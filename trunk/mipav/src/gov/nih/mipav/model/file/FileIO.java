@@ -17,10 +17,8 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
-import java.awt.Dimension;
-import java.awt.GraphicsEnvironment;
-import java.awt.Image;
-import java.awt.MediaTracker;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.io.*;
@@ -1130,8 +1128,8 @@ public class FileIO {
                 extents = new int[3];
                 extents[2] = nImages;
             }
-            
-           // check for miscalculation of the 4th dim and fall back to just 3D if necessary
+
+            // check for miscalculation of the 4th dim and fall back to just 3D if necessary
             if (extents.length > 3 && extents[3] > 0 && (extents[2] * extents[3]) < nImages) {
                 extents = new int[3];
                 extents[2] = nImages;
@@ -2325,7 +2323,7 @@ public class FileIO {
 
         }
 
-        final int fileType = readFileType(niftiCompressed, multiFile, fileName,fileDir);
+        final int fileType = readFileType(niftiCompressed, multiFile, fileName, fileDir);
         FileBase readSrc = null;
         FileInfoBase fileInfo = null;
         boolean success = false;
@@ -2984,7 +2982,7 @@ public class FileIO {
 
         }
 
-        final int fileType = readFileType(niftiCompressed, multiFile, fileName,fileDir);
+        final int fileType = readFileType(niftiCompressed, multiFile, fileName, fileDir);
 
         try {
 
@@ -3041,10 +3039,10 @@ public class FileIO {
                 case FileUtility.LSM_MULTIFILE:
                     image = readLSMMulti(fileName, fileDir);
                     break;
-                    
+
                 case FileUtility.SVS:
-                	image = readSVS(fileName, fileDir, one);
-                	break;
+                    image = readSVS(fileName, fileDir, one);
+                    break;
 
                 case FileUtility.STK:
                     image = readSTK(fileName, fileDir, one);
@@ -13328,7 +13326,7 @@ public class FileIO {
         imageFile = null;
         return image;
     }
-    
+
     /**
      * Reads a SVS file by calling the read method of the file.
      * 
@@ -13347,7 +13345,7 @@ public class FileIO {
         try {
             // final long start = System.currentTimeMillis();
             imageFile = new FileSVS(fileName, fileDir);
-            //imageFile.setTIFFOrientation(doTIFFOrientation);
+            // imageFile.setTIFFOrientation(doTIFFOrientation);
             imageFile.setSuppressProgressBar(suppressProgressBar);
             if ( !suppressProgressBar) {
                 // TODO: removed progress bar because it was causing huge slowdowns on some files. needs to have
@@ -15813,7 +15811,7 @@ public class FileIO {
     private boolean writeJimi(final ModelImage image, final FileWriteOptions options) {
         final int index = options.getFileName().indexOf(".");
         final String prefix = options.getFileName().substring(0, index); // Used for setting file name
-        final String fileSuffix = options.getFileName().substring(index);
+        final String fileSuffix = options.getFileName().substring(index + 1);
         int slice = 0;
         final boolean isVis = UI.isAppFrameVisible();
         ViewJFrameImage frame = null;
@@ -15839,6 +15837,15 @@ public class FileIO {
         final String sliceZeroPaddingFormat = "%0" + sliceZeroPadding + "d";
         final String timeZeroPaddingFormat = "%0" + timeZeroPadding + "d";
 
+        boolean useImageIO = false;
+        final String writerNames[] = ImageIO.getWriterFormatNames();
+        for (final String format : ImageIO.getWriterFileSuffixes()) {
+            if (format.equals(fileSuffix)) {
+                useImageIO = true;
+                break;
+            }
+        }
+
         if (image.getNDims() <= 3) {
 
             for (int i = beginSlice; i <= endSlice; i++) {
@@ -15851,7 +15858,7 @@ public class FileIO {
 
                 final String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(i + 1));
 
-                name = options.getFileDirectory() + prefix + "_" + sliceString + fileSuffix;
+                name = options.getFileDirectory() + prefix + "_" + sliceString + "." + fileSuffix;
 
                 /*
                  * if ( (i < 9) && (endSlice != beginSlice)) { name = options.getFileDirectory() + prefix + "00" + (i +
@@ -15862,11 +15869,21 @@ public class FileIO {
                  */
 
                 try {
-                    Jimi.putImage(im, name);
-                } catch (final JimiException jimiException) {
-                    Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
+                    if (useImageIO) {
+                        ImageIO.write(getRenderedImage(im), fileSuffix, new File(name));
+                    } else {
+                        Jimi.putImage(im, name);
+                    }
+                } catch (final IOException e) {
+                    Preferences.debug("ImageIO write error: " + e + "\n", Preferences.DEBUG_FILEIO);
 
-                    jimiException.printStackTrace();
+                    e.printStackTrace();
+
+                    return false;
+                } catch (final JimiException e) {
+                    Preferences.debug("Jimi write error: " + e + "\n", Preferences.DEBUG_FILEIO);
+
+                    e.printStackTrace();
 
                     return false;
                 }
@@ -15886,7 +15903,7 @@ public class FileIO {
                     final String sliceString = String.format(sliceZeroPaddingFormat, Integer.valueOf(i + 1));
                     final String timeString = String.format(timeZeroPaddingFormat, Integer.valueOf(t));
 
-                    name = options.getFileDirectory() + prefix + "_t" + timeString + "_" + sliceString + fileSuffix;
+                    name = options.getFileDirectory() + prefix + "_t" + timeString + "_" + sliceString + "." + fileSuffix;
 
                     /*
                      * if ( (i < 9) && (endSlice != beginSlice)) { name = options.getFileDirectory() + prefix + "_t" + t
@@ -15897,11 +15914,21 @@ public class FileIO {
                      */
 
                     try {
-                        Jimi.putImage(im, name);
-                    } catch (final JimiException jimiException) {
-                        Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
+                        if (useImageIO) {
+                            ImageIO.write(getRenderedImage(im), fileSuffix, new File(name));
+                        } else {
+                            Jimi.putImage(im, name);
+                        }
+                    } catch (final IOException e) {
+                        Preferences.debug("ImageIO write error: " + e + "\n", Preferences.DEBUG_FILEIO);
 
-                        jimiException.printStackTrace();
+                        e.printStackTrace();
+
+                        return false;
+                    } catch (final JimiException e) {
+                        Preferences.debug("Jimi write error: " + e + "\n", Preferences.DEBUG_FILEIO);
+
+                        e.printStackTrace();
 
                         return false;
                     }
@@ -15915,15 +15942,23 @@ public class FileIO {
 
         UI.setAppFrameVisible(isVis);
 
-        
-        if(frame != null) {
-        	frame.close();
-        	
+        if (frame != null) {
+            frame.close();
+
         }
-        
-        
-        
+
         return true;
+    }
+
+    private final BufferedImage getRenderedImage(final Image in) {
+        final int w = in.getWidth(null);
+        final int h = in.getHeight(null);
+        final int type = BufferedImage.TYPE_INT_RGB;
+        final BufferedImage out = new BufferedImage(w, h, type);
+        final Graphics2D g2 = out.createGraphics();
+        g2.drawImage(in, 0, 0, null);
+        g2.dispose();
+        return out;
     }
 
     /**
