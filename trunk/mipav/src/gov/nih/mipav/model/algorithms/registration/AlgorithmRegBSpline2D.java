@@ -528,6 +528,18 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
             BSplineBasisf kBasisY = kReg.getLattice().getBasisY();
 
             String fileName = m_kImageSource.getImageName() + ".nlt";
+            File userDir = new File(ViewUserInterface.getReference().getDefaultDirectory());
+            if (!userDir.exists()) {
+
+                try { // do we have rights to write here?  and an error if we can't?
+
+                    if (!userDir.mkdir()) {
+                        throw new IOException("Error in creating destination directory.  Write rights maybe?");
+                    }
+                } catch (SecurityException se) {
+                    throw new IOException("security error in " + "creating destination directory:" + se.getMessage());
+                }
+            }
             File file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
             RandomAccessFile raFile = new RandomAccessFile(file, "rw");
 
