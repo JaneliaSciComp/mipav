@@ -503,6 +503,19 @@ public class FileJPEG2000 extends FileBase {
 		this.OPJ_HAVE_LIBLCMS1 = OPJ_HAVE_LIBLCMS1;
 		this.OPJ_HAVE_LIBLCMS2 = OPJ_HAVE_LIBLCMS2;
 	}
+	
+	public FileJPEG2000() {
+		
+	}
+	
+	public void selfTest() {
+		inputImageDirectory = null;
+		outputFormatExtension = null;
+		compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
+		//compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
+		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.pnm";
+		opj_decompress_main();
+	}
 
 	private byte lut_ctxno_zc[] = new byte[] { 0, 1, 1, 2, 1, 2, 2, 2, 1, 2, 2,
 			2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5,
@@ -587,49 +600,14 @@ public class FileJPEG2000 extends FileBase {
 			0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1,
 			1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			1, 1 };
-
-	/**
-	 * Supported image color spaces
-	 */
-	private enum OPJ_COLOR_SPACE {
-		OPJ_CLRSPC_UNKNOWN(-1), /** < not supported by the library */
-		OPJ_CLRSPC_UNSPECIFIED(0), /** < not specified in the codestream */
-		OPJ_CLRSPC_SRGB(1), /** < sRGB */
-		OPJ_CLRSPC_GRAY(2), /** < grayscale */
-		OPJ_CLRSPC_SYCC(3), /** < YUV */
-		OPJ_CLRSPC_EYCC(4), /** < e-YCC */
-		OPJ_CLRSPC_CMYK(5);
-		/** < CMYK */
-
-		@SuppressWarnings("unused")
-		int index;
-
-		OPJ_COLOR_SPACE(int index) {
-			this.index = index;
-		}
-
-		@SuppressWarnings("unused")
-		public static OPJ_COLOR_SPACE getOPJ_COLOR_SPACE(int index) {
-			switch (index) {
-			case -1:
-				return OPJ_CLRSPC_UNKNOWN;
-			case 0:
-				return OPJ_CLRSPC_UNSPECIFIED;
-			case 1:
-				return OPJ_CLRSPC_SRGB;
-			case 2:
-				return OPJ_CLRSPC_GRAY;
-			case 3:
-				return OPJ_CLRSPC_SYCC;
-			case 4:
-				return OPJ_CLRSPC_EYCC;
-			case 5:
-				return OPJ_CLRSPC_CMYK;
-			default:
-				return OPJ_CLRSPC_UNKNOWN;
-			}
-		}
-	};
+	
+	//private static final int OPJ_CLRSPC_UNKNOWN = -1; // not supported by the library
+	//private static final int OPJ_CLRSPC_UNSPECIFIED = 0; // not specified in the codestream
+	private static final int OPJ_CLRSPC_SRGB = 1; // sRGB 
+	private static final int OPJ_CLRSPC_GRAY = 2; // grayscale
+	private static final int OPJ_CLRSPC_SYCC = 3; // YUV
+	private static final int OPJ_CLRSPC_EYCC = 4; // e-YCC
+	private static final int OPJ_CLRSPC_CMYK = 5; // CMYK
 
 	/**
 	 * Supported codec
@@ -686,81 +664,16 @@ public class FileJPEG2000 extends FileBase {
 			}
 		}
 	}
+	
+	private static final int MCT_TYPE_INT16 = 0; // MCT data is stored as signed shorts
+	private static final int MCT_TYPE_INT32 = 1; // MCT data is stored as signed integers
+	private static final int MCT_TYPE_FLOAT = 2; // MCT data is stored as floats
+	private static final int MCT_TYPE_DOUBLE = 3; // MCT data is stored as doubles
 
-	/**
-	 * Type of elements storing in the MCT data
-	 */
-	private enum J2K_MCT_ELEMENT_TYPE {
-		MCT_TYPE_INT16(0), /** MCT data is stored as signed shorts */
-		MCT_TYPE_INT32(1), /** MCT data is stored as signed integers */
-		MCT_TYPE_FLOAT(2), /** MCT data is stored as floats */
-		MCT_TYPE_DOUBLE(3);
-		/** MCT data is stored as doubles */
-
-		@SuppressWarnings("unused")
-		int index;
-
-		J2K_MCT_ELEMENT_TYPE(int index) {
-			this.index = index;
-		}
-
-		public static J2K_MCT_ELEMENT_TYPE getJ2K_MCT_ELEMENT_TYPE(int index) {
-			switch (index) {
-			case 0:
-				return MCT_TYPE_INT16;
-			case 1:
-				return MCT_TYPE_INT32;
-			case 2:
-				return MCT_TYPE_FLOAT;
-			case 3:
-				return MCT_TYPE_DOUBLE;
-			default:
-				return MCT_TYPE_INT16;
-			}
-		}
-
-		public static int getIndex(J2K_MCT_ELEMENT_TYPE el) {
-			switch (el) {
-			case MCT_TYPE_INT16:
-				return 0;
-			case MCT_TYPE_INT32:
-				return 1;
-			case MCT_TYPE_FLOAT:
-				return 2;
-			case MCT_TYPE_DOUBLE:
-				return 3;
-			default:
-				return -1;
-			}
-		}
-	}
-
-	/**
-	 * Type of MCT array
-	 */
-	private enum J2K_MCT_ARRAY_TYPE {
-		MCT_TYPE_DEPENDENCY(0), MCT_TYPE_DECORRELATION(1), MCT_TYPE_OFFSET(2);
-
-		@SuppressWarnings("unused")
-		int index;
-
-		J2K_MCT_ARRAY_TYPE(int index) {
-			this.index = index;
-		}
-
-		public static J2K_MCT_ARRAY_TYPE getJ2K_MCT_ARRAY_TYPE(int index) {
-			switch (index) {
-			case 0:
-				return MCT_TYPE_DEPENDENCY;
-			case 1:
-				return MCT_TYPE_DECORRELATION;
-			case 2:
-				return MCT_TYPE_OFFSET;
-			default:
-				return MCT_TYPE_DEPENDENCY;
-			}
-		}
-	}
+	// Type of MCT array
+	//private static final int MCT_TYPE_DEPENDENCY = 0;
+	//private static final int MCT_TYPE_DECORRELATION = 1;
+	//private static final int MCT_TYPE_OFFSET = 2;
 
 	private static final int MCT_ELEMENT_SIZE[] = new int[] { 2, 4, 4, 8 };
 
@@ -1020,7 +933,7 @@ public class FileJPEG2000 extends FileBase {
 		/** number of components in the image */
 		int numcomps;
 		/** color space: sRGB, Greyscale or YUV */
-		OPJ_COLOR_SPACE color_space;
+		int color_space;
 		/** image components */
 		opj_image_comp_t comps[];
 		/** 'restricted' ICC profile */
@@ -1306,8 +1219,8 @@ public class FileJPEG2000 extends FileBase {
 	 * FIXME DOC
 	 */
 	class opj_mct_data_t {
-		J2K_MCT_ELEMENT_TYPE m_element_type;
-		J2K_MCT_ARRAY_TYPE m_array_type;
+		int m_element_type;
+		int m_array_type;
 		int m_index;
 		byte m_data[];
 		int m_data_size;
@@ -3056,20 +2969,20 @@ public class FileJPEG2000 extends FileBase {
 			}
 			
 
-    		if( image.color_space != OPJ_COLOR_SPACE.OPJ_CLRSPC_SYCC 
+    		if( image.color_space != OPJ_CLRSPC_SYCC 
     			&& image.numcomps == 3 && image.comps[0].dx == image.comps[0].dy
     			&& image.comps[1].dx != 1 )
-    			image.color_space = OPJ_COLOR_SPACE.OPJ_CLRSPC_SYCC;
+    			image.color_space = OPJ_CLRSPC_SYCC;
     		else if (image.numcomps <= 2)
-    			image.color_space = OPJ_COLOR_SPACE.OPJ_CLRSPC_GRAY;
+    			image.color_space = OPJ_CLRSPC_GRAY;
 
-    		if(image.color_space == OPJ_COLOR_SPACE.OPJ_CLRSPC_SYCC){
+    		if(image.color_space == OPJ_CLRSPC_SYCC){
     			color_sycc_to_rgb(image);
     		}
-    		else if((image.color_space == OPJ_COLOR_SPACE.OPJ_CLRSPC_CMYK) && (parameters.cod_format != TIF_DFMT)){
+    		else if((image.color_space == OPJ_CLRSPC_CMYK) && (parameters.cod_format != TIF_DFMT)){
     			color_cmyk_to_rgb(image);
     		}
-    		else if(image.color_space == OPJ_COLOR_SPACE.OPJ_CLRSPC_EYCC){
+    		else if(image.color_space == OPJ_CLRSPC_EYCC){
     			color_esycc_to_rgb(image);
     		}
     		
@@ -11740,8 +11653,7 @@ public class FileJPEG2000 extends FileBase {
 		l_deco_array = l_mcc_record.m_decorrelation_array;
 
 		if (l_deco_array != null) {
-			int index = J2K_MCT_ELEMENT_TYPE
-					.getIndex(l_deco_array.m_element_type);
+			int index = l_deco_array.m_element_type;
 			l_data_size = MCT_ELEMENT_SIZE[index] * p_image.numcomps
 					* p_image.numcomps;
 			if (l_deco_array.m_data_size != l_data_size) {
@@ -11751,16 +11663,16 @@ public class FileJPEG2000 extends FileBase {
 			l_nb_elem = p_image.numcomps * p_image.numcomps;
 			p_tcp.m_mct_decoding_matrix = new float[l_nb_elem];
 
-			if (l_deco_array.m_element_type == J2K_MCT_ELEMENT_TYPE.MCT_TYPE_INT16) {
+			if (l_deco_array.m_element_type == MCT_TYPE_INT16) {
 				opj_j2k_read_int16_to_float(l_deco_array.m_data,
 						p_tcp.m_mct_decoding_matrix, l_nb_elem);
-			} else if (l_deco_array.m_element_type == J2K_MCT_ELEMENT_TYPE.MCT_TYPE_INT32) {
+			} else if (l_deco_array.m_element_type == MCT_TYPE_INT32) {
 				opj_j2k_read_int32_to_float(l_deco_array.m_data,
 						p_tcp.m_mct_decoding_matrix, l_nb_elem);
-			} else if (l_deco_array.m_element_type == J2K_MCT_ELEMENT_TYPE.MCT_TYPE_FLOAT) {
+			} else if (l_deco_array.m_element_type == MCT_TYPE_FLOAT) {
 				opj_j2k_read_float32_to_float(l_deco_array.m_data,
 						p_tcp.m_mct_decoding_matrix, l_nb_elem);
-			} else if (l_deco_array.m_element_type == J2K_MCT_ELEMENT_TYPE.MCT_TYPE_DOUBLE) {
+			} else if (l_deco_array.m_element_type == MCT_TYPE_DOUBLE) {
 				opj_j2k_read_float64_to_float(l_deco_array.m_data,
 						p_tcp.m_mct_decoding_matrix, l_nb_elem);
 			}
@@ -11769,8 +11681,7 @@ public class FileJPEG2000 extends FileBase {
 		l_offset_array = l_mcc_record.m_offset_array;
 
 		if (l_offset_array != null) {
-			int index = J2K_MCT_ELEMENT_TYPE
-					.getIndex(l_offset_array.m_element_type);
+			int index = l_offset_array.m_element_type;
 			l_data_size = MCT_ELEMENT_SIZE[index] * p_image.numcomps;
 			if (l_offset_array.m_data_size != l_data_size) {
 				return false;
@@ -11779,16 +11690,16 @@ public class FileJPEG2000 extends FileBase {
 			l_nb_elem = p_image.numcomps;
 			l_offset_data = new int[l_nb_elem];
 
-			if (l_offset_array.m_element_type == J2K_MCT_ELEMENT_TYPE.MCT_TYPE_INT16) {
+			if (l_offset_array.m_element_type == MCT_TYPE_INT16) {
 				opj_j2k_read_int16_to_int32(l_offset_array.m_data,
 						l_offset_data, l_nb_elem);
-			} else if (l_offset_array.m_element_type == J2K_MCT_ELEMENT_TYPE.MCT_TYPE_INT32) {
+			} else if (l_offset_array.m_element_type == MCT_TYPE_INT32) {
 				opj_j2k_read_int32_to_int32(l_offset_array.m_data,
 						l_offset_data, l_nb_elem);
-			} else if (l_offset_array.m_element_type == J2K_MCT_ELEMENT_TYPE.MCT_TYPE_FLOAT) {
+			} else if (l_offset_array.m_element_type == MCT_TYPE_FLOAT) {
 				opj_j2k_read_float32_to_int32(l_offset_array.m_data,
 						l_offset_data, l_nb_elem);
-			} else if (l_offset_array.m_element_type == J2K_MCT_ELEMENT_TYPE.MCT_TYPE_DOUBLE) {
+			} else if (l_offset_array.m_element_type == MCT_TYPE_DOUBLE) {
 				opj_j2k_read_float64_to_int32(l_offset_array.m_data,
 						l_offset_data, l_nb_elem);
 			}
@@ -12368,10 +12279,8 @@ public class FileJPEG2000 extends FileBase {
 		}
 
 		l_mct_data.m_index = l_indix;
-		l_mct_data.m_array_type = J2K_MCT_ARRAY_TYPE
-				.getJ2K_MCT_ARRAY_TYPE((l_tmp >> 8) & 3);
-		l_mct_data.m_element_type = J2K_MCT_ELEMENT_TYPE
-				.getJ2K_MCT_ELEMENT_TYPE((l_tmp >> 10) & 3);
+		l_mct_data.m_array_type = ((l_tmp >> 8) & 3);
+		l_mct_data.m_element_type = ((l_tmp >> 10) & 3);
 
 		l_tmp = getBufferUShort(p_header_data, p_header_offset, endianess); /* Ymct */
 		p_header_offset += 2;
@@ -15397,7 +15306,7 @@ public class FileJPEG2000 extends FileBase {
 
 	private void color_sycc_to_rgb(opj_image_t img) {
 		if (img.numcomps < 3) {
-			img.color_space = OPJ_COLOR_SPACE.OPJ_CLRSPC_GRAY;
+			img.color_space = OPJ_CLRSPC_GRAY;
 			return;
 		}
 
@@ -15434,7 +15343,7 @@ public class FileJPEG2000 extends FileBase {
 			MipavUtil.displayError("color_sycc_to_rgb cannot convert");
 			return;
 		}
-		img.color_space = OPJ_COLOR_SPACE.OPJ_CLRSPC_SRGB;
+		img.color_space = OPJ_CLRSPC_SRGB;
 
 	}/* color_sycc_to_rgb() */
 
@@ -15779,7 +15688,7 @@ public class FileJPEG2000 extends FileBase {
 		image.comps[1].prec = 8;
 		image.comps[2].prec = 8;
 		image.numcomps -= 1;
-		image.color_space = OPJ_COLOR_SPACE.OPJ_CLRSPC_SRGB;
+		image.color_space = OPJ_CLRSPC_SRGB;
 
 		for (i = 3; i < image.numcomps; ++i) {
 			image.comps[i].dx = image.comps[i + 1].dx;
@@ -15861,7 +15770,7 @@ public class FileJPEG2000 extends FileBase {
 				val = 0;
 			image.comps[2].data[i] = val;
 		}
-		image.color_space = OPJ_COLOR_SPACE.OPJ_CLRSPC_SRGB;
+		image.color_space = OPJ_CLRSPC_SRGB;
 
 	}/* color_esycc_to_rgb() */
 
@@ -16150,28 +16059,28 @@ public class FileJPEG2000 extends FileBase {
 		return l_new_image;
 	}
 
-	opj_image_t opj_image_create(int numcmpts,
-			opj_image_cmptparm_t cmptparms[], OPJ_COLOR_SPACE clrspc) {
+	private opj_image_t opj_image_create(int numcmpts,
+			opj_image_cmptparm_t cmptparms[], int clrspc) {
 		int compno;
 		opj_image_t image = null;
 		int i;
 
 		image = new opj_image_t();
-		if (image != null) {
+	 if (image != null) {
 			image.color_space = clrspc;
 			image.numcomps = numcmpts;
-			/* allocate memory for the per-component information */
-			image.comps = new opj_image_comp_t[image.numcomps];
-			for (i = 0; i < image.numcomps; i++) {
+			// allocate memory for the per-component information
+			image.comps = new opj_image_comp_t[numcmpts];
+			for (i = 0; i < numcmpts; i++) {
 				image.comps[i] = new opj_image_comp_t();
 			}
 			if (image.comps == null) {
-				/* TODO replace with event manager, breaks API */
-				/* fprintf(stderr,"Unable to allocate memory for image.\n"); */
+				// TODO replace with event manager, breaks API
+				//fprintf(stderr,"Unable to allocate memory for image.\n");
 				opj_image_destroy(image);
 				return null;
 			}
-			/* create the individual image components */
+			// create the individual image components
 			for (compno = 0; compno < numcmpts; compno++) {
 				opj_image_comp_t comp = image.comps[compno];
 				comp.dx = cmptparms[compno].dx;
@@ -16185,8 +16094,8 @@ public class FileJPEG2000 extends FileBase {
 				comp.sgnd = cmptparms[compno].sgnd;
 				comp.data = new int[comp.w * comp.h];
 				if (comp.data == null) {
-					/* TODO replace with event manager, breaks API */
-					/* fprintf(stderr,"Unable to allocate memory for image.\n"); */
+					// TODO replace with event manager, breaks API 
+					// fprintf(stderr,"Unable to allocate memory for image.\n");
 					opj_image_destroy(image);
 					return null;
 				}
@@ -16230,7 +16139,7 @@ public class FileJPEG2000 extends FileBase {
 		}
 
 		l_new_image = opj_image_create(original.numcomps + 2, l_new_components,
-				OPJ_COLOR_SPACE.OPJ_CLRSPC_SRGB);
+				OPJ_CLRSPC_SRGB);
 		l_new_components = null;
 		if (l_new_image == null) {
 			MipavUtil
