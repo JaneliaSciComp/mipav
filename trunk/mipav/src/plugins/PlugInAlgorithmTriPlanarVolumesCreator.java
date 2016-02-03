@@ -1,4 +1,6 @@
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
@@ -59,6 +61,35 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
 	public void runAlgorithm() {
 
     	System.out.println("TriPlanarVolumesCreator...");
+    	
+    	if(!outputDir.endsWith(File.separator)) {
+	    	 outputDir = outputDir + File.separator;    
+	     }
+    	
+    	//if src image is 4d, output 4dInfo.txt file with number of time volumes
+    	boolean isSrcImage4D = false;
+    	if(srcImage.getNDims() == 4) {
+    		isSrcImage4D = true;
+    	}
+    	if(isSrcImage4D) {
+    		int numTimeVols = srcImage.getExtents()[3];
+    		//now write out file
+    		String fourDInfoTxtFilePath  = outputDir + "4dInfo.txt";
+    		
+    		
+    		try {
+				PrintWriter writer = new PrintWriter(fourDInfoTxtFilePath);
+				writer.print(numTimeVols);
+				writer.close();
+			} catch (FileNotFoundException e) {
+				System.out.println("Can not create 4dInfo.txt");
+				setCompleted(true);
+				e.printStackTrace();
+				return;
+			}
+    		
+    	}
+    	
     	
     	//get axis orientations...if any are unknown, exit and display error
     	System.out.println("Determining axes orientations...");
@@ -480,8 +511,11 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
     		
     	}//end for each orientation
 	
-    	transformedImage.disposeLocal();
+    	
     
+    	
+    	
+    	transformedImage.disposeLocal();
 
 	}
 	
@@ -731,9 +765,7 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
 			 FileIO fileIO = new FileIO();
 		     fileIO.setQuiet(true);
 		     FileWriteOptions opts = new FileWriteOptions(true);
-		     if(!outputDir.endsWith(File.separator)) {
-		    	 outputDir = outputDir + File.separator;    
-		     }
+
 		     
 		     opts.setFileDirectory(outputDir);
 
@@ -750,8 +782,7 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
             }
 		       
 		        
-		        
-		        
+		         
 
 			//now save the image as slices
 			//if(saveAsJPEGRadio.isSelected()) {
