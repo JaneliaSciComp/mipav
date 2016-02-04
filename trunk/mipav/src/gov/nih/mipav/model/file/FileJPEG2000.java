@@ -1272,11 +1272,14 @@ public class FileJPEG2000 extends FileBase {
 
 		/***** FLAGS *******/
 		/** If cod == 1 --> there was a COD marker for the present tile */
-		int cod = 1;
+		//int cod = 1;
+		int cod = 0;
 		/** If ppt == 1 --> there was a PPT marker for the present tile */
-		int ppt = 1;
+		// int ppt = 1;
+		int ppt = 0;
 		/** indicates if a POC marker has been used O:NO, 1:YES */
-		boolean POC = true;
+		// boolean POC = true;
+		boolean POC = false;
 	};
 
 	/**
@@ -2737,6 +2740,9 @@ public class FileJPEG2000 extends FileBase {
     		    	l_j2k.m_decoder.m_nb_tile_parts_correction_checked = 1;	
     		    }
     		    l_j2k.m_decoder.m_default_tcp = new opj_tcp_t();
+    		    for (i = 0; i < 32; i++) {
+    		    	l_j2k.m_decoder.m_default_tcp.pocs[i] = new opj_poc_t();
+    		    }
     		    l_j2k.m_decoder.m_header_data = new byte[OPJ_J2K_DEFAULT_HEADER_SIZE];
     		    l_j2k.m_decoder.m_header_data_size = OPJ_J2K_DEFAULT_HEADER_SIZE;
     		    l_j2k.m_decoder.m_state = 0x0000;
@@ -2828,7 +2834,7 @@ public class FileJPEG2000 extends FileBase {
 //            l_j2k.m_procedure_list.m_nb_procedures++;
             
 //            for (i = 0; i < l_j2k.m_procedure_list.m_nb_procedures; i++) {
-//            	if (l_j2k.m_procedure_list.m_procedures.get(i) == OPJ_J2K_READ_HEADEAR_PROCEDURE) {
+//            	if (l_j2k.m_procedure_list.m_procedures.get(i) == OPJ_J2K_READ_HEADER_PROCEDURE) {
             	  // execute opj_j2k_read_header_procedure	
 //            	}
 //            	else if (l_j2k.m_procedure_list.m_procedures.get(i) == OPJ_J2K_COPY_DEFAULT_TCP_AND_CREATE_TCD) {
@@ -2839,6 +2845,8 @@ public class FileJPEG2000 extends FileBase {
                 opj_j2k_read_header_procedure(l_j2k, l_stream); 
                 
                 opj_j2k_copy_default_tcp_and_create_tcd(l_j2k, l_stream);
+                
+                
 
             
 //            l_j2k.m_procedure_list.m_procedures.clear();
@@ -5074,6 +5082,9 @@ public class FileJPEG2000 extends FileBase {
 				l_tilec.resolutions = new opj_tcd_resolution_t[l_data_size];
 				for (i = 0; i < l_data_size; i++) {
 					l_tilec.resolutions[i] = new opj_tcd_resolution_t();
+					for (j = 0; j < 3; j++) {
+						l_tilec.resolutions[i].bands[j] = new opj_tcd_band_t();
+					}
 				}
 
 				/*
@@ -5090,12 +5101,12 @@ public class FileJPEG2000 extends FileBase {
 					l_tilec.resolutions[i].pw = 0;
 					l_tilec.resolutions[i].ph = 0;
 					l_tilec.resolutions[i].numbands = 0;
-					l_tilec.resolutions[i].bands = null;
 				}
 			} else if (l_data_size > l_tilec.resolutions_size) {
 				opj_tcd_resolution_t new_resolutions[] = new opj_tcd_resolution_t[l_data_size];
 				for (i = 0; i < l_tilec.resolutions_size; i++) {
 					new_resolutions[i] = l_tilec.resolutions[i];
+					
 					/*
 					 * new_resolutions[i] = new opj_tcd_resolution_t();
 					 * new_resolutions[i].x0 = l_tilec.resolutions[i].x0;
@@ -5353,7 +5364,7 @@ public class FileJPEG2000 extends FileBase {
 				}
 				for (i = l_tilec.resolutions_size; i < l_data_size; i++) {
 					new_resolutions[i] = new opj_tcd_resolution_t();
-				}
+				} 
 
 				l_tilec.resolutions = new_resolutions;
 				for (i = l_tilec.resolutions_size; i < l_data_size; i++) {
@@ -5364,7 +5375,10 @@ public class FileJPEG2000 extends FileBase {
 					l_tilec.resolutions[i].pw = 0;
 					l_tilec.resolutions[i].ph = 0;
 					l_tilec.resolutions[i].numbands = 0;
-					l_tilec.resolutions[i].bands = null;
+					l_tilec.resolutions[i].bands = new opj_tcd_band_t[3];
+					for (j = 0; j < 3; j++) {
+						l_tilec.resolutions[i].bands[j] = new opj_tcd_band_t();
+					}
 				}
 				/*
 				 * fprintf(stderr,
@@ -10784,8 +10798,9 @@ public class FileJPEG2000 extends FileBase {
 				l_tcp.pocs[j].precno1 = l_default_tcp.pocs[j].precno1;
 				l_tcp.pocs[j].prg1 = l_default_tcp.pocs[j].prg1;
 				l_tcp.pocs[j].prg = l_default_tcp.pocs[j].prg;
-				l_tcp.pocs[j].progorder = new String(
-						l_default_tcp.pocs[j].progorder);
+				if (l_default_tcp.pocs[j].progorder != null) {
+				    l_tcp.pocs[j].progorder = new String(l_default_tcp.pocs[j].progorder);
+				}
 				l_tcp.pocs[j].tile = l_default_tcp.pocs[j].tile;
 				l_tcp.pocs[j].tx0 = l_default_tcp.pocs[j].tx0;
 				l_tcp.pocs[j].tx1 = l_default_tcp.pocs[j].tx1;
@@ -10813,8 +10828,8 @@ public class FileJPEG2000 extends FileBase {
 				l_tcp.pocs[j].ty0_t = l_default_tcp.pocs[j].ty0_t;
 			}
 			l_tcp.ppt_markers_count = l_default_tcp.ppt_markers_count;
-			l_tcp.ppt_markers = new opj_ppx[l_default_tcp.ppt_markers.length];
-			for (j = 0; j < l_default_tcp.ppt_markers.length; j++) {
+			l_tcp.ppt_markers = new opj_ppx[l_default_tcp.ppt_markers_count];
+			for (j = 0; j < l_default_tcp.ppt_markers_count; j++) {
 				l_tcp.ppt_markers[j] = new opj_ppx();
 				l_tcp.ppt_markers[j].m_data = new byte[l_default_tcp.ppt_markers[j].m_data.length];
 				for (k = 0; k < l_default_tcp.ppt_markers[j].m_data.length; k++) {
@@ -10829,18 +10844,22 @@ public class FileJPEG2000 extends FileBase {
 				l_tcp.distoratio[j] = l_default_tcp.distoratio[j];
 			}
 			l_tcp.m_nb_tile_parts = l_default_tcp.m_nb_tile_parts;
-			l_tcp.m_data = new byte[l_default_tcp.m_data.length];
-			for (j = 0; j < l_default_tcp.m_data.length; j++) {
+			l_tcp.m_data = new byte[l_default_tcp.m_data_size];
+			for (j = 0; j < l_default_tcp.m_data_size; j++) {
 				l_tcp.m_data[j] = l_default_tcp.m_data[j];
 			}
 			l_tcp.m_data_size = l_default_tcp.m_data_size;
-			l_tcp.mct_norms = new double[l_default_tcp.mct_norms.length];
-			for (j = 0; j < l_tcp.mct_norms.length; j++) {
-				l_tcp.mct_norms[j] = l_default_tcp.mct_norms[j];
+			if (l_default_tcp.mct_norms != null) {
+				l_tcp.mct_norms = new double[l_default_tcp.mct_norms.length];
+				for (j = 0; j < l_tcp.mct_norms.length; j++) {
+					l_tcp.mct_norms[j] = l_default_tcp.mct_norms[j];
+				}
 			}
-			l_tcp.m_mct_coding_matrix = new float[l_default_tcp.m_mct_coding_matrix.length];
-			for (j = 0; j < l_default_tcp.m_mct_coding_matrix.length; j++) {
-				l_tcp.m_mct_coding_matrix[j] = l_default_tcp.m_mct_coding_matrix[j];
+			if (l_default_tcp.m_mct_coding_matrix != null) {
+				l_tcp.m_mct_coding_matrix = new float[l_default_tcp.m_mct_coding_matrix.length];
+				for (j = 0; j < l_default_tcp.m_mct_coding_matrix.length; j++) {
+					l_tcp.m_mct_coding_matrix[j] = l_default_tcp.m_mct_coding_matrix[j];
+				}
 			}
 			l_tcp.POC = l_default_tcp.POC;
 			/* Initialize some values of the current tile coding parameters */
@@ -10889,8 +10908,8 @@ public class FileJPEG2000 extends FileBase {
 					l_tcp.m_mct_records[j].m_element_type = l_default_tcp.m_mct_records[j].m_element_type;
 					l_tcp.m_mct_records[j].m_array_type = l_default_tcp.m_mct_records[j].m_array_type;
 					l_tcp.m_mct_records[j].m_index = l_default_tcp.m_mct_records[j].m_index;
-					l_tcp.m_mct_records[j].m_data = new byte[l_default_tcp.m_mct_records[j].m_data.length];
-					for (k = 0; k < l_default_tcp.m_mct_records[j].m_data.length; k++) {
+					l_tcp.m_mct_records[j].m_data = new byte[l_default_tcp.m_mct_records[j].m_data_size];
+					for (k = 0; k < l_default_tcp.m_mct_records[j].m_data_size; k++) {
 						l_tcp.m_mct_records[j].m_data[k] = l_default_tcp.m_mct_records[j].m_data[k];
 					}
 					l_tcp.m_mct_records[j].m_data_size = l_default_tcp.m_mct_records[j].m_data_size;
@@ -11427,6 +11446,7 @@ public class FileJPEG2000 extends FileBase {
 	private boolean readMarkerHandler(int handler, opj_j2k_t p_j2k,
 			byte p_header_data[], int p_header_size[]) {
 		boolean success;
+		System.out.println("handler = " + handler);
 		switch (handler) {
 		case OPJ_J2K_READ_SOT:
 			success = opj_j2k_read_sot(p_j2k, p_header_data, p_header_size[0]);
@@ -12694,7 +12714,7 @@ public class FileJPEG2000 extends FileBase {
 	 */
 	private boolean opj_j2k_read_siz(opj_j2k_t p_j2k, byte p_header_data[],
 			int p_header_size[]) {
-		int i, j;
+		int i, j, k;
 		int l_nb_comp;
 		int l_nb_comp_remain;
 		int l_remaining_size;
@@ -13046,6 +13066,9 @@ public class FileJPEG2000 extends FileBase {
 		l_cp.tcps = new opj_tcp_t[l_nb_tiles];
 		for (i = 0; i < l_nb_tiles; i++) {
 			l_cp.tcps[i] = new opj_tcp_t();
+			for (j = 0; j < 32; j++) {
+				l_cp.tcps[i].pocs[j] = new opj_poc_t();
+			}
 		}
 
 		if (useJPWL) {
@@ -13062,6 +13085,9 @@ public class FileJPEG2000 extends FileBase {
 		p_j2k.m_decoder.m_default_tcp.tccps = new opj_tccp_t[l_image.numcomps];
 		for (i = 0; i < l_image.numcomps; i++) {
 			p_j2k.m_decoder.m_default_tcp.tccps[i] = new opj_tccp_t();
+			for (j = 0; j < OPJ_J2K_MAXBANDS; j++) {
+				p_j2k.m_decoder.m_default_tcp.tccps[i].stepsizes[j] = new opj_stepsize_t();
+			}
 		}
 
 		p_j2k.m_decoder.m_default_tcp.m_mct_records = new opj_mct_data_t[OPJ_J2K_MCT_DEFAULT_NB_RECORDS];
@@ -13090,6 +13116,9 @@ public class FileJPEG2000 extends FileBase {
 			l_current_tile_param.tccps = new opj_tccp_t[l_image.numcomps];
 			for (j = 0; j < l_image.numcomps; j++) {
 				l_current_tile_param.tccps[j] = new opj_tccp_t();
+				for (k = 0; k < OPJ_J2K_MAXBANDS; k++) {
+					l_current_tile_param.tccps[j].stepsizes[k] = new opj_stepsize_t();	
+				}
 			}
 
 			if (i < l_nb_tiles - 1) {
@@ -13804,6 +13833,7 @@ public class FileJPEG2000 extends FileBase {
 		l_cp = p_j2k.m_cp;
 
 		/* If we are in the first tile-part header of the current tile */
+		System.out.println("p_j2k.m_decoder.m_state = " + p_j2k.m_decoder.m_state);
 		l_tcp = (p_j2k.m_decoder.m_state == J2K_STATE_TPH) ? l_cp.tcps[p_j2k.m_current_tile_number[0]]
 				: p_j2k.m_decoder.m_default_tcp;
 
@@ -13935,7 +13965,9 @@ public class FileJPEG2000 extends FileBase {
 				l_copied_tccp.prcw[j] = l_ref_tccp.prcw[j];
 				l_copied_tccp.prch[j] = l_ref_tccp.prch[j];
 			}
-			l_copied_tccp = l_tcp.tccps[i + 1];
+			if (i < p_j2k.m_private_image.numcomps-1) {
+			    l_copied_tccp = l_tcp.tccps[i + 1];
+			}
 		}
 	}
 
