@@ -16031,7 +16031,8 @@ public class FileJPEG2000 extends FileBase {
 		int i;
 
 		image = new opj_image_t();
-	 if (image != null) {
+	 //if (image != null) {
+     // This if clause gives a java.lang.verifyError
 			image.color_space = clrspc;
 			image.numcomps = numcmpts;
 			// allocate memory for the per-component information
@@ -16065,7 +16066,7 @@ public class FileJPEG2000 extends FileBase {
 					return null;
 				}
 			}
-		}
+		//}
 
 		return image;
 	}
