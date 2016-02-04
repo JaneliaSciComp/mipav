@@ -612,58 +612,23 @@ public class FileJPEG2000 extends FileBase {
 	/**
 	 * Supported codec
 	 */
-	@SuppressWarnings("unused")
-	private enum OPJ_CODEC_FORMAT {
-		OPJ_CODEC_UNKNOWN, /** < place-holder */
-		OPJ_CODEC_J2K, /** < JPEG-2000 codestream : read/write */
-		OPJ_CODEC_JPT, /** < JPT-stream (JPEG 2000, JPIP) : read only */
-		OPJ_CODEC_JP2, /** < JP2 file format : read/write */
-		OPJ_CODEC_JPP, /** < JPP-stream (JPEG 2000, JPIP) : to be coded */
-		OPJ_CODEC_JPX
-		/** < JPX file format (JPEG 2000 Part-2) : to be coded */
-	};
-
-	/**
-	 * Progression order
-	 * */
-	private enum OPJ_PROG_ORDER {
-		OPJ_PROG_UNKNOWN(-1, ""), /** < place-holder */
-		OPJ_LRCP(0, "LRCP"), /** < layer-resolution-component-precinct order */
-		OPJ_RLCP(1, "RLCP"), /** < resolution-layer-component-precinct order */
-		OPJ_RPCL(2, "RPCL"), /** < resolution-precinct-component-layer order */
-		OPJ_PCRL(3, "PCRL"), /** < precinct-component-resolution-layer order */
-		OPJ_CPRL(4, "CPRL");
-		/** < component-precinct-resolution-layer order */
-
-		@SuppressWarnings("unused")
-		int index;
-		@SuppressWarnings("unused")
-		String descrip;
-
-		OPJ_PROG_ORDER(int index, String descrip) {
-			this.index = index;
-			this.descrip = descrip;
-		}
-
-		public static OPJ_PROG_ORDER getOPJ_PROG_ORDER(int index) {
-			switch (index) {
-			case -1:
-				return OPJ_PROG_UNKNOWN;
-			case 0:
-				return OPJ_LRCP;
-			case 1:
-				return OPJ_RLCP;
-			case 2:
-				return OPJ_RPCL;
-			case 3:
-				return OPJ_PCRL;
-			case 4:
-				return OPJ_CPRL;
-			default:
-				return OPJ_PROG_UNKNOWN;
-			}
-		}
-	}
+//	private enum OPJ_CODEC_FORMAT {
+//		OPJ_CODEC_UNKNOWN, // < place-holder
+//		OPJ_CODEC_J2K, // < JPEG-2000 codestream : read/write
+//		OPJ_CODEC_JPT, // < JPT-stream (JPEG 2000, JPIP) : read only 
+//		OPJ_CODEC_JP2, // < JP2 file format : read/write
+//		OPJ_CODEC_JPP, // < JPP-stream (JPEG 2000, JPIP) : to be coded
+//		OPJ_CODEC_JPX
+		// < JPX file format (JPEG 2000 Part-2) : to be coded 
+//	};
+	
+	// Progression order
+	private static final int OPJ_PROG_UNKNOWN = -1; // < place-holder
+	private static final int OPJ_LRCP = 0; // < layer-resolution-component-precinct order
+	private static final int OPJ_RLCP = 1; // < resolution-layer-component-precinct order 
+	private static final int OPJ_RPCL = 2; // < resolution-precinct-component-layer order
+	private static final int OPJ_PCRL = 3; // < precinct-component-resolution-layer order 
+	private static final int OPJ_CPRL = 4; // < component-precinct-resolution-layer order
 	
 	private static final int MCT_TYPE_INT16 = 0; // MCT data is stored as signed shorts
 	private static final int MCT_TYPE_INT32 = 1; // MCT data is stored as signed integers
@@ -1099,7 +1064,7 @@ public class FileJPEG2000 extends FileBase {
 		/** Layer num start,Precinct num start, Precinct num end */
 		int layno0;
 		/** Progression order enum */
-		OPJ_PROG_ORDER prg1, prg;
+		int prg1, prg;
 		/** Progression order string - 5 characters */
 		String progorder;
 		/** Tile number */
@@ -1250,7 +1215,7 @@ public class FileJPEG2000 extends FileBase {
 		/** coding style */
 		int csty;
 		/** progression order */
-		OPJ_PROG_ORDER prg;
+		int prg;
 		/** number of layers */
 		int numlayers;
 		int num_layers_to_decode;
@@ -1918,7 +1883,7 @@ public class FileJPEG2000 extends FileBase {
 		/** coding style */
 		int csty;
 		/** progression order */
-		OPJ_PROG_ORDER prg;
+		int prg;
 		/** number of layers */
 		int numlayers;
 		/** multi-component transform identifier */
@@ -7279,7 +7244,7 @@ public class FileJPEG2000 extends FileBase {
 			 */
 			boolean first_pass_failed[] = null;
 
-			if (l_current_pi.poc.prg == OPJ_PROG_ORDER.OPJ_PROG_UNKNOWN) {
+			if (l_current_pi.poc.prg == OPJ_PROG_UNKNOWN) {
 				/* TODO ADE : add an error */
 				opj_pi_destroy(l_pi, l_nb_pocs);
 				return false;
@@ -13293,7 +13258,7 @@ public class FileJPEG2000 extends FileBase {
 			}
 			l_tmp = getUnsignedByte(p_header_data, p_header_offset); /* Ppoc_i */
 			p_header_offset++;
-			l_current_poc.prg = OPJ_PROG_ORDER.getOPJ_PROG_ORDER(l_tmp);
+			l_current_poc.prg = l_tmp;
 			/* make sure comp is in acceptable bounds */
 			l_current_poc.compno1 = Math.min(l_current_poc.compno1, l_nb_comp);
 			if (i < l_current_poc_nb - 1) {
@@ -13865,14 +13830,14 @@ public class FileJPEG2000 extends FileBase {
 		l_tmp = getUnsignedByte(p_header_data, 1); /* SGcod (A) */
 
 		if ((l_tmp >= 0) && (l_tmp <= 4)) {
-			l_tcp.prg = OPJ_PROG_ORDER.getOPJ_PROG_ORDER(l_tmp);
+			l_tcp.prg = l_tmp;
 		}
 		/* Make sure progression order is valid */
 		else {
 			Preferences.debug(
 					"Error Unknown progression order in COD marker\n",
 					Preferences.DEBUG_FILEIO);
-			l_tcp.prg = OPJ_PROG_ORDER.OPJ_PROG_UNKNOWN;
+			l_tcp.prg = OPJ_PROG_UNKNOWN;
 		}
 		l_tcp.numlayers = getBufferUShort(p_header_data, 2, endianess);
 
