@@ -818,6 +818,22 @@ public abstract class ViewJComponentBase extends JComponent {
     }
 
     /**
+     * Sets the magnification to exactly the zoom specified values in both x and y directions.
+     *
+     * @param  zX  zoom in the x direction
+     * @param  zY  zoom in the y direction
+     */
+    public void setZoomExact(float zX, float zY) {
+        zoomX = zX;
+        zoomY = zY;
+        // setSize(Math.round(zoomX * imageDim.width * resolutionX), Math.round(zoomY * imageDim.height * resolutionY));
+        // setSize(Math.round(zoomX * imageDim.width ), Math.round(zoomY * imageDim.height));
+        // 
+        setSize((int)zoomX, (int)zoomY);
+    }
+
+    
+    /**
      * Calls paint without erasing background - this reduces flicker!
      *
      * @param  g  Graphics handle

@@ -1991,6 +1991,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: unable to open Tri-planar frame.");
             }
+        } else if (command.equals("Multimodality")) {
+            
+        	ViewJFrameMultimodalityViewer multimodalFrame = new ViewJFrameMultimodalityViewer(getActiveImage(), this);
+        	multimodalFrame.validate();
+          
+        } else if (command.equals("MultimodalitySingle")) {
+          
+        	ViewJFrameMultimodalitySingleViewer multimodalFrame = new ViewJFrameMultimodalitySingleViewer(getActiveImage(), this);
+        	multimodalFrame.validate();
+        	
         } else if (command.equals("VolTriplanar")) {
 
             // 3 space representation makes no sense on a 2d image!

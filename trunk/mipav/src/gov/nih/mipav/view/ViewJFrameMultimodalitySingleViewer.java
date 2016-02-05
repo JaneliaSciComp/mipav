@@ -165,7 +165,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		float zoomX = zoomX0 * zoomFactorX;
 		float zoomY = zoomY0 * zoomFactorY;
 
-		imageComp.setZoomEx(zoomY, zoomY);
+		imageComp.setZoomExact(zoomY, zoomY);
 		imageComp.show(0, currentSlice0, true);
 		
 		
