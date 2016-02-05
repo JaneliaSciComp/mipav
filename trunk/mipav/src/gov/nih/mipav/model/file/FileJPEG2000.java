@@ -6961,42 +6961,44 @@ public class FileJPEG2000 extends FileBase {
 
 		node = tree.nodes[0];
 		int node_index = 0;
-		l_parent_node = tree.nodes[tree.numleafsh * tree.numleafsv];
-		int parent_node_index = tree.numleafsh * tree.numleafsv;
-		l_parent_node0 = l_parent_node;
-		int parent_node0_index = parent_node_index;
-
-		for (i = 0; i < numlvls - 1; ++i) {
-			for (j = 0; j < nplv[i]; ++j) {
-				k = nplh[i];
-				while (--k >= 0) {
-					node.parent = l_parent_node;
-					if (node_index < tree.nodes.length - 1) {
-						node = tree.nodes[++node_index];
-					}
-					if (--k >= 0) {
+		if (tree.numleafsh * tree.numleafsv <= tree.numnodes-1) {
+			l_parent_node = tree.nodes[tree.numleafsh * tree.numleafsv];
+			int parent_node_index = tree.numleafsh * tree.numleafsv;
+			l_parent_node0 = l_parent_node;
+			int parent_node0_index = parent_node_index;
+	
+			for (i = 0; i < numlvls - 1; ++i) {
+				for (j = 0; j < nplv[i]; ++j) {
+					k = nplh[i];
+					while (--k >= 0) {
 						node.parent = l_parent_node;
 						if (node_index < tree.nodes.length - 1) {
 							node = tree.nodes[++node_index];
 						}
+						if (--k >= 0) {
+							node.parent = l_parent_node;
+							if (node_index < tree.nodes.length - 1) {
+								node = tree.nodes[++node_index];
+							}
+						}
+						if (parent_node_index < tree.nodes.length - 1) {
+							l_parent_node = tree.nodes[++parent_node_index];
+						}
 					}
-					if (parent_node_index < tree.nodes.length - 1) {
-						l_parent_node = tree.nodes[++parent_node_index];
-					}
-				}
-				if (((j & 1) != 0) || j == nplv[i] - 1) {
-					l_parent_node0 = l_parent_node;
-					parent_node0_index = parent_node_index;
-				} else {
-					l_parent_node = l_parent_node0;
-					parent_node_index = parent_node0_index;
-					if (parent_node0_index + nplh[i] <= tree.nodes.length - 1) {
-						parent_node0_index += nplh[i];
-						l_parent_node0 = tree.nodes[parent_node0_index];
+					if (((j & 1) != 0) || j == nplv[i] - 1) {
+						l_parent_node0 = l_parent_node;
+						parent_node0_index = parent_node_index;
+					} else {
+						l_parent_node = l_parent_node0;
+						parent_node_index = parent_node0_index;
+						if (parent_node0_index + nplh[i] <= tree.nodes.length - 1) {
+							parent_node0_index += nplh[i];
+							l_parent_node0 = tree.nodes[parent_node0_index];
+						}
 					}
 				}
 			}
-		}
+		} // if (tree.numleafsh * tree.numleafsv <= tree.numnodes-1)
 		node.parent = null;
 		opj_tgt_reset(tree);
 		return tree;
@@ -11446,7 +11448,6 @@ public class FileJPEG2000 extends FileBase {
 	private boolean readMarkerHandler(int handler, opj_j2k_t p_j2k,
 			byte p_header_data[], int p_header_size[]) {
 		boolean success;
-		System.out.println("handler = " + handler);
 		switch (handler) {
 		case OPJ_J2K_READ_SOT:
 			success = opj_j2k_read_sot(p_j2k, p_header_data, p_header_size[0]);
@@ -13833,7 +13834,6 @@ public class FileJPEG2000 extends FileBase {
 		l_cp = p_j2k.m_cp;
 
 		/* If we are in the first tile-part header of the current tile */
-		System.out.println("p_j2k.m_decoder.m_state = " + p_j2k.m_decoder.m_state);
 		l_tcp = (p_j2k.m_decoder.m_state == J2K_STATE_TPH) ? l_cp.tcps[p_j2k.m_current_tile_number[0]]
 				: p_j2k.m_decoder.m_default_tcp;
 
