@@ -1829,7 +1829,7 @@ public class FileJPEG2000 extends FileBase {
 		/** 0 if the first packet */
 		boolean first;
 		/** progression order change information */
-		opj_poc_t poc;
+		opj_poc_t poc = new opj_poc_t();
 		/** number of components in the image */
 		int numcomps;
 		/** Components */
@@ -5648,7 +5648,9 @@ public class FileJPEG2000 extends FileBase {
 						if ((l_current_precinct.dec == null)
 								&& (l_nb_code_blocks > 0)) {
 							l_current_precinct.dec = new opj_tcd_cblk_dec_t[l_nb_code_blocks_size];
-
+                            for (i = 0; i < l_nb_code_blocks; i++) {
+                            	l_current_precinct.dec[i] = new opj_tcd_cblk_dec_t();
+                            }
 							/*
 							 * fprintf(stderr,
 							 * "\t\t\t\tAllocate cblks of a precinct (opj_tcd_cblk_dec_t): %d\n"
@@ -8782,7 +8784,9 @@ public class FileJPEG2000 extends FileBase {
 				l_img_comp = p_image.comps[compno + 1];
 			}
 		}
-		l_current_pi = l_pi[1];
+		if (l_pi.length > 1) {
+		    l_current_pi = l_pi[1];
+		}
 		last_pi = l_pi[0];
 
 		for (pino = 1; pino < l_bound; ++pino) {
