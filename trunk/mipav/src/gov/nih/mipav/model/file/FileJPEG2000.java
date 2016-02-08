@@ -6055,7 +6055,7 @@ public class FileJPEG2000 extends FileBase {
 		int j = 0;
 		opj_tcd_resolution_t r = tilec.resolutions[j];
 		while (--i != 0) {
-			r = tilec.resolutions[j++];
+			r = tilec.resolutions[++j];
 			if (mr < (w = (r.x1 - r.x0)))
 				mr = w;
 			if (mr < (w = (r.y1 - r.y0)))
@@ -6074,13 +6074,11 @@ public class FileJPEG2000 extends FileBase {
 		while (--numres != 0) {
 			int tiledp[] = tilec.data;
 
-			tr = tilec.resolutions[p++];
+			tr = tilec.resolutions[++p];
 			h.sn = rw;
 			v.sn = rh;
-
 			rw = (tr.x1 - tr.x0);
 			rh = (tr.y1 - tr.y0);
-
 			h.dn = (rw - h.sn);
 			h.cas = tr.x0 % 2;
 
@@ -6197,6 +6195,7 @@ public class FileJPEG2000 extends FileBase {
 		// OPJ_INT32 *bi = h->mem + h->cas;
 		int bi = h.cas;
 		int i = h.sn;
+		
 		while (i-- != 0) {
 			h.mem[bi] = a[ai++];
 			bi += 2;
@@ -6206,7 +6205,7 @@ public class FileJPEG2000 extends FileBase {
 		bi = 1 - h.cas;
 		i = h.dn;
 		while (i-- != 0) {
-			h.mem[1 - h.cas] = a[ai++];
+			h.mem[bi] = a[ai++];
 			bi += 2;
 		}
 	}
@@ -7208,7 +7207,7 @@ public class FileJPEG2000 extends FileBase {
 			opj_t2_destroy(l_t2);
 			return false;
 		}
-
+		
 		opj_t2_destroy(l_t2);
 
 		/*---------------CLEAN-------------------*/
@@ -7250,9 +7249,7 @@ public class FileJPEG2000 extends FileBase {
 		}
 
 		l_current_pi = l_pi[0];
-
 		for (pino = 0; pino <= l_tcp.numpocs; ++pino) {
-
 			/*
 			 * if the resolution needed is too low, one dim of the tilec could
 			 * be equal to zero and no packets are used to decode this
@@ -9244,94 +9241,7 @@ public class FileJPEG2000 extends FileBase {
 	}
 
 	void opj_t2_destroy(opj_t2_t t2) {
-		int i, j;
-		if (t2 != null) {
-			if (t2.image != null) {
-				if (t2.image.comps != null) {
-					for (i = 0; i < t2.image.comps.length; i++) {
-						t2.image.comps[i].data = null;
-						t2.image.comps[i] = null;
-					}
-					t2.image.comps = null;
-				}
-				if (t2.image.icc_profile_buf != null) {
-					t2.image.icc_profile_buf = null;
-				}
-				t2.image = null;
-			}
-			if (t2.cp != null) {
-				t2.cp.comment = null;
-				if (t2.cp.ppm_markers != null) {
-					for (i = 0; i < t2.cp.ppm_markers.length; i++) {
-						t2.cp.ppm_markers[i].m_data = null;
-						t2.cp.ppm_markers[i] = null;
-					}
-					t2.cp.ppm_markers = null;
-				}
-				t2.cp.ppm_data_current = null;
-				t2.cp.ppm_buffer = null;
-				if (t2.cp.tcps != null) {
-					for (i = 0; i < t2.cp.tcps.length; i++) {
-						t2.cp.tcps[i].rates = null;
-						if (t2.cp.tcps[i].pocs != null) {
-							for (j = 0; j < t2.cp.tcps[i].pocs.length; j++) {
-								t2.cp.tcps[i].pocs[j] = null;
-							}
-							t2.cp.tcps[i].pocs = null;
-						}
-						t2.cp.tcps[i] = null;
-					}
-					if (t2.cp.tcps[i].ppt_markers != null) {
-						for (j = 0; j < t2.cp.tcps[i].ppt_markers.length; j++) {
-							t2.cp.tcps[i].ppt_markers[j].m_data = null;
-							t2.cp.tcps[i].ppt_markers[j] = null;
-						}
-						t2.cp.tcps[i].ppt_markers = null;
-					}
-					t2.cp.tcps[i].ppt_data = null;
-					t2.cp.tcps[i].ppt_buffer = null;
-					t2.cp.tcps[i].distoratio = null;
-					if (t2.cp.tcps[i].tccps != null) {
-						for (j = 0; j < t2.cp.tcps[i].tccps.length; j++) {
-							t2.cp.tcps[i].tccps[j].stepsizes = null;
-							t2.cp.tcps[i].tccps[j].prcw = null;
-							t2.cp.tcps[i].tccps[j].prch = null;
-							t2.cp.tcps[i].tccps[j] = null;
-						}
-						t2.cp.tcps[i].tccps = null;
-					}
-					t2.cp.tcps[i].m_data = null;
-					t2.cp.tcps[i].mct_norms = null;
-					t2.cp.tcps[i].m_mct_decoding_matrix = null;
-					t2.cp.tcps[i].m_mct_coding_matrix = null;
-					if (t2.cp.tcps[i].m_mct_records != null) {
-						for (j = 0; j < t2.cp.tcps[i].m_mct_records.length; j++) {
-							t2.cp.tcps[i].m_mct_records[j].m_data = null;
-							t2.cp.tcps[i].m_mct_records[j] = null;
-						}
-						t2.cp.tcps[i].m_mct_records = null;
-					}
-					if (t2.cp.tcps[i].m_mcc_records != null) {
-						for (j = 0; j < t2.cp.tcps[i].m_mcc_records.length; j++) {
-							t2.cp.tcps[i].m_mcc_records[j].m_decorrelation_array.m_data = null;
-							t2.cp.tcps[i].m_mcc_records[j].m_decorrelation_array = null;
-							t2.cp.tcps[i].m_mcc_records[j] = null;
-						}
-						t2.cp.tcps[i].m_mcc_records = null;
-					}
-					t2.cp.tcps = null;
-				}
-				t2.cp.m_dec = null;
-				t2.cp.m_enc = null;
-				t2.cp.hprot_TPH_tileno = null;
-				t2.cp.hprot_TPH = null;
-				t2.cp.pprot_tileno = null;
-				t2.cp.pprot_packno = null;
-				t2.cp.pprot = null;
-				t2.cp.sens_TPH_tileno = null;
-				t2.cp.sens_TPH = null;
-				t2.cp = null;
-			}
+		if (t2 != null) {	
 			t2 = null;
 		}
 	}
