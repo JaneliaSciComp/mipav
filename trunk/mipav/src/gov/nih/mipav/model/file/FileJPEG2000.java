@@ -511,9 +511,9 @@ public class FileJPEG2000 extends FileBase {
 	public void selfTest() {
 		inputImageDirectory = null;
 		outputFormatExtension = null;
-		//compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
+	    //compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
 		compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
-		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.pnm";
+		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lena.bmp";
 		opj_decompress_main();
 	}
 
@@ -1440,7 +1440,8 @@ public class FileJPEG2000 extends FileBase {
 		 */
 		int m_last_tile_part;
 		/** to tell that a tile can be decoded. */
-		boolean m_can_decode = true;
+		//boolean m_can_decode = true;
+		boolean m_can_decode = false;
 		boolean m_discard_tiles = true;
 		boolean m_skip_data = true;
 		/** TNsot correction : see issue 254 **/
@@ -2857,7 +2858,7 @@ public class FileJPEG2000 extends FileBase {
         		/* Copy codestream image information to the output image */
         		opj_copy_image_header(l_j2k.m_private_image, image);
         		
-        		/*Allocate and initialize some elements of codestrem index*/
+        		/*Allocate and initialize some elements of codestream index*/
         		if (!opj_j2k_allocate_tile_element_cstr_index(l_j2k)){
         		return false;
         		}
@@ -3727,6 +3728,7 @@ public class FileJPEG2000 extends FileBase {
 					+ (p_j2k.m_cp.th * p_j2k.m_cp.tw) + " has been decoded.\n",
 					Preferences.DEBUG_FILEIO);
 
+			l_current_data_ptr[0] = 0;
 			if (!opj_j2k_update_image_data(p_j2k.m_tcd, l_current_data,
 					l_current_data_ptr, p_j2k.m_output_image)) {
 				l_current_data = null;
@@ -3928,7 +3930,7 @@ public class FileJPEG2000 extends FileBase {
 				}
 				/* Read the marker segment with the correct marker handler */
 				if (!readMarkerHandler(l_marker_handler.handler, p_j2k,
-						p_j2k.m_decoder.m_header_data, l_marker_size)) {
+						p_j2k.m_decoder.m_header_data, l_marker_size[0])) {
 					MipavUtil
 							.displayError("Failed to read the current marker segment = "
 									+ l_current_marker);
@@ -11111,7 +11113,7 @@ public class FileJPEG2000 extends FileBase {
 
 			/* Read the marker segment with the correct marker handler */
 			if (!readMarkerHandler(l_marker_handler.handler, l_j2k,
-					l_j2k.m_decoder.m_header_data, l_marker_size)) {
+					l_j2k.m_decoder.m_header_data, l_marker_size[0])) {
 				MipavUtil
 						.displayError("Marker handler function failed to read the marker segment");
 				return false;
@@ -11360,11 +11362,11 @@ public class FileJPEG2000 extends FileBase {
 	}
 
 	private boolean readMarkerHandler(int handler, opj_j2k_t p_j2k,
-			byte p_header_data[], int p_header_size[]) {
+			byte p_header_data[], int p_header_size) {
 		boolean success;
 		switch (handler) {
 		case OPJ_J2K_READ_SOT:
-			success = opj_j2k_read_sot(p_j2k, p_header_data, p_header_size[0]);
+			success = opj_j2k_read_sot(p_j2k, p_header_data, p_header_size);
 			break;
 		case OPJ_J2K_READ_COD:
 			success = opj_j2k_read_cod(p_j2k, p_header_data, p_header_size);
@@ -11438,7 +11440,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the MCO marker.
 	 */
 	private boolean opj_j2k_read_mco(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int l_tmp, i;
 		int l_nb_stages;
 		opj_tcp_t l_tcp;
@@ -11461,9 +11463,9 @@ public class FileJPEG2000 extends FileBase {
 		l_tcp = p_j2k.m_decoder.m_state == J2K_STATE_TPH ? p_j2k.m_cp.tcps[p_j2k.m_current_tile_number[0]]
 				: p_j2k.m_decoder.m_default_tcp;
 
-		if (p_header_size[0] < 1) {
+		if (p_header_size < 1) {
 			MipavUtil
-					.displayError("Error reading MCO marker p_header_size[0] < 1");
+					.displayError("Error reading MCO marker p_header_size < 1");
 			return false;
 		}
 
@@ -11484,7 +11486,7 @@ public class FileJPEG2000 extends FileBase {
 			return true;
 		}
 
-		if (p_header_size[0] != l_nb_stages + 1) {
+		if (p_header_size != l_nb_stages + 1) {
 			MipavUtil.displayError("Error reading MCO marker");
 			return false;
 		}
@@ -11704,7 +11706,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the MCC marker.
 	 */
 	private boolean opj_j2k_read_mcc(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int i, j;
 		int l_tmp;
 		int l_indix;
@@ -11730,9 +11732,9 @@ public class FileJPEG2000 extends FileBase {
 		l_tcp = p_j2k.m_decoder.m_state == J2K_STATE_TPH ? p_j2k.m_cp.tcps[p_j2k.m_current_tile_number[0]]
 				: p_j2k.m_decoder.m_default_tcp;
 
-		if (p_header_size[0] < 2) {
+		if (p_header_size < 2) {
 			MipavUtil
-					.displayError("Error reading MCC marker p_header_size[0] < 2");
+					.displayError("Error reading MCC marker p_header_size < 2");
 			return false;
 		}
 
@@ -11745,9 +11747,9 @@ public class FileJPEG2000 extends FileBase {
 			return true;
 		}
 
-		if (p_header_size[0] < 7) {
+		if (p_header_size < 7) {
 			MipavUtil
-					.displayError("Error reading MCC marker p_header_size[0] < 7");
+					.displayError("Error reading MCC marker p_header_size < 7");
 			return false;
 		}
 
@@ -11812,12 +11814,12 @@ public class FileJPEG2000 extends FileBase {
 			return true;
 		}
 
-		p_header_size[0] -= 7;
+		p_header_size -= 7;
 
 		for (i = 0; i < l_nb_collections; ++i) {
-			if (p_header_size[0] < 3) {
+			if (p_header_size < 3) {
 				MipavUtil
-						.displayError("Error reading MCC marker p_header_size[0] < 3");
+						.displayError("Error reading MCC marker p_header_size < 3");
 				return false;
 			}
 
@@ -11843,18 +11845,18 @@ public class FileJPEG2000 extends FileBase {
 					endianess);
 
 			p_header_offset += 2;
-			p_header_size[0] -= 3;
+			p_header_size -= 3;
 
 			l_nb_bytes_by_comp = 1 + (l_nb_comps >>> 15);
 			l_mcc_record.m_nb_comps = l_nb_comps & 0x7fff;
 
-			if (p_header_size[0] < (l_nb_bytes_by_comp
+			if (p_header_size < (l_nb_bytes_by_comp
 					* l_mcc_record.m_nb_comps + 2)) {
 				MipavUtil.displayError("Error reading MCC marker");
 				return false;
 			}
 
-			p_header_size[0] -= (l_nb_bytes_by_comp * l_mcc_record.m_nb_comps + 2);
+			p_header_size -= (l_nb_bytes_by_comp * l_mcc_record.m_nb_comps + 2);
 
 			for (j = 0; j < l_mcc_record.m_nb_comps; ++j) {
 				if (l_nb_bytes_by_comp == 1) {
@@ -11897,13 +11899,13 @@ public class FileJPEG2000 extends FileBase {
 				return true;
 			}
 
-			if (p_header_size[0] < (l_nb_bytes_by_comp
+			if (p_header_size < (l_nb_bytes_by_comp
 					* l_mcc_record.m_nb_comps + 3)) {
 				MipavUtil.displayError("Error reading MCC marker");
 				return false;
 			}
 
-			p_header_size[0] -= (l_nb_bytes_by_comp * l_mcc_record.m_nb_comps + 3);
+			p_header_size -= (l_nb_bytes_by_comp * l_mcc_record.m_nb_comps + 3);
 
 			for (j = 0; j < l_mcc_record.m_nb_comps; ++j) {
 				if (l_nb_bytes_by_comp == 1) {
@@ -11982,7 +11984,7 @@ public class FileJPEG2000 extends FileBase {
 			}
 		}
 
-		if (p_header_size[0] != 0) {
+		if (p_header_size != 0) {
 			MipavUtil.displayError("Error reading MCC marker");
 			return false;
 		}
@@ -12028,7 +12030,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the CBD marker.
 	 */
 	private boolean opj_j2k_read_cbd(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int l_nb_comp, l_num_comp;
 		int l_comp_def;
 		int i;
@@ -12048,7 +12050,7 @@ public class FileJPEG2000 extends FileBase {
 
 		l_num_comp = p_j2k.m_private_image.numcomps;
 
-		if (p_header_size[0] != p_j2k.m_private_image.numcomps + 2) {
+		if (p_header_size != p_j2k.m_private_image.numcomps + 2) {
 			MipavUtil.displayError("Error reading CBD marker");
 			return false;
 		}
@@ -12090,7 +12092,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the MCT marker.
 	 */
 	private boolean opj_j2k_read_mct(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int i, j;
 		opj_tcp_t l_tcp = null;
 		int l_tmp;
@@ -12112,9 +12114,9 @@ public class FileJPEG2000 extends FileBase {
 		l_tcp = p_j2k.m_decoder.m_state == J2K_STATE_TPH ? p_j2k.m_cp.tcps[p_j2k.m_current_tile_number[0]]
 				: p_j2k.m_decoder.m_default_tcp;
 
-		if (p_header_size[0] < 2) {
+		if (p_header_size < 2) {
 			MipavUtil
-					.displayError("Error reading MCT marker p_header_size[0] < 2");
+					.displayError("Error reading MCT marker p_header_size < 2");
 			return false;
 		}
 
@@ -12128,9 +12130,9 @@ public class FileJPEG2000 extends FileBase {
 			return true;
 		}
 
-		if (p_header_size[0] <= 6) {
+		if (p_header_size <= 6) {
 			MipavUtil
-					.displayError("Error reading MCT marker p_header_size[0] <= 6");
+					.displayError("Error reading MCT marker p_header_size <= 6");
 			return false;
 		}
 
@@ -12190,14 +12192,14 @@ public class FileJPEG2000 extends FileBase {
 			return true;
 		}
 
-		p_header_size[0] -= 6;
+		p_header_size -= 6;
 
-		l_mct_data.m_data = new byte[p_header_size[0]];
-		for (i = 0; i < p_header_size[0]; i++) {
+		l_mct_data.m_data = new byte[p_header_size];
+		for (i = 0; i < p_header_size; i++) {
 			l_mct_data.m_data[i] = p_header_data[i];
 		}
 
-		l_mct_data.m_data_size = p_header_size[0];
+		l_mct_data.m_data_size = p_header_size;
 
 		return true;
 	}
@@ -12213,7 +12215,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the COM marker.
 	 */
 	private boolean opj_j2k_read_com(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		/* preconditions */
 		if (p_header_data == null) {
 			MipavUtil.displayError("p_header_data == null");
@@ -12239,7 +12241,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the CRG marker.
 	 */
 	private boolean opj_j2k_read_crg(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int l_nb_comp;
 		/* preconditions */
 		if (p_header_data == null) {
@@ -12254,7 +12256,7 @@ public class FileJPEG2000 extends FileBase {
 
 		l_nb_comp = p_j2k.m_private_image.numcomps;
 
-		if (p_header_size[0] != l_nb_comp * 4) {
+		if (p_header_size != l_nb_comp * 4) {
 			MipavUtil.displayError("Error reading CRG marker");
 			return false;
 		}
@@ -12282,7 +12284,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the PPT marker.
 	 */
 	private boolean opj_j2k_read_ppt(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		opj_cp_t l_cp = null;
 		opj_tcp_t l_tcp = null;
 		int l_Z_ppt;
@@ -12301,9 +12303,9 @@ public class FileJPEG2000 extends FileBase {
 		}
 
 		/* We need to have the Z_ppt element + 1 byte of Ippt at minimum */
-		if (p_header_size[0] < 2) {
+		if (p_header_size < 2) {
 			MipavUtil
-					.displayError("Error reading PPT marker p_header_size[0] < 2");
+					.displayError("Error reading PPT marker p_header_size < 2");
 			return false;
 		}
 
@@ -12319,7 +12321,7 @@ public class FileJPEG2000 extends FileBase {
 
 		l_Z_ppt = getUnsignedByte(p_header_data, p_header_offset); /* Z_ppt */
 		++p_header_offset;
-		--p_header_size[0];
+		--p_header_size;
 
 		/* check allocation needed */
 		if (l_tcp.ppt_markers == null) { /* first PPT marker */
@@ -12355,9 +12357,9 @@ public class FileJPEG2000 extends FileBase {
 			return false;
 		}
 
-		l_tcp.ppt_markers[l_Z_ppt].m_data = new byte[p_header_size[0]];
-		l_tcp.ppt_markers[l_Z_ppt].m_data_size = p_header_size[0];
-		for (i = 0; i < p_header_size[0]; i++) {
+		l_tcp.ppt_markers[l_Z_ppt].m_data = new byte[p_header_size];
+		l_tcp.ppt_markers[l_Z_ppt].m_data_size = p_header_size;
+		for (i = 0; i < p_header_size; i++) {
 			l_tcp.ppt_markers[l_Z_ppt].m_data[i] = p_header_data[i];
 		}
 		return true;
@@ -12375,7 +12377,7 @@ public class FileJPEG2000 extends FileBase {
 	 */
 
 	private boolean opj_j2k_read_ppm(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		opj_cp_t l_cp = null;
 		int l_Z_ppm;
 		int p_header_offset = 0;
@@ -12393,9 +12395,9 @@ public class FileJPEG2000 extends FileBase {
 		}
 
 		/* We need to have the Z_ppm element + 1 byte of Nppm/Ippm at minimum */
-		if (p_header_size[0] < 2) {
+		if (p_header_size < 2) {
 			MipavUtil
-					.displayError("Error reading PPM marker p_header_size[0] < 2");
+					.displayError("Error reading PPM marker p_header_size < 2");
 			return false;
 		}
 
@@ -12404,7 +12406,7 @@ public class FileJPEG2000 extends FileBase {
 
 		l_Z_ppm = getUnsignedByte(p_header_data, p_header_offset); /* Z_ppm */
 		++p_header_offset;
-		--p_header_size[0];
+		--p_header_size;
 
 		/* check allocation needed */
 		if (l_cp.ppm_markers == null) { /* first PPM marker */
@@ -12439,9 +12441,9 @@ public class FileJPEG2000 extends FileBase {
 			return false;
 		}
 
-		l_cp.ppm_markers[l_Z_ppm].m_data = new byte[p_header_size[0]];
-		l_cp.ppm_markers[l_Z_ppm].m_data_size = p_header_size[0];
-		for (i = 0; i < p_header_size[0]; i++) {
+		l_cp.ppm_markers[l_Z_ppm].m_data = new byte[p_header_size];
+		l_cp.ppm_markers[l_Z_ppm].m_data_size = p_header_size;
+		for (i = 0; i < p_header_size; i++) {
 			l_cp.ppm_markers[l_Z_ppm].m_data[i] = p_header_data[i];
 		}
 
@@ -12459,7 +12461,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the PLT marker.
 	 */
 	private boolean opj_j2k_read_plt(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int l_tmp, l_packet_len = 0, i;
 		int p_header_offset = 0;
 
@@ -12474,17 +12476,17 @@ public class FileJPEG2000 extends FileBase {
 			return false;
 		}
 
-		if (p_header_size[0] < 1) {
+		if (p_header_size < 1) {
 			MipavUtil
-					.displayError("Error reading PLT marker p_header_size[0] < 1");
+					.displayError("Error reading PLT marker p_header_size < 1");
 			return false;
 		}
 
 		getUnsignedByte(p_header_data, p_header_offset); /* Zplt */
 		p_header_offset++;
-		--p_header_size[0];
+		--p_header_size;
 
-		for (i = 0; i < p_header_size[0]; ++i) {
+		for (i = 0; i < p_header_size; ++i) {
 			l_tmp = getUnsignedByte(p_header_data, p_header_offset); /* Iplt_ij */
 			p_header_offset++;
 			/* take only the last seven bytes */
@@ -12517,7 +12519,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the PLM marker.
 	 */
 	private boolean opj_j2k_read_plm(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		/* preconditions */
 		if (p_header_data == null) {
 			MipavUtil.displayError("p_header_data == null");
@@ -12529,9 +12531,9 @@ public class FileJPEG2000 extends FileBase {
 			return false;
 		}
 
-		if (p_header_size[0] < 1) {
+		if (p_header_size < 1) {
 			MipavUtil
-					.displayError("Error reading PLM marker p_header_size[0] < 1");
+					.displayError("Error reading PLM marker p_header_size < 1");
 			return false;
 		}
 		/*
@@ -12567,7 +12569,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the TLM marker.
 	 */
 	private boolean opj_j2k_read_tlm(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int l_Stlm, l_ST, l_SP, l_tot_num_tp_remaining, l_quotient, l_Ptlm_size;
 		int p_header_offset = 0;
 		/* preconditions */
@@ -12581,12 +12583,12 @@ public class FileJPEG2000 extends FileBase {
 			return false;
 		}
 
-		if (p_header_size[0] < 2) {
+		if (p_header_size < 2) {
 			MipavUtil
-					.displayError("Error reading TLM marker p_header_size[0] < 2");
+					.displayError("Error reading TLM marker p_header_size < 2");
 			return false;
 		}
-		p_header_size[0] -= 2;
+		p_header_size -= 2;
 		getUnsignedByte(p_header_data, p_header_offset); /* Ztlm */
 		p_header_offset++;
 		l_Stlm = getUnsignedByte(p_header_data, p_header_offset); /* Stlm */
@@ -12598,7 +12600,7 @@ public class FileJPEG2000 extends FileBase {
 		l_Ptlm_size = (l_SP + 1) * 2;
 		l_quotient = l_Ptlm_size + l_ST;
 
-		l_tot_num_tp_remaining = p_header_size[0] % l_quotient;
+		l_tot_num_tp_remaining = p_header_size % l_quotient;
 
 		if (l_tot_num_tp_remaining != 0) {
 			MipavUtil.displayError("Error reading TLM marker");
@@ -12628,7 +12630,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the SIZ marker.
 	 */
 	private boolean opj_j2k_read_siz(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int i, j, k;
 		int l_nb_comp;
 		int l_nb_comp_remain;
@@ -12656,13 +12658,13 @@ public class FileJPEG2000 extends FileBase {
 		l_cp = p_j2k.m_cp;
 
 		/* minimum size == 39 - 3 (= minimum component parameter) */
-		if (p_header_size[0] < 36) {
+		if (p_header_size < 36) {
 			MipavUtil
-					.displayError("Error with SIZ marker size p_header_size[0] < 36");
+					.displayError("Error with SIZ marker size p_header_size < 36");
 			return false;
 		}
 
-		l_remaining_size = p_header_size[0] - 36;
+		l_remaining_size = p_header_size - 36;
 		l_nb_comp = l_remaining_size / 3;
 		l_nb_comp_remain = l_remaining_size % 3;
 		if (l_nb_comp_remain != 0) {
@@ -13116,7 +13118,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the POC marker.
 	 */
 	private boolean opj_j2k_read_poc(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int i, l_nb_comp, l_tmp;
 		opj_image_t l_image = null;
 		int l_old_poc_nb, l_current_poc_nb, l_current_poc_remaining;
@@ -13146,8 +13148,8 @@ public class FileJPEG2000 extends FileBase {
 			l_comp_room = 2;
 		}
 		l_chunk_size = 5 + 2 * l_comp_room;
-		l_current_poc_nb = p_header_size[0] / l_chunk_size;
-		l_current_poc_remaining = p_header_size[0] % l_chunk_size;
+		l_current_poc_nb = p_header_size / l_chunk_size;
+		l_current_poc_remaining = p_header_size % l_chunk_size;
 
 		if ((l_current_poc_nb <= 0) || (l_current_poc_remaining != 0)) {
 			MipavUtil.displayError("Error reading POC marker");
@@ -13225,7 +13227,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the QCC marker.
 	 */
 	private boolean opj_j2k_read_qcc(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int l_num_comp, l_comp_no;
 
 		/* preconditions */
@@ -13243,23 +13245,23 @@ public class FileJPEG2000 extends FileBase {
 		l_num_comp = p_j2k.m_private_image.numcomps;
 
 		if (l_num_comp <= 256) {
-			if (p_header_size[0] < 1) {
+			if (p_header_size < 1) {
 				MipavUtil
-						.displayError("Error reading QCC marker p_header_size[0] < 1");
+						.displayError("Error reading QCC marker p_header_size < 1");
 				return false;
 			}
 			l_comp_no = getUnsignedByte(p_header_data, 0);
 			p_header_offset = 1;
-			p_header_size[0] = p_header_size[0] - 1;
+			p_header_size = p_header_size - 1;
 		} else {
-			if (p_header_size[0] < 2) {
+			if (p_header_size < 2) {
 				MipavUtil
 						.displayError("Error reading QCC marker p_header_size[0] < 2");
 				return false;
 			}
 			l_comp_no = getBufferUShort(p_header_data, 0, endianess);
 			p_header_offset = 2;
-			p_header_size[0] -= 2;
+			p_header_size -= 2;
 		}
 
 		if (useJPWL) {
@@ -13303,15 +13305,15 @@ public class FileJPEG2000 extends FileBase {
 			return false;
 		}
 
+		int header_size[] = new int[]{p_header_size};
 		if (!opj_j2k_read_SQcd_SQcc(p_j2k, l_comp_no, p_header_data,
-				p_header_offset, p_header_size)) {
+				p_header_offset, header_size)) {
 			MipavUtil.displayError("Error reading QCC marker");
 			return false;
 		}
 
-		if (p_header_size[0] != 0) {
-			MipavUtil
-					.displayError("Error reading QCC marker p_header_size[0] != 0");
+		if (header_size[0] != 0) {
+			MipavUtil.displayError("Error reading QCC marker header_size[0] != 0");
 			return false;
 		}
 
@@ -13329,7 +13331,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the QCD marker.
 	 */
 	private boolean opj_j2k_read_qcd(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		/* preconditions */
 
 		if (p_header_data == null) {
@@ -13343,13 +13345,14 @@ public class FileJPEG2000 extends FileBase {
 		}
 		int p_header_offset = 0;
 
+		int header_size[] = new int[]{p_header_size};
 		if (!opj_j2k_read_SQcd_SQcc(p_j2k, 0, p_header_data, p_header_offset,
-				p_header_size)) {
+				header_size)) {
 			MipavUtil.displayError("Error reading QCD marker");
 			return false;
 		}
 
-		if (p_header_size[0] != 0) {
+		if (header_size[0] != 0) {
 			MipavUtil.displayError("Error reading QCD marker");
 			return false;
 		}
@@ -13565,7 +13568,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the POC marker.
 	 */
 	private boolean opj_j2k_read_rgn(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		int l_nb_comp;
 		opj_image_t l_image = null;
 
@@ -13593,9 +13596,9 @@ public class FileJPEG2000 extends FileBase {
 			l_comp_room = 2;
 		}
 
-		if (p_header_size[0] != 2 + l_comp_room) {
+		if (p_header_size != 2 + l_comp_room) {
 			MipavUtil
-					.displayError("Error reading RGN marker p_header_size[0] != 2 + l_comp_room");
+					.displayError("Error reading RGN marker p_header_size != 2 + l_comp_room");
 			return false;
 		}
 
@@ -13649,7 +13652,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the COC marker.
 	 */
 	private boolean opj_j2k_read_coc(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		opj_cp_t l_cp = null;
 		opj_tcp_t l_tcp = null;
 		opj_image_t l_image = null;
@@ -13680,12 +13683,12 @@ public class FileJPEG2000 extends FileBase {
 		l_comp_room = l_image.numcomps <= 256 ? 1 : 2;
 
 		/* make sure room is sufficient */
-		if (p_header_size[0] < l_comp_room + 1) {
+		if (p_header_size < l_comp_room + 1) {
 			MipavUtil
 					.displayError("Error reading COC marker p_header_size[0] < l_comp_room+1");
 			return false;
 		}
-		p_header_size[0] -= l_comp_room + 1;
+		p_header_size -= l_comp_room + 1;
 
 		if (l_comp_room == 1) {
 			l_comp_no = getUnsignedByte(p_header_data, 0); /* Ccoc */
@@ -13702,13 +13705,14 @@ public class FileJPEG2000 extends FileBase {
 				l_comp_room); /* Scoc */
 		p_header_offset = l_comp_room + 1;
 
+		int header_size[] = new int[]{p_header_size};
 		if (!opj_j2k_read_SPCod_SPCoc(p_j2k, l_comp_no, p_header_data,
-				p_header_offset, p_header_size)) {
+				p_header_offset, header_size)) {
 			MipavUtil.displayError("Error reading COC marker");
 			return false;
 		}
 
-		if (p_header_size[0] != 0) {
+		if (header_size[0] != 0) {
 			MipavUtil.displayError("Error reading COC marker");
 			return false;
 		}
@@ -13726,7 +13730,7 @@ public class FileJPEG2000 extends FileBase {
 	 *            the size of the data contained in the COD marker..
 	 */
 	private boolean opj_j2k_read_cod(opj_j2k_t p_j2k, byte p_header_data[],
-			int p_header_size[]) {
+			int p_header_size) {
 		/* loop */
 		int i;
 		int l_tmp;
@@ -13762,8 +13766,8 @@ public class FileJPEG2000 extends FileBase {
 		l_tcp.cod = 1;
 
 		/* Make sure room is sufficient */
-		if (p_header_size[0] < 5) {
-			MipavUtil.displayError("Error p_header_size[0] < 5");
+		if (p_header_size < 5) {
+			MipavUtil.displayError("Error p_header_size < 5");
 			return false;
 		}
 
@@ -13805,19 +13809,20 @@ public class FileJPEG2000 extends FileBase {
 
 		l_tcp.mct = getUnsignedByte(p_header_data, 4); /* SGcod (C) */
 
-		p_header_size[0] -= 5;
+		p_header_size -= 5;
 		p_header_offset = 5;
 		for (i = 0; i < l_image.numcomps; ++i) {
 			l_tcp.tccps[i].csty = l_tcp.csty & J2K_CCP_CSTY_PRT;
 		}
 
+		int header_size[] = new int[]{p_header_size};
 		if (!opj_j2k_read_SPCod_SPCoc(p_j2k, 0, p_header_data, p_header_offset,
-				p_header_size)) {
+				header_size)) {
 			MipavUtil.displayError("Error reading COD marker");
 			return false;
 		}
 
-		if (p_header_size[0] != 0) {
+		if (header_size[0] != 0) {
 			MipavUtil.displayError("Error reading COD marker");
 			return false;
 		}
@@ -14311,11 +14316,17 @@ public class FileJPEG2000 extends FileBase {
 
 				if (p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index == null) {
 					p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index = new opj_tp_index_t[l_num_parts[0]];
+					for (i = 0; i < l_num_parts[0]; i++) {
+						p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index[i] = new opj_tp_index_t();	
+					}
 				} else {
 					opj_tp_index_t new_tp_index[] = new opj_tp_index_t[l_num_parts[0]];
 					int len = p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index.length;
 					for (i = 0; i < len; i++) {
 						new_tp_index[i] = p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index[i];
+					}
+					for (i = len; i < l_num_parts[0]; i++) {
+						new_tp_index[i] = new opj_tp_index_t();
 					}
 					p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index = new_tp_index;
 				}
@@ -14329,7 +14340,9 @@ public class FileJPEG2000 extends FileBase {
 					if (p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index == null) {
 						p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].current_nb_tps = 10;
 						p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index = new opj_tp_index_t[p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].current_nb_tps];
-
+                        for (i = 0; i < p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].current_nb_tps; i++) {
+                        	p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index[i] = new opj_tp_index_t();	
+                        }
 					}
 
 					if (l_current_part[0] >= p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].current_nb_tps) {
@@ -14339,6 +14352,9 @@ public class FileJPEG2000 extends FileBase {
 						int len = p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index.length;
 						for (i = 0; i < len; i++) {
 							new_tp_index[i] = p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index[i];
+						}
+						for (i = len; i < p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].current_nb_tps; i++) {
+							new_tp_index[i] = new opj_tp_index_t();
 						}
 						p_j2k.cstr_index.tile_index[p_j2k.m_current_tile_number[0]].tp_index = new_tp_index;
 					}
