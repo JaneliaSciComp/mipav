@@ -511,8 +511,8 @@ public class FileJPEG2000 extends FileBase {
 	public void selfTest() {
 		inputImageDirectory = null;
 		outputFormatExtension = null;
-		compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
-		//compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
+		//compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
+		compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
 		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.pnm";
 		opj_decompress_main();
 	}
@@ -13382,7 +13382,9 @@ public class FileJPEG2000 extends FileBase {
 				: p_j2k.m_decoder.m_default_tcp;
 
 		l_ref_tccp = l_tcp.tccps[0];
-		l_copied_tccp = l_tcp.tccps[1];
+		if (l_tcp.tccps.length > 1) {
+		    l_copied_tccp = l_tcp.tccps[1];
+		}
 
 		for (i = 1; i < p_j2k.m_private_image.numcomps; ++i) {
 			l_copied_tccp.qntsty = l_ref_tccp.qntsty;
@@ -13866,7 +13868,9 @@ public class FileJPEG2000 extends FileBase {
 				: p_j2k.m_decoder.m_default_tcp;
 
 		l_ref_tccp = l_tcp.tccps[0];
-		l_copied_tccp = l_tcp.tccps[1];
+		if (l_tcp.tccps.length > 1) {
+		    l_copied_tccp = l_tcp.tccps[1];
+		}
 		l_prc_size = l_ref_tccp.numresolutions;
 
 		for (i = 1; i < p_j2k.m_private_image.numcomps; ++i) {
