@@ -513,7 +513,7 @@ public class FileJPEG2000 extends FileBase {
 		outputFormatExtension = null;
 	    //compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
 		compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
-		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lena.bmp";
+		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lena.pgm";
 		opj_decompress_main();
 	}
 
@@ -2539,7 +2539,7 @@ public class FileJPEG2000 extends FileBase {
 				img_fol.out_format = "rawl";
 				break;
 			case TGA_DFMT:
-				img_fol.out_format = "raw";
+				img_fol.out_format = "tga";
 				break;
 			case PNG_DFMT:
 				img_fol.out_format = "png";
@@ -3105,7 +3105,7 @@ public class FileJPEG2000 extends FileBase {
     			
 
     		case TGA_DFMT:			// TGA
-    			if(imagetotga(image, parameters.outfile)){
+    			if(!imagetotga(image, parameters.outfile)){
     				MipavUtil.displayError("Error generating tga file. Outfile " + parameters.outfile + " not generated");
             failed = 1;
     			}
@@ -16167,7 +16167,6 @@ public class FileJPEG2000 extends FileBase {
 
 			try {
 				raFile.writeBytes("BM");
-				raFile.writeByte('\0');
 
 				/* FILE HEADER */
 				/* ------------- */
@@ -16352,7 +16351,6 @@ public class FileJPEG2000 extends FileBase {
 
 			try {
 				raFile.writeBytes("BM");
-				raFile.writeByte('\0');
 
 				/* FILE HEADER */
 				/* ------------- */
@@ -16747,16 +16745,24 @@ public class FileJPEG2000 extends FileBase {
                 cstring = JavaStrToCStr(inString);
                 // cstring.length-1 to remove terminating null
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(wr);
+                inString = String.valueOf(wr);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
                 cstring = JavaStrToCStr("\nHEIGHT ");
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(hr);
+                inString = String.valueOf(hr);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
                 cstring = JavaStrToCStr("\nDEPTH ");
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(ncomp);
+                inString = String.valueOf(ncomp);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
                 cstring = JavaStrToCStr("\nMAXVAL ");
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(max);
+                inString = String.valueOf(max);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
                 inString = "\nTUPLTYPE " + tt + "\nENDHDR\n";
                 cstring = JavaStrToCStr(inString);
                 raFile.write(cstring, 0, cstring.length-1);
@@ -16771,13 +16777,20 @@ public class FileJPEG2000 extends FileBase {
             	cstring = JavaStrToCStr(inString);
             	 // cstring.length-1 to remove terminating null
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(wr);
+                inString = String.valueOf(wr);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
                 cstring = JavaStrToCStr(" ");
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(hr);
+                inString = String.valueOf(hr);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
                 cstring = JavaStrToCStr("\n");
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(max);
+                inString = String.valueOf(max);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
+                cstring = JavaStrToCStr("\n");
                 raFile.write(cstring, 0, cstring.length-1);
                 adjustA = 0;
             }
@@ -16937,13 +16950,20 @@ public class FileJPEG2000 extends FileBase {
             	cstring = JavaStrToCStr(inString);
             	 // cstring.length-1 to remove terminating null
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(wr);
+                inString = String.valueOf(wr);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
                 cstring = JavaStrToCStr(" ");
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(hr);
+                inString = String.valueOf(hr);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
                 cstring = JavaStrToCStr("\n");
                 raFile.write(cstring, 0, cstring.length-1);
-                raFile.writeInt(max);
+                inString = String.valueOf(max);
+                cstring = JavaStrToCStr(inString);
+                raFile.write(cstring, 0, cstring.length-1);
+                cstring = JavaStrToCStr("\n");
                 raFile.write(cstring, 0, cstring.length-1);
             
 
@@ -17256,7 +17276,9 @@ return true;
         int width, height, bpp, x, y;
         boolean write_alpha;
         int i;
-        int adjustR, adjustG, adjustB;
+        int adjustR;
+        int adjustG = 0;
+        int adjustB = 0;
         int alpha_channel;
         float r,g,b,a;
         byte value[] = new byte[1];
@@ -17323,7 +17345,9 @@ return true;
         /* Write TGA header  */
         bpp = write_alpha ? 32 : 24;
 
-        if (!tga_writeheader(raFile, bpp, width , height, true, true)){
+        boolean flip_image = true;
+        boolean bigEndian = false;
+        if (!tga_writeheader(raFile, bpp, width , height, flip_image, bigEndian)){
         	try {
             	raFile.close();
             }
@@ -17338,8 +17362,10 @@ return true;
         scale = 255.0f / (float)((1<<image.comps[0].prec)-1);
 
         adjustR = ((image.comps[0].sgnd != 0) ? 1 << (image.comps[0].prec - 1) : 0);
-        adjustG = ((image.comps[1].sgnd != 0) ? 1 << (image.comps[1].prec - 1) : 0);
-        adjustB = ((image.comps[2].sgnd != 0) ? 1 << (image.comps[2].prec - 1) : 0);
+        if (image.numcomps > 2) {
+	        adjustG = ((image.comps[1].sgnd != 0) ? 1 << (image.comps[1].prec - 1) : 0);
+	        adjustB = ((image.comps[2].sgnd != 0) ? 1 << (image.comps[2].prec - 1) : 0);
+        }
         
        try {
     	for (y=0; y < height; y++) 
@@ -17387,7 +17413,7 @@ return true;
        }
        } // try 
        catch (IOException e) {
-    	   MipavUtil.displayError("IOExcpetion on raFile.write(value)");
+    	   MipavUtil.displayError("IOException on raFile.write(value)");
     	   return false;
        }
   
