@@ -7889,7 +7889,7 @@ public class FileJPEG2000 extends FileBase {
 		int i;
 		int v;
 		v = 0;
-		for (i = n - 1; i < n; i--) {
+		for (i = n - 1; i >= 0; i--) {
 			v += opj_bio_getbit(bio) << i;
 		}
 		return v;
