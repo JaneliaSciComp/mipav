@@ -6,7 +6,6 @@ import gov.nih.mipav.plugins.PlugInFile;
 import gov.nih.mipav.plugins.PlugInFileTransfer;
 import gov.nih.mipav.plugins.PlugInGeneric;
 import gov.nih.mipav.util.ThreadUtil;
-
 import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
 import gov.nih.mipav.model.file.*;
@@ -19,7 +18,6 @@ import gov.nih.mipav.model.scripting.actions.ActionCollectGarbage;
 import gov.nih.mipav.model.scripting.actions.ActionCreateBlankImage;
 import gov.nih.mipav.model.scripting.actions.ActionSaveBase;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.Argument.InstanceArgument;
 import gov.nih.mipav.view.Argument.StaticArgument;
 import gov.nih.mipav.view.dialogs.*;
@@ -29,7 +27,6 @@ import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIColorDisplay;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
-
 import ij.process.ImageProcessor;
 
 import java.awt.*;
@@ -48,6 +45,8 @@ import java.util.regex.Matcher;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import org.apache.commons.io.FileUtils;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -242,6 +241,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Exception logging file */
     private static File exceptions;
+    
+    private static Vector<String> tempDirList = new Vector<String>();
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -284,6 +285,25 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         // listen to the script recorder so that we can pass along changes in the script recorder status to the script
         // toolbars of individual images
         ScriptRecorder.getReference().addScriptRecordingListener(this);
+        
+        
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+
+            @Override
+            public void run() {
+              for(int i=0;i<tempDirList.size();i++) {
+            	  String dir = tempDirList.get(i); 
+            	  final File f = new File(dir);
+                  if (f.exists()) {
+                      try {
+                          FileUtils.deleteDirectory(f);
+                      } catch (final IOException e) {
+                          e.printStackTrace();
+                      }
+                  }
+              }
+            }
+       });
     }
 
     // ~ Methods
@@ -4892,6 +4912,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 parseStaticArguments(argSub, 0);
             }
         }
+    }
+    
+    
+    public static void addToTempDirList(String path) {
+    	tempDirList.add(path);
     }
 
 }
