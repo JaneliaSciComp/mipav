@@ -51,6 +51,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	private int zOffset;
 	private int image1Slice;
 	private int zDim;
+	private JLabel label5;
 	
 	
 	
@@ -120,7 +121,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 		JPanel topPanel = new JPanel(new BorderLayout());
 		topPanel.setBackground(Color.black);
-		JLabel label5 = new JLabel();
+		label5 = new JLabel();
 		label5.setBackground(Color.black);
 		label5.setIcon(cornerImage);
 		JLabel label6 = new JLabel();
@@ -599,6 +600,33 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 		synchronized (this) {
 			origin = new Point(event.getPoint());
+			// Get the top left corner of the upper left white circle in the screen's coordinate space
+			Point pul = label5.getLocationOnScreen();
+			System.out.println("Upper left circle upper left corner x = " + pul.x + " y = "+ pul.y);
+			// Get the width and height of the upper left circle
+			Dimension dul = label5.getSize();
+			System.out.println("Upper left circle dimensions width = " + dul.width + " height = " + dul.height);
+			// Get the center of the upper left circle
+			double culx = pul.x + dul.width/2.0;
+			double culy = pul.y + dul.height/2.0;
+			System.out.println("Center of upper left circle x = " + culx + " y = " + culy);
+			// Note that the upper left corner of JViewport of imageScroll and the quadImagePanel upper left corner were
+			// initially identical at 81,80.
+			// However, while the image scroll location always stayed at 81,80 the quad image panel
+			// upper left corner location took on values of (81,3), (81,56), and (81,-102), so
+			// do not use the quad image panel upper left corner value
+			JViewport viewPort0 = imageScroll.getViewport();
+			Point vul = viewPort0.getLocationOnScreen();
+			System.out.println("Upper left corner of JViewport of imageScroll x = " + vul.x + " y = " + vul.y);
+			// Get the top left corner of the quadImagePanel in the screen's coordinate space
+			//Point qul = quadImagePanel.getLocationOnScreen();
+			//System.out.println("quad image panel upper left corner x = " + qul.x + " y = " + qul.y);
+			Point originScreen = event.getLocationOnScreen();
+			System.out.println("Event location in screen coordinates x = " + originScreen.x + " y = " +originScreen.y);
+			// Distance from center of upper circle
+			double dx = originScreen.x - culx;
+			double dy = originScreen.y - culy;
+			System.out.println("Event distance from upper left circle center dx = " + dx + " dy = " + dy);
 
 			// System.err.println("in mouse pressed");
 			int currentSlice0 = imageComp.getSlice();
