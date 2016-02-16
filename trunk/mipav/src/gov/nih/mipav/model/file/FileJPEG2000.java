@@ -514,6 +514,7 @@ public class FileJPEG2000 extends FileBase {
 	    //compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
 		compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
 		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lena.pgm";
+		//decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.pgm";
 		opj_decompress_main();
 	}
 
@@ -1440,9 +1441,11 @@ public class FileJPEG2000 extends FileBase {
 		 */
 		int m_last_tile_part;
 		/** to tell that a tile can be decoded. */
-		//boolean m_can_decode = true;
-		boolean m_can_decode = false;
+		// Used by opj_j2k_decode_tile(), opj_j2k_read_sot(), and opj_j2k_read_tile_header().
+		boolean m_can_decode = true;
+		// Used by opj_j2k_read_siz() and opj_j2k_read_deccode_area().
 		boolean m_discard_tiles = true;
+		// Used by opj_j2k_read_sot() and opj_j2k_read_tile_header()
 		boolean m_skip_data = true;
 		/** TNsot correction : see issue 254 **/
 		int m_nb_tile_parts_correction_checked = 1;
@@ -7487,13 +7490,13 @@ public class FileJPEG2000 extends FileBase {
 						if (cblkno < l_nb_code_blocks - 1) {
 							l_cblk = l_prc.dec[cblkno + 1];
 						}
-					}
-				}
+					} // for (cblkno = 0; cblkno < l_nb_code_blocks; ++cblkno)
+				} // if (!((l_band.x1 - l_band.x0 == 0) || (l_band.y1 - l_band.y0 == 0)))
 				if (bandno < l_res.numbands - 1) {
 					l_band = l_res.bands[bandno + 1];
 				}
-			}
-		}
+			} // for (bandno = 0; bandno < l_res.numbands; ++bandno)
+		} // if (p_pi.layno == 0)
 
 		/* SOP markers */
 
@@ -7573,7 +7576,7 @@ public class FileJPEG2000 extends FileBase {
 			l_header_length = (l_header_data_ptr - l_header_data_start);
 			l_modified_length_ptr -= l_header_length;
 			l_header_data_start += l_header_length;
-			l_header_data_ptr = l_header_data_start;
+			//l_header_data_ptr = l_header_data_start;
 
 			/* << INDEX */
 			/*
@@ -7733,7 +7736,7 @@ public class FileJPEG2000 extends FileBase {
 		Preferences.debug("packet body\n", Preferences.DEBUG_FILEIO);
 		l_modified_length_ptr -= l_header_length;
 		l_header_data_start += l_header_length;
-		l_header_data_ptr = l_header_data_start;
+		//l_header_data_ptr = l_header_data_start;
 
 		/* << INDEX */
 		/*
@@ -7824,7 +7827,7 @@ public class FileJPEG2000 extends FileBase {
 		int n;
 		if (opj_bio_read(bio, 1) == 0)
 			return 1;
-		if (opj_bio_read(bio, 1) == -0)
+		if (opj_bio_read(bio, 1) == 0)
 			return 2;
 		if ((n = opj_bio_read(bio, 2)) != 3)
 			return (3 + n);
@@ -13256,7 +13259,7 @@ public class FileJPEG2000 extends FileBase {
 		} else {
 			if (p_header_size < 2) {
 				MipavUtil
-						.displayError("Error reading QCC marker p_header_size[0] < 2");
+						.displayError("Error reading QCC marker p_header_size < 2");
 				return false;
 			}
 			l_comp_no = getBufferUShort(p_header_data, 0, endianess);
@@ -13271,11 +13274,12 @@ public class FileJPEG2000 extends FileBase {
 
 				/* compno is negative or larger than the number of components!!! */
 				if (/* (l_comp_no < 0) || */(l_comp_no >= l_num_comp)) {
-					if (JPWLAssume) {
+					    if (JPWLAssume) {
 						Preferences.debug("JPWL: bad component number in QCC ("
 								+ l_comp_no + " out of a maximum of "
 								+ l_num_comp + ")\n", Preferences.DEBUG_FILEIO);
-					} else {
+					    }
+						else {
 						MipavUtil
 								.displayError("JPWL: bad component number in QCC ("
 										+ l_comp_no
@@ -13482,8 +13486,8 @@ public class FileJPEG2000 extends FileBase {
 						+ " is greater than OPJ_J2K_MAXBANDS "
 						+ OPJ_J2K_MAXBANDS + ".\n", Preferences.DEBUG_FILEIO);
 				Preferences.debug(
-						"So we limit the number of elements stored to OPJ_J2K_MAXBANDS "
-								+ OPJ_J2K_MAXBANDS + " and skip the rest.\n",
+						"So we limit the number of elements stored to OPJ_J2K_MAXBANDS ("
+								+ OPJ_J2K_MAXBANDS + ") and skip the rest.\n",
 						Preferences.DEBUG_FILEIO);
 				/* return OPJ_FALSE; */
 			}
