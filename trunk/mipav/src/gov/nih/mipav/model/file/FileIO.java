@@ -2734,9 +2734,11 @@ public class FileIO {
             } else {
                 tempDir = Preferences.getFileTempDir();
                 if (tempDir == null) {
-                    tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator;
+                    tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir" + File.separator + System.currentTimeMillis() + File.separator;
+                    ViewUserInterface.getReference().addToTempDirList(tempDir); 
                 } else {
-                    tempDir = tempDir + File.separator;
+                    tempDir = tempDir + File.separator + System.currentTimeMillis() + File.separator;
+                    ViewUserInterface.getReference().addToTempDirList(tempDir); 
                 }
                 file = new File(tempDir);
                 if ( !file.exists()) {
