@@ -511,10 +511,10 @@ public class FileJPEG2000 extends FileBase {
 	public void selfTest() {
 		inputImageDirectory = null;
 		outputFormatExtension = null;
-	    //compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
-		compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
-		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lena.pgm";
-		//decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.pgm";
+	    compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
+		//compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
+		//decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lena.pgm";
+		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.pgm";
 		opj_decompress_main();
 	}
 
@@ -11006,6 +11006,7 @@ public class FileJPEG2000 extends FileBase {
 		/* Read 2 bytes as the new marker ID */
 		l_current_marker[0] = getBufferUShort(l_j2k.m_decoder.m_header_data, 0,
 				endianess);
+			
 
 		/* Try to read until the SOT is detected */
 		while (l_current_marker[0] != J2K_MS_SOT) {
@@ -11186,7 +11187,9 @@ public class FileJPEG2000 extends FileBase {
 
 		/* Position of the last element if the main header */
 		try {
-			filePointer = l_stream.getFilePointer();
+			//filePointer = l_stream.getFilePointer();
+			filePointer = l_stream.getFilePointer()-2;
+			l_stream.seek(filePointer);
 		} catch (IOException e) {
 			MipavUtil.displayError("IOException " + e
 					+ " on l_stream.getFilePointer()");
