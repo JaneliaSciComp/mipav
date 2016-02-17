@@ -204,11 +204,16 @@ public class MipavCoordinateSystems {
     public static final void fileToScanner(final Vector3f kInput, final Vector3f kOutput, final ModelImage kImage) {
 
         final Vector3f kOriginLPS = MipavCoordinateSystems.originLPS(kImage);
+    	int dimX = kImage.getExtents().length > 0 ? kImage.getExtents()[0] : 1;
+    	int dimY = kImage.getExtents().length > 1 ? kImage.getExtents()[1] : 1;
+    	int dimZ = kImage.getExtents().length > 2 ? kImage.getExtents()[2] : 1;
+    	
+        final int[] extents = new int[]{dimX,dimY,dimZ};
 
         if ( (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                 || (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
 
-            final float[] afResolutions = kImage.getResolutions(Math.min(kImage.getExtents()[2]-1,Math.max(0,(int)Math.round(kInput.Z))));
+            final float[] afResolutions = kImage.getResolutions(Math.min(dimZ-1,Math.max(0,(int)Math.round(kInput.Z))));
 
             final TransMatrix dicomMatrix = (kImage).getMatrix(); // Gets composite matrix
 
@@ -223,7 +228,7 @@ public class MipavCoordinateSystems {
             final boolean[] axisFlip = new boolean[] {false, false, false};
             MipavCoordinateSystems.toLPS(kImage, axisOrder, axisFlip);
 
-            final float[] afRes = kImage.getResolutions(Math.min(kImage.getExtents()[2]-1,Math.max(0,(int)Math.round(kInput.Z))));
+            final float[] afRes = kImage.getResolutions(Math.min(dimZ-1,Math.max(0,(int)Math.round(kInput.Z))));
             final float[] filePoint = new float[3];
             filePoint[0] = kInput.X;
             filePoint[1] = kInput.Y;
@@ -235,7 +240,6 @@ public class MipavCoordinateSystems {
                 scannerPoint[i] = filePoint[axisOrder[i]];
             }
 
-            final int[] extents = kImage.getExtents();
             // Then invert the point, using the appropriate extents
             for (int i = 0; i < 3; i++) {
                 if (axisFlip[i]) {
