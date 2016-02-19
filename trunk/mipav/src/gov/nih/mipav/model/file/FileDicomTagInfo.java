@@ -15,7 +15,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
 
     public enum StringType implements DicomType {
         /** A character string that may be possibly have further format specifications is stored in the tag's value */
-        STRING("typeString", VR.ST, VR.LT, VR.CS, VR.UI, VR.PN, VR.AS, VR.AE, VR.UT, VR.IS, VR.LO, VR.DS, VR.SH, VR.OF),
+        STRING("typeString", VR.ST, VR.LT, VR.CS, VR.UI, VR.PN, VR.AS, VR.AE, VR.UT, VR.IS, VR.LO, VR.DS, VR.SH, VR.OD, VR.OF),
         /** A string with VR "OB" is stored in the tag's value. */
         BYTE_STRING("otherByteString", VR.OB),
         /** A string with VR "OW" is stored in the tag's value. */
@@ -63,6 +63,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
         LO("LO", StringType.STRING), // Long String
         DS("DS", StringType.STRING), // Decimal String
         SH("SH", StringType.STRING), // Short String
+        OD("OD", StringType.STRING), // Other Double String
         OF("OF", StringType.STRING), // Other Float String
         OB("OB", StringType.BYTE_STRING),
         OW("OW", StringType.WORD_STRING), 
@@ -97,6 +98,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
             switch(this) {
             case OB:
             case OW:
+            case OD:
             case OF:
             case SQ:
             case UT:
