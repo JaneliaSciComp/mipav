@@ -85,6 +85,7 @@ public class LatticeModel {
 
 	protected ModelImage imageA;
 	protected ModelImage maskImage = null;
+	protected float maskScale = 1;
 	private VOIVector latticeGrid;
 
 	protected VOI lattice = null;
@@ -93,7 +94,7 @@ public class LatticeModel {
 
 	protected VOIContour right;
 
-	private VOIContour center;
+	protected VOIContour center;
 
 	private VOIContour leftBackup;
 
@@ -149,7 +150,7 @@ public class LatticeModel {
 
 	private VOIContour[] showSelected = null;
 
-	private final int DiameterBuffer = 0;
+	protected final int DiameterBuffer = 20;
 
 	protected static final int SampleLimit = 5;
 
@@ -161,7 +162,7 @@ public class LatticeModel {
 
 	protected VOI growContours;
 
-	private VOI annotationVOIs;
+	protected VOI annotationVOIs;
 	private int highestIndex = -1;
 
 	protected Vector3f wormOrigin = null;
@@ -477,13 +478,16 @@ public class LatticeModel {
 				imageA.unregisterVOI(marker);
 			}
 		}
-		imageA.unregisterVOI(lattice);
-		imageA.unregisterVOI(displayContours);
-		imageA.unregisterVOI(leftLine);
-		imageA.unregisterVOI(rightLine);
-		imageA.unregisterVOI(centerLine);
-		clear3DSelection();
-
+		if ( imageA != null )
+		{
+			imageA.unregisterVOI(lattice);
+			imageA.unregisterVOI(displayContours);
+			imageA.unregisterVOI(leftLine);
+			imageA.unregisterVOI(rightLine);
+			imageA.unregisterVOI(centerLine);
+			clear3DSelection();
+		}
+		
 		imageA = null;
 		latticeGrid = null;
 		lattice = null;
@@ -681,9 +685,13 @@ public class LatticeModel {
 
 		// save the lattice statistics -- distance between pairs and distances between
 		// lattice points along the curves
-		saveLatticeStatistics(imageA, length, left, right, leftDistances, rightDistances, "_before");
+		String imageName = imageA.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		saveLatticeStatistics(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator, length, left, right, leftDistances, rightDistances, "_before");
 		// save the original annotation positions
-		saveAnnotationStatistics(imageA, null, null, null, "_before");
+		saveAnnotationStatistics(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator, null, null, null, "_before");
 
 		// modify markers based on volume segmentation:
 		markerVolumes = new int[left.size()][2];
@@ -701,7 +709,7 @@ public class LatticeModel {
 		}
 		// save the updated lattice positions, including any volume estimation for the marker segmentat at that lattice
 		// point:
-		saveLatticePositions(imageA, null, null, left, right, markerVolumes, "_before");
+		saveLatticePositions(imageA, null, left, right, markerVolumes, "_before");
 		for (int i = 0; i < completedIDs.length; i++) {
 			if (markerIDs[i] == 0) {
 				completedIDs[i] = true;
@@ -1304,6 +1312,7 @@ public class LatticeModel {
 		maskImage = image;
 	}
 	
+	
 	/**
 	 * Sets the currently selected point (lattice or annotation).
 	 * 
@@ -1483,7 +1492,7 @@ public class LatticeModel {
 			int x = Math.round(position.X);
 			int y = Math.round(position.Y);
 			int z = Math.round(position.Z);
-			float value = model.getFloat(x, y, z);
+			int value = model.getInt(x, y, z);
 			// float value = model.getFloatTriLinearBounds( position.X, position.Y, position.Z );
 			if (value == 0) {
 				outsideFound = true;
@@ -1492,7 +1501,7 @@ public class LatticeModel {
 			x = Math.round(position.X);
 			y = Math.round(position.Y);
 			z = Math.round(position.Z);
-			value = model.getFloat(x, y, z);
+			value = model.getInt(x, y, z);
 			// value = model.getFloatTriLinearBounds( position.X, position.Y, position.Z );
 			if (value == 0) {
 				outsideFound = true;
@@ -1515,7 +1524,7 @@ public class LatticeModel {
 			final int x = Math.round(position.X);
 			final int y = Math.round(position.Y);
 			final int z = Math.round(position.Z);
-			final float value = model.getFloat(x, y, z);
+			final int value = model.getInt(x, y, z);
 			if ( print )
 			{
 				System.err.println( text.getText() + " " + position + "  " + value );
@@ -1672,7 +1681,7 @@ public class LatticeModel {
 		if (imageName.contains("_clone")) {
 			imageName = imageName.replaceAll("_clone", "");
 		}
-		ModelImage model = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), imageName + "_model.xml");
+		ModelImage model = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), imageName + "_model.xml");
 		JDialogBase.updateFileInfo(imageA, model);
 
 		ModelImage insideConflict = new ModelImage(ModelStorageBase.BOOLEAN, imageA.getExtents(), imageName + "_insideConflict.xml");
@@ -1768,8 +1777,8 @@ public class LatticeModel {
 		insideConflict = null;
 
 		// Save the marker segmentation image:
-		saveImage(imageName, markerSegmentation, true);
-		markerImageToColor(markerSegmentation, displayResult);
+//		saveImage(imageName, markerSegmentation, true);
+//		markerImageToColor(markerSegmentation, displayResult);
 
 		// 8. The marker segmentation image is used to resolve conflicts where multiple ellipses overlap.
 		// Each slice in the output image should extend only to the edges of the left-right markers for the
@@ -1823,7 +1832,7 @@ public class LatticeModel {
 						cornersSub[j] = new Vector3f(corners[j]);
 					}
 					for (int j = 0; j < planeDist; j++) {
-						fillMarkerSegmentationImage(model, markerSegmentation, sliceIDs, 0, i, resultExtents, cornersSub, ellipseBounds.elementAt(i));
+						fillMarkerSegmentationImage( markerSegmentation, sliceIDs, 0, i, resultExtents, cornersSub, ellipseBounds.elementAt(i));
 						for (int k = 0; k < 4; k++) {
 							cornersSub[k].add(steps[k]);
 						}
@@ -1839,7 +1848,7 @@ public class LatticeModel {
 						cornersSub[j] = new Vector3f(corners[j]);
 					}
 					for (int j = 0; j < planeDist; j++) {
-						fillMarkerSegmentationImage(model, markerSegmentation, sliceIDs, 0, i, resultExtents, cornersSub, ellipseBounds.elementAt(i));
+						fillMarkerSegmentationImage( markerSegmentation, sliceIDs, 0, i, resultExtents, cornersSub, ellipseBounds.elementAt(i));
 						for (int k = 0; k < 4; k++) {
 							cornersSub[k].add(steps[k]);
 						}
@@ -1974,22 +1983,22 @@ public class LatticeModel {
 		}
 
 
-		ModelImage inside = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), imageName + "_insideMask.xml");
-		JDialogBase.updateFileInfo(imageA, inside);
-		// Call the straightening step:
-		for (int z = 0; z < dimZ; z++) {
-			for (int y = 0; y < dimY; y++) {
-				for (int x = 0; x < dimX; x++) {
-					if (model.getFloat(x, y, z) != 0) {
-						inside.set(x, y, z, 1);
-					}
-				}
-			}
-		}
-		inside.setImageName( imageName + "_" + growStep + "_insideMask.xml" );
-		saveImage(imageName, inside, false);
-		inside.disposeLocal();
-		inside = null;
+//		ModelImage inside = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), imageName + "_insideMask.xml");
+//		JDialogBase.updateFileInfo(imageA, inside);
+//		// Call the straightening step:
+//		for (int z = 0; z < dimZ; z++) {
+//			for (int y = 0; y < dimY; y++) {
+//				for (int x = 0; x < dimX; x++) {
+//					if (model.getFloat(x, y, z) != 0) {
+//						inside.set(x, y, z, 1);
+//					}
+//				}
+//			}
+//		}
+//		inside.setImageName( imageName + "_" + growStep + "_insideMask.xml" );
+//		saveImage(imageName, inside, false);
+//		inside.disposeLocal();
+//		inside = null;
 
 		saveImage(imageName, model, false);
 		straighten(imageA, resultExtents, imageName, model, true, displayResult, true);
@@ -2088,7 +2097,6 @@ public class LatticeModel {
 	/**
 	 * Fills each model slice of the marker segmentation image with the current slice value.
 	 * 
-	 * @param model
 	 * @param markerSegmentation
 	 * @param sliceIDs
 	 * @param tSlice
@@ -2097,7 +2105,7 @@ public class LatticeModel {
 	 * @param verts
 	 * @param ellipseBound
 	 */
-	private void fillMarkerSegmentationImage(final ModelImage model, final ModelImage markerSegmentation, final float[] sliceIDs, final int tSlice,
+	private void fillMarkerSegmentationImage(final ModelImage markerSegmentation, final float[] sliceIDs, final int tSlice,
 			final int slice, final int[] extents, final Vector3f[] verts, final Ellipsoid3f ellipseBound) {
 		final int iBound = extents[0];
 		final int jBound = extents[1];
@@ -2467,7 +2475,7 @@ public class LatticeModel {
 					int x = Math.round(pt.X);
 					int y = Math.round(pt.Y);
 					int z = Math.round(pt.Z);
-					float currentValue = model.getFloat(x, y, z);
+					int currentValue = model.getInt(x, y, z);
 					while ( ( (length != 0) && (currentValue != 0) && Math.abs(currentValue - value) <= SampleLimit)) {
 						pt.add(diff);
 						x = Math.round(pt.X);
@@ -2476,7 +2484,7 @@ public class LatticeModel {
 						if ( (x < 0) || (x >= dimX) || (y < 0) || (y >= dimY) || (z < 0) || (z >= dimZ)) {
 							break;
 						}
-						currentValue = model.getFloat(x, y, z);
+						currentValue = model.getInt(x, y, z);
 					}
 					if ( !pt.isEqual(centerPositions.elementAt(i))) {
 						pt.sub(diff);
@@ -2488,7 +2496,7 @@ public class LatticeModel {
 						y = Math.round(start.Y);
 						z = Math.round(start.Z);
 						if ( ! ( (x < 0) || (x >= dimX) || (y < 0) || (y >= dimY) || (z < 0) || (z >= dimZ))) {
-							currentValue = model.getFloat(x, y, z);
+							currentValue = model.getInt(x, y, z);
 							if ( ( (currentValue != 0) && Math.abs(currentValue - value) <= SampleLimit)) {
 								diff = Vector3f.sub(start, pt);
 								length = diff.normalize();
@@ -2530,7 +2538,7 @@ public class LatticeModel {
 				for (int z1 = Math.max(0, (int) Math.floor(z)); (z1 <= Math.min(dimZ - 1, Math.ceil(z))) && extend; z1++) {
 					for (int y1 = Math.max(0, (int) Math.floor(y)); (y1 <= Math.min(dimY - 1, Math.ceil(y))) && extend; y1++) {
 						for (int x1 = Math.max(0, (int) Math.floor(x)); (x1 <= Math.min(dimX - 1, Math.ceil(x))) && extend; x1++) {
-							final float currentValue = model.getFloat(x1, y1, z1);
+							final int currentValue = model.getInt(x1, y1, z1);
 							if (currentValue != 0) {
 								if (Math.abs(currentValue - value) > SampleLimit) {
 									extend = false;
@@ -2546,8 +2554,8 @@ public class LatticeModel {
 							}
 							if ( maskImage != null )
 							{
-								final float maskValue = maskImage.getFloat(x1, y1, z1);
-								if ( maskValue != 0 )
+								final boolean maskValue = maskImage.getBoolean(x1, y1, z1);
+								if ( maskValue )
 								{
 									extend = false;
 								}
@@ -2559,7 +2567,7 @@ public class LatticeModel {
 					for (int z1 = Math.max(0, (int) Math.floor(z)); (z1 <= Math.min(dimZ - 1, Math.ceil(z))) && extend; z1++) {
 						for (int y1 = Math.max(0, (int) Math.floor(y)); (y1 <= Math.min(dimY - 1, Math.ceil(y))) && extend; y1++) {
 							for (int x1 = Math.max(0, (int) Math.floor(x)); (x1 <= Math.min(dimX - 1, Math.ceil(x))) && extend; x1++) {
-								final float currentValue = model.getFloat(x1, y1, z1);
+								final int currentValue = model.getInt(x1, y1, z1);
 								if (currentValue == 0) {
 									model.set(x1, y1, z1, value);
 								}
@@ -2590,7 +2598,7 @@ public class LatticeModel {
 	 */
 	private void initializeModelandConflicts(final ModelImage image, final ModelImage model, final ModelImage insideConflict, final int tSlice,
 			final int slice, final int[] extents, final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float diameter, final Box3f boxBound,
-			final float value) {
+			final int value) {
 		final int iBound = extents[0];
 		final int jBound = extents[1];
 
@@ -2678,7 +2686,7 @@ public class LatticeModel {
 						for (int z1 = Math.max(0, (int) Math.floor(z)); z1 <= Math.min(dimExtents[2] - 1, Math.ceil(z)); z1++) {
 							for (int y1 = Math.max(0, (int) Math.floor(y)); y1 <= Math.min(dimExtents[1] - 1, Math.ceil(y)); y1++) {
 								for (int x1 = Math.max(0, (int) Math.floor(x)); x1 <= Math.min(dimExtents[0] - 1, Math.ceil(x)); x1++) {
-									final float currentValue = model.getFloat(x1, y1, z1);
+									final int currentValue = model.getInt(x1, y1, z1);
 									if (currentValue != 0) {
 										if (Math.abs(currentValue - value) < SampleLimit) {
 											// model.set(x1, y1, z1, (currentValue + value)/2f);
@@ -2927,7 +2935,7 @@ public class LatticeModel {
 				} else {
 					currentPoint.set(x, y, z);
 					final boolean isInside = ellipseBound.Contains(currentPoint);
-					final float currentValue = model.getFloat(iIndex, jIndex, kIndex);
+					final int currentValue = model.getInt(iIndex, jIndex, kIndex);
 					// float currentValue = model.getFloatTriLinearBounds(x, y, z);
 					if (isInside && (currentValue != 0)) {
 						values[j * iBound + i] = markerSegmentation.getFloat(iIndex, jIndex, kIndex);
@@ -3113,7 +3121,7 @@ public class LatticeModel {
 					for (int y1 = Math.max(0, y - 2); y1 < Math.min(dimY, y + 2); y1++) {
 						for (int x1 = Math.max(0, x - 2); x1 < Math.min(dimX, x + 2); x1++) {
 							final float a1 = originToStraight.getFloatC(x1, y1, z1, 0);
-							final float m1 = model.getFloat(x1, y1, z1);
+							final int m1 = model.getInt(x1, y1, z1);
 							if ( (a1 != 0) && (m1 == m)) {
 								final float x2 = originToStraight.getFloatC(x1, y1, z1, 1);
 								final float y2 = originToStraight.getFloatC(x1, y1, z1, 2);
@@ -3150,7 +3158,7 @@ public class LatticeModel {
 	 * @param value
 	 */
 	private void resolveModelConflicts(final ModelImage model, final ModelImage markerSegmentation, final float[] sliceIDs, final int tSlice, final int slice,
-			final int[] extents, final Vector3f[] verts, final float value) {
+			final int[] extents, final Vector3f[] verts, final int value) {
 		final int iBound = extents[0];
 		final int jBound = extents[1];
 
@@ -3222,7 +3230,7 @@ public class LatticeModel {
 					// do nothing
 				} else {
 					currentPoint.set(x, y, z);
-					final float currentValue = model.getFloat(iIndex, jIndex, kIndex);
+					final int currentValue = model.getInt(iIndex, jIndex, kIndex);
 					final float markerValue = markerSegmentation.getFloat(iIndex, jIndex, kIndex);
 					if ( (currentValue == 0) && (markerValue == sliceIDs[slice])) {
 						model.set(iIndex, jIndex, kIndex, value);
@@ -3258,7 +3266,7 @@ public class LatticeModel {
 	 * @param postFix
 	 * @return
 	 */
-	protected VOI saveAnnotationStatistics(final ModelImage image, final ModelImage model, final ModelImage originToStraight, final int[] outputDim,
+	protected VOI saveAnnotationStatistics(final String imageDir, final ModelImage model, final ModelImage originToStraight, final int[] outputDim,
 			final String postFix) {
 		if (annotationVOIs == null) {
 			return null;
@@ -3267,18 +3275,30 @@ public class LatticeModel {
 			return null;
 		}
 
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator;
+//		String imageName = image.getImageName();
+//		if (imageName.contains("_clone")) {
+//			imageName = imageName.replaceAll("_clone", "");
+//		}
+//		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator;
+//		File voiFileDir = new File(voiDir);
+//		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+//		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+//		} else { // voiFileDir does not exist
+//			voiFileDir.mkdir();
+//		}
+//		voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "statistics" + File.separator;
+		
+
+		String voiDir = imageDir;
 		File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
 			voiFileDir.mkdir();
 		}
-		voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "statistics" + File.separator;
+		voiDir = imageDir + "statistics" + File.separator;
+		
+		
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir
 			// does
@@ -3375,14 +3395,13 @@ public class LatticeModel {
 	 * Saves the lattice positions to a file.
 	 * 
 	 * @param image
-	 * @param model
 	 * @param originToStraight
 	 * @param left
 	 * @param right
 	 * @param volumes
 	 * @param postFix
 	 */
-	private void saveLatticePositions(final ModelImage image, final ModelImage model, final ModelImage originToStraight, final VOIContour left,
+	private void saveLatticePositions(final ModelImage image, final ModelImage originToStraight, final VOIContour left,
 			final VOIContour right, final int[][] volumes, final String postFix) {
 		String imageName = image.getImageName();
 		if (imageName.contains("_clone")) {
@@ -3462,20 +3481,30 @@ public class LatticeModel {
 	 * @param rightPairs
 	 * @param postFix
 	 */
-	protected void saveLatticeStatistics(final ModelImage image, final float length, final VOIContour left, final VOIContour right, final float[] leftPairs,
+	protected void saveLatticeStatistics( String imageDir, final float length, final VOIContour left, final VOIContour right, final float[] leftPairs,
 			final float[] rightPairs, final String postFix) {
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator;
+//		String imageName = image.getImageName();
+//		if (imageName.contains("_clone")) {
+//			imageName = imageName.replaceAll("_clone", "");
+//		}
+//		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator;
+//		File voiFileDir = new File(voiDir);
+//		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+//		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+//		} else { // voiFileDir does not exist
+//			voiFileDir.mkdir();
+//		}
+//		voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "statistics" + File.separator;
+
+		String voiDir = imageDir;
 		File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
 			voiFileDir.mkdir();
 		}
-		voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "statistics" + File.separator;
+		voiDir = imageDir + "statistics" + File.separator;
+		
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 			// String[] list = voiFileDir.list();
@@ -3512,6 +3541,7 @@ public class LatticeModel {
 			e.printStackTrace();
 		}
 	}
+
 
 	protected void saveNeuriteData( ModelImage wormImage, ModelImage resultImage, ModelImage model, ModelImage originToStraight, String baseName )
 	{
@@ -3882,7 +3912,7 @@ public class LatticeModel {
 	 * @param time
 	 * @return
 	 */
-	private NaturalSpline3 smoothCurve(final VOIContour curve, final float[] time) {
+	protected NaturalSpline3 smoothCurve(final VOIContour curve, final float[] time) {
 		float totalDistance = 0;
 		for (int i = 0; i < curve.size() - 1; i++) {
 			totalDistance += curve.elementAt(i).distance(curve.elementAt(i + 1));
@@ -3913,7 +3943,7 @@ public class LatticeModel {
 	 * @param time
 	 * @return
 	 */
-	private NaturalSpline3 smoothCurve2(final VOIContour curve, final float[] time) {
+	protected NaturalSpline3 smoothCurve2(final VOIContour curve, final float[] time) {
 		final Vector3f[] akPoints = new Vector3f[curve.size()];
 		for (int i = 0; i < curve.size(); i++) {
 			akPoints[i] = new Vector3f(curve.elementAt(i));
@@ -3957,26 +3987,26 @@ public class LatticeModel {
 		final int colorFactor = image.isColorImage() ? 4 : 1;
 		final float[] values = new float[resultExtents[0] * resultExtents[1] * colorFactor];
 
-		float[] dataOrigin = null;
-		float[] sampleDistance = null;
-		float[] sampleDistanceP = null;
+//		float[] dataOrigin = null;
+//		float[] sampleDistance = null;
+//		float[] sampleDistanceP = null;
 
 		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straight.xml");
 		JDialogBase.updateFileInfo(image, resultImage);
 		resultImage.setResolutions(new float[] {1, 1, 1});
 
-		ModelImage straightToOrigin = null;
+//		ModelImage straightToOrigin = null;
 		ModelImage originToStraight = null;
-		ModelImage overlap2 = null;
+//		ModelImage overlap2 = null;
 
 		if (saveStats) {
-			dataOrigin = new float[resultExtents[0] * resultExtents[1] * 4];
-			straightToOrigin = new ModelImage(ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toOriginal.xml");
-			JDialogBase.updateFileInfo(image, straightToOrigin);
-			straightToOrigin.setResolutions(new float[] {1, 1, 1});
-			for (int i = 0; i < straightToOrigin.getDataSize(); i++) {
-				straightToOrigin.set(i, 0);
-			}
+//			dataOrigin = new float[resultExtents[0] * resultExtents[1] * 4];
+//			straightToOrigin = new ModelImage(ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toOriginal.xml");
+//			JDialogBase.updateFileInfo(image, straightToOrigin);
+//			straightToOrigin.setResolutions(new float[] {1, 1, 1});
+//			for (int i = 0; i < straightToOrigin.getDataSize(); i++) {
+//				straightToOrigin.set(i, 0);
+//			}
 
 			originToStraight = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), imageName + "_toStraight.xml");
 			JDialogBase.updateFileInfo(image, originToStraight);
@@ -3984,20 +4014,20 @@ public class LatticeModel {
 				originToStraight.set(i, 0);
 			}
 
-			overlap2 = new ModelImage(ModelStorageBase.FLOAT, resultExtents, imageName + "_sampleDensity.xml");
-			JDialogBase.updateFileInfo(image, overlap2);
-			overlap2.setResolutions(new float[] {1, 1, 1});
-
-			sampleDistance = new float[resultExtents[0] * resultExtents[1]];
-			sampleDistanceP = new float[resultExtents[0] * resultExtents[1] * 4];
-			final int length = resultExtents[0] * resultExtents[1];
-			for (int j = 0; j < length; j++) {
-				sampleDistance[j] = 0;
-				for (int c = 0; c < 4; c++) {
-					// sampleDistance[j * 4 + c] = 0;
-					sampleDistanceP[j * 4 + c] = 0;
-				}
-			}
+//			overlap2 = new ModelImage(ModelStorageBase.FLOAT, resultExtents, imageName + "_sampleDensity.xml");
+//			JDialogBase.updateFileInfo(image, overlap2);
+//			overlap2.setResolutions(new float[] {1, 1, 1});
+//
+//			sampleDistance = new float[resultExtents[0] * resultExtents[1]];
+//			sampleDistanceP = new float[resultExtents[0] * resultExtents[1] * 4];
+//			final int length = resultExtents[0] * resultExtents[1];
+//			for (int j = 0; j < length; j++) {
+//				sampleDistance[j] = 0;
+//				for (int c = 0; c < 4; c++) {
+//					// sampleDistance[j * 4 + c] = 0;
+//					sampleDistanceP[j * 4 + c] = 0;
+//				}
+//			}
 		}
 
 		for (int i = 0; i < samplingPlanes.getCurves().size(); i++) {
@@ -4031,11 +4061,11 @@ public class LatticeModel {
 					else {
 						values[j] = (float) image.getMin();
 					}
-					if (dataOrigin != null) {
-						for (int c = 0; c < 4; c++) {
-							dataOrigin[j * 4 + c] = 0;
-						}
-					}
+//					if (dataOrigin != null) {
+//						for (int c = 0; c < 4; c++) {
+//							dataOrigin[j * 4 + c] = 0;
+//						}
+//					}
 				}
 
 				int planeCount = 0;
@@ -4050,7 +4080,8 @@ public class LatticeModel {
 						cornersSub[j] = new Vector3f(corners[j]);
 					}
 					for (int j = 0; j < planeDist; j++) {
-						writeDiagonal(image, model, originToStraight, 0, i, resultExtents, cornersSub, values, dataOrigin, sampleDistance, sampleDistanceP);
+						writeDiagonal(image, model, originToStraight, 0, i, resultExtents, cornersSub, values, null, null, null);
+//						writeDiagonal(image, model, originToStraight, 0, i, resultExtents, cornersSub, values, dataOrigin, sampleDistance, sampleDistanceP);
 						planeCount++;
 						for (int k = 0; k < 4; k++) {
 							cornersSub[k].add(steps[k]);
@@ -4068,7 +4099,8 @@ public class LatticeModel {
 						cornersSub[j] = new Vector3f(corners[j]);
 					}
 					for (int j = 0; j < planeDist; j++) {
-						writeDiagonal(image, model, originToStraight, 0, i, resultExtents, cornersSub, values, dataOrigin, sampleDistance, sampleDistanceP);
+						writeDiagonal(image, model, originToStraight, 0, i, resultExtents, cornersSub, values, null, null, null);
+//						writeDiagonal(image, model, originToStraight, 0, i, resultExtents, cornersSub, values, dataOrigin, sampleDistance, sampleDistanceP);
 						planeCount++;
 						for (int k = 0; k < 4; k++) {
 							cornersSub[k].add(steps[k]);
@@ -4086,20 +4118,20 @@ public class LatticeModel {
 					else {
 						values[j] /= planeCount;
 					}
-					if (dataOrigin != null) {
-						for (int c = 1; c < 4; c++) {
-							dataOrigin[j * 4 + c] /= planeCount;
-						}
-					}
+//					if (dataOrigin != null) {
+//						for (int c = 1; c < 4; c++) {
+//							dataOrigin[j * 4 + c] /= planeCount;
+//						}
+//					}
 				}
 
 				resultImage.importData(i * values.length, values, false);
-				if (straightToOrigin != null) {
-					straightToOrigin.importData(i * dataOrigin.length, dataOrigin, false);
-				}
-				if (overlap2 != null) {
-					overlap2.importData(i * sampleDistance.length, sampleDistance, false);
-				}
+//				if (straightToOrigin != null) {
+//					straightToOrigin.importData(i * dataOrigin.length, dataOrigin, false);
+//				}
+//				if (overlap2 != null) {
+//					overlap2.importData(i * sampleDistance.length, sampleDistance, false);
+//				}
 
 			} catch (final IOException e) {
 				e.printStackTrace();
@@ -4107,11 +4139,11 @@ public class LatticeModel {
 		}
 
 		VOI transformedAnnotations = null;
-		if (saveStats && (straightToOrigin != null)) {
-			testOriginToStraight(model, originToStraight);
-			saveImage(baseName, overlap2, true);
-
-			saveImage(baseName, straightToOrigin, false);
+		if (saveStats) {
+//			testOriginToStraight(model, originToStraight);
+//			saveImage(baseName, overlap2, true);
+//
+//			saveImage(baseName, straightToOrigin, false);
 			saveImage(baseName, originToStraight, false);
 			
 			// calculate the transformed origin point:
@@ -4123,12 +4155,12 @@ public class LatticeModel {
 				transformedOrigin = new Vector3f();
 			}
 			
-			transformedAnnotations = saveAnnotationStatistics(imageA, model, originToStraight, resultExtents, "_after");
-			straightToOrigin.disposeLocal();
-			straightToOrigin = null;
-
-			overlap2.disposeLocal();
-			overlap2 = null;
+			transformedAnnotations = saveAnnotationStatistics(image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator, model, originToStraight, resultExtents, "_after");
+//			straightToOrigin.disposeLocal();
+//			straightToOrigin = null;
+//
+//			overlap2.disposeLocal();
+//			overlap2 = null;
 
 			short id = (short) image.getVOIs().getUniqueID();
 			final VOI lattice = new VOI(id, "lattice", VOI.POLYLINE, (float) Math.random());
@@ -4200,7 +4232,7 @@ public class LatticeModel {
 						+ File.separator;
 				saveAllVOIsTo(voiDir, resultImage);
 			}
-			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
+			saveLatticeStatistics(image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
 
 			resultImage.restoreVOIs(temp);
 			if (transformedAnnotations != null) {
@@ -4210,27 +4242,27 @@ public class LatticeModel {
 			saveNeuriteData( imageA, resultImage, model, originToStraight, baseName );
 
 
-			final int[] markerIDs = new int[leftSide.size()];
-			final int[][] markerVolumes = new int[leftSide.size()][2];
-			ModelImage straightMarkers;
-			if ( maskImage == null )
-			{
-				straightMarkers = segmentMarkers(resultImage, leftSide, rightSide, markerIDs, markerVolumes, false);
-			}
-			else
-			{
-				straightMarkers = segmentMarkersSimple(resultImage, leftSide, rightSide, markerIDs, markerVolumes);
-			}
-			saveLatticePositions(imageA, model, originToStraight, leftSide, rightSide, markerVolumes, "_after");
+//			final int[] markerIDs = new int[leftSide.size()];
+//			final int[][] markerVolumes = new int[leftSide.size()][2];
+//			ModelImage straightMarkers;
+//			if ( maskImage == null )
+//			{
+//				straightMarkers = segmentMarkers(resultImage, leftSide, rightSide, markerIDs, markerVolumes, false);
+//			}
+//			else
+//			{
+//				straightMarkers = segmentMarkersSimple(resultImage, leftSide, rightSide, markerIDs, markerVolumes);
+//			}
+			saveLatticePositions(imageA, originToStraight, leftSide, rightSide, markerVolumes, "_after");
 
-			saveImage(baseName, straightMarkers, true);
-			if (displayResult) {
-				straightMarkers.calcMinMax();
-				new ViewJFrameImage(straightMarkers);
-			} else {
-				straightMarkers.disposeLocal();
-				straightMarkers = null;
-			}
+//			saveImage(baseName, straightMarkers, true);
+//			if (displayResult) {
+//				straightMarkers.calcMinMax();
+//				new ViewJFrameImage(straightMarkers);
+//			} else {
+//				straightMarkers.disposeLocal();
+//				straightMarkers = null;
+//			}
 		}
 
 		saveImage(baseName, resultImage, saveAsTif);
@@ -4602,11 +4634,11 @@ public class LatticeModel {
 
 					// do nothing
 				} else {
-					float currentValue = (slice + 1);
+					int currentValue = (slice + 1);
 					if (model != null) {
 						// currentValue = model.getFloat((int)x, (int)y, (int)z);
 						// currentValue = model.getFloatTriLinearBounds(x, y, z);
-						currentValue = model.getFloat(iIndex, jIndex, kIndex);
+						currentValue = model.getInt(iIndex, jIndex, kIndex);
 					}
 					if (currentValue == 0) {
 						if (buffFactor == 4) {

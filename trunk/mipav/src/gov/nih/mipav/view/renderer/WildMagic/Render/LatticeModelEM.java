@@ -1,38 +1,27 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
-import gov.nih.mipav.model.file.FileVOI;
+import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
-import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
-import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
-import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Vector;
 
-import javax.swing.JFileChooser;
-
-import WildMagic.LibFoundation.Curves.NaturalSpline3;
-import WildMagic.LibFoundation.Distance.DistanceSegment3Segment3;
-import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
-import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
 
@@ -42,41 +31,27 @@ import WildMagic.LibFoundation.Mathematics.Vector4f;
  */
 public class LatticeModelEM extends LatticeModel
 {
-
+	private ModelImageLargeFormat imageA_LF;
 	private Vector<Vector4f> nucleiCenters;
 	private Vector<String> nucleiNames;
+	private VOIContour[] outputNucleiCenters;
+	private String outputDirectory;
+	private Short voiID = 0;
+	private float latticeScale = 1;
+	private float outputZResolution = 1;
 
 	/**
 	 * Creates a new LatticeModel
 	 * 
 	 * @param imageA
 	 */
-	public LatticeModelEM(final ModelImage imageA) {
-		super(imageA);
+	public LatticeModelEM(final ModelImageLargeFormat imageA) {
+		super(null);
+		imageA_LF = imageA;
+		
+		outputDirectory = imageA.getOutputDirectory();
+		System.err.println(outputDirectory);
 	}
-
-	/**
-	 * Creats a new LatticeModel with the given input lattice.
-	 * 
-	 * @param imageA
-	 * @param lattice
-	 */
-	public LatticeModelEM(final ModelImage imageA, final VOI lattice) {
-		super(imageA, lattice);
-	}
-
-	/**
-	 * Creates a new LatticeModel with the given set of annotations.
-	 * 
-	 * @param imageA
-	 * @param annotation
-	 * @param doAnnotation
-	 */
-	public LatticeModelEM(final ModelImage imageA, final VOI annotation, final boolean doAnnotation) {
-		super(imageA, annotation, doAnnotation);
-	}
-	
-
 
 	/**
 	 * Deletes this LatticeModel
@@ -93,7 +68,8 @@ public class LatticeModelEM extends LatticeModel
 	 * @param displayResult, when true intermediate volumes and results are displayed as well as the final straighened
 	 *            image.
 	 */
-	public void interpolateLattice(final boolean displayResult) {
+	public void interpolateLattice(final float outputSliceResolutions) {
+		generateCurves(outputSliceResolutions);
 		
 		// Determine the distances between points on the lattice
 		// distances are along the curve, not straight-line distances:
@@ -119,19 +95,19 @@ public class LatticeModelEM extends LatticeModel
 
 		// save the lattice statistics -- distance between pairs and distances between
 		// lattice points along the curves
-		saveLatticeStatistics(imageA, length, left, right, leftDistances, rightDistances, "_before");
+		saveLatticeStatistics(outputDirectory, length, left, right, leftDistances, rightDistances, "_before");
 		// save the original annotation positions
-		saveAnnotationStatistics(imageA, null, null, null, "_before");
+		saveAnnotationStatistics(outputDirectory, null, null, null, "_before");
 
 		// The algorithm interpolates between the lattice points, creating two smooth curves from head to tail along
 		// the left and right-hand sides of the worm body. A third curve down the center-line of the worm body is
 		// also generated. Eventually, the center-line curve will be used to determine the number of sample points
 		// along the length of the straightened worm, and therefore the final length of the straightened worm volume.
-		generateCurves();
+//		generateCurves();
 
 		boxBounds = new Vector<Box3f>();
 		ellipseBounds = new Vector<Ellipsoid3f>();
-		final short sID = (short) (imageA.getVOIs().getUniqueID());
+		final short sID = voiID++;
 		samplingPlanes = new VOI(sID, "samplingPlanes");
 		for (int i = 0; i < centerPositions.size(); i++) {
 			final Vector3f rkEye = centerPositions.elementAt(i);
@@ -164,8 +140,61 @@ public class LatticeModelEM extends LatticeModel
 			final Box3f box = new Box3f(ellipsoid.Center, ellipsoid.Axis, new float[] {extent, extent, 1});
 			boxBounds.add(box);
 		}
-		createWormModel(imageA, samplingPlanes, ellipseBounds, wormDiameters, 2 * extent, displayResult);
+		
+		if ( imageA_LF != null )
+		{
+			final int[] resultExtents = new int[] {2 * extent, 2 * extent, samplingPlanes.getCurves().size()};
+			System.err.println( "...straightening" );
+			straighten(imageA_LF, resultExtents);
+			saveNucleiInfo(outputDirectory);
+			System.err.println( "...done" );	
+		}
 	}
+	
+	public void setLattice( VOI newLattice, float latticeScale )
+	{
+		this.latticeScale = latticeScale;
+		if ( (latticeScale != 1) || ((imageA_LF != null) && (imageA_LF.getZScale() != 1)) )
+		{
+			scaleLattice(newLattice, latticeScale);
+		}
+		this.lattice = newLattice;
+		if ( this.lattice == null )
+		{
+			left = null;
+			right = null;
+			return;
+		}
+
+		// Assume image is isotropic (square voxels).
+		if (lattice.getCurves().size() != 2) {
+			return;
+		}
+		left = (VOIContour) lattice.getCurves().elementAt(0);
+		right = (VOIContour) lattice.getCurves().elementAt(1);
+		if (left.size() != right.size()) {
+			return;
+		}
+		
+//		int[] extents = imageA_LF.getExtents();
+//		ModelImageLargeFormat test = new ModelImageLargeFormat( extents, outputDirectory + imageA_LF.getImageName(), false );
+//		for ( int i = 0; i < Math.min( left.size(), right.size() ); i++ )
+//		{
+//			Vector3f pt = left.elementAt(i);
+//			for ( int z = (int)Math.max( 0, pt.Z - 20); z < Math.min( extents[2], pt.Z + 20); z++ )
+//				for ( int y = (int)Math.max( 0, pt.Y - 20); y < Math.min( extents[1], pt.Y + 20); y++ )
+//					for ( int x = (int)Math.max( 0, pt.X - 20); x < Math.min( extents[0], pt.X + 20); x++ )
+//						test.set(x, y, z, 1);
+//			pt = right.elementAt(i);
+//			for ( int z = (int)Math.max( 0, pt.Z - 20); z < Math.min( extents[2], pt.Z + 20); z++ )
+//				for ( int y = (int)Math.max( 0, pt.Y - 20); y < Math.min( extents[1], pt.Y + 20); y++ )
+//					for ( int x = (int)Math.max( 0, pt.X - 20); x < Math.min( extents[0], pt.X + 20); x++ )
+//						test.set(x, y, z, 1);
+//		}
+//		System.gc();
+//		test.save(outputDirectory + imageA_LF.getImageName() + File.separator );
+	}
+	
 
 	public void setNucleiMarkers(VOI nucleiVOIs)
 	{
@@ -181,492 +210,510 @@ public class LatticeModelEM extends LatticeModel
 			nucleiNames.add(text.getText());
 //			System.err.println( text.getText() + " " + pos + " " + radius );
 		}
+		outputNucleiCenters = new VOIContour[nucleiVOIs.getCurves().size()];
 	}
 	
-
-	private void createWormModel(final ModelImage imageA, final VOI samplingPlanes, final Vector<Ellipsoid3f> ellipseBounds, final Vector<Float> diameters,
-			final int diameter, final boolean displayResult) {
-		final int[] resultExtents = new int[] {diameter, diameter, samplingPlanes.getCurves().size()};
-
-		String imageName = imageA.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		ModelImage model = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), imageName + "_model.xml");
-		JDialogBase.updateFileInfo(imageA, model);
-		
-		ModelImage nucleiMarkers = null;
-
-		ModelImage insideConflict = new ModelImage(ModelStorageBase.BOOLEAN, imageA.getExtents(), imageName + "_insideConflict.xml");
-		JDialogBase.updateFileInfo(imageA, insideConflict);
-
-		// 7. The set of ellipses from the head of the worm to the tail defines an approximate outer boundary of the
-		// worm in 3D.
-		// The centers of each ellipse are spaced one voxel apart along the center line curve of the worm, and each
-		// ellipse
-		// corresponds to a single output slice in the final straightened image. This step generates a model of the worm
-		// where each voxel that falls within one of the ellipses is labeled with the corresponding output slice value.
-		// Voxels where multiple ellipses intersect are labeled as conflict voxels. Once all ellipses have been
-		// evaluated,
-		// the conflict voxels are removed from the model.
-		final int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
-		final int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;
-		final int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;
-		for (int z = 0; z < dimZ; z++) {
-			for (int y = 0; y < dimY; y++) {
-				for (int x = 0; x < dimX; x++) {
-					model.set(x, y, z, 0);
-					insideConflict.set(x, y, z, false);
-				}
-			}
-		}
-		
-		
-		int[] nucleiSlices = null;
-		if ( nucleiCenters != null )
-		{
-			nucleiMarkers = new ModelImage(ModelStorageBase.FLOAT, imageA.getExtents(), imageName + "_model.xml");
-			JDialogBase.updateFileInfo(imageA, model);
-			
-			nucleiSlices = new int[nucleiCenters.size()];
-			int missingCount = 0;
-			Vector3f center = new Vector3f();
-			Vector3f currentPoint = new Vector3f();
-			for ( int i = 0; i < nucleiCenters.size(); i++ )
-			{
-				Vector4f pos = nucleiCenters.elementAt(i);
-				center.set(pos.X, pos.Y, pos.Z);
-				currentPoint.set(pos.X, pos.Y, pos.Z);
-				int minIndex = -1;
-				float minDistance = Float.MAX_VALUE;
-				for ( int j = 0; j < ellipseBounds.size(); j++ )
-				{
-					if ( ellipseBounds.elementAt(j).Contains(currentPoint) )
-					{
-						float distance = currentPoint.distance(ellipseBounds.elementAt(j).Center );
-						if ( distance < minDistance )
-						{
-							minDistance = distance;
-							minIndex = j;
-						}
-					}
-				}
-				nucleiSlices[i] = minIndex + 1;
-				if ( minIndex == -1 )
-				{
-					missingCount++;
-				}
-				else
-				{
-					for ( int z = (int) Math.max(0, Math.floor(pos.Z - pos.W)); z <= Math.min(dimZ - 1, Math.ceil(pos.Z + pos.W)); z++ )
-					{
-						for ( int y = (int) Math.max(0, Math.floor(pos.Y - pos.W)); y <= Math.min(dimY - 1, Math.ceil(pos.Y + pos.W)); y++ )
-						{
-							for ( int x = (int) Math.max(0, Math.floor(pos.X - pos.W)); x <= Math.min(dimX - 1, Math.ceil(pos.X + pos.W)); x++ )
-							{
-								currentPoint.set( x, y, z );
-								if ( center.distance(currentPoint) <= pos.W )
-								{
-									minIndex = -1;
-									minDistance = Float.MAX_VALUE;
-									int startIndex = (int)Math.max(0, nucleiSlices[i] - pos.W);
-									int endIndex = (int)Math.min(nucleiSlices[i] + pos.W, ellipseBounds.size() - 1);
-									for ( int j = startIndex; j <= endIndex; j++ )
-									{
-										if ( ellipseBounds.elementAt(j).Contains(currentPoint) )
-										{
-											float distance = currentPoint.distance(ellipseBounds.elementAt(j).Center );
-											if ( distance < minDistance )
-											{
-												minDistance = distance;
-												minIndex = j;
-											}
-										}
-									}
-									if ( minIndex != -1 )
-									{
-										for (int z1 = Math.max(0, (int) Math.floor(z)); (z1 <= Math.min(dimZ - 1, Math.ceil(z))); z1++) {
-											for (int y1 = Math.max(0, (int) Math.floor(y)); (y1 <= Math.min(dimY - 1, Math.ceil(y))); y1++) {
-												for (int x1 = Math.max(0, (int) Math.floor(x)); (x1 <= Math.min(dimX - 1, Math.ceil(x))); x1++) {
-													nucleiMarkers.set(x1, y1, z1, minIndex );
-												}
-											}
-										}
-									}
-								}
-							}
-						}					
-					}
-				}
-			}
-//			nucleiMarkers.calcMinMax();
-//			new ViewJFrameImage((ModelImage)nucleiMarkers.clone());
-			System.err.println( "Pre Grow " + missingCount + " " + nucleiCenters.size() );
-//			return;
-		}
-		
-		for (int i = 0; i < samplingPlanes.getCurves().size(); i++) {
-			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
-			final Vector3f[] corners = new Vector3f[4];
-			for (int j = 0; j < 4; j++) {
-				corners[j] = kBox.elementAt(j);
-			}
-
-			float planeDist = -Float.MAX_VALUE;
-			if (i < (samplingPlanes.getCurves().size() - 1)) {
-				kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i + 1);
-				for (int j = 0; j < 4; j++) {
-					final float distance = corners[j].distance(kBox.elementAt(j));
-					if (distance > planeDist) {
-						planeDist = distance;
-					}
-				}
-			}
-
-			if (i < (samplingPlanes.getCurves().size() - 1)) {
-				planeDist *= 3;
-				kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i + 1);
-				final Vector3f[] steps = new Vector3f[4];
-				final Vector3f[] cornersSub = new Vector3f[4];
-				for (int j = 0; j < 4; j++) {
-					steps[j] = Vector3f.sub(kBox.elementAt(j), corners[j]);
-					steps[j].scale(1f / planeDist);
-					cornersSub[j] = new Vector3f(corners[j]);
-				}
-				for (int j = 0; j < planeDist; j++) {
-					initializeModelandConflicts(imageA, model, nucleiMarkers, insideConflict, 0, i, resultExtents, cornersSub, ellipseBounds.elementAt(i),
-							1.5f * diameters.elementAt(i), boxBounds.elementAt(i), i + 1);
-					for (int k = 0; k < 4; k++) {
-						cornersSub[k].add(steps[k]);
-					}
-				}
-			} else {
-				planeDist = 15;
-				kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i - 1);
-				final Vector3f[] steps = new Vector3f[4];
-				final Vector3f[] cornersSub = new Vector3f[4];
-				for (int j = 0; j < 4; j++) {
-					steps[j] = Vector3f.sub(corners[j], kBox.elementAt(j));
-					steps[j].scale(1f / planeDist);
-					// cornersSub[j] = Vector3f.add( corners[j], kBox.elementAt(j) ); cornersSub[j].scale(0.5f);
-					cornersSub[j] = new Vector3f(corners[j]);
-				}
-				for (int j = 0; j < planeDist; j++) {
-					initializeModelandConflicts(imageA, model, nucleiMarkers, insideConflict, 0, i, resultExtents, cornersSub, ellipseBounds.elementAt(i),
-							1.5f * diameters.elementAt(i), boxBounds.elementAt(i), i + 1);
-					for (int k = 0; k < 4; k++) {
-						cornersSub[k].add(steps[k]);
-					}
-				}
-			}
-		}
-
-		for (int z = 0; z < dimZ; z++) {
-			for (int y = 0; y < dimY; y++) {
-				for (int x = 0; x < dimX; x++) {
-					if (insideConflict.getBoolean(x, y, z)) {
-						model.set(x, y, z, 0);
-					}
-				}
-			}
-		}
-		
-//		model.calcMinMax();
-//		new ViewJFrameImage((ModelImage)model.clone());
-		insideConflict.disposeLocal(true);
-		insideConflict = null;
-		
-		
-		// 9. The last step is an attempt to ensure that as much of the worm data is captured by the algorithm as
-		// possible.
-		// Using the marker segmentation image where possible as a guide to the worm boundary, each slice of worm model
-		// is
-		// grown outward. The points on the boundary are expanded in an iterative process until the point comes in
-		// contact
-		// with another edge of the worm. For areas of the worm where it folds back on itself this results in a
-		// flattened
-		// cross-section where the folds press against each other.
-		// For areas of the worm where the cross-section does not contact other sections of the worm the 2D contour
-		// extends
-		// outward until it reaches the edge of the sample plane, capturing as much data as possible.
-		int growStep = 0;
-		int max = (int) (resultExtents[0] / 3);
-		System.err.println( max );
-		while ( (growStep < max) && ( !checkAnnotations(model, false) || (growStep < 20)))
-		{
-//			for (int z = 0; z < dimZ; z++) {
-//				for (int y = 0; y < dimY; y++) {
-//					for (int x = 0; x < dimX; x++) {
-//						if (model.getFloat(x, y, z) != 0) {
-//							inside.set(x, y, z, 1);
-//						}
-//						else
-//						{
-//							inside.set(x, y, z, 0);
-//						}
-//					}
-//				}
-//			}
-//			inside.setImageName( imageName + "_" + growStep + "_insideMask.xml" );
-//			saveImage(imageName, inside, false, "masks");
-			
-			growEdges(maskImage, model, null, null, growStep++);
-
-//			model.calcMinMax();
-//			new ViewJFrameImage((ModelImage)model.clone());
-			
-		}
-//		model.calcMinMax();
-//		new ViewJFrameImage((ModelImage)model.clone());
-		
-
-		System.err.println("    generateMasks " + growStep );
-		if ( !checkAnnotations(model, true)) {
-			System.err.println("    generateMasks " + growStep + " " + false);
-		}
-		
-
-		final short sID = (short) (imageA.getVOIs().getUniqueID());
-		if (displayInterpolatedContours != null) {
-			imageA.unregisterVOI(displayInterpolatedContours);
-			displayInterpolatedContours.dispose();
-			displayInterpolatedContours = null;
-		}
-		displayInterpolatedContours = new VOI(sID, "interpolatedContours");
-		displayInterpolatedContours.setColor(Color.blue);
-
-		if ( growContours != null )
-		{
-			for (int i = 0; i < growContours.getCurves().size(); i += 30) {
-				final VOIContour contour = (VOIContour) growContours.getCurves().elementAt(i).clone();
-				contour.trimPoints(0.5, true);
-				displayInterpolatedContours.getCurves().add(contour);
-				contour.update(new ColorRGBA(0, 1, 0, 1));
-				contour.setVolumeDisplayRange(minRange);
-			}
-		}
-
-
-		ModelImage inside = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), imageName + "_insideMask.xml");
-		JDialogBase.updateFileInfo(imageA, inside);
-		// Call the straightening step:
-		for (int z = 0; z < dimZ; z++) {
-			for (int y = 0; y < dimY; y++) {
-				for (int x = 0; x < dimX; x++) {
-					if (model.getFloat(x, y, z) != 0) {
-						inside.set(x, y, z, 1);
-					}
-				}
-			}
-		}
-		inside.setImageName( imageName + "_" + growStep + "_insideMask.xml" );
-		saveImage(imageName, inside, false);
-		inside.disposeLocal();
-		inside = null;
-
-		saveImage(imageName, model, false);
-		straighten(imageA, resultExtents, imageName, model, true, displayResult, true);
-//		straighten(imageA, resultExtents, imageName, model, false, displayResult, true);
-		
-		model.disposeLocal();
-		model = null;
-	}
-
-	
-	private void growEdges(final ModelImage mask, final ModelImage model, final ModelImage markers, final float[] sliceIDs, final int step) {
-		final int dimX = model.getExtents().length > 0 ? model.getExtents()[0] : 1;
-		final int dimY = model.getExtents().length > 1 ? model.getExtents()[1] : 1;
-		final int dimZ = model.getExtents().length > 2 ? model.getExtents()[2] : 1;
-
-		if (step == 0) {
-			if (growContours != null) {
-				growContours.dispose();
-				growContours = null;
-			}
-			final short sID = (short) (imageA.getVOIs().getUniqueID());
-			growContours = new VOI(sID, "growContours");
-
-			for (int i = 0; i < centerPositions.size(); i++) {
-				final int value = i + 1;
-
-				final Vector3f rkEye = centerPositions.elementAt(i);
-				final Vector3f rkRVector = rightVectors.elementAt(i);
-				final Vector3f rkUVector = upVectors.elementAt(i);
-
-				final float curve = centerSpline.GetCurvature(allTimes[i]);
-				final float scale = curve;
-				final VOIContour ellipse = new VOIContour(true);
-				ellipse.setVolumeDisplayRange(minRange);
-				makeEllipse2D(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), scale, ellipse);
-
-				interpolateContour(ellipse);
-				for (int j = 0; j < ellipse.size(); j++) {
-					final Vector3f start = new Vector3f(ellipse.elementAt(j));
-					final Vector3f pt = ellipse.elementAt(j);
-					Vector3f diff = Vector3f.sub(pt, centerPositions.elementAt(i));
-					float length = diff.normalize();
-
-					pt.copy(centerPositions.elementAt(i));
-					int x = Math.round(pt.X);
-					int y = Math.round(pt.Y);
-					int z = Math.round(pt.Z);
-					float currentValue = model.getFloat(x, y, z);
-					while ( ( (length != 0) && (currentValue != 0) && Math.abs(currentValue - value) <= SampleLimit)) {
-						pt.add(diff);
-						x = Math.round(pt.X);
-						y = Math.round(pt.Y);
-						z = Math.round(pt.Z);
-						if ( (x < 0) || (x >= dimX) || (y < 0) || (y >= dimY) || (z < 0) || (z >= dimZ)) {
-							break;
-						}
-						currentValue = model.getFloat(x, y, z);
-					}
-					if ( !pt.isEqual(centerPositions.elementAt(i))) {
-						pt.sub(diff);
-					}
-					final float distStart = start.distance(centerPositions.elementAt(i));
-					float distPt = pt.distance(centerPositions.elementAt(i));
-					if (distStart > distPt) {
-						x = Math.round(start.X);
-						y = Math.round(start.Y);
-						z = Math.round(start.Z);
-						if ( ! ( (x < 0) || (x >= dimX) || (y < 0) || (y >= dimY) || (z < 0) || (z >= dimZ))) {
-							currentValue = model.getFloat(x, y, z);
-							if ( ( (currentValue != 0) && Math.abs(currentValue - value) <= SampleLimit)) {
-								diff = Vector3f.sub(start, pt);
-								length = diff.normalize();
-								while ( (length != 0) && !pt.isEqual(start) && (distPt < distStart)) {
-									pt.add(diff);
-									x = Math.round(pt.X);
-									y = Math.round(pt.Y);
-									z = Math.round(pt.Z);
-									if ( (x < 0) || (x >= dimX) || (y < 0) || (y >= dimY) || (z < 0) || (z >= dimZ)) {
-										break;
-									}
-//									System.err.println( pt + "    " + start + "    " + centerPositions.elementAt(i) );
-									model.set(x, y, z, currentValue);
-									distPt = pt.distance(centerPositions.elementAt(i));
-								}
-							}
-						}
-					}
-				}
-				growContours.getCurves().add(ellipse);
-			}
-			// return;
-		}
-
-		for (int i = 0; i < centerPositions.size(); i++) {
-			final int value = i + 1;
-			float targetValue = (sliceIDs == null) ? value : sliceIDs[i];
-			final VOIContour ellipse = (VOIContour) growContours.getCurves().elementAt(i);
-			interpolateContour(ellipse);
-						
-			for (int j = 0; j < ellipse.size(); j++) {
-				final Vector3f pt = ellipse.elementAt(j);
-				final Vector3f diff = Vector3f.sub(pt, centerPositions.elementAt(i));
-				final float distance = diff.normalize();
-				if ( distance > (wormDiameters.elementAt(i)) )
-					continue;
-				// diff.scale(0.5f);
-//				if ( mask != null )
-//				{
-//					final float maskValue = mask.getFloat(Math.round(pt.X), Math.round(pt.Y), Math.round(pt.Z));
-//					if ( maskValue != 0 )
-//					{
-//						continue;
-//					}
-//				}
-
-				final float x = pt.X + diff.X;
-				final float y = pt.Y + diff.Y;
-				final float z = pt.Z + diff.Z;
-				boolean extend = true;
-				for (int z1 = Math.max(0, (int) Math.floor(z)); (z1 <= Math.min(dimZ - 1, Math.ceil(z))) && extend; z1++) {
-					for (int y1 = Math.max(0, (int) Math.floor(y)); (y1 <= Math.min(dimY - 1, Math.ceil(y))) && extend; y1++) {
-						for (int x1 = Math.max(0, (int) Math.floor(x)); (x1 <= Math.min(dimX - 1, Math.ceil(x))) && extend; x1++) {
-							final float currentValue = model.getFloat(x1, y1, z1);
-							if (currentValue != 0) {
-								if (Math.abs(currentValue - value) > SampleLimit) {
-									extend = false;
-									break;
-								}
-							}
-							if (markers != null) {
-								final float markerValue = markers.getFloat(x1, y1, z1);
-								if ( (markerValue != 0) && (markerValue != targetValue)) {
-									extend = false;
-									break;
-								}
-							}
-							if ( mask != null )
-							{
-								final float maskValue = mask.getFloat(x1, y1, z1);
-								if ( maskValue != 0 )
-								{
-									extend = false;
-								}
-							}
-						}
-					}
-				}
-				if (extend) {
-					for (int z1 = Math.max(0, (int) Math.floor(z)); (z1 <= Math.min(dimZ - 1, Math.ceil(z))) && extend; z1++) {
-						for (int y1 = Math.max(0, (int) Math.floor(y)); (y1 <= Math.min(dimY - 1, Math.ceil(y))) && extend; y1++) {
-							for (int x1 = Math.max(0, (int) Math.floor(x)); (x1 <= Math.min(dimX - 1, Math.ceil(x))) && extend; x1++) {
-								final float currentValue = model.getFloat(x1, y1, z1);
-								if (currentValue == 0) {
-									model.set(x1, y1, z1, value);
-								}
-							}
-						}
-					}
-					pt.add(diff);
-				}
-			}
-		}
-	}
 
 	/**
-	 * First pass generating the worm model from the simple ellipse-based model. Any voxels that fall inside overlapping
-	 * ellipses are set as conflict voxels.
-	 * 
-	 * @param image
-	 * @param model
-	 * @param insideConflict
-	 * @param tSlice
-	 * @param slice
-	 * @param extents
-	 * @param verts
-	 * @param ellipseBound
-	 * @param diameter
-	 * @param boxBound
-	 * @param value
+	 * Generates the set of natural spline curves to fit the current lattice.
 	 */
-	private void initializeModelandConflicts(final ModelImage image, final ModelImage model, final ModelImage nucleiMarkers, final ModelImage insideConflict, final int tSlice,
-			final int slice, final int[] extents, final Vector3f[] verts, final Ellipsoid3f ellipseBound, final float diameter, final Box3f boxBound,
-			final float value) {	
+	protected void generateCurves(float outputResolution)
+	{
+		
+		// 1. The center line of the worm is calculated from the midpoint between the left and right points of the
+		// lattice.
+		center = new VOIContour(false);
+		for (int i = 0; i < left.size(); i++) {
+			final Vector3f centerPt = Vector3f.add(left.elementAt(i), right.elementAt(i));
+			centerPt.scale(0.5f);
+			center.add(centerPt);
+		}
+
+		// 2. Three curves are generated from the three sets of points (left, center, right) using natural splines
+		// to fit the points. Natural splines generate curves that pass through the control points, have continuous
+		// first and second derivatives and minimize the bending between points.
+		afTimeC = new float[center.size()];
+		centerSpline = smoothCurve(center, afTimeC);
+		leftSpline = smoothCurve2(left, afTimeC);
+		rightSpline = smoothCurve2(right, afTimeC);
+
+		centerPositions = new VOIContour(false);
+		leftPositions = new VOIContour(false);
+		rightPositions = new VOIContour(false);
+
+		wormDiameters = new Vector<Float>();
+		rightVectors = new Vector<Vector3f>();
+		upVectors = new Vector<Vector3f>();
+
+		// 3. The center curve is uniformly sampled along the length of the curve.
+		// The step size is set to be one voxel. This determines the length of the final straightened
+		// image and ensures that each slice in the straightened image is equally spaced. The points
+		// along the curve are the center-points of the output slices.
+		// 4. Each spline can be parametrized with a parameter t, where the start of the curve has t = 0
+		// and the end of the curve has t = 1. This parameter t is calculated on the center curve, and
+		// used to determine the corresponding locations on the left and right hand curves, which may be
+		// longer or shorter than the center curve, depending on how the worm bends. Using the parametrization
+		// ensures that the left and right hand curves are sampled the same number of times as the center curve
+		// and that the points from start to end on all curves are included.
+		// 5. Given the current point on the center curve and the corresponding positions on the left and right hand
+		// curves, the 2D sampling plane can be defined. The center point of the plane is the current point on the
+		// center curve.
+		// The plane normal is the first derivative of the center line spline. The plane horizontal axis is the vector
+		// from the position on the left hand curve to the position on the right hand curve.
+		// The plane vertical axis is the cross-product of the plane normal with the plane horizontal axis.
+		// This method fully defines the sample plane location and orientation as it sweeps through the 3D volume of the
+		// worm.
+		length = centerSpline.GetLength(0, 1);
+		int maxLength = (int) Math.ceil(length/outputResolution);
+		float step = 1;
+		if ( maxLength != length )
+		{
+			step = length / maxLength;
+		}
+		allTimes = new float[maxLength + 1];
+		extent = -1;
+		float minDiameter = Float.MAX_VALUE;
+		System.err.println( "generateCurves " + length + " " + maxLength + " " + step );
+		outputZResolution = step;
+		
+		for (int i = 0; i <= maxLength; i++) {
+			final float t = centerSpline.GetTime(i*step);
+			centerPositions.add(centerSpline.GetPosition(t));
+			leftPositions.add(leftSpline.GetPosition(t));
+			rightPositions.add(rightSpline.GetPosition(t));
+
+			allTimes[i] = t;
+			final Vector3f normal = centerSpline.GetTangent(t);
+//			System.err.println( normal );
+			final Vector3f leftPt = leftSpline.GetPosition(t);
+			final Vector3f rightPt = rightSpline.GetPosition(t);
+
+			final Vector3f rightDir = Vector3f.sub(rightPt, leftPt);
+			float diameter = rightDir.normalize();
+			diameter /= 2f;
+			diameter += (DiameterBuffer * latticeScale);
+			if (diameter > extent) {
+				extent = (int) Math.ceil(diameter);
+			}
+			if ( (diameter > 0) && (diameter < minDiameter) )
+			{
+				minDiameter = diameter;
+			}
+			wormDiameters.add(diameter);
+			rightVectors.add(rightDir);
+
+			final Vector3f upDir = Vector3f.cross(normal, rightDir);
+			upDir.normalize();
+			upVectors.add(upDir);
+		}
+		extent += 10;
+		for ( int i = 0; i < wormDiameters.size(); i++ )
+		{
+			if ( wormDiameters.elementAt(i) < minDiameter )
+			{
+				wormDiameters.set(i, minDiameter);
+			}
+		}
+	}
+	
+
+	private void straighten(final ModelImageLargeFormat image, final int[] resultExtents) {
+		
+		int size = samplingPlanes.getCurves().size();
+
+//        int nthreads = ThreadUtil.getAvailableCores();
+        boolean multiThreadingEnabled = false; //Preferences.isMultiThreadingEnabled();
+        if ( multiThreadingEnabled )
+        {
+//    		System.err.println( "start multiThreaded ..." );
+//    		final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+//			final float step = size / nthreads;
+//			for (int j = 0; j < nthreads; j++) {
+//				final int fstart = (int)(j * step);
+//				final int fend = (j == (nthreads-1)) ? size : (int)(step * (j + 1));
+//				Runnable task = new Runnable() {
+//					public void run() {
+//						straighten( image, resultExtents, fstart, fend );
+//						doneSignal.countDown();
+//					}
+//				};
+//				ThreadUtil.mipavThreadPool.execute(task);
+//
+//			}
+//			try {
+//				doneSignal.await();
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+        }
+		else
+		{
+    		System.err.println( "start ..." );
+			String imageName = image.getImageName();
+			if (imageName.contains("_clone")) {
+				imageName = imageName.replaceAll("_clone", "");
+			}
+
+			final int dimX = resultExtents[0];
+			final int dimY = resultExtents[1];
+			final int dimZ = 1;
+			
+			int[] resultExtents2D = new int[]{resultExtents[0], resultExtents[1]};
+			ModelImage resultImage = new ModelImage( ModelStorageBase.ARGB, resultExtents2D, imageName + "_straight_unmasked.xml");		
+			resultImage.setResolutions(new float[] {1, 1});
+
+			Vector3f center2D = new Vector3f( dimX/2, dimY/2, 0);
+			
+			int min = 240;
+			int max = 255;
+			
+			final Vector3f[] corners = new Vector3f[4];
+			VOIContour[] contoursForward = new VOIContour[size];
+			float[] areas = new float[size];
+			Vector3f[] minEllipse = new Vector3f[size];
+			Vector3f[] maxEllipse = new Vector3f[size];
+
+			String voiDir = outputDirectory + "contours" + File.separator;
+			final File voiFileDir = new File(voiDir);
+
+			if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+				final String[] list = voiFileDir.list();
+				for (int i = 0; i < list.length; i++) {
+					final File lrFile = new File(voiDir + list[i]);
+					lrFile.delete();
+				}
+			} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+			} else { // voiFileDir does not exist
+				voiFileDir.mkdir();
+			}
+			boolean[] contoursOK = new boolean[size];
+			for (int i = 0; i < size; i++)
+			{			
+				VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+				for (int j = 0; j < 4; j++) {
+					corners[j] = kBox.elementAt(j);
+				}
+
+				minEllipse[i] = new Vector3f();
+				maxEllipse[i] = new Vector3f();
+				
+				writeDiagonal(image, null, null, size, i, resultExtents, corners, wormDiameters.elementAt(i), resultImage);
+				contoursForward[i] = WormSegmentation.findLargestConnected( resultImage, centerPositions.elementAt(i), leftPositions.elementAt(i), rightPositions.elementAt(i),
+						wormDiameters.elementAt(i) * 1.25f, 
+						dimX, dimY, dimZ, min, max, i, minEllipse[i], maxEllipse[i] );
+				
+				areas[i] = 0;
+				if ( contoursForward[i] != null )
+				{
+					areas[i] = (float) contoursForward[i].area();
+					float bb = minEllipse[i].distance(maxEllipse[i])/2f;
+					float radius = (leftPositions.elementAt(i).distance(rightPositions.elementAt(i)) / 2f);
+					float targetArea = (float) (Math.PI * radius * radius);
+					float ratioArea = targetArea / areas[i];
+					float ratioRadius = radius / bb;
+					if ( (ratioArea > .75) && (ratioArea < 1.5) && (ratioRadius > .65) && (ratioRadius < 1.5) )
+					{
+						contoursOK[i] = true;
+					}
+					else
+					{
+						contoursOK[i] = false;
+					}
+					System.err.println( i + " " + contoursOK[i] + " " + ratioArea + " " + ratioRadius );
+					if ( !contoursOK[i] )
+					{
+						System.err.println( "     " + bb + " " + radius );
+						System.err.println( "     " + targetArea + " " + areas[i] );
+					}
+				}
+				
+				resultImage.setImageName(imageName + "_straight_unmasked.xml");
+				saveImage(resultImage, i);
+				
+				resultImage.unregisterAllVOIs();
+				VOI outputContour = new VOI( (short)i, "contour_" + i, VOI.POLYLINE, (float) Math.random());
+				outputContour.getCurves().add( contoursForward[i] );
+				resultImage.registerVOI( outputContour );
+				
+				voiDir = outputDirectory + "contours" + File.separator + imageName + "_contour_" + i + File.separator;
+				saveAllVOIsTo(voiDir, resultImage);
+				
+				
+
+				for ( int y = 0; y < dimY; y++ )
+				{
+					for ( int x = 0; x < dimX; x++ )
+					{
+						if ( !contoursForward[i].contains( x, y ) )
+						{
+							if ( contoursOK[i] )
+							{
+								resultImage.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+								resultImage.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );	
+								resultImage.setC(x, y, 2, (byte) ( (0 & 0x000000ff)) );	
+								resultImage.setC(x, y, 3, (byte) ( (0 & 0x000000ff)) );
+							}
+							else
+							{
+								resultImage.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+								resultImage.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );							
+							}
+						}
+					}
+				}
+				
+				resultImage.setImageName(imageName + "_straight.xml");
+				saveImage(resultImage, i);
+			}
+
+			boolean badFound = false;
+			int start = -1;
+			for (int i = 0; i < size; i++)
+			{
+				if ( !contoursOK[i] && !badFound )
+				{
+					start = i-1;
+					badFound = true;
+				}
+				else if ( contoursOK[i] && badFound )
+				{
+					if ( start == -1 )
+					{
+						for ( int j = 0; j < i; j++ )
+						{
+							contoursForward[j] = contoursForward[i];
+							contoursOK[j] = true;
+
+							VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
+							for (int k = 0; k < 4; k++) {
+								corners[k] = kBox.elementAt(k);
+							}
+
+							writeDiagonal(image, null, null, size, j, resultExtents, corners, wormDiameters.elementAt(j), resultImage);
+
+
+							for ( int y = 0; y < dimY; y++ )
+							{
+								for ( int x = 0; x < dimX; x++ )
+								{
+									if ( !contoursForward[j].contains( x, y ) )
+									{
+										if ( contoursOK[j] )
+										{
+											resultImage.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+											resultImage.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );	
+											resultImage.setC(x, y, 2, (byte) ( (0 & 0x000000ff)) );	
+											resultImage.setC(x, y, 3, (byte) ( (0 & 0x000000ff)) );
+										}
+										else
+										{
+											resultImage.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+											resultImage.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );							
+										}
+									}
+								}
+							}
+
+							resultImage.setImageName(imageName + "_straight.xml");
+							System.err.println( "rewritingA " + j );
+							saveImage(resultImage, j);
+						}
+					}
+					else
+					{
+						VOI newContours = interpolateContours(contoursForward[start], contoursForward[i], (i - (start+1)), dimX, dimY);
+						for ( int j = 0; j < (i - (start+1)); j++ )
+						{
+							contoursForward[start + 1 + j] = (VOIContour) newContours.getCurves().elementAt(j);
+							contoursOK[start + 1 + j] = true;
+
+							VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(start + 1 + j);
+							for (int k = 0; k < 4; k++) {
+								corners[k] = kBox.elementAt(k);
+							}
+
+							writeDiagonal(image, null, null, size, start + 1 + j, resultExtents, corners, 
+									wormDiameters.elementAt(start + 1 + j), resultImage);
+
+							Vector3f dir = new Vector3f();
+							VOIContour ellipse = contoursForward[start + 1 + j];
+							for ( int k = 0; k < ellipse.size(); k++ )
+							{
+								dir.copy(ellipse.elementAt(k));
+								dir.sub(center2D);
+								float length = dir.normalize();
+								length += 10;
+								dir.scale(length);
+								ellipse.elementAt(k).copy(center2D);
+								ellipse.elementAt(k).add(dir);
+							}
+
+							for ( int y = 0; y < dimY; y++ )
+							{
+								for ( int x = 0; x < dimX; x++ )
+								{
+									if ( !contoursForward[start + 1 + j].contains( x, y ) )
+									{
+										if ( contoursOK[start + 1 + j] )
+										{
+											resultImage.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+											resultImage.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );	
+											resultImage.setC(x, y, 2, (byte) ( (0 & 0x000000ff)) );	
+											resultImage.setC(x, y, 3, (byte) ( (0 & 0x000000ff)) );
+										}
+										else
+										{
+											resultImage.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+											resultImage.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );							
+										}
+									}
+								}
+							}
+
+							resultImage.setImageName(imageName + "_straight.xml");
+							System.err.println( "rewritingB " + (start + 1 + j) );
+							saveImage(resultImage, start + 1 + j);
+						}
+					}
+					
+
+					badFound = false;
+					start = -1;
+				}
+			}
+			
+			if ( badFound && (start != -1) )
+			{
+				for ( int j = start + 1; j < size; j++ )
+				{
+					contoursForward[j] = contoursForward[start];
+					contoursOK[j] = true;
+
+					VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
+					for (int k = 0; k < 4; k++) {
+						corners[k] = kBox.elementAt(k);
+					}
+
+					writeDiagonal(image, null, null, size, j, resultExtents, corners, wormDiameters.elementAt(j), resultImage);
+
+
+					for ( int y = 0; y < dimY; y++ )
+					{
+						for ( int x = 0; x < dimX; x++ )
+						{
+							if ( !contoursForward[j].contains( x, y ) )
+							{
+								if ( contoursOK[j] )
+								{
+									resultImage.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+									resultImage.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );	
+									resultImage.setC(x, y, 2, (byte) ( (0 & 0x000000ff)) );	
+									resultImage.setC(x, y, 3, (byte) ( (0 & 0x000000ff)) );
+								}
+								else
+								{
+									resultImage.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+									resultImage.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );							
+								}
+							}
+						}
+					}
+
+					System.err.println( "rewritingC " + j );
+					resultImage.setImageName(imageName + "_straight.xml");
+					saveImage(resultImage, j);
+				}
+			}
+			
+			
+			if ( nucleiCenters != null )
+			{
+				for ( int n = 0; n < outputNucleiCenters.length; n++ )
+				{
+					if ( outputNucleiCenters[n] != null )
+					{
+						VOIContour outputNuclei = outputNucleiCenters[n];
+						for ( int i = outputNuclei.size() - 1; i >= 0; i-- )
+						{
+							int slice = Math.round(outputNuclei.elementAt(i).Z);
+							if ( (slice >= 0) && (slice < contoursForward.length) )
+							{
+								if ( contoursForward[slice] != null )
+								{
+									Vector3f pt = new Vector3f( outputNuclei.elementAt(i).X, outputNuclei.elementAt(i).Y, 0 );
+									if ( !contoursForward[slice].contains(pt) )
+									{
+										outputNuclei.remove(i);
+									}
+								}
+							}
+						}
+						if ( outputNuclei.size() > 1 )
+						{
+							Vector3f centerPos = new Vector3f();
+							for ( int i = 0; i < outputNuclei.size(); i++ )
+							{
+								centerPos.add(outputNuclei.elementAt(i) );
+							}
+							centerPos.scale(1f/(float)outputNuclei.size());
+							
+							float avgDist = 0;
+							for ( int i = 0; i < outputNuclei.size(); i++ )
+							{
+								avgDist += outputNuclei.elementAt(i).distance( centerPos );
+							}
+							float std = 0;
+							for ( int i = 0; i < outputNuclei.size(); i++ )
+							{
+								float dist = outputNuclei.elementAt(i).distance( centerPos );
+								std += (dist - avgDist)*(dist - avgDist);
+							}
+							std /= (float)outputNuclei.size();
+							std = (float) Math.sqrt(std);
+							
+							for ( int i = outputNuclei.size() - 1; i >= 0; i-- )
+							{
+								float dist = outputNuclei.elementAt(i).distance( centerPos );
+								if ( dist > (2*std) )
+								{
+									outputNuclei.remove(i);
+								}
+							}
+							if ( outputNuclei.size() == 0 )
+							{
+								outputNuclei.add(centerPos);
+							}
+							else
+							{
+								centerPos = new Vector3f();
+								for ( int i = 0; i < outputNuclei.size(); i++ )
+								{
+									centerPos.add(outputNuclei.elementAt(i) );
+								}
+								centerPos.scale(1f/(float)outputNuclei.size());
+								outputNuclei.removeAllElements();
+								outputNuclei.add(centerPos);
+							}
+						}
+					}
+				}
+			}
+			
+			resultImage.disposeLocal();
+			resultImage = null;
+		}
+
+	}
+
+	protected void writeDiagonal(final ModelImageLargeFormat image, final ModelImage model, final ModelImageLargeFormat originToStraight, 
+			final int curveLength, final int slice,
+			final int[] extents, final Vector3f[] verts, float diameter, ModelImage result ) {
+		final float modelScaleX = model == null ? 1 : (float)model.getExtents()[0] / (float)extents[0];
+		final float modelScaleY = model == null ? 1 : (float)model.getExtents()[1] / (float)extents[1];
+		final float modelScaleZ = model == null ? 1 : (float)model.getExtents()[2] / (float)curveLength;
 		
 		final int iBound = extents[0];
 		final int jBound = extents[1];
-
-		final int[] dimExtents = image.getExtents();
-
-		/*
-		 * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
-		 * coordinate-systems: transformation:
-		 */
-		final int iFactor = 1;
-		final int jFactor = dimExtents[0];
-		final int kFactor = dimExtents[0] * dimExtents[1];
-		final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
-
-		int buffFactor = 1;
-
-		if ( (image.getType() == ModelStorageBase.ARGB) || (image.getType() == ModelStorageBase.ARGB_USHORT)
-				|| (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
-			buffFactor = 4;
-		}
 
 		final Vector3f center = new Vector3f();
 		for (int i = 0; i < verts.length; i++) {
@@ -699,10 +746,9 @@ public class LatticeModelEM extends LatticeModel
 		float x = x0;
 		float y = y0;
 		float z = z0;
-		
-		final Vector3f currentPoint = new Vector3f();
 
-//		final boolean[][] values = new boolean[iBound][jBound];
+//		Vector3f position = new Vector3f();
+//		float[] indexValues = new float[4];
 		for (int j = 0; j < jBound; j++) {
 
 			/* Initialize the first diagonal point(x,y,z): */
@@ -711,61 +757,81 @@ public class LatticeModelEM extends LatticeModel
 			z = z0;
 
 			for (int i = 0; i < iBound; i++) {
-//				values[i][j] = false;
+				if ( result.getType() == ModelStorageBase.ARGB )
+				{
+					result.setC(i, j, 0, (byte) ( (0 & 0x000000ff)) );
+					result.setC(i, j, 1, (byte) ( (0 & 0x000000ff)) );
+					result.setC(i, j, 2, (byte) ( (0 & 0x000000ff)) );
+					result.setC(i, j, 3, (byte) ( (0 & 0x000000ff)) );
+				}
+				else
+				{
+					result.set(i,j,0,0);
+				}
+				
 				final int iIndex = Math.round(x);
 				final int jIndex = Math.round(y);
 				final int kIndex = Math.round(z);
 
-				/* calculate the ModelImage space index: */
-				final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
-
 				// Bounds checking:
-				if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
-						|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > image.getSize()))) {
-
+				if ( !image.checkBounds(iIndex, jIndex, kIndex) ) {
 					// do nothing
 				} else {
-					currentPoint.set(x, y, z);
-					final boolean isInside = ellipseBound.Contains(currentPoint);
-					if ( !isInside) {
-						// do nothing
-					} else {
-//						values[i][j] = true;
-						for (int z1 = Math.max(0, (int) Math.floor(z)); z1 <= Math.min(dimExtents[2] - 1, Math.ceil(z)); z1++) {
-							for (int y1 = Math.max(0, (int) Math.floor(y)); y1 <= Math.min(dimExtents[1] - 1, Math.ceil(y)); y1++) {
-								for (int x1 = Math.max(0, (int) Math.floor(x)); x1 <= Math.min(dimExtents[0] - 1, Math.ceil(x)); x1++) {
-									boolean foundNuclei = false;
-									float nucleiValue = 0;
-									if ( nucleiMarkers != null )
+					int currentValue = (slice + 1);
+					if (model != null) {
+						int modelX = (int)((float)i * modelScaleX);
+						int modelY = (int)((float)j * modelScaleY);
+						int modelZ = (int)((float)slice * modelScaleZ);
+						currentValue = model.getInt(modelX, modelY, modelZ);
+					}
+					if (currentValue == 0) {
+						if ( result.getType() == ModelStorageBase.ARGB )
+						{
+							result.setC(i, j, 0, (byte) ( (0 & 0x000000ff)) );
+							result.setC(i, j, 1, (byte) ( (0 & 0x000000ff)) );
+							result.setC(i, j, 2, (byte) ( (0 & 0x000000ff)) );
+							result.setC(i, j, 3, (byte) ( (0 & 0x000000ff)) );
+						}
+						else
+						{
+							result.set(i, j, 0, 0);
+						}
+					}
+					else //if (Math.abs(currentValue - (slice + 1)) < SampleLimit) {
+					{
+						final Integer tempV = image.get(iIndex, jIndex, kIndex);
+
+						if ( result.getType() == ModelStorageBase.ARGB )
+						{
+							result.setC(i, j, 0, (byte) ( (255 & 0x000000ff)) );
+							result.setC(i, j, 1, (byte) ( (tempV & 0x000000ff)) );
+							result.setC(i, j, 2, (byte) ( (tempV & 0x000000ff)) );
+							result.setC(i, j, 3, (byte) ( (tempV & 0x000000ff)) );
+						}
+						else
+						{
+							result.set(i, j, 0, tempV.intValue());
+						}
+						
+						if ( nucleiCenters != null )
+						{
+							for ( int n = 0; n < nucleiCenters.size(); n++ )
+							{
+								float nX = nucleiCenters.elementAt(n).X;
+								float nY = nucleiCenters.elementAt(n).Y;
+								float nZ = nucleiCenters.elementAt(n).Z;
+								if ( Math.sqrt( ( (nX-x)*(nX-x) + (nY-y)*(nY-y) + (nZ-z)*(nZ-z) ) ) < 5 )
+								{
+									if ( outputNucleiCenters[n] == null )
 									{
-										nucleiValue = nucleiMarkers.getFloat(x1,y1,z1);
-										if ( nucleiValue != 0 )
-										{
-											foundNuclei = true;
-										}
+										outputNucleiCenters[n] = new VOIContour(false);
 									}
-									if ( foundNuclei )
-									{
-										model.set(x1,y1,z1,nucleiValue);
-									}
-									else
-									{
-										final float currentValue = model.getFloat(x1, y1, z1);
-										if (currentValue != 0) {
-											if (Math.abs(currentValue - value) < SampleLimit) {
-											} else {
-												insideConflict.set(x1, y1, z1, true);
-											}
-										} else {
-											model.set(x1, y1, z1, value);
-										}
-									}
+									outputNucleiCenters[n].add(new Vector3f(i,j,slice) );
 								}
 							}
 						}
 					}
 				}
-
 				/*
 				 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
 				 * ySlopeX and zSlopeX values:
@@ -783,364 +849,397 @@ public class LatticeModelEM extends LatticeModel
 			y0 = y0 + ySlopeY;
 			z0 = z0 + zSlopeY;
 		}
+
+		if ( (xSlopeX > 1) || (ySlopeX > 1) || (zSlopeX > 1) || (xSlopeY > 1) || (ySlopeY > 1) || (zSlopeY > 1)) {
+			System.err.println("writeDiagonal " + xSlopeX + " " + ySlopeX + " " + zSlopeX);
+			System.err.println("writeDiagonal " + xSlopeY + " " + ySlopeY + " " + zSlopeY);
+		}
 	}
 	
-	/**
-	 * Once the 3D model of the worm is finalized, a 2D slice plane is swept through the model. At each sample-point
-	 * along the 3D center spline of the worm, the 2D plane is intersected with the original 3D volume. Voxels that fall
-	 * outside the updated 2D worm contour are set to the image minimum value (typically = 0). Voxels that fall inside
-	 * the 2D worm contour are copied into the output slice. The set of 2D slices from the worm head to tail are
-	 * concatenated to form the final 3D straightened volume.
-	 * 
-	 * During the straightening step as well as during the model-building process or anytime the 2D sample plane is
-	 * intersected with the 3D volume steps are taken by the algorithm to minimize sampling artifacts. Due to the
-	 * twisted configuration of the worm, sampling the volume along the outer-edge of a curve will result under-sampling
-	 * the data while the inside edge of the curve will be over-sampled.
-	 * 
-	 * To reduce sampling artifacts the sample planes are interpolated between sample points, using the maximum distance
-	 * between points along consecutive contours to determine the amount of super-sampling. The multiple sample planes
-	 * are averaged to produce the final slice in the straightened image. In addition, each contour is modeled as having
-	 * the thickness of one voxel and sample points that fall between voxels in the volume are trilinearly interpolated.
-	 * 
-	 * @param image
-	 * @param resultExtents
-	 * @param baseName
-	 * @param model
-	 * @param saveStats
-	 * @param displayResult
-	 * @param saveAsTif
-	 */
-	private void straighten(final ModelImage image, final int[] resultExtents, final String baseName, final ModelImage model, final boolean saveStats,
-			final boolean displayResult, final boolean saveAsTif) {
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
 
-		final int colorFactor = image.isColorImage() ? 4 : 1;
-		final float[] values = new float[resultExtents[0] * resultExtents[1] * colorFactor];
-
-		float[] dataOrigin = null;
-		float[] sampleDistance = null;
-		float[] sampleDistanceP = null;
-
-		ModelImage resultImage = new ModelImage(image.getType(), resultExtents, imageName + "_straight.xml");
-		JDialogBase.updateFileInfo(image, resultImage);
-		resultImage.setResolutions(new float[] {1, 1, 1});
-
-		ModelImage straightToOrigin = null;
-		ModelImage originToStraight = null;
-		ModelImage overlap2 = null;
-
-		if (saveStats) {
-			dataOrigin = new float[resultExtents[0] * resultExtents[1] * 4];
-			straightToOrigin = new ModelImage(ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_toOriginal.xml");
-			JDialogBase.updateFileInfo(image, straightToOrigin);
-			straightToOrigin.setResolutions(new float[] {1, 1, 1});
-			for (int i = 0; i < straightToOrigin.getDataSize(); i++) {
-				straightToOrigin.set(i, 0);
-			}
-
-			originToStraight = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), imageName + "_toStraight.xml");
-			JDialogBase.updateFileInfo(image, originToStraight);
-			for (int i = 0; i < originToStraight.getDataSize(); i++) {
-				originToStraight.set(i, 0);
-			}
-
-			overlap2 = new ModelImage(ModelStorageBase.FLOAT, resultExtents, imageName + "_sampleDensity.xml");
-			JDialogBase.updateFileInfo(image, overlap2);
-			overlap2.setResolutions(new float[] {1, 1, 1});
-
-			sampleDistance = new float[resultExtents[0] * resultExtents[1]];
-			sampleDistanceP = new float[resultExtents[0] * resultExtents[1] * 4];
-			final int length = resultExtents[0] * resultExtents[1];
-			for (int j = 0; j < length; j++) {
-				sampleDistance[j] = 0;
-				for (int c = 0; c < 4; c++) {
-					// sampleDistance[j * 4 + c] = 0;
-					sampleDistanceP[j * 4 + c] = 0;
-				}
-			}
-		}
-
-		for (int i = 0; i < samplingPlanes.getCurves().size(); i++) {
-			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
-			final Vector3f[] corners = new Vector3f[4];
-			for (int j = 0; j < 4; j++) {
-				corners[j] = kBox.elementAt(j);
-			}
-			float planeDist = -Float.MAX_VALUE;
-			if (i < (samplingPlanes.getCurves().size() - 1)) {
-				kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i + 1);
-				for (int j = 0; j < 4; j++) {
-					final float distance = corners[j].distance(kBox.elementAt(j));
-					if (distance > planeDist) {
-						planeDist = distance;
-					}
-					// System.err.println( distance + "  " + centerPositions.elementAt(i).distance(
-					// centerPositions.elementAt(i+1) ) );
-				}
-				// System.err.println("");
-			}
-			try {
-				for (int j = 0; j < values.length / colorFactor; j++) {
-					if (colorFactor == 4) {
-						values[ (j * 4) + 0] = (float) image.getMinA();
-						values[ (j * 4) + 1] = (float) image.getMinR();
-						values[ (j * 4) + 2] = (float) image.getMinG();
-						values[ (j * 4) + 3] = (float) image.getMinB();
-					}
-					/* not color: */
-					else {
-						values[j] = (float) image.getMin();
-					}
-					if (dataOrigin != null) {
-						for (int c = 0; c < 4; c++) {
-							dataOrigin[j * 4 + c] = 0;
-						}
-					}
-				}
-
-				int planeCount = 0;
-				if (i < (samplingPlanes.getCurves().size() - 1)) {
-					planeDist *= 3;
-					kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i + 1);
-					final Vector3f[] steps = new Vector3f[4];
-					final Vector3f[] cornersSub = new Vector3f[4];
-					for (int j = 0; j < 4; j++) {
-						steps[j] = Vector3f.sub(kBox.elementAt(j), corners[j]);
-						steps[j].scale(1f / planeDist);
-						cornersSub[j] = new Vector3f(corners[j]);
-					}
-					for (int j = 0; j < planeDist; j++) {
-						writeDiagonal(image, model, originToStraight, 0, i, resultExtents, cornersSub, values, dataOrigin, sampleDistance, sampleDistanceP);
-						planeCount++;
-						for (int k = 0; k < 4; k++) {
-							cornersSub[k].add(steps[k]);
-						}
-					}
-				} else {
-					planeDist = 15;
-					kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i - 1);
-					final Vector3f[] steps = new Vector3f[4];
-					final Vector3f[] cornersSub = new Vector3f[4];
-					for (int j = 0; j < 4; j++) {
-						steps[j] = Vector3f.sub(corners[j], kBox.elementAt(j));
-						steps[j].scale(1f / planeDist);
-						// cornersSub[j] = Vector3f.add( corners[j], kBox.elementAt(j) ); cornersSub[j].scale(0.5f);
-						cornersSub[j] = new Vector3f(corners[j]);
-					}
-					for (int j = 0; j < planeDist; j++) {
-						writeDiagonal(image, model, originToStraight, 0, i, resultExtents, cornersSub, values, dataOrigin, sampleDistance, sampleDistanceP);
-						planeCount++;
-						for (int k = 0; k < 4; k++) {
-							cornersSub[k].add(steps[k]);
-						}
-					}
-					// writeDiagonal( image, model, originToStraight, 0, i, resultExtents, corners, values, dataOrigin);
-				}
-				for (int j = 0; j < values.length / colorFactor; j++) {
-					if (colorFactor == 4) {
-						values[ (j * 4) + 1] /= planeCount;
-						values[ (j * 4) + 2] /= planeCount;
-						values[ (j * 4) + 3] /= planeCount;
-					}
-					/* not color: */
-					else {
-						values[j] /= planeCount;
-					}
-					if (dataOrigin != null) {
-						for (int c = 1; c < 4; c++) {
-							dataOrigin[j * 4 + c] /= planeCount;
-						}
-					}
-				}
-
-				resultImage.importData(i * values.length, values, false);
-				if (straightToOrigin != null) {
-					straightToOrigin.importData(i * dataOrigin.length, dataOrigin, false);
-				}
-				if (overlap2 != null) {
-					overlap2.importData(i * sampleDistance.length, sampleDistance, false);
-				}
-
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		VOI transformedAnnotations = null;
-		if (saveStats && (straightToOrigin != null)) {
-			testOriginToStraight(model, originToStraight);
-			saveImage(baseName, overlap2, true);
-
-			saveImage(baseName, straightToOrigin, false);
-			saveImage(baseName, originToStraight, false);
-			
-			// calculate the transformed origin point:
-			if ( (model != null) && (originToStraight != null) && (wormOrigin != null)) {
-				transformedOrigin = originToStraight(model, originToStraight, wormOrigin, "wormOrigin");
-			}
-			else if ( transformedOrigin == null )
-			{
-				transformedOrigin = new Vector3f();
-			}
-			
-			transformedAnnotations = saveAnnotationStatistics(imageA, model, originToStraight, resultExtents, "_after");
-			straightToOrigin.disposeLocal();
-			straightToOrigin = null;
-
-			overlap2.disposeLocal();
-			overlap2 = null;
-
-			short id = (short) image.getVOIs().getUniqueID();
-			final VOI lattice = new VOI(id, "lattice", VOI.POLYLINE, (float) Math.random());
-			final VOIContour leftSide = new VOIContour(false);
-			final VOIContour rightSide = new VOIContour(false);
-			lattice.getCurves().add(leftSide);
-			lattice.getCurves().add(rightSide);
-			for (int i = 0; i < left.size(); i++) {
-				final Vector3f leftPt = originToStraight(model, originToStraight, left.elementAt(i), "left" + i);
-				final Vector3f rightPt = originToStraight(model, originToStraight, right.elementAt(i), "right" + i);
-
-				if (leftPt.isEqual(Vector3f.ZERO) || rightPt.isEqual(Vector3f.ZERO)) {
-					System.err.println("    " + imageA.getImageName() + " " + i + " " + leftPt + "     " + rightPt);
-				} else if ( (leftSide.size() > 0) && ( (leftPt.Z <= leftSide.lastElement().Z) || (rightPt.Z <= rightSide.lastElement().Z))) {
-					System.err.println("    " + imageA.getImageName() + " " + i + " " + leftPt + "     " + rightPt);
-				} else {
-					leftSide.add(leftPt);
-					rightSide.add(rightPt);
-				}
-			}
-			final float[] leftDistances = new float[leftSide.size()];
-			final float[] rightDistances = new float[leftSide.size()];
-			for (int i = 0; i < leftSide.size(); i++) {
-				leftDistances[i] = 0;
-				rightDistances[i] = 0;
-				if (i > 1) {
-					leftDistances[i] = leftSide.elementAt(i).distance(leftSide.elementAt(i - 1));
-					rightDistances[i] = rightSide.elementAt(i).distance(rightSide.elementAt(i - 1));
-				}
-			}
-
-			resultImage.registerVOI(lattice);
-			lattice.setColor(new Color(0, 0, 255));
-			lattice.getCurves().elementAt(0).update(new ColorRGBA(0, 0, 1, 1));
-			lattice.getCurves().elementAt(1).update(new ColorRGBA(0, 0, 1, 1));
-			lattice.getCurves().elementAt(0).setClosed(false);
-			lattice.getCurves().elementAt(1).setClosed(false);
-
-			id = (short) image.getVOIs().getUniqueID();
-			for (int j = 0; j < leftSide.size(); j++) {
-				id = (short) image.getVOIs().getUniqueID();
-				final VOI marker = new VOI(id, "pair_" + j, VOI.POLYLINE, (float) Math.random());
-				final VOIContour mainAxis = new VOIContour(false);
-				mainAxis.add(leftSide.elementAt(j));
-				mainAxis.add(rightSide.elementAt(j));
-				marker.getCurves().add(mainAxis);
-				marker.setColor(new Color(255, 255, 0));
-				mainAxis.update(new ColorRGBA(1, 1, 0, 1));
-				if (j == 0) {
-					marker.setColor(new Color(0, 255, 0));
-					mainAxis.update(new ColorRGBA(0, 1, 0, 1));
-				}
-				resultImage.registerVOI(marker);
-			}
-
-			String voiDir = resultImage.getImageDirectory() + JDialogBase.makeImageName(baseName, "") + File.separator + "straightened_lattice"
-					+ File.separator;
-			saveAllVOIsTo(voiDir, resultImage);
-
-			final VOIVector temp = resultImage.getVOIsCopy();
-			resultImage.resetVOIs();
-			if (transformedAnnotations != null) {
-				resultImage.registerVOI(transformedAnnotations);
-				voiDir = resultImage.getImageDirectory() + JDialogBase.makeImageName(baseName, "") + File.separator + "straightened_annotations"
-						+ File.separator;
-				saveAllVOIsTo(voiDir, resultImage);
-			}
-			saveLatticeStatistics(image, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
-
-			resultImage.restoreVOIs(temp);
-			if (transformedAnnotations != null) {
-				resultImage.registerVOI(transformedAnnotations);
-			}
-
-			saveNeuriteData( imageA, resultImage, model, originToStraight, baseName );
-			
-			if ( nucleiCenters != null )
-			{
-				saveNucleiVolumes( imageA, resultImage, model, originToStraight, baseName );
-			}
-		}
-
-		saveImage(baseName, resultImage, saveAsTif);
-		if (displayResult) {
-			resultImage.calcMinMax();
-			new ViewJFrameImage(resultImage);
-		} else {
-			resultImage.disposeLocal();
-			resultImage = null;
-		}
-
-		if (originToStraight != null) {
-			originToStraight.disposeLocal();
-			originToStraight = null;
-		}
-	}
-
-
-	private void saveNucleiVolumes( ModelImage image, ModelImage result, ModelImage model, ModelImage originToStraight, String baseName )
+	private void saveImage(final ModelImage image, int sliceID)
 	{
-		ModelImage output = new ModelImage( result.getDataType(), result.getExtents(), JDialogBase.makeImageName( result.getImageName(), "_nucleiMarkers.xml") );
-		JDialogBase.updateFileInfo(result, output);
-
-		// original dimensions:
-		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
-		for ( int i = 0; i < nucleiCenters.size(); i++ )
-		{
-			Vector3f p1 = new Vector3f();
-			Vector3f center = new Vector3f();
-			Vector4f pos = nucleiCenters.elementAt(i);
-			center.set( pos.X, pos.Y, pos.Z );
-			Vector3f straightCenter = originToStraight(model, originToStraight, center, "center" );
-			int volumeCount = 0;
-			int foundCount = 0;
-			int outsideCount = 0;
-//			float centerValue = model.getFloat( Math.round(center.X), Math.round(center.Y), Math.round(center.Z) );
-			for ( int z = (int) Math.max(0, Math.floor(pos.Z - pos.W)); z <= Math.min(dimZ - 1, Math.ceil(pos.Z + pos.W)); z++ )
-			{
-				for ( int y = (int) Math.max(0, Math.floor(pos.Y - pos.W)); y <= Math.min(dimY - 1, Math.ceil(pos.Y + pos.W)); y++ )
-				{
-					for ( int x = (int) Math.max(0, Math.floor(pos.X - pos.W)); x <= Math.min(dimX - 1, Math.ceil(pos.X + pos.W)); x++ )
-					{
-						p1.set( x, y, z );
-						if ( center.distance(p1) <= pos.W )
-						{
-							volumeCount++;
-//							float currentValue = model.getFloat(x, y, z);
-//							if ( (currentValue != 0) && (Math.abs(currentValue - centerValue) <= SampleLimit) )
-							{
-								Vector3f newPt = originToStraight(model, originToStraight, p1, nucleiNames.elementAt(i) + "_" + x + "_" + y + "_" + z );
-								if ( !newPt.isEqual(Vector3f.ZERO) )
-								{
-									output.set( Math.round(newPt.X), Math.round(newPt.Y), Math.round(newPt.Z), 1 );
-									foundCount++;
-									if ( straightCenter.distance(newPt) > pos.W )
-									{
-										outsideCount++;
-									}
-								}
-							}
-						}
-					}
-				}					
-			}
-//			System.err.println( 100*(float)(foundCount)/(float)volumeCount + " " + 100*(float)(outsideCount)/(float)foundCount );
+		String imageName = image.getImageName();
+		String voiDir = outputDirectory + JDialogBase.makeImageName(imageName, "") + File.separator;
+		File voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			voiFileDir.mkdir();
 		}
-		saveImage( baseName, output, false );
+
+		imageName = imageName + "_" + sliceID;
+		final File file = new File(voiDir + imageName);
+		if (file.exists()) {
+			file.delete();
+		}
+		ModelImage.saveImage(image, imageName + ".tif", voiDir, false);
+//		System.err.println( "saveImage " + voiDir + " " + imageName + ".tif" );
 	}
 	
+
+
+
+	private void scaleLattice( VOI lattice, float scale )
+	{
+		Vector3f scaleDown = new Vector3f(0,0,0);
+		Vector3f scaleUp = new Vector3f(0,0,0);
+		Vector3f scaleV = new Vector3f(scale, scale, 1);
+		if ( imageA != null )
+		{
+			scaleDown.X = (int)(imageA.getExtents()[0]/(scale*2));
+			scaleDown.Y = (int)(imageA.getExtents()[1]/(scale*2));
+			
+			scaleUp.X = imageA.getExtents()[0]/2;
+			scaleUp.Y = imageA.getExtents()[1]/2;
+		}
+		else if ( imageA_LF != null )
+		{
+			scaleDown.X = (int)(imageA_LF.getExtents()[0]/(scale*2));
+			scaleDown.Y = (int)(imageA_LF.getExtents()[1]/(scale*2));
+			
+			scaleUp.X = imageA_LF.getExtents()[0]/2;
+			scaleUp.Y = imageA_LF.getExtents()[1]/2;
+			
+			scaleV.Z = imageA_LF.getZScale();
+		}
+		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+		for ( int i = 0; i < Math.min( left.size(), right.size() ); i++ )
+		{
+			Vector3f pt = left.elementAt(i);
+			pt.sub(scaleDown);
+			pt.mult(scaleV);
+			pt.add(scaleUp);
+			
+			pt = right.elementAt(i);
+			pt.sub(scaleDown);
+			pt.mult(scaleV);
+			pt.add(scaleUp);
+		}
+
+	}
+	
+
+	private VOI interpolateContours(VOIContour contour1, VOIContour contour2, int numSlices, int dimX, int dimY )
+	{
+		int centerX = dimX/2;
+		int centerY = dimY/2;
+
+		Vector3f geomCenter1 = contour1.getGeometricCenter();
+		Vector3f geomCenter2 = contour2.getGeometricCenter();
+
+		//reposition VOIs to center
+		float transX1 = centerX - geomCenter1.X;
+		float transY1 = centerY - geomCenter1.Y;
+		float transX2 = centerX - geomCenter2.X;
+		float transY2 = centerY- geomCenter2.Y;
+		contour1.translate(transX1, transY1, 0); contour1.update();
+		contour2.translate(transX2, transY2, 0); contour2.update();
+
+		
+		//generate binary mask images
+        //generate distance map image for shape interpolation
+		ModelImage distanceMap1 = new ModelImage(ModelStorageBase.BOOLEAN, new int[]{dimX,dimY}, "dMap1" );
+		ModelImage distanceMap2 = new ModelImage(ModelStorageBase.BOOLEAN, new int[]{dimX,dimY}, "dMap2" );
+		
+
+		for ( int y = 0; y < dimY; y++ )
+		{
+			for ( int x = 0; x < dimX; x++ )
+			{
+				int index = y*dimX + x;
+				if ( contour1.contains( x, y ) )
+				{
+					distanceMap1.set(index, true);
+				}
+				if ( contour2.contains( x, y ) )
+				{
+					distanceMap2.set(index, true);
+				}
+			}
+		}
+		
+
+        AlgorithmMorphology2D distanceMapAlgo1 = new AlgorithmMorphology2D(distanceMap1, 0, 0, AlgorithmMorphology2D.DISTANCE_MAP_FOR_SHAPE_INTERPOLATION, 0, 0, 0, 0, true);
+        distanceMapAlgo1.run();
+        AlgorithmMorphology2D distanceMapAlgo2 = new AlgorithmMorphology2D(distanceMap2, 0, 0, AlgorithmMorphology2D.DISTANCE_MAP_FOR_SHAPE_INTERPOLATION, 0, 0, 0, 0, true);
+        distanceMapAlgo2.run();
+
+        VOI curves = new VOI((short)0, "interp");
+        if ( numSlices == 1 )
+        {
+        	ModelImage averageDistanceMaps = new ModelImage(distanceMap1.getType(), distanceMap1.getExtents(), "average_0");
+        	AlgorithmImageCalculator mathAlgo = new AlgorithmImageCalculator(averageDistanceMaps, distanceMap1, distanceMap2, AlgorithmImageCalculator.AVERAGE, AlgorithmImageMath.CLIP, true, null);
+        	mathAlgo.run();
+
+        	ModelImage inBetweenBooleanShapes = new ModelImage(ModelStorageBase.BOOLEAN, distanceMap1.getExtents(), "booleanShape_0");
+        	int length = distanceMap1.getExtents()[0] * distanceMap1.getExtents()[1];
+        	float[] avgDistMapBuff = new float[length];
+        	boolean[] boolBuff = new boolean[length];
+        	try {
+        		averageDistanceMaps.exportData(0,length,avgDistMapBuff);
+        	}catch(Exception e) {
+        		
+        	}
+        	for(int i=0;i<avgDistMapBuff.length;i++) {
+        		if(avgDistMapBuff[i] >= 0) {
+        			boolBuff[i] = true;
+        		}else {
+        			boolBuff[i] = false;
+        		}
+        	}
+        	try {
+        		inBetweenBooleanShapes.importData(0, boolBuff, true);
+        	}catch(Exception e) {
+        		
+        	}
+
+            AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(inBetweenBooleanShapes);
+            VOIExtractionAlgo.run();
+            
+            //we are only working with one contour on a 2d slice here
+            ViewVOIVector VOIs = (ViewVOIVector) inBetweenBooleanShapes.getVOIs();
+            VOIContour newContour = null;
+            if ( VOIs != null )
+            {
+            	VOI tempVOI = (VOI)(VOIs.VOIAt(0).clone());
+            	tempVOI.setUID(tempVOI.hashCode());
+            	if ( tempVOI != null )
+            	{
+            		Vector<VOIBase> contours = tempVOI.getCurves();
+            		if ( contours.size() > 0 )
+            		{
+            			newContour = (VOIContour)contours.elementAt(0);
+            		}
+            	}
+            }
+            
+            boolean isLineVertical = false;
+            float diffX = Math.abs(geomCenter1.X - geomCenter2.X);
+            float stepX = (diffX/2);
+
+            float newX = 0;
+            float newY = 0;
+            if(geomCenter1.X < geomCenter2.X) {
+            	newX = geomCenter1.X + stepX;
+            }else if(geomCenter1.X > geomCenter2.X) {
+            	newX = geomCenter2.X + stepX;
+            }else {
+            	isLineVertical = true;
+            }
+
+            if(!isLineVertical) {
+            	//get newY coordinate
+            	newY = linearInterpGetY(geomCenter1, geomCenter2, newX);
+            }
+            if(isLineVertical) {
+            	newX = geomCenter1.X;
+            	float diffY = Math.abs(geomCenter1.Y - geomCenter2.Y);
+                float stepY = (diffY/2);
+                if(geomCenter1.Y < geomCenter2.Y) {
+                	newY = geomCenter1.Y + stepY;
+                }else if(geomCenter1.Y > geomCenter2.Y) {
+                	newY = geomCenter2.Y + stepY;
+                }else {
+                	newY = geomCenter1.Y;
+                }
+            }
+            
+            if ( newContour != null )
+            {
+            	float transX = newX - centerX;
+            	float transY = newY - centerY;
+            	newContour.translate(transX, transY, 0);
+        		curves.getCurves().add(newContour);
+            }
+            else
+            {
+        		curves.getCurves().add(new VOIContour(false));
+            }
+    		
+            averageDistanceMaps.disposeLocal(false);
+            inBetweenBooleanShapes.disposeLocal(false);
+        }
+        else
+        { 
+        	for( int i = 1, k = numSlices; i <= numSlices; i++,k-- )
+        	{
+        		int denominator = numSlices + 1;
+        		double numerator_A = k;
+        		double numerator_B = i;
+
+        		double factor_A = (numerator_A/denominator);
+        		double factor_B = (numerator_B/denominator);
+
+        		int index = i - 1;
+        		ModelImage tempA = new ModelImage(distanceMap1.getType(), distanceMap1.getExtents(), "tempA_" + index);
+        		ModelImage tempB = new ModelImage(distanceMap2.getType(), distanceMap2.getExtents(), "tempB_" + index);
+        		
+        		ModelImage averageDistanceMaps = new ModelImage(distanceMap1.getType(), distanceMap1.getExtents(), "average_" + index);
+        		
+        		AlgorithmImageMath mathAlgoA = new AlgorithmImageMath(tempA, distanceMap1, AlgorithmImageMath.MULTIPLY, factor_A, 0, 0, AlgorithmImageMath.CLIP, true);
+        		mathAlgoA.run();
+
+        		AlgorithmImageMath mathAlgoB = new AlgorithmImageMath(tempB, distanceMap2, AlgorithmImageMath.MULTIPLY, factor_B, 0, 0, AlgorithmImageMath.CLIP, true);
+        		mathAlgoB.run();
+
+            	AlgorithmImageCalculator mathAlgoAdd = new AlgorithmImageCalculator(averageDistanceMaps, tempA, tempB, AlgorithmImageCalculator.ADD, AlgorithmImageMath.CLIP, true, null);
+            	mathAlgoAdd.run();
+
+            	ModelImage inBetweenBooleanShapes = new ModelImage(ModelStorageBase.BOOLEAN, distanceMap1.getExtents(), "booleanShape_" + index);
+            	int length = distanceMap1.getExtents()[0] * distanceMap1.getExtents()[1];
+            	float[] avgDistMapBuff = new float[length];
+            	boolean[] boolBuff = new boolean[length];
+            	try {
+            		averageDistanceMaps.exportData(0,length,avgDistMapBuff);
+            	}catch(Exception e) {
+            	}
+            	for(int m=0;m<avgDistMapBuff.length;m++) {
+            		if(avgDistMapBuff[m] >= 0) {
+            			boolBuff[m] = true;
+            		}else {
+            			boolBuff[m] = false;
+            		}
+            	}
+            	try {
+            		inBetweenBooleanShapes.importData(0, boolBuff, true);
+            	}catch(Exception e) {
+            	}
+
+                //new ViewJFrameImage( (ModelImage)averageDistanceMaps[index].clone() );
+                //new ViewJFrameImage( (ModelImage)inBetweenBooleanShapes[index].clone() );
+
+            	AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(inBetweenBooleanShapes);
+                VOIExtractionAlgo.run();
+            	
+                //we are only working with one contour on a 2d slice here
+                ViewVOIVector VOIs = inBetweenBooleanShapes.getVOIs();
+                VOI tempVOI = new VOI(VOIs.VOIAt(0));
+            	tempVOI.setUID(tempVOI.hashCode());
+                Vector<VOIBase> contours = tempVOI.getCurves();
+                VOIContour newContour = (VOIContour)contours.elementAt(0);
+                
+                boolean isLineVertical = false;
+                float diffX = Math.abs(geomCenter1.X - geomCenter2.X);
+                float stepX = diffX/(denominator);
+                float newX = 0;
+                float newY = 0;
+                if(geomCenter1.X < geomCenter2.X) {
+                	newX = (int)geomCenter1.X + (stepX * i);
+                }else if(geomCenter1.X > geomCenter2.X) {
+                    //newX = (int)geomCenter2.X + (stepX * i);
+                    newX = (int)geomCenter1.X - (stepX * i);
+                }else {
+                	//line is vertical...to do later
+                	isLineVertical = true;
+                }
+
+                if(!isLineVertical) {
+                	//get newY coordinate
+                	newY = linearInterpGetY(geomCenter1, geomCenter2, newX);
+                }
+                if(isLineVertical) {
+                	newX = geomCenter1.X;
+                	float diffY = Math.abs(geomCenter1.Y - geomCenter2.Y);
+                    float stepY = (diffY/denominator);
+                    if(geomCenter1.Y < geomCenter2.Y) {
+                    	newY = geomCenter1.Y + (stepY * i);
+                    }else if(geomCenter1.Y > geomCenter2.Y) {
+                        //newY = geomCenter2.Y + (stepY * i);
+                        newY = geomCenter1.Y - (stepY * i);
+                    }else {
+                    	newY = geomCenter1.Y;
+                    }
+                }
+                
+
+                float transX = newX - centerX;
+        		float transY = newY - centerY;
+        		newContour.translate(transX, transY, 0);
+        		newContour.update();
+        		curves.getCurves().add(new VOIContour(newContour));
+                if(tempA != null) {
+                	tempA.disposeLocal(false);
+                	tempA = null;
+                }
+                if(tempB != null) {
+                	tempB.disposeLocal(false);
+                	tempB = null;
+                }
+                averageDistanceMaps.disposeLocal(false);
+                inBetweenBooleanShapes.disposeLocal(false);
+        	}
+        	
+        }
+        distanceMap1.disposeLocal(false);
+        distanceMap2.disposeLocal(false);
+        
+        return curves;
+	}
+	
+	/** get y based on equation of linear interpolation **/
+	private float linearInterpGetY(Vector3f geomCenter1, Vector3f geomCenter2, float x) {
+		float y = 0;
+		y = ((geomCenter1.Y) + (x - geomCenter1.X)*(geomCenter2.Y - geomCenter1.Y)/(geomCenter2.X - geomCenter1.X));
+		return y;
+	}
+
+	protected void saveNucleiInfo( String imageDir ) {
+
+		if ( nucleiCenters == null )
+		{
+			return;
+		}
+		String voiDir = imageDir;
+		File voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			voiFileDir.mkdir();
+		}
+		voiDir = imageDir + "statistics" + File.separator;
+		
+		voiFileDir = new File(voiDir);
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir does not exist
+			voiFileDir.mkdir();
+		}
+
+		File file = new File(voiDir + "NucleiOutput.csv");
+		if (file.exists()) {
+			file.delete();
+			file = new File(voiDir + "NucleiOutput.csv");
+		}
+
+		try {
+
+			final FileWriter fw = new FileWriter(file);
+			final BufferedWriter bw = new BufferedWriter(fw);
+
+			bw.write("Name" + "," + "X" + "," + "Y" + "," + "Z" + "\n");
+
+			for ( int n = 0; n < outputNucleiCenters.length; n++ )
+			{
+				if ( outputNucleiCenters[n] != null )
+				{
+					if ( outputNucleiCenters[n].size() > 0 )
+					{
+						Vector3f pos = outputNucleiCenters[n].elementAt(0);
+						bw.write(nucleiNames.elementAt(n) + "," + pos.X + "," + pos.Y + "," + (pos.Z * outputZResolution) + "\n");
+					}
+				}
+			}
+			bw.newLine();
+			bw.close();
+		} catch (final Exception e) {
+			System.err.println("CAUGHT EXCEPTION WITHIN saveNucleiInfo");
+			e.printStackTrace();
+		}
+	}
+
+	
+	
+	
+
 }
