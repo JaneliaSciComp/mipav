@@ -1,10 +1,13 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.PointStack;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -20,10 +23,15 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Stack;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Intersection.IntrSphere3Sphere3f;
+import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.Sphere3f;
+import WildMagic.LibFoundation.Mathematics.Vector2d;
+import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -51,7 +59,11 @@ public abstract class WormSegmentation
 		}
 		imageName = imageName + "_gblur";
 
-		final float[] sigmas = new float[] {sigma, sigma, sigma * getCorrectionFactor(image)};
+		float[] sigmas = new float[] {sigma, sigma};
+		if ( image.getNDims() == 3 )
+		{
+			sigmas = new float[] {sigma, sigma, sigma * getCorrectionFactor(image)};
+		}
 		OpenCLAlgorithmGaussianBlur blurAlgo;
 
 		final ModelImage resultImage = new ModelImage(image.getType(), image.getExtents(), imageName);
@@ -579,8 +591,809 @@ public abstract class WormSegmentation
 //		segmentationImage.calcMinMax();
 //		new ViewJFrameImage(segmentationImage);
 //	}
+
+	public static VOIContour findLargestConnected( ModelImage image, Vector3f center, Vector3f left, Vector3f right, float radius, 
+			int dimX, int dimY, int dimZ, int min, int max, int ID, Vector3f minEllipse, Vector3f maxEllipse )
+	{				
+		Vector3f center2D = new Vector3f( dimX/2, dimY/2, 0);
+		float[] averages = new float[dimX*dimY];
+		int window = 5;
+		float maxAverage = -1;
+		for ( int y = 0; y < dimY; y++ )
+		{
+			for ( int x = 0; x < dimX; x++ )
+			{
+				int index = y*dimX + x;
+				averages[index] = 0;
+				int count = 0;
+				for ( int y1 = Math.max(0, y - window); y1 < Math.min(dimY,  y + window + 1); y1++ )
+				{
+					for ( int x1 = Math.max(0, x - window); x1 < Math.min(dimX,  x + window + 1); x1++ )
+					{
+						int indexW = y1*dimX + x1;
+						int valueA = image.getInt(indexW * 4 + 0);
+						int value = image.getInt(indexW * 4 + 1);
+						if ( valueA != 0 )
+						{
+							averages[index] += value;
+							count++;
+						}
+					}
+				}
+				if ( count != 0 )
+				{
+					averages[index] /= (float)count;
+					if ( averages[index] > maxAverage )
+					{
+						maxAverage = averages[index];
+					}
+				}
+				else
+				{
+					averages[index] = -1;
+				}
+			}
+		}
+		
+		for ( int y = 0; y < dimY; y++ )
+		{
+			for ( int x = 0; x < dimX; x++ )
+			{
+				int index = y*dimX + x;
+				if ( averages[index] >= 0.9 * maxAverage )
+				{
+					averages[index] = 0;
+//					image.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );
+//					image.setC(x, y, 2, (byte) ( (0 & 0x000000ff)) );
+//					image.setC(x, y, 3, (byte) ( (0 & 0x000000ff)) );
+				}
+				else if ( averages[index] <=  0.85 * maxAverage )
+				{
+					averages[index] = 0;
+//					image.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );
+//					image.setC(x, y, 2, (byte) ( (0 & 0x000000ff)) );
+//					image.setC(x, y, 3, (byte) ( (0 & 0x000000ff)) );
+				}
+				else
+				{
+					averages[index] = 255;
+//					image.setC(x, y, 1, (byte) ( (255 & 0x000000ff)) );
+//					image.setC(x, y, 2, (byte) ( (255 & 0x000000ff)) );
+//					image.setC(x, y, 3, (byte) ( (255 & 0x000000ff)) );
+				}
+			}
+		}
+		
+		float[] temp = new float[dimX*dimY];
+		for ( int y = 0; y < dimY; y++ )
+		{
+			for ( int x = 0; x < dimX; x++ )
+			{
+				int index = y*dimX + x;
+				temp[index] = 0;
+				if ( averages[index] != 0 )
+				{
+					for ( int y1 = Math.max(0, y-1); y1 < Math.min(dimY, y + 2); y1++ )
+					{
+						for ( int x1 = Math.max(0, x-1); x1 < Math.min(dimX, x + 2); x1++ )
+						{
+							index = y1*dimX + x1;
+							temp[index] = 255;
+						}
+					}
+				}
+			}
+		}
+
+		float r = Math.max(3, Vector3f.sub(left, right).normalize()/2f);
+		float diameter = (float) (Math.PI * 2 * r);
+
+		Vector<BitSet> components = new Vector<BitSet>();
+		BitSet visited = new BitSet(dimY*dimX);
+		for ( int y = 0; y < dimY; y++ )
+		{
+			for ( int x = 0; x < dimX; x++ )
+			{
+				int index = y*dimX + x;
+				float value = temp[index];
+				if ( value == 255 )
+				{
+					if ( !visited.get(index) )
+					{
+						BitSet filled = new BitSet(dimZ*dimY*dimX);
+						Vector<Vector3f> seeds = new Vector<Vector3f>();
+						seeds.add( new Vector3f(x, y, 0) );
+
+						Vector<Vector3f> insidePts = new Vector<Vector3f>();
+						Vector3f minV = new Vector3f( Float.MAX_VALUE, Float.MAX_VALUE, 0 );
+						Vector3f maxV = new Vector3f(-Float.MAX_VALUE,-Float.MAX_VALUE, 0 );
+						
+						fillMask( temp, visited, filled, seeds, dimX, dimY, dimZ, true, insidePts, minV, maxV );
+
+						if ( (center2D.X > minV.X) && (center2D.Y > minV.Y) && (center2D.X < maxV.X) && (center2D.Y < maxV.Y) )
+						{
+							if ( filled.cardinality() > (diameter * 0.3) )
+							{
+								float dist = maxV.distance(minV);
+								if ( dist > r )
+								{
+									Box3f orientedBox = ContBox3f.ContOrientedBox(insidePts.size(), insidePts);
+									if ( ContBox3f.InBox( center2D, orientedBox) )
+									{
+										components.add(filled);
+									}
+									orientedBox.dispose();
+									orientedBox = null;
+								}
+							}
+						}
+						insidePts.clear();
+					}
+				}
+			}
+		}
+		
+		
+		Vector3f pt = new Vector3f();
+		visited.clear();
+		for ( int y = 0; y < dimY; y++ )
+		{
+			for ( int x = 0; x < dimX; x++ )
+			{
+//				pt.set(x, y, 0);
+				int index = y*dimX + x;
+
+				temp[index] = 0;
+
+				for ( int i = 0; i < components.size(); i++ )
+				{
+					if ( components.elementAt(i).get(index) )
+					{
+						temp[index] = 255;
+						visited.set(index);
+						break;
+					}
+				}
+			}
+		}
+
+		BitSet filled = new BitSet(dimZ*dimY*dimX);
+		Vector<Vector3f> seeds = new Vector<Vector3f>();
+		seeds.add( center2D );
+		
+//		long time = System.currentTimeMillis();
+
+		VOIContour ellipseAll = new VOIContour(false);
+		fillMask( temp, visited, filled, seeds, ellipseAll, dimX, dimY, dimZ, 10 );
+		
+//		System.err.println( "fillMask " + AlgorithmBase.computeElapsedTime(time) );
+//		time = System.currentTimeMillis();
+//		for ( int y = 0; y < dimY; y++ )
+//		{
+//			for ( int x = 0; x < dimX; x++ )
+//			{
+//				int index = y*dimX + x;
+//				if ( filled.get(index) )
+//				{
+//					ellipseAll.add(new Vector3f(x, y, 0) );				
+//				}
+//			}
+//		}
+		if ( ellipseAll.size() < 3 )
+		{
+			VOIContour ellipseDefault = new VOIContour(true);
+			final int numPts = 360;
+			center2D = new Vector3f( dimX/2, dimY/2, 0);
+			for (int i = 0; i < numPts; i++) {
+				final double c = Math.cos(Math.PI * 2.0 * i / numPts);
+				final double s = Math.sin(Math.PI * 2.0 * i / numPts);
+				final Vector3f pos1 = Vector3f.scale((float) (r * c), Vector3f.UNIT_X);
+				final Vector3f pos2 = Vector3f.scale((float) (r * s), Vector3f.UNIT_Y);
+				final Vector3f pos = Vector3f.add(pos1, pos2);
+				pos.add(center2D);
+				ellipseDefault.addElement(pos);
+			}
+			return ellipseDefault;
+		}
+		ellipseAll.convexHull();
+		if ( ellipseAll.size() < 3 )
+		{
+			VOIContour ellipseDefault = new VOIContour(true);
+			final int numPts = 360;
+			center2D = new Vector3f( dimX/2, dimY/2, 0);
+			for (int i = 0; i < numPts; i++) {
+				final double c = Math.cos(Math.PI * 2.0 * i / numPts);
+				final double s = Math.sin(Math.PI * 2.0 * i / numPts);
+				final Vector3f pos1 = Vector3f.scale((float) (r * c), Vector3f.UNIT_X);
+				final Vector3f pos2 = Vector3f.scale((float) (r * s), Vector3f.UNIT_Y);
+				final Vector3f pos = Vector3f.add(pos1, pos2);
+				pos.add(center2D);
+				ellipseDefault.addElement(pos);
+			}
+			return ellipseDefault;
+		}
+//		System.err.println( "convexhull " + AlgorithmBase.computeElapsedTime(time) );
+
+//		time = System.currentTimeMillis();
+		Vector3f dir = new Vector3f();
+		minEllipse.set(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE);
+		maxEllipse.set( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
+		for ( int i = 0; i < ellipseAll.size(); i++ )
+		{
+			dir.copy(ellipseAll.elementAt(i));
+			dir.sub(center2D);
+			float length = dir.normalize();
+			length += 10;
+			dir.scale(length);
+			ellipseAll.elementAt(i).copy(center2D);
+			ellipseAll.elementAt(i).add(dir);
+			minEllipse.min(ellipseAll.elementAt(i));
+			maxEllipse.max(ellipseAll.elementAt(i));
+		}
+//		System.err.println( "add margin " + AlgorithmBase.computeElapsedTime(time) );
+		
+		
+		
+		if ( true )
+			return ellipseAll;
+		
+
+		float rMin = r * 0.5f;
+		float rMax = r * 1.5f;
+		float rRange = (rMax - rMin);
+		float rStep = rRange / 10;
+		Vector<VOIContour> ellipseFits = new Vector<VOIContour>();
+		Vector<Float> ellipseAreas = new Vector<Float>();
+		for ( int cy = -50; cy < 51; cy += 5 )
+		{
+			for ( int cx = -50; cx < 51; cx += 5 )
+			{
+				center2D = new Vector3f( cx + dimX/2, cy + dimY/2, 0);
+				for ( float rA = rMin; rA < rMax; rA += rStep )
+				{
+//					for ( float rB = rMin; rB < rMax; rB += rStep )
+					{
+						float rB = (r * r) / rA;
+						int zAngle = 0;
+//						for ( int zAngle = 0; zAngle < 90; zAngle += 15 )
+						{
+							VOIContour ellipse = new VOIContour(true);
+							Vector3f axisA = new Vector3f( (float)Math.cos( Math.PI * zAngle / 360 ), (float)Math.sin( Math.PI * zAngle / 360 ), 0f );
+							Vector3f axisB = new Vector3f( (float)Math.sin( Math.PI * zAngle / 360 ), (float)Math.cos( Math.PI * zAngle / 360 ), 0f );
+
+							final int numPts = 360;
+							for (int i = 0; i < numPts; i++) {
+								final double c = Math.cos(Math.PI * 2.0 * i / numPts);
+								final double s = Math.sin(Math.PI * 2.0 * i / numPts);
+								final Vector3f pos1 = Vector3f.scale((float) (rA * c), axisA);
+								final Vector3f pos2 = Vector3f.scale((float) (rB * s), axisB);
+								final Vector3f pos = Vector3f.add(pos1, pos2);
+								pos.add(center2D);
+								ellipse.addElement(pos);
+							}
+							ellipseFits.add(ellipse);
+							ellipseAreas.add( new Float(Math.PI * rA * rB) );
+						}
+					}
+				}
+			}
+		}
+		
+		float areaDefault = (float) (Math.PI * r * r);
+		Vector2d[] costFits = new Vector2d[ellipseFits.size()];
+		for ( int i = 0; i < costFits.length; i++ )
+		{
+			int fit = (ellipseFits.elementAt(i).size() - ellipseMatch( temp, ellipseFits.elementAt(i), dimX, dimY));// ellipseFits.elementAt(i).size();
+			if ( (ellipseAreas.elementAt(i) / areaDefault) < .30 )
+			{
+				costFits[i] = new Vector2d( Double.MAX_VALUE, i );
+			}
+			else
+			{
+				costFits[i] = new Vector2d( fit, i );
+			}
+		}
+		
+		Arrays.sort(costFits);
+		VOIContour ellipse = ellipseFits.elementAt((int)costFits[0].Y);
+
+		VOIContour ellipseDefault = new VOIContour(true);
+		final int numPts = 360;
+		center2D = new Vector3f( dimX/2, dimY/2, 0);
+		for (int i = 0; i < numPts; i++) {
+			final double c = Math.cos(Math.PI * 2.0 * i / numPts);
+			final double s = Math.sin(Math.PI * 2.0 * i / numPts);
+			final Vector3f pos1 = Vector3f.scale((float) (r * c), Vector3f.UNIT_X);
+			final Vector3f pos2 = Vector3f.scale((float) (r * s), Vector3f.UNIT_Y);
+			final Vector3f pos = Vector3f.add(pos1, pos2);
+			pos.add(center2D);
+			ellipseDefault.addElement(pos);
+		}
+		
+		
+//		for ( int i = 0; i < ellipse.size(); i++ )
+//		{
+//			Vector3f dir = Vector3f.sub( ellipse.elementAt(i), center2D );
+//			dir.normalize();
+//			Vector3f pt = ellipse.elementAt(i);
+//			pt.add(dir);
+//			boolean inside = false;
+//			boolean border = false;
+//			boolean outside = false;
+//			while ( (pt.X >= 0) && (pt.X < dimX) && (pt.Y >= 0) && (pt.Y < dimY) )
+//			{
+//				int x = (int) pt.X;
+//				int y = (int) pt.Y;
+//				
+//				int index = y*dimX + x;
+//				int value = image.getInt(index * 4 + 0);
+//				if ( value == 0 )
+//				{
+//					break;
+//				}
+//
+//				if ( averages[index] >= 0.9 * maxAverage )
+//				{
+//					outside = true;
+//					if ( inside && border )
+//					{
+//						break;
+//					}
+//					inside = false;
+//					border = false;
+//					outside = false;
+//				}
+//				else if ( averages[index] <=  0.85 * maxAverage )
+//				{
+//					inside = true;
+//					border = false;
+//					outside = false;
+//				}
+//				else
+//				{
+//					border = true;
+//					outside = false;
+//				}
+//				pt.add(dir);
+//			}
+//		}
+//		
+//		int maxIndex = -1;
+//		int maxSize = -1;
+//		VOIContour[] levelSets = new VOIContour[ellipse.size()];
+//		for ( int i = 0; i < ellipse.size(); i++ )
+//		{
+//			Vector3f pt = ellipse.elementAt(i);
+//			int x = (int) pt.X;
+//			int y = (int) pt.Y;
+//			levelSets[i] = singleLevelSet2( averages, x, y, dimX, dimY );
+//			if ( levelSets[i] != null )
+//			{
+//				if ( levelSets[i].contains( center2D.X, center2D.Y ) )
+//				{
+//					if ( levelSets[i].size() > maxSize )
+//					{
+//						maxSize = levelSets[i].size();
+//						maxIndex = i;
+//					}
+//				}
+//			}
+//		}
+		
+		
+		
+		
+//		ellipse.convexHull();
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					if ( ellipse.contains( x, y ) )
+					{
+//						int index = z*dimY*dimX + y*dimX + x;
+//						int value = image.getInt(index * 4 + 3);
+						image.setC(x, y, 0, (byte) ( (255 & 0x000000ff)) );
+						image.setC(x, y, 1, (byte) ( (255 & 0x000000ff)) );
+//						image.setC(x, y, 2, (byte) ( (value & 0x000000ff)) );
+//						image.setC(x, y, 3, (byte) ( (value & 0x000000ff)) );
+					}
+					if ( ellipseDefault.contains( x, y ) )
+					{
+						image.setC(x, y, 0, (byte) ( (255 & 0x000000ff)) );
+						image.setC(x, y, 3, (byte) ( (255 & 0x000000ff)) );						
+					}
+//					else
+//					{
+//						image.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+//						image.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );
+//						image.setC(x, y, 2, (byte) ( (0 & 0x000000ff)) );
+//						image.setC(x, y, 3, (byte) ( (0 & 0x000000ff)) );						
+//					}
+				}
+			}
+		}
+		return ellipse;
+	}
+	
+	private static int ellipseMatch( float[] data, VOIContour ellipse, int dimX, int dimY )
+	{
+		int count = 0;
+		boolean[] matched = new boolean[data.length];
+		for ( int i = 0; i < ellipse.size(); i++ )
+		{
+			Vector3f pt = ellipse.elementAt(i);
+			int x = (int) pt.X;
+			int y = (int) pt.Y;
+
+			if ( (pt.X >= 0) && (pt.X < dimX) && (pt.Y >= 0) && (pt.Y < dimY) )
+			{
+				if ( !matched[y*dimX + x] && (data[y * dimX + x ] != 0) )
+				{
+					count++;
+					matched[y*dimX + x] = true;
+				}
+			}
+		}
+		return count;
+	}
+	
+	private static int ellipseMatch( Vector<Vector3f> data, VOIContour ellipse )
+	{
+		int count = 0;
+		for ( int i = 0; i < ellipse.size(); i++ )
+		{
+			if ( data.contains(ellipse.elementAt(i)) )
+			{
+				count++;
+			}
+//			Vector3f pt = ellipse.elementAt(i);
+//			int x = (int) pt.X;
+//			int y = (int) pt.Y;
+//			if ( data[y * dimX + x ] != 0 )
+//			{
+//				count++;
+//			}
+		}
+		return count;
+	}
 	
 	
+	public static VOIContour findLargestConnected2( ModelImage image, Vector3f center, Vector3f left, Vector3f right, float radius, 
+			int dimX, int dimY, int dimZ, int min, int max, int ID )
+	{		
+		Vector3f center2D = new Vector3f( dimX/2, dimY/2, 0);
+		Vector3f pt = new Vector3f(0,0,0);
+		
+		Vector<BitSet> components = new Vector<BitSet>();
+		BitSet visited = new BitSet(dimZ*dimY*dimX);
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					int index = z*dimY*dimX + y*dimX + x;
+					int value = image.getInt(index * 4 + 0);
+					if ( value == 0 )
+					{
+						visited.set(index);
+						continue;
+					}
+					
+					value = image.getInt(index * 4 + 1);
+					if ( (value >= min) && (value <= max) )
+					{
+						if ( !visited.get(index) )
+						{
+							BitSet filled = new BitSet(dimZ*dimY*dimX);
+							Vector<Vector3f> seeds = new Vector<Vector3f>();
+							seeds.add( new Vector3f(x, y, z) );
+							fillMask( image, visited, filled, seeds, dimX, dimY, dimZ, min, max, true );
+							if ( filled.cardinality() > 1 )
+							{
+								components.add(filled);
+								//							System.err.println( x + " " + y + " " + z + "    " + filled.cardinality() );
+							}
+						}
+					}
+				}
+			}
+		}
+
+		visited.clear();
+		for ( int i = 0; i < components.size(); i++ )
+		{
+			visited.or(components.elementAt(i));
+		}
+
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					int index = z*dimY*dimX + y*dimX + x;
+					if ( visited.get(index) )
+					{
+						image.setC(x, y, 1, (byte) ( (255 & 0x000000ff)) );						
+					}
+				}
+			}
+		}
+		visited.clear();
+		
+		components.removeAllElements();
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					int index = z*dimY*dimX + y*dimX + x;
+					int value = image.getInt(index * 4 + 0);
+					if ( value == 0 )
+					{
+						visited.set(index);
+						continue;
+					}
+					
+					value = image.getInt(index * 4 + 1);
+					if ( (value >= min) && (value <= max) )
+					{
+						if ( !visited.get(index) )
+						{
+							BitSet filled = new BitSet(dimZ*dimY*dimX);
+							Vector<Vector3f> seeds = new Vector<Vector3f>();
+							seeds.add( new Vector3f(x, y, z) );
+							fillMask( image, visited, filled, seeds, dimX, dimY, dimZ, min, max, true );
+							if ( filled.cardinality() > 1 )
+							{
+								components.add(filled);
+								//							System.err.println( x + " " + y + " " + z + "    " + filled.cardinality() );
+							}
+						}
+					}
+				}
+			}
+		}
+
+		int maxIndex = -1;
+		int maxSize = -1;
+		for ( int i = 0; i < components.size(); i++ )
+		{
+			int c = components.elementAt(i).cardinality();
+			if ( c > maxSize )
+			{
+				maxSize = c;
+				maxIndex = i;
+			}
+		}
+		
+		if ( maxIndex != -1 )
+		{
+			visited.clear();
+			visited.or( components.remove(maxIndex) );
+			
+			
+//			maxIndex = -1;
+//			maxSize = -1;
+//			for ( int i = 0; i < components.size(); i++ )
+//			{
+//				int c = components.elementAt(i).cardinality();
+//				if ( c > maxSize )
+//				{
+//					maxSize = c;
+//					maxIndex = i;
+//				}
+//			}
+//			if ( maxIndex != -1 )
+//			{
+//				int c = components.elementAt(maxIndex).cardinality();
+//				if ( c > (.05*dimX*dimY) )
+//				{
+//					visited.or( components.remove(maxIndex) );
+//					maxIndex = -1;
+//					maxSize = -1;
+//					for ( int i = 0; i < components.size(); i++ )
+//					{
+//						c = components.elementAt(i).cardinality();
+//						if ( c > maxSize )
+//						{
+//							maxSize = c;
+//							maxIndex = i;
+//						}
+//					}
+//					if ( maxIndex != -1 )
+//					{
+//						c = components.elementAt(maxIndex).cardinality();
+//						if ( c > (.05*dimX*dimY) )
+//						{
+//							visited.or( components.remove(maxIndex) );
+//						}
+//					}
+//				}
+//			}
+			
+			
+			for ( int z = 0; z < dimZ; z++ )
+			{
+				for ( int y = 0; y < dimY; y++ )
+				{
+					for ( int x = 0; x < dimX; x++ )
+					{
+						int index = z*dimY*dimX + y*dimX + x;
+						if ( visited.get(index) )
+						{
+							image.setC(x, y, 2, (byte) ( (255 & 0x000000ff)) );						
+						}
+					}
+				}
+			}
+		}
+		
+//		if ( true )
+//			return null;
+		
+	
+		VOIContour ellipse = new VOIContour(true);
+		final int numPts = 360;
+		for (int i = 0; i < numPts; i++) {
+			final double c = Math.cos(Math.PI * 2.0 * i / numPts);
+			final double s = Math.sin(Math.PI * 2.0 * i / numPts);
+			final Vector3f pos1 = Vector3f.scale((float) (3 * c), Vector3f.UNIT_X);
+			final Vector3f pos2 = Vector3f.scale((float) (3 * s), Vector3f.UNIT_Y);
+			final Vector3f pos = Vector3f.add(pos1, pos2);
+			pos.add(center2D);
+			ellipse.addElement(pos);
+		}
+		
+		for ( int i = 0; i < ellipse.size(); i++ )
+		{
+			Vector3f dir = Vector3f.sub( ellipse.elementAt(i), center2D );
+			dir.normalize();
+			pt = ellipse.elementAt(i);
+			pt.add(dir);
+			while ( (pt.X >= 0) && (pt.X < dimX) && (pt.Y >= 0) && (pt.Y < dimY) )
+//				while ( (center2D.distance(pt) < radius) && (pt.X >= 0) && (pt.X < dimX) && (pt.Y >= 0) && (pt.Y < dimY) )
+			{
+				int x = (int) pt.X;
+				int y = (int) pt.Y;
+				float valueA = image.getFloatC( x, y, 0, 0);
+				float valueR = image.getFloatC( x, y, 0, 1);
+				float valueG = image.getFloatC( x, y, 0, 2);
+				float valueB = image.getFloatC( x, y, 0, 3);
+				if ( ((valueR != valueB) && (valueR == 255) && (valueR == valueG)) || (valueA == 0) )
+				{
+					break;
+				}
+				pt.add(dir);
+			}
+		}
+
+		Vector<Float> distances = new Vector<Float>();
+		float average = 0;
+		for ( int i = 0; i < ellipse.size(); i++ )
+		{
+			distances.add(center2D.distance(ellipse.elementAt(i)));
+			average += center2D.distance(ellipse.elementAt(i));			
+		}
+		average /= (float)ellipse.size();		
+		
+		float std = 0;
+		for ( int i = 0; i < ellipse.size(); i++ )
+		{
+			std += ((distances.elementAt(i) - average)*(distances.elementAt(i) - average));
+		}
+		std /= (float)ellipse.size();
+		std = (float) Math.sqrt(std);
+
+		int size = ellipse.size();
+		boolean changing = true;
+		while ( changing )
+		{
+			size = ellipse.size();
+			int stepSize = 25;
+			for ( int i = ellipse.size() - 1; i >= 0; i-- )
+			{
+				if ( distances.elementAt(i) > (average + 2 * std) )
+				{
+					boolean found = false;
+					for ( int j = Math.max(0, i - stepSize); j < i; j++ )
+					{
+						if ( distances.elementAt(j) < 2*average )
+						{
+							found = true;
+							break;
+						}
+					}
+					if ( !found )
+						continue;
+					for ( int j = Math.min(size - 1, i + 1); j < Math.min( size - 1, i + stepSize + 1); j++ )
+					{
+						if ( distances.elementAt(i) > (average + 2 * std) )
+						{
+							ellipse.remove(i);
+							distances.remove(i);
+//							System.err.println( ID + " : removing " + i );
+							break;
+						}
+					}
+				}
+			}
+			changing = (size != ellipse.size());
+		}
+
+		for ( int i = 0; i < ellipse.size(); i++ )
+		{
+			if ( distances.elementAt(i) > (average + 2 * std) )
+			{
+				Vector3f dir = Vector3f.sub( center2D, ellipse.elementAt(i) );
+				dir.normalize();
+				float maxVal = -1;
+				Vector3f maxVec = new Vector3f();
+				Vector3f temp = new Vector3f(ellipse.elementAt(i));
+				temp.add(dir);
+				float dist = center2D.distance(temp);
+				while ( dist > average )
+				{
+					int index = (int) (temp.Y*dimX + temp.X);
+					int value = image.getInt(index * 4 + 3);
+					if ( value > maxVal )
+					{
+						maxVal = value;
+						maxVec.copy(temp);
+					}
+					temp.add(dir);
+					dist = center2D.distance(temp);
+				}
+				if ( !maxVec.isEqual(Vector3f.ZERO ) )
+				{
+					ellipse.elementAt(i).copy(temp);
+				}
+			}
+		}
+		
+		ellipse.convexHull();
+		for ( int i = 0; i < ellipse.size(); i++ )
+		{
+			Vector3f dir = Vector3f.sub( ellipse.elementAt(i), center2D );
+			float length = dir.normalize();
+			length += 5;
+			dir.scale(length);
+			ellipse.elementAt(i).copy(center2D);
+			ellipse.elementAt(i).add(dir);			
+		}
+		
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					if ( ellipse.contains( x, y ) )
+					{
+						int index = z*dimY*dimX + y*dimX + x;
+						int value = image.getInt(index * 4 + 3);
+						image.setC(x, y, 0, (byte) ( (255 & 0x000000ff)) );
+						image.setC(x, y, 1, (byte) ( (value & 0x000000ff)) );
+						image.setC(x, y, 2, (byte) ( (value & 0x000000ff)) );
+						image.setC(x, y, 3, (byte) ( (value & 0x000000ff)) );
+					}
+					else
+					{
+						image.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
+						image.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );
+						image.setC(x, y, 2, (byte) ( (0 & 0x000000ff)) );
+						image.setC(x, y, 3, (byte) ( (0 & 0x000000ff)) );								
+					}
+				}
+			}
+		}
+		
+		return ellipse;
+	}
 
 	public static void outline( String directory, ModelImage image, ModelImage mp, int slice )
 	{
@@ -1794,7 +2607,7 @@ public abstract class WormSegmentation
 		return new TriMesh(vertexBuffer, indexBuffer);
 	}
 	
-	
+
 	private static void fillMask( BitSet inside, BitSet visited, BitSet connected, Vector<Vector3f> seeds, int dimX, int dimY, int dimZ )
 	{
 		while ( seeds.size() > 0 )
@@ -1818,6 +2631,217 @@ public abstract class WormSegmentation
 						{
 							visited.set(index);
 							seeds.add( new Vector3f(x1,y1,z1) );
+						}
+					}
+				}
+			}
+		}
+	}
+	
+
+	private static void fillMask( ModelImage image, BitSet visited, BitSet connected, Vector<Vector3f> seeds, 
+			int dimX, int dimY, int dimZ, int min, int max, boolean diagonals )
+	{
+		while ( seeds.size() > 0 )
+		{
+			Vector3f start = seeds.remove(0);
+			int x = (int) start.X;
+			int y = (int) start.Y;
+			int z = (int) start.Z;
+			int startIndex = z*dimY*dimX + y*dimX + x;
+			connected.set(startIndex);
+			visited.set(startIndex);
+			
+			if ( diagonals )
+			{
+				for ( int y1 = Math.max(0, y - 1); y1 <= Math.min(y+1, dimY-1); y1++ )
+				{
+					for ( int x1 = Math.max(0, x - 1); x1 <= Math.min(x+1, dimX-1); x1++ )
+					{
+						int index = y1*dimX + x1;
+						int value = image.getInt(index * 4 + 0);
+						if ( value == 0 )
+						{
+							visited.set(index);
+						}
+						else
+						{
+							value = image.getInt(index * 4 + 1);
+							if ( !visited.get(index) && !connected.get(index) && (value >= min) && (value <= max) )
+							{
+								visited.set(index);
+								seeds.add( new Vector3f(x1,y1,0) );
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+
+				for ( int x1 = Math.max(0, x - 1); x1 <= Math.min(x+1, dimX-1); x1++ )
+				{
+					int index = y*dimX + x1;
+					int value = image.getInt(index * 4 + 0);
+					if ( value == 0 )
+					{
+						visited.set(index);
+					}
+					else
+					{
+						value = image.getInt(index * 4 + 1);
+						if ( !visited.get(index) && !connected.get(index) && (value >= min) && (value <= max) )
+						{
+							visited.set(index);
+							seeds.add( new Vector3f(x1,y,0) );
+						}
+					}
+				}
+
+				for ( int y1 = Math.max(0, y - 1); y1 <= Math.min(y+1, dimY-1); y1++ )
+				{
+					int index = y1*dimX + x;
+					int value = image.getInt(index * 4 + 0);
+					if ( value == 0 )
+					{
+						visited.set(index);
+					}
+					else
+					{
+						value = image.getInt(index * 4 + 1);
+						if ( !visited.get(index) && !connected.get(index) && (value >= min) && (value <= max) )
+						{
+							visited.set(index);
+							seeds.add( new Vector3f(x,y1,0) );
+						}
+					}
+				}
+				
+			}
+		}
+	}
+
+	private static void fillMask( float[] image, BitSet visited, BitSet connected, Vector<Vector3f> seeds, 
+			int dimX, int dimY, int dimZ, boolean diagonals, Vector<Vector3f> insidePts, Vector3f minV, Vector3f maxV )
+	{
+		while ( seeds.size() > 0 )
+		{
+			Vector3f start = seeds.remove(0);
+			insidePts.add(start);
+			minV.min(start);
+			maxV.max(start);
+			
+			int x = (int) start.X;
+			int y = (int) start.Y;
+			int z = (int) start.Z;
+			int startIndex = z*dimY*dimX + y*dimX + x;
+			connected.set(startIndex);
+			visited.set(startIndex);
+			
+			if ( diagonals )
+			{
+				for ( int y1 = Math.max(0, y - 1); y1 <= Math.min(y+1, dimY-1); y1++ )
+				{
+					for ( int x1 = Math.max(0, x - 1); x1 <= Math.min(x+1, dimX-1); x1++ )
+					{
+						int index = y1*dimX + x1;
+						float value = image[index];
+						if ( value == 0 )
+						{
+							visited.set(index);
+						}
+						else if ( !visited.get(index) && !connected.get(index) && (value == 255) )
+						{
+							visited.set(index);
+							seeds.add( new Vector3f(x1,y1,0) );
+						}
+					}
+				}
+			}
+			else
+			{
+
+				for ( int x1 = Math.max(0, x - 1); x1 <= Math.min(x+1, dimX-1); x1++ )
+				{
+					int index = y*dimX + x1;
+					float value = image[index];
+					if ( value == 0 )
+					{
+						visited.set(index);
+					}
+					else
+					{
+						value = image[index];
+						if ( !visited.get(index) && !connected.get(index) && (value == 255) )
+						{
+							visited.set(index);
+							seeds.add( new Vector3f(x1,y,0) );
+						}
+					}
+				}
+
+				for ( int y1 = Math.max(0, y - 1); y1 <= Math.min(y+1, dimY-1); y1++ )
+				{
+					int index = y1*dimX + x;
+					float value = image[index];
+					if ( value == 0 )
+					{
+						visited.set(index);
+					}
+					else
+					{
+						value = image[index];
+						if ( !visited.get(index) && !connected.get(index) && (value == 255) )
+						{
+							visited.set(index);
+							seeds.add( new Vector3f(x,y1,0) );
+						}
+					}
+				}
+				
+			}
+		}
+	}
+
+
+	private static void fillMask( float[] image, BitSet visited, BitSet connected, Vector<Vector3f> seeds, Vector<Vector3f> boundary, 
+			int dimX, int dimY, int dimZ, int width )
+	{
+		while ( seeds.size() > 0 )
+		{
+			Vector3f start = seeds.remove(0);
+			int x = (int) start.X;
+			int y = (int) start.Y;
+			int z = (int) start.Z;
+			int startIndex = z*dimY*dimX + y*dimX + x;
+			connected.set(startIndex);
+			visited.set(startIndex);
+
+			boolean allZero = true;
+			for ( int y1 = Math.max(0, y - width); y1 <= Math.min(y+width, dimY-1) && allZero; y1++ )
+			{
+				for ( int x1 = Math.max(0, x - width); x1 <= Math.min(x+width, dimX-1) && allZero; x1++ )
+				{
+					int index = y1*dimX + x1;
+					float value = image[index];
+					if ( value != 0 )
+					{
+						allZero = false;
+						boundary.add(start);
+					}
+				}
+			}
+			if ( allZero )
+			{
+				for ( int y1 = Math.max(0, y - width); y1 <= Math.min(y+width, dimY-1) && allZero; y1++ )
+				{
+					for ( int x1 = Math.max(0, x - width); x1 <= Math.min(x+width, dimX-1) && allZero; x1++ )
+					{
+						int index = y1*dimX + x1;
+						if ( !visited.get(index) && !connected.get(index) )
+						{
+							visited.set(index);
+							seeds.add( new Vector3f(x1,y1,0) );
 						}
 					}
 				}
@@ -2355,4 +3379,335 @@ public abstract class WormSegmentation
 		outputDir = new String(dir);
 	}
 
+	
+	/**
+	 * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
+	 * starting point.
+	 */
+	private static VOIContour singleLevelSet2(float[] image, float startPtX, float startPtY, int xDim, int yDim ) {
+
+		Stack<int[]> stack = new Stack<int[]>();
+		BitSet map = new BitSet(xDim * yDim);
+
+
+		if ((startPtX < 0) || (startPtX >= (xDim - 1))) {
+			return null;
+		}
+
+		if ((startPtY < 0) || (startPtY >= (yDim - 1))) {
+			return null;
+		}
+
+
+		int x = (int) (startPtX + 0.5);
+		int y = (int) (startPtY + 0.5);
+
+//		float level = image.getFloat( y * xDim + x);
+		float level = image[ y * xDim + x];
+
+		int index = (y * xDim) + x;
+
+		/** Used to calculate the levelset contour. */
+		PointStack levelSetStack = new PointStack(500);
+		levelSetStack.addPoint(x, y);
+		map.set((y * xDim) + x);
+
+		int dir = -1;
+		float diff = 100000;
+		double distance;
+		do {
+			index = (y * xDim) + x;
+
+			if ((x >= 2) && (x < (xDim - 2)) && (y >= 2) && (y < (yDim - 2))) {
+
+				if ((avgPix(image, xDim, index - xDim) >= level) &&
+						((avgPix(image, xDim, index - xDim + 1) < level) || (avgPix(image, xDim, index) < level) ||
+								(avgPix(image, xDim, index - xDim - 1) < level) || (avgPix(image, xDim, index - (2 * xDim)) < level)) &&
+								(map.get(index - xDim) == false)) {
+					dir = 1;
+					diff = Math.abs(avgPix(image, xDim, index - xDim) - avgPix(image, xDim, index));
+				}
+
+				if ((avgPix(image, xDim, index - xDim + 1) >= level) &&
+						((avgPix(image, xDim, index - xDim + 2) < level) || (avgPix(image, xDim, index + 1) < level) ||
+								(avgPix(image, xDim, index - xDim) < level) || (avgPix(image, xDim, index - (2 * xDim) + 1) < level)) &&
+								(map.get(index - xDim + 1) == false)) {
+
+					if (Math.abs(avgPix(image, xDim, index - xDim + 1) - avgPix(image, xDim, index)) < diff) {
+						dir = 2;
+						diff = Math.abs(avgPix(image, xDim, index - xDim + 1) - avgPix(image, xDim, index));
+					}
+				}
+
+				if ((avgPix(image, xDim, index + 1) >= level) &&
+						((avgPix(image, xDim, index + 2) < level) || (avgPix(image, xDim, index + xDim + 1) < level) || (avgPix(image, xDim, index) < level) ||
+								(avgPix(image, xDim, index - xDim + 1) < level)) && (map.get(index + 1) == false)) {
+
+					if (Math.abs(avgPix(image, xDim, index + 1) - avgPix(image, xDim, index)) < diff) {
+						dir = 3;
+						diff = Math.abs(avgPix(image, xDim, index + 1) - avgPix(image, xDim, index));
+					}
+				}
+
+				if ((avgPix(image, xDim, index + xDim + 1) >= level) &&
+						((avgPix(image, xDim, index + xDim + 2) < level) || (avgPix(image, xDim, index + (2 * xDim) + 1) < level) ||
+								(avgPix(image, xDim, index + 1) < level) || (avgPix(image, xDim, index + xDim) < level)) &&
+								(map.get(index + xDim + 1) == false)) {
+
+					if (Math.abs(avgPix(image, xDim, index + xDim + 1) - avgPix(image, xDim, index)) < diff) {
+						dir = 4;
+						diff = Math.abs(avgPix(image, xDim, index + xDim + 1) - avgPix(image, xDim, index));
+					}
+				}
+
+				if ((avgPix(image, xDim, index + xDim) >= level) &&
+						((avgPix(image, xDim, index + xDim + 1) < level) || (avgPix(image, xDim, index + (2 * xDim)) < level) ||
+								(avgPix(image, xDim, index + xDim - 1) < level) || (avgPix(image, xDim, index) < level)) &&
+								(map.get(index + xDim) == false)) {
+
+					if (Math.abs(avgPix(image, xDim, index + xDim) - avgPix(image, xDim, index)) < diff) {
+						dir = 5;
+						diff = Math.abs(avgPix(image, xDim, index + xDim) - avgPix(image, xDim, index));
+					}
+				}
+
+				if ((avgPix(image, xDim, index + xDim - 1) >= level) &&
+						((avgPix(image, xDim, index + xDim) < level) || (avgPix(image, xDim, index + (2 * xDim) - 1) < level) ||
+								(avgPix(image, xDim, index + xDim - 2) < level) || (avgPix(image, xDim, index - 1) < level)) &&
+								(map.get(index + xDim - 1) == false)) {
+
+					if (Math.abs(avgPix(image, xDim, index + xDim - 1) - avgPix(image, xDim, index)) < diff) {
+						dir = 6;
+						diff = Math.abs(avgPix(image, xDim, index + xDim - 1) - avgPix(image, xDim, index));
+					}
+				}
+
+				if ((avgPix(image, xDim, index - 1) >= level) &&
+						((avgPix(image, xDim, index) < level) || (avgPix(image, xDim, index + xDim - 1) < level) || (avgPix(image, xDim, index - 2) < level) ||
+								(avgPix(image, xDim, index - xDim - 1) < level)) && (map.get(index - 1) == false)) {
+
+					if (Math.abs(avgPix(image, xDim, index - 1) - avgPix(image, xDim, index)) < diff) {
+						dir = 7;
+						diff = Math.abs(avgPix(image, xDim, index - 1) - avgPix(image, xDim, index));
+					}
+				}
+
+				if ((avgPix(image, xDim, index - xDim - 1) >= level) &&
+						((avgPix(image, xDim, index - xDim) < level) || (avgPix(image, xDim, index - 1) < level) ||
+								(avgPix(image, xDim, index - xDim - 2) < level) || (avgPix(image, xDim, index - (2 * xDim) - 1) < level)) &&
+								(map.get(index - xDim - 1) == false)) {
+
+					if (Math.abs(avgPix(image, xDim, index - xDim - 1) - avgPix(image, xDim, index)) < diff) {
+						dir = 0;
+						// diff = Math.abs(imageBufferActive[index-xDim-1] - imageBufferActive[index]);
+					}
+				}
+
+				diff = 1000000;
+				if (dir == 1) {
+					// x = x;
+					y = y - 1;
+					map.set(index - xDim);
+					paths(image, xDim, levelSetStack, map, stack, index, 1, level);
+				} else if (dir == 2) {
+					x = x + 1;
+					y = y - 1;
+					map.set(index - xDim + 1);
+					paths(image, xDim, levelSetStack, map, stack, index, 2, level);
+				} else if (dir == 3) {
+					x = x + 1;
+					// y = y;
+					map.set(index + 1);
+					paths(image, xDim, levelSetStack, map, stack, index, 3, level);
+				} else if (dir == 4) {
+					x = x + 1;
+					y = y + 1;
+					map.set(index + xDim + 1);
+					paths(image, xDim, levelSetStack, map, stack, index, 4, level);
+				} else if (dir == 5) {
+					// x = x;
+					y = y + 1;
+					map.set(index + xDim);
+					paths(image, xDim, levelSetStack, map, stack, index, 5, level);
+				} else if (dir == 6) {
+					x = x - 1;
+					y = y + 1;
+					map.set(index + xDim - 1);
+					paths(image, xDim, levelSetStack, map, stack, index, 6, level);
+				} else if (dir == 7) {
+					x = x - 1;
+					// y = y;
+					map.set(index - 1);
+					paths(image, xDim, levelSetStack, map, stack, index, 7, level);
+				} else if (dir == 0) {
+					x = x - 1;
+					y = y - 1;
+					map.set(index - xDim - 1);
+					paths(image, xDim, levelSetStack, map, stack, index, 0, level);
+				} else {
+
+					if (!stack.empty()) {
+						int ptr = (stack.pop())[0];
+						x = levelSetStack.getPointX(ptr);
+						y = levelSetStack.getPointY(ptr);
+						levelSetStack.setIndex(ptr);
+					} else {
+						x = y = -1;
+					}
+				}
+
+				dir = -1;
+			} else { // near edge of image
+				levelSetStack.reset();
+
+				break;
+			}
+
+			if ((x == -1) || (y == -1)) {
+				levelSetStack.reset();
+
+				break;
+			}
+
+			levelSetStack.addPoint(x, y);
+
+			distance = ((x - startPtX) * (x - startPtX)) + ((y - startPtY) * (y - startPtY));
+
+			if ((distance < 2.1) && (levelSetStack.size() < 10)) {
+				distance = 10;
+			}
+		} while (distance > 2.1);
+
+
+
+		if (levelSetStack.size() != 0) {
+
+			VOIContour kVOI = new VOIContour( false, true );
+			for ( int i = 0; i < levelSetStack.size(); i++ )
+			{
+				kVOI.add( new Vector3f( levelSetStack.getPointX(i), levelSetStack.getPointY(i), 0 ) );
+			}
+			return kVOI;
+		} 
+		return null;
+	}
+
+	/**
+	 * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
+	 *
+	 * @param   index  the center pixel where the average pixel value is to be calculated.
+	 *
+	 * @return  the average pixel value as a float.
+	 */
+	private static float avgPix(ModelImage image, int xDim, int index) {
+
+		if ((index > xDim) && (index < (image.getDataSize() - xDim))) {
+
+			float sum = image.getFloat(index);
+
+			sum += image.getFloat(index - xDim);
+			sum += image.getFloat(index - 1);
+			sum += image.getFloat(index + 1);
+			sum += image.getFloat(index + xDim);
+
+			return sum / 5.0f;
+		}
+		return (image.getFloat(index));
+	}
+	
+	private static float avgPix(float[] image, int xDim, int index) {
+
+		if ((index > xDim) && (index < (image.length - xDim))) {
+
+			float sum = image[index];
+
+			sum += image[index - xDim];
+			sum += image[index - 1];
+			sum += image[index + 1];
+			sum += image[index + xDim];
+
+			return sum / 5.0f;
+		}
+		return (image[index]);
+	}
+
+	/**
+	 * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
+	 * directions for the possible paths.
+	 *
+	 * @param  index  image location
+	 * @param  i      DOCUMENT ME!
+	 */
+	private static void paths( ModelImage image, int xDim, PointStack levelSetStack, BitSet map, Stack<int[]> stack, int index, int i, float level) {
+
+		int[] intPtr = null;
+
+		try {
+			intPtr = new int[1];
+		} catch (OutOfMemoryError error) {
+			System.gc();
+			MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
+
+			return;
+		}
+
+		intPtr[0] = levelSetStack.size() - 1;
+
+		if ((i != 0) && (image.getFloat(index - xDim - 1) <= level) && (map.get(index - xDim - 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 1) && (image.getFloat(index - xDim) <= level) && (map.get(index - xDim) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 2) && (image.getFloat(index - xDim + 1) <= level) && (map.get(index - xDim + 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 3) && (image.getFloat(index + 1) <= level) && (map.get(index + 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 4) && (image.getFloat(index + xDim + 1) <= level) && (map.get(index + xDim + 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 5) && (image.getFloat(index + xDim) <= level) && (map.get(index + xDim) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 6) && (image.getFloat(index + xDim - 1) <= level) && (map.get(index + xDim - 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 7) && (image.getFloat(index - 1) <= level) && (map.get(index - 1) == false)) {
+			stack.push(intPtr);
+		}
+	}
+	
+	private static void paths( float[] image, int xDim, PointStack levelSetStack, BitSet map, Stack<int[]> stack, int index, int i, float level) {
+
+		int[] intPtr = null;
+
+		try {
+			intPtr = new int[1];
+		} catch (OutOfMemoryError error) {
+			System.gc();
+			MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
+
+			return;
+		}
+
+		intPtr[0] = levelSetStack.size() - 1;
+
+		if ((i != 0) && (image[index - xDim - 1] <= level) && (map.get(index - xDim - 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 1) && (image[index - xDim] <= level) && (map.get(index - xDim) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 2) && (image[index - xDim + 1] <= level) && (map.get(index - xDim + 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 3) && (image[index + 1] <= level) && (map.get(index + 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 4) && (image[index + xDim + 1] <= level) && (map.get(index + xDim + 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 5) && (image[index + xDim] <= level) && (map.get(index + xDim) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 6) && (image[index + xDim - 1] <= level) && (map.get(index + xDim - 1) == false)) {
+			stack.push(intPtr);
+		} else if ((i != 7) && (image[index - 1] <= level) && (map.get(index - 1) == false)) {
+			stack.push(intPtr);
+		}
+	}
+
+
+	
+	
+	
 }

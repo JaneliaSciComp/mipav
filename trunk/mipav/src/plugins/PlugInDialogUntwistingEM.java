@@ -25,6 +25,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
@@ -34,11 +35,13 @@ import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewOpenFileUI;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModelEM;
+import gov.nih.mipav.view.renderer.WildMagic.Render.ModelImageLargeFormat;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -49,6 +52,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -56,6 +60,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.StringTokenizer;
 
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -69,19 +74,27 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 
 	private static final long serialVersionUID = -8451902403280342311L;
 	private JTextField  inputImageTF;
+	private JTextField  latticeFileTF;
+//	private JTextField  maskImageTF;
+//	private JTextField  modelImageTF;
 	private JTextField  nucleiTF;
-	private JTextField  scaleTF;	
+	private JTextField  latticeScaleTF;	
+	private JTextField  nucleiScaleTF;
+	private JTextField[]  resolutionsTF;
+	private JTextField  outputResolutionTF;	
 	private JButton startButton;
 
+	private ModelImageLargeFormat fullImage;
 	private ModelImage wormImage;
-	private ModelImage maskImage;
-	
-	
+//	private ModelImage wormModelImage;
+//	private ModelImage maskImage;
+
+
 	public PlugInDialogUntwistingEM()
 	{
 		init();
 		setVisible(true);
-        addWindowListener(this);
+		addWindowListener(this);
 	}
 
 	public void actionPerformed(ActionEvent event)
@@ -95,77 +108,155 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 				wormImage.disposeLocal();
 				wormImage = null;
 			}
-			if ( maskImage != null ) {
-				maskImage.disposeLocal();
-				maskImage = null;
-			}
-
-//			System.err.println( inputImageTF.getText() );
-//			System.err.println( nucleiTF.getText() );
-//			System.err.println( scaleTF.getText() );
-			int scale = Integer.valueOf(scaleTF.getText() );
 			
+			int scale = Integer.valueOf(nucleiScaleTF.getText() );
+			float latticeScale = Float.valueOf(latticeScaleTF.getText() );
+			float resX = Float.valueOf( resolutionsTF[0].getText() );
+			float resY = Float.valueOf( resolutionsTF[1].getText() );
+			float resZ = Float.valueOf( resolutionsTF[2].getText() );
+			float outputResZ = Float.valueOf( outputResolutionTF.getText() );
+
 			if ( inputImageTF.getText().length() > 0 )
 			{
 				File imageFile = new File(inputImageTF.getText());
 				if ( imageFile.exists() )
 				{
-					String fileName = inputImageTF.getText().substring(inputImageTF.getText().lastIndexOf(File.separator) + 1);
-					String fileDir = inputImageTF.getText().substring(0, inputImageTF.getText().lastIndexOf(File.separator) + 1);
-//					System.err.println( fileDir );
-//					System.err.println( fileName );
-					FileIO fileIO = new FileIO();
-					wormImage = fileIO.readImage(fileName, fileDir, false, null); 
-					wormImage.calcMinMax();
-
-					String baseName = JDialogBase.makeImageName( wormImage.getImageName(), "" );
-					fileName = JDialogBase.makeImageName( wormImage.getImageName(), "_mask_image.tif" );
-					imageFile = new File(fileDir + fileName);
-					if ( imageFile.exists() )
+					String dirName = inputImageTF.getText().substring(inputImageTF.getText().lastIndexOf(File.separator) + 1);
+			        
+					boolean largeFormat = false;
+					if ( imageFile.isDirectory() )
 					{
-						if ( maskImage != null )
+						String[] list = imageFile.list();
+						int min = Integer.MAX_VALUE;
+						int max = -1;
+						for ( int i = 0; i < list.length; i++ )
 						{
-							maskImage.disposeLocal();
-							maskImage = null;
-						}
-//						System.err.println( fileName );
-						maskImage = fileIO.readImage(fileName, fileDir, false, null);
-						maskImage.calcMinMax();
-					}
-					
-					VOIVector latticeVector = new VOIVector();
-					fileName = baseName + File.separator + PlugInAlgorithmWormUntwisting.editLatticeOutput;
-					String voiDir = new String(fileDir + fileName + File.separator);
-					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, latticeVector, false);
-					if ( latticeVector.size() != 0 )
-					{
-						LatticeModelEM model = new LatticeModelEM(wormImage);
-						model.setLattice(latticeVector.elementAt(0));
-						model.setMaskImage(maskImage);
-						
-						if ( nucleiTF.getText().length() > 0 )
-						{
-							File nucleiFile = new File(nucleiTF.getText());
-							if ( nucleiFile.exists() )
+							int value = ModelImageLargeFormat.getIndex(list[i]);
+							if ( value < min )
 							{
-								fileName = nucleiTF.getText().substring(nucleiTF.getText().lastIndexOf(File.separator) + 1);
-								fileDir = nucleiTF.getText().substring(0, nucleiTF.getText().lastIndexOf(File.separator) + 1);
-//								System.err.println( fileDir );
-//								System.err.println( fileName );
-								VOIVector vois = readNucleiPositions( fileName, nucleiFile, scale );
-								VOI nucleiVOIs = vois.elementAt(0);
-								if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
-								{
-									model.setNucleiMarkers(nucleiVOIs);
-//									wormImage.setVOIs(vois);
-								}
+								min = value;
+							}
+							if ( value > max )
+							{
+								max = value;
 							}
 						}
-//						new ViewJFrameImage((ModelImage)wormImage.clone());
-						model.interpolateLattice( false );
-						System.err.println("Done straightening" );
-						model.dispose();
-						model = null;
+						int average = (min + max)/2;
+						for ( int i = 0; i < list.length; i++ )
+						{
+							int value = ModelImageLargeFormat.getIndex(list[i]);
+							if ( value == average )
+							{
+//								System.err.println( inputImageTF.getText() + " " + list[i] + " " + value );									
+
+								FileIO fileIO = new FileIO();
+								wormImage = fileIO.readImage(list[i], inputImageTF.getText() + File.separator, false, null); 
+								break;
+							}
+						}
+						if ( wormImage != null )
+						{
+							int[] extents2D = wormImage.getExtents();
+							if ( wormImage.getType() == ModelStorageBase.ARGB )
+							{	
+								fullImage = new ModelImageLargeFormat( ModelImageLargeFormat.ARGB, new int[]{ extents2D[0], extents2D[1], list.length}, inputImageTF.getText(), true );
+							}
+							else
+							{
+								fullImage = new ModelImageLargeFormat( new int[]{ extents2D[0], extents2D[1], list.length}, inputImageTF.getText(), true );
+							}
+							fullImage.setZScale( resZ/resX );
+							wormImage.disposeLocal(false);
+							wormImage = null;
+						}
+						largeFormat = true;
+					}
+//					if ( (fullImage != null) && (latticeFileTF.getText().length() == 0) )
+//					{
+////						System.err.println( "masking errors" );
+////						LatticeModelEM.maskErrors(fullImage);
+//						System.err.println("reslice");
+//						fullImage.reslize();
+//					}
+
+					VOIVector latticeVector = new VOIVector();
+					String latticeFile = latticeFileTF.getText() + File.separator;
+					if ( (latticeFileTF.getText().length() > 0) && (fullImage != null) )
+					{
+						int[] extents = new int[3];
+						extents[0] = (int) (fullImage.getExtents()[0] / latticeScale);
+						extents[1] = (int) (fullImage.getExtents()[1] / latticeScale);
+						extents[2] = fullImage.getExtents()[2];
+						ModelImage temp = new ModelImage(ModelStorageBase.INTEGER, extents, "temp" );
+//						System.err.println( extents[0] + " " + extents[1] + " " + extents[2] );
+						
+						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(temp, latticeFile, true, latticeVector, false);
+
+//						VOI lattice = latticeVector.elementAt(0);
+//						VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+//						VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+//						for ( int i = 0; i < Math.min( left.size(), right.size() ); i++ )
+//						{
+//							Vector3f pt = left.elementAt(i);
+//							pt.Z *= (1050f/157f);
+//							
+//							if ( pt.Z >= 1050 )
+//							{
+//								System.err.println( i + " " + pt );
+//							}
+//							
+//							pt = right.elementAt(i);
+//							pt.Z *= (1050f/157f);
+//							
+//							if ( pt.Z >= 1050 )
+//							{
+//								System.err.println( i + " " + pt );
+//							}
+//						}
+//						
+//						temp.registerVOI( lattice );
+//						LatticeModel.saveAllVOIsTo( latticeFile + "temp" + File.separator, temp );
+						temp.disposeLocal();
+						temp = null;
+//						return;
+					}
+					
+					if ( latticeVector.size() != 0 )
+					{
+						LatticeModelEM model = null;
+						if ( (fullImage != null) && largeFormat )
+						{
+							model = new LatticeModelEM(fullImage);
+						}
+						if ( model != null )
+						{
+							model.setLattice(latticeVector.elementAt(0), latticeScale);
+
+							if ( nucleiTF.getText().length() > 0 )
+							{
+								File nucleiFile = new File(nucleiTF.getText());
+								if ( nucleiFile.exists() )
+								{
+									String fileName = nucleiTF.getText().substring(nucleiTF.getText().lastIndexOf(File.separator) + 1);
+									VOIVector vois = readNucleiPositions( fileName, nucleiFile, scale );
+									VOI nucleiVOIs = vois.elementAt(0);
+									if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
+									{
+										model.setNucleiMarkers(nucleiVOIs);
+									}
+								}
+							}
+							System.err.println("Starting straightening" );
+							model.interpolateLattice( outputResZ );
+							if ( fullImage != null )
+							{
+								fullImage.disposeLocal(false);
+								System.gc();
+							}
+							model.dispose();
+							model = null;
+							System.err.println("Done straightening" );
+						}
 					}
 				}
 			}
@@ -173,17 +264,17 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 		if (command.equals("close"))
 		{			
 			setVisible(false);
-	        if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
-	                && ViewUserInterface.getReference().isPlugInFrameVisible() )
-	        {
-                System.exit(0);
-            } else {
-                dispose();
-            }
+			if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
+					&& ViewUserInterface.getReference().isPlugInFrameVisible() )
+			{
+				System.exit(0);
+			} else {
+				dispose();
+			}
 		}
 	}
-	
-	
+
+
 	public void dispose()
 	{
 		super.dispose();
@@ -192,33 +283,33 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 			wormImage.disposeLocal();
 			wormImage = null;
 		}		
-		if ( maskImage != null )
-		{
-			maskImage.disposeLocal();
-			maskImage = null;
-		}		
+//		if ( maskImage != null )
+//		{
+//			maskImage.disposeLocal();
+//			maskImage = null;
+//		}		
 	}
-	
-    @Override
+
+	@Override
 	public void windowActivated(WindowEvent e) {}
 
 	@Override
 	public void windowClosed(WindowEvent e) {}
 
 	public void windowClosing(final WindowEvent event)
-    {
-        if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
-                && ViewUserInterface.getReference().isPlugInFrameVisible() )
-        {
-            System.exit(0);
-        } else {
-            dispose();
-        }
-    }
+	{
+		if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
+				&& ViewUserInterface.getReference().isPlugInFrameVisible() )
+		{
+			System.exit(0);
+		} else {
+			dispose();
+		}
+	}
 
 	@Override
 	public void windowDeactivated(WindowEvent e) {}
-	
+
 	@Override
 	public void windowDeiconified(WindowEvent e) {}
 
@@ -228,7 +319,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 	@Override
 	public void windowOpened(WindowEvent e) {}
 
-	
+
 
 	/**
 	 * Initializes the panels for a non-integrated display. 
@@ -263,18 +354,44 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
 		inputsPanel.setForeground(Color.black);
 
-		inputImageTF = gui.buildFileField("Worm image:  ", "", false, JFileChooser.FILES_ONLY, this);
+		inputImageTF = gui.buildFileField("Worm image:  ", "", false, JFileChooser.FILES_AND_DIRECTORIES, this);
 		inputsPanel.add(inputImageTF.getParent(), gbc);
+		gbc.gridy++;
+
+		latticeFileTF = gui.buildFileField("lattice directory:  ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(latticeFileTF.getParent(), gbc);
 		gbc.gridy++;
 
 		nucleiTF = gui.buildFileField("Nuclei info: ", "", false, JFileChooser.FILES_ONLY, this);
 		inputsPanel.add(nucleiTF.getParent(), gbc);
 		gbc.gridy++;
 
-		scaleTF = gui.buildIntegerField("rescale factor: ", 1 );
-		inputsPanel.add(scaleTF.getParent(), gbc);
+		nucleiScaleTF = gui.buildIntegerField("Nuclei rescale factor: ", 2 );
+		inputsPanel.add(nucleiScaleTF.getParent(), gbc);
 		gbc.gridy++;
 
+		latticeScaleTF = gui.buildDecimalField("Lattice rescale factor: ", 8 );
+		inputsPanel.add(latticeScaleTF.getParent(), gbc);
+		gbc.gridy++;
+
+		resolutionsTF = new JTextField[3];
+
+		resolutionsTF[0] = gui.buildDecimalField("Resolutions x: ", 8 );
+		inputsPanel.add(resolutionsTF[0].getParent(), gbc);
+		gbc.gridx++;
+		resolutionsTF[1] = gui.buildDecimalField("y: ", 8 );
+		inputsPanel.add(resolutionsTF[1].getParent(), gbc);
+		gbc.gridx++;
+		resolutionsTF[2] = gui.buildDecimalField("z: ", 30 );
+		inputsPanel.add(resolutionsTF[2].getParent(), gbc);
+		gbc.gridx = 0;
+		gbc.gridy++;
+		
+		outputResolutionTF = gui.buildDecimalField("output slice resolution: ", 30 );
+		inputsPanel.add(outputResolutionTF.getParent(), gbc);
+		gbc.gridx = 0;
+		gbc.gridy++;
+		
 		JPanel buttonPanel = new JPanel();
 		startButton = gui.buildButton("start");
 		startButton.addActionListener(this);
@@ -294,7 +411,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 		pack();
 		setResizable(true);
 	}
-	
+
 	private VOIVector readNucleiPositions( String fileName, File file, float scale )
 	{
 		VOIVector vois = new VOIVector();
@@ -353,7 +470,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 
 		return vois;
 	}
-	
+
 	private VOIContour makeEllipse2D( Vector3f center, float radius ) {
 		VOIContour ellipse = new VOIContour(true);
 		int numPts = 32;

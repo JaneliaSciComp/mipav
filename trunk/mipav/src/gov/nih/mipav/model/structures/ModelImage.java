@@ -3697,6 +3697,7 @@ public class ModelImage extends ModelStorageBase {
         options.doPutInQuicklist(false);
         boolean allowScriptRecording = true;
         fileIO.writeImage(kImage, options, displayProgressBar, allowScriptRecording);
+        fileIO.dispose();
     }
     
     

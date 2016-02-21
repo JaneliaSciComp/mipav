@@ -143,6 +143,12 @@ public class FileIO {
         }
     }
 
+    public void dispose()
+    {
+    	unknownIODialog.dispose();
+    	unknownIODialog = null;
+    }
+    
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
 
