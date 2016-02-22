@@ -315,6 +315,8 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         //pixel data should never be an element in the tag list.
         @SuppressWarnings("unused")
         FileDicomTag t = tagList.remove(new FileDicomKey(0x7FE0,0x0010));
+        t = tagList.remove(new FileDicomKey(0x7FE0,0x0008));
+        t = tagList.remove(new FileDicomKey(0x7FE0,0x0009));
 
         return tagList;
     }
