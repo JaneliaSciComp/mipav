@@ -426,10 +426,10 @@ public class FileDicomBase {
      * 
      * @throws IOException
      */
-    public void loadTagBuffer() throws IOException {
+    public void loadTagBuffer(int b3) throws IOException {
 
         try {
-            tagBuffer = new byte[locateImageTag(0, 999)]; // tagBuffer now guaranteed to contain all necessary header
+            tagBuffer = new byte[locateImageTag(0, 999, b3)]; // tagBuffer now guaranteed to contain all necessary header
                                                           // information, MIPAV can handle up to 999 embedded images
         } catch (final NegativeArraySizeException ex) { // file is probably dicomdir, but not known for sure until
                                                         // tagBuffer has been parsed
@@ -443,7 +443,7 @@ public class FileDicomBase {
      * Locates a DICOM image beginning at the given offset. When multiple images after the offset exist, imageNumber can
      * be used to specify the exact image to retrieve.
      */
-    public int locateImageTag(final int offset, final int imageNumber) {
+    public int locateImageTag(final int offset, final int imageNumber, final int b3) {
         // if receiving a dicom via network, we're only interested in the tags, not the image
         if (isDicomRecv) {
             return -1;
@@ -469,7 +469,7 @@ public class FileDicomBase {
 
             final int b0 = Integer.parseInt("7F", 16);
             final int b2 = Integer.parseInt("00", 16);
-            final int b3 = Integer.parseInt("10", 16);
+            //final int b3 = Integer.parseInt("10", 16);
 
             int first, second, third, fourth;
             int num = 0, numRepeats = 0;
