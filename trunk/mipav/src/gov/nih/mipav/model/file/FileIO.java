@@ -13,7 +13,6 @@ import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.actions.ActionSaveImage;
 import gov.nih.mipav.model.scripting.actions.ActionSaveImageAs;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -14244,6 +14243,7 @@ public class FileIO {
             final boolean isCheshireFloat = originalFileInfo.getFileFormat() == FileUtility.CHESHIRE && originalImageDataType == ModelStorageBase.FLOAT;
             final boolean isNotPet = fileDicom.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY;
             final boolean isNIFTI = originalFileInfo.getFileFormat() == FileUtility.NIFTI;
+            final boolean isPARREC = image.getFileInfo(0).getFileFormat() == FileUtility.PARREC;
 
             // necessary to save (non-pet) floating point minc/analyze/cheshire files to dicom
             if ( (isMincFloatNotPet || isAnalyzeFloat || isCheshireFloat) && isNotPet) {
@@ -14271,7 +14271,14 @@ public class FileIO {
                     fileDicom.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
                 }
             }
-
+            if (isPARREC) {
+           	 TransMatrix tr = image.getMatrix();
+           	 if (tr != null) {
+	           	 patientOrientationString = tr.M00 + "\\" + tr.M10 + "\\" + tr.M20 + "\\" + tr.M01 +
+	           			 "\\" + tr.M11 + "\\" + tr.M21;
+	           	 fileDicom.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
+           	 }
+           }
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
             final float resols[] = image.getFileInfo()[0].getResolutions();
             final float origin[] = image.getFileInfo()[0].getOrigin();
@@ -14901,6 +14908,7 @@ public class FileIO {
             final boolean isCheshireFloat = image.getFileInfo(0).getFileFormat() == FileUtility.CHESHIRE && image.getType() == ModelStorageBase.FLOAT;
             final boolean isNotPet = myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY;
             final boolean isNIFTI = image.getFileInfo(0).getFileFormat() == FileUtility.NIFTI;
+            final boolean isPARREC = image.getFileInfo(0).getFileFormat() == FileUtility.PARREC;
 
             // necessary to save (non-pet) floating point minc/analyze/cheshire files to dicom
             if ( (isMincFloatNotPet || isAnalyzeFloat || isCheshireFloat) && isNotPet) {
@@ -14924,6 +14932,14 @@ public class FileIO {
                 if (patientOrientationString != null) {
                     myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
                 }
+            }
+            if (isPARREC) {
+            	 TransMatrix tr = image.getMatrix();
+            	 if (tr != null) {
+	            	 patientOrientationString = tr.M00 + "\\" + tr.M10 + "\\" + tr.M20 + "\\" + tr.M01 +
+	            			 "\\" + tr.M11 + "\\" + tr.M21;
+	            	 myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
+            	 }
             }
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
             final float resols[] = image.getFileInfo()[0].getResolutions();
