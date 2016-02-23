@@ -196,7 +196,7 @@ public class LatticeModelEM extends LatticeModel
 	}
 	
 
-	public void setNucleiMarkers(VOI nucleiVOIs)
+	public void setNucleiMarkers(VOI nucleiVOIs, float scale)
 	{
 		nucleiCenters = new Vector<Vector4f>();
 		nucleiNames = new Vector<String>();
@@ -205,6 +205,7 @@ public class LatticeModelEM extends LatticeModel
 			VOIText text = (VOIText)nucleiVOIs.getCurves().elementAt(i);
 			float radius = text.size() > 1 ? text.elementAt(0).distance(text.elementAt(1)) : 1;
 			Vector3f pos = text.elementAt(0);
+			scalePoint( pos, scale );
 			Vector4f centerRadius = new Vector4f( pos.X, pos.Y, pos.Z, radius );
 			nucleiCenters.add(centerRadius);
 			nucleiNames.add(text.getText());
@@ -397,7 +398,9 @@ public class LatticeModelEM extends LatticeModel
 				minEllipse[i] = new Vector3f();
 				maxEllipse[i] = new Vector3f();
 				
-				writeDiagonal(image, null, null, size, i, resultExtents, corners, wormDiameters.elementAt(i), resultImage);
+				writeDiagonal(image, null, null, size, i, resultExtents, corners, wormDiameters.elementAt(i), resultImage, true);
+				System.err.println(i + " " + size );
+				
 				contoursForward[i] = WormSegmentation.findLargestConnected( resultImage, centerPositions.elementAt(i), leftPositions.elementAt(i), rightPositions.elementAt(i),
 						wormDiameters.elementAt(i) * 1.25f, 
 						dimX, dimY, dimZ, min, max, i, minEllipse[i], maxEllipse[i] );
@@ -419,12 +422,12 @@ public class LatticeModelEM extends LatticeModel
 					{
 						contoursOK[i] = false;
 					}
-					System.err.println( i + " " + contoursOK[i] + " " + ratioArea + " " + ratioRadius );
-					if ( !contoursOK[i] )
-					{
-						System.err.println( "     " + bb + " " + radius );
-						System.err.println( "     " + targetArea + " " + areas[i] );
-					}
+//					System.err.println( i + " " + contoursOK[i] + " " + ratioArea + " " + ratioRadius );
+//					if ( !contoursOK[i] )
+//					{
+//						System.err.println( "     " + bb + " " + radius );
+//						System.err.println( "     " + targetArea + " " + areas[i] );
+//					}
 				}
 				
 				resultImage.setImageName(imageName + "_straight_unmasked.xml");
@@ -465,7 +468,7 @@ public class LatticeModelEM extends LatticeModel
 				resultImage.setImageName(imageName + "_straight.xml");
 				saveImage(resultImage, i);
 			}
-
+			
 			boolean badFound = false;
 			int start = -1;
 			for (int i = 0; i < size; i++)
@@ -489,7 +492,7 @@ public class LatticeModelEM extends LatticeModel
 								corners[k] = kBox.elementAt(k);
 							}
 
-							writeDiagonal(image, null, null, size, j, resultExtents, corners, wormDiameters.elementAt(j), resultImage);
+							writeDiagonal(image, null, null, size, j, resultExtents, corners, wormDiameters.elementAt(j), resultImage, false);
 
 
 							for ( int y = 0; y < dimY; y++ )
@@ -515,7 +518,7 @@ public class LatticeModelEM extends LatticeModel
 							}
 
 							resultImage.setImageName(imageName + "_straight.xml");
-							System.err.println( "rewritingA " + j );
+//							System.err.println( "rewritingA " + j );
 							saveImage(resultImage, j);
 						}
 					}
@@ -524,19 +527,34 @@ public class LatticeModelEM extends LatticeModel
 						VOI newContours = interpolateContours(contoursForward[start], contoursForward[i], (i - (start+1)), dimX, dimY);
 						for ( int j = 0; j < (i - (start+1)); j++ )
 						{
-							contoursForward[start + 1 + j] = (VOIContour) newContours.getCurves().elementAt(j);
-							contoursOK[start + 1 + j] = true;
+							int indexInterp = start + 1 + j;
+							if ( newContours.getCurves().elementAt(j).size() > 0 )
+							{
+								contoursForward[indexInterp] = (VOIContour) newContours.getCurves().elementAt(j);
+							}
+							else
+							{
+								if ( Math.abs(indexInterp - start) < Math.abs(indexInterp - i) )
+								{
+									contoursForward[indexInterp] = new VOIContour(contoursForward[start]);
+								}
+								else
+								{
+									contoursForward[indexInterp] = new VOIContour(contoursForward[i]);
+								}
+							}
+							contoursOK[indexInterp] = true;
 
-							VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(start + 1 + j);
+							VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(indexInterp);
 							for (int k = 0; k < 4; k++) {
 								corners[k] = kBox.elementAt(k);
 							}
 
-							writeDiagonal(image, null, null, size, start + 1 + j, resultExtents, corners, 
-									wormDiameters.elementAt(start + 1 + j), resultImage);
+							writeDiagonal(image, null, null, size, indexInterp, resultExtents, corners, 
+									wormDiameters.elementAt(indexInterp), resultImage, false);
 
 							Vector3f dir = new Vector3f();
-							VOIContour ellipse = contoursForward[start + 1 + j];
+							VOIContour ellipse = contoursForward[indexInterp];
 							for ( int k = 0; k < ellipse.size(); k++ )
 							{
 								dir.copy(ellipse.elementAt(k));
@@ -552,9 +570,9 @@ public class LatticeModelEM extends LatticeModel
 							{
 								for ( int x = 0; x < dimX; x++ )
 								{
-									if ( !contoursForward[start + 1 + j].contains( x, y ) )
+									if ( !contoursForward[indexInterp].contains( x, y ) )
 									{
-										if ( contoursOK[start + 1 + j] )
+										if ( contoursOK[indexInterp] )
 										{
 											resultImage.setC(x, y, 0, (byte) ( (0 & 0x000000ff)) );
 											resultImage.setC(x, y, 1, (byte) ( (0 & 0x000000ff)) );	
@@ -571,8 +589,8 @@ public class LatticeModelEM extends LatticeModel
 							}
 
 							resultImage.setImageName(imageName + "_straight.xml");
-							System.err.println( "rewritingB " + (start + 1 + j) );
-							saveImage(resultImage, start + 1 + j);
+//							System.err.println( "rewritingB " + (start + 1 + j) );
+							saveImage(resultImage, indexInterp);
 						}
 					}
 					
@@ -594,7 +612,7 @@ public class LatticeModelEM extends LatticeModel
 						corners[k] = kBox.elementAt(k);
 					}
 
-					writeDiagonal(image, null, null, size, j, resultExtents, corners, wormDiameters.elementAt(j), resultImage);
+					writeDiagonal(image, null, null, size, j, resultExtents, corners, wormDiameters.elementAt(j), resultImage, false);
 
 
 					for ( int y = 0; y < dimY; y++ )
@@ -619,84 +637,113 @@ public class LatticeModelEM extends LatticeModel
 						}
 					}
 
-					System.err.println( "rewritingC " + j );
+//					System.err.println( "rewritingC " + j );
 					resultImage.setImageName(imageName + "_straight.xml");
 					saveImage(resultImage, j);
 				}
 			}
 			
-			
 			if ( nucleiCenters != null )
 			{
+				int count = 0;
 				for ( int n = 0; n < outputNucleiCenters.length; n++ )
 				{
 					if ( outputNucleiCenters[n] != null )
 					{
 						VOIContour outputNuclei = outputNucleiCenters[n];
-						for ( int i = outputNuclei.size() - 1; i >= 0; i-- )
+						Vector3f centerPos = new Vector3f();
+						for ( int i = 0; i < outputNuclei.size(); i++ )
 						{
-							int slice = Math.round(outputNuclei.elementAt(i).Z);
-							if ( (slice >= 0) && (slice < contoursForward.length) )
-							{
-								if ( contoursForward[slice] != null )
-								{
-									Vector3f pt = new Vector3f( outputNuclei.elementAt(i).X, outputNuclei.elementAt(i).Y, 0 );
-									if ( !contoursForward[slice].contains(pt) )
-									{
-										outputNuclei.remove(i);
-									}
-								}
-							}
+							centerPos.add(outputNuclei.elementAt(i) );
 						}
-						if ( outputNuclei.size() > 1 )
+						centerPos.scale(1f/(float)outputNuclei.size());
+						
+						float avgDist = 0;
+						for ( int i = 0; i < outputNuclei.size(); i++ )
 						{
-							Vector3f centerPos = new Vector3f();
-							for ( int i = 0; i < outputNuclei.size(); i++ )
-							{
-								centerPos.add(outputNuclei.elementAt(i) );
-							}
-							centerPos.scale(1f/(float)outputNuclei.size());
-							
-							float avgDist = 0;
-							for ( int i = 0; i < outputNuclei.size(); i++ )
-							{
-								avgDist += outputNuclei.elementAt(i).distance( centerPos );
-							}
-							float std = 0;
-							for ( int i = 0; i < outputNuclei.size(); i++ )
-							{
-								float dist = outputNuclei.elementAt(i).distance( centerPos );
-								std += (dist - avgDist)*(dist - avgDist);
-							}
-							std /= (float)outputNuclei.size();
-							std = (float) Math.sqrt(std);
-							
-							for ( int i = outputNuclei.size() - 1; i >= 0; i-- )
-							{
-								float dist = outputNuclei.elementAt(i).distance( centerPos );
-								if ( dist > (2*std) )
-								{
-									outputNuclei.remove(i);
-								}
-							}
-							if ( outputNuclei.size() == 0 )
-							{
-								outputNuclei.add(centerPos);
-							}
-							else
-							{
-								centerPos = new Vector3f();
-								for ( int i = 0; i < outputNuclei.size(); i++ )
-								{
-									centerPos.add(outputNuclei.elementAt(i) );
-								}
-								centerPos.scale(1f/(float)outputNuclei.size());
-								outputNuclei.removeAllElements();
-								outputNuclei.add(centerPos);
-							}
+							avgDist += outputNuclei.elementAt(i).distance( centerPos );
 						}
+						avgDist /= (float)outputNuclei.size();
+						
+						float std = 0;
+						for ( int i = 0; i < outputNuclei.size(); i++ )
+						{
+							float dist = outputNuclei.elementAt(i).distance( centerPos );
+							std += (dist - avgDist)*(dist - avgDist);
+						}
+						std /= (float)outputNuclei.size();
+						std = (float) Math.sqrt(std);
+//						System.err.println( nucleiNames.elementAt(n) + " " + centerPos + "     " + avgDist + "   " + std );
+						outputNuclei.removeAllElements();
+						outputNuclei.add(new Vector3f(centerPos));
+						count++;
+						
+//						for ( int i = outputNuclei.size() - 1; i >= 0; i-- )
+//						{
+//							int slice = Math.round(outputNuclei.elementAt(i).Z);
+//							if ( (slice >= 0) && (slice < contoursForward.length) )
+//							{
+//								if ( contoursForward[slice] != null )
+//								{
+//									Vector3f pt = new Vector3f( outputNuclei.elementAt(i).X, outputNuclei.elementAt(i).Y, 0 );
+//									if ( !contoursForward[slice].contains(pt) )
+//									{
+//										outputNuclei.remove(i);
+//									}
+//								}
+//							}
+//						}
+//						if ( outputNuclei.size() > 1 )
+//						{
+//							Vector3f centerPos = new Vector3f();
+//							for ( int i = 0; i < outputNuclei.size(); i++ )
+//							{
+//								centerPos.add(outputNuclei.elementAt(i) );
+//							}
+//							centerPos.scale(1f/(float)outputNuclei.size());
+//							
+//							float avgDist = 0;
+//							for ( int i = 0; i < outputNuclei.size(); i++ )
+//							{
+//								avgDist += outputNuclei.elementAt(i).distance( centerPos );
+//							}
+//							float std = 0;
+//							for ( int i = 0; i < outputNuclei.size(); i++ )
+//							{
+//								float dist = outputNuclei.elementAt(i).distance( centerPos );
+//								std += (dist - avgDist)*(dist - avgDist);
+//							}
+//							std /= (float)outputNuclei.size();
+//							std = (float) Math.sqrt(std);
+//							
+//							for ( int i = outputNuclei.size() - 1; i >= 0; i-- )
+//							{
+//								float dist = outputNuclei.elementAt(i).distance( centerPos );
+//								if ( dist > (2*std) )
+//								{
+//									outputNuclei.remove(i);
+//								}
+//							}
+//							if ( outputNuclei.size() == 0 )
+//							{
+//								outputNuclei.add(centerPos);
+//							}
+//							else
+//							{
+//								centerPos = new Vector3f();
+//								for ( int i = 0; i < outputNuclei.size(); i++ )
+//								{
+//									centerPos.add(outputNuclei.elementAt(i) );
+//								}
+//								centerPos.scale(1f/(float)outputNuclei.size());
+//								outputNuclei.removeAllElements();
+//								outputNuclei.add(centerPos);
+//							}
+//						}
 					}
 				}
+				
+				System.err.println( nucleiCenters.size() + "    " + count );
 			}
 			
 			resultImage.disposeLocal();
@@ -707,7 +754,7 @@ public class LatticeModelEM extends LatticeModel
 
 	protected void writeDiagonal(final ModelImageLargeFormat image, final ModelImage model, final ModelImageLargeFormat originToStraight, 
 			final int curveLength, final int slice,
-			final int[] extents, final Vector3f[] verts, float diameter, ModelImage result ) {
+			final int[] extents, final Vector3f[] verts, float diameter, ModelImage result, boolean checkNuclei ) {
 		final float modelScaleX = model == null ? 1 : (float)model.getExtents()[0] / (float)extents[0];
 		final float modelScaleY = model == null ? 1 : (float)model.getExtents()[1] / (float)extents[1];
 		final float modelScaleZ = model == null ? 1 : (float)model.getExtents()[2] / (float)curveLength;
@@ -813,7 +860,7 @@ public class LatticeModelEM extends LatticeModel
 							result.set(i, j, 0, tempV.intValue());
 						}
 						
-						if ( nucleiCenters != null )
+						if ( checkNuclei && (nucleiCenters != null) )
 						{
 							for ( int n = 0; n < nucleiCenters.size(); n++ )
 							{
@@ -827,6 +874,7 @@ public class LatticeModelEM extends LatticeModel
 										outputNucleiCenters[n] = new VOIContour(false);
 									}
 									outputNucleiCenters[n].add(new Vector3f(i,j,slice) );
+//									System.err.println( nucleiNames.elementAt(n) );
 								}
 							}
 						}
@@ -878,6 +926,26 @@ public class LatticeModelEM extends LatticeModel
 	}
 	
 
+	private void scalePoint( Vector3f pt, float scale )
+	{
+		Vector3f scaleDown = new Vector3f(0,0,0);
+		Vector3f scaleUp = new Vector3f(0,0,0);
+		Vector3f scaleV = new Vector3f(scale, scale, 1);
+		if ( imageA_LF != null )
+		{
+			scaleDown.X = (int)(imageA_LF.getExtents()[0]/(scale*2));
+			scaleDown.Y = (int)(imageA_LF.getExtents()[1]/(scale*2));
+			
+			scaleUp.X = imageA_LF.getExtents()[0]/2;
+			scaleUp.Y = imageA_LF.getExtents()[1]/2;
+			
+			scaleV.Z = imageA_LF.getZScale();
+
+			pt.sub(scaleDown);
+			pt.mult(scaleV);
+			pt.add(scaleUp);			
+		}
+	}
 
 
 	private void scaleLattice( VOI lattice, float scale )
@@ -1223,10 +1291,10 @@ public class LatticeModelEM extends LatticeModel
 			{
 				if ( outputNucleiCenters[n] != null )
 				{
-					if ( outputNucleiCenters[n].size() > 0 )
+					for ( int i = 0; i < outputNucleiCenters[n].size(); i++ )
 					{
-						Vector3f pos = outputNucleiCenters[n].elementAt(0);
-						bw.write(nucleiNames.elementAt(n) + "," + pos.X + "," + pos.Y + "," + (pos.Z * outputZResolution) + "\n");
+						Vector3f pos = outputNucleiCenters[n].elementAt(i);
+						bw.write(nucleiNames.elementAt(n) + "," + pos.X + "," + pos.Y + "," + pos.Z + "\n");
 					}
 				}
 			}

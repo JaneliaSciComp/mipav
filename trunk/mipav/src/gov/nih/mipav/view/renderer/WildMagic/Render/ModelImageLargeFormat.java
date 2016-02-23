@@ -425,19 +425,26 @@ public class ModelImageLargeFormat {
 				{
 					fileIO = new FileIO();
 				}
-//				System.err.println( "found file " + fileInfo[1] + fileInfo[0] + ".png" );
+				//				System.err.println( "found file " + fileInfo[1] + fileInfo[0] + ".png" );
 				image = fileIO.readImage(fileInfo[0] + ".png", fileInfo[1], false, null);
-//				fileIO.dispose();
+				//				fileIO.dispose();
 			}
-			file = new File(fileInfo[1] + fileInfo[0] + ".tif");
-			if (file.exists()) {
-				if ( fileIO == null )
-				{
-					fileIO = new FileIO();
+			else
+			{
+				file = new File(fileInfo[1] + fileInfo[0] + ".tif");
+				if (file.exists()) {
+					if ( fileIO == null )
+					{
+						fileIO = new FileIO();
+					}
+					//				System.err.println( "found file " + fileInfo[1] + fileInfo[0] + ".itf" );
+					image = fileIO.readImage(fileInfo[0] + ".tif", fileInfo[1], false, null);
+					//				fileIO.dispose();
 				}
-//				System.err.println( "found file " + fileInfo[1] + fileInfo[0] + ".itf" );
-				image = fileIO.readImage(fileInfo[0] + ".tif", fileInfo[1], false, null);
-//				fileIO.dispose();
+				else
+				{
+					MipavUtil.displayError( "File not found " + fileInfo[1] + " " + fileInfo[0] );
+				}
 			}
 			file = null;
 		}

@@ -109,7 +109,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 				wormImage = null;
 			}
 			
-			int scale = Integer.valueOf(nucleiScaleTF.getText() );
+			float scale = Float.valueOf(nucleiScaleTF.getText() );
 			float latticeScale = Float.valueOf(latticeScaleTF.getText() );
 			float resX = Float.valueOf( resolutionsTF[0].getText() );
 			float resY = Float.valueOf( resolutionsTF[1].getText() );
@@ -238,11 +238,11 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 								if ( nucleiFile.exists() )
 								{
 									String fileName = nucleiTF.getText().substring(nucleiTF.getText().lastIndexOf(File.separator) + 1);
-									VOIVector vois = readNucleiPositions( fileName, nucleiFile, scale );
+									VOIVector vois = readNucleiPositions( fileName, nucleiFile );
 									VOI nucleiVOIs = vois.elementAt(0);
 									if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
 									{
-										model.setNucleiMarkers(nucleiVOIs);
+										model.setNucleiMarkers(nucleiVOIs, scale);
 									}
 								}
 							}
@@ -258,7 +258,19 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 							System.err.println("Done straightening" );
 						}
 					}
+					else
+					{
+						MipavUtil.displayError( "Error in reading lattice file " + latticeFileTF.getText() );
+					}
 				}
+				else
+				{
+					MipavUtil.displayError( "Error in reading image file " + inputImageTF.getText() );
+				}
+			}
+			else
+			{
+				MipavUtil.displayError( "Must set image file." );
 			}
 		}
 		if (command.equals("close"))
@@ -354,7 +366,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
 		inputsPanel.setForeground(Color.black);
 
-		inputImageTF = gui.buildFileField("Worm image:  ", "", false, JFileChooser.FILES_AND_DIRECTORIES, this);
+		inputImageTF = gui.buildFileField("Worm image:  ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
 		inputsPanel.add(inputImageTF.getParent(), gbc);
 		gbc.gridy++;
 
@@ -366,7 +378,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 		inputsPanel.add(nucleiTF.getParent(), gbc);
 		gbc.gridy++;
 
-		nucleiScaleTF = gui.buildIntegerField("Nuclei rescale factor: ", 2 );
+		nucleiScaleTF = gui.buildDecimalField("Nuclei rescale factor: ", 0.5 );
 		inputsPanel.add(nucleiScaleTF.getParent(), gbc);
 		gbc.gridy++;
 
@@ -412,7 +424,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 		setResizable(true);
 	}
 
-	private VOIVector readNucleiPositions( String fileName, File file, float scale )
+	private VOIVector readNucleiPositions( String fileName, File file )
 	{
 		VOIVector vois = new VOIVector();
 		VOI annotationVOI = new VOI( (short)0, fileName, VOI.ANNOTATION, 0 );
@@ -436,16 +448,16 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 					text.setText(name);
 				}
 				if (st.hasMoreTokens()) {
-					pos.X = Float.valueOf(st.nextToken())/scale;
+					pos.X = Float.valueOf(st.nextToken());
 				}
 				if (st.hasMoreTokens()) {
-					pos.Y = Float.valueOf(st.nextToken())/scale;
+					pos.Y = Float.valueOf(st.nextToken());
 				}
 				if (st.hasMoreTokens()) {
 					pos.Z = Float.valueOf(st.nextToken());
 				}
 				if (st.hasMoreTokens()) {
-					radius = Float.valueOf(st.nextToken())/scale;
+					radius = Float.valueOf(st.nextToken());
 					if ( !pos.isEqual(Vector3f.ZERO ) )
 					{
 						text.add(pos);
