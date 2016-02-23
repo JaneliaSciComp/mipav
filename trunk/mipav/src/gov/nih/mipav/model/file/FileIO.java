@@ -14421,6 +14421,14 @@ public class FileIO {
                 } else {
                     fileDicom.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
                 }
+            } else if  ( (image.getType() == ModelStorageBase.FLOAT) || (image.getFileInfo(0).getDataType() == ModelStorageBase.FLOAT)) {
+            	fileDicom.getTagTable().setValue("0028,0100", new Short((short) 32), 2); // bits per pixel
+                fileDicom.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                fileDicom.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
+            } else if  ( (image.getType() == ModelStorageBase.DOUBLE) || (image.getFileInfo(0).getDataType() == ModelStorageBase.DOUBLE)) {
+            	fileDicom.getTagTable().setValue("0028,0100", new Short((short) 64), 2); // bits per pixel
+                fileDicom.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                fileDicom.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
             } else {
 
                 if ( !quiet) {
@@ -15063,6 +15071,14 @@ public class FileIO {
                 } else {
                     myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
                 }
+            } else if  ( (image.getType() == ModelStorageBase.FLOAT) || (image.getFileInfo(0).getDataType() == ModelStorageBase.FLOAT)) {
+            	myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 32), 2); // bits per pixel
+            	myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                myFileInfo.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
+            } else if  ( (image.getType() == ModelStorageBase.DOUBLE) || (image.getFileInfo(0).getDataType() == ModelStorageBase.DOUBLE)) {
+            	myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 64), 2); // bits per pixel
+                myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+                myFileInfo.getTagTable().setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
             } else {
 
                 if ( !quiet) {
