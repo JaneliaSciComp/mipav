@@ -68,6 +68,9 @@ public class FileDicom extends FileDicomBase {
     
     /** The tag marking the start of the float image data. */
     public static final String FLOAT_IMAGE_TAG = "7F[0-9A-F][0-9A-F],0008";
+    
+    /** The tag marking the start of the double image data. */
+    public static final String DOUBLE_IMAGE_TAG = "7F[0-9A-F][0-9A-F],0009";
 
     /** The tag marking the beginning of a dicom sequence. */
     public static final String SEQ_ITEM_BEGIN = "FFFE,E000";
@@ -203,6 +206,9 @@ public class FileDicom extends FileDicomBase {
     
     // Set true if (7FE0,0008) is present for Float Pixel Data
     private boolean haveFloatPixelData = false;
+    
+    // Set true if (7FE0,0009) is present for Double Float Pixel Data
+    private boolean haveDoublePixelData = false;
     
     // for nonfloat and nondouble data
     private int b3 = Integer.parseInt("10", 16);
@@ -690,10 +696,17 @@ public class FileDicom extends FileDicomBase {
                 aie.printStackTrace();
                 Preferences.debug("Reached end of file while attempting to read: " + getFilePointer() + "\n", Preferences.DEBUG_FILEIO);
                 if (haveFloatPixelData) {
-                	key = new FileDicomKey("7FE0,0008"); // process image tag
+                	key = new FileDicomKey("7FE0,0008"); // process float image tag
                 	fileInfo.setDataType(ModelStorageBase.FLOAT);
                     vrBytes = new byte[] {'O', 'F'};
                     b3 = Integer.parseInt("08", 16);
+                    loadTagBuffer(b3);
+                }
+                else if (haveDoublePixelData) {
+                	key = new FileDicomKey("7FE0,0009"); // process double image tag
+                	fileInfo.setDataType(ModelStorageBase.DOUBLE);
+                    vrBytes = new byte[] {'O', 'D'};
+                    b3 = Integer.parseInt("09", 16);
                     loadTagBuffer(b3);
                 }
                 else {
@@ -736,7 +749,7 @@ public class FileDicom extends FileDicomBase {
             }
 
             if (getFilePointer() >= fLength || (elementLength == -1 && (key.toString().matches(FileDicom.IMAGE_TAG)) ||
-            		(key.toString().matches(FileDicom.FLOAT_IMAGE_TAG)))) { // for
+            		(key.toString().matches(FileDicom.FLOAT_IMAGE_TAG)) || (key.toString().matches(FileDicom.DOUBLE_IMAGE_TAG)))) { // for
                                                                                                                        // dicom
                                                                                                                        // files
                                                                                                                        // that
@@ -874,6 +887,8 @@ public class FileDicom extends FileDicomBase {
                     }
                 } else if (key.toString().matches(FileDicom.FLOAT_IMAGE_TAG)) {
                 	vr = VR.OF;
+                } else if (key.toString().matches(FileDicom.DOUBLE_IMAGE_TAG)) {
+                	vr = VR.OD;
                 } else if ( (vr == VR.UN || vr == VR.XX || vr == null) && DicomDictionary.containsTag(key)) {
                     // TODO: some explicit dicom files have tags labeled UN in the file, but SQ in the dictionary. They
                     // appear to be sequences with defined lengths, but no explicit VR for the tags inside, which caused
@@ -966,6 +981,25 @@ public class FileDicom extends FileDicomBase {
                     break;
                 case OF:
                     if (name.matches(FileDicom.FLOAT_IMAGE_TAG) && !inSequence) { // must be OF
+                        return processImageData(extents, numEmbeddedImages, getFilePointer() + (fileInfo.getVr_type() == VRtype.IMPLICIT ? 4 : 0)); // finished
+                                                                                                                                                    // reading
+                                                                                                                                                    // image
+                                                                                                                                                    // tags
+                                                                                                                                                    // and
+                                                                                                                                                    // all
+                                                                                                                                                    // image
+                                                                                                                                                    // data,
+                                                                                                                                                    // get
+                                                                                                                                                    // final
+                                                                                                                                                    // image
+                                                                                                                                                    // for
+                                                                                                                                                    // display
+                    }
+                    data = getByte(tagVM, elementLength, endianess);
+                    tagTable.setValue(key, data, elementLength);
+                    break;
+                case OD:
+                    if (name.matches(FileDicom.DOUBLE_IMAGE_TAG) && !inSequence) { // must be OF
                         return processImageData(extents, numEmbeddedImages, getFilePointer() + (fileInfo.getVr_type() == VRtype.IMPLICIT ? 4 : 0)); // finished
                                                                                                                                                     // reading
                                                                                                                                                     // image
@@ -1279,6 +1313,9 @@ public class FileDicom extends FileDicomBase {
  
         if (haveFloatPixelData) {
         	Preferences.debug("File Dicom: readHeader - Data tag = " + FileDicom.FLOAT_IMAGE_TAG + "\n", Preferences.DEBUG_FILEIO);	
+        }
+        else if (haveDoublePixelData) {
+        	Preferences.debug("File Dicom: readHeader - Data tag = " + FileDicom.DOUBLE_IMAGE_TAG + "\n", Preferences.DEBUG_FILEIO);		
         }
         else {
             Preferences.debug("File Dicom: readHeader - Data tag = " + FileDicom.IMAGE_TAG + "\n", Preferences.DEBUG_FILEIO);
@@ -2148,6 +2185,7 @@ public class FileDicom extends FileDicomBase {
         BitSet bufferBitSet = null;
         short[] dataRGB = null;
         int[] dataRGB_USHORT = null;
+        boolean saveAsEncapJP2Final;
 
         fileInfo = (FileInfoDicom) image.getFileInfo(index);
 
@@ -2162,7 +2200,15 @@ public class FileDicom extends FileDicomBase {
 
         try {
             raFile.setLength(0);
-            writeHeader(raFile, fileInfo, saveAsEncapJP2);
+            if (((fileInfo.getDataType() == ModelStorageBase.FLOAT) || (fileInfo.getDataType() == ModelStorageBase.DOUBLE)) &&
+            		saveAsEncapJP2) {
+            	saveAsEncapJP2Final = false;
+            	Preferences.debug("JPEG2000 encapsulation not allowed for FLOAT or DOUBLE data\n", Preferences.DEBUG_FILEIO);
+            }
+            else {
+            	saveAsEncapJP2Final = saveAsEncapJP2;
+            }
+            writeHeader(raFile, fileInfo, saveAsEncapJP2Final);
 
             // changed this to happen for ALL files, because it's necessary for CT
             // images, or else the min-max gets messed up.
@@ -2323,6 +2369,13 @@ public class FileDicom extends FileDicomBase {
                         rawChunkFile.writeBufferUShort(data5, 0, length, image.getFileInfo(0).getEndianess());
                         data5 = null;
                         break;
+                        
+                    case ModelStorageBase.FLOAT:
+
+                        image.exportData(index * length, length, data);
+
+                        rawChunkFile.writeBufferFloat(data, 0, length, image.getFileInfo(0).getEndianess());
+                        break;
 
                     case ModelStorageBase.UINTEGER:
                         // Required for RT Doses
@@ -2433,6 +2486,8 @@ public class FileDicom extends FileDicomBase {
         int bitsPerPixel;
         if (dataType == ModelStorageBase.ARGB) {
             bitsPerPixel = 8; // writing a ARGB color image
+        } else if (dataType == ModelStorageBase.FLOAT) {
+        	bitsPerPixel = 32;
         } else {
             bitsPerPixel = 16; // writing a signed or unsigned short or ARGB_USHORT image
         }
@@ -2495,6 +2550,19 @@ public class FileDicom extends FileDicomBase {
                     }
                 }
             } // else if (dataType == ModelStorageBase.ARGB_USHORT)
+            else if (dataType == ModelStorageBase.FLOAT) {
+                final float[] data = new float[imageSize];
+
+                for (int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                    for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                        image.exportData(timeNum * volumeSize + sliceNum * imageSize, imageSize, data);
+
+                        rawChunkFile.writeBufferFloat(data, timeNum * volumeSize + sliceNum * imageSize, timeNum * volumeSize + sliceNum * imageSize
+                                + imageSize, fileInfo.getEndianess());
+
+                    }
+                }
+            } // if (dataType == ModelStorageBase.FLOAT)
             else if (dataType == ModelStorageBase.USHORT) {
                 final float[] data = new float[imageSize];
                 final int[] data2 = new int[imageSize];
@@ -3053,9 +3121,10 @@ public class FileDicom extends FileDicomBase {
             final FileDicomKey key = getNextTag(endianess);
             nameSQ = key.toString();
             if ( !nameSQ.equals(FileDicom.SEQ_ITEM_END) && !nameSQ.matches(FileDicom.IMAGE_TAG) && 
-            		!nameSQ.matches(FileDicom.FLOAT_IMAGE_TAG)) {
+            		!nameSQ.matches(FileDicom.FLOAT_IMAGE_TAG) && !nameSQ.matches(FileDicom.DOUBLE_IMAGE_TAG)) {
                 dataSetflag = processNextTag(table, key, endianess, true);
-            } else if ((nameSQ.matches(FileDicom.IMAGE_TAG)) || (nameSQ.matches(FileDicom.FLOAT_IMAGE_TAG))) {
+            } else if ((nameSQ.matches(FileDicom.IMAGE_TAG)) || (nameSQ.matches(FileDicom.FLOAT_IMAGE_TAG)) ||
+            		(nameSQ.matches(FileDicom.DOUBLE_IMAGE_TAG))) {
                 numEmbeddedImages++;
                 seek(getFilePointer() + elementLength); // embedded image not displayed //TODO: make this image
                                                         // availbale in the dicom infobox
@@ -3378,6 +3447,10 @@ public class FileDicom extends FileDicomBase {
         if ((groupWord == 0x7FE0) && (elementWord == 0x0008)) {
         	haveFloatPixelData = true;
         	fileInfo.setDataType(ModelStorageBase.FLOAT);
+        }
+        else if ((groupWord == 0x7FE0) && (elementWord == 0x0009)) {
+        	haveDoublePixelData = true;
+        	fileInfo.setDataType(ModelStorageBase.DOUBLE);
         }
         // Preferences.debug("(just found: )"+Integer.toString(groupWord, 0x10) + ":"+Integer.toString(elementWord,
         // 0x10)+" - " , Preferences.DEBUG_FILEIO); System.err.print("( just found: ) "+ Integer.toString(groupWord,
@@ -3965,8 +4038,18 @@ public class FileDicom extends FileDicomBase {
             } catch (final ArrayIndexOutOfBoundsException aie) {
                 aie.printStackTrace();
                 Preferences.debug("Reached end of file while attempting to read: " + getFilePointer() + "\n", Preferences.DEBUG_FILEIO);
-                key = new FileDicomKey("7FE0,0010"); // process image tag
-                vrBytes = new byte[] {'O', 'W'};
+                if (haveFloatPixelData) {
+                	key = new FileDicomKey("7FE0,0008"); // process float image tag
+                    vrBytes = new byte[] {'O', 'F'};
+                }
+                else if (haveDoublePixelData) {
+                	key = new FileDicomKey("7FE0,0009"); // process float image tag
+                    vrBytes = new byte[] {'O', 'D'};
+                }
+                else {
+                    key = new FileDicomKey("7FE0,0010"); // process image tag
+                    vrBytes = new byte[] {'O', 'W'};
+                }
                 final int imageLoc = locateImageTag(0, numEmbeddedImages, b3);
                 seek(imageLoc);
             }
@@ -4027,6 +4110,56 @@ public class FileDicom extends FileDicomBase {
                     flag = false;
                 }
             }
+            else if (getFilePointer() >= fLength || (elementLength == -1 && key.toString().matches(FileDicom.FLOAT_IMAGE_TAG))) { // for
+                // dicom
+                // files
+                // that
+                // contain
+                // no
+                // image
+                // information,
+                // the
+                // image
+                // tag
+                // will
+                // never
+                // be
+                // encountered
+				final int imageLoc = locateImageTag(0, numEmbeddedImages, b3);
+				if ( !notDir) { // Done reading tags, if DICOMDIR then don't do anything else
+				    flag = false;
+				} else if (imageLoc != -1 && !imageLoadReady) {
+				    seek(imageLoc);
+				flag = true; // image tag exists but has not been processed yet
+				} else {
+				    flag = false;
+				}
+		    }
+            else if (getFilePointer() >= fLength || (elementLength == -1 && key.toString().matches(FileDicom.DOUBLE_IMAGE_TAG))) { // for
+                // dicom
+                // files
+                // that
+                // contain
+                // no
+                // image
+                // information,
+                // the
+                // image
+                // tag
+                // will
+                // never
+                // be
+                // encountered
+				final int imageLoc = locateImageTag(0, numEmbeddedImages, b3);
+				if ( !notDir) { // Done reading tags, if DICOMDIR then don't do anything else
+				    flag = false;
+				} else if (imageLoc != -1 && !imageLoadReady) {
+				    seek(imageLoc);
+				flag = true; // image tag exists but has not been processed yet
+				} else {
+				    flag = false;
+				}
+		    }
 
             if (rereadLastTag) {
                 rereadLastTag = false;
@@ -4149,6 +4282,14 @@ public class FileDicom extends FileDicomBase {
     public void writeHeader(final RandomAccessFile outputFile, final FileInfoDicom fileInfo, final boolean saveAsEncapJP2) throws IOException {
         FileDicomTag element;
         final FileDicomTag[] tagArray = FileDicomTagTable.sortTagsList(fileInfo.getTagTable().getTagList());
+        if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
+        	haveFloatPixelData = true;
+        	b3 = Integer.parseInt("08", 16);
+        }
+        else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
+        	haveDoublePixelData = true;
+        	b3 = Integer.parseInt("09", 16);
+        }
 
         if (fileInfo.containsDICM) {
 
@@ -4174,7 +4315,15 @@ public class FileDicom extends FileDicomBase {
         }
 
         writeShort((short) 0x7FE0, endianess); // the image
-        writeShort((short) 0x0010, endianess);
+        if (haveFloatPixelData) {
+        	writeShort((short) 0x0008, endianess);
+        }
+        else if (haveDoublePixelData) {
+        	writeShort((short) 0x0009, endianess);	
+        }
+        else {        
+        	writeShort((short) 0x0010, endianess);
+        }
 
         if (saveAsEncapJP2) {
             writeShort((short) 0x424F, endianess);
@@ -4185,8 +4334,16 @@ public class FileDicom extends FileDicomBase {
         }
 
         if (fileInfo.getVr_type() == VRtype.EXPLICIT) {
-            final VR imageTagVR = DicomDictionary.getVR(new FileDicomKey("7FE0,0010"));
-
+        	VR imageTagVR;
+        	if (haveFloatPixelData) {
+        		imageTagVR = DicomDictionary.getVR(new FileDicomKey("7FE0,0008"));	
+        	}
+        	else if (haveDoublePixelData) {
+        		imageTagVR = DicomDictionary.getVR(new FileDicomKey("7FE0,0009"));	
+        	}
+        	else {
+                imageTagVR = DicomDictionary.getVR(new FileDicomKey("7FE0,0010"));
+        	}
             // write VR and two reserved bytes
             outputFile.writeBytes(imageTagVR.toString());
             outputFile.writeShort(0);
