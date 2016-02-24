@@ -2,7 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
-
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -114,6 +114,8 @@ public class JDialogSaveSlices extends JDialogBase {
     private JPanel tiffPanel;
     
     private boolean mincEnabled;
+    
+    private boolean dicomEnabled;
 
     /** DOCUMENT ME! */
     private boolean timeEnabled;
@@ -147,6 +149,14 @@ public class JDialogSaveSlices extends JDialogBase {
     private boolean saveEnhancedDicom = false;
     
     private boolean enforceDistinctVolumeWriting = false;
+    
+    private int dataType;
+    
+    private boolean isFloat;
+    
+    private boolean floatToShort = true;
+    
+    private JCheckBox floatToShortCheckbox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -157,14 +167,16 @@ public class JDialogSaveSlices extends JDialogBase {
      * @param  mnValue         Lowest slice number in range.
      * @param  mxValue         Highest slice number in range.
      * @param  options         Structure to store the write options chosen here.
+     * @param  dataType
      */
-    public JDialogSaveSlices(Frame theParentFrame, int mnValue, int mxValue, FileWriteOptions options) {
+    public JDialogSaveSlices(Frame theParentFrame, int mnValue, int mxValue, FileWriteOptions options, int dataType) {
 
         super(theParentFrame, true);
         minValue = mnValue;
         maxValue = mxValue;
         timeEnabled = false;
         fourDimEnabled = false;
+        dicomEnabled = (options.getFileType() == FileUtility.DICOM);
         mincEnabled = (options.getFileType() == FileUtility.MINC);
         tiffEnabled = (options.getFileType() == FileUtility.TIFF);
         corEnabled = (options.getFileType() == FileUtility.COR);
@@ -173,6 +185,8 @@ public class JDialogSaveSlices extends JDialogBase {
         geGenesisEnabled = (options.getFileType() == FileUtility.GE_GENESIS);
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
+        this.dataType = dataType;
+        isFloat = (dataType == ModelStorageBase.FLOAT);
         init();
 
     }
@@ -186,15 +200,17 @@ public class JDialogSaveSlices extends JDialogBase {
      * @param  mnTimeValue     Lowest time number in range.
      * @param  mxTimeValue     Highest time number in range.
      * @param  options         Structure to store the write options chosen here.
+     * @param  dataType
      */
     public JDialogSaveSlices(Frame theParentFrame, int mnValue, int mxValue, int mnTimeValue, int mxTimeValue,
-                             FileWriteOptions options) {
+                             FileWriteOptions options, int dataType) {
         super(theParentFrame, true);
         minValue = mnValue;
         maxValue = mxValue;
         minTimeValue = mnTimeValue;
         maxTimeValue = mxTimeValue;
         timeEnabled = true;
+        dicomEnabled = (options.getFileType() == FileUtility.DICOM);
         mincEnabled = (options.getFileType() == FileUtility.MINC);
         tiffEnabled = (options.getFileType() == FileUtility.TIFF);
         fourDimEnabled = ((options.getFileType() == FileUtility.ANALYZE) ||
@@ -219,6 +235,8 @@ public class JDialogSaveSlices extends JDialogBase {
         }
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
+        this.dataType = dataType;
+        isFloat = (dataType == ModelStorageBase.FLOAT);
         init();
        
     }
@@ -361,6 +379,10 @@ public class JDialogSaveSlices extends JDialogBase {
                 saveEnhancedDicom = enhancedDicomButton.isSelected();
             }
             options.setWritePackBit(packBitCheckbox.isSelected());
+            
+            if (dicomEnabled && isFloat) {
+            	options.setFloatToShort(floatToShortCheckbox.isSelected());
+            }
 
             dispose();
         } else if (command.equals("Cancel")) {
@@ -413,6 +435,10 @@ public class JDialogSaveSlices extends JDialogBase {
     public boolean getSaveAsEncapJP2() {
 		return saveAsEncapJP2;
 	}
+    
+    public boolean getFloatToShort() {
+    	return floatToShort;
+    }
 
 	/**
      * Sets up GUI and displays the dialog.
@@ -590,6 +616,15 @@ public class JDialogSaveSlices extends JDialogBase {
             dicomGroup.add(multiFileDicomButton);
             gbc.gridy++;
             dicomInfoPanel.add(multiFileDicomButton, gbc);
+            
+            if (isFloat) {
+	            floatToShortCheckbox = new JCheckBox("Save float as short or USHORT");
+	            floatToShortCheckbox.setFont(serif12);
+	            floatToShortCheckbox.setSelected(true);
+	            floatToShortCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+	            gbc.gridy++;
+	            dicomInfoPanel.add(floatToShortCheckbox, gbc);
+            }
         }
 
         JPanel generalPanel = new JPanel();
@@ -614,7 +649,7 @@ public class JDialogSaveSlices extends JDialogBase {
             multiFileCheckbox.setSelected(false);
         }
 
-        if (afniEnabled || (options.getFileType() == FileUtility.DICOM)) {
+        if (afniEnabled || dicomEnabled) {
             multiFileCheckbox.setEnabled(false);
         }
 
@@ -691,7 +726,7 @@ public class JDialogSaveSlices extends JDialogBase {
         mainPanel.add(slicePanel);
         mainPanel.add(timePanel);
         mainPanel.add(tiff2Panel);
-        if(options.getFileType() == FileUtility.DICOM) {
+        if(dicomEnabled) {
         	mainPanel.add(encapJP2Panel2);
         }
 
