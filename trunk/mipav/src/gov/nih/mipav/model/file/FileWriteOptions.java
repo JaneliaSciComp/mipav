@@ -186,7 +186,7 @@ public class FileWriteOptions {
     
     private boolean isBz2zip = false;
 
-    
+    private boolean floatToShort = true;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1223,6 +1223,14 @@ public class FileWriteOptions {
 
 	public void setBz2zip(boolean isBz2zip) {
 		this.isBz2zip = isBz2zip;
+	}
+	
+	public void setFloatToShort(boolean floatToShort) {
+		this.floatToShort = floatToShort;
+	}
+	
+	public boolean getFloatToShort() {
+		return floatToShort;
 	}
 
 	/**
