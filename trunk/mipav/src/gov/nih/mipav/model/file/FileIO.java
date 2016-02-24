@@ -14361,6 +14361,7 @@ public class FileIO {
                 }
                 if (set) {
                     fileDicom.getTagTable().setValue("0018,0088", new Double(resols[2]), 8);
+                    originalFileInfo.setResolutions(resols[2],2);
                 }
             } // if (image.getNDims() >= 3)
 
@@ -15023,6 +15024,7 @@ public class FileIO {
                 }
                 if (set) {
                     myFileInfo.getTagTable().setValue("0018,0088", new Double(resols[2]), 8);
+                    myFileInfo.setResolutions(resols[2], 2);
                 }
             } // if (image.getNDims() >= 3)
 
