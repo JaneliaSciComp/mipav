@@ -13,6 +13,7 @@ import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.actions.ActionSaveImage;
 import gov.nih.mipav.model.scripting.actions.ActionSaveImageAs;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -4340,7 +4341,7 @@ public class FileIO {
 
         if (options.isSaveAs() && !options.isSet()) {
             // if(!gzip && !zip && !bz2zip) {
-            if ( !callDialog(image.getExtents(), (fileType == FileUtility.TIFF), options)) {
+            if ( !callDialog(image.getExtents(), image.getFileInfo(0).getDataType(), options)) {
                 return;
             }
             if ( (gzip || zip || bz2zip) && options.isMultiFile()) {
@@ -6121,9 +6122,10 @@ public class FileIO {
      * 
      * @return DOCUMENT ME!
      */
-    private boolean callDialog(final int[] extents, final boolean isTiff, FileWriteOptions options) {
+    private boolean callDialog(final int[] extents, final int dataType, FileWriteOptions options) {
 
         JDialogSaveSlices dialogSave = null;
+        boolean isTiff = (options.getFileType() == FileUtility.TIFF);
 
         if ( (extents.length == 2) && isTiff && options.isPackBitEnabled()) {
             final int response = JOptionPane.showConfirmDialog(UI.getMainFrame(), "Save with pack bit compression?", "Compression", JOptionPane.YES_NO_OPTION,
@@ -6139,11 +6141,11 @@ public class FileIO {
             if ( (extents.length == 2) && (options.getFileType() == FileUtility.DICOM) && displayRangeOfSlicesDialog) {
                 // we want the saveslices to pop up in this case so the user can select if they want
                 // to save as encapsulated jpeg2000..unless ofcourse flag has been set to false
-                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, 0, options);
+                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, 0, options, dataType);
             } else if (extents.length == 3) {
-                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, options);
+                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, options, dataType);
             } else if (extents.length == 4) {
-                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, 0, extents[3] - 1, options);
+                dialogSave = new JDialogSaveSlices(UI.getMainFrame(), 0, extents[2] - 1, 0, extents[3] - 1, options, dataType);
             } else {
                 return true;
             }
@@ -6156,6 +6158,7 @@ public class FileIO {
             options = dialogSave.getWriteOptions();
             options.doStamp(dialogSave.doStampSecondary());
             options.doEnhanced(dialogSave.doSaveEnhancedDicom());
+            options.setFloatToShort(dialogSave.getFloatToShort());
 
             if (extents.length == 3) {
 
@@ -14170,6 +14173,7 @@ public class FileIO {
         ModelImage clonedImage = null;
         boolean didClone = false;
         String patientOrientationString = null;
+        boolean floatToShort = options.getFloatToShort();
 
         if (image.getNDims() != 2) {
             return false;
@@ -14254,7 +14258,7 @@ public class FileIO {
             final boolean isPARREC = image.getFileInfo(0).getFileFormat() == FileUtility.PARREC;
 
             // necessary to save (non-pet) floating point minc/analyze/cheshire files to dicom
-            if ( (isMincFloatNotPet || isAnalyzeFloat || isCheshireFloat) && isNotPet) {
+            if ( (isMincFloatNotPet || isAnalyzeFloat || isCheshireFloat || isPARREC) && isNotPet && floatToShort) {
 
                 clonedImage = (ModelImage) image.clone();
                 didClone = true;
@@ -14264,10 +14268,22 @@ public class FileIO {
                 } else {
                     newType = ModelStorageBase.SHORT;
                 }
+                double newMin, newMax;
+                
+                if (image.getMin() >= 0) {
+                    // give USHORT range
+                    newMin = 0;
+                    newMax = 65535;
+
+                } else {
+                    // give SHORT range
+                    newMin = Short.MIN_VALUE;
+                    newMax = Short.MAX_VALUE;
+                }
 
                 // in-place conversion is required so that the minc file info is retained
-                final AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType, originalImageMin, originalImageMax, clonedImage.getMin(),
-                        clonedImage.getMax(), false);
+                final AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType, originalImageMin, originalImageMax, newMin,
+                        newMax, false);
                 convertType.run();
 
                 image = clonedImage;
@@ -14425,7 +14441,7 @@ public class FileIO {
                     // is
                     // new
                     // 7/8/2008
-                    && (originalFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+                    && (originalFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) && floatToShort) {
                 fileDicom.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
                 fileDicom.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
                 fileDicom.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
@@ -14609,7 +14625,8 @@ public class FileIO {
                 // this handles PET float images
                 // convert type to float with short or ushort range
                 if ( (originalFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                        && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
+                        && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))
+                        && floatToShort) {
 
                     // clone the image
                     // then convert type to float with short or ushort range
@@ -14675,7 +14692,8 @@ public class FileIO {
 
                 // rescaling intercepts and slopes for each slice.
                 if ( (fBase.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                        && ( (originalImageDataType == ModelStorageBase.FLOAT) || (originalImageDataType == ModelStorageBase.DOUBLE))) {
+                        && ( (originalImageDataType == ModelStorageBase.FLOAT) || (originalImageDataType == ModelStorageBase.DOUBLE))
+                        && floatToShort) {
 
                     double smin, smax; // slice min and max
 
@@ -14823,6 +14841,7 @@ public class FileIO {
         final ModelImage originalImage = image;
         boolean didClone = false;
         String patientOrientationString = null;
+        boolean floatToShort = options.getFloatToShort();
 
         // if a file is being 'saved as' a dicom file, then
         // actually save it to a subdirectory, named by the base of the FileName
@@ -14920,7 +14939,7 @@ public class FileIO {
             final boolean isPARREC = image.getFileInfo(0).getFileFormat() == FileUtility.PARREC;
 
             // necessary to save (non-pet) floating point minc/analyze/cheshire files to dicom
-            if ( (isMincFloatNotPet || isAnalyzeFloat || isCheshireFloat) && isNotPet) {
+            if ( (isMincFloatNotPet || isAnalyzeFloat || isCheshireFloat || isPARREC) && isNotPet  && floatToShort) {
                 clonedImage = (ModelImage) image.clone();
                 didClone = true;
                 int newType;
@@ -14929,9 +14948,22 @@ public class FileIO {
                 } else {
                     newType = ModelStorageBase.SHORT;
                 }
+                
+                double newMin, newMax;
+                
+                if (image.getMin() >= 0) {
+                    // give USHORT range
+                    newMin = 0;
+                    newMax = 65535;
+
+                } else {
+                    // give SHORT range
+                    newMin = Short.MIN_VALUE;
+                    newMax = Short.MAX_VALUE;
+                }
                 // in-place conversion is required so that the minc file info is retained
                 final AlgorithmChangeType convertType = new AlgorithmChangeType(clonedImage, newType, clonedImage.getMin(), clonedImage.getMax(),
-                        clonedImage.getMin(), clonedImage.getMax(), false);
+                        newMin, newMax, false);
                 convertType.run();
 
                 image = clonedImage;
@@ -15085,7 +15117,7 @@ public class FileIO {
                 myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
                 myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
             } else if ( ( (image.getType() == ModelStorageBase.FLOAT) || (image.getFileInfo(0).getDataType() == ModelStorageBase.FLOAT)) // 7/8/2008
-                    && (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+                    && (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)  && floatToShort) {
                 myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
                 myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
                 myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
@@ -15262,7 +15294,8 @@ public class FileIO {
                 // this handles PET float images
                 // convert type to float with short or ushort range
                 if ( (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                        && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
+                        && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE)) &&
+                        floatToShort) {
 
                     // clone the image
                     // then convert type to float with short or ushort range
@@ -15342,7 +15375,8 @@ public class FileIO {
 
                     // rescaling intercepts and slopes for each slice.
                     if ( (fBase[k].getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                            && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
+                            && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE)) &&
+                            floatToShort) {
 
                         double smin, smax; // slice min and max
 
