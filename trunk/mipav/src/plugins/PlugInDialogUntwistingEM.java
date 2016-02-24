@@ -169,6 +169,10 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 							wormImage.disposeLocal(false);
 							wormImage = null;
 						}
+						else
+						{
+							MipavUtil.displayError( "Error in reading image file " + inputImageTF.getText() + File.separator + average );
+						}
 						largeFormat = true;
 					}
 //					if ( (fullImage != null) && (latticeFileTF.getText().length() == 0) )
@@ -256,6 +260,10 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 							model.dispose();
 							model = null;
 							System.err.println("Done straightening" );
+						}
+						else
+						{
+							MipavUtil.displayError( "Error in reading image folder " + inputImageTF.getText() );
 						}
 					}
 					else
