@@ -423,6 +423,7 @@ public class FileIO {
         FileInfoDicom[] savedFileInfos;
 
         float[] bufferFloat = null;
+        double[] bufferDouble = null;
         short[] bufferShort = null;
         int[] bufferInt = null;
         int[] extents;
@@ -538,12 +539,15 @@ public class FileIO {
             bufferFloat = new float[length];
             if (refFileInfo.getDataType() == ModelStorageBase.UINTEGER) {
                 bufferInt = new int[length];
+            } else if (refFileInfo.getDataType() == ModelStorageBase.DOUBLE) {
+            	bufferDouble = new double[length];
             } else {
 
                 bufferShort = new short[length];
             }
         } catch (final OutOfMemoryError error) {
             bufferFloat = null;
+            bufferDouble = null;
             bufferInt = null;
             bufferShort = null;
             System.gc();
@@ -1300,6 +1304,8 @@ public class FileIO {
                 // Read the image
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     imageFile.readImage(bufferFloat, curFileInfo.getDataType(), start);
+                } else if (image.getType() == ModelStorageBase.DOUBLE) {
+                	imageFile.readImage(bufferDouble, curFileInfo.getDataType(), start);
                 } else if (imageFile.isDir()) {
                     if (progressBar != null) {
                         progressBar.setVisible(false);
@@ -1391,6 +1397,8 @@ public class FileIO {
 
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     image.importData(location * length, bufferFloat, false);
+                } else if (image.getType() == ModelStorageBase.DOUBLE) {
+                	image.importData(location * length, bufferDouble, false);	
                 } else if (image.getType() == ModelStorageBase.UINTEGER) {
                     image.importData(location * length, bufferInt, false);
                 } else {
