@@ -154,6 +154,8 @@ public class JDialogSaveSlices extends JDialogBase {
     
     private boolean isFloat;
     
+    private boolean isDouble;
+    
     private boolean floatToShort = true;
     
     private JCheckBox floatToShortCheckbox;
@@ -187,6 +189,7 @@ public class JDialogSaveSlices extends JDialogBase {
         this.options = options;
         this.dataType = dataType;
         isFloat = (dataType == ModelStorageBase.FLOAT);
+        isDouble = (dataType == ModelStorageBase.DOUBLE);
         init();
 
     }
@@ -237,6 +240,7 @@ public class JDialogSaveSlices extends JDialogBase {
         this.options = options;
         this.dataType = dataType;
         isFloat = (dataType == ModelStorageBase.FLOAT);
+        isDouble = (dataType == ModelStorageBase.DOUBLE);
         init();
        
     }
@@ -400,6 +404,14 @@ public class JDialogSaveSlices extends JDialogBase {
                 textDigitNumber.setEnabled(false);
                 labelStartNumber.setEnabled(false);
                 labelDigitNumber.setEnabled(false);
+            }
+        } else if (source == floatToShortCheckbox) {
+            if (floatToShortCheckbox.isSelected()) {	
+            	encapJP2Checkbox.setEnabled(true);
+            }
+            else {
+            	encapJP2Checkbox.setSelected(false);
+            	encapJP2Checkbox.setEnabled(false);	
             }
         } else if (command.equalsIgnoreCase("help")) {
             //MipavUtil.showHelp("U4019");
@@ -577,6 +589,9 @@ public class JDialogSaveSlices extends JDialogBase {
         encapJP2Checkbox = new JCheckBox("Save as Encapsulated JPEG2000");
         encapJP2Checkbox.setFont(serif12);
         encapJP2Checkbox.setSelected(false);
+        if (isDouble) {
+        	encapJP2Checkbox.setEnabled(false);
+        }
         encapJP2Checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
         dicomInfoPanel.add(encapJP2Checkbox, gbc);
         
@@ -622,6 +637,7 @@ public class JDialogSaveSlices extends JDialogBase {
 	            floatToShortCheckbox.setFont(serif12);
 	            floatToShortCheckbox.setSelected(true);
 	            floatToShortCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+	            floatToShortCheckbox.addActionListener(this);
 	            gbc.gridy++;
 	            dicomInfoPanel.add(floatToShortCheckbox, gbc);
             }
