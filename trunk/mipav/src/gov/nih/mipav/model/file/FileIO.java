@@ -14625,7 +14625,7 @@ public class FileIO {
                 // this handles PET float images
                 // convert type to float with short or ushort range
                 if ( (originalFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                        && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))
+                        &&  (image.getType() == ModelStorageBase.FLOAT)
                         && floatToShort) {
 
                     // clone the image
@@ -14692,7 +14692,7 @@ public class FileIO {
 
                 // rescaling intercepts and slopes for each slice.
                 if ( (fBase.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                        && ( (originalImageDataType == ModelStorageBase.FLOAT) || (originalImageDataType == ModelStorageBase.DOUBLE))
+                        && (originalImageDataType == ModelStorageBase.FLOAT) 
                         && floatToShort) {
 
                     double smin, smax; // slice min and max
@@ -15294,7 +15294,7 @@ public class FileIO {
                 // this handles PET float images
                 // convert type to float with short or ushort range
                 if ( (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                        && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE)) &&
+                        && (image.getType() == ModelStorageBase.FLOAT)  &&
                         floatToShort) {
 
                     // clone the image
@@ -15375,7 +15375,7 @@ public class FileIO {
 
                     // rescaling intercepts and slopes for each slice.
                     if ( (fBase[k].getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                            && ( (image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE)) &&
+                            && (image.getType() == ModelStorageBase.FLOAT) &&
                             floatToShort) {
 
                         double smin, smax; // slice min and max
