@@ -385,7 +385,7 @@ public class JDialogSaveSlices extends JDialogBase {
             options.setWritePackBit(packBitCheckbox.isSelected());
             
             if (dicomEnabled && isFloat) {
-            	options.setFloatToShort(floatToShortCheckbox.isSelected());
+            	floatToShort = floatToShortCheckbox.isSelected();
             }
 
             dispose();
