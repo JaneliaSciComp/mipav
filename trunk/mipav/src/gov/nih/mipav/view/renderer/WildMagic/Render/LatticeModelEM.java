@@ -975,10 +975,10 @@ public class LatticeModelEM extends LatticeModel
 										outputNucleiCenters[n] = new VOIContour(false);
 									}
 									outputNucleiCenters[n].add(new Vector3f(i,j,slice) );
-									if ( result.getType() == ModelStorageBase.ARGB )
-									{
-										result.setC(i, j, 2, (byte) ( (0 & 0x000000ff)) );
-									}
+//									if ( result.getType() == ModelStorageBase.ARGB )
+//									{
+//										result.setC(i, j, 2, (byte) ( (0 & 0x000000ff)) );
+//									}
 //									System.err.println( nucleiNames.elementAt(n) );
 								}
 							}

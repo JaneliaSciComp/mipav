@@ -218,6 +218,10 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                     }
                     else
                     {
+                        afTraceData[i] = fLambda1 + fLambda2 + fLambda3;
+                        afADCData[i] = afTraceData[i]/3.0f;
+                        
+                        
                     	if ( fLambda1 < minL )
                     	{
                     		minL = fLambda1;
