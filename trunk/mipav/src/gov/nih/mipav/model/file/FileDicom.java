@@ -1925,22 +1925,6 @@ public class FileDicom extends FileDicomBase {
             }
         }
 
-        if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
-            short minVal = 32767;
-            short maxVal = -32768;
-            for (int i = 0; i < buffer.length; i++) {
-                if (buffer[i] < minVal) {
-                    minVal = buffer[i];
-                }
-                if (buffer[i] > maxVal) {
-                    maxVal = buffer[i];
-                }
-            }
-            if (minVal < 0) {
-                fileInfo.setDataType(ModelStorageBase.SHORT);
-                fileInfo.displayType = ModelStorageBase.SHORT;
-            }
-        }
     }
 
     /**
@@ -2443,7 +2427,7 @@ public class FileDicom extends FileDicomBase {
 
                         // System.out.println(" Intercept = " + intercept + " invSlope = " + invSlope);
                         for (int i = 0; i < data.length; i++) {
-                            data5[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
+                            data5[i] = MipavMath.round( (data[i] - intercept) / invSlope);
                         }
 
                         rawChunkFile.writeBufferUShort(data5, 0, length, image.getFileInfo(0).getEndianess());
