@@ -511,10 +511,10 @@ public class FileJPEG2000 extends FileBase {
 	public void selfTest() {
 		inputImageDirectory = null;
 		outputFormatExtension = null;
-	    compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
-		//compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
-		//decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lena.pgm";
-		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.pgm";
+	    //compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.j2k";
+		compressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lenaj2k.j2k";
+		decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "lena.pgm";
+		//decompressedFile = "C:" + File.separator + "images" + File.separator+ "J2K" + File.separator + "Bretagne1_0.pgm";
 		opj_decompress_main();
 	}
 
@@ -2494,31 +2494,33 @@ public class FileJPEG2000 extends FileBase {
     	    } // switch(parameters.decod_format)
     	    parameters.infile = new String(compressedFile);
     	} // if (compressedFile != null)
-    	parameters.cod_format = get_file_format(decompressedFile);
-    	switch(parameters.cod_format) {
-    	case PGX_DFMT:
-			break;
-		case PXM_DFMT:
-			break;
-		case BMP_DFMT:
-			break;
-		case TIF_DFMT:
-			break;
-		case RAW_DFMT:
-			break;
-		case RAWL_DFMT:
-			break;
-		case TGA_DFMT:
-			break;
-		case PNG_DFMT:
-			break;
-		default:
-			MipavUtil.displayError("Illegal decompressed image output format for " + decompressedFile);
-			MipavUtil.displayError("only *.png, *.pnm, *.pgm, *.ppm, *.pgx, *.bmp, *.tif, *.raw or *.tga");
-			destroy_parameters(parameters);
-	    	return false;
-    	} // switch(parmaters.code_format)
-    	parameters.outfile = new String(decompressedFile);
+    	if (decompressedFile != null) {
+	    	parameters.cod_format = get_file_format(decompressedFile);
+	    	switch(parameters.cod_format) {
+	    	case PGX_DFMT:
+				break;
+			case PXM_DFMT:
+				break;
+			case BMP_DFMT:
+				break;
+			case TIF_DFMT:
+				break;
+			case RAW_DFMT:
+				break;
+			case RAWL_DFMT:
+				break;
+			case TGA_DFMT:
+				break;
+			case PNG_DFMT:
+				break;
+			default:
+				MipavUtil.displayError("Illegal decompressed image output format for " + decompressedFile);
+				MipavUtil.displayError("only *.png, *.pnm, *.pgm, *.ppm, *.pgx, *.bmp, *.tif, *.raw or *.tga");
+				destroy_parameters(parameters);
+		    	return false;
+	    	} // switch(parameters.code_format)
+	    	parameters.outfile = new String(decompressedFile);
+    	} // if (decompressedFile != null)
     	if (outputFormatExtension != null) {
     	    img_fol.set_out_format = 1;
     	    parameters.cod_format = get_file_format("." + outputFormatExtension);
@@ -2553,7 +2555,7 @@ public class FileJPEG2000 extends FileBase {
 				destroy_parameters(parameters);
 				return false;
     	    }
-    	} // if (outputFormat != null)
+    	} // if (outputFormatExtension != null)
     	parameters.core.cp_reduce = reduceFactor;
     	parameters.core.cp_layer = qualityLayers;
     	if (inputImageDirectory != null) {
@@ -2573,15 +2575,26 @@ public class FileJPEG2000 extends FileBase {
     	if (indexName != null) {
     		parameters.indexfilename = indexName;
     	} // if (indexName != null)
+    	parameters.nb_precision = 0;
     	if (component0Precision > -1) {
     	    if (component2Precision > -1) {
-    	        parameters.precision = new opj_precision[3];	
+    	        parameters.precision = new opj_precision[3];
+    	        for (i = 0; i < 3; i++) {
+    	            parameters.precision[i] = new opj_precision();	
+    	        }
+    	        parameters.nb_precision = 3;
     	    }
     	    else if (component1Precision > -1) {
     	    	parameters.precision = new opj_precision[2];
+    	    	for (i = 0; i < 2; i++) {
+    	    		parameters.precision[i] = new opj_precision();
+    	    	}
+    	    	parameters.nb_precision = 2;
     	    }
     	    else {
     	    	parameters.precision = new opj_precision[1];
+    	    	parameters.precision[0] = new opj_precision();
+    	    	parameters.nb_precision = 1;
     	    }
     	    if((component0Precision < 1) || (component0Precision > 32)) {
     	    	MipavUtil.displayError("component0Precision must be between 1 and 32");
@@ -2731,11 +2744,13 @@ public class FileJPEG2000 extends FileBase {
 
 //    		t = opj_clock();
     		
+    		// opj_create_decompress
+    		l_codec = new opj_codec_private_t();
+		    l_codec.is_decompressor = true;
     		if (parameters.decod_format == J2K_CFMT) {
-    		    l_codec = new opj_codec_private_t();
-    		    l_codec.is_decompressor = true;
-    		    opj_j2k_t l_j2k = l_codec.m_codec;
-    		    l_j2k = new opj_j2k_t();
+    		    // opj_j2k_t* opj_j2k_create_decompress(void)
+    		    opj_j2k_t l_j2k = new opj_j2k_t();
+    		    l_codec.m_codec = l_j2k;
     		    l_j2k.m_is_decoder = true;
     		    l_j2k.m_cp = new opj_cp_t();
     		    l_j2k.m_cp.m_is_decoder = true;
@@ -2753,9 +2768,10 @@ public class FileJPEG2000 extends FileBase {
 
 	            l_j2k.m_decoder.m_tile_ind_to_dec = -1 ;
 
-	            l_j2k.m_decoder.m_last_sot_read_pos = 0 ;
+	            l_j2k.m_decoder.m_last_sot_read_pos = 0;
     		    
 	            /* codestream index creation */
+	            // opj_j2k_create_cstr_index();
 	            l_j2k.cstr_index = new opj_codestream_index_t();
     		    l_j2k.cstr_index.maxmarknum = 100;
     		    l_j2k.cstr_index.marknum = 0;
@@ -2766,17 +2782,24 @@ public class FileJPEG2000 extends FileBase {
                 l_j2k.cstr_index.tile_index = null;
                 
                 /* validation list creation */
+                // opj_procedure_list_create();
                 l_j2k.m_validation_list = new opj_procedure_list_t();
                 l_j2k.m_validation_list.m_nb_procedures = 0;
                 l_j2k.m_validation_list.m_nb_max_procedures = OPJ_VALIDATION_SIZE;
                 l_j2k.m_validation_list.m_procedures = new Vector<Integer>(OPJ_VALIDATION_SIZE);
                 
                 /* execution list creation */
+                // opj_procedure_list_create();
                 l_j2k.m_procedure_list = new opj_procedure_list_t();
                 l_j2k.m_procedure_list.m_nb_procedures = 0;
                 l_j2k.m_procedure_list.m_nb_max_procedures = OPJ_VALIDATION_SIZE;
                 l_j2k.m_procedure_list.m_procedures = new Vector<Integer>(OPJ_VALIDATION_SIZE);
     		            
+                // opj_set_default_event_handler(&(l_codec->m_event_mgr));
+                // Setup the decoder decoding parameters using user parameters 
+        		// if ( !opj_setup_decoder(l_codec, &(parameters.core)) ){
+                // opj_j2k_setup_decoder
+
                 l_j2k.m_cp.m_dec = new opj_decoding_param_t();
                 l_j2k.m_cp.m_dec.m_layer = parameters.core.cp_layer;
                 l_j2k.m_cp.m_dec.m_reduce = parameters.core.cp_reduce;
@@ -2787,8 +2810,23 @@ public class FileJPEG2000 extends FileBase {
                     l_j2k.m_cp.max_tiles = parameters.core.jpwl_max_tiles;
                 } // if (useJPWL)
                 
+                // Read the main header of the codestream and if necessary the JP2 boxes
+        		// if(! opj_read_header(l_stream, l_codec, &image)){
+                // opj_j2k_read_header
+                
                 /* create an empty image header */
                 l_j2k.m_private_image = new opj_image_t();
+                
+                // customization of the validation 
+                // if (! opj_j2k_setup_decoding_validation(p_j2k, p_manager)) {
+                //if (! opj_procedure_list_add_procedure(p_j2k->m_validation_list,(opj_procedure)opj_j2k_build_decoder, p_manager)) {
+                    //return OPJ_FALSE;
+                //}
+                //if (! opj_procedure_list_add_procedure(p_j2k->m_validation_list,(opj_procedure)opj_j2k_decoding_validation, p_manager)) {
+                    //return OPJ_FALSE;
+                //}
+
+
                 
 //                if (l_j2k.m_validation_list.m_nb_max_procedures ==l_j2k.m_validation_list.m_nb_procedures) {
 //                	l_j2k.m_validation_list.m_nb_max_procedures += OPJ_VALIDATION_SIZE;
@@ -2803,6 +2841,14 @@ public class FileJPEG2000 extends FileBase {
 //                }
 //                l_j2k.m_validation_list.m_procedures.add(l_j2k.m_validation_list.m_nb_procedures, OPJ_J2K_DECODING_VALIDATION);
 //                l_j2k.m_validation_list.m_nb_procedures++;
+                
+                // validation of the parameters codec
+                //if (! opj_j2k_exec(p_j2k, p_j2k->m_validation_list, p_stream,p_manager)) {
+                        //opj_image_destroy(p_j2k->m_private_image);
+                        //p_j2k->m_private_image = NULL;
+                        //return OPJ_FALSE;
+                //}
+
                 
 //                for (i = 0; i < l_j2k.m_validation_list.m_nb_procedures; i++) {
 //                	if (l_j2k.m_validation_list.m_procedures.get(i) == OPJ_J2K_BUILD_DECODER) {
@@ -3413,7 +3459,7 @@ public class FileJPEG2000 extends FileBase {
                 			}
                 			p_codec.m_codec.m_tcd.image.comps = null;
                 		}
-                		p_codec.m_codec.m_output_image.icc_profile_buf = null;
+                		p_codec.m_codec.m_tcd.image.icc_profile_buf = null;
             			p_codec.m_codec.m_tcd.image = null;	
             		}
             		if (p_codec.m_codec.m_tcd.cp != null) {
@@ -7395,6 +7441,7 @@ public class FileJPEG2000 extends FileBase {
 		p_max_length -= l_nb_bytes_read[0];
 
 		/* we should read data for the packet */
+	
 		if (l_read_data[0]) {
 			l_nb_bytes_read[0] = 0;
 
