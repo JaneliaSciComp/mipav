@@ -46,6 +46,8 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
     
     private boolean launchedFromGUI = false;
     
+    private int numTimeVols = -1;
+    
     
     public PlugInAlgorithmTriPlanarVolumesCreator(ModelImage srcImage,String outputDir,String outputNamePrefix,boolean launchedFromGUI) {
     	this.srcImage = srcImage;
@@ -72,22 +74,7 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
     		isSrcImage4D = true;
     	}
     	if(isSrcImage4D) {
-    		int numTimeVols = srcImage.getExtents()[3];
-    		//now write out file
-    		String fourDInfoTxtFilePath  = outputDir + "4dInfo.txt";
-    		
-    		
-    		try {
-				PrintWriter writer = new PrintWriter(fourDInfoTxtFilePath);
-				writer.print(numTimeVols);
-				writer.close();
-			} catch (FileNotFoundException e) {
-				System.out.println("Can not create 4dInfo.txt");
-				setCompleted(true);
-				e.printStackTrace();
-				return;
-			}
-    		
+    		numTimeVols = srcImage.getExtents()[3];
     	}
     	
     	
@@ -516,6 +503,21 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
     	
     	
     	transformedImage.disposeLocal();
+    	
+    	
+    	String infoTxtFilePath  = outputDir + "info.txt";
+		
+		
+		try {
+			PrintWriter writer = new PrintWriter(infoTxtFilePath);
+			writer.print(numTimeVols);
+			writer.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("Can not create info.txt");
+			setCompleted(true);
+			e.printStackTrace();
+			return;
+		}
 
 	}
 	
