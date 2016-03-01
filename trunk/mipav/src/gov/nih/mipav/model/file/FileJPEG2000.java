@@ -2866,6 +2866,8 @@ public class FileJPEG2000 extends FileBase {
 //                add here initialization of cp
  //               copy paste of setup_decoder 
  // opj_j2k_setup_decoder has already been done
+                
+ // opj_j2k_setup_header_reading
  // From opj_j2k_decoding_validation just derived l_j2k.m_decoder.m_state = 0x0000;
                 
 //              if (l_j2k.m_procedure_list.m_nb_max_procedures ==l_j2k.m_procedure_list.m_nb_procedures) {
@@ -11085,7 +11087,7 @@ public class FileJPEG2000 extends FileBase {
 				else
 					/* Get the marker handler from the marker ID */
 					l_marker_handler = opj_j2k_get_marker_handler(l_current_marker[0]);
-			}
+			} // if (l_marker_handler.id == J2K_MS_UNK)
 
 			if (l_marker_handler.id == J2K_MS_SIZ) {
 				/* Mark required SIZ marker as found */
@@ -11143,7 +11145,7 @@ public class FileJPEG2000 extends FileBase {
 				}
 				l_j2k.m_decoder.m_header_data = new_header_data;
 				l_j2k.m_decoder.m_header_data_size = l_marker_size[0];
-			}
+			} // if (l_marker_size[0] > l_j2k.m_decoder.m_header_data_size) 
 
 			/*
 			 * Try to read the rest of the marker segment from stream and copy
@@ -11206,7 +11208,7 @@ public class FileJPEG2000 extends FileBase {
 			/* read 2 bytes as the new marker ID */
 			l_current_marker[0] = getBufferUShort(
 					l_j2k.m_decoder.m_header_data, 0, endianess);
-		}
+		} // while (l_current_marker[0] != J2K_MS_SOT)
 
 		if (!l_has_siz) {
 			MipavUtil
@@ -14609,17 +14611,17 @@ public class FileJPEG2000 extends FileBase {
 
 	private boolean opj_j2k_add_mhmarker(opj_codestream_index_t cstr_index,
 			int type, long pos, int len) {
-
+        int i;
 		/* expand the list? */
 		if ((cstr_index.marknum + 1) > cstr_index.maxmarknum) {
 			opj_marker_info_t new_marker[];
 			cstr_index.maxmarknum = (100 + cstr_index.maxmarknum);
 			new_marker = new opj_marker_info_t[cstr_index.maxmarknum];
-			for (int i = 0; i < cstr_index.maxmarknum; i++) {
+			for (i = 0; i < cstr_index.marker.length; i++) {
+				new_marker[i] = cstr_index.marker[i];
+			}
+			for (i = cstr_index.marker.length; i < cstr_index.maxmarknum; i++) {
 				new_marker[i] = new opj_marker_info_t();
-				new_marker[i].type = cstr_index.marker[i].type;
-				new_marker[i].pos = cstr_index.marker[i].pos;
-				new_marker[i].len = cstr_index.marker[i].len;
 			}
 			cstr_index.marker = new_marker;
 		}
