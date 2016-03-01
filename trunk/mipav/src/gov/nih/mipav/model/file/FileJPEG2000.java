@@ -10807,7 +10807,12 @@ public class FileJPEG2000 extends FileBase {
 				}
 				l_tcp.ppt_markers[j].m_data_size = l_default_tcp.ppt_markers[j].m_data_size;
 			}
-			l_tcp.ppt_buffer = l_default_tcp.ppt_buffer;
+			if (l_default_tcp.ppt_buffer != null) {
+				l_tcp.ppt_buffer = new byte[l_default_tcp.ppt_buffer.length];
+				for (j = 0; j < l_default_tcp.ppt_buffer.length; j++) {
+					l_tcp.ppt_buffer[j] = l_default_tcp.ppt_buffer[j];
+				}
+			}
 			l_tcp.ppt_len = l_tcp.ppt_len;
 			l_tcp.distoratio = new float[l_default_tcp.distoratio.length];
 			for (j = 0; j < l_default_tcp.distoratio.length; j++) {
@@ -10992,8 +10997,9 @@ public class FileJPEG2000 extends FileBase {
 		}
 
 		p_tcd.tcd_image.tiles.numcomps = p_image.numcomps;
-		p_cp.m_enc = new opj_encoding_param_t();
-		p_tcd.tp_pos = p_cp.m_enc.m_tp_pos;
+		if (p_cp.m_enc != null) {
+		    p_tcd.tp_pos = p_cp.m_enc.m_tp_pos;
+		}
 
 		return true;
 	}
@@ -11257,8 +11263,6 @@ public class FileJPEG2000 extends FileBase {
 	 * 
 	 * @param p_cp
 	 *            main coding parameters.
-	 * @param p_manager
-	 *            the user event manager.
 	 */
 	private boolean opj_j2k_merge_ppm(opj_cp_t p_cp) {
 		int i, l_ppm_data_size, l_N_ppm_remaining;
