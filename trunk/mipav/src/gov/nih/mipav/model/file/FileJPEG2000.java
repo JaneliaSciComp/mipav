@@ -14544,10 +14544,9 @@ public class FileJPEG2000 extends FileBase {
 
 	private opj_dec_memory_marker_handler_t opj_j2k_get_marker_handler(int p_id) {
 		int i;
-		int id = -1;
-		for (i = 0; id != 0; i++) {
+		for (i = 0; j2k_memory_marker_handler_tab[i].id != 0; i++) {
 			if (j2k_memory_marker_handler_tab[i].id == p_id) {
-				return j2k_memory_marker_handler_tab[i];
+				break;
 			}
 		}
 		return j2k_memory_marker_handler_tab[i];
