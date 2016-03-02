@@ -1554,7 +1554,6 @@ public class FileJPEG2000 extends FileBase {
 		// opj_tcd_cblk_enc_t* enc;
 		opj_tcd_cblk_dec_t dec[];
 		// void* blocks;
-		byte blocks[];
 		// } cblks;
 		int block_size; /* size taken by cblks (in bytes) */
 		opj_tgt_tree_t incltree; /* inclusion tree */
@@ -2931,6 +2930,7 @@ public class FileJPEG2000 extends FileBase {
         			}
 
         			/* Get the decoded image */
+        			// opj_decode
         			// opj_j2k_end_decompress just does a return true;
         			if (!(opj_j2k_decode(l_j2k, l_stream, image)/* && opj_j2k_end_decompress(l_codec,	l_stream)*/)) {
         				MipavUtil.displayError("ERROR -> opj_decompress: failed to decode image!");
@@ -3424,7 +3424,6 @@ public class FileJPEG2000 extends FileBase {
             													}
             													p_codec.m_codec.m_tcd.tcd_image.tiles.comps[i].resolutions[j].bands[k].precincts[m].dec = null;	
             												}
-            												p_codec.m_codec.m_tcd.tcd_image.tiles.comps[i].resolutions[j].bands[k].precincts[m].blocks = null;
             												if (p_codec.m_codec.m_tcd.tcd_image.tiles.comps[i].resolutions[j].bands[k].precincts[m].incltree != null) {
             													opj_tgt_destroy(p_codec.m_codec.m_tcd.tcd_image.tiles.comps[i].resolutions[j].bands[k].precincts[m].incltree);	
             												}
@@ -4625,13 +4624,10 @@ public class FileJPEG2000 extends FileBase {
 		/* expand the list? */
 		if ((cstr_index.tile_index[tileno].marknum + 1) > cstr_index.tile_index[tileno].maxmarknum) {
 			opj_marker_info_t new_marker[];
-			cstr_index.tile_index[tileno].maxmarknum = (int) (100 + (float) cstr_index.tile_index[tileno].maxmarknum);
+			cstr_index.tile_index[tileno].maxmarknum = (100 + cstr_index.tile_index[tileno].maxmarknum);
 			new_marker = new opj_marker_info_t[cstr_index.tile_index[tileno].maxmarknum];
 			for (i = 0; i < cstr_index.tile_index[tileno].marker.length; i++) {
-				new_marker[i] = new opj_marker_info_t();
-				new_marker[i].type = cstr_index.tile_index[tileno].marker[i].type;
-				new_marker[i].pos = cstr_index.tile_index[tileno].marker[i].pos;
-				new_marker[i].len = cstr_index.tile_index[tileno].marker[i].len;
+				new_marker[i] = cstr_index.tile_index[tileno].marker[i];
 			}
 			for (i = cstr_index.tile_index[tileno].marker.length; i < cstr_index.tile_index[tileno].maxmarknum; i++) {
 				new_marker[i] = new opj_marker_info_t();
@@ -4946,7 +4942,7 @@ public class FileJPEG2000 extends FileBase {
 		int i, l_ppt_data_size, j;
 		/* preconditions */
 		if (p_tcp == null) {
-			MipavUtil.displayError("P_tcp = null at opj_j2k_merge_ppt entry");
+			MipavUtil.displayError("p_tcp = null at opj_j2k_merge_ppt entry");
 			return false;
 		}
 		if (p_tcp.ppt_buffer != null) {
@@ -5160,260 +5156,6 @@ public class FileJPEG2000 extends FileBase {
 				for (i = 0; i < l_tilec.resolutions_size; i++) {
 					new_resolutions[i] = l_tilec.resolutions[i];
 					
-					/*
-					 * new_resolutions[i] = new opj_tcd_resolution_t();
-					 * new_resolutions[i].x0 = l_tilec.resolutions[i].x0;
-					 * new_resolutions[i].y0 = l_tilec.resolutions[i].y0;
-					 * new_resolutions[i].x1 = l_tilec.resolutions[i].x1;
-					 * new_resolutions[i].y1 = l_tilec.resolutions[i].y1;
-					 * new_resolutions[i].pw = l_tilec.resolutions[i].pw;
-					 * new_resolutions[i].ph = l_tilec.resolutions[i].ph;
-					 * new_resolutions[i].numbands =
-					 * l_tilec.resolutions[i].numbands; new_resolutions[i].bands
-					 * = new opj_tcd_band_t[l_tilec.resolutions[i].numbands];
-					 * for (j = 0; j < l_tilec.resolutions[i].numbands; j++) {
-					 * new_resolutions[i].bands[j] = new opj_tcd_band_t();
-					 * new_resolutions[i].bands[j].x0 =
-					 * l_tilec.resolutions[i].bands[j].x0;
-					 * new_resolutions[i].bands[j].y0 =
-					 * l_tilec.resolutions[i].bands[j].y0;
-					 * new_resolutions[i].bands[j].x1 =
-					 * l_tilec.resolutions[i].bands[j].x1;
-					 * new_resolutions[i].bands[j].y1 =
-					 * l_tilec.resolutions[i].bands[j].y1;
-					 * new_resolutions[i].bands[j].precincts_data_size =
-					 * l_tilec.resolutions[i].bands[j].precincts_data_size;
-					 * new_resolutions[i].bands[j].numbps =
-					 * l_tilec.resolutions[i].bands[j].numbps;
-					 * new_resolutions[i].bands[j].stepsize =
-					 * l_tilec.resolutions[i].bands[j].stepsize;
-					 * new_resolutions[i].bands[j].precincts = new
-					 * opj_tcd_precinct_t
-					 * [l_tilec.resolutions[i].bands[j].precincts.length]; for
-					 * (k = 0; k <
-					 * l_tilec.resolutions[i].bands[j].precincts.length; k++) {
-					 * new_resolutions[i].bands[j].precincts[k] = new
-					 * opj_tcd_precinct_t();
-					 * new_resolutions[i].bands[j].precincts[k].x0 =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].x0;
-					 * new_resolutions[i].bands[j].precincts[k].y0 =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].y0;
-					 * new_resolutions[i].bands[j].precincts[k].x1 =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].x1;
-					 * new_resolutions[i].bands[j].precincts[k].y1 =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].y1;
-					 * new_resolutions[i].bands[j].precincts[k].cw =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].cw;
-					 * new_resolutions[i].bands[j].precincts[k].ch =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].ch;
-					 * new_resolutions[i].bands[j].precincts[k].blocks = new
-					 * byte
-					 * [l_tilec.resolutions[i].bands[j].precincts[k].blocks.length
-					 * ]; for (m = 0; m <
-					 * l_tilec.resolutions[i].bands[j].precincts
-					 * [k].blocks.length; m++) {
-					 * new_resolutions[i].bands[j].precincts[k].blocks[m] =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].blocks[m]; }
-					 * new_resolutions[i].bands[j].precincts[k].block_size =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].block_size;
-					 * if (l_tilec.resolutions[i].bands[j].precincts[k].dec !=
-					 * null) { new_resolutions[i].bands[j].precincts[k].dec =
-					 * new opj_tcd_cblk_dec_t();
-					 * new_resolutions[i].bands[j].precincts[k].dec.data = new
-					 * byte
-					 * [l_tilec.resolutions[i].bands[j].precincts[k].dec.data
-					 * .length]; for (m = 0; m <
-					 * l_tilec.resolutions[i].bands[j].
-					 * precincts[k].dec.data.length; m++) {
-					 * new_resolutions[i].bands[j].precincts[k].dec.data[m] =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].dec.data[m];
-					 * } new_resolutions[i].bands[j].precincts[k].dec.segs = new
-					 * opj_tcd_seg_t
-					 * [l_tilec.resolutions[i].bands[j].precincts[k]
-					 * .dec.segs.length]; for (m = 0; m <
-					 * l_tilec.resolutions[i].
-					 * bands[j].precincts[k].dec.segs.length; m++) {
-					 * new_resolutions[i].bands[j].precincts[k].dec.segs[m] =
-					 * new opj_tcd_seg_t();
-					 * new_resolutions[i].bands[j].precincts[k].dec.segs[m].data
-					 * = new byte
-					 * [l_tilec.resolutions[i].bands[j].precincts[k].dec
-					 * .segs[m].data.length]
-					 * [l_tilec.resolutions[i].bands[j].precincts
-					 * [k].dec.segs[m].data[0].length] ; for (n = 0; n <
-					 * l_tilec.
-					 * resolutions[i].bands[j].precincts[k].dec.segs[m].data
-					 * .length; n++) { for (s = 0; s <
-					 * l_tilec.resolutions[i].bands
-					 * [j].precincts[k].dec.segs[m].data[0].length; s++) {
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].dec.segs[m].data[n][s] =
-					 * l_tilec
-					 * .resolutions[i].bands[j].precincts[k].dec.segs[m].data
-					 * [n][s]; } }
-					 * new_resolutions[i].bands[j].precincts[k].dec.segs
-					 * [m].dataindex =
-					 * l_tilec.resolutions[i].bands[j].precincts[
-					 * k].dec.segs[m].dataindex;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].dec.segs[m].numpasses =
-					 * l_tilec.resolutions[i].bands[j
-					 * ].precincts[k].dec.segs[m].numpasses;
-					 * new_resolutions[i].bands
-					 * [j].precincts[k].dec.segs[m].real_num_passes =
-					 * l_tilec.resolutions
-					 * [i].bands[j].precincts[k].dec.segs[m].real_num_passes;
-					 * new_resolutions[i].bands[j].precincts[k].dec.segs[m].len
-					 * =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].dec.segs[m]
-					 * .len;
-					 * new_resolutions[i].bands[j].precincts[k].dec.segs[m]
-					 * .maxpasses =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].
-					 * dec.segs[m].maxpasses;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].dec.segs[m].numnewpasses =
-					 * l_tilec.resolutions[i].bands
-					 * [j].precincts[k].dec.segs[m].numnewpasses;
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].dec.segs[m].newlen =
-					 * l_tilec.resolutions
-					 * [i].bands[j].precincts[k].dec.segs[m].newlen; }
-					 * new_resolutions[i].bands[j].precincts[k].dec.x0 =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].dec.x0;
-					 * new_resolutions[i].bands[j].precincts[k].dec.y0 =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].dec.y0;
-					 * new_resolutions[i].bands[j].precincts[k].dec.x1 =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].dec.x1;
-					 * new_resolutions[i].bands[j].precincts[k].dec.y1 =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].dec.y1;
-					 * new_resolutions[i].bands[j].precincts[k].dec.numbps =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].dec.numbps;
-					 * new_resolutions[i].bands[j].precincts[k].dec.numlenbits =
-					 * l_tilec
-					 * .resolutions[i].bands[j].precincts[k].dec.numlenbits;
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].dec.data_max_size =
-					 * l_tilec.resolutions
-					 * [i].bands[j].precincts[k].dec.data_max_size;
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].dec.data_current_size =
-					 * l_tilec.
-					 * resolutions[i].bands[j].precincts[k].dec.data_current_size
-					 * ;
-					 * new_resolutions[i].bands[j].precincts[k].dec.numnewpasses
-					 * =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].dec.numnewpasses
-					 * ; new_resolutions[i].bands[j].precincts[k].dec.numsegs =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].dec.numsegs;
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].dec.real_num_segs =
-					 * l_tilec.resolutions
-					 * [i].bands[j].precincts[k].dec.real_num_segs;
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].dec.m_current_max_segs =
-					 * l_tilec
-					 * .resolutions[i].bands[j].precincts[k].dec.m_current_max_segs
-					 * ; } if
-					 * (l_tilec.resolutions[i].bands[j].precincts[k].incltree !=
-					 * null) { new_resolutions[i].bands[j].precincts[k].incltree
-					 * = new opj_tgt_tree_t();
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].incltree.numleafsh =
-					 * l_tilec.resolutions[i].bands[j].precincts
-					 * [k].incltree.numleafsh;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].incltree.numleafsv =
-					 * l_tilec.resolutions[i].bands[j].precincts
-					 * [k].incltree.numleafsv;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].incltree.numnodes =
-					 * l_tilec.resolutions[i].bands[j].precincts
-					 * [k].incltree.numnodes;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].incltree.nodes_size =
-					 * l_tilec.resolutions[i].bands[j].
-					 * precincts[k].incltree.nodes_size;
-					 * new_resolutions[i].bands[j].precincts[k].incltree.nodes =
-					 * new
-					 * opj_tgt_node_t[l_tilec.resolutions[i].bands[j].precincts
-					 * [k].incltree.nodes.length]; for (m = 0; m <
-					 * l_tilec.resolutions
-					 * [i].bands[j].precincts[k].incltree.nodes.length; m++) {
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].incltree.nodes[m] = new
-					 * opj_tgt_node_t(); opj_tgt_node_t np =
-					 * new_resolutions[i].bands
-					 * [j].precincts[k].incltree.nodes[m].parent; opj_tgt_node_t
-					 * lp =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].incltree
-					 * .nodes[m].parent; np = null;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].incltree.nodes[m].value =
-					 * l_tilec.resolutions[i].bands
-					 * [j].precincts[k].incltree.nodes[m].value;
-					 * new_resolutions[
-					 * i].bands[j].precincts[k].incltree.nodes[m].low =
-					 * l_tilec.resolutions
-					 * [i].bands[j].precincts[k].incltree.nodes[m].low;
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].incltree.nodes[m].known =
-					 * l_tilec
-					 * .resolutions[i].bands[j].precincts[k].incltree.nodes
-					 * [m].known; while (lp != null) { np = new
-					 * opj_tgt_node_t(); np.value = lp.value; np.low = lp.low;
-					 * np.known = lp.known; np.parent = null; lp = lp.parent; np
-					 * = np.parent; } } } if
-					 * (l_tilec.resolutions[i].bands[j].precincts[k].imsbtree !=
-					 * null) { new_resolutions[i].bands[j].precincts[k].imsbtree
-					 * = new opj_tgt_tree_t();
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].imsbtree.numleafsh =
-					 * l_tilec.resolutions[i].bands[j].precincts
-					 * [k].imsbtree.numleafsh;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].imsbtree.numleafsv =
-					 * l_tilec.resolutions[i].bands[j].precincts
-					 * [k].imsbtree.numleafsv;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].imsbtree.numnodes =
-					 * l_tilec.resolutions[i].bands[j].precincts
-					 * [k].imsbtree.numnodes;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].imsbtree.nodes_size =
-					 * l_tilec.resolutions[i].bands[j].
-					 * precincts[k].imsbtree.nodes_size;
-					 * new_resolutions[i].bands[j].precincts[k].imsbtree.nodes =
-					 * new
-					 * opj_tgt_node_t[l_tilec.resolutions[i].bands[j].precincts
-					 * [k].imsbtree.nodes.length]; for (m = 0; m <
-					 * l_tilec.resolutions
-					 * [i].bands[j].precincts[k].imsbtree.nodes.length; m++) {
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].imsbtree.nodes[m] = new
-					 * opj_tgt_node_t(); opj_tgt_node_t np =
-					 * new_resolutions[i].bands
-					 * [j].precincts[k].imsbtree.nodes[m].parent; opj_tgt_node_t
-					 * lp =
-					 * l_tilec.resolutions[i].bands[j].precincts[k].imsbtree
-					 * .nodes[m].parent; np = null;
-					 * new_resolutions[i].bands[j].precincts
-					 * [k].imsbtree.nodes[m].value =
-					 * l_tilec.resolutions[i].bands
-					 * [j].precincts[k].imsbtree.nodes[m].value;
-					 * new_resolutions[
-					 * i].bands[j].precincts[k].imsbtree.nodes[m].low =
-					 * l_tilec.resolutions
-					 * [i].bands[j].precincts[k].imsbtree.nodes[m].low;
-					 * new_resolutions
-					 * [i].bands[j].precincts[k].imsbtree.nodes[m].known =
-					 * l_tilec
-					 * .resolutions[i].bands[j].precincts[k].imsbtree.nodes
-					 * [m].known; while (lp != null) { np = new
-					 * opj_tgt_node_t(); np.value = lp.value; np.low = lp.low;
-					 * np.known = lp.known; np.parent = null; lp = lp.parent; np
-					 * = np.parent; } } } } }
-					 */
 				}
 				for (i = l_tilec.resolutions_size; i < l_data_size; i++) {
 					new_resolutions[i] = new opj_tcd_resolution_t();
@@ -5562,7 +5304,6 @@ public class FileJPEG2000 extends FileBase {
 					/** avoid an if with storing function pointer */
 					if (l_gain_ptr == OPJ_DWT_GETGAIN_REAL) {
 						l_gain = opj_dwt_getgain_real(l_band.bandno);
-						;
 					} else {
 						l_gain = opj_dwt_getgain(l_band.bandno);
 					}
@@ -5588,7 +5329,6 @@ public class FileJPEG2000 extends FileBase {
 							l_band.precincts[j].cw = 0;
 							l_band.precincts[j].ch = 0;
 							l_band.precincts[j].dec = null;
-							l_band.precincts[j].blocks = null;
 							l_band.precincts[j].block_size = 0;
 							l_band.precincts[j].incltree = null;
 							l_band.precincts[j].imsbtree = null;
@@ -5616,7 +5356,6 @@ public class FileJPEG2000 extends FileBase {
 							l_band.precincts[j].cw = 0;
 							l_band.precincts[j].ch = 0;
 							l_band.precincts[j].dec = null;
-							l_band.precincts[j].blocks = null;
 							l_band.precincts[j].block_size = 0;
 							l_band.precincts[j].incltree = null;
 							l_band.precincts[j].imsbtree = null;
@@ -5703,6 +5442,16 @@ public class FileJPEG2000 extends FileBase {
 							l_current_precinct.dec = new opj_tcd_cblk_dec_t[l_nb_code_blocks_size];
                             for (i = 0; i < l_nb_code_blocks; i++) {
                             	l_current_precinct.dec[i] = new opj_tcd_cblk_dec_t();
+                            	l_current_precinct.dec[i].data = null;
+                            	l_current_precinct.dec[i].data_current_size = 0;
+                            	l_current_precinct.dec[i].data_max_size = 0;
+                            	l_current_precinct.dec[i].m_current_max_segs = 0;
+                            	l_current_precinct.dec[i].numbps = 0;
+                            	l_current_precinct.dec[i].numlenbits = 0;
+                            	l_current_precinct.dec[i].numnewpasses = 0;
+                            	l_current_precinct.dec[i].numsegs = 0;
+                            	l_current_precinct.dec[i].real_num_segs = 0;
+                            	l_current_precinct.dec[i].segs = null;
                             }
 							/*
 							 * fprintf(stderr,
@@ -5715,6 +5464,19 @@ public class FileJPEG2000 extends FileBase {
 							opj_tcd_cblk_dec_t new_dec[] = new opj_tcd_cblk_dec_t[l_nb_code_blocks_size];
 							for (i = 0; i < l_current_precinct.block_size; i++) {
 								new_dec[i] = l_current_precinct.dec[i];
+							}
+							for (i = l_current_precinct.block_size; i < l_nb_code_blocks_size; i++) {
+							    new_dec[i] = new opj_tcd_cblk_dec_t();
+                            	new_dec[i].data = null;
+                            	new_dec[i].data_current_size = 0;
+                            	new_dec[i].data_max_size = 0;
+                            	new_dec[i].m_current_max_segs = 0;
+                            	new_dec[i].numbps = 0;
+                            	new_dec[i].numlenbits = 0;
+                            	new_dec[i].numnewpasses = 0;
+                            	new_dec[i].numsegs = 0;
+                            	new_dec[i].real_num_segs = 0;
+                            	new_dec[i].segs = null;	
 							}
 
 							l_current_precinct.dec = new_dec;
