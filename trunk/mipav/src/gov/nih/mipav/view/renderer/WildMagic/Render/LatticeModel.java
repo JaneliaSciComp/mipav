@@ -127,7 +127,7 @@ public class LatticeModel {
 	protected Vector<Float> wormDiameters;
 
 	protected Vector<Vector3f> rightVectors;
-
+	protected Vector<Vector3f> normalVectors;
 	protected Vector<Vector3f> upVectors;
 
 	protected int extent = -1;

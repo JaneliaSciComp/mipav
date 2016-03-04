@@ -165,7 +165,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 							{
 								fullImage = new ModelImageLargeFormat( new int[]{ extents2D[0], extents2D[1], list.length}, inputImageTF.getText(), true );
 							}
-							fullImage.setZScale( resZ/resX );
+							fullImage.setResolutions(resX, resY, resZ);
 							wormImage.disposeLocal(false);
 							wormImage = null;
 						}
@@ -247,6 +247,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 									if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
 									{
 										model.setNucleiMarkers(nucleiVOIs, scale);
+//										System.err.println("done");
 									}
 								}
 							}
@@ -436,9 +437,9 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 	{
 		VOIVector vois = new VOIVector();
 		VOI annotationVOI = new VOI( (short)0, fileName, VOI.ANNOTATION, 0 );
-		VOI circleVOI = new VOI( (short)1, fileName, VOI.POLYLINE, 0 );
+//		VOI circleVOI = new VOI( (short)1, fileName, VOI.POLYLINE, 0 );
 		vois.add(annotationVOI);
-		vois.add(circleVOI);
+//		vois.add(circleVOI);
 		FileReader fr;
 		try {
 			fr = new FileReader(file);
@@ -473,7 +474,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 						r.X += radius;
 						text.add(r);
 					}
-					circleVOI.getCurves().add(makeEllipse2D(text.elementAt(0), radius) );
+//					circleVOI.getCurves().add(makeEllipse2D(text.elementAt(0), radius) );
 				}
 				annotationVOI.getCurves().add(text);
 				line = br.readLine();

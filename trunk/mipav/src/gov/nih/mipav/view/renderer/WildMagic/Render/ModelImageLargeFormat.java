@@ -18,6 +18,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 public class ModelImageLargeFormat {
 	public static final int INT = 0;
 	public static final int ARGB = 1;
+	public static final int ARGB_FLOAT = 2;
 
 	private HashMap<Integer, String[]> fileTable;
 	private HashMap<Integer, ModelImage> sliceTable;
@@ -31,6 +32,7 @@ public class ModelImageLargeFormat {
 	private String name;
 	private int dataType;
 	private int sliceOffset = 0;
+	private float[] resolutions;
 	private float zScale = 1;
 	private FileIO fileIO = null;
 	
@@ -43,6 +45,7 @@ public class ModelImageLargeFormat {
 	{
 		this.extents3D = extents;
 		extents2D = new int[]{extents[0], extents[1]};
+		resolutions = new float[]{1,1,1};
 		this.name = fullPathName.substring(fullPathName.lastIndexOf(File.separator) + 1);
 		directory = fullPathName.substring(0, fullPathName.lastIndexOf(File.separator) + 1);
 		dataType = type;
@@ -138,6 +141,11 @@ public class ModelImageLargeFormat {
 		return name;
 	}
 	
+	public int getType()
+	{
+		return dataType;
+	}
+	
 	public void set(int x, int y, int z, int value )
 	{
 		ModelImage slice = updateSliceTable(z);
@@ -173,7 +181,7 @@ public class ModelImageLargeFormat {
 		}
 		return 0;
 	}
-	
+
 	private int getInterpolated(int x, int y, int z)
 	{
 		int z1 = (int) Math.floor(z / zScale);
@@ -206,9 +214,56 @@ public class ModelImageLargeFormat {
 		}
 		return 0;
 	}
+
+	private float[] getInterpolatedC(int x, int y, int z)
+	{
+		int z1 = (int) Math.floor(z / zScale);
+		int z2 = (int) Math.ceil(z / zScale);
+		float fraction = (z / zScale) - z1;
+		float z1Portion = (1 - fraction);
+		float z2Portion = fraction;
+		if ( z1Portion == 1 )
+		{
+			ModelImage slice = updateSliceTable(z1);
+			if ( slice != null )
+			{
+				float a = slice.getFloatC(x, y, 0);
+				float r = slice.getFloatC(x, y, 1);
+				float g = slice.getFloatC(x, y, 2);
+				float b = slice.getFloatC(x, y, 3);
+				return new float[]{a,r,g,b};	
+			}			
+		}
+		if ( z2Portion == 1 )
+		{
+			ModelImage slice = updateSliceTable(z2);
+			if ( slice != null )
+			{
+				float a = slice.getFloatC(x, y, 0);
+				float r = slice.getFloatC(x, y, 1);
+				float g = slice.getFloatC(x, y, 2);
+				float b = slice.getFloatC(x, y, 3);
+				return new float[]{a,r,g,b};	
+			}			
+		}
+
+		ModelImage slice1 = updateSliceTable(z1);
+		ModelImage slice2 = updateSliceTable(z2);
+		if ( (slice1 != null) && (slice2 != null) )
+		{
+			float a = z1Portion * slice1.getFloatC(x, y, 0) + z2Portion * slice2.getFloatC(x, y, 0);
+			float r = z1Portion * slice1.getFloatC(x, y, 1) + z2Portion * slice2.getFloatC(x, y, 1);
+			float g = z1Portion * slice1.getFloatC(x, y, 2) + z2Portion * slice2.getFloatC(x, y, 2);
+			float b = z1Portion * slice1.getFloatC(x, y, 3) + z2Portion * slice2.getFloatC(x, y, 3);
+			return new float[]{a,r,g,b};	
+		}
+		return new float[]{0,0,0,0};	
+	}
 	
 	public float[] getC(int x, int y, int z )
 	{
+		if ( zScale != 1 )
+			return getInterpolatedC(x, y, z);
 		ModelImage slice = updateSliceTable(z);
 		if ( slice != null )
 		{
@@ -241,7 +296,11 @@ public class ModelImageLargeFormat {
 					{
 						slice = new ModelImage(ModelStorageBase.INTEGER, extents2D, "Slice_" + i );
 					}
-					else
+					else if ( dataType == ARGB )
+					{
+						slice = new ModelImage(ModelStorageBase.ARGB_FLOAT, extents2D, "Slice_" + i );
+					}
+					else if ( dataType == ARGB_FLOAT )
 					{
 						slice = new ModelImage(ModelStorageBase.ARGB_FLOAT, extents2D, "Slice_" + i );
 					}
@@ -334,9 +393,17 @@ public class ModelImageLargeFormat {
 		}
 	}
 	
-	public void setZScale(float scale)
+	public void setResolutions(float rX, float rY, float rZ)
 	{
-		zScale = scale;
+		resolutions[0] = rX;
+		resolutions[1] = rY;
+		resolutions[2] = rZ;
+		zScale = rZ/rX;
+	}
+	
+	public float[] getResolutions()
+	{
+		return resolutions;
 	}
 	
 	public float getZScale()
@@ -354,6 +421,11 @@ public class ModelImageLargeFormat {
 			return false;
 		
 		return true;
+	}
+	
+	public void fileCoordinates( Vector3f pt )
+	{
+		pt.Z /= zScale;
 	}
 
 	private void saveImage(final ModelImage image, String name, String outputDirectory)
@@ -425,9 +497,9 @@ public class ModelImageLargeFormat {
 				{
 					fileIO = new FileIO();
 				}
-				//				System.err.println( "found file " + fileInfo[1] + fileInfo[0] + ".png" );
 				image = fileIO.readImage(fileInfo[0] + ".png", fileInfo[1], false, null);
 				//				fileIO.dispose();
+//				System.err.println( "found file " + fileInfo[1] + fileInfo[0] + ".png" + " " + image.getTypeString() );
 			}
 			else
 			{
@@ -513,9 +585,13 @@ public class ModelImageLargeFormat {
 //				System.err.println( sliceTable.size() + " " + index );
 				slice = new ModelImage(ModelStorageBase.INTEGER, extents2D, "Slice_" + index );
 			}
-			else
+			else if ( dataType == ARGB )
 			{
 				slice = new ModelImage(ModelStorageBase.ARGB, extents2D, "Slice_" + index );
+			}
+			else if ( dataType == ARGB_FLOAT )
+			{
+				slice = new ModelImage(ModelStorageBase.ARGB_FLOAT, extents2D, "Slice_" + index );
 			}
 		}
 		sliceTable.put(index, slice);
