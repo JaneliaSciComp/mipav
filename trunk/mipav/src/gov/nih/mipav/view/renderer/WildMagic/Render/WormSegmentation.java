@@ -779,6 +779,8 @@ public abstract class WormSegmentation
 //				}
 //			}
 //		}
+		minEllipse.set(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE);
+		maxEllipse.set( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
 		if ( ellipseAll.size() < 3 )
 		{
 			VOIContour ellipseDefault = new VOIContour(true);
@@ -792,6 +794,8 @@ public abstract class WormSegmentation
 				final Vector3f pos = Vector3f.add(pos1, pos2);
 				pos.add(center2D);
 				ellipseDefault.addElement(pos);
+				minEllipse.min(pos);
+				maxEllipse.max(pos);
 			}
 			return ellipseDefault;
 		}
@@ -809,6 +813,8 @@ public abstract class WormSegmentation
 				final Vector3f pos = Vector3f.add(pos1, pos2);
 				pos.add(center2D);
 				ellipseDefault.addElement(pos);
+				minEllipse.min(pos);
+				maxEllipse.max(pos);
 			}
 			return ellipseDefault;
 		}
@@ -816,8 +822,6 @@ public abstract class WormSegmentation
 
 //		time = System.currentTimeMillis();
 		Vector3f dir = new Vector3f();
-		minEllipse.set(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE);
-		maxEllipse.set( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
 		for ( int i = 0; i < ellipseAll.size(); i++ )
 		{
 			dir.copy(ellipseAll.elementAt(i));
