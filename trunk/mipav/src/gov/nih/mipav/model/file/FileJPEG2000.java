@@ -4232,7 +4232,7 @@ public class FileJPEG2000 extends FileBase {
 			opj_j2k_tcp_destroy(l_tcp);
 			return false;
 		}
-
+		
 		if (!opj_tcd_decode_tile(p_j2k.m_tcd, l_tcp.m_data, l_tcp.m_data_size,
 				p_tile_index, p_j2k.cstr_index)) {
 			opj_j2k_tcp_destroy(l_tcp);
@@ -5735,6 +5735,7 @@ public class FileJPEG2000 extends FileBase {
 		int l_data_read[] = new int[1];
 		p_tcd.tcd_tileno = p_tile_no;
 		p_tcd.tcp = p_tcd.cp.tcps[p_tile_no];
+		
 
 		// if (TODO_MSD) { /* No p_cstr_info structure */
 		// if(p_cstr_info) {
@@ -6872,14 +6873,14 @@ public class FileJPEG2000 extends FileBase {
 			}
 			// l_node_size = p_tree->numnodes *
 			// (OPJ_UINT32)sizeof(opj_tgt_node_t);
-			l_node_size = p_tree.numnodes * 16;
+			l_node_size = p_tree.numnodes;
 
 			if (l_node_size > p_tree.nodes_size) {
-				opj_tgt_node_t new_nodes[] = new opj_tgt_node_t[p_tree.numnodes];
+				opj_tgt_node_t new_nodes[] = new opj_tgt_node_t[l_node_size];
 				for (i = 0; i < p_tree.nodes.length; i++) {
 					new_nodes[i] = p_tree.nodes[i];
 				}
-				for (i = p_tree.nodes.length; i < p_tree.numnodes; i++) {
+				for (i = p_tree.nodes.length; i < l_node_size; i++) {
 					new_nodes[i] = new opj_tgt_node_t();
 				}
 				p_tree.nodes = new_nodes;
