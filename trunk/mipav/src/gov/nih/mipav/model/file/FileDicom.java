@@ -1340,7 +1340,7 @@ public class FileDicom extends FileDicomBase {
         if ( !encapsulated) {
             if (fileInfo.getVr_type() == VRtype.IMPLICIT) {
                 Preferences.debug("Implicit image tag loading from " + imageTagLoc + "\n", Preferences.DEBUG_FILEIO);
-                MipavUtil.displayError("Implicit imageTagLoc = " + imageTagLoc);
+                //MipavUtil.displayError("Implicit imageTagLoc = " + imageTagLoc);
                 fileInfo.setOffset(imageTagLoc - 4 > 0 ? imageTagLoc - 4 : imageTagLoc); // no image length, subtract 4
             }
             // for explicit tags - see Part 5 page 27 1998
