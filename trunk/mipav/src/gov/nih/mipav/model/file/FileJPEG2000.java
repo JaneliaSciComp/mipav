@@ -4160,8 +4160,8 @@ public class FileJPEG2000 extends FileBase {
 			int l_nb_tiles = p_j2k.m_cp.th * p_j2k.m_cp.tw;
 			l_tcp = p_j2k.m_cp.tcps[p_j2k.m_current_tile_number[0]];
 
-			while ((p_j2k.m_current_tile_number[0] < l_nb_tiles)
-					&& (l_tcp.m_data == null)) {
+			while (((p_j2k.m_current_tile_number[0] < l_nb_tiles) && (p_j2k.m_current_tile_number[0] < p_j2k.m_cp.tcps.length-1))
+					&& ((l_tcp.m_data == null) || (l_tcp.m_data.length == 0))) {
 				++p_j2k.m_current_tile_number[0];
 				l_tcp = p_j2k.m_cp.tcps[p_j2k.m_current_tile_number[0]];
 			}
@@ -4228,7 +4228,13 @@ public class FileJPEG2000 extends FileBase {
 		}
 
 		l_tcp = p_j2k.m_cp.tcps[p_tile_index];
-		if (l_tcp.m_data == null) {
+		if ((l_tcp.m_data == null) || (l_tcp.m_data.length == 0)) {
+			if (l_tcp.m_data == null) {
+				MipavUtil.displayError("l_tcp.m_data == null at opj_j2k_decode_tile entry");
+			}
+			else {
+				MipavUtil.displayError("l_tcp.m_data.length == 0 at opj_j2k_decode_tile_entry");
+			}
 			opj_j2k_tcp_destroy(l_tcp);
 			return false;
 		}
@@ -10798,6 +10804,7 @@ public class FileJPEG2000 extends FileBase {
 		l_j2k.m_decoder.m_state = J2K_STATE_MHSOC;
 
 		/* Try to read the SOC marker, the codestream must begin with SOC marker */
+		
 		if (!opj_j2k_read_soc(l_j2k, l_stream)) {
 			MipavUtil.displayError("Expected a SOC marker");
 			return false;
@@ -10842,6 +10849,7 @@ public class FileJPEG2000 extends FileBase {
 
 			/* Manage case where marker is unknown */
 			if (l_marker_handler.id == J2K_MS_UNK) {
+				
 				if (!opj_j2k_read_unk(l_j2k, l_stream, l_current_marker)) {
 					MipavUtil
 							.displayError("Unknow marker has been detected and generated error.");
@@ -11005,9 +11013,7 @@ public class FileJPEG2000 extends FileBase {
 
 		/* Position of the last element if the main header */
 		try {
-			//filePointer = l_stream.getFilePointer();
-			filePointer = l_stream.getFilePointer()-2;
-			l_stream.seek(filePointer);
+			filePointer = l_stream.getFilePointer();
 		} catch (IOException e) {
 			MipavUtil.displayError("IOException " + e
 					+ " on l_stream.getFilePointer()");
