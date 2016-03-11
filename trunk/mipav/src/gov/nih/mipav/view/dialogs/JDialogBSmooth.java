@@ -58,6 +58,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
 
     /** DOCUMENT ME! */
     private JTextField textInterpNPts;
+    
+    private JLabel labelInterpNPts;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -67,6 +69,10 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
 
     /** DOCUMENT ME! */
     private JCheckBox trimCheckBox;
+    
+    private JCheckBox ellipticCheckBox;
+    
+    private boolean doEllipticFourierDescription = false;
 
     /** DOCUMENT ME! */
     private Color voiColor;
@@ -75,6 +81,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
     private ViewVOIVector VOIs;
     
     private VOIManagerInterface voiManager;
+    
+    private int nPoints;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -138,7 +146,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         }
 
         VOIBase activeContour = contours.elementAt(elementNum);
-        int nPoints = activeContour.size();
+        nPoints = activeContour.size();
 
         xPoints = new float[nPoints + 5];
         yPoints = new float[nPoints + 5];
@@ -199,63 +207,102 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         Object source = event.getSource();
         String tmpStr;
         int i;
+        int newPts;
+        int coefficients;
 
-        if (source == OKButton) {
+        if (source == ellipticCheckBox) {
+        	if (ellipticCheckBox.isSelected()) {
+        		trimCheckBox.setSelected(false);
+        		trimCheckBox.setEnabled(false);
+        		labelInterpNPts.setText("Number of coefficients");
+        		textInterpNPts.setText(String.valueOf(nPoints/4));
+        	}
+        	else {
+        		trimCheckBox.setEnabled(true);
+        		labelInterpNPts.setText("Number of interpolation points");
+        		textInterpNPts.setText(String.valueOf(defaultPts));
+        	}
+        }
+        else if (source == OKButton) {
+        	
+        	doEllipticFourierDescription = ellipticCheckBox.isSelected();
 
             removeOriginal = removeOriginalCheckBox.isSelected();
-
-            trim = trimCheckBox.isSelected();
-
+            
             tmpStr = textInterpNPts.getText();
+            
+            if (doEllipticFourierDescription) {
+            	if (testParameter(tmpStr, 1.0, nPts/2)) {
+	                coefficients = Integer.valueOf(tmpStr).intValue();
+	            } else {
+	                textInterpNPts.requestFocus();
+	                textInterpNPts.selectAll();
+	
+	                return;
+	            }  
+            	
+            	try {
+            		
+            	}
+            	catch (OutOfMemoryError x) {
+	                MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
+	
+	                return;
+	            }
+            } // if (doEllipticFourierDescription)
+            else {
 
-            if (testParameter(tmpStr, 3.0, 1000000.0)) {
-                nPts = Integer.valueOf(tmpStr).intValue();
-            } else {
-                textInterpNPts.requestFocus();
-                textInterpNPts.selectAll();
-
-                return;
-            }
-
-            try {
-
-                // No need to make new image space because the user has choosen to replace the source image
-                // Make the algorithm class
-                smoothAlgo = new AlgorithmBSmooth(image, VOIs.VOIAt(groupNum), nPts, trim);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                smoothAlgo.addListener(this);
-
-                // Hide the dialog since the algorithm is about to run.
-                setVisible(false);
-
-                // These next lines set the titles in all frames where the source image is displayed to
-                // "locked - " image name so as to indicate that the image is now read/write locked!
-                // The image frames are disabled and then unregisted from the userinterface until the
-                // algorithm has completed.
-                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
-                titles = new String[imageFrames.size()];
-
-                for (i = 0; i < imageFrames.size(); i++) {
-                	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
-                	{
-                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
-                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                    ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                	}
-                }
-
-                // Start the thread as a low priority because we wish to still have user interface.
-                if (smoothAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
-
-                return;
+	            trim = trimCheckBox.isSelected();
+	
+	            if (testParameter(tmpStr, 3.0, 1000000.0)) {
+	                newPts = Integer.valueOf(tmpStr).intValue();
+	            } else {
+	                textInterpNPts.requestFocus();
+	                textInterpNPts.selectAll();
+	
+	                return;
+	            }
+	
+	            try {
+	
+	                // No need to make new image space because the user has choosen to replace the source image
+	                // Make the algorithm class
+	                smoothAlgo = new AlgorithmBSmooth(image, VOIs.VOIAt(groupNum), newPts, trim);
+	
+	                // This is very important. Adding this object as a listener allows the algorithm to
+	                // notify this object when it has completed of failed. See algorithm performed event.
+	                // This is made possible by implementing AlgorithmedPerformed interface
+	                smoothAlgo.addListener(this);
+	
+	                // Hide the dialog since the algorithm is about to run.
+	                setVisible(false);
+	
+	                // These next lines set the titles in all frames where the source image is displayed to
+	                // "locked - " image name so as to indicate that the image is now read/write locked!
+	                // The image frames are disabled and then unregisted from the userinterface until the
+	                // algorithm has completed.
+	                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+	                titles = new String[imageFrames.size()];
+	
+	                for (i = 0; i < imageFrames.size(); i++) {
+	                	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
+	                	{
+	                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+	                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+	                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+	                    ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+	                	}
+	                }
+	
+	                // Start the thread as a low priority because we wish to still have user interface.
+	                if (smoothAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                    MipavUtil.displayError("A thread is already running on this object");
+	                }
+	            } catch (OutOfMemoryError x) {
+	                MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
+	
+	                return;
+	            }
             }
 
         } else if (source == cancelButton) {
@@ -346,7 +393,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         setForeground(Color.black);
         setTitle("Smooth VOI");
 
-        JPanel imageVOIPanel = new JPanel(new GridLayout(2, 1));
+        JPanel imageVOIPanel = new JPanel(new GridLayout(3, 1));
         imageVOIPanel.setForeground(Color.black);
         imageVOIPanel.setBorder(buildTitledBorder("VOI Options"));
 
@@ -361,12 +408,19 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         trimCheckBox.setForeground(Color.black);
         trimCheckBox.setSelected(false);
         imageVOIPanel.add(trimCheckBox);
+        
+        ellipticCheckBox = new JCheckBox("Smooth with Elliptic Fourier Descriptors");
+        ellipticCheckBox.setFont(serif12);
+        ellipticCheckBox.setForeground(Color.black);
+        ellipticCheckBox.setSelected(false);
+        ellipticCheckBox.addActionListener(this);
+        imageVOIPanel.add(ellipticCheckBox);
 
         JPanel paramPanel = new JPanel(new GridLayout(1, 2));
         paramPanel.setForeground(Color.black);
         paramPanel.setBorder(buildTitledBorder("Algorithm parameters"));
 
-        JLabel labelInterpNPts = new JLabel("Number of interpolation points ");
+        labelInterpNPts = new JLabel("Number of interpolation points ");
         labelInterpNPts.setForeground(Color.black);
         labelInterpNPts.setFont(serif12);
         paramPanel.add(labelInterpNPts);
