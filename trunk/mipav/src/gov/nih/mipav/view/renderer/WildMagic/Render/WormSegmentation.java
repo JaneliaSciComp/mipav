@@ -592,8 +592,8 @@ public abstract class WormSegmentation
 //		new ViewJFrameImage(segmentationImage);
 //	}
 
-	public static VOIContour findLargestConnected( ModelImage image, Vector3f center, Vector3f left, Vector3f right, float radius, 
-			int dimX, int dimY, int dimZ, int min, int max, int ID, Vector3f minEllipse, Vector3f maxEllipse )
+	public static VOIContour findLargestConnected( ModelImage image, float r, 
+			int dimX, int dimY, int dimZ, int min, int max, int ID, Vector3f minEllipse, Vector3f maxEllipse, int width )
 	{				
 		Vector3f center2D = new Vector3f( dimX/2, dimY/2, 0);
 		float[] averages = new float[dimX*dimY];
@@ -685,7 +685,6 @@ public abstract class WormSegmentation
 			}
 		}
 
-		float r = Math.max(3, Vector3f.sub(left, right).normalize()/2f);
 		float diameter = (float) (Math.PI * 2 * r);
 
 		Vector<BitSet> components = new Vector<BitSet>();
@@ -764,7 +763,7 @@ public abstract class WormSegmentation
 //		long time = System.currentTimeMillis();
 
 		VOIContour ellipseAll = new VOIContour(false);
-		fillMask( temp, visited, filled, seeds, ellipseAll, dimX, dimY, dimZ, 10 );
+		fillMask( temp, visited, filled, seeds, ellipseAll, dimX, dimY, dimZ, width );
 		
 //		System.err.println( "fillMask " + AlgorithmBase.computeElapsedTime(time) );
 //		time = System.currentTimeMillis();
@@ -797,6 +796,7 @@ public abstract class WormSegmentation
 				minEllipse.min(pos);
 				maxEllipse.max(pos);
 			}
+			System.err.println("default circle 1 " + ID + " " + r );
 			return ellipseDefault;
 		}
 		ellipseAll.convexHull();
@@ -816,6 +816,7 @@ public abstract class WormSegmentation
 				minEllipse.min(pos);
 				maxEllipse.max(pos);
 			}
+			System.err.println("default circle 2 " + ID + " " + r );
 			return ellipseDefault;
 		}
 //		System.err.println( "convexhull " + AlgorithmBase.computeElapsedTime(time) );

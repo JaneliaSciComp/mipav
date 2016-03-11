@@ -81,7 +81,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 	private JTextField  latticeScaleTF;	
 	private JTextField  nucleiScaleTF;
 	private JTextField[]  resolutionsTF;
-	private JTextField  outputResolutionTF;	
+	private JTextField[]  outputResolutionsTF;	
 	private JButton startButton;
 
 	private ModelImageLargeFormat fullImage;
@@ -114,7 +114,8 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 			float resX = Float.valueOf( resolutionsTF[0].getText() );
 			float resY = Float.valueOf( resolutionsTF[1].getText() );
 			float resZ = Float.valueOf( resolutionsTF[2].getText() );
-			float outputResZ = Float.valueOf( outputResolutionTF.getText() );
+			float outputResX = Float.valueOf( outputResolutionsTF[0].getText() );
+			float outputResZ = Float.valueOf( outputResolutionsTF[1].getText() );
 
 			if ( inputImageTF.getText().length() > 0 )
 			{
@@ -252,7 +253,7 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 								}
 							}
 							System.err.println("Starting straightening" );
-							model.interpolateLattice( outputResZ );
+							model.interpolateLattice( outputResX, outputResX, outputResZ );
 							if ( fullImage != null )
 							{
 								fullImage.disposeLocal(false);
@@ -397,19 +398,26 @@ public class PlugInDialogUntwistingEM extends JFrame implements ActionListener, 
 
 		resolutionsTF = new JTextField[3];
 
-		resolutionsTF[0] = gui.buildDecimalField("Resolutions x: ", 8 );
+		resolutionsTF[0] = gui.buildDecimalField("Input image resolutions x: ", 8 );
 		inputsPanel.add(resolutionsTF[0].getParent(), gbc);
-		gbc.gridx++;
-		resolutionsTF[1] = gui.buildDecimalField("y: ", 8 );
+//		gbc.gridx++;
+		gbc.gridy++;
+		resolutionsTF[1] = gui.buildDecimalField("Input image resolutions y: ", 8 );
 		inputsPanel.add(resolutionsTF[1].getParent(), gbc);
-		gbc.gridx++;
-		resolutionsTF[2] = gui.buildDecimalField("z: ", 30 );
+//		gbc.gridx++;
+		gbc.gridy++;
+		resolutionsTF[2] = gui.buildDecimalField("Input image resolutions z: ", 30 );
 		inputsPanel.add(resolutionsTF[2].getParent(), gbc);
 		gbc.gridx = 0;
 		gbc.gridy++;
 		
-		outputResolutionTF = gui.buildDecimalField("output slice resolution: ", 30 );
-		inputsPanel.add(outputResolutionTF.getParent(), gbc);
+		outputResolutionsTF = new JTextField[2];
+		outputResolutionsTF[0] = gui.buildDecimalField("output slice (x,y) resolution: ", 8 );
+		inputsPanel.add(outputResolutionsTF[0].getParent(), gbc);
+//		gbc.gridx++;		
+		gbc.gridy++;
+		outputResolutionsTF[1] = gui.buildDecimalField("output slice (z) resolution: ", 30 );
+		inputsPanel.add(outputResolutionsTF[1].getParent(), gbc);
 		gbc.gridx = 0;
 		gbc.gridy++;
 		

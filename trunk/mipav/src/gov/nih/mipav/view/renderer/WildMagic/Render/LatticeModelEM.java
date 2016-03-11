@@ -13,6 +13,7 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -36,13 +37,15 @@ import WildMagic.LibFoundation.Mathematics.Vector4f;
  */
 public class LatticeModelEM extends LatticeModel
 {
+	private static final LatticeModel PlugInAlgorithmWormUntwisting = null;
 	private ModelImageLargeFormat imageA_LF;
 	private Vector<Vector4f> nucleiCenters;
 	private Vector<String> nucleiNames;
 	private Vector<Vector3f> outputNucleiCenters;
 	private String outputDirectory;
 	private Short voiID = 0;
-	private float latticeScale = 1;
+	private float outputXResolution = 1;
+	private float outputYResolution = 1;
 	private float outputZResolution = 1;
 	private boolean unTwist = true;
 	private boolean mask = true;
@@ -76,8 +79,12 @@ public class LatticeModelEM extends LatticeModel
 	 * @param displayResult, when true intermediate volumes and results are displayed as well as the final straighened
 	 *            image.
 	 */
-	public void interpolateLattice(final float outputSliceResolutions) {
-		generateCurves(outputSliceResolutions);
+	public void interpolateLattice( float outputResolutionX, float outputResolutionY, float outputResolutionZ ) {
+		long time = System.currentTimeMillis();
+		generateCurves(outputResolutionX, outputResolutionY, outputResolutionZ);
+		outputXResolution = outputResolutionX;
+		outputYResolution = outputResolutionY;
+		System.err.println( "output image size " + (2 * extent) / outputResolutionX + " " + (2 * extent) / outputResolutionY );
 
 		// Determine the distances between points on the lattice
 		// distances are along the curve, not straight-line distances:
@@ -157,17 +164,17 @@ public class LatticeModelEM extends LatticeModel
 
 		if ( imageA_LF != null )
 		{
-			final int[] resultExtents = new int[] {2 * extent, 2 * extent, samplingPlanes.getCurves().size()};
+			final int[] resultExtents = new int[] {(int) ((2 * extent) / outputResolutionX), (int) ((2 * extent) / outputResolutionY), samplingPlanes.getCurves().size()};
 			System.err.println( "...straightening" );
 			straighten(imageA_LF, resultExtents);
 			System.err.println( "...done" );	
 		}
+		System.err.println( "Total Striaghtening " + AlgorithmBase.computeElapsedTime(time) );
 	}
 
 	public void setLattice( VOI newLattice, float latticeScale )
 	{
-		this.latticeScale = latticeScale;
-		if ( (latticeScale != 1) || ((imageA_LF != null) && (imageA_LF.getZScale() != 1)) )
+		if ( (latticeScale != 1) || ((imageA_LF != null) && (imageA_LF.getXRes() != 1) && (imageA_LF.getYRes() != 1) && (imageA_LF.getZRes() != 1)) )
 		{
 			scaleLattice(newLattice, latticeScale);
 		}
@@ -220,7 +227,7 @@ public class LatticeModelEM extends LatticeModel
 	/**
 	 * Generates the set of natural spline curves to fit the current lattice.
 	 */
-	protected void generateCurves(float outputResolution)
+	protected void generateCurves(float outputResolutionX, float outputResolutionY, float outputResolutionZ)
 	{
 
 		// 1. The center line of the worm is calculated from the midpoint between the left and right points of the
@@ -268,7 +275,7 @@ public class LatticeModelEM extends LatticeModel
 		// This method fully defines the sample plane location and orientation as it sweeps through the 3D volume of the
 		// worm.
 		length = centerSpline.GetLength(0, 1);
-		int maxLength = (int) Math.ceil(length/outputResolution);
+		int maxLength = (int) Math.ceil(length/outputResolutionZ);
 		float step = 1;
 		if ( maxLength != length )
 		{
@@ -277,7 +284,6 @@ public class LatticeModelEM extends LatticeModel
 		allTimes = new float[maxLength + 1];
 		extent = -1;
 		float minDiameter = Float.MAX_VALUE;
-		System.err.println( "generateCurves " + length + " " + maxLength + " " + step );
 		outputZResolution = step;
 
 		for (int i = 0; i <= maxLength; i++) {
@@ -296,7 +302,7 @@ public class LatticeModelEM extends LatticeModel
 			final Vector3f rightDir = Vector3f.sub(rightPt, leftPt);
 			float diameter = rightDir.normalize();
 			diameter /= 2f;
-			diameter += (DiameterBuffer * latticeScale);
+			diameter += (DiameterBuffer);
 			if (diameter > extent) {
 				extent = (int) Math.ceil(diameter);
 			}
@@ -319,6 +325,7 @@ public class LatticeModelEM extends LatticeModel
 				wormDiameters.set(i, minDiameter);
 			}
 		}
+		System.err.println( "generateCurves " + length + " " + maxLength + " " + step + " " + extent );
 	}
 
 	
@@ -434,7 +441,8 @@ public class LatticeModelEM extends LatticeModel
 		} else { // voiFileDir does not exist
 			voiFileDir.mkdir();
 		}
-		
+
+		int width = (int) (Math.max(1, 80 / outputXResolution));
 		boolean[] contoursOK = new boolean[size];
 		for (int i = 0; i < size; i++)
 		{			
@@ -444,23 +452,23 @@ public class LatticeModelEM extends LatticeModel
 			resultImage = readImage(imageName + "_straight_unmasked", i);
 			straightToTwisted = readImage(imageName + "_straightToTwisted_unmasked", i);
 			
-			contoursForward[i] = WormSegmentation.findLargestConnected( resultImage, centerPositions.elementAt(i), leftPositions.elementAt(i), rightPositions.elementAt(i),
-					wormDiameters.elementAt(i) * 1.25f, 
-					dimX, dimY, dimZ, min, max, i, minEllipse[i], maxEllipse[i] );
+			
+			float radius = leftPositions.elementAt(i).distance(rightPositions.elementAt(i));
+			radius /= outputXResolution;			
+			float r = Math.max(3, radius/2f);
+//			System.err.println( i + " " + leftPositions.elementAt(i).distance(rightPositions.elementAt(i)) + " " + radius + " " + r + " " + dimX + " " + dimY );
+			contoursForward[i] = WormSegmentation.findLargestConnected( resultImage, r, 
+					dimX, dimY, dimZ, min, max, i, minEllipse[i], maxEllipse[i], width );
 
 			areas[i] = 0;
 			if ( contoursForward[i] != null )
 			{
 				areas[i] = (float) contoursForward[i].area();
 				float bb = minEllipse[i].distance(maxEllipse[i])/2f;
-				float radius = (leftPositions.elementAt(i).distance(rightPositions.elementAt(i)) / 2f);
-				float targetArea = (float) (Math.PI * radius * radius);
+				float targetArea = (float) (Math.PI * r * r);
 				float ratioArea = targetArea / areas[i];
-				float ratioRadius = radius / bb;
-				if ( i == 3 )
-				{
-					System.err.println( bb + " " + radius + " " + ratioRadius + " " + targetArea + " " + areas[i] + "  " + ratioArea );
-				}
+				float ratioRadius = r / bb;
+//				System.err.println( i + " " + areas[i] + " " + targetArea + " " + ratioArea + "    " + bb + " " + r +  " " + ratioRadius );
 				if ( (ratioArea > .75) && (ratioArea < 1.5) && (ratioRadius > .65) && (ratioRadius < 1.5) )
 				{
 					contoursOK[i] = true;
@@ -480,7 +488,7 @@ public class LatticeModelEM extends LatticeModel
 			straightToTwisted.disposeLocal(false);
 			straightToTwisted = null;
 			
-			System.err.println((i+1) + " " + size );
+//			System.err.println((i+1) + " " + size );
 		}
 		System.err.println( "   findLargestConnected " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
@@ -652,8 +660,9 @@ public class LatticeModelEM extends LatticeModel
 			
 			Vector3f pos = new Vector3f();
 			Vector<Float> distance = new Vector<Float>();
-			Vector3f straightPt = new Vector3f();
+			Vector3f twistedPt = new Vector3f();
 			Vector3f wormPt = new Vector3f();
+			VOIVector contours = new VOIVector();
 			for ( int i = 0; i < list.length; i++ )
 			{
 				FileIO fileIO = new FileIO();
@@ -664,11 +673,20 @@ public class LatticeModelEM extends LatticeModel
 				
 				int zIndex = ModelImageLargeFormat.getIndex(list[i]);
 				System.err.println( zIndex + " " + straightX + " " + straightY );
+				
+				String voiDir = outputDirectory + "contours" + File.separator + imageName + "_contour_" + i + File.separator;
+				loadAllVOIsFrom(straightToTwisted, voiDir, true, contours, false);
+				VOIContour contour = (VOIContour) contours.elementAt(0).getCurves().elementAt(0);
+				Vector3f[] minMax = contour.getImageBoundingBox();
 
 				for ( int y = 0; y < straightY; y++ )
 				{
 					for ( int x = 0; x < straightX; x++ )
 					{
+						if ( (x < minMax[0].X) || (y < minMax[0].Y) || (x > minMax[1].X) || (y > minMax[1].Y) )
+						{
+							continue;
+						}
 						float r = straightToTwisted.getFloatC(x, y, 1);
 						float g = straightToTwisted.getFloatC(x, y, 2);
 						float b = straightToTwisted.getFloatC(x, y, 3);
@@ -677,13 +695,13 @@ public class LatticeModelEM extends LatticeModel
 						wormPt.Y -= straightY/2;
 						wormPt.X *= resolutions[0];
 						wormPt.Y *= resolutions[1];
-						wormPt.X += straightX/2;
-						wormPt.Y += straightY/2;
+						wormPt.X += (straightX*outputXResolution)/2;
+						wormPt.Y += (straightY*outputXResolution)/2;
 						wormPt.Z *= outputZResolution;
 						
-						if ( (r != 0) && (g != 0) && (b != 0) )
+						if ( (r != 0) || (g != 0) || (b != 0) )
 						{
-							straightPt.set(r,g,b);
+							twistedPt.set(r,g,b);
 							
 							for ( int n = 0; n < nucleiCenters.size(); n++ )
 							{
@@ -692,17 +710,20 @@ public class LatticeModelEM extends LatticeModel
 								if (outputNucleiCenters.size() <= n)
 								{
 									outputNucleiCenters.add( new Vector3f(wormPt) );
-									distance.add( pos.distance(straightPt) );
+									distance.add( pos.distance(twistedPt) );
 								}
-								if ( pos.distance(straightPt) < distance.elementAt(n) )
+								if ( pos.distance(twistedPt) < distance.elementAt(n) )
 								{
-									distance.set(n, pos.distance(straightPt) );
+									distance.set(n, pos.distance(twistedPt) );
 									outputNucleiCenters.set(n, new Vector3f(wormPt) );
 								}
 							}
 						}
 					}
 				}
+				
+				straightToTwisted.disposeLocal(false);
+				straightToTwisted = null;
 			}					
 			
 			saveNucleiInfo(outputDirectory, resolutions);
@@ -788,6 +809,13 @@ public class LatticeModelEM extends LatticeModel
 				{
 					result.set(i,j,0,0);
 				}
+				if ( straightToTwisted != null )
+				{
+					straightToTwisted.setC(i, j, 0, 0 );
+					straightToTwisted.setC(i, j, 1, 0 );
+					straightToTwisted.setC(i, j, 2, 0 );
+					straightToTwisted.setC(i, j, 3, 0 );
+				}
 
 				final int iIndex = Math.round(x);
 				final int jIndex = Math.round(y);
@@ -853,10 +881,10 @@ public class LatticeModelEM extends LatticeModel
 			z0 = z0 + zSlopeY;
 		}
 
-		if ( (xSlopeX > 1) || (ySlopeX > 1) || (zSlopeX > 1) || (xSlopeY > 1) || (ySlopeY > 1) || (zSlopeY > 1)) {
-			System.err.println("writeDiagonal " + xSlopeX + " " + ySlopeX + " " + zSlopeX);
-			System.err.println("writeDiagonal " + xSlopeY + " " + ySlopeY + " " + zSlopeY);
-		}
+//		if ( (xSlopeX > 1) || (ySlopeX > 1) || (zSlopeX > 1) || (xSlopeY > 1) || (ySlopeY > 1) || (zSlopeY > 1)) {
+//			System.err.println("writeDiagonal " + xSlopeX + " " + ySlopeX + " " + zSlopeX);
+//			System.err.println("writeDiagonal " + xSlopeY + " " + ySlopeY + " " + zSlopeY);
+//		}
 	}
 
 
@@ -885,7 +913,10 @@ public class LatticeModelEM extends LatticeModel
 		String voiDir = outputDirectory + JDialogBase.makeImageName(name, "") + File.separator;
 		String imageName = name + "_" + sliceID;
 		FileIO fileIO = new FileIO();
-		return fileIO.readImage(imageName + ".tif", voiDir, false, null); 
+		ModelImage image = fileIO.readImage(imageName + ".tif", voiDir, false, null);
+		fileIO.dispose();
+		fileIO = null;
+		return image;
 	}
 
 
@@ -894,6 +925,7 @@ public class LatticeModelEM extends LatticeModel
 		Vector3f scaleDown = new Vector3f(0,0,0);
 		Vector3f scaleUp = new Vector3f(0,0,0);
 		Vector3f scaleV = new Vector3f(scale, scale, 1);
+		Vector3f resolutionsScale = new Vector3f(1, 1, 1);
 		if ( imageA_LF != null )
 		{
 			scaleDown.X = (int)(imageA_LF.getExtents()[0]/(scale*2));
@@ -902,14 +934,18 @@ public class LatticeModelEM extends LatticeModel
 			scaleUp.X = imageA_LF.getExtents()[0]/2;
 			scaleUp.Y = imageA_LF.getExtents()[1]/2;
 
-			scaleV.Z = imageA_LF.getZScale();
+			resolutionsScale.X = imageA_LF.getXRes();
+			resolutionsScale.Y = imageA_LF.getYRes();
+			resolutionsScale.Z = imageA_LF.getZRes();
 
 			pt.sub(scaleDown);
 			pt.mult(scaleV);
+			pt.mult(resolutionsScale);
 			pt.add(scaleUp);			
 		}
 	}
-	
+
+
 
 	private void scaleLattice( VOI lattice, float scale )
 	{
@@ -1246,7 +1282,7 @@ public class LatticeModelEM extends LatticeModel
 			for ( int i = 0; i < outputNucleiCenters.size(); i++ )
 			{
 				Vector3f pos = outputNucleiCenters.elementAt(i);
-				float radius = nucleiCenters.elementAt(i).W * resolutions[0];
+				float radius = nucleiCenters.elementAt(i).W * resolutions[0] * outputXResolution;
 				bw.write(nucleiNames.elementAt(i) + "," + pos.X + "," + pos.Y + "," + pos.Z + "," + radius + "\n");
 			}
 			

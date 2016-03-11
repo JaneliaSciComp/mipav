@@ -33,7 +33,7 @@ public class ModelImageLargeFormat {
 	private int dataType;
 	private int sliceOffset = 0;
 	private float[] resolutions;
-	private float zScale = 1;
+//	private float zScale = 1;
 	private FileIO fileIO = null;
 	
 	public ModelImageLargeFormat( int[] extents, String fullPathName, boolean readFromDisk )
@@ -146,33 +146,33 @@ public class ModelImageLargeFormat {
 		return dataType;
 	}
 	
-	public void set(int x, int y, int z, int value )
-	{
-		ModelImage slice = updateSliceTable(z);
-		if ( slice != null )
-		{
-			slice.set(x, y, value);
-			modified[z] = true;
-		}
-	}
-
-	
-	public void set(int x, int y, int z, float[] value )
-	{
-		ModelImage slice = updateSliceTable(z);
-		if ( slice != null )
-		{
-			slice.setC(x, y, 0, value[0]);
-			slice.setC(x, y, 1, value[1]);
-			slice.setC(x, y, 2, value[2]);
-			slice.setC(x, y, 3, value[3]);
-			modified[z] = true;			
-		}
-	}
+//	public void set(int x, int y, int z, int value )
+//	{
+//		ModelImage slice = updateSliceTable(z);
+//		if ( slice != null )
+//		{
+//			slice.set(x, y, value);
+//			modified[z] = true;
+//		}
+//	}
+//
+//	
+//	public void set(int x, int y, int z, float[] value )
+//	{
+//		ModelImage slice = updateSliceTable(z);
+//		if ( slice != null )
+//		{
+//			slice.setC(x, y, 0, value[0]);
+//			slice.setC(x, y, 1, value[1]);
+//			slice.setC(x, y, 2, value[2]);
+//			slice.setC(x, y, 3, value[3]);
+//			modified[z] = true;			
+//		}
+//	}
 	
 	public int get(int x, int y, int z )
 	{
-		if ( zScale != 1 )
+		if ( resolutions[2] != 1 )
 			return getInterpolated(x, y, z);
 		ModelImage slice = updateSliceTable(z);
 		if ( slice != null )
@@ -184,9 +184,18 @@ public class ModelImageLargeFormat {
 
 	private int getInterpolated(int x, int y, int z)
 	{
-		int z1 = (int) Math.floor(z / zScale);
-		int z2 = (int) Math.ceil(z / zScale);
-		float fraction = (z / zScale) - z1;
+		x -= extents3D[0]/2;
+		y -= extents3D[1]/2;
+
+		x /= resolutions[0];
+		y /= resolutions[1];
+
+		x += extents3D[0]/2;
+		y += extents3D[1]/2;
+		
+		int z1 = (int) Math.floor(z / resolutions[2]);
+		int z2 = (int) Math.ceil(z / resolutions[2]);
+		float fraction = (z / resolutions[2]) - z1;
 		float z1Portion = (1 - fraction);
 		float z2Portion = fraction;
 		if ( z1Portion == 1 )
@@ -217,9 +226,18 @@ public class ModelImageLargeFormat {
 
 	private float[] getInterpolatedC(int x, int y, int z)
 	{
-		int z1 = (int) Math.floor(z / zScale);
-		int z2 = (int) Math.ceil(z / zScale);
-		float fraction = (z / zScale) - z1;
+		x -= extents3D[0]/2;
+		y -= extents3D[1]/2;
+
+		x /= resolutions[0];
+		y /= resolutions[1];
+
+		x += extents3D[0]/2;
+		y += extents3D[1]/2;
+		
+		int z1 = (int) Math.floor(z / resolutions[2]);
+		int z2 = (int) Math.ceil(z / resolutions[2]);
+		float fraction = (z / resolutions[2]) - z1;
 		float z1Portion = (1 - fraction);
 		float z2Portion = fraction;
 		if ( z1Portion == 1 )
@@ -262,7 +280,7 @@ public class ModelImageLargeFormat {
 	
 	public float[] getC(int x, int y, int z )
 	{
-		if ( zScale != 1 )
+		if ( resolutions[2] != 1 )
 			return getInterpolatedC(x, y, z);
 		ModelImage slice = updateSliceTable(z);
 		if ( slice != null )
@@ -276,129 +294,129 @@ public class ModelImageLargeFormat {
 		return new float[]{0,0,0,0};	
 	}
 	
-	public void save(String dir)
-	{
-		System.err.println("saving " + dir );
-		
-		for ( int i = 0; i < extents3D[2]; i++ )
-		{
-			int index = i + sliceOffset;
-			if ( !onDisk[index] || modified[index] )
-			{
-				ModelImage slice = updateSliceTable(i);
-				if ( slice != null )
-				{
-					saveImage(slice, name + "_" + i, dir);
-				}
-				else
-				{
-					if ( dataType == INT )
-					{
-						slice = new ModelImage(ModelStorageBase.INTEGER, extents2D, "Slice_" + i );
-					}
-					else if ( dataType == ARGB )
-					{
-						slice = new ModelImage(ModelStorageBase.ARGB_FLOAT, extents2D, "Slice_" + i );
-					}
-					else if ( dataType == ARGB_FLOAT )
-					{
-						slice = new ModelImage(ModelStorageBase.ARGB_FLOAT, extents2D, "Slice_" + i );
-					}
-					saveImage(slice, name + "_" + i, dir);
-					slice.disposeLocal();
-					slice = null;
-				}
-			}
-		}		
-	}
+//	public void save(String dir)
+//	{
+//		System.err.println("saving " + dir );
+//		
+//		for ( int i = 0; i < extents3D[2]; i++ )
+//		{
+//			int index = i + sliceOffset;
+//			if ( !onDisk[index] || modified[index] )
+//			{
+//				ModelImage slice = updateSliceTable(i);
+//				if ( slice != null )
+//				{
+//					saveImage(slice, name + "_" + i, dir);
+//				}
+//				else
+//				{
+//					if ( dataType == INT )
+//					{
+//						slice = new ModelImage(ModelStorageBase.INTEGER, extents2D, "Slice_" + i );
+//					}
+//					else if ( dataType == ARGB )
+//					{
+//						slice = new ModelImage(ModelStorageBase.ARGB_FLOAT, extents2D, "Slice_" + i );
+//					}
+//					else if ( dataType == ARGB_FLOAT )
+//					{
+//						slice = new ModelImage(ModelStorageBase.ARGB_FLOAT, extents2D, "Slice_" + i );
+//					}
+//					saveImage(slice, name + "_" + i, dir);
+//					slice.disposeLocal();
+//					slice = null;
+//				}
+//			}
+//		}		
+//	}
 	
-	public void reslize()
-	{
-		Vector3f[][] sliceExtents = new Vector3f[extents3D[2]][2];
-		Vector3f pt = new Vector3f();
-		for ( int z = 0; z < extents3D[2]; z++ )
-		{
-			sliceExtents[z][0] = new Vector3f(extents3D[0], extents3D[1], extents3D[2]); 
-			sliceExtents[z][1] = new Vector3f(0, 0, 0); 
-			for ( int y = 0; y < extents3D[1]; y++ )
-			{
-				for ( int x = 0; x < extents3D[0]; x++ )
-				{
-					int value = get(x,y,z);
-					if ( value > 0 )
-					{
-						pt.set(x,y,z);
-						sliceExtents[z][0].min(pt);
-						sliceExtents[z][1].max(pt);
-					}
-				}
-			}
-			System.err.println( z + "    " + sliceExtents[z][0] + "        " + sliceExtents[z][1] );
-		}
-		
-		
-		System.err.println( extents3D[2] + " " + extents3D[1] + " " + extents3D[0] );
-		
-		String dirName = directory + name + "_reslice" + File.separator;
-		ModelImage temp = new ModelImage( ModelStorageBase.INTEGER, new int[]{ extents3D[2], extents3D[1] }, "Slice_" );
-		
-		for ( int x = 0; x < extents3D[0]; x++ )
-		{
-			System.err.print( "reslice... " + x );
-			for ( int z = 0; z < extents3D[2]; z++ )
-			{
-//				System.err.print( z + "..." );
-				for ( int y = 0; y < extents3D[1]; y++ )
-				{
-					if ( (sliceExtents[z][0].X <= x) && (sliceExtents[z][0].Y <= y) && (sliceExtents[z][0].Z <= z) &&
-						 (sliceExtents[z][1].X >= x) && (sliceExtents[z][1].Y >= y) && (sliceExtents[z][1].Z >= z)    )
-					{
-						temp.set(z, y, get(x, y, z) );
-					}
-					else
-					{
-						temp.set(z, y, 0);
-					}
-				}
-			}
-			temp.setImageName( "Slice_" + x );
-			saveImage(temp, temp.getImageName(), dirName );
-			System.err.println( "... done" );
-			
-			x++;
-			if ( x == extents3D[0] )
-			{
-				break;
-			}
-			System.err.print( "reslice... " + x );
-			for ( int z = extents3D[2] - 1; z >= 0; z-- )
-			{
-//				System.err.print( z + "..." );
-				for ( int y = 0; y < extents3D[1]; y++ )
-				{
-					if ( (sliceExtents[z][0].X <= x) && (sliceExtents[z][0].Y <= y) && (sliceExtents[z][0].Z <= z) &&
-						 (sliceExtents[z][1].X >= x) && (sliceExtents[z][1].Y >= y) && (sliceExtents[z][1].Z >= z)    )
-					{
-						temp.set(z, y, get(x, y, z) );
-					}
-					else
-					{
-						temp.set(z, y, 0);
-					}
-				}
-			}
-			temp.setImageName( "Slice_" + (x) );
-			saveImage(temp, temp.getImageName(), dirName );
-			System.err.println( "... done" );
-		}
-	}
+//	public void reslize()
+//	{
+//		Vector3f[][] sliceExtents = new Vector3f[extents3D[2]][2];
+//		Vector3f pt = new Vector3f();
+//		for ( int z = 0; z < extents3D[2]; z++ )
+//		{
+//			sliceExtents[z][0] = new Vector3f(extents3D[0], extents3D[1], extents3D[2]); 
+//			sliceExtents[z][1] = new Vector3f(0, 0, 0); 
+//			for ( int y = 0; y < extents3D[1]; y++ )
+//			{
+//				for ( int x = 0; x < extents3D[0]; x++ )
+//				{
+//					int value = get(x,y,z);
+//					if ( value > 0 )
+//					{
+//						pt.set(x,y,z);
+//						sliceExtents[z][0].min(pt);
+//						sliceExtents[z][1].max(pt);
+//					}
+//				}
+//			}
+//			System.err.println( z + "    " + sliceExtents[z][0] + "        " + sliceExtents[z][1] );
+//		}
+//		
+//		
+//		System.err.println( extents3D[2] + " " + extents3D[1] + " " + extents3D[0] );
+//		
+//		String dirName = directory + name + "_reslice" + File.separator;
+//		ModelImage temp = new ModelImage( ModelStorageBase.INTEGER, new int[]{ extents3D[2], extents3D[1] }, "Slice_" );
+//		
+//		for ( int x = 0; x < extents3D[0]; x++ )
+//		{
+//			System.err.print( "reslice... " + x );
+//			for ( int z = 0; z < extents3D[2]; z++ )
+//			{
+////				System.err.print( z + "..." );
+//				for ( int y = 0; y < extents3D[1]; y++ )
+//				{
+//					if ( (sliceExtents[z][0].X <= x) && (sliceExtents[z][0].Y <= y) && (sliceExtents[z][0].Z <= z) &&
+//						 (sliceExtents[z][1].X >= x) && (sliceExtents[z][1].Y >= y) && (sliceExtents[z][1].Z >= z)    )
+//					{
+//						temp.set(z, y, get(x, y, z) );
+//					}
+//					else
+//					{
+//						temp.set(z, y, 0);
+//					}
+//				}
+//			}
+//			temp.setImageName( "Slice_" + x );
+//			saveImage(temp, temp.getImageName(), dirName );
+//			System.err.println( "... done" );
+//			
+//			x++;
+//			if ( x == extents3D[0] )
+//			{
+//				break;
+//			}
+//			System.err.print( "reslice... " + x );
+//			for ( int z = extents3D[2] - 1; z >= 0; z-- )
+//			{
+////				System.err.print( z + "..." );
+//				for ( int y = 0; y < extents3D[1]; y++ )
+//				{
+//					if ( (sliceExtents[z][0].X <= x) && (sliceExtents[z][0].Y <= y) && (sliceExtents[z][0].Z <= z) &&
+//						 (sliceExtents[z][1].X >= x) && (sliceExtents[z][1].Y >= y) && (sliceExtents[z][1].Z >= z)    )
+//					{
+//						temp.set(z, y, get(x, y, z) );
+//					}
+//					else
+//					{
+//						temp.set(z, y, 0);
+//					}
+//				}
+//			}
+//			temp.setImageName( "Slice_" + (x) );
+//			saveImage(temp, temp.getImageName(), dirName );
+//			System.err.println( "... done" );
+//		}
+//	}
 	
 	public void setResolutions(float rX, float rY, float rZ)
 	{
 		resolutions[0] = rX;
 		resolutions[1] = rY;
 		resolutions[2] = rZ;
-		zScale = rZ/rX;
+//		zScale = rZ/rX;
 	}
 	
 	public float[] getResolutions()
@@ -406,26 +424,45 @@ public class ModelImageLargeFormat {
 		return resolutions;
 	}
 	
-	public float getZScale()
+	public float getXRes()
 	{
-		return zScale;
+		return resolutions[0];
 	}
+	
+	public float getYRes()
+	{
+		return resolutions[1];
+	}
+	
+	public float getZRes()
+	{
+		return resolutions[2];
+	}
+	
+//	public float getZScale()
+//	{
+//		return zScale;
+//	}
 	
 	public boolean checkBounds( int x, int y, int z )
 	{
+		x -= extents3D[0]/2;
+		y -= extents3D[1]/2;
+
+		x /= resolutions[0];
+		y /= resolutions[1];
+
+		x += extents3D[0]/2;
+		y += extents3D[1]/2;
+				
 		if ( (x < 0) || (y < 0) || (z < 0)  ||
 			 (x >= extents2D[0]) || (y >= extents2D[1]) )
 			return false;
 		
-		if ( (Math.ceil(z / zScale) + sliceOffset) >= extents3D[2] )
+		if ( (Math.ceil(z / resolutions[2]) + sliceOffset) >= extents3D[2] )
 			return false;
 		
 		return true;
-	}
-	
-	public void fileCoordinates( Vector3f pt )
-	{
-		pt.Z /= zScale;
 	}
 
 	private void saveImage(final ModelImage image, String name, String outputDirectory)
