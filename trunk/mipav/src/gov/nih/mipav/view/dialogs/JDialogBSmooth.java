@@ -234,7 +234,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
             tmpStr = textInterpNPts.getText();
             
             if (doEllipticFourierDescription) {
-            	if (testParameter(tmpStr, 1.0, nPts/2)) {
+            	if (testParameter(tmpStr, 1.0, nPoints/2)) {
 	                coefficients = Integer.valueOf(tmpStr).intValue();
 	            } else {
 	                textInterpNPts.requestFocus();
