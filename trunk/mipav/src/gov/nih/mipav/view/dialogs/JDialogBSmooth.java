@@ -55,6 +55,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
 
     /** DOCUMENT ME! */
     private AlgorithmBSmooth smoothAlgo;
+    
+    private AlgorithmEllipticFourierDescriptors ellipticAlgo;
 
     /** DOCUMENT ME! */
     private JTextField textInterpNPts;
@@ -214,7 +216,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         	if (ellipticCheckBox.isSelected()) {
         		trimCheckBox.setSelected(false);
         		trimCheckBox.setEnabled(false);
-        		labelInterpNPts.setText("Number of coefficients");
+        		labelInterpNPts.setText("Number of coefficients (<= " + String.valueOf(nPoints/2) + ")");
         		textInterpNPts.setText(String.valueOf(nPoints/4));
         	}
         	else {
@@ -242,6 +244,39 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
 	            }  
             	
             	try {
+            		// No need to make new image space because the user has choosen to replace the source image
+	                // Make the algorithm class
+	                ellipticAlgo = new AlgorithmEllipticFourierDescriptors(image, VOIs.VOIAt(groupNum), coefficients);
+	
+	                // This is very important. Adding this object as a listener allows the algorithm to
+	                // notify this object when it has completed of failed. See algorithm performed event.
+	                // This is made possible by implementing AlgorithmedPerformed interface
+	                ellipticAlgo.addListener(this);
+	
+	                // Hide the dialog since the algorithm is about to run.
+	                setVisible(false);
+	
+	                // These next lines set the titles in all frames where the source image is displayed to
+	                // "locked - " image name so as to indicate that the image is now read/write locked!
+	                // The image frames are disabled and then unregisted from the userinterface until the
+	                // algorithm has completed.
+	                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+	                titles = new String[imageFrames.size()];
+	
+	                for (i = 0; i < imageFrames.size(); i++) {
+	                	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
+	                	{
+	                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+	                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+	                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+	                    ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+	                	}
+	                }
+	
+	                // Start the thread as a low priority because we wish to still have user interface.
+	                if (ellipticAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                    MipavUtil.displayError("A thread is already running on this object");
+	                }
             		
             	}
             	catch (OutOfMemoryError x) {
@@ -334,12 +369,18 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         int nContours;
 
         // ViewJFrameImage imageFrame = null;
-        if (algorithm instanceof AlgorithmBSmooth) {
+        if ((algorithm instanceof AlgorithmBSmooth) || (algorithm instanceof AlgorithmEllipticFourierDescriptors)) {
 
-            if (smoothAlgo.isCompleted() == true) {
+            if (((!doEllipticFourierDescription) && (smoothAlgo.isCompleted())) || 
+            		((doEllipticFourierDescription) && (ellipticAlgo.isCompleted()))) {
 
                 // The algorithm has completed and produced a
-                resultVOI = smoothAlgo.getResultVOI();
+            	if (doEllipticFourierDescription) {
+            		resultVOI = ellipticAlgo.getResultVOI();
+            	}
+            	else {
+                    resultVOI = smoothAlgo.getResultVOI();
+            	}
 
                 if (removeOriginal) {
                     resultVOI.setColor(voiColor);
