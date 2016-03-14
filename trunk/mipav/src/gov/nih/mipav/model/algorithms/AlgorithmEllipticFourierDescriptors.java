@@ -5,6 +5,15 @@ import gov.nih.mipav.model.structures.*;
 
 import java.util.*;
 
+/** Smoothing VOI with Elliptic Fourier Descriptors.  The number of coefficients can range from 1 to the number of 
+ * points in the curve divided by 2.
+ * Reference:
+ * Feature Extraction & Image Processing for Computer Vision, Third Edition, Mark S. Nixon and
+ * Alberto S. Aguado, 2012, pp. 369-378.
+ * @author ilb
+ *
+ */
+
 public class AlgorithmEllipticFourierDescriptors extends AlgorithmBase {
 	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
