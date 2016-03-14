@@ -43,6 +43,23 @@ public class AlgorithmEllipticFourierDescriptors extends AlgorithmBase {
     }
     
     /**
+     * Prepares this class for destruction.
+     */
+    public void finalize() {
+        srcImage = null;
+        super.finalize();
+    }
+
+    /**
+     * Accessor that returns a voi that is a smoothed version of the original.
+     *
+     * @return  resultVOI
+     */
+    public VOI getResultVOI() {
+        return resultVOI;
+    }
+    
+    /**
      * Starts the smooth algorithm.
      */
     public void runAlgorithm() {
