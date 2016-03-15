@@ -72,7 +72,11 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
     /** DOCUMENT ME! */
     private JCheckBox trimCheckBox;
     
-    private JCheckBox ellipticCheckBox;
+    private ButtonGroup smoothGroup;
+    
+    private JRadioButton BSplineButton;
+    
+    private JRadioButton ellipticButton;
     
     private boolean doEllipticFourierDescription = false;
 
@@ -212,8 +216,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         int newPts;
         int coefficients;
 
-        if (source == ellipticCheckBox) {
-        	if (ellipticCheckBox.isSelected()) {
+        if ((source == BSplineButton) || (source == ellipticButton)) {
+        	if (ellipticButton.isSelected()) {
         		trimCheckBox.setSelected(false);
         		trimCheckBox.setEnabled(false);
         		labelInterpNPts.setText("Number of coefficients (<= " + String.valueOf(nPoints/2) + ")");
@@ -227,7 +231,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         }
         else if (source == OKButton) {
         	
-        	doEllipticFourierDescription = ellipticCheckBox.isSelected();
+        	doEllipticFourierDescription = ellipticButton.isSelected();
 
             removeOriginal = removeOriginalCheckBox.isSelected();
             
@@ -434,7 +438,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         setForeground(Color.black);
         setTitle("Smooth VOI");
 
-        JPanel imageVOIPanel = new JPanel(new GridLayout(3, 1));
+        JPanel imageVOIPanel = new JPanel(new GridLayout(4, 1));
         imageVOIPanel.setForeground(Color.black);
         imageVOIPanel.setBorder(buildTitledBorder("VOI Options"));
 
@@ -450,12 +454,22 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         trimCheckBox.setSelected(false);
         imageVOIPanel.add(trimCheckBox);
         
-        ellipticCheckBox = new JCheckBox("Smooth with Elliptic Fourier Descriptors");
-        ellipticCheckBox.setFont(serif12);
-        ellipticCheckBox.setForeground(Color.black);
-        ellipticCheckBox.setSelected(false);
-        ellipticCheckBox.addActionListener(this);
-        imageVOIPanel.add(ellipticCheckBox);
+        smoothGroup = new ButtonGroup();
+        BSplineButton = new JRadioButton("Smooth with Bspline interpolation");
+        BSplineButton.setFont(serif12);
+        BSplineButton.setForeground(Color.black);
+        BSplineButton.setSelected(true);
+        BSplineButton.addActionListener(this);
+        smoothGroup.add(BSplineButton);
+        imageVOIPanel.add(BSplineButton);
+        
+        ellipticButton = new JRadioButton("Smooth with Elliptic Fourier Descriptors");
+        ellipticButton.setFont(serif12);
+        ellipticButton.setForeground(Color.black);
+        ellipticButton.setSelected(false);
+        ellipticButton.addActionListener(this);
+        smoothGroup.add(ellipticButton);
+        imageVOIPanel.add(ellipticButton);
 
         JPanel paramPanel = new JPanel(new GridLayout(1, 2));
         paramPanel.setForeground(Color.black);
