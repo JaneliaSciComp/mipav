@@ -774,9 +774,11 @@ public class VOIContour extends VOIBase {
 	    return bestFitFD;
     }
 	
-	// The 7 invariant moments do not change with scaling, rotation, or translation
-	// Reference: Feature Extraction & Image Processing for Computer Vision Third Edition by Mark S. Nixon and 
+	// The 7 invariant moments do not change with scaling, rotation, translation, or mirroring (within a minus
+	// sign).  Mirroring changes the sign of the seventh moment.
+	// References: 1.) Feature Extraction & Image Processing for Computer Vision Third Edition by Mark S. Nixon and 
 	// Alberto S. Aguado, 2012, pp. 383-389.
+	// 2.) Digital Image Processing Third Edition by Rafael C. Gonzalez and Richard E. Woods, 2008, pp. 839-842.
 	public double[] invariantMoments(int xDim, int yDim) {
 		double moments[] = new double[7];
 		double xSum = 0.0;
