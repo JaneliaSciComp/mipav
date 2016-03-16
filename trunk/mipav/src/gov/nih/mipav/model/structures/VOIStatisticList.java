@@ -161,6 +161,20 @@ public interface VOIStatisticList {
     String fractalDimensionBoxCountDescription = "Fractal Dimension Box Count";
     
     String fractalDimensionEuclideanDistanceDescription = "Fractal Dimension Euclidean Distance";
+    
+    String invariantMoment1Description = "Invariant Moment 1";
+    
+    String invariantMoment2Description = "Invariant Moment 2";
+    
+    String invariantMoment3Description = "Invariant Moment 3";
+    
+    String invariantMoment4Description = "Invariant Moment 4";
+    
+    String invariantMoment5Description = "Invariant Moment 5";
+    
+    String invariantMoment6Description = "Invariant Moment 6";
+    
+    String invariantMoment7Description = "Invariant Moment 7";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -174,7 +188,9 @@ public interface VOIStatisticList {
         minorAxisDescription, skewnessDescription, kurtosisDescription, largestSliceDistanceDescription, 
         largestDistanceDescription, median, mode, modeCount, meanCurvatureDescription, stdDevCurvatureDescription,
         meanNegativeCurvatureDescription, numberOfIndentationsCurvatureDescription, numberOfIndentationsHullDescription,
-        asymmetryIndexDescription, fractalDimensionBoxCountDescription, fractalDimensionEuclideanDistanceDescription
+        asymmetryIndexDescription, fractalDimensionBoxCountDescription, fractalDimensionEuclideanDistanceDescription,
+        invariantMoment1Description, invariantMoment2Description, invariantMoment3Description, invariantMoment4Description,
+        invariantMoment5Description, invariantMoment6Description, invariantMoment7Description
     };
 
     /** number of statistics in the list. */
