@@ -774,6 +774,119 @@ public class VOIContour extends VOIBase {
 	    return bestFitFD;
     }
 	
+	// The 7 invariant moments do not change with scaling, rotation, or translation
+	public double[] invariantMoments(int xDim, int yDim) {
+		double moments[] = new double[7];
+		double xSum = 0.0;
+		double ySum = 0.0;
+		double xMean;
+		double yMean;
+		int i;
+		int x;
+		int y;
+		boolean snear[] = new boolean[1];
+		int i1[] = new int[1];
+		int i2[] = new int[1];
+		int polarity = 1;
+		double boundaryDistance;
+		Vector<Integer> xVec = new Vector<Integer>();
+		Vector<Integer> yVec = new Vector<Integer>();
+		int numPixels = 0;
+		double xDiff;
+		double yDiff;
+		double xDiffSquared;
+		double xDiffCubed;
+		double yDiffSquared;
+		double yDiffCubed;
+		// Centrialized moments u
+		double u00;
+		double u20 = 0.0;
+		double u02 = 0.0;
+		double u11 = 0.0;
+		double u30 = 0.0;
+		double u21 = 0.0;
+		double u12 = 0.0;
+		double u03 = 0.0;
+		// Normalized central moments n
+		double n20;
+		double n02;
+		double n11;
+		double n30;
+		double n21;
+		double n12;
+		double n03;
+		
+		double u00pow2;
+		double u00pow25;
+		double var1;
+		double var2;
+		
+		// Lines protruding out from contours can flip the polarity of pinpol function
+	    boundaryDistance = this.pinpol(2*xDim, 2*yDim, snear, i1, i2);
+		if (boundaryDistance > 0.0) {
+	        polarity = -1;
+		}
+		for (y = 0; y < yDim; y++) {
+			for (x = 0; x < xDim; x++) {
+			    boundaryDistance = this.pinpol(x,  y, snear, i1, i2) * polarity;
+			    if (boundaryDistance >= 0) {
+			    	xSum += x;
+			    	ySum += y;
+			    	xVec.add(x);
+			    	yVec.add(y);
+			    	numPixels++;
+			    }
+			}
+		}
+		xMean = xSum/numPixels;
+		yMean = ySum/numPixels;
+		u00 = numPixels;
+		for (i = 0; i < numPixels; i++) {
+			x = xVec.get(i);
+			y = yVec.get(i);
+			xDiff = x - xMean;
+			yDiff = y - yMean;
+			xDiffSquared = xDiff * xDiff;
+			xDiffCubed = xDiffSquared * xDiff;
+			yDiffSquared = yDiff * yDiff;
+			yDiffCubed = yDiffSquared * yDiff;
+			u20 += xDiffSquared;
+			u02 += yDiffSquared;
+			u11 += xDiff * yDiff;
+			u30 += xDiffCubed;
+			u21 += xDiffSquared * yDiff;
+			u12 += xDiff * yDiffSquared;
+			u03 += yDiffCubed;
+		}
+		xVec.clear();
+		yVec.clear();
+		u00pow2 = u00 * u00;
+		u00pow25 = Math.pow(u00,2.5);
+		n20 = u20/u00pow2;
+		n02 = u02/u00pow2;
+		n11 = u11/u00pow2;
+		n30 = u30/u00pow25;
+		n21 = u21/u00pow25;
+		n12 = u12/u00pow25;
+		n03 = u03/u00pow25;
+		
+		moments[0] = n20 + n02;
+		var1 = n20 - n02;
+		moments[1] = var1*var1 + 4*n11*n11;
+		var1 = n30 - 3.0*n12;
+		var2 = 3*n21 - n03;
+		moments[2] = var1*var1 + var2*var2;
+		var1 = n30 + n12;
+		var2 = n21 + n03;
+		moments[3] = var1*var1 + var2*var2;
+		moments[4] = (n30 - 3*n12)*var1*(var1*var1 - 3.0*var2*var2)
+				+ (3.0*n21 - n03)*var2*(3.0*var1*var1 - var2*var2);
+		moments[5] = (n20-n02)*(var1*var1 - var2*var2) + 4.0*n11*var1*var2;
+		moments[6] = (3.0*n21 - n03)*var1*(var1*var1 - 3.0*var2*var2) 
+		      + (3.0*n12 - n30)*var2*(3.0*var1*var1 - var2*var2);
+		return moments;
+	}
+	
 	/**
 	 * From statics it is known that any planar shape or closed curve possesses two principal axes 90 degrees
 	 * apart intersecting at the centroid of the area.  (For certain areas such as a circle, there may be more
