@@ -124,6 +124,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public double asymmetryIndex;
             public double fractalDimensionBoxCount;
             public double fractalDimensionEuclideanDistance;
+            public double invariantMoment1;
+            public double invariantMoment2;
+            public double invariantMoment3;
+            public double invariantMoment4;
+            public double invariantMoment5;
+            public double invariantMoment6;
+            public double invariantMoment7;
             public double meanCurvature;
             public double stdDevCurvature;
             public double meanNegativeCurvature;
@@ -1227,6 +1234,54 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         nf.format(stats.fractalDimensionEuclideanDistance));
             }
             
+            if (statsList[indexOf(invariantMoment1Description)] || statsList[indexOf(invariantMoment2Description)] ||
+            		statsList[indexOf(invariantMoment3Description)] || statsList[indexOf(invariantMoment4Description)] ||
+            		statsList[indexOf(invariantMoment5Description)] || statsList[indexOf(invariantMoment6Description)] ||
+            		statsList[indexOf(invariantMoment7Description)]) {
+            	double invariantMoments[] = ((VOIContour)contour).invariantMoments(srcImage.getExtents()[0], srcImage.getExtents()[1]);
+            	if (statsList[indexOf(invariantMoment1Description)]) {
+            	    stats.invariantMoment1 = invariantMoments[0];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment1Description + end, 
+            			nfe.format(stats.invariantMoment1));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment2Description)]) {
+            	    stats.invariantMoment2 = invariantMoments[1];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment2Description + end, 
+            			nfe.format(stats.invariantMoment2));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment3Description)]) {
+            	    stats.invariantMoment3 = invariantMoments[2];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment3Description + end, 
+            			nfe.format(stats.invariantMoment3));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment4Description)]) {
+            	    stats.invariantMoment4 = invariantMoments[3];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment4Description + end, 
+            			nfe.format(stats.invariantMoment4));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment5Description)]) {
+            	    stats.invariantMoment5 = invariantMoments[4];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment5Description + end, 
+            			nfe.format(stats.invariantMoment5));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment6Description)]) {
+            	    stats.invariantMoment6 = invariantMoments[5];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment6Description + end, 
+            			nfe.format(stats.invariantMoment6));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment7Description)]) {
+            	    stats.invariantMoment7 = invariantMoments[6];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment7Description + end, 
+            			nfe.format(stats.invariantMoment7));
+            	}
+            }
+            
             return stats;
         }
         
@@ -1593,6 +1648,54 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         srcImage.getExtents()[1]);
                 statProperty.setProperty(VOIStatisticList.fractalDimensionEuclideanDistanceDescription + end, 
                         nf.format(stats.fractalDimensionEuclideanDistance));
+            }
+            
+            if (statsList[indexOf(invariantMoment1Description)] || statsList[indexOf(invariantMoment2Description)] ||
+            		statsList[indexOf(invariantMoment3Description)] || statsList[indexOf(invariantMoment4Description)] ||
+            		statsList[indexOf(invariantMoment5Description)] || statsList[indexOf(invariantMoment6Description)] ||
+            		statsList[indexOf(invariantMoment7Description)]) {
+            	double invariantMoments[] = ((VOIContour)contour).invariantMoments(srcImage.getExtents()[0], srcImage.getExtents()[1]);
+            	if (statsList[indexOf(invariantMoment1Description)]) {
+            	    stats.invariantMoment1 = invariantMoments[0];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment1Description + end, 
+            			nfe.format(stats.invariantMoment1));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment2Description)]) {
+            	    stats.invariantMoment2 = invariantMoments[1];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment2Description + end, 
+            			nfe.format(stats.invariantMoment2));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment3Description)]) {
+            	    stats.invariantMoment3 = invariantMoments[2];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment3Description + end, 
+            			nfe.format(stats.invariantMoment3));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment4Description)]) {
+            	    stats.invariantMoment4 = invariantMoments[3];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment4Description + end, 
+            			nfe.format(stats.invariantMoment4));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment5Description)]) {
+            	    stats.invariantMoment5 = invariantMoments[4];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment5Description + end, 
+            			nfe.format(stats.invariantMoment5));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment6Description)]) {
+            	    stats.invariantMoment6 = invariantMoments[5];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment6Description + end, 
+            			nfe.format(stats.invariantMoment6));
+            	}
+            	
+            	if (statsList[indexOf(invariantMoment7Description)]) {
+            	    stats.invariantMoment7 = invariantMoments[6];
+            	    statProperty.setProperty(VOIStatisticList.invariantMoment7Description + end, 
+            			nfe.format(stats.invariantMoment7));
+            	}
             }
             
             return stats;
@@ -3199,6 +3302,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
     /** Formatting for float values into strings. */
     protected DecimalFormat nf;
+    
+    protected DecimalFormat nfe;
 
     /** How the VOI calculations should be performed (entire, contour, slice). */
     protected int processType = PROCESS_PER_VOI;
@@ -3248,6 +3353,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         DecimalFormatSymbols dfs = nf.getDecimalFormatSymbols();
         dfs.setDecimalSeparator('.');
         nf.setDecimalFormatSymbols(dfs);
+        
+        nfe = new DecimalFormat("0.000E0");
 
         this.rangeFlag = rangeFlag;
         this.sliceDistanceFlag = true;
