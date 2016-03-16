@@ -775,6 +775,8 @@ public class VOIContour extends VOIBase {
     }
 	
 	// The 7 invariant moments do not change with scaling, rotation, or translation
+	// Reference: Feature Extraction & Image Processing for Computer Vision Third Edition by Mark S. Nixon and 
+	// Alberto S. Aguado, 2012, pp. 383-389.
 	public double[] invariantMoments(int xDim, int yDim) {
 		double moments[] = new double[7];
 		double xSum = 0.0;
