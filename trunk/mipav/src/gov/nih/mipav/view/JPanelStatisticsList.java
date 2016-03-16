@@ -166,6 +166,13 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
             setEnabledList(asymmetryIndexDescription, false);
             setEnabledList(fractalDimensionBoxCountDescription, false);
             setEnabledList(fractalDimensionEuclideanDistanceDescription, false);
+            setEnabledList(invariantMoment1Description, false);
+            setEnabledList(invariantMoment2Description, false);
+            setEnabledList(invariantMoment3Description, false);
+            setEnabledList(invariantMoment4Description, false);
+            setEnabledList(invariantMoment5Description, false);
+            setEnabledList(invariantMoment6Description, false);
+            setEnabledList(invariantMoment7Description, false);
         }
         
         if (!byContour) {
@@ -175,6 +182,13 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
             setEnabledList(asymmetryIndexDescription, false);
             setEnabledList(fractalDimensionBoxCountDescription, false);
             setEnabledList(fractalDimensionEuclideanDistanceDescription, false);
+            setEnabledList(invariantMoment1Description, false);
+            setEnabledList(invariantMoment2Description, false);
+            setEnabledList(invariantMoment3Description, false);
+            setEnabledList(invariantMoment4Description, false);
+            setEnabledList(invariantMoment5Description, false);
+            setEnabledList(invariantMoment6Description, false);
+            setEnabledList(invariantMoment7Description, false);
         }
     }
 
