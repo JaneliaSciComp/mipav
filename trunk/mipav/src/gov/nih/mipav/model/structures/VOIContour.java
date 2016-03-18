@@ -779,6 +779,9 @@ public class VOIContour extends VOIBase {
 	// References: 1.) Feature Extraction & Image Processing for Computer Vision Third Edition by Mark S. Nixon and 
 	// Alberto S. Aguado, 2012, pp. 383-389.
 	// 2.) Digital Image Processing Third Edition by Rafael C. Gonzalez and Richard E. Woods, 2008, pp. 839-842.
+	// Note that this version does not multiply by pixel intensity values I(x,y) so that it only measures the 
+	// similarity of the VOI shapes or curves.  If you multiply by pixel intensity values I(x,y), then you can
+	// test whether the enclosed images are scaled, rotated, and translated versions of each other.
 	public double[] invariantMoments(int xDim, int yDim) {
 		double moments[] = new double[7];
 		double xSum = 0.0;
