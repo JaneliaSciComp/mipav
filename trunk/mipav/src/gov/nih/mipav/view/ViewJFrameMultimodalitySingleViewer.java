@@ -20,6 +20,10 @@ import javax.swing.event.*;
 
 import WildMagic.LibFoundation.Mathematics.*;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		implements ItemListener, ChangeListener, KeyListener, MouseListener, MouseMotionListener, MouseWheelListener, VOIManagerInterfaceListener {
@@ -79,6 +83,26 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		
 	}
 	
+	void captureComponent(Component component) {
+	    Rectangle rect = component.getBounds();
+	 
+	    try {
+	        String format = "png";
+	        String fileName = component.getName() + "." + format;
+	        BufferedImage captureImage =
+	                new BufferedImage(rect.width, rect.height,
+	                                    BufferedImage.TYPE_INT_ARGB);
+	        component.paint(captureImage.getGraphics());
+	 
+	        ImageIO.write(captureImage, format, new File(fileName));
+	 
+	        System.err.printf("The screenshot of %s was saved!", component.getName());
+	    } catch (IOException ex) {
+	        System.err.println(ex);
+	    }
+	}
+	
+
 	private void initLayout() {
 
 		final GridBagLayout gbLayout = new GridBagLayout();
@@ -93,9 +117,9 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		gbc.weighty = 0;
 
 		ImageIcon cornerImage;
-		cornerImage = MipavUtil.getIcon("WhiteCircle.png");
+		cornerImage = MipavUtil.getIcon("WhiteCircle_550.png");
 		ImageIcon blackImage;
-		blackImage = MipavUtil.getIcon("BlackCircle.png");
+		blackImage = MipavUtil.getIcon("BlackCircle_550.png");
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.setBackground(Color.black);
@@ -188,6 +212,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		getContentPane().add(rightPanel, BorderLayout.EAST);
 		getContentPane().add(topPanel, BorderLayout.NORTH);
 		getContentPane().add(lowerPanel, BorderLayout.SOUTH);
+		getContentPane().setName("SingleMultiViewContentPane");
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -197,6 +222,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageComp.addMouseWheelListener(this);
 		imageComp.addMouseListener(this);
 		imageComp.addMouseMotionListener(this);
+		imageComp.addKeyListener(this);
 		 
 		addKeyListener(this);
 		
@@ -330,6 +356,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageFrame = new ViewJFrameImage(images);
 		imageFrame.setLocation(screenWidth, screenHeight);
 		imageComp = imageFrame.getComponentImage();
+		imageComp.setName("MultiViewSingle");
 		
 			
 		compW = imageComp.getWidth();
@@ -476,19 +503,29 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	 *            KeyEvent
 	 */
 	public void keyPressed(final KeyEvent e) {
-		// System.err.println("ViewJFrameTriImage keyPressed" );
+		System.err.println("ViewJFrameTriImage keyPressed" );
+		
 		final int keyCode = e.getKeyCode();
 
 		if ( keyCode == KeyEvent.VK_ESCAPE ) {
 			System.err.println("escape key pressed");
 			this.setVisible(false);
 			this.dispose();
+		} else if ( keyCode == KeyEvent.VK_F1) {
+			System.err.println("F1 key pressed");
+			captureComponent(getContentPane());
+		} else if ( keyCode == KeyEvent.VK_F2) {
+			// changeIcon("BlackCircle_400");
+		} else if ( keyCode == KeyEvent.VK_F3) {
+			// changeIcon("BlackCircle_550");
+		} else if ( keyCode == KeyEvent.VK_F4) {
+			// changeIcon("BlackCircle");
 		}
-		
+		  
 		// pass the key bindings to the underlying image (plb)
 		String command = null;
 		final KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
-
+        
 		command = Preferences.getShortcutCommand(ks);
 
 		if (command != null) {
