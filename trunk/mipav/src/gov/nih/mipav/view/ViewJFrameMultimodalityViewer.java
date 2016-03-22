@@ -9,11 +9,12 @@ import gov.nih.mipav.view.renderer.WildMagic.VOI.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
-
+import java.io.IOException;
 import java.util.*;
 
-
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import javax.swing.event.*;
@@ -98,9 +99,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		gbc.weighty = 0;
 
 		ImageIcon cornerImage;
-		cornerImage = MipavUtil.getIcon("WhiteCircle.png");
+		cornerImage = MipavUtil.getIcon("WhiteCircle_550.png");
 		ImageIcon blackImage;
-		blackImage = MipavUtil.getIcon("BlackCircle.png");
+		blackImage = MipavUtil.getIcon("BlackCircle_550.png");
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.setBackground(Color.black);
@@ -255,7 +256,8 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		getContentPane().add(rightPanel, BorderLayout.EAST);
 		getContentPane().add(topPanel, BorderLayout.NORTH);
 		getContentPane().add(lowerPanel, BorderLayout.SOUTH);
-
+        getContentPane().setName("MultiViewConentPane");
+        
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		setUndecorated(true);
@@ -287,6 +289,25 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		pack();
 		this.validate();
 		setSize(screenWidth, screenHeight);
+	}
+	
+	void captureComponent(Component component) {
+	    Rectangle rect = component.getBounds();
+	 
+	    try {
+	        String format = "png";
+	        String fileName = component.getName() + "." + format;
+	        BufferedImage captureImage =
+	                new BufferedImage(rect.width, rect.height,
+	                                    BufferedImage.TYPE_INT_ARGB);
+	        component.paint(captureImage.getGraphics());
+	 
+	        ImageIO.write(captureImage, format, new File(fileName));
+	 
+	        System.err.printf("The screenshot of %s was saved!", component.getName());
+	    } catch (IOException ex) {
+	        System.err.println(ex);
+	    }
 	}
 	
 	public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
@@ -590,6 +611,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 			System.err.println("escape key pressed");
 			this.setVisible(false);
 			this.dispose();
+		} else if ( keyCode == KeyEvent.VK_F1) {
+			System.err.println("F1 key pressed");
+			captureComponent(getContentPane());
 		}
 		
 		// pass the key bindings to the underlying image (plb)
