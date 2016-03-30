@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.Bessel;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Dimension;
@@ -136,7 +137,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private int arrayLength; // size of buffers (realData and imagData)
 
     /** DOCUMENT ME! */
-    private int butterworthOrder; // order of the Butterworth filter
+    private int filterOrder; // order of the Butterworth filter
 
     /** DOCUMENT ME! */
     private int constructionMethod; // WINDOW = 1 for windowed finite impulse response
@@ -316,13 +317,13 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  srcImg            source image model
      * @param  image25D          If true, processes each slice of a 3D image independently
      * @param  freq1             cutoff frequency, transition frequency from low to high gain
-     * @param  butterworthOrder  order of the Butterworth filter
+     * @param  filterOrder  order of the Butterworth filter
      * @param  lowGain           < 1, gain at low frequencies
      * @param  highGain          > 1, gain at high frequencies
      * @param  lowTruncated      part of low histogram end truncated
      * @param  highTruncated     part of high histogram end truncated
      */
-    public AlgorithmFrequencyFilter(ModelImage srcImg, boolean image25D, float freq1, int butterworthOrder,
+    public AlgorithmFrequencyFilter(ModelImage srcImg, boolean image25D, float freq1, int filterOrder,
                                     float lowGain, float highGain, float lowTruncated, float highTruncated) {
         super(null, srcImg);
 
@@ -331,7 +332,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         this.filterType = HOMOMORPHIC;
         f1 = freq1;
         this.constructionMethod = BUTTERWORTH;
-        this.butterworthOrder = butterworthOrder;
+        this.filterOrder = filterOrder;
         this.lowGain = lowGain;
         this.highGain = highGain;
         this.lowTruncated = lowTruncated;
@@ -377,14 +378,14 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  srcImg            source image model
      * @param  image25D          If true, processes each slice of a 3D image independently
      * @param  freq1             cutoff frequency, transition frequency from low to high gain
-     * @param  butterworthOrder  order of the Butterworth filter
+     * @param  filterOrder  order of the Butterworth filter
      * @param  lowGain           < 1, gain at low frequencies
      * @param  highGain          > 1, gain at high frequencies
      * @param  lowTruncated      part of low histogram end truncated
      * @param  highTruncated     part of high histogram end truncated
      */
     public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, boolean image25D, float freq1,
-                                    int butterworthOrder, float lowGain, float highGain, float lowTruncated,
+                                    int filterOrder, float lowGain, float highGain, float lowTruncated,
                                     float highTruncated) {
         super(destImg, srcImg);
 
@@ -393,7 +394,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         this.filterType = HOMOMORPHIC;
         f1 = freq1;
         this.constructionMethod = BUTTERWORTH;
-        this.butterworthOrder = butterworthOrder;
+        this.filterOrder = filterOrder;
         this.lowGain = lowGain;
         this.highGain = highGain;
         this.lowTruncated = lowTruncated;
@@ -413,11 +414,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  freq2               higher frequency in BANDPASS and BANDSTOP User inputs f1 and f2 going from 0.0 to
      *                             1.0. Program multiplies these numbers by PI for FIR filters.
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
-     * @param  butterworthOrder    order of a Butterworth filter
+     * @param  filterOrder    order of a Butterworth filter
      */
     public AlgorithmFrequencyFilter(ModelImage srcImg, boolean image25D, boolean imageCrop, int kernelDiameter,
                                     int filterType, float freq1, float freq2, int constructionMethod,
-                                    int butterworthOrder) {
+                                    int filterOrder) {
         super(null, srcImg);
 
         this.image25D = image25D;
@@ -427,7 +428,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         f1 = freq1;
         f2 = freq2;
         this.constructionMethod = constructionMethod;
-        this.butterworthOrder = butterworthOrder;
+        this.filterOrder = filterOrder;
     }
 
     /**
@@ -444,11 +445,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  freq2               higher frequency in BANDPASS and BANDSTOP User inputs f1 and f2 going from 0.0 to
      *                             1.0. Program multiplies these numbers by PI for FIR filters.
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
-     * @param  butterworthOrder    order of the Butterworth filter
+     * @param  filterOrder    order of the Butterworth filter
      */
     public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, boolean image25D, boolean imageCrop,
                                     int kernelDiameter, int filterType, float freq1, float freq2,
-                                    int constructionMethod, int butterworthOrder) {
+                                    int constructionMethod, int filterOrder) {
         super(destImg, srcImg);
 
         this.imageCrop = imageCrop;
@@ -458,7 +459,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         f1 = freq1;
         f2 = freq2;
         this.constructionMethod = constructionMethod;
-        this.butterworthOrder = butterworthOrder;
+        this.filterOrder = filterOrder;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -2534,6 +2535,203 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             magData[i] = (float) java.lang.Math.sqrt((realData[i] * realData[i]) + (imagData[i] * imagData[i]));
         }
     }
+    
+    private double Chebyshev(int order, double w) {
+    	double wSquared;
+    	double wCubed;
+    	double wFourth;
+    	double wFifth;
+    	double wSixth;
+    	double wSeventh;
+    	double wEighth;
+    	double wNinth;
+    	double wTenth;
+    	double wEleventh;
+    	double wTwelfth;
+    	double wThirteenth;
+    	switch (order) {
+    	case 0:
+    		return 1;
+    	case 1:
+    		return w;
+    	case 2:
+    		return 2.0*w*w - 1;
+    	case 3:
+    		return 4.0*w*w*w - 3.0*w;
+    	case 4:
+    		wSquared = w * w;
+    		return 8.0*wSquared*wSquared - 8.0*wSquared + 1.0;
+    	case 5:
+    		wCubed = w * w * w;
+    		return 16.0*wCubed*w*w - 20.0*wCubed + 5.0*w;
+    	case 6:
+    		wSquared = w * w;
+    		wFourth = wSquared * wSquared;
+    		return 32.0*wFourth*wSquared -48.0*wFourth + 18.0*wSquared - 1.0;
+    	case 7:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		return 64.0*wFifth*wSquared - 112.0*wFifth + 56.0*wCubed - 7.0*w;
+    	case 8:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		return 128.0*wFourth*wFourth - 256.0*wSixth + 160.0*wFourth -32.0*wSquared + 1.0;
+    	case 9:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		return 256.0*wSeventh*wSquared - 576.0*wSeventh + 432.0*wFifth - 120.0*wCubed + 9.0*w;
+    	case 10:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		wEighth = wFourth*wFourth;
+    		return 512.0*wEighth*wSquared - 1280.0*wEighth + 1120.0*wSixth - 400.0*wFourth + 50.0*wSquared - 1.0;
+    	case 11:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		wNinth = wSeventh*wSquared;
+    		return 1024.0*wNinth*wSquared - 2816.0*wNinth + 2816.0*wSeventh - 1232.0*wFifth + 220.0*wCubed - 11.0*w;
+    	case 12:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		wEighth = wFourth*wFourth;
+    		wTenth = wEighth*wSquared;
+    		return 2048.0*wSixth*wSixth - 6144.0*wTenth + 6912.0*wEighth - 3584.0*wSixth + 840.0*wFourth - 72.0*wSquared + 1.0;
+    	case 13:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		wNinth = wSeventh*wSquared;
+    		wEleventh = wNinth*wSquared;
+    		return 4096.0*wEleventh*wSquared - 13312.0*wEleventh + 16640.0*wNinth - 9984.0*wSeventh + 2912.0*wFifth
+    				- 364.0*wCubed + 13.0;
+    	case 14:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		wEighth = wFourth*wFourth;
+    		wTenth = wEighth*wSquared;
+    		wTwelfth = wSixth * wSixth;
+    		return 8192.0*wTwelfth*wSquared - 28672.0*wTwelfth + 39424.0*wTenth - 26880.0*wEighth + 9408.0*wSixth
+    				- 1568.0*wFourth + 98.0*wSquared - 1.0;
+    	case 15:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		wNinth = wSeventh*wSquared;
+    		wEleventh = wNinth*wSquared;
+    		wThirteenth = wEleventh*wSquared;
+    		return 16384.0*wThirteenth*wSquared - 61440.0*wThirteenth + 92160.0*wEleventh - 70400.0*wNinth + 28800.0*wSeventh
+    				- 6048.0*wFifth + 560.0*wCubed - 15.0*w;
+    	default:
+    		MipavUtil.displayError("No Chebyshev polynomial returned");
+    		return Double.NaN;
+    	}
+    	 
+    }
+    
+    private void makeChebyshevTypeIFilter(float epsilon, float fr1) {
+    	int x, y, z, pos;
+        float distsq, width, centersq, coeff, num, xnorm, ynorm, znorm, xcenter, ycenter, zcenter;
+        int upperZ;
+        
+        double epsilonSquared = epsilon*epsilon;
+        double ratio;
+        double Tn;
+        // gamma = 1/n * invsinh(1/epsilon)
+        //gamma = (1.0/filterOrder)*Math.log(inverseEpsilon + Math.sqrt(inverseEpsilon*inverseEpsilon + 1.0));
+        //expGamma = Math.exp(gamma);
+       //expMinusGamma = 1.0/expGamma;
+        //coshGamma = 0.5 * (expGamma + expMinusGamma);
+        //sinhGamma = 0.5 * (expGamma - expMinusGamma);
+        //if ((filterOrder % 2) == 0) {
+        	// Filter order is even
+        	//a = new double[filterOrder/2];
+        	//b = new double[filterOrder/2];
+        	// sk = -sinhGamma*cos((2k+1)*PI/(2n)) + j* coshGamma * sin((2k+1)*PI/(2n)) 
+        	// for k = -n/2, -n/2 + 1, ..., n/2 -1
+        	// if (2*k1 + 1) = -(2*k2 + 1) then k2 = -1 - k1, real(sk1) = real(sk2), imag(sk1) = -imag(sk2)
+        	// For k = -n/2 to -1, s*s + 2*real(sk)*s + (real(sk)*real(sk) - imag(sk)*imag(sk))
+        	// a = 2*real(sk), b = (real(sk)*real(sk) - imag(sk)*imag(sk), s*s + a*s + b
+        	//index = 0;
+        	//DCProduct = 1.0;
+        	//for (k = -filterOrder/2; k <= -1; k++) {
+        		//realsk = -sinhGamma*Math.cos((2.0*k + 1.0)*Math.PI/(2.0*filterOrder));
+        		//imagsk = coshGamma*Math.sin((2.0*k + 1.0)*Math.PI/(2.0*filterOrder));
+        		//a[index] = 2.0 *realsk;
+        		//b[index++] = realsk*realsk -imagsk*imagsk;
+        		//DCProduct = DCProduct * b[index-1];
+        	//}
+        	// In the passband gain ripples between C and C/sqrt(1 + epsilon*epsilon) with the gain at
+        	// zero frequency equal to C/sqrt(1 + epsilon*epsilon), so to have the DC gain equal to 1
+        	// must have C = DCProduct/sqrt(1 + epsilon*epsilon)
+        	//C = DCProduct/Math.sqrt(1.0 + epsilon*epsilon);
+        //}
+        //else {
+        	// Filter order is odd
+        	//a = new double[(filterOrder-1)/2];
+        	//b = new double[(filterOrder-1)/2];
+        	// sk = -sinhGamma*cos(k*PI/n) +; j * coshGamma * sin(k*PI/n)
+        	// for k  0, +-1, +-2, ..., +-(n-1)/2
+        	// For k = 0, real(s0) = -sinhGamma, imag(s0) = 0, s + real(s0) = s - sinhGamma
+        	// For k = 1 to (n-1)/2, s*s + 2*real(sk)*s + (real(sk)*real(sk) - imag(sk)*imag(sk))
+        	// a = 2*real(sk), b = (real(sk)*real(sk) - imag(sk)*imag(sk), s*s + a*s + b
+        	//DCProduct = -sinhGamma;
+        	//index = 0;
+        	//for (k = 1; k <= ((filterOrder-1)/2); k++) {
+        	    //realsk = -sinhGamma*Math.cos(k*Math.PI/filterOrder);
+        	    //imagsk = coshGamma*Math.sin(k*Math.PI/filterOrder);
+        	    //a[index] = 2.0 *realsk;
+        		//b[index++] = realsk*realsk -imagsk*imagsk;
+        		//DCProduct = DCProduct * b[index-1];
+        	//}
+        	// In the passband gain ripples between C and C/sqrt(1 + epsilon*epsilon) with the gain at
+        	// zero frequency equal to C, so to have the DC gain equal to 1
+        	// must have C = DCProduct
+        	//C = DCProduct;
+        //}
+        xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
+        ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
+        xnorm = xcenter * xcenter;
+        ynorm = ycenter * ycenter;
+
+        if ((ndim == 2) || (image25D)) {
+
+            if (image25D) {
+                upperZ = newDimLengths[2] - 1;
+            } else {
+                upperZ = 0;
+            }
+
+            if (filterType == LOWPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = Math.sqrt(distsq)/fr1;
+                            Tn = Chebyshev(filterOrder, ratio);
+                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // end of if (filterType == LOWPASS)	
+        } // if ((ndim == 2) || (image25D))
+    }
 
 
     /**
@@ -2568,7 +2766,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), butterworthOrder)));
+                            coeff = (float) (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), filterOrder)));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
@@ -2584,7 +2782,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
+                            coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
@@ -2602,8 +2800,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            num = (float) Math.pow(Math.sqrt(distsq) * width, 2.0 * butterworthOrder);
-                            coeff = (float) (num / (num + Math.pow((distsq - centersq), 2.0 * butterworthOrder)));
+                            num = (float) Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder);
+                            coeff = (float) (num / (num + Math.pow((distsq - centersq), 2.0 * filterOrder)));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
@@ -2621,8 +2819,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            num = (float) Math.pow((distsq - centersq), 2.0 * butterworthOrder);
-                            coeff = (float) (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * butterworthOrder)));
+                            num = (float) Math.pow((distsq - centersq), 2.0 * filterOrder);
+                            coeff = (float) (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder)));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
@@ -2644,7 +2842,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                             pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
                                      ((z - zcenter) * (z - zcenter) / znorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), butterworthOrder)));
+                            coeff = (float) (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), filterOrder)));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
@@ -2661,7 +2859,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                             pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
                                      ((z - zcenter) * (z - zcenter) / znorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
+                            coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
@@ -2680,8 +2878,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                             pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
                                      ((z - zcenter) * (z - zcenter) / znorm);
-                            num = (float) Math.pow(Math.sqrt(distsq) * width, 2.0 * butterworthOrder);
-                            coeff = (float) (num / (num + Math.pow((distsq - centersq), 2.0 * butterworthOrder)));
+                            num = (float) Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder);
+                            coeff = (float) (num / (num + Math.pow((distsq - centersq), 2.0 * filterOrder)));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
@@ -2700,8 +2898,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                             pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
                                      ((z - zcenter) * (z - zcenter) / znorm);
-                            num = (float) Math.pow((distsq - centersq), 2.0 * butterworthOrder);
-                            coeff = (float) (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * butterworthOrder)));
+                            num = (float) Math.pow((distsq - centersq), 2.0 * filterOrder);
+                            coeff = (float) (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder)));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
@@ -3571,7 +3769,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                     for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                         pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                         distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                        coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
+                        coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
                         realData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                         imagData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                     }
@@ -3590,7 +3788,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                         pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
                         distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
                                  ((z - zcenter) * (z - zcenter) / znorm);
-                        coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
+                        coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
                         realData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                         imagData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                     }
