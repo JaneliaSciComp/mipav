@@ -60,6 +60,12 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     public static final int BUTTERWORTH = 3;
+    
+    public static final int GABOR = 4;
+    
+    public static final int CHEBYSHEV_TYPE_I = 5;
+    
+    public static final int CHEBYSHEV_TYPE_II = 6;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -71,9 +77,13 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private JRadioButton butterworthFilter;
+    
+    private JRadioButton chebyshevIFilter;
+    
+    private JRadioButton chebyshevIIFilter;
 
     /** DOCUMENT ME! */
-    private int butterworthOrder;
+    private int filterOrder;
 
     /** DOCUMENT ME! */
     private JPanel buttonPanel;
@@ -627,8 +637,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
      *
      * @param  order  Value to set the butterworth order to.
      */
-    public void setButterworthOrder(int order) {
-        butterworthOrder = order;
+    public void setfilterOrder(int order) {
+        filterOrder = order;
     }
 
     /**
@@ -994,7 +1004,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         freq1 = scriptParameters.getParams().getFloat("freq1");
         freq2 = scriptParameters.getParams().getFloat("freq2");
         constructionMethod = scriptParameters.getParams().getInt("construction_method");
-        butterworthOrder = scriptParameters.getParams().getInt("butterworth_order");
+        filterOrder = scriptParameters.getParams().getInt("butterworth_order");
         kernelDiameter = scriptParameters.getParams().getInt("kernel_diameter");
         if (scriptParameters.getParams().containsParameter(AlgorithmParameters.USE_OPENCL)) {
         	setUseOCL(scriptParameters.getParams().getBoolean(AlgorithmParameters.USE_OPENCL));
@@ -1018,7 +1028,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", freq1));
         scriptParameters.getParams().put(ParameterFactory.newParameter("freq2", freq2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", filterOrder));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_diameter", kernelDiameter));
         scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.USE_OPENCL, useOCL));
     }
@@ -1211,14 +1221,50 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 butterworthFilter.setSelected(false);
             }
         }
+        
+        chebyshevIFilter = new JRadioButton("Chebyshev Type I filter", false);
+        chebyshevIFilter.setFont(serif12);
+        chebyshevIFilter.setForeground(Color.black);
+        chebyshevIFilter.addActionListener(this);
+        constructionGroup.add(chebyshevIFilter);
+
+        if (!image.isComplexImage()) {
+            chebyshevIFilter.setEnabled(true);
+        } else {
+            chebyshevIFilter.setEnabled(false);
+
+            if (constructionMethod == CHEBYSHEV_TYPE_I) {
+                chebyshevIFilter.setSelected(true);
+            } else {
+                chebyshevIFilter.setSelected(false);
+            }
+        }
+        
+        chebyshevIIFilter = new JRadioButton("Chebyshev Type II filter", false);
+        chebyshevIIFilter.setFont(serif12);
+        chebyshevIIFilter.setForeground(Color.black);
+        chebyshevIIFilter.addActionListener(this);
+        constructionGroup.add(chebyshevIIFilter);
+
+        if (!image.isComplexImage()) {
+            chebyshevIIFilter.setEnabled(true);
+        } else {
+            chebyshevIIFilter.setEnabled(false);
+
+            if (constructionMethod == CHEBYSHEV_TYPE_II) {
+                chebyshevIIFilter.setSelected(true);
+            } else {
+                chebyshevIIFilter.setSelected(false);
+            }
+        }
 
         textOrder = new JTextField(10);
 
         if (!image.isComplexImage()) {
             textOrder.setText("1");
         } else {
-            butterworthOrder = image.getOriginalButterworthOrder();
-            textOrder.setText(String.valueOf(butterworthOrder));
+            filterOrder = image.getOriginalFilterOrder();
+            textOrder.setText(String.valueOf(filterOrder));
         }
 
         textOrder.setFont(serif12);
@@ -1254,8 +1300,12 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         constructionPanel.add(gaussianFilter, gbc);
         gbc.gridy = 4;
         constructionPanel.add(butterworthFilter, gbc);
-        gbc.gridx = 1;
         gbc.gridy = 5;
+        constructionPanel.add(chebyshevIFilter, gbc);
+        gbc.gridy = 6;
+        constructionPanel.add(chebyshevIIFilter, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
         constructionPanel.add(labelOrder, gbc);
         gbc.gridx = 2;
@@ -1510,9 +1560,9 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             } else if (butterworthFilter.isSelected()) {
                 constructionMethod = BUTTERWORTH;
                 tmpStr = textOrder.getText();
-                butterworthOrder = Integer.parseInt(tmpStr);
+                filterOrder = Integer.parseInt(tmpStr);
 
-                if (butterworthOrder < 1) {
+                if (filterOrder < 1) {
                     MipavUtil.displayError("Butterworth order must be at least 1");
                     textOrder.requestFocus();
                     textOrder.selectAll();
