@@ -366,7 +366,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private double nonZeroMinR, nonZeroMaxR, nonZeroMinG, nonZeroMaxG, nonZeroMinB, nonZeroMaxB;
 
     /** DOCUMENT ME!- TO BE MOVED - redesigned. */
-    private int originalButterworthOrder;
+    private int originalFilterOrder;
 
     /** DOCUMENT ME!- TO BE MOVED - redesigned. */
     private boolean originalCropCheckbox;
@@ -4586,12 +4586,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * returns integer telling Butterworth order. - TO BE MOVED
+     * returns integer telling filter order. - TO BE MOVED
      * 
-     * @return value indicating the Butterworth filter order;
+     * @return value indicating the filter order;
      */
-    public final int getOriginalButterworthOrder() {
-        return originalButterworthOrder;
+    public final int getOriginalFilterOrder() {
+        return originalFilterOrder;
     }
 
     /**
@@ -7538,10 +7538,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * DOCUMENT ME! TO BE MOVED
      * 
-     * @param butterworthOrder DOCUMENT ME!
+     * @param filterOrder DOCUMENT ME!
      */
-    public void setOriginalButterworthOrder(final int butterworthOrder) {
-        originalButterworthOrder = butterworthOrder;
+    public void setOriginalFilterOrder(final int filterOrder) {
+        originalFilterOrder = filterOrder;
     }
 
     /**
