@@ -22,7 +22,7 @@ import java.util.Arrays;
  *          image. 2.) Enhancing some frequency components of the image and attenuating other frequency components of
  *          the image by mulitplying by a lowpass, highpass, bandpass, or bandstop filter. Frequency filters may be
  *          constructed with 1 of 3 methods - finite impulse response filters constructed with Hamming windows, Gaussian
- *          filters, and Butterworth filters. However, for the Gaussian filters only lowpass and highpass filters are
+ *          filters, Butterworth, and Chebyshev filters. However, for the Gaussian filters only lowpass and highpass filters are
  *          available. 3.) Performing an inverse fast fourier transform to convert from the frequency domain back into
  *          the spatial domain. This software module performs all 3 steps in one combined process. AlgorithmFFT is used
  *          to perform the steps one at a time and examine the Frequency space images.
@@ -56,16 +56,16 @@ import java.util.Arrays;
  *          with Hamming windows and no cropping, the new dimension size is equal to the minimum power of two number
  *          that equals or exceeds the original dimension size + kDim - 1, where kDim is the diameter of a circular or
  *          spherical convolution kernel. If finite impulse response filters with Hamming windows and cropping or
- *          infinite impulse response Gaussian or Butterworth filters are used, the new dimension size is equal to the
+ *          infinite impulse response Gaussian or Butterworth or Chebyshev filters are used, the new dimension size is equal to the
  *          minimum power of two number that equals or exceeds the original dimension size. The data is padded with
  *          zeros at the end of each dimension. 4.) exec() is invoked to run the fast fourier transform algorithm. 5.)
- *          If Butterworth or Gaussian or Gabor filters are used, the center algorithm is invoked to reorder the data so
+ *          If Butterworth or Gaussian or Gabor or Chebyshev filters are used, the center algorithm is invoked to reorder the data so
  *          that frequencies with the lowest magnitudes are at the center. If finite impulse response filters with
  *          windows are used: 6a.) An ideal filter kernel is constructed in the spatial domain. 7a.) A Hamming window
  *          kernel is constructed in the spatial domain. 8a.) The ideal kernel and the Hamming window kernel are
  *          multiplied together. 9a.) The kernel is zero padded up to the same dimensions that the image data was. 10a.)
- *          exec() is run to obtain the FFT of the kernel. If Gaussian or Butterworth filters are used: For Gaussian and
- *          Butterworth filters the transfer functions affect the real and imaginary parts of the FFT of the image in
+ *          exec() is run to obtain the FFT of the kernel. If Gaussian or Butterworth or Chebyshev filters are used: For Gaussian and
+ *          Butterworth and Chebyshev filters the transfer functions affect the real and imaginary parts of the FFT of the image in
  *          exactly the same manner. These filters are zero-phase- shift filters because they do not alter the phase of
  *          the transform. Since these filters are conjugate symmetric, the inverse FFTs of these filters are purely
  *          real. Since this filtering is equivalent to convolving to real 2D data sets, the result must be purely real.
@@ -73,10 +73,10 @@ import java.util.Arrays;
  *          equal to zero. This filter has the same dimensions as the padded image data. 11.) The data FFT is set equal
  *          to the product of the data FFT and the filter FFT. 12.) The inverse FFT process is invoked. The complex data
  *          is exported into the 2 float arrays realData and imagData. There should be no need for zero padding at this
- *          point since the dimensions should already be all powers of 2 from before. 13.) If Butterworth or Gaussian
+ *          point since the dimensions should already be all powers of 2 from before. 13.) If Butterworth or Gaussian or Chebyshev
  *          filters are used, the center() routine is invoked to restore the data to its original ordering. 14.) exec()
  *          is invoked to run the inverse fast fourier transform algorithm. 15.) The realData now holds the correct
- *          response if Gaussian or Butterworth filtering was used. If FIR filtering with windows was used then realData
+ *          response if Gaussian or Butterworth or Chebyshev filtering was used. If FIR filtering with windows was used then realData
  *          holds a version of the correct response shifted by (kDim - 1)/2 toward the end of each dimension. The
  *          imagData should contain only roundoff error. 16.) For FIR filters shift the data back by (kDim - 1)/2 toward
  *          the start of each dimension. 17.) Stripping is performed to return the image to its original dimensions.
@@ -130,6 +130,10 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int GABOR = 4;
+    
+    public static final int CHEBYSHEV_TYPE_I = 5;
+    
+    public static final int CHEBYSHEV_TYPE_II = 6;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -137,7 +141,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private int arrayLength; // size of buffers (realData and imagData)
 
     /** DOCUMENT ME! */
-    private int filterOrder; // order of the Butterworth filter
+    private int filterOrder; // order of the Butterworth or Chebyshev filter
 
     /** DOCUMENT ME! */
     private int constructionMethod; // WINDOW = 1 for windowed finite impulse response
@@ -260,6 +264,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private boolean zeroPad; // true if zero padding actually performed
     
     private ModelImage gaborImage = null ;
+    
+    private float epsilon;  // maximum ripple in Chebyshev filters
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -414,11 +420,12 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  freq2               higher frequency in BANDPASS and BANDSTOP User inputs f1 and f2 going from 0.0 to
      *                             1.0. Program multiplies these numbers by PI for FIR filters.
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
-     * @param  filterOrder    order of a Butterworth filter
+     * @param  filterOrder    order of a Butterworth or Chebyshev filter
+     * @param  epsilon        Maximum Chebyshev filter ripple
      */
     public AlgorithmFrequencyFilter(ModelImage srcImg, boolean image25D, boolean imageCrop, int kernelDiameter,
                                     int filterType, float freq1, float freq2, int constructionMethod,
-                                    int filterOrder) {
+                                    int filterOrder, float epsilon) {
         super(null, srcImg);
 
         this.image25D = image25D;
@@ -429,6 +436,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         f2 = freq2;
         this.constructionMethod = constructionMethod;
         this.filterOrder = filterOrder;
+        this.epsilon = epsilon;
     }
 
     /**
@@ -445,11 +453,12 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  freq2               higher frequency in BANDPASS and BANDSTOP User inputs f1 and f2 going from 0.0 to
      *                             1.0. Program multiplies these numbers by PI for FIR filters.
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
-     * @param  filterOrder    order of the Butterworth filter
+     * @param  filterOrder    order of the Butterworth or Chebyshev filter
+     * @param  epsilon        Maximum Chebyshev filter ripple
      */
     public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, boolean image25D, boolean imageCrop,
                                     int kernelDiameter, int filterType, float freq1, float freq2,
-                                    int constructionMethod, int filterOrder) {
+                                    int constructionMethod, int filterOrder, float epsilon) {
         super(destImg, srcImg);
 
         this.imageCrop = imageCrop;
@@ -460,6 +469,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         f2 = freq2;
         this.constructionMethod = constructionMethod;
         this.filterOrder = filterOrder;
+        this.epsilon = epsilon;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -680,6 +690,14 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
         if (constructionMethod == GABOR) {
             makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta, createGabor);
+        }
+        
+        if (constructionMethod == CHEBYSHEV_TYPE_I) {
+        	makeChebyshevTypeIFilter(f1);
+        }
+        
+        if (constructionMethod == CHEBYSHEV_TYPE_II) {
+        	makeChebyshevTypeIIFilter(f1, f2);
         }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
@@ -1724,7 +1742,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
         if ((transformDir == INVERSE) &&
                 ((constructionMethod == GAUSSIAN) || (constructionMethod == BUTTERWORTH) ||
-                     (constructionMethod == GABOR))) {
+                     (constructionMethod == GABOR) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
+                     (constructionMethod == CHEBYSHEV_TYPE_II))) {
 
             if (!image25D) {
 
@@ -1833,7 +1852,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
         if ((transformDir == FORWARD) &&
                 ((constructionMethod == GAUSSIAN) || (constructionMethod == BUTTERWORTH) ||
-                     (constructionMethod == GABOR))) {
+                     (constructionMethod == GABOR) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
+                     (constructionMethod == CHEBYSHEV_TYPE_II))) {
 
             if (!image25D) {
                 fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
@@ -2639,9 +2659,10 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     	 
     }
     
-    private void makeChebyshevTypeIFilter(float epsilon, float fr1) {
+    private void makeChebyshevTypeIFilter(float fr1) {
+    	// Lowpass filter has ripples in the passband but no ripples in the stopband.
     	int x, y, z, pos;
-        float distsq, width, centersq, coeff, num, xnorm, ynorm, znorm, xcenter, ycenter, zcenter;
+        float distsq, coeff, xnorm, ynorm, znorm, xcenter, ycenter, zcenter;
         int upperZ;
         
         double epsilonSquared = epsilon*epsilon;
@@ -2731,6 +2752,107 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
             } // end of if (filterType == LOWPASS)	
         } // if ((ndim == 2) || (image25D))
+        else if (ndim == 3) {
+            zcenter = (newDimLengths[2] - 1.0f) / 2.0f;
+            znorm = zcenter * zcenter;
+
+            if (filterType == LOWPASS) {
+
+                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
+                                     ((z - zcenter) * (z - zcenter) / znorm);
+                            ratio = Math.sqrt(distsq)/fr1;
+                            Tn = Chebyshev(filterOrder, ratio);
+                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // end of if (filterType == LOWPASS)
+        } // end of else if (ndim == 3)
+    }
+    
+    private void makeChebyshevTypeIIFilter(float fr1, float fr2) {
+    	// Lowpass filter has no ripples in the passband but has ripples in the stopband
+    	// fr1 end of pass band
+    	// fr2 start of stop pand
+    	// fr2 > fr1
+    	int x, y, z, pos;
+        float distsq, coeff, xnorm, ynorm, znorm, xcenter, ycenter, zcenter;
+        int upperZ;
+        
+        double ratio;
+        double Tn;
+        double ratio2;
+        double Tn2;
+        double product;
+        
+        ratio2 = fr2/fr1;
+        Tn2 = Chebyshev(filterOrder, ratio2);
+        product = epsilon * epsilon * Tn2 * Tn2;
+        
+        xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
+        ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
+        xnorm = xcenter * xcenter;
+        ynorm = ycenter * ycenter;
+
+        if ((ndim == 2) || (image25D)) {
+
+            if (image25D) {
+                upperZ = newDimLengths[2] - 1;
+            } else {
+                upperZ = 0;
+            }
+
+            if (filterType == LOWPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = fr2/Math.sqrt(distsq);
+                            Tn = Chebyshev(filterOrder, ratio);
+                            coeff = (float) (1.0 / (1.0 + product/(Tn * Tn)));
+                            realData[pos] *= coeff;
+                            imagData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // end of if (filterType == LOWPASS)	
+        } // if ((ndim == 2) || (image25D))
+        else if (ndim == 3) {
+            zcenter = (newDimLengths[2] - 1.0f) / 2.0f;
+            znorm = zcenter * zcenter;
+
+            if (filterType == LOWPASS) {
+
+                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
+                                     ((z - zcenter) * (z - zcenter) / znorm);
+                            ratio = fr2/Math.sqrt(distsq);
+                            Tn = Chebyshev(filterOrder, ratio);
+                            coeff = (float) (1.0 / (1.0 + product/(Tn * Tn)));
+                            realData[pos] *= coeff;
+                            imagData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // end of if (filterType == LOWPASS)
+        } // end of else if (ndim == 3)
     }
 
 
