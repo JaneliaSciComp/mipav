@@ -65,7 +65,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
     private JRadioButton butterworthFilter;
 
     /** DOCUMENT ME! */
-    private int butterworthOrder;
+    private int filterOrder;
 
     /** DOCUMENT ME! */
     private ButtonGroup constructionGroup;
@@ -176,6 +176,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
     /** DOCUMENT ME! */
     private JRadioButton windowFilter;
+    
+    private float epsilon = 0.5f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -430,8 +432,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
      *
      * @param  order  Value to set the butterworth order to.
      */
-    public void setButterworthOrder(int order) {
-        butterworthOrder = order;
+    public void setfilterOrder(int order) {
+        filterOrder = order;
     }
 
     /**
@@ -531,7 +533,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 // Make algorithm
                 FrequencyFilterAlgo = new AlgorithmFrequencyFilter(resultImage, image, image25D, imageCrop,
                                                                    kernelDiameter, filterType, freq1, freq2,
-                                                                   constructionMethod, butterworthOrder);
+                                                                   constructionMethod, filterOrder, epsilon);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -570,7 +572,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 // Make the algorithm class
                 FrequencyFilterAlgo = new AlgorithmFrequencyFilter(image, image25D, imageCrop, kernelDiameter,
                                                                    filterType, freq1, freq2, constructionMethod,
-                                                                   butterworthOrder);
+                                                                   filterOrder, epsilon);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -634,7 +636,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 // Make algorithm
                 FrequencyFilterColorAlgo = new AlgorithmFrequencyFilterColor(resultImage, image, image25D, imageCrop,
                                                                    kernelDiameter, filterType, freq1, freq2,
-                                                                   constructionMethod, butterworthOrder);
+                                                                   constructionMethod, filterOrder);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -673,7 +675,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 // Make the algorithm class
                 FrequencyFilterColorAlgo = new AlgorithmFrequencyFilterColor(image, image25D, imageCrop, kernelDiameter,
                                                                    filterType, freq1, freq2, constructionMethod,
-                                                                   butterworthOrder);
+                                                                   filterOrder);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -749,7 +751,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         setFreq1(scriptParameters.getParams().getFloat("freq1"));
         setFreq2(scriptParameters.getParams().getFloat("freq2"));
         setMethod(scriptParameters.getParams().getInt("construction_method"));
-        setButterworthOrder(scriptParameters.getParams().getInt("butterworth_order"));
+        setfilterOrder(scriptParameters.getParams().getInt("butterworth_order"));
     }
 
     /**
@@ -766,7 +768,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", freq1));
         scriptParameters.getParams().put(ParameterFactory.newParameter("freq2", freq2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", filterOrder));
     }
 
     /**
@@ -907,8 +909,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         if (!image.isComplexImage()) {
             textOrder.setText("1");
         } else {
-            butterworthOrder = image.getOriginalButterworthOrder();
-            textOrder.setText(String.valueOf(butterworthOrder));
+            filterOrder = image.getOriginalFilterOrder();
+            textOrder.setText(String.valueOf(filterOrder));
         }
 
         textOrder.setFont(serif12);
@@ -1138,9 +1140,9 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         } else if (butterworthFilter.isSelected()) {
             constructionMethod = BUTTERWORTH;
             tmpStr = textOrder.getText();
-            butterworthOrder = Integer.parseInt(tmpStr);
+            filterOrder = Integer.parseInt(tmpStr);
 
-            if (butterworthOrder < 1) {
+            if (filterOrder < 1) {
                 MipavUtil.displayError("Butterworth order must be at least 1");
                 textOrder.requestFocus();
                 textOrder.selectAll();
