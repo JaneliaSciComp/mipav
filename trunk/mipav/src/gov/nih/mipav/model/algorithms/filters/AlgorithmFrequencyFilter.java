@@ -266,6 +266,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private ModelImage gaborImage = null ;
     
     private float epsilon;  // maximum ripple in Chebyshev filters
+    
+    private boolean onlyFrequencyFilter = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -422,10 +424,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
      * @param  filterOrder    order of a Butterworth or Chebyshev filter
      * @param  epsilon        Maximum Chebyshev filter ripple
+     * @param  onlyFrequencyFilter
      */
     public AlgorithmFrequencyFilter(ModelImage srcImg, boolean image25D, boolean imageCrop, int kernelDiameter,
                                     int filterType, float freq1, float freq2, int constructionMethod,
-                                    int filterOrder, float epsilon) {
+                                    int filterOrder, float epsilon, boolean onlyFrequencyFilter) {
         super(null, srcImg);
 
         this.image25D = image25D;
@@ -437,6 +440,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         this.constructionMethod = constructionMethod;
         this.filterOrder = filterOrder;
         this.epsilon = epsilon;
+        this.onlyFrequencyFilter = onlyFrequencyFilter;
     }
 
     /**
@@ -455,10 +459,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
      * @param  filterOrder    order of the Butterworth or Chebyshev filter
      * @param  epsilon        Maximum Chebyshev filter ripple
+     * @param  onlyFrequencyFilter
      */
     public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, boolean image25D, boolean imageCrop,
                                     int kernelDiameter, int filterType, float freq1, float freq2,
-                                    int constructionMethod, int filterOrder, float epsilon) {
+                                    int constructionMethod, int filterOrder, float epsilon, boolean onlyFrequencyFilter) {
         super(destImg, srcImg);
 
         this.imageCrop = imageCrop;
@@ -470,6 +475,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         this.constructionMethod = constructionMethod;
         this.filterOrder = filterOrder;
         this.epsilon = epsilon;
+        this.onlyFrequencyFilter = onlyFrequencyFilter;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -629,7 +635,51 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
         fireProgressStateChanged(0, null, "Running frequency filter ...");
 
-        makeComplexData();
+        if (onlyFrequencyFilter) {
+        	ndim = srcImage.getNDims();
+        	newDimLengths = srcImage.getExtents();
+        	newArrayLength = 1;
+        	for (i = 0; i < ndim; i++) {
+                newArrayLength *= newDimLengths[i];
+            }
+
+            newSliceSize = newDimLengths[0] * newDimLengths[1];
+            try {
+                realData = new float[newArrayLength];
+            } catch (OutOfMemoryError e) {
+                realData = null;
+                System.gc();
+                displayError("AlgorithmFrequencyFilter: Out of memory creating realData in calcInPlace() routine");
+
+                setCompleted(false);
+
+                return;
+            }
+            
+            try {
+                imagData = new float[newArrayLength];
+            } catch (OutOfMemoryError e) {
+                imagData = null;
+                System.gc();
+                displayError("AlgorithmFrequencyFilter: Out of memory creating imagData in calcInPlace() routine");
+
+                setCompleted(false);
+
+                return;
+            }
+            
+            try {
+                srcImage.exportComplexData(0, newArrayLength, realData, imagData);
+            }
+            catch (IOException e) {
+            	MipavUtil.displayError("IOException " + e + " srcImage.exportComplexData");
+            	setCompleted(false);
+            	return;
+            }
+        }
+        else {
+            makeComplexData();
+        }
 
         if (constructionMethod == WINDOW) {
 
@@ -647,41 +697,44 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             }
         } // end of if (constructionMethod == WINDOW)
 
-        // Perform forward FFT on data
-        transformDir = FORWARD;
-
-        if (image25D) {
-            realSubsetData = new float[newSliceSize];
-            imagSubsetData = new float[newSliceSize];
-
-            for (z = 0; z < newDimLengths[2]; z++) {
-
-                for (i = 0; i < newSliceSize; i++) {
-                    realSubsetData[i] = realData[(z * newSliceSize) + i];
-                    imagSubsetData[i] = imagData[(z * newSliceSize) + i];
-                }
-
-                exec(realSubsetData, imagSubsetData, z);
-
-                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
-                                         "Running forward FFTs ...");
-                // fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
-
-                for (i = 0; i < newSliceSize; i++) {
-                    realData[(z * newSliceSize) + i] = realSubsetData[i];
-                    imagData[(z * newSliceSize) + i] = imagSubsetData[i];
-                }
-            } // for (z = 0; z < newDimLengths[2]; z++)
-        } // if (image25D)
-        else { // not image25D
-            exec(realData, imagData, 0);
-        } // else not image25D
-
-        if (threadStopped) {
-            finalize();
-
-            return;
-        }
+        
+        if (!onlyFrequencyFilter) {
+	        // Perform forward FFT on data
+	        transformDir = FORWARD;
+	
+	        if (image25D) {
+	            realSubsetData = new float[newSliceSize];
+	            imagSubsetData = new float[newSliceSize];
+	
+	            for (z = 0; z < newDimLengths[2]; z++) {
+	
+	                for (i = 0; i < newSliceSize; i++) {
+	                    realSubsetData[i] = realData[(z * newSliceSize) + i];
+	                    imagSubsetData[i] = imagData[(z * newSliceSize) + i];
+	                }
+	
+	                exec(realSubsetData, imagSubsetData, z);
+	
+	                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
+	                                         "Running forward FFTs ...");
+	                // fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
+	
+	                for (i = 0; i < newSliceSize; i++) {
+	                    realData[(z * newSliceSize) + i] = realSubsetData[i];
+	                    imagData[(z * newSliceSize) + i] = imagSubsetData[i];
+	                }
+	            } // for (z = 0; z < newDimLengths[2]; z++)
+	        } // if (image25D)
+	        else { // not image25D
+	            exec(realData, imagData, 0);
+	        } // else not image25D
+	
+	        if (threadStopped) {
+	            finalize();
+	
+	            return;
+	        }
+        } // if (!onlyFrequencyFilter)
 
 
         if (constructionMethod == GAUSSIAN) {
@@ -734,6 +787,19 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
             } // else not image25D
         } // end of if (constructionMethod == WINDOW)
+        
+        if (onlyFrequencyFilter) {
+        	try {
+        	    srcImage.importComplexData(0, realData, imagData, true, srcImage.getLogMagDisplay());
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on srcImage.importComplexData");
+        		setCompleted(false);
+        		return;
+        	}
+        	setCompleted(true);
+        	return;
+        }
 
         // Perform inverse FFT
         transformDir = INVERSE;
@@ -837,7 +903,51 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
         fireProgressStateChanged(0, null, "Running frequency filter ...");
 
-        makeComplexData();
+        if (onlyFrequencyFilter) {
+        	ndim = srcImage.getNDims();
+        	newDimLengths = srcImage.getExtents();
+        	newArrayLength = 1;
+        	for (i = 0; i < ndim; i++) {
+                newArrayLength *= newDimLengths[i];
+            }
+
+            newSliceSize = newDimLengths[0] * newDimLengths[1];
+            try {
+                realData = new float[newArrayLength];
+            } catch (OutOfMemoryError e) {
+                realData = null;
+                System.gc();
+                displayError("AlgorithmFrequencyFilter: Out of memory creating realData in calcInPlace() routine");
+
+                setCompleted(false);
+
+                return;
+            }
+            
+            try {
+                imagData = new float[newArrayLength];
+            } catch (OutOfMemoryError e) {
+                imagData = null;
+                System.gc();
+                displayError("AlgorithmFrequencyFilter: Out of memory creating imagData in calcInPlace() routine");
+
+                setCompleted(false);
+
+                return;
+            }
+            
+            try {
+                srcImage.exportComplexData(0, newArrayLength, realData, imagData);
+            }
+            catch (IOException e) {
+            	MipavUtil.displayError("IOException " + e + " srcImage.exportComplexData");
+            	setCompleted(false);
+            	return;
+            }
+        }
+        else {
+            makeComplexData();
+        }
 
         if (constructionMethod == WINDOW) {
 
@@ -855,40 +965,42 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             }
         } // end of if (constructionMethod == WINDOW)
 
-        // Perform forward FFT on image
-        transformDir = FORWARD;
-
-        if (image25D) {
-            realSubsetData = new float[newSliceSize];
-            imagSubsetData = new float[newSliceSize];
-
-            for (z = 0; z < newDimLengths[2]; z++) {
-
-                for (i = 0; i < newSliceSize; i++) {
-                    realSubsetData[i] = realData[(z * newSliceSize) + i];
-                    imagSubsetData[i] = imagData[(z * newSliceSize) + i];
-                }
-
-                exec(realSubsetData, imagSubsetData, z);
-                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
-                                         "Running forward FFTs ...");
-                // fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
-
-                for (i = 0; i < newSliceSize; i++) {
-                    realData[(z * newSliceSize) + i] = realSubsetData[i];
-                    imagData[(z * newSliceSize) + i] = imagSubsetData[i];
-                }
-            } // for (z = 0; z < newDimLengths[2]; z++)
-        } // if (image25D)
-        else { // not image25D
-            exec(realData, imagData, 0);
-        } // else not image25D
-
-        if (threadStopped) {
-            finalize();
-
-            return;
-        }
+        if (!onlyFrequencyFilter) {
+	        // Perform forward FFT on image
+	        transformDir = FORWARD;
+	
+	        if (image25D) {
+	            realSubsetData = new float[newSliceSize];
+	            imagSubsetData = new float[newSliceSize];
+	
+	            for (z = 0; z < newDimLengths[2]; z++) {
+	
+	                for (i = 0; i < newSliceSize; i++) {
+	                    realSubsetData[i] = realData[(z * newSliceSize) + i];
+	                    imagSubsetData[i] = imagData[(z * newSliceSize) + i];
+	                }
+	
+	                exec(realSubsetData, imagSubsetData, z);
+	                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
+	                                         "Running forward FFTs ...");
+	                // fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
+	
+	                for (i = 0; i < newSliceSize; i++) {
+	                    realData[(z * newSliceSize) + i] = realSubsetData[i];
+	                    imagData[(z * newSliceSize) + i] = imagSubsetData[i];
+	                }
+	            } // for (z = 0; z < newDimLengths[2]; z++)
+	        } // if (image25D)
+	        else { // not image25D
+	            exec(realData, imagData, 0);
+	        } // else not image25D
+	
+	        if (threadStopped) {
+	            finalize();
+	
+	            return;
+	        }
+        } // if (!onlyFrequencyFilter)
 
 
         if (constructionMethod == GAUSSIAN) {
@@ -897,6 +1009,14 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
         if (constructionMethod == GABOR) {
             makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta, createGabor);
+        }
+        
+        if (constructionMethod == CHEBYSHEV_TYPE_I) {
+        	makeChebyshevTypeIFilter(f1);
+        }
+        
+        if (constructionMethod == CHEBYSHEV_TYPE_II) {
+        	makeChebyshevTypeIIFilter(f1, f2);
         }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
@@ -932,6 +1052,19 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
             } // else not image25D
         } // if (constructionMethod == WINDOW)
+        
+        if (onlyFrequencyFilter) {
+        	try {
+        	    destImage.importComplexData(0, realData, imagData, true, srcImage.getLogMagDisplay());
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on destImage.importComplexData");
+        		setCompleted(false);
+        		return;
+        	}
+        	setCompleted(true);
+        	return;
+        }
 
         // Perform inverse FFT
         transformDir = INVERSE;
@@ -2720,6 +2853,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         	// must have C = DCProduct
         	//C = DCProduct;
         //}
+     
         xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
         ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
         xnorm = xcenter * xcenter;
@@ -2747,6 +2881,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                             coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
+                            
                         }
                     }
                 }
