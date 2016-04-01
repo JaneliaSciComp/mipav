@@ -6,12 +6,10 @@ import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -52,6 +50,10 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
     /** DOCUMENT ME! */
     public static final int BUTTERWORTH = 3;
+    
+    public static final int CHEBYSHEV_TYPE_I = 5;
+    
+    public static final int CHEBYSHEV_TYPE_II = 6;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -63,6 +65,10 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
     /** DOCUMENT ME! */
     private JRadioButton butterworthFilter;
+    
+    private JRadioButton chebyshevIFilter;
+    
+    private JRadioButton chebyshevIIFilter;
 
     /** DOCUMENT ME! */
     private int filterOrder;
@@ -140,6 +146,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
     /** DOCUMENT ME! */
     private JLabel labelOrder;
+    
+    private JLabel labelEpsilon;
 
     /** DOCUMENT ME! */
     private JRadioButton lowPass;
@@ -167,6 +175,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
     /** DOCUMENT ME! */
     private JTextField textOrder;
+    
+    private JTextField textEpsilon;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -178,6 +188,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
     private JRadioButton windowFilter;
     
     private float epsilon = 0.5f;
+    
+    private boolean onlyFrequencyFilter = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -241,6 +253,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             labelF1.setText("Frequency F1 0.0 to 1.0 ");
             textOrder.setEnabled(false);
             labelOrder.setEnabled(false);
+            textEpsilon.setEnabled(false);
+            labelEpsilon.setEnabled(false);
             bandPass.setEnabled(true);
             bandStop.setEnabled(true);
         } else if (source == gaussianFilter) {
@@ -251,6 +265,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             labelF1.setText("Frequency F1 exceeds 0.0 ");
             textOrder.setEnabled(false);
             labelOrder.setEnabled(false);
+            textEpsilon.setEnabled(false);
+            labelEpsilon.setEnabled(false);
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
             bandPass.setEnabled(false);
@@ -271,9 +287,37 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             labelF1.setText("Frequency F1 >0.0 to 1.0 ");
             textOrder.setEnabled(true);
             labelOrder.setEnabled(true);
+            textEpsilon.setEnabled(false);
+            labelEpsilon.setEnabled(false);
             bandPass.setEnabled(true);
             bandStop.setEnabled(true);
-        } else if ((source == lowPass) || (source == highPass)) {
+        } else if (source == chebyshevIFilter) {
+        	imageCropCheckbox.setEnabled(false);
+            imageCropCheckbox.setSelected(false);
+            textKernelDiameter.setEnabled(false);
+            labelKernelDiameter.setEnabled(false);
+            labelF1.setText("Frequency F1 >0.0 to 1.0 ");
+            textOrder.setEnabled(true);
+            labelOrder.setEnabled(true);
+            textEpsilon.setEnabled(true);
+            labelEpsilon.setEnabled(true);
+            bandPass.setEnabled(true);
+            bandStop.setEnabled(true);
+        } else if (source == chebyshevIIFilter) {
+        	imageCropCheckbox.setEnabled(false);
+            imageCropCheckbox.setSelected(false);
+            textKernelDiameter.setEnabled(false);
+            labelKernelDiameter.setEnabled(false);
+            labelF1.setText("Frequency F1 >0.0 to 1.0 ");
+            textF2.setEnabled(true);
+            labelF2.setEnabled(true);
+            textOrder.setEnabled(true);
+            labelOrder.setEnabled(true);
+            textEpsilon.setEnabled(true);
+            labelEpsilon.setEnabled(true);
+            bandPass.setEnabled(true);
+            bandStop.setEnabled(true);
+        } else if (((source == lowPass) || (source == highPass)) && (!chebyshevIIFilter.isSelected())) {
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
         } else if ((source == bandPass) || (source == bandStop)) {
@@ -513,6 +557,14 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
     public void setMethod(int method) {
         constructionMethod = method;
     }
+    
+   /**
+    * 
+    * @param epsilon
+    */
+    public void setEpsilon(float epsilon) {
+    	this.epsilon = epsilon;
+    }
 
     /**
      * Once all the necessary variables are set, call the Frequency Filter algorithm based on what type of image this is
@@ -520,6 +572,10 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
      */
     protected void callAlgorithm() {
         image.setOriginalCropCheckbox(imageCrop);
+        image.setOriginalFilterConstruction(constructionMethod);
+        image.setOriginalKernelDimension(kernelDiameter);
+        image.setOriginalFilterOrder(filterOrder);
+        image.setOriginalEpsilon(epsilon);
 
         String name = makeImageName(image.getImageName(), "_freqFilter");
 
@@ -533,7 +589,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 // Make algorithm
                 FrequencyFilterAlgo = new AlgorithmFrequencyFilter(resultImage, image, image25D, imageCrop,
                                                                    kernelDiameter, filterType, freq1, freq2,
-                                                                   constructionMethod, filterOrder, epsilon);
+                                                                   constructionMethod, filterOrder, epsilon, onlyFrequencyFilter);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -572,7 +628,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 // Make the algorithm class
                 FrequencyFilterAlgo = new AlgorithmFrequencyFilter(image, image25D, imageCrop, kernelDiameter,
                                                                    filterType, freq1, freq2, constructionMethod,
-                                                                   filterOrder, epsilon);
+                                                                   filterOrder, epsilon, onlyFrequencyFilter);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -623,6 +679,10 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
      */
     protected void callColorAlgorithm() {
         image.setOriginalCropCheckbox(imageCrop);
+        image.setOriginalFilterConstruction(constructionMethod);
+        image.setOriginalKernelDimension(kernelDiameter);
+        image.setOriginalFilterOrder(filterOrder);
+        image.setOriginalEpsilon(epsilon);
 
         String name = makeImageName(image.getImageName(), "_freqFilter");
 
@@ -751,7 +811,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         setFreq1(scriptParameters.getParams().getFloat("freq1"));
         setFreq2(scriptParameters.getParams().getFloat("freq2"));
         setMethod(scriptParameters.getParams().getInt("construction_method"));
-        setfilterOrder(scriptParameters.getParams().getInt("butterworth_order"));
+        setfilterOrder(scriptParameters.getParams().getInt("filter_order"));
+        setEpsilon(scriptParameters.getParams().getFloat("epsilon"));
     }
 
     /**
@@ -768,7 +829,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", freq1));
         scriptParameters.getParams().put(ParameterFactory.newParameter("freq2", freq2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", filterOrder));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_order", filterOrder));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("epsilon", epsilon));
     }
 
     /**
@@ -903,6 +965,42 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 butterworthFilter.setSelected(false);
             }
         }
+        
+        chebyshevIFilter = new JRadioButton("Chebyshev Type I filter", false);
+        chebyshevIFilter.setFont(serif12);
+        chebyshevIFilter.setForeground(Color.black);
+        chebyshevIFilter.addActionListener(this);
+        constructionGroup.add(chebyshevIFilter);
+
+        if (!image.isComplexImage()) {
+            chebyshevIFilter.setEnabled(true);
+        } else {
+            chebyshevIFilter.setEnabled(false);
+
+            if (constructionMethod == CHEBYSHEV_TYPE_I) {
+                chebyshevIFilter.setSelected(true);
+            } else {
+                chebyshevIFilter.setSelected(false);
+            }
+        }
+        
+        chebyshevIIFilter = new JRadioButton("Chebyshev Type II filter", false);
+        chebyshevIIFilter.setFont(serif12);
+        chebyshevIIFilter.setForeground(Color.black);
+        chebyshevIIFilter.addActionListener(this);
+        constructionGroup.add(chebyshevIIFilter);
+
+        if (!image.isComplexImage()) {
+            chebyshevIIFilter.setEnabled(true);
+        } else {
+            chebyshevIIFilter.setEnabled(false);
+
+            if (constructionMethod == CHEBYSHEV_TYPE_II) {
+                chebyshevIIFilter.setSelected(true);
+            } else {
+                chebyshevIIFilter.setSelected(false);
+            }
+        }
 
         textOrder = new JTextField(10);
 
@@ -921,6 +1019,24 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         labelOrder.setForeground(Color.black);
         labelOrder.setFont(serif12);
         labelOrder.setEnabled(false);
+        
+        textEpsilon = new JTextField(10);
+
+        if (!image.isComplexImage()) {
+            textEpsilon.setText("0.5");
+        } else {
+            epsilon = image.getOriginalEpsilon();
+            textEpsilon.setText(String.valueOf(epsilon));
+        }
+
+        textEpsilon.setFont(serif12);
+        textEpsilon.setForeground(Color.black);
+        textEpsilon.setEnabled(false);
+
+        labelEpsilon = new JLabel("Maximum ripple");
+        labelEpsilon.setForeground(Color.black);
+        labelEpsilon.setFont(serif12);
+        labelEpsilon.setEnabled(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 3;
@@ -946,12 +1062,21 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         constructionPanel.add(gaussianFilter, gbc);
         gbc.gridy = 4;
         constructionPanel.add(butterworthFilter, gbc);
-        gbc.gridx = 1;
         gbc.gridy = 5;
+        constructionPanel.add(chebyshevIFilter, gbc);
+        gbc.gridy = 6;
+        constructionPanel.add(chebyshevIIFilter, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
         constructionPanel.add(labelOrder, gbc);
         gbc.gridx = 2;
         constructionPanel.add(textOrder, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 8;
+        constructionPanel.add(labelEpsilon, gbc);
+        gbc.gridx = 2;
+        constructionPanel.add(textEpsilon, gbc);
 
         destinationPanel = new JPanel(new GridLayout(2, 1));
         destinationPanel.setForeground(Color.black);
@@ -1149,7 +1274,53 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
                 return false;
             }
-        } // end of else if (butterworthFilter.isSelected())
+        } else if (chebyshevIFilter.isSelected()) {
+        	constructionMethod = CHEBYSHEV_TYPE_I;
+            tmpStr = textOrder.getText();
+            filterOrder = Integer.parseInt(tmpStr);
+
+            if (filterOrder < 1) {
+                MipavUtil.displayError("Chebyshev order must be at least 1");
+                textOrder.requestFocus();
+                textOrder.selectAll();
+
+                return false;
+            }
+            
+            tmpStr = textEpsilon.getText();
+            epsilon = Float.parseFloat(tmpStr);
+            
+            if (epsilon <= 0.0f) {
+            	MipavUtil.displayError("Chebyshev maximum ripple epsilon must be greater than 0.0");
+            	textEpsilon.requestFocus();
+            	textEpsilon.selectAll();
+            	
+            	return false;
+            }
+        }  else if (chebyshevIIFilter.isSelected()) {
+        	constructionMethod = CHEBYSHEV_TYPE_II;
+            tmpStr = textOrder.getText();
+            filterOrder = Integer.parseInt(tmpStr);
+
+            if (filterOrder < 1) {
+                MipavUtil.displayError("Chebyshev order must be at least 1");
+                textOrder.requestFocus();
+                textOrder.selectAll();
+
+                return false;
+            }
+            
+            tmpStr = textEpsilon.getText();
+            epsilon = Float.parseFloat(tmpStr);
+            
+            if (epsilon <= 0.0f) {
+            	MipavUtil.displayError("Chebyshev maximum ripple epsilon mut be greater than 0.0");
+            	textEpsilon.requestFocus();
+            	textEpsilon.selectAll();
+            	
+            	return false;
+            }
+        }
 
         if (lowPass.isSelected()) {
             filterType = LOWPASS;
@@ -1187,7 +1358,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 return false;
             }
         } // end of else if (constructionMethod == GAUSSIAN)
-        else if (constructionMethod == BUTTERWORTH) {
+        else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) || 
+        		(constructionMethod == CHEBYSHEV_TYPE_II)) {
             freq1 = Float.valueOf(tmpStr).floatValue();
 
             if (freq1 <= 0.0) {
@@ -1203,9 +1375,10 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
                 return false;
             }
-        } // end of else if (constructionMethod == BUTTERWORTH)
+        } // else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
+       
 
-        if ((filterType == BANDPASS) || (filterType == BANDSTOP)) {
+        if ((filterType == BANDPASS) || (filterType == BANDSTOP) || (constructionMethod == CHEBYSHEV_TYPE_II)) {
             tmpStr = textF2.getText();
 
             if (testParameter(tmpStr, 0.0, 1.0)) {
@@ -1230,7 +1403,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 return false;
             }
 
-        } // end of if ((filterType == BANDPASS) || (filterType == BUTTERWORTH))
+        } // if ((filterType == BANDPASS) || (filterType == BANDSTOP) || (constructionMethod == CHEBYSHEV_TYPE_II)) 
 
         if (imageCropCheckbox.isSelected()) {
             imageCrop = true;
@@ -1292,8 +1465,9 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             table.put(new ParameterFloat("freq1", (float) 0.4));
             table.put(new ParameterFloat("freq2", (float) 0.7));
             table.put(new ParameterInt("construction_method", 1));
-            table.put(new ParameterInt("butterworth_order", 0));
+            table.put(new ParameterInt("filter_order", 0));
             table.put(new ParameterInt("kernel_diameter", 15));
+            table.put(new ParameterFloat("epsilon", 0.0f));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
