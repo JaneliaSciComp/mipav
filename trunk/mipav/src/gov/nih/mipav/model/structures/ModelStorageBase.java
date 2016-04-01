@@ -367,6 +367,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /** DOCUMENT ME!- TO BE MOVED - redesigned. */
     private int originalFilterOrder;
+    
+    /** The maximum filter ripple */
+    private float originalEpsilon;
 
     /** DOCUMENT ME!- TO BE MOVED - redesigned. */
     private boolean originalCropCheckbox;
@@ -4593,6 +4596,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public final int getOriginalFilterOrder() {
         return originalFilterOrder;
     }
+    
+    /**
+     * 
+     * @return value inidicating the maximum filter ripple
+     */
+    public final float getOriginalEpsilon() {
+    	return originalEpsilon;
+    }
 
     /**
      * DOCUMENT ME! - TO BE MOVED
@@ -7542,6 +7553,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public void setOriginalFilterOrder(final int filterOrder) {
         originalFilterOrder = filterOrder;
+    }
+    
+    /**
+     * 
+     * @param epsilon maximum filter ripple
+     */
+    public void setOriginalEpsilon(final float epsilon) {
+    	originalEpsilon = epsilon;
     }
 
     /**
