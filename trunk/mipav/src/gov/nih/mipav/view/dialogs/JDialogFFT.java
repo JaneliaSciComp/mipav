@@ -7,12 +7,10 @@ import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -118,6 +116,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     
     /** Double precision, openCL enabled FFT algroithm */
     private AlgorithmFFT2 FFTAlgo2 = null;
+    
+    private AlgorithmFrequencyFilter FrequencyFilterAlgo;
 
     /** DOCUMENT ME! */
     private JPanel filterPanel;
@@ -178,6 +178,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private JLabel labelOrder;
+    
+    private JLabel labelEpsilon;
 
     /** private JPanel optionsPanel;. */
     private JCheckBox logDisplayCheckbox;
@@ -211,6 +213,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private JTextField textOrder;
+    
+    private JTextField textEpsilon;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -241,6 +245,11 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     
     /** True when double precision testing should be performed, default is float. */
     private boolean testDouble = false;
+    
+    /** private float epsilon */
+    private float epsilon = 0.5f;
+    
+    private boolean onlyFrequencyFilter = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -275,7 +284,10 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         if (source == OKButton) {
 
             if (setVariables()) {
-            	if (testDouble) {
+            	if (transformDir == FILTER) {
+            		callAlgorithmFrequencyFilter();
+            	}
+            	else if (testDouble) {
             		callAlgorithm2();
             	}
             	else {
@@ -302,18 +314,40 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                     labelKernelDiameter.setEnabled(true);
                     textOrder.setEnabled(false);
                     labelOrder.setEnabled(false);
+                    textEpsilon.setEnabled(false);
+                    labelEpsilon.setEnabled(false);
                 } else if (gaussianFilter.isSelected()) {
                     imageCropCheckbox.setEnabled(false);
                     textKernelDiameter.setEnabled(false);
                     labelKernelDiameter.setEnabled(false);
                     textOrder.setEnabled(false);
                     labelOrder.setEnabled(false);
+                    textEpsilon.setEnabled(false);
+                    labelEpsilon.setEnabled(false);
                 } else if (butterworthFilter.isSelected()) {
                     imageCropCheckbox.setEnabled(false);
                     textKernelDiameter.setEnabled(false);
                     labelKernelDiameter.setEnabled(false);
                     textOrder.setEnabled(true);
                     labelOrder.setEnabled(true);
+                    textEpsilon.setEnabled(false);
+                    labelEpsilon.setEnabled(false);
+                } else if (chebyshevIFilter.isSelected()) {
+                	imageCropCheckbox.setEnabled(false);
+                    textKernelDiameter.setEnabled(false);
+                    labelKernelDiameter.setEnabled(false);
+                    textOrder.setEnabled(true);
+                    labelOrder.setEnabled(true);
+                    textEpsilon.setEnabled(true);
+                    labelEpsilon.setEnabled(true);	
+                } else if (chebyshevIIFilter.isSelected()) {
+                	imageCropCheckbox.setEnabled(false);
+                    textKernelDiameter.setEnabled(false);
+                    labelKernelDiameter.setEnabled(false);
+                    textOrder.setEnabled(true);
+                    labelOrder.setEnabled(true);
+                    textEpsilon.setEnabled(true);
+                    labelEpsilon.setEnabled(true);	
                 }
 
                 lowPass.setEnabled(false);
@@ -327,6 +361,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 windowFilter.setEnabled(true);
                 gaussianFilter.setEnabled(true);
                 butterworthFilter.setEnabled(true);
+                chebyshevIFilter.setEnabled(true);
+                chebyshevIIFilter.setEnabled(true);
             } else if (frequencyFilter.isSelected()) {
                 image25DCheckbox.setEnabled(false);
                 logDisplayCheckbox.setEnabled(true);
@@ -346,6 +382,12 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 } else if (butterworthFilter.isSelected()) {
                     bandPass.setEnabled(true);
                     bandStop.setEnabled(true);
+                } else if (chebyshevIFilter.isSelected()) {
+                	bandPass.setEnabled(true);
+                	bandStop.setEnabled(true);
+                }  else if (chebyshevIIFilter.isSelected()) {
+                	bandPass.setEnabled(true);
+                	bandStop.setEnabled(true);
                 }
 
                 textF1.setEnabled(true);
@@ -353,8 +395,12 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 windowFilter.setEnabled(false);
                 gaussianFilter.setEnabled(false);
                 butterworthFilter.setEnabled(false);
+                chebyshevIFilter.setEnabled(false);
+                chebyshevIIFilter.setEnabled(false);
                 textOrder.setEnabled(false);
                 labelOrder.setEnabled(false);
+                textEpsilon.setEnabled(false);
+                labelEpsilon.setEnabled(false);
             } else if (inverseFFT.isSelected()) {
                 image25DCheckbox.setEnabled(false);
                 logDisplayCheckbox.setEnabled(false);
@@ -374,8 +420,12 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 windowFilter.setEnabled(false);
                 gaussianFilter.setEnabled(false);
                 butterworthFilter.setEnabled(false);
+                chebyshevIFilter.setEnabled(false);
+                chebyshevIIFilter.setEnabled(false);
                 textOrder.setEnabled(false);
                 labelOrder.setEnabled(false);
+                textEpsilon.setEnabled(false);
+                labelEpsilon.setEnabled(false);
             }
         } else if (source == windowFilter) {
             imageCropCheckbox.setEnabled(true);
@@ -384,6 +434,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             labelF1.setText("Frequency F1 0.0 to 1.0 ");
             textOrder.setEnabled(false);
             labelOrder.setEnabled(false);
+            textEpsilon.setEnabled(false);
+            labelEpsilon.setEnabled(false);
         } else if (source == gaussianFilter) {
             imageCropCheckbox.setEnabled(false);
             imageCropCheckbox.setSelected(false);
@@ -392,6 +444,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             labelF1.setText("Frequency F1 exceeds 0.0 ");
             textOrder.setEnabled(false);
             labelOrder.setEnabled(false);
+            textEpsilon.setEnabled(false);
+            labelEpsilon.setEnabled(false);
         } else if (source == butterworthFilter) {
             imageCropCheckbox.setEnabled(false);
             imageCropCheckbox.setSelected(false);
@@ -400,7 +454,31 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             labelF1.setText("Frequency F1 >0.0 to 1.0 ");
             textOrder.setEnabled(true);
             labelOrder.setEnabled(true);
-        } else if ((source == lowPass) || (source == highPass)) {
+            textEpsilon.setEnabled(false);
+            labelEpsilon.setEnabled(false);
+        } else if (source == chebyshevIFilter) {
+        	imageCropCheckbox.setEnabled(false);
+            imageCropCheckbox.setSelected(false);
+            textKernelDiameter.setEnabled(false);
+            labelKernelDiameter.setEnabled(false);
+            labelF1.setText("Frequency F1 >0.0 to 1.0 ");
+            textOrder.setEnabled(true);
+            labelOrder.setEnabled(true);
+            textEpsilon.setEnabled(true);
+            labelEpsilon.setEnabled(true);
+        } else if (source == chebyshevIIFilter) {
+        	imageCropCheckbox.setEnabled(false);
+            imageCropCheckbox.setSelected(false);
+            textKernelDiameter.setEnabled(false);
+            labelKernelDiameter.setEnabled(false);
+            labelF1.setText("Frequency F1 >0.0 to 1.0 ");
+            textOrder.setEnabled(true);
+            labelOrder.setEnabled(true);
+            textEpsilon.setEnabled(true);
+            labelEpsilon.setEnabled(true);
+            textF2.setEnabled(true);
+            labelF2.setEnabled(true);
+        } else if (((source == lowPass) || (source == highPass)) && (!chebyshevIIFilter.isSelected())) {
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
         } else if ((source == bandPass) || (source == bandStop)) {
@@ -605,6 +683,58 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             	insertScriptLine();
             }
         }
+        
+        if (algorithm instanceof AlgorithmFrequencyFilter) {
+
+            if ((algorithm.isCompleted() == true) && (resultImage != null)) {
+
+            	updateFileTypeInfo(image, resultImage, image.getType());
+
+                // resultImage is the same or smaller than image.
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Frequency Filtered image");
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame)
+                                                                                        (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame(parentFrame);
+                    ((ViewJFrameImage) parentFrame).getComponentImage().setLogMagDisplay(true);
+                }
+
+                updateFileTypeInfo(image, image.getType());
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+        }
 
 
         // Update frame
@@ -618,6 +748,10 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         if (FFTAlgo2 != null) {
         	FFTAlgo2.finalize();
         	FFTAlgo2 = null;
+        }
+        if (FrequencyFilterAlgo != null) {
+        	FrequencyFilterAlgo.finalize();
+        	FrequencyFilterAlgo = null;
         }
         dispose();
     }
@@ -639,6 +773,14 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
      */
     public void setfilterOrder(int order) {
         filterOrder = order;
+    }
+    
+    /**
+     * 
+     * @param epsilon maximum filter ripple
+     */
+    public void setEpsilon(float epsilon) {
+    	this.epsilon = epsilon;
     }
 
     /**
@@ -771,6 +913,114 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     public void setComplexInverse(boolean complexInverse) {
     	this.complexInverse = complexInverse;
     }
+    
+    /**
+     * Once all the necessary variables are set, call the Frequency Filter algorithm based on what type of image this is
+     * and whether or not there is a separate destination image.
+     */
+    protected void callAlgorithmFrequencyFilter() {
+        image.setOriginalCropCheckbox(imageCrop);
+        image.setOriginalFilterConstruction(constructionMethod);
+        image.setOriginalKernelDimension(kernelDiameter);
+        image.setOriginalFilterOrder(filterOrder);
+        image.setOriginalEpsilon(epsilon);
+
+        String name = makeImageName(image.getImageName(), "_freqFilter");
+
+        if (displayLoc == NEW) {
+
+            try {
+                resultImage = (ModelImage) image.clone();
+                resultImage.setImageName(name);
+                resultImage.resetVOIs();
+
+                // Make algorithm
+                FrequencyFilterAlgo = new AlgorithmFrequencyFilter(resultImage, image, image25D, imageCrop,
+                                                                   kernelDiameter, filterType, freq1, freq2,
+                                                                   constructionMethod, filterOrder, epsilon, onlyFrequencyFilter);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                FrequencyFilterAlgo.addListener(this);
+                createProgressBar(image.getImageName(), FrequencyFilterAlgo);
+
+                // Hide dialog since the algorithm is about to run
+                setVisible(false);
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (FrequencyFilterAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    FrequencyFilterAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                return;
+            }
+        } else {
+
+            try {
+
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+                FrequencyFilterAlgo = new AlgorithmFrequencyFilter(image, image25D, imageCrop, kernelDiameter,
+                                                                   filterType, freq1, freq2, constructionMethod,
+                                                                   filterOrder, epsilon, onlyFrequencyFilter);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                FrequencyFilterAlgo.addListener(this);
+
+                createProgressBar(image.getImageName(), FrequencyFilterAlgo);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                    ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                            (imageFrames.elementAt(i)));
+                }
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (FrequencyFilterAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+
+                    FrequencyFilterAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
+
+                return;
+            }
+        }
+    }
 
     /**
      * Once all the necessary variables are set, call the FFT algorithm based on what type of image this is and whether
@@ -778,6 +1028,10 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
      */
     protected void callAlgorithm() {
         image.setOriginalCropCheckbox(imageCrop);
+        image.setOriginalFilterConstruction(constructionMethod);
+        image.setOriginalKernelDimension(kernelDiameter);
+        image.setOriginalFilterOrder(filterOrder);
+        image.setOriginalEpsilon(epsilon);
 
         String name = makeImageName(image.getImageName(), "_FFT");
 
@@ -878,6 +1132,10 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
      */
     protected void callAlgorithm2() {
         image.setOriginalCropCheckbox(imageCrop);
+        image.setOriginalFilterConstruction(constructionMethod);
+        image.setOriginalKernelDimension(kernelDiameter);
+        image.setOriginalFilterOrder(filterOrder);
+        image.setOriginalEpsilon(epsilon);
 
         String name = makeImageName(image.getImageName(), "_FFT");
 
@@ -1006,6 +1264,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         constructionMethod = scriptParameters.getParams().getInt("construction_method");
         filterOrder = scriptParameters.getParams().getInt("butterworth_order");
         kernelDiameter = scriptParameters.getParams().getInt("kernel_diameter");
+        epsilon = scriptParameters.getParams().getFloat("epsilon");
         if (scriptParameters.getParams().containsParameter(AlgorithmParameters.USE_OPENCL)) {
         	setUseOCL(scriptParameters.getParams().getBoolean(AlgorithmParameters.USE_OPENCL));
         }
@@ -1030,6 +1289,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
         scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", filterOrder));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_diameter", kernelDiameter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("epsilon", epsilon));
         scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.USE_OPENCL, useOCL));
     }
 
@@ -1275,6 +1535,24 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         labelOrder.setForeground(Color.black);
         labelOrder.setFont(serif12);
         labelOrder.setEnabled(false);
+        
+        textEpsilon = new JTextField(10);
+
+        if (!image.isComplexImage()) {
+            textEpsilon.setText("0.5");
+        } else {
+            epsilon = image.getOriginalEpsilon();
+            textEpsilon.setText(String.valueOf(epsilon));
+        }
+
+        textEpsilon.setFont(serif12);
+        textEpsilon.setForeground(Color.black);
+        textEpsilon.setEnabled(false);
+
+        labelEpsilon = new JLabel("Maximum ripple");
+        labelEpsilon.setForeground(Color.black);
+        labelEpsilon.setFont(serif12);
+        labelEpsilon.setEnabled(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 3;
@@ -1310,6 +1588,11 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         constructionPanel.add(labelOrder, gbc);
         gbc.gridx = 2;
         constructionPanel.add(textOrder, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 8;
+        constructionPanel.add(labelEpsilon, gbc);
+        gbc.gridx = 2;
+        constructionPanel.add(textEpsilon, gbc);
 
         destinationPanel = new JPanel(new GridLayout(2, 1));
         destinationPanel.setForeground(Color.black);
@@ -1569,7 +1852,53 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
                     return false;
                 }
-            } // end of else if (butterworthFilter.isSelected())
+            } else if (chebyshevIFilter.isSelected()) {
+            	 constructionMethod = CHEBYSHEV_TYPE_I;
+                 tmpStr = textOrder.getText();
+                 filterOrder = Integer.parseInt(tmpStr);
+
+                 if (filterOrder < 1) {
+                     MipavUtil.displayError("Chebyshev order must be at least 1");
+                     textOrder.requestFocus();
+                     textOrder.selectAll();
+
+                     return false;
+                 }
+                 
+                 tmpStr = textEpsilon.getText();
+                 epsilon = Float.parseFloat(tmpStr);
+                 
+                 if (epsilon <= 0.0f) {
+                	 MipavUtil.displayError("Chebyshev maximum ripple epsilon must be greater than 0.0");
+                	 textEpsilon.requestFocus();
+                	 textEpsilon.selectAll();
+                	 
+                	 return false;
+                 }
+            }  else if (chebyshevIIFilter.isSelected()) {
+           	 constructionMethod = CHEBYSHEV_TYPE_II;
+             tmpStr = textOrder.getText();
+             filterOrder = Integer.parseInt(tmpStr);
+
+             if (filterOrder < 1) {
+                 MipavUtil.displayError("Chebyshev order must be at least 1");
+                 textOrder.requestFocus();
+                 textOrder.selectAll();
+
+                 return false;
+             }
+             
+             tmpStr = textEpsilon.getText();
+             epsilon = Float.parseFloat(tmpStr);
+             
+             if (epsilon <= 0.0f) {
+            	 MipavUtil.displayError("Chebyshev maximum ripple epsilon must be greater than 0.0");
+            	 textEpsilon.requestFocus();
+            	 textEpsilon.selectAll();
+            	 
+            	 return false;
+             }
+        }
         } // end of if (forwardFFT.isSelected())
         else if (frequencyFilter.isSelected()) {
             transformDir = FILTER;
@@ -1610,7 +1939,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                     return false;
                 }
             } // end of else if (constructionMethod == GAUSSIAN)
-            else if (constructionMethod == BUTTERWORTH) {
+            else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
+            		(constructionMethod == CHEBYSHEV_TYPE_II)) {
                 freq1 = Float.valueOf(tmpStr).floatValue();
 
                 if (freq1 <= 0.0) {
@@ -1626,9 +1956,9 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
                     return false;
                 }
-            } // end of else if (constructionMethod == BUTTERWORTH)
+            }  // else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
 
-            if ((filterType == BANDPASS) || (filterType == BANDSTOP)) {
+            if ((filterType == BANDPASS) || (filterType == BANDSTOP) || (constructionMethod == CHEBYSHEV_TYPE_II)) {
                 tmpStr = textF2.getText();
 
                 if (testParameter(tmpStr, 0.0, 1.0)) {
@@ -1743,6 +2073,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             table.put(new ParameterInt("construction_method", 1));
             table.put(new ParameterInt("butterworth_order", 0));
             table.put(new ParameterInt("kernel_diameter", 15));
+            table.put(new ParameterFloat("epsilon", 0.0f));
 
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
