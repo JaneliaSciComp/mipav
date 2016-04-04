@@ -401,6 +401,14 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 labelOrder.setEnabled(false);
                 textEpsilon.setEnabled(false);
                 labelEpsilon.setEnabled(false);
+                if ((bandPass.isSelected()) || (bandStop.isSelected())) {
+                	labelF2.setEnabled(true);
+                	textF2.setEnabled(true);
+                }
+                else {
+                	labelF2.setEnabled(false);
+                	textF2.setEnabled(false);
+                }
             } else if (inverseFFT.isSelected()) {
                 image25DCheckbox.setEnabled(false);
                 logDisplayCheckbox.setEnabled(false);
@@ -476,8 +484,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             labelOrder.setEnabled(true);
             textEpsilon.setEnabled(true);
             labelEpsilon.setEnabled(true);
-            textF2.setEnabled(true);
-            labelF2.setEnabled(true);
+            textF2.setEnabled(false);
+            labelF2.setEnabled(false);
         } else if (((source == lowPass) || (source == highPass)) && (!chebyshevIIFilter.isSelected())) {
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
@@ -1958,7 +1966,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 }
             }  // else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
 
-            if ((filterType == BANDPASS) || (filterType == BANDSTOP) || (constructionMethod == CHEBYSHEV_TYPE_II)) {
+            if ((filterType == BANDPASS) || (filterType == BANDSTOP)) {
                 tmpStr = textF2.getText();
 
                 if (testParameter(tmpStr, 0.0, 1.0)) {
