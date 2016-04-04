@@ -309,15 +309,15 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             textKernelDiameter.setEnabled(false);
             labelKernelDiameter.setEnabled(false);
             labelF1.setText("Frequency F1 >0.0 to 1.0 ");
-            textF2.setEnabled(true);
-            labelF2.setEnabled(true);
+            textF2.setEnabled(false);
+            labelF2.setEnabled(false);
             textOrder.setEnabled(true);
             labelOrder.setEnabled(true);
             textEpsilon.setEnabled(true);
             labelEpsilon.setEnabled(true);
             bandPass.setEnabled(true);
             bandStop.setEnabled(true);
-        } else if (((source == lowPass) || (source == highPass)) && (!chebyshevIIFilter.isSelected())) {
+        } else if ((source == lowPass) || (source == highPass)) {
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
         } else if ((source == bandPass) || (source == bandStop)) {
@@ -1378,7 +1378,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         } // else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
        
 
-        if ((filterType == BANDPASS) || (filterType == BANDSTOP) || (constructionMethod == CHEBYSHEV_TYPE_II)) {
+        if ((filterType == BANDPASS) || (filterType == BANDSTOP)) {
             tmpStr = textF2.getText();
 
             if (testParameter(tmpStr, 0.0, 1.0)) {
@@ -1403,7 +1403,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 return false;
             }
 
-        } // if ((filterType == BANDPASS) || (filterType == BANDSTOP) || (constructionMethod == CHEBYSHEV_TYPE_II)) 
+        } // if ((filterType == BANDPASS) || (filterType == BANDSTOP)) 
 
         if (imageCropCheckbox.isSelected()) {
             imageCrop = true;
