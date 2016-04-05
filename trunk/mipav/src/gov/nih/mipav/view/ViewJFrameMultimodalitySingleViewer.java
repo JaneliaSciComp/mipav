@@ -117,9 +117,9 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		gbc.weighty = 0;
 
 		ImageIcon cornerImage;
-		cornerImage = MipavUtil.getIcon("WhiteCircle_550.png");
+		cornerImage = MipavUtil.getIcon("WhiteCircle.png");
 		ImageIcon blackImage;
-		blackImage = MipavUtil.getIcon("BlackCircle_550.png");
+		blackImage = MipavUtil.getIcon("BlackCircle.png");
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.setBackground(Color.black);
