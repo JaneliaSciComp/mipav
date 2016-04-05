@@ -696,7 +696,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 // Make algorithm
                 FrequencyFilterColorAlgo = new AlgorithmFrequencyFilterColor(resultImage, image, image25D, imageCrop,
                                                                    kernelDiameter, filterType, freq1, freq2,
-                                                                   constructionMethod, filterOrder);
+                                                                   constructionMethod, filterOrder, epsilon);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -735,7 +735,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 // Make the algorithm class
                 FrequencyFilterColorAlgo = new AlgorithmFrequencyFilterColor(image, image25D, imageCrop, kernelDiameter,
                                                                    filterType, freq1, freq2, constructionMethod,
-                                                                   filterOrder);
+                                                                   filterOrder, epsilon);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
