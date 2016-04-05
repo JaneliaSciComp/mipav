@@ -1358,8 +1358,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 return false;
             }
         } // end of else if (constructionMethod == GAUSSIAN)
-        else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) || 
-        		(constructionMethod == CHEBYSHEV_TYPE_II)) {
+        else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I)) {
             freq1 = Float.valueOf(tmpStr).floatValue();
 
             if (freq1 <= 0.0) {
@@ -1375,7 +1374,25 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
                 return false;
             }
-        } // else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
+        } // else if ((constructionMethod == BUTTERWORTH) || (constructionMethod == CHEBYSHEV_TYPE_I))
+        else if (constructionMethod == CHEBYSHEV_TYPE_II) {
+        	freq1 = Float.valueOf(tmpStr).floatValue();
+
+            if (freq1 <= 1.0/(2.0*Math.PI)) {
+                MipavUtil.displayError("F1 must exceed 1/(2.0*PI)");
+                textF1.requestFocus();
+                textF1.selectAll();
+
+                return false;
+            } else if (freq1 > 1.0) {
+                MipavUtil.displayError("F1 must not exceed 1.0");
+                textF1.requestFocus();
+                textF1.selectAll();
+
+                return false;
+            }
+        	
+        } // else if (constructionMethod == CHEBYSHEV_TYPE_II)
        
 
         if ((filterType == BANDPASS) || (filterType == BANDSTOP)) {
