@@ -3029,7 +3029,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     
     private void makeChebyshevTypeIIFilter(float fr1, float fr2) {
     	// Lowpass filter has no ripples in the passband but has ripples in the stopband
-    	// fr1 end of pass band
+    	// fr1 end of pass band only works for 2.0 * PI * fr1 > 1.0
     	// fr2 start of stop pand
     	// fr2 > fr1
     	int x, y, z, pos;
@@ -3042,7 +3042,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         double product;
         double TnSquared;
         
-        Tn2 = Chebyshev(filterOrder, fr1);
+        Tn2 = Chebyshev(filterOrder, 2.0 * Math.PI * fr1); // Only works if 2.0 * PI * fr1 > 1.0
         product = epsilon * epsilon * Tn2 * Tn2;
         
         xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
@@ -3086,16 +3086,54 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            ratio = fr1/Math.sqrt(distsq);
+                            ratio = Math.sqrt(distsq)/fr1;
                             Tn = Chebyshev(filterOrder, ratio);
                             TnSquared = Tn*Tn;
-                            coeff = 1.0f - (float) (TnSquared / (TnSquared + product));
+                            coeff = (float) (TnSquared / (TnSquared + product));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
                     }
                 }
-            } // else if (filterType == HIGHPASS)	
+            } // else if (filterType == HIGHPASS)
+            else if (filterType == BANDPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
+                            Tn = Chebyshev(filterOrder, ratio);
+                            TnSquared = Tn*Tn;
+                            coeff = (float) (TnSquared / (TnSquared + product));
+                            realData[pos] *= coeff;
+                            imagData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDPASS)
+            else if (filterType == BANDSTOP) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                            Tn = Chebyshev(filterOrder, ratio);
+                            TnSquared = Tn*Tn;
+                            coeff = (float) (TnSquared / (TnSquared + product));
+                            realData[pos] *= coeff;
+                            imagData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDSTOP)
         } // if ((ndim == 2) || (image25D))
         else if (ndim == 3) {
             zcenter = (newDimLengths[2] - 1.0f) / 2.0f;
@@ -3131,16 +3169,56 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                             pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
                                      ((z - zcenter) * (z - zcenter) / znorm);
-                            ratio = fr1/Math.sqrt(distsq);
+                            ratio = Math.sqrt(distsq)/fr1;
                             Tn = Chebyshev(filterOrder, ratio);
                             TnSquared = Tn*Tn;
-                            coeff = 1.0f - (float) (TnSquared / (TnSquared + product));
+                            coeff = (float) (TnSquared / (TnSquared + product));
                             realData[pos] *= coeff;
                             imagData[pos] *= coeff;
                         }
                     }
                 }
             } // else if (filterType == HIGHPASS)
+            else if (filterType == BANDPASS) {
+
+                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
+                                     ((z - zcenter) * (z - zcenter) / znorm);
+                            ratio = ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
+                            Tn = Chebyshev(filterOrder, ratio);
+                            TnSquared = Tn*Tn;
+                            coeff = (float) (TnSquared / (TnSquared + product));
+                            realData[pos] *= coeff;
+                            imagData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDPASS)
+            else if (filterType == BANDSTOP) {
+
+                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
+                                     ((z - zcenter) * (z - zcenter) / znorm);
+                            ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                            Tn = Chebyshev(filterOrder, ratio);
+                            TnSquared = Tn*Tn;
+                            coeff = (float) (TnSquared / (TnSquared + product));
+                            realData[pos] *= coeff;
+                            imagData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDSTOP)
         } // end of else if (ndim == 3)
     }
 
