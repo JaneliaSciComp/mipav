@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.Bessel;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Dimension;
@@ -157,6 +158,10 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int GABOR = 4;
+    
+    public static final int CHEBYSHEV_TYPE_I = 5;
+    
+    public static final int CHEBYSHEV_TYPE_II = 6;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -164,7 +169,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     private int arrayLength; // size of buffers (realData and imagData)
 
     /** DOCUMENT ME! */
-    private int butterworthOrder; // order of the Butterworth filter
+    private int filterOrder; // order of the Butterworth filter
 
     /** DOCUMENT ME! */
     private int constructionMethod; // WINDOW = 1 for windowed finite impulse response
@@ -294,6 +299,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     
     private int originalDataType;
     
+    private float epsilon;  // maximum ripple in Chebyshev filters
+    
     private double sqrt2 = Math.sqrt(2.0);
     private double sqrt3 = Math.sqrt(3.0);
     private double sqrt6 = Math.sqrt(6.0);
@@ -354,13 +361,13 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  srcImg            source image model
      * @param  image25D          If true, processes each slice of a 3D image independently
      * @param  freq1             cutoff frequency, transition frequency from low to high gain
-     * @param  butterworthOrder  order of the Butterworth filter
+     * @param  filterOrder  order of the Butterworth filter
      * @param  lowGain           < 1, gain at low frequencies
      * @param  highGain          > 1, gain at high frequencies
      * @param  lowTruncated      part of low histogram end truncated
      * @param  highTruncated     part of high histogram end truncated
      */
-    public AlgorithmFrequencyFilterColor(ModelImage srcImg, boolean image25D, float freq1, int butterworthOrder,
+    public AlgorithmFrequencyFilterColor(ModelImage srcImg, boolean image25D, float freq1, int filterOrder,
                                     float lowGain, float highGain, float lowTruncated, float highTruncated) {
         super(null, srcImg);
 
@@ -369,7 +376,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         this.filterType = HOMOMORPHIC;
         f1 = freq1;
         this.constructionMethod = BUTTERWORTH;
-        this.butterworthOrder = butterworthOrder;
+        this.filterOrder = filterOrder;
         this.lowGain = lowGain;
         this.highGain = highGain;
         this.lowTruncated = lowTruncated;
@@ -415,14 +422,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  srcImg            source image model
      * @param  image25D          If true, processes each slice of a 3D image independently
      * @param  freq1             cutoff frequency, transition frequency from low to high gain
-     * @param  butterworthOrder  order of the Butterworth filter
+     * @param  filterOrder  order of the Butterworth filter
      * @param  lowGain           < 1, gain at low frequencies
      * @param  highGain          > 1, gain at high frequencies
      * @param  lowTruncated      part of low histogram end truncated
      * @param  highTruncated     part of high histogram end truncated
      */
     public AlgorithmFrequencyFilterColor(ModelImage destImg, ModelImage srcImg, boolean image25D, float freq1,
-                                    int butterworthOrder, float lowGain, float highGain, float lowTruncated,
+                                    int filterOrder, float lowGain, float highGain, float lowTruncated,
                                     float highTruncated) {
         super(destImg, srcImg);
 
@@ -431,7 +438,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         this.filterType = HOMOMORPHIC;
         f1 = freq1;
         this.constructionMethod = BUTTERWORTH;
-        this.butterworthOrder = butterworthOrder;
+        this.filterOrder = filterOrder;
         this.lowGain = lowGain;
         this.highGain = highGain;
         this.lowTruncated = lowTruncated;
@@ -451,11 +458,12 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  freq2               higher frequency in BANDPASS and BANDSTOP User inputs f1 and f2 going from 0.0 to
      *                             1.0. Program multiplies these numbers by PI for FIR filters.
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
-     * @param  butterworthOrder    order of a Butterworth filter
+     * @param  filterOrder    order of a Butterworth or chebyshev filter
+     * @param  epsilon        Maximum ripple in a chebyshev filter
      */
     public AlgorithmFrequencyFilterColor(ModelImage srcImg, boolean image25D, boolean imageCrop, int kernelDiameter,
                                     int filterType, float freq1, float freq2, int constructionMethod,
-                                    int butterworthOrder) {
+                                    int filterOrder, float epsilon) {
         super(null, srcImg);
 
         this.image25D = image25D;
@@ -465,7 +473,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         f1 = freq1;
         f2 = freq2;
         this.constructionMethod = constructionMethod;
-        this.butterworthOrder = butterworthOrder;
+        this.filterOrder = filterOrder;
+        this.epsilon = epsilon;
     }
 
     /**
@@ -482,11 +491,12 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  freq2               higher frequency in BANDPASS and BANDSTOP User inputs f1 and f2 going from 0.0 to
      *                             1.0. Program multiplies these numbers by PI for FIR filters.
      * @param  constructionMethod  WINDOW for window finite impulse response, GAUSSIAN, or BUTTERWORTH
-     * @param  butterworthOrder    order of the Butterworth filter
+     * @param  filterOrder    order of the Butterworth or chebyshev filter
+     * @param  epsilon        Maximum ripple in chebyshev filter
      */
     public AlgorithmFrequencyFilterColor(ModelImage destImg, ModelImage srcImg, boolean image25D, boolean imageCrop,
                                     int kernelDiameter, int filterType, float freq1, float freq2,
-                                    int constructionMethod, int butterworthOrder) {
+                                    int constructionMethod, int filterOrder, float epsilon) {
         super(destImg, srcImg);
 
         this.imageCrop = imageCrop;
@@ -496,7 +506,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         f1 = freq1;
         f2 = freq2;
         this.constructionMethod = constructionMethod;
-        this.butterworthOrder = butterworthOrder;
+        this.filterOrder = filterOrder;
+        this.epsilon = epsilon;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -752,6 +763,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
         if (constructionMethod == GABOR) {
             makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta, createGabor);
+        }
+        
+        if (constructionMethod == CHEBYSHEV_TYPE_I) {
+        	makeChebyshevTypeIFilter(f1, f2);
+        }
+        
+        if (constructionMethod == CHEBYSHEV_TYPE_II) {
+        	makeChebyshevTypeIIFilter(f1, f2);
         }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
@@ -1027,6 +1046,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
         if (constructionMethod == GABOR) {
             makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta, createGabor);
+        }
+        
+        if (constructionMethod == CHEBYSHEV_TYPE_I) {
+        	makeChebyshevTypeIFilter(f1, f2);
+        }
+        
+        if (constructionMethod == CHEBYSHEV_TYPE_II) {
+        	makeChebyshevTypeIIFilter(f1, f2);
         }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
@@ -1976,7 +2003,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
         if ((transformDir == INVERSE) &&
                 ((constructionMethod == GAUSSIAN) || (constructionMethod == BUTTERWORTH) ||
-                     (constructionMethod == GABOR))) {
+                     (constructionMethod == GABOR) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
+                     (constructionMethod == CHEBYSHEV_TYPE_II))) {
 
             if (!image25D) {
 
@@ -2085,7 +2113,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
         if ((transformDir == FORWARD) &&
                 ((constructionMethod == GAUSSIAN) || (constructionMethod == BUTTERWORTH) ||
-                     (constructionMethod == GABOR))) {
+                     (constructionMethod == GABOR) || (constructionMethod == CHEBYSHEV_TYPE_I) ||
+                     (constructionMethod == CHEBYSHEV_TYPE_II))) {
 
             if (!image25D) {
                 fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
@@ -2823,7 +2852,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), butterworthOrder)));
+                            coeff = (float) (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), filterOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -2841,7 +2870,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
+                            coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -2861,8 +2890,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            num = (float) Math.pow(Math.sqrt(distsq) * width, 2.0 * butterworthOrder);
-                            coeff = (float) (num / (num + Math.pow((distsq - centersq), 2.0 * butterworthOrder)));
+                            num = (float) Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder);
+                            coeff = (float) (num / (num + Math.pow((distsq - centersq), 2.0 * filterOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -2882,8 +2911,338 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                             pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                             distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                            num = (float) Math.pow((distsq - centersq), 2.0 * butterworthOrder);
-                            coeff = (float) (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * butterworthOrder)));
+                            num = (float) Math.pow((distsq - centersq), 2.0 * filterOrder);
+                            coeff = (float) (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * filterOrder)));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDSTOP)
+        } // if ((ndim == 2) || (image25D))
+        
+    }
+    
+    private double Chebyshev(int order, double w) {
+    	double wSquared;
+    	double wCubed;
+    	double wFourth;
+    	double wFifth;
+    	double wSixth;
+    	double wSeventh;
+    	double wEighth;
+    	double wNinth;
+    	double wTenth;
+    	double wEleventh;
+    	double wTwelfth;
+    	double wThirteenth;
+    	switch (order) {
+    	case 0:
+    		return 1;
+    	case 1:
+    		return w;
+    	case 2:
+    		return 2.0*w*w - 1;
+    	case 3:
+    		return 4.0*w*w*w - 3.0*w;
+    	case 4:
+    		wSquared = w * w;
+    		return 8.0*wSquared*wSquared - 8.0*wSquared + 1.0;
+    	case 5:
+    		wCubed = w * w * w;
+    		return 16.0*wCubed*w*w - 20.0*wCubed + 5.0*w;
+    	case 6:
+    		wSquared = w * w;
+    		wFourth = wSquared * wSquared;
+    		return 32.0*wFourth*wSquared -48.0*wFourth + 18.0*wSquared - 1.0;
+    	case 7:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		return 64.0*wFifth*wSquared - 112.0*wFifth + 56.0*wCubed - 7.0*w;
+    	case 8:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		return 128.0*wFourth*wFourth - 256.0*wSixth + 160.0*wFourth -32.0*wSquared + 1.0;
+    	case 9:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		return 256.0*wSeventh*wSquared - 576.0*wSeventh + 432.0*wFifth - 120.0*wCubed + 9.0*w;
+    	case 10:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		wEighth = wFourth*wFourth;
+    		return 512.0*wEighth*wSquared - 1280.0*wEighth + 1120.0*wSixth - 400.0*wFourth + 50.0*wSquared - 1.0;
+    	case 11:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		wNinth = wSeventh*wSquared;
+    		return 1024.0*wNinth*wSquared - 2816.0*wNinth + 2816.0*wSeventh - 1232.0*wFifth + 220.0*wCubed - 11.0*w;
+    	case 12:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		wEighth = wFourth*wFourth;
+    		wTenth = wEighth*wSquared;
+    		return 2048.0*wSixth*wSixth - 6144.0*wTenth + 6912.0*wEighth - 3584.0*wSixth + 840.0*wFourth - 72.0*wSquared + 1.0;
+    	case 13:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		wNinth = wSeventh*wSquared;
+    		wEleventh = wNinth*wSquared;
+    		return 4096.0*wEleventh*wSquared - 13312.0*wEleventh + 16640.0*wNinth - 9984.0*wSeventh + 2912.0*wFifth
+    				- 364.0*wCubed + 13.0;
+    	case 14:
+    		wSquared = w*w;
+    		wFourth = wSquared*wSquared;
+    		wSixth = wFourth*wSquared;
+    		wEighth = wFourth*wFourth;
+    		wTenth = wEighth*wSquared;
+    		wTwelfth = wSixth * wSixth;
+    		return 8192.0*wTwelfth*wSquared - 28672.0*wTwelfth + 39424.0*wTenth - 26880.0*wEighth + 9408.0*wSixth
+    				- 1568.0*wFourth + 98.0*wSquared - 1.0;
+    	case 15:
+    		wSquared = w*w;
+    		wCubed = wSquared*w;
+    		wFifth = wCubed*wSquared;
+    		wSeventh = wFifth*wSquared;
+    		wNinth = wSeventh*wSquared;
+    		wEleventh = wNinth*wSquared;
+    		wThirteenth = wEleventh*wSquared;
+    		return 16384.0*wThirteenth*wSquared - 61440.0*wThirteenth + 92160.0*wEleventh - 70400.0*wNinth + 28800.0*wSeventh
+    				- 6048.0*wFifth + 560.0*wCubed - 15.0*w;
+    	default:
+    		MipavUtil.displayError("No Chebyshev polynomial returned");
+    		return Double.NaN;
+    	}
+    	 
+    }
+    
+    private void makeChebyshevTypeIFilter(float fr1, float fr2) {
+    	// Lowpass filter has ripples in the passband but no ripples in the stopband.
+    	int x, y, z, pos;
+        float distsq, coeff, xnorm, ynorm, xcenter, ycenter;
+        int upperZ;
+        
+        double epsilonSquared = epsilon*epsilon;
+        double ratio;
+        double Tn;
+        
+     
+        xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
+        ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
+        xnorm = xcenter * xcenter;
+        ynorm = ycenter * ycenter;
+
+        if ((ndim == 2) || (image25D)) {
+
+            if (image25D) {
+                upperZ = newDimLengths[2] - 1;
+            } else {
+                upperZ = 0;
+            }
+
+            if (filterType == LOWPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = Math.sqrt(distsq)/fr1;
+                            Tn = Chebyshev(filterOrder, ratio);
+                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // end of if (filterType == LOWPASS)
+            else if (filterType == HIGHPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = fr1/Math.sqrt(distsq);
+                            Tn = Chebyshev(filterOrder, ratio);
+                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == HIGHPASS)	
+            else if (filterType == BANDPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                            Tn = Chebyshev(filterOrder, ratio);
+                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDPASS)
+            else if (filterType == BANDSTOP) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
+                            Tn = Chebyshev(filterOrder, ratio);
+                            coeff = (float) (1.0 / (1.0 + epsilonSquared*Tn*Tn));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDSTOP)
+        } // if ((ndim == 2) || (image25D))
+        
+    }
+    
+    private void makeChebyshevTypeIIFilter(float fr1, float fr2) {
+    	// Lowpass filter has no ripples in the passband but has ripples in the stopband
+    	// fr1 end of pass band only works for 2.0 * PI * fr1 > 1.0
+    	// fr2 start of stop band
+    	// fr2 > fr1
+    	int x, y, z, pos;
+        float distsq, coeff, xnorm, ynorm, xcenter, ycenter;
+        int upperZ;
+        
+        double ratio;
+        double Tn;
+        double Tn2;
+        double product;
+        double TnSquared;
+        
+        Tn2 = Chebyshev(filterOrder, 2.0 * Math.PI * fr1); // Only works if 2.0 * PI * fr1 > 1.0
+        product = epsilon * epsilon * Tn2 * Tn2;
+        
+        xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
+        ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
+        xnorm = xcenter * xcenter;
+        ynorm = ycenter * ycenter;
+
+        if ((ndim == 2) || (image25D)) {
+
+            if (image25D) {
+                upperZ = newDimLengths[2] - 1;
+            } else {
+                upperZ = 0;
+            }
+
+            if (filterType == LOWPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = fr1/Math.sqrt(distsq);
+                            Tn = Chebyshev(filterOrder, ratio);
+                            TnSquared = Tn*Tn;
+                            coeff = (float) (TnSquared / (TnSquared + product));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // end of if (filterType == LOWPASS)
+            else if (filterType == HIGHPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = Math.sqrt(distsq)/fr1;
+                            Tn = Chebyshev(filterOrder, ratio);
+                            TnSquared = Tn*Tn;
+                            coeff = (float) (TnSquared / (TnSquared + product));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == HIGHPASS)
+            else if (filterType == BANDPASS) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = ((fr2 - fr1)*Math.sqrt(distsq))/Math.abs(fr1*fr2 - distsq);
+                            Tn = Chebyshev(filterOrder, ratio);
+                            TnSquared = Tn*Tn;
+                            coeff = (float) (TnSquared / (TnSquared + product));
+                            realData[pos] *= coeff;
+                            imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
+                        }
+                    }
+                }
+            } // else if (filterType == BANDPASS)
+            else if (filterType == BANDSTOP) {
+
+                for (z = 0; z <= upperZ; z++) {
+
+                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
+
+                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
+                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
+                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
+                            ratio = Math.abs(fr1*fr2 - distsq)/((fr2 - fr1)*Math.sqrt(distsq));
+                            Tn = Chebyshev(filterOrder, ratio);
+                            TnSquared = Tn*Tn;
+                            coeff = (float) (TnSquared / (TnSquared + product));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
                             imagjData[pos] *= coeff;
@@ -4142,7 +4501,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     for (x = 0; x <= (newDimLengths[0] - 1); x++) {
                         pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
                         distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm);
-                        coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
+                        coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, filterOrder)));
                         realData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                         imagiData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                         imagjData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
