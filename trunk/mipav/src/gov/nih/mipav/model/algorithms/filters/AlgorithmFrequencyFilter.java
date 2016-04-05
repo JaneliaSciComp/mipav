@@ -3030,7 +3030,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private void makeChebyshevTypeIIFilter(float fr1, float fr2) {
     	// Lowpass filter has no ripples in the passband but has ripples in the stopband
     	// fr1 end of pass band only works for 2.0 * PI * fr1 > 1.0
-    	// fr2 start of stop pand
+    	// fr2 start of stop band
     	// fr2 > fr1
     	int x, y, z, pos;
         float distsq, coeff, xnorm, ynorm, znorm, xcenter, ycenter, zcenter;
