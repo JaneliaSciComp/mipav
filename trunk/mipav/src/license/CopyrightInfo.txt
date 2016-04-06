@@ -1466,7 +1466,7 @@ without express or implied warranty.
 
 =================================
 ----
-Gamma, Hypergeometric, JacobianElliptic, Psi
+Gamma, Hypergeometric, JacobianElliptic, EllipticIntegral, Psi
 ----
 
 Ported from FORTRAN code from Computation of Special Functions by Shanjie Zhang and Jianming Jin.
