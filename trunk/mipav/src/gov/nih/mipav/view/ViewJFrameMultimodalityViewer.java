@@ -1,7 +1,6 @@
 package gov.nih.mipav.view;
 
 import gov.nih.mipav.util.*;
-
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -16,7 +15,6 @@ import java.util.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-
 import javax.swing.event.*;
 
 import WildMagic.LibFoundation.Mathematics.*;
@@ -52,6 +50,8 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	private int zOffset;
 	private int image1Slice;
 	private int zDim;
+	
+	private JLabel label5;
 	
 	
 	
@@ -127,7 +127,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 
 		JPanel topPanel = new JPanel(new BorderLayout());
 		topPanel.setBackground(Color.black);
-		JLabel label5 = new JLabel();
+		label5 = new JLabel();
 		label5.setBackground(Color.black);
 		label5.setIcon(cornerImage);
 		JLabel label6 = new JLabel();
@@ -757,6 +757,42 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 
 		synchronized (this) {
 			origin = new Point(event.getPoint());
+			// Get the top left corner of the upper left white circle in the screen's coordinate space
+			Point pul = label5.getLocationOnScreen();
+			System.out.println("Upper left circle upper left corner x = " + pul.x + " y = "+ pul.y);
+			// Get the width and height of the upper left circle
+			Dimension dul = label5.getSize();
+			System.out.println("Upper left circle dimensions width = " + dul.width + " height = " + dul.height);
+			// Get the center of the upper left circle
+			double culx = pul.x + dul.width/2.0;
+			double culy = pul.y + dul.height/2.0;
+			System.out.println("Center of upper left circle x = " + culx + " y = " + culy);
+			JViewport viewPort0 = imageScroll[0].getViewport();
+			Point vul0 = viewPort0.getLocationOnScreen();
+			System.out.println("Upper left corner of JViewport of imageScroll[0] x = " + vul0.x + " y = " + vul0.y);
+			JViewport viewPort1 = imageScroll[1].getViewport();
+			Point vul1 = viewPort1.getLocationOnScreen();
+			Dimension d1 = viewPort1.getSize();
+			System.out.println("Upper right corner of JViewPort of imageScroll[1] x = " + (vul1.x + d1.width) +
+					" y = " + vul1.y);
+			JViewport viewPort2 = imageScroll[2].getViewport();
+			Point vul2 = viewPort2.getLocationOnScreen();
+			Dimension d2 = viewPort2.getSize();
+			System.out.println("Lower left corner of JViewport of imageScroll[2] x = " + vul2.x + 
+					" y = " + (vul2.y + d2.height));
+			System.out.println("Upper right corner of JViewport of imageScroll[2] x = " + (vul2.x + d2.width) + 
+					" y = " + vul2.y);
+			JViewport viewPort3 = imageScroll[3].getViewport();
+			Point vul3 = viewPort3.getLocationOnScreen();
+			Dimension d3 = viewPort3.getSize();
+			System.out.println("Lower right corner of JViewport of imageScroll[3] x = " + (vul3.x + d3.width) +
+					" y = " + (vul3.y + d3.height));
+			Point originScreen = event.getLocationOnScreen();
+			System.out.println("Event location in screen coordinates x = " + originScreen.x + " y = " +originScreen.y);
+			// Distance from center of upper circle
+			double dx = originScreen.x - culx;
+			double dy = originScreen.y - culy;
+			System.out.println("Event distance from upper left circle center dx = " + dx + " dy = " + dy);
 
 			// System.err.println("in mouse pressed");
 			int currentSlice0 = imageComp[0].getSlice();
