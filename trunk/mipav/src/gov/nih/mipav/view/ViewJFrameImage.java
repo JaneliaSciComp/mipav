@@ -1459,6 +1459,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogCropPointParam(this, getActiveImage());
         } else if (command.equals("FFT")) {
             new JDialogFFT(this, getActiveImage());
+        } else if (command.equals("GradientInverse")) {
+        	new JDialogGradientInverseWeightedSmoothing(this, getActiveImage());
         } else if (command.equals("TiltCorrection")) {
             new JDialogTiltCorrection(this, getActiveImage());
         } else if (command.equals("High/lowpass")) {
