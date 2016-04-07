@@ -200,6 +200,7 @@ public class ViewMenuBar {
 												"IsophoteCurvature", 0, null, false), }),
 								menuBuilder.buildMenuItem("Deconvolution", null, 0, null, false),
 								menuBuilder.buildMenuItem("Gaussian blur", null, 0, null, false),
+								menuBuilder.buildMenuItem("Gradient Inverse Smoothing", "GradientInverse", 0, null, false),
 								menuBuilder.buildMenuItem("Gradient magnitude", null, 0, null, false),
 								menuBuilder.buildMenuItem("Haralick texture", "Haralick", 0, null, false),
 								menuBuilder.buildMenuItem("Hurst index", "Hurst", 0, null, false),
@@ -1639,6 +1640,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Convergence field", false);
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
 			menuBuilder.setMenuItemEnabled("Fuzzy Connectedness", false);
+			menuBuilder.setMenuItemEnabled("Gradient Inverse Smoothing", false);
 		} else {
 			menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
 			menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
