@@ -122,6 +122,9 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
 	        	    case FACET_BASED_PEAK_NOISE_REMOVAL:
 	        	    	facetBasedPeakNoiseRemoval();
 	        	    	break;
+	        	    case ITERATED_FACET_MODEL:
+	        	    	iteratedFacetModel();
+	        	    	break;
 	        	    }
 	        	
 	        		if (iter == iterations-1) {
@@ -227,5 +230,77 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         	} // for (x = blockHalf; x < xDim-blockHalf; x++)
         } // for (y = blockHalf; y < yDim-blockHalf; y++)
     } // private void facetBasedPeakNoiseRemoval()
+    
+    private void iteratedFacetModel() {
+    	// g(x,y) = alpha*x + beta*y + gamma
+    	int x, y;
+    	int delx; int dely;
+    	double alpha[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
+    	double beta[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
+    	double gamma[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
+    	double delxg;
+    	int delx2;
+    	double delyg;
+    	int dely2;
+    	double gSum;
+    	double diff;
+    	double epsilonSquared[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
+    	int N = blockSide*blockSide - 1;
+    	double lowestEpsilonSquared;
+    	int lowestDelx;
+    	int lowestDely;
+    	
+        for (y = blockHalf; y < yDim-blockHalf; y++) {
+        	for (x = blockHalf; x < xDim-blockHalf; x++) {
+        		delxg = 0.0;
+        		delx2 = 0;
+        		delyg = 0.0;
+        		dely2 = 0;
+        		gSum = 0.0;
+        	    for (dely = -blockHalf; dely <= blockHalf; dely++) {
+        	    	for (delx = -blockHalf; delx <= blockHalf; delx++) {
+        	    		if ((dely != 0) || (delx != 0)) {
+	        	    	    delxg += (delx * buffer[(y+dely)*xDim + (x + delx)]);
+	        	    	    delx2 += (delx * delx);
+	        	    	    delyg += (dely * buffer[(y+dely)*xDim + (x + delx)]);
+	        	    	    dely2 += (dely * dely);
+	        	    	    gSum += buffer[(y + dely)*xDim + (x + delx)];
+        	    		} // if ((dely != 0) || (delx != 0))
+        	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+        	    } // for (dely = -blockHalf; dely <= blockHalf; dely++)
+        	    alpha[y-blockHalf][x-blockHalf] = delxg/delx2;
+        	    beta[y-blockHalf][x-blockHalf] = delyg/dely2;
+        	    gamma[y-blockHalf][x-blockHalf] = gSum/N;
+        	    for (dely = -blockHalf; dely <= blockHalf; dely++) {
+        	    	for (delx = -blockHalf; delx <= blockHalf; delx++) {
+        	    		if ((dely != 0) || (delx != 0)) {
+	        	    	    diff = alpha[y-blockHalf][x-blockHalf]*delx + beta[y-blockHalf][x-blockHalf]*dely 
+	        	    	    		+ gamma[y-blockHalf][x-blockHalf] - buffer[(y+dely)*xDim + (x+delx)];
+	        	    	    epsilonSquared[y-blockHalf][x-blockHalf] += (diff * diff);
+        	    		} // if ((dely != 0) || (delx != 0))
+        	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+        	    } // for (dely = -blockHalf; dely <= blockHalf; dely++)	
+        	} // for (x = blockHalf; x < xDim-blockHalf; x++) 
+        } // for (y = blockHalf; y < yDim-blockHalf; y++)
+        for (y = blockHalf; y < yDim-blockHalf; y++) {
+        	for (x = blockHalf; x < xDim-blockHalf; x++) {
+        		lowestEpsilonSquared = Double.MAX_VALUE;
+        		lowestDelx = 0;
+        		lowestDely = 0;
+        		for (dely = -blockHalf; dely <= blockHalf; dely++) {
+        	    	for (delx = -blockHalf; delx <= blockHalf; delx++) {
+        	    		if (epsilonSquared[y+dely-blockHalf][x+delx-blockHalf] < lowestEpsilonSquared) {
+        	    			lowestEpsilonSquared = epsilonSquared[y+dely-blockHalf][x+delx-blockHalf];
+        	    			lowestDelx = delx;
+        	    			lowestDely = dely;
+        	    		}
+        	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+        	    } // for (dely = -blockHalf; dely <= blockHalf; dely++)
+        		result[y*xDim+x] = alpha[y+lowestDely-blockHalf][x+lowestDelx-blockHalf]*(-lowestDelx) 
+        				+ beta[y+lowestDely-blockHalf][x+lowestDelx-blockHalf]*(-lowestDely)
+        				+ gamma[y+lowestDely-blockHalf][x+lowestDelx-blockHalf];
+        	} // for (x = blockHalf; x < xDim-blockHalf; x++)
+        } // for (y = blockHalf; y < yDim-blockHalf; y++)
+    }
 	
 }
