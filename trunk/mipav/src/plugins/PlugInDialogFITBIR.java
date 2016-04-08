@@ -216,7 +216,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.37";
+    private static final String pluginVersion = "0.38";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -564,7 +564,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             str = br.readLine();
             String[] arr = str.split(CSV_OUTPUT_DELIM);
             final String dsName = arr[0].trim();
-            final String version = arr[1].trim();
+            // final String version = arr[1].trim();
 
             // second line are the field names
             str = br.readLine().trim();
