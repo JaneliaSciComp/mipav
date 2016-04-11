@@ -168,11 +168,11 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     }
     
     private void facetBasedPeakNoiseRemoval() {
-    	// g(x,y) = alpha*x + beta*y + gamma
+    	// g(x,y) = a*x + beta*y + gamma
     	// tStatistic has N-3 degrees of freedom
     	int x, y;
     	int delx; int dely;
-    	double alpha;
+    	double a;
     	double beta;
     	double gamma;
     	double delxg;
@@ -205,14 +205,14 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         	    		} // if ((dely != 0) || (delx != 0))
         	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
         	    } // for (dely = -blockHalf; dely <= blockHalf; dely++)
-        	    alpha = delxg/delx2;
+        	    a = delxg/delx2;
         	    beta = delyg/dely2;
         	    gamma = gSum/N;
         	    epsilonSquared = 0.0;
         	    for (dely = -blockHalf; dely <= blockHalf; dely++) {
         	    	for (delx = -blockHalf; delx <= blockHalf; delx++) {
         	    		if ((dely != 0) || (delx != 0)) {
-	        	    	    diff = alpha*delx + beta*dely + gamma - buffer[(y+dely)*xDim + (x+delx)];
+	        	    	    diff = a*delx + beta*dely + gamma - buffer[(y+dely)*xDim + (x+delx)];
 	        	    	    epsilonSquared += (diff * diff);
         	    		} // if ((dely != 0) || (delx != 0))
         	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
@@ -232,10 +232,10 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     } // private void facetBasedPeakNoiseRemoval()
     
     private void iteratedFacetModel() {
-    	// g(x,y) = alpha*x + beta*y + gamma
+    	// g(x,y) = a*x + beta*y + gamma
     	int x, y;
     	int delx; int dely;
-    	double alpha[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
+    	double a[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
     	double beta[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
     	double gamma[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
     	double delxg;
@@ -268,13 +268,13 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         	    		} // if ((dely != 0) || (delx != 0))
         	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
         	    } // for (dely = -blockHalf; dely <= blockHalf; dely++)
-        	    alpha[y-blockHalf][x-blockHalf] = delxg/delx2;
+        	    a[y-blockHalf][x-blockHalf] = delxg/delx2;
         	    beta[y-blockHalf][x-blockHalf] = delyg/dely2;
         	    gamma[y-blockHalf][x-blockHalf] = gSum/N;
         	    for (dely = -blockHalf; dely <= blockHalf; dely++) {
         	    	for (delx = -blockHalf; delx <= blockHalf; delx++) {
         	    		if ((dely != 0) || (delx != 0)) {
-	        	    	    diff = alpha[y-blockHalf][x-blockHalf]*delx + beta[y-blockHalf][x-blockHalf]*dely 
+	        	    	    diff = a[y-blockHalf][x-blockHalf]*delx + beta[y-blockHalf][x-blockHalf]*dely 
 	        	    	    		+ gamma[y-blockHalf][x-blockHalf] - buffer[(y+dely)*xDim + (x+delx)];
 	        	    	    epsilonSquared[y-blockHalf][x-blockHalf] += (diff * diff);
         	    		} // if ((dely != 0) || (delx != 0))
@@ -296,7 +296,7 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         	    		}
         	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
         	    } // for (dely = -blockHalf; dely <= blockHalf; dely++)
-        		result[y*xDim+x] = alpha[y+lowestDely-blockHalf][x+lowestDelx-blockHalf]*(-lowestDelx) 
+        		result[y*xDim+x] = a[y+lowestDely-blockHalf][x+lowestDelx-blockHalf]*(-lowestDelx) 
         				+ beta[y+lowestDely-blockHalf][x+lowestDelx-blockHalf]*(-lowestDely)
         				+ gamma[y+lowestDely-blockHalf][x+lowestDelx-blockHalf];
         	} // for (x = blockHalf; x < xDim-blockHalf; x++)
