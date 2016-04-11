@@ -12,6 +12,7 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
 	// ~ Static fields/initializers
 	public static final int FACET_BASED_PEAK_NOISE_REMOVAL = 1;
 	public static final int ITERATED_FACET_MODEL = 2;
+	public static final int GRADIENT_BASED_FACET_EDGE_DETECTION = 3;
     // -------------------------------------------------------------------------------------
 	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
@@ -124,6 +125,9 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
 	        	    	break;
 	        	    case ITERATED_FACET_MODEL:
 	        	    	iteratedFacetModel();
+	        	    	break;
+	        	    case GRADIENT_BASED_FACET_EDGE_DETECTION:
+	        	    	gradientBasedFacetEdgeDetection();
 	        	    	break;
 	        	    }
 	        	
@@ -301,6 +305,87 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         				+ gamma[y+lowestDely-blockHalf][x+lowestDelx-blockHalf];
         	} // for (x = blockHalf; x < xDim-blockHalf; x++)
         } // for (y = blockHalf; y < yDim-blockHalf; y++)
+    }
+    
+    private void gradientBasedFacetEdgeDetection() {
+    	// g(x,y) = a*x + beta*y + gamma
+    	int x, y;
+    	int delx; int dely;
+    	double a[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
+    	double beta[][] = new double[yDim-2*blockHalf][xDim-2*blockHalf];
+    	double gamma;
+    	double delxg;
+    	int delx2;
+    	double delyg;
+    	int dely2;
+    	double gSum;
+    	double diff;
+    	double epsilonSquaredTotal = 0;
+    	double epsilonSquaredAverage;
+    	double sigmaSquared;
+    	int numeratorMultiplier = 0;
+    	double multiplier;
+    	double chiSquared;
+    	Statistics stat;
+    	double degreesOfFreedom = 2.0;
+    	double answer[] = new double[1];
+    	int N = blockSide*blockSide - 1;
+    	
+        for (y = blockHalf; y < yDim-blockHalf; y++) {
+        	for (x = blockHalf; x < xDim-blockHalf; x++) {
+        		delxg = 0.0;
+        		delx2 = 0;
+        		delyg = 0.0;
+        		dely2 = 0;
+        		gSum = 0.0;
+        	    for (dely = -blockHalf; dely <= blockHalf; dely++) {
+        	    	for (delx = -blockHalf; delx <= blockHalf; delx++) {
+        	    		if ((dely != 0) || (delx != 0)) {
+	        	    	    delxg += (delx * buffer[(y+dely)*xDim + (x + delx)]);
+	        	    	    delx2 += (delx * delx);
+	        	    	    delyg += (dely * buffer[(y+dely)*xDim + (x + delx)]);
+	        	    	    dely2 += (dely * dely);
+	        	    	    gSum += buffer[(y + dely)*xDim + (x + delx)];
+        	    		} // if ((dely != 0) || (delx != 0))
+        	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+        	    } // for (dely = -blockHalf; dely <= blockHalf; dely++)
+        	    a[y-blockHalf][x-blockHalf] = delxg/delx2;
+        	    beta[y-blockHalf][x-blockHalf] = delyg/dely2;
+        	    gamma = gSum/N;
+        	    for (dely = -blockHalf; dely <= blockHalf; dely++) {
+        	    	for (delx = -blockHalf; delx <= blockHalf; delx++) {
+        	    		if ((dely != 0) || (delx != 0)) {
+	        	    	    diff = a[y-blockHalf][x-blockHalf]*delx + beta[y-blockHalf][x-blockHalf]*dely 
+	        	    	    		+ gamma - buffer[(y+dely)*xDim + (x+delx)];
+	        	    	    epsilonSquaredTotal += (diff * diff);
+        	    		} // if ((dely != 0) || (delx != 0))
+        	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+        	    } // for (dely = -blockHalf; dely <= blockHalf; dely++)	
+        	} // for (x = blockHalf; x < xDim-blockHalf; x++) 
+        } // for (y = blockHalf; y < yDim-blockHalf; y++)
+        epsilonSquaredAverage = epsilonSquaredTotal/((xDim-2*blockHalf)*(yDim-2*blockHalf));
+        sigmaSquared = epsilonSquaredAverage/((2*blockHalf+1)*(2*blockHalf+1)-3);
+        for (dely = -blockHalf; dely <= blockHalf; dely++) {
+        	for (delx = -blockHalf; delx <= blockHalf; delx++) {
+        		numeratorMultiplier += 2*delx*delx;
+        	}
+        }
+        multiplier = numeratorMultiplier/sigmaSquared;
+        for (y = blockHalf; y < yDim-blockHalf; y++) {
+        	for (x = blockHalf; x < xDim-blockHalf; x++) {
+        	    chiSquared = multiplier*(a[y-blockHalf][x-blockHalf]*a[y-blockHalf][x-blockHalf] +
+        	    		                 beta[y-blockHalf][x-blockHalf]*beta[y-blockHalf][x-blockHalf]);
+        	    stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION, chiSquared, degreesOfFreedom,
+        	    		answer);
+        	    stat.run();
+        	    if (answer[0] >= 1.0 - alpha) {
+        	    	result[y*xDim+x] = 1;
+        	    }
+        	    else {
+        	    	result[y*xDim+x] = 0;
+        	    }
+        	} // for (x = blockHalf; x < xDim-blockHalf; x++)
+        } // for (y = blockHalf; y < yDim-blockHalf; y++)	
     }
 	
 }
