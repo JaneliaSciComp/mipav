@@ -387,5 +387,96 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         	} // for (x = blockHalf; x < xDim-blockHalf; x++)
         } // for (y = blockHalf; y < yDim-blockHalf; y++)	
     }
+    
+    private void directionalDerivatives(double k1, double k2, double k3, double k4, double k5, double k6, double k7,
+    		double k8, double k9, double k10, double sinAngle, double cosAngle, double rho, double firstDirectionalDerivative[],
+    		double secondDirectionalDerivative[], double thirdDirectionalDerivative[]) {
+    	firstDirectionalDerivative[0] = (k2 + 2.0*k4*rho*sinAngle + k5*rho*cosAngle + 3.0*k7*rho*rho*sinAngle*sinAngle +
+    			2.0 * k8 * rho * rho * sinAngle * cosAngle + k9 * rho * rho * cosAngle * cosAngle)*sinAngle
+    			+(k3 + k5 * rho * sinAngle + 2.0 * k6 * rho * cosAngle + k8 * rho * rho * sinAngle * sinAngle
+    			+ 2.0 * k9 * rho * rho * cosAngle * sinAngle + 3.0 * k10 * rho * rho * cosAngle * cosAngle)*cosAngle;
+    	secondDirectionalDerivative[0] = 6.0*(k7 * sinAngle * sinAngle * sinAngle + k8 * sinAngle *sinAngle * cosAngle +
+    			k9 *sinAngle * cosAngle * cosAngle + k10 * cosAngle * cosAngle * cosAngle)*rho
+    			+2.0*(k4*sinAngle*sinAngle + k5*sinAngle*cosAngle + k6*cosAngle*cosAngle);
+    }
+    
+    
+    private void bivariateCubicCoefficients5by5(int x, int y, double k1[], double k2[], double k3[], double k4[],
+    		double k5[], double k6[], double k7[], double k8[], double k9[], double k10[], 
+    		double sinAngle[], double cosAngle[], double gradientAngle[]) {
+    	// Kernels for directly estimating the coefficients k1,...,k10 of the bivariate cubic f(y,x) = k1 + k2*y + k3*x
+    	// + k4*y*y + k5*x*y + k6*x*x + k7*y*y*y + k8*x*y*y + k9*x*x*y + k10*x*x*x for a 5 by 5 neighborhood
+    	double denom;
+    	k1[0] = (1.0/175.0)*(-13.0*buffer[(y-2)*xDim+x-2] + 2.0*buffer[(y-2)*xDim+x-1] + 7.0*buffer[(y-2)*xDim+x]
+    		 +2.0*buffer[(y-2)*xDim+x+1] -13.0*buffer[(y-2)*xDim+x+2] +2.0*buffer[(y-1)*xDim+x-2] + 17.0*buffer[(y-1)*xDim+x-1]
+    	     +22.0*buffer[(y-1)*xDim+x] + 17.0*buffer[(y-1)*xDim+x+1] + 2.0*buffer[(y-1)*xDim+x+2] + 7.0*buffer[y*xDim+x-2]
+    	     +22.0*buffer[y*xDim+x-1] + 27.0*buffer[y*xDim+x] + 22.0*buffer[y*xDim+x+1] + 7.0*buffer[y*xDim+x+2]
+    	     +2.0*buffer[(y+1)*xDim+x-2] + 17.0*buffer[(y+1)*xDim+x-1] + 22.0*buffer[(y+1)*xDim+x] + 17.0*buffer[(y+1)*xDim+x+1]
+    	     +2.0*buffer[(y+1)*xDim+x+2] -13.0*buffer[(y+2)*xDim+x-2] +2.0*buffer[(y+2)*xDim+x-1] + 7.0*buffer[(y+2)*xDim+x] 
+    	     +2.0*buffer[(y+2)*xDim+x+1] -13.0*buffer[(y+2)*xDim+x+2]);
+    	k2[0] = (1.0/420.0)*(31.0*buffer[(y-2)*xDim+x-2] - 5.0*buffer[(y-2)*xDim+x-1] - 17.0*buffer[(y-2)*xDim+x]
+       		 -5.0*buffer[(y-2)*xDim+x+1] +31.0*buffer[(y-2)*xDim+x+2] -44.0*buffer[(y-1)*xDim+x-2] -62.0*buffer[(y-1)*xDim+x-1]
+       	     -68.0*buffer[(y-1)*xDim+x] - 62.0*buffer[(y-1)*xDim+x+1] - 44.0*buffer[(y-1)*xDim+x+2] 
+       	     +44.0*buffer[(y+1)*xDim+x-2] + 62.0*buffer[(y+1)*xDim+x-1] + 68.0*buffer[(y+1)*xDim+x] + 62.0*buffer[(y+1)*xDim+x+1]
+       	     +44.0*buffer[(y+1)*xDim+x+2] -31.0*buffer[(y+2)*xDim+x-2] +5.0*buffer[(y+2)*xDim+x-1] + 17.0*buffer[(y+2)*xDim+x] 
+       	     +5.0*buffer[(y+2)*xDim+x+1] -31.0*buffer[(y+2)*xDim+x+2]);
+    	k3[0] = (1.0/420.0)*(31.0*buffer[(y-2)*xDim+x-2] - 44.0*buffer[(y-2)*xDim+x-1]
+       		 +44.0*buffer[(y-2)*xDim+x+1] -31.0*buffer[(y-2)*xDim+x+2] -5.0*buffer[(y-1)*xDim+x-2] - 62.0*buffer[(y-1)*xDim+x-1]
+       	     + 62.0*buffer[(y-1)*xDim+x+1] + 5.0*buffer[(y-1)*xDim+x+2] - 17.0*buffer[y*xDim+x-2]
+       	     -68.0*buffer[y*xDim+x-1]  + 68.0*buffer[y*xDim+x+1] + 17.0*buffer[y*xDim+x+2]
+       	     -5.0*buffer[(y+1)*xDim+x-2] - 62.0*buffer[(y+1)*xDim+x-1] + 62.0*buffer[(y+1)*xDim+x+1]
+       	     +5.0*buffer[(y+1)*xDim+x+2] +31.0*buffer[(y+2)*xDim+x-2] -44.0*buffer[(y+2)*xDim+x-1] 
+       	     +44.0*buffer[(y+2)*xDim+x+1] -31.0*buffer[(y+2)*xDim+x+2]);
+    	k4[0] = (1.0/70.0)*(2.0*buffer[(y-2)*xDim+x-2] + 2.0*buffer[(y-2)*xDim+x-1] + 2.0*buffer[(y-2)*xDim+x]
+       		 +2.0*buffer[(y-2)*xDim+x+1] +2.0*buffer[(y-2)*xDim+x+2] -1.0*buffer[(y-1)*xDim+x-2] - 1.0*buffer[(y-1)*xDim+x-1]
+       	     -1.0*buffer[(y-1)*xDim+x] - 1.0*buffer[(y-1)*xDim+x+1] - 1.0*buffer[(y-1)*xDim+x+2] - 2.0*buffer[y*xDim+x-2]
+       	     -2.0*buffer[y*xDim+x-1] - 2.0*buffer[y*xDim+x] - 2.0*buffer[y*xDim+x+1] - 2.0*buffer[y*xDim+x+2]
+       	     -1.0*buffer[(y+1)*xDim+x-2] - 1.0*buffer[(y+1)*xDim+x-1] - 1.0*buffer[(y+1)*xDim+x] - 1.0*buffer[(y+1)*xDim+x+1]
+       	     -1.0*buffer[(y+1)*xDim+x+2] +2.0*buffer[(y+2)*xDim+x-2] +2.0*buffer[(y+2)*xDim+x-1] + 2.0*buffer[(y+2)*xDim+x] 
+       	     +2.0*buffer[(y+2)*xDim+x+1] +2.0*buffer[(y+2)*xDim+x+2]);
+    	k5[0] = (1.0/100.0)*(+4.0*buffer[(y-2)*xDim+x-2] + 2.0*buffer[(y-2)*xDim+x-1] 
+       		 -2.0*buffer[(y-2)*xDim+x+1] -4.0*buffer[(y-2)*xDim+x+2] +2.0*buffer[(y-1)*xDim+x-2] + 1.0*buffer[(y-1)*xDim+x-1]
+       	     - 1.0*buffer[(y-1)*xDim+x+1] - 2.0*buffer[(y-1)*xDim+x+2] 
+       	     -2.0*buffer[(y+1)*xDim+x-2] - 1.0*buffer[(y+1)*xDim+x-1]  + 1.0*buffer[(y+1)*xDim+x+1]
+       	     +2.0*buffer[(y+1)*xDim+x+2] -4.0*buffer[(y+2)*xDim+x-2] -2.0*buffer[(y+2)*xDim+x-1] 
+       	     +2.0*buffer[(y+2)*xDim+x+1] +4.0*buffer[(y+2)*xDim+x+2]);
+    	k6[0] = (1.0/70.0)*(2.0*buffer[(y-2)*xDim+x-2] - 1.0*buffer[(y-2)*xDim+x-1] - 2.0*buffer[(y-2)*xDim+x]
+       		 -1.0*buffer[(y-2)*xDim+x+1] +2.0*buffer[(y-2)*xDim+x+2] +2.0*buffer[(y-1)*xDim+x-2] - 1.0*buffer[(y-1)*xDim+x-1]
+       	     -2.0*buffer[(y-1)*xDim+x] - 1.0*buffer[(y-1)*xDim+x+1] + 2.0*buffer[(y-1)*xDim+x+2] + 2.0*buffer[y*xDim+x-2]
+       	     -1.0*buffer[y*xDim+x-1] - 2.0*buffer[y*xDim+x] - 1.0*buffer[y*xDim+x+1] + 2.0*buffer[y*xDim+x+2]
+       	     +2.0*buffer[(y+1)*xDim+x-2] - 1.0*buffer[(y+1)*xDim+x-1] - 2.0*buffer[(y+1)*xDim+x] - 1.0*buffer[(y+1)*xDim+x+1]
+       	     +2.0*buffer[(y+1)*xDim+x+2] +2.0*buffer[(y+2)*xDim+x-2] -1.0*buffer[(y+2)*xDim+x-1] - 2.0*buffer[(y+2)*xDim+x] 
+       	     -1.0*buffer[(y+2)*xDim+x+1] +2.0*buffer[(y+2)*xDim+x+2]);
+    	k7[0] = (1.0/60.0)*(-1.0*buffer[(y-2)*xDim+x-2] - 1.0*buffer[(y-2)*xDim+x-1] - 1.0*buffer[(y-2)*xDim+x]
+       		 -1.0*buffer[(y-2)*xDim+x+1] -1.0*buffer[(y-2)*xDim+x+2] +2.0*buffer[(y-1)*xDim+x-2] + 2.0*buffer[(y-1)*xDim+x-1]
+       	     +2.0*buffer[(y-1)*xDim+x] + 2.0*buffer[(y-1)*xDim+x+1] + 2.0*buffer[(y-1)*xDim+x+2] 
+       	     -2.0*buffer[(y+1)*xDim+x-2] - 2.0*buffer[(y+1)*xDim+x-1] - 2.0*buffer[(y+1)*xDim+x] - 2.0*buffer[(y+1)*xDim+x+1]
+       	     -2.0*buffer[(y+1)*xDim+x+2] +1.0*buffer[(y+2)*xDim+x-2] +1.0*buffer[(y+2)*xDim+x-1] + 1.0*buffer[(y+2)*xDim+x] 
+       	     +1.0*buffer[(y+2)*xDim+x+1] +1.0*buffer[(y+2)*xDim+x+2]);
+    	k8[0] = (1.0/140.0)*(-4.0*buffer[(y-2)*xDim+x-2] - 2.0*buffer[(y-2)*xDim+x-1] 
+       		 +2.0*buffer[(y-2)*xDim+x+1] +4.0*buffer[(y-2)*xDim+x+2] +2.0*buffer[(y-1)*xDim+x-2] + 1.0*buffer[(y-1)*xDim+x-1]
+       	     - 1.0*buffer[(y-1)*xDim+x+1] - 2.0*buffer[(y-1)*xDim+x+2] + 4.0*buffer[y*xDim+x-2]
+       	     +2.0*buffer[y*xDim+x-1]  - 2.0*buffer[y*xDim+x+1] - 4.0*buffer[y*xDim+x+2]
+       	     +2.0*buffer[(y+1)*xDim+x-2] + 1.0*buffer[(y+1)*xDim+x-1]  - 1.0*buffer[(y+1)*xDim+x+1]
+       	     -2.0*buffer[(y+1)*xDim+x+2] -4.0*buffer[(y+2)*xDim+x-2] -2.0*buffer[(y+2)*xDim+x-1] 
+       	     +2.0*buffer[(y+2)*xDim+x+1] +4.0*buffer[(y+2)*xDim+x+2]);
+    	k9[0] = (1.0/140.0)*(-4.0*buffer[(y-2)*xDim+x-2] + 2.0*buffer[(y-2)*xDim+x-1] + 4.0*buffer[(y-2)*xDim+x]
+       		 +2.0*buffer[(y-2)*xDim+x+1] -4.0*buffer[(y-2)*xDim+x+2] -2.0*buffer[(y-1)*xDim+x-2] + 1.0*buffer[(y-1)*xDim+x-1]
+       	     +2.0*buffer[(y-1)*xDim+x] + 1.0*buffer[(y-1)*xDim+x+1] - 2.0*buffer[(y-1)*xDim+x+2] 
+       	     +2.0*buffer[(y+1)*xDim+x-2] - 1.0*buffer[(y+1)*xDim+x-1] - 2.0*buffer[(y+1)*xDim+x] - 1.0*buffer[(y+1)*xDim+x+1]
+       	     +2.0*buffer[(y+1)*xDim+x+2] +4.0*buffer[(y+2)*xDim+x-2] -2.0*buffer[(y+2)*xDim+x-1] - 4.0*buffer[(y+2)*xDim+x] 
+       	     -2.0*buffer[(y+2)*xDim+x+1] +4.0*buffer[(y+2)*xDim+x+2]);
+    	k10[0] = (1.0/60.0)*(-1.0*buffer[(y-2)*xDim+x-2] + 2.0*buffer[(y-2)*xDim+x-1] 
+       		 -2.0*buffer[(y-2)*xDim+x+1] +1.0*buffer[(y-2)*xDim+x+2] -1.0*buffer[(y-1)*xDim+x-2] + 2.0*buffer[(y-1)*xDim+x-1]
+       	     - 2.0*buffer[(y-1)*xDim+x+1] + 1.0*buffer[(y-1)*xDim+x+2] - 1.0*buffer[y*xDim+x-2]
+       	     +2.0*buffer[y*xDim+x-1]  - 2.0*buffer[y*xDim+x+1] + 1.0*buffer[y*xDim+x+2]
+       	     -1.0*buffer[(y+1)*xDim+x-2] + 2.0*buffer[(y+1)*xDim+x-1]  - 2.0*buffer[(y+1)*xDim+x+1]
+       	     +1.0*buffer[(y+1)*xDim+x+2] -1.0*buffer[(y+2)*xDim+x-2] +2.0*buffer[(y+2)*xDim+x-1] 
+       	     -2.0*buffer[(y+2)*xDim+x+1] +1.0*buffer[(y+2)*xDim+x+2]);
+    	denom = Math.sqrt(k2[0]*k2[0] + k3[0]*k3[0]);
+    	sinAngle[0] = k2[0]/denom;
+    	cosAngle[0] = k3[0]/denom;
+    	gradientAngle[0] = Math.atan2(sinAngle[0], cosAngle[0]);
+    }
 	
 }
