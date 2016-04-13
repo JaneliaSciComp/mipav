@@ -13,6 +13,8 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
 	public static final int FACET_BASED_PEAK_NOISE_REMOVAL = 1;
 	public static final int ITERATED_FACET_MODEL = 2;
 	public static final int GRADIENT_BASED_FACET_EDGE_DETECTION = 3;
+	// ZERO_CROSSING_EDGE_DETECTOR only uses blockSide = 5
+	public static final int ZERO_CROSSING_EDGE_DETECTOR = 4;
     // -------------------------------------------------------------------------------------
 	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
@@ -129,6 +131,8 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
 	        	    case GRADIENT_BASED_FACET_EDGE_DETECTION:
 	        	    	gradientBasedFacetEdgeDetection();
 	        	    	break;
+	        	    case ZERO_CROSSING_EDGE_DETECTOR:
+	        	    	zeroCrossingEdgeDetector();
 	        	    }
 	        	
 	        		if (iter == iterations-1) {
@@ -388,9 +392,47 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         } // for (y = blockHalf; y < yDim-blockHalf; y++)	
     }
     
+    private boolean isEdgePixel(double k1, double k2, double k3, double k4, double k5, double k6, double k7,
+    		double k8, double k9, double k10, double sinAngle, double cosAngle, double rho[]) {
+    	// If for some rho, where abs(pho) is slightly smaller than the length of a side of a pixel,
+    	// thirdDirectionalDerivative < 0.0, secondDirectionalDerivative = 0, and firstDirectionalDerivative != 0,
+    	// we have discovered a negatively sloped zero crossing of the estimated second directional derivative in
+    	// the direction of the gradient.  We mark the center pixel of the neighborhood  as an edge pixel,
+    	// and if required we make a note of the subpixel location of the zero crossing.
+    	double thirdDirectionalDerivative;
+    	double firstDirectionalDerivative;
+    	// Value of rho that makes the second directional derivative equal to zero.
+    	rho[0] = -(k4*sinAngle*sinAngle + k5*sinAngle*cosAngle + k6*cosAngle*cosAngle)/
+    			(3.0*(k7 * sinAngle * sinAngle * sinAngle + k8 * sinAngle *sinAngle * cosAngle +
+    	    			k9 *sinAngle * cosAngle * cosAngle + k10 * cosAngle * cosAngle * cosAngle));
+    	if ((rho[0] <= -1.0) || (rho[0] >= 1.0)) {
+    		return false;
+    	}
+    	thirdDirectionalDerivative = 6.0*(k7*sinAngle*sinAngle*sinAngle + k8*sinAngle*sinAngle*cosAngle
+    			+ k9*sinAngle*cosAngle*cosAngle + k10*cosAngle*cosAngle*cosAngle);
+    	if (thirdDirectionalDerivative >= 0.0) {
+    		return false;
+    	}
+    	firstDirectionalDerivative = (k2 + 2.0*k4*rho[0]*sinAngle + k5*rho[0]*cosAngle + 3.0*k7*rho[0]*rho[0]*sinAngle*sinAngle +
+    			2.0 * k8 * rho[0] * rho[0] * sinAngle * cosAngle + k9 * rho[0] * rho[0] * cosAngle * cosAngle)*sinAngle
+    			+(k3 + k5 * rho[0] * sinAngle + 2.0 * k6 * rho[0] * cosAngle + k8 * rho[0] * rho[0] * sinAngle * sinAngle
+    			+ 2.0 * k9 * rho[0] * rho[0] * cosAngle * sinAngle + 3.0 * k10 * rho[0] * rho[0] * cosAngle * cosAngle)*cosAngle;
+    	if (firstDirectionalDerivative != 0) {
+    		return true;
+    	}
+    	else {
+    		return false;
+    	}
+    }
+    
     private void directionalDerivatives(double k1, double k2, double k3, double k4, double k5, double k6, double k7,
     		double k8, double k9, double k10, double sinAngle, double cosAngle, double rho, double firstDirectionalDerivative[],
     		double secondDirectionalDerivative[], double thirdDirectionalDerivative[]) {
+    	// If for some rho, where abs(pho) is slightly smaller than the length of a side of a pixel,
+    	// thirdDirectionalDerivative < 0.0, secondDirectionalDerivative = 0, and firstDirectionalDerivative != 0,
+    	// we have discovered a negatively sloped zero crossing of the estimated second directional derivative in
+    	// the direction of the gradient.  We mark the center pixel of the neighborhood  as an edge pixel,
+    	// and if required we make a note of the subpixel location of the zero crossing.
     	firstDirectionalDerivative[0] = (k2 + 2.0*k4*rho*sinAngle + k5*rho*cosAngle + 3.0*k7*rho*rho*sinAngle*sinAngle +
     			2.0 * k8 * rho * rho * sinAngle * cosAngle + k9 * rho * rho * cosAngle * cosAngle)*sinAngle
     			+(k3 + k5 * rho * sinAngle + 2.0 * k6 * rho * cosAngle + k8 * rho * rho * sinAngle * sinAngle
@@ -398,6 +440,8 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     	secondDirectionalDerivative[0] = 6.0*(k7 * sinAngle * sinAngle * sinAngle + k8 * sinAngle *sinAngle * cosAngle +
     			k9 *sinAngle * cosAngle * cosAngle + k10 * cosAngle * cosAngle * cosAngle)*rho
     			+2.0*(k4*sinAngle*sinAngle + k5*sinAngle*cosAngle + k6*cosAngle*cosAngle);
+    	thirdDirectionalDerivative[0] = 6.0*(k7*sinAngle*sinAngle*sinAngle + k8*sinAngle*sinAngle*cosAngle
+    			+ k9*sinAngle*cosAngle*cosAngle + k10*cosAngle*cosAngle*cosAngle);
     }
     
     
@@ -477,6 +521,54 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     	sinAngle[0] = k2[0]/denom;
     	cosAngle[0] = k3[0]/denom;
     	gradientAngle[0] = Math.atan2(sinAngle[0], cosAngle[0]);
+    }
+    
+    private void zeroCrossingEdgeDetector() {
+    	// For now blockSide must be 5
+    	int x, y;
+    	double k1[] = new double[1];
+    	double k2[] = new double[1];
+    	double k3[] = new double[1];
+    	double k4[] = new double[1];
+    	double k5[] = new double[1];
+    	double k6[] = new double[1];
+    	double k7[] = new double[1];
+    	double k8[] = new double[1];
+    	double k9[] = new double[1];
+    	double k10[] = new double[1];
+    	double sinAngle[] = new double[1];
+    	double cosAngle[] = new double[1];
+    	double gradientAngle[] = new double[1];
+    	double rho[] = new double[1];
+    	boolean edge;
+    	
+    	for (y = blockHalf; y < yDim-blockHalf; y++) {
+        	for (x = blockHalf; x < xDim-blockHalf; x++) {
+        		bivariateCubicCoefficients5by5(x, y, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, sinAngle, cosAngle, gradientAngle);
+        		edge = isEdgePixel(k1[0], k2[0], k3[0], k4[0], k5[0], k6[0], k7[0],
+        	    		k8[0], k9[0], k10[0], sinAngle[0], cosAngle[0], rho);
+        		if (edge) {
+        			result[y*xDim+x] = 1;
+        		}
+        		else {
+        			result[y*xDim+x] = 0;
+        		}
+        	} // for (x = blockHalf; x < xDim-blockHalf; x++)
+    	} // for (y = blockHalf; y < yDim-blockHalf; y++)
+    }
+    
+    private double rowDerivativeMask5by5(int x, int y) {
+    	// D1 = L*L*K7 + (1/3)*L*L*K9 + K2
+    	// D2 = L*L*K10 + (1/3)*L*L*K8 + K3
+    	// gradient direction thetaMax = atan(D1/D2)
+    	// integrated first directional derivative = sqrt(D1*D1 + D2*D2)
+    	// This routine calculates D1 with the row derivative mask
+    	return  (1.0/10500.0)*(-116.0*buffer[(y-2)*xDim + x-2] -530.0*buffer[(y-2)*xDim+x-1] -668.0*buffer[(y-2)*xDim+x]
+    			-530.0*buffer[(y-2)*xDim+x+1] -116.0*buffer[(y-2)*xDim+x+2] -128*buffer[(y-1)*xDim+x-2] -335.0*buffer[(y-1)*xDim+x-1]
+    		    -404.0*buffer[(y-1)*xDim+x] -335.0*buffer[(y-1)*xDim+x+1] -128.0*buffer[(y-1)*xDim+x+2] +128.0*buffer[(y+1)*xDim+x-2]
+    		    +335.0*buffer[(y+1)*xDim+x-1] + 404.0*buffer[(y+1)*xDim+x] + 335.0*buffer[(y+1)*xDim+x+1] + 128.0*buffer[(y+1)*xDim+x+2]
+    		    +116.0*buffer[(y+2)*xDim+x-2] + 530.0*buffer[(y+2)*xDim+x-1] + 668.0*buffer[(y+2)*xDim+x] + 530.0*buffer[(y+2)*xDim+x+1]
+    		    +116.0*buffer[(y+2)*xDim+x+2]);
     }
 	
 }
