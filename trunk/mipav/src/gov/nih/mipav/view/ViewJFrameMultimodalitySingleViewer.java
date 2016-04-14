@@ -658,6 +658,12 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			// Get the top left corner of the quadImagePanel in the screen's coordinate space
 			//Point qul = quadImagePanel.getLocationOnScreen();
 			//System.out.println("quad image panel upper left corner x = " + qul.x + " y = " + qul.y);
+			Rectangle rect = imageComp.getBounds();
+            System.out.println("Image upper left corner in screen coordinates at x = " + (vul.x + rect.x) + " y = " + (vul.y + rect.y));
+            System.out.println("Image upper right corner in screen coordinates at x = " + (vul.x + rect.x + rect.width) + " y = " + (vul.y + rect.y));
+            System.out.println("Image lower left corner in screen coordinates at x = " + (vul.x + rect.x) + " y = " + (vul.y + rect.y + rect.height));
+            System.out.println("Image lower right corner in screen coordinates at x = " + (vul.x + rect.x + rect.width) + " y = " + 
+            (vul.y + rect.y + rect.height));
 			Point originScreen = event.getLocationOnScreen();
 			System.out.println("Event location in screen coordinates x = " + originScreen.x + " y = " +originScreen.y);
 			// Distance from center of upper circle
@@ -720,7 +726,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				}
 			
 			}
-
 		}
 	}
 
