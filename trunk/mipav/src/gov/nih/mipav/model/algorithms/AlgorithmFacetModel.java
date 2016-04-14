@@ -6,15 +6,21 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 
 
-// These routines implement the text in Computer and Robot Vision, Volume I, Robert M. Haralick and Linda G. Shapiro,
+// These routines implement the text in: 1.) Computer and Robot Vision, Volume I, Robert M. Haralick and Linda G. Shapiro,
 // Addison-Wesley Publishing Company, Inc., 1992, Chapter 8, The Facet Model, pp. 371-452.
+// 2.) Integrated Directional Derivative Gradient Operator by Oscar A. Zuniga and Robert M. Haralick, IEEE Transactions
+// on Systems, Man, and Cybernetics, Vol. SMC-17, No. 3, May/June 1987, pp. 508-517.
 public  class AlgorithmFacetModel extends AlgorithmBase {
 	// ~ Static fields/initializers
 	public static final int FACET_BASED_PEAK_NOISE_REMOVAL = 1;
 	public static final int ITERATED_FACET_MODEL = 2;
 	public static final int GRADIENT_BASED_FACET_EDGE_DETECTION = 3;
-	// ZERO_CROSSING_EDGE_DETECTOR only uses blockSide = 5
 	public static final int ZERO_CROSSING_EDGE_DETECTOR = 4;
+	// INTEGRATED_DIRECTIONAL_DERIVATIVE uses only blockSide = 5 or 7.
+	public static final int INTEGRATED_DIRECTIONAL_DERIVATIVE = 5;
+	
+	public static final int DERIVATIVE_ANGLE = 1;
+	public static final int DERIVATIVE_MAGNITUDE = 2;
     // -------------------------------------------------------------------------------------
 	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
@@ -34,20 +40,23 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
 	private double buffer[];
 	private double result[];
 	private int blockHalf;
+	private int derivativeResult;
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
-    public AlgorithmFacetModel(ModelImage srcImg, int routine, int blockSide, double alpha) {
+    public AlgorithmFacetModel(ModelImage srcImg, int routine, int blockSide, double alpha, int derivativeResult) {
     	super(null, srcImg);
     	this.routine = routine;
     	this.blockSide = blockSide;
     	this.alpha = alpha;
+    	this.derivativeResult = derivativeResult;
     }
     
-    public AlgorithmFacetModel(ModelImage destImg, ModelImage srcImg, int routine, int blockSide, double alpha) {
+    public AlgorithmFacetModel(ModelImage destImg, ModelImage srcImg, int routine, int blockSide, double alpha, int derivativeResult) {
     	super(destImg, srcImg);
     	this.routine = routine;
     	this.blockSide = blockSide;
     	this.alpha = alpha;
+    	this.derivativeResult = derivativeResult;;
     }
     
     /**
@@ -133,6 +142,10 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
 	        	    	break;
 	        	    case ZERO_CROSSING_EDGE_DETECTOR:
 	        	    	zeroCrossingEdgeDetector();
+	        	    	break;
+	        	    case INTEGRATED_DIRECTIONAL_DERIVATIVE:
+	        	    	integratedDirectionalDerivative();
+	        	    	break;
 	        	    }
 	        	
 	        		if (iter == iterations-1) {
@@ -425,7 +438,8 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     	}
     }
     
-    private void directionalDerivatives(double k1, double k2, double k3, double k4, double k5, double k6, double k7,
+    @SuppressWarnings("unused")
+	private void directionalDerivatives(double k1, double k2, double k3, double k4, double k5, double k6, double k7,
     		double k8, double k9, double k10, double sinAngle, double cosAngle, double rho, double firstDirectionalDerivative[],
     		double secondDirectionalDerivative[], double thirdDirectionalDerivative[]) {
     	// If for some rho, where abs(pho) is slightly smaller than the length of a side of a pixel,
@@ -444,8 +458,126 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     			+ k9*sinAngle*cosAngle*cosAngle + k10*cosAngle*cosAngle*cosAngle);
     }
     
+    private void bivariateCubicCoefficients(int x, int y, double k1[], double k2[], double k3[], double k4[],
+    		double k5[], double k6[], double k7[], double k8[], double k9[], double k10[], 
+    		double sinAngle[], double cosAngle[], double gradientAngle[]) {
+    	// Kernels for directly estimating the coefficients k1,...,k10 of the bivariate cubic f(y,x) = k1 + k2*y + k3*x
+    	// + k4*y*y + k5*x*y + k6*x*x + k7*y*y*y + k8*x*y*y + k9*x*x*y + k10*x*x*x
+    	int delx;
+    	int dely;
+    	double num;
+    	double denom;
+    	long R0 = 0;
+    	long R1 = 0;
+    	long R2 = 0;
+    	long R3 = 0;
+    	long C0 = 0;
+    	long C1 = 0;
+    	long C2 = 0;
+        long C3 = 0;
+        long dely2;
+        long delx2;
+        long dely4;
+        long delx4;
+        long G;
+        long A;
+        long B;
+        long Q;
+        long T;
+        long U;
+        long V;
+        long W;
+        long Z;
+        long TR1;
+        long QC1;
+        long WR2;
+        long UC1;
+        long ZR1;
+        long VC2;
+        double buf;
+    	
+    	num = 0.0;
+    	denom = 0.0;
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    		    num += delx * dely *buffer[(y+dely)*xDim+x+delx];
+    		    denom += delx * delx * dely * dely;
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	k5[0] = num/denom;
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		dely2 = dely * dely;
+    		dely4 = dely2 * dely2;
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    			delx2 = delx * delx;
+    			delx4 = delx2 * delx2;
+    		    R0 += 1;
+    		    C0 += 1;
+    		    R1 += dely2;
+    		    C1 += delx2;
+    		    R2 += dely4;
+    		    C2 += delx4;
+    		    R3 += dely4 * dely2;
+    		    C3 += delx4 * delx2;
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)\
+    	G = R0*R2*C0*C2 - R1*R1*C1*C1;
+    	A = R1*R3*C0*C2 - R2*R2*C1*C1;
+    	B = R0*R2*C1*C3 - R1*R1*C2*C2;
+    	Q = C0*(R0*R2 - R1*R1);
+    	T = R0*(C0*C2 - C1*C1);
+    	U = C0*(R1*R3 - R2*R2);
+    	V = C1*(R0*R2 - R1*R1);
+    	W = R1*(C0*C2 - C1*C1);
+    	Z = R0*(C1*C3 - C2*C2);
+    	TR1 = T * R1;
+    	QC1 = Q * C1;
+    	WR2 = W * R2;
+    	UC1 = U * C1;
+    	ZR1 = Z * R1;
+    	VC2 = V * C2;
+    	k1[0] = 0.0;
+    	k2[0] = 0.0;
+    	k3[0] = 0.0;
+    	k4[0] = 0.0;
+    	k6[0] = 0.0;
+    	k7[0] = 0.0;
+    	k8[0] = 0.0;
+    	k9[0] = 0.0;
+    	k10[0] = 0.0;
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		dely2 = dely * dely;
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    			buf = buffer[(y+dely)*xDim+x+delx];
+    			delx2 = delx * delx;
+    		    k1[0] += (G - TR1*dely2 - QC1*delx2)*buf;
+    		    k2[0] += (A - WR2*dely2 - UC1*delx2)*dely*buf;
+    		    k3[0] += (B - ZR1*dely2 - VC2*delx2)*delx*buf;
+    		    k4[0] += (R0*dely2 - R1)*buf;
+    		    k6[0] += (C0*delx2 - C1)*buf;
+    		    k7[0] += (R1*dely2 - R2)*dely*buf;
+    		    k8[0] += (R0*dely2 - R1)*delx*buf;
+    		    k9[0] += (C0*delx2 - C1)*dely*buf;
+    		    k10[0] += (C1*delx2 - C2)*delx*buf;
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	k1[0] = k1[0]/(Q*T);
+    	k2[0] = k2[0]/(U*W);
+    	k3[0] = k3[0]/(V*Z);
+    	k4[0] = k4[0]/Q;
+    	k6[0] = k6[0]/T;
+    	k7[0] = k7[0]/U;
+    	k8[0] = k8[0]/V;
+    	k9[0] = k9[0]/W;
+    	k10[0] = k10[0]/Z;
+    	denom = Math.sqrt(k2[0]*k2[0] + k3[0]*k3[0]);
+    	sinAngle[0] = k2[0]/denom;
+    	cosAngle[0] = k3[0]/denom;
+    	gradientAngle[0] = Math.atan2(sinAngle[0], cosAngle[0]);
+    }
     
-    private void bivariateCubicCoefficients5by5(int x, int y, double k1[], double k2[], double k3[], double k4[],
+    
+    private void bivariateCubicCoefficients5By5(int x, int y, double k1[], double k2[], double k3[], double k4[],
     		double k5[], double k6[], double k7[], double k8[], double k9[], double k10[], 
     		double sinAngle[], double cosAngle[], double gradientAngle[]) {
     	// Kernels for directly estimating the coefficients k1,...,k10 of the bivariate cubic f(y,x) = k1 + k2*y + k3*x
@@ -524,7 +656,6 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     }
     
     private void zeroCrossingEdgeDetector() {
-    	// For now blockSide must be 5
     	int x, y;
     	double k1[] = new double[1];
     	double k2[] = new double[1];
@@ -544,7 +675,12 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     	
     	for (y = blockHalf; y < yDim-blockHalf; y++) {
         	for (x = blockHalf; x < xDim-blockHalf; x++) {
-        		bivariateCubicCoefficients5by5(x, y, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, sinAngle, cosAngle, gradientAngle);
+        		if (blockSide == 5) {
+        		    bivariateCubicCoefficients5By5(x, y, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, sinAngle, cosAngle, gradientAngle);
+        		}
+        		else {
+        			bivariateCubicCoefficients(x, y, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, sinAngle, cosAngle, gradientAngle);	
+        		}
         		edge = isEdgePixel(k1[0], k2[0], k3[0], k4[0], k5[0], k6[0], k7[0],
         	    		k8[0], k9[0], k10[0], sinAngle[0], cosAngle[0], rho);
         		if (edge) {
@@ -557,7 +693,31 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     	} // for (y = blockHalf; y < yDim-blockHalf; y++)
     }
     
-    private double rowDerivativeMask5by5(int x, int y) {
+    private void integratedDirectionalDerivative() {
+    	int x,y;
+    	double D1 = 0.0;
+    	double D2 = 0.0;
+    	for (y = blockHalf; y < yDim-blockHalf; y++) {
+        	for (x = blockHalf; x < xDim-blockHalf; x++) {
+        		if (blockSide == 5) {
+        			D1 = rowDerivativeMask5By5(x,y);
+        			D2 = columnDerivativeMask5By5(x,y);
+        		}
+        		else if (blockSide == 7) {
+        			D2 = rowDerivativeMask7By7(x,y);
+        			D2 = columnDerivativeMask7By7(x,y);
+        		}
+        		if (derivativeResult == DERIVATIVE_ANGLE) {
+        			result[y*xDim+x] = Math.atan2(D1,D2);
+        		}
+        		else if (derivativeResult == DERIVATIVE_MAGNITUDE){
+        		    result[y*xDim+x] = Math.sqrt(D1*D1 + D2*D2);	
+        		}
+        	} // for (x = blockHalf; x < xDim-blockHalf; x++)
+    	} // for (y = blockHalf; y < yDim-blockHalf; y++)
+    }
+    
+    private double rowDerivativeMask5By5(int x, int y) {
     	// D1 = L*L*K7 + (1/3)*L*L*K9 + K2
     	// D2 = L*L*K10 + (1/3)*L*L*K8 + K3
     	// gradient direction thetaMax = atan(D1/D2)
@@ -569,6 +729,58 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     		    +335.0*buffer[(y+1)*xDim+x-1] + 404.0*buffer[(y+1)*xDim+x] + 335.0*buffer[(y+1)*xDim+x+1] + 128.0*buffer[(y+1)*xDim+x+2]
     		    +116.0*buffer[(y+2)*xDim+x-2] + 530.0*buffer[(y+2)*xDim+x-1] + 668.0*buffer[(y+2)*xDim+x] + 530.0*buffer[(y+2)*xDim+x+1]
     		    +116.0*buffer[(y+2)*xDim+x+2]);
+    }
+    
+    private double columnDerivativeMask5By5(int x, int y) {
+    	// D1 = L*L*K7 + (1/3)*L*L*K9 + K2
+    	// D2 = L*L*K10 + (1/3)*L*L*K8 + K3
+    	// gradient direction thetaMax = atan(D1/D2)
+    	// integrated first directional derivative = sqrt(D1*D1 + D2*D2)
+    	// This routine calculates D2 with the column derivative mask
+    	return  (1.0/10500.0)*(-116.0*buffer[(y-2)*xDim + x-2] -530.0*buffer[(y-1)*xDim+x-2] -668.0*buffer[y*xDim+x-2]
+    			-530.0*buffer[(y+1)*xDim+x-2] -116.0*buffer[(y+2)*xDim+x-2] -128*buffer[(y-2)*xDim+x-1] -335.0*buffer[(y-1)*xDim+x-1]
+    		    -404.0*buffer[y*xDim+x-1] -335.0*buffer[(y+1)*xDim+x-1] -128.0*buffer[(y+2)*xDim+x-1] +128.0*buffer[(y-2)*xDim+x+1]
+    		    +335.0*buffer[(y-1)*xDim+x+1] + 404.0*buffer[y*xDim+x+1] + 335.0*buffer[(y+1)*xDim+x+1] + 128.0*buffer[(y+2)*xDim+x+1]
+    		    +116.0*buffer[(y-2)*xDim+x+2] + 530.0*buffer[(y-1)*xDim+x+2] + 668.0*buffer[y*xDim+x+2] + 530.0*buffer[(y+1)*xDim+x+2]
+    		    +116.0*buffer[(y+2)*xDim+x+2]);
+    }
+    
+    private double rowDerivativeMask7By7(int x, int y) {
+    	// D1 = L*L*K7 + (1/3)*L*L*K9 + K2
+    	// D2 = L*L*K10 + (1/3)*L*L*K8 + K3
+    	// gradient direction thetaMax = atan(D1/D2)
+    	// integrated first directional derivative = sqrt(D1*D1 + D2*D2)
+    	// This routine calculates D1 with the row derivative mask
+    	return  (1.0/28224.0)*(-3.0*buffer[(y-3)*xDim+x-3] -348.0*buffer[(y-3)*xDim+x-2] -555.0*buffer[(y-3)*xDim+x-1]
+    		    -624.0*buffer[(y-3)*xDim+x] -555.0*buffer[(y-3)*xDim+x+1] -348.0*buffer[(y-3)*xDim+x+2] -3.0*buffer[(y-3)*xDim+x+3]
+    		    -142.0*buffer[(y-2)*xDim+x-3] -372.0*buffer[(y-2)*xDim+x-2] -510.0*buffer[(y-2)*xDim+x-1] -556.0*buffer[(y-2)*xDim+x]
+    		    -510.0*buffer[(y-2)*xDim+x+1] -372.0*buffer[(y-2)*xDim+x+2] -142.0*buffer[(y-2)*xDim+x+3] -113.0*buffer[(y-1)*xDim+x-3]
+    		    -228.0*buffer[(y-1)*xDim+x-2] -297.0*buffer[(y-1)*xDim+x-1] -320.0*buffer[(y-1)*xDim+x] -297.0*buffer[(y-1)*xDim+x+1]
+    		    -228.0*buffer[(y-1)*xDim+x+2] -113.0*buffer[(y-1)*xDim+x+3] +113.0*buffer[(y+1)*xDim+x-3] +228.0*buffer[(y+1)*xDim+x-2]
+    		    +297.0*buffer[(y+1)*xDim+x-1] +320.0*buffer[(y+1)*xDim+x] +297.0*buffer[(y+1)*xDim+x+1] +228.0*buffer[(y+1)*xDim+x+2]
+    		    +113.0*buffer[(y+1)*xDim+x+3] +142.0*buffer[(y+2)*xDim+x-3] +372.0*buffer[(y+2)*xDim+x-2] +510.0*buffer[(y+2)*xDim+x-1]
+    		    +556.0*buffer[(y+2)*xDim+x] + 510.0*buffer[(y+2)*xDim+x+1] +372.0*buffer[(y+2)*xDim+x+2] +142.0*buffer[(y+2)*xDim+x+3]
+    		    +3.0*buffer[(y+3)*xDim+x-3] +348.0*buffer[(y+3)*xDim+x-2] +555.0*buffer[(y+3)*xDim+x-1] +624.0*buffer[(y+3)*xDim+x]
+    		    +555.0*buffer[(y+3)*xDim+x+1] +348.0*buffer[(y+3)*xDim+x+2] +3.0*buffer[(y+3)*xDim+x+3]);
+    }
+    
+    private double columnDerivativeMask7By7(int x, int y) {
+    	// D1 = L*L*K7 + (1/3)*L*L*K9 + K2
+    	// D2 = L*L*K10 + (1/3)*L*L*K8 + K3
+    	// gradient direction thetaMax = atan(D1/D2)
+    	// integrated first directional derivative = sqrt(D1*D1 + D2*D2)
+    	// This routine calculates D2 with the column derivative mask
+    	return  (1.0/28224.0)*(-3.0*buffer[(y-3)*xDim+x-3] -348.0*buffer[(y-2)*xDim+x-3] -555.0*buffer[(y-1)*xDim+x-3]
+    		    -624.0*buffer[y*xDim+x-3] -555.0*buffer[(y+1)*xDim+x-3] -348.0*buffer[(y+2)*xDim+x-3] -3.0*buffer[(y+3)*xDim+x-3]
+    		    -142.0*buffer[(y-3)*xDim+x-2] -372.0*buffer[(y-2)*xDim+x-2] -510.0*buffer[(y-1)*xDim+x-2] -556.0*buffer[y*xDim+x-2]
+    		    -510.0*buffer[(y+1)*xDim+x-2] -372.0*buffer[(y+2)*xDim+x-2] -142.0*buffer[(y+3)*xDim+x-2] -113.0*buffer[(y-3)*xDim+x-1]
+    		    -228.0*buffer[(y-2)*xDim+x-1] -297.0*buffer[(y-1)*xDim+x-1] -320.0*buffer[y*xDim+x-1] -297.0*buffer[(y+1)*xDim+x-1]
+    		    -228.0*buffer[(y+2)*xDim+x-1] -113.0*buffer[(y+3)*xDim+x-1] +113.0*buffer[(y-3)*xDim+x+1] +228.0*buffer[(y-2)*xDim+x+1]
+    		    +297.0*buffer[(y-1)*xDim+x+1] +320.0*buffer[y*xDim+x+1] +297.0*buffer[(y+1)*xDim+x+1] +228.0*buffer[(y+2)*xDim+x+1]
+    		    +113.0*buffer[(y+3)*xDim+x+1] +142.0*buffer[(y-3)*xDim+x+2] +372.0*buffer[(y-2)*xDim+x+2] +510.0*buffer[(y-1)*xDim+x+2]
+    		    +556.0*buffer[y*xDim+x+2] + 510.0*buffer[(y+1)*xDim+x+2] +372.0*buffer[(y+2)*xDim+x+2] +142.0*buffer[(y+3)*xDim+x+2]
+    		    +3.0*buffer[(y-3)*xDim+x+3] +348.0*buffer[(y-2)*xDim+x+3] +555.0*buffer[(y-1)*xDim+x+3] +624.0*buffer[y*xDim+x+3]
+    		    +555.0*buffer[(y+1)*xDim+x+3] +348.0*buffer[(y+2)*xDim+x+3] +3.0*buffer[(y+3)*xDim+x+3]);
     }
 	
 }
