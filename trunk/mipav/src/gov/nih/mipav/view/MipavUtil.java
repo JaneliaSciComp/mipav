@@ -1414,7 +1414,7 @@ public class MipavUtil extends JComponent {
 	    	File file = new File(defaultDirectory);
 	    	if ( !file.exists() ) file.createNewFile();
 	        eyetrackingOutStream = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
-	        eyetrackingOutStream.write("Time, ActiveImage, ActiveSlice, frameMinX, frameMinY, frameMaxX, frameMaxY, Event, MouseEvent, Action, value, MouseCoordX, MouseCoordY\n");
+	        // eyetrackingOutStream.write("Time, ActiveImage, ActiveSlice, frameMinX, frameMinY, frameMaxX, frameMaxY, Event, MouseEvent, Action, value, MouseCoordX, MouseCoordY\n");
     	} catch ( IOException e ) {
     		e.printStackTrace();
     	}

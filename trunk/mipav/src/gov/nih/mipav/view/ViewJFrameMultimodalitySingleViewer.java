@@ -69,9 +69,21 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		readMultlmodalImages();
 		getFramesInfo();
 		initLayout();
+		startRecording();
 	}
 
+	public void startRecording() {
+		String defaultDirectory = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator;
+		String defaultFileName = defaultDirectory + "eyetracking-" + System.currentTimeMillis() + ".csv";
+		MipavUtil.setEyeTrackingEnabled(true, defaultFileName);
+	}
 
+	
+	public void stopRecording() {
+		System.err.println("stop recording new");
+		MipavUtil.setEyeTrackingEnabled(false, null);
+	}
+	
 	// ~ Methods
 	// --------------------------------------------------------------------------------------------------------
 
@@ -509,6 +521,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 		if ( keyCode == KeyEvent.VK_ESCAPE ) {
 			System.err.println("escape key pressed");
+			stopRecording();
 			this.setVisible(false);
 			this.dispose();
 		} else if ( keyCode == KeyEvent.VK_F1) {
@@ -636,6 +649,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public synchronized void mousePressed(final MouseEvent event) {
 
 		synchronized (this) {
+			
+			// System.err.println("single viewer mousePressed");
 			origin = new Point(event.getPoint());
 			// Get the top left corner of the upper left white circle in the screen's coordinate space
 			Point pul = label5.getLocationOnScreen();
@@ -671,6 +686,13 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			double dy = originScreen.y - culy;
 			System.out.println("Event distance from upper left circle center dx = " + dx + " dy = " + dy);
 
+			String location = "Upper left circle center, " + culx + ", " + culy + ", " + 
+			                  "Upper left corner frame, " + vul.x + ", " + vul.y + ", " +
+					          "Image upper left corner, " + (vul.x + rect.x) + ", " +  (vul.y + rect.y) + ", " +
+			                  "Image lower right corner, " + (vul.x + rect.x + rect.width) + ", " + (vul.y + rect.y + rect.height);
+			                  
+			imageComp.setFullScreenModeLocation(location);
+			
 			// System.err.println("in mouse pressed");
 			int currentSlice0 = imageComp.getSlice();
 
