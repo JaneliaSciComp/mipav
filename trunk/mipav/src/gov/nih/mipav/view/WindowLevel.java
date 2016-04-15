@@ -449,4 +449,13 @@ public class WindowLevel
             kImage.getHistogramFrame().redrawFrames();
         }
     }
+    
+    public float getWindowValue() {
+    	return old_fWindow;
+    }
+    
+    public float getLevelValue() {
+    	return old_fLevel;
+    }
+
 }

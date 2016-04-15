@@ -5955,6 +5955,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		m_kDrawingContext = kContext;
 	}
 	
+	public ScreenCoordinateListener getDrawingContext() {
+		return m_kDrawingContext;
+	}
+	
 	private void setOrientation( int iOrientation )
 	{
 		m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder( m_kImageActive, iOrientation );
@@ -6557,6 +6561,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			m_kCurrentVOI.set(3, kVolumePt3 );
 			m_kCurrentVOI.update();
 		}      
+	}
+	
+	public boolean getDrawVOIflag() {
+		return m_bDrawVOI;
 	}
 
 }
