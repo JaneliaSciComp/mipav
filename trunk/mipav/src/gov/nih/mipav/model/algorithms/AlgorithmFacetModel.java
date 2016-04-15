@@ -12,15 +12,17 @@ import gov.nih.mipav.view.MipavUtil;
 // on Systems, Man, and Cybernetics, Vol. SMC-17, No. 3, May/June 1987, pp. 508-517.
 public  class AlgorithmFacetModel extends AlgorithmBase {
 	// ~ Static fields/initializers
+	// Only FACET_BASED_PEAK_NOISE_REMOVAL, ITERATED_FACET_MODEL, and GRADIENT_BASED_FACET_EDGE_DETECTION
+	// can use 3 by 3 masks.
 	public static final int FACET_BASED_PEAK_NOISE_REMOVAL = 1;
 	public static final int ITERATED_FACET_MODEL = 2;
 	public static final int GRADIENT_BASED_FACET_EDGE_DETECTION = 3;
 	public static final int ZERO_CROSSING_EDGE_DETECTOR = 4;
 	// INTEGRATED_DIRECTIONAL_DERIVATIVE uses only blockSide = 5 or 7.
-	public static final int INTEGRATED_DIRECTIONAL_DERIVATIVE = 5;
+	public static final int INTEGRATED_DIRECTIONAL_DERIVATIVE_ANGLE = 5;
+	public static final int INTEGRATED_DIRECTIONAL_DERIVATIVE_MAGNITUDE = 6;
+	public static final int CORNER_DETECTOR = 7;
 	
-	public static final int DERIVATIVE_ANGLE = 1;
-	public static final int DERIVATIVE_MAGNITUDE = 2;
     // -------------------------------------------------------------------------------------
 	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
@@ -28,35 +30,38 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
 	private int blockSide;
 	
 	// Probability of rejecting a true hypothesis.  A reasonable range for alpha is .01 to .05
+	// Used only in facetBasedPeakNoiseRemoval and gradientBasedFacetEdgeDetection
     private double alpha;
     
     // Tells which of the facet model routines to use
     private int routine;
     
-    private int iterations = 1;
+    // Used only in cornerDetector
+    private double gradientDirectionThreshold = 20.0;
     
     private int xDim;
 	private int yDim;
 	private double buffer[];
 	private double result[];
 	private int blockHalf;
-	private int derivativeResult;
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
-    public AlgorithmFacetModel(ModelImage srcImg, int routine, int blockSide, double alpha, int derivativeResult) {
+    public AlgorithmFacetModel(ModelImage srcImg, int routine, int blockSide, double alpha,
+    		double gradientDirectionThreshold) {
     	super(null, srcImg);
     	this.routine = routine;
     	this.blockSide = blockSide;
     	this.alpha = alpha;
-    	this.derivativeResult = derivativeResult;
+    	this.gradientDirectionThreshold = gradientDirectionThreshold;
     }
     
-    public AlgorithmFacetModel(ModelImage destImg, ModelImage srcImg, int routine, int blockSide, double alpha, int derivativeResult) {
+    public AlgorithmFacetModel(ModelImage destImg, ModelImage srcImg, int routine, int blockSide, double alpha,
+    		double gradientDirectionThreshold) {
     	super(destImg, srcImg);
     	this.routine = routine;
     	this.blockSide = blockSide;
     	this.alpha = alpha;
-    	this.derivativeResult = derivativeResult;;
+    	this.gradientDirectionThreshold = gradientDirectionThreshold;
     }
     
     /**
@@ -67,9 +72,7 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     	int tDim;
     	int nDims;
     	int sliceSize;
-    	double temp[];
     	int x, y, z, t;
-    	int iter;
     	blockHalf = (blockSide - 1)/2;
 
         if (srcImage == null) {
@@ -100,84 +103,77 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         buffer = new double[sliceSize];
         result = new double[sliceSize];
         
-        for (iter = 0; iter < iterations; iter++) {
-	        for (t = 0; t < tDim; t++) {
-	        	for (z = 0; z < zDim; z++) {
-	        		if (iter == 0) {
-		        		try {
-		        			srcImage.exportData((z + t*zDim)*sliceSize, sliceSize, buffer);
-		        		}
-		        		catch(IOException e) {
-		        			MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
-		        			setCompleted(false);
-		        			return;
-		        		}
-	        		} // if (iter == 0)
-	        		for (x = 0; x < xDim; x++) {
-	        			    for (y = 0; y < blockHalf; y++) {
-	        			        result[y*xDim + x] = buffer[y*xDim+x];
-	        			    }
-	        			    for (y = yDim - 1; y > yDim-1-blockHalf; y--) {
-	        			        result[y*xDim + x] = buffer[y*xDim+x];
-	        			    }
-	        		}
-	        		
-	        		for (y = blockHalf; y < yDim-blockHalf; y++) {
-	        			for (x = 0; x < blockHalf; x++) {
-	        			    result[y*xDim + x] = buffer[y*xDim + x];
-	        			}
-	        			for (x = xDim-1; x > xDim-1-blockHalf; x--) {
-	        			    result[y*xDim + x] = buffer[y*xDim + x];
-	        			}
-	        		}
-	        	    switch(routine) {
-	        	    case FACET_BASED_PEAK_NOISE_REMOVAL:
-	        	    	facetBasedPeakNoiseRemoval();
-	        	    	break;
-	        	    case ITERATED_FACET_MODEL:
-	        	    	iteratedFacetModel();
-	        	    	break;
-	        	    case GRADIENT_BASED_FACET_EDGE_DETECTION:
-	        	    	gradientBasedFacetEdgeDetection();
-	        	    	break;
-	        	    case ZERO_CROSSING_EDGE_DETECTOR:
-	        	    	zeroCrossingEdgeDetector();
-	        	    	break;
-	        	    case INTEGRATED_DIRECTIONAL_DERIVATIVE:
-	        	    	integratedDirectionalDerivative();
-	        	    	break;
-	        	    }
-	        	
-	        		if (iter == iterations-1) {
-		        		if (destImage != null) {
-		        			try {
-		        			    destImage.importData((z + t*zDim)*sliceSize, result, false);
-		        			}
-		        			catch(IOException e) {
-		        				MipavUtil.displayError("IOException " + e + " on destImage.importData");
-		        				setCompleted(false);
-		        				return;
-		        			}
-		        		}
-		        		else {
-		        			try {
-		        			    srcImage.importData((z + t*zDim)*sliceSize, result, false);
-		        			}
-		        			catch(IOException e) {
-		        				MipavUtil.displayError("IOException " + e + " on srcImage.importData");
-		        				setCompleted(false);
-		        				return;
-		        			}
-		        		}
-	        		} // if (iter == iterations-1)
-	        		else {
-	        			temp = result;
-	        			result = buffer;
-	        			buffer = temp;
-	        		}
-	        	} // for (z = 0; z < zDim; z++)
-	        } // for (t = 0; t < tDim; t++)
-        } // for (iter = 0; iter < iterations; iter++)
+        for (t = 0; t < tDim; t++) {
+        	for (z = 0; z < zDim; z++) {
+        		try {
+        			srcImage.exportData((z + t*zDim)*sliceSize, sliceSize, buffer);
+        		}
+        		catch(IOException e) {
+        			MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+        			setCompleted(false);
+        			return;
+        		}
+        		for (x = 0; x < xDim; x++) {
+        			    for (y = 0; y < blockHalf; y++) {
+        			        result[y*xDim + x] = buffer[y*xDim+x];
+        			    }
+        			    for (y = yDim - 1; y > yDim-1-blockHalf; y--) {
+        			        result[y*xDim + x] = buffer[y*xDim+x];
+        			    }
+        		}
+        		
+        		for (y = blockHalf; y < yDim-blockHalf; y++) {
+        			for (x = 0; x < blockHalf; x++) {
+        			    result[y*xDim + x] = buffer[y*xDim + x];
+        			}
+        			for (x = xDim-1; x > xDim-1-blockHalf; x--) {
+        			    result[y*xDim + x] = buffer[y*xDim + x];
+        			}
+        		}
+        	    switch(routine) {
+        	    case FACET_BASED_PEAK_NOISE_REMOVAL:
+        	    	facetBasedPeakNoiseRemoval();
+        	    	break;
+        	    case ITERATED_FACET_MODEL:
+        	    	iteratedFacetModel();
+        	    	break;
+        	    case GRADIENT_BASED_FACET_EDGE_DETECTION:
+        	    	gradientBasedFacetEdgeDetection();
+        	    	break;
+        	    case ZERO_CROSSING_EDGE_DETECTOR:
+        	    	zeroCrossingEdgeDetector();
+        	    	break;
+        	    case INTEGRATED_DIRECTIONAL_DERIVATIVE_ANGLE:
+        	    case INTEGRATED_DIRECTIONAL_DERIVATIVE_MAGNITUDE:
+        	    	integratedDirectionalDerivative();
+        	    	break;
+        	    case CORNER_DETECTOR:
+        	    	cornerDetector();
+        	    	break;
+        	    }
+        	
+        		if (destImage != null) {
+        			try {
+        			    destImage.importData((z + t*zDim)*sliceSize, result, false);
+        			}
+        			catch(IOException e) {
+        				MipavUtil.displayError("IOException " + e + " on destImage.importData");
+        				setCompleted(false);
+        				return;
+        			}
+        		}
+        		else {
+        			try {
+        			    srcImage.importData((z + t*zDim)*sliceSize, result, false);
+        			}
+        			catch(IOException e) {
+        				MipavUtil.displayError("IOException " + e + " on srcImage.importData");
+        				setCompleted(false);
+        				return;
+        			}
+        		}
+        	} // for (z = 0; z < zDim; z++)
+        } // for (t = 0; t < tDim; t++)
         if (destImage != null) {
         	destImage.calcMinMax();
         }
@@ -693,6 +689,52 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     	} // for (y = blockHalf; y < yDim-blockHalf; y++)
     }
     
+    private void cornerDetector() {
+    	int x, y;
+    	double k1[] = new double[1];
+    	double k2[] = new double[1];
+    	double k3[] = new double[1];
+    	double k4[] = new double[1];
+    	double k5[] = new double[1];
+    	double k6[] = new double[1];
+    	double k7[] = new double[1];
+    	double k8[] = new double[1];
+    	double k9[] = new double[1];
+    	double k10[] = new double[1];
+    	double sinAngle[] = new double[1];
+    	double cosAngle[] = new double[1];
+    	double gradientAngle[] = new double[1];
+    	double rho[] = new double[1];
+    	boolean edge;
+    	double gradientDirection;
+    	
+    	for (y = blockHalf; y < yDim-blockHalf; y++) {
+        	for (x = blockHalf; x < xDim-blockHalf; x++) {
+        		if (blockSide == 5) {
+        		    bivariateCubicCoefficients5By5(x, y, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, sinAngle, cosAngle, gradientAngle);
+        		}
+        		else {
+        			bivariateCubicCoefficients(x, y, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, sinAngle, cosAngle, gradientAngle);	
+        		}
+        		edge = isEdgePixel(k1[0], k2[0], k3[0], k4[0], k5[0], k6[0], k7[0],
+        	    		k8[0], k9[0], k10[0], sinAngle[0], cosAngle[0], rho);
+        		if (edge) {
+        			gradientDirection = -2.0*(k2[0]*k2[0]*k6[0] - k2[0]*k3[0]*k5[0] + k3[0]*k3[0]*k4[0])/
+        					Math.pow(k2[0]*k2[0] + k3[0]*k3[0],1.5);
+        			if (Math.abs(gradientDirection) > gradientDirectionThreshold) {
+        			    result[y*xDim+x] = 1;
+        			}
+        			else {
+        				result[y*xDim+x] = 0;
+        			}
+        		}
+        		else {
+        			result[y*xDim+x] = 0;
+        		}
+        	} // for (x = blockHalf; x < xDim-blockHalf; x++)
+    	} // for (y = blockHalf; y < yDim-blockHalf; y++)	
+    }
+    
     private void integratedDirectionalDerivative() {
     	int x,y;
     	double D1 = 0.0;
@@ -707,10 +749,10 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         			D2 = rowDerivativeMask7By7(x,y);
         			D2 = columnDerivativeMask7By7(x,y);
         		}
-        		if (derivativeResult == DERIVATIVE_ANGLE) {
+        		if (routine == INTEGRATED_DIRECTIONAL_DERIVATIVE_ANGLE) {
         			result[y*xDim+x] = Math.atan2(D1,D2);
         		}
-        		else if (derivativeResult == DERIVATIVE_MAGNITUDE){
+        		else if (routine == INTEGRATED_DIRECTIONAL_DERIVATIVE_MAGNITUDE){
         		    result[y*xDim+x] = Math.sqrt(D1*D1 + D2*D2);	
         		}
         	} // for (x = blockHalf; x < xDim-blockHalf; x++)
