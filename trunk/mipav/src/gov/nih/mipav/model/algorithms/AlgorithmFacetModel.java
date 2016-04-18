@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewUserInterface;
 
 
 // These routines implement the text in: 1.) Computer and Robot Vision, Volume I, Robert M. Haralick and Linda G. Shapiro,
@@ -74,6 +75,13 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     	int sliceSize;
     	int x, y, z, t;
     	blockHalf = (blockSide - 1)/2;
+    	boolean test = false;
+    	
+    	if (test) {
+    	    testBivariateCubicCoefficients5By5();
+    	    setCompleted(false);
+    	    return;
+    	}
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -457,6 +465,151 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     			+ k9*sinAngle*cosAngle*cosAngle + k10*cosAngle*cosAngle*cosAngle);
     }
     
+    private void testBivariateCubicCoefficients5By5() {
+    	// Kernels for directly estimating the coefficients k1,...,k10 of the bivariate cubic f(y,x) = k1 + k2*y + k3*x
+    	// + k4*y*y + k5*x*y + k6*x*x + k7*y*y*y + k8*x*y*y + k9*x*x*y + k10*x*x*x
+    	blockHalf = 2;
+    	int delx;
+    	int dely;
+    	double denom;
+    	long R0 = 0;
+    	long R1 = 0;
+    	long R2 = 0;
+    	long R3 = 0;
+    	long C0 = 0;
+    	long C1 = 0;
+    	long C2 = 0;
+        long C3 = 0;
+        long dely2;
+        long delx2;
+        long dely4;
+        long delx4;
+        long G;
+        long A;
+        long B;
+        long Q;
+        long T;
+        long U;
+        long V;
+        long W;
+        long Z;
+        long TR1;
+        long QC1;
+        long WR2;
+        long UC1;
+        long ZR1;
+        long VC2;
+        ViewUserInterface UI = ViewUserInterface.getReference();
+    	
+    	denom = 0.0;
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    		    UI.setDataText("k5_numerator["+dely+"]["+delx+"] = " + (delx*dely) + "\n");
+    		    denom += delx * delx * dely * dely;
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	UI.setDataText("k5_denominator = " + denom + "\n");
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		dely2 = dely * dely;
+    		dely4 = dely2 * dely2;
+    		R0 += 1;
+    		R1 += dely2;
+    		R2 += dely4;
+    		R3 += dely4 * dely2;
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+			delx2 = delx * delx;
+			delx4 = delx2 * delx2;
+		    C0 += 1;
+		    C1 += delx2;
+		    C2 += delx4;
+		    C3 += delx4 * delx2;
+		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	G = R0*R2*C0*C2 - R1*R1*C1*C1;
+    	A = R1*R3*C0*C2 - R2*R2*C1*C1;
+    	B = R0*R2*C1*C3 - R1*R1*C2*C2;
+    	Q = C0*(R0*R2 - R1*R1);
+    	T = R0*(C0*C2 - C1*C1);
+    	U = C0*(R1*R3 - R2*R2);
+    	V = C1*(R0*R2 - R1*R1);
+    	W = R1*(C0*C2 - C1*C1);
+    	Z = R0*(C1*C3 - C2*C2);
+    	TR1 = T * R1;
+    	QC1 = Q * C1;
+    	WR2 = W * R2;
+    	UC1 = U * C1;
+    	ZR1 = Z * R1;
+    	VC2 = V * C2;
+    	
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		dely2 = dely * dely;
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    			delx2 = delx * delx;
+    		    UI.setDataText("k1_numerator["+dely+"]["+delx+"] = " + (G - TR1*dely2 - QC1*delx2) + "\n");
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	UI.setDataText("k1_denominator = " + (Q*T) + "\n");
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		dely2 = dely * dely;
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    			delx2 = delx * delx;
+    		    UI.setDataText("k2_numerator["+dely+"]["+delx+"] = " + ((A - WR2*dely2 - UC1*delx2)*dely) + "\n");
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+        UI.setDataText("k2_denominator = " + (U*W) + "\n");
+        for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		dely2 = dely * dely;
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    			delx2 = delx * delx;
+    		    UI.setDataText("k3_numerator["+dely+"]["+delx+"] = " + ((B - ZR1*dely2 - VC2*delx2)*delx) + "\n");
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+        UI.setDataText("k3_denominator = " + (V*Z) + "\n");
+        for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		dely2 = dely * dely;
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    			delx2 = delx * delx;
+    		    UI.setDataText("k4_numerator["+dely+"]["+delx+"] = " + (R0*dely2 - R1) + "\n");
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	UI.setDataText("k4_denominator = " + Q + "\n");
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    			delx2 = delx * delx;
+    		    UI.setDataText("k6_numerator["+dely+"]["+delx+"] = " + (C0*delx2 - C1) + "\n"); 
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	UI.setDataText("k6_denominator = " + T + "\n");
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		dely2 = dely * dely;
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    		    UI.setDataText("k7_numerator["+dely+"]["+delx+"] = " + ((R1*dely2 - R2)*dely) + "\n");
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	UI.setDataText("k7_denominator = " + U + "\n");
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		dely2 = dely * dely;
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    		    UI.setDataText("k8_numerator["+dely+"]["+delx+"] = " + ((R0*dely2 - R1)*delx) + "\n");
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	UI.setDataText("k8_denominator = " + V + "\n");
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    			delx2 = delx * delx;
+    		    UI.setDataText("k9_numerator["+dely+"]["+delx+"] = " + ((C0*delx2 - C1)*dely) + "\n");
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	UI.setDataText("k9_denominator = " + W + "\n");
+    	for (dely = -blockHalf; dely <= blockHalf; dely++) {
+    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+    			delx2 = delx * delx;
+    		    UI.setDataText("k10_numerator[" + dely + "][" + delx + "] = " + ((C1*delx2 - C2)*delx) + "\n");
+    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+    	UI.setDataText("k10_denominator = " + Z + "\n");
+    }
+    
     private void bivariateCubicCoefficients(int x, int y, double k1[], double k2[], double k3[], double k4[],
     		double k5[], double k6[], double k7[], double k8[], double k9[], double k10[], 
     		double sinAngle[], double cosAngle[], double gradientAngle[]) {
@@ -507,19 +660,19 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     	for (dely = -blockHalf; dely <= blockHalf; dely++) {
     		dely2 = dely * dely;
     		dely4 = dely2 * dely2;
-    		for (delx = -blockHalf; delx <= blockHalf; delx++) {
-    			delx2 = delx * delx;
-    			delx4 = delx2 * delx2;
-    		    R0 += 1;
-    		    C0 += 1;
-    		    R1 += dely2;
-    		    C1 += delx2;
-    		    R2 += dely4;
-    		    C2 += delx4;
-    		    R3 += dely4 * dely2;
-    		    C3 += delx4 * delx2;
-    		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
-    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)\
+    		R0 += 1;
+    		R1 += dely2;
+    		R2 += dely4;
+    		R3 += dely4 * dely2;
+    	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
+		for (delx = -blockHalf; delx <= blockHalf; delx++) {
+			delx2 = delx * delx;
+			delx4 = delx2 * delx2;
+		    C0 += 1;
+		    C1 += delx2;
+		    C2 += delx4;
+		    C3 += delx4 * delx2;
+		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	G = R0*R2*C0*C2 - R1*R1*C1*C1;
     	A = R1*R3*C0*C2 - R2*R2*C1*C1;
     	B = R0*R2*C1*C3 - R1*R1*C2*C2;
