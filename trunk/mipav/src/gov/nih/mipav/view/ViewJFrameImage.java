@@ -976,6 +976,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } // Algorithms
         else if (command.equals("Anisotropic diffusion")) {
             new JDialogAnisotropicDiffusion(this, getActiveImage());
+        } else if (command.equals("Facet")) {
+        	new JDialogFacetModel(this, getActiveImage());
         } else if (command.equals("BoundaryAttenuation")) {
             new JDialogBoundaryAttenuation(this, getActiveImage());
         } else if (command.equals("CoherDiff")) {
