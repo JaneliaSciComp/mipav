@@ -306,11 +306,14 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
         		lowestDely = 0;
         		for (dely = -blockHalf; dely <= blockHalf; dely++) {
         	    	for (delx = -blockHalf; delx <= blockHalf; delx++) {
-        	    		if (epsilonSquared[y+dely-blockHalf][x+delx-blockHalf] < lowestEpsilonSquared) {
-        	    			lowestEpsilonSquared = epsilonSquared[y+dely-blockHalf][x+delx-blockHalf];
-        	    			lowestDelx = delx;
-        	    			lowestDely = dely;
-        	    		}
+        	    		if ((y+dely-blockHalf >= 0) && (y+dely-blockHalf < yDim - 2*blockHalf) &&
+        	    			(x+delx-blockHalf >= 0) && (x+delx-blockHalf < xDim - 2*blockHalf)) {
+	        	    		if (epsilonSquared[y+dely-blockHalf][x+delx-blockHalf] < lowestEpsilonSquared) {
+	        	    			lowestEpsilonSquared = epsilonSquared[y+dely-blockHalf][x+delx-blockHalf];
+	        	    			lowestDelx = delx;
+	        	    			lowestDely = dely;
+	        	    		}
+        	    		} // if ((y+dely-blockHalf >= 0) && (y+dely-blockHalf < yDim - 2*blockHalf) &&
         	    	} // for (delx = -blockHalf; delx <= blockHalf; delx++)
         	    } // for (dely = -blockHalf; dely <= blockHalf; dely++)
         		result[y*xDim+x] = a[y+lowestDely-blockHalf][x+lowestDelx-blockHalf]*(-lowestDelx) 
