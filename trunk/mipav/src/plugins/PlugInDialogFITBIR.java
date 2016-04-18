@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
@@ -216,7 +217,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.38";
+    private static final String pluginVersion = "0.39";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -2949,7 +2950,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         final ArrayList<String> diseaseStrings = new ArrayList<String>();
         final ArrayList<String> fieldStrings = new ArrayList<String>();
 
-        final Matcher m = Pattern.compile("(\\w[\\w\\s()]*):\\s+(.+)\\s+-----\\s+").matcher(field);
+        final Matcher m = Pattern.compile("(\\w[\\w\\s\\/()]*):?\\s+(.+)\\s+-----?\\s+").matcher(field);
 
         // get the first info
         if (m.find()) {
@@ -2991,7 +2992,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if (lastMatchIndex != field.length()) {
                 boolean foundFieldMatch = false;
 
-                final Matcher m2 = Pattern.compile("(\\w[\\w\\s()]*):\\s+(.+)\\s*-*").matcher(field.substring(lastMatchIndex));
+                final Matcher m2 = Pattern.compile("(\\w[\\w\\s\\/()]*):?\\s+(.+)\\s*-*").matcher(field.substring(lastMatchIndex));
 
                 if (m2.matches()) {
                     for (int i = 0; i < diseaseStrings.size() && !foundFieldMatch; i++) {
@@ -5168,6 +5169,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String ctKVP = null;
             String ctMA = null;
 
+            String seriesDescription = null;
+            boolean isRestingFMRI = false;
+
             if (fileFormatString.equalsIgnoreCase("dicom")) {
                 final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
@@ -5220,6 +5224,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 if (modalityString.equalsIgnoreCase("magnetic resonance")) {
+                    seriesDescription = ((String) (fileInfoDicom.getTagTable().getValue("0008,103E")));
+                    final String seriesDescriptionLower = seriesDescription.toLowerCase();
+                    if (seriesDescription.toLowerCase().contains("rest")) {
+                        isRestingFMRI = true;
+                    }
+
                     echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
                     repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
                     magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
@@ -5286,6 +5296,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
                         } else if (deName.equalsIgnoreCase("ImgDim5UoMVal")) {
                             // for now...nothing
+                        } else if (deName.equalsIgnoreCase("ImgDim4ExtentTyp")) {
+                            if (img.getNDims() > 3 && Unit.getUnitFromLegacyNum(units[3]).getType() == UnitType.TIME) {
+                                setElementComponentValue(deVal, "Time");
+                            }
                         } else if (deName.equalsIgnoreCase("ImgDim1ResolVal")) {
                             setElementComponentValue(deVal, String.valueOf(res[0]));
                         } else if (deName.equalsIgnoreCase("ImgDim2ResolVal")) {
@@ -5396,6 +5410,17 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     setElementComponentValue(deVal, phaseEncode);
                                 } else if (deName.equalsIgnoreCase("ImgFlowCompnsatnInd")) {
                                     setElementComponentValue(deVal, flowCompensation);
+                                }
+
+                                // ImagingFunctionalMR FS
+                                if (deName.equalsIgnoreCase("ImgPulseSeqTyp")) {
+                                    if (fsData.getStructInfo().getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
+                                        setElementComponentValue(deVal, "fMRI");
+                                    }
+                                } else if (deName.equalsIgnoreCase("ImgFMRITaskTyp")) {
+                                    if (isRestingFMRI) {
+                                        setElementComponentValue(deVal, "Rest");
+                                    }
                                 }
                             } else if (modalityString.equalsIgnoreCase("computed tomography")) {
                                 if (deName.equalsIgnoreCase("ImgCTkVp")) {
