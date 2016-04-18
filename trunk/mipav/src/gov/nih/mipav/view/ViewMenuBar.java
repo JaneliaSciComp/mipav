@@ -182,6 +182,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Zero X non-maximum suppression", "zxsuppression", 0, null,
 										false) }),
 				menuBuilder.buildMenuItem("Extract surface (marching cubes)", "extractSurfaceCubes", 0, null, false),
+				menuBuilder.buildMenuItem("Facet Model", "Facet", 0, null, false),
 				menuBuilder.buildMenuItem("FFT", null, 0, null, false),
 				menuBuilder.makeMenu("Filters (frequency)", false,
 						new JMenuItem[] { menuBuilder.buildMenuItem("High/lowpass", null, 0, null, false),
@@ -1641,6 +1642,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
 			menuBuilder.setMenuItemEnabled("Fuzzy Connectedness", false);
 			menuBuilder.setMenuItemEnabled("Gradient Inverse Smoothing", false);
+			menuBuilder.setMenuItemEnabled("Facet Model",false);
 		} else {
 			menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
 			menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
