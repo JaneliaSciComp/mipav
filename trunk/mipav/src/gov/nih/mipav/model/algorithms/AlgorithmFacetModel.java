@@ -468,6 +468,8 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     private void testBivariateCubicCoefficients5By5() {
     	// Kernels for directly estimating the coefficients k1,...,k10 of the bivariate cubic f(y,x) = k1 + k2*y + k3*x
     	// + k4*y*y + k5*x*y + k6*x*x + k7*y*y*y + k8*x*y*y + k9*x*x*y + k10*x*x*x
+    	// Verified that Figure 8.9 in Computer and Robot Vision for 5 by 5 cubic facet coefficients matches 
+    	// results from equations in Integrated Directional Derivative Gradient Operator appendix.
     	blockHalf = 2;
     	int delx;
     	int dely;
@@ -545,69 +547,69 @@ public  class AlgorithmFacetModel extends AlgorithmBase {
     		dely2 = dely * dely;
     		for (delx = -blockHalf; delx <= blockHalf; delx++) {
     			delx2 = delx * delx;
-    		    UI.setDataText("k1_numerator["+dely+"]["+delx+"] = " + (G - TR1*dely2 - QC1*delx2) + "\n");
+    		    UI.setDataText("k1_numerator["+dely+"]["+delx+"] = " + ((G - TR1*dely2 - QC1*delx2)/700) + "\n");
     		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
-    	UI.setDataText("k1_denominator = " + (Q*T) + "\n");
+    	UI.setDataText("k1_denominator = " + (Q*T/700) + "\n");
     	for (dely = -blockHalf; dely <= blockHalf; dely++) {
     		dely2 = dely * dely;
     		for (delx = -blockHalf; delx <= blockHalf; delx++) {
     			delx2 = delx * delx;
-    		    UI.setDataText("k2_numerator["+dely+"]["+delx+"] = " + ((A - WR2*dely2 - UC1*delx2)*dely) + "\n");
+    		    UI.setDataText("k2_numerator["+dely+"]["+delx+"] = " + ((A - WR2*dely2 - UC1*delx2)*dely/1200) + "\n");
     		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
-        UI.setDataText("k2_denominator = " + (U*W) + "\n");
+        UI.setDataText("k2_denominator = " + (U*W/1200) + "\n");
         for (dely = -blockHalf; dely <= blockHalf; dely++) {
     		dely2 = dely * dely;
     		for (delx = -blockHalf; delx <= blockHalf; delx++) {
     			delx2 = delx * delx;
-    		    UI.setDataText("k3_numerator["+dely+"]["+delx+"] = " + ((B - ZR1*dely2 - VC2*delx2)*delx) + "\n");
+    		    UI.setDataText("k3_numerator["+dely+"]["+delx+"] = " + ((B - ZR1*dely2 - VC2*delx2)*delx/1200) + "\n");
     		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
-        UI.setDataText("k3_denominator = " + (V*Z) + "\n");
+        UI.setDataText("k3_denominator = " + (V*Z/1200) + "\n");
         for (dely = -blockHalf; dely <= blockHalf; dely++) {
     		dely2 = dely * dely;
     		for (delx = -blockHalf; delx <= blockHalf; delx++) {
     			delx2 = delx * delx;
-    		    UI.setDataText("k4_numerator["+dely+"]["+delx+"] = " + (R0*dely2 - R1) + "\n");
+    		    UI.setDataText("k4_numerator["+dely+"]["+delx+"] = " + ((R0*dely2 - R1)/5) + "\n");
     		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
-    	UI.setDataText("k4_denominator = " + Q + "\n");
+    	UI.setDataText("k4_denominator = " + (Q/5) + "\n");
     	for (dely = -blockHalf; dely <= blockHalf; dely++) {
     		for (delx = -blockHalf; delx <= blockHalf; delx++) {
     			delx2 = delx * delx;
-    		    UI.setDataText("k6_numerator["+dely+"]["+delx+"] = " + (C0*delx2 - C1) + "\n"); 
+    		    UI.setDataText("k6_numerator["+dely+"]["+delx+"] = " + ((C0*delx2 - C1)/5) + "\n"); 
     		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
-    	UI.setDataText("k6_denominator = " + T + "\n");
+    	UI.setDataText("k6_denominator = " + (T/5) + "\n");
     	for (dely = -blockHalf; dely <= blockHalf; dely++) {
     		dely2 = dely * dely;
     		for (delx = -blockHalf; delx <= blockHalf; delx++) {
-    		    UI.setDataText("k7_numerator["+dely+"]["+delx+"] = " + ((R1*dely2 - R2)*dely) + "\n");
+    		    UI.setDataText("k7_numerator["+dely+"]["+delx+"] = " + ((R1*dely2 - R2)*dely/12) + "\n");
     		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
-    	UI.setDataText("k7_denominator = " + U + "\n");
+    	UI.setDataText("k7_denominator = " + (U/12) + "\n");
     	for (dely = -blockHalf; dely <= blockHalf; dely++) {
     		dely2 = dely * dely;
     		for (delx = -blockHalf; delx <= blockHalf; delx++) {
-    		    UI.setDataText("k8_numerator["+dely+"]["+delx+"] = " + ((R0*dely2 - R1)*delx) + "\n");
+    		    UI.setDataText("k8_numerator["+dely+"]["+delx+"] = " + ((R0*dely2 - R1)*delx/5) + "\n");
     		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
-    	UI.setDataText("k8_denominator = " + V + "\n");
+    	UI.setDataText("k8_denominator = " + (V/5) + "\n");
     	for (dely = -blockHalf; dely <= blockHalf; dely++) {
     		for (delx = -blockHalf; delx <= blockHalf; delx++) {
     			delx2 = delx * delx;
-    		    UI.setDataText("k9_numerator["+dely+"]["+delx+"] = " + ((C0*delx2 - C1)*dely) + "\n");
+    		    UI.setDataText("k9_numerator["+dely+"]["+delx+"] = " + ((C0*delx2 - C1)*dely/5) + "\n");
     		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
-    	UI.setDataText("k9_denominator = " + W + "\n");
+    	UI.setDataText("k9_denominator = " + (W/5) + "\n");
     	for (dely = -blockHalf; dely <= blockHalf; dely++) {
     		for (delx = -blockHalf; delx <= blockHalf; delx++) {
     			delx2 = delx * delx;
-    		    UI.setDataText("k10_numerator[" + dely + "][" + delx + "] = " + ((C1*delx2 - C2)*delx) + "\n");
+    		    UI.setDataText("k10_numerator[" + dely + "][" + delx + "] = " + ((C1*delx2 - C2)*delx/12) + "\n");
     		} // for (delx = -blockHalf; delx <= blockHalf; delx++)
     	} // for (dely = -blockHalf; dely <= blockHalf; dely++)
-    	UI.setDataText("k10_denominator = " + Z + "\n");
+    	UI.setDataText("k10_denominator = " + (Z/12) + "\n");
     }
     
     private void bivariateCubicCoefficients(int x, int y, double k1[], double k2[], double k3[], double k4[],
