@@ -57,7 +57,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	private int zDim;
 	private JLabel label5;
 	
-	
+	private JComboBox comboBoxImage;
 	
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -66,7 +66,19 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		super(_imageA, null);
 		currentFrame = frame;
 		UI = ViewUserInterface.getReference();
-		readMultlmodalImages();
+		
+		comboBoxImage = new JComboBox();
+		comboBoxImage.setBackground(Color.white);
+		buildComboBoxImage();
+		Object selected = comboBoxImage.getSelectedItem();
+		if (selected != null) {
+			comboBoxImage.setSelectedItem(selected);
+			String selectedName = (String) comboBoxImage.getSelectedItem();
+			images = ViewUserInterface.getReference().getRegisteredImageByName(
+					selectedName);
+			equalScaleImage();
+		}
+		
 		getFramesInfo();
 		initLayout();
 		startRecording();
@@ -129,9 +141,9 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		gbc.weighty = 0;
 
 		ImageIcon cornerImage;
-		cornerImage = MipavUtil.getIcon("WhiteCircle.png");
+		cornerImage = MipavUtil.getIcon("WhiteCircle_550.png");
 		ImageIcon blackImage;
-		blackImage = MipavUtil.getIcon("BlackCircle.png");
+		blackImage = MipavUtil.getIcon("BlackCircle_550.png");
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.setBackground(Color.black);
@@ -229,7 +241,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		setUndecorated(true);
-
 		
 		imageComp.addMouseWheelListener(this);
 		imageComp.addMouseListener(this);
@@ -244,6 +255,9 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		pack();
 		this.validate();
 		setSize(screenWidth, screenHeight);
+		setMinimumSize(getSize());
+		setVisible(true);
+		setResizable(false);
 	}
 	
 	public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
@@ -286,66 +300,21 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	    	
 	}
 	
+	
 	/**
-	 * File chooser to select target image directory.
+	 * Builds a list of images to operate on from the template image.
 	 */
-	private void readMultlmodalImages() {
-		imagesChooser.setDialogTitle("Open Target Images");
+	private void buildComboBoxImage() {
+		ViewUserInterface UI;
 
-		if (UI.getDefaultDirectory() != null) {
-			final File file = new File(UI.getDefaultDirectory());
+		comboBoxImage.removeAllItems();
 
-			if (file != null) {
-				imagesChooser.setCurrentDirectory(file);
-			}
-		} else {
-			imagesChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-		}
+		UI = ViewUserInterface.getReference();
 
-		imagesChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-		final int returnValue = imagesChooser.showOpenDialog(UI.getMainFrame());
-
-		if (returnValue == JFileChooser.APPROVE_OPTION) {
-			String imageDirectory = String.valueOf(imagesChooser.getSelectedFile()) + File.separatorChar;
-			// System.err.println("imageDirectory = " + imageDirectory);
-			File fileDir = new File(imageDirectory);
-			readImages(fileDir);
-
-		} else {
-			return;
-		}
-
-	}
-
-	private void readImages(File dir) {
-		int i;
-		FileIO imageIO = null;
-		if (dir.isDirectory()) {
-			String[] children = dir.list();
-			for (i = 0; i < children.length; i++) {
-				traverse(new File(dir, children[i]));
-			}
-
-			try {
-				// read target images
-				imageIO = new FileIO();
-
-				
-				System.err.println(imageNames);
-				images = imageIO.readImage(imageNames);
-				// new ViewJFrameImage(images[i]);
-				
-
-				equalScaleImage();
-
-				// for ( i = 0; i < imageNamesIndex; i++ ) {
-				// new ViewJFrameImage(images[3]);
-				// }
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
+		Enumeration<String> names = UI.getRegisteredImageNames();
+		while (names.hasMoreElements()) {
+			String name = names.nextElement();
+			comboBoxImage.addItem(name);
 		}
 	}
 
