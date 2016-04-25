@@ -1,8 +1,11 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.awt.Color;
 import java.io.IOException;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -67,6 +70,10 @@ public class AlgorithmMSER extends AlgorithmBase {
 	
 	private final static int VL_MSER_VOID_NODE = Integer.MAX_VALUE;
 	
+	private final static int POINTS_ONLY = 1;
+	private final static int ELLIPSES_ONLY = 2;
+	private final static int POINTS_AND_ELLIPSES = 3;
+	
 	// Must be a non-negative number
 	private double delta;
 	
@@ -93,6 +100,8 @@ public class AlgorithmMSER extends AlgorithmBase {
 	// Enable or disable dark_on_bright regions.  dark_on_bright must be 0 or 1.  Default 1.
 	private int dark_on_bright = 1;
 	
+	private int outputVOIType;
+	
 	private int exit_code = 0;
 	
 	private int ndims = 2;
@@ -103,9 +112,10 @@ public class AlgorithmMSER extends AlgorithmBase {
 	
 	private int sliceSize;
 	
-	public AlgorithmMSER(ModelImage destImage, ModelImage srcImage, double delta, double epsilon, boolean duplicates,
-			double max_area, double min_area, double max_variation, double min_diversity, int bright_on_dark, int dark_on_bright) {
-	    super(destImage, srcImage);	
+	public AlgorithmMSER(ModelImage srcImage, double delta, double epsilon, boolean duplicates,
+			double max_area, double min_area, double max_variation, double min_diversity, int bright_on_dark, int dark_on_bright,
+			int outputVOIType) {
+	    super(null, srcImage);	
 	    this.delta = delta;
 	    this.epsilon = epsilon;
 	    this.duplicates = duplicates;
@@ -115,6 +125,7 @@ public class AlgorithmMSER extends AlgorithmBase {
 	    this.min_diversity = min_diversity;
 	    this.bright_on_dark = bright_on_dark;
 	    this.dark_on_bright = dark_on_bright;
+	    this.outputVOIType = outputVOIType;
 	}
 	
 	
@@ -122,8 +133,16 @@ public class AlgorithmMSER extends AlgorithmBase {
      * Start algorithm.
      */
     public void runAlgorithm() {
-    	VlMserFilt filt;;
+    	VlMserFilt filt;
     	VlMserFilt filtinv;
+    	int regions[];
+    	int regionsinv[];
+    	int nregions = 0;
+    	int i;
+    	VOI newPtVOI;
+    	int xArr[] = new int[1];
+    	int yArr[] = new int[1];
+    	int zArr[] = new int[1];
 
         if (srcImage == null) {
             displayError("MSER: Source Image is null");
@@ -198,7 +217,81 @@ public class AlgorithmMSER extends AlgorithmBase {
         
         if (dark_on_bright != 0) {
         	vl_mser_process(filt, data);
+        	
+        	// Save result
+        	nregions = filt.nmer;
+        	regions = filt.mer;
+        	
+        	if ((outputVOIType == POINTS_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES)) {
+        	    for (i = 0; i <  nregions; ++i) {
+        	    	newPtVOI = new VOI((short) (i), String.valueOf(i), VOI.POINT, -1.0f);
+                    newPtVOI.setColor(Color.RED);
+                    xArr[0] = regions[i] % dims[0];
+                    yArr[0] = regions[i] / dims[0];
+                    zArr[0] = 0;
+                    newPtVOI.importCurve(xArr, yArr, zArr);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));
+                    srcImage.registerVOI(newPtVOI);	
+        	    } // for (i = 0; i <  nregions; ++i)
+        	} // if ((outputVOIType == POINTS_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES))
+        	
+        	if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES)) {
+        		vl_mser_ell_fit(filt);
+        	} // if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES))
         } // if (dark_on_bright != 0)
+    }
+    
+    private void vl_mser_ell_fit(VlMserFilt f) {
+        // shortcuts
+    	int nel = f.nel;
+    	int dof = f.dof;
+    	int dims[] = f.dims;
+    	int ndims = f.ndims;
+    	int subs[] = f.subs;
+    	int njoins = f.njoins;
+    	int joins[] = f.joins;
+    	VlMserReg r[] = f.r;
+    	int mer[] = f.mer;
+    	int nmer = f.nmer;
+    	double acc[] = f.acc;
+    	double ell[] = f.ell;
+    	
+    	int d, index, i, j;
+    	
+    	// Already fit?
+    	if (f.nell == f.nmer) {
+    		return;
+    	}
+    	
+    	// Make room
+    	if (f.rell < f.nmer) {
+    		if (f.ell != null) {
+    			f.ell = null;
+    		}
+    		f.ell = new double[f.nmer * f.dof];
+    		f.rell = f.nmer;
+    	} // if (f.rell < f.nmer)
+    	
+    	if (f.acc == null) {
+    		f.acc = new double[f.nel];
+    	}
+    	
+    	acc = f.acc;
+    	ell = f.ell;
+    	
+    	// Integrate moments
+    	// For each dof
+    	for (d = 0; d < f.dof; ++d) {
+    	    
+    		// Start from the upper-left pixel(0,0,,,0)
+    		subs = new int[ndims];
+    		
+    		// Step 1: Fill acc pretending each region has only one pixel
+    		if (d < ndims) {
+    			
+    		} // if (d < ndims)
+    	} // for (d = 0; d < f.dof; ++d) 
     }
     
     private void vl_mser_process(VlMserFilt f, final short im[]) {
@@ -249,148 +342,393 @@ public class AlgorithmMSER extends AlgorithmBase {
 	    		j = --buckets[v];
 	    		perm[j] = i;
 	    	}
-	    	
-	    	// Initialize the forest with all void nodes
-	    	for (i = 0; i < nel; ++i) {
-	    		r[i].parent = VL_MSER_VOID_NODE;
-	    	}
-	    	
-	    	// Compute regions and count extremal regions
-	    	
-	    	// In the following:
-	    	
-	    	// idx: index of the current pixel
-	    	// val: intensity of the current pixel
-	    	// r_idx: index of the root of the current pixel
-	    	// n_idx: index of the neighbors of the current pixel
-	    	// nr_idex index of the root of the neighbor of the current pixel
-	    	
-	    	// Process each pixel by increasing intensity
-	    	for (i = 0; i < nel; ++i) {
-	    		// Pop next node xi
-	    		int idx = perm[i];
-	    		short val = im[idx];
-	    		int r_idx;
-	    		
-	    		// Add the pixel to the forest as a root for now
-	    		r[idx].parent = idx;
-	    		r[idx].shortcut = idx;
-	    		r[idx].area = 1;
-	    		r[idx].height = 1;
-	    		
-	    		r_idx = idx;
-	    		
-	    		// Convert the index idx into the subscript subs; also initialize
-	    		// dsubs to (-1, -1, ..., -1)
-	    		{
-	    			int temp = idx;
-	    			for (k = ndims - 1; k >= 0; --k) {
-	    				dsubs[k] = -1;
-	    				subs[k] = temp/strides[k];
-	    				temp = temp % strides[k];
-	    			} 
-	    		}
-	    		
-	    		//Examine the neighbors of the current pixel
-	    		done_all_neighbors: while (true) {
-	    			int n_idx = 0;
-	    			boolean good = true;
-	    			
-	    			// Compute the neighbor subscript as nsubs+sub, the corresponding neighborindex nindex and
-	    			// check that the neighbor is within the image domain.
-	    			
-	    			for (k = 0; k < ndims && good; ++k) {
-	    				int temp = dsubs[k] + subs[k];
-	    				good &= (0 <= temp) && (temp < dims[k]);
-	    				n_idx += temp * strides[k];
-	    			}
-	    			
-	    			// The neighbor should be processed if the following conditions are met:
-	    			// 1. The neighbor is within image boundaries.
-	    			// 2. The neighbor is indeed different from the current node
-	    			//    (the opposite happens when dsub = (0, 0, ..., 0)
-	    			// 3. The neighbor is already in the forest, meaning that is has already been processed.
-	    			if (good && n_idx != idx && r[n_idx].parent != VL_MSER_VOID_NODE) {
-	    			    short nr_val = 0;
-	    			    int nr_idx = 0;
-	    			    int hgt = r[r_idx].height;
-	    			    int n_hgt = r[nr_idx].height;
-	    			    
-	    			    // Now we join the two subtrees rooted at
-	    			    // R_IDX = ROOT(IDX)
-	    			    // NR_IDX = ROOT(N_IDX).
-	    			    // Note that R_IDX = ROOT(IDX) might change as we process more neighbors,
-	    			    // so we keep updating it.
-	    			    
-	    			    r_idx = climb(r, idx);
-	    			    nr_idx = climb(r, n_idx);
-	    			    
-	    			    // At this point we have three possibilities:
-	    			    // (A) ROOT(IDX) == ROOT(NR_IDX).  In this case the two trees have
-	    			    //     already been joined and we do not do anything.
-	    			    
-	    			    // (B) I(ROOT(IDX)) == I(ROOT(NR_IDX)).  In this case the pixel
-	    			    //     IDX is extending an extremal region with the same
-	    			    //     intensity value.  Since ROOT(NR_IDX) will NOT be an
-	    			    //     extremal region of the full image, ROOT(IDX) can be
-	    			    //     safely added as children of ROOT(NR_IDX) if this
-	    			    //     reduces the height according to the union rank
-	    			    //     heuristic.
-	    			    
-	    			    // (C) I(ROOT(IDX)) > I(ROOT(NR_IDX)).  In this case the pixel
-	    			    //     IDX is starting a new extremal region.  Thus ROOT (NR_IDX)
-	    			    //     will be an extremal region of the final image and the
-	    			    //     only possibility is to add ROOT(NR_IDX) as children of
-	    			    //     ROOT(IDX), which becomes parent.
-	    			    
-	    			    if (r_idx != nr_idx) { // skip if (A)
-	    			        nr_val = im[nr_idx];
-	    			        if (nr_val == val && hgt < n_hgt) {
-	    			            // ROOT(IDX) becomes the child
-	    			        	r[r_idx].parent = nr_idx;
-	    			        	r[r_idx].shortcut = nr_idx;
-	    			        	r[nr_idx].area += r[r_idx].area;
-	    			        	r[nr_idx].height = Math.max(n_hgt, hgt+1);
-	    			        	
-	    			        	joins[njoins++] = r_idx;
-	    			        } // if (nr_val == val && hgt < n_hgt)
-	    			        else{
-	    			        	// Cases ROOT(IDX) becomes the parent
-	    			        	r[nr_idx].parent = r_idx;
-	    			        	r[nr_idx].shortcut = r_idx;
-	    			        	r[r_idx].area += r[nr_idx].area;
-	    			        	r[r_idx].height = Math.max(hgt, n_hgt+1);
-	    			        	
-	    			        	joins[njoins++] = nr_idx;
-	    			        	
-	    			        	// Count if extremal
-	    			        	if (nr_val != val) {
-	    			        		++ner;
-	    			        	}
-	    			        } // Check b versus c
-	    			    } // if (r_idx != nr_idx) Check a vs b or c
-	    			} // if (good && n_idx != idx && r[n_idx].parent != VL_MSER_VOID_NODE) Neighbor done
-	    			
-	    			// Move to next neighbor
-	    			k = 0;
-	    			while (++dsubs[k] >1) {
-	    				dsubs[k++] = -1;
-	    				if (k == ndims) {
-	    					break done_all_neighbors;
-	    				}
-	    			} // while (++dsubs[k] >1)
-	    		} // done_all_neighbors: while (true)
-	    	} // for (i = 0; i < nel; ++i) Next pixel
-	    	
-	    	// The last root is extremal too.
-	    	++ner;
-	    	
-	    	// Save back
-	    	f.njoins = njoins;
-	    	f.stats.num_extremal = ner;
-	    	
-	    	// Extract extremal regions
     	}
+	    	
+    	// Initialize the forest with all void nodes
+    	for (i = 0; i < nel; ++i) {
+    		r[i].parent = VL_MSER_VOID_NODE;
+    	}
+    	
+    	// Compute regions and count extremal regions
+    	
+    	// In the following:
+    	
+    	// idx: index of the current pixel
+    	// val: intensity of the current pixel
+    	// r_idx: index of the root of the current pixel
+    	// n_idx: index of the neighbors of the current pixel
+    	// nr_idex index of the root of the neighbor of the current pixel
+    	
+    	// Process each pixel by increasing intensity
+    	for (i = 0; i < nel; ++i) {
+    		// Pop next node xi
+    		int idx = perm[i];
+    		short val = im[idx];
+    		int r_idx;
+    		
+    		// Add the pixel to the forest as a root for now
+    		r[idx].parent = idx;
+    		r[idx].shortcut = idx;
+    		r[idx].area = 1;
+    		r[idx].height = 1;
+    		
+    		r_idx = idx;
+    		
+    		// Convert the index idx into the subscript subs; also initialize
+    		// dsubs to (-1, -1, ..., -1)
+    		{
+    			int temp = idx;
+    			for (k = ndims - 1; k >= 0; --k) {
+    				dsubs[k] = -1;
+    				subs[k] = temp/strides[k];
+    				temp = temp % strides[k];
+    			} 
+    		}
+    		
+    		//Examine the neighbors of the current pixel
+    		done_all_neighbors: while (true) {
+    			int n_idx = 0;
+    			boolean good = true;
+    			
+    			// Compute the neighbor subscript as nsubs+sub, the corresponding neighborindex nindex and
+    			// check that the neighbor is within the image domain.
+    			
+    			for (k = 0; k < ndims && good; ++k) {
+    				int temp = dsubs[k] + subs[k];
+    				good &= (0 <= temp) && (temp < dims[k]);
+    				n_idx += temp * strides[k];
+    			}
+    			
+    			// The neighbor should be processed if the following conditions are met:
+    			// 1. The neighbor is within image boundaries.
+    			// 2. The neighbor is indeed different from the current node
+    			//    (the opposite happens when dsub = (0, 0, ..., 0)
+    			// 3. The neighbor is already in the forest, meaning that is has already been processed.
+    			if (good && n_idx != idx && r[n_idx].parent != VL_MSER_VOID_NODE) {
+    			    short nr_val = 0;
+    			    int nr_idx = 0;
+    			    int hgt = r[r_idx].height;
+    			    int n_hgt = r[nr_idx].height;
+    			    
+    			    // Now we join the two subtrees rooted at
+    			    // R_IDX = ROOT(IDX)
+    			    // NR_IDX = ROOT(N_IDX).
+    			    // Note that R_IDX = ROOT(IDX) might change as we process more neighbors,
+    			    // so we keep updating it.
+    			    
+    			    r_idx = climb(r, idx);
+    			    nr_idx = climb(r, n_idx);
+    			    
+    			    // At this point we have three possibilities:
+    			    // (A) ROOT(IDX) == ROOT(NR_IDX).  In this case the two trees have
+    			    //     already been joined and we do not do anything.
+    			    
+    			    // (B) I(ROOT(IDX)) == I(ROOT(NR_IDX)).  In this case the pixel
+    			    //     IDX is extending an extremal region with the same
+    			    //     intensity value.  Since ROOT(NR_IDX) will NOT be an
+    			    //     extremal region of the full image, ROOT(IDX) can be
+    			    //     safely added as children of ROOT(NR_IDX) if this
+    			    //     reduces the height according to the union rank
+    			    //     heuristic.
+    			    
+    			    // (C) I(ROOT(IDX)) > I(ROOT(NR_IDX)).  In this case the pixel
+    			    //     IDX is starting a new extremal region.  Thus ROOT (NR_IDX)
+    			    //     will be an extremal region of the final image and the
+    			    //     only possibility is to add ROOT(NR_IDX) as children of
+    			    //     ROOT(IDX), which becomes parent.
+    			    
+    			    if (r_idx != nr_idx) { // skip if (A)
+    			        nr_val = im[nr_idx];
+    			        if (nr_val == val && hgt < n_hgt) {
+    			            // ROOT(IDX) becomes the child
+    			        	r[r_idx].parent = nr_idx;
+    			        	r[r_idx].shortcut = nr_idx;
+    			        	r[nr_idx].area += r[r_idx].area;
+    			        	r[nr_idx].height = Math.max(n_hgt, hgt+1);
+    			        	
+    			        	joins[njoins++] = r_idx;
+    			        } // if (nr_val == val && hgt < n_hgt)
+    			        else{
+    			        	// Cases ROOT(IDX) becomes the parent
+    			        	r[nr_idx].parent = r_idx;
+    			        	r[nr_idx].shortcut = r_idx;
+    			        	r[r_idx].area += r[nr_idx].area;
+    			        	r[r_idx].height = Math.max(hgt, n_hgt+1);
+    			        	
+    			        	joins[njoins++] = nr_idx;
+    			        	
+    			        	// Count if extremal
+    			        	if (nr_val != val) {
+    			        		++ner;
+    			        	}
+    			        } // Check b versus c
+    			    } // if (r_idx != nr_idx) Check a vs b or c
+    			} // if (good && n_idx != idx && r[n_idx].parent != VL_MSER_VOID_NODE) Neighbor done
+    			
+    			// Move to next neighbor
+    			k = 0;
+    			while (++dsubs[k] >1) {
+    				dsubs[k++] = -1;
+    				if (k == ndims) {
+    					break done_all_neighbors;
+    				}
+    			} // while (++dsubs[k] >1)
+    		} // done_all_neighbors: while (true)
+    	} // for (i = 0; i < nel; ++i) Next pixel
+    	
+    	// The last root is extremal too.
+    	++ner;
+    	
+    	// Save back
+    	f.njoins = njoins;
+    	f.stats.num_extremal = ner;
+    	
+    	// Extract extremal regions
+    	// Extremal regions are extracted and stored into the array ER.  The 
+    	// structure R is also updated so that .SHORTCUT indexes the
+    	// corresponding extremal region if any (otherwise it is set to 
+    	// VOID).
+    	
+    	// Make room
+    	if (f.rer < ner) {
+    		if (er != null) {
+    			er = null;
+    		}
+    		f.er = er = new VlMserExtrReg[ner];
+    		f.rer = ner;
+    	} // if (f.rer < ner)
+    	
+    	// Save back
+    	f.nmer = ner;
+    	
+    	// Count again
+    	ner = 0;
+    	
+    	// Scan all regions Xi
+    	for (i = 0; i < nel; ++i) {
+    		
+    		// Pop next node xi
+    		int idx = perm[i];
+    		
+    		short val = im[idx];
+    		int p_idx = r[idx].parent;
+    		short p_val = im[p_idx];
+    		
+    		// Is extremal?
+    		boolean is_extr = (p_val > val) || idx == p_idx;
+    		
+    		if (is_extr) {
+    		    
+    			// If so, add it.
+                er[ner].index = idx;
+                er[ner].parent = ner;
+                er[ner].value = im[idx];
+                er[ner].area = r[idx].area;
+                
+                // Link this region to this extremal region
+                r[idx].shortcut = ner;
+                
+                // Increase count
+                ++ner;
+    		} // if (is_extr)
+    		else {
+    			// Link this region to void
+    			r[idx].shortcut = VL_MSER_VOID_NODE;
+    		}
+    	} // for (i = 0; i < nel; ++i)
+    	
+    	// Link extremal regions in a tree
+    	for (i = 0; i < ner; ++i) {
+    		
+    		int idx = er[i].index;
+    		
+    		do {
+    			idx = r[idx].parent;
+    		} while (r[idx].shortcut == VL_MSER_VOID_NODE);
+    		
+    		er[i].parent = r[idx].shortcut;
+    		er[i].shortcut = i;
+    	} // for (i = 0; i < ner; ++i) 
+    	
+    	// Compute variability of +DELTA branches
+    	// For each extremal region xi of value VAL we look for the biggest
+    	// parent that has value not greater than VAL+DELTA.  This is dubbed
+    	// 'top parent'.
+    	
+    	for (i = 0; i < ner; ++i) {
+    	
+    		// Xj is the currentand Xj are the parents
+    		int top_val = er[i].value + delta;
+    		int top = er[i].shortcut;
+    		
+    		// Examine all parents
+    		while (true) {
+    			int next = er[top].parent;
+    			int next_val = er[next].value;
+    			
+    			// Break if:
+    			// There is no node above the top or
+    			// the next node is above the top value.
+    		    if (next == top || next_val > top_val) {
+    		    	break;
+    		    }
+    		    
+    		    // So next could be top
+    		    top = next;
+    		} // while (true)
+    		
+    		// Calculate branch variation
+    		{
+    			int area = er[i].area;
+    			int area_top = er[top].area;
+    			er[i].variation = (double)(area_top - area)/area;
+    			er[i].max_stable = 1;
+    		}
+    		
+    		// Optimization: since extremal regions are processed by
+    		// increasing intensity, all next extremal regions being processed
+    		// have value at least equal to the one of Xi.  If any of them has
+    		// parent the parent of Xi (this comprises the parent itself), we
+    		// can safely skip most intermediate node along the branch and
+    		// skip directly to the top to start our search.
+    		{
+    			int parent = er[i].parent;
+    			int curr = er[parent].shortcut;
+    			er[parent].shortcut = Math.max(top, curr);
+    		}
+    	} // for (i = 0; i < ner; ++i)
+    	
+    	// Select maximally stable branches
+    	
+    	nmer = ner;
+    	for (i = 0; i < ner; ++i) {
+    	    int parent = er[i].parent;
+    	    short val = er[i].value;
+    	    double var = er[i].variation;
+    	    short p_val = er[parent].value;
+    	    double p_var = er[parent].variation;
+    	    int loser;
+    	    
+    	    // Notice that R_parent = R_{l+1} only if p_val = val + 1.  If not,
+    	    // this and the parent region coincide and there is nothing to do.
+    	    if (p_val > val + 1) {
+    	    	continue;
+    	    }
+    	    
+    	    // Decide which one to keep and put that in loser
+    	    if (var < p_var) {
+    	    	loser = parent;
+    	    }
+    	    else {
+    	    	loser = i;
+    	    }
+    	    
+    	    // Make loser NON maximally stable
+    	    if (er[loser].max_stable != 0) {
+    	    	--nmer;
+    	    	er[loser].max_stable = 0;
+    	    }
+    	} // for (i = 0; i < ner; ++i)
+    	
+        f.stats.num_unstable = ner - nmer;
+        
+        // Further filtering
+        // It is critical for correct duplicate detection to remove regions
+        // from the bottom (smallest one first).
+        {
+        	double max_area = f.max_area * nel;
+        	double min_area = f.min_area * nel;
+        	double max_var = f.max_variation;
+        	double min_div = f.min_diversity;
+        	
+        	// Scan all extremal regions (intensity value order)
+        	for (i = ner-1; i >= 0; --i) {
+        		
+        		// Process only maximally stable extremal regions
+        		if (er[i].max_stable == 0) {
+        			continue;
+        		}
+        		
+        		if (er[i].variation >= max_var) {
+        			++nbad;
+        			er[i].max_stable = 0;
+        			--nmer;
+        			continue;
+        		} // if (er[i].variation >= max_var)
+        		
+        		if (er[i].area > max_area) {
+        			++nbig;
+        			er[i].max_stable = 0;
+        			--nmer;
+        			continue;
+        		} // if (er[i].area > max_area)
+        		
+        		if (er[i].area < min_area) {
+        			++nsmall;
+        			er[i].max_stable = 0;
+        			--nmer;
+        			continue;
+        		} // if (er[i].area < min_area)
+        		
+        		// Remove duplicates
+        		if (min_div < 1.0) {
+        			int parent = er[i].parent;
+        			int area, p_area;
+        			double div;
+        			
+        			// Check all but the root user mser
+        			if (parent != i) {
+        			
+        				// Search for the maximally stable parent region
+        				while (er[parent].max_stable == 0) {
+        					int next = er[parent].parent;
+        					if (next == parent) {
+        						break;
+        					}
+        					parent = next;
+        				} // while (er[parent].max_stable == 0)
+        				
+        				// Compare with the parent region; if the current and parent
+        				// regions are too similar, keep only the parent.
+        				area = er[i].area;
+        				p_area = er[parent].area;
+        				div = (double)(p_area - area)/(double)area;
+        				
+        				if (div < min_div) {
+        					++ndup;
+        					er[i].max_stable = 0;
+                			--nmer;
+        				}
+        			} // if (parent != i)
+        		} // if (min_div < 1.0)
+        	} // for (i = ner-1; i >= 0; --i) Check next region
+        	
+        	f.stats.num_abs_unstable = nbad;
+        	f.stats.num_too_big = nbig;
+        	f.stats.num_too_small = nsmall;
+        	f.stats.num_duplicates = ndup;
+        }
+        
+        // Save the result
+        
+        // Make room
+        if (f.rmer < nmer) {
+            if (mer != null) {
+            	mer = null;
+            }
+            f.mer = mer = new int[nmer];
+            f.rmer = nmer;
+        } // if (f.rmer < nmer)
+        
+        // Save back
+        f.nmer = nmer;
+        
+        j = 0;
+        for (i = 0; i < ner; ++i) {
+        	if (er[i].max_stable != 0) {
+        		mer[j++] = er[i].index;
+        	}
+        }
     }
     
     
