@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -137,12 +138,44 @@ public class AlgorithmMSER extends AlgorithmBase {
     	VlMserFilt filtinv;
     	int regions[];
     	int regionsinv[];
+    	double frames[];
+    	double framesinv[];
     	int nregions = 0;
-    	int i;
+    	int nregionsinv = 0;
+    	int nframes = 0;
+    	int nframesinv = 0;
+    	int i, j, dof;
     	VOI newPtVOI;
+    	VOI newEllipseVOI;
     	int xArr[] = new int[1];
     	int yArr[] = new int[1];
     	int zArr[] = new int[1];
+    	float xArrFloat[];
+    	float yArrFloat[];
+    	float zArrFloat[];
+    	int numVOIPoint1 = 0;
+    	int numVOIEllipse1 = 0;
+    	double centerX;
+		double centerY;
+		double S11;
+		double S12;
+		double S22;
+		double diff;
+		double root;
+		double sum;
+		double eigenValueLarge;
+		double eigenValueSmall;
+		double semiMajorAxis;
+		double semiMinorAxis;
+		double phi; // Angle of major axis with x axis
+		double cosphi;
+		double sinphi;
+		double alpha;
+		double cosalpha;
+		double sinalpha;
+		float xf;
+		float yf;
+		int n;
 
         if (srcImage == null) {
             displayError("MSER: Source Image is null");
@@ -234,10 +267,82 @@ public class AlgorithmMSER extends AlgorithmBase {
                     ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i));
                     srcImage.registerVOI(newPtVOI);	
         	    } // for (i = 0; i <  nregions; ++i)
+        	    numVOIPoint1 = nregions;
         	} // if ((outputVOIType == POINTS_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES))
         	
         	if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES)) {
         		vl_mser_ell_fit(filt);
+        		nframes = filt.nell;
+        		dof = filt.dof;
+        		frames = filt.ell;
+        		for (i = 0; i < nframes; i++) {
+        			centerX = frames[i*5];
+        			centerY = frames[i*5+1];
+        			S11 = frames[i*5+2];
+        			S12 = frames[i*5+3];
+        			S22 = frames[i*5+4];
+        			diff = S11 - S22;
+        			root = Math.sqrt(diff*diff + 4.0*S12*S12);
+        			sum = S11 + S22;
+        			eigenValueLarge = (sum + root)/2.0;
+        			eigenValueSmall = (sum - root)/2.0;
+        			semiMajorAxis = Math.sqrt(eigenValueLarge);
+        			semiMinorAxis = Math.sqrt(eigenValueSmall);
+        			xArrFloat = new float[720];
+    			    yArrFloat = new float[720];
+    			    zArrFloat = new float[720];
+    			    newEllipseVOI = new VOI((short)(numVOIPoint1 + i), String.valueOf(i), VOI.CONTOUR, -1.0f);
+    			    newEllipseVOI.setColor(Color.RED);
+        			if ((S11 == S22) && (S12 == 0.0)) {
+        				// Ellipse is a circle
+        				n = 0;
+        			    for (j = 0; j < 720; j++) {
+                            alpha = j * Math.PI/360.0;
+                            cosalpha = Math.cos(alpha);
+                            sinalpha = Math.sin(alpha);
+                            xf = (float)(centerX + semiMajorAxis * cosalpha);
+                            if ((xf >= 0) && (xf <= dims[0]-1)) {
+                                yf = (float)(centerY + semiMajorAxis * sinalpha);
+                                if ((yf >= 0) && (yf <= dims[1]-1)) {
+                                    xArrFloat[n] = xf;
+                                    yArrFloat[n++] = yf;
+                                }
+                            }
+                        }
+                        newEllipseVOI.importCurve(xArrFloat, yArrFloat, zArrFloat);
+                        ((VOIContour)(newEllipseVOI.getCurves().elementAt(0))).setFixed(true);
+                        srcImage.registerVOI(newEllipseVOI);
+        			}
+        			else  {
+        			    if (S11 == S22) {
+        			        phi = Math.PI/4.0;	
+        			    }
+        			    else {
+        			    	phi = Math.atan2(2*S12, S11 - S22)/2.0;
+        			    }
+        			    cosphi = Math.cos(phi);
+        			    sinphi = Math.sin(phi);
+        			    
+        			    n = 0;
+        			    for (j = 0; j < 720; j++) {
+                            alpha = j * Math.PI/360.0;
+                            cosalpha = Math.cos(alpha);
+                            sinalpha = Math.sin(alpha);
+                            xf = (float)(centerX + semiMajorAxis * cosalpha * cosphi - semiMinorAxis * sinalpha * sinphi);
+                            if ((xf >= 0) && (xf <= dims[0]-1)) {
+                                yf = (float)(centerY + semiMajorAxis * cosalpha * sinphi + semiMinorAxis * sinalpha * cosphi);
+                                if ((yf >= 0) && (yf <= dims[1]-1)) {
+                                    xArrFloat[n] = xf;
+                                    yArrFloat[n++] = yf;
+                                }
+                            }
+                        }
+                        newEllipseVOI.importCurve(xArrFloat, yArrFloat, zArrFloat);
+                        ((VOIContour)(newEllipseVOI.getCurves().elementAt(0))).setFixed(true);
+                        srcImage.registerVOI(newEllipseVOI);
+        			}
+        		} // for (i = 0; i < nframes; i++) 
+        		numVOIEllipse1 = nframes;
         	} // if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES))
         } // if (dark_on_bright != 0)
     }
@@ -289,9 +394,83 @@ public class AlgorithmMSER extends AlgorithmBase {
     		
     		// Step 1: Fill acc pretending each region has only one pixel
     		if (d < ndims) {
+    		    // 1 -order
     			
+    		    for (index = 0; index < nel; ++index) {
+    		        acc[index] = subs[d];
+    		        adv(ndims, dims, subs);
+    		    }
     		} // if (d < ndims)
-    	} // for (d = 0; d < f.dof; ++d) 
+    		else {
+    			// 2-order
+    			// Map the dof d to a second order moment E[x_i x_j]
+    			i = d - ndims;
+    			j = 0;
+    			while (i > j) {
+    				i -= j + 1;
+    				j++;
+    			}
+    			// Initialize acc with x_i * x_j
+    			for (index = 0; index < nel; ++index) {
+    				acc[index] = subs[i] *subs[j];
+    				adv(ndims, dims, subs);
+    			}
+    		} // else
+    		
+    		// Step 2: integrate
+    		for (i = 0; i < njoins; ++i) {
+    			index = joins[i];
+    			int parent = r[index].parent;
+    			acc[parent] += acc[index];
+    		}
+    		
+    		// Step 3: Save back to ellipse
+    		for (i = 0; i < nmer; ++i) {
+    			int idx = mer[i];
+    			ell[d + dof*i] = acc[idx];
+    		}
+    	} // for (d = 0; d < f.dof; ++d) next dof
+    	
+    	// Compute central moments
+    	for (index = 0; index < nmer; ++index) {
+    	    // float *pt = ell + index * dof;
+    		int idx = mer[index];
+    		double area = r[idx].area;
+    		
+    		for (d = 0; d < dof; ++d) {
+    		    ell[index * dof + d] /= area;
+    		    
+    		    if (d >= ndims) {
+    		    	// Remove squared mean from moment to get variance
+    		    	i = d - ndims;
+    		    	j = 0;
+    		    	while (i > j) {
+    		    		i -= j+1;
+    		    		j++;
+    		    	}
+    		    	ell[index * dof + d] -= ell[index * dof + i] * ell[index * dof + j];
+    		    } // if (d >= ndims)
+    		} // for (d = 0; d < dof; ++d)
+    	} // for (index = 0; index < nmer; ++index)
+    	
+    	// Save back
+    	f.nell = nmer;
+    }
+    
+    /**
+     * Advance N-dimensional subscript
+     * @param ndims
+     * @param dims
+     * @param subs subscript to advance
+     */
+    private void adv(int ndims, int dims[], int subs[]) {
+    	int d = 0;
+    	while (d < ndims) {
+    		if (++subs[d] < dims[d]) {
+    			return;
+    		}
+    		subs[d++] = 0;
+    	}
     }
     
     private void vl_mser_process(VlMserFilt f, final short im[]) {
