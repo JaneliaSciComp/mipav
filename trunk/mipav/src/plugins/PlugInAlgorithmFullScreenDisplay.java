@@ -270,8 +270,8 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
         frame.setUndecorated(true);
         screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
         screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
-        widthRatio = (double) (screenWidth - 160) / (double) xDim;
-        heightRatio = (double) (screenHeight - 158) / (double) yDim;
+        widthRatio = (double) (screenWidth - 330) / (double) xDim;
+        heightRatio = (double) (screenHeight - 328) / (double) yDim;
         backgroundImage = new BufferedImage(screenWidth, screenHeight, BufferedImage.TYPE_INT_ARGB);
         final int screenLength = screenWidth * screenHeight;
         screenData = new int[screenLength * 4];
@@ -285,29 +285,29 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
         if (widthRatio > heightRatio) {
             // Can only expand by the heightRatio
             expWidth = (int) Math.floor(xDim * heightRatio);
-            leftPadding = (screenWidth - 160 - expWidth) / 2;
+            leftPadding = (screenWidth - 330 - expWidth) / 2;
             zoomX = (double)expWidth/(double)xDim;
-            zoomY = (double)(screenHeight - 158)/(double)yDim;
+            zoomY = (double)(screenHeight - 328)/(double)yDim;
             // Print center of upper left icon
-            // System.out.println("Upper left icon center x = " + (40 + leftPadding/2) + " , y = " + 39);
-            xMinRef = (40 + leftPadding/2);
-            yMinRef = 39;
-            // System.out.println("Lower right icon center x = " + (120 + 3*leftPadding/2 + expWidth) + " , y = " + (screenHeight - 40));
+            // System.out.println("Upper left icon center x = " + (82 + leftPadding/2) + " , y = " + 82);
+            xMinRef = (82 + leftPadding/2);
+            yMinRef = 82;
+            // System.out.println("Lower right icon center x = " + (120 + 3*leftPadding/2 + expWidth) + " , y = " + (screenHeight - 82));
             xMaxRef = (120 + 3*leftPadding/2 + expWidth);
-            yMaxRef = (screenHeight - 40);
+            yMaxRef = (screenHeight - 82);
         }
         else {
         	// Can only expand by the widthRatio
             expHeight = (int) Math.floor(yDim * widthRatio);
-            topPadding = (screenHeight - 158 - expHeight) / 2;
-            zoomX = (double)(screenWidth - 160)/(double)xDim;
+            topPadding = (screenHeight - 328 - expHeight) / 2;
+            zoomX = (double)(screenWidth - 330)/(double)xDim;
             zoomY = (double)expHeight/(double)yDim;
             // Print center of upper left icon
-            // System.out.println("Upper left icon center x = " + 40 + " , y = " + (39 + topPadding));
-            xMinRef = 40;
-            yMinRef = (39 + topPadding);
-            // System.out.println("Lower right icon center x = " + (screenWidth - 40) + ", y = " + (118 + topPadding + expHeight));
-            xMaxRef = (screenWidth - 40);
+            // System.out.println("Upper left icon center x = " + 82 + " , y = " + (82 + topPadding));
+            xMinRef = 82;
+            yMinRef = (82 + topPadding);
+            // System.out.println("Lower right icon center x = " + (screenWidth - 82) + ", y = " + (118 + topPadding + expHeight));
+            xMaxRef = (screenWidth - 82);
             xMinRef = (118 + topPadding + expHeight);
         }
         frame.setBackground(Color.BLACK);
@@ -317,20 +317,20 @@ public class PlugInAlgorithmFullScreenDisplay extends AlgorithmBase implements M
                 super.paint(g);
                 g.drawImage(backgroundImage, 0, 0, screenWidth, screenHeight, null);
                 if (widthRatio > heightRatio) {
-                    g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, screenHeight - 158, null);
+                    g.drawImage(inputImage, 165 + leftPadding, 158, expWidth, screenHeight - 328, null);
                     if (cornerImage != null) {
-                        g.drawImage(cornerImage, leftPadding/2, 0, 80, 79, null);
-                        g.drawImage(cornerImage, 80 + 3*leftPadding/2 + expWidth, 0, 80, 79, null);
-                        g.drawImage(cornerImage, leftPadding/2, screenHeight - 79, 80, 79, null);
-                        g.drawImage(cornerImage, 80 + 3*leftPadding/2 + expWidth, screenHeight - 79, 80, 79, null);
+                        g.drawImage(cornerImage, leftPadding/2, 0, 165, 158, null);
+                        g.drawImage(cornerImage, 165 + 3*leftPadding/2 + expWidth, 0, 165, 158, null);
+                        g.drawImage(cornerImage, leftPadding/2, screenHeight - 158, 165, 158, null);
+                        g.drawImage(cornerImage, 165 + 3*leftPadding/2 + expWidth, screenHeight - 158, 165, 158, null);
                     } // if (cornerImage != null)
                 } else {
-                    g.drawImage(inputImage, 80, 79 + topPadding, screenWidth - 160, expHeight, null);
+                    g.drawImage(inputImage, 165, 158 + topPadding, screenWidth - 330, expHeight, null);
                     if (cornerImage != null) {
-                        g.drawImage(cornerImage, 0, topPadding, 80, 79, null);
-                        g.drawImage(cornerImage, screenWidth - 80, topPadding, 80, 79, null);
-                        g.drawImage(cornerImage, 0, 79 + topPadding + expHeight, 80, 79, null);
-                        g.drawImage(cornerImage, screenWidth - 80,79 + topPadding + expHeight, 80, 79, null);
+                        g.drawImage(cornerImage, 0, topPadding, 165, 158, null);
+                        g.drawImage(cornerImage, screenWidth - 165, topPadding, 165, 158, null);
+                        g.drawImage(cornerImage, 0, 158 + topPadding + expHeight, 165, 158, null);
+                        g.drawImage(cornerImage, screenWidth - 165,158 + topPadding + expHeight, 165, 158, null);
                     } // if (cornerImage != null)
                 }
             }
@@ -463,10 +463,10 @@ public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
         	}
         	inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
         	if (widthRatio > heightRatio) {
-        	    frame.repaint(80 + leftPadding, 79, expWidth, screenHeight - 158);
+        	    frame.repaint(165 + leftPadding, 158, expWidth, screenHeight - 328);
         	}
         	else {
-        		frame.repaint(80, 79 + topPadding, screenWidth - 160, expHeight);
+        		frame.repaint(165, 158 + topPadding, screenWidth - 330, expHeight);
         	}
         	
 	    	if ( MipavUtil.isEyeTrackingEnabled() ) {
@@ -485,13 +485,13 @@ public void mouseDragged(final MouseEvent mouseEvent) {
     int xS, yS;
     int i;
     if (widthRatio > heightRatio) {
-        xS = (int)((mouseEvent.getX() - (80 + leftPadding))/zoomX);
-        yS = (int)((mouseEvent.getY() - 79)/zoomY);
-        //g.drawImage(inputImage, 80 + leftPadding, 79, expWidth, screenHeight - 158, this);
+        xS = (int)((mouseEvent.getX() - (165 + leftPadding))/zoomX);
+        yS = (int)((mouseEvent.getY() - 158)/zoomY);
+        //g.drawImage(inputImage, 165 + leftPadding, 158, expWidth, screenHeight - 328, this);
     } else {
-        xS = (int)((mouseEvent.getX() - 80)/zoomX);
-        yS = (int)((mouseEvent.getY() - (79 + topPadding))/zoomY);
-        //g.drawImage(inputImage, 80, 79 + topPadding, screenWidth - 160, expHeight, this);
+        xS = (int)((mouseEvent.getX() - 165)/zoomX);
+        yS = (int)((mouseEvent.getY() - (158 + topPadding))/zoomY);
+        //g.drawImage(inputImage, 165, 158 + topPadding, screenWidth - 330, expHeight, this);
     }
     if ( (xS < 0) || (xS >= xDim) || (yS < 0) || (yS >= yDim)) {
         return;
@@ -558,10 +558,10 @@ public void mouseDragged(final MouseEvent mouseEvent) {
     }
     inputImage.getRaster().setPixels(0, 0, xDim, yDim, bufferData);
     if (widthRatio > heightRatio) {
-	    frame.repaint(80 + leftPadding, 79, expWidth, screenHeight - 158);
+	    frame.repaint(165 + leftPadding, 158, expWidth, screenHeight - 328);
 	}
 	else {
-		frame.repaint(80, 79 + topPadding, screenWidth - 160, expHeight);
+		frame.repaint(165, 158 + topPadding, screenWidth - 330, expHeight);
 	}
     frame.setCursor(MipavUtil.winLevelCursor);
     
