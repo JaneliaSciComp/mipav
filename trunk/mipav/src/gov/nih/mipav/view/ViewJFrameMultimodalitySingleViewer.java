@@ -251,13 +251,16 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		GraphicsDevice[] gs = ge.getScreenDevices();
+		System.err.println("devices = " + gs.length);
 		gs[0].setFullScreenWindow(this);
-		pack();
-		this.validate();
+	
 		setSize(screenWidth, screenHeight);
 		setMinimumSize(getSize());
 		setVisible(true);
 		setResizable(false);
+		
+		pack();
+		this.validate();
 	}
 	
 	public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
@@ -338,6 +341,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageFrame.setLocation(screenWidth, screenHeight);
 		imageComp = imageFrame.getComponentImage();
 		imageComp.setName("MultiViewSingle");
+		imageComp.setEyetrackerRecordingMode(ViewJComponentEditImage.SingleFrameEyetrackerMode);
 		
 			
 		compW = imageComp.getWidth();
@@ -363,20 +367,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		
 		
 
-	}
-
-	private void traverse(File file) {
-		String dirName = file.toString();
-		// System.err.println(dirName);
-		int begin = dirName.lastIndexOf(File.separator) + 1;
-		int end = dirName.length();
-
-	
-		if (dirName.substring(begin, end).startsWith("t2w") && dirName.substring(begin, end).endsWith(".xml")) {
-			imageNames = file.toString();
-		}
-
-	
 	}
 
 	// ************************************************************************
@@ -619,7 +609,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 		synchronized (this) {
 			
-			// System.err.println("single viewer mousePressed");
+			System.err.println("single viewer mousePressed");
 			origin = new Point(event.getPoint());
 			// Get the top left corner of the upper left white circle in the screen's coordinate space
 			Point pul = label5.getLocationOnScreen();

@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ScrollCorrector;
+import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -103,6 +104,7 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements
 			String selectedName = (String) comboBoxImage.getSelectedItem();
 			image = ViewUserInterface.getReference().getRegisteredImageByName(
 					selectedName);
+			image.getParentFrame().getComponentImage().setEyetrackerRecordingMode(ViewJComponentEditImage.PluginEyetrackerMode);
 		}
 		comboBoxImage.addActionListener(this);
 		comboBoxImage.setActionCommand("ImageBrowse");
@@ -216,7 +218,7 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements
 		int z;
 		Image cornerImage;
 		try {
-			cornerImage = MipavUtil.getIconImage("WhiteCircle.png");
+			cornerImage = MipavUtil.getIconImage("WhiteCircle_550.png");
 		} catch (final FileNotFoundException e) {
 			MipavUtil.displayError("Eye tracker landmark image not found.");
 			e.printStackTrace();
@@ -226,6 +228,7 @@ public class PlugInDialogFullScreenDisplay extends JDialogBase implements
 			final FileIO fileIO = new FileIO();
 			final boolean multiFile = false;
 			image = fileIO.readImage(fileName, directory, multiFile, null);
+			image.getParentFrame().getComponentImage().setEyetrackerRecordingMode(ViewJComponentEditImage.PluginEyetrackerMode);
 		}
 
 		/*

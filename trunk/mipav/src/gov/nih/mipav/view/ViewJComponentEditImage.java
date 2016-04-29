@@ -444,7 +444,17 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	private boolean makingCheckerboard = false;
 	private int[] bandSpacing;
 	
+	// For eye tracker full screen recording mode, set the full screen landmark points related location parameter. 
 	private String refPtsLocation;
+	
+	// Eye tracker recording mode. 
+	private int eyeTrackerRecordingMode;
+	// single frame eye tracker recording mode
+	public static int SingleFrameEyetrackerMode = 0;
+	// multiframe eye tracker recording mode
+	public static int MultiFrameEyetrackerMode = 1;
+	// sing frame plug-in eye tracker recording mode;
+	public static int PluginEyetrackerMode = 2;
 	
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2703,8 +2713,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             return;
         }
 
-        // System.err.println("viewJComponentEditImage mousePressed: " + refPtsLocation);
-        if ( MipavUtil.isEyeTrackingEnabled() ) {
+       
+        System.err.println("viewJComponentEditImage mousePressed: " + refPtsLocation);
+        if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
 			if (refPtsLocation != null) {
 				String imageTimeStamp = getImageTimeStamp();
 				Point mouseScreen = mouseEvent.getLocationOnScreen();
@@ -2713,6 +2724,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 						+ "imageLocation" + ", " + xS + ", " + yS);
 			}
         } 
+         
         
         // save the state of the shift button
         mousePressIsShiftDown = mouseEvent.isShiftDown();
@@ -2739,15 +2751,15 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
 
         if ( (cursorMode == ViewJComponentBase.ZOOMING_IN) || (cursorMode == ViewJComponentBase.ZOOMING_OUT)) {
-            // int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor int yS =
-            // getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
+            // int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor 
+            // int yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
         	getActiveImage().updateVOIs();
         	float zoomMagX = getZoomMagnitudeX(mouseEvent.getButton() == MouseEvent.BUTTON3);
         	float zoomMagY = getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3);
             ((ViewJFrameImage) frame).updateFrame(zoomMagX, zoomMagY, xS, yS);
 
-            /*
-            if ( MipavUtil.isEyeTrackingEnabled() ) {
+           
+            if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode) {
 	            String imageTimeStamp = getImageTimeStamp();
 	            String zoom_parameter = "";
 	            if ( cursorMode == ViewJComponentBase.ZOOMING_IN ) {
@@ -2757,7 +2769,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	            }
 	        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom, " + "Mouse pressed, " + zoom_parameter + ", " + zoomMagX + ", " +  xS + ", " + yS);  
             }
-            */ 
+            
             
             if (mouseEvent.isShiftDown() == false) {
                 cursorMode = ViewJComponentBase.DEFAULT;
@@ -2916,22 +2928,26 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         }
 
                         ((ViewJFrameImage) frame).incSlice();
-                        /*
-                        if ( MipavUtil.isEyeTrackingEnabled() ) {
+                        
+                       
+                        if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode) {
                         	String imageTimeStamp = getImageTimeStamp();
                         	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, " + " increase, " + 0 + ", " +  xCoord + ", " + yCoord);   
                         }
-                        */ 
+                        
+                        
                         
                     } else {
                     	
                         ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f, xCoord, yCoord);
-                        /*
-                        if ( MipavUtil.isEyeTrackingEnabled() ) {
+                        
+                        
+                        if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode) {
                         	String imageTimeStamp = getImageTimeStamp();
                         	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, " + " zoom in, " + 0 + ", " +  xCoord + ", " + yCoord);      
                         }
-                        */ 
+                         
+                         
                     }
                 } else {
 
@@ -2949,21 +2965,25 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         }
 
                         ((ViewJFrameImage) frame).decSlice();
-                        /*
-                        if ( MipavUtil.isEyeTrackingEnabled() ) {
+                        
+                       
+                        if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode ) {
                         	String imageTimeStamp = getImageTimeStamp();
                         	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, " + " decrease, " + 0 + ", " +  xCoord + ", " + yCoord);   
                         }
-                        */ 
+                        
+                         
                     } else {
                     	
                         ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f, xCoord, yCoord);
-                        /*
-                        if ( MipavUtil.isEyeTrackingEnabled() ) {
+                        
+                       
+                        if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode) {
                         	String imageTimeStamp = getImageTimeStamp();
                         	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, " + " zoom out, " + 0 + ", " +  xCoord + ", " + yCoord);   
                         }
-                        */ 
+                         
+                         
                     }
                 }
         		
@@ -5811,8 +5831,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                      m_kWinLevel.updateWinLevel(fX, fY, !winLevelSet, m_kPatientSlice.getActiveLookupTable(), imageActive);
                     setCursor(MipavUtil.winLevelCursor);
                    
-                    if ( MipavUtil.isEyeTrackingEnabled() ) {
+                    
+                    if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
                 
+                    	
                     	if (refPtsLocation != null) {
             				String imageTimeStamp = getImageTimeStamp();
             				Point mouseScreen = mouseEvent.getLocationOnScreen();
@@ -5821,8 +5843,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             				+ " alphaBlend, " + alphaBlend + ", " + "Window, " + m_kWinLevel.getWindowValue() + 
             				", " + "Level, " + m_kWinLevel.getLevelValue());
             			}
+            			 
+                    	// String imageTimeStamp = getImageTimeStamp();
                     	// MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Win level, " + "Right mouse button, " + " alphaBlend, " + alphaBlend + ", " +  xS + ", " + yS);    
                     }
+                     
                   
                     
                     if ( !winLevelSet) {
@@ -7330,6 +7355,14 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 				+ landmarkPoints[2] + ", " + landmarkPoints[3] + ", ");
 	   */ 
 		return (strDate + ", " + "imageName" + ", " + imageName + ", " + "sliceNumber" + ", " + sliceNumber + ", ");
+	}
+	
+	/**
+	 * Set the eye tracking recording mode type
+	 * @param modeType
+	 */
+	public void setEyetrackerRecordingMode(int modeType) {
+		eyeTrackerRecordingMode = modeType;
 	}
 	
 	private void recordLineMeasure() {
