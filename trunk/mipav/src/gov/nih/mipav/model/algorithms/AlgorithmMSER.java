@@ -76,34 +76,28 @@ public class AlgorithmMSER extends AlgorithmBase {
 	private final static int POINTS_AND_ELLIPSES = 3;
 	
 	// Must be a non-negative number
-	private double delta;
-	
-	private double epsilon;
-	
-	// Keep or remove duplicates
-	private boolean duplicates;
+	private double delta = 5.0;
 	
 	// Maximum region (relative) area.  Must be in the [0,1] range.
-	private double max_area;
+	private double max_area = 0.75;
 	
 	// Minimum region (relative) area.  Must be in the [0,1] range.
+	// Default is 3.0/sliceSize;
 	private double min_area;
 	
 	// Maximum absolute region stability.  Must be a non-negative number.
-	private double max_variation;
+	private double max_variation = 0.25;
 	
 	// Must be in the [0,1] range.
-	private double min_diversity;
+	private double min_diversity = 0.2;
 	
-	// Enable or disable bright_on_dark regions.  bright_on_dark must be 0 or 1.  Default 1.
-	private int bright_on_dark = 1;
+	// Enable or disable bright_on_dark regions.  Default enabled
+	private boolean bright_on_dark = true;
 	
-	// Enable or disable dark_on_bright regions.  dark_on_bright must be 0 or 1.  Default 1.
-	private int dark_on_bright = 1;
+	// Enable or disable dark_on_bright regions.  Default enabled.
+	private boolean dark_on_bright = true;
 	
 	private int outputVOIType;
-	
-	private int exit_code = 0;
 	
 	private int ndims = 2;
 	
@@ -113,13 +107,10 @@ public class AlgorithmMSER extends AlgorithmBase {
 	
 	private int sliceSize;
 	
-	public AlgorithmMSER(ModelImage srcImage, double delta, double epsilon, boolean duplicates,
-			double max_area, double min_area, double max_variation, double min_diversity, int bright_on_dark, int dark_on_bright,
-			int outputVOIType) {
+	public AlgorithmMSER(ModelImage srcImage, double delta, double max_area, double min_area, double max_variation, 
+			double min_diversity, boolean bright_on_dark, boolean dark_on_bright, int outputVOIType) {
 	    super(null, srcImage);	
 	    this.delta = delta;
-	    this.epsilon = epsilon;
-	    this.duplicates = duplicates;
 	    this.max_area = max_area;
 	    this.min_area = min_area;
 	    this.max_variation = max_variation;
@@ -144,7 +135,8 @@ public class AlgorithmMSER extends AlgorithmBase {
     	int nregionsinv = 0;
     	int nframes = 0;
     	int nframesinv = 0;
-    	int i, j, dof;
+    	int i, j;
+    	// int dof;
     	VOI newPtVOI;
     	VOI newEllipseVOI;
     	int xArr[] = new int[1];
@@ -155,6 +147,7 @@ public class AlgorithmMSER extends AlgorithmBase {
     	float zArrFloat[];
     	int numVOIPoint1 = 0;
     	int numVOIEllipse1 = 0;
+    	int numVOIPoint2 = 0;
     	double centerX;
 		double centerY;
 		double S11;
@@ -176,6 +169,7 @@ public class AlgorithmMSER extends AlgorithmBase {
 		float xf;
 		float yf;
 		int n;
+		short datainv[];
 
         if (srcImage == null) {
             displayError("MSER: Source Image is null");
@@ -248,7 +242,7 @@ public class AlgorithmMSER extends AlgorithmBase {
         Preferences.debug("MSER: max_variation = " + filt.max_variation + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("MSER: min_diversity = " + filt.min_diversity + "\n", Preferences.DEBUG_ALGORITHM);
         
-        if (dark_on_bright != 0) {
+        if (dark_on_bright) {
         	vl_mser_process(filt, data);
         	
         	// Save result
@@ -273,7 +267,7 @@ public class AlgorithmMSER extends AlgorithmBase {
         	if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES)) {
         		vl_mser_ell_fit(filt);
         		nframes = filt.nell;
-        		dof = filt.dof;
+        		//dof = filt.dof;
         		frames = filt.ell;
         		for (i = 0; i < nframes; i++) {
         			centerX = frames[i*5];
@@ -344,7 +338,122 @@ public class AlgorithmMSER extends AlgorithmBase {
         		} // for (i = 0; i < nframes; i++) 
         		numVOIEllipse1 = nframes;
         	} // if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES))
-        } // if (dark_on_bright != 0)
+        } // if (dark_on_bright)
+        
+        if (bright_on_dark) {
+            datainv = new short[sliceSize];
+            for (i = 0; i < sliceSize; i++) {
+            	datainv[i] = (short)(255 - data[i]);
+            }
+            
+            vl_mser_process(filtinv, datainv);
+            
+            // Save result
+            nregionsinv = filtinv.nmer;
+        	regionsinv = filtinv.mer;
+        	
+        	if ((outputVOIType == POINTS_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES)) {
+        	    for (i = 0; i <  nregionsinv; ++i) {
+        	    	newPtVOI = new VOI((short) (numVOIPoint1 + numVOIEllipse1 + i), 
+        	    			String.valueOf(i + Math.max(numVOIPoint1, numVOIEllipse1)), VOI.POINT, -1.0f);
+                    newPtVOI.setColor(Color.GREEN);
+                    xArr[0] = regionsinv[i] % dims[0];
+                    yArr[0] = regionsinv[i] / dims[0];
+                    zArr[0] = 0;
+                    newPtVOI.importCurve(xArr, yArr, zArr);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setLabel(String.valueOf(i + Math.max(numVOIPoint1, numVOIEllipse1)));
+                    srcImage.registerVOI(newPtVOI);	
+        	    } // for (i = 0; i <  nregionsinv; ++i)
+        	    numVOIPoint2 = nregionsinv;
+        	} // if ((outputVOIType == POINTS_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES))
+        	
+        	if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES)) {
+        		vl_mser_ell_fit(filtinv);
+        		nframesinv = filtinv.nell;
+        		//dof = filtinv.dof;
+        		framesinv = filtinv.ell;
+        		for (i = 0; i < nframesinv; i++) {
+        			centerX = framesinv[i*5];
+        			centerY = framesinv[i*5+1];
+        			S11 = framesinv[i*5+2];
+        			S12 = framesinv[i*5+3];
+        			S22 = framesinv[i*5+4];
+        			diff = S11 - S22;
+        			root = Math.sqrt(diff*diff + 4.0*S12*S12);
+        			sum = S11 + S22;
+        			eigenValueLarge = (sum + root)/2.0;
+        			eigenValueSmall = (sum - root)/2.0;
+        			semiMajorAxis = Math.sqrt(eigenValueLarge);
+        			semiMinorAxis = Math.sqrt(eigenValueSmall);
+        			xArrFloat = new float[720];
+    			    yArrFloat = new float[720];
+    			    zArrFloat = new float[720];
+    			    newEllipseVOI = new VOI((short)(numVOIPoint1 + numVOIEllipse1 + numVOIPoint2 + i), 
+    			    		String.valueOf(i + Math.max(numVOIPoint1, numVOIEllipse1)), VOI.CONTOUR, -1.0f);
+    			    newEllipseVOI.setColor(Color.GREEN);
+        			if ((S11 == S22) && (S12 == 0.0)) {
+        				// Ellipse is a circle
+        				n = 0;
+        			    for (j = 0; j < 720; j++) {
+                            alpha = j * Math.PI/360.0;
+                            cosalpha = Math.cos(alpha);
+                            sinalpha = Math.sin(alpha);
+                            xf = (float)(centerX + semiMajorAxis * cosalpha);
+                            if ((xf >= 0) && (xf <= dims[0]-1)) {
+                                yf = (float)(centerY + semiMajorAxis * sinalpha);
+                                if ((yf >= 0) && (yf <= dims[1]-1)) {
+                                    xArrFloat[n] = xf;
+                                    yArrFloat[n++] = yf;
+                                }
+                            }
+                        }
+                        newEllipseVOI.importCurve(xArrFloat, yArrFloat, zArrFloat);
+                        ((VOIContour)(newEllipseVOI.getCurves().elementAt(0))).setFixed(true);
+                        srcImage.registerVOI(newEllipseVOI);
+        			}
+        			else  {
+        			    if (S11 == S22) {
+        			        phi = Math.PI/4.0;	
+        			    }
+        			    else {
+        			    	phi = Math.atan2(2*S12, S11 - S22)/2.0;
+        			    }
+        			    cosphi = Math.cos(phi);
+        			    sinphi = Math.sin(phi);
+        			    
+        			    n = 0;
+        			    for (j = 0; j < 720; j++) {
+                            alpha = j * Math.PI/360.0;
+                            cosalpha = Math.cos(alpha);
+                            sinalpha = Math.sin(alpha);
+                            xf = (float)(centerX + semiMajorAxis * cosalpha * cosphi - semiMinorAxis * sinalpha * sinphi);
+                            if ((xf >= 0) && (xf <= dims[0]-1)) {
+                                yf = (float)(centerY + semiMajorAxis * cosalpha * sinphi + semiMinorAxis * sinalpha * cosphi);
+                                if ((yf >= 0) && (yf <= dims[1]-1)) {
+                                    xArrFloat[n] = xf;
+                                    yArrFloat[n++] = yf;
+                                }
+                            }
+                        }
+                        newEllipseVOI.importCurve(xArrFloat, yArrFloat, zArrFloat);
+                        ((VOIContour)(newEllipseVOI.getCurves().elementAt(0))).setFixed(true);
+                        srcImage.registerVOI(newEllipseVOI);
+        			}
+        		} // for (i = 0; i < nframesinv; i++) 
+        	} // if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES))
+        } // if (bright_on_dark)
+        
+        // Release filter
+        vl_mser_delete(filt);
+        vl_mser_delete(filtinv);
+        
+        // Release image data
+        data = null;
+        datainv = null;
+        
+        setCompleted(true);
+        return;
     }
     
     private void vl_mser_ell_fit(VlMserFilt f) {
@@ -455,6 +564,53 @@ public class AlgorithmMSER extends AlgorithmBase {
     	
     	// Save back
     	f.nell = nmer;
+    }
+    
+    /**
+     * Delete MSER filter
+     * This function releases the MSER filter and all its resources
+     * @param f MSER filter to be deleted
+     */
+    private void vl_mser_delete(VlMserFilt f) {
+    	if (f != null) {
+    		if (f.acc != null) {
+    			f.acc = null;
+    		}
+    		if (f.ell != null) {
+    			f.ell = null;
+    		}
+    		
+    		if (f.er != null) {
+    			f.er = null;
+    		}
+    		if (f.r != null) {
+    			f.r = null;
+    		}
+    		if (f.joins != null) {
+    			f.joins = null;
+    		}
+    		if (f.perm != null) {
+    			f.perm = null;
+    		}
+    		
+    		if (f.strides != null) {
+    			f.strides = null;
+    		}
+    		if (f.dsubs != null) {
+    			f.dsubs = null;
+    		}
+    		if (f.subs != null) {
+    			f.subs = null;
+    		}
+    		if (f.dims != null) {
+    			f.dims = null;
+    		}
+    		
+    		if (f.mer != null) {
+    			f.mer = null;
+    		}
+    		f = null;
+    	} // if (f != null)
     }
     
     /**
@@ -1024,17 +1180,23 @@ public class AlgorithmMSER extends AlgorithmBase {
     
     private class VlMserStats {
     	// Number of extremal regions
-    	private int num_extremal;
+    	@SuppressWarnings("unused")
+		private int num_extremal;
     	// Number of unstable extremal regions
-    	private int num_unstable;
+    	@SuppressWarnings("unused")
+		private int num_unstable;
     	// Number of regions that failed the absolute stability test
-    	private int num_abs_unstable;
+    	@SuppressWarnings("unused")
+		private int num_abs_unstable;
     	// Number of regions that failed the maximum size test
-    	private int num_too_big;
+    	@SuppressWarnings("unused")
+		private int num_too_big;
     	// Number of regions that failed the minimum size test;
-    	private int num_too_small;
+    	@SuppressWarnings("unused")
+		private int num_too_small;
     	// Number of regions that failed the duplicate test
-    	private int num_duplicates;
+    	@SuppressWarnings("unused")
+		private int num_duplicates;
     }
     
     /**
@@ -1131,7 +1293,7 @@ public class AlgorithmMSER extends AlgorithmBase {
     	// Maximally stable extremal regions
     	int mer[];
     	// Number of extremal regions
-        int ner;
+        //int ner;
         // Number of maximally stable extr. regions
         int nmer;
         // Size of er buffer
@@ -1153,7 +1315,7 @@ public class AlgorithmMSER extends AlgorithmBase {
         
         // Configuration
         // Be verbose
-        boolean verbose;
+        //boolean verbose;
         // delta filter parameter
         int delta;
         // Badness test parameter
