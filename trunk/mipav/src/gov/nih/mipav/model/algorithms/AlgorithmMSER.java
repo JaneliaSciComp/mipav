@@ -67,6 +67,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 public class AlgorithmMSER extends AlgorithmBase {
 	
+	// Maximum pixel value is 255 giving 256 buckets
 	private final static int VL_MSER_PIX_MAXVAL = 256;
 	
 	private final static int VL_MSER_VOID_NODE = Integer.MAX_VALUE;
@@ -830,6 +831,9 @@ public class AlgorithmMSER extends AlgorithmBase {
     			er = null;
     		}
     		f.er = er = new VlMserExtrReg[ner];
+    		for (i = 0; i < ner; i++) {
+    			er[i] = new VlMserExtrReg();
+    		}
     		f.rer = ner;
     	} // if (f.rer < ner)
     	
@@ -1160,6 +1164,10 @@ public class AlgorithmMSER extends AlgorithmBase {
        f.perm = new int[f.nel];
        f.joins = new int[f.nel];
        f.r = new VlMserReg[f.nel];
+       for (k = 0; k < f.nel; k++) {
+    	   f.r[k] = new VlMserReg();
+       }
+       f.stats = new VlMserStats();
        
        f.er = null;
        f.rer = 0;
@@ -1181,22 +1189,22 @@ public class AlgorithmMSER extends AlgorithmBase {
     private class VlMserStats {
     	// Number of extremal regions
     	@SuppressWarnings("unused")
-		private int num_extremal;
+		int num_extremal;
     	// Number of unstable extremal regions
     	@SuppressWarnings("unused")
-		private int num_unstable;
+		int num_unstable;
     	// Number of regions that failed the absolute stability test
     	@SuppressWarnings("unused")
-		private int num_abs_unstable;
+		int num_abs_unstable;
     	// Number of regions that failed the maximum size test
     	@SuppressWarnings("unused")
-		private int num_too_big;
+		int num_too_big;
     	// Number of regions that failed the minimum size test;
     	@SuppressWarnings("unused")
-		private int num_too_small;
+		int num_too_small;
     	// Number of regions that failed the duplicate test
     	@SuppressWarnings("unused")
-		private int num_duplicates;
+		int num_duplicates;
     }
     
     /**
@@ -1217,13 +1225,13 @@ public class AlgorithmMSER extends AlgorithmBase {
      */
     private class VlMserReg {
     	// Points to the parent region
-    	private int parent;
+    	int parent;
     	// Points to a region closer to a root.
-    	private int shortcut;
+    	int shortcut;
     	// Region height in the forest
-    	private int height;
+    	int height;
     	// Area of the region
-    	private int area;
+    	int area;
     }
     
     /**
@@ -1245,19 +1253,19 @@ public class AlgorithmMSER extends AlgorithmBase {
      */
     private class VlMserExtrReg {
     	// Index of the parent region
-    	private int parent;
+    	int parent;
     	// Index of the pivot pixel
-    	private int index;
+    	int index;
     	// Value of pivot pixel
-    	private short value;
+    	short value;
     	// Shortcut used when building a tree
-    	private int shortcut;
+    	int shortcut;
     	// Area of the region
-    	private int area;
+    	int area;
     	// Relative area variation
-    	private double variation;
+    	double variation;
     	// Max stable number (=0 if not maxstable)
-    	private int max_stable;
+    	int max_stable;
     }
     
     private class VlMserFilt {
