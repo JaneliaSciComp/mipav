@@ -1,27 +1,31 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmBRISK;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmMSER;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptableActionInterface;
-import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
-import gov.nih.mipav.model.scripting.parameters.ParameterImage;
-import gov.nih.mipav.model.scripting.parameters.ParameterTable;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewUserInterface;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
-import java.util.Enumeration;
-import java.util.Vector;
+import java.text.DecimalFormat;
 
-import javax.swing.*;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
 
 // import javax.swing.*;
@@ -75,17 +79,17 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
     /** DOCUMENT ME! */
     private AlgorithmMSER mserAlgo;
 
-    
-
     private JPanel paramPanel;
 
     private JPanel imageVOIPanel;
 
     private ButtonGroup imageVOIGroup;
 
-    private JRadioButton wholeImage;
+    private JRadioButton pointsOnly;
 
-    private JRadioButton VOIRegions;
+    private JRadioButton ellipsesOnly;
+    
+    private JRadioButton pointsAndEllipses;
 
     private JLabel labelDelta;
 
@@ -102,10 +106,14 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
     private JLabel labelMaxVariation;
     
     private JTextField textMaxVariation;
+    
+    private JLabel labelMinDiversity;
+    
+    private JTextField textMinDiversity;
 
-    private JCheckBox rotationCheckBox;
+    private JCheckBox brightOnDarkCheckBox;
 
-    private JCheckBox scaleCheckBox;
+    private JCheckBox darkOnBrightCheckBox;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -252,6 +260,14 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
     @Override
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
+        delta = scriptParameters.getParams().getDouble("del");
+        max_area = scriptParameters.getParams().getDouble("maxArea");
+        min_area = scriptParameters.getParams().getDouble("minArea");
+        max_variation = scriptParameters.getParams().getDouble("maxVariation");
+        min_diversity = scriptParameters.getParams().getDouble("minDiversity");
+        bright_on_dark = scriptParameters.getParams().getBoolean("brightOnDark");
+        dark_on_bright = scriptParameters.getParams().getBoolean("darkOnBright");
+        outputVOIType = scriptParameters.getParams().getInt("output_VOI_type");
     }
 
     /**
@@ -260,6 +276,14 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
     @Override
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("del", delta));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("maxArea", max_area));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("minArea", min_area));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("maxVariation", max_variation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("minDiversity", min_diversity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("brightOnDark", bright_on_dark));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("darkOnBright", dark_on_bright));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("output_VOI_type", outputVOIType));
     }
 
     /**
@@ -267,6 +291,7 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
      */
     private void init() {
     	double defaultMinArea;
+    	DecimalFormat nfe = new DecimalFormat("0.000E0");
         setForeground(Color.black);
 
         setTitle("Maximally Stable Extremal Regions");
@@ -293,7 +318,7 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
 
         textMinArea = new JTextField(10);
         defaultMinArea = 3.0/(image.getExtents()[0] * image.getExtents()[1]);
-        textMinArea.setText(String.valueOf(defaultMinArea));
+        textMinArea.setText(nfe.format(defaultMinArea));
         textMinArea.setFont(serif12);
         
         labelMaxVariation = new JLabel("Maximum absolute region stability (> 0)");
@@ -303,15 +328,22 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
         textMaxVariation = new JTextField(10);
         textMaxVariation.setText("0.25");
         textMaxVariation.setFont(serif12);
+        
+        labelMinDiversity = new JLabel("Minimum diversity (0-1)");
+        labelMinDiversity.setForeground(Color.black);
+        labelMinDiversity.setFont(serif12);
 
+        textMinDiversity = new JTextField(10);
+        textMinDiversity.setText("0.2");
+        textMinDiversity.setFont(serif12);
 
-        rotationCheckBox = new JCheckBox("Rotation invariance");
-        rotationCheckBox.setFont(serif12);
-        rotationCheckBox.setSelected(true);
+        brightOnDarkCheckBox = new JCheckBox("Bright on dark regions");
+        brightOnDarkCheckBox.setFont(serif12);
+        brightOnDarkCheckBox.setSelected(true);
 
-        scaleCheckBox = new JCheckBox("Scale invariance");
-        scaleCheckBox.setFont(serif12);
-        scaleCheckBox.setSelected(true);
+        darkOnBrightCheckBox = new JCheckBox("Dark on bright regions");
+        darkOnBrightCheckBox.setFont(serif12);
+        darkOnBrightCheckBox.setSelected(true);
 
         final JPanel upperPanel = new JPanel(new GridBagLayout());
 
@@ -353,26 +385,50 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
         gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textMinArea, gbc);
         gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(labelMaxVariation, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        upperPanel.add(textMaxVariation, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        upperPanel.add(labelMinDiversity, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        upperPanel.add(textMinDiversity, gbc);
+        gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 2;
-        upperPanel.add(rotationCheckBox, gbc);
+        upperPanel.add(brightOnDarkCheckBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.gridwidth = 2;
-        upperPanel.add(scaleCheckBox, gbc);
+        upperPanel.add(darkOnBrightCheckBox, gbc);
 
         imageVOIPanel = new JPanel(new GridBagLayout());
         imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Image region"));
+        imageVOIPanel.setBorder(buildTitledBorder("Output VOI Type"));
 
         imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
+        pointsOnly = new JRadioButton("Points only", false);
+        pointsOnly.setFont(serif12);
+        imageVOIGroup.add(pointsOnly);
 
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
+        ellipsesOnly = new JRadioButton("Ellipses only", true);
+        ellipsesOnly.setFont(serif12);
+        imageVOIGroup.add(ellipsesOnly);
+        
+        pointsAndEllipses = new JRadioButton("Points and ellipses", false);
+        pointsAndEllipses.setFont(serif12);
+        imageVOIGroup.add(pointsAndEllipses);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -380,9 +436,11 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(0, 0, 0, 0);
-        imageVOIPanel.add(wholeImage, gbc);
+        imageVOIPanel.add(pointsOnly, gbc);
         gbc.gridy = 1;
-        imageVOIPanel.add(VOIRegions, gbc);
+        imageVOIPanel.add(ellipsesOnly, gbc);
+        gbc.gridy = 2;
+        imageVOIPanel.add(pointsAndEllipses, gbc);
 
         paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
@@ -445,6 +503,42 @@ public class JDialogMSER extends JDialogScriptableBase implements AlgorithmInter
             textMinArea.selectAll();
 
             return false;
+        }
+        
+        tmpStr = textMaxVariation.getText();
+
+        if (testParameter(tmpStr, Double.MIN_VALUE, Double.MAX_VALUE)) {
+            max_variation = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            textMaxVariation.requestFocus();
+            textMaxVariation.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = textMinDiversity.getText();
+
+        if (testParameter(tmpStr, 0.0, 1.0)) {
+            min_diversity = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            textMinDiversity.requestFocus();
+            textMinDiversity.selectAll();
+
+            return false;
+        }
+        
+        bright_on_dark = brightOnDarkCheckBox.isSelected();
+        
+        dark_on_bright = darkOnBrightCheckBox.isSelected();
+        
+        if (pointsOnly.isSelected()) {
+        	outputVOIType = POINTS_ONLY;
+        }
+        else if (ellipsesOnly.isSelected()) {
+        	outputVOIType = ELLIPSES_ONLY;
+        }
+        else {
+        	outputVOIType = POINTS_AND_ELLIPSES;
         }
         
         return true;
