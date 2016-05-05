@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
+
 public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		implements ItemListener, ChangeListener, KeyListener, MouseListener, MouseMotionListener, MouseWheelListener, VOIManagerInterfaceListener {
 
@@ -248,11 +249,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageComp.addKeyListener(this);
 		 
 		addKeyListener(this);
-		
-		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		GraphicsDevice[] gs = ge.getScreenDevices();
-		System.err.println("devices = " + gs.length);
-		gs[0].setFullScreenWindow(this);
 	
 		setSize(screenWidth, screenHeight);
 		setMinimumSize(getSize());
@@ -364,7 +360,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		// imageFrame.setSize(compW / 2 + diffW, compH / 2 + diffH);
 		imageFrame.updateImages();
 
-		
+		// userInterface.registerFrame(imageFrame);		
 		
 
 	}
