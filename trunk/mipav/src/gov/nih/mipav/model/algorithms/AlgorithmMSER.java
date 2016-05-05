@@ -472,7 +472,7 @@ public class AlgorithmMSER extends AlgorithmBase {
     	double acc[] = f.acc;
     	double ell[] = f.ell;
     	
-    	int d, index, i, j;
+    	int d, index, i, j, k;
     	
     	// Already fit?
     	if (f.nell == f.nmer) {
@@ -500,7 +500,9 @@ public class AlgorithmMSER extends AlgorithmBase {
     	for (d = 0; d < f.dof; ++d) {
     	    
     		// Start from the upper-left pixel(0,0,,,0)
-    		subs = new int[ndims];
+    		for (k = 0; k < ndims; k++) {
+    			subs[k] = 0;
+    		}
     		
     		// Step 1: Fill acc pretending each region has only one pixel
     		if (d < ndims) {
