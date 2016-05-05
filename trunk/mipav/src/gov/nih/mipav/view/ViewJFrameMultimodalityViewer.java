@@ -281,14 +281,19 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		 
 		addKeyListener(this);
 		
-		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		// GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		// GraphicsDevice gs = ge.getDefaultScreenDevice();
 		// gs.setFullScreenWindow(this);
-		GraphicsDevice[] gs = ge.getScreenDevices();
-		gs[0].setFullScreenWindow(this);
+		// GraphicsDevice[] gs = ge.getScreenDevices();
+		// gs[0].setFullScreenWindow(this);
+
+		setSize(screenWidth, screenHeight);
+		setMinimumSize(getSize());
+		setVisible(true);
+		setResizable(false);
+		
 		pack();
 		this.validate();
-		setSize(screenWidth, screenHeight);
 	}
 	
 	void captureComponent(Component component) {
