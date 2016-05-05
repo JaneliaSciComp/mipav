@@ -2759,7 +2759,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             ((ViewJFrameImage) frame).updateFrame(zoomMagX, zoomMagY, xS, yS);
 
            
-            if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode) {
+            if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
 	            String imageTimeStamp = getImageTimeStamp();
 	            String zoom_parameter = "";
 	            if ( cursorMode == ViewJComponentBase.ZOOMING_IN ) {
@@ -2830,6 +2830,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         if (modifyFlag == false) {
             return;
+        }
+        
+        if(drawVOIs) {
+        	if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
+        		recordLineMeasure();
+        	}
         }
 
         int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
@@ -2930,7 +2936,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         ((ViewJFrameImage) frame).incSlice();
                         
                        
-                        if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode) {
+                        if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
                         	String imageTimeStamp = getImageTimeStamp();
                         	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, " + " increase, " + 0 + ", " +  xCoord + ", " + yCoord);   
                         }
@@ -2942,7 +2948,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f, xCoord, yCoord);
                         
                         
-                        if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode) {
+                        if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
                         	String imageTimeStamp = getImageTimeStamp();
                         	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, " + " zoom in, " + 0 + ", " +  xCoord + ", " + yCoord);      
                         }
@@ -2967,7 +2973,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         ((ViewJFrameImage) frame).decSlice();
                         
                        
-                        if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode ) {
+                        if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode ) {
                         	String imageTimeStamp = getImageTimeStamp();
                         	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, " + " decrease, " + 0 + ", " +  xCoord + ", " + yCoord);   
                         }
@@ -2978,7 +2984,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f, xCoord, yCoord);
                         
                        
-                        if ( MipavUtil.isEyeTrackingEnabled() && SingleFrameEyetrackerMode == PluginEyetrackerMode) {
+                        if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
                         	String imageTimeStamp = getImageTimeStamp();
                         	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, " + " zoom out, " + 0 + ", " +  xCoord + ", " + yCoord);   
                         }
@@ -3291,7 +3297,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
              
             if(drawVOIs) {
             	draw3DVOIs(offscreenGraphics2d, false);
-                recordLineMeasure();
             }
             if ( ! (this instanceof ViewJComponentRegistration)) {
                 //voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
@@ -7381,13 +7386,13 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		            if (VOIs != null && voiManager != null) {
 		                int nVOI = VOIs.size();
 		                for (int i = nVOI - 1; i >= 0; i--) {    
-		                    VOI kVOI = VOIs.get(i);
+		                    VOI kVOI = VOIs.get(nVOI - 1);
 		                    Vector<VOIBase> kCurves = kVOI.getCurves();
 		                    if(kCurves != null) {
-		                        for ( int k = 0; k < kCurves.size(); k++ )
-		                        {
+		                        // for ( int k = 0; k < kCurves.size(); k++ ) {
+		                    	    int k = kCurves.size() - 1;
 		                            VOIBase kVOI3D = kCurves.get(k);
-		                            System.err.println("ruida drawVOIs = " + drawVOIs);
+		                            // System.err.println("ruida drawVOIs = " + drawVOIs);
 		                            int z = Math.min(zDim-1,Math.max(0,(int)Math.round(kVOI3D.elementAt(0).Z)));
 		                            
 		                            // Vector3f kStart = voiManager.getDrawingContext().fileToScreenVOI( kVOI3D.get(0) );
@@ -7418,7 +7423,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		                            "end point" + ", " + y[0] + ", " + y[1] + ", " + z + ", " +
 		                            "length" + ", " + lineLength + " " + "mm");
 		                            
-		                        }
+		                       //  }
 		                    }
 		                }
 		            }

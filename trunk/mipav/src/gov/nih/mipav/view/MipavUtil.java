@@ -1428,6 +1428,7 @@ public class MipavUtil extends JComponent {
     	if (isEyeTrackingEnabled) {
 			try {
 				eyetrackingOutStream.write(msg + "\n");
+				eyetrackingOutStream.flush();
 			} catch ( IOException e ) {
 				e.printStackTrace();
 			}

@@ -286,6 +286,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	             	zOffset--;
 	             	image1Slice--;
 	         	}
+	         	imageComp.setSlice(image1Slice);
 	    	 }
 	    	 
 	    	 // System.err.println("zOffset = " + zOffset);
