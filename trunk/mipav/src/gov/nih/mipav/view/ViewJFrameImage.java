@@ -1293,6 +1293,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         		return;
         	}
         	new JDialogBRISK(this, getActiveImage());
+        } else if (command.equals("MSER")) {
+        	final ModelImage mi = getActiveImage();
+        	if (mi.getMax() > 255) {
+        		MipavUtil.displayError("MSER assumes a maximum value of 255");
+        		return;
+        	}
+        	new JDialogMSER(this, getActiveImage());
         } else if (command.equals("CONVERGENCE")) {
             new JDialogConvergenceField(this, getActiveImage());
         } else if (command.equals("edge3D")) {
