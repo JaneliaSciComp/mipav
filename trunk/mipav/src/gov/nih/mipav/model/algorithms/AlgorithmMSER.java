@@ -1032,7 +1032,7 @@ public class AlgorithmMSER extends AlgorithmBase {
         				// regions are too similar, keep only the parent.
         				area = er[i].area;
         				p_area = er[parent].area;
-        				div = (double)(p_area - area)/(double)area;
+        				div = (double)(p_area - area)/(double)p_area;
         				
         				if (div < min_div) {
         					++ndup;
