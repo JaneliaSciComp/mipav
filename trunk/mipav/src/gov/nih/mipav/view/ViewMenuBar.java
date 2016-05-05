@@ -326,6 +326,7 @@ public class ViewMenuBar {
 				// menuBuilder.buildMenuItem("Point area average intensities",
 				// "Point area", 0,
 				// null, false),
+						menuBuilder.buildMenuItem("Maximally stable extremal regions", "MSER", 0, null, false),
 						menuBuilder.buildMenuItem("Principal component", "Principal components", 0, null, false),
 						menuBuilder.makeMenu("Registration", false,
 								new JMenuItem[] {
@@ -1474,6 +1475,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Box counting", false);
 			menuBuilder.setMenuItemEnabled("Convergence field", false);
 			menuBuilder.setMenuItemEnabled("BRISK", false);
+			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
 		} else if (numberOfDimensions == 3) {
 			menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
@@ -1515,6 +1517,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Markov random field", false);
 			menuBuilder.setMenuItemEnabled("Convergence field", false);
 			menuBuilder.setMenuItemEnabled("BRISK", false);
+			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
 			menuBuilder.setMenuItemEnabled("Texture analysis", false);
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
 			menuBuilder.setMenuItemEnabled("Graph Based", false);
@@ -1643,6 +1646,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Fuzzy Connectedness", false);
 			menuBuilder.setMenuItemEnabled("Gradient Inverse Smoothing", false);
 			menuBuilder.setMenuItemEnabled("Facet Model",false);
+			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
 		} else {
 			menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
 			menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
