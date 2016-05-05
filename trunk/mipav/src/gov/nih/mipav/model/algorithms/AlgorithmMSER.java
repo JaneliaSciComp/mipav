@@ -695,7 +695,7 @@ public class AlgorithmMSER extends AlgorithmBase {
     	// val: intensity of the current pixel
     	// r_idx: index of the root of the current pixel
     	// n_idx: index of the neighbors of the current pixel
-    	// nr_idex index of the root of the neighbor of the current pixel
+    	// nr_idx index of the root of the neighbor of the current pixel
     	
     	// Process each pixel by increasing intensity
     	for (i = 0; i < nel; ++i) {
@@ -728,7 +728,7 @@ public class AlgorithmMSER extends AlgorithmBase {
     			int n_idx = 0;
     			boolean good = true;
     			
-    			// Compute the neighbor subscript as nsubs+sub, the corresponding neighborindex nindex and
+    			// Compute the neighbor subscript as nsubs+sub, the corresponding neighbor index nindex and
     			// check that the neighbor is within the image domain.
     			
     			for (k = 0; k < ndims && good; ++k) {
@@ -898,7 +898,6 @@ public class AlgorithmMSER extends AlgorithmBase {
     	
     	for (i = 0; i < ner; ++i) {
     	
-    		// Xj is the currentand Xj are the parents
     		int top_val = er[i].value + delta;
     		int top = er[i].shortcut;
     		
