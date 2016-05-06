@@ -546,6 +546,18 @@ public class AlgorithmMSER extends AlgorithmBase {
         		} // for (i = 0; i < nframes; i++) 
         		numVOIEllipse1 = nframes;
         	} // if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES))
+        	
+        	Preferences.debug("Dark on bright has " + filt.stats.num_extremal + " extremal regions\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Dark on bright has " + filt.stats.num_unstable + " unstable extremal regions\n", 
+        			Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Dark on bright has " + filt.stats.num_abs_unstable + " regions that failed the absolute stablity test\n", 
+        			Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Dark on bright has " + filt.stats.num_too_big + " regions that failed the maximum size test\n", 
+        			Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Dark on bright has " + filt.stats.num_too_small + " regions that failed the minimum size test\n", 
+        			Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Dark on bright has " + filt.stats.num_duplicates + " regions that failed the duplicate test\n", 
+        			Preferences.DEBUG_ALGORITHM);
         } // if (dark_on_bright)
         
         if (bright_on_dark) {
@@ -650,6 +662,18 @@ public class AlgorithmMSER extends AlgorithmBase {
         			}
         		} // for (i = 0; i < nframesinv; i++) 
         	} // if ((outputVOIType == ELLIPSES_ONLY) || (outputVOIType == POINTS_AND_ELLIPSES))
+        	
+        	Preferences.debug("Bright on dark has " + filtinv.stats.num_extremal + " extremal regions\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Bright on dark has " + filtinv.stats.num_unstable + " unstable extremal regions\n", 
+        			Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Bright on dark has " + filtinv.stats.num_abs_unstable + " regions that failed the absolute stablity test\n", 
+        			Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Bright on dark has " + filtinv.stats.num_too_big + " regions that failed the maximum size test\n", 
+        			Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Bright on dark has " + filtinv.stats.num_too_small + " regions that failed the minimum size test\n", 
+        			Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Bright on dark has " + filtinv.stats.num_duplicates + " regions that failed the duplicate test\n", 
+        			Preferences.DEBUG_ALGORITHM);
         } // if (bright_on_dark)
         
         // Release filter
