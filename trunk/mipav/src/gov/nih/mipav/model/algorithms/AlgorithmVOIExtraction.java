@@ -2,13 +2,10 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-
 import java.io.*;
-
 import java.util.*;
 
 
@@ -74,6 +71,9 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
     private int yDimE;
     
     private BitSet maskExpanded = null;
+    
+    // connected = 4 or connected = 8
+    private int connected = 8;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -159,6 +159,622 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
      */
     public void setNameTable(String[] nameTable) {
         this.nameTable = nameTable;
+    }
+    
+    /**
+      * From text description in 4th edition Image Processing, Analysis, and Machine Vision International Edition
+     * by Milan Sonka, Vaclav Hlavac, and Roger Boyle, Algorithm 6.7 Outer Boundary Tracing, p. 193. 
+     */
+    @SuppressWarnings("unused")
+	private void outerBoundaryTracing() {
+    	ViewVOIVector VOIs = null;
+    	int length;
+    	int zDim;
+    	int x = 0;
+    	int y = 0;
+    	int z;
+    	int i, j;
+    	int numBoundaryPixels = 0;
+    	int numOuterPixels = 0;
+    	int boundaryBuffer[];
+    	int outerBuffer[];
+    	boolean found;
+    	int index = 0;
+    	int dir;
+    	int numDir;
+    	short voiID;
+    	int xArrInt[];
+    	int yArrInt[];
+    	int zArrInt[];
+    	
+    	if (srcImage == null) {
+            displayError("Source Image is null");
+            setCompleted(false);
+
+            return;
+        }
+
+        if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.UBYTE) &&
+                (srcImage.getType() != ModelImage.BYTE) && (srcImage.getType() != ModelImage.USHORT) &&
+                (srcImage.getType() != ModelImage.SHORT)) {
+            displayError("Source Image must be Boolean, UByte, Byte, UShort, or Short");
+            setCompleted(false);
+
+            return;
+        }
+
+        VOIs = srcImage.getVOIs();
+
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        length = xDim * yDim;
+        
+        if (srcImage.getNDims() > 2) {
+            zDim = srcImage.getExtents()[2];
+        } else {
+            zDim = 1;
+        }
+        
+        try {
+            imgBuffer = new short[length];
+            objBuffer = new short[length];
+            boundaryBuffer = new int[length];
+            outerBuffer = new int[length];
+        } catch (OutOfMemoryError e) {
+            displayError("Algorithm VOIExtraction: Out of memory creating buffers");
+            setCompleted(false);
+
+            return;
+        }
+        
+        try {
+            srcImage.setLock(ModelStorageBase.W_LOCKED);
+        } catch (IOException error) {
+            displayError("Algorithm VOI Extraction: Image locked");
+            setCompleted(false);
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+
+            return;
+        }
+
+
+
+        for (z = 0; z < zDim; z++) {
+
+            try {
+                srcImage.exportDataNoLock(z * length, length, imgBuffer);
+            } catch (IOException error) {
+                displayError("Algorithm VOI Extraction: image bounds exceeded");
+                setCompleted(false);
+                
+                srcImage.releaseLock();
+
+                return;
+            }
+            
+            
+            for (short obj = 1; obj < (srcImage.getMax() + 1); obj++) {
+
+                for (int m = 0; m < imgBuffer.length; m++) {
+
+                    if (imgBuffer[m] == obj) {
+                        objBuffer[m] = obj;
+                    } else {
+                        objBuffer[m] = 0;
+                    }
+                    
+                } // for (int m = 0; m < imgBuffer.length; m++)
+                
+                found = false;
+                for (y = 0; y < yDim && !found; y++) {
+                	for (x = 0; x < xDim && !found; x++) {
+                	    index = x + y * xDim;
+                	    if (objBuffer[index] == obj) {
+                	    	found = true;
+                	    	boundaryBuffer[numBoundaryPixels++] = index;
+                	    }
+                	} // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+                
+                    dir = 3;
+                    while ((numBoundaryPixels < 4) || (boundaryBuffer[0] != boundaryBuffer[numBoundaryPixels-2]) ||
+                    		(boundaryBuffer[1] != boundaryBuffer[numBoundaryPixels-1])) {
+                    	found = false;
+                    	dir = (dir + 3) % 4;
+                    	numDir = 1;
+                    	while (!found) {
+                    		if (numDir >= 5) {
+                    			MipavUtil.displayError("No boundary found in any of 4 directions at x = " + x + " y = " + y);
+                    			setCompleted(false);
+                    			return;
+                    		}
+                    		if (dir == 0) {
+                    			if ((x < xDim-1) && (objBuffer[index+1] == obj)) {
+                    			    found = true;
+                    			    x = x+1;
+                    			    index = index + 1;
+                    			    boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				if ((x < xDim - 1) && (outerBuffer[numOuterPixels] != index)) {
+                    					outerBuffer[numOuterPixels++] = index;
+                    				}
+                    				dir = 1;
+                    				numDir++;
+                    			}
+                    		} // if (dir == 0)
+                    		else if (dir == 1) {
+                    			if ((y >= 1) && (objBuffer[index - yDim] == obj)) {
+                    				found = true;
+                    				y = y - 1;
+                    				index = index - yDim;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				if ((y >= 1) && (outerBuffer[numOuterPixels] != index)) {
+                    					outerBuffer[numOuterPixels++] = index;
+                    				}
+                    				dir = 2;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 1)
+                    		else if (dir == 2) {
+                    			if ((x >= 1) && (objBuffer[index - 1] == obj)) {
+                    				found = true;
+                    				x = x - 1;
+                    				index = index - 1;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				if ((x >= 1) && (outerBuffer[numOuterPixels] != index)) {
+                    					outerBuffer[numOuterPixels++] = index;
+                    				}
+                    				dir = 3;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 2)
+                    		else if (dir == 3) {
+                    			if ((y < yDim - 1) && (objBuffer[index + yDim] == obj)) {
+                    				found = true;
+                    				y = y + 1;
+                    				index = index + yDim;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				if ((y < yDim - 1) && (outerBuffer[numOuterPixels] != index)) {
+                    					outerBuffer[numOuterPixels++] = index;
+                    				}
+                    				dir = 0;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 3)
+                    	} // while (!found)
+                    } // while ((numBoundaryPixels < 4) || (boundaryBuffer[0] != boundaryBuffer[numBoundaryPixels-2]) ||
+                    // Zero is the same as numBoundaryPixels-2 and one is the same as numBoundaryPixels-1
+                
+                numBoundaryPixels = numBoundaryPixels-2;
+                
+                voiID = (short)(obj - 1);
+                addedVOI = new VOI(voiID, "VOI" + voiID, VOI.CONTOUR, -1.0f);
+                xArrInt = new int[numOuterPixels];
+                yArrInt = new int[numOuterPixels];
+                zArrInt = new int[numOuterPixels];
+                for (i = 0; i < numOuterPixels; i++) {
+                	xArrInt[i] = outerBuffer[i] % xDim;
+                	yArrInt[i] = outerBuffer[i] / xDim;
+                	zArrInt[i] = z;
+                }
+                addedVOI.importCurve(xArrInt, yArrInt, zArrInt);
+                ((VOIContour) (addedVOI.getCurves().lastElement()))
+                .trimPoints(Preferences.getTrimMask(), Preferences.getTrimAdjacient());
+                if (colorTable != null) {
+                    addedVOI.setColor(colorTable[obj - 1]);
+                }
+
+               
+
+                VOIs.add(addedVOI);
+                
+                if (nameTable != null) {
+                    addedVOI.setName(nameTable[obj - 1]);
+                }
+            } // for (short obj = 1; obj < (srcImage.getMax() + 1); obj++)
+            
+        } // for (z = 0; z < zDim; z++)
+        
+        if (nameTable != null) {
+
+            // Reorder the vois to match the order in nameTable
+            VOIVector VOIs2 = new VOIVector();
+            int nVOI = VOIs.size();
+            String name;
+
+            for (i = 0; i < nVOI; i++) {
+                name = nameTable[i];
+                found = false;
+
+                for (j = 0; (j < nVOI) && !found; j++) {
+
+                    if (VOIs.VOIAt(j).getName().equals(name)) {
+                        found = true;
+                        VOIs2.addElement(VOIs.VOIAt(j));
+                    }
+                }
+            }
+
+            srcImage.setVOIs(VOIs2);
+
+        } // if (nameTable != null)
+
+        srcImage.releaseLock();
+
+        setCompleted(true);
+
+    }
+    
+    /**
+     * From text description in 4th edition Image Processing, Analysis, and Machine Vision International Edition
+     * by Milan Sonka, Vaclav Hlavac, and Roger Boyle, Algorithm 6.6 Inner Boundary Tracing, pp. 191-192.
+     * "Algorithm 6.6 works for all regions larger than one pixel.  It is able to find region borders but does
+     * not find borders of region holes, which may be located by identifying border elements unallocated thus
+     * far to borders.  The search for border elements always starts after a traced border is closed, and the
+     * search for "unused" border elements can continue in the same way as the search for the first border element.
+     * Note that if objects are of unit width, more conditions must be added."
+     * 
+     * Can be used with either connected = 4 or connected = 8.  Much less memory than calcInPlace.
+     */
+    @SuppressWarnings("unused")
+	private void calcInPlace2() {
+    	ViewVOIVector VOIs = null;
+    	int length;
+    	int zDim;
+    	int x = 0;
+    	int y = 0;
+    	int z;
+    	int i, j;
+    	int numBoundaryPixels = 0;
+    	int boundaryBuffer[];
+    	boolean found;
+    	int index = 0;
+    	int dir;
+    	int numDir;
+    	short voiID;
+    	int xArrInt[];
+    	int yArrInt[];
+    	int zArrInt[];
+    	
+    	if (srcImage == null) {
+            displayError("Source Image is null");
+            setCompleted(false);
+
+            return;
+        }
+
+        if ((srcImage.getType() != ModelImage.BOOLEAN) && (srcImage.getType() != ModelImage.UBYTE) &&
+                (srcImage.getType() != ModelImage.BYTE) && (srcImage.getType() != ModelImage.USHORT) &&
+                (srcImage.getType() != ModelImage.SHORT)) {
+            displayError("Source Image must be Boolean, UByte, Byte, UShort, or Short");
+            setCompleted(false);
+
+            return;
+        }
+
+        VOIs = srcImage.getVOIs();
+
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        length = xDim * yDim;
+        
+        if (srcImage.getNDims() > 2) {
+            zDim = srcImage.getExtents()[2];
+        } else {
+            zDim = 1;
+        }
+        
+        try {
+            imgBuffer = new short[length];
+            objBuffer = new short[length];
+            boundaryBuffer = new int[length];
+        } catch (OutOfMemoryError e) {
+            displayError("Algorithm VOIExtraction: Out of memory creating buffers");
+            setCompleted(false);
+
+            return;
+        }
+        
+        try {
+            srcImage.setLock(ModelStorageBase.W_LOCKED);
+        } catch (IOException error) {
+            displayError("Algorithm VOI Extraction: Image locked");
+            setCompleted(false);
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+
+            return;
+        }
+
+
+
+        for (z = 0; z < zDim; z++) {
+
+            try {
+                srcImage.exportDataNoLock(z * length, length, imgBuffer);
+            } catch (IOException error) {
+                displayError("Algorithm VOI Extraction: image bounds exceeded");
+                setCompleted(false);
+                
+                srcImage.releaseLock();
+
+                return;
+            }
+            
+            
+            for (short obj = 1; obj < (srcImage.getMax() + 1); obj++) {
+
+                for (int m = 0; m < imgBuffer.length; m++) {
+
+                    if (imgBuffer[m] == obj) {
+                        objBuffer[m] = obj;
+                    } else {
+                        objBuffer[m] = 0;
+                    }
+                    
+                } // for (int m = 0; m < imgBuffer.length; m++)
+                
+                found = false;
+                for (y = 0; y < yDim && !found; y++) {
+                	for (x = 0; x < xDim && !found; x++) {
+                	    index = x + y * xDim;
+                	    if (objBuffer[index] == obj) {
+                	    	found = true;
+                	    	boundaryBuffer[numBoundaryPixels++] = index;
+                	    }
+                	} // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+                
+                if (connected == 4) {
+                    dir = 3;
+                    while ((numBoundaryPixels < 4) || (boundaryBuffer[0] != boundaryBuffer[numBoundaryPixels-2]) ||
+                    		(boundaryBuffer[1] != boundaryBuffer[numBoundaryPixels-1])) {
+                    	found = false;
+                    	dir = (dir + 3) % 4;
+                    	numDir = 1;
+                    	while (!found) {
+                    		if (numDir >= 5) {
+                    			MipavUtil.displayError("No boundary found in any of 4 directions at x = " + x + " y = " + y);
+                    			setCompleted(false);
+                    			return;
+                    		}
+                    		if (dir == 0) {
+                    			if ((x < xDim-1) && (objBuffer[index+1] == obj)) {
+                    			    found = true;
+                    			    x = x+1;
+                    			    index = index + 1;
+                    			    boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 1;
+                    				numDir++;
+                    			}
+                    		} // if (dir == 0)
+                    		else if (dir == 1) {
+                    			if ((y >= 1) && (objBuffer[index - yDim] == obj)) {
+                    				found = true;
+                    				y = y - 1;
+                    				index = index - yDim;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 2;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 1)
+                    		else if (dir == 2) {
+                    			if ((x >= 1) && (objBuffer[index - 1] == obj)) {
+                    				found = true;
+                    				x = x - 1;
+                    				index = index - 1;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 3;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 2)
+                    		else if (dir == 3) {
+                    			if ((y < yDim - 1) && (objBuffer[index + yDim] == obj)) {
+                    				found = true;
+                    				y = y + 1;
+                    				index = index + yDim;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 0;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 3)
+                    	} // while (!found)
+                    } // while ((numBoundaryPixels < 4) || (boundaryBuffer[0] != boundaryBuffer[numBoundaryPixels-2]) ||
+                    // Zero is the same as numBoundaryPixels-2 and one is the same as numBoundaryPixels-1
+                } // if (connected == 4)
+                else if (connected == 8) {
+                	dir = 7;
+                    while ((numBoundaryPixels < 4) || (boundaryBuffer[0] != boundaryBuffer[numBoundaryPixels-2]) ||
+                    		(boundaryBuffer[1] != boundaryBuffer[numBoundaryPixels-1])) {
+                    	found = false;	
+                    	if ((dir % 2) == 0) { // dir is even
+                    		dir = (dir + 7) % 8;
+                    	}
+                    	else {
+                    		dir = (dir + 6) % 8;
+                    	}
+                    	numDir = 1;
+                    	while (!found) {
+                    		if (numDir >= 9) {
+                    			MipavUtil.displayError("No boundary found in any of 8 directions at x = " + x + " y = " + y);
+                    			setCompleted(false);
+                    			return;
+                    		}
+                    		if (dir == 0) {
+                    			if ((x < xDim-1) && (objBuffer[index+1] == obj)) {
+                    			    found = true;
+                    			    x = x+1;
+                    			    index = index + 1;
+                    			    boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 1;
+                    				numDir++;
+                    			}
+                    		} // if (dir == 0)
+                    		else if (dir == 1) {
+                    			if ((x < xDim - 1) && (y >= 1) && (objBuffer[index - yDim + 1] == obj)) {
+                    				found = true;
+                    				x = x + 1;
+                    				y = y - 1;
+                    				index = index - yDim + 1;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 2;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 1)
+                    		else if (dir == 2) {
+                    			if ((y >= 1) && (objBuffer[index - yDim] == obj)) {
+                    				found = true;
+                    				y = y - 1;
+                    				index = index - yDim;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 3;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 2)
+                    		else if (dir == 3) {
+                    			if ((x >= 1) && (y >= 1) && (objBuffer[index - yDim - 1] == obj)) {
+                    				found = true;
+                    				x = x - 1;
+                    				y = y - 1;
+                    				index = index - yDim - 1;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 4;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 3)
+                    		else if (dir == 4) {
+                    			if ((x >= 1) && (objBuffer[index - 1] == obj)) {
+                    				found = true;
+                    				x = x - 1;
+                    				index = index - 1;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 5;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 4)
+                    		else if (dir == 5) {
+                    			if ((x >= 1) && (y < yDim - 1) && (objBuffer[index + yDim - 1] == obj)) {
+                    				found = true;
+                    				x = x - 1;
+                    				y = y + 1;
+                    				index = index + yDim - 1;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 6;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 5)
+                    		else if (dir == 6) {
+                    			if ((y < yDim - 1) && (objBuffer[index + yDim] == obj)) {
+                    				found = true;
+                    				y = y + 1;
+                    				index = index + yDim;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 7;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 6)
+                    		else if (dir == 7) {
+                    			if ((x < xDim - 1) && (y < yDim - 1) && (objBuffer[index + yDim + 1] == obj)) {
+                    				found = true;
+                    				x = x + 1;
+                    				y = y + 1;
+                    				index = index + yDim + 1;
+                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    			}
+                    			else {
+                    				dir = 0;
+                    				numDir++;
+                    			}
+                    		} // else if (dir == 7)
+                    	} // while (!found)
+                    } // while ((numBoundaryPixels < 4) || (boundaryBuffer[0] != boundaryBuffer[numBoundaryPixels-2]) ||
+                } // else if (connected == 8)
+                numBoundaryPixels = numBoundaryPixels-2;
+                
+                voiID = (short)(obj - 1);
+                addedVOI = new VOI(voiID, "VOI" + voiID, VOI.CONTOUR, -1.0f);
+                xArrInt = new int[numBoundaryPixels];
+                yArrInt = new int[numBoundaryPixels];
+                zArrInt = new int[numBoundaryPixels];
+                for (i = 0; i < numBoundaryPixels; i++) {
+                	xArrInt[i] = boundaryBuffer[i] % xDim;
+                	yArrInt[i] = boundaryBuffer[i] / xDim;
+                	zArrInt[i] = z;
+                }
+                addedVOI.importCurve(xArrInt, yArrInt, zArrInt);
+                ((VOIContour) (addedVOI.getCurves().lastElement()))
+                .trimPoints(Preferences.getTrimMask(), Preferences.getTrimAdjacient());
+                if (colorTable != null) {
+                    addedVOI.setColor(colorTable[obj - 1]);
+                }
+
+               
+
+                VOIs.add(addedVOI);
+                
+                if (nameTable != null) {
+                    addedVOI.setName(nameTable[obj - 1]);
+                }
+            } // for (short obj = 1; obj < (srcImage.getMax() + 1); obj++)
+            
+        } // for (z = 0; z < zDim; z++)
+        
+        if (nameTable != null) {
+
+            // Reorder the vois to match the order in nameTable
+            VOIVector VOIs2 = new VOIVector();
+            int nVOI = VOIs.size();
+            String name;
+
+            for (i = 0; i < nVOI; i++) {
+                name = nameTable[i];
+                found = false;
+
+                for (j = 0; (j < nVOI) && !found; j++) {
+
+                    if (VOIs.VOIAt(j).getName().equals(name)) {
+                        found = true;
+                        VOIs2.addElement(VOIs.VOIAt(j));
+                    }
+                }
+            }
+
+            srcImage.setVOIs(VOIs2);
+
+        } // if (nameTable != null)
+
+        srcImage.releaseLock();
+
+        setCompleted(true);
+
     }
 
     /**
