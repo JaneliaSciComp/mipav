@@ -9,6 +9,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VOI.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import javax.swing.*;
@@ -618,6 +619,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public synchronized void mousePressed(final MouseEvent event) {
 
 		synchronized (this) {
+			DecimalFormat df = new DecimalFormat();
+			df.setMaximumFractionDigits(2);
 			
 			System.err.println("single viewer mousePressed");
 			origin = new Point(event.getPoint());
@@ -698,8 +701,41 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				int dim[] = image.getExtents();
 				
 				System.err.println("newZoom0 = " + newZoom0 + " " + " vh = " + vh + "  vw = " + vw + "  dim[0] = " + dim[0] + " dim[1] = " + dim[1] + "  compW = " + compW + "  compH = " + compH);
-				
-
+				Rectangle viewRectangle = viewPort.getViewRect();
+				int upperLeftViewX = viewRectangle.x;
+				int upperLeftViewY = viewRectangle.y;
+				int viewWidth = viewRectangle.width;
+				int viewHeight = viewRectangle.height;
+				Point P00 = new Point(0,0);
+				// Convert 0,0 in pixel coordinates to view coordinates
+				Point V00 = viewPort.toViewCoordinates(P00);
+				// Convert image.getExtents()[0]-1, image.getExtents()[1] -1 in pixel coordinates to view coordinates
+				Point PWH = new Point(image.getExtents()[0]-1, image.getExtents()[1]-1);
+				Point VWH = viewPort.toViewCoordinates(PWH);
+				// View coordinates in x = a * pixel coordinates in x + b
+				int b = V00.x;
+				// VWH.x= a *(image.getExtents()[0] - 1) + b
+				// VWH.x - V00.x = a*(image.getExtents()[0] - 1)
+				double a = (double)(VWH.x - V00.x)/(double)(image.getExtents()[0] - 1);
+				// pixel coordinates in x = (view coordinates in x - b)/a
+				// View coordinates in y = c * pixel coordinates in y + d
+				int d = V00.y;
+				// VWH.y = c*(image.getExtents()[1] - 1) + d
+				// VWH.y - V00.y = c*(image.getExtents()[1] - 1)
+				double c = (double)(VWH.y - V00.y)/(double)(image.getExtents()[1] - 1);
+				// pixel coordinates in y = (view coordinates in y - d)/c
+				double upperLeftPixelX = (double)(upperLeftViewX - b)/a;
+				double upperLeftPixelY = (double)(upperLeftViewY - d)/c;
+				double upperRightPixelX = (double)(upperLeftViewX + viewWidth - b)/a;
+				double lowerLeftPixelY = (double)(upperLeftViewY + viewHeight - d)/c;
+				System.out.println("image upper left corner in pixel coordinates at x = " + df.format(upperLeftPixelX) +
+						" y = " + df.format(upperLeftPixelY));
+				System.out.println("image upper right corner in pixel coordinates at x = " + df.format(upperRightPixelX) +
+						" y = " + df.format(upperLeftPixelY));
+				System.out.println("image lower left corner in pixel coordinates at x = " + df.format(upperLeftPixelX) +
+						" y = " + df.format(lowerLeftPixelY));
+				System.out.println("image lower right corner in pixel coordinates at x = " + df.format(upperRightPixelX) +
+						" y = " + df.format(lowerLeftPixelY));
 			} else if (event.getButton() == MouseEvent.BUTTON1 && event.isControlDown()) {
 				// imageScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 				// imageScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
