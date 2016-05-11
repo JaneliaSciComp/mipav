@@ -1,7 +1,6 @@
 package gov.nih.mipav.view;
 
 import gov.nih.mipav.util.*;
-
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -10,12 +9,9 @@ import gov.nih.mipav.view.renderer.WildMagic.VOI.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-
 import java.util.*;
 
-
 import javax.swing.*;
-
 import javax.swing.event.*;
 
 import WildMagic.LibFoundation.Mathematics.*;
@@ -23,6 +19,7 @@ import WildMagic.LibFoundation.Mathematics.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+
 import javax.imageio.ImageIO;
 
 
@@ -741,6 +738,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		}
 	}
 
+	
 	/**
 	 * DOCUMENT ME!
 	 * 
