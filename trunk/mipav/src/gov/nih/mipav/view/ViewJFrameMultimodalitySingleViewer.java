@@ -41,7 +41,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 	private String imageNames;
 	private int imageNamesIndex = 0;
-	private ModelImage images;
+	private ModelImage image;
 
 	private ViewJFrameImage currentFrame;
 	private ViewJFrameImage imageFrame;
@@ -75,13 +75,22 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		if (selected != null) {
 			comboBoxImage.setSelectedItem(selected);
 			String selectedName = (String) comboBoxImage.getSelectedItem();
-			images = ViewUserInterface.getReference().getRegisteredImageByName(
+			image = ViewUserInterface.getReference().getRegisteredImageByName(
 					selectedName);
 			equalScaleImage();
 		}
 		
 		getFramesInfo();
 		initLayout();
+		
+		JViewport viewPort = imageScroll.getViewport();
+		int vh = viewPort.getHeight();
+		int dim[] = image.getExtents();
+		float res[] = image.getResolutions(0);
+		float newZoom = (float)vh / (float)( dim[1]);
+		System.err.println("newZoom = " + newZoom);
+	    imageComp.setZoom(newZoom, newZoom);
+	    
 		startRecording();
 	}
 
@@ -102,7 +111,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 	private void getFramesInfo() {
 		
-		int[] extents0 = images.getExtents();
+		int[] extents0 = image.getExtents();
 		zDim = extents0[2];
 		
 		
@@ -228,8 +237,14 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		
 		imageScroll = new JScrollPane(quadImagePanel,
 	                ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		imageScroll.getVerticalScrollBar().setSize(new Dimension(2, 0));
-		imageScroll.getHorizontalScrollBar().setSize(new Dimension(0, 2));
+		imageScroll.getVerticalScrollBar().setSize(new Dimension(0, 0));
+		imageScroll.getHorizontalScrollBar().setSize(new Dimension(0, 0));
+		imageScroll.getVerticalScrollBar().setVisible(false);
+		imageScroll.getHorizontalScrollBar().setVisible(false);
+		imageScroll.setOpaque(false);
+		imageScroll.getViewport().setOpaque(false);
+		// imageScroll.setBorder(null);;
+		
 
 		getContentPane().add(imageScroll, BorderLayout.CENTER);
 
@@ -269,7 +284,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	    	int currentSlice0 = imageComp.getSlice();
 		
 	    	
-			int zDim1 = images.getExtents()[2];
+			int zDim1 = image.getExtents()[2];
 		    // System.err.println("zDim1 = " + zDim1 + " zDim = " + zDim);
 		    // System.err.println("zDim/zDim1 = " + (float)((float)zDim/(float)zDim1));
 	         
@@ -334,7 +349,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	    int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
 		
 	
-		imageFrame = new ViewJFrameImage(images);
+		imageFrame = new ViewJFrameImage(image);
 		imageFrame.setLocation(screenWidth, screenHeight);
 		imageComp = imageFrame.getComponentImage();
 		imageComp.setName("MultiViewSingle");
@@ -654,8 +669,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 			if (event.getButton() == MouseEvent.BUTTON1 && event.isShiftDown()) {
 
-				imageScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-				imageScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+				// imageScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+				// imageScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 				
 				// quad 0
 				float oldZoom0 = imageComp.getZoomX();
@@ -679,8 +694,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			
 
 			} else if (event.getButton() == MouseEvent.BUTTON1 && event.isControlDown()) {
-				imageScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-				imageScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+				// imageScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+				// imageScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			
 				// quad 0
 				float oldZoom0 = imageComp.getZoomX();
