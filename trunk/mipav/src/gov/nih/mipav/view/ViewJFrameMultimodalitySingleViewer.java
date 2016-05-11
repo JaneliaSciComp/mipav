@@ -59,6 +59,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	private JLabel label5;
 	
 	private JComboBox comboBoxImage;
+	private float initZoomFactor;
 	
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -87,9 +88,9 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		int vh = viewPort.getHeight();
 		int dim[] = image.getExtents();
 		float res[] = image.getResolutions(0);
-		float newZoom = (float)vh / (float)( dim[1]);
-		System.err.println("newZoom = " + newZoom);
-	    imageComp.setZoom(newZoom, newZoom);
+		initZoomFactor = (float)vh / (float)( dim[1]);
+		System.err.println("initZoomFactor = " + initZoomFactor);
+	    imageComp.setZoom(initZoomFactor, initZoomFactor);
 	    
 		startRecording();
 	}
@@ -692,6 +693,15 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				}
 			
 			
+				JViewport viewPort = imageScroll.getViewport();
+				int vh = viewPort.getHeight();
+				int vw = viewPort.getWidth();
+				int compW = imageComp.getSize().width;
+				int compH = imageComp.getSize().height;
+				int dim[] = image.getExtents();
+				
+				System.err.println("newZoom0 = " + newZoom0 + " " + " vh = " + vh + "  vw = " + vw + "  dim[0] = " + dim[0] + " dim[1] = " + dim[1] + "  compW = " + compW + "  compH = " + compH);
+				
 
 			} else if (event.getButton() == MouseEvent.BUTTON1 && event.isControlDown()) {
 				// imageScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -717,6 +727,15 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 					imageComp.setCenter(new Vector3f(newX, newY, currentSlice0));
 					adjustScrollbars(newX, newY, imageScroll);
 				}
+				
+				JViewport viewPort = imageScroll.getViewport();
+				int vh = viewPort.getHeight();
+				int vw = viewPort.getWidth();
+				int compW = imageComp.getSize().width;
+				int compH = imageComp.getSize().height;
+				int dim[] = image.getExtents();
+				
+				System.err.println("newZoom0 = " + newZoom0 + " " + " vh = " + vh + "  vw = " + vw + "  dim[0] = " + dim[0] + " dim[1] = " + dim[1] + "  compW = " + compW + "  compH = " + compH);
 			
 			}
 		}
