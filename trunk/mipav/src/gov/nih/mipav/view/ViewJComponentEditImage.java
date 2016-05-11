@@ -2905,105 +2905,104 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * 
      * @param mouseWheelEvent DOCUMENT ME!
      */
-    public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
-    	
-        final int wheelRotation = mouseWheelEvent.getWheelRotation();
+	public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
 
-        if (frame instanceof ViewJFrameImage) {
-        	
-        	boolean isActiveFrame = frame.isActive();
-        	
-        	if(isActiveFrame) {
-        		
-        		int xCoord = mouseWheelEvent.getX();
-            	int yCoord = mouseWheelEvent.getY();
-            	
-        		if (wheelRotation < 0) {
+		final int wheelRotation = mouseWheelEvent.getWheelRotation();
 
-                    if (imageActive.getNDims() > 2) {
+		if (frame instanceof ViewJFrameImage) {
 
-                        if (mouseWheelEvent.isShiftDown()) {
+			boolean isActiveFrame = frame.isActive();
 
-                            if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                                ((ViewJFrameImage) frame).setShiftDown(true);
-                            }
-                        }else {
-                        	if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                                ((ViewJFrameImage) frame).setShiftDown(false);
-                            }
-                        }
+			if (isActiveFrame) {
 
-                        ((ViewJFrameImage) frame).incSlice();
-                        
-                       
-                        if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
-                        	String imageTimeStamp = getImageTimeStamp();
-                        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, " + " increase, " + 0 + ", " +  xCoord + ", " + yCoord);   
-                        }
-                        
-                        
-                        
-                    } else {
-                    	
-                        ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f, xCoord, yCoord);
-                        
-                        
-                        if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
-                        	String imageTimeStamp = getImageTimeStamp();
-                        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, " + " zoom in, " + 0 + ", " +  xCoord + ", " + yCoord);      
-                        }
-                         
-                         
-                    }
-                } else {
+				int xCoord = mouseWheelEvent.getX();
+				int yCoord = mouseWheelEvent.getY();
 
-                    if (imageActive.getNDims() > 2) {
+				if (wheelRotation < 0) {
 
-                        if (mouseWheelEvent.isShiftDown()) {
+					if (imageActive.getNDims() > 2) {
 
-                            if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                                ((ViewJFrameImage) frame).setShiftDown(true);
-                            }
-                        }else {
-                        	if ( ((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                                ((ViewJFrameImage) frame).setShiftDown(false);
-                            }
-                        }
+						if (mouseWheelEvent.isShiftDown()) {
 
-                        ((ViewJFrameImage) frame).decSlice();
-                        
-                       
-                        if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode ) {
-                        	String imageTimeStamp = getImageTimeStamp();
-                        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, " + " decrease, " + 0 + ", " +  xCoord + ", " + yCoord);   
-                        }
-                        
-                         
-                    } else {
-                    	
-                        ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f, xCoord, yCoord);
-                        
-                       
-                        if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
-                        	String imageTimeStamp = getImageTimeStamp();
-                        	MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, " + " zoom out, " + 0 + ", " +  xCoord + ", " + yCoord);   
-                        }
-                         
-                         
-                    }
-                }
-        		
-        		
-        		
-        		restartCheckerboardAnimateThread();
-        		
-        		
-        		
-        	}
+							if (((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+								((ViewJFrameImage) frame).setShiftDown(true);
+							}
+						} else {
+							if (((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+								((ViewJFrameImage) frame).setShiftDown(false);
+							}
+						}
 
-            
-        }
-    }
+						((ViewJFrameImage) frame).incSlice();
+
+						if (MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
+							String imageTimeStamp = getImageTimeStamp();
+							MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, "
+									+ " increase, " + 0 + ", " + xCoord + ", " + yCoord);
+						}
+
+					} else {
+
+						((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f, xCoord, yCoord);
+
+						if (MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
+							String imageTimeStamp = getImageTimeStamp();
+							MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, "
+									+ " zoom in, " + 0 + ", " + xCoord + ", " + yCoord);
+						}
+
+					}
+				} else {
+
+					if (imageActive.getNDims() > 2) {
+
+						if (mouseWheelEvent.isShiftDown()) {
+
+							if (((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+								((ViewJFrameImage) frame).setShiftDown(true);
+							}
+						} else {
+							if (((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+								((ViewJFrameImage) frame).setShiftDown(false);
+							}
+						}
+
+						((ViewJFrameImage) frame).decSlice();
+
+						if (MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
+							String imageTimeStamp = getImageTimeStamp();
+							MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, "
+									+ " decrease, " + 0 + ", " + xCoord + ", " + yCoord);
+						}
+
+					} else {
+
+						((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f, xCoord, yCoord);
+
+						if (MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
+							String imageTimeStamp = getImageTimeStamp();
+							MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Zoom 2D, " + "Mouse wheel rolling, "
+									+ " zoom out, " + 0 + ", " + xCoord + ", " + yCoord);
+						}
+
+					}
+				}
+
+				restartCheckerboardAnimateThread();
+
+			}
+
+			if (MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
+				if (refPtsLocation != null) {
+					String imageTimeStamp = getImageTimeStamp();
+					Point mouseScreen = mouseWheelEvent.getLocationOnScreen();
+					MipavUtil.writeEyeTrackingLog(imageTimeStamp + refPtsLocation + ", " + "Sliding");
+				}
+
+			}
+
+		}
+	}
     
     
     
