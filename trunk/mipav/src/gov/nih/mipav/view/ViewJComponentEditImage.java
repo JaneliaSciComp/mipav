@@ -2714,7 +2714,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
 
        
-        System.err.println("viewJComponentEditImage mousePressed: " + refPtsLocation);
         if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
 			if (refPtsLocation != null) {
 				String imageTimeStamp = getImageTimeStamp();
