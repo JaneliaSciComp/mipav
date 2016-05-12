@@ -1196,7 +1196,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 deVal.setValue(structOutputBaseNameList.get(dsName.toLowerCase()) + File.separator + outputFileNameBase + ".jpg");
                             } else if (deVal.getName().equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME) && hashCode != null) {
                                 deVal.setValue(hashCode);
-                            } else if (deVal.getDataElementInfo().getType() == DataType.FILE && !deVal.getValue().equals("")) {
+                            } else if ( (deVal.getDataElementInfo().getType() == DataType.FILE || deVal.getDataElementInfo().getType() == DataType.TRIPLANAR)
+                                    && !deVal.getValue().equals("")) {
                                 final String srcFileValue = deVal.getValue();
 
                                 if (srcFileValue.contains(BROWSE_NONIMG_DELIM)) {
@@ -3563,7 +3564,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
                                     if (comp instanceof JTextField) {
                                         // if file type, check for relative vs. absolute path
-                                        if (deVal.getDataElementInfo().getType() == DataType.FILE && ! (new File(value).isAbsolute())) {
+                                        if ( (deVal.getDataElementInfo().getType() == DataType.FILE || deVal.getDataElementInfo().getType() == DataType.TRIPLANAR)
+                                                && ! (new File(value).isAbsolute())) {
                                             value = csvFile.getParentFile().getAbsolutePath() + File.separator + value;
                                         }
                                         final JTextField t = (JTextField) comp;
@@ -3677,7 +3679,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
                                     if (comp instanceof JTextField) {
                                         // if file type, check for relative vs. absolute path
-                                        if (deVal.getDataElementInfo().getType() == DataType.FILE && ! (new File(value).isAbsolute())) {
+                                        if ( (deVal.getDataElementInfo().getType() == DataType.FILE || deVal.getDataElementInfo().getType() == DataType.TRIPLANAR)
+                                                && ! (new File(value).isAbsolute())) {
                                             value = csvFile.getParentFile().getAbsolutePath() + File.separator + value;
                                         }
                                         final JTextField t = (JTextField) comp;
@@ -4153,7 +4156,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     final StructuralDataElement deInfo = deVal.getDataElementInfo();
 
-                    if (deInfo.getType().equals(DataType.FILE)) {
+                    if (deInfo.getType().equals(DataType.FILE) || deInfo.getType().equals(DataType.TRIPLANAR)) {
                         elementPanel.add(deVal.getComp(), egbc);
                         egbc.gridx++;
                         final JButton browseButton = new JButton("Browse");
@@ -4572,6 +4575,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String ctKVP = null;
             String ctMA = null;
 
+            String seriesDescription = null;
+            boolean isRestingFMRI = false;
+
+            String unit4DType = null;
+            if (units.length > 3 && Unit.getUnitFromLegacyNum(units[3]).getType() == UnitType.TIME) {
+                unit4DType = "Time";
+            }
+
             if (fileFormatString.equalsIgnoreCase("dicom")) {
                 final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
@@ -4624,6 +4635,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
 
                 if (modalityString.equalsIgnoreCase("magnetic resonance")) {
+                    seriesDescription = ((String) (fileInfoDicom.getTagTable().getValue("0008,103E")));
+                    if (seriesDescription.toLowerCase().contains("rest")) {
+                        isRestingFMRI = true;
+                    }
+
                     echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
                     repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
                     magneticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
@@ -4701,6 +4717,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             csvFList.add(csvFieldNames.get(i));
                             csvPList.add(repeatValues.get(i));
                             headerList.add(String.valueOf(exts[4]));
+                        }
+                    } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim4ExtentTyp") && units.length > 3
+                            && unit4DType != null) {
+                        if ( !repeatValues.get(i).trim().equals(unit4DType)) {
+                            csvFList.add(csvFieldNames.get(i));
+                            csvPList.add(repeatValues.get(i));
+                            headerList.add(unit4DType);
                         }
                     } else if (csvFieldNames.get(i).equalsIgnoreCase("Image pixel information and dimensions.ImgDim1UoMVal") && units.length > 0
                             && Unit.getUnitFromLegacyNum(units[0]) != null) {
@@ -5010,6 +5033,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     headerList.add(flowCompensation);
                                 }
                             }
+
+                            // TODO add in handling of FMRI pulse seq and Resting state task type
                         } else if (modalityString.equalsIgnoreCase("computed tomography")) {
                             if (csvFieldNames.get(i).equalsIgnoreCase("CT Information.ImgCTkVp") && isValueSet(ctKVP)) {
                                 if ( !repeatValues.get(i).trim().equals(ctKVP)) {
@@ -5225,7 +5250,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 if (modalityString.equalsIgnoreCase("magnetic resonance")) {
                     seriesDescription = ((String) (fileInfoDicom.getTagTable().getValue("0008,103E")));
-                    final String seriesDescriptionLower = seriesDescription.toLowerCase();
                     if (seriesDescription.toLowerCase().contains("rest")) {
                         isRestingFMRI = true;
                     }
