@@ -242,7 +242,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageScroll.getHorizontalScrollBar().setVisible(false);
 		imageScroll.setOpaque(false);
 		imageScroll.getViewport().setOpaque(false);
-		// imageScroll.setBorder(null);;
+		imageScroll.setBorder(null);;
 		
 
 		getContentPane().add(imageScroll, BorderLayout.CENTER);
