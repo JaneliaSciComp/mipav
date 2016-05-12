@@ -733,12 +733,12 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			// System.out.println("Event distance from upper left circle center dx = " + dx + " dy = " + dy);
 
 			
-			/*
-			String location = "Upper left circle center, " + culx + ", " + culy + ", " + 
+			
+			String reflocation = "Upper left circle center, " + culx + ", " + culy + ", " + 
 	                  "Upper left corner frame, " + vul.x + ", " + vul.y + ", " +
 			          "Image upper left corner, " + (vul.x + rect.x) + ", " +  (vul.y + rect.y) + ", " +
 	                  "Image lower right corner, " + (vul.x + rect.x + rect.width) + ", " + (vul.y + rect.y + rect.height);
-	        */
+			imageComp.setFullScreenModeLocation(reflocation);
 	       
 			
 			// System.err.println("in mouse pressed");
