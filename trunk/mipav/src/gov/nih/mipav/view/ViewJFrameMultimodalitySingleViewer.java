@@ -591,6 +591,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public synchronized void mouseDragged(MouseEvent e) {
 
 		synchronized (this) {
+			DecimalFormat df = new DecimalFormat();
+			df.setMaximumFractionDigits(2);
 			if (e.isAltDown()) {
 				int deltaX = origin.x - e.getX();
 				int deltaY = origin.y - e.getY();
@@ -601,6 +603,89 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 					view.y += deltaY;
 
 					imageComp.scrollRectToVisible(view);
+					JViewport viewPort = imageScroll.getViewport();
+					Rectangle viewRectangle = viewPort.getViewRect();
+					Point viewPt = viewPort.getLocationOnScreen();
+					Point compPt = imageComp.getLocationOnScreen();
+					int upperLeftCompX = compPt.x;
+					int upperLeftCompY = compPt.y;
+					int upperLeftViewX = viewPt.x;
+					int upperLeftViewY = viewPt.y;
+					int viewWidth = viewRectangle.width;
+					int viewHeight = viewRectangle.height;
+					Rectangle compRectangle = imageComp.getBounds();
+					
+					int compWidth = compRectangle.width;
+					int compHeight = compRectangle.height;
+					double viewHeightToCompHeight = (double)viewHeight/(double)compHeight;
+					double viewWidthToCompWidth = (double)viewWidth/(double)compWidth;
+					int diffX = Math.max(0, upperLeftViewX - upperLeftCompX);
+					int diffY = Math.max(0, upperLeftViewY - upperLeftCompY);
+					if ((viewWidth >= compWidth) && (viewHeight >= compHeight)) {
+						// All of image present
+						System.out.println("Upper left image component corner in pixels is located at x = 0 y = 0");
+						System.out.println("Upper right image component corner in pixels is located at x = " + (image.getExtents()[0] - 1) +
+								" y = 0");
+						System.out.println("Lower left image component corner in pixels is located at x = 0" +
+								" y = " + (image.getExtents()[1] - 1));
+						System.out.println("Lower right image component corner in pixels is located at x = " + (image.getExtents()[0] - 1) +
+								" y = " + (image.getExtents()[1] - 1));	
+					}
+					else if ((viewWidth < compWidth) && (viewHeight >= compHeight)) {
+						// Right part of image clipped but all of image height present
+						System.out.println("Upper left image component corner in pixels is located at x = " +
+						df.format(diffX*viewWidthToCompWidth) + " y = 0");
+						System.out.println("Upper right image component corner in pixels is located at x = " + 
+								df.format(Math.min((image.getExtents()[0] - 1), 
+										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = 0");
+						System.out.println("Lower left image component corner in pixels is located at x =  "
+								+ df.format(diffX*viewWidthToCompWidth) + 
+								" y = " + (image.getExtents()[1] - 1));
+						System.out.println("Lower right image component corner in pixels is located at x = " +
+								df.format(Math.min((image.getExtents()[0] - 1), 
+										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
+										" y = " + (image.getExtents()[1] - 1));
+					}
+					else if ((viewWidth >= compWidth) && (viewHeight < compHeight)) {
+						// Bottom part of image clipped but all of image width present
+						System.out.println("Upper left image component corner in pixels is located at x = 0 y = " +
+								df.format(diffY*viewHeightToCompHeight));
+						System.out.println("Upper right image component corner in pixels is located at x = " +
+								(image.getExtents()[0] - 1) +
+								" y = " + df.format(diffY*viewHeightToCompHeight));
+						System.out.println("Lower left image component corner in pixels is located at x = 0" +
+								" y = " + df.format(Math.min((image.getExtents()[1] - 1), 
+										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))));
+						System.out.println("Lower right image component corner in pixels is located at x = "
+										+ (image.getExtents()[0] - 1) +
+								" y = " + df.format(Math.min((image.getExtents()[1] - 1), 
+										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))));
+					}
+					else if ((viewWidth < compWidth) && (viewHeight < compHeight)) {
+						// Bottom and right part of images clipped
+						System.out.println("Upper left image component corner in pixels is located at x = " +
+								df.format(diffX*viewWidthToCompWidth) + " y = " +
+								df.format(diffY*viewHeightToCompHeight));
+						System.out.println("Upper right image component corner in pixels is located at x = " + 
+								df.format(Math.min((image.getExtents()[0] - 1), 
+										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
+								" y = " + df.format(diffY*viewHeightToCompHeight));
+						System.out.println("Lower left image component corner in pixels is located at x = " + 
+								df.format(diffX*viewWidthToCompWidth) + " y = " + 
+								 df.format(Math.min((image.getExtents()[1] - 1), 
+											((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))));
+						System.out.println("Lower right image component corner in pixels is located at x = " +
+								df.format(Math.min((image.getExtents()[0] - 1), 
+										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = " + 
+										 df.format(Math.min((image.getExtents()[1] - 1), 
+													((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))));
+					}
+					//System.out.println("upperLeftViewX = " + upperLeftViewX + " upperLeftViewY = " + upperLeftViewY);
+					//System.out.println("viewWidth = " + viewWidth + " viewHeight = " + viewHeight);
+					//System.out.println("upperLeftCompX = " + upperLeftCompX + " upperLeftCompY = " + upperLeftCompY);
+					//System.out.println("CompRectangle.x = " + compRectangle.x + " compRectangle.y = " + compRectangle.y);
+					//System.out.println("compWidth = " + compWidth + " compHeight = " + compHeight);
+					
 				}
 
 			
@@ -702,61 +787,83 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				
 				System.err.println("newZoom0 = " + newZoom0 + " " + " vh = " + vh + "  vw = " + vw + "  dim[0] = " + dim[0] + " dim[1] = " + dim[1] + "  compW = " + compW + "  compH = " + compH);
 				Rectangle viewRectangle = viewPort.getViewRect();
-				int upperLeftViewX = viewRectangle.x;
-				int upperLeftViewY = viewRectangle.y;
+				Point viewPt = viewPort.getLocationOnScreen();
+				Point compPt = imageComp.getLocationOnScreen();
+				int upperLeftCompX = compPt.x;
+				int upperLeftCompY = compPt.y;
+				int upperLeftViewX = viewPt.x;
+				int upperLeftViewY = viewPt.y;
 				int viewWidth = viewRectangle.width;
 				int viewHeight = viewRectangle.height;
 				Rectangle compRectangle = imageComp.getBounds();
-				int upperLeftCompX = compRectangle.x;
-				int upperLeftCompY = compRectangle.y;
+				
 				int compWidth = compRectangle.width;
 				int compHeight = compRectangle.height;
 				double viewHeightToCompHeight = (double)viewHeight/(double)compHeight;
 				double viewWidthToCompWidth = (double)viewWidth/(double)compWidth;
+				int diffX = Math.max(0, upperLeftViewX - upperLeftCompX);
+				int diffY = Math.max(0, upperLeftViewY - upperLeftCompY);
 				if ((viewWidth >= compWidth) && (viewHeight >= compHeight)) {
 					// All of image present
-					System.out.println("Upper left image component corner is located at x = 0 y = 0");
-					System.out.println("Upper right image component corner is located at x = " + (image.getExtents()[0] - 1) +
+					System.out.println("Upper left image component corner in pixels is located at x = 0 y = 0");
+					System.out.println("Upper right image component corner in pixels is located at x = " + (image.getExtents()[0] - 1) +
 							" y = 0");
-					System.out.println("Lower left image component corner is located at x = 0" +
+					System.out.println("Lower left image component corner in pixels is located at x = 0" +
 							" y = " + (image.getExtents()[1] - 1));
-					System.out.println("Lower right image component corner is located at x = " + (image.getExtents()[0] - 1) +
+					System.out.println("Lower right image component corner in pixels is located at x = " + (image.getExtents()[0] - 1) +
 							" y = " + (image.getExtents()[1] - 1));	
 				}
 				else if ((viewWidth < compWidth) && (viewHeight >= compHeight)) {
 					// Right part of image clipped but all of image height present
-					System.out.println("Upper left image component corner is located at x = 0 y = 0");
-					System.out.println("Upper right image component corner is located at x = " + 
-							df.format((image.getExtents()[0] - 1)*viewWidthToCompWidth) + " y = 0");
-					System.out.println("Lower left image component corner is located at x = 0" + " y = " + (image.getExtents()[1] - 1));
-					System.out.println("Lower right image component corner is located at x = " +
-							df.format((image.getExtents()[0] - 1)*viewWidthToCompWidth) + " y = " + (image.getExtents()[1] - 1));
+					System.out.println("Upper left image component corner in pixels is located at x = " +
+					df.format(diffX*viewWidthToCompWidth) + " y = 0");
+					System.out.println("Upper right image component corner in pixels is located at x = " + 
+							df.format(Math.min((image.getExtents()[0] - 1), 
+									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = 0");
+					System.out.println("Lower left image component corner in pixels is located at x =  "
+							+ df.format(diffX*viewWidthToCompWidth) + 
+							" y = " + (image.getExtents()[1] - 1));
+					System.out.println("Lower right image component corner in pixels is located at x = " +
+							df.format(Math.min((image.getExtents()[0] - 1), 
+									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
+									" y = " + (image.getExtents()[1] - 1));
 				}
 				else if ((viewWidth >= compWidth) && (viewHeight < compHeight)) {
 					// Bottom part of image clipped but all of image width present
-					System.out.println("Upper left image component corner is located at x = 0 y = 0");
-					System.out.println("Upper right image component corner is located at x = " + (image.getExtents()[0] - 1) +
-							" y = 0");
-					System.out.println("Lower left image component corner is located at x = 0" +
-							" y = " + df.format((image.getExtents()[1] - 1)*viewHeightToCompHeight));
-					System.out.println("Lower right image component corner is located at x = " + (image.getExtents()[0] - 1) +
-							" y = " + df.format((image.getExtents()[1] - 1)*viewHeightToCompHeight));
+					System.out.println("Upper left image component corner in pixels is located at x = 0 y = " +
+							df.format(diffY*viewHeightToCompHeight));
+					System.out.println("Upper right image component corner in pixels is located at x = " + (image.getExtents()[0] - 1) +
+							" y = " + df.format(diffY*viewHeightToCompHeight));
+					System.out.println("Lower left image component corner in pixels is located at x = 0" +
+							" y = " + df.format(Math.min((image.getExtents()[1] - 1), 
+									((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))));
+					System.out.println("Lower right image component corner in pixels is located at x = " + (image.getExtents()[0] - 1) +
+							" y = " + df.format(Math.min((image.getExtents()[1] - 1), 
+									((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))));
 				}
 				else if ((viewWidth < compWidth) && (viewHeight < compHeight)) {
 					// Bottom and right part of images clipped
-					System.out.println("Upper left image component corner is located at x = 0 y = 0");
-					System.out.println("Upper right image component corner is located at x = " + 
-					df.format((image.getExtents()[0] - 1)*viewWidthToCompWidth) +
-							" y = 0");
-					System.out.println("Lower left image component corner is located at x = 0" + " y = " + 
-							df.format((image.getExtents()[1] - 1)*viewHeightToCompHeight));
-					System.out.println("Lower right image component corner is located at x = " +
-							df.format((image.getExtents()[0] - 1)*viewWidthToCompWidth) + " y = " + 
-							df.format((image.getExtents()[1] - 1)*viewHeightToCompHeight));
+					System.out.println("Upper left image component corner in pixels is located at x = " +
+							df.format(diffX*viewWidthToCompWidth) + " y = " +
+							df.format(diffY*viewHeightToCompHeight));
+					System.out.println("Upper right image component corner in pixels is located at x = " + 
+							df.format(Math.min((image.getExtents()[0] - 1), 
+									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
+							" y = " + df.format(diffY*viewHeightToCompHeight));
+					System.out.println("Lower left image component corner in pixels is located at x = " + 
+							df.format(diffX*viewWidthToCompWidth) + " y = " + 
+							 df.format(Math.min((image.getExtents()[1] - 1), 
+										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))));
+					System.out.println("Lower right image component corner in pixels is located at x = " +
+							df.format(Math.min((image.getExtents()[0] - 1), 
+									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = " + 
+									 df.format(Math.min((image.getExtents()[1] - 1), 
+												((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))));
 				}
 				//System.out.println("upperLeftViewX = " + upperLeftViewX + " upperLeftViewY = " + upperLeftViewY);
 				//System.out.println("viewWidth = " + viewWidth + " viewHeight = " + viewHeight);
 				//System.out.println("upperLeftCompX = " + upperLeftCompX + " upperLeftCompY = " + upperLeftCompY);
+				//System.out.println("CompRectangle.x = " + compRectangle.x + " compRectangle.y = " + compRectangle.y);
 				//System.out.println("compWidth = " + compWidth + " compHeight = " + compHeight);
 			} else if (event.getButton() == MouseEvent.BUTTON1 && event.isControlDown()) {
 				// imageScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
