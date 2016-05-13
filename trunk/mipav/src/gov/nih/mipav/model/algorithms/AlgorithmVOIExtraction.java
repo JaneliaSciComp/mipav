@@ -317,7 +317,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     					outY = y;
                     					outIndex = index + 1;
                     					if ((outX >= 1) && (outX <= xDim) && (outY >= 1) && (outY <= yDim) &&
-                    					    (outerBuffer[numOuterPixels] != outX-1 + (outY-1)*xDim)) {
+                    					    ((numOuterPixels == 0) || (outerBuffer[numOuterPixels-1] != outX-1 + (outY-1)*xDim))) {
                     					    outerBuffer[numOuterPixels++] = outX-1 + (outY-1)*xDim;
                     					}
                     				}
@@ -338,7 +338,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     					outY = y - 1;
                     					outIndex = index -paddedYDim;
                     					if ((outX >= 1) && (outX <= xDim) && (outY >= 1) && (outY <= yDim) &&
-                    					    (outerBuffer[numOuterPixels] != outX-1 + (outY-1)*xDim)) {
+                    							((numOuterPixels == 0) || (outerBuffer[numOuterPixels-1] != outX-1 + (outY-1)*xDim))) {
                     					    outerBuffer[numOuterPixels++] = outX-1 + (outY-1)*xDim;
                     					}
                     				}
@@ -359,7 +359,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     					outY = y;
                     					outIndex = index - 1;
                     					if ((outX >= 1) && (outX <= xDim) && (outY >= 1) && (outY <= yDim) &&
-                    					    (outerBuffer[numOuterPixels] != outX-1 + (outY-1)*xDim)) {
+                    							((numOuterPixels == 0) || (outerBuffer[numOuterPixels-1] != outX-1 + (outY-1)*xDim))) {
                     					    outerBuffer[numOuterPixels++] = outX-1 + (outY-1)*xDim;
                     					}
                     				}
@@ -380,7 +380,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     					outY = y + 1;
                     					outIndex = index + paddedYDim;
                     					if ((outX >= 1) && (outX <= xDim) && (outY >= 1) && (outY <= yDim) &&
-                        					    (outerBuffer[numOuterPixels] != outX-1 + (outY-1)*xDim)) {
+                    							((numOuterPixels == 0) || (outerBuffer[numOuterPixels-1] != outX-1 + (outY-1)*xDim))) {
                         					    outerBuffer[numOuterPixels++] = outX-1 + (outY-1)*xDim;
                         					}
                     				}
