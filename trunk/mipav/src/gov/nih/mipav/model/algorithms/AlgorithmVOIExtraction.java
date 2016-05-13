@@ -169,9 +169,15 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 	private void outerBoundaryTracing() {
     	ViewVOIVector VOIs = null;
     	int length;
+    	int paddedLength;
+    	int paddedXDim;
+    	int paddedYDim;
     	int zDim;
     	int x = 0;
     	int y = 0;
+    	int outX;
+    	int outY;
+    	int outIndex;
     	int z;
     	int i, j;
     	int numBoundaryPixels = 0;
@@ -186,6 +192,8 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
     	int xArrInt[];
     	int yArrInt[];
     	int zArrInt[];
+    	int xinc;
+    	int yinc;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -208,6 +216,9 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
+        paddedXDim = xDim + 2;
+        paddedYDim = yDim + 2;
+        paddedLength = paddedXDim * paddedYDim;
         
         if (srcImage.getNDims() > 2) {
             zDim = srcImage.getExtents()[2];
@@ -217,7 +228,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         
         try {
             imgBuffer = new short[length];
-            objBuffer = new short[length];
+            objBuffer = new short[paddedLength];
             boundaryBuffer = new int[length];
             outerBuffer = new int[length];
         } catch (OutOfMemoryError e) {
@@ -254,27 +265,32 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             
             
             for (short obj = 1; obj < (srcImage.getMax() + 1); obj++) {
-
-                for (int m = 0; m < imgBuffer.length; m++) {
-
+            	
+            	for (int m = 0; m < imgBuffer.length; m++) {
+                    x = m % xDim;
+                    y = m / xDim;
                     if (imgBuffer[m] == obj) {
-                        objBuffer[m] = obj;
+                        objBuffer[(x+1) + (y+1)*paddedXDim] = obj;
                     } else {
-                        objBuffer[m] = 0;
+                        objBuffer[(x+1) + (y+1)*paddedXDim] = 0;
                     }
                     
                 } // for (int m = 0; m < imgBuffer.length; m++)
                 
                 found = false;
-                for (y = 0; y < yDim && !found; y++) {
-                	for (x = 0; x < xDim && !found; x++) {
-                	    index = x + y * xDim;
+                xinc = 1;
+                yinc = 1;
+                for (y = 1; y <= yDim && !found; y+= yinc) {
+                	for (x = 1; x <= xDim && !found; x+= xinc) {
+                	    index = x + y * paddedXDim;
                 	    if (objBuffer[index] == obj) {
                 	    	found = true;
-                	    	boundaryBuffer[numBoundaryPixels++] = index;
+                	    	boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
+                	    	xinc = 0;
+                	    	yinc = 0;
                 	    }
-                	} // for (x = 0; x < xDim; x++)
-                } // for (y = 0; y < yDim; y++)
+                	} // for (x = 1; x <= xDim; x++)
+                } // for (y = 1; y <= yDim; y++)
                 
                     dir = 3;
                     while ((numBoundaryPixels < 4) || (boundaryBuffer[0] != boundaryBuffer[numBoundaryPixels-2]) ||
@@ -289,30 +305,42 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			return;
                     		}
                     		if (dir == 0) {
-                    			if ((x < xDim-1) && (objBuffer[index+1] == obj)) {
+                    			if ((x < paddedXDim-1) && (objBuffer[index+1] == obj)) {
                     			    found = true;
                     			    x = x+1;
                     			    index = index + 1;
-                    			    boundaryBuffer[numBoundaryPixels++] = index;
+                    			    boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
-                    				if ((x < xDim - 1) && (outerBuffer[numOuterPixels] != index)) {
-                    					outerBuffer[numOuterPixels++] = index;
+                    				if (x < paddedXDim - 1) {
+                    					outX = x + 1;
+                    					outY = y;
+                    					outIndex = index + 1;
+                    					if ((outX >= 1) && (outX <= xDim) && (outY >= 1) && (outY <= yDim) &&
+                    					    (outerBuffer[numOuterPixels] != outX-1 + (outY-1)*xDim)) {
+                    					    outerBuffer[numOuterPixels++] = outX-1 + (outY-1)*xDim;
+                    					}
                     				}
                     				dir = 1;
                     				numDir++;
                     			}
                     		} // if (dir == 0)
                     		else if (dir == 1) {
-                    			if ((y >= 1) && (objBuffer[index - yDim] == obj)) {
+                    			if ((y >= 1) && (objBuffer[index - paddedYDim] == obj)) {
                     				found = true;
                     				y = y - 1;
-                    				index = index - yDim;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index - paddedYDim;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
-                    				if ((y >= 1) && (outerBuffer[numOuterPixels] != index)) {
-                    					outerBuffer[numOuterPixels++] = index;
+                    				if (y >= 1) {
+                    					outX = x;
+                    					outY = y - 1;
+                    					outIndex = index -paddedYDim;
+                    					if ((outX >= 1) && (outX <= xDim) && (outY >= 1) && (outY <= yDim) &&
+                    					    (outerBuffer[numOuterPixels] != outX-1 + (outY-1)*xDim)) {
+                    					    outerBuffer[numOuterPixels++] = outX-1 + (outY-1)*xDim;
+                    					}
                     				}
                     				dir = 2;
                     				numDir++;
@@ -323,26 +351,38 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     				found = true;
                     				x = x - 1;
                     				index = index - 1;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
-                    				if ((x >= 1) && (outerBuffer[numOuterPixels] != index)) {
-                    					outerBuffer[numOuterPixels++] = index;
+                    				if (x >= 1) {
+                    					outX = x - 1;
+                    					outY = y;
+                    					outIndex = index - 1;
+                    					if ((outX >= 1) && (outX <= xDim) && (outY >= 1) && (outY <= yDim) &&
+                    					    (outerBuffer[numOuterPixels] != outX-1 + (outY-1)*xDim)) {
+                    					    outerBuffer[numOuterPixels++] = outX-1 + (outY-1)*xDim;
+                    					}
                     				}
                     				dir = 3;
                     				numDir++;
                     			}
                     		} // else if (dir == 2)
                     		else if (dir == 3) {
-                    			if ((y < yDim - 1) && (objBuffer[index + yDim] == obj)) {
+                    			if ((y < paddedYDim - 1) && (objBuffer[index + paddedYDim] == obj)) {
                     				found = true;
                     				y = y + 1;
-                    				index = index + yDim;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index + paddedYDim;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
-                    				if ((y < yDim - 1) && (outerBuffer[numOuterPixels] != index)) {
-                    					outerBuffer[numOuterPixels++] = index;
+                    				if (y < paddedYDim - 1) {
+                    					outX = x;
+                    					outY = y + 1;
+                    					outIndex = index + paddedYDim;
+                    					if ((outX >= 1) && (outX <= xDim) && (outY >= 1) && (outY <= yDim) &&
+                        					    (outerBuffer[numOuterPixels] != outX-1 + (outY-1)*xDim)) {
+                        					    outerBuffer[numOuterPixels++] = outX-1 + (outY-1)*xDim;
+                        					}
                     				}
                     				dir = 0;
                     				numDir++;
@@ -427,6 +467,9 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 	private void calcInPlace2() {
     	ViewVOIVector VOIs = null;
     	int length;
+    	int paddedLength;
+    	int paddedXDim;
+    	int paddedYDim;
     	int zDim;
     	int x = 0;
     	int y = 0;
@@ -442,6 +485,8 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
     	int xArrInt[];
     	int yArrInt[];
     	int zArrInt[];
+    	int xinc;
+    	int yinc;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -464,6 +509,9 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
+        paddedXDim = xDim + 2;
+        paddedYDim = yDim + 2;
+        paddedLength = paddedXDim * paddedYDim;
         
         if (srcImage.getNDims() > 2) {
             zDim = srcImage.getExtents()[2];
@@ -473,7 +521,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         
         try {
             imgBuffer = new short[length];
-            objBuffer = new short[length];
+            objBuffer = new short[paddedLength];
             boundaryBuffer = new int[length];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm VOIExtraction: Out of memory creating buffers");
@@ -511,25 +559,30 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             for (short obj = 1; obj < (srcImage.getMax() + 1); obj++) {
 
                 for (int m = 0; m < imgBuffer.length; m++) {
-
+                    x = m % xDim;
+                    y = m / xDim;
                     if (imgBuffer[m] == obj) {
-                        objBuffer[m] = obj;
+                        objBuffer[(x+1) + (y+1)*paddedXDim] = obj;
                     } else {
-                        objBuffer[m] = 0;
+                        objBuffer[(x+1) + (y+1)*paddedXDim] = 0;
                     }
                     
                 } // for (int m = 0; m < imgBuffer.length; m++)
                 
                 found = false;
-                for (y = 0; y < yDim && !found; y++) {
-                	for (x = 0; x < xDim && !found; x++) {
-                	    index = x + y * xDim;
+                xinc = 1;
+                yinc = 1;
+                for (y = 1; y <= yDim && !found; y += yinc) {
+                	for (x = 1; x <= xDim && !found; x += xinc) {
+                	    index = x + y * paddedXDim;
                 	    if (objBuffer[index] == obj) {
                 	    	found = true;
-                	    	boundaryBuffer[numBoundaryPixels++] = index;
+                	    	boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
+                	    	xinc = 0;
+                	    	yinc = 0;
                 	    }
-                	} // for (x = 0; x < xDim; x++)
-                } // for (y = 0; y < yDim; y++)
+                	} // for (x = 1; x <= xDim; x+= xinc)
+                } // for (y = 1; y <= yDim; y+= yinc)
                 
                 if (connected == 4) {
                     dir = 3;
@@ -545,11 +598,11 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			return;
                     		}
                     		if (dir == 0) {
-                    			if ((x < xDim-1) && (objBuffer[index+1] == obj)) {
+                    			if ((x < paddedXDim - 1) && (objBuffer[index+1] == obj)) {
                     			    found = true;
                     			    x = x+1;
                     			    index = index + 1;
-                    			    boundaryBuffer[numBoundaryPixels++] = index;
+                    			    boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 1;
@@ -557,11 +610,11 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			}
                     		} // if (dir == 0)
                     		else if (dir == 1) {
-                    			if ((y >= 1) && (objBuffer[index - yDim] == obj)) {
+                    			if ((y >= 1) && (objBuffer[index - paddedYDim] == obj)) {
                     				found = true;
                     				y = y - 1;
-                    				index = index - yDim;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index - paddedYDim;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 2;
@@ -573,7 +626,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     				found = true;
                     				x = x - 1;
                     				index = index - 1;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 3;
@@ -581,11 +634,11 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			}
                     		} // else if (dir == 2)
                     		else if (dir == 3) {
-                    			if ((y < yDim - 1) && (objBuffer[index + yDim] == obj)) {
+                    			if ((y < paddedYDim - 1) && (objBuffer[index + paddedYDim] == obj)) {
                     				found = true;
                     				y = y + 1;
-                    				index = index + yDim;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index + paddedYDim;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 0;
@@ -615,11 +668,11 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			return;
                     		}
                     		if (dir == 0) {
-                    			if ((x < xDim-1) && (objBuffer[index+1] == obj)) {
+                    			if ((x < paddedXDim-1) && (objBuffer[index+1] == obj)) {
                     			    found = true;
                     			    x = x+1;
                     			    index = index + 1;
-                    			    boundaryBuffer[numBoundaryPixels++] = index;
+                    			    boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 1;
@@ -627,12 +680,12 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			}
                     		} // if (dir == 0)
                     		else if (dir == 1) {
-                    			if ((x < xDim - 1) && (y >= 1) && (objBuffer[index - yDim + 1] == obj)) {
+                    			if ((x < paddedXDim - 1) && (y >= 1) && (objBuffer[index - paddedYDim + 1] == obj)) {
                     				found = true;
                     				x = x + 1;
                     				y = y - 1;
-                    				index = index - yDim + 1;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index - paddedYDim + 1;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 2;
@@ -640,11 +693,11 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			}
                     		} // else if (dir == 1)
                     		else if (dir == 2) {
-                    			if ((y >= 1) && (objBuffer[index - yDim] == obj)) {
+                    			if ((y >= 1) && (objBuffer[index - paddedYDim] == obj)) {
                     				found = true;
                     				y = y - 1;
-                    				index = index - yDim;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index - paddedYDim;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 3;
@@ -652,12 +705,12 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			}
                     		} // else if (dir == 2)
                     		else if (dir == 3) {
-                    			if ((x >= 1) && (y >= 1) && (objBuffer[index - yDim - 1] == obj)) {
+                    			if ((x >= 1) && (y >= 1) && (objBuffer[index - paddedYDim - 1] == obj)) {
                     				found = true;
                     				x = x - 1;
                     				y = y - 1;
-                    				index = index - yDim - 1;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index - paddedYDim - 1;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 4;
@@ -669,7 +722,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     				found = true;
                     				x = x - 1;
                     				index = index - 1;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 5;
@@ -677,12 +730,12 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			}
                     		} // else if (dir == 4)
                     		else if (dir == 5) {
-                    			if ((x >= 1) && (y < yDim - 1) && (objBuffer[index + yDim - 1] == obj)) {
+                    			if ((x >= 1) && (y < paddedYDim - 1) && (objBuffer[index + paddedYDim - 1] == obj)) {
                     				found = true;
                     				x = x - 1;
                     				y = y + 1;
-                    				index = index + yDim - 1;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index + paddedYDim - 1;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 6;
@@ -690,11 +743,11 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			}
                     		} // else if (dir == 5)
                     		else if (dir == 6) {
-                    			if ((y < yDim - 1) && (objBuffer[index + yDim] == obj)) {
+                    			if ((y < paddedYDim - 1) && (objBuffer[index + paddedYDim] == obj)) {
                     				found = true;
                     				y = y + 1;
-                    				index = index + yDim;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index + paddedYDim;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 7;
@@ -702,12 +755,12 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     			}
                     		} // else if (dir == 6)
                     		else if (dir == 7) {
-                    			if ((x < xDim - 1) && (y < yDim - 1) && (objBuffer[index + yDim + 1] == obj)) {
+                    			if ((x < paddedXDim - 1) && (y < paddedYDim - 1) && (objBuffer[index + paddedYDim + 1] == obj)) {
                     				found = true;
                     				x = x + 1;
                     				y = y + 1;
-                    				index = index + yDim + 1;
-                    				boundaryBuffer[numBoundaryPixels++] = index;
+                    				index = index + paddedYDim + 1;
+                    				boundaryBuffer[numBoundaryPixels++] = x-1 + (y-1)*xDim;
                     			}
                     			else {
                     				dir = 0;
