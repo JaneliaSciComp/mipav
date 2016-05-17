@@ -23,15 +23,12 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
-
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-
 import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmSnake;
-
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoBase.UnitType;
@@ -44,7 +41,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
-
 import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
@@ -61,6 +57,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import org.apache.pdfbox.exceptions.COSVisitorException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -2991,9 +2988,13 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 	        } else if (command.equals(SELECT_ALL)) { 
 	        	pressAvailableButtons();
 	        } else if (command.equals(SAVE)) {
+	        	System.out.println("1 Have executed else if command.equals(SAVE)");
 	        	setVisible(false);
+	        	System.out.println("2 Have executed setVisible(false)");
 	        	boolean lutBuffer = lutOn;
+	        	System.out.println("3 Have executed boolean lutBuffer = lutOn");
 	        	getActiveImage().getParentFrame().requestFocus();
+	        	System.out.println("4 Have executed getActiveImage().getParentFrame().requestFocus()");
 	        	
 	        	processCalculations(true, true);
 	        	//note analysis turns off LUT automatically
@@ -3516,15 +3517,22 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 		 * @param doSave whether to save the output (and screen grabs) to a pdf
 		 */
 		private void processCalculations(boolean all, boolean doSave) {
+			System.out.println("5 Have entered processCalculations(boolean all, boolean doSave) with all = " + all + " doSave = " + doSave);
 			if(calcGroup.activeCount() > 0) {
+				System.out.println("6 Have entered if caclGroup.activeCount() > 0)");
+				System.out.println("7 calcGroup.activeCount() = " + calcGroup.activeCount());
 				//TODO: Use ExecutorService now that 1.6
 				//Note that since the buttons are disabled, this could only happen by being
 				//directly called in the code
 				Thread[] activeThread = new Thread[calcGroup.activeCount()];
+				System.out.println("8 Have executed Thread[] activeThread = new Thread[calcGroup.activeCount()]");
 				calcGroup.enumerate(activeThread);
+				System.out.println("9 Have executed calcGroup.enumerate(activeThread)");
 				String activeStr = new String();
+				System.out.println("10 Have executed String activeStr = new String()");
 				for(int i=0; i<calcGroup.activeCount(); i++) {
 					activeStr += activeThread[i].getName()+"\n";
+					System.out.println("11 Have executed activeStr += activeThread["+i+"].getName()+\n");
 				}
 				MipavUtil.displayError("Still processing calculations.  Please wait for the\nfollowing "+
 										"calculations to complete:\n"+activeStr);
@@ -3532,23 +3540,33 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 			}
 		
 			boolean pdfCreated = false;
+			System.out.println("12 Have executed boolean pdfCreated = false");
 			
 			String textFileDir = null, textFileName = null, pdfFileDir = null, pdfFileName = null;
+			System.out.println("13 Have executed String textFileDir = null, textFileName = null, pdfFileDir = null, pdfFileName = null");
 			if(doSave) {
+				System.out.println("14 Have entered if (doSave)");
 				FileLocation fl = new FileLocation(muscleFrame);
+				System.out.println("15 Have executed FileLocation fl = new FileLocation(muscleFrame)");
 				
 				if(!fl.doCalc()) {  //user chose to not save files.
+					System.out.println("16 Have entered if(!fl.doCalc())");
 					return;
 				}
 				
 				textFileDir = fl.getTextFileDir();
+				System.out.println("17 textFileDir = " + textFileDir);
 				textFileName = fl.getTextFileName();
+				System.out.println("18 textFileName = " + textFileName);
 				pdfFileDir = fl.getPdfFileDir();
+				System.out.println("19 pdfFileDir = " + pdfFileDir);
 				pdfFileName = fl.getPdfFileName();
+				System.out.println("20 pdfFileName = " + pdfFileName);
 			}
 
 			//if PDF hasnt been created and we're saving, create it now
 			if (doSave && !pdfCreated) {
+				System.out.println("21 Have entered if (doSave && !pdfCreated)");
 				PDFcreate(pdfFileDir, pdfFileName, all);
 				pdfCreated = true;
 			}
@@ -4029,265 +4047,1035 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
          *
          * @return the content stream for adding statistics to the first page
          */
-        protected void PDFcreate(String fileDir, String fileName, boolean all) {		
-        	if(!(new File(fileDir).exists())) {
+        protected void PDFcreate(String fileDir, String fileName, boolean all) {
+        	boolean fileDirExists = false;
+        	boolean pdfFileExists = false;
+        	PDPage page = null;
+        	DateFormat dateFormat = null;
+        	System.out.println("22 Have entered PDFcreate(String fileDir, String fileName, boolean all)");
+        	try {
+        	fileDirExists = (new File(fileDir).exists());
+        	}
+        	catch (SecurityException e) {
+        	    System.out.println("23 SecurityException " + e + " on (new File(fileDir).exists())");
+        	    return;
+        	}
+        	if(!(fileDirExists)) {
+        		System.out.println("24 Have entered if (!(fileDirExists))");
         		fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+VOI_DIR;
+        		System.out.println("25 fileDir = " + fileDir);
         	}
         	if(fileName == null) {
+        		System.out.println("26 Have entered if (fileName == null)");
         		fileName = fileDir + File.separator + "PDF_Report.pdf";
-        		pdfFile = new File(fileDir + File.separator + fileName);
-        		if(pdfFile.exists()) {
+        		System.out.println("27 fileName = " + fileName);
+        		try {
+        		    pdfFile = new File(fileDir + File.separator + fileName);
+        		}
+        		catch(NullPointerException e) {
+        			System.out.println("28 NullPointerException " + e + " on pdfFile = new File(fileDir + File.separator + fileName)");
+        			return;
+        		}
+        		try {
+        		pdfFileExists = pdfFile.exists();
+        		}
+        		catch (SecurityException e) {
+        		    System.out.println("29 SecurityException " + e + "on pdfFileExists = pdfFile.exists()");
+        		    return;
+        		}
+        		if(pdfFileExists) {
+        			System.out.println("30 Have entered if (pdfFileExists)");
         			int i=0;
-        			while(pdfFile.exists() && i<1000) {
+        			while(pdfFileExists && i<1000) {
+        				System.out.println("31 Have entered while(pdfFileExists && i<1000 for i = " + i);
         				fileName = "PDF_Report-"+(++i)+ ".pdf";
+        				System.out.println("32 fileName = " + fileName);
         				if(i == 1000) {
         					MipavUtil.displayError("Too many PDFs have been created, overwriting "+fileName);
         				}
-        				pdfFile = new File(fileDir + File.separator + fileName);
+        				try {
+        				    pdfFile = new File(fileDir + File.separator + fileName);
+        				}
+        				catch(NullPointerException e) {
+                			System.out.println("33 NullPointerException " + e + " on pdfFile = new File(fileDir + File.separator + fileName)");
+                			return;
+                		}
+        				try {
+    	        		pdfFileExists = pdfFile.exists();
+    	        		}
+    	        		catch (SecurityException e) {
+    	        		    System.out.println("34 SecurityException " + e + "on pdfFileExists = pdfFile.exists()");
+    	        		    return;
+    	        		}
         			}
         		}
         	} else {
-        		pdfFile = new File(fileDir + File.separator + fileName);
+        		try {
+				    pdfFile = new File(fileDir + File.separator + fileName);
+				}
+				catch(NullPointerException e) {
+        			System.out.println("35 NullPointerException " + e + " on pdfFile = new File(fileDir + File.separator + fileName)");
+        			return;
+        		}
         	}
         	
         	// the document
             doc = null;
-            try
-            {
+            //try
+            //{
                 //initialize blank PDF
-                doc = new PDDocument();
+                try {
+                    doc = new PDDocument();
+                }
+                catch (IOException e) {
+                	System.out.println("36 IOException " + e + " doc = new PDDocument()");
+                	return;
+                }
                 PDPage blankPage = new PDPage();
+                System.out.println("37 Have executed PDPage blankPage = new PDPage()");
                 doc.addPage( blankPage );
+                System.out.println("38 Have executed doc.addPage( blankPage )");
                 if(multipleSlices) {
+                	System.out.println("39 Have entered if (multipleSlices)");
                     for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
                         blankPage = new PDPage();
+                        System.out.println("40 Have executed blankPage = new PDPage() for i = " + i);
                         doc.addPage( blankPage );
+                        System.out.println("41 Have executed doc.addPage( blankPage ) for i = " + i);
                     }
                 }
-                doc.save(pdfFile.toString());
-                doc.close();
-            } catch(Exception e) {
-                MipavUtil.displayError("Unable to create pdf file.");
-            }
+                try {
+                	System.out.println("42 pdfFile.toString() = " + pdfFile.toString());
+                    doc.save(pdfFile.toString());
+                }
+                catch (COSVisitorException e) {
+                    System.out.println("43 COSVisitorException " + e + " on doc.save(pdfFile.toString())");
+                    return;
+                }
+                catch (IOException e) {
+                    System.out.println("44 IOException " + e + " on doc.save(pdfFile.toString())");
+                    return;
+                }
+                try {
+                    doc.close();
+                }
+                catch (IOException e) {
+                	System.out.println("45 IOException " + e + " on doc.close()");
+                	return;
+                }
+            //} catch(Exception e) {
+                //MipavUtil.displayError("Unable to create pdf file.");
+            //}
             
             PDPageContentStream contentStream = null;
+            System.out.println("46 Have executed PDPageContentStream contentStream = null");
             
             try
             {
-                doc = PDDocument.load( pdfFile );
+                try {
+            	doc = PDDocument.load( pdfFile );
+                }
+                catch(IOException e) {
+                	System.out.println("47 IOException "+ e + " on doc = PDDocument.load( pdfFile )");
+                	return;
+                }
         
                 List allPages = doc.getDocumentCatalog().getAllPages();
+                System.out.println("48 Have executed List allPages = doc.getDocumentCatalog().getAllPages()");
                 PDFont font = PDType1Font.HELVETICA_BOLD;
+                System.out.println("49 Have executed PDFont font = PDType1Font.HELVETICA_BOLD");
                 float fontSize = 12.0f;
+                System.out.println("50 Have executed float fontSize = 12.0f");
         
                 String unit =
                     Unit.getUnit(
                             ((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput()).getAbbrev();
+                System.out.println("51 unit = " + unit);
                 String type = new String();
+                System.out.println("52 Have executed String type = new String()");
                 
                 String center = null, id = null, scanDate = null, kvp = null, mA = null, height = null;
+                System.out.println("53 Have executed String center = null, id = null, scanDate = null, kvp = null, mA = null, height = null");
         
                 if(getActiveImage().getFileInfo()[0] instanceof FileInfoDicom) {
+                	System.out.println("54 Have entered getActiveImage().getFileInfo()[0] instanceof FileInfoDicom");
                     FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
+                    System.out.println("55 Have eexecuted FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0]");
                     
                     //location of scan
                     center = (String)fileInfo.getTagTable().getValue("0008,0080");
+                    System.out.println("56 center = " + center);
                     //identification of patient
                     id = (String)fileInfo.getTagTable().getValue("0010,0020");
+                    System.out.println("57 id = " + id);
                     //date scan taken
                     scanDate = (String)fileInfo.getTagTable().getValue("0008,0020");
+                    System.out.println("58 scanDate = " + scanDate);
                     //number of pulses
                     kvp = (String)fileInfo.getTagTable().getValue("0018,0060");
+                    System.out.println("59 kvp = " + kvp);
                     //field strength
                     mA = (String)fileInfo.getTagTable().getValue("0018,1151");
+                    System.out.println("60 mA = " + mA);
                     //table height (in centimeters)
                     height = (String)fileInfo.getTagTable().getValue("0018,1130");
+                    System.out.println("61 height = " + height);
                 }
                 
+                System.out.println("62 allPages.size() = " + allPages.size());
                 for( int i=0; i<allPages.size(); i++ )
                 {
-                    
-                    PDPage page = (PDPage)allPages.get( i );
+                    System.out.println("63 In for loop i = " + i);
+                    try {
+                        page = (PDPage)allPages.get( i );
+                    }
+                    catch(IndexOutOfBoundsException e) {
+                    	System.out.println("64 IndexOutOfBoundsException " + e + " on page = (PDPage)allPages.get( i )");
+                    	return;
+                    }
                     PDRectangle pageSize = page.findMediaBox();
+                    System.out.println("65 Have executed PDRectangle pageSize = page.findMediaBox()");
                     String message = "";
+                    System.out.println("66 message = " + message);
                     if(i == 0) {
                         message  ="MIPAV: Muscle Segmentation";
+                        System.out.println("67 message = "+ message);
                     } else {
                         message = "Slice "+(i-1);
+                        System.out.println("68 message = " + message);
                         if(id != null) {
                             message += " for "+id;
+                            System.out.println("69 message = " + message);
                         }
                     }
                     
                     float stringWidth = font.getStringWidth( message );
+                    System.out.println("70 stringWidth = " + stringWidth);
                     float centeredPosition = (pageSize.getWidth() - (stringWidth*fontSize)/1000f)/2f;
-                    contentStream = new PDPageContentStream(doc, page, false, true);
-                    contentStream.beginText();
+                    System.out.println("71 centeredPosition = " + centeredPosition);
+                    try {
+                        contentStream = new PDPageContentStream(doc, page, false, true);
+                    }
+                    catch(IOException e) {
+                    	System.out.println("72 IOException " + e + " on contentStream = new PDPageContentStream(doc, page, false, true)");
+                    	return;
+                    }
+                    try {
+                        contentStream.beginText();
+                    }
+                    catch(IOException e) {
+                    	System.out.println("73 IOException " + e + "on contentStream.beginText()");
+                    	return;
+                    }
                     
-                    contentStream.setFont(font, 18);
+                    try {
+                        contentStream.setFont(font, 18);
+                    }
+                    catch(IOException e) {
+                    	System.out.println("74 IOException " + e + " on contentStream.setFont(font, 18)");
+                    	return;
+                    }
                     
-                    contentStream.moveTextPositionByAmount((float) (PDPage.PAGE_SIZE_LETTER.getWidth()/2.0)-120, 750 );
-                    contentStream.drawString( message );
+                    try {
+                        contentStream.moveTextPositionByAmount((float) (PDPage.PAGE_SIZE_LETTER.getWidth()/2.0)-120, 750 );
+                    }
+                    catch(IOException e) {
+                    	System.out.println("75 IOexception " + e + "contentStrea.moveTextPositionByAmount");
+                    	return;
+                    }
+                    
+                    System.out.println("76 message = " + message);
+                    try {
+                        contentStream.drawString( message );
+                    }
+                    catch(IOException e) {
+                    	System.out.println("77 IOException " + e + " on contentStream.drawString(message)");
+                    	return;
+                    }
                     
                     if(i == 0) { //do first page reporting
+                    	System.out.println("78 Entered if (i == 0)");
         
-                        contentStream.moveTextPositionByAmount(35, -20);
-                        font = PDType1Font.HELVETICA_BOLD;
-                        contentStream.setFont(font, 12);
-                        contentStream.drawString(imageType+" Tissue Analysis Report");
-        
-                        contentStream.endText();
+                        try {
+                    	    contentStream.moveTextPositionByAmount(35, -20);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("79 IOException " + e + " on contentStream.moveTextPositionByAmount(35, -20)");
+                        	return;
+                        }
                         
-                        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+                        font = PDType1Font.HELVETICA_BOLD;
+                        System.out.println("80 Have executed font = PDType1Font.HELVETICA_BOLD");
+                        
+                        try {
+                            contentStream.setFont(font, 12);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("81 IOException " + e + " on contentStream.setFont(font, 12)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(imageType+" Tissue Analysis Report");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("82 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+        
+                        try {
+                            contentStream.endText();
+                        }
+                        catch(IOException e) {
+                        	System.out.println("83 IOException " + e + " on contentStream.endText()");
+                        	return;
+                        }
+                            try {
+                                dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+                            }
+                            catch(NullPointerException e) {
+                            	System.out.println("84 NullPointerException " + e + " on dateFormat = new SimpleDateFormat");
+                            	return;
+                            }
+                            catch(IllegalArgumentException e) {
+                            	System.out.println("85 IllegalArgumentException " + e + " on dateFormat = new SimpleDateFormat");
+                            	return;
+                            }
                         Date date = new Date();
+                        System.out.println("86 Have executed Data date = new Date()");
                         String dateStr = dateFormat.format(date);
+                        System.out.println("87 dateStr = " + dateStr); 
                         String userName = System.getProperty("user.name");
+                        System.out.println("88 userName = " + userName);
                         String imageName = getActiveImage().getFileInfo()[getViewableSlice()].getFileName();
+                        System.out.println("89 imageName = " + imageName);
                         
                         font = PDType1Font.HELVETICA;
-                        contentStream.setFont(font, 12);
+                        System.out.println("90 Have executed font = PDType1Font.HELVETICA");
+                        try {
+                            contentStream.setFont(font, 12);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("91 IOException " + e + "on contentStream.setFont(font, 12)");
+                        	return;
+                        }
                         
-                        contentStream.beginText();
+                        try {
+                            contentStream.beginText();
+                        }
+                        catch(IOException e) {
+                        	System.out.println("92 IOException " + e + "on contentStream.beginText()");
+                        	return;
+                        }
                         
                         //study information table
-                        contentStream.moveTextPositionByAmount(100, 715);
+                        try {
+                            contentStream.moveTextPositionByAmount(100, 715);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("93 IOException " + e + "on contentStream.moveTextPositionByAmount(100, 715)");
+                        	return;
+                        }
                         //column 1 (standard)
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString("Analyst:");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString("Name:");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString("Patient ID:");
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("94 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        
+                        try {
+                            contentStream.drawString("Analyst:");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("95 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("96 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        
+                        try {
+                            contentStream.drawString("Name:");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("97 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("98 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        
+                        try{
+                            contentStream.drawString("Patient ID:");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("99 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
                         
                         //column 2 (image specific)
-                        contentStream.moveTextPositionByAmount(100, 30);
-                        contentStream.drawString(userName);
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString(imageName);
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString((id != null && id.length() > 0) ? id.trim() : "Removed");
+                        try {
+                            contentStream.moveTextPositionByAmount(100, 30);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("100 IOException " + e + " on contentStream.moveTextPositionByAmount(100, 30)");
+                        	return;
+                        }
+                        
+                        try {
+                            contentStream.drawString(userName);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("101 IOException " + e + " on contentStream.drawString(userName)");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("102 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(imageName);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("103 IOException " + e + " on contentStream.drawString(imageName)");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("104 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString((id != null && id.length() > 0) ? id.trim() : "Removed");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("105 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
                         
                         //column 3 (standard)
-                        contentStream.moveTextPositionByAmount(150, 30);
-                        contentStream.drawString("Analysis Date:");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString("Center:");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString("Scan Date:");
+                        try {
+                            contentStream.moveTextPositionByAmount(150, 30);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("106 IOException " + e + " on contentStream.moveTextPositionByAmount(150, 30)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Analysis Date:");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("107 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("108 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        
+                        try {
+                            contentStream.drawString("Center:");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("109 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("110 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Scan Date:");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("111 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                        }
                         
                         //column 4 (image specific)
-                        contentStream.moveTextPositionByAmount(100, 30);
-                        contentStream.drawString(dateStr);
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString(center != null ? center.trim() : "Unknown");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString(scanDate != null ? scanDate.trim() : "Unknown");
-                        contentStream.endText();
+                        try {
+                            contentStream.moveTextPositionByAmount(100, 30);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("112 IOException " + e + " on contentStream.moveTextPositionByAmount(100, 30)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(dateStr);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("113 IOException " + e + " on contentStream.drawString(dateStr)");
+                        	return;	
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("114 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(center != null ? center.trim() : "Unknown");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("115 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("116 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(scanDate != null ? scanDate.trim() : "Unknown");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("117 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                        }
+                        try {
+                            contentStream.endText();
+                        }
+                        catch(IOException e) {
+                        	System.out.println("118 IOException " + e + " on contentStream.endText()");
+                        	return;
+                        }
                         
                         //various scan parameters section
-                        contentStream.beginText();
-                        contentStream.moveTextPositionByAmount((float) (PDPage.PAGE_SIZE_LETTER.getWidth()/2.0)-65, 635);
+                        try {
+                            contentStream.beginText();
+                        }
+                        catch(IOException e) {
+                        	System.out.println("119 IOException " + e + " on contentStream.beginText()");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount((float) (PDPage.PAGE_SIZE_LETTER.getWidth()/2.0)-65, 635);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("120 IOException " + e + " on contentStream.moveTextPositionByAmount((float) (PDPage.PAGE_SIZE_LETTER.getWidth()/2.0)-65, 635)");
+                        	return;
+                        }
                         font = PDType1Font.HELVETICA_BOLD;
-                        contentStream.setFont(font, 12); 
-                        contentStream.drawString("Scanning Parameters");
-                        font = PDType1Font.HELVETICA;
-                        contentStream.setFont(font, 12);
+                        System.out.println("121 Have executed font = PDType1Font.HELVETICA_BOLD");
+                        try {
+                            contentStream.setFont(font, 12);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("122 IOException " + e + " on contentStream.setFont(font, 12)");
+                        	return;
+                        }
                         
+                        try {
+                            contentStream.drawString("Scanning Parameters");
+                        }
+                        catch(IOException e) {
+                        	System.out.println("123 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                        }
+                        font = PDType1Font.HELVETICA;
+                        System.out.println("124 Have executed font = PDType1Font.HELVETICA");
+                        try {
+                            contentStream.setFont(font, 12);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("125 IOException " + e + " on contentStream.setFont(font, 12)");
+                        	return;
+                        }
                         //column 1 (standard)
-                        contentStream.moveTextPositionByAmount(-60, -18);
-                        contentStream.drawString("kVp:");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString("mA:");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString("Pixel Size ("+Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure(0)).getAbbrev()+"):");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString("Slice Thickness ("+Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure(2)).getAbbrev()+"):");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString("Table Height (cm):");
+                        try {
+                            contentStream.moveTextPositionByAmount(-60, -18);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("126 IOException " + e + " on contentStream.moveTextPositionByAmount(-60, -18)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("kVp:");
+                        }
+                        catch (IOException e) {
+                        	System.out.println("127 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("128 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try  {
+                            contentStream.drawString("mA:");
+                        }
+                        catch (IOException e) {
+                        	System.out.println("129 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("130 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Pixel Size ("+Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure(0)).getAbbrev()+"):");
+                        }
+                        catch (IOException e) {
+                        	System.out.println("131 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("132 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Slice Thickness ("+Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure(2)).getAbbrev()+"):");
+                        }
+                        catch (IOException e) {
+                        	System.out.println("133 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("134 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Table Height (cm):");
+                        }
+                        catch (IOException e) {
+                        	System.out.println("135 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
                         
                         //column 2 (image specific)
-                        contentStream.moveTextPositionByAmount(150, 60);
-                        contentStream.drawString(kvp != null ? kvp.trim() : "Unknown");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString(mA != null ? mA.trim() : "Unknown");
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString(Double.toString(getActiveImage().getResolutions(0)[0]));
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString(Float.toString(getActiveImage().getResolutions(0)[2]));
-                        contentStream.moveTextPositionByAmount(0, -15);
-                        contentStream.drawString(height != null ? height.trim() : "Unknown");
-        
+                        try {
+                            contentStream.moveTextPositionByAmount(150, 60);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("136 IOException " + e + " on contentStream.moveTextPositionByAmount(150, 60)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(kvp != null ? kvp.trim() : "Unknown");
+                        }
+                        catch (IOException e) {
+                        	System.out.println("137 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("138 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(mA != null ? mA.trim() : "Unknown");
+                        }
+                        catch (IOException e) {
+                        	System.out.println("139 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("140 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(Double.toString(getActiveImage().getResolutions(0)[0]));
+                        }
+                        catch (IOException e) {
+                        	System.out.println("141 IOException " + e + " on contentStream.drawString(Double.toString(getActiveImage().getResolutions(0)[0])");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("142 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(Float.toString(getActiveImage().getResolutions(0)[2]));
+                        }
+                        catch (IOException e) {
+                        	System.out.println("143 IOException " + e + " on contentStream.drawString(Double.toString(getActiveImage().getResolutions(0)[2])");
+                        	return;
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -15);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("144 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -15)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString(height != null ? height.trim() : "Unknown");
+                        }
+                        catch (IOException e) {
+                        	System.out.println("145 IOException " + e + " on contentStream.drawString");
+                        	return;
+                        }
                         
-                        contentStream.moveTextPositionByAmount(-260, -60);
-                        contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
+                        try {
+                            contentStream.moveTextPositionByAmount(-260, -60);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("146 IOException " + e + " on contentStream.moveTextPositionByAmount(-260, -60)");
+                        	return;
+                        }
+                        try {
+                            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("147 IOException " + e + " on contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16)");
+                        	return;
+                        }
                         
                         if(multipleSlices) {
-                            contentStream.drawString("Volume calculations");
-                            type = "Vol";   
+                        	try {
+                                contentStream.drawString("Volume calculations");
+                        	}
+                        	catch(IOException e) {
+                        		System.out.println("148 IOException " + e + " on contentStream.drawString");
+                            	return;	
+                        	}
+                            type = "Vol";  
+                            System.out.println("149 type = " + type);
                         } else {
-                            contentStream.drawString("Area calculations");
+                        	try {
+                                contentStream.drawString("Area calculations");
+                        	}
+                        	catch(IOException e) {
+                        		System.out.println("150 IOException " + e + " on contentStream.drawString");
+                            	return;	
+                        	}
                             type = "Area";
+                            System.out.println("151 type = " + type);
                         }
                         
                         //setting up first row
-                        contentStream.moveTextPositionByAmount(0, -16);
-                        contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -16);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("152 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -16)");
+                        	return;
+                        }
+                        try {
+                            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("153 IOexception " + e + " on contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12)");
+                        	return;
+                        }
                         
                         if(multipleSlices) {
-                            contentStream.drawString("Volume ("+unit+"^3)");
+                        	try {
+                                contentStream.drawString("Volume ("+unit+"^3)");
+                        	}
+                        	catch(IOException e) {
+                        		System.out.println("154 IOException " + e + " on contentStream.drawString");
+                            	return;	
+                        	}
                         } else {
+                        	try {
+                                contentStream.drawString("Area ("+unit+"^2)");
+                        	}
+                        	catch(IOException e) {
+                        		System.out.println("155 IOException " + e + " on contentStream.drawString");
+                            	return;	
+                        	}
+                        }
+                        try {
+                            contentStream.setFont(PDType1Font.HELVETICA, 12);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("156 IOexception " + e + " on contentStream.setFont(PDType1Font.HELVETICA, 12)");
+                        	return;	
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(120, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("157 IOException " + e + " on contentStream.moveTextPositionByAmount(120, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Total "+type);
+                        }
+                        catch(IOException e) {
+                    		System.out.println("158 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(60, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("159 IOException " + e + " on contentStream.moveTextPositionByAmount(60, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Fat "+type);
+                        }
+                        catch(IOException e) {
+                    		System.out.println("160 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(50, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("161 IOException " + e + " on contentStream.moveTextPositionByAmount(50, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Lean "+type);
+                        }
+                        catch(IOException e) {
+                    		System.out.println("162 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(60, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("163 IOException " + e + " on contentStream.moveTextPositionByAmount(60, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Fat HU");
+                        }
+                        catch(IOException e) {
+                    		System.out.println("164 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(50, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("165 IOException " + e + " on contentStream.moveTextPositionByAmount(50, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Lean HU");
+                        }
+                        catch(IOException e) {
+                    		System.out.println("166 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(60, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("167 IOException " + e + " on contentStream.moveTextPositionByAmount(60, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Total HU");
+                        }
+                        catch(IOException e) {
+                    		System.out.println("168 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(-400, -13);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("169 IOException " + e + " on contentStream.moveTextPositionByAmount(-400, -13)");
+                        	return;
+                        }
+                    } else if(multipleSlices) { //setting up first rows for area calculations
+                    	try {
+                            contentStream.moveTextPositionByAmount(-120, -60);
+                    	}
+                    	catch(IOException e) {
+                        	System.out.println("170 IOException " + e + " on contentStream.moveTextPositionByAmount(-120, -60)");
+                        	return;
+                        }
+                    	try {
+                            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
+                    	}
+                    	catch(IOException e) {
+                        	System.out.println("171 IOexception " + e + " on contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16)");
+                        	return;	
+                        }
+                    	try {
+                            contentStream.drawString("Area calculations");
+                    	}
+                    	catch(IOException e) {
+                    		System.out.println("172 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        type = "Area";
+                        System.out.println("173 type = " + type);
+                        try {
+                            contentStream.moveTextPositionByAmount(0, -16);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("174 IOException " + e + " on contentStream.moveTextPositionByAmount(0, -16)");
+                        	return;
+                        }
+                        try {
+                            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("175 IOexception " + e + " on contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12)");
+                        	return;	
+                        }
+                        try {
                             contentStream.drawString("Area ("+unit+"^2)");
                         }
-                        contentStream.setFont(PDType1Font.HELVETICA, 12);
-                        contentStream.moveTextPositionByAmount(120, 0);
-                        contentStream.drawString("Total "+type);
-                        contentStream.moveTextPositionByAmount(60, 0);
-                        contentStream.drawString("Fat "+type);
-                        contentStream.moveTextPositionByAmount(50, 0);
-                        contentStream.drawString("Lean "+type);
-                        contentStream.moveTextPositionByAmount(60, 0);
-                        contentStream.drawString("Fat HU");
-                        contentStream.moveTextPositionByAmount(50, 0);
-                        contentStream.drawString("Lean HU");
-                        contentStream.moveTextPositionByAmount(60, 0);
-                        contentStream.drawString("Total HU");
-                        contentStream.moveTextPositionByAmount(-400, -13);
-                        
-                    } else if(multipleSlices) { //setting up first rows for area calculations
-                        contentStream.moveTextPositionByAmount(-120, -60);
-                        contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
-                        contentStream.drawString("Area calculations");
-                        type = "Area";
-                        contentStream.moveTextPositionByAmount(0, -16);
-                        contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
-                        contentStream.drawString("Area ("+unit+"^2)");
-                        contentStream.setFont(PDType1Font.HELVETICA, 12);
-                        contentStream.moveTextPositionByAmount(120, 0);
-                        contentStream.drawString("Total "+type);
-                        contentStream.moveTextPositionByAmount(60, 0);
-                        contentStream.drawString("Fat "+type);
-                        contentStream.moveTextPositionByAmount(50, 0);
-                        contentStream.drawString("Lean "+type);
-                        contentStream.moveTextPositionByAmount(60, 0);
-                        contentStream.drawString("Fat HU");
-                        contentStream.moveTextPositionByAmount(50, 0);
-                        contentStream.drawString("Lean HU");
-                        contentStream.moveTextPositionByAmount(60, 0);
-                        contentStream.drawString("Total HU");
-                        contentStream.moveTextPositionByAmount(-400, -13);
+                        catch(IOException e) {
+                    		System.out.println("176 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.setFont(PDType1Font.HELVETICA, 12);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("177 IOexception " + e + " on contentStream.setFont(PDType1Font.HELVETICA, 12)");
+                        	return;	
+                        }
+                        try {
+                            contentStream.moveTextPositionByAmount(120, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("178 IOException " + e + " on contentStream.moveTextPositionByAmount(120, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Total "+type);
+                        }
+                        catch(IOException e) {
+                    		System.out.println("179 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(60, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("180 IOException " + e + " on contentStream.moveTextPositionByAmount(60, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Fat "+type);
+                        }
+                        catch(IOException e) {
+                    		System.out.println("181 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(50, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("182 IOException " + e + " on contentStream.moveTextPositionByAmount(50, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Lean "+type);
+                        }
+                        catch(IOException e) {
+                    		System.out.println("183 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(60, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("184 IOException " + e + " on contentStream.moveTextPositionByAmount(60, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Fat HU");
+                        }
+                        catch(IOException e) {
+                    		System.out.println("185 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(50, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("186 IOException " + e + " on contentStream.moveTextPositionByAmount(50, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Lean HU");
+                        }
+                        catch(IOException e) {
+                    		System.out.println("187 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(60, 0);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("188 IOException " + e + " on contentStream.moveTextPositionByAmount(60, 0)");
+                        	return;
+                        }
+                        try {
+                            contentStream.drawString("Total HU");
+                        }
+                        catch(IOException e) {
+                    		System.out.println("189 IOException " + e + " on contentStream.drawString");
+                        	return;	
+                    	}
+                        try {
+                            contentStream.moveTextPositionByAmount(-400, -13);
+                        }
+                        catch(IOException e) {
+                        	System.out.println("190 IOException " + e + " on contentStream.moveTextPositionByAmount(-400, -13)");
+                        	return;
+                        }
                     }
                     
                     Iterator<String> itr = generateVoiItr(all);
+                    System.out.println("191 Have executed Iterator<String> itr = generateVoiItr(all)");
                     //run through the calculations
                     while(itr.hasNext()) {
+                    	System.out.println("192 Have entered while(itr.hasNext())");
                         Object itrObj = itr.next();
+                        System.out.println("193 Have executed Object itrObj = itr.next()");
                         double totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
                         double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
                         //pixels -> cm^2\
                         PlugInSelectableVOI542a temp;
                         if((temp = voiBuffer.get(itrObj)) != null && temp.getCalcEligible()) {
-
+                            System.out.println("194 Have entered if((temp = voiBuffer.get(itrObj)) != null && temp.getCalcEligible())");
                             if(i == 0) {
+                            	System.out.println("195 Have entered i == 0");
                                 totalAreaCount = temp.getTotalArea();
                                 fatArea = temp.getFatArea();
                                 leanArea = temp.getLeanArea();
@@ -4298,6 +5086,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                                 ViewUserInterface.getReference().getMessageFrame().append("Compare areas of "+temp.getName()+":\tcount: "+totalAreaCount+"\n", ViewJFrameMessage.DEBUG);
 
                             } else if(multipleSlices) {
+                            	System.out.println("196 Have entered else if (multipleSlices)");
                                 int sliceNumber = i-1;
                                 totalAreaCount = temp.getTotalArea(sliceNumber);
                                 fatArea = temp.getFatArea(sliceNumber);
@@ -4308,9 +5097,16 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                             } 
                         }
                         PDFadd((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, contentStream);
+                        System.out.println("197 Have executed PDFadd");
                     }
                     
-                    contentStream.endText();
+                    try {
+                        contentStream.endText();
+                    }
+                    catch (IOException e) {
+                    	System.out.println("198 IOException " + e + " on contentStream.endText()");
+                    	return;
+                    }
         
                     /*contentStream.beginText();
                     contentStream.setFont( font, fontSize );
@@ -4322,14 +5118,28 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                     
                     
                     contentStream.endText();*/
-                    contentStream.close();
-                    
-                    
+                    try {
+                       contentStream.close();
+                    }
+                    catch (IOException e) {
+                    	System.out.println("199 IOException " + e + " on contentStream.close()");
+                    	return;
+                    }
                     
                 }
         
-        
-                doc.save( pdfFile.toString() );
+                System.out.println("200 pdfFile.toString() = " + pdfFile.toString());
+                try {
+                    doc.save( pdfFile.toString() );
+                }
+                catch (COSVisitorException e) {
+                	System.out.println("201 COSVisitorException " + e + " on doc.save( pdfFile.toString() )");
+                	return;
+                }
+                catch (IOException e) {
+                	System.out.println("202 IOException " + e + " on doc.save( pdfFile.toString()");
+                	return;
+                }
                 
                 if(true) {
                     MipavUtil.displayInfo("PDF saved to: " + pdfFile);
