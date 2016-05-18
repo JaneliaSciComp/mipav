@@ -14180,6 +14180,7 @@ public class FileIO {
         double slope = 1.0;
         double intercept = 0.0;
         boolean convertFloatToShort = false;
+        String dateString = null;
 
         if (image.getNDims() != 2) {
             return false;
@@ -14315,6 +14316,11 @@ public class FileIO {
 	           			 "\\" + tr.M11 + "\\" + tr.M21;
 	           	 fileDicom.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
            	 }
+           	 dateString = ((FileInfoPARREC)originalFileInfo).getDate();
+          	 if (dateString != null) {
+          		 dateString.replaceAll(".","");
+          		 fileDicom.getTagTable().setValue("0008,0020", dateString, dateString.length());
+          	 }
            }
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
             final float resols[] = image.getFileInfo()[0].getResolutions();
@@ -14836,6 +14842,7 @@ public class FileIO {
         double slope = 1.0;
         double intercept = 0.0;
         boolean convertFloatToShort = false;
+        String dateString = null;
         
         if (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) {
             originalMin = ((FileInfoMinc) image.getFileInfo(0)).vmin;
@@ -14983,6 +14990,11 @@ public class FileIO {
 	            			 "\\" + tr.M11 + "\\" + tr.M21;
 	            	 myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
             	 }
+            	 dateString = ((FileInfoPARREC)image.getFileInfo(0)).getDate();
+              	 if (dateString != null) {
+              		 dateString.replaceAll(".","");
+              		 myFileInfo.getTagTable().setValue("0008,0020", dateString, dateString.length());
+              	 }
             }
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
             final float resols[] = image.getFileInfo()[0].getResolutions();
