@@ -2717,7 +2717,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
        
         if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
         	String timeStamp = getTime();
-			int sliceNumber = getSlice();
+			int sliceNumber = getSlice()+1;
         	if (refPtsLocation != null) {
 				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "MouseClick," + sliceNumber + ", " + refPtsLocation + ", ," + xS + ", " + yS + ", " + "");
 			} else {
@@ -2996,7 +2996,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 			if (MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
 				String timeStamp = getTime();
 				Point mouseScreen = mouseWheelEvent.getLocationOnScreen();
-				int sliceNumber = getSlice();
+				int sliceNumber = getSlice()+1;
 				if (refPtsLocation != null) {
 					MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Scroll," + sliceNumber + "," + " , , , ,");
 				} else {
@@ -5842,7 +5842,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode ) {
             
                     	String timeStamp = getTime();
-            			int sliceNumber = getSlice();
+            			int sliceNumber = getSlice()+1;
                     	
                     	if (refPtsLocation != null) {
             				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Win/Level," + sliceNumber + "," + refPtsLocation + m_kWinLevel.getWindowValue() + ","  + m_kWinLevel.getLevelValue() + ", " +  "");
@@ -7349,7 +7349,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		Date now = new Date();
 		String strDate = sdfDate.format(now);
 		String imageName = getActiveImage().getImageName();
-		int sliceNumber = getSlice();
+		int sliceNumber = getSlice()+1;
 		/*
 		int[] landmarkPoints = ((ViewJFrameImage) frame).getFrameLandMarkPoints();
         
@@ -7383,7 +7383,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	public void recordZoom(boolean zoomIn) {
 	    if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
 	    	String timeStamp = getTime();
-			int sliceNumber = getSlice();
+			int sliceNumber = getSlice()+1;
 	    	if (refPtsLocation != null) {
 	    		if ( zoomIn ) {
 	    			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "ZoomIn," + sliceNumber + ", " + refPtsLocation + ", ," + ", " + ", " + "");
@@ -7405,7 +7405,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	public void recordPanning() {
 	    if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
 	    	String timeStamp = getTime();
-			int sliceNumber = getSlice();
+			int sliceNumber = getSlice()+1;
 	    	if (refPtsLocation != null) {
 	    			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Pan," + sliceNumber + ", " + refPtsLocation + ", ," + ", " + ", " + "" );
 			} else {	
@@ -7464,7 +7464,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		                			// double lineLength = Math.sqrt(dX * dX + dY * dY);
 		                    		// System.err.println("lineLength = " + lineLength);
 		                			String timeStamp = getTime();
-		                			int sliceNumber = getSlice();
+		                			int sliceNumber = getSlice()+1;
 		                        	if (refPtsLocation != null) {
 		                				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Measure," + sliceNumber + ", " + refPtsLocation + ", , , , " + lineLength + " " + "mm" + ", " + kStart.X + ", " + kStart.Y + ", " + kEnd.X + ", " + kEnd.Y);
 		                			} else {
