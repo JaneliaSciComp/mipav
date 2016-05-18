@@ -1437,7 +1437,7 @@ public class MipavUtil extends JComponent {
 			Date now = new Date();
 			String strDate = sdfDate.format(now);
 			ModelImage activeImage = imgComp.getActiveImage();
-			String imageName = activeImage.getImageDirectory() + File.separator + activeImage.getImageFileName();
+			String imageName = activeImage.getImageDirectory() + activeImage.getImageFileName();
 			int[] dim = activeImage.getExtents();
 	        // eyetrackingOutStream.write("Time, ActiveImage, ActiveSlice, frameMinX, frameMinY, frameMaxX, frameMaxY, Event, MouseEvent, Action, value, MouseCoordX, MouseCoordY\n");
 			eyetrackingOutStream.write("ImageName:," + imageName + "\n");
