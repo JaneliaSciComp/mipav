@@ -1293,6 +1293,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         		return;
         	}
         	new JDialogBRISK(this, getActiveImage());
+        } else if (command.equals("RegionsFromPartial")) {
+        	new JDialogRegionsFromPartialBorders(this, getActiveImage());
         } else if (command.equals("MSER")) {
         	final ModelImage mi = getActiveImage();
         	if (mi.getMax() > 255) {
