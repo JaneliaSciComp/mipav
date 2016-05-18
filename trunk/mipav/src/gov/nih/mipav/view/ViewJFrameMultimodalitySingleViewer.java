@@ -90,13 +90,14 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		System.err.println("initZoomFactor = " + initZoomFactor);
 	    imageComp.setZoom(initZoomFactor, initZoomFactor);
 	    
-		startRecording();
+	    startRecording();
+	    
 	}
 
 	public void startRecording() {
 		String defaultDirectory = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator;
 		String defaultFileName = defaultDirectory + "eyetracking-" + System.currentTimeMillis() + ".csv";
-		MipavUtil.setEyeTrackingEnabled(true, defaultFileName);
+		MipavUtil.setEyeTrackingEnabled(true, defaultFileName, imageComp);
 	}
 
 	
@@ -624,48 +625,41 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 					int diffY = Math.max(0, upperLeftViewY - upperLeftCompY);
 					if ((viewWidth >= compWidth) && (viewHeight >= compHeight)) {
 						// All of image present
-						location += ("Upper left image corner: x = 0 y = 0" + ", ");
-						location += ("Upper right image corner: x = " + (image.getExtents()[0] - 1) + " y = 0" + ", ");
-						location += ("Lower left image corner: x = 0" + " y = " + (image.getExtents()[1] - 1) + ", ");
-						location += ("Lower right image corner: x = " + (image.getExtents()[0] - 1) + " y = " + (image.getExtents()[1] - 1) + ", ");	
+						location += ("0, 0" + ", ");
+						location += ((image.getExtents()[0] - 1) + ", " + "0" + ",");
+						location += ("0," + (image.getExtents()[1] - 1) + ", ");
+						location += ((image.getExtents()[0] - 1) + ", " + (image.getExtents()[1] - 1) + ", ");	
 					}
 					else if ((viewWidth < compWidth) && (viewHeight >= compHeight)) {
 						// Right part of image clipped but all of image height present
-						location += ("Upper left image corner: x = " + df.format(diffX*viewWidthToCompWidth) + " y = 0" + ", ");
-						location += ("Upper right image corner: x = " + df.format(Math.min((image.getExtents()[0] - 1), 
-										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = 0" + ", ");
-						location += ("Lower left image corner:  x =  "
-								+ df.format(diffX*viewWidthToCompWidth) + 
-								" y = " + (image.getExtents()[1] - 1) + ", ");
-						location += ("Lower right image corner:  x = " +
-								df.format(Math.min((image.getExtents()[0] - 1), 
+						location += (df.format(diffX*viewWidthToCompWidth) + ", " + "0" + ", ");
+						location += (df.format(Math.min((image.getExtents()[0] - 1), 
+										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + "0" + ", ");
+						location += (df.format(diffX*viewWidthToCompWidth) + ", " + (image.getExtents()[1] - 1) + ", ");
+						location += (df.format(Math.min((image.getExtents()[0] - 1), 
 										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
-										" y = " + (image.getExtents()[1] - 1) + ", ");
+										"," + (image.getExtents()[1] - 1) + ", ");
 					}
 					else if ((viewWidth >= compWidth) && (viewHeight < compHeight)) {
 						// Bottom part of image clipped but all of image width present
-						location += ("Upper left image corner:  x = 0 y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-						location += ("Upper right image corner:  x = " + (image.getExtents()[0] - 1) + " y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-						location += ("Lower left image corner: x = 0" + " y = " + df.format(Math.min((image.getExtents()[1] - 1),  ((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-						location += ("Lower right image corner: x = " + (image.getExtents()[0] - 1) + " y = " + df.format(Math.min((image.getExtents()[1] - 1), 
+						location += ("0" + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+						location += ((image.getExtents()[0] - 1) + "," + df.format(diffY*viewHeightToCompHeight) + ", ");
+						location += ("0" + ", " + df.format(Math.min((image.getExtents()[1] - 1),  ((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+						location += ((image.getExtents()[0] - 1) + "," + df.format(Math.min((image.getExtents()[1] - 1), 
 										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 					}
 					else if ((viewWidth < compWidth) && (viewHeight < compHeight)) {
 						// Bottom and right part of images clipped
-						location += ("Upper left image corner:  x = " +
-								df.format(diffX*viewWidthToCompWidth) + " y = " +
+						location += ( df.format(diffX*viewWidthToCompWidth) + "," +
 								df.format(diffY*viewHeightToCompHeight) + ", ");
-						location += ("Upper right image corner: x = " + 
-								df.format(Math.min((image.getExtents()[0] - 1), 
+						location += ( df.format(Math.min((image.getExtents()[0] - 1), 
 										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
-								" y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-						location += ("Lower left image corner: x = " + 
-								df.format(diffX*viewWidthToCompWidth) + " y = " + 
+								", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+						location += ( df.format(diffX*viewWidthToCompWidth) + ", " + 
 								 df.format(Math.min((image.getExtents()[1] - 1), 
 											((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-						location += ("Lower right image corner: x = " +
-								df.format(Math.min((image.getExtents()[0] - 1), 
-										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = " + 
+						location += (df.format(Math.min((image.getExtents()[0] - 1), 
+										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + 
 										 df.format(Math.min((image.getExtents()[1] - 1), 
 													((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 					}
@@ -675,6 +669,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 					//System.out.println("CompRectangle.x = " + compRectangle.x + " compRectangle.y = " + compRectangle.y);
 					//System.out.println("compWidth = " + compWidth + " compHeight = " + compHeight);
 					imageComp.setFullScreenModeLocation(location);
+					imageComp.recordPanning();
 				}
                
 			
@@ -731,15 +726,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			double dx = originScreen.x - culx;
 			double dy = originScreen.y - culy;
 			// System.out.println("Event distance from upper left circle center dx = " + dx + " dy = " + dy);
-
-			
-			
-			String reflocation = "Upper left circle center, " + culx + ", " + culy + ", " + 
-	                  "Upper left corner frame, " + vul.x + ", " + vul.y + ", " +
-			          "Image upper left corner, " + (vul.x + rect.x) + ", " +  (vul.y + rect.y) + ", " +
-	                  "Image lower right corner, " + (vul.x + rect.x + rect.width) + ", " + (vul.y + rect.y + rect.height);
-			imageComp.setFullScreenModeLocation(reflocation);
-	       
 			
 			// System.err.println("in mouse pressed");
 			int currentSlice0 = imageComp.getSlice();
@@ -791,38 +777,38 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				int diffY = Math.max(0, upperLeftViewY - upperLeftCompY);
 				if ((viewWidth >= compWidth) && (viewHeight >= compHeight)) {
 					// All of image present
-					location += ("Upper left image corner: x = 0 y = 0" + ", ");
-					location += ("Upper right image corner: x = " + (image.getExtents()[0] - 1) +" y = 0" + ", ");
-					location += ("Lower left image corner: x = 0" + " y = " + (image.getExtents()[1] - 1) + ", ");
-					location += ("Lower right image corner: x = " + (image.getExtents()[0] - 1) + " y = " + (image.getExtents()[1] - 1) + ", ");	
+					location += ("0, 0" + ", ");
+					location += ((image.getExtents()[0] - 1) +", " + "0" + ", ");
+					location += ("0" + ", " + (image.getExtents()[1] - 1) + ", ");
+					location += ((image.getExtents()[0] - 1) + ", " + (image.getExtents()[1] - 1) + ", ");	
 				}
 				else if ((viewWidth < compWidth) && (viewHeight >= compHeight)) {
 					// Right part of image clipped but all of image height present
-					location += ("Upper left image corner: x = " + df.format(diffX*viewWidthToCompWidth) + " y = 0" + ", ");
-					location += ("Upper right image corner: x = " +  df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = 0" + ", ");
-					location += ("Lower left image corner: x =  " + df.format(diffX*viewWidthToCompWidth) +  " y = " + (image.getExtents()[1] - 1) + ", ");
-					location += ("Lower right image corner: x = " + df.format(Math.min((image.getExtents()[0] - 1), 
+					location += (df.format(diffX*viewWidthToCompWidth) + "," + "0" + ", ");
+					location += (df.format(Math.min((image.getExtents()[0] - 1), 
+									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + "," + "0" + ", ");
+					location += (df.format(diffX*viewWidthToCompWidth) +  ", " + (image.getExtents()[1] - 1) + ", ");
+					location += (df.format(Math.min((image.getExtents()[0] - 1), 
 									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
-									" y = " + (image.getExtents()[1] - 1) + ", ");
+									"," + (image.getExtents()[1] - 1) + ", ");
 				}
 				else if ((viewWidth >= compWidth) && (viewHeight < compHeight)) {
 					// Bottom part of image clipped but all of image width present
-					location += ("Upper left image corner: x = 0 y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("Upper right image corner: x = " + (image.getExtents()[0] - 1) + " y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("Lower left image corner: x = 0" + " y = " + df.format(Math.min((image.getExtents()[1] - 1), ((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-					location += ("Lower right image corner: x = " + (image.getExtents()[0] - 1) + " y = " + df.format(Math.min((image.getExtents()[1] - 1),  
+					location += ("0" + "," + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += ((image.getExtents()[0] - 1) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += ("0" + "," + df.format(Math.min((image.getExtents()[1] - 1), ((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += ((image.getExtents()[0] - 1) + ", " + df.format(Math.min((image.getExtents()[1] - 1),  
 							((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 				}
 				else if ((viewWidth < compWidth) && (viewHeight < compHeight)) {
 					// Bottom and right part of images clipped
-					location += ("Upper left image corner: x = " + df.format(diffX*viewWidthToCompWidth) + " y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("Upper right image corner: x = " + df.format(Math.min((image.getExtents()[0] - 1),  ((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
-							" y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("Lower left image corner:  x = " + df.format(diffX*viewWidthToCompWidth) + " y = " +  df.format(Math.min((image.getExtents()[1] - 1), 
+					location += (df.format(diffX*viewWidthToCompWidth) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += (df.format(Math.min((image.getExtents()[0] - 1),  ((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
+							", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += (df.format(diffX*viewWidthToCompWidth) + ", " +  df.format(Math.min((image.getExtents()[1] - 1), 
 										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-					location += ("Lower right image corner: x = " + df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = " + 
+					location += (df.format(Math.min((image.getExtents()[0] - 1), 
+									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + 
 									 df.format(Math.min((image.getExtents()[1] - 1), 
 										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 				}
@@ -832,6 +818,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				//System.out.println("CompRectangle.x = " + compRectangle.x + " compRectangle.y = " + compRectangle.y);
 				//System.out.println("compWidth = " + compWidth + " compHeight = " + compHeight);
 				imageComp.setFullScreenModeLocation(location);
+				imageComp.recordZoom(true);
 			} else if (event.getButton() == MouseEvent.BUTTON1 && event.isControlDown()) {
 				// imageScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 				// imageScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -885,42 +872,43 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				int diffY = Math.max(0, upperLeftViewY - upperLeftCompY);
 				if ((viewWidth >= compWidth) && (viewHeight >= compHeight)) {
 					// All of image present
-					location += ("Upper left image corner: x = 0 y = 0" + ", ");
-					location += ("Upper right image corner: x = " + (image.getExtents()[0] - 1) +" y = 0" + ", ");
-					location += ("Lower left image corner: x = 0" + " y = " + (image.getExtents()[1] - 1) + ", ");
-					location += ("Lower right image corner: x = " + (image.getExtents()[0] - 1) + " y = " + (image.getExtents()[1] - 1) + ", ");	
+					location += ("0, 0" + ", ");
+					location += ((image.getExtents()[0] - 1) +", " + "0" + ", ");
+					location += ("0" + ", " + (image.getExtents()[1] - 1) + ", ");
+					location += ((image.getExtents()[0] - 1) + ", " + (image.getExtents()[1] - 1) + ", ");	
 				}
 				else if ((viewWidth < compWidth) && (viewHeight >= compHeight)) {
 					// Right part of image clipped but all of image height present
-					location += ("Upper left image corner: x = " + df.format(diffX*viewWidthToCompWidth) + " y = 0" + ", ");
-					location += ("Upper right image corner: x = " +  df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = 0" + ", ");
-					location += ("Lower left image corner: x =  " + df.format(diffX*viewWidthToCompWidth) +  " y = " + (image.getExtents()[1] - 1) + ", ");
-					location += ("Lower right image corner: x = " + df.format(Math.min((image.getExtents()[0] - 1), 
+					location += (df.format(diffX*viewWidthToCompWidth) + "," + "0" + ", ");
+					location += (df.format(Math.min((image.getExtents()[0] - 1), 
+									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + "," + "0" + ", ");
+					location += (df.format(diffX*viewWidthToCompWidth) +  ", " + (image.getExtents()[1] - 1) + ", ");
+					location += (df.format(Math.min((image.getExtents()[0] - 1), 
 									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
-									" y = " + (image.getExtents()[1] - 1) + ", ");
+									"," + (image.getExtents()[1] - 1) + ", ");
 				}
 				else if ((viewWidth >= compWidth) && (viewHeight < compHeight)) {
 					// Bottom part of image clipped but all of image width present
-					location += ("Upper left image corner: x = 0 y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("Upper right image corner: x = " + (image.getExtents()[0] - 1) + " y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("Lower left image corner: x = 0" + " y = " + df.format(Math.min((image.getExtents()[1] - 1), ((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-					location += ("Lower right image corner: x = " + (image.getExtents()[0] - 1) + " y = " + df.format(Math.min((image.getExtents()[1] - 1),  
+					location += ("0" + "," + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += ((image.getExtents()[0] - 1) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += ("0" + "," + df.format(Math.min((image.getExtents()[1] - 1), ((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += ((image.getExtents()[0] - 1) + ", " + df.format(Math.min((image.getExtents()[1] - 1),  
 							((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 				}
 				else if ((viewWidth < compWidth) && (viewHeight < compHeight)) {
 					// Bottom and right part of images clipped
-					location += ("Upper left image corner: x = " + df.format(diffX*viewWidthToCompWidth) + " y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("Upper right image corner: x = " + df.format(Math.min((image.getExtents()[0] - 1),  ((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
-							" y = " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("Lower left image corner:  x = " + df.format(diffX*viewWidthToCompWidth) + " y = " +  df.format(Math.min((image.getExtents()[1] - 1), 
+					location += (df.format(diffX*viewWidthToCompWidth) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += (df.format(Math.min((image.getExtents()[0] - 1),  ((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
+							", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += (df.format(diffX*viewWidthToCompWidth) + ", " +  df.format(Math.min((image.getExtents()[1] - 1), 
 										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-					location += ("Lower right image corner: x = " + df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + " y = " + 
+					location += (df.format(Math.min((image.getExtents()[0] - 1), 
+									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + 
 									 df.format(Math.min((image.getExtents()[1] - 1), 
 										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 				}
 				imageComp.setFullScreenModeLocation(location);
+				imageComp.recordZoom(false);
 			}
 			
 		}
