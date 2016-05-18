@@ -6,12 +6,15 @@ import gov.nih.mipav.model.structures.TokenizerException;
 
 import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 import gov.nih.mipav.view.icons.PlaceHolder;
+import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.lang.management.*;
 import java.net.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.StringTokenizer;
 
 import javax.help.*;
@@ -1404,7 +1407,51 @@ public class MipavUtil extends JComponent {
     		closeEyeTrackingLogfile();
     	}
     }
+    
+    /**
+     * When the plug-in eye tracker record button is clicked, it re-initial the eye tracker csv file recording stream.
+     * If the stop button is clicked, stop the current csv file recording stream.  
+     * @param enable   enable flag
+     * @param fileDir user selected csv file directory. 
+     */
+    public static final void setEyeTrackingEnabled(boolean enable, String fileDir, ViewJComponentEditImage imageComp) {
+    	isEyeTrackingEnabled = enable;
+    	if (enable) {
+    		initEyeTrackingLogfile(fileDir, imageComp);
+    	} else {
+    		closeEyeTrackingLogfile();
+    	}
+    }
 
+    /**
+     * Initialize the file IO for eye tracking log file
+     */
+    private static void initEyeTrackingLogfile(String defaultDirectory, ViewJComponentEditImage imgComp) {
+    	try {
+	    	// System.err.println(defaultDirectory);
+	    	File file = new File(defaultDirectory);
+	    	if ( !file.exists() ) file.createNewFile();
+	        eyetrackingOutStream = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
+	        
+	        SimpleDateFormat sdfDate = new SimpleDateFormat("d MMM yyyy HH:mm:ss EEE");
+			Date now = new Date();
+			String strDate = sdfDate.format(now);
+			ModelImage activeImage = imgComp.getActiveImage();
+			String imageName = activeImage.getImageDirectory() + File.separator + activeImage.getImageFileName();
+			int[] dim = activeImage.getExtents();
+	        // eyetrackingOutStream.write("Time, ActiveImage, ActiveSlice, frameMinX, frameMinY, frameMaxX, frameMaxY, Event, MouseEvent, Action, value, MouseCoordX, MouseCoordY\n");
+			eyetrackingOutStream.write("ImageName:," + imageName + "\n");
+			eyetrackingOutStream.write("Date:," + strDate + "\n");
+			eyetrackingOutStream.write("ImageSize:," + dim[0] + "x" + dim[1] + "x" + dim[2] + "\n");
+			eyetrackingOutStream.write("\n");
+			eyetrackingOutStream.write("\n");
+			eyetrackingOutStream.write("\n");
+			eyetrackingOutStream.write("Time, ActionName, SliceNumber, X_UpperLeft, Y_UpperLeft, X_UpperRight, Y_UpperRight, X_LowerLeft, Y_LowerLeft, X_LowerRight, Y_LowerRight, Window, Level, X_MouseClickLocation, Y_MouseClickLocation, Length, X_LineStart, Y_LineStart, X_LineEnd, Y_LineEnd" + "\n");
+    	} catch ( IOException e ) {
+    		e.printStackTrace();
+    	}
+    }
+    
     /**
      * Initialize the file IO for eye tracking log file
      */
@@ -1425,6 +1472,22 @@ public class MipavUtil extends JComponent {
      * @param msg
      */
     public static final void writeEyeTrackingLog(String msg) {
+    	if (isEyeTrackingEnabled) {
+			try {
+				eyetrackingOutStream.write(msg + "\n");
+				eyetrackingOutStream.flush();
+			} catch ( IOException e ) {
+				e.printStackTrace();
+			}
+    	}
+    }
+    
+    
+    /**
+     * Record the eye tracking log message. 
+     * @param msg
+     */
+    public static final void writeEyeTrackingLog(String msg, ViewJComponentEditImage imgComp) {
     	if (isEyeTrackingEnabled) {
 			try {
 				eyetrackingOutStream.write(msg + "\n");
