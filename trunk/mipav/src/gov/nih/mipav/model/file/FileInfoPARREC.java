@@ -56,6 +56,8 @@ public class FileInfoPARREC extends FileInfoBase {
 
     /** par/rec gradients **/
     private String stringGradientArray[];
+    
+    private String repetitionTime = null;
 
     /** Slice Orientation Value (sag/cor/tra) **/
     private int firstOrientValue;
@@ -105,6 +107,9 @@ public class FileInfoPARREC extends FileInfoBase {
         dlg.append("Date: " + getDate() + "\n");
         dlg.append("Exam Name: " + getExamName() + "\n");
         dlg.append("Protocol Name: " + getProtocolName() + "\n");
+        if (repetitionTime != null) {
+        	dlg.append("Repetition time (ms): " + getRepetitionTime() + "\n");
+        }
     }
 
     public void displayDTIInfo_JDialogFileInfo(JDialogFileInfo dlg) {
@@ -217,6 +222,10 @@ public class FileInfoPARREC extends FileInfoBase {
     public void setPatientName(String patientName) {
         this.patientName = patientName;
     }
+    
+    public String getPatientName() {
+    	return patientName;
+    }
 
     public String getExamName() {
         return examName;
@@ -320,6 +329,14 @@ public class FileInfoPARREC extends FileInfoBase {
     
     public float getScaleSlope() {
         return scaleSlope;
+    }
+    
+    public void setRepetitionTime(String repetitionTime) {
+    	this.repetitionTime = repetitionTime;
+    }
+    
+    public String getRepetitionTime() {
+    	return repetitionTime;
     }
 
     /*
