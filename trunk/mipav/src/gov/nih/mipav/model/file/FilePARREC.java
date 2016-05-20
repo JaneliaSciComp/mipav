@@ -1179,6 +1179,10 @@ public class FilePARREC extends FileBase {
                         offCentre[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
                         offCentre[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
                         fileInfo.setOffCentre(offCentre);   
+                    } else if(nextLine.contains("Repetition time")) {
+                    	String info = nextLine.substring(nextLine.indexOf(":")+1);
+                        String repetitionTime = info.trim();
+                        fileInfo.setRepetitionTime(repetitionTime);
                     }
                     
 
