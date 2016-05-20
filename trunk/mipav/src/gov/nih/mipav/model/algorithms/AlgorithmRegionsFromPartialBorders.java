@@ -227,8 +227,8 @@ public class AlgorithmRegionsFromPartialBorders extends AlgorithmBase {
             		    	    currentMagnitude += imgBuffer[x+xd + xDim * (y+yd)] * mask[d][yd+1][xd+1];	
             		    	}
             		    } // for (yd = -1; yd <= 1; yd++)
-            		    if (Math.abs(currentMagnitude) > magnitude) {
-            		    	magnitude = Math.abs(currentMagnitude);
+            		    if (currentMagnitude > magnitude) {
+            		    	magnitude = currentMagnitude;
             		    	direction = d;
             		    }
             		} // for (d = 0; d <= 7; d++)
@@ -295,488 +295,240 @@ public class AlgorithmRegionsFromPartialBorders extends AlgorithmBase {
             if (darkObjectOnWhiteBackground) {
             	for (y = 1; y < yDim-1; y++) {
             		for (x = 1; x < xDim-1; x++) {
+            			if (suppressedMagnitude[x + y * xDim] > 0.0) {
             			edgeFound = false;
             			switch(edgeDirection[x + y * xDim]) {
             			case 0:
-            				if (suppressedMagnitude[x + (y+1)*xDim] >= suppressedMagnitude[x + (y-1)*xDim]) {
-            					for (yd = 1; yd <= maximumDistance && (y - yd) >= 1; yd++) {
-            						if (suppressedMagnitude[x + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            					        break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x + (y-yd) * xDim] >= 3) && (edgeDirection[x + (y-yd)*xDim] <= 5)) {
-            					    for (ye = 1; ye < yd; ye++) {
-            					    	output[x + (y - ye)*xDim]++;
-            					    }
-            					}
-            				} // if (suppressedMagnitude[x + (y+1)*xDim] >= suppressedMagnitude[x + (y-1)*xDim]) 
-            				else {
-            					for (yd = 1; yd <= maximumDistance && (y + yd) < yDim-1; yd++) {
-            						if (suppressedMagnitude[x + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            					        break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x + (y+yd) * xDim] >= 3) && (edgeDirection[x + (y+yd)*xDim] <= 5)) {
-            					    for (ye = 1; ye < yd; ye++) {
-            					    	output[x + (y + ye)*xDim]++;
-            					    }
-            					}	
-            				}
+        					for (yd = 1; yd <= maximumDistance && (y + yd) < yDim-1; yd++) {
+        						if (suppressedMagnitude[x + (y+yd) * xDim] > 0) {
+        							edgeFound = true;
+        					        break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x + (y+yd) * xDim] >= 3) && (edgeDirection[x + (y+yd)*xDim] <= 5)) {
+        					    for (ye = 1; ye < yd; ye++) {
+        					    	output[x + (y + ye)*xDim]++;
+        					    }
+        					}	
             				break;
             			case 1:
-            				if (suppressedMagnitude[x+1 + (y-1) * xDim] >= suppressedMagnitude[x-1 + (y+1) * xDim]) {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
-            							(y + yd) < yDim-1; xd++, yd++) {
-            						if (suppressedMagnitude[x-xd + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + (y+yd) * xDim] >= 4) && (edgeDirection[x-xd + (y+yd) * xDim] <= 6)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x-xe + (y+ye) * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
-            							(y - yd) >= 1; xd++, yd++) {
-            						if (suppressedMagnitude[x+xd + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x+xd + (y-yd) * xDim] >= 4) && (edgeDirection[x+xd + (y-yd) * xDim] <= 6)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x+xe + (y-ye) * xDim]++;
-            						}
-            					}	
-            				}
+        					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
+        							(y + yd) < yDim-1; xd++, yd++) {
+        						if (suppressedMagnitude[x-xd + (y+yd) * xDim] > 0) {
+        							edgeFound = true;
+        							break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x-xd + (y+yd) * xDim] >= 4) && (edgeDirection[x-xd + (y+yd) * xDim] <= 6)) {
+        						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
+        							output[x-xe + (y+ye) * xDim]++;
+        						}
+        					}	
             				break;
             			case 2:
-            				if (suppressedMagnitude[x+1 + y * xDim] >= suppressedMagnitude[x-1 + y * xDim]) {
-            					for (xd = 1; xd <= maximumDistance && (x - xd) >= 1; xd++) {
-            						if (suppressedMagnitude[x-xd + y * xDim] > 0) {
-            							edgeFound = true;
-            						    break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + y * xDim] >=5) && (edgeDirection[x-xd + y * xDim] <= 7)) {
-            						for (xe = 1; xe < xd; xe++) {
-            							output[x-xe + y * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1; xd <= maximumDistance && (x + xd) < xDim-1; xd++) {
-            						if (suppressedMagnitude[x+xd + y * xDim] > 0) {
-            							edgeFound = true;
-            						    break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x+xd + y * xDim] >=5) && (edgeDirection[x+xd + y * xDim] <= 7)) {
-            						for (xe = 1; xe < xd; xe++) {
-            							output[x+xe + y * xDim]++;
-            						}
-            					}	
-            				}
+        					for (xd = 1; xd <= maximumDistance && (x + xd) < xDim-1; xd++) {
+        						if (suppressedMagnitude[x+xd + y * xDim] > 0) {
+        							edgeFound = true;
+        						    break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x+xd + y * xDim] >=5) && (edgeDirection[x+xd + y * xDim] <= 7)) {
+        						for (xe = 1; xe < xd; xe++) {
+        							output[x+xe + y * xDim]++;
+        						}
+        					}	
             				break;
             			case 3:
-            				if (suppressedMagnitude[x+1 + (y+1) * xDim] >= suppressedMagnitude[x-1 + (y-1) * xDim]) {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
-            							(y - yd) >= 1; xd++, yd++) {
-            						if (suppressedMagnitude[x-xd + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && ((edgeDirection[x-xd + (y-yd) * xDim] == 6) || (edgeDirection[x-xd + (y-yd) * xDim] == 7) ||
-            							(edgeDirection[x-xd + (y-yd) * xDim] == 0))) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x-xe + (y-ye) * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
-            							(y + yd) < yDim-1; xd++, yd++) {
-            						if (suppressedMagnitude[x+xd + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && ((edgeDirection[x+xd + (y+yd) * xDim] == 6) || (edgeDirection[x+xd + (y+yd) * xDim] == 7) ||
-            							(edgeDirection[x+xd + (y+yd) * xDim] == 0))) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x+xe + (y+ye) * xDim]++;
-            						}
-            					}	
-            				}
+        					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
+        							(y - yd) >= 1; xd++, yd++) {
+        						if (suppressedMagnitude[x+xd + (y-yd) * xDim] > 0) {
+        							edgeFound = true;
+        							break;
+        						}
+        					}
+        					if (edgeFound && ((edgeDirection[x+xd + (y-yd) * xDim] == 6) || (edgeDirection[x+xd + (y-yd) * xDim] == 7) ||
+        							(edgeDirection[x+xd + (y-yd) * xDim] == 0))) {
+        						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
+        							output[x+xe + (y-ye) * xDim]++;
+        						}
+        					}
             			    break;	
             			case 4:
-            				if (suppressedMagnitude[x + (y+1)*xDim] >= suppressedMagnitude[x + (y-1)*xDim]) {
-            					for (yd = 1; yd <= maximumDistance && (y - yd) >= 1; yd++) {
-            						if (suppressedMagnitude[x + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            					        break;
-            						}
-            					}
-            					if (edgeFound && ((edgeDirection[x + (y-yd) * xDim] == 7) || (edgeDirection[x + (y-yd)*xDim] == 0) ||
-            							(edgeDirection[x + (y-yd)*xDim] == 1))) {
-            					    for (ye = 1; ye < yd; ye++) {
-            					    	output[x + (y - ye)*xDim]++;
-            					    }
-            					}
-            				} // if (suppressedMagnitude[x + (y+1)*xDim] >= suppressedMagnitude[x + (y-1)*xDim]) 
-            				else {
-            					for (yd = 1; yd <= maximumDistance && (y + yd) < yDim-1; yd++) {
-            						if (suppressedMagnitude[x + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            					        break;
-            						}
-            					}
-            					if (edgeFound && ((edgeDirection[x + (y+yd) * xDim] == 7) && (edgeDirection[x + (y+yd)*xDim] == 0) ||
-            							(edgeDirection[x + (y+yd)*xDim] == 1))) {
-            					    for (ye = 1; ye < yd; ye++) {
-            					    	output[x + (y + ye)*xDim]++;
-            					    }
-            					}	
-            				}
+        					for (yd = 1; yd <= maximumDistance && (y - yd) >= 1; yd++) {
+        						if (suppressedMagnitude[x + (y-yd) * xDim] > 0) {
+        							edgeFound = true;
+        					        break;
+        						}
+        					}
+        					if (edgeFound && ((edgeDirection[x + (y-yd) * xDim] == 7) || (edgeDirection[x + (y-yd)*xDim] == 0) ||
+        							(edgeDirection[x + (y-yd)*xDim] == 1))) {
+        					    for (ye = 1; ye < yd; ye++) {
+        					    	output[x + (y - ye)*xDim]++;
+        					    }
+        					}
             				break;
             			case 5:
-            				if (suppressedMagnitude[x+1 + (y-1) * xDim] >= suppressedMagnitude[x-1 + (y+1) * xDim]) {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
-            							(y + yd) < yDim-1; xd++, yd++) {
-            						if (suppressedMagnitude[x-xd + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + (y+yd) * xDim] >= 0) && (edgeDirection[x-xd + (y+yd) * xDim] <= 2)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x-xe + (y+ye) * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
-            							(y - yd) >= 1; xd++, yd++) {
-            						if (suppressedMagnitude[x+xd + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x+xd + (y-yd) * xDim] >= 0) && (edgeDirection[x+xd + (y-yd) * xDim] <= 2)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x+xe + (y-ye) * xDim]++;
-            						}
-            					}	
-            				}
+        					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
+        							(y - yd) >= 1; xd++, yd++) {
+        						if (suppressedMagnitude[x-xd + (y-yd) * xDim] > 0) {
+        							edgeFound = true;
+        							break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x-xd + (y-yd) * xDim] >= 0) && (edgeDirection[x-xd + (y-yd) * xDim] <= 2)) {
+        						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
+        							output[x-xe + (y-ye) * xDim]++;
+        						}
+        					}
             				break;
             			case 6:
-            				if (suppressedMagnitude[x+1 + y * xDim] >= suppressedMagnitude[x-1 + y * xDim]) {
-            					for (xd = 1; xd <= maximumDistance && (x - xd) >= 1; xd++) {
-            						if (suppressedMagnitude[x-xd + y * xDim] > 0) {
-            							edgeFound = true;
-            						    break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + y * xDim] >=1) && (edgeDirection[x-xd + y * xDim] <= 3)) {
-            						for (xe = 1; xe < xd; xe++) {
-            							output[x-xe + y * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1; xd <= maximumDistance && (x + xd) < xDim-1; xd++) {
-            						if (suppressedMagnitude[x+xd + y * xDim] > 0) {
-            							edgeFound = true;
-            						    break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x+xd + y * xDim] >=1) && (edgeDirection[x+xd + y * xDim] <= 3)) {
-            						for (xe = 1; xe < xd; xe++) {
-            							output[x+xe + y * xDim]++;
-            						}
-            					}	
-            				}
+        					for (xd = 1; xd <= maximumDistance && (x - xd) >= 1; xd++) {
+        						if (suppressedMagnitude[x-xd + y * xDim] > 0) {
+        							edgeFound = true;
+        						    break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x-xd + y * xDim] >=1) && (edgeDirection[x-xd + y * xDim] <= 3)) {
+        						for (xe = 1; xe < xd; xe++) {
+        							output[x-xe + y * xDim]++;
+        						}
+        					}
             				break;
             			case 7:
-            				if (suppressedMagnitude[x+1 + (y+1) * xDim] >= suppressedMagnitude[x-1 + (y-1) * xDim]) {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
-            							(y - yd) >= 1; xd++, yd++) {
-            						if (suppressedMagnitude[x-xd + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + (y-yd) * xDim] >= 2) && (edgeDirection[x-xd + (y-yd) * xDim] <= 4)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x-xe + (y-ye) * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
-            							(y + yd) < yDim-1; xd++, yd++) {
-            						if (suppressedMagnitude[x+xd + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + (y-yd) * xDim] >= 2) && (edgeDirection[x-xd + (y-yd) * xDim] <= 4)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x+xe + (y+ye) * xDim]++;
-            						}
-            					}	
-            				}	
+        					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
+        							(y + yd) < yDim-1; xd++, yd++) {
+        						if (suppressedMagnitude[x-xd + (y+yd) * xDim] > 0) {
+        							edgeFound = true;
+        							break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x-xd + (y+yd) * xDim] >= 2) && (edgeDirection[x-xd + (y+yd) * xDim] <= 4)) {
+        						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
+        							output[x-xe + (y+ye) * xDim]++;
+        						}
+        					}
             			} // switch(edgeDirection[x + y * xDim])
+            			} // if (suppressedMagnitude[x + y * xDim] > 0.0)
             		} // for (x = 1; x < xDim - 1; x++)
             	} // for (y = 1; y < yDim-1; y++)
             } // if (darkObjectOnWhiteBackground)
             else { // whiteObjectOnDarkBackground
             	for (y = 1; y < yDim-1; y++) {
             		for (x = 1; x < xDim-1; x++) {
+            			if (suppressedMagnitude[x + y * xDim] > 0.0){
             			edgeFound = false;
             			switch(edgeDirection[x + y * xDim]) {
             			case 0:
-            				if (suppressedMagnitude[x + (y+1)*xDim] < suppressedMagnitude[x + (y-1)*xDim]) {
-            					for (yd = 1; yd <= maximumDistance && (y - yd) >= 1; yd++) {
-            						if (suppressedMagnitude[x + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            					        break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x + (y-yd) * xDim] >= 3) && (edgeDirection[x + (y-yd)*xDim] <= 5)) {
-            					    for (ye = 1; ye < yd; ye++) {
-            					    	output[x + (y - ye)*xDim]++;
-            					    }
-            					}
-            				} // if (suppressedMagnitude[x + (y+1)*xDim] < suppressedMagnitude[x + (y-1)*xDim]) 
-            				else {
-            					for (yd = 1; yd <= maximumDistance && (y + yd) < yDim-1; yd++) {
-            						if (suppressedMagnitude[x + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            					        break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x + (y+yd) * xDim] >= 3) && (edgeDirection[x + (y+yd)*xDim] <= 5)) {
-            					    for (ye = 1; ye < yd; ye++) {
-            					    	output[x + (y + ye)*xDim]++;
-            					    }
-            					}	
-            				}
+        					for (yd = 1; yd <= maximumDistance && (y - yd) >= 1; yd++) {
+        						if (suppressedMagnitude[x + (y-yd) * xDim] > 0) {
+        							edgeFound = true;
+        					        break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x + (y-yd) * xDim] >= 3) && (edgeDirection[x + (y-yd)*xDim] <= 5)) {
+        					    for (ye = 1; ye < yd; ye++) {
+        					    	output[x + (y - ye)*xDim]++;
+        					    }
+        					}
             				break;
             			case 1:
-            				if (suppressedMagnitude[x+1 + (y-1) * xDim] < suppressedMagnitude[x-1 + (y+1) * xDim]) {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
-            							(y + yd) < yDim-1; xd++, yd++) {
-            						if (suppressedMagnitude[x-xd + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + (y+yd) * xDim] >= 4) && (edgeDirection[x-xd + (y+yd) * xDim] <= 6)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x-xe + (y+ye) * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
-            							(y - yd) >= 1; xd++, yd++) {
-            						if (suppressedMagnitude[x+xd + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x+xd + (y-yd) * xDim] >= 4) && (edgeDirection[x+xd + (y-yd) * xDim] <= 6)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x+xe + (y-ye) * xDim]++;
-            						}
-            					}	
-            				}
+        					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
+        							(y - yd) >= 1; xd++, yd++) {
+        						if (suppressedMagnitude[x-xd + (y-yd) * xDim] > 0) {
+        							edgeFound = true;
+        							break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x-xd + (y-yd) * xDim] >= 4) && (edgeDirection[x-xd + (y-yd) * xDim] <= 6)) {
+        						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
+        							output[x-xe + (y-ye) * xDim]++;
+        						}
+        					}
             				break;
             			case 2:
-            				if (suppressedMagnitude[x+1 + y * xDim] < suppressedMagnitude[x-1 + y * xDim]) {
-            					for (xd = 1; xd <= maximumDistance && (x - xd) >= 1; xd++) {
-            						if (suppressedMagnitude[x-xd + y * xDim] > 0) {
-            							edgeFound = true;
-            						    break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + y * xDim] >=5) && (edgeDirection[x-xd + y * xDim] <= 7)) {
-            						for (xe = 1; xe < xd; xe++) {
-            							output[x-xe + y * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1; xd <= maximumDistance && (x + xd) < xDim-1; xd++) {
-            						if (suppressedMagnitude[x+xd + y * xDim] > 0) {
-            							edgeFound = true;
-            						    break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x+xd + y * xDim] >=5) && (edgeDirection[x+xd + y * xDim] <= 7)) {
-            						for (xe = 1; xe < xd; xe++) {
-            							output[x+xe + y * xDim]++;
-            						}
-            					}	
-            				}
+        					for (xd = 1; xd <= maximumDistance && (x - xd) >= 1; xd++) {
+        						if (suppressedMagnitude[x-xd + y * xDim] > 0) {
+        							edgeFound = true;
+        						    break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x-xd + y * xDim] >=5) && (edgeDirection[x-xd + y * xDim] <= 7)) {
+        						for (xe = 1; xe < xd; xe++) {
+        							output[x-xe + y * xDim]++;
+        						}
+        					}
             				break;
-            			case 3:
-            				if (suppressedMagnitude[x+1 + (y+1) * xDim] < suppressedMagnitude[x-1 + (y-1) * xDim]) {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
-            							(y - yd) >= 1; xd++, yd++) {
-            						if (suppressedMagnitude[x-xd + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && ((edgeDirection[x-xd + (y-yd) * xDim] == 6) || (edgeDirection[x-xd + (y-yd) * xDim] == 7) ||
-            							(edgeDirection[x-xd + (y-yd) * xDim] == 0))) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x-xe + (y-ye) * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
-            							(y + yd) < yDim-1; xd++, yd++) {
-            						if (suppressedMagnitude[x+xd + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && ((edgeDirection[x+xd + (y+yd) * xDim] == 6) || (edgeDirection[x+xd + (y+yd) * xDim] == 7) ||
-            							(edgeDirection[x+xd + (y+yd) * xDim] == 0))) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x+xe + (y+ye) * xDim]++;
-            						}
-            					}	
-            				}
+            			case 3:	
+        					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
+        							(y + yd) < yDim-1; xd++, yd++) {
+        						if (suppressedMagnitude[x-xd + (y+yd) * xDim] > 0) {
+        							edgeFound = true;
+        							break;
+        						}
+        					}
+        					if (edgeFound && ((edgeDirection[x-xd + (y+yd) * xDim] == 6) || (edgeDirection[x-xd + (y+yd) * xDim] == 7) ||
+        							(edgeDirection[x-xd + (y+yd) * xDim] == 0))) {
+        						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
+        							output[x-xe + (y+ye) * xDim]++;
+        						}
+        					}
             			    break;	
             			case 4:
-            				if (suppressedMagnitude[x + (y+1)*xDim] < suppressedMagnitude[x + (y-1)*xDim]) {
-            					for (yd = 1; yd <= maximumDistance && (y - yd) >= 1; yd++) {
-            						if (suppressedMagnitude[x + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            					        break;
-            						}
-            					}
-            					if (edgeFound && ((edgeDirection[x + (y-yd) * xDim] == 7) || (edgeDirection[x + (y-yd)*xDim] == 0) ||
-            							(edgeDirection[x + (y-yd)*xDim] == 1))) {
-            					    for (ye = 1; ye < yd; ye++) {
-            					    	output[x + (y - ye)*xDim]++;
-            					    }
-            					}
-            				} // if (suppressedMagnitude[x + (y+1)*xDim] < suppressedMagnitude[x + (y-1)*xDim]) 
-            				else {
-            					for (yd = 1; yd <= maximumDistance && (y + yd) < yDim-1; yd++) {
-            						if (suppressedMagnitude[x + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            					        break;
-            						}
-            					}
-            					if (edgeFound && ((edgeDirection[x + (y+yd) * xDim] == 7) && (edgeDirection[x + (y+yd)*xDim] == 0) ||
-            							(edgeDirection[x + (y+yd)*xDim] == 1))) {
-            					    for (ye = 1; ye < yd; ye++) {
-            					    	output[x + (y + ye)*xDim]++;
-            					    }
-            					}	
-            				}
+        					for (yd = 1; yd <= maximumDistance && (y + yd) < yDim-1; yd++) {
+        						if (suppressedMagnitude[x + (y+yd) * xDim] > 0) {
+        							edgeFound = true;
+        					        break;
+        						}
+        					}
+        					if (edgeFound && ((edgeDirection[x + (y+yd) * xDim] == 7) || (edgeDirection[x + (y+yd)*xDim] == 0) ||
+        							(edgeDirection[x + (y+yd)*xDim] == 1))) {
+        					    for (ye = 1; ye < yd; ye++) {
+        					    	output[x + (y + ye)*xDim]++;
+        					    }
+        					}	
             				break;
             			case 5:
-            				if (suppressedMagnitude[x+1 + (y-1) * xDim] < suppressedMagnitude[x-1 + (y+1) * xDim]) {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
-            							(y + yd) < yDim-1; xd++, yd++) {
-            						if (suppressedMagnitude[x-xd + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + (y+yd) * xDim] >= 0) && (edgeDirection[x-xd + (y+yd) * xDim] <= 2)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x-xe + (y+ye) * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
-            							(y - yd) >= 1; xd++, yd++) {
-            						if (suppressedMagnitude[x+xd + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x+xd + (y-yd) * xDim] >= 0) && (edgeDirection[x+xd + (y-yd) * xDim] <= 2)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x+xe + (y-ye) * xDim]++;
-            						}
-            					}	
-            				}
+        					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
+        							(y + yd) < yDim-1; xd++, yd++) {
+        						if (suppressedMagnitude[x+xd + (y+yd) * xDim] > 0) {
+        							edgeFound = true;
+        							break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x+xd + (y+yd) * xDim] >= 0) && (edgeDirection[x+xd + (y+yd) * xDim] <= 2)) {
+        						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
+        							output[x+xe + (y+ye) * xDim]++;
+        						}
+        					}
             				break;
             			case 6:
-            				if (suppressedMagnitude[x+1 + y * xDim] < suppressedMagnitude[x-1 + y * xDim]) {
-            					for (xd = 1; xd <= maximumDistance && (x - xd) >= 1; xd++) {
-            						if (suppressedMagnitude[x-xd + y * xDim] > 0) {
-            							edgeFound = true;
-            						    break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + y * xDim] >=1) && (edgeDirection[x-xd + y * xDim] <= 3)) {
-            						for (xe = 1; xe < xd; xe++) {
-            							output[x-xe + y * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1; xd <= maximumDistance && (x + xd) < xDim-1; xd++) {
-            						if (suppressedMagnitude[x+xd + y * xDim] > 0) {
-            							edgeFound = true;
-            						    break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x+xd + y * xDim] >=1) && (edgeDirection[x+xd + y * xDim] <= 3)) {
-            						for (xe = 1; xe < xd; xe++) {
-            							output[x+xe + y * xDim]++;
-            						}
-            					}	
-            				}
+        					for (xd = 1; xd <= maximumDistance && (x + xd) < xDim-1; xd++) {
+        						if (suppressedMagnitude[x+xd + y * xDim] > 0) {
+        							edgeFound = true;
+        						    break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x+xd + y * xDim] >=1) && (edgeDirection[x+xd + y * xDim] <= 3)) {
+        						for (xe = 1; xe < xd; xe++) {
+        							output[x+xe + y * xDim]++;
+        						}
+        					}	
             				break;
             			case 7:
-            				if (suppressedMagnitude[x+1 + (y+1) * xDim] < suppressedMagnitude[x-1 + (y-1) * xDim]) {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x - xd) >= 1 &&
-            							(y - yd) >= 1; xd++, yd++) {
-            						if (suppressedMagnitude[x-xd + (y-yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + (y-yd) * xDim] >= 2) && (edgeDirection[x-xd + (y-yd) * xDim] <= 4)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x-xe + (y-ye) * xDim]++;
-            						}
-            					}
-            				}
-            				else {
-            					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
-            							(y + yd) < yDim-1; xd++, yd++) {
-            						if (suppressedMagnitude[x+xd + (y+yd) * xDim] > 0) {
-            							edgeFound = true;
-            							break;
-            						}
-            					}
-            					if (edgeFound && (edgeDirection[x-xd + (y-yd) * xDim] >= 2) && (edgeDirection[x-xd + (y-yd) * xDim] <= 4)) {
-            						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
-            							output[x+xe + (y+ye) * xDim]++;
-            						}
-            					}	
-            				}	
+        					for (xd = 1, yd = 1; Math.sqrt(xd*xd + yd*yd) <= maximumDistance && (x + xd) < xDim-1 &&
+        							(y - yd) >= 1; xd++, yd++) {
+        						if (suppressedMagnitude[x+xd + (y-yd) * xDim] > 0) {
+        							edgeFound = true;
+        							break;
+        						}
+        					}
+        					if (edgeFound && (edgeDirection[x+xd + (y-yd) * xDim] >= 2) && (edgeDirection[x+xd + (y-yd) * xDim] <= 4)) {
+        						for (xe = 1, ye = 1; xe < xd; xe++, ye++) {
+        							output[x+xe + (y-ye) * xDim]++;
+        						}
+        					}
             			} // switch(edgeDirection[x + y * xDim])
+            			} // if (suppressedMagnitude[x + y * xDim] > 0.0)
             		} // for (x = 1; x < xDim - 1; x++)
             	} // for (y = 1; y < yDim-1; y++)	
             } // whiteObjectOnDarkBackground
@@ -833,6 +585,12 @@ public class AlgorithmRegionsFromPartialBorders extends AlgorithmBase {
             	    }
             	}
             } // for (y = 1; y < yDim-1; y++)
+            
+            if (darkObjectOnWhiteBackground) {
+                for (i = 0; i < length; i++) {
+                	primitive2[i] = (byte)(1 - primitive2[i]);
+                }
+            }
             
             
 			try {
