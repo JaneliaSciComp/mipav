@@ -14181,6 +14181,9 @@ public class FileIO {
         double intercept = 0.0;
         boolean convertFloatToShort = false;
         String dateString = null;
+        String patientNameString = null;
+        String protocolNameString = null;
+        String repetitionTimeString = null;
 
         if (image.getNDims() != 2) {
             return false;
@@ -14320,6 +14323,18 @@ public class FileIO {
           	 if (dateString != null) {
           		 dateString.replaceAll(".","");
           		 fileDicom.getTagTable().setValue("0008,0020", dateString, dateString.length());
+          	 }
+          	 patientNameString = ((FileInfoPARREC)originalFileInfo).getPatientName();
+          	 if (patientNameString != null) {
+          		 fileDicom.getTagTable().setValue("0010,0010", patientNameString, patientNameString.length());
+          	 }
+          	 protocolNameString = ((FileInfoPARREC)originalFileInfo).getProtocolName();
+          	 if (protocolNameString != null) {
+          		 fileDicom.getTagTable().setValue("0018,1030", protocolNameString, protocolNameString.length());
+          	 }
+          	 repetitionTimeString = ((FileInfoPARREC)originalFileInfo).getRepetitionTime();
+          	 if (repetitionTimeString != null) {
+          		 fileDicom.getTagTable().setValue("0018,0080", repetitionTimeString, repetitionTimeString.length());
           	 }
            }
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
@@ -14843,6 +14858,9 @@ public class FileIO {
         double intercept = 0.0;
         boolean convertFloatToShort = false;
         String dateString = null;
+        String patientNameString = null;
+        String protocolNameString = null;
+        String repetitionTimeString = null;
         
         if (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) {
             originalMin = ((FileInfoMinc) image.getFileInfo(0)).vmin;
@@ -14995,6 +15013,18 @@ public class FileIO {
               		 dateString.replaceAll(".","");
               		 myFileInfo.getTagTable().setValue("0008,0020", dateString, dateString.length());
               	 }
+              	patientNameString = ((FileInfoPARREC)image.getFileInfo(0)).getPatientName();
+             	 if (patientNameString != null) {
+             		 myFileInfo.getTagTable().setValue("0010,0010", patientNameString, patientNameString.length());
+             	 }
+             	 protocolNameString = ((FileInfoPARREC)image.getFileInfo(0)).getProtocolName();
+             	 if (protocolNameString != null) {
+             		 myFileInfo.getTagTable().setValue("0018,1030", protocolNameString, protocolNameString.length());
+             	 }
+             	repetitionTimeString = ((FileInfoPARREC)image.getFileInfo(0)).getRepetitionTime();
+             	 if (repetitionTimeString != null) {
+             		 myFileInfo.getTagTable().setValue("0018,0080", repetitionTimeString, repetitionTimeString.length());
+             	 }
             }
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
             final float resols[] = image.getFileInfo()[0].getResolutions();
