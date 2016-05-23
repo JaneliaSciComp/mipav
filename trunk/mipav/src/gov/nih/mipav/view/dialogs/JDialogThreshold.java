@@ -512,7 +512,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                         for (int i = 0; i < end; i++) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                            		resultImage.getFileInfo()[0].getDataType());
                         }
                     }
                 }
