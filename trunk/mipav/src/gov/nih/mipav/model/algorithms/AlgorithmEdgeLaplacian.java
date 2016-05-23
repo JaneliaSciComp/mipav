@@ -684,7 +684,12 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase implements AlgorithmIn
                 gaussianImage = new ModelImage(ModelImage.FLOAT, destExtents, srcImage.getImageName() + "gaussian");
                 if ( (gaussianImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                     for (i = 0; i < zDim; i++)
-                    ((FileInfoDicom) (gaussianImage.getFileInfo(i))).setSecondaryCaptureTags();
+                    if (zDim > 1) {
+                    ((FileInfoDicom) (gaussianImage.getFileInfo(i))).setSecondaryCaptureTags(true, srcImage.getFileInfo()[0].getDataType());
+                    }
+                    else {
+                    ((FileInfoDicom) (gaussianImage.getFileInfo(i))).setSecondaryCaptureTags(false, srcImage.getFileInfo()[0].getDataType());
+                    }
                 }
                 gaussianBlurAlgo = new AlgorithmGaussianBlur(gaussianImage, srcImage, sigmas, entireImage, srcImage.getNDims() > 2);
                 if ( !entireImage) {
