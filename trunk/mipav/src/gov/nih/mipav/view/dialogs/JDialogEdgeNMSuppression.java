@@ -227,7 +227,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements
 
 				if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 					((FileInfoDicom) (resultImage.getFileInfo(0)))
-							.setSecondaryCaptureTags();
+							.setSecondaryCaptureTags(resultImage.getNDims() > 2,
+			                		resultImage.getFileInfo()[0].getDataType());
 				}
 
 				// Make algorithm
@@ -284,7 +285,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements
 
 					for (int i = 0; i < resultImage.getExtents()[2]; i++) {
 						((FileInfoDicom) (resultImage.getFileInfo(i)))
-								.setSecondaryCaptureTags();
+								.setSecondaryCaptureTags(resultImage.getNDims() > 2,
+				                		resultImage.getFileInfo()[0].getDataType());
 					}
 				}
 
