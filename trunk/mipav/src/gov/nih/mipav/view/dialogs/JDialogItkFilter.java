@@ -314,7 +314,8 @@ public class JDialogItkFilter extends JDialogScriptableBase
                         m_resultImage.setImageName(result_name);
 
                         if ((m_resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                            ((FileInfoDicom) (m_resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                            ((FileInfoDicom) (m_resultImage.getFileInfo(0))).setSecondaryCaptureTags(false,
+                            		m_resultImage.getFileInfo()[0].getDataType());
                         }
                     }
 
@@ -438,7 +439,8 @@ public class JDialogItkFilter extends JDialogScriptableBase
                         if ((m_resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                             for (int i = 0; i < m_resultImage.getExtents()[2]; i++) {
-                                ((FileInfoDicom) (m_resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                                ((FileInfoDicom) (m_resultImage.getFileInfo(i))).setSecondaryCaptureTags(true,
+                                		m_resultImage.getFileInfo()[0].getDataType());
                             }
                         }
                     }
