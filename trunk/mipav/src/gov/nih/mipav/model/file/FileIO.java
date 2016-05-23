@@ -15433,6 +15433,7 @@ public class FileIO {
                 }
             }
             insertEnhancedSequence(myFileInfo, infoAr);
+            myFileInfo.setMultiFrame(true);
         } else {
             if (image.getFileInfo()[0] instanceof FileInfoDicom) {
                 removeEnhancedDicomInfo(myFileInfo, image.getFileInfo());
