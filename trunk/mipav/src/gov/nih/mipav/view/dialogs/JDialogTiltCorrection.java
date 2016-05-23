@@ -251,7 +251,8 @@ public class JDialogTiltCorrection extends JDialogScriptableBase implements Algo
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM){
                     for (i = 0; i < resultImage.getExtents()[2]; i++) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                        		resultImage.getFileInfo()[0].getDataType());
                     }
                 }
                 // Make algorithm
