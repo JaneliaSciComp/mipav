@@ -189,7 +189,7 @@ public class JDialogAutoSeedWatershed extends JDialogScriptableBase implements A
         	
             resultImage     = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), name);
             if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(false, resultImage.getFileInfo(0).getDataType());
             }
 
             // Make algorithm
