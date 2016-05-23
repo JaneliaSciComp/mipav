@@ -322,14 +322,14 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
                 if (resultImage.getNDims() == 2) {
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(false, resultImage.getFileInfo()[0].getDataType());
                     }
                 } else {
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                         for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(true, resultImage.getFileInfo()[0].getDataType());
                         }
                     }
                 }
