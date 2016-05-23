@@ -258,10 +258,12 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
                             // For 2D Dicom set secondary capture tags only for fileinfo(0)
                             if (resultImage.getExtents().length == 2) {
-                                ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                                ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(false,
+                                                resultImage.getFileInfo()[0].getDataType());
                             } else {
                                 for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                                    ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                                    ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(true,
+                                    		resultImage.getFileInfo()[0].getDataType());
                                 }
                             }
 
@@ -572,7 +574,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     resultImage.setImageName(name);
 
                     if ( (resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(false,
+                        		resultImage.getFileInfo()[0].getDataType());
                     }
                 }
             } catch (final OutOfMemoryError x) {
@@ -676,7 +679,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                         resultImage.setImageName(name);
 
                         if ( (resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                            ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(false,
+                            		resultImage.getFileInfo()[0].getDataType());
                         }
                     }
 
@@ -805,7 +809,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                         if ( (resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                                ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                                ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(true,
+                                		resultImage.getFileInfo()[0].getDataType());
                             }
                         }
                     }
