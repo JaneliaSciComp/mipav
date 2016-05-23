@@ -961,11 +961,34 @@ public class FileInfoDicom extends FileInfoBase {
      * mipav). This is often used after a new image is created as the result of an algorithm and the source image's file
      * infos are copied over to the new image.
      */
-    public void setSecondaryCaptureTags() {
+    public void setSecondaryCaptureTags(boolean isMultiFrame, int dataType) {
 
         // Secondary Capture SOP UID
-        getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26);
-        getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26);
+    	if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)) {
+    		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30", 26);
+            getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.30", 26);	
+    	}
+    	else if (isMultiFrame && dataType == ModelStorageBase.BOOLEAN) {
+    		 getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.1 ", 28);
+    	     getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.1 ", 28);	
+    	}
+    	else if (isMultiFrame && dataType == ModelStorageBase.BYTE) {
+    		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.2 ", 28);
+   	        getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.2 ", 28);		
+    	}
+    	else if (isMultiFrame && ((dataType == ModelStorageBase.UBYTE) || (dataType == ModelStorageBase.SHORT) ||
+    			(dataType == ModelStorageBase.USHORT) || (dataType == ModelStorageBase.UINTEGER))) {
+    		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.3 ", 28);
+   	        getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.3 ", 28);	
+    	}
+    	else if (isMultiFrame && ((dataType == ModelStorageBase.ARGB) || (dataType == ModelStorageBase.ARGB_USHORT))) {
+    		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.4 ", 28);
+   	        getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.4 ", 28);		
+    	}
+    	else {
+            getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26);
+            getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26);
+    	}
 
         // bogus Implementation UID made up by Matt
         getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16);
