@@ -277,7 +277,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                    		resultImage.getFileInfo()[0].getDataType());
                 }
 
                 // Make algorithm
@@ -333,7 +334,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                     for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                        		resultImage.getFileInfo()[0].getDataType());
                     }
                 }
 
@@ -387,7 +389,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                    		resultImage.getFileInfo()[0].getDataType());
                 }
 
                 // Make algorithm
@@ -443,7 +446,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                     for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                        		resultImage.getFileInfo()[0].getDataType());
                     }
                 }
 
