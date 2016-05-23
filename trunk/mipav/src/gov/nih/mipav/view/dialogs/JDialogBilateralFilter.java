@@ -329,7 +329,8 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
                         resultImage.setImageName(name);
 
                         if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                            ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(false, 
+                            		resultImage.getFileInfo()[0].getDataType());
                         }
                     }
 
@@ -451,7 +452,8 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
                         if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                                ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                                ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(true, 
+                                		               resultImage.getFileInfo()[0].getDataType());
                             }
                         }
                     }
