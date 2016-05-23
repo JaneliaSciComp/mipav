@@ -350,7 +350,8 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                     	for (int i = 0; i < zDim; i++) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                            		resultImage.getFileInfo()[0].getDataType());
                         }
                     }
 
