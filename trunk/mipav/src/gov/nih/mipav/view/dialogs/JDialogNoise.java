@@ -353,7 +353,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                     for (int i = 0; i < numberFrames; i++) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                        		resultImage.getFileInfo()[0].getDataType());
                     }
                 }
 
