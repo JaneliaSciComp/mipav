@@ -296,7 +296,8 @@ public class JDialogEdgeDetection3D extends JDialogScriptableBase implements Alg
         	
             resultImage     = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), name);
             if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                		resultImage.getFileInfo()[0].getDataType());
             }
 
             // Make algorithm
