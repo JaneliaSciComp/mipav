@@ -281,7 +281,8 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
                 resultImage.setImageName(name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
+                    		                                                  resultImage.getFileInfo()[0].getDataType());
                 }
             }
 
