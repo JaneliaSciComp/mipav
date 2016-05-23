@@ -617,7 +617,8 @@ public class AlgorithmCrop extends AlgorithmBase {
         srcImage.getMatrixHolder().replaceMatrices(mats);
 
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setSecondaryCaptureTags();
+        	boolean isMultiFrame = false;
+            ((FileInfoDicom) (srcImage.getFileInfo(0))).setSecondaryCaptureTags(isMultiFrame, srcImage.getFileInfo()[0].getDataType());
             ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0028,0011",
                                                                                new Short((short) dimExtents[0]), 2); // columns
             ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0028,0010",
@@ -898,7 +899,8 @@ public class AlgorithmCrop extends AlgorithmBase {
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             if (nDims == 2) {
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setSecondaryCaptureTags();
+            	boolean isMultiFrame = false;
+                ((FileInfoDicom) (srcImage.getFileInfo(0))).setSecondaryCaptureTags(isMultiFrame, srcImage.getFileInfo()[0].getDataType());
                 ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0028,0011",
                                                                                    new Short((short) destExtents[0]),
                                                                                    2); // columns
@@ -925,7 +927,8 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                 for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setSecondaryCaptureTags();
+                    boolean isMultiFrame = true;
+                	((FileInfoDicom) (srcImage.getFileInfo(n))).setSecondaryCaptureTags(isMultiFrame, srcImage.getFileInfo()[0].getDataType());
                     ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
                                                                                        new Short((short) destExtents[0]),
                                                                                        2); // columns
@@ -1246,7 +1249,8 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                 for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setSecondaryCaptureTags();
+                    boolean isMultiFrame = true;
+                	((FileInfoDicom) (srcImage.getFileInfo(n))).setSecondaryCaptureTags(isMultiFrame, srcImage.getFileInfo()[0].getDataType());
                     ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
                                                                                        new Short((short) destExtents[0]),
                                                                                        2); // columns
@@ -1388,7 +1392,8 @@ public class AlgorithmCrop extends AlgorithmBase {
         if ((destImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             if ((destImage.getNDims() == 2) || (z[0] == z[1])) {
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setSecondaryCaptureTags();
+            	boolean isMultiFrame = false;
+                ((FileInfoDicom) (destImage.getFileInfo(0))).setSecondaryCaptureTags(isMultiFrame, srcImage.getFileInfo()[0].getDataType());
                 ((FileInfoDicom) (destImage.getFileInfo(0))).getTagTable().setValue("0028,0011",
                                                                                     new Short((short) destExtents[0]),
                                                                                     2); // columns
@@ -1422,7 +1427,8 @@ public class AlgorithmCrop extends AlgorithmBase {
                 // System.err.println("Original file origin: " + originVOI);
                 for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
-                    ((FileInfoDicom) (destImage.getFileInfo(n))).setSecondaryCaptureTags();
+                    boolean isMultiFrame = true;
+                	((FileInfoDicom) (destImage.getFileInfo(n))).setSecondaryCaptureTags(isMultiFrame, srcImage.getFileInfo()[0].getDataType());
                     ((FileInfoDicom) (destImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
                                                                                         new Short((short) destExtents[0]),
                                                                                         2); // columns
