@@ -466,6 +466,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 version[0] = new Byte((byte) 1);
                 version[1] = new Byte((byte) 0);
                 dicomFileInfo.getTagTable().setValue("0002,0001", version, 2);
+                Character nullChar = Character.MIN_VALUE;
                 if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)) {
                 	dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30", 26);
                 	dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.30", 26);
@@ -473,39 +474,39 @@ public class JDialogSaveDicom extends JDialogBase {
                 	dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.30", 26);
             	}
             	else if (isMultiFrame && dataType == ModelStorageBase.BOOLEAN) {
-            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);	
-            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.1" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.1" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.1" + String.valueOf(nullChar), 28);	
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.1" + String.valueOf(nullChar), 28);
             	}
             	else if (isMultiFrame && dataType == ModelStorageBase.BYTE) {
-            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.2" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.2" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.2" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.2" + String.valueOf(nullChar), 28);
             	}
             	else if (isMultiFrame && ((dataType == ModelStorageBase.UBYTE) || (dataType == ModelStorageBase.SHORT) ||
             			(dataType == ModelStorageBase.USHORT) || (dataType == ModelStorageBase.UINTEGER))) {
-            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.3" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.3" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.3" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.3" + String.valueOf(nullChar), 28);
             	}
             	else if (isMultiFrame && ((dataType == ModelStorageBase.ARGB) || (dataType == ModelStorageBase.ARGB_USHORT))) {
-            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
-            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.4" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.4" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.4" + String.valueOf(nullChar), 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.4" + String.valueOf(nullChar), 28);
             	}
             	else {
-            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
-            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
-            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
-            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7" + String.valueOf(nullChar), 26);
+            		dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7" + String.valueOf(nullChar), 26);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7" + String.valueOf(nullChar), 26);
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7" + String.valueOf(nullChar), 26);
             	}
 
                 
-                dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2" + null, 18); // Little Endian
+                dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2" + String.valueOf(nullChar), 18); // Little Endian
                 // transfer
                 // syntax
                 dicomFileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID
