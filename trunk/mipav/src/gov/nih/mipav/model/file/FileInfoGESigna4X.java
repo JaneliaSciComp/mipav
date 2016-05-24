@@ -765,7 +765,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
         fileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.4" + null, 26);
         fileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.4" + null, 26); 
         fileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2" + null, 18); // Little Endian transfer syntax
-        fileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17" + null, 17); // bogus Implementation UID made up by
+        fileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by
                                                                               // Matt
         fileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
