@@ -1003,7 +1003,7 @@ public class FileInfoDicom extends FileInfoBase {
     	}
 
         // bogus Implementation UID made up by Matt
-        getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16);
+        getTagTable().setValue("0002,0012", "1.2.840.34379.17" + null, 17);
         getTagTable().setValue("0002,0013", "MIPAV--NIH", 10);
     }
 
