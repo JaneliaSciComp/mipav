@@ -2,7 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
-
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -228,6 +228,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /** DOCUMENT ME! */
     private final ViewUserInterface UI;
+    private boolean isMultiFrame;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -239,14 +240,16 @@ public class JDialogSaveDicom extends JDialogBase {
      * @param _fileInfo File info object to get initialization info from.
      * @param dicomInfo Dicom file info object.
      * @param isScriptRunning Whether this dialog is being instantiated as part of the running of a script.
+     * @param isMultiFrame
      */
     public JDialogSaveDicom(final Frame theParentFrame, final FileInfoBase _fileInfo, final FileInfoDicom dicomInfo,
-            final boolean isScriptRunning) {
+            final boolean isScriptRunning, boolean isMultiFrame) {
         super(theParentFrame, true);
 
         UI = ViewUserInterface.getReference();
         fileInfo = _fileInfo;
         dicomFileInfo = dicomInfo;
+        this.isMultiFrame  = isMultiFrame;
 
         setTitle("Attributes to save");
         setResizable(true);
@@ -461,7 +464,39 @@ public class JDialogSaveDicom extends JDialogBase {
                 version[0] = new Byte((byte) 1);
                 version[1] = new Byte((byte) 0);
                 dicomFileInfo.getTagTable().setValue("0002,0001", version, 2);
-                dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary
+                int dataType = dicomFileInfo.getDataType();
+                if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)) {
+                	dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
+                	dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
+                	dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
+            	}
+            	else if (isMultiFrame && dataType == ModelStorageBase.BOOLEAN) {
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);	
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
+            	}
+            	else if (isMultiFrame && dataType == ModelStorageBase.BYTE) {
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
+            	}
+            	else if (isMultiFrame && ((dataType == ModelStorageBase.UBYTE) || (dataType == ModelStorageBase.SHORT) ||
+            			(dataType == ModelStorageBase.USHORT) || (dataType == ModelStorageBase.UINTEGER))) {
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
+            	}
+            	else if (isMultiFrame && ((dataType == ModelStorageBase.ARGB) || (dataType == ModelStorageBase.ARGB_USHORT))) {
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
+            	}
+            	else {
+            		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
+            		dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
+            		dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
+            	}
+
                 // Capture SOP
                 // UID
                 dicomFileInfo.getTagTable().setValue("0002,0003",
@@ -475,10 +510,6 @@ public class JDialogSaveDicom extends JDialogBase {
                 // made up by Matt
                 dicomFileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
-                dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary
-                // Capture UID
-                dicomFileInfo.getTagTable().setValue("0008,0018",
-                        FileInfoDicom.generateNewTagValue("0008,0018", "1.2.840.999999999999999999"), 26); // bogus
                 // SOP
                 // Instance UID
 
