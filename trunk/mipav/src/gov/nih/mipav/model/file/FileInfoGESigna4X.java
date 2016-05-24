@@ -803,18 +803,11 @@ public class FileInfoGESigna4X extends FileInfoBase {
 
 
         fileInfo.getTagTable().setValue("0008,0060", "MR", 2);
-        fileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.4", 25);
-        fileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.4", 25);
+        fileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.4" + null, 26);
+        fileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.4" + null, 26);
 
         // fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture UID
-        fileInfo.getTagTable().setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID all
-                                                                                        // secondary capture info is
-                                                                                        // installed by
-                                                                                        // FileDicom.writeImage(), under
-                                                                                        // the assumption that all saves
-                                                                                        // must have been modified (and
-                                                                                        // need that stuff)
-
+        fileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.4" + null, 26); 
 
         year = Integer.valueOf(studyDate.substring(7)).intValue();
 
