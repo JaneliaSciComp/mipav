@@ -15455,7 +15455,8 @@ public class FileIO {
                     infoAr[z][t] = ((FileInfoDicom) image.getFileInfo(zDim * t + z));
                 }
             }
-            insertEnhancedSequence(myFileInfo, infoAr);
+            
+            insertEnhancedSequence(myFileInfo, infoAr, image.getType());
             myFileInfo.setMultiFrame(true);
         } else {
             if (image.getFileInfo()[0] instanceof FileInfoDicom) {
@@ -15618,7 +15619,7 @@ public class FileIO {
         }
     }
 
-    private void insertEnhancedSequence(final FileInfoDicom myFileInfo, final FileInfoDicom[][] infoAr) {
+    private void insertEnhancedSequence(final FileInfoDicom myFileInfo, final FileInfoDicom[][] infoAr, int dataType) {
         final long time = System.currentTimeMillis();
         // create sequence ordered by current slice number
         final FileDicomSQ seqBase = new FileDicomSQ(); // this is the 5200,9230 sequence
@@ -15667,12 +15668,21 @@ public class FileIO {
         // insert constructed sequence into tag table
         myFileInfo.getTagTable().setValue("0028,0008", tDim * zDim);
         myFileInfo.getTagTable().setValue("5200,9230", seqBase);
-        if (myFileInfo.getTagTable().get("0002,0002") == null) {
+        if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)) {
+        	myFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30", 26);
+            myFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.30", 26);
+            myFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.30", 26);
+            myFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.30", 26);
+        }
+        else if (myFileInfo.getTagTable().get("0002,0002") == null) {
             final JDialogEnhancedDicomChoice choice = new JDialogEnhancedDicomChoice(ViewUserInterface.getReference().getMainFrame());
 
             if (choice.okayPressed()) {
                 final String str = choice.dicomType() + " ";
                 myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
+                myFileInfo.getTagTable().setValue("0002,0003", str, str.length());
+                myFileInfo.getTagTable().setValue("0008,0016", str, str.length());
+                myFileInfo.getTagTable().setValue("0008,0018", str, str.length());
             }
         } else {
             final FileDicomTag tag = myFileInfo.getTagTable().get("0002,0002");
@@ -15684,6 +15694,9 @@ public class FileIO {
                 if (choice.okayPressed()) {
                     str = choice.dicomType() + " ";
                     myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
+                    myFileInfo.getTagTable().setValue("0002,0003", str, str.length());
+                    myFileInfo.getTagTable().setValue("0008,0016", str, str.length());
+                    myFileInfo.getTagTable().setValue("0008,0018", str, str.length());
                 }
             }
         }
