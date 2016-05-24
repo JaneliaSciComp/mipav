@@ -4454,7 +4454,8 @@ public class FileIO {
                     if ( !image.isDicomImage()) {
                         fileDicom = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
 
-                        final JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), fileDicom, options.isScript());
+                        final JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), fileDicom, options.isScript(),
+                        		options.doEnhanced());
 
                         if (dialog.isCancelled()) {
                             break;
@@ -14943,7 +14944,8 @@ public class FileIO {
 
         } else { // if source image is a Non-DICOM image
             myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
-            final JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo, options.isScript());
+            final JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo, options.isScript(),
+            		options.doEnhanced());
 
             if (dialog.isCancelled()) {
                 return false;
