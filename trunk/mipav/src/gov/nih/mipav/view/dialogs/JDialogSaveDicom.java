@@ -229,6 +229,7 @@ public class JDialogSaveDicom extends JDialogBase {
     /** DOCUMENT ME! */
     private final ViewUserInterface UI;
     private boolean isMultiFrame;
+    private int dataType;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -243,13 +244,14 @@ public class JDialogSaveDicom extends JDialogBase {
      * @param isMultiFrame
      */
     public JDialogSaveDicom(final Frame theParentFrame, final FileInfoBase _fileInfo, final FileInfoDicom dicomInfo,
-            final boolean isScriptRunning, boolean isMultiFrame) {
+            final boolean isScriptRunning, boolean isMultiFrame, int dataType) {
         super(theParentFrame, true);
 
         UI = ViewUserInterface.getReference();
         fileInfo = _fileInfo;
         dicomFileInfo = dicomInfo;
         this.isMultiFrame  = isMultiFrame;
+        this.dataType = dataType;
 
         setTitle("Attributes to save");
         setResizable(true);
@@ -464,7 +466,6 @@ public class JDialogSaveDicom extends JDialogBase {
                 version[0] = new Byte((byte) 1);
                 version[1] = new Byte((byte) 0);
                 dicomFileInfo.getTagTable().setValue("0002,0001", version, 2);
-                int dataType = dicomFileInfo.getDataType();
                 if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)) {
                 	dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30", 26);
                 	dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.30", 26);
