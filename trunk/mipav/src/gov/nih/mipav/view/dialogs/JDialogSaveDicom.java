@@ -504,10 +504,10 @@ public class JDialogSaveDicom extends JDialogBase {
             	}
 
                 
-                dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian
+                dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2" + null, 18); // Little Endian
                 // transfer
                 // syntax
-                dicomFileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID
+                dicomFileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17" + null, 17); // bogus Implementation UID
                 // made up by Matt
                 dicomFileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
