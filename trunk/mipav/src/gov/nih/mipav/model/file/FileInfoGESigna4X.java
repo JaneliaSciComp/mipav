@@ -3,7 +3,6 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.dialogs.*;
 
 
@@ -760,11 +759,12 @@ public class FileInfoGESigna4X extends FileInfoBase {
         // set a bunch of variables from GE to DICOM ....
 
         // fileInfo.setValue("0002,0001", version, 2);
-        fileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.4" + null, 26);
-        fileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.4" + null, 26);
-        fileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.4" + null, 26);
-        fileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.4" + null, 26); 
-        fileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2" + null, 18); // Little Endian transfer syntax
+        Character nullChar = Character.MIN_VALUE;
+        fileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.4" + String.valueOf(nullChar), 26);
+        fileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.4" + String.valueOf(nullChar), 26);
+        fileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.4" + String.valueOf(nullChar), 26);
+        fileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.4" + String.valueOf(nullChar), 26); 
+        fileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2" + String.valueOf(nullChar), 18); // Little Endian transfer syntax
         fileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by
                                                                               // Matt
         fileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
