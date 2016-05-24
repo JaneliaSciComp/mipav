@@ -466,10 +466,10 @@ public class JDialogSaveDicom extends JDialogBase {
                 dicomFileInfo.getTagTable().setValue("0002,0001", version, 2);
                 int dataType = dicomFileInfo.getDataType();
                 if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)) {
-                	dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
-                	dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
-                	dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
-                	dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
+                	dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30", 26);
+                	dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.30", 26);
+                	dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.30", 26);
+                	dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.30", 26);
             	}
             	else if (isMultiFrame && dataType == ModelStorageBase.BOOLEAN) {
             		dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
@@ -507,7 +507,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2" + null, 18); // Little Endian
                 // transfer
                 // syntax
-                dicomFileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17" + null, 17); // bogus Implementation UID
+                dicomFileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID
                 // made up by Matt
                 dicomFileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
