@@ -965,10 +965,10 @@ public class FileInfoDicom extends FileInfoBase {
 
         // Secondary Capture SOP UID
     	if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)) {
-    		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
-    		getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
-            getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
-            getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
+    		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30", 26);
+    		getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.30", 26);
+            getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.30", 26);
+            getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.30", 26);
     	}
     	else if (isMultiFrame && dataType == ModelStorageBase.BOOLEAN) {
     		 getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
@@ -1003,7 +1003,7 @@ public class FileInfoDicom extends FileInfoBase {
     	}
 
         // bogus Implementation UID made up by Matt
-        getTagTable().setValue("0002,0012", "1.2.840.34379.17" + null, 17);
+        getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16);
         getTagTable().setValue("0002,0013", "MIPAV--NIH", 10);
     }
 
