@@ -86,12 +86,14 @@ public class DICOM_Constants {
 
     /** MR Storage UID = 1.2.840.10008.5.1.4.1.1.4 */
     public static final String UID_MRStorage = "1.2.840.10008.5.1.4.1.1.4";
+    
+    public static final Character nullChar = Character.MIN_VALUE;
 
     /** Enhanced MR Storage UID = 1.2.840.10008.5.1.4.1.1.4.1 */
-    public static final String UID_EnhancedMRStorage = "1.2.840.10008.5.1.4.1.1.4.1" + null;
+    public static final String UID_EnhancedMRStorage = "1.2.840.10008.5.1.4.1.1.4.1" + String.valueOf(nullChar);
 
     /** Enhanced CT Storage UID = 1.2.840.10008.5.1.4.1.1.4.1 */
-    public static final String UID_EnhancedCTStorage = "1.2.840.10008.5.1.4.1.1.2.1" + null;
+    public static final String UID_EnhancedCTStorage = "1.2.840.10008.5.1.4.1.1.2.1" + String.valueOf(nullChar);
 
     /** Enhanced XRAY Storage UID = 1.2.840.10008.5.1.4.1.1.12.1.1 */
     public static final String UID_EnhancedXAStorage = "1.2.840.10008.5.1.4.1.1.12.1.1";
