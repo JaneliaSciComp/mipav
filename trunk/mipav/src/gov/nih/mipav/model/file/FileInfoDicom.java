@@ -966,32 +966,38 @@ public class FileInfoDicom extends FileInfoBase {
         // Secondary Capture SOP UID
     	if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)) {
     		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
+    		getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
             getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
             getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.30" + null, 27);
     	}
     	else if (isMultiFrame && dataType == ModelStorageBase.BOOLEAN) {
     		 getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
+    		 getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
     	     getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);	
     	     getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.1" + null, 28);
     	}
     	else if (isMultiFrame && dataType == ModelStorageBase.BYTE) {
     		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
+    		getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
    	        getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
    	        getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.2" + null, 28);
     	}
     	else if (isMultiFrame && ((dataType == ModelStorageBase.UBYTE) || (dataType == ModelStorageBase.SHORT) ||
     			(dataType == ModelStorageBase.USHORT) || (dataType == ModelStorageBase.UINTEGER))) {
     		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
+    		getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
    	        getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
    	        getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.3" + null, 28);
     	}
     	else if (isMultiFrame && ((dataType == ModelStorageBase.ARGB) || (dataType == ModelStorageBase.ARGB_USHORT))) {
     		getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
+    		getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
    	        getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
    	        getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7.4" + null, 28);
     	}
     	else {
             getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
+            getTagTable().setValue("0002,0003", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
             getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
             getTagTable().setValue("0008,0018", "1.2.840.10008.5.1.4.1.1.7" + null, 26);
     	}
