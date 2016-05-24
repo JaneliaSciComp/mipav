@@ -4453,9 +4453,19 @@ public class FileIO {
                     FileInfoDicom fileDicom = null;
                     if ( !image.isDicomImage()) {
                         fileDicom = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
-
+                        int dataType = image.getType();
+                        if ( (image.getType() == ModelStorageBase.FLOAT) && 
+                        		(image.getFileInfo()[0].getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)  && 
+                        		options.getFloatToShort()) {
+                            
+                            if (image.getMin() >= 0) {
+                                dataType = ModelStorageBase.USHORT;
+                            } else {
+                                dataType = ModelStorageBase.SHORT;
+                            }
+                        }
                         final JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), fileDicom, options.isScript(),
-                        		options.doEnhanced(), image.getType());
+                        		options.doEnhanced(), dataType);
 
                         if (dialog.isCancelled()) {
                             break;
@@ -14944,8 +14954,19 @@ public class FileIO {
 
         } else { // if source image is a Non-DICOM image
             myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
+            int dataType = image.getType();
+            if ( (image.getType() == ModelStorageBase.FLOAT) && 
+            		(image.getFileInfo()[0].getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)  && 
+            		options.getFloatToShort()) {
+                
+                if (image.getMin() >= 0) {
+                    dataType = ModelStorageBase.USHORT;
+                } else {
+                    dataType = ModelStorageBase.SHORT;
+                }
+            }
             final JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo, options.isScript(),
-            		options.doEnhanced(), image.getType());
+            		options.doEnhanced(), dataType);
 
             if (dialog.isCancelled()) {
                 return false;
