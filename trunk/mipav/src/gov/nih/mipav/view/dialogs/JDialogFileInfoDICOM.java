@@ -7,12 +7,14 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.*;
 
 import javax.swing.*;
@@ -570,6 +572,28 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     if (c == '\0') {
                         dispString = dispString.substring(0, dispString.indexOf(c));
                     }
+                }
+                if ((vr.equals(VR.DS)) && (dispString.length() > 16) && (num == 1)) {
+                	double value = Double.valueOf(dispString);
+                	BigDecimal bd = new BigDecimal(value);
+                	int nonNumbers = 0;
+                	CharSequence period = ".";
+                	if (dispString.contains(period)) {
+                		nonNumbers++;
+                	}
+                	CharSequence Exp = "E";
+                	CharSequence exp = "e";
+                	if ((dispString.contains(Exp)) || (dispString.contains(exp))) {
+                		nonNumbers++;
+                	}
+                	for (int i = 0; i < dispString.length(); i++) {
+                		if ((dispString.substring(i,i+1).equals("+")) || (dispString.substring(i,i+1).equals("-"))) {
+                			nonNumbers++;
+                		}
+                	}
+                	MathContext mc = new MathContext(16 - nonNumbers, RoundingMode.HALF_UP);
+                    BigDecimal rounded = bd.round(mc);
+                    dispString = rounded.toString();
                 }
                 rowData[3] = dispString;
             }
