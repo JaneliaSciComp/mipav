@@ -15678,11 +15678,19 @@ public class FileIO {
             final JDialogEnhancedDicomChoice choice = new JDialogEnhancedDicomChoice(ViewUserInterface.getReference().getMainFrame());
 
             if (choice.okayPressed()) {
-                final String str = choice.dicomType() + " ";
-                myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
-                myFileInfo.getTagTable().setValue("0002,0003", str, str.length());
-                myFileInfo.getTagTable().setValue("0008,0016", str, str.length());
-                myFileInfo.getTagTable().setValue("0008,0018", str, str.length());
+            	// if choice.dicomType() == null because the image is not MRI, CT, or XA then keep all these UIDs equal to
+            	// 1 of the original 4 multiframe choices
+                // 1.2.840.10008.5.1.4.1.1.7.1 Multiframe Single Bit Secondary Capture Image Storage
+            	// 1.2.840.10008.5.1.4.1.1.7.2 Multiframe Grayscale Byte Secondary Capture Image Storage
+            	// 1.2.840.10008.5.1.4.1.1.7.3 Multiframe Grayscale Word Secondary Capture Image Storage
+            	// 1.2.840.10008.5.1.4.1.1.7.2 Multiframe True Color Secondary Capture Image Storage
+            	if (choice.dicomType() != null) {
+	                final String str = choice.dicomType() + " ";
+	                myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
+	                myFileInfo.getTagTable().setValue("0002,0003", str, str.length());
+	                myFileInfo.getTagTable().setValue("0008,0016", str, str.length());
+	                myFileInfo.getTagTable().setValue("0008,0018", str, str.length());
+            	}
             }
         } else {
             final FileDicomTag tag = myFileInfo.getTagTable().get("0002,0002");
@@ -15692,11 +15700,13 @@ public class FileIO {
                 final JDialogEnhancedDicomChoice choice = new JDialogEnhancedDicomChoice(ViewUserInterface.getReference().getMainFrame());
 
                 if (choice.okayPressed()) {
-                    str = choice.dicomType() + " ";
-                    myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
-                    myFileInfo.getTagTable().setValue("0002,0003", str, str.length());
-                    myFileInfo.getTagTable().setValue("0008,0016", str, str.length());
-                    myFileInfo.getTagTable().setValue("0008,0018", str, str.length());
+                	if (choice.dicomType() != null) {
+	                    str = choice.dicomType() + " ";
+	                    myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
+	                    myFileInfo.getTagTable().setValue("0002,0003", str, str.length());
+	                    myFileInfo.getTagTable().setValue("0008,0016", str, str.length());
+	                    myFileInfo.getTagTable().setValue("0008,0018", str, str.length());
+                	}
                 }
             }
         }
