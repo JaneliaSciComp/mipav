@@ -14744,6 +14744,41 @@ public class FileIO {
             }
 
         }// end else non-dicom images
+        
+        // From 7.1 DICOM File Meta Information
+        // Except for the 128 byte preamble and the 4 byte prefix, the File Meta Information shall be encoded
+        // using the Explicit VR Little Endian Transfer Syntax (UID = 1.2.840.10008.1.2.1) as defined in DICOM
+        // PS 3.5.  Values of each File Meta Element shall be padded when necessary to achieve an even length,
+        // as specified in PS3.5 by their corresponding value represenation.
+        int metaInformationGroupLength = 0;
+        if (fileDicom.getTagTable().getValue("0002,0001") != null) {
+            metaInformationGroupLength += 14;	
+        }
+        if (fileDicom.getTagTable().getValue("0002,0002") != null) {
+        	metaInformationGroupLength += (8 + fileDicom.getTagTable().getValue("0002,0002").toString().length());
+        }
+        if (fileDicom.getTagTable().getValue("0002,0003") != null) {
+        	metaInformationGroupLength += (8 + fileDicom.getTagTable().getValue("0002,0003").toString().length());
+        }
+        if (fileDicom.getTagTable().getValue("0002,0010") != null) {
+        	metaInformationGroupLength += (8 + fileDicom.getTagTable().getValue("0002,0010").toString().length());
+        }
+        if (fileDicom.getTagTable().getValue("0002,0012") != null) {
+        	metaInformationGroupLength += (8 + fileDicom.getTagTable().getValue("0002,0012").toString().length());
+        }
+        if (fileDicom.getTagTable().getValue("0002,0013") != null) {
+        	metaInformationGroupLength += (8 + fileDicom.getTagTable().getValue("0002,0013").toString().length());
+        }
+        if (fileDicom.getTagTable().getValue("0002,0016") != null) {
+        	metaInformationGroupLength += (8 + fileDicom.getTagTable().getValue("0002,0016").toString().length());
+        }
+        if (fileDicom.getTagTable().getValue("0002,0100") != null) {
+        	metaInformationGroupLength += (8 + fileDicom.getTagTable().getValue("0002,0100").toString().length());
+        }
+        if (fileDicom.getTagTable().getValue("0002,0102") != null) {
+        	metaInformationGroupLength += (12 + fileDicom.getTagTable().getValue("0002,0102").toString().length());
+        }
+        fileDicom.getTagTable().setValue("0002,0000", new Integer(metaInformationGroupLength), 4);
 
         if (options.isSaveAs()) {
             index = options.getFileName().indexOf(".");
@@ -15494,8 +15529,46 @@ public class FileIO {
 
                     myFileInfo.getTagTable().setValue("0008,0018", sopUID + "." + i);
                     if (myFileInfo.getTagTable().getValue("0002,0003") != null) {
-                        myFileInfo.getTagTable().setValue("0002,0003", sopUID + "." + i);
+                    	String sopUIDExt = sopUID + "." + i;
+                    	if (sopUIDExt.length() % 2 == 1) {
+                    		sopUIDExt = sopUIDExt + String.valueOf(Character.MIN_VALUE);
+                    	}
+                        myFileInfo.getTagTable().setValue("0002,0003", sopUIDExt);
                     }
+                    // From 7.1 DICOM File Meta Information
+                    // Except for the 128 byte preamble and the 4 byte prefix, the File Meta Information shall be encoded
+                    // using the Explicit VR Little Endian Transfer Syntax (UID = 1.2.840.10008.1.2.1) as defined in DICOM
+                    // PS 3.5.  Values of each File Meta Element shall be padded when necessary to achieve an even length,
+                    // as specified in PS3.5 by their corresponding value represenation.
+                    int metaInformationGroupLength = 0;
+                    if (myFileInfo.getTagTable().getValue("0002,0001") != null) {
+                        metaInformationGroupLength += 14;	
+                    }
+                    if (myFileInfo.getTagTable().getValue("0002,0002") != null) {
+                    	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0002").toString().length());
+                    }
+                    if (myFileInfo.getTagTable().getValue("0002,0003") != null) {
+                    	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0003").toString().length());
+                    }
+                    if (myFileInfo.getTagTable().getValue("0002,0010") != null) {
+                    	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0010").toString().length());
+                    }
+                    if (myFileInfo.getTagTable().getValue("0002,0012") != null) {
+                    	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0012").toString().length());
+                    }
+                    if (myFileInfo.getTagTable().getValue("0002,0013") != null) {
+                    	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0013").toString().length());
+                    }
+                    if (myFileInfo.getTagTable().getValue("0002,0016") != null) {
+                    	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0016").toString().length());
+                    }
+                    if (myFileInfo.getTagTable().getValue("0002,0100") != null) {
+                    	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0100").toString().length());
+                    }
+                    if (myFileInfo.getTagTable().getValue("0002,0102") != null) {
+                    	metaInformationGroupLength += (12 + myFileInfo.getTagTable().getValue("0002,0102").toString().length());
+                    }
+                    myFileInfo.getTagTable().setValue("0002,0000", new Integer(metaInformationGroupLength), 4);
 
                     if (options.isSaveAs()) {
 
@@ -15521,6 +15594,40 @@ public class FileIO {
                 }
 
             } else { // its a multi frame image
+            	// From 7.1 DICOM File Meta Information
+                // Except for the 128 byte preamble and the 4 byte prefix, the File Meta Information shall be encoded
+                // using the Explicit VR Little Endian Transfer Syntax (UID = 1.2.840.10008.1.2.1) as defined in DICOM
+                // PS 3.5.  Values of each File Meta Element shall be padded when necessary to achieve an even length,
+                // as specified in PS3.5 by their corresponding value represenation.
+                int metaInformationGroupLength = 0;
+                if (myFileInfo.getTagTable().getValue("0002,0001") != null) {
+                    metaInformationGroupLength += 14;	
+                }
+                if (myFileInfo.getTagTable().getValue("0002,0002") != null) {
+                	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0002").toString().length());
+                }
+                if (myFileInfo.getTagTable().getValue("0002,0003") != null) {
+                	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0003").toString().length());
+                }
+                if (myFileInfo.getTagTable().getValue("0002,0010") != null) {
+                	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0010").toString().length());
+                }
+                if (myFileInfo.getTagTable().getValue("0002,0012") != null) {
+                	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0012").toString().length());
+                }
+                if (myFileInfo.getTagTable().getValue("0002,0013") != null) {
+                	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0013").toString().length());
+                }
+                if (myFileInfo.getTagTable().getValue("0002,0016") != null) {
+                	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0016").toString().length());
+                }
+                if (myFileInfo.getTagTable().getValue("0002,0100") != null) {
+                	metaInformationGroupLength += (8 + myFileInfo.getTagTable().getValue("0002,0100").toString().length());
+                }
+                if (myFileInfo.getTagTable().getValue("0002,0102") != null) {
+                	metaInformationGroupLength += (12 + myFileInfo.getTagTable().getValue("0002,0102").toString().length());
+                }
+                myFileInfo.getTagTable().setValue("0002,0000", new Integer(metaInformationGroupLength), 4);
 
                 // progressBar.updateValue( Math.round((float)i/(endSlice) * 100));
                 dicomFile = new FileDicom(fileName, fileDir); // was (UI, fileDir, fileDir). think this fixes...
