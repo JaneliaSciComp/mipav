@@ -13,7 +13,7 @@ import javax.swing.*;
 
 
 /**
- * Confirmation Dialog giving user the choice to write an enhanced dicom MR, CT, or XA file.
+ * Confirmation Dialog giving user the choice to write an enhanced dicom MR, CT, XA, or Other file.
  */
 public class JDialogEnhancedDicomChoice extends JDialogBase {
 
@@ -34,6 +34,8 @@ public class JDialogEnhancedDicomChoice extends JDialogBase {
 
     /** Radio button to indicate that an enhanced XA file should be written out. */
     private JRadioButton enhancedXA;
+    
+    private JRadioButton enhancedOther;
 
     /** Whether the window was closed through the user clicking the OK button (and not just killing the dialog). */
     private boolean okayPressed = false;
@@ -86,8 +88,11 @@ public class JDialogEnhancedDicomChoice extends JDialogBase {
         else if (enhancedCT.isSelected()){
             return new String(DICOM_Constants.UID_EnhancedCTStorage);
         }
-        else {
+        else if (enhancedXA.isSelected()){
             return new String(DICOM_Constants.UID_EnhancedXAStorage);
+        }
+        else {
+        	return null;
         }
     }
 
@@ -115,12 +120,15 @@ public class JDialogEnhancedDicomChoice extends JDialogBase {
         enhancedCT.addActionListener(this);
         enhancedXA = WidgetFactory.buildRadioButton("Enhanced XA", false, writeGroup);
         enhancedXA.addActionListener(this);
+        enhancedOther = WidgetFactory.buildRadioButton("Enhanced Other", false, writeGroup);
+        enhancedOther.addActionListener(this);
 
         manager.getConstraints().insets = new Insets(0, 50, 0, 10);
         manager.add(enhancedMR);
         
         manager.addOnNextLine(enhancedCT);
         manager.addOnNextLine(enhancedXA);
+        manager.addOnNextLine(enhancedOther);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
