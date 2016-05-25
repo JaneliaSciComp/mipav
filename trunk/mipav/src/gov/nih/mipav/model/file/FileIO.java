@@ -15514,7 +15514,8 @@ public class FileIO {
         try {
             String name = "";
             if ( !myFileInfo.isMultiFrame() && !options.doEnhanced()) {
-                final String sopUID = ((String) ((FileInfoDicom) image.getFileInfo(0)).getTagTable().get("0008,0018").getValue(true)).toString();
+                String sopUID = ((String) ((FileInfoDicom) image.getFileInfo(0)).getTagTable().get("0008,0018").getValue(true)).toString();
+                sopUID = sopUID.trim();
                 for (i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
                     progressBar.updateValue(Math.round((float) i / (options.getEndSlice()) * 100), false);
 
