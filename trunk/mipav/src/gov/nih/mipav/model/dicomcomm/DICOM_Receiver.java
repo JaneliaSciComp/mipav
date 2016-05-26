@@ -1015,7 +1015,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         preambleBuffer[idx++] = (byte) implementationClassUIDLength;
         preambleBuffer[idx++] = 0x00;
 
-        // new String("2.25.06442176872376910536726107648421872844884262558620137527074");
+        // new String("2.25.219181047665313190039273556003903477538");
         byteArray = implementationClassUID.getBytes();
 
         for (int i = 0, j = idx; i < implementationClassUID.length(); i++, j++) {
