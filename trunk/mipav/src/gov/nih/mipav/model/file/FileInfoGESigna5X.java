@@ -1445,8 +1445,8 @@ public class FileInfoGESigna5X extends FileInfoBase {
         // fileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
         Character nullChar = Character.MIN_VALUE;
         fileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2" +  String.valueOf(nullChar), 18); // Little Endian transfer syntax
-        fileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by
-                                                                              // Matt
+        // Bogus implementation UID
+        fileInfo.getTagTable().setValue("0002,0012", "2.25.06442176872376910536726107648421872844884262558620137527074", 64);
         fileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
         fileInfo.setEndianess(FileBase.LITTLE_ENDIAN); // ??
