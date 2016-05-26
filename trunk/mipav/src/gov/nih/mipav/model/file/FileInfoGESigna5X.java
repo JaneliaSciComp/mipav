@@ -1446,7 +1446,7 @@ public class FileInfoGESigna5X extends FileInfoBase {
         Character nullChar = Character.MIN_VALUE;
         fileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2" +  String.valueOf(nullChar), 18); // Little Endian transfer syntax
         // Bogus implementation UID
-        fileInfo.getTagTable().setValue("0002,0012", "2.25.06442176872376910536726107648421872844884262558620137527074", 64);
+        fileInfo.getTagTable().setValue("0002,0012", "2.25.219181047665313190039273556003903477538", 44);
         fileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
         fileInfo.setEndianess(FileBase.LITTLE_ENDIAN); // ??
@@ -1626,9 +1626,15 @@ public class FileInfoGESigna5X extends FileInfoBase {
 
         RandomNumberGen randomNum = new RandomNumberGen();
         randomNum.genUniformRandomNum(1, 100000);
-        s = "2.25.06442176872.139875.234.455." + randomNum.genUniformRandomNum(1, 100000);
+        s = "2.25.219181047665313190039273556003903477538." + randomNum.genUniformRandomNum(1, 100000);
+        if ((s.length() % 2) == 1) {
+        	s = s + String.valueOf(Character.MIN_VALUE);
+        }
         fileInfo.getTagTable().setValue("0020,000D", s, s.length()); // study UID
-        s = "2.25.06442176872.139875.234.456." + randomNum.genUniformRandomNum(1, 100000);
+        s = "2.25.219181047665313190039273556003903477538." + randomNum.genUniformRandomNum(1, 100000);
+        if ((s.length() % 2) == 1) {
+        	s = s + String.valueOf(Character.MIN_VALUE);
+        }
         fileInfo.getTagTable().setValue("0020,000E", s, s.length()); // series UID
 
 
