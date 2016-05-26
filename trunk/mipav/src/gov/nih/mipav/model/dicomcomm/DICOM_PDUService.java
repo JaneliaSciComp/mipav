@@ -429,7 +429,7 @@ public class DICOM_PDUService extends DICOM_Comms {
      * @return the UID
      */
     public String getImplementationClassUID() {
-        return ("2.25.06442176872376910536726107648421872844884262558620137527074"); // Bogus number made up for Implementation UID
+        return ("2.25.219181047665313190039273556003903477538"); // Bogus number made up for Implementation UID
     }
 
     /**
