@@ -965,9 +965,9 @@ public class FileInfoGESigna4X extends FileInfoBase {
 
         RandomNumberGen randomNum = new RandomNumberGen();
         randomNum.genUniformRandomNum(1, 100000);
-        s = "1.2.840.34379.17.139875.234.455." + randomNum.genUniformRandomNum(1, 100000);
+        s = "2.25.06442176872.139875.234.455." + randomNum.genUniformRandomNum(1, 100000);
         fileInfo.getTagTable().setValue("0020,000D", s, s.length()); // study UID
-        s = "1.2.840.34379.17.139875.234.456." + randomNum.genUniformRandomNum(1, 100000);
+        s = "2.25.06442176872.139875.234.456." + randomNum.genUniformRandomNum(1, 100000);
         fileInfo.getTagTable().setValue("0020,000E", s, s.length()); // series UID
 
 
