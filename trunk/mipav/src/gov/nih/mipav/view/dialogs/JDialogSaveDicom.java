@@ -510,7 +510,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 // syntax
                 
                 // bogus implementation UID
-                dicomFileInfo.getTagTable().setValue("0002,0012", "2.25.06442176872376910536726107648421872844884262558620137527074", 64);
+                dicomFileInfo.getTagTable().setValue("0002,0012", "2.25.219181047665313190039273556003903477538", 44);
                 dicomFileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
                 // SOP
