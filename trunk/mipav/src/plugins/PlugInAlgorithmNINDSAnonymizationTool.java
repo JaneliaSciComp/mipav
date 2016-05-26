@@ -150,7 +150,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     private String mediaStorageSOPUID = "";
 
     /** Bogus implementation ID */
-    private final String bogusImplementationID = "1.2.840.34379.17";
+    private final String bogusImplementationID = "2.25.06442176872";
 
     /** Fixed part of study/series instance UID */
     private final String initialStudySeriesUID = "1.2.840.9999.9";
