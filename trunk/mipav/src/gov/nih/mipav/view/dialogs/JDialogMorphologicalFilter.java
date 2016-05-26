@@ -451,7 +451,7 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase
                      * ", 26 ); // Secondary Capture SOP UID      ( (FileInfoDicom) ( resultImage.getFileInfo( i ) )
                      * ).setValue( "0008,0016",              "1.2.840.10008.5.1.4.1.1.7 ", 26 );      ( (FileInfoDicom)
                      * ( resultImage.getFileInfo( i ) ) ).setValue( "0002,0012",
-                     * "2.25.06442176872376910536726107648421872844884262558620137527074",64 );
+                     * "2.25.219181047665313190039273556003903477538",44 );
                      * // bogus Implementation UID made up by Matt      ( (FileInfoDicom) ( resultImage.getFileInfo( i )
                      * ) ).setValue( "0002,0013", "MIPAV--NIH", 10 ); //  } }*/
                     // Make algorithm
