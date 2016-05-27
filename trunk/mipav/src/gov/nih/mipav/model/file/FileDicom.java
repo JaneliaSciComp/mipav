@@ -1463,6 +1463,8 @@ public class FileDicom extends FileDicomBase {
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 } else {
+                	System.out.println("fileInfo.getOffset() " + fileInfo.getOffset() + " imageNo = " + imageNo);
+                	System.out.println("buffer.length = " + buffer.length + " fileInfo.bytesPerPixel = " + fileInfo.bytesPerPixel);
                     rawFile.readImage(buffer, (long) fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType); // *****
                     // Read
                     // image
@@ -3476,7 +3478,7 @@ public class FileDicom extends FileDicomBase {
             }
         }
         // explicit VR with 32-bit length
-        else if ( ( (b1 == 79) && (b2 == 66)) || ((b1 == 79) && (b2 == 70)) || ( (b1 == 79) && (b2 == 87)) || ( (b1 == 83) && (b2 == 81))
+        else if ( ( (b1 == 79) && (b2 == 66)) /*|| ((b1 == 79) && (b2 == 70))*/ || ( (b1 == 79) && (b2 == 87)) || ( (b1 == 83) && (b2 == 81))
         		|| ( (b1 == 85) && (b2 == 78)) || ( (b1 == 85) && (b2 == 84))) {
 
             // VR = 'OB', or 'OF' or 'OW' or 'SQ' or 'UN' or 'UT'
