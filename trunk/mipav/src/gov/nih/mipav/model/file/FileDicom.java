@@ -650,6 +650,15 @@ public class FileDicom extends FileDicomBase {
         final int maxExceptionCount = 10;
 
         if (loadTagBuffer == true) {
+        	if (haveFloatPixelData) {
+                b3 = Integer.parseInt("08", 16);
+            }
+            else if (haveDoublePixelData) {
+                b3 = Integer.parseInt("09", 16);
+            }
+            else {
+                b3 = Integer.parseInt("10", 16);
+            }
             loadTagBuffer(b3);
         }
 
@@ -720,7 +729,6 @@ public class FileDicom extends FileDicomBase {
             final int bPtrOld = getFilePointer();
 
             try {
-
                 flag = processNextTag(tagTable, key, endianess, false);
                 if (flag == false && imageLoadReady == false) {
                     Preferences.debug("Error parsing tag: " + key + "\n", Preferences.DEBUG_FILEIO);
@@ -1463,8 +1471,6 @@ public class FileDicom extends FileDicomBase {
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 } else {
-                	System.out.println("fileInfo.getOffset() " + fileInfo.getOffset() + " imageNo = " + imageNo);
-                	System.out.println("buffer.length = " + buffer.length + " fileInfo.bytesPerPixel = " + fileInfo.bytesPerPixel);
                     rawFile.readImage(buffer, (long) fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType); // *****
                     // Read
                     // image
@@ -4150,7 +4156,7 @@ public class FileDicom extends FileDicomBase {
 
             try {
 
-                flag = processNextTag(tagTable, key, endianess, false);
+            	flag = processNextTag(tagTable, key, endianess, false);
                 if (flag == false && imageLoadReady == false) {
                     Preferences.debug("Error parsing tag: " + key + "\n", Preferences.DEBUG_FILEIO);
                     break;
