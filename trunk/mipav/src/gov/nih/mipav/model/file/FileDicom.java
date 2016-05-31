@@ -1251,9 +1251,9 @@ public class FileDicom extends FileDicomBase {
         final FileDicomTag frameTag = tagTable.get("0020,9111");
         int currNum = 0;
         if (frameTag != null) {
-            // OK...so we should be relying on 0020,9056 (Stack ID)
-            // to tell us the number of volumes in the dataet
-            // but we find that it is not being implemented in the dataset we have
+        	// In DICOM (for MRI images) by David Atkinson an image with zDim = 5 and
+            // tDim = 2 always had the "0020,9056" stack ID = 1.
+        	// Temporal Position Index ("0020,9128") is one based for different temporal positions
             // Look at 0020.9057 (In-Stack Pos ID), to get numSlices since
             // these should all be unique for 1 volume. If we find that there
             // are duplicates, then that means we are dealing with a 4D datset
