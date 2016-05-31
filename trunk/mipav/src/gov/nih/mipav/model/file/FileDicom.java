@@ -3484,10 +3484,10 @@ public class FileDicom extends FileDicomBase {
             }
         }
         // explicit VR with 32-bit length
-        else if ( ( (b1 == 79) && (b2 == 66)) || ((b1 == 79) && (b2 == 70)) || ( (b1 == 79) && (b2 == 87)) || ( (b1 == 83) && (b2 == 81))
-        		|| ( (b1 == 85) && (b2 == 78)) || ( (b1 == 85) && (b2 == 84))) {
+        else if ( ( (b1 == 79) && (b2 == 66)) || ((b1 == 79) && (b2 == 68)) || ((b1 == 79) && (b2 == 70)) || ( (b1 == 79) && (b2 == 87))
+        		|| ( (b1 == 83) && (b2 == 81)) || ( (b1 == 85) && (b2 == 78)) || ( (b1 == 85) && (b2 == 84))) {
 
-            // VR = 'OB', or 'OF' or 'OW' or 'SQ' or 'UN' or 'UT'
+            // VR = 'OB', or or 'OD' or 'OF' or 'OW' or 'SQ' or 'UN' or 'UT'
             vrBytes[0] = b1;
             vrBytes[1] = b2;
             fileInfo.isCurrentTagSQ = new String(vrBytes).equals("SQ");
