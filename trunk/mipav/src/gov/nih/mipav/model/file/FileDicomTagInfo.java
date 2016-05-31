@@ -67,10 +67,10 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
         LO("LO", StringType.STRING), // Long String
         DS("DS", StringType.STRING), // Decimal String
         SH("SH", StringType.STRING), // Short String
-        OD("OD", StringType.DOUBLE_STRING), // Other Double String
-        OF("OF", StringType.FLOAT_STRING), // Other Float String
         OB("OB", StringType.BYTE_STRING),
         OW("OW", StringType.WORD_STRING), 
+        OF("OF", StringType.FLOAT_STRING), // Other Float String
+        OD("OD", StringType.DOUBLE_STRING), // Other Double String
         SQ("SQ", StringType.SEQUENCE), 
         AT("AT", StringType.TAG), //Dicom tag pointer
         UN("UN", StringType.UNKNOWN), 
