@@ -15752,8 +15752,11 @@ public class FileIO {
                     table.setValue("0020,9111", seq, -1);
                 }
 
-                item.setValue("0020,9056", t + 1); // is one-based
+                // In DICOM (for MRI images) by David Atkinson an image with zDim = 5 and
+                // tDim = 2 always had the "0020,9056" stack ID = 1.
+                item.setValue("0020,9056", 1); // is one-based
                 item.setValue("0020,9057", z + 1); // is one-based
+                item.setValue("0020,9128", t + 1); // Temporal position index is one-based
 
                 item.setWriteAsUnknownLength(false); // enhanced sequence items are always written using known length
 
