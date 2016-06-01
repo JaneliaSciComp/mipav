@@ -15731,7 +15731,7 @@ public class FileIO {
         final long time = System.currentTimeMillis();
         // create sequence ordered by current slice number
         final FileDicomSQ seqBase = new FileDicomSQ(); // this is the 5200,9230 sequence
-        seqBase.setWriteAsUnknownLength(true); // sequences containing enhanced dicom data always given known length
+        seqBase.setWriteAsUnknownLength(true); // sequences containing enhanced dicom data always given unknown length
 
         final int tDim = infoAr[0].length;
         final int zDim = infoAr.length;
