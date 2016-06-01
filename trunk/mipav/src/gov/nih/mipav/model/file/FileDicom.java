@@ -150,7 +150,7 @@ public class FileDicom extends FileDicomBase {
      */
     private int metaGroupLength = 0;
 
-    /** Name of the sequance tag. */
+    /** Name of the sequence tag. */
     private String nameSQ = "";
 
     /**
