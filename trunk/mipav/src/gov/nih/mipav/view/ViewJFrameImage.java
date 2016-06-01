@@ -26,6 +26,7 @@ import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
 import gov.nih.mipav.view.renderer.WildMagic.TBI.*;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
+import gov.nih.mipav.view.renderer.WildMagic.Knees.*;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -2798,7 +2799,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	generateAtlasImage();
         } else if ( command.equals("generateEndingSlices")) {
         	generateEndingSlices();
-        }        
+        } else if ( command.equals("PatellaNIH")) {       
+        	patellaNIH();
+        } else if ( command.equals("PatellaNetherland")) {       
+        	patellaNetherland();
+        } else if ( command.equals("FemurNIH")) {       
+            femurNIH();
+        } else if ( command.equals("FemurNetherland")) {       
+        	femurNetherland();
+        } 
     }
 
     /**
@@ -5886,6 +5895,26 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     private void aamGroups() {
     	final JDialogProstateImageCategorize prostateGroups = new JDialogProstateImageCategorize(this);
         prostateGroups.validate();    
+    }
+    
+    private void patellaNIH() {
+    	JDialogPatellaTraceSectionsNIH patella = new JDialogPatellaTraceSectionsNIH(this, getActiveImage());
+    	patella.validate();
+    }
+    
+    private void patellaNetherland() {
+    	JDialogPatellaTraceSectionsNetherland patella = new JDialogPatellaTraceSectionsNetherland(this, getActiveImage());
+    	patella.validate();
+    }
+    
+    private void femurNIH() {
+    	JDialogFemurTraceSectionsNIH femur = new JDialogFemurTraceSectionsNIH(this, getActiveImage());
+    	femur.validate();
+    }
+    
+    private void femurNetherland() {
+    	JDialogFemurTraceSectionsNetherland femur = new JDialogFemurTraceSectionsNetherland(this, getActiveImage());
+    	femur.validate();
     }
     
     private void aamGroupRename() {

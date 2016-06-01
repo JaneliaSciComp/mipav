@@ -465,7 +465,20 @@ public class ViewMenuBar {
 																menuBuilder.buildMenuItem("aamClassification",
 																		"aamClassification", 0, null, false),
 																menuBuilder.buildMenuItem("aamMLClassification",
-																		"aamMLClassification", 0, null, false) }), }),
+																		"aamMLClassification", 0, null, false) }), 
+									  menuBuilder.makeMenu("Knees", true,
+		   		                                new JMenuItem[] {
+		   		                                        menuBuilder.buildMenuItem("Patella Segmentation (NIH)", "PatellaNIH", 0,
+		   		                                                null, false),
+		   		                                        menuBuilder.buildMenuItem("Patella Segmentation (Netherland)", "PatellaNetherland", 0,
+				                                                        null, false),
+		   		                                        menuBuilder.buildMenuItem("Femur Segmentation (NIH)", "FemurNIH", 0,
+		   		                                                        null, false),
+		   		                                        menuBuilder.buildMenuItem("Femur Segmentation (Netherland)", "FemurNetherland", 0,
+		   		                                                                null, false) }),		
+												
+										}),
+										
 
 				}),
 

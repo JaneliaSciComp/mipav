@@ -1060,6 +1060,34 @@ public class MipavCoordinateSystems {
 	}
 	
 	/**
+	 * Convert the Cartesian coordinate into the Polar coordinate, point based. 
+	 * 
+	 * @param in     image pixel coordinate, in.x = x, in.y = y.
+	 * @param out    polar coordinate  out.x = r, out.y = theta. 
+	 * @param center  polar coordinate center
+	 */
+	public static final void CartesianToPolar2D(Vector2f in, Vector2f out, Vector3f center) {
+
+		float centerX = center.X;
+		float centerY = center.Y;
+
+		float xx = in.X;
+		float yy = in.Y;
+		
+		// Convert the pixel coordinate to Cartesian coordinate. 
+		float x = xx - centerX;
+		float y = centerY - yy;
+		
+		// calculate the Polar coordinate  
+		float r = getRadius(x, y);
+		float angle = getAngleInDegree(x, y);
+		
+		out.X = r;
+		out.Y = angle;
+	}
+	
+	
+	/**
 	 * Convert the Cartesian coordinate into the Polar coordinate.
 	 * 
 	 * @param image       source model image.
