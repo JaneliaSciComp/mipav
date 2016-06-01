@@ -80,6 +80,14 @@ public class FileDicom extends FileDicomBase {
 
     /** The tag marking the end of an undefined length dicom sequence. */
     public static final String SEQ_ITEM_UNDEF_END = "FFFE,E0DD";
+    
+    public static final String PIXEL_MEASURES_SEQUENCE = "0028,9110";
+    
+    public static final String SLICE_THICKNESS = "0018,0050";
+    
+    public static final String PIXEL_SPACING = "0028,0030";
+    
+    public static final String SPACING_BETWEEN_SLICES = "0018,0088";
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -4375,6 +4383,19 @@ public class FileDicom extends FileDicomBase {
      */
     public void writeHeader(final RandomAccessFile outputFile, final FileInfoDicom fileInfo, final boolean saveAsEncapJP2) throws IOException {
         FileDicomTag element;
+        int pixelMeasuresSequenceIndex = -1;
+        int pixelSpacingIndex = -1;
+        int sliceThicknessIndex = -1;
+        int spacingBetweenSlicesIndex = -1;
+        int insertPixelMeasuresSequenceBeforeIndex = -1;
+        int groupNumber;
+        int elementNumber;
+        FileDicomTagTable table;
+        FileDicomSQ seq;
+        FileDicomSQItem item;
+        FileDicomTag seqTag = null;
+        Vector<Integer> excludeVector = new Vector<Integer>();
+        boolean doWrite;
         final FileDicomTag[] tagArray = FileDicomTagTable.sortTagsList(fileInfo.getTagTable().getTagList());
         if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
         	haveFloatPixelData = true;
@@ -4397,17 +4418,84 @@ public class FileDicom extends FileDicomBase {
             outputFile.write(skip);
             outputFile.writeBytes("DICM");
         }
+        
+        for (int i = 0; i < tagArray.length; i++) {
+        	element = tagArray[i];
+        	if (element.getKey().toString().matches(FileDicom.PIXEL_MEASURES_SEQUENCE)) {
+        	    pixelMeasuresSequenceIndex = i;	
+        	}
+        	else if (element.getKey().toString().matches(FileDicom.PIXEL_SPACING)) {
+        	    pixelSpacingIndex = i;	
+        	}
+        	else if (element.getKey().toString().matches(FileDicom.SLICE_THICKNESS)) {
+        	    sliceThicknessIndex = i;    	
+        	}
+        	else if (element.getKey().toString().matches(FileDicom.SPACING_BETWEEN_SLICES)) {
+        		spacingBetweenSlicesIndex = i;
+        	}
+        }
+        
+        if ((pixelMeasuresSequenceIndex == -1) && ((pixelSpacingIndex >=  0) ||
+        		(sliceThicknessIndex >= 0) || (spacingBetweenSlicesIndex >= 0))) {
+            for (int i = 0; i < tagArray.length && (insertPixelMeasuresSequenceBeforeIndex == -1); i++) {
+                groupNumber = tagArray[i].getKey().getGroupNumber();
+                elementNumber = tagArray[i].getKey().getElementNumber();
+                if ((groupNumber > 0x0028) || ((groupNumber == 0x0028) && (elementNumber > 0x9110))) {
+                	insertPixelMeasuresSequenceBeforeIndex = i;
+                }
+            }
+            if (insertPixelMeasuresSequenceBeforeIndex == -1) {
+            	insertPixelMeasuresSequenceBeforeIndex = tagArray.length;
+            }
+            table = fileInfo.getTagTable();
+            seq = new FileDicomSQ(); // this is the 0028,9110 Pixel Measures Sequence
+            item = new FileDicomSQItem(null, fileInfo.getVr_type());
+            seq.addItem(item);
+            seq.setWriteAsUnknownLength(true);
+            table.setValue("0028,9110", seq, -1);
+            if (pixelSpacingIndex >= 0) {
+            	String xyPixelSpacingString = (String) table.getValue("0028,0030");
+            	item.setValue("0028,0030", xyPixelSpacingString);
+            	excludeVector.add(pixelSpacingIndex);
+            }
+            if (sliceThicknessIndex >= 0) {
+            	String sliceThicknessString = (String) table.getValue("0018,0050");
+            	item.setValue("0018,0050", sliceThicknessString);
+            	excludeVector.add(sliceThicknessIndex);
+            }
+            if (spacingBetweenSlicesIndex >= 0) {
+            	String spacingBetweenSlicesString = (String)table.getValue("0018,0088");
+            	item.setValue("0018,0088", spacingBetweenSlicesString);
+            	excludeVector.add(spacingBetweenSlicesIndex);
+            }
+            item.setWriteAsUnknownLength(false); // enhanced sequence items are always written using known length
+            seqTag = table.get("0028,9110");
+        }
 
         for (int i = 0; i < tagArray.length; i++) {
             element = tagArray[i];
             if ( !element.getKey().toString().matches(FileDicom.IMAGE_TAG) &&
             		!element.getKey().toString().matches(FileDicom.FLOAT_IMAGE_TAG)	&&
             		!element.getKey().toString().matches(FileDicom.DOUBLE_IMAGE_TAG)) {
-                writeNextTag(element, outputFile);
+            	if (insertPixelMeasuresSequenceBeforeIndex == i) {
+            		writeNextTag(seqTag, outputFile);
+            	}
+            	doWrite = true;
+            	for (int j = 0; j < excludeVector.size() && doWrite; j++) {
+            	    if (excludeVector.get(j) == i) {
+            	    	doWrite = false;
+            	    }
+            	}
+            	if (doWrite) {
+                    writeNextTag(element, outputFile);
+            	}
             } else {
                 Preferences.debug("Image tag reached", Preferences.DEBUG_FILEIO);
                 break; // image tag reached
             }
+        }
+        if (insertPixelMeasuresSequenceBeforeIndex == tagArray.length) {
+        	writeNextTag(seqTag, outputFile);
         }
 
         writeShort((short) 0x7FE0, endianess); // the image
