@@ -273,6 +273,9 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 	private ModelImage cedImageGRE;	
 	private ModelImage cedImageFAT;
 	
+	int close_length = 40;
+    boolean firstTimeCheckMidShaft = false;
+	
 	/**
 	 * Constructor. the parent frame
 	 * 
@@ -9746,30 +9749,51 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 		System.err.println("shaft distance = " + shaftDistance);
 
-		int close_length = 60;
-
+		if ( firstTimeCheckMidShaft == false ) {
+			
+			if ( shaftDistance <= 70 ) {
+				if ((whichLeg == LEFT_LEG && group <= GROUP_6) || (whichLeg == RIGHT_LEG && group <= GROUP_5)) {
+					if (whichLeg == LEFT_LEG) {
+						close_length = 50;
+					} else {
+						close_length = 45;
+					}
 		
-		if ((whichLeg == LEFT_LEG && group <= GROUP_6) || (whichLeg == RIGHT_LEG && group <= GROUP_5)) {
-			if (whichLeg == LEFT_LEG) {
-				close_length = 70;
+				}
+		
+				if ((whichLeg == LEFT_LEG && group >= GROUP_5) || (whichLeg == RIGHT_LEG && group >= GROUP_6)) {
+					if (whichLeg == LEFT_LEG) {
+						close_length = 50;
+					} else {
+						close_length = 45;
+					}
+		
+				}
 			} else {
-				close_length = 60;
+				if ((whichLeg == LEFT_LEG && group <= GROUP_6) || (whichLeg == RIGHT_LEG && group <= GROUP_5)) {
+					if (whichLeg == LEFT_LEG) {
+						close_length = 70;
+					} else {
+						close_length = 65;
+					}
+		
+				}
+		
+				if ((whichLeg == LEFT_LEG && group >= GROUP_5) || (whichLeg == RIGHT_LEG && group >= GROUP_6)) {
+					if (whichLeg == LEFT_LEG) {
+						close_length = 70;
+					} else {
+						close_length = 65;
+					}
+		
+				}
 			}
-
-		}
-
-		if ((whichLeg == LEFT_LEG && group >= GROUP_5) || (whichLeg == RIGHT_LEG && group >= GROUP_6)) {
-			if (whichLeg == LEFT_LEG) {
-				close_length = 70;
-			} else {
-				close_length = 60;
-			}
-
-		}
-         
+			firstTimeCheckMidShaft = true;
+		}  
 		
 		identifyGroups(sliceNumber);
 
+		
 		
 		if (shaftDistance <= close_length   /* || traceCondyle */  ) {
 			tracingDFS_condyle(fatImageSlice, fuzzyCImageFat, class1ImageFat, class2ImageFat, class3ImageFat, 
