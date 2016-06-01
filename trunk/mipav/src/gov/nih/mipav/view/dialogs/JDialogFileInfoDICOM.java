@@ -531,7 +531,59 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     for(int i=0; i<tagList.length; i++) {
                         tag = tagList[i];
                         rowData[2] = tag.getKey()+": "+tag.getKeyword();
-                        rowData[3] = tag.getValue(true);
+                        VR vr2 = tag.getValueRepresentation();
+                        Object[] tagVals;
+                        tagVals = tag.getValueList();
+                        StringBuilder dispStringBuffer = new StringBuilder();
+                        final int num = tag.getNumberOfValues();
+
+                        if (num == 0) {
+                            Preferences.debug("No Multiplicity: " + name + "  " + tag.getValue(true)
+                                    + ", check that this is not an error.\n");
+                        }
+
+                        for (int q = 0; q < num; q++) {
+                            try {
+                                dispStringBuffer.append(tagVals[q].toString());
+                            } catch (final NullPointerException e1) {
+                                dispStringBuffer.append("");
+                            }
+
+                            if ( (q + 1) < num) {
+                                dispStringBuffer.append(", ");
+                            }
+                        }
+                        String dispString = dispStringBuffer.toString();
+                        if (dispString.length() > 0) {
+                            final char c = dispString.charAt(dispString.length() - 1);
+                            if (c == '\0') {
+                                dispString = dispString.substring(0, dispString.indexOf(c));
+                            }
+                        }
+                        
+                        if ((vr2.equals(VR.DS)) && (dispString.length() > 16) && (num == 1)) {
+                        	double value = Double.valueOf(dispString);
+                        	BigDecimal bd = new BigDecimal(value);
+                        	int nonNumbers = 0;
+                        	CharSequence period = ".";
+                        	if (dispString.contains(period)) {
+                        		nonNumbers++;
+                        	}
+                        	CharSequence Exp = "E";
+                        	CharSequence exp = "e";
+                        	if ((dispString.contains(Exp)) || (dispString.contains(exp))) {
+                        		nonNumbers++;
+                        	}
+                        	for (int j = 0; j < dispString.length(); j++) {
+                        		if ((dispString.substring(j,j+1).equals("+")) || (dispString.substring(j,j+1).equals("-"))) {
+                        			nonNumbers++;
+                        		}
+                        	}
+                        	MathContext mc = new MathContext(16 - nonNumbers, RoundingMode.HALF_UP);
+                            BigDecimal rounded = bd.round(mc);
+                            dispString = rounded.toString();
+                        }
+                        rowData[3] = dispString;
                         if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                             tagsModel.addRow(rowData);
                         }
