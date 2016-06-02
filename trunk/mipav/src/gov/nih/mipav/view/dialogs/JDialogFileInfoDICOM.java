@@ -523,7 +523,36 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 
                 for (final Enumeration<FileDicomSQItem> f = display.elements(); f.hasMoreElements();) {
                     FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
-                    rowData[2] = "Sequence element";
+                    if (name.equals("0020,9071")) {
+                    	rowData[2] = "Frame Anatomy Sequence";
+                    }
+                    else if (name.equals("0020,9111")) {
+                    	rowData[2] = "Frame Content Sequence";
+                    }
+                    else if (name.equals("0020,9113")) {
+                    	rowData[2] = "Plane Position Sequence";
+                    }
+                    else if (name.equals("0020,9116")) {
+                    	rowData[2] = "Plane Orientation Sequence";
+                    }
+                    else if (name.equals("0028,9110")) {
+                    	rowData[2] = "Pixel Measures Sequence";
+                    }
+                    else if (name.equals("0040,9092")) {
+                    	rowData[2] = "Parametric Map Frame Type Sequence";
+                    }
+                    else if (name.equals("0040,9096")) {
+                    	rowData[2] = "Real World Value Mapping Sequence";
+                    }
+                    else if (name.equals("5200,9229")) {
+                    	rowData[2] = "Shared Functional Groups Sequence";
+                    }
+                    else if (name.equals("5200,9230")) {
+                    	rowData[2] = "Per-frame Functional Groups Sequence";
+                    }
+                    else {
+                        rowData[2] = "Sequence element";
+                    }
                     rowData[3] = "";
                     if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                         tagsModel.addRow(rowData);
