@@ -15809,7 +15809,7 @@ public class FileIO {
             for (int z = 0; z < zDim; z++) {
                 final FileDicomTagTable table = infoAr[z][t].getTagTable();
 
-                FileDicomSQ seq = new FileDicomSQ(); // this is the 0020,9111 sequence
+                FileDicomSQ seq = new FileDicomSQ(); // this is the 0020,9111 Frame Content Sequence
                 FileDicomTag tag = null;
                 FileDicomSQItem item = null;
                 if ( (tag = table.get("0020,9111")) != null && !table.isTagSameAsReferenceTag(tag)) {
