@@ -91,6 +91,10 @@ public class FileDicom extends FileDicomBase {
     public static final String PIXEL_SPACING = "0028,0030";
     
     public static final String SPACING_BETWEEN_SLICES = "0018,0088";
+    
+    public static final String PLANE_POSITION_SEQUENCE = "0020,9113";
+    
+    public static final String IMAGE_POSITION = "0020,0032";
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -4425,17 +4429,24 @@ public class FileDicom extends FileDicomBase {
      */
     public void writeHeader(final RandomAccessFile outputFile, final FileInfoDicom fileInfo, final boolean saveAsEncapJP2) throws IOException {
         FileDicomTag element;
+        int i;
         int pixelMeasuresSequenceIndex = -1;
         int pixelSpacingIndex = -1;
         int sliceThicknessIndex = -1;
         int spacingBetweenSlicesIndex = -1;
         int insertPixelMeasuresSequenceBeforeIndex = -1;
+        int planePositionSequenceIndex = -1;
+        int imagePositionIndex = -1;
+        int insertPlanePositionSequenceBeforeIndex = -1;
         int groupNumber;
         int elementNumber;
         FileDicomTagTable table;
         FileDicomSQ seq;
         FileDicomSQItem item;
         FileDicomTag seqTag = null;
+        FileDicomSQ seqPos;
+        FileDicomSQItem itemPos;
+        FileDicomTag seqTagPos = null;
         Vector<Integer> excludeVector = new Vector<Integer>();
         boolean doWrite;
         int lengthReduction[] = new int[1];
@@ -4462,7 +4473,7 @@ public class FileDicom extends FileDicomBase {
             outputFile.writeBytes("DICM");
         }
         
-        for (int i = 0; i < tagArray.length; i++) {
+        for (i = 0; i < tagArray.length; i++) {
         	element = tagArray[i];
         	if (element.getKey().toString().matches(FileDicom.PIXEL_MEASURES_SEQUENCE)) {
         	    pixelMeasuresSequenceIndex = i;	
@@ -4476,11 +4487,17 @@ public class FileDicom extends FileDicomBase {
         	else if (element.getKey().toString().matches(FileDicom.SPACING_BETWEEN_SLICES)) {
         		spacingBetweenSlicesIndex = i;
         	}
+        	else if (element.getKey().toString().matches(FileDicom.PLANE_POSITION_SEQUENCE)) {
+        		planePositionSequenceIndex = i;
+        	}
+        	else if (element.getKey().toString().matches(FileDicom.IMAGE_POSITION)) {
+        		imagePositionIndex = i;
+        	}
         }
         
         if ((pixelMeasuresSequenceIndex == -1) && ((pixelSpacingIndex >=  0) ||
         		(sliceThicknessIndex >= 0) || (spacingBetweenSlicesIndex >= 0))) {
-            for (int i = 0; i < tagArray.length && (insertPixelMeasuresSequenceBeforeIndex == -1); i++) {
+            for (i = 0; i < tagArray.length && (insertPixelMeasuresSequenceBeforeIndex == -1); i++) {
                 groupNumber = tagArray[i].getKey().getGroupNumber();
                 elementNumber = tagArray[i].getKey().getElementNumber();
                 if ((groupNumber > 0x0028) || ((groupNumber == 0x0028) && (elementNumber > 0x9110))) {
@@ -4514,13 +4531,40 @@ public class FileDicom extends FileDicomBase {
             item.setWriteAsUnknownLength(false); // enhanced sequence items are always written using known length
             seqTag = table.get("0028,9110");
         }
+        
+        if ((planePositionSequenceIndex == -1) && (imagePositionIndex >= 0)) {
+        	for (i = 0; i < tagArray.length && (insertPlanePositionSequenceBeforeIndex == -1); i++) {
+                groupNumber = tagArray[i].getKey().getGroupNumber();
+                elementNumber = tagArray[i].getKey().getElementNumber();
+                if ((groupNumber > 0x0020) || ((groupNumber == 0x0020) && (elementNumber > 0x9113))) {
+                	insertPlanePositionSequenceBeforeIndex = i;
+                }
+            }
+            if (insertPlanePositionSequenceBeforeIndex == -1) {
+            	insertPlanePositionSequenceBeforeIndex = tagArray.length;
+            }
+            table = fileInfo.getTagTable();
+            seqPos = new FileDicomSQ(); // this is the 0020,9113 Plane Position Sequence
+            itemPos = new FileDicomSQItem(null, fileInfo.getVr_type());
+            seqPos.addItem(itemPos);
+            seqPos.setWriteAsUnknownLength(true);
+            table.setValue("0020,9113", seqPos, -1);
+            String imagePositionString = (String)table.getValue("0020,0032");
+            itemPos.setValue("0020,0032", imagePositionString);
+            excludeVector.add(imagePositionIndex);
+            itemPos.setWriteAsUnknownLength(false); // enhanced sequence items are always written using known length
+            seqTagPos = table.get("0020,9113");
+        }
 
-        for (int i = 0; i < tagArray.length; i++) {
+        for (i = 0; i < tagArray.length; i++) {
             element = tagArray[i];
             if ( !element.getKey().toString().matches(FileDicom.IMAGE_TAG) &&
             		!element.getKey().toString().matches(FileDicom.FLOAT_IMAGE_TAG)	&&
             		!element.getKey().toString().matches(FileDicom.DOUBLE_IMAGE_TAG)) {
-            	if (insertPixelMeasuresSequenceBeforeIndex == i) {
+            	if (insertPlanePositionSequenceBeforeIndex == i) { // 0020,9113
+            		writeNextTag(seqTagPos, outputFile, lengthReduction);
+            	}
+            	if (insertPixelMeasuresSequenceBeforeIndex == i) { // 0028,9110
             		writeNextTag(seqTag, outputFile, lengthReduction);
             	}
             	doWrite = true;
@@ -4536,6 +4580,9 @@ public class FileDicom extends FileDicomBase {
                 Preferences.debug("Image tag reached", Preferences.DEBUG_FILEIO);
                 break; // image tag reached
             }
+        }
+        if (insertPlanePositionSequenceBeforeIndex == tagArray.length) {
+        	writeNextTag(seqTagPos, outputFile, lengthReduction);
         }
         if (insertPixelMeasuresSequenceBeforeIndex == tagArray.length) {
         	writeNextTag(seqTag, outputFile, lengthReduction);
