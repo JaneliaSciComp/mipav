@@ -14713,7 +14713,41 @@ public class FileIO {
                 final String tmpStr = new String(Float.toString((float) dicomOrigin[RLIndex]) + "\\" + Float.toString((float) dicomOrigin[APIndex]) + "\\"
                         + Float.toString((float) dicomOrigin[ISIndex]));
 
-                ((FileInfoDicom) (fBase)).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
+                final FileDicomSQ seqBase = new FileDicomSQ(); // this is the 0020,9113 Plane Position Sequence
+                seqBase.setWriteAsUnknownLength(true); // sequences given unknown length
+                final FileDicomTagTable table = ((FileInfoDicom) fBase).getTagTable();
+
+                FileDicomSQ seq = new FileDicomSQ(); // this is the 0020,9113 sequence
+                tag = null;
+                FileDicomSQItem item = null;
+                if ( (tag = table.get("0020,9113")) != null && !table.isTagSameAsReferenceTag(tag)) {
+                    seq = (FileDicomSQ) table.get("0020,9113").getValue(false);
+                    item = ((FileDicomSQ) table.get("0020,9113").getValue(false)).getItem(0);
+                } else {
+                    item = new FileDicomSQItem(null, fileDicom.getVr_type());
+                    seq.addItem(item);
+                    seq.setWriteAsUnknownLength(true);
+                    table.setValue("0020,9113", seq, -1);
+                }
+
+                
+                item.setValue("0020,0032", tmpStr);
+
+                item.setWriteAsUnknownLength(false); // items are always written using known length
+
+                final Enumeration<FileDicomTag> tags = table.getTagList().elements();
+                Object tagValue = null;
+                final FileDicomSQItem outerItem = new FileDicomSQItem(null, fileDicom.getVr_type());
+                while (tags.hasMoreElements()) {
+                    tag = tags.nextElement();
+                    if (table == fileDicom.getTagTable() || // if table is pointing to the same location as myFileInfo,
+                                                             // write all tags
+                            (tagValue = fileDicom.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
+                        outerItem.setValue(tag.getKey(), tag, tag.getValue(false), -1);
+                    }
+                }
+                seqBase.addItem(outerItem); // is now the 2D item within the sequence
+                outerItem.setWriteAsUnknownLength(false);
 
                 if (baseInstanceNumber != -1) {
                     final String instanceStr = "" + (baseInstanceNumber + sliceNumber);
@@ -15432,6 +15466,8 @@ public class FileIO {
                 }
 
                 final float[] sliceData = new float[sliceSize];
+                final FileDicomSQ seqBase = new FileDicomSQ(); // this is the 0020,9113 Plane Position Sequence
+                seqBase.setWriteAsUnknownLength(true); // sequences given unknown length
                 for (int k = 0; k < fBaseLength; k++) {
 
                     // System.err.println("FileIO k = " + k);
@@ -15449,7 +15485,40 @@ public class FileIO {
                     final String tmpStr = new String(Float.toString((float) dicomOrigin[RLIndex]) + "\\" + Float.toString((float) dicomOrigin[APIndex]) + "\\"
                             + Float.toString((float) dicomOrigin[ISIndex]));
 
-                    ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
+                    //((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,0032", tmpStr, tmpStr.length());
+                    final FileDicomTagTable table = ((FileInfoDicom) fBase[k]).getTagTable();
+
+                    FileDicomSQ seq = new FileDicomSQ(); // this is the 0020,9113 sequence
+                    tag = null;
+                    FileDicomSQItem item = null;
+                    if ( (tag = table.get("0020,9113")) != null && !table.isTagSameAsReferenceTag(tag)) {
+                        seq = (FileDicomSQ) table.get("0020,9113").getValue(false);
+                        item = ((FileDicomSQ) table.get("0020,9113").getValue(false)).getItem(0);
+                    } else {
+                        item = new FileDicomSQItem(null, myFileInfo.getVr_type());
+                        seq.addItem(item);
+                        seq.setWriteAsUnknownLength(true);
+                        table.setValue("0020,9113", seq, -1);
+                    }
+
+                    
+                    item.setValue("0020,0032", tmpStr);
+
+                    item.setWriteAsUnknownLength(false); // items are always written using known length
+
+                    final Enumeration<FileDicomTag> tags = table.getTagList().elements();
+                    Object tagValue = null;
+                    final FileDicomSQItem outerItem = new FileDicomSQItem(null, myFileInfo.getVr_type());
+                    while (tags.hasMoreElements()) {
+                        tag = tags.nextElement();
+                        if (table == myFileInfo.getTagTable() || // if table is pointing to the same location as myFileInfo,
+                                                                 // write all tags
+                                (tagValue = myFileInfo.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
+                            outerItem.setValue(tag.getKey(), tag, tag.getValue(false), -1);
+                        }
+                    }
+                    seqBase.addItem(outerItem); // is now the 2D item within the sequence
+                    outerItem.setWriteAsUnknownLength(false);
 
                     dicomOrigin[RLIndex] += matrix.get(0, 2) * sliceResolution;
                     dicomOrigin[APIndex] += matrix.get(1, 2) * sliceResolution;
@@ -15474,6 +15543,7 @@ public class FileIO {
                         ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1052", "" + fBase[k].getRescaleIntercept());
                         ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1053", "" + fBase[k].getRescaleSlope());
                     }
+                    
                 }
                 image.setFileInfo(fBase);
             } else {
