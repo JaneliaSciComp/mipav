@@ -15839,6 +15839,7 @@ public class FileIO {
                 item.setValue("0020,9056", 1); // is one-based
                 item.setValue("0020,9057", z + 1); // is one-based
                 item.setValue("0020,9128", t + 1); // Temporal position index is one-based
+                item.setValue("0020,9156", 1 + z + t * zDim); // Frame Acquisition Number
 
                 item.setWriteAsUnknownLength(false); // enhanced sequence items are always written using known length
 
