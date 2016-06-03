@@ -14192,6 +14192,7 @@ public class FileIO {
         double intercept = 0.0;
         boolean convertFloatToShort = false;
         String dateString = null;
+        String timeString = null;
         String patientNameString = null;
         String protocolNameString = null;
         String repetitionTimeString = null;
@@ -14335,6 +14336,11 @@ public class FileIO {
           		 dateString.replaceAll(".","");
           		 fileDicom.getTagTable().setValue("0008,0020", dateString, dateString.length());
           	 }
+          	 timeString = ((FileInfoPARREC)originalFileInfo).getTime();
+         	 if (timeString != null) {
+         		 timeString.replaceAll(":","");
+         		 fileDicom.getTagTable().setValue("0008,0030", timeString, timeString.length());
+         	 }
           	 patientNameString = ((FileInfoPARREC)originalFileInfo).getPatientName();
           	 if (patientNameString != null) {
           		 fileDicom.getTagTable().setValue("0010,0010", patientNameString, patientNameString.length());
@@ -14938,6 +14944,7 @@ public class FileIO {
         double intercept = 0.0;
         boolean convertFloatToShort = false;
         String dateString = null;
+        String timeString = null;
         String patientNameString = null;
         String protocolNameString = null;
         String repetitionTimeString = null;
@@ -15105,7 +15112,12 @@ public class FileIO {
               		 dateString.replaceAll(".","");
               		 myFileInfo.getTagTable().setValue("0008,0020", dateString, dateString.length());
               	 }
-              	patientNameString = ((FileInfoPARREC)image.getFileInfo(0)).getPatientName();
+              	 timeString = ((FileInfoPARREC)image.getFileInfo(0)).getTime();
+             	 if (timeString != null) {
+             		 timeString.replaceAll(":","");
+             		 myFileInfo.getTagTable().setValue("0008,0030", timeString, timeString.length());
+             	 }
+              	 patientNameString = ((FileInfoPARREC)image.getFileInfo(0)).getPatientName();
              	 if (patientNameString != null) {
              		 myFileInfo.getTagTable().setValue("0010,0010", patientNameString, patientNameString.length());
              	 }
