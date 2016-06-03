@@ -1135,9 +1135,13 @@ public class FilePARREC extends FileBase {
                        
                    } else if(nextLine.contains("Examination date/time")){ //Determine date of exam
                         int ind = nextLine.indexOf(":");
-                        String date = nextLine.substring(ind+1,nextLine.indexOf("/",ind));
+                        int slash = nextLine.lastIndexOf("/");
+                        String date = nextLine.substring(ind+1,slash);
                         date = date.trim();
                         fileInfo.setDate(date);
+                        String time = nextLine.substring(slash+1);
+                        time = time.trim();
+                        fileInfo.setTime(time);
                    } else if(nextLine.contains("Patient position")){
                         String patientPositionLine = nextLine.trim();
                         int patientPositionInd = patientPositionLine.indexOf(":");
