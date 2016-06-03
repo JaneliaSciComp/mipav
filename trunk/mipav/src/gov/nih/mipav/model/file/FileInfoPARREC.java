@@ -77,6 +77,20 @@ public class FileInfoPARREC extends FileInfoBase {
     private int originalDataType = ModelStorageBase.FLOAT;
     
     private float scaleSlope = 1.0f;
+    
+    private float echoTime[] = null;
+    
+    private float triggerTime[] = null;
+    
+    private float flipAngle[] = null;
+    
+    private int heartRate[] = null;
+    
+    private int minimumRRInterval[] = null;
+    
+    private int maximumRRInterval[] = null;
+    
+    private float inversionDelay[] = null;
 
     // default constructor
     public FileInfoPARREC(String name, String directory, int format) {
