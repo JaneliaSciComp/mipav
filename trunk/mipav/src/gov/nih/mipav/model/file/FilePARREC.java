@@ -339,11 +339,53 @@ public class FilePARREC extends FileBase {
     /**bFactorIndex**/
     private int gradPos;
     
+    private int echoTimePos = -1;
+    
+    private int triggerTimePos = -1;
+    
+    private int flipAnglePos = -1;
+    
+    private int cardiacFrequencyPos = -1;
+    
+    private int minimumRRIntervalPos = -1;
+    
+    private int maximumRRIntervalPos = -1;
+    
+    private int inversionDelayPos = -1;
+    
     private int sliceOrientIndex;
     
     private int bValueIndex;
     
     private int gradIndex;
+    
+    private int echoTimeIndex = -1;
+    
+    private int triggerTimeIndex = -1;
+    
+    private int flipAngleIndex = -1;
+    
+    private int cardiacFrequencyIndex = -1;
+    
+    private int minimumRRIntervalIndex = -1;
+    
+    private int maximumRRIntervalIndex = -1;
+    
+    private int inversionDelayIndex = -1;
+    
+    private float echoTime[] = null;
+    
+    private float triggerTime[] = null;
+    
+    private float flipAngle[] = null;
+    
+    private int cardiacFrequency[] = null;
+    
+    private int minimumRRInterval[] = null;
+    
+    private int maximumRRInterval[] = null;
+    
+    private float inversionDelay[] = null;
 
     /**counter**/   
     private int counter = 0;
@@ -1055,6 +1097,13 @@ public class FilePARREC extends FileBase {
                 	int sliceOrientIndexCounter = -1;
                 	int bValIndexCounter = -1;
                     int gradIndexCounter = -1;
+                    int echoTimeCounter = -1;
+                    int triggerTimeCounter = -1;
+                    int flipAngleCounter = -1;
+                    int cardiacFrequencyCounter = -1;
+                    int minimumRRIntervalCounter = -1;
+                    int maximumRRIntervalCounter = -1;
+                    int inversionDelayCounter = -1;
                 	
                     if(nextLine.compareToIgnoreCase("# === IMAGE INFORMATION DEFINITION =============================================")==0) {
                         String line = raFile.readLine().trim();
@@ -1072,7 +1121,7 @@ public class FilePARREC extends FileBase {
                                 	
                                 	imageInfo = new String(imageInfo + line.trim());
                                 	   
-                                	   if (imageInfo.contains("slice orientation ( TRA/SAG/COR ) ")){                                         
+                                	   if (imageInfo.contains("slice orientation ( TRA/SAG/COR )")){                                         
                                 	       sliceOrientIndexCounter++;
                                        }
                                 	    if (imageInfo.contains("diffusion_b_factor")){                              	       
@@ -1081,7 +1130,35 @@ public class FilePARREC extends FileBase {
                                 	   
                                        if (imageInfo.contains("diffusion (ap, fh, rl)")){                                      
                                            gradIndexCounter++;
-                                       }                                	   
+                                       }
+                                       
+                                       if (imageInfo.contains("echo_time")) {
+                                    	   echoTimeCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("trigger_time")) {
+                                    	   triggerTimeCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("image_flip_angle")) {
+                                    	   flipAngleCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("cardiac frequency")) {
+                                    	   cardiacFrequencyCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("minimum RR-interval")) {
+                                    	   minimumRRIntervalCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("maximum RR-interval")) {
+                                    	   maximumRRIntervalCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("Inversion delay")) {
+                                    	   inversionDelayCounter++;
+                                       }
                                   }                  
                             }
                      
@@ -1089,7 +1166,28 @@ public class FilePARREC extends FileBase {
                         }
                         sliceOrientPos = counter - sliceOrientIndexCounter;
                         bValuePos = counter - bValIndexCounter;
-                        gradPos = counter - gradIndexCounter;                       
+                        gradPos = counter - gradIndexCounter; 
+                        if (echoTimeCounter != -1) {
+                            echoTimePos = counter - echoTimeCounter;
+                        }
+                        if (triggerTimeCounter != -1) {
+                            triggerTimePos = counter - triggerTimeCounter;
+                        }
+                        if (flipAngleCounter != -1) {
+                            flipAnglePos = counter - flipAngleCounter;
+                        }
+                        if (cardiacFrequencyCounter != -1) {
+                            cardiacFrequencyPos = counter - cardiacFrequencyCounter;
+                        }
+                        if (minimumRRIntervalCounter != -1) {
+                            minimumRRIntervalPos = counter - minimumRRIntervalCounter;
+                        }
+                        if (maximumRRIntervalCounter != -1) {
+                            maximumRRIntervalPos = counter - maximumRRIntervalCounter;
+                        }
+                        if (inversionDelayCounter != -1) {
+                            inversionDelayPos = counter - inversionDelayCounter;
+                        }
                     }
              
                     break;
@@ -1259,21 +1357,20 @@ public class FilePARREC extends FileBase {
         double [] flBvalueArray = new double[numVolumes];
         double[][] flGradientArray = new double[numVolumes][3];
         
+      //Determine arrangement of slices stored with data
+        String firstSliceIndex = Slices.get(0);
+        firstSliceIndex = firstSliceIndex.trim();
+        final String[] firstSliceArr = firstSliceIndex.split("\\s+");
+        int firstSliceValue= Integer.parseInt(firstSliceArr[0]);
+        
+        String secondSliceIndex = Slices.get(1);
+        secondSliceIndex = secondSliceIndex.trim();
+        final String[] secondSliceArray = secondSliceIndex.split("\\s+");
+        int secondSliceValue = Integer.parseInt(secondSliceArray[0]);
+        
         if ((examName.toUpperCase()).contains("DTI")|| (protocolName.toUpperCase()).contains("DTI")){ 
             dtiparams = new DTIParameters(numVolumes);
             dtiparams.setNumVolumes(numVolumes);
-            
-            
-            //Determine arrangement of slices stored with data
-            String firstSliceIndex = Slices.get(0);
-            firstSliceIndex = firstSliceIndex.trim();
-            final String[] firstSliceArr = firstSliceIndex.split("\\s+");
-            int firstSliceValue= Integer.parseInt(firstSliceArr[0]);
-            
-            String secondSliceIndex = Slices.get(1);
-            secondSliceIndex = secondSliceIndex.trim();
-            final String[] secondSliceArray = secondSliceIndex.split("\\s+");
-            int secondSliceValue = Integer.parseInt(secondSliceArray[0]);
                       
             // Find slice index of bvalues
             int counter2o = 0;
@@ -1378,7 +1475,175 @@ public class FilePARREC extends FileBase {
                 }
 
             }
-        }       
+        } 
+        
+        // Find slice index of values
+        if (echoTimePos >= 0) {
+        	echoTime = new float[Slices.size()];
+	        int counter2 = 0;
+	        int counter3 = 0;
+	        for (int i = 0; i < (echoTimePos-2); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        echoTimeIndex = ((counter2*1)+(counter3*2) + (echoTimePos-1));
+        }
+        
+        if (triggerTimePos >= 0) {
+        	triggerTime = new float[Slices.size()];
+	        int counter2 = 0;
+	        int counter3 = 0;
+	        for (int i = 0; i < (triggerTimePos-2); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        triggerTimeIndex = ((counter2*1)+(counter3*2) + (triggerTimePos-1));
+        }
+        
+        if (flipAnglePos >= 0) {
+        	flipAngle = new float[Slices.size()];
+	        int counter2 = 0;
+	        int counter3 = 0;
+	        for (int i = 0; i < (flipAnglePos-2); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        flipAngleIndex = ((counter2*1)+(counter3*2) + (flipAnglePos-1));
+        }
+        
+        if (cardiacFrequencyPos >= 0) {
+        	cardiacFrequency = new int[Slices.size()];
+	        int counter2 = 0;
+	        int counter3 = 0;
+	        for (int i = 0; i < (cardiacFrequencyPos-2); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        cardiacFrequencyIndex = ((counter2*1)+(counter3*2) + (cardiacFrequencyPos-1));
+        }
+        
+        if (minimumRRIntervalPos >= 0) {
+        	minimumRRInterval = new int[Slices.size()];
+	        int counter2 = 0;
+	        int counter3 = 0;
+	        for (int i = 0; i < ( minimumRRIntervalPos-2); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        minimumRRIntervalIndex = ((counter2*1)+(counter3*2) + (minimumRRIntervalPos-1));
+        }
+        
+        if (maximumRRIntervalPos >= 0) {
+        	maximumRRInterval = new int[Slices.size()];
+	        int counter2 = 0;
+	        int counter3 = 0;
+	        for (int i = 0; i < ( maximumRRIntervalPos-2); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        maximumRRIntervalIndex = ((counter2*1)+(counter3*2) + (maximumRRIntervalPos-1));
+        }
+        
+        if (inversionDelayPos >= 0) {
+        	inversionDelay = new float[Slices.size()];
+	        int counter2 = 0;
+	        int counter3 = 0;
+	        for (int i = 0; i < (inversionDelayPos-2); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        inversionDelayIndex = ((counter2*1)+(counter3*2) + (inversionDelayPos-1));
+        }
+        
+        
+        if (firstSliceValue != secondSliceValue) {
+            for (int i = 0; i < Slices.size(); i++) {
+            	String sliceIndex = Slices.get(i);
+                sliceIndex = sliceIndex.trim();
+                final String[] sliceArr = sliceIndex.split("\\s+");
+                if (echoTime != null) {
+                    echoTime[i] = Float.valueOf(sliceArr[echoTimeIndex]);
+                }
+                if (triggerTime != null) {
+                    triggerTime[i] = Float.valueOf(sliceArr[triggerTimeIndex]);
+                }
+                if (flipAngle != null) {
+                    flipAngle[i] = Float.valueOf(sliceArr[flipAngleIndex]);
+                }
+                if (cardiacFrequency != null) {
+                    cardiacFrequency[i] = Integer.valueOf(sliceArr[cardiacFrequencyIndex]);
+                }
+                if (minimumRRInterval != null) {
+                    minimumRRInterval[i] = Integer.valueOf(sliceArr[minimumRRIntervalIndex]);
+                }
+                if (maximumRRInterval != null) {
+                    maximumRRInterval[i] = Integer.valueOf(sliceArr[maximumRRIntervalIndex]);
+                }
+                if (inversionDelay != null) {
+                    inversionDelay[i] = Float.valueOf(sliceArr[inversionDelayIndex]);
+                }
+            }
+        }
+        else {
+        	for (int i = 0; i < numVolumes; i++) {
+        		for (int j = 0; j < numSlices; j++) {
+        			int index = i + j * numVolumes;
+        			String sliceIndex = Slices.get(index);
+                    sliceIndex = sliceIndex.trim();
+                    final String[] sliceArr = sliceIndex.split("\\s+");
+                    if (echoTime != null) {
+                        echoTime[index] = Float.valueOf(sliceArr[echoTimeIndex]);
+                    }
+                    if (triggerTime != null) {
+                        triggerTime[index] = Float.valueOf(sliceArr[triggerTimeIndex]);
+                    }
+                    if (flipAngle != null) {
+                        flipAngle[index] = Float.valueOf(sliceArr[flipAngleIndex]);
+                    }
+                    if (cardiacFrequency != null) {
+                        cardiacFrequency[index] = Integer.valueOf(sliceArr[cardiacFrequencyIndex]);
+                    }
+                    if (minimumRRInterval != null) {
+                        minimumRRInterval[index] = Integer.valueOf(sliceArr[minimumRRIntervalIndex]);
+                    }
+                    if (maximumRRInterval != null) {
+                        maximumRRInterval[index] = Integer.valueOf(sliceArr[maximumRRIntervalIndex]);
+                    }
+                    if (inversionDelay != null) {
+                        inversionDelay[index] = Float.valueOf(sliceArr[inversionDelayIndex]);
+                    }
+        		}
+        	}
+        	
+        }
 
 
         float slicethk=0, slicegap=0;
