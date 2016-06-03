@@ -95,6 +95,10 @@ public class FileDicom extends FileDicomBase {
     public static final String PLANE_POSITION_SEQUENCE = "0020,9113";
     
     public static final String IMAGE_POSITION = "0020,0032";
+    
+    public static final String PLANE_ORIENTATION_SEQUENCE = "0020,9116";
+    
+    public static final String IMAGE_ORIENTATION = "0020,0037";
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -4438,6 +4442,9 @@ public class FileDicom extends FileDicomBase {
         int planePositionSequenceIndex = -1;
         int imagePositionIndex = -1;
         int insertPlanePositionSequenceBeforeIndex = -1;
+        int planeOrientationSequenceIndex = -1;
+        int imageOrientationIndex = -1;
+        int insertPlaneOrientationSequenceBeforeIndex = -1;
         int groupNumber;
         int elementNumber;
         FileDicomTagTable table;
@@ -4447,6 +4454,9 @@ public class FileDicom extends FileDicomBase {
         FileDicomSQ seqPos;
         FileDicomSQItem itemPos;
         FileDicomTag seqTagPos = null;
+        FileDicomSQ seqOrient;
+        FileDicomSQItem itemOrient;
+        FileDicomTag seqTagOrient = null;
         Vector<Integer> excludeVector = new Vector<Integer>();
         boolean doWrite;
         int lengthReduction[] = new int[1];
@@ -4493,6 +4503,12 @@ public class FileDicom extends FileDicomBase {
         	else if (element.getKey().toString().matches(FileDicom.IMAGE_POSITION)) {
         		imagePositionIndex = i;
         	}
+        	else if (element.getKey().toString().matches(FileDicom.PLANE_ORIENTATION_SEQUENCE)) {
+        		planeOrientationSequenceIndex = i;
+        	}
+        	else if (element.getKey().toString().matches(FileDicom.IMAGE_ORIENTATION)) {
+        		imageOrientationIndex = i;
+        	}
         }
         
         if ((pixelMeasuresSequenceIndex == -1) && ((pixelSpacingIndex >=  0) ||
@@ -4528,7 +4544,7 @@ public class FileDicom extends FileDicomBase {
             	item.setValue("0018,0088", spacingBetweenSlicesString);
             	excludeVector.add(spacingBetweenSlicesIndex);
             }
-            item.setWriteAsUnknownLength(false); // enhanced sequence items are always written using known length
+            item.setWriteAsUnknownLength(false); // items are always written using known length
             seqTag = table.get("0028,9110");
         }
         
@@ -4552,8 +4568,32 @@ public class FileDicom extends FileDicomBase {
             String imagePositionString = (String)table.getValue("0020,0032");
             itemPos.setValue("0020,0032", imagePositionString);
             excludeVector.add(imagePositionIndex);
-            itemPos.setWriteAsUnknownLength(false); // enhanced sequence items are always written using known length
+            itemPos.setWriteAsUnknownLength(false); // items are always written using known length
             seqTagPos = table.get("0020,9113");
+        }
+        
+        if ((planeOrientationSequenceIndex == -1) && (imageOrientationIndex >= 0)) {
+        	for (i = 0; i < tagArray.length && (insertPlaneOrientationSequenceBeforeIndex == -1); i++) {
+                groupNumber = tagArray[i].getKey().getGroupNumber();
+                elementNumber = tagArray[i].getKey().getElementNumber();
+                if ((groupNumber > 0x0020) || ((groupNumber == 0x0020) && (elementNumber > 0x9116))) {
+                	insertPlaneOrientationSequenceBeforeIndex = i;
+                }
+            }
+            if (insertPlaneOrientationSequenceBeforeIndex == -1) {
+            	insertPlaneOrientationSequenceBeforeIndex = tagArray.length;
+            }
+            table = fileInfo.getTagTable();
+            seqOrient = new FileDicomSQ(); // this is the 0020,9116 Plane Orientation Sequence
+            itemOrient = new FileDicomSQItem(null, fileInfo.getVr_type());
+            seqOrient.addItem(itemOrient);
+            seqOrient.setWriteAsUnknownLength(true);
+            table.setValue("0020,9116", seqOrient, -1);
+            String imageOrientationString = (String)table.getValue("0020,0037");
+            itemOrient.setValue("0020,0037", imageOrientationString);
+            excludeVector.add(imageOrientationIndex);
+            itemOrient.setWriteAsUnknownLength(false); // items are always written using known length
+            seqTagOrient = table.get("0020,9116");
         }
 
         for (i = 0; i < tagArray.length; i++) {
@@ -4563,6 +4603,9 @@ public class FileDicom extends FileDicomBase {
             		!element.getKey().toString().matches(FileDicom.DOUBLE_IMAGE_TAG)) {
             	if (insertPlanePositionSequenceBeforeIndex == i) { // 0020,9113
             		writeNextTag(seqTagPos, outputFile, lengthReduction);
+            	}
+            	if (insertPlaneOrientationSequenceBeforeIndex == i) { // 0020,9116
+            		writeNextTag(seqTagOrient, outputFile, lengthReduction);
             	}
             	if (insertPixelMeasuresSequenceBeforeIndex == i) { // 0028,9110
             		writeNextTag(seqTag, outputFile, lengthReduction);
@@ -4583,6 +4626,9 @@ public class FileDicom extends FileDicomBase {
         }
         if (insertPlanePositionSequenceBeforeIndex == tagArray.length) {
         	writeNextTag(seqTagPos, outputFile, lengthReduction);
+        }
+        if (insertPlaneOrientationSequenceBeforeIndex == tagArray.length) {
+        	writeNextTag(seqTagOrient, outputFile, lengthReduction);
         }
         if (insertPixelMeasuresSequenceBeforeIndex == tagArray.length) {
         	writeNextTag(seqTag, outputFile, lengthReduction);
