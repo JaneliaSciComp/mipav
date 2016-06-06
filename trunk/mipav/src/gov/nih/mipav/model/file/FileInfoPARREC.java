@@ -376,7 +376,7 @@ public class FileInfoPARREC extends FileInfoBase {
     	this.triggerTime = triggerTime;
     }
     
-    public float[] gettriggerTime() {
+    public float[] getTriggerTime() {
     	return triggerTime;
     }
     
