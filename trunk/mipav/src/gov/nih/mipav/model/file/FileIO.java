@@ -14199,6 +14199,7 @@ public class FileIO {
         String patientNameString = null;
         String protocolNameString = null;
         String repetitionTimeString = null;
+        String echoNumberString = null;
         String echoTimeString = null;
         String triggerTimeString = null;
         String flipAngleString = null;
@@ -14363,6 +14364,11 @@ public class FileIO {
           	 if (repetitionTimeString != null) {
           		 fileDicom.getTagTable().setValue("0018,0080", repetitionTimeString, repetitionTimeString.length());
           	 }
+          	 int echoNumber[] = ((FileInfoPARREC)originalFileInfo).getEchoNumber();
+         	 if (echoNumber != null) {
+         		 echoNumberString = String.valueOf(echoNumber[sliceNumber]);
+         		 fileDicom.getTagTable().setValue("0018,0086", echoNumberString, echoNumberString.length());
+         	 }
           	 float echoTime[] = ((FileInfoPARREC)originalFileInfo).getEchoTime();
           	 if (echoTime != null) {
           		 echoTimeString = String.valueOf(echoTime[sliceNumber]);
@@ -15005,6 +15011,7 @@ public class FileIO {
         String patientNameString = null;
         String protocolNameString = null;
         String repetitionTimeString = null;
+        String echoNumberString[] = null;
         String echoTimeString[] = null;
         String triggerTimeString[] = null;
         String flipAngleString[] = null;
@@ -15192,6 +15199,13 @@ public class FileIO {
              	repetitionTimeString = ((FileInfoPARREC)image.getFileInfo(0)).getRepetitionTime();
              	 if (repetitionTimeString != null) {
              		 myFileInfo.getTagTable().setValue("0018,0080", repetitionTimeString, repetitionTimeString.length());
+             	 }
+             	 int echoNumber[] = ((FileInfoPARREC)image.getFileInfo(0)).getEchoNumber();
+             	 if (echoNumber != null) {
+             	     echoNumberString = new String[echoNumber.length];
+             	     for (i = 0; i < echoNumber.length; i++) {
+             	    	 echoNumberString[i] = String.valueOf(echoNumber[i]);
+             	     }
              	 }
              	 float echoTime[] = ((FileInfoPARREC)image.getFileInfo(0)).getEchoTime();
              	 if (echoTime != null) {
@@ -15682,6 +15696,10 @@ public class FileIO {
                     }
                     
                     if (isPARREC) {
+                    	if (echoNumberString != null) {
+                    		((FileInfoDicom)fBase[k]).getTagTable().setValue("0018,0086", echoNumberString[k], 
+                    				echoNumberString[k].length());
+                    	}
                     	if (echoTimeString != null) {
                     		((FileInfoDicom)fBase[k]).getTagTable().setValue("0018,0081", echoTimeString[k], echoTimeString[k].length());
                     	}
@@ -15736,6 +15754,9 @@ public class FileIO {
         }
 
         if (isPARREC) {
+        	if (echoNumberString != null) {
+        		myFileInfo.getTagTable().setValue("0018,0086", echoNumberString[0], echoNumberString[0].length());
+        	}
         	if (echoTimeString != null) {
         		myFileInfo.getTagTable().setValue("0018,0081", echoTimeString[0], echoTimeString[0].length());
         	}
