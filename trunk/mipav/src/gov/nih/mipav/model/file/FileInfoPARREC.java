@@ -364,11 +364,60 @@ public class FileInfoPARREC extends FileInfoBase {
     	return repetitionTime;
     }
 
-    /*
-     * public String getDate(){ return date; }
-     */
-    /*
-     * public void setDate(String date) { this.date = date; }
-     */
+    public void setEchoTime(float echoTime[]) {
+    	this.echoTime = echoTime;
+    }
+    
+    public float[] getEchoTime() {
+    	return echoTime;
+    }
+    
+    public void setTriggerTime(float triggerTime[]) {
+    	this.triggerTime = triggerTime;
+    }
+    
+    public float[] gettriggerTime() {
+    	return triggerTime;
+    }
+    
+    public void setFlipAngle(float flipAngle[]) {
+    	this.flipAngle = flipAngle;
+    }
+    
+    public float[] getFlipAngle() {
+    	return flipAngle;
+    }
+    
+    public void setHeartRate(int heartRate[]) {
+    	this.heartRate = heartRate;
+    }
+    
+    public int[] getHeartRate() {
+    	return heartRate;
+    }
+    
+    public void setMinimumRRInterval(int minimumRRInterval[]) {
+    	this.minimumRRInterval = minimumRRInterval;
+    }
+    
+    public int[] getMinimumRRInterval() {
+    	return minimumRRInterval;
+    }
+    
+    public void setMaximumRRInterval(int maximumRRInterval[]) {
+    	this.maximumRRInterval = maximumRRInterval;
+    }
+    
+    public int[] getMaximumRRInterval() {
+    	return maximumRRInterval;
+    }
+    
+    public void setInversionDelay(float inversionDelay[]) {
+    	this.inversionDelay = inversionDelay;
+    }
+    
+    public float[] getInversionDelay() {
+    	return inversionDelay;
+    }
 
 }
