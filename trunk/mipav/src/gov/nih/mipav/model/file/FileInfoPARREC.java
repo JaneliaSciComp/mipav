@@ -78,6 +78,8 @@ public class FileInfoPARREC extends FileInfoBase {
     
     private float scaleSlope = 1.0f;
     
+    private int echoNumber[] = null;
+    
     private float echoTime[] = null;
     
     private float triggerTime[] = null;
@@ -362,6 +364,14 @@ public class FileInfoPARREC extends FileInfoBase {
     
     public String getRepetitionTime() {
     	return repetitionTime;
+    }
+    
+    public void setEchoNumber(int echoNumber[]) {
+    	this.echoNumber = echoNumber;
+    }
+    
+    public int[] getEchoNumber() {
+    	return echoNumber;
     }
 
     public void setEchoTime(float echoTime[]) {
