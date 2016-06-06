@@ -339,6 +339,8 @@ public class FilePARREC extends FileBase {
     /**bFactorIndex**/
     private int gradPos;
     
+    private int echoNumberPos = -1;
+    
     private int echoTimePos = -1;
     
     private int triggerTimePos = -1;
@@ -359,6 +361,8 @@ public class FilePARREC extends FileBase {
     
     private int gradIndex;
     
+    private int echoNumberIndex = -1;
+    
     private int echoTimeIndex = -1;
     
     private int triggerTimeIndex = -1;
@@ -372,6 +376,8 @@ public class FilePARREC extends FileBase {
     private int maximumRRIntervalIndex = -1;
     
     private int inversionDelayIndex = -1;
+    
+    private int echoNumber[] = null;
     
     private float echoTime[] = null;
     
@@ -1097,6 +1103,7 @@ public class FilePARREC extends FileBase {
                 	int sliceOrientIndexCounter = -1;
                 	int bValIndexCounter = -1;
                     int gradIndexCounter = -1;
+                    int echoNumberCounter = -1;
                     int echoTimeCounter = -1;
                     int triggerTimeCounter = -1;
                     int flipAngleCounter = -1;
@@ -1130,6 +1137,10 @@ public class FilePARREC extends FileBase {
                                 	   
                                        if (imageInfo.contains("diffusion (ap, fh, rl)")){                                      
                                            gradIndexCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("echo number")) {
+                                    	   echoNumberCounter++;
                                        }
                                        
                                        if (imageInfo.contains("echo_time")) {
@@ -1167,6 +1178,9 @@ public class FilePARREC extends FileBase {
                         sliceOrientPos = counter - sliceOrientIndexCounter;
                         bValuePos = counter - bValIndexCounter;
                         gradPos = counter - gradIndexCounter; 
+                        if (echoNumberCounter != -1) {
+                        	echoNumberPos = counter - echoNumberCounter;
+                        }
                         if (echoTimeCounter != -1) {
                             echoTimePos = counter - echoTimeCounter;
                         }
@@ -1478,6 +1492,21 @@ public class FilePARREC extends FileBase {
         } 
         
         // Find slice index of values
+        if (echoNumberPos >= 0) {
+        	echoNumber = new int[Slices.size()];
+	        int counter2 = 0;
+	        int counter3 = 0;
+	        for (int i = 0; i < (echoNumberPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        echoNumberIndex = ((counter2*1)+(counter3*2) + (echoNumberPos-1));
+        }
+        
         if (echoTimePos >= 0) {
         	echoTime = new float[Slices.size()];
 	        int counter2 = 0;
@@ -1589,6 +1618,9 @@ public class FilePARREC extends FileBase {
             	String sliceIndex = Slices.get(i);
                 sliceIndex = sliceIndex.trim();
                 final String[] sliceArr = sliceIndex.split("\\s+");
+                if (echoNumber != null) {
+                	echoNumber[i] = Integer.valueOf(sliceArr[echoNumberIndex]);
+                }
                 if (echoTime != null) {
                     echoTime[i] = Float.valueOf(sliceArr[echoTimeIndex]);
                 }
@@ -1619,6 +1651,9 @@ public class FilePARREC extends FileBase {
         			String sliceIndex = Slices.get(index);
                     sliceIndex = sliceIndex.trim();
                     final String[] sliceArr = sliceIndex.split("\\s+");
+                    if (echoNumber != null) {
+                    	echoNumber[index] = Integer.valueOf(sliceArr[echoNumberIndex]);
+                    }
                     if (echoTime != null) {
                         echoTime[index] = Float.valueOf(sliceArr[echoTimeIndex]);
                     }
@@ -1645,6 +1680,9 @@ public class FilePARREC extends FileBase {
         	
         }
         
+        if (echoNumber != null) {
+        	fileInfo.setEchoNumber(echoNumber);
+        }
         if (echoTime != null) {
         	fileInfo.setEchoTime(echoTime);
         }
