@@ -1375,7 +1375,7 @@ public class FilePARREC extends FileBase {
             // Find slice index of bvalues
             int counter2o = 0;
             int counter3o = 0;
-            for (int i = 0; i < (sliceOrientPos-2); i++){
+            for (int i = 0; i < (sliceOrientPos-1); i++){
                 if (SliceParameters.get(i).contains("2")){
                     counter2o++;
                 }
@@ -1394,7 +1394,7 @@ public class FilePARREC extends FileBase {
             // Find slice index of bvalues
             int counter2 = 0;
             int counter3 = 0;
-            for (int i = 0; i < (bValuePos-2); i++){
+            for (int i = 0; i < (bValuePos-1); i++){
                 if (SliceParameters.get(i).contains("2")){
                     counter2++;
                 }
@@ -1433,7 +1433,7 @@ public class FilePARREC extends FileBase {
              // Find slice index automatically of gradient values
                 int counter2s = 0;
                 int counter3s = 0;
-                    for (int i = 0; i < (gradPos-2); i++){
+                    for (int i = 0; i < (gradPos-1); i++){
                         if (SliceParameters.get(i).contains("2")){
                             counter2s++;
                             }
@@ -1482,7 +1482,7 @@ public class FilePARREC extends FileBase {
         	echoTime = new float[Slices.size()];
 	        int counter2 = 0;
 	        int counter3 = 0;
-	        for (int i = 0; i < (echoTimePos-2); i++){
+	        for (int i = 0; i < (echoTimePos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
 	            }
@@ -1497,7 +1497,7 @@ public class FilePARREC extends FileBase {
         	triggerTime = new float[Slices.size()];
 	        int counter2 = 0;
 	        int counter3 = 0;
-	        for (int i = 0; i < (triggerTimePos-2); i++){
+	        for (int i = 0; i < (triggerTimePos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
 	            }
@@ -1512,7 +1512,7 @@ public class FilePARREC extends FileBase {
         	flipAngle = new float[Slices.size()];
 	        int counter2 = 0;
 	        int counter3 = 0;
-	        for (int i = 0; i < (flipAnglePos-2); i++){
+	        for (int i = 0; i < (flipAnglePos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
 	            }
@@ -1527,7 +1527,7 @@ public class FilePARREC extends FileBase {
         	cardiacFrequency = new int[Slices.size()];
 	        int counter2 = 0;
 	        int counter3 = 0;
-	        for (int i = 0; i < (cardiacFrequencyPos-2); i++){
+	        for (int i = 0; i < (cardiacFrequencyPos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
 	            }
@@ -1557,7 +1557,7 @@ public class FilePARREC extends FileBase {
         	maximumRRInterval = new int[Slices.size()];
 	        int counter2 = 0;
 	        int counter3 = 0;
-	        for (int i = 0; i < ( maximumRRIntervalPos-2); i++){
+	        for (int i = 0; i < ( maximumRRIntervalPos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
 	            }
@@ -1572,7 +1572,7 @@ public class FilePARREC extends FileBase {
         	inversionDelay = new float[Slices.size()];
 	        int counter2 = 0;
 	        int counter3 = 0;
-	        for (int i = 0; i < (inversionDelayPos-2); i++){
+	        for (int i = 0; i < (inversionDelayPos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
 	            }
