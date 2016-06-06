@@ -1644,7 +1644,28 @@ public class FilePARREC extends FileBase {
         	}
         	
         }
-
+        
+        if (echoTime != null) {
+        	fileInfo.setEchoTime(echoTime);
+        }
+        if (triggerTime != null) {
+        	fileInfo.setTriggerTime(triggerTime);
+        }
+        if (flipAngle != null) {
+        	fileInfo.setFlipAngle(flipAngle);
+        }
+        if (cardiacFrequency != null) {
+        	fileInfo.setCardiacFrequency(cardiacFrequency);
+        }
+        if (minimumRRInterval != null) {
+        	fileInfo.setMinimumRRInterval(minimumRRInterval);
+        }
+        if (maximumRRInterval != null) {
+        	fileInfo.setMaximumRRInterval(maximumRRInterval);
+        }
+        if (inversionDelay != null) {
+        	fileInfo.setInversionDelay(inversionDelay);
+        }
 
         float slicethk=0, slicegap=0;
         int ori=0;
