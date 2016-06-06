@@ -84,7 +84,7 @@ public class FileInfoPARREC extends FileInfoBase {
     
     private float flipAngle[] = null;
     
-    private int heartRate[] = null;
+    private int cardiacFrequency[] = null;
     
     private int minimumRRInterval[] = null;
     
@@ -388,12 +388,12 @@ public class FileInfoPARREC extends FileInfoBase {
     	return flipAngle;
     }
     
-    public void setHeartRate(int heartRate[]) {
-    	this.heartRate = heartRate;
+    public void setCardiacFrequency(int cardiacFrequency[]) {
+    	this.cardiacFrequency = cardiacFrequency;
     }
     
-    public int[] getHeartRate() {
-    	return heartRate;
+    public int[] getCardiacFrequency() {
+    	return cardiacFrequency;
     }
     
     public void setMinimumRRInterval(int minimumRRInterval[]) {
