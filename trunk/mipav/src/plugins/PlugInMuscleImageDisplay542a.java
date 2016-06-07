@@ -668,6 +668,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
         //may still be worked on
 
         System.gc();
+        
     }
     
 	public void componentShown(ComponentEvent event) {
@@ -844,6 +845,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 			imageA.disposeLocal(true);
 		}
 		if (componentImage != null) {
+			componentImage.removeNotify();
 			componentImage.disposeLocal(true);
 		}
 		removeComponentListener(this);
@@ -2988,13 +2990,13 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 	        } else if (command.equals(SELECT_ALL)) { 
 	        	pressAvailableButtons();
 	        } else if (command.equals(SAVE)) {
-	        	System.out.println("1 Have executed else if command.equals(SAVE)");
+	        	//System.out.println("1 Have executed else if command.equals(SAVE)");
 	        	setVisible(false);
-	        	System.out.println("2 Have executed setVisible(false)");
+	        	//System.out.println("2 Have executed setVisible(false)");
 	        	boolean lutBuffer = lutOn;
-	        	System.out.println("3 Have executed boolean lutBuffer = lutOn");
+	        	//System.out.println("3 Have executed boolean lutBuffer = lutOn");
 	        	getActiveImage().getParentFrame().requestFocus();
-	        	System.out.println("4 Have executed getActiveImage().getParentFrame().requestFocus()");
+	        	//System.out.println("4 Have executed getActiveImage().getParentFrame().requestFocus()");
 	        	
 	        	processCalculations(true, true);
 	        	//note analysis turns off LUT automatically
@@ -3517,22 +3519,22 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 		 * @param doSave whether to save the output (and screen grabs) to a pdf
 		 */
 		private void processCalculations(boolean all, boolean doSave) {
-			System.out.println("5 Have entered processCalculations(boolean all, boolean doSave) with all = " + all + " doSave = " + doSave);
+			//System.out.println("5 Have entered processCalculations(boolean all, boolean doSave) with all = " + all + " doSave = " + doSave);
 			if(calcGroup.activeCount() > 0) {
-				System.out.println("6 Have entered if caclGroup.activeCount() > 0)");
-				System.out.println("7 calcGroup.activeCount() = " + calcGroup.activeCount());
+				//System.out.println("6 Have entered if caclGroup.activeCount() > 0)");
+				//System.out.println("7 calcGroup.activeCount() = " + calcGroup.activeCount());
 				//TODO: Use ExecutorService now that 1.6
 				//Note that since the buttons are disabled, this could only happen by being
 				//directly called in the code
 				Thread[] activeThread = new Thread[calcGroup.activeCount()];
-				System.out.println("8 Have executed Thread[] activeThread = new Thread[calcGroup.activeCount()]");
+				//System.out.println("8 Have executed Thread[] activeThread = new Thread[calcGroup.activeCount()]");
 				calcGroup.enumerate(activeThread);
-				System.out.println("9 Have executed calcGroup.enumerate(activeThread)");
+				//System.out.println("9 Have executed calcGroup.enumerate(activeThread)");
 				String activeStr = new String();
-				System.out.println("10 Have executed String activeStr = new String()");
+				//System.out.println("10 Have executed String activeStr = new String()");
 				for(int i=0; i<calcGroup.activeCount(); i++) {
 					activeStr += activeThread[i].getName()+"\n";
-					System.out.println("11 Have executed activeStr += activeThread["+i+"].getName()+\n");
+					//System.out.println("11 Have executed activeStr += activeThread["+i+"].getName()+\n");
 				}
 				MipavUtil.displayError("Still processing calculations.  Please wait for the\nfollowing "+
 										"calculations to complete:\n"+activeStr);
@@ -3540,33 +3542,33 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 			}
 		
 			boolean pdfCreated = false;
-			System.out.println("12 Have executed boolean pdfCreated = false");
+			//System.out.println("12 Have executed boolean pdfCreated = false");
 			
 			String textFileDir = null, textFileName = null, pdfFileDir = null, pdfFileName = null;
-			System.out.println("13 Have executed String textFileDir = null, textFileName = null, pdfFileDir = null, pdfFileName = null");
+			//System.out.println("13 Have executed String textFileDir = null, textFileName = null, pdfFileDir = null, pdfFileName = null");
 			if(doSave) {
-				System.out.println("14 Have entered if (doSave)");
+				//System.out.println("14 Have entered if (doSave)");
 				FileLocation fl = new FileLocation(muscleFrame);
-				System.out.println("15 Have executed FileLocation fl = new FileLocation(muscleFrame)");
+				//System.out.println("15 Have executed FileLocation fl = new FileLocation(muscleFrame)");
 				
 				if(!fl.doCalc()) {  //user chose to not save files.
-					System.out.println("16 Have entered if(!fl.doCalc())");
+					//System.out.println("16 Have entered if(!fl.doCalc())");
 					return;
 				}
 				
 				textFileDir = fl.getTextFileDir();
-				System.out.println("17 textFileDir = " + textFileDir);
+				//System.out.println("17 textFileDir = " + textFileDir);
 				textFileName = fl.getTextFileName();
-				System.out.println("18 textFileName = " + textFileName);
+				//System.out.println("18 textFileName = " + textFileName);
 				pdfFileDir = fl.getPdfFileDir();
-				System.out.println("19 pdfFileDir = " + pdfFileDir);
+				//System.out.println("19 pdfFileDir = " + pdfFileDir);
 				pdfFileName = fl.getPdfFileName();
-				System.out.println("20 pdfFileName = " + pdfFileName);
+				//System.out.println("20 pdfFileName = " + pdfFileName);
 			}
 
 			//if PDF hasnt been created and we're saving, create it now
 			if (doSave && !pdfCreated) {
-				System.out.println("21 Have entered if (doSave && !pdfCreated)");
+				//System.out.println("21 Have entered if (doSave && !pdfCreated)");
 				PDFcreate(pdfFileDir, pdfFileName, all);
 				pdfCreated = true;
 			}
@@ -4052,7 +4054,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
         	boolean pdfFileExists = false;
         	PDPage page = null;
         	DateFormat dateFormat = null;
-        	System.out.println("22 Have entered PDFcreate(String fileDir, String fileName, boolean all)");
+        	//System.out.println("22 Have entered PDFcreate(String fileDir, String fileName, boolean all)");
         	try {
         	fileDirExists = (new File(fileDir).exists());
         	}
@@ -4061,14 +4063,14 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
         	    return;
         	}
         	if(!(fileDirExists)) {
-        		System.out.println("24 Have entered if (!(fileDirExists))");
+        		//System.out.println("24 Have entered if (!(fileDirExists))");
         		fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+VOI_DIR;
-        		System.out.println("25 fileDir = " + fileDir);
+        		//System.out.println("25 fileDir = " + fileDir);
         	}
         	if(fileName == null) {
-        		System.out.println("26 Have entered if (fileName == null)");
+        		//System.out.println("26 Have entered if (fileName == null)");
         		fileName = fileDir + File.separator + "PDF_Report.pdf";
-        		System.out.println("27 fileName = " + fileName);
+        		//System.out.println("27 fileName = " + fileName);
         		try {
         		    pdfFile = new File(fileDir + File.separator + fileName);
         		}
@@ -4084,12 +4086,12 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
         		    return;
         		}
         		if(pdfFileExists) {
-        			System.out.println("30 Have entered if (pdfFileExists)");
+        			//System.out.println("30 Have entered if (pdfFileExists)");
         			int i=0;
         			while(pdfFileExists && i<1000) {
-        				System.out.println("31 Have entered while(pdfFileExists && i<1000 for i = " + i);
+        				//System.out.println("31 Have entered while(pdfFileExists && i<1000 for i = " + i);
         				fileName = "PDF_Report-"+(++i)+ ".pdf";
-        				System.out.println("32 fileName = " + fileName);
+        				//System.out.println("32 fileName = " + fileName);
         				if(i == 1000) {
         					MipavUtil.displayError("Too many PDFs have been created, overwriting "+fileName);
         				}
@@ -4132,20 +4134,20 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                 	return;
                 }
                 PDPage blankPage = new PDPage();
-                System.out.println("37 Have executed PDPage blankPage = new PDPage()");
+                //System.out.println("37 Have executed PDPage blankPage = new PDPage()");
                 doc.addPage( blankPage );
-                System.out.println("38 Have executed doc.addPage( blankPage )");
+                //System.out.println("38 Have executed doc.addPage( blankPage )");
                 if(multipleSlices) {
-                	System.out.println("39 Have entered if (multipleSlices)");
+                	//System.out.println("39 Have entered if (multipleSlices)");
                     for(int i=0; i<getActiveImage().getExtents()[2]; i++) {
                         blankPage = new PDPage();
-                        System.out.println("40 Have executed blankPage = new PDPage() for i = " + i);
+                        //System.out.println("40 Have executed blankPage = new PDPage() for i = " + i);
                         doc.addPage( blankPage );
-                        System.out.println("41 Have executed doc.addPage( blankPage ) for i = " + i);
+                        //System.out.println("41 Have executed doc.addPage( blankPage ) for i = " + i);
                     }
                 }
                 try {
-                	System.out.println("42 pdfFile.toString() = " + pdfFile.toString());
+                	//System.out.println("42 pdfFile.toString() = " + pdfFile.toString());
                     doc.save(pdfFile.toString());
                 }
                 catch (COSVisitorException e) {
@@ -4168,7 +4170,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
             //}
             
             PDPageContentStream contentStream = null;
-            System.out.println("46 Have executed PDPageContentStream contentStream = null");
+            //System.out.println("46 Have executed PDPageContentStream contentStream = null");
             
             try
             {
@@ -4181,51 +4183,51 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                 }
         
                 List allPages = doc.getDocumentCatalog().getAllPages();
-                System.out.println("48 Have executed List allPages = doc.getDocumentCatalog().getAllPages()");
+                //System.out.println("48 Have executed List allPages = doc.getDocumentCatalog().getAllPages()");
                 PDFont font = PDType1Font.HELVETICA_BOLD;
-                System.out.println("49 Have executed PDFont font = PDType1Font.HELVETICA_BOLD");
+                //System.out.println("49 Have executed PDFont font = PDType1Font.HELVETICA_BOLD");
                 float fontSize = 12.0f;
-                System.out.println("50 Have executed float fontSize = 12.0f");
+                //System.out.println("50 Have executed float fontSize = 12.0f");
         
                 String unit =
                     Unit.getUnit(
                             ((AnalysisDialogPrompt)tabs[resultTabLoc]).getSelectedOutput()).getAbbrev();
-                System.out.println("51 unit = " + unit);
+                //System.out.println("51 unit = " + unit);
                 String type = new String();
-                System.out.println("52 Have executed String type = new String()");
+                //System.out.println("52 Have executed String type = new String()");
                 
                 String center = null, id = null, scanDate = null, kvp = null, mA = null, height = null;
-                System.out.println("53 Have executed String center = null, id = null, scanDate = null, kvp = null, mA = null, height = null");
+                //System.out.println("53 Have executed String center = null, id = null, scanDate = null, kvp = null, mA = null, height = null");
         
                 if(getActiveImage().getFileInfo()[0] instanceof FileInfoDicom) {
-                	System.out.println("54 Have entered getActiveImage().getFileInfo()[0] instanceof FileInfoDicom");
+                	//System.out.println("54 Have entered getActiveImage().getFileInfo()[0] instanceof FileInfoDicom");
                     FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0];
-                    System.out.println("55 Have eexecuted FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0]");
+                    //System.out.println("55 Have eexecuted FileInfoDicom fileInfo = (FileInfoDicom)getActiveImage().getFileInfo()[0]");
                     
                     //location of scan
                     center = (String)fileInfo.getTagTable().getValue("0008,0080");
-                    System.out.println("56 center = " + center);
+                    //System.out.println("56 center = " + center);
                     //identification of patient
                     id = (String)fileInfo.getTagTable().getValue("0010,0020");
-                    System.out.println("57 id = " + id);
+                    //System.out.println("57 id = " + id);
                     //date scan taken
                     scanDate = (String)fileInfo.getTagTable().getValue("0008,0020");
-                    System.out.println("58 scanDate = " + scanDate);
+                    //System.out.println("58 scanDate = " + scanDate);
                     //number of pulses
                     kvp = (String)fileInfo.getTagTable().getValue("0018,0060");
-                    System.out.println("59 kvp = " + kvp);
+                    //System.out.println("59 kvp = " + kvp);
                     //field strength
                     mA = (String)fileInfo.getTagTable().getValue("0018,1151");
-                    System.out.println("60 mA = " + mA);
+                    //System.out.println("60 mA = " + mA);
                     //table height (in centimeters)
                     height = (String)fileInfo.getTagTable().getValue("0018,1130");
-                    System.out.println("61 height = " + height);
+                    //System.out.println("61 height = " + height);
                 }
                 
-                System.out.println("62 allPages.size() = " + allPages.size());
+                //System.out.println("62 allPages.size() = " + allPages.size());
                 for( int i=0; i<allPages.size(); i++ )
                 {
-                    System.out.println("63 In for loop i = " + i);
+                    //System.out.println("63 In for loop i = " + i);
                     try {
                         page = (PDPage)allPages.get( i );
                     }
@@ -4234,25 +4236,25 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                     	return;
                     }
                     PDRectangle pageSize = page.findMediaBox();
-                    System.out.println("65 Have executed PDRectangle pageSize = page.findMediaBox()");
+                    //System.out.println("65 Have executed PDRectangle pageSize = page.findMediaBox()");
                     String message = "";
-                    System.out.println("66 message = " + message);
+                    //System.out.println("66 message = " + message);
                     if(i == 0) {
                         message  ="MIPAV: Muscle Segmentation";
-                        System.out.println("67 message = "+ message);
+                        //System.out.println("67 message = "+ message);
                     } else {
                         message = "Slice "+(i-1);
-                        System.out.println("68 message = " + message);
+                        //System.out.println("68 message = " + message);
                         if(id != null) {
                             message += " for "+id;
-                            System.out.println("69 message = " + message);
+                            //System.out.println("69 message = " + message);
                         }
                     }
                     
                     float stringWidth = font.getStringWidth( message );
-                    System.out.println("70 stringWidth = " + stringWidth);
+                    //System.out.println("70 stringWidth = " + stringWidth);
                     float centeredPosition = (pageSize.getWidth() - (stringWidth*fontSize)/1000f)/2f;
-                    System.out.println("71 centeredPosition = " + centeredPosition);
+                    //System.out.println("71 centeredPosition = " + centeredPosition);
                     try {
                         contentStream = new PDPageContentStream(doc, page, false, true);
                     }
@@ -4284,7 +4286,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                     	return;
                     }
                     
-                    System.out.println("76 message = " + message);
+                    //System.out.println("76 message = " + message);
                     try {
                         contentStream.drawString( message );
                     }
@@ -4294,7 +4296,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                     }
                     
                     if(i == 0) { //do first page reporting
-                    	System.out.println("78 Entered if (i == 0)");
+                    	//System.out.println("78 Entered if (i == 0)");
         
                         try {
                     	    contentStream.moveTextPositionByAmount(35, -20);
@@ -4305,7 +4307,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                         }
                         
                         font = PDType1Font.HELVETICA_BOLD;
-                        System.out.println("80 Have executed font = PDType1Font.HELVETICA_BOLD");
+                        //System.out.println("80 Have executed font = PDType1Font.HELVETICA_BOLD");
                         
                         try {
                             contentStream.setFont(font, 12);
@@ -4341,16 +4343,16 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                             	return;
                             }
                         Date date = new Date();
-                        System.out.println("86 Have executed Data date = new Date()");
+                        //System.out.println("86 Have executed Data date = new Date()");
                         String dateStr = dateFormat.format(date);
-                        System.out.println("87 dateStr = " + dateStr); 
+                        //System.out.println("87 dateStr = " + dateStr); 
                         String userName = System.getProperty("user.name");
-                        System.out.println("88 userName = " + userName);
+                        //System.out.println("88 userName = " + userName);
                         String imageName = getActiveImage().getFileInfo()[getViewableSlice()].getFileName();
-                        System.out.println("89 imageName = " + imageName);
+                        //System.out.println("89 imageName = " + imageName);
                         
                         font = PDType1Font.HELVETICA;
-                        System.out.println("90 Have executed font = PDType1Font.HELVETICA");
+                        //System.out.println("90 Have executed font = PDType1Font.HELVETICA");
                         try {
                             contentStream.setFont(font, 12);
                         }
@@ -4579,7 +4581,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                         	return;
                         }
                         font = PDType1Font.HELVETICA_BOLD;
-                        System.out.println("121 Have executed font = PDType1Font.HELVETICA_BOLD");
+                        //System.out.println("121 Have executed font = PDType1Font.HELVETICA_BOLD");
                         try {
                             contentStream.setFont(font, 12);
                         }
@@ -4596,7 +4598,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                         	return;	
                         }
                         font = PDType1Font.HELVETICA;
-                        System.out.println("124 Have executed font = PDType1Font.HELVETICA");
+                        //System.out.println("124 Have executed font = PDType1Font.HELVETICA");
                         try {
                             contentStream.setFont(font, 12);
                         }
@@ -4772,7 +4774,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                             	return;	
                         	}
                             type = "Vol";  
-                            System.out.println("149 type = " + type);
+                            //System.out.println("149 type = " + type);
                         } else {
                         	try {
                                 contentStream.drawString("Area calculations");
@@ -4782,7 +4784,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                             	return;	
                         	}
                             type = "Area";
-                            System.out.println("151 type = " + type);
+                            //System.out.println("151 type = " + type);
                         }
                         
                         //setting up first row
@@ -4939,7 +4941,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                         	return;	
                     	}
                         type = "Area";
-                        System.out.println("173 type = " + type);
+                        //System.out.println("173 type = " + type);
                         try {
                             contentStream.moveTextPositionByAmount(0, -16);
                         }
@@ -5062,20 +5064,20 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                     }
                     
                     Iterator<String> itr = generateVoiItr(all);
-                    System.out.println("191 Have executed Iterator<String> itr = generateVoiItr(all)");
+                    //System.out.println("191 Have executed Iterator<String> itr = generateVoiItr(all)");
                     //run through the calculations
                     while(itr.hasNext()) {
-                    	System.out.println("192 Have entered while(itr.hasNext())");
+                    	//System.out.println("192 Have entered while(itr.hasNext())");
                         Object itrObj = itr.next();
-                        System.out.println("193 Have executed Object itrObj = itr.next()");
+                        //System.out.println("193 Have executed Object itrObj = itr.next()");
                         double totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
                         double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
                         //pixels -> cm^2\
                         PlugInSelectableVOI542a temp;
                         if((temp = voiBuffer.get(itrObj)) != null && temp.getCalcEligible()) {
-                            System.out.println("194 Have entered if((temp = voiBuffer.get(itrObj)) != null && temp.getCalcEligible())");
+                            //System.out.println("194 Have entered if((temp = voiBuffer.get(itrObj)) != null && temp.getCalcEligible())");
                             if(i == 0) {
-                            	System.out.println("195 Have entered i == 0");
+                            	//System.out.println("195 Have entered i == 0");
                                 totalAreaCount = temp.getTotalArea();
                                 fatArea = temp.getFatArea();
                                 leanArea = temp.getLeanArea();
@@ -5086,7 +5088,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                                 ViewUserInterface.getReference().getMessageFrame().append("Compare areas of "+temp.getName()+":\tcount: "+totalAreaCount+"\n", ViewJFrameMessage.DEBUG);
 
                             } else if(multipleSlices) {
-                            	System.out.println("196 Have entered else if (multipleSlices)");
+                            	//System.out.println("196 Have entered else if (multipleSlices)");
                                 int sliceNumber = i-1;
                                 totalAreaCount = temp.getTotalArea(sliceNumber);
                                 fatArea = temp.getFatArea(sliceNumber);
@@ -5097,7 +5099,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                             } 
                         }
                         PDFadd((String)itrObj, fatArea, leanArea, totalAreaCount, meanFatH, meanLeanH, meanTotalH, contentStream);
-                        System.out.println("197 Have executed PDFadd");
+                        //System.out.println("197 Have executed PDFadd");
                     }
                     
                     try {
@@ -5128,7 +5130,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
                     
                 }
         
-                System.out.println("200 pdfFile.toString() = " + pdfFile.toString());
+                //System.out.println("200 pdfFile.toString() = " + pdfFile.toString());
                 try {
                     doc.save( pdfFile.toString() );
                 }
