@@ -1153,8 +1153,8 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 		
 		System.err.println("ruida");
 	
-		for (int i = startSlice - 1; i >= endSlice; i--) {
-	   // for (int i = startSlice - 1; i >= startSlice - 45; i--) {
+	   for (int i = startSlice - 1; i >= endSlice; i--) {
+	   // for (int i = startSlice - 1; i >= startSlice - 3; i--) {
 			System.err.println("slice = " + i);
 
 			ModelImage fatImageSlice = new ModelImage(ModelStorageBase.FLOAT, newExtents, makeImageName(fatImage.getImageName(), "fatImage" + i));
@@ -1208,7 +1208,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 		startSlice = midPt;
 		endSlice = endPt;
 
-		
+	
 		for (int i = startSlice + 1; i <= endPt; i++) {
 			// for (int i = startSlice + 1; i <= startSlice + 3; i++) {
 
@@ -1247,7 +1247,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					   leftLine, rightLine);
 
 		} // end for i loop
-        
+       
 		
 		greImage.getVOIs().removeAllElements();
 		// greImage.addVOIs(voiVectorFinal);
@@ -4822,7 +4822,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				break;
 			}
 
-			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group < GROUP_8))) {
+			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group <= GROUP_8))) {
 				while (distCurrent < distOuter) {
 
 					if (posX <= 0) {
@@ -4878,39 +4878,40 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						
 					}
 					
-					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
-					if (findGrowingPlateGRE) {
-						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
-						while ((fuzzyCIntensityGre == 1) && distCurrent < distOuter) {
-							posX += stepX;
-							posY += stepY;
-							if (posX <= 0) {
-								posX = 5;
-								break;
-							}
-							if (posY <= 0) {
-								posY = 5;
-								break;
-							}
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) { 
+						boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
+						if (findGrowingPlateGRE) {
 							fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
-							distCurrent = (float) Math.sqrt((posX - center.X) * (posX - center.X) + (posY - center.Y) * (posY - center.Y));
+							while ((fuzzyCIntensityGre == 1) && distCurrent < distOuter) {
+								posX += stepX;
+								posY += stepY;
+								if (posX <= 0) {
+									posX = 5;
+									break;
+								}
+								if (posY <= 0) {
+									posY = 5;
+									break;
+								}
+								fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+								distCurrent = (float) Math.sqrt((posX - center.X) * (posX - center.X) + (posY - center.Y) * (posY - center.Y));
+							}
+	
+							fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
+							class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
+							class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
+							class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
+							fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+							class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
+							class2IntensityGre = class2ImageGre.getDouble((int) posX, (int) posY);
+							class3IntensityGre = class3ImageGre.getDouble((int) posX, (int) posY);
+	
+							if (fuzzyCIntensityGre == 2 || fuzzyCIntensityGre == 3)
+								break;
+	
+							continue;
 						}
-
-						fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
-						class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
-						class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
-						class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
-						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
-						class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
-						class2IntensityGre = class2ImageGre.getDouble((int) posX, (int) posY);
-						class3IntensityGre = class3ImageGre.getDouble((int) posX, (int) posY);
-
-						if (fuzzyCIntensityGre == 2 || fuzzyCIntensityGre == 3)
-							break;
-
-						continue;
 					}
-					
 
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
@@ -4934,6 +4935,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				break;
 			}
 			
+		
 			boolean findGREfuzzyCPattern = false;
 			findGREfuzzyCPattern = findGreyRegionOnImage((int) posX, (int) posY, fuzzyCImageGre, 5, 0, FuzzyC);
 			if (findGREfuzzyCPattern) {
@@ -4963,7 +4965,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 				continue;
 			}
-			 
+		
 			
 			fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 			if (fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3) {
@@ -4983,7 +4985,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				}
 			}
 			
-			
+			if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 			boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 			if (findGrowingPlateGRE) {
 				fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -5016,7 +5018,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 				continue;
 			}
-			
+			}
 			
 
 			
@@ -5280,7 +5282,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 			}
 
 
-			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group < GROUP_8))) {
+			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group <= GROUP_8))) {
 				while (distCurrent < distOuter) {
 
 					if (posX <= 0) {
@@ -5331,6 +5333,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -5363,12 +5366,17 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
+					}
 					
 					
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
+					class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
 					class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
-					
+
+					if (fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3)
+						break;
+				
 					fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
 					class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
 					
@@ -5382,6 +5390,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				break;
 			}
 
+			
 			boolean findGREfuzzyCPattern = false;
 			findGREfuzzyCPattern = findGreyRegionOnImage((int) posX, (int) posY, fuzzyCImageGre, 5, 0, FuzzyC);
 			if (findGREfuzzyCPattern) {
@@ -5411,7 +5420,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 				continue;
 			}
-			
+		
            
 			fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 			if (fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3) {
@@ -5431,7 +5440,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				}
 			}
 			
-			
+			if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 			boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 			if (findGrowingPlateGRE) {
 				fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -5464,7 +5473,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 				continue;
 			}
-			
+			}
 			
 
 			
@@ -5732,7 +5741,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 			class2IntensityGre = class2ImageGre.getDouble((int) posX, (int) posY);
 			class3IntensityGre = class3ImageGre.getDouble((int) posX, (int) posY);
 			
-			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group < GROUP_8))) {
+			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group <= GROUP_8))) {
 				while (distCurrent < distOuter) {
 
 					if (posX <= 0) {
@@ -5781,6 +5790,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 					
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -5813,7 +5823,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
-					
+					}
 
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
@@ -5822,6 +5832,20 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
 
 					if (fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3 || fuzzyCIntensityGre == 1 || class1IntensityFat <= 0.1f )
+						break;
+					
+					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
+					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
+					class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
+					class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
+
+					if (fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3)
+						break;
+				
+					fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+					class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
+					
+					if ( class1IntensityGre >= 0.9f || fuzzyCIntensityGre == 1 )
 						break;
 
 					posX += stepX;
@@ -5832,7 +5856,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				break;
 			}
 
-		
+		    
 			boolean findGREfuzzyCPattern = false;
 			findGREfuzzyCPattern = findGreyRegionOnImage((int) posX, (int) posY, fuzzyCImageGre, 5, 0, FuzzyC);
 			if (findGREfuzzyCPattern) {
@@ -5875,7 +5899,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					continue;
 				}
 			}
-		 
+		  
 			
 			// walk around holes
 			fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
@@ -5897,7 +5921,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				// break;
 			}
 			
-			
+			if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 			boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 			if (findGrowingPlateGRE) {
 				fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -5930,7 +5954,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 				continue;
 			}
-			
+			}
 			
 			
 			fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
@@ -6308,7 +6332,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				break;
 			}
 
-			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group < GROUP_8))) {
+			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group <= GROUP_8))) {
 				while (distCurrent < distOuter) {
 
 					if (posX <= 0) {
@@ -6354,6 +6378,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 					
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -6386,7 +6411,8 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
-					
+				 
+					}
 
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
@@ -6396,9 +6422,18 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					if (fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3 || class1IntensityFat <= 0.1f || class2IntensityFat >= 0.9f)
 						break;
 					
+					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
+					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
+					class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
+					class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
+
+					if (fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3)
+						break;
+				
 					fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+					class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
 					
-					if ( fuzzyCIntensityGre == 1 ) 
+					if ( class1IntensityGre >= 0.9f || fuzzyCIntensityGre == 1 )
 						break;
 
 					posX += stepX;
@@ -6410,6 +6445,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 			}
 
 
+		
 			boolean findGREfuzzyCPattern = false;
 			findGREfuzzyCPattern = findGreyRegionOnImage((int) posX, (int) posY, fuzzyCImageGre, 5, 0, FuzzyC);
 			if (findGREfuzzyCPattern) {
@@ -6441,6 +6477,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				continue;
 			}
 		
+		
 			
 			fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 			// walk around holes
@@ -6460,6 +6497,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				}
 			}
 
+			if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 			boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 			if (findGrowingPlateGRE) {
 				fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -6491,6 +6529,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					break;
 
 				continue;
+			}
 			}
 			
 			if (posX <= 0) {
@@ -6632,7 +6671,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				break;
 			}
 
-			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group < GROUP_8))) {
+			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group <= GROUP_8))) {
 				while (distCurrent < distOuter) {
 
 					if (posX <= 0) {
@@ -6679,6 +6718,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -6711,21 +6751,21 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
-					
+					}
 					
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
 					class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
 					class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
 
-
-					if (fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3 )
+					if (fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3)
 						break;
-
+				
 					fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
 					class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
-					// if ( fuzzyCIntensityGre == 1 || class1IntensityGre >= 0.9f ) 
-					// 	break;
+					
+					if ( class1IntensityGre >= 0.9f || fuzzyCIntensityGre == 1 )
+						break;
 					
 					posX += stepX;
 					posY += stepY;
@@ -6736,7 +6776,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 			}
 
 		
-
+            
 			boolean findGREfuzzyCPattern = false;
 			findGREfuzzyCPattern = findGreyRegionOnImage((int) posX, (int) posY, fuzzyCImageGre, 5, 0, FuzzyC);
 			if (findGREfuzzyCPattern) {
@@ -6767,6 +6807,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 				continue;
 			}
+		
 			
 			fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 			// walk around holes
@@ -6789,6 +6830,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				}
 			}
 
+			if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 			boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 			if (findGrowingPlateGRE) {
 				fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -6820,6 +6862,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					break;
 
 				continue;
+			}
 			}
 			
 			if (posX <= 0) {
@@ -6984,7 +7027,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 			class3IntensityGre = class3ImageGre.getDouble((int) posX, (int) posY);
 			
 			
-			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group < GROUP_8))) {
+			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group <= GROUP_8))) {
 
 				while (distCurrent < distOuter) {
 
@@ -7040,6 +7083,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 					
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -7072,6 +7116,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
+					}
 					
 
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
@@ -7097,6 +7142,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				break;
 			}
 
+		
 			boolean findGREfuzzyCPattern = false;
 			findGREfuzzyCPattern = findGreyRegionOnImage((int) posX, (int) posY, fuzzyCImageGre, 5, 0, FuzzyC);
 			if (findGREfuzzyCPattern) {
@@ -7139,6 +7185,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					continue;	
 				}
 			}
+		
 			
 			// walk around holes
 			fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
@@ -7160,7 +7207,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 			}
 
 
-			
+			if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 			boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 			if (findGrowingPlateGRE) {
 				fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -7193,7 +7240,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 				continue;
 			}
-			
+			}
 			
 			
 			if (posX <= 0) {
@@ -7439,7 +7486,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 			class2IntensityGre = class2ImageGre.getDouble((int) posX, (int) posY);
 			class3IntensityGre = class3ImageGre.getDouble((int) posX, (int) posY);
 
-			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group < GROUP_8))) {
+			if ((whichLeg == RIGHT_LEG && (group <= GROUP_3 || group >= GROUP_8)) || (whichLeg == LEFT_LEG && (group >= GROUP_3 || group <= GROUP_8))) {
 
 				while (distCurrent < distOuter) {
 
@@ -7494,6 +7541,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 					
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -7526,7 +7574,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
-					
+					}
 
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
@@ -7551,7 +7599,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				break;
 			}
 
-			/*
+		
 			boolean findGREfuzzyCPattern = false;
 			findGREfuzzyCPattern = findGreyRegionOnImage((int) posX, (int) posY, fuzzyCImageGre, 5, 0, FuzzyC);
 			if (findGREfuzzyCPattern) {
@@ -7578,7 +7626,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				// else continue;
 				continue;
 			}
-			*/ 
+			
 			
 			// walk around holes
 			fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
@@ -7599,6 +7647,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				}
 			}
 			
+			if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 			boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 			if (findGrowingPlateGRE) {
 				fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -7631,7 +7680,8 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 				continue;
 			}
-			
+			}
+		
 
 			if (posX <= 0) {
 				posX = 5;
@@ -7842,6 +7892,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						break;
 					}
 					
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -7874,7 +7925,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
-					
+					}				
 
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
@@ -7890,6 +7941,48 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				    if ( class1IntensityGre >= 0.9f || fuzzyCIntensityGre == 1 )
 				      break;
 					
+				    boolean findEdgeOnGREFuzzyC = findEdgeOnImage((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
+					
+					if (findEdgeOnGREFuzzyC) {
+						
+						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+						
+						while ((fuzzyCIntensityGre == 1) && distCurrent < distOuter) {
+							posX += stepX;
+							posY += stepY;
+
+							if (posX <= 0) {
+								posX = 5;
+								break;
+							}
+							if (posY <= 0) {
+								posY = 5;
+								break;
+							}
+
+							fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+							distCurrent = (float) Math.sqrt((posX - center.X) * (posX - center.X) + (posY - center.Y) * (posY - center.Y));
+						}
+
+						fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
+						class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
+						class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
+						class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
+						greIntensity = greImageSlice.getDouble((int) posX, (int) posY);
+						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+						class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
+						class2IntensityGre = class2ImageGre.getDouble((int) posX, (int) posY);
+						class3IntensityGre = class3ImageGre.getDouble((int) posX, (int) posY);
+
+						if ( fuzzyCIntensityGre == 2 || fuzzyCIntensityGre == 3 )
+							break;
+
+						if ( fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3 )
+							break;
+						
+						
+					}
+				    
 					posX += stepX;
 					posY += stepY;
 
@@ -7916,6 +8009,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				}
 			}
 			
+			if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 			boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 			if (findGrowingPlateGRE) {
 				fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -7947,6 +8041,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					break;
 
 				continue;
+			}
 			}
 			
 			if (posX <= 0) {
@@ -8104,6 +8199,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -8136,7 +8232,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
-					
+					}
 					
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
@@ -8151,6 +8247,48 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 				
 					if ( class1IntensityGre >= 0.7f || fuzzyCIntensityGre == 1 )
 					 	break;
+					
+					boolean findEdgeOnGREFuzzyC = findEdgeOnImage((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
+					
+					if (findEdgeOnGREFuzzyC) {
+						
+						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+						
+						while ((fuzzyCIntensityGre == 1) && distCurrent < distOuter) {
+							posX += stepX;
+							posY += stepY;
+
+							if (posX <= 0) {
+								posX = 5;
+								break;
+							}
+							if (posY <= 0) {
+								posY = 5;
+								break;
+							}
+
+							fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+							distCurrent = (float) Math.sqrt((posX - center.X) * (posX - center.X) + (posY - center.Y) * (posY - center.Y));
+						}
+
+						fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
+						class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
+						class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
+						class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
+						greIntensity = greImageSlice.getDouble((int) posX, (int) posY);
+						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+						class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
+						class2IntensityGre = class2ImageGre.getDouble((int) posX, (int) posY);
+						class3IntensityGre = class3ImageGre.getDouble((int) posX, (int) posY);
+
+						if ( fuzzyCIntensityGre == 2 || fuzzyCIntensityGre == 3 )
+							break;
+
+						if ( fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3 )
+							break;
+						
+						
+					}
 					
 					posX += stepX;
 					posY += stepY;
@@ -8303,6 +8441,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 					
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -8335,7 +8474,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
-					
+					}
 
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
@@ -8353,7 +8492,47 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					
 					// if ( fuzzyCIntensityGre >= 2 || fuzzyCIntensityGre == 3 )
 					//  	break;
+					boolean findEdgeOnGREFuzzyC = findEdgeOnImage((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					
+					if (findEdgeOnGREFuzzyC) {
+						
+						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+						
+						while ((fuzzyCIntensityGre == 1) && distCurrent < distOuter) {
+							posX += stepX;
+							posY += stepY;
+
+							if (posX <= 0) {
+								posX = 5;
+								break;
+							}
+							if (posY <= 0) {
+								posY = 5;
+								break;
+							}
+
+							fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+							distCurrent = (float) Math.sqrt((posX - center.X) * (posX - center.X) + (posY - center.Y) * (posY - center.Y));
+						}
+
+						fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
+						class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
+						class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
+						class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
+						
+						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+						class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
+						class2IntensityGre = class2ImageGre.getDouble((int) posX, (int) posY);
+						class3IntensityGre = class3ImageGre.getDouble((int) posX, (int) posY);
+
+						if ( fuzzyCIntensityGre == 2 || fuzzyCIntensityGre == 3 )
+							break;
+
+						if ( fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3 )
+							break;
+						
+						
+					}
 					
 					posX += stepX;
 					posY += stepY;
@@ -8501,6 +8680,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 					
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -8532,6 +8712,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 							break;
 
 						continue;
+					}
 					}
 					
 
@@ -8693,7 +8874,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 
-					
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -8726,7 +8907,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
-					
+					}
 					
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
@@ -8902,6 +9083,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -8934,7 +9116,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 						continue;
 					}
-					
+					}
 					
 					fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
 					class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
@@ -8949,7 +9131,46 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 					
 					// if ( class1IntensityGre >= 0.7f || fuzzyCIntensityGre == 1 )
 					// 	break;
+					boolean findEdgeOnGREFuzzyC = findEdgeOnImage((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					
+					if (findEdgeOnGREFuzzyC) {
+						
+						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+						
+						while ((fuzzyCIntensityGre == 1) && distCurrent < distOuter) {
+							posX += stepX;
+							posY += stepY;
+
+							if (posX <= 0) {
+								posX = 5;
+								break;
+							}
+							if (posY <= 0) {
+								posY = 5;
+								break;
+							}
+
+							fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+							distCurrent = (float) Math.sqrt((posX - center.X) * (posX - center.X) + (posY - center.Y) * (posY - center.Y));
+						}
+
+						fuzzyCIntensityFat = fuzzyCImageFat.getDouble((int) posX, (int) posY);
+						class1IntensityFat = class1ImageFat.getDouble((int) posX, (int) posY);
+						class2IntensityFat = class2ImageFat.getDouble((int) posX, (int) posY);
+						class3IntensityFat = class3ImageFat.getDouble((int) posX, (int) posY);
+						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
+						class1IntensityGre = class1ImageGre.getDouble((int) posX, (int) posY);
+						class2IntensityGre = class2ImageGre.getDouble((int) posX, (int) posY);
+						class3IntensityGre = class3ImageGre.getDouble((int) posX, (int) posY);
+
+						if ( fuzzyCIntensityGre == 2 || fuzzyCIntensityGre == 3 )
+							break;
+
+						if ( fuzzyCIntensityFat == 2 || fuzzyCIntensityFat == 3 )
+							break;
+						
+						
+					}
 					posX += stepX;
 					posY += stepY;
 
@@ -9106,6 +9327,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						}
 					}
 
+					if ( posY >= (center.Y - 50) && posY <= (center.Y + 50) && posX >= (center.X - 50) && posX <= (center.X + 50)) {
 					boolean findGrowingPlateGRE = findGrowingPlate((int) posX, (int) posY, fuzzyCImageGre, 30, 50, FuzzyC_GRE_LOW);
 					if (findGrowingPlateGRE) {
 						fuzzyCIntensityGre = fuzzyCImageGre.getDouble((int) posX, (int) posY);
@@ -9137,6 +9359,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 							break;
 
 						continue;
+					}
 					}
 					
 					
@@ -9689,7 +9912,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 		// new ViewJFrameImage(class1ImageFat);
 		// new ViewJFrameImage(class2ImageFat);
 		// new ViewJFrameImage(class3ImageFat);
-		// new ViewJFrameImage(fuzzyCImageFat);
+	    // new ViewJFrameImage(fuzzyCImageFat);
 
 		// VOIBaseVector current_va =
 		// greImageSlice.getVOIs().VOIAt(2).getCurves();
@@ -9751,39 +9974,39 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 
 		if ( firstTimeCheckMidShaft == false ) {
 			
-			if ( shaftDistance <= 70 ) {
+			if ( shaftDistance <= 60 ) {
 				if ((whichLeg == LEFT_LEG && group <= GROUP_6) || (whichLeg == RIGHT_LEG && group <= GROUP_5)) {
 					if (whichLeg == LEFT_LEG) {
-						close_length = 50;
+						close_length = 30;
 					} else {
-						close_length = 45;
+						close_length = 30;
 					}
 		
 				}
 		
 				if ((whichLeg == LEFT_LEG && group >= GROUP_5) || (whichLeg == RIGHT_LEG && group >= GROUP_6)) {
 					if (whichLeg == LEFT_LEG) {
-						close_length = 50;
+						close_length = 30;
 					} else {
-						close_length = 45;
+						close_length = 30;
 					}
 		
 				}
 			} else {
 				if ((whichLeg == LEFT_LEG && group <= GROUP_6) || (whichLeg == RIGHT_LEG && group <= GROUP_5)) {
 					if (whichLeg == LEFT_LEG) {
-						close_length = 70;
+						close_length = 60;
 					} else {
-						close_length = 65;
+						close_length = 60;
 					}
 		
 				}
 		
 				if ((whichLeg == LEFT_LEG && group >= GROUP_5) || (whichLeg == RIGHT_LEG && group >= GROUP_6)) {
 					if (whichLeg == LEFT_LEG) {
-						close_length = 70;
+						close_length = 60;
 					} else {
-						close_length = 65;
+						close_length = 60;
 					}
 		
 				}
@@ -11043,7 +11266,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						distanceOuter = distance * (1d + 0.01d);
 						distanceInner = distance * (1d - 0.20d);
 					} else if (group == GROUP_5) {
-						distanceOuter = distance * (1d + 0.05d);
+						distanceOuter = distance * (1d + 0.01d);
 						distanceInner = distance * (1d - 0.10d);
 					} else if (group == GROUP_6) {
 						distanceOuter = distance * (1d + 0.05d);
@@ -11053,7 +11276,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						distanceInner = distance * (1d - 0.10d);
 					} else if (group == GROUP_8) {
 						distanceOuter = distance * (1d + 0.01d);
-						distanceInner = distance * (1d - 0.20d);
+						distanceInner = distance * (1d - 0.40d);
 					} else if (group == GROUP_9) {
 						distanceOuter = distance * (1d + 0.05d);
 						distanceInner = distance * (1d - 0.40d);
@@ -11114,7 +11337,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						distanceInner = distance * (1d - 0.15d);
 					} else if (group == GROUP_6) {
 						distanceOuter = distance * (1d + 0.05d);
-						distanceInner = distance * (1d - 0.10d);
+						distanceInner = distance * (1d - 0.05d);
 					} else if (group == GROUP_7) {
 						distanceOuter = distance * (1d + 0.05d);
 						distanceInner = distance * (1d - 0.10d);
@@ -11320,13 +11543,13 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						distanceInner = distance * (1d - 0.05d);
 					} else if (group == GROUP_8) {
 						distanceOuter = distance * (1d + 0.05d);
-						distanceInner = distance * (1d - 0.05d);
+						distanceInner = distance * (1d - 0.25d);
 					} else if (group == GROUP_9) {
 						distanceOuter = distance * (1d + 0.05d);
-						distanceInner = distance * (1d - 0.05d);
+						distanceInner = distance * (1d - 0.45d);
 					} else if (group == GROUP_10) {
 						distanceOuter = distance * (1d + 0.05d);
-						distanceInner = distance * (1d - 0.05d);
+						distanceInner = distance * (1d - 0.55d);
 					}
 				} else if (whichLeg == RIGHT_LEG) {
 					if (group == GROUP_1) {
@@ -11386,13 +11609,13 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						distanceInner = distance * (1d - 0.05d);
 					} else if (group == GROUP_8) {
 						distanceOuter = distance * (1d + 0.05d);
-						distanceInner = distance * (1d - 0.10d);
+						distanceInner = distance * (1d - 0.25d);
 					} else if (group == GROUP_9) {
 						distanceOuter = distance * (1d + 0.05d);
-						distanceInner = distance * (1d - 0.10d);
+						distanceInner = distance * (1d - 0.35d);
 					} else if (group == GROUP_10) {
 						distanceOuter = distance * (1d + 0.05d);
-						distanceInner = distance * (1d - 0.1d);
+						distanceInner = distance * (1d - 0.50);
 					}
 				} else if (whichLeg == RIGHT_LEG) {
 					if (group == GROUP_1) {
@@ -11443,7 +11666,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						distanceInner = distance * (1d - 0.20d);
 					} else if (group == GROUP_5) {
 						distanceOuter = distance * (1d + 0.01d);
-						distanceInner = distance * (1d - 0.20d);
+						distanceInner = distance * (1d - 0.10d);
 					} else if (group == GROUP_6) {
 						distanceOuter = distance * (1d + 0.01d);
 						distanceInner = distance * (1d - 0.15d);
@@ -11553,15 +11776,15 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 		resultVOIOuter.importCurve(pt_outer);
 
 		fatImageSlice.addVOIs(voiVectorLines);
-		new ViewJFrameImage(fatImageSlice); // Cheng1, emergency
+		// new ViewJFrameImage(fatImageSlice); // Cheng1, emergency
 
-		// ModelImage cloneImage = (ModelImage) fatImageSlice.clone();
-		// VOIVector voiVectorInOut = new VOIVector();
-		// voiVectorInOut.add(resultVOIBoundary);
-		// voiVectorInOut.add(resultVOIInner);
-		// voiVectorInOut.add(resultVOIOuter);
-		// cloneImage.addVOIs(voiVectorInOut);
-		// new ViewJFrameImage(cloneImage); // Cheng1, emergency
+		ModelImage cloneImage = (ModelImage) fatImageSlice.clone();
+		VOIVector voiVectorInOut = new VOIVector();
+		voiVectorInOut.add(resultVOIBoundary);
+		voiVectorInOut.add(resultVOIInner);
+		voiVectorInOut.add(resultVOIOuter);
+		cloneImage.addVOIs(voiVectorInOut);
+		new ViewJFrameImage(cloneImage); // Cheng1, emergency
 	}
 
 	private void findBoundingContour_condyle(int sliceNumber, VOI resultVOIBoundary, VOI resultVOIInner, VOI resultVOIOuter, Vector3f center,
@@ -11665,7 +11888,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						distanceOuter = distance * (1d + 0.05d);
 						distanceInner = distance * (1d - 0.20d);
 					} else if (group == GROUP_3) {
-						distanceOuter = distance * (1d + 0.10d);
+						distanceOuter = distance * (1d + 0.05d);
 						distanceInner = distance * (1d - 0.20d);
 					} else if (group == GROUP_4) {
 						distanceOuter = distance * (1d + 0.05d);
@@ -11681,7 +11904,7 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 						distanceInner = distance * (1d - 0.20d);
 					} else if (group == GROUP_8) {
 						distanceOuter = distance * (1d + 0.05d);
-						distanceInner = distance * (1d - 0.20d);
+						distanceInner = distance * (1d - 0.40d);
 					} else if (group == GROUP_9) {
 						distanceOuter = distance * (1d + 0.05d);
 						distanceInner = distance * (1d - 0.50d);
@@ -12120,15 +12343,15 @@ public class JDialogFemurTraceSectionsNetherland extends JDialogBase implements 
 		resultVOIOuter.importCurve(pt_outer);
 
 		fatImageSlice.addVOIs(voiVectorLines);
-		new ViewJFrameImage(fatImageSlice); // Cheng1, emergency
+		// new ViewJFrameImage(fatImageSlice); // Cheng1, emergency
 
-		// ModelImage cloneImage = (ModelImage) fatImageSlice.clone();
-		// VOIVector voiVectorInOut = new VOIVector();
-		// voiVectorInOut.add(resultVOIBoundary);
-		// voiVectorInOut.add(resultVOIInner);
-		// voiVectorInOut.add(resultVOIOuter);
-		// cloneImage.addVOIs(voiVectorInOut);
-		// new ViewJFrameImage(cloneImage); // Cheng1, emergency
+		ModelImage cloneImage = (ModelImage) fatImageSlice.clone();
+		VOIVector voiVectorInOut = new VOIVector();
+		voiVectorInOut.add(resultVOIBoundary);
+		voiVectorInOut.add(resultVOIInner);
+		voiVectorInOut.add(resultVOIOuter);
+		cloneImage.addVOIs(voiVectorInOut);
+		new ViewJFrameImage(cloneImage); // Cheng1, emergency
 	}
 
 	private void findSections(Vector3f[] inContour, int contourSize, float[][] sections, Vector3f center) {
