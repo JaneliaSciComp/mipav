@@ -181,6 +181,11 @@ public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase impleme
                 performDialog();
                 break;
                 
+            case Neck:
+            	buildNeckDialog();
+            	performDialog();
+            	break;
+                
             case Custom:
             	customDialog = initDialogBox();
             	customDialog.setVisible(true);
@@ -403,6 +408,60 @@ public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase impleme
 	    performFileSave(extendable, "Abdomen");
 	    
     }
+	
+	/**
+	 *   Builds neck dialog.
+	 */
+	private void buildNeckDialog() {
+		int imageSize = 1;
+    	if(srcImage.getNDims() > 2)
+    		imageSize = srcImage.getExtents()[2];
+    	
+    	voiList = new PlugInSelectableVOI542a[3][];
+    	//String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
+    	voiList[0] = new PlugInSelectableVOI542a[3];
+    	voiList[0][0] = new PlugInSelectableVOI542a("Neck", true, 1, 0, false, true, imageSize, 0, Color.ORANGE);
+    	voiList[0][1] = new PlugInSelectableVOI542a("Subcutaneous area", true, 1, 0, false, true, imageSize, 1, Color.RED);
+    	voiList[0][2] = new PlugInSelectableVOI542a("Phantom", true, 1, 0, false, false, imageSize, Color.GREEN);
+    	
+    	voiList[1] = new PlugInSelectableVOI542a[1];
+    	voiList[1][0] = new PlugInSelectableVOI542a("Bone sample", true, 1, 1, false, false, imageSize, Color.ORANGE);
+    	
+    	voiList[2] = new PlugInSelectableVOI542a[7];
+	    voiList[2][0] = new PlugInSelectableVOI542a("Left Sternomastoid", true, 1, 2, false, true, imageSize, 2, Color.ORANGE);
+    	voiList[2][1] = new PlugInSelectableVOI542a("Right Sternomastoid", true, 1, 2, false, true, imageSize, 3, Color.ORANGE);
+	    voiList[2][2] = new PlugInSelectableVOI542a("Left Paraspinus", true, 1, 2, true, true, imageSize, 4, Color.RED);
+    	voiList[2][3] = new PlugInSelectableVOI542a("Right Paraspinus", true, 1, 2, true, true, imageSize, 5, Color.RED);
+	    voiList[2][4] = new PlugInSelectableVOI542a("Left Trapezius", true, 1, 2, true, true, imageSize, 6, Color.GREEN);
+    	voiList[2][5] = new PlugInSelectableVOI542a("Right Trapezius", true, 1, 2, true, true, imageSize, 7, Color.GREEN);
+    	
+    	voiList[2][6] = new PlugInSelectableVOI542a("Water sample", true, 1, 1, false, false, imageSize, Color.CYAN);
+    	
+    	titles = new String[3];
+	    titles[0] = "Neck";
+	    titles[1] = "Bone";
+	    titles[2] = "Muscles";
+	     
+	    symmetry = PlugInMuscleImageDisplay542a.Symmetry.LEFT_RIGHT;
+	    imageType = PlugInMuscleImageDisplay542a.ImageType.Neck;
+	    
+	    String extendable = "Start Pane: Neck"+
+		    	System.getProperty("line.separator")+"Start Voi: Neck"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"End Voi"+
+		    	System.getProperty("line.separator")+"Start Voi: Subcutaneous area"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+		    	System.getProperty("line.separator")+"Start Voi: Phantom"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"End Voi"+
+		    	System.getProperty("line.separator")+"End Pane"+
+		    	System.getProperty("line.separator")+"Start Pane: Bone"+
+		    	System.getProperty("line.separator")+"Start Voi: Bone sample"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"End Voi"+
+		    	System.getProperty("line.separator")+"End Pane"+
+		    	System.getProperty("line.separator")+"Start Pane: Muscles"+
+		    	System.getProperty("line.separator")+"Start Voi: Sternomastoid"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+		    	System.getProperty("line.separator")+"Start Voi: Paraspinus"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+		    	System.getProperty("line.separator")+"Start Voi: Trapezius"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+		    	System.getProperty("line.separator")+"Start Voi: Water sample"+System.getProperty("line.separator")+"Color: 0,255,255"+System.getProperty("line.separator")+"End Voi"+
+		    	System.getProperty("line.separator")+"End Pane";
+		    
+		    performFileSave(extendable, "Neck");
+	}
     
     /**
 	 *   Builds thigh dialogue.
