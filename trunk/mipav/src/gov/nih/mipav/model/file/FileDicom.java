@@ -3555,6 +3555,7 @@ public class FileDicom extends FileDicomBase {
 
         groupWord = getUnsignedShort(bigEndian);
         elementWord = getUnsignedShort(bigEndian);
+        
         if ((groupWord == 0x7FE0) && (elementWord == 0x0008)) {
         	haveFloatPixelData = true;
         	fileInfo.setDataType(ModelStorageBase.FLOAT);
@@ -4531,16 +4532,23 @@ public class FileDicom extends FileDicomBase {
             table.setValue("0028,9110", seq, -1);
             if (pixelSpacingIndex >= 0) {
             	String xyPixelSpacingString = (String) table.getValue("0028,0030");
+            	// VM = 2 so don't reduce length to 16
             	item.setValue("0028,0030", xyPixelSpacingString);
             	excludeVector.add(pixelSpacingIndex);
             }
             if (sliceThicknessIndex >= 0) {
             	String sliceThicknessString = (String) table.getValue("0018,0050");
+            	if (sliceThicknessString.length() > 16) {
+            		sliceThicknessString = reduceStringLengthTo16(sliceThicknessString);
+            	}
             	item.setValue("0018,0050", sliceThicknessString);
             	excludeVector.add(sliceThicknessIndex);
             }
             if (spacingBetweenSlicesIndex >= 0) {
             	String spacingBetweenSlicesString = (String)table.getValue("0018,0088");
+            	if (spacingBetweenSlicesString.length() > 16) {
+            		spacingBetweenSlicesString = reduceStringLengthTo16(spacingBetweenSlicesString);
+            	}
             	item.setValue("0018,0088", spacingBetweenSlicesString);
             	excludeVector.add(spacingBetweenSlicesIndex);
             }
@@ -4566,6 +4574,9 @@ public class FileDicom extends FileDicomBase {
             seqPos.setWriteAsUnknownLength(true);
             table.setValue("0020,9113", seqPos, -1);
             String imagePositionString = (String)table.getValue("0020,0032");
+            if (imagePositionString.length() > 16) {
+        		imagePositionString = reduceStringLengthTo16(imagePositionString);
+        	}
             itemPos.setValue("0020,0032", imagePositionString);
             excludeVector.add(imagePositionIndex);
             itemPos.setWriteAsUnknownLength(false); // items are always written using known length
@@ -4590,6 +4601,7 @@ public class FileDicom extends FileDicomBase {
             seqOrient.setWriteAsUnknownLength(true);
             table.setValue("0020,9116", seqOrient, -1);
             String imageOrientationString = (String)table.getValue("0020,0037");
+            // VM = 6 so don't reduce length to 16
             itemOrient.setValue("0020,0037", imageOrientationString);
             excludeVector.add(imageOrientationIndex);
             itemOrient.setWriteAsUnknownLength(false); // items are always written using known length
@@ -4691,6 +4703,31 @@ public class FileDicom extends FileDicomBase {
         } else {
             writeInt(imageLength, endianess);
         }
+    }
+    
+    String reduceStringLengthTo16(String str) {
+    	String reducedString;
+    	double value = Double.valueOf(str);
+    	BigDecimal bd = new BigDecimal(value);
+    	int nonNumbers = 0;
+    	CharSequence period = ".";
+    	if (str.contains(period)) {
+    		nonNumbers++;
+    	}
+    	CharSequence Exp = "E";
+    	CharSequence exp = "e";
+    	if ((str.contains(Exp)) || (str.contains(exp))) {
+    		nonNumbers++;
+    	}
+    	for (int i = 0; i < str.length(); i++) {
+    		if ((str.substring(i,i+1).equals("+")) || (str.substring(i,i+1).equals("-"))) {
+    			nonNumbers++;
+    		}
+    	}
+    	MathContext mc = new MathContext(16 - nonNumbers, RoundingMode.HALF_UP);
+        BigDecimal rounded = bd.round(mc);
+        reducedString = rounded.toString();
+        return reducedString;
     }
 
     /**
