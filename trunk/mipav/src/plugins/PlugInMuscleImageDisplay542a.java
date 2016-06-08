@@ -205,6 +205,9 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
         /** Denotes that the srcImg is two thighs. */
         Thigh,
         
+        /** Denotes that the srcImg is a neck. */
+        Neck,
+        
         /** Custom means a user defined body type has been created or loaded. */
         Custom, 
         
