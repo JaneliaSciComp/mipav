@@ -57,6 +57,9 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
     /**Radio button to denote image is abdomen CT*/
     private JRadioButton abdomenRadio;
     
+    /** Radio button to denote image is neck CT*/
+    private JRadioButton neckRadio;
+    
     /**Alternate configs in user-dir*/
     private JRadioButton[] extraRadio;
     
@@ -249,6 +252,9 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         abdomenRadio = new JRadioButton("Abdomen");
         abdomenRadio.setFont(MipavUtil.font12);
         
+        neckRadio = new JRadioButton("Neck");
+        neckRadio.setFont(MipavUtil.font12);
+        
         extraRadio = new JRadioButton[validConfig.size()];
         for(int i=0; i<validConfig.size(); i++) {
         	extraRadio[i] = new JRadioButton(validConfig.get(i));
@@ -262,6 +268,8 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
             twoThighRadio.setSelected(true);
         } else if (imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Abdomen)) {
             abdomenRadio.setSelected(true);
+        } else if (imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Neck)) {
+            neckRadio.setSelected(true);
         } else {
         	customRadio.setSelected(true);
         }
@@ -269,6 +277,7 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         ButtonGroup group = new ButtonGroup();
         group.add(twoThighRadio);
         group.add(abdomenRadio);
+        group.add(neckRadio);
         for(int i=0; i<extraRadio.length; i++) {
         	group.add(extraRadio[i]);
         }
@@ -290,6 +299,8 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         mainPanel.add(twoThighRadio, gbc);
         gbc.gridx = 1;
         mainPanel.add(abdomenRadio, gbc);
+        gbc.gridx = 2;
+        mainPanel.add(neckRadio, gbc);
         for(int i=0; i<extraRadio.length; i++) {
         	if((gbc.gridx+1)%3 == 0) {
         		gbc.gridy++;
@@ -335,6 +346,8 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
             imageType = PlugInMuscleImageDisplay542a.ImageType.Thigh;
         } else if (abdomenRadio.isSelected()) {
             imageType = PlugInMuscleImageDisplay542a.ImageType.Abdomen;
+        } else if (neckRadio.isSelected()) {
+            imageType = PlugInMuscleImageDisplay542a.ImageType.Neck;
         } else if (customRadio.isSelected()) {
         	imageType = PlugInMuscleImageDisplay542a.ImageType.Custom;
         } else {
