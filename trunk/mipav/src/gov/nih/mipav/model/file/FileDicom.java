@@ -4533,7 +4533,7 @@ public class FileDicom extends FileDicomBase {
             if (pixelSpacingIndex >= 0) {
             	String xyPixelSpacingString = (String) table.getValue("0028,0030");
             	// VM = 2 so don't reduce length to 16
-            	item.setValue("0028,0030", xyPixelSpacingString);
+            	item.setValue("0028,0030", xyPixelSpacingString, xyPixelSpacingString.length());
             	excludeVector.add(pixelSpacingIndex);
             }
             if (sliceThicknessIndex >= 0) {
@@ -4541,7 +4541,7 @@ public class FileDicom extends FileDicomBase {
             	if (sliceThicknessString.length() > 16) {
             		sliceThicknessString = reduceStringLengthTo16(sliceThicknessString);
             	}
-            	item.setValue("0018,0050", sliceThicknessString);
+            	item.setValue("0018,0050", sliceThicknessString, sliceThicknessString.length());
             	excludeVector.add(sliceThicknessIndex);
             }
             if (spacingBetweenSlicesIndex >= 0) {
@@ -4549,7 +4549,7 @@ public class FileDicom extends FileDicomBase {
             	if (spacingBetweenSlicesString.length() > 16) {
             		spacingBetweenSlicesString = reduceStringLengthTo16(spacingBetweenSlicesString);
             	}
-            	item.setValue("0018,0088", spacingBetweenSlicesString);
+            	item.setValue("0018,0088", spacingBetweenSlicesString, spacingBetweenSlicesString.length());
             	excludeVector.add(spacingBetweenSlicesIndex);
             }
             item.setWriteAsUnknownLength(false); // items are always written using known length
@@ -4577,7 +4577,7 @@ public class FileDicom extends FileDicomBase {
             if (imagePositionString.length() > 16) {
         		imagePositionString = reduceStringLengthTo16(imagePositionString);
         	}
-            itemPos.setValue("0020,0032", imagePositionString);
+            itemPos.setValue("0020,0032", imagePositionString, imagePositionString.length());
             excludeVector.add(imagePositionIndex);
             itemPos.setWriteAsUnknownLength(false); // items are always written using known length
             seqTagPos = table.get("0020,9113");
@@ -4602,7 +4602,7 @@ public class FileDicom extends FileDicomBase {
             table.setValue("0020,9116", seqOrient, -1);
             String imageOrientationString = (String)table.getValue("0020,0037");
             // VM = 6 so don't reduce length to 16
-            itemOrient.setValue("0020,0037", imageOrientationString);
+            itemOrient.setValue("0020,0037", imageOrientationString, imageOrientationString.length());
             excludeVector.add(imageOrientationIndex);
             itemOrient.setWriteAsUnknownLength(false); // items are always written using known length
             seqTagOrient = table.get("0020,9116");
