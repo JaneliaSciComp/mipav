@@ -16106,7 +16106,7 @@ public class FileIO {
             	// 1.2.840.10008.5.1.4.1.1.7.3 Multiframe Grayscale Word Secondary Capture Image Storage
             	// 1.2.840.10008.5.1.4.1.1.7.2 Multiframe True Color Secondary Capture Image Storage
             	if (choice.dicomType() != null) {
-	                final String str = choice.dicomType() + " ";
+	                final String str = choice.dicomType();
 	                myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
 	                myFileInfo.getTagTable().setValue("0002,0003", str, str.length());
 	                myFileInfo.getTagTable().setValue("0008,0016", str, str.length());
@@ -16122,7 +16122,7 @@ public class FileIO {
 
                 if (choice.okayPressed()) {
                 	if (choice.dicomType() != null) {
-	                    str = choice.dicomType() + " ";
+	                    str = choice.dicomType();
 	                    myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
 	                    myFileInfo.getTagTable().setValue("0002,0003", str, str.length());
 	                    myFileInfo.getTagTable().setValue("0008,0016", str, str.length());
