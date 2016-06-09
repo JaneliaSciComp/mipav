@@ -4574,9 +4574,7 @@ public class FileDicom extends FileDicomBase {
             seqPos.setWriteAsUnknownLength(true);
             table.setValue("0020,9113", seqPos, -1);
             String imagePositionString = (String)table.getValue("0020,0032");
-            if (imagePositionString.length() > 16) {
-        		imagePositionString = reduceStringLengthTo16(imagePositionString);
-        	}
+            // VM = 3 so don't reduce length to 16
             itemPos.setValue("0020,0032", imagePositionString, imagePositionString.length());
             excludeVector.add(imagePositionIndex);
             itemPos.setWriteAsUnknownLength(false); // items are always written using known length
