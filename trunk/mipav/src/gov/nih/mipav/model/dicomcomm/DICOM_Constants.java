@@ -65,29 +65,29 @@ public class DICOM_Constants {
 
     /** DICOM Protocol Version - Default = 1. */
     public static final int PROTOCOLVERSION = 1;
-
-    /** Application context UID = 1.2.840.10008.3.1.1.1 */
-    public static final String UID_ApplicationContext = "1.2.840.10008.3.1.1.1";
-
-    /** Verification UID = 1.2.840.10008.1.1 */
-    public static final String UID_Verification = "1.2.840.10008.1.1";
-
-    /** CR Storage UID = 1.2.840.10008.5.1.4.1.1.1 */
-    public static final String UID_CRStorage = "1.2.840.10008.5.1.4.1.1.1";
-
-    /** CT Storage UID = 1.2.840.10008.5.1.4.1.1.2 */
-    public static final String UID_CTStorage = "1.2.840.10008.5.1.4.1.1.2";
-
-    /** Old US MultiframeStorage UID = 1.2.840.10008.5.1.4.1.1.3. Retired in 1998. */
-    public static final String UID_OldUSMultiframeStorage = "1.2.840.10008.5.1.4.1.1.3"; // retired 1998
-
-    /** US Multiframe Storage UID = 1.2.840.10008.5.1.4.1.1.3.1. */
-    public static final String UID_USMultiframeStorage = "1.2.840.10008.5.1.4.1.1.3.1";
-
-    /** MR Storage UID = 1.2.840.10008.5.1.4.1.1.4 */
-    public static final String UID_MRStorage = "1.2.840.10008.5.1.4.1.1.4";
     
     public static final Character nullChar = Character.MIN_VALUE;
+
+    /** Application context UID = 1.2.840.10008.3.1.1.1 */
+    public static final String UID_ApplicationContext = "1.2.840.10008.3.1.1.1" + String.valueOf(nullChar);
+
+    /** Verification UID = 1.2.840.10008.1.1 */
+    public static final String UID_Verification = "1.2.840.10008.1.1" + String.valueOf(nullChar);
+
+    /** CR Storage UID = 1.2.840.10008.5.1.4.1.1.1 */
+    public static final String UID_CRStorage = "1.2.840.10008.5.1.4.1.1.1" + String.valueOf(nullChar);
+
+    /** CT Storage UID = 1.2.840.10008.5.1.4.1.1.2 */
+    public static final String UID_CTStorage = "1.2.840.10008.5.1.4.1.1.2 + String.valueOf(nullChar)";
+
+    /** Old US MultiframeStorage UID = 1.2.840.10008.5.1.4.1.1.3. Retired in 1998. */
+    public static final String UID_OldUSMultiframeStorage = "1.2.840.10008.5.1.4.1.1.3" + String.valueOf(nullChar); // retired 1998
+
+    /** US Multiframe Storage UID = 1.2.840.10008.5.1.4.1.1.3.1. */
+    public static final String UID_USMultiframeStorage = "1.2.840.10008.5.1.4.1.1.3.1 + String.valueOf(nullChar)";
+
+    /** MR Storage UID = 1.2.840.10008.5.1.4.1.1.4 */
+    public static final String UID_MRStorage = "1.2.840.10008.5.1.4.1.1.4" + String.valueOf(nullChar);
 
     /** Enhanced MR Storage UID = 1.2.840.10008.5.1.4.1.1.4.1 */
     public static final String UID_EnhancedMRStorage = "1.2.840.10008.5.1.4.1.1.4.1" + String.valueOf(nullChar);
@@ -99,22 +99,22 @@ public class DICOM_Constants {
     public static final String UID_EnhancedXAStorage = "1.2.840.10008.5.1.4.1.1.12.1.1";
 
     /** Old NM Storage UID = 1.2.840.10008.5.1.4.1.1.5 */
-    public static final String UID_OldNMStorage = "1.2.840.10008.5.1.4.1.1.5";
+    public static final String UID_OldNMStorage = "1.2.840.10008.5.1.4.1.1.5" + String.valueOf(nullChar);
 
     /** Old US Storage UID = 1.2.840.10008.5.1.4.1.1.6. Retired 1998 */
-    public static final String UID_OldUSStorage = "1.2.840.10008.5.1.4.1.1.6"; // retired 1998
+    public static final String UID_OldUSStorage = "1.2.840.10008.5.1.4.1.1.6" + String.valueOf(nullChar); // retired 1998
 
     /** US Storage UID = 1.2.840.10008.5.1.4.1.1.6.1 */
-    public static final String UID_USStorage = "1.2.840.10008.5.1.4.1.1.6.1";
+    public static final String UID_USStorage = "1.2.840.10008.5.1.4.1.1.6.1" + String.valueOf(nullChar);
 
     /** SC (Secondary Capture) Storage UID = 1.2.840.10008.5.1.4.1.1.7 */
-    public static final String UID_SCStorage = "1.2.840.10008.5.1.4.1.1.7";
+    public static final String UID_SCStorage = "1.2.840.10008.5.1.4.1.1.7" + String.valueOf(nullChar);
 
     /** Standalone Overlay Storage UID = 1.2.840.10008.5.1.4.1.1.8 */
-    public static final String UID_StandaloneOverlayStorage = "1.2.840.10008.5.1.4.1.1.8";
+    public static final String UID_StandaloneOverlayStorage = "1.2.840.10008.5.1.4.1.1.8" + String.valueOf(nullChar);
 
     /** Standalone Curve Storage UID = 1.2.840.10008.5.1.4.1.1.9 */
-    public static final String UID_StandaloneCurveStorage = "1.2.840.10008.5.1.4.1.1.9";
+    public static final String UID_StandaloneCurveStorage = "1.2.840.10008.5.1.4.1.1.9" + String.valueOf(nullChar);
 
     /** Standalone Modality LUT Storage UID = 1.2.840.10008.5.1.4.1.1.10 */
     public static final String UID_StandaloneModalityLUTStorage = "1.2.840.10008.5.1.4.1.1.10";
@@ -132,10 +132,10 @@ public class DICOM_Constants {
     public static final String UID_NMStorage = "1.2.840.10008.5.1.4.1.1.20";
 
     /** Pet Storage UID = 1.2.840.10008.5.1.4.1.1.128 */
-    public static final String UID_PetStorage = "1.2.840.10008.5.1.4.1.1.128";
+    public static final String UID_PetStorage = "1.2.840.10008.5.1.4.1.1.128" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_StandalonePetCurve = "1.2.840.10008.5.1.4.1.1.129";
+    public static final String UID_StandalonePetCurve = "1.2.840.10008.5.1.4.1.1.129" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
     public static final String UID_GECTStorage = "1.2.840.113619.4.3"; // Need to add above convertUIDToString - Matt
@@ -146,52 +146,52 @@ public class DICOM_Constants {
     public static final String UID_GEMRStorage = "1.2.840.113619.4.2"; // Need to add above convertUIDToString
 
     /** DOCUMENT ME! */
-    public static final String UID_RTImageStorage = "1.2.840.10008.5.1.4.1.1.481.1";
+    public static final String UID_RTImageStorage = "1.2.840.10008.5.1.4.1.1.481.1" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_RTDoseStorage = "1.2.840.10008.5.1.4.1.1.481.2";
+    public static final String UID_RTDoseStorage = "1.2.840.10008.5.1.4.1.1.481.2" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_RTStructureSetStorage = "1.2.840.10008.5.1.4.1.1.481.3";
+    public static final String UID_RTStructureSetStorage = "1.2.840.10008.5.1.4.1.1.481.3" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_RTBeamsTreatmentRecordStorage = "1.2.840.10008.5.1.4.1.1.481.4";
+    public static final String UID_RTBeamsTreatmentRecordStorage = "1.2.840.10008.5.1.4.1.1.481.4 + String.valueOf(nullChar)";
 
     /** DOCUMENT ME! */
-    public static final String UID_RTPlanStorage = "1.2.840.10008.5.1.4.1.1.481.5";
+    public static final String UID_RTPlanStorage = "1.2.840.10008.5.1.4.1.1.481.5 + String.valueOf(nullChar)";
 
     /** DOCUMENT ME! */
-    public static final String UID_RTBrachyTreatmentRecordStorage = "1.2.840.10008.5.1.4.1.1.481.6";
+    public static final String UID_RTBrachyTreatmentRecordStorage = "1.2.840.10008.5.1.4.1.1.481.6 + String.valueOf(nullChar)";
 
     /** DOCUMENT ME! */
-    public static final String UID_RTTreatmentSummaryRecordStorage = "1.2.840.10008.5.1.4.1.1.481.7";
+    public static final String UID_RTTreatmentSummaryRecordStorage = "1.2.840.10008.5.1.4.1.1.481.7 + String.valueOf(nullChar)";
 
     /** DOCUMENT ME! */
-    public static final String UID_PatientRootQuery = "1.2.840.10008.5.1.4.1.2.1.1";
+    public static final String UID_PatientRootQuery = "1.2.840.10008.5.1.4.1.2.1.1" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_PatientRootRetrieve = "1.2.840.10008.5.1.4.1.2.1.2";
+    public static final String UID_PatientRootRetrieve = "1.2.840.10008.5.1.4.1.2.1.2" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_PatientStudyOnlyQuery = "1.2.840.10008.5.1.4.1.2.3.1";
+    public static final String UID_PatientStudyOnlyQuery = "1.2.840.10008.5.1.4.1.2.3.1" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_PatientStudyOnlyRetrieve = "1.2.840.10008.5.1.4.1.2.3.2";
+    public static final String UID_PatientStudyOnlyRetrieve = "1.2.840.10008.5.1.4.1.2.3.2" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_StudyRootQuery = "1.2.840.10008.5.1.4.1.2.2.1";
+    public static final String UID_StudyRootQuery = "1.2.840.10008.5.1.4.1.2.2.1" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_StudyRootRetrieve = "1.2.840.10008.5.1.4.1.2.2.2";
+    public static final String UID_StudyRootRetrieve = "1.2.840.10008.5.1.4.1.2.2.2" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_TransferLITTLEENDIAN = "1.2.840.10008.1.2";
+    public static final String UID_TransferLITTLEENDIAN = "1.2.840.10008.1.2" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_TransferLITTLEENDIANEXPLICIT = "1.2.840.10008.1.2.1";
+    public static final String UID_TransferLITTLEENDIANEXPLICIT = "1.2.840.10008.1.2.1"  + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
-    public static final String UID_TransferBIGENDIANEXPLICIT = "1.2.840.10008.1.2.2";
+    public static final String UID_TransferBIGENDIANEXPLICIT = "1.2.840.10008.1.2.2" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
     public static final String UID_TransferJPEGBASELINEPROCESS1 = "1.2.840.10008.1.2.4.50";
@@ -252,7 +252,7 @@ public class DICOM_Constants {
     // Not supported yet public static final String UID_TransferJPEG2000 = "1.2.840.10008.1.2.4.91";
 
     /** DOCUMENT ME! */
-    public static final String UID_RLE_Compression = "1.2.840.10008.1.2.5";
+    public static final String UID_RLE_Compression = "1.2.840.10008.1.2.5" + String.valueOf(nullChar);
 
     /** DOCUMENT ME! */
     public static final int DSTYPE_DATAPRESENT = 0x0000; // anything but 0x0101
