@@ -16063,7 +16063,7 @@ public class FileIO {
 
                 // In DICOM (for MRI images) by David Atkinson an image with zDim = 5 and
                 // tDim = 2 always had the "0020,9056" stack ID = 1.
-                item.setValue("0020,9056", "1", 1); // is one-based
+                item.setValue("0020,9056", "1 ", 2); // is one-based
                 item.setValue("0020,9057", z + 1, 8); // is one-based
                 item.setValue("0020,9128", t + 1, 8); // Temporal position index is one-based
                 item.setValue("0020,9156", 1 + z + t * zDim, 4); // Frame Acquisition Number
