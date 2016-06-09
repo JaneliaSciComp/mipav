@@ -535,7 +535,11 @@ public class JDialogSaveDicom extends JDialogBase {
                         patientComments.getText().length());
                 dicomFileInfo.getTagTable().setValue("0020,0020", patientOrientation.getText(),
                         patientOrientation.getText().length());
-                dicomFileInfo.getTagTable().setValue("0020,000D", studyUID.getText(), studyUID.getText().length());
+                String studyUIDString = studyUID.getText();
+                if ((studyUIDString.length() % 2) == 1) {
+                    studyUIDString = studyUIDString + String.valueOf(nullChar);	
+                }
+                dicomFileInfo.getTagTable().setValue("0020,000D", studyUIDString, studyUIDString.length());
                 dicomFileInfo.getTagTable().setValue("0020,0010", studyID.getText(), studyID.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,0020", studyDate.getText(), studyDate.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,0030", studyTime.getText(), studyTime.getText().length());
@@ -556,7 +560,11 @@ public class JDialogSaveDicom extends JDialogBase {
                 dicomFileInfo.getTagTable().setValue("0010,1020", studySize.getText(), studySize.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,2180", studyOcc.getText(), studyOcc.getText().length());
                 dicomFileInfo.getTagTable().setValue("0010,21B0", studyHist.getText(), studyHist.getText().length());
-                dicomFileInfo.getTagTable().setValue("0020,000E", seriesUID.getText(), seriesUID.getText().length());
+                String seriesUIDString = seriesUID.getText();
+                if ((seriesUIDString.length() % 2) == 1) {
+                    seriesUIDString = seriesUIDString + String.valueOf(nullChar);	
+                }
+                dicomFileInfo.getTagTable().setValue("0020,000E", seriesUIDString, seriesUIDString.length());
                 dicomFileInfo.getTagTable().setValue("0020,0011", seriesNo.getText(), seriesNo.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,0021", seriesDate.getText(), seriesDate.getText().length());
                 dicomFileInfo.getTagTable().setValue("0008,0031", seriesTime.getText(), seriesTime.getText().length());
