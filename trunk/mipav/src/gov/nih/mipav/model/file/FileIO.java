@@ -16087,7 +16087,11 @@ public class FileIO {
         }
 
         // insert constructed sequence into tag table
-        myFileInfo.getTagTable().setValue("0028,0008", tDim * zDim);
+        String frameNumberString = String.valueOf(tDim * zDim);
+        if ((frameNumberString.length() % 2) == 1) {
+            frameNumberString = frameNumberString + " ";	
+        }
+        myFileInfo.getTagTable().setValue("0028,0008", frameNumberString, frameNumberString.length());
         myFileInfo.getTagTable().setValue("5200,9230", seqBase);
         if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)) {
         	myFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.30", 26);
