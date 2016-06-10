@@ -36,7 +36,11 @@ import gov.nih.mipav.view.renderer.WildMagic.AAM.*;
 import gov.nih.mipav.util.*;
 
 /**
- * Femur segmentation for NIH data
+ * The class is the driver for the AAM classification. User specifies the AAM
+ * trained Atlas directory and target image. The algorithm performs NMI based
+ * similarity measure between each 2D slice in target image and the 2D slices
+ * atlas, find the closed image, then invoke the corresponding AAM model to do
+ * automatic segmentation on prostate MRI image.
  * 
  * @author Ruida Cheng
  * 
@@ -243,6 +247,10 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 	
 	private Vector3f cutOffPointInner;
 	private Vector3f cutOffPointOuter;
+
+	int close_length = 40;
+    boolean firstTimeCheckMidShaft = false;
+	
 	
 	/**
 	 * Constructor. the parent frame
@@ -2068,7 +2076,7 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		// greImageSlice.addVOIs(voiVectorNew);
 		// smoothVOI30Single(greImageSlice, greImageSlice);
 		smoothVOI150Single(greImageSlice, greImageSlice);
-		double constant_length = 0.15d;
+		double constant_length = 2.5d;
 		VOI resultVOI = greImageSlice.getVOIs().VOIAt(0);
 		VOI tempVOI = (VOI)resultVOI.clone();
 		tempVOI.removeCurves();
@@ -2081,9 +2089,9 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 			double perimeter = v.getLengthPtToPt(greImageSlice.getFileInfo(0).getResolutions());
 
 			if ( i == 0 ) {
-				constant_length = 0.1d;
+				constant_length = 2.0d;
 			} else if ( i == 1 ) {
-				constant_length = 0.15d;
+				constant_length = 2.0d;
 			}
 			/*
 			if (group == GROUP_1 || group == GROUP_2 || group == GROUP_9 || group == GROUP_10) {
@@ -2469,7 +2477,12 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
         testImage.addVOIs(voiVectorNewResult);
         new ViewJFrameImage(testImage);
       
-		
+        if ( voiVectorNewResult.size() == 2 ) {
+        	smoothVOI60DualContour(testImage, testImage);
+        } else if ( voiVectorNewResult.size() == 1 ) {
+        	smoothVOI30Single(testImage, testImage);
+        }
+        
 		int numVOIs = testImage.getVOIs().size();
 		System.err.println("numVOIs = " + numVOIs);
 		
@@ -4319,7 +4332,7 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 
 		// new ViewJFrameImage(maskImage);
 		try {
-			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(0), 64, false);
+			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(0), 30, false);
 			smoothAlgo.addListener(this);
 			smoothAlgo.run();
 
@@ -4333,7 +4346,7 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 			smoothAlgo.finalize();
 			smoothAlgo = null;
 
-			smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(1), 64, false);
+			smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(1), 30, false);
 			smoothAlgo.addListener(this);
 			smoothAlgo.run();
 
@@ -10498,11 +10511,14 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		greImageSlice.addVOIs(voiVectorNew);
 		
 		smoothVOI150Single(greImageSlice, greImageSlice);
-		double constant_length = 1.5d;
+		double constant_length = 2.5d;
 		resultVOI = greImageSlice.getVOIs().VOIAt(0);
 		VOIBaseVector vVector = resultVOI.getCurves();
 
 		v = vVector.get(0);
+		
+		if ( v.size() <= 3 ) return;
+		
 		double perimeter = v.getLengthPtToPt(greImageSlice.getFileInfo(0).getResolutions());
 		// System.err.println("perimeter = " + perimeter);
 
@@ -10518,9 +10534,9 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		}
 		*/ 
 		if ( group == GROUP_1 || group == GROUP_2 || group == GROUP_9 || group == GROUP_10 ) {
-			constant_length = 1.0d;
+			constant_length = 2.0d;
 		} else {
-			constant_length = 1.5d;
+			constant_length = 2.5d;
 		}
 		int numberPoints = (int) Math.round(perimeter / constant_length);
 
@@ -10607,12 +10623,21 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 
 		linePoints.clear();
 
+		Vector3f[] pts = new Vector3f[m];
 		for (int z = 0; z < m; z++) {
 			posX = xNew[z];
 			posY = yNew[z];
 			Line line = new Line(center.X, center.Y, posX, posY, z);
 			linePoints.put(z, line);
+			pts[z] = new Vector3f(posX, posY, 0);
 		}
+		
+		resultVOI.removeCurves();
+		greImageSlice.getVOIs().removeAllElements();
+		voiVectorNew.removeAllElements();
+		voiVectorNew.add(resultVOI);
+		resultVOI.importCurve(pts);
+		greImageSlice.addVOIs(voiVectorNew);
 
 		slicesPts.put(sliceNumber, linePoints);
 
@@ -10634,10 +10659,10 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		class2Image.addVOIs(voiVectorNew);
 		class3Image.addVOIs(voiVectorNew);
 		// new ViewJFrameImage(greImageSlice);    // Cheng1
-	    new ViewJFrameImage(class1Image);
-		new ViewJFrameImage(class2Image);
-		new ViewJFrameImage(class3Image);
-		new ViewJFrameImage(fuzzyCImage);
+	    // new ViewJFrameImage(class1Image);
+		// new ViewJFrameImage(class2Image);
+		// new ViewJFrameImage(class3Image);
+		// new ViewJFrameImage(fuzzyCImage);
 
 		// VOIBaseVector current_va =
 		// greImageSlice.getVOIs().VOIAt(2).getCurves();
@@ -10696,28 +10721,48 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 	    
 	    System.err.println("shaft distance = " + shaftDistance);
 	    
-	    int close_length = 60;
 
-		if ( ( whichLeg == LEFT_LEG && group <= GROUP_6) ||  
-				 ( whichLeg == RIGHT_LEG && group <= GROUP_5 ) ) {
-			  if ( whichLeg == LEFT_LEG ) {
-			    	close_length = 80;
-			    } else {
-			    	close_length = 70;
-			    }
-			    
-		}
+	    if ( firstTimeCheckMidShaft == false ) {
 			
+			if ( shaftDistance <= 60 ) {
+				if ((whichLeg == LEFT_LEG && group <= GROUP_6) || (whichLeg == RIGHT_LEG && group <= GROUP_5)) {
+					if (whichLeg == LEFT_LEG) {
+						close_length = 30;
+					} else {
+						close_length = 30;
+					}
 		
-		if ( (whichLeg == LEFT_LEG && group >= GROUP_5 ) || 
-			 ( whichLeg == RIGHT_LEG && group >= GROUP_6 )) {
-			 if ( whichLeg == LEFT_LEG ) {
-			    	close_length = 70;
-			    } else {
-			    	close_length = 60;
-			    }
-			    
-		}
+				}
+		
+				if ((whichLeg == LEFT_LEG && group >= GROUP_5) || (whichLeg == RIGHT_LEG && group >= GROUP_6)) {
+					if (whichLeg == LEFT_LEG) {
+						close_length = 30;
+					} else {
+						close_length = 30;
+					}
+		
+				}
+			} else {
+				if ((whichLeg == LEFT_LEG && group <= GROUP_6) || (whichLeg == RIGHT_LEG && group <= GROUP_5)) {
+					if (whichLeg == LEFT_LEG) {
+						close_length = 60;
+					} else {
+						close_length = 60;
+					}
+		
+				}
+		
+				if ((whichLeg == LEFT_LEG && group >= GROUP_5) || (whichLeg == RIGHT_LEG && group >= GROUP_6)) {
+					if (whichLeg == LEFT_LEG) {
+						close_length = 60;
+					} else {
+						close_length = 60;
+					}
+		
+				}
+			}
+			firstTimeCheckMidShaft = true;
+		}  
 		
 		identifyGroups(sliceNumber);
 	   	
@@ -11068,6 +11113,7 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		resultVOI = greImageSlice.getVOIs().VOIAt(0);
 		VOIBaseVector vVector = resultVOI.getCurves();
 		VOIBase vT = vVector.get(0);
+		
 		double perimeter = vT.getLengthPtToPt(greImageSlice.getFileInfo(0).getResolutions());
 		int numberPoints = (int) Math.round(perimeter / constant_length);
 
@@ -11681,11 +11727,11 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		fuzzyCImage.addVOIs(voiVectorNew);
 		class1Image.addVOIs(voiVectorNew);
 		class2Image.addVOIs(voiVectorNew);
-		new ViewJFrameImage(greImageSlice);    // Cheng1  emergency
-		new ViewJFrameImage(class1Image);
-		new ViewJFrameImage(class2Image);
-		new ViewJFrameImage(class3Image);
-		new ViewJFrameImage(fuzzyCImage);
+		// new ViewJFrameImage(greImageSlice);    // Cheng1  emergency
+		// new ViewJFrameImage(class1Image);
+		// new ViewJFrameImage(class2Image);
+		// new ViewJFrameImage(class3Image);
+		// new ViewJFrameImage(fuzzyCImage);
 
 		// VOIBaseVector current_va =
 		// greImageSlice.getVOIs().VOIAt(2).getCurves();
@@ -12083,10 +12129,10 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 					    distanceInner = distance * (1d - 0.05d);
 					} else if ( group == GROUP_5 ) {
 					    distanceOuter = distance * (1d + 0.10d);
-					    distanceInner = distance * (1d - 0.05d);
+					    distanceInner = distance * (1d - 0.20d);
 					} else if ( group == GROUP_6 ) {
 					    distanceOuter = distance * (1d + 0.10d);
-					    distanceInner = distance * (1d - 0.05d);
+					    distanceInner = distance * (1d - 0.20d);
 					} else if ( group == GROUP_7 ) {
 					    distanceOuter = distance * (1d + 0.25d);
 					    distanceInner = distance * (1d - 0.05d);
@@ -12361,7 +12407,7 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		resultVOIOuter.importCurve(pt_outer);
 
 		fatImageSlice.addVOIs(voiVectorLines);
-		new ViewJFrameImage(fatImageSlice);   // Cheng1, emergency
+		// new ViewJFrameImage(fatImageSlice);   // Cheng1, emergency
 
 		ModelImage cloneImage = (ModelImage) fatImageSlice.clone();
 		VOIVector voiVectorInOut = new VOIVector();
@@ -12369,7 +12415,7 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		voiVectorInOut.add(resultVOIInner);
 		voiVectorInOut.add(resultVOIOuter);
 		cloneImage.addVOIs(voiVectorInOut);
-		new ViewJFrameImage(cloneImage);         // Cheng1, emergency
+		// new ViewJFrameImage(cloneImage);         // Cheng1, emergency
 	}
 	
 	
@@ -12958,7 +13004,7 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		resultVOIOuter.importCurve(pt_outer);
 
 		fatImageSlice.addVOIs(voiVectorLines);
-	    new ViewJFrameImage(fatImageSlice);   // Cheng1, emergency
+	    // new ViewJFrameImage(fatImageSlice);   // Cheng1, emergency
 
 		ModelImage cloneImage = (ModelImage) fatImageSlice.clone();
 		VOIVector voiVectorInOut = new VOIVector();
@@ -12966,7 +13012,7 @@ public class JDialogFemurTraceSectionsNIH extends JDialogBase implements Algorit
 		voiVectorInOut.add(resultVOIInner);
 		voiVectorInOut.add(resultVOIOuter);
 		cloneImage.addVOIs(voiVectorInOut);
-		new ViewJFrameImage(cloneImage);         // Cheng1, emergency
+		// new ViewJFrameImage(cloneImage);         // Cheng1, emergency
 	}
 
 	private void findSections(Vector3f[] inContour, int contourSize, float[][] sections, Vector3f center) {
