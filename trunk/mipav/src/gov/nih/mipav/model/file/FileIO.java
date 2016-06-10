@@ -15200,10 +15200,11 @@ public class FileIO {
                 myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             }
             myFileInfo.setVr_type(VRtype.EXPLICIT);
+       
             final boolean isMincFloatNotPet = image.getFileInfo(0).getFileFormat() == FileUtility.MINC && image.getType() == ModelStorageBase.FLOAT;
             final boolean isAnalyzeFloat = image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE && image.getType() == ModelStorageBase.FLOAT;
             final boolean isCheshireFloat = image.getFileInfo(0).getFileFormat() == FileUtility.CHESHIRE && image.getType() == ModelStorageBase.FLOAT;
-            final boolean isNotPet = myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY;
+            final boolean isNotPet = image.getFileInfo(0).getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY;
             final boolean isNIFTI = image.getFileInfo(0).getFileFormat() == FileUtility.NIFTI;
             isPARREC = image.getFileInfo(0).getFileFormat() == FileUtility.PARREC;
 
@@ -15522,7 +15523,7 @@ public class FileIO {
                 myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
                 myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
             } else if ( ( (image.getType() == ModelStorageBase.FLOAT) || (image.getFileInfo(0).getDataType() == ModelStorageBase.FLOAT)) // 7/8/2008
-                    && (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)  && floatToShort) {
+                    && (image.getFileInfo(0).getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)  && floatToShort) {
                 myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
                 myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
                 myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
@@ -15697,7 +15698,7 @@ public class FileIO {
 
                 // this handles PET float images
                 // convert type to float with short or ushort range
-                if ( (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
+                if ( (image.getFileInfo(0).getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
                         && (image.getType() == ModelStorageBase.FLOAT)  &&
                         floatToShort) {
 
@@ -15736,7 +15737,9 @@ public class FileIO {
 
                 final float[] sliceData = new float[sliceSize];
                 final FileDicomSQ seqBase = new FileDicomSQ(); // this is the 0020,9113 Plane Position Sequence
+                //final FileDicomSQ seqBasep = new FileDicomSQ(); // this is the 0028,9145 Pixel Value Transformation Sequence
                 seqBase.setWriteAsUnknownLength(true); // sequences given unknown length
+                //seqBasep.setWriteAsUnknownLength(true);
                 for (int k = 0; k < fBaseLength; k++) {
 
                     // System.err.println("FileIO k = " + k);
@@ -15833,8 +15836,39 @@ public class FileIO {
                		    if ((slopeString.length() % 2) == 1) {
                   		    slopeString = slopeString + " ";
                   	    }
-                        ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1052", interceptString, interceptString.length());
-                        ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1053", slopeString, slopeString.length());
+               		     /*final FileDicomTagTable tablep= ((FileInfoDicom) fBase[k]).getTagTable();
+	               		 FileDicomSQ seqp = new FileDicomSQ(); // this is the 0028,9145 pixel value transformation sequence
+	                     tag = null;
+	                     FileDicomSQItem itemp = null;
+	                     if ( (tag = tablep.get("0028,9145")) != null && !tablep.isTagSameAsReferenceTag(tag)) {
+	                         seqp = (FileDicomSQ) tablep.get("0028,9145").getValue(false);
+	                         itemp = ((FileDicomSQ) tablep.get("0028,9145").getValue(false)).getItem(0);
+	                     } else {
+	                         itemp = new FileDicomSQItem(null, myFileInfo.getVr_type());
+	                         seqp.addItem(itemp);
+	                         seqp.setWriteAsUnknownLength(true);
+	                         tablep.setValue("0028,9145", seqp, -1);
+	                     }*/
+	
+	                     ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0028,1052", interceptString, interceptString.length());
+	                     ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0028,1053", slopeString, slopeString.length());
+	
+	                     /*itemp.setWriteAsUnknownLength(false); // items are always written using known length
+	
+	                     final Enumeration<FileDicomTag> tagsp = tablep.getTagList().elements();
+	                     Object tagValuep = null;
+	                     final FileDicomSQItem outerItemp = new FileDicomSQItem(null, myFileInfo.getVr_type());
+	                     while (tagsp.hasMoreElements()) {
+	                         tag = tagsp.nextElement();
+	                         if (tablep == myFileInfo.getTagTable() || // if table is pointing to the same location as myFileInfo,
+	                                                                  // write all tags
+	                                 (tagValuep = myFileInfo.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValuep)) {
+	                             outerItemp.setValue(tag.getKey(), tag, tag.getValue(false), -1);
+	                         }
+	                     }
+	                     seqBasep.addItem(outerItemp); // is now the 2D item within the sequence
+	                     outerItemp.setWriteAsUnknownLength(false);*/
+                        
                     }
                     
                     if (isPARREC) {
