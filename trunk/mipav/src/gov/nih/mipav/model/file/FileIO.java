@@ -14332,6 +14332,9 @@ public class FileIO {
             if (isNIFTI) {
                 patientOrientationString = ((FileInfoNIFTI) originalFileInfo).getPatientOrientationString();
                 if (patientOrientationString != null) {
+                	if ((patientOrientationString.length() % 2) == 1) {
+                		patientOrientationString = patientOrientationString + " ";
+                	}
                     fileDicom.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
                 }
             }
@@ -14340,33 +14343,54 @@ public class FileIO {
            	 if (tr != null) {
 	           	 patientOrientationString = tr.M00 + "\\" + tr.M10 + "\\" + tr.M20 + "\\" + tr.M01 +
 	           			 "\\" + tr.M11 + "\\" + tr.M21;
+	           	if ((patientOrientationString.length() % 2) == 1) {
+            		patientOrientationString = patientOrientationString + " ";
+            	}
 	           	 fileDicom.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
            	 }
            	 dateString = ((FileInfoPARREC)originalFileInfo).getDate();
           	 if (dateString != null) {
           		 dateString.replaceAll(".","");
+          		 if ((dateString.length() % 2) == 1) {
+            		dateString = dateString + " ";
+            	 }
           		 fileDicom.getTagTable().setValue("0008,0020", dateString, dateString.length());
           	 }
           	 timeString = ((FileInfoPARREC)originalFileInfo).getTime();
          	 if (timeString != null) {
          		 timeString.replaceAll(":","");
+         		 if ((timeString.length() % 2) == 1) {
+            		timeString = timeString + " ";
+            	 }
          		 fileDicom.getTagTable().setValue("0008,0030", timeString, timeString.length());
          	 }
           	 patientNameString = ((FileInfoPARREC)originalFileInfo).getPatientName();
           	 if (patientNameString != null) {
+          		 if ((patientNameString.length() % 2) == 1) {
+            		patientNameString = patientNameString + " ";
+            	 }
           		 fileDicom.getTagTable().setValue("0010,0010", patientNameString, patientNameString.length());
           	 }
           	 protocolNameString = ((FileInfoPARREC)originalFileInfo).getProtocolName();
           	 if (protocolNameString != null) {
+          		 if ((protocolNameString.length() % 2) == 1) {
+            		protocolNameString = protocolNameString + " ";
+            	 }
           		 fileDicom.getTagTable().setValue("0018,1030", protocolNameString, protocolNameString.length());
           	 }
           	 repetitionTimeString = ((FileInfoPARREC)originalFileInfo).getRepetitionTime();
           	 if (repetitionTimeString != null) {
+          		 if ((repetitionTimeString.length() % 2) == 1) {
+            		repetitionTimeString = repetitionTimeString + " ";
+            	 }
           		 fileDicom.getTagTable().setValue("0018,0080", repetitionTimeString, repetitionTimeString.length());
           	 }
           	 int echoNumber[] = ((FileInfoPARREC)originalFileInfo).getEchoNumber();
          	 if (echoNumber != null) {
          		 echoNumberString = String.valueOf(echoNumber[sliceNumber]);
+         		 if ((echoNumberString.length() % 2) == 1) {
+            		echoNumberString = echoNumberString + " ";
+            	 }
          		 fileDicom.getTagTable().setValue("0018,0086", echoNumberString, echoNumberString.length());
          	 }
           	 float echoTime[] = ((FileInfoPARREC)originalFileInfo).getEchoTime();
@@ -14375,6 +14399,9 @@ public class FileIO {
           		 if (echoTimeString.length() > 16) {
           			 echoTimeString = reduceStringLengthTo16(echoTimeString);
           		 }
+        		 if ((echoTimeString.length() % 2) == 1) {
+           		    echoTimeString = echoTimeString + " ";
+        		 }
           		 fileDicom.getTagTable().setValue("0018,0081", echoTimeString, echoTimeString.length());
           	 }
           	 float triggerTime[] = ((FileInfoPARREC)originalFileInfo).getTriggerTime();
@@ -14383,6 +14410,9 @@ public class FileIO {
          		 if (triggerTimeString.length() > 16) {
          			 triggerTimeString = reduceStringLengthTo16(triggerTimeString);
          		 }
+         		 if ((triggerTimeString.length() % 2) == 1) {
+             		triggerTimeString = triggerTimeString + " ";
+             	 }
          		 fileDicom.getTagTable().setValue("0018,1060", triggerTimeString, triggerTimeString.length());
          	 }
          	 float flipAngle[] = ((FileInfoPARREC)originalFileInfo).getFlipAngle();
@@ -14391,21 +14421,33 @@ public class FileIO {
          		 if (flipAngleString.length() > 16) {
          			 flipAngleString = reduceStringLengthTo16(flipAngleString);
          		 }
+         		 if ((flipAngleString.length() % 2) == 1) {
+            		flipAngleString = flipAngleString + " ";
+            	 }
          		 fileDicom.getTagTable().setValue("0018,1314", flipAngleString, flipAngleString.length());
          	 }
          	 int cardiacFrequency[] = ((FileInfoPARREC)originalFileInfo).getCardiacFrequency();
          	 if (cardiacFrequency != null) {
          		 heartRateString = String.valueOf(cardiacFrequency[sliceNumber]);
+         		 if ((heartRateString.length() % 2) == 1) {
+            		heartRateString = heartRateString + " ";
+            	 }
          		 fileDicom.getTagTable().setValue("0018,1088", heartRateString, heartRateString.length());
          	 }
          	 int minimumRRInterval[] = ((FileInfoPARREC)originalFileInfo).getMinimumRRInterval();
         	 if (minimumRRInterval != null) {
         		 lowRRValueString = String.valueOf(minimumRRInterval[sliceNumber]);
+        		 if ((lowRRValueString.length() % 2) == 1) {
+             		lowRRValueString = lowRRValueString + " ";
+             	 }
         		 fileDicom.getTagTable().setValue("0018,1081", lowRRValueString, lowRRValueString.length());
         	 }
         	 int maximumRRInterval[] = ((FileInfoPARREC)originalFileInfo).getMaximumRRInterval();
         	 if (maximumRRInterval != null) {
         		 highRRValueString = String.valueOf(maximumRRInterval[sliceNumber]);
+        		 if ((highRRValueString.length() % 2) == 1) {
+               		highRRValueString = highRRValueString + " ";
+               	 }
         		 fileDicom.getTagTable().setValue("0018,1082", highRRValueString, highRRValueString.length());
         	 }
         	 float inversionDelay[] = ((FileInfoPARREC)originalFileInfo).getInversionDelay();
@@ -14414,6 +14456,9 @@ public class FileIO {
          		 if (inversionTimeString.length() > 16) {
          			 inversionTimeString = reduceStringLengthTo16(inversionTimeString);
          		 }
+         		 if ((inversionTimeString.length() % 2) == 1) {
+            		inversionTimeString = inversionTimeString + " ";
+            	 }
          		 fileDicom.getTagTable().setValue("0018,0082", inversionTimeString, inversionTimeString.length());
          	 }
            }
@@ -14777,7 +14822,14 @@ public class FileIO {
                 fBase = (FileInfoBase) fileDicom.clone();
 
                 // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
-                ((FileInfoDicom) (fBase)).getTagTable().setValue("0020,1041", Double.toString(slLoc), Double.toString(slLoc).length());
+                String slLocString = Double.toString(slLoc);
+                if (slLocString.length() > 16) {
+        			 slLocString = reduceStringLengthTo16(slLocString);
+        		 }
+        		if ((slLocString.length() % 2) == 1) {
+           		    slLocString = slLocString + " ";
+           	    }
+                ((FileInfoDicom) (fBase)).getTagTable().setValue("0020,1041", slLocString, slLocString.length());
 
                 final String tmpStr = new String(Float.toString((float) dicomOrigin[RLIndex]) + "\\" + Float.toString((float) dicomOrigin[APIndex]) + "\\"
                         + Float.toString((float) dicomOrigin[ISIndex]));
@@ -14819,7 +14871,10 @@ public class FileIO {
                 outerItem.setWriteAsUnknownLength(false);
 
                 if (baseInstanceNumber != -1) {
-                    final String instanceStr = "" + (baseInstanceNumber + sliceNumber);
+                	String instanceStr = "" + (baseInstanceNumber + sliceNumber);
+                    if ((instanceStr.length() % 2) == 1) {
+                    	instanceStr = instanceStr + " ";
+                    }
                     ((FileInfoDicom) fBase).getTagTable().setValue("0020,0013", instanceStr, instanceStr.length());
                 }
 
@@ -14834,8 +14889,22 @@ public class FileIO {
                     fBase.setRescaleSlope(slope);
                     fBase.setRescaleIntercept(intercept);
 
-                    ((FileInfoDicom) fBase).getTagTable().setValue("0028,1052", "" + fBase.getRescaleIntercept());
-                    ((FileInfoDicom) fBase).getTagTable().setValue("0028,1053", "" + fBase.getRescaleSlope());
+                    String interceptString = String.valueOf(intercept);
+                    if (interceptString.length() > 16) {
+           			    interceptString = reduceStringLengthTo16(interceptString);
+           		    }
+           		    if ((interceptString.length() % 2) == 1) {
+              		    interceptString = interceptString + " ";
+              	    }
+                    String slopeString = String.valueOf(slope);
+                    if (slopeString.length() > 16) {
+           			    slopeString = reduceStringLengthTo16(slopeString);
+           		    }
+           		    if ((slopeString.length() % 2) == 1) {
+              		    slopeString = slopeString + " ";
+              	    }
+                    ((FileInfoDicom) fBase).getTagTable().setValue("0028,1052", interceptString, interceptString.length());
+                    ((FileInfoDicom) fBase).getTagTable().setValue("0028,1053", slopeString, slopeString.length());
                 }
                 
 
@@ -14899,9 +14968,12 @@ public class FileIO {
                 fileDicom = (FileInfoDicom) image.getFileInfo(0);
                 fileDicom.setFileDirectory(fileDir); // need to update in case it changed
 
-                final String s = "" + (sliceNumber + 1);
+                String s = "" + (sliceNumber + 1);
 
                 if (options.isInstanceNumberRecalculated()) {
+                	if ((s.length() % 2) == 1) {
+                		s = s + " ";
+                	}
                     fileDicom.getTagTable().setValue("0020,0013", s, s.length());
                 }
 
@@ -15168,6 +15240,9 @@ public class FileIO {
             if (isNIFTI) {
                 patientOrientationString = ((FileInfoNIFTI) image.getFileInfo(0)).getPatientOrientationString();
                 if (patientOrientationString != null) {
+                	if ((patientOrientationString.length() % 2) == 1) {
+                		patientOrientationString = patientOrientationString + " ";
+                	}
                     myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
                 }
             }
@@ -15176,28 +15251,46 @@ public class FileIO {
             	 if (tr != null) {
 	            	 patientOrientationString = tr.M00 + "\\" + tr.M10 + "\\" + tr.M20 + "\\" + tr.M01 +
 	            			 "\\" + tr.M11 + "\\" + tr.M21;
+	            	 if ((patientOrientationString.length() % 2) == 1) {
+	                		patientOrientationString = patientOrientationString + " ";
+	                 }
 	            	 myFileInfo.getTagTable().setValue("0020,0037", patientOrientationString, patientOrientationString.length());
             	 }
             	 dateString = ((FileInfoPARREC)image.getFileInfo(0)).getDate();
               	 if (dateString != null) {
               		 dateString.replaceAll(".","");
+              		 if ((dateString.length() % 2) == 1) {
+                		dateString = dateString + " ";
+                	 }
               		 myFileInfo.getTagTable().setValue("0008,0020", dateString, dateString.length());
               	 }
               	 timeString = ((FileInfoPARREC)image.getFileInfo(0)).getTime();
              	 if (timeString != null) {
              		 timeString.replaceAll(":","");
+             		 if ((timeString.length() % 2) == 1) {
+                		timeString = timeString + " ";
+                	 }
              		 myFileInfo.getTagTable().setValue("0008,0030", timeString, timeString.length());
              	 }
               	 patientNameString = ((FileInfoPARREC)image.getFileInfo(0)).getPatientName();
              	 if (patientNameString != null) {
+             		 if ((patientNameString.length() % 2) == 1) {
+                		patientNameString = patientNameString + " ";
+                	 }
              		 myFileInfo.getTagTable().setValue("0010,0010", patientNameString, patientNameString.length());
              	 }
              	 protocolNameString = ((FileInfoPARREC)image.getFileInfo(0)).getProtocolName();
              	 if (protocolNameString != null) {
+             		 if ((protocolNameString.length() % 2) == 1) {
+                		protocolNameString = protocolNameString + " ";
+                	 }
              		 myFileInfo.getTagTable().setValue("0018,1030", protocolNameString, protocolNameString.length());
              	 }
              	repetitionTimeString = ((FileInfoPARREC)image.getFileInfo(0)).getRepetitionTime();
              	 if (repetitionTimeString != null) {
+             		 if ((repetitionTimeString.length() % 2) == 1) {
+                		repetitionTimeString = repetitionTimeString + " ";
+                	 }
              		 myFileInfo.getTagTable().setValue("0018,0080", repetitionTimeString, repetitionTimeString.length());
              	 }
              	 int echoNumber[] = ((FileInfoPARREC)image.getFileInfo(0)).getEchoNumber();
@@ -15205,6 +15298,9 @@ public class FileIO {
              	     echoNumberString = new String[echoNumber.length];
              	     for (i = 0; i < echoNumber.length; i++) {
              	    	 echoNumberString[i] = String.valueOf(echoNumber[i]);
+             	    	 if ((echoNumberString[i].length() % 2) == 1) {
+                    		echoNumberString[i] = echoNumberString[i] + " ";
+                    	 }
              	     }
              	 }
              	 float echoTime[] = ((FileInfoPARREC)image.getFileInfo(0)).getEchoTime();
@@ -15215,6 +15311,9 @@ public class FileIO {
 	             		 if (echoTimeString[i].length() > 16) {
 	             			 echoTimeString[i] = reduceStringLengthTo16(echoTimeString[i]);
 	             		 }
+	             		 if ((echoTimeString[i].length() % 2) == 1) {
+	                		echoTimeString[i] = echoTimeString[i] + " ";
+	                	 }
 	             	 }
              	 }
              	 float triggerTime[] = ((FileInfoPARREC)image.getFileInfo(0)).getTriggerTime();
@@ -15225,6 +15324,9 @@ public class FileIO {
 	            		 if (triggerTimeString[i].length() > 16) {
 	            			 triggerTimeString[i] = reduceStringLengthTo16(triggerTimeString[i]);
 	            		 }
+	            		 if ((triggerTimeString[i].length() % 2) == 1) {
+	                 		triggerTimeString[i] = triggerTimeString[i] + " ";
+	                 	}
 	            	 }
              	 }
             	 float flipAngle[] = ((FileInfoPARREC)image.getFileInfo(0)).getFlipAngle();
@@ -15235,6 +15337,9 @@ public class FileIO {
 	             		 if (flipAngleString[i].length() > 16) {
 	             			 flipAngleString[i] = reduceStringLengthTo16(flipAngleString[i]);
 	             		 }
+	             		 if ((flipAngleString[i].length() % 2) == 1) {
+	                		flipAngleString[i] = flipAngleString[i] + " ";
+	                	 }
 	             	 }
             	 }
              	 int cardiacFrequency[] = ((FileInfoPARREC)image.getFileInfo(0)).getCardiacFrequency();
@@ -15242,13 +15347,20 @@ public class FileIO {
              		 heartRateString = new String[cardiacFrequency.length];
              		 for (i = 0; i < cardiacFrequency.length; i++) {
              			 heartRateString[i] = String.valueOf(cardiacFrequency[i]);
+             			 if ((heartRateString[i].length() % 2) == 1) {
+                    		heartRateString[i] = heartRateString[i] + " ";
+                    	 }
              		 }
+             		
              	 }
              	 int minimumRRInterval[] = ((FileInfoPARREC)image.getFileInfo(0)).getMinimumRRInterval();
              	 if (minimumRRInterval != null) {
              		 lowRRValueString = new String[minimumRRInterval.length];
              		 for (i = 0; i < minimumRRInterval.length; i++) {
              			 lowRRValueString[i] = String.valueOf(minimumRRInterval[i]);
+             			 if ((lowRRValueString[i].length() % 2) == 1) {
+                    		lowRRValueString[i] = lowRRValueString[i] + " ";
+                    	 }
              		 }
              	 }
              	 int maximumRRInterval[] = ((FileInfoPARREC)image.getFileInfo(0)).getMaximumRRInterval();
@@ -15256,6 +15368,9 @@ public class FileIO {
             		 highRRValueString = new String[maximumRRInterval.length];
             		 for (i = 0; i < maximumRRInterval.length; i++) {
             			 highRRValueString[i] = String.valueOf(maximumRRInterval[i]);
+            			 if ((highRRValueString[i].length() % 2) == 1) {
+                      		highRRValueString[i] = highRRValueString[i] + " ";
+                      	 }
             		 }
             	 }
             	 float inversionDelay[] = ((FileInfoPARREC)image.getFileInfo(0)).getInversionDelay();
@@ -15266,6 +15381,9 @@ public class FileIO {
 	             		 if (inversionTimeString[i].length() > 16) {
 	             			 inversionTimeString[i] = reduceStringLengthTo16(inversionTimeString[i]);
 	             		 }
+	             		 if ((inversionTimeString[i].length() % 2) == 1) {
+	                		inversionTimeString[i] = inversionTimeString[i] + " ";
+	                	 }
 	             	 }
              	 }
             }
@@ -15625,7 +15743,14 @@ public class FileIO {
                     fBase[k] = (FileInfoBase) myFileInfo.clone();
 
                     // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
-                    ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,1041", Double.toString(slLoc), Double.toString(slLoc).length());
+                    String slLocString = Double.toString(slLoc);
+                    if (slLocString.length() > 16) {
+            			 slLocString = reduceStringLengthTo16(slLocString);
+            		 }
+            		if ((slLocString.length() % 2) == 1) {
+               		    slLocString = slLocString + " ";
+               	    }
+                    ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,1041", slLocString, slLocString.length());
 
                     if (increaseRes) {
                         slLoc += sliceResolution;
@@ -15676,7 +15801,10 @@ public class FileIO {
                     dicomOrigin[ISIndex] += matrix.get(2, 2) * sliceResolution;
 
                     if (baseInstanceNumber != -1) {
-                        final String instanceStr = "" + (baseInstanceNumber + k);
+                        String instanceStr = "" + (baseInstanceNumber + k);
+                        if ((instanceStr.length() % 2) == 1) {
+                        	instanceStr = instanceStr + " ";
+                        }
                         ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0020,0013", instanceStr, instanceStr.length());
                     }
 
@@ -15691,8 +15819,22 @@ public class FileIO {
                         fBase[k].setRescaleSlope(slope);
                         fBase[k].setRescaleIntercept(intercept);
 
-                        ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1052", "" + fBase[k].getRescaleIntercept());
-                        ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1053", "" + fBase[k].getRescaleSlope());
+                        String interceptString = String.valueOf(intercept);
+                        if (interceptString.length() > 16) {
+               			    interceptString = reduceStringLengthTo16(interceptString);
+               		    }
+               		    if ((interceptString.length() % 2) == 1) {
+                  		    interceptString = interceptString + " ";
+                  	    }
+                        String slopeString = String.valueOf(slope);
+                        if (slopeString.length() > 16) {
+               			    slopeString = reduceStringLengthTo16(slopeString);
+               		    }
+               		    if ((slopeString.length() % 2) == 1) {
+                  		    slopeString = slopeString + " ";
+                  	    }
+                        ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1052", interceptString, interceptString.length());
+                        ((FileInfoDicom) fBase[k]).getTagTable().setValue("0028,1053", slopeString, slopeString.length());
                     }
                     
                     if (isPARREC) {
@@ -15805,9 +15947,12 @@ public class FileIO {
                     myFileInfo = (FileInfoDicom) image.getFileInfo(i);
                     myFileInfo.setFileDirectory(fileDir); // need to update in case it changed
 
-                    final String s = "" + (i + 1);
+                    String s = "" + (i + 1);
 
                     if (options.isInstanceNumberRecalculated()) {
+                    	if ((s.length() % 2) == 1) {
+                    	    s = s + " ";	
+                    	}
                         myFileInfo.getTagTable().setValue("0020,0013", s, s.length());
                     }
 
