@@ -1535,7 +1535,9 @@ public class ViewJFrameGraph extends JFrame
                 update(getGraphics());
             }
         } else if(command.equals("FitFunctions")) {
-        	fitFunctions((FitMode)fitType.getSelectedItem());
+        	if (((FitMode)fitType.getSelectedItem()).getImpl() != null) { 
+        	    fitFunctions((FitMode)fitType.getSelectedItem());
+        	}
         } else if (command.equals("SaveGraph")) { // saves the graph to a file
 
             try {
@@ -1870,7 +1872,6 @@ public class ViewJFrameGraph extends JFrame
         float[] y;
 
         try {
-
             for (int i = 0; i < functions.length; i++) {
                 nPoints = graph.getFuncts()[i].getOriginalXs().length;
                 if (mode.toString().equals("Fit Multiexponential a0 + sum of a[2*k+1]*exp(a[2*k+2]*x)")) {
