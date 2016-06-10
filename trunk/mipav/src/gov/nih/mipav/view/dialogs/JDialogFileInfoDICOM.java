@@ -538,6 +538,9 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     else if (name.equals("0028,9110")) {
                     	rowData[2] = "Pixel Measures Sequence";
                     }
+                    else if (name.equals("0028,9145")) {
+                    	rowData[2] = "Pixel Value Transformation Sequence";
+                    }
                     else if (name.equals("0040,9092")) {
                     	rowData[2] = "Parametric Map Frame Type Sequence";
                     }
