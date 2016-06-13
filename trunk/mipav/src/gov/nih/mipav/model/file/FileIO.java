@@ -721,7 +721,8 @@ public class FileIO {
 
                     if (performSort) {
                         // System.err.println(seriesNo + "\t" + seriesNoMaster + "\n" + studyID + "\t" + studyIDMaster);
-                        if (seriesNo.equals(seriesNoMaster) && studyID.equals(studyIDMaster)) { // &&
+                        //if (seriesNo.equals(seriesNoMaster) && studyID.equals(studyIDMaster)) { // &&
+                        if (seriesNo.equals(seriesNoMaster)) { // &&
                             // acqNo.equals(acqNoMaster))
                             // {
                             savedFileInfos[nImages] = fileInfoTemp;
