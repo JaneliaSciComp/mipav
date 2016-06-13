@@ -692,8 +692,10 @@ public class FileIO {
                         return readDicom(selectedFileName, fileList, performSort);
                     }
 
-                    // If study and series number match - Continue. If these weren't equal MIPAV will not be able to
-                    // handle this
+                    // In response to a NIH user with a multi slice dicom image with different 
+                    // "0020,0010" study ID numbers but the same "0020,0011" series numbers
+                    // removed the requirement that all slices have the same "0020,0010" study ID
+                    // number but retained the requirement of identical "0020,0011" series numbers.
                     if (fileInfoTemp.getTagTable().getValue("0020,0010") != null) {
                         studyID = (String) (fileInfoTemp.getTagTable().getValue("0020,0010"));
                         studyID = studyID.trim();
