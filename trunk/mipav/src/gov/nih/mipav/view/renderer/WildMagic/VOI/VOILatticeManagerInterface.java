@@ -1,19 +1,29 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
+import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationKMeans;
+import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationWindowing;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.Random;
+import java.util.Vector;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -207,8 +217,67 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		else if ( command.equals("StraightenLattice") ) {
 			if ( latticeModel != null )
 			{
-				latticeModel.interpolateLattice( true );
+				latticeModel.interpolateLattice( true, false, true, false );
 				voiMenuBuilder.setMenuItemEnabled("Show Expanded Model", true);
+			}
+		} 
+		else if ( command.equals("SegmentNeuclei") ) {
+		
+//			testSegmentation();
+//			if ( true )
+//				return;
+			
+			Vector<Vector3f> foundNuclei = WormSegmentationWindowing.findMarkers(m_kImageA, 150, (float) m_kImageA.getMax(), 5, 10 );
+			
+//			int[][] colors = new int[][]{ {255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {255, 255, 0}, {255, 0, 255}, {0, 255, 255} };
+			if ( foundNuclei != null )
+			{
+//				final int dimX = m_kImageA.getExtents().length > 0 ? m_kImageA.getExtents()[0] : 1;
+//				final int dimY = m_kImageA.getExtents().length > 1 ? m_kImageA.getExtents()[1] : 1;
+//				final int dimZ = m_kImageA.getExtents().length > 2 ? m_kImageA.getExtents()[2] : 1;
+//				
+//				Vector3f pt = new Vector3f();
+//		    	ModelImage segImage = new ModelImage( ModelStorageBase.ARGB, m_kImageA.getExtents(), JDialogBase.makeImageName( m_kImageA.getImageName(), "seg" ) );
+//		    	for ( int z = 0; z < dimZ; z++ )
+//		    	{
+//		    		for ( int y = 0; y < dimY; y++ )
+//		    		{
+//		    			for ( int x = 0; x < dimX; x++ )
+//		    			{
+//		    				segImage.set(x, y, z, 0);
+//		    				pt.set(x,y,z);
+//		    				boolean found = false;
+//		    				for ( int i = 0; i < foundNuclei.getCurves().size() && !found; i++ )
+//		    				{
+//		    					VOIContour contour = (VOIContour) foundNuclei.getCurves().elementAt(i);
+//		    					for ( int j = 0; j < contour.size(); j++ )
+//		    					{
+//		    						if ( contour.elementAt(j).distance(pt) < 2 )
+//		    						{
+//		    							segImage.setC(x, y, z, 0, 255);
+//		    							segImage.setC(x, y, z, 1, colors[i][0]);
+//		    							segImage.setC(x, y, z, 2, colors[i][1]);
+//		    							segImage.setC(x, y, z, 3, colors[i][2]);
+//		    							found = true;
+//		    							break;
+//		    						}
+//		    					}
+//		    				}
+//		    			}
+//		    		}
+//		    	}
+//		    	segImage.calcMinMax();
+//		    	new ViewJFrameImage(segImage);
+//		    	int count = 0;
+//				for ( int i = 0; i < foundNuclei.getCurves().size(); i++ )
+//				{
+//					count += foundNuclei.getCurves().elementAt(i).size();
+//				}
+		    	System.err.println( "Found " + foundNuclei.size() + " nuclei " );
+			}
+			else
+			{
+		    	System.err.println( "Found 0 nuclei " );				
 			}
 		} 
 		else if ( command.equals("voxelSize") ) {
@@ -608,4 +677,139 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		updateVoxelSize.setVisible(true);
 	}
 
+	
+//	private void testSegmentation()
+//	{
+//        long time = System.currentTimeMillis();
+//		Random r = new Random(time);
+//		System.err.println( Math.random() );
+//		
+//		ModelImage test = new ModelImage( ModelStorageBase.ARGB_FLOAT, m_kImageA.getExtents(), "testNuclei" );
+//		final int dimX = m_kImageA.getExtents().length > 0 ? m_kImageA.getExtents()[0] : 1;
+//		final int dimY = m_kImageA.getExtents().length > 1 ? m_kImageA.getExtents()[1] : 1;
+//		final int dimZ = m_kImageA.getExtents().length > 2 ? m_kImageA.getExtents()[2] : 1;
+//		
+//		int[] radiiCounts = new int[12];
+//		int count = (int) (Math.random() * 100 + 400);
+//		Vector<Vector3f> nuclei = new Vector<Vector3f>();
+//		Vector<Integer> radii = new Vector<Integer>();
+//		while ( nuclei.size() < count )
+//		{
+//			int exp = (int) (1 + 10*Math.random());
+//			int plusMinus = (int) Math.pow( -1, exp );
+//			float shift = (float) (5 * plusMinus * Math.random());
+//			Integer radius = new Integer( (int) Math.round(10 + shift) );
+//			float x = (float) Math.random() * (dimX - radius * 4) + radius * 2;
+//			float y = (float) Math.random() * (dimY - radius * 4) + radius * 2;
+//			float z = (float) Math.random() * (dimZ - radius * 4) + radius * 2;
+//			Vector3f pt = new Vector3f( Math.round(x), Math.round(y), Math.round(z) );
+//			boolean found = false;
+//			for ( int i = 0; i < nuclei.size(); i++ )
+//			{
+//				if ( nuclei.elementAt(i).distance(pt) < 2*radius )
+//				{
+//					found = true;
+//					break;
+//				}
+//			}
+//			if ( !found )
+//			{
+//				nuclei.add(pt);
+//				radii.add(radius);
+////				System.err.println( nuclei.size() + " " + pt + " " + radius );
+//				radiiCounts[radius-5]++;
+//			}
+////			System.err.println( nuclei.size() );
+//		}
+//		
+//		int minValue = 100;
+//		int maxValue = 255;
+//		Vector3f newPt = new Vector3f();
+//    	for ( int z = 0; z < dimZ; z++ )
+//    	{
+//    		for ( int y = 0; y < dimY; y++ )
+//    		{
+//    			for ( int x = 0; x < dimX; x++ )
+//    			{
+//    				newPt.set(x,y,z);
+//    				for ( int i = 0; i < nuclei.size(); i++ )
+//    				{
+//    					Integer radius = radii.elementAt(i);
+//    					if ( newPt.distance(nuclei.elementAt(i)) <= radius )
+//    					{
+//    						int currentValue = (int) Math.min( 255, Math.max(0, (minValue + (maxValue - minValue) * Math.random()) ));
+//    						test.setC(x,  y, z, 0, 255);
+//    						test.setC(x,  y, z, 1, currentValue);
+//    						test.setC(x,  y, z, 2, currentValue);
+//    						test.setC(x,  y, z, 3, currentValue);
+//    						break;
+//    					}
+//    				}
+//    			}
+//    		}
+////			System.err.println( z );
+//    	}
+//    	test.calcMinMax();
+////    	new ViewJFrameImage(test);
+//
+//		System.err.println( "seeded " + count + " nuclei" );
+//    	for ( int i = 0; i < radiiCounts.length; i++ )
+//    	{
+//    		System.err.println( (i+5) + " " + radiiCounts[i] );
+//    	}
+////		Vector<Vector3f> nuclei = WormSegmentationWindowing.nucleiSegmentation(m_kImageA, 150, 10, 20);
+//    	VOI foundNuclei = WormSegmentationWindowing.findMarkers(test, minValue -1, maxValue, 5, 15 );
+////		Vector<Vector3f> foundNuclei = WormSegmentationKMeans.segmentAll1(test, 100f, 255, 500);
+//		if ( foundNuclei != null )
+//		{
+//			Vector3f pt = new Vector3f();
+////			for ( int i = 0; i < foundNuclei.size(); i++ )
+////			{
+////				pt.copy(foundNuclei.elementAt(i));
+////				if ( test.getFloatC( (int)pt.X, (int)pt.Y, (int)pt.Z, 1 ) < 255 )
+////					System.err.println( i + " zero center value " +  test.getFloatC( (int)pt.X, (int)pt.Y, (int)pt.Z, 1 ) );
+////			}
+//			
+//	    	for ( int z = 0; z < dimZ; z++ )
+//	    	{
+//	    		for ( int y = 0; y < dimY; y++ )
+//	    		{
+//	    			for ( int x = 0; x < dimX; x++ )
+//	    			{
+//	    				pt.set(x,y,z);
+//	    				boolean found = false;
+//	    				for ( int i = 0; i < foundNuclei.getCurves().size() && !found; i++ )
+//	    				{
+//	    					VOIContour contour = (VOIContour) foundNuclei.getCurves().elementAt(i);
+//	    					for ( int j = 0; j < contour.size(); j++ )
+//	    					{
+//	    						if ( contour.elementAt(j).distance(pt) < 2 )
+//	    						{
+//	    							test.setC(x,  y, z, 1, 255);
+//	    							test.setC(x,  y, z, 2, 0);
+//	    							test.setC(x,  y, z, 3, 0);
+//	    							found = true;
+//	    							break;
+//	    						}
+//	    					}
+//	    				}
+//	    			}
+//	    		}
+////				System.err.println( z );
+//	    	}	    	
+//	    	count = 0;
+//			for ( int i = 0; i < foundNuclei.getCurves().size(); i++ )
+//			{
+//				count += foundNuclei.getCurves().elementAt(i).size();
+//			}
+//	    	System.err.println( "Found " + count + " nuclei " );
+//		}
+//		else
+//		{
+//	    	System.err.println( "Found 0 nuclei " );				
+//		}
+//    	test.calcMinMax();
+//    	new ViewJFrameImage(test);
+//	}
+	
 }

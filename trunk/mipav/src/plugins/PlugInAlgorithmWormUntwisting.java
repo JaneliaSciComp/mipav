@@ -380,7 +380,7 @@ public class PlugInAlgorithmWormUntwisting
 						}
 						// interpolate the lattice and untwist the worm, saving the output images and straightened lattice + annotations:
 						model.setMaskImage(maskImage);
-						model.interpolateLattice( false );
+						model.interpolateLattice( false, true, false, false );
 						model.dispose();
 						model = null;
 					}

@@ -72,7 +72,14 @@ public class WormSegmentationKMeans extends WormSegmentation
 		for (int z = 0; z < dimZ; z++) {
 			for (int y = 0; y < dimY; y++) {
 				for (int x = 0; x < dimX; x++) {
-					if ( (image.getFloat(x, y, z) > minValue) && (image.getFloat(x, y, z) <= maxValue)) {
+					if ( image.isColorImage() )
+					{
+						if ( image.getFloatC(x, y, z, 1) > minValue )
+						{
+							positions.add(new Vector3f(x, y, z));
+						}
+					}
+					else if ( (image.getFloat(x, y, z) > minValue) && (image.getFloat(x, y, z) <= maxValue)) {
 						positions.add(new Vector3f(x, y, z));
 					}
 				}
@@ -84,11 +91,11 @@ public class WormSegmentationKMeans extends WormSegmentation
 			return null;
 		}
 
-		final int numAttempts = 1000;
-		final Random randomGen = new Random();
-		double minCost = Float.MAX_VALUE;
+		int numAttempts = 100;
+		final Random randomGen = new Random(System.currentTimeMillis());
+		double minCost = Double.MAX_VALUE;
 		Vector3f[] potentialClusters = null;
-		for (int i = 0; i < numAttempts; i++) {
+		while (numAttempts > 0 ) {
 			// generate random potential cluster centers:
 			final Vector3f[] centers = new Vector3f[numClusters];
 			for (int j = 0; j < numClusters; j++) {
@@ -178,7 +185,18 @@ public class WormSegmentationKMeans extends WormSegmentation
 					// calculate cost -- each cluster center must be at a high-intensity voxel:
 					double cost = 0;
 					for (int j = 0; j < centers.length; j++) {
-						cost += 10*(float) (image.getMax() - image.getFloat((int)centers[j].X, (int)centers[j].Y, (int)centers[j].Z ));
+						if ( image.isColorImage() )
+						{
+//							if ( image.getFloatC((int)centers[j].X, (int)centers[j].Y, (int)centers[j].Z, 1 ) < minValue )
+//							{
+//								cost = Math.min( Double.MAX_VALUE, minCost + 1);
+//								break;
+//							}
+							cost += 10*(float) (image.getMaxR() - image.getFloatC((int)centers[j].X, (int)centers[j].Y, (int)centers[j].Z, 1 ));
+						}
+						else{
+							cost += 10*(float) (image.getMax() - image.getFloat((int)centers[j].X, (int)centers[j].Y, (int)centers[j].Z ));
+						}
 					}
 					
 					// check for min cost and save the clusters w/smallest cost so far:
@@ -202,35 +220,37 @@ public class WormSegmentationKMeans extends WormSegmentation
 					listCenters = null;
 				}
 			}
+			System.err.println( numAttempts + " " + minCost );
+			numAttempts--;
 		}
 
 		// Combine clusters that are too close together:
 		Vector3f negCenter = new Vector3f(-1,-1,-1);
-		for ( int i = 0; i < potentialClusters.length; i++ )
-		{
-			if ( !potentialClusters[i].equals(negCenter) )
-			{
-				Vector3f newCenter = new Vector3f(potentialClusters[i]);
-				int count = 1;
-				for ( int j = i+1; j < potentialClusters.length; j++ )
-				{
-					if ( !potentialClusters[j].equals(negCenter) )
-					{
-						if ( potentialClusters[i].distance(potentialClusters[j]) < 10 )
-						{
-							newCenter.add(potentialClusters[j]);
-							potentialClusters[j].copy(negCenter);
-							count++;
-						}
-					}
-				}
-				if ( count > 1 )
-				{
-					newCenter.scale(1f/count);
-					potentialClusters[i].copy(newCenter);
-				}
-			}
-		}
+//		for ( int i = 0; i < potentialClusters.length; i++ )
+//		{
+//			if ( !potentialClusters[i].equals(negCenter) )
+//			{
+//				Vector3f newCenter = new Vector3f(potentialClusters[i]);
+//				int count = 1;
+//				for ( int j = i+1; j < potentialClusters.length; j++ )
+//				{
+//					if ( !potentialClusters[j].equals(negCenter) )
+//					{
+//						if ( potentialClusters[i].distance(potentialClusters[j]) < 10 )
+//						{
+//							newCenter.add(potentialClusters[j]);
+//							potentialClusters[j].copy(negCenter);
+//							count++;
+//						}
+//					}
+//				}
+//				if ( count > 1 )
+//				{
+//					newCenter.scale(1f/count);
+//					potentialClusters[i].copy(newCenter);
+//				}
+//			}
+//		}
 		
 		Vector<Vector3f> seamcells = new Vector<Vector3f>();
 		for (int i = 0; i < potentialClusters.length; i++) {

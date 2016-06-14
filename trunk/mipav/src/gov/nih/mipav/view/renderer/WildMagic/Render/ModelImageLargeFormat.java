@@ -62,6 +62,39 @@ public class ModelImageLargeFormat {
 		lruList = new Vector<ModelImage>();
 	}
 	
+	public void clearTable()
+	{
+		int numRemove = sliceTable.size();
+		for ( int i = 0; i < numRemove; i++ )
+    	{
+    		ModelImage removeSlice = lruList.lastElement();
+    		Iterator<Integer> iterator = sliceTable.keySet().iterator();
+    		while ( iterator.hasNext() )
+    		{
+    			Integer key = iterator.next();
+    			if ( sliceTable.get(key) == removeSlice )
+    			{
+    				sliceTable.remove(key);
+    				lruList.remove(removeSlice);
+    				if ( modified[key] )
+    				{
+    					String[] fileInfo = fileTable.get(key);
+    					//        				System.err.println( "updateSliceTable " + key + " " + fileInfo[0] + " " + fileInfo[1] );
+    					removeSlice.setImageName( fileInfo[0] );
+    					saveImage( removeSlice, fileInfo[0], fileInfo[1] );
+    					modified[key] = false;
+    					onDisk[key] = true;
+    				}
+    				//        			System.err.println( "updateSliceTable removing from table: " + key );
+    				break;
+    			}
+    		}
+    		removeSlice.disposeLocal(false);
+    		removeSlice = null;
+    	}
+    	System.gc();
+	}
+	
 	public void disposeLocal( boolean gc )
 	{
 		for ( int i = 0; i < extents3D[2]; i++ )
@@ -533,6 +566,8 @@ public class ModelImageLargeFormat {
 				if ( fileIO == null )
 				{
 					fileIO = new FileIO();
+					fileIO.setQuiet(true);
+					fileIO.setSuppressProgressBar(true);
 				}
 				image = fileIO.readImage(fileInfo[0] + ".png", fileInfo[1], false, null);
 				//				fileIO.dispose();
@@ -545,6 +580,8 @@ public class ModelImageLargeFormat {
 					if ( fileIO == null )
 					{
 						fileIO = new FileIO();
+						fileIO.setQuiet(true);
+						fileIO.setSuppressProgressBar(true);
 					}
 					//				System.err.println( "found file " + fileInfo[1] + fileInfo[0] + ".itf" );
 					image = fileIO.readImage(fileInfo[0] + ".tif", fileInfo[1], false, null);
@@ -552,7 +589,21 @@ public class ModelImageLargeFormat {
 				}
 				else
 				{
-					MipavUtil.displayError( "File not found " + fileInfo[1] + " " + fileInfo[0] );
+					file = new File(fileInfo[1] + fileInfo[0] + ".xml");
+					if (file.exists()) {
+						if ( fileIO == null )
+						{
+							fileIO = new FileIO();
+							fileIO.setQuiet(true);
+							fileIO.setSuppressProgressBar(true);
+						}
+						//				System.err.println( "found file " + fileInfo[1] + fileInfo[0] + ".itf" );
+						image = fileIO.readImage(fileInfo[0] + ".xml", fileInfo[1], false, null);
+						//				fileIO.dispose();
+					}
+					else {
+						MipavUtil.displayError( "File not found " + fileInfo[1] + " " + fileInfo[0] );
+					}
 				}
 			}
 			file = null;
@@ -613,7 +664,42 @@ public class ModelImageLargeFormat {
 		// add new slice:
 		if ( onDisk[index] )
 		{
-			slice = readFromDisk(index);
+			try {
+				slice = readFromDisk(index);
+			} catch ( java.lang.OutOfMemoryError e )
+			{
+				int numRemove = (int)Math.max( 1, sliceTable.size()*.20 );
+				for ( int i = 0; i < numRemove; i++ )
+				{
+					ModelImage removeSlice = lruList.lastElement();
+					Iterator<Integer> iterator = sliceTable.keySet().iterator();
+					while ( iterator.hasNext() )
+					{
+						Integer key = iterator.next();
+						if ( sliceTable.get(key) == removeSlice )
+						{
+							sliceTable.remove(key);
+							lruList.remove(removeSlice);
+							if ( modified[key] )
+							{
+								String[] fileInfo = fileTable.get(key);
+								//        				System.err.println( "updateSliceTable " + key + " " + fileInfo[0] + " " + fileInfo[1] );
+								removeSlice.setImageName( fileInfo[0] );
+								saveImage( removeSlice, fileInfo[0], fileInfo[1] );
+								modified[key] = false;
+								onDisk[key] = true;
+							}
+							//        			System.err.println( "updateSliceTable removing from table: " + key );
+							break;
+						}
+					}
+					removeSlice.disposeLocal(false);
+					removeSlice = null;
+				}
+				System.gc();
+
+				slice = readFromDisk(index);
+			}
 		}
 		if ( slice == null )
 		{
