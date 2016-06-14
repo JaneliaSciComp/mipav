@@ -185,9 +185,14 @@ public class FileVOI extends FileXML {
             } else {
 
                 if ( !readXML(voi[0])) {
-
-                    if ( !readCoordXML(voi[0])) {
-                        throw (new IOException("Open VOI failed."));
+                	// read the VOI in the default LPS coordinates:
+                    if ( !readCoordXML(voi[0], true)) {
+                    	// if it fails to read, attempt to read as file-index based coordinates:
+                        if ( !readCoordXML(voi[0], false)) {
+                        	// display error on fail:
+                        	MipavUtil.displayError("Error: The file does not appear to be a valid VOI file");
+                        	throw (new IOException("Open VOI failed."));
+                        }
                     } else {
 
                         // System.err.println("success");
@@ -272,9 +277,14 @@ public class FileVOI extends FileXML {
             } else {
 
                 if ( !readXML(voi[0])) {
-
-                    if ( !readCoordXML(voi[0])) {
-                        throw (new IOException("Open VOI failed."));
+                	// read the VOI in the default LPS coordinates:
+                    if ( !readCoordXML(voi[0], true)) {
+                    	// if it fails to read, attempt to read as file-index based coordinates:
+                        if ( !readCoordXML(voi[0], false)) {
+                        	// display error on fail:
+                        	MipavUtil.displayError("Error: The file does not appear to be a valid VOI file");
+                        	throw (new IOException("Open VOI failed."));
+                        }
                     } else {
 
                         // System.err.println("success");
@@ -1409,7 +1419,7 @@ public class FileVOI extends FileXML {
      * 
      * @return boolean whether or not the VOI read in successfully
      */
-    private boolean readCoordXML(final VOI voi) {
+    private boolean readCoordXML(final VOI voi, boolean isLPS) {
         final SAXParserFactory spf = SAXParserFactory.newInstance();
 
         spf.setNamespaceAware(true);
@@ -1437,7 +1447,16 @@ public class FileVOI extends FileXML {
             final XMLReader xmlReader = saxParser.getXMLReader();
 
             // Set the ContentHandler of the XMLReader
-            xmlReader.setContentHandler(new XMLCoordHandler(voi));
+            if ( isLPS )
+            {
+            	// read the voi coordinates as LPS coordinates (the default)
+            	xmlReader.setContentHandler(new XMLCoordHandler(voi));
+            }
+            else
+            {
+            	// read the voi coordinates as file-index based coordinates
+            	xmlReader.setContentHandler(new XMLCoordHandler(voi, false));
+            }
 
             // Set an ErrorHandler before parsing
             xmlReader.setErrorHandler(new XMLErrorHandler());
@@ -1445,13 +1464,6 @@ public class FileVOI extends FileXML {
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
         }catch (SAXException e) {
-        	e.printStackTrace();
-        	String msg = e.getMessage();
-        	if(msg.contains("image")) {
-        		MipavUtil.displayError("Error: This is not a valid VOI file and appears to be an image header file");
-        	}else {
-        		MipavUtil.displayError("Error: This is not a valid VOI file");
-        	}
              return false;
         }catch (final Exception error) {
             error.printStackTrace();
@@ -2208,9 +2220,8 @@ public class FileVOI extends FileXML {
 
         /** The VOI that we are building from the XML. */
         private final VOI voi;
-        
-        @SuppressWarnings("unused")
-        private Vector3f LPSOrigin;
+        /** The default is to read the voi coodinates as LPS coordinates. */
+        private boolean isLPS = true;
 
         /**
          * Construct our custom XML data handler.
@@ -2219,6 +2230,17 @@ public class FileVOI extends FileXML {
          */
         public XMLCoordHandler(final VOI voi) {
             this.voi = voi;
+            contourVector = new Vector<Vector3f>();
+        }
+
+        /**
+         * Construct our custom XML data handler.
+         * 
+         * @param voi the VOI we should build from the XML file data
+         */
+        public XMLCoordHandler(final VOI voi, boolean isLPS) {
+            this.voi = voi;
+            this.isLPS = isLPS;
             contourVector = new Vector<Vector3f>();
         }
 
@@ -2264,7 +2286,6 @@ public class FileVOI extends FileXML {
                     x = Float.parseFloat(st.nextToken());
                     y = Float.parseFloat(st.nextToken());
                     z = Float.parseFloat(st.nextToken());
-                    LPSOrigin = new Vector3f( x, y, z );
                 } catch (final NumberFormatException nfex) {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
@@ -2323,14 +2344,15 @@ public class FileVOI extends FileXML {
                 for (index = 0; index < contourVector.size(); index++) {
                     ptIn = (Vector3f) contourVector.elementAt(index);
 
-                    // System.err.println("\tScanner coord: " + ptIn);
-                    //if ( LPSOrigin != null )
-                    //{
-                    //    MipavCoordinateSystems.scannerToFile(ptIn, ptOut, LPSOrigin, image);
-                    //}
-                    //else
+                    if ( isLPS )
                     {
-                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);                        
+                    	// convert from LPS to file coordinates:
+                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);                      	
+                    }
+                    else
+                    {
+                    	// the input point is in file coordinates already, copy:
+                        ptOut.set( Math.round(ptIn.X), Math.round(ptIn.Y), Math.round(ptIn.Z) );                        
                     }
 
                     x[index] = MipavMath.round(Math.abs(ptOut.X));
@@ -2342,7 +2364,8 @@ public class FileVOI extends FileXML {
                     Preferences.debug("\tScanner coord: " + ptIn + ", File coord: " + x[index] + ", " + y[index] + ", "
                             + z[index] + "\n", Preferences.DEBUG_FILEIO);
 
-                    if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
+                    if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {   
+                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);             
                         throw new SAXException("VOI on file out of image bounds");
                     }
                 }

@@ -597,7 +597,7 @@ public abstract class WormSegmentation
 	{				
 		Vector3f center2D = new Vector3f( dimX/2, dimY/2, 0);
 		float[] averages = new float[dimX*dimY];
-		int window = 5;
+		int window = Math.max(2, width/2);
 		float maxAverage = -1;
 		for ( int y = 0; y < dimY; y++ )
 		{
@@ -796,7 +796,7 @@ public abstract class WormSegmentation
 				minEllipse.min(pos);
 				maxEllipse.max(pos);
 			}
-			System.err.println("default circle 1 " + ID + " " + r );
+			System.err.println("default circle 1 " + ID + " " + r + " " + width + " " + window );
 			return ellipseDefault;
 		}
 		ellipseAll.convexHull();
@@ -3712,7 +3712,60 @@ public abstract class WormSegmentation
 	}
 
 
-	
+	public static void segmentNuclei( ModelImage image )
+	{
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+		int window = 5;
+		
+		double max = image.getMax();
+		double min = image.getMin();
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					float average = 0;
+					int count = 0;
+					for ( int z1 = Math.max(0, z - window); z1 < Math.min(dimZ,  z + window + 1); z1++ )
+					{
+						for ( int y1 = Math.max(0, y - window); y1 < Math.min(dimY,  y + window + 1); y1++ )
+						{
+							for ( int x1 = Math.max(0, x - window); x1 < Math.min(dimX,  x + window + 1); x1++ )
+							{
+								average += image.getFloat(x1,y1,z1);
+								count++;
+							}
+						}
+					}
+					average /= (float)count;
+
+					// 'inside' = high average, low standardDeviation
+//					if ( average > 100 )
+//					{
+//						float standardDeviation = 0;
+//						count = 0;
+//						for ( int z1 = Math.max(0, z - window); z1 < Math.min(dimZ,  z + window + 1); z1++ )
+//						{
+//							for ( int y1 = Math.max(0, y - window); y1 < Math.min(dimY,  y + window + 1); y1++ )
+//							{
+//								for ( int x1 = Math.max(0, x - window); x1 < Math.min(dimX,  x + window + 1); x1++ )
+//								{
+//									standardDeviation += ((image.getFloat(x1,y1,z1) - average)*(image.getFloat(x1,y1,z1) - average));
+//									count++;
+//								}
+//							}
+//						}
+//						standardDeviation /= (float)count;
+//					
+//					}
+				}
+			}
+		}
+		
+	}
 	
 	
 }
