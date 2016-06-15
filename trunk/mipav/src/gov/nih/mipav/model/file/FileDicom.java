@@ -1234,6 +1234,25 @@ public class FileDicom extends FileDicomBase {
             if (removeTag != null) {
                 tagTable.removeTag(key);
             }
+        } else if ((name.equals("0020,9113")) || (name.equals("0020,9116")) || (name.equals("0028,9110"))) {
+        	// Only occurs in read and not in write, so these 3 sequences will be written to the 
+        	// dicom file will not show up in the dicom file header read
+        	// Comment out this section to make these sequence tags show up in the header read
+        	// 0020,9113 Pixel Position Sequence
+        	// 0020,9116 Plane Orientation Sequence
+        	// 0028,9110 Pixel Measures Sequence
+        	sq = getSequence(endianess, len);
+            Vector<FileDicomSQItem> v = sq.getSequence();
+            Iterator<FileDicomTag> itr = v.get(0).getTagList().values().iterator();
+            
+            while (itr.hasNext()) { // put tags in base FileInfoDicom
+                tagTable.put(itr.next());
+            }
+            
+            FileDicomTag removeTag = tagTable.get(key);
+            if (removeTag != null) {
+                tagTable.removeTag(key);
+            }
         } else {
             if (name.equals("0004,1220")) {
                 dirInfo = getSequence(endianess, len);
