@@ -94,7 +94,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     private JTextField winValTextField, levelValTextField, minValTextField, maxValTextField;
 
     /** the maxes and mins for window and level * */
-    private float winMaxFloat, winMinFloat, levelMaxFloat, levelMinFloat;
+    public float winMaxFloat, winMinFloat, levelMaxFloat, levelMinFloat;
 
     /** Three arrays to save the coordinates of the LUT's transfer fucntion. z[] not used. */
     private final float[] x = new float[4];
@@ -626,7 +626,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         final Object source = e.getSource();
         if (source == levelSlider || source == windowSlider) {
             calcMinMax();
-            
+                System.err.println("levelSlider.getValue() = " + levelSlider.getValue());
+                System.err.println("windowSlider.getValue() = " +windowSlider.getValue());
 
                 level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
                 window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
@@ -1513,5 +1514,42 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 	public ModelLUT getLUT() {
 		return LUT;
 	}
+	
+	public void setWinLevel(int windowValue, int levelValue) {
+		   calcMinMax();
+           
+
+           // level = (levelValue * (maxImage - minImage) / levelSliderMax) + minImage;
+           // window = (windowValue * 2 * (maxImage - minImage) / windowSliderMax);
+
+           level = levelValue;
+           window = windowValue;
+           
+       if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.ARGB_FLOAT) {
+           winValTextField.setText(Float.toString(window));
+           levelValTextField.setText(Float.toString(level));
+       } else {
+           winValTextField.setText(Float.toString(Math.round(window)));
+           levelValTextField.setText(Float.toString(Math.round(level)));
+       }
+
+       calcWinLevTransferFunction(image, window, level, x, y);
+
+       // update the transfer function so the on-screen image
+       // (modelImage/viewJFrameImage) updates for the user
+       LUT.getTransferFunction().importArrays(x, y, 4);
+       image.notifyImageDisplayListeners(LUT, false);
+
+       // if ((levelSlider.getValueIsAdjusting()) || (windowSlider.getValueIsAdjusting())) {
+       // return;
+       // }
+
+       // if the slider is finally done, update the transfer function
+       // in the histogram.
+       if (image.getHistogramFrame() != null) {
+           updateHistoLUTFrame();
+       }
+	}
+	
 
 } // end class JDialogWinLevel
