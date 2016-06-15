@@ -455,6 +455,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	public static int MultiFrameEyetrackerMode = 1;
 	// sing frame plug-in eye tracker recording mode;
 	public static int PluginEyetrackerMode = 2;
+	// Hidden winLevel dialog for eye tracker
+	protected JDialogWinLevel winLevel;
 	
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -599,6 +601,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         final int imageSize = extents[0] * extents[1];
         paintBuffer = new int[imageSize];
         refPtsLocation = "0, 0," + (extents[0]-1) + ", " + "0" + ", " + "0, " + (extents[1]-1) + ", " + (extents[0]-1) + ", " + (extents[1]-1) + ", ";
+    
     }
 
     // ~ Methods
@@ -7377,6 +7380,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	 */
 	public void setEyetrackerRecordingMode(int modeType) {
 		eyeTrackerRecordingMode = modeType;
+		winLevel = new JDialogWinLevel(frame, imageActive, LUTa);
 	}
 	
 	
@@ -7481,4 +7485,78 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 			
 		}
 	}
+	
+	/**
+	 * Set the window level value from the eye tracker 
+	 * @param window
+	 * @param level
+	 */
+	public void setWindLevel(int window, int level) {	
+		winLevel.setWinLevel(window, level);
+	}
+	
+	 /**
+     * Sets mode to CT and sets range to CT presets.
+     *
+     * @param  preset1  first CT preset
+     * @param  preset2  second CT preset
+     */
+	
+    public void ctMode(int preset1, int preset2) {
+
+    	float[] x = new float[100];
+        float[] y = new float[100];
+        float[] z = new float[100];
+        Dimension dim = new Dimension(256, 256);
+
+        float min, max;
+        float yVal, m, b;
+
+        min = (float) imageA.getMin();
+        max = (float) imageA.getMax();
+
+        x[0] = min; // -1024;
+        y[0] = dim.height - 1;
+        z[0] = 0;
+
+        if (preset2 < max) {
+            x[2] = preset2;
+        } else {
+            x[2] = max;
+        }
+
+        y[2] = 0;
+        z[2] = 0;
+
+        if (preset1 < min) {
+
+            // y = m * x + b, line equation
+            // Assume: pt1 ( preset1, 255 ),  pt2 ( x[2], y[2])
+            // find: pt3 ( -1024, yVal);
+            m = (255 - y[2]) / (preset1 - x[2]);
+            b = 255 - (m * preset1);
+            yVal = (m * (-1024)) + b;
+            x[1] = -1024;
+            y[1] = yVal;
+            z[1] = 0;
+            //System.out.println("yVal = " + yVal);
+        } else {
+            x[1] = preset1;
+            y[1] = dim.height - 1;
+            z[1] = 0;
+        }
+
+        if (y[1] > 255) {
+            y[1] = 255;
+        }
+
+        x[3] = max; // 3071;
+        y[3] = 0;
+        z[3] = 0;
+
+        getLUTa().getTransferFunction().importArrays(x, y, 4);
+        imageA.getHistogramFrame().updateFrames(false);
+        // showHistogram();
+    }
+    
 }

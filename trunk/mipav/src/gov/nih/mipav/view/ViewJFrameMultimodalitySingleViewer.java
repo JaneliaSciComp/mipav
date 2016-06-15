@@ -13,6 +13,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.*;
 
 import WildMagic.LibFoundation.Mathematics.*;
@@ -59,6 +60,12 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	private JComboBox comboBoxImage;
 	private float initZoomFactor;
 	
+	private JPopupMenu popup = new JPopupMenu();
+	
+	private int sliceNumCache = 0;
+	
+	protected JToolBar viewToolBar;
+	
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
 
@@ -81,6 +88,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		
 		getFramesInfo();
 		initLayout();
+		addPopup();
 		
 		JViewport viewPort = imageScroll.getViewport();
 		int vh = viewPort.getHeight();
@@ -94,6 +102,21 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	    
 	}
 
+	public void addPopup() {
+		   JMenuItem m = new JMenuItem("Soft Tissue");
+		    m.addActionListener(this);
+		    popup.add(m);
+		    m = new JMenuItem("Lung");
+		    m.addActionListener(this);
+		    popup.add(m);
+		    m = new JMenuItem("Bone");
+		    m.addActionListener(this);
+		    popup.add(m);
+		    PopupListener pl = new PopupListener();
+		    addMouseListener(pl);
+		   
+	}
+	
 	public void startRecording() {
 		String defaultDirectory = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator;
 		String defaultFileName = defaultDirectory + "eyetracking-" + System.currentTimeMillis() + ".csv";
@@ -186,6 +209,15 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		label6.setBackground(Color.black);
 		label6.setIcon(cornerImage);
 		topPanel.add(label5, BorderLayout.WEST);
+		
+	    // final Border etchedBorder = BorderFactory.createEtchedBorder();
+        toolbarBuilder = new ViewToolBarBuilder(this);
+        viewToolBar = new JToolBar();
+        viewToolBar.setBorderPainted(false);
+        viewToolBar.setBackground(Color.black);
+        viewToolBar.setFloatable(false);
+	    viewToolBar.add(toolbarBuilder.buildButton("Measure", "Line Measure", "linear"));
+		topPanel.add(viewToolBar, BorderLayout.CENTER);
 		topPanel.add(label6, BorderLayout.EAST);
 
 		JPanel lowerPanel = new JPanel(new BorderLayout());
@@ -262,7 +294,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageComp.addMouseListener(this);
 		imageComp.addMouseMotionListener(this);
 		imageComp.addKeyListener(this);
-		 
+		imageFrame.addKeyListener(this);
+		
 		addKeyListener(this);
 	
 		setSize(screenWidth, screenHeight);
@@ -381,6 +414,21 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 	}
 
+	
+	 class PopupListener extends MouseAdapter {
+		    public void mousePressed(MouseEvent e) {
+		      maybeShowPopup(e);
+		    }
+
+		    public void mouseReleased(MouseEvent e) {
+		      maybeShowPopup(e);
+		    }
+
+		    private void maybeShowPopup(MouseEvent e) {
+		      if (e.isPopupTrigger())
+		        popup.show(getContentPane(), e.getX(), e.getY());
+		    }
+		  }
 	// ************************************************************************
 	// **************************** Action Events *****************************
 	// ************************************************************************
@@ -391,7 +439,27 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	 * @param event
 	 *            event that triggered function
 	 */
-	public void actionPerformed(final ActionEvent event) {}
+	public void actionPerformed(final ActionEvent event) {
+		Object eventObj = event.getSource();
+		// (JMenuItem)event.getSource()).getText();
+		if ( eventObj instanceof JMenuItem ) {
+			String cmd = ((JMenuItem)eventObj).getText();
+			if ( cmd.equals("Soft Tissue")) {
+				imageComp.setWindLevel(450, 50);
+			} else if ( cmd.equals("Bone")) {
+				imageComp.setWindLevel(2500, 450);
+			} else if ( cmd.equals("Lung")) {
+				imageComp.setWindLevel(2000,-100);
+			}
+			
+		}
+		
+		if ( event.getActionCommand().equals("Measure")) {
+			System.err.println("invoke measure");
+			invokeMeasure();
+		}
+		
+	}
 
 	/**
 	 * Should be called when window is closing to perform cleanup.
@@ -503,6 +571,16 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			// changeIcon("BlackCircle_550");
 		} else if ( keyCode == KeyEvent.VK_F4) {
 			// changeIcon("BlackCircle");
+		} else if ( keyCode == KeyEvent.VK_H) {
+			imageComp.setSlice(sliceNumCache);
+			System.err.println("sliceNumCache home = " + sliceNumCache);
+			imageFrame.updateImages(true);
+		} else if ( keyCode == KeyEvent.VK_R) {
+			sliceNumCache = imageComp.getSlice();
+			System.err.println("sliceNumCache insert = " + sliceNumCache);
+		} else if ( keyCode == KeyEvent.VK_D ) {
+			sliceNumCache = 0;
+			System.err.println("sliceNumCache delete = " + sliceNumCache);
 		}
 		  
 		// pass the key bindings to the underlying image (plb)
@@ -1605,6 +1683,10 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		}
 	}
 
+	
+	public void invokeMeasure() {
+		 imageFrame.getVOIManager().doVOI(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand());
+	}
 	
 
 }
