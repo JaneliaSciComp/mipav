@@ -488,8 +488,8 @@ private void buildPelvisDialog() {
     	voiList[2][7] = new PlugInSelectableVOI542a("Right Quadratus Lumborum", true, 1, 2, true, true, imageSize, 9, Color.CYAN);
     	voiList[2][8] = new PlugInSelectableVOI542a("Left Rectus Femoris", true, 1, 2, true, true, imageSize, 10, Color.MAGENTA);
     	voiList[2][9] = new PlugInSelectableVOI542a("Right Rectus Femoris", true, 1, 2, true, true, imageSize, 11, Color.MAGENTA);
-    	voiList[2][10] = new PlugInSelectableVOI542a("Left Sartorius", true, 1, 2, true, true, imageSize, 10, Color.BLUE);
-    	voiList[2][11] = new PlugInSelectableVOI542a("Right Sartorius", true, 1, 2, true, true, imageSize, 11, Color.BLUE);
+    	voiList[2][10] = new PlugInSelectableVOI542a("Left Sartorius", true, 1, 2, true, true, imageSize, 12, Color.BLUE);
+    	voiList[2][11] = new PlugInSelectableVOI542a("Right Sartorius", true, 1, 2, true, true, imageSize, 13, Color.BLUE);
     	
         titles = new String[3];
         titles[0] = "Pelvis";
