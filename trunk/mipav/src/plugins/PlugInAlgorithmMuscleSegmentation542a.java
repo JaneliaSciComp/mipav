@@ -185,6 +185,22 @@ public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase impleme
             	buildNeckDialog();
             	performDialog();
             	break;
+            	
+            case Chest:
+            	buildChestDialog();
+            	performDialog();
+            	break;
+            	
+            case Heart:
+            	buildHeartDialog();
+            	performDialog();
+            	break;
+            	
+            case Pelvis:
+            	buildPelvisDialog();
+            	performDialog();
+            	break;
+            	
                 
             case Custom:
             	customDialog = initDialogBox();
@@ -406,6 +422,163 @@ public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase impleme
 	    	System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator");
 	    
 	    performFileSave(extendable, "Abdomen");
+	    
+    }
+	
+	private void buildHeartDialog() {
+		voiList = new PlugInSelectableVOI542a[3][];
+    	int imageSize = 1;
+    	if(srcImage.getNDims() > 2)
+    		imageSize = srcImage.getExtents()[2];
+    	//String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
+    	voiList[0] = new PlugInSelectableVOI542a[1];
+    	voiList[0][0] = new PlugInSelectableVOI542a("Phantom", true, 1, 0, false, false, imageSize, Color.ORANGE);
+    	
+    	voiList[1] = new PlugInSelectableVOI542a[1];
+    	voiList[1][0] = new PlugInSelectableVOI542a("Pericardium", true, 1, 1, false, true, imageSize, 0, Color.ORANGE);
+    	
+    	voiList[2] = new PlugInSelectableVOI542a[1];
+    	voiList[2][0] = new PlugInSelectableVOI542a("Cardiac muscle", true, 1, 2, false, true, imageSize, 1, Color.ORANGE);
+    	
+    	titles = new String[3];
+        titles[0] = "Heart";
+        titles[1] = "Tissue";
+        titles[2] = "Muscles"; 
+        
+        symmetry = PlugInMuscleImageDisplay542a.Symmetry.NO_SYMMETRY;
+	    imageType = PlugInMuscleImageDisplay542a.ImageType.Heart;
+	    
+	    String extendable = "Start Pane: Heart"+
+	    	System.getProperty("line.separator")+"Start Voi: Phantom"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Tissue"+
+	    	System.getProperty("line.separator")+"Start Voi: Pericardium"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Muscles"+
+	    	System.getProperty("line.separator")+"Start Voi: Cardiac muscle"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator");
+	    
+	    performFileSave(extendable, "Heart");
+	}
+	
+private void buildPelvisDialog() {
+        
+    	voiList = new PlugInSelectableVOI542a[3][];
+    	int imageSize = 1;
+    	if(srcImage.getNDims() > 2)
+    		imageSize = srcImage.getExtents()[2];
+    	//String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
+    	voiList[0] = new PlugInSelectableVOI542a[3];
+    	voiList[0][0] = new PlugInSelectableVOI542a("Pelvis", true, 1, 0, false, true, imageSize, 0, Color.ORANGE);
+    	voiList[0][1] = new PlugInSelectableVOI542a("Subcutaneous area", true, 1, 0, false, true, imageSize, 1, Color.RED);
+    	voiList[0][2] = new PlugInSelectableVOI542a("Phantom", true, 1, 0, false, false, imageSize, Color.GREEN);
+    	
+    	voiList[1] = new PlugInSelectableVOI542a[2];
+    	voiList[1][0] = new PlugInSelectableVOI542a("Bone sample", true, 1, 1, false, false, imageSize, Color.ORANGE);
+    	voiList[1][1] = new PlugInSelectableVOI542a("Water sample", true, 1, 1, false, false, imageSize, Color.RED);
+    	
+    	voiList[2] = new PlugInSelectableVOI542a[12];
+    	voiList[2][0] = new PlugInSelectableVOI542a("Left Rectus Abdominus", true, 1, 2, true, true, imageSize, 2, Color.ORANGE);
+    	voiList[2][1] = new PlugInSelectableVOI542a("Right Rectus Abdominus", true, 1, 2, true, true, imageSize, 3, Color.ORANGE);
+    	voiList[2][2] = new PlugInSelectableVOI542a("Left Iliopsoas", true, 1, 2, true, true, imageSize, 4, Color.RED);
+    	voiList[2][3] = new PlugInSelectableVOI542a("Right Iliopsoas", true, 1, 2, true, true, imageSize, 5, Color.RED);
+    	voiList[2][4] = new PlugInSelectableVOI542a("Left Gluteals", true, 1, 2, true, true, imageSize, 6, Color.GREEN);
+    	voiList[2][5] = new PlugInSelectableVOI542a("Right Gluteals", true, 1, 2, true, true, imageSize, 7, Color.GREEN);
+    	voiList[2][6] = new PlugInSelectableVOI542a("Left Quadratus Lumborum", true, 1, 2, true, true, imageSize, 8, Color.CYAN);
+    	voiList[2][7] = new PlugInSelectableVOI542a("Right Quadratus Lumborum", true, 1, 2, true, true, imageSize, 9, Color.CYAN);
+    	voiList[2][8] = new PlugInSelectableVOI542a("Left Rectus Femoris", true, 1, 2, true, true, imageSize, 10, Color.MAGENTA);
+    	voiList[2][9] = new PlugInSelectableVOI542a("Right Rectus Femoris", true, 1, 2, true, true, imageSize, 11, Color.MAGENTA);
+    	voiList[2][10] = new PlugInSelectableVOI542a("Left Sartorius", true, 1, 2, true, true, imageSize, 10, Color.BLUE);
+    	voiList[2][11] = new PlugInSelectableVOI542a("Right Sartorius", true, 1, 2, true, true, imageSize, 11, Color.BLUE);
+    	
+        titles = new String[3];
+        titles[0] = "Pelvis";
+        titles[1] = "Tissue";
+        titles[2] = "Muscles"; 
+        
+        symmetry = PlugInMuscleImageDisplay542a.Symmetry.LEFT_RIGHT;
+	    imageType = PlugInMuscleImageDisplay542a.ImageType.Pelvis;
+	    
+	    String extendable = "Start Pane: Pelvis"+
+	    	System.getProperty("line.separator")+"Start Voi: Pelvis"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Subcutaneous area"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Phantom"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Tissue"+
+	    	System.getProperty("line.separator")+"Start Voi: Bone sample"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Water sample"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Muscles"+
+	    	System.getProperty("line.separator")+"Start Voi: Rectus Abdominus"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Iliopsoas"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Gluteals"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Quadratus Lumborum"+System.getProperty("line.separator")+"Color: 0,255,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Rectus Femoris"+System.getProperty("line.separator")+"Color: 255,0,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Sartorius"+System.getProperty("line.separator")+"Color: 0,0,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator");
+	    
+	    performFileSave(extendable, "Pelvis");
+	    
+    }
+	
+private void buildChestDialog() {
+        
+    	voiList = new PlugInSelectableVOI542a[3][];
+    	int imageSize = 1;
+    	if(srcImage.getNDims() > 2)
+    		imageSize = srcImage.getExtents()[2];
+    	//String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
+    	voiList[0] = new PlugInSelectableVOI542a[3];
+    	voiList[0][0] = new PlugInSelectableVOI542a("Chest", true, 1, 0, false, true, imageSize, 0, Color.ORANGE);
+    	voiList[0][1] = new PlugInSelectableVOI542a("Subcutaneous area", true, 1, 0, false, true, imageSize, 1, Color.RED);
+    	voiList[0][2] = new PlugInSelectableVOI542a("Phantom", true, 1, 0, false, false, imageSize, Color.GREEN);
+    	
+    	voiList[1] = new PlugInSelectableVOI542a[4];
+    	voiList[1][0] = new PlugInSelectableVOI542a("Visceral cavity", true, 1, 1, false, true, imageSize, 2, Color.ORANGE);
+    	voiList[1][1] = new PlugInSelectableVOI542a("Intrathoracic", true, 1, 1, false, true, imageSize, 3, Color.RED);
+    	voiList[1][2] = new PlugInSelectableVOI542a("Bone sample", true, 1, 1, false, false, imageSize, Color.GREEN);
+    	voiList[1][3] = new PlugInSelectableVOI542a("Water sample", true, 1, 1, false, false, imageSize, Color.CYAN);
+    	
+    	voiList[2] = new PlugInSelectableVOI542a[8];
+    	voiList[2][0] = new PlugInSelectableVOI542a("Left Pectoralis", true, 1, 2, true, true, imageSize, 4, Color.ORANGE);
+    	voiList[2][1] = new PlugInSelectableVOI542a("Right Pectoralis", true, 1, 2, true, true, imageSize, 5, Color.ORANGE);
+    	voiList[2][2] = new PlugInSelectableVOI542a("Left Paraspinus", true, 1, 2, true, true, imageSize, 6, Color.RED);
+    	voiList[2][3] = new PlugInSelectableVOI542a("Right Paraspinus", true, 1, 2, true, true, imageSize, 7, Color.RED);
+    	voiList[2][4] = new PlugInSelectableVOI542a("Left Trapezius", true, 1, 2, true, true, imageSize, 8, Color.GREEN);
+    	voiList[2][5] = new PlugInSelectableVOI542a("Right Trapezius", true, 1, 2, true, true, imageSize, 9, Color.GREEN);
+    	voiList[2][6] = new PlugInSelectableVOI542a("Left Latissimus Dorsi", true, 1, 2, true, true, imageSize, 10, Color.CYAN);
+    	voiList[2][7] = new PlugInSelectableVOI542a("Right Latissimus Dorsi", true, 1, 2, true, true, imageSize, 11, Color.CYAN);
+        
+    	//Subcutaneous area has chest as child
+    	voiList[0][1].addChild(voiList[0][0]);
+    	    	
+        titles = new String[3];
+        titles[0] = "Chest";
+        titles[1] = "Tissue";
+        titles[2] = "Muscles"; 
+        
+        symmetry = PlugInMuscleImageDisplay542a.Symmetry.LEFT_RIGHT;
+	    imageType = PlugInMuscleImageDisplay542a.ImageType.Chest;
+	    
+	    String extendable = "Start Pane: Chest"+
+	    	System.getProperty("line.separator")+"Start Voi: Chest"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Subcutaneous area"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Phantom"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Tissue"+
+	    	System.getProperty("line.separator")+"Start Voi: Visceral cavity"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Intrathoracic"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Bone sample"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Water sample"+System.getProperty("line.separator")+"Color: 0,255,255"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+
+	    	System.getProperty("line.separator")+"Start Pane: Muscles"+
+	    	System.getProperty("line.separator")+"Start Voi: Pectoralis"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Paraspinus"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Trapezius"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Latissimus Dorsi"+System.getProperty("line.separator")+"Color: 0,255,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator");
+	    
+	    performFileSave(extendable, "Chest");
 	    
     }
 	
