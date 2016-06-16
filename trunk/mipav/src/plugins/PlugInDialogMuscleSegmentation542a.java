@@ -60,6 +60,15 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
     /** Radio button to denote image is neck CT*/
     private JRadioButton neckRadio;
     
+    /** Radio button to denote image is chest CT*/
+    private JRadioButton chestRadio;
+    
+    /** Radio button to denote image is heart CT*/
+    private JRadioButton heartRadio;
+    
+    /** Radio button to denote image is pelvis CT*/
+    private JRadioButton pelvisRadio;
+    
     /**Alternate configs in user-dir*/
     private JRadioButton[] extraRadio;
     
@@ -255,6 +264,15 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         neckRadio = new JRadioButton("Neck");
         neckRadio.setFont(MipavUtil.font12);
         
+        chestRadio = new JRadioButton("Chest");
+        chestRadio.setFont(MipavUtil.font12);
+        
+        heartRadio = new JRadioButton("Heart");
+        heartRadio.setFont(MipavUtil.font12);
+        
+        pelvisRadio = new JRadioButton("Pelvis");
+        pelvisRadio.setFont(MipavUtil.font12);
+        
         extraRadio = new JRadioButton[validConfig.size()];
         for(int i=0; i<validConfig.size(); i++) {
         	extraRadio[i] = new JRadioButton(validConfig.get(i));
@@ -270,6 +288,12 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
             abdomenRadio.setSelected(true);
         } else if (imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Neck)) {
             neckRadio.setSelected(true);
+        } else if (imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Chest)) {
+            chestRadio.setSelected(true);
+        } else if (imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Heart)) {
+            heartRadio.setSelected(true);
+        } else if (imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Pelvis)) {
+            pelvisRadio.setSelected(true);
         } else {
         	customRadio.setSelected(true);
         }
@@ -278,6 +302,9 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         group.add(twoThighRadio);
         group.add(abdomenRadio);
         group.add(neckRadio);
+        group.add(chestRadio);
+        group.add(heartRadio);
+        group.add(pelvisRadio);
         for(int i=0; i<extraRadio.length; i++) {
         	group.add(extraRadio[i]);
         }
@@ -301,6 +328,13 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
         mainPanel.add(abdomenRadio, gbc);
         gbc.gridx = 2;
         mainPanel.add(neckRadio, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(chestRadio, gbc);
+        gbc.gridx = 1;
+        mainPanel.add(heartRadio, gbc);
+        gbc.gridx = 2;
+        mainPanel.add(pelvisRadio, gbc);
         for(int i=0; i<extraRadio.length; i++) {
         	if((gbc.gridx+1)%3 == 0) {
         		gbc.gridy++;
@@ -348,6 +382,12 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
             imageType = PlugInMuscleImageDisplay542a.ImageType.Abdomen;
         } else if (neckRadio.isSelected()) {
             imageType = PlugInMuscleImageDisplay542a.ImageType.Neck;
+        } else if (chestRadio.isSelected()) {
+            imageType = PlugInMuscleImageDisplay542a.ImageType.Chest;
+        } else if (heartRadio.isSelected()) {
+            imageType = PlugInMuscleImageDisplay542a.ImageType.Heart;
+        } else if (pelvisRadio.isSelected()) {
+            imageType = PlugInMuscleImageDisplay542a.ImageType.Pelvis;
         } else if (customRadio.isSelected()) {
         	imageType = PlugInMuscleImageDisplay542a.ImageType.Custom;
         } else {
