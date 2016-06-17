@@ -594,26 +594,14 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         }
                         
                         if ((vr2.equals(VR.DS)) && (dispString.length() > 16) && (num == 1)) {
-                        	double value = Double.valueOf(dispString);
-                        	BigDecimal bd = new BigDecimal(value);
-                        	int nonNumbers = 0;
-                        	CharSequence period = ".";
-                        	if (dispString.contains(period)) {
-                        		nonNumbers++;
+                        	BigDecimal bd = new BigDecimal(dispString);
+                        	int j = 0;
+                        	while (dispString.length() > 16) {
+                    	    	MathContext mc = new MathContext(16 - j, RoundingMode.HALF_UP);
+                    	        BigDecimal rounded = bd.round(mc);
+                    	        dispString = rounded.toString();
+                    	        j++;
                         	}
-                        	CharSequence Exp = "E";
-                        	CharSequence exp = "e";
-                        	if ((dispString.contains(Exp)) || (dispString.contains(exp))) {
-                        		nonNumbers++;
-                        	}
-                        	for (int j = 0; j < dispString.length(); j++) {
-                        		if ((dispString.substring(j,j+1).equals("+")) || (dispString.substring(j,j+1).equals("-"))) {
-                        			nonNumbers++;
-                        		}
-                        	}
-                        	MathContext mc = new MathContext(16 - nonNumbers, RoundingMode.HALF_UP);
-                            BigDecimal rounded = bd.round(mc);
-                            dispString = rounded.toString();
                         }
                         rowData[3] = dispString;
                         if(JDialogFileInfoDICOM.addRow(rowData, show)) {
@@ -658,26 +646,15 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     }
                 }
                 if ((vr.equals(VR.DS)) && (dispString.length() > 16) && (num == 1)) {
-                	double value = Double.valueOf(dispString);
-                	BigDecimal bd = new BigDecimal(value);
-                	int nonNumbers = 0;
-                	CharSequence period = ".";
-                	if (dispString.contains(period)) {
-                		nonNumbers++;
+                	BigDecimal bd = new BigDecimal(dispString);
+                	int i = 0;
+                	while (dispString.length() > 16) {
+            	    	MathContext mc = new MathContext(16 - i, RoundingMode.HALF_UP);
+            	        BigDecimal rounded = bd.round(mc);
+            	        dispString = rounded.toString();
+            	        i++;
                 	}
-                	CharSequence Exp = "E";
-                	CharSequence exp = "e";
-                	if ((dispString.contains(Exp)) || (dispString.contains(exp))) {
-                		nonNumbers++;
-                	}
-                	for (int i = 0; i < dispString.length(); i++) {
-                		if ((dispString.substring(i,i+1).equals("+")) || (dispString.substring(i,i+1).equals("-"))) {
-                			nonNumbers++;
-                		}
-                	}
-                	MathContext mc = new MathContext(16 - nonNumbers, RoundingMode.HALF_UP);
-                    BigDecimal rounded = bd.round(mc);
-                    dispString = rounded.toString();
+                	
                 }
                 rowData[3] = dispString;
             }
