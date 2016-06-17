@@ -14916,7 +14916,7 @@ public class FileIO {
                         itemp = ((FileDicomSQ) table.get("0028,9145").getValue(false)).getItem(0);
                     } else {
                         itemp = new FileDicomSQItem(null, fileDicom.getVr_type());
-                        seqp.addItem(item);
+                        seqp.addItem(itemp);
                         seqp.setWriteAsUnknownLength(true);
                         table.setValue("0028,9145", seqp, -1);
                     }
