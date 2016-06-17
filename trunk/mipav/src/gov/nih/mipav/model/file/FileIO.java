@@ -14906,8 +14906,42 @@ public class FileIO {
            		    if ((slopeString.length() % 2) == 1) {
               		    slopeString = slopeString + " ";
               	    }
-                    ((FileInfoDicom) fBase).getTagTable().setValue("0028,1052", interceptString, interceptString.length());
-                    ((FileInfoDicom) fBase).getTagTable().setValue("0028,1053", slopeString, slopeString.length());
+           		    final FileDicomSQ seqBasep = new FileDicomSQ(); // this is the 0028,9145 Pixel Value Transformation Sequence
+                    seqBasep.setWriteAsUnknownLength(true); // sequences given unknown length
+                    FileDicomSQ seqp = new FileDicomSQ(); // this is the 0028,9145 sequence
+                    tag = null;
+                    FileDicomSQItem itemp = null;
+                    if ( (tag = table.get("0028,9145")) != null && !table.isTagSameAsReferenceTag(tag)) {
+                        seqp = (FileDicomSQ) table.get("0028,9145").getValue(false);
+                        itemp = ((FileDicomSQ) table.get("0028,9145").getValue(false)).getItem(0);
+                    } else {
+                        itemp = new FileDicomSQItem(null, fileDicom.getVr_type());
+                        seqp.addItem(item);
+                        seqp.setWriteAsUnknownLength(true);
+                        table.setValue("0028,9145", seqp, -1);
+                    }
+                    //((FileInfoDicom) fBase).getTagTable().setValue("0028,1052", interceptString, interceptString.length());
+                    //((FileInfoDicom) fBase).getTagTable().setValue("0028,1053", slopeString, slopeString.length());
+                    itemp.setValue("0028,1052", interceptString, interceptString.length());
+                    itemp.setValue("0028,1053", slopeString, slopeString.length());
+                    // Since this is PET, Rescale Type can be "US" for Unspecified
+                    // "HU" for Hounnsfield Units is only used for CT
+                    itemp.setValue("0028,1054", "US", 2);
+                    itemp.setWriteAsUnknownLength(false); // items are always written using known length
+
+                    final Enumeration<FileDicomTag> tagsp = table.getTagList().elements();
+                    Object tagValuep = null;
+                    final FileDicomSQItem outerItemp = new FileDicomSQItem(null, fileDicom.getVr_type());
+                    while (tagsp.hasMoreElements()) {
+                        tag = tagsp.nextElement();
+                        if (table == fileDicom.getTagTable() || // if table is pointing to the same location as myFileInfo,
+                                                                 // write all tags
+                                (tagValuep = fileDicom.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
+                            outerItemp.setValue(tag.getKey(), tag, tag.getValue(false), -1);
+                        }
+                    }
+                    seqBasep.addItem(outerItemp); // is now the 2D item within the sequence
+                    outerItemp.setWriteAsUnknownLength(false);
                 }
                 
 
@@ -15740,9 +15774,9 @@ public class FileIO {
 
                 final float[] sliceData = new float[sliceSize];
                 final FileDicomSQ seqBase = new FileDicomSQ(); // this is the 0020,9113 Plane Position Sequence
-                //final FileDicomSQ seqBasep = new FileDicomSQ(); // this is the 0028,9145 Pixel Value Transformation Sequence
+                final FileDicomSQ seqBasep = new FileDicomSQ(); // this is the 0028,9145 Pixel Value Transformation Sequence
                 seqBase.setWriteAsUnknownLength(true); // sequences given unknown length
-                //seqBasep.setWriteAsUnknownLength(true);
+                seqBasep.setWriteAsUnknownLength(true);
                 for (int k = 0; k < fBaseLength; k++) {
 
                     // System.err.println("FileIO k = " + k);
@@ -15839,7 +15873,7 @@ public class FileIO {
                		    if ((slopeString.length() % 2) == 1) {
                   		    slopeString = slopeString + " ";
                   	    }
-               		     /*final FileDicomTagTable tablep= ((FileInfoDicom) fBase[k]).getTagTable();
+               		     final FileDicomTagTable tablep= ((FileInfoDicom) fBase[k]).getTagTable();
 	               		 FileDicomSQ seqp = new FileDicomSQ(); // this is the 0028,9145 pixel value transformation sequence
 	                     tag = null;
 	                     FileDicomSQItem itemp = null;
@@ -15851,12 +15885,17 @@ public class FileIO {
 	                         seqp.addItem(itemp);
 	                         seqp.setWriteAsUnknownLength(true);
 	                         tablep.setValue("0028,9145", seqp, -1);
-	                     }*/
+	                     }
 	
-	                     ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0028,1052", interceptString, interceptString.length());
-	                     ((FileInfoDicom) (fBase[k])).getTagTable().setValue("0028,1053", slopeString, slopeString.length());
+	                     //((FileInfoDicom) (fBase[k])).getTagTable().setValue("0028,1052", interceptString, interceptString.length());
+	                     //((FileInfoDicom) (fBase[k])).getTagTable().setValue("0028,1053", slopeString, slopeString.length());
+	                     itemp.setValue("0028,1052", interceptString, interceptString.length());
+	                     itemp.setValue("0028,1053", slopeString, slopeString.length());
+	                     // Since this is PET, Rescale Type can be "US" for Unspecified
+	                     // "HU" for Hounnsfield Units is only used for CT
+	                     itemp.setValue("0028,1054", "US", 2);
 	
-	                     /*itemp.setWriteAsUnknownLength(false); // items are always written using known length
+	                     itemp.setWriteAsUnknownLength(false); // items are always written using known length
 	
 	                     final Enumeration<FileDicomTag> tagsp = tablep.getTagList().elements();
 	                     Object tagValuep = null;
@@ -15870,7 +15909,7 @@ public class FileIO {
 	                         }
 	                     }
 	                     seqBasep.addItem(outerItemp); // is now the 2D item within the sequence
-	                     outerItemp.setWriteAsUnknownLength(false);*/
+	                     outerItemp.setWriteAsUnknownLength(false);
                         
                     }
                     
@@ -16178,26 +16217,15 @@ public class FileIO {
     
     String reduceStringLengthTo16(String str) {
     	String reducedString;
-    	double value = Double.valueOf(str);
-    	BigDecimal bd = new BigDecimal(value);
-    	int nonNumbers = 0;
-    	CharSequence period = ".";
-    	if (str.contains(period)) {
-    		nonNumbers++;
+    	BigDecimal bd = new BigDecimal(str);
+    	reducedString = str;
+    	int i = 0;
+    	while (reducedString.length() > 16) {
+	    	MathContext mc = new MathContext(16 - i, RoundingMode.HALF_UP);
+	        BigDecimal rounded = bd.round(mc);
+	        reducedString = rounded.toString();
+	        i++;
     	}
-    	CharSequence Exp = "E";
-    	CharSequence exp = "e";
-    	if ((str.contains(Exp)) || (str.contains(exp))) {
-    		nonNumbers++;
-    	}
-    	for (int i = 0; i < str.length(); i++) {
-    		if ((str.substring(i,i+1).equals("+")) || (str.substring(i,i+1).equals("-"))) {
-    			nonNumbers++;
-    		}
-    	}
-    	MathContext mc = new MathContext(16 - nonNumbers, RoundingMode.HALF_UP);
-        BigDecimal rounded = bd.round(mc);
-        reducedString = rounded.toString();
         return reducedString;
     }
 
