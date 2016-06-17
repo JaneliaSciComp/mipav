@@ -14925,7 +14925,7 @@ public class FileIO {
                     itemp.setValue("0028,1052", interceptString, interceptString.length());
                     itemp.setValue("0028,1053", slopeString, slopeString.length());
                     // Since this is PET, Rescale Type can be "US" for Unspecified
-                    // "HU" for Hounnsfield Units is only used for CT
+                    // "HU" for Hounsfield Units is only used for CT
                     itemp.setValue("0028,1054", "US", 2);
                     itemp.setWriteAsUnknownLength(false); // items are always written using known length
 
