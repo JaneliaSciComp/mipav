@@ -4739,26 +4739,15 @@ public class FileDicom extends FileDicomBase {
     
     String reduceStringLengthTo16(String str) {
     	String reducedString;
-    	double value = Double.valueOf(str);
-    	BigDecimal bd = new BigDecimal(value);
-    	int nonNumbers = 0;
-    	CharSequence period = ".";
-    	if (str.contains(period)) {
-    		nonNumbers++;
+    	BigDecimal bd = new BigDecimal(str);
+    	reducedString = str;
+    	int i = 0;
+    	while (reducedString.length() > 16) {
+	    	MathContext mc = new MathContext(16 - i, RoundingMode.HALF_UP);
+	        BigDecimal rounded = bd.round(mc);
+	        reducedString = rounded.toString();
+	        i++;
     	}
-    	CharSequence Exp = "E";
-    	CharSequence exp = "e";
-    	if ((str.contains(Exp)) || (str.contains(exp))) {
-    		nonNumbers++;
-    	}
-    	for (int i = 0; i < str.length(); i++) {
-    		if ((str.substring(i,i+1).equals("+")) || (str.substring(i,i+1).equals("-"))) {
-    			nonNumbers++;
-    		}
-    	}
-    	MathContext mc = new MathContext(16 - nonNumbers, RoundingMode.HALF_UP);
-        BigDecimal rounded = bd.round(mc);
-        reducedString = rounded.toString();
         return reducedString;
     }
 
