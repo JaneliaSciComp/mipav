@@ -14936,7 +14936,7 @@ public class FileIO {
                         tag = tagsp.nextElement();
                         if (table == fileDicom.getTagTable() || // if table is pointing to the same location as myFileInfo,
                                                                  // write all tags
-                                (tagValuep = fileDicom.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
+                                (tagValuep = fileDicom.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValuep)) {
                             outerItemp.setValue(tag.getKey(), tag, tag.getValue(false), -1);
                         }
                     }
