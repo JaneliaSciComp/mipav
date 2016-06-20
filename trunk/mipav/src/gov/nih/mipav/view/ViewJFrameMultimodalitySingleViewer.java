@@ -112,8 +112,10 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		    m = new JMenuItem("Bone");
 		    m.addActionListener(this);
 		    popup.add(m);
-		    PopupListener pl = new PopupListener();
+		    MousePopupListener pl = new MousePopupListener();
 		    addMouseListener(pl);
+		    viewToolBar.addMouseListener(pl);
+		    quadImagePanel.addMouseListener(pl);
 		   
 	}
 	
@@ -295,6 +297,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageComp.addMouseMotionListener(this);
 		imageComp.addKeyListener(this);
 		imageFrame.addKeyListener(this);
+		viewToolBar.addKeyListener(this);
 		
 		addKeyListener(this);
 	
@@ -415,20 +418,25 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	}
 
 	
-	 class PopupListener extends MouseAdapter {
-		    public void mousePressed(MouseEvent e) {
-		      maybeShowPopup(e);
-		    }
+	class MousePopupListener extends MouseAdapter {
+		public void mousePressed(MouseEvent e) {
+			checkPopup(e);
+		}
 
-		    public void mouseReleased(MouseEvent e) {
-		      maybeShowPopup(e);
-		    }
+		public void mouseClicked(MouseEvent e) {
+			checkPopup(e);
+		}
 
-		    private void maybeShowPopup(MouseEvent e) {
-		      if (e.isPopupTrigger())
-		        popup.show(getContentPane(), e.getX(), e.getY());
-		    }
-		  }
+		public void mouseReleased(MouseEvent e) {
+			checkPopup(e);
+		}
+
+		private void checkPopup(MouseEvent e) {
+			if (e.isPopupTrigger()) {
+				popup.show(getContentPane(), e.getX(), e.getY());
+			}
+		}
+	}
 	// ************************************************************************
 	// **************************** Action Events *****************************
 	// ************************************************************************
