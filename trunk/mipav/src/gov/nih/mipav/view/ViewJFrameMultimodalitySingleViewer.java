@@ -442,6 +442,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public void actionPerformed(final ActionEvent event) {
 		Object eventObj = event.getSource();
 		// (JMenuItem)event.getSource()).getText();
+		
+		/********************  Window-Level   threshold values ******************************/ 
 		if ( eventObj instanceof JMenuItem ) {
 			String cmd = ((JMenuItem)eventObj).getText();
 			if ( cmd.equals("Soft Tissue")) {
