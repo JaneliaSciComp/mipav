@@ -1,12 +1,18 @@
 package gov.nih.mipav.view.renderer.WildMagic.Knees;
 
 import gov.nih.mipav.model.algorithms.*;
-
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegBSpline;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegBSpline2D;
+import gov.nih.mipav.model.algorithms.registration.RegistrationMeasure;
+import gov.nih.mipav.model.algorithms.registration.RegistrationMeasureCorrelationRatio;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.ShapeSimilarity.*;
+import gov.nih.mipav.view.dialogs.JDialogRegistrationBSpline.Controls;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.*;
 
 import gov.nih.mipav.view.*;
 
@@ -17,6 +23,8 @@ import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 import WildMagic.LibFoundation.Curves.BSplineCurve3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -2618,11 +2626,11 @@ public class JDialogPatellaTraceSectionsNIH extends JDialogBase implements Algor
 					}
 				}
 			}
-			/*
+		
 			float testX = posX, testY = posY;
 			boolean lookFor3 = false;
-			
-			if ( fuzzyCIntensity == 2 ) {
+			fuzzyCIntensity = fuzzyCImage.getDouble((int) posX, (int) posY);
+			if ( fuzzyCIntensity == 2 ||  fuzzyCIntensity == 1) {
 				
 				while (distCurrent < distOuter) {
 					fuzzyCIntensity = fuzzyCImage.getDouble((int) testX, (int) testY);
@@ -2642,15 +2650,20 @@ public class JDialogPatellaTraceSectionsNIH extends JDialogBase implements Algor
 					break;
 				}
 			
-				break;
+				// break;
 			}
-		*/ 
-            			
+	
+           
+		
 			boolean findWeakEdge = false;
 			boolean findWeakClass3 = false;
 			boolean findWeakClass2 = false;
-			float testX = posX, testY = posY;
-			boolean lookFor3 = false;
+			// float testX = posX, testY = posY;
+			// boolean lookFor3 = false;
+			testX = posX; testY = posY;
+		    lookFor3 = false;
+			
+			
 			int []xResult = new int[1];
 			xResult[0] = -1;
 			findWeakEdge = findWeakConnectedEdgeOnImageHorizontal((int) posX, (int) posY, fuzzyCImage, 3, FuzzyC, false, xResult);
@@ -2710,7 +2723,7 @@ public class JDialogPatellaTraceSectionsNIH extends JDialogBase implements Algor
 					break;
 				}
 			}
-
+            
 			// arbitrary testing for fuzzyC
 
 			fuzzyCIntensity = fuzzyCImage.getDouble((int) posX, (int) posY);
@@ -2832,8 +2845,8 @@ public class JDialogPatellaTraceSectionsNIH extends JDialogBase implements Algor
 			boolean lookFor3 = false;
 			while (distCurrent < distOuter) {
 				fuzzyCIntensity = fuzzyCImage.getDouble((int) testX, (int) testY);
-				class3Intensity = class3Image.getDouble((int) testX, (int) testY);
-				if (fuzzyCIntensity == 3  || class3Intensity >= 0.02f  ) {
+				// class3Intensity = class3Image.getDouble((int) testX, (int) testY);
+				if (fuzzyCIntensity == 3  /* || class3Intensity >= 0.02f */  ) {
 					lookFor3 = true;
 					break;
 				}
@@ -3674,7 +3687,7 @@ public class JDialogPatellaTraceSectionsNIH extends JDialogBase implements Algor
 			boolean lookFor3 = false;
 			fuzzyCIntensity = fuzzyCImage.getDouble((int) posX, (int) posY);
 			
-			if ( fuzzyCIntensity == 2 ) {
+			if ( fuzzyCIntensity == 2 ||  fuzzyCIntensity == 1 ) {
 				testX = posX; testY = posY;
 				lookFor3 = false;
 				while (distCurrent < distOuter ) {
