@@ -93,6 +93,8 @@ public class FileInfoPARREC extends FileInfoBase {
     private int maximumRRInterval[] = null;
     
     private float inversionDelay[] = null;
+    
+    private float diffusionBFactor[] = null;
 
     // default constructor
     public FileInfoPARREC(String name, String directory, int format) {
@@ -428,6 +430,14 @@ public class FileInfoPARREC extends FileInfoBase {
     
     public float[] getInversionDelay() {
     	return inversionDelay;
+    }
+    
+    public void setDiffusionBFactor(float diffusionBFactor[]) {
+    	this.diffusionBFactor = diffusionBFactor;
+    }
+    
+    public float[] getDiffusionBFactor() {
+    	return diffusionBFactor;
     }
 
 }
