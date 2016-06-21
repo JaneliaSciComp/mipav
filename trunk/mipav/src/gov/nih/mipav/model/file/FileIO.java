@@ -14210,6 +14210,7 @@ public class FileIO {
         String lowRRValueString = null;
         String highRRValueString = null;
         String inversionTimeString = null;
+        double diffusionBValue = Double.NaN;
 
         if (image.getNDims() != 2) {
             return false;
@@ -14464,6 +14465,11 @@ public class FileIO {
             	 }
          		 fileDicom.getTagTable().setValue("0018,0082", inversionTimeString, inversionTimeString.length());
          	 }
+        	 float diffusionBFactor[] = ((FileInfoPARREC)originalFileInfo).getDiffusionBFactor();
+        	 if (diffusionBFactor != null) {
+        		 diffusionBValue = (double)diffusionBFactor[sliceNumber];
+        		 fileDicom.getTagTable().setValue("0018,9087", diffusionBValue, 8);
+        	 }
            }
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
             final float resols[] = image.getFileInfo()[0].getResolutions();
@@ -15128,6 +15134,7 @@ public class FileIO {
         String lowRRValueString[] = null;
         String highRRValueString[] = null;
         String inversionTimeString[] = null;
+        double diffusionBValue[] = null;
         
         if (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) {
             originalMin = ((FileInfoMinc) image.getFileInfo(0)).vmin;
@@ -15423,6 +15430,13 @@ public class FileIO {
 	                		inversionTimeString[i] = inversionTimeString[i] + " ";
 	                	 }
 	             	 }
+             	 }
+             	 float diffusionBFactor[] = ((FileInfoPARREC)image.getFileInfo(0)).getDiffusionBFactor();
+             	 if (diffusionBFactor != null) {
+             		 diffusionBValue = new double[diffusionBFactor.length];
+             		 for (i = 0; i < diffusionBFactor.length; i++) {
+             			 diffusionBValue[i] = (double)diffusionBFactor[i];
+             		 }
              	 }
             }
             // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
@@ -15943,6 +15957,9 @@ public class FileIO {
                     		((FileInfoDicom)fBase[k]).getTagTable().setValue("0018,0082", inversionTimeString[k],
                     				inversionTimeString[k].length());
                     	}
+                    	if (diffusionBValue != null) {
+                    	    ((FileInfoDicom)fBase[k]).getTagTable().setValue("0019,9087", diffusionBValue[k], 8);	
+                    	}
                     } // if (isPARREC)
                     
                 }
@@ -15999,6 +16016,9 @@ public class FileIO {
         	if (inversionTimeString != null) {
         		myFileInfo.getTagTable().setValue("0018,0082", inversionTimeString[0],
         				inversionTimeString[0].length());
+        	}
+        	if (diffusionBValue != null) {
+        		myFileInfo.getTagTable().setValue("0018,9087", diffusionBValue[0], 8);
         	}
         } // if (isPARREC)
         image.setFileInfo(myFileInfo, 0);
