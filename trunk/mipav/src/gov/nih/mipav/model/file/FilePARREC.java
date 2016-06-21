@@ -355,6 +355,8 @@ public class FilePARREC extends FileBase {
     
     private int inversionDelayPos = -1;
     
+    private int diffusionBFactorPos = -1;
+    
     private int sliceOrientIndex;
     
     private int bValueIndex;
@@ -377,6 +379,8 @@ public class FilePARREC extends FileBase {
     
     private int inversionDelayIndex = -1;
     
+    private int diffusionBFactorIndex = -1;
+    
     private int echoNumber[] = null;
     
     private float echoTime[] = null;
@@ -392,6 +396,8 @@ public class FilePARREC extends FileBase {
     private int maximumRRInterval[] = null;
     
     private float inversionDelay[] = null;
+    
+    private float diffusionBFactor[] = null;
 
     /**counter**/   
     private int counter = 0;
@@ -1111,6 +1117,7 @@ public class FilePARREC extends FileBase {
                     int minimumRRIntervalCounter = -1;
                     int maximumRRIntervalCounter = -1;
                     int inversionDelayCounter = -1;
+                    int diffusionBFactorCounter = -1;
                 	
                     if(nextLine.compareToIgnoreCase("# === IMAGE INFORMATION DEFINITION =============================================")==0) {
                         String line = raFile.readLine().trim();
@@ -1170,6 +1177,10 @@ public class FilePARREC extends FileBase {
                                        if (imageInfo.contains("Inversion delay")) {
                                     	   inversionDelayCounter++;
                                        }
+                                       
+                                       if (imageInfo.contains("diffusion_b_factor")) {
+                                    	   diffusionBFactorCounter++;
+                                       }
                                   }                  
                             }
                      
@@ -1201,6 +1212,9 @@ public class FilePARREC extends FileBase {
                         }
                         if (inversionDelayCounter != -1) {
                             inversionDelayPos = counter - inversionDelayCounter;
+                        }
+                        if (diffusionBFactorCounter != -1) {
+                        	diffusionBFactorPos = counter - diffusionBFactorCounter;
                         }
                     }
              
@@ -1612,6 +1626,21 @@ public class FilePARREC extends FileBase {
 	        inversionDelayIndex = ((counter2*1)+(counter3*2) + (inversionDelayPos-1));
         }
         
+        if (diffusionBFactorPos >= 0) {
+        	diffusionBFactor = new float[Slices.size()];
+	        int counter2 = 0;
+	        int counter3 = 0;
+	        for (int i = 0; i < (diffusionBFactorPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        diffusionBFactorIndex = ((counter2*1)+(counter3*2) + (diffusionBFactorPos-1));
+        }
+        
         
         if (firstSliceValue != secondSliceValue) {
             for (int i = 0; i < Slices.size(); i++) {
@@ -1641,6 +1670,9 @@ public class FilePARREC extends FileBase {
                 }
                 if (inversionDelay != null) {
                     inversionDelay[i] = Float.valueOf(sliceArr[inversionDelayIndex]);
+                }
+                if (diffusionBFactor != null) {
+                	diffusionBFactor[i] = Float.valueOf(sliceArr[diffusionBFactorIndex]);
                 }
             }
         }
@@ -1675,6 +1707,9 @@ public class FilePARREC extends FileBase {
                     if (inversionDelay != null) {
                         inversionDelay[index] = Float.valueOf(sliceArr[inversionDelayIndex]);
                     }
+                    if (diffusionBFactor != null) {
+                    	diffusionBFactor[index] = Float.valueOf(sliceArr[diffusionBFactorIndex]);
+                    }
         		}
         	}
         	
@@ -1703,6 +1738,9 @@ public class FilePARREC extends FileBase {
         }
         if (inversionDelay != null) {
         	fileInfo.setInversionDelay(inversionDelay);
+        }
+        if (diffusionBFactor != null) {
+        	fileInfo.setDiffusionBFactor(diffusionBFactor);
         }
 
         float slicethk=0, slicegap=0;
