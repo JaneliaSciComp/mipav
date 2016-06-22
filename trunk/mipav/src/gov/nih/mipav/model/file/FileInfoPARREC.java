@@ -80,9 +80,27 @@ public class FileInfoPARREC extends FileInfoBase {
     
     private int echoNumber[] = null;
     
+    private int dynamicScanNumber[] = null;
+    
+    private int cardiacPhaseNumber[] = null;
+    
+    private int scanningSequence[] = null;
+    
+    private int scanPercentage[] = null;
+    
+    private int windowCenter[]= null;
+    
+    private int windowWidth[] = null;
+    
+    private float imageAngulation[][] = null;
+    
+    private float imageOffcentre[][] = null;
+    
     private float echoTime[] = null;
     
     private float triggerTime[] = null;
+    
+    private int numberOfAverages[] = null;
     
     private float flipAngle[] = null;
     
@@ -92,16 +110,22 @@ public class FileInfoPARREC extends FileInfoBase {
     
     private int maximumRRInterval[] = null;
     
+    private int turboFactor[] = null;
+    
     private float inversionDelay[] = null;
     
     private float diffusionBFactor[] = null;
+    
+    private String contrastType[] = null;
+    
+    private int labelType[] = null;
 
     // default constructor
     public FileInfoPARREC(String name, String directory, int format) {
         super(name, directory, format);
     }
 
-    public void displayDTIInfo_JDialogText(JDialogText dlg) {
+    public void displayDTIInfo_JDialogText(JDialogText dlg, int index) {
         String ori0, ori1, ori2;
         
         ori0 = FileInfoBase.axisOrientationStr[getAxisOrientation(0)];
@@ -131,20 +155,92 @@ public class FileInfoPARREC extends FileInfoBase {
         if (repetitionTime != null) {
         	dlg.append("Repetition time (ms): " + getRepetitionTime() + "\n");
         }
+        dlg.append("\nValues for slice["+index+"]:\n");
+        if (echoNumber != null) {
+        	dlg.append("Echo number: " + echoNumber[index] + "\n");
+        }
+        if (dynamicScanNumber != null) {
+        	dlg.append("Dynamic scan number: " + dynamicScanNumber[index] + "\n");
+        }
+        if (cardiacPhaseNumber != null) {
+        	dlg.append("Cardiac phase number: " + cardiacPhaseNumber[index] + "\n");
+        }
+        if (scanningSequence != null) {
+        	dlg.append("Scanning sequence: " + scanningSequence[index] + "\n");
+        }
+        if (scanPercentage != null) {
+        	dlg.append("Scan percentage: " + scanPercentage[index] + "\n");
+        }
+        if (windowCenter != null) {
+        	dlg.append("Window center: " + windowCenter[index] + "\n");
+        }
+        if (windowWidth != null) {
+        	dlg.append("Window width: " + windowWidth[index] + "\n");
+        }
+        if (imageAngulation != null) {
+        	dlg.append("Image " + ori0 + " angulation (degrees): " + imageAngulation[index][0] + "\n");
+        	dlg.append("Image " + ori1 + " angulation (degrees): " + imageAngulation[index][1] + "\n");
+        	dlg.append("Image " + ori2 + " angulation (degrees): " + imageAngulation[index][2] + "\n");
+        }
+        if (imageOffcentre != null) {
+        	dlg.append("Image " + ori0 + " off center (mm): " + imageOffcentre[index][0] + "\n");
+        	dlg.append("Image " + ori1 + " off center (mm): " + imageOffcentre[index][1] + "\n");
+        	dlg.append("Image " + ori2 + " off center (mm): " + imageOffcentre[index][2] + "\n");
+        }
+        if (echoTime != null) {
+        	dlg.append("Echo time (ms): " + echoTime[index] + "\n");
+        }
+        if (triggerTime != null) {
+        	dlg.append("Trigger time (ms): " + triggerTime[index] + "\n");
+        }
+        if (diffusionBFactor != null) {
+        	dlg.append("Diffusion B factor: " + diffusionBFactor[index] + "\n");
+        }
+        if (numberOfAverages != null) {
+            dlg.append("Number of averages: " + numberOfAverages[index] + "\n");	
+        }
+        if (flipAngle != null) {
+        	dlg.append("Flip angle (degrees): " + flipAngle[index] + "\n");
+        }
+        if (cardiacFrequency != null) {
+        	dlg.append("Cardiac frequency (bpm): " + cardiacFrequency[index] + "\n");
+        }
+        if (minimumRRInterval != null) {
+        	dlg.append("Minimum RR interval (ms): " + minimumRRInterval[index] + "\n");
+        }
+        if (maximumRRInterval != null) {
+        	dlg.append("Maximum RR interval (ms): " + maximumRRInterval[index] + "\n");
+        }
+        if (turboFactor != null) {
+        	dlg.append("TURBO factor <0=no turbo>: " + turboFactor[index] + "\n");
+        }
+        if (inversionDelay != null) {
+        	dlg.append("Inversion delay (ms): " + inversionDelay[index] + "\n");
+        }
+        if (contrastType != null) {
+        	dlg.append("Contrast type: " + contrastType[index] + "\n");
+        }
+        if (labelType != null) {
+        	dlg.append("Label type (ASL): " + labelType[index] + "\n");
+        }
     }
 
     public void displayDTIInfo_JDialogFileInfo(JDialogFileInfo dlg) {
 
     }
 
-    // required by FileInfoBase
+    // required by FileInfoBase 
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
+    	
+    }
+    
+    public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix, int index) {
         JDialogFileInfo dialog;
         try {
             dialog = (JDialogFileInfo) dlog;
         } catch (Exception e) {
             displayPrimaryInfo((JDialogText) dlog, matrix);
-            displayDTIInfo_JDialogText((JDialogText) dlog);
+            displayDTIInfo_JDialogText((JDialogText) dlog, index);
             return;
         }
 
@@ -375,6 +471,70 @@ public class FileInfoPARREC extends FileInfoBase {
     public int[] getEchoNumber() {
     	return echoNumber;
     }
+    
+    public void setDynamicScanNumber(int dynamicScanNumber[]) {
+    	this.dynamicScanNumber = dynamicScanNumber;
+    }
+    
+    public int[] getDynamicScanNumber() {
+    	return dynamicScanNumber;
+    }
+    
+    public void setCardiacPhaseNumber(int cardiacPhaseNumber[]) {
+    	this.cardiacPhaseNumber = cardiacPhaseNumber;
+    }
+    
+    public int[] getCardiacPhaseNumber() {
+    	return cardiacPhaseNumber;
+    }
+    
+    public void setScanningSequence(int scanningSequence[]) {
+    	this.scanningSequence = scanningSequence;
+    }
+    
+    public int[] getScanningSequence() {
+    	return scanningSequence;
+    }
+    
+    public void setScanPercentage(int scanPercentage[]) {
+    	this.scanPercentage = scanPercentage;
+    }
+    
+    public int[] getScanPercentage() {
+    	return scanPercentage;
+    }
+    
+    public void setWindowCenter(int windowCenter[]) {
+    	this.windowCenter = windowCenter;
+    }
+    
+    public int[] getWindowCenter() {
+    	return windowCenter;
+    }
+    
+    public void setWindowWidth(int windowWidth[]) {
+    	this.windowWidth = windowWidth;
+    }
+    
+    public int[] getWindowWidth() {
+    	return windowWidth;
+    }
+    
+    public void setImageAngulation(float imageAngulation[][]) {
+    	this.imageAngulation = imageAngulation;
+    }
+    
+    public float[][] getImageAngulation() {
+    	return imageAngulation;
+    }
+    
+    public void setImageOffcentre(float imageOffcentre[][]) {
+    	this.imageOffcentre = imageOffcentre;
+    }
+    
+    public float[][] getImageOffcentre() {
+    	return imageOffcentre;
+    }
 
     public void setEchoTime(float echoTime[]) {
     	this.echoTime = echoTime;
@@ -390,6 +550,14 @@ public class FileInfoPARREC extends FileInfoBase {
     
     public float[] getTriggerTime() {
     	return triggerTime;
+    }
+    
+    public void setNumberOfAverages(int numberOfAverages[]) {
+    	this.numberOfAverages = numberOfAverages;
+    }
+    
+    public int[] getNumberOfAverages() {
+    	return numberOfAverages;
     }
     
     public void setFlipAngle(float flipAngle[]) {
@@ -424,6 +592,14 @@ public class FileInfoPARREC extends FileInfoBase {
     	return maximumRRInterval;
     }
     
+    public void setTurboFactor(int turboFactor[]) {
+    	this.turboFactor = turboFactor;
+    }
+    
+    public int[] getTurobFactor() {
+    	return turboFactor;
+    }
+    
     public void setInversionDelay(float inversionDelay[]) {
     	this.inversionDelay = inversionDelay;
     }
@@ -440,4 +616,19 @@ public class FileInfoPARREC extends FileInfoBase {
     	return diffusionBFactor;
     }
 
+    public void setContrastType(String contrastType[]) {
+    	this.contrastType = contrastType;
+    }
+    
+    public String[] getContrastType() {
+    	return contrastType;
+    }
+    
+    public void setLabelType(int labelType[]) {
+    	this.labelType = labelType;
+    }
+    
+    public int[] getLabelType() {
+    	return labelType;
+    }
 }
