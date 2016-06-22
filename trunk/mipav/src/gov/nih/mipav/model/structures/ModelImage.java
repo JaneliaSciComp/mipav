@@ -874,6 +874,8 @@ public class ModelImage extends ModelStorageBase {
         } else if (fileInfo[0] instanceof FileInfoMincHDF) {
             dialog.setTitle(dialog.getTitle() + ": " + (index));
             ((JDialogFileInfoMincHDF) dialog).displayAboutInfo(this, (FileInfoMincHDF) fileInfo[0], index);
+        } else if (fileInfo[0] instanceof FileInfoPARREC) {
+        	((FileInfoPARREC)fileInfo[index]).displayAboutInfo(dialog, getMatrix(), index);	
         } else {
             fileInfo[index].displayAboutInfo(dialog, getMatrix());
         }
