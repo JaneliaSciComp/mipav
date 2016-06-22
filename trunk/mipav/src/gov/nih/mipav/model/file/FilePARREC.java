@@ -341,9 +341,27 @@ public class FilePARREC extends FileBase {
     
     private int echoNumberPos = -1;
     
+    private int dynamicScanNumberPos = -1;
+    
+    private int cardiacPhaseNumberPos = -1;
+    
+    private int scanningSequencePos = -1;
+    
+    private int scanPercentagePos = -1;
+    
+    private int windowCenterPos = -1;
+    
+    private int windowWidthPos = -1;
+    
+    private int imageAngulationPos = -1;
+    
+    private int imageOffcentrePos = -1;
+    
     private int echoTimePos = -1;
     
     private int triggerTimePos = -1;
+    
+    private int numberOfAveragesPos = -1;
     
     private int flipAnglePos = -1;
     
@@ -353,9 +371,13 @@ public class FilePARREC extends FileBase {
     
     private int maximumRRIntervalPos = -1;
     
+    private int turboFactorPos = -1;
+    
     private int inversionDelayPos = -1;
     
-    private int diffusionBFactorPos = -1;
+    private int contrastTypePos = -1;
+    
+    private int labelTypePos = -1;
     
     private int sliceOrientIndex;
     
@@ -365,9 +387,27 @@ public class FilePARREC extends FileBase {
     
     private int echoNumberIndex = -1;
     
+    private int dynamicScanNumberIndex = -1;
+    
+    private int cardiacPhaseNumberIndex = -1;
+    
+    private int scanningSequenceIndex = -1;
+    
+    private int scanPercentageIndex = -1;
+    
+    private int windowCenterIndex = -1;
+    
+    private int windowWidthIndex = -1;
+    
+    private int imageAngulationIndex = -1;
+    
+    private int imageOffcentreIndex = -1;
+    
     private int echoTimeIndex = -1;
     
     private int triggerTimeIndex = -1;
+    
+    private int numberOfAveragesIndex = -1;
     
     private int flipAngleIndex = -1;
     
@@ -377,15 +417,37 @@ public class FilePARREC extends FileBase {
     
     private int maximumRRIntervalIndex = -1;
     
+    private int turboFactorIndex = -1;
+    
     private int inversionDelayIndex = -1;
     
-    private int diffusionBFactorIndex = -1;
+    private int contrastTypeIndex = -1;
+    
+    private int labelTypeIndex = -1;
     
     private int echoNumber[] = null;
+    
+    private int dynamicScanNumber[] = null;
+    
+    private int cardiacPhaseNumber[] = null;
+    
+    private int scanningSequence[] = null;
+    
+    private int scanPercentage[] = null;
+    
+    private int windowCenter[] = null;
+    
+    private int windowWidth[] = null;
+    
+    private float imageAngulation[][] = null;
+   
+    private float imageOffcentre[][] = null;
     
     private float echoTime[] = null;
     
     private float triggerTime[] = null;
+    
+    private int numberOfAverages[] = null;
     
     private float flipAngle[] = null;
     
@@ -395,9 +457,15 @@ public class FilePARREC extends FileBase {
     
     private int maximumRRInterval[] = null;
     
+    private int turboFactor[] = null;
+    
     private float inversionDelay[] = null;
     
     private float diffusionBFactor[] = null;
+    
+    private String contrastType[] = null;
+    
+    private int labelType[] = null;
 
     /**counter**/   
     private int counter = 0;
@@ -1110,14 +1178,25 @@ public class FilePARREC extends FileBase {
                 	int bValIndexCounter = -1;
                     int gradIndexCounter = -1;
                     int echoNumberCounter = -1;
+                    int dynamicScanNumberCounter = -1;
+                    int cardiacPhaseNumberCounter = -1;
+                    int scanningSequenceCounter = -1;
+                    int scanPercentageCounter = -1;
+                    int windowCenterCounter = -1;
+                    int windowWidthCounter = -1;
+                    int imageAngulationCounter = -1;
+                    int imageOffcentreCounter = -1;
                     int echoTimeCounter = -1;
                     int triggerTimeCounter = -1;
+                    int numberOfAveragesCounter = -1;
                     int flipAngleCounter = -1;
                     int cardiacFrequencyCounter = -1;
                     int minimumRRIntervalCounter = -1;
                     int maximumRRIntervalCounter = -1;
+                    int turboFactorCounter = -1;
                     int inversionDelayCounter = -1;
-                    int diffusionBFactorCounter = -1;
+                    int contrastTypeCounter = -1;
+                    int labelTypeCounter = -1;
                 	
                     if(nextLine.compareToIgnoreCase("# === IMAGE INFORMATION DEFINITION =============================================")==0) {
                         String line = raFile.readLine().trim();
@@ -1150,12 +1229,48 @@ public class FilePARREC extends FileBase {
                                     	   echoNumberCounter++;
                                        }
                                        
+                                       if (imageInfo.contains("dynamic scan number")) {
+                                    	   dynamicScanNumberCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("cardiac phase number")) {
+                                    	   cardiacPhaseNumberCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("scanning sequence")) {
+                                    	   scanningSequenceCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("scan percentage")) {
+                                    	   scanPercentageCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("window center")) {
+                                    	   windowCenterCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("window width")) {
+                                    	   windowWidthCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("image angulation")) {
+                                    	   imageAngulationCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("image offcentre")) {
+                                    	   imageOffcentreCounter++;
+                                       }
+                                       
                                        if (imageInfo.contains("echo_time")) {
                                     	   echoTimeCounter++;
                                        }
                                        
                                        if (imageInfo.contains("trigger_time")) {
                                     	   triggerTimeCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("number of averages")) {
+                                    	   numberOfAveragesCounter++;
                                        }
                                        
                                        if (imageInfo.contains("image_flip_angle")) {
@@ -1174,13 +1289,22 @@ public class FilePARREC extends FileBase {
                                     	   maximumRRIntervalCounter++;
                                        }
                                        
+                                       if (imageInfo.contains("TURBO factor")) {
+                                    	   turboFactorCounter++;
+                                       }
+                                       
                                        if (imageInfo.contains("Inversion delay")) {
                                     	   inversionDelayCounter++;
                                        }
                                        
-                                       if (imageInfo.contains("diffusion_b_factor")) {
-                                    	   diffusionBFactorCounter++;
+                                       if (imageInfo.contains("contrast type")) {
+                                    	   contrastTypeCounter++;
                                        }
+                                       
+                                       if (imageInfo.contains("label type")) {
+                                    	   labelTypeCounter++;
+                                       }
+                                       
                                   }                  
                             }
                      
@@ -1192,11 +1316,38 @@ public class FilePARREC extends FileBase {
                         if (echoNumberCounter != -1) {
                         	echoNumberPos = counter - echoNumberCounter;
                         }
+                        if (dynamicScanNumberCounter != -1) {
+                        	dynamicScanNumberPos = counter - dynamicScanNumberCounter;
+                        }
+                        if (cardiacPhaseNumberCounter != -1) {
+                        	cardiacPhaseNumberPos = counter - cardiacPhaseNumberCounter;
+                        }
+                        if (scanningSequenceCounter != -1) {
+                        	scanningSequencePos = counter - scanningSequenceCounter;
+                        }
+                        if (scanPercentageCounter != -1) {
+                        	scanPercentagePos = counter - scanPercentageCounter;
+                        }
+                        if (windowCenterCounter != -1) {
+                        	windowCenterPos = counter - windowCenterCounter;
+                        }
+                        if (windowWidthCounter != -1) {
+                        	windowWidthPos = counter - windowWidthCounter;
+                        }
+                        if (imageAngulationCounter != -1) {
+                        	imageAngulationPos = counter - imageAngulationCounter;
+                        }
+                        if (imageOffcentreCounter != -1) {
+                        	imageOffcentrePos = counter - imageOffcentreCounter;
+                        }
                         if (echoTimeCounter != -1) {
                             echoTimePos = counter - echoTimeCounter;
                         }
                         if (triggerTimeCounter != -1) {
                             triggerTimePos = counter - triggerTimeCounter;
+                        }
+                        if (numberOfAveragesCounter != -1) {
+                        	numberOfAveragesPos = counter - numberOfAveragesCounter;
                         }
                         if (flipAngleCounter != -1) {
                             flipAnglePos = counter - flipAngleCounter;
@@ -1210,11 +1361,17 @@ public class FilePARREC extends FileBase {
                         if (maximumRRIntervalCounter != -1) {
                             maximumRRIntervalPos = counter - maximumRRIntervalCounter;
                         }
+                        if (turboFactorCounter != -1) {
+                        	turboFactorPos = counter - turboFactorCounter;
+                        }
                         if (inversionDelayCounter != -1) {
                             inversionDelayPos = counter - inversionDelayCounter;
                         }
-                        if (diffusionBFactorCounter != -1) {
-                        	diffusionBFactorPos = counter - diffusionBFactorCounter;
+                        if (contrastTypeCounter != -1) {
+                        	contrastTypePos = counter - contrastTypeCounter;
+                        }
+                        if (labelTypeCounter != -1) {
+                        	labelTypePos = counter - labelTypeCounter;
                         }
                     }
              
@@ -1396,6 +1553,23 @@ public class FilePARREC extends FileBase {
         final String[] secondSliceArray = secondSliceIndex.split("\\s+");
         int secondSliceValue = Integer.parseInt(secondSliceArray[0]);
         
+     // Find slice index of bvalues
+        int counter2 = 0;
+        int counter3 = 0;
+        for (int i = 0; i < (bValuePos-1); i++){
+            if (SliceParameters.get(i).contains("2")){
+                counter2++;
+            }
+            if (SliceParameters.get(i).contains("3")){ 
+                counter3++;
+            }
+        }
+        
+        bValueIndex = ((counter2*1)+(counter3*2) + (bValuePos-1));
+        if (bValuePos >= 0) {
+        	diffusionBFactor = new float[Slices.size()];
+        }
+        
         if ((examName.toUpperCase()).contains("DTI")|| (protocolName.toUpperCase()).contains("DTI")){ 
             dtiparams = new DTIParameters(numVolumes);
             dtiparams.setNumVolumes(numVolumes);
@@ -1418,20 +1592,6 @@ public class FilePARREC extends FileBase {
             final String[] firstOrientSlice = firstSlice.split("\\s+");
             int firstOrientValue = Integer.parseInt(firstOrientSlice[sliceOrientIndex]);
             fileInfo.setSliceOrient(firstOrientValue);
-            
-            // Find slice index of bvalues
-            int counter2 = 0;
-            int counter3 = 0;
-            for (int i = 0; i < (bValuePos-1); i++){
-                if (SliceParameters.get(i).contains("2")){
-                    counter2++;
-                }
-                if (SliceParameters.get(i).contains("3")){ 
-                    counter3++;
-                }
-            }
-            
-            bValueIndex = ((counter2*1)+(counter3*2) + (bValuePos-1));
 
             
             if (version.equals("V3")||version.equals("V4")){                
@@ -1508,8 +1668,8 @@ public class FilePARREC extends FileBase {
         // Find slice index of values
         if (echoNumberPos >= 0) {
         	echoNumber = new int[Slices.size()];
-	        int counter2 = 0;
-	        int counter3 = 0;
+	        counter2 = 0;
+	        counter3 = 0;
 	        for (int i = 0; i < (echoNumberPos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
@@ -1521,10 +1681,130 @@ public class FilePARREC extends FileBase {
 	        echoNumberIndex = ((counter2*1)+(counter3*2) + (echoNumberPos-1));
         }
         
+        if (dynamicScanNumberPos >= 0) {
+        	dynamicScanNumber = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (dynamicScanNumberPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        dynamicScanNumberIndex = ((counter2*1)+(counter3*2) + (dynamicScanNumberPos-1));
+        }
+        
+        if (cardiacPhaseNumberPos >= 0) {
+        	cardiacPhaseNumber = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (cardiacPhaseNumberPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        cardiacPhaseNumberIndex = ((counter2*1)+(counter3*2) + (cardiacPhaseNumberPos-1));
+        }
+        
+        if (scanningSequencePos >= 0) {
+        	scanningSequence = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (scanningSequencePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        scanningSequenceIndex = ((counter2*1)+(counter3*2) + (scanningSequencePos-1));
+        }
+        
+        if (scanPercentagePos >= 0) {
+        	scanPercentage = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (scanPercentagePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        scanPercentageIndex = ((counter2*1)+(counter3*2) + (scanPercentagePos-1));
+        }
+        
+        if (windowCenterPos >= 0) {
+        	windowCenter = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (windowCenterPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        windowCenterIndex = ((counter2*1)+(counter3*2) + (windowCenterPos-1));
+        }
+        
+        if (windowWidthPos >= 0) {
+        	windowWidth = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (windowWidthPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        windowWidthIndex = ((counter2*1)+(counter3*2) + (windowWidthPos-1));
+        }
+        
+        if (imageAngulationPos >= 0) {
+        	imageAngulation = new float[Slices.size()][3];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (imageAngulationPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        imageAngulationIndex = ((counter2*1)+(counter3*2) + (imageAngulationPos-1));
+        }
+        
+        if (imageOffcentrePos >= 0) {
+        	imageOffcentre = new float[Slices.size()][3];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (imageOffcentrePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        imageOffcentreIndex = ((counter2*1)+(counter3*2) + (imageOffcentrePos-1));
+        }
+        
         if (echoTimePos >= 0) {
         	echoTime = new float[Slices.size()];
-	        int counter2 = 0;
-	        int counter3 = 0;
+	        counter2 = 0;
+	        counter3 = 0;
 	        for (int i = 0; i < (echoTimePos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
@@ -1538,8 +1818,8 @@ public class FilePARREC extends FileBase {
         
         if (triggerTimePos >= 0) {
         	triggerTime = new float[Slices.size()];
-	        int counter2 = 0;
-	        int counter3 = 0;
+	        counter2 = 0;
+	        counter3 = 0;
 	        for (int i = 0; i < (triggerTimePos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
@@ -1551,10 +1831,25 @@ public class FilePARREC extends FileBase {
 	        triggerTimeIndex = ((counter2*1)+(counter3*2) + (triggerTimePos-1));
         }
         
+        if (numberOfAveragesPos >= 0) {
+        	numberOfAverages = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (numberOfAveragesPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        numberOfAveragesIndex = ((counter2*1)+(counter3*2) + (numberOfAveragesPos-1));
+        }
+        
         if (flipAnglePos >= 0) {
         	flipAngle = new float[Slices.size()];
-	        int counter2 = 0;
-	        int counter3 = 0;
+	        counter2 = 0;
+	        counter3 = 0;
 	        for (int i = 0; i < (flipAnglePos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
@@ -1568,8 +1863,8 @@ public class FilePARREC extends FileBase {
         
         if (cardiacFrequencyPos >= 0) {
         	cardiacFrequency = new int[Slices.size()];
-	        int counter2 = 0;
-	        int counter3 = 0;
+	        counter2 = 0;
+	        counter3 = 0;
 	        for (int i = 0; i < (cardiacFrequencyPos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
@@ -1583,8 +1878,8 @@ public class FilePARREC extends FileBase {
         
         if (minimumRRIntervalPos >= 0) {
         	minimumRRInterval = new int[Slices.size()];
-	        int counter2 = 0;
-	        int counter3 = 0;
+	        counter2 = 0;
+	        counter3 = 0;
 	        for (int i = 0; i < ( minimumRRIntervalPos-2); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
@@ -1598,8 +1893,8 @@ public class FilePARREC extends FileBase {
         
         if (maximumRRIntervalPos >= 0) {
         	maximumRRInterval = new int[Slices.size()];
-	        int counter2 = 0;
-	        int counter3 = 0;
+	        counter2 = 0;
+	        counter3 = 0;
 	        for (int i = 0; i < ( maximumRRIntervalPos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
@@ -1611,10 +1906,25 @@ public class FilePARREC extends FileBase {
 	        maximumRRIntervalIndex = ((counter2*1)+(counter3*2) + (maximumRRIntervalPos-1));
         }
         
+        if (turboFactorPos >= 0) {
+        	turboFactor = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (turboFactorPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        turboFactorIndex = ((counter2*1)+(counter3*2) + (turboFactorPos-1));
+        }
+        
         if (inversionDelayPos >= 0) {
         	inversionDelay = new float[Slices.size()];
-	        int counter2 = 0;
-	        int counter3 = 0;
+	        counter2 = 0;
+	        counter3 = 0;
 	        for (int i = 0; i < (inversionDelayPos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
@@ -1626,11 +1936,11 @@ public class FilePARREC extends FileBase {
 	        inversionDelayIndex = ((counter2*1)+(counter3*2) + (inversionDelayPos-1));
         }
         
-        if (diffusionBFactorPos >= 0) {
-        	diffusionBFactor = new float[Slices.size()];
-	        int counter2 = 0;
-	        int counter3 = 0;
-	        for (int i = 0; i < (diffusionBFactorPos-1); i++){
+        if (contrastTypePos >= 0) {
+        	contrastType = new String[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (contrastTypePos-1); i++){
 	            if (SliceParameters.get(i).contains("2")){
 	                counter2++;
 	            }
@@ -1638,9 +1948,23 @@ public class FilePARREC extends FileBase {
 	                counter3++;
 	            }
 	        }
-	        diffusionBFactorIndex = ((counter2*1)+(counter3*2) + (diffusionBFactorPos-1));
+	        contrastTypeIndex = ((counter2*1)+(counter3*2) + (contrastTypePos-1));
         }
         
+        if (labelTypePos >= 0) {
+        	labelType = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (labelTypePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        labelTypeIndex = ((counter2*1)+(counter3*2) + (labelTypePos-1));
+        }
         
         if (firstSliceValue != secondSliceValue) {
             for (int i = 0; i < Slices.size(); i++) {
@@ -1649,6 +1973,34 @@ public class FilePARREC extends FileBase {
                 final String[] sliceArr = sliceIndex.split("\\s+");
                 if (echoNumber != null) {
                 	echoNumber[i] = Integer.valueOf(sliceArr[echoNumberIndex]);
+                }
+                if (dynamicScanNumber != null) {
+                	dynamicScanNumber[i] = Integer.valueOf(sliceArr[dynamicScanNumberIndex]);
+                }
+                if (cardiacPhaseNumber != null) {
+                	cardiacPhaseNumber[i] = Integer.valueOf(sliceArr[cardiacPhaseNumberIndex]);
+                }
+                if (scanningSequence != null) {
+                	scanningSequence[i] = Integer.valueOf(sliceArr[scanningSequenceIndex]);
+                }
+                if (scanPercentage != null) {
+                	scanPercentage[i] = Integer.valueOf(sliceArr[scanPercentageIndex]);
+                }
+                if (windowCenter != null) {
+                	windowCenter[i] = Integer.valueOf(sliceArr[windowCenterIndex]);
+                }
+                if (windowWidth != null) {
+                	windowWidth[i] = Integer.valueOf(sliceArr[windowWidthIndex]);
+                }
+                if (imageAngulation != null) {
+                	imageAngulation[i][0] = Float.valueOf(sliceArr[imageAngulationIndex]);
+                	imageAngulation[i][1] = Float.valueOf(sliceArr[imageAngulationIndex+1]);
+                	imageAngulation[i][2] = Float.valueOf(sliceArr[imageAngulationIndex+2]);
+                }
+                if (imageOffcentre != null) {
+                	imageOffcentre[i][0] = Float.valueOf(sliceArr[imageOffcentreIndex]);
+                	imageOffcentre[i][1] = Float.valueOf(sliceArr[imageOffcentreIndex+1]);
+                	imageOffcentre[i][2] = Float.valueOf(sliceArr[imageOffcentreIndex+2]);
                 }
                 if (echoTime != null) {
                     echoTime[i] = Float.valueOf(sliceArr[echoTimeIndex]);
@@ -1659,6 +2011,9 @@ public class FilePARREC extends FileBase {
                 if (flipAngle != null) {
                     flipAngle[i] = Float.valueOf(sliceArr[flipAngleIndex]);
                 }
+                if (numberOfAverages != null) {
+                    numberOfAverages[i] = Integer.valueOf(sliceArr[numberOfAveragesIndex]);
+                }
                 if (cardiacFrequency != null) {
                     cardiacFrequency[i] = Integer.valueOf(sliceArr[cardiacFrequencyIndex]);
                 }
@@ -1668,11 +2023,20 @@ public class FilePARREC extends FileBase {
                 if (maximumRRInterval != null) {
                     maximumRRInterval[i] = Integer.valueOf(sliceArr[maximumRRIntervalIndex]);
                 }
+                if (turboFactor != null) {
+                    turboFactor[i] = Integer.valueOf(sliceArr[turboFactorIndex]);
+                }
                 if (inversionDelay != null) {
                     inversionDelay[i] = Float.valueOf(sliceArr[inversionDelayIndex]);
                 }
                 if (diffusionBFactor != null) {
-                	diffusionBFactor[i] = Float.valueOf(sliceArr[diffusionBFactorIndex]);
+                	diffusionBFactor[i] = Float.valueOf(sliceArr[bValueIndex]);
+                }
+                if (contrastType != null) {
+                	contrastType[i] = sliceArr[contrastTypeIndex];
+                }
+                if (labelType != null) {
+                	labelType[i] = Integer.valueOf(sliceArr[labelTypeIndex]);
                 }
             }
         }
@@ -1686,11 +2050,42 @@ public class FilePARREC extends FileBase {
                     if (echoNumber != null) {
                     	echoNumber[index] = Integer.valueOf(sliceArr[echoNumberIndex]);
                     }
+                    if (dynamicScanNumber != null) {
+                    	dynamicScanNumber[index] = Integer.valueOf(sliceArr[dynamicScanNumberIndex]);
+                    }
+                    if (cardiacPhaseNumber != null) {
+                    	cardiacPhaseNumber[index] = Integer.valueOf(sliceArr[cardiacPhaseNumberIndex]);
+                    }
+                    if (scanningSequence != null) {
+                    	scanningSequence[index] = Integer.valueOf(sliceArr[scanningSequenceIndex]);
+                    }
+                    if (scanPercentage != null) {
+                    	scanPercentage[index] = Integer.valueOf(sliceArr[scanPercentageIndex]);
+                    }
+                    if (windowCenter != null) {
+                    	windowCenter[index] = Integer.valueOf(sliceArr[windowCenterIndex]);
+                    }
+                    if (windowWidth != null) {
+                    	windowWidth[index] = Integer.valueOf(sliceArr[windowWidthIndex]);
+                    }
+                    if (imageAngulation != null) {
+                    	imageAngulation[index][0] = Float.valueOf(sliceArr[imageAngulationIndex]);
+                        imageAngulation[index][1] = Float.valueOf(sliceArr[imageAngulationIndex+1]);
+                        imageAngulation[index][2] = Float.valueOf(sliceArr[imageAngulationIndex+2]);
+                    }
+                    if (imageOffcentre != null) {
+                    	imageOffcentre[index][0] = Float.valueOf(sliceArr[imageOffcentreIndex]);
+                        imageOffcentre[index][1] = Float.valueOf(sliceArr[imageOffcentreIndex+1]);
+                        imageOffcentre[index][2] = Float.valueOf(sliceArr[imageOffcentreIndex+2]);
+                    }
                     if (echoTime != null) {
                         echoTime[index] = Float.valueOf(sliceArr[echoTimeIndex]);
                     }
                     if (triggerTime != null) {
                         triggerTime[index] = Float.valueOf(sliceArr[triggerTimeIndex]);
+                    }
+                    if (numberOfAverages != null) {
+                        numberOfAverages[index] = Integer.valueOf(sliceArr[numberOfAveragesIndex]);
                     }
                     if (flipAngle != null) {
                         flipAngle[index] = Float.valueOf(sliceArr[flipAngleIndex]);
@@ -1704,11 +2099,20 @@ public class FilePARREC extends FileBase {
                     if (maximumRRInterval != null) {
                         maximumRRInterval[index] = Integer.valueOf(sliceArr[maximumRRIntervalIndex]);
                     }
+                    if (turboFactor != null) {
+                        turboFactor[index] = Integer.valueOf(sliceArr[turboFactorIndex]);
+                    }
                     if (inversionDelay != null) {
                         inversionDelay[index] = Float.valueOf(sliceArr[inversionDelayIndex]);
                     }
                     if (diffusionBFactor != null) {
-                    	diffusionBFactor[index] = Float.valueOf(sliceArr[diffusionBFactorIndex]);
+                    	diffusionBFactor[index] = Float.valueOf(sliceArr[bValueIndex]);
+                    }
+                    if (contrastType != null) {
+                    	contrastType[index] = sliceArr[contrastTypeIndex];
+                    }
+                    if (labelType != null) {
+                    	labelType[index] = Integer.valueOf(sliceArr[labelTypeIndex]);
                     }
         		}
         	}
@@ -1718,11 +2122,32 @@ public class FilePARREC extends FileBase {
         if (echoNumber != null) {
         	fileInfo.setEchoNumber(echoNumber);
         }
+        if (dynamicScanNumber != null) {
+        	fileInfo.setDynamicScanNumber(dynamicScanNumber);
+        }
+        if (cardiacPhaseNumber != null) {
+        	fileInfo.setCardiacPhaseNumber(cardiacPhaseNumber);
+        }
+        if (scanningSequence != null) {
+        	fileInfo.setScanningSequence(scanningSequence);
+        }
+        if (scanPercentage != null) {
+        	fileInfo.setScanPercentage(scanPercentage);
+        }
+        if (windowCenter != null) {
+        	fileInfo.setWindowCenter(windowCenter);
+        }
+        if (windowWidth != null) {
+        	fileInfo.setWindowWidth(windowWidth);
+        }
         if (echoTime != null) {
         	fileInfo.setEchoTime(echoTime);
         }
         if (triggerTime != null) {
         	fileInfo.setTriggerTime(triggerTime);
+        }
+        if (numberOfAverages != null) {
+        	fileInfo.setNumberOfAverages(numberOfAverages);
         }
         if (flipAngle != null) {
         	fileInfo.setFlipAngle(flipAngle);
@@ -1736,11 +2161,20 @@ public class FilePARREC extends FileBase {
         if (maximumRRInterval != null) {
         	fileInfo.setMaximumRRInterval(maximumRRInterval);
         }
+        if (turboFactor != null) {
+        	fileInfo.setTurboFactor(turboFactor);
+        }
         if (inversionDelay != null) {
         	fileInfo.setInversionDelay(inversionDelay);
         }
         if (diffusionBFactor != null) {
         	fileInfo.setDiffusionBFactor(diffusionBFactor);
+        }
+        if (contrastType != null) {
+        	fileInfo.setContrastType(contrastType);
+        }
+        if (labelType != null) {
+        	fileInfo.setLabelType(labelType);
         }
 
         float slicethk=0, slicegap=0;
@@ -2069,6 +2503,40 @@ public class FilePARREC extends FileBase {
             
             fileInfo.setSliceAngulation(sliceAngle);
             fileInfo.setOffCentre(offCentre);
+        }
+        
+        if (imageAngulation != null) {
+        	for (int i = 0; i < imageAngulation.length; i++) {
+        		switch(fileInfo.getImageOrientation()) {
+        		case FileInfoBase.AXIAL:
+        			imageAngulation[i] = new float[]{imageAngulation[i][2],imageAngulation[i][0], imageAngulation[i][1]};
+        			break;
+        		case FileInfoBase.SAGITTAL:
+        			imageAngulation[i] = new float[]{imageAngulation[i][0],-imageAngulation[i][1],-imageAngulation[i][2]};
+        			break;
+        		case FileInfoBase.CORONAL:
+        			imageAngulation[i] = new float[]{imageAngulation[i][2], -imageAngulation[i][1], imageAngulation[i][0]};
+        			break;
+        		}
+        	}
+        	fileInfo.setImageAngulation(imageAngulation);
+        }
+        
+        if (imageOffcentre != null) {
+        	for (int i = 0; i < imageOffcentre.length; i++) {
+        		switch(fileInfo.getImageOrientation()) {
+        		case FileInfoBase.AXIAL:
+        			imageOffcentre[i] = new float[]{imageOffcentre[i][2],imageOffcentre[i][0], imageOffcentre[i][1]};
+        			break;
+        		case FileInfoBase.SAGITTAL:
+        			imageOffcentre[i] = new float[]{imageOffcentre[i][0],-imageOffcentre[i][1],-imageOffcentre[i][2]};
+        			break;
+        		case FileInfoBase.CORONAL:
+        			imageOffcentre[i] = new float[]{imageOffcentre[i][2], -imageOffcentre[i][1], imageOffcentre[i][0]};
+        			break;
+        		}
+        	}
+        	fileInfo.setImageOffcentre(imageOffcentre);
         }
         
         float []o;
