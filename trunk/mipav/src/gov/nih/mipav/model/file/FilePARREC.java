@@ -345,6 +345,8 @@ public class FilePARREC extends FileBase {
     
     private int cardiacPhaseNumberPos = -1;
     
+    private int imageTypeMRPos = -1;
+    
     private int scanningSequencePos = -1;
     
     private int scanPercentagePos = -1;
@@ -357,7 +359,13 @@ public class FilePARREC extends FileBase {
     
     private int imageOffcentrePos = -1;
     
+    private int fmriStatusIndicationPos = -1;
+    
+    private int imageTypeEDESPos = -1;
+    
     private int echoTimePos = -1;
+    
+    private int dynamicScanBeginTimePos = -1;
     
     private int triggerTimePos = -1;
     
@@ -375,7 +383,13 @@ public class FilePARREC extends FileBase {
     
     private int inversionDelayPos = -1;
     
+    private int diffusionBValueNumberPos = -1;
+    
+    private int gradientOrientationNumberPos = -1;
+    
     private int contrastTypePos = -1;
+    
+    private int diffusionAnisotropyTypePos = -1;
     
     private int labelTypePos = -1;
     
@@ -391,6 +405,8 @@ public class FilePARREC extends FileBase {
     
     private int cardiacPhaseNumberIndex = -1;
     
+    private int imageTypeMRIndex = -1;
+    
     private int scanningSequenceIndex = -1;
     
     private int scanPercentageIndex = -1;
@@ -403,7 +419,13 @@ public class FilePARREC extends FileBase {
     
     private int imageOffcentreIndex = -1;
     
+    private int fmriStatusIndicationIndex = -1;
+    
+    private int imageTypeEDESIndex = -1;
+    
     private int echoTimeIndex = -1;
+    
+    private int dynamicScanBeginTimeIndex = -1;
     
     private int triggerTimeIndex = -1;
     
@@ -421,7 +443,13 @@ public class FilePARREC extends FileBase {
     
     private int inversionDelayIndex = -1;
     
+    private int diffusionBValueNumberIndex = -1;
+    
+    private int gradientOrientationNumberIndex = -1;
+    
     private int contrastTypeIndex = -1;
+    
+    private int diffusionAnisotropyTypeIndex = -1;
     
     private int labelTypeIndex = -1;
     
@@ -430,6 +458,8 @@ public class FilePARREC extends FileBase {
     private int dynamicScanNumber[] = null;
     
     private int cardiacPhaseNumber[] = null;
+    
+    private int imageTypeMR[] = null;
     
     private int scanningSequence[] = null;
     
@@ -443,7 +473,13 @@ public class FilePARREC extends FileBase {
    
     private float imageOffcentre[][] = null;
     
+    private int fmriStatusIndication[] = null;
+    
+    private int imageTypeEDES[] = null;
+    
     private float echoTime[] = null;
+    
+    private float dynamicScanBeginTime[] = null;
     
     private float triggerTime[] = null;
     
@@ -463,7 +499,15 @@ public class FilePARREC extends FileBase {
     
     private float diffusionBFactor[] = null;
     
+    private int diffusionBValueNumber[] = null;
+    
+    private int gradientOrientationNumber[] = null;
+    
     private String contrastType[] = null;
+    
+    private String diffusionAnisotropyType[] = null;
+    
+    private float diffusion[][] = null;
     
     private int labelType[] = null;
 
@@ -1180,13 +1224,17 @@ public class FilePARREC extends FileBase {
                     int echoNumberCounter = -1;
                     int dynamicScanNumberCounter = -1;
                     int cardiacPhaseNumberCounter = -1;
+                    int imageTypeMRCounter = -1;
                     int scanningSequenceCounter = -1;
                     int scanPercentageCounter = -1;
                     int windowCenterCounter = -1;
                     int windowWidthCounter = -1;
                     int imageAngulationCounter = -1;
                     int imageOffcentreCounter = -1;
+                    int fmriStatusIndicationCounter = -1;
+                    int imageTypeEDESCounter = -1;
                     int echoTimeCounter = -1;
+                    int dynamicScanBeginTimeCounter = -1;
                     int triggerTimeCounter = -1;
                     int numberOfAveragesCounter = -1;
                     int flipAngleCounter = -1;
@@ -1195,7 +1243,10 @@ public class FilePARREC extends FileBase {
                     int maximumRRIntervalCounter = -1;
                     int turboFactorCounter = -1;
                     int inversionDelayCounter = -1;
+                    int diffusionBValueNumberCounter = -1;
+                    int gradientOrientationNumberCounter = -1;
                     int contrastTypeCounter = -1;
+                    int diffusionAnisotropyTypeCounter = -1;
                     int labelTypeCounter = -1;
                 	
                     if(nextLine.compareToIgnoreCase("# === IMAGE INFORMATION DEFINITION =============================================")==0) {
@@ -1237,6 +1288,10 @@ public class FilePARREC extends FileBase {
                                     	   cardiacPhaseNumberCounter++;
                                        }
                                        
+                                       if (imageInfo.contains("image_type_mr")) {
+                                    	   imageTypeMRCounter++;
+                                       }
+                                       
                                        if (imageInfo.contains("scanning sequence")) {
                                     	   scanningSequenceCounter++;
                                        }
@@ -1261,8 +1316,20 @@ public class FilePARREC extends FileBase {
                                     	   imageOffcentreCounter++;
                                        }
                                        
+                                       if (imageInfo.contains("fmri_status_indication")) {
+                                    	   fmriStatusIndicationCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("image_type_ed_es")) {
+                                    	   imageTypeEDESCounter++;
+                                       }
+                                       
                                        if (imageInfo.contains("echo_time")) {
                                     	   echoTimeCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("dyn_scan_begin_time")) {
+                                    	   dynamicScanBeginTimeCounter++;
                                        }
                                        
                                        if (imageInfo.contains("trigger_time")) {
@@ -1297,8 +1364,20 @@ public class FilePARREC extends FileBase {
                                     	   inversionDelayCounter++;
                                        }
                                        
+                                       if (imageInfo.contains("diffusion b value number")) {
+                                    	   diffusionBValueNumberCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("gradient orientation number")) {
+                                    	   gradientOrientationNumberCounter++;
+                                       }
+                                       
                                        if (imageInfo.contains("contrast type")) {
                                     	   contrastTypeCounter++;
+                                       }
+                                       
+                                       if (imageInfo.contains("diffusion anisotropy type")) {
+                                    	   diffusionAnisotropyTypeCounter++;
                                        }
                                        
                                        if (imageInfo.contains("label type")) {
@@ -1310,9 +1389,15 @@ public class FilePARREC extends FileBase {
                      
                             line = raFile.readLine().trim();                           
                         }
-                        sliceOrientPos = counter - sliceOrientIndexCounter;
-                        bValuePos = counter - bValIndexCounter;
-                        gradPos = counter - gradIndexCounter; 
+                        if (sliceOrientIndexCounter != -1) {
+                            sliceOrientPos = counter - sliceOrientIndexCounter;
+                        }
+                        if (bValIndexCounter != -1) {
+                            bValuePos = counter - bValIndexCounter;
+                        }
+                        if (gradIndexCounter != -1) {
+                            gradPos = counter - gradIndexCounter; 
+                        }
                         if (echoNumberCounter != -1) {
                         	echoNumberPos = counter - echoNumberCounter;
                         }
@@ -1321,6 +1406,9 @@ public class FilePARREC extends FileBase {
                         }
                         if (cardiacPhaseNumberCounter != -1) {
                         	cardiacPhaseNumberPos = counter - cardiacPhaseNumberCounter;
+                        }
+                        if (imageTypeMRCounter != -1) {
+                        	imageTypeMRPos = counter - imageTypeMRCounter;
                         }
                         if (scanningSequenceCounter != -1) {
                         	scanningSequencePos = counter - scanningSequenceCounter;
@@ -1340,8 +1428,17 @@ public class FilePARREC extends FileBase {
                         if (imageOffcentreCounter != -1) {
                         	imageOffcentrePos = counter - imageOffcentreCounter;
                         }
+                        if (fmriStatusIndicationCounter != -1) {
+                        	fmriStatusIndicationPos = counter - fmriStatusIndicationCounter;
+                        }
+                        if (imageTypeEDESCounter != -1) {
+                        	imageTypeEDESPos = counter - imageTypeEDESCounter;
+                        }
                         if (echoTimeCounter != -1) {
                             echoTimePos = counter - echoTimeCounter;
+                        }
+                        if (dynamicScanBeginTimeCounter != -1) {
+                        	dynamicScanBeginTimePos = counter - dynamicScanBeginTimeCounter;
                         }
                         if (triggerTimeCounter != -1) {
                             triggerTimePos = counter - triggerTimeCounter;
@@ -1367,8 +1464,17 @@ public class FilePARREC extends FileBase {
                         if (inversionDelayCounter != -1) {
                             inversionDelayPos = counter - inversionDelayCounter;
                         }
+                        if (diffusionBValueNumberCounter != -1) {
+                        	diffusionBValueNumberPos = counter - diffusionBValueNumberCounter;
+                        }
+                        if (gradientOrientationNumberCounter != -1) {
+                        	gradientOrientationNumberPos = counter - gradientOrientationNumberCounter;
+                        }
                         if (contrastTypeCounter != -1) {
                         	contrastTypePos = counter - contrastTypeCounter;
+                        }
+                        if (diffusionAnisotropyTypeCounter != -1) {
+                        	diffusionAnisotropyTypePos = counter - diffusionAnisotropyTypeCounter;
                         }
                         if (labelTypeCounter != -1) {
                         	labelTypePos = counter - labelTypeCounter;
@@ -1570,6 +1676,22 @@ public class FilePARREC extends FileBase {
         	diffusionBFactor = new float[Slices.size()];
         }
         
+     // Find slice index automatically of gradient values
+        counter2 = 0;
+        counter3 = 0;
+        for (int i = 0; i < (gradPos-1); i++){
+            if (SliceParameters.get(i).contains("2")){
+                counter2++;
+                }
+            if (SliceParameters.get(i).contains("3")){ 
+                counter3++;
+                }
+            }
+        gradIndex = ((counter2*1)+(counter3*2) + (gradPos-1));
+        if (gradPos >= 0) {
+        	diffusion = new float[Slices.size()][3];
+        }
+        
         if ((examName.toUpperCase()).contains("DTI")|| (protocolName.toUpperCase()).contains("DTI")){ 
             dtiparams = new DTIParameters(numVolumes);
             dtiparams.setNumVolumes(numVolumes);
@@ -1618,18 +1740,7 @@ public class FilePARREC extends FileBase {
                 }       
         }
             else if(version.equals("V4.1")||version.equals("V4.2") ){
-             // Find slice index automatically of gradient values
-                int counter2s = 0;
-                int counter3s = 0;
-                    for (int i = 0; i < (gradPos-1); i++){
-                        if (SliceParameters.get(i).contains("2")){
-                            counter2s++;
-                            }
-                        if (SliceParameters.get(i).contains("3")){ 
-                            counter3s++;
-                            }
-                        }
-                    gradIndex = ((counter2*1)+(counter3*2) + (gradPos-1));
+             
                   
                 if (firstSliceValue!=secondSliceValue){
                     for (int i = 0; i < numVolumes; i++){
@@ -1709,6 +1820,21 @@ public class FilePARREC extends FileBase {
 	            }
 	        }
 	        cardiacPhaseNumberIndex = ((counter2*1)+(counter3*2) + (cardiacPhaseNumberPos-1));
+        }
+        
+        if (imageTypeMRPos >= 0) {
+        	imageTypeMR = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (imageTypeMRPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        imageTypeMRIndex = ((counter2*1)+(counter3*2) + (imageTypeMRPos-1));
         }
         
         if (scanningSequencePos >= 0) {
@@ -1801,6 +1927,36 @@ public class FilePARREC extends FileBase {
 	        imageOffcentreIndex = ((counter2*1)+(counter3*2) + (imageOffcentrePos-1));
         }
         
+        if (fmriStatusIndicationPos >= 0) {
+        	fmriStatusIndication = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (fmriStatusIndicationPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        fmriStatusIndicationIndex = ((counter2*1)+(counter3*2) + (fmriStatusIndicationPos-1));
+        }
+        
+        if (imageTypeEDESPos >= 0) {
+        	imageTypeEDES = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (imageTypeEDESPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        imageTypeEDESIndex = ((counter2*1)+(counter3*2) + (imageTypeEDESPos-1));
+        }
+        
         if (echoTimePos >= 0) {
         	echoTime = new float[Slices.size()];
 	        counter2 = 0;
@@ -1814,6 +1970,21 @@ public class FilePARREC extends FileBase {
 	            }
 	        }
 	        echoTimeIndex = ((counter2*1)+(counter3*2) + (echoTimePos-1));
+        }
+        
+        if (dynamicScanBeginTimePos >= 0) {
+        	dynamicScanBeginTime = new float[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (dynamicScanBeginTimePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        dynamicScanBeginTimeIndex = ((counter2*1)+(counter3*2) + (dynamicScanBeginTimePos-1));
         }
         
         if (triggerTimePos >= 0) {
@@ -1936,6 +2107,36 @@ public class FilePARREC extends FileBase {
 	        inversionDelayIndex = ((counter2*1)+(counter3*2) + (inversionDelayPos-1));
         }
         
+        if (diffusionBValueNumberPos >= 0) {
+        	diffusionBValueNumber = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (diffusionBValueNumberPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        diffusionBValueNumberIndex = ((counter2*1)+(counter3*2) + (diffusionBValueNumberPos-1));
+        }
+        
+        if (gradientOrientationNumberPos >= 0) {
+        	gradientOrientationNumber = new int[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (gradientOrientationNumberPos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        gradientOrientationNumberIndex = ((counter2*1)+(counter3*2) + (gradientOrientationNumberPos-1));
+        }
+        
         if (contrastTypePos >= 0) {
         	contrastType = new String[Slices.size()];
 	        counter2 = 0;
@@ -1949,6 +2150,21 @@ public class FilePARREC extends FileBase {
 	            }
 	        }
 	        contrastTypeIndex = ((counter2*1)+(counter3*2) + (contrastTypePos-1));
+        }
+        
+        if (diffusionAnisotropyTypePos >= 0) {
+        	diffusionAnisotropyType = new String[Slices.size()];
+	        counter2 = 0;
+	        counter3 = 0;
+	        for (int i = 0; i < (diffusionAnisotropyTypePos-1); i++){
+	            if (SliceParameters.get(i).contains("2")){
+	                counter2++;
+	            }
+	            if (SliceParameters.get(i).contains("3")){ 
+	                counter3++;
+	            }
+	        }
+	        diffusionAnisotropyTypeIndex = ((counter2*1)+(counter3*2) + (diffusionAnisotropyTypePos-1));
         }
         
         if (labelTypePos >= 0) {
@@ -1980,6 +2196,9 @@ public class FilePARREC extends FileBase {
                 if (cardiacPhaseNumber != null) {
                 	cardiacPhaseNumber[i] = Integer.valueOf(sliceArr[cardiacPhaseNumberIndex]);
                 }
+                if (imageTypeMR != null) {
+                	imageTypeMR[i] = Integer.valueOf(sliceArr[imageTypeMRIndex]);
+                }
                 if (scanningSequence != null) {
                 	scanningSequence[i] = Integer.valueOf(sliceArr[scanningSequenceIndex]);
                 }
@@ -2002,8 +2221,17 @@ public class FilePARREC extends FileBase {
                 	imageOffcentre[i][1] = Float.valueOf(sliceArr[imageOffcentreIndex+1]);
                 	imageOffcentre[i][2] = Float.valueOf(sliceArr[imageOffcentreIndex+2]);
                 }
+                if (fmriStatusIndication != null) {
+                	fmriStatusIndication[i] = Integer.valueOf(sliceArr[fmriStatusIndicationIndex]);
+                }
+                if (imageTypeEDES != null) {
+                	imageTypeEDES[i] = Integer.valueOf(sliceArr[imageTypeEDESIndex]);
+                }
                 if (echoTime != null) {
                     echoTime[i] = Float.valueOf(sliceArr[echoTimeIndex]);
+                }
+                if (dynamicScanBeginTime != null) {
+                    dynamicScanBeginTime[i] = Float.valueOf(sliceArr[dynamicScanBeginTimeIndex]);
                 }
                 if (triggerTime != null) {
                     triggerTime[i] = Float.valueOf(sliceArr[triggerTimeIndex]);
@@ -2032,8 +2260,22 @@ public class FilePARREC extends FileBase {
                 if (diffusionBFactor != null) {
                 	diffusionBFactor[i] = Float.valueOf(sliceArr[bValueIndex]);
                 }
+                if (diffusionBValueNumber != null) {
+                	diffusionBValueNumber[i] = Integer.valueOf(sliceArr[diffusionBValueNumberIndex]);
+                }
+                if (gradientOrientationNumber != null) {
+                	gradientOrientationNumber[i] = Integer.valueOf(sliceArr[gradientOrientationNumberIndex]);
+                }
                 if (contrastType != null) {
                 	contrastType[i] = sliceArr[contrastTypeIndex];
+                }
+                if (diffusionAnisotropyType != null) {
+                	diffusionAnisotropyType[i] = sliceArr[diffusionAnisotropyTypeIndex];
+                }
+                if (diffusion != null) {
+                	diffusion[i][0] = Float.valueOf(sliceArr[gradIndex]);
+                	diffusion[i][1] = Float.valueOf(sliceArr[gradIndex+1]);
+                	diffusion[i][2] = Float.valueOf(sliceArr[gradIndex+2]);
                 }
                 if (labelType != null) {
                 	labelType[i] = Integer.valueOf(sliceArr[labelTypeIndex]);
@@ -2055,6 +2297,9 @@ public class FilePARREC extends FileBase {
                     }
                     if (cardiacPhaseNumber != null) {
                     	cardiacPhaseNumber[index] = Integer.valueOf(sliceArr[cardiacPhaseNumberIndex]);
+                    }
+                    if (imageTypeMR != null) {
+                    	imageTypeMR[index] = Integer.valueOf(sliceArr[imageTypeMRIndex]);
                     }
                     if (scanningSequence != null) {
                     	scanningSequence[index] = Integer.valueOf(sliceArr[scanningSequenceIndex]);
@@ -2078,8 +2323,17 @@ public class FilePARREC extends FileBase {
                         imageOffcentre[index][1] = Float.valueOf(sliceArr[imageOffcentreIndex+1]);
                         imageOffcentre[index][2] = Float.valueOf(sliceArr[imageOffcentreIndex+2]);
                     }
+                    if (fmriStatusIndication != null) {
+                    	fmriStatusIndication[index] = Integer.valueOf(sliceArr[fmriStatusIndicationIndex]);
+                    }
+                    if (imageTypeEDES != null) {
+                    	imageTypeEDES[index] = Integer.valueOf(sliceArr[imageTypeEDESIndex]);
+                    }
                     if (echoTime != null) {
                         echoTime[index] = Float.valueOf(sliceArr[echoTimeIndex]);
+                    }
+                    if (dynamicScanBeginTime != null) {
+                        dynamicScanBeginTime[index] = Float.valueOf(sliceArr[dynamicScanBeginTimeIndex]);
                     }
                     if (triggerTime != null) {
                         triggerTime[index] = Float.valueOf(sliceArr[triggerTimeIndex]);
@@ -2108,8 +2362,22 @@ public class FilePARREC extends FileBase {
                     if (diffusionBFactor != null) {
                     	diffusionBFactor[index] = Float.valueOf(sliceArr[bValueIndex]);
                     }
+                    if (diffusionBValueNumber != null) {
+                    	diffusionBValueNumber[index] = Integer.valueOf(sliceArr[diffusionBValueNumberIndex]);
+                    }
+                    if (gradientOrientationNumber != null) {
+                    	gradientOrientationNumber[index] = Integer.valueOf(sliceArr[gradientOrientationNumberIndex]);
+                    }
                     if (contrastType != null) {
                     	contrastType[index] = sliceArr[contrastTypeIndex];
+                    }
+                    if (diffusionAnisotropyType != null) {
+                    	diffusionAnisotropyType[index] = sliceArr[diffusionAnisotropyTypeIndex];
+                    }
+                    if (diffusion != null) {
+                    	diffusion[index][0] = Float.valueOf(sliceArr[gradIndex]);
+                    	diffusion[index][1] = Float.valueOf(sliceArr[gradIndex+1]);
+                    	diffusion[index][2] = Float.valueOf(sliceArr[gradIndex+2]);
                     }
                     if (labelType != null) {
                     	labelType[index] = Integer.valueOf(sliceArr[labelTypeIndex]);
@@ -2128,6 +2396,9 @@ public class FilePARREC extends FileBase {
         if (cardiacPhaseNumber != null) {
         	fileInfo.setCardiacPhaseNumber(cardiacPhaseNumber);
         }
+        if (imageTypeMR != null) {
+        	fileInfo.setImageTypeMR(imageTypeMR);
+        }
         if (scanningSequence != null) {
         	fileInfo.setScanningSequence(scanningSequence);
         }
@@ -2140,8 +2411,17 @@ public class FilePARREC extends FileBase {
         if (windowWidth != null) {
         	fileInfo.setWindowWidth(windowWidth);
         }
+        if (fmriStatusIndication != null) {
+        	fileInfo.setFmriStatusIndication(fmriStatusIndication);
+        }
+        if (imageTypeEDES != null) {
+        	fileInfo.setImageTypeEDES(imageTypeEDES);
+        }
         if (echoTime != null) {
         	fileInfo.setEchoTime(echoTime);
+        }
+        if (dynamicScanBeginTime != null) {
+        	fileInfo.setDynamicScanBeginTime(dynamicScanBeginTime);
         }
         if (triggerTime != null) {
         	fileInfo.setTriggerTime(triggerTime);
@@ -2170,8 +2450,20 @@ public class FilePARREC extends FileBase {
         if (diffusionBFactor != null) {
         	fileInfo.setDiffusionBFactor(diffusionBFactor);
         }
+        if (diffusionBValueNumber != null) {
+        	fileInfo.setDiffusionBValueNumber(diffusionBValueNumber);
+        }
+        if (gradientOrientationNumber != null) {
+        	fileInfo.setGradientOrientationNumber(gradientOrientationNumber);
+        }
         if (contrastType != null) {
         	fileInfo.setContrastType(contrastType);
+        }
+        if (diffusionAnisotropyType != null) {
+        	fileInfo.setDiffusionAnisotropyType(diffusionAnisotropyType);
+        }
+        if (diffusion != null) {
+        	fileInfo.setDiffusion(diffusion);
         }
         if (labelType != null) {
         	fileInfo.setLabelType(labelType);
