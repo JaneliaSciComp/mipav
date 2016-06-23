@@ -985,7 +985,8 @@ public class FileDicom extends FileDicomBase {
                                                                                   // green(1202), or blue(1203)
                     }
                 case OB:
-                    if (name.matches(FileDicom.IMAGE_TAG) && !inSequence) { // can be either OW or OB
+                    if (name.matches(FileDicom.IMAGE_TAG) && !inSequence && (elementLength > 50)) { // can be either OW or OB
+                    	// 7FD1,0010 with an elementLength = 6 matched FileDicom.IMAGE_TAG
                         return processImageData(extents, numEmbeddedImages, getFilePointer() + (fileInfo.getVr_type() == VRtype.IMPLICIT ? 4 : 0)); // finished
                                                                                                                                                     // reading
                                                                                                                                                     // image
