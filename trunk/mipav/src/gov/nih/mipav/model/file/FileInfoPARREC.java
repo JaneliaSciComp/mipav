@@ -84,6 +84,8 @@ public class FileInfoPARREC extends FileInfoBase {
     
     private int cardiacPhaseNumber[] = null;
     
+    private int imageTypeMR[] = null;
+    
     private int scanningSequence[] = null;
     
     private int scanPercentage[] = null;
@@ -96,7 +98,13 @@ public class FileInfoPARREC extends FileInfoBase {
     
     private float imageOffcentre[][] = null;
     
+    private int fmriStatusIndication[] = null;
+    
+    private int imageTypeEDES[] = null;
+    
     private float echoTime[] = null;
+    
+    private float dynamicScanBeginTime[] = null;
     
     private float triggerTime[] = null;
     
@@ -116,7 +124,15 @@ public class FileInfoPARREC extends FileInfoBase {
     
     private float diffusionBFactor[] = null;
     
+    private int diffusionBValueNumber[] = null;
+    
+    private int gradientOrientationNumber[] = null;
+    
     private String contrastType[] = null;
+    
+    private String diffusionAnisotropyType[] = null;
+    
+    private float diffusion[][] = null;
     
     private int labelType[] = null;
 
@@ -165,6 +181,9 @@ public class FileInfoPARREC extends FileInfoBase {
         if (cardiacPhaseNumber != null) {
         	dlg.append("Cardiac phase number: " + cardiacPhaseNumber[index] + "\n");
         }
+        if (imageTypeMR != null) {
+        	dlg.append("Image type MR: " + imageTypeMR[index] + "\n");
+        }
         if (scanningSequence != null) {
         	dlg.append("Scanning sequence: " + scanningSequence[index] + "\n");
         }
@@ -187,8 +206,17 @@ public class FileInfoPARREC extends FileInfoBase {
         	dlg.append("Image " + ori1 + " off center (mm): " + imageOffcentre[index][1] + "\n");
         	dlg.append("Image " + ori2 + " off center (mm): " + imageOffcentre[index][2] + "\n");
         }
+        if (fmriStatusIndication != null) {
+        	dlg.append("fmri status indication: " + fmriStatusIndication[index] + "\n");
+        }
+        if (imageTypeEDES != null) {
+        	dlg.append("Image type ed es (end diast/end syst): " + imageTypeEDES[index] + "\n");
+        }
         if (echoTime != null) {
         	dlg.append("Echo time (ms): " + echoTime[index] + "\n");
+        }
+        if (dynamicScanBeginTime != null) {
+        	dlg.append("Dynamic scan begin time: " + dynamicScanBeginTime[index] + "\n");
         }
         if (triggerTime != null) {
         	dlg.append("Trigger time (ms): " + triggerTime[index] + "\n");
@@ -217,8 +245,22 @@ public class FileInfoPARREC extends FileInfoBase {
         if (inversionDelay != null) {
         	dlg.append("Inversion delay (ms): " + inversionDelay[index] + "\n");
         }
+        if (diffusionBValueNumber != null) {
+        	dlg.append("Diffsuion B value number: " + diffusionBValueNumber[index] + "\n");
+        }
+        if (gradientOrientationNumber != null) {
+        	dlg.append("Gradient orientation number: " + gradientOrientationNumber[index] + "\n");
+        }
         if (contrastType != null) {
         	dlg.append("Contrast type: " + contrastType[index] + "\n");
+        }
+        if (diffusionAnisotropyType != null) {
+        	dlg.append("Diffusion anisotropy type: " + diffusionAnisotropyType[index] + "\n");
+        }
+        if (diffusion != null) {
+        	dlg.append("Diffusion AP: " + diffusion[index][0] + "\n");
+        	dlg.append("Diffusion FH: " + diffusion[index][1] + "\n");
+        	dlg.append("Diffusion RL: " + diffusion[index][2] + "\n");
         }
         if (labelType != null) {
         	dlg.append("Label type (ASL): " + labelType[index] + "\n");
@@ -488,6 +530,14 @@ public class FileInfoPARREC extends FileInfoBase {
     	return cardiacPhaseNumber;
     }
     
+    public void setImageTypeMR(int imageTypeMR[]) {
+    	this.imageTypeMR = imageTypeMR;
+    }
+    
+    public int[] getImageTypeMR() {
+    	return imageTypeMR;
+    }
+    
     public void setScanningSequence(int scanningSequence[]) {
     	this.scanningSequence = scanningSequence;
     }
@@ -535,6 +585,22 @@ public class FileInfoPARREC extends FileInfoBase {
     public float[][] getImageOffcentre() {
     	return imageOffcentre;
     }
+    
+    public void setFmriStatusIndication(int fmriStatusIndication[]) {
+    	this.fmriStatusIndication = fmriStatusIndication;
+    }
+    
+    public int[] getFmriStatusIndication() {
+    	return fmriStatusIndication;
+    }
+    
+    public void setImageTypeEDES(int imageTypeEDES[]) {
+    	this.imageTypeEDES = imageTypeEDES;
+    }
+    
+    public int[] imageTypeEDES() {
+    	return imageTypeEDES;
+    }
 
     public void setEchoTime(float echoTime[]) {
     	this.echoTime = echoTime;
@@ -542,6 +608,14 @@ public class FileInfoPARREC extends FileInfoBase {
     
     public float[] getEchoTime() {
     	return echoTime;
+    }
+    
+    public void setDynamicScanBeginTime(float dynamicScanBeginTime[]) {
+    	this.dynamicScanBeginTime = dynamicScanBeginTime;
+    }
+    
+    public float[] getDynamicScanBeginTime() {
+    	return dynamicScanBeginTime;
     }
     
     public void setTriggerTime(float triggerTime[]) {
@@ -615,6 +689,22 @@ public class FileInfoPARREC extends FileInfoBase {
     public float[] getDiffusionBFactor() {
     	return diffusionBFactor;
     }
+    
+    public void setDiffusionBValueNumber(int diffusionBValueNumber[]) {
+    	this.diffusionBValueNumber = diffusionBValueNumber;
+    }
+    
+    public int[] getDiffusionBValueNumber() {
+    	return diffusionBValueNumber;
+    }
+    
+    public void setGradientOrientationNumber(int gradientOrientationNumber[]) {
+    	this.gradientOrientationNumber = gradientOrientationNumber;
+    }
+    
+    public int[] getGradientOrientationNumber() {
+    	return gradientOrientationNumber;
+    }
 
     public void setContrastType(String contrastType[]) {
     	this.contrastType = contrastType;
@@ -622,6 +712,22 @@ public class FileInfoPARREC extends FileInfoBase {
     
     public String[] getContrastType() {
     	return contrastType;
+    }
+    
+    public void setDiffusionAnisotropyType(String diffusionAnisotropyType[]) {
+    	this.diffusionAnisotropyType = diffusionAnisotropyType;
+    }
+    
+    public String[] getDiffusionAnisotropyType() {
+    	return diffusionAnisotropyType;
+    }
+    
+    public void setDiffusion(float diffusion[][]) {
+    	this.diffusion = diffusion;
+    }
+    
+    public float[][] getDiffusion() {
+    	return diffusion;
     }
     
     public void setLabelType(int labelType[]) {
