@@ -1469,6 +1469,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogCropBoundaryParam(this, getActiveImage());
         } else if (command.equals("CropPointParam")) {
             new JDialogCropPointParam(this, getActiveImage());
+        } else if (command.equals("CyclicPermutation")) {
+        	new JDialogCyclicPermutation(this, getActiveImage());
         } else if (command.equals("FFT")) {
             new JDialogFFT(this, getActiveImage());
         } else if (command.equals("GradientInverse")) {
