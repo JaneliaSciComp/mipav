@@ -80,6 +80,7 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 	private JTextField  nucleiTF;
 	private JCheckBox straightenImageCheck;
 	private JCheckBox straightenMarkersCheck;
+	private JCheckBox segmentSkinSurfaceCheck;
 	private JButton startButton;
 
 	private ModelImage wormImage;
@@ -142,7 +143,16 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 								}
 							}
 							System.err.println("Starting straightening" );
-							model.interpolateLattice( false, false, straightenImageCheck.isSelected(), straightenMarkersCheck.isSelected() );
+							model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
+							if ( segmentSkinSurfaceCheck.isSelected() )
+							{
+								model.segmentSkin(wormImage, false);
+							}
+							if ( straightenMarkersCheck.isSelected() )
+							{
+								model.interpolateLattice( false, false, false, true );								
+							}
+							
 							model.dispose();
 							model = null;
 							if ( wormImage != null )
@@ -279,6 +289,10 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 		
 		straightenMarkersCheck = gui.buildCheckBox( "Straighten Markers", true );
 		inputsPanel.add(straightenMarkersCheck.getParent(), gbc);
+		gbc.gridy++;
+		
+		segmentSkinSurfaceCheck = gui.buildCheckBox( "Segment Skin Surface Marker", true );
+		inputsPanel.add(segmentSkinSurfaceCheck.getParent(), gbc);
 		gbc.gridy++;
 		
 		

@@ -1367,17 +1367,6 @@ public class LatticeModelEM extends LatticeModel
 		//		System.err.println( "saveImage " + voiDir + " " + imageName + ".tif" );
 	}
 
-	private ModelImage readImage(String name, int sliceID)
-	{
-		String voiDir = outputDirectory + JDialogBase.makeImageName(name, "") + File.separator;
-		String imageName = name + "_" + sliceID;
-		FileIO fileIO = new FileIO();
-		ModelImage image = fileIO.readImage(imageName + ".tif", voiDir, false, null);
-		fileIO.dispose();
-		fileIO = null;
-		return image;
-	}
-
 
 	private void fileToWorm( Vector3f pt, float scale )
 	{
