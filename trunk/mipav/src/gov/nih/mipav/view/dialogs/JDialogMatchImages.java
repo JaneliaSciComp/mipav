@@ -218,8 +218,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
     }
 
     /**
-     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
-     * and whether or not there is a separate destination image.
+     * Once all the necessary variables are set, call the Match Images algorithm.
      */
     protected void callAlgorithm() {
 
