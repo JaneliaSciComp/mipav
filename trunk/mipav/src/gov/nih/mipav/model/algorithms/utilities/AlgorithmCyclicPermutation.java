@@ -74,7 +74,10 @@ public class AlgorithmCyclicPermutation extends AlgorithmBase {
         
         fireProgressStateChanged(srcImage.getImageName(), "Cyclic permutation on image ...");
         
-        if (srcImage.isColorImage()) {
+        if (srcImage.isComplexImage()) {
+            colorFactor = 2;	
+        }
+        else if (srcImage.isColorImage()) {
             colorFactor = 4;	
         }
         nDims = srcImage.getNDims();
