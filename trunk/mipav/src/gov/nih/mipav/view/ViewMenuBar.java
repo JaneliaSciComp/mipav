@@ -390,6 +390,8 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Markov random field", "HMRF_EM", 0, null, false),
 								menuBuilder.buildMenuItem("Power Watershed", "PowerWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Regions from Partial Borders", "RegionsFromPartial", 0, null, false),
+								menuBuilder.buildMenuItem("Region merging via boundary melting", "RegionMergingMelting", 0, null, false),
+									
 								menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
 								menuBuilder.buildMenuItem("Texture segmentation", "TextureSegmentation", 0, null,
 										false),
@@ -1640,6 +1642,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Nonlocal means filter", false);
 			menuBuilder.setMenuItemEnabled("Nonmaximum suppression", false);
 			menuBuilder.setMenuItemEnabled("Regions from partial borders", false);
+			menuBuilder.setMenuItemEnabled("Region merging via boundary melting", false);
 			menuBuilder.setMenuItemEnabled("Zero X non-maximum suppression", false);
 			menuBuilder.setMenuItemEnabled("Single channel", false);
 			menuBuilder.setMenuItemEnabled("Unsharp mask", false);
@@ -1837,5 +1840,6 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Hough transform", true);
 		menuBuilder.setMenuItemEnabled("Color edge", true);
 		menuBuilder.setMenuItemEnabled("DICOM database access", true);
+		menuBuilder.setMenuItemEnabled("Region merging via boundary melting", true);
 	}
 }
