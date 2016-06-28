@@ -280,7 +280,7 @@ public class JDialogRegionMergingViaBoundaryMelting extends JDialogScriptableBas
         paramPanel.add(labelthreshold1, gbc);
 
         textThreshold1 = new JTextField(10);
-        textThreshold1.setText("100.0");
+        textThreshold1.setText("10.0");
         textThreshold1.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textThreshold1, gbc);
