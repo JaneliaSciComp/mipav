@@ -929,7 +929,8 @@ public class ViewMenuBar {
 
 				// menuBuilder.buildMenuItem("Dicom order", "DicomOrder", 0,
 				// null, false),
-								menuBuilder.buildMenuItem("Fill image", null, 0, null, false),
+								menuBuilder.buildMenuItem("Cyclic permutation", "CyclicPermutation", 0, null, false),
+							    menuBuilder.buildMenuItem("Fill image", null, 0, null, false),
 								menuBuilder.makeMenu("Flip image", false, new JMenuItem[] {
 										menuBuilder.buildMenuItem("Horizontal", "ImageFlipY", 0, "fliphoriz.gif", true),
 										menuBuilder.buildMenuItem("Vertical", "ImageFlipX", 0, "flipvert.gif", true),
@@ -1737,6 +1738,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Quantify using mask", true);
 		menuBuilder.setMenuItemEnabled("Shading correction", true);
 		menuBuilder.setMenuItemEnabled("Skeletonize", true);
+		menuBuilder.setMenuItemEnabled("Cyclic permutation", true);
 
 		// menuBuilder.setMenuItemEnabled("AFNI - Shear", true);
 		menuBuilder.setMenuItemEnabled("Optimized automatic registration", true);
