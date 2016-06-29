@@ -185,7 +185,7 @@ public class JDialogRegionMergingViaBoundaryMelting extends JDialogScriptableBas
 
         try {
         	
-            resultImage     = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), name);
+            resultImage     = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), name);
             if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                 ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags(resultImage.getNDims() > 2,
                 		resultImage.getFileInfo()[0].getDataType());
