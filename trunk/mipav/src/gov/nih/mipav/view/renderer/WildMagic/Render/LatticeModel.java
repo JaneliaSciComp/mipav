@@ -44,7 +44,6 @@ import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Plane3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
-import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -5248,6 +5247,14 @@ public class LatticeModel {
 
 	}
 
+	/**
+	 * Used for segmenting the straightened worm image when the skin marker is present.
+	 * Initializes the segmentation from the lattice shape and attempts to segment the cross section of the worm
+	 * based on the skin surface marker. The cross section appears as a bright circular shape.
+	 * 
+	 * @param image
+	 * @param saveContourImage
+	 */
 	public void segmentSkin(final ModelImage image, boolean saveContourImage )
 	{
 		String imageName = image.getImageName();
@@ -5339,7 +5346,9 @@ public class LatticeModel {
 			outputContour.getCurves().add( contour );
 		}
 
+		// Optional VOI interpolation & smoothing:
 
+		// Save the contour vois to file.
 		voiDir = outputDirectory + File.separator + "contours" + File.separator;
 		saveAllVOIsTo(voiDir, resultImage);
 		resultImage.unregisterAllVOIs();
@@ -5348,237 +5357,13 @@ public class LatticeModel {
 		resultImage = null;
 	}
 
-	public void segmentSkinA(final ModelImage image, boolean saveContourImage )
-	{
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
 
-		String voiDir = outputDirectory + File.separator + "contours" + File.separator;
-		final File voiFileDir = new File(voiDir);
-
-		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-			final String[] list = voiFileDir.list();
-			for (int i = 0; i < list.length; i++) {
-				final File lrFile = new File(voiDir + list[i]);
-				lrFile.delete();
-			}
-		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		} else { // voiFileDir does not exist
-			voiFileDir.mkdir();
-		}
-
-		final int numPts = 360;
-
-		float resX = image.getResolutions(0)[0];
-		ModelImage resultImage;
-		int size = centerPositions.size();
-		for (int i = 0; i < size; i++)
-		{			
-			resultImage = readImage(imageName + "_straight_unmasked", i);
-			VOIContour contour = new VOIContour(true);
-
-			int dimX = (int) (resultImage.getExtents()[0]);
-			int dimY = (int) (resultImage.getExtents()[1]);
-			Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
-
-
-			float diameter = (float) (.75 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2*resX));
-
-			//			System.err.println( dimX + " " + dimY + " " + diameter );
-
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, diameter, contour, numPts);				
-
-			Vector3f position = null;
-			Vector3f position2 = null;
-			for (int j = 0; j < Math.min(numPts, contour.size()); j++) {
-				//				if ( (j == 0) || (j == (numPts/2)) )
-				//				{
-				//					position = contour.elementAt(j);
-				//				}
-				//				else
-				{
-					int maxDist = -1;
-					float maxValue = -Float.MAX_VALUE;
-					for ( int dist = (int)(diameter*0.75); dist <= diameter*1.15; dist++ )
-					{
-						position = Vector3f.sub(contour.elementAt(j), center );
-						position.normalize();
-						position.scale(dist);
-						position.add(center);
-						float value = resultImage.getFloat((int)position.X, (int)position.Y, 0);
-						if ( value > maxValue )
-						{
-							maxValue = value;
-							maxDist = dist;
-						}
-					}
-					for ( int dist = maxDist; dist <= diameter*1.15; dist++ )
-					{
-						position2 = Vector3f.sub(contour.elementAt(j), center );
-						position2.normalize();
-						position2.scale(dist);
-						position2.add(center);
-						float value = resultImage.getFloat((int)position2.X, (int)position2.Y, 0);
-						if ( value <= maxValue/2 )
-						{
-							position.copy(position2);
-							break;
-						}
-					}
-				}
-				if ( position != null )
-				{
-					contour.add(position);					
-				}
-				//				if ( maxDist != -1 )
-				//				{
-				//					final Vector3f pos1 = Vector3f.scale((float) (maxDist * adCos[j]), Vector3f.UNIT_X);
-				//					final Vector3f pos2 = Vector3f.scale((float) (maxDist * adSin[j]), Vector3f.UNIT_Y);
-				//					position = Vector3f.add(pos1, pos2);
-				//					position.add(center);
-				//					contour.add(position);
-				//				}
-			}
-			contour.convexHull();
-
-			if ( saveContourImage )
-			{
-				ModelImage contourImage = new ModelImage(ModelStorageBase.ARGB, resultImage.getExtents(), "temp" );
-				position = new Vector3f();
-				for ( int y = 0; y < dimY; y++ )
-				{
-					for ( int x = 0; x < dimX; x++ )
-					{
-						position.set(x,y,0);
-						if ( contour.contains(x,y) )
-						{
-							contourImage.setC(x,  y, 1, 255 );
-							contourImage.setC(x,  y, 2, 255 );
-						}
-						else {
-							if ( position.distance(center) < (diameter*.75) )
-							{
-								contourImage.setC(x,  y, 1, 255 );
-							}
-							if ( position.distance(center) < (diameter*1.25) )
-							{
-								contourImage.setC(x,  y, 3, 255 );
-							}
-						}
-						//								contourImage.setC(x,  y, 2, (int)(255* (resultImage.getFloat(x,y)/resultImage.getMax())) );
-					}
-				}
-
-				contourImage.setImageName(imageName + "_contour");
-				saveImage(outputDirectory, contourImage, i);
-
-				contourImage.disposeLocal(false);
-				contourImage = null;
-			}
-
-			VOI outputContour = new VOI( (short)i, "contour_" + i, VOI.POLYLINE, (float) Math.random());
-			outputContour.getCurves().add( contour );
-			resultImage.registerVOI( outputContour );
-
-			voiDir = outputDirectory + File.separator + "contours" + File.separator + imageName + "_contour_" + i + File.separator;
-			saveAllVOIsTo(voiDir, resultImage);
-			resultImage.unregisterAllVOIs();
-
-			resultImage.disposeLocal(false);
-			resultImage = null;
-		}
-
-	}
-
-
-	private void untwistA(final ModelImage image, final int[] resultExtents)
-	{
-		long time = System.currentTimeMillis();
-		int size = samplingPlanes.getCurves().size();
-
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-
-		float resX = image.getResolutions(0)[0];
-		float resY = image.getResolutions(0)[1];
-		int[] resultExtents2D = new int[]{(int) (resultExtents[0]/resX), (int) (resultExtents[1]/resY)};
-		ModelImage resultImage;
-		if ( image.isColorImage() )
-		{
-			resultImage = new ModelImage( ModelStorageBase.ARGB, resultExtents2D, imageName + "_straight_unmasked.xml");
-		}
-		else
-		{
-			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents2D, imageName + "_straight_unmasked.xml");
-		}	
-		resultImage.setResolutions(new float[] {1, 1});
-
-		//		ModelImage straightToTwisted = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents2D, imageName + "_straightToTwisted_unmasked.xml");		
-		//		straightToTwisted.setResolutions(new float[] {1, 1});
-
-		final Vector3f[] corners = new Vector3f[4];
-
-		Vector3f centerPt = new Vector3f( resultExtents2D[0]/2f, resultExtents2D[1]/2f, 0 );
-		Vector3f pt = new Vector3f();
-		for (int i = 0; i < size; i++)
-		{			
-			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
-			for (int j = 0; j < 4; j++) {
-				corners[j] = kBox.elementAt(j);
-				//				System.err.print( corners[j] + "      " );
-			}
-			//			System.err.println("");
-
-			writeDiagonal(image, resultImage, null, 0, 1, resultExtents2D, corners);
-			resultImage.setImageName(imageName + "_straight_unmasked");
-			saveImage(outputDirectory, resultImage, i);
-
-			float diamter = wormDiameters.elementAt(i)/resX;
-			for ( int y = 0; y < resultExtents2D[1]; y++ )
-			{
-				for ( int x = 0; x < resultExtents2D[0]; x++ )
-				{
-					pt.set(x, y, 0);
-					if ( centerPt.distance(pt) > diamter )
-					{
-						if ( image.isColorImage() )
-						{
-							resultImage.setC(x, y, 0, 0 );
-							resultImage.setC(x, y, 1, 0 );
-							resultImage.setC(x, y, 2, 0 );
-							resultImage.setC(x, y, 3, 0 );
-						}
-						else
-						{
-							resultImage.set(x, y, 0f);
-						}
-					}
-				}
-			}
-			resultImage.setImageName(imageName + "_straight_masked");
-			saveImage(outputDirectory, resultImage, i);
-
-			//			straightToTwisted.setImageName(imageName + "_straightToTwisted_unmasked");
-			//			saveImage(straightToTwisted, i);
-
-
-			//			System.err.println( (i+1) + " " + size );
-		}
-
-		resultImage.disposeLocal(false);
-		resultImage = null;
-		//		straightToTwisted.disposeLocal(false);
-		//		straightToTwisted = null;
-
-		System.err.println( "writeDiagonal " + AlgorithmBase.computeElapsedTime(time) );
-		time = System.currentTimeMillis();
-	}
-
-
+	/**
+	 * Straightenes the worm image based on the input lattice positions. The image is straightened without first building a worm model.
+	 * The image is segmented after clipping based on surface markers or the lattice shape.
+	 * @param image
+	 * @param resultExtents
+	 */
 	private void untwist(final ModelImage image, final int[] resultExtents)
 	{
 		long time = System.currentTimeMillis();
@@ -5599,18 +5384,13 @@ public class LatticeModel {
 		}	
 		resultImage.setResolutions(new float[] {1, 1, 1});
 
-		//		ModelImage straightToTwisted = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents2D, imageName + "_straightToTwisted_unmasked.xml");		
-		//		straightToTwisted.setResolutions(new float[] {1, 1});
-
 		final Vector3f[] corners = new Vector3f[4];
 		for (int i = 0; i < size; i++)
 		{			
 			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
 			for (int j = 0; j < 4; j++) {
 				corners[j] = kBox.elementAt(j);
-				//				System.err.print( corners[j] + "      " );
 			}
-			//			System.err.println("");
 
 			writeDiagonal(image, resultImage, null, 0, i, resultExtents, corners);
 		}
@@ -5619,8 +5399,6 @@ public class LatticeModel {
 
 		resultImage.disposeLocal(false);
 		resultImage = null;
-		//		straightToTwisted.disposeLocal(false);
-		//		straightToTwisted = null;
 
 		System.err.println( "writeDiagonal " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
@@ -6003,6 +5781,14 @@ public class LatticeModel {
 		//		writeMarkers(imageA_LF);
 	}
 
+	/**
+	 * Untwists the lattice and lattice interpolation curves, writing the
+	 * straightened data to spreadsheet format .csv files and the straightened lattice
+	 * to a VOI file.  The target slices for the lattice and curve data is generated
+	 * from the distance along the curve. No segmentation or interpolation is necessary:
+	 * @param image
+	 * @param resultExtents
+	 */
 	private void untwistLattice(final ModelImage image, final int[] resultExtents)
 	{
 		String imageName = image.getImageName();
@@ -6010,6 +5796,7 @@ public class LatticeModel {
 			imageName = imageName.replaceAll("_clone", "");
 		}
 
+		// Straightens the interpolation curves:
 		Vector3f[][] averageCenters = new Vector3f[centerPositions.size()][];
 		final Vector3f[] corners = new Vector3f[4];		
 		for (int i = 0; i < centerPositions.size(); i++)
@@ -6021,7 +5808,7 @@ public class LatticeModel {
 			averageCenters[i] = straightenFrame(image, i, resultExtents, corners, centerPositions.elementAt(i), leftPositions.elementAt(i), rightPositions.elementAt(i) );
 		}
 
-
+		// saves the data to the output directory:
 		String voiDir = outputDirectory;
 		File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
@@ -6037,7 +5824,7 @@ public class LatticeModel {
 			voiFileDir.mkdir();
 		}
 
-		File file = new File(voiDir + imageName + "_Frame_Straight.csv");
+				File file = new File(voiDir + imageName + "_Frame_Straight.csv");
 		if (file.exists()) {
 			file.delete();
 			file = new File(voiDir + imageName + "_Frame_Straight.csv");
@@ -6086,20 +5873,13 @@ public class LatticeModel {
 		
 		
 		
-		
-		
-		
-		
-
+		// Straightens and saves the lattice:
 		FileIO fileIO = new FileIO();
 
 		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
-		int dimZ = resultImage.getExtents().length > 2 ? resultImage.getExtents()[2] : 1;
 		int dimX = (int) (resultImage.getExtents()[0]);
 		int dimY = (int) (resultImage.getExtents()[1]);
 		Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
-
-
 
 		short id = (short) image.getVOIs().getUniqueID();
 		final VOI lattice = new VOI(id, "lattice", VOI.POLYLINE, (float) Math.random());
@@ -6117,7 +5897,7 @@ public class LatticeModel {
 			final Vector3f leftPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, left.elementAt(i) );
 			final Vector3f rightPt = writeDiagonal(image, latticeSlices[i], resultExtents, corners, right.elementAt(i) );
 
-			System.err.println( i + " " + latticeSlices[i] + "    " + leftPt + "    " + rightPt );
+//			System.err.println( i + " " + latticeSlices[i] + "    " + leftPt + "    " + rightPt );
 			
 			leftSide.add(leftPt);
 			rightSide.add(rightPt);
@@ -6170,6 +5950,16 @@ public class LatticeModel {
 	}
 
 
+	/**
+	 * Untwists the marker positions loaded from the .csv file.
+	 * This version does not use the skin marker to improve marker location determination.
+	 * The markers may fall into more than one group of output slices if the lattice is build
+	 * so that the folds of the worm overlap too much.  The target output slice for the markers is
+	 * determined by calculating the relative errors and selecting the target slice based on the smallest error.
+	 * 
+	 * @param image
+	 * @param resultExtents
+	 */
 	private void untwistMarkers(final ModelImage image, final int[] resultExtents)
 	{
 		String imageName = image.getImageName();
@@ -6188,8 +5978,6 @@ public class LatticeModel {
 		}
 		int size = samplingPlanes.getCurves().size();
 
-		int count = 0;
-//		int[] targetSlice = new int[markerCenters.size()];
 		HashMap<Integer,Vector<Vector2d>> targetSlice = new HashMap<Integer,Vector<Vector2d>>();
 		for ( int i = 0; i < markerCenters.size(); i++ )
 		{
@@ -6200,8 +5988,10 @@ public class LatticeModel {
 				float radius = leftPositions.elementAt(j).distance(rightPositions.elementAt(j))/2f;
 				//				System.err.println( markerNames.elementAt(i) + " " + distance + " " + radius + " " + (distance <= radius) );
 
+				// If the marker is within the radius of the current lattice position:
 				if ( (distance <= (1.05 * radius)) )
 				{					
+					// calculate the distance of the marker to the sample plane the markers with the smallest distance are used:
 					Plane3f plane = new Plane3f(normalVectors.elementAt(j), centerPositions.elementAt(j) );
 					DistanceVector3Plane3 dist = new DistanceVector3Plane3(markerCenters.elementAt(i), plane);
 
@@ -6224,241 +6014,11 @@ public class LatticeModel {
 			System.err.println( markerNames.elementAt(i) + " " + closeCount );
 		}
 
-		int[][] targetSliceLists = new int[markerCenters.size()][];
-		for ( int i = 0; i < markerCenters.size(); i++ )
-		{
-			Vector<Vector2d> list = targetSlice.get(i);
-			if ( list != null )
-			{
-				Vector2d[] listArray = new Vector2d[list.size()];
-				for ( int j = list.size() - 1; j >= 0; j-- )
-				{
-					listArray[j] = new Vector2d(list.elementAt(j));
-				}
-				Arrays.sort(listArray);
-				targetSliceLists[i] = new int[listArray.length];
-				for ( int j = 0; j < listArray.length; j++ )
-				{
-					targetSliceLists[i][j] = (int)listArray[j].Y;
-					System.err.println( markerNames.elementAt(i) + " " + listArray[j].X + " " + (int)listArray[j].Y );
-				}
-				System.err.println( "" );
-				System.err.println( "" );
-			}
-			else
-			{
-				targetSliceLists[i] = new int[]{-1};
-			}
-		}
-		
-		for ( int i = 0; i < targetSliceLists.length; i++ )
-		{
-			int minIndex = Integer.MAX_VALUE;
-			int maxIndex = -1;
-			for ( int j = 0; j < targetSliceLists[i].length; j++ )
-			{
-				if ( targetSliceLists[i][j] < minIndex )
-				{
-					minIndex = targetSliceLists[i][j];
-				}
-				if ( targetSliceLists[i][j] > maxIndex )
-				{
-					maxIndex = targetSliceLists[i][j];
-				}
-			}
-//			System.err.println( markerNames.elementAt(i) + " " + minIndex + " " + maxIndex + " " + ((maxIndex - minIndex) > targetSliceLists[i].length) );
-			
-			if ( (maxIndex - minIndex) > targetSliceLists[i].length )
-			{
-				int minIndexSave = minIndex;
-				System.err.println( markerNames.elementAt(i) + " " + minIndex + " " + maxIndex + " " + ((maxIndex - minIndex) > targetSliceLists[i].length) );
-				Arrays.sort(targetSliceLists[i]);
-				Vector<Integer> rangeCounts = new Vector<Integer>();
-				count = 1;
-				for ( int j = 1; j < targetSliceLists[i].length; j++ )
-				{
-					if ( targetSliceLists[i][j-1] == (targetSliceLists[i][j] - 1) )
-					{
-						count++;
-					}
-					else
-					{
-						rangeCounts.add(new Integer(count) );
-						count = 1;
-					}
-				}
-				if ( count != 1 )
-				{
-					rangeCounts.add(new Integer(count) );
-				}
-				
-				for ( int j = 0; j < rangeCounts.size(); j++ )
-				{
-					System.err.println( "    " + minIndex + " " + rangeCounts.elementAt(j) );
-					minIndex = targetSliceLists[i][rangeCounts.elementAt(j)];
-				}
-				
-
-				Vector<Vector2d> list = targetSlice.get(i);
-				if ( list != null )
-				{
-					minIndex = minIndexSave;
-					float minError = Float.MAX_VALUE;
-					int minErrorIndex = -1;
-					minIndexSave = -1;
-					for ( int j = 0; j < rangeCounts.size(); j++ )
-					{
-						float error = 0;
-						int errorCount = 0;
-						for ( int k = 0; k < list.size(); k++ )
-						{
-							if ( (list.elementAt(k).Y >= minIndex) && (list.elementAt(k).Y <= (minIndex + rangeCounts.elementAt(j)) ) )
-							{
-								error += list.elementAt(k).X;
-								errorCount++;
-							}
-						}
-						error /= errorCount;
-						if ( error < minError )
-						{
-							minError = error;
-							minErrorIndex = j;
-							minIndexSave = minIndex;
-						}
-						else if ( error == minError )
-						{
-							if ( errorCount > rangeCounts.elementAt(minErrorIndex) )
-							{
-								minError = error;
-								minErrorIndex = j;
-								minIndexSave = minIndex;								
-							}
-						}
-						System.err.println( "    " + minIndex + " " + (minIndex + rangeCounts.elementAt(j)) + " " + error + " " + errorCount );
-						minIndex = targetSliceLists[i][rangeCounts.elementAt(j)];
-					}
-					minIndex = minIndexSave;
-					System.err.println( "    " + "Minimum error = " + minError + "  range = " + minIndex + "  to " + (minIndex + rangeCounts.elementAt(minErrorIndex) ) );
-					
-
-					count = 0;
-					Vector2d[] listArray = new Vector2d[rangeCounts.elementAt(minErrorIndex)];
-					System.err.println( "    " + listArray.length );
-					for ( int j = 0; j < list.size(); j++ )
-					{
-						if ( (list.elementAt(j).Y >= minIndex) && (list.elementAt(j).Y <= (minIndex + rangeCounts.elementAt(minErrorIndex)) ) )
-						{
-							listArray[count++] = new Vector2d(list.elementAt(j));
-						}
-					}
-					System.err.println( "    " + listArray.length + " " + count );
-					Arrays.sort(listArray);
-					targetSliceLists[i] = new int[listArray.length];
-					for ( int j = 0; j < listArray.length; j++ )
-					{
-						targetSliceLists[i][j] = (int)listArray[j].Y;
-						System.err.println( "    " + markerNames.elementAt(i) + " " + listArray[j].X + " " + (int)listArray[j].Y );
-					}
-					System.err.println( "" );
-					System.err.println( "" );
-					
-				}
-			}
-		}
-
-		Vector3f[] averageCenters = new Vector3f[markerCenters.size()];
-		final Vector3f[] corners = new Vector3f[4];		
-
-
-		VOI annotationVOI = new VOI( (short)0, "straightened annotations", VOI.ANNOTATION, 0 );
-		count = 0;
-		for (int i = 0; i < markerCenters.size(); i++)
-		{			
-			int target = targetSliceLists[i][0];
-			if ( target != -1 )
-			{
-				VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(target);
-				for (int j = 0; j < 4; j++) {
-					corners[j] = kBox.elementAt(j);
-				}
-				averageCenters[i] = writeDiagonal(image, target, resultExtents, corners, markerCenters.elementAt(i) );
-				if ( averageCenters[i].X != Float.MAX_VALUE )
-				{
-					count++;
-					VOIText text = new VOIText();
-					text.setText(markerNames.elementAt(i));
-					text.add( new Vector3f(averageCenters[i]) );
-					text.add( new Vector3f(averageCenters[i]) );
-					annotationVOI.getCurves().add(text);
-				}
-			}
-			//			System.err.println( markerNames.elementAt(i) + " " + target + " " + markerCenters.size() );
-		}
+		// Save the markers as a VOI file:
 		FileIO fileIO = new FileIO();
-		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
-				
-		resultImage.unregisterAllVOIs();
-		resultImage.registerVOI(annotationVOI);
-		String voiDir = outputDirectory + File.separator + "straightened_annotations" + File.separator;
-		saveAllVOIsTo(voiDir, resultImage);
-		resultImage.unregisterAllVOIs();
+		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );				
 		
-		resultImage.disposeLocal(false);
-		resultImage = null;
-
-		System.err.println( "Found " + count + " out of " + markerCenters.size() );
-		
-		
-		transformedOrigin = new Vector3f( resultExtents[0]/2, resultExtents[1]/2, 0 );
-
-		voiDir = outputDirectory;
-		File voiFileDir = new File(voiDir);
-		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		} else { // voiFileDir does not exist
-			voiFileDir.mkdir();
-		}
-		voiDir = outputDirectory + File.separator + "statistics" + File.separator;
-
-		voiFileDir = new File(voiDir);
-		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
-		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir does not exist
-			voiFileDir.mkdir();
-		}
-
-		File file = new File(voiDir + imageName + "MarkersStraight.csv");
-		if (file.exists()) {
-			file.delete();
-			file = new File(voiDir + imageName + "MarkersStraight.csv");
-		}
-
-		try {
-
-			final FileWriter fw = new FileWriter(file);
-			final BufferedWriter bw = new BufferedWriter(fw);
-
-			bw.write("name" + "," + "x_voxels" + "," + "y_voxels" + "," + "z_voxels" + "," + "x_um" + "," + "y_um" + "," + "z_um" + "\n");
-
-			for ( int i = 0; i < markerCenters.size(); i++ )
-			{
-				if ( averageCenters[i] != null )
-				{
-					Vector3f position = averageCenters[i];
-					bw.write(markerNames.elementAt(i) + "," + (position.X - transformedOrigin.X) + "," + (position.Y - transformedOrigin.Y) + ","
-							+ (position.Z - transformedOrigin.Z) + "," +
-
-                        VOILatticeManagerInterface.VoxelSize * (position.X - transformedOrigin.X) + "," + VOILatticeManagerInterface.VoxelSize
-                        * (position.Y - transformedOrigin.Y) + "," + VOILatticeManagerInterface.VoxelSize * (position.Z - transformedOrigin.Z) + "\n");
-				}
-			}
-
-			bw.newLine();
-			bw.close();
-		} catch (final Exception e) {
-			System.err.println("CAUGHT EXCEPTION WITHIN saveNucleiInfo");
-			e.printStackTrace();
-		}
-
+		untwistMarkersTarget( image, resultImage, resultExtents, targetSlice );
 
 		System.err.println( "untwist markers " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
@@ -6466,8 +6026,19 @@ public class LatticeModel {
 
 
 
+	/**
+	 * Untwists the marker positions loaded from the .csv file.
+	 * This version uses the skin marker contours to improve marker location determination.
+	 * The markers may fall into more than one group of output slices if the lattice is build
+	 * so that the folds of the worm overlap too much.  The target output slice for the markers is
+	 * determined by calculating the relative errors and selecting the target slice based on the smallest error.
+	 * @param image
+	 * @param resultExtents
+	 * @param useSkinContour
+	 */
 	private void untwistMarkers(final ModelImage image, final int[] resultExtents, boolean useSkinContour )
 	{
+		// If not using the skin marker contours:
 		if ( !useSkinContour )
 		{
 			untwistMarkers(image, resultExtents);
@@ -6490,7 +6061,7 @@ public class LatticeModel {
 		}
 		int size = samplingPlanes.getCurves().size();
 		
-
+		// Load skin marker contours:
 		FileIO fileIO = new FileIO();
 		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
 				
@@ -6500,6 +6071,7 @@ public class LatticeModel {
 		loadAllVOIsFrom(resultImage, voiDir, true, contourVector, false);
 		if ( contourVector.size() == 0 )
 		{
+			// Fall back to default untwisting version:
 			System.err.println( "No contours found for each slice" );
 			untwistMarkers(image, resultExtents);
 			resultImage.disposeLocal(false);
@@ -6517,6 +6089,7 @@ public class LatticeModel {
 		System.err.println( "num contours added " + contourCount + " out of " + size );
 		if ( contourCount != size )
 		{
+			// Fall back to default untwisting version:
 			System.err.println( "No contours found for each slice" );
 			untwistMarkers(image, resultExtents);
 			resultImage.disposeLocal(false);
@@ -6524,29 +6097,33 @@ public class LatticeModel {
 		}
 		
 
-		int count = 0;
 		final Vector3f[] corners = new Vector3f[4];		
 		HashMap<Integer,Vector<Vector2d>> targetSlice = new HashMap<Integer,Vector<Vector2d>>();
 		for ( int i = 0; i < markerCenters.size(); i++ )
 		{
 			int closeCount = 0;
 			for ( int j = 0; j < size; j++ )
-			{
+			{			
 				float distance = centerPositions.elementAt(j).distance( markerCenters.elementAt(i) );
 				float radius = leftPositions.elementAt(j).distance(rightPositions.elementAt(j))/2f;
+				//				System.err.println( markerNames.elementAt(i) + " " + distance + " " + radius + " " + (distance <= radius) );
 
+				// If the marker is within the radius of the current lattice position:
 				if ( (distance <= (1.05 * radius)) )
-				{					
+				{
+					// Calculate the straightened marker location:
 					VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(j);
 					for (int k = 0; k < 4; k++) {
 						corners[k] = kBox.elementAt(k);
 					}
 					Vector3f markerPt = writeDiagonal(image, j, resultExtents, corners, markerCenters.elementAt(i) );
-					
+
 					if ( markerPt.X != Float.MAX_VALUE )
 					{
+						// If it is inside the skin marker contour:
 						if ( contours[j].contains( markerPt.X, markerPt.Y ) )
 						{
+							// Calculate the distance of the marker to the sampling plane:
 							Plane3f plane = new Plane3f(normalVectors.elementAt(j), centerPositions.elementAt(j) );
 							DistanceVector3Plane3 dist = new DistanceVector3Plane3(markerCenters.elementAt(i), plane);
 
@@ -6571,7 +6148,21 @@ public class LatticeModel {
 			}
 			System.err.println( markerNames.elementAt(i) + " " + closeCount );
 		}
+		
+		untwistMarkersTarget( image, resultImage, resultExtents, targetSlice );
 
+		System.err.println( "untwist markers (skin segmentation) " + AlgorithmBase.computeElapsedTime(time) );
+		time = System.currentTimeMillis();
+	}
+	
+	private void untwistMarkersTarget( ModelImage image, ModelImage resultImage, int[] resultExtents, HashMap<Integer,Vector<Vector2d>> targetSlice )
+	{
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+
+		// Sort the markers by distance to the target planes:
 		int[][] targetSliceLists = new int[markerCenters.size()][];
 		for ( int i = 0; i < markerCenters.size(); i++ )
 		{
@@ -6599,6 +6190,7 @@ public class LatticeModel {
 			}
 		}
 		
+		int count = 0;
 		for ( int i = 0; i < targetSliceLists.length; i++ )
 		{
 			int minIndex = Integer.MAX_VALUE;
@@ -6615,16 +6207,30 @@ public class LatticeModel {
 				}
 			}
 //			System.err.println( markerNames.elementAt(i) + " " + minIndex + " " + maxIndex + " " + ((maxIndex - minIndex) > targetSliceLists[i].length) );
-			
+
+			// Some markers are near overlapping folds of the worm, in which case they fall into separate sections of the worm:
+			// Separate the sections and determine the section with the smallest overall error
 			if ( (maxIndex - minIndex) > targetSliceLists[i].length )
 			{
-				int minIndexSave = minIndex;
+				// Find the separate sections based on target slice index:
 				System.err.println( markerNames.elementAt(i) + " " + minIndex + " " + maxIndex + " " + ((maxIndex - minIndex) > targetSliceLists[i].length) );
 				Arrays.sort(targetSliceLists[i]);
 				Vector<Integer> rangeCounts = new Vector<Integer>();
-				count = 1;
-				for ( int j = 1; j < targetSliceLists[i].length; j++ )
+				Vector<Integer> minIndexValues = new Vector<Integer>();
+				count = 0;
+				minIndex = Integer.MAX_VALUE;
+				for ( int j = 0; j < targetSliceLists[i].length; j++ )
 				{
+					System.err.println( j + " " + targetSliceLists[i][j] );
+					if ( minIndex > targetSliceLists[i][j] )
+					{
+						minIndex = targetSliceLists[i][j];
+					}
+					if ( j == 0 )
+					{
+						count++;
+						continue;
+					}
 					if ( targetSliceLists[i][j-1] == (targetSliceLists[i][j] - 1) )
 					{
 						count++;
@@ -6632,35 +6238,34 @@ public class LatticeModel {
 					else
 					{
 						rangeCounts.add(new Integer(count) );
+						minIndexValues.add(minIndex);
+						minIndex = targetSliceLists[i][j];
+						System.err.println( " range " + minIndexValues.lastElement() + " to " + (minIndexValues.lastElement() + rangeCounts.lastElement())  + " " + count );
 						count = 1;
 					}
 				}
-				if ( count != 1 )
-				{
-					rangeCounts.add(new Integer(count) );
-				}
-				
+				// Add last range:
+				rangeCounts.add(new Integer(count) );
+				minIndexValues.add(minIndex);
+
 				for ( int j = 0; j < rangeCounts.size(); j++ )
 				{
-					System.err.println( "    " + minIndex + " " + rangeCounts.elementAt(j) );
-					minIndex = targetSliceLists[i][rangeCounts.elementAt(j)];
+					System.err.println( "    " + minIndexValues.elementAt(j) + " " + rangeCounts.elementAt(j) );
 				}
 				
-
+				// Calculate the average error for each segment of the worm the marker falls into:
 				Vector<Vector2d> list = targetSlice.get(i);
 				if ( list != null )
 				{
-					minIndex = minIndexSave;
 					float minError = Float.MAX_VALUE;
 					int minErrorIndex = -1;
-					minIndexSave = -1;
 					for ( int j = 0; j < rangeCounts.size(); j++ )
 					{
 						float error = 0;
 						int errorCount = 0;
 						for ( int k = 0; k < list.size(); k++ )
 						{
-							if ( (list.elementAt(k).Y >= minIndex) && (list.elementAt(k).Y <= (minIndex + rangeCounts.elementAt(j)) ) )
+							if ( (list.elementAt(k).Y >= minIndexValues.elementAt(j)) && (list.elementAt(k).Y <= (minIndexValues.elementAt(j) + rangeCounts.elementAt(j)) ) )
 							{
 								error += list.elementAt(k).X;
 								errorCount++;
@@ -6671,22 +6276,20 @@ public class LatticeModel {
 						{
 							minError = error;
 							minErrorIndex = j;
-							minIndexSave = minIndex;
 						}
 						else if ( error == minError )
 						{
 							if ( errorCount > rangeCounts.elementAt(minErrorIndex) )
 							{
 								minError = error;
-								minErrorIndex = j;
-								minIndexSave = minIndex;								
+								minErrorIndex = j;							
 							}
 						}
-						System.err.println( "    " + minIndex + " " + (minIndex + rangeCounts.elementAt(j)) + " " + error + " " + errorCount );
-						minIndex = targetSliceLists[i][rangeCounts.elementAt(j)];
+						System.err.println( "    " + minIndexValues.elementAt(j) + " " + (minIndexValues.elementAt(j) + rangeCounts.elementAt(j)) + " " + error + " " + errorCount+ " " + rangeCounts.elementAt(j) );
 					}
-					minIndex = minIndexSave;
-					System.err.println( "    " + "Minimum error = " + minError + "  range = " + minIndex + "  to " + (minIndex + rangeCounts.elementAt(minErrorIndex) ) );
+					
+					// Take the segment with the smallest overall error:
+					System.err.println( "    " + "Minimum error = " + minError + "  range = " + minIndexValues.elementAt(minErrorIndex) + "  to " + (minIndexValues.elementAt(minErrorIndex) + rangeCounts.elementAt(minErrorIndex) ) );
 					
 
 					count = 0;
@@ -6694,7 +6297,7 @@ public class LatticeModel {
 					System.err.println( "    " + listArray.length );
 					for ( int j = 0; j < list.size(); j++ )
 					{
-						if ( (list.elementAt(j).Y >= minIndex) && (list.elementAt(j).Y <= (minIndex + rangeCounts.elementAt(minErrorIndex)) ) )
+						if ( (list.elementAt(j).Y >= minIndexValues.elementAt(minErrorIndex)) && (list.elementAt(j).Y <= (minIndexValues.elementAt(minErrorIndex) + rangeCounts.elementAt(minErrorIndex)) ) )
 						{
 							listArray[count++] = new Vector2d(list.elementAt(j));
 						}
@@ -6714,7 +6317,8 @@ public class LatticeModel {
 			}
 		}
 
-
+		// Straighten the markers based on the target slice with the smallest error:
+		final Vector3f[] corners = new Vector3f[4];		
 		VOI annotationVOI = new VOI( (short)0, "straightened annotations", VOI.ANNOTATION, 0 );
 		Vector3f[] averageCenters = new Vector3f[markerCenters.size()];
 		count = 0;
@@ -6740,15 +6344,17 @@ public class LatticeModel {
 			}
 			//			System.err.println( markerNames.elementAt(i) + " " + target + " " + markerCenters.size() );
 		}
+		
+		// Save the markers as a VOI file:
 		resultImage.unregisterAllVOIs();
 		resultImage.registerVOI(annotationVOI);
-		voiDir = outputDirectory + File.separator + "straightened_annotations" + File.separator;
+		String voiDir = outputDirectory + File.separator + "straightened_annotations" + File.separator;
 		saveAllVOIsTo(voiDir, resultImage);
 		resultImage.unregisterAllVOIs();
 
-		System.err.println( "Untwist Markers (skin segmentation) found " + count + " out of " + markerCenters.size() );
+		System.err.println( "Untwist Markers found " + count + " out of " + markerCenters.size() );
 		
-		
+		// Save the markers as spreadsheet .csv format:
 		transformedOrigin = new Vector3f( resultExtents[0]/2, resultExtents[1]/2, 0 );
 
 		voiDir = outputDirectory;
@@ -6801,9 +6407,6 @@ public class LatticeModel {
 
 		resultImage.disposeLocal(false);
 		resultImage = null;
-
-		System.err.println( "untwist markers " + AlgorithmBase.computeElapsedTime(time) );
-		time = System.currentTimeMillis();
 	}
 
 
