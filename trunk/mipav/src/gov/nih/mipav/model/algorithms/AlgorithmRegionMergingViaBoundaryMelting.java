@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
@@ -63,13 +65,15 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
     	boolean growRegion;
     	int perimiters[];
     	int currentNum;
-    	int weak[][];
-    	int common[][];
     	int neighborNum;
     	int i;
     	int j;
     	boolean boundaryRemoved;
     	int numberRemoved = 0;
+    	ArrayList<mergeItem> mergeList[];
+    	int mergeNum;
+    	int removeNum;
+    	boolean foundRemove;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -166,6 +170,13 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 		            	growRegion = false;
 		            	for (y = 0; y < yDim; y++) {
 		            		for (x = 0; x < xDim; x++) {
+		            			if (x > 0) {
+		            				if ((regions[x + y*xDim] != -1) && (regions[x-1 + y*xDim] == -1) &&
+			            		    		 (imgBuffer[x + y*xDim] == imgBuffer[x-1 + y*xDim])) {
+			            		    		regions[x-1 + y*xDim] = regions[x + y*xDim];
+			            		    		growRegion = true;
+			            		    	}	
+		            			} // if (x > 0)
 		            		    if (x < xDim-1) {
 		            		    	if ((regions[x + y*xDim] != -1) && (regions[x+1 + y*xDim] == -1) &&
 		            		    		 (imgBuffer[x + y*xDim] == imgBuffer[x+1 + y*xDim])) {
@@ -173,6 +184,13 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 		            		    		growRegion = true;
 		            		    	}
 		            		    } // if (x < xDim - 1)
+		            		    if (y > 0) {
+		            		    	if ((regions[x + y*xDim] != -1) && (regions[x + (y-1)*xDim] == -1) &&
+		            		    			(imgBuffer[x + y*xDim] == imgBuffer[x + (y-1)*xDim])) {
+		            		    		regions[x + (y-1)*xDim] = regions[x + y*xDim];
+		            		    		growRegion = true;
+		            		    	}	
+		            		    } // if (y > 0)
 		            		    if (y < yDim-1) {
 		            		    	if ((regions[x + y*xDim] != -1) && (regions[x + (y+1)*xDim] == -1) &&
 		            		    			(imgBuffer[x + y*xDim] == imgBuffer[x + (y+1)*xDim])) {
@@ -191,7 +209,10 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
             while (boundaryRemoved) {
             	boundaryRemoved = false;
 	            perimiters = new int[regionNum];
-	            weak = new int[regionNum][regionNum];
+	            mergeList = new ArrayList [regionNum];
+	            for (i = 0; i < regionNum; i++) {
+	            	mergeList[i] = new ArrayList<mergeItem>();
+	            }
 	            for (y = 0; y < yDim; y++) {
 	            	for (x = 0; x < xDim; x++) {
 	            	    currentNum = regions[x + y * xDim];
@@ -214,7 +235,24 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            	    	perimiters[currentNum]++;
 	            	    	if (wallX[x + y*xDim] == 0) {
 	            	    	    neighborNum = regions[x+1 + y*xDim];
-	            	    	    weak[Math.min(currentNum,neighborNum)][Math.max(currentNum,neighborNum)]++;
+	            	    	    mergeNum = Math.min(currentNum, neighborNum);
+	            	    	    removeNum = Math.max(currentNum, neighborNum);
+	            	    	    foundRemove = false;
+	            	    	    for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
+	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
+	            	    	    		mergeList[mergeNum].get(i).incrementWeak();
+	            	    	    		foundRemove = true;
+	            	    	    	}
+	            	    	    }
+	            	    	    if (!foundRemove) {
+	            	    	    	mergeList[mergeNum].add(new mergeItem(removeNum));
+	            	    	    	 for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
+	 	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
+	 	            	    	    		mergeList[mergeNum].get(i).incrementWeak();
+	 	            	    	    		foundRemove = true;
+	 	            	    	    	}
+	            	    	    	 }
+	            	    	    }
 	            	    	}
 	            	    }
 	            	    if ((y > 0) && (regions[x + (y-1)*xDim] != currentNum)) {
@@ -223,53 +261,57 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            	    if ((y < yDim-1) && (regions[x + (y+1)*xDim] != currentNum)) {
 	            	    	perimiters[currentNum]++;
 	            	    	if (wallY[x + y*xDim] == 0) {
-	            	    	    neighborNum = regions[x + (y+1)*xDim];
-	            	    	    weak[Math.min(currentNum,neighborNum)][Math.max(currentNum,neighborNum)]++;
+	            	    		neighborNum = regions[x + (y+1)*xDim];
+	            	    	    mergeNum = Math.min(currentNum, neighborNum);
+	            	    	    removeNum = Math.max(currentNum, neighborNum);
+	            	    	    foundRemove = false;
+	            	    	    for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
+	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
+	            	    	    		mergeList[mergeNum].get(i).incrementWeak();
+	            	    	    		foundRemove = true;
+	            	    	    	}
+	            	    	    }
+	            	    	    if (!foundRemove) {
+	            	    	    	mergeList[mergeNum].add(new mergeItem(removeNum));
+	            	    	    	for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
+	 	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
+	 	            	    	    		mergeList[mergeNum].get(i).incrementWeak();
+	 	            	    	    		foundRemove = true;
+	 	            	    	    	}
+	            	    	    	 }
+	            	    	    }
 	            	    	}
 	            	    }
 	            	} // for (x = 0; x < xDim; x++)
 	            } // for (y = 0; y < yDim; y++)
 	            
 	            for (i = 0; i < regionNum-1 && (!boundaryRemoved); i++) {
-	            	for (j = i+1; j < regionNum && (!boundaryRemoved); j++) {
-	            		if (weak[i][j] > 0) {
-	            			if ((weak[i][j]/Math.min(perimiters[i], perimiters[j])) >= t2) {
+	            	for (j = 0; j < mergeList[i].size() && (!boundaryRemoved); j++) {
+	            		if (mergeList[i].get(j).getWeak() > 0) {
+	            			if (((double)mergeList[i].get(j).getWeak()/
+	            					(double)Math.min(perimiters[i], perimiters[mergeList[i].get(j).getRemove()])) >= t2) {
 	            				boundaryRemoved = true;
-	            				numberRemoved = j;
+	            				numberRemoved = mergeList[i].get(j).getRemove();
 	            			    for (y = 0; y < yDim; y++) {
 	            			    	for (x = 0; x < xDim; x++) {
+	            			    		currentNum = regions[x + y*xDim];
 	            			    		if (x < xDim-1) {
-	            			    			if (wallX[x+y*xDim] == 1) {
-	            			    				currentNum = regions[x + y*xDim];
-	            			    				neighborNum = regions[x+1 + y*xDim];
-	            			    				if (((currentNum == i) && (neighborNum == j)) ||
-	            			    				    ((currentNum == j) && (neighborNum == i))) {
-	            			    					wallX[x+y*xDim] = 0;
-	            			    					if (regions[x + y*xDim] == j) {
-	            			    						regions[x + y*xDim] = i;
-	            			    					}
-	            			    					else {
-	            			    						regions[(x+1) + y*xDim] = i;
-	            			    					}
-	            			    				}
-	            			    			} // if (wallX[x+y*xDim] == 1)
+            			    				neighborNum = regions[x+1 + y*xDim];
+            			    				if (((currentNum == i) && (neighborNum == numberRemoved)) ||
+            			    				    ((currentNum == numberRemoved) && (neighborNum == i))) {
+            			    					wallX[x+y*xDim] = 0;
+            			    				}
 	            			    		} // if (x < xDim-1)
 	            			    		if (y < yDim-1) {
-	            			    			if (wallY[x+y*xDim] == 1) {
-	            			    				currentNum = regions[x + y*xDim];
-	            			    				neighborNum = regions[x+1 + y*xDim];
-	            			    				if (((currentNum == i) && (neighborNum == j)) ||
-	            			    				    ((currentNum == j) && (neighborNum == i))) {
-	            			    					wallY[x+y*xDim] = 0;
-	            			    					if (regions[x + y*xDim] == j) {
-	            			    						regions[x + y*xDim] = i;
-	            			    					}
-	            			    					else {
-	            			    						regions[x + (y+1)*xDim] = i;
-	            			    					}
-	            			    				}
-	            			    			} // if (wallY[x+y*xDim] == 1)
+            			    				neighborNum = regions[x + (y+1)*xDim];
+            			    				if (((currentNum == i) && (neighborNum == numberRemoved)) ||
+            			    				    ((currentNum == numberRemoved) && (neighborNum == i))) {
+            			    					wallY[x+y*xDim] = 0;
+            			    				}
 	            			    		} // if (y < yDim-1)
+	            			    		if (currentNum == numberRemoved) {
+	            			    			regions[x + y * xDim] = i;
+	            			    		}
 	            			    	}
 	            			    }
 	            			}
@@ -278,7 +320,7 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            }
 	            
 	            if (boundaryRemoved) {
-	            	regionNum--;
+	            	
 	            	for (y = 0; y < yDim; y++) {
 	            		for (x = 0; x < xDim; x++) {
 	            			if (regions[x + y*xDim] >= numberRemoved) {
@@ -286,6 +328,10 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            			}
 	            		}
 	            	}
+	            	for (i = 0; i < mergeList.length; i++) {
+	            		mergeList[i].clear();
+	            	}
+	                regionNum--;
 	            }
             } // while (boundaryRemoved)
             
@@ -294,69 +340,97 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
             boundaryRemoved = true;
             while (boundaryRemoved) {
             	boundaryRemoved = false;
-	            common = new int[regionNum][regionNum];
-	            weak = new int[regionNum][regionNum];
+            	 mergeList = new ArrayList [regionNum];
+ 	            for (i = 0; i < regionNum; i++) {
+ 	            	mergeList[i] = new ArrayList<mergeItem>();
+ 	            }
 	            for (y = 0; y < yDim; y++) {
 	            	for (x = 0; x < xDim; x++) {
 	            	    currentNum = regions[x + y * xDim];
 	            	    if ((x < xDim-1) && (regions[x+1 + y * xDim] != currentNum)) {
 	            	    	neighborNum = regions[x+1 + y*xDim];
-	            	    	common[Math.min(currentNum,neighborNum)][Math.max(currentNum,neighborNum)]++;
-	            	    	if (wallX[x + y*xDim] == 0) {
-	            	    	    weak[Math.min(currentNum,neighborNum)][Math.max(currentNum,neighborNum)]++;
-	            	    	}
+	            	    	mergeNum = Math.min(currentNum, neighborNum);
+            	    	    removeNum = Math.max(currentNum, neighborNum);
+            	    	    foundRemove = false;
+            	    	    for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
+            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
+            	    	    		mergeList[mergeNum].get(i).incrementCommon();
+            	    	    		if (wallX[x + y*xDim] == 0) {
+            	    	    			mergeList[mergeNum].get(i).incrementWeak();
+            	    	    		}
+            	    	    		foundRemove = true;
+            	    	    	}
+            	    	    }
+            	    	    if (!foundRemove) {
+            	    	    	mergeList[mergeNum].add(new mergeItem(removeNum));
+            	    	    	 for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
+ 	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
+ 	            	    	    		mergeList[mergeNum].get(i).incrementCommon();
+ 	            	    	    		if (wallX[x + y*xDim] == 0) {
+ 	            	    	    			mergeList[mergeNum].get(i).incrementWeak();
+ 	            	    	    		}
+ 	            	    	    		foundRemove = true;
+ 	            	    	    	}
+            	    	    	 }
+            	    	    }
 	            	    }
 	            	    
 	            	    if ((y < yDim-1) && (regions[x + (y+1)*xDim] != currentNum)) {
 	            	    	neighborNum = regions[x + (y+1)*xDim];
-	            	    	common[Math.min(currentNum,neighborNum)][Math.max(currentNum,neighborNum)]++;
-	            	    	if (wallY[x + y*xDim] == 0) {
-	            	    	    weak[Math.min(currentNum,neighborNum)][Math.max(currentNum,neighborNum)]++;
-	            	    	}
+	            	    	mergeNum = Math.min(currentNum, neighborNum);
+            	    	    removeNum = Math.max(currentNum, neighborNum);
+            	    	    foundRemove = false;
+            	    	    for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
+            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
+            	    	    		mergeList[mergeNum].get(i).incrementCommon();
+            	    	    		if (wallY[x + y*xDim] == 0) {
+            	    	    			mergeList[mergeNum].get(i).incrementWeak();
+            	    	    		}
+            	    	    		foundRemove = true;
+            	    	    	}
+            	    	    }
+            	    	    if (!foundRemove) {
+            	    	    	mergeList[mergeNum].add(new mergeItem(removeNum));
+            	    	    	 for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
+ 	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
+ 	            	    	    		mergeList[mergeNum].get(i).incrementCommon();
+ 	            	    	    		if (wallY[x + y*xDim] == 0) {
+ 	            	    	    			mergeList[mergeNum].get(i).incrementWeak();
+ 	            	    	    		}
+ 	            	    	    		foundRemove = true;
+ 	            	    	    	}
+            	    	    	 }
+            	    	    }
 	            	    }
 	            	} // for (x = 0; x < xDim; x++)
 	            } // for (y = 0; y < yDim; y++)
 	            
 	            for (i = 0; i < regionNum-1 && (!boundaryRemoved); i++) {
-	            	for (j = i+1; j < regionNum && (!boundaryRemoved); j++) {
-	            		if (weak[i][j] > 0) {
-	            			if ((weak[i][j]/common[i][j]) >= t3) {
+	            	for (j = 0; j < mergeList[i].size() && (!boundaryRemoved); j++) {
+	            		if (mergeList[i].get(j).getWeak() > 0) {
+	            			if (((double)mergeList[i].get(j).getWeak()/(double)mergeList[i].get(j).getCommon()) >= t3) {
 	            				boundaryRemoved = true;
-	            				numberRemoved = j;
+	            				numberRemoved =  mergeList[i].get(j).getRemove();
 	            			    for (y = 0; y < yDim; y++) {
 	            			    	for (x = 0; x < xDim; x++) {
+	            			    		currentNum = regions[x + y*xDim];
 	            			    		if (x < xDim-1) {
-	            			    			if (wallX[x+y*xDim] == 1) {
-	            			    				currentNum = regions[x + y*xDim];
-	            			    				neighborNum = regions[x+1 + y*xDim];
-	            			    				if (((currentNum == i) && (neighborNum == j)) ||
-	            			    				    ((currentNum == j) && (neighborNum == i))) {
-	            			    					wallX[x+y*xDim] = 0;
-	            			    					if (regions[x + y*xDim] == j) {
-	            			    						regions[x + y*xDim] = i;
-	            			    					}
-	            			    					else {
-	            			    						regions[(x+1) + y*xDim] = i;
-	            			    					}
-	            			    				}
-	            			    			} // if (wallX[x+y*xDim] == 1)
+            			    				neighborNum = regions[x+1 + y*xDim];
+            			    				if (((currentNum == i) && (neighborNum == numberRemoved)) ||
+            			    				    ((currentNum == numberRemoved) && (neighborNum == i))) {
+            			    					wallX[x+y*xDim] = 0;
+            			    				}
 	            			    		} // if (x < xDim-1)
 	            			    		if (y < yDim-1) {
-	            			    			if (wallY[x+y*xDim] == 1) {
-	            			    				currentNum = regions[x + y*xDim];
-	            			    				neighborNum = regions[x+1 + y*xDim];
-	            			    				if (((currentNum == i) && (neighborNum == j)) ||
-	            			    				    ((currentNum == j) && (neighborNum == i))) {
+	            			    				neighborNum = regions[x + (y+1)*xDim];
+	            			    				if (((currentNum == i) && (neighborNum == numberRemoved)) ||
+	            			    				    ((currentNum == numberRemoved) && (neighborNum == i))) {
 	            			    					wallY[x+y*xDim] = 0;
-	            			    					if (regions[x + y*xDim] == j) {
-	            			    						regions[x + y*xDim] = i;
-	            			    					}
-	            			    					else {
-	            			    						regions[x + (y+1)*xDim] = i;
-	            			    					}
 	            			    				}
-	            			    			} // if (wallY[x+y*xDim] == 1)
 	            			    		} // if (y < yDim-1)
+	            			    		if (currentNum == numberRemoved) {
+    			    						regions[x + y*xDim] = i;
+    			    					}
 	            			    	}
 	            			    }
 	            			}
@@ -365,7 +439,6 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            }
 	            
 	            if (boundaryRemoved) {
-	            	regionNum--;
 	            	for (y = 0; y < yDim; y++) {
 	            		for (x = 0; x < xDim; x++) {
 	            			if (regions[x + y*xDim] >= numberRemoved) {
@@ -373,6 +446,10 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            			}
 	            		}
 	            	}
+	            	for (i = 0; i < mergeList.length; i++) {
+	            		mergeList[i].clear();
+	            	}
+	                regionNum--;
 	            }
             } // while (boundaryRemoved)
             
@@ -392,6 +469,83 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
         
         setCompleted(true);
         return;
+    }
+    
+    private class mergeComparator implements Comparator<mergeItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(mergeItem o1, mergeItem o2) {
+            final int a = o1.getRemove();
+            final int b = o2.getRemove();
+            
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else {
+            	return 0;
+            }
+        }
+
+    }
+	
+	private class mergeItem {
+
+        /** DOCUMENT ME! */
+        private  int remove;
+        
+        private int weak;
+        
+        private int common = 0;
+
+        /**
+         * Creates a new mergeItem object.
+         * 
+         * @param merge
+         * @param remove
+         * @param common
+         */
+        public mergeItem(int remove) {
+            this.remove = remove;
+            this.weak = 0;
+            this.common = 0;
+        }
+
+        
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int getRemove() {
+            return remove;
+        }
+        
+        public int getWeak() {
+        	return weak;
+        }
+        
+        public void incrementWeak() {
+        	weak++;
+        }
+        
+        public int getCommon() {
+        	return common;
+        }
+        
+        public void incrementCommon() {
+        	common++;
+        }
+
     }
 	
 }
