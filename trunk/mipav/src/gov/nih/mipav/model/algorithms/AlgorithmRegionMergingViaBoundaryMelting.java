@@ -2,7 +2,6 @@ package gov.nih.mipav.model.algorithms;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
@@ -43,7 +42,8 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
         this.t3 = t3;
     }
     
-    public void runAlgorithm() {
+    @SuppressWarnings("unchecked")
+	public void runAlgorithm() {
     	int xDim;
     	int yDim;
     	int zDim;
@@ -107,7 +107,7 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
             wallY = new byte[length];
             regions = new int[length];
         } catch (OutOfMemoryError e) {
-            displayError("Algorithm VOIExtraction: Out of memory creating buffers");
+            displayError("Algorithm Region Merging Via Boundary Melting: Out of memory creating buffers");
             setCompleted(false);
 
             return;
@@ -119,7 +119,7 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
             try {
                 srcImage.exportData((z + t*zDim)*length, length, imgBuffer);
             } catch (IOException error) {
-                displayError("Algorithm VOI Extraction: image bounds exceeded");
+                displayError("Algorithm Region Merging Via Boundary Melting: image bounds exceeded");
                 setCompleted(false);
                 
                 srcImage.releaseLock();
@@ -246,12 +246,7 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            	    	    }
 	            	    	    if (!foundRemove) {
 	            	    	    	mergeList[mergeNum].add(new mergeItem(removeNum));
-	            	    	    	 for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
-	 	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
-	 	            	    	    		mergeList[mergeNum].get(i).incrementWeak();
-	 	            	    	    		foundRemove = true;
-	 	            	    	    	}
-	            	    	    	 }
+	            	    	    	mergeList[mergeNum].get(mergeList[mergeNum].size()-1).incrementWeak();
 	            	    	    }
 	            	    	}
 	            	    }
@@ -273,12 +268,7 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            	    	    }
 	            	    	    if (!foundRemove) {
 	            	    	    	mergeList[mergeNum].add(new mergeItem(removeNum));
-	            	    	    	for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
-	 	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
-	 	            	    	    		mergeList[mergeNum].get(i).incrementWeak();
-	 	            	    	    		foundRemove = true;
-	 	            	    	    	}
-	            	    	    	 }
+	            	    	    	mergeList[mergeNum].get(mergeList[mergeNum].size()-1).incrementWeak();
 	            	    	    }
 	            	    	}
 	            	    }
@@ -294,22 +284,7 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            				numberRemoved = mergeList[i].get(j).getRemove();
 	            			    for (y = 0; y < yDim; y++) {
 	            			    	for (x = 0; x < xDim; x++) {
-	            			    		currentNum = regions[x + y*xDim];
-	            			    		if (x < xDim-1) {
-            			    				neighborNum = regions[x+1 + y*xDim];
-            			    				if (((currentNum == i) && (neighborNum == numberRemoved)) ||
-            			    				    ((currentNum == numberRemoved) && (neighborNum == i))) {
-            			    					wallX[x+y*xDim] = 0;
-            			    				}
-	            			    		} // if (x < xDim-1)
-	            			    		if (y < yDim-1) {
-            			    				neighborNum = regions[x + (y+1)*xDim];
-            			    				if (((currentNum == i) && (neighborNum == numberRemoved)) ||
-            			    				    ((currentNum == numberRemoved) && (neighborNum == i))) {
-            			    					wallY[x+y*xDim] = 0;
-            			    				}
-	            			    		} // if (y < yDim-1)
-	            			    		if (currentNum == numberRemoved) {
+	            			    		if (regions[x + y*xDim] == numberRemoved) {
 	            			    			regions[x + y * xDim] = i;
 	            			    		}
 	            			    	}
@@ -363,15 +338,10 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
             	    	    }
             	    	    if (!foundRemove) {
             	    	    	mergeList[mergeNum].add(new mergeItem(removeNum));
-            	    	    	 for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
- 	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
- 	            	    	    		mergeList[mergeNum].get(i).incrementCommon();
- 	            	    	    		if (wallX[x + y*xDim] == 0) {
- 	            	    	    			mergeList[mergeNum].get(i).incrementWeak();
- 	            	    	    		}
- 	            	    	    		foundRemove = true;
- 	            	    	    	}
-            	    	    	 }
+            	    	    	mergeList[mergeNum].get(mergeList[mergeNum].size()-1).incrementCommon();
+            	    	    	if (wallX[x + y*xDim] == 0) {
+            	    	    	    mergeList[mergeNum].get(mergeList[mergeNum].size()-1).incrementWeak();
+            	    	    	}
             	    	    }
 	            	    }
 	            	    
@@ -391,15 +361,10 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
             	    	    }
             	    	    if (!foundRemove) {
             	    	    	mergeList[mergeNum].add(new mergeItem(removeNum));
-            	    	    	 for (i = 0; i < mergeList[mergeNum].size() && (!foundRemove); i++) {
- 	            	    	    	if (mergeList[mergeNum].get(i).getRemove() == removeNum) {
- 	            	    	    		mergeList[mergeNum].get(i).incrementCommon();
- 	            	    	    		if (wallY[x + y*xDim] == 0) {
- 	            	    	    			mergeList[mergeNum].get(i).incrementWeak();
- 	            	    	    		}
- 	            	    	    		foundRemove = true;
- 	            	    	    	}
-            	    	    	 }
+            	    	    	mergeList[mergeNum].get(mergeList[mergeNum].size()-1).incrementCommon();
+            	    	    	if (wallY[x + y*xDim] == 0) {
+            	    	    	    mergeList[mergeNum].get(mergeList[mergeNum].size()-1).incrementWeak();
+            	    	    	}
             	    	    }
 	            	    }
 	            	} // for (x = 0; x < xDim; x++)
@@ -413,22 +378,7 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
 	            				numberRemoved =  mergeList[i].get(j).getRemove();
 	            			    for (y = 0; y < yDim; y++) {
 	            			    	for (x = 0; x < xDim; x++) {
-	            			    		currentNum = regions[x + y*xDim];
-	            			    		if (x < xDim-1) {
-            			    				neighborNum = regions[x+1 + y*xDim];
-            			    				if (((currentNum == i) && (neighborNum == numberRemoved)) ||
-            			    				    ((currentNum == numberRemoved) && (neighborNum == i))) {
-            			    					wallX[x+y*xDim] = 0;
-            			    				}
-	            			    		} // if (x < xDim-1)
-	            			    		if (y < yDim-1) {
-	            			    				neighborNum = regions[x + (y+1)*xDim];
-	            			    				if (((currentNum == i) && (neighborNum == numberRemoved)) ||
-	            			    				    ((currentNum == numberRemoved) && (neighborNum == i))) {
-	            			    					wallY[x+y*xDim] = 0;
-	            			    				}
-	            			    		} // if (y < yDim-1)
-	            			    		if (currentNum == numberRemoved) {
+	            			    		if (regions[x + y*xDim] == numberRemoved) {
     			    						regions[x + y*xDim] = i;
     			    					}
 	            			    	}
@@ -469,32 +419,6 @@ public class AlgorithmRegionMergingViaBoundaryMelting extends AlgorithmBase {
         
         setCompleted(true);
         return;
-    }
-    
-    private class mergeComparator implements Comparator<mergeItem> {
-
-        /**
-         * DOCUMENT ME!
-         * 
-         * @param o1 DOCUMENT ME!
-         * @param o2 DOCUMENT ME!
-         * 
-         * @return DOCUMENT ME!
-         */
-        public int compare(mergeItem o1, mergeItem o2) {
-            final int a = o1.getRemove();
-            final int b = o2.getRemove();
-            
-
-            if (a < b) {
-                return -1;
-            } else if (a > b) {
-                return 1;
-            } else {
-            	return 0;
-            }
-        }
-
     }
 	
 	private class mergeItem {
