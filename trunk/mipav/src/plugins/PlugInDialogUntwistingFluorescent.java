@@ -62,11 +62,13 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 
 import javax.imageio.ImageIO;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -80,6 +82,8 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 	private JTextField  nucleiTF;
 	private JCheckBox straightenImageCheck;
 	private JCheckBox straightenMarkersCheck;
+	private JRadioButton voxelCoords;
+	private JRadioButton micronCoords;
 	private JCheckBox segmentSkinSurfaceCheck;
 	private JButton startButton;
 
@@ -287,12 +291,23 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 		inputsPanel.add(straightenImageCheck.getParent(), gbc);
 		gbc.gridy++;
 		
-		straightenMarkersCheck = gui.buildCheckBox( "Straighten Markers", true );
-		inputsPanel.add(straightenMarkersCheck.getParent(), gbc);
+		segmentSkinSurfaceCheck = gui.buildCheckBox( "Segment Skin Surface Marker", false );
+		inputsPanel.add(segmentSkinSurfaceCheck.getParent(), gbc);
 		gbc.gridy++;
 		
-		segmentSkinSurfaceCheck = gui.buildCheckBox( "Segment Skin Surface Marker", true );
-		inputsPanel.add(segmentSkinSurfaceCheck.getParent(), gbc);
+		straightenMarkersCheck = gui.buildCheckBox( "Straighten Markers", true );
+		inputsPanel.add(straightenMarkersCheck.getParent(), gbc);
+		gbc.gridx++;
+		ButtonGroup group = new ButtonGroup();
+		voxelCoords = gui.buildRadioButton( "voxels", false);
+		inputsPanel.add(voxelCoords.getParent(), gbc);
+		group.add(voxelCoords);
+		gbc.gridx++;
+		micronCoords = gui.buildRadioButton( "microns", true);
+		inputsPanel.add(micronCoords.getParent(), gbc);
+		group.add(micronCoords);
+		
+		gbc.gridx = 0;
 		gbc.gridy++;
 		
 		
@@ -345,8 +360,16 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 				}
 				if (st.hasMoreTokens()) {
 					pos.Z = Float.valueOf(st.nextToken());
+//					System.err.print( text.getText() + " " + pos + "    " );
 					Vector3f out = new Vector3f();
-					MipavCoordinateSystems.scannerToFile(pos, out, wormImage);
+					if ( micronCoords.isSelected() )
+					{
+						MipavCoordinateSystems.scannerToFile(pos, out, wormImage);
+					}
+					else
+					{
+						out.copy(pos);
+					}
 					text.add(out);
 					
 					annotationVOI.getCurves().add(text);
