@@ -813,7 +813,7 @@ public class LatticeModel {
 				untwist(imageA, resultExtents);
 				untwistLattice(imageA, resultExtents);
 			}
-			if ( untwistMarkers )
+			if ( untwistMarkers && (markerCenters != null) )
 			{
 				//				System.err.println( "interpolateLattice untwist markers " + resultExtents[0] + " " + resultExtents[1] );
 				untwistMarkers(imageA, resultExtents, true);
@@ -4841,7 +4841,7 @@ public class LatticeModel {
 	}
 
 
-	protected void writeDiagonal(final ModelImage image, ModelImage result, final ModelImage straightToTwisted, final int tSlice, final int slice,
+	protected void writeDiagonal(final ModelImage image, ModelImage result, ModelImage countImage, final ModelImage straightToTwisted, final int tSlice, final int slice,
 			final int[] extents, final Vector3f[] verts) {
 		final int iBound = extents[0];
 		final int jBound = extents[1];
@@ -4905,15 +4905,20 @@ public class LatticeModel {
 			for (int i = 0; i < iBound; i++) {
 				// Initialize to 0:
 				if (buffFactor == 4) {						
-					result.setC(i, j, 0, 0 );
-					result.setC(i, j, 1, 0 );
-					result.setC(i, j, 2, 0 );
-					result.setC(i, j, 3, 0 );
+					result.setC(i, j, slice, 0, 0 );
+					result.setC(i, j, slice, 1, 0 );
+					result.setC(i, j, slice, 2, 0 );
+					result.setC(i, j, slice, 3, 0 );
 				}
 				else {
-					result.set(i, j, 0 );
+					result.set(i, j, slice, 0 );
+				}		
+				if (straightToTwisted != null) {
+					straightToTwisted.setC(i, j, slice, 0, 0 );
+					straightToTwisted.setC(i, j, slice, 1, 0 );
+					straightToTwisted.setC(i, j, slice, 2, 0 );
+					straightToTwisted.setC(i, j, slice, 3, 0 );
 				}
-
 
 				final int iIndex = Math.round(x);
 				final int jIndex = Math.round(y);
@@ -4939,12 +4944,18 @@ public class LatticeModel {
 					else {
 						result.set(i, j, slice, image.getFloat(iIndex, jIndex, kIndex));
 					}
+					if ( countImage != null )
+					{
+						float count = countImage.getFloat(iIndex, jIndex, kIndex);
+						count++;
+						countImage.set(iIndex, jIndex, kIndex, count);
+					}
 
 					if (straightToTwisted != null) {
-						straightToTwisted.setC(i, j, 0, 1 );
-						straightToTwisted.setC(i, j, 1, x );
-						straightToTwisted.setC(i, j, 2, y );
-						straightToTwisted.setC(i, j, 3, z );
+						straightToTwisted.setC(i, j, slice, 0, 1 );
+						straightToTwisted.setC(i, j, slice, 1, x );
+						straightToTwisted.setC(i, j, slice, 2, y );
+						straightToTwisted.setC(i, j, slice, 3, z );
 					}
 				}
 
@@ -5383,6 +5394,11 @@ public class LatticeModel {
 			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_straight_unmasked.xml");
 		}	
 		resultImage.setResolutions(new float[] {1, 1, 1});
+		
+		ModelImage sourceImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_straight_unmasked_source.xml");
+		sourceImage.setResolutions(new float[] {1, 1, 1});
+		
+		ModelImage countImage = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), imageName + "_counts.xml" );
 
 		final Vector3f[] corners = new Vector3f[4];
 		for (int i = 0; i < size; i++)
@@ -5392,14 +5408,110 @@ public class LatticeModel {
 				corners[j] = kBox.elementAt(j);
 			}
 
-			writeDiagonal(image, resultImage, null, 0, i, resultExtents, corners);
+			writeDiagonal(image, resultImage, countImage, sourceImage, 0, i, resultExtents, corners);
+			
+			if ( i > 0 )
+			{
+				float x1 = sourceImage.getFloatC( resultExtents[0]/2, resultExtents[1]/2, i, 1 );
+				float y1 = sourceImage.getFloatC( resultExtents[0]/2, resultExtents[1]/2, i, 2 );
+				float z1 = sourceImage.getFloatC( resultExtents[0]/2, resultExtents[1]/2, i, 3 );
+				Vector3f pt1 = new Vector3f(x1, y1, z1);
+				
+				float x0 = sourceImage.getFloatC( resultExtents[0]/2, resultExtents[1]/2, i-1, 1 );
+				float y0 = sourceImage.getFloatC( resultExtents[0]/2, resultExtents[1]/2, i-1, 2 );
+				float z0 = sourceImage.getFloatC( resultExtents[0]/2, resultExtents[1]/2, i-1, 3 );
+				Vector3f pt0 = new Vector3f(x0, y0, z0);
+				
+				Vector3f dir = Vector3f.sub(pt1, pt0);
+				dir.normalize();
+//				System.err.println( i + " " + dir );
+//
+				for ( int y = 0; y < resultExtents[1]; y++ )
+				{
+					for ( int x = 0; x < resultExtents[0]; x++ )
+					{
+						x1 = sourceImage.getFloatC( x, y, i, 1 );
+						y1 = sourceImage.getFloatC( x, y, i, 2 );
+						z1 = sourceImage.getFloatC( x, y, i, 3 );
+						pt1.set(x1, y1, z1);
+						
+						x0 = sourceImage.getFloatC( x, y, i-1, 1 );
+						y0 = sourceImage.getFloatC( x, y, i-1, 2 );
+						z0 = sourceImage.getFloatC( x, y, i-1, 3 );
+						pt0.set(x0, y0, z0);
+
+						Vector3f testDir = Vector3f.sub(pt1, pt0);
+						testDir.normalize();
+						
+//						if ( i == 1 )
+//						{
+//							System.err.println( testDir.angle(dir) + " " + ( testDir.angle(dir) > (Math.PI/2) ));
+//						}
+						if ( testDir.angle(dir) > (Math.PI/2) )
+						{
+							sourceImage.setC( x, y, i-1, 0, 0 );
+							sourceImage.setC( x, y, i-1, 1, 0 );
+							sourceImage.setC( x, y, i-1, 2, 0 );
+							sourceImage.setC( x, y, i-1, 3, 0 );
+							if ( i == (size-1) )
+							{
+								sourceImage.setC( x, y, i, 0, 0 );
+								sourceImage.setC( x, y, i, 1, 0 );
+								sourceImage.setC( x, y, i, 2, 0 );
+								sourceImage.setC( x, y, i, 3, 0 );								
+							}
+						}
+					}
+				}
+			}
 		}
 
 		saveImage(imageName, resultImage, true);
-
 		resultImage.disposeLocal(false);
 		resultImage = null;
 
+		
+		for ( int i = 0; i < countImage.getDataSize(); i++ )
+		{
+			float c = countImage.getFloat(i);
+			if ( c > 0 )
+			{
+				c--;
+			}
+			countImage.set(i,  c);
+		}
+		resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_counts_straight_unmasked.xml");
+		resultImage.setResolutions(new float[] {1, 1, 1});
+		for (int i = 0; i < size; i++)
+		{			
+			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+			for (int j = 0; j < 4; j++) {
+				corners[j] = kBox.elementAt(j);
+			}
+
+			writeDiagonal(countImage, resultImage, null, null, 0, i, resultExtents, corners);
+		}
+		saveImage(imageName, resultImage, true);
+		resultImage.disposeLocal(false);
+		resultImage = null;
+		
+		
+		
+		
+		
+		if ( countImage != null )
+		{
+			//		saveImage(imageName, countImage, true);
+			countImage.disposeLocal(false);
+			countImage = null;
+		}
+		if ( sourceImage != null )
+		{
+			saveImage(imageName, sourceImage, true);
+			sourceImage.disposeLocal(false);
+			sourceImage = null;
+		}
+		
 		System.err.println( "writeDiagonal " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
 	}

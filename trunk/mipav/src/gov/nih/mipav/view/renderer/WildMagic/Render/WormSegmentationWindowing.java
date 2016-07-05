@@ -712,7 +712,8 @@ public class WormSegmentationWindowing extends WormSegmentation
 			boolean foundOutside = false;
 			int outR = -1;
 			int inR = -1;
-			for ( int radius = minRadius; radius <= (maxRadius+1); radius++ )
+//			for ( int radius = minRadius; radius <= (maxRadius+1); radius++ )
+			for ( int radius = (maxRadius+1); radius >= minRadius; radius-- )
 			{
 				int startZ = (int)(centerP.Z - radius);
 				int stopZ  = (int)(centerP.Z + radius);
@@ -721,7 +722,7 @@ public class WormSegmentationWindowing extends WormSegmentation
 				int startX = (int)(centerP.X - radius);
 				int stopX  = (int)(centerP.X + radius);
 				if ( (startZ < 0) || (startY < 0) || (startX < 0) ||
-						(stopZ > dimZ) || (stopY > dimY) || (stopX > dimX) )
+						(stopZ >= dimZ) || (stopY >= dimY) || (stopX >= dimX) )
 				{
 					continue;
 				}
