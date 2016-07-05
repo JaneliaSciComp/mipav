@@ -1,10 +1,5 @@
 package gov.nih.mipav.model.algorithms;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
@@ -13,10 +8,23 @@ import java.util.*;
 
 public class AlgorithmEfficientWatershed extends AlgorithmBase {
 	
+	/* Initial value of a threshold level */
+	private static final int MASK = -2;
+	
+	/* Value of the pixels belonging to the watersheds */
+	private static final int WSHED = 0;
+	
+	/* Initial value for labelBuffer */
+	private static final int INIT = -1;
+	
+	
+	private boolean neighbor8;
+	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
-	public AlgorithmEfficientWatershed(ModelImage destImage, ModelImage srcImage) {
+	public AlgorithmEfficientWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8) {
 		super(destImage, srcImage);
+		this.neighbor8 = neighbor8;
 	}
 	
 	public void runAlgorithm() {
@@ -27,27 +35,31 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	int nDims;
     	int length;
     	double imgBuffer[];
-    	double sortBuffer[];
-    	int intBuffer[] = null;
+    	int labelBuffer[] = null;
+    	int distanceBuffer[] = null;
     	int x;
     	int y;
     	int z;
     	int t;
-    	double minValue = Double.MAX_VALUE;
-    	double maxValue = -Double.MAX_VALUE;
     	int i;
     	int j;
-    	int k;
     	int numValues;
     	double histBins[];
     	int indexBins[][];
     	int lasti;
-    	double currentValue;
-    	int numLowestValues;
-    	int labelNum;
-    	boolean foundBins[];
-    	boolean labelFound;
-    	int numLowestFound;
+    	int currentLabel;
+    	int currentDist;
+    	ArrayList <indexValueItem> indexValueList = new ArrayList<indexValueItem>();
+    	ArrayList <Integer> frequencyCount = new ArrayList<Integer>();
+    	int ip;
+    	double hmin;
+    	double hmax;
+    	double h;
+    	int index;
+    	boolean exists;
+    	boolean added;
+    	Queue <Integer> fifo = new LinkedList<Integer>();
+    	int fictitiousIndex = -1;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -77,8 +89,8 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         
         try {
             imgBuffer = new double[length];
-            sortBuffer = new double[length];
-            intBuffer = new int[length];
+            labelBuffer = new int[length];
+            distanceBuffer = new int[length];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Efficient Watershed: Out of memory creating buffers");
             setCompleted(false);
@@ -99,88 +111,129 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 
                 return;
             }
+            indexValueList.clear();
+            frequencyCount.clear();
+            fifo.clear();
             
             for (i = 0; i < length; i++) {
-                sortBuffer[i] = imgBuffer[i];	
+            	indexValueList.add(new indexValueItem(i, imgBuffer[i]));	
             }
             
-            Arrays.sort(sortBuffer);
+            Collections.sort(indexValueList, new indexValueComparator());
             numValues = 1;
+            lasti = 0;
             for (i = 1; i < length; i++) {
-            	if (sortBuffer[i] > sortBuffer[i-1]) {
+            	if (indexValueList.get(i).getValue() > indexValueList.get(i-1).getValue()) {
             		numValues++;
+            		frequencyCount.add(i-lasti);
+            		lasti = i;
             	}
             }
+            frequencyCount.add(length-1-lasti);
             histBins = new double[numValues];
             indexBins = new int[numValues][];
-            histBins[0] = sortBuffer[0];
-            lasti = 0;
-            for (i = 1, j = 1; i < length; i++) {
-            	if (sortBuffer[i] > sortBuffer[i-1]) {
-            		histBins[j] = sortBuffer[i];
-            		indexBins[j-1] = new int[i - lasti];
-            		lasti = i;
-            		j++;
-            	}
+            for (i = 0; i < frequencyCount.size(); i++) {
+            	indexBins[i] = new int[frequencyCount.get(i)];
             }
-            indexBins[numValues-1] = new int[length-1-lasti];
-            for (i = 0; i < numValues; i++) {
-            	k = 0;
-                currentValue = histBins[i];
-                for (j = 0; j < length; j++) {
-                	if (imgBuffer[j] == currentValue) {
-                		indexBins[i][k++] = j;
-                	}
-                }
+            histBins[0] = indexValueList.get(0).getValue();
+            indexBins[0][0] = indexValueList.get(0).getIndex();
+            for (i = 1, j = 0, ip = 1; i < length; i++) {
+            	if (indexValueList.get(i).getValue() > indexValueList.get(i-1).getValue()) {
+            		histBins[j++] = indexValueList.get(i).getValue();
+            		ip = 0;
+            		indexBins[j][ip++] = indexValueList.get(i).getIndex();
+            	}
+            	else {
+            		indexBins[j][ip++] = indexValueList.get(i).getIndex();
+            	}
             }
             
-            numLowestValues = indexBins[0].length;
-            foundBins = new boolean[numLowestValues];
-            labelNum = 0;
+            
             for (i = 0; i < length; i++) {
-            	intBuffer[i] = Integer.MIN_VALUE;
+            	labelBuffer[i] = INIT;
+            	distanceBuffer[i] = 0;
             }
-            intBuffer[indexBins[0][0]] = labelNum;
-            foundBins[0] = true;
-            labelFound = true;
-            numLowestFound = 1;
-            while (labelFound) {
-            	labelFound = false;
-            	for (i = 0; i < numLowestValues; i++) {
-            		for (j = 0; j < numLowestValues; j++) {
-            			if (j != i) {
-	            			if ((foundBins[i]) && (!foundBins[j]) && 
-	            					(((indexBins[0][i] % xDim < xDim-1) && (indexBins[0][j] == indexBins[0][i]+1)) ||
-	            					((indexBins[0][i] % xDim > 0) && (indexBins[0][j] == indexBins[0][i]-1)) ||
-	            					(indexBins[0][j] == indexBins[0][i]+yDim) ||
-	            					(indexBins[0][j] == indexBins[0][i]-yDim))) {
-	            				labelFound = true;
-	            				foundBins[j] = true;
-	            				intBuffer[indexBins[0][j]] = labelNum;
-	            				numLowestFound++;
-	            			}
-            			}
+            currentLabel = 0;
+            hmin = histBins[0];
+            hmax = histBins[histBins.length-1];
+            
+            for (i = 0; i < numValues; i++) {
+            	for (j = 0; j < indexBins[i].length; j++) {
+            		index = indexBins[i][j];
+            		labelBuffer[index] = MASK;
+            		x = index % xDim;
+            		y = index / xDim;
+            		exists = false;
+            		if ((x > 0) && ((labelBuffer[index-1] > 0) || (labelBuffer[index-1] == WSHED))) {
+            			exists = true;
             		}
-            	}
+            		else if ((!exists) && (x < xDim-1) && ((labelBuffer[index+1] > 0) || (labelBuffer[index+1] == WSHED))) {
+            			exists = true;
+            		}
+            		else if ((!exists) && (y > 0) && ((labelBuffer[index-xDim] > 0) || (labelBuffer[index-xDim] == WSHED))) {
+            			exists =true;
+            		}
+            		else if ((!exists) && (y < yDim-1) && ((labelBuffer[index+xDim] > 0) || (labelBuffer[index+xDim] == WSHED))) {
+            			exists = true;
+            		}
+            		else if ((!exists) && neighbor8) {
+                        if ((x > 0) && (y > 0) && ((labelBuffer[index-xDim-1] > 0) || (labelBuffer[index-xDim-1] == WSHED))) {
+                        	exists = true;
+                        }
+                        else if ((!exists) &&(x > 0) && (y < yDim-1) && 
+                        		((labelBuffer[index+xDim-1] > 0) || (labelBuffer[index+xDim-1] == WSHED))) {
+                        	exists = true;
+                        }
+                        else if ((!exists) && (x < xDim-1) && ( y > 0) &&
+                        		((labelBuffer[index-xDim+1] > 0) || (labelBuffer[index-xDim+1] == WSHED))) {
+                        	exists = true;
+                        }
+                        else if ((!exists) && (x < xDim-1) && (y < yDim-1) &&
+                        		((labelBuffer[index+xDim+1] > 0) || (labelBuffer[index+xDim+1] == WSHED))) {
+                        	exists = true;
+                        }
+            		} // else if ((!exists) && neighbor8)
+            		if (exists) {
+            			distanceBuffer[index] = 1;
+            			added = fifo.offer(index);
+            			if (!added) {
+            				MipavUtil.displayError("Failure to add " + index + " to the fifo");
+            				setCompleted(false);
+            				return;
+            			}
+            		} // if (exists)
+            	} // for (j = 0; j < indexBins[i].length; j++)
             	
-            	if ((!labelFound) && (numLowestFound < numLowestValues)) {
-            		labelNum++;
-            		for (i = 0; i < numLowestValues && (!labelFound); i++) {
-            			if (!foundBins[i]) {
-            				labelFound = true;
-            				foundBins[i] = true;
-            				intBuffer[indexBins[0][i]] = labelNum;
-            				numLowestFound++;
+            	currentDist = 1;
+            	added = fifo.offer(fictitiousIndex);
+            	if (!added) {
+    				MipavUtil.displayError("Failure to add fictitiousIndex to the fifo");
+    				setCompleted(false);
+    				return;
+    			}
+            	while (true) {
+            		index = fifo.poll();
+            		if (index == fictitiousIndex) {
+            			if (fifo.isEmpty()) {
+            				break;
             			}
-            		}
-            		if (numLowestFound == numLowestValues) {
-            			labelFound = false;
-            		}
-            	}
-            } // while (labelFound)
+            			else {
+            				added = fifo.offer(fictitiousIndex);
+            				if (!added) {
+                				MipavUtil.displayError("Failure to add fictitiousIndex to the fifo");
+                				setCompleted(false);
+                				return;
+                			}
+            				currentDist++;
+            				index = fifo.poll();
+            			}
+            		} // if (index == fictiousIndex)
+            	} // while (true)
+            } // for (i = 0; i < numValues; i++)
+            
             
             try {
-			    destImage.importData((z + t*zDim)*length, intBuffer, false);
+			    destImage.importData((z + t*zDim)*length, labelBuffer, false);
 			}
 			catch(IOException e) {
 				MipavUtil.displayError("IOException " + e + " on destImage.importData");
@@ -193,5 +246,54 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         
         setCompleted(true);
         return;
+	}
+	
+	private class indexValueComparator implements Comparator<indexValueItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(indexValueItem o1, indexValueItem o2) {
+            double a = o1.getValue();
+            double b = o2.getValue();
+            int i = o1.getIndex();
+            int j = o2.getIndex();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else if (i < j) {
+            	return -1;
+            } else if (i > j) {
+            	return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+	
+	private class indexValueItem {
+		private int index;
+		private double value;
+		
+		public indexValueItem(int index, double value) {
+			this.index = index;
+			this.value = value;
+		}
+		
+		public int getIndex() {
+			return index;
+		}
+		
+		public double getValue() {
+			return value;
+		}
 	}
 }
