@@ -68,7 +68,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	boolean exists;
     	boolean added;
     	Queue <Integer> fifo = new LinkedList<Integer>();
-    	int fictitiousIndex = -1;
+    	int fictitiousIndex = -3;
     	int numNeighbor;
     	int indexn;
     	int indexn2 = 0;
