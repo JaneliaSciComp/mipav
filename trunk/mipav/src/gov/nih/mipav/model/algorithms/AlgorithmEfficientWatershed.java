@@ -6,6 +6,17 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 import java.util.*;
 
+/**
+ * 
+ * @author ilb
+ * Reference:
+ * 1.) Image Processing, Analysis, and Machine Vision 4th edition International Edition by Milan Sonka,
+ * Vaclav Hlavac, and Roger Boyle, Section 6.3.4 Watershed segmentation, pp. 229-232
+ * 2.) Watersheds in Digital Spaces: An Efficient Algorithm Based on Immersion Simulations by Luc Vincent
+ * and Pierre Soille, IEEE Transactions on Pattern Analysis and Machine Intelligence, Vol. 13, No. 6,
+ * June, 1991, pp. 583-598
+ */
+
 public class AlgorithmEfficientWatershed extends AlgorithmBase {
 	
 	/* Initial value of a threshold level */
@@ -52,14 +63,14 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	ArrayList <indexValueItem> indexValueList = new ArrayList<indexValueItem>();
     	ArrayList <Integer> frequencyCount = new ArrayList<Integer>();
     	int ip;
-    	double hmin;
-    	double hmax;
-    	double h;
     	int index;
     	boolean exists;
     	boolean added;
     	Queue <Integer> fifo = new LinkedList<Integer>();
     	int fictitiousIndex = -1;
+    	int numNeighbor;
+    	int indexn;
+    	int indexn2 = 0;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -74,6 +85,12 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
         nDims = srcImage.getNDims();
+        if (neighbor8) {
+        	numNeighbor = 8;
+        }
+        else {
+        	numNeighbor = 4;
+        }
     	
         if (nDims > 2) {
             zDim = srcImage.getExtents()[2];
@@ -154,10 +171,9 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             	distanceBuffer[i] = 0;
             }
             currentLabel = 0;
-            hmin = histBins[0];
-            hmax = histBins[histBins.length-1];
             
             for (i = 0; i < numValues; i++) {
+            	// geodesic SKIZ of level h-1 inside level h
             	for (j = 0; j < indexBins[i].length; j++) {
             		index = indexBins[i][j];
             		labelBuffer[index] = MASK;
@@ -228,7 +244,163 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             				index = fifo.poll();
             			}
             		} // if (index == fictiousIndex)
+            		x = index % xDim;
+            		y = index / xDim;
+            		for (j = 0; j < numNeighbor; j++) {
+            			if (j == 0) {
+            				if (x == 0) {
+            					continue;
+            				} // if (x == 0)
+            				indexn = index - 1;
+            			} // if (j == 0)
+            			else if (j == 1) {
+            				if (x == xDim-1) {
+            					continue;
+            				} // if (x == xDim-1)
+            				indexn = index + 1;
+            			} // else if (j == 1)
+            			else if (j == 2) {
+            				if (y == 0) {
+            					continue;
+            				} // if (y == 0)
+            				indexn = index - xDim;
+            			} // else if (j == 2)
+            			else if (j == 3) {
+            				if (y == yDim-1) {
+            					continue;
+            				} // if (y == yDim-1)
+            				indexn = index + xDim;
+            			} // else if (j == 3)
+            			else if (j == 4) {
+            			    if ((x == 0) || (y == 0)) {
+            			    	continue;
+            			    } // if ((x == 0) || (y == 0))
+            			    indexn = index - xDim - 1;
+            			} // else if (j == 4)
+            			else if (j == 5) {
+            			    if ((x == 0) || (y == yDim-1)) {
+            			    	continue;
+            			    } // if ((x == 0) || (y == yDim-1))
+            			    indexn = index + xDim - 1;
+            			} // else if (j == 5)
+            			else if (j == 6) {
+            				if ((x == xDim-1) || (y == 0)) {
+            					continue;
+            				} // if ((x == xDim-1) || (y == 0))
+            				indexn = index - xDim + 1;
+            			} // else if (j == 6)
+            			else { // j == 7
+            				if ((x == xDim-1) || (y == yDim-1)) {
+            					continue;
+            				} // if ((x == xDim-1) || (y == yDim-1))
+            				indexn = index + xDim + 1;
+            			} // else j == 7
+            			if ((distanceBuffer[indexn] < currentDist) && ((labelBuffer[indexn] > 0) || (labelBuffer[indexn] == WSHED))) {
+            			    // i.e., indexn belongs to an already labeled basin or to the watersheds
+            				if (labelBuffer[indexn] > 0) {
+            				   if ((labelBuffer[index] == MASK) || (labelBuffer[index] == WSHED)) {
+            				       labelBuffer[index] = labelBuffer[indexn];   
+            				   } // if ((labelBuffer[index] == MASK) || (labelBuffer[index] == WSHED))
+            				   else if (labelBuffer[index] != labelBuffer[indexn]) {
+            					    labelBuffer[index] = WSHED;   
+            				   } // else if (labelBuffer[index] != labelBuffer[indexn])
+            				} // if (labelBuffer[indexn] > 0)
+            				else if (labelBuffer[index] == MASK) {
+            				    labelBuffer[index] = WSHED;	
+            				} // else if (labelBuffer[index] == MASK)
+            			} // if ((distanceBuffer[indexn] < currentDist) && ((labelBuffer[indexn] > 0) || (labelBuffer[indexn] == WSHED)))
+            			else if ((labelBuffer[indexn] == MASK) && (distanceBuffer[indexn] == 0)) {
+            			    distanceBuffer[indexn] = currentDist + 1;	
+            			    added = fifo.offer(indexn);
+            				if (!added) {
+                				MipavUtil.displayError("Failure to add indexn to the fifo");
+                				setCompleted(false);
+                				return;
+                			}
+            			} // else if ((labelBuffer[indexn] == MASK) && (distanceBuffer[indexn] == 0))
+            		} // for (j = 0; j < numNeighbor; j++)
             	} // while (true)
+            	
+            	// Checks if new minima have been discovered
+            	for (j = 0; j < indexBins[i].length; j++) {
+            		index = indexBins[i][j];
+            		// The distance associated with index is reset to 0
+            		distanceBuffer[index] = 0;
+            		if (labelBuffer[index] == MASK) {
+            		    currentLabel++;	
+            		    added = fifo.offer(index);
+        				if (!added) {
+            				MipavUtil.displayError("Failure to add index to the fifo");
+            				setCompleted(false);
+            				return;
+            			}
+        				labelBuffer[index] = currentLabel;
+        				while (!fifo.isEmpty()) {
+        					indexn = fifo.poll();
+        					x = indexn % xDim;
+                    		y = indexn / xDim;
+                    		for (j = 0; j < numNeighbor; j++) {
+                    			if (j == 0) {
+                    				if (x == 0) {
+                    					continue;
+                    				} // if (x == 0)
+                    				indexn2 = indexn - 1;
+                    			} // if (j == 0)
+                    			else if (j == 1) {
+                    				if (x == xDim-1) {
+                    					continue;
+                    				} // if (x == xDim-1)
+                    				indexn2 = indexn + 1;
+                    			} // else if (j == 1)
+                    			else if (j == 2) {
+                    				if (y == 0) {
+                    					continue;
+                    				} // if (y == 0)
+                    				indexn2 = indexn - xDim;
+                    			} // else if (j == 2)
+                    			else if (j == 3) {
+                    				if (y == yDim-1) {
+                    					continue;
+                    				} // if (y == yDim-1)
+                    				indexn2 = indexn + xDim;
+                    			} // else if (j == 3)
+                    			else if (j == 4) {
+                    			    if ((x == 0) || (y == 0)) {
+                    			    	continue;
+                    			    } // if ((x == 0) || (y == 0))
+                    			    indexn2 = indexn - xDim - 1;
+                    			} // else if (j == 4)
+                    			else if (j == 5) {
+                    			    if ((x == 0) || (y == yDim-1)) {
+                    			    	continue;
+                    			    } // if ((x == 0) || (y == yDim-1))
+                    			    indexn2 = indexn + xDim - 1;
+                    			} // else if (j == 5)
+                    			else if (j == 6) {
+                    				if ((x == xDim-1) || (y == 0)) {
+                    					continue;
+                    				} // if ((x == xDim-1) || (y == 0))
+                    				indexn2 = indexn - xDim + 1;
+                    			} // else if (j == 6)
+                    			else { // j == 7
+                    				if ((x == xDim-1) || (y == yDim-1)) {
+                    					continue;
+                    				} // if ((x == xDim-1) || (y == yDim-1))
+                    				indexn2 = indexn + xDim + 1;
+                    			} // else j == 7
+                    		} // for (j = 0; j < numNeighbor; j++)
+                    		if (labelBuffer[indexn2] == MASK) {
+                    			added = fifo.offer(indexn2);
+                				if (!added) {
+                    				MipavUtil.displayError("Failure to add indexn2 to the fifo");
+                    				setCompleted(false);
+                    				return;
+                    			}
+                				labelBuffer[indexn2] = currentLabel;
+                    		} // if (labelBuffer[indexn2] == MASK)
+        				} // while (!fifo.isEmpty())
+            		} // if (labelBuffer[index] == MASK)
+            	} // for (j = 0; j < indexBins[i].length; j++)
             } // for (i = 0; i < numValues; i++)
             
             
