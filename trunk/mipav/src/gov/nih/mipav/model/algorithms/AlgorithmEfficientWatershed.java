@@ -11,10 +11,10 @@ import java.util.*;
  * @author ilb
  * Reference:
  * 1.) Image Processing, Analysis, and Machine Vision 4th edition International Edition by Milan Sonka,
- * Vaclav Hlavac, and Roger Boyle, Section 6.3.4 Watershed segmentation, pp. 229-232
+ * Vaclav Hlavac, and Roger Boyle, Section 6.3.4 Watershed segmentation, pp. 229-232.
  * 2.) Watersheds in Digital Spaces: An Efficient Algorithm Based on Immersion Simulations by Luc Vincent
  * and Pierre Soille, IEEE Transactions on Pattern Analysis and Machine Intelligence, Vol. 13, No. 6,
- * June, 1991, pp. 583-598
+ * June, 1991, pp. 583-598.
  */
 
 public class AlgorithmEfficientWatershed extends AlgorithmBase {
@@ -146,7 +146,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             		lasti = i;
             	}
             }
-            frequencyCount.add(length-1-lasti);
+            frequencyCount.add(length-lasti);
             histBins = new double[numValues];
             indexBins = new int[numValues][];
             for (i = 0; i < frequencyCount.size(); i++) {
