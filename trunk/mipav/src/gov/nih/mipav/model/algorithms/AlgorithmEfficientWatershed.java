@@ -54,6 +54,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	int t;
     	int i;
     	int j;
+    	int k;
     	int numValues;
     	double histBins[];
     	int indexBins[][];
@@ -183,32 +184,32 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             		if ((x > 0) && ((labelBuffer[index-1] > 0) || (labelBuffer[index-1] == WSHED))) {
             			exists = true;
             		}
-            		else if ((!exists) && (x < xDim-1) && ((labelBuffer[index+1] > 0) || (labelBuffer[index+1] == WSHED))) {
+            		else if ((x < xDim-1) && ((labelBuffer[index+1] > 0) || (labelBuffer[index+1] == WSHED))) {
             			exists = true;
             		}
-            		else if ((!exists) && (y > 0) && ((labelBuffer[index-xDim] > 0) || (labelBuffer[index-xDim] == WSHED))) {
+            		else if ((y > 0) && ((labelBuffer[index-xDim] > 0) || (labelBuffer[index-xDim] == WSHED))) {
             			exists =true;
             		}
-            		else if ((!exists) && (y < yDim-1) && ((labelBuffer[index+xDim] > 0) || (labelBuffer[index+xDim] == WSHED))) {
+            		else if ((y < yDim-1) && ((labelBuffer[index+xDim] > 0) || (labelBuffer[index+xDim] == WSHED))) {
             			exists = true;
             		}
-            		else if ((!exists) && neighbor8) {
+            		else if (neighbor8) {
                         if ((x > 0) && (y > 0) && ((labelBuffer[index-xDim-1] > 0) || (labelBuffer[index-xDim-1] == WSHED))) {
                         	exists = true;
                         }
-                        else if ((!exists) &&(x > 0) && (y < yDim-1) && 
+                        else if ((x > 0) && (y < yDim-1) && 
                         		((labelBuffer[index+xDim-1] > 0) || (labelBuffer[index+xDim-1] == WSHED))) {
                         	exists = true;
                         }
-                        else if ((!exists) && (x < xDim-1) && ( y > 0) &&
+                        else if ((x < xDim-1) && ( y > 0) &&
                         		((labelBuffer[index-xDim+1] > 0) || (labelBuffer[index-xDim+1] == WSHED))) {
                         	exists = true;
                         }
-                        else if ((!exists) && (x < xDim-1) && (y < yDim-1) &&
+                        else if ((x < xDim-1) && (y < yDim-1) &&
                         		((labelBuffer[index+xDim+1] > 0) || (labelBuffer[index+xDim+1] == WSHED))) {
                         	exists = true;
                         }
-            		} // else if ((!exists) && neighbor8)
+            		} // else if (neighbor8)
             		if (exists) {
             			distanceBuffer[index] = 1;
             			added = fifo.offer(index);
@@ -339,56 +340,56 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         					indexn = fifo.poll();
         					x = indexn % xDim;
                     		y = indexn / xDim;
-                    		for (j = 0; j < numNeighbor; j++) {
-                    			if (j == 0) {
+                    		for (k = 0; k < numNeighbor; k++) {
+                    			if (k == 0) {
                     				if (x == 0) {
                     					continue;
                     				} // if (x == 0)
                     				indexn2 = indexn - 1;
-                    			} // if (j == 0)
-                    			else if (j == 1) {
+                    			} // if (k == 0)
+                    			else if (k == 1) {
                     				if (x == xDim-1) {
                     					continue;
                     				} // if (x == xDim-1)
                     				indexn2 = indexn + 1;
-                    			} // else if (j == 1)
-                    			else if (j == 2) {
+                    			} // else if (k == 1)
+                    			else if (k == 2) {
                     				if (y == 0) {
                     					continue;
                     				} // if (y == 0)
                     				indexn2 = indexn - xDim;
-                    			} // else if (j == 2)
-                    			else if (j == 3) {
+                    			} // else if (k == 2)
+                    			else if (k == 3) {
                     				if (y == yDim-1) {
                     					continue;
                     				} // if (y == yDim-1)
                     				indexn2 = indexn + xDim;
-                    			} // else if (j == 3)
-                    			else if (j == 4) {
+                    			} // else if (k == 3)
+                    			else if (k == 4) {
                     			    if ((x == 0) || (y == 0)) {
                     			    	continue;
                     			    } // if ((x == 0) || (y == 0))
                     			    indexn2 = indexn - xDim - 1;
-                    			} // else if (j == 4)
-                    			else if (j == 5) {
+                    			} // else if (k == 4)
+                    			else if (k == 5) {
                     			    if ((x == 0) || (y == yDim-1)) {
                     			    	continue;
                     			    } // if ((x == 0) || (y == yDim-1))
                     			    indexn2 = indexn + xDim - 1;
-                    			} // else if (j == 5)
-                    			else if (j == 6) {
+                    			} // else if (k == 5)
+                    			else if (k == 6) {
                     				if ((x == xDim-1) || (y == 0)) {
                     					continue;
                     				} // if ((x == xDim-1) || (y == 0))
                     				indexn2 = indexn - xDim + 1;
-                    			} // else if (j == 6)
-                    			else { // j == 7
+                    			} // else if (k == 6)
+                    			else { // k == 7
                     				if ((x == xDim-1) || (y == yDim-1)) {
                     					continue;
                     				} // if ((x == xDim-1) || (y == yDim-1))
                     				indexn2 = indexn + xDim + 1;
-                    			} // else j == 7
-                    		} // for (j = 0; j < numNeighbor; j++)
+                    			} // else k == 7
+                    		} // for (k = 0; k < numNeighbor; k++)
                     		if (labelBuffer[indexn2] == MASK) {
                     			added = fifo.offer(indexn2);
                 				if (!added) {
