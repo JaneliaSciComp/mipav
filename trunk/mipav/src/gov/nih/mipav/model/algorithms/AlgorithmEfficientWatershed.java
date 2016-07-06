@@ -389,16 +389,16 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
                     				} // if ((x == xDim-1) || (y == yDim-1))
                     				indexn2 = indexn + xDim + 1;
                     			} // else k == 7
+                    			if (labelBuffer[indexn2] == MASK) {
+                        			added = fifo.offer(indexn2);
+                    				if (!added) {
+                        				MipavUtil.displayError("Failure to add indexn2 to the fifo");
+                        				setCompleted(false);
+                        				return;
+                        			}
+                    				labelBuffer[indexn2] = currentLabel;
+                        		} // if (labelBuffer[indexn2] == MASK)
                     		} // for (k = 0; k < numNeighbor; k++)
-                    		if (labelBuffer[indexn2] == MASK) {
-                    			added = fifo.offer(indexn2);
-                				if (!added) {
-                    				MipavUtil.displayError("Failure to add indexn2 to the fifo");
-                    				setCompleted(false);
-                    				return;
-                    			}
-                				labelBuffer[indexn2] = currentLabel;
-                    		} // if (labelBuffer[indexn2] == MASK)
         				} // while (!fifo.isEmpty())
             		} // if (labelBuffer[index] == MASK)
             	} // for (j = 0; j < indexBins[i].length; j++)
