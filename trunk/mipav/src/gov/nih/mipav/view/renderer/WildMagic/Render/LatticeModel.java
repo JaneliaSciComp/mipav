@@ -5294,6 +5294,9 @@ public class LatticeModel {
 
 		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
 		int dimZ = resultImage.getExtents().length > 2 ? resultImage.getExtents()[2] : 1;
+		
+		ModelImage contourImage = new ModelImage( ModelStorageBase.FLOAT, resultImage.getExtents(), imageName + "_straight_contour.xml" );
+		contourImage.setResolutions( resultImage.getResolutions(0) );
 
 		int dimX = (int) (resultImage.getExtents()[0]);
 		int dimY = (int) (resultImage.getExtents()[1]);
@@ -5355,9 +5358,40 @@ public class LatticeModel {
 				contour.elementAt(j).Z = i;
 			}
 			outputContour.getCurves().add( contour );
+			
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					contourImage.set(x,  y, i, 0 );
+					if ( contour.contains(x, y) )
+					{
+						contourImage.set(x,  y, i, 10 );
+					}
+				}
+			}
 		}
 
 		// Optional VOI interpolation & smoothing:
+		ModelImage contourImageBlur = WormSegmentation.blur(contourImage, 3);
+		contourImage.disposeLocal(false);
+		contourImage = null;
+		
+		for (int z = 0; z < dimZ; z++)
+		{			
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					if ( contourImageBlur.getFloat(x,y,z) <= 1 )
+					{
+						resultImage.set(x, y, z, 0);
+					}
+				}
+			}			
+		}
+		resultImage.setImageName( imageName + "_straight_masked.xml" );
+		saveImage(imageName, resultImage, true);
 
 		// Save the contour vois to file.
 		voiDir = outputDirectory + File.separator + "contours" + File.separator;
@@ -5366,6 +5400,9 @@ public class LatticeModel {
 
 		resultImage.disposeLocal(false);
 		resultImage = null;
+		
+		contourImageBlur.disposeLocal(false);
+		contourImageBlur = null;
 	}
 
 
