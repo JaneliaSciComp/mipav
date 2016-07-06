@@ -373,6 +373,7 @@ public class ViewMenuBar {
 										menuBuilder.buildMenuItem("Active contours without edges", "ActiveContours", 0,
 												null, false),
 								menuBuilder.buildMenuItem("Auto Seed Watershed", "AutoSeedWatershed", 0, null, false),
+								menuBuilder.buildMenuItem("Efficient Watershed", "EfficientWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Evaluate VOI segmentation", "evalSeg", 0, null, false),
 
 						// menuBuilder.buildMenuItem("Extract object surface",
@@ -1647,6 +1648,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Single channel", false);
 			menuBuilder.setMenuItemEnabled("Unsharp mask", false);
 			menuBuilder.setMenuItemEnabled("Watershed", false);
+			menuBuilder.setMenuItemEnabled("Efficient Watershed", false);
 			menuBuilder.setMenuItemEnabled("VOI landmark", false);
 			menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
 			menuBuilder.setMenuItemEnabled("Correct image spacing", false);
@@ -1757,6 +1759,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Reslice - isotropic voxels", true);
 		menuBuilder.setMenuItemEnabled("Subtract VOI background", true);
 		menuBuilder.setMenuItemEnabled("Single channel", true);
+		menuBuilder.setMenuItemEnabled("Efficient Watershed", true);
 		menuBuilder.setMenuItemEnabled("Watershed", true);
 		menuBuilder.setMenuItemEnabled("Histogram summary", true);
 		menuBuilder.setMenuItemEnabled("RGB -> Gray", true);
