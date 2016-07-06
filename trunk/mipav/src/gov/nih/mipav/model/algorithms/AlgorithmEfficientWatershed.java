@@ -156,7 +156,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             indexBins[0][0] = indexValueList.get(0).getIndex();
             for (i = 1, j = 0, ip = 1; i < length; i++) {
             	if (indexValueList.get(i).getValue() > indexValueList.get(i-1).getValue()) {
-            		histBins[j++] = indexValueList.get(i).getValue();
+            		histBins[++j] = indexValueList.get(i).getValue();
             		ip = 0;
             		indexBins[j][ip++] = indexValueList.get(i).getIndex();
             	}
