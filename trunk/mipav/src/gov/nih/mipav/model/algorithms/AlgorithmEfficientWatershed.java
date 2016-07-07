@@ -15,6 +15,7 @@ import java.util.*;
  * 2.) Watersheds in Digital Spaces: An Efficient Algorithm Based on Immersion Simulations by Luc Vincent
  * and Pierre Soille, IEEE Transactions on Pattern Analysis and Machine Intelligence, Vol. 13, No. 6,
  * June, 1991, pp. 583-598.
+ * The ImageJ version has 3 differences with the original article pseudocode as noted in comments.
  */
 
 public class AlgorithmEfficientWatershed extends AlgorithmBase {
@@ -55,9 +56,11 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	int i;
     	int j;
     	int k;
+    	int m;
     	int numValues;
     	double histBins[];
     	int indexBins[][];
+    	int neighborBins[][][];
     	int lasti;
     	int currentLabel;
     	int currentDist;
@@ -69,9 +72,12 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	boolean added;
     	Queue <Integer> fifo = new LinkedList<Integer>();
     	int fictitiousIndex = -3;
-    	int numNeighbor;
     	int indexn;
     	int indexn2 = 0;
+    	int numNeighbor;
+    	int foundNeighbors;
+    	int neighbors[];
+    	boolean found;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -93,6 +99,8 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         	numNeighbor = 4;
         }
     	
+        neighbors = new int[numNeighbor];
+        
         if (nDims > 2) {
             zDim = srcImage.getExtents()[2];
         } else {
@@ -129,8 +137,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 
                 return;
             }
-            indexValueList.clear();
-            frequencyCount.clear();
+          
             fifo.clear();
             
             for (i = 0; i < length; i++) {
@@ -150,8 +157,10 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             frequencyCount.add(length-lasti);
             histBins = new double[numValues];
             indexBins = new int[numValues][];
+            neighborBins = new int[numValues][][];
             for (i = 0; i < frequencyCount.size(); i++) {
             	indexBins[i] = new int[frequencyCount.get(i)];
+            	neighborBins[i] = new int[frequencyCount.get(i)][];
             }
             histBins[0] = indexValueList.get(0).getValue();
             indexBins[0][0] = indexValueList.get(0).getIndex();
@@ -165,6 +174,103 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             		indexBins[j][ip++] = indexValueList.get(i).getIndex();
             	}
             }
+            indexValueList.clear();
+            frequencyCount.clear();
+            
+            for (i = 0; i < numValues; i++) {
+            	for (j = 0; j < indexBins[i].length; j++) {
+            		index = indexBins[i][j];
+            		x = index % xDim;
+            		y = index / xDim;
+            		foundNeighbors = 0;
+            		if ((x > 0) && (j > 0) && (indexBins[i][j-1] == index-1)) {
+            			neighbors[foundNeighbors++] = index-1;
+            		}
+            		if ((x < xDim-1) && (j < indexBins[i].length-1) && (indexBins[i][j+1] == index+1)) {
+            			neighbors[foundNeighbors++] = index+1;
+            		}
+            		if ((y > 0) && (j > 0)) {
+            			found = false;
+            		    for (k = 0; k < j && (!found); k++) {
+            		        if (indexBins[i][k] == index-xDim) {
+            		        	found = true;
+            		        	neighbors[foundNeighbors++] = index-xDim;
+            		        }
+            		        else if (indexBins[i][k] > index-xDim) {
+            		        	break;
+            		        }
+            		    } // for (k = 0; k < j && (!found); k++)
+            		} // if ((y > 0) && (j > 0))
+            		if ((y < yDim-1) && (j < indexBins[i].length-1)) {
+            		    found = false;
+            		    for (k = j+1; k < indexBins[i].length && (!found); k++) {
+            		        if (indexBins[i][k] == index + xDim) {
+            		        	found = true;
+            		        	neighbors[foundNeighbors++] = index + xDim;
+            		        }
+            		        else if (indexBins[i][k] > index + xDim) {
+            		        	break;
+            		        }
+            		    } // for (k = j+1; k < indexBins[i].length && (!found); k++)
+            		} // if ((y < yDim-1) && (j < indexBins[i].length-1))
+            		if (neighbor8) {
+            		    if ((x > 0) && (y > 0) && (j > 0)) {
+            		        found = false;
+            		        for (k = 0; k < j && (!found); k++) {
+            		            if (indexBins[i][k] == index - xDim - 1) {
+            		                found = true;
+            		                neighbors[foundNeighbors++] = index-xDim-1;
+            		            }
+            		            else if (indexBins[i][k] > index-xDim-1) {
+            		            	break;
+            		            }
+            		        } // for (k = 0; k < j && (!found); k++)
+            		    } // if ((x > 0) && (y > 0) && (j > 0))
+            		    if ((x < xDim-1) && (y > 0) && (j > 0)) {
+            		        found = false;
+            		        for (k = 0; k < j && (!found); k++) {
+            		            if (indexBins[i][k] == index - xDim + 1) {
+            		                found = true;
+            		                neighbors[foundNeighbors++] = index-xDim+1;
+            		            }
+            		            else if (indexBins[i][k] > index-xDim+1) {
+            		            	break;
+            		            }
+            		        } // for (k = 0; k < j && (!found); k++)
+            		    } // if ((x < xDim-1) && (y > 0) && (j > 0))
+            		    if ((x > 0) & ( y < yDim-1) && (j < indexBins[i].length-1)) {
+            		        found = false;
+            		        for (k = j+1; k < indexBins[i].length && (!found); k++) {
+            		            if (indexBins[i][k] == index + xDim - 1) {
+            		            	found = true;
+            		            	neighbors[foundNeighbors++] = index+xDim-1;
+            		            }
+            		            else if (indexBins[i][k] > index+xDim-1) {
+            		            	break;
+            		            }
+            		        } // for (k = j+1; k < indexBins[i].length && (!found); k++)
+            		    } // if ((x > 0) & ( y < yDim-1) && (j < indexBins[i].length-1))
+            		    if ((x < xDim-1) & ( y < yDim-1) && (j < indexBins[i].length-1)) {
+            		        found = false;
+            		        for (k = j+1; k < indexBins[i].length && (!found); k++) {
+            		            if (indexBins[i][k] == index + xDim + 1) {
+            		            	found = true;
+            		            	neighbors[foundNeighbors++] = index+xDim+1;
+            		            }
+            		            else if (indexBins[i][k] > index+xDim+1) {
+            		            	break;
+            		            }
+            		        } // for (k = j+1; k < indexBins[i].length && (!found); k++)
+            		    } // if ((x < xDim-1) & ( y < yDim-1) && (j < indexBins[i].length-1))
+            		} // if (neighbor8)
+            		if (foundNeighbors > 0) {
+            			neighborBins[i][j] = new int[foundNeighbors];
+            			for (k = 0; k < foundNeighbors; k++) {
+            				neighborBins[i][j][k] = neighbors[k];
+            			}
+            		} // if (foundNeighbors > 0)
+            	} // for (j = 0; j < indexBins[i].length; j++)
+            } // for (i = 0; i < numValues; i++)
             
             
             for (i = 0; i < length; i++) {
@@ -178,38 +284,16 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             	for (j = 0; j < indexBins[i].length; j++) {
             		index = indexBins[i][j];
             		labelBuffer[index] = MASK;
-            		x = index % xDim;
-            		y = index / xDim;
             		exists = false;
-            		if ((x > 0) && ((labelBuffer[index-1] > 0) || (labelBuffer[index-1] == WSHED))) {
-            			exists = true;
-            		}
-            		else if ((x < xDim-1) && ((labelBuffer[index+1] > 0) || (labelBuffer[index+1] == WSHED))) {
-            			exists = true;
-            		}
-            		else if ((y > 0) && ((labelBuffer[index-xDim] > 0) || (labelBuffer[index-xDim] == WSHED))) {
-            			exists =true;
-            		}
-            		else if ((y < yDim-1) && ((labelBuffer[index+xDim] > 0) || (labelBuffer[index+xDim] == WSHED))) {
-            			exists = true;
-            		}
-            		else if (neighbor8) {
-                        if ((x > 0) && (y > 0) && ((labelBuffer[index-xDim-1] > 0) || (labelBuffer[index-xDim-1] == WSHED))) {
-                        	exists = true;
-                        }
-                        else if ((x > 0) && (y < yDim-1) && 
-                        		((labelBuffer[index+xDim-1] > 0) || (labelBuffer[index+xDim-1] == WSHED))) {
-                        	exists = true;
-                        }
-                        else if ((x < xDim-1) && ( y > 0) &&
-                        		((labelBuffer[index-xDim+1] > 0) || (labelBuffer[index-xDim+1] == WSHED))) {
-                        	exists = true;
-                        }
-                        else if ((x < xDim-1) && (y < yDim-1) &&
-                        		((labelBuffer[index+xDim+1] > 0) || (labelBuffer[index+xDim+1] == WSHED))) {
-                        	exists = true;
-                        }
-            		} // else if (neighbor8)
+            		if (neighborBins[i][j] != null) {
+            			for (k = 0; k < neighborBins[i][j].length && (!exists); k++) {
+            				indexn = neighborBins[i][j][k];
+            				// ImageJ code has if (labelBuffer[indexn] >= 0)
+            				if ((labelBuffer[indexn] > 0) || (labelBuffer[indexn] == WSHED)) {
+            					exists = true;
+            				}
+            			}
+            		} // if (neighbors[i][j] != null)
             		if (exists) {
             			distanceBuffer[index] = 1;
             			added = fifo.offer(index);
@@ -245,81 +329,45 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             				index = fifo.poll();
             			}
             		} // if (index == fictiousIndex)
-            		x = index % xDim;
-            		y = index / xDim;
-            		for (j = 0; j < numNeighbor; j++) {
-            			if (j == 0) {
-            				if (x == 0) {
-            					continue;
-            				} // if (x == 0)
-            				indexn = index - 1;
-            			} // if (j == 0)
-            			else if (j == 1) {
-            				if (x == xDim-1) {
-            					continue;
-            				} // if (x == xDim-1)
-            				indexn = index + 1;
-            			} // else if (j == 1)
-            			else if (j == 2) {
-            				if (y == 0) {
-            					continue;
-            				} // if (y == 0)
-            				indexn = index - xDim;
-            			} // else if (j == 2)
-            			else if (j == 3) {
-            				if (y == yDim-1) {
-            					continue;
-            				} // if (y == yDim-1)
-            				indexn = index + xDim;
-            			} // else if (j == 3)
-            			else if (j == 4) {
-            			    if ((x == 0) || (y == 0)) {
-            			    	continue;
-            			    } // if ((x == 0) || (y == 0))
-            			    indexn = index - xDim - 1;
-            			} // else if (j == 4)
-            			else if (j == 5) {
-            			    if ((x == 0) || (y == yDim-1)) {
-            			    	continue;
-            			    } // if ((x == 0) || (y == yDim-1))
-            			    indexn = index + xDim - 1;
-            			} // else if (j == 5)
-            			else if (j == 6) {
-            				if ((x == xDim-1) || (y == 0)) {
-            					continue;
-            				} // if ((x == xDim-1) || (y == 0))
-            				indexn = index - xDim + 1;
-            			} // else if (j == 6)
-            			else { // j == 7
-            				if ((x == xDim-1) || (y == yDim-1)) {
-            					continue;
-            				} // if ((x == xDim-1) || (y == yDim-1))
-            				indexn = index + xDim + 1;
-            			} // else j == 7
-            			if ((distanceBuffer[indexn] < currentDist) && ((labelBuffer[indexn] > 0) || (labelBuffer[indexn] == WSHED))) {
-            			    // i.e., indexn belongs to an already labeled basin or to the watersheds
-            				if (labelBuffer[indexn] > 0) {
-            				   if ((labelBuffer[index] == MASK) || (labelBuffer[index] == WSHED)) {
-            				       labelBuffer[index] = labelBuffer[indexn];   
-            				   } // if ((labelBuffer[index] == MASK) || (labelBuffer[index] == WSHED))
-            				   else if (labelBuffer[index] != labelBuffer[indexn]) {
-            					    labelBuffer[index] = WSHED;   
-            				   } // else if (labelBuffer[index] != labelBuffer[indexn])
-            				} // if (labelBuffer[indexn] > 0)
-            				else if (labelBuffer[index] == MASK) {
-            				    labelBuffer[index] = WSHED;	
-            				} // else if (labelBuffer[index] == MASK)
-            			} // if ((distanceBuffer[indexn] < currentDist) && ((labelBuffer[indexn] > 0) || (labelBuffer[indexn] == WSHED)))
-            			else if ((labelBuffer[indexn] == MASK) && (distanceBuffer[indexn] == 0)) {
-            			    distanceBuffer[indexn] = currentDist + 1;	
-            			    added = fifo.offer(indexn);
-            				if (!added) {
-                				MipavUtil.displayError("Failure to add indexn to the fifo");
-                				setCompleted(false);
-                				return;
-                			}
-            			} // else if ((labelBuffer[indexn] == MASK) && (distanceBuffer[indexn] == 0))
-            		} // for (j = 0; j < numNeighbor; j++)
+            		
+            		found = false;
+            		for (j = 0; j < indexBins[i].length && (!found); j++) {
+            			if (indexBins[i][j] == index) {
+            				found = true;
+            				break;
+            			}
+            		}
+            		if (found && (neighborBins[i][j] != null)) {
+            		    for (k = 0; k < neighborBins[i][j].length; k++) {
+            		    	indexn = neighborBins[i][j][k];
+            		
+	            			// ImageJ code has if ((distanceBuffer[indexn] <= curDist) && (labelBuffer[indexn] >= 0))
+            		    	if ((distanceBuffer[indexn] < currentDist) && ((labelBuffer[indexn] > 0) || (labelBuffer[indexn] == WSHED))) {
+	            			    // i.e., indexn belongs to an already labeled basin or to the watersheds
+	            				if (labelBuffer[indexn] > 0) {
+	            				   // ImageJ code has if (labelBuffer[index] == MASK)
+	            				   if ((labelBuffer[index] == MASK) || (labelBuffer[index] == WSHED)) {
+	            				       labelBuffer[index] = labelBuffer[indexn];   
+	            				   } // if ((labelBuffer[index] == MASK) || (labelBuffer[index] == WSHED))
+	            				   else if (labelBuffer[index] != labelBuffer[indexn]) {
+	            					    labelBuffer[index] = WSHED;   
+	            				   } // else if (labelBuffer[index] != labelBuffer[indexn])
+	            				} // if (labelBuffer[indexn] > 0)
+	            				else if (labelBuffer[index] == MASK) {
+	            				    labelBuffer[index] = WSHED;	
+	            				} // else if (labelBuffer[index] == MASK)
+	            			} // if ((distanceBuffer[indexn] < currentDist) && ((labelBuffer[indexn] > 0) || (labelBuffer[indexn] == WSHED)))
+	            			else if ((labelBuffer[indexn] == MASK) && (distanceBuffer[indexn] == 0)) {
+	            			    distanceBuffer[indexn] = currentDist + 1;	
+	            			    added = fifo.offer(indexn);
+	            				if (!added) {
+	                				MipavUtil.displayError("Failure to add indexn to the fifo");
+	                				setCompleted(false);
+	                				return;
+	                			}
+	            			} // else if ((labelBuffer[indexn] == MASK) && (distanceBuffer[indexn] == 0))
+            		    } // for (k = 0; k < neighborBins[i][j].length; k++)
+            		} // if (found && (neighborBins[i][j] != null))
             	} // while (true)
             	
             	// Checks if new minima have been discovered
@@ -338,67 +386,27 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         				labelBuffer[index] = currentLabel;
         				while (!fifo.isEmpty()) {
         					indexn = fifo.poll();
-        					x = indexn % xDim;
-                    		y = indexn / xDim;
-                    		for (k = 0; k < numNeighbor; k++) {
-                    			if (k == 0) {
-                    				if (x == 0) {
-                    					continue;
-                    				} // if (x == 0)
-                    				indexn2 = indexn - 1;
-                    			} // if (k == 0)
-                    			else if (k == 1) {
-                    				if (x == xDim-1) {
-                    					continue;
-                    				} // if (x == xDim-1)
-                    				indexn2 = indexn + 1;
-                    			} // else if (k == 1)
-                    			else if (k == 2) {
-                    				if (y == 0) {
-                    					continue;
-                    				} // if (y == 0)
-                    				indexn2 = indexn - xDim;
-                    			} // else if (k == 2)
-                    			else if (k == 3) {
-                    				if (y == yDim-1) {
-                    					continue;
-                    				} // if (y == yDim-1)
-                    				indexn2 = indexn + xDim;
-                    			} // else if (k == 3)
-                    			else if (k == 4) {
-                    			    if ((x == 0) || (y == 0)) {
-                    			    	continue;
-                    			    } // if ((x == 0) || (y == 0))
-                    			    indexn2 = indexn - xDim - 1;
-                    			} // else if (k == 4)
-                    			else if (k == 5) {
-                    			    if ((x == 0) || (y == yDim-1)) {
-                    			    	continue;
-                    			    } // if ((x == 0) || (y == yDim-1))
-                    			    indexn2 = indexn + xDim - 1;
-                    			} // else if (k == 5)
-                    			else if (k == 6) {
-                    				if ((x == xDim-1) || (y == 0)) {
-                    					continue;
-                    				} // if ((x == xDim-1) || (y == 0))
-                    				indexn2 = indexn - xDim + 1;
-                    			} // else if (k == 6)
-                    			else { // k == 7
-                    				if ((x == xDim-1) || (y == yDim-1)) {
-                    					continue;
-                    				} // if ((x == xDim-1) || (y == yDim-1))
-                    				indexn2 = indexn + xDim + 1;
-                    			} // else k == 7
-                    			if (labelBuffer[indexn2] == MASK) {
-                        			added = fifo.offer(indexn2);
-                    				if (!added) {
-                        				MipavUtil.displayError("Failure to add indexn2 to the fifo");
-                        				setCompleted(false);
-                        				return;
-                        			}
-                    				labelBuffer[indexn2] = currentLabel;
-                        		} // if (labelBuffer[indexn2] == MASK)
-                    		} // for (k = 0; k < numNeighbor; k++)
+        					found = false;
+                    		for (k = 0; k < indexBins[i].length && (!found); k++) {
+                    			if (indexBins[i][k] == indexn) {
+                    				found = true;
+                    				break;
+                    			}
+                    		}
+                    	    if (found & neighborBins[i][k] != null) {
+                    	    	for (m = 0; m < neighborBins[i][k].length; m++) {
+                    	    	    indexn2 = neighborBins[i][k][m];
+	                    			if (labelBuffer[indexn2] == MASK) {
+	                        			added = fifo.offer(indexn2);
+	                    				if (!added) {
+	                        				MipavUtil.displayError("Failure to add indexn2 to the fifo");
+	                        				setCompleted(false);
+	                        				return;
+	                        			}
+	                    				labelBuffer[indexn2] = currentLabel;
+	                        		} // if (labelBuffer[indexn2] == MASK)
+                    		    } // for (m = 0; m < neighborBins[i][k].length; m++)
+                    	    } // if (found & neighborBins[i][k] != null)
         				} // while (!fifo.isEmpty())
             		} // if (labelBuffer[index] == MASK)
             	} // for (j = 0; j < indexBins[i].length; j++)
@@ -468,5 +476,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 		public double getValue() {
 			return value;
 		}
+		
+		
 	}
 }
