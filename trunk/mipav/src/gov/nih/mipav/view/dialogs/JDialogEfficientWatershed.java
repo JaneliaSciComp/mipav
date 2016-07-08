@@ -35,9 +35,6 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
-    /** DOCUMENT ME! */
-    private JLabel labelNeighborSize;
-
     
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -55,6 +52,16 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
     private JRadioButton fourButton;
     
     private JRadioButton eightButton;
+    
+    private boolean limitBins;
+    
+    private JLabel labelBins;
+    
+    private JTextField textBins;
+    
+    private JCheckBox binCheckBox;
+    
+    private int binNumber;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -86,12 +93,16 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
             if (setVariables()) {
                 callAlgorithm();
             }
+        } else if (source.equals(binCheckBox)) {
+        	labelBins.setEnabled(binCheckBox.isSelected());
+        	textBins.setEnabled(binCheckBox.isSelected());
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -196,12 +207,24 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
                 if (!neighbor8) {
                 	fourButton.setSelected(true);
                 	eightButton.setSelected(false);
-                	
                 }
                 else {
                 	fourButton.setSelected(false);
                 	eightButton.setSelected(true);		
                 }
+                limitBins = MipavUtil.getBoolean(st);
+                if (limitBins) {
+                	binCheckBox.setSelected(true);
+                	labelBins.setEnabled(true);
+                	textBins.setEnabled(true);
+                }
+                else {
+                	binCheckBox.setSelected(false);
+                	labelBins.setEnabled(false);
+                	textBins.setEnabled(false);
+                }
+                binNumber = MipavUtil.getInt(st);
+                textBins.setText(String.valueOf(binNumber));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -220,6 +243,23 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         this.neighbor8 = neighbor8;
     }
     
+   
+    /**
+     * 
+     * @param limitBins
+     */
+    public void setLimitBins(boolean limitBins) {
+    	this.limitBins = limitBins;
+    }
+    
+    /**
+     * 
+     * @param binNumber
+     */
+    public void setBinNumber(int binNumber) {
+    	this.binNumber = binNumber;
+    }
+    
     
 
     /**
@@ -232,7 +272,7 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
                resultImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), 
                         		image.getImageName() + "_watershed");
            
-           watershedAlgo = new AlgorithmEfficientWatershed(resultImage, image, neighbor8);
+           watershedAlgo = new AlgorithmEfficientWatershed(resultImage, image, neighbor8, limitBins, binNumber);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -287,6 +327,8 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         parentFrame = image.getParentFrame();
 
         setNeighbor8(scriptParameters.getParams().getBoolean("neighbor_8"));
+        setLimitBins(scriptParameters.getParams().getBoolean("limit_bins"));
+        setBinNumber(scriptParameters.getParams().getInt("bin_number"));
     }
 
     /**
@@ -297,6 +339,8 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("neighbor_8", neighbor8));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("limit_bins", limitBins));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bin_number", binNumber));
     }
 
     
@@ -331,7 +375,7 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         gbc.gridy = ypos++;
         gbc.weighty = .1;
         JScrollPane scaleScroll = new JScrollPane(neighborPanel);
-        scaleScroll.setBorder(buildTitledBorder("Neighbor group number"));
+        scaleScroll.setBorder(buildTitledBorder("Parameters"));
         scaleScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         mainPanel.add(scaleScroll, gbc);
 
@@ -342,18 +386,38 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         gbcScale.anchor = GridBagConstraints.WEST;
         gbcScale.insets = new Insets(0, 0, 2, 0);
         neighborGroup = new ButtonGroup();
-        fourButton = new JRadioButton("4", true);
+        fourButton = new JRadioButton("4 nearest neighbors", true);
         fourButton.setFont(serif12);
         fourButton.setForeground(Color.black);
         neighborGroup.add(fourButton);
         gbcScale.gridy++;
         neighborPanel.add(fourButton, gbcScale); 
-        eightButton = new JRadioButton("8", false);
+        eightButton = new JRadioButton("8 nearest neighbors", false);
         eightButton.setFont(serif12);
         eightButton.setForeground(Color.black);
         neighborGroup.add(eightButton);
         gbcScale.gridy++;
         neighborPanel.add(eightButton, gbcScale); 
+        binCheckBox = new JCheckBox("Limit bins per frame");
+        binCheckBox.setFont(serif12);
+        binCheckBox.setForeground(Color.black);
+        binCheckBox.setSelected(false);
+        binCheckBox.addActionListener(this);
+        gbcScale.gridy++;
+        neighborPanel.add(binCheckBox, gbcScale);
+        labelBins = new JLabel("Bin number per frame");
+        labelBins.setFont(serif12);
+        labelBins.setForeground(Color.black);
+        labelBins.setEnabled(false);
+        gbcScale.gridy++;
+        neighborPanel.add(labelBins, gbcScale);
+        textBins = new JTextField(10);
+        textBins.setText("4");
+        textBins.setFont(serif12);
+        textBins.setForeground(Color.black);
+        textBins.setEnabled(false);
+        gbcScale.gridx = 1;
+        neighborPanel.add(textBins, gbcScale);
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -375,12 +439,19 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+    	String tmpStr;
         
         if (fourButton.isSelected()) {
         	neighbor8 = false;
         }
         else {
         	neighbor8 = true;
+        }
+        
+        limitBins = binCheckBox.isSelected();
+        if (limitBins) {
+        	tmpStr = textBins.getText();
+            binNumber = Integer.parseInt(tmpStr);
         }
 
         return true;
@@ -434,6 +505,8 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         	
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean("neighbor_8", false));
+            table.put(new ParameterBoolean("limit_bins", false));
+            table.put(new ParameterInt("bin_number", 4));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
