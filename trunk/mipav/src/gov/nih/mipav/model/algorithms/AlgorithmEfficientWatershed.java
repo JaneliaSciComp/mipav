@@ -39,6 +39,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 		this.neighbor8 = neighbor8;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void runAlgorithm() {
     	int xDim;
     	int yDim;
@@ -55,7 +56,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	int t;
     	int i;
     	int j;
-    	int k;
+    	int k = 0;
     	int m;
     	int numValues;
     	double histBins[];
@@ -78,6 +79,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	int foundNeighbors;
     	int neighbors[];
     	boolean found;
+    	Map<Integer, Integer> reverseIndex[];
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -158,6 +160,10 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             histBins = new double[numValues];
             indexBins = new int[numValues][];
             neighborBins = new int[numValues][][];
+            reverseIndex = new Map[numValues];
+            for (i = 0; i < numValues; i++) {
+            	reverseIndex[i] = new Hashtable<Integer,Integer>();
+            }
             for (i = 0; i < frequencyCount.size(); i++) {
             	indexBins[i] = new int[frequencyCount.get(i)];
             	neighborBins[i] = new int[frequencyCount.get(i)][];
@@ -168,10 +174,12 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             	if (indexValueList.get(i).getValue() > indexValueList.get(i-1).getValue()) {
             		histBins[++j] = indexValueList.get(i).getValue();
             		ip = 0;
-            		indexBins[j][ip++] = indexValueList.get(i).getIndex();
+            		indexBins[j][ip] = indexValueList.get(i).getIndex();
+            		reverseIndex[j].put(indexValueList.get(i).getIndex(), ip++);
             	}
             	else {
-            		indexBins[j][ip++] = indexValueList.get(i).getIndex();
+            		indexBins[j][ip] = indexValueList.get(i).getIndex();
+            		reverseIndex[j].put(indexValueList.get(i).getIndex(), ip++);
             	}
             }
             indexValueList.clear();
@@ -331,11 +339,9 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             		} // if (index == fictiousIndex)
             		
             		found = false;
-            		for (j = 0; j < indexBins[i].length && (!found); j++) {
-            			if (indexBins[i][j] == index) {
-            				found = true;
-            				break;
-            			}
+            		if (reverseIndex[i].containsKey(index)) {
+            			found = true;
+            			j = reverseIndex[i].get(index);
             		}
             		if (found && (neighborBins[i][j] != null)) {
             		    for (k = 0; k < neighborBins[i][j].length; k++) {
@@ -387,12 +393,10 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         				while (!fifo.isEmpty()) {
         					indexn = fifo.poll();
         					found = false;
-                    		for (k = 0; k < indexBins[i].length && (!found); k++) {
-                    			if (indexBins[i][k] == indexn) {
-                    				found = true;
-                    				break;
-                    			}
-                    		}
+        					if (reverseIndex[i].containsKey(indexn)) {
+        						found = true;
+        						k = reverseIndex[i].get(indexn);
+        					}
                     	    if (found & neighborBins[i][k] != null) {
                     	    	for (m = 0; m < neighborBins[i][k].length; m++) {
                     	    	    indexn2 = neighborBins[i][k][m];
@@ -410,6 +414,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         				} // while (!fifo.isEmpty())
             		} // if (labelBuffer[index] == MASK)
             	} // for (j = 0; j < indexBins[i].length; j++)
+            	reverseIndex[i].clear();
             } // for (i = 0; i < numValues; i++)
             
             
