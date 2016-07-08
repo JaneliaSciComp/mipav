@@ -197,79 +197,25 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             		if ((x < xDim-1) && (j < indexBins[i].length-1) && (indexBins[i][j+1] == index+1)) {
             			neighbors[foundNeighbors++] = index+1;
             		}
-            		if ((y > 0) && (j > 0)) {
-            			found = false;
-            		    for (k = 0; k < j && (!found); k++) {
-            		        if (indexBins[i][k] == index-xDim) {
-            		        	found = true;
-            		        	neighbors[foundNeighbors++] = index-xDim;
-            		        }
-            		        else if (indexBins[i][k] > index-xDim) {
-            		        	break;
-            		        }
-            		    } // for (k = 0; k < j && (!found); k++)
-            		} // if ((y > 0) && (j > 0))
-            		if ((y < yDim-1) && (j < indexBins[i].length-1)) {
-            		    found = false;
-            		    for (k = j+1; k < indexBins[i].length && (!found); k++) {
-            		        if (indexBins[i][k] == index + xDim) {
-            		        	found = true;
-            		        	neighbors[foundNeighbors++] = index + xDim;
-            		        }
-            		        else if (indexBins[i][k] > index + xDim) {
-            		        	break;
-            		        }
-            		    } // for (k = j+1; k < indexBins[i].length && (!found); k++)
-            		} // if ((y < yDim-1) && (j < indexBins[i].length-1))
+            		if ((y > 0) && (j > 0)  && reverseIndex[i].containsKey(index-xDim)) {
+            		    neighbors[foundNeighbors++] = index-xDim;	
+            		} // if ((y > 0) && (j > 0)  && reverseIndex[i].containsKey(index-xDim))
+            		if ((y < yDim-1) && (j < indexBins[i].length-1) && reverseIndex[i].containsKey(index+xDim)) {
+            		    neighbors[foundNeighbors++] = index+xDim;
+            		} // if ((y < yDim-1) && (j < indexBins[i].length-1) && reverseIndex[i].containsKey(index+xDim))
             		if (neighbor8) {
-            		    if ((x > 0) && (y > 0) && (j > 0)) {
-            		        found = false;
-            		        for (k = 0; k < j && (!found); k++) {
-            		            if (indexBins[i][k] == index - xDim - 1) {
-            		                found = true;
-            		                neighbors[foundNeighbors++] = index-xDim-1;
-            		            }
-            		            else if (indexBins[i][k] > index-xDim-1) {
-            		            	break;
-            		            }
-            		        } // for (k = 0; k < j && (!found); k++)
-            		    } // if ((x > 0) && (y > 0) && (j > 0))
-            		    if ((x < xDim-1) && (y > 0) && (j > 0)) {
-            		        found = false;
-            		        for (k = 0; k < j && (!found); k++) {
-            		            if (indexBins[i][k] == index - xDim + 1) {
-            		                found = true;
-            		                neighbors[foundNeighbors++] = index-xDim+1;
-            		            }
-            		            else if (indexBins[i][k] > index-xDim+1) {
-            		            	break;
-            		            }
-            		        } // for (k = 0; k < j && (!found); k++)
-            		    } // if ((x < xDim-1) && (y > 0) && (j > 0))
-            		    if ((x > 0) & ( y < yDim-1) && (j < indexBins[i].length-1)) {
-            		        found = false;
-            		        for (k = j+1; k < indexBins[i].length && (!found); k++) {
-            		            if (indexBins[i][k] == index + xDim - 1) {
-            		            	found = true;
-            		            	neighbors[foundNeighbors++] = index+xDim-1;
-            		            }
-            		            else if (indexBins[i][k] > index+xDim-1) {
-            		            	break;
-            		            }
-            		        } // for (k = j+1; k < indexBins[i].length && (!found); k++)
-            		    } // if ((x > 0) & ( y < yDim-1) && (j < indexBins[i].length-1))
-            		    if ((x < xDim-1) & ( y < yDim-1) && (j < indexBins[i].length-1)) {
-            		        found = false;
-            		        for (k = j+1; k < indexBins[i].length && (!found); k++) {
-            		            if (indexBins[i][k] == index + xDim + 1) {
-            		            	found = true;
-            		            	neighbors[foundNeighbors++] = index+xDim+1;
-            		            }
-            		            else if (indexBins[i][k] > index+xDim+1) {
-            		            	break;
-            		            }
-            		        } // for (k = j+1; k < indexBins[i].length && (!found); k++)
-            		    } // if ((x < xDim-1) & ( y < yDim-1) && (j < indexBins[i].length-1))
+            		    if ((x > 0) && (y > 0) && (j > 0) && (reverseIndex[i].containsKey(index-xDim-1))) {
+            		        neighbors[foundNeighbors++] = index-xDim-1;
+            		    } // if ((x > 0) && (y > 0) && (j > 0) && (reverseIndex[i].containsKey(index-xDim-1)))
+            		    if ((x < xDim-1) && (y > 0) && (j > 0) && (reverseIndex[i].containsKey(index-xDim+1))) {
+            		       neighbors[foundNeighbors++] = index-xDim+1;
+            		    } // if ((x < xDim-1) && (y > 0) && (j > 0) && (reverseIndex[i].containsKey(index-xDim+1)))
+            		    if ((x > 0) & ( y < yDim-1) && (j < indexBins[i].length-1) && (reverseIndex[i].containsKey(index+xDim-1))) {
+            		       neighbors[foundNeighbors++] = index+xDim-1;
+            		    } // if ((x > 0) & ( y < yDim-1) && (j < indexBins[i].length-1) && (reverseIndex[i].containsKey(index+xDim-1)))
+            		    if ((x < xDim-1) & ( y < yDim-1) && (j < indexBins[i].length-1) && (reverseIndex[i].containsKey(index+xDim+1))) {
+            		       neighbors[foundNeighbors++] = index+xDim+1;
+            		    } // if ((x < xDim-1) & ( y < yDim-1) && (j < indexBins[i].length-1) && (reverseIndex[i].containsKey(index+xDim+1)))
             		} // if (neighbor8)
             		if (foundNeighbors > 0) {
             			neighborBins[i][j] = new int[foundNeighbors];
