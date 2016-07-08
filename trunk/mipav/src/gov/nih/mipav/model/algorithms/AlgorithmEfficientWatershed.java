@@ -32,11 +32,18 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 	
 	private boolean neighbor8;
 	
+	boolean limitBins;
+	
+	int binNumber;
+	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
-	public AlgorithmEfficientWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8) {
+	public AlgorithmEfficientWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8, boolean limitBins,
+			int binNumber) {
 		super(destImage, srcImage);
 		this.neighbor8 = neighbor8;
+		this.limitBins = limitBins;
+		this.binNumber = binNumber;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -80,6 +87,10 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	int neighbors[];
     	boolean found;
     	Map<Integer, Integer> reverseIndex[];
+    	double minValue;
+    	double maxValue;
+    	double range;
+    	double scale;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -139,6 +150,25 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 
                 return;
             }
+            
+            if (limitBins) {
+            	minValue = Double.MAX_VALUE;
+            	maxValue = -Double.MAX_VALUE;
+            	for (i = 0; i < length; i++) {
+            	    if (imgBuffer[i] < minValue) {
+            	    	minValue = imgBuffer[i];
+            	    }
+            	    if (imgBuffer[i] > maxValue) {
+            	    	maxValue = imgBuffer[i];
+            	    }
+            	}
+            	
+            	range = maxValue - minValue;
+        	    scale = (binNumber-1)/range;
+        	    for (i = 0; i < length; i++) {
+        	    	imgBuffer[i] = Math.min((double)(binNumber-1), Math.floor((imgBuffer[i]-minValue)*scale + 0.5));
+        	    }
+            } // if (limitBins)
           
             fifo.clear();
             
