@@ -58,5 +58,9 @@ public class FileInfoMetaImage extends FileInfoBase {
         this.centerOfRotation = centerOfRotation;    
     }
     
+    public double[] getCenterOfRotation() {
+    	return centerOfRotation;
+    }
+    
     
 }
