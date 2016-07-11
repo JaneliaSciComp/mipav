@@ -1081,7 +1081,7 @@ public class FileMetaImage extends FileBase {
     	float offset[];
     	TransMatrix matrix;
     	boolean haveOrientation;
-    	String orientation = "";
+    	String orientation[] = new String[3];
     	int axisOrientation[];
     	double centerOfRotation[];
     	int i;
@@ -1176,29 +1176,29 @@ public class FileMetaImage extends FileBase {
              for (i = 0; i < 3; i++) {
                  switch(axisOrientation[i]) {
                  case FileInfoBase.ORI_R2L_TYPE:
-                	 orientation.concat("R");
+                	 orientation[i] = "R";
                 	 break;
                  case FileInfoBase.ORI_L2R_TYPE:
-                	 orientation.concat("L");
+                	 orientation[i] = "L";
                 	 break;
                  case FileInfoBase.ORI_A2P_TYPE:
-                	 orientation.concat("A");
+                	 orientation[i] = "A";
                      break;
                  case FileInfoBase.ORI_P2A_TYPE:
-                	 orientation.concat("P");
+                	 orientation[i] = "P";
                 	 break;
                  case FileInfoBase.ORI_I2S_TYPE:
-                	 orientation.concat("I");
+                	 orientation[i] = "I";
                 	 break;
                  case FileInfoBase.ORI_S2I_TYPE:
-                	 orientation.concat("S");
+                	 orientation[i] = "S";
                 	 break;
                  case FileInfoBase.ORI_UNKNOWN_TYPE:
                 	 haveOrientation = false;
                  }
              }
              if (haveOrientation) {
-                 raFile.writeBytes("AnatomicalOrientation = " + orientation + "\n");	 
+                 raFile.writeBytes("AnatomicalOrientation = " + orientation[0] + orientation[1] + orientation[2] + "\n");	 
              }
          } // if (nDims >= 3)
          if (isMetaImage && fileInfo.getCenterOfRotation() != null) {
