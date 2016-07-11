@@ -66,6 +66,11 @@ public class FileMetaImage extends FileBase {
     private boolean sepFound = true;
     private Inflater zlibDecompresser = null;
     
+    /** If true, header and data both stored in .mha file.
+     *  If false, header stored in filename.mhd and data
+     *  stored in filename.raw. */
+    private boolean oneFile;
+    private File fileHeader;
     
     /**
      * Constructs new file object.
@@ -930,5 +935,438 @@ public class FileMetaImage extends FileBase {
         
         values[numValues++] = tempString;
         return;
+    }
+    
+    /**
+     * Writes an MetaImage format type image.
+     *
+     * @param      image  Image model of data to write.
+     *
+     * @exception  IOException  if there is an error writing the file
+     *
+     * @see        FileInfoMeta
+     * @see        FileRaw
+     */
+    public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
+        String fhName;
+        int index;
+        int nImagesSaved;
+        int nTimePeriodsSaved;
+        String suffix;
+        int headerIndex = 0;
+        long finalHeaderPosition[] = null;
+
+        suffix = FileUtility.getExtension(fileName);
+
+        if (suffix.equalsIgnoreCase(".mha")) {
+            oneFile = true;
+        } else if (suffix.equalsIgnoreCase(".raw")) {
+            oneFile = false;
+        } else if (suffix.equalsIgnoreCase(".mhd")) {
+            oneFile = false;
+        } else {
+            JDialogMetaImageChoice choice = new JDialogMetaImageChoice(ViewUserInterface.getReference().getMainFrame());
+
+            if (!choice.okayPressed()) {
+                throw new IOException("FileMetaImageWrite dialog error");
+            }
+
+            oneFile = choice.getOneFile();
+        }
+
+        index = fileName.lastIndexOf(".");
+
+        if (index != -1) {
+            fhName = fileName.substring(0, index);
+            if (suffix.equalsIgnoreCase(".mhd")) {
+                fileName = fhName + ".raw";
+            }
+        } else {
+            fhName = fileName.substring(0);
+        }
+        nImagesSaved = options.getEndSlice() - options.getBeginSlice() + 1;
+        nTimePeriodsSaved = options.getEndTime() - options.getBeginTime() + 1;
+
+        if (options.isMultiFile()) {
+            FileRaw rawFile;
+            rawFile = new FileRaw(image.getFileInfo(0));
+            rawFile.setZeroLengthFlag(true);
+            linkProgress(rawFile);
+            if (image.getNDims() == 3) {
+                finalHeaderPosition = new long[nImagesSaved];	
+            }
+            else if (image.getNDims() == 4) {
+            	finalHeaderPosition = new long[nTimePeriodsSaved];
+            }
+
+            if (oneFile) {
+
+                if (image.getNDims() == 3) {
+                	writeHeader3DTo2D(image, fhName, fileDir, options, oneFile, finalHeaderPosition);
+                    rawFile.writeImage3DTo2D(image, options, ".mha", finalHeaderPosition);
+                } else if (image.getNDims() == 4) {
+                	writeHeader4DTo3D(image, fhName, fileDir, options, oneFile, finalHeaderPosition);
+                    rawFile.writeImage4DTo3D(image, options, ".mha", finalHeaderPosition);
+                }
+            } // if (oneFile)
+            else { // 2 files
+                rawFile.setStartPosition(0L);
+
+                if (image.getNDims() == 3) {
+                	writeHeader3DTo2D(image, fhName, fileDir, options, oneFile, finalHeaderPosition);
+                    rawFile.writeImage3DTo2D(image, options, ".raw");
+                } else if (image.getNDims() == 4) {
+                	writeHeader4DTo3D(image, fhName, fileDir, options, oneFile, finalHeaderPosition);
+                    rawFile.writeImage4DTo3D(image, options, ".raw");
+                }
+            } // else 2 files
+
+        } else {
+
+            try {
+                FileRaw rawFile;
+                rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                rawFile.setZeroLengthFlag(true);
+                linkProgress(rawFile);
+                finalHeaderPosition = new long[1];
+                if (nImagesSaved != 0) {
+                    writeHeader(image, nImagesSaved, nTimePeriodsSaved, fhName, fileDir,oneFile,headerIndex,finalHeaderPosition);
+                }
+               
+                if (oneFile) {
+                    rawFile.setStartPosition(finalHeaderPosition[0]);
+                } else {
+                    rawFile.setStartPosition(0L);
+                }
+
+                rawFile.writeImage(image, options);
+
+            } catch (IOException error) {
+                throw new IOException("FileMetaImageWrite: " + error);
+            } catch (OutOfMemoryError error) {
+                throw (error);
+            }
+        }
+
+        fireProgressStateChanged(100);
+
+        // With extents from rawFile
+    }
+    
+    /**
+     * Writes a MetaImage header to a separate file.
+     *
+     * @param      image     Image model of data to write.
+     * @param      fileName  File name.
+     * @param      fileDir   File directory.
+     *
+     * @return     Flag to confirm a successful read.
+     *
+     * @exception  IOException  if there is an error
+     *
+     * @see        FileInfoMetaImage
+     */
+    public boolean writeHeader(ModelImage image, int nImagesSaved, int nTimeSaved, String fileName, String fileDir,
+    		                   boolean oneFile, int headerIndex, long finalHeaderPosition[])
+            throws IOException {
+    	FileInfoBase myFileInfo;
+    	boolean endianess;
+    	boolean isMetaImage = true;
+    	String fileHeaderName;
+    	int nDims;
+    	int extents[];
+    	int dataType;
+    	String fileDataName;
+    	float res[];
+    	float offset[];
+    	TransMatrix matrix;
+    	boolean haveOrientation;
+    	String orientation = "";
+    	int axisOrientation[];
+    	double centerOfRotation[];
+    	int i;
+    	
+    	 myFileInfo = image.getFileInfo(0); // A safeguard in case the file is not MetaImage
+         endianess = myFileInfo.getEndianess();
+
+         try { // In this case, the file must be MetaImage
+             fileInfo = (FileInfoMetaImage) image.getFileInfo(0);
+         } catch (ClassCastException e) { // If it isn't, catch the exception
+
+             // and make a new fileInfo
+             fileInfo = new FileInfoMetaImage(fileName, fileDir, FileUtility.METAIMAGE);
+             isMetaImage = false; // Write the header without all the NIFTI info
+         }
+         
+         if (oneFile) {
+             fileHeaderName = fileName + ".mha";
+             fileDataName = fileName + ".mha";
+         } else {
+             fileHeaderName = fileName + ".mhd";
+             fileDataName = fileName + ".raw";
+         }
+
+         fileHeader = new File(fileDir + fileHeaderName);
+         raFile = new RandomAccessFile(fileHeader, "rw");
+         raFile.setLength(0);
+         
+         raFile.writeBytes("ObjectType = Image\n");
+         nDims = image.getNDims();
+         raFile.writeBytes("NDims = " + String.valueOf(nDims) + "\n");
+         raFile.writeBytes("BinaryData = True\n");
+         if (endianess) {
+        	 raFile.writeBytes("BinaryDataByteOrderMSB = True\n");
+         }
+         else {
+        	 raFile.writeBytes("BinaryDataByteOrderMSB = False\n");
+         }
+         raFile.writeBytes("CompressedData = False\n");
+         extents = image.getExtents();
+         if (nDims == 2) {
+        	 raFile.writeBytes("DimSize = " + String.valueOf(extents[0]) + " " + String.valueOf(extents[1]) + "\n");
+         }
+         else if (nDims == 3) {
+        	 raFile.writeBytes("DimSize = " + String.valueOf(extents[0]) + " " + String.valueOf(extents[1]) + 
+        			 " " + String.valueOf(extents[2]) + "\n");	 
+         }
+         else if (nDims == 4) {
+        	 raFile.writeBytes("DimSize = " + String.valueOf(extents[0]) + " " + String.valueOf(extents[1]) + 
+        			 " " + String.valueOf(extents[2]) + " " + String.valueOf(extents[3]) + "\n");	 	 
+         }
+         res = image.getResolutions(0);
+         if (nDims == 2) {
+        	 raFile.writeBytes("ElementSpacing = " + String.valueOf(res[0]) + " " + String.valueOf(res[1]) + "\n");
+         }
+         else if (nDims == 3) {
+        	 raFile.writeBytes("ElementSpacing = " + String.valueOf(res[0]) + " " + String.valueOf(res[1]) + 
+        			 " " + String.valueOf(res[2]) + "\n");	 
+         }
+         else if (nDims == 4) {
+        	 raFile.writeBytes("ElementSpacing = " + String.valueOf(res[0]) + " " + String.valueOf(res[1]) + 
+        			 " " + String.valueOf(res[2]) + " " + String.valueOf(res[3]) + "\n");	 	 
+         }
+         offset = image.getOrigin();
+         if (nDims == 2) {
+        	 raFile.writeBytes("Offset = " + String.valueOf(offset[0]) + " " + String.valueOf(offset[1]) + "\n");
+         }
+         else if (nDims == 3) {
+        	 raFile.writeBytes("Offset = " + String.valueOf(offset[0]) + " " + String.valueOf(offset[1]) + 
+        			 " " + String.valueOf(offset[2]) + "\n");	 
+         }
+         else if (nDims == 4) {
+        	 raFile.writeBytes("Offset = " + String.valueOf(offset[0]) + " " + String.valueOf(offset[1]) + 
+        			 " " + String.valueOf(offset[2]) + " " + String.valueOf(offset[3]) + "\n");	 	 
+         }
+         if (((nDims == 3) || (nDims == 4)) && (image.getMatrix() != null)) {
+             matrix = image.getMatrix();
+             raFile.writeBytes("TransformMatrix = " + String.valueOf(matrix.get(0,0)) + " " + String.valueOf(matrix.get(0,1))
+             + " " + String.valueOf(matrix.get(0,2)) + " " + String.valueOf(matrix.get(1,0)) + " " +
+            		 String.valueOf(matrix.get(1,1)) + " " + String.valueOf(matrix.get(1,2)) + " " +
+                     String.valueOf(matrix.get(2,0)) + " " + String.valueOf(matrix.get(2,1)) + " " +
+            		 String.valueOf(matrix.get(2,2)) + "\n");
+         }
+         else if ((nDims == 2) && (image.getMatrix() != null)) {
+        	 matrix = image.getMatrix();
+        	 raFile.writeBytes("TransformMatrix = " + String.valueOf(matrix.get(0,0)) + " " + String.valueOf(matrix.get(0,1))
+             + " " + String.valueOf(matrix.get(1,0)) + " " + String.valueOf(matrix.get(1,1)) + "\n"); 
+         }
+         if (nDims >= 3) {
+             haveOrientation = true;
+             axisOrientation = image.getAxisOrientation();
+             for (i = 0; i < 3; i++) {
+                 switch(axisOrientation[i]) {
+                 case FileInfoBase.ORI_R2L_TYPE:
+                	 orientation.concat("R");
+                	 break;
+                 case FileInfoBase.ORI_L2R_TYPE:
+                	 orientation.concat("L");
+                	 break;
+                 case FileInfoBase.ORI_A2P_TYPE:
+                	 orientation.concat("A");
+                     break;
+                 case FileInfoBase.ORI_P2A_TYPE:
+                	 orientation.concat("P");
+                	 break;
+                 case FileInfoBase.ORI_I2S_TYPE:
+                	 orientation.concat("I");
+                	 break;
+                 case FileInfoBase.ORI_S2I_TYPE:
+                	 orientation.concat("S");
+                	 break;
+                 case FileInfoBase.ORI_UNKNOWN_TYPE:
+                	 haveOrientation = false;
+                 }
+             }
+             if (haveOrientation) {
+                 raFile.writeBytes("AnatomicalOrientation = " + orientation + "\n");	 
+             }
+         } // if (nDims >= 3)
+         if (isMetaImage && fileInfo.getCenterOfRotation() != null) {
+             centerOfRotation = fileInfo.getCenterOfRotation();	 
+             if (nDims == 2) {
+            	 raFile.writeBytes("CenterOfRotation = " + String.valueOf(centerOfRotation[0]) + " " + 
+             String.valueOf(centerOfRotation[1]) + "\n");
+             }
+             else if (nDims >= 3) {
+            	 raFile.writeBytes("CenterOfRotation = " + String.valueOf(centerOfRotation[0]) + " " + String.valueOf(centerOfRotation[1]) + 
+            			 " " + String.valueOf(centerOfRotation[2]) + "\n");	 
+             }
+         }
+         dataType = image.getType();
+         switch(dataType) {
+         case ModelStorageBase.BYTE:
+        	 raFile.writeBytes("ElementType =  MET_CHAR\n");
+        	 break;
+         case ModelStorageBase.UBYTE:
+        	 raFile.writeBytes("ElementType = MET_UCHAR\n");
+        	 break;
+         case ModelStorageBase.SHORT:
+        	 raFile.writeBytes("ElementType = MET_SHORT\n");
+        	 break;
+         case ModelStorageBase.USHORT:
+        	 raFile.writeBytes("ElementType = MET_USHORT\n");
+        	 break;
+         case ModelStorageBase.INTEGER:
+        	 raFile.writeBytes("ElementType = MET_INT\n");
+        	 break;
+         case ModelStorageBase.UINTEGER:
+        	 raFile.writeBytes("ElementType = MET_UINT\n");
+        	 break;
+         case ModelStorageBase.LONG:
+        	 raFile.writeBytes("ElementType = MET_LONG\n");
+        	 break;
+         case ModelStorageBase.FLOAT:
+        	 raFile.writeBytes("ElementType = MET_FLOAT\n");
+        	 break;
+         case ModelStorageBase.DOUBLE:
+        	 raFile.writeBytes("ElementType = MET_DOUBLE\n");
+        	 break;
+         }
+         if (oneFile) {
+        	 raFile.writeBytes("HeaderSize = -1\n");
+         }
+         raFile.writeBytes("ElementDataFile = " + fileDataName + "\n");
+         
+         finalHeaderPosition[headerIndex] = raFile.getFilePointer();
+    	 return true; // Successful write
+    }
+    
+    /**
+     * This method is used when saving a 3D image in an array of 2D files. The file name has numbers appended to
+     * correctly order the images.
+     *
+     * @param   image     the image dataset to be saved
+     * @param   fileName  the file name
+     * @param   fileDir   the file directory
+     * @param   options   file options indicate how to save the image
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    private void writeHeader3DTo2D(ModelImage image, String fileName, String fileDir, FileWriteOptions options,
+    		                       boolean oneFile, long finalHeaderPosition[])
+            throws IOException {
+        int k, seq;
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
+        String origName = new String(fileName);
+
+        for (k = beginSlice, seq = options.getStartNumber(); k <= endSlice; k++, seq++) {
+            fileName = origName;
+
+            if (options.getDigitNumber() == 1) {
+                fileName += Integer.toString(seq);
+            } else if (options.getDigitNumber() == 2) {
+
+                if (seq < 10) {
+                    fileName += "0" + Integer.toString(seq);
+                } else {
+                    fileName += Integer.toString(seq);
+                }
+            } else if (options.getDigitNumber() == 3) {
+
+                if (seq < 10) {
+                    fileName += "00" + Integer.toString(seq);
+                } else if (seq < 100) {
+                    fileName += "0" + Integer.toString(seq);
+                } else {
+                    fileName += Integer.toString(seq);
+                }
+            } else if (options.getDigitNumber() == 4) {
+
+                if (seq < 10) {
+                    fileName += "000" + Integer.toString(seq);
+                } else if (seq < 100) {
+                    fileName += "00" + Integer.toString(seq);
+                } else if (seq < 1000) {
+                    fileName += "0" + Integer.toString(seq);
+                } else {
+                    fileName += Integer.toString(seq);
+                }
+            }
+
+            writeHeader(image, 1, 1, fileName, fileDir, oneFile, k-beginSlice, finalHeaderPosition);
+
+        } // end for loop
+
+    }
+    
+    /**
+     * This method is used when saving a 4D image in an array of 3D files. The file name has numbers appended to
+     * correctly order the images.
+     *
+     * @param   image     the image dataset to be saved
+     * @param   fileName  the file name
+     * @param   fileDir   the file directory
+     * @param   options   file options indicate how to save the image
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    private void writeHeader4DTo3D(ModelImage image, String fileName, String fileDir, FileWriteOptions options,
+    		                       boolean oneFile, long finalHeaderPosition[])
+            throws IOException {
+        int k, seq;
+        int beginTime = options.getBeginTime();
+        int endTime = options.getEndTime();
+        String origName = new String(fileName);
+
+        for (k = beginTime, seq = options.getStartNumber(); k <= endTime; k++, seq++) {
+            fileName = origName;
+
+            if (options.getDigitNumber() == 1) {
+                fileName += Integer.toString(seq);
+            } else if (options.getDigitNumber() == 2) {
+
+                if (seq < 10) {
+                    fileName += "0" + Integer.toString(seq);
+                } else {
+                    fileName += Integer.toString(seq);
+                }
+            } else if (options.getDigitNumber() == 3) {
+
+                if (seq < 10) {
+                    fileName += "00" + Integer.toString(seq);
+                } else if (seq < 100) {
+                    fileName += "0" + Integer.toString(seq);
+                } else {
+                    fileName += Integer.toString(seq);
+                }
+            } else if (options.getDigitNumber() == 4) {
+
+                if (seq < 10) {
+                    fileName += "000" + Integer.toString(seq);
+                } else if (seq < 100) {
+                    fileName += "00" + Integer.toString(seq);
+                } else if (seq < 1000) {
+                    fileName += "0" + Integer.toString(seq);
+                } else {
+                    fileName += Integer.toString(seq);
+                }
+            }
+            // write header with image, # of images per, and 1 time slice
+
+            writeHeader(image, image.getExtents()[2], 1, fileName, fileDir,oneFile,k-beginTime,finalHeaderPosition);
+
+        } // end for loop
+
     }
 }
