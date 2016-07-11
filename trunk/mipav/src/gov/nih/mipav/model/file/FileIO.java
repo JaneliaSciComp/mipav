@@ -4376,6 +4376,9 @@ public class FileIO {
                 } else {
                     break;
                 }
+            case FileUtility.METAIMAGE:
+            	success = writeMetaImage(image, options);
+            	break;
             case FileUtility.MATLAB:
                 success = writeMATLAB(image, options);
                 break;
@@ -17013,6 +17016,46 @@ public class FileIO {
 
         NIFTIFile.finalize();
         NIFTIFile = null;
+        return true;
+    }
+    
+    /**
+     * Writes a MetaImage file to store the image.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
+     */
+    private boolean writeMetaImage(final ModelImage image, final FileWriteOptions options) {
+        FileMetaImage metaImageFile;
+
+        try { // Construct a new file object
+            metaImageFile = new FileMetaImage(options.getFileName(), options.getFileDirectory());
+            createProgressBar(metaImageFile, options.getFileName(), FileIO.FILE_WRITE);
+            metaImageFile.writeImage(image, options);
+        } catch (final IOException error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return false;
+        }
+
+        metaImageFile.finalize();
+        metaImageFile = null;
         return true;
     }
 
