@@ -15,7 +15,23 @@ import java.util.*;
  * 2.) Watersheds in Digital Spaces: An Efficient Algorithm Based on Immersion Simulations by Luc Vincent
  * and Pierre Soille, IEEE Transactions on Pattern Analysis and Machine Intelligence, Vol. 13, No. 6,
  * June, 1991, pp. 583-598.
+ * 3.) Fast watershed algorithms: analysis and extensions by Bogdan P. Dobrin, Timo Viero, and Moncef
+ * Gabbouj.
  * The ImageJ version has 3 differences with the original article pseudocode as noted in comments.
+ * 
+ * Reference 1 states "Further improvements of the watershed segmentation based on immersion simulations
+ * are given in [Dobrin et al., 1994]."  Reference 3 states: "Vincent & Soille algorithm produces a tesselation
+ * of the image into its disjoint catchment basins.  Pixels lying exactly half-way between the two catchment
+ * basins, should be assigned to watersheds.  Studying the operation of Vincent and Soille algorithms, we will
+ * show that this is not always the case.
+ *     The algorithm has a tendency to generate large watershed regions, because it does not propagate only
+ * catchment basin labels but also watershed labels.... Therefore, the algorithm produces an ambiguous result
+ * when propagating watershed lines to a region.
+ *     Another drawback of this algorithm is given by the oscillation in the pixel assignment rule. It is relatively
+ * easy to see ... that the value of the current pixel, i.e. the pixel whose value is to be determined, can
+ * change multiple times depending on its local neighborhood.  For example, the current pixel can firstly be
+ * assigned to watersheds and then immediately to a catchment basin label or vice versa.  As a result, the operation
+ * of the algorithm is inconsistent in several critical pixel configurations."
  */
 
 public class AlgorithmEfficientWatershed extends AlgorithmBase {
