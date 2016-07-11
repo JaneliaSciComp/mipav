@@ -3040,6 +3040,114 @@ public class FileRaw extends FileBase {
             }
         } // end for loop
     }
+    
+    /**
+     * Method to save 3D images to an array of 2D images. Images will be name sequentially with the given start # and #
+     * of digits
+     *
+     * @param   image    Image to be saved (broken down into 2D images)
+     * @param   options  File Write options
+     * @param   suffix   Suffix for file names. Example: ".xml", ".img"
+     * @param   finalHeaderPosition starting locations
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public void writeImage3DTo2D(ModelImage image, FileWriteOptions options, String suffix, long finalHeaderPosition[]) throws IOException {
+        String prefix;
+
+        int k, seq;
+        int[] extents;
+        int bufferSize;
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
+
+        extents = image.getExtents();
+        bufferSize = extents[0] * extents[1];
+
+        nImages = endSlice - beginSlice + 1;
+        dataFileName = new String[nImages];
+        nTimePeriods = 1;
+
+
+        String fileName = options.getFileName();
+        String fileDir = options.getFileDirectory();
+
+        fireProgressStateChanged(0);
+
+        int index = fileName.lastIndexOf(".");
+
+        if (index != -1) {
+            prefix = fileName.substring(0, index);
+        } else {
+            prefix = fileName;
+        }
+
+        String fileString = new String("");
+        float prog = 1.0f;
+
+        for (k = beginSlice, seq = options.getStartNumber(); k <= endSlice; k++, seq++, prog++) {
+        	setStartPosition(finalHeaderPosition[k-beginSlice]);
+
+            if (options.getDigitNumber() == 1) {
+                fileString = prefix + Integer.toString(seq) + suffix;
+
+            } else if (options.getDigitNumber() == 2) {
+
+                if (seq < 10) {
+                    fileString = prefix + "0" + Integer.toString(seq) + suffix;
+                } else {
+                    fileString = prefix + Integer.toString(seq) + suffix;
+                }
+            } else if (options.getDigitNumber() == 3) {
+
+                if (seq < 10) {
+                    fileString = prefix + "00" + Integer.toString(seq) + suffix;
+                } else if (seq < 100) {
+                    fileString = prefix + "0" + Integer.toString(seq) + suffix;
+                } else {
+                    fileString = prefix + Integer.toString(seq) + suffix;
+                }
+            } else if (options.getDigitNumber() == 4) {
+
+                if (seq < 10) {
+                    fileString = prefix + "000" + Integer.toString(seq) + suffix;
+                } else if (seq < 100) {
+                    fileString = prefix + "00" + Integer.toString(seq) + suffix;
+                } else if (seq < 1000) {
+                    fileString = prefix + "0" + Integer.toString(seq) + suffix;
+                } else {
+                    fileString = prefix + Integer.toString(seq) + suffix;
+                }
+            }
+
+            //fireProgressStateChanged(MipavMath.round((prog / (endSlice - beginSlice + 1)) * 100), "Saving image " + fileString, "Saving image ...");
+            fireProgressStateChanged(MipavMath.round((prog / (endSlice - beginSlice + 1)) * 100));
+            if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                file = new File(fileDir + fileString);
+                dataFileName[k - beginSlice] = fileString;
+                raFile = new RandomAccessFile(file, "rw");
+                if(zeroLengthFlag) {
+            		raFile.setLength(0);
+            	}
+                raFile.seek(startPosition);
+                fileRW = new FileRawChunk(raFile, image.getFileInfo(0));
+            } else {
+                fileRW = new FileRawChunk(fileDir + fileString, fileInfo, FileBase.READ_WRITE, compressionType);
+            }
+
+
+            try {
+                fileRW.writeImage(image, k * bufferSize, (k * bufferSize) + bufferSize);
+
+                if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                    raFile.close();
+                }
+            } catch (IOException error) {
+                raFile.close();
+                throw error;
+            }
+        } // end for loop
+    }
 
     /**
      * Method to write 4D images to an array of 3D image files. the files will be named sequentially with the given # of
@@ -3094,6 +3202,128 @@ public class FileRaw extends FileBase {
 
         // name the files sequentially
         for (int t = beginTimePeriod, seq = options.getStartNumber(); t <= endTimePeriod; t++, seq++, prog++) {
+
+            if (options.getDigitNumber() == 1) {
+                fileString = prefix + Integer.toString(seq) + suffix;
+
+            } else if (options.getDigitNumber() == 2) {
+
+                if (seq < 10) {
+                    fileString = prefix + "0" + Integer.toString(seq) + suffix;
+                } else {
+                    fileString = prefix + Integer.toString(seq) + suffix;
+                }
+            } else if (options.getDigitNumber() == 3) {
+
+                if (seq < 10) {
+                    fileString = prefix + "00" + Integer.toString(seq) + suffix;
+                } else if (seq < 100) {
+                    fileString = prefix + "0" + Integer.toString(seq) + suffix;
+                } else {
+                    fileString = prefix + Integer.toString(seq) + suffix;
+                }
+            } else if (options.getDigitNumber() == 4) {
+
+                if (seq < 10) {
+                    fileString = prefix + "000" + Integer.toString(seq) + suffix;
+                } else if (seq < 100) {
+                    fileString = prefix + "00" + Integer.toString(seq) + suffix;
+                } else if (seq < 1000) {
+                    fileString = prefix + "0" + Integer.toString(seq) + suffix;
+                } else {
+                    fileString = prefix + Integer.toString(seq) + suffix;
+                }
+            }
+
+            //fireProgressStateChanged(MipavMath.round((prog / (endTimePeriod - beginTimePeriod + 1)) * 100), "Saving image " + fileString, "Saving image ...");
+            fireProgressStateChanged(MipavMath.round((prog / (endTimePeriod - beginTimePeriod + 1)) * 100));
+            if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                file = new File(fileDir + fileString);
+                dataFileName[t - beginTimePeriod] = fileString;
+                raFile = new RandomAccessFile(file, "rw");
+                if(zeroLengthFlag) {
+            		raFile.setLength(0);
+            	}
+                raFile.seek(startPosition);
+                fileRW = new FileRawChunk(raFile, image.getFileInfo(0));
+            } else {
+                fileRW = new FileRawChunk(fileDir + fileString, fileInfo, FileBase.READ_WRITE, compressionType);
+            }
+
+            // write the given start/end point in the image to a file
+            try {
+                fileRW.writeImage(image, t * volSize + beginSlice * sliceSize, (t * volSize) + (endSlice + 1) * sliceSize);
+
+                if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                    raFile.close();
+                }
+            } catch (IOException error) {
+
+                if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                    raFile.close();
+                }
+
+                throw error;
+            }
+        }
+
+    }
+    
+    /**
+     * Method to write 4D images to an array of 3D image files. the files will be named sequentially with the given # of
+     * digits and given starting #. This method will save ALL slices and the files will be split up by time-period
+     *
+     * @param   image    Image that is to be saved
+     * @param   options  File write options
+     * @param   suffix   file suffix for saving name-convention example ".raw", ".img"
+     * @param   finalHeaderPosition starting positions
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+
+    public void writeImage4DTo3D(ModelImage image, FileWriteOptions options, String suffix, long finalHeaderPosition[]) throws IOException {
+
+        String prefix;
+
+        int[] extents;
+        int volSize = 0;
+        int sliceSize;
+
+        int beginTimePeriod = options.getBeginTime();
+        int endTimePeriod = options.getEndTime();
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
+
+        extents = image.getExtents();
+
+        volSize = extents[2] * extents[1] * extents[0];
+        sliceSize = extents[1] * extents[0];
+
+        this.nTimePeriods = endTimePeriod - beginTimePeriod + 1;
+
+        this.nImages = extents[2];
+        dataFileName = new String[nTimePeriods];
+
+
+        String fileName = options.getFileName();
+        String fileDir = options.getFileDirectory();
+
+        fireProgressStateChanged(0, "Saving " + fileName, "Saving image ...");
+
+        int index = fileName.lastIndexOf(".");
+
+        if (index != -1) {
+            prefix = fileName.substring(0, index);
+        } else {
+            prefix = fileName;
+        }
+
+        String fileString = new String("");
+        float prog = 1.0f;
+
+        // name the files sequentially
+        for (int t = beginTimePeriod, seq = options.getStartNumber(); t <= endTimePeriod; t++, seq++, prog++) {
+        	setStartPosition(finalHeaderPosition[t-beginTimePeriod]);
 
             if (options.getDigitNumber() == 1) {
                 fileString = prefix + Integer.toString(seq) + suffix;
