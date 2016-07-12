@@ -680,7 +680,7 @@ public class FileMetaImage extends FileBase {
                 dataLength *= extents[i];
             }
             Preferences.debug("dataLength of uncompressed data = " + dataLength + "\n", Preferences.DEBUG_FILEIO);
-            
+           
             if ((fileDataName != null) && (fileDataName.length() > 0)) {
                 if (fileDataName.equalsIgnoreCase("LOCAL")) {
                     raFile.seek(currentLocation);
@@ -889,10 +889,10 @@ public class FileMetaImage extends FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     private void readLine() throws IOException {
-        String tempString;
+        String tempString = null;
         int index;
         numValues = 0;
-
+        
         try {
             tempString = raFile.readLine();
         } catch (IOException error) {
@@ -1043,6 +1043,7 @@ public class FileMetaImage extends FileBase {
                
                 if (oneFile) {
                     rawFile.setStartPosition(finalHeaderPosition[0]);
+                    rawFile.setZeroLengthFlag(false);
                 } else {
                     rawFile.setStartPosition(0L);
                 }
@@ -1265,9 +1266,11 @@ public class FileMetaImage extends FileBase {
         	 raFile.writeBytes("ElementNumberOfChannels = 1\n");
          }
          if (oneFile) {
-        	 raFile.writeBytes("HeaderSize = -1\n");
+        	 raFile.writeBytes("ElementDataFile = LOCAL\n");
          }
-         raFile.writeBytes("ElementDataFile = " + fileDataName + "\n");
+         else {
+             raFile.writeBytes("ElementDataFile = " + fileDataName + "\n");
+         }
          
          finalHeaderPosition[headerIndex] = raFile.getFilePointer();
     	 return true; // Successful write
