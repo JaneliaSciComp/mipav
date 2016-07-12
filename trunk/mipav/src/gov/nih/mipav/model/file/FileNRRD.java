@@ -2666,7 +2666,7 @@ public class FileNRRD extends FileBase {
 
                     if (image.isColorImage()) {
                         rawFile.setPlanarConfig(planarConfig);
-                        rawFile.setNumColors(numColors);
+                        rawFile.setNumChannels(numColors);
                         rawFile.setRGBAOrder(RGBAOrder);
                     }
 
@@ -2829,7 +2829,7 @@ public class FileNRRD extends FileBase {
 
                 if (image.isColorImage()) {
                     rawFile.setPlanarConfig(planarConfig);
-                    rawFile.setNumColors(numColors);
+                    rawFile.setNumChannels(numColors);
                     rawFile.setRGBAOrder(RGBAOrder);
                 }
 
