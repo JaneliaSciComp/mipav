@@ -53,7 +53,7 @@ public class FileRaw extends FileBase {
     /** DOCUMENT ME! */
     private long startPosition = 0;
     
-    private int numColors = 3;
+    private int numChannels = 4;
     
     /** Allow reading from 4 color files with RGBA order */
     private boolean RGBAOrder = false;
@@ -432,10 +432,10 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.ARGB:
                     try {
-                        fileRW.readImage(ModelStorageBase.ARGB, (((long)k) * bufferSize * numColors) + offset,
-                                                                 bufferSize * numColors);
+                        fileRW.readImage(ModelStorageBase.ARGB, (((long)k) * bufferSize * numChannels) + offset,
+                                                                 bufferSize * numChannels);
 
-                        if (numColors == 2) {
+                        if (numChannels == 2) {
                             if (planarConfig == 0) { // RG
                                 
                                 byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -458,8 +458,8 @@ public class FileRaw extends FileBase {
                                     buffer[ii + 3] = 0;
                                 }
                             }    
-                        } // if (numColors == 2)
-                        else if (numColors == 3) {
+                        } // if (numChannels == 2)
+                        else if (numChannels == 3) {
                             if (planarConfig == 0) { // RGB
     
                                 byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -482,8 +482,8 @@ public class FileRaw extends FileBase {
                                     buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
                                 }
                             }
-                        } // else if (numColors == 3)
-                        else { // numColors == 4
+                        } // else if (numChannels == 3)
+                        else { // numChannels == 4
                             if (!RGBAOrder) { // ARGB order
                                 if (planarConfig == 0) { // ARGB
                                     
@@ -529,7 +529,7 @@ public class FileRaw extends FileBase {
                                     }
                                 }   
                             } // else RGBAOrder
-                        } // numColors == 4
+                        } // numChannels == 4
 
                         image.importData(k * buffer.length, buffer, false);
                     } catch (IOException error) {
@@ -540,12 +540,12 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.ARGB_USHORT:
                     try {
-                        fileRW.readImage(ModelStorageBase.ARGB_USHORT, (((long)k) * bufferSize * 2 * numColors) + offset,
-                                                                        bufferSize * numColors);
+                        fileRW.readImage(ModelStorageBase.ARGB_USHORT, (((long)k) * bufferSize * 2 * numChannels) + offset,
+                                                                        bufferSize * numChannels);
 
                         short[] shortBuffer = new short[4 * extents[0] * extents[1]];
                         
-                        if (numColors == 2) {
+                        if (numChannels == 2) {
                             if (planarConfig == 0) { // RG
                                 
                                 short[] tmpBuffer = fileRW.getShortBuffer();
@@ -568,8 +568,8 @@ public class FileRaw extends FileBase {
                                     shortBuffer[ii + 3] = 0;
                                 }
                             }    
-                        } // if (numColors == 2)
-                        else if (numColors == 3) {
+                        } // if (numChannels == 2)
+                        else if (numChannels == 3) {
                             if (planarConfig == 0) { // RGB
     
                                 short[] tmpBuffer = fileRW.getShortBuffer();
@@ -592,8 +592,8 @@ public class FileRaw extends FileBase {
                                     shortBuffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
                                 }
                             }
-                        } // else if (numColors == 3)
-                        else { // numColors == 4
+                        } // else if (numChannels == 3)
+                        else { // numChannels == 4
                           if (!RGBAOrder) { // ARGB order
                               if (planarConfig == 0) { // ARGB
                                   
@@ -639,7 +639,7 @@ public class FileRaw extends FileBase {
                                   }
                               }    
                           } // else RGBAOrder
-                        } // else numColors == 4
+                        } // else numChannels == 4
 
                         image.importUData(k * shortBuffer.length, shortBuffer, false);
                     } catch (IOException error) {
@@ -650,12 +650,12 @@ public class FileRaw extends FileBase {
                     
                 case ModelStorageBase.ARGB_FLOAT:
                     try {
-                        fileRW.readImage(ModelStorageBase.ARGB_FLOAT, (((long)k) * bufferSize * 4 * numColors) + offset,
-                                                                        bufferSize * numColors);
+                        fileRW.readImage(ModelStorageBase.ARGB_FLOAT, (((long)k) * bufferSize * 4 * numChannels) + offset,
+                                                                        bufferSize * numChannels);
 
                         float[] floatBuffer = new float[4 * extents[0] * extents[1]];
                         
-                        if (numColors == 2) {
+                        if (numChannels == 2) {
                             if (planarConfig == 0) { // RG
                                 
                                 float[] tmpBuffer = fileRW.getFloatBuffer();
@@ -678,8 +678,8 @@ public class FileRaw extends FileBase {
                                     floatBuffer[ii + 3] = 0;
                                 }
                             }    
-                        } // if (numColors == 2)
-                        else if (numColors == 3) {
+                        } // if (numChannels == 2)
+                        else if (numChannels == 3) {
                             if (planarConfig == 0) { // RGB
     
                                 float[] tmpBuffer = fileRW.getFloatBuffer();
@@ -702,8 +702,8 @@ public class FileRaw extends FileBase {
                                     floatBuffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
                                 }
                             }
-                        } // else if (numColors == 3)
-                        else { // numColors == 4
+                        } // else if (numChannels == 3)
+                        else { // numChannels == 4
                           if (!RGBAOrder) { // ARGB order
                               if (planarConfig == 0) { // ARGB
                                   
@@ -749,7 +749,7 @@ public class FileRaw extends FileBase {
                                   }
                               }    
                           } // else RGBAOrder
-                        } // else numColors == 4
+                        } // else numChannels == 4
 
                         image.importData(k * floatBuffer.length, floatBuffer, false);
                     } catch (IOException error) {
@@ -1048,10 +1048,10 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.ARGB:
                         try {
-                            fileRW.readImage(ModelStorageBase.ARGB, (((long)k) * bufferSize * numColors) + offset,
-                                                                     bufferSize * numColors);
+                            fileRW.readImage(ModelStorageBase.ARGB, (((long)k) * bufferSize * numChannels) + offset,
+                                                                     bufferSize * numChannels);
 
-                            if (numColors == 2) {
+                            if (numChannels == 2) {
                                 if (planarConfig == 0) { // RG
                                     
                                     byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -1074,8 +1074,8 @@ public class FileRaw extends FileBase {
                                         floatBuffer[ii + 3] = 0.0f;
                                     }
                                 }    
-                            } // if (numColors == 2)
-                            else if (numColors == 3) {
+                            } // if (numChannels == 2)
+                            else if (numChannels == 3) {
                                 if (planarConfig == 0) { // RGB
         
                                     byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -1099,8 +1099,8 @@ public class FileRaw extends FileBase {
                                                               offsetAdjustment[k];
                                     }
                                 }
-                            } // else if (numColors == 3)
-                            else { // numColors == 4
+                            } // else if (numChannels == 3)
+                            else { // numChannels == 4
                                 if (!RGBAOrder) { // ARGB order
                                     if (planarConfig == 0) { // ARGB
                                         
@@ -1152,7 +1152,7 @@ public class FileRaw extends FileBase {
                                         }
                                     }   
                                 } // else RGBAOrder
-                            } // numColors == 4
+                            } // numChannels == 4
 
                             image.importData(k * floatBuffer.length, floatBuffer, false);
                         } catch (IOException error) {
@@ -1163,10 +1163,10 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.ARGB_USHORT:
                         try {
-                            fileRW.readImage(ModelStorageBase.ARGB_USHORT, (((long)k) * bufferSize * 2 * numColors) + offset,
-                                                                            bufferSize * numColors);
+                            fileRW.readImage(ModelStorageBase.ARGB_USHORT, (((long)k) * bufferSize * 2 * numChannels) + offset,
+                                                                            bufferSize * numChannels);
                             
-                            if (numColors == 2) {
+                            if (numChannels == 2) {
                                 if (planarConfig == 0) { // RG
                                     
                                     short[] tmpBuffer = fileRW.getShortBuffer();
@@ -1190,8 +1190,8 @@ public class FileRaw extends FileBase {
                                         floatBuffer[ii + 3] = 0.0f;
                                     }
                                 }    
-                            } // if (numColors == 2)
-                            else if (numColors == 3) {
+                            } // if (numChannels == 2)
+                            else if (numChannels == 3) {
                                 if (planarConfig == 0) { // RGB
         
                                     short[] tmpBuffer = fileRW.getShortBuffer();
@@ -1216,8 +1216,8 @@ public class FileRaw extends FileBase {
                                                               offsetAdjustment[k];
                                     }
                                 }
-                            } // else if (numColors == 3)
-                            else { // numColors == 4
+                            } // else if (numChannels == 3)
+                            else { // numChannels == 4
                               if (!RGBAOrder) { // ARGB order
                                   if (planarConfig == 0) { // ARGB
                                       
@@ -1269,7 +1269,7 @@ public class FileRaw extends FileBase {
                                       }
                                   }    
                               } // else RGBAOrder
-                            } // else numColors == 4
+                            } // else numChannels == 4
 
                             image.importData(k * floatBuffer.length, floatBuffer, false);
                         } catch (IOException error) {
@@ -1280,10 +1280,10 @@ public class FileRaw extends FileBase {
                         
                     case ModelStorageBase.ARGB_FLOAT:
                         try {
-                            fileRW.readImage(ModelStorageBase.ARGB_FLOAT, (((long)k) * bufferSize * 4 * numColors) + offset,
-                                                                            bufferSize * numColors);
+                            fileRW.readImage(ModelStorageBase.ARGB_FLOAT, (((long)k) * bufferSize * 4 * numChannels) + offset,
+                                                                            bufferSize * numChannels);
                             
-                            if (numColors == 2) {
+                            if (numChannels == 2) {
                                 if (planarConfig == 0) { // RG
                                     
                                     float[] tmpBuffer = fileRW.getFloatBuffer();
@@ -1307,8 +1307,8 @@ public class FileRaw extends FileBase {
                                         floatBuffer[ii + 3] = 0.0f;
                                     }
                                 }    
-                            } // if (numColors == 2)
-                            else if (numColors == 3) {
+                            } // if (numChannels == 2)
+                            else if (numChannels == 3) {
                                 if (planarConfig == 0) { // RGB
         
                                     float[] tmpBuffer = fileRW.getFloatBuffer();
@@ -1333,8 +1333,8 @@ public class FileRaw extends FileBase {
                                                               offsetAdjustment[k];
                                     }
                                 }
-                            } // else if (numColors == 3)
-                            else { // numColors == 4
+                            } // else if (numChannels == 3)
+                            else { // numChannels == 4
                               if (!RGBAOrder) { // ARGB order
                                   if (planarConfig == 0) { // ARGB
                                       
@@ -1386,7 +1386,7 @@ public class FileRaw extends FileBase {
                                       }
                                   }    
                               } // else RGBAOrder
-                            } // else numColors == 4
+                            } // else numChannels == 4
 
                             image.importData(k * floatBuffer.length, floatBuffer, false);
                         } catch (IOException error) {
@@ -1597,8 +1597,8 @@ public class FileRaw extends FileBase {
                 i = 0;
 
                 try {
-                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * numColors);
-                    if (numColors == 2) {
+                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * numChannels);
+                    if (numChannels == 2) {
                         if (planarConfig == 0) { // RG
                             
                             byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -1623,8 +1623,8 @@ public class FileRaw extends FileBase {
                             }
                             tmpBuffer = null;
                         }    
-                    } // if (numColors == 2)
-                    else if (numColors == 3) {
+                    } // if (numChannels == 2)
+                    else if (numChannels == 3) {
                         if (planarConfig == 0) { // RGB
 
                             byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -1649,8 +1649,8 @@ public class FileRaw extends FileBase {
                             }
                             tmpBuffer = null;
                         }
-                    } // else if (numColors == 3)
-                    else { // numColors == 4
+                    } // else if (numChannels == 3)
+                    else { // numChannels == 4
                         if (!RGBAOrder) { // ARGB order
                             if (planarConfig == 0) { // ARGB
                                 
@@ -1700,7 +1700,7 @@ public class FileRaw extends FileBase {
                                 tmpBuffer = null;
                             }   
                         } // else RGBAOrder
-                    } // numColors == 4
+                    } // numChannels == 4
                     
                 } catch (IOException error) {
                     throw error;
@@ -1713,9 +1713,9 @@ public class FileRaw extends FileBase {
                 i = 0;
 
                 try {
-                    fileRW.readImage(ModelStorageBase.ARGB_USHORT, offset, bufferSize / 4 * numColors);
+                    fileRW.readImage(ModelStorageBase.ARGB_USHORT, offset, bufferSize / 4 * numChannels);
                     
-                    if (numColors == 2) {
+                    if (numChannels == 2) {
                         if (planarConfig == 0) { // RG
                             
                             short[] tmpBuffer = fileRW.getShortBuffer();
@@ -1740,8 +1740,8 @@ public class FileRaw extends FileBase {
                             }
                             tmpBuffer = null;
                         }    
-                    } // if (numColors == 2)
-                    else if (numColors == 3) {
+                    } // if (numChannels == 2)
+                    else if (numChannels == 3) {
                         if (planarConfig == 0) { // RGB
 
                             short[] tmpBuffer = fileRW.getShortBuffer();
@@ -1766,8 +1766,8 @@ public class FileRaw extends FileBase {
                             }
                             tmpBuffer = null;
                         }
-                    } // else if (numColors == 3)
-                    else { // numColors == 4
+                    } // else if (numChannels == 3)
+                    else { // numChannels == 4
                       if (!RGBAOrder) { // ARGB order
                           if (planarConfig == 0) { // ARGB
                               
@@ -1817,7 +1817,7 @@ public class FileRaw extends FileBase {
                               tmpBuffer = null;
                           }    
                       } // else RGBAOrder
-                    } // else numColors == 4
+                    } // else numChannels == 4
 
                 } catch (IOException error) {
                     throw error;
@@ -1830,9 +1830,9 @@ public class FileRaw extends FileBase {
                 i = 0;
 
                 try {
-                    fileRW.readImage(ModelStorageBase.ARGB_FLOAT, offset, bufferSize / 4 * numColors);
+                    fileRW.readImage(ModelStorageBase.ARGB_FLOAT, offset, bufferSize / 4 * numChannels);
                     
-                    if (numColors == 2) {
+                    if (numChannels == 2) {
                         if (planarConfig == 0) { // RG
                             
                             float[] tmpBuffer = fileRW.getFloatBuffer();
@@ -1857,8 +1857,8 @@ public class FileRaw extends FileBase {
                             }
                             tmpBuffer = null;
                         }    
-                    } // if (numColors == 2)
-                    else if (numColors == 3) {
+                    } // if (numChannels == 2)
+                    else if (numChannels == 3) {
                         if (planarConfig == 0) { // RGB
 
                             float[] tmpBuffer = fileRW.getFloatBuffer();
@@ -1883,8 +1883,8 @@ public class FileRaw extends FileBase {
                             }
                             tmpBuffer = null;
                         }
-                    } // else if (numColors == 3)
-                    else { // numColors == 4
+                    } // else if (numChannels == 3)
+                    else { // numChannels == 4
                       if (!RGBAOrder) { // ARGB order
                           if (planarConfig == 0) { // ARGB
                               
@@ -1934,7 +1934,7 @@ public class FileRaw extends FileBase {
                               tmpBuffer = null;
                           }    
                       } // else RGBAOrder
-                    } // else numColors == 4
+                    } // else numChannels == 4
 
                 } catch (IOException error) {
                     throw error;
@@ -2085,8 +2085,8 @@ public class FileRaw extends FileBase {
                 i = 0;
 
                 try {
-                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * numColors);
-                    if (numColors == 2) {
+                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * numChannels);
+                    if (numChannels == 2) {
                         if (planarConfig == 0) { // RG
                             
                             byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -2109,8 +2109,8 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 3] = 0;
                             }
                         }    
-                    } // if (numColors == 2)
-                    else if (numColors == 3) {
+                    } // if (numChannels == 2)
+                    else if (numChannels == 3) {
                         if (planarConfig == 0) { // RGB
 
                             byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -2133,8 +2133,8 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
                             }
                         }
-                    } // else if (numColors == 3)
-                    else { // numColors == 4
+                    } // else if (numChannels == 3)
+                    else { // numChannels == 4
                         if (!RGBAOrder) { // ARGB order
                             if (planarConfig == 0) { // ARGB
                                 
@@ -2180,7 +2180,7 @@ public class FileRaw extends FileBase {
                                 }
                             }   
                         } // else RGBAOrder
-                    } // numColors == 4
+                    } // numChannels == 4
                     
                 } catch (IOException error) {
                     throw error;
@@ -2195,7 +2195,7 @@ public class FileRaw extends FileBase {
           
                 try {
                     fileRW.readImage(ModelStorageBase.ARGB_USHORT, offset, bufferSize / 4 * 3);
-                    if (numColors == 2) {
+                    if (numChannels == 2) {
                         if (planarConfig == 0) { // RG
                             
                             short[] tmpBuffer = fileRW.getShortBuffer();
@@ -2218,8 +2218,8 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 3] = 0;
                             }
                         }    
-                    } // if (numColors == 2)
-                    else if (numColors == 3) {
+                    } // if (numChannels == 2)
+                    else if (numChannels == 3) {
                         if (planarConfig == 0) { // RGB
 
                             short[] tmpBuffer = fileRW.getShortBuffer();
@@ -2242,8 +2242,8 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 3] = (short) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
                             }
                         }
-                    } // else if (numColors == 3)
-                    else { // numColors == 4
+                    } // else if (numChannels == 3)
+                    else { // numChannels == 4
                       if (!RGBAOrder) { // ARGB order
                           if (planarConfig == 0) { // ARGB
                               
@@ -2289,7 +2289,7 @@ public class FileRaw extends FileBase {
                               }
                           }    
                       } // else RGBAOrder
-                    } // else numColors == 4
+                    } // else numChannels == 4
                     
                 } catch (IOException error) {
                     throw error;
@@ -2446,8 +2446,8 @@ public class FileRaw extends FileBase {
                 i = 0;
 
                 try {
-                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * numColors);
-                    if (numColors == 2) {
+                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * numChannels);
+                    if (numChannels == 2) {
                         if (planarConfig == 0) { // RG
                             
                             byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -2470,8 +2470,8 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 3] = 0;
                             }
                         }    
-                    } // if (numColors == 2)
-                    else if (numColors == 3) {
+                    } // if (numChannels == 2)
+                    else if (numChannels == 3) {
                         if (planarConfig == 0) { // RGB
 
                             byte[] tmpBuffer = fileRW.getByteBuffer();
@@ -2494,8 +2494,8 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
                             }
                         }
-                    } // else if (numColors == 3)
-                    else { // numColors == 4
+                    } // else if (numChannels == 3)
+                    else { // numChannels == 4
                         if (!RGBAOrder) { // ARGB order
                             if (planarConfig == 0) { // ARGB
                                 
@@ -2541,7 +2541,7 @@ public class FileRaw extends FileBase {
                                 }
                             }   
                         } // else RGBAOrder
-                    } // numColors == 4
+                    } // numChannels == 4
                     
                 } catch (IOException error) {
                     throw error;
@@ -2556,7 +2556,7 @@ public class FileRaw extends FileBase {
           
                 try {
                     fileRW.readImage(ModelStorageBase.ARGB_USHORT, offset, bufferSize / 4 * 3);
-                    if (numColors == 2) {
+                    if (numChannels == 2) {
                         if (planarConfig == 0) { // RG
                             
                             short[] tmpBuffer = fileRW.getShortBuffer();
@@ -2579,8 +2579,8 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 3] = 0;
                             }
                         }    
-                    } // if (numColors == 2)
-                    else if (numColors == 3) {
+                    } // if (numChannels == 2)
+                    else if (numChannels == 3) {
                         if (planarConfig == 0) { // RGB
 
                             short[] tmpBuffer = fileRW.getShortBuffer();
@@ -2603,8 +2603,8 @@ public class FileRaw extends FileBase {
                                 buffer[ii + 3] = (short) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
                             }
                         }
-                    } // else if (numColors == 3)
-                    else { // numColors == 4
+                    } // else if (numChannels == 3)
+                    else { // numChannels == 4
                       if (!RGBAOrder) { // ARGB order
                           if (planarConfig == 0) { // ARGB
                               
@@ -2650,7 +2650,7 @@ public class FileRaw extends FileBase {
                               }
                           }    
                       } // else RGBAOrder
-                    } // else numColors == 4
+                    } // else numChannels == 4
                     
                 } catch (IOException error) {
                     throw error;
@@ -2712,12 +2712,12 @@ public class FileRaw extends FileBase {
     }
     
     /**
-     * Sets the number of colors used in RGB files
-     * @param numColors
+     * Sets the number of channels used in RGB files
+     * @param numChannels
      */
-    public void setNumColors(int numColors) {
-        this.numColors = numColors;
-        fileRW.setNumColors(numColors);
+    public void setNumChannels(int numChannels) {
+        this.numChannels = numChannels;
+        fileRW.setNumChannels(numChannels);
     }
     
     public void setRGBAOrder(boolean RGBAOrder) {
