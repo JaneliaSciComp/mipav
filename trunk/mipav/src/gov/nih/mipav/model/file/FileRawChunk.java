@@ -70,7 +70,7 @@ public class FileRawChunk extends FileBase {
     private InflaterInputStream inflaterStream;
 
     @SuppressWarnings("unused")
-    private int numColors = 3;
+    private int numChannels = 4;
 
     /** DOCUMENT ME! */
     private int planarConfig = 0; // 0 = rgb,rgb, 1 = rrr, ggg, bbb
@@ -1057,12 +1057,12 @@ public class FileRawChunk extends FileBase {
     }
 
     /**
-     * Sets the number of colors used in RGB files.
+     * Sets the number of channels used in RGB files.
      *
-     * @param  numColors  DOCUMENT ME!
+     * @param  numChannels  DOCUMENT ME!
      */
-    public void setNumColors(int numColors) {
-        this.numColors = numColors;
+    public void setNumChannels(int numChannels) {
+        this.numChannels = numChannels;
     }
 
     /**
@@ -1744,17 +1744,17 @@ public class FileRawChunk extends FileBase {
 
                     case ModelStorageBase.ARGB:
                         bufferShort = new short[4 * bufferSize];
-                        bufferByte = new byte[3 * bufferSize];
+                        bufferByte = new byte[numChannels * bufferSize];
                         break;
 
                     case ModelStorageBase.ARGB_USHORT:
                         bufferInt = new int[4 * bufferSize];
-                        bufferByte = new byte[6 * bufferSize];
+                        bufferByte = new byte[2 * numChannels * bufferSize];
                         break;
                         
                     case ModelStorageBase.ARGB_FLOAT:
                         bufferFloat = new float[4 * bufferSize];
-                        bufferByte = new byte[12 * bufferSize];
+                        bufferByte = new byte[4 * numChannels * bufferSize];
                         break;
 
                     case ModelStorageBase.COMPLEX:
@@ -2065,47 +2065,90 @@ public class FileRawChunk extends FileBase {
             // at this point. Maybe future version will handle other ARGB
             case ModelStorageBase.ARGB:
 
-                // if (endianess == BIG_ENDIAN) { //RGB
-                if (planarConfig == 0) {
-
-                    try {
-                        image.exportData(4 * start, 4 * bufferSize, bufferShort);
-
-                        for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 3) {
-                            bufferByte[j] = (byte) (bufferShort[i + 1] & 0xff);
-                            bufferByte[j + 1] = (byte) (bufferShort[i + 2] & 0xff);
-                            bufferByte[j + 2] = (byte) (bufferShort[i + 3] & 0xff);
-                        }
-
-                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
-                            raFile.write(bufferByte);
-                        } else {
-                            deflaterStream.write(bufferByte);
-                        }
-                    } catch (IOException error) {
-                        throw error;
-                    }
-                } else {
-
-                    try {
-                        image.exportData(4 * start, 4 * bufferSize, bufferShort);
-
-                        for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j++) {
-                            bufferByte[j] = (byte) (bufferShort[i + 1] & 0xff);
-                            bufferByte[j + bufferSize] = (byte) (bufferShort[i + 2] & 0xff);
-                            bufferByte[j + (2 * bufferSize)] = (byte) (bufferShort[i + 3] & 0xff);
-                        }
-
-                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
-                            raFile.write(bufferByte);
-                        } else {
-                            deflaterStream.write(bufferByte);
-                        }
-                    } catch (IOException error) {
-                        throw error;
-                    }
-                }
-
+                if (numChannels == 3) {
+	                if (planarConfig == 0) {
+	
+	                    try {
+	                        image.exportData(4 * start, 4 * bufferSize, bufferShort);
+	
+	                        for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 3) {
+	                            bufferByte[j] = (byte) (bufferShort[i + 1] & 0xff);
+	                            bufferByte[j + 1] = (byte) (bufferShort[i + 2] & 0xff);
+	                            bufferByte[j + 2] = (byte) (bufferShort[i + 3] & 0xff);
+	                        }
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                } else {
+	
+	                    try {
+	                        image.exportData(4 * start, 4 * bufferSize, bufferShort);
+	
+	                        for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j++) {
+	                            bufferByte[j] = (byte) (bufferShort[i + 1] & 0xff);
+	                            bufferByte[j + bufferSize] = (byte) (bufferShort[i + 2] & 0xff);
+	                            bufferByte[j + (2 * bufferSize)] = (byte) (bufferShort[i + 3] & 0xff);
+	                        }
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                }
+                } // if (numChannels == 3)
+                else { // numChannels == 4
+                	if (planarConfig == 0) {
+                		
+	                    try {
+	                        image.exportData(4 * start, 4 * bufferSize, bufferShort);
+	
+	                        for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 4) {
+	                            bufferByte[j] = (byte) (bufferShort[i] & 0xff);
+	                            bufferByte[j + 1] = (byte) (bufferShort[i + 1] & 0xff);
+	                            bufferByte[j + 2] = (byte) (bufferShort[i + 2] & 0xff);
+	                            bufferByte[j + 3] = (byte) (bufferShort[i + 3] & 0xff);
+	                        }
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                } else {
+	
+	                    try {
+	                        image.exportData(4 * start, 4 * bufferSize, bufferShort);
+	
+	                        for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j++) {
+	                            bufferByte[j] = (byte) (bufferShort[i] & 0xff);
+	                            bufferByte[j + bufferSize] = (byte) (bufferShort[i + 1] & 0xff);
+	                            bufferByte[j + (2 * bufferSize)] = (byte) (bufferShort[i + 2] & 0xff);
+	                            bufferByte[j + (3 * bufferSize)] = (byte) (bufferShort[i + 3] & 0xff);
+	                        }
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                }
+                } // else (numChannels == 4)
                 /*
                  * } else { // BGR if (planarConfig == 0) { try { image.exportData(4*start, 4*bufferSize, bufferShort);
                  * for (i = 0, j = 0; i < 4*bufferSize; i+=4, j+=3) { bufferByte[j+2] = (byte)(bufferShort[i+1] & 0xff);
@@ -2120,80 +2163,164 @@ public class FileRawChunk extends FileBase {
 
             case ModelStorageBase.ARGB_USHORT:
 
-                // if (endianess == BIG_ENDIAN) { //RGB
-                if (planarConfig == 0) {
-
-                    try {
-                        image.exportData(4 * start, 4 * bufferSize, bufferInt);
-
-                        if (endianess == BIG_ENDIAN) {
-
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 6) {
-                                bufferByte[j] = (byte) (bufferInt[i + 1] >>> 8);
-                                bufferByte[j + 1] = (byte) (bufferInt[i + 1] & 0xff);
-                                bufferByte[j + 2] = (byte) (bufferInt[i + 2] >>> 8);
-                                bufferByte[j + 3] = (byte) (bufferInt[i + 2] & 0xff);
-                                bufferByte[j + 4] = (byte) (bufferInt[i + 3] >>> 8);
-                                bufferByte[j + 5] = (byte) (bufferInt[i + 3] & 0xff);
-                            }
-                        } // if (endianess == BIG_ENDIAN)
-                        else { // endianess == LITTLE_ENDIAN
-
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 6) {
-                                bufferByte[j] = (byte) (bufferInt[i + 1] & 0xff);
-                                bufferByte[j + 1] = (byte) (bufferInt[i + 1] >>> 8);
-                                bufferByte[j + 2] = (byte) (bufferInt[i + 2] & 0xff);
-                                bufferByte[j + 3] = (byte) (bufferInt[i + 2] >>> 8);
-                                bufferByte[j + 4] = (byte) (bufferInt[i + 3] & 0xff);
-                                bufferByte[j + 5] = (byte) (bufferInt[i + 3] >>> 8);
-                            }
-                        }
-
-                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
-                            raFile.write(bufferByte);
-                        } else {
-                            deflaterStream.write(bufferByte);
-                        }
-                    } catch (IOException error) {
-                        throw error;
-                    }
-                } else {
-
-                    try {
-                        image.exportData(4 * start, 4 * bufferSize, bufferInt);
-
-                        if (endianess == BIG_ENDIAN) {
-
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 2) {
-                                bufferByte[j] = (byte) (bufferInt[i + 1] >>> 8);
-                                bufferByte[j + 1] = (byte) (bufferInt[i + 1] & 0xff);
-                                bufferByte[j + bufferSize] = (byte) (bufferInt[i + 2] >>> 8);
-                                bufferByte[j + 1 + bufferSize] = (byte) (bufferInt[i + 2] & 0xff);
-                                bufferByte[j + (2 * bufferSize)] = (byte) (bufferInt[i + 3] >>> 8);
-                                bufferByte[j + 1 + (2 * bufferSize)] = (byte) (bufferInt[i + 3] & 0xff);
-                            }
-                        } // if (endianess == BIG_ENDIAN)
-                        else { // endianess == LITTLE_ENDIAN
-
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 2) {
-                                bufferByte[j] = (byte) (bufferInt[i + 1] & 0xff);
-                                bufferByte[j + 1] = (byte) (bufferInt[i + 1] >>> 8);
-                                bufferByte[j + bufferSize] = (byte) (bufferInt[i + 2] & 0xff);
-                                bufferByte[j + 1 + bufferSize] = (byte) (bufferInt[i + 2] >>> 8);
-                                bufferByte[j + (2 * bufferSize)] = (byte) (bufferInt[i + 3] & 0xff);
-                                bufferByte[j + 1 + (2 * bufferSize)] = (byte) (bufferInt[i + 3] >>> 8);
-                            }
-                        } // else endianess == LITTLE_ENDIAN
-
-                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
-                            raFile.write(bufferByte);
-                        } else {
-                            deflaterStream.write(bufferByte);
-                        }
-                    } catch (IOException error) {
-                        throw error;
-                    }
-                }
+                if (numChannels == 3) {
+	                if (planarConfig == 0) {
+	
+	                    try {
+	                        image.exportData(4 * start, 4 * bufferSize, bufferInt);
+	
+	                        if (endianess == BIG_ENDIAN) {
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 6) {
+	                                bufferByte[j] = (byte) (bufferInt[i + 1] >>> 8);
+	                                bufferByte[j + 1] = (byte) (bufferInt[i + 1] & 0xff);
+	                                bufferByte[j + 2] = (byte) (bufferInt[i + 2] >>> 8);
+	                                bufferByte[j + 3] = (byte) (bufferInt[i + 2] & 0xff);
+	                                bufferByte[j + 4] = (byte) (bufferInt[i + 3] >>> 8);
+	                                bufferByte[j + 5] = (byte) (bufferInt[i + 3] & 0xff);
+	                            }
+	                        } // if (endianess == BIG_ENDIAN)
+	                        else { // endianess == LITTLE_ENDIAN
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 6) {
+	                                bufferByte[j] = (byte) (bufferInt[i + 1] & 0xff);
+	                                bufferByte[j + 1] = (byte) (bufferInt[i + 1] >>> 8);
+	                                bufferByte[j + 2] = (byte) (bufferInt[i + 2] & 0xff);
+	                                bufferByte[j + 3] = (byte) (bufferInt[i + 2] >>> 8);
+	                                bufferByte[j + 4] = (byte) (bufferInt[i + 3] & 0xff);
+	                                bufferByte[j + 5] = (byte) (bufferInt[i + 3] >>> 8);
+	                            }
+	                        }
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                } else {
+	
+	                    try {
+	                        image.exportData(4 * start, 4 * bufferSize, bufferInt);
+	
+	                        if (endianess == BIG_ENDIAN) {
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 2) {
+	                                bufferByte[j] = (byte) (bufferInt[i + 1] >>> 8);
+	                                bufferByte[j + 1] = (byte) (bufferInt[i + 1] & 0xff);
+	                                bufferByte[j + bufferSize] = (byte) (bufferInt[i + 2] >>> 8);
+	                                bufferByte[j + 1 + bufferSize] = (byte) (bufferInt[i + 2] & 0xff);
+	                                bufferByte[j + (2 * bufferSize)] = (byte) (bufferInt[i + 3] >>> 8);
+	                                bufferByte[j + 1 + (2 * bufferSize)] = (byte) (bufferInt[i + 3] & 0xff);
+	                            }
+	                        } // if (endianess == BIG_ENDIAN)
+	                        else { // endianess == LITTLE_ENDIAN
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 2) {
+	                                bufferByte[j] = (byte) (bufferInt[i + 1] & 0xff);
+	                                bufferByte[j + 1] = (byte) (bufferInt[i + 1] >>> 8);
+	                                bufferByte[j + bufferSize] = (byte) (bufferInt[i + 2] & 0xff);
+	                                bufferByte[j + 1 + bufferSize] = (byte) (bufferInt[i + 2] >>> 8);
+	                                bufferByte[j + (2 * bufferSize)] = (byte) (bufferInt[i + 3] & 0xff);
+	                                bufferByte[j + 1 + (2 * bufferSize)] = (byte) (bufferInt[i + 3] >>> 8);
+	                            }
+	                        } // else endianess == LITTLE_ENDIAN
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                }
+                } // if (numChannels == 3)
+                else  { // numChannels == 4
+                	if (planarConfig == 0) {
+                		
+	                    try {
+	                        image.exportData(4 * start, 4 * bufferSize, bufferInt);
+	
+	                        if (endianess == BIG_ENDIAN) {
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 8) {
+	                                bufferByte[j] = (byte) (bufferInt[i] >>> 8);
+	                                bufferByte[j + 1] = (byte) (bufferInt[i] & 0xff);
+	                                bufferByte[j + 2] = (byte) (bufferInt[i + 1] >>> 8);
+	                                bufferByte[j + 3] = (byte) (bufferInt[i + 1] & 0xff);
+	                                bufferByte[j + 4] = (byte) (bufferInt[i + 2] >>> 8);
+	                                bufferByte[j + 5] = (byte) (bufferInt[i + 2] & 0xff);
+	                                bufferByte[j + 6] = (byte) (bufferInt[i + 3] >>> 8);
+	                                bufferByte[j + 7] = (byte) (bufferInt[i + 3] & 0xff);
+	                            }
+	                        } // if (endianess == BIG_ENDIAN)
+	                        else { // endianess == LITTLE_ENDIAN
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 8) {
+	                                bufferByte[j] = (byte) (bufferInt[i] & 0xff);
+	                                bufferByte[j + 1] = (byte) (bufferInt[i] >>> 8);
+	                                bufferByte[j + 2] = (byte) (bufferInt[i + 1] & 0xff);
+	                                bufferByte[j + 3] = (byte) (bufferInt[i + 1] >>> 8);
+	                                bufferByte[j + 4] = (byte) (bufferInt[i + 2] & 0xff);
+	                                bufferByte[j + 5] = (byte) (bufferInt[i + 2] >>> 8);
+	                                bufferByte[j + 6] = (byte) (bufferInt[i + 3] & 0xff);
+	                                bufferByte[j + 7] = (byte) (bufferInt[i + 3] >>> 8);
+	                            }
+	                        }
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                } else {
+	
+	                    try {
+	                        image.exportData(4 * start, 4 * bufferSize, bufferInt);
+	
+	                        if (endianess == BIG_ENDIAN) {
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 2) {
+	                                bufferByte[j] = (byte) (bufferInt[i] >>> 8);
+	                                bufferByte[j + 1] = (byte) (bufferInt[i] & 0xff);
+	                                bufferByte[j + bufferSize] = (byte) (bufferInt[i + 1] >>> 8);
+	                                bufferByte[j + 1 + bufferSize] = (byte) (bufferInt[i + 1] & 0xff);
+	                                bufferByte[j + (2 * bufferSize)] = (byte) (bufferInt[i + 2] >>> 8);
+	                                bufferByte[j + 1 + (2 * bufferSize)] = (byte) (bufferInt[i + 2] & 0xff);
+	                                bufferByte[j + (3 * bufferSize)] = (byte) (bufferInt[i + 3] >>> 8);
+	                                bufferByte[j + 1 + (3 * bufferSize)] = (byte) (bufferInt[i + 3] & 0xff);
+	                            }
+	                        } // if (endianess == BIG_ENDIAN)
+	                        else { // endianess == LITTLE_ENDIAN
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 2) {
+	                                bufferByte[j] = (byte) (bufferInt[i] & 0xff);
+	                                bufferByte[j + 1] = (byte) (bufferInt[i] >>> 8);
+	                                bufferByte[j + bufferSize] = (byte) (bufferInt[i + 1] & 0xff);
+	                                bufferByte[j + 1 + bufferSize] = (byte) (bufferInt[i + 1] >>> 8);
+	                                bufferByte[j + (2 * bufferSize)] = (byte) (bufferInt[i + 2] & 0xff);
+	                                bufferByte[j + 1 + (2 * bufferSize)] = (byte) (bufferInt[i + 2] >>> 8);
+	                                bufferByte[j + (3 * bufferSize)] = (byte) (bufferInt[i + 3] & 0xff);
+	                                bufferByte[j + 1 + (3 * bufferSize)] = (byte) (bufferInt[i + 3] >>> 8);
+	                            }
+	                        } // else endianess == LITTLE_ENDIAN
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                }	
+                } // else (numChannels == 4)
 
                 /*
                  * } else { // BGR if (planarConfig == 0) { try { image.exportData(4*start, 4*bufferSize, bufferInt); if
@@ -2223,117 +2350,254 @@ public class FileRawChunk extends FileBase {
                 
             case ModelStorageBase.ARGB_FLOAT:
                 
-                if (planarConfig == 0) {
-
-                    try {
-                        int tmpInt;
-                        image.exportData(4 * start, 4 * bufferSize, bufferFloat);
-
-                        if (endianess == BIG_ENDIAN) {
-
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 12) {
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
-                                bufferByte[j] = (byte) (tmpInt >>> 24);
-                                bufferByte[j+1] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+2] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+3] = (byte) (tmpInt & 0xff);
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
-                                bufferByte[j+4] = (byte) (tmpInt >>> 24);
-                                bufferByte[j+5] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+6] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+7] = (byte) (tmpInt & 0xff);
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
-                                bufferByte[j+8] = (byte) (tmpInt >>> 24);
-                                bufferByte[j+9] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+10] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+11] = (byte) (tmpInt & 0xff);
-                            }
-                        } // if (endianess == BIG_ENDIAN)
-                        else { // endianess == LITTLE_ENDIAN
-
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 12) {
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
-                                bufferByte[j] = (byte) (tmpInt & 0xff);
-                                bufferByte[j+1] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+2] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+3] = (byte) (tmpInt >>> 24);
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
-                                bufferByte[j+4] = (byte) (tmpInt & 0xff);
-                                bufferByte[j+5] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+6] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+7] = (byte) (tmpInt >>> 24);
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
-                                bufferByte[j+8] = (byte) (tmpInt & 0xff);
-                                bufferByte[j+9] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+10] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+11] = (byte) (tmpInt >>> 24);
-                            }
-                        }
-
-                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
-                            raFile.write(bufferByte);
-                        } else {
-                            deflaterStream.write(bufferByte);
-                        }
-                    } catch (IOException error) {
-                        throw error;
-                    }
-                } else {
-
-                    try {
-                        int tmpInt;
-                        image.exportData(4 * start, 4 * bufferSize, bufferFloat);
-
-                        if (endianess == BIG_ENDIAN) {
-
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 4) {
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
-                                bufferByte[j] = (byte) (tmpInt >>> 24);
-                                bufferByte[j+1] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+2] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+3] = (byte) (tmpInt & 0xff);
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
-                                bufferByte[j + bufferSize] = (byte) (tmpInt >>> 24);
-                                bufferByte[j+1 + bufferSize] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+2 + bufferSize] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+3 + bufferSize] = (byte) (tmpInt & 0xff);
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
-                                bufferByte[j + (2*bufferSize)] = (byte) (tmpInt >>> 24);
-                                bufferByte[j+1 + (2*bufferSize)] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+2 + (2*bufferSize)] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+3 + (2*bufferSize)] = (byte) (tmpInt & 0xff);
-                            }
-                        } // if (endianess == BIG_ENDIAN)
-                        else { // endianess == LITTLE_ENDIAN
-
-                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 4) {
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
-                                bufferByte[j] = (byte) (tmpInt & 0xff);
-                                bufferByte[j+1] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+2] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+3] = (byte) (tmpInt >>> 24);
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
-                                bufferByte[j + bufferSize] = (byte) (tmpInt & 0xff);
-                                bufferByte[j+1 + bufferSize] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+2 + bufferSize] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+3 + bufferSize] = (byte) (tmpInt >>> 24);
-                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
-                                bufferByte[j + (2*bufferSize)] = (byte) (tmpInt & 0xff);
-                                bufferByte[j+1 + (2*bufferSize)] = (byte) (tmpInt >>> 8);
-                                bufferByte[j+2 + (2*bufferSize)] = (byte) (tmpInt >>> 16);
-                                bufferByte[j+3 + (2*bufferSize)] = (byte) (tmpInt >>> 24);
-                            }
-                        } // else endianess == LITTLE_ENDIAN
-
-                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
-                            raFile.write(bufferByte);
-                        } else {
-                            deflaterStream.write(bufferByte);
-                        }
-                    } catch (IOException error) {
-                        throw error;
-                    }
-                }
+                if (numChannels == 3) {
+	            	if (planarConfig == 0) {
+	
+	                    try {
+	                        int tmpInt;
+	                        image.exportData(4 * start, 4 * bufferSize, bufferFloat);
+	
+	                        if (endianess == BIG_ENDIAN) {
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 12) {
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+	                                bufferByte[j] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+1] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+2] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+3] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+	                                bufferByte[j+4] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+5] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+6] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+7] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+	                                bufferByte[j+8] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+9] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+10] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+11] = (byte) (tmpInt & 0xff);
+	                            }
+	                        } // if (endianess == BIG_ENDIAN)
+	                        else { // endianess == LITTLE_ENDIAN
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 12) {
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+	                                bufferByte[j] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+1] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+2] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+3] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+	                                bufferByte[j+4] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+5] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+6] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+7] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+	                                bufferByte[j+8] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+9] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+10] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+11] = (byte) (tmpInt >>> 24);
+	                            }
+	                        }
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                } else {
+	
+	                    try {
+	                        int tmpInt;
+	                        image.exportData(4 * start, 4 * bufferSize, bufferFloat);
+	
+	                        if (endianess == BIG_ENDIAN) {
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 4) {
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+	                                bufferByte[j] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+1] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+2] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+3] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+	                                bufferByte[j + bufferSize] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+1 + bufferSize] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+2 + bufferSize] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+3 + bufferSize] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+	                                bufferByte[j + (2*bufferSize)] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+1 + (2*bufferSize)] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+2 + (2*bufferSize)] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+3 + (2*bufferSize)] = (byte) (tmpInt & 0xff);
+	                            }
+	                        } // if (endianess == BIG_ENDIAN)
+	                        else { // endianess == LITTLE_ENDIAN
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 4) {
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+	                                bufferByte[j] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+1] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+2] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+3] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+	                                bufferByte[j + bufferSize] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+1 + bufferSize] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+2 + bufferSize] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+3 + bufferSize] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+	                                bufferByte[j + (2*bufferSize)] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+1 + (2*bufferSize)] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+2 + (2*bufferSize)] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+3 + (2*bufferSize)] = (byte) (tmpInt >>> 24);
+	                            }
+	                        } // else endianess == LITTLE_ENDIAN
+	                    
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                }
+                } // if (numChannels == 3)
+                else { // (numChannels == 4)
+                	if (planarConfig == 0) {
+                		
+	                    try {
+	                        int tmpInt;
+	                        image.exportData(4 * start, 4 * bufferSize, bufferFloat);
+	
+	                        if (endianess == BIG_ENDIAN) {
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 16) {
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i]);
+	                                bufferByte[j] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+1] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+2] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+3] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+	                                bufferByte[j+4] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+5] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+6] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+7] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+	                                bufferByte[j+8] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+9] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+10] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+11] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+	                                bufferByte[j+12] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+13] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+14] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+15] = (byte) (tmpInt & 0xff);
+	                            }
+	                        } // if (endianess == BIG_ENDIAN)
+	                        else { // endianess == LITTLE_ENDIAN
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 16) {
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i]);
+	                                bufferByte[j] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+1] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+2] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+3] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+	                                bufferByte[j+4] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+5] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+6] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+7] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+	                                bufferByte[j+8] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+9] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+10] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+11] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+	                                bufferByte[j+12] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+13] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+14] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+15] = (byte) (tmpInt >>> 24);
+	                            }
+	                        }
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                } else {
+	
+	                    try {
+	                        int tmpInt;
+	                        image.exportData(4 * start, 4 * bufferSize, bufferFloat);
+	
+	                        if (endianess == BIG_ENDIAN) {
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 4) {
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i]);
+	                                bufferByte[j] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+1] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+2] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+3] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+	                                bufferByte[j + bufferSize] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+1 + bufferSize] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+2 + bufferSize] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+3 + bufferSize] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+	                                bufferByte[j + (2*bufferSize)] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+1 + (2*bufferSize)] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+2 + (2*bufferSize)] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+3 + (2*bufferSize)] = (byte) (tmpInt & 0xff);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+	                                bufferByte[j + (3*bufferSize)] = (byte) (tmpInt >>> 24);
+	                                bufferByte[j+1 + (3*bufferSize)] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+2 + (3*bufferSize)] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+3 + (3*bufferSize)] = (byte) (tmpInt & 0xff);
+	                            }
+	                        } // if (endianess == BIG_ENDIAN)
+	                        else { // endianess == LITTLE_ENDIAN
+	
+	                            for (i = 0, j = 0; i < (4 * bufferSize); i += 4, j += 4) {
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i]);
+	                                bufferByte[j] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+1] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+2] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+3] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+	                                bufferByte[j + bufferSize] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+1 + bufferSize] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+2 + bufferSize] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+3 + bufferSize] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+2]);
+	                                bufferByte[j + (2*bufferSize)] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+1 + (2*bufferSize)] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+2 + (2*bufferSize)] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+3 + (2*bufferSize)] = (byte) (tmpInt >>> 24);
+	                                tmpInt = Float.floatToIntBits(bufferFloat[i+3]);
+	                                bufferByte[j + (3*bufferSize)] = (byte) (tmpInt & 0xff);
+	                                bufferByte[j+1 + (3*bufferSize)] = (byte) (tmpInt >>> 8);
+	                                bufferByte[j+2 + (3*bufferSize)] = (byte) (tmpInt >>> 16);
+	                                bufferByte[j+3 + (3*bufferSize)] = (byte) (tmpInt >>> 24);
+	                            }
+	                        } // else endianess == LITTLE_ENDIAN
+	                    
+	
+	                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+	                            raFile.write(bufferByte);
+	                        } else {
+	                            deflaterStream.write(bufferByte);
+	                        }
+	                    } catch (IOException error) {
+	                        throw error;
+	                    }
+	                }	
+                } // else (numChannels == 4)
                 break;
 
             case ModelStorageBase.COMPLEX:
