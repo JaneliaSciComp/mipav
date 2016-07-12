@@ -820,7 +820,7 @@ public class FileMetaImage extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(rawDataName, fileDir, fileInfo, FileBase.READ);
             if (numChannels == 4) {
-                rawFile.setNumColors(4);
+                rawFile.setNumChannels(4);
                 rawFile.setRGBAOrder(false);
             }
             linkProgress(rawFile);
@@ -991,6 +991,10 @@ public class FileMetaImage extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(image.getFileInfo(0));
             rawFile.setZeroLengthFlag(true);
+            if (image.isColorImage()) {
+                rawFile.setNumChannels(4);
+                rawFile.setRGBAOrder(false);
+            }
             linkProgress(rawFile);
             if (image.getNDims() == 3) {
                 finalHeaderPosition = new long[nImagesSaved];	
@@ -1027,6 +1031,10 @@ public class FileMetaImage extends FileBase {
                 FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
                 rawFile.setZeroLengthFlag(true);
+                if (image.isColorImage()) {
+                    rawFile.setNumChannels(4);
+                    rawFile.setRGBAOrder(false);
+                }
                 linkProgress(rawFile);
                 finalHeaderPosition = new long[1];
                 if (nImagesSaved != 0) {
@@ -1218,12 +1226,14 @@ public class FileMetaImage extends FileBase {
         	 raFile.writeBytes("ElementType =  MET_CHAR\n");
         	 break;
          case ModelStorageBase.UBYTE:
+         case ModelStorageBase.ARGB:
         	 raFile.writeBytes("ElementType = MET_UCHAR\n");
         	 break;
          case ModelStorageBase.SHORT:
         	 raFile.writeBytes("ElementType = MET_SHORT\n");
         	 break;
          case ModelStorageBase.USHORT:
+         case ModelStorageBase.ARGB_USHORT:
         	 raFile.writeBytes("ElementType = MET_USHORT\n");
         	 break;
          case ModelStorageBase.INTEGER:
@@ -1236,11 +1246,23 @@ public class FileMetaImage extends FileBase {
         	 raFile.writeBytes("ElementType = MET_LONG\n");
         	 break;
          case ModelStorageBase.FLOAT:
+         case ModelStorageBase.ARGB_FLOAT:
+         case ModelStorageBase.COMPLEX:
         	 raFile.writeBytes("ElementType = MET_FLOAT\n");
         	 break;
          case ModelStorageBase.DOUBLE:
+         case ModelStorageBase.DCOMPLEX:
         	 raFile.writeBytes("ElementType = MET_DOUBLE\n");
         	 break;
+         }
+         if (image.isColorImage()) {
+        	 raFile.writeBytes("ElementNumberOfChannels = 4\n");
+         }
+         else if (image.isComplexImage()) {
+        	 raFile.writeBytes("ElementNumberOfChannels = 2\n");
+         }
+         else {
+        	 raFile.writeBytes("ElementNumberOfChannels = 1\n");
          }
          if (oneFile) {
         	 raFile.writeBytes("HeaderSize = -1\n");
