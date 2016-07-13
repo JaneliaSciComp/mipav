@@ -337,7 +337,7 @@ public class FilePARREC extends FileBase {
     private int bValuePos;
     
     /**bFactorIndex**/
-    private int gradPos;
+    private int gradPos = -1;
     
     private int echoNumberPos = -1;
     
