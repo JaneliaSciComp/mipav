@@ -159,6 +159,7 @@ public class FilePPM extends FileBase {
         if (format == BINARY_FORMAT) {
         	
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
+            rawFile.setNumChannels(3);
             linkProgress(rawFile);
             rawFile.readImage(image, raFile.getFilePointer());
         }
