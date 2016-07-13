@@ -1758,11 +1758,13 @@ public class FileDicom extends FileDicomBase {
 
                 if (imageType == ModelStorageBase.ARGB) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
+                    rawFile.setNumChannels(3);
                     rawFile.readImage(buffer, (long) fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 3)), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 } else if (imageType == ModelStorageBase.ARGB_USHORT) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
+                    rawFile.setNumChannels(3);
                     rawFile.readImage(buffer, (long) fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 6)), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
