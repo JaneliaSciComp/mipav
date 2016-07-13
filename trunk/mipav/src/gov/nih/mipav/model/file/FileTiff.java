@@ -6285,6 +6285,9 @@ public class FileTiff extends FileBase {
                                 } // if (type == ModelStorageBase.BOOLEAN)
                                 else {
                                     // adjust for intAlign ????
+                                	if (image.isColorImage()) {
+                                		fileRW.setNumChannels(3);
+                                	}
                                     fileRW.writeImage(image, timeOffset + (k * bufferSize), timeOffset
                                             + (k * bufferSize) + bufferSize);
                                 }
@@ -6314,6 +6317,9 @@ public class FileTiff extends FileBase {
                     try {
 
                         if ( !options.isWritePackBit()) {
+                        	if (image.isColorImage()) {
+                        		fileRW.setNumChannels(3);
+                        	}
                             fileRW.writeImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
                         } else {
                             filePB.writePackBitImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
