@@ -11,7 +11,6 @@ import java.io.*;
  *
  * @version  0.1 Sept 2, 1997
  * @author   Matthew J. McAuliffe, Ph.D.
- * @see      FileRaw
  */
 
 public class FileMap extends FileBase {
