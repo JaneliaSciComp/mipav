@@ -1504,6 +1504,7 @@ public class FileDicom extends FileDicomBase {
 
                 if (ModelImage.isColorImage(imageType)) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
+                    rawFile.setNumChannels(3);
                     rawFile.readImage(buffer, (long) fileInfo.getOffset() + (imageNo * buffer.length), imageType); // *****
                     // Read
                     // image
@@ -1681,6 +1682,7 @@ public class FileDicom extends FileDicomBase {
 
                 if (ModelImage.isColorImage(imageType)) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
+                    rawFile.setNumChannels(3);
                     rawFile.readImage(buffer, (long) fileInfo.getOffset() + (imageNo * buffer.length)); // *****
                     // Read
                     // image
