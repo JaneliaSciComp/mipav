@@ -46,7 +46,6 @@ import javax.swing.*;
  *
  * @see  FileIO
  * @see  FileInfoLSM
- * @see  FileRaw
  */
 
 public class FileLSM extends FileBase {
