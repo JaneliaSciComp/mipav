@@ -6049,6 +6049,9 @@ public class FileSVS extends FileBase {
 
                     if (options.isWritePackBit() == false) {
                         fileRW = new FileRawChunk(raFile, image.getFileInfo(0));
+                        if (image.isColorImage()) {
+                    		fileRW.setNumChannels(3);
+                    	}
                     } else {
                         filePB = new FilePackBit(raFile);
                     }
@@ -6096,6 +6099,9 @@ public class FileSVS extends FileBase {
 
                     if (options.isWritePackBit() == false) {
                         fileRW = new FileRawChunk(raFile, image.getFileInfo(s));
+                        if (image.isColorImage()) {
+                    		fileRW.setNumChannels(3);
+                    	}
                     } else {
                         filePB = new FilePackBit(raFile);
                     }
