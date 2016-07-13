@@ -40,7 +40,6 @@ import gov.nih.mipav.model.file.rawjp2.*;
  * @author   Dzung Nguyen, Nam Nguyen
  * @see      FileIO
  * @see      FileInfoJP2
- * @see      FileRaw
  */
 public class FileJP2 extends FileBase implements ActionListener{
 	
