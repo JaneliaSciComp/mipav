@@ -6040,6 +6040,9 @@ public class FileTiff extends FileBase {
 
                     if (options.isWritePackBit() == false) {
                         fileRW = new FileRawChunk(raFile, image.getFileInfo(0));
+                        if (image.isColorImage()) {
+                    		fileRW.setNumChannels(3);
+                    	}
                     } else {
                         filePB = new FilePackBit(raFile);
                     }
@@ -6086,7 +6089,11 @@ public class FileTiff extends FileBase {
                                          // end
 
                     if (options.isWritePackBit() == false) {
+
                         fileRW = new FileRawChunk(raFile, image.getFileInfo(s));
+                        if (image.isColorImage()) {
+                    		fileRW.setNumChannels(3);
+                    	}
                     } else {
                         filePB = new FilePackBit(raFile);
                     }
@@ -6285,9 +6292,6 @@ public class FileTiff extends FileBase {
                                 } // if (type == ModelStorageBase.BOOLEAN)
                                 else {
                                     // adjust for intAlign ????
-                                	if (image.isColorImage()) {
-                                		fileRW.setNumChannels(3);
-                                	}
                                     fileRW.writeImage(image, timeOffset + (k * bufferSize), timeOffset
                                             + (k * bufferSize) + bufferSize);
                                 }
@@ -6317,9 +6321,6 @@ public class FileTiff extends FileBase {
                     try {
 
                         if ( !options.isWritePackBit()) {
-                        	if (image.isColorImage()) {
-                        		fileRW.setNumChannels(3);
-                        	}
                             fileRW.writeImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
                         } else {
                             filePB.writePackBitImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
