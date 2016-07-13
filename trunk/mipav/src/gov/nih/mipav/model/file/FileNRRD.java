@@ -3610,6 +3610,9 @@ public class FileNRRD extends FileBase {
         	if (oneFile) {
         		FileRaw rawFile;
                 rawFile = new FileRaw(image.getFileInfo(0));
+                if (image.isColorImage()) {
+                	rawFile.setNumChannels(3);
+                }
                 linkProgress(rawFile);
         		if (image.getNDims() == 3) {
         			writeHeader3DTo2D(image, fhName, fileDir, options);
@@ -3628,6 +3631,9 @@ public class FileNRRD extends FileBase {
         	}else {
         		FileRaw rawFile;
                 rawFile = new FileRaw(fhName + ".raw", fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                if (image.isColorImage()) {
+                	rawFile.setNumChannels(3);
+                }
                 linkProgress(rawFile);
         		if (image.getNDims() == 3) {
         			writeHeader3DTo2D(image, fhName, fileDir, options);
@@ -3643,6 +3649,9 @@ public class FileNRRD extends FileBase {
         	if (oneFile) {
         		FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                if (image.isColorImage()) {
+                	rawFile.setNumChannels(3);
+                }
                 linkProgress(rawFile);
                 long startLocation = raFile.getFilePointer();
                 rawFile.setZeroLengthFlag(false);
@@ -3653,6 +3662,9 @@ public class FileNRRD extends FileBase {
         	}else {
                 FileRaw rawFile;
                 rawFile = new FileRaw(fhName + ".raw", fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                if (image.isColorImage()) {
+                	rawFile.setNumChannels(3);
+                }
                 linkProgress(rawFile);
                 rawFile.writeImage(image, options);
                 rawFile.close();
