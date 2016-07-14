@@ -47,7 +47,6 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 		this.binNumber = binNumber;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void runAlgorithm() {
     	int xDim;
     	int yDim;
@@ -205,6 +204,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
           
             fifo.clear();
             
+            // Algorithm 1. Detection and labeling of minima
             for (i = 0; i < length; i++) {
             	if (labelBuffer[i] == INIT) {
             	    foundNeighbors = allNeighbors[i].length;
@@ -266,7 +266,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
                     				return;
                     			}
         					}
-        					else if (labelBuffer[allNeighbors[j][k]] == NARM) {
+        					else if (labelBuffer[allNeighbors[j][k]] == NARM) { /* A beta(Mi) pixel */
         						labelBuffer[allNeighbors[j][k]] = INOQ;
         						pfifo.add(new indexValueItem(allNeighbors[j][k],imgBuffer[allNeighbors[j][k]]));
         					}
@@ -275,6 +275,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
             	} // if (labelBuffer[i] == INIT)
             } // for (i = 0; i < length; i++)
             
+            // Meyer2 watershed algorithm with Algorithm 4. split-and-merge placed after the assignment of WSHED.
             while (!pfifo.isEmpty()) {
             	p = pfifo.poll();
             	i = p.getIndex();
