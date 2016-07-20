@@ -675,6 +675,8 @@ public class Preferences {
     public static final String PREF_BRICS_PLUGIN_OUTPUT_DIR = "BRICSOutputDir";
 
     public static final String PREF_BRICS_PLUGIN_CSV_DIR = "BRICSCSVDir";
+    
+    public static final String PREF_BRICS_PLUGIN_BIDS_DIR = "BRICSBIDSDir";
 
     public static final String PREF_PAINT_OPACITY = "paintOpacity";
 
