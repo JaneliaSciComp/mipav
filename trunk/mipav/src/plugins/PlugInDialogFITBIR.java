@@ -74,7 +74,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private JTable structTable;
 
-    private JButton addStructButton, loadCSVButton, finishButton, removeStructButton, editDataElementsButton, outputDirButton;
+    private JButton addStructButton, loadCSVButton, selectBIDSButton,
+                    finishButton, removeStructButton, editDataElementsButton, outputDirButton;
 
     private JTextField outputDirTextField;
 
@@ -83,6 +84,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private String outputDirBase;
 
     private String csvFileDir;
+    
+    private String BIDSFileDir;
 
     private Hashtable<String, String> csvStructRowData;
 
@@ -198,6 +201,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private List<FormStructure> dataStructureList;
 
     private File csvFile;
+    
+    private File BIDSFile;
 
     private ArrayList<String> csvFieldNames;
 
@@ -316,6 +321,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         if (csvFileDir == null) {
             csvFileDir = ViewUserInterface.getReference().getDefaultDirectory();
         }
+        BIDSFileDir = Preferences.getProperty(Preferences.PREF_BRICS_PLUGIN_BIDS_DIR);
+        if (BIDSFileDir == null) {
+        	BIDSFileDir = ViewUserInterface.getReference().getDefaultDirectory();
+        }
 
         // try to read the server config from disk, if it is there.
         // otherwise the value set above at initialization is used.
@@ -364,6 +373,21 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
+            }
+            listPane.setBorder(JDialogBase.buildTitledBorder(structTableModel.getRowCount() + " Form Structure(s) "));
+        } else if (command.equalsIgnoreCase("SelectBIDS")) {
+        	final JFileChooser chooser = new JFileChooser();
+        	chooser.setCurrentDirectory(new File(BIDSFileDir));
+        	chooser.setDialogTitle("Choose root BIDS directory");
+        	chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setMultiSelectionEnabled(false);
+            final int returnValue = chooser.showOpenDialog(this);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                BIDSFile = chooser.getSelectedFile();
+                processBIDSDirectories();
+
+                BIDSFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
+                Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_BIDS_DIR, BIDSFileDir);
             }
             listPane.setBorder(JDialogBase.buildTitledBorder(structTableModel.getRowCount() + " Form Structure(s) "));
         } else if (command.equalsIgnoreCase("RemoveStruct")) {
@@ -492,6 +516,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     addStructButton.setEnabled(false);
                     editDataElementsButton.setEnabled(false);
                     loadCSVButton.setEnabled(false);
+                    selectBIDSButton.setEnabled(false);
 
                     worker.execute();
                 }
@@ -554,6 +579,218 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     @Override
     public void windowOpened(final WindowEvent e) {}
+    
+    private boolean processBIDSDirectories() {
+    	int numberSubjects = 0;
+    	File[] files;
+    	File[] files2;
+    	File subjectFiles[];
+    	int i;
+    	int j;
+    	int k;
+    	int m;
+    	int numberSessions[];
+    	int maximumNumberSessions = 0;
+    	File sessionFiles[][];
+    	int anatNumber = 0;
+    	int funcNumber = 0;
+    	int dwiNumber = 0;
+    	int fmapNumber = 0;
+    	int tsvNumber = 0;
+    	File anatFiles[][][];
+    	File funcFiles[][][];
+    	File dwiFiles[][][];
+    	File fmapFiles[][][];
+    	File tsvFiles[][];
+    	boolean found;
+    	// Read directory and find no. of images
+        files = BIDSFile.listFiles();
+        for (i = 0; i < files.length; i++) {
+        	if ((files[i].isDirectory()) && (files[i].getName().substring(0,3).equalsIgnoreCase("SUB"))) {
+        		numberSubjects++;
+        	}
+        }
+        printlnToLog("Number of subjects = " + numberSubjects);
+        if (numberSubjects == 0) {
+        	return false;
+        }
+        subjectFiles = new File[numberSubjects];
+        for (i = 0, j = 0; i < files.length; i++) {
+        	if ((files[i].isDirectory()) && (files[i].getName().substring(0,3).equalsIgnoreCase("SUB"))) {
+        		subjectFiles[j++] = files[i];
+        	}
+        }
+        numberSessions = new int[numberSubjects];
+        for (i = 0; i < numberSubjects; i++) {
+            files = subjectFiles[i].listFiles();
+            for (j = 0; j < files.length; j++) {
+            	if ((files[j].isDirectory()) && (files[j].getName().substring(0,3).equalsIgnoreCase("SES"))) {	
+            		numberSessions[i]++;
+            	}
+            }
+            if (numberSessions[i] > maximumNumberSessions) {
+            	maximumNumberSessions = numberSessions[i];
+            }
+        }
+        printlnToLog("Maximum number of sessions for any subject = " + maximumNumberSessions);
+        if (maximumNumberSessions > 0) {
+        	for (i = 0; i < numberSubjects; i++) {
+        		if (numberSessions[i] == 0) {
+        			printlnToLog("Illegal skipped session for subject " + subjectFiles[i].getName());
+        		}
+        	}
+        }
+        sessionFiles = new File[numberSubjects][];
+        if (maximumNumberSessions == 0) {
+            for (i = 0; i < numberSubjects; i++) {
+        	    sessionFiles[i] = new File[1];
+        	    sessionFiles[i][0] = subjectFiles[i]; 
+            }
+        } // if (maximumNumberSessions == 0)
+        else { // maximumNumberSessions > 0
+        	for (i = 0; i < numberSubjects; i++) {
+        		sessionFiles[i] = new File[numberSessions[i]];
+        		files = subjectFiles[i].listFiles();
+                for (j = 0, k = 0; j < files.length; j++) {
+                	if ((files[j].isDirectory()) && (files[j].getName().substring(0,3).equalsIgnoreCase("SES"))) {	
+                		sessionFiles[i][k++] = files[j];
+                	}
+                }
+        	}
+        } // else maximumNumberSessions > 0
+        
+        for (i = 0; i < numberSubjects; i++) {
+        	for (j = 0; j < sessionFiles[i].length; j++) {
+        		files = sessionFiles[i][j].listFiles();
+        		for (k = 0; k < files.length; k++) {
+        			if (files[k].isDirectory()) {
+        				if (files[k].getName().equalsIgnoreCase("ANAT")) {
+        					anatNumber++;
+        				}
+        				else if (files[k].getName().equalsIgnoreCase("FUNC")) {
+        					funcNumber++;
+        				}
+        				else if (files[k].getName().equalsIgnoreCase("DWI")) {
+        					dwiNumber++;
+        				}
+        				else if (files[k].getName().equalsIgnoreCase("FMAP")) {
+        					fmapNumber++;
+        				}
+        			} // if (files[k].isDirectory())
+        			else if (files[k].getName().endsWith(".tsv")) {
+        				tsvNumber++;
+        			}
+        		}
+        	}
+        }
+        
+        printlnToLog(anatNumber + " anat subdirectories were found");
+        printlnToLog(funcNumber + " func subdirectories were found");
+        printlnToLog(dwiNumber + " dwi subdirectories were found");
+        printlnToLog(fmapNumber + " fmap subdirectories were found");
+        if (maximumNumberSessions == 0) {
+        	printlnToLog(tsvNumber + " subject subdirectory tsv files were found");
+        }
+        else {
+        	printlnToLog(tsvNumber + " session subdirectory tsv files were found");
+        }
+        
+        if (anatNumber > 0) {
+        	anatFiles = new File[numberSubjects][][];
+        	for (i = 0; i < numberSubjects; i++) {
+        		anatFiles[i] = new File[sessionFiles[i].length][];
+        		for (j = 0; j < sessionFiles[i].length; j++) {
+        			files = sessionFiles[i][j].listFiles();
+        			for (k = 0; k < files.length; k++) {
+        				if ((files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("ANAT"))) {
+        				    files2 = files[k].listFiles();
+        				    anatFiles[i][j] = new File[files2.length];
+        				    for (m = 0; m < files2.length; m++) {
+        				    	anatFiles[i][j][m] = files2[m];
+        				    }
+        				}
+        			}
+        		}
+        	}
+        } // if (anatNumber > 0)
+        
+        if (funcNumber > 0) {
+        	funcFiles = new File[numberSubjects][][];
+        	for (i = 0; i < numberSubjects; i++) {
+        		funcFiles[i] = new File[sessionFiles[i].length][];
+        		for (j = 0; j < sessionFiles[i].length; j++) {
+        			files = sessionFiles[i][j].listFiles();
+        			for (k = 0; k < files.length; k++) {
+        				if ((files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("FUNC"))) {
+        				    files2 = files[k].listFiles();
+        				    funcFiles[i][j] = new File[files2.length];
+        				    for (m = 0; m < files2.length; m++) {
+        				    	funcFiles[i][j][m] = files2[m];
+        				    }
+        				}
+        			}
+        		}
+        	}
+        } // if (funcNumber > 0)
+        
+        if (dwiNumber > 0) {
+        	dwiFiles = new File[numberSubjects][][];
+        	for (i = 0; i < numberSubjects; i++) {
+        		dwiFiles[i] = new File[sessionFiles[i].length][];
+        		for (j = 0; j < sessionFiles[i].length; j++) {
+        			files = sessionFiles[i][j].listFiles();
+        			for (k = 0; k < files.length; k++) {
+        				if ((files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("DWI"))) {
+        				    files2 = files[k].listFiles();
+        				    dwiFiles[i][j] = new File[files2.length];
+        				    for (m = 0; m < files2.length; m++) {
+        				    	dwiFiles[i][j][m] = files2[m];
+        				    }
+        				}
+        			}
+        		}
+        	}
+        } // if (dwiNumber > 0)
+        
+        if (fmapNumber > 0) {
+        	fmapFiles = new File[numberSubjects][][];
+        	for (i = 0; i < numberSubjects; i++) {
+        		fmapFiles[i] = new File[sessionFiles[i].length][];
+        		for (j = 0; j < sessionFiles[i].length; j++) {
+        			files = sessionFiles[i][j].listFiles();
+        			for (k = 0; k < files.length; k++) {
+        				if ((files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("FMAP"))) {
+        				    files2 = files[k].listFiles();
+        				    fmapFiles[i][j] = new File[files2.length];
+        				    for (m = 0; m < files2.length; m++) {
+        				    	fmapFiles[i][j][m] = files2[m];
+        				    }
+        				}
+        			}
+        		}
+        	}
+        } // if (fmapNumber > 0)
+        
+        if (tsvNumber > 0) {
+        	tsvFiles = new File[numberSubjects][];
+        	for (i = 0; i < numberSubjects; i++) {
+        		tsvFiles[i] = new File[sessionFiles[i].length];
+        		for (j = 0; j < sessionFiles[i].length; j++) {
+        			files = sessionFiles[i][j].listFiles();
+        			found = false;
+        			for (k = 0; k < files.length && (!found); k++) {
+        				if ((files[k].isFile()) && (files[k].getName().endsWith(".tsv"))) {
+                            tsvFiles[i][j] = files[k];
+                            found = true;
+        				}
+        			}
+        		}
+        	}
+        } // if (tsvNumber > 0)
+        
+     	enableDisableFinishButton();
+    	return true;
+    }
 
     private boolean readCSVFile() {
         try {
@@ -1712,6 +1949,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         loadCSVButton.setToolTipText("Load CSV File");
         loadCSVButton.addActionListener(this);
         loadCSVButton.setActionCommand("LoadCSV");
+        
+        selectBIDSButton = new JButton("Select BIDS Directory");
+        selectBIDSButton.setToolTipText("Select BIDS Root Directory");
+        selectBIDSButton.addActionListener(this);
+        selectBIDSButton.setActionCommand("SelectBIDS");
 
         removeStructButton = new JButton("Remove Form Structure");
         removeStructButton.setToolTipText("Remove the selected Form Structure");
@@ -1728,12 +1970,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         editDataElementsButton.addActionListener(this);
         editDataElementsButton.setActionCommand("EditDataElements");
 
+        selectBIDSButton.setPreferredSize(MipavUtil.defaultButtonSize);
         addStructButton.setPreferredSize(MipavUtil.defaultButtonSize);
         removeStructButton.setPreferredSize(MipavUtil.defaultButtonSize);
         finishButton.setPreferredSize(MipavUtil.defaultButtonSize);
         editDataElementsButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
         addStructButton.setEnabled(false);
+        selectBIDSButton.setEnabled(false);
         loadCSVButton.setEnabled(false);
         removeStructButton.setEnabled(false);
         editDataElementsButton.setEnabled(false);
@@ -1742,12 +1986,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         gbc.gridx = 0;
         buttonPanel1.add(loadCSVButton, gbc);
         gbc.gridx = 1;
-        buttonPanel1.add(addStructButton, gbc);
+        buttonPanel1.add(selectBIDSButton, gbc);
         gbc.gridx = 2;
-        buttonPanel1.add(removeStructButton, gbc);
+        buttonPanel1.add(addStructButton, gbc);
         gbc.gridx = 3;
-        buttonPanel1.add(editDataElementsButton, gbc);
+        buttonPanel1.add(removeStructButton, gbc);
         gbc.gridx = 4;
+        buttonPanel1.add(editDataElementsButton, gbc);
+        gbc.gridx = 5;
         buttonPanel1.add(finishButton, gbc);
 
         return buttonPanel1;
@@ -6098,6 +6344,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 addStructButton.setEnabled(true);
                 loadCSVButton.setEnabled(true);
+                selectBIDSButton.setEnabled(true);
             } catch (final Exception e) {
                 e.printStackTrace();
                 if (progressBar != null) {
