@@ -1233,11 +1233,17 @@ public abstract class VOIBase extends Vector<Vector3f> {
             smoothContour = new VOIContour(false, this.isClosed());
             bSmoothAlgo.runSmooth(xPoints, yPoints, zPoints, smoothContour);
             //smoothContour.trimPoints(constraint, trimCollinearPoints);
-            graphContour = smoothContour;
+            if (smoothContour.size() >= 5) {
+                graphContour = smoothContour;
+            }
+            else {
+            	graphContour = (VOIContour)this;
+            }
         }
         else {
             graphContour = (VOIContour)this;
         }
+        // Need graphPoints >= 5 for this routine to work
         graphPoints = graphContour.size();
         xPoints = new float[graphPoints + 9];
         yPoints = new float[graphPoints + 9];
