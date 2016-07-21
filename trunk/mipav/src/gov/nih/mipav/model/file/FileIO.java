@@ -10009,7 +10009,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readNIFTI(final String fileName, final String fileDir, final boolean one, final boolean niftiCompressed) {
+    public ModelImage readNIFTI(final String fileName, final String fileDir, final boolean one, final boolean niftiCompressed) {
         ModelImage image = null;
         FileNIFTI imageFile;
 
