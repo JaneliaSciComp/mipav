@@ -589,6 +589,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int j;
     	int k;
     	int m;
+    	int n;
     	int numberSessions[];
     	int maximumNumberSessions = 0;
     	File sessionFiles[][];
@@ -597,12 +598,29 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int dwiNumber = 0;
     	int fmapNumber = 0;
     	int tsvNumber = 0;
-    	File anatFiles[][][];
-    	File funcFiles[][][];
-    	File dwiFiles[][][];
-    	File fmapFiles[][][];
-    	File tsvFiles[][];
+    	File anatFiles[][][] = null;
+    	File funcFiles[][][] = null;
+    	File dwiFiles[][][] = null;
+    	File fmapFiles[][][] = null;
+    	File tsvFiles[][] = null;
     	boolean found;
+    	FormStructure dsInfo = null;
+    	FormStructureData dsData = null;
+    	ModelImage srcImage[] = new ModelImage[5];
+    	File jsonFile[] = new File[5];
+    	FileIO fileIO = new FileIO();
+    	int anatImagesRead;
+    	int anatJsonRead;
+    	int funcImagesRead;
+    	int funcJsonRead;
+    	int dwiImagesRead;
+    	int dwiJsonRead;
+    	int index;
+    	String baseName;
+    	String jsonName;
+    	int sessionImagesRead;
+    	int sessionJsonRead;
+    	
     	// Read directory and find no. of images
         files = BIDSFile.listFiles();
         for (i = 0; i < files.length; i++) {
@@ -787,6 +805,178 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         		}
         	}
         } // if (tsvNumber > 0)
+        
+        if (anatNumber > 0) {
+            found = false;
+            for (i = 0; i < dataStructureList.size() && (!found); i++) {
+            	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingMR")) {
+            		found = true;
+            	    dsInfo = dataStructureList.get(i);	
+            	}
+            }
+            anatImagesRead = 0;
+            anatJsonRead = 0;
+            for (i = 0; i < numberSubjects; i++) {
+            	for (j = 0; j < anatFiles[i].length; j++) {
+            	    if (anatFiles[i][j] != null) {
+            	    	sessionImagesRead = 0;
+            	    	sessionJsonRead = 0;
+            	        dsData = new FormStructureData(dsInfo);	
+            	        for (k = 0, m = 0; k < anatFiles[i][j].length; k++) {
+            	        	if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
+            	        	    (anatFiles[i][j][k].getName().endsWith(".nii"))) {
+            	        		if (anatFiles[i][j][k].getName().endsWith("nii.gz")) {
+            	        		    srcImage[m] = fileIO.readNIFTI(anatFiles[i][j][k].getParentFile().getAbsolutePath(), 
+            	        				     anatFiles[i][j][k].getName(), true, true);
+            	        		    index = anatFiles[i][j][k].getName().indexOf("nii.gz");
+            	        		}
+            	        		else{
+            	        			srcImage[m] = fileIO.readNIFTI(anatFiles[i][j][k].getParentFile().getAbsolutePath(), 
+           	        				     anatFiles[i][j][k].getName(), true, false);
+            	        			index = anatFiles[i][j][k].getName().indexOf("nii");
+            	        		}
+            	        		anatImagesRead++;
+            	        		sessionImagesRead++;
+            	        		baseName = anatFiles[i][j][k].getName().substring(0,index);
+            	        		jsonName = baseName + "json";
+            	        		found = false;
+            	        		for (n = 0; n < anatFiles[i][j].length  && (!found); n++) {
+            	        			if (anatFiles[i][j][n].getName().equals(jsonName)) {
+            	        				found = true;
+            	        				jsonFile[m] = anatFiles[i][j][n];
+            	        				anatJsonRead++;
+            	        				sessionJsonRead++;
+            	        			}
+            	        		}
+            	        		m++;
+            	        	} // if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
+            	        } // for (k = 0, m = 0; k < anatFiles[i][j].length; k++)
+            	        for (k = 0; k < sessionImagesRead; k++) {
+        	        		srcImage[k].disposeLocal();
+        	        		srcImage[k] = null;
+        	        		jsonFile[k] = null;
+        	        	}
+            	    } // if (anatFiles[i][j] != null)
+            	}
+            }
+            printlnToLog("anat images read = " + anatImagesRead);
+            printlnToLog("anat JSON files read = " + anatJsonRead);
+        } // if (anatNumber > 0)
+        
+        
+        if (funcNumber > 0) {
+        	found = false;
+            for (i = 0; i < dataStructureList.size() && (!found); i++) {
+            	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
+            		found = true;
+            	    dsInfo = dataStructureList.get(i);	
+            	}
+            }
+            funcImagesRead = 0;
+            funcJsonRead = 0;
+            for (i = 0; i < numberSubjects; i++) {
+            	for (j = 0; j < funcFiles[i].length; j++) {
+            	    if (funcFiles[i][j] != null) {
+            	    	sessionImagesRead = 0;
+            	    	sessionJsonRead = 0;
+            	        dsData = new FormStructureData(dsInfo);	
+            	        for (k = 0, m =0; k < funcFiles[i][j].length; k++) {
+            	        	if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
+            	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+            	        		if (funcFiles[i][j][k].getName().endsWith("nii.gz")) {
+            	        		    srcImage[m] = fileIO.readNIFTI(funcFiles[i][j][k].getParentFile().getAbsolutePath(), 
+            	        				     funcFiles[i][j][k].getName(), true, true);
+            	        		    index = funcFiles[i][j][k].getName().indexOf("nii.gz");
+            	        		}
+            	        		else{
+            	        			srcImage[m] = fileIO.readNIFTI(funcFiles[i][j][k].getParentFile().getAbsolutePath(), 
+           	        				     funcFiles[i][j][k].getName(), true, false);
+            	        			index = funcFiles[i][j][k].getName().indexOf("nii");
+            	        		}
+            	        		funcImagesRead++;
+            	        		sessionImagesRead++;
+            	        		baseName = funcFiles[i][j][k].getName().substring(0,index);
+            	        		jsonName = baseName + "json";
+            	        		found = false;
+            	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
+            	        			if (funcFiles[i][j][n].getName().equals(jsonName)) {
+            	        				found = true;
+            	        				jsonFile[m] = funcFiles[i][j][n];
+            	        				funcJsonRead++;
+            	        				sessionJsonRead++;
+            	        			}
+            	        		}
+            	        		m++;
+            	        	} // if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
+            	        } // for (k = 0, m = 0; k < funcFiles[i][j].length; k++) 
+            	        for (k = 0; k < sessionImagesRead; k++) {
+        	        		srcImage[k].disposeLocal();
+        	        		srcImage[k] = null;
+        	        		jsonFile[k] = null;
+        	        	}
+            	    }
+            	}
+            }
+            printlnToLog("func images read = " + funcImagesRead);
+            printlnToLog("func JSON files read = " + funcJsonRead);
+        } // if (funcNumber > 0)
+        
+        if (dwiNumber > 0) {
+        	found = false;
+            for (i = 0; i < dataStructureList.size() && (!found); i++) {
+            	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingDiffusion")) {
+            		found = true;
+            	    dsInfo = dataStructureList.get(i);
+            	}
+            }
+            dwiImagesRead = 0;
+            dwiJsonRead = 0;
+            for (i = 0; i < numberSubjects; i++) {
+            	for (j = 0; j < funcFiles[i].length; j++) {
+            	    if (dwiFiles[i][j] != null) {
+            	    	sessionImagesRead = 0;
+            	    	sessionJsonRead = 0;
+            	        dsData = new FormStructureData(dsInfo);	
+            	        for (k = 0 , m = 0; k < dwiFiles[i][j].length; k++) {
+            	        	if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
+            	        	    (dwiFiles[i][j][k].getName().endsWith(".nii"))) {
+            	        		if (dwiFiles[i][j][k].getName().endsWith("nii.gz")) {
+            	        		    srcImage[m] = fileIO.readNIFTI(dwiFiles[i][j][k].getParentFile().getAbsolutePath(), 
+            	        				     dwiFiles[i][j][k].getName(), true, true);
+            	        		    index = dwiFiles[i][j][k].getName().indexOf("nii.gz");
+            	        		}
+            	        		else{
+            	        			srcImage[m] = fileIO.readNIFTI(dwiFiles[i][j][k].getParentFile().getAbsolutePath(), 
+           	        				     dwiFiles[i][j][k].getName(), true, false);	
+            	        			index = dwiFiles[i][j][k].getName().indexOf("nii");
+            	        		}
+            	        		dwiImagesRead++;
+            	        		sessionImagesRead++;
+            	        		baseName = dwiFiles[i][j][k].getName().substring(0,index);
+            	        		jsonName = baseName + "json";
+            	        		found = false;
+            	        		for (n = 0; n < dwiFiles[i][j].length  && (!found); n++) {
+            	        			if (dwiFiles[i][j][n].getName().equals(jsonName)) {
+            	        				found = true;
+            	        				jsonFile[m] = dwiFiles[i][j][n];
+            	        				dwiJsonRead++;
+            	        				sessionJsonRead++;
+            	        			}
+            	        		}
+            	        		m++;
+            	        	} // if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
+            	        } // for (k = 0 , m = 0; k < dwiFiles[i][j].length; k++)
+            	        for (k = 0; k < sessionImagesRead; k++) {
+        	        		srcImage[k].disposeLocal();
+        	        		srcImage[k] = null;
+        	        		jsonFile[k] = null;
+        	        	}
+            	    }
+            	}
+            }
+            printlnToLog("dwi images read = " + dwiImagesRead);
+            printlnToLog("dwi json files read = " + dwiJsonRead);
+        } // if (dwiNumber > 0)
         
      	enableDisableFinishButton();
     	return true;
