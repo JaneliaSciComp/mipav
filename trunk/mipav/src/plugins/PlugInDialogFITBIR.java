@@ -604,22 +604,43 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	File fmapFiles[][][] = null;
     	File tsvFiles[][] = null;
     	boolean found;
+    	FormStructure ds = null;
     	FormStructure dsInfo = null;
     	FormStructureData dsData = null;
-    	ModelImage srcImage[] = new ModelImage[5];
-    	File jsonFile[] = new File[5];
+    	int maximumSessionFileNumber = 5;
+    	ModelImage srcImage[] = new ModelImage[maximumSessionFileNumber];
+    	File jsonFile[] = new File[maximumSessionFileNumber];
+    	File bvalFile[] = new File[maximumSessionFileNumber];
+    	File bvecFile[] = new File[maximumSessionFileNumber];
+    	File eventsFile[] = new File[maximumSessionFileNumber];
+    	File physioTsvFile[] = new File[maximumSessionFileNumber];
+    	File physioJsonFile[] = new File[maximumSessionFileNumber];
     	FileIO fileIO = new FileIO();
     	int anatImagesRead;
     	int anatJsonRead;
     	int funcImagesRead;
     	int funcJsonRead;
+    	int funcEventsRead;
+    	int funcPhysioTsvRead;
+    	int funcPhysioJsonRead;
     	int dwiImagesRead;
     	int dwiJsonRead;
+    	int dwiBvalRead;
+    	int dwiBvecRead;
     	int index;
     	String baseName;
     	String jsonName;
+    	String bvalName;
+    	String bvecName;
+    	String eventsBaseName;
+    	String eventsName;
     	int sessionImagesRead;
     	int sessionJsonRead;
+    	int sessionBvalRead;
+    	int sessionBvecRead;
+    	int sessionEventsRead;
+    	int sessionPhysioTsvRead;
+    	int sessionPhysioJsonRead;
     	
     	// Read directory and find no. of images
         files = BIDSFile.listFiles();
@@ -726,6 +747,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         				    for (m = 0; m < files2.length; m++) {
         				    	anatFiles[i][j][m] = files2[m];
         				    }
+        				    Arrays.sort(anatFiles[i][j], new fileComparator());
         				}
         			}
         		}
@@ -745,6 +767,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         				    for (m = 0; m < files2.length; m++) {
         				    	funcFiles[i][j][m] = files2[m];
         				    }
+        				    Arrays.sort(funcFiles[i][j], new fileComparator());
         				}
         			}
         		}
@@ -764,6 +787,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         				    for (m = 0; m < files2.length; m++) {
         				    	dwiFiles[i][j][m] = files2[m];
         				    }
+        				    Arrays.sort(dwiFiles[i][j], new fileComparator());
         				}
         			}
         		}
@@ -783,6 +807,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         				    for (m = 0; m < files2.length; m++) {
         				    	fmapFiles[i][j][m] = files2[m];
         				    }
+        				    Arrays.sort(fmapFiles[i][j], new fileComparator());
         				}
         			}
         		}
@@ -811,7 +836,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             for (i = 0; i < dataStructureList.size() && (!found); i++) {
             	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingMR")) {
             		found = true;
-            	    dsInfo = dataStructureList.get(i);	
+            		ds = dataStructureList.get(i);
+            		if (ds.getDataElements().size() == 0) {
+                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName());
+                        thread.run();
+
+                        dsInfo = thread.getFullFormStructure();
+                    } else {
+                        dsInfo = ds;
+                    }
             	}
             }
             anatImagesRead = 0;
@@ -822,35 +855,35 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    	sessionImagesRead = 0;
             	    	sessionJsonRead = 0;
             	        dsData = new FormStructureData(dsInfo);	
-            	        for (k = 0, m = 0; k < anatFiles[i][j].length; k++) {
+            	        for (k = 0; k < anatFiles[i][j].length; k++) {
             	        	if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        	    (anatFiles[i][j][k].getName().endsWith(".nii"))) {
             	        		if (anatFiles[i][j][k].getName().endsWith("nii.gz")) {
-            	        		    srcImage[m] = fileIO.readNIFTI(anatFiles[i][j][k].getParentFile().getAbsolutePath(), 
+            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getParentFile().getAbsolutePath(), 
             	        				     anatFiles[i][j][k].getName(), true, true);
             	        		    index = anatFiles[i][j][k].getName().indexOf("nii.gz");
             	        		}
             	        		else{
-            	        			srcImage[m] = fileIO.readNIFTI(anatFiles[i][j][k].getParentFile().getAbsolutePath(), 
+            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getParentFile().getAbsolutePath(), 
            	        				     anatFiles[i][j][k].getName(), true, false);
             	        			index = anatFiles[i][j][k].getName().indexOf("nii");
             	        		}
             	        		anatImagesRead++;
-            	        		sessionImagesRead++;
             	        		baseName = anatFiles[i][j][k].getName().substring(0,index);
             	        		jsonName = baseName + "json";
             	        		found = false;
             	        		for (n = 0; n < anatFiles[i][j].length  && (!found); n++) {
             	        			if (anatFiles[i][j][n].getName().equals(jsonName)) {
             	        				found = true;
-            	        				jsonFile[m] = anatFiles[i][j][n];
+            	        				jsonFile[sessionImagesRead] = anatFiles[i][j][n];
             	        				anatJsonRead++;
             	        				sessionJsonRead++;
             	        			}
             	        		}
-            	        		m++;
+            	        		sessionImagesRead++;
             	        	} // if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        } // for (k = 0, m = 0; k < anatFiles[i][j].length; k++)
+            	        } // for (k = 0; k < anatFiles[i][j].length; k++)
+            	        parseDataStructure(dsInfo, dsData, sessionImagesRead);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -869,56 +902,110 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             for (i = 0; i < dataStructureList.size() && (!found); i++) {
             	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
             		found = true;
-            	    dsInfo = dataStructureList.get(i);	
+            		ds = dataStructureList.get(i);
+            		if (ds.getDataElements().size() == 0) {
+                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName());
+                        thread.run();
+
+                        dsInfo = thread.getFullFormStructure();
+                    } else {
+                        dsInfo = ds;
+                    }
             	}
             }
             funcImagesRead = 0;
             funcJsonRead = 0;
+            funcEventsRead = 0;
+            funcPhysioTsvRead = 0;
+            funcPhysioJsonRead = 0;
             for (i = 0; i < numberSubjects; i++) {
             	for (j = 0; j < funcFiles[i].length; j++) {
             	    if (funcFiles[i][j] != null) {
             	    	sessionImagesRead = 0;
             	    	sessionJsonRead = 0;
+            	    	sessionEventsRead = 0;
+            	    	sessionPhysioTsvRead = 0;
+            	    	sessionPhysioJsonRead = 0;
             	        dsData = new FormStructureData(dsInfo);	
-            	        for (k = 0, m =0; k < funcFiles[i][j].length; k++) {
+            	        
+            	        for (k = 0; k < funcFiles[i][j].length; k++) {
             	        	if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
             	        		if (funcFiles[i][j][k].getName().endsWith("nii.gz")) {
-            	        		    srcImage[m] = fileIO.readNIFTI(funcFiles[i][j][k].getParentFile().getAbsolutePath(), 
+            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getParentFile().getAbsolutePath(), 
             	        				     funcFiles[i][j][k].getName(), true, true);
             	        		    index = funcFiles[i][j][k].getName().indexOf("nii.gz");
             	        		}
             	        		else{
-            	        			srcImage[m] = fileIO.readNIFTI(funcFiles[i][j][k].getParentFile().getAbsolutePath(), 
+            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getParentFile().getAbsolutePath(), 
            	        				     funcFiles[i][j][k].getName(), true, false);
             	        			index = funcFiles[i][j][k].getName().indexOf("nii");
             	        		}
             	        		funcImagesRead++;
-            	        		sessionImagesRead++;
             	        		baseName = funcFiles[i][j][k].getName().substring(0,index);
             	        		jsonName = baseName + "json";
             	        		found = false;
             	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
             	        			if (funcFiles[i][j][n].getName().equals(jsonName)) {
             	        				found = true;
-            	        				jsonFile[m] = funcFiles[i][j][n];
+            	        				jsonFile[sessionImagesRead] = funcFiles[i][j][n];
             	        				funcJsonRead++;
             	        				sessionJsonRead++;
             	        			}
             	        		}
-            	        		m++;
+            	        		index = baseName.lastIndexOf("_");
+            	        		eventsBaseName = baseName.substring(0,index+1);
+            	        		eventsName = eventsBaseName + "events.tsv";
+            	        		found = false;
+            	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
+            	        			if (funcFiles[i][j][n].getName().equals(eventsName)) {
+            	        				found = true;
+            	        				eventsFile[sessionImagesRead] = funcFiles[i][j][n];
+            	        				funcEventsRead++;
+            	        				sessionEventsRead++;
+            	        			}
+            	        		}
+            	        		found = false;
+            	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
+            	        			if ((funcFiles[i][j][n].getName().substring(0,index+1).equals(eventsBaseName)) &&
+            	        			   ((funcFiles[i][j][n].getName().endsWith("tsv")) ||
+            	        			    (funcFiles[i][j][n].getName().endsWith("tsv.gz")))) {
+            	        				found = true;
+            	        				physioTsvFile[sessionImagesRead] = funcFiles[i][j][n];
+            	        				funcPhysioTsvRead++;
+            	        				sessionPhysioTsvRead++;
+            	        			}
+            	        		}
+            	        		found = false;
+            	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
+            	        			if ((funcFiles[i][j][n].getName().substring(0,index+1).equals(eventsBaseName)) &&
+            	        			   (funcFiles[i][j][n].getName().endsWith("json"))) {
+            	        				found = true;
+            	        				physioJsonFile[sessionImagesRead] = funcFiles[i][j][n];
+            	        				funcPhysioJsonRead++;
+            	        				sessionPhysioJsonRead++;
+            	        			}
+            	        		}
+            	        		sessionImagesRead++;
             	        	} // if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        } // for (k = 0, m = 0; k < funcFiles[i][j].length; k++) 
+            	        } // for (k = 0; k < funcFiles[i][j].length; k++) 
+            	        parseDataStructure(dsInfo, dsData, sessionImagesRead);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
         	        		jsonFile[k] = null;
+        	        		eventsFile[k] = null;
+        	        		physioTsvFile[k] = null;
+        	        		physioJsonFile[k] = null;
         	        	}
             	    }
             	}
             }
             printlnToLog("func images read = " + funcImagesRead);
             printlnToLog("func JSON files read = " + funcJsonRead);
+            printlnToLog("func events.tsv files read = " + funcEventsRead);
+            printlnToLog("func physio.tsv or physio.tsv.gz files read = " + funcPhysioTsvRead);
+            printlnToLog("func physio json files read = " + funcPhysioJsonRead);
         } // if (funcNumber > 0)
         
         if (dwiNumber > 0) {
@@ -926,61 +1013,406 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             for (i = 0; i < dataStructureList.size() && (!found); i++) {
             	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingDiffusion")) {
             		found = true;
-            	    dsInfo = dataStructureList.get(i);
+            		ds = dataStructureList.get(i);
+            		if (ds.getDataElements().size() == 0) {
+                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName());
+                        thread.run();
+
+                        dsInfo = thread.getFullFormStructure();
+                    } else {
+                        dsInfo = ds;
+                    }
             	}
             }
             dwiImagesRead = 0;
             dwiJsonRead = 0;
+            dwiBvalRead = 0;
+            dwiBvecRead = 0;
             for (i = 0; i < numberSubjects; i++) {
             	for (j = 0; j < funcFiles[i].length; j++) {
             	    if (dwiFiles[i][j] != null) {
             	    	sessionImagesRead = 0;
             	    	sessionJsonRead = 0;
+            	    	sessionBvalRead = 0;
+            	    	sessionBvecRead = 0;
             	        dsData = new FormStructureData(dsInfo);	
-            	        for (k = 0 , m = 0; k < dwiFiles[i][j].length; k++) {
+            	        for (k = 0; k < dwiFiles[i][j].length; k++) {
             	        	if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        	    (dwiFiles[i][j][k].getName().endsWith(".nii"))) {
             	        		if (dwiFiles[i][j][k].getName().endsWith("nii.gz")) {
-            	        		    srcImage[m] = fileIO.readNIFTI(dwiFiles[i][j][k].getParentFile().getAbsolutePath(), 
+            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getParentFile().getAbsolutePath(), 
             	        				     dwiFiles[i][j][k].getName(), true, true);
             	        		    index = dwiFiles[i][j][k].getName().indexOf("nii.gz");
             	        		}
             	        		else{
-            	        			srcImage[m] = fileIO.readNIFTI(dwiFiles[i][j][k].getParentFile().getAbsolutePath(), 
+            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getParentFile().getAbsolutePath(), 
            	        				     dwiFiles[i][j][k].getName(), true, false);	
             	        			index = dwiFiles[i][j][k].getName().indexOf("nii");
             	        		}
             	        		dwiImagesRead++;
-            	        		sessionImagesRead++;
             	        		baseName = dwiFiles[i][j][k].getName().substring(0,index);
             	        		jsonName = baseName + "json";
             	        		found = false;
             	        		for (n = 0; n < dwiFiles[i][j].length  && (!found); n++) {
             	        			if (dwiFiles[i][j][n].getName().equals(jsonName)) {
             	        				found = true;
-            	        				jsonFile[m] = dwiFiles[i][j][n];
+            	        				jsonFile[sessionImagesRead] = dwiFiles[i][j][n];
             	        				dwiJsonRead++;
             	        				sessionJsonRead++;
             	        			}
             	        		}
-            	        		m++;
+            	        		bvalName = baseName + "bval";
+            	        		found = false;
+            	        		for (n = 0; n < dwiFiles[i][j].length  && (!found); n++) {
+            	        			if (dwiFiles[i][j][n].getName().equals(bvalName)) {
+            	        				found = true;
+            	        				bvalFile[sessionImagesRead] = dwiFiles[i][j][n];
+            	        				dwiBvalRead++;
+            	        				sessionBvalRead++;
+            	        			}
+            	        		}
+            	        		bvecName = baseName + "bvec";
+            	        		found = false;
+            	        		for (n = 0; n < dwiFiles[i][j].length  && (!found); n++) {
+            	        			if (dwiFiles[i][j][n].getName().equals(bvecName)) {
+            	        				found = true;
+            	        				bvecFile[sessionImagesRead] = dwiFiles[i][j][n];
+            	        				dwiBvecRead++;
+            	        				sessionBvalRead++;
+            	        			}
+            	        		}
+            	        		sessionImagesRead++;
             	        	} // if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        } // for (k = 0 , m = 0; k < dwiFiles[i][j].length; k++)
+            	        } // for (k = 0; k < dwiFiles[i][j].length; k++)
+            	        parseDataStructure(dsInfo, dsData, sessionImagesRead);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
         	        		jsonFile[k] = null;
+        	        		bvalFile[k] = null;
+        	        		bvecFile[k] = null;
         	        	}
             	    }
             	}
             }
             printlnToLog("dwi images read = " + dwiImagesRead);
             printlnToLog("dwi json files read = " + dwiJsonRead);
+            printlnToLog("dwi bval files read = " + dwiBvalRead);
+            printlnToLog("dwi bvec files read = " + dwiBvecRead);    
         } // if (dwiNumber > 0)
         
      	enableDisableFinishButton();
     	return true;
     }
+    
+    private class fileComparator implements Comparator<File> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(File o1, File o2) {
+            String a = o1.getName();
+            String b = o2.getName();
+            return a.compareToIgnoreCase(b);
+        }
+
+    }
+    
+    private void parseDataStructure(final FormStructure dataStructure, final FormStructureData fsData, final int sessionImagesRead) {
+        // setup the group bins in the form data
+        for (final RepeatableGroup g : dataStructure.getRepeatableGroups()) {
+            // if the group repeats an exact number of times, create them now
+            // otherwise, start with just one (threshold of 0 ==> optional)
+            int numRepeats = 0;
+            if (g.getType().equals(RepeatableType.EXACTLY) && g.getThreshold() > 0) {
+                numRepeats = g.getThreshold();
+            } else {
+            	if (g.getName().equalsIgnoreCase("Main")) {
+            		numRepeats = 1;
+            	}
+            	else if (g.getName().equalsIgnoreCase("Image Information")) {
+            		numRepeats = sessionImagesRead;
+            	}
+            	else if (g.getName().equalsIgnoreCase("Image pixel information and dimensions")) {
+            		numRepeats = sessionImagesRead;
+            	}
+            	else if (g.getName().equalsIgnoreCase("Image QA & QC")) {
+            		numRepeats = sessionImagesRead;
+            	}
+            	else {
+            		numRepeats = 1;
+            	}
+            }
+
+            // if no values or threshold of 0, build at least one repeat
+            if (numRepeats == 0) {
+                numRepeats = 1;
+            }
+
+            fsData.addGroup(g.getName());
+            for (int i = 0; i < numRepeats; i++) {
+                final GroupRepeat repeat = parseGroupRepeat(dataStructure, fsData, g, i);
+
+                fsData.addGroupRepeat(g.getName(), repeat);
+            }
+        }
+    }
+    
+    private GroupRepeat parseGroupRepeat(final FormStructure dataStructure, final FormStructureData fsData, final RepeatableGroup group, final int repeatNum) {
+        final GroupRepeat repeat = new GroupRepeat(group, fsData, repeatNum);
+
+        for (final MapElement de : group.getDataElements()) {
+            final DataElementValue newDeVal = new DataElementValue(repeat, de);
+            final DataElement deFullInfo = fsData.getDataElement(de.getStructuralDataElement());
+
+            JLabel l;
+
+            l = new JLabel(deFullInfo.getTitle());
+            //l = new JLabel(de.getStructuralDataElement().getName());
+
+            l.setFont(MipavUtil.font12);
+            l.setName(de.getStructuralDataElement().getName());
+
+            String tooltip = "<html><p><b>Name:</b> " + de.getStructuralDataElement().getName() + "<br/>";
+            tooltip += "<b>Required?:</b> " + de.getRequiredType().getValue() + "<br/>";
+            tooltip += "<b>Description:</b><br/>" + WordUtils.wrap(deFullInfo.getDescription(), 80, "<br/>", false);
+            tooltip += "</p></html>";
+            l.setToolTipText(tooltip);
+
+            for (final Alias a : de.getStructuralDataElement().getAliasList()) {
+                System.out.println(a);
+            }
+
+            // if valuerange is enumeration, create a combo box...otherwise create a textfield
+
+            // special handling of SiteName for PDBP, where they want to use a set of permissible values
+            // with the free-form DE
+            if (isPDBPImagingStructure(dataStructure.getShortName()) && de.getStructuralDataElement().getName().equalsIgnoreCase(SITE_NAME_ELEMENT_NAME)) {
+                final JComboBox cb = new JComboBox();
+                cb.setName(de.getStructuralDataElement().getName());
+                cb.setFont(MipavUtil.font12);
+                final String[] items = PDBP_ALLOWED_SITE_NAMES;
+                cb.addItem("");
+                for (final String element : items) {
+                    final String item = element.trim();
+                    cb.addItem(item);
+                }
+                cb.addItemListener(this);
+                if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
+                    l.setForeground(Color.red);
+                }
+
+                tooltip = "<html>";
+                if (de.getStructuralDataElement().getMeasuringUnit() != null) {
+                    tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
+                }
+
+                if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+                    tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
+                }
+                if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
+                    tooltip += "<p><b>Guidelines & Instructions:</b></br>"
+                            + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
+                }
+                if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
+                    tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
+                }
+                tooltip += "</html>";
+                if ( !tooltip.equals("<html></html>")) {
+                    cb.setToolTipText(tooltip);
+                }
+
+                newDeVal.setLabel(l);
+                newDeVal.setComp(cb);
+            } else if (de.getStructuralDataElement().getValueRangeList() != null && de.getStructuralDataElement().getValueRangeList().size() > 0
+                    && de.getStructuralDataElement().getType() != null && !de.getStructuralDataElement().getType().equals(DataType.DATE)) {
+                if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.SINGLE
+                        || de.getStructuralDataElement().getRestrictions() == InputRestrictions.FREE_FORM) {
+                    final JComboBox cb = new JComboBox();
+                    cb.setName(de.getStructuralDataElement().getName());
+                    cb.setFont(MipavUtil.font12);
+
+                    cb.addItem("");
+                    final List<ValueRange> valuesList = new ArrayList<ValueRange>();
+                    valuesList.addAll(de.getStructuralDataElement().getValueRangeList());
+                    Collections.sort(valuesList);
+                    for (final ValueRange val : valuesList) {
+                        cb.addItem(val.getValueRange());
+                    }
+                    cb.addItemListener(this);
+
+                    if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
+                        l.setForeground(Color.red);
+                    }
+
+                    tooltip = "<html>";
+                    if (de.getStructuralDataElement().getMeasuringUnit() != null) {
+                        tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
+                    }
+
+                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
+                    }
+                    if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
+                        tooltip += "<p><b>Guidelines & Instructions:</b></br>"
+                                + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
+                    }
+                    if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
+                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
+                    }
+                    tooltip += "</html>";
+                    if ( !tooltip.equals("<html></html>")) {
+                        cb.setToolTipText(tooltip);
+                    }
+
+                    newDeVal.setLabel(l);
+                    newDeVal.setComp(cb);
+                } else if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.MULTIPLE) {
+                    final List<ValueRange> valuesList = new ArrayList<ValueRange>();
+                    valuesList.addAll(de.getStructuralDataElement().getValueRangeList());
+                    Collections.sort(valuesList);
+                    final String[] valStrList = new String[valuesList.size()];
+                    int i = 0;
+                    for (final ValueRange val : valuesList) {
+                        valStrList[i] = val.getValueRange();
+                        i++;
+                    }
+
+                    final JList list = new JList(valStrList);
+                    list.setName(de.getStructuralDataElement().getName());
+                    list.setFont(MipavUtil.font12);
+                    list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                    list.setLayoutOrientation(JList.VERTICAL);
+                    list.setVisibleRowCount(MULTI_SELECT_VISIBLE_ROWS);
+
+                    final JScrollPane listScroller = new JScrollPane(list);
+                    listScroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+                    // listScroller.setPreferredSize(new Dimension(250, 80));
+
+                    if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
+                        l.setForeground(Color.red);
+                    }
+
+                    tooltip = "<html>";
+                    if (de.getStructuralDataElement().getMeasuringUnit() != null) {
+                        tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
+                    }
+
+                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
+                    }
+                    if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
+                        tooltip += "<p><b>Guidelines & Instructions:</b></br>"
+                                + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
+                    }
+                    if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
+                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
+                    }
+                    tooltip += "</html>";
+                    if ( !tooltip.equals("<html></html>")) {
+                        list.setToolTipText(tooltip);
+                    }
+
+                    newDeVal.setLabel(l);
+                    newDeVal.setComp(list);
+                }
+            } else {
+                final JTextField tf = new JTextField(20);
+                tf.setName(de.getStructuralDataElement().getName());
+                tf.setFont(MipavUtil.font12);
+
+                tf.addMouseListener(new ContextMenuMouseListener());
+
+                tooltip = "<html><p><b>Type:</b> " + de.getStructuralDataElement().getType().getValue();
+                if (de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC) && de.getStructuralDataElement().getSize() != null) {
+                    tooltip += " (" + de.getStructuralDataElement().getSize() + ")";
+                }
+                tooltip += "</p>";
+
+                if (de.getStructuralDataElement().getType().equals(DataType.NUMERIC)
+                        || de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC)) {
+                    if (de.getStructuralDataElement().getMinimumValue() != null || de.getStructuralDataElement().getMaximumValue() != null) {
+                        tooltip += "<p>";
+                        if (de.getStructuralDataElement().getMinimumValue() != null) {
+                            tooltip += "<b>Min:</b> " + de.getStructuralDataElement().getMinimumValue() + " ";
+                        }
+                        if (de.getStructuralDataElement().getMaximumValue() != null) {
+                            tooltip += "<b>Max:</b> " + de.getStructuralDataElement().getMaximumValue();
+                        }
+                        tooltip += "</p>";
+                    }
+                }
+
+                if (de.getStructuralDataElement().getMeasuringUnit() != null) {
+                    tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
+                }
+
+                if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
+                    tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
+                }
+                if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
+                    tooltip += "<p><b>Guidelines & Instructions:</b></br>"
+                            + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
+                }
+                if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
+                    tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
+                }
+                tooltip += "</html>";
+                tf.setToolTipText(tooltip);
+                //tf.addFocusListener(this);
+
+                disableUnchangableFields(de.getStructuralDataElement().getName(), tf);
+
+                if (de.getStructuralDataElement().getName().equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
+                    tf.setText("Automatically generated from selected image files.");
+                } else if (de.getStructuralDataElement().getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+                    tf.setText("Automatically generated from selected image files.");
+                }
+
+                if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
+                    l.setForeground(Color.red);
+                }
+
+                newDeVal.setLabel(l);
+                newDeVal.setComp(tf);
+            }
+
+            repeat.addDataElement(newDeVal);
+        }
+
+        // now that all DEs are added, find sister elements
+        DataElementValue bigSister = null;
+        for (final DataElementValue deVal : repeat.getDataElements()) {
+            if (isNewOtherSpecifyField(deVal)) {
+                bigSister = deVal;
+            } else if (bigSister != null && isSisterField(deVal)) {
+                // assume that they need to be next to each other and the specify field comp is a text field
+                if (deVal.getPosition() == bigSister.getPosition() + 1 && deVal.getComp() instanceof JTextField) {
+                    bigSister.setOtherSpecifyField((JTextField) deVal.getComp());
+                }
+            } else {
+                // didn't find a sister, so reset the saved big sister
+                bigSister = null;
+            }
+        }
+
+        return repeat;
+    }
+    
+    private void disableUnchangableFields(final String elementName, final Component c) {
+    	final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME};
+        for (final String e : unchangableElements) {
+            if (elementName.equalsIgnoreCase(e)) {
+                c.setEnabled(false);
+            }
+        }
+    }
+
 
     private boolean readCSVFile() {
         try {
