@@ -7487,6 +7487,24 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	}
 	
 	/**
+	 * Set the image slice number, and recording the action as slider changes on single eye tracker viewer. 
+	 * @param slice
+	 */
+	public void setImageSlice(int slice) {
+      setSlice(slice);
+	  if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
+      	System.err.println("recording it");
+      	String timeStamp = getTime();
+		int sliceNumber = slice + 1;
+		if (refPtsLocation != null) {
+			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Slider," + sliceNumber + "," + " , , , ,");
+		} else {
+			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Slider," + sliceNumber + ", , , , , , , , , , , , ,");
+		}
+      } 
+	}
+	
+	/**
 	 * Set the window level value from the eye tracker 
 	 * @param window
 	 * @param level
