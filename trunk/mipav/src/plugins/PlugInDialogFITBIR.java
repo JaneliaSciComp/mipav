@@ -63,7 +63,7 @@ import com.sun.jimi.core.JimiException;
  * TODO: Test csv handling of incorrect form/de names (and add in case-insensitivity)
  */
 public class PlugInDialogFITBIR extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
-        PreviewImageContainer, WindowListener {
+        PreviewImageContainer, WindowListener, FocusListener {
     private static final long serialVersionUID = -5516621806537554154L;
 
     private final Font serif12 = MipavUtil.font12, serif12B = MipavUtil.font12B;
@@ -86,6 +86,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private String csvFileDir;
     
     private String BIDSFileDir;
+    
+    private final Hashtable<RepeatableGroup, JPanel> groupPanelTable = new Hashtable<RepeatableGroup, JPanel>();
+
+    private final Hashtable<RepeatableGroup, JButton> groupRemoveButtonTable = new Hashtable<RepeatableGroup, JButton>();
 
     private Hashtable<String, String> csvStructRowData;
 
@@ -203,6 +207,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private File csvFile;
     
     private File BIDSFile;
+    
+    private JPanel dsMainPanel;
+    
+    private String dataStructureName;
 
     private ArrayList<String> csvFieldNames;
 
@@ -264,6 +272,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             imagingStructurePrefixes[i + 1] = PDBP_IMAGING_STRUCTURE_PREFIX_LIST[i];
         }
     }
+    
+    private FormStructureData fsData = null;
 
     /**
      * Text of the privacy notice displayed to the user before the plugin can be used.
@@ -384,7 +394,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 BIDSFile = chooser.getSelectedFile();
-                processBIDSDirectories();
+                processBIDSDirectories(false);
 
                 BIDSFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_BIDS_DIR, BIDSFileDir);
@@ -580,7 +590,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     @Override
     public void windowOpened(final WindowEvent e) {}
     
-    private boolean processBIDSDirectories() {
+    private boolean processBIDSDirectories(boolean setInitialVisible) {
     	int numberSubjects = 0;
     	File[] files;
     	File[] files2;
@@ -606,7 +616,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	boolean found;
     	FormStructure ds = null;
     	FormStructure dsInfo = null;
-    	FormStructureData dsData = null;
+    	
     	int maximumSessionFileNumber = 5;
     	ModelImage srcImage[] = new ModelImage[maximumSessionFileNumber];
     	File jsonFile[] = new File[maximumSessionFileNumber];
@@ -837,6 +847,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingMR")) {
             		found = true;
             		ds = dataStructureList.get(i);
+            		dataStructureName = "ImagingMR";
             		if (ds.getDataElements().size() == 0) {
                         final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName());
                         thread.run();
@@ -854,18 +865,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    if (anatFiles[i][j] != null) {
             	    	sessionImagesRead = 0;
             	    	sessionJsonRead = 0;
-            	        dsData = new FormStructureData(dsInfo);	
+            	        fsData = new FormStructureData(dsInfo);	
             	        for (k = 0; k < anatFiles[i][j].length; k++) {
             	        	if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        	    (anatFiles[i][j][k].getName().endsWith(".nii"))) {
             	        		if (anatFiles[i][j][k].getName().endsWith("nii.gz")) {
-            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getParentFile().getAbsolutePath(), 
-            	        				     anatFiles[i][j][k].getName(), true, true);
+            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI( anatFiles[i][j][k].getName(),
+            	        		    		anatFiles[i][j][k].getParentFile().getAbsolutePath(), false, true);
             	        		    index = anatFiles[i][j][k].getName().indexOf("nii.gz");
             	        		}
             	        		else{
-            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getParentFile().getAbsolutePath(), 
-           	        				     anatFiles[i][j][k].getName(), true, false);
+            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getName(),
+            	        					anatFiles[i][j][k].getParentFile().getAbsolutePath(), false, false);
             	        			index = anatFiles[i][j][k].getName().indexOf("nii");
             	        		}
             	        		anatImagesRead++;
@@ -883,7 +894,35 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        		sessionImagesRead++;
             	        	} // if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        } // for (k = 0; k < anatFiles[i][j].length; k++)
-            	        parseDataStructure(dsInfo, dsData, sessionImagesRead);
+            	        parseDataStructure(dsInfo, sessionImagesRead);
+            	        parseForInitLabelsAndComponents();
+            	        populateFields(srcImage, sessionImagesRead);
+            	        if ( !setInitialVisible) {
+                            // convert any dates found into proper ISO format
+                            /*for (i = 0; i < csvFieldNames.size(); i++) {
+                                final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i));
+
+                                StructuralDataElement de = null;
+                                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(deGroupAndName[0])) {
+                                    for (final DataElementValue deVal : repeat.getDataElements()) {
+                                        if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
+                                            de = deVal.getDataElementInfo();
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                for (final ArrayList<String> values : record) {
+                                    // check value not empty and check type of field for date
+                                    if ( !values.get(i).trim().equals("") && de.getType().equals(DataType.DATE)) {
+                                        values.set(i, convertDateToISOFormat(values.get(i)));
+                                    }
+                                }
+                            }
+
+                            // this means it was launched via the csv file
+                            populateFieldsFromCSV(fsData, record);*/
+                        }
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -903,6 +942,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
             		found = true;
             		ds = dataStructureList.get(i);
+            		dataStructureName = "ImagingFunctionalMR";
             		if (ds.getDataElements().size() == 0) {
                         final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName());
                         thread.run();
@@ -926,19 +966,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    	sessionEventsRead = 0;
             	    	sessionPhysioTsvRead = 0;
             	    	sessionPhysioJsonRead = 0;
-            	        dsData = new FormStructureData(dsInfo);	
+            	        fsData = new FormStructureData(dsInfo);	
             	        
             	        for (k = 0; k < funcFiles[i][j].length; k++) {
             	        	if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
             	        		if (funcFiles[i][j][k].getName().endsWith("nii.gz")) {
-            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getParentFile().getAbsolutePath(), 
-            	        				     funcFiles[i][j][k].getName(), true, true);
+            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getName(),
+            	        		    		funcFiles[i][j][k].getParentFile().getAbsolutePath(), false, true);
             	        		    index = funcFiles[i][j][k].getName().indexOf("nii.gz");
             	        		}
             	        		else{
-            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getParentFile().getAbsolutePath(), 
-           	        				     funcFiles[i][j][k].getName(), true, false);
+            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getName(),
+            	        					funcFiles[i][j][k].getParentFile().getAbsolutePath(), false, false);
             	        			index = funcFiles[i][j][k].getName().indexOf("nii");
             	        		}
             	        		funcImagesRead++;
@@ -989,7 +1029,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        		sessionImagesRead++;
             	        	} // if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        } // for (k = 0; k < funcFiles[i][j].length; k++) 
-            	        parseDataStructure(dsInfo, dsData, sessionImagesRead);
+            	        parseDataStructure(dsInfo, sessionImagesRead);
+            	        parseForInitLabelsAndComponents();
+            	        populateFields(srcImage, sessionImagesRead);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1014,6 +1056,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingDiffusion")) {
             		found = true;
             		ds = dataStructureList.get(i);
+            		dataStructureName = "ImagingDiffusion";
             		if (ds.getDataElements().size() == 0) {
                         final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName());
                         thread.run();
@@ -1035,18 +1078,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    	sessionJsonRead = 0;
             	    	sessionBvalRead = 0;
             	    	sessionBvecRead = 0;
-            	        dsData = new FormStructureData(dsInfo);	
+            	        fsData = new FormStructureData(dsInfo);	
             	        for (k = 0; k < dwiFiles[i][j].length; k++) {
             	        	if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        	    (dwiFiles[i][j][k].getName().endsWith(".nii"))) {
             	        		if (dwiFiles[i][j][k].getName().endsWith("nii.gz")) {
-            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getParentFile().getAbsolutePath(), 
-            	        				     dwiFiles[i][j][k].getName(), true, true);
+            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getName(),
+            	        		    		dwiFiles[i][j][k].getParentFile().getAbsolutePath(), false, true);
             	        		    index = dwiFiles[i][j][k].getName().indexOf("nii.gz");
             	        		}
             	        		else{
-            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getParentFile().getAbsolutePath(), 
-           	        				     dwiFiles[i][j][k].getName(), true, false);	
+            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getName(),
+            	        					dwiFiles[i][j][k].getParentFile().getAbsolutePath(), false, false);	
             	        			index = dwiFiles[i][j][k].getName().indexOf("nii");
             	        		}
             	        		dwiImagesRead++;
@@ -1084,7 +1127,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        		sessionImagesRead++;
             	        	} // if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        } // for (k = 0; k < dwiFiles[i][j].length; k++)
-            	        parseDataStructure(dsInfo, dsData, sessionImagesRead);
+            	        parseDataStructure(dsInfo, sessionImagesRead);
+            	        parseForInitLabelsAndComponents();
+            	        populateFields(srcImage, sessionImagesRead);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1105,6 +1150,395 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	return true;
     }
     
+    /**
+     * prepopulates some of the fields with info from image headers
+     */
+    public void populateFields(final ModelImage img[], int numImages) {
+    	float[][] res = new float[numImages][];
+    	int[][] units = new int[numImages][];
+    	int [][] exts = new int[numImages][];
+    	int [] modality = new int[numImages];
+    	String [] modalityString = new String[numImages];
+    	int [] fileFormatInt = new int[numImages];
+    	String [] fileFormatString = new String[numImages];
+    	String [] upperStructureName = new String[numImages];
+    	float [] sliceThickness = new float[numImages];
+    	int [] orient = new int[numImages];
+    	String [] orientation = new String[numImages];
+    	String [] ageVal = new String[numImages];
+    	String [] siteName = new String[numImages];
+    	String [] visitDate = new String[numImages];
+    	String [] visitTime = new String[numImages];
+        String [] sliceOversample = new String[numImages];
+        String [] gap = new String[numImages];
+        String [] bodyPart = new String[numImages];
+
+        String [] fieldOfView = new String[numImages];
+        String [] manufacturer = new String[numImages];
+        String [] softwareVersion = new String[numImages];
+        String [] patientPosition = new String[numImages];
+
+        String [] scannerModel = new String[numImages];
+        String [] bandwidth = new String[numImages];
+
+        String [] scanOptions = new String[numImages];
+        String [] flowCompensation = new String[numImages];
+
+        String [] patientName = new String[numImages];
+        String [] patientID = new String[numImages];
+
+        String [] echoTime = new String[numImages];
+        String [] repetitionTime = new String[numImages];
+        String [] magneticFieldStrength = new String[numImages];
+        String [] flipAngle = new String[numImages];
+
+        String [] mriT1T2Name = new String[numImages];
+        String [] inversionTime = new String[numImages];
+        String [] echoTrainMeas = new String[numImages];
+        String [] phaseEncode = new String[numImages];
+        String [] numAverages = new String[numImages];
+        String [] receiveCoilName = new String[numImages];
+
+        String [] manuf = new String[numImages];
+        String [] model = new String[numImages];
+        String [] scannerVer = new String[numImages];
+
+        String [] contrastAgent = new String[numImages];
+        String [] contrastMethod = new String[numImages];
+        String [] contrastTime = new String[numImages];
+        String [] contrastDose = new String[numImages];
+        String [] contrastRate = new String[numImages];
+        String [] contrastUsedInd = new String[numImages];
+        boolean [] contrastUsed = new boolean[numImages];
+
+        String [] ctKVP = new String[numImages];
+        String [] ctMA = new String[numImages];
+
+        String [] description = new String[numImages];
+        String [] seriesDescription = new String[numImages];
+        boolean [] isRestingFMRI = new boolean[numImages];
+        String [] thicknessStr = new String[numImages];
+        String [] ageInMonths = new String[numImages];
+        String [] ageMonthsStr = new String[numImages];
+        Integer [] ageInMonthsInt = new Integer[numImages];
+        String [] ageInYears = new String[numImages];
+        FileInfoDicom fileInfoDicom;
+        FileInfoNIFTI fileInfoNifti;
+        int i;
+        
+        for (i = 0; i < numImages; i++) {
+        	res[i] = img[i].getResolutions(0);
+            units[i] = img[i].getUnitsOfMeasure();
+            exts[i] = img[i].getExtents();
+            modality[i] = img[i].getFileInfo(0).getModality();
+            modalityString[i] = FileInfoBase.getModalityStr(modality[i]);
+            fileFormatInt[i] = img[i].getFileInfo(0).getFileFormat();
+
+            fileFormatString[i] = FileUtility.getFileTypeStr(fileFormatInt[i]);
+            if (fileFormatString[i].equalsIgnoreCase("xml")) {
+                fileFormatString[i] = "mipav xml";
+            } else if (fileFormatString[i].equalsIgnoreCase("mat")) {
+                fileFormatString[i] = "matlab";
+            }
+
+            // if no modality, try to guess from structure being used
+            if (modality[i] == FileInfoBase.UNKNOWN_MODALITY) {
+                upperStructureName[i] = dataStructureName.toUpperCase();
+                if (upperStructureName[i].endsWith("IMAGINGMR")) {
+                    modality[i] = FileInfoBase.MAGNETIC_RESONANCE;
+                } else if (upperStructureName[i].endsWith("IMAGINGCT")) {
+                    modality[i] = FileInfoBase.COMPUTED_TOMOGRAPHY;
+                } else if (upperStructureName[i].endsWith("IMAGINGDIFFUSION")) {
+                    modality[i] = FileInfoBase.MAGNETIC_RESONANCE;
+                }
+                modalityString[i] = FileInfoBase.getModalityStr(modality[i]);
+            }
+
+            sliceThickness[i] = img[i].getFileInfo(0).getSliceThickness();
+            orient[i] = img[i].getFileInfo(0).getImageOrientation();
+            orientation[i] = FileInfoBase.getImageOrientationStr(orient[i]);
+            
+            if (fileFormatString[i].equalsIgnoreCase("dicom")) {
+                fileInfoDicom = (FileInfoDicom) img[i].getFileInfo(0);
+
+                ageVal[i] = (String) (fileInfoDicom.getTagTable().getValue("0010,1010", false));
+                // put in to skip erroneous values set in some TRACK-TBI Pilot CT data
+                if (isValueSet(ageVal[i]) && ageVal[i].equalsIgnoreCase("135Y")) {
+                    ageVal = null;
+                }
+                siteName[i] = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
+                // CNRM anonymization of the institution tag sets the value to Institution instead of clearing the value
+                if (siteName[i] != null && siteName[i].trim().equalsIgnoreCase("Institution")) {
+                    siteName[i] = "";
+                }
+                visitDate[i] = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
+                visitTime[i] = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
+                sliceOversample[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
+                gap[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
+                bodyPart[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
+
+                fieldOfView[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
+                manufacturer[i] = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
+                softwareVersion[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
+                patientPosition[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
+
+                scannerModel[i] = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
+                bandwidth[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
+
+                patientName[i] = (String) (fileInfoDicom.getTagTable().getValue("0010,0010"));
+                patientID[i] = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
+
+                contrastAgent[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
+                contrastMethod[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
+                if (isValueSet(contrastMethod[i])) {
+                    // TODO
+                    System.err.println(patientName[i] + "\tContrast route: " + contrastMethod[i]);
+                    if (contrastMethod[i].equalsIgnoreCase("IV") || contrastMethod[i].equalsIgnoreCase("Oral & IV")) {
+                        contrastMethod[i] = "Infusion";
+                    }
+                }
+                contrastTime[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1042"));
+                if (isValueSet(contrastTime[i]) && isValueSet(visitDate[i])) {
+                    contrastTime[i] = convertDateTimeToISOFormat(visitDate[i], contrastTime[i]);
+                }
+                contrastDose[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1044"));
+                contrastRate[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1046"));
+
+                if (isValueSet(contrastAgent[i]) || isValueSet(contrastMethod[i]) || 
+                		isValueSet(contrastTime[i]) || isValueSet(contrastDose[i]) || isValueSet(contrastRate[i])) {
+                    contrastUsedInd[i] = "Yes";
+                    contrastUsed[i] = true;
+                }
+
+                if (modalityString[i].equalsIgnoreCase("magnetic resonance")) {
+                    seriesDescription[i] = ((String) (fileInfoDicom.getTagTable().getValue("0008,103E")));
+                    if (seriesDescription[i].toLowerCase().contains("rest")) {
+                        isRestingFMRI[i] = true;
+                    }
+
+                    echoTime[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
+                    repetitionTime[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
+                    magneticFieldStrength[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
+                    flipAngle[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
+
+                    mriT1T2Name[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
+                    inversionTime[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
+                    echoTrainMeas[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
+                    phaseEncode[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
+                    numAverages[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
+                    receiveCoilName[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
+
+                    scanOptions[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0022"));
+                    // FC ==> flow compensation
+                    if (scanOptions[i] != null && scanOptions[i].contains("FC")) {
+                        flowCompensation[i] = "Yes";
+                    }
+                } else if (modalityString[i].equalsIgnoreCase("computed tomography")) {
+                    ctKVP[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0060"));
+                    ctMA[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1151"));
+                }
+            } else if (fileFormatString[i].equalsIgnoreCase("nifti")) {
+                // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
+                fileInfoNifti = (FileInfoNIFTI) img[i].getFileInfo(0);
+                description[i] = fileInfoNifti.getDescription();
+
+                if ((description[i] != null) && (description[i].length() > 0)) {
+	                manuf[i] = convertNiftiDescToBRICSManuf(description[i]);
+	                model[i] = convertNiftiDescToBRICSModel(description[i]);
+	                scannerVer[i] = convertNiftiDescToBRICSVer(description[i]);
+                } // if ((description[i] != null) && (description[i].length() > 0))
+            }
+
+        } // for (i = 0; i < numImages; i++)
+    	
+        
+
+        
+
+        for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+        	i = -1;
+            for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+            	i++;
+                for (final DataElementValue deVal : repeat.getDataElements()) {
+                    final String deName = deVal.getName();
+
+                    if (deName.equalsIgnoreCase("ImgDimensionTyp")) {
+                        setElementComponentValue(deVal, exts[i].length + "D");
+                    } else if (deName.equalsIgnoreCase("ImgDim1ExtentVal")) {
+                        setElementComponentValue(deVal, String.valueOf(exts[i][0]));
+                    } else if (deName.equalsIgnoreCase("ImgDim2ExtentVal")) {
+                        setElementComponentValue(deVal, String.valueOf(exts[i][1]));
+                    } else if (deName.equalsIgnoreCase("ImgDim3ExtentVal")) {
+                        if (img[i].getNDims() > 2) {
+                            setElementComponentValue(deVal, String.valueOf(exts[i][2]));
+                        }
+                    } else if (deName.equalsIgnoreCase("ImgDim4ExtentVal")) {
+                        if (img[i].getNDims() > 3) {
+                            setElementComponentValue(deVal, String.valueOf(exts[i][3]));
+                        }
+                    } else if (deName.equalsIgnoreCase("ImgDim5ExtentVal")) {
+                        // for now...nothing
+                    } else if (deName.equalsIgnoreCase("ImgDim1UoMVal")) {
+                        setElementComponentValue(deVal, Unit.getUnitFromLegacyNum(units[i][0]).toString());
+                    } else if (deName.equalsIgnoreCase("ImgDim2UoMVal")) {
+                        setElementComponentValue(deVal, Unit.getUnitFromLegacyNum(units[i][1]).toString());
+                    } else if (deName.equalsIgnoreCase("ImgDim3UoMVal")) {
+                        if (img[i].getNDims() > 2) {
+                            setElementComponentValue(deVal, Unit.getUnitFromLegacyNum(units[i][2]).toString());
+                        }
+                    } else if (deName.equalsIgnoreCase("ImgDim4UoMVal")) {
+                        if (img[i].getNDims() > 3) {
+                            setElementComponentValue(deVal, Unit.getUnitFromLegacyNum(units[i][3]).toString());
+                        }
+                    } else if (deName.equalsIgnoreCase("ImgDim5UoMVal")) {
+                        // for now...nothing
+                    } else if (deName.equalsIgnoreCase("ImgDim4ExtentTyp")) {
+                        if (img[i].getNDims() > 3 && Unit.getUnitFromLegacyNum(units[i][3]).getType() == UnitType.TIME) {
+                            setElementComponentValue(deVal, "Time");
+                        }
+                    } else if (deName.equalsIgnoreCase("ImgDim1ResolVal")) {
+                        setElementComponentValue(deVal, String.valueOf(res[i][0]));
+                    } else if (deName.equalsIgnoreCase("ImgDim2ResolVal")) {
+                        setElementComponentValue(deVal, String.valueOf(res[i][1]));
+                    } else if (deName.equalsIgnoreCase("ImgDim3ResolVal")) {
+                        if (img[i].getNDims() > 2) {
+                            setElementComponentValue(deVal, String.valueOf(res[i][2]));
+                        }
+                    } else if (deName.equalsIgnoreCase("ImgDim4ResolVal")) {
+                        if (img[i].getNDims() > 3) {
+                            setElementComponentValue(deVal, String.valueOf(res[i][3]));
+                        }
+                    } else if (deName.equalsIgnoreCase("ImgDim5ResolVal")) {
+                        // for now...nothing
+                    } else if (deName.equalsIgnoreCase("ImgModltyTyp")) {
+                        setElementComponentValue(deVal, convertModalityToBRICS(modalityString[i], contrastUsed[i]));
+                    } else if (deName.equalsIgnoreCase("ImgFileFormatTyp")) {
+                        setElementComponentValue(deVal, fileFormatString[i]);
+                    } else if (deName.equalsIgnoreCase("ImgSliceThicknessVal")) {
+                        thicknessStr[i] = "";
+                        if (sliceThickness[i] > 0) {
+                            thicknessStr[i] = String.valueOf(sliceThickness[i]);
+                        }
+                        setElementComponentValue(deVal, thicknessStr[i]);
+                    } else if (deName.equalsIgnoreCase("ImgSliceOrientTyp")) {
+                        setElementComponentValue(deVal, orientation[i]);
+                    }
+
+                    if (fileFormatString[i].equalsIgnoreCase("dicom")) {
+                        if (deName.equalsIgnoreCase("AgeVal") && ageVal[i] != null && !ageVal[i].equals("")) {
+                            ageInMonths[i] = convertDicomAgeToBRICS(ageVal[i]);
+                            if (Float.parseFloat(ageInMonths[i]) != 0) {
+                                setElementComponentValue(deVal, ageInMonths[i]);
+                            }
+                        } else if (deName.equalsIgnoreCase("AgeYrs") && ageVal[i] != null && !ageVal[i].equals("")) {
+                            ageMonthsStr[i] = convertDicomAgeToBRICS(ageVal[i]);
+                            if (ageMonthsStr[i] != null && !ageMonthsStr[i].trim().equals("")) {
+                                ageInMonthsInt[i] = Integer.valueOf(ageMonthsStr[i]);
+                                if (ageInMonthsInt[i] != 0) {
+                                    ageInYears[i] = String.valueOf(ageInMonthsInt[i] / 12);
+                                    setElementComponentValue(deVal, ageInYears[i]);
+                                }
+                            }
+                        } else if (deName.equalsIgnoreCase("SiteName")) {
+                            setElementComponentValue(deVal, siteName[i]);
+                        } else if (deName.equalsIgnoreCase("VisitDate")) {
+                            setElementComponentValue(deVal, convertDateToISOFormat(visitDate[i]));
+                        } else if (deName.equalsIgnoreCase("ImgAntmicSite")) {
+                            setElementComponentValue(deVal, bodyPart[i]);
+                        } else if (deName.equalsIgnoreCase("ImgStdyDateTime")) {
+                            setElementComponentValue(deVal, convertDateTimeToISOFormat(visitDate[i], visitTime[i]));
+                        } else if (deName.equalsIgnoreCase("ImgSliceOverSampVal")) {
+                            setElementComponentValue(deVal, sliceOversample[i]);
+                        } else if (deName.equalsIgnoreCase("ImgGapBetwnSlicesMeasr")) {
+                            setElementComponentValue(deVal, gap[i]);
+                        } else if (deName.equalsIgnoreCase("ImgFOVMeasrDescTxt")) {
+                            setElementComponentValue(deVal, fieldOfView[i]);
+                        } else if (deName.equalsIgnoreCase("ImgScannerManufName")) {
+                            setElementComponentValue(deVal, convertManufNameToBRICS(manufacturer[i]));
+                        } else if (deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
+                            setElementComponentValue(deVal, softwareVersion[i]);
+                        } else if (deName.equalsIgnoreCase("ImgHeadPostnTxt")) {
+                            setElementComponentValue(deVal, patientPosition[i]);
+                        } else if (deName.equalsIgnoreCase("ImgScannerModelName")) {
+                            setElementComponentValue(deVal, convertModelNameToBRICS(scannerModel[i]));
+                        } else if (deName.equalsIgnoreCase("ImgBandwidthVal")) {
+                            setElementComponentValue(deVal, bandwidth[i]);
+                        } else if (deName.equalsIgnoreCase("GUID")) {
+                            if (isGuid(patientID[i])) {
+                                setElementComponentValue(deVal, patientID[i]);
+                            } else if (isGuid(patientName[i])) {
+                                setElementComponentValue(deVal, patientName[i]);
+                            }
+                        } else if (deName.equalsIgnoreCase("ImgContrastAgentUsedInd")) {
+                            setElementComponentValue(deVal, contrastUsedInd[i]);
+                        } else if (deName.equalsIgnoreCase("ImgContrastAgentName")) {
+                            setElementComponentValue(deVal, contrastAgent[i]);
+                        } else if (deName.equalsIgnoreCase("ImgContrastAgentMethodTyp")) {
+                            setElementComponentValue(deVal, contrastMethod[i]);
+                        } else if (deName.equalsIgnoreCase("ImgContrastAgentInjctnTime")) {
+                            setElementComponentValue(deVal, contrastTime[i]);
+                        } else if (deName.equalsIgnoreCase("ImgContrastAgentDose")) {
+                            setElementComponentValue(deVal, contrastDose[i]);
+                        } else if (deName.equalsIgnoreCase("ImgContrastAgentRate")) {
+                            setElementComponentValue(deVal, contrastRate[i]);
+                        }
+
+                        if (modalityString[i].equalsIgnoreCase("magnetic resonance")) {
+                            if (deName.equalsIgnoreCase("ImgEchoDur")) {
+                                setElementComponentValue(deVal, echoTime[i]);
+                            } else if (deName.equalsIgnoreCase("ImgRepetitionGapVal")) {
+                                setElementComponentValue(deVal, repetitionTime[i]);
+                            } else if (deName.equalsIgnoreCase("ImgScannerStrgthVal")) {
+                                setElementComponentValue(deVal, convertMagFieldStrengthToBRICS(magneticFieldStrength[i]));
+                            } else if (deName.equalsIgnoreCase("ImgMRIT1T2SeqName")) {
+                                setElementComponentValue(deVal, mriT1T2Name[i]);
+                            } else if (deName.equalsIgnoreCase("ImgSignalAvgNum")) {
+                                setElementComponentValue(deVal, numAverages[i]);
+                            } else if (deName.equalsIgnoreCase("ImgFlipAngleMeasr")) {
+                                setElementComponentValue(deVal, flipAngle[i]);
+                            } else if (deName.equalsIgnoreCase("ImgEchoTrainLngthMeasr")) {
+                                setElementComponentValue(deVal, echoTrainMeas[i]);
+                            } else if (deName.equalsIgnoreCase("ImgInversionTime")) {
+                                setElementComponentValue(deVal, inversionTime[i]);
+                            } else if (deName.equalsIgnoreCase("ImgRFCoilName")) {
+                                setElementComponentValue(deVal, receiveCoilName[i]);
+                            } else if (deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) {
+                                setElementComponentValue(deVal, phaseEncode[i]);
+                            } else if (deName.equalsIgnoreCase("ImgFlowCompnsatnInd")) {
+                                setElementComponentValue(deVal, flowCompensation[i]);
+                            }
+
+                            // ImagingFunctionalMR FS
+                            if (deName.equalsIgnoreCase("ImgPulseSeqTyp")) {
+                                if (fsData.getStructInfo().getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
+                                    setElementComponentValue(deVal, "fMRI");
+                                }
+                            } else if (deName.equalsIgnoreCase("ImgFMRITaskTyp")) {
+                                if (isRestingFMRI[i]) {
+                                    setElementComponentValue(deVal, "Rest");
+                                }
+                            }
+                        } else if (modalityString[i].equalsIgnoreCase("computed tomography")) {
+                            if (deName.equalsIgnoreCase("ImgCTkVp")) {
+                                setElementComponentValue(deVal, ctKVP[i]);
+                            } else if (deName.equalsIgnoreCase("ImgCTmA")) {
+                                setElementComponentValue(deVal, ctMA[i]);
+                            }
+                        }
+                    } else if (fileFormatString[i].equalsIgnoreCase("nifti")) {
+                        if (deName.equalsIgnoreCase("ImgScannerManufName")) {
+                            setElementComponentValue(deVal, manuf[i]);
+                        } else if (deName.equalsIgnoreCase("ImgScannerModelName")) {
+                            setElementComponentValue(deVal, model[i]);
+                        } else if (deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
+                            setElementComponentValue(deVal, scannerVer[i]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     private class fileComparator implements Comparator<File> {
 
         /**
@@ -1123,7 +1557,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     }
     
-    private void parseDataStructure(final FormStructure dataStructure, final FormStructureData fsData, final int sessionImagesRead) {
+    private void parseDataStructure(final FormStructure dataStructure, final int sessionImagesRead) {
         // setup the group bins in the form data
         for (final RepeatableGroup g : dataStructure.getRepeatableGroups()) {
             // if the group repeats an exact number of times, create them now
@@ -1364,7 +1798,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
                 tooltip += "</html>";
                 tf.setToolTipText(tooltip);
-                //tf.addFocusListener(this);
+                tf.addFocusListener(this);
 
                 disableUnchangableFields(de.getStructuralDataElement().getName(), tf);
 
@@ -1412,7 +1846,280 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
     }
+    
+    @Override
+    public void focusGained(final FocusEvent e) {}
+    
+    @Override
+    public void focusLost(final FocusEvent e) {
+        validateFields();
+    }
+    
+    /**
+     * validates fields
+     * 
+     * @return
+     */
+    public ArrayList<String> validateFields() {
+        final ArrayList<String> errs = new ArrayList<String>();
 
+        parseDataStructForValidation(fsData, errs);
+
+        return errs;
+    }
+
+    /**
+     * validates fields
+     */
+    public void parseDataStructForValidation(final FormStructureData fsData, final ArrayList<String> errs) {
+        errors = new ArrayList<DataElementValue>();
+        String value = "";
+        final String key = "";
+        RequiredType required = null;
+        DataType type = null;
+        String title = "";
+
+        for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+            for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                for (final DataElementValue deVal : repeat.getDataElements()) {
+                    final StructuralDataElement deInfo = deVal.getDataElementInfo();
+
+                    final JComponent deComp = deVal.getComp();
+                    if (deComp instanceof JTextField) {
+                        value = ((JTextField) deComp).getText().trim();
+                    } else if (deComp instanceof JComboBox) {
+                        value = (String) ( ((JComboBox) deComp).getSelectedItem());
+                    } else if (deComp instanceof JList) {
+                        value = "";
+                        final int[] selectedIndicies = ((JList) deComp).getSelectedIndices();
+                        for (final int index : selectedIndicies) {
+                            if (value == "") {
+                                value = (String) ((JList) deComp).getModel().getElementAt(index);
+                            } else {
+                                value += MULTI_SELECT_VALUE_DELIM + (String) ((JList) deComp).getModel().getElementAt(index);
+                            }
+                        }
+                    }
+
+                    // now we need to validate
+                    required = deVal.getRequiredType();
+                    type = deInfo.getType();
+                    title = fsData.getDataElement(deInfo).getTitle();
+
+                    if (required.equals(RequiredType.REQUIRED)) {
+                        if (value.trim().equalsIgnoreCase("")) {
+                            errs.add(title + " is a required field");
+                            errors.add(deVal);
+                        } else {
+                            if (key.equalsIgnoreCase(GUID_ELEMENT_NAME)) {
+                                if ( !isGuid(value.trim())) {
+                                    errs.add(title + " must begin with a valid GUID prefix");
+                                    errors.add(deVal);
+                                }
+                            }
+                        }
+                    }
+
+                    if (type.equals(DataType.NUMERIC)) {
+                        if ( !value.trim().equalsIgnoreCase("")) {
+                            try {
+                                final float floatValue = Float.valueOf(value.trim()).floatValue();
+                                if (deInfo.getMinimumValue() != null && floatValue < deInfo.getMinimumValue().floatValue()) {
+                                    errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
+                                            + deInfo.getMaximumValue().floatValue());
+                                    errors.add(deVal);
+                                } else if (deInfo.getMaximumValue() != null && floatValue > deInfo.getMaximumValue().floatValue()) {
+                                    errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
+                                            + deInfo.getMaximumValue().floatValue());
+                                    errors.add(deVal);
+                                }
+                            } catch (final NumberFormatException e) {
+                                errs.add(title + " must be a number");
+                                errors.add(deVal);
+                            }
+                        }
+                    }
+                    if (type.equals(DataType.ALPHANUMERIC)) {
+                        if (deInfo.getSize() != null && deInfo.getSize() > 0 && value.length() > deInfo.getSize()) {
+                            errs.add(title + " must not exceed " + deInfo.getSize() + " in length");
+                            errors.add(deVal);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void parseForInitLabelsAndComponents() {
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(2, 5, 2, 5);
+
+        for (final RepeatableGroup g : fsData.getStructInfo().getRepeatableGroups()) {
+            final JPanel groupPanel = new JPanel(new GridBagLayout());
+
+            final GridBagConstraints egbc = new GridBagConstraints();
+            egbc.insets = new Insets(2, 5, 2, 5);
+            egbc.fill = GridBagConstraints.HORIZONTAL;
+            egbc.weightx = 1;
+            egbc.gridx = 0;
+            egbc.anchor = GridBagConstraints.WEST;
+            egbc.gridy = 0;
+
+            for (final GroupRepeat repeat : fsData.getAllGroupRepeats(g.getName())) {
+                final JPanel repeatPanel = buildGroupRepeatPanel(repeat);
+                repeatPanel.setBorder(JDialogBase.buildTitledBorder("Repeat number " + (repeat.getRepeatNumber() + 1)));
+
+                if (repeatPanel.getComponentCount() > 0) {
+                    groupPanel.add(repeatPanel, egbc);
+                    egbc.gridy++;
+                }
+            }
+
+            final JPanel groupPanelWithControls = new JPanel(new BorderLayout());
+            groupPanelWithControls.setBorder(JDialogBase.buildTitledBorder(g.getName()));
+            groupPanelWithControls.add(groupPanel, BorderLayout.NORTH);
+            groupPanelWithControls.add(buildRepeatControlPanel(g), BorderLayout.SOUTH);
+
+            if (groupPanel.getComponentCount() > 0) {
+                gbc.gridy = g.getPosition(); // group position is 0-based (unlike data element position)
+                dsMainPanel.add(groupPanelWithControls, gbc);
+                groupPanelTable.put(g, groupPanel);
+            }
+        }
+    }
+    
+    private JPanel buildGroupRepeatPanel(final GroupRepeat repeat) {
+        final JPanel repeatPanel = new JPanel(new GridBagLayout());
+
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2, 5, 2, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.gridx = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+
+        for (final DataElementValue deVal : repeat.getDataElements()) {
+            if ( (fixErrors == FIX_ERRORS_NOW && errors.contains(deVal)) || fixErrors == FIX_ERRORS_LATER || fixErrors == FIX_ERRORS_CANCEL) {
+                final JPanel elementPanel = new JPanel(new GridBagLayout());
+                final GridBagConstraints egbc = new GridBagConstraints();
+                egbc.insets = new Insets(2, 5, 2, 5);
+                egbc.fill = GridBagConstraints.HORIZONTAL;
+                egbc.anchor = GridBagConstraints.EAST;
+                egbc.weightx = 0;
+                // elementPanel.add(l, egbc);
+
+                egbc.weightx = 1;
+                egbc.gridy = 0;
+                egbc.gridx = 0;
+                egbc.anchor = GridBagConstraints.WEST;
+
+                final StructuralDataElement deInfo = deVal.getDataElementInfo();
+
+                if (deInfo.getType().equals(DataType.FILE) || deInfo.getType().equals(DataType.TRIPLANAR)) {
+                    elementPanel.add(deVal.getComp(), egbc);
+                    egbc.gridx++;
+                    final JButton browseButton = new JButton("Browse");
+                    browseButton.addActionListener(this);
+                    browseButton.setActionCommand("browse_-_" + repeat.getGroupInfo().getName() + "_-_" + repeat.getRepeatNumber() + "_-_"
+                            + deInfo.getName());
+                    elementPanel.add(browseButton, egbc);
+                } else {
+                    egbc.gridwidth = 2;
+                    if (deInfo.getRestrictions() == InputRestrictions.MULTIPLE) {
+                        // the stored component is the JList of option. instead, add the scrollpane containing it (a
+                        // viewport is in between)
+                        elementPanel.add(deVal.getComp().getParent().getParent(), egbc);
+                    } else {
+                        elementPanel.add(deVal.getComp(), egbc);
+                    }
+
+                    if (isLegacyOtherSpecifyField(deVal)) {
+                        egbc.gridy++;
+                        elementPanel.add(deVal.getOtherSpecifyField(), egbc);
+                    }
+                }
+
+                // gbc.gridy++;
+                gbc.insets = new Insets(2, 5, 2, 5);
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.anchor = GridBagConstraints.NORTHWEST;
+                gbc.weightx = 0;
+                gbc.gridx = 0;
+                gbc.gridy = deVal.getPosition() - 1; // data element position is 1-based
+                // gbc.gridy++;
+                repeatPanel.add(deVal.getLabel(), gbc);
+                gbc.gridx = 1;
+                gbc.anchor = GridBagConstraints.NORTHEAST;
+                gbc.weightx = 1;
+                repeatPanel.add(elementPanel, gbc);
+
+                // gridYCounter = gridYCounter + 1;
+                // gbc.gridy = gridYCounter;
+                gbc.gridx = 0;
+                gbc.gridwidth = 1;
+            }
+        }
+
+        return repeatPanel;
+    }
+    
+    private JPanel buildRepeatControlPanel(final RepeatableGroup group) {
+        final JPanel repeatControlPanel = new JPanel(new GridBagLayout());
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(2, 5, 2, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.gridx = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridy = 0;
+
+        JLabel repeatLabel;
+        final JButton addRepeatButton = new JButton("Add repeat");
+        addRepeatButton.setActionCommand("AddRepeat_-_" + group.getName());
+        addRepeatButton.addActionListener(this);
+        final JButton removeRepeatButton = new JButton("Remove repeat");
+        removeRepeatButton.setActionCommand("RemoveRepeat_-_" + group.getName());
+        removeRepeatButton.addActionListener(this);
+        groupRemoveButtonTable.put(group, removeRepeatButton);
+        if (group.getThreshold() == 0) {
+            repeatLabel = new JLabel("Optional group");
+        } else {
+            switch (group.getType()) {
+                case MORETHAN:
+                    repeatLabel = new JLabel("At least " + group.getThreshold() + " repeat(s) required");
+                    if (fsData.getNumGroupRepeats(group.getName()) == 1) {
+                        removeRepeatButton.setEnabled(false);
+                    }
+                    break;
+                case LESSTHAN:
+                    repeatLabel = new JLabel("Less than " + group.getThreshold() + " repeat(s) allowed");
+                    if (fsData.getNumGroupRepeats(group.getName()) == 1) {
+                        removeRepeatButton.setEnabled(false);
+                    }
+                    break;
+                case EXACTLY:
+                    repeatLabel = new JLabel("Exactly " + group.getThreshold() + " repeat(s) allowed");
+                    addRepeatButton.setEnabled(false);
+                    removeRepeatButton.setEnabled(false);
+                    break;
+                default:
+                    repeatLabel = new JLabel(group.getType() + " " + group.getThreshold());
+            }
+        }
+        repeatLabel.setFont(serif12);
+        repeatControlPanel.add(repeatLabel, gbc);
+
+        gbc.gridx++;
+        repeatControlPanel.add(addRepeatButton, gbc);
+
+        gbc.gridx++;
+        repeatControlPanel.add(removeRepeatButton, gbc);
+
+        return repeatControlPanel;
+    }
 
     private boolean readCSVFile() {
         try {
@@ -1565,7 +2272,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private void init() {
         setTitle("Image Submission Package Creation Tool v" + pluginVersion + " (" + ddEnvName + ")");
-
+        dsMainPanel = new JPanel(new GridBagLayout());
+        final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (final Exception e) {
