@@ -66,6 +66,13 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	
 	protected JToolBar viewToolBar;
 	
+	protected Font serif12, serif12B;
+	
+	private JLabel sliderMax;
+	private JSlider zImageSlider;
+	private JTextField slicesTextField;
+
+	
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
 
@@ -74,7 +81,10 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		currentFrame = frame;
 		UI = ViewUserInterface.getReference();
 		
-		comboBoxImage = new JComboBox();
+		serif12 = MipavUtil.font12;
+	    serif12B = MipavUtil.font12B;
+		
+	    comboBoxImage = new JComboBox();
 		comboBoxImage.setBackground(Color.white);
 		buildComboBoxImage();
 		Object selected = comboBoxImage.getSelectedItem();
@@ -201,6 +211,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		label4.setIcon(blackImage);
 		rightPanel.add(label3, BorderLayout.NORTH);
 		rightPanel.add(label4, BorderLayout.SOUTH);
+		
+		
 
 		JPanel topPanel = new JPanel(new BorderLayout());
 		topPanel.setBackground(Color.black);
@@ -280,6 +292,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageScroll.setBorder(null);;
 		
 
+		buildSlider(rightPanel);
+		
 		getContentPane().add(imageScroll, BorderLayout.CENTER);
 
 		getContentPane().add(leftPanel, BorderLayout.WEST);
@@ -288,6 +302,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		getContentPane().add(lowerPanel, BorderLayout.SOUTH);
 		getContentPane().setName("SingleMultiViewContentPane");
 
+		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		setUndecorated(true);
@@ -297,8 +312,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageComp.addMouseMotionListener(this);
 		imageComp.addKeyListener(this);
 		imageFrame.addKeyListener(this);
-		viewToolBar.addKeyListener(this);
-		
+		viewToolBar.addKeyListener(this);		
+
 		addKeyListener(this);
 	
 		setSize(screenWidth, screenHeight);
@@ -308,6 +323,89 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		
 		pack();
 		this.validate();
+	}
+	
+	private void buildSlider(final JPanel rightPanel) {
+		
+		final GridBagConstraints gbc = new GridBagConstraints();
+		final JPanel spanel = new JPanel();
+
+		rightPanel.add(spanel, BorderLayout.CENTER);
+		spanel.setLayout(new GridBagLayout());
+
+		spanel.setForeground(Color.white);
+		spanel.setBackground(Color.black);
+		int sliceMax = zDim - 1;
+		sliderMax = new JLabel(Integer.toString(sliceMax));
+		sliderMax.setForeground(Color.white);
+		sliderMax.setFont(serif12);
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.weightx = 1;
+		gbc.weighty = 1;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.insets = new Insets(3, 3, 3, 3);
+
+		final JLabel levelLabel = new JLabel("Slices");
+		levelLabel.setForeground(Color.white);
+		spanel.add(levelLabel, gbc);
+
+		gbc.gridy = 1;
+
+		spanel.add(sliderMax, gbc);
+
+		zImageSlider = new JSlider(0, sliceMax, imageComp.getSlice());
+		// set slider attributes
+		zImageSlider.setFont(serif12);
+		zImageSlider.setEnabled(true);
+		zImageSlider.setMajorTickSpacing((int) (1));
+		zImageSlider.setPaintTicks(true);
+		zImageSlider.addChangeListener(this);
+		zImageSlider.setVisible(true);
+		zImageSlider.setOrientation(SwingConstants.VERTICAL);
+		zImageSlider.setBackground(Color.black);
+		zImageSlider.setForeground(Color.white);
+		
+
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		gbc.gridwidth = 3;
+		gbc.gridheight = 7;
+		gbc.weightx = 10;
+		gbc.weighty = 10;
+		gbc.fill = GridBagConstraints.VERTICAL;
+		spanel.add(zImageSlider, gbc);
+
+		gbc.weightx = 1;
+		gbc.weighty = 1;
+		gbc.gridx = 0;
+		gbc.gridy = 10;
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+
+		JLabel sliderLevMin = new JLabel(Integer.toString(0));
+		int levelMinFloat = 0;
+		sliderLevMin.setForeground(Color.white);
+		sliderLevMin.setFont(serif12);
+		spanel.add(sliderLevMin, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy = 11;
+		gbc.gridwidth = 0;
+		gbc.gridheight = 1;
+		gbc.weightx = 20;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		slicesTextField = new JTextField();
+		slicesTextField.setBorder(BorderFactory.createEmptyBorder());
+		slicesTextField.setText(Integer.toString(imageComp.getSlice()));
+		slicesTextField.setForeground(color.white);
+		slicesTextField.setBackground(color.black);
+		slicesTextField.addKeyListener(this);
+		spanel.add(slicesTextField, gbc);
 	}
 	
 	public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
@@ -548,15 +646,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public ViewJFrameImage getParentFrame() {
 		return parentFrame;
 	}
-
-		/**
-	 * Does setBorderPainted for the appropriate button.
-	 * 
-	 * @param event
-	 *            Event that triggered this function
-	 */
-	public void itemStateChanged(final ItemEvent event) {}
-
 	/**
 	 * keyPressed event method for KeyListener.
 	 * 
@@ -1413,7 +1502,14 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	 * @param e
 	 *            Event that triggered this function
 	 */
-	public void stateChanged(final ChangeEvent e) {}
+	public void stateChanged(ChangeEvent e) {
+		Object source = e.getSource();
+		if (source == zImageSlider) {
+			imageComp.setImageSlice(zImageSlider.getValue());
+			slicesTextField.setText(Integer.toString(zImageSlider.getValue()));
+			imageFrame.updateImages(true);
+		}
+	}
 
 	/**
 	 * Do nothing - required by ViewJFrameBase.
@@ -1697,6 +1793,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public void invokeMeasure() {
 		 imageFrame.getVOIManager().doVOI(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand());
 	}
+
 	
 
 }
