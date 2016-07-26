@@ -603,6 +603,67 @@ public class FileInfoNIFTI extends FileInfoBase {
     private TransMatrix matrixS = null;
     
     private String patientOrientationString = null;
+    
+    // Tells whether or not an extended header with JavaScript Object Notation is present. 
+    private boolean haveJson = false;
+    
+    private String specificCharacterSet = null;
+    
+    private String imageType[] = null;
+    
+    private String studyTime = null;
+    
+    private String seriesTime = null;
+    
+    private String accessionNumber = null;
+    
+    private String modalityString = null;
+    
+    private String manufacturer = null;
+    
+    private String manufacturerModelName = null;
+    
+    private String scanningSequence = null;
+    
+    private String sequenceVariant = null;
+    
+    private String scanOptions = null;
+    
+    private String MRAcquisitionType = null;
+    
+    private String sequenceName = null;
+    
+    private String angioFlag = null;
+    
+    private double repetitionTime = Double.NaN;
+    
+    private double echoTime = Double.NaN;
+    
+    private double numberOfAverages = Double.NaN;
+    
+    private double imagingFrequency = Double.NaN;
+    
+    private String imagedNucleus = null;
+    
+    private int echoNumbers = Integer.MIN_VALUE;
+    
+    private double magneticFieldStrength = Double.NaN;
+    
+    private double spacingBetweenSlices = Double.NaN;
+    
+    private int numberOfPhaseEncodingSteps = Integer.MIN_VALUE;
+    
+    private int echoTrainLength = Integer.MIN_VALUE;
+    
+    private double percentSampling = Double.NaN;
+    
+    private double percentPhaseFieldOfView = Double.NaN;
+    
+    private double pixelBandwidth = Double.NaN;
+    
+    private String softwareVersions = null;
+    
+    private String transmitCoilName = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1157,6 +1218,99 @@ public class FileInfoNIFTI extends FileInfoBase {
         	dialog.append("No extended header is present\n");
         }
         
+        if (haveJson) {
+        	dialog.append("An extended Java Script Object Notation Header has:\n");
+        	if (specificCharacterSet != null) {
+        		dialog.append("Specific character set = " + specificCharacterSet + "\n");
+        	}
+        	if (imageType != null) {
+        		for (i = 0; i < imageType.length; i++) {
+        			dialog.append("Image type["+i+"] = " + imageType[i] + "\n");
+        		}
+        	}
+        	if (studyTime != null) {
+        		dialog.append("Study time = " + studyTime + "\n");
+        	}
+        	if (seriesTime != null) {
+        		dialog.append("Series time = " + seriesTime + "\n");
+        	}
+        	if (accessionNumber != null) {
+        		dialog.append("Accession number = " + accessionNumber + "\n");
+        	}
+        	if (modalityString != null) {
+        		dialog.append("Modality = " + modalityString + "\n");
+        	}
+        	if (manufacturer != null) {
+        		dialog.append("Manufacturer = " + manufacturer + "\n");
+        	}
+        	if (manufacturerModelName != null) {
+        		dialog.append("Manufacturer model name = " + manufacturerModelName + "\n");
+        	}
+        	if (scanningSequence != null) {
+        		dialog.append("Scanning sequence = " + scanningSequence + "\n");
+        	}
+        	if (sequenceVariant != null) {
+        		dialog.append("Sequence variant = " + sequenceVariant + "\n");
+        	}
+        	if (scanOptions != null) {
+        		dialog.append("Scan options = " + scanOptions + "\n");
+        	}
+        	if (MRAcquisitionType != null) {
+        		dialog.append("MR acquisition type = " + MRAcquisitionType + "\n");
+        	}
+        	if (sequenceName != null) {
+        		dialog.append("Sequence name = " + sequenceName + "\n");
+        	}
+        	if (angioFlag != null) {
+        		dialog.append("Angio flag = " + angioFlag + "\n");
+        	}
+        	if (!Double.isNaN(repetitionTime)) {
+        		dialog.append("Repetition time = " + repetitionTime + "\n");
+        	}
+        	if (!Double.isNaN(echoTime)) {
+        		dialog.append("Echo time = " + echoTime + "\n");
+        	}
+        	if (!Double.isNaN(numberOfAverages)) {
+        		dialog.append("Number of averages = " + numberOfAverages + "\n");
+        	}
+        	if (!Double.isNaN(imagingFrequency)) {
+        		dialog.append("Imaging frequency = " + imagingFrequency + "\n");
+        	}
+        	if (imagedNucleus != null) {
+        		dialog.append("Imaged nucleus = " + imagedNucleus + "\n");
+        	}
+        	if (echoNumbers != Integer.MIN_VALUE) {
+        		dialog.append("Echo numbers = " + echoNumbers + "\n");
+        	}
+        	if (!Double.isNaN(magneticFieldStrength)) {
+        		dialog.append("Magnetic field strength = " + magneticFieldStrength + "\n");
+        	}
+        	if (!Double.isNaN(spacingBetweenSlices)) {
+        		dialog.append("Spacing between slices = " + spacingBetweenSlices + "\n");
+        	}
+        	if (numberOfPhaseEncodingSteps != Integer.MIN_VALUE) {
+        		dialog.append("Number of phase encoding steps = " + numberOfPhaseEncodingSteps + "\n");
+        	}
+        	if (echoTrainLength != Integer.MIN_VALUE) {
+        		dialog.append("Echo train length = " + echoTrainLength + "\n");
+        	}
+        	if (!Double.isNaN(percentSampling)) {
+        		dialog.append("Percent sampling = " + percentSampling + "\n");
+        	}
+        	if (!Double.isNaN(percentPhaseFieldOfView)) {
+        		dialog.append("Percent phase field of view = " + percentPhaseFieldOfView  + "\n");
+        	}
+        	if (!Double.isNaN(pixelBandwidth)) {
+        		dialog.append("Pixel bandwidth = " + pixelBandwidth + "\n");
+        	}
+        	if (softwareVersions != null) {
+        		dialog.append("Software versions = " + softwareVersions + "\n");
+        	}
+        	if (transmitCoilName != null) {
+        		dialog.append("Transmit coil name = " + transmitCoilName + "\n");
+        	}
+        } // if (haveJson)
+        
         
         if (matrixQ != null) {
             dialog.append("Qform Matrix = \n" + matrixQ.matrixToString(10, 4));
@@ -1172,7 +1326,12 @@ public class FileInfoNIFTI extends FileInfoBase {
         String ecodeStr = null;
         switch(ecode) {
             case 0:
-                ecodeStr = "Unknown private format";
+            	if (haveJson) {
+            		ecodeStr = "Java Script Object Notation";
+            	}
+            	else {
+                    ecodeStr = "Unknown private format";
+            	}
                 break;
             case 2:
                 ecodeStr = "DICOM format (attribute tags and values)";
@@ -1941,5 +2100,245 @@ public class FileInfoNIFTI extends FileInfoBase {
         } else {
             return str.substring(0, len);
         }
+    }
+    
+    public void setHaveJson(boolean haveJson) {
+    	this.haveJson = haveJson;
+    }
+  
+    public boolean getHaveJson() {
+    	return haveJson;
+    }
+    
+    public void setSpecificCharacterSet(String specificCharacterSet) {
+    	this.specificCharacterSet = specificCharacterSet;
+    }
+    
+    public String getSpecificCharacterSet() {
+    	return specificCharacterSet;
+    }
+    
+    public void setImageType(String imageType[]) {
+    	this.imageType = imageType;
+    }
+    
+    public String[] getImageType() {
+    	return imageType;
+    }
+    
+    public void setStudyTime(String studyTime) {
+    	this.studyTime = studyTime;
+    }
+    
+    public String getStudyTime() {
+    	return studyTime;
+    }
+    
+    public void setSeriesTime(String seriesTime) {
+    	this.seriesTime = seriesTime;
+    }
+    
+    public String getSeriesTime() {
+    	return seriesTime;
+    }
+    
+    public void setAccessionNumber(String accessionNumber) {
+    	this.accessionNumber = accessionNumber;
+    }
+    
+    public String getAccessionNumber() {
+    	return accessionNumber;
+    }
+    
+    public void setModalityString(String modalityString) {
+    	this.modalityString = modalityString;
+    }
+    
+    public String getModalityString() {
+    	return modalityString;
+    }
+    
+    public void setManufacturer(String manufacturer) {
+    	this.manufacturer = manufacturer;
+    }
+    
+    public String getManufacturer() {
+    	return manufacturer;
+    }
+    
+    public void setManufacturerModelName(String manufacturerModelName) {
+    	this.manufacturerModelName = manufacturerModelName;
+    }
+    
+    public String getManufacturerModelName() {
+    	return manufacturerModelName;
+    }
+    
+    public void setScanningSequence(String scanningSequence) {
+    	this.scanningSequence = scanningSequence;
+    }
+    
+    public String getScanningSequence() {
+    	return scanningSequence;
+    }
+    
+    public void setSequenceVariant(String sequenceVariant) {
+    	this.sequenceVariant = sequenceVariant;
+    }
+    
+    public String getSequenceVariant() {
+    	return sequenceVariant;
+    }
+    
+    public void setScanOptions(String scanOptions) {
+    	this.scanOptions = scanOptions;
+    }
+    
+    public String getScanOptions() {
+    	return scanOptions;
+    }
+    
+    public void setMRAcquisitionType(String MRAcquisitionType) {
+    	this.MRAcquisitionType = MRAcquisitionType;
+    }
+    
+    public String getMRAcquisitionType() {
+    	return MRAcquisitionType;
+    }
+    
+    public void setSequenceName(String sequenceName) {
+    	this.sequenceName = sequenceName;
+    }
+    
+    public String getSequenceName() {
+    	return sequenceName;
+    }
+    
+    public void setAngioFlag(String angioFlag) {
+    	this.angioFlag = angioFlag;
+    }
+    
+    public String getAngioFlag() {
+    	return angioFlag;
+    }
+    
+    public void setRepetitionTime(double repetitionTime) {
+    	this.repetitionTime= repetitionTime;
+    }
+    
+    public double getRepetitionTime() {
+    	return repetitionTime;
+    }
+    
+    public void setEchoTime(double echoTime) {
+    	this.echoTime = echoTime;
+    }
+    
+    public double getEchoTime() {
+    	return echoTime;
+    }
+    
+    public void setNumberOfAverages(double numberOfAverages) {
+    	this.numberOfAverages = numberOfAverages;
+    }
+    
+    public double getNumberOfAverages() {
+    	return numberOfAverages;
+    }
+    
+    public void setImagingFrequency(double imagingFrequency) {
+    	this.imagingFrequency = imagingFrequency;
+    }
+    
+    public double getImagingFrequency() {
+    	return imagingFrequency;
+    }
+    
+    public void setImagedNucleus(String imagedNucleus) {
+    	this.imagedNucleus = imagedNucleus;
+    }
+    
+    public String getImagedNucleus() {
+    	return imagedNucleus;
+    }
+    
+    public void setEchoNumbers(int echoNumbers) {
+    	this.echoNumbers = echoNumbers;
+    }
+    
+    public int getEchoNumbers() {
+    	return echoNumbers;
+    }
+    
+    public void setMagneticFieldStrength(double magneticFieldStrength) {
+    	this.magneticFieldStrength = magneticFieldStrength;
+    }
+    
+    public double getMagneticFieldStrength() {
+    	return magneticFieldStrength;
+    }
+    
+    public void setSpacingBetweenSlices(double spacingBetweenSlices) {
+    	this.spacingBetweenSlices = spacingBetweenSlices;
+    }
+    
+    public double getSpacingBetweenSlices() {
+    	return spacingBetweenSlices;
+    }
+    
+    public void setNumberOfPhaseEncodingSteps(int numberOfPhaseEncodingSteps) {
+    	this.numberOfPhaseEncodingSteps = numberOfPhaseEncodingSteps;
+    }
+    
+    public int getNumberOfPhaseEncodingSteps() {
+    	return numberOfPhaseEncodingSteps;
+    }
+    
+    public void setEchoTrainLength(int echoTrainLength) {
+    	this.echoTrainLength = echoTrainLength;
+    }
+    
+    public int getEchoTrainLength() {
+    	return echoTrainLength;
+    }
+    
+    public void setPercentSampling(double percentSampling) {
+    	this.percentSampling = percentSampling;
+    }
+    
+    public double getPercentSampling() {
+    	return percentSampling;
+    }
+    
+    public void setPercentPhaseFieldOfView(double percentPhaseFieldOfView) {
+    	this.percentPhaseFieldOfView = percentPhaseFieldOfView;
+    }
+    
+    public double getPercentPhaseFieldOfView() {
+    	return percentPhaseFieldOfView;
+    }
+    
+    public void setPixelBandwidth(double pixelBandwidth) {
+    	this.pixelBandwidth = pixelBandwidth;
+    }
+    
+    public double getPixelBandwidth() {
+    	return pixelBandwidth;
+    }
+    
+    public void setSoftwareVersions(String softwareVersions) {
+    	this.softwareVersions = softwareVersions;
+    }
+    
+    public String getSoftwareVersions() {
+    	return softwareVersions;
+    }
+    
+    public void setTransmitCoilName(String transmitCoilName) {
+    	this.transmitCoilName = transmitCoilName;
+    }
+    
+    public String getTransmitCoilName() {
+    	return transmitCoilName;
     }
 }
