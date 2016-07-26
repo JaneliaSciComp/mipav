@@ -12,6 +12,11 @@ import gov.nih.mipav.view.dialogs.*;
 import java.io.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
+
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+import org.codehaus.jettison.json.JSONArray;
+
 import java.text.*;
 
 
@@ -450,6 +455,8 @@ public class FileNIFTI extends FileBase {
     private String asciiTextArray[] = null;
     
     private String caretArray[] = null;
+    
+    private String jsonArray[] = null;
     
     /**
      * File object and input streams 
@@ -903,6 +910,8 @@ public class FileNIFTI extends FileBase {
         int asciiTextIndex = 0;
         int caretNumber = 0;
         int caretIndex = 0;
+        int jsonNumber = 0;
+        int jsonIndex = 0;
 
         bufferByte = new byte[headerSize];
 
@@ -2348,7 +2357,17 @@ public class FileNIFTI extends FileBase {
             while ((bufferByte.length >= currentAddress + esize) && ((!oneFile) || (vox_offset >= currentAddress + esize))) {
                 esize = getBufferInt(bufferByte, currentAddress, endianess);
                 ecode = getBufferInt(bufferByte, currentAddress+4, endianess);
-                if (ecode == 4) {
+                if (ecode == 0) {
+                    String openBracket = new String(bufferByte, currentAddress+8, 1);
+                    if (openBracket.equals("{")) {
+                    	// Paaded to 4 bytes, so could be a }, }<sp>, }<sp><sp>, or }<sp><sp><sp>
+                        String closeBracket = new String(bufferByte, currentAddress+esize-5, 4);
+                        if (closeBracket.trim().endsWith("}")) {
+                        	jsonNumber++;
+                        }
+                    }
+                }
+                else if (ecode == 4) {
                 	afniGroupNumber++;
                 }
                 else if (ecode == 6) {
@@ -2390,6 +2409,7 @@ public class FileNIFTI extends FileBase {
                 afniGroupArray = new String[afniGroupNumber];
                 asciiTextArray = new String[asciiTextNumber];
                 caretArray = new String[caretNumber];
+                jsonArray = new String[jsonNumber];
                 currentAddress = extendedHeaderStart;
                 ecodeNumber = 0;
                 while ((bufferByte.length >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]) && ((!oneFile) || (vox_offset >= currentAddress + esizeArray[Math.max(0, ecodeNumber-1)]))) {
@@ -2400,7 +2420,14 @@ public class FileNIFTI extends FileBase {
                     Preferences.debug("Header field number " + (ecodeNumber+1) + " has ", Preferences.DEBUG_FILEIO);
                     switch(ecodeArray[ecodeNumber]) {
                     case 0:
-                    	Preferences.debug("ecode = 0 for an unknown private format\n", Preferences.DEBUG_FILEIO);
+                    	if (jsonNumber == 0) {
+                    	     Preferences.debug("ecode = 0 for an unknown private format\n", Preferences.DEBUG_FILEIO);
+                    	}
+                    	else {
+                    		Preferences.debug("ecode = 0 used for JavaScript Object Notation\n", Preferences.DEBUG_FILEIO);
+                    		jsonArray[jsonIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
+                    		jsonIndex++;
+                    	}
                     	break;
                     case 2:
                     	Preferences.debug("ecode = 2 for DICOM format (i.e., attribute tags and values)\n",
@@ -2498,6 +2525,10 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setAfniGroup(afniGroupArray);
                 fileInfo.setAsciiText(asciiTextArray);
                 fileInfo.setCaret(caretArray);
+                if (jsonNumber >= 1) {
+                	fileInfo.setHaveJson(true);
+                	processJson(jsonArray[0]);
+                }
             } // if (ecodeNumber >= 1)
         } // else 
         
@@ -2508,6 +2539,345 @@ public class FileNIFTI extends FileBase {
         	raFile.close();
         }
         return true; // If it got this far, it has successfully read in the header
+    }
+    
+    private void processJson(String json) {
+    	JSONObject jsonObject = null;
+    	JSONObject global = null;
+    	JSONObject global_const = null;
+    	String specificCharacterSet = null;
+    	JSONArray imageType = null;
+    	String imageTypeString[] = null;
+    	int i;
+    	String studyTime = null;
+    	String seriesTime = null;
+    	String accessionNumber = null;
+    	String modalityString = null;
+    	String manufacturer = null;
+    	String manufacturerModelName = null;
+    	String scanningSequence = null;
+    	String sequenceVariant = null;
+    	String scanOptions = null;
+    	String MRAcquisitionType = null;
+    	String sequenceName = null;
+    	String angioFlag = null;
+    	float sliceThickness = Float.NaN;
+    	double repetitionTime = Double.NaN;
+    	double echoTime = Double.NaN;
+    	double numberOfAverages = Double.NaN;
+    	double imagingFrequency = Double.NaN;
+    	String imagedNucleus = null;
+    	int echoNumbers = Integer.MIN_VALUE;
+    	double magneticFieldStrength = Double.NaN;
+    	double spacingBetweenSlices = Double.NaN;
+    	int numberOfPhaseEncodingSteps = Integer.MIN_VALUE;
+    	int echoTrainLength = Integer.MIN_VALUE;
+    	double percentSampling = Double.NaN;
+    	double percentPhaseFieldOfView = Double.NaN;
+    	double pixelBandwidth = Double.NaN;
+    	String softwareVersions = null;
+    	String transmitCoilName = null;
+    	try {
+    	    jsonObject = new JSONObject(json);
+    	}
+    	catch (JSONException e) {
+    		MipavUtil.displayError("JSONException " + e + " on new JSONObject(json)");
+    	}
+    	try {
+    		global = jsonObject.getJSONObject("global");
+    	}
+    	catch (JSONException e) {
+    	    Preferences.debug("global not found\n", Preferences.DEBUG_FILEIO);	
+    	}
+    	if (global != null) {
+    	    try {
+    	    	global_const = global.getJSONObject("const");
+    	    }
+    	    catch (JSONException e) {
+    	        Preferences.debug("const not found\n", Preferences.DEBUG_FILEIO);	
+    	    }
+    	    if (global_const != null) {
+    	    	try {
+    	    		specificCharacterSet = global_const.getString("SpecificCharacterSet");
+    	    	}
+    	    	catch (JSONException e) {
+    	    		Preferences.debug("SpecificCharacterSet not found\n", Preferences.DEBUG_FILEIO);
+    	    	}
+    	    	if (specificCharacterSet != null) {
+    	    		fileInfo.setSpecificCharacterSet(specificCharacterSet);
+    	    	}
+    	    	try {
+    	    		imageType = global_const.getJSONArray("ImageType");
+    	    	}
+    	    	catch(JSONException e) {
+    	    		Preferences.debug("JSONArray ImageType not found\n", Preferences.DEBUG_FILEIO);
+    	    	}
+    	    	if (imageType != null) {
+    	    		imageTypeString = new String[imageType.length()];
+    	    		for (i = 0; i < imageType.length(); i++) {
+    	    			try {
+    	    			    imageTypeString[i] = imageType.getString(i);
+    	    			}
+    	    			catch (JSONException e) {
+    	    				Preferences.debug("imageType.getString("+i+") not found\n", Preferences.DEBUG_FILEIO);
+    	    			}
+    	    		}
+    	    		fileInfo.setImageType(imageTypeString);
+    	    	}
+    	        try {
+    	        	studyTime = global_const.getString("StudyTime");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("StudyTime not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (studyTime != null) {
+    	        	fileInfo.setStudyTime(studyTime);
+    	        }
+    	        try {
+    	        	seriesTime = global_const.getString("SeriesTime");
+    	        }
+    	        catch(JSONException e) {
+    	        	Preferences.debug("SeriesTime not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (seriesTime != null) {
+    	        	fileInfo.setSeriesTime(seriesTime);
+    	        }
+    	        try {
+    	        	accessionNumber = global_const.getString("AccessionNumber");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("AccessionNumber not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (accessionNumber != null) {
+    	        	fileInfo.setAccessionNumber(accessionNumber);
+    	        }
+    	        try {
+    	        	modalityString = global_const.getString("Modality");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("Modality not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (modalityString != null) {
+    	        	fileInfo.setModalityString(modalityString);
+    	        }
+    	        try {
+    	        	manufacturer = global_const.getString("Manufacturer");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("Manufacturer not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (manufacturer != null) {
+    	        	fileInfo.setManufacturer(manufacturer);
+    	        }
+    	        try {
+    	        	manufacturerModelName = global_const.getString("ManufacturerModelName");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("ManufacturerModelName not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (manufacturerModelName != null) {
+    	        	fileInfo.setManufacturerModelName(manufacturerModelName);
+    	        }
+    	        try {
+    	        	scanningSequence = global_const.getString("ScanningSequence");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("ScanningSequence not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (scanningSequence != null) {
+    	        	fileInfo.setScanningSequence(scanningSequence);
+    	        }
+    	        try {
+    	        	sequenceVariant = global_const.getString("SequenceVariant");
+    	        }
+    	        catch(JSONException e) {
+    	        	Preferences.debug("SequenceVariant not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (sequenceVariant != null) {
+    	        	fileInfo.setSequenceVariant(sequenceVariant);
+    	        }
+    	        try {
+    	        	scanOptions = global_const.getString("ScanOptions");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("ScanOptions not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (scanOptions != null) {
+    	        	fileInfo.setScanOptions(scanOptions);
+    	        }
+    	        try {
+    	        	MRAcquisitionType = global_const.getString("MRAcquisitionType");
+    	        }
+    	        catch(JSONException e) {
+    	        	Preferences.debug("MRAcquisitionType not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (MRAcquisitionType != null) {
+    	        	fileInfo.setMRAcquisitionType(MRAcquisitionType);
+    	        }
+    	        try {
+    	        	sequenceName = global_const.getString("SequenceName");
+    	        }
+    	        catch(JSONException e) {
+    	        	Preferences.debug("SequenceName not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (sequenceName != null) {
+    	        	fileInfo.setSequenceName(sequenceName);
+    	        }
+    	        try {
+    	        	angioFlag = global_const.getString("AngioFlag");
+    	        }
+    	        catch(JSONException e) {
+    	        	Preferences.debug("AngioFlag not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (angioFlag != null) {
+    	        	fileInfo.setAngioFlag(angioFlag);
+    	        }
+    	        try {
+    	        	sliceThickness = (float)global_const.getDouble("SliceThickness");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("SliceThickness not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Float.isNaN(sliceThickness)) {
+    	        	fileInfo.setSliceThickness(sliceThickness);
+    	        }
+    	        try {
+    	        	repetitionTime = global_const.getDouble("RepetitionTime");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("RepetitionTime not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(repetitionTime)) {
+    	        	fileInfo.setRepetitionTime(repetitionTime);
+    	        }
+    	        try {
+    	        	echoTime = global_const.getDouble("EchoTime");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("EchoTime not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(echoTime)) {
+    	        	fileInfo.setEchoTime(echoTime);
+    	        }
+    	        try {
+    	        	numberOfAverages = global_const.getDouble("NumberOfAverages");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("NumberOfAverages  not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(numberOfAverages)) {
+    	        	fileInfo.setNumberOfAverages(numberOfAverages);
+    	        }
+    	        try {
+    	        	imagingFrequency = global_const.getDouble("ImagingFrequency");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("ImagingFrequency not found\n");
+    	        }
+    	        if (!Double.isNaN(imagingFrequency)) {
+    	        	fileInfo.setImagingFrequency(imagingFrequency);
+    	        }
+    	        try {
+    	        	imagedNucleus = global_const.getString("ImagedNucleus");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("ImagedNucleus not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (imagedNucleus != null) {
+    	        	fileInfo.setImagedNucleus(imagedNucleus);
+    	        }
+    	        try {
+    	        	echoNumbers = global_const.getInt("EchoNumbers");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("EchoNumbers not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (echoNumbers != Integer.MIN_VALUE) {
+    	        	fileInfo.setEchoNumbers(echoNumbers);
+    	        }
+    	        try {
+    	            magneticFieldStrength = global_const.getDouble("MagneticFieldStrength");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("MagneticFieldStrength not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(magneticFieldStrength)) {
+    	        	fileInfo.setMagneticFieldStrength(magneticFieldStrength);
+    	        }
+    	        try {
+    	        	spacingBetweenSlices = global_const.getDouble("SpacingBetweenSlices");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("SpacingBetweenSlices not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(spacingBetweenSlices)) {
+    	        	fileInfo.setSpacingBetweenSlices(spacingBetweenSlices);
+    	        }
+    	        try {
+    	        	numberOfPhaseEncodingSteps = global_const.getInt("NumberOfPhaseEncodingSteps");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("NumberOfPhaseEncodingSteps not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (numberOfPhaseEncodingSteps != Integer.MIN_VALUE) {
+    	        	fileInfo.setNumberOfPhaseEncodingSteps(numberOfPhaseEncodingSteps);
+    	        }
+    	        try {
+    	        	echoTrainLength = global_const.getInt("EchoTrainLength");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("EchoTrainLength not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (echoTrainLength != Integer.MIN_VALUE) {
+    	        	fileInfo.setEchoTrainLength(echoTrainLength);
+    	        }
+    	        try {
+    	        	percentSampling = global_const.getDouble("PercentSampling");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("PercentSampling not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(percentSampling)) {
+    	        	fileInfo.setPercentSampling(percentSampling);
+    	        }
+    	        try {
+    	        	percentPhaseFieldOfView = global_const.getDouble("PercentPhaseFieldOfView");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("PercentPhaseFieldOfView not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(percentPhaseFieldOfView)) {
+    	        	fileInfo.setPercentPhaseFieldOfView(percentPhaseFieldOfView);
+    	        }
+    	        try {
+    	        	pixelBandwidth = global_const.getDouble("PixelBandwidth");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("PixelBandwidth not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(pixelBandwidth)) {
+    	        	fileInfo.setPixelBandwidth(pixelBandwidth);
+    	        }
+    	        try {
+    	        	softwareVersions = global_const.getString("SoftwareVersions");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("SoftwareVersions not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (softwareVersions != null) {
+    	        	fileInfo.setSoftwareVersions(softwareVersions);
+    	        }
+    	        try {
+    	        	transmitCoilName = global_const.getString("TransmitCoilName");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("TransmitCoilName not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (transmitCoilName != null) {
+    	        	fileInfo.setTransmitCoilName(transmitCoilName);
+    	        }
+    	    } // if (global_const != null)
+    	} // if (global != null)
     }
 
     /**
