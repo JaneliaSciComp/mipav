@@ -607,6 +607,8 @@ public class FileInfoNIFTI extends FileInfoBase {
     // Tells whether or not an extended header with JavaScript Object Notation is present. 
     private boolean haveJson = false;
     
+    // The below fields are found in extended JSON headers:
+    
     private String specificCharacterSet = null;
     
     private String imageType[] = null;
@@ -664,6 +666,52 @@ public class FileInfoNIFTI extends FileInfoBase {
     private String softwareVersions = null;
     
     private String transmitCoilName = null;
+    
+    private int acquisitionMatrix[] =  null;
+    
+    private String inPlanePhaseEncodingDirection = null;
+    
+    private double flipAngle = Double.NaN;
+    
+    private String variableFlipAngleFlag = null;
+    
+    private double SAR = Double.NaN;
+    
+    private double dBdt = Double.NaN;
+    
+    private int seriesNumber = Integer.MIN_VALUE;
+    
+    private double imagePositionPatient[] = null;
+    
+    private double imageOrientationPatient[] = null;
+    
+    private double sliceLocation = Double.NaN;
+    
+    private int samplesPerPixel = Integer.MIN_VALUE;
+    
+    private String photometricInterpretation = null;
+    
+    private int rows = Integer.MIN_VALUE;
+    
+    private int columns = Integer.MIN_VALUE;
+    
+    private double pixelSpacing[] = null;
+    
+    private int bitsAllocated = Integer.MIN_VALUE;
+    
+    private int bitsStored = Integer.MIN_VALUE;
+    
+    private int highBit = Integer.MIN_VALUE;
+    
+    private int pixelRepresentation = Integer.MIN_VALUE;
+    
+    private int smallestImagePixelValue = Integer.MAX_VALUE;
+    
+    private int largestImagePixelValue = Integer.MIN_VALUE;
+    
+    private String windowCenterWidthExplanation = null;
+    
+    private String performedProcedureStepStartTime = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1308,6 +1356,83 @@ public class FileInfoNIFTI extends FileInfoBase {
         	}
         	if (transmitCoilName != null) {
         		dialog.append("Transmit coil name = " + transmitCoilName + "\n");
+        	}
+        	if (acquisitionMatrix != null) {
+        	    for (i = 0; i < acquisitionMatrix.length; i++) {
+        	    	dialog.append("Acquisition matrix["+i+"] = " + acquisitionMatrix[i] + "\n");
+        	    }
+        	}
+        	if (inPlanePhaseEncodingDirection != null) {
+        		dialog.append("In plane phase encoding direction = " + inPlanePhaseEncodingDirection + "\n");
+        	}
+        	if (!Double.isNaN(flipAngle)) {
+        		dialog.append("Flip angle = " + flipAngle + "\n");
+        	}
+        	if (variableFlipAngleFlag != null) {
+        		dialog.append("Variable flip angle flag = " + variableFlipAngleFlag + "\n");
+        	}
+        	if (!Double.isNaN(SAR)) {
+        		dialog.append("SAR = " + SAR + "\n");
+        	}
+        	if (!Double.isNaN(dBdt)) {
+        		dialog.append("dBdt = " + dBdt + "\n");
+        	}
+        	if (seriesNumber != Integer.MIN_VALUE) {
+        		dialog.append("Series number = " + seriesNumber + "\n");
+        	}
+        	if (imagePositionPatient != null) {
+        		for (i = 0; i < imagePositionPatient.length; i++) {
+        			dialog.append("Image position patient["+i+"] = " + imagePositionPatient[i] + "\n");
+        		}
+        	}
+        	if (imageOrientationPatient != null) {
+        		for (i = 0; i < imageOrientationPatient.length; i++) {
+        			dialog.append("Image orientation patient["+i+"] = " + imageOrientationPatient[i] + "\n");
+        		}
+        	}
+        	if (!Double.isNaN(sliceLocation)) {
+        		dialog.append("Slice location = " + sliceLocation + "\n");
+        	}
+        	if (samplesPerPixel != Integer.MIN_VALUE) {
+        		dialog.append("Samples per pixel = " + samplesPerPixel + "\n");
+        	}
+        	if (photometricInterpretation != null) {
+        		dialog.append("Photometric interpretation = " + photometricInterpretation + "\n");
+        	}
+        	if (rows != Integer.MIN_VALUE) {
+        		dialog.append("Rows = " + rows + "\n");
+        	}
+        	if (columns != Integer.MIN_VALUE) {
+        		dialog.append("Columns = " + columns + "\n");
+        	}
+        	if (pixelSpacing != null) {
+        		for (i = 0; i < pixelSpacing.length; i++) {
+        			dialog.append("Pixel spacing["+i+"] = " + pixelSpacing[i] + "\n");
+        		}
+        	}
+        	if (bitsAllocated != Integer.MIN_VALUE) {
+        		dialog.append("Bits allocated = " + bitsAllocated + "\n");
+        	}
+        	if (bitsStored != Integer.MIN_VALUE) {
+        		dialog.append("Bits stored = " + bitsStored + "\n");
+        	}
+        	if (highBit != Integer.MIN_VALUE) {
+        		dialog.append("High bit = " + highBit + "\n");
+        	}
+        	if (pixelRepresentation != Integer.MIN_VALUE) {
+        		dialog.append("Pixel representation = " + pixelRepresentation + "\n");
+        	}
+        	if (smallestImagePixelValue != Integer.MAX_VALUE) {
+        		dialog.append("Smallest image pixel value = " + smallestImagePixelValue + "\n");
+        	}
+        	if (largestImagePixelValue != Integer.MIN_VALUE) {
+        		dialog.append("Largest image pixel value = "+ largestImagePixelValue + "\n");
+        	}
+        	if (windowCenterWidthExplanation != null) {
+        		dialog.append("Window center width explanation = " + windowCenterWidthExplanation + "\n");
+        	}
+        	if (performedProcedureStepStartTime != null) {
+        		dialog.append("Performed procedre step start time = " + performedProcedureStepStartTime + "\n");
         	}
         } // if (haveJson)
         
@@ -2340,5 +2465,189 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     public String getTransmitCoilName() {
     	return transmitCoilName;
+    }
+    
+    public void setAcquisitionMatrix(int acquisitionMatrix[]) {
+    	this.acquisitionMatrix = acquisitionMatrix;
+    }
+    
+    public int[] getAcquisitionMatrix() {
+    	return acquisitionMatrix;
+    }
+    
+    public void setInPlanePhaseEncodingDirection(String inPlanePhaseEncodingDirection) {
+    	this.inPlanePhaseEncodingDirection = inPlanePhaseEncodingDirection;
+    }
+    
+    public String getInPlanePhaseEncodingDirection() {
+    	return inPlanePhaseEncodingDirection;
+    }
+    
+    public void setFlipAngle(double flipAngle) {
+    	this.flipAngle = flipAngle;
+    }
+    
+    public double getFlipAngle() {
+    	return flipAngle;
+    }
+    
+    public void setVariableFlipAngleFlag(String variableFlipAngleFlag) {
+    	this.variableFlipAngleFlag = variableFlipAngleFlag;
+    }
+    
+    public String getVariableFlipAngleFlag() {
+    	return variableFlipAngleFlag;
+    }
+    
+    public void setSAR(double SAR) {
+    	this.SAR = SAR;
+    }
+    
+    public double getSAR() {
+    	return SAR;
+    }
+    
+    public void setDBdt(double dBdt) {
+    	this.dBdt = dBdt;
+    }
+    
+    public double getDBdt() {
+    	return dBdt;
+    }
+    
+    public void setSeriesNumber(int seriesNumber) {
+    	this.seriesNumber = seriesNumber;
+    }
+    
+    public int getSeriesNumber() {
+    	return seriesNumber;
+    }
+    
+    public void setImagePositionPatient(double imagePositionPatient[]) {
+    	this.imagePositionPatient = imagePositionPatient;
+    }
+    
+    public double[] getImagePositionPatient() {
+    	return imagePositionPatient;
+    }
+    
+    public void setImageOrientationPatient(double imageOrientationPatient[]) {
+    	this.imageOrientationPatient = imageOrientationPatient;
+    }
+    
+    public double[] getImageOrientationPatient() {
+    	return imageOrientationPatient;
+    }
+    
+    public void setSliceLocation(double sliceLocation) {
+    	this.sliceLocation = sliceLocation;
+    }
+    
+    public double getSliceLocation() {
+    	return sliceLocation;
+    }
+    
+    public void setSamplesPerPixel(int samplesPerPixel) {
+    	this.samplesPerPixel = samplesPerPixel;
+    }
+    
+    public int getSamplesPerPixel() {
+    	return samplesPerPixel;
+    }
+    
+    public void setPhotometricInterpretation(String photometricInterpretation) {
+    	this.photometricInterpretation = photometricInterpretation;
+    }
+    
+    public String getPhotometricInterpretation() {
+    	return photometricInterpretation;
+    }
+    
+    public void setRows(int rows) {
+    	this.rows = rows;
+    }
+    
+    public int getRows() {
+    	return rows;
+    }
+    
+    public void setColumns(int columns) {
+    	this.columns = columns;
+    }
+    
+    public int getColumns() {
+    	return columns;
+    }
+    
+    public void setPixelSpacing(double pixelSpacing[]) {
+    	this.pixelSpacing = pixelSpacing;
+    }
+    
+    public double[] getPixelSpacing() {
+    	return pixelSpacing;
+    }
+    
+    public void setBitsAllocated(int bitsAllocated) {
+    	this.bitsAllocated = bitsAllocated;
+    }
+    
+    public int getBitsAllocated() {
+    	return bitsAllocated;
+    }
+    
+    public void setBitsStored(int bitsStored) {
+    	this.bitsStored = bitsStored;
+    }
+    
+    public int getBitsStored() {
+    	return bitsStored;
+    }
+    
+    public void setHighBit(int highBit) {
+    	this.highBit = highBit;
+    }
+    
+    public int getHighBit() {
+    	return highBit;
+    }
+    
+    public void setPixelRepresentation(int pixelRepresentation) {
+    	this.pixelRepresentation = pixelRepresentation;
+    }
+    
+    public int getPixelRepresentation() {
+    	return pixelRepresentation;
+    }
+    
+    public void setSmallestImagePixelValue(int smallestImagePixelValue) {
+    	this.smallestImagePixelValue = smallestImagePixelValue;
+    }
+    
+    public int getSmallestImagePixelValue() {
+    	return smallestImagePixelValue;
+    }
+    
+    public void setLargestImagePixelValue(int largestImagePixelValue) {
+    	this.largestImagePixelValue = largestImagePixelValue;
+    }
+    
+    public int getLargestImagePixelValue() {
+    	return largestImagePixelValue;
+    }
+    
+    public void setWindowCenterWidthExplanation(String windowCenterWidthExplanation) {
+    	this.windowCenterWidthExplanation = windowCenterWidthExplanation;
+    }
+    
+    public String getWindowCenterWidthExplanation() {
+    	return windowCenterWidthExplanation;
+    }
+    
+    public void setPerformedProcedureStepStartTime(String performedProcedureStepStartTime) {
+    	this.performedProcedureStepStartTime = performedProcedureStepStartTime;
+    }
+    
+    public String getPerformedProcedureStepStartTime() {
+    	return performedProcedureStepStartTime;
     }
 }
