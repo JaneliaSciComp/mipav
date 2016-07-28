@@ -607,12 +607,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int funcNumber = 0;
     	int dwiNumber = 0;
     	int fmapNumber = 0;
-    	int tsvNumber = 0;
+    	int numberSessionDirectoryTSV[][] = null;
+    	int numberSubjectDirectoryTSV[];
+    	int totalSessionTSVFiles = 0;
+    	int totalSubjectTSVFiles = 0;
     	File anatFiles[][][] = null;
     	File funcFiles[][][] = null;
     	File dwiFiles[][][] = null;
     	File fmapFiles[][][] = null;
-    	File tsvFiles[][] = null;
+    	File tsvSessionDirectoryFiles[][][] = null;
+    	File tsvSubjectDirectoryFiles[][] = null;
     	boolean found;
     	FormStructure ds = null;
     	FormStructure dsInfo = null;
@@ -651,12 +655,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int sessionEventsRead;
     	int sessionPhysioTsvRead;
     	int sessionPhysioJsonRead;
+    	File participantsFile;
     	
     	// Read directory and find no. of images
         files = BIDSFile.listFiles();
         for (i = 0; i < files.length; i++) {
         	if ((files[i].isDirectory()) && (files[i].getName().substring(0,3).equalsIgnoreCase("SUB"))) {
         		numberSubjects++;
+        	}
+        	else if ((files[i].isFile()) && (files[i].getName().equalsIgnoreCase("participants.tsv"))) {
+        		participantsFile = files[i];
         	}
         }
         printlnToLog("Number of subjects = " + numberSubjects);
@@ -670,11 +678,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	}
         }
         numberSessions = new int[numberSubjects];
+        numberSubjectDirectoryTSV = new int[numberSubjects];
         for (i = 0; i < numberSubjects; i++) {
             files = subjectFiles[i].listFiles();
             for (j = 0; j < files.length; j++) {
             	if ((files[j].isDirectory()) && (files[j].getName().substring(0,3).equalsIgnoreCase("SES"))) {	
             		numberSessions[i]++;
+            	}
+            	else if ((files[j].isFile()) && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
+            		numberSubjectDirectoryTSV[i]++;
+            		totalSubjectTSVFiles++;
             	}
             }
             if (numberSessions[i] > maximumNumberSessions) {
@@ -690,25 +703,43 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	}
         }
         sessionFiles = new File[numberSubjects][];
+        tsvSubjectDirectoryFiles = new File[numberSubjects][];
         if (maximumNumberSessions == 0) {
             for (i = 0; i < numberSubjects; i++) {
         	    sessionFiles[i] = new File[1];
         	    sessionFiles[i][0] = subjectFiles[i]; 
+        	    tsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryTSV[i]];
+        	    files = subjectFiles[i].listFiles();
+        	    for (j = 0, k = 0; j < files.length; j++) {
+        	    	if (files[j].isFile() && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
+        	    		tsvSubjectDirectoryFiles[i][k++] = files[j];
+        	    	}
+        	    }
             }
         } // if (maximumNumberSessions == 0)
         else { // maximumNumberSessions > 0
         	for (i = 0; i < numberSubjects; i++) {
         		sessionFiles[i] = new File[numberSessions[i]];
+        		tsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryTSV[i]];
         		files = subjectFiles[i].listFiles();
-                for (j = 0, k = 0; j < files.length; j++) {
+                for (j = 0, k = 0, m = 0; j < files.length; j++) {
                 	if ((files[j].isDirectory()) && (files[j].getName().substring(0,3).equalsIgnoreCase("SES"))) {	
                 		sessionFiles[i][k++] = files[j];
+                	}
+                	else if ((files[j].isFile()) && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
+                		tsvSubjectDirectoryFiles[i][m++] = files[j];
                 	}
                 }
         	}
         } // else maximumNumberSessions > 0
         
+        if (maximumNumberSessions > 0) {
+        	numberSessionDirectoryTSV = new int[numberSubjects][];
+        }
         for (i = 0; i < numberSubjects; i++) {
+        	if (maximumNumberSessions > 0) {
+        		numberSessionDirectoryTSV[i] = new int[numberSessions[i]];
+        	}
         	for (j = 0; j < sessionFiles[i].length; j++) {
         		files = sessionFiles[i][j].listFiles();
         		for (k = 0; k < files.length; k++) {
@@ -726,8 +757,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         					fmapNumber++;
         				}
         			} // if (files[k].isDirectory())
-        			else if (files[k].getName().endsWith(".tsv")) {
-        				tsvNumber++;
+        			else if ((files[k].getName().toLowerCase().endsWith(".tsv")) && (maximumNumberSessions > 0)) {
+        			    numberSessionDirectoryTSV[i][j]++;
+        			    totalSessionTSVFiles++;
         			}
         		}
         	}
@@ -737,12 +769,24 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         printlnToLog(funcNumber + " func subdirectories were found");
         printlnToLog(dwiNumber + " dwi subdirectories were found");
         printlnToLog(fmapNumber + " fmap subdirectories were found");
-        if (maximumNumberSessions == 0) {
-        	printlnToLog(tsvNumber + " subject subdirectory tsv files were found");
-        }
-        else {
-        	printlnToLog(tsvNumber + " session subdirectory tsv files were found");
-        }
+        printlnToLog("Number of subject subdirectory .tsv files = " + totalSubjectTSVFiles);
+        printlnToLog("Number of session subdirectory .tsv files = " + totalSessionTSVFiles);
+        
+        if (totalSessionTSVFiles > 0) {
+            tsvSessionDirectoryFiles = new File[numberSubjects][][];
+            for (i = 0; i < numberSubjects; i++) {
+            	tsvSessionDirectoryFiles[i] = new File[sessionFiles[i].length][];
+            	for (j = 0; j < sessionFiles[i].length; j++) {
+            		files = sessionFiles[i][j].listFiles();
+            		tsvSessionDirectoryFiles[i][j] = new File[numberSessionDirectoryTSV[i][j]];
+            		for (k = 0, m = 0; k < files.length; k++) {
+            			if ((files[k].isFile()) && (files[k].getName().toLowerCase().endsWith(".tsv"))) {
+            			    tsvSessionDirectoryFiles[i][j][m++] = files[k];	
+            			}
+            		}
+            	}
+            }
+        } // if (totalSessionTSVFiles > 0)
         
         if (anatNumber > 0) {
         	anatFiles = new File[numberSubjects][][];
@@ -824,22 +868,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	}
         } // if (fmapNumber > 0)
         
-        if (tsvNumber > 0) {
-        	tsvFiles = new File[numberSubjects][];
-        	for (i = 0; i < numberSubjects; i++) {
-        		tsvFiles[i] = new File[sessionFiles[i].length];
-        		for (j = 0; j < sessionFiles[i].length; j++) {
-        			files = sessionFiles[i][j].listFiles();
-        			found = false;
-        			for (k = 0; k < files.length && (!found); k++) {
-        				if ((files[k].isFile()) && (files[k].getName().endsWith(".tsv"))) {
-                            tsvFiles[i][j] = files[k];
-                            found = true;
-        				}
-        			}
-        		}
-        	}
-        } // if (tsvNumber > 0)
         
         if (anatNumber > 0) {
             found = false;
@@ -1199,8 +1227,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         String [] numAverages = new String[numImages];
         String [] receiveCoilName = new String[numImages];
 
-        String [] manuf = new String[numImages];
-        String [] model = new String[numImages];
         String [] scannerVer = new String[numImages];
 
         String [] contrastAgent = new String[numImages];
@@ -1214,7 +1240,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         String [] ctKVP = new String[numImages];
         String [] ctMA = new String[numImages];
 
-        String [] description = new String[numImages];
+        String description;
         String [] seriesDescription = new String[numImages];
         boolean [] isRestingFMRI = new boolean[numImages];
         String [] thicknessStr = new String[numImages];
@@ -1225,6 +1251,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         FileInfoDicom fileInfoDicom;
         FileInfoNIFTI fileInfoNifti;
         int i;
+        // If true, the NIFTI file has a Java Script Object Node extension header
+        boolean haveJson;
         
         for (i = 0; i < numImages; i++) {
         	res[i] = img[i].getResolutions(0);
@@ -1340,13 +1368,33 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             } else if (fileFormatString[i].equalsIgnoreCase("nifti")) {
                 // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
                 fileInfoNifti = (FileInfoNIFTI) img[i].getFileInfo(0);
-                description[i] = fileInfoNifti.getDescription();
+                description = fileInfoNifti.getDescription();
 
-                if ((description[i] != null) && (description[i].length() > 0)) {
-	                manuf[i] = convertNiftiDescToBRICSManuf(description[i]);
-	                model[i] = convertNiftiDescToBRICSModel(description[i]);
-	                scannerVer[i] = convertNiftiDescToBRICSVer(description[i]);
-                } // if ((description[i] != null) && (description[i].length() > 0))
+                if ((description != null) && (description.length() > 0)) {
+	                manufacturer[i] = convertNiftiDescToBRICSManuf(description);
+	                scannerModel[i] = convertNiftiDescToBRICSModel(description);
+	                softwareVersion[i] = convertNiftiDescToBRICSVer(description);
+                } // if ((description != null) && (description.length() > 0))
+                
+                haveJson = fileInfoNifti.getHaveJson();
+                if (haveJson) {
+                    visitTime[i] = fileInfoNifti.getStudyTime();
+                    manufacturer[i] = convertManufNameToBRICS(fileInfoNifti.getManufacturer());
+                    scannerModel[i] = fileInfoNifti.getManufacturerModelName();
+                    softwareVersion[i] = fileInfoNifti.getSoftwareVersions();
+                    bandwidth[i] = String.valueOf(fileInfoNifti.getPixelBandwidth());
+                    scanOptions[i] = fileInfoNifti.getScanOptions();
+                    gap[i] = String.valueOf(fileInfoNifti.getSpacingBetweenSlices());
+                    echoTime[i] = String.valueOf(fileInfoNifti.getEchoTime());
+                    repetitionTime[i] = String.valueOf(fileInfoNifti.getRepetitionTime());
+                    magneticFieldStrength[i] = String.valueOf(fileInfoNifti.getMagneticFieldStrength());
+                    flipAngle[i] = String.valueOf(fileInfoNifti.getFlipAngle());
+                    echoTrainMeas[i] = String.valueOf(fileInfoNifti.getEchoTrainLength());
+                    phaseEncode[i] = fileInfoNifti.getInPlanePhaseEncodingDirection();
+                    numAverages[i] = String.valueOf(fileInfoNifti.getNumberOfAverages());
+                    mriT1T2Name[i] = fileInfoNifti.getSequenceName();
+                } // if (haveJson)
+                
             }
 
         } // for (i = 0; i < numImages; i++)
@@ -1526,12 +1574,32 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             }
                         }
                     } else if (fileFormatString[i].equalsIgnoreCase("nifti")) {
-                        if (deName.equalsIgnoreCase("ImgScannerManufName")) {
-                            setElementComponentValue(deVal, manuf[i]);
-                        } else if (deName.equalsIgnoreCase("ImgScannerModelName")) {
-                            setElementComponentValue(deVal, model[i]);
-                        } else if (deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
-                            setElementComponentValue(deVal, scannerVer[i]);
+                        if ((deName.equalsIgnoreCase("ImgScannerManufName")) && (manufacturer[i] != null)) {
+                            setElementComponentValue(deVal, manufacturer[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgScannerModelName")) && (scannerModel[i]!= null)) {
+                            setElementComponentValue(deVal, scannerModel[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) && (softwareVersion[i] != null)) {
+                            setElementComponentValue(deVal, softwareVersion[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgBandwidthVal")) && (bandwidth[i] != null)) {
+                            setElementComponentValue(deVal, bandwidth[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgGapBetwnSlicesMeasr")) && (gap[i] != null)) {
+                            setElementComponentValue(deVal, gap[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgEchoDur")) && (echoTime[i] != null)) {
+                                setElementComponentValue(deVal, echoTime[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgRepetitionGapVal")) && (repetitionTime[i] != null)) {
+                            setElementComponentValue(deVal, repetitionTime[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgScannerStrgthVal")) && (magneticFieldStrength[i] != null)) {
+                            setElementComponentValue(deVal, convertMagFieldStrengthToBRICS(magneticFieldStrength[i]));
+                        } else if ((deName.equalsIgnoreCase("ImgFlipAngleMeasr")) && (flipAngle[i] != null)) {
+                            setElementComponentValue(deVal, flipAngle[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgEchoTrainLngthMeasr")) && (echoTrainMeas[i] != null)) {
+                            setElementComponentValue(deVal, echoTrainMeas[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) && (phaseEncode[i] != null)) {
+                            setElementComponentValue(deVal, phaseEncode[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgSignalAvgNum")) && (numAverages[i] != null)) {
+                            setElementComponentValue(deVal, numAverages[i]);
+                        } else if ((deName.equalsIgnoreCase("ImgMRIT1T2SeqName")) && (mriT1T2Name[i] != null)) {
+                            setElementComponentValue(deVal, mriT1T2Name[i]);
                         }
                     }
                 }
@@ -3683,7 +3751,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * Checks if the given string starts with an allowed GUID prefix.
      * 
      * @param str A string to check.
-     * @return True if the string starts with one of the BIRCS prefixes (case sensitive).
+     * @return True if the string starts with one of the BRICS prefixes (case sensitive).
      */
     private static final boolean isGuid(final String str) {
         if (str == null || str.equals("")) {
