@@ -2360,8 +2360,8 @@ public class FileNIFTI extends FileBase {
                 if (ecode == 0) {
                     String openBracket = new String(bufferByte, currentAddress+8, 1);
                     if (openBracket.equals("{")) {
-                    	// Paaded to 4 bytes, so could be a }, }<sp>, }<sp><sp>, or }<sp><sp><sp>
-                        String closeBracket = new String(bufferByte, currentAddress+esize-5, 4);
+                    	// Padded to 16 bytes, so could be a }, }<sp>, }<sp><sp>, or }<sp><sp><sp>, etc.
+                        String closeBracket = new String(bufferByte, currentAddress+esize-17, 16);
                         if (closeBracket.trim().endsWith("}")) {
                         	jsonNumber++;
                         }
