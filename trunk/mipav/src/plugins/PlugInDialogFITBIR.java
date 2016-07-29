@@ -49,6 +49,8 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.bouncycastle.util.encoders.Hex;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -57,6 +59,7 @@ import com.ice.tar.TarEntry;
 import com.ice.tar.TarInputStream;
 import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
+import com.sun.source.tree.ArrayAccessTree;
 
 
 /**
@@ -655,10 +658,42 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int sessionEventsRead;
     	int sessionPhysioTsvRead;
     	int sessionPhysioJsonRead;
-    	File participantsFile;
-    	
+    	File participantsFile = null;
+    	RandomAccessFile raFile = null;
+    	boolean processFile;
+    	String line = null;
+    	boolean readMoreLines;
+    	String tokens[];
+    	int participant_id_index;
+    	int age_at_first_scan_years_index;
+    	String participant_id_array[] = null;
+    	String age_at_first_scan_years_array[] = null;
+    	int participant_id_read = 0;
+    	int age_at_first_scan_years_read = 0;
+    	int subjectsRead = 0;
+    	long fileLength = 0;
+    	long filePos;
+    	boolean indexRead;
+    	int subject_id_index;
+    	String subject_id_array[] = null;
+    	int headerTokenNumber;
+    	int sessionTokenNumber;
+    	int sessionsRead;
+    	int subject_id_read = 0;
+    	int numberBoldJsonFiles = 0;
+    	String boldJsonFilenames[];
+    	byte bufferByte[] = null;
+    	String jsonString;
+    	String openBracket;
+    	String closeBracket;
+    	JSONObject jsonObject = null;
+    	double effectiveEchoSpacing[];
+    	double echoTime[];
+    	double repetitionTime[];
+    	String phaseEncodingDirection[];
     	// Read directory and find no. of images
         files = BIDSFile.listFiles();
+        Arrays.sort(files, new fileComparator());
         for (i = 0; i < files.length; i++) {
         	if ((files[i].isDirectory()) && (files[i].getName().substring(0,3).equalsIgnoreCase("SUB"))) {
         		numberSubjects++;
@@ -666,11 +701,210 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	else if ((files[i].isFile()) && (files[i].getName().equalsIgnoreCase("participants.tsv"))) {
         		participantsFile = files[i];
         	}
+        	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().contains("_bold")) &&
+        	    (files[i].getName().toLowerCase().endsWith(".json"))) {
+        	    numberBoldJsonFiles++;	
+        	}
+        }
+        boldJsonFilenames = new String[numberBoldJsonFiles];
+        effectiveEchoSpacing = new double[numberBoldJsonFiles];
+        echoTime = new double[numberBoldJsonFiles];
+        repetitionTime = new double[numberBoldJsonFiles];
+        phaseEncodingDirection = new String[numberBoldJsonFiles];
+        for (i = 0, j = 0; i < files.length; i++) {
+        	if ((files[i].isFile()) && (files[i].getName().toLowerCase().contains("_bold")) &&
+        	    (files[i].getName().toLowerCase().endsWith(".json"))) {
+        		index = files[i].getName().lastIndexOf("_bold");
+        	    boldJsonFilenames[j] = files[i].getName().substring(0,index);
+        	    try {
+                    raFile = new RandomAccessFile(files[i], "r");
+                    processFile = true;
+            	}
+            	catch (FileNotFoundException e) {
+            		System.err.println("FileNotFoundException " + e);
+            		processFile = false;
+            	}
+        	    if (processFile) {
+    	        	try {
+    	        	    fileLength = raFile.length();
+    	        	}
+    	        	catch (IOException e) {
+    	        		System.err.println("IOException " + e);
+    	        		processFile = false;
+    	        	}
+            	} // if (processFile)
+        	    if (processFile) {
+        	        bufferByte = new byte[(int)fileLength];
+        	        try {
+        	            raFile.read(bufferByte);	
+        	        }
+        	        catch (IOException e) {
+        	        	System.err.println("IOException " + e);
+        	        	processFile = false;
+        	        }
+        	    } // if (processFile)
+        	    if (processFile) {
+        	    	openBracket = new String(bufferByte, 0, 1);
+                    if (openBracket.equals("{")) {
+                    	// Padded to 16 bytes, so could be a }, }<sp>, }<sp><sp>, or }<sp><sp><sp>, etc.
+                        closeBracket = new String(bufferByte, (int)(fileLength-17), 16);
+                        if (closeBracket.trim().endsWith("}")) {
+                        	processFile = true;
+                        }
+                        else {
+                        	processFile = false;
+                        }
+                    }
+                    else {
+                    	processFile = false;
+                    }
+        	    } // if (processFile)
+        	    if (processFile) {
+            	    jsonString = new String(bufferByte, 0, (int)fileLength);
+            	    try {
+                	    jsonObject = new JSONObject(jsonString);
+                	}
+                	catch (JSONException e) {
+                		System.err.println("JSONException " + e + " on new JSONObject(jsonString)");
+                		processFile = false;
+                	}
+        	    } // if (processFile)
+        	    if (processFile) {
+        	        try {
+        	        	// Change seconds to milliseconds
+        	        	effectiveEchoSpacing[j] = 1000.0 * jsonObject.getDouble("EffectiveEchoSpacing");
+        	        }
+        	        catch (JSONException e) {
+        	            System.err.println("JSONException " + e + " jsonObject.getDouble EffectiveEchoSpacing");	
+        	        }
+        	        try {
+        	        	echoTime[j] = 1000.0 * jsonObject.getDouble("EchoTime");
+        	        }
+        	        catch (JSONException e) {
+        	        	System.err.println("JSONException " + e + " jsonObject.getDouble EchoTime");
+        	        }
+        	        try {
+        	        	repetitionTime[j] = 1000.0 * jsonObject.getDouble("RepetitionTime");
+        	        }
+        	        catch (JSONException e) {
+        	        	System.err.println("JSONException " + e + "jsonObject.getDouble RepetitionTime");
+        	        }
+        	        try {
+        	        	phaseEncodingDirection[j] = jsonObject.getString("PhaseEncodingDirection");
+        	        }
+        	        catch (JSONException e) {
+        	        	System.err.println("JSONException " + e + " jsonObject.getString PhaseEncodingDirection");
+        	        }
+        	    } // if (processFile)
+        	    j++;
+        	    try {
+        	    	raFile.close();
+        	    }
+        	    catch (IOException e) {
+        	    	System.err.println(" IOException " + e + " on raFile.close()");
+        	    }
+        	}
         }
         printlnToLog("Number of subjects = " + numberSubjects);
         if (numberSubjects == 0) {
         	return false;
         }
+        if (participantsFile != null) {
+        	try {
+                raFile = new RandomAccessFile(participantsFile, "r");
+                processFile = true;
+        	}
+        	catch (FileNotFoundException e) {
+        		System.err.println("FileNotFoundException " + e);
+        		processFile = false;
+        	}
+        	if (processFile) {
+	        	try {
+	        	    fileLength = raFile.length();
+	        	}
+	        	catch (IOException e) {
+	        		System.err.println("IOException " + e);
+	        		processFile = false;
+	        	}
+        	} // if (processFile)
+        	if (processFile) {
+        		try {
+        		    line = raFile.readLine();
+        		    readMoreLines = true;
+        		}
+        		catch (IOException e) {
+        		    System.err.println("IOException " + e);	
+        		    readMoreLines = false;
+        		}
+        		if (readMoreLines) {
+        		    tokens = line.split("\t");
+        		    participant_id_index = -1;
+        		    age_at_first_scan_years_index = -1;
+        		    for (i = 0; i < tokens.length; i++) {
+        		        if (tokens[i].equalsIgnoreCase("participant_id")) {
+        		        	participant_id_index = i;
+        		        	participant_id_array = new String[numberSubjects];
+        		        }
+        		        else if (tokens[i].equalsIgnoreCase("age_at_first_scan_years")) {
+        		        	age_at_first_scan_years_index = i;
+        		        	age_at_first_scan_years_array = new String[numberSubjects];
+        		        } 
+        		    } // // for (i = 0; i < tokens.length; i++)
+        		    if ((participant_id_index >= 0)|| (age_at_first_scan_years_index >= 0)) {
+        		        subjectsRead = 0;
+        		        try {
+        		        	filePos = raFile.getFilePointer();
+        		        }
+        		        catch (IOException e) {
+        		        	System.err.println("IOException " + e);
+        		        	filePos = fileLength;
+        		        }
+        		        while (readMoreLines && (subjectsRead < numberSubjects) && (filePos < fileLength)) {
+        		        	try {
+        	        		    line = raFile.readLine();
+        	        		    readMoreLines = true;
+        	        		}
+        	        		catch (IOException e) {
+        	        		    System.err.println("IOException " + e);	
+        	        		    readMoreLines = false;
+        	        		}
+        		        	tokens = line.split("\t");
+        		        	indexRead = false;
+        		        	if ((participant_id_index >= 0) && (tokens.length-1 >= participant_id_index)) {
+        		        		participant_id_array[subjectsRead] = tokens[participant_id_index];
+        		        		indexRead = true;
+        		        		participant_id_read++;
+        		        	}
+        		        	if ((age_at_first_scan_years_index >= 0) && (tokens.length-1 >= age_at_first_scan_years_index)) {
+        		        		age_at_first_scan_years_array[subjectsRead] = tokens[age_at_first_scan_years_index];
+        		        		indexRead = true;
+        		        		age_at_first_scan_years_read++;
+        		        	}
+        		        	if (indexRead) {
+        		        		subjectsRead++;
+        		        	}
+        		        	try {
+            		        	filePos = raFile.getFilePointer();
+            		        }
+            		        catch (IOException e) {
+            		        	System.err.println("IOException " + e);
+            		        	filePos = fileLength;
+            		        }	
+        		        } // while (readMoreLines && (subjectsRead < numberSubjects) && (filePos < fileLength))
+        		    } // if ((participant_id_index >= 0)|| (age_at_first_scan_years_index >= 0))
+        		} // if (readMoreLines)
+        		printlnToLog(participant_id_read + " participant_id read from participants.tsv");
+        		printlnToLog(age_at_first_scan_years_read + " age_at_first_scan_years read from participants.tsv");
+        	} // if (processFile)
+        	if (processFile) {
+        		try {
+        			raFile.close();
+        		}
+        		catch (IOException e) {
+        			System.err.println("IOException " + e);
+        		}
+        	}
+        } // if (participantsFile != null)
         subjectFiles = new File[numberSubjects];
         for (i = 0, j = 0; i < files.length; i++) {
         	if ((files[i].isDirectory()) && (files[i].getName().substring(0,3).equalsIgnoreCase("SUB"))) {
@@ -681,6 +915,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         numberSubjectDirectoryTSV = new int[numberSubjects];
         for (i = 0; i < numberSubjects; i++) {
             files = subjectFiles[i].listFiles();
+            Arrays.sort(files, new fileComparator());
             for (j = 0; j < files.length; j++) {
             	if ((files[j].isDirectory()) && (files[j].getName().substring(0,3).equalsIgnoreCase("SES"))) {	
             		numberSessions[i]++;
@@ -732,6 +967,112 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
         	}
         } // else maximumNumberSessions > 0
+        
+        if (totalSubjectTSVFiles > 0) {
+        	subject_id_array = new String[numberSubjects];
+        	for (i = 0; i < numberSubjects; i++) {
+        		for (j = 0; j < tsvSubjectDirectoryFiles[i].length; j++) {
+        			if (tsvSubjectDirectoryFiles[i][j].getName().toLowerCase().endsWith("_sessions.tsv")) {
+        				try {
+        	                raFile = new RandomAccessFile(tsvSubjectDirectoryFiles[i][j], "r");
+        	                processFile = true;
+        	        	}
+        	        	catch (FileNotFoundException e) {
+        	        		System.err.println("FileNotFoundException " + e);
+        	        		processFile = false;
+        	        	}
+        				if (processFile) {
+        		        	try {
+        		        	    fileLength = raFile.length();
+        		        	}
+        		        	catch (IOException e) {
+        		        		System.err.println("IOException " + e);
+        		        		processFile = false;
+        		        	}
+        	        	} // if (processFile)
+        	        	if (processFile) {
+        	        		try {
+        	        		    line = raFile.readLine();
+        	        		    readMoreLines = true;
+        	        		}
+        	        		catch (IOException e) {
+        	        		    System.err.println("IOException " + e);	
+        	        		    readMoreLines = false;
+        	        		}
+        	        		if (readMoreLines) {
+        	        		    tokens = line.split("\t");
+        	        		    headerTokenNumber = tokens.length;
+        	        		    subject_id_index = -1;
+        	        		    for (k = 0; k < tokens.length; k++) {
+        	        		        if (tokens[k].equalsIgnoreCase("subject_id")) {
+        	        		        	subject_id_index = k;
+        	        		        }
+        	        		    } // // for (k = 0; k < tokens.length; k++)
+        	        		    if (subject_id_index >= 0) {
+        	        		    	try {
+        	        		        	filePos = raFile.getFilePointer();
+        	        		        }
+        	        		        catch (IOException e) {
+        	        		        	System.err.println("IOException " + e);
+        	        		        	filePos = fileLength;
+        	        		        }
+        	        		    	sessionsRead = 0;
+        	        		    	indexRead = false;
+        	        		        while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos < fileLength)) {
+        	        		        	try {
+        	        	        		    line = raFile.readLine();
+        	        	        		    readMoreLines = true;
+        	        	        		}
+        	        	        		catch (IOException e) {
+        	        	        		    System.err.println("IOException " + e);	
+        	        	        		    readMoreLines = false;
+        	        	        		}
+        	        		        	tokens = line.split("\t");
+        	        		        	sessionTokenNumber = tokens.length;
+        	        		        	if (headerTokenNumber != sessionTokenNumber) {
+        	        		        		System.err.println("Header token number = " + headerTokenNumber + ", but session token number = " +
+        	        		        	                   sessionTokenNumber);
+        	        		        	}
+        	        		        	if (tokens.length-1 >= subject_id_index) {
+        	        		        		if (!indexRead) {
+        	        		        		    subject_id_array[i] = tokens[subject_id_index];
+        	        		        		    indexRead = true;
+        	        		        		    subject_id_read++;
+        	        		        		}
+        	        		        		else if (Integer.valueOf(subject_id_array[i]).intValue() != 
+        	        		        				Integer.valueOf(tokens[subject_id_index]).intValue()) {
+        	        		        		    	System.err.println("subject_id number varies across sessions for subject subdirectory "
+        	        		        		    			+ i);
+        	        		        		    	System.err.println("subject_id_array["+i+"] = " + subject_id_array[i]);
+        	        		        		    	System.err.println("tokens["+subject_id_index+"] = " + tokens[subject_id_index]);
+        	        		        		}
+        	        		        		sessionsRead++;
+        	        		        	}
+        	        		        	
+        	        		        	try {
+        	            		        	filePos = raFile.getFilePointer();
+        	            		        }
+        	            		        catch (IOException e) {
+        	            		        	System.err.println("IOException " + e);
+        	            		        	filePos = fileLength;
+        	            		        }	
+        	        		        } // while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos < fileLength))	
+        	        		    } // if (subject_id_index >= 0)
+        	        		} // if (readMoreLines)
+        	        	} // if (processFile)
+        	        	if (processFile) {
+        	        		try {
+        	        			raFile.close();
+        	        		}
+        	        		catch (IOException e) {
+        	        			System.err.println("IOException " + e);
+        	        		}
+        	        	}
+        			}
+        		}
+        	}
+        	printlnToLog(subject_id_read + " subject id read from _sessions.tsv files in subject subdirectories");
+        } // if (totalSubjectTSVFiles > 0)
         
         if (maximumNumberSessions > 0) {
         	numberSessionDirectoryTSV = new int[numberSubjects][];
