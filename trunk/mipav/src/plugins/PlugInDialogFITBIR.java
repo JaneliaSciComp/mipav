@@ -277,6 +277,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
     
     private FormStructureData fsData = null;
+    
+    private JLabel requiredLabel;
 
     /**
      * Text of the privacy notice displayed to the user before the plugin can be used.
@@ -668,6 +670,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int age_at_first_scan_years_index;
     	String participant_id_array[] = null;
     	String age_at_first_scan_years_array[] = null;
+    	String age_at_first_scan_years = null;
     	int participant_id_read = 0;
     	int age_at_first_scan_years_read = 0;
     	int subjectsRead = 0;
@@ -676,6 +679,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	boolean indexRead;
     	int subject_id_index;
     	String subject_id_array[] = null;
+    	String subject_id = null;
     	int headerTokenNumber;
     	int sessionTokenNumber;
     	int sessionsRead;
@@ -691,6 +695,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	double echoTime[];
     	double repetitionTime[];
     	String phaseEncodingDirection[];
+    	final JPanel mainPanel = new JPanel(new GridBagLayout());
+
+        dsMainPanel = new JPanel(new GridBagLayout());
+        final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    	final GridBagConstraints gbc = new GridBagConstraints();
+    	
+    	setTitle("Edit Data Elements - " + dataStructureName);
+        addWindowListener(this);
+        
+        try {
+            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        } catch (final Exception e) {
+            // setIconImage() is not part of the Java 1.5 API - catch any
+            // runtime error on those systems
+        }
     	// Read directory and find no. of images
         files = BIDSFile.listFiles();
         Arrays.sort(files, new fileComparator());
@@ -711,6 +731,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         echoTime = new double[numberBoldJsonFiles];
         repetitionTime = new double[numberBoldJsonFiles];
         phaseEncodingDirection = new String[numberBoldJsonFiles];
+        for (i = 0; i < numberBoldJsonFiles; i++) {
+        	effectiveEchoSpacing[i] = Double.NaN;
+        	echoTime[i] = Double.NaN;
+        	repetitionTime[i] = Double.NaN;
+        }
         for (i = 0, j = 0; i < files.length; i++) {
         	if ((files[i].isFile()) && (files[i].getName().toLowerCase().contains("_bold")) &&
         	    (files[i].getName().toLowerCase().endsWith(".json"))) {
@@ -1265,7 +1290,23 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        } // for (k = 0; k < anatFiles[i][j].length; k++)
             	        parseDataStructure(dsInfo, sessionImagesRead);
             	        parseForInitLabelsAndComponents();
-            	        populateFields(srcImage, sessionImagesRead);
+            	        if (subject_id_array != null) {
+            	        	subject_id = subject_id_array[i];
+            	        }
+            	        else if (participant_id_array != null) {
+            	        	subject_id = participant_id_array[i];
+            	        }
+            	        else {
+            	        	subject_id = null;
+            	        }
+            	        if (age_at_first_scan_years_array != null) {
+            	        	age_at_first_scan_years = age_at_first_scan_years_array[i];
+            	        }
+            	        else {
+            	        	age_at_first_scan_years = null;
+            	        }
+            	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
+            	        		echoTime, repetitionTime, phaseEncodingDirection, subject_id, age_at_first_scan_years);
             	        if ( !setInitialVisible) {
                             // convert any dates found into proper ISO format
                             /*for (i = 0; i < csvFieldNames.size(); i++) {
@@ -1400,7 +1441,23 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        } // for (k = 0; k < funcFiles[i][j].length; k++) 
             	        parseDataStructure(dsInfo, sessionImagesRead);
             	        parseForInitLabelsAndComponents();
-            	        populateFields(srcImage, sessionImagesRead);
+            	        if (subject_id_array != null) {
+            	        	subject_id = subject_id_array[i];
+            	        }
+            	        else if (participant_id_array != null) {
+            	        	subject_id = participant_id_array[i];
+            	        }
+            	        else {
+            	        	subject_id = null;
+            	        }
+            	        if (age_at_first_scan_years_array != null) {
+            	        	age_at_first_scan_years = age_at_first_scan_years_array[i];
+            	        }
+            	        else {
+            	        	age_at_first_scan_years = null;
+            	        }
+            	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
+            	        		echoTime, repetitionTime, phaseEncodingDirection, subject_id, age_at_first_scan_years);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1498,7 +1555,23 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        } // for (k = 0; k < dwiFiles[i][j].length; k++)
             	        parseDataStructure(dsInfo, sessionImagesRead);
             	        parseForInitLabelsAndComponents();
-            	        populateFields(srcImage, sessionImagesRead);
+            	        if (subject_id_array != null) {
+            	        	subject_id = subject_id_array[i];
+            	        }
+            	        else if (participant_id_array != null) {
+            	        	subject_id = participant_id_array[i];
+            	        }
+            	        else {
+            	        	subject_id = null;
+            	        }
+            	        if (age_at_first_scan_years_array != null) {
+            	        	age_at_first_scan_years = age_at_first_scan_years_array[i];
+            	        }
+            	        else {
+            	        	age_at_first_scan_years = null;
+            	        }
+            	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
+            	        		echoTime, repetitionTime, phaseEncodingDirection, subject_id, age_at_first_scan_years);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1515,14 +1588,180 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             printlnToLog("dwi bvec files read = " + dwiBvecRead);    
         } // if (dwiNumber > 0)
         
-     	enableDisableFinishButton();
+       
+        
+        finishButton.setEnabled(true);
+        
+        /*gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(10, 5, 10, 25);
+        gbc.gridwidth = 1;
+
+        final JPanel OKPanel = new JPanel();
+
+        final JButton OKButton = new JButton("Save");
+        OKButton.setActionCommand("StructDialogOK");
+        OKButton.addActionListener(this);
+        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        OKButton.setFont(serif12B);
+
+        final JButton cancelButton = new JButton("Cancel");
+        cancelButton.setActionCommand("StructDialogCancel");
+        cancelButton.addActionListener(this);
+        cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        cancelButton.setFont(serif12B);
+
+        OKPanel.add(OKButton);
+        OKPanel.add(cancelButton);
+
+        requiredLabel = new JLabel(
+                "<html>Mouse over data element name for a description.<br/>Mouse over the data element fields for more information on filling them in.<br/>* Required data elements are in <font color=\"red\">red</font></html>");
+
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.weightx = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        mainPanel.add(requiredLabel, gbc);
+
+        gbc.gridy = 2;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        mainPanel.add(tabScrollPane, gbc);
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.gridy = 3;
+        mainPanel.add(OKPanel, gbc);
+
+        getContentPane().add(mainPanel);
+
+        final Dimension dim = getContentPane().getPreferredSize();
+        if (dim.height > 500) {
+            dim.height = 500;
+        }
+        tabScrollPane.setPreferredSize(dim);
+
+        pack();
+        MipavUtil.centerInWindow(this, this);
+        if (setInitialVisible) {
+            setVisible(true);
+        }*/
+        
     	return true;
+    }
+    
+    /**
+     * called after validation is done
+     */
+    public void complete(final FormStructureData fsData, final boolean isComplete) {
+        String value = "";
+        String guid = "";
+        ArrayList<File> allOtherFiles = new ArrayList<File>();
+        boolean launchedFromInProcessState = false;
+        boolean addedPreviewImage = false;
+
+        for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
+            for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
+                for (final DataElementValue deVal : repeat.getDataElements()) {
+                    final JLabel label = deVal.getLabel();
+                    final JComponent comp = deVal.getComp();
+
+                    if (label.getName().equalsIgnoreCase(GUID_ELEMENT_NAME)) {
+                        guid = ((JTextField) comp).getText().trim();
+                    }
+
+                    if (comp instanceof JTextField) {
+                        value = ((JTextField) comp).getText().trim();
+                        // ok...all files will go into the allOtherFiles AL
+
+                        final File f = new File(value);
+                        if (f.isFile()) {
+                            allOtherFiles.add(f);
+                        }
+
+                    } else if (comp instanceof JComboBox) {
+                        value = (String) ( ((JComboBox) comp).getSelectedItem());
+                        if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || value.equalsIgnoreCase(VALUE_YES_SPECIFY)) {
+                            // value = deVal.getOtherSpecifyField().getText().trim();
+                        }
+                    } else if (comp instanceof JList) {
+                        value = "";
+                        final int[] selectedIndicies = ((JList) comp).getSelectedIndices();
+                        for (final int index : selectedIndicies) {
+                            if (value == "") {
+                                value = (String) ((JList) comp).getModel().getElementAt(index);
+                            } else {
+                                value += MULTI_SELECT_VALUE_DELIM + (String) ((JList) comp).getModel().getElementAt(index);
+                            }
+                        }
+                    }
+
+                    /*
+                     * if(!value.equals("")) { System.out.println("the key is " + key);
+                     * System.out.println("the value is " + value); }
+                     */
+
+                    deVal.setValue(value);
+                }
+            }
+        }
+
+        // boolean guidKnown = true;
+        // if (guid != null && !guid.trim().equalsIgnoreCase("")) {
+        // guidKnown = false;
+        // }
+
+        String name = "";
+
+        if (guid != null && !guid.trim().equalsIgnoreCase("")) {
+            name = fsData.getStructInfo().getShortName() + STRUCT_GUID_SEPERATOR + guid;
+        } else {
+            name = fsData.getStructInfo().getShortName() + STRUCT_GUID_SEPERATOR + "UNKNOWNGUID";
+        }
+
+        if (launchedFromInProcessState) {
+            final int selectedRow = structTable.getSelectedRow();
+
+            structTableModel.setValueAt(name, selectedRow, 0);
+            if (isComplete) {
+                structTableModel.setValueAt("Yes", selectedRow, 1);
+            } else {
+                structTableModel.setValueAt("No", selectedRow, 1);
+            }
+
+            fsDataList.set(selectedRow, fsData);
+
+            allOtherFilesAL.set(selectedRow, allOtherFiles);
+
+        } else {
+            if ( !addedPreviewImage) {
+                previewImgPanel.removeAll();
+                previewImgPanel.repaint();
+            }
+
+            fsDataList.set(fsDataList.size() - 1, fsData);
+            final Vector<String> rowData = new Vector<String>();
+            rowData.add(name);
+            if (isComplete) {
+                rowData.add("Yes");
+            } else {
+                rowData.add("No");
+            }
+            structTableModel.addRow(rowData);
+            structTable.setRowSelectionInterval(structTableModel.getRowCount() - 1, structTableModel.getRowCount() - 1);
+
+            allOtherFilesAL.set(allOtherFilesAL.size() - 1, allOtherFiles);
+        }
     }
     
     /**
      * prepopulates some of the fields with info from image headers
      */
-    public void populateFields(final ModelImage img[], int numImages) {
+    public void populateFields(final ModelImage img[], int numImages, String boldJsonFilenames[], double effectiveEchoSpacing[],
+    		double echoTimeDouble[], double repetitionTimeDouble[], String phaseEncodingDirection[],
+    		String subject_id, String age_at_first_scan_years) {
     	float[][] res = new float[numImages][];
     	int[][] units = new int[numImages][];
     	int [][] exts = new int[numImages][];
@@ -1568,8 +1807,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         String [] numAverages = new String[numImages];
         String [] receiveCoilName = new String[numImages];
 
-        String [] scannerVer = new String[numImages];
-
         String [] contrastAgent = new String[numImages];
         String [] contrastMethod = new String[numImages];
         String [] contrastTime = new String[numImages];
@@ -1589,11 +1826,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         String [] ageMonthsStr = new String[numImages];
         Integer [] ageInMonthsInt = new Integer[numImages];
         String [] ageInYears = new String[numImages];
+        String [] imagingEchoSpacing = new String[numImages];
         FileInfoDicom fileInfoDicom;
         FileInfoNIFTI fileInfoNifti;
         int i;
+        int j;
         // If true, the NIFTI file has a Java Script Object Node extension header
         boolean haveJson;
+        String imageFilename;
         
         for (i = 0; i < numImages; i++) {
         	res[i] = img[i].getResolutions(0);
@@ -1736,7 +1976,31 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     mriT1T2Name[i] = fileInfoNifti.getSequenceName();
                 } // if (haveJson)
                 
-            }
+            } // else if (fileFormatString[i].equalsIgnoreCase("nifti"))
+            
+            imageFilename = img[i].getImageFileName();
+        	if ((imageFilename.contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length > 0)) {
+        	    for (j = 0; j < boldJsonFilenames.length; j++) {
+        	        if (imageFilename.contains(boldJsonFilenames[j])) {
+        	            if ((effectiveEchoSpacing != null)	&& (effectiveEchoSpacing.length >= j+1) &&
+        	            		(!Double.isNaN(effectiveEchoSpacing[j]))) {
+        	                imagingEchoSpacing[i] = String.valueOf(effectiveEchoSpacing[j]);	
+        	            }
+        	            if ((echoTime[i] == null) && (echoTimeDouble != null) && (echoTimeDouble.length >= j+1) &&
+        	            		(!Double.isNaN(echoTimeDouble[j]))) {
+        	            	echoTime[i] = String.valueOf(echoTimeDouble[j]);
+        	            }
+        	            if ((repetitionTime[i] == null) && (repetitionTimeDouble != null) && (repetitionTimeDouble.length >= j+1) &&
+        	            		(!Double.isNaN(repetitionTimeDouble[j]))) {
+        	            	repetitionTime[i] = String.valueOf(repetitionTimeDouble[j]);
+        	            }
+        	            if ((phaseEncode[i] == null) && (phaseEncodingDirection != null) && (phaseEncodingDirection.length >= j+1) &&
+        	            		(phaseEncodingDirection[j] != null)) {
+        	            	phaseEncode[i] = phaseEncodingDirection[j];
+        	            }
+        	        } // if (imageFilename.contains(boldJsonFilenames[j])) 
+        	    } // for (j = 0; j < boldJsonFilenames.length; j++)
+        	} // if ((imageFilename.contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length > 0))
 
         } // for (i = 0; i < numImages; i++)
     	
@@ -1925,27 +2189,49 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             setElementComponentValue(deVal, bandwidth[i]);
                         } else if ((deName.equalsIgnoreCase("ImgGapBetwnSlicesMeasr")) && (gap[i] != null)) {
                             setElementComponentValue(deVal, gap[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgEchoDur")) && (echoTime[i] != null)) {
-                                setElementComponentValue(deVal, echoTime[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgRepetitionGapVal")) && (repetitionTime[i] != null)) {
-                            setElementComponentValue(deVal, repetitionTime[i]);
                         } else if ((deName.equalsIgnoreCase("ImgScannerStrgthVal")) && (magneticFieldStrength[i] != null)) {
                             setElementComponentValue(deVal, convertMagFieldStrengthToBRICS(magneticFieldStrength[i]));
                         } else if ((deName.equalsIgnoreCase("ImgFlipAngleMeasr")) && (flipAngle[i] != null)) {
                             setElementComponentValue(deVal, flipAngle[i]);
                         } else if ((deName.equalsIgnoreCase("ImgEchoTrainLngthMeasr")) && (echoTrainMeas[i] != null)) {
                             setElementComponentValue(deVal, echoTrainMeas[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) && (phaseEncode[i] != null)) {
-                            setElementComponentValue(deVal, phaseEncode[i]);
                         } else if ((deName.equalsIgnoreCase("ImgSignalAvgNum")) && (numAverages[i] != null)) {
                             setElementComponentValue(deVal, numAverages[i]);
                         } else if ((deName.equalsIgnoreCase("ImgMRIT1T2SeqName")) && (mriT1T2Name[i] != null)) {
                             setElementComponentValue(deVal, mriT1T2Name[i]);
                         }
                     }
+	                if ((deName.equalsIgnoreCase("ImgEchoDur")) && (echoTime[i] != null)) {
+	                    setElementComponentValue(deVal, echoTime[i]);
+	                } else if ((deName.equalsIgnoreCase("ImgRepetitionGapVal")) && (repetitionTime[i] != null)) {
+	                    setElementComponentValue(deVal, repetitionTime[i]);
+	                } else if ((deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) && (phaseEncode[i] != null)) {
+	                    setElementComponentValue(deVal, phaseEncode[i]);
+	                } else if ((deName.equalsIgnoreCase("ImgEchoSpcVal")) && (imagingEchoSpacing[i] != null)) {
+	                	setElementComponentValue(deVal, imagingEchoSpacing[i]);
+	                } else if ((deName.equalsIgnoreCase("SubjectIDNum")) && (subject_id != null)) {
+	                	setElementComponentValue(deVal, subject_id);
+	                } else if ((deName.equalsIgnoreCase("AgeYrs")) && (age_at_first_scan_years != null)) {
+	                	setElementComponentValue(deVal, age_at_first_scan_years);
+	                }
                 }
             }
         }
+        
+        // need to validate and then close window
+        ArrayList<String> errs;
+        final StringBuffer errors = new StringBuffer();
+        errs = validateFields();
+
+        boolean isComplete = true;
+        if (errs.size() != 0) {
+            for (i = 0; i < errs.size(); i++) {
+                errors.append(" - " + errs.get(i) + "\n");
+            }
+            isComplete = false;
+        }
+
+        complete(fsData, isComplete);
     }
     
     private class fileComparator implements Comparator<File> {
