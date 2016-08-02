@@ -1259,6 +1259,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    if (anatFiles[i][j] != null) {
             	    	sessionImagesRead = 0;
             	    	sessionJsonRead = 0;
+                        previewImages.add(null);
+                        structRowImgFileInfoList.add(null);
+                        fsDataList.add(null);
+                        allOtherFilesAL.add(null);
             	        fsData = new FormStructureData(dsInfo);	
             	        for (k = 0; k < anatFiles[i][j].length; k++) {
             	        	if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
@@ -1376,6 +1380,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    	sessionEventsRead = 0;
             	    	sessionPhysioTsvRead = 0;
             	    	sessionPhysioJsonRead = 0;
+            	    	previewImages.add(null);
+                        structRowImgFileInfoList.add(null);
+                        fsDataList.add(null);
+                        allOtherFilesAL.add(null);
             	        fsData = new FormStructureData(dsInfo);	
             	        
             	        for (k = 0; k < funcFiles[i][j].length; k++) {
@@ -1504,6 +1512,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    	sessionJsonRead = 0;
             	    	sessionBvalRead = 0;
             	    	sessionBvecRead = 0;
+            	    	previewImages.add(null);
+                        structRowImgFileInfoList.add(null);
+                        fsDataList.add(null);
+                        allOtherFilesAL.add(null);
             	        fsData = new FormStructureData(dsInfo);	
             	        for (k = 0; k < dwiFiles[i][j].length; k++) {
             	        	if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
@@ -1590,7 +1602,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         
        
         
-        finishButton.setEnabled(true);
+        //finishButton.setEnabled(true);
+        enableDisableFinishButton();
+        //dispose();
         
         /*gbc.gridx = 0;
         gbc.gridy = 0;
