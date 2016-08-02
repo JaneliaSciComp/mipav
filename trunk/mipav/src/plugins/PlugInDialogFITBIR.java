@@ -694,6 +694,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	double effectiveEchoSpacing[];
     	double echoTime[];
     	double repetitionTime[];
+    	// Possible values, "i", "j", "k", "i-", "j-", "k-".  The letters "i", "j", "k" correspond to the first, second,
+    	// and third, axis of the data in the NIFTI file.  The polarity of the phase encoding is assumed to go from zero 
+    	// index to maximum index unless '-' sign is present(then the order is reversed - starting from highest index 
+    	// instead of zero).
+    	// PhaseEncodingDirection is defined as the direction along which phase was modulated which may result in 
+    	// visible distortions.  Note that this is not the same as the DICOM term inPlanePhaseEncodingDirection
+        // which can have "ROW" or "COL" values.
     	String phaseEncodingDirection[];
     	final JPanel mainPanel = new JPanel(new GridBagLayout());
 
@@ -1310,7 +1317,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	age_at_first_scan_years = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, phaseEncodingDirection, subject_id, age_at_first_scan_years);
+            	        		echoTime, repetitionTime, subject_id, age_at_first_scan_years);
             	        if ( !setInitialVisible) {
                             // convert any dates found into proper ISO format
                             /*for (i = 0; i < csvFieldNames.size(); i++) {
@@ -1465,7 +1472,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	age_at_first_scan_years = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, phaseEncodingDirection, subject_id, age_at_first_scan_years);
+            	        		echoTime, repetitionTime, subject_id, age_at_first_scan_years);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1583,7 +1590,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	age_at_first_scan_years = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, phaseEncodingDirection, subject_id, age_at_first_scan_years);
+            	        		echoTime, repetitionTime, subject_id, age_at_first_scan_years);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1774,7 +1781,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      * prepopulates some of the fields with info from image headers
      */
     public void populateFields(final ModelImage img[], int numImages, String boldJsonFilenames[], double effectiveEchoSpacing[],
-    		double echoTimeDouble[], double repetitionTimeDouble[], String phaseEncodingDirection[],
+    		double echoTimeDouble[], double repetitionTimeDouble[],
     		String subject_id, String age_at_first_scan_years) {
     	float[][] res = new float[numImages][];
     	int[][] units = new int[numImages][];
@@ -2007,10 +2014,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	            if ((repetitionTime[i] == null) && (repetitionTimeDouble != null) && (repetitionTimeDouble.length >= j+1) &&
         	            		(!Double.isNaN(repetitionTimeDouble[j]))) {
         	            	repetitionTime[i] = String.valueOf(repetitionTimeDouble[j]);
-        	            }
-        	            if ((phaseEncode[i] == null) && (phaseEncodingDirection != null) && (phaseEncodingDirection.length >= j+1) &&
-        	            		(phaseEncodingDirection[j] != null)) {
-        	            	phaseEncode[i] = phaseEncodingDirection[j];
         	            }
         	        } // if (imageFilename.contains(boldJsonFilenames[j])) 
         	    } // for (j = 0; j < boldJsonFilenames.length; j++)
