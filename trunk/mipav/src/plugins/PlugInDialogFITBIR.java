@@ -693,6 +693,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	JSONObject jsonObject = null;
     	double effectiveEchoSpacing[];
     	double echoTime[];
+    	// The JSON file gives the time in seconds between the beginning of an acquisition of one volume and the 
+    	// beginning of the acquisition of the volume following it (TR).  Pleases note that this definition includes
+    	// time between scans (when no data has been acquired) in case of sparse acquisition schemes.  This value
+    	// needs to be consistent with the 'pixdim[4]' field (after accounting for units stored in 'xyzt_units'
+    	// field) in the NIFTI header.
     	double repetitionTime[];
     	// Possible values, "i", "j", "k", "i-", "j-", "k-".  The letters "i", "j", "k" correspond to the first, second,
     	// and third, axis of the data in the NIFTI file.  The polarity of the phase encoding is assumed to go from zero 
@@ -1855,6 +1860,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         // If true, the NIFTI file has a Java Script Object Node extension header
         boolean haveJson;
         String imageFilename;
+        Unit tUnit;
+        double tResol;
+        double diff;
         
         for (i = 0; i < numImages; i++) {
         	res[i] = img[i].getResolutions(0);
@@ -2010,6 +2018,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	            if ((echoTime[i] == null) && (echoTimeDouble != null) && (echoTimeDouble.length >= j+1) &&
         	            		(!Double.isNaN(echoTimeDouble[j]))) {
         	            	echoTime[i] = String.valueOf(echoTimeDouble[j]);
+        	            }
+        	            if ((repetitionTimeDouble != null) && (repetitionTimeDouble.length >= j+1) &&
+	            		                    (!Double.isNaN(repetitionTimeDouble[j]))) {
+			            	tUnit = Unit.getUnitFromLegacyNum(units[i][3]);
+			            	tResol =  tUnit.convertTo(res[i][3], Unit.MILLISEC);
+			            	diff = Math.abs(tResol - repetitionTimeDouble[j])/repetitionTimeDouble[j];
+			            	if (diff >= 1.0E-2) {
+			            		System.err.println("JSON repetition time = " + repetitionTimeDouble[j] + 
+			            		" does not equal image time resolution = " + tResol);
+			            	}
         	            }
         	            if ((repetitionTime[i] == null) && (repetitionTimeDouble != null) && (repetitionTimeDouble.length >= j+1) &&
         	            		(!Double.isNaN(repetitionTimeDouble[j]))) {
