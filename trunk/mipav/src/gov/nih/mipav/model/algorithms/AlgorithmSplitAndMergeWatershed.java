@@ -12,6 +12,17 @@ import java.util.*;
  * Reference:
  * 1.) Fast watershed algorithms: analysis and extensions by Bogdan P. Dobrin, Timo Viero, and Moncef
  * Gabbouj.
+ * 2.) The Watershed Transform: Definitions, Algorithms, and Parallelization Strategies by 
+ * Jos B.T.M. Roerdink and Arnold Meijster, Fundamentals Informaticae 41 (2001), pp. 187-228.
+ * 
+ * Reference 2 makes the following criticism about this algorithm:
+ *  'Isolated' regions.  When computing the watershed transform, regions in the image may arise
+ *  which are completely surrounded by watershed pixels.  In some implementations of watershed
+ *  transforms by topographical distance, such regions may in fact become temporarily or
+ *  permanently 'isolated'.  This is a defect of the particular implementation, since, according
+ *  to Corollary 3.1, watershed pixels should be propagated.  Such 'problems' are often solved
+ *  by ad hoc modifications of the implementation, which still do not correctly implement
+ *  the definition.
  */
 
 public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
