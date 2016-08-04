@@ -7493,7 +7493,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	public void setImageSlice(int slice) {
       setSlice(slice);
 	  if ( MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == SingleFrameEyetrackerMode) {
-      	System.err.println("recording it");
       	String timeStamp = getTime();
 		int sliceNumber = slice + 1;
 		if (refPtsLocation != null) {

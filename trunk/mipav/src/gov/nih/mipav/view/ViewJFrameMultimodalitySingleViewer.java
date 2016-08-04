@@ -52,8 +52,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	private JSplitPane splitPaneUpper;
 	private JSplitPane splitPaneLower;
 	private JSplitPane splitPaneCenter;
-	private int zOffset;
-	private int image1Slice;
+	private int currentSlice;
+	
 	private int zDim;
 	private JLabel label5;
 	
@@ -63,8 +63,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	private JPopupMenu popup = new JPopupMenu();
 	
 	private int sliceNumCache = 0;
-	
-	protected JToolBar viewToolBar;
 	
 	protected Font serif12, serif12B;
 	
@@ -122,9 +120,11 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		    m = new JMenuItem("Bone");
 		    m.addActionListener(this);
 		    popup.add(m);
+		    m = new JMenuItem("Measure");
+		    m.addActionListener(this);
+		    popup.add(m);
 		    MousePopupListener pl = new MousePopupListener();
 		    addMouseListener(pl);
-		    viewToolBar.addMouseListener(pl);
 		    quadImagePanel.addMouseListener(pl);
 		   
 	}
@@ -158,6 +158,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	    try {
 	        String format = "png";
 	        String fileName = component.getName() + "." + format;
+	        System.err.println("filename = " + fileName);
 	        BufferedImage captureImage =
 	                new BufferedImage(rect.width, rect.height,
 	                                    BufferedImage.TYPE_INT_ARGB);
@@ -223,16 +224,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		label6.setBackground(Color.black);
 		label6.setIcon(cornerImage);
 		topPanel.add(label5, BorderLayout.WEST);
-		
-	    // final Border etchedBorder = BorderFactory.createEtchedBorder();
-        toolbarBuilder = new ViewToolBarBuilder(this);
-        viewToolBar = new JToolBar();
-        viewToolBar.setBorderPainted(false);
-        viewToolBar.setBackground(Color.black);
-        viewToolBar.setFloatable(false);
-	    viewToolBar.add(toolbarBuilder.buildButton("Measure", "Line Measure", "linear"));
-		topPanel.add(viewToolBar, BorderLayout.CENTER);
-		topPanel.add(label6, BorderLayout.EAST);
 
 		JPanel lowerPanel = new JPanel(new BorderLayout());
 		lowerPanel.setBackground(Color.black);
@@ -312,8 +303,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		imageComp.addMouseMotionListener(this);
 		imageComp.addKeyListener(this);
 		imageFrame.addKeyListener(this);
-		viewToolBar.addKeyListener(this);		
-
 		addKeyListener(this);
 	
 		setSize(screenWidth, screenHeight);
@@ -411,40 +400,26 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
 		
 		    int wheelRotation = mouseWheelEvent.getWheelRotation();
-	        int xCoord = mouseWheelEvent.getX();
-	    	int yCoord = mouseWheelEvent.getY();
-	    	
-	    	
-	    	int currentSlice0 = imageComp.getSlice();
-		
-	    	
-			int zDim1 = image.getExtents()[2];
-		    // System.err.println("zDim1 = " + zDim1 + " zDim = " + zDim);
-		    // System.err.println("zDim/zDim1 = " + (float)((float)zDim/(float)zDim1));
-	         
-	    	 if (((wheelRotation < 0) && (zOffset < zDim - 1)) ||  ((wheelRotation > 0) && (zOffset > 0))) {
+	        
+	    	currentSlice = imageComp.getSlice();
+		  
+	    	 if (((wheelRotation < 0) && (currentSlice < zDim - 1)) ||  ((wheelRotation > 0) && (currentSlice > 0))) {
 	         	if (wheelRotation < 0) {
-	         	    // Increment slice
-	         		//  System.err.println("Mouse wheel moved UP");
-	         	    zOffset++;
-	         	   image1Slice++;
+	         		currentSlice++;
 	             }
 	         	else {
-	         		// Decrement slice
-	         		// System.err.println("Mouse wheel moved DOWN");
-	             	zOffset--;
-	             	image1Slice--;
+	         		currentSlice--;
 	         	}
-	         	imageComp.setSlice(image1Slice);
+	         	imageComp.setSlice(currentSlice);
+	         	
 	    	 }
-	    	 
-	    	 // System.err.println("zOffset = " + zOffset);
-	    	 
 	    	 
 	    	 if ( imageFrame.isActive() ) {
-	    		 currentSlice0 = (int)(((float)zOffset / (float)zDim) * zDim1);
-	    		 imageComp.show(0, currentSlice0, true);
+	    		
+	    		 imageComp.show(0, currentSlice, true);
 	    	 }
+	    	 
+	    	 zImageSlider.setValue(currentSlice);
 	    	  
 	    	
 	}
@@ -470,7 +445,6 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public void equalScaleImage() {
 
 		float newZoom;
-		int currentSlice;
 		int i;
 		int compW;
 		int compH;
@@ -557,16 +531,12 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			} else if ( cmd.equals("Bone")) {
 				imageComp.setWindLevel(2500, 450);
 			} else if ( cmd.equals("Lung")) {
-				imageComp.setWindLevel(2000,-100);
+				imageComp.setWindLevel(996,-1024);
+			} else if ( cmd.equals("Measure")) {
+				invokeMeasure();
 			}
 			
 		}
-		
-		if ( event.getActionCommand().equals("Measure")) {
-			System.err.println("invoke measure");
-			invokeMeasure();
-		}
-		
 	}
 
 	/**
@@ -671,14 +641,17 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		} else if ( keyCode == KeyEvent.VK_F4) {
 			// changeIcon("BlackCircle");
 		} else if ( keyCode == KeyEvent.VK_H) {
+			currentSlice = sliceNumCache;
+			zImageSlider.setValue(currentSlice);
 			imageComp.setSlice(sliceNumCache);
-			System.err.println("sliceNumCache home = " + sliceNumCache);
 			imageFrame.updateImages(true);
 		} else if ( keyCode == KeyEvent.VK_R) {
 			sliceNumCache = imageComp.getSlice();
 			System.err.println("sliceNumCache insert = " + sliceNumCache);
 		} else if ( keyCode == KeyEvent.VK_D ) {
 			sliceNumCache = 0;
+			currentSlice = sliceNumCache;
+			zImageSlider.setValue(currentSlice);
 			System.err.println("sliceNumCache delete = " + sliceNumCache);
 		}
 		  
@@ -1505,8 +1478,9 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public void stateChanged(ChangeEvent e) {
 		Object source = e.getSource();
 		if (source == zImageSlider) {
-			imageComp.setImageSlice(zImageSlider.getValue());
-			slicesTextField.setText(Integer.toString(zImageSlider.getValue()));
+			currentSlice = zImageSlider.getValue();
+			imageComp.setImageSlice(currentSlice);
+			slicesTextField.setText(Integer.toString(currentSlice));
 			imageFrame.updateImages(true);
 		}
 	}
