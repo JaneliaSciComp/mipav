@@ -21,7 +21,7 @@ import javax.swing.text.StyleConstants;
 
 /**
  * New plugin for Akanni Clarke of the Giniger Lab. Conceptually similar to the DrosophilaCreateSWC plugin written by
- * Nish Pandya, this one also includes keeping track of statistics. These statistics are: branch order, number, and
+ * Nish Pandya, this one als o includes keeping track of statistics. These statistics are: branch order, number, and
  * length as well as the distance along the axon/parent that the branch originates from.
  * 
  * This class isn't being used currently as it was superceded by PlugInAlgorithm3DSWCViewer
