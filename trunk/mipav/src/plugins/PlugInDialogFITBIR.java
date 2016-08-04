@@ -667,12 +667,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	boolean readMoreLines;
     	String tokens[];
     	int participant_id_index;
-    	int age_at_first_scan_years_index;
+    	int age_index;
     	String participant_id_array[] = null;
-    	String age_at_first_scan_years_array[] = null;
-    	String age_at_first_scan_years = null;
+    	String age_array[] = null;
+    	String age = null;
     	int participant_id_read = 0;
-    	int age_at_first_scan_years_read = 0;
+    	int age_read = 0;
     	int subjectsRead = 0;
     	long fileLength = 0;
     	long filePos;
@@ -876,18 +876,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         		if (readMoreLines) {
         		    tokens = line.split("\t");
         		    participant_id_index = -1;
-        		    age_at_first_scan_years_index = -1;
+        		    age_index = -1;
         		    for (i = 0; i < tokens.length; i++) {
         		        if (tokens[i].equalsIgnoreCase("participant_id")) {
         		        	participant_id_index = i;
         		        	participant_id_array = new String[numberSubjects];
         		        }
-        		        else if (tokens[i].equalsIgnoreCase("age_at_first_scan_years")) {
-        		        	age_at_first_scan_years_index = i;
-        		        	age_at_first_scan_years_array = new String[numberSubjects];
+        		        else if ((tokens[i].equalsIgnoreCase("age_at_first_scan_years")) ||
+        		        		 (tokens[i].equalsIgnoreCase("age"))) {
+        		        	age_index = i;
+        		        	age_array = new String[numberSubjects];
         		        } 
         		    } // // for (i = 0; i < tokens.length; i++)
-        		    if ((participant_id_index >= 0)|| (age_at_first_scan_years_index >= 0)) {
+        		    if ((participant_id_index >= 0)|| (age_index >= 0)) {
         		        subjectsRead = 0;
         		        try {
         		        	filePos = raFile.getFilePointer();
@@ -912,10 +913,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         		        		indexRead = true;
         		        		participant_id_read++;
         		        	}
-        		        	if ((age_at_first_scan_years_index >= 0) && (tokens.length-1 >= age_at_first_scan_years_index)) {
-        		        		age_at_first_scan_years_array[subjectsRead] = tokens[age_at_first_scan_years_index];
+        		        	if ((age_index >= 0) && (tokens.length-1 >= age_index)) {
+        		        		age_array[subjectsRead] = tokens[age_index];
         		        		indexRead = true;
-        		        		age_at_first_scan_years_read++;
+        		        		age_read++;
         		        	}
         		        	if (indexRead) {
         		        		subjectsRead++;
@@ -931,7 +932,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         		    } // if ((participant_id_index >= 0)|| (age_at_first_scan_years_index >= 0))
         		} // if (readMoreLines)
         		printlnToLog(participant_id_read + " participant_id read from participants.tsv");
-        		printlnToLog(age_at_first_scan_years_read + " age_at_first_scan_years read from participants.tsv");
+        		printlnToLog(age_read + " age or age_at_first_scan_years read from participants.tsv");
         	} // if (processFile)
         	if (processFile) {
         		try {
@@ -1315,14 +1316,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        else {
             	        	subject_id = null;
             	        }
-            	        if (age_at_first_scan_years_array != null) {
-            	        	age_at_first_scan_years = age_at_first_scan_years_array[i];
+            	        if (age_array != null) {
+            	        	age = age_array[i];
             	        }
             	        else {
-            	        	age_at_first_scan_years = null;
+            	        	age = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age_at_first_scan_years);
+            	        		echoTime, repetitionTime, subject_id, age);
             	        if ( !setInitialVisible) {
                             // convert any dates found into proper ISO format
                             /*for (i = 0; i < csvFieldNames.size(); i++) {
@@ -1470,14 +1471,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        else {
             	        	subject_id = null;
             	        }
-            	        if (age_at_first_scan_years_array != null) {
-            	        	age_at_first_scan_years = age_at_first_scan_years_array[i];
+            	        if (age_array != null) {
+            	        	age = age_array[i];
             	        }
             	        else {
-            	        	age_at_first_scan_years = null;
+            	        	age = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age_at_first_scan_years);
+            	        		echoTime, repetitionTime, subject_id, age);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1588,14 +1589,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        else {
             	        	subject_id = null;
             	        }
-            	        if (age_at_first_scan_years_array != null) {
-            	        	age_at_first_scan_years = age_at_first_scan_years_array[i];
+            	        if (age_array != null) {
+            	        	age = age_array[i];
             	        }
             	        else {
-            	        	age_at_first_scan_years = null;
+            	        	age = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age_at_first_scan_years);
+            	        		echoTime, repetitionTime, subject_id, age);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1787,7 +1788,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      */
     public void populateFields(final ModelImage img[], int numImages, String boldJsonFilenames[], double effectiveEchoSpacing[],
     		double echoTimeDouble[], double repetitionTimeDouble[],
-    		String subject_id, String age_at_first_scan_years) {
+    		String subject_id, String age) {
     	float[][] res = new float[numImages][];
     	int[][] units = new int[numImages][];
     	int [][] exts = new int[numImages][];
@@ -2246,8 +2247,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 	                	setElementComponentValue(deVal, imagingEchoSpacing[i]);
 	                } else if ((deName.equalsIgnoreCase("SubjectIDNum")) && (subject_id != null)) {
 	                	setElementComponentValue(deVal, subject_id);
-	                } else if ((deName.equalsIgnoreCase("AgeYrs")) && (age_at_first_scan_years != null)) {
-	                	setElementComponentValue(deVal, age_at_first_scan_years);
+	                } else if ((deName.equalsIgnoreCase("AgeYrs")) && (age != null)) {
+	                	setElementComponentValue(deVal, age);
 	                }
                 }
             }
