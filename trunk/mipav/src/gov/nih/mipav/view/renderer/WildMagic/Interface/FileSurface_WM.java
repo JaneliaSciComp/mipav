@@ -16,6 +16,7 @@ import gov.nih.mipav.view.renderer.J3D.surfaceview.JPanelSurface;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceAttributes;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceRender;
 
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -38,6 +39,8 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.nio.ByteOrder;
+import java.nio.ByteBuffer;
 
 import javax.swing.JFileChooser;
 
@@ -52,6 +55,7 @@ import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
+import javax.vecmath.Point3f;
 
 /**
  * FileSurface. Reads and writes surface files for the JPanelSurface class. When surface files are loaded by the user in
@@ -101,6 +105,13 @@ public class FileSurface_WM {
 	/** dicom matrix file. */
 	private static File dicomMatrixFile = null;
 	
+	  // GeometryInfo needs Arrays
+	  private Point3f[] coordArray = null;
+	  private Vector3f[] normArray = null;
+
+	  // Needed because TRIANGLE_STRIP_ARRAY
+	  // As the number of strips = the number of faces it's filled in objectToVectorArray
+	  private int[] stripCounts = null;
 	
 	//~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -2222,6 +2233,313 @@ public class FileSurface_WM {
     
 
     /**
+     * Load the STL ASCII file.
+     * @param file STL surface file reference
+     * @param source image
+     * @return TriMesh
+     */
+    private static TriMesh loadSTLBinaryMesh(File file, ModelImage kImage) {
+
+        TriMesh mesh; 
+        try {
+        	FileInputStream data;    
+        	data = new FileInputStream(file);
+            mesh = readSTLBinary(data, kImage);
+            // reader.close();
+            return mesh;
+        } catch (FileNotFoundException e) {
+            System.err.println("ERROR: Can't find file " + file);
+            return null;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    
+    /**
+     * Method for reading binary files Execution is completly different
+     * It uses ByteBuffer for reading data and ByteOrder for retrieving the machine's endian
+     * (Needs JDK 1.4)
+     *
+     * TO-DO:
+     *  1.-Be able to read files over Internet
+     *  2.-If the amount of data expected is bigger than what is on the file then
+     *  the program will block forever
+     *
+     * @param file The name of the file
+     *
+     * @throws IOException
+     */
+    private static TriMesh readSTLBinary(FileInputStream data, ModelImage kImage) throws IOException {
+		ByteBuffer dataBuffer; // For reading in the correct endian
+		byte[] Info = new byte[80]; // Header data
+		byte[] Array_number = new byte[4]; // Holds the number of faces
+		byte[] Temp_Info; // Intermediate array
+
+		Vector3f temp = new Vector3f();
+		Vector3f normal = new Vector3f();
+		Vector3f side1 = new Vector3f();
+		Vector3f side2 = new Vector3f();
+		Vector3f surfaceNormal = new Vector3f();
+		Vector<Vector3f> vertexArray = new Vector<Vector3f>();
+		VertexBuffer kVBuffer;
+		int[] aiConnect;
+
+		TriMesh kMesh = null;
+		float x, y, z;
+		Vector3f vertex1, vertex2, vertex3;
+		int index = 0;
+		Integer searchIndex;
+		Vector<Integer> connectivity = new Vector<Integer>();
+		HashMap<String, Integer> vertexHashtable = new HashMap<String, Integer>();
+
+		float _res[] = kImage.getFileInfo(0).getResolutions();
+		float[] _startLocation = kImage.getFileInfo()[0].getOrigin();
+		int[] _direction = MipavCoordinateSystems.getModelDirections(kImage);
+
+		Vector3f ptIn = new Vector3f();
+		Vector3f ptOut = new Vector3f();
+
+		int Number_faces; // First info (after the header) on the file
+
+		System.out.println("Machine's endian: " + ByteOrder.nativeOrder());
+
+		// It's a local file
+
+		// First 80 bytes aren't important
+		if (80 != data.read(Info)) { // File is incorrect
+			System.out.println("Format Error: 80 bytes expected");
+			return null;
+		}
+
+		data.read(Array_number); // We get the 4 bytes
+		dataBuffer = ByteBuffer.wrap(Array_number); // ByteBuffer for
+													// reading correctly the
+													// int
+		dataBuffer.order(ByteOrder.nativeOrder()); // Set the right order
+		Number_faces = dataBuffer.getInt();
+
+		Temp_Info = new byte[50 * Number_faces]; // Each face has 50 bytes
+													// of data
+
+		data.read(Temp_Info); // We get the rest of the file
+
+		dataBuffer = ByteBuffer.wrap(Temp_Info); // Now we have all the data
+													// in this ByteBuffer
+		dataBuffer.order(ByteOrder.nativeOrder());
+
+		// System.out.println("Number of faces= " + Number_faces);
+
+		// We can create that array directly as we know how big it's going
+		// to be
+
+		for (int i = 0; i < Number_faces; i++) {
+
+			// readFacetB(dataBuffer,i);
+			Point3f vertex = new Point3f();
+
+			// System.out.println("Reading face number " + i);
+
+			// Read the Normal
+			normal = new Vector3f();
+			normal.X = dataBuffer.getFloat();
+			normal.Y = dataBuffer.getFloat();
+			normal.Z = dataBuffer.getFloat();
+
+			// System.out.println("Normal: X=" + normal.X + " Y=" + normal.Y + " Z=" + normal.Z);
+
+			// Read vertex1
+			vertex1 = new Vector3f();
+			vertex1.X = dataBuffer.getFloat();
+			vertex1.Y = dataBuffer.getFloat();
+			vertex1.Z = dataBuffer.getFloat();
+
+			// System.out.println("Vertex 1: X=" + vertex1.X + " Y=" + vertex1.Y + " Z=" + vertex1.Z);
+
+			x = vertex1.X;
+			y = vertex1.Y;
+			z = vertex1.Z;
+
+			ptIn.X = x;
+			ptIn.Y = y;
+			ptIn.Z = z;
+
+			MipavCoordinateSystems.scannerToFile(ptIn, ptOut, kImage);
+
+			x = (ptOut.X * _res[0] * _direction[0]) + _startLocation[0];
+			y = (ptOut.Y * _res[1] * _direction[1]) + _startLocation[1];
+			z = (ptOut.Z * _res[2] * _direction[2]) + _startLocation[2];
+
+			searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+			if (searchIndex == null) { // not found
+				vertexHashtable.put((x + " " + y + " " + z), new Integer(index));
+				connectivity.add(new Integer(index));
+				vertexArray.add(new Vector3f(x, y, z));
+				index++;
+			} else {
+				connectivity.add(searchIndex);
+			}
+
+			// Read vertex2
+			vertex2 = new Vector3f();
+			vertex2.X = dataBuffer.getFloat();
+			vertex2.Y = dataBuffer.getFloat();
+			vertex2.Z = dataBuffer.getFloat();
+			// System.out.println("Vertex 2: X=" + vertex2.X + " Y=" + vertex2.Y + " Z=" + vertex2.Z);
+
+			x = vertex2.X;
+			y = vertex2.Y;
+			z = vertex2.Z;
+
+			ptIn.X = x;
+			ptIn.Y = y;
+			ptIn.Z = z;
+
+			MipavCoordinateSystems.scannerToFile(ptIn, ptOut, kImage);
+
+			x = (ptOut.X * _res[0] * _direction[0]) + _startLocation[0];
+			y = (ptOut.Y * _res[1] * _direction[1]) + _startLocation[1];
+			z = (ptOut.Z * _res[2] * _direction[2]) + _startLocation[2];
+
+			searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+			if (searchIndex == null) { // not found
+				vertexHashtable.put((x + " " + y + " " + z), new Integer(index));
+				connectivity.add(new Integer(index));
+				vertexArray.add(new Vector3f(x, y, z));
+				index++;
+			} else {
+				connectivity.add(searchIndex);
+			}
+
+			// Read vertex3
+			vertex3 = new Vector3f();
+			vertex3.X = dataBuffer.getFloat();
+			vertex3.Y = dataBuffer.getFloat();
+			vertex3.Z = dataBuffer.getFloat();
+			// System.out.println("Vertex 3: X=" + vertex3.X + " Y=" + vertex3.Y + " Z=" + vertex3.Z);
+
+			x = vertex3.X;
+			y = vertex3.Y;
+			z = vertex3.Z;
+
+			ptIn.X = x;
+			ptIn.Y = y;
+			ptIn.Z = z;
+
+			MipavCoordinateSystems.scannerToFile(ptIn, ptOut, kImage);
+
+			x = (ptOut.X * _res[0] * _direction[0]) + _startLocation[0];
+			y = (ptOut.Y * _res[1] * _direction[1]) + _startLocation[1];
+			z = (ptOut.Z * _res[2] * _direction[2]) + _startLocation[2];
+
+			searchIndex = vertexHashtable.get((x + " " + y + " " + z));
+			if (searchIndex == null) { // not found
+				vertexHashtable.put((x + " " + y + " " + z), new Integer(index));
+				connectivity.add(new Integer(index));
+				vertexArray.add(new Vector3f(x, y, z));
+				index++;
+			} else {
+				connectivity.add(searchIndex);
+			}
+			// After each facet there are 2 bytes without information
+			// In the last iteration we dont have to skip those bytes..
+			if (i != Number_faces - 1) {
+				dataBuffer.get();
+				dataBuffer.get();
+			}
+
+		} // End for
+
+		int vertexCount = vertexArray.size();
+		Attributes kAttr = new Attributes();
+		kAttr.SetPChannels(3);
+		kAttr.SetNChannels(3);
+		kAttr.SetTChannels(0, 3);
+		kAttr.SetCChannels(0, 4);
+		kVBuffer = new VertexBuffer(kAttr, vertexCount);
+
+		index = 0;
+		Vector3f pos;
+		for (int i = 0; i < vertexCount; i++) {
+			pos = vertexArray.elementAt(i);
+			kVBuffer.SetPosition3(index, pos);
+			kVBuffer.SetColor4(0, index, 1.0f, 1.0f, 1.0f, 1.0f);
+			index++;
+		}
+
+		int indexCount = connectivity.size();
+		aiConnect = new int[indexCount];
+		for (int i = 0; i < indexCount; i++) {
+			aiConnect[i] = connectivity.get(i);
+		}
+
+		IndexBuffer kIBuffer = new IndexBuffer(aiConnect.length, aiConnect);
+		kMesh = new TriMesh(kVBuffer, kIBuffer);
+		MaterialState kMaterial = new MaterialState();
+		kMesh.AttachGlobalState(kMaterial);
+		return kMesh;
+
+	}// End of readBinaryFile
+
+    
+    /**
+     * Method that reads a face in binary files
+     * All binary versions of the methods end by 'B'
+     * As in binary files we can read the number of faces, we don't need
+     * to use coordArray and normArray (reading binary files should be faster)
+     *
+     * @param in The ByteBuffer with the data of the object.
+     * @param index The facet index
+     *
+     * @throws IOException
+     */
+    private void readFacetB(ByteBuffer in, int index) throws IOException
+ {
+		// File structure: Normal Vertex1 Vertex2 Vertex3
+		Vector3f normal = new Vector3f();
+		Point3f vertex = new Point3f();
+
+		System.out.println("Reading face number " + index);
+
+		// Read the Normal
+		normArray[index] = new Vector3f();
+		normArray[index].X = in.getFloat();
+		normArray[index].Y = in.getFloat();
+		normArray[index].Z = in.getFloat();
+
+		System.out.println("Normal: X=" + normArray[index].X + " Y=" + normArray[index].Y + " Z=" + normArray[index].Z);
+
+		// Read vertex1
+		coordArray[index * 3] = new Point3f();
+		coordArray[index * 3].x = in.getFloat();
+		coordArray[index * 3].y = in.getFloat();
+		coordArray[index * 3].z = in.getFloat();
+
+		System.out.println("Vertex 1: X=" + coordArray[index * 3].x + " Y=" + coordArray[index * 3].y + " Z="
+				+ coordArray[index * 3].z);
+
+		// Read vertex2
+		coordArray[index * 3 + 1] = new Point3f();
+		coordArray[index * 3 + 1].x = in.getFloat();
+		coordArray[index * 3 + 1].y = in.getFloat();
+		coordArray[index * 3 + 1].z = in.getFloat();
+
+		System.out.println("Vertex 2: X=" + coordArray[index * 3 + 1].x + " Y=" + coordArray[index * 3 + 1].y + " Z="
+				+ coordArray[index * 3 + 1].z);
+
+		// Read vertex3
+		coordArray[index * 3 + 2] = new Point3f();
+		coordArray[index * 3 + 2].x = in.getFloat();
+		coordArray[index * 3 + 2].y = in.getFloat();
+		coordArray[index * 3 + 2].z = in.getFloat();
+
+		System.out.println("Vertex 3: X=" + coordArray[index * 3 + 2].x + " Y=" + coordArray[index * 3 + 2].y + " Z="
+				+ coordArray[index * 3 + 2].z);
+
+	}// End of readFacetB
+
+    
+    /**
      * Load a triangle mesh from the specified file and assign to it the MaterialState.
      * @param   kImage  ModelImage displayed in the SurfaceRender class
      * @param   file    The triangle mesh file to load.
@@ -2372,7 +2690,18 @@ public class FileSurface_WM {
                             akComponent[i] = loadGiftiXMLMesh( file.getAbsolutePath(), file.getName(), file.getParent());
                     	}
                     	else if (file.getName().endsWith("stl")) {
-                            akComponent[i] = loadSTLAsciiMesh( file, kImage);
+                    		
+                    		try {
+                    			BufferedReader br = new BufferedReader(new FileReader(file));
+                    		    String line = br.readLine();
+                    		    if ( line.contains("solid")) {
+                    		    	akComponent[i] = loadSTLAsciiMesh( file, kImage);
+                    		    } else {
+                    		    	akComponent[i] = loadSTLBinaryMesh( file, kImage);
+                    		    }
+                    		} catch ( IOException e ) {
+                    			e.printStackTrace();
+                    		}
                     	}
                     	
                     	else if (file.getName().endsWith("ply")) {
@@ -2436,8 +2765,8 @@ public class FileSurface_WM {
         return akComponent[0];
     }
 
-    
-    /**
+
+	/**
      * Save the TriMesh as an ascii text file.
      * @param kName file name
      * @param kMesh TriMesh
