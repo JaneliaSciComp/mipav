@@ -38,7 +38,7 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 7054211453483441130L;
+	private static final long serialVersionUID = 7054211453483441130L; 
 
 	private JTextField swcField;
 

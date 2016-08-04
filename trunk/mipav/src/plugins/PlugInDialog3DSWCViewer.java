@@ -64,8 +64,6 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
      */
     private JSpinner[] spinners;
 
-    private File swcFile;
-
     private final JTextPane textArea;
 
     @SuppressWarnings("rawtypes")
@@ -79,28 +77,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
 
     // private String imageFile;
 
-    public PlugInDialog3DSWCViewer(/* String imFile, */final File file, final JTextPane text, final String unit) {
-
-        // imageFile = imFile;
-        swcFile = file;
-        textArea = text;
-        resUnit = unit;
-
-        attr = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(attr, "Serif");
-        StyleConstants.setFontSize(attr, 12);
-
-        try {
-            textArea.getDocument().remove(0, textArea.getDocument().getLength());
-        } catch (final BadLocationException e) {}
-
-        append("Creating viewer...", attr);
-
-        init();
-
-        setup();
-
-    }
+  
 
     public PlugInDialog3DSWCViewer(final JTextPane text, final String unit, final PlugInAlgorithm3DSWCViewer algorithm) {
 
@@ -209,8 +186,30 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
                     final String name = "Filament " + i.toString();
                     tipName.add(name);
                 }
+                tips.removeListSelectionListener(this); 
                 tips.setListData(tipName);
                 tips.setSelectedIndex(0);
+                tips.addListSelectionListener(this);
+                
+                final Object obj = tips.getSelectedValue();
+                if (obj instanceof String) {
+                    final String label = obj.toString();
+                    final String num = label.split(" ")[1];
+                    Integer branch;
+                    try {
+                        branch = Integer.valueOf(num);
+                    } catch (final NumberFormatException ne) {
+                        // This should never happen but on the off-chance something goes wrong
+                        final SimpleAttributeSet redText = new SimpleAttributeSet(attr);
+                        StyleConstants.setForeground(redText, Color.red.darker());
+                        append("Invalid branch choice. Check for non-integer numbers.", redText);
+                        return;
+                    }
+                    alg.setAxon(branch);
+                    stateChanged(new ChangeEvent(sliders[0]));
+                }
+                
+                
                 // alg.highlightAxon(tipList.get(0));
                 // BitSet axonMask = alg.highlightAxon(tipList.get(0));
                 // frame.getComponentImage().setPaintMask(axonMask);
@@ -254,7 +253,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void init() {
 
-        setTitle("3D Neuron Viewer");
+        setTitle("4D Neuron Viewer");
 
         getContentPane().removeAll();
 
@@ -398,20 +397,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
 
     }
 
-    /**
-     * Run the setup step for the algorithm, which just reads the Imaris file and makes some basic inferences.
-     */
-    private void setup() {
-        alg = new PlugInAlgorithm3DSWCViewer(/* imageFile, */swcFile, textArea, resUnit, axonRB.isSelected(), true);
-        alg.addListener(this);
-        if (isRunInSeparateThread()) {
-            if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
-            alg.run();
-        }
-    }
+  
 
     private class TipListRenderer extends DefaultListCellRenderer {
 
