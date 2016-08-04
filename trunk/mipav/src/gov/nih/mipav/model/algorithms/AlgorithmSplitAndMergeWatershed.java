@@ -92,6 +92,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
     	indexValueItem p;
     	boolean uniqueLabelFound;
     	boolean labelFound;
+    	boolean testpfifo = false;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -106,6 +107,20 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
         pfifo = new PriorityQueue<indexValueItem>(length, comparator);
+        if (testpfifo) {
+        	pfifo.add(new indexValueItem(0, 1.0));
+        	pfifo.add(new indexValueItem(1, 100.0));
+        	pfifo.add(new indexValueItem(2, 50.0));
+        	pfifo.add(new indexValueItem(3, 20.0));
+        	pfifo.add(new indexValueItem(4, 80.0));
+        	while (!pfifo.isEmpty()) {
+        		p = pfifo.poll();
+        		i = p.getIndex();
+        		double value = p.getValue();
+        		System.out.println("i = " + i + " value = " + value);
+        	}
+        	return;
+        } // if (testpfifo)
         nDims = srcImage.getNDims();
         if (neighbor8) {
         	numNeighbor = 8;
@@ -438,10 +453,10 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
         	double a = o1.getValue();
             double b = o2.getValue();
             if (a < b) {
-            	return 1;
+            	return -1;
             }
             else if (a > b) {
-            	return -1;
+            	return 1;
             }
             else {
             	return 0;
