@@ -626,7 +626,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	FormStructure ds = null;
     	FormStructure dsInfo = null;
     	
-    	int maximumSessionFileNumber = 5;
+    	int maximumSessionFileNumber = 10;
     	ModelImage srcImage[] = new ModelImage[maximumSessionFileNumber];
     	File jsonFile[] = new File[maximumSessionFileNumber];
     	File bvalFile[] = new File[maximumSessionFileNumber];
