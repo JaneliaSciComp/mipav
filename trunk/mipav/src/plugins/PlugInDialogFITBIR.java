@@ -1441,7 +1441,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        		}
             	        		found = false;
             	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
-            	        			if ((funcFiles[i][j][n].getName().substring(0,index+1).equals(eventsBaseName)) &&
+            	        			if ((funcFiles[i][j][n].getName().length() >= index+1) &&
+            	        				(funcFiles[i][j][n].getName().substring(0,index+1).equals(eventsBaseName)) &&
             	        			   ((funcFiles[i][j][n].getName().endsWith("tsv")) ||
             	        			    (funcFiles[i][j][n].getName().endsWith("tsv.gz")))) {
             	        				found = true;
@@ -1452,7 +1453,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        		}
             	        		found = false;
             	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
-            	        			if ((funcFiles[i][j][n].getName().substring(0,index+1).equals(eventsBaseName)) &&
+            	        			if ((funcFiles[i][j][n].getName().length() >= index+1) &&
+            	        			   (funcFiles[i][j][n].getName().substring(0,index+1).equals(eventsBaseName)) &&
             	        			   (funcFiles[i][j][n].getName().endsWith("json"))) {
             	        				found = true;
             	        				physioJsonFile[sessionImagesRead] = funcFiles[i][j][n];
