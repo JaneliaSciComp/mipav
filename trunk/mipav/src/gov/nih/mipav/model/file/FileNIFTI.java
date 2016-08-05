@@ -3171,7 +3171,7 @@ public class FileNIFTI extends FileBase {
      *
      * @see        FileRaw
      */
-    public ModelImage readImage(boolean one, boolean niftiCompressed) throws IOException, OutOfMemoryError {
+    public ModelImage readImage(boolean one, boolean niftiCompressed, boolean noImportData) throws IOException, OutOfMemoryError {
         long offset;
         double m1, m2;
         boolean needFloat;
@@ -3355,6 +3355,21 @@ public class FileNIFTI extends FileBase {
         if (matrix2 != null) {
             image.getMatrixHolder().addMatrix(matrix2);
         }
+        
+        if (noImportData) {
+        	//close the compressed streams if open
+            if(zin != null) {
+            	zin.close();
+            }
+            if(gzin != null) {
+            	gzin.close();
+            }
+            if(bz2in != null) {
+            	bz2in.close();
+            }	
+            fireProgressStateChanged(100);
+            return image;
+        } // if (noImportData)
 
         try { // Construct a FileRaw to actually read the image.
 
