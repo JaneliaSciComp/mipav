@@ -707,6 +707,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	// visible distortions.  Note that this is not the same as the DICOM term inPlanePhaseEncodingDirection
         // which can have "ROW" or "COL" values.
     	String phaseEncodingDirection[];
+    	String imagingFMRIAuxiliaryFile[] = null;
+    	int fMRIAuxiliaryFileNumber = 0;
     	final JPanel mainPanel = new JPanel(new GridBagLayout());
 
         dsMainPanel = new JPanel(new GridBagLayout());
@@ -1306,7 +1308,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        		sessionImagesRead++;
             	        	} // if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        } // for (k = 0; k < anatFiles[i][j].length; k++)
-            	        parseDataStructure(dsInfo, sessionImagesRead);
+            	        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
             	        parseForInitLabelsAndComponents();
             	        if (subject_id_array != null) {
             	        	subject_id = subject_id_array[i];
@@ -1324,7 +1326,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	age = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age);
+            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile);
             	        if ( !setInitialVisible) {
                             // convert any dates found into proper ISO format
                             /*for (i = 0; i < csvFieldNames.size(); i++) {
@@ -1460,8 +1462,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        		}
             	        		sessionImagesRead++;
             	        	} // if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        } // for (k = 0; k < funcFiles[i][j].length; k++) 
-            	        parseDataStructure(dsInfo, sessionImagesRead);
+            	        } // for (k = 0; k < funcFiles[i][j].length; k++)
+            	        imagingFMRIAuxiliaryFile = null;
+            	        fMRIAuxiliaryFileNumber = funcFiles[i][j].length - sessionImagesRead;
+            	        if (fMRIAuxiliaryFileNumber > 0) {
+            	        	imagingFMRIAuxiliaryFile = new String[funcFiles[i][j].length - sessionImagesRead];
+            	        	for (k = 0, m = 0; k < funcFiles[i][j].length; k++) {
+                	        	if ((!funcFiles[i][j][k].getName().endsWith("nii.gz")) &&
+                	        	    (!funcFiles[i][j][k].getName().endsWith(".nii"))) {
+                	        		imagingFMRIAuxiliaryFile[m++] = funcFiles[i][j][k].getName();
+                	        	}
+            	        	} // for (k = 0; k < funcFiles[i][j].length; k++)
+            	        } // if (fMRIAuxiliaryFileNumber > 0)
+            	        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
             	        parseForInitLabelsAndComponents();
             	        if (subject_id_array != null) {
             	        	subject_id = subject_id_array[i];
@@ -1479,7 +1492,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	age = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age);
+            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1497,6 +1510,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             printlnToLog("func physio.tsv or physio.tsv.gz files read = " + funcPhysioTsvRead);
             printlnToLog("func physio json files read = " + funcPhysioJsonRead);
         } // if (funcNumber > 0)
+        imagingFMRIAuxiliaryFile = null;
+        fMRIAuxiliaryFileNumber = 0;
         
         if (dwiNumber > 0) {
         	found = false;
@@ -1579,7 +1594,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        		sessionImagesRead++;
             	        	} // if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        } // for (k = 0; k < dwiFiles[i][j].length; k++)
-            	        parseDataStructure(dsInfo, sessionImagesRead);
+            	        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
             	        parseForInitLabelsAndComponents();
             	        if (subject_id_array != null) {
             	        	subject_id = subject_id_array[i];
@@ -1597,7 +1612,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	age = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age);
+            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1789,7 +1804,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      */
     public void populateFields(final ModelImage img[], int numImages, String boldJsonFilenames[], double effectiveEchoSpacing[],
     		double echoTimeDouble[], double repetitionTimeDouble[],
-    		String subject_id, String age) {
+    		String subject_id, String age, String imagingFMRIAuxiliaryFile[]) {
     	float[][] res = new float[numImages][];
     	int[][] units = new int[numImages][];
     	int [][] exts = new int[numImages][];
@@ -2114,7 +2129,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         setElementComponentValue(deVal, orientation[i]);
                     }
 
-                    if (fileFormatString[i].equalsIgnoreCase("dicom")) {
+                    if ((i < numImages) && (fileFormatString[i].equalsIgnoreCase("dicom"))) {
                         if (deName.equalsIgnoreCase("AgeVal") && ageVal[i] != null && !ageVal[i].equals("")) {
                             ageInMonths[i] = convertDicomAgeToBRICS(ageVal[i]);
                             if (Float.parseFloat(ageInMonths[i]) != 0) {
@@ -2215,7 +2230,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 setElementComponentValue(deVal, ctMA[i]);
                             }
                         }
-                    } else if (fileFormatString[i].equalsIgnoreCase("nifti")) {
+                    } else if ((i < numImages) && (fileFormatString[i].equalsIgnoreCase("nifti"))) {
                         if ((deName.equalsIgnoreCase("ImgScannerManufName")) && (manufacturer[i] != null)) {
                             setElementComponentValue(deVal, manufacturer[i]);
                         } else if ((deName.equalsIgnoreCase("ImgScannerModelName")) && (scannerModel[i]!= null)) {
@@ -2250,6 +2265,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 	                	setElementComponentValue(deVal, subject_id);
 	                } else if ((deName.equalsIgnoreCase("AgeYrs")) && (age != null)) {
 	                	setElementComponentValue(deVal, age);
+	                }
+	                else if ((deName.equalsIgnoreCase("ImgFMRIAuxFile")) && (imagingFMRIAuxiliaryFile != null) &&
+	                		(imagingFMRIAuxiliaryFile[i] != null)) {
+	                	setElementComponentValue(deVal, imagingFMRIAuxiliaryFile[i]);
 	                }
                 }
             }
@@ -2289,7 +2308,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     }
     
-    private void parseDataStructure(final FormStructure dataStructure, final int sessionImagesRead) {
+    private void parseDataStructure(final FormStructure dataStructure, final int sessionImagesRead, final int fMRIAuxiliaryFileNumber) {
         // setup the group bins in the form data
         for (final RepeatableGroup g : dataStructure.getRepeatableGroups()) {
             // if the group repeats an exact number of times, create them now
@@ -2309,6 +2328,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	}
             	else if (g.getName().equalsIgnoreCase("Image QA & QC")) {
             		numRepeats = sessionImagesRead;
+            	}
+            	else if (g.getName().equalsIgnoreCase("fMRI Auxiliary Files")) {
+            		numRepeats = fMRIAuxiliaryFileNumber;
             	}
             	else {
             		numRepeats = 1;
