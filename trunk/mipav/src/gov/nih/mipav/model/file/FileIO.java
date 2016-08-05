@@ -3100,10 +3100,10 @@ public class FileIO {
 
                 case FileUtility.NIFTI:
                     if (niftiCompressed) {
-                        image = readNIFTI(fileName, fileDir, one, true);
+                        image = readNIFTI(fileName, fileDir, one, true, false);
                         image.setImageName(fileName.substring(0, fileName.lastIndexOf(".")), false);
                     } else {
-                        image = readNIFTI(fileName, fileDir, one, false);
+                        image = readNIFTI(fileName, fileDir, one, false, false);
                     }
 
                     break;
@@ -10006,10 +10006,13 @@ public class FileIO {
      * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
      *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
      *            dataset.
+     * @param niftiCompressed
+     * @param noImportData
      * 
      * @return The image that was read in, or null if failure.
      */
-    public ModelImage readNIFTI(final String fileName, final String fileDir, final boolean one, final boolean niftiCompressed) {
+    public ModelImage readNIFTI(final String fileName, final String fileDir, final boolean one, final boolean niftiCompressed,
+    		final boolean noImportData) {
         ModelImage image = null;
         FileNIFTI imageFile;
 
@@ -10019,9 +10022,9 @@ public class FileIO {
                 createProgressBar(imageFile, fileName, FileIO.FILE_READ);
             }
             if (niftiCompressed) {
-                image = imageFile.readImage(one, true);
+                image = imageFile.readImage(one, true, noImportData);
             } else {
-                image = imageFile.readImage(one, false);
+                image = imageFile.readImage(one, false, noImportData);
             }
 
         } catch (final IOException error) {
@@ -10177,7 +10180,7 @@ public class FileIO {
         nImages = i; // total number of suspected files to import into an image
 
         if (nImages == 1) {
-            return readNIFTI(fileName, fileDir, false, false);
+            return readNIFTI(fileName, fileDir, false, false, false);
         }
 
         createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName), FileIO.FILE_READ);
