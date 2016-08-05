@@ -878,7 +878,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         		    participant_id_index = -1;
         		    age_index = -1;
         		    for (i = 0; i < tokens.length; i++) {
-        		        if (tokens[i].equalsIgnoreCase("participant_id")) {
+        		        if ((tokens[i].equalsIgnoreCase("participant_id")) ||
+        		        	(tokens[i].equalsIgnoreCase("subject_id"))) {
         		        	participant_id_index = i;
         		        	participant_id_array = new String[numberSubjects];
         		        }
