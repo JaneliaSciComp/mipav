@@ -613,14 +613,17 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int dwiNumber = 0;
     	int fmapNumber = 0;
     	int numberSessionDirectoryTSV[][] = null;
+    	int numberSessionDirectoryScansTSV[][] = null;
     	int numberSubjectDirectoryTSV[];
     	int totalSessionTSVFiles = 0;
+    	int totalSessionScansTSVFiles = 0;
     	int totalSubjectTSVFiles = 0;
     	File anatFiles[][][] = null;
     	File funcFiles[][][] = null;
     	File dwiFiles[][][] = null;
     	File fmapFiles[][][] = null;
     	File tsvSessionDirectoryFiles[][][] = null;
+    	File scanstsvSessionDirectoryFiles[][][] = null;
     	File tsvSubjectDirectoryFiles[][] = null;
     	boolean found;
     	FormStructure ds = null;
@@ -1117,10 +1120,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         
         if (maximumNumberSessions > 0) {
         	numberSessionDirectoryTSV = new int[numberSubjects][];
+        	numberSessionDirectoryScansTSV = new int[numberSubjects][];
         }
         for (i = 0; i < numberSubjects; i++) {
         	if (maximumNumberSessions > 0) {
         		numberSessionDirectoryTSV[i] = new int[numberSessions[i]];
+        		numberSessionDirectoryScansTSV[i] = new int[numberSessions[i]];
         	}
         	for (j = 0; j < sessionFiles[i].length; j++) {
         		files = sessionFiles[i][j].listFiles();
@@ -1142,6 +1147,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         			else if ((files[k].getName().toLowerCase().endsWith(".tsv")) && (maximumNumberSessions > 0)) {
         			    numberSessionDirectoryTSV[i][j]++;
         			    totalSessionTSVFiles++;
+        			    if (files[k].getName().toLowerCase().endsWith("_scans.tsv")) {
+        			        numberSessionDirectoryScansTSV[i][j]++;
+        			        totalSessionScansTSVFiles++;
+        			    }
         			}
         		}
         	}
@@ -1153,6 +1162,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         printlnToLog(fmapNumber + " fmap subdirectories were found");
         printlnToLog("Number of subject subdirectory .tsv files = " + totalSubjectTSVFiles);
         printlnToLog("Number of session subdirectory .tsv files = " + totalSessionTSVFiles);
+        printlnToLog("Number of session subdirectory _scans.tsv files = " + totalSessionScansTSVFiles);
         
         if (totalSessionTSVFiles > 0) {
             tsvSessionDirectoryFiles = new File[numberSubjects][][];
@@ -1169,6 +1179,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	}
             }
         } // if (totalSessionTSVFiles > 0)
+        
+        if (totalSessionScansTSVFiles > 0) {
+            scanstsvSessionDirectoryFiles = new File[numberSubjects][][];
+            for (i = 0; i < numberSubjects; i++) {
+            	scanstsvSessionDirectoryFiles[i] = new File[sessionFiles[i].length][];
+            	for (j = 0; j < sessionFiles[i].length; j++) {
+            		files = sessionFiles[i][j].listFiles();
+            		scanstsvSessionDirectoryFiles[i][j] = new File[numberSessionDirectoryScansTSV[i][j]];
+            		for (k = 0, m = 0; k < files.length; k++) {
+            			if ((files[k].isFile()) && (files[k].getName().toLowerCase().endsWith("_scans.tsv"))) {
+            			    scanstsvSessionDirectoryFiles[i][j][m++] = files[k];	
+            			}
+            		}
+            	}
+            }
+        } // if (totalSessionScansTSVFiles > 0)
         
         if (anatNumber > 0) {
         	anatFiles = new File[numberSubjects][][];
@@ -1467,9 +1493,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        } // for (k = 0; k < funcFiles[i][j].length; k++)
             	        imagingFMRIAuxiliaryFile = null;
             	        fMRIAuxiliaryFileNumber = funcFiles[i][j].length - sessionImagesRead;
+            	        if (scanstsvSessionDirectoryFiles != null) {
+            	        	fMRIAuxiliaryFileNumber += scanstsvSessionDirectoryFiles[i][j].length;
+            	        }
             	        if (fMRIAuxiliaryFileNumber > 0) {
-            	        	imagingFMRIAuxiliaryFile = new String[funcFiles[i][j].length - sessionImagesRead];
-            	        	for (k = 0, m = 0; k < funcFiles[i][j].length; k++) {
+            	        	imagingFMRIAuxiliaryFile = new String[fMRIAuxiliaryFileNumber];
+            	        	m = 0;
+            	        	if (scanstsvSessionDirectoryFiles != null) {
+            	        	    for (k = 0; k < scanstsvSessionDirectoryFiles[i][j].length; k++) {
+            	        	    	imagingFMRIAuxiliaryFile[m++] = scanstsvSessionDirectoryFiles[i][j][k].getName();
+            	        	    }
+            	        	}
+            	        	for (k = 0; k < funcFiles[i][j].length; k++) {
                 	        	if ((!funcFiles[i][j][k].getName().endsWith("nii.gz")) &&
                 	        	    (!funcFiles[i][j][k].getName().endsWith(".nii"))) {
                 	        		imagingFMRIAuxiliaryFile[m++] = funcFiles[i][j][k].getName();
