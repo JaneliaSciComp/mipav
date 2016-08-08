@@ -1336,7 +1336,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             anatJsonRead = 0;
             for (i = 0; i < numberSubjects; i++) {
             	for (j = 0; j < anatFiles[i].length; j++) {
-            	    if (anatFiles[i][j] != null) {
+            	    if ((anatFiles[i][j] != null) && (anatFiles[i][j].length > 0)) {
             	    	sessionImagesRead = 0;
             	    	sessionJsonRead = 0;
                         previewImages.add(null);
@@ -1422,7 +1422,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	        		srcImage[k] = null;
         	        		jsonFile[k] = null;
         	        	}
-            	    } // if (anatFiles[i][j] != null)
+            	    } // if ((anatFiles[i][j] != null) && (anatFiles[i][j].length > 0))
             	}
             }
             printlnToLog("anat images read = " + anatImagesRead);
@@ -2362,11 +2362,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     }
 	                if ((deName.equalsIgnoreCase("ImgEchoDur")) && (echoTime[i] != null)) {
 	                    setElementComponentValue(deVal, echoTime[i]);
-	                } else if ((deName.equalsIgnoreCase("ImgRepetitionGapVal")) && (repetitionTime[i] != null)) {
+	                } else if ((deName.equalsIgnoreCase("ImgRepetitionGapVal")) && (repetitionTime != null) &&
+	                		(repetitionTime[i] != null)) {
 	                    setElementComponentValue(deVal, repetitionTime[i]);
-	                } else if ((deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) && (phaseEncode[i] != null)) {
+	                } else if ((deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) && (phaseEncode != null) &&
+	                		(phaseEncode[i] != null)) {
 	                    setElementComponentValue(deVal, phaseEncode[i]);
-	                } else if ((deName.equalsIgnoreCase("ImgEchoSpcVal")) && (imagingEchoSpacing[i] != null)) {
+	                } else if ((deName.equalsIgnoreCase("ImgEchoSpcVal")) && (imagingEchoSpacing != null) &&
+	                		(imagingEchoSpacing[i] != null)) {
 	                	setElementComponentValue(deVal, imagingEchoSpacing[i]);
 	                } else if ((deName.equalsIgnoreCase("SubjectIDNum")) && (subject_id != null)) {
 	                	setElementComponentValue(deVal, subject_id);
