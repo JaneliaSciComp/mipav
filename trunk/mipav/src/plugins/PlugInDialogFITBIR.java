@@ -605,6 +605,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int k;
     	int m;
     	int n;
+    	int p;
     	int numberSessions[];
     	int maximumNumberSessions = 0;
     	File sessionFiles[][];
@@ -615,9 +616,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int numberSessionDirectoryTSV[][] = null;
     	int numberSessionDirectoryScansTSV[][] = null;
     	int numberSubjectDirectoryTSV[];
+    	int numberSubjectDirectoryScansTSV[];
+    	int numberSubjectDirectorySessionsTSV[];
     	int totalSessionTSVFiles = 0;
     	int totalSessionScansTSVFiles = 0;
     	int totalSubjectTSVFiles = 0;
+    	int totalSubjectScansTSVFiles = 0;
+    	int totalSubjectSessionsTSVFiles = 0;
     	File anatFiles[][][] = null;
     	File funcFiles[][][] = null;
     	File dwiFiles[][][] = null;
@@ -625,6 +630,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	File tsvSessionDirectoryFiles[][][] = null;
     	File scanstsvSessionDirectoryFiles[][][] = null;
     	File tsvSubjectDirectoryFiles[][] = null;
+    	File scanstsvSubjectDirectoryFiles[][] =  null;
+    	File sessionstsvSubjectDirectoryFiles[][] = null;
     	boolean found;
     	FormStructure ds = null;
     	FormStructure dsInfo = null;
@@ -957,6 +964,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
         numberSessions = new int[numberSubjects];
         numberSubjectDirectoryTSV = new int[numberSubjects];
+        numberSubjectDirectoryScansTSV = new int[numberSubjects];
+        numberSubjectDirectorySessionsTSV = new int[numberSubjects];
         for (i = 0; i < numberSubjects; i++) {
             files = subjectFiles[i].listFiles();
             Arrays.sort(files, new fileComparator());
@@ -967,6 +976,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	else if ((files[j].isFile()) && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
             		numberSubjectDirectoryTSV[i]++;
             		totalSubjectTSVFiles++;
+            		if (files[j].getName().toLowerCase().endsWith("_scans.tsv")) {
+            			numberSubjectDirectoryScansTSV[i]++;
+            			totalSubjectScansTSVFiles++;
+            		}
+            		else if (files[j].getName().toLowerCase().endsWith("_sessions.tsv")) {
+            			numberSubjectDirectorySessionsTSV[i]++;
+            			totalSubjectSessionsTSVFiles++;
+            		}
             	}
             }
             if (numberSessions[i] > maximumNumberSessions) {
@@ -983,15 +1000,25 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
         sessionFiles = new File[numberSubjects][];
         tsvSubjectDirectoryFiles = new File[numberSubjects][];
+        scanstsvSubjectDirectoryFiles = new File[numberSubjects][];
+        sessionstsvSubjectDirectoryFiles = new File[numberSubjects][];
         if (maximumNumberSessions == 0) {
             for (i = 0; i < numberSubjects; i++) {
         	    sessionFiles[i] = new File[1];
         	    sessionFiles[i][0] = subjectFiles[i]; 
         	    tsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryTSV[i]];
+        	    scanstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryScansTSV[i]];
+        	    sessionstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectorySessionsTSV[i]];
         	    files = subjectFiles[i].listFiles();
-        	    for (j = 0, k = 0; j < files.length; j++) {
+        	    for (j = 0, k = 0, m = 0, n = 0; j < files.length; j++) {
         	    	if (files[j].isFile() && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
         	    		tsvSubjectDirectoryFiles[i][k++] = files[j];
+        	    		if (files[j].getName().toLowerCase().endsWith("_scans.tsv")) {
+        	                scanstsvSubjectDirectoryFiles[i][m++] = files[j];
+        	    		}
+        	    		else if (files[j].getName().toLowerCase().endsWith("_sessions.tsv")) {
+                			sessionstsvSubjectDirectoryFiles[i][n++] = files[j];
+                		}
         	    	}
         	    }
             }
@@ -1000,123 +1027,129 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	for (i = 0; i < numberSubjects; i++) {
         		sessionFiles[i] = new File[numberSessions[i]];
         		tsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryTSV[i]];
+        		scanstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryScansTSV[i]];
+        	    sessionstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectorySessionsTSV[i]];
         		files = subjectFiles[i].listFiles();
-                for (j = 0, k = 0, m = 0; j < files.length; j++) {
+                for (j = 0, k = 0, m = 0, n = 0, p = 0; j < files.length; j++) {
                 	if ((files[j].isDirectory()) && (files[j].getName().substring(0,3).equalsIgnoreCase("SES"))) {	
                 		sessionFiles[i][k++] = files[j];
                 	}
                 	else if ((files[j].isFile()) && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
                 		tsvSubjectDirectoryFiles[i][m++] = files[j];
+                		if (files[j].getName().toLowerCase().endsWith("_scans.tsv")) {
+        	                scanstsvSubjectDirectoryFiles[i][n++] = files[j];
+        	    		}
+                		else if (files[j].getName().toLowerCase().endsWith("_sessions.tsv")) {
+                			sessionstsvSubjectDirectoryFiles[i][p++] = files[j];
+                		}
                 	}
                 }
         	}
         } // else maximumNumberSessions > 0
         
-        if (totalSubjectTSVFiles > 0) {
+        if (totalSubjectSessionsTSVFiles > 0) {
         	subject_id_array = new String[numberSubjects];
         	for (i = 0; i < numberSubjects; i++) {
-        		for (j = 0; j < tsvSubjectDirectoryFiles[i].length; j++) {
-        			if (tsvSubjectDirectoryFiles[i][j].getName().toLowerCase().endsWith("_sessions.tsv")) {
-        				try {
-        	                raFile = new RandomAccessFile(tsvSubjectDirectoryFiles[i][j], "r");
-        	                processFile = true;
-        	        	}
-        	        	catch (FileNotFoundException e) {
-        	        		System.err.println("FileNotFoundException " + e);
-        	        		processFile = false;
-        	        	}
-        				if (processFile) {
-        		        	try {
-        		        	    fileLength = raFile.length();
-        		        	}
-        		        	catch (IOException e) {
-        		        		System.err.println("IOException " + e);
-        		        		processFile = false;
-        		        	}
-        	        	} // if (processFile)
-        	        	if (processFile) {
-        	        		try {
-        	        		    line = raFile.readLine();
-        	        		    readMoreLines = true;
-        	        		}
-        	        		catch (IOException e) {
-        	        		    System.err.println("IOException " + e);	
-        	        		    readMoreLines = false;
-        	        		}
-        	        		if (readMoreLines) {
-        	        		    tokens = line.split("\t");
-        	        		    headerTokenNumber = tokens.length;
-        	        		    subject_id_index = -1;
-        	        		    for (k = 0; k < tokens.length; k++) {
-        	        		        if (tokens[k].equalsIgnoreCase("subject_id")) {
-        	        		        	subject_id_index = k;
-        	        		        }
-        	        		    } // // for (k = 0; k < tokens.length; k++)
-        	        		    if (subject_id_index >= 0) {
-        	        		    	try {
-        	        		        	filePos = raFile.getFilePointer();
-        	        		        }
-        	        		        catch (IOException e) {
-        	        		        	System.err.println("IOException " + e);
-        	        		        	filePos = fileLength;
-        	        		        }
-        	        		    	sessionsRead = 0;
-        	        		    	indexRead = false;
-        	        		        while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos < fileLength)) {
-        	        		        	try {
-        	        	        		    line = raFile.readLine();
-        	        	        		    readMoreLines = true;
-        	        	        		}
-        	        	        		catch (IOException e) {
-        	        	        		    System.err.println("IOException " + e);	
-        	        	        		    readMoreLines = false;
-        	        	        		}
-        	        		        	tokens = line.split("\t");
-        	        		        	sessionTokenNumber = tokens.length;
-        	        		        	if (headerTokenNumber != sessionTokenNumber) {
-        	        		        		System.err.println("Header token number = " + headerTokenNumber + ", but session token number = " +
-        	        		        	                   sessionTokenNumber);
-        	        		        	}
-        	        		        	if (tokens.length-1 >= subject_id_index) {
-        	        		        		if (!indexRead) {
-        	        		        		    subject_id_array[i] = tokens[subject_id_index];
-        	        		        		    indexRead = true;
-        	        		        		    subject_id_read++;
-        	        		        		}
-        	        		        		else if (Integer.valueOf(subject_id_array[i]).intValue() != 
-        	        		        				Integer.valueOf(tokens[subject_id_index]).intValue()) {
-        	        		        		    	System.err.println("subject_id number varies across sessions for subject subdirectory "
-        	        		        		    			+ i);
-        	        		        		    	System.err.println("subject_id_array["+i+"] = " + subject_id_array[i]);
-        	        		        		    	System.err.println("tokens["+subject_id_index+"] = " + tokens[subject_id_index]);
-        	        		        		}
-        	        		        		sessionsRead++;
-        	        		        	}
-        	        		        	
-        	        		        	try {
-        	            		        	filePos = raFile.getFilePointer();
-        	            		        }
-        	            		        catch (IOException e) {
-        	            		        	System.err.println("IOException " + e);
-        	            		        	filePos = fileLength;
-        	            		        }	
-        	        		        } // while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos < fileLength))	
-        	        		    } // if (subject_id_index >= 0)
-        	        		} // if (readMoreLines)
-        	        	} // if (processFile)
-        	        	if (processFile) {
-        	        		try {
-        	        			raFile.close();
-        	        		}
-        	        		catch (IOException e) {
-        	        			System.err.println("IOException " + e);
-        	        		}
-        	        	}
-        			}
+        		for (j = 0; j < sessionstsvSubjectDirectoryFiles[i].length; j++) {
+    				try {
+    	                raFile = new RandomAccessFile(tsvSubjectDirectoryFiles[i][j], "r");
+    	                processFile = true;
+    	        	}
+    	        	catch (FileNotFoundException e) {
+    	        		System.err.println("FileNotFoundException " + e);
+    	        		processFile = false;
+    	        	}
+    				if (processFile) {
+    		        	try {
+    		        	    fileLength = raFile.length();
+    		        	}
+    		        	catch (IOException e) {
+    		        		System.err.println("IOException " + e);
+    		        		processFile = false;
+    		        	}
+    	        	} // if (processFile)
+    	        	if (processFile) {
+    	        		try {
+    	        		    line = raFile.readLine();
+    	        		    readMoreLines = true;
+    	        		}
+    	        		catch (IOException e) {
+    	        		    System.err.println("IOException " + e);	
+    	        		    readMoreLines = false;
+    	        		}
+    	        		if (readMoreLines) {
+    	        		    tokens = line.split("\t");
+    	        		    headerTokenNumber = tokens.length;
+    	        		    subject_id_index = -1;
+    	        		    for (k = 0; k < tokens.length; k++) {
+    	        		        if (tokens[k].equalsIgnoreCase("subject_id")) {
+    	        		        	subject_id_index = k;
+    	        		        }
+    	        		    } // // for (k = 0; k < tokens.length; k++)
+    	        		    if (subject_id_index >= 0) {
+    	        		    	try {
+    	        		        	filePos = raFile.getFilePointer();
+    	        		        }
+    	        		        catch (IOException e) {
+    	        		        	System.err.println("IOException " + e);
+    	        		        	filePos = fileLength;
+    	        		        }
+    	        		    	sessionsRead = 0;
+    	        		    	indexRead = false;
+    	        		        while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos < fileLength)) {
+    	        		        	try {
+    	        	        		    line = raFile.readLine();
+    	        	        		    readMoreLines = true;
+    	        	        		}
+    	        	        		catch (IOException e) {
+    	        	        		    System.err.println("IOException " + e);	
+    	        	        		    readMoreLines = false;
+    	        	        		}
+    	        		        	tokens = line.split("\t");
+    	        		        	sessionTokenNumber = tokens.length;
+    	        		        	if (headerTokenNumber != sessionTokenNumber) {
+    	        		        		System.err.println("Header token number = " + headerTokenNumber + ", but session token number = " +
+    	        		        	                   sessionTokenNumber);
+    	        		        	}
+    	        		        	if (tokens.length-1 >= subject_id_index) {
+    	        		        		if (!indexRead) {
+    	        		        		    subject_id_array[i] = tokens[subject_id_index];
+    	        		        		    indexRead = true;
+    	        		        		    subject_id_read++;
+    	        		        		}
+    	        		        		else if (Integer.valueOf(subject_id_array[i]).intValue() != 
+    	        		        				Integer.valueOf(tokens[subject_id_index]).intValue()) {
+    	        		        		    	System.err.println("subject_id number varies across sessions for subject subdirectory "
+    	        		        		    			+ i);
+    	        		        		    	System.err.println("subject_id_array["+i+"] = " + subject_id_array[i]);
+    	        		        		    	System.err.println("tokens["+subject_id_index+"] = " + tokens[subject_id_index]);
+    	        		        		}
+    	        		        		sessionsRead++;
+    	        		        	}
+    	        		        	
+    	        		        	try {
+    	            		        	filePos = raFile.getFilePointer();
+    	            		        }
+    	            		        catch (IOException e) {
+    	            		        	System.err.println("IOException " + e);
+    	            		        	filePos = fileLength;
+    	            		        }	
+    	        		        } // while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos < fileLength))	
+    	        		    } // if (subject_id_index >= 0)
+    	        		} // if (readMoreLines)
+    	        	} // if (processFile)
+    	        	if (processFile) {
+    	        		try {
+    	        			raFile.close();
+    	        		}
+    	        		catch (IOException e) {
+    	        			System.err.println("IOException " + e);
+    	        		}
+    	        	}
         		}
         	}
         	printlnToLog(subject_id_read + " subject id read from _sessions.tsv files in subject subdirectories");
-        } // if (totalSubjectTSVFiles > 0)
+        } // if (totalSubjectSessionsTSVFiles > 0)
         
         if (maximumNumberSessions > 0) {
         	numberSessionDirectoryTSV = new int[numberSubjects][];
@@ -1161,6 +1194,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         printlnToLog(dwiNumber + " dwi subdirectories were found");
         printlnToLog(fmapNumber + " fmap subdirectories were found");
         printlnToLog("Number of subject subdirectory .tsv files = " + totalSubjectTSVFiles);
+        printlnToLog("Number of subject subdirectory _scans.tsv files = " + totalSubjectScansTSVFiles);
+        printlnToLog("Number of subject subdirectory _sessions.tsv files = " + totalSubjectSessionsTSVFiles);
         printlnToLog("Number of session subdirectory .tsv files = " + totalSessionTSVFiles);
         printlnToLog("Number of session subdirectory _scans.tsv files = " + totalSessionScansTSVFiles);
         
@@ -1493,12 +1528,28 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        } // for (k = 0; k < funcFiles[i][j].length; k++)
             	        imagingFMRIAuxiliaryFile = null;
             	        fMRIAuxiliaryFileNumber = funcFiles[i][j].length - sessionImagesRead;
+            	        if (scanstsvSubjectDirectoryFiles != null) {
+            	        	fMRIAuxiliaryFileNumber += scanstsvSubjectDirectoryFiles[i].length;
+            	        }
+            	        if (sessionstsvSubjectDirectoryFiles != null) {
+            	        	fMRIAuxiliaryFileNumber += sessionstsvSubjectDirectoryFiles[i].length;
+            	        }
             	        if (scanstsvSessionDirectoryFiles != null) {
             	        	fMRIAuxiliaryFileNumber += scanstsvSessionDirectoryFiles[i][j].length;
             	        }
             	        if (fMRIAuxiliaryFileNumber > 0) {
             	        	imagingFMRIAuxiliaryFile = new String[fMRIAuxiliaryFileNumber];
             	        	m = 0;
+            	        	if (scanstsvSubjectDirectoryFiles != null) {
+            	        		for (k = 0; k < scanstsvSubjectDirectoryFiles[i].length; k++) {
+            	        			imagingFMRIAuxiliaryFile[m++] = scanstsvSubjectDirectoryFiles[i][k].getName();
+            	        		}
+            	        	}
+            	        	if (sessionstsvSubjectDirectoryFiles != null) {
+            	        		for (k = 0; k < sessionstsvSubjectDirectoryFiles[i].length; k++) {
+            	        			imagingFMRIAuxiliaryFile[m++] = sessionstsvSubjectDirectoryFiles[i][k].getName();
+            	        		}
+            	        	}
             	        	if (scanstsvSessionDirectoryFiles != null) {
             	        	    for (k = 0; k < scanstsvSessionDirectoryFiles[i][j].length; k++) {
             	        	    	imagingFMRIAuxiliaryFile[m++] = scanstsvSessionDirectoryFiles[i][j][k].getName();
