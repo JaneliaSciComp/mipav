@@ -1528,6 +1528,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        } // for (k = 0; k < funcFiles[i][j].length; k++)
             	        imagingFMRIAuxiliaryFile = null;
             	        fMRIAuxiliaryFileNumber = funcFiles[i][j].length - sessionImagesRead;
+            	        if (participantsFile != null) {
+            	        	fMRIAuxiliaryFileNumber++;
+            	        }
             	        if (scanstsvSubjectDirectoryFiles != null) {
             	        	fMRIAuxiliaryFileNumber += scanstsvSubjectDirectoryFiles[i].length;
             	        }
@@ -1540,6 +1543,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        if (fMRIAuxiliaryFileNumber > 0) {
             	        	imagingFMRIAuxiliaryFile = new String[fMRIAuxiliaryFileNumber];
             	        	m = 0;
+            	        	if (participantsFile != null) {
+            	        		imagingFMRIAuxiliaryFile[m++] = participantsFile.getName();
+            	        	}
             	        	if (scanstsvSubjectDirectoryFiles != null) {
             	        		for (k = 0; k < scanstsvSubjectDirectoryFiles[i].length; k++) {
             	        			imagingFMRIAuxiliaryFile[m++] = scanstsvSubjectDirectoryFiles[i][k].getName();
