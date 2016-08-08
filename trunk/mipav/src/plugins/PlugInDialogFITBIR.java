@@ -705,6 +705,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	double echoTime[];
     	String BIDSString = null;
     	String fullPath = null;
+    	String dwibvalString = null;
+    	String dwibvecString = null;
     	// The JSON file gives the time in seconds between the beginning of an acquisition of one volume and the 
     	// beginning of the acquisition of the volume following it (TR).  Pleases note that this definition includes
     	// time between scans (when no data has been acquired) in case of sparse acquisition schemes.  This value
@@ -751,6 +753,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().contains("_bold")) &&
         	    (files[i].getName().toLowerCase().endsWith(".json"))) {
         	    numberBoldJsonFiles++;	
+        	}
+        	else if ((files[i].isFile()) && (files[i].getName().equalsIgnoreCase("dwi.bval"))) {
+        	    fullPath = files[i].getAbsolutePath();
+        	    index = fullPath.indexOf(BIDSString);
+        	    dwibvalString = fullPath.substring(index);
+        	    printlnToLog("dwi.bval read");
+        	    
+        	}
+        	else if ((files[i].isFile()) && (files[i].getName().equalsIgnoreCase("dwi.bvec"))) {
+        		fullPath = files[i].getAbsolutePath();
+        	    index = fullPath.indexOf(BIDSString);
+        	    dwibvecString = fullPath.substring(index);
+        	    printlnToLog("dwi.bvec read");
         	}
         }
         boldJsonFilenames = new String[numberBoldJsonFiles];
@@ -1390,7 +1405,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	age = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile);
+            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile,
+            	        		dwibvalString, dwibvecString);
             	        if ( !setInitialVisible) {
                             // convert any dates found into proper ISO format
                             /*for (i = 0; i < csvFieldNames.size(); i++) {
@@ -1425,8 +1441,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    } // if ((anatFiles[i][j] != null) && (anatFiles[i][j].length > 0))
             	}
             }
-            printlnToLog("anat images read = " + anatImagesRead);
-            printlnToLog("anat JSON files read = " + anatJsonRead);
+            printlnToLog("anat subdirectory images read = " + anatImagesRead);
+            printlnToLog("anat subdirectory JSON files read = " + anatJsonRead);
         } // if (anatNumber > 0)
         
         
@@ -1599,7 +1615,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	age = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile);
+            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile,
+            	        		dwibvalString, dwibvecString);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1611,11 +1628,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    }
             	}
             }
-            printlnToLog("func images read = " + funcImagesRead);
-            printlnToLog("func JSON files read = " + funcJsonRead);
-            printlnToLog("func events.tsv files read = " + funcEventsRead);
-            printlnToLog("func physio.tsv or physio.tsv.gz files read = " + funcPhysioTsvRead);
-            printlnToLog("func physio json files read = " + funcPhysioJsonRead);
+            printlnToLog("func subdirectory images read = " + funcImagesRead);
+            printlnToLog("func subdirectory JSON files read = " + funcJsonRead);
+            printlnToLog("func subdirectory events.tsv files read = " + funcEventsRead);
+            printlnToLog("func subdirectory physio.tsv or physio.tsv.gz files read = " + funcPhysioTsvRead);
+            printlnToLog("func subdirectory physio json files read = " + funcPhysioJsonRead);
         } // if (funcNumber > 0)
         imagingFMRIAuxiliaryFile = null;
         fMRIAuxiliaryFileNumber = 0;
@@ -1719,7 +1736,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	age = null;
             	        }
             	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile);
+            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile,
+            	        		dwibvalString, dwibvecString);
             	        for (k = 0; k < sessionImagesRead; k++) {
         	        		srcImage[k].disposeLocal();
         	        		srcImage[k] = null;
@@ -1730,10 +1748,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	    }
             	}
             }
-            printlnToLog("dwi images read = " + dwiImagesRead);
-            printlnToLog("dwi json files read = " + dwiJsonRead);
-            printlnToLog("dwi bval files read = " + dwiBvalRead);
-            printlnToLog("dwi bvec files read = " + dwiBvecRead);    
+            printlnToLog("dwi subdirectory images read = " + dwiImagesRead);
+            printlnToLog("dwi subdirectory json files read = " + dwiJsonRead);
+            printlnToLog("dwi subdirectory bval files read = " + dwiBvalRead);
+            printlnToLog("dwi subdirectory bvec files read = " + dwiBvecRead);    
         } // if (dwiNumber > 0)
         
        
@@ -1911,7 +1929,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
      */
     public void populateFields(final ModelImage img[], int numImages, String boldJsonFilenames[], double effectiveEchoSpacing[],
     		double echoTimeDouble[], double repetitionTimeDouble[],
-    		String subject_id, String age, String imagingFMRIAuxiliaryFile[]) {
+    		String subject_id, String age, String imagingFMRIAuxiliaryFile[],
+    		String dwibvalString, String dwibvecString) {
     	float[][] res = new float[numImages][];
     	int[][] units = new int[numImages][];
     	int [][] exts = new int[numImages][];
@@ -2379,6 +2398,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 	                else if ((deName.equalsIgnoreCase("ImgFMRIAuxFile")) && (imagingFMRIAuxiliaryFile != null) &&
 	                		(imagingFMRIAuxiliaryFile[i] != null)) {
 	                	setElementComponentValue(deVal, imagingFMRIAuxiliaryFile[i]);
+	                }
+	                else if ((deName.equalsIgnoreCase("ImgDIffusionBValFile")) && (dwibvalString != null)) {
+	                	setElementComponentValue(deVal, dwibvalString);
+	                }
+	                else if ((deName.equalsIgnoreCase("ImgDIffusionBVecFile")) && (dwibvecString != null)) {
+	                	setElementComponentValue(deVal, dwibvecString);
 	                }
                 }
             }
