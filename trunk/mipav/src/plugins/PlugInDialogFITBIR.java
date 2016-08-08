@@ -703,6 +703,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	JSONObject jsonObject = null;
     	double effectiveEchoSpacing[];
     	double echoTime[];
+    	String BIDSString = null;
+    	String fullPath = null;
     	// The JSON file gives the time in seconds between the beginning of an acquisition of one volume and the 
     	// beginning of the acquisition of the volume following it (TR).  Pleases note that this definition includes
     	// time between scans (when no data has been acquired) in case of sparse acquisition schemes.  This value
@@ -737,6 +739,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
     	// Read directory and find no. of images
         files = BIDSFile.listFiles();
+        BIDSString = BIDSFile.getName();
         Arrays.sort(files, new fileComparator());
         for (i = 0; i < files.length; i++) {
         	if ((files[i].isDirectory()) && (files[i].getName().substring(0,3).equalsIgnoreCase("SUB"))) {
@@ -1544,27 +1547,37 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	imagingFMRIAuxiliaryFile = new String[fMRIAuxiliaryFileNumber];
             	        	m = 0;
             	        	if (participantsFile != null) {
-            	        		imagingFMRIAuxiliaryFile[m++] = participantsFile.getName();
+            	        		fullPath = participantsFile.getAbsolutePath();
+            	        		index = fullPath.indexOf(BIDSString);
+            	        		imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
             	        	}
             	        	if (scanstsvSubjectDirectoryFiles != null) {
             	        		for (k = 0; k < scanstsvSubjectDirectoryFiles[i].length; k++) {
-            	        			imagingFMRIAuxiliaryFile[m++] = scanstsvSubjectDirectoryFiles[i][k].getName();
+            	        			fullPath = scanstsvSubjectDirectoryFiles[i][k].getAbsolutePath();
+            	        			index = fullPath.indexOf(BIDSString);
+            	        			imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
             	        		}
             	        	}
             	        	if (sessionstsvSubjectDirectoryFiles != null) {
             	        		for (k = 0; k < sessionstsvSubjectDirectoryFiles[i].length; k++) {
-            	        			imagingFMRIAuxiliaryFile[m++] = sessionstsvSubjectDirectoryFiles[i][k].getName();
+            	        			fullPath = sessionstsvSubjectDirectoryFiles[i][k].getAbsolutePath();
+            	        			index = fullPath.indexOf(BIDSString);
+            	        			imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
             	        		}
             	        	}
             	        	if (scanstsvSessionDirectoryFiles != null) {
             	        	    for (k = 0; k < scanstsvSessionDirectoryFiles[i][j].length; k++) {
-            	        	    	imagingFMRIAuxiliaryFile[m++] = scanstsvSessionDirectoryFiles[i][j][k].getName();
+            	        	    	fullPath = scanstsvSessionDirectoryFiles[i][j][k].getAbsolutePath();
+            	        	    	index = fullPath.indexOf(BIDSString);
+            	        			imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
             	        	    }
             	        	}
             	        	for (k = 0; k < funcFiles[i][j].length; k++) {
                 	        	if ((!funcFiles[i][j][k].getName().endsWith("nii.gz")) &&
                 	        	    (!funcFiles[i][j][k].getName().endsWith(".nii"))) {
-                	        		imagingFMRIAuxiliaryFile[m++] = funcFiles[i][j][k].getName();
+                	        		fullPath = funcFiles[i][j][k].getAbsolutePath();
+                	        		index = fullPath.indexOf(BIDSString);
+            	        			imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
                 	        	}
             	        	} // for (k = 0; k < funcFiles[i][j].length; k++)
             	        } // if (fMRIAuxiliaryFileNumber > 0)
