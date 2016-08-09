@@ -2049,6 +2049,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int [][] exts = new int[numImages][];
     	int [] modality = new int[numImages];
     	String [] modalityString = new String[numImages];
+    	String [] imageFileName = new String[numImages];
     	int [] fileFormatInt = new int[numImages];
     	String [] fileFormatString = new String[numImages];
     	String [] upperStructureName = new String[numImages];
@@ -2121,6 +2122,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         double diff;
         
         for (i = 0; i < numImages; i++) {
+        	imageFileName[i] = img[i].getImageFileName();
         	res[i] = img[i].getResolutions(0);
             units[i] = img[i].getUnitsOfMeasure();
             exts[i] = img[i].getExtents();
@@ -2263,10 +2265,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 
             } // else if (fileFormatString[i].equalsIgnoreCase("nifti"))
             
-            imageFilename = img[i].getImageFileName();
-        	if ((imageFilename.contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length > 0)) {
+        	if ((imageFileName[i].contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length > 0)) {
         	    for (j = 0; j < boldJsonFilenames.length; j++) {
-        	        if (imageFilename.contains(boldJsonFilenames[j])) {
+        	        if (imageFileName[i].contains(boldJsonFilenames[j])) {
         	            if ((effectiveEchoSpacing != null)	&& (effectiveEchoSpacing.length >= j+1) &&
         	            		(!Double.isNaN(effectiveEchoSpacing[j]))) {
         	                imagingEchoSpacing[i] = String.valueOf(effectiveEchoSpacing[j]);	
@@ -2289,9 +2290,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	            		(!Double.isNaN(repetitionTimeDouble[j]))) {
         	            	repetitionTime[i] = String.valueOf(repetitionTimeDouble[j]);
         	            }
-        	        } // if (imageFilename.contains(boldJsonFilenames[j])) 
+        	        } // if (imageFileName[i].contains(boldJsonFilenames[j])) 
         	    } // for (j = 0; j < boldJsonFilenames.length; j++)
-        	} // if ((imageFilename.contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length > 0))
+        	} // if ((imageFileName[i].contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length > 0))
 
         } // for (i = 0; i < numImages; i++)
     	
@@ -2305,8 +2306,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	i++;
                 for (final DataElementValue deVal : repeat.getDataElements()) {
                     final String deName = deVal.getName();
-
-                    if (deName.equalsIgnoreCase("ImgDimensionTyp")) {
+                    if (deName.equalsIgnoreCase("ImgFile")) {
+                    	setElementComponentValue(deVal, imageFileName[i]);
+                    }
+                    else if (deName.equalsIgnoreCase("ImgModltyTyp")) {
+                    	setElementComponentValue(deVal, convertModalityToBRICS(modalityString[i], false));
+                    }
+                    else if (deName.equalsIgnoreCase("ImgDimensionTyp")) {
                         setElementComponentValue(deVal, exts[i].length + "D");
                     } else if (deName.equalsIgnoreCase("ImgDim1ExtentVal")) {
                         setElementComponentValue(deVal, String.valueOf(exts[i][0]));
