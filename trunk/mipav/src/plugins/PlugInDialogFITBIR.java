@@ -723,6 +723,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	String phaseEncodingDirection[];
     	String imagingFMRIAuxiliaryFile[] = null;
     	int fMRIAuxiliaryFileNumber = 0;
+    	int numberEventsTSVFiles = 0;
+    	String eventsTSVFilenames[] = null;
+    	String eventsTSVPathnames[] = null;
     	final JPanel mainPanel = new JPanel(new GridBagLayout());
 
         dsMainPanel = new JPanel(new GridBagLayout());
@@ -754,6 +757,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	    (files[i].getName().toLowerCase().endsWith(".json"))) {
         	    numberBoldJsonFiles++;	
         	}
+        	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv"))) {
+        		numberEventsTSVFiles++;
+        	}
         	else if ((files[i].isFile()) && (files[i].getName().equalsIgnoreCase("dwi.bval"))) {
         	    fullPath = files[i].getAbsolutePath();
         	    index = fullPath.indexOf(BIDSString);
@@ -768,6 +774,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	    printlnToLog("dwi.bvec read");
         	}
         }
+        if (numberEventsTSVFiles > 0) {
+        	eventsTSVFilenames = new String[numberEventsTSVFiles];
+        	eventsTSVPathnames = new String[numberEventsTSVFiles];
+        	for (i = 0, j = 0; i < files.length; i++) {
+        		if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv"))) {
+        		    index = files[i].getName().toLowerCase().indexOf("_events_tsv");
+        		    eventsTSVFilenames[j] = files[i].getName().substring(0,index);
+        		    fullPath = files[i].getAbsolutePath();
+        		    index = fullPath.indexOf(BIDSString);
+        		    eventsTSVPathnames[j++] = fullPath.substring(index);
+        		} // if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv")))
+        	} // for (i = 0; i < files.length; i++)
+        } // if (numberEventsTSVFiles > 0)
         boldJsonFilenames = new String[numberBoldJsonFiles];
         effectiveEchoSpacing = new double[numberBoldJsonFiles];
         echoTime = new double[numberBoldJsonFiles];
@@ -1559,6 +1578,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        if (scanstsvSessionDirectoryFiles != null) {
             	        	fMRIAuxiliaryFileNumber += scanstsvSessionDirectoryFiles[i][j].length;
             	        }
+            	        if (eventsTSVFilenames != null) {
+	            	        for (n = 0; n < eventsTSVFilenames.length; n++) {
+	            	        	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {	
+	            	        		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
+	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+		            	        		if (funcFiles[i][j][k].getName().contains(eventsTSVFilenames[n])) {
+		        	        		    	fMRIAuxiliaryFileNumber++;
+		        	        		    	found = true;
+		        	        		    }
+	            	        		}
+	            	        	}
+	            	        } // for (n = 0; n < eventsTSVFilenames.length; n++)
+            	        } // if (eventsTSVFilenames != null)
             	        if (fMRIAuxiliaryFileNumber > 0) {
             	        	imagingFMRIAuxiliaryFile = new String[fMRIAuxiliaryFileNumber];
             	        	m = 0;
@@ -1588,14 +1620,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        			imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
             	        	    }
             	        	}
-            	        	for (k = 0; k < funcFiles[i][j].length; k++) {
-                	        	if ((!funcFiles[i][j][k].getName().endsWith("nii.gz")) &&
-                	        	    (!funcFiles[i][j][k].getName().endsWith(".nii"))) {
-                	        		fullPath = funcFiles[i][j][k].getAbsolutePath();
-                	        		index = fullPath.indexOf(BIDSString);
-            	        			imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
-                	        	}
-            	        	} // for (k = 0; k < funcFiles[i][j].length; k++)
+            	        	if (eventsTSVFilenames != null) {
+	            	        	for (n = 0; n < eventsTSVFilenames.length; n++) {
+	                	        	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {	
+	                	        		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
+	                        	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+	    	            	        		if (funcFiles[i][j][k].getName().contains(eventsTSVFilenames[n])) {
+	    	        	        		    	imagingFMRIAuxiliaryFile[m++] = eventsTSVPathnames[n];
+	    	        	        		    	found = true;
+	    	        	        		    }
+	                	        		}
+	                	        	}
+	                	        } // for (n = 0; n < eventsTSVFilenames.length; n++)
+            	        	} // if (eventsTSVFilenames != null)
             	        } // if (fMRIAuxiliaryFileNumber > 0)
             	        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
             	        parseForInitLabelsAndComponents();
