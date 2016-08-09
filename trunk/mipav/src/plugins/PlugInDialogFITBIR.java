@@ -2442,6 +2442,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 	                else if ((deName.equalsIgnoreCase("ImgDIffusionBVecFile")) && (dwibvecString != null)) {
 	                	setElementComponentValue(deVal, dwibvecString);
 	                }
+	                // ImagingFunctionalMR FS
+	                else if (deName.equalsIgnoreCase("ImgPulseSeqTyp")) {
+                        if (fsData.getStructInfo().getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
+                            setElementComponentValue(deVal, "fMRI");
+                        }
+                    } 
                 }
             }
         }
