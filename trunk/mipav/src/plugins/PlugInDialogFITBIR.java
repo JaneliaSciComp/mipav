@@ -2116,7 +2116,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         int j;
         // If true, the NIFTI file has a Java Script Object Node extension header
         boolean haveJson;
-        String imageFilename;
         Unit tUnit;
         double tResol;
         double diff;
@@ -2309,9 +2308,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     if (deName.equalsIgnoreCase("ImgFile")) {
                     	setElementComponentValue(deVal, imageFileName[i]);
                     }
-                    else if (deName.equalsIgnoreCase("ImgModltyTyp")) {
-                    	setElementComponentValue(deVal, convertModalityToBRICS(modalityString[i], false));
-                    }
                     else if (deName.equalsIgnoreCase("ImgDimensionTyp")) {
                         setElementComponentValue(deVal, exts[i].length + "D");
                     } else if (deName.equalsIgnoreCase("ImgDim1ExtentVal")) {
@@ -2497,6 +2493,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         } else if ((deName.equalsIgnoreCase("ImgMRIT1T2SeqName")) && (mriT1T2Name[i] != null)) {
                             setElementComponentValue(deVal, mriT1T2Name[i]);
                         }
+                		else if (deName.equalsIgnoreCase("ImgModltyTyp")) {
+                        	setElementComponentValue(deVal, convertModalityToBRICS(modalityString[i], false));
+                        }
+                        // ImagingFunctionalMR FS
+    	                else if (deName.equalsIgnoreCase("ImgPulseSeqTyp")) {
+                            if (fsData.getStructInfo().getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
+                                setElementComponentValue(deVal, "fMRI");
+                            }
+                        } 
                     }
 	                if ((deName.equalsIgnoreCase("ImgEchoDur")) && (echoTime[i] != null)) {
 	                    setElementComponentValue(deVal, echoTime[i]);
@@ -2524,12 +2529,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 	                else if ((deName.equalsIgnoreCase("ImgDIffusionBVecFile")) && (dwibvecString != null)) {
 	                	setElementComponentValue(deVal, dwibvecString);
 	                }
-	                // ImagingFunctionalMR FS
-	                else if (deName.equalsIgnoreCase("ImgPulseSeqTyp")) {
-                        if (fsData.getStructInfo().getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
-                            setElementComponentValue(deVal, "fMRI");
-                        }
-                    } 
+	                
                 }
             }
         }
