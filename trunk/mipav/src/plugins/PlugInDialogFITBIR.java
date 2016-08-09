@@ -695,14 +695,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int sessionsRead;
     	int subject_id_read = 0;
     	int numberBoldJsonFiles = 0;
-    	String boldJsonFilenames[];
+    	String boldJsonFilenames[] = null;
+    	String boldJsonPathnames[] = null;
+    	int numberPhysioJsonFiles = 0;
+    	String physioJsonFilenames[] = null;
+    	String physioJsonPathnames[] = null;
     	byte bufferByte[] = null;
     	String jsonString;
     	String openBracket;
     	String closeBracket;
     	JSONObject jsonObject = null;
-    	double effectiveEchoSpacing[];
-    	double echoTime[];
+    	double effectiveEchoSpacing[] = null;
+    	double echoTime[] = null;
     	String BIDSString = null;
     	String fullPath = null;
     	String dwibvalString = null;
@@ -712,7 +716,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	// time between scans (when no data has been acquired) in case of sparse acquisition schemes.  This value
     	// needs to be consistent with the 'pixdim[4]' field (after accounting for units stored in 'xyzt_units'
     	// field) in the NIFTI header.
-    	double repetitionTime[];
+    	double repetitionTime[] = null;
     	// Possible values, "i", "j", "k", "i-", "j-", "k-".  The letters "i", "j", "k" correspond to the first, second,
     	// and third, axis of the data in the NIFTI file.  The polarity of the phase encoding is assumed to go from zero 
     	// index to maximum index unless '-' sign is present(then the order is reversed - starting from highest index 
@@ -720,7 +724,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	// PhaseEncodingDirection is defined as the direction along which phase was modulated which may result in 
     	// visible distortions.  Note that this is not the same as the DICOM term inPlanePhaseEncodingDirection
         // which can have "ROW" or "COL" values.
-    	String phaseEncodingDirection[];
+    	String phaseEncodingDirection[] = null;
     	String imagingFMRIAuxiliaryFile[] = null;
     	int fMRIAuxiliaryFileNumber = 0;
     	int numberEventsTSVFiles = 0;
@@ -753,9 +757,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	else if ((files[i].isFile()) && (files[i].getName().equalsIgnoreCase("participants.tsv"))) {
         		participantsFile = files[i];
         	}
-        	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().contains("_bold")) &&
-        	    (files[i].getName().toLowerCase().endsWith(".json"))) {
+        	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_bold.json"))) {
         	    numberBoldJsonFiles++;	
+        	}
+        	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_physio.json"))) {
+        	    numberPhysioJsonFiles++;	
         	}
         	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv"))) {
         		numberEventsTSVFiles++;
@@ -787,110 +793,128 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         		} // if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv")))
         	} // for (i = 0; i < files.length; i++)
         } // if (numberEventsTSVFiles > 0)
-        boldJsonFilenames = new String[numberBoldJsonFiles];
-        effectiveEchoSpacing = new double[numberBoldJsonFiles];
-        echoTime = new double[numberBoldJsonFiles];
-        repetitionTime = new double[numberBoldJsonFiles];
-        phaseEncodingDirection = new String[numberBoldJsonFiles];
-        for (i = 0; i < numberBoldJsonFiles; i++) {
-        	effectiveEchoSpacing[i] = Double.NaN;
-        	echoTime[i] = Double.NaN;
-        	repetitionTime[i] = Double.NaN;
-        }
-        for (i = 0, j = 0; i < files.length; i++) {
-        	if ((files[i].isFile()) && (files[i].getName().toLowerCase().contains("_bold")) &&
-        	    (files[i].getName().toLowerCase().endsWith(".json"))) {
-        		index = files[i].getName().lastIndexOf("_bold");
-        	    boldJsonFilenames[j] = files[i].getName().substring(0,index);
-        	    try {
-                    raFile = new RandomAccessFile(files[i], "r");
-                    processFile = true;
-            	}
-            	catch (FileNotFoundException e) {
-            		System.err.println("FileNotFoundException " + e);
-            		processFile = false;
-            	}
-        	    if (processFile) {
-    	        	try {
-    	        	    fileLength = raFile.length();
-    	        	}
-    	        	catch (IOException e) {
-    	        		System.err.println("IOException " + e);
-    	        		processFile = false;
-    	        	}
-            	} // if (processFile)
-        	    if (processFile) {
-        	        bufferByte = new byte[(int)fileLength];
-        	        try {
-        	            raFile.read(bufferByte);	
-        	        }
-        	        catch (IOException e) {
-        	        	System.err.println("IOException " + e);
-        	        	processFile = false;
-        	        }
-        	    } // if (processFile)
-        	    if (processFile) {
-        	    	openBracket = new String(bufferByte, 0, 1);
-                    if (openBracket.equals("{")) {
-                    	// Padded to 16 bytes, so could be a }, }<sp>, }<sp><sp>, or }<sp><sp><sp>, etc.
-                        closeBracket = new String(bufferByte, (int)(fileLength-17), 16);
-                        if (closeBracket.trim().endsWith("}")) {
-                        	processFile = true;
-                        }
-                        else {
-                        	processFile = false;
-                        }
-                    }
-                    else {
-                    	processFile = false;
-                    }
-        	    } // if (processFile)
-        	    if (processFile) {
-            	    jsonString = new String(bufferByte, 0, (int)fileLength);
-            	    try {
-                	    jsonObject = new JSONObject(jsonString);
-                	}
-                	catch (JSONException e) {
-                		System.err.println("JSONException " + e + " on new JSONObject(jsonString)");
-                		processFile = false;
-                	}
-        	    } // if (processFile)
-        	    if (processFile) {
-        	        try {
-        	        	// Change seconds to milliseconds
-        	        	effectiveEchoSpacing[j] = 1000.0 * jsonObject.getDouble("EffectiveEchoSpacing");
-        	        }
-        	        catch (JSONException e) {
-        	            System.err.println("JSONException " + e + " jsonObject.getDouble EffectiveEchoSpacing");	
-        	        }
-        	        try {
-        	        	echoTime[j] = 1000.0 * jsonObject.getDouble("EchoTime");
-        	        }
-        	        catch (JSONException e) {
-        	        	System.err.println("JSONException " + e + " jsonObject.getDouble EchoTime");
-        	        }
-        	        try {
-        	        	repetitionTime[j] = 1000.0 * jsonObject.getDouble("RepetitionTime");
-        	        }
-        	        catch (JSONException e) {
-        	        	System.err.println("JSONException " + e + "jsonObject.getDouble RepetitionTime");
-        	        }
-        	        try {
-        	        	phaseEncodingDirection[j] = jsonObject.getString("PhaseEncodingDirection");
-        	        }
-        	        catch (JSONException e) {
-        	        	System.err.println("JSONException " + e + " jsonObject.getString PhaseEncodingDirection");
-        	        }
-        	    } // if (processFile)
-        	    j++;
-        	    try {
-        	    	raFile.close();
-        	    }
-        	    catch (IOException e) {
-        	    	System.err.println(" IOException " + e + " on raFile.close()");
-        	    }
-        	}
-        }
+        if (numberBoldJsonFiles > 0) {
+	        boldJsonFilenames = new String[numberBoldJsonFiles];
+	        boldJsonPathnames = new String[numberBoldJsonFiles];
+	        effectiveEchoSpacing = new double[numberBoldJsonFiles];
+	        echoTime = new double[numberBoldJsonFiles];
+	        repetitionTime = new double[numberBoldJsonFiles];
+	        phaseEncodingDirection = new String[numberBoldJsonFiles];
+	        for (i = 0; i < numberBoldJsonFiles; i++) {
+	        	effectiveEchoSpacing[i] = Double.NaN;
+	        	echoTime[i] = Double.NaN;
+	        	repetitionTime[i] = Double.NaN;
+	        }
+	        for (i = 0, j = 0; i < files.length; i++) {
+	        	if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_bold.json"))) {
+	        		index = files[i].getName().lastIndexOf("_bold.json");
+	        	    boldJsonFilenames[j] = files[i].getName().substring(0,index);
+	        	    fullPath = files[i].getAbsolutePath();
+        		    index = fullPath.indexOf(BIDSString);
+        		    boldJsonPathnames[j] = fullPath.substring(index);
+	        	    try {
+	                    raFile = new RandomAccessFile(files[i], "r");
+	                    processFile = true;
+	            	}
+	            	catch (FileNotFoundException e) {
+	            		System.err.println("FileNotFoundException " + e);
+	            		processFile = false;
+	            	}
+	        	    if (processFile) {
+	    	        	try {
+	    	        	    fileLength = raFile.length();
+	    	        	}
+	    	        	catch (IOException e) {
+	    	        		System.err.println("IOException " + e);
+	    	        		processFile = false;
+	    	        	}
+	            	} // if (processFile)
+	        	    if (processFile) {
+	        	        bufferByte = new byte[(int)fileLength];
+	        	        try {
+	        	            raFile.read(bufferByte);	
+	        	        }
+	        	        catch (IOException e) {
+	        	        	System.err.println("IOException " + e);
+	        	        	processFile = false;
+	        	        }
+	        	    } // if (processFile)
+	        	    if (processFile) {
+	        	    	openBracket = new String(bufferByte, 0, 1);
+	                    if (openBracket.equals("{")) {
+	                    	// Padded to 16 bytes, so could be a }, }<sp>, }<sp><sp>, or }<sp><sp><sp>, etc.
+	                        closeBracket = new String(bufferByte, (int)(fileLength-17), 16);
+	                        if (closeBracket.trim().endsWith("}")) {
+	                        	processFile = true;
+	                        }
+	                        else {
+	                        	processFile = false;
+	                        }
+	                    }
+	                    else {
+	                    	processFile = false;
+	                    }
+	        	    } // if (processFile)
+	        	    if (processFile) {
+	            	    jsonString = new String(bufferByte, 0, (int)fileLength);
+	            	    try {
+	                	    jsonObject = new JSONObject(jsonString);
+	                	}
+	                	catch (JSONException e) {
+	                		System.err.println("JSONException " + e + " on new JSONObject(jsonString)");
+	                		processFile = false;
+	                	}
+	        	    } // if (processFile)
+	        	    if (processFile) {
+	        	        try {
+	        	        	// Change seconds to milliseconds
+	        	        	effectiveEchoSpacing[j] = 1000.0 * jsonObject.getDouble("EffectiveEchoSpacing");
+	        	        }
+	        	        catch (JSONException e) {
+	        	            System.err.println("JSONException " + e + " jsonObject.getDouble EffectiveEchoSpacing");	
+	        	        }
+	        	        try {
+	        	        	echoTime[j] = 1000.0 * jsonObject.getDouble("EchoTime");
+	        	        }
+	        	        catch (JSONException e) {
+	        	        	System.err.println("JSONException " + e + " jsonObject.getDouble EchoTime");
+	        	        }
+	        	        try {
+	        	        	repetitionTime[j] = 1000.0 * jsonObject.getDouble("RepetitionTime");
+	        	        }
+	        	        catch (JSONException e) {
+	        	        	System.err.println("JSONException " + e + "jsonObject.getDouble RepetitionTime");
+	        	        }
+	        	        try {
+	        	        	phaseEncodingDirection[j] = jsonObject.getString("PhaseEncodingDirection");
+	        	        }
+	        	        catch (JSONException e) {
+	        	        	System.err.println("JSONException " + e + " jsonObject.getString PhaseEncodingDirection");
+	        	        }
+	        	    } // if (processFile)
+	        	    j++;
+	        	    try {
+	        	    	raFile.close();
+	        	    }
+	        	    catch (IOException e) {
+	        	    	System.err.println(" IOException " + e + " on raFile.close()");
+	        	    }
+	        	}
+	        }
+        } // if (numberBoldJsonFiles > 0)
+        if (numberPhysioJsonFiles > 0) {
+	        physioJsonFilenames = new String[numberPhysioJsonFiles];
+	        physioJsonPathnames = new String[numberPhysioJsonFiles];
+	        for (i = 0, j = 0; i < files.length; i++) {
+	        	if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_physio.json"))) {
+	        		index = files[i].getName().lastIndexOf("_physio.json");
+	        	    physioJsonFilenames[j] = files[i].getName().substring(0,index);
+	        	    fullPath = files[i].getAbsolutePath();
+        		    index = fullPath.indexOf(BIDSString);
+        		    physioJsonPathnames[j++] = fullPath.substring(index);
+	        	}
+	        }
+        } // if (numberPhysioJsonFiles > 0)
         printlnToLog("Number of subjects = " + numberSubjects);
         if (numberSubjects == 0) {
         	return false;
@@ -1591,6 +1615,32 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 	            	        	}
 	            	        } // for (n = 0; n < eventsTSVFilenames.length; n++)
             	        } // if (eventsTSVFilenames != null)
+            	        if (boldJsonFilenames != null) {
+            	            for (n = 0; n < boldJsonFilenames.length; n++) {
+            	            	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+            	            		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
+	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+		            	        		if (funcFiles[i][j][k].getName().contains(boldJsonFilenames[n])) {
+		        	        		    	fMRIAuxiliaryFileNumber++;
+		        	        		    	found = true;
+		        	        		    }
+	            	        		}	
+            	            	}
+            	            }
+            	        } // if (boldJsonFilenames != null)
+            	        if (physioJsonFilenames != null) {
+            	            for (n = 0; n < physioJsonFilenames.length; n++) {
+            	            	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+            	            		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
+	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+		            	        		if (funcFiles[i][j][k].getName().contains(physioJsonFilenames[n])) {
+		        	        		    	fMRIAuxiliaryFileNumber++;
+		        	        		    	found = true;
+		        	        		    }
+	            	        		}	
+            	            	}
+            	            }
+            	        } // if (physioJsonFilenames != null)
             	        if (fMRIAuxiliaryFileNumber > 0) {
             	        	imagingFMRIAuxiliaryFile = new String[fMRIAuxiliaryFileNumber];
             	        	m = 0;
@@ -1633,6 +1683,32 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 	                	        	}
 	                	        } // for (n = 0; n < eventsTSVFilenames.length; n++)
             	        	} // if (eventsTSVFilenames != null)
+            	        	if (boldJsonFilenames != null) {
+                	            for (n = 0; n < boldJsonFilenames.length; n++) {
+                	            	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+                	            		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
+    	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+    		            	        		if (funcFiles[i][j][k].getName().contains(boldJsonFilenames[n])) {
+    		        	        		        imagingFMRIAuxiliaryFile[m++] = boldJsonPathnames[n];
+    		        	        		    	found = true;
+    		        	        		    }
+    	            	        		}	
+                	            	}
+                	            }
+                	        } // if (boldJsonFilenames != null)
+            	        	if (physioJsonFilenames != null) {
+                	            for (n = 0; n < physioJsonFilenames.length; n++) {
+                	            	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+                	            		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
+    	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+    		            	        		if (funcFiles[i][j][k].getName().contains(physioJsonFilenames[n])) {
+    		        	        		        imagingFMRIAuxiliaryFile[m++] = physioJsonPathnames[n];
+    		        	        		    	found = true;
+    		        	        		    }
+    	            	        		}	
+                	            	}
+                	            }
+                	        } // if (physioJsonFilenames != null)
             	        } // if (fMRIAuxiliaryFileNumber > 0)
             	        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
             	        parseForInitLabelsAndComponents();
