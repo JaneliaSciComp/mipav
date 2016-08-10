@@ -2144,8 +2144,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         FileInfoNIFTI fileInfoNifti;
         int i;
         int j;
-        // If true, the NIFTI file has a Java Script Object Node extension header
-        boolean haveJson;
+        // If true, the NIFTI file has a DcmMeta extension header using JSON encoding
+        boolean haveDcmMeta;
         Unit tUnit;
         double tResol;
         double diff;
@@ -2273,8 +2273,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 	                softwareVersion[i] = convertNiftiDescToBRICSVer(description);
                 } // if ((description != null) && (description.length() > 0))
                 
-                haveJson = fileInfoNifti.getHaveJson();
-                if (haveJson) {
+                haveDcmMeta = fileInfoNifti.getHaveDcmMeta();
+                if (haveDcmMeta) {
                     visitTime[i] = fileInfoNifti.getStudyTime();
                     manufacturer[i] = convertManufNameToBRICS(fileInfoNifti.getManufacturer());
                     scannerModel[i] = fileInfoNifti.getManufacturerModelName();
@@ -2290,7 +2290,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     phaseEncode[i] = fileInfoNifti.getInPlanePhaseEncodingDirection();
                     numAverages[i] = String.valueOf(fileInfoNifti.getNumberOfAverages());
                     mriT1T2Name[i] = fileInfoNifti.getSequenceName();
-                } // if (haveJson)
+                } // if (haveDcmMeta)
                 
             } // else if (fileFormatString[i].equalsIgnoreCase("nifti"))
             
