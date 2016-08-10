@@ -604,113 +604,226 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private String patientOrientationString = null;
     
-    // Tells whether or not an extended header with JavaScript Object Notation is present. 
-    private boolean haveJson = false;
+    // Tells whether or not an extended DcmMeta header encoded with JavaScript Object Notation is present. 
+    private boolean haveDcmMeta = false;
     
-    // The below fields are found in extended JSON headers:
+    // The below fields are found in extended DcmMeta headers:
     
+    // Required if an extended or replacement character set is used in one of the keys
+    // DICOM:0008_0005 CS
     private String specificCharacterSet = null;
     
+    // Image identification characteristics. The Image Type (0008,0008) Attribute identifies 
+    // important image identification characteristics.
+    // These characteristics are: a. Pixel Data Characteristics. b. Patient Examination Characteristics.
+    // c. Modality Specific Characteristics.
+    // DICOM:0008_0008 CS
     private String imageType[] = null;
     
+    // Time at which the acquisition of the study information was started.
+    // DICOM:0008_0030 TM
     private String studyTime = null;
     
+    // Time the Series started.
+    // DICOM:0008_0031 TM
     private String seriesTime = null;
     
+    // A departmental IS generated number that identifies the order for the Imaging Service Request.
+    // DICOM:0008_0050 		Imaging data attribute 	DICOM term 	SH
     private String accessionNumber = null;
     
+    // Type of equipment that acquired the data used to create the images in this Study Component.
+    // DICOM:0008_0060 CS
     private String modalityString = null;
     
+    // Manufacturer of the equipment that produced the composite instances.
+    // DICOM:0008_0070 LO
     private String manufacturer = null;
     
+    // Manufacturers model name of the equipment that produced the composite instances.
+    // DICOM:0008_1090 LO
     private String manufacturerModelName = null;
     
+    // Description of the type of data taken.
+    // DICOM:0018_0020 CS
     private String scanningSequence = null;
     
+    // Variant of the Scanning Sequence.
+    // DICOM:0018_0021 CS
     private String sequenceVariant = null;
     
     private String scanOptions = null;
     
+    // Identification of data encoding scheme.
+    // DICOM:0018_0023 CS
     private String MRAcquisitionType = null;
     
+    // User defined name for the Scanning Sequence (0018,0020) and Sequence Variant (0018,0021) combination.
+    // DICOM:0018_0024 SH
     private String sequenceName = null;
     
+    // Angio Image Indicator. Primary image for Angio processing. 	
+    // DICOM:0018_0025 		Imaging protocol attribute 	DICOM term 	CS
     private String angioFlag = null;
     
+    // The period of time in msec between the beginning of a pulse sequence and the beginning of the 
+    // succeeding (essentially identical) pulse sequence. Required except when Scanning Sequence (0018,0020) is EP and 
+    // Sequence Variant (0018,0021) is not SK.
+    // DICOM:0018_0080 DS
     private double repetitionTime = Double.NaN;
     
+    // Time in ms between the middle of the excitation pulse and the peak of the echo produced (kx=0). 
+    // In the case of segmented k-space, the TE(eff) is the time between the middle of the excitation pulse to
+    //the peak of the echo that is used to cover the center of the segment. 	
+    // DICOM:0018_0081 		Imaging protocol attribute 	DICOM term 	DS
     private double echoTime = Double.NaN;
     
+    // Number of times a given pulse sequence is repeated before any parameter is changed.
+    // DICOM:0018_0083 DS
     private double numberOfAverages = Double.NaN;
     
+    // Precession frequency in MHz of the nucleus being imaged.
+    // DICOM:0018_0084 DS
     private double imagingFrequency = Double.NaN;
     
+    // Nucleus that is resonant at the imaging frequency. Examples: 31P, 1H.
+    // DICOM:0018_0085 SH
     private String imagedNucleus = null;
     
+    // The echo number used in generating this image. In the case of segmented k-space, it is the effective Echo Number. 	
+    // DICOM:0018_0086 		Imaging protocol attribute 	DICOM term 	IS
     private int echoNumbers = Integer.MIN_VALUE;
     
+    // Nominal field strength of MR magnet in Tesla.
+    // DICOM:0018_0087 DS
     private double magneticFieldStrength = Double.NaN;
     
+    // Spacing between slices, in mm. The spacing is measured from the center-tocenter of each slice.
+    // DICOM:0018_0088 DS
     private double spacingBetweenSlices = Double.NaN;
     
+    // Total number of lines in k-space in the "y" direction collected during acquisition.
+    // DICOM:0018_0089 IS
     private int numberOfPhaseEncodingSteps = Integer.MIN_VALUE;
     
+    // Number of lines in k-space acquired per excitation per image. 	
+    // DICOM:0018_0091 		Imaging protocol attribute 	DICOM term 	IS
     private int echoTrainLength = Integer.MIN_VALUE;
     
+    // Fraction of acquisition matrix lines acquired, expressed as a percent.
+    // DICOM:0018_0093 DS
     private double percentSampling = Double.NaN;
     
+    // Ratio of field of view dimension in phase direction to field of view dimension in frequency direction, expressed as a percent.
+    // DICOM:0018_0094 DS
     private double percentPhaseFieldOfView = Double.NaN;
     
+    // Reciprocal of the total sampling period, in hertz per pixel.
+    // DICOM:0018_0095 DS
     private double pixelBandwidth = Double.NaN;
     
+    // Manufacturers designation of software version of the equipment that produced the composite instances.
+    // DICOM:0018_1020 LO
     private String softwareVersions = null;
     
+    // Transmit coil used.
+    // DICOM:0018_1251 SH
     private String transmitCoilName = null;
     
+    // Dimensions of the acquired frequency /phase data before reconstruction. 
+    // Multi-valued: frequency rowsfrequency columnsphase rowsphase columns. 	
+    // DICOM:0018_1310 		Imaging protocol attribute 	DICOM term 	US
     private int acquisitionMatrix[] =  null;
     
+    // The axis of phase encoding with respect to the image.
+    // DICOM:0018_1312 CS
     private String inPlanePhaseEncodingDirection = null;
     
+    // Steady state angle in degrees to which the magnetic vector is flipped from the magnetic vector of the primary field.
+    // DICOM:0018_1314 		Imaging protocol attribute 	DICOM term 	DS
     private double flipAngle = Double.NaN;
     
+    // Flip angle variation applied during image acquisition.
+    // DICOM:0018_1315 CS
     private String variableFlipAngleFlag = null;
     
+    // Calculated whole body Specific Absorption Rate in watts/kilogram.
+    // DICOM:0018_1316 DS
     private double SAR = Double.NaN;
     
+    // The rate of change of the gradient coil magnetic flux density with time (T/s). 	
+    // DICOM:0018_1318 		Imaging hardware attribute 	DICOM term 	DS
     private double dBdt = Double.NaN;
     
+    // A number that identifies this Series.
+    // DICOM:0020_0011 IS
     private int seriesNumber = Integer.MIN_VALUE;
     
+    // The x, y, and z coordinates of the upper left hand corner (center of the first voxel transmitted) of the image, in mm.
+    // DICOM:0020_0032 DS
     private double imagePositionPatient[] = null;
     
+    // The direction cosines of the first row and the first column with respect to the patient.
+    // DICOM:0020_0037 DS
     private double imageOrientationPatient[] = null;
     
+    // Relative position of exposure expressed in mm. The Slice Location (0020,1041) is defined as the 
+    // relative position of exposure expressed in mm. This information is relative to an unspecified implementation
+    // specific reference point.
+    // DICOM:0020_1041 DS
     private double sliceLocation = Double.NaN;
     
+    // Number of samples (planes) in this image.
+    // DICOM:0028_0002 US
     private int samplesPerPixel = Integer.MIN_VALUE;
     
+    // Specifies the intended interpretation of the pixel data.
+    // DICOM:0028_0004 CS
     private String photometricInterpretation = null;
     
+    // Number of rows in the ima=ge
+    // DICOM: 0028_0010 US
     private int rows = Integer.MIN_VALUE;
     
+    // Number of columns in the image.
+    // DICOM:0028_0011 US
     private int columns = Integer.MIN_VALUE;
     
+    // Physical distance in the patient between the center of each pixel, specified by a numeric pair - 
+    // adjacent row spacing (delimiter) adjacent column spacing in mm.
+    // DICOM:0028_0030 DS
     private double pixelSpacing[] = null;
     
+    // Number of bits allocated for each pixel sample. Each sample shall have the same number of bits allocated. 
+    // See PS 3.5 for further explanation. 	DICOM:0028_0100 		Imaging data attribute 	DICOM term 	US
     private int bitsAllocated = Integer.MIN_VALUE;
     
+    // Number of bits stored for each pixel sample. Each sample shall have the same number of bits stored. 
+    // See PS 3.5 for further explanation. 	DICOM:0028_0101 		Imaging data attribute 	DICOM term 	US
     private int bitsStored = Integer.MIN_VALUE;
     
+    // Most significant bit for pixel sample data. Each sample shall have the same high bit.
+    // DICOM:0028_0102 US
     private int highBit = Integer.MIN_VALUE;
     
+    // Data representation of the pixel samples. Each sample shall have the same pixel representation.
+    // DICOM:0028_0103 US
     private int pixelRepresentation = Integer.MIN_VALUE;
     
+    // The minimum actual pixel value encountered in this image.
+    // DICOM:0028_0106 US or SS
     private int smallestImagePixelValue = Integer.MAX_VALUE;
     
+    // The maximum actual pixel value encountered in this image.
+    // DICOM:0028_0107 US or SS
     private int largestImagePixelValue = Integer.MIN_VALUE;
     
+    // Explanation of the Window Center and Width.
+    // DICOM:0028_1055 LO
     private String windowCenterWidthExplanation = null;
     
+    // Time at which the Performed Procedure Step started.
+    // DICOM:0040_0245 TM
     private String performedProcedureStepStartTime = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -1266,8 +1379,8 @@ public class FileInfoNIFTI extends FileInfoBase {
         	dialog.append("No extended header is present\n");
         }
         
-        if (haveJson) {
-        	dialog.append("An extended Java Script Object Notation Header has:\n");
+        if (haveDcmMeta) {
+        	dialog.append("An extended DcmMeta Header encoded with JSON has:\n");
         	if (specificCharacterSet != null) {
         		dialog.append("Specific character set = " + specificCharacterSet + "\n");
         	}
@@ -1451,8 +1564,8 @@ public class FileInfoNIFTI extends FileInfoBase {
         String ecodeStr = null;
         switch(ecode) {
             case 0:
-            	if (haveJson) {
-            		ecodeStr = "Java Script Object Notation";
+            	if (haveDcmMeta) {
+            		ecodeStr = "DcmMeta encoded with JSON";
             	}
             	else {
                     ecodeStr = "Unknown private format";
@@ -2227,12 +2340,12 @@ public class FileInfoNIFTI extends FileInfoBase {
         }
     }
     
-    public void setHaveJson(boolean haveJson) {
-    	this.haveJson = haveJson;
+    public void setHaveDcmMeta(boolean haveDcmMeta) {
+    	this.haveDcmMeta = haveDcmMeta;
     }
   
-    public boolean getHaveJson() {
-    	return haveJson;
+    public boolean getHaveDcmMeta() {
+    	return haveDcmMeta;
     }
     
     public void setSpecificCharacterSet(String specificCharacterSet) {
