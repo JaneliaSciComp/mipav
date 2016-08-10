@@ -730,7 +730,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     	int numberEventsTSVFiles = 0;
     	String eventsTSVFilenames[] = null;
     	String eventsTSVPathnames[] = null;
+    	int subdirectoriesFound = 0;
+    	int subdirectoriesRead = 0;
+    	int pValue;
     	final JPanel mainPanel = new JPanel(new GridBagLayout());
+    	
+    	fileIO.setQuiet(true);
+    	final ViewJProgressBar progressBar = new ViewJProgressBar("Reading BIDS directories", "Reading BIDS directories...", 0, 100, false);
+        progressBar.setVisible(true);
+        progressBar.updateValue(5);
 
         dsMainPanel = new JPanel(new GridBagLayout());
         final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -1249,6 +1257,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         		}
         	}
         }
+        //subdirectoriesFound = anatNumber + funcNumber + dwiNumber + fmapNumber;
+        subdirectoriesFound = anatNumber + funcNumber + dwiNumber;
         
         printlnToLog(anatNumber + " anat subdirectories were found");
         printlnToLog(funcNumber + " func subdirectories were found");
@@ -1372,7 +1382,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         	}
         } // if (fmapNumber > 0)
         
-        
+        progressBar.updateValue(20);
         if (anatNumber > 0) {
             found = false;
             for (i = 0; i < dataStructureList.size() && (!found); i++) {
@@ -1381,7 +1391,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             		ds = dataStructureList.get(i);
             		dataStructureName = "ImagingMR";
             		if (ds.getDataElements().size() == 0) {
-                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName());
+            			progressBar.setMessage("Retrieving data elements for form structure: " + ds.getShortName());
+                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName(), false);
                         thread.run();
 
                         dsInfo = thread.getFullFormStructure();
@@ -1394,6 +1405,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             anatJsonRead = 0;
             for (i = 0; i < numberSubjects; i++) {
             	for (j = 0; j < anatFiles[i].length; j++) {
+            		pValue = 20 + 80*subdirectoriesRead/subdirectoriesFound;
+            		progressBar.updateValue(pValue);
+            		subdirectoriesRead++;
             	    if ((anatFiles[i][j] != null) && (anatFiles[i][j].length > 0)) {
             	    	sessionImagesRead = 0;
             	    	sessionJsonRead = 0;
@@ -1405,6 +1419,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        for (k = 0; k < anatFiles[i][j].length; k++) {
             	        	if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        	    (anatFiles[i][j][k].getName().endsWith(".nii"))) {
+            	        		progressBar.setMessage("Reading " + anatFiles[i][j][k].getName());
+            	        		progressBar.updateValue(pValue + k*80/(subdirectoriesFound*anatFiles[i][j].length));
             	        		if (anatFiles[i][j][k].getName().endsWith("nii.gz")) {
             	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI( anatFiles[i][j][k].getName(),
             	        		    		anatFiles[i][j][k].getParentFile().getAbsolutePath(), false, true, true);
@@ -1497,7 +1513,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             		ds = dataStructureList.get(i);
             		dataStructureName = "ImagingFunctionalMR";
             		if (ds.getDataElements().size() == 0) {
-                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName());
+            			progressBar.setMessage("Retrieving data elements for form structure: " + ds.getShortName());
+                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName(), false);
                         thread.run();
 
                         dsInfo = thread.getFullFormStructure();
@@ -1513,6 +1530,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             funcPhysioJsonRead = 0;
             for (i = 0; i < numberSubjects; i++) {
             	for (j = 0; j < funcFiles[i].length; j++) {
+            		pValue = 20 + 80*subdirectoriesRead/subdirectoriesFound;
+            		progressBar.updateValue(pValue);
+            		subdirectoriesRead++;
             	    if (funcFiles[i][j] != null) {
             	    	sessionImagesRead = 0;
             	    	sessionJsonRead = 0;
@@ -1529,6 +1549,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
             	        		if (funcFiles[i][j][k].getName().endsWith("nii.gz")) {
+            	        			progressBar.setMessage("Reading " + funcFiles[i][j][k].getName());
+            	        			progressBar.updateValue(pValue + k*80/(subdirectoriesFound*funcFiles[i][j].length));
             	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getName(),
             	        		    		funcFiles[i][j][k].getParentFile().getAbsolutePath(), false, true, true);
             	        		    index = funcFiles[i][j][k].getName().indexOf("nii.gz");
@@ -1758,7 +1780,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             		ds = dataStructureList.get(i);
             		dataStructureName = "ImagingDiffusion";
             		if (ds.getDataElements().size() == 0) {
-                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName());
+            			progressBar.setMessage("Retrieving data elements for form structure: " + ds.getShortName());
+                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName(), false);
                         thread.run();
 
                         dsInfo = thread.getFullFormStructure();
@@ -1773,6 +1796,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             dwiBvecRead = 0;
             for (i = 0; i < numberSubjects; i++) {
             	for (j = 0; j < funcFiles[i].length; j++) {
+            		pValue = 20 + 80*subdirectoriesRead/subdirectoriesFound;
+            		progressBar.updateValue(pValue);
+            		subdirectoriesRead++;
             	    if (dwiFiles[i][j] != null) {
             	    	sessionImagesRead = 0;
             	    	sessionJsonRead = 0;
@@ -1787,6 +1813,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             	        	if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
             	        	    (dwiFiles[i][j][k].getName().endsWith(".nii"))) {
             	        		if (dwiFiles[i][j][k].getName().endsWith("nii.gz")) {
+            	        			progressBar.setMessage("Reading " + dwiFiles[i][j][k].getName());
+            	        			progressBar.updateValue(pValue + k*80/(subdirectoriesFound*dwiFiles[i][j].length));
             	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getName(),
             	        		    		dwiFiles[i][j][k].getParentFile().getAbsolutePath(), false, true, true);
             	        		    index = dwiFiles[i][j][k].getName().indexOf("nii.gz");
@@ -1871,6 +1899,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         
         //finishButton.setEnabled(true);
         enableDisableFinishButton();
+        progressBar.updateValue(100);
+        progressBar.dispose();
         //dispose();
         
         /*gbc.gridx = 0;
@@ -5948,7 +5978,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             for (final FormStructure ds : dataStructureList) {
                 if (ds.getShortName().equalsIgnoreCase(dataStructureName)) {
                     if (ds.getDataElements().size() == 0) {
-                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(owner, ds.getShortName());
+                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(owner, ds.getShortName(), true);
                         thread.run();
 
                         dataStructure = thread.getFullFormStructure();
@@ -8730,23 +8760,28 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         private final String formStructName;
 
         private FormStructure fullFormStructure;
+        
+        private boolean addProgressBar;
 
-        public FormDataElementsRESTThread(final PlugInDialogFITBIR parent, final String formStructName) {
+        public FormDataElementsRESTThread(final PlugInDialogFITBIR parent, final String formStructName, boolean addProgressBar) {
             super();
             this.parent = parent;
             this.formStructName = formStructName;
+            this.addProgressBar = addProgressBar;
         }
 
         @Override
         public void run() {
             ViewJProgressBar progressBar = null;
             try {
-                progressBar = new ViewJProgressBar("BRICS", "Retrieving data elements for form structure: " + formStructName, 0, 100, true);
-                progressBar.setVisible(true);
-                progressBar.updateValue(20);
-                progressBar.setIndeterminate(true);
-                progressCancelButton = progressBar.getCancelButton();
-                progressCancelButton.addActionListener(this);
+            	if (addProgressBar) {
+	                progressBar = new ViewJProgressBar("BRICS", "Retrieving data elements for form structure: " + formStructName, 0, 100, true);
+	                progressBar.setVisible(true);
+	                progressBar.updateValue(20);
+	                progressBar.setIndeterminate(true);
+	                progressCancelButton = progressBar.getCancelButton();
+	                progressCancelButton.addActionListener(this);
+            	}
 
                 // should have already read in the config file (moved from here to be before the GUI init() call)
 
@@ -8776,11 +8811,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // ds.getStatus());
                 // }
 
-                progressBar.updateValue(80);
-
-                progressBar.updateValue(100);
-                progressBar.setVisible(false);
-                progressBar.dispose();
+                if (addProgressBar) {
+	                progressBar.updateValue(80);
+	
+	                progressBar.updateValue(100);
+	                progressBar.setVisible(false);
+	                progressBar.dispose();
+                }
                 printlnToLog("Successful retrieval of data elements for form structure: " + formStructName);
             } catch (final Exception e) {
                 e.printStackTrace();
