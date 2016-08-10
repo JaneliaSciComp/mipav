@@ -224,6 +224,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		label6.setBackground(Color.black);
 		label6.setIcon(cornerImage);
 		topPanel.add(label5, BorderLayout.WEST);
+		topPanel.add(label6, BorderLayout.EAST);
 
 		JPanel lowerPanel = new JPanel(new BorderLayout());
 		lowerPanel.setBackground(Color.black);
