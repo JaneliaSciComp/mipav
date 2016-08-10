@@ -2424,7 +2424,7 @@ public class FileNIFTI extends FileBase {
                     	     Preferences.debug("ecode = 0 for an unknown private format\n", Preferences.DEBUG_FILEIO);
                     	}
                     	else {
-                    		Preferences.debug("ecode = 0 used for JavaScript Object Notation\n", Preferences.DEBUG_FILEIO);
+                    		Preferences.debug("ecode = 0 used for DcmMeta encoded with JSON\n", Preferences.DEBUG_FILEIO);
                     		jsonArray[jsonIndex] = new String(bufferByte, currentAddress+8, esizeArray[ecodeNumber]-8);
                     		jsonIndex++;
                     	}
@@ -2526,7 +2526,7 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setAsciiText(asciiTextArray);
                 fileInfo.setCaret(caretArray);
                 if (jsonNumber >= 1) {
-                	fileInfo.setHaveJson(true);
+                	fileInfo.setHaveDcmMeta(true);
                 	processJson(jsonArray[0]);
                 }
             } // if (ecodeNumber >= 1)
