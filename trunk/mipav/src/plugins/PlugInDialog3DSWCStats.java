@@ -20,10 +20,7 @@ import java.util.Comparator;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
+import javax.swing.text.*;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -55,6 +52,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
     @SuppressWarnings("rawtypes")
     private JComboBox resolutionUnits;
 
+    private ArrayList<ArrayList<ArrayList<float[]>>> allTimeCoordinates; // **ADDED**
+
     private JTextPane textArea;
 
     private JRadioButton axonRB;
@@ -75,11 +74,40 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
     private int densityCount;
 
+    private int timePtCounter;
+
+    private boolean is3DVol;
+
+    private File ivFile;
+
     private JTextField splitField;
 
     private JButton splitBrowse;
 
     private float[] growthConeLenList;
+
+    public static final SimpleAttributeSet BLACK_TEXT;
+
+    public static final SimpleAttributeSet BLACK_BOLD_TEXT;
+
+    public static final SimpleAttributeSet GREEN_TEXT;
+
+    public static final SimpleAttributeSet RED_TEXT;
+
+    static {
+        BLACK_TEXT = new SimpleAttributeSet();
+        StyleConstants.setFontFamily(BLACK_TEXT, "Serif");
+        StyleConstants.setFontSize(BLACK_TEXT, 12);
+
+        BLACK_BOLD_TEXT = new SimpleAttributeSet(BLACK_TEXT);
+        StyleConstants.setBold(BLACK_BOLD_TEXT, true);
+
+        RED_TEXT = new SimpleAttributeSet(BLACK_TEXT);
+        StyleConstants.setForeground(RED_TEXT, Color.red.darker());
+
+        GREEN_TEXT = new SimpleAttributeSet(BLACK_TEXT);
+        StyleConstants.setForeground(GREEN_TEXT, Color.green.darker());
+    }
 
     public PlugInDialog3DSWCStats() {
         super();
@@ -89,22 +117,12 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
         init();
 
-        final SimpleAttributeSet blackText = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(blackText, "Serif");
-        StyleConstants.setFontSize(blackText, 12);
-
-        final String version = "1.5.1";
-        final String lastUpdate = "4/20/15";
+        final String version = "2.0";
+        final String lastUpdate = "8/5/2016";
 
         final String message = "Initializing v " + version + "\n" + "Last updated: " + lastUpdate + "\n" + "-----------------------------------------";
 
-        final Document doc = textArea.getDocument();
-        try {
-            doc.insertString(doc.getLength(), message + "\n", blackText);
-        } catch (final BadLocationException ex) {
-            ex.printStackTrace();
-        }
-        textArea.setCaretPosition(doc.getLength());
+        append(message, BLACK_TEXT);
     }
 
     @Override
@@ -166,16 +184,47 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                 // For branch density, iterate through all the files
                 if (densityRB.isSelected() && writeStep) {
                     densityCount++;
-                    if (densityCount < densityFiles.length) {
-                        alg = new PlugInAlgorithm3DSWCViewer(densityFiles[densityCount], textArea, (String) resolutionUnits.getSelectedItem());
-                        alg.addListener(this);
-                        new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
-                        if (isRunInSeparateThread()) {
-                            if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-                                MipavUtil.displayError("A thread is already running on this object");
+                    if (densityCount < densityFiles.length || !is3DVol) {
+                        if (is3DVol) {
+                            ivFile = densityFiles[densityCount];
+                            if ( !readSurfaceFile(ivFile)) {
+                                MipavUtil.displayError("Error reading IV file: " + ivFile);
+                                locked = false;
+                                return;
                             }
-                        } else {
-                            alg.run();
+                        }
+
+                        timePtCounter++;
+                        ArrayList<ArrayList<float[]>> TimePoint;
+                        for (; timePtCounter < allTimeCoordinates.size(); timePtCounter++) {
+                            TimePoint = allTimeCoordinates.get(timePtCounter);
+                            if (TimePoint == null || TimePoint.size() == 0) {
+                                is3DVol = true;
+                                continue;
+                            }
+
+                            if (allTimeCoordinates.size() == 1) {
+                                is3DVol = true;
+                            }
+
+                            String baseName = ivFile.getName().substring(0, ivFile.getName().lastIndexOf("."));
+                            if ( !is3DVol) {
+                                baseName += "_T=" + timePtCounter;
+
+                            }
+                            alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem());
+                            alg.addListener(this);
+                            new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
+
+                            if (isRunInSeparateThread()) {
+                                if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+                                    MipavUtil.displayError("A thread is already running on this object");
+                                }
+                            } else {
+                                alg.run();
+                            }
+
+                            break;
                         }
                     } else {
                         locked = false;
@@ -190,6 +239,104 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                 if ( !densityRB.isSelected() && !alg.isViewerOpen() && writeStep) {
                     locked = true;
                     alg.write();
+
+                    timePtCounter++;
+                    ArrayList<ArrayList<float[]>> TimePoint;
+                    for (; timePtCounter < allTimeCoordinates.size(); timePtCounter++) {
+                        TimePoint = allTimeCoordinates.get(timePtCounter);
+                        if (TimePoint == null || TimePoint.size() == 0) {
+                            is3DVol = true;
+                            continue;
+                        }
+
+                        if (allTimeCoordinates.size() == 1) {
+                            is3DVol = true;
+                        }
+
+                        String baseName = ivFile.getName().substring(0, ivFile.getName().lastIndexOf("."));
+                        if ( !is3DVol) {
+                            baseName += "_T=" + timePtCounter;
+
+                        }
+
+                        // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
+                        // resolutionUnits.getSelectedItem(), axonRB.isSelected(),
+                        // false);
+                        alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem(),
+                                axonRB.isSelected(), false);
+                        float splitDist;
+                        try {
+                            splitDist = Float.valueOf(splitField.getText());
+                        } catch (final NumberFormatException e) {
+                            MipavUtil.displayError("Enter the length of the growth cone");
+                            locked = false;
+                            return;
+                        }
+                        alg.setSplit(splitDist);
+                        alg.addListener(this);
+
+                        if (isRunInSeparateThread()) {
+                            if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            alg.run();
+                        }
+
+                        break;
+                    }
+                }
+
+                if ( !densityRB.isSelected() && !writeStep && !alg.isViewerOpen()) {
+                    timePtCounter++;
+                    ArrayList<ArrayList<float[]>> TimePoint;
+                    for (; timePtCounter < allTimeCoordinates.size(); timePtCounter++) {
+                        TimePoint = allTimeCoordinates.get(timePtCounter);
+                        if (TimePoint == null || TimePoint.size() == 0) {
+                            is3DVol = true;
+                            continue;
+                        }
+
+                        if (allTimeCoordinates.size() == 1) {
+                            is3DVol = true;
+                        }
+
+                        String baseName = ivFile.getName().substring(0, ivFile.getName().lastIndexOf("."));
+                        if ( !is3DVol) {
+                            baseName += "_T=" + timePtCounter;
+
+                        }
+
+                        // Open the viewer if the a custom axon is to be chosen
+
+                        // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
+                        // resolutionUnits.getSelectedItem(), false, true);
+                        alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem(),
+                                false, true);
+                        new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
+
+                        float splitDist;
+                        try {
+                            splitDist = Float.valueOf(splitField.getText());
+                        } catch (final NumberFormatException e) {
+                            MipavUtil.displayError("Enter the length of the growth cone");
+                            locked = false;
+                            return;
+                        }
+                        alg.setSplit(splitDist);
+
+                        alg.addListener(this);
+
+                        if (isRunInSeparateThread()) {
+                            if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+                                MipavUtil.displayError("A thread is already running on this object");
+                            }
+                        } else {
+                            alg.run();
+                        }
+
+                        break;
+                    }
                 }
 
             } else {
@@ -284,17 +431,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                 fw.close();
             } catch (final IOException e) {
                 final String message = "Could not create a CSV file for writing. Make sure to close any open CSVs.";
-                final SimpleAttributeSet redText = new SimpleAttributeSet();
-                StyleConstants.setFontFamily(redText, "Serif");
-                StyleConstants.setFontSize(redText, 12);
-                StyleConstants.setForeground(redText, Color.red.darker());
-                final Document doc = textArea.getDocument();
-                try {
-                    doc.insertString(doc.getLength(), message + "\n", redText);
-                } catch (final BadLocationException ex) {
-                    ex.printStackTrace();
-                }
-                textArea.setCaretPosition(doc.getLength());
+                append(message, RED_TEXT);
                 locked = false;
                 return;
             }
@@ -302,10 +439,36 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
             densityFiles = list;
             densityCount = 0;
 
-            alg = new PlugInAlgorithm3DSWCViewer(list[densityCount], textArea, (String) resolutionUnits.getSelectedItem());
-            alg.addListener(this);
-            new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
+            ivFile = list[densityCount];
+            if ( !readSurfaceFile(ivFile)) {
+                MipavUtil.displayError("Error reading IV file: " + ivFile);
+                locked = false;
+                return;
+            }
 
+            ArrayList<ArrayList<float[]>> TimePoint;
+            for (timePtCounter = 0; timePtCounter < allTimeCoordinates.size(); timePtCounter++) {
+                TimePoint = allTimeCoordinates.get(timePtCounter);
+                if (TimePoint == null || TimePoint.size() == 0) {
+                    is3DVol = true;
+                    continue;
+                }
+
+                if (allTimeCoordinates.size() == 1) {
+                    is3DVol = true;
+                }
+
+                String baseName = ivFile.getName().substring(0, ivFile.getName().lastIndexOf("."));
+                if ( !is3DVol) {
+                    baseName += "_T=" + timePtCounter;
+
+                }
+                alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem());
+                alg.addListener(this);
+                new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
+
+                break;
+            }
         } else {
 
             if ( !fileName.endsWith(".iv")) {
@@ -337,7 +500,6 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
             float splitDist;
 
-            // TODO need code from 4D revision and to copy to algorithmPerformed
             if (growthConeLenList != null && growthConeLenList.length > 0) {
                 if (timePtCounter > growthConeLenList.length) {
                     MipavUtil.displayError("Growth cone length CSV value missing for time point " + timePtCounter);
@@ -355,17 +517,51 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                 }
             }
 
-            // Open the viewer if the a custom axon is to be chosen
-            if (customRB.isSelected()) {
-                // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
-                // resolutionUnits.getSelectedItem(), false, true);
-                alg = new PlugInAlgorithm3DSWCViewer(file, textArea, (String) resolutionUnits.getSelectedItem(), false, true);
-                new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
-            } else {
-                // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
-                // resolutionUnits.getSelectedItem(), axonRB.isSelected(),
-                // false);
-                alg = new PlugInAlgorithm3DSWCViewer(file, textArea, (String) resolutionUnits.getSelectedItem(), axonRB.isSelected(), false);
+            append("Reading " + file.getName(), BLACK_BOLD_TEXT);
+
+            ivFile = file;
+            if ( !readSurfaceFile(ivFile)) {
+                MipavUtil.displayError("Error reading IV file: " + ivFile);
+                locked = false;
+                return;
+            }
+
+            is3DVol = false;
+
+            ArrayList<ArrayList<float[]>> TimePoint;
+            for (timePtCounter = 0; timePtCounter < allTimeCoordinates.size(); timePtCounter++) {
+                TimePoint = allTimeCoordinates.get(timePtCounter);
+                if (TimePoint == null || TimePoint.size() == 0) {
+                    is3DVol = true;
+                    continue;
+                }
+
+                if (allTimeCoordinates.size() == 1) {
+                    is3DVol = true;
+                }
+
+                String baseName = ivFile.getName().substring(0, ivFile.getName().lastIndexOf("."));
+                if ( !is3DVol) {
+                    baseName += "_T=" + timePtCounter;
+
+                }
+
+                // Open the viewer if the a custom axon is to be chosen
+                if (customRB.isSelected()) {
+                    // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
+                    // resolutionUnits.getSelectedItem(), false, true);
+                    alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem(), false,
+                            true);
+                    new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
+                } else {
+                    // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
+                    // resolutionUnits.getSelectedItem(), axonRB.isSelected(),
+                    // false);
+                    alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem(),
+                            axonRB.isSelected(), false);
+                }
+
+                break;
             }
 
             alg.setSplit(splitDist);
@@ -696,5 +892,111 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
             arr[i] = gcLenList.get(i).floatValue();
         }
         return arr;
+    }
+
+    /**
+     * Reads surface file. Taken from drosophila registration dialog written by Nish Pandya.
+     * 
+     * @param surfaceFile
+     * @return
+     */
+    private boolean readSurfaceFile(final File surfaceFile) {
+        final boolean success = true;
+        RandomAccessFile raFile = null;
+        ArrayList<ArrayList<float[]>> curTimeCoordinates = null;
+
+        allTimeCoordinates = new ArrayList<ArrayList<ArrayList<float[]>>>();
+        try {
+
+            raFile = new RandomAccessFile(surfaceFile, "r");
+
+            String line;
+
+            while ( (line = raFile.readLine()) != null) {
+                line = line.trim();
+                if (line.startsWith("Translate1Dragger")) {
+                    break;
+                }
+                if (line.contains("Coordinate3")) {
+                    final ArrayList<float[]> filamentCoords = new ArrayList<float[]>();
+                    while ( ! ( (line = raFile.readLine()).endsWith("}"))) {
+                        line = line.trim();
+                        if ( !line.equals("")) {
+                            if (line.startsWith("point [")) {
+                                line = line.substring(line.indexOf("point [") + 7, line.length()).trim();
+                                if (line.equals("")) {
+                                    continue;
+                                }
+                            }
+                            if (line.endsWith("]")) {
+                                line = line.substring(0, line.indexOf("]")).trim();
+                                if (line.equals("")) {
+                                    continue;
+                                }
+                            }
+                            if (line.endsWith(",")) {
+                                line = line.substring(0, line.indexOf(",")).trim();
+                                if (line.equals("")) {
+                                    continue;
+                                }
+                            }
+                            final String[] splits = line.split("\\s+");
+                            splits[0] = splits[0].trim();
+                            splits[1] = splits[1].trim();
+                            splits[2] = splits[2].trim();
+                            final float coord_x = new Float(splits[0]).floatValue();
+                            final float coord_y = new Float(splits[1]).floatValue();
+                            final float coord_z = new Float(splits[2]).floatValue();
+
+                            /**
+                             * Changing from previous versions. Order is now: X, Y, Z coordinates (0, 1, 2) Distance (3)
+                             * Backwards connection (4) Branch order (5) Radius (6) Include in Volume Calculations
+                             * (1=Include, -1=Exclude) (7)
+                             */
+                            final float[] coords = {coord_x, coord_y, coord_z, 0, Float.NEGATIVE_INFINITY, 0f, -1.0f, -1.0f};
+
+                            filamentCoords.add(coords);
+                        }
+                    }
+                    curTimeCoordinates.add(filamentCoords);
+                } else if (line.startsWith("Group {")) {
+                    if (curTimeCoordinates != null) {
+                        allTimeCoordinates.add(curTimeCoordinates);
+                    }
+                    curTimeCoordinates = new ArrayList<ArrayList<float[]>>();
+                }
+            }
+            raFile.close();
+        } catch (final Exception e) {
+            try {
+                if (raFile != null) {
+                    raFile.close();
+                }
+            } catch (final Exception ex) {
+
+            }
+            e.printStackTrace();
+            return false;
+        }
+
+        return success;
+    }
+
+    /**
+     * Used to write messages with certain fonts to the text area that can be used to monitor progress and errors in
+     * lieu of using the java console.
+     * 
+     * @param message
+     * @param a
+     */
+    private void append(final String message, final AttributeSet a) {
+        final Document doc = textArea.getDocument();
+        try {
+            doc.insertString(doc.getLength(), message + "\n", a);
+        } catch (final BadLocationException e) {
+            e.printStackTrace();
+        }
+
+        textArea.setCaretPosition(doc.getLength());
     }
 }

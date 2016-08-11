@@ -8,7 +8,6 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Vector;
@@ -20,7 +19,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.text.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 
 /**
@@ -40,9 +41,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
 	 */
     private static final long serialVersionUID = 4712836845621801009L;
 
-    private PlugInAlgorithm3DSWCViewer alg;
-
-    private final SimpleAttributeSet attr;
+    private final PlugInAlgorithm3DSWCViewer alg;
 
     private JRadioButton axonRB;
 
@@ -77,8 +76,6 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
 
     // private String imageFile;
 
-  
-
     public PlugInDialog3DSWCViewer(final JTextPane text, final String unit, final PlugInAlgorithm3DSWCViewer algorithm) {
 
         alg = algorithm; // yes this is a bit backwards but it'll work
@@ -87,16 +84,12 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
         textArea = text;
         resUnit = unit;
 
-        attr = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(attr, "Serif");
-        StyleConstants.setFontSize(attr, 12);
-
         /*
          * try { textArea.getDocument().remove(0, textArea.getDocument().getLength()); } catch (BadLocationException e)
          * {}
          */
 
-        append("Creating viewer...", attr);
+        append("Creating viewer...", PlugInDialog3DSWCStats.BLACK_TEXT);
 
         init();
 
@@ -110,8 +103,8 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
             setVisible(false);
             frame.close();
             alg.removeListener(this);
-            append("Closing viewer...", attr);
-            append("Writing with new axon choice", attr);
+            append("Closing viewer...", PlugInDialog3DSWCStats.BLACK_TEXT);
+            append("Writing with new axon choice", PlugInDialog3DSWCStats.BLACK_TEXT);
             alg.setUseLength(axonRB.isSelected());
             alg.write();
         } else if (command.equals("cancel")) {
@@ -119,8 +112,8 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
             alg.setCompleted(false);
             alg.removeListener(this);
             alg.notifyListeners(alg);
-            append("Closing viewer...", attr);
-            append("-----------------------------------------", attr);
+            append("Closing viewer...", PlugInDialog3DSWCStats.BLACK_TEXT);
+            append("-----------------------------------------", PlugInDialog3DSWCStats.BLACK_TEXT);
             frame.close();
             dispose();
         } else if (command.equals("axon")) {
@@ -134,9 +127,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
                     branch = Integer.valueOf(num);
                 } catch (final NumberFormatException ne) {
                     // This should never happen but on the off-chance something goes wrong
-                    final SimpleAttributeSet redText = new SimpleAttributeSet(attr);
-                    StyleConstants.setForeground(redText, Color.red.darker());
-                    append("Invalid branch choice. Check for non-integer numbers.", redText);
+                    append("Invalid branch choice. Check for non-integer numbers.", PlugInDialog3DSWCStats.RED_TEXT);
                     return;
                 }
                 alg.setAxon(branch);
@@ -186,11 +177,11 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
                     final String name = "Filament " + i.toString();
                     tipName.add(name);
                 }
-                tips.removeListSelectionListener(this); 
+                tips.removeListSelectionListener(this);
                 tips.setListData(tipName);
                 tips.setSelectedIndex(0);
                 tips.addListSelectionListener(this);
-                
+
                 final Object obj = tips.getSelectedValue();
                 if (obj instanceof String) {
                     final String label = obj.toString();
@@ -200,16 +191,13 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
                         branch = Integer.valueOf(num);
                     } catch (final NumberFormatException ne) {
                         // This should never happen but on the off-chance something goes wrong
-                        final SimpleAttributeSet redText = new SimpleAttributeSet(attr);
-                        StyleConstants.setForeground(redText, Color.red.darker());
-                        append("Invalid branch choice. Check for non-integer numbers.", redText);
+                        append("Invalid branch choice. Check for non-integer numbers.", PlugInDialog3DSWCStats.RED_TEXT);
                         return;
                     }
                     alg.setAxon(branch);
                     stateChanged(new ChangeEvent(sliders[0]));
                 }
-                
-                
+
                 // alg.highlightAxon(tipList.get(0));
                 // BitSet axonMask = alg.highlightAxon(tipList.get(0));
                 // frame.getComponentImage().setPaintMask(axonMask);
@@ -397,8 +385,6 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
 
     }
 
-  
-
     private class TipListRenderer extends DefaultListCellRenderer {
 
         private static final long serialVersionUID = -3803797492979272180L;
@@ -472,9 +458,6 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
                 }
             }
 
-            final SimpleAttributeSet redText = new SimpleAttributeSet(attr);
-            StyleConstants.setForeground(redText, Color.red.darker());
-
             try {
                 spinners[ind].commitEdit();
                 final Object val = spinners[ind].getValue();
@@ -498,18 +481,18 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
                 }
             } catch (final NumberFormatException ne) {
                 MipavUtil.displayError("Could not format a value into a number");
-                append("Error in formatting values.", redText);
-                append(e.toString(), redText);
+                append("Error in formatting values.", PlugInDialog3DSWCStats.RED_TEXT);
+                append(e.toString(), PlugInDialog3DSWCStats.RED_TEXT);
                 for (final StackTraceElement t : ne.getStackTrace()) {
-                    append(t.toString(), redText);
+                    append(t.toString(), PlugInDialog3DSWCStats.RED_TEXT);
                 }
                 return;
             } catch (final ParseException pe) {
                 MipavUtil.displayError("Could not parse a value");
-                append("Error in parsing values.", redText);
-                append(e.toString(), redText);
+                append("Error in parsing values.", PlugInDialog3DSWCStats.RED_TEXT);
+                append(e.toString(), PlugInDialog3DSWCStats.RED_TEXT);
                 for (final StackTraceElement t : pe.getStackTrace()) {
-                    append(t.toString(), redText);
+                    append(t.toString(), PlugInDialog3DSWCStats.RED_TEXT);
                 }
                 return;
             }
@@ -541,9 +524,7 @@ public class PlugInDialog3DSWCViewer extends JDialogBase implements AlgorithmInt
                 branch = Integer.valueOf(num);
             } catch (final NumberFormatException ne) {
                 // This should never happen but on the off-chance something goes wrong
-                final SimpleAttributeSet redText = new SimpleAttributeSet(attr);
-                StyleConstants.setForeground(redText, Color.red.darker());
-                append("Invalid branch choice. Check for non-integer numbers.", redText);
+                append("Invalid branch choice. Check for non-integer numbers.", PlugInDialog3DSWCStats.RED_TEXT);
                 return;
             }
             alg.setAxon(branch);
