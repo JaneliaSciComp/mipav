@@ -2604,6 +2604,22 @@ public class FileNIFTI extends FileBase {
     	int largestImagePixelValue = Integer.MIN_VALUE;
     	String windowCenterWidthExplanation = null;
     	String performedProcedureStepStartTime = null;
+    	int CsaImageEchoLinePosition = Integer.MIN_VALUE;
+    	int CsaImageProtocolSliceNumber = Integer.MIN_VALUE;
+    	int CsaImageUsedChannelMask = Integer.MIN_VALUE;
+    	double CsaImageBandwidthPerPixelPhaseEncode = Double.NaN;
+    	int CsaImageMeasuredFourierLines = Integer.MIN_VALUE;
+    	int CsaImageSequenceMask = Integer.MIN_VALUE;
+    	String CsaImageRFSWDDataType = null;
+    	String CsaImageImaPATModeText = null;
+    	int CsaImageRealDwellTime = Integer.MIN_VALUE;
+    	String CsaImageImaCoilString = null;
+    	int CsaImageEchoColumnPosition = Integer.MIN_VALUE;
+    	int CsaImagePhaseEncodingDirectionPositive = Integer.MIN_VALUE;
+    	JSONArray CsaImageSlicePosition_PCS = null;
+    	double CsaImageSlicePosition_PCSDouble[] = null;
+    	JSONArray CsaImageSliceNormalVector = null;
+    	double CsaImageSliceNormalVectorDouble[] = null;
     	try {
     	    jsonObject = new JSONObject(json);
     	}
@@ -2916,7 +2932,7 @@ public class FileNIFTI extends FileBase {
     	            		acquisitionMatrixInt[i] = acquisitionMatrix.getInt(i);
     	            	}
     	            	catch (JSONException e) {
-    	            		Preferences.debug("acquisitionMatrxi.getInt("+i+") not found\n", Preferences.DEBUG_FILEIO);
+    	            		Preferences.debug("acquisitionMatrix.getInt("+i+") not found\n", Preferences.DEBUG_FILEIO);
     	            	}
     	            }
     	            if (acquisitionMatrixInt != null) {
@@ -3154,6 +3170,154 @@ public class FileNIFTI extends FileBase {
     	        if (performedProcedureStepStartTime != null) {
     	        	fileInfo.setPerformedProcedureStepStartTime(performedProcedureStepStartTime);
     	        }
+    	        try {
+    	        	CsaImageEchoLinePosition = global_const.getInt("CsaImage.EchoLinePosition");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.EchoLinePosition not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageEchoLinePosition != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaImageEchoLinePosition(CsaImageEchoLinePosition);
+    	        }
+    	        try {
+    	        	CsaImageProtocolSliceNumber = global_const.getInt("CsaImage.ProtocolSliceNumber");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.ProtocolSliceNumber not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageProtocolSliceNumber != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaImageProtocolSliceNumber(CsaImageProtocolSliceNumber);
+    	        }
+    	        try {
+    	        	CsaImageUsedChannelMask = global_const.getInt("CsaImage.UsedChannelMask");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.UsedChannelMask not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageUsedChannelMask != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaImageUsedChannelMask(CsaImageUsedChannelMask);
+    	        }
+    	        try {
+    	        	CsaImageBandwidthPerPixelPhaseEncode = global_const.getDouble("CsaImage.BandwidthPerPixelPhaseEncode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.BandwidthPerPixelPhaseEncode not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaImageBandwidthPerPixelPhaseEncode)) {
+    	        	fileInfo.setCsaImageBandwidthPerPixelPhaseEncode(CsaImageBandwidthPerPixelPhaseEncode);
+    	        }
+    	        try {
+    	        	CsaImageMeasuredFourierLines = global_const.getInt("CsaImage.MeasuredFourierLines");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.MeasuredFourierLines not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageMeasuredFourierLines != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaImageMeasuredFourierLines(CsaImageMeasuredFourierLines);
+    	        }
+    	        try {
+    	        	CsaImageSequenceMask = global_const.getInt("CsaImage.SequenceMask");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.SequenceMask not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageSequenceMask != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaImageSequenceMask(CsaImageSequenceMask);
+    	        }
+    	        try {
+    	        	CsaImageRFSWDDataType = global_const.getString("CsaImage.RFSWDDataType");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.RFSWDDataType not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageRFSWDDataType != null) {
+    	        	fileInfo.setCsaImageRFSWDDataType(CsaImageRFSWDDataType);
+    	        }
+    	        try {
+    	        	CsaImageImaPATModeText = global_const.getString("CsaImage.ImaPATModeText");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.ImaPATModeText not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageImaPATModeText != null) {
+    	        	fileInfo.setCsaImageImaPATModeText(CsaImageImaPATModeText);
+    	        }
+    	        try {
+    	        	CsaImageRealDwellTime = global_const.getInt("CsaImage.RealDwellTime");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.RealDwellTime not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageRealDwellTime != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaImageRealDwellTime(CsaImageRealDwellTime);
+    	        }
+    	        try {
+    	        	CsaImageImaCoilString = global_const.getString("CsaImage.ImaCoilString");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.ImaCoilString not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageImaCoilString != null) {
+    	        	fileInfo.setCsaImageImaCoilString(CsaImageImaCoilString);
+    	        }
+    	        try {
+    	        	CsaImageEchoColumnPosition = global_const.getInt("CsaImage.EchoColumnPosition");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.EchoColumnPosition not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageEchoColumnPosition != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaImageEchoColumnPosition(CsaImageEchoColumnPosition);
+    	        }
+    	        try {
+    	        	CsaImagePhaseEncodingDirectionPositive = global_const.getInt("CsaImage.PhaseEncodingDirectionPositive");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaImage.PhaseEncodingDirectionPositive not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImagePhaseEncodingDirectionPositive != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaImagePhaseEncodingDirectionPositive(CsaImagePhaseEncodingDirectionPositive);
+    	        }
+    	        try {
+    	        	CsaImageSlicePosition_PCS = global_const.getJSONArray("CsaImage.SlicePosition_PCS");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("JSONArray CsaImage.SlicePosition_PCS not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageSlicePosition_PCS != null) {
+    	            CsaImageSlicePosition_PCSDouble = new double[CsaImageSlicePosition_PCS.length()];
+    	            for (i = 0; i < CsaImageSlicePosition_PCS.length(); i++) {
+    	            	try {
+    	            		CsaImageSlicePosition_PCSDouble[i] = CsaImageSlicePosition_PCS.getDouble(i);
+    	            	}
+    	            	catch (JSONException e) {
+    	            		Preferences.debug("CsaImageSlicePosition_PCS.getDouble("+i+") not found\n", Preferences.DEBUG_FILEIO);
+    	            	}
+    	            }
+    	            if (CsaImageSlicePosition_PCSDouble != null) {
+    	            	fileInfo.setCsaImageSlicePosition_PCS(CsaImageSlicePosition_PCSDouble);
+    	            }
+    	        } // if (CsaImageSlicePosition_PCS != null) 
+    	        try {
+    	        	CsaImageSliceNormalVector = global_const.getJSONArray("CsaImage.SliceNormalVector");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("JSONArray CsaImage.SliceNormalVector not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaImageSliceNormalVector != null) {
+    	            CsaImageSliceNormalVectorDouble = new double[CsaImageSliceNormalVector.length()];
+    	            for (i = 0; i < CsaImageSliceNormalVector.length(); i++) {
+    	            	try {
+    	            		CsaImageSliceNormalVectorDouble[i] = CsaImageSliceNormalVector.getDouble(i);
+    	            	}
+    	            	catch (JSONException e) {
+    	            		Preferences.debug("CsaImageSliceNormalVector.getDouble("+i+") not found\n", Preferences.DEBUG_FILEIO);
+    	            	}
+    	            }
+    	            if (CsaImageSliceNormalVectorDouble != null) {
+    	            	fileInfo.setCsaImageSliceNormalVector(CsaImageSliceNormalVectorDouble);
+    	            }
+    	        } // if (CsaImageSliceNormalVector != null) 
     	    } // if (global_const != null)
     	} // if (global != null)
     }
