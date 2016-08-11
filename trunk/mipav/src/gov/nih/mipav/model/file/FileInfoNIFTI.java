@@ -644,17 +644,26 @@ public class FileInfoNIFTI extends FileInfoBase {
     // DICOM:0008_1090 LO
     private String manufacturerModelName = null;
     
-    // Description of the type of data taken.
+    // Description of the type of data taken. Enumerated Values: SE = Spin Echo IR = Inversion Recovery 
+    // GR = Gradient Recalled EP = Echo Planar RM = Research Mode Note: Multi-valued, 
+    // but not all combinations are valid (e.g. SE/GR, etc.).
     // DICOM:0018_0020 CS
     private String scanningSequence = null;
     
-    // Variant of the Scanning Sequence.
+    // Variant of the Scanning Sequence. Defined Terms: SK = segmented k-space MTC = magnetization transfer contrast
+    // SS = steady state TRSS = time reversed steady state SP = spoiled MP = MAG prepared OSP = oversampling phase
+    // NONE = no sequence variant
     // DICOM:0018_0021 CS
     private String sequenceVariant = null;
     
+    // Parameters of scanning sequence. Defined Terms: PER = Phase Encode Reordering 
+    // RG = Respiratory Gating CG = Cardiac Gating PPG = Peripheral Pulse Gating FC = Flow Compensation 
+    // PFF = Partial Fourier - Frequency PFP = Partial Fourier - Phase SP = Spatial Presaturation FS = Fat Saturation	
+    // MR IMAGE MODULE ATTRIBUTES
+    // DICOM:0018_0022 CS
     private String scanOptions = null;
     
-    // Identification of data encoding scheme.
+    // Identification of data encoding scheme. Enumerated Values: 2D = frequency x phase 3D = frequency x phase x phase
     // DICOM:0018_0023 CS
     private String MRAcquisitionType = null;
     
@@ -662,7 +671,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     // DICOM:0018_0024 SH
     private String sequenceName = null;
     
-    // Angio Image Indicator. Primary image for Angio processing. 	
+    // Angio Image Indicator. Primary image for Angio processing. Enumerated Values: Y = Image is Angio N = Image is not Angio
     // DICOM:0018_0025 		Imaging protocol attribute 	DICOM term 	CS
     private String angioFlag = null;
     
@@ -735,7 +744,8 @@ public class FileInfoNIFTI extends FileInfoBase {
     // DICOM:0018_1310 		Imaging protocol attribute 	DICOM term 	US
     private int acquisitionMatrix[] =  null;
     
-    // The axis of phase encoding with respect to the image.
+    // The axis of phase encoding with respect to the image. Enumerated Values: ROW = phase encoded in rows. 
+    // COL = phase encoded in columns.
     // DICOM:0018_1312 CS
     private String inPlanePhaseEncodingDirection = null;
     
@@ -781,7 +791,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     // DICOM:0028_0004 CS
     private String photometricInterpretation = null;
     
-    // Number of rows in the ima=ge
+    // Number of rows in the image
     // DICOM: 0028_0010 US
     private int rows = Integer.MIN_VALUE;
     
@@ -825,6 +835,34 @@ public class FileInfoNIFTI extends FileInfoBase {
     // Time at which the Performed Procedure Step started.
     // DICOM:0040_0245 TM
     private String performedProcedureStepStartTime = null;
+    
+    private int CsaImageEchoLinePosition = Integer.MIN_VALUE;
+    
+    private int CsaImageProtocolSliceNumber = Integer.MIN_VALUE;
+    
+    private int CsaImageUsedChannelMask = Integer.MIN_VALUE;
+    
+    private double CsaImageBandwidthPerPixelPhaseEncode = Double.NaN;
+    
+    private int CsaImageMeasuredFourierLines = Integer.MIN_VALUE;
+    
+    private int CsaImageSequenceMask = Integer.MIN_VALUE;
+    
+    private String CsaImageRFSWDDataType = null;
+    
+    private String CsaImageImaPATModeText = null;
+    
+    private int CsaImageRealDwellTime= Integer.MIN_VALUE;
+    
+    private String CsaImageImaCoilString = null;
+    
+    private int CsaImageEchoColumnPosition = Integer.MIN_VALUE;
+    
+    private int CsaImagePhaseEncodingDirectionPositive = Integer.MIN_VALUE;
+    
+    private double CsaImageSlicePosition_PCS[] = null;
+    
+    private double CsaImageSliceNormalVector[] = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1408,34 +1446,119 @@ public class FileInfoNIFTI extends FileInfoBase {
         		dialog.append("Manufacturer model name = " + manufacturerModelName + "\n");
         	}
         	if (scanningSequence != null) {
-        		dialog.append("Scanning sequence = " + scanningSequence + "\n");
+        		if (scanningSequence.equalsIgnoreCase("SE")) {
+        			dialog.append("Scanning sequence = Spin Echo\n");
+        		}
+        		else if (scanningSequence.equalsIgnoreCase("IR")) {
+        			dialog.append("Scanning sequence = Inversion Recovery\n");
+        		}
+        		else if (scanningSequence.equalsIgnoreCase("GR")) {
+        			dialog.append("Scanning sequence = Gradient Recalled\n");
+        		}
+        		else if (scanningSequence.equalsIgnoreCase("EP")) {
+        			dialog.append("Scanning sequence = Echo Planar\n");
+        		}
+        		else if (scanningSequence.equalsIgnoreCase("RM")) {
+        			dialog.append("Scanning sequence = Research Mode\n");
+        		}
+        		else {
+        		    dialog.append("Scanning sequence = " + scanningSequence + "\n");
+        		}
         	}
         	if (sequenceVariant != null) {
-        		dialog.append("Sequence variant = " + sequenceVariant + "\n");
+        		if (sequenceVariant.equalsIgnoreCase("SK")) {
+        			dialog.append("Sequence variant = segmented k-space\n");
+        		}
+        		else if (sequenceVariant.equalsIgnoreCase("MTC")) {
+        			dialog.append("Sequence variant = magnetization transfer constant\n");
+        		}
+        		else if (sequenceVariant.equalsIgnoreCase("SS")) {
+        			dialog.append("Sequence variant = steady state\n");
+        		}
+        		else if (sequenceVariant.equalsIgnoreCase("TRSS")) {
+        			dialog.append("Sequence variant = time reversed steady state\n");
+        		}
+        		else if (sequenceVariant.equalsIgnoreCase("SP")) {
+        			dialog.append("Sequence variant = spoiled\n");
+        		}
+        		else if (sequenceVariant.equalsIgnoreCase("MAG")) {
+        			dialog.append("Sequence variant = MAG prepared\n");
+        		}
+        		else if (sequenceVariant.equalsIgnoreCase("OSP")) {
+        			dialog.append("Sequence variant = oversampling phase\n");
+        		}
+        		else if (sequenceVariant.equalsIgnoreCase("NONE")) {
+        			dialog.append("Sequence variant = no sequence variant\n");
+        		}
+        		else {
+        		    dialog.append("Sequence variant = " + sequenceVariant + "\n");
+        		}
         	}
         	if (scanOptions != null) {
-        		dialog.append("Scan options = " + scanOptions + "\n");
+        		if (scanOptions.equalsIgnoreCase("RG")) {
+        			dialog.append("Scan options = Respiratory Gating\n");
+        		}
+        		else if (scanOptions.equalsIgnoreCase("CG")) {
+        			dialog.append("Scan options = Cardiac Gating\n");
+        		}
+        		else if (scanOptions.equalsIgnoreCase("PPG")) {
+        			dialog.append("Scan options = Peripheral Pulse Gating\n");
+        		}
+        		else if (scanOptions.equalsIgnoreCase("FC")) {
+        			dialog.append("Scan options = Flow Compensation\n");
+        		}
+        		else if (scanOptions.equalsIgnoreCase("PFF")) {
+        			dialog.append("Scan options = Partial Fourier Frequency\n");
+        		}
+        		else if (scanOptions.equalsIgnoreCase("PFP")) {
+        			dialog.append("Scan options = Partial Fourier Phase\n");
+        		}
+        		else if (scanOptions.equalsIgnoreCase("SP")) {
+        			dialog.append("Scan options = Spatial Presaturation\n");
+        		}
+        		else if (scanOptions.equalsIgnoreCase("FS")) {
+        			dialog.append("Scan options = Fat Saturation\n");
+        		}
+        		else {
+        		    dialog.append("Scan options = " + scanOptions + "\n");
+        		}
         	}
         	if (MRAcquisitionType != null) {
-        		dialog.append("MR acquisition type = " + MRAcquisitionType + "\n");
+        		if (MRAcquisitionType.equalsIgnoreCase("2D")) {
+        			dialog.append("MR acquisition type = frequency x phase\n");
+        		}
+        		else if (MRAcquisitionType.equalsIgnoreCase("3D")) {
+        			dialog.append("MR acquisition type = frequency x phase x phase\n");
+        		}
+        		else {
+        		    dialog.append("MR acquisition type = " + MRAcquisitionType + "\n");
+        		}
         	}
         	if (sequenceName != null) {
         		dialog.append("Sequence name = " + sequenceName + "\n");
         	}
         	if (angioFlag != null) {
-        		dialog.append("Angio flag = " + angioFlag + "\n");
+        		if (angioFlag.equalsIgnoreCase("Y")) {
+        			dialog.append("Image is Angio\n");
+        		}
+        		else if (angioFlag.equalsIgnoreCase("N")) {
+        			dialog.append("Image is not Angio\n");
+        		}
+        		else {
+        		    dialog.append("Angio flag = " + angioFlag + "\n");
+        		}
         	}
         	if (!Double.isNaN(repetitionTime)) {
-        		dialog.append("Repetition time = " + repetitionTime + "\n");
+        		dialog.append("Repetition time = " + repetitionTime + " msec\n");
         	}
         	if (!Double.isNaN(echoTime)) {
-        		dialog.append("Echo time = " + echoTime + "\n");
+        		dialog.append("Echo time = " + echoTime + " msec\n");
         	}
         	if (!Double.isNaN(numberOfAverages)) {
         		dialog.append("Number of averages = " + numberOfAverages + "\n");
         	}
         	if (!Double.isNaN(imagingFrequency)) {
-        		dialog.append("Imaging frequency = " + imagingFrequency + "\n");
+        		dialog.append("Imaging frequency = " + imagingFrequency + " MHz\n");
         	}
         	if (imagedNucleus != null) {
         		dialog.append("Imaged nucleus = " + imagedNucleus + "\n");
@@ -1444,10 +1567,10 @@ public class FileInfoNIFTI extends FileInfoBase {
         		dialog.append("Echo numbers = " + echoNumbers + "\n");
         	}
         	if (!Double.isNaN(magneticFieldStrength)) {
-        		dialog.append("Magnetic field strength = " + magneticFieldStrength + "\n");
+        		dialog.append("Magnetic field strength = " + magneticFieldStrength + " Tesla\n");
         	}
         	if (!Double.isNaN(spacingBetweenSlices)) {
-        		dialog.append("Spacing between slices = " + spacingBetweenSlices + "\n");
+        		dialog.append("Spacing between slices = " + spacingBetweenSlices + " mm\n");
         	}
         	if (numberOfPhaseEncodingSteps != Integer.MIN_VALUE) {
         		dialog.append("Number of phase encoding steps = " + numberOfPhaseEncodingSteps + "\n");
@@ -1462,7 +1585,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         		dialog.append("Percent phase field of view = " + percentPhaseFieldOfView  + "\n");
         	}
         	if (!Double.isNaN(pixelBandwidth)) {
-        		dialog.append("Pixel bandwidth = " + pixelBandwidth + "\n");
+        		dialog.append("Pixel bandwidth = " + pixelBandwidth + " hertz per pixel\n");
         	}
         	if (softwareVersions != null) {
         		dialog.append("Software versions = " + softwareVersions + "\n");
@@ -1475,27 +1598,45 @@ public class FileInfoNIFTI extends FileInfoBase {
         	    	dialog.append("Acquisition matrix["+i+"] = " + acquisitionMatrix[i] + "\n");
         	    }
         	}
+        	// ROW = phase encoded in rows. 
+        		    // COL = phase encoded in columns.
         	if (inPlanePhaseEncodingDirection != null) {
-        		dialog.append("In plane phase encoding direction = " + inPlanePhaseEncodingDirection + "\n");
+        		if (inPlanePhaseEncodingDirection.equalsIgnoreCase("ROW")) {
+        			dialog.append("In plane phase encoding direction has phase encoded in rows\n");
+        		}
+        		else if (inPlanePhaseEncodingDirection.equalsIgnoreCase("COL")) {
+        			dialog.append("In plane phase encoding direction has phase encoded in columns\n");
+        		}
+        		else {
+        		    dialog.append("In plane phase encoding direction = " + inPlanePhaseEncodingDirection + "\n");
+        		}
         	}
         	if (!Double.isNaN(flipAngle)) {
-        		dialog.append("Flip angle = " + flipAngle + "\n");
+        		dialog.append("Flip angle = " + flipAngle + " degrees\n");
         	}
         	if (variableFlipAngleFlag != null) {
-        		dialog.append("Variable flip angle flag = " + variableFlipAngleFlag + "\n");
+        		if (variableFlipAngleFlag.equalsIgnoreCase("Y")) {
+        			dialog.append("Flip angle variation applied during image acquisition\n");
+        		}
+        		else if (variableFlipAngleFlag.equalsIgnoreCase("N")) {
+        			dialog.append("Flip angle variation not applied during image acquisition\n");
+        		}
+        		else {
+        		    dialog.append("Variable flip angle flag = " + variableFlipAngleFlag + "\n");
+        		}
         	}
         	if (!Double.isNaN(SAR)) {
-        		dialog.append("SAR = " + SAR + "\n");
+        		dialog.append("Calculated whole body specific absorption rate = " + SAR + " watts/kilogram\n");
         	}
         	if (!Double.isNaN(dBdt)) {
-        		dialog.append("dBdt = " + dBdt + "\n");
+        		dialog.append("Rate of change of magnetic coil flux density with time = " + dBdt + " T/s\n");
         	}
         	if (seriesNumber != Integer.MIN_VALUE) {
         		dialog.append("Series number = " + seriesNumber + "\n");
         	}
         	if (imagePositionPatient != null) {
         		for (i = 0; i < imagePositionPatient.length; i++) {
-        			dialog.append("Image position patient["+i+"] = " + imagePositionPatient[i] + "\n");
+        			dialog.append("Image position patient["+i+"] = " + imagePositionPatient[i] + " mm\n");
         		}
         	}
         	if (imageOrientationPatient != null) {
@@ -1504,7 +1645,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         		}
         	}
         	if (!Double.isNaN(sliceLocation)) {
-        		dialog.append("Slice location = " + sliceLocation + "\n");
+        		dialog.append("Slice location = " + sliceLocation + " mm\n");
         	}
         	if (samplesPerPixel != Integer.MIN_VALUE) {
         		dialog.append("Samples per pixel = " + samplesPerPixel + "\n");
@@ -1520,7 +1661,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         	}
         	if (pixelSpacing != null) {
         		for (i = 0; i < pixelSpacing.length; i++) {
-        			dialog.append("Pixel spacing["+i+"] = " + pixelSpacing[i] + "\n");
+        			dialog.append("Pixel spacing["+i+"] = " + pixelSpacing[i] + " mm\n");
         		}
         	}
         	if (bitsAllocated != Integer.MIN_VALUE) {
@@ -1545,7 +1686,53 @@ public class FileInfoNIFTI extends FileInfoBase {
         		dialog.append("Window center width explanation = " + windowCenterWidthExplanation + "\n");
         	}
         	if (performedProcedureStepStartTime != null) {
-        		dialog.append("Performed procedre step start time = " + performedProcedureStepStartTime + "\n");
+        		dialog.append("Performed procedure step start time = " + performedProcedureStepStartTime + "\n");
+        	}
+        	if (CsaImageEchoLinePosition != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.EchoLinePosition = " + CsaImageEchoLinePosition + "\n");
+        	}
+        	if (CsaImageProtocolSliceNumber != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.ProtocolSliceNumber = " + CsaImageProtocolSliceNumber + "\n");
+        	}
+        	if (CsaImageUsedChannelMask != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.UsedChannelMask = " + CsaImageUsedChannelMask + "\n");
+        	}
+        	if (!Double.isNaN(CsaImageBandwidthPerPixelPhaseEncode)) {
+        		dialog.append("CsaImage.BandwidthPerPixelPhaseEncode = " + CsaImageBandwidthPerPixelPhaseEncode + "\n");
+        	}
+        	if (CsaImageMeasuredFourierLines != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.MeasuredFourierLines = " + CsaImageMeasuredFourierLines + "\n");
+        	}
+        	if (CsaImageSequenceMask != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.MeasuredSequenceMask = " + CsaImageSequenceMask + "\n");
+        	}
+        	if (CsaImageRFSWDDataType != null) {
+        		dialog.append("CsaImage.RFSWDDataType = " + CsaImageRFSWDDataType + "\n");
+        	}
+        	if (CsaImageImaPATModeText != null) {
+        		dialog.append("CsaImage.ImaPATModeText = " + CsaImageImaPATModeText + "\n");
+        	}
+        	if (CsaImageRealDwellTime != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.RealDwellTime = " + CsaImageRealDwellTime + "\n");
+        	}
+        	if (CsaImageImaCoilString != null) {
+        		dialog.append("CsaImage.ImaCoilString = " + CsaImageImaCoilString + "\n");
+        	}
+        	if (CsaImageEchoColumnPosition != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.EchoColumnPosition = " + CsaImageEchoColumnPosition + "\n");
+        	}
+        	if (CsaImagePhaseEncodingDirectionPositive != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.PhaseEncodingDirectionPositive = " + CsaImagePhaseEncodingDirectionPositive + "\n");
+        	}
+        	if (CsaImageSlicePosition_PCS != null) {
+        		for (i = 0; i < CsaImageSlicePosition_PCS.length; i++) {
+        			dialog.append("CsaImage.SlicePosition_PCS["+i+"] = " + CsaImageSlicePosition_PCS[i] + "\n");
+        		}
+        	}
+        	if (CsaImageSliceNormalVector != null) {
+        		for (i = 0; i < CsaImageSliceNormalVector.length; i++) {
+        			dialog.append("CsaImage.SliceNormalVector["+i+"] = " + CsaImageSliceNormalVector[i] + "\n");
+        		}
         	}
         } // if (haveJson)
         
@@ -2762,5 +2949,117 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     public String getPerformedProcedureStepStartTime() {
     	return performedProcedureStepStartTime;
+    }
+    
+    public void setCsaImageEchoLinePosition(int CsaImageEchoLinePosition) {
+    	this.CsaImageEchoLinePosition = CsaImageEchoLinePosition;
+    }
+    
+    public int getCsaImageEchoLinePosition() {
+    	return CsaImageEchoLinePosition;
+    }
+    
+    public void setCsaImageProtocolSliceNumber(int CsaImageProtocolSliceNumber) {
+    	this.CsaImageProtocolSliceNumber = CsaImageProtocolSliceNumber;
+    }
+    
+    public int getCsaImageProtocolSliceNumber() {
+    	return CsaImageProtocolSliceNumber;
+    }
+    
+    public void setCsaImageUsedChannelMask(int CsaImageUsedChannelMask) {
+    	this.CsaImageUsedChannelMask = CsaImageUsedChannelMask;
+    }
+    
+    public int getCsaImageUsedChannelMask() {
+    	return CsaImageUsedChannelMask;
+    }
+    
+    public void setCsaImageBandwidthPerPixelPhaseEncode(double CsaImageBandwidthPerPixelPhaseEncode) {
+    	this.CsaImageBandwidthPerPixelPhaseEncode = CsaImageBandwidthPerPixelPhaseEncode;
+    }
+    
+    public double getCsaImageBandwidthPerPixelPhaseEncode() {
+    	return CsaImageBandwidthPerPixelPhaseEncode;
+    }
+    
+    public void setCsaImageMeasuredFourierLines(int CsaImageMeasuredFourierLines) {
+    	this.CsaImageMeasuredFourierLines = CsaImageMeasuredFourierLines;
+    }
+    
+    public int getCsaImageMeasuredFourierLines() {
+    	return CsaImageMeasuredFourierLines;
+    }
+    
+    public void setCsaImageSequenceMask(int CsaImageSequenceMask) {
+    	this.CsaImageSequenceMask = CsaImageSequenceMask;
+    }
+    
+    public int getCsaImageSequenceMask() {
+    	return CsaImageSequenceMask;
+    }
+    
+    public void setCsaImageRFSWDDataType(String CsaImageRFSWDDataType) {
+    	this.CsaImageRFSWDDataType = CsaImageRFSWDDataType;
+    }
+    
+    public String getCsaImageRFSWDDataType() {
+    	return CsaImageRFSWDDataType;
+    }
+    
+    public void setCsaImageImaPATModeText(String CsaImageImaPATModeText) {
+    	this.CsaImageImaPATModeText = CsaImageImaPATModeText;
+    }
+    
+    public String getCsaImageImaPATModeText() {
+    	return CsaImageImaPATModeText;
+    }
+    
+    public void setCsaImageRealDwellTime(int CsaImageRealDwellTime) {
+    	this.CsaImageRealDwellTime = CsaImageRealDwellTime;
+    }
+    
+    public int getCsaImageRealDwellTime() {
+    	return CsaImageRealDwellTime;
+    }
+    
+    public void setCsaImageImaCoilString(String CsaImageImaCoilString) {
+    	this.CsaImageImaCoilString = CsaImageImaCoilString;
+    }
+    
+    public String getCsaImageImaCoilString() {
+    	return CsaImageImaCoilString;
+    }
+    
+    public void setCsaImageEchoColumnPosition(int CsaImageEchoColumnPosition) {
+    	this.CsaImageEchoColumnPosition = CsaImageEchoColumnPosition;
+    }
+    
+    public int getCsaImageEchoColumnPosition() {
+    	return CsaImageEchoColumnPosition;
+    }
+    
+    public void setCsaImagePhaseEncodingDirectionPositive(int CsaImagePhaseEncodingDirectionPositive) {
+    	this.CsaImagePhaseEncodingDirectionPositive = CsaImagePhaseEncodingDirectionPositive;
+    }
+    
+    public int getCsaPhaseEncodingDirectionPositive() {
+    	return CsaImagePhaseEncodingDirectionPositive;
+    }
+    
+    public void setCsaImageSlicePosition_PCS(double CsaImageSlicePosition_PCS[]) {
+    	this.CsaImageSlicePosition_PCS = CsaImageSlicePosition_PCS;
+    }
+    
+    public double[] getCsaImageSlicePosition_PCS() {
+    	return CsaImageSlicePosition_PCS;
+    }
+    
+    public void setCsaImageSliceNormalVector(double CsaImageSliceNormalVector[]) {
+    	this.CsaImageSliceNormalVector = CsaImageSliceNormalVector;
+    }
+    
+    public double[] getCsaImageSliceNormalVector() {
+    	return CsaImageSliceNormalVector;
     }
 }
