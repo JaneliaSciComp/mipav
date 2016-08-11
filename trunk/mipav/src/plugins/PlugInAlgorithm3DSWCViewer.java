@@ -4,18 +4,18 @@ import gov.nih.mipav.model.structures.TransMatrix;
 
 import gov.nih.mipav.view.ViewJFrameImage;
 
-import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.Map.Entry;
 
 import javax.swing.JTextPane;
-import javax.swing.text.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 import quickhull3d.Point3d;
 import quickhull3d.QuickHull3D;
@@ -30,7 +30,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * 
  * @see PlugInAlgorithm3DSWCStats
  * @author wangvg
- *     
+ * 
  */
 public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
@@ -48,12 +48,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
     private ArrayList<float[]> spacePts;
 
-    private ArrayList<ArrayList<float[]>> curTimeCoordinates;
-    
-    private String parentDir;
-    
-    private String baseName; 
-     
+    private final ArrayList<ArrayList<float[]>> curTimeCoordinates;
+
+    private final String parentDir;
+
+    private final String baseName;
+
     private final JTextPane textArea;
 
     private boolean axonUseLength;
@@ -66,10 +66,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
     private boolean viewerOpen;
 
-    private final SimpleAttributeSet blackText;
-
-    private final SimpleAttributeSet redText;
-
     private final boolean branchDensity;
 
     private int[][] faceVerticies;
@@ -79,11 +75,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
     private int[] vertexInd;
 
     private float splitDist;
-    
+
     private boolean haveSplitDist = false;
 
-    public PlugInAlgorithm3DSWCViewer(/* String imFile, */final ArrayList<ArrayList<float[]>> coords, final String dir, final String name, final JTextPane text, final String resUnit, final boolean useLength,
-            final boolean showView) {
+    public PlugInAlgorithm3DSWCViewer(/* String imFile, */final ArrayList<ArrayList<float[]>> coords, final String dir, final String name,
+            final JTextPane text, final String resUnit, final boolean useLength, final boolean showView) {
 
         super();
 
@@ -94,15 +90,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         // and shown concurrently
         destImage = new ModelImage(ModelImage.ARGB, new int[] {512, 512}, "3D Neuron Viewer");
         parentDir = dir;
-        baseName = name; 
+        baseName = name;
 
-        
-        
         destImage.setImageName(name);
-        
-        curTimeCoordinates = coords; 
 
-        
+        curTimeCoordinates = coords;
+
         textArea = text;
         resolutionUnit = resUnit;
         axonUseLength = useLength;
@@ -111,13 +104,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         branchDensity = false;
 
         viewerOpen = false;
-
-        blackText = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(blackText, "Serif");
-        StyleConstants.setFontSize(blackText, 12);
-
-        redText = new SimpleAttributeSet(blackText);
-        StyleConstants.setForeground(redText, Color.red.darker());
     }
 
     /**
@@ -127,14 +113,15 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
      * @param text
      * @param resUnit
      */
-    public PlugInAlgorithm3DSWCViewer(final ArrayList<ArrayList<float[]>> coords, final String dir, final String name, final JTextPane text, final String resUnit) {
+    public PlugInAlgorithm3DSWCViewer(final ArrayList<ArrayList<float[]>> coords, final String dir, final String name, final JTextPane text,
+            final String resUnit) {
         super();
 
         destImage = new ModelImage(ModelImage.ARGB, new int[] {512, 512}, "3D Neuron Viewer");
         parentDir = dir;
-        baseName = name; 
-        curTimeCoordinates = coords; 
-        
+        baseName = name;
+        curTimeCoordinates = coords;
+
         textArea = text;
         resolutionUnit = resUnit;
         axonUseLength = false;
@@ -143,13 +130,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         branchDensity = true;
 
         viewerOpen = false;
-
-        blackText = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(blackText, "Serif");
-        StyleConstants.setFontSize(blackText, 12);
-
-        redText = new SimpleAttributeSet(blackText);
-        StyleConstants.setForeground(redText, Color.red.darker());
     }
 
     @Override
@@ -163,18 +143,16 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
     public void runAlgorithm() {
 
         try {
-
-            StyleConstants.setBold(blackText, false);
-
             disconnected = false;
-        	
+
             mat = new TransMatrix(3);
-        	
+
             // Attempt to make connections between all of the filaments
             connections = makeConnections(curTimeCoordinates);
 
-            for (int i = 1; i < curTimeCoordinates.size(); i++) { 			// **MODIFICATION**		(curTimeCoordinates replaced swcCoordinates)
-                final ArrayList<float[]> fil = curTimeCoordinates.get(i);   // **MODIFICATION**
+            for (int i = 1; i < curTimeCoordinates.size(); i++) { // **MODIFICATION** (curTimeCoordinates replaced
+                                                                  // swcCoordinates)
+                final ArrayList<float[]> fil = curTimeCoordinates.get(i); // **MODIFICATION**
                 if (fil.get(0)[4] == Float.NEGATIVE_INFINITY) {
                     // No connection was made, something is wrong
                     disconnected = true;
@@ -186,12 +164,13 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
             // in which case the connections must be determined using
             // a slight tolerance
             if (disconnected) {
-                connections = makeConnectionsTol(curTimeCoordinates); 			// **MODIFICATION**		(curTimeCoordinates replaced swcCoordinates)
-                for (int i = 1; i < curTimeCoordinates.size(); i++) { 			// **MODIFICATION**
-                    final ArrayList<float[]> fil = curTimeCoordinates.get(i);   // **MODIFICATION**
+                connections = makeConnectionsTol(curTimeCoordinates); // **MODIFICATION** (curTimeCoordinates replaced
+                                                                      // swcCoordinates)
+                for (int i = 1; i < curTimeCoordinates.size(); i++) { // **MODIFICATION**
+                    final ArrayList<float[]> fil = curTimeCoordinates.get(i); // **MODIFICATION**
                     if (fil.get(0)[4] == Float.NEGATIVE_INFINITY) {
                         // No connection was made, something is wrong
-                        append(baseName + ": Filament " + i + " is not connected properly.", redText);
+                        append(baseName + ": Filament " + i + " is not connected properly.", PlugInDialog3DSWCStats.RED_TEXT);
                         setCompleted(false);
                         return;
                     }
@@ -209,11 +188,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
             }
 
             // Generate the 3D viewer if needed
-            joints = new ArrayList<float[]>(); 
+            joints = new ArrayList<float[]>();
             if (showViewer) {
-                joints.add(curTimeCoordinates.get(0).get(0)); 					// **MODIFICATION**		(curTimeCoordinates replaced swcCoordinates)
-                for (int i = 0; i < curTimeCoordinates.size(); i++) {   		// **MODIFICATION**
-                    final ArrayList<float[]> fil = curTimeCoordinates.get(i);   // **MODIFICATION**
+                joints.add(curTimeCoordinates.get(0).get(0)); // **MODIFICATION** (curTimeCoordinates replaced
+                                                              // swcCoordinates)
+                for (int i = 0; i < curTimeCoordinates.size(); i++) { // **MODIFICATION**
+                    final ArrayList<float[]> fil = curTimeCoordinates.get(i); // **MODIFICATION**
                     joints.add(fil.get(fil.size() - 1));
                 }
 
@@ -225,7 +205,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
             // The output is a 2D array, with the last array being
             // the vertex indicies so that it all fits in one output
             // array
-            final int[][] tempArray = calculateConvexHull(curTimeCoordinates, tips); // **MODIFICATION**		(curTimeCoordinates replaced swcCoordinates)
+            final int[][] tempArray = calculateConvexHull(curTimeCoordinates, tips); // **MODIFICATION**
+                                                                                     // (curTimeCoordinates replaced
+                                                                                     // swcCoordinates)
             faceVerticies = new int[tempArray.length - 1][];
             vertexInd = tempArray[tempArray.length - 1];
             for (int i = 0; i < faceVerticies.length; i++) {
@@ -239,15 +221,14 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
                 // FileIO reader = new FileIO();
                 // srcImage = reader.readImage(imageFile);
             }
-        
 
             setCompleted(true);
 
         } catch (final Exception e) {
-            append("The following Java error has occured:", redText);
-            append(e.toString(), redText);
+            append("The following Java error has occured:", PlugInDialog3DSWCStats.RED_TEXT);
+            append(e.toString(), PlugInDialog3DSWCStats.RED_TEXT);
             for (final StackTraceElement t : e.getStackTrace()) {
-                append(t.toString(), redText);
+                append(t.toString(), PlugInDialog3DSWCStats.RED_TEXT);
             }
             setCompleted(false);
             return;
@@ -265,12 +246,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
      * @see PlugInAlgorithm3DSWCStats
      */
     public void write() {
-    	
-    	//allTimeCoordinates = new ArrayList<ArrayList<ArrayList<float[]>>>();
+
+        // allTimeCoordinates = new ArrayList<ArrayList<ArrayList<float[]>>>();
 
         setCompleted(false);
-        
-       
 
         final PlugInAlgorithm3DSWCViewer alg = this;
 
@@ -285,12 +264,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
                     // Pre-processing before all the statistics are
                     // calculated. Makes sure the logical ordering
                     // of branches is correct
-                    
-                    
-                    
-                    calculateDistances(curTimeCoordinates); 												// **MODIFICATION**		(curTimeCoordinates replaced swcCoordinates)
+
+                    calculateDistances(curTimeCoordinates); // **MODIFICATION** (curTimeCoordinates replaced
+                                                            // swcCoordinates)
                     if (axonUseLength) {
-                        maxOrder = determineOrder_useLength(curTimeCoordinates, connections, currentAxon); // **MODIFICATION**		
+                        maxOrder = determineOrder_useLength(curTimeCoordinates, connections, currentAxon); // **MODIFICATION**
                     } else {
                         maxOrder = determineOrder(curTimeCoordinates, connections, currentAxon);
                     }
@@ -299,7 +277,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
                         currentAxon = tips.get(0);
                         for (final int i : tips) {
-                            if (curTimeCoordinates.get(i).get(0)[5] == 1) { 								// **MODIFICATION**
+                            if (curTimeCoordinates.get(i).get(0)[5] == 1) { // **MODIFICATION**
                                 currentAxon = i;
                                 break;
                             }
@@ -308,32 +286,34 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
                     if (branchDensity) {
                         // We aren't doing any sort of split point work
-                        final float hullVolume = convexHullVolumeNew(curTimeCoordinates, vertexInd, faceVerticies); 		// **MODIFICATION**		(curTimeCoordinates replaced swcCoordinates)
+                        final float hullVolume = convexHullVolumeNew(curTimeCoordinates, vertexInd, faceVerticies); // **MODIFICATION**
+                                                                                                                    // (curTimeCoordinates
+                                                                                                                    // replaced
+                                                                                                                    // swcCoordinates)
 
                         final ArrayList<String> messages = consolidateFilaments(curTimeCoordinates, connections, maxOrder); // **MODIFICATION**
-                        final float[] branchLengths = recalculateDistances(curTimeCoordinates, connections); 				// **MODIFICATION**
-                        addToMessages(curTimeCoordinates, messages); 														// **MODIFICATION**
+                        final float[] branchLengths = recalculateDistances(curTimeCoordinates, connections); // **MODIFICATION**
+                        addToMessages(curTimeCoordinates, messages); // **MODIFICATION**
 
                         try {
-                            final String output = exportStatsToCSV(curTimeCoordinates, connections, messages, branchLengths, /*-1.0f,*/hullVolume,
-                                    maxOrder);																				 // **MODIFICATION**
-                            append("Exported stats to CSV -> " + output, blackText);
+                            final String output = exportStatsToCSV(curTimeCoordinates, connections, messages, branchLengths, /*-1.0f,*/hullVolume, maxOrder); // **MODIFICATION**
+                            append("Exported stats to CSV -> " + output, PlugInDialog3DSWCStats.BLACK_TEXT);
                         } catch (final IOException e) {
-                            append("Could not export stats to CSV for " + baseName, redText);
+                            append("Could not export stats to CSV for " + baseName, PlugInDialog3DSWCStats.RED_TEXT);
                         }
 
-                        try { 
+                        try {
                             final String output = writeSWC(curTimeCoordinates, messages, branchLengths); // **MODIFICATION**
-                            append("Converted to SWC -> " + output, blackText);
+                            append("Converted to SWC -> " + output, PlugInDialog3DSWCStats.BLACK_TEXT);
                         } catch (final IOException e) {
-                            append("Could not write SWC for " + baseName, redText);
+                            append("Could not write SWC for " + baseName, PlugInDialog3DSWCStats.RED_TEXT);
                         }
 
-                        final ArrayList<float[]> stats = branchDensity(curTimeCoordinates); 					// **MODIFICATION**
+                        final ArrayList<float[]> stats = branchDensity(curTimeCoordinates); // **MODIFICATION**
 
-                        append("Writing branch density information", blackText);
+                        append("Writing branch density information", PlugInDialog3DSWCStats.BLACK_TEXT);
                         // write stats out
-                        
+
                         final String output = parentDir + File.separator + "branch_density.csv";
                         final File outputFile = new File(output);
 
@@ -375,11 +355,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
                         fw.close();
 
-                        final SimpleAttributeSet greenText = new SimpleAttributeSet(blackText);
-                        StyleConstants.setForeground(greenText, Color.green.darker());
-
-                        append("Finished writing stats and SWC files", greenText);
-                        append("-----------------------------------------", blackText);
+                        append("Finished writing stats and SWC files", PlugInDialog3DSWCStats.GREEN_TEXT);
+                        append("-----------------------------------------", PlugInDialog3DSWCStats.BLACK_TEXT);
                     } else {
 
                         // Need to use the split point provided to calculate stats
@@ -387,7 +364,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
                         int filIndex = currentAxon;
 
                         // Find the location of the split point of the growth cone
-                        ArrayList<float[]> piece = curTimeCoordinates.get(currentAxon); // **MODIFICATION**		(curTimeCoordinates replaced swcCoordinates)
+                        ArrayList<float[]> piece = curTimeCoordinates.get(currentAxon); // **MODIFICATION**
+                                                                                        // (curTimeCoordinates replaced
+                                                                                        // swcCoordinates)
                         float sDist = splitDist;
                         int ind = piece.size() - 1;
                         while (sDist > 0) {
@@ -396,12 +375,12 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
                             if (ind == 0) {
                                 final int con = (int) fa[4];
                                 if (con == -1) {
-                                    append("Growth cone is longer than axon", redText);
+                                    append("Growth cone is longer than axon", PlugInDialog3DSWCStats.RED_TEXT);
                                     setCompleted(false);
                                     alg.notifyListeners(alg);
                                     return;
                                 }
-                                piece = curTimeCoordinates.get(con); 				// **MODIFICATION**
+                                piece = curTimeCoordinates.get(con); // **MODIFICATION**
                                 filIndex = con;
                                 ind = piece.size() - 1;
                                 fa2 = piece.get(ind);
@@ -468,33 +447,34 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
                         final ArrayList<String> gcMessages = consolidateFilaments(growthCone, gcConnections, gcOrder);
                         final float[] gcLengths = recalculateDistances(growthCone, gcConnections);
                         addToMessages(growthCone, gcMessages);
-                        
+
                         // Need to use the split point provided to calculate stats
                         float[] splitLocMax = null;
                         int filIndexMax = currentAxon;
-                        
+
                         // Find the location of the split point of the maximum growth cone
-                        piece = curTimeCoordinates.get(currentAxon); 							// **MODIFICATION**		(curTimeCoordinates replaced swcCoordinates)
+                        piece = curTimeCoordinates.get(currentAxon); // **MODIFICATION** (curTimeCoordinates replaced
+                                                                     // swcCoordinates)
                         ind = piece.size() - 1;
                         int lastCon = 0;
                         while (true) {
                             final float[] fa = piece.get(ind);
                             if (ind == 0) {
-                            	
+
                                 final int con = (int) fa[4];
                                 if (con == -1) {
-                                   filIndexMax = lastCon; 
-                                   splitLocMax = fa;
-                                   break;
+                                    filIndexMax = lastCon;
+                                    splitLocMax = fa;
+                                    break;
                                 }
                                 lastCon = con;
-                                piece = curTimeCoordinates.get(con);							// **MODIFICATION**
-                                ind = piece.size() - 1; 
+                                piece = curTimeCoordinates.get(con); // **MODIFICATION**
+                                ind = piece.size() - 1;
                             } else {
                                 ind--;
                             }
                         }
-                        
+
                         // axonIndexMax contains the currentAxon value in the
                         // new set of filaments in the growth cone
                         final int[] axonIndexMax = new int[1];
@@ -536,50 +516,44 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
                         // PlugInAlgorithmSWCVolume alg = new PlugInAlgorithmSWCVolume(srcImage, growthCone);
                         // alg.run();
 
-                        
-                      
-
                         try {
-                            append("Calculating volumes", blackText);
+                            append("Calculating volumes", PlugInDialog3DSWCStats.BLACK_TEXT);
                             final String output = exportStatsToCSV(growthCone, gcConnections, gcMessages, gcLengths, /*
-                                                                                                                              * alg
-                                                                                                                              * .
-                                                                                                                              * getVolume
-                                                                                                                              * (
-                                                                                                                              * )
-                                                                                                                              * ,
-                                                                                                                              */gcHullVolume, gcOrder,
-                                      growthConeMax, gcConnectionsMax, gcMessagesMax, gcLengthsMax, gcHullVolumeMax, gcOrderMax);
-                            append("Exported stats to CSV -> " + output, blackText);
+                                                                                                                      * alg
+                                                                                                                      * .
+                                                                                                                      * getVolume
+                                                                                                                      * (
+                                                                                                                      * )
+                                                                                                                      * ,
+                                                                                                                      */gcHullVolume, gcOrder, growthConeMax,
+                                    gcConnectionsMax, gcMessagesMax, gcLengthsMax, gcHullVolumeMax, gcOrderMax);
+                            append("Exported stats to CSV -> " + output, PlugInDialog3DSWCStats.BLACK_TEXT);
                         } catch (final IOException e) {
-                            append("Could not export stats to CSV for " + baseName, redText);
+                            append("Could not export stats to CSV for " + baseName, PlugInDialog3DSWCStats.RED_TEXT);
                         }
 
                         try {
                             final String output = writeSWC(growthCone, gcMessages, gcLengths);
-                            append("Converted to SWC -> " + output, blackText);
+                            append("Converted to SWC -> " + output, PlugInDialog3DSWCStats.BLACK_TEXT);
                         } catch (final IOException e) {
-                            append("Could not write SWC for " + baseName, redText);
+                            append("Could not write SWC for " + baseName, PlugInDialog3DSWCStats.RED_TEXT);
                         }
 
-                        final SimpleAttributeSet greenText = new SimpleAttributeSet(blackText);
-                        StyleConstants.setForeground(greenText, Color.green.darker());
-
-                        append("Finished writing stats and SWC files", greenText);
-                        append("-----------------------------------------", blackText);
+                        append("Finished writing stats and SWC files", PlugInDialog3DSWCStats.GREEN_TEXT);
+                        append("-----------------------------------------", PlugInDialog3DSWCStats.BLACK_TEXT);
 
                     }
                     setCompleted(true);
-                    
+
                 } catch (final Exception e) {
-                    append("The following Java error has occured:", redText);
-                    append(e.toString(), redText);
+                    append("The following Java error has occured:", PlugInDialog3DSWCStats.RED_TEXT);
+                    append(e.toString(), PlugInDialog3DSWCStats.RED_TEXT);
                     for (final StackTraceElement t : e.getStackTrace()) {
-                        append(t.toString(), redText);
+                        append(t.toString(), PlugInDialog3DSWCStats.RED_TEXT);
                     }
                 }
 
-                alg.notifyListeners(alg);		
+                alg.notifyListeners(alg);
             }
         };
 
@@ -849,7 +823,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
     private int[][] addBranchesToHull(final ArrayList<ArrayList<float[]>> swcCoordinates, final ArrayList<Integer> tips, final int[][] hull,
             final int[] verticies) {
 
-        append("Attempting to add all tips to hull", blackText);
+        append("Attempting to add all tips to hull", PlugInDialog3DSWCStats.BLACK_TEXT);
         final ArrayList<Integer> missing = new ArrayList<Integer>(tips);
         // Find which tips are not included in the hull
         for (int i = 0; i < verticies.length; i++) {
@@ -1009,7 +983,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         textArea.setCaretPosition(doc.getLength());
     }
 
-    private ArrayList<float[]> branchDensity(ArrayList<ArrayList<float[]>> curTimeCoordinates) {
+    private ArrayList<float[]> branchDensity(final ArrayList<ArrayList<float[]>> curTimeCoordinates) {
         // Would be based on the consolidated branches, so comes after that method
         // Could reuse the messages to figure out where the branches fall
 
@@ -1129,7 +1103,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         final Point3d[] pts = new Point3d[ptList.size()];
         ptList.toArray(pts);
 
-        final QuickHull3D hull = new QuickHull3D(pts); 
+        final QuickHull3D hull = new QuickHull3D(pts);
 
         final Point3d[] verticies = hull.getVertices();
         final int[][] faceVerticiesA = hull.getFaces();
@@ -1730,12 +1704,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
         return Math.abs(dist);
     }
-    
+
     private String exportStatsToCSV(final ArrayList<ArrayList<float[]>> swcCoordinates, final ArrayList<ArrayList<Integer>> connections,
-    		final ArrayList<String> messages, final float[] branchLengths, /* float neuronVolume, */final float hullVolume, 
-            final int maxOrder)
+            final ArrayList<String> messages, final float[] branchLengths, /* float neuronVolume, */final float hullVolume, final int maxOrder)
             throws IOException {
-        
+
         final String output = parentDir + File.separator + baseName + "_stats.csv";
         final File outputFile = new File(output);
 
@@ -1800,7 +1773,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
             }
             sb.append("\n");
             fw.append(sb.toString());
-            //System.out.println(sb.toString());
+            // System.out.println(sb.toString());
         }
 
         fw.close();
@@ -1809,13 +1782,10 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
     }
 
     private String exportStatsToCSV(final ArrayList<ArrayList<float[]>> swcCoordinates, final ArrayList<ArrayList<Integer>> connections,
-    		final ArrayList<String> messages, final float[] branchLengths, /* float neuronVolume, */final float hullVolume, 
-            final int maxOrder,
-            final ArrayList<ArrayList<float[]>> swcCoordinatesMax, final ArrayList<ArrayList<Integer>> connectionsMax,
-            final ArrayList<String> messagesMax, final float[] branchLengthsMax, /* float neuronVolume, */final float hullVolumeMax,
-            final int maxOrderMax)
-            throws IOException {
-       
+            final ArrayList<String> messages, final float[] branchLengths, /* float neuronVolume, */final float hullVolume, final int maxOrder,
+            final ArrayList<ArrayList<float[]>> swcCoordinatesMax, final ArrayList<ArrayList<Integer>> connectionsMax, final ArrayList<String> messagesMax,
+            final float[] branchLengthsMax, /* float neuronVolume, */final float hullVolumeMax, final int maxOrderMax) throws IOException {
+
         final String output = parentDir + File.separator + baseName + "_stats.csv";
         final File outputFile = new File(output);
 
@@ -1825,8 +1795,11 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
         // Write the new branch info here
 
-        writeBranchInformation(swcCoordinates, connections, fw, /* neuronVolume, */hullVolume, maxOrder,
-        		swcCoordinatesMax, connectionsMax,/* neuronVolume, */hullVolumeMax, maxOrderMax);
+        writeBranchInformation(swcCoordinates, connections, fw, /* neuronVolume, */hullVolume, maxOrder, swcCoordinatesMax, connectionsMax,/*
+                                                                                                                                            * neuronVolume
+                                                                                                                                            * ,
+                                                                                                                                            */hullVolumeMax,
+                maxOrderMax);
 
         /*
          * String branchInfo = ""; branchInfo += "Total branch length," + String.valueOf(branchLengths[0]) + "\n";
@@ -1839,9 +1812,9 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
         fw.append(header);
 
-        int mLength = messages.size();
-        int mMaxLength = messagesMax.size();
-        int mDiff = mMaxLength - mLength;
+        final int mLength = messages.size();
+        final int mMaxLength = messagesMax.size();
+        final int mDiff = mMaxLength - mLength;
         int index = 0;
         for (final String s : messagesMax) {
             final StringBuilder sb = new StringBuilder(30);
@@ -1885,8 +1858,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
             }
             sb.append("\n");
             index++;
-            if (index == (mDiff+1)) {
-            	sb.append("\n");
+            if (index == (mDiff + 1)) {
+                sb.append("\n");
             }
             fw.append(sb.toString());
         }
@@ -1908,9 +1881,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
     private ArrayList<ArrayList<float[]>> filterGrowthCone(final float[] splitPt, final int filIndex, final int[] axonIndex) {
         final ArrayList<ArrayList<float[]>> growthCone = new ArrayList<ArrayList<float[]>>();
         final ArrayDeque<Integer> indexStack = new ArrayDeque<Integer>();
-        
-        
-        
+
         ArrayList<float[]> fil = curTimeCoordinates.get(filIndex);
         ArrayList<float[]> addFil = new ArrayList<float[]>();
         boolean add = false;
@@ -1956,7 +1927,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
             for (int i = forward.size() - 1; i >= 0; i--) {
                 indexStack.addFirst(forward.get(i));
             }
-        
+
         }
         return growthCone;
     }
@@ -1986,8 +1957,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
      * @return
      */
     private void highlightAxon(int branch) {
-    	
-    	currentAxon = branch;
+
+        currentAxon = branch;
 
         ArrayList<float[]> fil = curTimeCoordinates.get(branch);
         int c = (int) fil.get(0)[4];
@@ -2022,8 +1993,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
                     destImage.setC(pt.x + pt.y * 512, 3, 0);
                 }
             }
-          }
-    	
+        }
+
     }
 
     /**
@@ -2149,8 +2120,6 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         }
 
     }
-
-  
 
     /**
      * Using the selected branch, make sure that it comes first in the forward connections.
@@ -2325,17 +2294,17 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         fw.append("\n");
 
     }
-    
+
     private void writeBranchInformation(final ArrayList<ArrayList<float[]>> swcCoordinates, final ArrayList<ArrayList<Integer>> connections,
-            final FileWriter fw, /* float neuronVolume, */final float hullVolume, final int maxOrder,
-            final ArrayList<ArrayList<float[]>> swcCoordinatesMax, final ArrayList<ArrayList<Integer>> connectionsMax,
-             /* float neuronVolume, */final float hullVolumeMax, final int maxOrderMax) throws IOException {
+            final FileWriter fw, /* float neuronVolume, */final float hullVolume, final int maxOrder, final ArrayList<ArrayList<float[]>> swcCoordinatesMax,
+            final ArrayList<ArrayList<Integer>> connectionsMax,
+            /* float neuronVolume, */final float hullVolumeMax, final int maxOrderMax) throws IOException {
 
         final float[] lengthsMax = new float[maxOrderMax];
         for (int i = 0; i < lengthsMax.length; i++) {
             lengthsMax[i] = 0.0F;
         }
-        
+
         int primaryNumberEntire = 0;
         float primaryTotalEntire = 0.0f;
         float primaryAverageEntire = 0.0f;
@@ -2361,58 +2330,54 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         for (int i = 1; i < swcCoordinatesMax.size(); i++) {
             final ArrayList<float[]> fil = swcCoordinatesMax.get(i);
             final float filLength = fil.get(fil.size() - 1)[3];
-            final int order = (int) fil.get(0)[5]-1;
+            final int order = (int) fil.get(0)[5] - 1;
             lengthsMax[order] += filLength;
             if (order == 1) {
-            	primaryNumberEntire++;
-            	primaryTotalEntire += filLength;
-            }
-            else if (order == 2) {
-            	secondaryNumberEntire++;
-            	secondaryTotalEntire += filLength;
-            }
-            else if (order == 3) {
-            	tertiaryNumberEntire++;
-            	tertiaryTotalEntire += filLength;
-            }
-            else if (order == 4) {
-            	quartenaryNumberEntire++;
-            	quartenaryTotalEntire += filLength;
-            }
-            else if (order == 5) {
-            	quinaryNumberEntire++;
-            	quinaryTotalEntire += filLength;
+                primaryNumberEntire++;
+                primaryTotalEntire += filLength;
+            } else if (order == 2) {
+                secondaryNumberEntire++;
+                secondaryTotalEntire += filLength;
+            } else if (order == 3) {
+                tertiaryNumberEntire++;
+                tertiaryTotalEntire += filLength;
+            } else if (order == 4) {
+                quartenaryNumberEntire++;
+                quartenaryTotalEntire += filLength;
+            } else if (order == 5) {
+                quinaryNumberEntire++;
+                quinaryTotalEntire += filLength;
             }
             branchNumberEntire++;
             branchTotalEntire += filLength;
             if (order != 1) {
-            	higherNumberEntire++;
-            	higherTotalEntire += filLength;
+                higherNumberEntire++;
+                higherTotalEntire += filLength;
             }
         }
-        primaryAverageEntire = primaryTotalEntire/primaryNumberEntire;
-        if (maxOrderMax-1 >= 2) {
-        	secondaryAverageEntire = secondaryTotalEntire/secondaryNumberEntire;
+        primaryAverageEntire = primaryTotalEntire / primaryNumberEntire;
+        if (maxOrderMax - 1 >= 2) {
+            secondaryAverageEntire = secondaryTotalEntire / secondaryNumberEntire;
         }
-        if (maxOrderMax-1 >= 3) {
-        	tertiaryAverageEntire = tertiaryTotalEntire/tertiaryNumberEntire;
+        if (maxOrderMax - 1 >= 3) {
+            tertiaryAverageEntire = tertiaryTotalEntire / tertiaryNumberEntire;
         }
-        if (maxOrderMax-1 >= 4) {
-        	quartenaryAverageEntire = quartenaryTotalEntire/quartenaryNumberEntire;
+        if (maxOrderMax - 1 >= 4) {
+            quartenaryAverageEntire = quartenaryTotalEntire / quartenaryNumberEntire;
         }
-        if (maxOrderMax-1 >= 5) {
-        	quinaryAverageEntire = quinaryTotalEntire/quinaryNumberEntire;
+        if (maxOrderMax - 1 >= 5) {
+            quinaryAverageEntire = quinaryTotalEntire / quinaryNumberEntire;
         }
-        branchAverageEntire = branchTotalEntire/branchNumberEntire;
-        if (maxOrderMax-1 >= 2) {
-        	higherAverageEntire = higherTotalEntire/higherNumberEntire;
+        branchAverageEntire = branchTotalEntire / branchNumberEntire;
+        if (maxOrderMax - 1 >= 2) {
+            higherAverageEntire = higherTotalEntire / higherNumberEntire;
         }
-        
+
         final float[] lengthsGrowth = new float[maxOrder];
         for (int i = 0; i < lengthsGrowth.length; i++) {
             lengthsGrowth[i] = 0.0F;
         }
-        
+
         int primaryNumberGrowth = 0;
         float primaryTotalGrowth = 0.0f;
         float primaryAverageGrowth = 0.0f;
@@ -2438,236 +2403,218 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
         for (int i = 1; i < swcCoordinates.size(); i++) {
             final ArrayList<float[]> fil = swcCoordinates.get(i);
             final float filLength = fil.get(fil.size() - 1)[3];
-            final int order = (int) fil.get(0)[5]-1;
+            final int order = (int) fil.get(0)[5] - 1;
             lengthsGrowth[order] += filLength;
             if (order == 1) {
-            	primaryNumberGrowth++;
-            	primaryTotalGrowth += filLength;
-            }
-            else if (order == 2) {
-            	secondaryNumberGrowth++;
-            	secondaryTotalGrowth += filLength;
-            }
-            else if (order == 3) {
-            	tertiaryNumberGrowth++;
-            	tertiaryTotalGrowth += filLength;
-            }
-            else if (order == 4) {
-            	quartenaryNumberGrowth++;
-            	quartenaryTotalGrowth += filLength;
-            }
-            else if (order == 5) {
-            	quinaryNumberGrowth++;
-            	quinaryTotalGrowth += filLength;
+                primaryNumberGrowth++;
+                primaryTotalGrowth += filLength;
+            } else if (order == 2) {
+                secondaryNumberGrowth++;
+                secondaryTotalGrowth += filLength;
+            } else if (order == 3) {
+                tertiaryNumberGrowth++;
+                tertiaryTotalGrowth += filLength;
+            } else if (order == 4) {
+                quartenaryNumberGrowth++;
+                quartenaryTotalGrowth += filLength;
+            } else if (order == 5) {
+                quinaryNumberGrowth++;
+                quinaryTotalGrowth += filLength;
             }
             branchNumberGrowth++;
             branchTotalGrowth += filLength;
             if (order != 1) {
-            	higherNumberGrowth++;
-            	higherTotalGrowth += filLength;
+                higherNumberGrowth++;
+                higherTotalGrowth += filLength;
             }
         }
-        primaryAverageGrowth = primaryTotalGrowth/primaryNumberGrowth;
-        if (maxOrder-1 >= 2) {
-        	secondaryAverageGrowth = secondaryTotalGrowth/secondaryNumberGrowth;
+        primaryAverageGrowth = primaryTotalGrowth / primaryNumberGrowth;
+        if (maxOrder - 1 >= 2) {
+            secondaryAverageGrowth = secondaryTotalGrowth / secondaryNumberGrowth;
         }
-        if (maxOrder-1 >= 3) {
-        	tertiaryAverageGrowth = tertiaryTotalGrowth/tertiaryNumberGrowth;
+        if (maxOrder - 1 >= 3) {
+            tertiaryAverageGrowth = tertiaryTotalGrowth / tertiaryNumberGrowth;
         }
-        if (maxOrder-1 >= 4) {
-        	quartenaryAverageGrowth = quartenaryTotalGrowth/quartenaryNumberGrowth;
+        if (maxOrder - 1 >= 4) {
+            quartenaryAverageGrowth = quartenaryTotalGrowth / quartenaryNumberGrowth;
         }
-        if (maxOrder-1 >= 5) {
-        	quinaryAverageGrowth = quinaryTotalGrowth/quinaryNumberGrowth;
+        if (maxOrder - 1 >= 5) {
+            quinaryAverageGrowth = quinaryTotalGrowth / quinaryNumberGrowth;
         }
-        branchAverageGrowth = branchTotalEntire/branchNumberGrowth;
-        if (maxOrder-1 >= 2) {
-        	higherAverageGrowth = higherTotalGrowth/higherNumberGrowth;
+        branchAverageGrowth = branchTotalEntire / branchNumberGrowth;
+        if (maxOrder - 1 >= 2) {
+            higherAverageGrowth = higherTotalGrowth / higherNumberGrowth;
         }
-        
-        int primaryNumberNonGrowth = primaryNumberEntire - primaryNumberGrowth;
-        float primaryTotalNonGrowth = primaryTotalEntire - primaryTotalGrowth;
-        float primaryAverageNonGrowth = primaryTotalNonGrowth/primaryNumberNonGrowth;
-        int secondaryNumberNonGrowth = secondaryNumberEntire - secondaryNumberGrowth;
-        float secondaryTotalNonGrowth = secondaryTotalEntire - secondaryTotalGrowth;
+
+        final int primaryNumberNonGrowth = primaryNumberEntire - primaryNumberGrowth;
+        final float primaryTotalNonGrowth = primaryTotalEntire - primaryTotalGrowth;
+        final float primaryAverageNonGrowth = primaryTotalNonGrowth / primaryNumberNonGrowth;
+        final int secondaryNumberNonGrowth = secondaryNumberEntire - secondaryNumberGrowth;
+        final float secondaryTotalNonGrowth = secondaryTotalEntire - secondaryTotalGrowth;
         float secondaryAverageNonGrowth = 0.0f;
         if (secondaryNumberNonGrowth >= 1) {
-        	secondaryAverageNonGrowth = secondaryTotalNonGrowth/secondaryNumberNonGrowth;
+            secondaryAverageNonGrowth = secondaryTotalNonGrowth / secondaryNumberNonGrowth;
         }
-        int tertiaryNumberNonGrowth = tertiaryNumberEntire - tertiaryNumberGrowth;
-        float tertiaryTotalNonGrowth = tertiaryTotalEntire - tertiaryTotalGrowth;
+        final int tertiaryNumberNonGrowth = tertiaryNumberEntire - tertiaryNumberGrowth;
+        final float tertiaryTotalNonGrowth = tertiaryTotalEntire - tertiaryTotalGrowth;
         float tertiaryAverageNonGrowth = 0.0f;
         if (tertiaryNumberNonGrowth >= 1) {
-            tertiaryAverageNonGrowth = tertiaryTotalNonGrowth/tertiaryNumberNonGrowth;	
+            tertiaryAverageNonGrowth = tertiaryTotalNonGrowth / tertiaryNumberNonGrowth;
         }
-        int quartenaryNumberNonGrowth = quartenaryNumberEntire - quartenaryNumberGrowth;
-        float quartenaryTotalNonGrowth = quartenaryTotalEntire - quartenaryTotalGrowth;
+        final int quartenaryNumberNonGrowth = quartenaryNumberEntire - quartenaryNumberGrowth;
+        final float quartenaryTotalNonGrowth = quartenaryTotalEntire - quartenaryTotalGrowth;
         float quartenaryAverageNonGrowth = 0.0f;
         if (quartenaryNumberNonGrowth >= 1) {
-        	quartenaryAverageNonGrowth = quartenaryTotalNonGrowth/quartenaryNumberNonGrowth;
+            quartenaryAverageNonGrowth = quartenaryTotalNonGrowth / quartenaryNumberNonGrowth;
         }
-        int quinaryNumberNonGrowth = quinaryNumberEntire - quinaryNumberGrowth;
-        float quinaryTotalNonGrowth = quinaryTotalEntire - quinaryTotalGrowth;
+        final int quinaryNumberNonGrowth = quinaryNumberEntire - quinaryNumberGrowth;
+        final float quinaryTotalNonGrowth = quinaryTotalEntire - quinaryTotalGrowth;
         float quinaryAverageNonGrowth = 0.0f;
         if (quinaryNumberNonGrowth >= 1) {
-        	quinaryAverageNonGrowth = quinaryTotalNonGrowth/quinaryNumberNonGrowth;
+            quinaryAverageNonGrowth = quinaryTotalNonGrowth / quinaryNumberNonGrowth;
         }
-        int branchNumberNonGrowth = branchNumberEntire - branchNumberGrowth;
-        float branchTotalNonGrowth = branchTotalEntire - branchTotalGrowth;
-        float branchAverageNonGrowth = branchTotalNonGrowth/branchNumberNonGrowth;
-        int higherNumberNonGrowth = higherNumberEntire - higherNumberGrowth;
-        float higherTotalNonGrowth = higherTotalEntire - higherTotalGrowth;
+        final int branchNumberNonGrowth = branchNumberEntire - branchNumberGrowth;
+        final float branchTotalNonGrowth = branchTotalEntire - branchTotalGrowth;
+        final float branchAverageNonGrowth = branchTotalNonGrowth / branchNumberNonGrowth;
+        final int higherNumberNonGrowth = higherNumberEntire - higherNumberGrowth;
+        final float higherTotalNonGrowth = higherTotalEntire - higherTotalGrowth;
         float higherAverageNonGrowth = 0.0f;
         if (higherNumberNonGrowth >= 1) {
-        	higherAverageNonGrowth = higherTotalNonGrowth/higherNumberNonGrowth;
+            higherAverageNonGrowth = higherTotalNonGrowth / higherNumberNonGrowth;
         }
 
         // if(neuronVolume >= 0){
         // fw.append("\nVolumes\n");
         // fw.append("Neuron volume," + neuronVolume + "\n");
         // }
-    	fw.append("Convex hull volume," + hullVolumeMax + "," + "," + "Growth cone length input,," + "For entire axon," +
-        "Primary number," + "Primary average length," + "Primary total length");
-    	if (maxOrderMax-1 >= 2) {
-    		fw.append("," + "Secondary number," + "Secondary average length," + "Secondary total length");
-    	}
-    	if (maxOrderMax-1 >= 3) {
-    		fw.append("," + "Tertiary number," + "Tertiary average length," + "Tertiary total length");
-    	}
-    	if (maxOrderMax-1 >= 4) {
-    		fw.append("," + "Quartenary number," + "Quartenary average length," + "Quartenary total length");
-    	}
-    	if (maxOrderMax-1 >= 5) {
-    		fw.append("," + "Quinary number," + "Quinary average length," + "Quinary total length");
-    	}
-    	fw.append("," + "Branch number," + "Branch average length," + "Branch total length");
-    	if (maxOrderMax >= 2) {
-    		fw.append("," + "High order number," + "High order average length," + "High order total length");	
-    	}
-        fw.append("\n");
-    	fw.append("," + "," + "," + String.valueOf(splitDist) + "," + ","  + "," + String.valueOf(primaryNumberEntire)
-    			+ "," + String.valueOf(primaryAverageEntire) + "," + String.valueOf(primaryTotalEntire));
-    	if (maxOrderMax-1 >= 2) {
-    		fw.append("," +  String.valueOf(secondaryNumberEntire)
-    			+ "," + String.valueOf(secondaryAverageEntire) + "," + String.valueOf(secondaryTotalEntire));
-    	}
-    	if (maxOrderMax-1 >= 3) {
-    		fw.append("," +  String.valueOf(tertiaryNumberEntire)
-    			+ "," + String.valueOf(tertiaryAverageEntire) + "," + String.valueOf(tertiaryTotalEntire));
-    	}
-    	if (maxOrderMax-1 >= 4) {
-    		fw.append("," +  String.valueOf(quartenaryNumberEntire)
-    			+ "," + String.valueOf(quartenaryAverageEntire) + "," + String.valueOf(quartenaryTotalEntire));
-    	}
-    	if (maxOrderMax-1 >= 5) {
-    		fw.append("," +  String.valueOf(quinaryNumberEntire)
-    			+ "," + String.valueOf(quinaryAverageEntire) + "," + String.valueOf(quinaryTotalEntire));
-    	}
-    	fw.append("," +  String.valueOf(branchNumberEntire)
-    			+ "," + String.valueOf(branchAverageEntire) + "," + String.valueOf(branchTotalEntire));
-    	if (maxOrderMax-1 >= 2) {
-    		fw.append("," +  String.valueOf(higherNumberEntire)
-    			+ "," + String.valueOf(higherAverageEntire) + "," + String.valueOf(higherTotalEntire));
-    	}
-    	fw.append("\n");
-        
-        fw.append("Branch lengths\n");
-        fw.append("Total Branches," + String.valueOf(branchTotalEntire) + "," + "," + "," + "," + "For growth cone," +
-                "Primary number," + "Primary average length," + "Primary total length");
-    	if (maxOrderMax-1 >= 2) {
-    		fw.append("," + "Secondary number," + "Secondary average length," + "Secondary total length");
-    	}
-    	if (maxOrderMax-1 >= 3) {
-    		fw.append("," + "Tertiary number," + "Tertiary average length," + "Tertiary total length");
-    	}
-    	if (maxOrderMax-1 >= 4) {
-    		fw.append("," + "Quartenary number," + "Quartenary average length," + "Quartenary total length");
-    	}
-    	if (maxOrderMax-1 >= 5) {
-    		fw.append("," + "Quinary number," + "Quinary average length," + "Quinary total length");
-    	}
-    	fw.append("," + "Branch number," + "Branch average length," + "Branch total length");
-    	if (maxOrderMax >= 2) {
-    		fw.append("," + "High order number," + "High order average length," + "High order total length");	
-    	}
-        fw.append("\n");
-        fw.append("Higher order," + String.valueOf(higherTotalEntire) + "," + "," + "," + "," + "," + String.valueOf(primaryNumberGrowth)
-    			+ "," + String.valueOf(primaryAverageGrowth) + "," + String.valueOf(primaryTotalGrowth));
-    	if (maxOrderMax-1 >= 2) {
-    		fw.append("," +  String.valueOf(secondaryNumberGrowth)
-    			+ "," + String.valueOf(secondaryAverageGrowth) + "," + String.valueOf(secondaryTotalGrowth));
-    	}
-    	if (maxOrderMax-1 >= 3) {
-    		fw.append("," +  String.valueOf(tertiaryNumberGrowth)
-    			+ "," + String.valueOf(tertiaryAverageGrowth) + "," + String.valueOf(tertiaryTotalGrowth));
-    	}
-    	if (maxOrderMax-1 >= 4) {
-    		fw.append("," +  String.valueOf(quartenaryNumberGrowth)
-    			+ "," + String.valueOf(quartenaryAverageGrowth) + "," + String.valueOf(quartenaryTotalGrowth));
-    	}
-    	if (maxOrderMax-1 >= 5) {
-    		fw.append("," +  String.valueOf(quinaryNumberGrowth)
-    			+ "," + String.valueOf(quinaryAverageGrowth) + "," + String.valueOf(quinaryTotalGrowth));
-    	}
-    	fw.append("," +  String.valueOf(branchNumberGrowth)
-    			+ "," + String.valueOf(branchAverageGrowth) + "," + String.valueOf(branchTotalGrowth));
-    	if (maxOrderMax-1 >= 2) {
-    		fw.append("," +  String.valueOf(higherNumberGrowth)
-    			+ "," + String.valueOf(higherAverageGrowth) + "," + String.valueOf(higherTotalGrowth));
-    	}
-        fw.append("\n\n");
-        
-        fw.append("Order " + "1" + "," + String.valueOf(lengthsMax[1]) + "," + "," +"," + "," + "Non growth cone," +
-                "Primary number," + "Primary average length," + "Primary total length");
-        if (maxOrderMax-1 >= 2) {
-    		fw.append("," + "Secondary number," + "Secondary average length," + "Secondary total length");
-    	}
-    	if (maxOrderMax-1 >= 3) {
-    		fw.append("," + "Tertiary number," + "Tertiary average length," + "Tertiary total length");
-    	}
-    	if (maxOrderMax-1 >= 4) {
-    		fw.append("," + "Quartenary number," + "Quartenary average length," + "Quartenary total length");
-    	}
-    	if (maxOrderMax-1 >= 5) {
-    		fw.append("," + "Quinary number," + "Quinary average length," + "Quinary total length");
-    	}
-    	fw.append("," + "Branch number," + "Branch average length," + "Branch total length");
-    	if (maxOrderMax >= 2) {
-    		fw.append("," + "High order number," + "High order average length," + "High order total length");	
-    	}
-        fw.append("\n");
-        
+        fw.append("Convex hull volume," + hullVolumeMax + "," + "," + "Growth cone length input,," + "For entire axon," + "Primary number,"
+                + "Primary average length," + "Primary total length");
+        if (maxOrderMax - 1 >= 2) {
+            fw.append("," + "Secondary number," + "Secondary average length," + "Secondary total length");
+        }
+        if (maxOrderMax - 1 >= 3) {
+            fw.append("," + "Tertiary number," + "Tertiary average length," + "Tertiary total length");
+        }
+        if (maxOrderMax - 1 >= 4) {
+            fw.append("," + "Quartenary number," + "Quartenary average length," + "Quartenary total length");
+        }
+        if (maxOrderMax - 1 >= 5) {
+            fw.append("," + "Quinary number," + "Quinary average length," + "Quinary total length");
+        }
+        fw.append("," + "Branch number," + "Branch average length," + "Branch total length");
         if (maxOrderMax >= 2) {
-        	fw.append("Order " + "2" + "," + String.valueOf(lengthsMax[2]));
-        	fw.append("," + "," +"," + "," + ",");
+            fw.append("," + "High order number," + "High order average length," + "High order total length");
         }
-        else {
-        	fw.append("," + "," +"," + "," + "," + "," + ",");	
+        fw.append("\n");
+        fw.append("," + "," + "," + String.valueOf(splitDist) + "," + "," + "," + String.valueOf(primaryNumberEntire) + ","
+                + String.valueOf(primaryAverageEntire) + "," + String.valueOf(primaryTotalEntire));
+        if (maxOrderMax - 1 >= 2) {
+            fw.append("," + String.valueOf(secondaryNumberEntire) + "," + String.valueOf(secondaryAverageEntire) + "," + String.valueOf(secondaryTotalEntire));
         }
-        fw.append(String.valueOf(primaryNumberNonGrowth)
-    			+ "," + String.valueOf(primaryAverageNonGrowth) + "," + String.valueOf(primaryTotalNonGrowth));
-        if (maxOrderMax-1 >= 2) {
-    		fw.append("," +  String.valueOf(secondaryNumberNonGrowth)
-    			+ "," + String.valueOf(secondaryAverageNonGrowth) + "," + String.valueOf(secondaryTotalNonGrowth));
-    	}
-    	if (maxOrderMax-1 >= 3) {
-    		fw.append("," +  String.valueOf(tertiaryNumberNonGrowth)
-    			+ "," + String.valueOf(tertiaryAverageNonGrowth) + "," + String.valueOf(tertiaryTotalNonGrowth));
-    	}
-    	if (maxOrderMax-1 >= 4) {
-    		fw.append("," +  String.valueOf(quartenaryNumberNonGrowth)
-    			+ "," + String.valueOf(quartenaryAverageNonGrowth) + "," + String.valueOf(quartenaryTotalNonGrowth));
-    	}
-    	if (maxOrderMax-1 >= 5) {
-    		fw.append("," +  String.valueOf(quinaryNumberNonGrowth)
-    			+ "," + String.valueOf(quinaryAverageNonGrowth) + "," + String.valueOf(quinaryTotalNonGrowth));
-    	}
-    	fw.append("," +  String.valueOf(branchNumberNonGrowth)
-    			+ "," + String.valueOf(branchAverageNonGrowth) + "," + String.valueOf(branchTotalNonGrowth));
-    	if (maxOrderMax-1 >= 2) {
-    		fw.append("," +  String.valueOf(higherNumberNonGrowth)
-    			+ "," + String.valueOf(higherAverageNonGrowth) + "," + String.valueOf(higherTotalNonGrowth));
-    	}
+        if (maxOrderMax - 1 >= 3) {
+            fw.append("," + String.valueOf(tertiaryNumberEntire) + "," + String.valueOf(tertiaryAverageEntire) + "," + String.valueOf(tertiaryTotalEntire));
+        }
+        if (maxOrderMax - 1 >= 4) {
+            fw.append("," + String.valueOf(quartenaryNumberEntire) + "," + String.valueOf(quartenaryAverageEntire) + ","
+                    + String.valueOf(quartenaryTotalEntire));
+        }
+        if (maxOrderMax - 1 >= 5) {
+            fw.append("," + String.valueOf(quinaryNumberEntire) + "," + String.valueOf(quinaryAverageEntire) + "," + String.valueOf(quinaryTotalEntire));
+        }
+        fw.append("," + String.valueOf(branchNumberEntire) + "," + String.valueOf(branchAverageEntire) + "," + String.valueOf(branchTotalEntire));
+        if (maxOrderMax - 1 >= 2) {
+            fw.append("," + String.valueOf(higherNumberEntire) + "," + String.valueOf(higherAverageEntire) + "," + String.valueOf(higherTotalEntire));
+        }
+        fw.append("\n");
+
+        fw.append("Branch lengths\n");
+        fw.append("Total Branches," + String.valueOf(branchTotalEntire) + "," + "," + "," + "," + "For growth cone," + "Primary number,"
+                + "Primary average length," + "Primary total length");
+        if (maxOrderMax - 1 >= 2) {
+            fw.append("," + "Secondary number," + "Secondary average length," + "Secondary total length");
+        }
+        if (maxOrderMax - 1 >= 3) {
+            fw.append("," + "Tertiary number," + "Tertiary average length," + "Tertiary total length");
+        }
+        if (maxOrderMax - 1 >= 4) {
+            fw.append("," + "Quartenary number," + "Quartenary average length," + "Quartenary total length");
+        }
+        if (maxOrderMax - 1 >= 5) {
+            fw.append("," + "Quinary number," + "Quinary average length," + "Quinary total length");
+        }
+        fw.append("," + "Branch number," + "Branch average length," + "Branch total length");
+        if (maxOrderMax >= 2) {
+            fw.append("," + "High order number," + "High order average length," + "High order total length");
+        }
+        fw.append("\n");
+        fw.append("Higher order," + String.valueOf(higherTotalEntire) + "," + "," + "," + "," + "," + String.valueOf(primaryNumberGrowth) + ","
+                + String.valueOf(primaryAverageGrowth) + "," + String.valueOf(primaryTotalGrowth));
+        if (maxOrderMax - 1 >= 2) {
+            fw.append("," + String.valueOf(secondaryNumberGrowth) + "," + String.valueOf(secondaryAverageGrowth) + "," + String.valueOf(secondaryTotalGrowth));
+        }
+        if (maxOrderMax - 1 >= 3) {
+            fw.append("," + String.valueOf(tertiaryNumberGrowth) + "," + String.valueOf(tertiaryAverageGrowth) + "," + String.valueOf(tertiaryTotalGrowth));
+        }
+        if (maxOrderMax - 1 >= 4) {
+            fw.append("," + String.valueOf(quartenaryNumberGrowth) + "," + String.valueOf(quartenaryAverageGrowth) + ","
+                    + String.valueOf(quartenaryTotalGrowth));
+        }
+        if (maxOrderMax - 1 >= 5) {
+            fw.append("," + String.valueOf(quinaryNumberGrowth) + "," + String.valueOf(quinaryAverageGrowth) + "," + String.valueOf(quinaryTotalGrowth));
+        }
+        fw.append("," + String.valueOf(branchNumberGrowth) + "," + String.valueOf(branchAverageGrowth) + "," + String.valueOf(branchTotalGrowth));
+        if (maxOrderMax - 1 >= 2) {
+            fw.append("," + String.valueOf(higherNumberGrowth) + "," + String.valueOf(higherAverageGrowth) + "," + String.valueOf(higherTotalGrowth));
+        }
+        fw.append("\n\n");
+
+        fw.append("Order " + "1" + "," + String.valueOf(lengthsMax[1]) + "," + "," + "," + "," + "Non growth cone," + "Primary number,"
+                + "Primary average length," + "Primary total length");
+        if (maxOrderMax - 1 >= 2) {
+            fw.append("," + "Secondary number," + "Secondary average length," + "Secondary total length");
+        }
+        if (maxOrderMax - 1 >= 3) {
+            fw.append("," + "Tertiary number," + "Tertiary average length," + "Tertiary total length");
+        }
+        if (maxOrderMax - 1 >= 4) {
+            fw.append("," + "Quartenary number," + "Quartenary average length," + "Quartenary total length");
+        }
+        if (maxOrderMax - 1 >= 5) {
+            fw.append("," + "Quinary number," + "Quinary average length," + "Quinary total length");
+        }
+        fw.append("," + "Branch number," + "Branch average length," + "Branch total length");
+        if (maxOrderMax >= 2) {
+            fw.append("," + "High order number," + "High order average length," + "High order total length");
+        }
+        fw.append("\n");
+
+        if (maxOrderMax >= 2) {
+            fw.append("Order " + "2" + "," + String.valueOf(lengthsMax[2]));
+            fw.append("," + "," + "," + "," + ",");
+        } else {
+            fw.append("," + "," + "," + "," + "," + "," + ",");
+        }
+        fw.append(String.valueOf(primaryNumberNonGrowth) + "," + String.valueOf(primaryAverageNonGrowth) + "," + String.valueOf(primaryTotalNonGrowth));
+        if (maxOrderMax - 1 >= 2) {
+            fw.append("," + String.valueOf(secondaryNumberNonGrowth) + "," + String.valueOf(secondaryAverageNonGrowth) + ","
+                    + String.valueOf(secondaryTotalNonGrowth));
+        }
+        if (maxOrderMax - 1 >= 3) {
+            fw.append("," + String.valueOf(tertiaryNumberNonGrowth) + "," + String.valueOf(tertiaryAverageNonGrowth) + ","
+                    + String.valueOf(tertiaryTotalNonGrowth));
+        }
+        if (maxOrderMax - 1 >= 4) {
+            fw.append("," + String.valueOf(quartenaryNumberNonGrowth) + "," + String.valueOf(quartenaryAverageNonGrowth) + ","
+                    + String.valueOf(quartenaryTotalNonGrowth));
+        }
+        if (maxOrderMax - 1 >= 5) {
+            fw.append("," + String.valueOf(quinaryNumberNonGrowth) + "," + String.valueOf(quinaryAverageNonGrowth) + ","
+                    + String.valueOf(quinaryTotalNonGrowth));
+        }
+        fw.append("," + String.valueOf(branchNumberNonGrowth) + "," + String.valueOf(branchAverageNonGrowth) + "," + String.valueOf(branchTotalNonGrowth));
+        if (maxOrderMax - 1 >= 2) {
+            fw.append("," + String.valueOf(higherNumberNonGrowth) + "," + String.valueOf(higherAverageNonGrowth) + "," + String.valueOf(higherTotalNonGrowth));
+        }
         fw.append("\n");
 
         for (int i = 3; i < maxOrderMax; i++) {
@@ -2680,7 +2627,7 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
     private String writeSWC(final ArrayList<ArrayList<float[]>> swcCoordinates, final ArrayList<String> messages, final float[] branchLengths)
             throws IOException {
-        
+
         final String output = parentDir + File.separator + baseName + ".swc";
         final File outputFile = new File(output);
 
@@ -2717,8 +2664,8 @@ public class PlugInAlgorithm3DSWCViewer extends AlgorithmBase {
 
     @Override
     public void windowClosed(final WindowEvent e) {
-        append("Canceling...", blackText);
-        append("-----------------------------------------", blackText);
+        append("Canceling...", PlugInDialog3DSWCStats.BLACK_TEXT);
+        append("-----------------------------------------", PlugInDialog3DSWCStats.BLACK_TEXT);
         setCompleted(true);
         notifyListeners(this);
     }
