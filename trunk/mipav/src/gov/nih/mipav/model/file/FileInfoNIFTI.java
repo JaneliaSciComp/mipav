@@ -863,6 +863,60 @@ public class FileInfoNIFTI extends FileInfoBase {
     private double CsaImageSlicePosition_PCS[] = null;
     
     private double CsaImageSliceNormalVector[] = null;
+    
+    private String CsaImageGSWDDataType = null;
+    
+    private int CsaImageMultistepIndex = Integer.MIN_VALUE;
+    
+    private int CsaImageImaRelTablePosition[] = null;
+    
+    private int CsaImageNumberOfImagesInMosaic = Integer.MIN_VALUE;
+    
+    private int CsaImageNonPlanarImage = Integer.MIN_VALUE;
+    
+    private int CsaImageEchoPartitionPosition = Integer.MIN_VALUE;
+    
+    private String CsaImageAcquisitionMatrixText = null;
+    
+    private int CsaImageImaAbsTablePosition[] = null;
+    
+    private double CsaSeriesTalesReferencePower = Double.NaN;
+    
+    private int CsaSeriesOperation_mode_flag = Integer.MIN_VALUE;
+    
+    private double CsaSeriesdBdt_thresh = Double.NaN;
+    
+    private int CsaSeriesProtocolChangeHistory = Integer.MIN_VALUE;
+    
+    private double CsaSeriesGradientDelayTime[] = null;
+    
+    private double CsaSeriesSARMostCriticalAspect[] = null;
+    
+    private double CsaSeriesB1rms[] = null;
+    
+    private String CsaSeriesPATModeText = null;
+    
+    private int CsaSeriesRelTablePosition[] = null;
+    
+    private int CsaSeriesNumberOfPrescans = Integer.MIN_VALUE;
+    
+    private double CsaSeriesdBdt_limit = Double.NaN;
+    
+    private double CsaSeriesStim_lim[] = null;
+    
+    private String CsaSeriesPatReinPattern = null;
+    
+    private String CsaSeriesB1rmsSupervision = null;
+    
+    private double CsaSeriesReadoutGradientAmplitude = Double.NaN;
+    
+    private int CsaSeriesMrProtocolVersion = Integer.MIN_VALUE;
+    
+    private String CsaSeriesRFSWDMostCriticalAspect = null;
+    
+    private String CsaSeriesSequenceFileOwner = null;
+    
+    private String CsaSeriesGradientMode = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1733,6 +1787,101 @@ public class FileInfoNIFTI extends FileInfoBase {
         		for (i = 0; i < CsaImageSliceNormalVector.length; i++) {
         			dialog.append("CsaImage.SliceNormalVector["+i+"] = " + CsaImageSliceNormalVector[i] + "\n");
         		}
+        	}
+        	if (CsaImageGSWDDataType != null) {
+        		dialog.append("CsaImage.GSWDDataType = " + CsaImageGSWDDataType + "\n");
+        	}
+        	if (CsaImageMultistepIndex != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.MultistepIndex = " + CsaImageMultistepIndex + "\n");
+        	}
+        	if (CsaImageImaRelTablePosition != null) {
+        		for (i = 0; i < CsaImageImaRelTablePosition.length; i++) {
+        			dialog.append("CsaImage.ImaRelTablePosition["+i+"] = " + CsaImageImaRelTablePosition[i] + "\n");
+        		}
+        	}
+        	if (CsaImageNumberOfImagesInMosaic != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.NumberOfImagesInMosaic = " + CsaImageNumberOfImagesInMosaic + "\n");
+        	}
+        	if (CsaImageNonPlanarImage != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.NonPlanarImage = " + CsaImageNonPlanarImage + "\n");
+        	}
+        	if (CsaImageEchoPartitionPosition != Integer.MIN_VALUE) {
+        		dialog.append("CsaImage.EchoPartitionPosition = " + CsaImageEchoPartitionPosition + "\n");
+        	}
+        	if (CsaImageAcquisitionMatrixText != null) {
+        		dialog.append("CsaImage.AcquisitionMatrixText = " + CsaImageAcquisitionMatrixText + "\n");
+        	}
+        	if (CsaImageImaAbsTablePosition != null) {
+        		for (i = 0; i < CsaImageImaAbsTablePosition.length; i++) {
+        			dialog.append("CsaImage.ImaAbsTablePosition["+i+"] = " + CsaImageImaAbsTablePosition[i] + "\n");
+        		}
+        	}
+        	if (!Double.isNaN(CsaSeriesTalesReferencePower)) {
+        		dialog.append("CsaSeries.TalesReferencePower = " + CsaSeriesTalesReferencePower + "\n");
+        	}
+        	if (CsaSeriesOperation_mode_flag != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.Operation_mode_flag = " + CsaSeriesOperation_mode_flag + "\n");
+        	}
+        	if (!Double.isNaN(CsaSeriesdBdt_thresh)) {
+        		dialog.append("CsaSeries.dBdt_thresh = " + CsaSeriesdBdt_thresh + "\n");
+        	}
+        	if (CsaSeriesProtocolChangeHistory != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.ProtocolChangeHistory = " + CsaSeriesProtocolChangeHistory + "\n");
+        	}
+        	if (CsaSeriesGradientDelayTime != null) {
+        		for (i = 0; i < CsaSeriesGradientDelayTime.length; i++) {
+        			dialog.append("CsaSeries.GradientDelayTime["+i+"] = " + CsaSeriesGradientDelayTime[i] + "\n");
+        		}
+        	}
+        	if (CsaSeriesSARMostCriticalAspect != null) {
+        		for (i = 0; i < CsaSeriesSARMostCriticalAspect.length; i++) {
+        			dialog.append("CsaSeries.SARMostCriticalAspect["+i+"] = " + CsaSeriesSARMostCriticalAspect[i] + "\n");
+        		}
+        	}
+        	if (CsaSeriesB1rms != null) {
+        		for (i = 0; i < CsaSeriesB1rms.length; i++) {
+        			dialog.append("CsaSeries.B1rms["+i+"] = " + CsaSeriesB1rms[i] + "\n");
+        		}
+        	}
+        	if (CsaSeriesPATModeText != null) {
+        		dialog.append("CsaSeries.PATModeText = " + CsaSeriesPATModeText + "\n");
+        	}
+        	if (CsaSeriesRelTablePosition != null) {
+        		for (i = 0; i < CsaSeriesRelTablePosition.length; i++) {
+        			dialog.append("CsaSeries.RelTablePosition["+i+"] = " + CsaSeriesRelTablePosition[i] + "\n");
+        		}
+        	}
+        	if (CsaSeriesNumberOfPrescans != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.NumberOfPrescans = " + CsaSeriesNumberOfPrescans + "\n");
+        	}
+        	if (!Double.isNaN(CsaSeriesdBdt_limit)) {
+        		dialog.append("CsaSeries.dBdt_limit = " + CsaSeriesdBdt_limit + "\n");
+        	}
+        	if (CsaSeriesStim_lim != null) {
+        		for (i = 0; i < CsaSeriesStim_lim.length; i++) {
+        			dialog.append("CsaSeries.Stim_lim["+i+"] = " + CsaSeriesStim_lim[i] + "\n");
+        		}
+        	}
+        	if (CsaSeriesPatReinPattern != null) {
+        		dialog.append("CsaSeries.PatReinPattern = " + CsaSeriesPatReinPattern + "\n");
+        	}
+        	if (CsaSeriesB1rmsSupervision != null) {
+        		dialog.append("CsaSeries.B1rmsSupervision = " + CsaSeriesB1rmsSupervision + "\n");
+        	}
+        	if (!Double.isNaN(CsaSeriesReadoutGradientAmplitude)) {
+        		dialog.append("CsaSeries.ReadoutGradientAmplitude = " + CsaSeriesReadoutGradientAmplitude + "\n");
+        	}
+        	if (CsaSeriesMrProtocolVersion != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.MrProtocolVersion = " + CsaSeriesMrProtocolVersion + "\n");
+        	}
+        	if (CsaSeriesRFSWDMostCriticalAspect != null) {
+        		dialog.append("CsaSeries.RFSWDMostCriticalAspect = " + CsaSeriesRFSWDMostCriticalAspect + "\n");
+        	}
+        	if (CsaSeriesSequenceFileOwner != null) {
+        		dialog.append("CsaSeries.SequenceFileOwner = " + CsaSeriesSequenceFileOwner + "\n");
+        	}
+        	if (CsaSeriesGradientMode != null) {
+        		dialog.append("CsaSeries.GradientMode = " + CsaSeriesGradientMode + "\n");
         	}
         } // if (haveJson)
         
@@ -3043,7 +3192,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     	this.CsaImagePhaseEncodingDirectionPositive = CsaImagePhaseEncodingDirectionPositive;
     }
     
-    public int getCsaPhaseEncodingDirectionPositive() {
+    public int getCsaImagePhaseEncodingDirectionPositive() {
     	return CsaImagePhaseEncodingDirectionPositive;
     }
     
@@ -3061,5 +3210,221 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     public double[] getCsaImageSliceNormalVector() {
     	return CsaImageSliceNormalVector;
+    }
+    
+    public void setCsaImageGSWDDataType(String CsaImageGSWDDataType) {
+    	this.CsaImageGSWDDataType = CsaImageGSWDDataType;
+    }
+    
+    public String getCsaImageGSWDDataType() {
+    	return CsaImageGSWDDataType;
+    }
+    
+    public void setCsaImageMultistepIndex(int CsaImageMultistepIndex) {
+    	this.CsaImageMultistepIndex = CsaImageMultistepIndex;
+    }
+    
+    public int getCsaImageMultistepIndex() {
+    	return CsaImageMultistepIndex;
+    }
+    
+    public void setCsaImageImaRelTablePosition(int CsaImageImaRelTablePosition[]) {
+    	this.CsaImageImaRelTablePosition = CsaImageImaRelTablePosition;
+    }
+    
+    public int[] getCsaImageImaRelTablePosition() {
+    	return CsaImageImaRelTablePosition;
+    }
+    
+    public void setCsaImageNumberOfImagesInMosaic(int CsaImageNumberOfImagesInMosaic) {
+    	this.CsaImageNumberOfImagesInMosaic = CsaImageNumberOfImagesInMosaic;
+    }
+    
+    public int getCsaImageNumberOfImagesInMosaic() {
+    	return CsaImageNumberOfImagesInMosaic;
+    }
+    
+    public void setCsaImageNonPlanarImage(int CsaImageNonPlanarImage) {
+    	this.CsaImageNonPlanarImage = CsaImageNonPlanarImage;
+    }
+    
+    public int getCsaImageNonPlanarImage() {
+    	return CsaImageNonPlanarImage;
+    }
+    
+    public void setCsaImageEchoPartitionPosition(int CsaImageEchoPartitionPosition) {
+    	this.CsaImageEchoPartitionPosition = CsaImageEchoPartitionPosition;
+    }
+    
+    public int getCsaImageEchoPartitionPosition() {
+    	return CsaImageEchoPartitionPosition;
+    }
+    
+    public void setCsaImageAcquisitionMatrixText(String CsaImageAcquisitionMatrixText) {
+    	this.CsaImageAcquisitionMatrixText = CsaImageAcquisitionMatrixText;
+    }
+    
+    public String getCsaImageAcquisitionMatrixText() {
+    	return CsaImageAcquisitionMatrixText;
+    }
+    
+    public void setCsaImageImaAbsTablePosition(int CsaImageImaAbsTablePosition[]) {
+    	this.CsaImageImaAbsTablePosition = CsaImageImaAbsTablePosition;
+    }
+    
+    public int[] getCsaImageImaAbsTablePosition() {
+    	return CsaImageImaAbsTablePosition;
+    }
+    
+    public void setCsaSeriesTalesReferencePower(double CsaSeriesTalesReferencePower) {
+    	this.CsaSeriesTalesReferencePower = CsaSeriesTalesReferencePower;
+    }
+    
+    public double getCsaSeriesTalesReferencePower() {
+    	return CsaSeriesTalesReferencePower;
+    }
+    
+    public void setCsaSeriesOperation_mode_flag(int CsaSeriesOperation_mode_flag) {
+    	this.CsaSeriesOperation_mode_flag = CsaSeriesOperation_mode_flag;
+    }
+    
+    public int getCsaSeriesOperation_mode_flag() {
+    	return CsaSeriesOperation_mode_flag;
+    }
+    
+    public void setCsaSeriesdBdt_thresh(double CsaSeriesdBdt_thresh) {
+    	this.CsaSeriesdBdt_thresh = CsaSeriesdBdt_thresh;
+    }
+    
+    public double getCsaSeriesdBdt_thresh() {
+    	return CsaSeriesdBdt_thresh;
+    }
+    
+    public void setCsaSeriesProtocolChangeHistory(int CsaSeriesProtocolChangeHistory) {
+    	this.CsaSeriesProtocolChangeHistory = CsaSeriesProtocolChangeHistory;
+    }
+    
+    public int getCsaSeriesProtocolChangeHistory() {
+    	return CsaSeriesProtocolChangeHistory;
+    }
+    
+    public void setCsaSeriesGradientDelayTime(double CsaSeriesGradientDelayTime[]) {
+    	this.CsaSeriesGradientDelayTime = CsaSeriesGradientDelayTime;
+    }
+    
+    public double[] getCsaSeriesGradientDelayTime() {
+    	return CsaSeriesGradientDelayTime;
+    }
+    
+    public void setCsaSeriesSARMostCriticalAspect(double CsaSeriesSARMostCriticalAspect[]) {
+    	this.CsaSeriesSARMostCriticalAspect = CsaSeriesSARMostCriticalAspect;
+    }
+    
+    public double[] getCsaSeriesSARMostCriticalAspect() {
+    	return CsaSeriesSARMostCriticalAspect;
+    }
+    
+    public void setCsaSeriesB1rms(double CsaSeriesB1rms[]) {
+    	this.CsaSeriesB1rms = CsaSeriesB1rms;
+    }
+    
+    public double[] getCsaSeriesB1rms() {
+    	return CsaSeriesB1rms;
+    }
+    
+    public void setCsaSeriesPATModeText(String CsaSeriesPATModeText) {
+    	this.CsaSeriesPATModeText = CsaSeriesPATModeText;
+    }
+    
+    public String getCsaSeriesPATModeText() {
+    	return CsaSeriesPATModeText;
+    }
+    
+    public void setCsaSeriesRelTablePosition(int CsaSeriesRelTablePosition[]) {
+    	this.CsaSeriesRelTablePosition = CsaSeriesRelTablePosition;
+    }
+    
+    public int[] getCsaSeriesRelTablePosition() {
+    	return CsaSeriesRelTablePosition;
+    }
+    
+    public void setCsaSeriesNumberOfPrescans(int CsaSeriesNumberOfPrescans) {
+    	this.CsaSeriesNumberOfPrescans = CsaSeriesNumberOfPrescans;
+    }
+    
+    public int getCsaSeriesNumberOfPrescans() {
+    	return CsaSeriesNumberOfPrescans;
+    }
+    
+    public void setCsaSeriesdBdt_limit(double CsaSeriesdBdt_limit) {
+    	this.CsaSeriesdBdt_limit = CsaSeriesdBdt_limit;
+    }
+    
+    public double getCsaSeriesdBdt_limit() {
+    	return CsaSeriesdBdt_limit;
+    }
+    
+    public void setCsaSeriesStim_lim(double CsaSeriesStim_lim[]) {
+    	this.CsaSeriesStim_lim = CsaSeriesStim_lim;
+    }
+    
+    public double[] getCsaSeriesStim_lim() {
+    	return CsaSeriesStim_lim;
+    }
+    
+    public void setCsaSeriesPatReinPattern(String CsaSeriesPatReinPattern) {
+    	this.CsaSeriesPatReinPattern = CsaSeriesPatReinPattern;
+    }
+    
+    public String getCsaSeriesPatReinPattern() {
+    	return CsaSeriesPatReinPattern;
+    }
+    
+    public void setCsaSeriesB1rmsSupervision(String CsaSeriesB1rmsSupervision) {
+    	this.CsaSeriesB1rmsSupervision = CsaSeriesB1rmsSupervision;
+    }
+    
+    public String getCsaSeriesB1rmsSupervision() {
+    	return CsaSeriesB1rmsSupervision;
+    }
+    
+    public void setCsaSeriesReadoutGradientAmplitude(double CsaSeriesReadoutGradientAmplitude) {
+    	this.CsaSeriesReadoutGradientAmplitude = CsaSeriesReadoutGradientAmplitude;
+    }
+    
+    public double getCsaSeriesReadoutGradientAmplitude() {
+    	return CsaSeriesReadoutGradientAmplitude;
+    }
+    
+    public void setCsaSeriesMrProtocolVersion(int CsaSeriesMrProtocolVersion) {
+    	this.CsaSeriesMrProtocolVersion = CsaSeriesMrProtocolVersion;
+    }
+    
+    public int getCsaSeriesMrProtocolVersion() {
+    	return CsaSeriesMrProtocolVersion;
+    }
+    
+    public void setCsaSeriesRFSWDMostCriticalAspect(String CsaSeriesRFSWDMostCriticalAspect) {
+    	this.CsaSeriesRFSWDMostCriticalAspect = CsaSeriesRFSWDMostCriticalAspect;
+    }
+    
+    public String getCsaSeriesRFSWDMostCriticalAspect() {
+    	return CsaSeriesRFSWDMostCriticalAspect;
+    }
+    
+    public void setCsaSeriesSequenceFileOwner(String CsaSeriesSequenceFileOwner) {
+    	this.CsaSeriesSequenceFileOwner = CsaSeriesSequenceFileOwner;
+    }
+    
+    public String getCsaSeriesSequenceFileOwner() {
+    	return CsaSeriesSequenceFileOwner;
+    }
+    
+    public void setCsaSeriesGradientMode(String CsaSeriesGradientMode) {
+    	this.CsaSeriesGradientMode = CsaSeriesGradientMode;
+    }
+    
+    public String getCsaSeriesGradientMode() {
+    	return CsaSeriesGradientMode;
     }
 }
