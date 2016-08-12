@@ -59,7 +59,6 @@ import com.ice.tar.TarEntry;
 import com.ice.tar.TarInputStream;
 import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
-import com.sun.source.tree.ArrayAccessTree;
 
 
 /**
@@ -77,8 +76,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private JTable structTable;
 
-    private JButton addStructButton, loadCSVButton, selectBIDSButton,
-                    finishButton, removeStructButton, editDataElementsButton, outputDirButton;
+    private JButton addStructButton, loadCSVButton, selectBIDSButton, finishButton, removeStructButton, editDataElementsButton, outputDirButton;
 
     private JTextField outputDirTextField;
 
@@ -87,9 +85,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private String outputDirBase;
 
     private String csvFileDir;
-    
+
     private String BIDSFileDir;
-    
+
     private final Hashtable<RepeatableGroup, JPanel> groupPanelTable = new Hashtable<RepeatableGroup, JPanel>();
 
     private final Hashtable<RepeatableGroup, JButton> groupRemoveButtonTable = new Hashtable<RepeatableGroup, JButton>();
@@ -208,11 +206,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private List<FormStructure> dataStructureList;
 
     private File csvFile;
-    
+
     private File BIDSFile;
-    
+
     private JPanel dsMainPanel;
-    
+
     private String dataStructureName;
 
     private ArrayList<String> csvFieldNames;
@@ -233,7 +231,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.39";
+    private static final String pluginVersion = "0.40";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -265,7 +263,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             "Pennsylvania State University (Hershey)", "Pacific Northwest National Laboratory", "University of Alabama (Birmingham)",
             "University of Pennsylvania", "University of Florida (Gainesville)", "University of Washington", "UT-Southwestern Medical Center",};
 
-    private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD"};
+    private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD", "NEI"};
 
     private static final String[] imagingStructurePrefixes;
     static {
@@ -275,9 +273,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             imagingStructurePrefixes[i + 1] = PDBP_IMAGING_STRUCTURE_PREFIX_LIST[i];
         }
     }
-    
+
     private FormStructureData fsData = null;
-    
+
     private JLabel requiredLabel;
 
     /**
@@ -338,7 +336,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
         BIDSFileDir = Preferences.getProperty(Preferences.PREF_BRICS_PLUGIN_BIDS_DIR);
         if (BIDSFileDir == null) {
-        	BIDSFileDir = ViewUserInterface.getReference().getDefaultDirectory();
+            BIDSFileDir = ViewUserInterface.getReference().getDefaultDirectory();
         }
 
         // try to read the server config from disk, if it is there.
@@ -391,10 +389,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
             listPane.setBorder(JDialogBase.buildTitledBorder(structTableModel.getRowCount() + " Form Structure(s) "));
         } else if (command.equalsIgnoreCase("SelectBIDS")) {
-        	final JFileChooser chooser = new JFileChooser();
-        	chooser.setCurrentDirectory(new File(BIDSFileDir));
-        	chooser.setDialogTitle("Choose root BIDS directory");
-        	chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            final JFileChooser chooser = new JFileChooser();
+            chooser.setCurrentDirectory(new File(BIDSFileDir));
+            chooser.setDialogTitle("Choose root BIDS directory");
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             chooser.setMultiSelectionEnabled(false);
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -594,442 +592,415 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     @Override
     public void windowOpened(final WindowEvent e) {}
-    
-    private boolean processBIDSDirectories(boolean setInitialVisible) {
-    	int numberSubjects = 0;
-    	File[] files;
-    	File[] files2;
-    	File subjectFiles[];
-    	int i;
-    	int j;
-    	int k;
-    	int m;
-    	int n;
-    	int p;
-    	int numberSessions[];
-    	int maximumNumberSessions = 0;
-    	File sessionFiles[][];
-    	int anatNumber = 0;
-    	int funcNumber = 0;
-    	int dwiNumber = 0;
-    	int fmapNumber = 0;
-    	int numberSessionDirectoryTSV[][] = null;
-    	int numberSessionDirectoryScansTSV[][] = null;
-    	int numberSubjectDirectoryTSV[];
-    	int numberSubjectDirectoryScansTSV[];
-    	int numberSubjectDirectorySessionsTSV[];
-    	int totalSessionTSVFiles = 0;
-    	int totalSessionScansTSVFiles = 0;
-    	int totalSubjectTSVFiles = 0;
-    	int totalSubjectScansTSVFiles = 0;
-    	int totalSubjectSessionsTSVFiles = 0;
-    	File anatFiles[][][] = null;
-    	File funcFiles[][][] = null;
-    	File dwiFiles[][][] = null;
-    	File fmapFiles[][][] = null;
-    	File tsvSessionDirectoryFiles[][][] = null;
-    	File scanstsvSessionDirectoryFiles[][][] = null;
-    	File tsvSubjectDirectoryFiles[][] = null;
-    	File scanstsvSubjectDirectoryFiles[][] =  null;
-    	File sessionstsvSubjectDirectoryFiles[][] = null;
-    	boolean found;
-    	FormStructure ds = null;
-    	FormStructure dsInfo = null;
-    	
-    	int maximumSessionFileNumber = 15;
-    	ModelImage srcImage[] = new ModelImage[maximumSessionFileNumber];
-    	File jsonFile[] = new File[maximumSessionFileNumber];
-    	File bvalFile[] = new File[maximumSessionFileNumber];
-    	File bvecFile[] = new File[maximumSessionFileNumber];
-    	File eventsFile[] = new File[maximumSessionFileNumber];
-    	File physioTsvFile[] = new File[maximumSessionFileNumber];
-    	File physioJsonFile[] = new File[maximumSessionFileNumber];
-    	FileIO fileIO = new FileIO();
-    	int anatImagesRead;
-    	int anatJsonRead;
-    	int funcImagesRead;
-    	int funcJsonRead;
-    	int funcEventsRead;
-    	int funcPhysioTsvRead;
-    	int funcPhysioJsonRead;
-    	int dwiImagesRead;
-    	int dwiJsonRead;
-    	int dwiBvalRead;
-    	int dwiBvecRead;
-    	int index;
-    	String baseName;
-    	String jsonName;
-    	String bvalName;
-    	String bvecName;
-    	String eventsBaseName;
-    	String eventsName;
-    	int sessionImagesRead;
-    	int sessionJsonRead;
-    	int sessionBvalRead;
-    	int sessionBvecRead;
-    	int sessionEventsRead;
-    	int sessionPhysioTsvRead;
-    	int sessionPhysioJsonRead;
-    	File participantsFile = null;
-    	RandomAccessFile raFile = null;
-    	boolean processFile;
-    	String line = null;
-    	boolean readMoreLines;
-    	String tokens[];
-    	int participant_id_index;
-    	int age_index;
-    	String participant_id_array[] = null;
-    	String age_array[] = null;
-    	String age = null;
-    	int participant_id_read = 0;
-    	int age_read = 0;
-    	int subjectsRead = 0;
-    	long fileLength = 0;
-    	long filePos;
-    	boolean indexRead;
-    	int subject_id_index;
-    	String subject_id_array[] = null;
-    	String subject_id = null;
-    	int headerTokenNumber;
-    	int sessionTokenNumber;
-    	int sessionsRead;
-    	int subject_id_read = 0;
-    	int numberBoldJsonFiles = 0;
-    	String boldJsonFilenames[] = null;
-    	String boldJsonPathnames[] = null;
-    	int numberPhysioJsonFiles = 0;
-    	String physioJsonFilenames[] = null;
-    	String physioJsonPathnames[] = null;
-    	byte bufferByte[] = null;
-    	String jsonString;
-    	String openBracket;
-    	String closeBracket;
-    	JSONObject jsonObject = null;
-    	double effectiveEchoSpacing[] = null;
-    	double echoTime[] = null;
-    	String BIDSString = null;
-    	String fullPath = null;
-    	String dwibvalString = null;
-    	String dwibvecString = null;
-    	// The JSON file gives the time in seconds between the beginning of an acquisition of one volume and the 
-    	// beginning of the acquisition of the volume following it (TR).  Pleases note that this definition includes
-    	// time between scans (when no data has been acquired) in case of sparse acquisition schemes.  This value
-    	// needs to be consistent with the 'pixdim[4]' field (after accounting for units stored in 'xyzt_units'
-    	// field) in the NIFTI header.
-    	double repetitionTime[] = null;
-    	// Possible values, "i", "j", "k", "i-", "j-", "k-".  The letters "i", "j", "k" correspond to the first, second,
-    	// and third, axis of the data in the NIFTI file.  The polarity of the phase encoding is assumed to go from zero 
-    	// index to maximum index unless '-' sign is present(then the order is reversed - starting from highest index 
-    	// instead of zero).
-    	// PhaseEncodingDirection is defined as the direction along which phase was modulated which may result in 
-    	// visible distortions.  Note that this is not the same as the DICOM term inPlanePhaseEncodingDirection
+
+    private boolean processBIDSDirectories(final boolean setInitialVisible) {
+        int numberSubjects = 0;
+        File[] files;
+        File[] files2;
+        File subjectFiles[];
+        int i;
+        int j;
+        int k;
+        int m;
+        int n;
+        int p;
+        int numberSessions[];
+        int maximumNumberSessions = 0;
+        File sessionFiles[][];
+        int anatNumber = 0;
+        int funcNumber = 0;
+        int dwiNumber = 0;
+        int fmapNumber = 0;
+        int numberSessionDirectoryTSV[][] = null;
+        int numberSessionDirectoryScansTSV[][] = null;
+        int numberSubjectDirectoryTSV[];
+        int numberSubjectDirectoryScansTSV[];
+        int numberSubjectDirectorySessionsTSV[];
+        int totalSessionTSVFiles = 0;
+        int totalSessionScansTSVFiles = 0;
+        int totalSubjectTSVFiles = 0;
+        int totalSubjectScansTSVFiles = 0;
+        int totalSubjectSessionsTSVFiles = 0;
+        File anatFiles[][][] = null;
+        File funcFiles[][][] = null;
+        File dwiFiles[][][] = null;
+        File fmapFiles[][][] = null;
+        File tsvSessionDirectoryFiles[][][] = null;
+        File scanstsvSessionDirectoryFiles[][][] = null;
+        File tsvSubjectDirectoryFiles[][] = null;
+        File scanstsvSubjectDirectoryFiles[][] = null;
+        File sessionstsvSubjectDirectoryFiles[][] = null;
+        boolean found;
+        FormStructure ds = null;
+        FormStructure dsInfo = null;
+
+        final int maximumSessionFileNumber = 15;
+        final ModelImage srcImage[] = new ModelImage[maximumSessionFileNumber];
+        final File jsonFile[] = new File[maximumSessionFileNumber];
+        final File bvalFile[] = new File[maximumSessionFileNumber];
+        final File bvecFile[] = new File[maximumSessionFileNumber];
+        final File eventsFile[] = new File[maximumSessionFileNumber];
+        final File physioTsvFile[] = new File[maximumSessionFileNumber];
+        final File physioJsonFile[] = new File[maximumSessionFileNumber];
+        final FileIO fileIO = new FileIO();
+        int anatImagesRead;
+        int anatJsonRead;
+        int funcImagesRead;
+        int funcJsonRead;
+        int funcEventsRead;
+        int funcPhysioTsvRead;
+        int funcPhysioJsonRead;
+        int dwiImagesRead;
+        int dwiJsonRead;
+        int dwiBvalRead;
+        int dwiBvecRead;
+        int index;
+        String baseName;
+        String jsonName;
+        String bvalName;
+        String bvecName;
+        String eventsBaseName;
+        String eventsName;
+        int sessionImagesRead;
+        int sessionJsonRead;
+        int sessionBvalRead;
+        int sessionBvecRead;
+        int sessionEventsRead;
+        int sessionPhysioTsvRead;
+        int sessionPhysioJsonRead;
+        File participantsFile = null;
+        RandomAccessFile raFile = null;
+        boolean processFile;
+        String line = null;
+        boolean readMoreLines;
+        String tokens[];
+        int participant_id_index;
+        int age_index;
+        String participant_id_array[] = null;
+        String age_array[] = null;
+        String age = null;
+        int participant_id_read = 0;
+        int age_read = 0;
+        int subjectsRead = 0;
+        long fileLength = 0;
+        long filePos;
+        boolean indexRead;
+        int subject_id_index;
+        String subject_id_array[] = null;
+        String subject_id = null;
+        int headerTokenNumber;
+        int sessionTokenNumber;
+        int sessionsRead;
+        int subject_id_read = 0;
+        int numberBoldJsonFiles = 0;
+        String boldJsonFilenames[] = null;
+        String boldJsonPathnames[] = null;
+        int numberPhysioJsonFiles = 0;
+        String physioJsonFilenames[] = null;
+        String physioJsonPathnames[] = null;
+        byte bufferByte[] = null;
+        String jsonString;
+        String openBracket;
+        String closeBracket;
+        JSONObject jsonObject = null;
+        double effectiveEchoSpacing[] = null;
+        double echoTime[] = null;
+        String BIDSString = null;
+        String fullPath = null;
+        String dwibvalString = null;
+        String dwibvecString = null;
+        // The JSON file gives the time in seconds between the beginning of an acquisition of one volume and the
+        // beginning of the acquisition of the volume following it (TR). Pleases note that this definition includes
+        // time between scans (when no data has been acquired) in case of sparse acquisition schemes. This value
+        // needs to be consistent with the 'pixdim[4]' field (after accounting for units stored in 'xyzt_units'
+        // field) in the NIFTI header.
+        double repetitionTime[] = null;
+        // Possible values, "i", "j", "k", "i-", "j-", "k-". The letters "i", "j", "k" correspond to the first, second,
+        // and third, axis of the data in the NIFTI file. The polarity of the phase encoding is assumed to go from zero
+        // index to maximum index unless '-' sign is present(then the order is reversed - starting from highest index
+        // instead of zero).
+        // PhaseEncodingDirection is defined as the direction along which phase was modulated which may result in
+        // visible distortions. Note that this is not the same as the DICOM term inPlanePhaseEncodingDirection
         // which can have "ROW" or "COL" values.
-    	String phaseEncodingDirection[] = null;
-    	String imagingFMRIAuxiliaryFile[] = null;
-    	int fMRIAuxiliaryFileNumber = 0;
-    	int numberEventsTSVFiles = 0;
-    	String eventsTSVFilenames[] = null;
-    	String eventsTSVPathnames[] = null;
-    	int subdirectoriesFound = 0;
-    	int subdirectoriesRead = 0;
-    	int pValue;
-    	final JPanel mainPanel = new JPanel(new GridBagLayout());
-    	
-    	fileIO.setQuiet(true);
-    	final ViewJProgressBar progressBar = new ViewJProgressBar("Reading BIDS directories", "Reading BIDS directories...", 0, 100, false);
+        String phaseEncodingDirection[] = null;
+        String imagingFMRIAuxiliaryFile[] = null;
+        int fMRIAuxiliaryFileNumber = 0;
+        int numberEventsTSVFiles = 0;
+        String eventsTSVFilenames[] = null;
+        String eventsTSVPathnames[] = null;
+        int subdirectoriesFound = 0;
+        int subdirectoriesRead = 0;
+        int pValue;
+        final JPanel mainPanel = new JPanel(new GridBagLayout());
+
+        fileIO.setQuiet(true);
+        final ViewJProgressBar progressBar = new ViewJProgressBar("Reading BIDS directories", "Reading BIDS directories...", 0, 100, false);
         progressBar.setVisible(true);
         progressBar.updateValue(5);
 
         dsMainPanel = new JPanel(new GridBagLayout());
         final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    	final GridBagConstraints gbc = new GridBagConstraints();
-    	
-    	setTitle("Edit Data Elements - " + dataStructureName);
+        final GridBagConstraints gbc = new GridBagConstraints();
+
+        setTitle("Edit Data Elements - " + dataStructureName);
         addWindowListener(this);
-        
+
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (final Exception e) {
             // setIconImage() is not part of the Java 1.5 API - catch any
             // runtime error on those systems
         }
-    	// Read directory and find no. of images
+        // Read directory and find no. of images
         files = BIDSFile.listFiles();
         BIDSString = BIDSFile.getName();
         Arrays.sort(files, new fileComparator());
         for (i = 0; i < files.length; i++) {
-        	if ((files[i].isDirectory()) && (files[i].getName().substring(0,3).equalsIgnoreCase("SUB"))) {
-        		numberSubjects++;
-        	}
-        	else if ((files[i].isFile()) && (files[i].getName().equalsIgnoreCase("participants.tsv"))) {
-        		participantsFile = files[i];
-        	}
-        	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_bold.json"))) {
-        	    numberBoldJsonFiles++;	
-        	}
-        	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_physio.json"))) {
-        	    numberPhysioJsonFiles++;	
-        	}
-        	else if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv"))) {
-        		numberEventsTSVFiles++;
-        	}
-        	else if ((files[i].isFile()) && (files[i].getName().equalsIgnoreCase("dwi.bval"))) {
-        	    fullPath = files[i].getAbsolutePath();
-        	    index = fullPath.indexOf(BIDSString);
-        	    dwibvalString = fullPath.substring(index);
-        	    printlnToLog("dwi.bval read");
-        	    
-        	}
-        	else if ((files[i].isFile()) && (files[i].getName().equalsIgnoreCase("dwi.bvec"))) {
-        		fullPath = files[i].getAbsolutePath();
-        	    index = fullPath.indexOf(BIDSString);
-        	    dwibvecString = fullPath.substring(index);
-        	    printlnToLog("dwi.bvec read");
-        	}
+            if ( (files[i].isDirectory()) && (files[i].getName().substring(0, 3).equalsIgnoreCase("SUB"))) {
+                numberSubjects++;
+            } else if ( (files[i].isFile()) && (files[i].getName().equalsIgnoreCase("participants.tsv"))) {
+                participantsFile = files[i];
+            } else if ( (files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_bold.json"))) {
+                numberBoldJsonFiles++;
+            } else if ( (files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_physio.json"))) {
+                numberPhysioJsonFiles++;
+            } else if ( (files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv"))) {
+                numberEventsTSVFiles++;
+            } else if ( (files[i].isFile()) && (files[i].getName().equalsIgnoreCase("dwi.bval"))) {
+                fullPath = files[i].getAbsolutePath();
+                index = fullPath.indexOf(BIDSString);
+                dwibvalString = fullPath.substring(index);
+                printlnToLog("dwi.bval read");
+
+            } else if ( (files[i].isFile()) && (files[i].getName().equalsIgnoreCase("dwi.bvec"))) {
+                fullPath = files[i].getAbsolutePath();
+                index = fullPath.indexOf(BIDSString);
+                dwibvecString = fullPath.substring(index);
+                printlnToLog("dwi.bvec read");
+            }
         }
         if (numberEventsTSVFiles > 0) {
-        	eventsTSVFilenames = new String[numberEventsTSVFiles];
-        	eventsTSVPathnames = new String[numberEventsTSVFiles];
-        	for (i = 0, j = 0; i < files.length; i++) {
-        		if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv"))) {
-        		    index = files[i].getName().toLowerCase().indexOf("_events_tsv");
-        		    eventsTSVFilenames[j] = files[i].getName().substring(0,index);
-        		    fullPath = files[i].getAbsolutePath();
-        		    index = fullPath.indexOf(BIDSString);
-        		    eventsTSVPathnames[j++] = fullPath.substring(index);
-        		} // if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv")))
-        	} // for (i = 0; i < files.length; i++)
+            eventsTSVFilenames = new String[numberEventsTSVFiles];
+            eventsTSVPathnames = new String[numberEventsTSVFiles];
+            for (i = 0, j = 0; i < files.length; i++) {
+                if ( (files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv"))) {
+                    index = files[i].getName().toLowerCase().indexOf("_events_tsv");
+                    eventsTSVFilenames[j] = files[i].getName().substring(0, index);
+                    fullPath = files[i].getAbsolutePath();
+                    index = fullPath.indexOf(BIDSString);
+                    eventsTSVPathnames[j++] = fullPath.substring(index);
+                } // if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_events_tsv")))
+            } // for (i = 0; i < files.length; i++)
         } // if (numberEventsTSVFiles > 0)
         if (numberBoldJsonFiles > 0) {
-	        boldJsonFilenames = new String[numberBoldJsonFiles];
-	        boldJsonPathnames = new String[numberBoldJsonFiles];
-	        effectiveEchoSpacing = new double[numberBoldJsonFiles];
-	        echoTime = new double[numberBoldJsonFiles];
-	        repetitionTime = new double[numberBoldJsonFiles];
-	        phaseEncodingDirection = new String[numberBoldJsonFiles];
-	        for (i = 0; i < numberBoldJsonFiles; i++) {
-	        	effectiveEchoSpacing[i] = Double.NaN;
-	        	echoTime[i] = Double.NaN;
-	        	repetitionTime[i] = Double.NaN;
-	        }
-	        for (i = 0, j = 0; i < files.length; i++) {
-	        	if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_bold.json"))) {
-	        		index = files[i].getName().lastIndexOf("_bold.json");
-	        	    boldJsonFilenames[j] = files[i].getName().substring(0,index);
-	        	    fullPath = files[i].getAbsolutePath();
-        		    index = fullPath.indexOf(BIDSString);
-        		    boldJsonPathnames[j] = fullPath.substring(index);
-	        	    try {
-	                    raFile = new RandomAccessFile(files[i], "r");
-	                    processFile = true;
-	            	}
-	            	catch (FileNotFoundException e) {
-	            		System.err.println("FileNotFoundException " + e);
-	            		processFile = false;
-	            	}
-	        	    if (processFile) {
-	    	        	try {
-	    	        	    fileLength = raFile.length();
-	    	        	}
-	    	        	catch (IOException e) {
-	    	        		System.err.println("IOException " + e);
-	    	        		processFile = false;
-	    	        	}
-	            	} // if (processFile)
-	        	    if (processFile) {
-	        	        bufferByte = new byte[(int)fileLength];
-	        	        try {
-	        	            raFile.read(bufferByte);	
-	        	        }
-	        	        catch (IOException e) {
-	        	        	System.err.println("IOException " + e);
-	        	        	processFile = false;
-	        	        }
-	        	    } // if (processFile)
-	        	    if (processFile) {
-	        	    	openBracket = new String(bufferByte, 0, 1);
-	                    if (openBracket.equals("{")) {
-	                    	// Padded to 16 bytes, so could be a }, }<sp>, }<sp><sp>, or }<sp><sp><sp>, etc.
-	                        closeBracket = new String(bufferByte, (int)(fileLength-17), 16);
-	                        if (closeBracket.trim().endsWith("}")) {
-	                        	processFile = true;
-	                        }
-	                        else {
-	                        	processFile = false;
-	                        }
-	                    }
-	                    else {
-	                    	processFile = false;
-	                    }
-	        	    } // if (processFile)
-	        	    if (processFile) {
-	            	    jsonString = new String(bufferByte, 0, (int)fileLength);
-	            	    try {
-	                	    jsonObject = new JSONObject(jsonString);
-	                	}
-	                	catch (JSONException e) {
-	                		System.err.println("JSONException " + e + " on new JSONObject(jsonString)");
-	                		processFile = false;
-	                	}
-	        	    } // if (processFile)
-	        	    if (processFile) {
-	        	        try {
-	        	        	// Change seconds to milliseconds
-	        	        	effectiveEchoSpacing[j] = 1000.0 * jsonObject.getDouble("EffectiveEchoSpacing");
-	        	        }
-	        	        catch (JSONException e) {
-	        	            System.err.println("JSONException " + e + " jsonObject.getDouble EffectiveEchoSpacing");	
-	        	        }
-	        	        try {
-	        	        	echoTime[j] = 1000.0 * jsonObject.getDouble("EchoTime");
-	        	        }
-	        	        catch (JSONException e) {
-	        	        	System.err.println("JSONException " + e + " jsonObject.getDouble EchoTime");
-	        	        }
-	        	        try {
-	        	        	repetitionTime[j] = 1000.0 * jsonObject.getDouble("RepetitionTime");
-	        	        }
-	        	        catch (JSONException e) {
-	        	        	System.err.println("JSONException " + e + "jsonObject.getDouble RepetitionTime");
-	        	        }
-	        	        try {
-	        	        	phaseEncodingDirection[j] = jsonObject.getString("PhaseEncodingDirection");
-	        	        }
-	        	        catch (JSONException e) {
-	        	        	System.err.println("JSONException " + e + " jsonObject.getString PhaseEncodingDirection");
-	        	        }
-	        	    } // if (processFile)
-	        	    j++;
-	        	    try {
-	        	    	raFile.close();
-	        	    }
-	        	    catch (IOException e) {
-	        	    	System.err.println(" IOException " + e + " on raFile.close()");
-	        	    }
-	        	}
-	        }
+            boldJsonFilenames = new String[numberBoldJsonFiles];
+            boldJsonPathnames = new String[numberBoldJsonFiles];
+            effectiveEchoSpacing = new double[numberBoldJsonFiles];
+            echoTime = new double[numberBoldJsonFiles];
+            repetitionTime = new double[numberBoldJsonFiles];
+            phaseEncodingDirection = new String[numberBoldJsonFiles];
+            for (i = 0; i < numberBoldJsonFiles; i++) {
+                effectiveEchoSpacing[i] = Double.NaN;
+                echoTime[i] = Double.NaN;
+                repetitionTime[i] = Double.NaN;
+            }
+            for (i = 0, j = 0; i < files.length; i++) {
+                if ( (files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_bold.json"))) {
+                    index = files[i].getName().lastIndexOf("_bold.json");
+                    boldJsonFilenames[j] = files[i].getName().substring(0, index);
+                    fullPath = files[i].getAbsolutePath();
+                    index = fullPath.indexOf(BIDSString);
+                    boldJsonPathnames[j] = fullPath.substring(index);
+                    try {
+                        raFile = new RandomAccessFile(files[i], "r");
+                        processFile = true;
+                    } catch (final FileNotFoundException e) {
+                        System.err.println("FileNotFoundException " + e);
+                        processFile = false;
+                    }
+                    if (processFile) {
+                        try {
+                            fileLength = raFile.length();
+                        } catch (final IOException e) {
+                            System.err.println("IOException " + e);
+                            processFile = false;
+                        }
+                    } // if (processFile)
+                    if (processFile) {
+                        bufferByte = new byte[(int) fileLength];
+                        try {
+                            raFile.read(bufferByte);
+                        } catch (final IOException e) {
+                            System.err.println("IOException " + e);
+                            processFile = false;
+                        }
+                    } // if (processFile)
+                    if (processFile) {
+                        openBracket = new String(bufferByte, 0, 1);
+                        if (openBracket.equals("{")) {
+                            // Padded to 16 bytes, so could be a }, }<sp>, }<sp><sp>, or }<sp><sp><sp>, etc.
+                            closeBracket = new String(bufferByte, (int) (fileLength - 17), 16);
+                            if (closeBracket.trim().endsWith("}")) {
+                                processFile = true;
+                            } else {
+                                processFile = false;
+                            }
+                        } else {
+                            processFile = false;
+                        }
+                    } // if (processFile)
+                    if (processFile) {
+                        jsonString = new String(bufferByte, 0, (int) fileLength);
+                        try {
+                            jsonObject = new JSONObject(jsonString);
+                        } catch (final JSONException e) {
+                            System.err.println("JSONException " + e + " on new JSONObject(jsonString)");
+                            processFile = false;
+                        }
+                    } // if (processFile)
+                    if (processFile) {
+                        try {
+                            // Change seconds to milliseconds
+                            effectiveEchoSpacing[j] = 1000.0 * jsonObject.getDouble("EffectiveEchoSpacing");
+                        } catch (final JSONException e) {
+                            System.err.println("JSONException " + e + " jsonObject.getDouble EffectiveEchoSpacing");
+                        }
+                        try {
+                            echoTime[j] = 1000.0 * jsonObject.getDouble("EchoTime");
+                        } catch (final JSONException e) {
+                            System.err.println("JSONException " + e + " jsonObject.getDouble EchoTime");
+                        }
+                        try {
+                            repetitionTime[j] = 1000.0 * jsonObject.getDouble("RepetitionTime");
+                        } catch (final JSONException e) {
+                            System.err.println("JSONException " + e + "jsonObject.getDouble RepetitionTime");
+                        }
+                        try {
+                            phaseEncodingDirection[j] = jsonObject.getString("PhaseEncodingDirection");
+                        } catch (final JSONException e) {
+                            System.err.println("JSONException " + e + " jsonObject.getString PhaseEncodingDirection");
+                        }
+                    } // if (processFile)
+                    j++;
+                    try {
+                        raFile.close();
+                    } catch (final IOException e) {
+                        System.err.println(" IOException " + e + " on raFile.close()");
+                    }
+                }
+            }
         } // if (numberBoldJsonFiles > 0)
         if (numberPhysioJsonFiles > 0) {
-	        physioJsonFilenames = new String[numberPhysioJsonFiles];
-	        physioJsonPathnames = new String[numberPhysioJsonFiles];
-	        for (i = 0, j = 0; i < files.length; i++) {
-	        	if ((files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_physio.json"))) {
-	        		index = files[i].getName().lastIndexOf("_physio.json");
-	        	    physioJsonFilenames[j] = files[i].getName().substring(0,index);
-	        	    fullPath = files[i].getAbsolutePath();
-        		    index = fullPath.indexOf(BIDSString);
-        		    physioJsonPathnames[j++] = fullPath.substring(index);
-	        	}
-	        }
+            physioJsonFilenames = new String[numberPhysioJsonFiles];
+            physioJsonPathnames = new String[numberPhysioJsonFiles];
+            for (i = 0, j = 0; i < files.length; i++) {
+                if ( (files[i].isFile()) && (files[i].getName().toLowerCase().endsWith("_physio.json"))) {
+                    index = files[i].getName().lastIndexOf("_physio.json");
+                    physioJsonFilenames[j] = files[i].getName().substring(0, index);
+                    fullPath = files[i].getAbsolutePath();
+                    index = fullPath.indexOf(BIDSString);
+                    physioJsonPathnames[j++] = fullPath.substring(index);
+                }
+            }
         } // if (numberPhysioJsonFiles > 0)
         printlnToLog("Number of subjects = " + numberSubjects);
         if (numberSubjects == 0) {
-        	return false;
+            return false;
         }
         if (participantsFile != null) {
-        	try {
+            try {
                 raFile = new RandomAccessFile(participantsFile, "r");
                 processFile = true;
-        	}
-        	catch (FileNotFoundException e) {
-        		System.err.println("FileNotFoundException " + e);
-        		processFile = false;
-        	}
-        	if (processFile) {
-	        	try {
-	        	    fileLength = raFile.length();
-	        	}
-	        	catch (IOException e) {
-	        		System.err.println("IOException " + e);
-	        		processFile = false;
-	        	}
-        	} // if (processFile)
-        	if (processFile) {
-        		try {
-        		    line = raFile.readLine();
-        		    readMoreLines = true;
-        		}
-        		catch (IOException e) {
-        		    System.err.println("IOException " + e);	
-        		    readMoreLines = false;
-        		}
-        		if (readMoreLines) {
-        		    tokens = line.split("\t");
-        		    participant_id_index = -1;
-        		    age_index = -1;
-        		    for (i = 0; i < tokens.length; i++) {
-        		        if ((tokens[i].equalsIgnoreCase("participant_id")) ||
-        		        	(tokens[i].equalsIgnoreCase("subject_id"))) {
-        		        	participant_id_index = i;
-        		        	participant_id_array = new String[numberSubjects];
-        		        }
-        		        else if ((tokens[i].equalsIgnoreCase("age_at_first_scan_years")) ||
-        		        		 (tokens[i].equalsIgnoreCase("age"))) {
-        		        	age_index = i;
-        		        	age_array = new String[numberSubjects];
-        		        } 
-        		    } // // for (i = 0; i < tokens.length; i++)
-        		    if ((participant_id_index >= 0)|| (age_index >= 0)) {
-        		        subjectsRead = 0;
-        		        try {
-        		        	filePos = raFile.getFilePointer();
-        		        }
-        		        catch (IOException e) {
-        		        	System.err.println("IOException " + e);
-        		        	filePos = fileLength;
-        		        }
-        		        while (readMoreLines && (subjectsRead < numberSubjects) && (filePos < fileLength)) {
-        		        	try {
-        	        		    line = raFile.readLine();
-        	        		    readMoreLines = true;
-        	        		}
-        	        		catch (IOException e) {
-        	        		    System.err.println("IOException " + e);	
-        	        		    readMoreLines = false;
-        	        		}
-        		        	tokens = line.split("\t");
-        		        	indexRead = false;
-        		        	if ((participant_id_index >= 0) && (tokens.length-1 >= participant_id_index)) {
-        		        		participant_id_array[subjectsRead] = tokens[participant_id_index];
-        		        		indexRead = true;
-        		        		participant_id_read++;
-        		        	}
-        		        	if ((age_index >= 0) && (tokens.length-1 >= age_index)) {
-        		        		age_array[subjectsRead] = tokens[age_index];
-        		        		indexRead = true;
-        		        		age_read++;
-        		        	}
-        		        	if (indexRead) {
-        		        		subjectsRead++;
-        		        	}
-        		        	try {
-            		        	filePos = raFile.getFilePointer();
-            		        }
-            		        catch (IOException e) {
-            		        	System.err.println("IOException " + e);
-            		        	filePos = fileLength;
-            		        }	
-        		        } // while (readMoreLines && (subjectsRead < numberSubjects) && (filePos < fileLength))
-        		    } // if ((participant_id_index >= 0)|| (age_at_first_scan_years_index >= 0))
-        		} // if (readMoreLines)
-        		printlnToLog(participant_id_read + " participant_id read from participants.tsv");
-        		printlnToLog(age_read + " age or age_at_first_scan_years read from participants.tsv");
-        	} // if (processFile)
-        	if (processFile) {
-        		try {
-        			raFile.close();
-        		}
-        		catch (IOException e) {
-        			System.err.println("IOException " + e);
-        		}
-        	}
+            } catch (final FileNotFoundException e) {
+                System.err.println("FileNotFoundException " + e);
+                processFile = false;
+            }
+            if (processFile) {
+                try {
+                    fileLength = raFile.length();
+                } catch (final IOException e) {
+                    System.err.println("IOException " + e);
+                    processFile = false;
+                }
+            } // if (processFile)
+            if (processFile) {
+                try {
+                    line = raFile.readLine();
+                    readMoreLines = true;
+                } catch (final IOException e) {
+                    System.err.println("IOException " + e);
+                    readMoreLines = false;
+                }
+                if (readMoreLines) {
+                    tokens = line.split("\t");
+                    participant_id_index = -1;
+                    age_index = -1;
+                    for (i = 0; i < tokens.length; i++) {
+                        if ( (tokens[i].equalsIgnoreCase("participant_id")) || (tokens[i].equalsIgnoreCase("subject_id"))) {
+                            participant_id_index = i;
+                            participant_id_array = new String[numberSubjects];
+                        } else if ( (tokens[i].equalsIgnoreCase("age_at_first_scan_years")) || (tokens[i].equalsIgnoreCase("age"))) {
+                            age_index = i;
+                            age_array = new String[numberSubjects];
+                        }
+                    } // // for (i = 0; i < tokens.length; i++)
+                    if ( (participant_id_index >= 0) || (age_index >= 0)) {
+                        subjectsRead = 0;
+                        try {
+                            filePos = raFile.getFilePointer();
+                        } catch (final IOException e) {
+                            System.err.println("IOException " + e);
+                            filePos = fileLength;
+                        }
+                        while (readMoreLines && (subjectsRead < numberSubjects) && (filePos < fileLength)) {
+                            try {
+                                line = raFile.readLine();
+                                readMoreLines = true;
+                            } catch (final IOException e) {
+                                System.err.println("IOException " + e);
+                                readMoreLines = false;
+                            }
+                            tokens = line.split("\t");
+                            indexRead = false;
+                            if ( (participant_id_index >= 0) && (tokens.length - 1 >= participant_id_index)) {
+                                participant_id_array[subjectsRead] = tokens[participant_id_index];
+                                indexRead = true;
+                                participant_id_read++;
+                            }
+                            if ( (age_index >= 0) && (tokens.length - 1 >= age_index)) {
+                                age_array[subjectsRead] = tokens[age_index];
+                                indexRead = true;
+                                age_read++;
+                            }
+                            if (indexRead) {
+                                subjectsRead++;
+                            }
+                            try {
+                                filePos = raFile.getFilePointer();
+                            } catch (final IOException e) {
+                                System.err.println("IOException " + e);
+                                filePos = fileLength;
+                            }
+                        } // while (readMoreLines && (subjectsRead < numberSubjects) && (filePos < fileLength))
+                    } // if ((participant_id_index >= 0)|| (age_at_first_scan_years_index >= 0))
+                } // if (readMoreLines)
+                printlnToLog(participant_id_read + " participant_id read from participants.tsv");
+                printlnToLog(age_read + " age or age_at_first_scan_years read from participants.tsv");
+            } // if (processFile)
+            if (processFile) {
+                try {
+                    raFile.close();
+                } catch (final IOException e) {
+                    System.err.println("IOException " + e);
+                }
+            }
         } // if (participantsFile != null)
         subjectFiles = new File[numberSubjects];
         for (i = 0, j = 0; i < files.length; i++) {
-        	if ((files[i].isDirectory()) && (files[i].getName().substring(0,3).equalsIgnoreCase("SUB"))) {
-        		subjectFiles[j++] = files[i];
-        	}
+            if ( (files[i].isDirectory()) && (files[i].getName().substring(0, 3).equalsIgnoreCase("SUB"))) {
+                subjectFiles[j++] = files[i];
+            }
         }
         numberSessions = new int[numberSubjects];
         numberSubjectDirectoryTSV = new int[numberSubjects];
@@ -1039,33 +1010,31 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             files = subjectFiles[i].listFiles();
             Arrays.sort(files, new fileComparator());
             for (j = 0; j < files.length; j++) {
-            	if ((files[j].isDirectory()) && (files[j].getName().substring(0,3).equalsIgnoreCase("SES"))) {	
-            		numberSessions[i]++;
-            	}
-            	else if ((files[j].isFile()) && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
-            		numberSubjectDirectoryTSV[i]++;
-            		totalSubjectTSVFiles++;
-            		if (files[j].getName().toLowerCase().endsWith("_scans.tsv")) {
-            			numberSubjectDirectoryScansTSV[i]++;
-            			totalSubjectScansTSVFiles++;
-            		}
-            		else if (files[j].getName().toLowerCase().endsWith("_sessions.tsv")) {
-            			numberSubjectDirectorySessionsTSV[i]++;
-            			totalSubjectSessionsTSVFiles++;
-            		}
-            	}
+                if ( (files[j].isDirectory()) && (files[j].getName().substring(0, 3).equalsIgnoreCase("SES"))) {
+                    numberSessions[i]++;
+                } else if ( (files[j].isFile()) && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
+                    numberSubjectDirectoryTSV[i]++;
+                    totalSubjectTSVFiles++;
+                    if (files[j].getName().toLowerCase().endsWith("_scans.tsv")) {
+                        numberSubjectDirectoryScansTSV[i]++;
+                        totalSubjectScansTSVFiles++;
+                    } else if (files[j].getName().toLowerCase().endsWith("_sessions.tsv")) {
+                        numberSubjectDirectorySessionsTSV[i]++;
+                        totalSubjectSessionsTSVFiles++;
+                    }
+                }
             }
             if (numberSessions[i] > maximumNumberSessions) {
-            	maximumNumberSessions = numberSessions[i];
+                maximumNumberSessions = numberSessions[i];
             }
         }
         printlnToLog("Maximum number of sessions for any subject = " + maximumNumberSessions);
         if (maximumNumberSessions > 0) {
-        	for (i = 0; i < numberSubjects; i++) {
-        		if (numberSessions[i] == 0) {
-        			printlnToLog("Illegal skipped session for subject " + subjectFiles[i].getName());
-        		}
-        	}
+            for (i = 0; i < numberSubjects; i++) {
+                if (numberSessions[i] == 0) {
+                    printlnToLog("Illegal skipped session for subject " + subjectFiles[i].getName());
+                }
+            }
         }
         sessionFiles = new File[numberSubjects][];
         tsvSubjectDirectoryFiles = new File[numberSubjects][];
@@ -1073,193 +1042,177 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         sessionstsvSubjectDirectoryFiles = new File[numberSubjects][];
         if (maximumNumberSessions == 0) {
             for (i = 0; i < numberSubjects; i++) {
-        	    sessionFiles[i] = new File[1];
-        	    sessionFiles[i][0] = subjectFiles[i]; 
-        	    tsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryTSV[i]];
-        	    scanstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryScansTSV[i]];
-        	    sessionstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectorySessionsTSV[i]];
-        	    files = subjectFiles[i].listFiles();
-        	    for (j = 0, k = 0, m = 0, n = 0; j < files.length; j++) {
-        	    	if (files[j].isFile() && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
-        	    		tsvSubjectDirectoryFiles[i][k++] = files[j];
-        	    		if (files[j].getName().toLowerCase().endsWith("_scans.tsv")) {
-        	                scanstsvSubjectDirectoryFiles[i][m++] = files[j];
-        	    		}
-        	    		else if (files[j].getName().toLowerCase().endsWith("_sessions.tsv")) {
-                			sessionstsvSubjectDirectoryFiles[i][n++] = files[j];
-                		}
-        	    	}
-        	    }
+                sessionFiles[i] = new File[1];
+                sessionFiles[i][0] = subjectFiles[i];
+                tsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryTSV[i]];
+                scanstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryScansTSV[i]];
+                sessionstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectorySessionsTSV[i]];
+                files = subjectFiles[i].listFiles();
+                for (j = 0, k = 0, m = 0, n = 0; j < files.length; j++) {
+                    if (files[j].isFile() && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
+                        tsvSubjectDirectoryFiles[i][k++] = files[j];
+                        if (files[j].getName().toLowerCase().endsWith("_scans.tsv")) {
+                            scanstsvSubjectDirectoryFiles[i][m++] = files[j];
+                        } else if (files[j].getName().toLowerCase().endsWith("_sessions.tsv")) {
+                            sessionstsvSubjectDirectoryFiles[i][n++] = files[j];
+                        }
+                    }
+                }
             }
         } // if (maximumNumberSessions == 0)
         else { // maximumNumberSessions > 0
-        	for (i = 0; i < numberSubjects; i++) {
-        		sessionFiles[i] = new File[numberSessions[i]];
-        		tsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryTSV[i]];
-        		scanstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryScansTSV[i]];
-        	    sessionstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectorySessionsTSV[i]];
-        		files = subjectFiles[i].listFiles();
+            for (i = 0; i < numberSubjects; i++) {
+                sessionFiles[i] = new File[numberSessions[i]];
+                tsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryTSV[i]];
+                scanstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectoryScansTSV[i]];
+                sessionstsvSubjectDirectoryFiles[i] = new File[numberSubjectDirectorySessionsTSV[i]];
+                files = subjectFiles[i].listFiles();
                 for (j = 0, k = 0, m = 0, n = 0, p = 0; j < files.length; j++) {
-                	if ((files[j].isDirectory()) && (files[j].getName().substring(0,3).equalsIgnoreCase("SES"))) {	
-                		sessionFiles[i][k++] = files[j];
-                	}
-                	else if ((files[j].isFile()) && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
-                		tsvSubjectDirectoryFiles[i][m++] = files[j];
-                		if (files[j].getName().toLowerCase().endsWith("_scans.tsv")) {
-        	                scanstsvSubjectDirectoryFiles[i][n++] = files[j];
-        	    		}
-                		else if (files[j].getName().toLowerCase().endsWith("_sessions.tsv")) {
-                			sessionstsvSubjectDirectoryFiles[i][p++] = files[j];
-                		}
-                	}
+                    if ( (files[j].isDirectory()) && (files[j].getName().substring(0, 3).equalsIgnoreCase("SES"))) {
+                        sessionFiles[i][k++] = files[j];
+                    } else if ( (files[j].isFile()) && (files[j].getName().toLowerCase().endsWith(".tsv"))) {
+                        tsvSubjectDirectoryFiles[i][m++] = files[j];
+                        if (files[j].getName().toLowerCase().endsWith("_scans.tsv")) {
+                            scanstsvSubjectDirectoryFiles[i][n++] = files[j];
+                        } else if (files[j].getName().toLowerCase().endsWith("_sessions.tsv")) {
+                            sessionstsvSubjectDirectoryFiles[i][p++] = files[j];
+                        }
+                    }
                 }
-        	}
+            }
         } // else maximumNumberSessions > 0
-        
+
         if (totalSubjectSessionsTSVFiles > 0) {
-        	subject_id_array = new String[numberSubjects];
-        	for (i = 0; i < numberSubjects; i++) {
-        		for (j = 0; j < sessionstsvSubjectDirectoryFiles[i].length; j++) {
-    				try {
-    	                raFile = new RandomAccessFile(tsvSubjectDirectoryFiles[i][j], "r");
-    	                processFile = true;
-    	        	}
-    	        	catch (FileNotFoundException e) {
-    	        		System.err.println("FileNotFoundException " + e);
-    	        		processFile = false;
-    	        	}
-    				if (processFile) {
-    		        	try {
-    		        	    fileLength = raFile.length();
-    		        	}
-    		        	catch (IOException e) {
-    		        		System.err.println("IOException " + e);
-    		        		processFile = false;
-    		        	}
-    	        	} // if (processFile)
-    	        	if (processFile) {
-    	        		try {
-    	        		    line = raFile.readLine();
-    	        		    readMoreLines = true;
-    	        		}
-    	        		catch (IOException e) {
-    	        		    System.err.println("IOException " + e);	
-    	        		    readMoreLines = false;
-    	        		}
-    	        		if (readMoreLines) {
-    	        		    tokens = line.split("\t");
-    	        		    headerTokenNumber = tokens.length;
-    	        		    subject_id_index = -1;
-    	        		    for (k = 0; k < tokens.length; k++) {
-    	        		        if (tokens[k].equalsIgnoreCase("subject_id")) {
-    	        		        	subject_id_index = k;
-    	        		        }
-    	        		    } // // for (k = 0; k < tokens.length; k++)
-    	        		    if (subject_id_index >= 0) {
-    	        		    	try {
-    	        		        	filePos = raFile.getFilePointer();
-    	        		        }
-    	        		        catch (IOException e) {
-    	        		        	System.err.println("IOException " + e);
-    	        		        	filePos = fileLength;
-    	        		        }
-    	        		    	sessionsRead = 0;
-    	        		    	indexRead = false;
-    	        		        while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos < fileLength)) {
-    	        		        	try {
-    	        	        		    line = raFile.readLine();
-    	        	        		    readMoreLines = true;
-    	        	        		}
-    	        	        		catch (IOException e) {
-    	        	        		    System.err.println("IOException " + e);	
-    	        	        		    readMoreLines = false;
-    	        	        		}
-    	        		        	tokens = line.split("\t");
-    	        		        	sessionTokenNumber = tokens.length;
-    	        		        	if (headerTokenNumber != sessionTokenNumber) {
-    	        		        		System.err.println("Header token number = " + headerTokenNumber + ", but session token number = " +
-    	        		        	                   sessionTokenNumber);
-    	        		        	}
-    	        		        	if (tokens.length-1 >= subject_id_index) {
-    	        		        		if (!indexRead) {
-    	        		        		    subject_id_array[i] = tokens[subject_id_index];
-    	        		        		    indexRead = true;
-    	        		        		    subject_id_read++;
-    	        		        		}
-    	        		        		else if (Integer.valueOf(subject_id_array[i]).intValue() != 
-    	        		        				Integer.valueOf(tokens[subject_id_index]).intValue()) {
-    	        		        		    	System.err.println("subject_id number varies across sessions for subject subdirectory "
-    	        		        		    			+ i);
-    	        		        		    	System.err.println("subject_id_array["+i+"] = " + subject_id_array[i]);
-    	        		        		    	System.err.println("tokens["+subject_id_index+"] = " + tokens[subject_id_index]);
-    	        		        		}
-    	        		        		sessionsRead++;
-    	        		        	}
-    	        		        	
-    	        		        	try {
-    	            		        	filePos = raFile.getFilePointer();
-    	            		        }
-    	            		        catch (IOException e) {
-    	            		        	System.err.println("IOException " + e);
-    	            		        	filePos = fileLength;
-    	            		        }	
-    	        		        } // while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos < fileLength))	
-    	        		    } // if (subject_id_index >= 0)
-    	        		} // if (readMoreLines)
-    	        	} // if (processFile)
-    	        	if (processFile) {
-    	        		try {
-    	        			raFile.close();
-    	        		}
-    	        		catch (IOException e) {
-    	        			System.err.println("IOException " + e);
-    	        		}
-    	        	}
-        		}
-        	}
-        	printlnToLog(subject_id_read + " subject id read from _sessions.tsv files in subject subdirectories");
+            subject_id_array = new String[numberSubjects];
+            for (i = 0; i < numberSubjects; i++) {
+                for (j = 0; j < sessionstsvSubjectDirectoryFiles[i].length; j++) {
+                    try {
+                        raFile = new RandomAccessFile(tsvSubjectDirectoryFiles[i][j], "r");
+                        processFile = true;
+                    } catch (final FileNotFoundException e) {
+                        System.err.println("FileNotFoundException " + e);
+                        processFile = false;
+                    }
+                    if (processFile) {
+                        try {
+                            fileLength = raFile.length();
+                        } catch (final IOException e) {
+                            System.err.println("IOException " + e);
+                            processFile = false;
+                        }
+                    } // if (processFile)
+                    if (processFile) {
+                        try {
+                            line = raFile.readLine();
+                            readMoreLines = true;
+                        } catch (final IOException e) {
+                            System.err.println("IOException " + e);
+                            readMoreLines = false;
+                        }
+                        if (readMoreLines) {
+                            tokens = line.split("\t");
+                            headerTokenNumber = tokens.length;
+                            subject_id_index = -1;
+                            for (k = 0; k < tokens.length; k++) {
+                                if (tokens[k].equalsIgnoreCase("subject_id")) {
+                                    subject_id_index = k;
+                                }
+                            } // // for (k = 0; k < tokens.length; k++)
+                            if (subject_id_index >= 0) {
+                                try {
+                                    filePos = raFile.getFilePointer();
+                                } catch (final IOException e) {
+                                    System.err.println("IOException " + e);
+                                    filePos = fileLength;
+                                }
+                                sessionsRead = 0;
+                                indexRead = false;
+                                while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos < fileLength)) {
+                                    try {
+                                        line = raFile.readLine();
+                                        readMoreLines = true;
+                                    } catch (final IOException e) {
+                                        System.err.println("IOException " + e);
+                                        readMoreLines = false;
+                                    }
+                                    tokens = line.split("\t");
+                                    sessionTokenNumber = tokens.length;
+                                    if (headerTokenNumber != sessionTokenNumber) {
+                                        System.err.println("Header token number = " + headerTokenNumber + ", but session token number = " + sessionTokenNumber);
+                                    }
+                                    if (tokens.length - 1 >= subject_id_index) {
+                                        if ( !indexRead) {
+                                            subject_id_array[i] = tokens[subject_id_index];
+                                            indexRead = true;
+                                            subject_id_read++;
+                                        } else if (Integer.valueOf(subject_id_array[i]).intValue() != Integer.valueOf(tokens[subject_id_index]).intValue()) {
+                                            System.err.println("subject_id number varies across sessions for subject subdirectory " + i);
+                                            System.err.println("subject_id_array[" + i + "] = " + subject_id_array[i]);
+                                            System.err.println("tokens[" + subject_id_index + "] = " + tokens[subject_id_index]);
+                                        }
+                                        sessionsRead++;
+                                    }
+
+                                    try {
+                                        filePos = raFile.getFilePointer();
+                                    } catch (final IOException e) {
+                                        System.err.println("IOException " + e);
+                                        filePos = fileLength;
+                                    }
+                                } // while (readMoreLines && (sessionsRead < sessionFiles[i].length) && (filePos <
+                                  // fileLength))
+                            } // if (subject_id_index >= 0)
+                        } // if (readMoreLines)
+                    } // if (processFile)
+                    if (processFile) {
+                        try {
+                            raFile.close();
+                        } catch (final IOException e) {
+                            System.err.println("IOException " + e);
+                        }
+                    }
+                }
+            }
+            printlnToLog(subject_id_read + " subject id read from _sessions.tsv files in subject subdirectories");
         } // if (totalSubjectSessionsTSVFiles > 0)
-        
+
         if (maximumNumberSessions > 0) {
-        	numberSessionDirectoryTSV = new int[numberSubjects][];
-        	numberSessionDirectoryScansTSV = new int[numberSubjects][];
+            numberSessionDirectoryTSV = new int[numberSubjects][];
+            numberSessionDirectoryScansTSV = new int[numberSubjects][];
         }
         for (i = 0; i < numberSubjects; i++) {
-        	if (maximumNumberSessions > 0) {
-        		numberSessionDirectoryTSV[i] = new int[numberSessions[i]];
-        		numberSessionDirectoryScansTSV[i] = new int[numberSessions[i]];
-        	}
-        	for (j = 0; j < sessionFiles[i].length; j++) {
-        		files = sessionFiles[i][j].listFiles();
-        		for (k = 0; k < files.length; k++) {
-        			if (files[k].isDirectory()) {
-        				if (files[k].getName().equalsIgnoreCase("ANAT")) {
-        					anatNumber++;
-        				}
-        				else if (files[k].getName().equalsIgnoreCase("FUNC")) {
-        					funcNumber++;
-        				}
-        				else if (files[k].getName().equalsIgnoreCase("DWI")) {
-        					dwiNumber++;
-        				}
-        				else if (files[k].getName().equalsIgnoreCase("FMAP")) {
-        					fmapNumber++;
-        				}
-        			} // if (files[k].isDirectory())
-        			else if ((files[k].getName().toLowerCase().endsWith(".tsv")) && (maximumNumberSessions > 0)) {
-        			    numberSessionDirectoryTSV[i][j]++;
-        			    totalSessionTSVFiles++;
-        			    if (files[k].getName().toLowerCase().endsWith("_scans.tsv")) {
-        			        numberSessionDirectoryScansTSV[i][j]++;
-        			        totalSessionScansTSVFiles++;
-        			    }
-        			}
-        		}
-        	}
+            if (maximumNumberSessions > 0) {
+                numberSessionDirectoryTSV[i] = new int[numberSessions[i]];
+                numberSessionDirectoryScansTSV[i] = new int[numberSessions[i]];
+            }
+            for (j = 0; j < sessionFiles[i].length; j++) {
+                files = sessionFiles[i][j].listFiles();
+                for (k = 0; k < files.length; k++) {
+                    if (files[k].isDirectory()) {
+                        if (files[k].getName().equalsIgnoreCase("ANAT")) {
+                            anatNumber++;
+                        } else if (files[k].getName().equalsIgnoreCase("FUNC")) {
+                            funcNumber++;
+                        } else if (files[k].getName().equalsIgnoreCase("DWI")) {
+                            dwiNumber++;
+                        } else if (files[k].getName().equalsIgnoreCase("FMAP")) {
+                            fmapNumber++;
+                        }
+                    } // if (files[k].isDirectory())
+                    else if ( (files[k].getName().toLowerCase().endsWith(".tsv")) && (maximumNumberSessions > 0)) {
+                        numberSessionDirectoryTSV[i][j]++;
+                        totalSessionTSVFiles++;
+                        if (files[k].getName().toLowerCase().endsWith("_scans.tsv")) {
+                            numberSessionDirectoryScansTSV[i][j]++;
+                            totalSessionScansTSVFiles++;
+                        }
+                    }
+                }
+            }
         }
-        //subdirectoriesFound = anatNumber + funcNumber + dwiNumber + fmapNumber;
+        // subdirectoriesFound = anatNumber + funcNumber + dwiNumber + fmapNumber;
         subdirectoriesFound = anatNumber + funcNumber + dwiNumber;
-        
+
         printlnToLog(anatNumber + " anat subdirectories were found");
         printlnToLog(funcNumber + " func subdirectories were found");
         printlnToLog(dwiNumber + " dwi subdirectories were found");
@@ -1269,129 +1222,129 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         printlnToLog("Number of subject subdirectory _sessions.tsv files = " + totalSubjectSessionsTSVFiles);
         printlnToLog("Number of session subdirectory .tsv files = " + totalSessionTSVFiles);
         printlnToLog("Number of session subdirectory _scans.tsv files = " + totalSessionScansTSVFiles);
-        
+
         if (totalSessionTSVFiles > 0) {
             tsvSessionDirectoryFiles = new File[numberSubjects][][];
             for (i = 0; i < numberSubjects; i++) {
-            	tsvSessionDirectoryFiles[i] = new File[sessionFiles[i].length][];
-            	for (j = 0; j < sessionFiles[i].length; j++) {
-            		files = sessionFiles[i][j].listFiles();
-            		tsvSessionDirectoryFiles[i][j] = new File[numberSessionDirectoryTSV[i][j]];
-            		for (k = 0, m = 0; k < files.length; k++) {
-            			if ((files[k].isFile()) && (files[k].getName().toLowerCase().endsWith(".tsv"))) {
-            			    tsvSessionDirectoryFiles[i][j][m++] = files[k];	
-            			}
-            		}
-            	}
+                tsvSessionDirectoryFiles[i] = new File[sessionFiles[i].length][];
+                for (j = 0; j < sessionFiles[i].length; j++) {
+                    files = sessionFiles[i][j].listFiles();
+                    tsvSessionDirectoryFiles[i][j] = new File[numberSessionDirectoryTSV[i][j]];
+                    for (k = 0, m = 0; k < files.length; k++) {
+                        if ( (files[k].isFile()) && (files[k].getName().toLowerCase().endsWith(".tsv"))) {
+                            tsvSessionDirectoryFiles[i][j][m++] = files[k];
+                        }
+                    }
+                }
             }
         } // if (totalSessionTSVFiles > 0)
-        
+
         if (totalSessionScansTSVFiles > 0) {
             scanstsvSessionDirectoryFiles = new File[numberSubjects][][];
             for (i = 0; i < numberSubjects; i++) {
-            	scanstsvSessionDirectoryFiles[i] = new File[sessionFiles[i].length][];
-            	for (j = 0; j < sessionFiles[i].length; j++) {
-            		files = sessionFiles[i][j].listFiles();
-            		scanstsvSessionDirectoryFiles[i][j] = new File[numberSessionDirectoryScansTSV[i][j]];
-            		for (k = 0, m = 0; k < files.length; k++) {
-            			if ((files[k].isFile()) && (files[k].getName().toLowerCase().endsWith("_scans.tsv"))) {
-            			    scanstsvSessionDirectoryFiles[i][j][m++] = files[k];	
-            			}
-            		}
-            	}
+                scanstsvSessionDirectoryFiles[i] = new File[sessionFiles[i].length][];
+                for (j = 0; j < sessionFiles[i].length; j++) {
+                    files = sessionFiles[i][j].listFiles();
+                    scanstsvSessionDirectoryFiles[i][j] = new File[numberSessionDirectoryScansTSV[i][j]];
+                    for (k = 0, m = 0; k < files.length; k++) {
+                        if ( (files[k].isFile()) && (files[k].getName().toLowerCase().endsWith("_scans.tsv"))) {
+                            scanstsvSessionDirectoryFiles[i][j][m++] = files[k];
+                        }
+                    }
+                }
             }
         } // if (totalSessionScansTSVFiles > 0)
-        
+
         if (anatNumber > 0) {
-        	anatFiles = new File[numberSubjects][][];
-        	for (i = 0; i < numberSubjects; i++) {
-        		anatFiles[i] = new File[sessionFiles[i].length][];
-        		for (j = 0; j < sessionFiles[i].length; j++) {
-        			files = sessionFiles[i][j].listFiles();
-        			for (k = 0; k < files.length; k++) {
-        				if ((files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("ANAT"))) {
-        				    files2 = files[k].listFiles();
-        				    anatFiles[i][j] = new File[files2.length];
-        				    for (m = 0; m < files2.length; m++) {
-        				    	anatFiles[i][j][m] = files2[m];
-        				    }
-        				    Arrays.sort(anatFiles[i][j], new fileComparator());
-        				}
-        			}
-        		}
-        	}
+            anatFiles = new File[numberSubjects][][];
+            for (i = 0; i < numberSubjects; i++) {
+                anatFiles[i] = new File[sessionFiles[i].length][];
+                for (j = 0; j < sessionFiles[i].length; j++) {
+                    files = sessionFiles[i][j].listFiles();
+                    for (k = 0; k < files.length; k++) {
+                        if ( (files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("ANAT"))) {
+                            files2 = files[k].listFiles();
+                            anatFiles[i][j] = new File[files2.length];
+                            for (m = 0; m < files2.length; m++) {
+                                anatFiles[i][j][m] = files2[m];
+                            }
+                            Arrays.sort(anatFiles[i][j], new fileComparator());
+                        }
+                    }
+                }
+            }
         } // if (anatNumber > 0)
-        
+
         if (funcNumber > 0) {
-        	funcFiles = new File[numberSubjects][][];
-        	for (i = 0; i < numberSubjects; i++) {
-        		funcFiles[i] = new File[sessionFiles[i].length][];
-        		for (j = 0; j < sessionFiles[i].length; j++) {
-        			files = sessionFiles[i][j].listFiles();
-        			for (k = 0; k < files.length; k++) {
-        				if ((files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("FUNC"))) {
-        				    files2 = files[k].listFiles();
-        				    funcFiles[i][j] = new File[files2.length];
-        				    for (m = 0; m < files2.length; m++) {
-        				    	funcFiles[i][j][m] = files2[m];
-        				    }
-        				    Arrays.sort(funcFiles[i][j], new fileComparator());
-        				}
-        			}
-        		}
-        	}
+            funcFiles = new File[numberSubjects][][];
+            for (i = 0; i < numberSubjects; i++) {
+                funcFiles[i] = new File[sessionFiles[i].length][];
+                for (j = 0; j < sessionFiles[i].length; j++) {
+                    files = sessionFiles[i][j].listFiles();
+                    for (k = 0; k < files.length; k++) {
+                        if ( (files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("FUNC"))) {
+                            files2 = files[k].listFiles();
+                            funcFiles[i][j] = new File[files2.length];
+                            for (m = 0; m < files2.length; m++) {
+                                funcFiles[i][j][m] = files2[m];
+                            }
+                            Arrays.sort(funcFiles[i][j], new fileComparator());
+                        }
+                    }
+                }
+            }
         } // if (funcNumber > 0)
-        
+
         if (dwiNumber > 0) {
-        	dwiFiles = new File[numberSubjects][][];
-        	for (i = 0; i < numberSubjects; i++) {
-        		dwiFiles[i] = new File[sessionFiles[i].length][];
-        		for (j = 0; j < sessionFiles[i].length; j++) {
-        			files = sessionFiles[i][j].listFiles();
-        			for (k = 0; k < files.length; k++) {
-        				if ((files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("DWI"))) {
-        				    files2 = files[k].listFiles();
-        				    dwiFiles[i][j] = new File[files2.length];
-        				    for (m = 0; m < files2.length; m++) {
-        				    	dwiFiles[i][j][m] = files2[m];
-        				    }
-        				    Arrays.sort(dwiFiles[i][j], new fileComparator());
-        				}
-        			}
-        		}
-        	}
+            dwiFiles = new File[numberSubjects][][];
+            for (i = 0; i < numberSubjects; i++) {
+                dwiFiles[i] = new File[sessionFiles[i].length][];
+                for (j = 0; j < sessionFiles[i].length; j++) {
+                    files = sessionFiles[i][j].listFiles();
+                    for (k = 0; k < files.length; k++) {
+                        if ( (files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("DWI"))) {
+                            files2 = files[k].listFiles();
+                            dwiFiles[i][j] = new File[files2.length];
+                            for (m = 0; m < files2.length; m++) {
+                                dwiFiles[i][j][m] = files2[m];
+                            }
+                            Arrays.sort(dwiFiles[i][j], new fileComparator());
+                        }
+                    }
+                }
+            }
         } // if (dwiNumber > 0)
-        
+
         if (fmapNumber > 0) {
-        	fmapFiles = new File[numberSubjects][][];
-        	for (i = 0; i < numberSubjects; i++) {
-        		fmapFiles[i] = new File[sessionFiles[i].length][];
-        		for (j = 0; j < sessionFiles[i].length; j++) {
-        			files = sessionFiles[i][j].listFiles();
-        			for (k = 0; k < files.length; k++) {
-        				if ((files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("FMAP"))) {
-        				    files2 = files[k].listFiles();
-        				    fmapFiles[i][j] = new File[files2.length];
-        				    for (m = 0; m < files2.length; m++) {
-        				    	fmapFiles[i][j][m] = files2[m];
-        				    }
-        				    Arrays.sort(fmapFiles[i][j], new fileComparator());
-        				}
-        			}
-        		}
-        	}
+            fmapFiles = new File[numberSubjects][][];
+            for (i = 0; i < numberSubjects; i++) {
+                fmapFiles[i] = new File[sessionFiles[i].length][];
+                for (j = 0; j < sessionFiles[i].length; j++) {
+                    files = sessionFiles[i][j].listFiles();
+                    for (k = 0; k < files.length; k++) {
+                        if ( (files[k].isDirectory()) && (files[k].getName().equalsIgnoreCase("FMAP"))) {
+                            files2 = files[k].listFiles();
+                            fmapFiles[i][j] = new File[files2.length];
+                            for (m = 0; m < files2.length; m++) {
+                                fmapFiles[i][j][m] = files2[m];
+                            }
+                            Arrays.sort(fmapFiles[i][j], new fileComparator());
+                        }
+                    }
+                }
+            }
         } // if (fmapNumber > 0)
-        
+
         progressBar.updateValue(20);
         if (anatNumber > 0) {
             found = false;
-            for (i = 0; i < dataStructureList.size() && (!found); i++) {
-            	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingMR")) {
-            		found = true;
-            		ds = dataStructureList.get(i);
-            		dataStructureName = "ImagingMR";
-            		if (ds.getDataElements().size() == 0) {
-            			progressBar.setMessage("Retrieving data elements for form structure: " + ds.getShortName());
+            for (i = 0; i < dataStructureList.size() && ( !found); i++) {
+                if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingMR")) {
+                    found = true;
+                    ds = dataStructureList.get(i);
+                    dataStructureName = "ImagingMR";
+                    if (ds.getDataElements().size() == 0) {
+                        progressBar.setMessage("Retrieving data elements for form structure: " + ds.getShortName());
                         final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName(), false);
                         thread.run();
 
@@ -1399,121 +1352,107 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     } else {
                         dsInfo = ds;
                     }
-            	}
+                }
             }
             anatImagesRead = 0;
             anatJsonRead = 0;
             for (i = 0; i < numberSubjects; i++) {
-            	for (j = 0; j < anatFiles[i].length; j++) {
-            		pValue = 20 + 80*subdirectoriesRead/subdirectoriesFound;
-            		progressBar.updateValue(pValue);
-            		subdirectoriesRead++;
-            	    if ((anatFiles[i][j] != null) && (anatFiles[i][j].length > 0)) {
-            	    	sessionImagesRead = 0;
-            	    	sessionJsonRead = 0;
+                for (j = 0; j < anatFiles[i].length; j++) {
+                    pValue = 20 + 80 * subdirectoriesRead / subdirectoriesFound;
+                    progressBar.updateValue(pValue);
+                    subdirectoriesRead++;
+                    if ( (anatFiles[i][j] != null) && (anatFiles[i][j].length > 0)) {
+                        sessionImagesRead = 0;
+                        sessionJsonRead = 0;
                         previewImages.add(null);
                         structRowImgFileInfoList.add(null);
                         fsDataList.add(null);
                         allOtherFilesAL.add(null);
-            	        fsData = new FormStructureData(dsInfo);	
-            	        for (k = 0; k < anatFiles[i][j].length; k++) {
-            	        	if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        	    (anatFiles[i][j][k].getName().endsWith(".nii"))) {
-            	        		progressBar.setMessage("Reading " + anatFiles[i][j][k].getName());
-            	        		progressBar.updateValue(pValue + k*80/(subdirectoriesFound*anatFiles[i][j].length));
-            	        		if (anatFiles[i][j][k].getName().endsWith("nii.gz")) {
-            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI( anatFiles[i][j][k].getName(),
-            	        		    		anatFiles[i][j][k].getParentFile().getAbsolutePath(), false, true, true);
-            	        		    index = anatFiles[i][j][k].getName().indexOf("nii.gz");
-            	        		}
-            	        		else{
-            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getName(),
-            	        					anatFiles[i][j][k].getParentFile().getAbsolutePath(), false, false, true);
-            	        			index = anatFiles[i][j][k].getName().indexOf("nii");
-            	        		}
-            	        		anatImagesRead++;
-            	        		baseName = anatFiles[i][j][k].getName().substring(0,index);
-            	        		jsonName = baseName + "json";
-            	        		found = false;
-            	        		for (n = 0; n < anatFiles[i][j].length  && (!found); n++) {
-            	        			if (anatFiles[i][j][n].getName().equals(jsonName)) {
-            	        				found = true;
-            	        				jsonFile[sessionImagesRead] = anatFiles[i][j][n];
-            	        				anatJsonRead++;
-            	        				sessionJsonRead++;
-            	        			}
-            	        		}
-            	        		sessionImagesRead++;
-            	        	} // if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        } // for (k = 0; k < anatFiles[i][j].length; k++)
-            	        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
-            	        parseForInitLabelsAndComponents();
-            	        if (subject_id_array != null) {
-            	        	subject_id = subject_id_array[i];
-            	        }
-            	        else if (participant_id_array != null) {
-            	        	subject_id = participant_id_array[i];
-            	        }
-            	        else {
-            	        	subject_id = null;
-            	        }
-            	        if (age_array != null) {
-            	        	age = age_array[i];
-            	        }
-            	        else {
-            	        	age = null;
-            	        }
-            	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile,
-            	        		dwibvalString, dwibvecString);
-            	        if ( !setInitialVisible) {
-                            // convert any dates found into proper ISO format
-                            /*for (i = 0; i < csvFieldNames.size(); i++) {
-                                final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i));
-
-                                StructuralDataElement de = null;
-                                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(deGroupAndName[0])) {
-                                    for (final DataElementValue deVal : repeat.getDataElements()) {
-                                        if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
-                                            de = deVal.getDataElementInfo();
-                                            break;
-                                        }
+                        fsData = new FormStructureData(dsInfo);
+                        for (k = 0; k < anatFiles[i][j].length; k++) {
+                            if ( (anatFiles[i][j][k].getName().endsWith("nii.gz")) || (anatFiles[i][j][k].getName().endsWith(".nii"))) {
+                                progressBar.setMessage("Reading " + anatFiles[i][j][k].getName());
+                                progressBar.updateValue(pValue + k * 80 / (subdirectoriesFound * anatFiles[i][j].length));
+                                if (anatFiles[i][j][k].getName().endsWith("nii.gz")) {
+                                    srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getName(), anatFiles[i][j][k].getParentFile()
+                                            .getAbsolutePath(), false, true, true);
+                                    index = anatFiles[i][j][k].getName().indexOf("nii.gz");
+                                } else {
+                                    srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getName(), anatFiles[i][j][k].getParentFile()
+                                            .getAbsolutePath(), false, false, true);
+                                    index = anatFiles[i][j][k].getName().indexOf("nii");
+                                }
+                                anatImagesRead++;
+                                baseName = anatFiles[i][j][k].getName().substring(0, index);
+                                jsonName = baseName + "json";
+                                found = false;
+                                for (n = 0; n < anatFiles[i][j].length && ( !found); n++) {
+                                    if (anatFiles[i][j][n].getName().equals(jsonName)) {
+                                        found = true;
+                                        jsonFile[sessionImagesRead] = anatFiles[i][j][n];
+                                        anatJsonRead++;
+                                        sessionJsonRead++;
                                     }
                                 }
-
-                                for (final ArrayList<String> values : record) {
-                                    // check value not empty and check type of field for date
-                                    if ( !values.get(i).trim().equals("") && de.getType().equals(DataType.DATE)) {
-                                        values.set(i, convertDateToISOFormat(values.get(i)));
-                                    }
-                                }
-                            }
-
-                            // this means it was launched via the csv file
-                            populateFieldsFromCSV(fsData, record);*/
+                                sessionImagesRead++;
+                            } // if ((anatFiles[i][j][k].getName().endsWith("nii.gz")) ||
+                        } // for (k = 0; k < anatFiles[i][j].length; k++)
+                        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
+                        parseForInitLabelsAndComponents();
+                        if (subject_id_array != null) {
+                            subject_id = subject_id_array[i];
+                        } else if (participant_id_array != null) {
+                            subject_id = participant_id_array[i];
+                        } else {
+                            subject_id = null;
                         }
-            	        for (k = 0; k < sessionImagesRead; k++) {
-        	        		srcImage[k].disposeLocal();
-        	        		srcImage[k] = null;
-        	        		jsonFile[k] = null;
-        	        	}
-            	    } // if ((anatFiles[i][j] != null) && (anatFiles[i][j].length > 0))
-            	}
+                        if (age_array != null) {
+                            age = age_array[i];
+                        } else {
+                            age = null;
+                        }
+                        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing, echoTime, repetitionTime, subject_id, age,
+                                imagingFMRIAuxiliaryFile, dwibvalString, dwibvecString);
+                        if ( !setInitialVisible) {
+                            // convert any dates found into proper ISO format
+                            /*
+                             * for (i = 0; i < csvFieldNames.size(); i++) { final String[] deGroupAndName =
+                             * splitFieldString(csvFieldNames.get(i));
+                             * 
+                             * StructuralDataElement de = null; for (final GroupRepeat repeat :
+                             * fsData.getAllGroupRepeats(deGroupAndName[0])) { for (final DataElementValue deVal :
+                             * repeat.getDataElements()) { if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) { de
+                             * = deVal.getDataElementInfo(); break; } } }
+                             * 
+                             * for (final ArrayList<String> values : record) { // check value not empty and check type
+                             * of field for date if ( !values.get(i).trim().equals("") &&
+                             * de.getType().equals(DataType.DATE)) { values.set(i,
+                             * convertDateToISOFormat(values.get(i))); } } }
+                             * 
+                             * // this means it was launched via the csv file populateFieldsFromCSV(fsData, record);
+                             */
+                        }
+                        for (k = 0; k < sessionImagesRead; k++) {
+                            srcImage[k].disposeLocal();
+                            srcImage[k] = null;
+                            jsonFile[k] = null;
+                        }
+                    } // if ((anatFiles[i][j] != null) && (anatFiles[i][j].length > 0))
+                }
             }
             printlnToLog("anat subdirectory images read = " + anatImagesRead);
             printlnToLog("anat subdirectory JSON files read = " + anatJsonRead);
         } // if (anatNumber > 0)
-        
-        
+
         if (funcNumber > 0) {
-        	found = false;
-            for (i = 0; i < dataStructureList.size() && (!found); i++) {
-            	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
-            		found = true;
-            		ds = dataStructureList.get(i);
-            		dataStructureName = "ImagingFunctionalMR";
-            		if (ds.getDataElements().size() == 0) {
-            			progressBar.setMessage("Retrieving data elements for form structure: " + ds.getShortName());
+            found = false;
+            for (i = 0; i < dataStructureList.size() && ( !found); i++) {
+                if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
+                    found = true;
+                    ds = dataStructureList.get(i);
+                    dataStructureName = "ImagingFunctionalMR";
+                    if (ds.getDataElements().size() == 0) {
+                        progressBar.setMessage("Retrieving data elements for form structure: " + ds.getShortName());
                         final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName(), false);
                         thread.run();
 
@@ -1521,7 +1460,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     } else {
                         dsInfo = ds;
                     }
-            	}
+                }
             }
             funcImagesRead = 0;
             funcJsonRead = 0;
@@ -1529,239 +1468,226 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             funcPhysioTsvRead = 0;
             funcPhysioJsonRead = 0;
             for (i = 0; i < numberSubjects; i++) {
-            	for (j = 0; j < funcFiles[i].length; j++) {
-            		pValue = 20 + 80*subdirectoriesRead/subdirectoriesFound;
-            		progressBar.updateValue(pValue);
-            		subdirectoriesRead++;
-            	    if (funcFiles[i][j] != null) {
-            	    	sessionImagesRead = 0;
-            	    	sessionJsonRead = 0;
-            	    	sessionEventsRead = 0;
-            	    	sessionPhysioTsvRead = 0;
-            	    	sessionPhysioJsonRead = 0;
-            	    	previewImages.add(null);
+                for (j = 0; j < funcFiles[i].length; j++) {
+                    pValue = 20 + 80 * subdirectoriesRead / subdirectoriesFound;
+                    progressBar.updateValue(pValue);
+                    subdirectoriesRead++;
+                    if (funcFiles[i][j] != null) {
+                        sessionImagesRead = 0;
+                        sessionJsonRead = 0;
+                        sessionEventsRead = 0;
+                        sessionPhysioTsvRead = 0;
+                        sessionPhysioJsonRead = 0;
+                        previewImages.add(null);
                         structRowImgFileInfoList.add(null);
                         fsDataList.add(null);
                         allOtherFilesAL.add(null);
-            	        fsData = new FormStructureData(dsInfo);	
-            	        
-            	        for (k = 0; k < funcFiles[i][j].length; k++) {
-            	        	if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
-            	        		if (funcFiles[i][j][k].getName().endsWith("nii.gz")) {
-            	        			progressBar.setMessage("Reading " + funcFiles[i][j][k].getName());
-            	        			progressBar.updateValue(pValue + k*80/(subdirectoriesFound*funcFiles[i][j].length));
-            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getName(),
-            	        		    		funcFiles[i][j][k].getParentFile().getAbsolutePath(), false, true, true);
-            	        		    index = funcFiles[i][j][k].getName().indexOf("nii.gz");
-            	        		}
-            	        		else{
-            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getName(),
-            	        					funcFiles[i][j][k].getParentFile().getAbsolutePath(), false, false, true);
-            	        			index = funcFiles[i][j][k].getName().indexOf("nii");
-            	        		}
-            	        		funcImagesRead++;
-            	        		baseName = funcFiles[i][j][k].getName().substring(0,index);
-            	        		jsonName = baseName + "json";
-            	        		found = false;
-            	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
-            	        			if (funcFiles[i][j][n].getName().equals(jsonName)) {
-            	        				found = true;
-            	        				jsonFile[sessionImagesRead] = funcFiles[i][j][n];
-            	        				funcJsonRead++;
-            	        				sessionJsonRead++;
-            	        			}
-            	        		}
-            	        		index = baseName.lastIndexOf("_");
-            	        		eventsBaseName = baseName.substring(0,index+1);
-            	        		eventsName = eventsBaseName + "events.tsv";
-            	        		found = false;
-            	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
-            	        			if (funcFiles[i][j][n].getName().equals(eventsName)) {
-            	        				found = true;
-            	        				eventsFile[sessionImagesRead] = funcFiles[i][j][n];
-            	        				funcEventsRead++;
-            	        				sessionEventsRead++;
-            	        			}
-            	        		}
-            	        		found = false;
-            	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
-            	        			if ((funcFiles[i][j][n].getName().length() >= index+1) &&
-            	        				(funcFiles[i][j][n].getName().substring(0,index+1).equals(eventsBaseName)) &&
-            	        			   ((funcFiles[i][j][n].getName().endsWith("tsv")) ||
-            	        			    (funcFiles[i][j][n].getName().endsWith("tsv.gz")))) {
-            	        				found = true;
-            	        				physioTsvFile[sessionImagesRead] = funcFiles[i][j][n];
-            	        				funcPhysioTsvRead++;
-            	        				sessionPhysioTsvRead++;
-            	        			}
-            	        		}
-            	        		found = false;
-            	        		for (n = 0; n < funcFiles[i][j].length  && (!found); n++) {
-            	        			if ((funcFiles[i][j][n].getName().length() >= index+1) &&
-            	        			   (funcFiles[i][j][n].getName().substring(0,index+1).equals(eventsBaseName)) &&
-            	        			   (funcFiles[i][j][n].getName().endsWith("json"))) {
-            	        				found = true;
-            	        				physioJsonFile[sessionImagesRead] = funcFiles[i][j][n];
-            	        				funcPhysioJsonRead++;
-            	        				sessionPhysioJsonRead++;
-            	        			}
-            	        		}
-            	        		sessionImagesRead++;
-            	        	} // if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        } // for (k = 0; k < funcFiles[i][j].length; k++)
-            	        imagingFMRIAuxiliaryFile = null;
-            	        fMRIAuxiliaryFileNumber = funcFiles[i][j].length - sessionImagesRead;
-            	        if (participantsFile != null) {
-            	        	fMRIAuxiliaryFileNumber++;
-            	        }
-            	        if (scanstsvSubjectDirectoryFiles != null) {
-            	        	fMRIAuxiliaryFileNumber += scanstsvSubjectDirectoryFiles[i].length;
-            	        }
-            	        if (sessionstsvSubjectDirectoryFiles != null) {
-            	        	fMRIAuxiliaryFileNumber += sessionstsvSubjectDirectoryFiles[i].length;
-            	        }
-            	        if (scanstsvSessionDirectoryFiles != null) {
-            	        	fMRIAuxiliaryFileNumber += scanstsvSessionDirectoryFiles[i][j].length;
-            	        }
-            	        if (eventsTSVFilenames != null) {
-	            	        for (n = 0; n < eventsTSVFilenames.length; n++) {
-	            	        	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {	
-	            	        		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
-		            	        		if (funcFiles[i][j][k].getName().contains(eventsTSVFilenames[n])) {
-		        	        		    	fMRIAuxiliaryFileNumber++;
-		        	        		    	found = true;
-		        	        		    }
-	            	        		}
-	            	        	}
-	            	        } // for (n = 0; n < eventsTSVFilenames.length; n++)
-            	        } // if (eventsTSVFilenames != null)
-            	        if (boldJsonFilenames != null) {
-            	            for (n = 0; n < boldJsonFilenames.length; n++) {
-            	            	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
-            	            		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
-		            	        		if (funcFiles[i][j][k].getName().contains(boldJsonFilenames[n])) {
-		        	        		    	fMRIAuxiliaryFileNumber++;
-		        	        		    	found = true;
-		        	        		    }
-	            	        		}	
-            	            	}
-            	            }
-            	        } // if (boldJsonFilenames != null)
-            	        if (physioJsonFilenames != null) {
-            	            for (n = 0; n < physioJsonFilenames.length; n++) {
-            	            	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
-            	            		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
-		            	        		if (funcFiles[i][j][k].getName().contains(physioJsonFilenames[n])) {
-		        	        		    	fMRIAuxiliaryFileNumber++;
-		        	        		    	found = true;
-		        	        		    }
-	            	        		}	
-            	            	}
-            	            }
-            	        } // if (physioJsonFilenames != null)
-            	        if (fMRIAuxiliaryFileNumber > 0) {
-            	        	imagingFMRIAuxiliaryFile = new String[fMRIAuxiliaryFileNumber];
-            	        	m = 0;
-            	        	if (participantsFile != null) {
-            	        		fullPath = participantsFile.getAbsolutePath();
-            	        		index = fullPath.indexOf(BIDSString);
-            	        		imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
-            	        	}
-            	        	if (scanstsvSubjectDirectoryFiles != null) {
-            	        		for (k = 0; k < scanstsvSubjectDirectoryFiles[i].length; k++) {
-            	        			fullPath = scanstsvSubjectDirectoryFiles[i][k].getAbsolutePath();
-            	        			index = fullPath.indexOf(BIDSString);
-            	        			imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
-            	        		}
-            	        	}
-            	        	if (sessionstsvSubjectDirectoryFiles != null) {
-            	        		for (k = 0; k < sessionstsvSubjectDirectoryFiles[i].length; k++) {
-            	        			fullPath = sessionstsvSubjectDirectoryFiles[i][k].getAbsolutePath();
-            	        			index = fullPath.indexOf(BIDSString);
-            	        			imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
-            	        		}
-            	        	}
-            	        	if (scanstsvSessionDirectoryFiles != null) {
-            	        	    for (k = 0; k < scanstsvSessionDirectoryFiles[i][j].length; k++) {
-            	        	    	fullPath = scanstsvSessionDirectoryFiles[i][j][k].getAbsolutePath();
-            	        	    	index = fullPath.indexOf(BIDSString);
-            	        			imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
-            	        	    }
-            	        	}
-            	        	if (eventsTSVFilenames != null) {
-	            	        	for (n = 0; n < eventsTSVFilenames.length; n++) {
-	                	        	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {	
-	                	        		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-	                        	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
-	    	            	        		if (funcFiles[i][j][k].getName().contains(eventsTSVFilenames[n])) {
-	    	        	        		    	imagingFMRIAuxiliaryFile[m++] = eventsTSVPathnames[n];
-	    	        	        		    	found = true;
-	    	        	        		    }
-	                	        		}
-	                	        	}
-	                	        } // for (n = 0; n < eventsTSVFilenames.length; n++)
-            	        	} // if (eventsTSVFilenames != null)
-            	        	if (boldJsonFilenames != null) {
-                	            for (n = 0; n < boldJsonFilenames.length; n++) {
-                	            	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
-                	            		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-    	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
-    		            	        		if (funcFiles[i][j][k].getName().contains(boldJsonFilenames[n])) {
-    		        	        		        imagingFMRIAuxiliaryFile[m++] = boldJsonPathnames[n];
-    		        	        		    	found = true;
-    		        	        		    }
-    	            	        		}	
-                	            	}
-                	            }
-                	        } // if (boldJsonFilenames != null)
-            	        	if (physioJsonFilenames != null) {
-                	            for (n = 0; n < physioJsonFilenames.length; n++) {
-                	            	for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
-                	            		if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
-    	                    	        	    (funcFiles[i][j][k].getName().endsWith(".nii"))) {
-    		            	        		if (funcFiles[i][j][k].getName().contains(physioJsonFilenames[n])) {
-    		        	        		        imagingFMRIAuxiliaryFile[m++] = physioJsonPathnames[n];
-    		        	        		    	found = true;
-    		        	        		    }
-    	            	        		}	
-                	            	}
-                	            }
-                	        } // if (physioJsonFilenames != null)
-            	        } // if (fMRIAuxiliaryFileNumber > 0)
-            	        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
-            	        parseForInitLabelsAndComponents();
-            	        if (subject_id_array != null) {
-            	        	subject_id = subject_id_array[i];
-            	        }
-            	        else if (participant_id_array != null) {
-            	        	subject_id = participant_id_array[i];
-            	        }
-            	        else {
-            	        	subject_id = null;
-            	        }
-            	        if (age_array != null) {
-            	        	age = age_array[i];
-            	        }
-            	        else {
-            	        	age = null;
-            	        }
-            	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile,
-            	        		dwibvalString, dwibvecString);
-            	        for (k = 0; k < sessionImagesRead; k++) {
-        	        		srcImage[k].disposeLocal();
-        	        		srcImage[k] = null;
-        	        		jsonFile[k] = null;
-        	        		eventsFile[k] = null;
-        	        		physioTsvFile[k] = null;
-        	        		physioJsonFile[k] = null;
-        	        	}
-            	    }
-            	}
+                        fsData = new FormStructureData(dsInfo);
+
+                        for (k = 0; k < funcFiles[i][j].length; k++) {
+                            if ( (funcFiles[i][j][k].getName().endsWith("nii.gz")) || (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+                                if (funcFiles[i][j][k].getName().endsWith("nii.gz")) {
+                                    progressBar.setMessage("Reading " + funcFiles[i][j][k].getName());
+                                    progressBar.updateValue(pValue + k * 80 / (subdirectoriesFound * funcFiles[i][j].length));
+                                    srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getName(), funcFiles[i][j][k].getParentFile()
+                                            .getAbsolutePath(), false, true, true);
+                                    index = funcFiles[i][j][k].getName().indexOf("nii.gz");
+                                } else {
+                                    srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getName(), funcFiles[i][j][k].getParentFile()
+                                            .getAbsolutePath(), false, false, true);
+                                    index = funcFiles[i][j][k].getName().indexOf("nii");
+                                }
+                                funcImagesRead++;
+                                baseName = funcFiles[i][j][k].getName().substring(0, index);
+                                jsonName = baseName + "json";
+                                found = false;
+                                for (n = 0; n < funcFiles[i][j].length && ( !found); n++) {
+                                    if (funcFiles[i][j][n].getName().equals(jsonName)) {
+                                        found = true;
+                                        jsonFile[sessionImagesRead] = funcFiles[i][j][n];
+                                        funcJsonRead++;
+                                        sessionJsonRead++;
+                                    }
+                                }
+                                index = baseName.lastIndexOf("_");
+                                eventsBaseName = baseName.substring(0, index + 1);
+                                eventsName = eventsBaseName + "events.tsv";
+                                found = false;
+                                for (n = 0; n < funcFiles[i][j].length && ( !found); n++) {
+                                    if (funcFiles[i][j][n].getName().equals(eventsName)) {
+                                        found = true;
+                                        eventsFile[sessionImagesRead] = funcFiles[i][j][n];
+                                        funcEventsRead++;
+                                        sessionEventsRead++;
+                                    }
+                                }
+                                found = false;
+                                for (n = 0; n < funcFiles[i][j].length && ( !found); n++) {
+                                    if ( (funcFiles[i][j][n].getName().length() >= index + 1)
+                                            && (funcFiles[i][j][n].getName().substring(0, index + 1).equals(eventsBaseName))
+                                            && ( (funcFiles[i][j][n].getName().endsWith("tsv")) || (funcFiles[i][j][n].getName().endsWith("tsv.gz")))) {
+                                        found = true;
+                                        physioTsvFile[sessionImagesRead] = funcFiles[i][j][n];
+                                        funcPhysioTsvRead++;
+                                        sessionPhysioTsvRead++;
+                                    }
+                                }
+                                found = false;
+                                for (n = 0; n < funcFiles[i][j].length && ( !found); n++) {
+                                    if ( (funcFiles[i][j][n].getName().length() >= index + 1)
+                                            && (funcFiles[i][j][n].getName().substring(0, index + 1).equals(eventsBaseName))
+                                            && (funcFiles[i][j][n].getName().endsWith("json"))) {
+                                        found = true;
+                                        physioJsonFile[sessionImagesRead] = funcFiles[i][j][n];
+                                        funcPhysioJsonRead++;
+                                        sessionPhysioJsonRead++;
+                                    }
+                                }
+                                sessionImagesRead++;
+                            } // if ((funcFiles[i][j][k].getName().endsWith("nii.gz")) ||
+                        } // for (k = 0; k < funcFiles[i][j].length; k++)
+                        imagingFMRIAuxiliaryFile = null;
+                        fMRIAuxiliaryFileNumber = funcFiles[i][j].length - sessionImagesRead;
+                        if (participantsFile != null) {
+                            fMRIAuxiliaryFileNumber++;
+                        }
+                        if (scanstsvSubjectDirectoryFiles != null) {
+                            fMRIAuxiliaryFileNumber += scanstsvSubjectDirectoryFiles[i].length;
+                        }
+                        if (sessionstsvSubjectDirectoryFiles != null) {
+                            fMRIAuxiliaryFileNumber += sessionstsvSubjectDirectoryFiles[i].length;
+                        }
+                        if (scanstsvSessionDirectoryFiles != null) {
+                            fMRIAuxiliaryFileNumber += scanstsvSessionDirectoryFiles[i][j].length;
+                        }
+                        if (eventsTSVFilenames != null) {
+                            for (n = 0; n < eventsTSVFilenames.length; n++) {
+                                for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+                                    if ( (funcFiles[i][j][k].getName().endsWith("nii.gz")) || (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+                                        if (funcFiles[i][j][k].getName().contains(eventsTSVFilenames[n])) {
+                                            fMRIAuxiliaryFileNumber++;
+                                            found = true;
+                                        }
+                                    }
+                                }
+                            } // for (n = 0; n < eventsTSVFilenames.length; n++)
+                        } // if (eventsTSVFilenames != null)
+                        if (boldJsonFilenames != null) {
+                            for (n = 0; n < boldJsonFilenames.length; n++) {
+                                for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+                                    if ( (funcFiles[i][j][k].getName().endsWith("nii.gz")) || (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+                                        if (funcFiles[i][j][k].getName().contains(boldJsonFilenames[n])) {
+                                            fMRIAuxiliaryFileNumber++;
+                                            found = true;
+                                        }
+                                    }
+                                }
+                            }
+                        } // if (boldJsonFilenames != null)
+                        if (physioJsonFilenames != null) {
+                            for (n = 0; n < physioJsonFilenames.length; n++) {
+                                for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+                                    if ( (funcFiles[i][j][k].getName().endsWith("nii.gz")) || (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+                                        if (funcFiles[i][j][k].getName().contains(physioJsonFilenames[n])) {
+                                            fMRIAuxiliaryFileNumber++;
+                                            found = true;
+                                        }
+                                    }
+                                }
+                            }
+                        } // if (physioJsonFilenames != null)
+                        if (fMRIAuxiliaryFileNumber > 0) {
+                            imagingFMRIAuxiliaryFile = new String[fMRIAuxiliaryFileNumber];
+                            m = 0;
+                            if (participantsFile != null) {
+                                fullPath = participantsFile.getAbsolutePath();
+                                index = fullPath.indexOf(BIDSString);
+                                imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
+                            }
+                            if (scanstsvSubjectDirectoryFiles != null) {
+                                for (k = 0; k < scanstsvSubjectDirectoryFiles[i].length; k++) {
+                                    fullPath = scanstsvSubjectDirectoryFiles[i][k].getAbsolutePath();
+                                    index = fullPath.indexOf(BIDSString);
+                                    imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
+                                }
+                            }
+                            if (sessionstsvSubjectDirectoryFiles != null) {
+                                for (k = 0; k < sessionstsvSubjectDirectoryFiles[i].length; k++) {
+                                    fullPath = sessionstsvSubjectDirectoryFiles[i][k].getAbsolutePath();
+                                    index = fullPath.indexOf(BIDSString);
+                                    imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
+                                }
+                            }
+                            if (scanstsvSessionDirectoryFiles != null) {
+                                for (k = 0; k < scanstsvSessionDirectoryFiles[i][j].length; k++) {
+                                    fullPath = scanstsvSessionDirectoryFiles[i][j][k].getAbsolutePath();
+                                    index = fullPath.indexOf(BIDSString);
+                                    imagingFMRIAuxiliaryFile[m++] = fullPath.substring(index);
+                                }
+                            }
+                            if (eventsTSVFilenames != null) {
+                                for (n = 0; n < eventsTSVFilenames.length; n++) {
+                                    for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+                                        if ( (funcFiles[i][j][k].getName().endsWith("nii.gz")) || (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+                                            if (funcFiles[i][j][k].getName().contains(eventsTSVFilenames[n])) {
+                                                imagingFMRIAuxiliaryFile[m++] = eventsTSVPathnames[n];
+                                                found = true;
+                                            }
+                                        }
+                                    }
+                                } // for (n = 0; n < eventsTSVFilenames.length; n++)
+                            } // if (eventsTSVFilenames != null)
+                            if (boldJsonFilenames != null) {
+                                for (n = 0; n < boldJsonFilenames.length; n++) {
+                                    for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+                                        if ( (funcFiles[i][j][k].getName().endsWith("nii.gz")) || (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+                                            if (funcFiles[i][j][k].getName().contains(boldJsonFilenames[n])) {
+                                                imagingFMRIAuxiliaryFile[m++] = boldJsonPathnames[n];
+                                                found = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            } // if (boldJsonFilenames != null)
+                            if (physioJsonFilenames != null) {
+                                for (n = 0; n < physioJsonFilenames.length; n++) {
+                                    for (k = 0, found = false; k < funcFiles[i][j].length && !found; k++) {
+                                        if ( (funcFiles[i][j][k].getName().endsWith("nii.gz")) || (funcFiles[i][j][k].getName().endsWith(".nii"))) {
+                                            if (funcFiles[i][j][k].getName().contains(physioJsonFilenames[n])) {
+                                                imagingFMRIAuxiliaryFile[m++] = physioJsonPathnames[n];
+                                                found = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            } // if (physioJsonFilenames != null)
+                        } // if (fMRIAuxiliaryFileNumber > 0)
+                        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
+                        parseForInitLabelsAndComponents();
+                        if (subject_id_array != null) {
+                            subject_id = subject_id_array[i];
+                        } else if (participant_id_array != null) {
+                            subject_id = participant_id_array[i];
+                        } else {
+                            subject_id = null;
+                        }
+                        if (age_array != null) {
+                            age = age_array[i];
+                        } else {
+                            age = null;
+                        }
+                        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing, echoTime, repetitionTime, subject_id, age,
+                                imagingFMRIAuxiliaryFile, dwibvalString, dwibvecString);
+                        for (k = 0; k < sessionImagesRead; k++) {
+                            srcImage[k].disposeLocal();
+                            srcImage[k] = null;
+                            jsonFile[k] = null;
+                            eventsFile[k] = null;
+                            physioTsvFile[k] = null;
+                            physioJsonFile[k] = null;
+                        }
+                    }
+                }
             }
             printlnToLog("func subdirectory images read = " + funcImagesRead);
             printlnToLog("func subdirectory JSON files read = " + funcJsonRead);
@@ -1771,16 +1697,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } // if (funcNumber > 0)
         imagingFMRIAuxiliaryFile = null;
         fMRIAuxiliaryFileNumber = 0;
-        
+
         if (dwiNumber > 0) {
-        	found = false;
-            for (i = 0; i < dataStructureList.size() && (!found); i++) {
-            	if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingDiffusion")) {
-            		found = true;
-            		ds = dataStructureList.get(i);
-            		dataStructureName = "ImagingDiffusion";
-            		if (ds.getDataElements().size() == 0) {
-            			progressBar.setMessage("Retrieving data elements for form structure: " + ds.getShortName());
+            found = false;
+            for (i = 0; i < dataStructureList.size() && ( !found); i++) {
+                if (dataStructureList.get(i).getShortName().equalsIgnoreCase("ImagingDiffusion")) {
+                    found = true;
+                    ds = dataStructureList.get(i);
+                    dataStructureName = "ImagingDiffusion";
+                    if (ds.getDataElements().size() == 0) {
+                        progressBar.setMessage("Retrieving data elements for form structure: " + ds.getShortName());
                         final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(this, ds.getShortName(), false);
                         thread.run();
 
@@ -1788,190 +1714,158 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     } else {
                         dsInfo = ds;
                     }
-            	}
+                }
             }
             dwiImagesRead = 0;
             dwiJsonRead = 0;
             dwiBvalRead = 0;
             dwiBvecRead = 0;
             for (i = 0; i < numberSubjects; i++) {
-            	for (j = 0; j < funcFiles[i].length; j++) {
-            		pValue = 20 + 80*subdirectoriesRead/subdirectoriesFound;
-            		progressBar.updateValue(pValue);
-            		subdirectoriesRead++;
-            	    if (dwiFiles[i][j] != null) {
-            	    	sessionImagesRead = 0;
-            	    	sessionJsonRead = 0;
-            	    	sessionBvalRead = 0;
-            	    	sessionBvecRead = 0;
-            	    	previewImages.add(null);
+                for (j = 0; j < funcFiles[i].length; j++) {
+                    pValue = 20 + 80 * subdirectoriesRead / subdirectoriesFound;
+                    progressBar.updateValue(pValue);
+                    subdirectoriesRead++;
+                    if (dwiFiles[i][j] != null) {
+                        sessionImagesRead = 0;
+                        sessionJsonRead = 0;
+                        sessionBvalRead = 0;
+                        sessionBvecRead = 0;
+                        previewImages.add(null);
                         structRowImgFileInfoList.add(null);
                         fsDataList.add(null);
                         allOtherFilesAL.add(null);
-            	        fsData = new FormStructureData(dsInfo);	
-            	        for (k = 0; k < dwiFiles[i][j].length; k++) {
-            	        	if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        	    (dwiFiles[i][j][k].getName().endsWith(".nii"))) {
-            	        		if (dwiFiles[i][j][k].getName().endsWith("nii.gz")) {
-            	        			progressBar.setMessage("Reading " + dwiFiles[i][j][k].getName());
-            	        			progressBar.updateValue(pValue + k*80/(subdirectoriesFound*dwiFiles[i][j].length));
-            	        		    srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getName(),
-            	        		    		dwiFiles[i][j][k].getParentFile().getAbsolutePath(), false, true, true);
-            	        		    index = dwiFiles[i][j][k].getName().indexOf("nii.gz");
-            	        		}
-            	        		else{
-            	        			srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getName(),
-            	        					dwiFiles[i][j][k].getParentFile().getAbsolutePath(), false, false, true);	
-            	        			index = dwiFiles[i][j][k].getName().indexOf("nii");
-            	        		}
-            	        		dwiImagesRead++;
-            	        		baseName = dwiFiles[i][j][k].getName().substring(0,index);
-            	        		jsonName = baseName + "json";
-            	        		found = false;
-            	        		for (n = 0; n < dwiFiles[i][j].length  && (!found); n++) {
-            	        			if (dwiFiles[i][j][n].getName().equals(jsonName)) {
-            	        				found = true;
-            	        				jsonFile[sessionImagesRead] = dwiFiles[i][j][n];
-            	        				dwiJsonRead++;
-            	        				sessionJsonRead++;
-            	        			}
-            	        		}
-            	        		bvalName = baseName + "bval";
-            	        		found = false;
-            	        		for (n = 0; n < dwiFiles[i][j].length  && (!found); n++) {
-            	        			if (dwiFiles[i][j][n].getName().equals(bvalName)) {
-            	        				found = true;
-            	        				bvalFile[sessionImagesRead] = dwiFiles[i][j][n];
-            	        				dwiBvalRead++;
-            	        				sessionBvalRead++;
-            	        			}
-            	        		}
-            	        		bvecName = baseName + "bvec";
-            	        		found = false;
-            	        		for (n = 0; n < dwiFiles[i][j].length  && (!found); n++) {
-            	        			if (dwiFiles[i][j][n].getName().equals(bvecName)) {
-            	        				found = true;
-            	        				bvecFile[sessionImagesRead] = dwiFiles[i][j][n];
-            	        				dwiBvecRead++;
-            	        				sessionBvalRead++;
-            	        			}
-            	        		}
-            	        		sessionImagesRead++;
-            	        	} // if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
-            	        } // for (k = 0; k < dwiFiles[i][j].length; k++)
-            	        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
-            	        parseForInitLabelsAndComponents();
-            	        if (subject_id_array != null) {
-            	        	subject_id = subject_id_array[i];
-            	        }
-            	        else if (participant_id_array != null) {
-            	        	subject_id = participant_id_array[i];
-            	        }
-            	        else {
-            	        	subject_id = null;
-            	        }
-            	        if (age_array != null) {
-            	        	age = age_array[i];
-            	        }
-            	        else {
-            	        	age = null;
-            	        }
-            	        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing,
-            	        		echoTime, repetitionTime, subject_id, age, imagingFMRIAuxiliaryFile,
-            	        		dwibvalString, dwibvecString);
-            	        for (k = 0; k < sessionImagesRead; k++) {
-        	        		srcImage[k].disposeLocal();
-        	        		srcImage[k] = null;
-        	        		jsonFile[k] = null;
-        	        		bvalFile[k] = null;
-        	        		bvecFile[k] = null;
-        	        	}
-            	    }
-            	}
+                        fsData = new FormStructureData(dsInfo);
+                        for (k = 0; k < dwiFiles[i][j].length; k++) {
+                            if ( (dwiFiles[i][j][k].getName().endsWith("nii.gz")) || (dwiFiles[i][j][k].getName().endsWith(".nii"))) {
+                                if (dwiFiles[i][j][k].getName().endsWith("nii.gz")) {
+                                    progressBar.setMessage("Reading " + dwiFiles[i][j][k].getName());
+                                    progressBar.updateValue(pValue + k * 80 / (subdirectoriesFound * dwiFiles[i][j].length));
+                                    srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getName(), dwiFiles[i][j][k].getParentFile()
+                                            .getAbsolutePath(), false, true, true);
+                                    index = dwiFiles[i][j][k].getName().indexOf("nii.gz");
+                                } else {
+                                    srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getName(), dwiFiles[i][j][k].getParentFile()
+                                            .getAbsolutePath(), false, false, true);
+                                    index = dwiFiles[i][j][k].getName().indexOf("nii");
+                                }
+                                dwiImagesRead++;
+                                baseName = dwiFiles[i][j][k].getName().substring(0, index);
+                                jsonName = baseName + "json";
+                                found = false;
+                                for (n = 0; n < dwiFiles[i][j].length && ( !found); n++) {
+                                    if (dwiFiles[i][j][n].getName().equals(jsonName)) {
+                                        found = true;
+                                        jsonFile[sessionImagesRead] = dwiFiles[i][j][n];
+                                        dwiJsonRead++;
+                                        sessionJsonRead++;
+                                    }
+                                }
+                                bvalName = baseName + "bval";
+                                found = false;
+                                for (n = 0; n < dwiFiles[i][j].length && ( !found); n++) {
+                                    if (dwiFiles[i][j][n].getName().equals(bvalName)) {
+                                        found = true;
+                                        bvalFile[sessionImagesRead] = dwiFiles[i][j][n];
+                                        dwiBvalRead++;
+                                        sessionBvalRead++;
+                                    }
+                                }
+                                bvecName = baseName + "bvec";
+                                found = false;
+                                for (n = 0; n < dwiFiles[i][j].length && ( !found); n++) {
+                                    if (dwiFiles[i][j][n].getName().equals(bvecName)) {
+                                        found = true;
+                                        bvecFile[sessionImagesRead] = dwiFiles[i][j][n];
+                                        dwiBvecRead++;
+                                        sessionBvalRead++;
+                                    }
+                                }
+                                sessionImagesRead++;
+                            } // if ((dwiFiles[i][j][k].getName().endsWith("nii.gz")) ||
+                        } // for (k = 0; k < dwiFiles[i][j].length; k++)
+                        parseDataStructure(dsInfo, sessionImagesRead, fMRIAuxiliaryFileNumber);
+                        parseForInitLabelsAndComponents();
+                        if (subject_id_array != null) {
+                            subject_id = subject_id_array[i];
+                        } else if (participant_id_array != null) {
+                            subject_id = participant_id_array[i];
+                        } else {
+                            subject_id = null;
+                        }
+                        if (age_array != null) {
+                            age = age_array[i];
+                        } else {
+                            age = null;
+                        }
+                        populateFields(srcImage, sessionImagesRead, boldJsonFilenames, effectiveEchoSpacing, echoTime, repetitionTime, subject_id, age,
+                                imagingFMRIAuxiliaryFile, dwibvalString, dwibvecString);
+                        for (k = 0; k < sessionImagesRead; k++) {
+                            srcImage[k].disposeLocal();
+                            srcImage[k] = null;
+                            jsonFile[k] = null;
+                            bvalFile[k] = null;
+                            bvecFile[k] = null;
+                        }
+                    }
+                }
             }
             printlnToLog("dwi subdirectory images read = " + dwiImagesRead);
             printlnToLog("dwi subdirectory json files read = " + dwiJsonRead);
             printlnToLog("dwi subdirectory bval files read = " + dwiBvalRead);
-            printlnToLog("dwi subdirectory bvec files read = " + dwiBvecRead);    
+            printlnToLog("dwi subdirectory bvec files read = " + dwiBvecRead);
         } // if (dwiNumber > 0)
-        
-       
-        
-        //finishButton.setEnabled(true);
+
+        // finishButton.setEnabled(true);
         enableDisableFinishButton();
         progressBar.updateValue(100);
         progressBar.dispose();
-        //dispose();
-        
-        /*gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(10, 5, 10, 25);
-        gbc.gridwidth = 1;
+        // dispose();
 
-        final JPanel OKPanel = new JPanel();
+        /*
+         * gbc.gridx = 0; gbc.gridy = 0; gbc.insets = new Insets(10, 5, 10, 25); gbc.gridwidth = 1;
+         * 
+         * final JPanel OKPanel = new JPanel();
+         * 
+         * final JButton OKButton = new JButton("Save"); OKButton.setActionCommand("StructDialogOK");
+         * OKButton.addActionListener(this); OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+         * OKButton.setPreferredSize(MipavUtil.defaultButtonSize); OKButton.setFont(serif12B);
+         * 
+         * final JButton cancelButton = new JButton("Cancel"); cancelButton.setActionCommand("StructDialogCancel");
+         * cancelButton.addActionListener(this); cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
+         * cancelButton.setPreferredSize(MipavUtil.defaultButtonSize); cancelButton.setFont(serif12B);
+         * 
+         * OKPanel.add(OKButton); OKPanel.add(cancelButton);
+         * 
+         * requiredLabel = new JLabel(
+         * "<html>Mouse over data element name for a description.<br/>Mouse over the data element fields for more information on filling them in.<br/>* Required data elements are in <font color=\"red\">red</font></html>"
+         * );
+         * 
+         * gbc.fill = GridBagConstraints.BOTH; gbc.anchor = GridBagConstraints.EAST; gbc.weightx = 0; gbc.gridx = 0;
+         * gbc.gridy = 0; mainPanel.add(requiredLabel, gbc);
+         * 
+         * gbc.gridy = 2; gbc.weightx = 1; gbc.weighty = 1; mainPanel.add(tabScrollPane, gbc); gbc.weightx = 0;
+         * gbc.weighty = 0; gbc.gridy = 3; mainPanel.add(OKPanel, gbc);
+         * 
+         * getContentPane().add(mainPanel);
+         * 
+         * final Dimension dim = getContentPane().getPreferredSize(); if (dim.height > 500) { dim.height = 500; }
+         * tabScrollPane.setPreferredSize(dim);
+         * 
+         * pack(); MipavUtil.centerInWindow(this, this); if (setInitialVisible) { setVisible(true); }
+         */
 
-        final JButton OKButton = new JButton("Save");
-        OKButton.setActionCommand("StructDialogOK");
-        OKButton.addActionListener(this);
-        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        OKButton.setFont(serif12B);
-
-        final JButton cancelButton = new JButton("Cancel");
-        cancelButton.setActionCommand("StructDialogCancel");
-        cancelButton.addActionListener(this);
-        cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        cancelButton.setFont(serif12B);
-
-        OKPanel.add(OKButton);
-        OKPanel.add(cancelButton);
-
-        requiredLabel = new JLabel(
-                "<html>Mouse over data element name for a description.<br/>Mouse over the data element fields for more information on filling them in.<br/>* Required data elements are in <font color=\"red\">red</font></html>");
-
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.weightx = 0;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        mainPanel.add(requiredLabel, gbc);
-
-        gbc.gridy = 2;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        mainPanel.add(tabScrollPane, gbc);
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.gridy = 3;
-        mainPanel.add(OKPanel, gbc);
-
-        getContentPane().add(mainPanel);
-
-        final Dimension dim = getContentPane().getPreferredSize();
-        if (dim.height > 500) {
-            dim.height = 500;
-        }
-        tabScrollPane.setPreferredSize(dim);
-
-        pack();
-        MipavUtil.centerInWindow(this, this);
-        if (setInitialVisible) {
-            setVisible(true);
-        }*/
-        
-    	return true;
+        return true;
     }
-    
+
     /**
      * called after validation is done
      */
     public void complete(final FormStructureData fsData, final boolean isComplete) {
         String value = "";
         String guid = "";
-        ArrayList<File> allOtherFiles = new ArrayList<File>();
-        boolean launchedFromInProcessState = false;
-        boolean addedPreviewImage = false;
+        final ArrayList<File> allOtherFiles = new ArrayList<File>();
+        final boolean launchedFromInProcessState = false;
+        final boolean addedPreviewImage = false;
 
         for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
             for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
@@ -2066,80 +1960,79 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             allOtherFilesAL.set(allOtherFilesAL.size() - 1, allOtherFiles);
         }
     }
-    
+
     /**
      * prepopulates some of the fields with info from image headers
      */
-    public void populateFields(final ModelImage img[], int numImages, String boldJsonFilenames[], double effectiveEchoSpacing[],
-    		double echoTimeDouble[], double repetitionTimeDouble[],
-    		String subject_id, String age, String imagingFMRIAuxiliaryFile[],
-    		String dwibvalString, String dwibvecString) {
-    	float[][] res = new float[numImages][];
-    	int[][] units = new int[numImages][];
-    	int [][] exts = new int[numImages][];
-    	int [] modality = new int[numImages];
-    	String [] modalityString = new String[numImages];
-    	String [] imageFileName = new String[numImages];
-    	int [] fileFormatInt = new int[numImages];
-    	String [] fileFormatString = new String[numImages];
-    	String [] upperStructureName = new String[numImages];
-    	float [] sliceThickness = new float[numImages];
-    	int [] orient = new int[numImages];
-    	String [] orientation = new String[numImages];
-    	String [] ageVal = new String[numImages];
-    	String [] siteName = new String[numImages];
-    	String [] visitDate = new String[numImages];
-    	String [] visitTime = new String[numImages];
-        String [] sliceOversample = new String[numImages];
-        String [] gap = new String[numImages];
-        String [] bodyPart = new String[numImages];
+    public void populateFields(final ModelImage img[], final int numImages, final String boldJsonFilenames[], final double effectiveEchoSpacing[],
+            final double echoTimeDouble[], final double repetitionTimeDouble[], final String subject_id, final String age,
+            final String imagingFMRIAuxiliaryFile[], final String dwibvalString, final String dwibvecString) {
+        final float[][] res = new float[numImages][];
+        final int[][] units = new int[numImages][];
+        final int[][] exts = new int[numImages][];
+        final int[] modality = new int[numImages];
+        final String[] modalityString = new String[numImages];
+        final String[] imageFileName = new String[numImages];
+        final int[] fileFormatInt = new int[numImages];
+        final String[] fileFormatString = new String[numImages];
+        final String[] upperStructureName = new String[numImages];
+        final float[] sliceThickness = new float[numImages];
+        final int[] orient = new int[numImages];
+        final String[] orientation = new String[numImages];
+        String[] ageVal = new String[numImages];
+        final String[] siteName = new String[numImages];
+        final String[] visitDate = new String[numImages];
+        final String[] visitTime = new String[numImages];
+        final String[] sliceOversample = new String[numImages];
+        final String[] gap = new String[numImages];
+        final String[] bodyPart = new String[numImages];
 
-        String [] fieldOfView = new String[numImages];
-        String [] manufacturer = new String[numImages];
-        String [] softwareVersion = new String[numImages];
-        String [] patientPosition = new String[numImages];
+        final String[] fieldOfView = new String[numImages];
+        final String[] manufacturer = new String[numImages];
+        final String[] softwareVersion = new String[numImages];
+        final String[] patientPosition = new String[numImages];
 
-        String [] scannerModel = new String[numImages];
-        String [] bandwidth = new String[numImages];
+        final String[] scannerModel = new String[numImages];
+        final String[] bandwidth = new String[numImages];
 
-        String [] scanOptions = new String[numImages];
-        String [] flowCompensation = new String[numImages];
+        final String[] scanOptions = new String[numImages];
+        final String[] flowCompensation = new String[numImages];
 
-        String [] patientName = new String[numImages];
-        String [] patientID = new String[numImages];
+        final String[] patientName = new String[numImages];
+        final String[] patientID = new String[numImages];
 
-        String [] echoTime = new String[numImages];
-        String [] repetitionTime = new String[numImages];
-        String [] magneticFieldStrength = new String[numImages];
-        String [] flipAngle = new String[numImages];
+        final String[] echoTime = new String[numImages];
+        final String[] repetitionTime = new String[numImages];
+        final String[] magneticFieldStrength = new String[numImages];
+        final String[] flipAngle = new String[numImages];
 
-        String [] mriT1T2Name = new String[numImages];
-        String [] inversionTime = new String[numImages];
-        String [] echoTrainMeas = new String[numImages];
-        String [] phaseEncode = new String[numImages];
-        String [] numAverages = new String[numImages];
-        String [] receiveCoilName = new String[numImages];
+        final String[] mriT1T2Name = new String[numImages];
+        final String[] inversionTime = new String[numImages];
+        final String[] echoTrainMeas = new String[numImages];
+        final String[] phaseEncode = new String[numImages];
+        final String[] numAverages = new String[numImages];
+        final String[] receiveCoilName = new String[numImages];
 
-        String [] contrastAgent = new String[numImages];
-        String [] contrastMethod = new String[numImages];
-        String [] contrastTime = new String[numImages];
-        String [] contrastDose = new String[numImages];
-        String [] contrastRate = new String[numImages];
-        String [] contrastUsedInd = new String[numImages];
-        boolean [] contrastUsed = new boolean[numImages];
+        final String[] contrastAgent = new String[numImages];
+        final String[] contrastMethod = new String[numImages];
+        final String[] contrastTime = new String[numImages];
+        final String[] contrastDose = new String[numImages];
+        final String[] contrastRate = new String[numImages];
+        final String[] contrastUsedInd = new String[numImages];
+        final boolean[] contrastUsed = new boolean[numImages];
 
-        String [] ctKVP = new String[numImages];
-        String [] ctMA = new String[numImages];
+        final String[] ctKVP = new String[numImages];
+        final String[] ctMA = new String[numImages];
 
         String description;
-        String [] seriesDescription = new String[numImages];
-        boolean [] isRestingFMRI = new boolean[numImages];
-        String [] thicknessStr = new String[numImages];
-        String [] ageInMonths = new String[numImages];
-        String [] ageMonthsStr = new String[numImages];
-        Integer [] ageInMonthsInt = new Integer[numImages];
-        String [] ageInYears = new String[numImages];
-        String [] imagingEchoSpacing = new String[numImages];
+        final String[] seriesDescription = new String[numImages];
+        final boolean[] isRestingFMRI = new boolean[numImages];
+        final String[] thicknessStr = new String[numImages];
+        final String[] ageInMonths = new String[numImages];
+        final String[] ageMonthsStr = new String[numImages];
+        final Integer[] ageInMonthsInt = new Integer[numImages];
+        final String[] ageInYears = new String[numImages];
+        final String[] imagingEchoSpacing = new String[numImages];
         FileInfoDicom fileInfoDicom;
         FileInfoNIFTI fileInfoNifti;
         int i;
@@ -2149,10 +2042,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         Unit tUnit;
         double tResol;
         double diff;
-        
+
         for (i = 0; i < numImages; i++) {
-        	imageFileName[i] = img[i].getImageFileName();
-        	res[i] = img[i].getResolutions(0);
+            imageFileName[i] = img[i].getImageFileName();
+            res[i] = img[i].getResolutions(0);
             units[i] = img[i].getUnitsOfMeasure();
             exts[i] = img[i].getExtents();
             modality[i] = img[i].getFileInfo(0).getModality();
@@ -2182,7 +2075,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             sliceThickness[i] = img[i].getFileInfo(0).getSliceThickness();
             orient[i] = img[i].getFileInfo(0).getImageOrientation();
             orientation[i] = FileInfoBase.getImageOrientationStr(orient[i]);
-            
+
             if (fileFormatString[i].equalsIgnoreCase("dicom")) {
                 fileInfoDicom = (FileInfoDicom) img[i].getFileInfo(0);
 
@@ -2229,8 +2122,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 contrastDose[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1044"));
                 contrastRate[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1046"));
 
-                if (isValueSet(contrastAgent[i]) || isValueSet(contrastMethod[i]) || 
-                		isValueSet(contrastTime[i]) || isValueSet(contrastDose[i]) || isValueSet(contrastRate[i])) {
+                if (isValueSet(contrastAgent[i]) || isValueSet(contrastMethod[i]) || isValueSet(contrastTime[i]) || isValueSet(contrastDose[i])
+                        || isValueSet(contrastRate[i])) {
                     contrastUsedInd[i] = "Yes";
                     contrastUsed[i] = true;
                 }
@@ -2267,12 +2160,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 fileInfoNifti = (FileInfoNIFTI) img[i].getFileInfo(0);
                 description = fileInfoNifti.getDescription();
 
-                if ((description != null) && (description.length() > 0)) {
-	                manufacturer[i] = convertNiftiDescToBRICSManuf(description);
-	                scannerModel[i] = convertNiftiDescToBRICSModel(description);
-	                softwareVersion[i] = convertNiftiDescToBRICSVer(description);
+                if ( (description != null) && (description.length() > 0)) {
+                    manufacturer[i] = convertNiftiDescToBRICSManuf(description);
+                    scannerModel[i] = convertNiftiDescToBRICSModel(description);
+                    softwareVersion[i] = convertNiftiDescToBRICSVer(description);
                 } // if ((description != null) && (description.length() > 0))
-                
+
                 haveDcmMeta = fileInfoNifti.getHaveDcmMeta();
                 if (haveDcmMeta) {
                     visitTime[i] = fileInfoNifti.getStudyTime();
@@ -2291,54 +2184,46 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     numAverages[i] = String.valueOf(fileInfoNifti.getNumberOfAverages());
                     mriT1T2Name[i] = fileInfoNifti.getSequenceName();
                 } // if (haveDcmMeta)
-                
+
             } // else if (fileFormatString[i].equalsIgnoreCase("nifti"))
-            
-        	if ((imageFileName[i].contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length > 0)) {
-        	    for (j = 0; j < boldJsonFilenames.length; j++) {
-        	        if (imageFileName[i].contains(boldJsonFilenames[j])) {
-        	            if ((effectiveEchoSpacing != null)	&& (effectiveEchoSpacing.length >= j+1) &&
-        	            		(!Double.isNaN(effectiveEchoSpacing[j]))) {
-        	                imagingEchoSpacing[i] = String.valueOf(effectiveEchoSpacing[j]);	
-        	            }
-        	            if ((echoTime[i] == null) && (echoTimeDouble != null) && (echoTimeDouble.length >= j+1) &&
-        	            		(!Double.isNaN(echoTimeDouble[j]))) {
-        	            	echoTime[i] = String.valueOf(echoTimeDouble[j]);
-        	            }
-        	            if ((repetitionTimeDouble != null) && (repetitionTimeDouble.length >= j+1) &&
-	            		                    (!Double.isNaN(repetitionTimeDouble[j]))) {
-			            	tUnit = Unit.getUnitFromLegacyNum(units[i][3]);
-			            	tResol =  tUnit.convertTo(res[i][3], Unit.MILLISEC);
-			            	diff = Math.abs(tResol - repetitionTimeDouble[j])/repetitionTimeDouble[j];
-			            	if (diff >= 1.0E-2) {
-			            		System.err.println("JSON repetition time = " + repetitionTimeDouble[j] + 
-			            		" does not equal image time resolution = " + tResol);
-			            	}
-        	            }
-        	            if ((repetitionTime[i] == null) && (repetitionTimeDouble != null) && (repetitionTimeDouble.length >= j+1) &&
-        	            		(!Double.isNaN(repetitionTimeDouble[j]))) {
-        	            	repetitionTime[i] = String.valueOf(repetitionTimeDouble[j]);
-        	            }
-        	        } // if (imageFileName[i].contains(boldJsonFilenames[j])) 
-        	    } // for (j = 0; j < boldJsonFilenames.length; j++)
-        	} // if ((imageFileName[i].contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length > 0))
+
+            if ( (imageFileName[i].contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length > 0)) {
+                for (j = 0; j < boldJsonFilenames.length; j++) {
+                    if (imageFileName[i].contains(boldJsonFilenames[j])) {
+                        if ( (effectiveEchoSpacing != null) && (effectiveEchoSpacing.length >= j + 1) && ( !Double.isNaN(effectiveEchoSpacing[j]))) {
+                            imagingEchoSpacing[i] = String.valueOf(effectiveEchoSpacing[j]);
+                        }
+                        if ( (echoTime[i] == null) && (echoTimeDouble != null) && (echoTimeDouble.length >= j + 1) && ( !Double.isNaN(echoTimeDouble[j]))) {
+                            echoTime[i] = String.valueOf(echoTimeDouble[j]);
+                        }
+                        if ( (repetitionTimeDouble != null) && (repetitionTimeDouble.length >= j + 1) && ( !Double.isNaN(repetitionTimeDouble[j]))) {
+                            tUnit = Unit.getUnitFromLegacyNum(units[i][3]);
+                            tResol = tUnit.convertTo(res[i][3], Unit.MILLISEC);
+                            diff = Math.abs(tResol - repetitionTimeDouble[j]) / repetitionTimeDouble[j];
+                            if (diff >= 1.0E-2) {
+                                System.err.println("JSON repetition time = " + repetitionTimeDouble[j] + " does not equal image time resolution = " + tResol);
+                            }
+                        }
+                        if ( (repetitionTime[i] == null) && (repetitionTimeDouble != null) && (repetitionTimeDouble.length >= j + 1)
+                                && ( !Double.isNaN(repetitionTimeDouble[j]))) {
+                            repetitionTime[i] = String.valueOf(repetitionTimeDouble[j]);
+                        }
+                    } // if (imageFileName[i].contains(boldJsonFilenames[j]))
+                } // for (j = 0; j < boldJsonFilenames.length; j++)
+            } // if ((imageFileName[i].contains("_bold")) && (boldJsonFilenames != null) && (boldJsonFilenames.length >
+              // 0))
 
         } // for (i = 0; i < numImages; i++)
-    	
-        
-
-        
 
         for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
-        	i = -1;
+            i = -1;
             for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
-            	i++;
+                i++;
                 for (final DataElementValue deVal : repeat.getDataElements()) {
                     final String deName = deVal.getName();
                     if (deName.equalsIgnoreCase("ImgFile")) {
-                    	setElementComponentValue(deVal, imageFileName[i]);
-                    }
-                    else if (deName.equalsIgnoreCase("ImgDimensionTyp")) {
+                        setElementComponentValue(deVal, imageFileName[i]);
+                    } else if (deName.equalsIgnoreCase("ImgDimensionTyp")) {
                         setElementComponentValue(deVal, exts[i].length + "D");
                     } else if (deName.equalsIgnoreCase("ImgDim1ExtentVal")) {
                         setElementComponentValue(deVal, String.valueOf(exts[i][0]));
@@ -2400,7 +2285,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         setElementComponentValue(deVal, orientation[i]);
                     }
 
-                    if ((i < numImages) && (fileFormatString[i].equalsIgnoreCase("dicom"))) {
+                    if ( (i < numImages) && (fileFormatString[i].equalsIgnoreCase("dicom"))) {
                         if (deName.equalsIgnoreCase("AgeVal") && ageVal[i] != null && !ageVal[i].equals("")) {
                             ageInMonths[i] = convertDicomAgeToBRICS(ageVal[i]);
                             if (Float.parseFloat(ageInMonths[i]) != 0) {
@@ -2501,69 +2386,61 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 setElementComponentValue(deVal, ctMA[i]);
                             }
                         }
-                    } else if ((i < numImages) && (fileFormatString[i].equalsIgnoreCase("nifti"))) {
-                        if ((deName.equalsIgnoreCase("ImgScannerManufName")) && (manufacturer[i] != null)) {
+                    } else if ( (i < numImages) && (fileFormatString[i].equalsIgnoreCase("nifti"))) {
+                        if ( (deName.equalsIgnoreCase("ImgScannerManufName")) && (manufacturer[i] != null)) {
                             setElementComponentValue(deVal, manufacturer[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgScannerModelName")) && (scannerModel[i]!= null)) {
+                        } else if ( (deName.equalsIgnoreCase("ImgScannerModelName")) && (scannerModel[i] != null)) {
                             setElementComponentValue(deVal, scannerModel[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) && (softwareVersion[i] != null)) {
+                        } else if ( (deName.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) && (softwareVersion[i] != null)) {
                             setElementComponentValue(deVal, softwareVersion[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgBandwidthVal")) && (bandwidth[i] != null)) {
+                        } else if ( (deName.equalsIgnoreCase("ImgBandwidthVal")) && (bandwidth[i] != null)) {
                             setElementComponentValue(deVal, bandwidth[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgGapBetwnSlicesMeasr")) && (gap[i] != null)) {
+                        } else if ( (deName.equalsIgnoreCase("ImgGapBetwnSlicesMeasr")) && (gap[i] != null)) {
                             setElementComponentValue(deVal, gap[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgScannerStrgthVal")) && (magneticFieldStrength[i] != null)) {
+                        } else if ( (deName.equalsIgnoreCase("ImgScannerStrgthVal")) && (magneticFieldStrength[i] != null)) {
                             setElementComponentValue(deVal, convertMagFieldStrengthToBRICS(magneticFieldStrength[i]));
-                        } else if ((deName.equalsIgnoreCase("ImgFlipAngleMeasr")) && (flipAngle[i] != null)) {
+                        } else if ( (deName.equalsIgnoreCase("ImgFlipAngleMeasr")) && (flipAngle[i] != null)) {
                             setElementComponentValue(deVal, flipAngle[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgEchoTrainLngthMeasr")) && (echoTrainMeas[i] != null)) {
+                        } else if ( (deName.equalsIgnoreCase("ImgEchoTrainLngthMeasr")) && (echoTrainMeas[i] != null)) {
                             setElementComponentValue(deVal, echoTrainMeas[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgSignalAvgNum")) && (numAverages[i] != null)) {
+                        } else if ( (deName.equalsIgnoreCase("ImgSignalAvgNum")) && (numAverages[i] != null)) {
                             setElementComponentValue(deVal, numAverages[i]);
-                        } else if ((deName.equalsIgnoreCase("ImgMRIT1T2SeqName")) && (mriT1T2Name[i] != null)) {
+                        } else if ( (deName.equalsIgnoreCase("ImgMRIT1T2SeqName")) && (mriT1T2Name[i] != null)) {
                             setElementComponentValue(deVal, mriT1T2Name[i]);
-                        }
-                		else if (deName.equalsIgnoreCase("ImgModltyTyp")) {
-                        	setElementComponentValue(deVal, convertModalityToBRICS(modalityString[i], false));
+                        } else if (deName.equalsIgnoreCase("ImgModltyTyp")) {
+                            setElementComponentValue(deVal, convertModalityToBRICS(modalityString[i], false));
                         }
                         // ImagingFunctionalMR FS
-    	                else if (deName.equalsIgnoreCase("ImgPulseSeqTyp")) {
+                        else if (deName.equalsIgnoreCase("ImgPulseSeqTyp")) {
                             if (fsData.getStructInfo().getShortName().equalsIgnoreCase("ImagingFunctionalMR")) {
                                 setElementComponentValue(deVal, "fMRI");
                             }
-                        } 
+                        }
                     }
-	                if ((deName.equalsIgnoreCase("ImgEchoDur")) && (echoTime[i] != null)) {
-	                    setElementComponentValue(deVal, echoTime[i]);
-	                } else if ((deName.equalsIgnoreCase("ImgRepetitionGapVal")) && (repetitionTime != null) &&
-	                		(repetitionTime[i] != null)) {
-	                    setElementComponentValue(deVal, repetitionTime[i]);
-	                } else if ((deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) && (phaseEncode != null) &&
-	                		(phaseEncode[i] != null)) {
-	                    setElementComponentValue(deVal, phaseEncode[i]);
-	                } else if ((deName.equalsIgnoreCase("ImgEchoSpcVal")) && (imagingEchoSpacing != null) &&
-	                		(imagingEchoSpacing[i] != null)) {
-	                	setElementComponentValue(deVal, imagingEchoSpacing[i]);
-	                } else if ((deName.equalsIgnoreCase("SubjectIDNum")) && (subject_id != null)) {
-	                	setElementComponentValue(deVal, subject_id);
-	                } else if ((deName.equalsIgnoreCase("AgeYrs")) && (age != null)) {
-	                	setElementComponentValue(deVal, age);
-	                }
-	                else if ((deName.equalsIgnoreCase("ImgFMRIAuxFile")) && (imagingFMRIAuxiliaryFile != null) &&
-	                		(imagingFMRIAuxiliaryFile[i] != null)) {
-	                	setElementComponentValue(deVal, imagingFMRIAuxiliaryFile[i]);
-	                }
-	                else if ((deName.equalsIgnoreCase("ImgDIffusionBValFile")) && (dwibvalString != null)) {
-	                	setElementComponentValue(deVal, dwibvalString);
-	                }
-	                else if ((deName.equalsIgnoreCase("ImgDIffusionBVecFile")) && (dwibvecString != null)) {
-	                	setElementComponentValue(deVal, dwibvecString);
-	                }
-	                
+                    if ( (deName.equalsIgnoreCase("ImgEchoDur")) && (echoTime[i] != null)) {
+                        setElementComponentValue(deVal, echoTime[i]);
+                    } else if ( (deName.equalsIgnoreCase("ImgRepetitionGapVal")) && (repetitionTime != null) && (repetitionTime[i] != null)) {
+                        setElementComponentValue(deVal, repetitionTime[i]);
+                    } else if ( (deName.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) && (phaseEncode != null) && (phaseEncode[i] != null)) {
+                        setElementComponentValue(deVal, phaseEncode[i]);
+                    } else if ( (deName.equalsIgnoreCase("ImgEchoSpcVal")) && (imagingEchoSpacing != null) && (imagingEchoSpacing[i] != null)) {
+                        setElementComponentValue(deVal, imagingEchoSpacing[i]);
+                    } else if ( (deName.equalsIgnoreCase("SubjectIDNum")) && (subject_id != null)) {
+                        setElementComponentValue(deVal, subject_id);
+                    } else if ( (deName.equalsIgnoreCase("AgeYrs")) && (age != null)) {
+                        setElementComponentValue(deVal, age);
+                    } else if ( (deName.equalsIgnoreCase("ImgFMRIAuxFile")) && (imagingFMRIAuxiliaryFile != null) && (imagingFMRIAuxiliaryFile[i] != null)) {
+                        setElementComponentValue(deVal, imagingFMRIAuxiliaryFile[i]);
+                    } else if ( (deName.equalsIgnoreCase("ImgDIffusionBValFile")) && (dwibvalString != null)) {
+                        setElementComponentValue(deVal, dwibvalString);
+                    } else if ( (deName.equalsIgnoreCase("ImgDIffusionBVecFile")) && (dwibvecString != null)) {
+                        setElementComponentValue(deVal, dwibvecString);
+                    }
+
                 }
             }
         }
-        
+
         // need to validate and then close window
         ArrayList<String> errs;
         final StringBuffer errors = new StringBuffer();
@@ -2579,7 +2456,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         complete(fsData, isComplete);
     }
-    
+
     private class fileComparator implements Comparator<File> {
 
         /**
@@ -2590,14 +2467,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
          * 
          * @return DOCUMENT ME!
          */
-        public int compare(File o1, File o2) {
-            String a = o1.getName();
-            String b = o2.getName();
+        @Override
+        public int compare(final File o1, final File o2) {
+            final String a = o1.getName();
+            final String b = o2.getName();
             return a.compareToIgnoreCase(b);
         }
 
     }
-    
+
     private void parseDataStructure(final FormStructure dataStructure, final int sessionImagesRead, final int fMRIAuxiliaryFileNumber) {
         // setup the group bins in the form data
         for (final RepeatableGroup g : dataStructure.getRepeatableGroups()) {
@@ -2607,24 +2485,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if (g.getType().equals(RepeatableType.EXACTLY) && g.getThreshold() > 0) {
                 numRepeats = g.getThreshold();
             } else {
-            	if (g.getName().equalsIgnoreCase("Main")) {
-            		numRepeats = 1;
-            	}
-            	else if (g.getName().equalsIgnoreCase("Image Information")) {
-            		numRepeats = sessionImagesRead;
-            	}
-            	else if (g.getName().equalsIgnoreCase("Image pixel information and dimensions")) {
-            		numRepeats = sessionImagesRead;
-            	}
-            	else if (g.getName().equalsIgnoreCase("Image QA & QC")) {
-            		numRepeats = sessionImagesRead;
-            	}
-            	else if (g.getName().equalsIgnoreCase("fMRI Auxiliary Files")) {
-            		numRepeats = fMRIAuxiliaryFileNumber;
-            	}
-            	else {
-            		numRepeats = 1;
-            	}
+                if (g.getName().equalsIgnoreCase("Main")) {
+                    numRepeats = 1;
+                } else if (g.getName().equalsIgnoreCase("Image Information")) {
+                    numRepeats = sessionImagesRead;
+                } else if (g.getName().equalsIgnoreCase("Image pixel information and dimensions")) {
+                    numRepeats = sessionImagesRead;
+                } else if (g.getName().equalsIgnoreCase("Image QA & QC")) {
+                    numRepeats = sessionImagesRead;
+                } else if (g.getName().equalsIgnoreCase("fMRI Auxiliary Files")) {
+                    numRepeats = fMRIAuxiliaryFileNumber;
+                } else {
+                    numRepeats = 1;
+                }
             }
 
             // if no values or threshold of 0, build at least one repeat
@@ -2640,7 +2513,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
     }
-    
+
     private GroupRepeat parseGroupRepeat(final FormStructure dataStructure, final FormStructureData fsData, final RepeatableGroup group, final int repeatNum) {
         final GroupRepeat repeat = new GroupRepeat(group, fsData, repeatNum);
 
@@ -2651,7 +2524,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             JLabel l;
 
             l = new JLabel(deFullInfo.getTitle());
-            //l = new JLabel(de.getStructuralDataElement().getName());
+            // l = new JLabel(de.getStructuralDataElement().getName());
 
             l.setFont(MipavUtil.font12);
             l.setName(de.getStructuralDataElement().getName());
@@ -2812,8 +2685,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
                 tooltip += "</p>";
 
-                if (de.getStructuralDataElement().getType().equals(DataType.NUMERIC)
-                        || de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC)) {
+                if (de.getStructuralDataElement().getType().equals(DataType.NUMERIC) || de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC)) {
                     if (de.getStructuralDataElement().getMinimumValue() != null || de.getStructuralDataElement().getMaximumValue() != null) {
                         tooltip += "<p>";
                         if (de.getStructuralDataElement().getMinimumValue() != null) {
@@ -2881,24 +2753,24 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return repeat;
     }
-    
+
     private void disableUnchangableFields(final String elementName, final Component c) {
-    	final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME};
+        final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME};
         for (final String e : unchangableElements) {
             if (elementName.equalsIgnoreCase(e)) {
                 c.setEnabled(false);
             }
         }
     }
-    
+
     @Override
     public void focusGained(final FocusEvent e) {}
-    
+
     @Override
     public void focusLost(final FocusEvent e) {
         validateFields();
     }
-    
+
     /**
      * validates fields
      * 
@@ -3034,7 +2906,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
     }
-    
+
     private JPanel buildGroupRepeatPanel(final GroupRepeat repeat) {
         final JPanel repeatPanel = new JPanel(new GridBagLayout());
 
@@ -3067,8 +2939,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     egbc.gridx++;
                     final JButton browseButton = new JButton("Browse");
                     browseButton.addActionListener(this);
-                    browseButton.setActionCommand("browse_-_" + repeat.getGroupInfo().getName() + "_-_" + repeat.getRepeatNumber() + "_-_"
-                            + deInfo.getName());
+                    browseButton.setActionCommand("browse_-_" + repeat.getGroupInfo().getName() + "_-_" + repeat.getRepeatNumber() + "_-_" + deInfo.getName());
                     elementPanel.add(browseButton, egbc);
                 } else {
                     egbc.gridwidth = 2;
@@ -3109,7 +2980,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return repeatPanel;
     }
-    
+
     private JPanel buildRepeatControlPanel(final RepeatableGroup group) {
         final JPanel repeatControlPanel = new JPanel(new GridBagLayout());
         final GridBagConstraints gbc = new GridBagConstraints();
@@ -4324,7 +4195,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         loadCSVButton.setToolTipText("Load CSV File");
         loadCSVButton.addActionListener(this);
         loadCSVButton.setActionCommand("LoadCSV");
-        
+
         selectBIDSButton = new JButton("Select BIDS Directory");
         selectBIDSButton.setToolTipText("Select BIDS Root Directory");
         selectBIDSButton.addActionListener(this);
@@ -8760,10 +8631,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         private final String formStructName;
 
         private FormStructure fullFormStructure;
-        
-        private boolean addProgressBar;
 
-        public FormDataElementsRESTThread(final PlugInDialogFITBIR parent, final String formStructName, boolean addProgressBar) {
+        private final boolean addProgressBar;
+
+        public FormDataElementsRESTThread(final PlugInDialogFITBIR parent, final String formStructName, final boolean addProgressBar) {
             super();
             this.parent = parent;
             this.formStructName = formStructName;
@@ -8774,14 +8645,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public void run() {
             ViewJProgressBar progressBar = null;
             try {
-            	if (addProgressBar) {
-	                progressBar = new ViewJProgressBar("BRICS", "Retrieving data elements for form structure: " + formStructName, 0, 100, true);
-	                progressBar.setVisible(true);
-	                progressBar.updateValue(20);
-	                progressBar.setIndeterminate(true);
-	                progressCancelButton = progressBar.getCancelButton();
-	                progressCancelButton.addActionListener(this);
-            	}
+                if (addProgressBar) {
+                    progressBar = new ViewJProgressBar("BRICS", "Retrieving data elements for form structure: " + formStructName, 0, 100, true);
+                    progressBar.setVisible(true);
+                    progressBar.updateValue(20);
+                    progressBar.setIndeterminate(true);
+                    progressCancelButton = progressBar.getCancelButton();
+                    progressCancelButton.addActionListener(this);
+                }
 
                 // should have already read in the config file (moved from here to be before the GUI init() call)
 
@@ -8812,11 +8683,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 // }
 
                 if (addProgressBar) {
-	                progressBar.updateValue(80);
-	
-	                progressBar.updateValue(100);
-	                progressBar.setVisible(false);
-	                progressBar.dispose();
+                    progressBar.updateValue(80);
+
+                    progressBar.updateValue(100);
+                    progressBar.setVisible(false);
+                    progressBar.dispose();
                 }
                 printlnToLog("Successful retrieval of data elements for form structure: " + formStructName);
             } catch (final Exception e) {
