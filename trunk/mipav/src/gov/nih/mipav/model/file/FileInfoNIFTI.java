@@ -917,6 +917,42 @@ public class FileInfoNIFTI extends FileInfoBase {
     private String CsaSeriesSequenceFileOwner = null;
     
     private String CsaSeriesGradientMode = null;
+    
+    private int CsaSeriesSliceArrayConcatenations = Integer.MIN_VALUE;
+    
+    private String CsaSeriesFlowCompensation = null;
+    
+    private double CsaSeriesTransmitterCalibration = Double.NaN;
+    
+    private int CsaSeriesIsocentered = Integer.MIN_VALUE;
+    
+    private int CsaSeriesAbsTablePosition = Integer.MIN_VALUE;
+    
+    private double CsaSeriesReadoutOS = Double.NaN;
+    
+    private double CsaSeriesdBdt_max = Double.NaN;
+    
+    private int CsaSeriesRFSWDOperationMode = Integer.MIN_VALUE;
+    
+    private double CsaSeriesSelectionGradientAmplitude = Double.NaN;
+    
+    private int CsaSeriesRfWatchdogMask = Integer.MIN_VALUE;
+    
+    private String CsaSeriesCoilForGradient2 = null;
+    
+    private int CsaSeriesStim_mon_mode = Integer.MIN_VALUE;
+    
+    private int CsaSeriesCoilId[] = null;
+    
+    private double CsaSeriesStim_max_ges_norm_online = Double.NaN;
+    
+    private String CsaSeriesCoilString = null;
+    
+    private String CsaSeriesCoilForGradient = null;
+    
+    private int CsaSeriesTablePositionOrigin[] = null;
+    
+    private int CsaSeriesMiscSequenceParam[] = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1882,6 +1918,66 @@ public class FileInfoNIFTI extends FileInfoBase {
         	}
         	if (CsaSeriesGradientMode != null) {
         		dialog.append("CsaSeries.GradientMode = " + CsaSeriesGradientMode + "\n");
+        	}
+        	if (CsaSeriesSliceArrayConcatenations != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.SliceArrayConcatenations = " + CsaSeriesSliceArrayConcatenations + "\n");
+        	}
+        	if (CsaSeriesFlowCompensation != null) {
+        		dialog.append("CsaSeries.FlowCompensation = " + CsaSeriesFlowCompensation + "\n");
+        	}
+        	if (!Double.isNaN(CsaSeriesTransmitterCalibration)) {
+        		dialog.append("CsaSeries.TransmitterCalibration = " + CsaSeriesTransmitterCalibration + "\n");
+        	}
+        	if (CsaSeriesIsocentered != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.Isocentered = " + CsaSeriesIsocentered + "\n");
+        	}
+        	if (CsaSeriesAbsTablePosition != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.AbsTablePosition = " + CsaSeriesAbsTablePosition + "\n");
+        	}
+        	if (!Double.isNaN(CsaSeriesReadoutOS)) {
+        		dialog.append("CsaSeries.ReadoutOS = " + CsaSeriesReadoutOS + "\n");
+        	}
+        	if (!Double.isNaN(CsaSeriesdBdt_max)) {
+        		dialog.append("CsaSeries.dBdt_max = " + CsaSeriesdBdt_max + "\n");
+        	}
+        	if (CsaSeriesRFSWDOperationMode != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.RFSWDOperationMode = " + CsaSeriesRFSWDOperationMode + "\n");
+        	}
+        	if (!Double.isNaN(CsaSeriesSelectionGradientAmplitude)) {
+        		dialog.append("CsaSeries.SelectionGradientAmplitude = " + CsaSeriesSelectionGradientAmplitude + "\n");
+        	}
+        	if (CsaSeriesRfWatchdogMask != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.RfWatchdogMask = " + CsaSeriesRfWatchdogMask + "\n");
+        	}
+        	if (CsaSeriesCoilForGradient2 != null) {
+        		dialog.append("CsaSeries.CoilForGradient2 = " + CsaSeriesCoilForGradient2 + "\n");
+        	}
+        	if (CsaSeriesStim_mon_mode != Integer.MIN_VALUE) {
+        		dialog.append("CsaSeries.Stim_mon_mode = " + CsaSeriesStim_mon_mode + "\n");
+        	}
+        	if (CsaSeriesCoilId != null) {
+        		for (i = 0; i < CsaSeriesCoilId.length; i++) {
+        			dialog.append("CsaSeries.CoilId["+i+"] = " + CsaSeriesCoilId[i] + "\n");
+        		}
+        	}
+        	if (!Double.isNaN(CsaSeriesStim_max_ges_norm_online)) {
+        		dialog.append("CsaSeries.Stim_max_ges_norm_online = " + CsaSeriesStim_max_ges_norm_online + "\n");
+        	}
+        	if (CsaSeriesCoilString != null) {
+        		dialog.append("CsaSeries.CoilString = " + CsaSeriesCoilString + "\n");
+        	}
+        	if (CsaSeriesCoilForGradient != null) {
+        		dialog.append("CsaSeries.CoilForGradient = " + CsaSeriesCoilForGradient + "\n");
+        	}
+        	if (CsaSeriesTablePositionOrigin != null) {
+        		for (i = 0; i < CsaSeriesTablePositionOrigin.length; i++) {
+        			dialog.append("CsaSeries.TablePositionOrigin["+i+"] = " + CsaSeriesTablePositionOrigin[i] + "\n");
+        		}
+        	}
+        	if (CsaSeriesMiscSequenceParam != null) {
+        		for (i = 0; i < CsaSeriesMiscSequenceParam.length; i++) {
+        			dialog.append("CsaSeries.MiscSequenceParam["+i+"] = " + CsaSeriesMiscSequenceParam[i] + "\n");
+        		}
         	}
         } // if (haveJson)
         
@@ -3426,5 +3522,149 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     public String getCsaSeriesGradientMode() {
     	return CsaSeriesGradientMode;
+    }
+    
+    public void setCsaSeriesSliceArrayConcatenations(int CsaSeriesSliceArrayConcatenations) {
+    	this.CsaSeriesSliceArrayConcatenations = CsaSeriesSliceArrayConcatenations;
+    }
+    
+    public int getCsaSeriesSliceArrayConcatenations() {
+    	return CsaSeriesSliceArrayConcatenations;
+    }
+    
+    public void setCsaSeriesFlowCompensation(String CsaSeriesFlowCompensation) {
+    	this.CsaSeriesFlowCompensation = CsaSeriesFlowCompensation;
+    }
+    
+    public String getCsaSeriesFlowCompensation() {
+    	return CsaSeriesFlowCompensation;
+    }
+    
+    public void setCsaSeriesTransmitterCalibration(double CsaSeriesTransmitterCalibration) {
+    	this.CsaSeriesTransmitterCalibration = CsaSeriesTransmitterCalibration;
+    }
+    
+    public double getCsaSeriesTransmitterCalibration() {
+    	return CsaSeriesTransmitterCalibration;
+    }
+    
+    public void setCsaSeriesIsocentered(int CsaSeriesIsocentered) {
+    	this.CsaSeriesIsocentered = CsaSeriesIsocentered;
+    }
+    
+    public int getCsaSeriesIsocentered() {
+    	return CsaSeriesIsocentered;
+    }
+    
+    public void setCsaSeriesAbsTablePosition(int CsaSeriesAbsTablePosition) {
+    	this.CsaSeriesAbsTablePosition = CsaSeriesAbsTablePosition;
+    }
+    
+    public int getCsaSeriesAbsTablePosition() {
+    	return CsaSeriesAbsTablePosition;
+    }
+    
+    public void setCsaSeriesReadoutOS(double CsaSeriesReadoutOS) {
+    	this.CsaSeriesReadoutOS = CsaSeriesReadoutOS;
+    }
+    
+    public double getCsaSeriesReadoutOS() {
+    	return CsaSeriesReadoutOS;
+    }
+    
+    public void setCsaSeriesdBdt_max(double CsaSeriesdBdt_max) {
+    	this.CsaSeriesdBdt_max = CsaSeriesdBdt_max;
+    }
+    
+    public double getCsaSeriesdBdt_max() {
+    	return CsaSeriesdBdt_max;
+    }
+    
+    public void setCsaSeriesRFSWDOperationMode(int CsaSeriesRFSWDOperationMode) {
+    	this.CsaSeriesRFSWDOperationMode = CsaSeriesRFSWDOperationMode;
+    }
+    
+    public int getCsaSeriesRFSWDOperationMode() {
+    	return CsaSeriesRFSWDOperationMode;
+    }
+    
+    public void setCsaSeriesSelectionGradientAmplitude(double CsaSeriesSelectionGradientAmplitude) {
+    	this.CsaSeriesSelectionGradientAmplitude = CsaSeriesSelectionGradientAmplitude;
+    }
+    
+    public double getCsaSeriesSelectionGradientAmplitude() {
+    	return CsaSeriesSelectionGradientAmplitude;
+    }
+    
+    public void setCsaSeriesRfWatchdogMask(int CsaSeriesRfWatchdogMask) {
+    	this.CsaSeriesRfWatchdogMask = CsaSeriesRfWatchdogMask;
+    }
+    
+    public int getCsaSeriesRfWatchdogMask() {
+    	return CsaSeriesRfWatchdogMask;
+    }
+    
+    public void setCsaSeriesCoilForGradient2(String CsaSeriesCoilForGradient2) {
+    	this.CsaSeriesCoilForGradient2 = CsaSeriesCoilForGradient2;
+    }
+    
+    public String getCsaSeriesCoilForGradient2() {
+    	return CsaSeriesCoilForGradient2;
+    }
+    
+    public void setCsaSeriesStim_mon_mode(int CsaSeriesStim_mon_mode) {
+    	this.CsaSeriesStim_mon_mode = CsaSeriesStim_mon_mode;
+    }
+    
+    public int getCsaSeriesStim_mon_mode() {
+    	return CsaSeriesStim_mon_mode;
+    }
+    
+    public void setCsaSeriesCoilId(int CsaSeriesCoilId[]) {
+    	this.CsaSeriesCoilId = CsaSeriesCoilId;
+    }
+    
+    public int[] getCsaSeriesCoilId() {
+    	return CsaSeriesCoilId;
+    }
+    
+    public void setCsaSeriesStim_max_ges_norm_online(double CsaSeriesStim_max_ges_norm_online) {
+    	this.CsaSeriesStim_max_ges_norm_online = CsaSeriesStim_max_ges_norm_online;
+    }
+    
+    public double getCsaStim_max_ges_norm_online() {
+    	return CsaSeriesStim_max_ges_norm_online;
+    }
+    
+    public void setCsaSeriesCoilString(String CsaSeriesCoilString) {
+    	this.CsaSeriesCoilString = CsaSeriesCoilString;
+    }
+    
+    public String getCsaSeriesCoilString() {
+    	return CsaSeriesCoilString;
+    }
+    
+    public void setCsaSeriesCoilForGradient(String CsaSeriesCoilForGradient) {
+    	this.CsaSeriesCoilForGradient = CsaSeriesCoilForGradient;
+    }
+    
+    public String getCsaSeriesCoilForGradient() {
+    	return CsaSeriesCoilForGradient;
+    }
+    
+    public void setCsaSeriesTablePositionOrigin(int CsaSeriesTablePositionOrigin[]) {
+    	this.CsaSeriesTablePositionOrigin = CsaSeriesTablePositionOrigin;
+    }
+    
+    public int[] getCsaSeriesTablePositionOrigin() {
+    	return CsaSeriesTablePositionOrigin;
+    }
+    
+    public void setCsaSeriesMiscSequenceParam(int CsaSeriesMiscSequenceParam[]) {
+    	this.CsaSeriesMiscSequenceParam = CsaSeriesMiscSequenceParam;
+    }
+    
+    public int[] getCsaSeriesMiscSequenceParam() {
+    	return CsaSeriesMiscSequenceParam;
     }
 }
