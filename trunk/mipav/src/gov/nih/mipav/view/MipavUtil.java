@@ -1446,7 +1446,7 @@ public class MipavUtil extends JComponent {
 			eyetrackingOutStream.write("\n");
 			eyetrackingOutStream.write("\n");
 			eyetrackingOutStream.write("\n");
-			eyetrackingOutStream.write("Time, ActionName, SliceNumber, X_UpperLeft, Y_UpperLeft, X_UpperRight, Y_UpperRight, X_LowerLeft, Y_LowerLeft, X_LowerRight, Y_LowerRight, Window, Level, X_MouseClickLocation, Y_MouseClickLocation, Length, X_LineStart, Y_LineStart, X_LineEnd, Y_LineEnd" + "\n");
+			eyetrackingOutStream.write("Time, ImageActive, ActionName, SliceNumber, X_UpperLeft, Y_UpperLeft, X_UpperRight, Y_UpperRight, X_LowerLeft, Y_LowerLeft, X_LowerRight, Y_LowerRight, Window, Level, X_MouseClickLocation, Y_MouseClickLocation, Length, X_LineStart, Y_LineStart, X_LineEnd, Y_LineEnd" + "\n");
     	} catch ( IOException e ) {
     		e.printStackTrace();
     	}

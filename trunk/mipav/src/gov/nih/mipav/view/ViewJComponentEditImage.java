@@ -2722,9 +2722,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         	String timeStamp = getTime();
 			int sliceNumber = getSlice()+1;
         	if (refPtsLocation != null) {
-				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "MouseClick," + sliceNumber + ", " + refPtsLocation + ", ," + xS + ", " + yS + ", " + "");
+				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + imageActive.getImageName() + ", " + "MouseClick," + sliceNumber + ", " + refPtsLocation + ", ," + xS + ", " + yS + ", " + "");
 			} else {
-				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "MouseClick," + sliceNumber + ", " + ", , , , , , , , , ,"
+				MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", " + "MouseClick," + sliceNumber + ", " + ", , , , , , , , , ,"
 						+ xS + ", " + yS + ", " + "");
 			}
         } 
@@ -2860,7 +2860,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 triFrame.setSlicesFromFrame(xS, yS, slice);
             }
         }
-
+        
         if (cursorMode == ViewJComponentBase.PAINT_CAN) {
             xPG = (short) xS;
             yPG = (short) yS;
@@ -3001,9 +3001,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 				Point mouseScreen = mouseWheelEvent.getLocationOnScreen();
 				int sliceNumber = getSlice()+1;
 				if (refPtsLocation != null) {
-					MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Scroll," + sliceNumber + "," + " , , , ,");
+					MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", " + "Scroll," + sliceNumber + "," + " , , , ,");
 				} else {
-					MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Scroll," + sliceNumber + ", , , , , , , , , , , , ,");
+					MipavUtil.writeEyeTrackingLog(timeStamp + ", " + imageActive.getImageName() + ", " + "Scroll," + sliceNumber + ", , , , , , , , , , , , ,");
 				}
 
 			}
@@ -5848,10 +5848,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             			int sliceNumber = getSlice()+1;
                     	
                     	if (refPtsLocation != null) {
-            				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Win/Level," + sliceNumber + "," + refPtsLocation + m_kWinLevel.getWindowValue() + ","  + m_kWinLevel.getLevelValue() + ", " +  "");
+            				MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", " + "Win/Level," + sliceNumber + "," + refPtsLocation + m_kWinLevel.getWindowValue() + ","  + m_kWinLevel.getLevelValue() + ", " +  "");
             			} else {
-            				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Win/Level," + sliceNumber + ", " + ", , , , , , , ,"
-            						+  m_kWinLevel.getWindowValue() + ","  + m_kWinLevel.getLevelValue() + ", , " + "");
+            				MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", " + "Win/Level," + sliceNumber + ", " + ", , , , , , , ,"
+            						+  m_kWinLevel.getWindowValue() + ","   + imageActive.getImageName() + ", " + m_kWinLevel.getLevelValue() + ", , " + "");
             			}
                     } 
                   
@@ -7390,16 +7390,16 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 			int sliceNumber = getSlice()+1;
 	    	if (refPtsLocation != null) {
 	    		if ( zoomIn ) {
-	    			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "ZoomIn," + sliceNumber + ", " + refPtsLocation + ", ," + ", " + ", " + "");
+	    			MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", " + "ZoomIn," + sliceNumber + ", " + refPtsLocation + ", ," + ", " + ", " + "");
 	    		} else {
-	    			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "ZoomOut," + sliceNumber + ", " + refPtsLocation + ", ," + ", " + ", " + "");
+	    			MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", "  + "ZoomOut," + sliceNumber + ", " + refPtsLocation + ", ," + ", " + ", " + "");
 	    		}
 			} else {
 				if ( zoomIn ) {
-					MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "ZoomIn," + sliceNumber + ", " + ", , , , , , , , , ,"
+					MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", "  + "ZoomIn," + sliceNumber + ", " + ", , , , , , , , , ,"
 						+ ", " + ", " + "");
 				} else {
-					MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "ZoomOut," + sliceNumber + ", " + ", , , , , , , , , ,"
+					MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", "  + "ZoomOut," + sliceNumber + ", " + ", , , , , , , , , ,"
 							+ ", " + ", " + "");
 				}
 			}
@@ -7411,9 +7411,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	    	String timeStamp = getTime();
 			int sliceNumber = getSlice()+1;
 	    	if (refPtsLocation != null) {
-	    			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Pan," + sliceNumber + ", " + refPtsLocation + ", ," + ", " + ", " + "" );
+	    			MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", " + "Pan," + sliceNumber + ", " + refPtsLocation + ", ," + ", " + ", " + "" );
 			} else {	
-					MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Pan," + sliceNumber + ", " + ", , , , , , , , , ,"
+					MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", "  + "Pan," + sliceNumber + ", " + ", , , , , , , , , ,"
 						+ ", " + ", " + "");
 			}
 	    } 
@@ -7421,6 +7421,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     
 	
 	private void recordLineMeasure() {
+		
 		boolean drawVOIflag = voiManager.getDrawVOIflag();
 		float[] resol = imageA.getResolutions(0);
 		if (refPtsLocation != null && drawVOIflag ) {
@@ -7442,7 +7443,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		                        // for ( int k = 0; k < kCurves.size(); k++ ) {
 		                    	    int k = kCurves.size() - 1;
 		                            VOIBase kVOI3D = kCurves.get(k);
-		                            // System.err.println("ruida drawVOIs = " + drawVOIs);
+		                            
 		                            int z = Math.min(zDim-1,Math.max(0,(int)Math.round(kVOI3D.elementAt(0).Z)));
 		                            
 		                            // Vector3f kStart = voiManager.getDrawingContext().fileToScreenVOI( kVOI3D.get(0) );
@@ -7470,9 +7471,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		                			String timeStamp = getTime();
 		                			int sliceNumber = getSlice()+1;
 		                        	if (refPtsLocation != null) {
-		                				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Measure," + sliceNumber + ", " + refPtsLocation + ", , , , " + lineLength + " " + "mm" + ", " + kStart.X + ", " + kStart.Y + ", " + kEnd.X + ", " + kEnd.Y);
+		                				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + imageActive.getImageName() + ", " + "Measure," + sliceNumber + ", " + refPtsLocation + ", , , , " + lineLength + " " + "mm" + ", " + kStart.X + ", " + kStart.Y + ", " + kEnd.X + ", " + kEnd.Y);
 		                			} else {
-		                				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Measure," + sliceNumber + ", " + ", , , , , , , , , , , , " + lineLength + " " + "mm" + ", " + kStart.X + ", " + kStart.Y + ", " + kEnd.X + ", " + kEnd.Y);
+		                				MipavUtil.writeEyeTrackingLog(timeStamp + ", " + imageActive.getImageName() + ", " + "Measure," + sliceNumber + ", " + ", , , , , , , , , , , , " + lineLength + " " + "mm" + ", " + kStart.X + ", " + kStart.Y + ", " + kEnd.X + ", " + kEnd.Y);
 		                			}
 		             
 		                            
@@ -7496,9 +7497,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
       	String timeStamp = getTime();
 		int sliceNumber = slice + 1;
 		if (refPtsLocation != null) {
-			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Slider," + sliceNumber + "," + " , , , ,");
+			MipavUtil.writeEyeTrackingLog(timeStamp + ", "  + imageActive.getImageName() + ", " + "Slider," + sliceNumber + "," + " , , , ,");
 		} else {
-			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + "Slider," + sliceNumber + ", , , , , , , , , , , , ,");
+			MipavUtil.writeEyeTrackingLog(timeStamp + ", " + imageActive.getImageName() + ", " + "Slider," + sliceNumber + ", , , , , , , , , , , , ,");
 		}
       } 
 	}
@@ -7509,6 +7510,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 	 * @param level
 	 */
 	public void setWindLevel(int window, int level) {	
+		if ( winLevel == null ) {
+			winLevel = new JDialogWinLevel(frame, imageActive, LUTa);
+		}
 		winLevel.setWinLevel(window, level);
 	}
 	
