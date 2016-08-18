@@ -2781,6 +2781,37 @@ public class FileNIFTI extends FileBase {
         int CsaSeriesMrPhoenixProtocolsGRADSPECalShimCurrent4 = Integer.MIN_VALUE;
         int CsaSeriesMrPhoenixProtocolsGRADSPECbShimCurrentValid = Integer.MIN_VALUE;
         int CsaSeriesMrPhoenixProtocolsGRADSPECucMode = Integer.MIN_VALUE;
+        String CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0tNucleus = null;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0lFrequency = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bFrequencyValid = Integer.MIN_VALUE;
+        double CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flReferenceAmplitude = Double.NaN;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bReferenceAmplitudeValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bAmplitudeCorrectionValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bRFPAIndexValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bFrequencyValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bReferenceAmplitudeValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bAmplitudeCorrectionValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1lRFPAIndex = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bRFPAIndexValid = Integer.MIN_VALUE;
+        String CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0tName = null;
+        int CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0bAmplitudeValid = Integer.MIN_VALUE;
+        double CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0flAmplitude = Double.NaN;
+        int CsaSeriesMrPhoenixProtocolsTXSPEClNoOfTraPulses = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPEClBCExcitationMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPEClBCSeqExcitationMode = Integer.MIN_VALUE;
+        double CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMin = Double.NaN;
+        double CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMax = Double.NaN;
+        int CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh = Integer.MIN_VALUE;
+        double CsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseMax = Double.NaN;
+        double CsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseClip = Double.NaN;
+        int CsaSeriesMrPhoenixProtocolsTXSPECbKDynValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECucRFPulseType = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECucExcitMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECucSimultaneousExcitation = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsTXSPECucBCExcitationModeValid = Integer.MIN_VALUE;
     	try {
     	    jsonObject = new JSONObject(json);
     	}
@@ -5178,6 +5209,368 @@ public class FileNIFTI extends FileBase {
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsGRADSPECucMode != Integer.MIN_VALUE) {
     	        	fileInfo.setCsaSeriesMrPhoenixProtocolsGRADSPECucMode(CsaSeriesMrPhoenixProtocolsGRADSPECucMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0tNucleus = 
+    	        			global_const.getString("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].tNucleus");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].tNucleus not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0tNucleus != null) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0tNucleus(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0tNucleus);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0lFrequency = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].lFrequency");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].lFrequency not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0lFrequency != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0lFrequency(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0lFrequency);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bFrequencyValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].bFrequencyValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].bFrequencyValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bFrequencyValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bFrequencyValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bFrequencyValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flReferenceAmplitude = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].flReferenceAmplitude");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].flReferenceAmplitude not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flReferenceAmplitude)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flReferenceAmplitude(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flReferenceAmplitude);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bReferenceAmplitudeValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].bReferenceAmplitudeValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].bReferenceAmplitudeValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bReferenceAmplitudeValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bReferenceAmplitudeValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bReferenceAmplitudeValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].flAmplitudeCorrection");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].flAmplitudeCorrection not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bAmplitudeCorrectionValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].bAmplitudeCorrectionValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].bAmplitudeCorrectionValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bAmplitudeCorrectionValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bAmplitudeCorrectionValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bAmplitudeCorrectionValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bRFPAIndexValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].bRFPAIndexValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].bRFPAIndexValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bRFPAIndexValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bRFPAIndexValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bRFPAIndexValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bFrequencyValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].bFrequencyValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].bFrequencyValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bFrequencyValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bFrequencyValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bFrequencyValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bReferenceAmplitudeValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].bReferenceAmplitudeValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].bReferenceAmplitudeValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bReferenceAmplitudeValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bReferenceAmplitudeValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bReferenceAmplitudeValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].flAmplitudeCorrection");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].flAmplitudeCorrection not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bAmplitudeCorrectionValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].bAmplitudeCorrectionValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].bAmplitudeCorrectionValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bAmplitudeCorrectionValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bAmplitudeCorrectionValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bAmplitudeCorrectionValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1lRFPAIndex = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].lRFPAIndex");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].lRFPAIndex not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1lRFPAIndex != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1lRFPAIndex(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1lRFPAIndex);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bRFPAIndexValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].bRFPAIndexValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].bRFPAIndexValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bRFPAIndexValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bRFPAIndexValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bRFPAIndexValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0tName = 
+    	        			global_const.getString("CsaSeries.MrPhoenixProtocol.sTXSPEC.aRFPULSE[0].tName");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.aRFPULSE[0].tName not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0tName != null) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0tName(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0tName);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0bAmplitudeValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.aRFPULSE[0].bAmplitudeValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.aRFPULSE[0].bAmplitudeValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0bAmplitudeValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0bAmplitudeValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0bAmplitudeValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0flAmplitude = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sTXSPEC.aRFPULSE[0].flAmplitude");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.aRFPULSE[0].flAmplitude not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0flAmplitude)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0flAmplitude(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECaRFPULSE0flAmplitude);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPEClNoOfTraPulses = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.lNoOfTraPulses");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.lNoOfTraPulses not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPEClNoOfTraPulses != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPEClNoOfTraPulses(CsaSeriesMrPhoenixProtocolsTXSPEClNoOfTraPulses);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPEClBCExcitationMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.lBCExcitationMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.lBCExcitationMode not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPEClBCExcitationMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPEClBCExcitationMode(CsaSeriesMrPhoenixProtocolsTXSPEClBCExcitationMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPEClBCSeqExcitationMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.lBCSeqExcitationMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.lBCSeqExcitationMode not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPEClBCSeqExcitationMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPEClBCSeqExcitationMode(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPEClBCSeqExcitationMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMin = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeMin");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeMin not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMin)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMin(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMin);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMax = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeMax");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeMax not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMax)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMax(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMax);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeClipLow");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeClipLow not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeClipHigh");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeClipHigh not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseMax = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynPhaseMax");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynPhaseMax not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseMax)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseMax(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseMax);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseClip = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynPhaseClip");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynPhaseClip not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseClip)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseClip(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseClip);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECbKDynValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.bKDynValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.bKDynValid not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECbKDynValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECbKDynValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECbKDynValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECucRFPulseType = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.ucRFPulseType");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.ucRFPulseType not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECucRFPulseType != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECucRFPulseType(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECucRFPulseType);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECucExcitMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.ucExcitMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.ucExcitMode not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECucExcitMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECucExcitMode(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECucExcitMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECucSimultaneousExcitation = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.ucSimultaneousExcitation");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.ucSimultaneousExcitation not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECucSimultaneousExcitation != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECucSimultaneousExcitation(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECucSimultaneousExcitation);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsTXSPECucBCExcitationModeValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sTXSPEC.ucBCExcitationModeValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sTXSPEC.ucBCExcitationModeValid not found\n",
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsTXSPECucBCExcitationModeValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECucBCExcitationModeValid(
+    	        			CsaSeriesMrPhoenixProtocolsTXSPECucBCExcitationModeValid);
     	        }
     	    } // if (global_const != null)
     	} // if (global != null)
