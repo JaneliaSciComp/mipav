@@ -38,24 +38,15 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	/** The main user interface. */
 	private ViewUserInterface UI;
 
-	private String imageNames;
-	private int imageNamesIndex = 0;
-	private ModelImage image;
-
 	private ViewJFrameImage currentFrame;
-	private ViewJFrameImage imageFrame;
-	private ViewJComponentEditImage imageComp;
 	private JScrollPane imageScroll;
 	private Point origin;
 
 	private JPanel quadImagePanel;
-	private JSplitPane splitPaneUpper;
-	private JSplitPane splitPaneLower;
-	private JSplitPane splitPaneCenter;
 	private int currentSlice;
 	
-	private int zDim;
-	private JLabel label5;
+	private int[] zDim;
+	
 	
 	private JComboBox comboBoxImage;
 	private float initZoomFactor;
@@ -66,10 +57,38 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	
 	protected Font serif12, serif12B;
 	
-	private JLabel sliderMax;
-	private JSlider zImageSlider;
-	private JTextField slicesTextField;
+	private JLabel[] sliderMax;
+	private JSlider[] zImageSlider;
+	private JTextField[] slicesTextField;
 
+	private ViewJFrameImage[] imageFrame;
+	private ViewJComponentEditImage[] imageComp;
+	private String[] imageNames = new String[10];
+	private int imageNamesIndex = 0;
+	private ModelImage[] images;
+	
+	private int imageActiveIndex = 0;
+
+	private JPanel sliderPanel;
+	
+	
+	private ImageIcon cornerImage;
+	private ImageIcon blackImage;
+	
+	private JPanel rightPanel;
+	private JPanel leftPanel;
+	private JPanel topPanel;
+	private JPanel lowerPanel;
+	private JLabel label1;
+	private JLabel label2;
+	private JLabel label3;
+	private JLabel label4;
+	private JLabel label5;
+	private JLabel label6;
+	private JLabel label7;
+	private JLabel label8;
+	
+	private boolean pressed = false;
 	
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -82,17 +101,38 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		serif12 = MipavUtil.font12;
 	    serif12B = MipavUtil.font12B;
 		
-	    comboBoxImage = new JComboBox();
-		comboBoxImage.setBackground(Color.white);
-		buildComboBoxImage();
-		Object selected = comboBoxImage.getSelectedItem();
-		if (selected != null) {
-			comboBoxImage.setSelectedItem(selected);
-			String selectedName = (String) comboBoxImage.getSelectedItem();
-			image = ViewUserInterface.getReference().getRegisteredImageByName(
-					selectedName);
-			equalScaleImage();
-		}
+	    int readFromDirectory = JOptionPane.showConfirmDialog(UI.getMainFrame(), "Read images from directory?", "Init Dialog",  JOptionPane.YES_NO_OPTION);
+	    
+	    if ( readFromDirectory == JOptionPane.OK_OPTION ) {
+	    	// reading from specific directory. 
+			readMultlmodalImages();
+	    } else {
+		    // reading from opened image list
+		    comboBoxImage = new JComboBox();
+			comboBoxImage.setBackground(Color.white);
+			buildComboBoxImage();
+			Object selected = comboBoxImage.getSelectedItem();
+			if (selected != null) {
+				comboBoxImage.setSelectedItem(selected);
+				int len = comboBoxImage.getItemCount();
+				imageNamesIndex = len;
+				images = new ModelImage[len];
+				imageComp = new ViewJComponentEditImage[len];
+				imageFrame = new ViewJFrameImage[len];
+				imageNames = new String[len];
+				
+				sliderMax = new JLabel[len];
+				zImageSlider = new JSlider[len];
+				slicesTextField = new JTextField[len];
+				zDim = new int[len];			
+				for (int i = 0; i < len; i++) {
+					imageNames[i] = (String)comboBoxImage.getItemAt(i);
+					System.err.println(imageNames[i]);
+					images[i] = ViewUserInterface.getReference().getRegisteredImageByName(imageNames[i]);
+				}
+				equalScaleImage();
+			}
+	    }
 		
 		getFramesInfo();
 		initLayout();
@@ -100,12 +140,14 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		
 		JViewport viewPort = imageScroll.getViewport();
 		int vh = viewPort.getHeight();
-		int dim[] = image.getExtents();
-		float res[] = image.getResolutions(0);
-		initZoomFactor = (float)vh / (float)( dim[1]);
-		System.err.println("initZoomFactor = " + initZoomFactor);
-	    imageComp.setZoom(initZoomFactor, initZoomFactor);
-	    
+		
+		for ( int i = 0; i < imageNamesIndex; i++ ) {
+			int dim[] = images[i].getExtents();
+			float res[] = images[i].getResolutions(0);
+			initZoomFactor = (float)vh / (float)( dim[1]);
+			System.err.println("initZoomFactor = " + initZoomFactor);
+		    imageComp[i].setZoom(initZoomFactor, initZoomFactor);
+		}
 	    startRecording();
 	    
 	}
@@ -123,6 +165,11 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		    m = new JMenuItem("Measure");
 		    m.addActionListener(this);
 		    popup.add(m);
+		    for ( int i = 0; i < imageNamesIndex; i++ ) {
+		    	m = new JMenuItem(images[i].getImageName());
+			    m.addActionListener(this);
+			    popup.add(m);
+		    }
 		    MousePopupListener pl = new MousePopupListener();
 		    addMouseListener(pl);
 		    quadImagePanel.addMouseListener(pl);
@@ -132,7 +179,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	public void startRecording() {
 		String defaultDirectory = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator;
 		String defaultFileName = defaultDirectory + "eyetracking-" + System.currentTimeMillis() + ".csv";
-		MipavUtil.setEyeTrackingEnabled(true, defaultFileName, imageComp);
+		MipavUtil.setEyeTrackingEnabled(true, defaultFileName, imageComp[imageActiveIndex]);
 	}
 
 	
@@ -146,8 +193,10 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 	private void getFramesInfo() {
 		
-		int[] extents0 = image.getExtents();
-		zDim = extents0[2];
+		for ( int i = 0; i < imageNamesIndex; i++ ) {
+			int[] extents0 = images[i].getExtents();
+			zDim[i] = extents0[2];
+		}
 		
 		
 	}
@@ -173,6 +222,8 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	}
 	
 
+	
+	
 	private void initLayout() {
 
 		final GridBagLayout gbLayout = new GridBagLayout();
@@ -186,52 +237,49 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		gbc.weightx = 0;
 		gbc.weighty = 0;
 
-		ImageIcon cornerImage;
 		cornerImage = MipavUtil.getIcon("WhiteCircle_550.png");
-		ImageIcon blackImage;
 		blackImage = MipavUtil.getIcon("BlackCircle_550.png");
 
-		JPanel leftPanel = new JPanel(new BorderLayout());
+		leftPanel = new JPanel(new BorderLayout());
 		leftPanel.setBackground(Color.black);
-		JLabel label1 = new JLabel();
+		label1 = new JLabel();
 		label1.setBackground(Color.black);
 		label1.setIcon(blackImage);
-		JLabel label2 = new JLabel();
+		label2 = new JLabel();
 		label2.setBackground(Color.black);
 		label2.setIcon(blackImage);
 		leftPanel.add(label1, BorderLayout.NORTH);
 		leftPanel.add(label2, BorderLayout.SOUTH);
 
-		JPanel rightPanel = new JPanel(new BorderLayout());
+		rightPanel = new JPanel(new BorderLayout());
 		rightPanel.setBackground(Color.black);
-		JLabel label3 = new JLabel();
+		label3 = new JLabel();
 		label3.setBackground(Color.black);
 		label3.setIcon(blackImage);
-		JLabel label4 = new JLabel();
+		label4 = new JLabel();
 		label4.setBackground(Color.black);
 		label4.setIcon(blackImage);
 		rightPanel.add(label3, BorderLayout.NORTH);
 		rightPanel.add(label4, BorderLayout.SOUTH);
 		
-		
 
-		JPanel topPanel = new JPanel(new BorderLayout());
+		topPanel = new JPanel(new BorderLayout());
 		topPanel.setBackground(Color.black);
 		label5 = new JLabel();
 		label5.setBackground(Color.black);
 		label5.setIcon(cornerImage);
-		JLabel label6 = new JLabel();
+		label6 = new JLabel();
 		label6.setBackground(Color.black);
 		label6.setIcon(cornerImage);
 		topPanel.add(label5, BorderLayout.WEST);
 		topPanel.add(label6, BorderLayout.EAST);
 
-		JPanel lowerPanel = new JPanel(new BorderLayout());
+		lowerPanel = new JPanel(new BorderLayout());
 		lowerPanel.setBackground(Color.black);
-		JLabel label7 = new JLabel();
+		label7 = new JLabel();
 		label7.setBackground(Color.black);
 		label7.setIcon(cornerImage);
-		JLabel label8 = new JLabel();
+		label8 = new JLabel();
 		label8.setBackground(Color.black);
 		label8.setIcon(cornerImage);
 		lowerPanel.add(label7, BorderLayout.WEST);
@@ -248,29 +296,30 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		int panelWidth = actualFrameHeight / 2;
 		int panelHeight = actualFrameHeight / 2;
 
-		int currentSlice0 = imageComp.getSlice();
+		
+		int currentSlice0 = imageComp[imageActiveIndex].getSlice();
 
-		int compW = imageComp.getWidth();
-		int compH = imageComp.getHeight();
+		int compW = imageComp[imageActiveIndex].getWidth();
+		int compH = imageComp[imageActiveIndex].getHeight();
 
 		float zoomFactorX = panelWidth / compH;
 		float zoomFactorY = panelHeight / compH;
 
-		float zoomX0 = imageComp.getZoomX();
-		float zoomY0 = imageComp.getZoomY();
-
+		float zoomX0 = imageComp[imageActiveIndex].getZoomX();
+		float zoomY0 = imageComp[imageActiveIndex].getZoomY();
+		
 		float zoomX = zoomX0 * zoomFactorX;
 		float zoomY = zoomY0 * zoomFactorY;
 
-		imageComp.setZoomExact(zoomY, zoomY);
-		imageComp.show(0, currentSlice0, true);
+		imageComp[imageActiveIndex].setZoomExact(zoomY, zoomY);
+		imageComp[imageActiveIndex].show(0, currentSlice0, true);
 		
 		
 
 		quadImagePanel = new JPanel();
 		quadImagePanel.setLayout(gbLayout);
 		quadImagePanel.setBackground(Color.black);
-		quadImagePanel.add(imageComp, gbc);
+		quadImagePanel.add(imageComp[imageActiveIndex], gbc);
 		
 		
 		imageScroll = new JScrollPane(quadImagePanel,
@@ -299,11 +348,13 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		setUndecorated(true);
 		
-		imageComp.addMouseWheelListener(this);
-		imageComp.addMouseListener(this);
-		imageComp.addMouseMotionListener(this);
-		imageComp.addKeyListener(this);
-		imageFrame.addKeyListener(this);
+		for ( int i = 0; i < imageNamesIndex; i++ ) {
+			imageComp[i].addMouseWheelListener(this);
+			imageComp[i].addMouseListener(this);
+			imageComp[i].addMouseMotionListener(this);
+			imageComp[i].addKeyListener(this);
+			imageFrame[i].addKeyListener(this);
+		}
 		addKeyListener(this);
 	
 		setSize(screenWidth, screenHeight);
@@ -317,18 +368,23 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	
 	private void buildSlider(final JPanel rightPanel) {
 		
+		int i;
 		final GridBagConstraints gbc = new GridBagConstraints();
-		final JPanel spanel = new JPanel();
+		sliderPanel = new JPanel();
+		int[] sliceMax = new int[imageNamesIndex];
+		
+		rightPanel.add(sliderPanel, BorderLayout.CENTER);
+		sliderPanel.setLayout(new GridBagLayout());
 
-		rightPanel.add(spanel, BorderLayout.CENTER);
-		spanel.setLayout(new GridBagLayout());
-
-		spanel.setForeground(Color.white);
-		spanel.setBackground(Color.black);
-		int sliceMax = zDim - 1;
-		sliderMax = new JLabel(Integer.toString(sliceMax));
-		sliderMax.setForeground(Color.white);
-		sliderMax.setFont(serif12);
+		sliderPanel.setForeground(Color.white);
+		sliderPanel.setBackground(Color.black);
+		
+		for ( i = 0; i < imageNamesIndex; i++ ) {
+			sliceMax[i] = zDim[i] - 1;
+			sliderMax[i] = new JLabel(Integer.toString(sliceMax[i]));
+			sliderMax[i].setForeground(Color.white);
+			sliderMax[i].setFont(serif12);
+		}
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 1;
@@ -341,24 +397,24 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 		final JLabel levelLabel = new JLabel("Slices");
 		levelLabel.setForeground(Color.white);
-		spanel.add(levelLabel, gbc);
+		sliderPanel.add(levelLabel, gbc);
 
 		gbc.gridy = 1;
 
-		spanel.add(sliderMax, gbc);
+		sliderPanel.add(sliderMax[imageActiveIndex], gbc);
 
-		zImageSlider = new JSlider(0, sliceMax, imageComp.getSlice());
-		// set slider attributes
-		zImageSlider.setFont(serif12);
-		zImageSlider.setEnabled(true);
-		zImageSlider.setMajorTickSpacing((int) (1));
-		zImageSlider.setPaintTicks(true);
-		zImageSlider.addChangeListener(this);
-		zImageSlider.setVisible(true);
-		zImageSlider.setOrientation(SwingConstants.VERTICAL);
-		zImageSlider.setBackground(Color.black);
-		zImageSlider.setForeground(Color.white);
-		
+		for ( i = 0; i < imageNamesIndex; i++ ) {
+			zImageSlider[i] = new JSlider(0, sliceMax[i], imageComp[imageActiveIndex].getSlice());
+			zImageSlider[i].setFont(serif12);
+			zImageSlider[i].setEnabled(true);
+			zImageSlider[i].setMajorTickSpacing((int) (1));
+			zImageSlider[i].setPaintTicks(true);
+			zImageSlider[i].addChangeListener(this);
+			zImageSlider[i].setVisible(true);
+			zImageSlider[i].setOrientation(SwingConstants.VERTICAL);
+			zImageSlider[i].setBackground(Color.black);
+			zImageSlider[i].setForeground(Color.white);
+		}
 
 		gbc.gridx = 0;
 		gbc.gridy = 2;
@@ -367,7 +423,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		gbc.weightx = 10;
 		gbc.weighty = 10;
 		gbc.fill = GridBagConstraints.VERTICAL;
-		spanel.add(zImageSlider, gbc);
+		sliderPanel.add(zImageSlider[imageActiveIndex], gbc);
 
 		gbc.weightx = 1;
 		gbc.weighty = 1;
@@ -381,7 +437,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		int levelMinFloat = 0;
 		sliderLevMin.setForeground(Color.white);
 		sliderLevMin.setFont(serif12);
-		spanel.add(sliderLevMin, gbc);
+		sliderPanel.add(sliderLevMin, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 11;
@@ -389,38 +445,156 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		gbc.gridheight = 1;
 		gbc.weightx = 20;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
-		slicesTextField = new JTextField();
-		slicesTextField.setBorder(BorderFactory.createEmptyBorder());
-		slicesTextField.setText(Integer.toString(imageComp.getSlice()));
-		slicesTextField.setForeground(color.white);
-		slicesTextField.setBackground(color.black);
-		slicesTextField.addKeyListener(this);
-		spanel.add(slicesTextField, gbc);
+		
+		for ( i = 0; i < imageNamesIndex; i++ ) {
+			slicesTextField[i] = new JTextField();
+			slicesTextField[i].setBorder(BorderFactory.createEmptyBorder());
+			slicesTextField[i].setText(Integer.toString(imageComp[imageActiveIndex].getSlice()));
+			slicesTextField[i].setForeground(color.white);
+			slicesTextField[i].setBackground(color.black);
+			slicesTextField[i].addKeyListener(this);
+		}
+		sliderPanel.add(slicesTextField[imageActiveIndex], gbc);
+		
+	}
+	
+	private void updateSlider() {
+		
+		int i;
+		final GridBagConstraints gbc = new GridBagConstraints();
+		sliderPanel.removeAll();
+		rightPanel.removeAll();
+		int[] sliceMax = new int[imageNamesIndex];
+		
+		// cornerImage = MipavUtil.getIcon("WhiteCircle_550.png");
+		// blackImage = MipavUtil.getIcon("BlackCircle_550.png");
+		// rightPanel = new JPanel(new BorderLayout());
+		
+		rightPanel.setBackground(Color.black);
+		JLabel label3 = new JLabel();
+		label3.setBackground(Color.black);
+		label3.setIcon(blackImage);
+		JLabel label4 = new JLabel();
+		label4.setBackground(Color.black);
+		label4.setIcon(blackImage);
+		rightPanel.add(label3, BorderLayout.NORTH);
+		rightPanel.add(label4, BorderLayout.SOUTH);
+	 
+		sliderPanel = new JPanel();
+		sliderPanel.setLayout(new GridBagLayout());
+		sliderPanel.setForeground(Color.white);
+		sliderPanel.setBackground(Color.black);
+		
+		sliceMax[imageActiveIndex] = zDim[imageActiveIndex];
+		sliderMax[imageActiveIndex] = new JLabel(Integer.toString(sliceMax[imageActiveIndex]-1));
+		sliderMax[imageActiveIndex].setForeground(Color.white);
+		sliderMax[imageActiveIndex].setFont(serif12);
+		
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.weightx = 1;
+		gbc.weighty = 1;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.insets = new Insets(3, 3, 3, 3);
+
+		final JLabel levelLabel = new JLabel("Slices");
+		levelLabel.setForeground(Color.white);
+		sliderPanel.add(levelLabel, gbc);
+
+		gbc.gridy = 1;
+
+		sliderPanel.add(sliderMax[imageActiveIndex], gbc);
+
+		
+		zImageSlider[imageActiveIndex] = new JSlider(0, sliceMax[imageActiveIndex], imageComp[imageActiveIndex].getSlice());
+		zImageSlider[imageActiveIndex].setFont(serif12);
+		zImageSlider[imageActiveIndex].setEnabled(true);
+		zImageSlider[imageActiveIndex].setMajorTickSpacing((int) (1));
+		zImageSlider[imageActiveIndex].setPaintTicks(true);
+		zImageSlider[imageActiveIndex].addChangeListener(this);
+		zImageSlider[imageActiveIndex].setVisible(true);
+		zImageSlider[imageActiveIndex].setOrientation(SwingConstants.VERTICAL);
+		zImageSlider[imageActiveIndex].setBackground(Color.black);
+		zImageSlider[imageActiveIndex].setForeground(Color.white);
+		
+
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		gbc.gridwidth = 3;
+		gbc.gridheight = 7;
+		gbc.weightx = 10;
+		gbc.weighty = 10;
+		gbc.fill = GridBagConstraints.VERTICAL;
+		sliderPanel.add(zImageSlider[imageActiveIndex], gbc);
+
+		gbc.weightx = 1;
+		gbc.weighty = 1;
+		gbc.gridx = 0;
+		gbc.gridy = 10;
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+
+		JLabel sliderLevMin = new JLabel(Integer.toString(0));
+		int levelMinFloat = 0;
+		sliderLevMin.setForeground(Color.white);
+		sliderLevMin.setFont(serif12);
+		sliderPanel.add(sliderLevMin, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy = 11;
+		gbc.gridwidth = 0;
+		gbc.gridheight = 1;
+		gbc.weightx = 20;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		
+		
+		slicesTextField[imageActiveIndex] = new JTextField();
+		slicesTextField[imageActiveIndex].setBorder(BorderFactory.createEmptyBorder());
+		slicesTextField[imageActiveIndex].setText(Integer.toString(imageComp[imageActiveIndex].getSlice()));
+		slicesTextField[imageActiveIndex].setForeground(color.white);
+		slicesTextField[imageActiveIndex].setBackground(color.black);
+		slicesTextField[imageActiveIndex].addKeyListener(this);
+		
+		sliderPanel.add(slicesTextField[imageActiveIndex], gbc);
+		
+		// getContentPane().remove(rightPanel);
+		rightPanel.add(sliderPanel, BorderLayout.CENTER);
+		// getContentPane().add(rightPanel, BorderLayout.EAST);
+		
+		sliderPanel.repaint();
+		rightPanel.repaint();
+
+		pack();
+		this.validate();
 	}
 	
 	public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
 		
 		    int wheelRotation = mouseWheelEvent.getWheelRotation();
 	        
-	    	currentSlice = imageComp.getSlice();
+	    	currentSlice = imageComp[imageActiveIndex].getSlice();
 		  
-	    	 if (((wheelRotation < 0) && (currentSlice < zDim - 1)) ||  ((wheelRotation > 0) && (currentSlice > 0))) {
+	    	 if (((wheelRotation < 0) && (currentSlice < zDim[imageActiveIndex] )) ||  ((wheelRotation > 0) && (currentSlice > 0))) {
 	         	if (wheelRotation < 0) {
 	         		currentSlice++;
 	             }
 	         	else {
 	         		currentSlice--;
 	         	}
-	         	imageComp.setSlice(currentSlice);
+	         	imageComp[imageActiveIndex].setSlice(currentSlice);
 	         	
 	    	 }
 	    	 
-	    	 if ( imageFrame.isActive() ) {
+	    	 if ( imageFrame[imageActiveIndex].isActive() ) {
 	    		
-	    		 imageComp.show(0, currentSlice, true);
+	    		 imageComp[imageActiveIndex].show(0, currentSlice, true);
 	    	 }
 	    	 
-	    	 zImageSlider.setValue(currentSlice);
+	    	 zImageSlider[imageActiveIndex].setValue(currentSlice);
 	    	  
 	    	
 	}
@@ -456,38 +630,100 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		
 		int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
 	    int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
-		
+	    System.err.println("imageNamesIndex = " + imageNamesIndex);
+	    for ( i = 0; i < imageNamesIndex; i++ ) {
 	
-		imageFrame = new ViewJFrameImage(image);
-		imageFrame.setLocation(screenWidth, screenHeight);
-		imageComp = imageFrame.getComponentImage();
-		imageComp.setName("MultiViewSingle");
-		imageComp.setEyetrackerRecordingMode(ViewJComponentEditImage.SingleFrameEyetrackerMode);
-		
+		    imageFrame[i] = new ViewJFrameImage(images[i]);
+			imageFrame[i].setLocation(screenWidth, screenHeight);
+			imageComp[i] = imageFrame[i].getComponentImage();
+			imageComp[i].setName("MultiViewSingle_" + i);
 			
-		compW = imageComp.getWidth();
-		compH = imageComp.getHeight();
-
-		System.err.println("compW = " + compW + " compH = " + compH);
+				
+			compW = imageComp[i].getWidth();
+			compH = imageComp[i].getHeight();
+	
+			// System.err.println("compW = " + compW + " compH = " + compH);
+			
+			frameW = imageFrame[i].getWidth();
+			frameH = imageFrame[i].getHeight();
+	
+			diffW = frameW - compW;
+			diffH = frameH - compH;
+			
+			currentSlice = imageComp[i].getSlice();
+			// System.err.println(" zoom X = " + imageComp[i].getZoomX());
+			newZoom = 1.1f * imageComp[i].getZoomX();
+		    imageComp[i].setZoom(newZoom, newZoom);
+		    imageComp[i].show(0, currentSlice, true);
+	
+			imageFrame[i].updateImages();
+	    }
 		
-		frameW = imageFrame.getWidth();
-		frameH = imageFrame.getHeight();
+	}
 
-		diffW = frameW - compW;
-		diffH = frameH - compH;
+	
+	public void equalScaleImageLight() {
+
+		float newZoom;
+		int i;
+		int compW;
+		int compH;
+		int frameW;
+		int frameH;
+		int diffW;
+		int diffH;
 		
-		currentSlice = imageComp.getSlice();
-		System.err.println(" zoom X = " + imageComp.getZoomX());
-		newZoom = 1.0f * imageComp.getZoomX();
-	    imageComp.setZoom(newZoom, newZoom);
-	    imageComp.show(0, currentSlice, true);
+		int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
+	    int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
+	    
+	    int actualFrameWidth = screenWidth;
+		int actualFrameHeight = screenHeight;
 
-		// imageFrame.setSize(compW / 2 + diffW, compH / 2 + diffH);
-		imageFrame.updateImages();
+		float panelWidth = actualFrameWidth / 2;
+		float panelHeight = actualFrameHeight / 2;
+	    
+	    System.err.println("imageNamesIndex = " + imageNamesIndex);
+	    for ( i = 0; i < imageNamesIndex; i++ ) {
+	
+		    imageFrame[i] = new ViewJFrameImage(images[i]);
+			imageFrame[i].setLocation(screenWidth, screenHeight);
+			imageComp[i] = imageFrame[i].getComponentImage();
+			imageComp[i].setName("MultiViewSingle_" + i);
+			
+				
+			compW = imageComp[i].getWidth();
+			compH = imageComp[i].getHeight();
+	
+			// System.err.println("compW = " + compW + " compH = " + compH);
+			
+			frameW = imageFrame[i].getWidth();
+			frameH = imageFrame[i].getHeight();
+	
+			diffW = frameW - compW;
+			diffH = frameH - compH;
+			
+			currentSlice = imageComp[i].getSlice();
+			
+			float zoomFactorX = panelWidth / compW;
+			float zoomFactorY = panelHeight / compH;
 
-		// userInterface.registerFrame(imageFrame);		
+			float zoomX0 = imageComp[i].getZoomX()* 1.1f;
+			float zoomY0 = imageComp[i].getZoomY();
+			
+			float zoomX = zoomX0 * zoomFactorX;
+			float zoomY = zoomY0 * zoomFactorY;
+			
+			// System.err.println(" zoom X = " + imageComp[i].getZoomX());
+			// newZoom = 1.1f * imageComp[i].getZoomX();
+		    imageComp[i].setZoom(zoomX, zoomY);
+		    imageComp[i].show(0, currentSlice, true);
+	
+			imageFrame[i].updateImages();
+			
+			
+	    }
+	    // updateImage(imageActiveIndex);
 		
-
 	}
 
 	
@@ -527,19 +763,86 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		/********************  Window-Level   threshold values ******************************/ 
 		if ( eventObj instanceof JMenuItem ) {
 			String cmd = ((JMenuItem)eventObj).getText();
-			if ( cmd.equals("Soft Tissue")) {
-				imageComp.setWindLevel(450, 50);
-			} else if ( cmd.equals("Bone")) {
-				imageComp.setWindLevel(2500, 450);
-			} else if ( cmd.equals("Lung")) {
-				imageComp.setWindLevel(996,-1024);
-			} else if ( cmd.equals("Measure")) {
-				invokeMeasure();
-			}
-			
+				
+				if ( cmd.equals("Soft Tissue")) {
+					imageComp[imageActiveIndex].setWindLevel(450, 50);
+				} else if ( cmd.equals("Bone")) {
+					imageComp[imageActiveIndex].setWindLevel(2500, 450);
+				} else if ( cmd.equals("Lung")) {
+					imageComp[imageActiveIndex].setWindLevel(996,-1024);
+				} else if ( cmd.equals("Measure")) {
+					invokeMeasure();
+				} 
+				
+				for ( int i = 0; i < imageNamesIndex; i++ ) {
+					if( cmd.equals(images[i].getImageName() )) {
+						updateImage(i);
+						updateSlider();
+						break;
+					}
+					
+				}	
 		}
 	}
 
+	public void updateImage(int index) {
+		
+		GridBagLayout gbLayout = new GridBagLayout();
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.fill = GridBagConstraints.NONE;
+		gbc.anchor = GridBagConstraints.CENTER;
+		gbc.weightx = 0;
+		gbc.weighty = 0;
+		
+		imageActiveIndex = index;
+				
+		int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
+		int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
+		
+		int actualFrameWidth = screenWidth;
+		int actualFrameHeight = screenHeight;
+
+		float panelWidth = actualFrameWidth / 2;
+		float panelHeight = actualFrameHeight / 2;
+		
+		int currentSlice0 = imageComp[imageActiveIndex].getSlice();
+	    
+		UI.setActiveFrame(imageFrame[imageActiveIndex]);
+		imageFrame[imageActiveIndex].setActiveImage(images[imageActiveIndex]);
+        
+		float compW = imageComp[imageActiveIndex].getWidth();
+		float compH = imageComp[imageActiveIndex].getHeight();
+
+		
+		float zoomFactorX = panelWidth / compW;
+		float zoomFactorY = panelHeight / compH;
+
+		float zoomX0 = imageComp[imageActiveIndex].getZoomX()* 1.1f;
+		float zoomY0 = imageComp[imageActiveIndex].getZoomY();
+		
+		float zoomX = zoomX0 * zoomFactorX;
+		float zoomY = zoomY0 * zoomFactorY;
+		 
+		imageComp[imageActiveIndex].setZoom(zoomX, zoomX);
+		imageComp[imageActiveIndex].show(0, currentSlice0, true);
+		
+		
+		quadImagePanel.removeAll();
+		quadImagePanel.setLayout(gbLayout);
+		quadImagePanel.setBackground(Color.black);
+		quadImagePanel.add(imageComp[imageActiveIndex],gbc);
+		quadImagePanel.repaint();
+		
+		
+		pack();
+		this.validate();
+		
+	}
+	
 	/**
 	 * Should be called when window is closing to perform cleanup.
 	 */
@@ -627,47 +930,50 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		
 		final int keyCode = e.getKeyCode();
 
-		if ( keyCode == KeyEvent.VK_ESCAPE ) {
-			System.err.println("escape key pressed");
-			stopRecording();
-			this.setVisible(false);
-			this.dispose();
-		} else if ( keyCode == KeyEvent.VK_F1) {
-			System.err.println("F1 key pressed");
-			captureComponent(getContentPane());
-		} else if ( keyCode == KeyEvent.VK_F2) {
-			// changeIcon("BlackCircle_400");
-		} else if ( keyCode == KeyEvent.VK_F3) {
-			// changeIcon("BlackCircle_550");
-		} else if ( keyCode == KeyEvent.VK_F4) {
-			// changeIcon("BlackCircle");
-		} else if ( keyCode == KeyEvent.VK_H) {
-			currentSlice = sliceNumCache;
-			zImageSlider.setValue(currentSlice);
-			imageComp.setSlice(sliceNumCache);
-			imageFrame.updateImages(true);
-		} else if ( keyCode == KeyEvent.VK_R) {
-			sliceNumCache = imageComp.getSlice();
-			System.err.println("sliceNumCache insert = " + sliceNumCache);
-		} else if ( keyCode == KeyEvent.VK_D ) {
-			sliceNumCache = 0;
-			currentSlice = sliceNumCache;
-			zImageSlider.setValue(currentSlice);
-			System.err.println("sliceNumCache delete = " + sliceNumCache);
-		}
-		  
-		// pass the key bindings to the underlying image (plb)
-		String command = null;
-		final KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
-        
-		command = Preferences.getShortcutCommand(ks);
+		if (!pressed) {
+			pressed = true;
+			if (keyCode == KeyEvent.VK_ESCAPE) {
+				System.err.println("escape key pressed");
+				stopRecording();
+				this.setVisible(false);
+				this.dispose();
+			} else if (keyCode == KeyEvent.VK_F1) {
+				System.err.println("F1 key pressed");
+				captureComponent(getContentPane());
+			} else if (keyCode == KeyEvent.VK_F2) {
+				changeIcon("WhiteCircle_550.png", "BlackCircle_550.png");
+			} else if (keyCode == KeyEvent.VK_F3) {
+				changeIcon("WhiteCircle_400.png", "BlackCircle_400.png");
+			} else if (keyCode == KeyEvent.VK_F4) {
+				changeIcon("WhiteCircle.png", "BlackCircle.png");
+			} else if (keyCode == KeyEvent.VK_H) {
+				currentSlice = sliceNumCache;
+				zImageSlider[imageActiveIndex].setValue(currentSlice);
+				imageComp[imageActiveIndex].setSlice(sliceNumCache);
+				imageFrame[imageActiveIndex].updateImages(true);
+			} else if (keyCode == KeyEvent.VK_R) {
+				sliceNumCache = imageComp[imageActiveIndex].getSlice();
+				System.err.println("sliceNumCache insert = " + sliceNumCache);
+			} else if (keyCode == KeyEvent.VK_D) {
+				sliceNumCache = 0;
+				currentSlice = sliceNumCache;
+				zImageSlider[imageActiveIndex].setValue(currentSlice);
+				System.err.println("sliceNumCache delete = " + sliceNumCache);
+			}
 
-		if (command != null) {
-			parentFrame.actionPerformed(new ActionEvent(ks, 0, command));
+			// pass the key bindings to the underlying image (plb)
+			String command = null;
+			final KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
+
+			command = Preferences.getShortcutCommand(ks);
+
+			if (command != null) {
+				parentFrame.actionPerformed(new ActionEvent(ks, 0, command));
+			}
 		}
 
 	}
-
+	
 	/**
 	 * keyReleased event method for KeyListener.
 	 * 
@@ -675,7 +981,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	 *            KeyEvent
 	 */
 	public void keyReleased(final KeyEvent e) {
-
+         pressed = false;
 	}
 
 	/**
@@ -755,18 +1061,18 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 					view.x += deltaX;
 					view.y += deltaY;
 
-					imageComp.scrollRectToVisible(view);
+					imageComp[imageActiveIndex].scrollRectToVisible(view);
 					JViewport viewPort = imageScroll.getViewport();
 					Rectangle viewRectangle = viewPort.getViewRect();
 					Point viewPt = viewPort.getLocationOnScreen();
-					Point compPt = imageComp.getLocationOnScreen();
+					Point compPt = imageComp[imageActiveIndex].getLocationOnScreen();
 					int upperLeftCompX = compPt.x;
 					int upperLeftCompY = compPt.y;
 					int upperLeftViewX = viewPt.x;
 					int upperLeftViewY = viewPt.y;
 					int viewWidth = viewRectangle.width;
 					int viewHeight = viewRectangle.height;
-					Rectangle compRectangle = imageComp.getBounds();
+					Rectangle compRectangle = imageComp[imageActiveIndex].getBounds();
 					
 					int compWidth = compRectangle.width;
 					int compHeight = compRectangle.height;
@@ -777,50 +1083,50 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 					if ((viewWidth >= compWidth) && (viewHeight >= compHeight)) {
 						// All of image present
 						location += ("0, 0" + ", ");
-						location += ((image.getExtents()[0] - 1) + ", " + "0" + ",");
-						location += ("0," + (image.getExtents()[1] - 1) + ", ");
-						location += ((image.getExtents()[0] - 1) + ", " + (image.getExtents()[1] - 1) + ", ");	
+						location += ((images[imageActiveIndex].getExtents()[0] - 1) + ", " + "0" + ",");
+						location += ("0," + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");
+						location += ((images[imageActiveIndex].getExtents()[0] - 1) + ", " + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");	
 					}
 					else if ((viewWidth < compWidth) && (viewHeight >= compHeight)) {
 						// Right part of image clipped but all of image height present
 						location += (df.format(diffX*viewWidthToCompWidth) + ", " + "0" + ", ");
-						location += (df.format(Math.min((image.getExtents()[0] - 1), 
-										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + "0" + ", ");
-						location += (df.format(diffX*viewWidthToCompWidth) + ", " + (image.getExtents()[1] - 1) + ", ");
-						location += (df.format(Math.min((image.getExtents()[0] - 1), 
-										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
-										"," + (image.getExtents()[1] - 1) + ", ");
+						location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+										((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + "0" + ", ");
+						location += (df.format(diffX*viewWidthToCompWidth) + ", " + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");
+						location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+										((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
+										"," + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");
 					}
 					else if ((viewWidth >= compWidth) && (viewHeight < compHeight)) {
 						// Bottom part of image clipped but all of image width present
 						location += ("0" + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
-						location += ((image.getExtents()[0] - 1) + "," + df.format(diffY*viewHeightToCompHeight) + ", ");
-						location += ("0" + ", " + df.format(Math.min((image.getExtents()[1] - 1),  ((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-						location += ((image.getExtents()[0] - 1) + "," + df.format(Math.min((image.getExtents()[1] - 1), 
-										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+						location += ((images[imageActiveIndex].getExtents()[0] - 1) + "," + df.format(diffY*viewHeightToCompHeight) + ", ");
+						location += ("0" + ", " + df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1),  ((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+						location += ((images[imageActiveIndex].getExtents()[0] - 1) + "," + df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1), 
+										((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 					}
 					else if ((viewWidth < compWidth) && (viewHeight < compHeight)) {
 						// Bottom and right part of images clipped
 						location += ( df.format(diffX*viewWidthToCompWidth) + "," +
 								df.format(diffY*viewHeightToCompHeight) + ", ");
-						location += ( df.format(Math.min((image.getExtents()[0] - 1), 
-										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
+						location += ( df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+										((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
 								", " + df.format(diffY*viewHeightToCompHeight) + ", ");
 						location += ( df.format(diffX*viewWidthToCompWidth) + ", " + 
-								 df.format(Math.min((image.getExtents()[1] - 1), 
-											((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-						location += (df.format(Math.min((image.getExtents()[0] - 1), 
-										((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + 
-										 df.format(Math.min((image.getExtents()[1] - 1), 
-													((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+								 df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1), 
+											((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+						location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+										((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + 
+										 df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1), 
+													((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 					}
 					//System.out.println("upperLeftViewX = " + upperLeftViewX + " upperLeftViewY = " + upperLeftViewY);
 					//System.out.println("viewWidth = " + viewWidth + " viewHeight = " + viewHeight);
 					//System.out.println("upperLeftCompX = " + upperLeftCompX + " upperLeftCompY = " + upperLeftCompY);
 					//System.out.println("CompRectangle.x = " + compRectangle.x + " compRectangle.y = " + compRectangle.y);
 					//System.out.println("compWidth = " + compWidth + " compHeight = " + compHeight);
-					imageComp.setFullScreenModeLocation(location);
-					imageComp.recordPanning();
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location);
+					imageComp[imageActiveIndex].recordPanning();
 				}
                
 			
@@ -865,7 +1171,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			// Get the top left corner of the quadImagePanel in the screen's coordinate space
 			//Point qul = quadImagePanel.getLocationOnScreen();
 			//System.out.println("quad image panel upper left corner x = " + qul.x + " y = " + qul.y);
-			Rectangle rect = imageComp.getBounds();
+			Rectangle rect = imageComp[imageActiveIndex].getBounds();
             // System.out.println("Image upper left corner in screen coordinates at x = " + (vul.x + rect.x) + " y = " + (vul.y + rect.y));
             // System.out.println("Image upper right corner in screen coordinates at x = " + (vul.x + rect.x + rect.width) + " y = " + (vul.y + rect.y));
             // System.out.println("Image lower left corner in screen coordinates at x = " + (vul.x + rect.x) + " y = " + (vul.y + rect.y + rect.height));
@@ -879,7 +1185,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			// System.out.println("Event distance from upper left circle center dx = " + dx + " dy = " + dy);
 			
 			// System.err.println("in mouse pressed");
-			int currentSlice0 = imageComp.getSlice();
+			int currentSlice0 = imageComp[imageActiveIndex].getSlice();
 
 			if (event.getButton() == MouseEvent.BUTTON1 && event.isShiftDown()) {
 
@@ -888,21 +1194,21 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				 String location = new String("");        
 			       
 				// quad 0
-				float oldZoom0 = imageComp.getZoomX();
+				float oldZoom0 = imageComp[imageActiveIndex].getZoomX();
 				float newZoom0 = 1;
-				if (imageComp.getZoomX() < 1.0f) {
-					newZoom0 = 2.0f * imageComp.getZoomX();
+				if (imageComp[imageActiveIndex].getZoomX() < 1.5f) {
+					newZoom0 = 2.0f * imageComp[imageActiveIndex].getZoomX();
 				} else {
-					newZoom0 = imageComp.getZoomX() + 1.0f;
+					newZoom0 = imageComp[imageActiveIndex].getZoomX() + 1.0f;
 				}
-				imageComp.setZoom(newZoom0, newZoom0);
+				imageComp[imageActiveIndex].setZoom(newZoom0, newZoom0);
 
 				Vector2f oldCrosshairPoint0 = new Vector2f(event.getX(), event.getY());
 
 				if (oldCrosshairPoint0 != null) {
 					final int newX = MipavMath.round((oldCrosshairPoint0.X * newZoom0) / oldZoom0);
 					final int newY = MipavMath.round((oldCrosshairPoint0.Y * newZoom0) / oldZoom0);
-					imageComp.setCenter(new Vector3f(newX, newY, currentSlice0));
+					imageComp[imageActiveIndex].setCenter(new Vector3f(newX, newY, currentSlice0));
 					adjustScrollbars(newX, newY, imageScroll);
 				}
 			
@@ -911,14 +1217,14 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				
 				Rectangle viewRectangle = viewPort.getViewRect();
 				Point viewPt = viewPort.getLocationOnScreen();
-				Point compPt = imageComp.getLocationOnScreen();
+				Point compPt = imageComp[imageActiveIndex].getLocationOnScreen();
 				int upperLeftCompX = compPt.x;
 				int upperLeftCompY = compPt.y;
 				int upperLeftViewX = viewPt.x;
 				int upperLeftViewY = viewPt.y;
 				int viewWidth = viewRectangle.width;
 				int viewHeight = viewRectangle.height;
-				Rectangle compRectangle = imageComp.getBounds();
+				Rectangle compRectangle = imageComp[imageActiveIndex].getBounds();
 				
 				int compWidth = compRectangle.width;
 				int compHeight = compRectangle.height;
@@ -929,91 +1235,91 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				if ((viewWidth >= compWidth) && (viewHeight >= compHeight)) {
 					// All of image present
 					location += ("0, 0" + ", ");
-					location += ((image.getExtents()[0] - 1) +", " + "0" + ", ");
-					location += ("0" + ", " + (image.getExtents()[1] - 1) + ", ");
-					location += ((image.getExtents()[0] - 1) + ", " + (image.getExtents()[1] - 1) + ", ");	
+					location += ((images[imageActiveIndex].getExtents()[0] - 1) +", " + "0" + ", ");
+					location += ("0" + ", " + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");
+					location += ((images[imageActiveIndex].getExtents()[0] - 1) + ", " + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");	
 				}
 				else if ((viewWidth < compWidth) && (viewHeight >= compHeight)) {
 					// Right part of image clipped but all of image height present
 					location += (df.format(diffX*viewWidthToCompWidth) + "," + "0" + ", ");
-					location += (df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + "," + "0" + ", ");
-					location += (df.format(diffX*viewWidthToCompWidth) +  ", " + (image.getExtents()[1] - 1) + ", ");
-					location += (df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
-									"," + (image.getExtents()[1] - 1) + ", ");
+					location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+									((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + "," + "0" + ", ");
+					location += (df.format(diffX*viewWidthToCompWidth) +  ", " + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");
+					location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+									((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
+									"," + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");
 				}
 				else if ((viewWidth >= compWidth) && (viewHeight < compHeight)) {
 					// Bottom part of image clipped but all of image width present
 					location += ("0" + "," + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ((image.getExtents()[0] - 1) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("0" + "," + df.format(Math.min((image.getExtents()[1] - 1), ((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-					location += ((image.getExtents()[0] - 1) + ", " + df.format(Math.min((image.getExtents()[1] - 1),  
-							((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += ((images[imageActiveIndex].getExtents()[0] - 1) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += ("0" + "," + df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1), ((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += ((images[imageActiveIndex].getExtents()[0] - 1) + ", " + df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1),  
+							((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 				}
 				else if ((viewWidth < compWidth) && (viewHeight < compHeight)) {
 					// Bottom and right part of images clipped
 					location += (df.format(diffX*viewWidthToCompWidth) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += (df.format(Math.min((image.getExtents()[0] - 1),  ((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
+					location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1),  ((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
 							", " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += (df.format(diffX*viewWidthToCompWidth) + ", " +  df.format(Math.min((image.getExtents()[1] - 1), 
-										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-					location += (df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + 
-									 df.format(Math.min((image.getExtents()[1] - 1), 
-										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += (df.format(diffX*viewWidthToCompWidth) + ", " +  df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1), 
+										((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+									((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + 
+									 df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1), 
+										((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 				}
 				//System.out.println("upperLeftViewX = " + upperLeftViewX + " upperLeftViewY = " + upperLeftViewY);
 				//System.out.println("viewWidth = " + viewWidth + " viewHeight = " + viewHeight);
 				//System.out.println("upperLeftCompX = " + upperLeftCompX + " upperLeftCompY = " + upperLeftCompY);
 				//System.out.println("CompRectangle.x = " + compRectangle.x + " compRectangle.y = " + compRectangle.y);
 				//System.out.println("compWidth = " + compWidth + " compHeight = " + compHeight);
-				imageComp.setFullScreenModeLocation(location);
-				imageComp.recordZoom(true);
+				imageComp[imageActiveIndex].setFullScreenModeLocation(location);
+				imageComp[imageActiveIndex].recordZoom(true);
 			} else if (event.getButton() == MouseEvent.BUTTON1 && event.isControlDown()) {
 				// imageScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 				// imageScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 				 String location = new String("");        
 			       
 				// quad 0
-				float oldZoom0 = imageComp.getZoomX();
+				float oldZoom0 = imageComp[imageActiveIndex].getZoomX();
 				float newZoom0 = 1;
-				if (imageComp.getZoomX() > 1.0f) {
-					newZoom0 = imageComp.getZoomX() - 1.0f;
+				if (imageComp[imageActiveIndex].getZoomX() > 1.5f) {
+					newZoom0 = imageComp[imageActiveIndex].getZoomX() - 1.0f;
 				} else {
-					newZoom0 = 0.5f * imageComp.getZoomX();
+					newZoom0 = 0.5f * imageComp[imageActiveIndex].getZoomX();
 				}
 				// System.err.println("newZoom0 = " + newZoom0);
-				imageComp.mouseExited(event);
-				imageComp.setZoom(newZoom0, newZoom0);
+				imageComp[imageActiveIndex].mouseExited(event);
+				imageComp[imageActiveIndex].setZoom(newZoom0, newZoom0);
 
 				Vector2f oldCrosshairPoint0 = new Vector2f(event.getX(), event.getY());
 
 				if (oldCrosshairPoint0 != null) {
 					final int newX = MipavMath.round((oldCrosshairPoint0.X * newZoom0) / oldZoom0);
 					final int newY = MipavMath.round((oldCrosshairPoint0.Y * newZoom0) / oldZoom0);
-					imageComp.setCenter(new Vector3f(newX, newY, currentSlice0));
+					imageComp[imageActiveIndex].setCenter(new Vector3f(newX, newY, currentSlice0));
 					adjustScrollbars(newX, newY, imageScroll);
 				}
 				
 				JViewport viewPort = imageScroll.getViewport();
 				int vh = viewPort.getHeight();
 				int vw = viewPort.getWidth();
-				int compW = imageComp.getSize().width;
-				int compH = imageComp.getSize().height;
-				int dim[] = image.getExtents();
+				int compW = imageComp[imageActiveIndex].getSize().width;
+				int compH = imageComp[imageActiveIndex].getSize().height;
+				int dim[] = images[imageActiveIndex].getExtents();
 				// System.err.println("newZoom0 = " + newZoom0 + " " + " vh = " + vh + "  vw = " + vw + "  dim[0] = " + dim[0] + " dim[1] = " + dim[1] + "  compW = " + compW + "  compH = " + compH);
 				
 				Rectangle viewRectangle = viewPort.getViewRect();
 				Point viewPt = viewPort.getLocationOnScreen();
-				Point compPt = imageComp.getLocationOnScreen();
+				Point compPt = imageComp[imageActiveIndex].getLocationOnScreen();
 				int upperLeftCompX = compPt.x;
 				int upperLeftCompY = compPt.y;
 				int upperLeftViewX = viewPt.x;
 				int upperLeftViewY = viewPt.y;
 				int viewWidth = viewRectangle.width;
 				int viewHeight = viewRectangle.height;
-				Rectangle compRectangle = imageComp.getBounds();
+				Rectangle compRectangle = imageComp[imageActiveIndex].getBounds();
 				
 				int compWidth = compRectangle.width;
 				int compHeight = compRectangle.height;
@@ -1024,42 +1330,42 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				if ((viewWidth >= compWidth) && (viewHeight >= compHeight)) {
 					// All of image present
 					location += ("0, 0" + ", ");
-					location += ((image.getExtents()[0] - 1) +", " + "0" + ", ");
-					location += ("0" + ", " + (image.getExtents()[1] - 1) + ", ");
-					location += ((image.getExtents()[0] - 1) + ", " + (image.getExtents()[1] - 1) + ", ");	
+					location += ((images[imageActiveIndex].getExtents()[0] - 1) +", " + "0" + ", ");
+					location += ("0" + ", " + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");
+					location += ((images[imageActiveIndex].getExtents()[0] - 1) + ", " + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");	
 				}
 				else if ((viewWidth < compWidth) && (viewHeight >= compHeight)) {
 					// Right part of image clipped but all of image height present
 					location += (df.format(diffX*viewWidthToCompWidth) + "," + "0" + ", ");
-					location += (df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + "," + "0" + ", ");
-					location += (df.format(diffX*viewWidthToCompWidth) +  ", " + (image.getExtents()[1] - 1) + ", ");
-					location += (df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
-									"," + (image.getExtents()[1] - 1) + ", ");
+					location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+									((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + "," + "0" + ", ");
+					location += (df.format(diffX*viewWidthToCompWidth) +  ", " + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");
+					location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+									((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + 
+									"," + (images[imageActiveIndex].getExtents()[1] - 1) + ", ");
 				}
 				else if ((viewWidth >= compWidth) && (viewHeight < compHeight)) {
 					// Bottom part of image clipped but all of image width present
 					location += ("0" + "," + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ((image.getExtents()[0] - 1) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += ("0" + "," + df.format(Math.min((image.getExtents()[1] - 1), ((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-					location += ((image.getExtents()[0] - 1) + ", " + df.format(Math.min((image.getExtents()[1] - 1),  
-							((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += ((images[imageActiveIndex].getExtents()[0] - 1) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
+					location += ("0" + "," + df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1), ((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += ((images[imageActiveIndex].getExtents()[0] - 1) + ", " + df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1),  
+							((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 				}
 				else if ((viewWidth < compWidth) && (viewHeight < compHeight)) {
 					// Bottom and right part of images clipped
 					location += (df.format(diffX*viewWidthToCompWidth) + ", " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += (df.format(Math.min((image.getExtents()[0] - 1),  ((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
+					location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1),  ((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) +
 							", " + df.format(diffY*viewHeightToCompHeight) + ", ");
-					location += (df.format(diffX*viewWidthToCompWidth) + ", " +  df.format(Math.min((image.getExtents()[1] - 1), 
-										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
-					location += (df.format(Math.min((image.getExtents()[0] - 1), 
-									((image.getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + 
-									 df.format(Math.min((image.getExtents()[1] - 1), 
-										((image.getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += (df.format(diffX*viewWidthToCompWidth) + ", " +  df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1), 
+										((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
+					location += (df.format(Math.min((images[imageActiveIndex].getExtents()[0] - 1), 
+									((images[imageActiveIndex].getExtents()[0] - 1 + diffX)*viewWidthToCompWidth))) + ", " + 
+									 df.format(Math.min((images[imageActiveIndex].getExtents()[1] - 1), 
+										((images[imageActiveIndex].getExtents()[1] - 1 + diffY)*viewHeightToCompHeight))) + ", ");
 				}
-				imageComp.setFullScreenModeLocation(location);
-				imageComp.recordZoom(false);
+				imageComp[imageActiveIndex].setFullScreenModeLocation(location);
+				imageComp[imageActiveIndex].recordZoom(false);
 			}
 			
 		}
@@ -1478,11 +1784,11 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	 */
 	public void stateChanged(ChangeEvent e) {
 		Object source = e.getSource();
-		if (source == zImageSlider) {
-			currentSlice = zImageSlider.getValue();
-			imageComp.setImageSlice(currentSlice);
-			slicesTextField.setText(Integer.toString(currentSlice));
-			imageFrame.updateImages(true);
+		if (source == zImageSlider[imageActiveIndex]) {
+			currentSlice = zImageSlider[imageActiveIndex].getValue();
+			imageComp[imageActiveIndex].setImageSlice(currentSlice);
+			slicesTextField[imageActiveIndex].setText(Integer.toString(currentSlice));
+			imageFrame[imageActiveIndex].updateImages(true);
 		}
 	}
 
@@ -1766,9 +2072,245 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 
 	
 	public void invokeMeasure() {
-		 imageFrame.getVOIManager().doVOI(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand());
+		 imageFrame[imageActiveIndex].getVOIManager().doVOI(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand());
 	}
 
+	/**
+	 * File chooser to select target image directory.
+	 */
+	private void readMultlmodalImages() {
+		imagesChooser.setDialogTitle("Open Target Images");
+
+		if (UI.getDefaultDirectory() != null) {
+			final File file = new File(UI.getDefaultDirectory());
+
+			if (file != null) {
+				imagesChooser.setCurrentDirectory(file);
+			}
+		} else {
+			imagesChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+		}
+
+		imagesChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		final int returnValue = imagesChooser.showOpenDialog(UI.getMainFrame());
+
+		if (returnValue == JFileChooser.APPROVE_OPTION) {
+			String imageDirectory = String.valueOf(imagesChooser.getSelectedFile()) + File.separatorChar;
+			// System.err.println("imageDirectory = " + imageDirectory);
+			File fileDir = new File(imageDirectory);
+			readImages(fileDir);
+
+		} else {
+			return;
+		}
+
+	}
+
+	private void readImages(File dir) {
+		int i;
+		FileIO imageIO = null;
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			for (i = 0; i < children.length; i++) {
+				traverse(new File(dir, children[i]));
+			}
+			
+			images = new ModelImage[imageNamesIndex];
+			imageComp = new ViewJComponentEditImage[imageNamesIndex];
+			imageFrame = new ViewJFrameImage[imageNamesIndex];
+			
+			sliderMax = new JLabel[imageNamesIndex];
+			zImageSlider = new JSlider[imageNamesIndex];
+			slicesTextField = new JTextField[imageNamesIndex];
+			zDim = new int[imageNamesIndex];
+			
+			
+			try {
+				// read target images
+				imageIO = new FileIO();
+
+				for (i = 0; i < imageNamesIndex; i++) {
+					System.err.println(imageNames[i]);
+					images[i] = imageIO.readImage(imageNames[i]);
+					// new ViewJFrameImage(images[i]);
+				}
+
+				equalScaleImage();
+
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		}
+	}
 	
+	private void traverse(File file) {
+		String dirName = file.toString();
+		// System.err.println(dirName);
+		int begin = dirName.lastIndexOf(File.separator) + 1;
+		int end = dirName.length();
+
+		if (dirName.substring(begin, end).startsWith("Axial") && dirName.substring(begin, end).endsWith(".xml")) {
+			imageNames[imageNamesIndex] = new String();
+			imageNames[imageNamesIndex++] = file.toString();
+		}
+
+		if (dirName.substring(begin, end).startsWith("MIP") && dirName.substring(begin, end).endsWith(".xml")) {
+			imageNames[imageNamesIndex] = new String();
+			imageNames[imageNamesIndex++] = file.toString();
+		}
+
+		/*
+		if (dirName.substring(begin, end).startsWith("image") && dirName.substring(begin, end).endsWith(".xml")
+				&& dirName.contains("Sagittal")) {
+			imageNames[imageNamesIndex] = new String();
+			imageNames[imageNamesIndex++] = file.toString();
+		}
+		*/ 
+
+	}
+	
+
+	private void changeIcon(String whiteCicleName, String blackCircleName) {
+		System.err.println("changeICON");
+		equalScaleImageLight();
+		
+		final GridBagLayout gbLayout = new GridBagLayout();
+		final GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.fill = GridBagConstraints.NONE;
+		gbc.anchor = GridBagConstraints.CENTER;
+		gbc.weightx = 0;
+		gbc.weighty = 0;
+
+		cornerImage = MipavUtil.getIcon(whiteCicleName);
+		blackImage = MipavUtil.getIcon(blackCircleName);
+
+		// leftPanel = new JPanel(new BorderLayout());
+		leftPanel.removeAll();
+		leftPanel.setBackground(Color.black);
+		label1.setBackground(Color.black);
+		label1.setIcon(blackImage);
+		label2.setBackground(Color.black);
+		label2.setIcon(blackImage);
+		leftPanel.add(label1, BorderLayout.NORTH);
+		leftPanel.add(label2, BorderLayout.SOUTH);
+
+		// rightPanel = new JPanel(new BorderLayout());
+		rightPanel.removeAll();
+		rightPanel.setBackground(Color.black);
+		label3.setBackground(Color.black);
+		label3.setIcon(blackImage);
+		label4.setBackground(Color.black);
+		label4.setIcon(blackImage);
+		rightPanel.add(label3, BorderLayout.NORTH);
+		rightPanel.add(label4, BorderLayout.SOUTH);
+
+		// topPanel = new JPanel(new BorderLayout());
+		topPanel.removeAll();
+		topPanel.setBackground(Color.black);
+		label5.setBackground(Color.black);
+		label5.setIcon(cornerImage);
+		label6.setBackground(Color.black);
+		label6.setIcon(cornerImage);
+		topPanel.add(label5, BorderLayout.WEST);
+		topPanel.add(label6, BorderLayout.EAST);
+
+		// lowerPanel = new JPanel(new BorderLayout());
+		lowerPanel.removeAll();
+		lowerPanel.setBackground(Color.black);
+		label7.setBackground(Color.black);
+		label7.setIcon(cornerImage);
+		label8.setBackground(Color.black);
+		label8.setIcon(cornerImage);
+		lowerPanel.add(label7, BorderLayout.WEST);
+		lowerPanel.add(label8, BorderLayout.EAST);
+
+		int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
+		int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
+		// int actualFrameWidth = screenWidth - 160;
+		// int actualFrameHeight = screenHeight - 158;
+
+		int actualFrameWidth = screenWidth;
+		int actualFrameHeight = screenHeight;
+
+		int panelWidth = actualFrameHeight / 2;
+		int panelHeight = actualFrameHeight / 2;
+
+		
+		int currentSlice0 = imageComp[imageActiveIndex].getSlice();
+
+		int compW = imageComp[imageActiveIndex].getWidth();
+		int compH = imageComp[imageActiveIndex].getHeight();
+
+		float zoomFactorX = panelWidth / compH;
+		float zoomFactorY = panelHeight / compH;
+
+		float zoomX0 = imageComp[imageActiveIndex].getZoomX();
+		float zoomY0 = imageComp[imageActiveIndex].getZoomY();
+		
+		float zoomX = zoomX0 * zoomFactorX;
+		float zoomY = zoomY0 * zoomFactorY;
+
+		imageComp[imageActiveIndex].setZoomExact(zoomY, zoomY);
+		imageComp[imageActiveIndex].show(0, currentSlice0, true);
+		
+		// quadImagePanel = new JPanel();
+		quadImagePanel.removeAll();
+		quadImagePanel.setLayout(gbLayout);
+		quadImagePanel.setBackground(Color.black);
+		quadImagePanel.add(imageComp[imageActiveIndex], gbc);
+		
+		
+		imageScroll = new JScrollPane(quadImagePanel,
+	                ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		imageScroll.getVerticalScrollBar().setSize(new Dimension(0, 0));
+		imageScroll.getHorizontalScrollBar().setSize(new Dimension(0, 0));
+		imageScroll.getVerticalScrollBar().setVisible(false);
+		imageScroll.getHorizontalScrollBar().setVisible(false);
+		imageScroll.setOpaque(false);
+		imageScroll.getViewport().setOpaque(false);
+		imageScroll.setBorder(null);;
+		
+
+		buildSlider(rightPanel);
+		
+		
+		getContentPane().removeAll();
+		getContentPane().add(imageScroll, BorderLayout.CENTER);
+		getContentPane().add(leftPanel, BorderLayout.WEST);
+		getContentPane().add(rightPanel, BorderLayout.EAST);
+		getContentPane().add(topPanel, BorderLayout.NORTH);
+		getContentPane().add(lowerPanel, BorderLayout.SOUTH);
+		getContentPane().setName("SingleMultiViewContentPane");
+
+		
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
+		// setUndecorated(true);
+	     
+		for ( int i = 0; i < imageNamesIndex; i++ ) {
+			imageComp[i].addMouseWheelListener(this);
+			imageComp[i].addMouseListener(this);
+			imageComp[i].addMouseMotionListener(this);
+			imageComp[i].addKeyListener(this);
+			imageFrame[i].addKeyListener(this);
+		}
+		addKeyListener(this);
+	    
+		setSize(screenWidth, screenHeight);
+		setMinimumSize(getSize());
+		setVisible(true);
+		setResizable(false);
+		
+		pack();
+		this.validate();
+		
+	}
+
 
 }
