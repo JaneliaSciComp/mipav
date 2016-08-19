@@ -2812,6 +2812,34 @@ public class FileNIFTI extends FileBase {
         int CsaSeriesMrPhoenixProtocolsTXSPECucExcitMode = Integer.MIN_VALUE;
         int CsaSeriesMrPhoenixProtocolsTXSPECucSimultaneousExcitation = Integer.MIN_VALUE;
         int CsaSeriesMrPhoenixProtocolsTXSPECucBCExcitationModeValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsRXSPEClGain = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsRXSPECbGainValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsRXSPECalDwellTime0 = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatauiAdjShimMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatauiAdjWatSupMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatauiAdjRFMapMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatauiAdjMDSMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatauiAdjTableTolerance = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatauiAdjProtID = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreProtRelated = Integer.MIN_VALUE;
+        double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondSag = Double.NaN;
+        double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondCor = Double.NaN;
+        double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondTra = Double.NaN;
+        double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldSag = Double.NaN;
+        double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldCor = Double.NaN;
+        double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldTra = Double.NaN;
+        int CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV = Integer.MIN_VALUE;
+        double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedInPlaneRot = Double.NaN;
+        int CsaSeriesMrPhoenixProtocolsAdjDatauiAdjVolumeValid = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolucEnableNoiseAdjust = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolalTR0 = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocollContrasts = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolalTE0 = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolacFlowComp0 = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocollCombinedEchoes = Integer.MIN_VALUE;
     	try {
     	    jsonObject = new JSONObject(json);
     	}
@@ -5571,6 +5599,307 @@ public class FileNIFTI extends FileBase {
     	        if (CsaSeriesMrPhoenixProtocolsTXSPECucBCExcitationModeValid != Integer.MIN_VALUE) {
     	        	fileInfo.setCsaSeriesMrPhoenixProtocolsTXSPECucBCExcitationModeValid(
     	        			CsaSeriesMrPhoenixProtocolsTXSPECucBCExcitationModeValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsRXSPEClGain = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sRXSPEC.lGain");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sRXSPEC.lGain not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsRXSPEClGain != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsRXSPEClGain(CsaSeriesMrPhoenixProtocolsRXSPEClGain);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsRXSPECbGainValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sRXSPEC.bGainValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sRXSPEC.bGainValid not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsRXSPECbGainValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsRXSPECbGainValid(CsaSeriesMrPhoenixProtocolsRXSPECbGainValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsRXSPECalDwellTime0 = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sRXSPEC.alDwellTime[0]");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sRXSPEC.alDwellTime[0] not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsRXSPECalDwellTime0 != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsRXSPECalDwellTime0(CsaSeriesMrPhoenixProtocolsRXSPECalDwellTime0);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjFreMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjFreMode not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreMode(CsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatauiAdjShimMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjShimMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjShimMode not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatauiAdjShimMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatauiAdjShimMode(CsaSeriesMrPhoenixProtocolsAdjDatauiAdjShimMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatauiAdjWatSupMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjWatSupMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjWatSupMode not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatauiAdjWatSupMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatauiAdjWatSupMode(CsaSeriesMrPhoenixProtocolsAdjDatauiAdjWatSupMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatauiAdjRFMapMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjRFMapMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjRFMapMode not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatauiAdjRFMapMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatauiAdjRFMapMode(CsaSeriesMrPhoenixProtocolsAdjDatauiAdjRFMapMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatauiAdjMDSMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjMDSMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjMDSMode not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatauiAdjMDSMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatauiAdjMDSMode(CsaSeriesMrPhoenixProtocolsAdjDatauiAdjMDSMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatauiAdjTableTolerance = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjTableTolerance");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjTableTolerance not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatauiAdjTableTolerance != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatauiAdjTableTolerance(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatauiAdjTableTolerance);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatauiAdjProtID = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjProtID");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjProtID not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatauiAdjProtID != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatauiAdjProtID(CsaSeriesMrPhoenixProtocolsAdjDatauiAdjProtID);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreProtRelated = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjFreProtRelated");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjFreProtRelated not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreProtRelated != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreProtRelated(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatauiAdjFreProtRelated);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondSag = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sPosition.dSag");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sPosition.dSag not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondSag)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondSag(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondSag);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondCor = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sPosition.dCor");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sPosition.dCor not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondCor)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondCor(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondCor);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondTra = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sPosition.dTra");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sPosition.dTra not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondTra)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondTra(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesPositiondTra);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldSag = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sNormal.dSag");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sNormal.dSag not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldSag)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldSag(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldSag);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldCor = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sNormal.dCor");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sNormal.dCor not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldCor)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldCor(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldCor);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldTra = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sNormal.dTra");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sNormal.dTra not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldTra)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldTra(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldTra);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dThickness");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dThickness not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dPhaseFOV");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dPhaseFOV not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dReadoutFOV");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dReadoutFOV not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedInPlaneRot = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dInPlaneRot");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dInPlaneRot not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedInPlaneRot)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedInPlaneRot(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedInPlaneRot);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsAdjDatauiAdjVolumeValid = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjVolumeValid");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sAdjData.uiAdjVolumeValid not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsAdjDatauiAdjVolumeValid != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAdjDatauiAdjVolumeValid(
+    	        			CsaSeriesMrPhoenixProtocolsAdjDatauiAdjVolumeValid);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolucEnableNoiseAdjust = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.ucEnableNoiseAdjust");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.ucEnableNoiseAdjust not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolucEnableNoiseAdjust != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolucEnableNoiseAdjust(
+    	        			CsaSeriesMrPhoenixProtocolucEnableNoiseAdjust);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolalTR0 = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.alTR[0]");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.alTR[0] not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolalTR0 != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolalTR0(CsaSeriesMrPhoenixProtocolalTR0);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocollContrasts = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.lContrasts");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.lContrasts not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocollContrasts != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocollContrasts(CsaSeriesMrPhoenixProtocollContrasts);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolalTE0 = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.alTE[0]");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.alTE[0] not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolalTE0 != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolalTE0(CsaSeriesMrPhoenixProtocolalTE0);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolacFlowComp0 = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.acFlowComp[0]");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.acFlowComp[0] not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolacFlowComp0 != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolacFlowComp0(CsaSeriesMrPhoenixProtocolacFlowComp0);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocollCombinedEchoes = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.lCombinedEchoes");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.lCombinedEchoes not found\n", Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocollCombinedEchoes != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocollCombinedEchoes(CsaSeriesMrPhoenixProtocollCombinedEchoes);
     	        }
     	    } // if (global_const != null)
     	} // if (global != null)
