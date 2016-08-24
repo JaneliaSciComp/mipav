@@ -992,9 +992,9 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflNominalB0 = Double.NaN;
     
-    private int CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax = Double.NaN;
     
-    private int CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime = Double.NaN;
     
     private int CsaSeriesMrPhoenixProtocolsProtConsistencyInfolMaximumNofRxReceiverChannels = Integer.MIN_VALUE;
     
@@ -1172,7 +1172,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bReferenceAmplitudeValid = Integer.MIN_VALUE;
     
-    private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection = Double.NaN;
     
     private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bAmplitudeCorrectionValid = Integer.MIN_VALUE;
     
@@ -1182,7 +1182,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bReferenceAmplitudeValid = Integer.MIN_VALUE;
     
-    private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection = Double.NaN;
     
     private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bAmplitudeCorrectionValid = Integer.MIN_VALUE;
     
@@ -1206,9 +1206,9 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMax = Double.NaN;
     
-    private int CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow = Double.NaN;
     
-    private int CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsTXSPECflKDynPhaseMax = Double.NaN;
     
@@ -1258,11 +1258,11 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldTra = Double.NaN;
     
-    private int CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness = Double.NaN;
     
-    private int CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV = Double.NaN;
     
-    private int CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedInPlaneRot = Double.NaN;
     
@@ -1294,9 +1294,9 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdThickness[] = null;
     
-    private int CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV[] = null;
+    private double CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV[] = null;
     
-    private int CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV[] = null;
+    private double CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV[] = null;
     
     private double CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdInPlaneRot[] = null;
     
@@ -1310,7 +1310,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int CsaSeriesMrPhoenixProtocolsSliceArrayucMode = Integer.MIN_VALUE;
     
-    private int CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness = Double.NaN;
     
     private int CsaSeriesMrPhoenixProtocolsGroupArrayasGroup0nSize = Integer.MIN_VALUE;
     
@@ -1318,19 +1318,19 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int CsaSeriesMrPhoenixProtocolsGroupArraylSize = Integer.MIN_VALUE;
     
-    private int CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness = Double.NaN;
     
-    private int CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix[] = null;
-    // 12, 13, 14 skipped
-    private int CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 = Integer.MIN_VALUE;
+    // 12, 13, 14 are not present
+    private double CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 = Double.NaN;
     
     private int CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas = Integer.MIN_VALUE;
     
     private int CsaSeriesMrPhoenixProtocolsNavigatorParalRespComp = Integer.MIN_VALUE;
     
-    private int CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage = Integer.MIN_VALUE;
+    private double CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage = Double.NaN;
     
     private int CsaSeriesMrPhoenixProtocolsBladeParaucMotionCorr = Integer.MIN_VALUE;
     
@@ -1347,6 +1347,56 @@ public class FileInfoNIFTI extends FileInfoBase {
     private int CsaSeriesMrPhoenixProtocolsPrepPulsesucTIScout = Integer.MIN_VALUE;
     
     private int CsaSeriesMrPhoenixProtocolsPrepPulsesucFatSatMode = Integer.MIN_VALUE;
+    
+    private double CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness = Double.NaN;
+    
+    private double CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle = Double.NaN;
+    
+    private double CsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration = Double.NaN;
+    
+    private double CsaSeriesMrPhoenixProtocolsPrepPulsesdIRPulseThicknessFactor = Double.NaN;
+    
+    private double CsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution = Double.NaN;
+    
+    private double CsaSeriesMrPhoenixProtocolsKSpacedSliceResolution = Double.NaN;
+    
+    private double CsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA = Double.NaN;
+    
+    private double CsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB = Double.NaN;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpacelBaseResolution = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpacelPartitions = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpacelRadialViews = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceunReordering = Integer.MIN_VALUE;
+    
+    private double CsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR = Double.NaN;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceucDimension = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceucTrajectory = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode = Integer.MIN_VALUE;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -2438,11 +2488,11 @@ public class FileInfoNIFTI extends FileInfoBase {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sProtConsistencyInfo.flNominalB0 = " + 
 	    	                   CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflNominalB0 + "\n");
 	    	}
-	    	if (CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax != Integer.MIN_VALUE) {
+	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax)) {
         		dialog.append("CsaSeries.MrPhoenixProtocol.sProtConsistencyInfo.flGMax = " + 
 	    	                             CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax + "\n");
         	}
-	    	if (CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime != Integer.MIN_VALUE) {
+	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime)) {
         		dialog.append("CsaSeries.MrPhoenixProtocol.sProtConsistencyInfo.flRiseTime = " + 
 	    	                             CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime + "\n");
         	}
@@ -2798,7 +2848,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         		dialog.append("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].bReferenceAmplitudeValid = " + 
 	    	                             CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bReferenceAmplitudeValid + "\n");
         	}
-	    	if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection != Integer.MIN_VALUE) {
+	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection)) {
         		dialog.append("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[0].flAmplitudeCorrection = " + 
 	    	                             CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection + "\n");
         	}
@@ -2818,7 +2868,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         		dialog.append("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].bReferenceAmplitudeValid = " + 
 	    	                             CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bReferenceAmplitudeValid + "\n");
         	}
-	    	if (CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection != Integer.MIN_VALUE) {
+	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection)) {
         		dialog.append("CsaSeries.MrPhoenixProtocol.sTXSPEC.asNucleusInfo[1].flAmplitudeCorrection = " + 
 	    	                             CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection + "\n");
         	}
@@ -2866,11 +2916,11 @@ public class FileInfoNIFTI extends FileInfoBase {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeMax = " + 
 	    		CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMax + "\n");
 	    	}
-	    	if (CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow != Integer.MIN_VALUE) {
+	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow)) {
         		dialog.append("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeClipLow = " + 
 	    	                             CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow + "\n");
         	}
-	    	if (CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh != Integer.MIN_VALUE) {
+	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh)) {
         		dialog.append("CsaSeries.MrPhoenixProtocol.sTXSPEC.flKDynMagnitudeClipHigh = " + 
 	    	                             CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh + "\n");
         	}
@@ -2970,16 +3020,16 @@ public class FileInfoNIFTI extends FileInfoBase {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.sNormal.dTra = " +
 	    				       CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldTra + "\n");
 	    	}
-	    	if (CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness != Integer.MIN_VALUE) {
+	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness)) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dThickness = " + 
 	    				CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness + "\n");
 	    		
 	    	}
-	    	if (CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV != Integer.MIN_VALUE) {
+	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV)) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dPhaseFOV = " + 
 	    				CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV + "\n");
 	    	}
-	    	if (CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV != Integer.MIN_VALUE) {
+	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV)) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sAdjData.sAdjVolume.dReadoutFOV = " + 
 	    				CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV + "\n");
 	    	}
@@ -3063,14 +3113,14 @@ public class FileInfoNIFTI extends FileInfoBase {
 	    	    } // if (CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdThickness != null)
 	    	    
 	    	    if (CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV != null) {
-	    	    	if (CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV[i] != Integer.MIN_VALUE) {
+	    	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV[i])) {
 	    	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice["+i+"].dPhaseFOV = " +
 	    	    				CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV[i] + "\n");
 	    	    	}
 	    	    } // if (CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV != null)
 	    	    
 	    	    if (CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV != null) {
-	    	    	if (CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV[i] != Integer.MIN_VALUE) {
+	    	    	if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV[i])) {
 	    	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice["+i+"].dReadoutFOV = " +
 	    	    				CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV[i] + "\n");
 	    	    	}
@@ -3109,7 +3159,7 @@ public class FileInfoNIFTI extends FileInfoBase {
 	        if (CsaSeriesMrPhoenixProtocolsSliceArrayucMode != Integer.MIN_VALUE) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSliceArray.ucMode = " + CsaSeriesMrPhoenixProtocolsSliceArrayucMode + "\n");
 	    	}
-	        if (CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness != Integer.MIN_VALUE) {
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness)) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSliceArray.sTSat.dThickness = " + 
 	                                CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness + "\n");
 	    	}
@@ -3129,11 +3179,11 @@ public class FileInfoNIFTI extends FileInfoBase {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sGroupArray.lSize = " + 
 	                                CsaSeriesMrPhoenixProtocolsGroupArraylSize + "\n");
 	    	}
-	        if (CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness != Integer.MIN_VALUE) {
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness)) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sGroupArray.sPSat.dThickness = " + 
 	                                CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness + "\n");
 	    	}
-	        if (CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap != Integer.MIN_VALUE) {
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap)) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sGroupArray.sPSat.dGap = " + 
 	                                CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap + "\n");
 	    	}
@@ -3145,7 +3195,7 @@ public class FileInfoNIFTI extends FileInfoBase {
 	    	    	}
 	        	}
     	    } // if (CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix != null)
-	        if (CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 != Integer.MIN_VALUE) {
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15)) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sAutoAlign.dAAMatrix[15] = " + 
 	                                CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 + "\n");
 	    	}
@@ -3157,7 +3207,7 @@ public class FileInfoNIFTI extends FileInfoBase {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sNavigatorPara.lRespComp = " + 
 	                                CsaSeriesMrPhoenixProtocolsNavigatorParalRespComp + "\n");
 	    	}
-	        if (CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage != Integer.MIN_VALUE) {
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage)) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sBladePara.dBladeCoverage = " + 
 	                                CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage + "\n");
 	    	}
@@ -3192,6 +3242,106 @@ public class FileInfoNIFTI extends FileInfoBase {
 	        if (CsaSeriesMrPhoenixProtocolsPrepPulsesucFatSatMode != Integer.MIN_VALUE) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucFatSatMode = " + 
 	                                CsaSeriesMrPhoenixProtocolsPrepPulsesucFatSatMode + "\n");
+	    	}
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness)) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPrepPulses.dDarkBloodThickness = " + 
+	                                CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness + "\n");
+	    	}
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle)) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPrepPulses.dDarkBloodFlipAngle = " + 
+	                                CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle + "\n");
+	    	}
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration)) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPrepPulses.dT2PrepDuration = " + 
+	                                CsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration + "\n");
+	    	}
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPrepPulsesdIRPulseThicknessFactor)) {
+	        	dialog.append("CsaSeries.MrPhoenixProtocol.sPrepPulses.dIRPulseThicknessFactor = " + 
+	        			CsaSeriesMrPhoenixProtocolsPrepPulsesdIRPulseThicknessFactor + "\n");
+	        }
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution)) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.dPhaseResolution = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution + "\n");
+	    	}
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedSliceResolution)) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.dSliceResolution = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacedSliceResolution + "\n");
+	    	}
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA)) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.dAngioDynCentralRegionA = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA + "\n");
+	    	}
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB)) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.dAngioDynSamplingDensityB = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpacelBaseResolution != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.lBaseResolution = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacelBaseResolution + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.lPhaseEncodingLines = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpacelPartitions != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.lPartitions = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacelPartitions + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.lImagesPerSlab = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpacelRadialViews != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.lRadialViews = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacelRadialViews + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.lRadialInterleavesPerImage = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.lLinesPerShot = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceunReordering != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.unReordering = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceunReordering + "\n");
+	    	}
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR)) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.dSeqPhasePartialFourierForSNR = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucPhasePartialFourier = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucSlicePartialFourier = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucAveragingMode = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucMultiSliceMode = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceucDimension != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucDimension = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceucDimension + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceucTrajectory != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucTrajectory = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceucTrajectory + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucViewSharing = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucAsymmetricEchoMode = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode + "\n");
 	    	}
         } // if (haveJson)
         
@@ -5037,19 +5187,20 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflNominalB0;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax(int CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax) {
+    public void setCsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax(double CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax) {
     	this.CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax = CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax() {
+    public double getCsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax() {
     	return CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime(int CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime) {
+    public void setCsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime(double 
+    		CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime) {
     	this.CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime = CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime() {
+    public double getCsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime() {
     	return CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflRiseTime;
     }
     
@@ -5890,13 +6041,13 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bReferenceAmplitudeValid;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection(int 
+    public void setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection(double 
     		CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection) {
     	this.CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection = 
     			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection() {
+    public double getCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection() {
     	return CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection;
     }
     
@@ -5940,13 +6091,13 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1bReferenceAmplitudeValid;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection(int 
+    public void setCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection(double 
     		CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection) {
     	this.CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection = 
     			CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection() {
+    public double getCsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection() {
     	return CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo1flAmplitudeCorrection;
     }
     
@@ -6053,19 +6204,20 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeMax;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow(int CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow) {
+    public void setCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow(double CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow) {
     	this.CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow = CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow() {
+    public double getCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow() {
     	return CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipLow;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh(int CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh) {
+    public void setCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh(double 
+    		CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh) {
     	this.CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh = CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh() {
+    public double getCsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh() {
     	return CsaSeriesMrPhoenixProtocolsTXSPECflKDynMagnitudeClipHigh;
     }
     
@@ -6273,7 +6425,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumesNormaldTra;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness(int 
+    public void setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness(double 
     		CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness) {
     	this.CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness = CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness;
     }
@@ -6282,7 +6434,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedThickness;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV(int 
+    public void setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV(double 
     		CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV) {
     	this.CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV = CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV;
     }
@@ -6291,7 +6443,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedPhaseFOV;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV(int 
+    public void setCsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV(double 
     		CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV) {
     	this.CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV = CsaSeriesMrPhoenixProtocolsAdjDatasAdjVolumedReadoutFOV;
     }
@@ -6429,21 +6581,21 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdThickness;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV(int 
+    public void setCsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV(double 
     		CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV[]) {
     	this.CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV = CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV;
     }
     
-    public int[] getCsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV() {
+    public double[] getCsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV() {
     	return CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdPhaseFOV;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV(int 
+    public void setCsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV(double 
     		CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV[]) {
     	this.CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV = CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV;
     }
     
-    public int[] getCsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV() {
+    public double[] getCsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV() {
     	return CsaSeriesMrPhoenixProtocolsSliceArrayasSlicezdReadoutFOV;
     }
     
@@ -6498,11 +6650,11 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsSliceArrayucMode;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness(int CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness) {
+    public void setCsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness(double CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness) {
     	this.CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness = CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness() {
+    public double getCsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness() {
     	return CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness;
     }
     
@@ -6530,19 +6682,19 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsGroupArraylSize;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness(int CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness) {
+    public void setCsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness(double CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness) {
     	this.CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness = CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness() {
+    public double getCsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness() {
     	return CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap(int CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap) {
+    public void setCsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap(double CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap) {
     	this.CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap = CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap() {
+    public double getCsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap() {
     	return CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap;
     }
     
@@ -6555,11 +6707,11 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15(int CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15) {
+    public void setCsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15(double CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15) {
     	this.CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 = CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15() {
+    public double getCsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15() {
     	return CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15;
     }
     
@@ -6579,11 +6731,11 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsNavigatorParalRespComp;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage(int CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage) {
+    public void setCsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage(double CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage) {
     	this.CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage = CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage;
     }
     
-    public int getCsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage() {
+    public double getCsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage() {
     	return CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage;
     }
     
@@ -6649,5 +6801,213 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     public int getCsaSeriesMrPhoenixProtocolsPrepPulsesucFatSatMode() {
     	return CsaSeriesMrPhoenixProtocolsPrepPulsesucFatSatMode;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness(double
+    		CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness) {
+    	this.CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness = CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness() {
+    	return CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle(double 
+    		CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle) {
+    	this.CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle = CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle() {
+    	return CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration(double CsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration) {
+    	this.CsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration = CsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration() {
+    	return CsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPrepPulsesdIRPulseThicknessFactor(double 
+    		CsaSeriesMrPhoenixProtocolsPrepPulsesdIRPulseThicknessFactor) {
+    	this.CsaSeriesMrPhoenixProtocolsPrepPulsesdIRPulseThicknessFactor = CsaSeriesMrPhoenixProtocolsPrepPulsesdIRPulseThicknessFactor;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsPrepPulsesdIRPulseThicknessFactor() {
+    	return CsaSeriesMrPhoenixProtocolsPrepPulsesdIRPulseThicknessFactor;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution(double CsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution = CsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacedSliceResolution(double CsaSeriesMrPhoenixProtocolsKSpacedSliceResolution) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacedSliceResolution = CsaSeriesMrPhoenixProtocolsKSpacedSliceResolution;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsKSpacedSliceResolution() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacedSliceResolution;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA(double
+    		CsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA = CsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB(double 
+    		CsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB = CsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacelBaseResolution(int CsaSeriesMrPhoenixProtocolsKSpacelBaseResolution) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacelBaseResolution = CsaSeriesMrPhoenixProtocolsKSpacelBaseResolution;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpacelBaseResolution() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacelBaseResolution;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines(int CsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines = CsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacelPartitions(int CsaSeriesMrPhoenixProtocolsKSpacelPartitions) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacelPartitions = CsaSeriesMrPhoenixProtocolsKSpacelPartitions;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpacelPartitions() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacelPartitions;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab(int CsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab = CsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacelRadialViews(int CsaSeriesMrPhoenixProtocolsKSpacelRadialViews) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacelRadialViews = CsaSeriesMrPhoenixProtocolsKSpacelRadialViews;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpacelRadialViews() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacelRadialViews;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage(int 
+    		CsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage = CsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot(int CsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot = CsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceunReordering(int CsaSeriesMrPhoenixProtocolsKSpaceunReordering) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceunReordering = CsaSeriesMrPhoenixProtocolsKSpaceunReordering;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceunReordering() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceunReordering;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR(double 
+    		CsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR = 
+    			CsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR() {
+    	return CsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier(int CsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier = CsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier(int CsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier = CsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode(int CsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode = CsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode(int CsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode = CsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceucDimension(int CsaSeriesMrPhoenixProtocolsKSpaceucDimension) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceucDimension = CsaSeriesMrPhoenixProtocolsKSpaceucDimension;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceucDimension() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceucDimension;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceucTrajectory(int CsaSeriesMrPhoenixProtocolsKSpaceucTrajectory) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceucTrajectory = CsaSeriesMrPhoenixProtocolsKSpaceucTrajectory;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceucTrajectory() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceucTrajectory;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceucViewSharing(int CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing = CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceucViewSharing() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode(int CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode = CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode;
     }
 }
