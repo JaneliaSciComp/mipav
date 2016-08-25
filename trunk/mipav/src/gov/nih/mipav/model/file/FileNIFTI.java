@@ -2861,8 +2861,7 @@ public class FileNIFTI extends FileBase {
         int CsaSeriesMrPhoenixProtocolsGroupArraylSize = Integer.MIN_VALUE;
         double CsaSeriesMrPhoenixProtocolsGroupArraysPSatdThickness = Double.NaN;
         double CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap = Double.NaN;
-        double CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix[] = new double[12];
-        double CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 = Double.NaN;
+        double CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix[] = new double[16];
         int CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas = Integer.MIN_VALUE;
         int CsaSeriesMrPhoenixProtocolsNavigatorParalRespComp = Integer.MIN_VALUE;
         double CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage = Double.NaN;
@@ -2899,6 +2898,49 @@ public class FileNIFTI extends FileBase {
         int CsaSeriesMrPhoenixProtocolsKSpaceucTrajectory = Integer.MIN_VALUE;
         int CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing = Integer.MIN_VALUE;
         int CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsKSpaceucPOCS = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsFastImaginglSegments = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsFastImaginglShots = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1 = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1 = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2 = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2 = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase = Integer.MIN_VALUE;
+        double CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio = Double.NaN;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo = Integer.MIN_VALUE;
+        int CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType = Integer.MIN_VALUE;
     	try {
     	    jsonObject = new JSONObject(json);
     	}
@@ -6215,22 +6257,11 @@ public class FileNIFTI extends FileBase {
     	        fileInfo.setCsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix(
 	        			CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix);
     	        try {
-    	        	CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 = 
-    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sAutoAlign.dAAMatrix[15]");
-    	        }
-    	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sAutoAlign.dAAMatrix[15] not found\n", 
-    	        			Preferences.DEBUG_FILEIO);
-    	        }
-    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15)) {
-    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15(CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15);
-    	        }
-    	        try {
     	        	CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas = 
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sNavigatorPara.lBreathHoldMeas");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sNavigatorPara.lBreathHoldMeas not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sNavigatorPara.lBreathHoldMeas not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas != Integer.MIN_VALUE) {
@@ -6242,7 +6273,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sNavigatorPara.lRespComp");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sNavigatorPara.lRespComp not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sNavigatorPara.lRespComp not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsNavigatorParalRespComp != Integer.MIN_VALUE) {
@@ -6254,7 +6285,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sBladePara.dBladeCoverage");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sBladePara.dBladeCoverage not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sBladePara.dBladeCoverage not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsBladeParadBladeCoverage)) {
@@ -6266,7 +6297,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sBladePara.ucMotionCorr");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sBladePara.ucMotionCorr not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sBladePara.ucMotionCorr not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsBladeParaucMotionCorr != Integer.MIN_VALUE) {
@@ -6278,7 +6309,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucFatSat");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.ucFatSat not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucFatSat not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsPrepPulsesucFatSat != Integer.MIN_VALUE) {
@@ -6289,7 +6320,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucWaterSat");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.ucWaterSat not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucWaterSat not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsPrepPulsesucWaterSat != Integer.MIN_VALUE) {
@@ -6300,7 +6331,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucInversion");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.ucInversion not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucInversion not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsPrepPulsesucInversion != Integer.MIN_VALUE) {
@@ -6311,7 +6342,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucSatRecovery");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.ucSatRecovery not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucSatRecovery not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsPrepPulsesucSatRecovery != Integer.MIN_VALUE) {
@@ -6322,7 +6353,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucT2Prep");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.ucT2Prep not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucT2Prep not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsPrepPulsesucT2Prep != Integer.MIN_VALUE) {
@@ -6333,7 +6364,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucTIScout");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.ucTIScout not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucTIScout not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsPrepPulsesucTIScout != Integer.MIN_VALUE) {
@@ -6344,7 +6375,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucFatSatMode");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.ucFatSatMode not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.ucFatSatMode not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsPrepPulsesucFatSatMode != Integer.MIN_VALUE) {
@@ -6355,7 +6386,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sPrepPulses.dDarkBloodThickness");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.dDarkBloodThickness not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.dDarkBloodThickness not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodThickness)) {
@@ -6367,7 +6398,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sPrepPulses.dDarkBloodFlipAngle");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.dDarkBloodFlipAngle not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.dDarkBloodFlipAngle not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPrepPulsesdDarkBloodFlipAngle)) {
@@ -6379,7 +6410,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sPrepPulses.dT2PrepDuration");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.dT2PrepDuration not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocolsPrepPulses.dT2PrepDuration not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration)) {
@@ -6390,7 +6421,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sPrepPulses.dIRPulseThicknessFactor");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sPrepPulses.dIRPulseThicknessFactor not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPrepPulses.dIRPulseThicknessFactor not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPrepPulsesdT2PrepDuration)) {
@@ -6402,7 +6433,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sKSpace.dPhaseResolution");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.dPhaseResolution not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.dPhaseResolution not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedPhaseResolution)) {
@@ -6413,7 +6444,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sKSpace.dSliceResolution");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.dSliceResolution not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.dSliceResolution not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedSliceResolution)) {
@@ -6424,7 +6455,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sKSpace.dAngioDynCentralRegionA");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.dAngioDynCentralRegionA not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.dAngioDynCentralRegionA not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedAngioDynCentralRegionA)) {
@@ -6436,7 +6467,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sKSpace.dAngioDynSamplingDensityB");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.dAngioDynSamplingDensityB not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.dAngioDynSamplingDensityB not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedAngioDynSamplingDensityB)) {
@@ -6448,7 +6479,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.lBaseResolution");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.lBaseResolution not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.lBaseResolution not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpacelBaseResolution != Integer.MIN_VALUE) {
@@ -6459,7 +6490,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.lPhaseEncodingLines");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.lPhaseEncodingLines not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.lPhaseEncodingLines not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpacelPhaseEncodingLines != Integer.MIN_VALUE) {
@@ -6470,7 +6501,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.lPartitions");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.lPartitions not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.lPartitions not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpacelPartitions != Integer.MIN_VALUE) {
@@ -6481,7 +6512,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.lImagesPerSlab");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.lImagesPerSlab not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.lImagesPerSlab not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpacelImagesPerSlab != Integer.MIN_VALUE) {
@@ -6492,7 +6523,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.lRadialViews");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.lRadialViews not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.lRadialViews not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpacelRadialViews != Integer.MIN_VALUE) {
@@ -6503,7 +6534,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.lRadialInterleavesPerImage");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.lRadialInterleavesPerImage not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.lRadialInterleavesPerImage not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpacelRadialInterleavesPerImage != Integer.MIN_VALUE) {
@@ -6515,7 +6546,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.lLinesPerShot");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.lLinesPerShot not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.lLinesPerShot not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpacelLinesPerShot != Integer.MIN_VALUE) {
@@ -6526,7 +6557,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.unReordering");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.unReordering not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.unReordering not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpaceunReordering != Integer.MIN_VALUE) {
@@ -6537,7 +6568,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sKSpace.dSeqPhasePartialFourierForSNR");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.dSeqPhasePartialFourierForSNR not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.dSeqPhasePartialFourierForSNR not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsKSpacedSeqPhasePartialFourierForSNR)) {
@@ -6549,7 +6580,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.ucPhasePartialFourier");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.ucPhasePartialFourier not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.ucPhasePartialFourier not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpaceucPhasePartialFourier != Integer.MIN_VALUE) {
@@ -6561,7 +6592,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.ucSlicePartialFourier");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.ucSlicePartialFourier not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.ucSlicePartialFourier not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpaceucSlicePartialFourier != Integer.MIN_VALUE) {
@@ -6573,7 +6604,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.ucAveragingMode");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.ucAveragingMode not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.ucAveragingMode not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpaceucAveragingMode != Integer.MIN_VALUE) {
@@ -6584,7 +6615,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.ucMultiSliceMode");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.ucMultiSliceMode not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.ucMultiSliceMode not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpaceucMultiSliceMode != Integer.MIN_VALUE) {
@@ -6595,7 +6626,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.ucDimension");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.ucDimension not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.ucDimension not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpaceucDimension != Integer.MIN_VALUE) {
@@ -6606,7 +6637,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.ucTrajectory");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.ucTrajectory not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.ucTrajectory not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpaceucTrajectory != Integer.MIN_VALUE) {
@@ -6617,7 +6648,7 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.ucViewSharing");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.ucViewSharing not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.ucViewSharing not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing != Integer.MIN_VALUE) {
@@ -6628,12 +6659,519 @@ public class FileNIFTI extends FileBase {
     	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.ucAsymmetricEchoMode");
     	        }
     	        catch (JSONException e) {
-    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sGroupArray.sKSpace.ucAsymmetricEchoMode not found\n", 
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.ucAsymmetricEchoMode not found\n", 
     	        			Preferences.DEBUG_FILEIO);
     	        }
     	        if (CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode != Integer.MIN_VALUE) {
     	        	fileInfo.setCsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode(
     	        			CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsKSpaceucPOCS = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sKSpace.ucPOCS");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sKSpace.ucPOCS not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsKSpaceucPOCS != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsKSpaceucPOCS(CsaSeriesMrPhoenixProtocolsKSpaceucPOCS);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sFastImaging.lEPIFactor");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sFastImaging.lEPIFactor not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor(CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sFastImaging.lTurboFactor");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sFastImaging.lTurboFactor not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor(CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sFastImaging.lSliceTurboFactor");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sFastImaging.lSliceTurboFactor not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor(
+    	        			CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsFastImaginglSegments = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sFastImaging.lSegments");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sFastImaging.lSegments not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsFastImaginglSegments != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsFastImaginglSegments(CsaSeriesMrPhoenixProtocolsFastImaginglSegments);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sFastImaging.ucSegmentationMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sFastImaging.ucSegmentationMode not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode(
+    	        			CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsFastImaginglShots = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sFastImaging.lShots");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sFastImaging.lShots not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsFastImaginglShots != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsFastImaginglShots(CsaSeriesMrPhoenixProtocolsFastImaginglShots);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sFastImaging.lEchoTrainDuration");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sFastImaging.lEchoTrainDuration not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration(
+    	        			CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1 = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lSignal1");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lSignal1 not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1 != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1(CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1 = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lMethod1");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lMethod1 not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1 != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1(CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2 = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lSignal2");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lSignal2 not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2 != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2(CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2 = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lMethod2");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lMethod2 not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2 != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2(CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lPhases");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lPhases not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImaginglPhases(CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lRetroGatedImages");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lRetroGatedImages not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lTriggerPulses");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lTriggerPulses not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lTriggerWindow");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lTriggerWindow not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lArrhythmiaDetection");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lArrhythmiaDetection not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lCardiacGateOnThreshold");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lCardiacGateOnThreshold not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lCardiacGateOffThreshold");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lCardiacGateOffThreshold" +
+    	                                " not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lTriggerIntervals");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lTriggerIntervals not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lTriggerPulses");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lTriggerPulses not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lTriggerWindow");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lTriggerWindow not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lArrhythmiaDetection");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lArrhythmiaDetection not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lCardiacGateOnThreshold");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lCardiacGateOnThreshold not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lCardiacGateOffThreshold");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lCardiacGateOffThreshold not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lTriggerIntervals");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lTriggerIntervals not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lTriggerPulses");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lTriggerPulses not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lTriggerWindow");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lTriggerWindow not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lArrhythmiaDetection");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lArrhythmiaDetection not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lCardiacGateOnThreshold");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lCardiacGateOnThreshold not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lCardiacGateOffThreshold");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lCardiacGateOffThresold not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lTriggerIntervals");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lTriggerIntervals not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioResp.lRespGateThreshold");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioResp.lRespGateThreshold not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioResp.lRespGatePhase");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioResp.lRespGatePhase not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio = 
+    	        			global_const.getDouble("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioResp.dGatingRatio");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioResp.dGatingRatio not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio)) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioNative.ucMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioNative.ucMode not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioNative.ucFlowSenMode");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioNative.ucFlowSenMode not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode(
+    	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sSpecPara.lPhaseCyclingType");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sSpecPara.lPhaseCyclingType not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType(
+    	        			CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sSpecPara.lPhaseEncodingType");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sSpecPara.lPhaseEncodingType not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType(
+    	        			CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sSpecPara.lRFExcitationBandwidth");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sSpecPara.lRFExcitationBandwidth not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth(
+    	        			CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sSpecPara.ucRemoveOversampling");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sSpecPara.ucRemoveOversampling not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling(
+    	        			CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sSpecPara.lAutoRefScanNo");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sSpecPara.lAutoRefScanNo not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo(
+    	        			CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo);
+    	        }
+    	        try {
+    	        	CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType = 
+    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.sSpecPara.lDecouplingType");
+    	        }
+    	        catch (JSONException e) {
+    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.sSpecPara.lDecouplingType not found\n", 
+    	        			Preferences.DEBUG_FILEIO);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType != Integer.MIN_VALUE) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolsSpecParalDecouplingType(
+    	        			CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType);
     	        }
     	    } // if (global_const != null)
     	} // if (global != null)
