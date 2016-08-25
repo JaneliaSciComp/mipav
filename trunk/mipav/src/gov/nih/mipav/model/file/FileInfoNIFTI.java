@@ -1323,8 +1323,6 @@ public class FileInfoNIFTI extends FileInfoBase {
     private double CsaSeriesMrPhoenixProtocolsGroupArraysPSatdGap = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix[] = null;
-    // 12, 13, 14 are not present
-    private double CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 = Double.NaN;
     
     private int CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas = Integer.MIN_VALUE;
     
@@ -1397,6 +1395,92 @@ public class FileInfoNIFTI extends FileInfoBase {
     private int CsaSeriesMrPhoenixProtocolsKSpaceucViewSharing = Integer.MIN_VALUE;
     
     private int CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsKSpaceucPOCS = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsFastImaginglSegments = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsFastImaginglShots = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1 = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1 = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2 = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2 = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase = Integer.MIN_VALUE;
+    
+    private double CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio = Double.NaN;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo = Integer.MIN_VALUE;
+    
+    private int CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType = Integer.MIN_VALUE;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -3195,10 +3279,6 @@ public class FileInfoNIFTI extends FileInfoBase {
 	    	    	}
 	        	}
     	    } // if (CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix != null)
-	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15)) {
-	    		dialog.append("CsaSeries.MrPhoenixProtocol.sAutoAlign.dAAMatrix[15] = " + 
-	                                CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 + "\n");
-	    	}
 	        if (CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas != Integer.MIN_VALUE) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sNavigatorPara.lBreathHoldMeas = " + 
 	                                CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas + "\n");
@@ -3342,6 +3422,178 @@ public class FileInfoNIFTI extends FileInfoBase {
 	        if (CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode != Integer.MIN_VALUE) {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucAsymmetricEchoMode = " + 
 	                                CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsKSpaceucPOCS != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sKSpace.ucPOCS = " + 
+	                                CsaSeriesMrPhoenixProtocolsKSpaceucPOCS + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sFastImaging.lEPIFactor = " + 
+	                                CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sFastImaging.lTurboFactor = " + 
+	                                CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sFastImaging.lSliceTurboFactor = " + 
+	                                CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsFastImaginglSegments != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sFastImaging.lSegments = " + 
+	                                CsaSeriesMrPhoenixProtocolsFastImaginglSegments + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sFastImaging.ucSegmentationMode = " + 
+	                                CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsFastImaginglShots != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sFastImaging.lShots = " + 
+	                                CsaSeriesMrPhoenixProtocolsFastImaginglShots + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sFastImaging.lEchoTrainDuration = " + 
+	                                CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1 != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lSignal1 = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1 + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1 != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lMethod1 = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1 + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2 != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lSignal2 = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2 + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2 != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lMethod2 = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2 + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lPhases = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.lRetroGatedImages = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lTriggerPulses = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lTriggerWindow = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lArrhythmiaDetection = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lCardiacGateOnThreshold = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lCardiacGateOffThreshold = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioECG.lTriggerIntervals = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lTriggerPulses = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lTriggerWindow = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lArrhythmiaDetection = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lCardiacGateOnThreshold = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lCardiacGateOffThreshold = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioPulse.lTriggerIntervals = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lTriggerPulses = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lTriggerWindow = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lArrhythmiaDetection = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lCardiacGateOnThreshold = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lCardiacGateOffThreshold = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioExt.lTriggerIntervals = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioResp.lRespGateThreshold = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioResp.lRespGatePhase = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase + "\n");
+	    	}
+	        if (!Double.isNaN(CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio)) {
+	        	dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioResp.dGatingRatio = " + 
+	        			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio + "\n");
+	        }
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioNative.ucMode = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sPhysioImaging.sPhysioNative.ucFlowSenMode = " + 
+	                                CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSpecPara.lPhaseCyclingType = " + 
+	                                CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSpecPara.lPhaseEncodingType = " + 
+	                                CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSpecPara.lRFExcitationBandwidth = " + 
+	                                CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSpecPara.ucRemoveOversampling = " + 
+	                                CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSpecPara.lAutoRefScanNo = " + 
+	                                CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo + "\n");
+	    	}
+	        if (CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType != Integer.MIN_VALUE) {
+	    		dialog.append("CsaSeries.MrPhoenixProtocol.sSpecPara.lDecouplingType = " + 
+	                                CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType + "\n");
 	    	}
         } // if (haveJson)
         
@@ -6707,14 +6959,6 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix;
     }
     
-    public void setCsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15(double CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15) {
-    	this.CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15 = CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15;
-    }
-    
-    public double getCsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15() {
-    	return CsaSeriesMrPhoenixProtocolsAutoAligndAAMatrix15;
-    }
-    
     public void setCsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas(int CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas) {
     	this.CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas = CsaSeriesMrPhoenixProtocolsNavigatorParalBreathHoldMeas;
     }
@@ -7009,5 +7253,400 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     public int getCsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode() {
     	return CsaSeriesMrPhoenixProtocolsKSpaceucAsymmetricEchoMode;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsKSpaceucPOCS(int CsaSeriesMrPhoenixProtocolsKSpaceucPOCS) {
+    	this.CsaSeriesMrPhoenixProtocolsKSpaceucPOCS = CsaSeriesMrPhoenixProtocolsKSpaceucPOCS;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsKSpaceucPOCS() {
+    	return CsaSeriesMrPhoenixProtocolsKSpaceucPOCS;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor(int CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor) {
+    	this.CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor = CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor() {
+    	return CsaSeriesMrPhoenixProtocolsFastImaginglEPIFactor;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor(int CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor) {
+    	this.CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor = CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor() {
+    	return CsaSeriesMrPhoenixProtocolsFastImaginglTurboFactor;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor(int CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor) {
+    	this.CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor = CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor() {
+    	return CsaSeriesMrPhoenixProtocolsFastImaginglSliceTurboFactor;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsFastImaginglSegments(int CsaSeriesMrPhoenixProtocolsFastImaginglSegments) {
+    	this.CsaSeriesMrPhoenixProtocolsFastImaginglSegments = CsaSeriesMrPhoenixProtocolsFastImaginglSegments;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsFastImaginglSegments() {
+    	return CsaSeriesMrPhoenixProtocolsFastImaginglSegments;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode(int CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode) {
+    	this.CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode = CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode() {
+    	return CsaSeriesMrPhoenixProtocolsFastImagingucSegmentationMode;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsFastImaginglShots(int CsaSeriesMrPhoenixProtocolsFastImaginglShots) {
+    	this.CsaSeriesMrPhoenixProtocolsFastImaginglShots = CsaSeriesMrPhoenixProtocolsFastImaginglShots;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsFastImaginglShots() {
+    	return CsaSeriesMrPhoenixProtocolsFastImaginglShots;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration(int CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration) {
+    	this.CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration = CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration() {
+    	return CsaSeriesMrPhoenixProtocolsFastImaginglEchoTrainDuration;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1(int CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1 = CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal1;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1(int CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1 = CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod1;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2(int CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2 = CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImaginglSignal2;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2(int CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2 = CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImaginglMethod2;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImaginglPhases(int CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases = CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImaginglPhases() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImaginglPhases;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages = CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImaginglRetroGatedImages;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerPulses;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerWindow;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArryhythmiaDetection() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlArrhythmiaDetection;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOnThreshold;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlCardiacGateOffThreshold;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioECGlTriggerIntervals;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerPulses;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerWindow;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArryhythmiaDetection() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselArrhythmiaDetection;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOnThreshold;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselCardiacGateOffThreshold;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioPulselTriggerIntervals;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerPulses;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerWindow;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArryhythmiaDetection() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlArrhythmiaDetection;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOnThreshold;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlCardiacGateOffThreshold;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioExtlTriggerIntervals;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGateThreshold;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioResplRespGatePhase;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio(double 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio;
+    }
+    
+    public double getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioRespdGatingRatio;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucMode;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode(int 
+    		CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode) {
+    	this.CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode = 
+    			CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode() {
+    	return CsaSeriesMrPhoenixProtocolsPhysioImagingsPhysioNativeucFlowSenMode;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType(int CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType) {
+    	this.CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType = CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType() {
+    	return CsaSeriesMrPhoenixProtocolsSpecParalPhaseCyclingType;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType(int CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType) {
+    	this.CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType = CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType() {
+    	return CsaSeriesMrPhoenixProtocolsSpecParalPhaseEncodingType;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth(int 
+    		CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth) {
+    	this.CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth = CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth() {
+    	return CsaSeriesMrPhoenixProtocolsSpecParalRFExcitationBandwidth;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling(int 
+    		CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling) {
+    	this.CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling = CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling() {
+    	return CsaSeriesMrPhoenixProtocolsSpecParaucRemoveOversampling;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo(int 
+    		CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo) {
+    	this.CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo = CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo() {
+    	return CsaSeriesMrPhoenixProtocolsSpecParalAutoRefScanNo;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolsSpecParalDecouplingType(int 
+    		CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType) {
+    	this.CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType = CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType;
+    }
+    
+    public int getCsaSeriesMrPhoenixProtocolsSpecParalDecouplingType() {
+    	return CsaSeriesMrPhoenixProtocolsSpecParalDecouplingType;
     }
 }
