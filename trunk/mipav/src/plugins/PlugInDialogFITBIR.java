@@ -3062,8 +3062,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         || csvFieldNamesWithRecord[i].equalsIgnoreCase("\"" + recordIndicatorColumn + "\"")) {
                     recordFieldIndex = i;
                 } else {
-                    // if the names are surrounded by quotes, remove them before adding
-                    csvFieldNames.add(csvFieldNamesWithRecord[i].replaceAll("^\"|\"$", ""));
+                    // don't add fields without a name (error in the middle of the CSV, ignore at the end)
+                    if ( !csvFieldNamesWithRecord[i].trim().equals("")) {
+                        // if the names are surrounded by quotes, remove them before adding.
+                        csvFieldNames.add(csvFieldNamesWithRecord[i].trim().replaceAll("^\"|\"$", ""));
+                    } else {
+                        // TODO: ignore if no more real field names (and no data values for the column). otherwise show
+                        // error
+                        boolean allEmpty = true;
+                        for (int j = i; j < csvFieldNamesWithRecord.length; j++) {
+                            if ( !csvFieldNamesWithRecord[j].trim().equals("")) {
+                                allEmpty = false;
+                            }
+                        }
+
+                        // show error if the blank field is not at the end
+                        if ( !allEmpty) {
+                            MipavUtil.displayError("Empty CSV header field found in the middle of the row.  Check your CSV file.");
+                            return false;
+                        }
+                    }
                 }
             }
 
@@ -6294,7 +6312,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             String filePath;
             boolean isMultifile;
             final FileIO fileIO = new FileIO();
-            fileIO.setQuiet(true);
+            // fileIO.setQuiet(true);
             ModelImage srcImage = null;
             validFile = true;
             File origSrcFile;
