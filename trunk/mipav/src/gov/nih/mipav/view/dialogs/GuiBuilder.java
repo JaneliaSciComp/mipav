@@ -152,18 +152,18 @@ public class GuiBuilder implements ActionListener {
         
     
     public JTextField buildFileField(String labelText, final String initText, final boolean multiSelect, final int fileSelectionMode) {
-        return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode);
+        return buildFileField(labelText, initText, multiSelect, fileSelectionMode, false);
     }
     
     public JTextField buildFileField(String labelText, final String initText, final boolean multiSelect, final int fileSelectionMode, ActionListener updateAction) {
-        return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode, false, updateAction);
+        return buildFileField(labelText, initText, multiSelect, fileSelectionMode, false, updateAction);
     }
     
-    public JTextField buildFileField(String labelText, final String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles) {
-        return buildFileField(labelText, initText, initDir, multiSelect, fileSelectionMode, createNewFiles, null);
+    public JTextField buildFileField(String labelText, final String initText, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles) {
+        return buildFileField(labelText, initText, multiSelect, fileSelectionMode, createNewFiles, null);
     }
     
-    public JTextField buildFileField(String labelText, final String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles, final ActionListener updateAction) {    
+    public JTextField buildFileField(String labelText, final String initText, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles, final ActionListener updateAction) {    
         JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
         JLabel label = new JLabel(labelText);
@@ -176,14 +176,14 @@ public class GuiBuilder implements ActionListener {
         ActionListener listener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
             	
-            	String finalDir = initDir;
+            	String finalDir = Preferences.getImageDirectory();
             	final File f2 = new File(text.getText());
             	if(f2.exists() && f2.isDirectory()) {
             		finalDir = f2.getAbsolutePath();
             	} else if(f2.exists() && !f2.isDirectory()) {
             		finalDir = f2.getParentFile().getAbsolutePath();
             	} else {
-	                final File f = new File(initDir + File.separator + initText);
+	                final File f = new File(Preferences.getImageDirectory() + File.separator + initText);
 	                if(f.exists() && f.isDirectory()) {
 	            		finalDir = f.getAbsolutePath();
 	            	} else if(f.exists() && !f.isDirectory()) {
@@ -275,9 +275,6 @@ public class GuiBuilder implements ActionListener {
         return text;
     }
     
-    public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode) {
-        return buildFileField(labelText, initText, initDir, multiSelect, fileSelectionMode, false);
-    }
     
     public JTextField buildIntegerField(final String labelText, int initNum) {
         final JTextField genericField = buildField(labelText, String.valueOf(initNum));
