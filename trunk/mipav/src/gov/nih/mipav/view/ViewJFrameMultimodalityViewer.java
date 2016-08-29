@@ -52,7 +52,17 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	private int zDim;
 	
 	private JLabel label5;
-	
+	private float xDist[] = new float[4];
+	private float yDist[] = new float[4];
+    private float xDistMin = Float.MAX_VALUE;
+    private float xDistMax = -Float.MAX_VALUE;
+    private float yDistMin = Float.MAX_VALUE;
+    private float yDistMax = -Float.MAX_VALUE;
+	private int xDistMinImage = -1;
+	private int xDistMaxImage = -1;
+	private int yDistMinImage = -1;
+	private int yDistMaxImage = -1;
+	private float scaleToMaxRatio[] = new float[4];
 	
 	
 	// ~ Constructors
@@ -72,7 +82,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	// --------------------------------------------------------------------------------------------------------
 
 	private void getFramesInfo() {
-		
+		int i;
 		int[] extents0 = images[0].getExtents();
 		int[] extents1 = images[1].getExtents();
 		int[] extents2 = images[2].getExtents();
@@ -82,7 +92,33 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		int minZ2 = Math.min(extents2[2], minZ1);
 		zDim = Math.min(minZ2, extents3[2]);
 		
-		
+		for (i = 0; i < 4; i++) {
+		    xDist[i] = images[i].getExtents()[0] * images[i].getFileInfo(0).getResolutions()[0];
+		    yDist[i] = images[i].getExtents()[1] * images[i].getFileInfo(0).getResolutions()[1];
+		    if (xDist[i] < xDistMin) {
+		    	xDistMin = xDist[i];
+		    	xDistMinImage = i;
+		    }
+		    if (xDist[i] > xDistMax) {
+		    	xDistMax = xDist[i];
+		    	xDistMaxImage = i;
+		    }
+		    if (yDist[i] < yDistMin) {
+		    	yDistMin = yDist[i];
+		    	yDistMinImage = i;
+		    }
+		    if (yDist[i] > yDistMax) {
+		    	yDistMax = yDist[i];
+		    	yDistMaxImage = i;
+		    }
+		}
+		System.out.println("xDistMinImage = " + xDistMinImage + " xDistMin = " + xDistMin);
+		System.out.println("yDistMinImage = " + yDistMinImage + " yDistMin = " + yDistMin);
+		System.out.println("xDistMaxImage = " + xDistMaxImage + " xDistMax = " + xDistMax);
+		System.out.println("yDistMaxImage = " + yDistMaxImage + " yDistMax = " + yDistMax);
+		for (i = 0; i < 4; i++) {
+			scaleToMaxRatio[i] = yDist[i]/yDistMax;
+		}
 	}
 	
 	private void initLayout() {
