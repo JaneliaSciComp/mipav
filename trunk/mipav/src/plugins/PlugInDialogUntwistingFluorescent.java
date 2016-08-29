@@ -84,7 +84,8 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 	private JCheckBox straightenMarkersCheck;
 	private JRadioButton voxelCoords;
 	private JRadioButton micronCoords;
-	private JCheckBox segmentSkinSurfaceCheck;
+	private JRadioButton segmentSkinSurface;
+	private JRadioButton segmentLattice;
 	private JButton startButton;
 
 	private ModelImage wormImage;
@@ -101,6 +102,8 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 	{
 		String command = event.getActionCommand();
 		
+		if (command.equals("BrowseConclude"))
+		{}
 		if (command.equals("start"))
 		{			
 			if ( wormImage != null ) {
@@ -148,9 +151,13 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 							}
 							System.err.println("Starting straightening" );
 							model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
-							if ( segmentSkinSurfaceCheck.isSelected() )
+							if ( segmentSkinSurface.isSelected() )
 							{
 								model.segmentSkin(wormImage, false);
+							}
+							else if ( segmentLattice.isSelected() )
+							{
+								model.segmentLattice(wormImage, false);
 							}
 							if ( straightenMarkersCheck.isSelected() )
 							{
@@ -290,10 +297,18 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 		straightenImageCheck = gui.buildCheckBox( "Straighten Image", true );
 		inputsPanel.add(straightenImageCheck.getParent(), gbc);
 		gbc.gridy++;
+
+		ButtonGroup group1 = new ButtonGroup();
+		segmentSkinSurface = gui.buildRadioButton( "Segment Skin Surface Marker", false );
+		inputsPanel.add(segmentSkinSurface.getParent(), gbc);
+		gbc.gridx++;
+		group1.add(segmentSkinSurface);
 		
-		segmentSkinSurfaceCheck = gui.buildCheckBox( "Segment Skin Surface Marker", false );
-		inputsPanel.add(segmentSkinSurfaceCheck.getParent(), gbc);
+		segmentLattice = gui.buildRadioButton( "Segment Lattice", true );
+		inputsPanel.add(segmentLattice.getParent(), gbc);
+		group1.add(segmentLattice);
 		gbc.gridy++;
+		gbc.gridx = 0;
 		
 		straightenMarkersCheck = gui.buildCheckBox( "Straighten Markers", true );
 		inputsPanel.add(straightenMarkersCheck.getParent(), gbc);

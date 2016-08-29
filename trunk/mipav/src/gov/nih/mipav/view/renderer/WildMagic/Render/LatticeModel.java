@@ -4946,9 +4946,26 @@ public class LatticeModel {
 					}
 					if ( countImage != null )
 					{
-						float count = countImage.getFloat(iIndex, jIndex, kIndex);
-						count++;
-						countImage.set(iIndex, jIndex, kIndex, count);
+//						if ( countImage.isColorImage() )
+//						{
+//							float sliceVal = countImage.getFloatC(iIndex, jIndex, kIndex, 1 );
+//							if ( sliceVal == 0 )
+//							{
+//								countImage.setC(iIndex, jIndex, kIndex, 1, i+1 );
+//							}
+//							else if ( sliceVal < (i+1) )
+//							{
+//								countImage.setC(iIndex, jIndex, kIndex, 3, 10 );
+//							}
+//							
+//						}
+//						float count = countImage.getFloat(iIndex, jIndex, kIndex);
+//						if ( count < curvature )
+//						{
+//							countImage.set(iIndex, jIndex, kIndex, curvature);							
+//						}
+//						count++;
+//						countImage.set(iIndex, jIndex, kIndex, count);
 					}
 
 					if (straightToTwisted != null) {
@@ -5327,7 +5344,18 @@ public class LatticeModel {
 					position.normalize();
 					position.scale(dist);
 					position.add(center);
-					float value = resultImage.getFloat((int)position.X, (int)position.Y, i);
+					float value = 0;
+					if ( resultImage.isColorImage() )
+					{
+						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 1);
+						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 2);
+						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 3);
+						value /= 3f;
+					}
+					else
+					{
+						value = resultImage.getFloat((int)position.X, (int)position.Y, i);
+					}
 					if ( value > maxValue )
 					{
 						maxValue = value;
@@ -5340,7 +5368,18 @@ public class LatticeModel {
 					position.normalize();
 					position.scale(dist);
 					position.add(center);
-					float value = resultImage.getFloat((int)position.X, (int)position.Y, i);
+					float value = 0;
+					if ( resultImage.isColorImage() )
+					{
+						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 1);
+						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 2);
+						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 3);
+						value /= 3f;
+					}
+					else
+					{
+						resultImage.getFloat((int)position.X, (int)position.Y, i);
+					}
 					if ( value <= maxValue/2 )
 					{
 						break;
@@ -5385,7 +5424,17 @@ public class LatticeModel {
 				{
 					if ( contourImageBlur.getFloat(x,y,z) <= 1 )
 					{
-						resultImage.set(x, y, z, 0);
+						if ( resultImage.isColorImage() )
+						{
+							resultImage.setC(x, y, z, 0, 0);	
+							resultImage.setC(x, y, z, 1, 0);	
+							resultImage.setC(x, y, z, 2, 0);	
+							resultImage.setC(x, y, z, 3, 0);							
+						}
+						else
+						{
+							resultImage.set(x, y, z, 0);
+						}
 					}
 				}
 			}			
@@ -5401,13 +5450,222 @@ public class LatticeModel {
 		resultImage.disposeLocal(false);
 		resultImage = null;
 		
+		
+
+		ModelImage sourceImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked_source.xml" );
+		ModelImage curvatureImageTwisted = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), imageName + "_curvature.xml" );
+		curvatureImageTwisted.setResolutions( image.getResolutions(0) );
+		
+		ModelImage curvatureImage = new ModelImage( ModelStorageBase.FLOAT, contourImageBlur.getExtents(), imageName + "_straight_curvature.xml" );
+		curvatureImage.setResolutions( contourImageBlur.getResolutions(0) );
+		for (int z = 0; z < dimZ; z++)
+		{			
+			float curvature = centerSpline.GetCurvature(allTimes[z]);
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					if ( contourImageBlur.getFloat(x,y,z) > 1 )
+					{
+						curvatureImage.set(x, y, z, curvature);
+						
+						if ( sourceImage != null )
+						{
+							int tX = Math.round(sourceImage.getFloatC(x, y, z, 1));
+							int tY = Math.round(sourceImage.getFloatC(x, y, z, 2));
+							int tZ = Math.round(sourceImage.getFloatC(x, y, z, 3));
+							
+							float val = curvatureImageTwisted.getFloat(tX,tY,tZ);
+							if ( val < curvature )
+							{
+								curvatureImageTwisted.set(tX, tY, tZ, curvature);
+							}
+						}
+					}
+				}
+			}
+		}
+		saveImage(imageName, curvatureImage, true);			
+		curvatureImage.disposeLocal(false);
+		curvatureImage = null;
+		
+		if ( sourceImage != null )
+		{
+			saveImage(imageName, curvatureImageTwisted, true);	
+		}		
+		curvatureImageTwisted.disposeLocal(false);
+		curvatureImageTwisted = null;
+		
+		
+		
+		contourImageBlur.disposeLocal(false);
+		contourImageBlur = null;
+	}
+
+
+	public void segmentLattice(final ModelImage image, boolean saveContourImage )
+	{
+		String imageName = image.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+
+		String voiDir = outputDirectory + File.separator + "contours" + File.separator;
+		final File voiFileDir = new File(voiDir);
+
+		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+			final String[] list = voiFileDir.list();
+			for (int i = 0; i < list.length; i++) {
+				final File lrFile = new File(voiDir + list[i]);
+				lrFile.delete();
+			}
+		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			voiFileDir.mkdir();
+		}
+
+		final int numPts = 360;
+
+
+		FileIO fileIO = new FileIO();
+
+		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
+		int dimZ = resultImage.getExtents().length > 2 ? resultImage.getExtents()[2] : 1;
+		
+		ModelImage contourImage = new ModelImage( ModelStorageBase.FLOAT, resultImage.getExtents(), imageName + "_straight_contour.xml" );
+		contourImage.setResolutions( resultImage.getResolutions(0) );
+
+		int dimX = (int) (resultImage.getExtents()[0]);
+		int dimY = (int) (resultImage.getExtents()[1]);
+		Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
+
+//		System.err.println( dimX + " " + dimY + " " + dimZ );
+
+		VOI outputContour = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
+		resultImage.registerVOI( outputContour );
+		for (int i = 0; i < dimZ; i++)
+		{			
+			VOIContour contour = new VOIContour(true);
+
+
+			float diameter = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2));
+
+			//			System.err.println( dimX + " " + dimY + " " + diameter );
+
+			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, diameter, contour, numPts);			
+			for ( int j = 0; j < contour.size(); j++ )
+			{
+				contour.elementAt(j).Z = i;
+			}
+			outputContour.getCurves().add( contour );
+			
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					contourImage.set(x,  y, i, 0 );
+					if ( contour.contains(x, y) )
+					{
+						contourImage.set(x,  y, i, 10 );
+					}
+				}
+			}
+		}
+
+		// Optional VOI interpolation & smoothing:
+		ModelImage contourImageBlur = WormSegmentation.blur(contourImage, 3);
+		contourImage.disposeLocal(false);
+		contourImage = null;
+		
+		for (int z = 0; z < dimZ; z++)
+		{			
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					if ( contourImageBlur.getFloat(x,y,z) <= 1 )
+					{
+						if ( resultImage.isColorImage() )
+						{
+							resultImage.setC(x, y, z, 0, 0);	
+							resultImage.setC(x, y, z, 1, 0);	
+							resultImage.setC(x, y, z, 2, 0);	
+							resultImage.setC(x, y, z, 3, 0);							
+						}
+						else
+						{
+							resultImage.set(x, y, z, 0);
+						}
+					}
+				}
+			}			
+		}
+		resultImage.setImageName( imageName + "_straight_masked.xml" );
+		saveImage(imageName, resultImage, true);
+
+		// Save the contour vois to file.
+		voiDir = outputDirectory + File.separator + "contours" + File.separator;
+		saveAllVOIsTo(voiDir, resultImage);
+		resultImage.unregisterAllVOIs();
+
+		resultImage.disposeLocal(false);
+		resultImage = null;
+		
+
+
+		ModelImage sourceImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked_source.xml" );
+		ModelImage curvatureImageTwisted = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), imageName + "_curvature.xml" );
+		curvatureImageTwisted.setResolutions( image.getResolutions(0) );
+		
+		ModelImage curvatureImage = new ModelImage( ModelStorageBase.FLOAT, contourImageBlur.getExtents(), imageName + "_straight_curvature.xml" );
+		curvatureImage.setResolutions( contourImageBlur.getResolutions(0) );
+		for (int z = 0; z < dimZ; z++)
+		{			
+			float curvature = centerSpline.GetCurvature(allTimes[z]);
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					if ( contourImageBlur.getFloat(x,y,z) > 1 )
+					{
+						curvatureImage.set(x, y, z, curvature);
+						
+						if ( sourceImage != null )
+						{
+							int tX = Math.round(sourceImage.getFloatC(x, y, z, 1));
+							int tY = Math.round(sourceImage.getFloatC(x, y, z, 2));
+							int tZ = Math.round(sourceImage.getFloatC(x, y, z, 3));
+							
+							float val = curvatureImageTwisted.getFloat(tX,tY,tZ);
+							if ( val < curvature )
+							{
+								curvatureImageTwisted.set(tX, tY, tZ, curvature);
+							}
+						}
+					}
+				}
+			}
+		}
+		saveImage(imageName, curvatureImage, true);			
+		curvatureImage.disposeLocal(false);
+		curvatureImage = null;
+		
+		if ( sourceImage != null )
+		{
+			saveImage(imageName, curvatureImageTwisted, true);	
+		}		
+		curvatureImageTwisted.disposeLocal(false);
+		curvatureImageTwisted = null;
+		
+		
+		
 		contourImageBlur.disposeLocal(false);
 		contourImageBlur = null;
 	}
 
 
 	/**
-	 * Straightenes the worm image based on the input lattice positions. The image is straightened without first building a worm model.
+	 * Straightens the worm image based on the input lattice positions. The image is straightened without first building a worm model.
 	 * The image is segmented after clipping based on surface markers or the lattice shape.
 	 * @param image
 	 * @param resultExtents
@@ -5435,16 +5693,27 @@ public class LatticeModel {
 		ModelImage sourceImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, resultExtents, imageName + "_straight_unmasked_source.xml");
 		sourceImage.setResolutions(new float[] {1, 1, 1});
 		
-		ModelImage countImage = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), imageName + "_counts.xml" );
+		ModelImage countImage = null;//new ModelImage( ModelStorageBase.ARGB_FLOAT, image.getExtents(), imageName + "_counts.xml" );
+
+		int dimX = (int) (resultImage.getExtents()[0]);
+		int dimY = (int) (resultImage.getExtents()[1]);
+		Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
 
 		final Vector3f[] corners = new Vector3f[4];
 		for (int i = 0; i < size; i++)
 		{			
+			VOIContour contour = new VOIContour(true);
+			float diameter = (float) (rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2));
+			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, diameter, contour, 360);	
+			
+			
 			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
 			for (int j = 0; j < 4; j++) {
 				corners[j] = kBox.elementAt(j);
 			}
 
+			float curvature = centerSpline.GetCurvature(allTimes[i]);
+			
 			writeDiagonal(image, resultImage, countImage, sourceImage, 0, i, resultExtents, corners);
 			
 			if ( i > 0 )
@@ -5507,30 +5776,34 @@ public class LatticeModel {
 		resultImage.disposeLocal(false);
 		resultImage = null;
 
-		
-		for ( int i = 0; i < countImage.getDataSize(); i++ )
+		if ( countImage != null )
 		{
-			float c = countImage.getFloat(i);
-			if ( c > 0 )
-			{
-				c--;
-			}
-			countImage.set(i,  c);
-		}
-		resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_counts_straight_unmasked.xml");
-		resultImage.setResolutions(new float[] {1, 1, 1});
-		for (int i = 0; i < size; i++)
-		{			
-			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
-			for (int j = 0; j < 4; j++) {
-				corners[j] = kBox.elementAt(j);
-			}
+			//		for ( int i = 0; i < countImage.getDataSize(); i++ )
+			//		{
+			//			float c = countImage.getFloat(i);
+			//			if ( c > 0 )
+			//			{
+			//				c--;
+			//			}
+			//			countImage.set(i,  c);
+			//		}
+			saveImage(imageName, countImage, true);
 
-			writeDiagonal(countImage, resultImage, null, null, 0, i, resultExtents, corners);
+			resultImage = new ModelImage( ModelStorageBase.FLOAT, resultExtents, imageName + "_counts_straight_unmasked.xml");
+			resultImage.setResolutions(new float[] {1, 1, 1});
+			for (int i = 0; i < size; i++)
+			{			
+				VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+				for (int j = 0; j < 4; j++) {
+					corners[j] = kBox.elementAt(j);
+				}
+
+				writeDiagonal(countImage, resultImage, null, null, 0, i, resultExtents, corners);
+			}
+			saveImage(imageName, resultImage, true);
+			resultImage.disposeLocal(false);
+			resultImage = null;
 		}
-		saveImage(imageName, resultImage, true);
-		resultImage.disposeLocal(false);
-		resultImage = null;
 		
 		
 		
