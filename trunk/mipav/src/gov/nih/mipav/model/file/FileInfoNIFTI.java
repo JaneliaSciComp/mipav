@@ -1575,6 +1575,16 @@ public class FileInfoNIFTI extends FileInfoBase {
     private String CsaSeriesMrPhoenixProtocolasCoilSelectMeas0tNucleus = null;
     
     private int CsaSeriesMrPhoenixProtocolasCoilSelectMeas0iUsedRFactor = Integer.MIN_VALUE;
+    
+    private String CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID[] = null;
+    
+    private int CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy[] = null;
+    
+    private String CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement[] = null;
+    
+    private int CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected[] = null;
+    
+    private int CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected[] = null;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -3877,6 +3887,38 @@ public class FileInfoNIFTI extends FileInfoBase {
 	    		dialog.append("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].iUsedRFactor = " + 
 	    				CsaSeriesMrPhoenixProtocolasCoilSelectMeas0iUsedRFactor  + "\n");
 	    	}
+	        for (i = 0; i < 24; i++) {
+		        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID != null) {
+		        		if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID[i] != null) {
+		        			dialog.append("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+"].sCoilElementID.tCoilID = " +
+		        					CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID[i] + "\n");
+		        		}
+		        }
+		        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy != null) {
+		        	if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy[i] != Integer.MIN_VALUE) {
+		        		dialog.append("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+"].sCoilElementID.lCoilCopy = " +
+		        				CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy[i] + "\n");
+		        	}
+		        }
+		        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement != null) {
+	        		if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement[i] != null) {
+	        			dialog.append("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+"].sCoilElementID.tElement = " +
+	        					CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement[i] + "\n");
+	        		}
+	            }
+		        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected != null) {
+		        	if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected[i] != Integer.MIN_VALUE) {
+		        		dialog.append("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+"].lElementSelected = " +
+		        				CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected[i] + "\n");
+		        	}
+		        }
+		        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected != null) {
+		        	if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected[i] != Integer.MIN_VALUE) {
+		        		dialog.append("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+"].lRxChannelConnected = " +
+		        				CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected[i] + "\n");
+		        	}
+		        }
+	        } // for (i = 0; i < 24; i++)
         } // if (haveJson)
         
         
@@ -8306,6 +8348,56 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     public int getCsaSeriesMrPhoenixProtocolasCoilSelectMeas0iUsedRFactor() {
     	return CsaSeriesMrPhoenixProtocolasCoilSelectMeas0iUsedRFactor;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID(String
+    		CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID[]) {
+    	this.CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID =
+    			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID;
+    }
+    
+    public String[] getCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID() {
+    	return CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy(int
+    		CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy[]) {
+    	this.CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy =
+    			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy;
+    }
+    
+    public int[] getCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy() {
+    	return CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement(String
+    		CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement[]) {
+    	this.CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement =
+    			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement;
+    }
+    
+    public String[] getCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement() {
+    	return CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected(int
+    		CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected[]) {
+    	this.CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected =
+    			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected;
+    }
+    
+    public int[] getCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected() {
+    	return CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected;
+    }
+    
+    public void setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected(int
+    		CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected[]) {
+    	this.CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected =
+    			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected;
+    }
+    
+    public int[] getCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected() {
+    	return CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected;
     }
 
 }
