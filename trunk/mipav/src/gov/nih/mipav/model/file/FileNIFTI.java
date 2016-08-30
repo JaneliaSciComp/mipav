@@ -2988,6 +2988,11 @@ public class FileNIFTI extends FileBase {
         String CsaSeriesMrPhoenixProtocoltdefaultEVAProt = null;
         String CsaSeriesMrPhoenixProtocolasCoilSelectMeas0tNucleus = null;
         int CsaSeriesMrPhoenixProtocolasCoilSelectMeas0iUsedRFactor = Integer.MIN_VALUE;
+        String CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID[] = new String[24];
+        int CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy[] = new int[24];
+        String CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement[] = new String[24];
+        int CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected[] = new int[24];
+        int CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected[] = new int[24];
     	try {
     	    jsonObject = new JSONObject(json);
     	}
@@ -7728,6 +7733,78 @@ public class FileNIFTI extends FileBase {
     	        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0iUsedRFactor != Integer.MIN_VALUE) {
     	        	fileInfo.setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0iUsedRFactor(
     	        			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0iUsedRFactor);
+    	        }
+    	        for (i = 0; i < 24; i++) {
+    	        	CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID[i] = null;
+    	            try {
+    	            	CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID[i] =
+    	            			global_const.getString("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            					"].sCoilElementID.tCoilID");
+    	            }
+    	            catch (JSONException e) {
+    	            	Preferences.debug("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            			"].sCoilElementID.tCoilID not found\n", Preferences.DEBUG_FILEIO);
+    	            }
+    	            CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy[i] = Integer.MIN_VALUE;
+    	            try {
+    	            	CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy[i] = 
+    	            			global_const.getInt("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            					"].sCoilElementID.lCoilCopy");
+    	            }
+    	            catch (JSONException e) {
+    	            	Preferences.debug("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            			"].sCoilElementID.lCoilCopy not found\n", Preferences.DEBUG_FILEIO);
+    	            }
+    	            CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement[i] = null;
+    	            try {
+    	            	CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement[i] =
+    	            			global_const.getString("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            					"].sCoilElementID.tElement");
+    	            }
+    	            catch (JSONException e) {
+    	            	Preferences.debug("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            			"].sCoilElementID.tElement not found\n", Preferences.DEBUG_FILEIO);
+    	            }
+    	            CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected[i] = Integer.MIN_VALUE;
+    	            try {
+    	            	CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected[i] = 
+    	            			global_const.getInt("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            					"].lElementSelected");
+    	            }
+    	            catch (JSONException e) {
+    	            	Preferences.debug("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            			"].lElementSelected not found\n", Preferences.DEBUG_FILEIO);
+    	            }
+    	            CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected[i] = Integer.MIN_VALUE;
+    	            try {
+    	            	CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected[i] = 
+    	            			global_const.getInt("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            					"].lRxChannelConnected");
+    	            }
+    	            catch (JSONException e) {
+    	            	Preferences.debug("CsaSeries.MrPhoenixProtocol.asCoilSelectMeas[0].asList["+i+
+    	            			"].lRxChannelConnected not found\n", Preferences.DEBUG_FILEIO);
+    	            }
+    	        } // for (i = 0; i < 24; i++)
+    	        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID != null) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID(
+    	        			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtCoilID);	
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy != null) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy(
+    	        			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDlCoilCopy);	
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement != null) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement(
+    	        			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnsCoilElementIDtElement);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected != null) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected(
+    	        			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlElementSelected);
+    	        }
+    	        if (CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected != null) {
+    	        	fileInfo.setCsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected(
+    	        			CsaSeriesMrPhoenixProtocolasCoilSelectMeas0asListnlRxChannelConnected);
     	        }
     	    } // if (global_const != null)
     	} // if (global != null)
