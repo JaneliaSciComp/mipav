@@ -53,6 +53,10 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 
     public static final SimpleAttributeSet RED_TEXT;
 
+    private static final String LAST_SWC_FILE_PREF = "PlugInNeuronalActinStats_LastSWCFile";
+
+    private static final String LAST_ACTIN_FILE_PREF = "PlugInNeuronalActinStats_LastActinFile";
+
     static {
         BLACK_TEXT = new SimpleAttributeSet();
         StyleConstants.setFontFamily(BLACK_TEXT, "Serif");
@@ -301,7 +305,8 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             final String selection = fileChooser.getSelectedFile().getAbsolutePath();
             imageField.setText(selection);
-            Preferences.setImageDirectory(new File(selection));
+            // Preferences.setImageDirectory(new File(selection));
+            Preferences.setProperty(LAST_ACTIN_FILE_PREF, selection);
         }
     }
 
@@ -344,7 +349,8 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             final String selection = fileChooser.getSelectedFile().getAbsolutePath();
             swcField.setText(selection);
-            Preferences.setImageDirectory(new File(selection));
+            // Preferences.setImageDirectory(new File(selection));
+            Preferences.setProperty(LAST_SWC_FILE_PREF, selection);
         }
     }
 
@@ -364,6 +370,11 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
         swcField = new JTextField(30);
         swcField.setFont(serif12);
 
+        final String swcFileDefault = Preferences.getProperty(LAST_SWC_FILE_PREF);
+        if (swcFileDefault != null) {
+            swcField.setText(swcFileDefault);
+        }
+
         final JButton browseButton = new JButton("Browse");
         browseButton.setFont(serif12);
         browseButton.setActionCommand("BrowseSWC");
@@ -374,6 +385,11 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 
         imageField = new JTextField(30);
         imageField.setFont(serif12);
+
+        final String imageFileDefault = Preferences.getProperty(LAST_ACTIN_FILE_PREF);
+        if (imageFileDefault != null) {
+            imageField.setText(imageFileDefault);
+        }
 
         final JButton browseImage = new JButton("Browse");
         browseImage.setFont(serif12);
