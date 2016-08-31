@@ -43,6 +43,12 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
     private JTextField textField;
 
+    private JRadioButton gcTextRB;
+
+    private JRadioButton gcFileRB;
+
+    private JTextField gcCsvTextField;
+
     // private JTextField imageField;
 
     private JFileChooser ivFileChooser;
@@ -93,6 +99,10 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
     public static final SimpleAttributeSet GREEN_TEXT;
 
     public static final SimpleAttributeSet RED_TEXT;
+
+    private static final String LAST_IV_FILE_PREF = "PlugIn3DSWCStats_LastIVFile";
+
+    private static final String LAST_CSV_FILE_PREF = "PlugIn3DSWCStats_LastCSVFile";
 
     static {
         BLACK_TEXT = new SimpleAttributeSet();
@@ -146,7 +156,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         } else if (source == ivFileChooser && command.equals(JFileChooser.APPROVE_SELECTION)) {
             final File selected = ivFileChooser.getSelectedFile();
             final String name = selected.getAbsolutePath();
-            Preferences.setImageDirectory(selected);
+            // Preferences.setImageDirectory(selected);
+            Preferences.setProperty(LAST_IV_FILE_PREF, name);
             if (chooseIV) {
                 textField.setText(name);
             } else {
@@ -168,10 +179,9 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
             chooseCSVFile();
         } else if (source == csvFileChooser && command.equals(JFileChooser.APPROVE_SELECTION)) {
             final File selected = csvFileChooser.getSelectedFile();
-            growthConeLenList = readGrowthConeLenCSV(selected);
-            if (growthConeLenList != null) {
-                splitField.setEditable(false);
-            }
+            final String name = selected.getAbsolutePath();
+            gcCsvTextField.setText(name);
+            Preferences.setProperty(LAST_CSV_FILE_PREF, name);
         } else {
             super.actionPerformed(e);
         }
@@ -212,6 +222,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                                 baseName += "_T=" + timePtCounter;
 
                             }
+                            append("Processing: " + baseName, BLACK_TEXT);
                             alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem());
                             alg.addListener(this);
                             new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
@@ -233,10 +244,13 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                     locked = false;
 
                 }
+
+                // when using the axon selection dialog, only write out the files every other time we hit this handler,
+                // since it hits once on the initial algorithm and again when the dialog OK button is hit
                 writeStep ^= true;
 
                 // If the 3D viewer isn't being used, go straight to the write step
-                if ( !densityRB.isSelected() && !alg.isViewerOpen() && writeStep) {
+                if ( !densityRB.isSelected() && !customRB.isSelected()) {
                     locked = true;
                     alg.write();
 
@@ -262,16 +276,15 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                         // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
                         // resolutionUnits.getSelectedItem(), axonRB.isSelected(),
                         // false);
+                        append("Processing: " + baseName, BLACK_TEXT);
                         alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem(),
                                 axonRB.isSelected(), false);
-                        float splitDist;
-                        try {
-                            splitDist = Float.valueOf(splitField.getText());
-                        } catch (final NumberFormatException e) {
-                            MipavUtil.displayError("Enter the length of the growth cone");
-                            locked = false;
+
+                        final float splitDist = getGrowthConeLen(timePtCounter);
+                        if (splitDist == -1) {
                             return;
                         }
+
                         alg.setSplit(splitDist);
                         alg.addListener(this);
 
@@ -307,20 +320,25 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
                         }
 
+                        append("Processing: " + baseName, BLACK_TEXT);
+
                         // Open the viewer if the a custom axon is to be chosen
+                        if (customRB.isSelected()) {
+                            // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
+                            // resolutionUnits.getSelectedItem(), false, true);
+                            alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem(),
+                                    false, true);
+                            new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
+                        } else {
+                            // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
+                            // resolutionUnits.getSelectedItem(), axonRB.isSelected(),
+                            // false);
+                            alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem(),
+                                    axonRB.isSelected(), false);
+                        }
 
-                        // alg = new PlugInAlgorithm3DSWCViewer(imageField.getText(), file, textArea, (String)
-                        // resolutionUnits.getSelectedItem(), false, true);
-                        alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem(),
-                                false, true);
-                        new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
-
-                        float splitDist;
-                        try {
-                            splitDist = Float.valueOf(splitField.getText());
-                        } catch (final NumberFormatException e) {
-                            MipavUtil.displayError("Enter the length of the growth cone");
-                            locked = false;
+                        final float splitDist = getGrowthConeLen(timePtCounter);
+                        if (splitDist == -1) {
                             return;
                         }
                         alg.setSplit(splitDist);
@@ -463,6 +481,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                     baseName += "_T=" + timePtCounter;
 
                 }
+                append("Processing: " + baseName, BLACK_TEXT);
                 alg = new PlugInAlgorithm3DSWCViewer(TimePoint, ivFile.getParent(), baseName, textArea, (String) resolutionUnits.getSelectedItem());
                 alg.addListener(this);
                 new PlugInDialog3DSWCViewer(textArea, (String) resolutionUnits.getSelectedItem(), alg);
@@ -498,23 +517,9 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
             // return;
             // }
 
-            float splitDist;
-
-            if (growthConeLenList != null && growthConeLenList.length > 0) {
-                if (timePtCounter > growthConeLenList.length) {
-                    MipavUtil.displayError("Growth cone length CSV value missing for time point " + timePtCounter);
-                    locked = false;
-                    return;
-                }
-                splitDist = growthConeLenList[timePtCounter];
-            } else {
-                try {
-                    splitDist = Float.valueOf(splitField.getText());
-                } catch (final NumberFormatException e) {
-                    MipavUtil.displayError("Enter the length of the growth cone");
-                    locked = false;
-                    return;
-                }
+            final float splitDist = getGrowthConeLen(0);
+            if (splitDist == -1) {
+                return;
             }
 
             append("Reading " + file.getName(), BLACK_BOLD_TEXT);
@@ -545,6 +550,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
                     baseName += "_T=" + timePtCounter;
 
                 }
+
+                append("Processing: " + baseName, BLACK_TEXT);
 
                 // Open the viewer if the a custom axon is to be chosen
                 if (customRB.isSelected()) {
@@ -585,7 +592,16 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         setTitle("Imaris to 3D SWC with stats");
 
         getContentPane().removeAll();
-        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
+        getContentPane().setLayout(new GridBagLayout());
+        final GridBagConstraints topGbc = new GridBagConstraints();
+        topGbc.gridx = 0;
+        topGbc.gridy = 0;
+        topGbc.weightx = 1;
+        topGbc.weighty = 0;
+        topGbc.insets = new Insets(5, 5, 5, 5);
+        topGbc.anchor = GridBagConstraints.WEST;
+        topGbc.fill = GridBagConstraints.HORIZONTAL;
+        // getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.PAGE_AXIS));
 
         final JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
@@ -595,6 +611,11 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
         textField = new JTextField(30);
         textField.setFont(serif12);
+
+        final String ivFileDefault = Preferences.getProperty(LAST_IV_FILE_PREF);
+        if (ivFileDefault != null) {
+            textField.setText(ivFileDefault);
+        }
 
         final JButton browseButton = new JButton("Browse");
         browseButton.setFont(serif12);
@@ -611,18 +632,6 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         // browseImage.setActionCommand("BrowseImage");
         // browseImage.addActionListener(this);
 
-        final JLabel splitLabel = new JLabel("Growth Cone Length");
-        splitLabel.setFont(serif12B);
-
-        splitField = new JTextField(7);
-        splitField.setFont(serif12);
-        splitField.setHorizontalAlignment(JTextField.RIGHT);
-
-        splitBrowse = new JButton("Read from CSV");
-        splitBrowse.setFont(serif12);
-        splitBrowse.setActionCommand("BrowseGrowthConeLen");
-        splitBrowse.addActionListener(this);
-
         final JPanel rbPanel = new JPanel(new GridLayout(0, 2));
         rbPanel.setForeground(Color.black);
         rbPanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Axon determination"));
@@ -633,7 +642,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         axonRB.setFont(serif12);
         axonRB.setActionCommand("notDensity_Length");
         axonRB.addActionListener(this);
-        axonRB.setSelected(true);
+        // axonRB.setSelected(true);
         group.add(axonRB);
 
         final JRadioButton imarisRB = new JRadioButton("Infer from file");
@@ -646,6 +655,7 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         customRB.setFont(serif12);
         customRB.setActionCommand("notDensity_Choose");
         customRB.addActionListener(this);
+        customRB.setSelected(true);
         group.add(customRB);
 
         densityRB = new JRadioButton("Branch Density");
@@ -658,6 +668,70 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         rbPanel.add(imarisRB);
         rbPanel.add(customRB);
         rbPanel.add(densityRB);
+
+        final JPanel splitPanel = new JPanel(new GridBagLayout());
+        splitPanel.setForeground(Color.black);
+        splitPanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.black), "Growth Cone Length"));
+
+        final ButtonGroup gcGroup = new ButtonGroup();
+
+        gcTextRB = new JRadioButton("Enter one value");
+        gcTextRB.setFont(serif12);
+        gcTextRB.setActionCommand("gcLenText");
+        gcTextRB.addActionListener(this);
+        // gcTextRB.setSelected(true);
+        gcGroup.add(gcTextRB);
+
+        splitField = new JTextField(7);
+        splitField.setFont(serif12);
+        splitField.setHorizontalAlignment(JTextField.RIGHT);
+
+        gcFileRB = new JRadioButton("From CSV file");
+        gcFileRB.setFont(serif12);
+        gcFileRB.setActionCommand("gcLenFile");
+        gcFileRB.addActionListener(this);
+        gcFileRB.setSelected(true);
+        gcGroup.add(gcFileRB);
+
+        gcCsvTextField = new JTextField(30);
+        gcCsvTextField.setFont(serif12);
+
+        final String csvFileDefault = Preferences.getProperty(LAST_CSV_FILE_PREF);
+        if (csvFileDefault != null) {
+            gcCsvTextField.setText(csvFileDefault);
+        }
+
+        splitBrowse = new JButton("Browse");
+        splitBrowse.setFont(serif12);
+        splitBrowse.setActionCommand("BrowseGrowthConeLen");
+        splitBrowse.addActionListener(this);
+
+        final GridBagConstraints gcGbc = new GridBagConstraints();
+        gcGbc.gridx = 0;
+        gcGbc.gridy = 0;
+        gcGbc.weightx = 0;
+        gcGbc.weighty = 0;
+        gcGbc.insets = new Insets(5, 5, 5, 5);
+        gcGbc.anchor = GridBagConstraints.WEST;
+        gcGbc.fill = GridBagConstraints.HORIZONTAL;
+
+        splitPanel.add(gcTextRB, gcGbc);
+
+        gcGbc.gridx = 1;
+        gcGbc.fill = GridBagConstraints.NONE;
+        splitPanel.add(splitField, gcGbc);
+
+        gcGbc.gridx = 0;
+        gcGbc.gridy++;
+        splitPanel.add(gcFileRB, gcGbc);
+
+        gcGbc.gridx = 1;
+        gcGbc.fill = GridBagConstraints.NONE;
+        splitPanel.add(gcCsvTextField, gcGbc);
+
+        gcGbc.gridx = 2;
+        gcGbc.fill = GridBagConstraints.NONE;
+        splitPanel.add(splitBrowse, gcGbc);
 
         final JLabel resLabel = new JLabel("SWC Resolution Units");
         resLabel.setFont(serif12);
@@ -719,24 +793,16 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
         gbc.gridx = 0;
         gbc.gridy++;
-
-        mainPanel.add(splitLabel, gbc);
-
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.NONE;
-        mainPanel.add(splitField, gbc);
-
-        gbc.gridx = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        mainPanel.add(splitBrowse, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(rbPanel, gbc);
 
-        getContentPane().add(mainPanel);
+        topGbc.gridx = 0;
+        topGbc.gridy = 0;
+        getContentPane().add(mainPanel, topGbc);
+
+        topGbc.gridy++;
+        getContentPane().add(splitPanel, topGbc);
 
         final JPanel resPanel = new JPanel();
         resPanel.setForeground(Color.black);
@@ -744,7 +810,8 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         resPanel.add(resLabel);
         resPanel.add(resolutionUnits);
 
-        getContentPane().add(resPanel);
+        topGbc.gridy++;
+        getContentPane().add(resPanel, topGbc);
 
         buildOKCancelButtons();
 
@@ -758,11 +825,11 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         buttonPanel.add(OKButton, BorderLayout.WEST);
         buttonPanel.add(cancelButton, BorderLayout.EAST);
 
-        getContentPane().add(buttonPanel);
+        topGbc.gridy++;
+        getContentPane().add(buttonPanel, topGbc);
 
         final JPanel debugPanel = new JPanel();
         debugPanel.setLayout(new BoxLayout(debugPanel, BoxLayout.PAGE_AXIS));
-        ;
         debugPanel.setForeground(Color.black);
         debugPanel.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(), "Debugging Output"));
 
@@ -770,20 +837,30 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         textArea = new JTextPane();
         textPanel.add(textArea, BorderLayout.CENTER);
         final JScrollPane scrollPane = new JScrollPane(textPanel);
-        scrollPane.setPreferredSize(new Dimension(100, 200));
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setPreferredSize(new Dimension(400, 400));
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         debugPanel.add(scrollPane);
 
-        getContentPane().add(debugPanel);
+        topGbc.fill = GridBagConstraints.BOTH;
+        topGbc.weighty = 1;
+        topGbc.gridy++;
+        getContentPane().add(debugPanel, topGbc);
 
         pack();
+
+        setSize(800, 800);
+
         setVisible(true);
         System.gc();
     }
 
     private void chooseDir() {
-        final String dirText = Preferences.getImageDirectory();
+        // final String dirText = Preferences.getImageDirectory();
+        String dirText = textField.getText();
+        if (dirText == null || dirText.equals("")) {
+            dirText = Preferences.getImageDirectory();
+        }
 
         final FileFilter ivFilter = new FileFilter() {
 
@@ -823,7 +900,11 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
     }
 
     private void chooseCSVFile() {
-        final String dirText = Preferences.getImageDirectory();
+        // final String dirText = Preferences.getImageDirectory();
+        String dirText = Preferences.getProperty(LAST_CSV_FILE_PREF);
+        if (dirText == null) {
+            dirText = Preferences.getImageDirectory();
+        }
 
         final FileFilter csvFilter = new FileFilter() {
 
@@ -862,14 +943,14 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         csvFileChooser.showOpenDialog(this);
     }
 
-    private float[] readGrowthConeLenCSV(final File csvFile) {
+    private float[] readGrowthConeLenCSV(final String csvFile) {
         final ArrayList<Float> gcLenList = new ArrayList<Float>();
 
         Iterable<CSVRecord> records;
 
         try {
-            final Reader in = new FileReader(csvFile);
-            records = CSVFormat.EXCEL.parse(in);
+            final Reader in = new FileReader(new File(csvFile));
+            records = CSVFormat.EXCEL.withFirstRecordAsHeader().withIgnoreEmptyLines().parse(in);
         } catch (final FileNotFoundException e) {
             MipavUtil.displayError("File not found: " + csvFile);
             return null;
@@ -980,6 +1061,33 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         }
 
         return success;
+    }
+
+    private float getGrowthConeLen(final int timePt) {
+        float splitDist;
+
+        if (gcFileRB.isSelected()) {
+            if (growthConeLenList == null) {
+                growthConeLenList = readGrowthConeLenCSV(gcCsvTextField.getText());
+            }
+
+            if (growthConeLenList == null || timePt > growthConeLenList.length) {
+                MipavUtil.displayError("Growth cone length CSV value missing for time point " + timePtCounter);
+                locked = false;
+                return -1;
+            }
+            splitDist = growthConeLenList[timePt];
+        } else {
+            try {
+                splitDist = Float.valueOf(splitField.getText());
+            } catch (final NumberFormatException e) {
+                MipavUtil.displayError("Enter the length of the growth cone");
+                locked = false;
+                return -1;
+            }
+        }
+
+        return splitDist;
     }
 
     /**
