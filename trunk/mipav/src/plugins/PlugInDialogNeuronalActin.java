@@ -78,7 +78,7 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
         init();
 
         final String version = "2.0";
-        final String lastUpdate = "8/5/2016";
+        final String lastUpdate = "8/31/2016";
         append("Version " + version, BLACK_TEXT);
         append("Last updated " + lastUpdate, BLACK_TEXT);
         append("-----------------------------------------", BLACK_TEXT);
