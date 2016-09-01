@@ -1375,11 +1375,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 progressBar.updateValue(pValue + k * 80 / (subdirectoriesFound * anatFiles[i][j].length));
                                 if (anatFiles[i][j][k].getName().endsWith("nii.gz")) {
                                     srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getName(), anatFiles[i][j][k].getParentFile()
-                                            .getAbsolutePath(), false, true, true);
+                                            .getAbsolutePath(), false, true, true, true);
                                     index = anatFiles[i][j][k].getName().indexOf("nii.gz");
                                 } else {
                                     srcImage[sessionImagesRead] = fileIO.readNIFTI(anatFiles[i][j][k].getName(), anatFiles[i][j][k].getParentFile()
-                                            .getAbsolutePath(), false, false, true);
+                                            .getAbsolutePath(), false, false, true, true);
                                     index = anatFiles[i][j][k].getName().indexOf("nii");
                                 }
                                 anatImagesRead++;
@@ -1490,11 +1490,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     progressBar.setMessage("Reading " + funcFiles[i][j][k].getName());
                                     progressBar.updateValue(pValue + k * 80 / (subdirectoriesFound * funcFiles[i][j].length));
                                     srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getName(), funcFiles[i][j][k].getParentFile()
-                                            .getAbsolutePath(), false, true, true);
+                                            .getAbsolutePath(), false, true, true, true);
                                     index = funcFiles[i][j][k].getName().indexOf("nii.gz");
                                 } else {
                                     srcImage[sessionImagesRead] = fileIO.readNIFTI(funcFiles[i][j][k].getName(), funcFiles[i][j][k].getParentFile()
-                                            .getAbsolutePath(), false, false, true);
+                                            .getAbsolutePath(), false, false, true, true);
                                     index = funcFiles[i][j][k].getName().indexOf("nii");
                                 }
                                 funcImagesRead++;
@@ -1741,11 +1741,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                     progressBar.setMessage("Reading " + dwiFiles[i][j][k].getName());
                                     progressBar.updateValue(pValue + k * 80 / (subdirectoriesFound * dwiFiles[i][j].length));
                                     srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getName(), dwiFiles[i][j][k].getParentFile()
-                                            .getAbsolutePath(), false, true, true);
+                                            .getAbsolutePath(), false, true, true, true);
                                     index = dwiFiles[i][j][k].getName().indexOf("nii.gz");
                                 } else {
                                     srcImage[sessionImagesRead] = fileIO.readNIFTI(dwiFiles[i][j][k].getName(), dwiFiles[i][j][k].getParentFile()
-                                            .getAbsolutePath(), false, false, true);
+                                            .getAbsolutePath(), false, false, true, true);
                                     index = dwiFiles[i][j][k].getName().indexOf("nii");
                                 }
                                 dwiImagesRead++;
