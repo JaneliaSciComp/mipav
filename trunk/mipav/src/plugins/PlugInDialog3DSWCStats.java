@@ -128,9 +128,10 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
         init();
 
         final String version = "$Rev$";
-        final String lastUpdate = "$Date::           $";
+        final String lastUpdate = "$Date$";
 
-        final String message = "Initializing " + version + "\n" + lastUpdate + "\n" + "-----------------------------------------";
+        final String message = "Initializing v " + MipavUtil.getSVNRevisionNum(version) + "\n" + "Date: " + MipavUtil.getSVNChangedDate(lastUpdate) + "\n"
+                + "-----------------------------------------";
 
         append(message, BLACK_TEXT);
     }

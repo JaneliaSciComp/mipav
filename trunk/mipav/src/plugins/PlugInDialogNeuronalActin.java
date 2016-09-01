@@ -78,10 +78,10 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
         init();
 
         final String version = "$Rev$";
-        final String lastUpdate = "$Date::            $";
+        final String lastUpdate = "$Date$";
 
-        append(version, BLACK_TEXT);
-        append(lastUpdate, BLACK_TEXT);
+        append("Version:\t" + MipavUtil.getSVNRevisionNum(version), BLACK_TEXT);
+        append("Date:\t" + MipavUtil.getSVNChangedDate(lastUpdate), BLACK_TEXT);
         append("-----------------------------------------", BLACK_TEXT);
     }
 
