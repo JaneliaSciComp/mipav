@@ -58,7 +58,7 @@ nifti.h standard for details:
 http://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h
 
 - rick
- * <p>NIFTI can have 2 different transformaton matrices
+ * <p>NIFTI can have 2 different transformation matrices
  * associated with an image - one stored in the qform_code parameters and one stored in the sform_code parameters. While
  * MIPAV separately stores axis orientation and matrix information, NIFTI does not store axis orientation information.
  * NIFTI uses a routine to derive axis orientations from the upper 3 by 3 parameters of the 4 by 4 matrix. The 4 by 4
