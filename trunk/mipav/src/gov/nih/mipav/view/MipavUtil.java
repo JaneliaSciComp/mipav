@@ -1,25 +1,35 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TokenizerException;
-
 
 import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 import gov.nih.mipav.view.icons.PlaceHolder;
-import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.*;
-import java.lang.management.*;
-import java.net.*;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import javax.help.*;
+import javax.help.HelpBroker;
+import javax.help.HelpSet;
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 import libnative.MipavJarLoader;
 
@@ -175,9 +185,8 @@ public class MipavUtil extends JComponent {
     private static boolean forceQuiet = false;
 
     /** DOCUMENT ME! */
-    public static final int[] functionKeys = new int[] {0, KeyEvent.VK_F1, KeyEvent.VK_F2, KeyEvent.VK_F3,
-            KeyEvent.VK_F4, KeyEvent.VK_F5, KeyEvent.VK_F6, KeyEvent.VK_F7, KeyEvent.VK_F8, KeyEvent.VK_F9,
-            KeyEvent.VK_F10, KeyEvent.VK_F11, KeyEvent.VK_F12};
+    public static final int[] functionKeys = new int[] {0, KeyEvent.VK_F1, KeyEvent.VK_F2, KeyEvent.VK_F3, KeyEvent.VK_F4, KeyEvent.VK_F5, KeyEvent.VK_F6,
+            KeyEvent.VK_F7, KeyEvent.VK_F8, KeyEvent.VK_F9, KeyEvent.VK_F10, KeyEvent.VK_F11, KeyEvent.VK_F12};
 
     /**
      * Displays the Java Help dialog indexed directly to the section identified by the ID passed in.
@@ -188,12 +197,12 @@ public class MipavUtil extends JComponent {
 
     /** DOCUMENT ME! */
     static HelpBroker helpBroker;
-    
+
     private static boolean isEyeTrackingEnabled = false;
-    
-    /** eye tracking outstream writer .*/
+
+    /** eye tracking outstream writer . */
     private static BufferedWriter eyetrackingOutStream;
-    
+
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
 
@@ -213,14 +222,11 @@ public class MipavUtil extends JComponent {
 
             // img = Toolkit.getDefaultToolkit().getImage(PlaceHolder.class.getResource("emptycursor.gif"));
             cursorImage = MipavUtil.getIconImage("emptycursor.gif");
-            MipavUtil.magRegionCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
-                    "Magnification");
-            MipavUtil.blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
-                    "Blank Cursor");
+            MipavUtil.magRegionCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12), "Magnification");
+            MipavUtil.blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12), "Blank Cursor");
             // System.err.println("created blank cursor");
         } catch (final FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.magRegionCursor = MipavUtil.crosshairCursor;
             MipavUtil.blankCursor = MipavUtil.crosshairCursor;
         }
@@ -229,45 +235,36 @@ public class MipavUtil extends JComponent {
         // this!) then notify the user of the prob and get a default. This try must be seperate for all diff cursors
         try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
             cursorImage = MipavUtil.getIconImage("smpointercursor.gif");
-            MipavUtil.smallPointerCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(0, 0),
-                    "SmallPointer");
+            MipavUtil.smallPointerCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(0, 0), "SmallPointer");
         } catch (final FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.smallPointerCursor = MipavUtil.pointCursor;
         }
 
         try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
             cursorImage = MipavUtil.getIconImage("qkwinlevel.gif");
 
-            MipavUtil.winLevelCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
-                    "WinLevel");
+            MipavUtil.winLevelCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12), "WinLevel");
         } catch (final FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.winLevelCursor = MipavUtil.crosshairCursor;
         }
 
         try {
             cursorImage = MipavUtil.getIconImage("probepoint.gif");
 
-            MipavUtil.probeCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(15, 15),
-                    "Probe");
+            MipavUtil.probeCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(15, 15), "Probe");
         } catch (final FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.probeCursor = MipavUtil.crosshairCursor;
         }
 
         try {
             final Toolkit toolkit = Toolkit.getDefaultToolkit();
-            MipavUtil.magnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomin.gif").getImage(), new Point(
-                    10, 10), "zoomin");
-            MipavUtil.unmagnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomout.gif").getImage(),
-                    new Point(10, 10), "zoomout");
+            MipavUtil.magnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomin.gif").getImage(), new Point(10, 10), "zoomin");
+            MipavUtil.unmagnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomout.gif").getImage(), new Point(10, 10), "zoomout");
         } catch (final Exception error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
-                    + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
             MipavUtil.magnifyCursor = MipavUtil.crosshairCursor;
         }
 
@@ -319,8 +316,7 @@ public class MipavUtil extends JComponent {
      * @return The titled border.
      */
     public static final TitledBorder buildTitledBorder(final String title) {
-        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-                Color.black);
+        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
     }
 
     /**
@@ -393,17 +389,16 @@ public class MipavUtil extends JComponent {
 
         return path;
     }
-    
+
     /**
      * Creates a label in the proper font and color.
-     *
-     * @param   title  The title of the label.
-     *
-     * @return  The new label.
+     * 
+     * @param title The title of the label.
+     * 
+     * @return The new label.
      */
-    public static final JLabel createSliderLabel(String title) 
-    {
-        JLabel label = new JLabel(title);
+    public static final JLabel createSliderLabel(final String title) {
+        final JLabel label = new JLabel(title);
         label.setFont(MipavUtil.font12);
         label.setForeground(Color.black);
 
@@ -425,17 +420,15 @@ public class MipavUtil extends JComponent {
     public static void displayError(final String error) {
         if ( !MipavUtil.forceQuiet && !GraphicsEnvironment.isHeadless()) {
             if ( (ViewUserInterface.getReference() != null)
-                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
-                            .isPlugInFrameVisible())) {
+                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference().isPlugInFrameVisible())) {
 
                 try {
                     JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                     JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
                 } catch (final FileNotFoundException ex) {
-                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
-                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
+                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n",
+                            Preferences.DEBUG_FILEIO);
+                    System.err.println("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n");
                 }
             } else {
 
@@ -458,10 +451,9 @@ public class MipavUtil extends JComponent {
                         JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                         JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
                     } catch (final FileNotFoundException ex) {
-                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                                + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
-                        System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                                + ">.  Check that this file is available.\n");
+                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n",
+                                Preferences.DEBUG_FILEIO);
+                        System.err.println("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n");
                     }
                 }
             }
@@ -483,19 +475,17 @@ public class MipavUtil extends JComponent {
      * @param info the information string
      */
     public static void displayInfo(final String info) {
-        if ( !MipavUtil.forceQuiet  && !GraphicsEnvironment.isHeadless()) {
+        if ( !MipavUtil.forceQuiet && !GraphicsEnvironment.isHeadless()) {
             if ( (ViewUserInterface.getReference() != null)
-                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
-                            .isPlugInFrameVisible())) {
+                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference().isPlugInFrameVisible())) {
 
                 try {
                     JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                     JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
                 } catch (final FileNotFoundException ex) {
-                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
-                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
+                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n",
+                            Preferences.DEBUG_FILEIO);
+                    System.err.println("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n");
                 }
             } else {
 
@@ -511,10 +501,9 @@ public class MipavUtil extends JComponent {
                         JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                         JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
                     } catch (final FileNotFoundException ex) {
-                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                                + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
-                        System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                                + ">.  Check that this file is available.\n");
+                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n",
+                                Preferences.DEBUG_FILEIO);
+                        System.err.println("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n");
                     }
                 }
             }
@@ -534,19 +523,17 @@ public class MipavUtil extends JComponent {
      * @param warning the message text of the warning.
      */
     public static void displayWarning(final String warning) {
-        if ( !MipavUtil.forceQuiet  && !GraphicsEnvironment.isHeadless()) {
+        if ( !MipavUtil.forceQuiet && !GraphicsEnvironment.isHeadless()) {
             if ( (ViewUserInterface.getReference() != null)
-                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
-                            .isPlugInFrameVisible())) {
+                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference().isPlugInFrameVisible())) {
 
                 try {
                     JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                     JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
                 } catch (final FileNotFoundException ex) {
-                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
-                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
+                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n",
+                            Preferences.DEBUG_FILEIO);
+                    System.err.println("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n");
                 }
             } else {
 
@@ -562,10 +549,9 @@ public class MipavUtil extends JComponent {
                         JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                         JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
                     } catch (final FileNotFoundException ex) {
-                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                                + ">.  Check that this file is available.\n", Preferences.DEBUG_FILEIO);
-                        System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                                + ">.  Check that this file is available.\n");
+                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n",
+                                Preferences.DEBUG_FILEIO);
+                        System.err.println("Exception ocurred while getting <" + ex.getMessage() + ">.  Check that this file is available.\n");
                     }
                 }
             }
@@ -601,16 +587,15 @@ public class MipavUtil extends JComponent {
             if (preferencesColorString != null) {
 
                 // so long as the string is available, pull out expected color string.
-                RGB[0] = Integer.parseInt(String.valueOf(preferencesColorString.toCharArray()[0])
-                        + String.valueOf(preferencesColorString.toCharArray()[1]), 16);
-                RGB[1] = Integer.parseInt(String.valueOf(preferencesColorString.toCharArray()[2])
-                        + String.valueOf(preferencesColorString.toCharArray()[3]), 16);
-                RGB[2] = Integer.parseInt(String.valueOf(preferencesColorString.toCharArray()[4])
-                        + String.valueOf(preferencesColorString.toCharArray()[5]), 16);
+                RGB[0] = Integer
+                        .parseInt(String.valueOf(preferencesColorString.toCharArray()[0]) + String.valueOf(preferencesColorString.toCharArray()[1]), 16);
+                RGB[1] = Integer
+                        .parseInt(String.valueOf(preferencesColorString.toCharArray()[2]) + String.valueOf(preferencesColorString.toCharArray()[3]), 16);
+                RGB[2] = Integer
+                        .parseInt(String.valueOf(preferencesColorString.toCharArray()[4]) + String.valueOf(preferencesColorString.toCharArray()[5]), 16);
             }
         } catch (final Exception npe) {
-            Preferences.debug("MipavOptions: Color string was improper.  String was '" + preferencesColorString + "'", 
-            		Preferences.DEBUG_FILEIO);
+            Preferences.debug("MipavOptions: Color string was improper.  String was '" + preferencesColorString + "'", Preferences.DEBUG_FILEIO);
 
             // reset all three values with
             RGB[0] = 0;
@@ -784,8 +769,7 @@ public class MipavUtil extends JComponent {
             final URL fileURL = Thread.currentThread().getContextClassLoader().getResource(filename);
 
             if (fileURL == null) {
-                Preferences.debug("Unable to open " + filename
-                        + ".  Make sure it is in the same directory as MipavMain.class\n", Preferences.DEBUG_MINOR);
+                Preferences.debug("Unable to open " + filename + ".  Make sure it is in the same directory as MipavMain.class\n", Preferences.DEBUG_MINOR);
 
                 return verString;
             }
@@ -822,109 +806,110 @@ public class MipavUtil extends JComponent {
 
         return verString;
     }
-    
+
     /**
      * Determines if a value is within the given pixel intensity range.
+     * 
      * @param min minimum intensity.
      * @param max maximum intensity.
      * @param num value to test.
      * @param rangeFlag (no test, between, outside) the min and max.
      * @return true if num satisfies the test.
      */
-    public static boolean inRange(float min, float max, float num, RangeType rangeFlag) {
-        if(rangeFlag == null) {
+    public static boolean inRange(final float min, final float max, final float num, final RangeType rangeFlag) {
+        if (rangeFlag == null) {
             return false;
         }
-        
-        switch(rangeFlag) {
-        case BETWEEN:
-            if ((num >= min) && (num <= max)) {
-                return true; //pixel is within min to max
-            }
-            return false; 
-            
-        case OUTSIDE:
-            if ((num < min) || (num > max)) {
-                return true; //pixel is either below min or above max
-            }
-            return false; 
-        
-        case NO_RANGE:
-        default:
-            return false; //no range for pixel to be in
-            
+
+        switch (rangeFlag) {
+            case BETWEEN:
+                if ( (num >= min) && (num <= max)) {
+                    return true; // pixel is within min to max
+                }
+                return false;
+
+            case OUTSIDE:
+                if ( (num < min) || (num > max)) {
+                    return true; // pixel is either below min or above max
+                }
+                return false;
+
+            case NO_RANGE:
+            default:
+                return false; // no range for pixel to be in
+
         }
     }
-    
+
     /**
-     * Loads a dynamic library of the given name and path and places it in
-     * the Java temp directory.
+     * Loads a dynamic library of the given name and path and places it in the Java temp directory.
      */
-    public static void loadDynamicLib(String path, String name) {
-    	String is64 = System.getProperty("sun.arch.data.model");
-    	String osName = System.getProperty("os.name").toLowerCase();
-    	name = new String(name);
-    	if(is64.equals("64") && osName.startsWith("windows")) {
-    		name = name + "_64.dll";
-    	} else if(osName.startsWith("windows")) {
-    		name = name+".dll";
-    	} else if(osName.contains("mac")) {
-    		name = name+"-osx.jnilib";
-    	} else if(is64.equals("64")) { //"must" be linux
-    		name = name+"-linux64.so";
-    	} else {
-    		name = name+"-linux.so";
-    	}
-    	
-    	InputStream source = null;
-		FileOutputStream destination = null;
-    
-		try {
-	    	try {
-	    		byte[] buffer = new byte[102400];
-	    		URL url = MipavJarLoader.class.getResource(path+name);
-	    		if(url == null && is64.equals("64") && osName.startsWith("windows")) {
-	    			name = name.substring(0, name.indexOf("_64"))+".dll";
-	    			url = MipavJarLoader.class.getResource(path+name);
-	    		}
-				source = MipavJarLoader.class.getResourceAsStream(path+name);
-				File fileOut = new File(Preferences.getPreferencesDir()+File.separator+"plugins"+ File.separator+path + name);
-				if(!fileOut.getParentFile().exists()) {
-					boolean success = fileOut.getParentFile().mkdirs();
-					if(!success) {
-						throw new Exception("Unable to create plugins directory");
-					}
-				}
-				// running a second time causes the libs to be written out from themselves to themselves (which results in a 0 byte file)
-				// so only write out the lib if it's not already there
-				if (!fileOut.exists()) {
-					System.out.println("Writing file to: "+fileOut);
-					destination = new FileOutputStream(fileOut);
-					int len = 0;
-					while((len = source.read(buffer)) != -1) {
-						destination.write(buffer, 0, len);
-					}
-					destination.flush();
-					destination.close(); //for file locks
-				}
-				
-				System.load(fileOut.toString());
-	    	} catch (Exception e) {
-	    		e.printStackTrace();
-	    		Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
-	    	} finally {
-				if(source != null) {
-					source.close();
-				}
-				if(destination != null) {
-					destination.close();
-				}
-			}
-		} catch (Exception e) {
-			Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
-    	} catch (Error e) {
-    		Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
-    	}
+    public static void loadDynamicLib(final String path, String name) {
+        final String is64 = System.getProperty("sun.arch.data.model");
+        final String osName = System.getProperty("os.name").toLowerCase();
+        name = new String(name);
+        if (is64.equals("64") && osName.startsWith("windows")) {
+            name = name + "_64.dll";
+        } else if (osName.startsWith("windows")) {
+            name = name + ".dll";
+        } else if (osName.contains("mac")) {
+            name = name + "-osx.jnilib";
+        } else if (is64.equals("64")) { // "must" be linux
+            name = name + "-linux64.so";
+        } else {
+            name = name + "-linux.so";
+        }
+
+        InputStream source = null;
+        FileOutputStream destination = null;
+
+        try {
+            try {
+                final byte[] buffer = new byte[102400];
+                URL url = MipavJarLoader.class.getResource(path + name);
+                if (url == null && is64.equals("64") && osName.startsWith("windows")) {
+                    name = name.substring(0, name.indexOf("_64")) + ".dll";
+                    url = MipavJarLoader.class.getResource(path + name);
+                }
+                source = MipavJarLoader.class.getResourceAsStream(path + name);
+                final File fileOut = new File(Preferences.getPreferencesDir() + File.separator + "plugins" + File.separator + path + name);
+                if ( !fileOut.getParentFile().exists()) {
+                    final boolean success = fileOut.getParentFile().mkdirs();
+                    if ( !success) {
+                        throw new Exception("Unable to create plugins directory");
+                    }
+                }
+                // running a second time causes the libs to be written out from themselves to themselves (which results
+                // in a 0 byte file)
+                // so only write out the lib if it's not already there
+                if ( !fileOut.exists()) {
+                    System.out.println("Writing file to: " + fileOut);
+                    destination = new FileOutputStream(fileOut);
+                    int len = 0;
+                    while ( (len = source.read(buffer)) != -1) {
+                        destination.write(buffer, 0, len);
+                    }
+                    destination.flush();
+                    destination.close(); // for file locks
+                }
+
+                System.load(fileOut.toString());
+            } catch (final Exception e) {
+                e.printStackTrace();
+                Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
+            } finally {
+                if (source != null) {
+                    source.close();
+                }
+                if (destination != null) {
+                    destination.close();
+                }
+            }
+        } catch (final Exception e) {
+            Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
+        } catch (final Error e) {
+            Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
+        }
     }
 
     /**
@@ -999,8 +984,7 @@ public class MipavUtil extends JComponent {
      * 
      * @return String
      */
-    public static final String makeHTMLFontString(final Color color, final String name, final int size,
-            final int style, final boolean doU, final String text) {
+    public static final String makeHTMLFontString(final Color color, final String name, final int size, final int style, final boolean doU, final String text) {
 
         String colorStr = "#";
 
@@ -1022,8 +1006,7 @@ public class MipavUtil extends JComponent {
             colorStr += Integer.toHexString(color.getBlue());
         }
 
-        String fontString = "<font " + "face=\"" + name + "\" " + "size=\"" + size + "\" " + "color=\"" + colorStr
-                + "\">";
+        String fontString = "<font " + "face=\"" + name + "\" " + "size=\"" + size + "\" " + "color=\"" + colorStr + "\">";
 
         if ( (style & Font.BOLD) != 0) {
             fontString += "<b>";
@@ -1081,157 +1064,165 @@ public class MipavUtil extends JComponent {
      * @param allowNegativeNumbers true causes textfield to allow the entry of a single minus sign ('-') in front of the
      *            text. An additional '-' removes minus sign from the field to give it the opposite sign.
      */
-    public static void makeNumericsOnly(final JTextField txt, boolean allowFloatingPoint, boolean allowNegativeNumbers) {
+    public static void makeNumericsOnly(final JTextField txt, final boolean allowFloatingPoint, final boolean allowNegativeNumbers) {
 
         if (allowFloatingPoint && allowNegativeNumbers) {
             txt.addKeyListener(new KeyAdapter() { // make the field
-                        public void keyTyped(final KeyEvent evt) { // not accept letters
+                @Override
+                public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                            final JTextField t = (JTextField) evt.getComponent();
-                            final char ch = evt.getKeyChar();
+                    final JTextField t = (JTextField) evt.getComponent();
+                    final char ch = evt.getKeyChar();
 
-                            if (ch == '.') {
+                    if (ch == '.') {
 
-                                if (t.getSelectedText() != null) {
+                        if (t.getSelectedText() != null) {
 
-                                    if (t.getText().length() == t.getSelectedText().length()) {
-                                        t.setText("0.");
-                                        evt.consume();
-                                    } else if ( (t.getText().indexOf('.') != -1)
-                                            && (t.getSelectedText().indexOf('.') == -1)) { // there is a '.', but not
-                                        // in the selected text
-                                        evt.consume(); // ignore
-                                    }
-                                } else if (t.getText().indexOf('.') != -1) {
-                                    evt.consume();
-                                } else if (t.getText().length() == 0) {
-                                    t.setText("0.");
-                                    evt.consume();
-                                } else {
-                                    final StringBuffer sb = new StringBuffer(t.getText());
-                                    t.setText(sb.insert(t.getCaretPosition(), ".").toString());
-                                    evt.consume();
-                                }
-                            } else if (ch == '-') {
-                                String text = t.getText().trim();
-                                final int minusPlace = text.indexOf('-');
-
-                                if (minusPlace != -1) { // text does has a '-'
-                                    text = text.substring(minusPlace + 1);
-
-                                    // put minus in front of text after '-'...
-                                    // t.setText(text);
-                                    t.setText("-");
-                                } else {
-                                    t.setText("-" + text);
-                                }
-
+                            if (t.getText().length() == t.getSelectedText().length()) {
+                                t.setText("0.");
                                 evt.consume();
-                            } else if ( ( (ch < '0') || (ch > '9')) && (ch != KeyEvent.VK_DELETE)
-                                    && (ch != KeyEvent.VK_BACK_SPACE)) {
-
-                                // if is the case that ch is outside the bounds of a
-                                // number AND it is the case that ch is neither a BS
-                                // or a DE, then...
-                                // key is not a digit or a deletion char
-                                evt.consume();
+                            } else if ( (t.getText().indexOf('.') != -1) && (t.getSelectedText().indexOf('.') == -1)) { // there
+                                                                                                                        // is
+                                                                                                                        // a
+                                                                                                                        // '.',
+                                                                                                                        // but
+                                                                                                                        // not
+                                // in the selected text
+                                evt.consume(); // ignore
                             }
+                        } else if (t.getText().indexOf('.') != -1) {
+                            evt.consume();
+                        } else if (t.getText().length() == 0) {
+                            t.setText("0.");
+                            evt.consume();
+                        } else {
+                            final StringBuffer sb = new StringBuffer(t.getText());
+                            t.setText(sb.insert(t.getCaretPosition(), ".").toString());
+                            evt.consume();
                         }
-                    });
+                    } else if (ch == '-') {
+                        String text = t.getText().trim();
+                        final int minusPlace = text.indexOf('-');
+
+                        if (minusPlace != -1) { // text does has a '-'
+                            text = text.substring(minusPlace + 1);
+
+                            // put minus in front of text after '-'...
+                            // t.setText(text);
+                            t.setText("-");
+                        } else {
+                            t.setText("-" + text);
+                        }
+
+                        evt.consume();
+                    } else if ( ( (ch < '0') || (ch > '9')) && (ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE)) {
+
+                        // if is the case that ch is outside the bounds of a
+                        // number AND it is the case that ch is neither a BS
+                        // or a DE, then...
+                        // key is not a digit or a deletion char
+                        evt.consume();
+                    }
+                }
+            });
         } else if (allowFloatingPoint && !allowNegativeNumbers) {
             txt.addKeyListener(new KeyAdapter() { // make the field
-                        public void keyTyped(final KeyEvent evt) { // not accept letters
+                @Override
+                public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                            final JTextField t = (JTextField) evt.getComponent();
-                            final char ch = evt.getKeyChar();
+                    final JTextField t = (JTextField) evt.getComponent();
+                    final char ch = evt.getKeyChar();
 
-                            if (ch == '.') {
+                    if (ch == '.') {
 
-                                if (t.getSelectedText() != null) {
+                        if (t.getSelectedText() != null) {
 
-                                    if (t.getText().length() == t.getSelectedText().length()) {
-                                        t.setText("0.");
-                                        evt.consume(); // ignore the rest
-                                    } else if ( (t.getText().indexOf('.') != -1)
-                                            && (t.getSelectedText().indexOf('.') == -1)) { // there is a '.', but not
-                                        // in the selected text
-                                        evt.consume(); // ignore
-                                    }
-                                } else if (t.getText().indexOf('.') != -1) {
-                                    evt.consume();
-                                } else if (t.getText().length() == 0) {
-                                    t.setText("0.");
-                                    evt.consume(); // ignore the rest
-                                } else {
-                                    final StringBuffer sb = new StringBuffer(t.getText());
-                                    t.setText(sb.insert(t.getCaretPosition(), ".").toString());
-                                    evt.consume(); // ignore the rest
-                                }
+                            if (t.getText().length() == t.getSelectedText().length()) {
+                                t.setText("0.");
+                                evt.consume(); // ignore the rest
+                            } else if ( (t.getText().indexOf('.') != -1) && (t.getSelectedText().indexOf('.') == -1)) { // there
+                                                                                                                        // is
+                                                                                                                        // a
+                                                                                                                        // '.',
+                                                                                                                        // but
+                                                                                                                        // not
+                                // in the selected text
+                                evt.consume(); // ignore
                             }
-                            /* else if (ch == '-') {...} */
-                            // negatives are not allowed
-                            else if ( ( (ch < '0') || (ch > '9')) && (ch != KeyEvent.VK_DELETE)
-                                    && (ch != KeyEvent.VK_BACK_SPACE)) {
-
-                                // if is the case that ch is outside the bounds of a
-                                // number AND it is the case that ch is neither a BS
-                                // or a DE, then...key is not a digit or a deletion char
-                                evt.consume();
-                            }
+                        } else if (t.getText().indexOf('.') != -1) {
+                            evt.consume();
+                        } else if (t.getText().length() == 0) {
+                            t.setText("0.");
+                            evt.consume(); // ignore the rest
+                        } else {
+                            final StringBuffer sb = new StringBuffer(t.getText());
+                            t.setText(sb.insert(t.getCaretPosition(), ".").toString());
+                            evt.consume(); // ignore the rest
                         }
-                    });
+                    }
+                    /* else if (ch == '-') {...} */
+                    // negatives are not allowed
+                    else if ( ( (ch < '0') || (ch > '9')) && (ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE)) {
+
+                        // if is the case that ch is outside the bounds of a
+                        // number AND it is the case that ch is neither a BS
+                        // or a DE, then...key is not a digit or a deletion char
+                        evt.consume();
+                    }
+                }
+            });
         } else if ( !allowFloatingPoint && allowNegativeNumbers) {
             txt.addKeyListener(new KeyAdapter() { // make the field
-                        public void keyTyped(final KeyEvent evt) { // not accept letters
+                @Override
+                public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                            final JTextField t = (JTextField) evt.getComponent();
-                            final char ch = evt.getKeyChar();
+                    final JTextField t = (JTextField) evt.getComponent();
+                    final char ch = evt.getKeyChar();
 
-                            /* else if (ch == '.') {..} */
-                            // decimal not allowed
-                            if (ch == '-') {
-                                String text = t.getText().trim();
-                                final int minusPlace = text.indexOf('-');
+                    /* else if (ch == '.') {..} */
+                    // decimal not allowed
+                    if (ch == '-') {
+                        String text = t.getText().trim();
+                        final int minusPlace = text.indexOf('-');
 
-                                if (minusPlace != -1) { // text does has a '-'
-                                    text = text.substring(minusPlace + 1); // only text after '-'...
-                                    t.setText(text);
-                                } else {
-                                    t.setText("-" + text);
-                                }
-
-                                evt.consume();
-                            } else if ( ( (ch < '0') || (ch > '9')) && (ch != KeyEvent.VK_DELETE)
-                                    && (ch != KeyEvent.VK_BACK_SPACE)) {
-
-                                // if is the case that ch is outside the bounds of a
-                                // number AND it is the case that ch is neither a BS
-                                // or a DE, then...key is not a digit or a deletion char
-                                evt.consume();
-                            }
+                        if (minusPlace != -1) { // text does has a '-'
+                            text = text.substring(minusPlace + 1); // only text after '-'...
+                            t.setText(text);
+                        } else {
+                            t.setText("-" + text);
                         }
-                    });
+
+                        evt.consume();
+                    } else if ( ( (ch < '0') || (ch > '9')) && (ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE)) {
+
+                        // if is the case that ch is outside the bounds of a
+                        // number AND it is the case that ch is neither a BS
+                        // or a DE, then...key is not a digit or a deletion char
+                        evt.consume();
+                    }
+                }
+            });
         } else { // if (!allowFloatingPoint && !allowNegativeNumbers) {
             txt.addKeyListener(new KeyAdapter() { // make the field
-                        public void keyTyped(final KeyEvent evt) { // not accept letters
+                @Override
+                public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                            final char ch = evt.getKeyChar();
+                    final char ch = evt.getKeyChar();
 
-                            /* else if (ch == '.') {...} */
-                            // floating point not allowed
-                            /* else if (ch == '-') {...} */
-                            // negatives are not allowed
-                            if ( ( (ch < '0') || (ch > '9')) && (ch != KeyEvent.VK_DELETE)
-                                    && (ch != KeyEvent.VK_BACK_SPACE)) {
+                    /* else if (ch == '.') {...} */
+                    // floating point not allowed
+                    /* else if (ch == '-') {...} */
+                    // negatives are not allowed
+                    if ( ( (ch < '0') || (ch > '9')) && (ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE)) {
 
-                                // if is the case that ch is outside the bounds of a
-                                // number AND it is the case that ch is neither a BS
-                                // nor a DE, then...
-                                // key is not a digit or a deletion char
-                                evt.consume();
-                            }
-                        }
-                    });
+                        // if is the case that ch is outside the bounds of a
+                        // number AND it is the case that ch is neither a BS
+                        // nor a DE, then...
+                        // key is not a digit or a deletion char
+                        evt.consume();
+                    }
+                }
+            });
         }
     }
 
@@ -1277,22 +1268,22 @@ public class MipavUtil extends JComponent {
     public static final void setForceQuiet(final boolean force) {
         MipavUtil.forceQuiet = force;
     }
-    
+
     /**
      * Pops up the MIPAV help for a given wiki help page.
      * 
      * @param wikiPage The name of the wiki help topic to open.
      */
     public static void showWebHelp(final String wikiPage) {
-        String wikiBase = "http://mipav.cit.nih.gov/pubwiki/index.php/";
+        final String wikiBase = "http://mipav.cit.nih.gov/pubwiki/index.php/";
         try {
-            URI wikiURI = new URI(wikiBase + wikiPage);
+            final URI wikiURI = new URI(wikiBase + wikiPage);
             Desktop.getDesktop().browse(wikiURI);
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             e.printStackTrace();
             MipavUtil.displayError("Unable to display MIPAV wiki help: " + wikiPage);
             return;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
             MipavUtil.displayError("Unable to display MIPAV wiki help: " + wikiPage);
             return;
@@ -1315,8 +1306,7 @@ public class MipavUtil extends JComponent {
             tmp = Double.valueOf(str).doubleValue();
 
             if ( (tmp > maxValue) || (tmp < minValue)) {
-                MipavUtil.displayError("Value is out of range: " + String.valueOf(minValue) + " , "
-                        + String.valueOf(maxValue));
+                MipavUtil.displayError("Value is out of range: " + String.valueOf(minValue) + " , " + String.valueOf(maxValue));
 
                 return false;
             } else {
@@ -1328,33 +1318,37 @@ public class MipavUtil extends JComponent {
             return false;
         }
     }
-    
+
     /**
      * Get an object containing information on the current memory usage.
+     * 
      * @return Heap memory usage object.
      */
     public static MemoryUsage getHeapMemoryUsage() {
         return ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
     }
-    
+
     /**
      * Return the amount of heap memory still available.
+     * 
      * @return The amount of heap memory still available.
      */
     public static long getFreeHeapMemory() {
         return getMaxHeapMemory() - getUsedHeapMemory();
     }
-    
+
     /**
      * Return the maximum amount of heap memory that MIPAV can use.
+     * 
      * @return The maximum amount of heap memory available.
      */
     public static long getMaxHeapMemory() {
         return getHeapMemoryUsage().getMax();
     }
-    
+
     /**
      * Return the amount of heap memory that MIPAV is currently using.
+     * 
      * @return The amount of heap memory currently being used.
      */
     public static long getUsedHeapMemory() {
@@ -1382,131 +1376,173 @@ public class MipavUtil extends JComponent {
          * 
          * @param ae DOCUMENT ME!
          */
+        @Override
         public abstract void actionPerformed(ActionEvent ae);
     }
-    
+
     /**
-     * Check eye tracking is enabled or not. 
+     * Check eye tracking is enabled or not.
+     * 
      * @return
      */
     public static final boolean isEyeTrackingEnabled() {
-    	return isEyeTrackingEnabled;
+        return isEyeTrackingEnabled;
     }
-    
+
     /**
      * When the plug-in eye tracker record button is clicked, it re-initial the eye tracker csv file recording stream.
-     * If the stop button is clicked, stop the current csv file recording stream.  
-     * @param enable   enable flag
-     * @param fileDir user selected csv file directory. 
+     * If the stop button is clicked, stop the current csv file recording stream.
+     * 
+     * @param enable enable flag
+     * @param fileDir user selected csv file directory.
      */
-    public static final void setEyeTrackingEnabled(boolean enable, String fileDir) {
-    	isEyeTrackingEnabled = enable;
-    	if (enable) {
-    		initEyeTrackingLogfile(fileDir);
-    	} else {
-    		closeEyeTrackingLogfile();
-    	}
+    public static final void setEyeTrackingEnabled(final boolean enable, final String fileDir) {
+        isEyeTrackingEnabled = enable;
+        if (enable) {
+            initEyeTrackingLogfile(fileDir);
+        } else {
+            closeEyeTrackingLogfile();
+        }
     }
-    
+
     /**
      * When the plug-in eye tracker record button is clicked, it re-initial the eye tracker csv file recording stream.
-     * If the stop button is clicked, stop the current csv file recording stream.  
-     * @param enable   enable flag
-     * @param fileDir user selected csv file directory. 
+     * If the stop button is clicked, stop the current csv file recording stream.
+     * 
+     * @param enable enable flag
+     * @param fileDir user selected csv file directory.
      */
-    public static final void setEyeTrackingEnabled(boolean enable, String fileDir, ViewJComponentEditImage imageComp) {
-    	isEyeTrackingEnabled = enable;
-    	if (enable) {
-    		initEyeTrackingLogfile(fileDir, imageComp);
-    	} else {
-    		closeEyeTrackingLogfile();
-    	}
+    public static final void setEyeTrackingEnabled(final boolean enable, final String fileDir, final ViewJComponentEditImage imageComp) {
+        isEyeTrackingEnabled = enable;
+        if (enable) {
+            initEyeTrackingLogfile(fileDir, imageComp);
+        } else {
+            closeEyeTrackingLogfile();
+        }
     }
 
     /**
      * Initialize the file IO for eye tracking log file
      */
-    private static void initEyeTrackingLogfile(String defaultDirectory, ViewJComponentEditImage imgComp) {
-    	try {
-	    	// System.err.println(defaultDirectory);
-	    	File file = new File(defaultDirectory);
-	    	if ( !file.exists() ) file.createNewFile();
-	        eyetrackingOutStream = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
-	        
-	        SimpleDateFormat sdfDate = new SimpleDateFormat("d MMM yyyy HH:mm:ss EEE");
-			Date now = new Date();
-			String strDate = sdfDate.format(now);
-			ModelImage activeImage = imgComp.getActiveImage();
-			String imageName = activeImage.getImageDirectory() + activeImage.getImageFileName();
-			int[] dim = activeImage.getExtents();
-	        // eyetrackingOutStream.write("Time, ActiveImage, ActiveSlice, frameMinX, frameMinY, frameMaxX, frameMaxY, Event, MouseEvent, Action, value, MouseCoordX, MouseCoordY\n");
-			eyetrackingOutStream.write("ImageName:," + imageName + "\n");
-			eyetrackingOutStream.write("Date:," + strDate + "\n");
-			eyetrackingOutStream.write("ImageSize:," + dim[0] + "x" + dim[1] + "x" + dim[2] + "\n");
-			eyetrackingOutStream.write("\n");
-			eyetrackingOutStream.write("\n");
-			eyetrackingOutStream.write("\n");
-			eyetrackingOutStream.write("Time, ImageActive, ActionName, SliceNumber, X_UpperLeft, Y_UpperLeft, X_UpperRight, Y_UpperRight, X_LowerLeft, Y_LowerLeft, X_LowerRight, Y_LowerRight, Window, Level, X_MouseClickLocation, Y_MouseClickLocation, Length, X_LineStart, Y_LineStart, X_LineEnd, Y_LineEnd" + "\n");
-    	} catch ( IOException e ) {
-    		e.printStackTrace();
-    	}
+    private static void initEyeTrackingLogfile(final String defaultDirectory, final ViewJComponentEditImage imgComp) {
+        try {
+            // System.err.println(defaultDirectory);
+            final File file = new File(defaultDirectory);
+            if ( !file.exists()) {
+                file.createNewFile();
+            }
+            eyetrackingOutStream = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
+
+            final SimpleDateFormat sdfDate = new SimpleDateFormat("d MMM yyyy HH:mm:ss EEE");
+            final Date now = new Date();
+            final String strDate = sdfDate.format(now);
+            final ModelImage activeImage = imgComp.getActiveImage();
+            final String imageName = activeImage.getImageDirectory() + activeImage.getImageFileName();
+            final int[] dim = activeImage.getExtents();
+            // eyetrackingOutStream.write("Time, ActiveImage, ActiveSlice, frameMinX, frameMinY, frameMaxX, frameMaxY, Event, MouseEvent, Action, value, MouseCoordX, MouseCoordY\n");
+            eyetrackingOutStream.write("ImageName:," + imageName + "\n");
+            eyetrackingOutStream.write("Date:," + strDate + "\n");
+            eyetrackingOutStream.write("ImageSize:," + dim[0] + "x" + dim[1] + "x" + dim[2] + "\n");
+            eyetrackingOutStream.write("\n");
+            eyetrackingOutStream.write("\n");
+            eyetrackingOutStream.write("\n");
+            eyetrackingOutStream
+                    .write("Time, ImageActive, ActionName, SliceNumber, X_UpperLeft, Y_UpperLeft, X_UpperRight, Y_UpperRight, X_LowerLeft, Y_LowerLeft, X_LowerRight, Y_LowerRight, Window, Level, X_MouseClickLocation, Y_MouseClickLocation, Length, X_LineStart, Y_LineStart, X_LineEnd, Y_LineEnd"
+                            + "\n");
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
     }
-    
+
     /**
      * Initialize the file IO for eye tracking log file
      */
-    private static void initEyeTrackingLogfile(String defaultDirectory) {
-    	try {
-	    	// System.err.println(defaultDirectory);
-	    	File file = new File(defaultDirectory);
-	    	if ( !file.exists() ) file.createNewFile();
-	        eyetrackingOutStream = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
-	        // eyetrackingOutStream.write("Time, ActiveImage, ActiveSlice, frameMinX, frameMinY, frameMaxX, frameMaxY, Event, MouseEvent, Action, value, MouseCoordX, MouseCoordY\n");
-    	} catch ( IOException e ) {
-    		e.printStackTrace();
-    	}
+    private static void initEyeTrackingLogfile(final String defaultDirectory) {
+        try {
+            // System.err.println(defaultDirectory);
+            final File file = new File(defaultDirectory);
+            if ( !file.exists()) {
+                file.createNewFile();
+            }
+            eyetrackingOutStream = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
+            // eyetrackingOutStream.write("Time, ActiveImage, ActiveSlice, frameMinX, frameMinY, frameMaxX, frameMaxY, Event, MouseEvent, Action, value, MouseCoordX, MouseCoordY\n");
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
     }
-    
+
     /**
-     * Record the eye tracking log message. 
+     * Record the eye tracking log message.
+     * 
      * @param msg
      */
-    public static final void writeEyeTrackingLog(String msg) {
-    	if (isEyeTrackingEnabled) {
-			try {
-				eyetrackingOutStream.write(msg + "\n");
-				eyetrackingOutStream.flush();
-			} catch ( IOException e ) {
-				e.printStackTrace();
-			}
-    	}
+    public static final void writeEyeTrackingLog(final String msg) {
+        if (isEyeTrackingEnabled) {
+            try {
+                eyetrackingOutStream.write(msg + "\n");
+                eyetrackingOutStream.flush();
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
-    
-    
+
     /**
-     * Record the eye tracking log message. 
+     * Record the eye tracking log message.
+     * 
      * @param msg
      */
-    public static final void writeEyeTrackingLog(String msg, ViewJComponentEditImage imgComp) {
-    	if (isEyeTrackingEnabled) {
-			try {
-				eyetrackingOutStream.write(msg + "\n");
-				eyetrackingOutStream.flush();
-			} catch ( IOException e ) {
-				e.printStackTrace();
-			}
-    	}
+    public static final void writeEyeTrackingLog(final String msg, final ViewJComponentEditImage imgComp) {
+        if (isEyeTrackingEnabled) {
+            try {
+                eyetrackingOutStream.write(msg + "\n");
+                eyetrackingOutStream.flush();
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
-    
+
     /**
-     * close the eye tracking log. 
+     * close the eye tracking log.
      */
     private static void closeEyeTrackingLogfile() {
-    	try {
-    		eyetrackingOutStream.close();
-    	} catch ( IOException e ) {
-    		e.printStackTrace();
-    	}
+        try {
+            eyetrackingOutStream.close();
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
     }
-   
+
+    /**
+     * Get the revision number from auto populated SVN revision string.
+     * 
+     * @param svnRevStr String with format $Rev: ##### $
+     * @return Only the revision number from the given string.
+     */
+    public static final String getSVNRevisionNum(final String svnRevStr) {
+        final Pattern p = Pattern.compile("\\$Rev\\:+\\s+(\\d+)\\s*\\#?\\$");
+        final Matcher m = p.matcher(svnRevStr);
+        if (m.find() && m.groupCount() > 0) {
+            return m.group(1);
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * Get the date from auto populated SVN date string.
+     * 
+     * @param svnRevStr String with format resembling $Date: YYYY-MM-DD [...] $
+     * @return Only the revision number from the given string.
+     */
+    public static final String getSVNChangedDate(final String svnRevStr) {
+        final Pattern p = Pattern.compile("\\$(?:Date|LastChangedDate)\\:+\\s+([\\d\\-]+)[\\s\\w,\\-:()]*\\#?\\$");
+        final Matcher m = p.matcher(svnRevStr);
+        if (m.find() && m.groupCount() > 0) {
+            return m.group(1);
+        } else {
+            return "";
+        }
+    }
 }
