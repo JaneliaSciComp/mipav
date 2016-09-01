@@ -127,10 +127,10 @@ public class PlugInDialog3DSWCStats extends JDialogStandalonePlugin implements A
 
         init();
 
-        final String version = "2.0";
-        final String lastUpdate = "8/31/2016";
+        final String version = "$Rev$";
+        final String lastUpdate = "$Date::           $";
 
-        final String message = "Initializing v " + version + "\n" + "Last updated: " + lastUpdate + "\n" + "-----------------------------------------";
+        final String message = "Initializing " + version + "\n" + lastUpdate + "\n" + "-----------------------------------------";
 
         append(message, BLACK_TEXT);
     }
