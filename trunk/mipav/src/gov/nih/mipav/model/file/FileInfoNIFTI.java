@@ -1640,8 +1640,27 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double AcquisitionTime[] = null;
     
+    private int AcquisitionNumber[] = null;
+    
+    private int InstanceNumber[] = null;
+    
+    private double CsaImageTimeAfterStart[] = null;
+    
+    // This array of arrays is too massive for display.  Don't display unless requested.
+    private double CsaImageMosaicRefAcqTimes[][] = null;
+    
+    private String CsaImageICE_Dims[] = null;
+    
+    private double CsaImageSliceMeasurementDuration[] = null;
+    
+    private double InstanceCreationTime[] = null;
+    
     // Same as image.getExtents()
     private int dcmmeta_shape[] = null;
+    
+    private double dcmmeta_affine[][] = null;
+    
+    private double dcmmeta_reorient_transform[][] = null;
     
     private int dcmmeta_slice_dim = Integer.MIN_VALUE;
     
@@ -4117,10 +4136,76 @@ public class FileInfoNIFTI extends FileInfoBase {
 	        		}
 	        	}
 	        }
+	        if (AcquisitionNumber != null) {
+	        	for (i = 0; i < AcquisitionNumber.length; i++) {
+	        		if (AcquisitionNumber[i] != Integer.MIN_VALUE) {
+	        			dialog.append("AcquisitionNumber["+i+"] = " + AcquisitionNumber[i] + "\n");
+	        		}
+	        	}
+	        }
+	        if (InstanceNumber != null) {
+	        	for (i = 0; i < InstanceNumber.length; i++) {
+	        		if (InstanceNumber[i] != Integer.MIN_VALUE) {
+	        			dialog.append("InstanceNumber["+i+"] = " + InstanceNumber[i] + "\n");
+	        		}
+	        	}
+	        }
+	        if (CsaImageTimeAfterStart != null) {
+	        	for (i = 0; i < CsaImageTimeAfterStart.length; i++) {
+	        		if (!Double.isNaN(CsaImageTimeAfterStart[i])) {
+	        			dialog.append("CsaImage.TimeAfterStart["+i+"] = " + CsaImageTimeAfterStart[i] + "\n");
+	        		}
+	        	}
+	        }
+	        if (CsaImageICE_Dims != null) {
+	        	for (i = 0; i < CsaImageICE_Dims.length; i++) {
+	        		if (CsaImageICE_Dims[i] != null) {
+	        			dialog.append("CsaImage.ICE_Dims["+i+"] = " + CsaImageICE_Dims[i] + "\n");
+	        		}
+	        	}
+	        }
+	        if (CsaImageSliceMeasurementDuration != null) {
+	        	for (i = 0; i < CsaImageSliceMeasurementDuration.length; i++) {
+	        		if (!Double.isNaN(CsaImageSliceMeasurementDuration[i])) {
+	        			dialog.append("CsaImage.SliceMeasurementDuration["+i+"] = " +
+	        		           CsaImageSliceMeasurementDuration[i] + "\n");
+	        		}
+	        	}
+	        }
+	        if (InstanceCreationTime != null) {
+	        	for (i = 0; i < InstanceCreationTime.length; i++) {
+	        		if (!Double.isNaN(InstanceCreationTime[i])) {
+	        			dialog.append("InstanceCreationTime["+i+"] = " + InstanceCreationTime[i] + "\n");
+	        		}
+	        	}
+	        }
 	        if (dcmmeta_shape != null) {
 	        	for (i = 0; i < dcmmeta_shape.length; i++) {
 	        		if (dcmmeta_shape[i] != Integer.MIN_VALUE) {
 	        			dialog.append("dcmmeta_shape["+i+"] = " + dcmmeta_shape[i] + "\n");
+	        		}
+	        	}
+	        }
+	        if (dcmmeta_affine != null) {
+	        	for (i = 0; i < dcmmeta_affine.length; i++) {
+	        		if (dcmmeta_affine[i] != null) {
+	        			for (j = 0; j < dcmmeta_affine[i].length; j++) {
+	        				if (!Double.isNaN(dcmmeta_affine[i][j])) {
+	        					dialog.append("dcmmeta_affine["+i+"]["+j+"] = " + dcmmeta_affine[i][j] + "\n");
+	        				}
+	        			}
+	        		}
+	        	}
+	        }
+	        if (dcmmeta_reorient_transform != null) {
+	        	for (i = 0; i < dcmmeta_reorient_transform.length; i++) {
+	        		if (dcmmeta_reorient_transform[i] != null) {
+	        			for (j = 0; j < dcmmeta_reorient_transform[i].length; j++) {
+	        				if (!Double.isNaN(dcmmeta_reorient_transform[i][j])) {
+	        					dialog.append("dcmmeta_reorient_transform["+i+"]["+j+"] = " + 
+	        							dcmmeta_reorient_transform[i][j] + "\n");
+	        				}
+	        			}
 	        		}
 	        	}
 	        }
@@ -8838,12 +8923,84 @@ public class FileInfoNIFTI extends FileInfoBase {
     	return AcquisitionTime;
     }
     
+    public void setAcquisitionNumber(int AcquisitionNumber[]) {
+    	this.AcquisitionNumber = AcquisitionNumber;
+    }
+    
+    public int[] getAcquisitionNumber() {
+    	return AcquisitionNumber;
+    }
+    
+    public void setInstanceNumber(int InstanceNumber[]) {
+    	this.InstanceNumber = InstanceNumber;
+    }
+    
+    public int[] getInstanceNumber() {
+    	return InstanceNumber;
+    }
+    
+    public void setCsaImageTimeAfterStart(double CsaImageTimeAfterStart[]) {
+    	this.CsaImageTimeAfterStart = CsaImageTimeAfterStart;
+    }
+    
+    public double[] getCsaImageTimeAfterStart() {
+    	return CsaImageTimeAfterStart;
+    }
+    
+    public void setCsaImageMosaicRefAcqTimes(double CsaImageMosaicRefAcqTimes[][]) {
+    	this.CsaImageMosaicRefAcqTimes = CsaImageMosaicRefAcqTimes;
+    }
+    
+    public double[][] getCsaImageMosaicRefAcqTimes() {
+    	return CsaImageMosaicRefAcqTimes;
+    }
+    
+    public void setCsaImageICE_Dims(String CsaImageICE_Dims[]) {
+    	this.CsaImageICE_Dims = CsaImageICE_Dims;
+    }
+    
+    public String[] getCsaImageICE_Dims() {
+    	return CsaImageICE_Dims;
+    }
+    
+    public void setCsaImageSliceMeasurementDuration(double CsaImageSliceMeasurementDuration[]) {
+    	this.CsaImageSliceMeasurementDuration = CsaImageSliceMeasurementDuration;
+    }
+    
+    public double[] getCsaImageSliceMeasurementDuration() {
+    	return CsaImageSliceMeasurementDuration;
+    }
+    
+    public void setInstanceCreationTime(double InstanceCreationTime[]) {
+    	this.InstanceCreationTime = InstanceCreationTime;
+    }
+    
+    public double[] getInstanceCreationTime() {
+    	return InstanceCreationTime;
+    }
+    
     public void setDcmmeta_shape(int dcmmeta_shape[]) {
     	this.dcmmeta_shape = dcmmeta_shape;
     }
     
     public int[] getDcmmeta_shape() {
     	return dcmmeta_shape;
+    }
+    
+    public void setDcmmeta_affine(double dcmmeta_affine[][]) {
+    	this.dcmmeta_affine = dcmmeta_affine;
+    }
+    
+    public double[][] getDcmmeta_affine() {
+    	return dcmmeta_affine;
+    }
+    
+    public void setDcmmeta_reorient_transform(double dcmmeta_reorient_transform[][]) {
+    	this.dcmmeta_reorient_transform = dcmmeta_reorient_transform;
+    }
+    
+    public double[][] getDcmmeta_reorient_transform() {
+    	return dcmmeta_reorient_transform;
     }
     
     public void setDcmmeta_slice_dim(int dcmmeta_slice_dim) {
