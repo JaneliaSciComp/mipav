@@ -2477,7 +2477,7 @@ public class FileIO {
                 case FileUtility.NIFTI:
                 case FileUtility.NIFTI_MULTIFILE:
                     readSrc = new FileNIFTI(fileName, fileDir);
-                    success = ((FileNIFTI) readSrc).readHeader(fileName, fileDir, niftiCompressed);
+                    success = ((FileNIFTI) readSrc).readHeader(fileName, fileDir, niftiCompressed, false);
                     if (success) {
                         fileInfo = ((FileNIFTI) readSrc).getFileInfo();
                     }
@@ -3112,10 +3112,10 @@ public class FileIO {
 
                 case FileUtility.NIFTI:
                     if (niftiCompressed) {
-                        image = readNIFTI(fileName, fileDir, one, true, false);
+                        image = readNIFTI(fileName, fileDir, one, true, false, false);
                         image.setImageName(fileName.substring(0, fileName.lastIndexOf(".")), false);
                     } else {
-                        image = readNIFTI(fileName, fileDir, one, false, false);
+                        image = readNIFTI(fileName, fileDir, one, false, false, false);
                     }
 
                     break;
@@ -10022,7 +10022,8 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    public ModelImage readNIFTI(final String fileName, final String fileDir, final boolean one, final boolean niftiCompressed, final boolean noImportData) {
+    public ModelImage readNIFTI(final String fileName, final String fileDir, final boolean one, final boolean niftiCompressed, final boolean noImportData,
+    		final boolean noReadPrivateTags) {
         ModelImage image = null;
         FileNIFTI imageFile;
 
@@ -10032,9 +10033,9 @@ public class FileIO {
                 createProgressBar(imageFile, fileName, FileIO.FILE_READ);
             }
             if (niftiCompressed) {
-                image = imageFile.readImage(one, true, noImportData);
+                image = imageFile.readImage(one, true, noImportData, noReadPrivateTags);
             } else {
-                image = imageFile.readImage(one, false, noImportData);
+                image = imageFile.readImage(one, false, noImportData, noReadPrivateTags);
             }
 
         } catch (final IOException error) {
@@ -10190,7 +10191,7 @@ public class FileIO {
         nImages = i; // total number of suspected files to import into an image
 
         if (nImages == 1) {
-            return readNIFTI(fileName, fileDir, false, false, false);
+            return readNIFTI(fileName, fileDir, false, false, false, false);
         }
 
         createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName), FileIO.FILE_READ);
@@ -10205,7 +10206,7 @@ public class FileIO {
 
         try {
 
-            if ( !imageFile.readHeader(fileList[0], fileDir, false)) {
+            if ( !imageFile.readHeader(fileList[0], fileDir, false, false)) {
                 throw (new IOException(" NIFTI header file error"));
             }
         } catch (final IOException ioe) {
@@ -10260,7 +10261,7 @@ public class FileIO {
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
                 imageFile = new FileNIFTI(fileList[i], fileDir);
 
-                if ( ! (imageFile).readHeader(fileList[i], fileDir, false)) {
+                if ( ! (imageFile).readHeader(fileList[i], fileDir, false, false)) {
                     throw (new IOException(" NIFTI header file error"));
                 }
 
