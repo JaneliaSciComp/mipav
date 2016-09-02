@@ -1189,13 +1189,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 files = sessionFiles[i][j].listFiles();
                 for (k = 0; k < files.length; k++) {
                     if (files[k].isDirectory()) {
-                        if (files[k].getName().equalsIgnoreCase("ANAT")) {
+                        if ((files[k].getName().equalsIgnoreCase("ANAT")) && (files[k].listFiles().length > 0)) {
                             anatNumber++;
-                        } else if (files[k].getName().equalsIgnoreCase("FUNC")) {
+                        } else if ((files[k].getName().equalsIgnoreCase("FUNC")) && (files[k].listFiles().length > 0)) {
                             funcNumber++;
-                        } else if (files[k].getName().equalsIgnoreCase("DWI")) {
+                        } else if ((files[k].getName().equalsIgnoreCase("DWI")) && (files[k].listFiles().length > 0)) {
                             dwiNumber++;
-                        } else if (files[k].getName().equalsIgnoreCase("FMAP")) {
+                        } else if ((files[k].getName().equalsIgnoreCase("FMAP")) && (files[k].listFiles().length > 0)) {
                             fmapNumber++;
                         }
                     } // if (files[k].isDirectory())
@@ -1213,10 +1213,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         // subdirectoriesFound = anatNumber + funcNumber + dwiNumber + fmapNumber;
         subdirectoriesFound = anatNumber + funcNumber + dwiNumber;
 
-        printlnToLog(anatNumber + " anat subdirectories were found");
-        printlnToLog(funcNumber + " func subdirectories were found");
-        printlnToLog(dwiNumber + " dwi subdirectories were found");
-        printlnToLog(fmapNumber + " fmap subdirectories were found");
+        printlnToLog(anatNumber + " nonempty anat subdirectories were found");
+        printlnToLog(funcNumber + " nonempty func subdirectories were found");
+        printlnToLog(dwiNumber + " nonempty dwi subdirectories were found");
+        printlnToLog(fmapNumber + " nonempty fmap subdirectories were found");
         printlnToLog("Number of subject subdirectory .tsv files = " + totalSubjectTSVFiles);
         printlnToLog("Number of subject subdirectory _scans.tsv files = " + totalSubjectScansTSVFiles);
         printlnToLog("Number of subject subdirectory _sessions.tsv files = " + totalSubjectSessionsTSVFiles);
@@ -1360,8 +1360,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 for (j = 0; j < anatFiles[i].length; j++) {
                     pValue = 20 + 80 * subdirectoriesRead / subdirectoriesFound;
                     progressBar.updateValue(pValue);
-                    subdirectoriesRead++;
                     if ( (anatFiles[i][j] != null) && (anatFiles[i][j].length > 0)) {
+                    	subdirectoriesRead++;
                         sessionImagesRead = 0;
                         sessionJsonRead = 0;
                         previewImages.add(null);
@@ -1471,8 +1471,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 for (j = 0; j < funcFiles[i].length; j++) {
                     pValue = 20 + 80 * subdirectoriesRead / subdirectoriesFound;
                     progressBar.updateValue(pValue);
-                    subdirectoriesRead++;
-                    if (funcFiles[i][j] != null) {
+                    if ((funcFiles[i][j] != null) && (funcFiles[i][j].length > 0)) {
+                    	subdirectoriesRead++;
                         sessionImagesRead = 0;
                         sessionJsonRead = 0;
                         sessionEventsRead = 0;
@@ -1724,8 +1724,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 for (j = 0; j < funcFiles[i].length; j++) {
                     pValue = 20 + 80 * subdirectoriesRead / subdirectoriesFound;
                     progressBar.updateValue(pValue);
-                    subdirectoriesRead++;
-                    if (dwiFiles[i][j] != null) {
+                    if ((dwiFiles[i][j] != null) && (dwiFiles[i][j].length > 0)) {
+                    	subdirectoriesRead++;
                         sessionImagesRead = 0;
                         sessionJsonRead = 0;
                         sessionBvalRead = 0;
