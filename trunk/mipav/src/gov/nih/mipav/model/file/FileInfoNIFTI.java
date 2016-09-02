@@ -836,28 +836,41 @@ public class FileInfoNIFTI extends FileInfoBase {
     // DICOM:0040_0245 TM
     private String performedProcedureStepStartTime = null;
     
+    // Although some information overlaps between
+    // the dicom standard tags and CSA headers, patient information is not included in the CSA.  Therefore,
+    // anonymization doesn't need to fiddle with the CSA headers
+    
+    // Fourier line position with the maximal echo for the performed acquisition
     private int CsaImageEchoLinePosition = Integer.MIN_VALUE;
     
+    // Number of the slice beginning with 0
     private int CsaImageProtocolSliceNumber = Integer.MIN_VALUE;
     
+    // 8 bit mask of the used receiver channels for the performed acquisition. Example: channel 0: 00000001 channel 3: 00000111
     private int CsaImageUsedChannelMask = Integer.MIN_VALUE;
     
     private double CsaImageBandwidthPerPixelPhaseEncode = Double.NaN;
     
+    // Number of performed fourier lines
     private int CsaImageMeasuredFourierLines = Integer.MIN_VALUE;
     
+    // Parameters used for acquisition, e.g. door open, interpolation, raw filter, Siemens seqence .&#xB7;
     private int CsaImageSequenceMask = Integer.MIN_VALUE;
     
     private String CsaImageRFSWDDataType = null;
     
     private String CsaImageImaPATModeText = null;
     
+    // The time in ns between the beginning of sampling one data point and the beginning of sampling of next data
+    // point in the acquired signal. This means the dwell time is the sampling rate during digital conversion of an acquired signal
     private int CsaImageRealDwellTime= Integer.MIN_VALUE;
     
     private String CsaImageImaCoilString = null;
     
+    // Echo column position for the performed acquisition
     private int CsaImageEchoColumnPosition = Integer.MIN_VALUE;
     
+    // Phase encoding direction: 0 = negative; 1 = positive
     private int CsaImagePhaseEncodingDirectionPositive = Integer.MIN_VALUE;
     
     private double CsaImageSlicePosition_PCS[] = null;
@@ -870,12 +883,15 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int CsaImageImaRelTablePosition[] = null;
     
+    // Number of slices in a mosaic image
     private int CsaImageNumberOfImagesInMosaic = Integer.MIN_VALUE;
     
     private int CsaImageNonPlanarImage = Integer.MIN_VALUE;
     
+    // Echo partition position for the performed acquisition
     private int CsaImageEchoPartitionPosition = Integer.MIN_VALUE;
     
+    // Used acquisition matrix description
     private String CsaImageAcquisitionMatrixText = null;
     
     private int CsaImageImaAbsTablePosition[] = null;
@@ -970,26 +986,35 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriest_puls_max = Double.NaN;
     
+    // Protocol version
     private int CsaSeriesMrPhoenixProtocolulVersion = Integer.MIN_VALUE;
     
+    // Sequence file name for actual measurement protocol
     private String CsaSeriesMrPhoenixProtocoltSequenceFileName = null;
     
+    // Name of actual measurement protocol
     private String CsaSeriesMrPhoenixProtocoltProtocolName = null;
     
+    // Referenced image
     private String CsaSeriesMrPhoenixProtocoltReferenceImage0 = null;
     		
+    // Referenced image
     private String CsaSeriesMrPhoenixProtocoltReferenceImage1 = null;
     
+    // Referenced image
     private String CsaSeriesMrPhoenixProtocoltReferenceImage2 = null;
     
+    // Valid flag for desired table position in series block coordinate system
     private int CsaSeriesMrPhoenixProtocolucScanRegionPosValid = Integer.MIN_VALUE;
     
     private int CsaSeriesMrPhoenixProtocolucTablePositioningMode = Integer.MIN_VALUE;
     
+    // Baseline consistence info
     private String CsaSeriesMrPhoenixProtocolsProtConsistencyInfotBaselineString = null;
     
     private String CsaSeriesMrPhoenixProtocolsProtConsistencyInfotSystemType = null;
     
+    // Nominal Bo compensation consistence
     private double CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflNominalB0 = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsProtConsistencyInfoflGMax = Double.NaN;
@@ -998,6 +1023,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int CsaSeriesMrPhoenixProtocolsProtConsistencyInfolMaximumNofRxReceiverChannels = Integer.MIN_VALUE;
     
+    // Eddy compensation x amplitude gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationXaflAmplitude0 = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationXaflAmplitude1 = Double.NaN;
@@ -1008,6 +1034,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationXaflAmplitude4 = Double.NaN;
     
+    // Eddy compensation x time parameter gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationXaflTimeConstant0 = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationXaflTimeConstant1 = Double.NaN;
@@ -1018,6 +1045,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationXaflTimeConstant4 = Double.NaN;
     
+    // Eddy compensation y amplitude gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationYaflAmplitude0 = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationYaflAmplitude1 = Double.NaN;
@@ -1028,6 +1056,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationYaflAmplitude4 = Double.NaN;
     
+    // Eddy compensation y time parameter gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationYaflTimeConstant0 = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationYaflTimeConstant1 = Double.NaN;
@@ -1038,6 +1067,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationYaflTimeConstant4 = Double.NaN;
     
+    // Eddy compensation z amplitude gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationZaflAmplitude0 = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationZaflAmplitude1 = Double.NaN;
@@ -1048,6 +1078,7 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationZaflAmplitude4 = Double.NaN;
     
+    // Eddy compensation z time parameter gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationZaflTimeConstant0 = Double.NaN;
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsEddyCompensationZaflTimeConstant1 = Double.NaN;
@@ -1096,58 +1127,85 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsB0CompensationZaflTimeConstant2 = Double.NaN;
     
+    // B0 compensation gradient system specification valid flag
     private int CsaSeriesMrPhoenixProtocolsGRADSPECbB0CompensationValid = Integer.MIN_VALUE;
     
+    // Crossterm compensation xy amplitude gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationXYaflAmplitude0 = Double.NaN;
     
+    // Crossterm compensation xy time parameter gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationXYaflTimeConstant0 = Double.NaN;
     
+    // Crossterm compensation xz amplitude gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationXZaflAmplitude0 = Double.NaN;
     
+    // Crossterm compensation xz time parameter gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationXZaflTimeConstant0 = Double.NaN;
     
+    // Crossterm compensation yx amplitude gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationYXaflAmplitude0 = Double.NaN;
     
+    // Crossterm compensation yx time parameter gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationYXaflTimeConstant0 = Double.NaN;
     
+    // Crossterm compensation yz amplitude gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationYZaflAmplitude0 = Double.NaN;
     
+    // Crossterm compensation yz time parameter gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationYZaflTimeConstant0 = Double.NaN;
     
+    // Crossterm compensation zx amplitude gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationZXaflAmplitude0 = Double.NaN;
     
+    // Crossterm compensation zx time parameter gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationZXaflTimeConstant0 = Double.NaN;
     
+    // Crossterm compensation zy amplitude gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationZYaflAmplitude0 = Double.NaN;
     
+    // Crossterm compensation zy time parameter gradient system specification
     private double CsaSeriesMrPhoenixProtocolsGRADSPECsCrossTermCompensationZYaflTimeConstant0 = Double.NaN;
     
+    // "Crossterm compensation gradient system specification valid flag
     private int CsaSeriesMrPhoenixProtocolsGRADSPECbCrossTermCompensationValid = Integer.MIN_VALUE;
     
+    // Gradient offset x direction [bit pattern]
     private int CsaSeriesMrPhoenixProtocolsGRADSPEClOffsetX = Integer.MIN_VALUE;
     
+    // Gradient offset y direction [bit pattern]
     private int CsaSeriesMrPhoenixProtocolsGRADSPEClOffsetY = Integer.MIN_VALUE;
     
+    // Gradient offset z direction [bit pattern]
     private int CsaSeriesMrPhoenixProtocolsGRADSPEClOffsetZ = Integer.MIN_VALUE;
     
+    // Gradient offsets valid flag
     private int CsaSeriesMrPhoenixProtocolsGRADSPECbOffsetValid = Integer.MIN_VALUE;
     
+    // Gradient delay x direction
     private int CsaSeriesMrPhoenixProtocolsGRADSPEClDelayX = Integer.MIN_VALUE;
     
+    // Gradient delay y direction
     private int CsaSeriesMrPhoenixProtocolsGRADSPEClDelayY = Integer.MIN_VALUE;
     
+    // Gradient delay z direction
     private int CsaSeriesMrPhoenixProtocolsGRADSPEClDelayZ = Integer.MIN_VALUE;
     
+    // Gradient delay valid flag
     private int CsaSeriesMrPhoenixProtocolsGRADSPECbDelayValid = Integer.MIN_VALUE;
     
+    // Gradient sensitivity x direction [mT/m]
     private double CsaSeriesMrPhoenixProtocolsGRADSPECflSensitivityX = Double.NaN;
     
+    // Gradient sensitivity y direction [mT/m]
     private double CsaSeriesMrPhoenixProtocolsGRADSPECflSensitivityY = Double.NaN;
     
+    // Gradient sensitivity z direction [mT/m]
     private double CsaSeriesMrPhoenixProtocolsGRADSPECflSensitivityZ = Double.NaN;
     
+    // Gradient sensitivity valid flag
     private int CsaSeriesMrPhoenixProtocolsGRADSPECbSensitivityValid = Integer.MIN_VALUE;
     
+    // Shim current parameter [mA]
     private int CsaSeriesMrPhoenixProtocolsGRADSPECalShimCurrent0 = Integer.MIN_VALUE;
     
     private int CsaSeriesMrPhoenixProtocolsGRADSPECalShimCurrent1 = Integer.MIN_VALUE;
@@ -1158,22 +1216,31 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int CsaSeriesMrPhoenixProtocolsGRADSPECalShimCurrent4 = Integer.MIN_VALUE;
     
+    // Shim current parameter valid flag
     private int CsaSeriesMrPhoenixProtocolsGRADSPECbShimCurrentValid = Integer.MIN_VALUE;
     
+    // Gradient mode: fast, normal, whisper
     private int CsaSeriesMrPhoenixProtocolsGRADSPECucMode = Integer.MIN_VALUE;
     
+    // Transmitter system nucleus
     private String CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0tNucleus = null;
     
+    // Transmitter system frequency [Hz]
     private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0lFrequency = Integer.MIN_VALUE;
     
+    // Frequency valid flag
     private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bFrequencyValid = Integer.MIN_VALUE;
     
+    // Transmitter reference amplitude [V]
     private double CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flReferenceAmplitude = Double.NaN;
     
+    // Reference amplitude valid flag
     private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bReferenceAmplitudeValid = Integer.MIN_VALUE;
     
+    // Transmitter amplitude correction factor, e.g. used for water suppression
     private double CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0flAmplitudeCorrection = Double.NaN;
     
+    // Amplitude correction valid flag
     private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bAmplitudeCorrectionValid = Integer.MIN_VALUE;
     
     private int CsaSeriesMrPhoenixProtocolsTXSPECasNucleusInfo0bRFPAIndexValid = Integer.MIN_VALUE;
@@ -1308,6 +1375,18 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int CsaSeriesMrPhoenixProtocolsSliceArraylConc = Integer.MIN_VALUE;
     
+    // # CsaSeries.MrPhoenixProtocol.sSliceArray.ucMode indicates siemens slice order:
+    // # Siemens; 1 Ascending, 2 Descending, and 4 Interleaved Ascending.
+    // # NIFTI;   1 Ascending, 2 Descending, and 4 Interleaving Descending
+    // # Siemens slice order 4 could be nifti slice order 3 or 5 depending on num_slices
+    // # - nifti slice order 3: interleave_asc, odd first, odd num slices, interleave INC
+    // # - nifti slice order 5: interleave_asc, even first, even num slices, interleave INC 2
+    // self.slice_order = self.getelem(self._hdr, 'CsaSeries.MrPhoenixProtocol.sSliceArray.ucMode', None, 0)
+    //	    if self.slice_order == 4:   # don't try to guess if num_slices can't be determined
+    //	        if self.num_slices % 2 != 0:
+    //	            self.slice_order = 3  # interleaved ascending, odd first
+    //	        else:
+    //	            self.slice_order = 5  # interleaved ascending, even first
     private int CsaSeriesMrPhoenixProtocolsSliceArrayucMode = Integer.MIN_VALUE;
     
     private double CsaSeriesMrPhoenixProtocolsSliceArraysTSatdThickness = Double.NaN;
@@ -1638,19 +1717,24 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private int CsaSeriesMrPhoenixProtocolucAutoAlignInit = Integer.MIN_VALUE;
     
+    // The time the acquisition of data started
     private double AcquisitionTime[] = null;
     
+    // A number identifying the gathering of data over a period of time which resulted in this data set
     private int AcquisitionNumber[] = null;
     
     private int InstanceNumber[] = null;
     
+    // Time delay after start of measurment
     private double CsaImageTimeAfterStart[] = null;
     
     // This array of arrays is too massive for display.  Don't display unless requested.
     private double CsaImageMosaicRefAcqTimes[][] = null;
-    
+    // The 9 used ICE object dimensions of the performed acquisition. Combined/unset dimensions will be marked
+    // with 'X'. E.g.: X_2_1_1_1_1_2_1_1"/>
     private String CsaImageICE_Dims[] = null;
     
+    // Time duration between two slices of the performed acquisition
     private double CsaImageSliceMeasurementDuration[] = null;
     
     private double InstanceCreationTime[] = null;
