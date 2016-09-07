@@ -7706,7 +7706,7 @@ public class FileNIFTI extends FileBase {
 	    	        }
 	    	        try {
 	    	        	CsaSeriesMrPhoenixProtocolucEnableIntro = 
-	    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.ucEnbaleIntro");
+	    	        			global_const.getInt("CsaSeries.MrPhoenixProtocol.ucEnableIntro");
 	    	        }
 	    	        catch (JSONException e) {
 	    	        	Preferences.debug("CsaSeries.MrPhoenixProtocol.ucEnableIntro not found\n", 
