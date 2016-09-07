@@ -1771,11 +1771,6 @@ public class FileInfoNIFTI extends FileInfoBase {
     
     private double ContentTime[] = null;
     
-    // The dictionaries of summarized meta data are encoded with JSON. A small amount of “meta meta” data that describes
-    // the DcmMeta extension is also included. This includes the affine (‘dcmmeta_affine’), shape (‘dcmmeta_shape’),
-    // any reorientation transform (‘dcmmeta_reorient_transform’), and the slice dimension (‘dcmmeta_slice_dim’) of the
-    // data described by the meta data. A version number for the DcmMeta extension (‘dcmmeta_version’) is also included.
-
     // The dictionaries of summarized meta data are encoded with JSON. A small amount of "meta meta" data that describes
     // the DcmMeta extension is also included. This includes the affine ('dcmmeta_affine'), shape ('dcmmeta_shape'),
     // any reorientation transform ('dcmmeta_reorient_transform'), and the slice dimension ('dcmmeta_slice_dim') of the
