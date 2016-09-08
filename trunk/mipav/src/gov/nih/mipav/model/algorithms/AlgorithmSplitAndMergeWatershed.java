@@ -48,6 +48,9 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 	
 	int binNumber;
 	
+	boolean doMeyer1 = false;
+	boolean doMeyer2 = true;
+	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
 	public AlgorithmSplitAndMergeWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8, boolean limitBins,
@@ -93,6 +96,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
     	boolean uniqueLabelFound;
     	boolean labelFound;
     	boolean testpfifo = false;
+    	boolean testfifo = false;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -121,6 +125,19 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
         	}
         	return;
         } // if (testpfifo)
+        if (testfifo) {
+        	fifo.offer(5);
+        	fifo.offer(0);
+        	fifo.offer(100);
+        	fifo.offer(1);
+        	fifo.offer(2);
+        	fifo.offer(-1);
+        	while(!fifo.isEmpty()) {
+        		i = fifo.poll();
+        		System.out.println("i = " + i);
+        	}
+        	return;
+        }
         nDims = srcImage.getNDims();
         if (neighbor8) {
         	numNeighbor = 8;
@@ -293,7 +310,12 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
                     			}
         					}
         					else if (labelBuffer[allNeighbors[j][k]] == NARM) { /* A beta(Mi) pixel */
-        						labelBuffer[allNeighbors[j][k]] = INOQ;
+        						if (doMeyer1) {
+        							labelBuffer[allNeighbors[j][k]] = currentLabel;
+        						}
+        						else {
+        						    labelBuffer[allNeighbors[j][k]] = INOQ;
+        						}
         						pfifo.add(new indexValueItem(allNeighbors[j][k],imgBuffer[allNeighbors[j][k]]));
         					}
         				}
@@ -301,126 +323,141 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
             	} // if (labelBuffer[i] == INIT)
             } // for (i = 0; i < length; i++)
             
-            // Meyer2 watershed algorithm with Algorithm 4. split-and-merge placed after the assignment of WSHED.
-            while (!pfifo.isEmpty()) {
-            	p = pfifo.poll();
-            	i = p.getIndex();
-            	foundNeighbors = allNeighbors[i].length;
-            	exists = false;
-        	    loop1: for (j = 0; j < foundNeighbors-1; j++) {
-        	        for (k = j+1; k < foundNeighbors; k++) {
-        	        	if ((labelBuffer[allNeighbors[i][j]] > 0) && (labelBuffer[allNeighbors[i][k]] > 0) &&
-        	        			(labelBuffer[allNeighbors[i][j]] != labelBuffer[allNeighbors[i][k]])) {
-        	        		labelBuffer[i] = WSHED;
-        	        		exists = true;
-        	        		break loop1;
-        	        	}
-        	        }
-        	    } // loop1: for (j = 0; j < foundNeighbors-1; j++)
-            	if (exists) {
-            	    for (j = 0; j < foundNeighbors; j++) {
-            	    	if (labelBuffer[allNeighbors[i][j]] == NARM) { /* an unprocessed pixel */
-            	    		labelFound = false;
-            	    		labelBuffer[allNeighbors[i][j]] = PIAP;
-            	    		added = fifo.offer(allNeighbors[i][j]);
-    			    		if (!added) {
-                				MipavUtil.displayError("Failure to add " + allNeighbors[i][j] + " to the fifo");
-                				setCompleted(false);
-                				return;
-                			}
-    			    		while ((!labelFound) && (!fifo.isEmpty())) {
-    			    		    k = fifo.poll();
-    			    		    for (m = 0; m < allNeighbors[k].length; m++) {
-    			    		    	if ((labelBuffer[allNeighbors[k][m]] == NARM) && 
-    			    		    			(imgBuffer[allNeighbors[k][m]] == imgBuffer[allNeighbors[i][j]])) {
-    			    		    		labelBuffer[allNeighbors[k][m]] = PIAP;
-    			    		    		added = fifo.offer(allNeighbors[k][m]);
-    			    		    		if (!added) {
-    		                				MipavUtil.displayError("Failure to add " + allNeighbors[k][m] + " to the fifo");
-    		                				setCompleted(false);
-    		                				return;
-    		                			}
-    			    		    	}
-    			    		    	else if ((labelBuffer[allNeighbors[k][m]] == NARM) && 
-    			    		    			(imgBuffer[allNeighbors[k][m]] < imgBuffer[allNeighbors[i][j]])) {
-    			    		    		labelFound = true;
-    			    		    	}
-    			    		    	else if ((labelBuffer[allNeighbors[k][m]] == INOQ) && 
-    			    		    			(imgBuffer[allNeighbors[k][m]] <= imgBuffer[allNeighbors[i][j]])) {
-    			    		    		labelFound = true;
-    			    		    	}
-    			    		    } // for (m = 0; m < allNeighbors[k].length; m++)
-    			    		} // while ((!labelFound) && (!fifo.isEmpty()))
-    			    		if (!labelFound) { /* an isolated area I detected */
-    			    			currentLabel++;
-    			    			labelBuffer[allNeighbors[i][j]] = currentLabel;
-    			    			added = fifo.offer(allNeighbors[i][j]);
-        			    		if (!added) {
-                    				MipavUtil.displayError("Failure to add " + allNeighbors[i][j] + " to the fifo");
-                    				setCompleted(false);
-                    				return;
-                    			}
-        			    		while (!fifo.isEmpty()) {
-        			    		    k = fifo.poll();
-        			    		    for (m = 0; m < allNeighbors[k].length; m++) {
-        			    		        if (labelBuffer[allNeighbors[k][m]] == PIAP) {
-        			    		            labelBuffer[allNeighbors[k][m]] = currentLabel;
-        			    		            added = fifo.offer(allNeighbors[k][m]);
-        			    		    		if (!added) {
-        		                				MipavUtil.displayError("Failure to add " + allNeighbors[k][m] + " to the fifo");
-        		                				setCompleted(false);
-        		                				return;
-        		                			}
-        			    		        } // if (labelBuffer[allNeighbors[k][m]] == PIAP)
-        			    		        // Put pixels of the set beta(I) to the priority queue
-        			    		        else if (labelBuffer[allNeighbors[k][m]] == NARM) {
-        			    		        	pfifo.add(new indexValueItem(allNeighbors[k][m],imgBuffer[allNeighbors[k][m]]));
-        			    		        	labelBuffer[allNeighbors[k][m]] = INOQ;
-        			    		        } // else if (labelBuffer[allNeighbors[k][m]] == NARM)
-        			    		    } // for (m = 0; m < allNeighbors[k].length; m++)
-        			    		} // while (!fifo.isEmpty())
-    			    		} // if (!labelFound)
-    			    		else { /* restoring the original state of the area */
-    			    		    fifo.clear();
-    			    		    labelBuffer[allNeighbors[i][j]] = NARM;
-    			    		    added = fifo.offer(allNeighbors[i][j]);
-        			    		if (!added) {
-                    				MipavUtil.displayError("Failure to add " + allNeighbors[i][j] + " to the fifo");
-                    				setCompleted(false);
-                    				return;
-                    			}
-        			    		while (!fifo.isEmpty()) {
-        			    		    k = fifo.poll();
-        			    		    for (m = 0; m < allNeighbors[k].length; m++) {
-        			    		        if (labelBuffer[allNeighbors[k][m]] == PIAP) {
-        			    		            labelBuffer[allNeighbors[k][m]] = NARM;
-        			    		            added = fifo.offer(allNeighbors[k][m]);
-        			    		    		if (!added) {
-        		                				MipavUtil.displayError("Failure to add " + allNeighbors[k][m] + " to the fifo");
-        		                				setCompleted(false);
-        		                				return;
-        		                			}
-        			    		        } // if (labelBuffer[allNeighbors[k][m]] == PIAP)
-        			    		    } // for (m = 0; m < allNeighbors[k].length; m++)
-        			    		} // while (!fifo.isEmpty())
-    			    		} // else restoring the original state of the area
-            	    	} // if (labelBuffer[allNeighbors[i][j]] == NARM)
-            	    } // for (j = 0; j < foundNeighbor; j++)
-            	} // if (exists)
-            	else { // !exists
-            		uniqueLabelFound = false;
-            	    for (j = 0; j < foundNeighbors; j++) {
-            	    	if ((!uniqueLabelFound) && (labelBuffer[allNeighbors[i][j]] > 0)) {
-            	    		uniqueLabelFound = true;
-            	    		labelBuffer[i] = labelBuffer[allNeighbors[i][j]];
-            	    	}
-            	    	else if (labelBuffer[allNeighbors[i][j]] == NARM) {
-            	    		labelBuffer[allNeighbors[i][j]] = INOQ;
+            if (doMeyer1) {
+            	while (!pfifo.isEmpty()) {
+	            	p = pfifo.poll();
+	            	i = p.getIndex();
+	            	foundNeighbors = allNeighbors[i].length;
+	            	for (j = 0; j < foundNeighbors; j++) {
+            	    	if (labelBuffer[allNeighbors[i][j]] == NARM) {
+            	    		labelBuffer[allNeighbors[i][j]] = labelBuffer[i];
             	    		pfifo.add(new indexValueItem(allNeighbors[i][j],imgBuffer[allNeighbors[i][j]]));
             	    	}
-            	    } // for (j = 0; j < foundNeighbors; j++)
-            	} // else !exists
-            } // while (!pfifo.isEmpty())
+            	    }
+            	} // while (!pfifo.isEmpty())
+            }
+            else if (doMeyer2){ // Meyer2
+	            // Meyer2 watershed algorithm with Algorithm 4. split-and-merge placed after the assignment of WSHED.
+	            while (!pfifo.isEmpty()) {
+	            	p = pfifo.poll();
+	            	i = p.getIndex();
+	            	foundNeighbors = allNeighbors[i].length;
+	            	exists = false;
+	        	    loop1: for (j = 0; j < foundNeighbors-1; j++) {
+	        	        for (k = j+1; k < foundNeighbors; k++) {
+	        	        	if ((labelBuffer[allNeighbors[i][j]] > 0) && (labelBuffer[allNeighbors[i][k]] > 0) &&
+	        	        			(labelBuffer[allNeighbors[i][j]] != labelBuffer[allNeighbors[i][k]])) {
+	        	        		labelBuffer[i] = WSHED;
+	        	        		exists = true;
+	        	        		break loop1;
+	        	        	}
+	        	        }
+	        	    } // loop1: for (j = 0; j < foundNeighbors-1; j++)
+	            	if (exists) {
+	            	    for (j = 0; j < foundNeighbors; j++) {
+	            	    	if (labelBuffer[allNeighbors[i][j]] == NARM) { /* an unprocessed pixel */
+	            	    		labelFound = false;
+	            	    		labelBuffer[allNeighbors[i][j]] = PIAP;
+	            	    		added = fifo.offer(allNeighbors[i][j]);
+	    			    		if (!added) {
+	                				MipavUtil.displayError("Failure to add " + allNeighbors[i][j] + " to the fifo");
+	                				setCompleted(false);
+	                				return;
+	                			}
+	    			    		while ((!labelFound) && (!fifo.isEmpty())) {
+	    			    		    k = fifo.poll();
+	    			    		    for (m = 0; m < allNeighbors[k].length; m++) {
+	    			    		    	if ((labelBuffer[allNeighbors[k][m]] == NARM) && 
+	    			    		    			(imgBuffer[allNeighbors[k][m]] == imgBuffer[allNeighbors[i][j]])) {
+	    			    		    		labelBuffer[allNeighbors[k][m]] = PIAP;
+	    			    		    		added = fifo.offer(allNeighbors[k][m]);
+	    			    		    		if (!added) {
+	    		                				MipavUtil.displayError("Failure to add " + allNeighbors[k][m] + " to the fifo");
+	    		                				setCompleted(false);
+	    		                				return;
+	    		                			}
+	    			    		    	}
+	    			    		    	else if ((labelBuffer[allNeighbors[k][m]] == NARM) && 
+	    			    		    			(imgBuffer[allNeighbors[k][m]] < imgBuffer[allNeighbors[i][j]])) {
+	    			    		    		labelFound = true;
+	    			    		    	}
+	    			    		    	else if ((labelBuffer[allNeighbors[k][m]] == INOQ) && 
+	    			    		    			(imgBuffer[allNeighbors[k][m]] <= imgBuffer[allNeighbors[i][j]])) {
+	    			    		    		labelFound = true;
+	    			    		    	}
+	    			    		    } // for (m = 0; m < allNeighbors[k].length; m++)
+	    			    		} // while ((!labelFound) && (!fifo.isEmpty()))
+	    			    		if (!labelFound) { /* an isolated area I detected */
+	    			    			currentLabel++;
+	    			    			labelBuffer[allNeighbors[i][j]] = currentLabel;
+	    			    			added = fifo.offer(allNeighbors[i][j]);
+	        			    		if (!added) {
+	                    				MipavUtil.displayError("Failure to add " + allNeighbors[i][j] + " to the fifo");
+	                    				setCompleted(false);
+	                    				return;
+	                    			}
+	        			    		while (!fifo.isEmpty()) {
+	        			    		    k = fifo.poll();
+	        			    		    for (m = 0; m < allNeighbors[k].length; m++) {
+	        			    		        if (labelBuffer[allNeighbors[k][m]] == PIAP) {
+	        			    		            labelBuffer[allNeighbors[k][m]] = currentLabel;
+	        			    		            added = fifo.offer(allNeighbors[k][m]);
+	        			    		    		if (!added) {
+	        		                				MipavUtil.displayError("Failure to add " + allNeighbors[k][m] + " to the fifo");
+	        		                				setCompleted(false);
+	        		                				return;
+	        		                			}
+	        			    		        } // if (labelBuffer[allNeighbors[k][m]] == PIAP)
+	        			    		        // Put pixels of the set beta(I) to the priority queue
+	        			    		        else if (labelBuffer[allNeighbors[k][m]] == NARM) {
+	        			    		        	pfifo.add(new indexValueItem(allNeighbors[k][m],imgBuffer[allNeighbors[k][m]]));
+	        			    		        	labelBuffer[allNeighbors[k][m]] = INOQ;
+	        			    		        } // else if (labelBuffer[allNeighbors[k][m]] == NARM)
+	        			    		    } // for (m = 0; m < allNeighbors[k].length; m++)
+	        			    		} // while (!fifo.isEmpty())
+	    			    		} // if (!labelFound)
+	    			    		else { /* restoring the original state of the area */
+	    			    		    fifo.clear();
+	    			    		    labelBuffer[allNeighbors[i][j]] = NARM;
+	    			    		    added = fifo.offer(allNeighbors[i][j]);
+	        			    		if (!added) {
+	                    				MipavUtil.displayError("Failure to add " + allNeighbors[i][j] + " to the fifo");
+	                    				setCompleted(false);
+	                    				return;
+	                    			}
+	        			    		while (!fifo.isEmpty()) {
+	        			    		    k = fifo.poll();
+	        			    		    for (m = 0; m < allNeighbors[k].length; m++) {
+	        			    		        if (labelBuffer[allNeighbors[k][m]] == PIAP) {
+	        			    		            labelBuffer[allNeighbors[k][m]] = NARM;
+	        			    		            added = fifo.offer(allNeighbors[k][m]);
+	        			    		    		if (!added) {
+	        		                				MipavUtil.displayError("Failure to add " + allNeighbors[k][m] + " to the fifo");
+	        		                				setCompleted(false);
+	        		                				return;
+	        		                			}
+	        			    		        } // if (labelBuffer[allNeighbors[k][m]] == PIAP)
+	        			    		    } // for (m = 0; m < allNeighbors[k].length; m++)
+	        			    		} // while (!fifo.isEmpty())
+	    			    		} // else restoring the original state of the area
+	            	    	} // if (labelBuffer[allNeighbors[i][j]] == NARM)
+	            	    } // for (j = 0; j < foundNeighbor; j++)
+	            	} // if (exists)
+	            	else { // !exists
+	            		uniqueLabelFound = false;
+	            	    for (j = 0; j < foundNeighbors; j++) {
+	            	    	if ((!uniqueLabelFound) && (labelBuffer[allNeighbors[i][j]] > 0)) {
+	            	    		uniqueLabelFound = true;
+	            	    		labelBuffer[i] = labelBuffer[allNeighbors[i][j]];
+	            	    	}
+	            	    	else if (labelBuffer[allNeighbors[i][j]] == NARM) {
+	            	    		labelBuffer[allNeighbors[i][j]] = INOQ;
+	            	    		pfifo.add(new indexValueItem(allNeighbors[i][j],imgBuffer[allNeighbors[i][j]]));
+	            	    	}
+	            	    } // for (j = 0; j < foundNeighbors; j++)
+	            	} // else !exists
+	            } // while (!pfifo.isEmpty())
+            } // else if (doMeyer2)
             
             
             try {
