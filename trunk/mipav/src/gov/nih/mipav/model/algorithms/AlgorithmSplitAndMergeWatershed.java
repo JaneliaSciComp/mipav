@@ -9,6 +9,7 @@ import java.util.*;
 /**
  * 
  * @author ilb
+ * Retiring for now because now make this algorithm work properly.
  * Reference:
  * 1.) Fast watershed algorithms: analysis and extensions by Bogdan P. Dobrin, Timo Viero, and Moncef
  * Gabbouj.
