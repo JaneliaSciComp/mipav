@@ -388,6 +388,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Graph Based", "GraphBasedSeg", 0, null, false),
 								menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
 								menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
+								menuBuilder.buildMenuItem("Lower completion", "LowerCompletion", 0, null, false),
 								menuBuilder.buildMenuItem("Markov random field", "HMRF_EM", 0, null, false),
 								menuBuilder.buildMenuItem("Power Watershed", "PowerWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Regions from Partial Borders", "RegionsFromPartial", 0, null, false),
@@ -1650,6 +1651,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Unsharp mask", false);
 			menuBuilder.setMenuItemEnabled("Watershed", false);
 			menuBuilder.setMenuItemEnabled("Efficient Watershed", false);
+			menuBuilder.setMenuItemEnabled("Lower completion", false);
 			//menuBuilder.setMenuItemEnabled("Split and Merge Watershed", false);
 			menuBuilder.setMenuItemEnabled("VOI landmark", false);
 			menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
@@ -1762,6 +1764,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Subtract VOI background", true);
 		menuBuilder.setMenuItemEnabled("Single channel", true);
 		menuBuilder.setMenuItemEnabled("Efficient Watershed", true);
+		menuBuilder.setMenuItemEnabled("Lower completion", true);
 		//menuBuilder.setMenuItemEnabled("Split and Merge Watershed", true);
 		menuBuilder.setMenuItemEnabled("Watershed", true);
 		menuBuilder.setMenuItemEnabled("Histogram summary", true);
