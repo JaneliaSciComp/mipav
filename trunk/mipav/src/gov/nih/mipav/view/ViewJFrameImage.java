@@ -1905,6 +1905,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	new JDialogPowerWatershed(this, getActiveImage());
         } else if (command.equals("EfficientWatershed")) {
         	new JDialogEfficientWatershed(this, getActiveImage());
+        } else if (command.equals("LowerCompletion")) {
+        	new JDialogLowerCompletion(this, getActiveImage());
         } else if (command.equals("SplitAndMergeWatershed")) {
         	new JDialogSplitAndMergeWatershed(this, getActiveImage());
         } else if (command.equals("FuzzyConnectedness")) {
