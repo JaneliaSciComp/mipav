@@ -62,6 +62,10 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
     private JCheckBox binCheckBox;
     
     private int binNumber;
+    
+    private JCheckBox createWatershedCheckBox;
+    
+    private boolean createWatershedLines;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -261,6 +265,15 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
     }
     
     
+    /**
+     * 
+     * @param createWatershedLines
+     */
+    public void setCreateWatershedLines(boolean createWatershedLines) {
+    	this.createWatershedLines = createWatershedLines;
+    }
+    
+    
 
     /**
      * Once all the necessary variables are set, call the Split And Merge Watershed algorithm.
@@ -272,7 +285,7 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
                resultImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), 
                         		image.getImageName() + "_watershed");
            
-           watershedAlgo = new AlgorithmSplitAndMergeWatershed(resultImage, image, neighbor8, limitBins, binNumber);
+           watershedAlgo = new AlgorithmSplitAndMergeWatershed(resultImage, image, neighbor8, limitBins, binNumber, createWatershedLines);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -329,6 +342,7 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
         setNeighbor8(scriptParameters.getParams().getBoolean("neighbor_8"));
         setLimitBins(scriptParameters.getParams().getBoolean("limit_bins"));
         setBinNumber(scriptParameters.getParams().getInt("bin_number"));
+        setCreateWatershedLines(scriptParameters.getParams().getBoolean("create_watershed_lines"));
     }
 
     /**
@@ -341,6 +355,7 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("neighbor_8", neighbor8));
         scriptParameters.getParams().put(ParameterFactory.newParameter("limit_bins", limitBins));
         scriptParameters.getParams().put(ParameterFactory.newParameter("bin_number", binNumber));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("create_watershed_lines", createWatershedLines));
     }
 
     
@@ -385,6 +400,12 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
         gbcScale.fill = GridBagConstraints.HORIZONTAL;
         gbcScale.anchor = GridBagConstraints.WEST;
         gbcScale.insets = new Insets(0, 0, 2, 0);
+        createWatershedCheckBox = new JCheckBox("Create watershed lines");
+        createWatershedCheckBox.setFont(serif12);
+        createWatershedCheckBox.setForeground(Color.black);
+        createWatershedCheckBox.setSelected(true);
+        neighborPanel.add(createWatershedCheckBox, gbcScale);
+        gbcScale.gridy++;
         neighborGroup = new ButtonGroup();
         fourButton = new JRadioButton("4 nearest neighbors", true);
         fourButton.setFont(serif12);
@@ -397,6 +418,7 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
         eightButton.setForeground(Color.black);
         neighborGroup.add(eightButton);
         gbcScale.gridy++;
+        
         neighborPanel.add(eightButton, gbcScale); 
         binCheckBox = new JCheckBox("Limit bins per frame");
         binCheckBox.setFont(serif12);
@@ -447,6 +469,8 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
         else {
         	neighbor8 = true;
         }
+        
+        createWatershedLines = createWatershedCheckBox.isSelected();
         
         limitBins = binCheckBox.isSelected();
         if (limitBins) {
@@ -507,6 +531,7 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
             table.put(new ParameterBoolean("neighbor_8", false));
             table.put(new ParameterBoolean("limit_bins", false));
             table.put(new ParameterInt("bin_number", 4));
+            table.put(new ParameterBoolean("create_watershed_lines", true));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
