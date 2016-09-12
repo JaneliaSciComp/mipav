@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * 
  * @author ilb
- * Retiring for now because now make this algorithm work properly.
+ * Separate dark VOIs on a constant light background only works if you do lower completion first.
  * Reference:
  * 1.) Fast watershed algorithms: analysis and extensions by Bogdan P. Dobrin, Timo Viero, and Moncef
  * Gabbouj.
@@ -49,17 +49,17 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 	
 	int binNumber;
 	
-	boolean doMeyer1 = false;
-	boolean doMeyer2 = true;
+	boolean createWatershedLines;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
 	public AlgorithmSplitAndMergeWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8, boolean limitBins,
-			int binNumber) {
+			int binNumber, boolean createWatershedLines) {
 		super(destImage, srcImage);
 		this.neighbor8 = neighbor8;
 		this.limitBins = limitBins;
 		this.binNumber = binNumber;
+		this.createWatershedLines = createWatershedLines;
 	}
 	
 	public void runAlgorithm() {
@@ -69,7 +69,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
     	int tDim;
     	int nDims;
     	int length;
-    	double imgBuffer[];
+    	int imgBuffer[];
     	int labelBuffer[] = null;
     	int x;
     	int y;
@@ -83,10 +83,6 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
     	Queue <Integer> fifo = new LinkedList<Integer>();
     	Comparator<indexValueItem> comparator = new indexValueComparator();
     	PriorityQueue<indexValueItem> pfifo;
-    	double minValue;
-    	double maxValue;
-    	double range;
-    	double scale;
     	int numNeighbor;
     	int neighbors[];
     	int allNeighbors[][];
@@ -98,6 +94,8 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
     	boolean labelFound;
     	boolean testpfifo = false;
     	boolean testfifo = false;
+    	AlgorithmLowerCompletion lcAlgo;
+    	ModelImage lcImage;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -139,6 +137,12 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
         	}
         	return;
         }
+        lcImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
+        		srcImage.getImageName());
+        lcAlgo = new AlgorithmLowerCompletion(lcImage, srcImage, neighbor8, limitBins, binNumber);
+        lcAlgo.run();
+        lcAlgo.finalize();
+        lcAlgo = null;
         nDims = srcImage.getNDims();
         if (neighbor8) {
         	numNeighbor = 8;
@@ -162,7 +166,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
         }
         
         try {
-            imgBuffer = new double[length];
+            imgBuffer = new int[length];
             labelBuffer = new int[length];
             allNeighbors = new int[length][];
         } catch (OutOfMemoryError e) {
@@ -212,34 +216,15 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
         for (z = 0; z < zDim; z++) {
 
             try {
-                srcImage.exportData((z + t*zDim)*length, length, imgBuffer);
+                lcImage.exportData((z + t*zDim)*length, length, imgBuffer);
             } catch (IOException error) {
                 displayError("Algorithm Split And Merge Watershed: image bounds exceeded");
                 setCompleted(false);
                 
-                srcImage.releaseLock();
+                lcImage.releaseLock();
 
                 return;
             }
-            
-            if (limitBins) {
-            	minValue = Double.MAX_VALUE;
-            	maxValue = -Double.MAX_VALUE;
-            	for (i = 0; i < length; i++) {
-            	    if (imgBuffer[i] < minValue) {
-            	    	minValue = imgBuffer[i];
-            	    }
-            	    if (imgBuffer[i] > maxValue) {
-            	    	maxValue = imgBuffer[i];
-            	    }
-            	}
-            	
-            	range = maxValue - minValue;
-        	    scale = (binNumber-1)/range;
-        	    for (i = 0; i < length; i++) {
-        	    	imgBuffer[i] = Math.min((double)(binNumber-1), Math.floor((imgBuffer[i]-minValue)*scale + 0.5));
-        	    }
-            } // if (limitBins)
             
             for (i = 0; i < length; i++) {
             	labelBuffer[i] = INIT;
@@ -311,7 +296,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
                     			}
         					}
         					else if (labelBuffer[allNeighbors[j][k]] == NARM) { /* A beta(Mi) pixel */
-        						if (doMeyer1) {
+        						if (!createWatershedLines) {
         							labelBuffer[allNeighbors[j][k]] = currentLabel;
         						}
         						else {
@@ -324,7 +309,8 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
             	} // if (labelBuffer[i] == INIT)
             } // for (i = 0; i < length; i++)
             
-            if (doMeyer1) {
+            if (!createWatershedLines) {
+            	// Meyer1
             	while (!pfifo.isEmpty()) {
 	            	p = pfifo.poll();
 	            	i = p.getIndex();
@@ -337,7 +323,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
             	    }
             	} // while (!pfifo.isEmpty())
             }
-            else if (doMeyer2){ // Meyer2
+            else { // Meyer2
 	            // Meyer2 watershed algorithm with Algorithm 4. split-and-merge placed after the assignment of WSHED.
 	            while (!pfifo.isEmpty()) {
 	            	p = pfifo.poll();
@@ -458,7 +444,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 	            	    } // for (j = 0; j < foundNeighbors; j++)
 	            	} // else !exists
 	            } // while (!pfifo.isEmpty())
-            } // else if (doMeyer2)
+            } // else Meyer2
             
             
             try {
@@ -471,6 +457,8 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 			}
         } // for (z = 0; z < zDim; z++)
         } // for (t = 0; t < tDim; t++)
+        lcImage.disposeLocal();
+        lcImage = null;
         destImage.calcMinMax();
         
         setCompleted(true);
