@@ -395,7 +395,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Region merging via boundary melting", "RegionMergingMelting", 0, null, false),
 									
 								menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
-								//menuBuilder.buildMenuItem("Split and Merge Watershed", "SplitAndMergeWatershed", 0, null, false),
+								menuBuilder.buildMenuItem("Split and Merge Watershed", "SplitAndMergeWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Texture segmentation", "TextureSegmentation", 0, null,
 										false),
 
@@ -1652,7 +1652,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Watershed", false);
 			menuBuilder.setMenuItemEnabled("Efficient Watershed", false);
 			menuBuilder.setMenuItemEnabled("Lower completion", false);
-			//menuBuilder.setMenuItemEnabled("Split and Merge Watershed", false);
+			menuBuilder.setMenuItemEnabled("Split and Merge Watershed", false);
 			menuBuilder.setMenuItemEnabled("VOI landmark", false);
 			menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
 			menuBuilder.setMenuItemEnabled("Correct image spacing", false);
@@ -1765,7 +1765,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Single channel", true);
 		menuBuilder.setMenuItemEnabled("Efficient Watershed", true);
 		menuBuilder.setMenuItemEnabled("Lower completion", true);
-		//menuBuilder.setMenuItemEnabled("Split and Merge Watershed", true);
+		menuBuilder.setMenuItemEnabled("Split and Merge Watershed", true);
 		menuBuilder.setMenuItemEnabled("Watershed", true);
 		menuBuilder.setMenuItemEnabled("Histogram summary", true);
 		menuBuilder.setMenuItemEnabled("RGB -> Gray", true);
