@@ -53,6 +53,8 @@ public class AlgorithmUnionFindComponentLabelling extends AlgorithmBase {
     	int z;
     	int t;
     	int i;
+    	int yi;
+    	int xi;
     	int j;
     	int r;
     	int r2;
@@ -179,44 +181,50 @@ public class AlgorithmUnionFindComponentLabelling extends AlgorithmBase {
             }
             
             // Initialize queue with pixels that have a lower neighbor
-            for (i = 0; i < length; i++) {
-            	r = i;
-            	foundNeighbors = allNeighbors[i].length;
-        	    for (j = 0; j < foundNeighbors; j++) {
-        	    	if (imgBuffer[allNeighbors[i][j]] == imgBuffer[i]) {
-        	    	   r2 =  findRoot(allNeighbors[i][j]);
-        	    	   // Obtain the minimum of r and r2 with respect to lexicographical order
-        	    	   x = r % xDim;
-        	    	   y = r / xDim;
-        	    	   x2 = r2 % xDim;
-        	    	   y2 = r2 / xDim;
-        	    	   if ((x2 < x) || ((x2 == x) && (y2 < y))) {
-        	    		   r = r2;
-        	    	   }
-        	    	} // if (imgBuffer[allNeighbors[i][j]] == imgBuffer[i]) 
-        	    } // for (j = 0; j < foundNeighbors; j++)
-        	    parentBuffer[i] = r;
-        	    for (j = 0; j < foundNeighbors; j++) {
-        	    	if (imgBuffer[allNeighbors[i][j]] == imgBuffer[i]) {
-        	    	    pathCompress(allNeighbors[i][j], r);	
-        	    	} // if (imgBuffer[allNeighbors[i][j]] == imgBuffer[i])
-        	    } // for (j = 0; j < foundNeighbors; j++)
-            } // for (i = 0; i < length; i++)
+            for (xi = 0; xi < xDim; xi++) {
+                for (yi = 0; yi < yDim; yi++) {
+            	    i = xi + yi * xDim;
+	            	r = i;
+	            	foundNeighbors = allNeighbors[i].length;
+	        	    for (j = 0; j < foundNeighbors; j++) {
+	        	    	if (imgBuffer[allNeighbors[i][j]] == imgBuffer[i]) {
+	        	    	   r2 =  findRoot(allNeighbors[i][j]);
+	        	    	   // Obtain the minimum of r and r2 with respect to lexicographical order
+	        	    	   x = r % xDim;
+	        	    	   y = r / xDim;
+	        	    	   x2 = r2 % xDim;
+	        	    	   y2 = r2 / xDim;
+	        	    	   if ((x2 < x) || ((x2 == x) && (y2 < y))) {
+	        	    		   r = r2;
+	        	    	   }
+	        	    	} // if (imgBuffer[allNeighbors[i][j]] == imgBuffer[i]) 
+	        	    } // for (j = 0; j < foundNeighbors; j++)
+	        	    parentBuffer[i] = r;
+	        	    for (j = 0; j < foundNeighbors; j++) {
+	        	    	if (imgBuffer[allNeighbors[i][j]] == imgBuffer[i]) {
+	        	    	    pathCompress(allNeighbors[i][j], r);	
+	        	    	} // if (imgBuffer[allNeighbors[i][j]] == imgBuffer[i])
+	        	    } // for (j = 0; j < foundNeighbors; j++)'
+                } // for (yi = 0; yi < yDim; yi++)
+            } // for (xi = 0; xi < xDim; xi++)
             
             // curlab is the current label
             curlab = 1;
-            for (i = 0; i < length; i++) {
-            	if (parentBuffer[i] == i) {
-            	    // i is a root pixel
-            		labelBuffer[i] = curlab;
-            		curlab++;
-            	}
-            	else {
-            		// Resolve unresolved equivalences
-            		parentBuffer[i] = parentBuffer[parentBuffer[i]];
-            		labelBuffer[i] = labelBuffer[parentBuffer[i]];
-            	}
-            } // for (i = 0; i < length; i++)
+            for (xi = 0; xi < xDim; xi++) {
+                for (yi = 0; yi < yDim; yi++) {
+            	    i = xi + yi * xDim;
+	            	if (parentBuffer[i] == i) {
+	            	    // i is a root pixel
+	            		labelBuffer[i] = curlab;
+	            		curlab++;
+	            	}
+	            	else {
+	            		// Resolve unresolved equivalences
+	            		parentBuffer[i] = parentBuffer[parentBuffer[i]];
+	            		labelBuffer[i] = labelBuffer[parentBuffer[i]];
+	            	}
+                } // for (yi = 0; yi < yDim; yi++)
+            } // for (xi = 0; xi < xDim; xi++)
             
             try {
 			    destImage.importData((z + t*zDim)*length, labelBuffer, false);
