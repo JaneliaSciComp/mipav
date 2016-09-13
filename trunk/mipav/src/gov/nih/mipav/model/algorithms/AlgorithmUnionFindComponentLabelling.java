@@ -15,6 +15,12 @@ import java.util.*;
  * The UNION-FIND algorithm for implementing disjoint sets can be used for computing connected
  * components, and therefore for minima detection as well.  This algorithm can be used for the 
  * computation of connected components in images of any dimension, size, and connectivity.
+ * regional maxima Connected set of pixels of constant intensity from which it is impossible to reach
+ * a point with higher intensity without first descending; that is, a connected component of pixels with
+ * the same intensity value, t, surrounded by pixels that all have a value less than t.
+ * regional minima Connected set of pixels of constant intensity from which it is impossible to reach a
+ * point with lower intensity without first ascending; that is, a connected component of pixels with the
+ * same intensity value, t, surrounded by pixels that all have a value greater than t.
 */
 
 public class AlgorithmUnionFindComponentLabelling extends AlgorithmBase {
