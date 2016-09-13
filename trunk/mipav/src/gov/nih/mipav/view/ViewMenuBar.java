@@ -403,6 +403,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Threshold using min/max", "threshMinMax", 0, null, false),
 								menuBuilder.buildMenuItem("Theshold using standard deviation", "threshStdDev", 0, null,
 										false), }),
+						                menuBuilder.buildMenuItem("Union Find Component Labelling", "UnionFindComponentLabelling", 0, null, false),
 										menuBuilder.buildMenuItem("Watershed", null, 0, null, false),
 										menuBuilder.makeMenu("ITK", false,
 												new JMenuItem[] {
@@ -1651,6 +1652,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Unsharp mask", false);
 			menuBuilder.setMenuItemEnabled("Watershed", false);
 			menuBuilder.setMenuItemEnabled("Efficient Watershed", false);
+			menuBuilder.setMenuItemEnabled("Union Find Component Labelling", false);
 			menuBuilder.setMenuItemEnabled("Lower completion", false);
 			menuBuilder.setMenuItemEnabled("Split and Merge Watershed", false);
 			menuBuilder.setMenuItemEnabled("VOI landmark", false);
@@ -1764,6 +1766,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Subtract VOI background", true);
 		menuBuilder.setMenuItemEnabled("Single channel", true);
 		menuBuilder.setMenuItemEnabled("Efficient Watershed", true);
+		menuBuilder.setMenuItemEnabled("Union Find Component Labelling", true);
 		menuBuilder.setMenuItemEnabled("Lower completion", true);
 		menuBuilder.setMenuItemEnabled("Split and Merge Watershed", true);
 		menuBuilder.setMenuItemEnabled("Watershed", true);
