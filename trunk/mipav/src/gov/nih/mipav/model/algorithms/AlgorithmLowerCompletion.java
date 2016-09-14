@@ -22,9 +22,11 @@ public class AlgorithmLowerCompletion extends AlgorithmBase {
 	
     private boolean neighbor8;
 	
-	boolean limitBins;
+	private boolean limitBins;
 	
-	int binNumber;
+	private int binNumber;
+	
+	private boolean minBuffer[][][];
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -104,6 +106,7 @@ public class AlgorithmLowerCompletion extends AlgorithmBase {
             imgBuffer = new double[length];
             intBuffer = new int[length];
             labelBuffer = new int[length];
+            minBuffer = new boolean[tDim][zDim][length];
             allNeighbors = new int[length][];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Lower Completion: Out of memory creating buffers");
@@ -184,6 +187,7 @@ public class AlgorithmLowerCompletion extends AlgorithmBase {
             else {
             	for (i = 0; i < length; i++) {
             		intBuffer[i] = (int)Math.round(imgBuffer[i]);
+            		minBuffer[t][z][i] = false;
             	}
             }
           
@@ -257,6 +261,7 @@ public class AlgorithmLowerCompletion extends AlgorithmBase {
             } // if (labelBuffer[i] != 0)
             else {
                 labelBuffer[i] = dist * intBuffer[i];	
+                minBuffer[t][z][i] = true;
             } // else
             } // for (i = 0; i < length; i++)
             try {
@@ -273,6 +278,10 @@ public class AlgorithmLowerCompletion extends AlgorithmBase {
         
         setCompleted(true);
         return;
+	}
+	
+	public boolean[][][] getMinBuffer() {
+		return minBuffer;
 	}
 	
 }
