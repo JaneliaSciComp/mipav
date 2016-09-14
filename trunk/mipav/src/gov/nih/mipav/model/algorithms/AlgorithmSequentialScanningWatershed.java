@@ -57,6 +57,7 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
     	int tDim;
     	int nDims;
     	int length;
+    	double srcBuffer[];
     	int levelBuffer[];
     	int x;
     	int y;
@@ -66,11 +67,16 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
     	int j;
     	AlgorithmLowerCompletion lcAlgo;
     	ModelImage lcImage;
-    	AlgorithmUnionFindComponentLabelling ufclAlgo;
-    	ModelImage ufclImage;
     	int numLevels;
     	boolean isMin[];
     	int minLabel[];
+    	int numMins;
+    	AlgorithmUnionFindComponentLabelling ufclAlgo;
+    	ModelImage ufclImage;
+    	double minValue;
+    	double maxValue;
+    	double range;
+    	double scale;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -90,11 +96,11 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
         
         ufclImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, lcImage, neighbor8, false, -1);
+        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, srcImage, neighbor8, limitBins, binNumber);
         ufclAlgo.run();
         ufclAlgo.finalize();
         ufclAlgo = null;
-        
+          
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
@@ -117,6 +123,7 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
             labelBuffer = new int[length];
             levelBuffer = new int[length];
             distBuffer = new double[length];
+            srcBuffer = new double[length];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Sequential Scanning Watershed: Out of memory creating buffers");
             setCompleted(false);
@@ -126,6 +133,36 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
         
         for (t = 0; t < tDim; t++) {
             for (z = 0; z < zDim; z++) {
+            	
+            	try {
+                    srcImage.exportData((z + t*zDim)*length, length, srcBuffer);
+                } catch (IOException error) {
+                    displayError("Algorithm Sequential Scanning Watershed: image bounds exceeded");
+                    setCompleted(false);
+                    
+                    srcImage.releaseLock();
+
+                    return;
+                }
+            	
+            	if (limitBins) {
+                	minValue = Double.MAX_VALUE;
+                	maxValue = -Double.MAX_VALUE;
+                	for (i = 0; i < length; i++) {
+                	    if (imgBuffer[i] < minValue) {
+                	    	minValue = imgBuffer[i];
+                	    }
+                	    if (imgBuffer[i] > maxValue) {
+                	    	maxValue = imgBuffer[i];
+                	    }
+                	}
+                	
+                	range = maxValue - minValue;
+            	    scale = (binNumber-1)/range;
+            	    for (i = 0; i < length; i++) {
+            	    	srcBuffer[i] = Math.min((binNumber-1), Math.floor((srcBuffer[i]-minValue)*scale + 0.5));
+            	    }
+                } // if (limitBins)
 
                 try {
                     lcImage.exportData((z + t*zDim)*length, length, imgBuffer);
@@ -149,72 +186,60 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
                     return;
                 }
                 
-                numLevels = 0;
-                for (i = 0; i < length; i++) {
-                    if (levelBuffer[i] > numLevels) {
-                        numLevels = levelBuffer[i];	
-                    }
-                }
-                isMin = new boolean[numLevels];
-                for (i = 0; i < numLevels; i++) {
-                	isMin[i] = true;
-                }
-                for (y = 0; y < yDim; y++) {
-                	for (x = 0; x < xDim; x++) {
-                	    i = x + y * xDim;
-                	    if (isMin[levelBuffer[i]-1]) {
-                	    	if (x > 0) {
-                	    		if (levelBuffer[i] > levelBuffer[i-1]) {
-                	    			isMin[levelBuffer[i]-1] = false;
-                	    		}
-                	    	} // if (x > 0)
-                	    	if (x < xDim-1) {
-                	    		if (levelBuffer[i] > levelBuffer[i+1]) {
-                	    			isMin[levelBuffer[i]-1] = false;
-                	    		}
-                	    	} // if (x < xDim-1)
-                	    	if (y > 0) {
-                	    		if (levelBuffer[i] > levelBuffer[i-xDim]) {
-                	    			isMin[levelBuffer[i]-1] = false;
-                	    		}
-                	    	} // if (y > 0)
-                	    	if (y < yDim-1) {
-                	    		if (levelBuffer[i] > levelBuffer[i+xDim]) {
-                	    			isMin[levelBuffer[i]-1] = false;
-                	    		}
-                	    	} // if (y < yDim-1)
-                	    	if (neighbor8) {
-                	    	    if ((x > 0) && (y > 0)) {
-                	    	        if (levelBuffer[i] > levelBuffer[i-xDim-1]) {
-                	    	        	isMin[levelBuffer[i]-1] = false;
-                	    	        }
-                	    	    } // if ((x > 0) && (y > 0))
-                	    	    if ((x > 0) && (y < yDim-1)) {
-                	    	    	if (levelBuffer[i] > levelBuffer[i+xDim-1]) {
-                	    	    		isMin[levelBuffer[i]-1] = false;
-                	    	    	}
-                	    	    } // if ((x > 0) && (y < yDim-1))
-                	    	    if ((x < xDim-1) && (y > 0)) {
-                	    	        if (levelBuffer[i] > levelBuffer[i-xDim+1]) {
-                	    	        	isMin[levelBuffer[i]-1] = false;
-                	    	        }
-                	    	    } // if ((x < xDim-1) && (y > 0))
-                	    	    if ((x < xDim-1) && (y < yDim-1)) {
-                	    	        if (levelBuffer[i] > levelBuffer[i + xDim + 1]) {
-                	    	        	isMin[levelBuffer[i]-1] = false;
-                	    	        }
-                	    	    } // if ((x < xDim-1) && (y < yDim-1))
-                	    	} // if (neighbor8)
-                	    } // if (isMin[levelBuffer[i]-1])
-                	} // for (x = 0; x < xDim; x++)
-                } // for (y = 0; y < yDim; y++)
-                
-                minLabel = new int[numLevels];
-                for (i = 0, j = 1; i < numLevels; i++) {
-                	if (isMin[i]) {
-                		minLabel[i] = j++;
-                	}
-                }
+               numLevels = 0;
+               for (i = 0; i < length; i++) {
+            	   if (levelBuffer[i] > numLevels) {
+            		   numLevels = levelBuffer[i];
+            	   }
+               }
+               // levelBuffer[i] goes from 1 to numLevels
+               isMin = new boolean[numLevels];
+               for (i = 0; i < numLevels; i++) {
+            	   isMin[i] = true;
+               }
+               for (i = 0; i < length; i++) {
+                   x = i % xDim;
+                   y = i / xDim;
+                   if (isMin[levelBuffer[i]-1]) {
+	                   if ((x > 0) && (srcBuffer[i] > srcBuffer[i-1])) {
+	                	   isMin[levelBuffer[i]-1] = false;
+	                   }
+	                   if ((x < xDim-1) && (srcBuffer[i] > srcBuffer[i+1])) {
+	                	   isMin[levelBuffer[i]-1] = false;
+	                   }
+	                   if ((y > 0) && (srcBuffer[i] > srcBuffer[i-xDim])) {
+	                	   isMin[levelBuffer[i]-1] = false;
+	                   }
+	                   if ((y < yDim-1) && (srcBuffer[i] > srcBuffer[i+xDim])) {
+	                	   isMin[levelBuffer[i]-1] = false;
+	                   }
+	                   if (neighbor8) {
+	                	   if ((x > 0) && (y > 0) && (srcBuffer[i] > srcBuffer[i-xDim-1])) {
+	                		   isMin[levelBuffer[i]-1] = false;   
+	                	   }
+	                	   if ((x < xDim-1) && (y > 0) && (srcBuffer[i] > srcBuffer[i-xDim+1])) {
+	                		   isMin[levelBuffer[i]-1] = false;   
+	                	   }
+	                	   if ((x > 0) && (y < yDim-1) && (srcBuffer[i] > srcBuffer[i+xDim-1])) {
+	                		   isMin[levelBuffer[i]-1] = false;   
+	                	   }
+	                	   if ((x < xDim-1) && (y < yDim-1) && (srcBuffer[i] > srcBuffer[i+xDim+1])) {
+	                		   isMin[levelBuffer[i]-1] = false;   
+	                	   }
+	                   } // if (neighbor8)
+                   } // if (isMin[levelBuffer[i]-1])
+               }
+               
+               minLabel = new int[numLevels];
+               numMins = 0;
+               for (i = 0, j = 1; i < numLevels; i++) {
+            	   if (isMin[i]) {
+            		    minLabel[i] = j++;  
+            		    numMins++;
+            	   }
+               }
+               System.out.println("numMins = " + numMins);
+               System.out.println("numLevels = " + numLevels);
                 
                 for (i = 0; i < length; i++) {
                 	labelBuffer[i] = 0;
@@ -261,7 +286,7 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 	private void propagate(int u, boolean forward) {
 	    int x;
 	    int y;
-	    int v[] = new int[4];
+	    int v[] = new int[3];
 	    int numNeighbors = 0;
 	    int i;
 	    double c;
@@ -276,9 +301,6 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 	    		v[numNeighbors++] = u+xDim;
 	    	}
 	    	if (neighbor8) {
-	    		if ((x > 0) && (y < yDim-1)) {
-	    			v[numNeighbors++] = u+xDim-1;
-	    		}
 	    		if ((x < xDim-1) && (y < yDim-1)) {
 	    			v[numNeighbors++] = u+xDim+1;
 	    		}
@@ -294,9 +316,6 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 	    	if (neighbor8) {
 	    		if ((x > 0) && (y > 0)) {
 	    			v[numNeighbors++] = u-xDim-1;
-	    		}
-	    		if ((x < xDim-1) && (y > 0)) {
-	    			v[numNeighbors++] = u-xDim+1;
 	    		}
 	    	}
 	    } // else backward
