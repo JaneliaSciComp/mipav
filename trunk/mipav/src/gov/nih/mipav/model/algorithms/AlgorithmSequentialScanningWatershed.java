@@ -277,6 +277,8 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
             } // for (t = 0; t < tDim; t++)
             lcImage.disposeLocal();
             lcImage = null;
+            ufclImage.disposeLocal();
+            ufclImage = null;                                 
             destImage.calcMinMax();
             
             setCompleted(true);
