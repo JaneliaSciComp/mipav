@@ -45,6 +45,8 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 	// Fictitious index of the watershed pixels
 	private final int W = -1;
 	
+	private int con;
+	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
 	public AlgorithmUnionFindWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8, boolean limitBins,
@@ -124,10 +126,17 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
         	tDim = 1;
         }
         
+        if (neighbor8) {
+        	con = 8;
+        }
+        else {
+        	con = 4;
+        }
+        
         try {
             imgBuffer = new int[length];
             labelBuffer = new int[length];
-            sln = new int[length][];
+            sln = new int[length][con];
             srcBuffer = new double[length];
             levelBuffer = new int[length];
         } catch (OutOfMemoryError e) {
@@ -250,6 +259,9 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                 
                 for (i = 0; i < length; i++) {
                 	labelBuffer[i] = 0;
+                	for (j = 0; j < con; j++) {
+                		sln[i][j] = i;
+                	}
                 }
                 
                 for (i = 0; i < length; i++) {
@@ -301,13 +313,13 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
             			Collections.sort(indexSlopeList, new indexSlopeComparator());
             		}
             		if (numLowerNeighbors > 0) {
-            			sln[i] = new int[numLowerNeighbors];
             			for (j = 0; j < numLowerNeighbors; j++) {
             				sln[i][j] = indexSlopeList.get(i).index;
             			}
             		}
             	} // for (i = 0; i < length; i++)
             	
+            	// Give i the label of its representative
             	for (i = 0; i < length; i++) {
             	    rep = resolve(i);
             	    if (rep != W) {
@@ -337,11 +349,29 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 	}
 	
 	private int resolve(int p) {
+		// Recursive function for resolving the downstream paths of the lower complete graph
+		// Returns the representative element of pixel p, or W if p is a watershed pixel
 		int i;
+		int j;
 		int rep;
-		i = 1;
-		rep = 0;
-		return rep;
+		i = 0;
+		rep = 0; // some value such that rep != W
+		while ((i < con) && (rep != W)) {
+		    if ((sln[p][i] != p) && (sln[p][i] != W)) {
+		    	sln[p][i] = resolve(sln[p][i]);
+		    }
+		    if (i == 0) {
+		    	rep = sln[p][0];
+		    } // if (i == 0)
+		    else if (sln[p][i] != rep) {
+		        rep = W;
+		        for (j = 0; j < con; j++) {
+		            sln[p][j] = W;	
+		        } // for (j = 0; j < con; j++)
+		    } // else if (sln[p][i] != rep)
+		    i++;
+		} // while ((i < con) && (rep != W))
+		return rep; 
 	}
 	
 	private class indexSlopeComparator implements Comparator<indexSlopeItem> {
