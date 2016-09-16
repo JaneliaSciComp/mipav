@@ -314,7 +314,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
             		}
             		if (numLowerNeighbors > 0) {
             			for (j = 0; j < numLowerNeighbors; j++) {
-            				sln[i][j] = indexSlopeList.get(i).index;
+            				sln[i][j] = indexSlopeList.get(j).index;
             			}
             		}
             	} // for (i = 0; i < length; i++)
