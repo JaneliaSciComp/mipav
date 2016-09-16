@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import java.text.SimpleDateFormat;
 
 
 public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
@@ -178,7 +179,11 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 	
 	public void startRecording() {
 		String defaultDirectory = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator;
-		String defaultFileName = defaultDirectory + "eyetracking-" + System.currentTimeMillis() + ".csv";
+		String timeStamp = new SimpleDateFormat("yyyy MMM dd HH:mm:ss").format(new Date()).toString();
+		timeStamp = timeStamp.replaceAll("\\s","_");
+		timeStamp = timeStamp.replaceAll(":","_");
+		System.err.println(timeStamp );
+		String defaultFileName = defaultDirectory + "MIPAV_eyetracking_" + timeStamp + ".csv";
 		MipavUtil.setEyeTrackingEnabled(true, defaultFileName, imageComp[imageActiveIndex]);
 	}
 
@@ -311,7 +316,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 		float zoomX = zoomX0 * zoomFactorX;
 		float zoomY = zoomY0 * zoomFactorY;
 
-		imageComp[imageActiveIndex].setZoomExact(zoomY, zoomY);
+		// imageComp[imageActiveIndex].setZoomExact(zoomY, zoomY);
 		imageComp[imageActiveIndex].show(0, currentSlice0, true);
 		
 		
@@ -769,7 +774,7 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 				} else if ( cmd.equals("Bone")) {
 					imageComp[imageActiveIndex].setWindLevel(2500, 450);
 				} else if ( cmd.equals("Lung")) {
-					imageComp[imageActiveIndex].setWindLevel(996,-1024);
+					imageComp[imageActiveIndex].setWindLevel(2402,176);
 				} else if ( cmd.equals("Measure")) {
 					invokeMeasure();
 				} 

@@ -2700,6 +2700,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     	refPtsLocation = _location;
     }
     
+    
     /**
      * A mouse event. Sets the mode of the program depending on the cursor mode. If the mode is move, activates the
      * contour or line and enables the delete button.
@@ -2712,7 +2713,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         final int xS = getScaledX(mouseEvent.getX());
         final int yS = getScaledY(mouseEvent.getY());
-
+        
         if (modifyFlag == false) {
             return;
         }
@@ -2937,8 +2938,13 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 							}
 						}
 
-						((ViewJFrameImage) frame).incSlice();
-
+						
+						if (mouseWheelEvent.isAltDown()) {
+							((ViewJFrameImage) frame).incSliceEyeTracker();
+						} else {
+							((ViewJFrameImage) frame).incSlice();
+						}
+						
 						if (MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
 							String imageTimeStamp = getImageTimeStamp();
 							MipavUtil.writeEyeTrackingLog(imageTimeStamp + "Sliding 3D, " + "Mouse wheel rolling, "
@@ -2971,7 +2977,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 							}
 						}
 
-						((ViewJFrameImage) frame).decSlice();
+						if (mouseWheelEvent.isAltDown()) {
+							((ViewJFrameImage) frame).decSliceEyeTracker();
+						} else {
+							((ViewJFrameImage) frame).decSlice();
+						}
+						
 
 						if (MipavUtil.isEyeTrackingEnabled() && eyeTrackerRecordingMode == PluginEyetrackerMode) {
 							String imageTimeStamp = getImageTimeStamp();
@@ -3119,7 +3130,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param graphics graphics
      */
     public void paintComponent(final Graphics graphics) {
-
+       
         try {
             if (modifyFlag == false) {
                 return;
@@ -3354,6 +3365,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 }
             }
 
+            
             if (onTop) {
 
                 // paint the on-top notifier for the user when this component is on the top of the user-interface
@@ -3384,7 +3396,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 
 
             }
-
+            
             graphics.drawImage(offscreenImage, 0, 0, null);
 
             if (offscreenGraphics2d != null) {
@@ -5455,6 +5467,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         onTop = hilite;
     }
 
+    public boolean isHighlight() {
+    	return onTop;
+    }
 
     protected void draw3DVOIs(Graphics offscreenGraphics2d, boolean bBlend)
     {

@@ -2,7 +2,12 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.util.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmConvert3Dto4D;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.view.ViewJFrameMultimodalitySingleViewer.MousePopupListener;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.*;
 
@@ -33,7 +38,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	/** The main user interface. */
 	private ViewUserInterface UI;
 
-	private String[] imageNames = new String[4];
+	private String[] imageNames = new String[8];
 	private int imageNamesIndex = 0;
 	private ModelImage[] images = new ModelImage[4];
 
@@ -52,18 +57,10 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	private int zDim;
 	
 	private JLabel label5;
-	private float xDist[] = new float[4];
-	private float yDist[] = new float[4];
-    private float xDistMin = Float.MAX_VALUE;
-    private float xDistMax = -Float.MAX_VALUE;
-    private float yDistMin = Float.MAX_VALUE;
-    private float yDistMax = -Float.MAX_VALUE;
-	private int xDistMinImage = -1;
-	private int xDistMaxImage = -1;
-	private int yDistMinImage = -1;
-	private int yDistMaxImage = -1;
-	private float scaleToMaxRatio[] = new float[4];
 	
+	private JPopupMenu popup = new JPopupMenu();
+	
+	private int imageActiveIndex;
 	
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -73,16 +70,48 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		currentFrame = frame;
 		UI = ViewUserInterface.getReference();
 		readMultlmodalImages();
-		getFramesInfo();
+		// getFramesInfo();
 		initLayout();
+		addPopup();
+		fitsToScreen();
 	}
 
 
 	// ~ Methods
 	// --------------------------------------------------------------------------------------------------------
 
+	public void addPopup() {
+		   JMenuItem m = new JMenuItem("Measure");
+		    m.addActionListener(this);
+		    popup.add(m);
+		  
+		    MousePopupListener pl = new MousePopupListener();
+		    addMouseListener(pl);
+		   
+	}
+	
+	class MousePopupListener extends MouseAdapter {
+		public void mousePressed(MouseEvent e) {
+			checkPopup(e);
+		}
+
+		public void mouseClicked(MouseEvent e) {
+			checkPopup(e);
+		}
+
+		public void mouseReleased(MouseEvent e) {
+			checkPopup(e);
+		}
+
+		private void checkPopup(MouseEvent e) {
+			if (e.isPopupTrigger()) {
+				popup.show(getContentPane(), e.getX(), e.getY());
+			}
+		}
+	}
+	
 	private void getFramesInfo() {
-		int i;
+		
 		int[] extents0 = images[0].getExtents();
 		int[] extents1 = images[1].getExtents();
 		int[] extents2 = images[2].getExtents();
@@ -92,33 +121,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		int minZ2 = Math.min(extents2[2], minZ1);
 		zDim = Math.min(minZ2, extents3[2]);
 		
-		for (i = 0; i < 4; i++) {
-		    xDist[i] = images[i].getExtents()[0] * images[i].getFileInfo(0).getResolutions()[0];
-		    yDist[i] = images[i].getExtents()[1] * images[i].getFileInfo(0).getResolutions()[1];
-		    if (xDist[i] < xDistMin) {
-		    	xDistMin = xDist[i];
-		    	xDistMinImage = i;
-		    }
-		    if (xDist[i] > xDistMax) {
-		    	xDistMax = xDist[i];
-		    	xDistMaxImage = i;
-		    }
-		    if (yDist[i] < yDistMin) {
-		    	yDistMin = yDist[i];
-		    	yDistMinImage = i;
-		    }
-		    if (yDist[i] > yDistMax) {
-		    	yDistMax = yDist[i];
-		    	yDistMaxImage = i;
-		    }
-		}
-		System.out.println("xDistMinImage = " + xDistMinImage + " xDistMin = " + xDistMin);
-		System.out.println("yDistMinImage = " + yDistMinImage + " yDistMin = " + yDistMin);
-		System.out.println("xDistMaxImage = " + xDistMaxImage + " xDistMax = " + xDistMax);
-		System.out.println("yDistMaxImage = " + yDistMaxImage + " yDistMax = " + yDistMax);
-		for (i = 0; i < 4; i++) {
-			scaleToMaxRatio[i] = yDist[i]/yDistMax;
-		}
+		
 	}
 	
 	private void initLayout() {
@@ -330,6 +333,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		
 		pack();
 		this.validate();
+
 	}
 	
 	void captureComponent(Component component) {
@@ -360,47 +364,113 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	    	
 	    	int currentSlice0 = imageComp[0].getSlice();
 			int currentSlice1 = imageComp[1].getSlice();
-			// System.err.println("currentSlice1 = " + currentSlice1);
 			int currentSlice2 = imageComp[2].getSlice();
 			int currentSlice3 = imageComp[3].getSlice();
 	    	
+			int zDim0 = images[0].getExtents()[2];
 			int zDim1 = images[1].getExtents()[2];
-		    // System.err.println("zDim1 = " + zDim1 + " zDim = " + zDim);
-		    // System.err.println("zDim/zDim1 = " + (float)((float)zDim/(float)zDim1));
-	         
-	    	 if (((wheelRotation < 0) && (zOffset < zDim - 1)) ||  ((wheelRotation > 0) && (zOffset > 0))) {
+			int zDim2 = images[2].getExtents()[2];
+			int zDim3 = images[3].getExtents()[2];
+			
+			int zTimeDim = images[3].getExtents()[3];
+			// System.err.println("zTimeDim = " + zTimeDim);
+			
+			int tCurrentSlice = imageComp[3].getTimeSlice();
+			   
+			if ( mouseWheelEvent.isAltDown() ) {
+				 if (wheelRotation < 0) {
+					 
+					 if ( imageFrame[3].isActive() ) {
+						 tCurrentSlice++;
+		         		 // System.err.println("tDim = " + tCurrentSlice);
+		         	 } 
+				 } else {
+				 
+					if ( imageFrame[3].isActive() ) {
+						tCurrentSlice--;
+	         			// System.err.println("tDim = " + tCurrentSlice);
+	         		}
+				 }
+				 
+				 if ( tCurrentSlice >= 0 && tCurrentSlice <= (zTimeDim-1) ) {
+					currentSlice3 = imageComp[3].getSlice();
+      				imageComp[3].setTimeSlice(tCurrentSlice);
+      				imageComp[3].show(tCurrentSlice, currentSlice3, true);
+      				
+      			}
+				 
+				 
+			 } else {
+	    
 	         	if (wheelRotation < 0) {
-	         	    // Increment slice
-	         		//  System.err.println("Mouse wheel moved UP");
-	         	    zOffset++;
-	         	   image1Slice++;
-	             }
-	         	else {
-	         		// Decrement slice
-	         		// System.err.println("Mouse wheel moved DOWN");
-	             	zOffset--;
-	             	image1Slice--;
+	         	    
+	         		if ( imageFrame[0].isActive() ) {
+	         			currentSlice0++;
+	         		}
+	         		
+	         		if ( imageFrame[1].isActive() ) {
+	         			currentSlice1++;
+	         		}
+	         		
+	         		if ( imageFrame[2].isActive() ) {
+	         			currentSlice2++;
+	         		}
+	         		
+	         	    if ( imageFrame[3].isActive() ) {
+	         			currentSlice3++;
+	         			// System.err.println("currentSlice3 = " + currentSlice3);
+	         		}
+	         		
+	             } else {
+	         		
+	         		if ( imageFrame[0].isActive() ) {
+	         			currentSlice0--;
+	         		}
+	         		
+	         		if ( imageFrame[1].isActive() ) {
+	         			currentSlice1--;
+	         		}
+	         		
+	         		if ( imageFrame[2].isActive() ) {
+	         			currentSlice2--;
+	         		}
+	         		
+	         		if ( imageFrame[3].isActive() ) {
+	         			currentSlice3--;
+	         			// System.err.println("currentSlice3 = " + currentSlice3);
+	         		}
+	         		
 	         	}
-	    	 }
-	    	 
-	    	 // System.err.println("zOffset = " + zOffset);
-	    	 
-	    	 
-	    	 if ( imageFrame[0].isActive() || imageFrame[2].isActive() || imageFrame[3].isActive()) {
-	    		 currentSlice1 = (int)(((float)zOffset / (float)zDim) * zDim1);
-	    		 imageComp[0].show(0, zOffset, true);
-	    		 imageComp[1].show(0, currentSlice1, true);
-	    		 imageComp[2].show(0, zOffset, true);
-	    		 imageComp[3].show(0, zOffset, true);
-	    	 } else if ( imageFrame[1].isActive() ) {
-	    		 // System.err.println("image1Slice = " + image1Slice + " zDim1 = " + zDim1);
-	    		 zOffset = (int)( (float)image1Slice / (float)zDim1 * zDim );  
-	    		 // System.err.println("zOffset = " + zOffset + " zDim = " + zDim);
-	    		 imageComp[0].show(0, zOffset, true);
-	    		 imageComp[1].show(0, image1Slice, true);
-	    		 imageComp[2].show(0, zOffset, true);
-	    		 imageComp[3].show(0, zOffset, true);
-	    	 }
+			  
+	         	if ( imageFrame[0].isActive() && ( currentSlice0 >= 0 && currentSlice0 < zDim0) )  {
+		         	 imageComp[0].show(0, currentSlice0, true);
+		    		 imageComp[1].show(0, currentSlice0, true);
+		    		 imageComp[2].show(0, currentSlice0, true);
+		    		 imageComp[3].show(0, currentSlice0, true);
+	         	}
+	            
+	         	if ( imageFrame[1].isActive() && ( currentSlice1 >= 0 && currentSlice1 < zDim1) )  {
+		         	 imageComp[0].show(0, currentSlice1, true);
+		    		 imageComp[1].show(0, currentSlice1, true);
+		    		 imageComp[2].show(0, currentSlice1, true);
+		    		 imageComp[3].show(0, currentSlice1, true);
+	         	}
+	         	
+	         	if ( imageFrame[2].isActive() && ( currentSlice2 >= 0 && currentSlice2 < zDim2)  )  {
+		         	 imageComp[0].show(0, currentSlice2, true);
+		    		 imageComp[1].show(0, currentSlice2, true);
+		    		 imageComp[2].show(0, currentSlice2, true);
+		    		 imageComp[3].show(0, currentSlice2, true);
+	         	}
+	         	
+	         	if ( imageFrame[3].isActive() && ( currentSlice3 >= 0 && currentSlice3 < zDim3) )  {
+         		 	 imageComp[0].show(0, currentSlice3, true);
+		    		 imageComp[1].show(0, currentSlice3, true);
+		    		 imageComp[2].show(0, currentSlice3, true);
+		    		 imageComp[3].show(0, currentSlice3, true);
+		    		 // System.err.println("update image slice");
+	         	}
+			 }	
 	    	  
 	    	
 	}
@@ -439,24 +509,314 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	private void readImages(File dir) {
 		int i;
 		FileIO imageIO = null;
+		String currentDirectory;
+		boolean hasConvertedImages = false;
 		if (dir.isDirectory()) {
 			String[] children = dir.list();
 			for (i = 0; i < children.length; i++) {
 				traverse(new File(dir, children[i]));
 			}
-
+ 
+			
+			currentDirectory = dir.getAbsolutePath() + File.separator;
+			
 			try {
+			
+				for (i = 0; i < imageNamesIndex; i++) {
+					if ( imageNames[i].contains("t2w_new.xml")) {
+						hasConvertedImages = true;
+						break;
+					} else if ( imageNames[i].contains("adc_new.xml")) {
+						hasConvertedImages = true;
+						break;
+					} else if ( imageNames[i].contains("dwi_new.xml")) {
+						hasConvertedImages = true;
+						break;
+					} else if ( imageNames[i].contains("dce_new.xml")) {
+						hasConvertedImages = true;
+						break;
+					}
+				}
+				 
 				// read target images
 				imageIO = new FileIO();
+				// hasConvertedImages = false;
+				if ( hasConvertedImages ) {
+					for (i = 0; i < imageNamesIndex; i++) {
 
-				for (i = 0; i < imageNamesIndex; i++) {
-					System.err.println(imageNames[i]);
-					images[i] = imageIO.readImage(imageNames[i]);
-					// new ViewJFrameImage(images[i]);
-				}
+						if (imageNames[i].contains("t2w_new.xml")) {
+							images[0] = imageIO.readImage(imageNames[i]);
+						}
 
+						if (imageNames[i].contains("adc_new.xml")) {
+							images[1] = imageIO.readImage(imageNames[i]);
+						}
+
+						if (imageNames[i].contains("dwi_new.xml")) {
+							images[2] = imageIO.readImage(imageNames[i]);
+						}
+
+						if (imageNames[i].contains("dce_new.xml")) {
+							images[3] = imageIO.readImage(imageNames[i]);
+						}
+
+						// System.err.println(imageNames[i]);
+					}
+				} else {
+					readDicomImage();
+					
+					for (i = 0; i < imageNamesIndex; i++) {
+
+						if (imageNames[i].contains("t2w.xml")) {
+							images[0] = imageIO.readImage(imageNames[i]);
+						}
+
+						if (imageNames[i].contains("adc.xml")) {
+							images[1] = imageIO.readImage(imageNames[i]);
+						}
+
+						if (imageNames[i].contains("dwi.xml")) {
+							images[2] = imageIO.readImage(imageNames[i]);
+						}
+
+						if (imageNames[i].contains("dce.xml")) {
+							images[3] = imageIO.readImage(imageNames[i]);
+						}
+
+						System.err.println(imageNames[i]);
+					}
+					
+
+					images[0].saveImage(currentDirectory, "t2w_new.xml", FileUtility.XML, false);
+
+					int[] t2wExtents = images[0].getExtents();
+					float[] t2wResols = images[0].getResolutions(0);
+					// 1. transform adc.xml
+					int[] adcExtents = images[1].getExtents();
+					float[] adcResols = images[1].getResolutions(0);
+					float[] adcResolsNew = new float[3];
+					float constantFOV = 1.0f;
+					float factor, fov;
+
+					factor = (t2wExtents[0] - constantFOV) / (adcExtents[0] - constantFOV);
+					fov = (adcExtents[0] - constantFOV) * adcResols[0];
+					adcResolsNew[0] = fov / (t2wExtents[0] - constantFOV);
+					adcResolsNew[1] = fov / (t2wExtents[0] - constantFOV);
+					adcResolsNew[2] = adcResols[2];
+
+					int oXdim, oYdim, oZdim, cXdim, cYdim, cZdim;
+					float oXres, oYres, oZres, cXres, cYres, cZres;
+					int[] units;
+					boolean doVOI, doClip, doPad, perserveFOV, doUpdateOrigin, doInvMat;
+					boolean doRotateCenter;
+					float fillValue = 0.0f;
+					boolean isSATransform = false;
+					Vector3f center = null;
+					TransMatrix xfrm;
+					int interp;
+
+					units = new int[3];
+					units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
+
+					factor = 1.0f;
+					doVOI = false;
+					doClip = true;
+					doPad = false;
+					doRotateCenter = false;
+					center = null;
+
+					fillValue = 0.0f;
+					doUpdateOrigin = true;
+					isSATransform = false;
+
+					interp = 0;
+					xfrm = new TransMatrix(4);
+					xfrm.identity();
+
+					oXres = adcResolsNew[0];
+					oYres = adcResolsNew[1];
+					oZres = adcResolsNew[2];
+
+					oXdim = t2wExtents[0];
+					oYdim = t2wExtents[1];
+					oZdim = t2wExtents[2];
+
+					AlgorithmTransform algoTrans = new AlgorithmTransform(images[1], xfrm, interp, oXres, oYres, oZres,
+							oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+					algoTrans.setFillValue(fillValue);
+					algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+					algoTrans.setUseScannerAnatomical(isSATransform);
+					algoTrans.run();
+
+					images[1] = algoTrans.getTransformedImage();
+					images[1].calcMinMax();
+
+					images[1].saveImage(currentDirectory, "adc_new.xml", FileUtility.XML, false);
+
+					algoTrans.disposeLocal();
+					algoTrans = null;
+
+					// new ViewJFrameImage(images[1]);
+
+					// 2. transform dwi.xml
+					int[] dwiExtents = images[2].getExtents();
+					float[] dwiResols = images[2].getResolutions(0);
+					float[] dwiResolsNew = new float[3];
+
+					factor = (t2wExtents[0] - constantFOV) / (dwiExtents[0] - constantFOV);
+					fov = (dwiExtents[0] - constantFOV) * dwiResols[0];
+					dwiResolsNew[0] = fov / (t2wExtents[0] - constantFOV);
+					dwiResolsNew[1] = fov / (t2wExtents[0] - constantFOV);
+					dwiResolsNew[2] = dwiResols[2];
+
+					units = new int[3];
+					units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
+
+					factor = 1.0f;
+					doVOI = false;
+					doClip = true;
+					doPad = false;
+					doRotateCenter = false;
+					center = null;
+
+					fillValue = 0.0f;
+					doUpdateOrigin = true;
+					isSATransform = false;
+
+					interp = 0;
+					xfrm = new TransMatrix(4);
+					xfrm.identity();
+
+					oXres = dwiResolsNew[0];
+					oYres = dwiResolsNew[1];
+					oZres = dwiResolsNew[2];
+
+					oXdim = t2wExtents[0];
+					oYdim = t2wExtents[1];
+					oZdim = t2wExtents[2];
+
+					AlgorithmTransform algoTransDWI = new AlgorithmTransform(images[2], xfrm, interp, oXres, oYres,
+							oZres, oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+					algoTransDWI.setFillValue(fillValue);
+					algoTransDWI.setUpdateOriginFlag(doUpdateOrigin);
+					algoTransDWI.setUseScannerAnatomical(isSATransform);
+					algoTransDWI.run();
+
+					images[2] = algoTransDWI.getTransformedImage();
+					images[2].calcMinMax();
+
+					images[2].saveImage(currentDirectory, "dwi_new.xml", FileUtility.XML, false);
+
+					algoTransDWI.disposeLocal();
+					algoTransDWI = null;
+
+					// new ViewJFrameImage(images[2]);
+
+					// 3. transform dce.xml
+					int[] xBounds = new int[2];
+					int[] yBounds = new int[2];
+					int[] zBounds = new int[2];
+
+					int[] dceExtents = images[3].getExtents();
+					float[] dceResols = images[3].getResolutions(0);
+					float[] dceResolsNew = new float[3];
+
+					int[] destExtents = new int[3];
+					destExtents[0] = 128;
+					destExtents[1] = 128;
+					destExtents[2] = dceExtents[2];
+
+					xBounds[0] = -64;
+					xBounds[1] = -64;
+					yBounds[0] = -64;
+					yBounds[1] = -64;
+					zBounds[0] = 0;
+					zBounds[1] = 0;
+
+					ModelImage resultImage = new ModelImage(images[3].getType(), destExtents,
+							images[3].getImageName() + "_crop");
+					AlgorithmAddMargins cropAlgo = new AlgorithmAddMargins(images[3], resultImage, xBounds, yBounds,
+							zBounds);
+					cropAlgo.run();
+
+					images[3] = resultImage;
+
+					cropAlgo = null;
+
+					dceExtents = images[3].getExtents();
+					dceResols = images[3].getResolutions(0);
+					dceResolsNew = new float[3];
+
+					factor = (t2wExtents[0] - constantFOV) / (dwiExtents[0] - constantFOV);
+					fov = (dceExtents[0] - constantFOV) * dceResols[0];
+					dceResolsNew[0] = fov / (t2wExtents[0] - constantFOV);
+					dceResolsNew[1] = fov / (t2wExtents[0] - constantFOV);
+					dceResolsNew[2] = dceResols[2];
+
+					units = new int[3];
+					units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
+
+					factor = 1.0f;
+					doVOI = false;
+					doClip = true;
+					doPad = false;
+					doRotateCenter = false;
+					center = null;
+
+					fillValue = 0.0f;
+					doUpdateOrigin = true;
+					isSATransform = false;
+
+					interp = 0;
+					xfrm = new TransMatrix(4);
+					xfrm.identity();
+
+					oXres = dceResolsNew[0];
+					oYres = dceResolsNew[1];
+					oZres = dceResolsNew[2];
+
+					oXdim = t2wExtents[0];
+					oYdim = t2wExtents[1];
+					oZdim = dceExtents[2];
+
+					AlgorithmTransform algoTransDCE = new AlgorithmTransform(images[3], xfrm, interp, oXres, oYres,
+							oZres, oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+					algoTransDCE.setFillValue(fillValue);
+					algoTransDCE.setUpdateOriginFlag(doUpdateOrigin);
+					algoTransDCE.setUseScannerAnatomical(isSATransform);
+					algoTransDCE.run();
+
+					images[3] = algoTransDCE.getTransformedImage();
+					images[3].calcMinMax();
+
+					images[3].saveImage(currentDirectory, "dce_new.xml", FileUtility.XML, false);
+
+					algoTransDCE.disposeLocal();
+					algoTransDCE = null;
+
+					// new ViewJFrameImage(images[3]);
+                   
+				
+				} // end if hasConvertedImages
+			
+				int volumeLength = 26;
+				float res3 = 3.0f;
+				float res4 = 1.0f;
+				int unit3 = 8;
+				int unit4 = 8;
+				AlgorithmConvert3Dto4D convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(images[3], volumeLength, res3,
+						res4, unit3, unit4);
+				convert3Dto4DAlgo.run();
+				images[3] = convert3Dto4DAlgo.getResultImage();
+				// new ViewJFrameImage(images[3], null,
+				// ViewUserInterface.getReference().getNewFrameLocation(images[3].getExtents()[0],
+				// images[3].getExtents()[1]));
+
+				// new ViewJFrameImage(convert3Dto4DAlgo.getResultImage());
+				convert3Dto4DAlgo = null;
+				
 				equalScaleImage();
-
+               
 				// for ( i = 0; i < imageNamesIndex; i++ ) {
 				// new ViewJFrameImage(images[3]);
 				// }
@@ -469,8 +829,34 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	}
 
 	public void equalScaleImage() {
+		
+		int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
+	    int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
+		
+		for ( int i = 0; i < 4; i++ ) {
+			
+			
+			if ( i != 3 ) {
+			imageFrame[i] = new ViewJFrameImage(images[i]);
+			// imageFrame[i].setVisible(false);
+			imageFrame[i].setLocation(screenWidth, screenHeight);
+			imageComp[i] = imageFrame[i].getComponentImage();
+			} else {
+				imageFrame[3] = new ViewJFrameImage(images[3], null, ViewUserInterface.getReference().getNewFrameLocation(images[3].getExtents()[0], images[3].getExtents()[1]));
+				imageFrame[3].setLocation(screenWidth, screenHeight);
+				imageComp[3] = imageFrame[i].getComponentImage(); 
+			}
+		
+		}
+		
+		
 
-		float newZoom;
+	}
+
+	
+	public void fitsToScreen() {
+
+		float newZoom, oldZoom;
 		int currentSlice;
 		int i;
 		int compW;
@@ -480,18 +866,8 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		int diffW;
 		int diffH;
 		
-		int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
-	    int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
-		
 		for ( i = 0; i < 4; i++ ) {
 			
-			imageFrame[i] = new ViewJFrameImage(images[i]);
-			// imageFrame[i].setVisible(false);
-			imageFrame[i].setLocation(screenWidth, screenHeight);
-			imageComp[i] = imageFrame[i].getComponentImage();
-			
-			if ( i == 3 ) {
-				
 				compW = imageComp[i].getWidth();
 				compH = imageComp[i].getHeight();
 
@@ -501,27 +877,40 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				diffW = frameW - compW;
 				diffH = frameH - compH;
 				
-				currentSlice = imageComp[3].getSlice();
-				newZoom = 0.5f * imageComp[3].getZoomX();
+				currentSlice = imageComp[i].getSlice();
 				
-			    imageComp[3].setZoomExact(newZoom, newZoom);
-			    imageComp[3].show(0, currentSlice, true);
-
-				imageFrame[3].setSize(compW / 2 + diffW, compH / 2 + diffH);
-				imageFrame[3].updateImages();
-			}
+				int w = imageComp[i].getWidth();
+				int h = imageComp[i].getHeight();
+				
+				oldZoom = imageComp[i].getZoomX();
+				newZoom = 2.0f * imageComp[i].getZoomX();
+				
+			    imageComp[i].setZoomExact(newZoom, newZoom);
+			    
+			    int newX = MipavMath.round((w/2 * newZoom) / oldZoom);
+				int newY = MipavMath.round((h/2 * newZoom) / oldZoom);
+				imageComp[i].setCenter(new Vector3f(newX, newY, currentSlice));
+				adjustScrollbars(newX, newY, imageScroll[i]);
+				
+				imageComp[i].show(0, currentSlice, true);
+				
+				imageFrame[i].setSize(compW / 2 + diffW, compH / 2 + diffH);
+				imageFrame[i].updateImages();
+			 
 		}
 		
 		
+		 
 
 	}
-
+	
 	private void traverse(File file) {
 		String dirName = file.toString();
 		// System.err.println(dirName);
 		int begin = dirName.lastIndexOf(File.separator) + 1;
 		int end = dirName.length();
 
+	
 		if (dirName.substring(begin, end).startsWith("adc") && dirName.substring(begin, end).endsWith(".xml")) {
 			imageNames[imageNamesIndex++] = file.toString();
 		}
@@ -537,7 +926,117 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		if (dirName.substring(begin, end).startsWith("t2w") && dirName.substring(begin, end).endsWith(".xml")) {
 			imageNames[imageNamesIndex++] = file.toString();
 		}
+	 
+		
+		if ( file.isDirectory() ) {
+			traverseDeeper(file); 
+			// printTable();
+			
+		}
 
+	}
+	
+	private void readDicomImage() {
+		Set<String> keys = namesTable.keySet();
+		for ( String hashID : keys ) {
+			System.err.println(" readDicom:   hashID = " + hashID);
+		
+			Vector<String> names = namesTable.get(hashID);
+			FileIO fileIO = new FileIO();
+			String imageFullName = names.get(0);
+			System.err.println(" imageFullName = " + imageFullName);
+			int index = imageFullName.lastIndexOf(File.separator);
+		
+			String fileName = imageFullName.substring(index+1, imageFullName.length());
+			String directory = imageFullName.substring(0, index+1);
+			System.err.println("fileName = " + fileName);
+			System.err.println("directory = " + directory);
+			 
+			boolean multiFile = true;
+			ModelImage image = fileIO.readImage(fileName, directory, multiFile, null);
+			// new ViewJFrameImage(image);
+			 
+		
+			int extents[] = image.getExtents();
+			
+			System.err.println(" zDim = " + extents[2]);
+			
+			if ( extents[0] == 512 && extents[1] == 512 ) { // t2w 
+				images[0] = image;
+				System.err.println("t2w image");
+			} else if ( extents[2] >= 100 ) {  // dce
+				images[3] = image;
+				System.err.println("dce image");
+			} else if ( extents[2] < 100 && extents[0] == 256  && extents[1] == 256 ) {
+			
+				System.err.println("adc and dwi");
+				FileInfoBase fileInfo = image.getFileInfo()[0];
+				FileInfoDicom fileInfoDicom = (FileInfoDicom)fileInfo;
+			    String imageType = ((String) fileInfoDicom.getTagTable().getValue("0008,0008")).trim();
+				System.err.println("image type: " + imageType);
+				
+				if ( imageType.toLowerCase().contains("adc")) {
+					images[1] = image;   // adc
+					System.err.println("read adc");
+				} else {
+					images[2] = image;
+					System.err.println("read dwi");
+				}
+				
+			} 
+		
+			// if (image.getImageName().contains("t2w.xml")) {
+			// 	images[0] = image;
+			// }
+
+			/*
+			if (image.getImageName().contains("adc.xml")) {
+				images[1] = image;
+			}
+
+			if (image.getImageName().contains("dwi.xml")) {
+				images[2] = image;
+			}
+			*/ 
+
+			// if (image.getImageName().contains("dce.xml")) {
+			// 	images[3] = image;
+			// }
+
+			
+		}
+	}
+	
+	private void printTable() {
+		Set<String> keys = namesTable.keySet();
+		for ( String hashID : keys ) {
+			System.err.println("hashID = " + hashID);
+			
+			Vector<String> names = namesTable.get(hashID);
+			for ( int j = 0; j < names.size(); j++ ) {
+				System.err.println(names.get(j));
+			}
+		 
+			System.err.println();
+		}
+	}
+	
+	Hashtable<String, Vector<String>>  namesTable = new Hashtable<String, Vector<String>>(); 
+	
+	private void traverseDeeper(File file) {
+		String children[] = file.list();
+		for ( int i = 0; i < children.length; i++ ) {
+			namesTable.put(children[i], new Vector<String>());
+			traverseDicom(new File(file.getAbsolutePath() + File.separator + children[i] + File.separator), children[i]);
+		}
+		
+	}
+	
+	private void traverseDicom(File file, String dirName) {
+		String children[] = file.list();
+		for ( int i = 0; i < children.length; i++ ) {
+			namesTable.get(dirName).add(file + File.separator + children[i]);
+		}
 	}
 
 	// ************************************************************************
@@ -550,8 +1049,43 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	 * @param event
 	 *            event that triggered function
 	 */
-	public void actionPerformed(final ActionEvent event) {}
+	public void actionPerformed(final ActionEvent event) {
+		Object eventObj = event.getSource();
+		// (JMenuItem)event.getSource()).getText();
+		
+		/********************  Window-Level   threshold values ******************************/ 
+		if ( eventObj instanceof JMenuItem ) {
+			String cmd = ((JMenuItem)eventObj).getText();
+				
+				
+				if ( cmd.equals("Measure")) {
+					invokeMeasure();
+				} 
+				
+				/*
+				for ( int i = 0; i < imageNamesIndex; i++ ) {
+					if( cmd.equals(images[i].getImageName() )) {
+						updateImage(i);
+						updateSlider();
+						break;
+					}
+					
+				}
+				*/ 	
+		}
+		
+	}
 
+	public void invokeMeasure() {
+		for ( int i = 0; i < 4; i++ ) {
+		  if ( imageActiveIndex == i ) {
+			  imageFrame[i].getVOIManager().doVOI(CustomUIBuilder.PARAM_VOI_LINE.getActionCommand());
+		  }
+		}	
+	}
+
+	
+	
 	/**
 	 * Should be called when window is closing to perform cleanup.
 	 */
@@ -697,7 +1231,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	 *            DOCUMENT ME!
 	 */
 	public void mouseClicked(final MouseEvent event) {
-
+       
 	    if (event.getButton() == MouseEvent.BUTTON3) {
 
 			if (event.getSource() instanceof AbstractButton) {
@@ -713,6 +1247,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				}
 			}
 		}
+	 
 
 	}
 
@@ -724,7 +1259,6 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	 */
 	public void mouseEntered(final MouseEvent event) {
 		
-
 	}
 
 	/**
@@ -738,7 +1272,6 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	}
 	
 	public void mouseMoved(MouseEvent evt) {
-		
 	}
 	
 	public synchronized void mouseDragged(MouseEvent e) {
@@ -795,7 +1328,8 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	 *            DOCUMENT ME!
 	 */
 	public synchronized void mousePressed(final MouseEvent event) {
-
+       
+      
 		synchronized (this) {
 			origin = new Point(event.getPoint());
 			// Get the top left corner of the upper left white circle in the screen's coordinate space
@@ -1024,6 +1558,14 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	 *            DOCUMENT ME!
 	 */
 	public void mouseReleased(final MouseEvent event) {
+	       
+	        for ( int i = 0; i < 4; i++ ) {
+	        	if ( imageComp[i].isHighlight() ) {
+	        		imageActiveIndex = i; 
+	        		break;
+	        	}
+	        }
+		
 		if ( event.getButton() == MouseEvent.BUTTON1 && event.isShiftDown() || 
 				 event.getButton() == MouseEvent.BUTTON1 && event.isControlDown() ||
 				 event.getButton() == MouseEvent.BUTTON1 && event.isAltDown() ) {
