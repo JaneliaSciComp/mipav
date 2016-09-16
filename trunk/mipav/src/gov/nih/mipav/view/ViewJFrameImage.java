@@ -3191,6 +3191,52 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // registeredFramedImages = null;
         }
     }
+    
+    public synchronized void decSliceEyeTracker() {
+
+        if (imageA.getNDims() <= 2) {
+            return;
+        }
+
+        if (componentImage.getSlice() > 0) {
+            controls.setZSlider(componentImage.getSlice());
+
+            if (imageA.getLightBoxFrame() != null) { // move highlight on images in lightbox
+                imageA.getLightBoxFrame().setSlice(componentImage.getSlice());
+                // imageA.getLightBoxFrame().updateImage(zSlice, true); //turn highlight on in old image
+            }
+
+            // livewire grad mag. should be recalculated for the new slice
+            voiManager.resetLivewire();
+
+            // componentImage.deactivateAllVOI();
+            setTitle();
+            // need to get all other images in sync if there are other matching images and if shift was down
+            if (linkedScrolling || isShiftDown) {
+                doLinkedScrolling( -1);
+            }
+
+            if (linkFrame != null) {
+
+                // linkFrame.setSlice(zSlice);
+                linkFrame.decSlice();
+            }
+
+            if (infoDialogA != null) {
+                infoDialogA.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
+            }
+
+            if (infoDialogB != null) {
+                infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
+            }
+
+            updateImages(true);
+
+            componentImage.restartCheckerboardAnimateThread();
+
+            // registeredFramedImages = null;
+        }
+    }
 
     public void doLinkedScrolling(final int offset) {
         if ( !linkedScrolling && !isShiftDown) {
@@ -3859,6 +3905,55 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
     }
 
+    public synchronized void incSliceEyeTracker() {
+        if (imageA.getNDims() <= 2) {
+            return;
+        }
+
+        if (componentImage.getSlice() < (imageA.getExtents()[2] - 1)) {
+       
+            controls.setZSlider(componentImage.getSlice());
+
+            // ////
+            if (imageA.getLightBoxFrame() != null) { // move highlight on images in lightbox
+                imageA.getLightBoxFrame().setSlice(componentImage.getSlice()); // turn highlight on in old image
+            }
+
+            // livewire grad mag. should be recalculated for the new slice
+            voiManager.resetLivewire();
+
+            // componentImage.deactivateAllVOI();
+            setTitle();
+
+            // need to get all other images in sync if there are other matching images and if shift was down
+
+            if (linkedScrolling || isShiftDown) {
+                doLinkedScrolling(1);
+            }
+            // ////
+
+            if (linkFrame != null) {
+                linkFrame.incSlice();
+            }
+
+            if (infoDialogA != null) {
+                infoDialogA.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
+            }
+
+            if (infoDialogB != null) {
+                infoDialogB.setSlice(componentImage.getSlice(), componentImage.getTimeSlice());
+            }
+
+            updateImages(true);
+
+            componentImage.restartCheckerboardAnimateThread();
+
+            // registeredFramedImages = null;
+
+        }
+    }
+
+    
     /**
      * Initializes the variables based on the image extents. (i.e. number of slices, number of time slices, the initial
      * z-slice, etc.
