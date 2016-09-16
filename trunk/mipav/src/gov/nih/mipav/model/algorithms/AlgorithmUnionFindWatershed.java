@@ -85,6 +85,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
     	int minLabel[];
     	int numMins;
     	int rep;
+    	boolean test = false;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -92,6 +93,19 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 
             return;
         }
+    	
+    	if (test) {
+    		indexSlopeList.add(new indexSlopeItem(10,5.0));
+    		indexSlopeList.add(new indexSlopeItem(58,-4.0));
+    		indexSlopeList.add(new indexSlopeItem(45, 10.0));
+    		indexSlopeList.add(new indexSlopeItem(105, 20.0));
+    		Collections.sort(indexSlopeList, new indexSlopeComparator());
+    		for (i = 0; i < indexSlopeList.size(); i++) {
+    			System.out.println("index = " + indexSlopeList.get(i).index + " slope = " + indexSlopeList.get(i).slope);
+    		}
+    		setCompleted(true);
+    		return;
+    	}
     	
     	fireProgressStateChanged(0, srcImage.getImageName(), "Union Find Watershed ...");
         
@@ -392,13 +406,11 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 
             
             // Slopes in descending order
-            if (a < b) {
-            	return 1;
-            }
-            else if (b > a) {
-            	return -1;
-            }
             // Indices in ascending order
+            int retval = Double.compare(b, a);
+            if (retval != 0) {
+            	return retval;
+            }
             else if (i > j) {
             	return 1;
             }
