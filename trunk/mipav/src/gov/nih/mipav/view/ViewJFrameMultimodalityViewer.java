@@ -1290,10 +1290,10 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 					Point vul0 = viewPort0.getLocationOnScreen();
 					Dimension d0 = viewPort0.getSize();
 					Point im0 = imageComp[0].getLocationOnScreen();
-					int x0l = imageComp[0].getScaledX(vul0.x - im0.x);
-		            int y0u = imageComp[0].getScaledY(vul0.y - im0.y);
-		            int x0r = imageComp[0].getScaledX(vul0.x - im0.x + d0.width);
-		            int y0l = imageComp[0].getScaledY(vul0.y - im0.y + d0.height);
+					int x0l = Math.max(0,imageComp[0].getScaledX(vul0.x - im0.x));
+		            int y0u = Math.max(0,imageComp[0].getScaledY(vul0.y - im0.y));
+		            int x0r = Math.min(images[0].getExtents()[0]-1,imageComp[0].getScaledX(vul0.x - im0.x + d0.width));
+		            int y0l = Math.min(images[0].getExtents()[1]-1,imageComp[0].getScaledY(vul0.y - im0.y + d0.height));
 		            System.out.println("Image 0 upper left image coordinates at x = " + x0l + " y = " + y0u);
 		            System.out.println("Image 0 upper right image coordinates at x = " + x0r + " y = " + y0u);
 		            System.out.println("Image 0 lower left image coordinates at x = " + x0l + " y = " + y0l);
@@ -1310,10 +1310,10 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 					Point vul1 = viewPort1.getLocationOnScreen();
 					Dimension d1 = viewPort1.getSize();
 					Point im1 = imageComp[1].getLocationOnScreen();
-					int x1l = imageComp[1].getScaledX(vul1.x - im1.x);
-		            int y1u = imageComp[1].getScaledY(vul1.y - im1.y);
-		            int x1r = imageComp[1].getScaledX(vul1.x - im1.x + d1.width);
-		            int y1l = imageComp[1].getScaledY(vul1.y - im1.y + d1.height);
+					int x1l = Math.max(0,imageComp[1].getScaledX(vul1.x - im1.x));
+		            int y1u = Math.max(0,imageComp[1].getScaledY(vul1.y - im1.y));
+		            int x1r = Math.min(images[1].getExtents()[0]-1,imageComp[1].getScaledX(vul1.x - im1.x + d1.width));
+		            int y1l = Math.min(images[1].getExtents()[1]-1,imageComp[1].getScaledY(vul1.y - im1.y + d1.height));
 		            System.out.println("Image 1 upper left image coordinates at x = " + x1l + " y = " + y1u);
 		            System.out.println("Image 1 upper right image coordinates at x = " + x1r + " y = " + y1u);
 		            System.out.println("Image 1 lower left image coordinates at x = " + x1l + " y = " + y1l);
@@ -1330,10 +1330,10 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 					Point vul2 = viewPort2.getLocationOnScreen();
 					Dimension d2 = viewPort2.getSize();
 					Point im2 = imageComp[2].getLocationOnScreen();
-					int x2l = imageComp[2].getScaledX(vul2.x - im2.x);
-		            int y2u = imageComp[2].getScaledY(vul2.y - im2.y);
-		            int x2r = imageComp[2].getScaledX(vul2.x - im2.x + d2.width);
-		            int y2l = imageComp[2].getScaledY(vul2.y - im2.y + d2.height);
+					int x2l = Math.max(0,imageComp[2].getScaledX(vul2.x - im2.x));
+		            int y2u = Math.max(0,imageComp[2].getScaledY(vul2.y - im2.y));
+		            int x2r = Math.min(images[2].getExtents()[0]-1,imageComp[2].getScaledX(vul2.x - im2.x + d2.width));
+		            int y2l = Math.min(images[2].getExtents()[1]-1,imageComp[2].getScaledY(vul2.y - im2.y + d2.height));
 		            System.out.println("Image 2 upper left image coordinates at x = " + x2l + " y = " + y2u);
 		            System.out.println("Image 2 upper right image coordinates at x = " + x2r + " y = " + y2u);
 		            System.out.println("Image 2 lower left image coordinates at x = " + x2l + " y = " + y2l);
@@ -1350,10 +1350,10 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 					Point vul3 = viewPort3.getLocationOnScreen();
 					Dimension d3 = viewPort3.getSize();
 					Point im3 = imageComp[3].getLocationOnScreen();
-					int x3l = imageComp[3].getScaledX(vul3.x - im3.x);
-		            int y3u = imageComp[3].getScaledY(vul3.y - im3.y);
-		            int x3r = imageComp[3].getScaledX(vul3.x - im3.x + d3.width);
-		            int y3l = imageComp[3].getScaledY(vul3.y - im3.y + d3.height);
+					int x3l = Math.max(0,imageComp[3].getScaledX(vul3.x - im3.x));
+		            int y3u = Math.max(0,imageComp[3].getScaledY(vul3.y - im3.y));
+		            int x3r = Math.min(images[3].getExtents()[0]-1,imageComp[3].getScaledX(vul3.x - im3.x + d3.width));
+		            int y3l = Math.min(images[3].getExtents()[1]-1,imageComp[3].getScaledY(vul3.y - im3.y + d3.height));
 		            System.out.println("Image 3 upper left image coordinates at x = " + x3l + " y = " + y3u);
 		            System.out.println("Image 3 upper right image coordinates at x = " + x3r + " y = " + y3u);
 		            System.out.println("Image 3 lower left image coordinates at x = " + x3l + " y = " + y3l);
@@ -1396,10 +1396,10 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
             System.out.println("Image lower left corner in screen coordinates at x = " + vul0.x + " y = " + (vul0.y + d0.height));
             System.out.println("Image lower right corner in screen coordinates at x = " + (vul0.x + d0.width) + " y = " + 
             (vul0.y + d0.height));
-            int x0l = imageComp[0].getScaledX(vul0.x - im0.x);
-            int y0u = imageComp[0].getScaledY(vul0.y - im0.y);
-            int x0r = imageComp[0].getScaledX(vul0.x - im0.x + d0.width);
-            int y0l = imageComp[0].getScaledY(vul0.y - im0.y + d0.height);
+            int x0l = Math.max(0,imageComp[0].getScaledX(vul0.x - im0.x));
+            int y0u = Math.max(0,imageComp[0].getScaledY(vul0.y - im0.y));
+            int x0r = Math.min(images[0].getExtents()[0]-1,imageComp[0].getScaledX(vul0.x - im0.x + d0.width));
+            int y0l = Math.min(images[0].getExtents()[1]-1,imageComp[0].getScaledY(vul0.y - im0.y + d0.height));
             System.out.println("Image 0 upper left image coordinates at x = " + x0l + " y = " + y0u);
             System.out.println("Image 0 upper right image coordinates at x = " + x0r + " y = " + y0u);
             System.out.println("Image 0 lower left image coordinates at x = " + x0l + " y = " + y0l);
@@ -1410,10 +1410,10 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 			System.out.println("Upper right corner of JViewPort of imageScroll[1] x = " + (vul1.x + d1.width) +
 					" y = " + vul1.y);
 			Point im1 = imageComp[1].getLocationOnScreen();
-			int x1l = imageComp[1].getScaledX(vul1.x - im1.x);
-            int y1u = imageComp[1].getScaledY(vul1.y - im1.y);
-            int x1r = imageComp[1].getScaledX(vul1.x - im1.x + d1.width);
-            int y1l = imageComp[1].getScaledY(vul1.y - im1.y + d1.height);
+			int x1l = Math.max(0,imageComp[1].getScaledX(vul1.x - im1.x));
+            int y1u = Math.max(0,imageComp[1].getScaledY(vul1.y - im1.y));
+            int x1r = Math.min(images[1].getExtents()[0]-1,imageComp[1].getScaledX(vul1.x - im1.x + d1.width));
+            int y1l = Math.min(images[1].getExtents()[1]-1,imageComp[1].getScaledY(vul1.y - im1.y + d1.height));
             System.out.println("Image 1 upper left image coordinates at x = " + x1l + " y = " + y1u);
             System.out.println("Image 1 upper right image coordinates at x = " + x1r + " y = " + y1u);
             System.out.println("Image 1 lower left image coordinates at x = " + x1l + " y = " + y1l);
@@ -1426,10 +1426,10 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 			System.out.println("Upper right corner of JViewport of imageScroll[2] x = " + (vul2.x + d2.width) + 
 					" y = " + vul2.y);
 			Point im2 = imageComp[2].getLocationOnScreen();
-			int x2l = imageComp[2].getScaledX(vul2.x - im2.x);
-            int y2u = imageComp[2].getScaledY(vul2.y - im2.y);
-            int x2r = imageComp[2].getScaledX(vul2.x - im2.x + d2.width);
-            int y2l = imageComp[2].getScaledY(vul2.y - im2.y + d2.height);
+			int x2l = Math.max(0,imageComp[2].getScaledX(vul2.x - im2.x));
+            int y2u = Math.max(0,imageComp[2].getScaledY(vul2.y - im2.y));
+            int x2r = Math.min(images[2].getExtents()[0]-1,imageComp[2].getScaledX(vul2.x - im2.x + d2.width));
+            int y2l = Math.min(images[2].getExtents()[1]-1,imageComp[2].getScaledY(vul2.y - im2.y + d2.height));
             System.out.println("Image 2 upper left image coordinates at x = " + x2l + " y = " + y2u);
             System.out.println("Image 2 upper right image coordinates at x = " + x2r + " y = " + y2u);
             System.out.println("Image 2 lower left image coordinates at x = " + x2l + " y = " + y2l);
@@ -1440,10 +1440,10 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 			System.out.println("Lower right corner of JViewport of imageScroll[3] x = " + (vul3.x + d3.width) +
 					" y = " + (vul3.y + d3.height));
 			Point im3 = imageComp[3].getLocationOnScreen();
-			int x3l = imageComp[3].getScaledX(vul3.x - im3.x);
-            int y3u = imageComp[3].getScaledY(vul3.y - im3.y);
-            int x3r = imageComp[3].getScaledX(vul3.x - im3.x + d3.width);
-            int y3l = imageComp[3].getScaledY(vul3.y - im3.y + d3.height);
+			int x3l = Math.max(0,imageComp[3].getScaledX(vul3.x - im3.x));
+            int y3u = Math.max(0,imageComp[3].getScaledY(vul3.y - im3.y));
+            int x3r = Math.min(images[3].getExtents()[0]-1,imageComp[3].getScaledX(vul3.x - im3.x + d3.width));
+            int y3l = Math.min(images[3].getExtents()[1]-1,imageComp[3].getScaledY(vul3.y - im3.y + d3.height));
             System.out.println("Image 3 upper left image coordinates at x = " + x3l + " y = " + y3u);
             System.out.println("Image 3 upper right image coordinates at x = " + x3r + " y = " + y3u);
             System.out.println("Image 3 lower left image coordinates at x = " + x3l + " y = " + y3l);
