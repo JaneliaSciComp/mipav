@@ -4,9 +4,8 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * 
@@ -45,7 +44,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 	// Fictitious index of the watershed pixels
 	private final int W = -1;
 	
-	private int con;
+	private final int INIT = -2;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -74,8 +73,6 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
     	ModelImage ufclImage;
     	double srcBuffer[];
     	int levelBuffer[];
-    	int numLowerNeighbors;
-    	ArrayList <indexSlopeItem> indexSlopeList = new ArrayList<indexSlopeItem>();
     	double minValue;
     	double maxValue;
     	double range;
@@ -85,7 +82,20 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
     	int minLabel[];
     	int numMins;
     	int rep;
-    	boolean test = false;
+    	int smallestMinIndex[];
+    	int smallestMinValue[];
+    	double maxSlope; 
+    	int minIndex[];
+    	int numLowestNeighbors = 0;
+    	double epsilon = 1.0e-6;
+    	boolean equalPresent;
+    	Queue <Integer> fifo = new LinkedList<Integer>();
+    	boolean added;
+    	int numberEqual;
+    	int equalIndex[];
+    	int k;
+    	int gamma[][];
+    	int con;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -94,18 +104,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
             return;
         }
     	
-    	if (test) {
-    		indexSlopeList.add(new indexSlopeItem(10,5.0));
-    		indexSlopeList.add(new indexSlopeItem(58,-4.0));
-    		indexSlopeList.add(new indexSlopeItem(45, 10.0));
-    		indexSlopeList.add(new indexSlopeItem(105, 20.0));
-    		Collections.sort(indexSlopeList, new indexSlopeComparator());
-    		for (i = 0; i < indexSlopeList.size(); i++) {
-    			System.out.println("index = " + indexSlopeList.get(i).index + " slope = " + indexSlopeList.get(i).slope);
-    		}
-    		setCompleted(true);
-    		return;
-    	}
+    	
     	
     	fireProgressStateChanged(0, srcImage.getImageName(), "Union Find Watershed ...");
         
@@ -150,7 +149,8 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
         try {
             imgBuffer = new int[length];
             labelBuffer = new int[length];
-            sln = new int[length][con];
+            sln = new int[length][];
+            gamma = new int[length][];
             srcBuffer = new double[length];
             levelBuffer = new int[length];
         } catch (OutOfMemoryError e) {
@@ -272,66 +272,207 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                System.out.println("numLevels = " + numLevels);
                 
                 for (i = 0; i < length; i++) {
-                	labelBuffer[i] = 0;
-                	for (j = 0; j < con; j++) {
-                		sln[i][j] = i;
-                	}
+                	labelBuffer[i] = INIT;
                 }
                 
+               smallestMinIndex = new int[numMins];
+                smallestMinValue = new int[numMins];
+                for (i = 0; i < numMins; i++) {
+                	smallestMinValue[i] = Integer.MAX_VALUE;
+                }
                 for (i = 0; i < length; i++) {
                 	if (isMin[levelBuffer[i]-1]) {
                 		labelBuffer[i] = minLabel[levelBuffer[i]-1];
+                		if (imgBuffer[i] < smallestMinValue[labelBuffer[i]-1]) {
+                			smallestMinValue[labelBuffer[i]-1] = imgBuffer[i];
+                			smallestMinIndex[labelBuffer[i]-1] = i;
+                		}
                 	}
                 }
+                
+                minIndex = new int[con];
+                equalIndex = new int[con];
+                fifo.clear();
+                for (i = 0; i < length; i++) {
+                	if (gamma[i] == null) {
+                	    x = i % xDim;
+                	    y = i / xDim;
+                	    maxSlope = 0.0;
+                	    numLowestNeighbors = 0;
+                	    if ((x > 0) && (imgBuffer[i]-imgBuffer[i-1] > 0)) {
+                	    	maxSlope = imgBuffer[i] - imgBuffer[i-1];
+                	        numLowestNeighbors = 1;
+                	        minIndex[0] = i-1;
+                	    }
+                	    if ((x < xDim - 1) && (imgBuffer[i] - imgBuffer[i+1] > 0)) {
+	                	    if (imgBuffer[i] - imgBuffer[i+1] > maxSlope) {
+	                	    	maxSlope = imgBuffer[i+1] - imgBuffer[i];
+	                	    	numLowestNeighbors = 1;
+	                	    	minIndex[0] = i+1;
+	                	    }
+	                	    else if (imgBuffer[i] - imgBuffer[i+1] == maxSlope) {
+	                	    	minIndex[numLowestNeighbors++] = i+1;
+	                	    }
+                	    } // if ((x < xDim - 1) && (imgBuffer[i] - imgBuffer[i+1] > 0))
+                	    if ((y > 0) && (imgBuffer[i] - imgBuffer[i-xDim] > 0)) {
+                	    	if (imgBuffer[i] - imgBuffer[i-xDim] > maxSlope) {
+                	    		maxSlope = imgBuffer[i] - imgBuffer[i-xDim];
+	                	    	numLowestNeighbors = 1;
+	                	    	minIndex[0] = i-xDim;
+	                	    }
+	                	    else if (imgBuffer[i] - imgBuffer[i-xDim] == maxSlope) {
+	                	    	minIndex[numLowestNeighbors++] = i-xDim;
+	                	    }	
+                	    } // if ((y > 0) && (imgBuffer[i] - imgBuffer[i-xDim] > 0))
+                	    if ((y < yDim-1) && (imgBuffer[i] - imgBuffer[i+xDim] > 0)) {
+                	        if (imgBuffer[i] - imgBuffer[i+xDim] > maxSlope) {
+                	        	maxSlope = imgBuffer[i] - imgBuffer[i+xDim];
+                	        	numLowestNeighbors = 1;
+                	        	minIndex[0] = i+xDim;
+                	        }
+                	        else if (imgBuffer[i] - imgBuffer[i+xDim] == maxSlope) {
+                	        	minIndex[numLowestNeighbors++] = i+xDim;
+                	        }
+                	    } // if ((y < yDim-1) && (imgBuffer[i] - imgBuffer[i+xDim] > 0))
+                	    if (neighbor8) {
+                	    	if ((x > 0) && (y > 0) && (imgBuffer[i] - imgBuffer[i-xDim-1] > 0)) {
+	                	    	if (((imgBuffer[i] - imgBuffer[i-xDim-1])/sqrt2) - epsilon > maxSlope) {
+	                	    		maxSlope = (imgBuffer[i] - imgBuffer[i-xDim-1])/sqrt2;
+	                	    		numLowestNeighbors = 1;
+	                	    		minIndex[0] = i-xDim-1;
+	                	    	}
+	                	    	else if (Math.abs(((imgBuffer[i] - imgBuffer[i-xDim-1])/sqrt2) - maxSlope) <= epsilon) {
+	                	    		minIndex[numLowestNeighbors++] = i-xDim-1;
+	                	    	}
+                	    	} // if ((x > 0) && (y > 0) && (imgBuffer[i] - imgBuffer[i-xDim-1] > 0))
+                	    	if ((x > 0) && (y < yDim-1) && (imgBuffer[i] - imgBuffer[i+xDim-1] > 0)) {
+	                	    	if (((imgBuffer[i] - imgBuffer[i+xDim-1])/sqrt2) - epsilon > maxSlope) {
+	                	    		maxSlope = (imgBuffer[i] - imgBuffer[i+xDim-1])/sqrt2;
+	                	    		numLowestNeighbors = 1;
+	                	    		minIndex[0] = i+xDim-1;
+	                	    	}
+	                	    	else if (Math.abs(((imgBuffer[i] - imgBuffer[i+xDim-1])/sqrt2) - maxSlope) <= epsilon) {
+	                	    		minIndex[numLowestNeighbors++] = i+xDim-1;
+	                	    	}
+                	    	} // if ((x > 0) && (y < yDim-1) && (imgBuffer[i] - imgBuffer[i+xDim-1] > 0))
+                	    	if ((x < xDim-1) && (y > 0) && (imgBuffer[i] - imgBuffer[i-xDim+1] > 0)) {
+	                	    	if (((imgBuffer[i] - imgBuffer[i-xDim+1])/sqrt2) - epsilon > maxSlope) {
+	                	    		maxSlope = (imgBuffer[i] - imgBuffer[i-xDim+1])/sqrt2;
+	                	    		numLowestNeighbors = 1;
+	                	    		minIndex[0] = i-xDim+1;
+	                	    	}
+	                	    	else if (Math.abs(((imgBuffer[i] - imgBuffer[i-xDim+1])/sqrt2) - maxSlope) <= epsilon) {
+	                	    		minIndex[numLowestNeighbors++] = i-xDim+1;
+	                	    	}
+                	    	} // if ((x < xDim-1) && (y > 0) && (imgBuffer[i] - imgBuffer[i-xDim+1] > 0))
+                	    	if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[i] - imgBuffer[i+xDim+1] > 0)) {
+	                	    	if (((imgBuffer[i] - imgBuffer[i+xDim+1])/sqrt2) - epsilon > maxSlope) {
+	                	    		maxSlope = (imgBuffer[i] - imgBuffer[i+xDim+1])/sqrt2;
+	                	    		numLowestNeighbors = 1;
+	                	    		minIndex[0] = i+xDim+1;
+	                	    	}
+	                	    	else if (Math.abs(((imgBuffer[i] - imgBuffer[i+xDim+1])/sqrt2) - maxSlope) <= epsilon) {
+	                	    		minIndex[numLowestNeighbors++] = i+xDim+1;
+	                	    	}
+                	    	} // if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[i] - imgBuffer[i+xDim+1] > 0))
+                	    } // if (neighbor8)
+                	    if (numLowestNeighbors > 0) {
+                	    	gamma[i] = new int[numLowestNeighbors];
+                	    	for (j = 0; j < numLowestNeighbors; j++) {
+                	    		gamma[i][j] = minIndex[j];
+                	    	}
+                	    } // if (numLowestNeighbors > 0)
+                	    else { // numNeighbors == 0
+                	    	gamma[i] = new int[1];
+                	    	gamma[i][0] = i;
+                	    	equalPresent = false;
+                	    	if ((x > 0) && (imgBuffer[i] == imgBuffer[i-1])) {
+                	    		equalPresent = true;
+                	    	}
+                	    	else if ((x < xDim-1) && (imgBuffer[i] == imgBuffer[i+1])) {
+                	    		equalPresent = true;
+                	    	}
+                	    	else if ((y > 0) && (imgBuffer[i] == imgBuffer[i-xDim])) {
+                	    		equalPresent = true;
+                	    	}
+                	    	else if ((y < yDim-1) && (imgBuffer[i] == imgBuffer[i+xDim])) {
+                	    		equalPresent = true;
+                	    	}
+                	    	else if (neighbor8) {
+                	    		if ((x > 0) && (y > 0) && (Math.abs((imgBuffer[i] - imgBuffer[i-xDim-1])/sqrt2) <= epsilon)) {
+                	    		    equalPresent = true;	
+                	    		}
+                	    		else if ((x > 0) && (y < yDim-1) && (Math.abs((imgBuffer[i] - imgBuffer[i+xDim-1])/sqrt2) <= epsilon)) {
+                	    		    equalPresent = true;	
+                	    		}
+                	    		else if ((x < xDim-1) && (y > 0) && (Math.abs((imgBuffer[i] - imgBuffer[i-xDim+1])/sqrt2) <= epsilon)) {
+                	    		    equalPresent = true;	
+                	    		}
+                	    		else if ((x < xDim-1) && (y < yDim-1) && (Math.abs((imgBuffer[i] - imgBuffer[i+xDim+1])/sqrt2) <= epsilon)) {
+                	    		    equalPresent = true;	
+                	    		}
+                	    	} // else if (neighbor8)
+                	    	if (equalPresent) {
+                	    		added = fifo.offer(i);
+                            	if (!added) {
+                    				MipavUtil.displayError("Failure to add " + i + " to the fifo");
+                    				setCompleted(false);
+                    				return;
+                    			}	
+                            	while (!fifo.isEmpty()) {
+                            	    j = fifo.poll();
+                            	    numberEqual = 0;;
+                        	    	if ((x > 0) && (imgBuffer[j] == imgBuffer[j-1])) {
+                        	    		equalIndex[numberEqual++] = j-1;
+                        	    	}
+                        	    	if ((x < xDim-1) && (imgBuffer[j] == imgBuffer[j+1])) {
+                        	    		equalIndex[numberEqual++] = j+1;
+                        	    	}
+                        	    	if ((y > 0) && (imgBuffer[j] == imgBuffer[j-xDim])) {
+                        	    		equalIndex[numberEqual++] = j-xDim;
+                        	    	}
+                        	    	if ((y < yDim-1) && (imgBuffer[j] == imgBuffer[j+xDim])) {
+                        	    		equalIndex[numberEqual++] = j+xDim;
+                        	    	}
+                        	    	if (neighbor8) {
+                        	    		if ((x > 0) && (y > 0) && (Math.abs((imgBuffer[j] - imgBuffer[j-xDim-1])/sqrt2) <= epsilon)) {
+                        	    		    equalIndex[numberEqual++] = j-xDim-1;	
+                        	    		}
+                        	    		if ((x > 0) && (y < yDim-1) && (Math.abs((imgBuffer[j] - imgBuffer[j+xDim-1])/sqrt2) <= epsilon)) {
+                        	    		    equalIndex[numberEqual++] = j + xDim-1;	
+                        	    		}
+                        	    		if ((x < xDim-1) && (y > 0) && (Math.abs((imgBuffer[j] - imgBuffer[j-xDim+1])/sqrt2) <= epsilon)) {
+                        	    		    equalIndex[numberEqual++] = j-xDim+1;	
+                        	    		}
+                        	    		if ((x < xDim-1) && (y < yDim-1) && (Math.abs((imgBuffer[j] - imgBuffer[j+xDim+1])/sqrt2) <= epsilon)) {
+                        	    		    equalIndex[numberEqual++] = j+xDim+1;	
+                        	    		}
+                        	    	} // else if (neighbor8)
+                        	    	for (k = 0; k < numberEqual; k++) {
+                        	    	    if (gamma[equalIndex[k]] == null) {
+                        	    	        gamma[equalIndex[k]] = new int[1];
+                        	    	        gamma[equalIndex[k]][0] = i;
+                        	    	        added = fifo.offer(equalIndex[k]);
+                                        	if (!added) {
+                                				MipavUtil.displayError("Failure to add " + equalIndex[k] + " to the fifo");
+                                				setCompleted(false);
+                                				return;
+                                			}	
+                        	    	    } //  if (gamma[equalIndex[k]] == null) 
+                        	    	} // for (k = 0; k < numberEqual; k++)
+                            	} // while (!fifo.isEmpty())
+                	    	} // if (equalPresent)
+                	    } // else numNeighbors == 0
+                	} // if (gamma[i] == null)
+                	if (gamma[i] != null) {
+                		sln[i] = new int[gamma[i].length];
+                		for (j = 0; j < gamma[i].length; j++) {
+                		     sln[i][j] = gamma[i][j];	
+                		}
+                	} // if (gamma[i] != null)
+                } // for (i = 0; i < length; i++)
             	
-            	for (i = 0; i < length; i++) {
-            		x = i % xDim;
-            		y = i / xDim;
-            		numLowerNeighbors = 0;
-            		indexSlopeList.clear();
-            		if ((x > 0) && (imgBuffer[i] > imgBuffer[i-1])) {
-            			indexSlopeList.add(new indexSlopeItem(i-1, imgBuffer[i] - imgBuffer[i-1]));
-            			numLowerNeighbors++;
-            		}
-            		if ((x < xDim-1) && (imgBuffer[i] > imgBuffer[i+1])) {
-            			indexSlopeList.add(new indexSlopeItem(i+1, imgBuffer[i] - imgBuffer[i+1]));
-            			numLowerNeighbors++;	
-            		}
-            		if ((y > 0) && (imgBuffer[i] > imgBuffer[i-xDim])) {
-            			indexSlopeList.add(new indexSlopeItem(i-xDim, imgBuffer[i] - imgBuffer[i-xDim]));
-            			numLowerNeighbors++;	
-            		}
-            		if ((y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim])) {
-            			indexSlopeList.add(new indexSlopeItem(i+xDim, imgBuffer[i] - imgBuffer[i+xDim]));
-            			numLowerNeighbors++;	
-            		}
-            		if (neighbor8) {
-            			if ((x > 0) && (y > 0) && (imgBuffer[i] > imgBuffer[i-xDim-1])) {
-                			indexSlopeList.add(new indexSlopeItem(i-xDim-1, (imgBuffer[i] - imgBuffer[i-xDim-1])/sqrt2));
-                			numLowerNeighbors++;
-                		}
-            			if ((x > 0) && (y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim-1])) {
-                			indexSlopeList.add(new indexSlopeItem(i+xDim-1, (imgBuffer[i] - imgBuffer[i+xDim-1])/sqrt2));
-                			numLowerNeighbors++;
-                		}
-            			if ((x < xDim-1) && (y > 0) && (imgBuffer[i] > imgBuffer[i-xDim+1])) {
-                			indexSlopeList.add(new indexSlopeItem(i-xDim+1, (imgBuffer[i] - imgBuffer[i-xDim+1])/sqrt2));
-                			numLowerNeighbors++;
-                		}
-            			if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim+1])) {
-                			indexSlopeList.add(new indexSlopeItem(i+xDim+1, (imgBuffer[i] - imgBuffer[i+xDim+1])/sqrt2));
-                			numLowerNeighbors++;
-                		}
-            		} // if (neighbor8)
-            		if (numLowerNeighbors > 1) {
-            			Collections.sort(indexSlopeList, new indexSlopeComparator());
-            		}
-            		if (numLowerNeighbors > 0) {
-            			for (j = 0; j < numLowerNeighbors; j++) {
-            				sln[i][j] = indexSlopeList.get(j).index;
-            			}
-            		}
-            	} // for (i = 0; i < length; i++)
+            	
             	
             	// Give i the label of its representative
             	for (i = 0; i < length; i++) {
@@ -368,9 +509,16 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 		int i;
 		int j;
 		int rep;
+		int conn;
 		i = 0;
 		rep = 0; // some value such that rep != W
-		while ((i < con) && (rep != W)) {
+		if (sln[p] == null) {
+			conn = 0;
+		}
+		else {
+			conn = sln[p].length;
+		}
+		while ((i < conn) && (rep != W)) {
 		    if ((sln[p][i] != p) && (sln[p][i] != W)) {
 		    	sln[p][i] = resolve(sln[p][i]);
 		    }
@@ -379,68 +527,12 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 		    } // if (i == 0)
 		    else if (sln[p][i] != rep) {
 		        rep = W;
-		        for (j = 0; j < con; j++) {
+		        for (j = 0; j < conn; j++) {
 		            sln[p][j] = W;	
 		        } // for (j = 0; j < con; j++)
 		    } // else if (sln[p][i] != rep)
 		    i++;
 		} // while ((i < con) && (rep != W))
 		return rep; 
-	}
-	
-	private class indexSlopeComparator implements Comparator<indexSlopeItem> {
-
-        /**
-         * DOCUMENT ME!
-         * 
-         * @param o1 DOCUMENT ME!
-         * @param o2 DOCUMENT ME!
-         * 
-         * @return DOCUMENT ME!
-         */
-        public int compare(indexSlopeItem o1, indexSlopeItem o2) {
-            double a = o1.getSlope();
-            double b = o2.getSlope();
-            int i = o1.getIndex();
-            int j = o2.getIndex();
-
-            
-            // Slopes in descending order
-            // Indices in ascending order
-            int retval = Double.compare(b, a);
-            if (retval != 0) {
-            	return retval;
-            }
-            else if (i > j) {
-            	return 1;
-            }
-            else if (i < j) {
-            	return -1;
-            }
-            else {
-            	return 0;
-            }
-        }
-
-    }
-	
-	private class indexSlopeItem {
-		private int index;
-		private double slope;
-		
-		public indexSlopeItem(int index, double slope) {
-			this.index = index;
-			this.slope = slope;
-		}
-		
-		public int getIndex() {
-			return index;
-		}
-		
-		public double getSlope() {
-			return slope;
-		}
-		
-		
 	}
 }
