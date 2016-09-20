@@ -90,7 +90,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
             return;
         }
     	
-    	fireProgressStateChanged(0, srcImage.getImageName(), "Sequential Scanning Watershed ...");
+    	fireProgressStateChanged(0, srcImage.getImageName(), "Shortest Path Watershed ...");
         
         lcImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
@@ -137,7 +137,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
             	v = new int[4];
             }
         } catch (OutOfMemoryError e) {
-            displayError("Algorithm Sequential Scanning Watershed: Out of memory creating buffers");
+            displayError("Algorithm Shortest Path Watershed: Out of memory creating buffers");
             setCompleted(false);
 
             return;
@@ -149,7 +149,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
             	try {
                     srcImage.exportData((z + t*zDim)*length, length, srcBuffer);
                 } catch (IOException error) {
-                    displayError("Algorithm Sequential Scanning Watershed: image bounds exceeded");
+                    displayError("Algorithm Shortest Path Watershed: image bounds exceeded");
                     setCompleted(false);
                     
                     srcImage.releaseLock();
@@ -179,7 +179,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
                 try {
                     lcImage.exportData((z + t*zDim)*length, length, imgBuffer);
                 } catch (IOException error) {
-                    displayError("Algorithm Sequential Scanning Watershed: image bounds exceeded");
+                    displayError("Algorithm Shortest Path Watershed: image bounds exceeded");
                     setCompleted(false);
                     
                     lcImage.releaseLock();
@@ -190,7 +190,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
                 try {
                     ufclImage.exportData((z + t*zDim)*length, length, levelBuffer);
                 } catch (IOException error) {
-                    displayError("Algorithm Sequential Scanning Watershed: image bounds exceeded");
+                    displayError("Algorithm Shortest Path Watershed: image bounds exceeded");
                     setCompleted(false);
                     
                     ufclImage.releaseLock();
