@@ -356,6 +356,9 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
 	    else if (Math.abs(p-q) == xDim+1) {
 	    	dist = sqrt2;
 	    }
+	    else if (Math.abs(p-q) == xDim-1) {
+	    	dist = sqrt2;
+	    }
 	    if (imgBuffer[p] > imgBuffer[q]) {
 	    	result = LS(p) * dist;
 	    }
