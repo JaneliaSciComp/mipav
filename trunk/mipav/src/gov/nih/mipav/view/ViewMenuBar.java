@@ -393,7 +393,8 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Power Watershed", "PowerWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Regions from Partial Borders", "RegionsFromPartial", 0, null, false),
 								menuBuilder.buildMenuItem("Region merging via boundary melting", "RegionMergingMelting", 0, null, false),
-								menuBuilder.buildMenuItem("Sequential Scanning Watershed", "SequentialScanningWatershed", 0, null, false),	
+								menuBuilder.buildMenuItem("Sequential Scanning Watershed", "SequentialScanningWatershed", 0, null, false),
+								menuBuilder.buildMenuItem("Shortest Path Watershed", "ShortestPathWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
 								menuBuilder.buildMenuItem("Split and Merge Watershed", "SplitAndMergeWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Texture segmentation", "TextureSegmentation", 0, null,
@@ -1655,6 +1656,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Efficient Watershed", false);
 			menuBuilder.setMenuItemEnabled("Union Find Watershed", false);
 			menuBuilder.setMenuItemEnabled("Sequential Scanning Watershed", false);
+			menuBuilder.setMenuItemEnabled("Shortest Path Watershed", false);
 			menuBuilder.setMenuItemEnabled("Union Find Component Labelling", false);
 			menuBuilder.setMenuItemEnabled("Lower completion", false);
 			menuBuilder.setMenuItemEnabled("Split and Merge Watershed", false);
@@ -1771,6 +1773,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Efficient Watershed", true);
 		menuBuilder.setMenuItemEnabled("Union Find Watershed", true);
 		menuBuilder.setMenuItemEnabled("Sequential Scanning Watershed", true);
+		menuBuilder.setMenuItemEnabled("Shortest Path Watershed", true);
 		menuBuilder.setMenuItemEnabled("Union Find Component Labelling", true);
 		menuBuilder.setMenuItemEnabled("Lower completion", true);
 		menuBuilder.setMenuItemEnabled("Split and Merge Watershed", true);
