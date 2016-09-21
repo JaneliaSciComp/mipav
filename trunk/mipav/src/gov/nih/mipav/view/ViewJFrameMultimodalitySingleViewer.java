@@ -148,7 +148,9 @@ public class ViewJFrameMultimodalitySingleViewer extends ViewJFrameTriImage
 			initZoomFactor = (float)vh / (float)( dim[1]);
 			System.err.println("initZoomFactor = " + initZoomFactor);
 		    imageComp[i].setZoom(initZoomFactor, initZoomFactor);
+		    imageComp[i].setEyetrackerRecordMode(ViewJComponentEditImage.SingleFrameEyetrackerMode);
 		}
+		
 	    startRecording();
 	    
 	}
