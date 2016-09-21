@@ -1911,6 +1911,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	new JDialogSequentialScanningWatershed(this, getActiveImage());
         } else if (command.equals("ShortestPathWatershed")) {
         	new JDialogShortestPathWatershed(this, getActiveImage());
+        } else if (command.equals("HillClimbingWatershed")) {
+        	new JDialogHillClimbingWatershed(this, getActiveImage());
         } else if (command.equals("UnionFindComponentLabelling")) {
         	new JDialogUnionFindComponentLabelling(this, getActiveImage());
         } else if (command.equals("LowerCompletion")) {
