@@ -484,8 +484,8 @@ private void buildPelvisDialog() {
     	voiList[2][3] = new PlugInSelectableVOI542a("Right Iliopsoas", true, 1, 2, true, true, imageSize, 5, Color.RED);
     	voiList[2][4] = new PlugInSelectableVOI542a("Left Gluteals", true, 1, 2, true, true, imageSize, 6, Color.GREEN);
     	voiList[2][5] = new PlugInSelectableVOI542a("Right Gluteals", true, 1, 2, true, true, imageSize, 7, Color.GREEN);
-    	voiList[2][6] = new PlugInSelectableVOI542a("Left Quadratus Lumborum", true, 1, 2, true, true, imageSize, 8, Color.CYAN);
-    	voiList[2][7] = new PlugInSelectableVOI542a("Right Quadratus Lumborum", true, 1, 2, true, true, imageSize, 9, Color.CYAN);
+    	voiList[2][6] = new PlugInSelectableVOI542a("Left Quadratus Femoris", true, 1, 2, true, true, imageSize, 8, Color.CYAN);
+    	voiList[2][7] = new PlugInSelectableVOI542a("Right Quadratus Femoris", true, 1, 2, true, true, imageSize, 9, Color.CYAN);
     	voiList[2][8] = new PlugInSelectableVOI542a("Left Rectus Femoris", true, 1, 2, true, true, imageSize, 10, Color.MAGENTA);
     	voiList[2][9] = new PlugInSelectableVOI542a("Right Rectus Femoris", true, 1, 2, true, true, imageSize, 11, Color.MAGENTA);
     	voiList[2][10] = new PlugInSelectableVOI542a("Left Sartorius", true, 1, 2, true, true, imageSize, 12, Color.BLUE);
@@ -512,7 +512,7 @@ private void buildPelvisDialog() {
 	    	System.getProperty("line.separator")+"Start Voi: Rectus Abdominus"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
 	    	System.getProperty("line.separator")+"Start Voi: Iliopsoas"+System.getProperty("line.separator")+"Color: 255,0,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
 	    	System.getProperty("line.separator")+"Start Voi: Gluteals"+System.getProperty("line.separator")+"Color: 0,255,0"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
-	    	System.getProperty("line.separator")+"Start Voi: Quadratus Lumborum"+System.getProperty("line.separator")+"Color: 0,255,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
+	    	System.getProperty("line.separator")+"Start Voi: Quadratus Femoris"+System.getProperty("line.separator")+"Color: 0,255,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
 	    	System.getProperty("line.separator")+"Start Voi: Rectus Femoris"+System.getProperty("line.separator")+"Color: 255,0,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
 	    	System.getProperty("line.separator")+"Start Voi: Sartorius"+System.getProperty("line.separator")+"Color: 0,0,255"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Do_Fill: true"+System.getProperty("line.separator")+"End Voi"+
 	    	System.getProperty("line.separator")+"End Pane"+System.getProperty("line.separator");
