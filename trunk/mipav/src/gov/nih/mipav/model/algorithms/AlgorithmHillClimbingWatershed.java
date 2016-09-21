@@ -12,6 +12,8 @@ import java.io.*;
  * 1.) The Watershed Transform: Definitions, Algorithms, and Parallelization Strategies by 
  * Jos B.T.M. Roerdink and Arnold Meijster, Fundamentals Informaticae 41 (2001), pp. 187-228.
  * Algorithm 4.3 Watershed transform w.r.t. topographcial distance by hill climbing
+ * From Section 4.2.3 Hill Climbing use distance values of 1 for both 4 and 8 connected
+ * in calculating steepest upper neighbors.
  */
 
 public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
@@ -37,7 +39,6 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
 		 int yDim;
 		 int imgBuffer[];
 		 int labelBuffer[];
-		 final double sqrt2 = Math.sqrt(2.0);
 		 // Label of the watershed pixels
 	    final int WSHED = 0;
 	    final int MASK = -1;
@@ -73,7 +74,6 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	int steepestUpperNeighbors;
     	int v[];
     	double steepestSlope;
-    	double epsilon = 1.0e-6;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -348,47 +348,47 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                     if (neighbor8) {
                     	if ((x > 0) && ( y > 0) && (S[smallestIndex-xDim-1]) && 
                     			(imgBuffer[smallestIndex-xDim-1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	    if ((imgBuffer[smallestIndex-xDim-1] - imgBuffer[smallestIndex])/sqrt2 - epsilon > steepestSlope) {
-                    	        steepestSlope = (imgBuffer[smallestIndex-xDim-1]-imgBuffer[smallestIndex])/sqrt2;
+                    	    if (imgBuffer[smallestIndex-xDim-1] - imgBuffer[smallestIndex] > steepestSlope) {
+                    	        steepestSlope = imgBuffer[smallestIndex-xDim-1]-imgBuffer[smallestIndex];
                     	        v[0] = smallestIndex-xDim-1;
                     	        steepestUpperNeighbors = 1;
                     	    }
-                    	    else if (Math.abs((imgBuffer[smallestIndex-xDim-1] -imgBuffer[smallestIndex])/sqrt2 - steepestSlope) <= epsilon) {
+                    	    else if (imgBuffer[smallestIndex-xDim-1] -imgBuffer[smallestIndex] == steepestSlope) {
                     	    	v[steepestUpperNeighbors++] = smallestIndex-xDim-1;
                     	    }
                     	} // if ((x > 0) && ( y > 0) && (S[smallestIndex-xDim-1]) && (imgBuffer[smallestIndex-xDim-1] - imgBuffer[smallestIndex] > 0.0))
                     	if ((x > 0) && ( y < yDim-1) && (S[smallestIndex+xDim-1]) && 
                     			(imgBuffer[smallestIndex+xDim-1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	    if ((imgBuffer[smallestIndex+xDim-1] - imgBuffer[smallestIndex])/sqrt2 - epsilon > steepestSlope) {
-                    	        steepestSlope = (imgBuffer[smallestIndex+xDim-1]-imgBuffer[smallestIndex])/sqrt2;
+                    	    if (imgBuffer[smallestIndex+xDim-1] - imgBuffer[smallestIndex] > steepestSlope) {
+                    	        steepestSlope = imgBuffer[smallestIndex+xDim-1]-imgBuffer[smallestIndex];
                     	        v[0] = smallestIndex+xDim-1;
                     	        steepestUpperNeighbors = 1;
                     	    }
-                    	    else if (Math.abs((imgBuffer[smallestIndex+xDim-1] -imgBuffer[smallestIndex])/sqrt2 - steepestSlope) <= epsilon) {
+                    	    else if (imgBuffer[smallestIndex+xDim-1] -imgBuffer[smallestIndex] == steepestSlope) {
                     	    	v[steepestUpperNeighbors++] = smallestIndex+xDim-1;
                     	    }
                     	} // if ((x > 0) && ( y < yDim-1) && (S[smallestIndex+xDim-1]) 
                     	  // && (imgBuffer[smallestIndex+xDim-1] - imgBuffer[smallestIndex] > 0.0))
                     	if ((x < xDim-1) && ( y > 0) && (S[smallestIndex-xDim+1]) && 
                     			(imgBuffer[smallestIndex-xDim+1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	    if ((imgBuffer[smallestIndex-xDim+1] - imgBuffer[smallestIndex])/sqrt2 - epsilon > steepestSlope) {
-                    	        steepestSlope = (imgBuffer[smallestIndex-xDim+1]-imgBuffer[smallestIndex])/sqrt2;
+                    	    if (imgBuffer[smallestIndex-xDim+1] - imgBuffer[smallestIndex] > steepestSlope) {
+                    	        steepestSlope = imgBuffer[smallestIndex-xDim+1]-imgBuffer[smallestIndex];
                     	        v[0] = smallestIndex-xDim+1;
                     	        steepestUpperNeighbors = 1;
                     	    }
-                    	    else if (Math.abs((imgBuffer[smallestIndex-xDim+1] -imgBuffer[smallestIndex])/sqrt2 - steepestSlope) <= epsilon) {
+                    	    else if (imgBuffer[smallestIndex-xDim+1] -imgBuffer[smallestIndex] == steepestSlope) {
                     	    	v[steepestUpperNeighbors++] = smallestIndex-xDim+1;
                     	    }
                     	} // if ((x < xDim-1) && ( y > 0) && (S[smallestIndex-xDim+1]) 
                     	  // && (imgBuffer[smallestIndex-xDim+1] - imgBuffer[smallestIndex] > 0.0))
                     	if ((x < xDim-1) && ( y < yDim-1) && (S[smallestIndex+xDim+1]) &&
                     			(imgBuffer[smallestIndex+xDim+1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	    if ((imgBuffer[smallestIndex+xDim+1] - imgBuffer[smallestIndex])/sqrt2 - epsilon > steepestSlope) {
-                    	        steepestSlope = (imgBuffer[smallestIndex+xDim+1]-imgBuffer[smallestIndex])/sqrt2;
+                    	    if (imgBuffer[smallestIndex+xDim+1] - imgBuffer[smallestIndex] > steepestSlope) {
+                    	        steepestSlope = imgBuffer[smallestIndex+xDim+1]-imgBuffer[smallestIndex];
                     	        v[0] = smallestIndex+xDim+1;
                     	        steepestUpperNeighbors = 1;
                     	    }
-                    	    else if (Math.abs((imgBuffer[smallestIndex+xDim+1] -imgBuffer[smallestIndex])/sqrt2 - steepestSlope) <= epsilon) {
+                    	    else if (imgBuffer[smallestIndex+xDim+1] -imgBuffer[smallestIndex] == steepestSlope) {
                     	    	v[steepestUpperNeighbors++] = smallestIndex+xDim+1;
                     	    }
                     	} // if ((x < xDim-1) && ( y < yDim-1) && (S[smallestIndex+xDim+1]) 
