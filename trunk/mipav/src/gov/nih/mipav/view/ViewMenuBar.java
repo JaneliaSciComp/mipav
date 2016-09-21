@@ -386,6 +386,7 @@ public class ViewMenuBar {
 												menuBuilder.buildMenuItem("Single channel", null, 0, null, false), }),
 								menuBuilder.buildMenuItem("Fuzzy Connectedness", "FuzzyConnectedness", 0, null, false),
 								menuBuilder.buildMenuItem("Graph Based", "GraphBasedSeg", 0, null, false),
+								menuBuilder.buildMenuItem("Hill Climbing Watershed", "HillClimbingWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
 								menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
 								menuBuilder.buildMenuItem("Lower completion", "LowerCompletion", 0, null, false),
@@ -1654,6 +1655,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Unsharp mask", false);
 			menuBuilder.setMenuItemEnabled("Watershed", false);
 			menuBuilder.setMenuItemEnabled("Efficient Watershed", false);
+			menuBuilder.setMenuItemEnabled("Hill Climbing Watershed", false);
 			menuBuilder.setMenuItemEnabled("Union Find Watershed", false);
 			menuBuilder.setMenuItemEnabled("Sequential Scanning Watershed", false);
 			menuBuilder.setMenuItemEnabled("Shortest Path Watershed", false);
@@ -1771,6 +1773,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Subtract VOI background", true);
 		menuBuilder.setMenuItemEnabled("Single channel", true);
 		menuBuilder.setMenuItemEnabled("Efficient Watershed", true);
+		menuBuilder.setMenuItemEnabled("Hill Climbing Watershed", true);
 		menuBuilder.setMenuItemEnabled("Union Find Watershed", true);
 		menuBuilder.setMenuItemEnabled("Sequential Scanning Watershed", true);
 		menuBuilder.setMenuItemEnabled("Shortest Path Watershed", true);
