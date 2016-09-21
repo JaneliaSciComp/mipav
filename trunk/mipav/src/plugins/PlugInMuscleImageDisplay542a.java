@@ -1334,9 +1334,9 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 	    //scrollPane.addKeyListener(this);
 	    
 	    dialogTabs = new JTabbedPane();
-	    dialogTabs.setMinimumSize(new Dimension (370, 532));
-	    dialogTabs.setPreferredSize(new Dimension(370, 532));
-	    dialogTabs.setMaximumSize(new Dimension (370, 532));
+	    dialogTabs.setMinimumSize(new Dimension (400, 532));
+	    dialogTabs.setPreferredSize(new Dimension(400, 532));
+	    dialogTabs.setMaximumSize(new Dimension (400, 532));
 	    
 	    tabs = new DialogPrompt[mirrorArr.length+2]; //+2 for VOI and AnalysisPrompt
 	    
