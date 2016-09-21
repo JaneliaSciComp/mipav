@@ -16,6 +16,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.imageio.ImageIO;
@@ -74,12 +75,24 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		initLayout();
 		addPopup();
 		fitsToScreen();
+		setRecordingMode();
+		startRecording();
 	}
 
 
+	
 	// ~ Methods
 	// --------------------------------------------------------------------------------------------------------
 
+	public void setRecordingMode() {
+		for ( int i = 0; i < 4; i++ ) {
+			int []extents = images[i].getExtents();
+			String refPtsLocation = "0, 0," + (extents[0]-1) + ", " + "0" + ", " + "0, " + (extents[1]-1) + ", " + (extents[0]-1) + ", " + (extents[1]-1) + ", ";
+			imageComp[i].setEyetrackerRecordMode(ViewJComponentEditImage.MultiFrameEyetrackerMode);
+			imageComp[i].setFullScreenModeLocation(refPtsLocation);
+		}
+	}
+	
 	public void addPopup() {
 		   JMenuItem m = new JMenuItem("Measure");
 		    m.addActionListener(this);
@@ -1184,6 +1197,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 
 		if ( keyCode == KeyEvent.VK_ESCAPE ) {
 			System.err.println("escape key pressed");
+			stopRecording();
 			this.setVisible(false);
 			this.dispose();
 		} else if ( keyCode == KeyEvent.VK_F1) {
@@ -1277,7 +1291,16 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	public synchronized void mouseDragged(MouseEvent e) {
 
 		synchronized (this) {
+			
+		
 			if (e.isAltDown()) {
+				
+				String location0 = new String("");        
+				String location1 = new String("");
+				String location2 = new String("");
+				String location3 = new String("");
+				
+				
 				int deltaX = origin.x - e.getX();
 				int deltaY = origin.y - e.getY();
 				JViewport viewPort0 = imageScroll[0].getViewport();
@@ -1294,10 +1317,15 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		            int y0u = Math.max(0,imageComp[0].getScaledY(vul0.y - im0.y));
 		            int x0r = Math.min(images[0].getExtents()[0]-1,imageComp[0].getScaledX(vul0.x - im0.x + d0.width));
 		            int y0l = Math.min(images[0].getExtents()[1]-1,imageComp[0].getScaledY(vul0.y - im0.y + d0.height));
-		            System.out.println("Image 0 upper left image coordinates at x = " + x0l + " y = " + y0u);
-		            System.out.println("Image 0 upper right image coordinates at x = " + x0r + " y = " + y0u);
-		            System.out.println("Image 0 lower left image coordinates at x = " + x0l + " y = " + y0l);
-		            System.out.println("Image 0 lower right image coordinates at x = " + x0r + " y = " + y0l);
+		            // System.out.println("Image 0 upper left image coordinates at x = " + x0l + " y = " + y0u);
+		            // System.out.println("Image 0 upper right image coordinates at x = " + x0r + " y = " + y0u);
+		            // System.out.println("Image 0 lower left image coordinates at x = " + x0l + " y = " + y0l);
+		            // System.out.println("Image 0 lower right image coordinates at x = " + x0r + " y = " + y0l);
+		            
+		            location0 += x0l + ", " + y0u + ", ";
+		            location0 += x0r + ", " + y0u + ", ";
+		            location0 += x0l + ", " + y0l + ", ";
+		            location0 += x0r + ", " + y0l + ", ";
 				}
 
 				JViewport viewPort1 = imageScroll[1].getViewport();
@@ -1314,10 +1342,15 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		            int y1u = Math.max(0,imageComp[1].getScaledY(vul1.y - im1.y));
 		            int x1r = Math.min(images[1].getExtents()[0]-1,imageComp[1].getScaledX(vul1.x - im1.x + d1.width));
 		            int y1l = Math.min(images[1].getExtents()[1]-1,imageComp[1].getScaledY(vul1.y - im1.y + d1.height));
-		            System.out.println("Image 1 upper left image coordinates at x = " + x1l + " y = " + y1u);
-		            System.out.println("Image 1 upper right image coordinates at x = " + x1r + " y = " + y1u);
-		            System.out.println("Image 1 lower left image coordinates at x = " + x1l + " y = " + y1l);
-		            System.out.println("Image 1 lower right image coordinates at x = " + x1r + " y = " + y1l);
+		            // System.out.println("Image 1 upper left image coordinates at x = " + x1l + " y = " + y1u);
+		            // System.out.println("Image 1 upper right image coordinates at x = " + x1r + " y = " + y1u);
+		            // System.out.println("Image 1 lower left image coordinates at x = " + x1l + " y = " + y1l);
+		            // System.out.println("Image 1 lower right image coordinates at x = " + x1r + " y = " + y1l);
+		            
+		            location1 += x1l + ", " + y1u + ", ";
+		            location1 += x1r + ", " + y1u + ", ";
+		            location1 += x1l + ", " + y1l + ", ";
+		            location1 += x1r + ", " + y1l + ", ";
 				}
 
 				JViewport viewPort2 = imageScroll[2].getViewport();
@@ -1334,10 +1367,16 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		            int y2u = Math.max(0,imageComp[2].getScaledY(vul2.y - im2.y));
 		            int x2r = Math.min(images[2].getExtents()[0]-1,imageComp[2].getScaledX(vul2.x - im2.x + d2.width));
 		            int y2l = Math.min(images[2].getExtents()[1]-1,imageComp[2].getScaledY(vul2.y - im2.y + d2.height));
-		            System.out.println("Image 2 upper left image coordinates at x = " + x2l + " y = " + y2u);
-		            System.out.println("Image 2 upper right image coordinates at x = " + x2r + " y = " + y2u);
-		            System.out.println("Image 2 lower left image coordinates at x = " + x2l + " y = " + y2l);
-		            System.out.println("Image 2 lower right image coordinates at x = " + x2r + " y = " + y2l);
+		            // System.out.println("Image 2 upper left image coordinates at x = " + x2l + " y = " + y2u);
+		            // System.out.println("Image 2 upper right image coordinates at x = " + x2r + " y = " + y2u);
+		            // System.out.println("Image 2 lower left image coordinates at x = " + x2l + " y = " + y2l);
+		            // System.out.println("Image 2 lower right image coordinates at x = " + x2r + " y = " + y2l);
+		            
+		            location2 += x2l + ", " + y2u + ", ";
+		            location2 += x2r + ", " + y2u + ", ";
+		            location2 += x2l + ", " + y2l + ", ";
+		            location2 += x2r + ", " + y2l + ", ";
+		            
 				}
 
 				JViewport viewPort3 = imageScroll[3].getViewport();
@@ -1354,12 +1393,32 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		            int y3u = Math.max(0,imageComp[3].getScaledY(vul3.y - im3.y));
 		            int x3r = Math.min(images[3].getExtents()[0]-1,imageComp[3].getScaledX(vul3.x - im3.x + d3.width));
 		            int y3l = Math.min(images[3].getExtents()[1]-1,imageComp[3].getScaledY(vul3.y - im3.y + d3.height));
-		            System.out.println("Image 3 upper left image coordinates at x = " + x3l + " y = " + y3u);
-		            System.out.println("Image 3 upper right image coordinates at x = " + x3r + " y = " + y3u);
-		            System.out.println("Image 3 lower left image coordinates at x = " + x3l + " y = " + y3l);
-		            System.out.println("Image 3 lower right image coordinates at x = " + x3r + " y = " + y3l);
+		            // System.out.println("Image 3 upper left image coordinates at x = " + x3l + " y = " + y3u);
+		            // System.out.println("Image 3 upper right image coordinates at x = " + x3r + " y = " + y3u);
+		            // System.out.println("Image 3 lower left image coordinates at x = " + x3l + " y = " + y3l);
+		            // System.out.println("Image 3 lower right image coordinates at x = " + x3r + " y = " + y3l);
+		            
+		            location3 += x3l + ", " + y3u + ", ";
+		            location3 += x3r + ", " + y3u + ", ";
+		            location3 += x3l + ", " + y3l + ", ";
+		            location3 += x3r + ", " + y3l + ", ";
+		            
 				}
+				
+				
+				if ( imageActiveIndex == 0 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location0);
+				} else if ( imageActiveIndex == 1 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location1);
+				} else if ( imageActiveIndex == 2 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location2);
+				} else if ( imageActiveIndex == 3 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location3);
+				}
+				imageComp[imageActiveIndex].recordPanning();
 			}
+		
+			
 		}
 	}
 	
@@ -1375,6 +1434,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
        
       
 		synchronized (this) {
+			
 			origin = new Point(event.getPoint());
 			// Get the top left corner of the upper left white circle in the screen's coordinate space
 			Point pul = label5.getLocationOnScreen();
@@ -1391,19 +1451,21 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 			Dimension d0 = viewPort0.getSize();
 			System.out.println("Upper left corner of JViewport of imageScroll[0] x = " + vul0.x + " y = " + vul0.y);
 			Point im0 = imageComp[0].getLocationOnScreen();
-            System.out.println("Image upper left corner in screen coordinates at x = " + vul0.x + " y = " + vul0.y);
-            System.out.println("Image upper right corner in screen coordinates at x = " + (vul0.x + d0.width) + " y = " + vul0.y);
-            System.out.println("Image lower left corner in screen coordinates at x = " + vul0.x + " y = " + (vul0.y + d0.height));
-            System.out.println("Image lower right corner in screen coordinates at x = " + (vul0.x + d0.width) + " y = " + 
-            (vul0.y + d0.height));
+            // System.out.println("Image upper left corner in screen coordinates at x = " + vul0.x + " y = " + vul0.y);
+            // System.out.println("Image upper right corner in screen coordinates at x = " + (vul0.x + d0.width) + " y = " + vul0.y);
+            // System.out.println("Image lower left corner in screen coordinates at x = " + vul0.x + " y = " + (vul0.y + d0.height));
+            // System.out.println("Image lower right corner in screen coordinates at x = " + (vul0.x + d0.width) + " y = " + (vul0.y + d0.height));
+            
             int x0l = Math.max(0,imageComp[0].getScaledX(vul0.x - im0.x));
             int y0u = Math.max(0,imageComp[0].getScaledY(vul0.y - im0.y));
             int x0r = Math.min(images[0].getExtents()[0]-1,imageComp[0].getScaledX(vul0.x - im0.x + d0.width));
             int y0l = Math.min(images[0].getExtents()[1]-1,imageComp[0].getScaledY(vul0.y - im0.y + d0.height));
-            System.out.println("Image 0 upper left image coordinates at x = " + x0l + " y = " + y0u);
-            System.out.println("Image 0 upper right image coordinates at x = " + x0r + " y = " + y0u);
-            System.out.println("Image 0 lower left image coordinates at x = " + x0l + " y = " + y0l);
-            System.out.println("Image 0 lower right image coordinates at x = " + x0r + " y = " + y0l);
+            // System.out.println("Image 0 upper left image coordinates at x = " + x0l + " y = " + y0u);
+            // System.out.println("Image 0 upper right image coordinates at x = " + x0r + " y = " + y0u);
+            // System.out.println("Image 0 lower left image coordinates at x = " + x0l + " y = " + y0l);
+            // System.out.println("Image 0 lower right image coordinates at x = " + x0r + " y = " + y0l);
+            
+        
 			JViewport viewPort1 = imageScroll[1].getViewport();
 			Point vul1 = viewPort1.getLocationOnScreen();
 			Dimension d1 = viewPort1.getSize();
@@ -1414,10 +1476,11 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
             int y1u = Math.max(0,imageComp[1].getScaledY(vul1.y - im1.y));
             int x1r = Math.min(images[1].getExtents()[0]-1,imageComp[1].getScaledX(vul1.x - im1.x + d1.width));
             int y1l = Math.min(images[1].getExtents()[1]-1,imageComp[1].getScaledY(vul1.y - im1.y + d1.height));
-            System.out.println("Image 1 upper left image coordinates at x = " + x1l + " y = " + y1u);
-            System.out.println("Image 1 upper right image coordinates at x = " + x1r + " y = " + y1u);
-            System.out.println("Image 1 lower left image coordinates at x = " + x1l + " y = " + y1l);
-            System.out.println("Image 1 lower right image coordinates at x = " + x1r + " y = " + y1l);
+            // System.out.println("Image 1 upper left image coordinates at x = " + x1l + " y = " + y1u);
+            // System.out.println("Image 1 upper right image coordinates at x = " + x1r + " y = " + y1u);
+            // System.out.println("Image 1 lower left image coordinates at x = " + x1l + " y = " + y1l);
+            // System.out.println("Image 1 lower right image coordinates at x = " + x1r + " y = " + y1l);
+            
 			JViewport viewPort2 = imageScroll[2].getViewport();
 			Point vul2 = viewPort2.getLocationOnScreen();
 			Dimension d2 = viewPort2.getSize();
@@ -1430,10 +1493,11 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
             int y2u = Math.max(0,imageComp[2].getScaledY(vul2.y - im2.y));
             int x2r = Math.min(images[2].getExtents()[0]-1,imageComp[2].getScaledX(vul2.x - im2.x + d2.width));
             int y2l = Math.min(images[2].getExtents()[1]-1,imageComp[2].getScaledY(vul2.y - im2.y + d2.height));
-            System.out.println("Image 2 upper left image coordinates at x = " + x2l + " y = " + y2u);
-            System.out.println("Image 2 upper right image coordinates at x = " + x2r + " y = " + y2u);
-            System.out.println("Image 2 lower left image coordinates at x = " + x2l + " y = " + y2l);
-            System.out.println("Image 2 lower right image coordinates at x = " + x2r + " y = " + y2l);
+            // System.out.println("Image 2 upper left image coordinates at x = " + x2l + " y = " + y2u);
+            // System.out.println("Image 2 upper right image coordinates at x = " + x2r + " y = " + y2u);
+            // System.out.println("Image 2 lower left image coordinates at x = " + x2l + " y = " + y2l);
+            // System.out.println("Image 2 lower right image coordinates at x = " + x2r + " y = " + y2l);
+            
 			JViewport viewPort3 = imageScroll[3].getViewport();
 			Point vul3 = viewPort3.getLocationOnScreen();
 			Dimension d3 = viewPort3.getSize();
@@ -1444,10 +1508,11 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
             int y3u = Math.max(0,imageComp[3].getScaledY(vul3.y - im3.y));
             int x3r = Math.min(images[3].getExtents()[0]-1,imageComp[3].getScaledX(vul3.x - im3.x + d3.width));
             int y3l = Math.min(images[3].getExtents()[1]-1,imageComp[3].getScaledY(vul3.y - im3.y + d3.height));
-            System.out.println("Image 3 upper left image coordinates at x = " + x3l + " y = " + y3u);
-            System.out.println("Image 3 upper right image coordinates at x = " + x3r + " y = " + y3u);
-            System.out.println("Image 3 lower left image coordinates at x = " + x3l + " y = " + y3l);
-            System.out.println("Image 3 lower right image coordinates at x = " + x3r + " y = " + y3l);
+            // System.out.println("Image 3 upper left image coordinates at x = " + x3l + " y = " + y3u);
+            // System.out.println("Image 3 upper right image coordinates at x = " + x3r + " y = " + y3u);
+            // System.out.println("Image 3 lower left image coordinates at x = " + x3l + " y = " + y3l);
+            // System.out.println("Image 3 lower right image coordinates at x = " + x3r + " y = " + y3l);
+            
 			Point originScreen = event.getLocationOnScreen();
 			System.out.println("Event location in screen coordinates x = " + originScreen.x + " y = " +originScreen.y);
 			// Distance from center of upper circle
@@ -1462,7 +1527,32 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 			int currentSlice3 = imageComp[3].getSlice();
 
 			if (event.getButton() == MouseEvent.BUTTON1 && event.isShiftDown()) {
-
+				
+				String location0 = new String("");        
+				String location1 = new String("");
+				String location2 = new String("");
+				String location3 = new String("");
+				
+			    location0 +=  x0l + ", " + y0u + ", ";
+	            location0 +=   x0r + ", " + y0u + ", ";
+	            location0 +=  x0l + ", " + y0l + ", ";
+	            location0 +=  x0r + ", " + y0l + ", ";
+	            
+	            location1 +=  x1l + ", " + y1u + ", ";
+	            location1 +=  x1r + ", " + y1u + ", ";
+	            location1 +=  x1l + ", " + y1l + ", ";
+	            location1 +=  x1r + ", " + y1l + ", ";
+	            
+	            location2 +=  x2l + ", " + y2u + ", ";
+	            location2 +=  x2r + ", " + y2u + ", ";
+	            location2 +=  x2l + ", " + y2l + ", ";
+	            location2 +=  x2r + ", " + y2l + ", ";
+	            
+	            location3 +=  x3l + ", " + y3u + ", ";
+	            location3 +=  x3r + ", " + y3u + ", ";
+	            location3 +=  x3l + ", " + y3l + ", ";
+	            location3 +=  x3r + ", " + y3l + ", ";
+	            
 				imageScroll[0].setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 				imageScroll[0].setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 				imageScroll[1].setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -1544,8 +1634,45 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 					imageComp[3].setCenter(new Vector3f(newX, newY, currentSlice3));
 					adjustScrollbars(newX, newY, imageScroll[3]);
 				}
+				
+				if ( imageActiveIndex == 0 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location0);
+				} else if ( imageActiveIndex == 1 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location1);
+				} else if ( imageActiveIndex == 2 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location2);
+				} else if ( imageActiveIndex == 3 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location3);
+				}
+				imageComp[imageActiveIndex].recordZoom(true);
 
 			} else if (event.getButton() == MouseEvent.BUTTON1 && event.isControlDown()) {
+				
+				String location0 = new String("");        
+				String location1 = new String("");
+				String location2 = new String("");
+				String location3 = new String("");
+				
+			    location0 +=  x0l + ", " + y0u + ", ";
+	            location0 +=   x0r + ", " + y0u + ", ";
+	            location0 +=  x0l + ", " + y0l + ", ";
+	            location0 +=  x0r + ", " + y0l + ", ";
+	            
+	            location1 +=  x1l + ", " + y1u + ", ";
+	            location1 +=  x1r + ", " + y1u + ", ";
+	            location1 +=  x1l + ", " + y1l + ", ";
+	            location1 +=  x1r + ", " + y1l + ", ";
+	            
+	            location2 +=  x2l + ", " + y2u + ", ";
+	            location2 +=  x2r + ", " + y2u + ", ";
+	            location2 +=  x2l + ", " + y2l + ", ";
+	            location2 +=  x2r + ", " + y2l + ", ";
+	            
+	            location3 +=  x3l + ", " + y3u + ", ";
+	            location3 +=  x3r + ", " + y3u + ", ";
+	            location3 +=  x3l + ", " + y3l + ", ";
+	            location3 +=  x3r + ", " + y3l + ", ";
+				
 				imageScroll[0].setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 				imageScroll[0].setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 				imageScroll[1].setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -1631,8 +1758,20 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 					imageComp[3].setCenter(new Vector3f(newX, newY, currentSlice3));
 					adjustScrollbars(newX, newY, imageScroll[3]);
 				}
+				
+				if ( imageActiveIndex == 0 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location0);
+				} else if ( imageActiveIndex == 1 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location1);
+				} else if ( imageActiveIndex == 2 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location2);
+				} else if ( imageActiveIndex == 3 ) {
+					imageComp[imageActiveIndex].setFullScreenModeLocation(location3);
+				}
+				imageComp[imageActiveIndex].recordZoom(false);
 
 			}
+			
 
 		}
 	}
@@ -2340,6 +2479,23 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		}
 	}
 
+	
+	public void startRecording() {
+		String defaultDirectory = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator;
+		String timeStamp = new SimpleDateFormat("yyyy MMM dd HH:mm:ss").format(new Date()).toString();
+		timeStamp = timeStamp.replaceAll("\\s","_");
+		timeStamp = timeStamp.replaceAll(":","_");
+		System.err.println(timeStamp );
+		String defaultFileName = defaultDirectory + "MIPAV_eyetracking_" + timeStamp + ".csv";
+		MipavUtil.setEyeTrackingEnabled(true, defaultFileName, imageComp[imageActiveIndex]);
+	}
+
+	
+	public void stopRecording() {
+		System.err.println("stop recording now");
+		MipavUtil.setEyeTrackingEnabled(false, null);
+	}
+	
 	
 
 }
