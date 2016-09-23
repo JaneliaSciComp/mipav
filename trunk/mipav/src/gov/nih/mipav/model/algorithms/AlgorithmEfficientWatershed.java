@@ -1,4 +1,4 @@
-package gov.nih.mipav.model.algorithms;
+    package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
@@ -107,6 +107,24 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	double maxValue;
     	double range;
     	double scale;
+    	boolean test = false;
+    	
+    	if (test) {
+    	    indexValueList.add(new indexValueItem(5, 23.0));
+    	    indexValueList.add(new indexValueItem(2, -33.0));
+    	    indexValueList.add(new indexValueItem(65, 1.25));
+    	    indexValueList.add(new indexValueItem(34, -6.3));
+    	    indexValueList.add(new indexValueItem(31, 7.89));
+    	    indexValueList.add(new indexValueItem(23, 62.1));
+    	    indexValueList.add(new indexValueItem(11, 5.6));
+    	    Collections.sort(indexValueList, new indexValueComparator());
+    	    for (i = 0; i < indexValueList.size(); i++) {
+    	    	indexValueItem item = indexValueList.get(i);
+    	    	System.out.println("index = " + item.getIndex() + " value = " + item.getValue());
+    	    }
+    	    setCompleted(true);
+    	    return;
+    	}
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -237,31 +255,31 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
             		x = index % xDim;
             		y = index / xDim;
             		foundNeighbors = 0;
-            		if ((x > 0) && (j > 0) && (indexBins[i][j-1] == index-1)) {
+            		if (x > 0) {
             			neighbors[foundNeighbors++] = index-1;
             		}
-            		if ((x < xDim-1) && (j < indexBins[i].length-1) && (indexBins[i][j+1] == index+1)) {
+            		if (x < xDim-1) {
             			neighbors[foundNeighbors++] = index+1;
             		}
-            		if ((y > 0) && (j > 0)  && reverseIndex[i].containsKey(index-xDim)) {
+            		if (y > 0) {
             		    neighbors[foundNeighbors++] = index-xDim;	
-            		} // if ((y > 0) && (j > 0)  && reverseIndex[i].containsKey(index-xDim))
-            		if ((y < yDim-1) && (j < indexBins[i].length-1) && reverseIndex[i].containsKey(index+xDim)) {
+            		} // if (y > 0)
+            		if (y < yDim-1) {
             		    neighbors[foundNeighbors++] = index+xDim;
-            		} // if ((y < yDim-1) && (j < indexBins[i].length-1) && reverseIndex[i].containsKey(index+xDim))
+            		} // if (y < yDim-1)
             		if (neighbor8) {
-            		    if ((x > 0) && (y > 0) && (j > 0) && (reverseIndex[i].containsKey(index-xDim-1))) {
+            		    if ((x > 0) && (y > 0)) {
             		        neighbors[foundNeighbors++] = index-xDim-1;
-            		    } // if ((x > 0) && (y > 0) && (j > 0) && (reverseIndex[i].containsKey(index-xDim-1)))
-            		    if ((x < xDim-1) && (y > 0) && (j > 0) && (reverseIndex[i].containsKey(index-xDim+1))) {
+            		    } // if ((x > 0) && (y > 0))
+            		    if ((x < xDim-1) && (y > 0)) {
             		       neighbors[foundNeighbors++] = index-xDim+1;
-            		    } // if ((x < xDim-1) && (y > 0) && (j > 0) && (reverseIndex[i].containsKey(index-xDim+1)))
-            		    if ((x > 0) & ( y < yDim-1) && (j < indexBins[i].length-1) && (reverseIndex[i].containsKey(index+xDim-1))) {
+            		    } // if ((x < xDim-1) && (y > 0))
+            		    if ((x > 0) & ( y < yDim-1)) {
             		       neighbors[foundNeighbors++] = index+xDim-1;
-            		    } // if ((x > 0) & ( y < yDim-1) && (j < indexBins[i].length-1) && (reverseIndex[i].containsKey(index+xDim-1)))
-            		    if ((x < xDim-1) & ( y < yDim-1) && (j < indexBins[i].length-1) && (reverseIndex[i].containsKey(index+xDim+1))) {
+            		    } // if ((x > 0) & ( y < yDim-1))
+            		    if ((x < xDim-1) & ( y < yDim-1)) {
             		       neighbors[foundNeighbors++] = index+xDim+1;
-            		    } // if ((x < xDim-1) & ( y < yDim-1) && (j < indexBins[i].length-1) && (reverseIndex[i].containsKey(index+xDim+1)))
+            		    } // if ((x < xDim-1) & ( y < yDim-1))
             		} // if (neighbor8)
             		if (foundNeighbors > 0) {
             			neighborBins[i][j] = new int[foundNeighbors];
