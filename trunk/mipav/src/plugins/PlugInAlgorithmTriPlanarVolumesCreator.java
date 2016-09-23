@@ -489,8 +489,12 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
            algoTrans.setUpdateOriginFlag(true);
     		
 
-    		
-           algoTrans.run();
+    		try {
+    			algoTrans.run();
+    		}catch(Throwable t) {
+    			t.printStackTrace();
+    			MipavUtil.displayError("AlgorithmTransform Fail: " + t.getMessage());
+    		}
     		
     		runAlgorithmPerformedForEachOrienation();
     		
