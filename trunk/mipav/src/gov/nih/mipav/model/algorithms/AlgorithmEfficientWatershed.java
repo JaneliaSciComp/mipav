@@ -391,7 +391,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
                         			}
                     				labelBuffer[indexn2] = currentLabel;
                         		} // if (labelBuffer[indexn2] == MASK)
-                		    } // for (m = 0; m < neighborBins[i][k].length; m++)
+                		    } // for (m = 0; m < neighborBins[indexn].length; m++)
         				} // while (!fifo.isEmpty())
             		} // if (labelBuffer[index] == MASK)
             	} // for (j = 0; j < indexBins[i].length; j++)
