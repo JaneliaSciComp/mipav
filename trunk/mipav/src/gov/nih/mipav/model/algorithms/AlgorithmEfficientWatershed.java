@@ -62,7 +62,6 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 		this.binNumber = binNumber;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void runAlgorithm() {
     	int xDim;
     	int yDim;
