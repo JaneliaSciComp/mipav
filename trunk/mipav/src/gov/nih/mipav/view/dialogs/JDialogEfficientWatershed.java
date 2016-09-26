@@ -45,13 +45,19 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
     /** DOCUMENT ME! */
     private AlgorithmEfficientWatershed watershedAlgo;
     
-    private boolean neighbor8;
+    private int numNeighbor;
     
     private ButtonGroup neighborGroup;
     
     private JRadioButton fourButton;
     
     private JRadioButton eightButton;
+    
+    private JRadioButton sixButton;
+    
+    private JRadioButton eighteenButton;
+    
+    private JRadioButton twentySixButton;
     
     private boolean limitBins;
     
@@ -178,7 +184,7 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
 
         String str = new String();
         
-        str += neighbor8;
+        str += numNeighbor;
         
 
         return str;
@@ -203,14 +209,71 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
 
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                neighbor8 =  MipavUtil.getBoolean(st);
-                if (!neighbor8) {
+                numNeighbor =  MipavUtil.getInt(st);
+                if (numNeighbor == 4) {
                 	fourButton.setSelected(true);
                 	eightButton.setSelected(false);
+                	if (sixButton != null) {
+                	    sixButton.setSelected(false);
+                	}
+                	if (eighteenButton != null) {
+                	    eighteenButton.setSelected(false);
+                	}
+                	if (twentySixButton != null) {
+                	    twentySixButton.setSelected(false);
+                	}
+                }
+                else if (numNeighbor == 8) {
+                	fourButton.setSelected(false);
+                	eightButton.setSelected(true);
+                	if (sixButton != null) {
+                	    sixButton.setSelected(false);
+                	}
+                	if (eighteenButton != null) {
+                	    eighteenButton.setSelected(false);
+                	}
+                	if (twentySixButton != null) {
+                	    twentySixButton.setSelected(false);
+                	}
+                }
+                else if (numNeighbor == 6) {
+                	fourButton.setSelected(false);
+                	eightButton.setSelected(false);	
+                	if (sixButton != null) {
+                	    sixButton.setSelected(true);
+                	}
+                	if (eighteenButton != null) {
+                	    eighteenButton.setSelected(false);
+                	}
+                	if (twentySixButton != null) {
+                	    twentySixButton.setSelected(false);
+                	}	
+                }
+                else if (numNeighbor == 18) {
+                	fourButton.setSelected(false);
+                	eightButton.setSelected(false);	
+                	if (sixButton != null) {
+                	    sixButton.setSelected(false);
+                	}
+                	if (eighteenButton != null) {
+                	    eighteenButton.setSelected(true);
+                	}
+                	if (twentySixButton != null) {
+                	    twentySixButton.setSelected(false);
+                	}		
                 }
                 else {
                 	fourButton.setSelected(false);
-                	eightButton.setSelected(true);		
+                	eightButton.setSelected(false);	
+                	if (sixButton != null) {
+                	    sixButton.setSelected(false);
+                	}
+                	if (eighteenButton != null) {
+                	    eighteenButton.setSelected(false);
+                	}
+                	if (twentySixButton != null) {
+                	    twentySixButton.setSelected(true);
+                	}			
                 }
                 limitBins = MipavUtil.getBoolean(st);
                 if (limitBins) {
@@ -235,12 +298,12 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
     }
     
     /**
-     * Accessor that sets neighbor8.
+     * Accessor that sets numNeighbor.
      *
-     * @param  neighbor8
+     * @param  numNeighbor
      */
-    public void setNeighbor8(boolean neighbor8) {
-        this.neighbor8 = neighbor8;
+    public void setNumNeighbor(int numNeighbor) {
+        this.numNeighbor = numNeighbor;
     }
     
    
@@ -272,7 +335,7 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
                resultImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), 
                         		image.getImageName() + "_watershed");
            
-           watershedAlgo = new AlgorithmEfficientWatershed(resultImage, image, neighbor8, limitBins, binNumber);
+           watershedAlgo = new AlgorithmEfficientWatershed(resultImage, image, numNeighbor, limitBins, binNumber);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -326,7 +389,7 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         image = scriptParameters.retrieveInputImage();
         parentFrame = image.getParentFrame();
 
-        setNeighbor8(scriptParameters.getParams().getBoolean("neighbor_8"));
+        setNumNeighbor(scriptParameters.getParams().getInt("num_neighbor"));
         setLimitBins(scriptParameters.getParams().getBoolean("limit_bins"));
         setBinNumber(scriptParameters.getParams().getInt("bin_number"));
     }
@@ -338,7 +401,7 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         scriptParameters.storeInputImage(image);
         scriptParameters.storeImageInRecorder(getResultImage());
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("neighbor_8", neighbor8));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_neighbor", numNeighbor));
         scriptParameters.getParams().put(ParameterFactory.newParameter("limit_bins", limitBins));
         scriptParameters.getParams().put(ParameterFactory.newParameter("bin_number", binNumber));
     }
@@ -385,6 +448,10 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         gbcScale.fill = GridBagConstraints.HORIZONTAL;
         gbcScale.anchor = GridBagConstraints.WEST;
         gbcScale.insets = new Insets(0, 0, 2, 0);
+        JLabel label2D = new JLabel("2D segmentation neighbors:");
+        label2D.setFont(serif12);
+        label2D.setForeground(Color.black);
+        neighborPanel.add(label2D, gbcScale);
         neighborGroup = new ButtonGroup();
         fourButton = new JRadioButton("4 nearest neighbors", true);
         fourButton.setFont(serif12);
@@ -398,6 +465,31 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         neighborGroup.add(eightButton);
         gbcScale.gridy++;
         neighborPanel.add(eightButton, gbcScale); 
+        if (image.getNDims() >= 3) {
+        	JLabel label3D = new JLabel("3D segmentation neighbors:");
+            label3D.setFont(serif12);
+            label3D.setForeground(Color.black);
+            gbcScale.gridy++;
+            neighborPanel.add(label3D, gbcScale);
+            sixButton = new JRadioButton("6 nearest neighbors", false);
+            sixButton.setFont(serif12);
+            sixButton.setForeground(Color.black);
+            neighborGroup.add(sixButton);
+            gbcScale.gridy++;
+            neighborPanel.add(sixButton, gbcScale);
+            eighteenButton = new JRadioButton("18 nearest neighbors", false);
+            eighteenButton.setFont(serif12);
+            eighteenButton.setForeground(Color.black);
+            neighborGroup.add(eighteenButton);
+            gbcScale.gridy++;
+            neighborPanel.add(eighteenButton, gbcScale);
+            twentySixButton = new JRadioButton("26 nearest neighbors", false);
+            twentySixButton.setFont(serif12);
+            twentySixButton.setForeground(Color.black);
+            neighborGroup.add(twentySixButton);
+            gbcScale.gridy++;
+            neighborPanel.add(twentySixButton, gbcScale);
+        } // if (image.getNDims() >= 3)
         binCheckBox = new JCheckBox("Limit bins per frame");
         binCheckBox.setFont(serif12);
         binCheckBox.setForeground(Color.black);
@@ -442,10 +534,19 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
     	String tmpStr;
         
         if (fourButton.isSelected()) {
-        	neighbor8 = false;
+        	numNeighbor = 4;
+        }
+        else if (eightButton.isSelected()) {
+        	numNeighbor = 8;
+        }
+        else if ((sixButton != null) && (sixButton.isSelected())) {
+        	numNeighbor = 6;
+        }
+        else if ((eighteenButton != null) && (eighteenButton.isSelected())) {
+        	numNeighbor = 18;
         }
         else {
-        	neighbor8 = true;
+        	numNeighbor = 26;
         }
         
         limitBins = binCheckBox.isSelected();
@@ -504,7 +605,7 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         try {
         	
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            table.put(new ParameterBoolean("neighbor_8", false));
+            table.put(new ParameterInt("num_neighbor", 4));
             table.put(new ParameterBoolean("limit_bins", false));
             table.put(new ParameterInt("bin_number", 4));
             } catch (final ParserException e) {
