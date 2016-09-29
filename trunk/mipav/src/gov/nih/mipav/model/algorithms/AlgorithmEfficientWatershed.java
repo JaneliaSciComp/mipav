@@ -10,20 +10,23 @@ import java.util.*;
  * 
  * @author ilb
  * Reference:
- * 1.) Image Processing, Analysis, and Machine Vision 4th edition International Edition by Milan Sonka,
+ * * 1.) The Watershed Transform: Definitions, Algorithms, and Parallelization Strategies by 
+ * Jos B.T.M. Roerdink and Arnold Meijster, Fundamentals Informaticae 41 (2001), pp. 187-228.
+ * Algorithm 4.1 Vincent-Soille watershed algorithm
+ * 2.) Image Processing, Analysis, and Machine Vision 4th edition International Edition by Milan Sonka,
  * Vaclav Hlavac, and Roger Boyle, Section 6.3.4 Watershed segmentation, pp. 229-232.
- * 2.) Watersheds in Digital Spaces: An Efficient Algorithm Based on Immersion Simulations by Luc Vincent
+ * 3.) Watersheds in Digital Spaces: An Efficient Algorithm Based on Immersion Simulations by Luc Vincent
  * and Pierre Soille, IEEE Transactions on Pattern Analysis and Machine Intelligence, Vol. 13, No. 6,
  * June, 1991, pp. 583-598.
- * 3.) Fast watershed algorithms: analysis and extensions by Bogdan P. Dobrin, Timo Viero, and Moncef
+ * 4.) Fast watershed algorithms: analysis and extensions by Bogdan P. Dobrin, Timo Viero, and Moncef
  * Gabbouj.
- * 4.) Watershed-Based Segmentation of 3D MR Data for Volume Quantization by J. Sijbers, P. Scheunders,
+ * 5.) Watershed-Based Segmentation of 3D MR Data for Volume Quantization by J. Sijbers, P. Scheunders,
  * M. Verhoye, A. Van Der Linden, D. van Dyck, and E. Raman, Magnetic Resonance Imaging, Vol. 15,
  * No. 6, 1997, pp. 679-688. 
  * The ImageJ version has 3 differences with the original article pseudocode as noted in comments.
  * 
- * Reference 1 states "Further improvements of the watershed segmentation based on immersion simulations
- * are given in [Dobrin et al., 1994]."  Reference 3 states: "Vincent & Soille algorithm produces a tesselation
+ * Reference 2 states "Further improvements of the watershed segmentation based on immersion simulations
+ * are given in [Dobrin et al., 1994]."  Reference 4 states: "Vincent & Soille algorithm produces a tesselation
  * of the image into its disjoint catchment basins.  Pixels lying exactly half-way between the two catchment
  * basins, should be assigned to watersheds.  Studying the operation of Vincent and Soille algorithms, we will
  * show that this is not always the case.
@@ -36,7 +39,7 @@ import java.util.*;
  * assigned to watersheds and then immediately to a catchment basin label or vice versa.  As a result, the operation
  * of the algorithm is inconsistent in several critical pixel configurations."
  * 
- * Reference 4 uses a 3D version of this algorithm with 26 connectivity.
+ * Reference 5 uses a 3D version of this algorithm with 26 connectivity.
  */
 
 public class AlgorithmEfficientWatershed extends AlgorithmBase {
