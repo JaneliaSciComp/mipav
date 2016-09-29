@@ -68,6 +68,16 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
     private JCheckBox binCheckBox;
     
     private int binNumber;
+    
+    private JCheckBox mergeCheckBox;
+    
+    private boolean merge;
+    
+    private JLabel labelThreshold;
+    
+    private JTextField textThreshold;
+    
+    private double mergeThreshold;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -109,6 +119,9 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         } else if (source.equals(binCheckBox)) {
         	labelBins.setEnabled(binCheckBox.isSelected());
         	textBins.setEnabled(binCheckBox.isSelected());
+        } else if (source.equals(mergeCheckBox)) {
+        	labelThreshold.setEnabled(mergeCheckBox.isSelected());
+        	textThreshold.setEnabled(mergeCheckBox.isSelected());
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -334,8 +347,9 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
                // Image name set in program
                resultImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), 
                         		image.getImageName() + "_watershed");
-           
-           watershedAlgo = new AlgorithmEfficientWatershed(resultImage, image, numNeighbor, limitBins, binNumber);
+                   
+               watershedAlgo = new AlgorithmEfficientWatershed(resultImage, image, numNeighbor, limitBins, binNumber,
+        		                                           merge, mergeThreshold);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -510,6 +524,25 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         textBins.setEnabled(false);
         gbcScale.gridx = 1;
         neighborPanel.add(textBins, gbcScale);
+        mergeCheckBox = new JCheckBox("Post watershed merging of catchment basins");
+        mergeCheckBox.setFont(serif12);
+        mergeCheckBox.setForeground(Color.black);
+        gbcScale.gridx = 0;
+        gbcScale.gridy++;
+        neighborPanel.add(mergeCheckBox, gbcScale);
+        labelThreshold = new JLabel("Height of ridge separating 2 basins");
+        labelThreshold.setFont(serif12);
+        labelThreshold.setForeground(Color.black);
+        labelThreshold.setEnabled(false);
+        gbcScale.gridy++;
+        neighborPanel.add(labelThreshold, gbcScale);
+        textThreshold = new JTextField(10);
+        textThreshold.setText("10.0");
+        textThreshold.setFont(serif12);
+        textThreshold.setCaretColor(Color.black);
+        textThreshold.setEnabled(false);
+        gbcScale.gridx = 1;
+        neighborPanel.add(textThreshold, gbcScale);
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -553,6 +586,11 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         if (limitBins) {
         	tmpStr = textBins.getText();
             binNumber = Integer.parseInt(tmpStr);
+        }
+        merge = mergeCheckBox.isSelected();
+        if (merge) {
+        	tmpStr = textThreshold.getText();
+        	mergeThreshold = Double.parseDouble(tmpStr);
         }
 
         return true;
