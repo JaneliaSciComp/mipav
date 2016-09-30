@@ -198,7 +198,10 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         String str = new String();
         
         str += numNeighbor;
-        
+        str += limitBins;
+        str += binNumber;
+        str += merge;
+        str += mergeThreshold;
 
         return str;
     }
@@ -301,6 +304,19 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
                 }
                 binNumber = MipavUtil.getInt(st);
                 textBins.setText(String.valueOf(binNumber));
+                merge = MipavUtil.getBoolean(st);
+                if (merge) {
+                	mergeCheckBox.setSelected(true);
+                	labelThreshold.setEnabled(true);
+                	textThreshold.setEnabled(true);
+                }
+                else {
+                	mergeCheckBox.setSelected(false);
+                	labelThreshold.setEnabled(false);
+                	textThreshold.setEnabled(false);	
+                }
+                mergeThreshold = MipavUtil.getDouble(st);
+                textThreshold.setText(String.valueOf(mergeThreshold));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -336,7 +352,21 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
     	this.binNumber = binNumber;
     }
     
+    /**
+     * 
+     * @param merge
+     */
+    public void setMerge(boolean merge) {
+    	this.merge = merge;
+    }
     
+    /**
+     * 
+     * @param mergeThreshold
+     */
+    public void setMergeThreshold(double mergeThreshold) {
+    	this.mergeThreshold = mergeThreshold;
+    }
 
     /**
      * Once all the necessary variables are set, call the Efficient Watershed algorithm.
@@ -406,6 +436,8 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         setNumNeighbor(scriptParameters.getParams().getInt("num_neighbor"));
         setLimitBins(scriptParameters.getParams().getBoolean("limit_bins"));
         setBinNumber(scriptParameters.getParams().getInt("bin_number"));
+        setMerge(scriptParameters.getParams().getBoolean("merge"));
+        setMergeThreshold(scriptParameters.getParams().getDouble("merge_threshold"));
     }
 
     /**
@@ -418,6 +450,8 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_neighbor", numNeighbor));
         scriptParameters.getParams().put(ParameterFactory.newParameter("limit_bins", limitBins));
         scriptParameters.getParams().put(ParameterFactory.newParameter("bin_number", binNumber));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("merge", merge));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("merge_threshold", mergeThreshold));
     }
 
     
@@ -504,7 +538,7 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
             gbcScale.gridy++;
             neighborPanel.add(twentySixButton, gbcScale);
         } // if (image.getNDims() >= 3)
-        binCheckBox = new JCheckBox("Limit bins per frame");
+        binCheckBox = new JCheckBox("Pre watershed limit bins per frame");
         binCheckBox.setFont(serif12);
         binCheckBox.setForeground(Color.black);
         binCheckBox.setSelected(false);
@@ -527,6 +561,7 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         mergeCheckBox = new JCheckBox("Post watershed merging of catchment basins");
         mergeCheckBox.setFont(serif12);
         mergeCheckBox.setForeground(Color.black);
+        mergeCheckBox.addActionListener(this);
         gbcScale.gridx = 0;
         gbcScale.gridy++;
         neighborPanel.add(mergeCheckBox, gbcScale);
