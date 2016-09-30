@@ -13,7 +13,7 @@ import java.util.Queue;
  * Reference:
  * 1.) The Watershed Transform: Definitions, Algorithms, and Parallelization Strategies by 
  * Jos B.T.M. Roerdink and Arnold Meijster, Fundamentals Informaticae 41 (2001), pp. 187-228.
- * Algorithm 4.4 Watershed transform w.r.t. topographical distance based on disjoint sets
+ * Algorithm 4.8 Watershed transform w.r.t. topographical distance based on disjoint sets
  */
 
 public class AlgorithmUnionFindWatershed extends AlgorithmBase {
@@ -71,12 +71,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
     	ModelImage lcImage;
     	AlgorithmUnionFindComponentLabelling ufclAlgo;
     	ModelImage ufclImage;
-    	double srcBuffer[];
     	int levelBuffer[];
-    	double minValue;
-    	double maxValue;
-    	double range;
-    	double scale;
     	int numLevels;
     	boolean isMin[];
     	int minLabel[];
@@ -117,7 +112,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
         
         ufclImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, srcImage, neighbor8, limitBins, binNumber);
+        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, lcImage, neighbor8, false, binNumber);
         ufclAlgo.run();
         ufclAlgo.finalize();
         ufclAlgo = null;
@@ -151,7 +146,6 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
             labelBuffer = new int[length];
             sln = new int[length][];
             gamma = new int[length][];
-            srcBuffer = new double[length];
             levelBuffer = new int[length];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Union Find Watershed: Out of memory creating buffers");
@@ -162,37 +156,6 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
         
         for (t = 0; t < tDim; t++) {
             for (z = 0; z < zDim; z++) {
-            	
-            	try {
-                    srcImage.exportData((z + t*zDim)*length, length, srcBuffer);
-                } catch (IOException error) {
-                    displayError("Algorithm Sequential Scanning Watershed: image bounds exceeded");
-                    setCompleted(false);
-                    
-                    srcImage.releaseLock();
-
-                    return;
-                }
-            	
-            	if (limitBins) {
-                	minValue = Double.MAX_VALUE;
-                	maxValue = -Double.MAX_VALUE;
-                	for (i = 0; i < length; i++) {
-                	    if (imgBuffer[i] < minValue) {
-                	    	minValue = imgBuffer[i];
-                	    }
-                	    if (imgBuffer[i] > maxValue) {
-                	    	maxValue = imgBuffer[i];
-                	    }
-                	}
-                	
-                	range = maxValue - minValue;
-            	    scale = (binNumber-1)/range;
-            	    for (i = 0; i < length; i++) {
-            	    	srcBuffer[i] = Math.min((binNumber-1), Math.floor((srcBuffer[i]-minValue)*scale + 0.5));
-            	    }
-                } // if (limitBins)
-
             	
             	try {
                     lcImage.exportData((z + t*zDim)*length, length, imgBuffer);
@@ -231,29 +194,29 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                    x = i % xDim;
                    y = i / xDim;
                    if (isMin[levelBuffer[i]-1]) {
-	                   if ((x > 0) && (srcBuffer[i] > srcBuffer[i-1])) {
+	                   if ((x > 0) && (imgBuffer[i] > imgBuffer[i-1])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
-	                   if ((x < xDim-1) && (srcBuffer[i] > srcBuffer[i+1])) {
+	                   if ((x < xDim-1) && (imgBuffer[i] > imgBuffer[i+1])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
-	                   if ((y > 0) && (srcBuffer[i] > srcBuffer[i-xDim])) {
+	                   if ((y > 0) && (imgBuffer[i] > imgBuffer[i-xDim])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
-	                   if ((y < yDim-1) && (srcBuffer[i] > srcBuffer[i+xDim])) {
+	                   if ((y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
 	                   if (neighbor8) {
-	                	   if ((x > 0) && (y > 0) && (srcBuffer[i] > srcBuffer[i-xDim-1])) {
+	                	   if ((x > 0) && (y > 0) && (imgBuffer[i] > imgBuffer[i-xDim-1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
-	                	   if ((x < xDim-1) && (y > 0) && (srcBuffer[i] > srcBuffer[i-xDim+1])) {
+	                	   if ((x < xDim-1) && (y > 0) && (imgBuffer[i] > imgBuffer[i-xDim+1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
-	                	   if ((x > 0) && (y < yDim-1) && (srcBuffer[i] > srcBuffer[i+xDim-1])) {
+	                	   if ((x > 0) && (y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim-1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
-	                	   if ((x < xDim-1) && (y < yDim-1) && (srcBuffer[i] > srcBuffer[i+xDim+1])) {
+	                	   if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim+1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
 	                   } // if (neighbor8)
@@ -421,6 +384,8 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                     			}	
                             	while (!fifo.isEmpty()) {
                             	    j = fifo.poll();
+                            	    x = j % xDim;
+                            	    y = j / xDim;
                             	    numberEqual = 0;;
                         	    	if ((x > 0) && (imgBuffer[j] == imgBuffer[j-1])) {
                         	    		equalIndex[numberEqual++] = j-1;
