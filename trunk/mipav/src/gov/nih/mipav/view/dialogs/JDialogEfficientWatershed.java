@@ -681,6 +681,8 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
             table.put(new ParameterInt("num_neighbor", 4));
             table.put(new ParameterBoolean("limit_bins", false));
             table.put(new ParameterInt("bin_number", 4));
+            table.put(new ParameterBoolean("merge", false));
+            table.put(new ParameterDouble("merge_threshold", 10.0));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
