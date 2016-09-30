@@ -212,7 +212,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 			for (j = 0; j < foundNeighbors; j++) {
 				neighborBins[i][j] = neighbors[j];
 			}
-        } // for (i = 0; i < numValues; i++)
+        } // for (i = 0; i < length; i++)
         
         if (nDims > 2) {
             zDim = srcImage.getExtents()[2];
@@ -834,7 +834,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 			for (j = 0; j < foundNeighbors; j++) {
 				neighborBins[i][j] = neighbors[j];
 			}
-        } // for (i = 0; i < numValues; i++)
+        } // for (i = 0; i < length; i++)
         
         if (nDims > 3) {
         	tDim = srcImage.getExtents()[3];
