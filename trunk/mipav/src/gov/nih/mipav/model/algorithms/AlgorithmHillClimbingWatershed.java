@@ -58,7 +58,6 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	int tDim;
     	int nDims;
     	int length;
-    	double srcBuffer[];
     	int levelBuffer[];
     	int x;
     	int y;
@@ -74,10 +73,6 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	int numMins;
     	AlgorithmUnionFindComponentLabelling ufclAlgo;
     	ModelImage ufclImage;
-    	double minValue;
-    	double maxValue;
-    	double range;
-    	double scale;
     	boolean S[];
     	int numberS;
     	boolean memberS;
@@ -187,7 +182,7 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
         
         ufclImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, srcImage, neighbor8, limitBins, binNumber);
+        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, lcImage, neighbor8, false, binNumber);
         ufclAlgo.run();
         ufclAlgo.finalize();
         ufclAlgo = null;
@@ -196,7 +191,6 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
             imgBuffer = new int[length];
             labelBuffer = new int[length];
             levelBuffer = new int[length];
-            srcBuffer = new double[length];
             S = new boolean[length];
             if (neighbor8) {
             	v = new int[8];
@@ -213,36 +207,6 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
         
         for (t = 0; t < tDim; t++) {
             for (z = 0; z < zDim; z++) {
-            	
-            	try {
-                    srcImage.exportData((z + t*zDim)*length, length, srcBuffer);
-                } catch (IOException error) {
-                    displayError("Algorithm Hill Climbing Watershed: image bounds exceeded");
-                    setCompleted(false);
-                    
-                    srcImage.releaseLock();
-
-                    return;
-                }
-            	
-            	if (limitBins) {
-                	minValue = Double.MAX_VALUE;
-                	maxValue = -Double.MAX_VALUE;
-                	for (i = 0; i < length; i++) {
-                	    if (srcBuffer[i] < minValue) {
-                	    	minValue = srcBuffer[i];
-                	    }
-                	    if (srcBuffer[i] > maxValue) {
-                	    	maxValue = srcBuffer[i];
-                	    }
-                	}
-                	
-                	range = maxValue - minValue;
-            	    scale = (binNumber-1)/range;
-            	    for (i = 0; i < length; i++) {
-            	    	srcBuffer[i] = Math.min((binNumber-1), Math.floor((srcBuffer[i]-minValue)*scale + 0.5));
-            	    }
-                } // if (limitBins)
 
                 try {
                     lcImage.exportData((z + t*zDim)*length, length, imgBuffer);
@@ -281,29 +245,29 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                    x = i % xDim;
                    y = i / xDim;
                    if (isMin[levelBuffer[i]-1]) {
-	                   if ((x > 0) && (srcBuffer[i] > srcBuffer[i-1])) {
+	                   if ((x > 0) && (imgBuffer[i] > imgBuffer[i-1])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
-	                   if ((x < xDim-1) && (srcBuffer[i] > srcBuffer[i+1])) {
+	                   if ((x < xDim-1) && (imgBuffer[i] > imgBuffer[i+1])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
-	                   if ((y > 0) && (srcBuffer[i] > srcBuffer[i-xDim])) {
+	                   if ((y > 0) && (imgBuffer[i] > imgBuffer[i-xDim])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
-	                   if ((y < yDim-1) && (srcBuffer[i] > srcBuffer[i+xDim])) {
+	                   if ((y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
 	                   if (neighbor8) {
-	                	   if ((x > 0) && (y > 0) && (srcBuffer[i] > srcBuffer[i-xDim-1])) {
+	                	   if ((x > 0) && (y > 0) && (imgBuffer[i] > imgBuffer[i-xDim-1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
-	                	   if ((x < xDim-1) && (y > 0) && (srcBuffer[i] > srcBuffer[i-xDim+1])) {
+	                	   if ((x < xDim-1) && (y > 0) && (imgBuffer[i] > imgBuffer[i-xDim+1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
-	                	   if ((x > 0) && (y < yDim-1) && (srcBuffer[i] > srcBuffer[i+xDim-1])) {
+	                	   if ((x > 0) && (y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim-1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
-	                	   if ((x < xDim-1) && (y < yDim-1) && (srcBuffer[i] > srcBuffer[i+xDim+1])) {
+	                	   if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim+1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
 	                   } // if (neighbor8)
@@ -495,8 +459,8 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                 	}
                 	for (i = 0; i < length; i++) {
                 		if (labelBuffer[i] > 0) {
-                		    if (srcBuffer[i] < labelMin[labelBuffer[i]]) {
-                		    	labelMin[labelBuffer[i]] = srcBuffer[i];
+                		    if (imgBuffer[i] < labelMin[labelBuffer[i]]) {
+                		    	labelMin[labelBuffer[i]] = imgBuffer[i];
                 		    }
                 		} // if (labelBuffer[i] > 0)
                 	} // for (i = 0; i < length; i++)
@@ -567,8 +531,8 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	        	        	        for (j = 0; j < neighborBins[i].length && (!hasSmallestLabelNeighbor); j++) {
     	        	        	        	if (labelBuffer[neighborBins[i][j]] == smallestLabel) {
     	        	        	        		hasSmallestLabelNeighbor = true;
-    	        	        	        		if (srcBuffer[i] < smallestBorderValue) {
-    	        	        	        			smallestBorderValue = srcBuffer[i];
+    	        	        	        		if (imgBuffer[i] < smallestBorderValue) {
+    	        	        	        			smallestBorderValue = imgBuffer[i];
     	        	        	        		}
     	        	        	        	}
     	        	        	        } // for (j = 0; j < neighborBins[i].length && (!hasSmallestLabelNeighbor); j++)
@@ -578,8 +542,8 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	        	        	        for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++) {
     	        	        	        	if (labelBuffer[neighborBins[i][j]] == listLabel) {
     	        	        	        		hasListLabelNeighbor = true;
-    	        	        	        		if (srcBuffer[i] < smallestBorderValue) {
-    	        	        	        			smallestBorderValue = srcBuffer[i];
+    	        	        	        		if (imgBuffer[i] < smallestBorderValue) {
+    	        	        	        			smallestBorderValue = imgBuffer[i];
     	        	        	        		}
     	        	        	        	}
     	        	        	        } // for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++)	
@@ -596,8 +560,8 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	        	        	    	    }
     	        	        	    	} // for (j = 0; j < neighborBins[i].length && (!(hasListLabelNeighbor && hasSmallestLabelNeighbor)); j++)
     	        	        	    	if (hasListLabelNeighbor && hasSmallestLabelNeighbor) {
-    	        	        	    		if (srcBuffer[i] < smallestBorderValue) {
-    	        	        	    			smallestBorderValue = srcBuffer[i];
+    	        	        	    		if (imgBuffer[i] < smallestBorderValue) {
+    	        	        	    			smallestBorderValue = imgBuffer[i];
     	        	        	    		}
     	        	        	    	}
     	        	        	    } // else if (labelBuffer[i] == WSHED)
