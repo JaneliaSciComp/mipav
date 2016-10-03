@@ -18,7 +18,7 @@ import java.util.Queue;
 
 public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 	
-    private boolean neighbor8;
+    private int numNeighbor;
 	
     private boolean limitBins;
 	
@@ -48,10 +48,10 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
-	public AlgorithmUnionFindWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8, boolean limitBins,
+	public AlgorithmUnionFindWatershed(ModelImage destImage, ModelImage srcImage, int numNeighbor, boolean limitBins,
 			int binNumber) {
 		super(destImage, srcImage);
-		this.neighbor8 = neighbor8;
+		this.numNeighbor = numNeighbor;
 		this.limitBins = limitBins;
 		this.binNumber = binNumber;
 	}
@@ -90,7 +90,6 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
     	int equalIndex[];
     	int k;
     	int gamma[][];
-    	int con;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -105,14 +104,14 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
         
         lcImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        lcAlgo = new AlgorithmLowerCompletion(lcImage, srcImage, neighbor8, limitBins, binNumber);
+        lcAlgo = new AlgorithmLowerCompletion(lcImage, srcImage, numNeighbor, limitBins, binNumber);
         lcAlgo.run();
         lcAlgo.finalize();
         lcAlgo = null;
         
         ufclImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, lcImage, neighbor8, false, binNumber);
+        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, lcImage, numNeighbor, false, binNumber);
         ufclAlgo.run();
         ufclAlgo.finalize();
         ufclAlgo = null;
@@ -132,13 +131,6 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
         }
         else {
         	tDim = 1;
-        }
-        
-        if (neighbor8) {
-        	con = 8;
-        }
-        else {
-        	con = 4;
         }
         
         try {
@@ -206,7 +198,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 	                   if ((y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
-	                   if (neighbor8) {
+	                   if (numNeighbor == 8) {
 	                	   if ((x > 0) && (y > 0) && (imgBuffer[i] > imgBuffer[i-xDim-1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
@@ -219,7 +211,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 	                	   if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim+1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
-	                   } // if (neighbor8)
+	                   } // if (numNeighbor == 8)
                    } // if (isMin[levelBuffer[i]-1])
                }
                
@@ -253,8 +245,8 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                 	}
                 }
                 
-                minIndex = new int[con];
-                equalIndex = new int[con];
+                minIndex = new int[numNeighbor];
+                equalIndex = new int[numNeighbor];
                 fifo.clear();
                 for (i = 0; i < length; i++) {
                 	if (gamma[i] == null) {
@@ -297,7 +289,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                 	        	minIndex[numLowestNeighbors++] = i+xDim;
                 	        }
                 	    } // if ((y < yDim-1) && (imgBuffer[i] - imgBuffer[i+xDim] > 0))
-                	    if (neighbor8) {
+                	    if (numNeighbor == 8) {
                 	    	if ((x > 0) && (y > 0) && (imgBuffer[i] - imgBuffer[i-xDim-1] > 0)) {
 	                	    	if (((imgBuffer[i] - imgBuffer[i-xDim-1])/sqrt2) - epsilon > maxSlope) {
 	                	    		maxSlope = (imgBuffer[i] - imgBuffer[i-xDim-1])/sqrt2;
@@ -338,7 +330,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
 	                	    		minIndex[numLowestNeighbors++] = i+xDim+1;
 	                	    	}
                 	    	} // if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[i] - imgBuffer[i+xDim+1] > 0))
-                	    } // if (neighbor8)
+                	    } // if (numNeighbor == 8)
                 	    if (numLowestNeighbors > 0) {
                 	    	gamma[i] = new int[numLowestNeighbors];
                 	    	for (j = 0; j < numLowestNeighbors; j++) {
@@ -361,7 +353,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                 	    	else if ((y < yDim-1) && (imgBuffer[i] == imgBuffer[i+xDim])) {
                 	    		equalPresent = true;
                 	    	}
-                	    	else if (neighbor8) {
+                	    	else if (numNeighbor == 8) {
                 	    		if ((x > 0) && (y > 0) && (Math.abs((imgBuffer[i] - imgBuffer[i-xDim-1])/sqrt2) <= epsilon)) {
                 	    		    equalPresent = true;	
                 	    		}
@@ -374,7 +366,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                 	    		else if ((x < xDim-1) && (y < yDim-1) && (Math.abs((imgBuffer[i] - imgBuffer[i+xDim+1])/sqrt2) <= epsilon)) {
                 	    		    equalPresent = true;	
                 	    		}
-                	    	} // else if (neighbor8)
+                	    	} // else if (numNeighbor == 8)
                 	    	if (equalPresent) {
                 	    		added = fifo.offer(i);
                             	if (!added) {
@@ -399,7 +391,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                         	    	if ((y < yDim-1) && (imgBuffer[j] == imgBuffer[j+xDim])) {
                         	    		equalIndex[numberEqual++] = j+xDim;
                         	    	}
-                        	    	if (neighbor8) {
+                        	    	if (numNeighbor == 8) {
                         	    		if ((x > 0) && (y > 0) && (Math.abs((imgBuffer[j] - imgBuffer[j-xDim-1])/sqrt2) <= epsilon)) {
                         	    		    equalIndex[numberEqual++] = j-xDim-1;	
                         	    		}
@@ -412,7 +404,7 @@ public class AlgorithmUnionFindWatershed extends AlgorithmBase {
                         	    		if ((x < xDim-1) && (y < yDim-1) && (Math.abs((imgBuffer[j] - imgBuffer[j+xDim+1])/sqrt2) <= epsilon)) {
                         	    		    equalIndex[numberEqual++] = j+xDim+1;	
                         	    		}
-                        	    	} // else if (neighbor8)
+                        	    	} // else if (numNeighbor == 8)
                         	    	for (k = 0; k < numberEqual; k++) {
                         	    	    if (gamma[equalIndex[k]] == null) {
                         	    	        gamma[equalIndex[k]] = new int[1];
