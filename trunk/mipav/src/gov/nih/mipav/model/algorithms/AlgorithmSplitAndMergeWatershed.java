@@ -43,7 +43,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 	/* Potential Isolated Area Pixel */
 	private static final int PIAP = -4;
 	
-	private boolean neighbor8;
+	private int numNeighbor;
 	
 	boolean limitBins;
 	
@@ -53,10 +53,10 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
-	public AlgorithmSplitAndMergeWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8, boolean limitBins,
+	public AlgorithmSplitAndMergeWatershed(ModelImage destImage, ModelImage srcImage, int numNeighbor, boolean limitBins,
 			int binNumber, boolean createWatershedLines) {
 		super(destImage, srcImage);
-		this.neighbor8 = neighbor8;
+		this.numNeighbor = numNeighbor;
 		this.limitBins = limitBins;
 		this.binNumber = binNumber;
 		this.createWatershedLines = createWatershedLines;
@@ -83,7 +83,6 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
     	Queue <Integer> fifo = new LinkedList<Integer>();
     	Comparator<indexValueItem> comparator = new indexValueComparator();
     	PriorityQueue<indexValueItem> pfifo;
-    	int numNeighbor;
     	int neighbors[];
     	int allNeighbors[][];
     	int foundNeighbors = 0;
@@ -139,17 +138,11 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
         }
         lcImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        lcAlgo = new AlgorithmLowerCompletion(lcImage, srcImage, neighbor8, limitBins, binNumber);
+        lcAlgo = new AlgorithmLowerCompletion(lcImage, srcImage, numNeighbor, limitBins, binNumber);
         lcAlgo.run();
         lcAlgo.finalize();
         lcAlgo = null;
         nDims = srcImage.getNDims();
-        if (neighbor8) {
-        	numNeighbor = 8;
-        }
-        else {
-        	numNeighbor = 4;
-        }
     	
         neighbors = new int[numNeighbor];
         
@@ -192,7 +185,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
         	if (y < yDim-1) {
         		neighbors[foundNeighbors++] = i+xDim;
         	}
-        	if (neighbor8) {
+        	if (numNeighbor == 8) {
         		if ((x > 0) && (y > 0)) {
         			neighbors[foundNeighbors++] = i-xDim-1;
         		}
@@ -205,7 +198,7 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
         		if ((x < xDim-1) && (y < yDim-1)) {
         			neighbors[foundNeighbors++] = i+xDim+1;
         		}
-        	} // if (neighbor8)
+        	} // if (numNeighbor == 8)
         	allNeighbors[i] = new int[foundNeighbors];
         	for (j = 0; j < foundNeighbors; j++) {
         		allNeighbors[i][j] = neighbors[j];
