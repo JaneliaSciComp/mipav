@@ -17,7 +17,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  *
- * @version  0.1 September 20, 2016
+ * @version  0.1 October 3, 2016
  * @author   William Gandler
  * @see      AlgorithmShortestPathWatershed
  */
@@ -45,7 +45,7 @@ public class JDialogShortestPathWatershed extends JDialogScriptableBase
     /** DOCUMENT ME! */
     private AlgorithmShortestPathWatershed watershedAlgo;
     
-    private boolean neighbor8;
+    private int numNeighbor;
     
     private ButtonGroup neighborGroup;
     
@@ -178,7 +178,9 @@ public class JDialogShortestPathWatershed extends JDialogScriptableBase
 
         String str = new String();
         
-        str += neighbor8;
+        str += numNeighbor;
+        str += limitBins;
+        str += binNumber;
         
 
         return str;
@@ -203,8 +205,8 @@ public class JDialogShortestPathWatershed extends JDialogScriptableBase
 
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                neighbor8 =  MipavUtil.getBoolean(st);
-                if (!neighbor8) {
+                numNeighbor =  MipavUtil.getInt(st);
+                if (numNeighbor == 4) {
                 	fourButton.setSelected(true);
                 	eightButton.setSelected(false);
                 }
@@ -235,14 +237,13 @@ public class JDialogShortestPathWatershed extends JDialogScriptableBase
     }
     
     /**
-     * Accessor that sets neighbor8.
+     * Accessor that sets numNeighbor.
      *
-     * @param  neighbor8
+     * @param  numNeighbor
      */
-    public void setNeighbor8(boolean neighbor8) {
-        this.neighbor8 = neighbor8;
+    public void setNumNeighbor(int numNeighbor) {
+        this.numNeighbor = numNeighbor;
     }
-    
    
     /**
      * 
@@ -272,7 +273,7 @@ public class JDialogShortestPathWatershed extends JDialogScriptableBase
                resultImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), 
                         		image.getImageName() + "_watershed");
            
-           watershedAlgo = new AlgorithmShortestPathWatershed(resultImage, image, neighbor8, limitBins, binNumber);
+           watershedAlgo = new AlgorithmShortestPathWatershed(resultImage, image, numNeighbor, limitBins, binNumber);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -326,7 +327,7 @@ public class JDialogShortestPathWatershed extends JDialogScriptableBase
         image = scriptParameters.retrieveInputImage();
         parentFrame = image.getParentFrame();
 
-        setNeighbor8(scriptParameters.getParams().getBoolean("neighbor_8"));
+        setNumNeighbor(scriptParameters.getParams().getInt("num_neighbor"));
         setLimitBins(scriptParameters.getParams().getBoolean("limit_bins"));
         setBinNumber(scriptParameters.getParams().getInt("bin_number"));
     }
@@ -338,7 +339,7 @@ public class JDialogShortestPathWatershed extends JDialogScriptableBase
         scriptParameters.storeInputImage(image);
         scriptParameters.storeImageInRecorder(getResultImage());
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("neighbor_8", neighbor8));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_neighbor", numNeighbor));
         scriptParameters.getParams().put(ParameterFactory.newParameter("limit_bins", limitBins));
         scriptParameters.getParams().put(ParameterFactory.newParameter("bin_number", binNumber));
     }
@@ -442,10 +443,10 @@ public class JDialogShortestPathWatershed extends JDialogScriptableBase
     	String tmpStr;
         
         if (fourButton.isSelected()) {
-        	neighbor8 = false;
+        	numNeighbor = 4;
         }
         else {
-        	neighbor8 = true;
+        	numNeighbor = 8;
         }
         
         limitBins = binCheckBox.isSelected();
@@ -504,7 +505,7 @@ public class JDialogShortestPathWatershed extends JDialogScriptableBase
         try {
         	
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            table.put(new ParameterBoolean("neighbor_8", false));
+            table.put(new ParameterInt("num_neighbor", 4));
             table.put(new ParameterBoolean("limit_bins", false));
             table.put(new ParameterInt("bin_number", 4));
             } catch (final ParserException e) {
