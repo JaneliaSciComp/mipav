@@ -17,7 +17,7 @@ import java.io.*;
 
 public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 	
-    private boolean neighbor8;
+    private int numNeighbor;
 	
     private boolean limitBins;
 	
@@ -43,10 +43,10 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
-	public AlgorithmSequentialScanningWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8, boolean limitBins,
+	public AlgorithmSequentialScanningWatershed(ModelImage destImage, ModelImage srcImage, int numNeighbor, boolean limitBins,
 			int binNumber) {
 		super(destImage, srcImage);
-		this.neighbor8 = neighbor8;
+		this.numNeighbor = numNeighbor;
 		this.limitBins = limitBins;
 		this.binNumber = binNumber;
 	}
@@ -83,14 +83,14 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
         
         lcImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        lcAlgo = new AlgorithmLowerCompletion(lcImage, srcImage, neighbor8, limitBins, binNumber);
+        lcAlgo = new AlgorithmLowerCompletion(lcImage, srcImage, numNeighbor, limitBins, binNumber);
         lcAlgo.run();
         lcAlgo.finalize();
         lcAlgo = null;
         
         ufclImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, lcImage, neighbor8, false, binNumber);
+        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, lcImage, numNeighbor, false, binNumber);
         ufclAlgo.run();
         ufclAlgo.finalize();
         ufclAlgo = null;
@@ -176,7 +176,7 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 	                   if ((y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
-	                   if (neighbor8) {
+	                   if (numNeighbor == 8) {
 	                	   if ((x > 0) && (y > 0) && (imgBuffer[i] > imgBuffer[i-xDim-1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
@@ -189,7 +189,7 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 	                	   if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim+1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
-	                   } // if (neighbor8)
+	                   } // if (numNeighbor == 8)
                    } // if (isMin[levelBuffer[i]-1])
                }
                
@@ -265,7 +265,7 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 	    	if (y < yDim-1) {
 	    		v[numNeighbors++] = u+xDim;
 	    	}
-	    	if (neighbor8) {
+	    	if (numNeighbor == 8) {
 	    		if ((x < xDim-1) && (y < yDim-1)) {
 	    			v[numNeighbors++] = u+xDim+1;
 	    		}
@@ -278,7 +278,7 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 	    	if (y > 0) {
 	    		v[numNeighbors++] = u-xDim;
 	    	}
-	    	if (neighbor8) {
+	    	if (numNeighbor == 8) {
 	    		if ((x > 0) && (y > 0)) {
 	    			v[numNeighbors++] = u-xDim-1;
 	    		}
@@ -341,7 +341,7 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 		if ((y < yDim-1) && (imgBuffer[p] > imgBuffer[p+xDim])) {
 			lowerSlope = Math.max(lowerSlope, (imgBuffer[p]-imgBuffer[p+xDim]));	
 		}
-		if (neighbor8) {
+		if (numNeighbor == 8) {
 			if ((x > 0) && (y > 0) && (imgBuffer[p] > imgBuffer[p-xDim-1])) {
 				lowerSlope = Math.max(lowerSlope, (imgBuffer[p]-imgBuffer[p-xDim-1])/sqrt2);
 			}
@@ -354,7 +354,7 @@ public class AlgorithmSequentialScanningWatershed extends AlgorithmBase {
 			if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[p] > imgBuffer[p+xDim+1])) {
 				lowerSlope = Math.max(lowerSlope, (imgBuffer[p]-imgBuffer[p+xDim+1])/sqrt2);
 			}
-		} // if (neighbor8)
+		} // if (numNeighbor == 8)
 		return lowerSlope;
 	}
 }
