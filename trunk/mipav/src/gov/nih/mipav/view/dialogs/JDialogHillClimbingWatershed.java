@@ -567,7 +567,7 @@ public class JDialogHillClimbingWatershed extends JDialogScriptableBase
         gbcScale.gridy++;
         neighborPanel.add(labelThreshold, gbcScale);
         textThreshold = new JTextField(10);
-        textThreshold.setText("10.0");
+        textThreshold.setText("0.10");
         textThreshold.setFont(serif12);
         textThreshold.setCaretColor(Color.black);
         textThreshold.setEnabled(false);
