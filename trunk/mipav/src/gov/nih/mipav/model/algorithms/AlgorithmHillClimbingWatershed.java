@@ -351,87 +351,36 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                     x = smallestIndex % xDim;
                     y = smallestIndex / xDim;
                     steepestUpperNeighbors = 0;
-                    steepestSlope = 0.0;
                     if ((x > 0) && (S[smallestIndex-1]) && (imgBuffer[smallestIndex-1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	steepestSlope = imgBuffer[smallestIndex-1] - imgBuffer[smallestIndex];
                     	v[steepestUpperNeighbors++] = smallestIndex-1;
                     }
                     if ((x < xDim-1) && (S[smallestIndex+1]) && (imgBuffer[smallestIndex+1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	if (imgBuffer[smallestIndex+1] - imgBuffer[smallestIndex] > steepestSlope) {
-                    		steepestSlope = imgBuffer[smallestIndex+1] - imgBuffer[smallestIndex];
-                    		v[0] = smallestIndex+1;
-                    		steepestUpperNeighbors = 1;
-                    	}
-                    	else if (imgBuffer[smallestIndex+1] - imgBuffer[smallestIndex] == steepestSlope) {
-                    		v[steepestUpperNeighbors++] = smallestIndex+1;
-                    	}
+                        v[steepestUpperNeighbors++] = smallestIndex+1;
                     } // if ((x < xDim-1) && (S[smallestIndex+1]) && (imgBuffer[smallestIndex+1] - imgBuffer[smallestIndex] > 0.0))
                     if ((y > 0) && (S[smallestIndex-xDim]) && (imgBuffer[smallestIndex-xDim] - imgBuffer[smallestIndex] > 0.0)) {
-                    	if (imgBuffer[smallestIndex-xDim] - imgBuffer[smallestIndex] > steepestSlope) {
-                    		steepestSlope = imgBuffer[smallestIndex-xDim] - imgBuffer[smallestIndex];
-                    		v[0] = smallestIndex-xDim;
-                    		steepestUpperNeighbors = 1;
-                    	}
-                    	else if (imgBuffer[smallestIndex-xDim] - imgBuffer[smallestIndex] == steepestSlope) {
-                    		v[steepestUpperNeighbors++] = smallestIndex-xDim;
-                    	}
+                    	v[steepestUpperNeighbors++] = smallestIndex-xDim;
                     } // if ((y > 0) && (S[smallestIndex-xDim]) && (imgBuffer[smallestIndex-xDim] - imgBuffer[smallestIndex] > 0.0))
                     if ((y < yDim-1) && (S[smallestIndex+xDim]) && (imgBuffer[smallestIndex+xDim] - imgBuffer[smallestIndex] > 0.0)) {
-                    	if (imgBuffer[smallestIndex+xDim] - imgBuffer[smallestIndex] > steepestSlope) {
-                    		steepestSlope = imgBuffer[smallestIndex+xDim] - imgBuffer[smallestIndex];
-                    		v[0] = smallestIndex+xDim;
-                    		steepestUpperNeighbors = 1;
-                    	}
-                    	else if (imgBuffer[smallestIndex+xDim] - imgBuffer[smallestIndex] == steepestSlope) {
-                    		v[steepestUpperNeighbors++] = smallestIndex+xDim;
-                    	}
+                    	v[steepestUpperNeighbors++] = smallestIndex+xDim;
                     } // if ((y < yDim-1) && (S[smallestIndex+xDim]) && (imgBuffer[smallestIndex+xDim] - imgBuffer[smallestIndex] > 0.0))
                     if (neighbor8) {
                     	if ((x > 0) && ( y > 0) && (S[smallestIndex-xDim-1]) && 
                     			(imgBuffer[smallestIndex-xDim-1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	    if (imgBuffer[smallestIndex-xDim-1] - imgBuffer[smallestIndex] > steepestSlope) {
-                    	        steepestSlope = imgBuffer[smallestIndex-xDim-1]-imgBuffer[smallestIndex];
-                    	        v[0] = smallestIndex-xDim-1;
-                    	        steepestUpperNeighbors = 1;
-                    	    }
-                    	    else if (imgBuffer[smallestIndex-xDim-1] -imgBuffer[smallestIndex] == steepestSlope) {
-                    	    	v[steepestUpperNeighbors++] = smallestIndex-xDim-1;
-                    	    }
+                    	    v[steepestUpperNeighbors++] = smallestIndex-xDim-1;
                     	} // if ((x > 0) && ( y > 0) && (S[smallestIndex-xDim-1]) && (imgBuffer[smallestIndex-xDim-1] - imgBuffer[smallestIndex] > 0.0))
                     	if ((x > 0) && ( y < yDim-1) && (S[smallestIndex+xDim-1]) && 
                     			(imgBuffer[smallestIndex+xDim-1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	    if (imgBuffer[smallestIndex+xDim-1] - imgBuffer[smallestIndex] > steepestSlope) {
-                    	        steepestSlope = imgBuffer[smallestIndex+xDim-1]-imgBuffer[smallestIndex];
-                    	        v[0] = smallestIndex+xDim-1;
-                    	        steepestUpperNeighbors = 1;
-                    	    }
-                    	    else if (imgBuffer[smallestIndex+xDim-1] -imgBuffer[smallestIndex] == steepestSlope) {
-                    	    	v[steepestUpperNeighbors++] = smallestIndex+xDim-1;
-                    	    }
+                    	    v[steepestUpperNeighbors++] = smallestIndex+xDim-1;
                     	} // if ((x > 0) && ( y < yDim-1) && (S[smallestIndex+xDim-1]) 
                     	  // && (imgBuffer[smallestIndex+xDim-1] - imgBuffer[smallestIndex] > 0.0))
                     	if ((x < xDim-1) && ( y > 0) && (S[smallestIndex-xDim+1]) && 
                     			(imgBuffer[smallestIndex-xDim+1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	    if (imgBuffer[smallestIndex-xDim+1] - imgBuffer[smallestIndex] > steepestSlope) {
-                    	        steepestSlope = imgBuffer[smallestIndex-xDim+1]-imgBuffer[smallestIndex];
-                    	        v[0] = smallestIndex-xDim+1;
-                    	        steepestUpperNeighbors = 1;
-                    	    }
-                    	    else if (imgBuffer[smallestIndex-xDim+1] -imgBuffer[smallestIndex] == steepestSlope) {
-                    	    	v[steepestUpperNeighbors++] = smallestIndex-xDim+1;
-                    	    }
+                    	    v[steepestUpperNeighbors++] = smallestIndex-xDim+1;
                     	} // if ((x < xDim-1) && ( y > 0) && (S[smallestIndex-xDim+1]) 
                     	  // && (imgBuffer[smallestIndex-xDim+1] - imgBuffer[smallestIndex] > 0.0))
                     	if ((x < xDim-1) && ( y < yDim-1) && (S[smallestIndex+xDim+1]) &&
                     			(imgBuffer[smallestIndex+xDim+1] - imgBuffer[smallestIndex] > 0.0)) {
-                    	    if (imgBuffer[smallestIndex+xDim+1] - imgBuffer[smallestIndex] > steepestSlope) {
-                    	        steepestSlope = imgBuffer[smallestIndex+xDim+1]-imgBuffer[smallestIndex];
-                    	        v[0] = smallestIndex+xDim+1;
-                    	        steepestUpperNeighbors = 1;
-                    	    }
-                    	    else if (imgBuffer[smallestIndex+xDim+1] -imgBuffer[smallestIndex] == steepestSlope) {
-                    	    	v[steepestUpperNeighbors++] = smallestIndex+xDim+1;
-                    	    }
+                    	    v[steepestUpperNeighbors++] = smallestIndex+xDim+1;
                     	} // if ((x < xDim-1) && ( y < yDim-1) && (S[smallestIndex+xDim+1]) 
                     	  // && (imgBuffer[smallestIndex+xDim+1] - imgBuffer[smallestIndex] > 0.0))
                     } // if (neighbor8)
