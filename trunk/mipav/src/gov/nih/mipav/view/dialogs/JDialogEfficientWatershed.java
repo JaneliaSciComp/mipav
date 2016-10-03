@@ -565,14 +565,14 @@ public class JDialogEfficientWatershed extends JDialogScriptableBase
         gbcScale.gridx = 0;
         gbcScale.gridy++;
         neighborPanel.add(mergeCheckBox, gbcScale);
-        labelThreshold = new JLabel("Height of ridge separating 2 basins");
+        labelThreshold = new JLabel("Height of ridge separating 2 basins in fraction max - min ");
         labelThreshold.setFont(serif12);
         labelThreshold.setForeground(Color.black);
         labelThreshold.setEnabled(false);
         gbcScale.gridy++;
         neighborPanel.add(labelThreshold, gbcScale);
         textThreshold = new JTextField(10);
-        textThreshold.setText("10.0");
+        textThreshold.setText("0.10");
         textThreshold.setFont(serif12);
         textThreshold.setCaretColor(Color.black);
         textThreshold.setEnabled(false);
