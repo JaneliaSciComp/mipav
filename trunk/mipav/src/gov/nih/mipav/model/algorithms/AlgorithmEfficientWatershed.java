@@ -143,6 +143,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	boolean firstFound;
     	int firstNeighbor;
     	boolean secondFound;
+    	double threshold;
     	
     	if (test) {
     	    indexValueList.add(new indexValueItem(5, 23.0));
@@ -269,6 +270,18 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         	    	imgBuffer[i] = Math.min((double)(binNumber-1), Math.floor((imgBuffer[i]-minValue)*scale + 0.5));
         	    }
             } // if (limitBins)
+            
+            minValue = Double.MAX_VALUE;
+        	maxValue = -Double.MAX_VALUE;
+        	for (i = 0; i < length; i++) {
+        	    if (imgBuffer[i] < minValue) {
+        	    	minValue = imgBuffer[i];
+        	    }
+        	    if (imgBuffer[i] > maxValue) {
+        	    	maxValue = imgBuffer[i];
+        	    }
+        	}
+        	threshold = mergeThreshold * (maxValue - minValue);
           
             fifo.clear();
             
@@ -550,8 +563,8 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 	        	        	    } // else if (labelBuffer[i] == WSHED)
 	        	        	} //for (i = 0; i < length; i++)
 	        	        	if (smallestBorderValue < Double.MAX_VALUE) {
-		        	        	if ((smallestBorderValue - labelMin[listLabel] < mergeThreshold) && 
-		        	        			(smallestBorderValue - labelMin[smallestLabel] < mergeThreshold)) {
+		        	        	if ((smallestBorderValue - labelMin[listLabel] < threshold) && 
+		        	        			(smallestBorderValue - labelMin[smallestLabel] < threshold)) {
 		        	        		for (i = 0; i < length; i++) {
 		        	        			if (labelBuffer[i] == WSHED) {
 		            	        	    	hasListLabelNeighbor = false;
@@ -706,6 +719,7 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
     	boolean firstFound;
     	int firstNeighbor;
     	boolean secondFound;
+    	double threshold;
     	
     	if (test) {
     	    indexValueList.add(new indexValueItem(5, 23.0));
@@ -885,6 +899,18 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
         	    	imgBuffer[i] = Math.min((double)(binNumber-1), Math.floor((imgBuffer[i]-minValue)*scale + 0.5));
         	    }
             } // if (limitBins)
+            
+            minValue = Double.MAX_VALUE;
+        	maxValue = -Double.MAX_VALUE;
+        	for (i = 0; i < length; i++) {
+        	    if (imgBuffer[i] < minValue) {
+        	    	minValue = imgBuffer[i];
+        	    }
+        	    if (imgBuffer[i] > maxValue) {
+        	    	maxValue = imgBuffer[i];
+        	    }
+        	}
+        	threshold = mergeThreshold * (maxValue - minValue);
           
             fifo.clear();
             
@@ -1166,8 +1192,8 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 	        	        	    } // else if (labelBuffer[i] == WSHED)
 	        	        	} //for (i = 0; i < length; i++)
 	        	        	if (smallestBorderValue < Double.MAX_VALUE) {
-		        	        	if ((smallestBorderValue - labelMin[listLabel] < mergeThreshold) && 
-		        	        			(smallestBorderValue - labelMin[smallestLabel] < mergeThreshold)) {
+		        	        	if ((smallestBorderValue - labelMin[listLabel] < threshold) && 
+		        	        			(smallestBorderValue - labelMin[smallestLabel] < threshold)) {
 		        	        		for (i = 0; i < length; i++) {
 		        	        			if (labelBuffer[i] == WSHED) {
 		            	        	    	hasListLabelNeighbor = false;
