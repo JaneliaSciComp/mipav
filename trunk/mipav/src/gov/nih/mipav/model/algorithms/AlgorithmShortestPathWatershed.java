@@ -17,7 +17,7 @@ import java.io.*;
 
 public class AlgorithmShortestPathWatershed extends AlgorithmBase {
 	
-    private boolean neighbor8;
+    private int numNeighbor;
 	
     private boolean limitBins;
 	
@@ -41,10 +41,10 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
-	public AlgorithmShortestPathWatershed(ModelImage destImage, ModelImage srcImage, boolean neighbor8, boolean limitBins,
+	public AlgorithmShortestPathWatershed(ModelImage destImage, ModelImage srcImage, int numNeighbor, boolean limitBins,
 			int binNumber) {
 		super(destImage, srcImage);
-		this.neighbor8 = neighbor8;
+		this.numNeighbor = numNeighbor;
 		this.limitBins = limitBins;
 		this.binNumber = binNumber;
 	}
@@ -89,14 +89,14 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
         
         lcImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        lcAlgo = new AlgorithmLowerCompletion(lcImage, srcImage, neighbor8, limitBins, binNumber);
+        lcAlgo = new AlgorithmLowerCompletion(lcImage, srcImage, numNeighbor, limitBins, binNumber);
         lcAlgo.run();
         lcAlgo.finalize();
         lcAlgo = null;
         
         ufclImage = new ModelImage(ModelStorageBase.INTEGER, srcImage.getExtents(), 
         		srcImage.getImageName());
-        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, lcImage, neighbor8, false, binNumber);
+        ufclAlgo = new AlgorithmUnionFindComponentLabelling(ufclImage, lcImage, numNeighbor, false, binNumber);
         ufclAlgo.run();
         ufclAlgo.finalize();
         ufclAlgo = null;
@@ -124,12 +124,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
             levelBuffer = new int[length];
             distBuffer = new double[length];
             pixelsCalculated = new boolean[length];
-            if (neighbor8) {
-            	v = new int[8];
-            }
-            else {
-            	v = new int[4];
-            }
+            v = new int[numNeighbor];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Shortest Path Watershed: Out of memory creating buffers");
             setCompleted(false);
@@ -189,7 +184,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
 	                   if ((y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim])) {
 	                	   isMin[levelBuffer[i]-1] = false;
 	                   }
-	                   if (neighbor8) {
+	                   if (numNeighbor == 8) {
 	                	   if ((x > 0) && (y > 0) && (imgBuffer[i] > imgBuffer[i-xDim-1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
@@ -202,7 +197,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
 	                	   if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[i] > imgBuffer[i+xDim+1])) {
 	                		   isMin[levelBuffer[i]-1] = false;   
 	                	   }
-	                   } // if (neighbor8)
+	                   } // if (numNeighbor == 8)
                    } // if (isMin[levelBuffer[i]-1])
                }
                
@@ -261,7 +256,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
                     if ((y < yDim-1) && (!pixelsCalculated[smallestIndex+xDim])) {
                     	v[numNeighbors++] = smallestIndex+xDim;
                     }
-                    if (neighbor8) {
+                    if (numNeighbor == 8) {
                     	if ((x > 0) && (y > 0) && (!pixelsCalculated[smallestIndex-xDim-1])) {
                     		v[numNeighbors++] = smallestIndex-xDim-1;
                     	}
@@ -274,7 +269,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
                     	if ((x < xDim-1) && (y < yDim-1) && (!pixelsCalculated[smallestIndex+xDim+1])) {
                     	    v[numNeighbors++] = smallestIndex+xDim+1;	
                     	}
-                    } // if (neighbor8)
+                    } // if (numNeighbor == 8)
                     for (j = 0; j < numNeighbors; j++) {
             	    	c = cost(smallestIndex,v[j]);
             	        if (distBuffer[smallestIndex] + c < distBuffer[v[j]] - eps) {
@@ -353,7 +348,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
 		if ((y < yDim-1) && (imgBuffer[p] > imgBuffer[p+xDim])) {
 			lowerSlope = Math.max(lowerSlope, (imgBuffer[p]-imgBuffer[p+xDim]));	
 		}
-		if (neighbor8) {
+		if (numNeighbor == 8) {
 			if ((x > 0) && (y > 0) && (imgBuffer[p] > imgBuffer[p-xDim-1])) {
 				lowerSlope = Math.max(lowerSlope, (imgBuffer[p]-imgBuffer[p-xDim-1])/sqrt2);
 			}
@@ -366,7 +361,7 @@ public class AlgorithmShortestPathWatershed extends AlgorithmBase {
 			if ((x < xDim-1) && (y < yDim-1) && (imgBuffer[p] > imgBuffer[p+xDim+1])) {
 				lowerSlope = Math.max(lowerSlope, (imgBuffer[p]-imgBuffer[p+xDim+1])/sqrt2);
 			}
-		} // if (neighbor8)
+		} // if (numNeighbor == 8)
 		return lowerSlope;
 	}
 }
