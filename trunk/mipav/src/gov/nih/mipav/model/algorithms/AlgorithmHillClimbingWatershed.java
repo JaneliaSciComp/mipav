@@ -412,30 +412,30 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                 			maxLabel = labelBuffer[i];
                 		}
                 	} // for (i = 0; i < length; i++)
-                	labelMin = new double[maxLabel+1];
-                	for (i = 1; i <= maxLabel; i++) {
+                	labelMin = new double[maxLabel];
+                	for (i = 0; i < maxLabel; i++) {
                 		labelMin[i] = Double.MAX_VALUE;
                 	}
                 	for (i = 0; i < length; i++) {
                 		if (labelBuffer[i] > 0) {
-                		    if (imgBuffer[i] < labelMin[labelBuffer[i]]) {
-                		    	labelMin[labelBuffer[i]] = imgBuffer[i];
+                		    if (imgBuffer[i] < labelMin[labelBuffer[i]-1]) {
+                		    	labelMin[labelBuffer[i]-1] = imgBuffer[i];
                 		    }
                 		} // if (labelBuffer[i] > 0)
                 	} // for (i = 0; i < length; i++)
                 	indexValueList.clear();
-                	for (i = 1; i <= maxLabel; i++) {
-                		indexValueList.add(new indexValueItem(i, labelMin[i]));
+                	for (i = 0; i < maxLabel; i++) {
+                		indexValueList.add(new indexValueItem(i+1, labelMin[i]));
                 	}
                 	Collections.sort(indexValueList, new indexValueComparator());
-                	orderedLabel = new int[maxLabel+1];
-                	for (i = 1; i <= maxLabel; i++) {
-                	    orderedLabel[indexValueList.get(i-1).index] = i;
-                	    labelMin[i] = indexValueList.get(i-1).value;
+                	orderedLabel = new int[maxLabel];
+                	for (i = 0; i < maxLabel; i++) {
+                	    orderedLabel[indexValueList.get(i).index-1] = i+1;
+                	    labelMin[i] = indexValueList.get(i).value;
                 	}
                 	indexValueList.clear();
-                	for (i = 1; i <= maxLabel; i++) {
-                		indexValueList.add(new indexValueItem(i, labelMin[i]));
+                	for (i = 0; i < maxLabel; i++) {
+                		indexValueList.add(new indexValueItem(i+1, labelMin[i]));
                 	}
                 	// (i = 0; i < indexValueList.size(); i++) {
                 		//indexValueItem item = indexValueList.get(i);
@@ -444,7 +444,7 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                 	// Labels 1 to maxLabel will now correspond from labels with smallest to largest minima
                 	for (i = 0; i < length; i++) {
                 		if (labelBuffer[i] > 0) {
-                		    labelBuffer[i] = orderedLabel[labelBuffer[i]];
+                		    labelBuffer[i] = orderedLabel[labelBuffer[i]-1];
                 		}
                 	}
                 	numMerges = 1;
@@ -477,16 +477,17 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	            	        	        	smallestLabel = labelBuffer[neighborBins[i][j]];
     	            	        	        }	
     	        	        	    	} // for (j = 0; j < neighborBins[i].length; j++)
+    	        	        	    	if (smallestLabel == Integer.MAX_VALUE) {
+    	        	        	    		labelBuffer[i] = listLabel;
+    	        	        	    	}
     	        	        	    } // if (hasListLabelNeighbor)
     	        	        	} // else if (labelBuffer[i] == WSHED)
     	        	        } // for (i = 0; i < length; i++)
-    	        	        //System.out.println("listIndex = " + listIndex + " indexValueList.size() = " + indexValueList.size() +
-    	        	        		//" smallestLabel = " + smallestLabel);
     	        	        if (smallestLabel < Integer.MAX_VALUE) {
     	        	        	smallestBorderValue = Double.MAX_VALUE;
     	        	        	for (i = 0; i < length; i++) {
     	        	        	    if (labelBuffer[i] == listLabel) {
-    	        	        	        hasSmallestLabelNeighbor = false;
+    	        	        	    	hasSmallestLabelNeighbor = false;
     	        	        	        for (j = 0; j < neighborBins[i].length && (!hasSmallestLabelNeighbor); j++) {
     	        	        	        	if (labelBuffer[neighborBins[i][j]] == smallestLabel) {
     	        	        	        		hasSmallestLabelNeighbor = true;
@@ -526,8 +527,8 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	        	        	    } // else if (labelBuffer[i] == WSHED)
     	        	        	} //for (i = 0; i < length; i++)
     	        	        	if (smallestBorderValue < Double.MAX_VALUE) {
-    		        	        	if ((smallestBorderValue - labelMin[listLabel] < threshold) && 
-    		        	        			(smallestBorderValue - labelMin[smallestLabel] < threshold)) {
+    		        	        	if ((smallestBorderValue - labelMin[listLabel-1] < threshold) && 
+    		        	        			(smallestBorderValue - labelMin[smallestLabel-1] < threshold)) {
     		        	        		for (i = 0; i < length; i++) {
     		        	        			if (labelBuffer[i] == WSHED) {
     		            	        	    	hasListLabelNeighbor = false;
@@ -541,21 +542,20 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     		            	        	    	    }
     		            	        	    	} // for (j = 0; j < neighborBins[i].length && (!(hasListLabelNeighbor && hasSmallestLabelNeighbor)); j++)
     		            	        	    	if (hasListLabelNeighbor && hasSmallestLabelNeighbor) {
-    		            	        	    		labelBuffer[i] = listLabel;
+    		            	        	    		labelBuffer[i] = Math.min(listLabel, smallestLabel);
     		            	        	    	}
     		            	        	    } // if (labelBuffer[i] == WSHED)
     		        	        		} // for (i = 0; i < length; i++)
     		        	        		for (i = 0; i < length; i++) {
-    		        	        			if (labelBuffer[i] == smallestLabel) {
-    		        	        				labelBuffer[i] = listLabel;
+    		        	        			if ((labelBuffer[i] == smallestLabel) || (labelBuffer[i] == listLabel)) {
+    		        	        				labelBuffer[i] = Math.min(listLabel, smallestLabel);
     		        	        			}
     		        	        		} // for (i = 0; i < length; i++)
     		        	        		removed = false;
-    		        	        		if (labelMin[smallestLabel] < labelMin[listLabel]) {
-    		        	        			labelMin[listLabel] = labelMin[smallestLabel];
-    		        	        		}
+    		        	        		labelMin[Math.min(smallestLabel-1, listLabel-1)] = Math.min(labelMin[listLabel-1], 
+    		        	        				                                                    labelMin[smallestLabel-1]);
     		        	        		for (i = 0; i < indexValueList.size() && (!removed); i++) {
-    		        	        			if (indexValueList.get(i).index == smallestLabel) {
+    		        	        			if (indexValueList.get(i).index == Math.max(smallestLabel, listLabel)) {
     		        	        				indexValueList.remove(i);
     		        	        				removed = true;
     		        	        				if (i > listIndex) {
@@ -564,7 +564,7 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     		        	        				numMerges++;
     		        	        			}
     		        	        		}
-    		        	        	} // if ((smallestBorderValue - labelMin[listLabel] < mergeThreshold) && 
+    		        	        	} // if ((smallestBorderValue - labelMin[listLabel-1] < mergeThreshold) && 
     		        	        	else {
     		        	        		listIndex++;
     		        	        	}
@@ -599,12 +599,12 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                 			}
                 		} // if (labelBuffer[i] == WSHED)
                 	} // for (i = 0; i < length; i++)
-                	for (i = 1; i <= indexValueList.size(); i++) {
-                	    orderedLabel[indexValueList.get(i-1).index] = i;
+                	for (i = 0; i < indexValueList.size(); i++) {
+                	    orderedLabel[indexValueList.get(i).index-1] = i+1;
                 	}
                 	for (i = 0; i < length; i++) {
                 		if (labelBuffer[i] > 0) {
-                		    labelBuffer[i] = orderedLabel[labelBuffer[i]];
+                		    labelBuffer[i] = orderedLabel[labelBuffer[i]-1];
                 		}
                 	}
                 } // if (merge)
@@ -1225,30 +1225,30 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                			maxLabel = labelBuffer[i];
                		}
                	} // for (i = 0; i < length; i++)
-               	labelMin = new double[maxLabel+1];
-               	for (i = 1; i <= maxLabel; i++) {
+               	labelMin = new double[maxLabel];
+               	for (i = 0; i < maxLabel; i++) {
                		labelMin[i] = Double.MAX_VALUE;
                	}
                	for (i = 0; i < length; i++) {
                		if (labelBuffer[i] > 0) {
-               		    if (imgBuffer[i] < labelMin[labelBuffer[i]]) {
-               		    	labelMin[labelBuffer[i]] = imgBuffer[i];
+               		    if (imgBuffer[i] < labelMin[labelBuffer[i]-1]) {
+               		    	labelMin[labelBuffer[i]-1] = imgBuffer[i];
                		    }
                		} // if (labelBuffer[i] > 0)
                	} // for (i = 0; i < length; i++)
                	indexValueList.clear();
-               	for (i = 1; i <= maxLabel; i++) {
-               		indexValueList.add(new indexValueItem(i, labelMin[i]));
+               	for (i = 0; i < maxLabel; i++) {
+               		indexValueList.add(new indexValueItem(i+1, labelMin[i]));
                	}
                	Collections.sort(indexValueList, new indexValueComparator());
-               	orderedLabel = new int[maxLabel+1];
-               	for (i = 1; i <= maxLabel; i++) {
-               	    orderedLabel[indexValueList.get(i-1).index] = i;
-               	    labelMin[i] = indexValueList.get(i-1).value;
+               	orderedLabel = new int[maxLabel];
+               	for (i = 0; i < maxLabel; i++) {
+               	    orderedLabel[indexValueList.get(i).index-1] = i+1;
+               	    labelMin[i] = indexValueList.get(i).value;
                	}
                	indexValueList.clear();
-               	for (i = 1; i <= maxLabel; i++) {
-               		indexValueList.add(new indexValueItem(i, labelMin[i]));
+               	for (i = 0; i < maxLabel; i++) {
+               		indexValueList.add(new indexValueItem(i+1, labelMin[i]));
                	}
                	// (i = 0; i < indexValueList.size(); i++) {
                		//indexValueItem item = indexValueList.get(i);
@@ -1257,7 +1257,7 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                	// Labels 1 to maxLabel will now correspond from labels with smallest to largest minima
                	for (i = 0; i < length; i++) {
                		if (labelBuffer[i] > 0) {
-               		    labelBuffer[i] = orderedLabel[labelBuffer[i]];
+               		    labelBuffer[i] = orderedLabel[labelBuffer[i]-1];
                		}
                	}
                	numMerges = 1;
@@ -1290,16 +1290,17 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
    	            	        	        	smallestLabel = labelBuffer[neighborBins[i][j]];
    	            	        	        }	
    	        	        	    	} // for (j = 0; j < neighborBins[i].length; j++)
+   	        	        	    	if (smallestLabel == Integer.MAX_VALUE) {
+   	        	        	    		labelBuffer[i] = listLabel;
+   	        	        	    	}
    	        	        	    } // if (hasListLabelNeighbor)
    	        	        	} // else if (labelBuffer[i] == WSHED)
    	        	        } // for (i = 0; i < length; i++)
-   	        	        //System.out.println("listIndex = " + listIndex + " indexValueList.size() = " + indexValueList.size() +
-   	        	        		//" smallestLabel = " + smallestLabel);
    	        	        if (smallestLabel < Integer.MAX_VALUE) {
    	        	        	smallestBorderValue = Double.MAX_VALUE;
    	        	        	for (i = 0; i < length; i++) {
    	        	        	    if (labelBuffer[i] == listLabel) {
-   	        	        	        hasSmallestLabelNeighbor = false;
+   	        	        	    	hasSmallestLabelNeighbor = false;
    	        	        	        for (j = 0; j < neighborBins[i].length && (!hasSmallestLabelNeighbor); j++) {
    	        	        	        	if (labelBuffer[neighborBins[i][j]] == smallestLabel) {
    	        	        	        		hasSmallestLabelNeighbor = true;
@@ -1339,8 +1340,8 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
    	        	        	    } // else if (labelBuffer[i] == WSHED)
    	        	        	} //for (i = 0; i < length; i++)
    	        	        	if (smallestBorderValue < Double.MAX_VALUE) {
-   		        	        	if ((smallestBorderValue - labelMin[listLabel] < threshold) && 
-   		        	        			(smallestBorderValue - labelMin[smallestLabel] < threshold)) {
+   		        	        	if ((smallestBorderValue - labelMin[listLabel-1] < threshold) && 
+   		        	        			(smallestBorderValue - labelMin[smallestLabel-1] < threshold)) {
    		        	        		for (i = 0; i < length; i++) {
    		        	        			if (labelBuffer[i] == WSHED) {
    		            	        	    	hasListLabelNeighbor = false;
@@ -1354,21 +1355,20 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
    		            	        	    	    }
    		            	        	    	} // for (j = 0; j < neighborBins[i].length && (!(hasListLabelNeighbor && hasSmallestLabelNeighbor)); j++)
    		            	        	    	if (hasListLabelNeighbor && hasSmallestLabelNeighbor) {
-   		            	        	    		labelBuffer[i] = listLabel;
+   		            	        	    		labelBuffer[i] = Math.min(listLabel, smallestLabel);
    		            	        	    	}
    		            	        	    } // if (labelBuffer[i] == WSHED)
    		        	        		} // for (i = 0; i < length; i++)
    		        	        		for (i = 0; i < length; i++) {
-   		        	        			if (labelBuffer[i] == smallestLabel) {
-   		        	        				labelBuffer[i] = listLabel;
+   		        	        			if ((labelBuffer[i] == smallestLabel) || (labelBuffer[i] == listLabel)) {
+   		        	        				labelBuffer[i] = Math.min(listLabel, smallestLabel);
    		        	        			}
    		        	        		} // for (i = 0; i < length; i++)
    		        	        		removed = false;
-   		        	        		if (labelMin[smallestLabel] < labelMin[listLabel]) {
-   		        	        			labelMin[listLabel] = labelMin[smallestLabel];
-   		        	        		}
+   		        	        		labelMin[Math.min(smallestLabel-1, listLabel-1)] = Math.min(labelMin[listLabel-1], 
+   		        	        				                                                    labelMin[smallestLabel-1]);
    		        	        		for (i = 0; i < indexValueList.size() && (!removed); i++) {
-   		        	        			if (indexValueList.get(i).index == smallestLabel) {
+   		        	        			if (indexValueList.get(i).index == Math.max(smallestLabel, listLabel)) {
    		        	        				indexValueList.remove(i);
    		        	        				removed = true;
    		        	        				if (i > listIndex) {
@@ -1377,7 +1377,7 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
    		        	        				numMerges++;
    		        	        			}
    		        	        		}
-   		        	        	} // if ((smallestBorderValue - labelMin[listLabel] < mergeThreshold) && 
+   		        	        	} // if ((smallestBorderValue - labelMin[listLabel-1] < mergeThreshold) && 
    		        	        	else {
    		        	        		listIndex++;
    		        	        	}
@@ -1412,12 +1412,12 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
                			}
                		} // if (labelBuffer[i] == WSHED)
                	} // for (i = 0; i < length; i++)
-               	for (i = 1; i <= indexValueList.size(); i++) {
-               	    orderedLabel[indexValueList.get(i-1).index] = i;
+               	for (i = 0; i < indexValueList.size(); i++) {
+               	    orderedLabel[indexValueList.get(i).index-1] = i+1;
                	}
                	for (i = 0; i < length; i++) {
                		if (labelBuffer[i] > 0) {
-               		    labelBuffer[i] = orderedLabel[labelBuffer[i]];
+               		    labelBuffer[i] = orderedLabel[labelBuffer[i]-1];
                		}
                	}
                } // if (merge)
