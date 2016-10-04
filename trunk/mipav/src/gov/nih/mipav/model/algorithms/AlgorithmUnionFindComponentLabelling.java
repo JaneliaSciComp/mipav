@@ -433,7 +433,7 @@ public class AlgorithmUnionFindComponentLabelling extends AlgorithmBase {
 		        	    	   z = r / sliceSize;
 		        	    	   x2 = r2 % xDim;
 		        	    	   y2 = (r2 % sliceSize) / xDim;
-		        	    	   z2 = r2 % sliceSize;
+		        	    	   z2 = r2 / sliceSize;
 		        	    	   if ((x2 < x) || ((x2 == x) && (y2 < y)) || ((x2 == x) && (y2 == y) && (z2 < z))) {
 		        	    		   r = r2;
 		        	    	   }
