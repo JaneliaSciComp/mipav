@@ -464,23 +464,39 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	        	        	    } // for (j = 0; j < neighborBins[i].length; j++)
     	        	        	} // if (labelBuffer[i] == listLabel)
     	        	        	else if (labelBuffer[i] == WSHED) {
-    	        	        	    hasListLabelNeighbor = false;
-    	        	        	    for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++) {
-    	        	        	    	if (labelBuffer[neighborBins[i][j]] == listLabel) {
-    	        	        	    		hasListLabelNeighbor = true;
-    	        	        	    	}
-    	        	        	    } // for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++)
-    	        	        	    if (hasListLabelNeighbor) {
-    	        	        	    	for (j = 0; j < neighborBins[i].length; j++) {
-    	        	        	    		if ((labelBuffer[neighborBins[i][j]] != listLabel) && (labelBuffer[neighborBins[i][j]] > 0) &&
-    	            	        	        		(labelBuffer[neighborBins[i][j]] < smallestLabel)) {
-    	            	        	        	smallestLabel = labelBuffer[neighborBins[i][j]];
-    	            	        	        }	
-    	        	        	    	} // for (j = 0; j < neighborBins[i].length; j++)
-    	        	        	    	if (smallestLabel == Integer.MAX_VALUE) {
-    	        	        	    		labelBuffer[i] = listLabel;
-    	        	        	    	}
-    	        	        	    } // if (hasListLabelNeighbor)
+    	        	        		// Remove watershed with only 1 type of neighbor
+    	        	        		firstFound = false;
+    	                			secondFound = false;
+    	                			firstNeighbor = -1;
+    	                			for (j = 0; j < neighborBins[i].length && (!secondFound); j++) {
+    	                			    if ((!firstFound) && (labelBuffer[neighborBins[i][j]] > 0)) {
+    	                			    	firstFound = true;
+    	                			    	firstNeighbor = labelBuffer[neighborBins[i][j]];
+    	                			    }
+    	                			    else if (firstFound && (labelBuffer[neighborBins[i][j]] > 0) &&
+    	                			    		labelBuffer[neighborBins[i][j]] != firstNeighbor) {
+    	                			        secondFound = true;	
+    	                			    }
+    	                			} // for (j = 0; j < neighborBins[i].length && (!secondFound); j++)
+    	                			if ((!secondFound) && (firstNeighbor > 0)) {
+    	                				labelBuffer[i] = firstNeighbor;
+    	                			}
+    	                			else {
+	    	        	        	    hasListLabelNeighbor = false;
+	    	        	        	    for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++) {
+	    	        	        	    	if (labelBuffer[neighborBins[i][j]] == listLabel) {
+	    	        	        	    		hasListLabelNeighbor = true;
+	    	        	        	    	}
+	    	        	        	    } // for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++)
+	    	        	        	    if (hasListLabelNeighbor) {
+	    	        	        	    	for (j = 0; j < neighborBins[i].length; j++) {
+	    	        	        	    		if ((labelBuffer[neighborBins[i][j]] != listLabel) && (labelBuffer[neighborBins[i][j]] > 0) &&
+	    	            	        	        		(labelBuffer[neighborBins[i][j]] < smallestLabel)) {
+	    	            	        	        	smallestLabel = labelBuffer[neighborBins[i][j]];
+	    	            	        	        }	
+	    	        	        	    	} // for (j = 0; j < neighborBins[i].length; j++)
+	    	        	        	    } // if (hasListLabelNeighbor)
+    	                			}
     	        	        	} // else if (labelBuffer[i] == WSHED)
     	        	        } // for (i = 0; i < length; i++)
     	        	        if (smallestLabel < Integer.MAX_VALUE) {
@@ -578,27 +594,6 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
     	        	        }
     	        	    } // while (listIndex < indexValueList.size())
                 	} // while (numMerges > 0)
-                	// Remove watershed with only 1 type of neighbor
-                	for (i = 0; i < length; i++) {
-                		if (labelBuffer[i] == WSHED) {
-                			firstFound = false;
-                			secondFound = false;
-                			firstNeighbor = -1;
-                			for (j = 0; j < neighborBins[i].length && (!secondFound); j++) {
-                			    if ((!firstFound) && (labelBuffer[neighborBins[i][j]] > 0)) {
-                			    	firstFound = true;
-                			    	firstNeighbor = labelBuffer[neighborBins[i][j]];
-                			    }
-                			    else if (firstFound && (labelBuffer[neighborBins[i][j]] > 0) &&
-                			    		labelBuffer[neighborBins[i][j]] != firstNeighbor) {
-                			        secondFound = true;	
-                			    }
-                			} // for (j = 0; j < neighborBins[i].length && (!secondFound); j++)
-                			if ((!secondFound) && (firstNeighbor > 0)) {
-                				labelBuffer[i] = firstNeighbor;
-                			}
-                		} // if (labelBuffer[i] == WSHED)
-                	} // for (i = 0; i < length; i++)
                 	for (i = 0; i < indexValueList.size(); i++) {
                 	    orderedLabel[indexValueList.get(i).index-1] = i+1;
                 	}
@@ -1277,23 +1272,39 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
    	        	        	    } // for (j = 0; j < neighborBins[i].length; j++)
    	        	        	} // if (labelBuffer[i] == listLabel)
    	        	        	else if (labelBuffer[i] == WSHED) {
-   	        	        	    hasListLabelNeighbor = false;
-   	        	        	    for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++) {
-   	        	        	    	if (labelBuffer[neighborBins[i][j]] == listLabel) {
-   	        	        	    		hasListLabelNeighbor = true;
-   	        	        	    	}
-   	        	        	    } // for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++)
-   	        	        	    if (hasListLabelNeighbor) {
-   	        	        	    	for (j = 0; j < neighborBins[i].length; j++) {
-   	        	        	    		if ((labelBuffer[neighborBins[i][j]] != listLabel) && (labelBuffer[neighborBins[i][j]] > 0) &&
-   	            	        	        		(labelBuffer[neighborBins[i][j]] < smallestLabel)) {
-   	            	        	        	smallestLabel = labelBuffer[neighborBins[i][j]];
-   	            	        	        }	
-   	        	        	    	} // for (j = 0; j < neighborBins[i].length; j++)
-   	        	        	    	if (smallestLabel == Integer.MAX_VALUE) {
-   	        	        	    		labelBuffer[i] = listLabel;
-   	        	        	    	}
-   	        	        	    } // if (hasListLabelNeighbor)
+   	        	        		// Remove watershed with only 1 type of neighbor
+   	        	        		firstFound = false;
+   	                			secondFound = false;
+   	                			firstNeighbor = -1;
+   	                			for (j = 0; j < neighborBins[i].length && (!secondFound); j++) {
+   	                			    if ((!firstFound) && (labelBuffer[neighborBins[i][j]] > 0)) {
+   	                			    	firstFound = true;
+   	                			    	firstNeighbor = labelBuffer[neighborBins[i][j]];
+   	                			    }
+   	                			    else if (firstFound && (labelBuffer[neighborBins[i][j]] > 0) &&
+   	                			    		labelBuffer[neighborBins[i][j]] != firstNeighbor) {
+   	                			        secondFound = true;	
+   	                			    }
+   	                			} // for (j = 0; j < neighborBins[i].length && (!secondFound); j++)
+   	                			if ((!secondFound) && (firstNeighbor > 0)) {
+   	                				labelBuffer[i] = firstNeighbor;
+   	                			}
+   	                			else {
+    	        	        	    hasListLabelNeighbor = false;
+    	        	        	    for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++) {
+    	        	        	    	if (labelBuffer[neighborBins[i][j]] == listLabel) {
+    	        	        	    		hasListLabelNeighbor = true;
+    	        	        	    	}
+    	        	        	    } // for (j = 0; j < neighborBins[i].length && (!hasListLabelNeighbor); j++)
+    	        	        	    if (hasListLabelNeighbor) {
+    	        	        	    	for (j = 0; j < neighborBins[i].length; j++) {
+    	        	        	    		if ((labelBuffer[neighborBins[i][j]] != listLabel) && (labelBuffer[neighborBins[i][j]] > 0) &&
+    	            	        	        		(labelBuffer[neighborBins[i][j]] < smallestLabel)) {
+    	            	        	        	smallestLabel = labelBuffer[neighborBins[i][j]];
+    	            	        	        }	
+    	        	        	    	} // for (j = 0; j < neighborBins[i].length; j++)
+    	        	        	    } // if (hasListLabelNeighbor)
+   	                			}
    	        	        	} // else if (labelBuffer[i] == WSHED)
    	        	        } // for (i = 0; i < length; i++)
    	        	        if (smallestLabel < Integer.MAX_VALUE) {
@@ -1391,27 +1402,6 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
    	        	        }
    	        	    } // while (listIndex < indexValueList.size())
                	} // while (numMerges > 0)
-               	// Remove watershed with only 1 type of neighbor
-               	for (i = 0; i < length; i++) {
-               		if (labelBuffer[i] == WSHED) {
-               			firstFound = false;
-               			secondFound = false;
-               			firstNeighbor = -1;
-               			for (j = 0; j < neighborBins[i].length && (!secondFound); j++) {
-               			    if ((!firstFound) && (labelBuffer[neighborBins[i][j]] > 0)) {
-               			    	firstFound = true;
-               			    	firstNeighbor = labelBuffer[neighborBins[i][j]];
-               			    }
-               			    else if (firstFound && (labelBuffer[neighborBins[i][j]] > 0) &&
-               			    		labelBuffer[neighborBins[i][j]] != firstNeighbor) {
-               			        secondFound = true;	
-               			    }
-               			} // for (j = 0; j < neighborBins[i].length && (!secondFound); j++)
-               			if ((!secondFound) && (firstNeighbor > 0)) {
-               				labelBuffer[i] = firstNeighbor;
-               			}
-               		} // if (labelBuffer[i] == WSHED)
-               	} // for (i = 0; i < length; i++)
                	for (i = 0; i < indexValueList.size(); i++) {
                	    orderedLabel[indexValueList.get(i).index-1] = i+1;
                	}
