@@ -17,7 +17,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  *
- * @version  0.1 October 3, 2016
+ * @version  0.1 October 5, 2016
  * @author   William Gandler
  * @see      AlgorithmUnionFindWatershed
  */
@@ -62,6 +62,16 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
     private JCheckBox binCheckBox;
     
     private int binNumber;
+    
+    private JCheckBox mergeCheckBox;
+    
+    private boolean merge;
+    
+    private JLabel labelThreshold;
+    
+    private JTextField textThreshold;
+    
+    private double mergeThreshold;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -103,6 +113,9 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
         } else if (source.equals(binCheckBox)) {
         	labelBins.setEnabled(binCheckBox.isSelected());
         	textBins.setEnabled(binCheckBox.isSelected());
+        } else if (source.equals(mergeCheckBox)) {
+        	labelThreshold.setEnabled(mergeCheckBox.isSelected());
+        	textThreshold.setEnabled(mergeCheckBox.isSelected());
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -181,6 +194,8 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
         str += numNeighbor;
         str += limitBins;
         str += binNumber;
+        str += merge;
+        str += mergeThreshold;
 
         return str;
     }
@@ -226,6 +241,19 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
                 }
                 binNumber = MipavUtil.getInt(st);
                 textBins.setText(String.valueOf(binNumber));
+                merge = MipavUtil.getBoolean(st);
+                if (merge) {
+                	mergeCheckBox.setSelected(true);
+                	labelThreshold.setEnabled(true);
+                	textThreshold.setEnabled(true);
+                }
+                else {
+                	mergeCheckBox.setSelected(false);
+                	labelThreshold.setEnabled(false);
+                	textThreshold.setEnabled(false);	
+                }
+                mergeThreshold = MipavUtil.getDouble(st);
+                textThreshold.setText(String.valueOf(mergeThreshold));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -260,7 +288,21 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
     	this.binNumber = binNumber;
     }
     
+    /**
+     * 
+     * @param merge
+     */
+    public void setMerge(boolean merge) {
+    	this.merge = merge;
+    }
     
+    /**
+     * 
+     * @param mergeThreshold
+     */
+    public void setMergeThreshold(double mergeThreshold) {
+    	this.mergeThreshold = mergeThreshold;
+    }
 
     /**
      * Once all the necessary variables are set, call the UnionFind Watershed algorithm.
@@ -272,7 +314,8 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
                resultImage = new ModelImage(ModelStorageBase.INTEGER, image.getExtents(), 
                         		image.getImageName() + "_watershed");
            
-           watershedAlgo = new AlgorithmUnionFindWatershed(resultImage, image, numNeighbor, limitBins, binNumber);
+           watershedAlgo = new AlgorithmUnionFindWatershed(resultImage, image, numNeighbor, limitBins, binNumber,
+        		   merge, mergeThreshold);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -329,6 +372,8 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
         setNumNeighbor(scriptParameters.getParams().getInt("num_neighbor"));
         setLimitBins(scriptParameters.getParams().getBoolean("limit_bins"));
         setBinNumber(scriptParameters.getParams().getInt("bin_number"));
+        setMerge(scriptParameters.getParams().getBoolean("merge"));
+        setMergeThreshold(scriptParameters.getParams().getDouble("merge_threshold"));
     }
 
     /**
@@ -341,6 +386,8 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_neighbor", numNeighbor));
         scriptParameters.getParams().put(ParameterFactory.newParameter("limit_bins", limitBins));
         scriptParameters.getParams().put(ParameterFactory.newParameter("bin_number", binNumber));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("merge", merge));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("merge_threshold", mergeThreshold));
     }
 
     
@@ -398,7 +445,7 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
         neighborGroup.add(eightButton);
         gbcScale.gridy++;
         neighborPanel.add(eightButton, gbcScale); 
-        binCheckBox = new JCheckBox("Limit bins per frame");
+        binCheckBox = new JCheckBox("Pre watershed limit bins per frame");
         binCheckBox.setFont(serif12);
         binCheckBox.setForeground(Color.black);
         binCheckBox.setSelected(false);
@@ -418,6 +465,26 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
         textBins.setEnabled(false);
         gbcScale.gridx = 1;
         neighborPanel.add(textBins, gbcScale);
+        mergeCheckBox = new JCheckBox("Post watershed merging of catchment basins");
+        mergeCheckBox.setFont(serif12);
+        mergeCheckBox.setForeground(Color.black);
+        mergeCheckBox.addActionListener(this);
+        gbcScale.gridx = 0;
+        gbcScale.gridy++;
+        neighborPanel.add(mergeCheckBox, gbcScale);
+        labelThreshold = new JLabel("Height of ridge separating 2 basins in fraction max - min ");
+        labelThreshold.setFont(serif12);
+        labelThreshold.setForeground(Color.black);
+        labelThreshold.setEnabled(false);
+        gbcScale.gridy++;
+        neighborPanel.add(labelThreshold, gbcScale);
+        textThreshold = new JTextField(10);
+        textThreshold.setText("0.10");
+        textThreshold.setFont(serif12);
+        textThreshold.setCaretColor(Color.black);
+        textThreshold.setEnabled(false);
+        gbcScale.gridx = 1;
+        neighborPanel.add(textThreshold, gbcScale);
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -452,6 +519,11 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
         if (limitBins) {
         	tmpStr = textBins.getText();
             binNumber = Integer.parseInt(tmpStr);
+        }
+        merge = mergeCheckBox.isSelected();
+        if (merge) {
+        	tmpStr = textThreshold.getText();
+        	mergeThreshold = Double.parseDouble(tmpStr);
         }
 
         return true;
@@ -507,6 +579,8 @@ public class JDialogUnionFindWatershed extends JDialogScriptableBase
             table.put(new ParameterInt("num_neighbor", 4));
             table.put(new ParameterBoolean("limit_bins", false));
             table.put(new ParameterInt("bin_number", 4));
+            table.put(new ParameterBoolean("merge", false));
+            table.put(new ParameterDouble("merge_threshold", 0.10));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
