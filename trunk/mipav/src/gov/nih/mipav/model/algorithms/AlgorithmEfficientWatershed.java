@@ -58,13 +58,13 @@ public class AlgorithmEfficientWatershed extends AlgorithmBase {
 	
 	private int numNeighbor;
 	
-	boolean limitBins;
+	private boolean limitBins;
 	
-	int binNumber;
+	private int binNumber;
 	
-	boolean merge;
+	private boolean merge;
 	
-	double mergeThreshold;
+	private double mergeThreshold;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
