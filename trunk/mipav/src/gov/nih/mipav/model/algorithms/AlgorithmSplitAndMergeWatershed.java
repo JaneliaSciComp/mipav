@@ -51,15 +51,21 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 	
 	boolean createWatershedLines;
 	
+    boolean merge;
+	
+	double mergeThreshold;
+	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
 	public AlgorithmSplitAndMergeWatershed(ModelImage destImage, ModelImage srcImage, int numNeighbor, boolean limitBins,
-			int binNumber, boolean createWatershedLines) {
+			int binNumber, boolean createWatershedLines, boolean merge, double mergeThreshold) {
 		super(destImage, srcImage);
 		this.numNeighbor = numNeighbor;
 		this.limitBins = limitBins;
 		this.binNumber = binNumber;
 		this.createWatershedLines = createWatershedLines;
+		this.merge = merge;
+		this.mergeThreshold = mergeThreshold;
 	}
 	
 	public void runAlgorithm() {
@@ -95,6 +101,24 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
     	boolean testfifo = false;
     	AlgorithmLowerCompletion lcAlgo;
     	ModelImage lcImage;
+    	int maxLabel;
+    	double labelMin[];
+    	int numMerges;
+    	int listIndex = 0;
+    	int listLabel;
+    	int orderedLabel[];
+    	int smallestLabel;
+    	boolean hasListLabelNeighbor;
+    	double smallestBorderValue;
+    	boolean hasSmallestLabelNeighbor;
+    	boolean removed;
+    	boolean firstFound;
+    	int firstNeighbor;
+    	boolean secondFound;
+    	ArrayList <indexValueItem> indexValueList = new ArrayList<indexValueItem>();
+    	double threshold;
+    	double minValue;
+    	double maxValue;
     	
     	if (srcImage == null) {
             displayError("Source Image is null");
@@ -218,6 +242,18 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 
                 return;
             }
+            
+            minValue = Double.MAX_VALUE;
+        	maxValue = -Double.MAX_VALUE;
+        	for (i = 0; i < length; i++) {
+        	    if (imgBuffer[i] < minValue) {
+        	    	minValue = imgBuffer[i];
+        	    }
+        	    if (imgBuffer[i] > maxValue) {
+        	    	maxValue = imgBuffer[i];
+        	    }
+        	}
+        	threshold = mergeThreshold * (maxValue - minValue);
             
             for (i = 0; i < length; i++) {
             	labelBuffer[i] = INIT;
@@ -439,7 +475,205 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 	            } // while (!pfifo.isEmpty())
             } // else Meyer2
             
-            
+            if (merge) {
+            	// Put the catchment basins in a list going from smallest minimum to largest minimum
+            	maxLabel = 0;
+            	for (i = 0; i < length; i++) {
+            		if (labelBuffer[i] > maxLabel) {
+            			maxLabel = labelBuffer[i];
+            		}
+            	} // for (i = 0; i < length; i++)
+            	labelMin = new double[maxLabel];
+            	for (i = 0; i < maxLabel; i++) {
+            		labelMin[i] = Double.MAX_VALUE;
+            	}
+            	for (i = 0; i < length; i++) {
+            		if (labelBuffer[i] > 0) {
+            		    if (imgBuffer[i] < labelMin[labelBuffer[i]-1]) {
+            		    	labelMin[labelBuffer[i]-1] = imgBuffer[i];
+            		    }
+            		} // if (labelBuffer[i] > 0)
+            	} // for (i = 0; i < length; i++)
+            	indexValueList.clear();
+            	for (i = 0; i < maxLabel; i++) {
+            		indexValueList.add(new indexValueItem(i+1, labelMin[i]));
+            	}
+            	Collections.sort(indexValueList, new indexValueComparator());
+            	orderedLabel = new int[maxLabel];
+            	for (i = 0; i < maxLabel; i++) {
+            	    orderedLabel[indexValueList.get(i).index-1] = i+1;
+            	    labelMin[i] = indexValueList.get(i).value;
+            	}
+            	indexValueList.clear();
+            	for (i = 0; i < maxLabel; i++) {
+            		indexValueList.add(new indexValueItem(i+1, labelMin[i]));
+            	}
+            	// (i = 0; i < indexValueList.size(); i++) {
+            		//indexValueItem item = indexValueList.get(i);
+            		//System.out.println("index = " + item.index + " value = " + item.value);
+            	//}
+            	// Labels 1 to maxLabel will now correspond from labels with smallest to largest minima
+            	for (i = 0; i < length; i++) {
+            		if (labelBuffer[i] > 0) {
+            		    labelBuffer[i] = orderedLabel[labelBuffer[i]-1];
+            		}
+            	}
+            	numMerges = 1;
+            	while (numMerges > 0) {
+	        	    numMerges = 0;
+	        	    listIndex = 0;
+	        	    while (listIndex < indexValueList.size()) {
+	        	        listLabel = indexValueList.get(listIndex).index;
+	        	        smallestLabel = Integer.MAX_VALUE;
+	        	        for (i = 0; i < length; i++) {
+	        	        	if (labelBuffer[i] == listLabel) {
+	        	        	    for (j = 0; j < allNeighbors[i].length; j++) {
+	        	        	        if ((labelBuffer[allNeighbors[i][j]] != listLabel) && (labelBuffer[allNeighbors[i][j]] > 0) &&
+	        	        	        		(labelBuffer[allNeighbors[i][j]] < smallestLabel)) {
+	        	        	        	smallestLabel = labelBuffer[allNeighbors[i][j]];
+	        	        	        }
+	        	        	    } // for (j = 0; j < allNeighbors[i].length; j++)
+	        	        	} // if (labelBuffer[i] == listLabel)
+	        	        	else if (labelBuffer[i] == WSHED) {
+	        	        		// Remove watershed with only 1 type of neighbor
+	        	        		firstFound = false;
+	                			secondFound = false;
+	                			firstNeighbor = -1;
+	                			for (j = 0; j < allNeighbors[i].length && (!secondFound); j++) {
+	                			    if ((!firstFound) && (labelBuffer[allNeighbors[i][j]] > 0)) {
+	                			    	firstFound = true;
+	                			    	firstNeighbor = labelBuffer[allNeighbors[i][j]];
+	                			    }
+	                			    else if (firstFound && (labelBuffer[allNeighbors[i][j]] > 0) &&
+	                			    		labelBuffer[allNeighbors[i][j]] != firstNeighbor) {
+	                			        secondFound = true;	
+	                			    }
+	                			} // for (j = 0; j < allNeighbors[i].length && (!secondFound); j++)
+	                			if ((!secondFound) && (firstNeighbor > 0)) {
+	                				labelBuffer[i] = firstNeighbor;
+	                			}
+	                			else {
+    	        	        	    hasListLabelNeighbor = false;
+    	        	        	    for (j = 0; j < allNeighbors[i].length && (!hasListLabelNeighbor); j++) {
+    	        	        	    	if (labelBuffer[allNeighbors[i][j]] == listLabel) {
+    	        	        	    		hasListLabelNeighbor = true;
+    	        	        	    	}
+    	        	        	    } // for (j = 0; j < allNeighbors[i].length && (!hasListLabelNeighbor); j++)
+    	        	        	    if (hasListLabelNeighbor) {
+    	        	        	    	for (j = 0; j < allNeighbors[i].length; j++) {
+    	        	        	    		if ((labelBuffer[allNeighbors[i][j]] != listLabel) && (labelBuffer[allNeighbors[i][j]] > 0) &&
+    	            	        	        		(labelBuffer[allNeighbors[i][j]] < smallestLabel)) {
+    	            	        	        	smallestLabel = labelBuffer[allNeighbors[i][j]];
+    	            	        	        }	
+    	        	        	    	} // for (j = 0; j < allNeighbors[i].length; j++)
+    	        	        	    } // if (hasListLabelNeighbor)
+	                			}
+	        	        	} // else if (labelBuffer[i] == WSHED)
+	        	        } // for (i = 0; i < length; i++)
+	        	        if (smallestLabel < Integer.MAX_VALUE) {
+	        	        	smallestBorderValue = Double.MAX_VALUE;
+	        	        	for (i = 0; i < length; i++) {
+	        	        	    if (labelBuffer[i] == listLabel) {
+	        	        	    	hasSmallestLabelNeighbor = false;
+	        	        	        for (j = 0; j < allNeighbors[i].length && (!hasSmallestLabelNeighbor); j++) {
+	        	        	        	if (labelBuffer[allNeighbors[i][j]] == smallestLabel) {
+	        	        	        		hasSmallestLabelNeighbor = true;
+	        	        	        		if (imgBuffer[i] < smallestBorderValue) {
+	        	        	        			smallestBorderValue = imgBuffer[i];
+	        	        	        		}
+	        	        	        	}
+	        	        	        } // for (j = 0; j < allNeighbors[i].length && (!hasSmallestLabelNeighbor); j++)
+	        	        	    } // if (labelBuffer[i] == listLabel)
+	        	        	    else if (labelBuffer[i] == smallestLabel) {
+	        	        	    	hasListLabelNeighbor = false;
+	        	        	        for (j = 0; j < allNeighbors[i].length && (!hasListLabelNeighbor); j++) {
+	        	        	        	if (labelBuffer[allNeighbors[i][j]] == listLabel) {
+	        	        	        		hasListLabelNeighbor = true;
+	        	        	        		if (imgBuffer[i] < smallestBorderValue) {
+	        	        	        			smallestBorderValue = imgBuffer[i];
+	        	        	        		}
+	        	        	        	}
+	        	        	        } // for (j = 0; j < allNeighbors[i].length && (!hasListLabelNeighbor); j++)	
+	        	        	    } // else if (labelBuffer[i] == smallestLabel)
+	        	        	    else if (labelBuffer[i] == WSHED) {
+	        	        	    	hasListLabelNeighbor = false;
+	        	        	    	hasSmallestLabelNeighbor = false;
+	        	        	    	for (j = 0; j < allNeighbors[i].length && (!(hasListLabelNeighbor && hasSmallestLabelNeighbor)); j++) {
+	        	        	    	    if (labelBuffer[allNeighbors[i][j]] == listLabel) {
+	        	        	    	    	hasListLabelNeighbor = true;
+	        	        	    	    }
+	        	        	    	    else if (labelBuffer[allNeighbors[i][j]] == smallestLabel) {
+	        	        	    	    	hasSmallestLabelNeighbor = true;
+	        	        	    	    }
+	        	        	    	} // for (j = 0; j < allNeighbors[i].length && (!(hasListLabelNeighbor && hasSmallestLabelNeighbor)); j++)
+	        	        	    	if (hasListLabelNeighbor && hasSmallestLabelNeighbor) {
+	        	        	    		if (imgBuffer[i] < smallestBorderValue) {
+	        	        	    			smallestBorderValue = imgBuffer[i];
+	        	        	    		}
+	        	        	    	}
+	        	        	    } // else if (labelBuffer[i] == WSHED)
+	        	        	} //for (i = 0; i < length; i++)
+	        	        	if (smallestBorderValue < Double.MAX_VALUE) {
+		        	        	if ((smallestBorderValue - labelMin[listLabel-1] < threshold) && 
+		        	        			(smallestBorderValue - labelMin[smallestLabel-1] < threshold)) {
+		        	        		for (i = 0; i < length; i++) {
+		        	        			if (labelBuffer[i] == WSHED) {
+		            	        	    	hasListLabelNeighbor = false;
+		            	        	    	hasSmallestLabelNeighbor = false;
+		            	        	    	for (j = 0; j < allNeighbors[i].length && (!(hasListLabelNeighbor && hasSmallestLabelNeighbor)); j++) {
+		            	        	    	    if (labelBuffer[allNeighbors[i][j]] == listLabel) {
+		            	        	    	    	hasListLabelNeighbor = true;
+		            	        	    	    }
+		            	        	    	    else if (labelBuffer[allNeighbors[i][j]] == smallestLabel) {
+		            	        	    	    	hasSmallestLabelNeighbor = true;
+		            	        	    	    }
+		            	        	    	} // for (j = 0; j < allNeighbors[i].length && (!(hasListLabelNeighbor && hasSmallestLabelNeighbor)); j++)
+		            	        	    	if (hasListLabelNeighbor && hasSmallestLabelNeighbor) {
+		            	        	    		labelBuffer[i] = Math.min(listLabel, smallestLabel);
+		            	        	    	}
+		            	        	    } // if (labelBuffer[i] == WSHED)
+		        	        		} // for (i = 0; i < length; i++)
+		        	        		for (i = 0; i < length; i++) {
+		        	        			if ((labelBuffer[i] == smallestLabel) || (labelBuffer[i] == listLabel)) {
+		        	        				labelBuffer[i] = Math.min(listLabel, smallestLabel);
+		        	        			}
+		        	        		} // for (i = 0; i < length; i++)
+		        	        		removed = false;
+		        	        		labelMin[Math.min(smallestLabel-1, listLabel-1)] = Math.min(labelMin[listLabel-1], 
+		        	        				                                                    labelMin[smallestLabel-1]);
+		        	        		for (i = 0; i < indexValueList.size() && (!removed); i++) {
+		        	        			if (indexValueList.get(i).index == Math.max(smallestLabel, listLabel)) {
+		        	        				indexValueList.remove(i);
+		        	        				removed = true;
+		        	        				if (i > listIndex) {
+		        	        					listIndex++;
+		        	        				}
+		        	        				numMerges++;
+		        	        			}
+		        	        		}
+		        	        	} // if ((smallestBorderValue - labelMin[listLabel-1] < mergeThreshold) && 
+		        	        	else {
+		        	        		listIndex++;
+		        	        	}
+	        	        	} // if (smallestBorderValue < Double.MAX_VALUE) {
+	        	        	else {
+	        	        		listIndex++;
+	        	        	}
+	        	        } // if (smallestLabel < Integer.MAX_VALUE)
+	        	        else {
+	        	        	listIndex++;
+	        	        }
+	        	    } // while (listIndex < indexValueList.size())
+            	} // while (numMerges > 0)
+            	for (i = 0; i < indexValueList.size(); i++) {
+            	    orderedLabel[indexValueList.get(i).index-1] = i+1;
+            	}
+            	for (i = 0; i < length; i++) {
+            		if (labelBuffer[i] > 0) {
+            		    labelBuffer[i] = orderedLabel[labelBuffer[i]-1];
+            		}
+            	}
+            } // if (merge)
             try {
 			    destImage.importData((z + t*zDim)*length, labelBuffer, false);
 			}
