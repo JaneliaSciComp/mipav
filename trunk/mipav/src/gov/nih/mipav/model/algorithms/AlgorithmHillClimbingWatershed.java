@@ -30,9 +30,9 @@ public class AlgorithmHillClimbingWatershed extends AlgorithmBase {
 	
     private int binNumber;
     
-    boolean merge;
+    private boolean merge;
 	
-	double mergeThreshold;
+	private double mergeThreshold;
     	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
