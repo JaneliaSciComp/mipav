@@ -45,15 +45,15 @@ public class AlgorithmSplitAndMergeWatershed extends AlgorithmBase {
 	
 	private int numNeighbor;
 	
-	boolean limitBins;
+	private boolean limitBins;
 	
-	int binNumber;
+	private int binNumber;
 	
-	boolean createWatershedLines;
+	private boolean createWatershedLines;
 	
-    boolean merge;
+    private boolean merge;
 	
-	double mergeThreshold;
+	private double mergeThreshold;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
