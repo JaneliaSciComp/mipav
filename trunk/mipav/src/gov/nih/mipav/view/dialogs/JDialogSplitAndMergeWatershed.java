@@ -467,7 +467,7 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
         gbcScale.gridy++;
         
         neighborPanel.add(eightButton, gbcScale); 
-        binCheckBox = new JCheckBox("Limit bins per frame");
+        binCheckBox = new JCheckBox("Pre watershed limit bins per frame");
         binCheckBox.setFont(serif12);
         binCheckBox.setForeground(Color.black);
         binCheckBox.setSelected(false);
