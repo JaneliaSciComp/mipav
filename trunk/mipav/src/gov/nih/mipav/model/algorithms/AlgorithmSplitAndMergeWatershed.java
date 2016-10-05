@@ -15,6 +15,9 @@ import java.util.*;
  * Gabbouj.
  * 2.) The Watershed Transform: Definitions, Algorithms, and Parallelization Strategies by 
  * Jos B.T.M. Roerdink and Arnold Meijster, Fundamentals Informaticae 41 (2001), pp. 187-228.
+ * 3.) Automated Sulcal Segmentation Using Watersheds on the Cortical Surface by Maryam E. Rettmann,
+ * Xiao Han, Chenyang Xu, and Jerry L. Prince, NeuroImage 15, 2002, Section Merging of 
+ * Catchment Basins, p.338.
  * 
  * Reference 2 makes the following criticism about this algorithm:
  *  'Isolated' regions.  When computing the watershed transform, regions in the image may arise
