@@ -1661,7 +1661,6 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Shortest Path Watershed", false);
 			menuBuilder.setMenuItemEnabled("Union Find Component Labelling", false);
 			menuBuilder.setMenuItemEnabled("Lower completion", false);
-			menuBuilder.setMenuItemEnabled("Split and Merge Watershed", false);
 			menuBuilder.setMenuItemEnabled("VOI landmark", false);
 			menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
 			menuBuilder.setMenuItemEnabled("Correct image spacing", false);
