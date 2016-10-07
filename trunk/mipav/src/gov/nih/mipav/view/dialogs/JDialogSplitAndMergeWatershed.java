@@ -17,7 +17,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  *
- * @version  0.1 July 14, 2016
+ * @version  0.1 Ocotober 7, 2016
  * @author   William Gandler
  * @see      AlgorithmSplitAndMergeWatershed
  */
@@ -471,6 +471,9 @@ public class JDialogSplitAndMergeWatershed extends JDialogScriptableBase
         binCheckBox.setFont(serif12);
         binCheckBox.setForeground(Color.black);
         binCheckBox.setSelected(false);
+        if (image.isColorImage()) {
+        	binCheckBox.setEnabled(false);
+        }
         binCheckBox.addActionListener(this);
         gbcScale.gridy++;
         neighborPanel.add(binCheckBox, gbcScale);
