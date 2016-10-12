@@ -1216,6 +1216,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
         boolean negativeSet;
         boolean initial;
         int consecutiveNegative;
+        float uniqueX;
+        float uniqueY;
         
         if (consecutiveNegativeNeeded < 1) {
             consecutiveNegativeNeeded = 1;    
@@ -1243,6 +1245,20 @@ public abstract class VOIBase extends Vector<Vector3f> {
         else {
             graphContour = (VOIContour)this;
         }
+        // Remove successive points with identical values
+        uniqueX = graphContour.elementAt(0).X;
+        uniqueY = graphContour.elementAt(0).Y;
+        i = 1;
+        while (i < graphContour.size()) {
+          if ((uniqueX != graphContour.elementAt(i).X) || (uniqueY != graphContour.elementAt(i).Y))	{
+        	  uniqueX = graphContour.elementAt(i).X;
+        	  uniqueY = graphContour.elementAt(i).Y;
+        	  i++;
+          }
+          else {
+        	  graphContour.remove(i);
+          }
+        } // while (i < graphContour.size())
         // Need graphPoints >= 5 for this routine to work
         graphPoints = graphContour.size();
         xPoints = new float[graphPoints + 9];
@@ -1297,7 +1313,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
         for (i = 0; i < graphPoints+2; i++) {
             length[i] = arcLength.length(i+2, i+4);    
         }
-        
         xderiv = new double[graphPoints+2];
         yderiv = new double[graphPoints+2];
         for (i = 0; i < graphPoints+2; i++) {
