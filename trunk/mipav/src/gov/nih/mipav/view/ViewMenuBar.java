@@ -294,7 +294,8 @@ public class ViewMenuBar {
 				menuBuilder.makeMenu("Morphological", false,
 						new JMenuItem[] {
 
-						menuBuilder.buildMenuItem("Close", null, 0, null, false),
+						        menuBuilder.buildMenuItem("Border clearing", "borderClearing", 0, null, false),
+								menuBuilder.buildMenuItem("Close", null, 0, null, false),
 								menuBuilder.buildMenuItem("Delete objects", null, 0, null, false),
 								menuBuilder.buildMenuItem("Dilate", null, 0, null, false),
 								menuBuilder
