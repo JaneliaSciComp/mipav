@@ -35,6 +35,7 @@ import java.util.*;
  *   <li>Particle Analysis</li>
  *   <li>Skeletonize with pruning option</li>
  *   <li>ultimate erode</li>
+ *   <li>Border clearing</li>
  * </ul>
  *
  * @version  1.0 March 15, 1998
@@ -90,6 +91,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
     public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 14;
     
     public static final int MORPHOLOGICAL_GRADIENT = 15;
+    
+    public static final int BORDER_CLEARING = 16;
 
     /** DOCUMENT ME! */
     public static final int SIZED_CIRCLE = 0;
@@ -1671,6 +1674,10 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             case FIND_EDGES:
                 findEdges(edgingType, false);
                 break;
+                
+            case BORDER_CLEARING:
+            	borderClearing(false);
+            	break;
 
             default:
                 break;
@@ -2419,6 +2426,132 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         setCompleted(true);
+    }
+    
+    /**
+     * Removes objects that touch (i.e., are connected to) the border
+     * @param returnFlag
+     */
+    private void borderClearing(boolean returnFlag) {
+    	if (threadStopped) {
+            setCompleted(false);
+
+            finalize();
+
+            return;
+        }
+
+        int i;
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int sliceSize = xDim * yDim;
+        int x;
+        int y;
+        boolean change = true;
+        
+        fireProgressStateChanged("Border clearing ...");
+
+        fireProgressStateChanged(0);
+        
+        // processBuffer = imgBuffer if (x,y) is on the border of imgBuffer
+        // processBuffer = 0 otherwise
+        for (i = 0; i < xDim; i++) {
+        	processBuffer[i] = imgBuffer[i];
+        	processBuffer[i+xDim*(yDim-1)] = imgBuffer[i+xDim*(yDim-1)];
+        }
+        
+        for (i = 0; i < yDim; i++) {
+        	processBuffer[i*xDim] = imgBuffer[i*xDim];
+        	processBuffer[i*xDim+xDim-1] = imgBuffer[i*xDim+xDim-1];
+        }
+        
+        while (change) {
+        	change = false;
+            for (i = 0; i < sliceSize; i++) {
+	        	x = i % xDim;
+	        	y = i / xDim;
+	        	if (processBuffer[i] != 0) {
+	        		if ((x > 0) && (processBuffer[i-1] != 0) && (imgBuffer[i-1] != 0)) {
+	        		    processBuffer[i-1] = imgBuffer[i-1];
+	        		    change = true;
+	        		}
+	        		if ((x < xDim-1) && (processBuffer[i+1] != 0) && (imgBuffer[i+1] != 0)) {
+	        			processBuffer[i+1] = imgBuffer[i+1];
+	        			change = true;
+	        		}
+	        		if ((y > 0) && (processBuffer[i-xDim] != 0) && (imgBuffer[i-xDim] != 0)) {
+	        			processBuffer[i-xDim] = imgBuffer[i-xDim];
+	        			change = true;
+	        		}
+	        		if ((y < yDim-1) && (processBuffer[i+xDim] != 0) && (imgBuffer[i+xDim] != 0)) {
+	        			processBuffer[i+xDim] = imgBuffer[i+xDim];
+	        			change = true;
+	        		}
+	        		if (kernelType == CONNECTED8) {
+	        			if ((x > 0) && (y > 0) && (processBuffer[i-xDim-1] != 0) && (imgBuffer[i-xDim-1] != 0)) {
+	        				processBuffer[i-xDim-1] = imgBuffer[i-xDim-1];
+	        				change = true;
+	        			}
+	        			if ((x > 0) && (y < yDim-1) && (processBuffer[i+xDim-1] != 0) && (imgBuffer[i+xDim-1] != 0)) {
+	        				processBuffer[i+xDim-1] = imgBuffer[i+xDim-1];
+	        				change = true;
+	        			}
+	        			if ((x < xDim-1) && (y > 0) && (processBuffer[i-xDim+1] != 0) && (imgBuffer[i-xDim+1] != 0)) {
+	        				processBuffer[i-xDim+1] = imgBuffer[i-xDim+1];
+	        				change = true;
+	        			}
+	        			if ((x < xDim-1) && (y < yDim-1) && (processBuffer[i+xDim+1] != 0) && (imgBuffer[i+xDim+1] != 0)) {
+	        				processBuffer[i+xDim+1] = imgBuffer[i+xDim+1];
+	        				change = true;
+	        			}
+	        		} // if (kernelType == CONNECTED8)
+	        	} // if (processBuffer[i] != 0)
+            } // for (i = 0; i < sliceSize; i++)
+        } // while (change)
+        
+        // processBuffer[i] = imgBuffer[i] - processBuffer[i]
+        // processBuffer[i] = imgBuffer[i] or processBuffer[i] = 0
+        for (i = 0; i < sliceSize; i++) {
+        	if (processBuffer[i] != 0) {
+        		processBuffer[i] = 0;
+        	}
+        	else {
+        		processBuffer[i] = imgBuffer[i];
+        	}
+        }
+        
+        try {
+
+            if (threadStopped) {
+                setCompleted(false);
+
+                finalize();
+
+                return;
+            }
+
+            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE) ||
+                (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
+                srcImage.reallocate(ModelImage.USHORT);
+            }
+
+            srcImage.importData(0, processBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm Morphology2D: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        } catch (OutOfMemoryError e) {
+            displayError("Algorithm Morphology2D: Out of memory");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    	
     }
 
     /**
