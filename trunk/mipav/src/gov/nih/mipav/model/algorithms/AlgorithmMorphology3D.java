@@ -85,6 +85,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 13;
 
     public static final int MORPHOLOGICAL_GRADIENT = 14;
+    
+    public static final int BORDER_CLEARING = 15;
 
     /** DOCUMENT ME! */
     public static final int SIZED_SPHERE = 0;
