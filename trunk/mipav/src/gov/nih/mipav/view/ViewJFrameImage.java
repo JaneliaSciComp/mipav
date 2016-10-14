@@ -1547,6 +1547,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogBGAndFGDistanceMap(this, getActiveImage());
         } else if (command.equals("Delete objects")) {
             new JDialogDeleteObjects(this, getActiveImage());
+        } else if (command.equals("borderClearing")) {
+            new JDialogBorderClearing(this, getActiveImage());
         } else if (command.equals("Particle analysis")) {
             new JDialogParticleAnalysisNew(this, getActiveImage());
         } else if (command.equals("Fill holes")) {
