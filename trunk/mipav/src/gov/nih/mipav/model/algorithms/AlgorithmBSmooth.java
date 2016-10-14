@@ -340,6 +340,10 @@ public class AlgorithmBSmooth extends AlgorithmBase {
     public void runSmooth(float[] xPoints, float[] yPoints, float[] zPoints, VOIBase resultContour) {
         float pct;
         float index;
+        float uniqueX = 0.0f;
+        float uniqueY = 0.0f;
+        int newNum = 0;
+        int skipped = 0;
 
         AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
         AlgorithmBSpline bSpline = new AlgorithmBSpline();
@@ -355,13 +359,29 @@ public class AlgorithmBSmooth extends AlgorithmBase {
              * returns an index 2 below the maximum array index */
             index = arcLength.invlen(pct);
             Vector3f interpPt = bSpline.bSplineJetXYZ(0, index, xPoints, yPoints, zPoints);
-            newXPts[i] = interpPt.X;
-            newYPts[i] = interpPt.Y;
-            newZPts[i] = interpPt.Z;
+            if (i == 0) {
+            	uniqueX = interpPt.X;
+            	uniqueY = interpPt.Y;
+            	newNum++;
+            }
+            else if ((uniqueX != interpPt.X) || (uniqueY != interpPt.Y)) {
+            	uniqueX = interpPt.X;
+            	uniqueY = interpPt.Y;
+            	newNum++;
+            }
+            else {
+            	skipped++;
+            	continue;
+            }
+            newXPts[i-skipped] = interpPt.X;
+            newYPts[i-skipped] = interpPt.Y;
+            newZPts[i-skipped] = interpPt.Z;
         }
+        
+        
 
-        for (int i = 0; i < nPts; i++) {
-            resultContour.add(new Vector3f( Math.round(newXPts[i]), Math.round(newYPts[i]), Math.round(newZPts[i])));
+        for (int i = 0; i < newNum; i++) {
+            resultContour.add(new Vector3f(newXPts[i], newYPts[i], newZPts[i]));
         }
     }
 
