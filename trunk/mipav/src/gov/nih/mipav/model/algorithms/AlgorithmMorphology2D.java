@@ -2471,40 +2471,58 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 	        	x = i % xDim;
 	        	y = i / xDim;
 	        	if (processBuffer[i] != 0) {
-	        		if ((x > 0) && (processBuffer[i-1] != 0) && (imgBuffer[i-1] != 0)) {
+	        		if ((x > 0) && (processBuffer[i-1] == 0) && (imgBuffer[i-1] != 0)) {
 	        		    processBuffer[i-1] = imgBuffer[i-1];
 	        		    change = true;
 	        		}
-	        		if ((x < xDim-1) && (processBuffer[i+1] != 0) && (imgBuffer[i+1] != 0)) {
+	        		if ((x < xDim-1) && (processBuffer[i+1] == 0) && (imgBuffer[i+1] != 0)) {
 	        			processBuffer[i+1] = imgBuffer[i+1];
 	        			change = true;
 	        		}
-	        		if ((y > 0) && (processBuffer[i-xDim] != 0) && (imgBuffer[i-xDim] != 0)) {
+	        		if ((y > 0) && (processBuffer[i-xDim] == 0) && (imgBuffer[i-xDim] != 0)) {
 	        			processBuffer[i-xDim] = imgBuffer[i-xDim];
 	        			change = true;
 	        		}
-	        		if ((y < yDim-1) && (processBuffer[i+xDim] != 0) && (imgBuffer[i+xDim] != 0)) {
+	        		if ((y < yDim-1) && (processBuffer[i+xDim] == 0) && (imgBuffer[i+xDim] != 0)) {
 	        			processBuffer[i+xDim] = imgBuffer[i+xDim];
 	        			change = true;
 	        		}
-	        		if (kernelType == CONNECTED8) {
-	        			if ((x > 0) && (y > 0) && (processBuffer[i-xDim-1] != 0) && (imgBuffer[i-xDim-1] != 0)) {
+	        		if ((kernelType == CONNECTED8) || (kernelType == CONNECTED12)) {
+	        			if ((x > 0) && (y > 0) && (processBuffer[i-xDim-1] == 0) && (imgBuffer[i-xDim-1] != 0)) {
 	        				processBuffer[i-xDim-1] = imgBuffer[i-xDim-1];
 	        				change = true;
 	        			}
-	        			if ((x > 0) && (y < yDim-1) && (processBuffer[i+xDim-1] != 0) && (imgBuffer[i+xDim-1] != 0)) {
+	        			if ((x > 0) && (y < yDim-1) && (processBuffer[i+xDim-1] == 0) && (imgBuffer[i+xDim-1] != 0)) {
 	        				processBuffer[i+xDim-1] = imgBuffer[i+xDim-1];
 	        				change = true;
 	        			}
-	        			if ((x < xDim-1) && (y > 0) && (processBuffer[i-xDim+1] != 0) && (imgBuffer[i-xDim+1] != 0)) {
+	        			if ((x < xDim-1) && (y > 0) && (processBuffer[i-xDim+1] == 0) && (imgBuffer[i-xDim+1] != 0)) {
 	        				processBuffer[i-xDim+1] = imgBuffer[i-xDim+1];
 	        				change = true;
 	        			}
-	        			if ((x < xDim-1) && (y < yDim-1) && (processBuffer[i+xDim+1] != 0) && (imgBuffer[i+xDim+1] != 0)) {
+	        			if ((x < xDim-1) && (y < yDim-1) && (processBuffer[i+xDim+1] == 0) && (imgBuffer[i+xDim+1] != 0)) {
 	        				processBuffer[i+xDim+1] = imgBuffer[i+xDim+1];
 	        				change = true;
 	        			}
-	        		} // if (kernelType == CONNECTED8)
+	        			if (kernelType == CONNECTED12) {
+	        			    if ((x > 1) && (processBuffer[i-2] == 0) && (imgBuffer[i-2] != 0)) {
+	        			    	processBuffer[i-2] = imgBuffer[i-2];
+	        			    	change = true;
+	        			    }
+	        			    if ((x < xDim-2) && (processBuffer[i+2] == 0) && (imgBuffer[i+2] != 0)) {
+	        			    	processBuffer[i+2] = imgBuffer[i+2];
+	        			    	change = true;
+	        			    }
+	        			    if ((y > 1) && (processBuffer[i-2*xDim] == 0) && (imgBuffer[i-2*xDim] != 0)) {
+	        			    	processBuffer[i-2*xDim] = imgBuffer[i-2*xDim];
+	        			    	change = true;
+	        			    }
+	        			    if ((y < yDim-2) && (processBuffer[i+2*xDim] == 0) && (imgBuffer[i+2*xDim] != 0)) {
+	        			    	processBuffer[i+2*xDim] = imgBuffer[i+2*xDim];
+	        			    	change = true;
+	        			    }
+	        			} // if (kernelType == CONNECTED12)
+	        		} // if ((kernelType == CONNECTED8) || (kernelType == CONNECTED12))
 	        	} // if (processBuffer[i] != 0)
             } // for (i = 0; i < sliceSize; i++)
         } // while (change)
