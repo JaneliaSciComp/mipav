@@ -87,6 +87,18 @@ public class JDialogBorderClearing extends JDialogScriptableBase
     private ViewUserInterface userInterface;
     
     private JPanelAlgorithmOutputOptions outputPanel;
+    
+    private JPanel destinationPanel;
+    
+    private ButtonGroup destinationGroup;
+    
+    private JRadioButton newImage;
+    
+    private JRadioButton replaceImage;
+    
+    private JPanel processPanel;
+    
+    private int displayLoc;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -432,7 +444,7 @@ public class JDialogBorderClearing extends JDialogScriptableBase
 
         if (image.getNDims() == 2) { // source image is 2D
 
-            if (outputPanel.isOutputNewImageSet()) {
+            if (displayLoc == NEW) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -440,11 +452,7 @@ public class JDialogBorderClearing extends JDialogScriptableBase
 
                     // Make algorithm
                     borderClearAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, kernelSize,
-                                                            AlgorithmMorphology2D.BORDER_CLEARING, 0, 1, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        borderClearAlgo2D.setMask(image.generateVOIMask());
-                    }
+                                                            AlgorithmMorphology2D.BORDER_CLEARING, 0, 1, 0, 0, true);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -482,11 +490,7 @@ public class JDialogBorderClearing extends JDialogScriptableBase
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     borderClearAlgo2D = new AlgorithmMorphology2D(image, kernel, kernelSize,
-                                                            AlgorithmMorphology2D.BORDER_CLEARING, 0, 1, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        borderClearAlgo2D.setMask(image.generateVOIMask());
-                    }
+                                                            AlgorithmMorphology2D.BORDER_CLEARING, 0, 1, 0, 0, true);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -530,7 +534,7 @@ public class JDialogBorderClearing extends JDialogScriptableBase
             }
         } else if ((image.getNDims() == 3) && !do25D) {
 
-            if (outputPanel.isOutputNewImageSet()) {
+            if (displayLoc == NEW) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -538,11 +542,7 @@ public class JDialogBorderClearing extends JDialogScriptableBase
 
                     // Make algorithm
                     borderClearAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, kernelSize,
-                                                            AlgorithmMorphology3D.BORDER_CLEARING, 0, 1, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        borderClearAlgo3D.setMask(image.generateVOIMask());
-                    }
+                                                            AlgorithmMorphology3D.BORDER_CLEARING, 0, 1, 0, 0, true);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -579,11 +579,8 @@ public class JDialogBorderClearing extends JDialogScriptableBase
 
                     // Make algorithm
                     borderClearAlgo3D = new AlgorithmMorphology3D(image, kernel, kernelSize,
-                                                            AlgorithmMorphology3D.BORDER_CLEARING, 0, 1, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        borderClearAlgo3D.setMask(image.generateVOIMask());
-                    }
+                                                            AlgorithmMorphology3D.BORDER_CLEARING, 0, 1, 0, 0, true);
+     
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -638,7 +635,7 @@ public class JDialogBorderClearing extends JDialogScriptableBase
                 kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
             }
 
-            if (outputPanel.isOutputNewImageSet()) {
+            if (displayLoc == NEW) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -646,11 +643,7 @@ public class JDialogBorderClearing extends JDialogScriptableBase
 
                     // Make algorithm
                     borderClearAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, kernelSize,
-                                                              AlgorithmMorphology25D.BORDER_CLEARING, 0, 1, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        borderClearAlgo25D.setMask(image.generateVOIMask());
-                    }
+                                                              AlgorithmMorphology25D.BORDER_CLEARING, 0, 1, 0, 0, true);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -688,11 +681,7 @@ public class JDialogBorderClearing extends JDialogScriptableBase
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     borderClearAlgo25D = new AlgorithmMorphology25D(image, kernel, kernelSize,
-                                                              AlgorithmMorphology25D.BORDER_CLEARING, 0, 1, 0, 0, outputPanel.isProcessWholeImageSet());
-
-                    if (outputPanel.isProcessWholeImageSet() == false) {
-                        borderClearAlgo25D.setMask(image.generateVOIMask());
-                    }
+                                                              AlgorithmMorphology25D.BORDER_CLEARING, 0, 1, 0, 0, true);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -729,7 +718,7 @@ public class JDialogBorderClearing extends JDialogScriptableBase
                         borderClearAlgo25D.run();
                     }
                 } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog MORPHOLOGICAL_GRADIENT: unable to allocate enough memory");
+                    MipavUtil.displayError("Dialog BAOARDEAR_CLEARING: unable to allocate enough memory");
 
                     return;
                 }
@@ -773,22 +762,61 @@ public class JDialogBorderClearing extends JDialogScriptableBase
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(comboBoxKernel, gbc);
-
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
         
-        PanelManager optionsPanelManager = new PanelManager("Options");
+        destinationPanel = new JPanel(new GridBagLayout());
+        destinationPanel.setForeground(Color.black);
+        destinationPanel.setBorder(buildTitledBorder("Destination"));
+
+        destinationGroup = new ButtonGroup();
+        newImage = new JRadioButton("New image", true);
+        newImage.setFont(serif12);
+        destinationGroup.add(newImage);
+
+        replaceImage = new JRadioButton("Replace image", false);
+        replaceImage.setFont(serif12);
+        destinationGroup.add(replaceImage);
+        
+        // Only if the image is unlocked can it be replaced.
+        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
+            replaceImage.setEnabled(true);
+        } else {
+            replaceImage.setEnabled(false);
+        }
+
+
+        GridBagConstraints gbc2 = new GridBagConstraints();
+
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.weightx = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        destinationPanel.add(newImage, gbc2);
+        gbc2.gridy = 1;
+        destinationPanel.add(replaceImage, gbc2);
+        
+        processPanel = new JPanel(new GridBagLayout());
+        processPanel.setForeground(Color.black);
+        processPanel.setBorder(buildTitledBorder("Process"));
+        
+        
         image25D = WidgetFactory.buildCheckBox("Process image in 2.5D", false);
         if (image.getNDims() == 3) {
             image25D.setEnabled(true);
         } else {
             image25D.setEnabled(false);
         }
-        optionsPanelManager.add(image25D);
+        GridBagConstraints gbc3 = new GridBagConstraints();
+
+        gbc3.gridx = 0;
+        gbc3.gridy = 0;
+        gbc3.weightx = 1;
+        gbc3.anchor = GridBagConstraints.WEST;
+        processPanel.add(image25D, gbc3);
 
         PanelManager mainPanelManager = new PanelManager();
         mainPanelManager.add(maskPanel);
-        mainPanelManager.addOnNextLine(outputPanel);
-        mainPanelManager.addOnNextLine(optionsPanelManager.getPanel());
+        mainPanelManager.addOnNextLine(destinationPanel);
+        mainPanelManager.addOnNextLine(processPanel);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -812,6 +840,12 @@ public class JDialogBorderClearing extends JDialogScriptableBase
     private boolean setVariables() {
 
         System.gc();
+        
+        if (replaceImage.isSelected()) {
+            displayLoc = REPLACE;
+        } else if (newImage.isSelected()) {
+            displayLoc = NEW;
+        }
 
         do25D = image25D.isSelected();
 
