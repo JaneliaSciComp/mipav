@@ -978,6 +978,10 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             case FIND_EDGES:
                 findEdges(edgingType, false);
                 break;
+                
+            case BORDER_CLEARING:
+            	borderClearing(false);
+            	break;    
 
             default:
                 break;
@@ -1698,6 +1702,246 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         setCompleted(true);
+    }
+    
+    /**
+     * Removes objects that touch (i.e., are connected to) the border
+     * @param returnFlag
+     */
+    private void borderClearing(boolean returnFlag) {
+    	if (threadStopped) {
+            setCompleted(false);
+
+            finalize();
+
+            return;
+        }
+
+        int i;
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int sliceSize = xDim * yDim;
+        int zDim = srcImage.getExtents()[2];
+        int imgSize = sliceSize * zDim;
+        int x;
+        int y;
+        int z;
+        int indexZ;
+        boolean change = true;
+        
+        fireProgressStateChanged("Border clearing ...");
+
+        fireProgressStateChanged(0);
+        
+        // processBuffer = imgBuffer if (x,y,z) is on the border of imgBuffer
+        // processBuffer = 0 otherwise
+        for (z = 0; z < zDim; z++) {
+        	indexZ = z * sliceSize;
+	        for (i = 0; i < xDim; i++) {
+	        	processBuffer[indexZ+i] = imgBuffer[indexZ+i];
+	        	processBuffer[indexZ+i+xDim*(yDim-1)] = imgBuffer[indexZ+i+xDim*(yDim-1)];
+	        }
+	        
+	        for (i = 0; i < yDim; i++) {
+	        	processBuffer[indexZ+i*xDim] = imgBuffer[indexZ+i*xDim];
+	        	processBuffer[indexZ+i*xDim+xDim-1] = imgBuffer[indexZ+i*xDim+xDim-1];
+	        }
+        } // for (z = 0; z < zDim; z++)
+        
+        indexZ = (zDim-1)*sliceSize;
+        for (i = 0; i < sliceSize; i++) {
+        	processBuffer[i] = imgBuffer[i];
+        	processBuffer[indexZ+i] = imgBuffer[indexZ+i];
+        }
+        
+        while (change) {
+        	change = false;
+            for (i = 0; i < imgSize; i++) {
+	        	x = i % xDim;
+	        	y = (i % sliceSize) / xDim;
+	        	z = i / sliceSize;
+	        	if (processBuffer[i] != 0) {
+	        		if ((x > 0) && (processBuffer[i-1] == 0) && (imgBuffer[i-1] != 0)) {
+	        		    processBuffer[i-1] = imgBuffer[i-1];
+	        		    change = true;
+	        		}
+	        		if ((x < xDim-1) && (processBuffer[i+1] == 0) && (imgBuffer[i+1] != 0)) {
+	        			processBuffer[i+1] = imgBuffer[i+1];
+	        			change = true;
+	        		}
+	        		if ((y > 0) && (processBuffer[i-xDim] == 0) && (imgBuffer[i-xDim] != 0)) {
+	        			processBuffer[i-xDim] = imgBuffer[i-xDim];
+	        			change = true;
+	        		}
+	        		if ((y < yDim-1) && (processBuffer[i+xDim] == 0) && (imgBuffer[i+xDim] != 0)) {
+	        			processBuffer[i+xDim] = imgBuffer[i+xDim];
+	        			change = true;
+	        		}
+	        		if ((z > 0) && (processBuffer[i-sliceSize] == 0) && (imgBuffer[i-sliceSize] != 0)) {
+	        			processBuffer[i-sliceSize] = imgBuffer[i-sliceSize];
+	        			change = true;
+	        		}
+	        		if ((z < zDim-1) && (processBuffer[i+sliceSize] == 0) && (imgBuffer[i+sliceSize] != 0)) {
+	        			processBuffer[i+sliceSize] = imgBuffer[i+sliceSize];
+	        			change = true;
+	        		}
+	        		if ((kernelType == CONNECTED26) || (kernelType == CONNECTED24)) {
+	        			if ((x > 0) && (y > 0) && (processBuffer[i-xDim-1] == 0) && (imgBuffer[i-xDim-1] != 0)) {
+	        				processBuffer[i-xDim-1] = imgBuffer[i-xDim-1];
+	        				change = true;
+	        			}
+	        			if ((x > 0) && (y < yDim-1) && (processBuffer[i+xDim-1] == 0) && (imgBuffer[i+xDim-1] != 0)) {
+	        				processBuffer[i+xDim-1] = imgBuffer[i+xDim-1];
+	        				change = true;
+	        			}
+	        			if ((x < xDim-1) && (y > 0) && (processBuffer[i-xDim+1] == 0) && (imgBuffer[i-xDim+1] != 0)) {
+	        				processBuffer[i-xDim+1] = imgBuffer[i-xDim+1];
+	        				change = true;
+	        			}
+	        			if ((x < xDim-1) && (y < yDim-1) && (processBuffer[i+xDim+1] == 0) && (imgBuffer[i+xDim+1] != 0)) {
+	        				processBuffer[i+xDim+1] = imgBuffer[i+xDim+1];
+	        				change = true;
+	        			}
+	        			if ((x > 0) && (z > 0) && (processBuffer[i-sliceSize-1] == 0) && (imgBuffer[i-sliceSize-1] != 0)) {
+		        		    processBuffer[i-sliceSize-1] = imgBuffer[i-sliceSize-1];
+		        		    change = true;
+		        		}
+		        		if ((x < xDim-1) && (z > 0) && (processBuffer[i-sliceSize+1] == 0) && (imgBuffer[i-sliceSize+1] != 0)) {
+		        			processBuffer[i-sliceSize+1] = imgBuffer[i-sliceSize+1];
+		        			change = true;
+		        		}
+		        		if ((y > 0) && (z > 0) && (processBuffer[i-sliceSize-xDim] == 0) && (imgBuffer[i-sliceSize-xDim] != 0)) {
+		        			processBuffer[i-sliceSize-xDim] = imgBuffer[i-sliceSize-xDim];
+		        			change = true;
+		        		}
+		        		if ((y < yDim-1) && (z > 0) && (processBuffer[i-sliceSize+xDim] == 0) && (imgBuffer[i-sliceSize+xDim] != 0)) {
+		        			processBuffer[i-sliceSize+xDim] = imgBuffer[i-sliceSize+xDim];
+		        			change = true;
+		        		}
+		        		if ((x > 0) && (z < zDim-1) && (processBuffer[i+sliceSize-1] == 0) && (imgBuffer[i+sliceSize-1] != 0)) {
+		        		    processBuffer[i+sliceSize-1] = imgBuffer[i+sliceSize-1];
+		        		    change = true;
+		        		}
+		        		if ((x < xDim-1) && (z < zDim-1) && (processBuffer[i+sliceSize+1] == 0) && (imgBuffer[i+sliceSize+1] != 0)) {
+		        			processBuffer[i+sliceSize+1] = imgBuffer[i+sliceSize+1];
+		        			change = true;
+		        		}
+		        		if ((y > 0) && (z < zDim-1) && (processBuffer[i+sliceSize-xDim] == 0) && (imgBuffer[i+sliceSize-xDim] != 0)) {
+		        			processBuffer[i+sliceSize-xDim] = imgBuffer[i+sliceSize-xDim];
+		        			change = true;
+		        		}
+		        		if ((y < yDim-1) && (z < zDim-1) && (processBuffer[i+sliceSize+xDim] == 0) && (imgBuffer[i+sliceSize+xDim] != 0)) {
+		        			processBuffer[i+sliceSize+xDim] = imgBuffer[i+sliceSize+xDim];
+		        			change = true;
+		        		}
+		        		if (kernelType == CONNECTED26) {
+		        			if ((x > 0) && (y > 0) && (z > 0) && (processBuffer[i-sliceSize-xDim-1] == 0) && (imgBuffer[i-sliceSize-xDim-1] != 0)) {
+		        				processBuffer[i-sliceSize-xDim-1] = imgBuffer[i-sliceSize-xDim-1];
+		        				change = true;
+		        			}
+		        			if ((x > 0) && (y < yDim-1) && (z > 0) && (processBuffer[i-sliceSize+xDim-1] == 0) && (imgBuffer[i-sliceSize+xDim-1] != 0)) {
+		        				processBuffer[i-sliceSize+xDim-1] = imgBuffer[i-sliceSize+xDim-1];
+		        				change = true;
+		        			}
+		        			if ((x < xDim-1) && (y > 0) && (z > 0) && (processBuffer[i-sliceSize-xDim+1] == 0) && (imgBuffer[i-sliceSize-xDim+1] != 0)) {
+		        				processBuffer[i-sliceSize-xDim+1] = imgBuffer[i-sliceSize-xDim+1];
+		        				change = true;
+		        			}
+		        			if ((x < xDim-1) && (y < yDim-1) && (z > 0) && (processBuffer[i-sliceSize+xDim+1] == 0) && (imgBuffer[i-sliceSize+xDim+1] != 0)) {
+		        				processBuffer[i-sliceSize+xDim+1] = imgBuffer[i-sliceSize+xDim+1];
+		        				change = true;
+		        			}
+		        			if ((x > 0) && (y > 0) && (z < zDim-1) && (processBuffer[i+sliceSize-xDim-1] == 0) && (imgBuffer[i+sliceSize-xDim-1] != 0)) {
+		        				processBuffer[i+sliceSize-xDim-1] = imgBuffer[i+sliceSize-xDim-1];
+		        				change = true;
+		        			}
+		        			if ((x > 0) && (y < yDim-1) && (z < zDim-1) && (processBuffer[i+sliceSize+xDim-1] == 0) && (imgBuffer[i+sliceSize+xDim-1] != 0)) {
+		        				processBuffer[i+sliceSize+xDim-1] = imgBuffer[i+sliceSize+xDim-1];
+		        				change = true;
+		        			}
+		        			if ((x < xDim-1) && (y > 0) && (z < zDim-1) && (processBuffer[i+sliceSize-xDim+1] == 0) && (imgBuffer[i+sliceSize-xDim+1] != 0)) {
+		        				processBuffer[i+sliceSize-xDim+1] = imgBuffer[i+sliceSize-xDim+1];
+		        				change = true;
+		        			}
+		        			if ((x < xDim-1) && (y < yDim-1) && (z < zDim-1) && (processBuffer[i+sliceSize+xDim+1] == 0) && (imgBuffer[i+sliceSize+xDim+1] != 0)) {
+		        				processBuffer[i+sliceSize+xDim+1] = imgBuffer[i+sliceSize+xDim+1];
+		        				change = true;
+		        			}	
+		        		} // if (kernelType == CONNECTED26)
+	        			if (kernelType == CONNECTED24) {
+	        			    if ((x > 1) && (processBuffer[i-2] == 0) && (imgBuffer[i-2] != 0)) {
+	        			    	processBuffer[i-2] = imgBuffer[i-2];
+	        			    	change = true;
+	        			    }
+	        			    if ((x < xDim-2) && (processBuffer[i+2] == 0) && (imgBuffer[i+2] != 0)) {
+	        			    	processBuffer[i+2] = imgBuffer[i+2];
+	        			    	change = true;
+	        			    }
+	        			    if ((y > 1) && (processBuffer[i-2*xDim] == 0) && (imgBuffer[i-2*xDim] != 0)) {
+	        			    	processBuffer[i-2*xDim] = imgBuffer[i-2*xDim];
+	        			    	change = true;
+	        			    }
+	        			    if ((y < yDim-2) && (processBuffer[i+2*xDim] == 0) && (imgBuffer[i+2*xDim] != 0)) {
+	        			    	processBuffer[i+2*xDim] = imgBuffer[i+2*xDim];
+	        			    	change = true;
+	        			    }
+	        			    if ((z > 1) && (processBuffer[i-2*sliceSize] == 0) && (imgBuffer[i-2*sliceSize] != 0)) {
+	        			    	processBuffer[i-2*sliceSize] = imgBuffer[i-2*sliceSize];
+	        			    	change = true;
+	        			    }
+	        			    if ((z < zDim-2) && (processBuffer[i+2*sliceSize] == 0) && (imgBuffer[i+2*sliceSize] != 0)) {
+	        			    	processBuffer[i+2*sliceSize] = imgBuffer[i+2*sliceSize];
+	        			    	change = true;
+	        			    }
+	        			} // if (kernelType == CONNECTED24)
+	        		} // if ((kernelType == CONNECTED26) || (kernelType == CONNECTED24))
+	        	} // if (processBuffer[i] != 0)
+            } // for (i = 0; i < imgSize; i++)
+        } // while (change)
+        
+        // processBuffer[i] = imgBuffer[i] - processBuffer[i]
+        // processBuffer[i] = imgBuffer[i] or processBuffer[i] = 0
+        for (i = 0; i < imgSize; i++) {
+        	if (processBuffer[i] != 0) {
+        		processBuffer[i] = 0;
+        	}
+        	else {
+        		processBuffer[i] = imgBuffer[i];
+        	}
+        }
+        
+        try {
+
+            if (threadStopped) {
+                setCompleted(false);
+
+                finalize();
+
+                return;
+            }
+
+            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.BYTE) ||
+                (srcImage.getType() == ModelStorageBase.UBYTE) || (srcImage.getType() == ModelStorageBase.SHORT)) {
+                srcImage.reallocate(ModelImage.USHORT);
+            }
+
+            srcImage.importData(0, processBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm Morphology3D: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        } catch (OutOfMemoryError e) {
+            displayError("Algorithm Morphology3D: Out of memory");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    	
     }
 
     /**
