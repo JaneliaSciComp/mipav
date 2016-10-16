@@ -1423,13 +1423,13 @@ kernelLoop:
 
             srcImage.importData(0, processBuffer, true);
         } catch (IOException error) {
-            displayError("Algorithm Morphology2D: Image(s) locked");
+            displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
 
 
             return;
         } catch (OutOfMemoryError e) {
-            displayError("Algorithm Morphology2D: Out of memory");
+            displayError("Algorithm Morphology25D: Out of memory");
             setCompleted(false);
 
 
