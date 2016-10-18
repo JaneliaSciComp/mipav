@@ -73,7 +73,17 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     
     public static final int MORPHOLOGICAL_LAPLACIAN = 18;
 
+    public static final int GEODESIC_DILATION = 19;
     
+    public static final int GEODESIC_EROSION = 20;
+    
+    public static final int MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION = 21;
+    
+    public static final int MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION = 22;
+    
+    public static final int OPENING_BY_RECONSTRUCTION = 23;
+    
+    public static final int CLOSING_BY_RECONSTRUCTION = 24;
     /** DOCUMENT ME! */
     public static final int SIZED_CIRCLE = AlgorithmMorphology2D.SIZED_CIRCLE;
 
@@ -115,6 +125,8 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     private double[] imgBuffer;
     
     private double[] imgBuffer2;
+    
+    private double[] maskBuffer;
 
     /** Dilation iteration times. */
     private int iterationsD;
@@ -164,6 +176,16 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private Point[] ultErodeObjects = null;
+    
+    /** Image that constrains morphological transformations */
+    /** Used in geodesic dilation, geodesic erosion, morphological reconstruction
+     * by dilation, and morphological reconstruction by erosion
+     * Not used in opening by reconstruction and closing by reconstruction
+     */
+    private ModelImage maskImage = null;
+    
+    /** Size of geodesic erosions and dilations */
+    private int geodesicSize;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -204,7 +226,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     }
 
     /**
-     * Creates a new AlgorithmMorphology2D object.
+     * Creates a new AlgorithmGrayScaleMorphology2D object.
      *
      * @param  srcImg               source image model
      * @param  kernelType           dilation kernel size (i.e. connectedness)
@@ -232,6 +254,51 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
         iterationsE = iterE;
         numPruningPixels = pruningPix;
         edgingType = edType;
+        this.entireImage = entireImage;
+        this.kernelType = kernelType;
+        this.showFrame = _showFrame;
+
+        if (kernelType == SIZED_CIRCLE) {
+            this.circleDiameter = circleDiameter;
+            makeCircularKernel(circleDiameter);
+        } else {
+            makeKernel(kernelType);
+        }
+
+        this.kernelTypeErode = kernelTypeErode;
+        this.circleDiameterErode = circleDiameterErode;
+
+    }
+    
+    /**
+     * Creates a new AlgorithmGrayScaleMorphology2D object.
+     *
+     * @param  srcImg               source image model
+     * @paran  maskImage            image that constrains the morphological transformation
+     * @param  kernelType           dilation kernel size (i.e. connectedness)
+     * @param  circleDiameter       dilation only valid if kernelType == SIZED_CIRCLE and represents the width of a
+     *                              circle in the resolution of the image
+     * @param  kernelTypeErode      kernel size (i.e. connectedness) of erosion
+     * @param  circleDiameterErode  Erosion only valid if kernelType == SIZED_CIRCLE and represents the width of a
+     *                              circle in the resolution of the image
+     * @param  method               setup the algorithm method (i.e. erode, dilate)
+     * @param  geodesicSize
+     * @param  iterD             number of times to dilate
+     * @param  iterE                number of times to erode
+     * @param  entireImage          if true, indicates that the VOIs should NOT be used and that entire image should be
+     *                              processed
+     * @param  _showFrame           if true, indicates that show image frame after each algorithm be processed
+     */
+    public AlgorithmGrayScaleMorphology2D(ModelImage srcImg, ModelImage maskImage, int kernelType, float circleDiameter, int kernelTypeErode,
+                                 float circleDiameterErode, int method, int geodesicSize, int iterD, int iterE,
+                                 boolean entireImage, boolean _showFrame) {
+        super(null, srcImg);
+        this.maskImage = maskImage;
+        setAlgorithm(method);
+
+        this.geodesicSize = geodesicSize;
+        iterationsD = iterD;
+        iterationsE = iterE;
         this.entireImage = entireImage;
         this.kernelType = kernelType;
         this.showFrame = _showFrame;
@@ -1454,6 +1521,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+    	int i;
 
         // do all source image verification before logging:
         if (srcImage == null) {
@@ -1461,6 +1529,14 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        }
+        
+        if ((maskImage == null) && ((algorithm == GEODESIC_DILATION) || (algorithm == GEODESIC_EROSION)
+        		|| (algorithm == MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION) ||
+        		(algorithm == MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION))) {
+        	displayError("Mask Image is null");
+        	setCompleted(false);
+        	return;
         }
 
         srcImage.calcMinMax();
@@ -1483,9 +1559,8 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
             return;
         }
 
+        int length = srcImage.getSliceSize();
         try {
-            int length = srcImage.getSliceSize();
-
             imgBuffer = new double[length];
             processBuffer = new double[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
@@ -1502,7 +1577,36 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
             return;
         }
 
+        if (maskImage != null) {
+        	try {
+                maskBuffer = new double[length];
+                maskImage.exportData(0, length, maskBuffer); // locks and releases lock
+            } catch (IOException error) {
+                displayError("Algorithm GrayScaleMorphology2D: Mask Image locked");
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                displayError("Algorithm GrayScaleMorphology2D: Out of memory");
+                setCompleted(false);
+
+                return;
+            }	
+        } // if (maskImage != null)
         
+        if ((algorithm == OPENING_BY_RECONSTRUCTION) || (algorithm == CLOSING_BY_RECONSTRUCTION)) {
+        	try {
+        	    maskBuffer = new double[length];
+        	} catch (OutOfMemoryError e) {
+                displayError("Algorithm GrayScaleMorphology2D: Out of memory");
+                setCompleted(false);
+
+                return;
+            }
+        	for (i = 0; i < length; i++) {
+        		maskBuffer[i] = imgBuffer[i];
+        	}
+        }
 
         int[] progressValues = getProgressValues();
 
@@ -1548,7 +1652,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                         ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 erode(true, 1);
-                for (int i = 0; i < imgBuffer.length; i++) {
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] = imgBuffer2[i] - imgBuffer[i];
                 }
                 try {
@@ -1581,7 +1685,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
 
                     return;
                 }
-                for (int i = 0; i < imgBuffer.length; i++) {
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer[i] = imgBuffer[i] - imgBuffer2[i];
                 }
                 try {
@@ -1614,7 +1718,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
 
                     return;
                 }
-                for (int i = 0; i < imgBuffer.length; i++) {
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] = imgBuffer2[i] - imgBuffer[i];
                 }
                 try {
@@ -1647,7 +1751,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                         ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 erode(true, 1);
-                for (int i = 0; i < imgBuffer.length; i++) {
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] = imgBuffer2[i] + imgBuffer[i];
                 }
                 try { 
@@ -1658,7 +1762,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
 
                     return;
                 }
-                for (int i = 0; i < imgBuffer.length; i++) {
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] = imgBuffer2[i] - 2 * imgBuffer[i];
                 }
                 try {
@@ -1672,6 +1776,32 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                 }
 
                 setCompleted(true);
+                break;
+                
+            case GEODESIC_DILATION:
+                geodesicDilation(false, geodesicSize);
+                break;
+                
+            case GEODESIC_EROSION:
+            	geodesicErosion(false, geodesicSize);
+            	break;
+            	
+            case MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION:
+            	geodesicDilation(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION:
+            	geodesicErosion(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case OPENING_BY_RECONSTRUCTION:
+            	erode(true, iterationsE);
+            	geodesicDilation(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case CLOSING_BY_RECONSTRUCTION:
+            	dilate(true, iterationsD);
+                geodesicErosion(false, Integer.MAX_VALUE);
                 break;
             /*case PARTICLE_ANALYSIS_NEW:
                 // open
@@ -2617,6 +2747,190 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                 tempImage.importData(0, imgBuffer, true);
             } catch (IOException error) {
                 displayError("Algorithm GrayScaleMorphology2D: Image(s) locked in Dilate");
+                setCompleted(false);
+
+
+                return;
+            }
+
+            new ViewJFrameImage(tempImage, null, null, false);
+        }
+
+        if (returnFlag == true) {
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+
+            srcImage.importData(0, imgBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    }
+    
+    /**
+     * geodesic dilation of a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * @param  geodesicSize
+     */
+    private void geodesicDilation(boolean returnFlag, int geodesicSize) {
+        int i;
+        int j;
+        int xDim;
+        int yDim;
+        int sliceSize;
+        double lastBuffer[];
+        boolean same;
+        
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        lastBuffer = new double[sliceSize];
+        for (i = 0; i < sliceSize; i++) {
+        	lastBuffer[i] = imgBuffer[i];
+        }
+        
+        for (i = 0; i < geodesicSize; i++) {
+            dilate(true, 1);
+            for (j = 0; j < sliceSize; j++) {
+            	imgBuffer[j] = Math.min(imgBuffer[j], maskBuffer[j]);
+            }
+            same = true;
+            for (j = 0; same && j < sliceSize; j++) {
+            	if (imgBuffer[j] != lastBuffer[j]) {
+            		same = false;
+            	}
+            }
+            if (same) {
+            	break;
+            }
+            else {
+            	for (j = 0; j < sliceSize; j++) {
+            		lastBuffer[j] = imgBuffer[j];
+            	}
+            }
+        } // for (i = 0; i < geodesicSize; i++)
+        
+        if (showFrame) {
+            ModelImage tempImage = new ModelImage(ModelImage.DOUBLE, srcImage.getExtents(), "Geodesic Dilation");
+
+            try {
+                tempImage.importData(0, imgBuffer, true);
+            } catch (IOException error) {
+                displayError("Algorithm GrayScaleMorphology2D: Image(s) locked in geodesicDilation");
+                setCompleted(false);
+
+
+                return;
+            }
+
+            new ViewJFrameImage(tempImage, null, null, false);
+        }
+
+        if (returnFlag == true) {
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+
+            srcImage.importData(0, imgBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    }
+    
+    /**
+     * geodesic erosion of a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * @param  geodesicSize
+     */
+    private void geodesicErosion(boolean returnFlag, int geodesicSize) {
+        int i;
+        int j;
+        int xDim;
+        int yDim;
+        int sliceSize;
+        double lastBuffer[];
+        boolean same;
+        
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        lastBuffer = new double[sliceSize];
+        for (i = 0; i < sliceSize; i++) {
+        	lastBuffer[i] = imgBuffer[i];
+        }
+        
+        for (i = 0; i < geodesicSize; i++) {
+            erode(true, 1);
+            for (j = 0; j < sliceSize; j++) {
+            	imgBuffer[j] = Math.max(imgBuffer[j], maskBuffer[j]);
+            }
+            same = true;
+            for (j = 0; same && j < sliceSize; j++) {
+            	if (imgBuffer[j] != lastBuffer[j]) {
+            		same = false;
+            	}
+            }
+            if (same) {
+            	break;
+            }
+            else {
+            	for (j = 0; j < sliceSize; j++) {
+            		lastBuffer[j] = imgBuffer[j];
+            	}
+            }
+        } // for (i = 0; i < geodesicSize; i++)
+        
+        if (showFrame) {
+            ModelImage tempImage = new ModelImage(ModelImage.DOUBLE, srcImage.getExtents(), "Geodesic Erosion");
+
+            try {
+                tempImage.importData(0, imgBuffer, true);
+            } catch (IOException error) {
+                displayError("Algorithm GrayScaleMorphology2D: Image(s) locked in geodesicErosion");
                 setCompleted(false);
 
 
