@@ -1817,6 +1817,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             case CLOSING_BY_RECONSTRUCTION:
             	dilate(true, iterationsD);
                 geodesicErosion(false, Integer.MAX_VALUE);
+                break;
             default:
                 break;
         }
