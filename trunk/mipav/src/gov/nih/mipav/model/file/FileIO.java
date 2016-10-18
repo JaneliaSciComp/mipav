@@ -16,15 +16,18 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.io.*;
+
+import java.nio.file.Files;
+
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+
 import java.util.*;
 import java.util.zip.*;
 
@@ -32,6 +35,8 @@ import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
+import com.ice.tar.TarEntry;
+import com.ice.tar.TarInputStream;
 import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
 
@@ -2814,6 +2819,18 @@ public class FileIO {
                     while (ze != null) {
                         fileName = ze.getName();
                         uncompressedName = fileDir + fileName;
+                        //need to handle possible subdirs in the filename (need to create he subdirs if they dont exisit)
+                        File f = new File(fileDir + fileName);
+                        String parentDirPath = f.getParent();
+                        if(parentDirPath != null) {
+                        	File pf = new File(parentDirPath);
+                        	if(!pf.exists()) {
+                        		pf.mkdirs();
+                        	}
+                        	//fileName = f.getName();
+                        	//fileDir = parentDirPath;
+                        }
+                        
                         try {
                             out = new FileOutputStream(uncompressedName);
                         } catch (final IOException e) {
@@ -2884,61 +2901,144 @@ public class FileIO {
                     }
                 } // if (unzip)
                 else if (gunzip) {
-                    int totalBytesRead = 0;
+                   //we first gunzip....if there is tar file....then we (PlugInDialogFitbir)  untar
+                	if (fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz")) {
+                		
+                		String fName = "";
+                		 try {
+							fis = new FileInputStream(file);
+							 gzin = new GZIPInputStream(new BufferedInputStream(fis));
+							 final TarInputStream tin = new TarInputStream(gzin);
+							 FileOutputStream fout;
+							 TarEntry entry;
+							 BufferedOutputStream dest = null;
+							 final int BUFFER = 2048;
+							 int count;
+							 final byte[] data = new byte[BUFFER];
+							 File f;
+							 // while we are at it, find the first file that does not
+							 // have a .raw extension, so we can
+							 // open it
+							 fileDir = tempDir;
+							 uncompressedName = fileDir + fileName;
+							 while ( (entry = tin.getNextEntry()) != null) {
+							     f = new File(tempDir);
+							     if ( !f.exists()) {
+							         f.mkdir();
+							     }
 
-                    try {
-                        fis = new FileInputStream(file);
-                    } catch (final FileNotFoundException e) {
-                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
-                        return null;
-                    }
+							     if (entry.isDirectory()) {
+							         // if a directory, create it instead of trying to write it to disk
+							         f = new File(tempDir + File.separator + entry.getName());
+							         if ( !f.exists()) {
+							             f.mkdirs();
+							         }
+							     } else {
+							         // not a directory, so write out the file contents to disk from the zip and remember the
+							         // first non-raw file name we find
+							         if (fName.equals("")) {
+							             if ( !entry.getName().endsWith(".raw") && !entry.getName().equalsIgnoreCase(".METADATA")) {
+							            	 fName = entry.getName();
+							            	/* fName = fName.replace("\\", File.separator);
+							            	 fName = fName.replace("/", File.separator);
+							            	 if(fName.contains(File.separator)) { 
+							            		 fileName = fName.substring(fName.lastIndexOf(File.separator)+1, fName.length());
+							            	 }else {*/
+							            		 fileName = fName;
+							            	 //}
+							            	 
+							             }
+							         }
 
-                    try {
-                        gzin = new GZIPInputStream(new BufferedInputStream(fis));
-                    } catch (final IOException e) {
-                        MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
-                        return null;
-                    }
+							         fout = new FileOutputStream(tempDir + File.separator + entry.getName());
+							         dest = new BufferedOutputStream(fout, BUFFER);
+							         while ( (count = tin.read(data, 0, BUFFER)) != -1) {
+							             dest.write(data, 0, count);
+							         }
+							         dest.flush();
+							         dest.close();
+							     }
+							 }
+							 tin.close();
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+							MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
+	                        return null;
+						} catch (IOException e) {
+							e.printStackTrace();
+							MipavUtil.displayError("IO Exception for " + fileName);
+	                        return null;
+						}
+                		
+                		
+                		
+                		
+                		
+                		
+                		
+                	}else {
+                		
+                		int totalBytesRead = 0;
 
-                    fileName = fileName.substring(0, index);
-                    fileDir = tempDir;
-                    uncompressedName = fileDir + fileName;
-                    try {
-                        out = new FileOutputStream(uncompressedName);
-                    } catch (final IOException e) {
-                        MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
-                        return null;
-                    }
-                    final byte[] buffer = new byte[256];
-
-                    while (true) {
                         try {
-                            bytesRead = gzin.read(buffer);
-                        } catch (final IOException e) {
-                            MipavUtil.displayError("IOException on gzin.read(buffer) for " + uncompressedName);
+                            fis = new FileInputStream(file);
+                        } catch (final FileNotFoundException e) {
+                            MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for " + fileName);
                             return null;
                         }
 
-                        if (bytesRead == -1) {
-                            break;
-                        }
-
-                        totalBytesRead += bytesRead;
                         try {
-                            out.write(buffer, 0, bytesRead);
+                            gzin = new GZIPInputStream(new BufferedInputStream(fis));
                         } catch (final IOException e) {
-                            MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                            MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
                             return null;
                         }
-                    }
+                        
+                      
 
-                    try {
-                        out.flush();
-                        out.close();
-                    } catch (final IOException e) {
-                        MipavUtil.displayError("IOException on out.close for " + uncompressedName);
-                        return null;
-                    }
+                        fileName = fileName.substring(0, index);
+                        fileDir = tempDir;
+                        uncompressedName = fileDir + fileName;
+                        try {
+                            out = new FileOutputStream(uncompressedName);
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                            return null;
+                        }
+                        final byte[] buffer = new byte[256];
+
+                        while (true) {
+                            try {
+                                bytesRead = gzin.read(buffer);
+                            } catch (final IOException e) {
+                                MipavUtil.displayError("IOException on gzin.read(buffer) for " + uncompressedName);
+                                return null;
+                            }
+
+                            if (bytesRead == -1) {
+                                break;
+                            }
+
+                            totalBytesRead += bytesRead;
+                            try {
+                                out.write(buffer, 0, bytesRead);
+                            } catch (final IOException e) {
+                                MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                                return null;
+                            }
+                        }
+
+                        try {
+                            out.flush();
+                            out.close();
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                            return null;
+                        }
+                		
+                	}
+                	
+                	
                 } // if (gunzip)
                 else if (bz2unzip) {
                     int totalBytesRead = 0;
@@ -3015,7 +3115,11 @@ public class FileIO {
             }
 
         }
-
+        
+        File f = new File(fileDir + fileName);
+        fileDir = f.getParent() + File.separator;
+        fileName = f.getName();
+        
         final int fileType = readFileType(niftiCompressed, multiFile, fileName, fileDir);
 
         try {

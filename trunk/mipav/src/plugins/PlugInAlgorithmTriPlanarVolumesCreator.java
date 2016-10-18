@@ -70,6 +70,10 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
     	
     	//if src image is 4d, output 4dInfo.txt file with number of time volumes
     	boolean isSrcImage4D = false;
+    	if(srcImage.getNDims() == 2) {
+    		System.out.println("src image is 2d");
+    		MipavUtil.displayError("Src Image is 2D");
+    	}
     	if(srcImage.getNDims() == 4) {
     		isSrcImage4D = true;
     	}
@@ -145,7 +149,13 @@ public class PlugInAlgorithmTriPlanarVolumesCreator extends AlgorithmBase {
         algoResample.setUpdateOriginFlag(doUpdateOrigin);
         algoResample.setUseScannerAnatomical(isSATransform);
         
-        algoResample.run();
+        
+        try {
+        	algoResample.run();
+		}catch(Throwable t) {
+			t.printStackTrace();
+			MipavUtil.displayError("AlgorithmTransform Fail: " + t.getMessage());
+		}
         
 		
         transformedImage = 	algoResample.getTransformedImage();
