@@ -308,19 +308,16 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
      * @param  kernelType           dilation kernel size (i.e. connectedness)
      * @param  circleDiameter       dilation only valid if kernelType == SIZED_CIRCLE and represents the width of a
      *                              circle in the resolution of the image
-     * @param  kernelTypeErode      kernel size (i.e. connectedness) of erosion
-     * @param  circleDiameterErode  Erosion only valid if kernelType == SIZED_CIRCLE and represents the width of a
-     *                              circle in the resolution of the image
      * @param  method               setup the algorithm method (i.e. erode, dilate)
      * @param  geodesicSize
-     * @param  iterD             number of times to dilate
+     * @param  iterD                number of times to dilate
      * @param  iterE                number of times to erode
      * @param  entireImage          if true, indicates that the VOIs should NOT be used and that entire image should be
      *                              processed
      * @param  _showFrame           if true, indicates that show image frame after each algorithm be processed
      */
-    public AlgorithmMorphology2D(ModelImage srcImg, ModelImage maskImage, int kernelType, float circleDiameter, int kernelTypeErode,
-                                 float circleDiameterErode, int method, int geodesicSize, int iterD, int iterE,
+    public AlgorithmMorphology2D(ModelImage srcImg, ModelImage maskImage, int kernelType, float circleDiameter,
+                                 int method, int geodesicSize, int iterD, int iterE,
                                  boolean entireImage, boolean _showFrame) {
         super(null, srcImg);
         this.maskImage = maskImage;
@@ -339,9 +336,6 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } else {
             makeKernel(kernelType);
         }
-
-        this.kernelTypeErode = kernelTypeErode;
-        this.circleDiameterErode = circleDiameterErode;
 
     }
 
