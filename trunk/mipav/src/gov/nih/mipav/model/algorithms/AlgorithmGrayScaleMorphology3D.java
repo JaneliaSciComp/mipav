@@ -67,6 +67,18 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     public static final int BOTTOM_HAT = 16;
     
     public static final int MORPHOLOGICAL_LAPLACIAN = 17;
+    
+    public static final int GEODESIC_DILATION = 18;
+    
+    public static final int GEODESIC_EROSION = 19;
+    
+    public static final int MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION = 20;
+    
+    public static final int MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION = 21;
+    
+    public static final int OPENING_BY_RECONSTRUCTION = 22;
+    
+    public static final int CLOSING_BY_RECONSTRUCTION = 23;
 
     /** DOCUMENT ME! */
     public static final int SIZED_SPHERE = AlgorithmMorphology3D.SIZED_SPHERE;
@@ -108,6 +120,8 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     private double[] imgBuffer;
     
     private double[] imgBuffer2;
+    
+    private double[] maskBuffer;
 
     /** Dilation iteration times. */
     private int iterationsD;
@@ -144,6 +158,16 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
 
     /** kernel diameter. */
     private float sphereDiameter;
+    
+    /** Image that constrains morphological transformations */
+    /** Used in geodesic dilation, geodesic erosion, morphological reconstruction
+     * by dilation, and morphological reconstruction by erosion
+     * Not used in opening by reconstruction and closing by reconstruction
+     */
+    private ModelImage maskImage = null;
+    
+    /** Size of geodesic erosions and dilations */
+    private int geodesicSize;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -201,6 +225,43 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
             makeKernel(kernelType);
         }
     }
+    
+    /**
+     * Creates a new AlgorithmGrayScaleMorphology3D object.
+     *
+     * @param  srcImg               source image model
+     * @paran  maskImage            image that constrains the morphological transformation
+     * @param  kernelType           dilation kernel size (i.e. connectedness)
+     * @param  sphereDiameter       dilation only valid if kernelType == SIZED_SPHERE and represents the width of a
+     *                              circle in the resolution of the image
+     * @param  method               setup the algorithm method (i.e. erode, dilate)
+     * @param  geodesicSize
+     * @param  iterD             number of times to dilate
+     * @param  iterE                number of times to erode
+     * @param  entireImage          if true, indicates that the VOIs should NOT be used and that entire image should be
+     *                              processed
+     */
+    public AlgorithmGrayScaleMorphology3D(ModelImage srcImg, ModelImage destImg, ModelImage maskImage, int kernelType, float sphereDiameter,
+                                 int method, int geodesicSize, int iterD, int iterE,
+                                 boolean entireImage) {
+        super(destImg, srcImg);
+        this.maskImage = maskImage;
+        setAlgorithm(method);
+
+        this.geodesicSize = geodesicSize;
+        iterationsD = iterD;
+        iterationsE = iterE;
+        this.entireImage = entireImage;
+        this.kernelType = kernelType;
+
+        if (kernelType == SIZED_SPHERE) {
+            this.sphereDiameter = sphereDiameter;
+            makeSphericalKernel();
+        } else {
+            makeKernel(kernelType);
+        }
+
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -221,12 +282,21 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+    	int i;
 
         if (srcImage == null) {
             displayError("Source Image is null");
             setCompleted(false);
 
             return;
+        }
+        
+        if ((maskImage == null) && ((algorithm == GEODESIC_DILATION) || (algorithm == GEODESIC_EROSION)
+        		|| (algorithm == MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION) ||
+        		(algorithm == MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION))) {
+        	displayError("Mask Image is null");
+        	setCompleted(false);
+        	return;
         }
 
         srcImage.calcMinMax();
@@ -248,8 +318,8 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
             return;
         }
 
+        int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
         try {
-            int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
 
             imgBuffer = new double[length];
 
@@ -273,6 +343,37 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
 
             return;
         }
+        
+        if (maskImage != null) {
+        	try {
+                maskBuffer = new double[length];
+                maskImage.exportData(0, length, maskBuffer); // locks and releases lock
+            } catch (IOException error) {
+                displayError("Algorithm GrayScaleMorphology3D: Mask Image locked");
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                displayError("Algorithm GrayScaleMorphology3D: Out of memory");
+                setCompleted(false);
+
+                return;
+            }	
+        } // if (maskImage != null)
+        
+        if ((algorithm == OPENING_BY_RECONSTRUCTION) || (algorithm == CLOSING_BY_RECONSTRUCTION)) {
+        	try {
+        	    maskBuffer = new double[length];
+        	} catch (OutOfMemoryError e) {
+                displayError("Algorithm GrayScaleMorphology3D: Out of memory");
+                setCompleted(false);
+
+                return;
+            }
+        	for (i = 0; i < length; i++) {
+        		maskBuffer[i] = imgBuffer[i];
+        	}
+        }
 
         // initProgressBar();
 
@@ -284,38 +385,38 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
         switch (algorithm) {
 
             case ERODE:
-                erode(false);
+                erode(false, iterationsE);
                 break;
 
             case DILATE:
-                dilate(false);
+                dilate(false, iterationsD);
                 break;
 
             case CLOSE:
 
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
-                dilate(true);
+                dilate(true, iterationsD);
 
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                                   ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-                erode(false);
+                erode(false, iterationsE);
                 break;
 
             case OPEN:
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
-                erode(true);
+                erode(true, iterationsE);
 
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                                   ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-                dilate(false);
+                dilate(false, iterationsD);
                 break;
                 
             case MORPHOLOGICAL_GRADIENT:
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
-                dilate(true);
+                dilate(true, iterationsD);
                 imgBuffer2 = new double[imgBuffer.length];
                 System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
                 try { 
@@ -328,8 +429,8 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 }
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                         ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-                erode(true);
-                for (int i = 0; i < imgBuffer.length; i++) {
+                erode(true, iterationsE);
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] = imgBuffer2[i] - imgBuffer[i];
                 }
                 try {
@@ -349,10 +450,10 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 // image - open of image
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
-                erode(true);
+                erode(true, iterationsE);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                                   ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-                dilate(true);
+                dilate(true, iterationsD);
                 imgBuffer2 = new double[imgBuffer.length];
                 System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
                 try { 
@@ -363,7 +464,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
 
                     return;
                 }
-                for (int i = 0; i < imgBuffer.length; i++) {
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer[i] = imgBuffer[i] - imgBuffer2[i];
                 }
                 try {
@@ -383,10 +484,10 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 // close of image - image
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
-                dilate(true);
+                dilate(true, iterationsD);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                                   ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-                erode(true);
+                erode(true, iterationsE);
                 imgBuffer2 = new double[imgBuffer.length];
                 System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
                 try { 
@@ -397,7 +498,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
 
                     return;
                 }
-                for (int i = 0; i < imgBuffer.length; i++) {
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] = imgBuffer2[i] - imgBuffer[i];
                 }
                 try {
@@ -417,7 +518,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 // (dilation of image - image) - (image - erosion of image)
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
-                dilate(true);
+                dilate(true, iterationsD);
                 imgBuffer2 = new double[imgBuffer.length];
                 System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
                 try { 
@@ -430,8 +531,8 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 }
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                         ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-                erode(true);
-                for (int i = 0; i < imgBuffer.length; i++) {
+                erode(true, iterationsE);
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] = imgBuffer2[i] + imgBuffer[i];
                 }
                 try { 
@@ -442,7 +543,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
 
                     return;
                 }
-                for (int i = 0; i < imgBuffer.length; i++) {
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] = imgBuffer2[i] - 2 * imgBuffer[i];
                 }
                 try {
@@ -456,6 +557,32 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 }
 
                 setCompleted(true);
+                break;
+                
+            case GEODESIC_DILATION:
+                geodesicDilation(false, geodesicSize);
+                break;
+                
+            case GEODESIC_EROSION:
+            	geodesicErosion(false, geodesicSize);
+            	break;
+            	
+            case MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION:
+            	geodesicDilation(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION:
+            	geodesicErosion(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case OPENING_BY_RECONSTRUCTION:
+            	erode(true, iterationsE);
+            	geodesicDilation(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case CLOSING_BY_RECONSTRUCTION:
+            	dilate(true, iterationsD);
+                geodesicErosion(false, Integer.MAX_VALUE);
                 break;
 
             /*case FILL_HOLES:
@@ -603,8 +730,9 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
      * For symmetric kernels the reflected kernel is the same as the kernel.
      *
      * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * @param  iters number of dilation iterations
      */
-    private void dilate(boolean returnFlag) {
+    private void dilate(boolean returnFlag, int iters) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -636,7 +764,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
         int stepZ = kDimZ * sliceSize;
         int stepY = kDimXY * xDim;
 
-        int totalSize = imgSize * iterationsD;
+        int totalSize = imgSize * iters;
         int tmpSize = 0;
         int mod = totalSize / 100;
 
@@ -648,7 +776,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
             processBuffer[pix] = 0;
         }
 
-        for (c = 0; (c < iterationsD) && !threadStopped; c++) {
+        for (c = 0; (c < iters) && !threadStopped; c++) {
             tmpSize = c * imgSize;
 
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
@@ -759,6 +887,166 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
 
         setCompleted(true);
     }
+    
+    /**
+     * geodesic dilation of a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * @param  geodesicSize
+     */
+    private void geodesicDilation(boolean returnFlag, int geodesicSize) {
+        int i;
+        int j;
+        int xDim;
+        int yDim;
+        int zDim;
+        int sliceSize;
+        int imgSize;
+        double lastBuffer[];
+        boolean same;
+        
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        zDim = srcImage.getExtents()[2];
+        imgSize = zDim * sliceSize;
+        lastBuffer = new double[imgSize];
+        for (i = 0; i < imgSize; i++) {
+        	lastBuffer[i] = imgBuffer[i];
+        }
+        
+        for (i = 0; i < geodesicSize; i++) {
+            dilate(true, 1);
+            for (j = 0; j < imgSize; j++) {
+            	imgBuffer[j] = Math.min(imgBuffer[j], maskBuffer[j]);
+            }
+            same = true;
+            for (j = 0; same && j < imgSize; j++) {
+            	if (imgBuffer[j] != lastBuffer[j]) {
+            		same = false;
+            	}
+            }
+            if (same) {
+            	break;
+            }
+            else {
+            	for (j = 0; j < imgSize; j++) {
+            		lastBuffer[j] = imgBuffer[j];
+            	}
+            }
+        } // for (i = 0; i < geodesicSize; i++)
+
+        if (returnFlag == true) {
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+
+            srcImage.importData(0, imgBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    }
+    
+    /**
+     * geodesic erosion of a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * @param  geodesicSize
+     */
+    private void geodesicErosion(boolean returnFlag, int geodesicSize) {
+        int i;
+        int j;
+        int xDim;
+        int yDim;
+        int zDim;
+        int sliceSize;
+        int imgSize;
+        double lastBuffer[];
+        boolean same;
+        
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        zDim = srcImage.getExtents()[2];
+        imgSize = zDim *sliceSize;
+        lastBuffer = new double[imgSize];
+        for (i = 0; i < imgSize; i++) {
+        	lastBuffer[i] = imgBuffer[i];
+        }
+        
+        for (i = 0; i < geodesicSize; i++) {
+            erode(true, 1);
+            for (j = 0; j < imgSize; j++) {
+            	imgBuffer[j] = Math.max(imgBuffer[j], maskBuffer[j]);
+            }
+            same = true;
+            for (j = 0; same && j < imgSize; j++) {
+            	if (imgBuffer[j] != lastBuffer[j]) {
+            		same = false;
+            	}
+            }
+            if (same) {
+            	break;
+            }
+            else {
+            	for (j = 0; j < imgSize; j++) {
+            		lastBuffer[j] = imgBuffer[j];
+            	}
+            }
+        } // for (i = 0; i < geodesicSize; i++)
+
+        if (returnFlag == true) {
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+
+            srcImage.importData(0, imgBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    }
 
  
     /**
@@ -766,8 +1054,9 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
      * iterations.  The grayscale erosion is the minimum value over the kernel region.
      *
      * @param  returnFlag  if true then this operation is a step in the morph process (i.e. open)
+     * @param  iters number of erosion iterations
      */
-    private void erode(boolean returnFlag) {
+    private void erode(boolean returnFlag, int iters) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -800,12 +1089,12 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
         int stepZ = kDimZ * sliceSize;
         int stepY = kDimXY * xDim;
 
-        int totalSize = imgSize * iterationsE;
+        int totalSize = imgSize * iters;
         int tmpSize = 0;
         int mod = totalSize / 100;
         fireProgressStateChanged("Eroding image ...");
 
-        for (c = 0; (c < iterationsE) && !threadStopped; c++) {
+        for (c = 0; (c < iters) && !threadStopped; c++) {
             tmpSize = c * imgSize;
 
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
