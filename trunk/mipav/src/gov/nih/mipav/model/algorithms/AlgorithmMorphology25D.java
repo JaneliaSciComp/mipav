@@ -79,6 +79,18 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
     public static final int MORPHOLOGICAL_GRADIENT = 14;
     
     public static final int BORDER_CLEARING = 15;
+    
+    public static final int GEODESIC_DILATION = 16;
+    
+    public static final int GEODESIC_EROSION = 17;
+    
+    public static final int MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION = 18;
+    
+    public static final int MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION = 19;
+    
+    public static final int OPENING_BY_RECONSTRUCTION = 20;
+    
+    public static final int CLOSING_BY_RECONSTRUCTION = 21;
 
     /** DOCUMENT ME! */
     public static final int SIZED_CIRCLE = 0;
@@ -113,6 +125,8 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
     private short[] imgBuffer;
     
     private short[] imgBuffer2;
+    
+    private short[] maskBuffer;
 
     /** DOCUMENT ME! */
     private int imgLength;
@@ -140,6 +154,16 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int sliceLength;
+    
+    /** Image that constrains morphological transformations */
+    /** Used in geodesic dilation, geodesic erosion, morphological reconstruction
+     * by dilation, and morphological reconstruction by erosion
+     * Not used in opening by reconstruction and closing by reconstruction
+     */
+    private ModelImage maskImage = null;
+    
+    /** Size of geodesic erosions and dilations */
+    private int geodesicSize;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -176,6 +200,43 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         } else {
             makeKernel(kernelType);
         }
+    }
+    
+    /**
+     * Creates a new AlgorithmMorphology25D object.
+     *
+     * @param  srcImg               source image model
+     * @paran  maskImage            image that constrains the morphological transformation
+     * @param  kernelType           dilation kernel size (i.e. connectedness)
+     * @param  circleDiameter       dilation only valid if kernelType == SIZED_CIRCLE and represents the width of a
+     *                              circle in the resolution of the image
+     * @param  method               setup the algorithm method (i.e. erode, dilate)
+     * @param  geodesicSize
+     * @param  iterD             number of times to dilate
+     * @param  iterE                number of times to erode
+     * @param  entireImage          if true, indicates that the VOIs should NOT be used and that entire image should be
+     *                              processed
+     */
+    public AlgorithmMorphology25D(ModelImage srcImg, ModelImage maskImage, int kernelType, float circleDiameter,
+                                 int method, int geodesicSize, int iterD, int iterE,
+                                 boolean entireImage) {
+        super(null, srcImg);
+        this.maskImage = maskImage;
+        setAlgorithm(method);
+
+        this.geodesicSize = geodesicSize;
+        iterationsD = iterD;
+        iterationsE = iterE;
+        this.entireImage = entireImage;
+        this.kernelType = kernelType;
+
+        if (kernelType == SIZED_CIRCLE) {
+            this.circleDiameter = circleDiameter;
+            makeCircularKernel(circleDiameter);
+        } else {
+            makeKernel(kernelType);
+        }
+
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -456,6 +517,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+    	int i;
 
         // do all source image verification before logging:
         if (srcImage == null) {
@@ -463,6 +525,14 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        }
+        
+        if ((maskImage == null) && ((algorithm == GEODESIC_DILATION) || (algorithm == GEODESIC_EROSION)
+        		|| (algorithm == MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION) ||
+        		(algorithm == MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION))) {
+        	displayError("Mask Image is null");
+        	setCompleted(false);
+        	return;
         }
 
         srcImage.calcMinMax();
@@ -510,6 +580,37 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        }
+        
+        if (maskImage != null) {
+        	try {
+                maskBuffer = new short[imgLength];
+                maskImage.exportData(0, imgLength, maskBuffer); // locks and releases lock
+            } catch (IOException error) {
+                displayError("Algorithm Morphology25D: Mask Image locked");
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                displayError("Algorithm Morphology25D: Out of memory");
+                setCompleted(false);
+
+                return;
+            }	
+        } // if (maskImage != null)
+        
+        if ((algorithm == OPENING_BY_RECONSTRUCTION) || (algorithm == CLOSING_BY_RECONSTRUCTION)) {
+        	try {
+        	    maskBuffer = new short[imgLength];
+        	} catch (OutOfMemoryError e) {
+                displayError("Algorithm Morphology25D: Out of memory");
+                setCompleted(false);
+
+                return;
+            }
+        	for (i = 0; i < imgLength; i++) {
+        		maskBuffer[i] = imgBuffer[i];
+        	}
         }
 
         // initProgressBar();
@@ -560,7 +661,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                         ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 erode(true, 1);
-                for (int i = 0; i < imgBuffer.length; i++) {
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] -= imgBuffer[i];
                 }
                 try {
@@ -628,6 +729,32 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             case BORDER_CLEARING:
             	borderClearing(false);
             	break;
+            	
+            case GEODESIC_DILATION:
+                geodesicDilation(false, geodesicSize);
+                break;
+                
+            case GEODESIC_EROSION:
+            	geodesicErosion(false, geodesicSize);
+            	break;
+            	
+            case MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION:
+            	geodesicDilation(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION:
+            	geodesicErosion(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case OPENING_BY_RECONSTRUCTION:
+            	erode(true, iterationsE);
+            	geodesicDilation(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case CLOSING_BY_RECONSTRUCTION:
+            	dilate(true, iterationsD);
+                geodesicErosion(false, Integer.MAX_VALUE);
+                break;
 
             default:
                 break;
@@ -966,6 +1093,382 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
      
         setCompleted(true);
+    }
+    
+    /**
+     * geodesic dilation of a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * @param  geodesicSize
+     */
+    private void geodesicDilation(boolean returnFlag, int geodesicSize) {
+        int i;
+        int j;
+        int z;
+        int xDim;
+        int yDim;
+        int zDim;
+        int sliceSize;
+        short lastBuffer[];
+        boolean same;
+        int indexZ;
+        
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        zDim = srcImage.getExtents()[2];
+        lastBuffer = new short[sliceSize];
+        for (z = 0; z < zDim; z++) {
+        	indexZ = z * sliceSize;
+	        for (i = 0; i < sliceSize; i++) {
+	        	lastBuffer[i] = imgBuffer[indexZ+i];
+	        }
+	        
+	        for (i = 0; i < geodesicSize; i++) {
+	            dilate2D(indexZ, 1);
+	            for (j = 0; j < sliceSize; j++) {
+	            	if (maskBuffer[indexZ+j] == 0) {
+	            		imgBuffer[indexZ+j] = 0;
+	            	}
+	            }
+	            same = true;
+	            for (j = 0; same && j < sliceSize; j++) {
+	            	if (imgBuffer[indexZ+j] != lastBuffer[j]) {
+	            		same = false;
+	            	}
+	            }
+	            if (same) {
+	            	break;
+	            }
+	            else {
+	            	for (j = 0; j < sliceSize; j++) {
+	            		lastBuffer[j] = imgBuffer[indexZ+j];
+	            	}
+	            }
+	        } // for (i = 0; i < geodesicSize; i++)
+        } // for (z = 0; z < zDim; z++)
+
+        if (returnFlag == true) {
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+
+            srcImage.importData(0, imgBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm Morphology25D: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    }
+    
+    /**
+     * Dilates a boolean, unsigned byte or unsigned short image slice using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  indexZ
+     * @param  iters       number of dilations
+     */
+    private void dilate2D(int indexZ, int iters) {
+
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+
+        int c;
+        short value = 0;
+        int i, j, pix, count;
+        int offsetX, offsetY;
+        int offsetXU;
+        int startX, startY;
+        int endX, endY;
+
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+
+        int halfKDim = kDim / 2;
+        int sliceSize = xDim * yDim;
+        int stepY = kDim * xDim;
+        short[] tempBuffer;
+
+        for (pix = 0; pix < sliceSize; pix++) {
+            processBuffer[indexZ+pix] = 0;
+        }
+
+        for (c = 0; (c < iters) && !threadStopped; c++) {
+
+            for (pix = 0; (pix < sliceSize) && !threadStopped; pix++) {
+
+                if (entireImage || mask.get(indexZ+pix)) {
+                    value = imgBuffer[indexZ+pix];
+
+                    if (value != 0) {
+                        offsetX = (pix % xDim) - halfKDim;
+                        offsetXU = offsetX + kDim;
+                        offsetY = (pix / xDim) - halfKDim;
+
+                        count = 0;
+                        startY = offsetY * xDim;
+                        endY = startY + stepY;
+
+                        if (startY < 0) {
+                            startY = 0;
+                        }
+
+                        if (endY > sliceSize) {
+                            endY = sliceSize;
+                        }
+
+                        if (offsetX < 0) {
+                            offsetX = 0;
+                        }
+
+                        if (offsetXU > xDim) {
+                            offsetXU = xDim;
+                        }
+
+                        for (j = startY; j < endY; j += xDim) {
+                            startX = j + offsetX;
+                            endX = j + offsetXU;
+
+                            for (i = startX; i < endX; i++) {
+
+                                if (kernel.get(count) == true) {
+                                    processBuffer[indexZ+i] = value;
+                                }
+
+                                count++;
+                            }
+                        }
+                    }
+                } else {
+                    processBuffer[indexZ+pix] = imgBuffer[indexZ+pix];
+                }
+            }
+
+            tempBuffer = imgBuffer;
+            imgBuffer = processBuffer;
+            processBuffer = tempBuffer;
+        }
+        return;
+    }
+    
+    /**
+     * geodesic erosion of a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * @param  geodesicSize
+     */
+    private void geodesicErosion(boolean returnFlag, int geodesicSize) {
+        int i;
+        int j;
+        int z;
+        int xDim;
+        int yDim;
+        int zDim;
+        int indexZ;
+        int sliceSize;
+        short lastBuffer[];
+        boolean same;
+        
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        zDim = srcImage.getExtents()[2];
+        lastBuffer = new short[sliceSize];
+        for (z = 0; z < zDim; z++) {
+        	indexZ = z * sliceSize;
+	        for (i = 0; i < sliceSize; i++) {
+	        	lastBuffer[i] = imgBuffer[indexZ+i];
+	        }
+	        
+	        for (i = 0; i < geodesicSize; i++) {
+	            erode2D(indexZ, 1);
+	            for (j = 0; j < sliceSize; j++) {
+	            	if (imgBuffer[indexZ+j] == 0) {
+	            		imgBuffer[indexZ+j] = maskBuffer[indexZ+j];
+	            	}
+	            }
+	            same = true;
+	            for (j = 0; same && j < sliceSize; j++) {
+	            	if (imgBuffer[indexZ+j] != lastBuffer[j]) {
+	            		same = false;
+	            	}
+	            }
+	            if (same) {
+	            	break;
+	            }
+	            else {
+	            	for (j = 0; j < sliceSize; j++) {
+	            		lastBuffer[j] = imgBuffer[indexZ+j];
+	            	}
+	            }
+	        } // for (i = 0; i < geodesicSize; i++)
+        } // for (z = 0; z < zDim; z++)
+
+        if (returnFlag == true) {
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+
+            srcImage.importData(0, imgBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm Morphology25D: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    }
+    
+    /**
+     * Erodes a boolean or unsigned byte or unsigned short image slice using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  indexZ
+     * @param  iters       number of erosion iterations.
+     */
+    private void erode2D(int indexZ, int iters) {
+
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+
+        boolean clear;
+        int c;
+        short value = 0;
+        int i, j, pix, count;
+        int offsetX, offsetY;
+        int offsetXU;
+        int startX, startY;
+        int endX, endY;
+
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+
+        int halfKDim = kDim / 2;
+        int sliceSize = xDim * yDim;
+        int stepY = kDim * xDim;
+        short[] tempBuffer;
+
+        for (pix = 0; pix < sliceSize; pix++) {
+            processBuffer[indexZ+pix] = 0;
+        }
+
+        for (c = 0; (c < iters) && !threadStopped; c++) {
+
+            for (pix = 0; (pix < sliceSize) && !threadStopped; pix++) {
+
+                if (entireImage || mask.get(indexZ+pix)) {
+                    value = imgBuffer[indexZ+pix];
+
+                    if (imgBuffer[indexZ+pix] == 0) {
+                        clear = true;
+                    } else {
+                        clear = false;
+                        offsetX = (pix % xDim) - halfKDim;
+                        offsetXU = offsetX + kDim;
+                        offsetY = (pix / xDim) - halfKDim;
+
+                        count = 0;
+                        startY = offsetY * xDim;
+                        endY = startY + stepY;
+
+                        if (startY < 0) {
+                            startY = 0;
+                        }
+
+                        if (endY > sliceSize) {
+                            endY = sliceSize;
+                        }
+
+                        if (offsetX < 0) {
+                            offsetX = 0;
+                        }
+
+                        if (offsetXU > xDim) {
+                            offsetXU = xDim;
+                        }
+
+
+kernelLoop:
+                        for (j = startY; j < endY; j += xDim) {
+                            startX = j + offsetX;
+                            endX = j + offsetXU;
+
+                            for (i = startX; i < endX; i++) {
+
+                                if ((kernel.get(count) == true) && (imgBuffer[indexZ+i] == 0)) {
+                                    clear = true;
+
+                                    break kernelLoop;
+                                }
+
+                                count++;
+                            }
+                        }
+                    }
+
+                    if (clear == true) {
+                        processBuffer[indexZ+pix] = 0;
+                    } else {
+                        processBuffer[indexZ+pix] = value;
+                    }
+                } else {
+
+                    processBuffer[indexZ+pix] = imgBuffer[indexZ+pix];
+                }
+            }
+
+            tempBuffer = imgBuffer;
+            imgBuffer = processBuffer;
+            processBuffer = tempBuffer;
+        }
+
+        
+        return;
+        
     }
 
     /**
