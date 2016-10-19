@@ -144,6 +144,12 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
     private JLabel geodesicSizeLabel;
     
     private JTextField geodesicSizeText;
+    
+    private int geodesicSize;
+    
+    private ModelImage maskImage = null;
+    
+    private int method;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -583,7 +589,7 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         else if ((source == geodesicDilationButton) || (source == geodesicErosionButton) ||
         		 (source == reconstructionByDilationButton) || (source == reconstructionByErosionButton) ||
         		 (source == openingByReconstructionButton) || (source == closingByReconstructionButton)) {
-        	if (geodesicDilationButton.isSelected()) {
+        	if (geodesicDilationButton.isSelected() || geodesicErosionButton.isSelected()) {
         		markerLabel.setEnabled(true);
         		maskLabel.setEnabled(true);
         		imageComboBox.setEnabled(true);
@@ -593,6 +599,39 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         		textNIterD.setEnabled(false);
         		labelNIterE.setEnabled(false);
         		textNIterE.setEnabled(false);
+        	}
+        	else if (reconstructionByDilationButton.isSelected() || reconstructionByErosionButton.isSelected()) {
+        		markerLabel.setEnabled(true);
+        		maskLabel.setEnabled(true);
+        		imageComboBox.setEnabled(true);
+        		geodesicSizeLabel.setEnabled(false);
+        		geodesicSizeText.setEnabled(false);
+        		labelNIterD.setEnabled(false);
+        		textNIterD.setEnabled(false);
+        		labelNIterE.setEnabled(false);
+        		textNIterE.setEnabled(false);	
+        	}
+        	else if (openingByReconstructionButton.isSelected()) {
+        		markerLabel.setEnabled(false);
+        		maskLabel.setEnabled(false);
+        		imageComboBox.setEnabled(false);
+        		geodesicSizeLabel.setEnabled(false);
+        		geodesicSizeText.setEnabled(false);
+        		labelNIterD.setEnabled(false);
+        		textNIterD.setEnabled(false);
+        		labelNIterE.setEnabled(true);
+        		textNIterE.setEnabled(true);		
+        	}
+        	else if (closingByReconstructionButton.isSelected()) {
+        		markerLabel.setEnabled(false);
+        		maskLabel.setEnabled(false);
+        		imageComboBox.setEnabled(false);
+        		geodesicSizeLabel.setEnabled(false);
+        		geodesicSizeText.setEnabled(false);
+        		labelNIterD.setEnabled(true);
+        		textNIterD.setEnabled(true);
+        		labelNIterE.setEnabled(false);
+        		textNIterE.setEnabled(false);	
         	}
         }
     }
@@ -1475,55 +1514,100 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
-
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(markerLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(maskLabel, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        maskPanel.add(imageComboBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(geodesicDilationButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(geodesicErosionButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(reconstructionByDilationButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(reconstructionByErosionButton, gbc);
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(openingByReconstructionButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        maskPanel.add(closingByReconstructionButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelNIterE, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 6;
+        gbc.gridy = 8;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textNIterE, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 9;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelNIterD, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 7;
+        gbc.gridy = 9;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textNIterD, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 10;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelKernel, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 8;
+        gbc.gridy = 10;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(comboBoxKernel, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 11;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelKernelSize, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 9;
+        gbc.gridy = 11;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textKernelSize, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 12;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(binaryButton, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 13;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(grayScaleButton, gbc);
@@ -1625,27 +1709,75 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         String tmpStr;
 
         do25D = image25D.isSelected();
-
-        tmpStr = textNIterD.getText();
-
-        if (testParameter(tmpStr, 1, 20)) {
-            itersD = Integer.valueOf(tmpStr).intValue();
-        } else {
-            textNIterD.requestFocus();
-            textNIterD.selectAll();
-
-            return false;
+        
+        binaryMorphology = binaryButton.isSelected();
+        
+        if (binaryMorphology) {
+        	if (image.getNDims() == 2) {
+        	    if (geodesicDilationButton.isSelected()) {
+        	    	method = AlgorithmMorphology2D.GEODESIC_DILATION;
+        	    }
+        	    else if (geodesicErosionButton.isSelected()) {
+        	        method = AlgorithmMorphology2D.GEODESIC_EROSION;	
+        	    }
+        	} // if (image.getNDims() == 2)
+        	else if (do25D) {
+        		
+        	} // else if (do25)
+        	else {
+        		
+        	} // else
+        } // if (binaryMorphology)
+        else {
+        	
+        }
+        
+        if (geodesicDilationButton.isSelected() || geodesicErosionButton.isSelected() || 
+        		reconstructionByErosionButton.isSelected() || reconstructionByDilationButton.isSelected()) {
+            String selectedName = (String) imageComboBox.getSelectedItem();
+            maskImage = userInterface.getRegisteredImageByName(selectedName);
+        }
+        else {
+        	maskImage = null;
+        }
+        
+        if (geodesicDilationButton.isSelected() || geodesicErosionButton.isSelected()) {
+	        tmpStr = geodesicSizeText.getText();
+	        
+	        if (testParameter(tmpStr, 1, 20)) {
+	            geodesicSize = Integer.valueOf(tmpStr).intValue();
+	        } else {
+	            geodesicSizeText.requestFocus();
+	            geodesicSizeText.selectAll();
+	
+	            return false;
+	        }
         }
 
-        tmpStr = textNIterE.getText();
+	    if (closingByReconstructionButton.isSelected()) {
+	        tmpStr = textNIterD.getText();
+	        
+	        if (testParameter(tmpStr, 1, 20)) {
+	            itersD = Integer.valueOf(tmpStr).intValue();
+	        } else {
+	            textNIterD.requestFocus();
+	            textNIterD.selectAll();
+	
+	            return false;
+	        }
+        }
 
-        if (testParameter(tmpStr, 1, 20)) {
-            itersE = Integer.valueOf(tmpStr).intValue();
-        } else {
-            textNIterE.requestFocus();
-            textNIterE.selectAll();
-
-            return false;
+        if (openingByReconstructionButton.isSelected()) {
+		    tmpStr = textNIterE.getText();
+	
+	        if (testParameter(tmpStr, 1, 20)) {
+	            itersE = Integer.valueOf(tmpStr).intValue();
+	        } else {
+	            textNIterE.requestFocus();
+	            textNIterE.selectAll();
+	
+	            return false;
+	        }
         }
 
         tmpStr = textKernelSize.getText();
@@ -1675,6 +1807,17 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
             } else if (comboBoxKernel.getSelectedIndex() == 3) {
                 kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
             }
+        } else if (do25D) {
+
+            if (comboBoxKernel.getSelectedIndex() == 0) {
+                kernel = AlgorithmMorphology25D.CONNECTED4;
+            } else if (comboBoxKernel.getSelectedIndex() == 1) {
+                kernel = AlgorithmMorphology25D.CONNECTED8;
+            } else if (comboBoxKernel.getSelectedIndex() == 2) {
+                kernel = AlgorithmMorphology25D.CONNECTED12;
+            } else if (comboBoxKernel.getSelectedIndex() == 3) {
+                kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
+            }
         } else if (image.getNDims() == 3) {
 
             if (comboBoxKernel.getSelectedIndex() == 0) {
@@ -1687,8 +1830,6 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                 kernel = AlgorithmMorphology3D.SIZED_SPHERE;
             }
         }
-        
-        binaryMorphology = binaryButton.isSelected();
 
         return true;
     }
