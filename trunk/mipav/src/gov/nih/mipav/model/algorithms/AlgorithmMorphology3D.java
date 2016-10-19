@@ -32,6 +32,13 @@ import WildMagic.LibFoundation.Mathematics.*;
  * <li>Particle Analysis</li>
  * <li>Skeletonize with pruning option</li>
  * <li>ultimate erode</li>
+ * <li>Border clearing</li>
+ * <li>Geodesic dilation</li>
+ * <li>Geodesic erosion</li>
+ * <li>Morphological reconstruction by dilation</li>
+ * <li>Morphological reconstruction by erosion</li>
+ * <li>Opening by reconstruction</li>
+ * <li>Closing by reconstruction</li>
  * </ul>
  * 
  * @version 1.0 Aug 1999
@@ -87,6 +94,18 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     public static final int MORPHOLOGICAL_GRADIENT = 14;
     
     public static final int BORDER_CLEARING = 15;
+    
+    public static final int GEODESIC_DILATION = 16;
+    
+    public static final int GEODESIC_EROSION = 17;
+    
+    public static final int MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION = 18;
+    
+    public static final int MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION = 19;
+    
+    public static final int OPENING_BY_RECONSTRUCTION = 20;
+    
+    public static final int CLOSING_BY_RECONSTRUCTION = 21;
 
     /** DOCUMENT ME! */
     public static final int SIZED_SPHERE = 0;
@@ -121,7 +140,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     private float[] distanceMap = null;
 
     /** Edge type. */
-    private final int edgingType;
+    private int edgingType;
 
     /** if true, indicates that the VOIs should NOT be used and that entire image should be processed. */
     private boolean entireImage;
@@ -130,6 +149,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     private short[] imgBuffer;
 
     private short[] imgBuffer2;
+    
+    private short[] maskBuffer;
 
     /** Dilation iteration times. */
     private final int iterationsD;
@@ -154,7 +175,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     private int min = 1, max = 20000000;
 
     /** Number pixels to prune. */
-    private final int numPruningPixels;
+    private int numPruningPixels;
 
     /** Vector that holding the current available objects in the 3D image. */
     private Vector<intObject> objects = new Vector<intObject>();
@@ -173,6 +194,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private Vector3f[] ultErodeObjects = null;
+    
+    /** Image that constrains morphological transformations */
+    /** Used in geodesic dilation, geodesic erosion, morphological reconstruction
+     * by dilation, and morphological reconstruction by erosion
+     * Not used in opening by reconstruction and closing by reconstruction
+     */
+    private ModelImage maskImage = null;
+    
+    /** Size of geodesic erosions and dilations */
+    private int geodesicSize;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -192,7 +223,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      * @param entireImage flag that indicates if the VOIs should NOT be used and entire image should be processed
      */
     public AlgorithmMorphology3D(final ModelImage srcImg, final int kernelType, final float sphereDiameter,
-            final int method, final int iterD, final int iterE, final int pruningPix, final int edType,
+            final int method, final int iterD, final int iterE, int pruningPix, int edType,
             final boolean entireImage) {
         this(srcImg, null, kernelType, sphereDiameter, method, iterD, iterE, pruningPix, edType, entireImage);
     }
@@ -213,8 +244,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      * @param entireImage flag that indicates if the VOIs should NOT be used and entire image should be processed
      */
     public AlgorithmMorphology3D(final ModelImage srcImg, final ModelImage destImg, final int kernelType,
-            final float sphereDiameter, final int method, final int iterD, final int iterE, final int pruningPix,
-            final int edType, final boolean entireImage) {
+            final float sphereDiameter, final int method, final int iterD, final int iterE, int pruningPix,
+            int edType, final boolean entireImage) {
         super(destImg, srcImg);
         makeKernel(kernelType);
         setAlgorithm(method);
@@ -231,6 +262,42 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } else {
             makeKernel(kernelType);
         }
+    }
+    
+    /**
+     * Creates a new AlgorithmMorphology3D object.
+     *
+     * @param  srcImg               source image model
+     * @paran  maskImage            image that constrains the morphological transformation
+     * @param  kernelType           dilation kernel size (i.e. connectedness)
+     * @param  circleDiameter       dilation only valid if kernelType == SIZED_CIRCLE and represents the width of a
+     *                              circle in the resolution of the image
+     * @param  method               setup the algorithm method (i.e. erode, dilate)
+     * @param  geodesicSize
+     * @param  iterD                number of times to dilate
+     * @param  iterE                number of times to erode
+     * @param  entireImage          if true, indicates that the VOIs should NOT be used and that entire image should be
+     *                              processed
+     */
+    public AlgorithmMorphology3D(ModelImage srcImg, ModelImage destImg, ModelImage maskImage, int kernelType,
+    		float sphereDiameter, int method, int geodesicSize, int iterD, int iterE, boolean entireImage) {
+        super(destImg, srcImg);
+        this.maskImage = maskImage;
+        setAlgorithm(method);
+
+        this.geodesicSize = geodesicSize;
+        iterationsD = iterD;
+        iterationsE = iterE;
+        this.entireImage = entireImage;
+        this.kernelType = kernelType;
+
+        if (kernelType == AlgorithmMorphology3D.SIZED_SPHERE) {
+            this.sphereDiameter = sphereDiameter;
+            makeSphericalKernel();
+        } else {
+            makeKernel(kernelType);
+        }
+
     }
 
     // ~ Methods
@@ -816,12 +883,21 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+    	int i;
 
         if (srcImage == null) {
             displayError("Source Image is null");
             setCompleted(false);
 
             return;
+        }
+        
+        if ((maskImage == null) && ((algorithm == GEODESIC_DILATION) || (algorithm == GEODESIC_EROSION)
+        		|| (algorithm == MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION) ||
+        		(algorithm == MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION))) {
+        	displayError("Mask Image is null");
+        	setCompleted(false);
+        	return;
         }
 
         srcImage.calcMinMax();
@@ -847,9 +923,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             return;
         }
 
+        final int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
         try {
-            final int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
-
             imgBuffer = new short[length];
 
             if (algorithm != AlgorithmMorphology3D.FILL_HOLES) {
@@ -870,6 +945,37 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             return;
         }
+        
+        if (maskImage != null) {
+        	try {
+                maskBuffer = new short[length];
+                maskImage.exportData(0, length, maskBuffer); // locks and releases lock
+            } catch (IOException error) {
+                displayError("Algorithm Morphology3D: Mask Image locked");
+                setCompleted(false);
+
+                return;
+            } catch (OutOfMemoryError e) {
+                displayError("Algorithm Morphology3D: Out of memory");
+                setCompleted(false);
+
+                return;
+            }	
+        } // if (maskImage != null)
+        
+        if ((algorithm == OPENING_BY_RECONSTRUCTION) || (algorithm == CLOSING_BY_RECONSTRUCTION)) {
+        	try {
+        	    maskBuffer = new short[length];
+        	} catch (OutOfMemoryError e) {
+                displayError("Algorithm Morphology3D: Out of memory");
+                setCompleted(false);
+
+                return;
+            }
+        	for (i = 0; i < length; i++) {
+        		maskBuffer[i] = imgBuffer[i];
+        	}
+        }
 
         // initProgressBar();
 
@@ -879,38 +985,38 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         switch (algorithm) {
 
             case ERODE:
-                erode(false);
+                erode(false, iterationsE);
                 break;
 
             case DILATE:
-                dilate(false);
+                dilate(false, iterationsD);
                 break;
 
             case CLOSE:
 
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
-                dilate(true);
+                dilate(true, iterationsD);
 
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                         ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-                erode(false);
+                erode(false, iterationsE);
                 break;
 
             case OPEN:
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
-                erode(true);
+                erode(true, iterationsE);
 
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                         ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-                dilate(false);
+                dilate(false, iterationsD);
                 break;
 
             case MORPHOLOGICAL_GRADIENT:
                 progressValues = getProgressValues();
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
-                dilate(true);
+                dilate(true, iterationsD);
                 imgBuffer2 = new short[imgBuffer.length];
                 System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
                 try {
@@ -923,8 +1029,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 }
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
                         ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-                erode(true);
-                for (int i = 0; i < imgBuffer.length; i++) {
+                erode(true, iterationsE);
+                for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer2[i] -= imgBuffer[i];
                 }
                 try {
@@ -981,7 +1087,33 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 
             case BORDER_CLEARING:
             	borderClearing(false);
-            	break;    
+            	break; 
+            	
+            case GEODESIC_DILATION:
+                geodesicDilation(false, geodesicSize);
+                break;
+                
+            case GEODESIC_EROSION:
+            	geodesicErosion(false, geodesicSize);
+            	break;
+            	
+            case MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION:
+            	geodesicDilation(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION:
+            	geodesicErosion(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case OPENING_BY_RECONSTRUCTION:
+            	erode(true, iterationsE);
+            	geodesicDilation(false, Integer.MAX_VALUE);
+            	break;
+            	
+            case CLOSING_BY_RECONSTRUCTION:
+            	dilate(true, iterationsD);
+                geodesicErosion(false, Integer.MAX_VALUE);
+                break;
 
             default:
                 break;
@@ -1949,8 +2081,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      * iterations.
      * 
      * @param returnFlag if true then this operation is a step in the morph process (i.e. close)
+     * @param iters number of dilation iterations
      */
-    private void dilate(final boolean returnFlag) {
+    private void dilate(final boolean returnFlag, int iters) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -1983,7 +2116,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         final int stepZ = kDimZ * sliceSize;
         final int stepY = kDimXY * xDim;
 
-        final int totalSize = imgSize * iterationsD;
+        final int totalSize = imgSize * iters;
         int tmpSize = 0;
         final int mod = totalSize / 100;
 
@@ -1995,7 +2128,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             processBuffer[pix] = 0;
         }
 
-        for (c = 0; (c < iterationsD) && !threadStopped; c++) {
+        for (c = 0; (c < iters) && !threadStopped; c++) {
             tmpSize = c * imgSize;
 
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
@@ -2101,6 +2234,170 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } catch (final IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
+
+            return;
+        }
+
+        setCompleted(true);
+    }
+    
+    /**
+     * geodesic dilation of a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * @param  geodesicSize
+     */
+    private void geodesicDilation(boolean returnFlag, int geodesicSize) {
+        int i;
+        int j;
+        int xDim;
+        int yDim;
+        int zDim;
+        int sliceSize;
+        int imgSize;
+        short lastBuffer[];
+        boolean same;
+        
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        zDim = srcImage.getExtents()[0];
+        imgSize = sliceSize * zDim;
+        lastBuffer = new short[imgSize];
+        for (i = 0; i < imgSize; i++) {
+        	lastBuffer[i] = imgBuffer[i];
+        }
+        
+        for (i = 0; i < geodesicSize; i++) {
+            dilate(true, 1);
+            for (j = 0; j < imgSize; j++) {
+            	if (maskBuffer[j] == 0) {
+            		imgBuffer[j] = 0;
+            	}
+            }
+            same = true;
+            for (j = 0; same && j < imgSize; j++) {
+            	if (imgBuffer[j] != lastBuffer[j]) {
+            		same = false;
+            	}
+            }
+            if (same) {
+            	break;
+            }
+            else {
+            	for (j = 0; j < imgSize; j++) {
+            		lastBuffer[j] = imgBuffer[j];
+            	}
+            }
+        } // for (i = 0; i < geodesicSize; i++)
+
+        if (returnFlag == true) {
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+
+            srcImage.importData(0, imgBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm Morphology3D: Image(s) locked");
+            setCompleted(false);
+
+
+            return;
+        }
+
+        setCompleted(true);
+    }
+    
+    /**
+     * geodesic erosion of a boolean, unsigned byte or unsigned short image using the indicated kernel and the indicated number of
+     * executions.
+     *
+     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     * @param  geodesicSize
+     */
+    private void geodesicErosion(boolean returnFlag, int geodesicSize) {
+        int i;
+        int j;
+        int xDim;
+        int yDim;
+        int zDim;
+        int sliceSize;
+        int imgSize;
+        short lastBuffer[];
+        boolean same;
+        
+        // if THREAD stopped already, then dump out!
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        zDim = srcImage.getExtents()[2];
+        imgSize = sliceSize * zDim;
+        lastBuffer = new short[imgSize];
+        for (i = 0; i < imgSize; i++) {
+        	lastBuffer[i] = imgBuffer[i];
+        }
+        
+        for (i = 0; i < geodesicSize; i++) {
+            erode(true, 1);
+            for (j = 0; j < imgSize; j++) {
+            	if (imgBuffer[j] == 0) {
+            		imgBuffer[j] = maskBuffer[j];
+            	}
+            }
+            same = true;
+            for (j = 0; same && j < imgSize; j++) {
+            	if (imgBuffer[j] != lastBuffer[j]) {
+            		same = false;
+            	}
+            }
+            if (same) {
+            	break;
+            }
+            else {
+            	for (j = 0; j < imgSize; j++) {
+            		lastBuffer[j] = imgBuffer[j];
+            	}
+            }
+        } // for (i = 0; i < geodesicSize; i++)
+
+        if (returnFlag == true) {
+            return;
+        }
+
+        try {
+
+            if (threadStopped) {
+                finalize();
+
+                return;
+            }
+
+            srcImage.importData(0, imgBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm Morphology3D: Image(s) locked");
+            setCompleted(false);
+
 
             return;
         }
@@ -2288,8 +2585,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      * iterations.
      * 
      * @param returnFlag if true then this operation is a step in the morph process (i.e. open)
+     * @param iters number of erosion iterations
      */
-    private void erode(final boolean returnFlag) {
+    private void erode(final boolean returnFlag, int iters) {
 
         // if thread has already been stopped, dump out
         if (threadStopped) {
@@ -2324,7 +2622,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         final int stepZ = kDimZ * sliceSize;
         final int stepY = kDimXY * xDim;
 
-        final int totalSize = imgSize * iterationsE;
+        final int totalSize = imgSize * iters;
         int tmpSize = 0;
         final int mod = totalSize / 100;
         fireProgressStateChanged("Eroding image ...");
@@ -2343,7 +2641,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             processBuffer[pix] = 0;
         }
 
-        for (c = 0; (c < iterationsE) && !threadStopped; c++) {
+        for (c = 0; (c < iters) && !threadStopped; c++) {
             tmpSize = c * imgSize;
 
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
