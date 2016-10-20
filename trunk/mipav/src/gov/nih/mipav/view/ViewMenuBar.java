@@ -315,6 +315,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Morphological filter", "morFilter", 0, null, false),
 								menuBuilder.buildMenuItem("Morphological gradient", "morGradient", 0, null, false),
 								menuBuilder.buildMenuItem("Morphological laplacian", "morLaplacian", 0, null, false),
+								menuBuilder.buildMenuItem("Morphological reconstruction", "morReconstruction", 0, null, false),
 								menuBuilder.buildMenuItem("Open", null, 0, null, false),
 								menuBuilder.buildMenuItem("Particle analysis", null, 0, null, false),
 								menuBuilder.buildMenuItem("Skeletonize", null, 0, null, false),
