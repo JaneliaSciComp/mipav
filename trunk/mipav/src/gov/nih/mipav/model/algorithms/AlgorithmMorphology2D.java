@@ -435,6 +435,173 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
         return;
     }
+    
+    public void runGeodesicErosionTest() {
+        // Digital Image Processing Gonzalez and Woods Third Edition Figure 9.27
+    	// Note that marker image pixel at x = 3, y = 4 (with zero based indexing should be zero)
+    	// Test gave answer shown in figure 9.27.
+    	int x;
+    	int y;
+    	int i;
+    	int index;
+    	int xDim = 10;
+    	int yDim = 9;
+    	int sliceSize = xDim * yDim;
+    	int extents[] = new int[2];
+    	extents[0] = xDim;
+    	extents[1] = yDim;
+    	byte markerBuffer[] = new byte[sliceSize];
+    	for (y = 1; y < 4; y++) {
+            for (x = 1; x < 6; x++) {
+            	markerBuffer[x + y * xDim] = 1;
+            }
+    	} 
+    	for (x = 4; x < 7; x++) {
+    		markerBuffer[x + 4 * xDim] = 1;
+    	}
+    	markerBuffer[6 + xDim * 2] = 1;
+    	markerBuffer[6 + xDim * 3] = 1;
+    	srcImage = new ModelImage(ModelStorageBase.BYTE, extents, "markerImage");
+    	try {
+    		srcImage.importData(0, markerBuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on srcImage.importData(0, markerBuffer, true)");
+    		return;
+    	}
+    	byte maskBuffer[] = new byte[sliceSize];
+    	maskBuffer[2 + xDim * 2] = 1;
+    	maskBuffer[2 + xDim * 3] = 1;
+    	maskBuffer[3 + xDim * 3] = 1;
+    	maskBuffer[3 + xDim * 4] = 1;
+    	maskBuffer[3 + xDim * 5] = 1;
+    	maskBuffer[4 + xDim * 5] = 1;
+    	maskBuffer[5 + xDim * 5] = 1;
+    	maskBuffer[3 + xDim * 6] = 1;
+    	maskBuffer[5 + xDim * 6] = 1;
+    	maskBuffer[3 + xDim * 7] = 1;
+    	maskBuffer[4 + xDim * 7] = 1;
+    	maskBuffer[5 + xDim * 7] = 1;
+    	maskImage = new ModelImage(ModelStorageBase.BYTE, extents, "maskImage");
+    	try {
+    		maskImage.importData(0, maskBuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on maskImage.importData(0, maskBuffer, true)");
+    		return;
+    	}
+    	setAlgorithm(GEODESIC_EROSION);
+    	kernelType = CONNECTED8;
+    	makeKernel(kernelType);
+    	geodesicSize = 1;
+    	entireImage = true;
+    	showFrame = false;
+        runAlgorithm();
+        try {
+        	srcImage.exportData(0, sliceSize, markerBuffer);
+        }
+        catch (IOException e) {
+        	MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, markerBuffer");
+        	return;
+        }
+        srcImage.disposeLocal();
+        byte answerBuffer[] = new byte[sliceSize];
+        for (i = 0; i < sliceSize; i++) {
+        	answerBuffer[i] = maskBuffer[i];
+        }
+        answerBuffer[3 + 2 * xDim] = 1;
+        answerBuffer[4 + 2 * xDim] = 1;
+        answerBuffer[5 + 3 * xDim] = 1;
+        boolean error = false;
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        	    index = x + y * xDim;
+        	    if (answerBuffer[index] != markerBuffer[index]) {
+        	    	System.out.println("Error x = " + x + " y = " + y);
+        	    	error = true;
+        	    }
+        	}
+        }
+        if (!error) {
+        	System.out.println("Geodesic erosion worked properly");
+        }
+        return;
+    }
+    
+    public void runMorphologicalReconstructionByDilationTest() {
+        // Digital Image Processing Gonzalez and Woods Third Edition Figure 9.26 and 92.8
+    	// Test gave answer shown in Figure 9.28.
+    	int x;
+    	int y;
+    	int index;
+    	int xDim = 10;
+    	int yDim = 9;
+    	int sliceSize = xDim * yDim;
+    	int extents[] = new int[2];
+    	extents[0] = xDim;
+    	extents[1] = yDim;
+    	byte markerBuffer[] = new byte[sliceSize];
+    	markerBuffer[2 + xDim * 2] = 1;
+    	srcImage = new ModelImage(ModelStorageBase.BYTE, extents, "markerImage");
+    	try {
+    		srcImage.importData(0, markerBuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on srcImage.importData(0, markerBuffer, true)");
+    		return;
+    	}
+    	byte maskBuffer[] = new byte[sliceSize];
+    	maskBuffer[2 + xDim * 2] = 1;
+    	maskBuffer[2 + xDim * 3] = 1;
+    	maskBuffer[3 + xDim * 3] = 1;
+    	maskBuffer[3 + xDim * 4] = 1;
+    	maskBuffer[3 + xDim * 5] = 1;
+    	maskBuffer[4 + xDim * 5] = 1;
+    	maskBuffer[5 + xDim * 5] = 1;
+    	maskBuffer[3 + xDim * 6] = 1;
+    	maskBuffer[5 + xDim * 6] = 1;
+    	maskBuffer[3 + xDim * 7] = 1;
+    	maskBuffer[4 + xDim * 7] = 1;
+    	maskBuffer[5 + xDim * 7] = 1;
+    	maskImage = new ModelImage(ModelStorageBase.BYTE, extents, "maskImage");
+    	try {
+    		maskImage.importData(0, maskBuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on maskImage.importData(0, maskBuffer, true)");
+    		return;
+    	}
+    	setAlgorithm(MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION);
+    	kernelType = CONNECTED8;
+    	makeKernel(kernelType);
+    	geodesicSize = 1;
+    	entireImage = true;
+    	showFrame = false;
+        runAlgorithm();
+        byte answerBuffer[] = new byte[sliceSize];
+        try {
+        	srcImage.exportData(0, sliceSize, answerBuffer);
+        }
+        catch (IOException e) {
+        	MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, answerBuffer");
+        	return;
+        }
+        srcImage.disposeLocal();
+        boolean error = false;
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        	    index = x + y * xDim;
+        	    if (answerBuffer[index] != maskBuffer[index]) {
+        	    	System.out.println("Error at x = " + x + " y = " + y);
+        	    	error = true;
+        	    }
+        	}
+        }
+        if (!error) {
+        	System.out.println("Morphological reconstruction by dilation worked properly");
+        }
+        return;
+    }
 
     /**
      * Static method that generates a boundary of a binary object. (aka. turtle algorithm: if 1 turn left, step if 0
@@ -2301,6 +2468,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         setCompleted(true);
     }
+    
+    
 
     /**
      * Euclidian distance map of the background.
