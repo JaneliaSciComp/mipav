@@ -338,8 +338,103 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
     }
+    
+    public AlgorithmMorphology2D() {
+    	
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+    
+    public void runGeodesicDilationTest() {
+        // Digital Image Processing Gonzalez and Woods Third Edition Figure 9.26
+    	// Test gave answer shown in Figure 9.26.
+    	int x;
+    	int y;
+    	int index;
+    	int xDim = 10;
+    	int yDim = 9;
+    	int sliceSize = xDim * yDim;
+    	int extents[] = new int[2];
+    	extents[0] = xDim;
+    	extents[1] = yDim;
+    	byte markerBuffer[] = new byte[sliceSize];
+    	markerBuffer[2 + xDim * 2] = 1;
+    	srcImage = new ModelImage(ModelStorageBase.BYTE, extents, "markerImage");
+    	try {
+    		srcImage.importData(0, markerBuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on srcImage.importData(0, markerBuffer, true)");
+    		return;
+    	}
+    	byte maskBuffer[] = new byte[sliceSize];
+    	maskBuffer[2 + xDim * 2] = 1;
+    	maskBuffer[2 + xDim * 3] = 1;
+    	maskBuffer[3 + xDim * 3] = 1;
+    	maskBuffer[3 + xDim * 4] = 1;
+    	maskBuffer[3 + xDim * 5] = 1;
+    	maskBuffer[4 + xDim * 5] = 1;
+    	maskBuffer[5 + xDim * 5] = 1;
+    	maskBuffer[3 + xDim * 6] = 1;
+    	maskBuffer[5 + xDim * 6] = 1;
+    	maskBuffer[3 + xDim * 7] = 1;
+    	maskBuffer[4 + xDim * 7] = 1;
+    	maskBuffer[5 + xDim * 7] = 1;
+    	maskImage = new ModelImage(ModelStorageBase.BYTE, extents, "maskImage");
+    	try {
+    		maskImage.importData(0, maskBuffer, true);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on maskImage.importData(0, maskBuffer, true)");
+    		return;
+    	}
+    	setAlgorithm(GEODESIC_DILATION);
+    	kernelType = CONNECTED8;
+    	makeKernel(kernelType);
+    	geodesicSize = 1;
+    	entireImage = true;
+    	showFrame = false;
+        runAlgorithm();
+        try {
+        	srcImage.exportData(0, sliceSize, markerBuffer);
+        }
+        catch (IOException e) {
+        	MipavUtil.displayError("IOException " + e + " on srcImage.exportData(0, sliceSize, markerBuffer");
+        	return;
+        }
+        srcImage.disposeLocal();
+        boolean error = false;
+        for (y = 0; y < yDim; y++) {
+        	for (x = 0; x < xDim; x++) {
+        	    index = x + y * xDim;
+        	    if ((x == 2) && (y == 2)) {
+        	    	if (markerBuffer[index] != 1) {
+        	            System.out.println("Error x = 2 y = 2 has an incorrect value of " + markerBuffer[index]);
+        	            error = true;
+        	    	}
+        	    }
+        	    else if ((x == 2) && (y == 3)) {
+        	    	if (markerBuffer[index] != 1) {
+	        	    	System.out.println("Error x = 2 y = 3 has an incorrect value of " + markerBuffer[index]);
+	        	    	error = true;
+        	    	}
+        	    }
+        	    else if ((x == 3) && (y == 3)) {
+        	    	if (markerBuffer[index] != 1) {
+	        	    	System.out.println("Error x = 3 y = 3 has an incorrect value of " + markerBuffer[index]);
+	        	    	error = true;
+        	    	}
+        	    }
+        	    else if (markerBuffer[index] != 0) {
+        	    	System.out.println("Error x = " + x + " y = " + y + " has an incorrect value of " + markerBuffer[index]);
+        	    }
+        	}
+        }
+        if (!error) {
+        	System.out.println("Geodesic dilation worked properly");
+        }
+        return;
+    }
 
     /**
      * Static method that generates a boundary of a binary object. (aka. turtle algorithm: if 1 turn left, step if 0
