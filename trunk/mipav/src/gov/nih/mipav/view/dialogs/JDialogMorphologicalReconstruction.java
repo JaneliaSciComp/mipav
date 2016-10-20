@@ -35,7 +35,7 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
-    private static final long serialVersionUID = -9116067564431404676L;
+    //private static final long serialVersionUID;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -79,19 +79,19 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
     private JPanel maskPanel;
 
     /** DOCUMENT ME! */
-    private AlgorithmMorphology25D openAlgo25D = null;
+    private AlgorithmMorphology25D reconAlgo25D = null;
 
     /** DOCUMENT ME! */
-    private AlgorithmMorphology2D openAlgo2D = null;
+    private AlgorithmMorphology2D reconAlgo2D = null;
 
     /** DOCUMENT ME! */
-    private AlgorithmMorphology3D openAlgo3D = null;
+    private AlgorithmMorphology3D reconAlgo3D = null;
     
-    private AlgorithmGrayScaleMorphology2D gsOpenAlgo2D = null;
+    private AlgorithmGrayScaleMorphology2D gsReconAlgo2D = null;
     
-    private AlgorithmGrayScaleMorphology25D gsOpenAlgo25D = null;
+    private AlgorithmGrayScaleMorphology25D gsReconAlgo25D = null;
     
-    private AlgorithmGrayScaleMorphology3D gsOpenAlgo3D = null;
+    private AlgorithmGrayScaleMorphology3D gsReconAlgo3D = null;
     
     private ButtonGroup morphologyGroup;
     
@@ -196,9 +196,8 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	//MipavUtil.showHelp("Mor004OP1");
-            MipavUtil.showWebHelp("Morphology#Open");
-        } else { // else if (source == thresholdCheckbox)
+            //MipavUtil.showWebHelp("Morphology#MorphologicalReconstruction");
+        } else { 
             super.actionPerformed(event);
         }
 
@@ -221,7 +220,7 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
 
             image.clearMask();
 
-            if ((openAlgo2D.isCompleted() == true) && (resultImage != null)) {
+            if ((reconAlgo2D.isCompleted() == true) && (resultImage != null)) {
                 updateFileInfo(image, resultImage);
                 resultImage.clearMask();
 
@@ -263,7 +262,7 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
 
             image.clearMask();
 
-            if ((openAlgo25D.isCompleted() == true) && (resultImage != null)) {
+            if ((reconAlgo25D.isCompleted() == true) && (resultImage != null)) {
                 updateFileInfo(image, resultImage);
                 resultImage.clearMask();
 
@@ -304,7 +303,7 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         } else if (algorithm instanceof AlgorithmMorphology3D) {
             image.clearMask();
 
-            if ((openAlgo3D.isCompleted() == true) && (resultImage != null)) {
+            if ((reconAlgo3D.isCompleted() == true) && (resultImage != null)) {
                 updateFileInfo(image, resultImage);
                 resultImage.clearMask();
 
@@ -347,7 +346,7 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
 
             image.clearMask();
 
-            if ((gsOpenAlgo2D.isCompleted() == true) && (resultImage != null)) {
+            if ((gsReconAlgo2D.isCompleted() == true) && (resultImage != null)) {
                 updateFileInfo(image, resultImage);
                 resultImage.clearMask();
 
@@ -389,7 +388,7 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
 
             image.clearMask();
 
-            if ((gsOpenAlgo25D.isCompleted() == true) && (resultImage != null)) {
+            if ((gsReconAlgo25D.isCompleted() == true) && (resultImage != null)) {
                 updateFileInfo(image, resultImage);
                 resultImage.clearMask();
 
@@ -430,7 +429,7 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         } else if (algorithm instanceof AlgorithmGrayScaleMorphology3D) {
             image.clearMask();
 
-            if ((gsOpenAlgo3D.isCompleted() == true) && (resultImage != null)) {
+            if ((gsReconAlgo3D.isCompleted() == true) && (resultImage != null)) {
                 updateFileInfo(image, resultImage);
                 resultImage.clearMask();
 
@@ -474,34 +473,34 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
             insertScriptLine();
         }
 
-        if (openAlgo2D != null) {
-            openAlgo2D.finalize();
-            openAlgo2D = null;
+        if (reconAlgo2D != null) {
+            reconAlgo2D.finalize();
+            reconAlgo2D = null;
         }
 
-        if (openAlgo25D != null) {
-            openAlgo25D.finalize();
-            openAlgo25D = null;
+        if (reconAlgo25D != null) {
+            reconAlgo25D.finalize();
+            reconAlgo25D = null;
         }
 
-        if (openAlgo3D != null) {
-            openAlgo3D.finalize();
-            openAlgo3D = null;
+        if (reconAlgo3D != null) {
+            reconAlgo3D.finalize();
+            reconAlgo3D = null;
         }
         
-        if (gsOpenAlgo2D != null) {
-            gsOpenAlgo2D.finalize();
-            gsOpenAlgo2D = null;
+        if (gsReconAlgo2D != null) {
+            gsReconAlgo2D.finalize();
+            gsReconAlgo2D = null;
         }
 
-        if (gsOpenAlgo25D != null) {
-            gsOpenAlgo25D.finalize();
-            gsOpenAlgo25D = null;
+        if (gsReconAlgo25D != null) {
+            gsReconAlgo25D.finalize();
+            gsReconAlgo25D = null;
         }
 
-        if (gsOpenAlgo3D != null) {
-            gsOpenAlgo3D.finalize();
-            gsOpenAlgo3D = null;
+        if (gsReconAlgo3D != null) {
+            gsReconAlgo3D.finalize();
+            gsReconAlgo3D = null;
         }
 
         dispose();
@@ -521,9 +520,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
+        if (maskImage != null) {
+        	scriptParameters.storeInputImage(maskImage);
+        }
         scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
         
         scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), do25D);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("method", method));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("geodesic_size", geodesicSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("erosion_iterations", itersE));
         scriptParameters.getParams().put(ParameterFactory.newParameter("dilation_iterations", itersD));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type", kernel));
@@ -536,6 +540,16 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
+        ParameterImage secondImageParameter = null;
+        try {
+            secondImageParameter = scriptParameters.getParams().getImageParameter(AlgorithmParameters.getInputImageLabel(2));
+        }
+        catch (ParameterException e) {
+        	
+        }
+        if (secondImageParameter != null) {
+        	maskImage = secondImageParameter.getImage();
+        }
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
@@ -548,6 +562,8 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         
         setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
         
+        setMethod(scriptParameters.getParams().getInt("method"));
+        setGeodesicSize(scriptParameters.getParams().getInt("geodesic_size"));
         setNumErosions(scriptParameters.getParams().getInt("erosion_iterations"));
         setNumDilations(scriptParameters.getParams().getInt("dilation_iterations"));
         setKernelType(scriptParameters.getParams().getInt("kernel_type"));
@@ -685,6 +701,22 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
     public void setNumErosions(int n) {
         itersE = n;
     }
+    
+    /**
+     * 
+     * @param method
+     */
+    public void setMethod(int method) {
+    	this.method = method;
+    }
+    
+    /**
+     * 
+     * @param geodesicSize
+     */
+    public void setGeodesicSize(int geodesicSize) {
+    	this.geodesicSize = geodesicSize;
+    }
 
     /**
      * buildComboBox.
@@ -727,20 +759,20 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         resultImage = (ModelImage) image.clone();
     
                         // Make algorithm
-                        openAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, kernelSize, AlgorithmMorphology2D.OPEN,
-                                                               itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        reconAlgo2D = new AlgorithmMorphology2D(resultImage, maskImage, kernel, kernelSize, method,
+                                      geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet(), false);
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            openAlgo2D.setMask(image.generateVOIMask());
+                            reconAlgo2D.setMask(image.generateVOIMask());
                         }
     
-                        // openAlgo2D.setIterations(itersD, itersE);
+                        // reconAlgo2D.setIterations(itersD, itersE);
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        openAlgo2D.addListener(this);
+                        reconAlgo2D.addListener(this);
     
-                        createProgressBar(image.getImageName(), openAlgo2D);
+                        createProgressBar(image.getImageName(), reconAlgo2D);
                         
                         // Hide dialog
                         setVisible(false);
@@ -748,14 +780,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface work fast.
-                            if (openAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (reconAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            openAlgo2D.run();
+                            reconAlgo2D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         if (resultImage != null) {
                             resultImage.disposeLocal(); // Clean up memory of result image
@@ -770,20 +802,20 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
     
                         // No need to make new image space because the user has choosen to replace the source image
                         // Make the algorithm class
-                        openAlgo2D = new AlgorithmMorphology2D(image, kernel, kernelSize, AlgorithmMorphology2D.OPEN,
-                                                               itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        reconAlgo2D = new AlgorithmMorphology2D(image, maskImage, kernel, kernelSize, method, geodesicSize,
+                                                               itersD, itersE, outputPanel.isProcessWholeImageSet(), false);
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            openAlgo2D.setMask(image.generateVOIMask());
-                            // openAlgo2D.setIterations(itersD, itersE);
+                            reconAlgo2D.setMask(image.generateVOIMask());
+                            // reconAlgo2D.setIterations(itersD, itersE);
                         }
     
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        openAlgo2D.addListener(this);
+                        reconAlgo2D.addListener(this);
     
-                        createProgressBar(image.getImageName(), openAlgo2D);
+                        createProgressBar(image.getImageName(), reconAlgo2D);
                         
                         // Hide the dialog since the algorithm is about to run.
                         setVisible(false);
@@ -805,14 +837,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface.
-                            if (openAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (reconAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            openAlgo2D.run();
+                            reconAlgo2D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         return;
                     }
@@ -829,19 +861,19 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         resultImage = (ModelImage) image.clone();
     
                         // Make algorithm
-                        openAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, kernelSize, AlgorithmMorphology3D.OPEN,
-                                                               itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        reconAlgo3D = new AlgorithmMorphology3D(resultImage, null, maskImage, kernel, kernelSize, 
+                        		method, geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet());
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            openAlgo3D.setMask(image.generateVOIMask());
+                            reconAlgo3D.setMask(image.generateVOIMask());
                         }
     
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        openAlgo3D.addListener(this);
+                        reconAlgo3D.addListener(this);
     
-                        createProgressBar(image.getImageName(), openAlgo3D);
+                        createProgressBar(image.getImageName(), reconAlgo3D);
                         
                         // Hide dialog
                         setVisible(false);
@@ -849,14 +881,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface work fast
-                            if (openAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (reconAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            openAlgo3D.run();
+                            reconAlgo3D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         if (resultImage != null) {
                             resultImage.disposeLocal(); // Clean up image memory
@@ -870,19 +902,19 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                     try {
     
                         // Make algorithm
-                        openAlgo3D = new AlgorithmMorphology3D(image, kernel, kernelSize, AlgorithmMorphology3D.OPEN,
-                                                               itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        reconAlgo3D = new AlgorithmMorphology3D(image, null, maskImage, kernel, kernelSize, method,
+                                              geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet());
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            openAlgo3D.setMask(image.generateVOIMask());
+                            reconAlgo3D.setMask(image.generateVOIMask());
                         }
     
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        openAlgo3D.addListener(this);
+                        reconAlgo3D.addListener(this);
     
-                        createProgressBar(image.getImageName(), openAlgo3D);
+                        createProgressBar(image.getImageName(), reconAlgo3D);
                         
                         // Hide dialog
                         setVisible(false);
@@ -904,14 +936,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface work fast
-                            if (openAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (reconAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            openAlgo3D.run();
+                            reconAlgo3D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         return;
                     }
@@ -922,38 +954,26 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                 destExtents[1] = image.getExtents()[1]; // Y dim
                 destExtents[2] = image.getExtents()[2]; // Z dim
     
-                // convert to 2.5d kernel type
-                if (kernel == AlgorithmMorphology3D.CONNECTED6) {
-                    kernel = AlgorithmMorphology25D.CONNECTED4;
-                } else if (kernel == AlgorithmMorphology3D.CONNECTED26) {
-                    kernel = AlgorithmMorphology25D.CONNECTED8;
-                } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
-                    kernel = AlgorithmMorphology25D.CONNECTED12;
-                } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
-                    kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
-                }
-    
                 if (outputPanel.isOutputNewImageSet()) {
     
                     try {
                         resultImage = (ModelImage) image.clone();
     
                         // Make algorithm
-                        openAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, kernelSize,
-                                                                 AlgorithmMorphology25D.OPEN, itersD, itersE, 0, 0,
-                                                                 outputPanel.isProcessWholeImageSet());
+                        reconAlgo25D = new AlgorithmMorphology25D(resultImage, maskImage, kernel, kernelSize,
+                                      method, geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet());
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            openAlgo25D.setMask(image.generateVOIMask());
+                            reconAlgo25D.setMask(image.generateVOIMask());
                         }
     
-                        // openAlgo25D.setIterations(itersD, itersE);
+                        // reconAlgo25D.setIterations(itersD, itersE);
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        openAlgo25D.addListener(this);
+                        reconAlgo25D.addListener(this);
     
-                        createProgressBar(image.getImageName(), openAlgo25D);
+                        createProgressBar(image.getImageName(), reconAlgo25D);
                         
                         // Hide dialog
                         setVisible(false);
@@ -961,14 +981,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface work fast.
-                            if (openAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (reconAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            openAlgo25D.run();
+                            reconAlgo25D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         if (resultImage != null) {
                             resultImage.disposeLocal(); // Clean up memory of result image
@@ -983,20 +1003,20 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
     
                         // No need to make new image space because the user has choosen to replace the source image
                         // Make the algorithm class
-                        openAlgo25D = new AlgorithmMorphology25D(image, kernel, kernelSize, AlgorithmMorphology25D.OPEN,
-                                                                 itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        reconAlgo25D = new AlgorithmMorphology25D(image, maskImage, kernel, kernelSize, method,
+                                          geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet());
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            openAlgo25D.setMask(image.generateVOIMask());
-                            // openAlgo25D.setIterations(itersD, itersE);
+                            reconAlgo25D.setMask(image.generateVOIMask());
+                            // reconAlgo25D.setIterations(itersD, itersE);
                         }
     
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        openAlgo25D.addListener(this);
+                        reconAlgo25D.addListener(this);
     
-                        createProgressBar(image.getImageName(), openAlgo25D);
+                        createProgressBar(image.getImageName(), reconAlgo25D);
                         
                         // Hide the dialog since the algorithm is about to run.
                         setVisible(false);
@@ -1018,14 +1038,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface.
-                            if (openAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (reconAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            openAlgo25D.run();
+                            reconAlgo25D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         return;
                     }
@@ -1045,20 +1065,20 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         resultImage = (ModelImage) image.clone();
     
                         // Make algorithm
-                        gsOpenAlgo2D = new AlgorithmGrayScaleMorphology2D(resultImage, kernel, kernelSize, AlgorithmGrayScaleMorphology2D.OPEN,
-                                                               itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        gsReconAlgo2D = new AlgorithmGrayScaleMorphology2D(resultImage, maskImage, kernel, kernelSize, 
+                        		method, geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet(), false);
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            gsOpenAlgo2D.setMask(image.generateVOIMask());
+                            gsReconAlgo2D.setMask(image.generateVOIMask());
                         }
     
-                        // gsOpenAlgo2D.setIterations(itersD, itersE);
+                        // gsReconAlgo2D.setIterations(itersD, itersE);
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        gsOpenAlgo2D.addListener(this);
+                        gsReconAlgo2D.addListener(this);
     
-                        createProgressBar(image.getImageName(), gsOpenAlgo2D);
+                        createProgressBar(image.getImageName(), gsReconAlgo2D);
                         
                         // Hide dialog
                         setVisible(false);
@@ -1066,14 +1086,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface work fast.
-                            if (gsOpenAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (gsReconAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            gsOpenAlgo2D.run();
+                            gsReconAlgo2D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         if (resultImage != null) {
                             resultImage.disposeLocal(); // Clean up memory of result image
@@ -1088,20 +1108,20 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
     
                         // No need to make new image space because the user has choosen to replace the source image
                         // Make the algorithm class
-                        gsOpenAlgo2D = new AlgorithmGrayScaleMorphology2D(image, kernel, kernelSize, AlgorithmGrayScaleMorphology2D.OPEN,
-                                                               itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        gsReconAlgo2D = new AlgorithmGrayScaleMorphology2D(image, maskImage, kernel, kernelSize, 
+                        		method, geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet(), false);
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            gsOpenAlgo2D.setMask(image.generateVOIMask());
-                            // gsOpenAlgo2D.setIterations(itersD, itersE);
+                            gsReconAlgo2D.setMask(image.generateVOIMask());
+                            // gsReconAlgo2D.setIterations(itersD, itersE);
                         }
     
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        gsOpenAlgo2D.addListener(this);
+                        gsReconAlgo2D.addListener(this);
     
-                        createProgressBar(image.getImageName(), gsOpenAlgo2D);
+                        createProgressBar(image.getImageName(), gsReconAlgo2D);
                         
                         // Hide the dialog since the algorithm is about to run.
                         setVisible(false);
@@ -1123,14 +1143,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface.
-                            if (gsOpenAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (gsReconAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            gsOpenAlgo2D.run();
+                            gsReconAlgo2D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         return;
                     }
@@ -1147,19 +1167,19 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         resultImage = (ModelImage) image.clone();
     
                         // Make algorithm
-                        gsOpenAlgo3D = new AlgorithmGrayScaleMorphology3D(resultImage, kernel, kernelSize, AlgorithmGrayScaleMorphology3D.OPEN,
-                                                               itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        gsReconAlgo3D = new AlgorithmGrayScaleMorphology3D(resultImage, null, maskImage, 
+                        		kernel, kernelSize, method, geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet());
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            gsOpenAlgo3D.setMask(image.generateVOIMask());
+                            gsReconAlgo3D.setMask(image.generateVOIMask());
                         }
     
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        gsOpenAlgo3D.addListener(this);
+                        gsReconAlgo3D.addListener(this);
     
-                        createProgressBar(image.getImageName(), gsOpenAlgo3D);
+                        createProgressBar(image.getImageName(), gsReconAlgo3D);
                         
                         // Hide dialog
                         setVisible(false);
@@ -1167,14 +1187,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface work fast
-                            if (gsOpenAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (gsReconAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            gsOpenAlgo3D.run();
+                            gsReconAlgo3D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         if (resultImage != null) {
                             resultImage.disposeLocal(); // Clean up image memory
@@ -1188,19 +1208,19 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                     try {
     
                         // Make algorithm
-                        gsOpenAlgo3D = new AlgorithmGrayScaleMorphology3D(image, kernel, kernelSize, AlgorithmGrayScaleMorphology3D.OPEN,
-                                                               itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        gsReconAlgo3D = new AlgorithmGrayScaleMorphology3D(image, null, maskImage, kernel, kernelSize, 
+                        		method, geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet());
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            gsOpenAlgo3D.setMask(image.generateVOIMask());
+                            gsReconAlgo3D.setMask(image.generateVOIMask());
                         }
     
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        gsOpenAlgo3D.addListener(this);
+                        gsReconAlgo3D.addListener(this);
     
-                        createProgressBar(image.getImageName(), gsOpenAlgo3D);
+                        createProgressBar(image.getImageName(), gsReconAlgo3D);
                         
                         // Hide dialog
                         setVisible(false);
@@ -1222,14 +1242,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface work fast
-                            if (gsOpenAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (gsReconAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            gsOpenAlgo3D.run();
+                            gsReconAlgo3D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         return;
                     }
@@ -1240,38 +1260,26 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                 destExtents[1] = image.getExtents()[1]; // Y dim
                 destExtents[2] = image.getExtents()[2]; // Z dim
     
-                // convert to 2.5d kernel type
-                if (kernel == AlgorithmMorphology3D.CONNECTED6) {
-                    kernel = AlgorithmMorphology25D.CONNECTED4;
-                } else if (kernel == AlgorithmMorphology3D.CONNECTED26) {
-                    kernel = AlgorithmMorphology25D.CONNECTED8;
-                } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
-                    kernel = AlgorithmMorphology25D.CONNECTED12;
-                } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
-                    kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
-                }
-    
                 if (outputPanel.isOutputNewImageSet()) {
     
                     try {
                         resultImage = (ModelImage) image.clone();
     
                         // Make algorithm
-                        gsOpenAlgo25D = new AlgorithmGrayScaleMorphology25D(resultImage, kernel, kernelSize,
-                                                                 AlgorithmGrayScaleMorphology25D.OPEN, itersD, itersE, 0, 0,
-                                                                 outputPanel.isProcessWholeImageSet());
+                        gsReconAlgo25D = new AlgorithmGrayScaleMorphology25D(resultImage, maskImage, kernel, kernelSize,
+                                               method, geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet());
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            gsOpenAlgo25D.setMask(image.generateVOIMask());
+                            gsReconAlgo25D.setMask(image.generateVOIMask());
                         }
     
-                        // gsOpenAlgo25D.setIterations(itersD, itersE);
+                        // gsReconAlgo25D.setIterations(itersD, itersE);
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        gsOpenAlgo25D.addListener(this);
+                        gsReconAlgo25D.addListener(this);
     
-                        createProgressBar(image.getImageName(), gsOpenAlgo25D);
+                        createProgressBar(image.getImageName(), gsReconAlgo25D);
                         
                         // Hide dialog
                         setVisible(false);
@@ -1279,14 +1287,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface work fast.
-                            if (gsOpenAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (gsReconAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            gsOpenAlgo25D.run();
+                            gsReconAlgo25D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         if (resultImage != null) {
                             resultImage.disposeLocal(); // Clean up memory of result image
@@ -1301,20 +1309,20 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
     
                         // No need to make new image space because the user has choosen to replace the source image
                         // Make the algorithm class
-                        gsOpenAlgo25D = new AlgorithmGrayScaleMorphology25D(image, kernel, kernelSize, AlgorithmGrayScaleMorphology25D.OPEN,
-                                                                 itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                        gsReconAlgo25D = new AlgorithmGrayScaleMorphology25D(image, maskImage, kernel, kernelSize,
+                        		method, geodesicSize, itersD, itersE, outputPanel.isProcessWholeImageSet());
     
                         if (outputPanel.isProcessWholeImageSet() == false) {
-                            gsOpenAlgo25D.setMask(image.generateVOIMask());
-                            // gsOpenAlgo25D.setIterations(itersD, itersE);
+                            gsReconAlgo25D.setMask(image.generateVOIMask());
+                            // gsReconAlgo25D.setIterations(itersD, itersE);
                         }
     
                         // This is very important. Adding this object as a listener allows the algorithm to
                         // notify this object when it has completed or failed. See algorithm performed event.
                         // This is made possible by implementing AlgorithmedPerformed interface
-                        gsOpenAlgo25D.addListener(this);
+                        gsReconAlgo25D.addListener(this);
     
-                        createProgressBar(image.getImageName(), gsOpenAlgo25D);
+                        createProgressBar(image.getImageName(), gsReconAlgo25D);
                         
                         // Hide the dialog since the algorithm is about to run.
                         setVisible(false);
@@ -1336,14 +1344,14 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
                         if (isRunInSeparateThread()) {
     
                             // Start the thread as a low priority because we wish to still have user interface.
-                            if (gsOpenAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            if (gsReconAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                                 MipavUtil.displayError("A thread is already running on this object");
                             }
                         } else {
-                            gsOpenAlgo25D.run();
+                            gsReconAlgo25D.run();
                         }
                     } catch (OutOfMemoryError x) {
-                        MipavUtil.displayError("Dialog open: unable to allocate enough memory");
+                        MipavUtil.displayError("Dialog Morphological Reconstruction: unable to allocate enough memory");
     
                         return;
                     }
@@ -1720,20 +1728,125 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         	    else if (geodesicErosionButton.isSelected()) {
         	        method = AlgorithmMorphology2D.GEODESIC_EROSION;	
         	    }
+        	    else if (reconstructionByDilationButton.isSelected()) {
+        	    	method = AlgorithmMorphology2D.MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION;
+        	    }
+        	    else if (reconstructionByErosionButton.isSelected()) {
+        	    	method = AlgorithmMorphology2D.MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION;
+        	    }
+        	    else if (openingByReconstructionButton.isSelected()) {
+        	    	method = AlgorithmMorphology2D.OPENING_BY_RECONSTRUCTION;
+        	    }
+        	    else {
+        	    	method = AlgorithmMorphology2D.CLOSING_BY_RECONSTRUCTION;
+        	    }
         	} // if (image.getNDims() == 2)
         	else if (do25D) {
-        		
+        		if (geodesicDilationButton.isSelected()) {
+        	    	method = AlgorithmMorphology25D.GEODESIC_DILATION;
+        	    }
+        	    else if (geodesicErosionButton.isSelected()) {
+        	        method = AlgorithmMorphology25D.GEODESIC_EROSION;	
+        	    }
+        	    else if (reconstructionByDilationButton.isSelected()) {
+        	    	method = AlgorithmMorphology25D.MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION;
+        	    }
+        	    else if (reconstructionByErosionButton.isSelected()) {
+        	    	method = AlgorithmMorphology25D.MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION;
+        	    }
+        	    else if (openingByReconstructionButton.isSelected()) {
+        	    	method = AlgorithmMorphology25D.OPENING_BY_RECONSTRUCTION;
+        	    }
+        	    else {
+        	    	method = AlgorithmMorphology25D.CLOSING_BY_RECONSTRUCTION;
+        	    }	
         	} // else if (do25)
         	else {
-        		
+        		if (geodesicDilationButton.isSelected()) {
+        	    	method = AlgorithmMorphology3D.GEODESIC_DILATION;
+        	    }
+        	    else if (geodesicErosionButton.isSelected()) {
+        	        method = AlgorithmMorphology3D.GEODESIC_EROSION;	
+        	    }
+        	    else if (reconstructionByDilationButton.isSelected()) {
+        	    	method = AlgorithmMorphology3D.MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION;
+        	    }
+        	    else if (reconstructionByErosionButton.isSelected()) {
+        	    	method = AlgorithmMorphology3D.MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION;
+        	    }
+        	    else if (openingByReconstructionButton.isSelected()) {
+        	    	method = AlgorithmMorphology3D.OPENING_BY_RECONSTRUCTION;
+        	    }
+        	    else {
+        	    	method = AlgorithmMorphology3D.CLOSING_BY_RECONSTRUCTION;
+        	    }	
         	} // else
         } // if (binaryMorphology)
         else {
-        	
+        	if (image.getNDims() == 2) {
+        	    if (geodesicDilationButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology2D.GEODESIC_DILATION;
+        	    }
+        	    else if (geodesicErosionButton.isSelected()) {
+        	        method = AlgorithmGrayScaleMorphology2D.GEODESIC_EROSION;	
+        	    }
+        	    else if (reconstructionByDilationButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology2D.MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION;
+        	    }
+        	    else if (reconstructionByErosionButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology2D.MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION;
+        	    }
+        	    else if (openingByReconstructionButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology2D.OPENING_BY_RECONSTRUCTION;
+        	    }
+        	    else {
+        	    	method = AlgorithmGrayScaleMorphology2D.CLOSING_BY_RECONSTRUCTION;
+        	    }
+        	} // if (image.getNDims() == 2)
+        	else if (do25D) {
+        		if (geodesicDilationButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology25D.GEODESIC_DILATION;
+        	    }
+        	    else if (geodesicErosionButton.isSelected()) {
+        	        method = AlgorithmGrayScaleMorphology25D.GEODESIC_EROSION;	
+        	    }
+        	    else if (reconstructionByDilationButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology25D.MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION;
+        	    }
+        	    else if (reconstructionByErosionButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology25D.MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION;
+        	    }
+        	    else if (openingByReconstructionButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology25D.OPENING_BY_RECONSTRUCTION;
+        	    }
+        	    else {
+        	    	method = AlgorithmGrayScaleMorphology25D.CLOSING_BY_RECONSTRUCTION;
+        	    }	
+        	} // else if (do25)
+        	else {
+        		if (geodesicDilationButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology3D.GEODESIC_DILATION;
+        	    }
+        	    else if (geodesicErosionButton.isSelected()) {
+        	        method = AlgorithmGrayScaleMorphology3D.GEODESIC_EROSION;	
+        	    }
+        	    else if (reconstructionByDilationButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology3D.MORPHOLOGICAL_RECONSTRUCTION_BY_DILATION;
+        	    }
+        	    else if (reconstructionByErosionButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology3D.MORPHOLOGICAL_RECONSTRUCTION_BY_EROSION;
+        	    }
+        	    else if (openingByReconstructionButton.isSelected()) {
+        	    	method = AlgorithmGrayScaleMorphology3D.OPENING_BY_RECONSTRUCTION;
+        	    }
+        	    else {
+        	    	method = AlgorithmGrayScaleMorphology3D.CLOSING_BY_RECONSTRUCTION;
+        	    }	
+        	} // else	
         }
         
         if (geodesicDilationButton.isSelected() || geodesicErosionButton.isSelected() || 
-        		reconstructionByErosionButton.isSelected() || reconstructionByDilationButton.isSelected()) {
+        		reconstructionByDilationButton.isSelected() || reconstructionByErosionButton.isSelected()) {
             String selectedName = (String) imageComboBox.getSelectedItem();
             maskImage = userInterface.getRegisteredImageByName(selectedName);
         }
@@ -1846,24 +1959,23 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
             }
 
             public String getDescription() {
-                return new String("Erodes then dilates an image.");
+                return new String("Morphological Reconstruction.");
             }
 
             public String getDescriptionLong() {
-                return new String("Erodes then dilates an image using " +
-                		"the indicated kernel and the indicated number of executions.");
+                return new String("Morphological Reconstruction.");
             }
 
             public String getShortLabel() {
-                return new String("Open");
+                return new String("Morphological Reconstruction");
             }
 
             public String getLabel() {
-                return new String("Open");
+                return new String("Morphological Reconstruction");
             }
 
             public String getName() {
-                return new String("Open");
+                return new String("Morphological Reconstruction");
             }
             
             public Set<ImageRequirements> getInputImageRequirements() {
@@ -1884,13 +1996,18 @@ public class JDialogMorphologicalReconstruction extends JDialogScriptableBase
         try {
           	
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            if (maskImage != null) {
+            	table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));	
+            }
+            table.put(new ParameterInt("method", AlgorithmMorphology2D.GEODESIC_DILATION));
+            table.put(new ParameterInt("geodesic_size", 1));
             table.put(new ParameterInt("erosion_iterations", 1));
             table.put(new ParameterInt("dilation_iterations", 1));
             
             //See buildComboBox method for information on kernel_type
             table.put(new ParameterInt("kernel_type", 1));
             table.put(new ParameterFloat("kernel_size", 1.0f));
-            table.put(new ParameterBoolean("binary_morphology", false));
+            table.put(new ParameterBoolean("binary_morphology", true));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
