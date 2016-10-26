@@ -23,7 +23,6 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ScrollCorrector;
-import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
