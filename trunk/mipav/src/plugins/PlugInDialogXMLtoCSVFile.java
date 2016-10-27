@@ -196,7 +196,6 @@ public class PlugInDialogXMLtoCSVFile extends JDialogBase implements AlgorithmIn
 	        	XMLDirectoryFile = chooser.getSelectedFile();
 	        	currDir = XMLDirectoryFile.getAbsolutePath();
 	        	Preferences.setImageDirectory(new File(currDir));
-	        	CSVFileName = CSVFileTextField.getText();
 	        	XMLFilePathTextField.setText(currDir);
 	        }
 		}else if(command.equalsIgnoreCase("ok")) {
@@ -226,7 +225,7 @@ public class PlugInDialogXMLtoCSVFile extends JDialogBase implements AlgorithmIn
 			return false;
 		}
 		
-		
+		CSVFileName = CSVFileTextField.getText();
 		return true;
 	}
 
