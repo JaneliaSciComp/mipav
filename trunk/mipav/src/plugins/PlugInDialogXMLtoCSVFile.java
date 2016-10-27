@@ -220,12 +220,13 @@ public class PlugInDialogXMLtoCSVFile extends JDialogBase implements AlgorithmIn
 			
 		}
 		
+		CSVFileName = CSVFileTextField.getText();
+		
 		if ((CSVFileName.trim() == null) || (CSVFileName.trim().length() == 0)) {
 			MipavUtil.displayError("CSV output file name is required");
 			return false;
 		}
 		
-		CSVFileName = CSVFileTextField.getText();
 		return true;
 	}
 
