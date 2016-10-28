@@ -6,22 +6,30 @@ import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
 
-import javax.swing.*;
-import javax.xml.parsers.*;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.xerces.jaxp.JAXPConstants;
-import org.xml.sax.*;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
-import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -139,8 +147,7 @@ public class FileVOI extends FileXML {
     // --------------------------------------------------------------------------------------------------------
 
     /**
-     * This method read a VOI file that has been saved in the MIPAV VOI format (MIPAV *.voi, Nuages,
-     * and MIPAV *.xml).
+     * This method read a VOI file that has been saved in the MIPAV VOI format (MIPAV *.voi, Nuages, and MIPAV *.xml).
      * 
      * @param doLabel boolean telling to read the files as VOITexts (labels)
      * 
@@ -185,13 +192,13 @@ public class FileVOI extends FileXML {
             } else {
 
                 if ( !readXML(voi[0])) {
-                	// read the VOI in the default LPS coordinates:
+                    // read the VOI in the default LPS coordinates:
                     if ( !readCoordXML(voi[0], true)) {
-                    	// if it fails to read, attempt to read as file-index based coordinates:
+                        // if it fails to read, attempt to read as file-index based coordinates:
                         if ( !readCoordXML(voi[0], false)) {
-                        	// display error on fail:
-                        	MipavUtil.displayError("Error: The file does not appear to be a valid VOI file");
-                        	throw (new IOException("Open VOI failed."));
+                            // display error on fail:
+                            MipavUtil.displayError("Error: The file does not appear to be a valid VOI file");
+                            throw (new IOException("Open VOI failed."));
                         }
                     } else {
 
@@ -235,10 +242,9 @@ public class FileVOI extends FileXML {
         return voi;
 
     }
-    
+
     /**
-     * This method read a VOI file that has been saved in the MIPAV VOI format (MIPAV *.voi, Nuages,
-     * and MIPAV *.xml).
+     * This method read a VOI file that has been saved in the MIPAV VOI format (MIPAV *.voi, Nuages, and MIPAV *.xml).
      * 
      * @return the VOI read off the disk
      * 
@@ -277,13 +283,13 @@ public class FileVOI extends FileXML {
             } else {
 
                 if ( !readXML(voi[0])) {
-                	// read the VOI in the default LPS coordinates:
+                    // read the VOI in the default LPS coordinates:
                     if ( !readCoordXML(voi[0], true)) {
-                    	// if it fails to read, attempt to read as file-index based coordinates:
+                        // if it fails to read, attempt to read as file-index based coordinates:
                         if ( !readCoordXML(voi[0], false)) {
-                        	// display error on fail:
-                        	MipavUtil.displayError("Error: The file does not appear to be a valid VOI file");
-                        	throw (new IOException("Open VOI failed."));
+                            // display error on fail:
+                            MipavUtil.displayError("Error: The file does not appear to be a valid VOI file");
+                            throw (new IOException("Open VOI failed."));
                         }
                     } else {
 
@@ -324,36 +330,36 @@ public class FileVOI extends FileXML {
             }
         }
         for (int i = 0; i < voi.length; i++) {
-        	VOI presentVOI = voi[i];
-        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
-        		curves = presentVOI.getCurves();	
-        		curveNumber = curves.size();
-        		for (int j = 0; j < curveNumber; j++) {
-        		    base = curves.elementAt(j);	
-        		    pointNumber = base.size();
-        		    for (int k = 0; k < pointNumber; k++) {
-        		        totalPoints++;
-        		    }
-        		}
-        	} 
+            final VOI presentVOI = voi[i];
+            if (presentVOI.getCurveType() == VOI.CONTOUR) {
+                curves = presentVOI.getCurves();
+                curveNumber = curves.size();
+                for (int j = 0; j < curveNumber; j++) {
+                    base = curves.elementAt(j);
+                    pointNumber = base.size();
+                    for (int k = 0; k < pointNumber; k++) {
+                        totalPoints++;
+                    }
+                }
+            }
         }
         pointVOI = new VOI[totalPoints];
         for (int i = 0; i < voi.length; i++) {
-        	VOI presentVOI = voi[i];
-        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
-        		curves = presentVOI.getCurves();	
-        		curveNumber = curves.size();
-        		for (int j = 0; j < curveNumber; j++) {
-        		    base = curves.elementAt(j);	
-        		    pointNumber = base.size();
-        		    for (int k = 0; k < pointNumber; k++) {
-        		    	vec = base.elementAt(k);
-        		        pointVOI[pointIndex] = new VOI(id++, "",VOI.POINT, 0.0f);
-        		        pointVOI[pointIndex].importPoint(vec);
-        		        pointIndex++;
-        		    }
-        		}
-        	} 
+            final VOI presentVOI = voi[i];
+            if (presentVOI.getCurveType() == VOI.CONTOUR) {
+                curves = presentVOI.getCurves();
+                curveNumber = curves.size();
+                for (int j = 0; j < curveNumber; j++) {
+                    base = curves.elementAt(j);
+                    pointNumber = base.size();
+                    for (int k = 0; k < pointNumber; k++) {
+                        vec = base.elementAt(k);
+                        pointVOI[pointIndex] = new VOI(id++, "", VOI.POINT, 0.0f);
+                        pointVOI[pointIndex].importPoint(vec);
+                        pointIndex++;
+                    }
+                }
+            }
         }
         return pointVOI;
 
@@ -369,8 +375,7 @@ public class FileVOI extends FileXML {
     public void writeAnnotationXML(final boolean writeAll) throws IOException {
         FileWriter fw;
         while (file.exists() == true) {
-            final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?",
-                    "File exists", JOptionPane.YES_NO_OPTION);
+            final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists", JOptionPane.YES_NO_OPTION);
 
             if (response == JOptionPane.YES_OPTION) {
                 file.delete();
@@ -434,83 +439,79 @@ public class FileVOI extends FileXML {
 
                     curves = currentVOI.getCurves();
 
-                    //for (int j = 0; j < curves.length; j++) {
+                    // for (int j = 0; j < curves.length; j++) {
 
-                        for (int k = 0; k < curves.size(); k++) {
+                    for (int k = 0; k < curves.size(); k++) {
 
-                            openTag("Label", true);
+                        openTag("Label", true);
 
-                            // there's only one per VOI
-                            vText = (VOIText) curves.elementAt(k);
-                            voiString = vText.getText();
-                            noteString = vText.getNote();
-                            doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
+                        // there's only one per VOI
+                        vText = (VOIText) curves.elementAt(k);
+                        voiString = vText.getText();
+                        noteString = vText.getNote();
+                        doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
 
-                            voiColor = vText.getColor();
-                            voiBackgroundColor = vText.getBackgroundColor();
-                            textPt = vText.elementAt(0);
-                            arrowPt = vText.elementAt(1);
-                            useMarker = vText.useMarker();
-                            fontSize = vText.getFontSize();
-                            fontName = vText.getFontName();
-                            fontDescriptors = vText.getFontDescriptors();
+                        voiColor = vText.getColor();
+                        voiBackgroundColor = vText.getBackgroundColor();
+                        textPt = vText.elementAt(0);
+                        arrowPt = vText.elementAt(1);
+                        useMarker = vText.useMarker();
+                        fontSize = vText.getFontSize();
+                        fontName = vText.getFontName();
+                        fontDescriptors = vText.getFontDescriptors();
 
-                            closedTag("Text", voiString);
-                            if (doNote) {
-                                closedTag("Note", noteString);
-                            }
-
-                            if (image.getNDims() > 2) {
-                                MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
-                                MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
-                                closedTag("TextLocation", Float.toString(textPtScanner.X) + ","
-                                        + Float.toString(textPtScanner.Y) + "," + Float.toString(textPtScanner.Z));
-                                closedTag("ArrowLocation", Float.toString(arrowPtScanner.X) + ","
-                                        + Float.toString(arrowPtScanner.Y) + "," + Float.toString(arrowPtScanner.Z));
-                                // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
-                                // arrowPtScanner);
-                            } else {
-                                //textPt.Z = j;
-                                //arrowPt.Z = j;
-                                closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
-                                        + "," + Float.toString(textPt.Z));
-                                closedTag("ArrowLocation", Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y)
-                                        + "," + Float.toString(arrowPt.Z));
-                            }
-
-                            closedTag("UseMarker", Boolean.toString(useMarker));
-
-                            closedTag("Color", Integer.toString(voiColor.getAlpha()) + ","
-                                    + Integer.toString(voiColor.getRed()) + "," + Integer.toString(voiColor.getGreen())
-                                    + "," + Integer.toString(voiColor.getBlue()));
-                            closedTag("BackgroundColor", Integer.toString(voiBackgroundColor.getAlpha()) + ","
-                                    + Integer.toString(voiBackgroundColor.getRed()) + ","
-                                    + Integer.toString(voiBackgroundColor.getGreen()) + ","
-                                    + Integer.toString(voiBackgroundColor.getBlue()));
-                            closedTag("FontName", fontName);
-                            closedTag("FontSize", Integer.toString(fontSize));
-
-                            if (fontDescriptors == Font.BOLD) {
-                                closedTag("FontStyle", "BOLD");
-                            } else if (fontDescriptors == Font.ITALIC) {
-                                closedTag("FontStyle", "ITALIC");
-                            } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
-                                closedTag("FontStyle", "BOLDITALIC");
-                            } else {
-                                closedTag("FontStyle", "");
-                            }
-                            ArrayList<String> comments = vText.getComments();
-                            if(comments.size() > 0) {
-                            	for(int w=0;w<comments.size();w++) {
-                            		closedTag("Comment", comments.get(w));
-                            	}
-                            }
-
-                            openTag("Label", false);
+                        closedTag("Text", voiString);
+                        if (doNote) {
+                            closedTag("Note", noteString);
                         }
-                    }
 
-                //}
+                        if (image.getNDims() > 2) {
+                            MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
+                            MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
+                            closedTag("TextLocation",
+                                    Float.toString(textPtScanner.X) + "," + Float.toString(textPtScanner.Y) + "," + Float.toString(textPtScanner.Z));
+                            closedTag("ArrowLocation",
+                                    Float.toString(arrowPtScanner.X) + "," + Float.toString(arrowPtScanner.Y) + "," + Float.toString(arrowPtScanner.Z));
+                            // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
+                            // arrowPtScanner);
+                        } else {
+                            // textPt.Z = j;
+                            // arrowPt.Z = j;
+                            closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y) + "," + Float.toString(textPt.Z));
+                            closedTag("ArrowLocation", Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y) + "," + Float.toString(arrowPt.Z));
+                        }
+
+                        closedTag("UseMarker", Boolean.toString(useMarker));
+
+                        closedTag("Color",
+                                Integer.toString(voiColor.getAlpha()) + "," + Integer.toString(voiColor.getRed()) + "," + Integer.toString(voiColor.getGreen())
+                                        + "," + Integer.toString(voiColor.getBlue()));
+                        closedTag("BackgroundColor", Integer.toString(voiBackgroundColor.getAlpha()) + "," + Integer.toString(voiBackgroundColor.getRed())
+                                + "," + Integer.toString(voiBackgroundColor.getGreen()) + "," + Integer.toString(voiBackgroundColor.getBlue()));
+                        closedTag("FontName", fontName);
+                        closedTag("FontSize", Integer.toString(fontSize));
+
+                        if (fontDescriptors == Font.BOLD) {
+                            closedTag("FontStyle", "BOLD");
+                        } else if (fontDescriptors == Font.ITALIC) {
+                            closedTag("FontStyle", "ITALIC");
+                        } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
+                            closedTag("FontStyle", "BOLDITALIC");
+                        } else {
+                            closedTag("FontStyle", "");
+                        }
+                        final ArrayList<String> comments = vText.getComments();
+                        if (comments.size() > 0) {
+                            for (int w = 0; w < comments.size(); w++) {
+                                closedTag("Comment", comments.get(w));
+                            }
+                        }
+
+                        openTag("Label", false);
+                    }
+                }
+
+                // }
             }
 
             openTag("Annotation", false);
@@ -522,17 +523,15 @@ public class FileVOI extends FileXML {
     /**
      * Writes VOIText(s) to a .lbl file (XML based)
      * 
-     * @param String voiName   Name of VOIText to write out
+     * @param String voiName Name of VOIText to write out
      * @param boolean writeAllContours Whether to write all contours or only selected contours
      * 
      * @throws IOException exception thrown if there is an error writing the file
      */
-    public void writeAnnotationInVoiAsXML(String voiName, boolean writeAllContours)
-            throws IOException {
+    public void writeAnnotationInVoiAsXML(final String voiName, final boolean writeAllContours) throws IOException {
         FileWriter fw;
         while (file.exists() == true) {
-            final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?",
-                    "File exists", JOptionPane.YES_NO_OPTION);
+            final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists", JOptionPane.YES_NO_OPTION);
 
             if (response == JOptionPane.YES_OPTION) {
                 file.delete();
@@ -588,14 +587,14 @@ public class FileVOI extends FileXML {
 
             arrowPtScanner = new Vector3f();
             textPtScanner = new Vector3f();
-            boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
-            boolean is2D = (image.getNDims() == 2);
-            if(saveAsLPS) {
-            	closedTag("CoordinateSystem", "LPS-scanner");
-            }else {
-            	closedTag("CoordinateSystem", "Voxel");
+            final boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
+            final boolean is2D = (image.getNDims() == 2);
+            if (saveAsLPS) {
+                closedTag("CoordinateSystem", "LPS-scanner");
+            } else {
+                closedTag("CoordinateSystem", "Voxel");
             }
-            
+
             for (int i = 0; i < numVOIs; i++) {
                 currentVOI = VOIs.VOIAt(i);
 
@@ -603,100 +602,91 @@ public class FileVOI extends FileXML {
 
                     curves = currentVOI.getCurves();
 
-                    //for (int j = 0; j < curves.length; j++) {
+                    // for (int j = 0; j < curves.length; j++) {
 
-                        for (int k = 0; k < curves.size(); k++) {
-                    		if(!((VOIText) curves.elementAt(k)).getName().equals(voiName)){
-                    			continue;
-                    		}
-                    		if(!writeAllContours) {
-                    			if(!((VOIText)curves.elementAt(k)).isActive()) {
-                    				continue;
-                    			}
-                    		}
-                            vText = (VOIText) curves.elementAt(k);
-                            voiString = vText.getText();
-                            noteString = vText.getNote();
-                            doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
-
-
-
-                                openTag("Label", true);
-
-                                // there's only one per VOI, but
-                                voiColor = vText.getColor();
-                                voiBackgroundColor = vText.getBackgroundColor();
-                                textPt = vText.elementAt(0);
-                                arrowPt = vText.elementAt(1);
-                                useMarker = vText.useMarker();
-                                fontSize = vText.getFontSize();
-                                fontName = vText.getFontName();
-                                fontDescriptors = vText.getFontDescriptors();
-
-                                closedTag("Text", voiString);
-                                if (doNote) {
-                                    closedTag("Note", noteString);
-                                }
-
-                                if (!is2D && saveAsLPS) {
-                                    MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
-                                    MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
-                                    closedTag("TextLocation", Float.toString(textPtScanner.X) + ","
-                                            + Float.toString(textPtScanner.Y) + "," + Float.toString(textPtScanner.Z));
-                                    closedTag("ArrowLocation", Float.toString(arrowPtScanner.X) + ","
-                                            + Float.toString(arrowPtScanner.Y) + "," + Float.toString(arrowPtScanner.Z));
-                                    // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
-                                    // arrowPtScanner);
-                                }else if(!is2D && saveAsLPS) {
-                                	closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
-                                            + "," + Float.toString(textPt.Z));
-                                    closedTag("ArrowLocation", Float.toString(arrowPt.X) + ","
-                                            + Float.toString(arrowPt.Y) + "," + Float.toString(arrowPt.Z));
-                                }else {
-                                    //textPt.Z = j;
-                                    //arrowPt.Z = j;
-                                    closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y)
-                                            + "," + Float.toString(textPt.Z));
-                                    closedTag("ArrowLocation", Float.toString(arrowPt.X) + ","
-                                            + Float.toString(arrowPt.Y) + "," + Float.toString(arrowPt.Z));
-                                }
-
-                                closedTag("UseMarker", Boolean.toString(useMarker));
-
-                                closedTag("Color", Integer.toString(voiColor.getAlpha()) + ","
-                                        + Integer.toString(voiColor.getRed()) + ","
-                                        + Integer.toString(voiColor.getGreen()) + ","
-                                        + Integer.toString(voiColor.getBlue()));
-                                closedTag("BackgroundColor", Integer.toString(voiBackgroundColor.getAlpha()) + ","
-                                        + Integer.toString(voiBackgroundColor.getRed()) + ","
-                                        + Integer.toString(voiBackgroundColor.getGreen()) + ","
-                                        + Integer.toString(voiBackgroundColor.getBlue()));
-                                closedTag("FontName", fontName);
-                                closedTag("FontSize", Integer.toString(fontSize));
-
-                                if (fontDescriptors == Font.BOLD) {
-                                    closedTag("FontStyle", "BOLD");
-                                } else if (fontDescriptors == Font.ITALIC) {
-                                    closedTag("FontStyle", "ITALIC");
-                                } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
-                                    closedTag("FontStyle", "BOLDITALIC");
-                                } else {
-                                    closedTag("FontStyle", "");
-                                }
-                                
-                                ArrayList<String> comments = vText.getComments();
-                                if(comments.size() > 0) {
-                                	for(int w=0;w<comments.size();w++) {
-                                		closedTag("Comment", comments.get(w));
-                                	}
-                                }
-
-                                openTag("Label", false);
-                            
+                    for (int k = 0; k < curves.size(); k++) {
+                        if ( ! ((VOIText) curves.elementAt(k)).getName().equals(voiName)) {
+                            continue;
                         }
-                    }
+                        if ( !writeAllContours) {
+                            if ( ! ((VOIText) curves.elementAt(k)).isActive()) {
+                                continue;
+                            }
+                        }
+                        vText = (VOIText) curves.elementAt(k);
+                        voiString = vText.getText();
+                        noteString = vText.getNote();
+                        doNote = !noteString.equals(JDialogAnnotation.DEFAULT_NOTES) && noteString.length() > 0;
 
-                //}
+                        openTag("Label", true);
+
+                        // there's only one per VOI, but
+                        voiColor = vText.getColor();
+                        voiBackgroundColor = vText.getBackgroundColor();
+                        textPt = vText.elementAt(0);
+                        arrowPt = vText.elementAt(1);
+                        useMarker = vText.useMarker();
+                        fontSize = vText.getFontSize();
+                        fontName = vText.getFontName();
+                        fontDescriptors = vText.getFontDescriptors();
+
+                        closedTag("Text", voiString);
+                        if (doNote) {
+                            closedTag("Note", noteString);
+                        }
+
+                        if ( !is2D && saveAsLPS) {
+                            MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
+                            MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
+                            closedTag("TextLocation",
+                                    Float.toString(textPtScanner.X) + "," + Float.toString(textPtScanner.Y) + "," + Float.toString(textPtScanner.Z));
+                            closedTag("ArrowLocation",
+                                    Float.toString(arrowPtScanner.X) + "," + Float.toString(arrowPtScanner.Y) + "," + Float.toString(arrowPtScanner.Z));
+                            // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
+                            // arrowPtScanner);
+                        } else if ( !is2D && saveAsLPS) {
+                            closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y) + "," + Float.toString(textPt.Z));
+                            closedTag("ArrowLocation", Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y) + "," + Float.toString(arrowPt.Z));
+                        } else {
+                            // textPt.Z = j;
+                            // arrowPt.Z = j;
+                            closedTag("TextLocation", Float.toString(textPt.X) + "," + Float.toString(textPt.Y) + "," + Float.toString(textPt.Z));
+                            closedTag("ArrowLocation", Float.toString(arrowPt.X) + "," + Float.toString(arrowPt.Y) + "," + Float.toString(arrowPt.Z));
+                        }
+
+                        closedTag("UseMarker", Boolean.toString(useMarker));
+
+                        closedTag("Color",
+                                Integer.toString(voiColor.getAlpha()) + "," + Integer.toString(voiColor.getRed()) + "," + Integer.toString(voiColor.getGreen())
+                                        + "," + Integer.toString(voiColor.getBlue()));
+                        closedTag("BackgroundColor", Integer.toString(voiBackgroundColor.getAlpha()) + "," + Integer.toString(voiBackgroundColor.getRed())
+                                + "," + Integer.toString(voiBackgroundColor.getGreen()) + "," + Integer.toString(voiBackgroundColor.getBlue()));
+                        closedTag("FontName", fontName);
+                        closedTag("FontSize", Integer.toString(fontSize));
+
+                        if (fontDescriptors == Font.BOLD) {
+                            closedTag("FontStyle", "BOLD");
+                        } else if (fontDescriptors == Font.ITALIC) {
+                            closedTag("FontStyle", "ITALIC");
+                        } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
+                            closedTag("FontStyle", "BOLDITALIC");
+                        } else {
+                            closedTag("FontStyle", "");
+                        }
+
+                        final ArrayList<String> comments = vText.getComments();
+                        if (comments.size() > 0) {
+                            for (int w = 0; w < comments.size(); w++) {
+                                closedTag("Comment", comments.get(w));
+                            }
+                        }
+
+                        openTag("Label", false);
+
+                    }
+                }
+
+                // }
             }
 
             openTag("Annotation", false);
@@ -736,8 +726,8 @@ public class FileVOI extends FileXML {
             // open save as file dialog
         }
 
-        int length = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
-        contours = voi.getSortedCurves( VOIBase.ZPLANE, length );
+        final int length = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+        contours = voi.getSortedCurves(VOIBase.ZPLANE, length);
         nSlices = contours.length;
 
         if (image.getNDims() > 2) {
@@ -752,7 +742,7 @@ public class FileVOI extends FileXML {
             nContours = contours[i].size();
 
             for (j = 0, nPts = 0; j < nContours; j++) {
-                nPts +=  (contours[i].elementAt(j)).size();
+                nPts += (contours[i].elementAt(j)).size();
             }
 
             raFile.writeBytes("V " + nPts + " z " + i + "\n");
@@ -809,9 +799,9 @@ public class FileVOI extends FileXML {
         }
 
         raFile.writeBytes("MIPAV PTS FILE\r\n");
-        
+
         length = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
-        contours = voi.getSortedCurves( VOIBase.ZPLANE, length );
+        contours = voi.getSortedCurves(VOIBase.ZPLANE, length);
         length = contours.length;
         curveType = voi.getCurveType();
         color = voi.getColor();
@@ -911,7 +901,7 @@ public class FileVOI extends FileXML {
         raFile.writeBytes("MIPAV VOI FILE\r\n");
 
         length = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
-        contours = voi.getSortedCurves( VOIBase.ZPLANE, length );
+        contours = voi.getSortedCurves(VOIBase.ZPLANE, length);
         length = contours.length;
         curveType = voi.getCurveType();
         color = voi.getColor();
@@ -921,7 +911,7 @@ public class FileVOI extends FileXML {
 
             for (j = 0; j < nContours; j++) {
 
-                if (saveAllContours || ((VOIBase) contours[i].elementAt(j)).isActive()) {
+                if (saveAllContours || contours[i].elementAt(j).isActive()) {
                     count++;
 
                     break;
@@ -946,7 +936,7 @@ public class FileVOI extends FileXML {
 
                 for (j = 0; j < nContours; j++) {
 
-                    if ( ((VOIBase) contours[i].elementAt(j)).isActive()) {
+                    if (contours[i].elementAt(j).isActive()) {
                         nActiveContours++;
                     }
                 }
@@ -958,13 +948,13 @@ public class FileVOI extends FileXML {
 
                 for (j = 0; j < nContours; j++) {
 
-                    if (saveAllContours || ((VOIBase) contours[i].elementAt(j)).isActive()) {
+                    if (saveAllContours || contours[i].elementAt(j).isActive()) {
                         nPts = (contours[i].elementAt(j)).size();
                         raFile.writeBytes(Integer.toString(nPts) + "\t\t# number of pts in contour\r\n");
                         x = new float[nPts];
                         y = new float[nPts];
                         z = new float[nPts];
-                        ((VOIBase) (contours[i].elementAt(j))).exportArrays(x, y, z);
+                        (contours[i].elementAt(j)).exportArrays(x, y, z);
 
                         for (k = 0; k < nPts; k++) {
                             raFile.writeBytes(Float.toString(x[k]) + " " + Float.toString(y[k]) + "\r\n");
@@ -979,11 +969,10 @@ public class FileVOI extends FileXML {
         raFile.close();
     }
 
-    public void writeXML(final VOI voi, final boolean saveAllContours) throws IOException 
-    {
-    	writeXML(voi, saveAllContours, false);
+    public void writeXML(final VOI voi, final boolean saveAllContours) throws IOException {
+        writeXML(voi, saveAllContours, false);
     }
-    
+
     /**
      * Writes VOI to an XML formatted file.
      * 
@@ -992,7 +981,7 @@ public class FileVOI extends FileXML {
      * 
      * @throws IOException exception thrown if there is an error writing the file
      */
-    public void writeXML(final VOI voi, final boolean saveAllContours, final boolean overwriteFile ) throws IOException {
+    public void writeXML(final VOI voi, final boolean saveAllContours, final boolean overwriteFile) throws IOException {
         int i, j, k, m;
         int nPts;
         int nContours, nActiveContours;
@@ -1008,47 +997,43 @@ public class FileVOI extends FileXML {
         // single copy is necessary for correct implementation of openTag(), closeTag(), etc
         // BufferedWriter bw;
 
-        if ( !overwriteFile )
-        {
-        	while (file.exists() == true) {
-        		final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?",
-        				"File exists", JOptionPane.YES_NO_OPTION);
+        if ( !overwriteFile) {
+            while (file.exists() == true) {
+                final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists", JOptionPane.YES_NO_OPTION);
 
-        		if (response == JOptionPane.YES_OPTION) {
-        			file.delete();
-        			file = new File(fileDir + fileName);
+                if (response == JOptionPane.YES_OPTION) {
+                    file.delete();
+                    file = new File(fileDir + fileName);
 
-        			break;
-        		} else {
-        			final JFileChooser chooser = new JFileChooser();
-        			chooser.setDialogTitle("Save VOI as");
-        			chooser.setCurrentDirectory(file);
+                    break;
+                } else {
+                    final JFileChooser chooser = new JFileChooser();
+                    chooser.setDialogTitle("Save VOI as");
+                    chooser.setCurrentDirectory(file);
 
-        			chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml"}));
+                    chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml"}));
 
-        			final int returnVal = chooser.showSaveDialog(null);
+                    final int returnVal = chooser.showSaveDialog(null);
 
-        			if (returnVal == JFileChooser.APPROVE_OPTION) {
-        				fileName = chooser.getSelectedFile().getName();
-        				if(!fileName.endsWith(".xml")) {
-        					MipavUtil.displayError("VOI files must end in .xml");
-        					return;
-        				}
-        				fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-        				file = new File(fileDir + fileName);
-        				String voiName = fileName.substring(0, fileName.indexOf(".xml"));
-        				voi.setName(voiName);
-        	        	voi.update();
-        			} else {
-        				return;
-        			}
-        		}
-        	}
-        }
-        else
-        {
-			file.delete();
-			file = new File(fileDir + fileName);
+                    if (returnVal == JFileChooser.APPROVE_OPTION) {
+                        fileName = chooser.getSelectedFile().getName();
+                        if ( !fileName.endsWith(".xml")) {
+                            MipavUtil.displayError("VOI files must end in .xml");
+                            return;
+                        }
+                        fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                        file = new File(fileDir + fileName);
+                        final String voiName = fileName.substring(0, fileName.indexOf(".xml"));
+                        voi.setName(voiName);
+                        voi.update();
+                    } else {
+                        return;
+                    }
+                }
+            }
+        } else {
+            file.delete();
+            file = new File(fileDir + fileName);
         }
 
         try {
@@ -1063,32 +1048,30 @@ public class FileVOI extends FileXML {
             bw.write(FileVOI.VOI_HEADER);
             bw.newLine();
 
-            boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
+            final boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
             openTag("VOI xmlns:xsi=\"" + FileVOI.W3C_XML_SCHEMA + "-instance\"", true);
             closedTag("Unique-ID", Integer.toString(voi.getUID()));
             closedTag("Curve-type", Integer.toString(voi.getCurveType()));
-            if ( saveAsLPS )
-            {
-                //final Vector3f kOriginLPS = MipavCoordinateSystems.originLPS(image);
-                //closedTag("LPS-origin", Float.toString(kOriginLPS.X) + "," + Float.toString(kOriginLPS.Y) + ","
-                //        + Float.toString(kOriginLPS.Z));                
+            if (saveAsLPS) {
+                // final Vector3f kOriginLPS = MipavCoordinateSystems.originLPS(image);
+                // closedTag("LPS-origin", Float.toString(kOriginLPS.X) + "," + Float.toString(kOriginLPS.Y) + ","
+                // + Float.toString(kOriginLPS.Z));
             }
-            closedTag("Color", Integer.toString(voi.getColor().getAlpha()) + ","
-                    + Integer.toString(voi.getColor().getRed()) + "," + Integer.toString(voi.getColor().getGreen())
-                    + "," + Integer.toString(voi.getColor().getBlue()));
+            closedTag(
+                    "Color",
+                    Integer.toString(voi.getColor().getAlpha()) + "," + Integer.toString(voi.getColor().getRed()) + ","
+                            + Integer.toString(voi.getColor().getGreen()) + "," + Integer.toString(voi.getColor().getBlue()));
 
             closedTag("Thickness", Integer.toString(voi.getThickness()));
-            
-            ArrayList<String> comments = voi.getComments();
-            if(comments.size() > 0) {
-            	for(int w=0;w<comments.size();w++) {
-            		closedTag("Comment", comments.get(w));
-            	}
-            }
-            
 
-            if ( (voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE)
-                    || (voi.getCurveType() == VOI.POINT)) {
+            final ArrayList<String> comments = voi.getComments();
+            if (comments.size() > 0) {
+                for (int w = 0; w < comments.size(); w++) {
+                    closedTag("Comment", comments.get(w));
+                }
+            }
+
+            if ( (voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE) || (voi.getCurveType() == VOI.POINT)) {
 
                 Vector<VOISortItem> pointVector = new Vector<VOISortItem>();
 
@@ -1097,9 +1080,8 @@ public class FileVOI extends FileXML {
 
                 for (k = 0; k < nContours; k++) {
 
-                    if ( (saveAllContours || ((VOIBase) contours.elementAt(k)).isActive())) {
-                        pointVector.add(new VOISortItem((VOIBase) contours.elementAt(k), Integer
-                                .parseInt( ((VOIBase) contours.elementAt(k)).getLabel())));
+                    if ( (saveAllContours || contours.elementAt(k).isActive())) {
+                        pointVector.add(new VOISortItem(contours.elementAt(k), Integer.parseInt(contours.elementAt(k).getLabel())));
 
                     }
                 }
@@ -1111,11 +1093,11 @@ public class FileVOI extends FileXML {
                 VOIBase tempBase = null;
 
                 // System.err.println("SaveAsLPS: " + saveAsLPS);
-                boolean is2D = (image.getNDims() == 2);
+                final boolean is2D = (image.getNDims() == 2);
 
                 for (i = 0; i < pSize; i++) {
 
-                    tempVOIItem = (VOISortItem) pointVector.elementAt(i);
+                    tempVOIItem = pointVector.elementAt(i);
                     tempBase = tempVOIItem.getVOIBase();
 
                     openTag("Contour", true);
@@ -1132,13 +1114,13 @@ public class FileVOI extends FileXML {
 
                     // save old format if image dim is 2
                     if (is2D || !saveAsLPS) {
-                        closedTag("Slice-number", Integer.toString((int)z[0]));
+                        closedTag("Slice-number", Integer.toString((int) z[0]));
                     }
 
                     if ( !is2D && saveAsLPS) {
                         final Vector3f ptIn = new Vector3f();
                         final Vector3f ptOut = new Vector3f();
-                        //final int slice = tempVOIItem.getSlice();
+                        // final int slice = tempVOIItem.getSlice();
 
                         for (m = 0; m < nPts; m++) {
                             ptIn.X = x[m];
@@ -1147,8 +1129,7 @@ public class FileVOI extends FileXML {
                             MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
 
                             // System.err.println("Pt in: " + ptIn + ", Pt out: " + ptOut);
-                            closedTag("Pt", Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + ","
-                                    + Float.toString(ptOut.Z));
+                            closedTag("Pt", Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + "," + Float.toString(ptOut.Z));
                         }
                     } else {
                         // image dim is 2 (or SaveAsLPS false).... save to old format
@@ -1167,76 +1148,75 @@ public class FileVOI extends FileXML {
 
             } else {
 
-                //for (i = 0; i < length; i++) {
-                    nContours = contours.size();
-                    nActiveContours = 0;
+                // for (i = 0; i < length; i++) {
+                nContours = contours.size();
+                nActiveContours = 0;
 
-                    if (saveAllContours) {
-                        nActiveContours = nContours;
-                    } else {
+                if (saveAllContours) {
+                    nActiveContours = nContours;
+                } else {
 
-                        for (j = 0; j < nContours; j++) {
+                    for (j = 0; j < nContours; j++) {
 
-                            if ( ((VOIBase) contours.elementAt(j)).isActive()) {
-                                nActiveContours++;
-                            }
+                        if (contours.elementAt(j).isActive()) {
+                            nActiveContours++;
                         }
                     }
+                }
 
-                    if (nActiveContours > 0) {
+                if (nActiveContours > 0) {
 
-                        for (j = 0; j < nContours; j++) {
+                    for (j = 0; j < nContours; j++) {
 
-                            if (saveAllContours || ((VOIBase) contours.elementAt(j)).isActive()) {
-                                openTag("Contour", true);
+                        if (saveAllContours || contours.elementAt(j).isActive()) {
+                            openTag("Contour", true);
 
-                                nPts = (contours.elementAt(j)).size();
+                            nPts = (contours.elementAt(j)).size();
 
-                                if (x.length < nPts) {
-                                    x = new float[nPts];
-                                    y = new float[nPts];
-                                    z = new float[nPts];
-                                }
-
-                                ((VOIBase) (contours.elementAt(j))).exportArrays(x, y, z);
-
-                                // save old format if image dim is 2 or !saveAsLPS
-                                if (image.getNDims() == 2 || !saveAsLPS) {
-                                    closedTag("Slice-number", Integer.toString((int)z[0]));
-                                }
-
-                                if (image.getNDims() > 2) {
-                                    final Vector3f ptIn = new Vector3f();
-                                    final Vector3f ptOut = new Vector3f();
-                                    //final int slice = i;
-
-                                    for (m = 0; m < nPts; m++) {
-                                        ptIn.X = x[m];
-                                        ptIn.Y = y[m];
-                                        ptIn.Z = z[m];
-                                        if(saveAsLPS) {
-                                            MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
-                                        } else {
-                                            ptOut.X = ptIn.X;
-                                            ptOut.Y = ptIn.Y;
-                                            ptOut.Z = ptIn.Z;
-                                        }
-                                        closedTag("Pt", Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + ","
-                                                + Float.toString(ptOut.Z));
-                                    }
-                                } else {
-                                    // image is 2d
-
-                                    for (k = 0; k < nPts; k++) {
-                                        closedTag("Pt", Float.toString(x[k]) + "," + Float.toString(y[k]));
-                                    }
-                                }
-
-                                openTag("Contour", false);
+                            if (x.length < nPts) {
+                                x = new float[nPts];
+                                y = new float[nPts];
+                                z = new float[nPts];
                             }
+
+                            (contours.elementAt(j)).exportArrays(x, y, z);
+
+                            // save old format if image dim is 2 or !saveAsLPS
+                            if (image.getNDims() == 2 || !saveAsLPS) {
+                                closedTag("Slice-number", Integer.toString((int) z[0]));
+                            }
+
+                            if (image.getNDims() > 2) {
+                                final Vector3f ptIn = new Vector3f();
+                                final Vector3f ptOut = new Vector3f();
+                                // final int slice = i;
+
+                                for (m = 0; m < nPts; m++) {
+                                    ptIn.X = x[m];
+                                    ptIn.Y = y[m];
+                                    ptIn.Z = z[m];
+                                    if (saveAsLPS) {
+                                        MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
+                                    } else {
+                                        ptOut.X = ptIn.X;
+                                        ptOut.Y = ptIn.Y;
+                                        ptOut.Z = ptIn.Z;
+                                    }
+                                    closedTag("Pt", Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + "," + Float.toString(ptOut.Z));
+                                }
+                            } else {
+                                // image is 2d
+
+                                for (k = 0; k < nPts; k++) {
+                                    closedTag("Pt", Float.toString(x[k]) + "," + Float.toString(y[k]));
+                                }
+                            }
+
+                            openTag("Contour", false);
                         }
                     }
-                //}
+                }
+                // }
             }
 
             openTag("VOI", false);
@@ -1419,7 +1399,7 @@ public class FileVOI extends FileXML {
      * 
      * @return boolean whether or not the VOI read in successfully
      */
-    private boolean readCoordXML(final VOI voi, boolean isLPS) {
+    private boolean readCoordXML(final VOI voi, final boolean isLPS) {
         final SAXParserFactory spf = SAXParserFactory.newInstance();
 
         spf.setNamespaceAware(true);
@@ -1447,15 +1427,12 @@ public class FileVOI extends FileXML {
             final XMLReader xmlReader = saxParser.getXMLReader();
 
             // Set the ContentHandler of the XMLReader
-            if ( isLPS )
-            {
-            	// read the voi coordinates as LPS coordinates (the default)
-            	xmlReader.setContentHandler(new XMLCoordHandler(voi));
-            }
-            else
-            {
-            	// read the voi coordinates as file-index based coordinates
-            	xmlReader.setContentHandler(new XMLCoordHandler(voi, false));
+            if (isLPS) {
+                // read the voi coordinates as LPS coordinates (the default)
+                xmlReader.setContentHandler(new XMLCoordHandler(voi));
+            } else {
+                // read the voi coordinates as file-index based coordinates
+                xmlReader.setContentHandler(new XMLCoordHandler(voi, false));
             }
 
             // Set an ErrorHandler before parsing
@@ -1463,9 +1440,9 @@ public class FileVOI extends FileXML {
 
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
-        }catch (SAXException e) {
-             return false;
-        }catch (final Exception error) {
+        } catch (final SAXException e) {
+            return false;
+        } catch (final Exception error) {
             error.printStackTrace();
             MipavUtil.displayError("Error: " + error.getMessage());
 
@@ -1572,8 +1549,7 @@ public class FileVOI extends FileXML {
                         while ( ! ( (VOIStr = readLine()).regionMatches(true, 0, "}", 0, 1))) {
                             decodeLine(VOIStr, pt2D);
 
-                            if ( (pt2D.X < 0) || (pt2D.Y < 0) || (pt2D.X >= image.getExtents()[0])
-                                    || (pt2D.Y >= image.getExtents()[1])) {
+                            if ( (pt2D.X < 0) || (pt2D.Y < 0) || (pt2D.X >= image.getExtents()[0]) || (pt2D.Y >= image.getExtents()[1])) {
                                 throw (new IOException("VOI points exceed image bounds"));
                             }
 
@@ -1740,7 +1716,8 @@ public class FileVOI extends FileXML {
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
         } catch (final Exception error) {
-            //MipavUtil.displayError("Error: " + error.getMessage());
+            // MipavUtil.displayError("Error: " + error.getMessage());
+            error.printStackTrace();
 
             return false;
         }
@@ -1788,6 +1765,7 @@ public class FileVOI extends FileXML {
          * @param start int
          * @param length int
          */
+        @Override
         public void characters(final char[] ch, final int start, final int length) {
             final String s = new String(ch, start, length);
 
@@ -1808,16 +1786,16 @@ public class FileVOI extends FileXML {
          * 
          * @throws SAXException if there is a problem with the parser
          */
-        public void endElement(final String namespaceURI, final String localName, final String qName)
-                throws SAXException {
+        @Override
+        public void endElement(final String namespaceURI, final String localName, final String qName) throws SAXException {
             currentKey = localName;
 
             if (currentKey.equals("Unique-ID")) {
                 voi.setUID(Integer.parseInt(elementBuffer));
-            }//else if (currentKey.equals("Comment")) {
-                //voi.setComments(elementBuffer);
-            //} 
-        	else if (currentKey.equals("Curve-type")) {
+            }// else if (currentKey.equals("Comment")) {
+             // voi.setComments(elementBuffer);
+             // }
+            else if (currentKey.equals("Curve-type")) {
                 voi.setCurveType(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Color")) {
                 int a = 0, r = 0, g = 0, b = 0;
@@ -1831,11 +1809,16 @@ public class FileVOI extends FileXML {
 
                     voi.setColor(new Color(r, g, b, a));
                 } catch (final NumberFormatException ex) {
-                    Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
-                            Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
             } else if (currentKey.equals("Thickness")) {
-                voi.setThickness(Integer.parseInt(elementBuffer));
+                // changed the xsds to allow for thickness < 1 (we were writing 0 thickness out but erroring out when
+                // opening them)
+                int thick = Integer.parseInt(elementBuffer);
+                if (thick < 0) {
+                    thick = 1;
+                }
+                voi.setThickness(thick);
             } else if (currentKey.equals("Slice-number")) {
                 sliceNumber = Integer.parseInt(elementBuffer);
             } else if (currentKey.equals("Pt")) {
@@ -1860,12 +1843,20 @@ public class FileVOI extends FileXML {
                 z = new float[contourVector.size()];
 
                 for (index = 0; index < contourVector.size(); index++) {
-                    x[index] = ((Vector2f) contourVector.elementAt(index)).X;
-                    y[index] = ((Vector2f) contourVector.elementAt(index)).Y;
+                    x[index] = contourVector.elementAt(index).X;
+                    y[index] = contourVector.elementAt(index).Y;
                     z[index] = sliceNumber;
                 }
 
                 voi.importCurve(x, y, z);
+
+                Vector2f prev = null;
+                for (int i = 0; i < contourVector.size(); i++) {
+                    if (prev != null && (prev.X == contourVector.elementAt(i).X && prev.Y == contourVector.elementAt(i).Y)) {
+                        System.err.println("Same VOI point:\tprev =  " + prev + "\tcur = " + contourVector.elementAt(i));
+                    }
+                    prev = contourVector.elementAt(i);
+                }
             }
 
         }
@@ -1880,8 +1871,8 @@ public class FileVOI extends FileXML {
          * 
          * @throws SAXException if there is a problem with the parser
          */
-        public void startElement(final String namespaceURI, final String localName, final String qName,
-                final Attributes atts) throws SAXException {
+        @Override
+        public void startElement(final String namespaceURI, final String localName, final String qName, final Attributes atts) throws SAXException {
             currentKey = localName;
             elementBuffer = "";
 
@@ -1908,6 +1899,7 @@ public class FileVOI extends FileXML {
          * 
          * @return DOCUMENT ME!
          */
+        @Override
         public int compare(final VOISortItem o1, final VOISortItem o2) {
             final int a = o1.getIndex();
             final int b = o2.getIndex();
@@ -2001,9 +1993,9 @@ public class FileVOI extends FileXML {
         /** the Z dimension of the image */
         @SuppressWarnings("unused")
         private int zDim = 1;
-        
+
         private boolean lps = true;
-        
+
         private String name;
 
         /**
@@ -2026,6 +2018,7 @@ public class FileVOI extends FileXML {
          * @param start int
          * @param length int
          */
+        @Override
         public void characters(final char[] ch, final int start, final int length) {
             final String s = new String(ch, start, length);
 
@@ -2046,19 +2039,17 @@ public class FileVOI extends FileXML {
          * 
          * @throws SAXException if there is a problem with the parser
          */
-        public void endElement(final String namespaceURI, final String localName, final String qName)
-                throws SAXException {
+        @Override
+        public void endElement(final String namespaceURI, final String localName, final String qName) throws SAXException {
             currentKey = localName;
-            
-            
-            
-            if(currentKey.equals("CoordinateSystem")) {
-            	if(elementBuffer.equals("LPS-scanner")) {
-            		lps = true;
-            	}
-            	if(elementBuffer.equals("Voxel")) {
-            		lps = false;
-            	}
+
+            if (currentKey.equals("CoordinateSystem")) {
+                if (elementBuffer.equals("LPS-scanner")) {
+                    lps = true;
+                }
+                if (elementBuffer.equals("Voxel")) {
+                    lps = false;
+                }
             }
 
             if (currentKey.equals("Label")) {
@@ -2067,22 +2058,22 @@ public class FileVOI extends FileXML {
                 voiText.setFontDescriptors(fontStyle);
 
                 voi.importCurve(voiText);
-                if(id == 0) {
-                	voiVector.addVOI(voi);
+                if (id == 0) {
+                    voiVector.addVOI(voi);
                 }
             }
 
             if (currentKey.equals("Unique-ID")) {
-            	if(id == 0) {
-            		voi.setUID(Integer.parseInt(elementBuffer));
-            	}
+                if (id == 0) {
+                    voi.setUID(Integer.parseInt(elementBuffer));
+                }
             } else if (currentKey.equals("Text")) {
                 voiText.setText(elementBuffer);
             } else if (currentKey.equals("Note")) {
                 voiText.setNote(elementBuffer);
             } else if (currentKey.equals("Comment")) {
                 voiText.setComments(elementBuffer);
-            }else if (currentKey.equals("TextLocation") || currentKey.equals("ArrowLocation")) {
+            } else if (currentKey.equals("TextLocation") || currentKey.equals("ArrowLocation")) {
                 float x = 0f, y = 0f, z = 0f;
                 final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
@@ -2099,38 +2090,38 @@ public class FileVOI extends FileXML {
                 final Vector3f ptOut = new Vector3f();
 
                 if (image.getNDims() > 2) {
-                	
-                	if(lps) {
-	                    final int xDim = image.getExtents()[0];
-	                    final int yDim = image.getExtents()[1];
-	                    final int zDim = image.getExtents()[2];
-	
-	                    Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
-	
-	                    MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
-	
-	                    if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
-	                        MipavUtil.displayWarning("VOI in file out of image bounds:  Open VOI aborted");
-	                        
-	                        return;
-	                    }
-	
-	                    // A mistake has occured in reading FileInfoBase.ORI_L2R_TYPE, all must now be flipped
-	                    if ( (ptOut.X < 0) && (ptOut.Y < 0) && (ptOut.Z < 0)) {
-	
-	                        ptOut.X = -ptOut.X;
-	                        ptOut.Y = -ptOut.Y;
-	                        ptOut.Z = -ptOut.Z;
-	                    }
-	
-	                    ptOut.X = Math.round(ptOut.X);
-	                    ptOut.Y = Math.round(ptOut.Y);
-	                    ptOut.Z = Math.round(ptOut.Z);
 
-	                    voiText.addElement(ptOut);
-                	}else {
-                		voiText.addElement(ptIn);
-                	}
+                    if (lps) {
+                        final int xDim = image.getExtents()[0];
+                        final int yDim = image.getExtents()[1];
+                        final int zDim = image.getExtents()[2];
+
+                        Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
+
+                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
+
+                        if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
+                            MipavUtil.displayWarning("VOI in file out of image bounds:  Open VOI aborted");
+
+                            return;
+                        }
+
+                        // A mistake has occured in reading FileInfoBase.ORI_L2R_TYPE, all must now be flipped
+                        if ( (ptOut.X < 0) && (ptOut.Y < 0) && (ptOut.Z < 0)) {
+
+                            ptOut.X = -ptOut.X;
+                            ptOut.Y = -ptOut.Y;
+                            ptOut.Z = -ptOut.Z;
+                        }
+
+                        ptOut.X = Math.round(ptOut.X);
+                        ptOut.Y = Math.round(ptOut.Y);
+                        ptOut.Z = Math.round(ptOut.Z);
+
+                        voiText.addElement(ptOut);
+                    } else {
+                        voiText.addElement(ptIn);
+                    }
                 } else {
                     voiText.addElement(ptIn);
                 }
@@ -2156,8 +2147,7 @@ public class FileVOI extends FileXML {
                     }
 
                 } catch (final NumberFormatException ex) {
-                    Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
-                            Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
             } else if (currentKey.equals("FontName")) {
                 fontName = new String(elementBuffer);
@@ -2186,16 +2176,16 @@ public class FileVOI extends FileXML {
          * 
          * @throws SAXException if there is a problem with the parser
          */
-        public void startElement(final String namespaceURI, final String localName, final String qName,
-                final Attributes atts) throws SAXException {
+        @Override
+        public void startElement(final String namespaceURI, final String localName, final String qName, final Attributes atts) throws SAXException {
             currentKey = localName;
             elementBuffer = "";
             if (currentKey.equals("Label")) {
                 id++;
                 name = file.getName().substring(0, file.getName().lastIndexOf("."));
-                if(id == 0) {
-                	voi = new VOI(id, name, VOI.ANNOTATION, 0f);
-                	voi.setExtension(extension);
+                if (id == 0) {
+                    voi = new VOI(id, name, VOI.ANNOTATION, 0f);
+                    voi.setExtension(extension);
                 }
                 voiText = new VOIText();
 
@@ -2220,6 +2210,7 @@ public class FileVOI extends FileXML {
 
         /** The VOI that we are building from the XML. */
         private final VOI voi;
+
         /** The default is to read the voi coodinates as LPS coordinates. */
         private boolean isLPS = true;
 
@@ -2238,7 +2229,7 @@ public class FileVOI extends FileXML {
          * 
          * @param voi the VOI we should build from the XML file data
          */
-        public XMLCoordHandler(final VOI voi, boolean isLPS) {
+        public XMLCoordHandler(final VOI voi, final boolean isLPS) {
             this.voi = voi;
             this.isLPS = isLPS;
             contourVector = new Vector<Vector3f>();
@@ -2251,6 +2242,7 @@ public class FileVOI extends FileXML {
          * @param start int
          * @param length int
          */
+        @Override
         public void characters(final char[] ch, final int start, final int length) {
             final String s = new String(ch, start, length);
 
@@ -2271,15 +2263,15 @@ public class FileVOI extends FileXML {
          * 
          * @throws SAXException if there is a problem with the parser
          */
-        public void endElement(final String namespaceURI, final String localName, final String qName)
-                throws SAXException {
+        @Override
+        public void endElement(final String namespaceURI, final String localName, final String qName) throws SAXException {
             currentKey = localName;
 
             if (currentKey.equals("Unique-ID")) {
                 voi.setUID(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Curve-type")) {
                 voi.setCurveType(Integer.parseInt(elementBuffer));
-            }  else if (currentKey.equals("LPS-origin")) {
+            } else if (currentKey.equals("LPS-origin")) {
                 float x = 0f, y = 0f, z = 0f;
                 final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
                 try {
@@ -2291,8 +2283,7 @@ public class FileVOI extends FileXML {
                 }
             } else if (currentKey.equals("Comment")) {
                 voi.setComments(elementBuffer);
-            }
-            else if (currentKey.equals("Color")) {
+            } else if (currentKey.equals("Color")) {
                 int a = 0, r = 0, g = 0, b = 0;
                 final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
 
@@ -2304,11 +2295,16 @@ public class FileVOI extends FileXML {
 
                     voi.setColor(new Color(r, g, b, a));
                 } catch (final NumberFormatException ex) {
-                    Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
-                            Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
             } else if (currentKey.equals("Thickness")) {
-                voi.setThickness(Integer.parseInt(elementBuffer));
+                // changed the xsds to allow for thickness < 1 (we were writing 0 thickness out but erroring out when
+                // opening them)
+                int thick = Integer.parseInt(elementBuffer);
+                if (thick < 0) {
+                    thick = 1;
+                }
+                voi.setThickness(thick);
             } else if (currentKey.equals("Pt")) {
                 float x = 0f, y = 0f, z = 0f;
                 final StringTokenizer st = new StringTokenizer(elementBuffer, ",");
@@ -2342,17 +2338,14 @@ public class FileVOI extends FileXML {
                 Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
 
                 for (index = 0; index < contourVector.size(); index++) {
-                    ptIn = (Vector3f) contourVector.elementAt(index);
+                    ptIn = contourVector.elementAt(index);
 
-                    if ( isLPS )
-                    {
-                    	// convert from LPS to file coordinates:
-                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);                      	
-                    }
-                    else
-                    {
-                    	// the input point is in file coordinates already, copy:
-                        ptOut.set( Math.round(ptIn.X), Math.round(ptIn.Y), Math.round(ptIn.Z) );                        
+                    if (isLPS) {
+                        // convert from LPS to file coordinates:
+                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
+                    } else {
+                        // the input point is in file coordinates already, copy:
+                        ptOut.set(Math.round(ptIn.X), Math.round(ptIn.Y), Math.round(ptIn.Z));
                     }
 
                     x[index] = MipavMath.round(Math.abs(ptOut.X));
@@ -2361,11 +2354,11 @@ public class FileVOI extends FileXML {
 
                     // System.err.println("POINT OUT (scanner to file): " + x[index] + ", " + y[index] + ", " +
                     // z[index]);
-                    Preferences.debug("\tScanner coord: " + ptIn + ", File coord: " + x[index] + ", " + y[index] + ", "
-                            + z[index] + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("\tScanner coord: " + ptIn + ", File coord: " + x[index] + ", " + y[index] + ", " + z[index] + "\n",
+                            Preferences.DEBUG_FILEIO);
 
-                    if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {   
-                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);             
+                    if ( (ptOut.X > xDim) || (ptOut.Y > yDim) || (ptOut.Z >= zDim)) {
+                        MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
                         throw new SAXException("VOI on file out of image bounds");
                     }
                 }
@@ -2385,8 +2378,8 @@ public class FileVOI extends FileXML {
          * 
          * @throws SAXException if there is a problem with the parser
          */
-        public void startElement(final String namespaceURI, final String localName, final String qName,
-                final Attributes atts) throws SAXException {
+        @Override
+        public void startElement(final String namespaceURI, final String localName, final String qName, final Attributes atts) throws SAXException {
             currentKey = localName;
             elementBuffer = "";
 

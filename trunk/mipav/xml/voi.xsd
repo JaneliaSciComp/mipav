@@ -11,7 +11,7 @@
 				<xs:element name="Unique-ID" type="xs:int"/>
 				<xs:element name="Curve-type" type="xs:int"/>
 				<xs:element name="Color" type="xs:string"/>
-				<xs:element name="Thickness" type="xs:positiveInteger" minOccurs="0"/>
+				<xs:element name="Thickness" type="xs:int" minOccurs="0"/>
 				<xs:element name="CoordinateSpace" minOccurs="0" >
 					<xs:simpleType>
 						<xs:restriction base="xs:string">
