@@ -3521,7 +3521,7 @@ public class ModelImage extends ModelStorageBase {
      * @return true if succeeded in saving.
      */
     public boolean saveImage(final String directory, final String fileName, final int fileType, final boolean isActive) {
-        return saveImage(directory, fileName, fileType, isActive, true);
+        return saveImage(directory, fileName, fileType, isActive, true, false);
     }
 
     /**
@@ -3537,6 +3537,22 @@ public class ModelImage extends ModelStorageBase {
      */
     public boolean saveImage(final String directory, final String fileName, final int fileType, final boolean isActive,
             final boolean bDisplayProgress) {
+    	return saveImage(directory, fileName, fileType, isActive, bDisplayProgress, false);
+    }
+    
+    /**
+     * Save the image to a file. The file type the image is to be save in is passed into this method.
+     * 
+     * @param directory location where the image is to stored.
+     * @param fileName the name of the file (without the extension).
+     * @param fileType The format of the image file (i.e. Analyze, XML, DICOM etc.)
+     * @param isActive Whether saving is being done in a separate thread
+     * @param bDisplayProgress when true display the progress bar for writing.
+     * 
+     * @return true if succeeded in saving.
+     */
+    public boolean saveImage(final String directory, final String fileName, final int fileType, final boolean isActive,
+            final boolean bDisplayProgress, final boolean quiet) {
         final FileWriteOptions options = new FileWriteOptions(false);
 
         if (this.getNDims() == 3) {
@@ -3576,6 +3592,7 @@ public class ModelImage extends ModelStorageBase {
 
         // like the number of images.
         final FileIO fileIO = new FileIO();
+        fileIO.setQuiet(quiet);
 
         boolean allowScriptRecording = true;
         fileIO.writeImage(this, options, bDisplayProgress, allowScriptRecording);
