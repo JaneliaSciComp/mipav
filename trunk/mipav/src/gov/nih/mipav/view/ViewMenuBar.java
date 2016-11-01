@@ -1312,7 +1312,7 @@ public class ViewMenuBar {
 								menuBuilder.buildCheckBoxMenuItem("Show Model", "ShowModel", false),
 								menuBuilder.buildCheckBoxMenuItem("Show Expanded Model", "ShowExpandedModel", false),
 								menuBuilder.buildMenuItem("Straighten", "StraightenLattice", 0, null, false),
-								menuBuilder.buildMenuItem("Segment Neuclei", "SegmentNeuclei", 0, null, false),
+//								menuBuilder.buildMenuItem("Segment Neuclei", "SegmentNeuclei", 0, null, false),
 								menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null, false) /*
 												 * , menuBuilder.buildMenuItem(
 												 * "Animate Straightening",

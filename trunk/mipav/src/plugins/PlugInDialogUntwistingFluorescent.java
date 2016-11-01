@@ -23,6 +23,8 @@ This software may NOT be used for diagnostic purposes.
  ******************************************************************
  ******************************************************************/
 
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -60,6 +62,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.StringTokenizer;
+import java.util.Vector;
 
 import javax.imageio.ImageIO;
 import javax.swing.ButtonGroup;
@@ -74,20 +77,16 @@ import javax.swing.JTextField;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
-public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionListener,  WindowListener {
+public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin implements AlgorithmInterface
+{
 
 	private static final long serialVersionUID = -8451902403280342311L;
-	private JTextField  inputImageTF;
-	private JTextField  latticeFileTF;
-	private JTextField  nucleiTF;
 	private JCheckBox straightenImageCheck;
 	private JCheckBox straightenMarkersCheck;
 	private JRadioButton voxelCoords;
 	private JRadioButton micronCoords;
 	private JRadioButton segmentSkinSurface;
 	private JRadioButton segmentLattice;
-	private JButton startButton;
-
 	private ModelImage wormImage;
 
 
@@ -97,110 +96,175 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 		setVisible(true);
 		addWindowListener(this);
 	}
-
+	/**
+	 * Closes dialog box when the OK button is pressed and calls the algorithm.
+	 *
+	 * @param  event  Event that triggers function.
+	 */
 	public void actionPerformed(ActionEvent event)
 	{
 		String command = event.getActionCommand();
-		
-		if (command.equals("BrowseConclude"))
-		{}
-		if (command.equals("start"))
-		{			
-			if ( wormImage != null ) {
-				wormImage.disposeLocal();
-				wormImage = null;
+
+		if (command.equals("OK")) {
+			if (setVariables()) {
+				callAlgorithm();
 			}
-			
-			if ( inputImageTF.getText().length() > 0 )
+		} else if (command.equals("Script")) {
+			callAlgorithm();
+		} else if (command.equals("Cancel")) {
+			this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+		}
+	}
+	
+
+	private void callAlgorithm()
+	{
+		if ( includeRange != null )
+		{
+			System.err.println("Starting straightening" );
+			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				File imageFile = new File(inputImageTF.getText());
+				ModelImage contourImage = null;
+				
+				// Build the full image name:
+				baseFileName = baseFileNameText.getText();
+				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
+				File imageFile = new File(baseFileDir + File.separator + fileName);
+
 				if ( imageFile.exists() )
-				{					
+				{	
+					System.err.println( "   " + fileName );
 					FileIO fileIO = new FileIO();
-					wormImage = fileIO.readImage(inputImageTF.getText());
-					
-					
+					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+
+
+					String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
 					VOIVector latticeVector = new VOIVector();
-					String latticeFile = latticeFileTF.getText() + File.separator;
-					if ( (latticeFileTF.getText().length() > 0) )
-					{
-						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
-					}
-					
+					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
+
 					if ( latticeVector.size() != 0 )
 					{
 						LatticeModel model = new LatticeModel(wormImage);
-						
-						if ( model != null )
-						{
-							model.setLattice(latticeVector.elementAt(0));
+						model.setLattice(latticeVector.elementAt(0));
 
-							if ( nucleiTF.getText().length() > 0 )
+						String nucleiFileName = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + "marker" + File.separator + "marker.csv";
+						File nucleiFile = new File(nucleiFileName);
+						if ( nucleiFile.exists() )
+						{
+							VOIVector vois = readMarkerPositions( nucleiFileName, nucleiFile );
+							VOI nucleiVOIs = vois.elementAt(0);
+							if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
 							{
-								File nucleiFile = new File(nucleiTF.getText());
-								if ( nucleiFile.exists() )
-								{
-									String fileName = nucleiTF.getText().substring(nucleiTF.getText().lastIndexOf(File.separator) + 1);
-									VOIVector vois = readMarkerPositions( fileName, nucleiFile );
-									VOI nucleiVOIs = vois.elementAt(0);
-									if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
-									{
-										model.setMarkers(nucleiVOIs);
-									}
-								}
+								model.setMarkers(nucleiVOIs);
 							}
-							System.err.println("Starting straightening" );
-							model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
-							if ( segmentSkinSurface.isSelected() )
-							{
-								model.segmentSkin(wormImage, false);
-							}
-							else if ( segmentLattice.isSelected() )
-							{
-								model.segmentLattice(wormImage, false);
-							}
-							if ( straightenMarkersCheck.isSelected() )
-							{
-								model.interpolateLattice( false, false, false, true );								
-							}
-							
-							model.dispose();
-							model = null;
-							if ( wormImage != null )
-							{
-								wormImage.disposeLocal(false);
-							}
-							System.err.println("Done straightening" );
+						}
+
+						System.err.println("Straightening " + i);
+						model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
+						if ( segmentSkinSurface.isSelected() )
+						{
+							contourImage = model.segmentSkin(wormImage);
+						}
+						else if ( segmentLattice.isSelected() )
+						{
+							model.segmentLattice(wormImage, false);
+						}
+						if ( straightenMarkersCheck.isSelected() )
+						{
+							model.interpolateLattice( false, false, false, true );								
+						}
+
+						model.dispose();
+						model = null;
+
+						if ( wormImage != null )
+						{
+							wormImage.disposeLocal(false);
 						}
 					}
 					else
 					{
-						MipavUtil.displayError( "Error in reading lattice file " + latticeFileTF.getText() );
+						MipavUtil.displayError( "Error in reading lattice file " + latticeFile );
 					}
 				}
 				else
 				{
-					MipavUtil.displayError( "Error in reading image file " + inputImageTF.getText() );
+					MipavUtil.displayError( "Error in reading image file " + fileName );
 				}
+				
+
+				
+				// Build the full image name:
+				baseFileName = baseFileNameText.getText();
+				fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
+				imageFile = new File(baseFileDir2 + File.separator + fileName);
+
+				if ( imageFile.exists() )
+				{					
+					System.err.println( "   " + fileName );
+					FileIO fileIO = new FileIO();
+					wormImage = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null);  
+
+
+					String latticeFile = baseFileDir2 + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
+					VOIVector latticeVector = new VOIVector();
+					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
+
+					if ( latticeVector.size() != 0 )
+					{
+						LatticeModel model = new LatticeModel(wormImage);
+						model.setLattice(latticeVector.elementAt(0));
+
+						String nucleiFileName = baseFileDir2 + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + "marker" + File.separator + "marker.csv";
+						File nucleiFile = new File(nucleiFileName);
+						if ( nucleiFile.exists() )
+						{
+							VOIVector vois = readMarkerPositions( nucleiFileName, nucleiFile );
+							VOI nucleiVOIs = vois.elementAt(0);
+							if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
+							{
+								model.setMarkers(nucleiVOIs);
+							}
+						}
+
+						System.err.println("Straightening " + i);
+						model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
+						if ( segmentSkinSurface.isSelected() )
+						{
+							model.segmentSkin(wormImage, contourImage);
+						}
+						else if ( segmentLattice.isSelected() )
+						{
+							model.segmentLattice(wormImage, false);
+						}
+						if ( straightenMarkersCheck.isSelected() )
+						{
+							model.interpolateLattice( false, false, false, true );								
+						}
+
+						model.dispose();
+						model = null;
+
+						if ( wormImage != null )
+						{
+							wormImage.disposeLocal(false);
+						}
+					}
+					else
+					{
+						MipavUtil.displayError( "Error in reading lattice file " + latticeFile );
+					}
+				}
+
+				if ( contourImage != null )
+				{
+					contourImage.disposeLocal(false);
+				}
+				
 			}
-			else
-			{
-				MipavUtil.displayError( "Must set image file." );
-			}
-		}
-		if (command.equals("close"))
-		{			
-			setVisible(false);
-			if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
-					&& ViewUserInterface.getReference().isPlugInFrameVisible() )
-			{
-				System.exit(0);
-			} else {
-				dispose();
-			}
+			System.err.println("Done straightening" );
 		}
 	}
-
 
 	public void dispose()
 	{
@@ -247,6 +311,16 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 	public void windowOpened(WindowEvent e) {}
 
 
+	private String baseFileDir;
+	private String baseFileDir2;
+	private JTextField  baseFileLocText;
+	private JTextField  baseFileLocText2;
+	private String baseFileName;
+	private JTextField  baseFileNameText;
+	private int imageIndex = 0;
+	private Vector<Integer> includeRange;
+	private JPanel inputsPanel;
+	private JTextField rangeFusionText;
 
 	/**
 	 * Initializes the panels for a non-integrated display. 
@@ -264,8 +338,7 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
 		}
 
-		JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
-		GuiBuilder gui = new GuiBuilder(dialogGUI);
+		GuiBuilder gui = new GuiBuilder(this);
 
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridwidth = 1;
@@ -277,75 +350,138 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 
-		JPanel inputsPanel = new JPanel(new GridBagLayout());
+		
+
+		inputsPanel = new JPanel(new GridBagLayout());
 		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
 		inputsPanel.setForeground(Color.black);
 
-		inputImageTF = gui.buildFileField("Worm image:  ", "", false, JFileChooser.FILES_ONLY, this);
-		inputsPanel.add(inputImageTF.getParent(), gbc);
+		baseFileLocText = gui.buildFileField("Data directory (marker 1): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(baseFileLocText.getParent(), gbc);
 		gbc.gridy++;
 
-		latticeFileTF = gui.buildFileField("lattice directory:  ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
-		inputsPanel.add(latticeFileTF.getParent(), gbc);
+		baseFileLocText2 = gui.buildFileField("Data directory (marker 2): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(baseFileLocText2.getParent(), gbc);
 		gbc.gridy++;
 
-		nucleiTF = gui.buildFileField("Marker info (spreadsheet csv file): ", "", false, JFileChooser.FILES_ONLY, this);
-		inputsPanel.add(nucleiTF.getParent(), gbc);
+		baseFileNameText = gui.buildField("Base images name: ", "Decon");
+		inputsPanel.add(baseFileNameText.getParent(), gbc);
 		gbc.gridy++;
-		gbc.gridx = 0;
+
+		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", "             ");
+		inputsPanel.add(rangeFusionText.getParent(), gbc);
+		gbc.gridy++;
 		
+		
+		
+//		JPanel inputsPanel = new JPanel(new GridBagLayout());
+//		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
+//		inputsPanel.setForeground(Color.black);
+//
+//		inputImageTF = gui.buildFileField("Worm image:  ", "", false, JFileChooser.FILES_ONLY, this);
+//		inputsPanel.add(inputImageTF.getParent(), gbc);
+//		gbc.gridy++;
+//
+//		latticeFileTF = gui.buildFileField("lattice directory:  ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+//		inputsPanel.add(latticeFileTF.getParent(), gbc);
+//		gbc.gridy++;
+//
+//		nucleiTF = gui.buildFileField("Marker info (spreadsheet csv file): ", "", false, JFileChooser.FILES_ONLY, this);
+//		inputsPanel.add(nucleiTF.getParent(), gbc);
+//		gbc.gridy++;
+//		gbc.gridx = 0;
+
+		JPanel algorithmPanel = new JPanel(new GridBagLayout());
 		straightenImageCheck = gui.buildCheckBox( "Straighten Image", true );
-		inputsPanel.add(straightenImageCheck.getParent(), gbc);
+		algorithmPanel.add(straightenImageCheck.getParent(), gbc);
 		gbc.gridy++;
 
 		ButtonGroup group1 = new ButtonGroup();
 		segmentSkinSurface = gui.buildRadioButton( "Segment Skin Surface Marker", false );
-		inputsPanel.add(segmentSkinSurface.getParent(), gbc);
+		algorithmPanel.add(segmentSkinSurface.getParent(), gbc);
 		gbc.gridx++;
 		group1.add(segmentSkinSurface);
 		
 		segmentLattice = gui.buildRadioButton( "Segment Lattice", true );
-		inputsPanel.add(segmentLattice.getParent(), gbc);
+		algorithmPanel.add(segmentLattice.getParent(), gbc);
 		group1.add(segmentLattice);
 		gbc.gridy++;
 		gbc.gridx = 0;
 		
 		straightenMarkersCheck = gui.buildCheckBox( "Straighten Markers", true );
-		inputsPanel.add(straightenMarkersCheck.getParent(), gbc);
+		algorithmPanel.add(straightenMarkersCheck.getParent(), gbc);
 		gbc.gridx++;
 		ButtonGroup group = new ButtonGroup();
 		voxelCoords = gui.buildRadioButton( "voxels", false);
-		inputsPanel.add(voxelCoords.getParent(), gbc);
+		algorithmPanel.add(voxelCoords.getParent(), gbc);
 		group.add(voxelCoords);
 		gbc.gridx++;
 		micronCoords = gui.buildRadioButton( "microns", true);
-		inputsPanel.add(micronCoords.getParent(), gbc);
+		algorithmPanel.add(micronCoords.getParent(), gbc);
 		group.add(micronCoords);
 		
 		gbc.gridx = 0;
 		gbc.gridy++;
+
+
+		getContentPane().add(inputsPanel, BorderLayout.NORTH);
+		getContentPane().add(algorithmPanel, BorderLayout.CENTER);
 		
-		
-		JPanel buttonPanel = new JPanel();
-		startButton = gui.buildButton("start");
-		startButton.addActionListener(this);
-		buttonPanel.add( startButton );
-		JButton closeButton = gui.buildButton("close");
-		closeButton.addActionListener(this);
-		buttonPanel.add( closeButton );
-		buttonPanel.add(new JPanel());
-		//		panel.add(buttonPanel, gbc);
+		JPanel okCancelPanel = gui.buildOKCancelPanel();
+		getContentPane().add(okCancelPanel, BorderLayout.SOUTH);
 
-		dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
-		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
-		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
-
-		setLocation(0, 0);
 		pack();
 		setResizable(true);
+
+		System.gc();
 	}
 
+
+    /**
+	 * This method could ensure everything in your dialog box has been set correctly
+	 * 
+	 * @return
+	 */
+	private boolean setVariables()
+	{	    
+		baseFileDir = baseFileLocText.getText();
+		baseFileDir2 = baseFileLocText2.getText();
+		includeRange = new Vector<Integer>();
+		String rangeFusion = rangeFusionText.getText();
+		if(rangeFusion != null) {  
+			String[] ranges = rangeFusion.split("[,;]");
+			for(int i=0; i<ranges.length; i++) {
+				String[] subset = ranges[i].split("-");
+				int lowerBound = -1, bound = -1;
+				for(int j=0; j<subset.length; j++) {
+					try {
+						bound = Integer.valueOf(subset[j].trim());
+						if(lowerBound == -1) {
+							lowerBound = bound;
+							includeRange.add(lowerBound);
+						} 
+					} catch(NumberFormatException e) {
+						Preferences.debug("Invalid range specified: "+bound, Preferences.DEBUG_ALGORITHM);
+					}
+				}
+
+				for(int k=lowerBound+1; k<=bound; k++) {
+					includeRange.add(k);
+				}
+			}
+		}
+
+		if(includeRange.size() == 0) {
+			includeRange = null;
+		}
+
+		return true;
+	}     
+
+
+	
+	
 	private VOIVector readMarkerPositions( String fileName, File file )
 	{
 		VOIVector vois = new VOIVector();
@@ -403,5 +539,10 @@ public class PlugInDialogUntwistingFluorescent extends JFrame implements ActionL
 		}
 
 		return vois;
+	}
+	@Override
+	public void algorithmPerformed(AlgorithmBase algorithm) {
+		// TODO Auto-generated method stub
+		
 	}
 }

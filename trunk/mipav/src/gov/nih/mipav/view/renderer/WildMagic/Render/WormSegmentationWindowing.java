@@ -641,7 +641,7 @@ public class WormSegmentationWindowing extends WormSegmentation
 		return cubeCenters;
 	}
 
-	public static Vector<Vector3f> findMarkers( ModelImage image, float intensityMin, float intensityMax, int minRadius, int maxRadius )
+	public static Vector<Vector3f> findMarkers( ModelImage image, ModelImage seamCellImage, BitSet mask, float intensityMin, float intensityMax, int minRadius, int maxRadius )
 	{
 		Vector<Vector3f> pts = initFindMarkers(image, intensityMin, intensityMax);
 //		pts = new Vector<Vector3f>();
@@ -658,14 +658,9 @@ public class WormSegmentationWindowing extends WormSegmentation
 		//			return markers;
 		//		}
 
-		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
-		BitSet mask = new BitSet(dimX*dimY*dimZ);
-		ModelImage results = new ModelImage( ModelStorageBase.ARGB, image.getExtents(), "results" );
 
 //		VOI markers = new VOI( (short) 0, "all markers", VOI.POLYLINE, 1 );
-		Vector<Vector3f> allSizes = findMarkers(image, results, pts, mask, intensityMin, intensityMax, minRadius, maxRadius );
+		Vector<Vector3f> allSizes = findMarkers(image, seamCellImage, pts, mask, intensityMin, intensityMax, minRadius, maxRadius );
 		System.err.println( "num markers " + allSizes.size() + " radius " + maxRadius + " " + mask.cardinality() );
 //		VOIContour c = new VOIContour(false);
 //		c.addAll(allSizes);
@@ -680,8 +675,8 @@ public class WormSegmentationWindowing extends WormSegmentation
 		//			markers.getCurves().add(c);
 		//		}
 		
-		results.calcMinMax();
-		new ViewJFrameImage(results);
+//		seamCellImage.calcMinMax();
+//		new ViewJFrameImage(seamCellImage);
 //		return markers;
 		return allSizes;
 	}
@@ -823,13 +818,14 @@ public class WormSegmentationWindowing extends WormSegmentation
 								{
 									index = (z * dimX * dimY + y * dimX + x);
 									mask.set(index);
-									results.setC(x,  y, z, 0, 255);
-									results.setC(x,  y, z, 3, 255);
+//									results.setC(x,  y, z, 0, 255);
+//									results.setC(x,  y, z, 3, 255);
 								}
 								if ( centerP.distance(testP) <= inR )
 								{
-									results.setC(x,  y, z, 0, 255);
-									results.setC(x,  y, z, 1, 255);
+//									results.setC(x,  y, z, 0, 255);
+//									results.setC(x,  y, z, 1, 255);
+									results.set(x, y, z, 1f);
 								}
 //								if ( centerP.distance(testP) == outR )
 //								{
@@ -900,7 +896,112 @@ public class WormSegmentationWindowing extends WormSegmentation
 
 		return sortedList;
 	}
+	
+	public static void findLargestConnected( ModelImage image, BitSet mask, float minValue )
+	{
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+		
+//		float minValue = Float.MAX_VALUE;
+		
+		Vector<Vector3f> seeds = new Vector<Vector3f>();
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					int index = z * dimX * dimY + y * dimX + x;
+					if ( mask.get(index) )
+					{
+						seeds.add( new Vector3f(x,y,z));
+//						float value = 0;
+//						if ( image.isColorImage() )
+//						{
+//							value = image.getFloatC(x, y, z, 1 ); 
+//						}
+//						else
+//						{
+//							value = image.getFloat(x,y,z);
+//						}
+//						if ( value < minValue )
+//						{
+//							minValue = value;
+//						}
+					}
+				}
+			}
+		}
+		System.err.println("findLargest " + minValue );
+		if ( minValue == image.getMin() )
+		{
+			System.err.println("findLargest " + minValue + " == " + image.getMin() );
+			return;
+		}
+		
+		BitSet visited = new BitSet(dimX*dimY*dimZ);
+//		visited.or(mask);
+		
+		fillMask(  image, visited, mask, seeds, 
+				dimX, dimY, dimZ, minValue, (float)image.getMax() );
+		
 
+		ModelImage results = new ModelImage( ModelStorageBase.ARGB, image.getExtents(), "skin" );
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					int index = z * dimX * dimY + y * dimX + x;
+					if ( mask.get(index) )
+					{
+						results.setC(x, y, z, 3, 1);
+					}					
+				}
+			}
+		}
+		results.calcMinMax();
+		new ViewJFrameImage(results);
+	}
+	
+	private static void fillMask( ModelImage image, BitSet visited, BitSet connected, Vector<Vector3f> seeds, 
+			int dimX, int dimY, int dimZ, float min, float max )
+	{
+		while ( seeds.size() > 0 )
+		{
+			Vector3f start = seeds.remove(0);
+			int x = (int) start.X;
+			int y = (int) start.Y;
+			int z = (int) start.Z;
+			int startIndex = z*dimY*dimX + y*dimX + x;
+			connected.set(startIndex);
+			visited.set(startIndex);
+
+			for ( int y1 = Math.max(0, y - 1); y1 <= Math.min(y+1, dimY-1); y1++ )
+			{
+				for ( int x1 = Math.max(0, x - 1); x1 <= Math.min(x+1, dimX-1); x1++ )
+				{
+					int index = y1*dimX + x1;
+					float value = image.getFloat(index);
+					if ( value == 0 )
+					{
+						visited.set(index);
+					}
+					else
+					{
+						value = image.getFloat(index);
+						if ( !visited.get(index) && !connected.get(index) && (value >= min) && (value <= max) )
+						{
+							visited.set(index);
+							seeds.add( new Vector3f(x1,y1,0) );
+						}
+					}
+				}
+			}
+		}
+	}
 
 	public WormSegmentationWindowing() {}
 
