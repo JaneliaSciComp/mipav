@@ -1153,6 +1153,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogBilateralFilter(this, getActiveImage());
         } else if (command.equals("Deconvolution")) {
             new JDialogDeconvolution(this, getImageA(), getImageB());
+        } else if (command.equals("EdgePreservingSmoothing")) {
+        	new JDialogEdgePreservingSmoothing(this, getActiveImage());
         } else if (command.equals("Gaussian blur")) {
             // JDialogGaussianBlur gb =
             new JDialogGaussianBlur(this, getActiveImage());
