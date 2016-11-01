@@ -210,6 +210,8 @@ public class LatticeModel {
 				imageName = imageName.replaceAll("_clone", "");
 			}
 			outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
+			String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
+			checkParentDir(parentDir);			
 		}
 	}
 
@@ -226,6 +228,8 @@ public class LatticeModel {
 			imageName = imageName.replaceAll("_clone", "");
 		}
 		outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
+		String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
+		checkParentDir(parentDir);			
 		this.lattice = lattice;
 
 		// Assume image is isotropic (square voxels).
@@ -256,6 +260,8 @@ public class LatticeModel {
 			imageName = imageName.replaceAll("_clone", "");
 		}
 		outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
+		String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
+		checkParentDir(parentDir);			
 		this.lattice = null;
 		this.setAnnotations(annotation);
 	}
@@ -5604,6 +5610,8 @@ public class LatticeModel {
 		if ( sourceImage != null )
 		{
 			saveImage(imageName, curvatureImageTwisted, true);	
+			sourceImage.disposeLocal(false);
+			sourceImage = null;
 		}		
 		curvatureImageTwisted.disposeLocal(false);
 		curvatureImageTwisted = null;
@@ -7212,5 +7220,15 @@ public class LatticeModel {
 		double fSqrDistance = kDiff.squaredLength();
 
 		return fSqrDistance;
+	}
+	
+	private void checkParentDir( String parentDir )
+	{
+		File parentFileDir = new File(parentDir);
+		if (parentFileDir.exists() && parentFileDir.isDirectory()) { // do nothing
+		} else if (parentFileDir.exists() && !parentFileDir.isDirectory()) { // do nothing
+		} else { // voiFileDir does not exist
+			parentFileDir.mkdir();
+		}
 	}
 }

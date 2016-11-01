@@ -123,9 +123,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 		{
 			System.err.println("Starting straightening" );
 			for ( int i = 0; i < includeRange.size(); i++ )
-			{
-				ModelImage contourImage = null;
-				
+			{				
 				// Build the full image name:
 				baseFileName = baseFileNameText.getText();
 				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
@@ -159,8 +157,8 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							}
 						}
 
-						System.err.println("Straightening " + i);
 						model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
+						ModelImage contourImage = null;
 						if ( segmentSkinSurface.isSelected() )
 						{
 							contourImage = model.segmentSkin(wormImage);
@@ -173,13 +171,49 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 						{
 							model.interpolateLattice( false, false, false, true );								
 						}
-
 						model.dispose();
 						model = null;
 
 						if ( wormImage != null )
 						{
 							wormImage.disposeLocal(false);
+						}
+						
+
+						// Build the full image name:
+						baseFileName = baseFileNameText.getText();
+						fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
+						imageFile = new File(baseFileDir2 + File.separator + fileName);
+						if ( imageFile.exists() )
+						{					
+							
+							System.err.println( "   " + fileName );
+							fileIO = new FileIO();
+							wormImage = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null); 
+							model = new LatticeModel(wormImage);
+							model.setLattice(latticeVector.elementAt(0));
+							model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
+							
+							if ( segmentSkinSurface.isSelected() )
+							{
+								contourImage = model.segmentSkin(wormImage, contourImage);
+							}
+							else if ( segmentLattice.isSelected() )
+							{
+								model.segmentLattice(wormImage, false);
+							}
+							model.dispose();
+							model = null;
+
+							if ( wormImage != null )
+							{
+								wormImage.disposeLocal(false);
+							}
+						}						
+
+						if ( contourImage != null )
+						{
+							contourImage.disposeLocal(false);
 						}
 					}
 					else
@@ -190,75 +224,6 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 				else
 				{
 					MipavUtil.displayError( "Error in reading image file " + fileName );
-				}
-				
-
-				
-				// Build the full image name:
-				baseFileName = baseFileNameText.getText();
-				fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-				imageFile = new File(baseFileDir2 + File.separator + fileName);
-
-				if ( imageFile.exists() )
-				{					
-					System.err.println( "   " + fileName );
-					FileIO fileIO = new FileIO();
-					wormImage = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null);  
-
-
-					String latticeFile = baseFileDir2 + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
-					VOIVector latticeVector = new VOIVector();
-					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
-
-					if ( latticeVector.size() != 0 )
-					{
-						LatticeModel model = new LatticeModel(wormImage);
-						model.setLattice(latticeVector.elementAt(0));
-
-						String nucleiFileName = baseFileDir2 + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + "marker" + File.separator + "marker.csv";
-						File nucleiFile = new File(nucleiFileName);
-						if ( nucleiFile.exists() )
-						{
-							VOIVector vois = readMarkerPositions( nucleiFileName, nucleiFile );
-							VOI nucleiVOIs = vois.elementAt(0);
-							if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
-							{
-								model.setMarkers(nucleiVOIs);
-							}
-						}
-
-						System.err.println("Straightening " + i);
-						model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
-						if ( segmentSkinSurface.isSelected() )
-						{
-							model.segmentSkin(wormImage, contourImage);
-						}
-						else if ( segmentLattice.isSelected() )
-						{
-							model.segmentLattice(wormImage, false);
-						}
-						if ( straightenMarkersCheck.isSelected() )
-						{
-							model.interpolateLattice( false, false, false, true );								
-						}
-
-						model.dispose();
-						model = null;
-
-						if ( wormImage != null )
-						{
-							wormImage.disposeLocal(false);
-						}
-					}
-					else
-					{
-						MipavUtil.displayError( "Error in reading lattice file " + latticeFile );
-					}
-				}
-
-				if ( contourImage != null )
-				{
-					contourImage.disposeLocal(false);
 				}
 				
 			}
