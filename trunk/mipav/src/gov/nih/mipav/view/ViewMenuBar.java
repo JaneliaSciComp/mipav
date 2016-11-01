@@ -200,6 +200,7 @@ public class ViewMenuBar {
 										new JMenuItem[] { menuBuilder.buildMenuItem("Isophote curvature",
 												"IsophoteCurvature", 0, null, false), }),
 								menuBuilder.buildMenuItem("Deconvolution", null, 0, null, false),
+								menuBuilder.buildMenuItem("Edge Preserving Smoothing", "EdgePreservingSmoothing", 0, null, false),
 								menuBuilder.buildMenuItem("Gaussian blur", null, 0, null, false),
 								menuBuilder.buildMenuItem("Gradient Inverse Smoothing", "GradientInverse", 0, null, false),
 								menuBuilder.buildMenuItem("Gradient magnitude", null, 0, null, false),
@@ -1680,6 +1681,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Texture segmentation", false);
 			menuBuilder.setMenuItemEnabled("Fuzzy Connectedness", false);
 			menuBuilder.setMenuItemEnabled("Gradient Inverse Smoothing", false);
+			menuBuilder.setMenuItemEnabled("Edge Preserving Smoothing", false);
 			menuBuilder.setMenuItemEnabled("Facet Model",false);
 			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
 		} else {
@@ -1865,5 +1867,6 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Color edge", true);
 		menuBuilder.setMenuItemEnabled("DICOM database access", true);
 		menuBuilder.setMenuItemEnabled("Region merging via boundary melting", true);
+		menuBuilder.setMenuItemEnabled("Edge Preserving Smoothing", true);
 	}
 }
