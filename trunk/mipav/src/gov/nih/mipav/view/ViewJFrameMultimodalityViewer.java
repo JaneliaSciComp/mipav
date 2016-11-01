@@ -370,14 +370,11 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 	
 	public void mouseWheelMoved(final MouseWheelEvent mouseWheelEvent) {
 		
+		  
 		    int wheelRotation = mouseWheelEvent.getWheelRotation();
-	        int xCoord = mouseWheelEvent.getX();
-	    	int yCoord = mouseWheelEvent.getY();
+	       
+	    	int currentSlice = imageComp[imageActiveIndex].getSlice();
 	    	
-	    	
-	    	int currentSlice0 = imageComp[0].getSlice();
-			int currentSlice1 = imageComp[1].getSlice();
-			int currentSlice2 = imageComp[2].getSlice();
 			int currentSlice3 = imageComp[3].getSlice();
 	    	
 			int zDim0 = images[0].getExtents()[2];
@@ -413,79 +410,29 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
       			}
 				 
 				 
-			 } else {
-	    
-	         	if (wheelRotation < 0) {
-	         	    
-	         		if ( imageFrame[0].isActive() ) {
-	         			currentSlice0++;
-	         		}
-	         		
-	         		if ( imageFrame[1].isActive() ) {
-	         			currentSlice1++;
-	         		}
-	         		
-	         		if ( imageFrame[2].isActive() ) {
-	         			currentSlice2++;
-	         		}
-	         		
-	         	    if ( imageFrame[3].isActive() ) {
-	         			currentSlice3++;
-	         			// System.err.println("currentSlice3 = " + currentSlice3);
-	         		}
-	         		
-	             } else {
-	         		
-	         		if ( imageFrame[0].isActive() ) {
-	         			currentSlice0--;
-	         		}
-	         		
-	         		if ( imageFrame[1].isActive() ) {
-	         			currentSlice1--;
-	         		}
-	         		
-	         		if ( imageFrame[2].isActive() ) {
-	         			currentSlice2--;
-	         		}
-	         		
-	         		if ( imageFrame[3].isActive() ) {
-	         			currentSlice3--;
-	         			// System.err.println("currentSlice3 = " + currentSlice3);
-	         		}
-	         		
-	         	}
-			  
-	         	if ( imageFrame[0].isActive() && ( currentSlice0 >= 0 && currentSlice0 < zDim0) )  {
-		         	 imageComp[0].show(0, currentSlice0, true);
-		    		 imageComp[1].show(0, currentSlice0, true);
-		    		 imageComp[2].show(0, currentSlice0, true);
-		    		 imageComp[3].show(0, currentSlice0, true);
-	         	}
-	            
-	         	if ( imageFrame[1].isActive() && ( currentSlice1 >= 0 && currentSlice1 < zDim1) )  {
-		         	 imageComp[0].show(0, currentSlice1, true);
-		    		 imageComp[1].show(0, currentSlice1, true);
-		    		 imageComp[2].show(0, currentSlice1, true);
-		    		 imageComp[3].show(0, currentSlice1, true);
-	         	}
-	         	
-	         	if ( imageFrame[2].isActive() && ( currentSlice2 >= 0 && currentSlice2 < zDim2)  )  {
-		         	 imageComp[0].show(0, currentSlice2, true);
-		    		 imageComp[1].show(0, currentSlice2, true);
-		    		 imageComp[2].show(0, currentSlice2, true);
-		    		 imageComp[3].show(0, currentSlice2, true);
-	         	}
-	         	
-	         	if ( imageFrame[3].isActive() && ( currentSlice3 >= 0 && currentSlice3 < zDim3) )  {
-         		 	 imageComp[0].show(0, currentSlice3, true);
-		    		 imageComp[1].show(0, currentSlice3, true);
-		    		 imageComp[2].show(0, currentSlice3, true);
-		    		 imageComp[3].show(0, currentSlice3, true);
-		    		 // System.err.println("update image slice");
-	         	}
-			 }	
-	    	  
-	    	
+		} else {
+            /*
+			if (wheelRotation < 0) {
+				currentSlice++;
+			} else {
+				currentSlice--;
+			}
+            */
+			imageComp[0].setSlice(currentSlice);
+			imageComp[1].setSlice(currentSlice);
+			imageComp[2].setSlice(currentSlice);
+			imageComp[3].setSlice(currentSlice);
+			
+			if (currentSlice >= 0 && currentSlice < zDim0 && currentSlice < zDim1 && currentSlice < zDim2
+					&& currentSlice < zDim3) {
+				imageComp[0].show(0, currentSlice, true);
+				imageComp[1].show(0, currentSlice, true);
+				imageComp[2].show(0, currentSlice, true);
+				imageComp[3].show(0, currentSlice, true);
+
+			}
+		}
+
 	}
 	
 	/**
@@ -519,17 +466,31 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 
 	}
 
-	private void readImages(File dir) {
+	
+	public void doTraverse(File dir) {
 		int i;
-		FileIO imageIO = null;
-		String currentDirectory;
-		boolean hasConvertedImages = false;
+		
+		imageNames = new String[8];
+		imageNamesIndex = 0;
+		images = new ModelImage[4];
+		
 		if (dir.isDirectory()) {
 			String[] children = dir.list();
 			for (i = 0; i < children.length; i++) {
 				traverse(new File(dir, children[i]));
 			}
- 
+		}
+	}
+	
+	private void readImages(File dir) {
+		int i;
+		FileIO imageIO = null;
+		String currentDirectory;
+		boolean hasConvertedImages = false;
+		boolean hasXMLimages = false;
+		if (dir.isDirectory()) {
+			
+			doTraverse(dir);
 			
 			currentDirectory = dir.getAbsolutePath() + File.separator;
 			
@@ -553,286 +514,47 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				 
 				// read target images
 				imageIO = new FileIO();
-				// hasConvertedImages = false;
 				if ( hasConvertedImages ) {
-					for (i = 0; i < imageNamesIndex; i++) {
-
-						if (imageNames[i].contains("t2w_new.xml")) {
-							images[0] = imageIO.readImage(imageNames[i]);
-						}
-
-						if (imageNames[i].contains("adc_new.xml")) {
-							images[1] = imageIO.readImage(imageNames[i]);
-						}
-
-						if (imageNames[i].contains("dwi_new.xml")) {
-							images[2] = imageIO.readImage(imageNames[i]);
-						}
-
-						if (imageNames[i].contains("dce_new.xml")) {
-							images[3] = imageIO.readImage(imageNames[i]);
-						}
-
-						// System.err.println(imageNames[i]);
-					}
+					readNewXML();
 				} else {
-					readDicomImage();
 					
 					for (i = 0; i < imageNamesIndex; i++) {
 
 						if (imageNames[i].contains("t2w.xml")) {
-							images[0] = imageIO.readImage(imageNames[i]);
+							hasXMLimages = true;
 						}
 
 						if (imageNames[i].contains("adc.xml")) {
-							images[1] = imageIO.readImage(imageNames[i]);
+							hasXMLimages = true;
 						}
 
 						if (imageNames[i].contains("dwi.xml")) {
-							images[2] = imageIO.readImage(imageNames[i]);
+							hasXMLimages = true;
 						}
 
 						if (imageNames[i].contains("dce.xml")) {
-							images[3] = imageIO.readImage(imageNames[i]);
+							hasXMLimages = true;
 						}
 
 						System.err.println(imageNames[i]);
 					}
-					
-
-					images[0].saveImage(currentDirectory, "t2w_new.xml", FileUtility.XML, false);
-
-					int[] t2wExtents = images[0].getExtents();
-					float[] t2wResols = images[0].getResolutions(0);
-					// 1. transform adc.xml
-					int[] adcExtents = images[1].getExtents();
-					float[] adcResols = images[1].getResolutions(0);
-					float[] adcResolsNew = new float[3];
-					float constantFOV = 1.0f;
-					float factor, fov;
-
-					factor = (t2wExtents[0] - constantFOV) / (adcExtents[0] - constantFOV);
-					fov = (adcExtents[0] - constantFOV) * adcResols[0];
-					adcResolsNew[0] = fov / (t2wExtents[0] - constantFOV);
-					adcResolsNew[1] = fov / (t2wExtents[0] - constantFOV);
-					adcResolsNew[2] = adcResols[2];
-
-					int oXdim, oYdim, oZdim, cXdim, cYdim, cZdim;
-					float oXres, oYres, oZres, cXres, cYres, cZres;
-					int[] units;
-					boolean doVOI, doClip, doPad, perserveFOV, doUpdateOrigin, doInvMat;
-					boolean doRotateCenter;
-					float fillValue = 0.0f;
-					boolean isSATransform = false;
-					Vector3f center = null;
-					TransMatrix xfrm;
-					int interp;
-
-					units = new int[3];
-					units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
-
-					factor = 1.0f;
-					doVOI = false;
-					doClip = true;
-					doPad = false;
-					doRotateCenter = false;
-					center = null;
-
-					fillValue = 0.0f;
-					doUpdateOrigin = true;
-					isSATransform = false;
-
-					interp = 0;
-					xfrm = new TransMatrix(4);
-					xfrm.identity();
-
-					oXres = adcResolsNew[0];
-					oYres = adcResolsNew[1];
-					oZres = adcResolsNew[2];
-
-					oXdim = t2wExtents[0];
-					oYdim = t2wExtents[1];
-					oZdim = t2wExtents[2];
-
-					AlgorithmTransform algoTrans = new AlgorithmTransform(images[1], xfrm, interp, oXres, oYres, oZres,
-							oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
-					algoTrans.setFillValue(fillValue);
-					algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-					algoTrans.setUseScannerAnatomical(isSATransform);
-					algoTrans.run();
-
-					images[1] = algoTrans.getTransformedImage();
-					images[1].calcMinMax();
-
-					images[1].saveImage(currentDirectory, "adc_new.xml", FileUtility.XML, false);
-
-					algoTrans.disposeLocal();
-					algoTrans = null;
-
-					// new ViewJFrameImage(images[1]);
-
-					// 2. transform dwi.xml
-					int[] dwiExtents = images[2].getExtents();
-					float[] dwiResols = images[2].getResolutions(0);
-					float[] dwiResolsNew = new float[3];
-
-					factor = (t2wExtents[0] - constantFOV) / (dwiExtents[0] - constantFOV);
-					fov = (dwiExtents[0] - constantFOV) * dwiResols[0];
-					dwiResolsNew[0] = fov / (t2wExtents[0] - constantFOV);
-					dwiResolsNew[1] = fov / (t2wExtents[0] - constantFOV);
-					dwiResolsNew[2] = dwiResols[2];
-
-					units = new int[3];
-					units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
-
-					factor = 1.0f;
-					doVOI = false;
-					doClip = true;
-					doPad = false;
-					doRotateCenter = false;
-					center = null;
-
-					fillValue = 0.0f;
-					doUpdateOrigin = true;
-					isSATransform = false;
-
-					interp = 0;
-					xfrm = new TransMatrix(4);
-					xfrm.identity();
-
-					oXres = dwiResolsNew[0];
-					oYres = dwiResolsNew[1];
-					oZres = dwiResolsNew[2];
-
-					oXdim = t2wExtents[0];
-					oYdim = t2wExtents[1];
-					oZdim = t2wExtents[2];
-
-					AlgorithmTransform algoTransDWI = new AlgorithmTransform(images[2], xfrm, interp, oXres, oYres,
-							oZres, oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
-					algoTransDWI.setFillValue(fillValue);
-					algoTransDWI.setUpdateOriginFlag(doUpdateOrigin);
-					algoTransDWI.setUseScannerAnatomical(isSATransform);
-					algoTransDWI.run();
-
-					images[2] = algoTransDWI.getTransformedImage();
-					images[2].calcMinMax();
-
-					images[2].saveImage(currentDirectory, "dwi_new.xml", FileUtility.XML, false);
-
-					algoTransDWI.disposeLocal();
-					algoTransDWI = null;
-
-					// new ViewJFrameImage(images[2]);
-
-					// 3. transform dce.xml
-					int[] xBounds = new int[2];
-					int[] yBounds = new int[2];
-					int[] zBounds = new int[2];
-
-					int[] dceExtents = images[3].getExtents();
-					float[] dceResols = images[3].getResolutions(0);
-					float[] dceResolsNew = new float[3];
-
-					int[] destExtents = new int[3];
-					destExtents[0] = 128;
-					destExtents[1] = 128;
-					destExtents[2] = dceExtents[2];
-
-					xBounds[0] = -64;
-					xBounds[1] = -64;
-					yBounds[0] = -64;
-					yBounds[1] = -64;
-					zBounds[0] = 0;
-					zBounds[1] = 0;
-
-					ModelImage resultImage = new ModelImage(images[3].getType(), destExtents,
-							images[3].getImageName() + "_crop");
-					AlgorithmAddMargins cropAlgo = new AlgorithmAddMargins(images[3], resultImage, xBounds, yBounds,
-							zBounds);
-					cropAlgo.run();
-
-					images[3] = resultImage;
-
-					cropAlgo = null;
-
-					dceExtents = images[3].getExtents();
-					dceResols = images[3].getResolutions(0);
-					dceResolsNew = new float[3];
-
-					factor = (t2wExtents[0] - constantFOV) / (dwiExtents[0] - constantFOV);
-					fov = (dceExtents[0] - constantFOV) * dceResols[0];
-					dceResolsNew[0] = fov / (t2wExtents[0] - constantFOV);
-					dceResolsNew[1] = fov / (t2wExtents[0] - constantFOV);
-					dceResolsNew[2] = dceResols[2];
-
-					units = new int[3];
-					units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
-
-					factor = 1.0f;
-					doVOI = false;
-					doClip = true;
-					doPad = false;
-					doRotateCenter = false;
-					center = null;
-
-					fillValue = 0.0f;
-					doUpdateOrigin = true;
-					isSATransform = false;
-
-					interp = 0;
-					xfrm = new TransMatrix(4);
-					xfrm.identity();
-
-					oXres = dceResolsNew[0];
-					oYres = dceResolsNew[1];
-					oZres = dceResolsNew[2];
-
-					oXdim = t2wExtents[0];
-					oYdim = t2wExtents[1];
-					oZdim = dceExtents[2];
-
-					AlgorithmTransform algoTransDCE = new AlgorithmTransform(images[3], xfrm, interp, oXres, oYres,
-							oZres, oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
-					algoTransDCE.setFillValue(fillValue);
-					algoTransDCE.setUpdateOriginFlag(doUpdateOrigin);
-					algoTransDCE.setUseScannerAnatomical(isSATransform);
-					algoTransDCE.run();
-
-					images[3] = algoTransDCE.getTransformedImage();
-					images[3].calcMinMax();
-
-					images[3].saveImage(currentDirectory, "dce_new.xml", FileUtility.XML, false);
-
-					algoTransDCE.disposeLocal();
-					algoTransDCE = null;
-
-					// new ViewJFrameImage(images[3]);
-                   
+					 
+					if ( !hasXMLimages ) {
+						readDicomImage(currentDirectory);
+						doTraverse(dir);
+						readXML(currentDirectory);
+						doTraverse(dir);
+						readNewXML();
+					} else {
+						readXML(currentDirectory);
+						doTraverse(dir);
+						readNewXML();
+					}
+				
 				
 				} // end if hasConvertedImages
 			
-				int volumeLength = 26;
-				float res3 = 3.0f;
-				float res4 = 1.0f;
-				int unit3 = 8;
-				int unit4 = 8;
-				AlgorithmConvert3Dto4D convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(images[3], volumeLength, res3,
-						res4, unit3, unit4);
-				convert3Dto4DAlgo.run();
-				images[3] = convert3Dto4DAlgo.getResultImage();
-				// new ViewJFrameImage(images[3], null,
-				// ViewUserInterface.getReference().getNewFrameLocation(images[3].getExtents()[0],
-				// images[3].getExtents()[1]));
-
-				// new ViewJFrameImage(convert3Dto4DAlgo.getResultImage());
-				convert3Dto4DAlgo = null;
-				
-				equalScaleImage();
-               
-				// for ( i = 0; i < imageNamesIndex; i++ ) {
-				// new ViewJFrameImage(images[3]);
-				// }
+			
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -841,6 +563,292 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		}
 	}
 
+	public void readXML(String currentDirectory) {
+		
+		FileIO imageIO = new FileIO();
+		int i; 
+		
+		for (i = 0; i < imageNamesIndex; i++) {
+
+			if (imageNames[i].contains("t2w.xml")) {
+				images[0] = imageIO.readImage(imageNames[i]);
+			}
+
+			if (imageNames[i].contains("adc.xml")) {
+				images[1] = imageIO.readImage(imageNames[i]);
+			}
+
+			if (imageNames[i].contains("dwi.xml")) {
+				images[2] = imageIO.readImage(imageNames[i]);
+			}
+
+			if (imageNames[i].contains("dce.xml")) {
+				images[3] = imageIO.readImage(imageNames[i]);
+			}
+
+			System.err.println(imageNames[i]);
+		}
+		
+		images[0].saveImage(currentDirectory, "t2w_new.xml", FileUtility.XML, false, true, true);
+
+		int[] t2wExtents = images[0].getExtents();
+		float[] t2wResols = images[0].getResolutions(0);
+		// 1. transform adc.xml
+		int[] adcExtents = images[1].getExtents();
+		float[] adcResols = images[1].getResolutions(0);
+		float[] adcResolsNew = new float[3];
+		float constantFOV = 1.0f;
+		float factor, fov;
+
+		factor = (t2wExtents[0] - constantFOV) / (adcExtents[0] - constantFOV);
+		fov = (adcExtents[0] - constantFOV) * adcResols[0];
+		adcResolsNew[0] = fov / (t2wExtents[0] - constantFOV);
+		adcResolsNew[1] = fov / (t2wExtents[0] - constantFOV);
+		adcResolsNew[2] = adcResols[2];
+
+		int oXdim, oYdim, oZdim, cXdim, cYdim, cZdim;
+		float oXres, oYres, oZres, cXres, cYres, cZres;
+		int[] units;
+		boolean doVOI, doClip, doPad, perserveFOV, doUpdateOrigin, doInvMat;
+		boolean doRotateCenter;
+		float fillValue = 0.0f;
+		boolean isSATransform = false;
+		Vector3f center = null;
+		TransMatrix xfrm;
+		int interp;
+
+		units = new int[3];
+		units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
+
+		factor = 1.0f;
+		doVOI = false;
+		doClip = true;
+		doPad = false;
+		doRotateCenter = false;
+		center = null;
+
+		fillValue = 0.0f;
+		doUpdateOrigin = true;
+		isSATransform = false;
+
+		interp = 0;
+		xfrm = new TransMatrix(4);
+		xfrm.identity();
+
+		oXres = adcResolsNew[0];
+		oYres = adcResolsNew[1];
+		oZres = adcResolsNew[2];
+
+		oXdim = t2wExtents[0];
+		oYdim = t2wExtents[1];
+		oZdim = t2wExtents[2];
+
+		AlgorithmTransform algoTrans = new AlgorithmTransform(images[1], xfrm, interp, oXres, oYres, oZres,
+				oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+		algoTrans.setFillValue(fillValue);
+		algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+		algoTrans.setUseScannerAnatomical(isSATransform);
+		algoTrans.run();
+
+		images[1] = algoTrans.getTransformedImage();
+		images[1].calcMinMax();
+
+		images[1].saveImage(currentDirectory, "adc_new.xml", FileUtility.XML, false, true, true);
+
+		algoTrans.disposeLocal();
+		algoTrans = null;
+
+		// new ViewJFrameImage(images[1]);
+
+		// 2. transform dwi.xml
+		int[] dwiExtents = images[2].getExtents();
+		float[] dwiResols = images[2].getResolutions(0);
+		float[] dwiResolsNew = new float[3];
+
+		factor = (t2wExtents[0] - constantFOV) / (dwiExtents[0] - constantFOV);
+		fov = (dwiExtents[0] - constantFOV) * dwiResols[0];
+		dwiResolsNew[0] = fov / (t2wExtents[0] - constantFOV);
+		dwiResolsNew[1] = fov / (t2wExtents[0] - constantFOV);
+		dwiResolsNew[2] = dwiResols[2];
+
+		units = new int[3];
+		units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
+
+		factor = 1.0f;
+		doVOI = false;
+		doClip = true;
+		doPad = false;
+		doRotateCenter = false;
+		center = null;
+
+		fillValue = 0.0f;
+		doUpdateOrigin = true;
+		isSATransform = false;
+
+		interp = 0;
+		xfrm = new TransMatrix(4);
+		xfrm.identity();
+
+		oXres = dwiResolsNew[0];
+		oYres = dwiResolsNew[1];
+		oZres = dwiResolsNew[2];
+
+		oXdim = t2wExtents[0];
+		oYdim = t2wExtents[1];
+		oZdim = t2wExtents[2];
+
+		AlgorithmTransform algoTransDWI = new AlgorithmTransform(images[2], xfrm, interp, oXres, oYres,
+				oZres, oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+		algoTransDWI.setFillValue(fillValue);
+		algoTransDWI.setUpdateOriginFlag(doUpdateOrigin);
+		algoTransDWI.setUseScannerAnatomical(isSATransform);
+		algoTransDWI.run();
+
+		images[2] = algoTransDWI.getTransformedImage();
+		images[2].calcMinMax();
+
+		images[2].saveImage(currentDirectory, "dwi_new.xml", FileUtility.XML, false, true, true);
+
+		algoTransDWI.disposeLocal();
+		algoTransDWI = null;
+
+		// new ViewJFrameImage(images[2]);
+
+		// 3. transform dce.xml
+		int[] xBounds = new int[2];
+		int[] yBounds = new int[2];
+		int[] zBounds = new int[2];
+
+		int[] dceExtents = images[3].getExtents();
+		float[] dceResols = images[3].getResolutions(0);
+		float[] dceResolsNew = new float[3];
+
+		int[] destExtents = new int[3];
+		destExtents[0] = 128;
+		destExtents[1] = 128;
+		destExtents[2] = dceExtents[2];
+
+		xBounds[0] = -64;
+		xBounds[1] = -64;
+		yBounds[0] = -64;
+		yBounds[1] = -64;
+		zBounds[0] = 0;
+		zBounds[1] = 0;
+
+		ModelImage resultImage = new ModelImage(images[3].getType(), destExtents,
+				images[3].getImageName() + "_crop");
+		AlgorithmAddMargins cropAlgo = new AlgorithmAddMargins(images[3], resultImage, xBounds, yBounds,
+				zBounds);
+		cropAlgo.run();
+
+		images[3] = resultImage;
+
+		// new ViewJFrameImage(resultImage);
+		// if( true) System.exit(1);
+		
+		cropAlgo = null;
+
+		dceExtents = images[3].getExtents();
+		dceResols = images[3].getResolutions(0);
+		dceResolsNew = new float[3];
+
+		factor = (t2wExtents[0] - constantFOV) / (dwiExtents[0] - constantFOV);
+		fov = (dceExtents[0] - constantFOV) * dceResols[0];
+		dceResolsNew[0] = fov / (t2wExtents[0] - constantFOV);
+		dceResolsNew[1] = fov / (t2wExtents[0] - constantFOV);
+		dceResolsNew[2] = dceResols[2];
+
+		units = new int[3];
+		units[0] = units[1] = units[2] = Unit.MILLIMETERS.getLegacyNum();
+
+		factor = 1.0f;
+		doVOI = false;
+		doClip = true;
+		doPad = false;
+		doRotateCenter = false;
+		center = null;
+
+		fillValue = 0.0f;
+		doUpdateOrigin = true;
+		isSATransform = false;
+
+		interp = 0;
+		xfrm = new TransMatrix(4);
+		xfrm.identity();
+
+		oXres = dceResolsNew[0];
+		oYres = dceResolsNew[1];
+		oZres = dceResolsNew[2];
+
+		oXdim = t2wExtents[0];
+		oYdim = t2wExtents[1];
+		oZdim = dceExtents[2];
+
+		AlgorithmTransform algoTransDCE = new AlgorithmTransform(images[3], xfrm, interp, oXres, oYres,
+				oZres, oXdim, oYdim, oZdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+		algoTransDCE.setFillValue(fillValue);
+		algoTransDCE.setUpdateOriginFlag(doUpdateOrigin);
+		algoTransDCE.setUseScannerAnatomical(isSATransform);
+		algoTransDCE.run();
+
+		images[3] = algoTransDCE.getTransformedImage();
+		images[3].calcMinMax();
+
+		images[3].saveImage(currentDirectory, "dce_new.xml", FileUtility.XML, false, true, true);
+
+		algoTransDCE.disposeLocal();
+		algoTransDCE = null;
+		
+		for ( i = 0; i < images.length; i++ ) {
+			images[i].disposeLocal();
+			images[i] = null;
+		}
+        System.gc();
+	}
+	
+	public void readNewXML() {
+		
+		FileIO imageIO = new FileIO();
+		int i; 
+		
+		for (i = 0; i < imageNamesIndex; i++) {
+
+			if (imageNames[i].contains("t2w_new.xml")) {
+				images[0] = imageIO.readImage(imageNames[i]);
+			}
+
+			if (imageNames[i].contains("adc_new.xml")) {
+				images[1] = imageIO.readImage(imageNames[i]);
+			}
+
+			if (imageNames[i].contains("dwi_new.xml")) {
+				images[2] = imageIO.readImage(imageNames[i]);
+			}
+
+			if (imageNames[i].contains("dce_new.xml")) {
+				images[3] = imageIO.readImage(imageNames[i]);
+			}
+
+			// System.err.println(imageNames[i]);
+		}
+		
+		int volumeLength = 26;
+		float res3 = 3.0f;
+		float res4 = 1.0f;
+		int unit3 = 8;
+		int unit4 = 8;
+		AlgorithmConvert3Dto4D convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(images[3], volumeLength, res3,
+				res4, unit3, unit4);
+		convert3Dto4DAlgo.run();
+		images[3] = convert3Dto4DAlgo.getResultImage();
+	
+		convert3Dto4DAlgo = null;
+		
+		equalScaleImage();
+       
+
+	}
+	
 	public void equalScaleImage() {
 		
 		int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -924,6 +932,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 		int end = dirName.length();
 
 	
+		
 		if (dirName.substring(begin, end).startsWith("adc") && dirName.substring(begin, end).endsWith(".xml")) {
 			imageNames[imageNamesIndex++] = file.toString();
 		}
@@ -949,7 +958,7 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 
 	}
 	
-	private void readDicomImage() {
+	private void readDicomImage(String currentDirectory) {
 		Set<String> keys = namesTable.keySet();
 		for ( String hashID : keys ) {
 			System.err.println(" readDicom:   hashID = " + hashID);
@@ -977,9 +986,11 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 			if ( extents[0] == 512 && extents[1] == 512 ) { // t2w 
 				images[0] = image;
 				System.err.println("t2w image");
+				images[0].saveImage(currentDirectory, "t2w.xml", FileUtility.XML, false, true, true);
 			} else if ( extents[2] >= 100 ) {  // dce
 				images[3] = image;
 				System.err.println("dce image");
+				images[3].saveImage(currentDirectory, "dce.xml", FileUtility.XML, false, true, true);
 			} else if ( extents[2] < 100 && extents[0] == 256  && extents[1] == 256 ) {
 			
 				System.err.println("adc and dwi");
@@ -991,33 +1002,19 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				if ( imageType.toLowerCase().contains("adc")) {
 					images[1] = image;   // adc
 					System.err.println("read adc");
+					images[1].saveImage(currentDirectory, "adc.xml", FileUtility.XML, false, true, true);
 				} else {
 					images[2] = image;
 					System.err.println("read dwi");
+					images[2].saveImage(currentDirectory, "dwi.xml", FileUtility.XML, false, true, true);
 				}
 				
 			} 
-		
-			// if (image.getImageName().contains("t2w.xml")) {
-			// 	images[0] = image;
-			// }
-
-			/*
-			if (image.getImageName().contains("adc.xml")) {
-				images[1] = image;
-			}
-
-			if (image.getImageName().contains("dwi.xml")) {
-				images[2] = image;
-			}
-			*/ 
-
-			// if (image.getImageName().contains("dce.xml")) {
-			// 	images[3] = image;
-			// }
-
 			
 		}
+		
+		System.gc();
+		
 	}
 	
 	private void printTable() {
@@ -1566,9 +1563,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				float oldZoom0 = imageComp[0].getZoomX();
 				float newZoom0 = 1;
 				if (imageComp[0].getZoomX() < 1.0f) {
-					newZoom0 = 2.0f * imageComp[0].getZoomX();
+					newZoom0 = 1.2f * imageComp[0].getZoomX();
 				} else {
-					newZoom0 = imageComp[0].getZoomX() + 1.0f;
+					newZoom0 = imageComp[0].getZoomX() + 0.2f;
 				}
 				imageComp[0].setZoom(newZoom0, newZoom0);
 
@@ -1584,9 +1581,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				float oldZoom1 = imageComp[1].getZoomX();
 				float newZoom1 = 1;
 				if (imageComp[1].getZoomX() < 1.0f) {
-					newZoom1 = 2.0f * imageComp[1].getZoomX();
+					newZoom1 = 1.2f * imageComp[1].getZoomX();
 				} else {
-					newZoom1 = imageComp[1].getZoomX() + 1.0f;
+					newZoom1 = imageComp[1].getZoomX() + 0.2f;
 				}
 				imageComp[1].setZoom(newZoom1, newZoom1);
 
@@ -1602,9 +1599,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				float oldZoom2 = imageComp[2].getZoomX();
 				float newZoom2 = 1;
 				if (imageComp[2].getZoomX() < 1.0f) {
-					newZoom2 = 2.0f * imageComp[2].getZoomX();
+					newZoom2 = 1.2f * imageComp[2].getZoomX();
 				} else {
-					newZoom2 = imageComp[2].getZoomX() + 1.0f;
+					newZoom2 = imageComp[2].getZoomX() + 0.2f;
 				}
 				imageComp[2].setZoom(newZoom2, newZoom2);
 
@@ -1620,9 +1617,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				float oldZoom3 = imageComp[3].getZoomX();
 				float newZoom3 = 1;
 				if (imageComp[3].getZoomX() < 1.0f) {
-					newZoom3 = 2.0f * imageComp[3].getZoomX();
+					newZoom3 = 1.2f * imageComp[3].getZoomX();
 				} else {
-					newZoom3 = imageComp[3].getZoomX() + 1.0f;
+					newZoom3 = imageComp[3].getZoomX() + 0.2f;
 				}
 				imageComp[3].setZoom(newZoom3, newZoom3);
 
@@ -1686,9 +1683,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				float oldZoom0 = imageComp[0].getZoomX();
 				float newZoom0 = 1;
 				if (imageComp[0].getZoomX() > 1.0f) {
-					newZoom0 = imageComp[0].getZoomX() - 1.0f;
+					newZoom0 = imageComp[0].getZoomX() - 0.2f;
 				} else {
-					newZoom0 = 0.5f * imageComp[0].getZoomX();
+					newZoom0 = 0.8f * imageComp[0].getZoomX();
 				}
 				imageComp[0].mouseExited(event);
 				imageComp[0].setZoom(newZoom0, newZoom0);
@@ -1705,9 +1702,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				float oldZoom1 = imageComp[1].getZoomX();
 				float newZoom1 = 1;
 				if (imageComp[1].getZoomX() > 1.0f) {
-					newZoom1 = imageComp[1].getZoomX() - 1.0f;
+					newZoom1 = imageComp[1].getZoomX() - 0.2f;
 				} else {
-					newZoom1 = 0.5f * imageComp[1].getZoomX();
+					newZoom1 = 0.8f * imageComp[1].getZoomX();
 				}
 				imageComp[1].mouseExited(event);
 				imageComp[1].setZoom(newZoom1, newZoom1);
@@ -1724,9 +1721,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				float oldZoom2 = imageComp[2].getZoomX();
 				float newZoom2 = 1;
 				if (imageComp[2].getZoomX() > 1.0f) {
-					newZoom2 = imageComp[2].getZoomX() - 1.0f;
+					newZoom2 = imageComp[2].getZoomX() - 0.2f;
 				} else {
-					newZoom2 = 0.5f * imageComp[2].getZoomX();
+					newZoom2 = 0.8f * imageComp[2].getZoomX();
 				}
 				imageComp[2].mouseExited(event);
 				imageComp[2].setZoom(newZoom2, newZoom2);
@@ -1743,9 +1740,9 @@ public class ViewJFrameMultimodalityViewer extends ViewJFrameTriImage
 				float oldZoom3 = imageComp[3].getZoomX();
 				float newZoom3 = 1;
 				if (imageComp[3].getZoomX() > 1.0f) {
-					newZoom3 = imageComp[3].getZoomX() - 1.0f;
+					newZoom3 = imageComp[3].getZoomX() - 0.2f;
 				} else {
-					newZoom3 = 0.5f * imageComp[3].getZoomX();
+					newZoom3 = 0.8f * imageComp[3].getZoomX();
 				}
 				imageComp[3].mouseExited(event);
 				imageComp[3].setZoom(newZoom3, newZoom3);
