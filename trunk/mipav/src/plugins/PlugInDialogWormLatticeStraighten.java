@@ -3584,11 +3584,17 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 						maximumProjectionImage = null;
 					}
 					wormImageA = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
-					maximumProjectionImage = new ModelImage( wormImageA.getType(), wormImageA.getExtents(), baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + "_surface.tif" );
+					maximumProjectionImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, wormImageA.getExtents(), baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + "_surface.tif" );
 					JDialogBase.updateFileInfo(wormImageA, maximumProjectionImage);
 
+//					ModelImage contourImage = new ModelImage( wormImageA.getType(), wormImageA.getExtents(), baseFileNameText.getText() + "_"  + includeRange.elementAt(i) + "_inside.tif" );
+//					JDialogBase.updateFileInfo(wormImageA, contourImage);
+					
 					fileName = baseFileDir + File.separator;
-					WormSegmentation.outline( fileName, wormImageA, maximumProjectionImage, currentMP++ );
+					WormSegmentation.outside( fileName, wormImageA, maximumProjectionImage, 5 /*(float) (wormImageA.getMax() * 0.01) */, 3, currentMP++ );
+					
+					
+					System.err.println("Done segmentation");
 				}    				
 			}
 		}

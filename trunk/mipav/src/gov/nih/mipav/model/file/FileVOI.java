@@ -1717,7 +1717,7 @@ public class FileVOI extends FileXML {
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
         } catch (final Exception error) {
             // MipavUtil.displayError("Error: " + error.getMessage());
-            error.printStackTrace();
+            // error.printStackTrace();
 
             return false;
         }

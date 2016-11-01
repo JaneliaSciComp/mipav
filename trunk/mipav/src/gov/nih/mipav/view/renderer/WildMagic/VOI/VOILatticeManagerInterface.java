@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.BitSet;
 import java.util.Random;
 import java.util.Vector;
 
@@ -219,65 +220,6 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			{
 				latticeModel.interpolateLattice( true, false, true, false );
 				voiMenuBuilder.setMenuItemEnabled("Show Expanded Model", true);
-			}
-		} 
-		else if ( command.equals("SegmentNeuclei") ) {
-		
-//			testSegmentation();
-//			if ( true )
-//				return;
-			
-			Vector<Vector3f> foundNuclei = WormSegmentationWindowing.findMarkers(m_kImageA, 150, (float) m_kImageA.getMax(), 5, 10 );
-			
-//			int[][] colors = new int[][]{ {255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {255, 255, 0}, {255, 0, 255}, {0, 255, 255} };
-			if ( foundNuclei != null )
-			{
-//				final int dimX = m_kImageA.getExtents().length > 0 ? m_kImageA.getExtents()[0] : 1;
-//				final int dimY = m_kImageA.getExtents().length > 1 ? m_kImageA.getExtents()[1] : 1;
-//				final int dimZ = m_kImageA.getExtents().length > 2 ? m_kImageA.getExtents()[2] : 1;
-//				
-//				Vector3f pt = new Vector3f();
-//		    	ModelImage segImage = new ModelImage( ModelStorageBase.ARGB, m_kImageA.getExtents(), JDialogBase.makeImageName( m_kImageA.getImageName(), "seg" ) );
-//		    	for ( int z = 0; z < dimZ; z++ )
-//		    	{
-//		    		for ( int y = 0; y < dimY; y++ )
-//		    		{
-//		    			for ( int x = 0; x < dimX; x++ )
-//		    			{
-//		    				segImage.set(x, y, z, 0);
-//		    				pt.set(x,y,z);
-//		    				boolean found = false;
-//		    				for ( int i = 0; i < foundNuclei.getCurves().size() && !found; i++ )
-//		    				{
-//		    					VOIContour contour = (VOIContour) foundNuclei.getCurves().elementAt(i);
-//		    					for ( int j = 0; j < contour.size(); j++ )
-//		    					{
-//		    						if ( contour.elementAt(j).distance(pt) < 2 )
-//		    						{
-//		    							segImage.setC(x, y, z, 0, 255);
-//		    							segImage.setC(x, y, z, 1, colors[i][0]);
-//		    							segImage.setC(x, y, z, 2, colors[i][1]);
-//		    							segImage.setC(x, y, z, 3, colors[i][2]);
-//		    							found = true;
-//		    							break;
-//		    						}
-//		    					}
-//		    				}
-//		    			}
-//		    		}
-//		    	}
-//		    	segImage.calcMinMax();
-//		    	new ViewJFrameImage(segImage);
-//		    	int count = 0;
-//				for ( int i = 0; i < foundNuclei.getCurves().size(); i++ )
-//				{
-//					count += foundNuclei.getCurves().elementAt(i).size();
-//				}
-		    	System.err.println( "Found " + foundNuclei.size() + " nuclei " );
-			}
-			else
-			{
-		    	System.err.println( "Found 0 nuclei " );				
 			}
 		} 
 		else if ( command.equals("voxelSize") ) {
