@@ -119,7 +119,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
         	    		        	sumOfSquares = 0.0;
         	    		            switch(region) {
         	    		            case 0:
-        	    		            	if ((x > 1) && (x < xDim-1) && (y > 1) && (y < yDim-1)) {
+        	    		            	if ((x >= 1) && (x < xDim-1) && (y >= 1) && (y < yDim-1)) {
         	    		            	    for (yoff = -1; yoff <= 1; yoff++) {
         	    		            	    	for (xoff = -1; xoff <= 1; xoff++) {
         	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
@@ -127,7 +127,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
         	    		            	    	    sumOfSquares += var*var;
         	    		            	    	}
         	    		            	    } // for (yoff = -1; yoff <= 1; yoff++)
-        	    		            	} // if ((x > 1) && (x < xDim-1) && (y > 1) && (y < yDim-1))
+        	    		            	} // if ((x >= 1) && (x < xDim-1) && (y >= 1) && (y < yDim-1))
         	    		            	regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
         	    		            	if (regionVariance < minVariance) {
         	    		            		minVariance = regionVariance;
@@ -135,7 +135,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
         	    		            	}
         	    		            	break;
         	    		            case 1:
-        	    		            	if ((x > 1) && (x < xDim-1) && (y > 2)) {
+        	    		            	if ((x >= 1) && (x < xDim-1) && (y >= 2)) {
         	    		            		for (yoff = -2; yoff <= -1; yoff++) {
         	    		            	    	for (xoff = -1; xoff <= 1; xoff++) {
         	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
@@ -151,10 +151,10 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            		minVariance = regionVariance;
             	    		            		mean = sum/7.0;
             	    		            	}
-        	    		            	} // if ((x > 1) && (x < xDim-1) && (y > 2))
+        	    		            	} // if ((x >= 1) && (x < xDim-1) && (y >= 2))
         	    		            	break;
         	    		            case 2:
-        	    		            	if ((x > 1) && (x < xDim-1) && (y < yDim-2)) {
+        	    		            	if ((x >= 1) && (x < xDim-1) && (y < yDim-2)) {
         	    		            		for (yoff = 1; yoff <= 2; yoff++) {
         	    		            	    	for (xoff = -1; xoff <= 1; xoff++) {
         	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
@@ -170,10 +170,10 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            		minVariance = regionVariance;
             	    		            		mean = sum/7.0;
             	    		            	}
-        	    		            	} // if ((x > 1) && (x < xDim-1) && (y < yDim-2))
+        	    		            	} // if ((x >= 1) && (x < xDim-1) && (y < yDim-2))
         	    		            	break;
         	    		            case 3:
-        	    		            	if ((x > 2) && (y > 1) && (y < yDim-1)) {
+        	    		            	if ((x >= 2) && (y >= 1) && (y < yDim-1)) {
         	    		            		for (yoff = -1; yoff <= 1; yoff++) {
         	    		            	    	for (xoff = -2; xoff <= -1; xoff++) {
         	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
@@ -189,10 +189,10 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            		minVariance = regionVariance;
             	    		            		mean = sum/7.0;
             	    		            	}
-        	    		            	} // if ((x > 2) && (y > 1) && (y < yDim-1))
+        	    		            	} // if ((x >= 2) && (y >= 1) && (y < yDim-1))
         	    		            	break;
         	    		            case 4:
-        	    		            	if ((x < xDim-2) && (y > 1) && (y < yDim-1)) {
+        	    		            	if ((x < xDim-2) && (y >= 1) && (y < yDim-1)) {
         	    		            		for (yoff = -1; yoff <= 1; yoff++) {
         	    		            	    	for (xoff = 1; xoff <= 2; xoff++) {
         	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
@@ -208,10 +208,10 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            		minVariance = regionVariance;
             	    		            		mean = sum/7.0;
             	    		            	}
-        	    		            	} // if ((x < xDim-2) && (y > 1) && (y < yDim-1))
+        	    		            	} // if ((x < xDim-2) && (y >= 1) && (y < yDim-1))
         	    		            	break;
         	    		            case 5:
-        	    		            	if ((x > 2) && (y > 2)) {
+        	    		            	if ((x >= 2) && (y >= 2)) {
         	    		            	    for (yoff = -2; yoff <= 0; yoff++) {
         	    		            	        for (xoff = -2; xoff <= 0; xoff++) {
         	    		            	        	if ((xoff == -2 && yoff == 0) || (xoff == 0 && yoff == -2)) {
@@ -229,10 +229,10 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            		minVariance = regionVariance;
             	    		            		mean = sum/7.0;
             	    		            	}
-        	    		            	} // if ((x > 2) && (y > 2))
+        	    		            	} // if ((x >= 2) && (y >= 2))
         	    		            	break;
         	    		            case 6:
-        	    		            	if ((x < xDim-2) && (y > 2)) {
+        	    		            	if ((x < xDim-2) && (y >= 2)) {
         	    		            	    for (yoff = -2; yoff <= 0; yoff++) {
         	    		            	        for (xoff = 0; xoff <= 2; xoff++) {
         	    		            	        	if ((xoff == 2 && yoff == 0) || (xoff == 0 && yoff == -2)) {
@@ -250,10 +250,10 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            		minVariance = regionVariance;
             	    		            		mean = sum/7.0;
             	    		            	}
-        	    		            	} // if ((x < xDim-2) && (y > 2))
+        	    		            	} // if ((x < xDim-2) && (y >= 2))
         	    		            	break;
         	    		            case 7:
-        	    		            	if ((x > 2) && (y < yDim-2)) {
+        	    		            	if ((x >= 2) && (y < yDim-2)) {
         	    		            	    for (yoff = 0; yoff <= 2; yoff++) {
         	    		            	        for (xoff = -2; xoff <= 0; xoff++) {
         	    		            	        	if ((xoff == -2 && yoff == 0) || (xoff == 0 && yoff == 2)) {
@@ -271,7 +271,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            		minVariance = regionVariance;
             	    		            		mean = sum/7.0;
             	    		            	}
-        	    		            	} // if ((x > 2) && (y < yDim-2))
+        	    		            	} // if ((x >= 2) && (y < yDim-2))
         	    		            	break;
         	    		            case 8:
         	    		            	if ((x < xDim-2) && (y < yDim-2)) {
