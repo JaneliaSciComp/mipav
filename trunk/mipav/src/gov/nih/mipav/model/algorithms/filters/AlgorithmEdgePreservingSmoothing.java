@@ -199,7 +199,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
         	    		            	    	    sum += var;
         	    		            	    	    sumOfSquares += var*var;
         	    		            	    	}
-        	    		            	    } // for (yoff = 1; yoff <= 2; yoff++)
+        	    		            	    } // for (yoff = -1; yoff <= 1; yoff++)
         	    		            		var = buffer[x + xDim*y];
         	    		            		sum += var;
         	    		            		sumOfSquares += var*var;
