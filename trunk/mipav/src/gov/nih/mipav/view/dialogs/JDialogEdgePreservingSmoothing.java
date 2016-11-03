@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.filters.AlgorithmEdgePreservingSmoothing;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
 import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.scripting.parameters.ParameterImage;
 import gov.nih.mipav.model.scripting.parameters.ParameterInt;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
@@ -26,6 +27,9 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.util.Vector;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 
@@ -50,6 +54,14 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
     private JTextField textIterations;
     
     private int iterations;
+    
+    private ButtonGroup standardGroup;
+    
+    private JRadioButton standardButton;
+    
+    private JRadioButton extendedButton;
+    
+    private boolean standard;
     
     /** locks the frame title */
     private String[] titles;
@@ -159,6 +171,7 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterBoolean("stan", true));
             table.put(new ParameterInt("iter", 1));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
@@ -278,7 +291,7 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
         	resultImage = new ModelImage( image.getType(), image.getExtents(), name );
         	JDialogBase.updateFileInfo( image, resultImage );
         	
-    		epsAlgo = new AlgorithmEdgePreservingSmoothing(resultImage, image, iterations,
+    		epsAlgo = new AlgorithmEdgePreservingSmoothing(resultImage, image, standard, iterations,
     				outputOptionsPanel.isProcessWholeImageSet());
         }
         else
@@ -294,7 +307,7 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
         		userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
         	}
         	
-            epsAlgo = new AlgorithmEdgePreservingSmoothing(null, image, iterations,
+            epsAlgo = new AlgorithmEdgePreservingSmoothing(null, image, standard, iterations,
         				outputOptionsPanel.isProcessWholeImageSet());
         }
         epsAlgo.addListener(this);
@@ -337,7 +350,7 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
 
         outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
         scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
-
+        standard = scriptParameters.getParams().getBoolean("stan");
         setIters(scriptParameters.getNumIterations());
 		
 	}
@@ -347,7 +360,7 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
 
         scriptParameters.storeOutputImageParams(getResultImage(), outputOptionsPanel.isOutputNewImageSet());
         scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), true);
-
+        scriptParameters.getParams().put(ParameterFactory.newParameter("stan", standard));
         scriptParameters.storeNumIterations(iterations);
 		
 	}
@@ -364,16 +377,32 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
         textIterations = WidgetFactory.buildTextField("1");
         textIterations.setColumns(5);
         textIterations.addActionListener(this);
+        standardGroup = new ButtonGroup();
+        JLabel standardLabel = new JLabel("Type of Maximum Homogeneity Neighbor Filter:");
+        standardLabel.setForeground(Color.black);
+        standardLabel.setFont(serif12);
+        standardButton = new JRadioButton("Standard (Nagao)", true);
+        standardButton.setForeground(Color.black);
+        standardButton.setFont(serif12);
+        standardGroup.add(standardButton);
+        extendedButton = new JRadioButton("Extended (Wang)", false);
+        extendedButton.setForeground(Color.black);
+        extendedButton.setFont(serif12);
+        standardGroup.add(extendedButton);
         final PanelManager iterationsOptionsPanelManager = new PanelManager("Iterations");
         iterationsOptionsPanelManager.add( WidgetFactory.buildLabel("Iterations (1 - 20) ") );
         iterationsOptionsPanelManager.add(textIterations);
+        final PanelManager filterTypePanelManager = new PanelManager("Filter Type");
+        filterTypePanelManager.add(standardLabel);
+        filterTypePanelManager.addOnNextLine(standardButton);
+        filterTypePanelManager.addOnNextLine(extendedButton);
 
         outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
 
         final PanelManager paramPanelManager = new PanelManager();
         paramPanelManager.add( iterationsOptionsPanelManager.getPanel() );
+        paramPanelManager.addOnNextLine(filterTypePanelManager.getPanel() );
         paramPanelManager.addOnNextLine(outputOptionsPanel);
-
         getContentPane().add(paramPanelManager.getPanel(), BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -396,6 +425,8 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
 
             return false;
         }
+        
+        standard = standardButton.isSelected();
         return true;
     }
 
