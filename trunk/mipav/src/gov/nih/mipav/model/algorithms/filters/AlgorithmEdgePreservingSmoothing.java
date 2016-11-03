@@ -9,13 +9,20 @@ import java.io.*;
 import java.util.*;
 
 /**
+ * These are Maximum Homogeneity Neighbor Filters.
+ * The standard from Nagao:
  * At each point the variance of 9 masks are compared with each other, and the average gray level
  * of the least variance mask is given to the point.  There is one traditional 3 by 3 mask, an up 
  * 7 point pentagonal mask, a down 7 point pentagonal mask, a left 7 point pentagonal mask, a
  * right 7 point pentagonal mask, and 4 diagonal 7 point hexagonal masks.
+ * Extended From Wang:
+ * The 9 masks used all have 9 points.  5 are traditional 3 by 3 masks.  4 are 5,3,1 stacks.
  * @author ilb
- * Reference: Edge Preserving Smoothing by Makoto Nagao and Takashi Matsuyama, Proceedings of the
+ * References: 1.) Edge Preserving Smoothing by Makoto Nagao and Takashi Matsuyama, Proceedings of the
  * Fourth International Joint Conference on Pattern Recognition, November, 1978, pp. 518-520.
+ * 2.) A New Approach to Edge-Preserving Smoothing for Edge Extraction and Image Segmentation by
+ * Carsten Garnica, Frank Boochs, and Marek Twardochlib, International Archives of Photogrammetry
+ * and Remote Sensing, Vol. XXXIII, Part B3., Amsterdam, 2000.
  * 
  *
  */
@@ -25,9 +32,11 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
 	private boolean entireImage;
 	/** contains VOI. */
     private BitSet mask = null;
+    private boolean standard;
 	
-	public AlgorithmEdgePreservingSmoothing(ModelImage destImg, ModelImage srcImg, int iters, boolean entireImage) {
+	public AlgorithmEdgePreservingSmoothing(ModelImage destImg, ModelImage srcImg, boolean standard, int iters, boolean entireImage) {
 		super(destImg, srcImg);
+		this.standard = standard;
 		iterations = iters;
 		this.entireImage = entireImage;
 		if (!entireImage) {
@@ -62,6 +71,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
         double sum;
         double sumOfSquares;
         double var;
+        int extendedOffset;
         if (srcImage == null) {
             displayError("Source Image is null");
 
@@ -89,6 +99,12 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
         }
         buffer = new double[sliceSize];
         result = new double[sliceSize];
+        if (standard) {
+        	extendedOffset = 0;
+        }
+        else {
+        	extendedOffset = 8;
+        }
         for (t = 0; t < tDim; t++) {
         	for (z = 0; z < zDim; z++) {
         	    try {
@@ -114,27 +130,11 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
         	    		    if (entireImage || mask.get(index)) {
         	    		    	minVariance = Double.MAX_VALUE;
         	    		    	mean = 0.0;
-        	    		        for (region = 0; region < 9; region++) {
+        	    		        for (region = extendedOffset; region < extendedOffset + 9; region++) {
         	    		        	sum = 0.0;
         	    		        	sumOfSquares = 0.0;
         	    		            switch(region) {
         	    		            case 0:
-        	    		            	if ((x >= 1) && (x < xDim-1) && (y >= 1) && (y < yDim-1)) {
-        	    		            	    for (yoff = -1; yoff <= 1; yoff++) {
-        	    		            	    	for (xoff = -1; xoff <= 1; xoff++) {
-        	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
-        	    		            	    	    sum += var;
-        	    		            	    	    sumOfSquares += var*var;
-        	    		            	    	}
-        	    		            	    } // for (yoff = -1; yoff <= 1; yoff++)
-        	    		            	} // if ((x >= 1) && (x < xDim-1) && (y >= 1) && (y < yDim-1))
-        	    		            	regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
-        	    		            	if (regionVariance < minVariance) {
-        	    		            		minVariance = regionVariance;
-        	    		            		mean = sum/9.0;
-        	    		            	}
-        	    		            	break;
-        	    		            case 1:
         	    		            	if ((x >= 1) && (x < xDim-1) && (y >= 2)) {
         	    		            		for (yoff = -2; yoff <= -1; yoff++) {
         	    		            	    	for (xoff = -1; xoff <= 1; xoff++) {
@@ -153,7 +153,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            	}
         	    		            	} // if ((x >= 1) && (x < xDim-1) && (y >= 2))
         	    		            	break;
-        	    		            case 2:
+        	    		            case 1:
         	    		            	if ((x >= 1) && (x < xDim-1) && (y < yDim-2)) {
         	    		            		for (yoff = 1; yoff <= 2; yoff++) {
         	    		            	    	for (xoff = -1; xoff <= 1; xoff++) {
@@ -172,7 +172,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            	}
         	    		            	} // if ((x >= 1) && (x < xDim-1) && (y < yDim-2))
         	    		            	break;
-        	    		            case 3:
+        	    		            case 2:
         	    		            	if ((x >= 2) && (y >= 1) && (y < yDim-1)) {
         	    		            		for (yoff = -1; yoff <= 1; yoff++) {
         	    		            	    	for (xoff = -2; xoff <= -1; xoff++) {
@@ -191,7 +191,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            	}
         	    		            	} // if ((x >= 2) && (y >= 1) && (y < yDim-1))
         	    		            	break;
-        	    		            case 4:
+        	    		            case 3:
         	    		            	if ((x < xDim-2) && (y >= 1) && (y < yDim-1)) {
         	    		            		for (yoff = -1; yoff <= 1; yoff++) {
         	    		            	    	for (xoff = 1; xoff <= 2; xoff++) {
@@ -210,7 +210,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            	}
         	    		            	} // if ((x < xDim-2) && (y >= 1) && (y < yDim-1))
         	    		            	break;
-        	    		            case 5:
+        	    		            case 4:
         	    		            	if ((x >= 2) && (y >= 2)) {
         	    		            	    for (yoff = -2; yoff <= 0; yoff++) {
         	    		            	        for (xoff = -2; xoff <= 0; xoff++) {
@@ -231,7 +231,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            	}
         	    		            	} // if ((x >= 2) && (y >= 2))
         	    		            	break;
-        	    		            case 6:
+        	    		            case 5:
         	    		            	if ((x < xDim-2) && (y >= 2)) {
         	    		            	    for (yoff = -2; yoff <= 0; yoff++) {
         	    		            	        for (xoff = 0; xoff <= 2; xoff++) {
@@ -252,7 +252,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            	}
         	    		            	} // if ((x < xDim-2) && (y >= 2))
         	    		            	break;
-        	    		            case 7:
+        	    		            case 6:
         	    		            	if ((x >= 2) && (y < yDim-2)) {
         	    		            	    for (yoff = 0; yoff <= 2; yoff++) {
         	    		            	        for (xoff = -2; xoff <= 0; xoff++) {
@@ -273,7 +273,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            	}
         	    		            	} // if ((x >= 2) && (y < yDim-2))
         	    		            	break;
-        	    		            case 8:
+        	    		            case 7:
         	    		            	if ((x < xDim-2) && (y < yDim-2)) {
         	    		            	    for (yoff = 0; yoff <= 2; yoff++) {
         	    		            	        for (xoff = 0; xoff <= 2; xoff++) {
@@ -294,8 +294,188 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
             	    		            	}
         	    		            	} // if ((x < xDim-2) && (y < yDim-2))
         	    		            	break;
+        	    		            case 8:
+        	    		            	if ((x >= 1) && (x < xDim-1) && (y >= 1) && (y < yDim-1)) {
+        	    		            	    for (yoff = -1; yoff <= 1; yoff++) {
+        	    		            	    	for (xoff = -1; xoff <= 1; xoff++) {
+        	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
+        	    		            	    	    sum += var;
+        	    		            	    	    sumOfSquares += var*var;
+        	    		            	    	}
+        	    		            	    } // for (yoff = -1; yoff <= 1; yoff++)
+	        	    		            	regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
+	        	    		            	if (regionVariance < minVariance) {
+	        	    		            		minVariance = regionVariance;
+	        	    		            		mean = sum/9.0;
+	        	    		            	}
+        	    		            	} // if ((x >= 1) && (x < xDim-1) && (y >= 1) && (y < yDim-1))
+        	    		            	break;
+        	    		            case 9:
+        	    		            	if ((x >= 2) && (y >= 2)) {
+        	    		            	    for (yoff = -2; yoff <= 0; yoff++) {
+        	    		            	    	for (xoff = -2; xoff <= 0; xoff++) {
+        	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
+        	    		            	    	    sum += var;
+        	    		            	    	    sumOfSquares += var*var;
+        	    		            	    	}
+        	    		            	    } // for (yoff = -2; yoff <= 0; yoff++)
+	        	    		            	regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
+	        	    		            	if (regionVariance < minVariance) {
+	        	    		            		minVariance = regionVariance;
+	        	    		            		mean = sum/9.0;
+	        	    		            	}
+        	    		            	} // if ((x >= 2) && (y >= 2))
+        	    		            	break;
+        	    		            case 10:
+        	    		            	if ((x >= 2) && (y < yDim-2)) {
+        	    		            	    for (yoff = 0; yoff <= 2; yoff++) {
+        	    		            	    	for (xoff = -2; xoff <= 0; xoff++) {
+        	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
+        	    		            	    	    sum += var;
+        	    		            	    	    sumOfSquares += var*var;
+        	    		            	    	}
+        	    		            	    } // for (yoff = 0; yoff <= 2; yoff++)
+	        	    		            	regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
+	        	    		            	if (regionVariance < minVariance) {
+	        	    		            		minVariance = regionVariance;
+	        	    		            		mean = sum/9.0;
+	        	    		            	}
+        	    		            	} // if ((x >= 2) && (y < yDim-2))
+        	    		            	break;
+        	    		            case 11:
+        	    		            	if ((x < xDim-2) && (y >= 2)) {
+        	    		            	    for (yoff = -2; yoff <= 0; yoff++) {
+        	    		            	    	for (xoff = 0; xoff <= 2; xoff++) {
+        	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
+        	    		            	    	    sum += var;
+        	    		            	    	    sumOfSquares += var*var;
+        	    		            	    	}
+        	    		            	    } // for (yoff = -2; yoff <= 0; yoff++)
+	        	    		            	regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
+	        	    		            	if (regionVariance < minVariance) {
+	        	    		            		minVariance = regionVariance;
+	        	    		            		mean = sum/9.0;
+	        	    		            	}
+        	    		            	} // if ((x < xDim-2) && (y >= 2))
+        	    		            	break;
+        	    		            case 12:
+        	    		            	if ((x < xDim-2) && (y < yDim-2)) {
+        	    		            	    for (yoff = 0; yoff <= 2; yoff++) {
+        	    		            	    	for (xoff = 0; xoff <= 2; xoff++) {
+        	    		            	    	    var = buffer[(x + xoff) + xDim*(y + yoff)];
+        	    		            	    	    sum += var;
+        	    		            	    	    sumOfSquares += var*var;
+        	    		            	    	}
+        	    		            	    } // for (yoff = 0; yoff <= 2; yoff++)
+	        	    		            	regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
+	        	    		            	if (regionVariance < minVariance) {
+	        	    		            		minVariance = regionVariance;
+	        	    		            		mean = sum/9.0;
+	        	    		            	}
+        	    		            	} // if ((x < xDim-2) && (y < yDim-2))
+        	    		            	break;
+        	    		            case 13:
+        	    		            	if ((x >= 2) && (x < xDim-2) && (y >= 2)) {
+        	    		            	    for (yoff = -2; yoff <= -1; yoff++) {
+        	    		            	        for (xoff = -1; xoff <= 1; xoff++) {
+        	    		            	        	var = buffer[(x + xoff) + xDim*(y + yoff)];
+        	    		            	    	    sum += var;
+        	    		            	    	    sumOfSquares += var*var;	
+        	    		            	        }
+        	    		            	    } // for (yoff = -2; yoff <= -1; yoff++)
+        	    		            	    var = buffer[(x-2) + xDim*(y-2)];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    var = buffer[(x+2) + xDim*(y-2)];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    var = buffer[x + xDim*y];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
+	        	    		            	if (regionVariance < minVariance) {
+	        	    		            		minVariance = regionVariance;
+	        	    		            		mean = sum/9.0;
+	        	    		            	}
+        	    		            	} // if ((x >= 2) && (x < xDim-2) && (y >= 2))
+        	    		            	break;
+        	    		            case 14:
+        	    		            	if ((x >= 2) && (y >= 2) && (y < yDim-2)) {
+        	    		            	    for (yoff = -1; yoff <= 1; yoff++) {
+        	    		            	        for (xoff = -2; xoff <= -1; xoff++) {
+        	    		            	        	var = buffer[(x + xoff) + xDim*(y + yoff)];
+        	    		            	    	    sum += var;
+        	    		            	    	    sumOfSquares += var*var;	
+        	    		            	        }
+        	    		            	    } // for (yoff = -1; yoff <= 1; yoff++)
+        	    		            	    var = buffer[(x-2) + xDim*(y-2)];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    var = buffer[(x-2) + xDim*(y+2)];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    var = buffer[x + xDim*y];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
+	        	    		            	if (regionVariance < minVariance) {
+	        	    		            		minVariance = regionVariance;
+	        	    		            		mean = sum/9.0;
+	        	    		            	}
+        	    		            	} // if ((x >= 2) && (y >= 2) && (y < yDim-2))
+        	    		            	break;
+        	    		            case 15:
+        	    		            	if ((x >= 2) && (x < xDim-2) && (y < yDim-2)) {
+        	    		            	    for (yoff = 1; yoff <= 2; yoff++) {
+        	    		            	        for (xoff = -1; xoff <= 1; xoff++) {
+        	    		            	        	var = buffer[(x + xoff) + xDim*(y + yoff)];
+        	    		            	    	    sum += var;
+        	    		            	    	    sumOfSquares += var*var;	
+        	    		            	        }
+        	    		            	    } // for (yoff = 1; yoff <= 2; yoff++)
+        	    		            	    var = buffer[(x-2) + xDim*(y+2)];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    var = buffer[(x+2) + xDim*(y+2)];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    var = buffer[x + xDim*y];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
+	        	    		            	if (regionVariance < minVariance) {
+	        	    		            		minVariance = regionVariance;
+	        	    		            		mean = sum/9.0;
+	        	    		            	}
+        	    		            	} // if ((x >= 2) && (x < xDim-2) && (y < yDim-2))
+        	    		            	break;
+        	    		            case 16:
+        	    		            	if ((x < xDim-2) && (y >= 2) && (y < yDim-2)) {
+        	    		            	    for (yoff = -1; yoff <= 1; yoff++) {
+        	    		            	        for (xoff = 1; xoff <= 2; xoff++) {
+        	    		            	        	var = buffer[(x + xoff) + xDim*(y + yoff)];
+        	    		            	    	    sum += var;
+        	    		            	    	    sumOfSquares += var*var;	
+        	    		            	        }
+        	    		            	    } // for (yoff = -1; yoff <= 1; yoff++)
+        	    		            	    var = buffer[(x+2) + xDim*(y-2)];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    var = buffer[(x+2) + xDim*(y+2)];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    var = buffer[x + xDim*y];
+        	    		            	    sum += var;
+        	    		            	    sumOfSquares += var*var;
+        	    		            	    regionVariance = (sumOfSquares - sum*sum/9.0)/8.0;
+	        	    		            	if (regionVariance < minVariance) {
+	        	    		            		minVariance = regionVariance;
+	        	    		            		mean = sum/9.0;
+	        	    		            	}
+        	    		            	} // if ((x < xDim-2) && (y >= 2) && (y < yDim-2))
+        	    		            	break;
         	    		            } // switch(region)
-        	    		        } // for (region = 0; region < 9; region++)
+        	    		        } // for (region = extendedOffset; region < extendedOffset + 9; region++)
         	    		        result[index] = mean;
         	    		    } // if (entireImage || mask.get(index))
         	    		    else {
