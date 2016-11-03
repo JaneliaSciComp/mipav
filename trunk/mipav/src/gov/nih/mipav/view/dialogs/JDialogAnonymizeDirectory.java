@@ -1424,6 +1424,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     	for(;i<split.length-1;i++){
     		String key = split[i];
     		String group = key.substring(0, key.indexOf(","));
+    		if (group.toLowerCase().indexOf("xx") == 2) {
+    		    continue;
+    		}
     		int groupNum = Integer.valueOf(group, 0x10);
     		if(groupNum%2==0){
     			publicKeys.add(new FileDicomKey(key));
