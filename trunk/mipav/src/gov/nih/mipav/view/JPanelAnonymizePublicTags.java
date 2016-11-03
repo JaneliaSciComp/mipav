@@ -638,7 +638,7 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 	}
 
 	public int compare(FileDicomKey k, FileDicomKey q){
-		int gdiff = k.getGroupNumber() - k.getGroupNumber();
+		int gdiff = k.getGroupNumber() - q.getGroupNumber();
 		int ediff = k.getElementNumber() - q.getElementNumber();
 		if(gdiff != 0)
 			return gdiff;
