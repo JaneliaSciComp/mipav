@@ -594,6 +594,9 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 			if(keyStack.isEmpty())
 				break;
 			FileDicomKey k = keyList.get(i);
+			if (k.getGroup().toLowerCase().indexOf("xx") == 2) {
+				continue;
+			}
 			FileDicomKey q = keyStack.peek(); //Keys made from strings
 			
 			if(!k.getGroup().equals(prevGroup)){
