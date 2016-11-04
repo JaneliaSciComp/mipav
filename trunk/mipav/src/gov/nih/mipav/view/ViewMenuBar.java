@@ -221,6 +221,7 @@ public class ViewMenuBar {
 										false),
 								menuBuilder.buildMenuItem("Slice averaging", "sliceAveraging", 0, null, false),
 								menuBuilder.buildMenuItem("Sobel gradient components", "sobel", 0, null, false),
+								menuBuilder.buildMenuItem("Symmetric Nearest Neighbor", "SymmetricNearestNeighbor", 0, null, false),
 								menuBuilder.buildMenuItem("Tamura texture", "Tamura", 0, null, false),
 								menuBuilder.buildMenuItem("Texture analysis", "TextAnalysis", 0, null, false),
 								menuBuilder.buildMenuItem("Unsharp mask", null, 0, null, false), }),
@@ -1682,6 +1683,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Fuzzy Connectedness", false);
 			menuBuilder.setMenuItemEnabled("Gradient Inverse Smoothing", false);
 			menuBuilder.setMenuItemEnabled("Edge Preserving Smoothing", false);
+			menuBuilder.setMenuItemEnabled("Symmetric Nearest Neighbor", false);
 			menuBuilder.setMenuItemEnabled("Facet Model",false);
 			menuBuilder.setMenuItemEnabled("Maximally stable extremal regions", false);
 		} else {
@@ -1868,5 +1870,6 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("DICOM database access", true);
 		menuBuilder.setMenuItemEnabled("Region merging via boundary melting", true);
 		menuBuilder.setMenuItemEnabled("Edge Preserving Smoothing", true);
+		menuBuilder.setMenuItemEnabled("Symmetric Nearest Neighbor", true);
 	}
 }
