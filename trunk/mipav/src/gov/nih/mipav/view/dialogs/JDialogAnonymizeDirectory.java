@@ -1425,16 +1425,18 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     		String key = split[i];
     		String group = key.substring(0, key.indexOf(","));
     		if (group.toLowerCase().indexOf("xx") == 2) {
-    		    continue;
+    			publicKeys.add(new FileDicomKey(key));    
     		}
-    		int groupNum = Integer.valueOf(group, 0x10);
-    		if(groupNum%2==0){
-    			publicKeys.add(new FileDicomKey(key));
-    		}else{
-    			String[] keytag = key.split(",");
-    			key = keytag[0] + "," + keytag[1];
-    			privateKeys.add(new FileDicomKey(key));
-    			privateKeyTags.add(keytag[2]);
+    		else {
+	    		int groupNum = Integer.valueOf(group, 0x10);
+	    		if(groupNum%2==0){
+	    			publicKeys.add(new FileDicomKey(key));
+	    		}else{
+	    			String[] keytag = key.split(",");
+	    			key = keytag[0] + "," + keytag[1];
+	    			privateKeys.add(new FileDicomKey(key));
+	    			privateKeyTags.add(keytag[2]);
+	    		}
     		}
     	}
     	
