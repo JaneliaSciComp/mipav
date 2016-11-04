@@ -376,7 +376,6 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
 
         textIterations = WidgetFactory.buildTextField("1");
         textIterations.setColumns(5);
-        textIterations.addActionListener(this);
         standardGroup = new ButtonGroup();
         JLabel standardLabel = new JLabel("Type of Maximum Homogeneity Neighbor Filter:");
         standardLabel.setForeground(Color.black);
