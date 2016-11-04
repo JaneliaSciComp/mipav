@@ -119,7 +119,7 @@ public class AlgorithmEdgePreservingSmoothing extends AlgorithmBase {
                     return;
                 }
         	    for (iter = 0; iter < iterations; iter++) {
-        	    	if (iter > 1) {
+        	    	if (iter >= 1) {
         	    		temp = buffer;
         	    		buffer = result;
         	    		result = temp;
