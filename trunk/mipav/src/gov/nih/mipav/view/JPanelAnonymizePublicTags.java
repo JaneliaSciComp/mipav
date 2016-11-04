@@ -602,9 +602,6 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 				offset++;
 			}
 			
-			if (k.getGroup().toLowerCase().indexOf("xx") == 2) {
-				continue;
-			}
 			while(compare(k,q) > 0){
 				keyStack.poll();
 				q = keyStack.peek();
@@ -643,8 +640,8 @@ public class JPanelAnonymizePublicTags extends JPanel implements ActionListener{
 	}
 
 	public int compare(FileDicomKey k, FileDicomKey q){
-		int gdiff = k.getGroupNumber() - q.getGroupNumber();
-		int ediff = k.getElementNumber() - q.getElementNumber();
+		int gdiff = k.getGroup().compareTo(q.getGroup());
+		int ediff = k.getElement().compareTo(q.getElement());
 		if(gdiff != 0)
 			return gdiff;
 		else return ediff;
