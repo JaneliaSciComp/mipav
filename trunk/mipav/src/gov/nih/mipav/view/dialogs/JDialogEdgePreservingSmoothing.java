@@ -279,7 +279,7 @@ public class JDialogEdgePreservingSmoothing extends JDialogScriptableBase implem
     }
 
     /**
-     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
+     * Once all the necessary variables are set, call the Edge Preserving Smoothing algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
