@@ -108,6 +108,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 		if (command.equals("OK")) {
 			if (setVariables()) {
 				callAlgorithm();
+				this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 			}
 		} else if (command.equals("Script")) {
 			callAlgorithm();
