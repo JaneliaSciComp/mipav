@@ -1462,8 +1462,8 @@ public abstract class WormSegmentation
 			}
 		}
 
-		System.err.println( "Saving mp image to : " + directory + mp.getImageName() + "_segmentation_" + ".tif" );
-		ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
+//		System.err.println( "Saving mp image to : " + directory + mp.getImageName() + "_segmentation_" + ".tif" );
+//		ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
 		mp.calcMinMax();
 		new ViewJFrameImage((ModelImage) mp);
 	}

@@ -5396,6 +5396,15 @@ public class LatticeModel {
 					contour.elementAt(j).copy(position);					
 				}
 			}
+			for ( int j = 0; j < contour.size(); j++ )
+			{
+				Vector3f dir = Vector3f.sub(contour.elementAt(j), center );
+				float dist = dir.normalize();
+				dist += 10;
+				dir.scale(dist);
+				dir.add(center);
+				contour.elementAt(j).copy(dir);					
+			}
 			contour.convexHull();
 			for ( int j = 0; j < contour.size(); j++ )
 			{
