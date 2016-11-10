@@ -162,7 +162,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 						ModelImage contourImage = null;
 						if ( segmentSkinSurface.isSelected() )
 						{
-							contourImage = model.segmentSkin(wormImage);
+							contourImage = model.segmentSkin(wormImage, paddingFactor);
 						}
 						else if ( segmentLattice.isSelected() )
 						{
@@ -197,7 +197,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							
 							if ( segmentSkinSurface.isSelected() )
 							{
-								contourImage = model.segmentSkin(wormImage, contourImage);
+								contourImage = model.segmentSkin(wormImage, contourImage, paddingFactor);
 							}
 							else if ( segmentLattice.isSelected() )
 							{
@@ -287,6 +287,8 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 	private Vector<Integer> includeRange;
 	private JPanel inputsPanel;
 	private JTextField rangeFusionText;
+	private JTextField segmentationPaddingText;
+	private int paddingFactor;
 
 	/**
 	 * Initializes the panels for a non-integrated display. 
@@ -373,6 +375,10 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 		group1.add(segmentLattice);
 		gbc.gridy++;
 		gbc.gridx = 0;
+
+		segmentationPaddingText = gui.buildField("Segmentation padding (voxels): ", "           10");
+		algorithmPanel.add(segmentationPaddingText.getParent(), gbc);
+		gbc.gridy++;
 		
 		straightenMarkersCheck = gui.buildCheckBox( "Straighten Markers", true );
 		algorithmPanel.add(straightenMarkersCheck.getParent(), gbc);
@@ -411,6 +417,11 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 	 */
 	private boolean setVariables()
 	{	    
+		try {
+			paddingFactor = Integer.valueOf(segmentationPaddingText.getText().trim());
+		} catch(NumberFormatException e) {
+			paddingFactor = 10;
+		}
 		baseFileDir = baseFileLocText.getText();
 		baseFileDir2 = baseFileLocText2.getText();
 		includeRange = new Vector<Integer>();
