@@ -5288,7 +5288,7 @@ public class LatticeModel {
 	 * 
 	 * @param image
 	 */
-	public ModelImage segmentSkin(final ModelImage image )
+	public ModelImage segmentSkin(final ModelImage image, final int paddingFactor )
 	{
 		String imageName = image.getImageName();
 		if (imageName.contains("_clone")) {
@@ -5400,7 +5400,7 @@ public class LatticeModel {
 			{
 				Vector3f dir = Vector3f.sub(contour.elementAt(j), center );
 				float dist = dir.normalize();
-				dist += 10;
+				dist += paddingFactor;
 				dir.scale(dist);
 				dir.add(center);
 				contour.elementAt(j).copy(dir);					
@@ -5522,11 +5522,11 @@ public class LatticeModel {
 	}
 
 
-	public ModelImage segmentSkin(final ModelImage image, final ModelImage contourImageBlur )
+	public ModelImage segmentSkin(final ModelImage image, final ModelImage contourImageBlur, final int paddingFactor )
 	{
 		if ( contourImageBlur == null )
 		{
-			return segmentSkin(image);
+			return segmentSkin(image, paddingFactor);
 		}
 		
 		String imageName = image.getImageName();
