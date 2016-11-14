@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Random;
+import java.util.Vector;
 
 import Jama.Matrix;
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
@@ -37,6 +38,17 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	public static final int EVERY_POINT = 1;
 	public static final int SELECT_ON_JUMP = 2;
 	public static final int SELECT_PERCENT = 3;
+	// Find KL
+	// Number of points on which test is run
+	private static final int FAMS_FKL_NEL = 500;
+	// Number of times on which same test is run
+	private static final int FAMS_FKL_TIMES = 10;
+	
+	// FAMS main algorithm
+	// Maximum valid K
+	private static final int FAMS_MAX_K = 70;
+	// Maximum valid L
+	private static final int FAMS_MAX_L = 500;
 	// K, L are LSH parameters.  If either K or L is not greater than zero, the LSH data structure is not built
 	// and the linear algorithm is run.
 	private int K;
@@ -58,7 +70,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	// Need 0.0 <= percent <= 1.0
 	private double percent = 0.0;
 	// if fixedWidth is true, the user runs the fixed bandwidth mean shift procedure.
-	// The width * d (d is tne dimension of the data) is the distance under the L1 norm
+	// The width * d (d is the dimension of the data) is the distance under the L1 norm
 	// used as the fixed bandwidth.
 	private boolean fixedWidth;
 	private float width = -1;
@@ -73,11 +85,25 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	
 	private boolean noLSH;
 	
+	// interval of input data
+	private float minVal;
+	private float maxVal;
+	
 	// input points
+	private famsPoint points[];
+	private int data[][];
 	private boolean hasPoints;
+	private int nPoints;
+	private int nDims;
+	private int dataSize;
+	// temp work
+	double rr[];
 	
 	// selected points on which mean shift is run
+	private int psel[];
 	private int nsel;
+	private int modes[];
+	private long hmodes[];
 	private int npm;
 	
 	// hash table data
@@ -88,7 +114,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	private int nnres2;
 	
 	private long tt1;
-	Random srand;
+	private Random srand;
 	
 	/**
 	 * File formats:
@@ -150,8 +176,30 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	
 	public void runAlgorithm() {
 	    String fdata_file_name;
-	    int Lmax;
+	    int Lmax = 0;
 	    int Kmax;
+	    RandomAccessFile raFile;
+	    String firstLine;
+	    String values[];
+	    int numValues;
+	    int presentValues;
+	    float pttemp[];
+	    String dataLine;
+	    int i;
+	    int j;
+	    int k;
+	    float deltaVal;
+	    float findEpsilon;
+	    boolean adaptive;
+	    int hWidth;
+	    float scores[];
+	    int Lcrt;
+	    int Kcrt;
+	    int nBest;
+	    int LBest[];
+	    int KBest[];
+	    int ntimes;
+	    int is;
 	    
 	    noLSH = (K <= 0) || (L <= 0);
 	    // input_directory should end with File.separator
@@ -183,6 +231,344 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    
 	    nnres1 = 0;
 	    nnres2 = 0;
+	    try {
+	    	raFile = new RandomAccessFile(fdata_file_name, "r");
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on new RandomAccessFile(fdata_file_name, \"r\")"); 
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    do {
+		    try {
+		    	firstLine = raFile.readLine();
+		    }
+		    catch (IOException e) {
+		    	MipavUtil.displayError("IOException " + e + " firstLine = raFile.readLine)"); 
+		    	setCompleted(false);
+		    	return;
+		    }
+	    } while ((firstLine == null) || (firstLine.isEmpty()));
+	    values = retrieveValues(firstLine);
+	    if (values == null) {
+	    	MipavUtil.displayError("No values found in first line");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    if (values.length != 2) {
+	    	MipavUtil.displayError("First line has " + values.length + " values instead of the expected 2");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    try {
+	        nPoints = Integer.parseInt(values[0]);
+	    }
+	    catch (NumberFormatException e) {
+	    	MipavUtil.displayError("NumberFormatException " + e + " on nPoints = Integer.parseInt(values[0])");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    if (nPoints < 1) {
+	    	MipavUtil.displayError("nPoints = " + nPoints);
+	    	setCompleted(false);
+	    	return;
+	    }
+	    try {
+	    	nDims= Integer.parseInt(values[1]);
+	    }
+	    catch (NumberFormatException e) {
+	    	MipavUtil.displayError("NumberFormatException " + e + " on nDims = Integer.parseInt(values[1])");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    if (nDims < 1) {
+	    	MipavUtil.displayError("nDims = " + nDims);
+	    	setCompleted(false);
+	    	return;
+	    }
+	    numValues = nPoints * nDims;
+	    presentValues = 0;
+	    // Allocate data
+	    pttemp = new float[numValues];
+	    while (presentValues < numValues) {
+	    	try {
+		    	dataLine = raFile.readLine();
+		    }
+		    catch (IOException e) {
+		    	MipavUtil.displayError("IOException " + e + " dataLine = raFile.readLine)"); 
+		    	setCompleted(false);
+		    	return;
+		    }
+	    	 values = retrieveValues(dataLine);
+	    	 if (values != null) {
+	    		 for (i = 0; i < values.length && presentValues < numValues; i++) {
+	    			 try {
+	    				 pttemp[presentValues++] = Float.parseFloat(values[i]);
+	    			 }
+	    			 catch (NumberFormatException e) {
+	    				 MipavUtil.displayError("NumberFormatException " + e + " pttemp["+presentValues+"++] = "+
+	    			     "Float.parseFloat(values["+i+"])");
+	    			     setCompleted(false);
+	    			    return;	 
+	    			 }
+	    		 } // for (i = 0; i < values.length; i++)
+	    	 } // if (values != null)
+	    } // while (presentValues < numValues)
+	    try {
+	    	raFile.close();
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("IOException " + e + " on raFile.close()");
+	    	setCompleted(false);
+	    	return;
+	    }
+	    
+	    // Allocate and convert to integer
+	    for (i = 0, minVal = pttemp[0], maxVal = pttemp[0]; i < numValues; i++) {
+	    	if (minVal > pttemp[i]) {
+	    		minVal = pttemp[i];
+	    	}
+	    	else if (maxVal < pttemp[i]) {
+	    		maxVal = pttemp[i];
+	    	}
+	    } // for (i = 0, minVal = pttemp[0], maxVal = pttemp[0]; i < numValues; i++)
+	    data = new int[nPoints][nDims];
+	    rr = new double[nDims];
+	    hasPoints = true;
+	    deltaVal = maxVal - minVal;
+	    if (deltaVal == 0) {
+	    	deltaVal = 1.0f;
+	    }
+	    for (i = 0, j = 0, k = 0; i < numValues; i++) {
+	    	data[j][k] = (int)(65535.0 * (pttemp[i] - minVal)/deltaVal);
+	    	k++;
+	    	if (k == nDims) {
+	    		k = 0;
+	    		j++;
+	    	}
+	    }
+	    pttemp = null;
+	    dataSize = nDims;
+	    
+	    points = new famsPoint[nPoints];
+	    for (i = 0; i < nPoints; i++) {
+	    	points[i] = new famsPoint();
+	    	points[i].setData(data[i]);
+	    	points[i].setUsedFlag(0);
+	    }
+	    
+	    if (findOptimalKL) {
+	        findEpsilon = epsilon;
+	        adaptive = !fixedWidth;
+	        
+	        if (fixedWidth) {
+	        	 hWidth = (int)(65535.0*width/(maxVal - minVal));
+	        }
+	        else {
+	        	hWidth = 0;
+	        }
+	        findEpsilon = epsilon + 1;
+	        
+	        // select points on which test is run
+	        selectMSPoints(FAMS_FKL_NEL*100.0/nPoints, 0);
+	        
+	        // Compute bandwidths for selected points
+	        computeRealBandwidths(hWidth);
+	        
+	        // Start finding the correct L for each K
+	        scores = new float[FAMS_FKL_TIMES*FAMS_MAX_L];
+	        LBest = new int[FAMS_MAX_K];
+	        KBest = new int[FAMS_MAX_K];
+	        
+	        Lcrt = Lmax;
+	    } // if (findOptimalKL)
+	}
+	
+	// Choose a subset of points on which to perform the mean shift operation
+	private void selectMSPoints(double percent, int jump) {
+	    int i;
+	    int tsel;
+	    
+	    if (!hasPoints) {
+	    	return;
+	    }
+	    
+	    if (percent > 0.0) {
+	        tsel = (int)(nPoints * percent /100.0);
+	        if (tsel != nsel) {
+	        	cleanSelected();
+	        	nsel = tsel;
+	        	psel = new int[nsel];
+	        	modes = new int[nsel * nDims];
+	        	hmodes = new long[nsel];
+	        }
+	        for (i = 0; i < nsel; i++) {
+	        	psel[i] = Math.min(nPoints-1, (int)(srand.nextDouble()*nPoints));
+	        }
+	    }
+	    else {
+	        tsel = (int)Math.ceil(((double)nPoints)/((double)jump));
+	        if (tsel != nsel) {
+	        	cleanSelected();
+	        	nsel = tsel;
+	        	psel = new int[nsel];
+	        	modes = new int[nsel * nDims];
+	        	hmodes = new long[nsel];
+	        }
+	        for (i = 0; i < nsel; i++) {
+	        	psel[i] = i * jump;
+	        }
+	    }
+	}
+	
+	// Compute real bandwidths for selected points
+	private void computeRealBandwidths(int h) {
+	    final int win_j = 10;
+	    final int max_win = 7000;
+	    int i, j;
+	    int nn;
+	    int wjd;
+	    int who;
+	    int numn;
+	    int numns[];
+	    
+	    wjd = (int) (win_j * nDims);
+	    if (h == 0) {
+	    	for (j = 0; j < nsel; j++) {
+	    		who = psel[j];
+	    		numn = 0;
+	    		numns = new int[max_win/win_j];
+	    		for (i = 0; i < nPoints; i++) {
+	    		    nn = distL1(points[who], points[i])/wjd;
+	    		    if (nn < max_win/win_j) {
+	    		    	numns[nn]++;
+	    		    }
+	    		} // for (i = 0; i < nPoints; i++)
+	    		for (nn = 0; nn < max_win/win_j; nn++) {
+	    		    numn += numns[nn];
+	    		    if (numn > k_neigh) {
+	    		    	break;
+	    		    }
+	    		} // for (nn = 0; nn < max_win/win_j; nn++)
+	    		points[who].setWindow((nn+1)*win_j);
+	    	} // for (j = 0; j < nsel; j++)
+	    } // if (h == 0)
+	    else {
+	    	for (j = 0; j < nsel; j++) {
+	    		who = psel[j];
+	    		points[who].setWindow(h);
+	    	}
+	    } // else
+	}
+	
+	private int distL1(famsPoint inPt1, famsPoint inPt2) {
+		int ini;
+		int inres = 0;
+		for (ini = 0; ini < nDims; ini++) {
+			inres += Math.abs(inPt1.data[ini] - inPt2.data[ini]);
+		}
+		return inres;
+	}
+	
+	private void cleanSelected() {
+		if (nsel > 0) {
+			psel = null;
+			modes = null;
+			hmodes = null;
+			nsel = 0;
+		}
+	}
+	
+	private String[] retrieveValues(String inString) {
+        String outString[] = null;
+        int i;
+        int numValues = 0;
+        Vector<Integer> firstValue = new Vector<Integer>();
+        Vector<Integer> lastValue = new Vector<Integer>();
+
+        if ((inString != null) && (!inString.isEmpty())) {
+        	for (i = 0; i < inString.length(); i++) {
+        	    if ((inString.charAt(i) > 0x20) &&	((i == 0) || (inString.charAt(i-1) <= 0x20))) {
+        	    	numValues++;
+        	    	firstValue.add(i);
+        	    	if (i == inString.length() - 1) {
+        	    		lastValue.add(i);
+        	    	}
+        	    }
+        	    else if ((inString.charAt(i) <= 0x20) && (inString.charAt(i-1) > 0x20)) {
+        	    	lastValue.add(i-1);
+        	    }
+        	    else if ((i == inString.length() - 1) && (inString.charAt(i) > 0x20)) {
+        	    	lastValue.add(i);
+        	    }
+        	}
+        	outString = new String[numValues];
+        	char[] val = new char[inString.length()];
+            for (i = 0; i < inString.length(); i++) {
+            	val[i] = inString.charAt(i);
+            }
+        	for (i = 0; i < numValues; i++) {
+        	    outString[i] = new String(val, firstValue.get(i), lastValue.get(i) - firstValue.get(i) + 1);    
+        	} // for (i = 0; i < numValues; i++)
+            
+            return outString;
+            
+        } // if ((inString != null) && (!inString.isEmpty()))
+        else {
+            return null;
+        }
+
+    }
+	
+	private class famsPoint {
+		private int data[];
+		private int usedFlag;
+		private int window;
+		float weightdp2;
+		
+		public famsPoint() {
+			
+		}
+		
+		public famsPoint(famsPoint d2) {
+			usedFlag = d2.usedFlag;
+			weightdp2 = d2.weightdp2;
+			window = d2.window;
+			data = d2.data;
+		}
+		
+		public void setData(int data[]) {
+			this.data = data;
+		}
+		
+		public void setUsedFlag(int usedFlag) {
+			this.usedFlag = usedFlag;
+		}
+		
+		public void setWindow(int window) {
+			this.window = window;
+		}
+		
+		public void setWeightdp2(float weightdp2) {
+			this.weightdp2 = weightdp2;
+		}
+		
+		public int[] getData() {
+			return data;
+		}
+		
+		public int getUsedFlag() {
+			return usedFlag;
+		}
+		
+		public int getWindow() {
+			return window;
+		}
+		
+		public float getWeightdp2() {
+			return weightdp2;
+		}
 	}
 	
 }
