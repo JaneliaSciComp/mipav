@@ -51,9 +51,19 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	private static final int FAMS_MAX_L = 500;
 	// first hash table block size
 	private static final int FAMS_BLOCKSIZE = 4096;
+	// second hash table block size
+	private static final int FAMS_BLOCKSIZE2 = 256;
+	// maximum MS iterations
+	private static final int FAMS_MAXITER = 100;
+	// weight power
+	private static final double FAMS_ALPHA = 1.0;
 	
 	//private static final int Bs = FAMS_BLOCKSIZE/sizeof(fams_hash_entry);
 	private static final int Bs = FAMS_BLOCKSIZE/14;
+	//private static final int Bs2 = FAMS_BLOCKSIZE2/sizeof(fams_hash_entry2);
+	private static final int Bs2 = FAMS_BLOCKSIZE2/12;
+	
+	private static float FAMS_FLOAT_SHIFT = 100000.0f;
 	// K, L are LSH parameters.  If either K or L is not greater than zero, the LSH data structure is not built
 	// and the linear algorithm is run.
 	private int K;
@@ -90,6 +100,13 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	
 	private boolean noLSH;
 	
+	private RandomAccessFile raFile;
+	/** byte array for int * */
+    private final byte[] byteIntBuffer = new byte[4];
+    /** byte array for float * */
+    private final byte[] byteFloatBuffer = new byte[4];
+    private boolean endianess;
+	
 	// interval of input data
 	private float minVal;
 	private float maxVal;
@@ -97,7 +114,6 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	// input points
 	private famsPoint points[];
 	private int data[][];
-	private boolean hasPoints;
 	private int nPoints;
 	private int nDims;
 	private int dataSize;
@@ -108,7 +124,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	private int psel[];
 	private int nsel;
 	private int modes[];
-	private long hmodes[];
+	private int hmodes[];
 	private int npm;
 	
 	// hash table data
@@ -123,6 +139,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	// temporary
 	private boolean t_cut_res[][] = new boolean[FAMS_MAX_L][FAMS_MAX_K];
 	private boolean t_old_cut_res[][] = new boolean[FAMS_MAX_L][FAMS_MAX_K];
+	private int t_m[] = new int[FAMS_MAX_L];
+	private int t_m2[] = new int[FAMS_MAX_L];
 	private int nnres1;
 	private int nnres2;
 	
@@ -189,9 +207,9 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	
 	public void runAlgorithm() {
 	    String fdata_file_name;
+	    String pilot_file_name;
 	    int Lmax = 0;
 	    int Kmax = 0;
-	    RandomAccessFile raFile;
 	    String firstLine;
 	    String values[];
 	    int numValues;
@@ -205,7 +223,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    float findEpsilon;
 	    boolean adaptive;
 	    int hWidth;
-	    float scores[];
+	    //float scores[];
+	    float scores[][];
 	    int Lcrt;
 	    int Kcrt;
 	    int nBest;
@@ -213,6 +232,19 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    int KBest[];
 	    int ntimes;
 	    int is;
+	    long run_times[];
+	    int iBest;
+	    long timeBest;
+	    fams_hash_entry HT[][];
+	    int hs[];
+	    fams_hash_entry2 HT2[][];
+	    int hs2[];
+	    fams_cut cuts[][];
+	    boolean cut_res[];
+	    int hjump[];
+	    int m;
+	    int m2;
+	    int hwd;
 	    
 	    noLSH = (K <= 0) || (L <= 0);
 	    // input_directory should end with File.separator
@@ -234,7 +266,6 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    }
 	    
 	    // load points
-	    hasPoints = false;
 	    int nsel = 0;
 	    int npm = 0;
 	    hashCoeffs = null;
@@ -348,7 +379,6 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    } // for (i = 0, minVal = pttemp[0], maxVal = pttemp[0]; i < numValues; i++)
 	    data = new int[nPoints][nDims];
 	    rr = new double[nDims];
-	    hasPoints = true;
 	    deltaVal = maxVal - minVal;
 	    if (deltaVal == 0) {
 	    	deltaVal = 1.0f;
@@ -371,16 +401,16 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    	points[i].setUsedFlag(0);
 	    }
 	    
+	    adaptive = !fixedWidth;
+        
+        if (fixedWidth) {
+        	 hWidth = (int)(65535.0*width/(maxVal - minVal));
+        }
+        else {
+        	hWidth = 0;
+        }
+	    
 	    if (findOptimalKL) {
-	        findEpsilon = epsilon;
-	        adaptive = !fixedWidth;
-	        
-	        if (fixedWidth) {
-	        	 hWidth = (int)(65535.0*width/(maxVal - minVal));
-	        }
-	        else {
-	        	hWidth = 0;
-	        }
 	        findEpsilon = epsilon + 1;
 	        
 	        // select points on which test is run
@@ -390,29 +420,569 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	        computeRealBandwidths(hWidth);
 	        
 	        // Start finding the correct L for each K
-	        scores = new float[FAMS_FKL_TIMES*FAMS_MAX_L];
+	        //scores = new float[FAMS_FKL_TIMES*FAMS_MAX_L];
 	        LBest = new int[FAMS_MAX_K];
 	        KBest = new int[FAMS_MAX_K];
 	        
-	        Lcrt = Lmax;
+	        Lcrt = Lmax; 
+	        scores = new float[FAMS_FKL_TIMES][Lcrt];
 	        Preferences.debug("About to find valid pairs\n", Preferences.DEBUG_ALGORITHM);
 	        for (Kcrt = Kmax, nBest = 0; Kcrt >= Kmin; Kcrt -= Kjump, nBest++) {
 	            // Do iterations for crt K and L = 1...Lcrt
 	        	for (ntimes = 0; ntimes < FAMS_FKL_TIMES; ntimes++) {
-	        		
+	        	    doFindKLIteration(Kcrt, Lcrt, scores[ntimes]);	
+	        	} // for (ntimes = 0; ntimes < FAMS_FKL_TIMES; ntimes++)
+	        	
+	        	// Get correct for this K
+	        	KBest[nBest] = Kcrt;
+	        	LBest[nBest] = -1;
+	        	for (is = 0; (LBest[nBest] == -1) && (is < Lcrt); is++) {
+	        	    // Find max on this column
+	        		for (ntimes = 1; ntimes < FAMS_FKL_TIMES; ntimes++) {
+	        		    if (scores[0][is] < scores[ntimes][is]) {
+	        		    	scores[0][is] = scores[ntimes][is];
+	        		    }
+	        		} // for (ntimes = 1; ntimes < FAMS_FKL_TIMES; ntimes++)
+	        		if (scores[0][is] < findEpsilon) {
+	        			LBest[nBest] = is+1;
+	        		}
+	        	} // for (is = 0; (LBest[nBest] == -1) && (is < Lcrt); is++)
+	        	
+	        	// Update Lcrt to reduce running time
+	        	if (LBest[nBest] > 0) {
+	        		Lcrt = LBest[nBest] + 2;
 	        	}
 	        } // for (Kcrt = Kmax, nBest = 0; Kcrt >= Kmin; Kcrt -= Kjump, nBest++)
+	        
+	        // Start finding the pair with the best running time
+	        run_times = new long[FAMS_FKL_TIMES];
+	        timeBest = -1;
+	        iBest = -1;
+	        Preferences.debug("About to select the best pair\n", Preferences.DEBUG_ALGORITHM);
+	        for (i = 0; i < nBest; i++) {
+	        	if (LBest[i] <= 0) {
+	        		continue;
+	        	}
+	        	for (ntimes = 0; ntimes < FAMS_FKL_TIMES; ntimes++) {
+	        	    run_times[ntimes] = doFindKLIteration(KBest[i], LBest[i], scores[ntimes]);	
+	        	} // for (ntimes = 0; ntimes < FAMS_FKL_TIMES; ntimes++)
+	        	bgSort(run_times, FAMS_FKL_TIMES);
+	        	if ((timeBest == -1) || (timeBest > run_times[FAMS_FKL_TIMES/2])) {
+	        		iBest = i;
+	        		timeBest = run_times[FAMS_FKL_TIMES/2];
+	        	}
+	        } // for (i = 0; i < nBest; i++)
+	        K = KBest[iBest];
+	        L = LBest[iBest];
+	        Preferences.debug("KBest = " + KBest[iBest] + " LBest = " + LBest[iBest] + "\n");
+	        Preferences.debug("time = " + run_times[FAMS_FKL_TIMES] + "\n");
 	    } // if (findOptimalKL)
+	    pilot_file_name = input_directory+"pilot_"+String.valueOf(k_neigh)+"_"+data_file_name;
+	    
+	    K_ = K;
+	    L_ = L;
+	    selectMSPoints(percent, jump);
+	    
+	    // Allocate memory for the hash table
+	    M = getPrime(3*nPoints*L_/Bs);
+	    M2 = getPrime(nsel*20*3/Bs2);
+	    HT = new fams_hash_entry[M][Bs];
+		for (i = 0; i < M; i++) {
+			for (j = 0; j < Bs; j++) {
+				HT[i][j] = new fams_hash_entry();
+			}
+		}
+		hs = new int[M];
+		HT2 = new fams_hash_entry2[M2][Bs2];
+		for (i = 0; i < M2; i++) {
+			for (j = 0; j < Bs2; j++) {
+				HT2[i][j] = new fams_hash_entry2();
+			}
+		}
+		hs2 = new int[M2];
+		
+		// Build partitions
+		cuts = new fams_cut[L][FAMS_MAX_K];
+		for (i = 0; i < L; i++) {
+			for (j = 0; j < FAMS_MAX_K; j++) {
+				cuts[i][j] = new fams_cut();
+			}
+		}
+		cut_res = new boolean[FAMS_MAX_K];
+		makeCuts(cuts);
+		
+		initHash(K_+L_);
+		
+		// Insert data into partitions
+		hjump = new int[1];
+		for (j = 0; j < nPoints; j++) {
+		    for (i = 0; i < L_; i++) {
+		        evalCutRes(points[j], cuts[i], cut_res);
+		        m = hashFunction(cut_res, 0, i, K_, M, hjump);
+		        m2 = hashFunction(cut_res,1,i,K_-1, 0, null);
+		        addDataToHash(HT, hs, points[j], m, Bs, M, i, m2, hjump[0]);
+		    } // for (i = 0; i < L_; i++)
+		} // for (j = 0; j < nPoints; j++)
+		
+		// Compute pilot if necessary
+		if (adaptive) {
+			computePilot(HT, hs, cuts, pilot_file_name);
+		}
+		else {
+			// fixed bandwidth
+		    hwd = (int)(hWidth * nDims);
+		    for (i = 0; i < nPoints; i++) {
+		    	points[i].window = hwd;
+		    	points[i].weightdp2 = 1;
+		    }
+		}
+		
+		doFAMS(HT, hs, cuts, HT2, hs2);
+	}
+	
+	// perform FAMS starting from a subset of the data points.
+	private void doFAMS(fams_hash_entry HT[][],int hs[], fams_cut cuts[][],
+	     fams_hash_entry2 HT2[][], int hs2[])
+	{
+	   int i;
+	   int j;
+	   int k;
+	   int jj;
+	   int oldMean[];
+	   int crtMean[];
+	   famsPoint currentpt;
+	   int sol[];
+	   int who;
+	   int tMode[][];
+	   int newH;
+	   int crtH[];
+	   int myPt;
+	   int iter;
+	   fams_res_cont res = new fams_res_cont(nPoints);
+	   for (i = 0; i < M2; i++) {
+		   for (j = 0; j < Bs2; j++) {
+			   HT2[i][j].whichCut = 0;
+			   for (k = 0; k < HT2[i][j].dp[0].length; k++) {
+				   HT2[i][j].dp[k] = null;
+			   }
+			   HT2[i][j].dp = null;
+		   }
+	   }
+	   for (i = 0; i < M2; i++) {
+		   hs2[i] = 0;
+	   }
+	   oldMean = new int[nDims];
+	   crtMean = new int[nDims];
+	   
+	   tMode = new int[nPoints][];
+	   Preferences.debug(" Start MS iterations", Preferences.DEBUG_ALGORITHM);
+	   myPt = nsel/10;
+	   /*for(jj=0; jj<nsel; jj++)
+	   {
+	      if((jj%myPt)==0)
+	         //bgLog(".");
+	      who = psel[jj];
+	      currentpt = points[who];
+	      for (i = 0; i < dataSize; i++) {
+	    	  crtMean[i] = currentpt.data[i];
+	      }
+	      hmodes[jj] = currentpt.window;
+	      tMode[jj]= 1;
+	      for(iter=0; notEq(oldMean,crtMean) && (iter<FAMS_MAXITER); iter++)
+	      {
+	         if(!noLSH)
+	         {
+	            if((sol=getNearestNeighbours2H(crtMean,HT,hs,cuts,
+	               res,tMode[jj],
+	               HT2,hs2)) != null)
+	            {
+	               if(sol == (unsigned short*)1)
+	               {
+	                  tMode[jj] = &modes_[jj*d_];
+	                  memcpy(tMode[jj], crtMean, dataSize_);
+	               }
+	               else
+	               {
+	                  tMode[jj] = &modes_[jj*d_];
+	                  memcpy(tMode[jj], sol, dataSize_);
+	                  break;
+	               }
+	            }
+	         }
+	         memcpy(oldMean, crtMean, dataSize_);
+	         if(!(newH=DoMeanShiftAdaptiveIteration(res,oldMean,crtMean)))
+	         {
+	            memcpy(crtMean, oldMean, dataSize_);
+	            break;
+	         }
+	         *crtH=newH;
+	      }
+	      if(tMode[jj]==(unsigned short*)1)
+	      {
+	         tMode[jj] = &modes_[jj*d_];
+	         memcpy(tMode[jj], crtMean, dataSize_);
+	      }
+	   }
+	   delete [] oldMean;
+	   delete [] crtMean;
+	   delete [] tMode;
+	   bgLog("done.\n");*/
+	}
+	
+	private int[] getNearestNeighbours2H(int who[], fams_hash_entry HT[][], int hs[],
+		       fams_cut cuts[][], fams_res_cont res,
+		       int solution[], fams_hash_entry2 HT2[][], int hs2[])
+		{
+		   int i;
+		   /*for(i=0; i<L_; i++)
+		   {
+		      evalCutRes(who,cuts[i],t_cut_res[i]);
+		      t_m[i] = HashFunction(t_cut_res_[i],i,K_,M_,&t_hjump_[i]);
+		      t_m2_[i] = HashFunction(&t_cut_res_[i][1],i,K_-1);
+		   }
+		   if(FAMS_DO_SPEEDUP)
+		   {
+		      int hjump2;
+		      int hf = HashFunction(t_m_,0,L_,M2_,&hjump2);
+		      int hf2 = HashFunction(&t_m_[L_/2-1],0,L_/2);
+		      unsigned short *old_sol =  FindInHash(HT2,hs2,hf,hf2,M2_,hjump2);
+		      if(old_sol!= NULL && old_sol != (unsigned short*)1)
+		         return old_sol;
+		      
+		      if(old_sol == NULL)
+		         InsertIntoHash(HT2,hs2,hf,hf2,solution,M2_,hjump2);
+		   }
+		   if(memcmp(t_m_,t_old_m_,sizeof(int)*L_)==0)
+		   {
+		      return NULL;
+		   }
+		   memcpy(t_old_m_,t_m_,sizeof(int)*L_);
+		   res.clear();
+		   nnres2_++;
+		   for(i=0; i<L_; i++)
+		      AddDataToRes(HT,hs,res,t_m_[i],Bs,M_,i,nnres2_,t_m2_[i],t_hjump_[i]);
+           */
+		   return null;
+		}
+
+	
+	private boolean notEq(int in_d1[], int in_d2[])
+	{
+		   for(int in_i=0; in_i<nDims; in_i++)
+		      if(in_d1[in_i] != in_d2[in_i])
+		         return true;
+		   return false;
+		}
+
+	
+	// compute the pilot h_i's for the data points
+	private void computePilot(fams_hash_entry HT[][],int hs[], fams_cut cuts[][], String pilot_file_name)
+	{
+	   final int win_j = 10,max_win=7000;
+	   int i,j;
+	   int nn;
+	   int wjd = (int)(win_j*nDims);
+	   int num_l[] = new int[1000];
+	   fams_res_cont res = new fams_res_cont(nPoints);
+	   if(!loadBandwidths(pilot_file_name))
+	   {
+	      Preferences.debug("compute bandwidths...", Preferences.DEBUG_ALGORITHM);
+	      for(j=0; j<nPoints; j++)
+	      { 
+	         int numn=0;
+	         int numns[] = new int[max_win/win_j];
+	         int nel;
+	         if(noLSH)
+	         {
+	            nel = nPoints;
+	            for(i=0; i<nel; i++)
+	            {
+	               famsPoint pt = points[i];
+	               nn = distL1(points[j],pt) / wjd;
+	               if(nn <max_win/win_j)
+	                  numns[nn]++;	
+	            }
+	         }
+	         else
+	         {
+	            getNearestNeighbours(points[j],HT,hs,cuts,res,0,num_l);
+	            nel = res.nel;      
+	            for(i=0; i<nel; i++)
+	            {
+	               famsPoint pt = res.vec[i];
+	               nn = distL1(points[j],pt) / wjd;
+	               if(nn <max_win/win_j)
+	                  numns[nn]++;	
+	            }
+	         }
+	         for(nn=0; nn<max_win/win_j; nn++)
+	         {
+	            numn+=numns[nn];
+	            if(numn>k_neigh)
+	            {
+	               break;
+	            }
+	         }	
+	         points[j].window=(nn+1)*wjd;
+	      }
+	      saveBandwidths(pilot_file_name);
+	   }
+	   else
+	      Preferences.debug("load bandwidths...",Preferences.DEBUG_ALGORITHM);
+	   for(j=0; j<nPoints; j++){
+	      points[j].weightdp2 = (float) Math.pow(FAMS_FLOAT_SHIFT/points[j].window, (nDims+2)*FAMS_ALPHA);
+//	      points_[j].weightdp2_ = (float) (1.0/pow(points_[j].window_, (d_+2)*FAMS_ALPHA));
+	   }
+	}
+	
+	private boolean loadBandwidths(String fn)
+	{
+        int n;
+        int i;
+        float bw;
+        float deltaVal;
+		try {
+	    	raFile = new RandomAccessFile(fn, "r");
+	    }
+	    catch (IOException e) { 
+	    	return false;
+	    }
+		try {
+			n = getInt(endianess);
+		}
+		catch (IOException e) {
+			return false;
+		}
+		if (n != nPoints) {
+			try {
+				raFile.close();
+				return false;
+			}
+			catch (IOException e) {
+				return false;
+			}
+		} // if (n != nPoints)
+		deltaVal = maxVal - minVal;
+		for (i = 0; i < nPoints; i++) {
+		    try {
+		    	bw = getFloat(endianess);
+		    	 points[i].window = (int) (65535.0*(bw)/deltaVal);
+		    }
+		    catch (IOException e) {
+		    	try {
+		    		raFile.close();
+		    		return false;
+		    	}
+		    	catch (IOException e2) {
+		    		return false;
+		    	}
+		    }
+		} // for (i = 0; i < nPoints; i++)
+		try {
+			raFile.close();
+		}
+		catch (IOException e) {
+			return false;
+		}
+		return true;
+	}
+	
+	private void saveBandwidths(String fn)
+	{
+		int i;
+		float bw;
+		float deltaVal;
+		try {
+	    	raFile = new RandomAccessFile(fn, "rw");
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("Error in saveBandwidths raFile = new RandomAccessFile");
+	    	return;
+	    }
+		try {
+			raFile.setLength(0);
+		}
+		catch (IOException e) {
+	    	MipavUtil.displayError("Error in saveBandwidths raFile.setLength(0)");
+	    	return;
+	    }
+		try {
+			writeInt(nPoints,endianess);
+		}
+		catch (IOException e) {
+	    	MipavUtil.displayError("Error in saveBandwidths writeInt");
+	    	return;
+	    }
+		deltaVal = maxVal - minVal;
+		for (i = 0; i < nPoints; i++) {
+			bw = (float) (points[i].window*deltaVal/65535.0);
+			try {
+				writeFloat(bw, endianess);
+			}
+			catch (IOException e) {
+		    	MipavUtil.displayError("Error in saveBandwidths writeFloat");
+		    	return;
+		    }
+		} // for (i = 0; i < nPoints; i++)
+		try {
+			raFile.close();
+		}
+		catch (IOException e) {
+	    	MipavUtil.displayError("Error in saveBandwidths raFile.close()");
+	    	return;
+	    }
+		return;
+	}
+
+
+	/**
+     * Reads four signed bytes from file.
+     * 
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @return The value of the integer read from the file.
+     * 
+     * @exception IOException if there is an error reading the file
+     */
+    public final int getInt(final boolean bigEndian) throws IOException {
+
+        raFile.readFully(byteIntBuffer);
+
+        if (bigEndian) {
+            return ( ( (byteIntBuffer[0] & 0xff) << 24) | ( (byteIntBuffer[1] & 0xff) << 16)
+                    | ( (byteIntBuffer[2] & 0xff) << 8) | (byteIntBuffer[3] & 0xff)); // Big Endian
+        } else {
+            return ( ( (byteIntBuffer[3] & 0xff) << 24) | ( (byteIntBuffer[2] & 0xff) << 16)
+                    | ( (byteIntBuffer[1] & 0xff) << 8) | (byteIntBuffer[0] & 0xff));
+        }
+    }
+    
+    /**
+     * Reads four unsigned bytes from file.
+     * 
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @return The value of the float read from the file.
+     * 
+     * @exception IOException if there is an error reading the file
+     */
+    public final float getFloat(final boolean bigEndian) throws IOException {
+
+        raFile.readFully(byteFloatBuffer);
+
+        int tmpInt;
+
+        if (bigEndian) {
+            tmpInt = ( ( (byteFloatBuffer[0] & 0xff) << 24) | ( (byteFloatBuffer[1] & 0xff) << 16)
+                    | ( (byteFloatBuffer[2] & 0xff) << 8) | (byteFloatBuffer[3] & 0xff));
+
+            return (Float.intBitsToFloat(tmpInt));
+        } else {
+            tmpInt = ( ( (byteFloatBuffer[3] & 0xff) << 24) | ( (byteFloatBuffer[2] & 0xff) << 16)
+                    | ( (byteFloatBuffer[1] & 0xff) << 8) | (byteFloatBuffer[0] & 0xff));
+
+            return (Float.intBitsToFloat(tmpInt));
+        }
+    }
+    
+    /**
+     * Writes an int as four bytes to a file.
+     * 
+     * @param data Data to be written to file.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @exception IOException if there is an error writing the file
+     */
+    public final void writeInt(final int data, final boolean bigEndian) throws IOException {
+
+        if (bigEndian) {
+            byteIntBuffer[0] = (byte) (data >>> 24);
+            byteIntBuffer[1] = (byte) (data >>> 16);
+            byteIntBuffer[2] = (byte) (data >>> 8);
+            byteIntBuffer[3] = (byte) (data & 0xff);
+        } else {
+            byteIntBuffer[0] = (byte) (data & 0xff);
+            byteIntBuffer[1] = (byte) (data >>> 8);
+            byteIntBuffer[2] = (byte) (data >>> 16);
+            byteIntBuffer[3] = (byte) (data >>> 24);
+        }
+
+        raFile.write(byteIntBuffer);
+    }
+    
+    /**
+     * Writes a float as four bytes to a file.
+     * 
+     * @param data Data to be written to file.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @exception IOException if there is an error writing the file
+     */
+    public final void writeFloat(final float data, final boolean bigEndian) throws IOException {
+        int tmpInt;
+
+        tmpInt = Float.floatToIntBits(data);
+        writeInt(tmpInt, bigEndian);
+    }
+	
+	private void bgSort(long ra[], int nVec)
+	{
+	   int l;
+	   int ir;
+	   int i;
+	   int j;
+	   long n;
+	   n = nVec;
+	   long rra;
+	   
+	   if (n<2)
+	      return;
+	   l = (int)(n>>1)+1;
+	   ir = (int)n;
+	   for (;;)
+	   {
+	      if (l>1)
+	      {
+	         rra = ra[(--l)-1];
+	      }
+	      else
+	      {
+	         rra = ra[ir-1];
+	         ra[ir-1] = ra[1-1];
+	         if (--ir==1)
+	         {
+	            ra[1-1] = rra;
+	            break;
+	         }
+	      }
+	      i = l;
+	      j = l+l;
+	      while (j<=ir)
+	      {
+	         if (j<ir && ra[j-1]<ra[j+1-1])
+	            j++;
+	         if (rra<ra[j-1])
+	         {
+	            ra[i-1] = ra[j-1];
+	            i = j;
+	            j <<= 1;
+	         }
+	         else
+	            j = ir+1;
+	      }
+	      ra[i-1] = rra;
+	   }
+
 	}
 	
 	// Choose a subset of points on which to perform the mean shift operation
 	private void selectMSPoints(double percent, int jump) {
 	    int i;
 	    int tsel;
-	    
-	    if (!hasPoints) {
-	    	return;
-	    }
 	    
 	    if (percent > 0.0) {
 	        tsel = (int)(nPoints * percent /100.0);
@@ -421,7 +991,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	        	nsel = tsel;
 	        	psel = new int[nsel];
 	        	modes = new int[nsel * nDims];
-	        	hmodes = new long[nsel];
+	        	hmodes = new int[nsel];
 	        }
 	        for (i = 0; i < nsel; i++) {
 	        	psel[i] = Math.min(nPoints-1, (int)(srand.nextDouble()*nPoints));
@@ -434,7 +1004,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	        	nsel = tsel;
 	        	psel = new int[nsel];
 	        	modes = new int[nsel * nDims];
-	        	hmodes = new long[nsel];
+	        	hmodes = new int[nsel];
 	        }
 	        for (i = 0; i < nsel; i++) {
 	        	psel[i] = i * jump;
@@ -502,11 +1072,21 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 		// Allocate memory for the hash table
 		M = getPrime(3*nPoints*L_/Bs);
 		HT = new fams_hash_entry[M][Bs];
+		for (i = 0; i < M; i++) {
+			for (j = 0; j < Bs; j++) {
+				HT[i][j] = new fams_hash_entry();
+			}
+		}
 		hs = new int[M];
 		initHash(K_+L_);
 		
 		// Build partitions
 		cuts = new fams_cut[L_][FAMS_MAX_K];
+		for (i = 0; i < L_; i++) {
+			for (j = 0; j < FAMS_MAX_K; j++) {
+				cuts[i][j] = new fams_cut();
+			}
+		}
 		cut_res = new boolean[FAMS_MAX_K];
 		makeCuts(cuts);
 		
@@ -525,6 +1105,23 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 		computeScores(HT, hs, cuts, scores);
 		t2 = System.currentTimeMillis();
 		timeElapsed = t2 - t1;
+		
+		// Clean
+		for (i = 0; i < L_; i++) {
+			cuts[i] = null;
+		}
+		cuts = null;
+		hs = null;
+		for (i = 0; i < M; i++) {
+			for (j = 0; j < Bs; j++) {
+				HT[i][j].getPt().setData(null);
+				HT[i][j].setPt(null);
+			}
+		}
+		for (i = 0; i < M; i++) {
+			HT[i] = null;
+		}
+		HT = null;
 		return timeElapsed;
 	}
 	
@@ -728,6 +1325,13 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	{
 	   for(int in_i=0; in_i<K_; in_i++)
 	      in_cut_res[in_i] =  in_pt.getData()[in_part[in_i].getWhich()] >= in_part[in_i].getWhere();
+	}
+	
+	//Produce the boolean vector of a ms data point with a partition 
+	private void evalCutRes(int in_dat[], fams_cut[] in_part, boolean in_cut_res[])
+	{
+	   for(int in_i=0; in_i<K_; in_i++)
+	      in_cut_res[in_i] =  in_dat[in_part[in_i].which] >= in_part[in_i].where;
 	}
 	
 	private void makeCuts(fams_cut cuts[][])
@@ -971,6 +1575,31 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 			  return pt;
 		  }
 	}
+    
+    private class fams_hash_entry2{
+    	  int whichCut;
+    	  int dp[][];
+    	  
+    	  public fams_hash_entry2() {
+    		  
+    	  }
+    	  
+    	  public void setWhichCut(int whichCut) {
+    		  this.whichCut = whichCut;
+    	  }
+    	  
+    	  public void setDp(int dp[][]) {
+    		  this.dp = dp;
+    	  }
+    	  
+    	  public int getWhichCut() {
+    		  return whichCut;
+    	  }
+    	  
+    	  public int[][] getDp() {
+    		  return dp;
+    	  }
+    }
     
     private class fams_cut {
     	private int which;
