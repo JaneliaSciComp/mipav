@@ -1,24 +1,10 @@
 package gov.nih.mipav.model.algorithms;
 
-
-import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-
-import java.awt.Color;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Random;
 import java.util.Vector;
-
-import Jama.Matrix;
-import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 /**
  * The java code is ported from C++ code downloaded from http://coewww.rutgers.edu/riul/research/code.html.
@@ -57,6 +43,20 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	private static final int FAMS_MAXITER = 100;
 	// weight power
 	private static final double FAMS_ALPHA = 1.0;
+	
+	/* Prune Modes */
+	// window size (in 2^16 units) in which modes are joined
+	private static final int FAMS_PRUNE_WINDOW = 3000;
+	// min number of points assoc to a reported mode
+	private static final int FAMS_PRUNE_MINN = 40;
+	// max number of modes
+	private static final int FAMS_PRUNE_MAXM = 100;
+	// max points when considering modes
+	private static final int FAMS_PRUNE_MAXP = 10000;
+	
+
+	// divison of mode h
+	private static final int FAMS_PRUNE_HDIV = 1;
 	
 	//private static final int Bs = FAMS_BLOCKSIZE/sizeof(fams_hash_entry);
 	private static final int Bs = FAMS_BLOCKSIZE/14;
@@ -97,6 +97,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	private float epsilon;
 	private int Kmin;
 	private int Kjump;
+	private boolean FAMS_DO_SPEEDUP;
 	
 	private boolean noLSH;
 	
@@ -106,6 +107,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
     /** byte array for float * */
     private final byte[] byteFloatBuffer = new byte[4];
     private boolean endianess;
+    
+    private int array1[] = new int[1];
 	
 	// interval of input data
 	private float minVal;
@@ -123,9 +126,11 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	// selected points on which mean shift is run
 	private int psel[];
 	private int nsel;
-	private int modes[];
-	private int hmodes[];
+	private int modes[][];
+	private int hmodes[][];
 	private int npm;
+	private int prunedmodes[];
+	private int nprunedmodes[];
 	
 	// hash table data
 	private int M;
@@ -137,10 +142,12 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	private int L_;
 	
 	// temporary
-	private boolean t_cut_res[][] = new boolean[FAMS_MAX_L][FAMS_MAX_K];
-	private boolean t_old_cut_res[][] = new boolean[FAMS_MAX_L][FAMS_MAX_K];
+	private int t_cut_res[][] = new int[FAMS_MAX_L][FAMS_MAX_K];
+	private int t_old_cut_res[][] = new int[FAMS_MAX_L][FAMS_MAX_K];
+	private int t_old_m[] = new int[FAMS_MAX_L];
 	private int t_m[] = new int[FAMS_MAX_L];
 	private int t_m2[] = new int[FAMS_MAX_L];
+	private int t_hjump[] = new int[FAMS_MAX_L];
 	private int nnres1;
 	private int nnres2;
 	
@@ -188,7 +195,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
     */
 	
 	public AlgorithmMeanShiftClustering(int K, int L, int k_neigh, String data_file_name, String input_directory,
-			int choosePoints, int jump, double percent, boolean fixedWidth, float width, boolean findOptimalKL, float epsilon, int Kmin, int Kjump) {
+			int choosePoints, int jump, double percent, boolean fixedWidth, float width, boolean findOptimalKL,
+			float epsilon, int Kmin, int Kjump, boolean FAMS_DO_SPEEDUP) {
 	    this.K = K;
 	    this.L = L;
 	    this.k_neigh = k_neigh;
@@ -203,11 +211,14 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    this.epsilon = epsilon;
 	    this.Kmin = Kmin;
 	    this.Kjump = Kjump;
+	    this.FAMS_DO_SPEEDUP = FAMS_DO_SPEEDUP;
 	}
 	
 	public void runAlgorithm() {
 	    String fdata_file_name;
 	    String pilot_file_name;
+	    String output_file_name;
+	    String modes_file_name;
 	    int Lmax = 0;
 	    int Kmax = 0;
 	    String firstLine;
@@ -240,7 +251,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    fams_hash_entry2 HT2[][];
 	    int hs2[];
 	    fams_cut cuts[][];
-	    boolean cut_res[];
+	    int cut_res[];
 	    int hjump[];
 	    int m;
 	    int m2;
@@ -266,8 +277,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    }
 	    
 	    // load points
-	    int nsel = 0;
-	    int npm = 0;
+	    nsel = 0;
+	    npm = 0;
 	    hashCoeffs = null;
 	    
 	    tt1 = System.currentTimeMillis();
@@ -508,7 +519,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 				cuts[i][j] = new fams_cut();
 			}
 		}
-		cut_res = new boolean[FAMS_MAX_K];
+		cut_res = new int[FAMS_MAX_K];
 		makeCuts(cuts);
 		
 		initHash(K_+L_);
@@ -518,8 +529,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 		for (j = 0; j < nPoints; j++) {
 		    for (i = 0; i < L_; i++) {
 		        evalCutRes(points[j], cuts[i], cut_res);
-		        m = hashFunction(cut_res, 0, i, K_, M, hjump);
-		        m2 = hashFunction(cut_res,1,i,K_-1, 0, null);
+		        m = hashFunction(cut_res, 0, i, K_, M, hjump,0);
+		        m2 = hashFunction(cut_res,1,i,K_-1, 0, null,0);
 		        addDataToHash(HT, hs, points[j], m, Bs, M, i, m2, hjump[0]);
 		    } // for (i = 0; i < L_; i++)
 		} // for (j = 0; j < nPoints; j++)
@@ -538,7 +549,466 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 		}
 		
 		doFAMS(HT, hs, cuts, HT2, hs2);
+		
+		// Join modes
+		pruneModes(FAMS_PRUNE_WINDOW, FAMS_PRUNE_MINN);
+		
+		// Clean
+		for (i = 0; i < L; i++) {
+			for (j = 0; j < FAMS_MAX_K; j++) {
+				cuts[i][j] = null;
+			}
+		}
+		for (i = 0; i < L; i++) {
+			cuts[i] = null;
+		}
+		cuts = null;
+		hs2 = null;
+		for (i = 0; i < M2; i++) {
+		   for (j = 0; j < Bs2; j++) {
+			   HT2[i][j].whichCut = 0;
+			   for (k = 0; k < HT2[i][j].dp[0].length; k++) {
+				   HT2[i][j].dp[k] = null;
+			   }
+			   HT2[i][j].dp = null;
+		   }
+		}
+		for (i = 0; i < M2; i++) {
+			HT2[i] = null;
+		}
+	    HT2 = null;
+	    hs = null;
+		for (i = 0; i < M; i++) {
+			for (j = 0; j < Bs; j++) {
+				HT[i][j].getPt().setData(null);
+				HT[i][j].setPt(null);
+			}
+		}
+		for (i = 0; i < M; i++) {
+			HT[i] = null;
+		}
+		HT = null;
+		
+		// Save the data
+		output_file_name = input_directory+"out_"+data_file_name;
+		saveModes(output_file_name);
+		
+		// Save pruned modes
+		modes_file_name = input_directory+"modes_"+data_file_name;
+		savePrunedModes(modes_file_name);
+		
+		setCompleted(true);
+		return;
 	}
+	
+	private void savePrunedModes(String fn)
+	{
+	   if (npm < 1)
+	      return;
+	   Preferences.debug("Save joined convergence points in " + fn + "\n", Preferences.DEBUG_ALGORITHM);
+	   try {
+	    	raFile = new RandomAccessFile(fn, "rw");
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("Error in savePrunedModes raFile = new RandomAccessFile");
+	    	return;
+	    }
+		try {
+			raFile.setLength(0);
+		}
+		catch (IOException e) {
+	    	MipavUtil.displayError("Error in savePrunedModes raFile.setLength(0)");
+	    	return;
+	    }
+	
+	   int i,j,idx;
+	   idx = 0;
+	   float value;
+	   for (i=0; i<npm; i++)
+	   {
+		   try {
+				writeInt(nprunedmodes[i],endianess);
+			}
+			catch (IOException e) {
+		    	MipavUtil.displayError("Error in savePrunedModes writeInt");
+		    	return;
+		    }
+	      for (j=0; j<nDims; j++)
+	      {
+	         value = (float)(prunedmodes[idx++]*(maxVal-minVal)/65535.0 + minVal);
+	         try {
+					writeFloat(value, endianess);
+				}
+				catch (IOException e) {
+			    	MipavUtil.displayError("Error in savePrunedModes writeFloat");
+			    	return;
+			    }
+	      }
+	   }
+	   try {
+			raFile.close();
+		}
+		catch (IOException e) {
+	    	MipavUtil.displayError("Error in savePrunedModes raFile.close()");
+	    	return;
+	    }
+		return;
+	}
+
+	
+	private void saveModes(String fn)
+	{
+	   if (nsel < 1)
+	      return;
+	   Preferences.debug("Save convergence points in " + fn + "\n",Preferences.DEBUG_ALGORITHM);
+	   try {
+	    	raFile = new RandomAccessFile(fn, "rw");
+	    }
+	    catch (IOException e) {
+	    	MipavUtil.displayError("Error in saveModes raFile = new RandomAccessFile");
+	    	return;
+	    }
+		try {
+			raFile.setLength(0);
+		}
+		catch (IOException e) {
+	    	MipavUtil.displayError("Error in saveModes raFile.setLength(0)");
+	    	return;
+	    }
+	   
+	   int i,j,idx;
+	   idx = 0;
+	   float value;
+	   for (i=0; i<nsel; i++)
+	   {
+	      for (j=0; j<nDims; j++)
+	      {
+	         value = (float)(modes[idx++][0]*(maxVal-minVal)/65535.0 + minVal);
+	         try {
+					writeFloat(value, endianess);
+				}
+				catch (IOException e) {
+			    	MipavUtil.displayError("Error in saveModes writeFloat");
+			    	return;
+			    }
+	      }
+	   }
+	   try {
+			raFile.close();
+		}
+		catch (IOException e) {
+	    	MipavUtil.displayError("Error in saveModes raFile.close()");
+	    	return;
+	    }
+		return;
+	}
+
+	
+	private int pruneModes(int hprune, int npmin)
+	{
+	   // compute jump
+	   int jm = (int)Math.ceil(((double) nsel)/FAMS_PRUNE_MAXP);
+
+	   Preferences.debug(" Join Modes with adaptive h/ " + ((int) Math.pow(2,FAMS_PRUNE_HDIV)) +
+			   ", min pt = " + npmin + " , jump =  " + jm + "\n", Preferences.DEBUG_ALGORITHM);
+	   Preferences.debug("            pass 1\n", Preferences.DEBUG_ALGORITHM);
+	   if (nsel < 1)
+	      return 1;
+	   hprune *= nDims;
+
+	   int mcount[];
+	   int mcount2[];
+	   float cmodes[][];
+	   float ctmodes[]; 
+	   float cmodes2[][];
+	   int pmodes[];
+	   double cminDist;
+	   double cdist;
+	   int iminDist;
+	   int cref;
+	   boolean invalidm[] = new boolean[nsel];
+	   mcount = new int[nsel];
+	   cmodes = new float[nDims*nsel][1];
+
+	   int i, cd, cm, maxm, j;
+
+	   // set first mode
+	   for (cd = 0; cd<nDims; cd++)
+	   {
+	      cmodes[cd][0] = modes[cd][0];
+	   }
+	   mcount[0] = 1;
+	   maxm = 1;
+
+	   //int myPt = FAMS_PRUNE_MAXP/10;
+	   for (cm = 1; cm<nsel; cm+=jm)
+	   {
+	      //if((cm%myPt)==0)
+	         //bgLog(".");
+
+	      pmodes = modes[cm*nDims];
+
+	      //bgLog("cm=%d, nm=%d, kk=%d, %d %d\n",cm, maxm, hmodes_[cm], pmodes[0], pmodes[d_-1]);
+
+	      // compute closest mode
+	      cminDist = nDims*1e7;
+	      iminDist = -1;
+	      for (cref = 0; cref<maxm; cref++)
+	      {
+	         if (invalidm[cref])
+	            continue;
+	         cdist = 0;
+	         ctmodes = cmodes[cref*nDims];
+	         for (cd=0; cd<nDims; cd++)
+	            cdist += Math.abs(ctmodes[cd]/mcount[cref] - pmodes[cd]);
+	         if (cdist<cminDist)
+	         {
+	            cminDist = cdist;
+	            iminDist = cref;
+	         }
+	      }
+	      // join
+	      hprune = hmodes[cm][0] >> FAMS_PRUNE_HDIV;
+	      if (cminDist < hprune)
+	      {
+	         // aready in, just add
+	         for (cd=0; cd<nDims; cd++)
+	         {
+	            cmodes[iminDist*nDims+cd][0] += pmodes[cd];
+	         }
+	         mcount[iminDist] += 1;
+	      } else
+	      {
+	         // new mode, create
+	         for (cd=0; cd<nDims; cd++)
+	         {
+	            cmodes[maxm*nDims+cd][0] = pmodes[cd];
+	         }
+	         mcount[maxm] = 1;
+	         maxm += 1;
+	      }
+	      // check for valid modes
+	      if (maxm>2000)
+	      {
+	         for (i=0; i<maxm; i++)
+	         {
+	            if (mcount[i] < 3)
+	               invalidm[i] = true;
+	         }
+	      }
+	   }
+
+	   Preferences.debug("            pass 2\n", Preferences.DEBUG_ALGORITHM);
+	   
+	   // put the modes in the order of importance (count)
+	   int stemp[];
+	   int istemp[];
+	   stemp = new int[maxm];
+	   istemp = new int[maxm];
+	   for (i=0; i<maxm; i++)
+	   {
+	      stemp[i] = mcount[i];
+	      istemp[i] = i;
+	   }
+	   bgISort(stemp, maxm, istemp); // increasing
+
+	   // find number of relevant modes
+	   int nrel=1;
+	   for (i=maxm-2; i>=0; i--)
+	   {
+	      if (stemp[i]>=npmin)
+	         nrel++;
+	      else
+	         break;
+	   }
+	   if (nrel > FAMS_PRUNE_MAXM)
+	      nrel = FAMS_PRUNE_MAXM;
+
+	   // rearange only relevant modes
+	   mcount2 = new int[nrel];
+	   cmodes2 = new float[nDims*nrel][1];
+
+	   for (i=0; i<nrel; i++)
+	   {
+	      cm = istemp[maxm-i-1]; // index
+	      mcount2[i] = mcount[cm];
+	      for (j = 0; j < nDims; j++) {
+	    	  cmodes2[i*nDims+j][0] = cmodes[cm*nDims+j][0];
+	      }
+	      //bgLog("1: %g %g %d\n",cmodes2[i*d_+0],cmodes2[i*d_+d_-1], mcount2[i]);
+	   }
+
+	   for (i = 0; i < cmodes.length; i++) {
+		   cmodes[i] = null;
+	   }
+	   cmodes = null;
+	   for (i = 0; i < nsel; i++) {
+		   mcount[i] = 0;
+	   }
+	   mcount[0]=1;
+	   for (i=1; i<nsel; i+=jm)
+	      mcount[i] = 1;
+
+	   maxm = nrel;
+
+	   //myPt = nsel/10;
+	   for (cm = 1; cm<nsel; cm++)
+	   {
+	      //if((cm%myPt)==0)
+	         //bgLog(".");
+
+	      if (mcount[cm] != 0)
+	         continue;
+
+	      pmodes = modes[cm*nDims];
+
+	      // compute closest mode
+	      cminDist = nDims*1e7;
+	      iminDist = -1;
+	      for (cref = 0; cref<maxm; cref++)
+	      {
+	         cdist = 0;
+	         ctmodes = cmodes2[cref*nDims];
+	         for (cd=0; cd<nDims; cd++)
+	            cdist += Math.abs(ctmodes[cd]/mcount2[cref] - pmodes[cd]);
+	         if (cdist<cminDist)
+	         {
+	            cminDist = cdist;
+	            iminDist = cref;
+	         }
+	      }
+	      // join
+	      hprune = hmodes[cm][0] >> FAMS_PRUNE_HDIV;
+	      if (cminDist < hprune)
+	      {
+	         // aready in, just add
+	         for (cd=0; cd<nDims; cd++)
+	         {
+	            cmodes2[iminDist*nDims+cd][0] += pmodes[cd];
+	         }
+	         mcount2[iminDist] += 1;
+	      } else
+	      {
+	         // new mode, but discard in second pass
+	      }
+	   }
+
+	   // put the modes in the order of importance (count)
+	   for (i=0; i<maxm; i++)
+	   {
+	      stemp[i] = mcount2[i];
+	      istemp[i] = i;
+	   }
+	   bgISort(stemp, maxm, istemp); // increasing
+
+	   // find number of relevant modes
+	   nrel=1;
+	   for (i=maxm-2; i>=0; i--)
+	   {
+	      if (stemp[i]>=npmin)
+	         nrel++;
+	      else
+	         break;
+	   }
+
+	   cleanPrunedModes();
+	   prunedmodes = new int[nDims*nrel];
+	   nprunedmodes = new int[nrel];
+	   int cpm[];
+	   npm = nrel;
+
+	   cpm = prunedmodes;
+	   for (i=0; i<npm; i++)
+	   {
+	      nprunedmodes[i] = stemp[maxm-i-1];
+	      cm = istemp[maxm-i-1];
+	      for (cd=0; cd<nDims; cd++)
+	      {
+	         cpm[cd] = (int) (cmodes2[cm*nDims+cd][0]/mcount2[cm]);
+	      }
+	      //bgLog("2: %d %d\n",prunedmodes_[i*d_+0],prunedmodes_[i*d_+d_-1]);
+	   }
+
+
+	   istemp = null;
+	   stemp = null;
+
+	   for (i = 0; i < cmodes2.length; i++) {
+		   cmodes2[i] = null;
+	   }
+	   cmodes2 = null;
+	   mcount2 = null;
+	   mcount = null;
+
+	   return 1;
+	}
+	
+	private void cleanPrunedModes()
+	{
+		   if (npm > 0)
+		   {
+		      prunedmodes = null;
+		      nprunedmodes = null;
+		      npm = 0;
+		   }
+		}
+
+	
+	void bgISort(int ra[], int nVec, int ira[])
+	{
+	   long n, l, ir, i, j;
+	   n = nVec;
+	   int rra;
+	   int irra;
+	   
+	   if (n<2)
+	      return;
+	   l = (n>>1)+1;
+	   ir = n;
+	   for (;;)
+	   {
+	      if (l>1)
+	      {
+	         irra = ira[(int)((--l)-1)];
+	         rra = ra[(int)(l-1)];
+	      }
+	      else
+	      {
+	         irra = ira[(int)(ir-1)];
+	         rra = ra[(int)(ir-1)];
+
+	         ira[(int)(ir-1)] = ira[1-1];
+	         ra[(int)(ir-1)] = ra[1-1];
+
+	         if (--ir==1)
+	         {
+	            ira[1-1] = irra;
+	            ra[1-1] = rra;
+	            break;
+	         }
+	      }
+	      i = l;
+	      j = l+l;
+	      while (j<=ir)
+	      {
+	         if (j<ir && ra[(int)(j-1)]<ra[(int)(j+1-1)])
+	            j++;
+	         if (rra<ra[(int)(j-1)])
+	         {
+	            ira[(int)(i-1)] = ira[(int)(j-1)];
+	            ra[(int)(i-1)] = ra[(int)(j-1)];
+
+	            i = j;
+	            j <<= 1;
+	         }
+	         else
+	            j = ir+1;
+	      }
+	      ira[(int)(i-1)] = irra;
+	      ra[(int)(i-1)] = rra;
+	   }
+	}
+
 	
 	// perform FAMS starting from a subset of the data points.
 	private void doFAMS(fams_hash_entry HT[][],int hs[], fams_cut cuts[][],
@@ -552,12 +1022,13 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	   int crtMean[];
 	   famsPoint currentpt;
 	   int sol[];
-	   int who;
+	   int who = 0;
 	   int tMode[][];
 	   int newH;
 	   int crtH[];
-	   int myPt;
+	   //int myPt;
 	   int iter;
+	   int tMode2[][];
 	   fams_res_cont res = new fams_res_cont(nPoints);
 	   for (i = 0; i < M2; i++) {
 		   for (j = 0; j < Bs2; j++) {
@@ -576,94 +1047,233 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	   
 	   tMode = new int[nPoints][];
 	   Preferences.debug(" Start MS iterations", Preferences.DEBUG_ALGORITHM);
-	   myPt = nsel/10;
-	   /*for(jj=0; jj<nsel; jj++)
+	   //myPt = nsel/10;
+	   for(jj=0; jj<nsel; jj++)
 	   {
-	      if((jj%myPt)==0)
+	      //if((jj%myPt)==0)
 	         //bgLog(".");
 	      who = psel[jj];
 	      currentpt = points[who];
 	      for (i = 0; i < dataSize; i++) {
 	    	  crtMean[i] = currentpt.data[i];
 	      }
-	      hmodes[jj] = currentpt.window;
-	      tMode[jj]= 1;
+	      crtH = hmodes[jj];
+	      crtH[0] = currentpt.window;
+	      tMode[jj] = array1;
+	      tMode2 = new int[tMode.length-jj][];
+	      for (i = 0; i < tMode.length-jj; i++) {
+	    	  tMode2[i] = tMode[jj+i];
+	      }
+
 	      for(iter=0; notEq(oldMean,crtMean) && (iter<FAMS_MAXITER); iter++)
 	      {
 	         if(!noLSH)
 	         {
 	            if((sol=getNearestNeighbours2H(crtMean,HT,hs,cuts,
-	               res,tMode[jj],
+	               res,tMode2,
 	               HT2,hs2)) != null)
 	            {
-	               if(sol == (unsigned short*)1)
+	               if(sol == array1)
 	               {
-	                  tMode[jj] = &modes_[jj*d_];
-	                  memcpy(tMode[jj], crtMean, dataSize_);
+	                  tMode[jj] = modes[jj*nDims];
+	                  for (i = 0; i < dataSize; i++) {
+	                	  tMode[jj][i] = crtMean[i];
+	                  }
 	               }
 	               else
 	               {
-	                  tMode[jj] = &modes_[jj*d_];
-	                  memcpy(tMode[jj], sol, dataSize_);
+	                  tMode[jj] = modes[jj*nDims];
+	                  for (i = 0; i < dataSize; i++) {
+	                	  tMode[jj][i] = sol[i];
+	                  }
 	                  break;
 	               }
 	            }
 	         }
-	         memcpy(oldMean, crtMean, dataSize_);
-	         if(!(newH=DoMeanShiftAdaptiveIteration(res,oldMean,crtMean)))
+	         for (i = 0; i < dataSize; i++) {
+	        	 oldMean[i] = crtMean[i];
+	         }
+	         if((newH=doMeanShiftAdaptiveIteration(res,oldMean,crtMean)) == 0)
 	         {
-	            memcpy(crtMean, oldMean, dataSize_);
+	        	for (i = 0; i < dataSize; i++) {
+	        		crtMean[i] = oldMean[i];
+	        	}
 	            break;
 	         }
-	         *crtH=newH;
+	         crtH[0]=newH;
 	      }
-	      if(tMode[jj]==(unsigned short*)1)
+	      if(tMode[jj]== array1)
 	      {
-	         tMode[jj] = &modes_[jj*d_];
-	         memcpy(tMode[jj], crtMean, dataSize_);
+	         tMode[jj] = modes[jj*nDims];
+	         for (i = 0; i < dataSize; i++) {
+	        	 tMode[jj][i] = crtMean[i];
+	         }
 	      }
 	   }
-	   delete [] oldMean;
-	   delete [] crtMean;
-	   delete [] tMode;
-	   bgLog("done.\n");*/
+	   oldMean = null;
+	   crtMean = null;
+	   for (i = 0; i < tMode.length; i++) {
+		   tMode[i] = null;
+	   }
+	   tMode = null;
 	}
+	
+	// perform an FAMS iteration
+
+	private int doMeanShiftAdaptiveIteration(fams_res_cont res,
+	              int old[], int ret[])
+	{
+	   double total_weight =0;
+	   int i,j;
+	   double dist[] = new double[1];
+	   for(i=0; i<nDims; i++) rr[i]=0;
+	   int nel;
+	   if(noLSH)
+	      nel = nPoints;
+	   else{
+	      nel = res.nel;
+	   }
+	   famsPoint ptp;
+	   int crtH = 0;
+	   double hmdist=1e100;
+	   for(i=0; i<nel; i++)
+	   {
+	      ptp = noLSH ? points[i] : res.vec[i];
+	      if(distL1Data(old, ptp, ptp.window, dist))
+	      {
+	         double w;
+	         w = ptp.weightdp2*SQ(1.0-(dist[0]/ptp.window));
+	         total_weight+=w;
+	         for(j=0; j<nDims; j++)
+	            rr[j] += ptp.data[j]*w;
+	         if (dist[0]<hmdist)
+	         {
+	            hmdist = dist[0];
+	            crtH=ptp.window;
+	         }
+	      }
+	   }	
+	   if(total_weight==0)
+	   {
+	      return 0;
+	   }
+	   for(i=0; i<nDims; i++)
+	      ret[i] = (int)(rr[i]/total_weight);
+	   return crtH;
+	}
+	
+	private double SQ(double x) {
+		return x*x;
+	}
+	
+	/*
+	a boolean function which computes the distance if it is less than dist into
+	dist_res. 
+	It returns a boolean value
+	*/
+
+	private boolean distL1Data(int in_d1[],famsPoint in_pt2,double in_dist,double in_res[])
+	{
+	   in_res[0]=0;
+	   for(int in_i=0; in_i<nDims&&(in_res[0]<in_dist); in_i++)
+	      in_res[0] += Math.abs(in_d1[in_i]-in_pt2.data[in_i]);
+	   return (in_res[0]<in_dist);
+	}
+
 	
 	private int[] getNearestNeighbours2H(int who[], fams_hash_entry HT[][], int hs[],
 		       fams_cut cuts[][], fams_res_cont res,
-		       int solution[], fams_hash_entry2 HT2[][], int hs2[])
+		       int solution[][], fams_hash_entry2 HT2[][], int hs2[])
 		{
 		   int i;
-		   /*for(i=0; i<L_; i++)
+		   for(i=0; i<L_; i++)
 		   {
 		      evalCutRes(who,cuts[i],t_cut_res[i]);
-		      t_m[i] = HashFunction(t_cut_res_[i],i,K_,M_,&t_hjump_[i]);
-		      t_m2_[i] = HashFunction(&t_cut_res_[i][1],i,K_-1);
+		      t_m[i] = hashFunction(t_cut_res[i],0,i,K_,M,t_hjump,i);
+		      t_m2[i] = hashFunction(t_cut_res[i],1,i,K_-1,0,null,0);
 		   }
 		   if(FAMS_DO_SPEEDUP)
 		   {
-		      int hjump2;
-		      int hf = HashFunction(t_m_,0,L_,M2_,&hjump2);
-		      int hf2 = HashFunction(&t_m_[L_/2-1],0,L_/2);
-		      unsigned short *old_sol =  FindInHash(HT2,hs2,hf,hf2,M2_,hjump2);
-		      if(old_sol!= NULL && old_sol != (unsigned short*)1)
+		      int hjump2[] = new int[1];
+		      int hf = hashFunction(t_m,0,0,L_,M2,hjump2,0);
+		      int hf2 = hashFunction(t_m,L_/2-1,0,L_/2,0,null,0);
+		      int old_sol[] =  findInHash(HT2,hs2,hf,hf2,M2,hjump2[0]);
+		      if(old_sol!= null && old_sol != array1)
 		         return old_sol;
 		      
-		      if(old_sol == NULL)
-		         InsertIntoHash(HT2,hs2,hf,hf2,solution,M2_,hjump2);
+		      if(old_sol == null)
+		         insertIntoHash(HT2,hs2,hf,hf2,solution,M2,hjump2[0]);
 		   }
-		   if(memcmp(t_m_,t_old_m_,sizeof(int)*L_)==0)
-		   {
-		      return NULL;
+		   for (i = 0; i < L_; i++) {
+			   if (t_m[i] != t_old_m[i]) {
+				   break;
+			   }
+			   if (i == L_ - 1) {
+				   return null;
+			   }
 		   }
-		   memcpy(t_old_m_,t_m_,sizeof(int)*L_);
+		   for (i = 0; i < L_; i++) {
+			   t_old_m[i] = t_m[i];
+		   }
 		   res.clear();
-		   nnres2_++;
+		   nnres2++;
 		   for(i=0; i<L_; i++)
-		      AddDataToRes(HT,hs,res,t_m_[i],Bs,M_,i,nnres2_,t_m2_[i],t_hjump_[i]);
-           */
+		      addDataToRes(HT,hs,res,t_m[i],Bs,M,i,nnres2,t_m2[i],t_hjump[i]);
+           
 		   return null;
 		}
+	
+	/*
+	Insert an mean-shift result into a second hash table so when another mean shift computationis 
+	performed about the same C_intersection region, the result can be retreived without further 
+	computation
+	*/
+
+	private void insertIntoHash(fams_hash_entry2 HT2[][],int hs2[],int where,int which,
+	                    int solution[][],int M,int hjump)
+	{
+	   int nw=0;
+	   for(;;where = (where+hjump)%M)
+	   {
+	      nw++;
+	      if(nw==M)
+	      {
+	         Preferences.debug("Second Hash Table Full\n",Preferences.DEBUG_ALGORITHM);
+	         System.exit(-1);
+	      }
+	      if(hs2[where] == Bs2)
+	         continue;
+	      HT2[where][hs2[where]].dp = solution;
+	      HT2[where][hs2[where]++].whichCut = which;
+	      break;
+	   }
+	}
+
+	
+	// perform a query on the second hash table
+
+	private int[] findInHash(fams_hash_entry2 HT2[][],int hs2[],int where,int which,int M2,int hjump)
+	{
+	   int uu;
+	   int nw=0;
+	   for(;;where = (where+hjump)%M2)
+	   {
+	      nw++;
+	      if(nw > M2)
+	      {
+	    	 MipavUtil.displayError("Hash Table2 full");
+	         Preferences.debug(" Hash Table2 full\n", Preferences.DEBUG_ALGORITHM);
+	         System.exit(-1);
+	      }
+	      for(uu=0; uu<hs2[where]; uu++)
+	         if(HT2[where][uu].whichCut == which)
+	            return (HT2[where][uu].dp[0]);
+	         if(hs2[where] < Bs2)
+	            break;
+	   }
+	   return null;
+	}
+
 
 	
 	private boolean notEq(int in_d1[], int in_d2[])
@@ -990,8 +1600,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	        	cleanSelected();
 	        	nsel = tsel;
 	        	psel = new int[nsel];
-	        	modes = new int[nsel * nDims];
-	        	hmodes = new int[nsel];
+	        	modes = new int[nsel * nDims][1];
+	        	hmodes = new int[nsel][1];
 	        }
 	        for (i = 0; i < nsel; i++) {
 	        	psel[i] = Math.min(nPoints-1, (int)(srand.nextDouble()*nPoints));
@@ -1003,8 +1613,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	        	cleanSelected();
 	        	nsel = tsel;
 	        	psel = new int[nsel];
-	        	modes = new int[nsel * nDims];
-	        	hmodes = new int[nsel];
+	        	modes = new int[nsel * nDims][1];
+	        	hmodes = new int[nsel][1];
 	        }
 	        for (i = 0; i < nsel; i++) {
 	        	psel[i] = i * jump;
@@ -1058,7 +1668,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 		fams_hash_entry HT[][];
 	    int hs[];
 	    fams_cut cuts[][];
-	    boolean cut_res[];
+	    int cut_res[];
 	    long t1;
 	    long t2;
 	    long timeElapsed;
@@ -1087,15 +1697,15 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 				cuts[i][j] = new fams_cut();
 			}
 		}
-		cut_res = new boolean[FAMS_MAX_K];
+		cut_res = new int[FAMS_MAX_K];
 		makeCuts(cuts);
 		
 		// Insert data into partitions
 		for (j = 0; j < nPoints; j++) {
 		    for (i = 0; i < L_; i++) {
 		        evalCutRes(points[j], cuts[i],cut_res);
-		        m = hashFunction(cut_res, 0, i, K_, M, hjump);
-		        m2 = hashFunction(cut_res, 1, i, K_ - 1, 0, null);
+		        m = hashFunction(cut_res, 0, i, K_, M, hjump,0);
+		        m2 = hashFunction(cut_res, 1, i, K_ - 1, 0, null,0);
 		        addDataToHash(HT, hs, points[j], m, Bs, M, i, m2, hjump[0]);
 		    } // for (j = 0; j < nPoints; j++)
 		} // for (j = 0; j < nPoints; j++)
@@ -1226,8 +1836,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	   for(i=0; i<L_; i++)
 	   {
 	      int hjump[] = new int[1];
-	      int m = hashFunction(t_cut_res[i],0,i,K_,M,hjump);
-	      int m2 = hashFunction(t_cut_res[i],1,i,K_-1, 0, null);
+	      int m = hashFunction(t_cut_res[i],0,i,K_,M,hjump,0);
+	      int m2 = hashFunction(t_cut_res[i],1,i,K_-1, 0, null,0);
 	      addDataToRes(HT,hs,res,m,Bs,M,i,nnres1,m2,hjump[0]);
 	      num_l[i] = res.getNel();
 	   }
@@ -1259,7 +1869,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 
 
 	//Compare a pair of L binary vectors
-	private boolean compareCutRes(boolean in_cr1[][], boolean in_cr2[][])
+	private boolean compareCutRes(int in_cr1[][], int in_cr2[][])
 	{
 	   for (int in_i=0; in_i<L_; in_i++)
 	      for (int in_j=0; in_j<K_; in_j++)
@@ -1299,21 +1909,20 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	hjump for the double hash key 
 	*/
 
-	private int hashFunction(boolean cutVals[], int offset, int whichPartition, int kk,int M,int hjump[])
+	private int hashFunction(int cutVals[], int offset, int whichPartition, int kk,int M,int hjump[],
+			int hOffset)
 	{
 	   int i;
 	   int res = whichPartition;
 	   for(i=0; i<kk; i++)
 	   {
-		  if (cutVals[i+offset]) {
-	          res += hashCoeffs[i];
-		  }
+	      res += cutVals[i]*hashCoeffs[i];
 	   }
 	   if(M > 0)
 	   {
 	      res = Math.abs(res);
 	      if(hjump != null)
-	         hjump[0] = (res%(M-1))+1;
+	         hjump[hOffset] = (res%(M-1))+1;
 	      res = res%M;
 	   }
 	   return res;
@@ -1321,17 +1930,28 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 
 	
 	//Produce the boolean vector of a data point with a partition 
-	private void evalCutRes(famsPoint in_pt, fams_cut in_part[],boolean in_cut_res[])
+	private void evalCutRes(famsPoint in_pt, fams_cut in_part[],int in_cut_res[])
 	{
 	   for(int in_i=0; in_i<K_; in_i++)
-	      in_cut_res[in_i] =  in_pt.getData()[in_part[in_i].getWhich()] >= in_part[in_i].getWhere();
+		   
+	      if (in_pt.getData()[in_part[in_i].getWhich()] >= in_part[in_i].getWhere()) {
+	    	  in_cut_res[in_i] = 1;
+	      }
+	      else {
+	    	  in_cut_res[in_i] = 0;
+	      }
 	}
 	
 	//Produce the boolean vector of a ms data point with a partition 
-	private void evalCutRes(int in_dat[], fams_cut[] in_part, boolean in_cut_res[])
+	private void evalCutRes(int in_dat[], fams_cut[] in_part, int in_cut_res[])
 	{
 	   for(int in_i=0; in_i<K_; in_i++)
-	      in_cut_res[in_i] =  in_dat[in_part[in_i].which] >= in_part[in_i].where;
+	      if (in_dat[in_part[in_i].which] >= in_part[in_i].where) {
+	    	  in_cut_res[in_i] = 1;
+	      }
+	      else {
+	    	  in_cut_res[in_i] = 0;
+	      }
 	}
 	
 	private void makeCuts(fams_cut cuts[][])
@@ -1502,13 +2122,6 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 			
 		}
 		
-		public famsPoint(famsPoint d2) {
-			usedFlag = d2.usedFlag;
-			weightdp2 = d2.weightdp2;
-			window = d2.window;
-			data = d2.data;
-		}
-		
 		public void setData(int data[]) {
 			this.data = data;
 		}
@@ -1521,9 +2134,6 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 			this.window = window;
 		}
 		
-		public void setWeightdp2(float weightdp2) {
-			this.weightdp2 = weightdp2;
-		}
 		
 		public int[] getData() {
 			return data;
@@ -1533,13 +2143,6 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 			return usedFlag;
 		}
 		
-		public int getWindow() {
-			return window;
-		}
-		
-		public float getWeightdp2() {
-			return weightdp2;
-		}
 	}
 	
     private class fams_hash_entry {
@@ -1584,21 +2187,6 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
     		  
     	  }
     	  
-    	  public void setWhichCut(int whichCut) {
-    		  this.whichCut = whichCut;
-    	  }
-    	  
-    	  public void setDp(int dp[][]) {
-    		  this.dp = dp;
-    	  }
-    	  
-    	  public int getWhichCut() {
-    		  return whichCut;
-    	  }
-    	  
-    	  public int[][] getDp() {
-    		  return dp;
-    	  }
     }
     
     private class fams_cut {
@@ -1629,10 +2217,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
     private class fams_res_cont{
     	    private int nel;
     		private famsPoint vec[];
-    		public fams_res_cont() {
-    			nel = 0;
-    			vec = new famsPoint[1];
-    		}
+    		
     		public fams_res_cont(int n){
     			nel=0;
     			vec = new famsPoint[n];
