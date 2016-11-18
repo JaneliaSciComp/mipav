@@ -908,7 +908,6 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         buttonImage.setForeground(Color.black);
         buttonImage.setFont(serif12B);
         buttonImage.addActionListener(this);
-        buttonImage.setActionCommand("AddImageBrowse");
         buttonImage.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
