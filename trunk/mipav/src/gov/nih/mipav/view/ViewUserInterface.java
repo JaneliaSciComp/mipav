@@ -961,6 +961,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new JDialogTimeFitting();
         } else if (command.equals("KMeans")) {
             new JDialogKMeans();
+        } else if (command.equals("MeanShiftClustering")) {
+            new JDialogMeanShiftClustering();
         } else if (command.equals("SpectralClustering")) {
             new JDialogSpectralClustering();
         }
