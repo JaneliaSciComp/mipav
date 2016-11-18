@@ -66,9 +66,14 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	private static float FAMS_FLOAT_SHIFT = 100000.0f;
 	// K, L are LSH parameters.  If either K or L is not greater than zero, the LSH data structure is not built
 	// and the linear algorithm is run.
+	// The readme file uses K = 30 and K = 24.
 	private int K;
+	// The readme file uses L = 46 and L = 35.
 	private int L;
-	// k_neigh is the number of neighbors used in the consruction of pilot density
+	// k_neigh is the number of neighbors used in the construction of pilot density\
+	// In the article : The data is processed correctly from k_neigh = 100 to k_neigh = 500
+	// except for a few points, and even for k_neigh = 700 only some of the points in the
+	// cluster with the largest spread converge to the adjacent node.  The readme file uses k_neigh = 200.
 	private int k_neigh;
 	// input_directory and data_file_name provide the location of the input data file.
 	private String data_file_name;
@@ -78,26 +83,34 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	// jump means once every jump a point is selected.  If jump is 5 then the points 1,6,11,16,...
 	// are chosen.  percent means that (percent*n)/100 (n the number of points) are chosen at
 	// random with replacement.  Obviously, each run of the program will yield a different set.
-	// Only 1 of EVERY_POINT, SELECT_ON_JUMP, or SELECT_PERCENT can be chosen.
+	// Only 1 of EVERY_POINT, SELECT_ON_JUMP, or SELECT_percent can be chosen.
 	private int choosePoints;
-	// jump must be at least 1
+	// jump must be at least 1.  The readme file uses jump = 5.
 	private int jump = 1;
-	// Need 0.0 <= percent <= 1.0
+	// Need 0.0 <= percent <= 100.0
 	private double percent = 0.0;
 	// if fixedWidth is true, the user runs the fixed bandwidth mean shift procedure.
 	// The width * d (d is the dimension of the data) is the distance under the L1 norm
 	// used as the fixed bandwidth.
+	// This is the bandwidth value associated with the data points
+	// The article uses values of 100, 1400, 2700, and 4000.
 	private boolean fixedWidth;
 	private float width = -1;
 	// If findOptimalKL is true, the program automatically computes the optimal K and L.
 	// The optimal K is searched between Kmin and K (the first parameter) with step Kjump.
 	// The optimal L is searched between 1 and L (the second parameter)
+	// epsilon, Kmin, and Kjump are only used when findOptimalKL is true.
 	// epsilon represents the allowed error (in experiments epsilon = 0.05)
 	private boolean findOptimalKL;
 	private float epsilon;
+	// The readme file uses Kmin = 10.
 	private int Kmin;
+	// The readme file uses Kjump = 2.
 	private int Kjump;
 	private boolean FAMS_DO_SPEEDUP;
+	private int nPoints;
+	private int nDims;
+	private float pttemp[];
 	
 	private boolean noLSH;
 	
@@ -117,8 +130,6 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	// input points
 	private famsPoint points[];
 	private int data[][];
-	private int nPoints;
-	private int nDims;
 	private int dataSize;
 	// temp work
 	double rr[];
@@ -196,7 +207,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	
 	public AlgorithmMeanShiftClustering(int K, int L, int k_neigh, String data_file_name, String input_directory,
 			int choosePoints, int jump, double percent, boolean fixedWidth, float width, boolean findOptimalKL,
-			float epsilon, int Kmin, int Kjump, boolean FAMS_DO_SPEEDUP) {
+			float epsilon, int Kmin, int Kjump, boolean FAMS_DO_SPEEDUP, int nPoints, int nDims,
+			float pttemp[]) {
 	    this.K = K;
 	    this.L = L;
 	    this.k_neigh = k_neigh;
@@ -212,6 +224,9 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    this.Kmin = Kmin;
 	    this.Kjump = Kjump;
 	    this.FAMS_DO_SPEEDUP = FAMS_DO_SPEEDUP;
+	    this.nPoints = nPoints;
+	    this.nDims = nDims;
+	    this.pttemp = pttemp;
 	}
 	
 	public void runAlgorithm() {
@@ -221,12 +236,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    String modes_file_name;
 	    int Lmax = 0;
 	    int Kmax = 0;
-	    String firstLine;
-	    String values[];
 	    int numValues;
-	    int presentValues;
-	    float pttemp[];
-	    String dataLine;
 	    int i;
 	    int j;
 	    int k;
@@ -266,7 +276,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    	}
 	    }
 	    else if (choosePoints == SELECT_PERCENT) {
-	    	if ((percent < 0) || (percent > 1)) {
+	    	if ((percent < 0) || (percent > 100.0)) {
 	    		percent = 0;
 	    	}
 	    }
@@ -276,7 +286,7 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    	Kmax = K;
 	    }
 	    
-	    // load points
+	    // points loaded in dialog
 	    nsel = 0;
 	    npm = 0;
 	    hashCoeffs = null;
@@ -286,98 +296,8 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 	    
 	    nnres1 = 0;
 	    nnres2 = 0;
-	    try {
-	    	raFile = new RandomAccessFile(fdata_file_name, "r");
-	    }
-	    catch (IOException e) {
-	    	MipavUtil.displayError("IOException " + e + " on new RandomAccessFile(fdata_file_name, \"r\")"); 
-	    	setCompleted(false);
-	    	return;
-	    }
 	    
-	    do {
-		    try {
-		    	firstLine = raFile.readLine();
-		    }
-		    catch (IOException e) {
-		    	MipavUtil.displayError("IOException " + e + " firstLine = raFile.readLine)"); 
-		    	setCompleted(false);
-		    	return;
-		    }
-	    } while ((firstLine == null) || (firstLine.isEmpty()));
-	    values = retrieveValues(firstLine);
-	    if (values == null) {
-	    	MipavUtil.displayError("No values found in first line");
-	    	setCompleted(false);
-	    	return;
-	    }
-	    if (values.length != 2) {
-	    	MipavUtil.displayError("First line has " + values.length + " values instead of the expected 2");
-	    	setCompleted(false);
-	    	return;
-	    }
-	    try {
-	        nPoints = Integer.parseInt(values[0]);
-	    }
-	    catch (NumberFormatException e) {
-	    	MipavUtil.displayError("NumberFormatException " + e + " on nPoints = Integer.parseInt(values[0])");
-	    	setCompleted(false);
-	    	return;
-	    }
-	    if (nPoints < 1) {
-	    	MipavUtil.displayError("nPoints = " + nPoints);
-	    	setCompleted(false);
-	    	return;
-	    }
-	    try {
-	    	nDims= Integer.parseInt(values[1]);
-	    }
-	    catch (NumberFormatException e) {
-	    	MipavUtil.displayError("NumberFormatException " + e + " on nDims = Integer.parseInt(values[1])");
-	    	setCompleted(false);
-	    	return;
-	    }
-	    if (nDims < 1) {
-	    	MipavUtil.displayError("nDims = " + nDims);
-	    	setCompleted(false);
-	    	return;
-	    }
 	    numValues = nPoints * nDims;
-	    presentValues = 0;
-	    // Allocate data
-	    pttemp = new float[numValues];
-	    while (presentValues < numValues) {
-	    	try {
-		    	dataLine = raFile.readLine();
-		    }
-		    catch (IOException e) {
-		    	MipavUtil.displayError("IOException " + e + " dataLine = raFile.readLine)"); 
-		    	setCompleted(false);
-		    	return;
-		    }
-	    	 values = retrieveValues(dataLine);
-	    	 if (values != null) {
-	    		 for (i = 0; i < values.length && presentValues < numValues; i++) {
-	    			 try {
-	    				 pttemp[presentValues++] = Float.parseFloat(values[i]);
-	    			 }
-	    			 catch (NumberFormatException e) {
-	    				 MipavUtil.displayError("NumberFormatException " + e + " pttemp["+presentValues+"++] = "+
-	    			     "Float.parseFloat(values["+i+"])");
-	    			     setCompleted(false);
-	    			    return;	 
-	    			 }
-	    		 } // for (i = 0; i < values.length; i++)
-	    	 } // if (values != null)
-	    } // while (presentValues < numValues)
-	    try {
-	    	raFile.close();
-	    }
-	    catch (IOException e) {
-	    	MipavUtil.displayError("IOException " + e + " on raFile.close()");
-	    	setCompleted(false);
-	    	return;
-	    }
 	    
 	    // Allocate and convert to integer
 	    for (i = 0, minVal = pttemp[0], maxVal = pttemp[0]; i < numValues; i++) {
