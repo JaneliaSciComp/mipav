@@ -717,6 +717,8 @@ public class ViewMenuBar {
 						false), menuBuilder
 								.buildMenuItem("Log slope mapping", "LogSlope", 0, null,
 										false),
+								menuBuilder.buildMenuItem("Mean shift clustering", "MeanShiftClustering", 0, null,
+										false),
 								menuBuilder.makeMenu("Quantitative MRI", false,
 										new JMenuItem[] {
 												menuBuilder.makeMenu("T1", false,
