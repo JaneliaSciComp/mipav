@@ -11,6 +11,7 @@ import gov.nih.mipav.view.ViewFileChooserBase;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewUserInterface;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -383,6 +384,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
         everyButton = new JRadioButton("Every point", true);
         everyButton.setFont(serif12);
         everyButton.setForeground(Color.black);
+        everyButton.addActionListener(this);
         chooseGroup.add(everyButton);
         gbc.gridx = 0;
         gbc.gridy++;
@@ -391,6 +393,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
         jumpButton = new JRadioButton("Select points on jump", false);
         jumpButton.setFont(serif12);
         jumpButton.setForeground(Color.black);
+        jumpButton.addActionListener(this);
         chooseGroup.add(jumpButton);
         gbc.gridx = 0;
         gbc.gridy++;
@@ -416,6 +419,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
         percentButton = new JRadioButton("Select percent points", false);
         percentButton.setFont(serif12);
         percentButton.setForeground(Color.black);
+        percentButton.addActionListener(this);
         chooseGroup.add(percentButton);
         gbc.gridx = 0;
         gbc.gridy++;
@@ -473,6 +477,13 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
         gbc.gridx = 0;
         gbc.gridy++;
         mainPanel.add(speedupCheckBox, gbc);
+        
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
+
+        pack();
+        setSize(600,700);
+        setVisible(true);
     }
     
     private void loadImage() {
