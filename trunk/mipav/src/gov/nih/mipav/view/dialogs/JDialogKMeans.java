@@ -1586,7 +1586,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
 	
 	/**
-     * item staate changed
+     * item state changed
      *
      * @param  event  DOCUMENT ME!
      */
@@ -1598,7 +1598,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 
     
     /**
-     *  windoe closing
+     *  window closing
      */
     public void windowClosing(WindowEvent event) {
         if (image != null) {
