@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewFileChooserBase;
 import gov.nih.mipav.view.ViewImageFileFilter;
@@ -37,6 +38,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
+@SuppressWarnings("serial")
 public class JDialogMeanShiftClustering extends JDialogScriptableBase implements AlgorithmInterface {
 	public static final int EVERY_POINT = 1;
 	public static final int SELECT_ON_JUMP = 2;
@@ -98,12 +100,13 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
  	private int nPoints;
  	private int nDims;
  	private float pttemp[];
+ 	private ModelImage prunedModesImage = null;
  	
     private JTextField textImage;
     
     private JButton buttonImage;
     
-    private JComboBox imageList;
+    private JComboBox<String> imageList;
  	
  	private JTextField textPointsFile;
      
@@ -191,7 +194,8 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 	 * init
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
-    private void init() {
+    @SuppressWarnings("unchecked")
+	private void init() {
 
     	GuiBuilder gui = new GuiBuilder(this);
     	
@@ -764,7 +768,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
     }
 	
 	private boolean setVariables() {
-		int extents[];
+		
 		int length;
 		int i;
 		double buffer[];
@@ -773,6 +777,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 		int yDim;
 		int zDim;
 		int tDim;
+		int extents[];
 		int sliceSize;
 		int volume;
 		int nval;
@@ -782,6 +787,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 		int t;
 		int index;
 		String tmpStr;
+		String imageName;
 
 		if (!havePoints) {
     		image = ViewUserInterface.getReference().getRegisteredImageByName(imageList.getSelectedItem().toString());
@@ -790,9 +796,13 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
         		MipavUtil.displayError("No image with name "+imageList.getSelectedItem()+" was found.");
         		return false;
         	}
+        	input_directory = image.getImageDirectory();
+        	data_file_name = image.getImageName() + ".txt";
+        	imageName = image.getImageName() + "_prunedModes";
+        	extents = image.getExtents();
+        	prunedModesImage = new ModelImage(ModelStorageBase.INTEGER, extents, imageName);
         	
         	nDims = image.getNDims();
-            extents = image.getExtents();
             length = extents[0];
             for (i = 1; i < nDims; i++) {
            	 length = length * extents[i];
@@ -1030,7 +1040,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 			
 			 alg = new AlgorithmMeanShiftClustering(K, L, k_neigh, data_file_name, input_directory, choosePoints,
 					 jump, percent, fixedWidth, width, findOptimalKL, epsilon, Kmin, Kjump, FAMS_DO_SPEEDUP,
-					 nPoints, nDims, pttemp);
+					 nPoints, nDims, pttemp, prunedModesImage);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
