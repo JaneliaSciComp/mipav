@@ -10,6 +10,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewFileChooserBase;
 import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.BorderLayout;
@@ -100,6 +101,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
  	private int nPoints;
  	private int nDims;
  	private float pttemp[];
+ 	private ModelImage modesImage = null;
  	private ModelImage prunedModesImage = null;
  	
     private JTextField textImage;
@@ -796,10 +798,14 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
         		MipavUtil.displayError("No image with name "+imageList.getSelectedItem()+" was found.");
         		return false;
         	}
+        	new ViewJFrameImage(image);
         	input_directory = image.getImageDirectory();
         	data_file_name = image.getImageName() + ".txt";
-        	imageName = image.getImageName() + "_prunedModes";
         	extents = image.getExtents();
+        	// modesImage has too many modes to be useful
+        	// imageName  = image.getImageName() + "_modes";
+            // modesImage = new ModelImage(ModelStorageBase.INTEGER, extents, imageName);
+        	imageName = image.getImageName() + "_prunedModes";
         	prunedModesImage = new ModelImage(ModelStorageBase.INTEGER, extents, imageName);
         	
         	nDims = image.getNDims();
@@ -976,6 +982,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 		
 		if (everyButton.isSelected()) {
 			choosePoints = EVERY_POINT;
+			percent = 100.0;
 		}
 		else if (jumpButton.isSelected()) {
 			tmpStr = jumpText.getText();
@@ -989,7 +996,8 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 			if (jump <= 0) {
 				MipavUtil.displayError("jump must be greater than zero");
 				return false;
-			}	
+			}
+			percent = 0.0;
 		}
 		else {
 			tmpStr = percentText.getText();
@@ -1026,6 +1034,9 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 				return false;
 			}	
 		} // if (fixedWidth)
+		else {
+			width = 0.0f;
+		}
 		
 		FAMS_DO_SPEEDUP = speedupCheckBox.isSelected();
 		
@@ -1038,9 +1049,9 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 	protected void callAlgorithm() {
 		try {
 			
-			 alg = new AlgorithmMeanShiftClustering(K, L, k_neigh, data_file_name, input_directory, choosePoints,
+			 alg = new AlgorithmMeanShiftClustering(image, K, L, k_neigh, data_file_name, input_directory, choosePoints,
 					 jump, percent, fixedWidth, width, findOptimalKL, epsilon, Kmin, Kjump, FAMS_DO_SPEEDUP,
-					 nPoints, nDims, pttemp, prunedModesImage);
+					 nPoints, nDims, pttemp, modesImage, prunedModesImage);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
