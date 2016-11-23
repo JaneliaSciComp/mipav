@@ -209,6 +209,21 @@ public class AlgorithmMeanShiftClustering extends AlgorithmBase {
 		  accuracy of the program. For example you can set the bandwidth on which two 
 		  modes are joined or the number of trials on which the test is run when 
 		  finding K and L.
+		  
+		  Permission to port granted by Ilan Shimshoni:
+		  No problem. 
+Good luck with that. I'll be happy to put your code also on my website if you like.
+Ilan
+Sent from my Cyanogen phone
+On Nov 23, 2016 9:02 PM, "Gandler, William (NIH/CIT) [E]" <ilb@mail.nih.gov> wrote:
+Dear Ilan Shimshoni,
+
+  I am a Java programmer for the MIPAV imaging package at NIH working on mean shift.  Could I have permission to port your Adaptive mean shift based clustering C++ code to Java for use in MIPAV?  You will receive full acknowledgement for all code ported.
+
+                                                                                                      Sincerely,
+
+                                                                                                 William Gandler
+
     */
 	
 	public AlgorithmMeanShiftClustering(ModelImage image, int K, int L, int k_neigh, String data_file_name, String input_directory,
