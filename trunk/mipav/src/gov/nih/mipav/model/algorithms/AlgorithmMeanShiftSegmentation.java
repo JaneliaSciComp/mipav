@@ -125,7 +125,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
  	private float offset[];	// defines bandwidth offset caused by the use of a Gaussian kernel (for example)
  	
  	//Kernel
- 	private enum kernelType		{Uniform, Gaussian, UserDefined};
+ 	public enum kernelType		{Uniform, Gaussian, UserDefined};
  	
  	// KERNEL DATA STRUCTURE
 
@@ -162,7 +162,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
     private ErrorLevel	ErrorStatus;
     
     // Speed Up Level
-    private enum SpeedUpLevel	{NO_SPEEDUP, MED_SPEEDUP, HIGH_SPEEDUP};
+    public enum SpeedUpLevel	{NO_SPEEDUP, MED_SPEEDUP, HIGH_SPEEDUP};
     
     // OUTPUT DATA STORAGE
     // Raw Data (1 to 1 correlation with input)////////
@@ -243,9 +243,9 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
     
     private kernelType rangeKernelType = kernelType.Uniform;
     
-    private float spatialBandwidth = 1.0f;
+    private float spatialBandwidth = 8.0f;
     
-    private float rangeBandwidth = 1.0f;
+    private float rangeBandwidth = 7.0f;
     
     private int minRegion;
     
