@@ -253,7 +253,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
 	private boolean measureTime;
 	
-	private double speedThreshold; // the % of window radius used in new optimized filter 2.
+	private double speedThreshold; // the fraction of window radius used in new optimized filter 2.
 	
 	// WEIGHT MAP USED WHEN COMPUTING MEAN SHIFT ON A LATTICE
 	private double  weightMap[]; // weight map that may be used to weight the kernel
