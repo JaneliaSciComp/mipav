@@ -1,15 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.*;
-
-import java.awt.Color;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.Random;
-
-import com.sun.media.ui.ProgressBar;
 
 /**
  * The java code is ported from C++ code downloaded from http://coewww.rutgers.edu/riul/research/code.html.
@@ -75,9 +68,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	private int kp; // subspace number
 	int P[]; // subspace number, and subspace dimensions
 	//data space conversion...
-	private final double Xn			= 0.95050;
 	private final double Yn			= 1.00000;
-	private final double Zn			= 1.08870;
 	//const double Un_prime	= 0.19780;
 	//const double Vn_prime	= 0.46830;
 	private final double Un_prime	= 0.19784977571475;
@@ -88,6 +79,12 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
     private final double XYZ[][] = new double[][]{	{  0.4125,  0.3576,  0.1804 },
 							{  0.2125,  0.7154,  0.0721 },
 							{  0.0193,  0.1192,  0.9502 }	};
+							
+	//LUV to RGB conversion
+	private final double RGB[][] = new double[][]{	{  3.2405, -1.5371, -0.4985 },
+														{ -0.9693,  1.8760,  0.0416 },
+														{  0.0556, -0.2040,  1.0573 }	};
+
 							
     // Gaussian Lookup Table
 	private final int		GAUSS_NUM_ELS   = 16;		// take 16 samples of exp(-u/2)
@@ -101,7 +98,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
 	private final int		LIMIT  = 100; // define max. # of iterations to find mode
 
-
+    private final int NODE_MULTIPLE = 10;
 
 							
 	//Linear Storage (used by lattice and bst)////////
@@ -116,22 +113,16 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
   	private int	height, width;	// Height and width of lattice
   	
     //Range Searching on General Input Data Set////////
-  	private tree root[]; // root of kdBST used to store input
+  	//private tree root[]; // root of kdBST used to store input
 
-  	private tree forest[]; // memory allocated for tree nodes
+  	//private tree forest[]; // memory allocated for tree nodes
 
-  	private float range[]; // range vector used to perform range search on kd tree, indexed
+  	//private float range[]; // range vector used to perform range search on kd tree, indexed
   	
     // KERNEL DATA STRUCTURE 
  	private float h[]; // bandwidth vector
 
  	private float offset[];	// defines bandwidth offset caused by the use of a Gaussian kernel (for example)
- 	
- 	// WEIGHT MAP USED WHEN COMPUTING MEAN SHIFT ON A LATTICE
- 	private float weightMap[]; // weight map that may be used to weight the kernel
- 					           // upon performing mean shift on a lattice
-
- 	private boolean	weightMapDefined = false; // used to indicate if a lattice weight map has been defined
  	
  	//Kernel
  	private enum kernelType		{Uniform, Gaussian, UserDefined};
@@ -144,7 +135,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
  	private double	increment[];	 // increment used by weight hashing function
 
- 	private boolean	uniformKernel; // flag used to indicate if the kernel is uniform or not
+ 	//private boolean	uniformKernel; // flag used to indicate if the kernel is uniform or not
  	
  	private userWeightFunct	head, cur; // user defined weight function linked list
     
@@ -154,14 +145,14 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
  	// MEAN SHIFT PROCESSING DATA STRUCTURES 
 
- 	private double	uv[]; // stores normalized distance vector between yk and xi
+ 	//private double	uv[]; // stores normalized distance vector between yk and xi
 
     // Error Handler
  	private enum ErrorLevel		{EL_OKAY, EL_ERROR, EL_HALT};
- 	private enum ErrorType		{NONFATAL, FATAL};
+ 	//private enum ErrorType		{NONFATAL, FATAL};
  	
  	// ErrorMessage is an error message that is set by a mean shift library class when an error occurs.
-    private String ErrorMessage;
+    //private String ErrorMessage;
     
     // ErrorStatus indicates if an error has occurred as a result of improper use of a mean shift library
     // class method or because of insufficient resources. ErrorStatus is set to EL_ERROR (ErrorStatus
@@ -210,9 +201,44 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	                          // currently being applied to
  	
  	private int	pointCount;	// the number of points stored by the point list
+    
+  // IMAGE PRUNING 
+    //##########################################
 
+ 	// Transitive Closure
+ 	float			rR2;					//defines square range radius used when clustering pixels
+ 											//together, thus defining image regions
+ 	
+ 	//Image Boundaries
+ 	//RegionList	regionList[];			// stores the boundary locations for each region
+ 	
+ 	//8 Connected Neighbors/////////
+ 	private int	neigh[] = new int[8];
+ 	
+ 	private double LUV_threshold = 0.1;        //in float mode this determines what "close" means between modes
+ 	
+ 	//  REGION ADJACENCY MATRIX
 
-    private long time5;
+ 	// Region Adjacency List
+ 	RAList	raList[];				// an array of RAList objects containing an entry for each
+ 									// region of the image
+
+ 	// RAMatrix Free List
+ 	RAList	freeRAList[];			// a pointer to the head of a region adjacency list object
+ 											// free list
+
+ 	RAList raPool[];				// a pool of RAList objects used in the construction of the
+ 									// RAM
+
+    // COMPUTATION OF EDGE STRENGTHS
+ 	double			epsilon = 1.0;				//Epsilon used for transitive closure
+
+ 	// Visit Table
+ 	byte visitTable[];	// Table used to keep track of which pixels have been
+                        // already visited upon computing the boundary edge strengths
+ 	
+ 	private byte outputBuffer[];
+    
     private kernelType spatialKernelType = kernelType.Uniform;
     
     private kernelType rangeKernelType = kernelType.Uniform;
@@ -227,9 +253,18 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
 	private boolean measureTime;
 	
+	private double speedThreshold; // the % of window radius used in new optimized filter 2.
+	
+	// WEIGHT MAP USED WHEN COMPUTING MEAN SHIFT ON A LATTICE
+	private double  weightMap[]; // weight map that may be used to weight the kernel
+	 					         // upon performing mean shift on a lattice
+
+    private boolean	weightMapDefined = false; // used to indicate if a lattice weight map has been defined
+	
 	public AlgorithmMeanShiftSegmentation(ModelImage destImage, ModelImage srcImage, kernelType spatialKernelType,
 			kernelType rangeKernelType, float spatialBandwidth, float rangeBandwidth, int minRegion,
-			SpeedUpLevel speedUpLevel, boolean measureTime) {
+			SpeedUpLevel speedUpLevel, boolean measureTime, double speedThreshold, double weightMap[],
+			boolean weightMapDefined) {
 		super(destImage, srcImage);
 		this.spatialKernelType = spatialKernelType;
 		this.rangeKernelType = rangeKernelType;
@@ -238,6 +273,9 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		this.minRegion = minRegion;
 		this.speedUpLevel = speedUpLevel;
 		this.measureTime = measureTime;
+		this.speedThreshold = speedThreshold;
+		this.weightMap = weightMap;
+		this.weightMapDefined = weightMapDefined;
 	}
 	
 	public void runAlgorithm() {
@@ -248,7 +286,8 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		int z;
 		int t;
 		int i;
-		int kN;
+		int cf;
+		//int kN;
 		// Start porting from msImageProcessor::DefineImage
 		if (srcImage == null) {
             displayError("Source Image is null");
@@ -279,78 +318,18 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
         	data = new double[3*L];
         	rgb = new float[4*L];
         	N = 3;
+        	outputBuffer = new byte[4*L];
+        	cf = 4;
         }
         else {
 		    data = new double[L];
 		    N = 1;
+		    outputBuffer = new byte[L];
+		    cf = 1;
         }
         class_state = new ClassStateStruct();
         //allocate memory for weight map
-        weightMap = new float [L];
-        /*      - wm is a floating point array of size         */
-        /*        (height x width) specifying for each pixel   */
-        /*        edge strength.                               */
-        /*      - eps is a threshold used to fuse similar      */
-        /*        regions during transitive closure.           */
-        /*Post:                                                */
-        /*      - wm has been used to populate the weight      */
-        /*        map.                                         */
-        /*      - the threshold used during transitive closure */
-        /*        is taken as eps.                             */
-        /*******************************************************/
-
-        /* void msImageProcessor::SetWeightMap(float *wm, float eps)
-        /{
-
-        	//initlaize confmap using wm
-        	SetLatticeWeightMap(wm);
-
-        	//set threshold value
-        	if((epsilon = eps) < 0)
-        		ErrorHandler("msImageProcessor", "SetWeightMap", "Threshold is negative.");
-
-        	//done.
-        	return;
-
-        }*/
-        /*******************************************************/
-        /*Set Lattice Weight Map                               */
-        /*******************************************************/
-        /*Populates the lattice weight map with specified      */
-        /*weight values.                                       */
-        /*******************************************************/
-        /*Pre:                                                 */
-        /*      - wm is a floating point array of size L       */
-        /*        specifying for each data point a weight      */
-        /*        value                                        */
-        /*Post:                                                */
-        /*      - wm has been used to populate the lattice     */
-        /*        weight map.                                  */
-        /*******************************************************/
-
-        /*void MeanShift::SetLatticeWeightMap(float *wm)
-        {
-        	//make sure wm is not NULL
-        	if(!wm)
-        	{
-        		ErrorHandler("MeanShift", "SetWeightMap", "Specified weight map is NULL.");
-        		return;
-        	}
-
-        	//populate weightMap using wm
-        	int i;
-        	for(i = 0; i < L; i++)
-        		weightMap[i] = wm[i];
-
-        	//indicate that a lattice weight map has been specified
-        	weightMapDefined	= true;
-
-        	//done.
-        	return;
-
-        }*/
-
-
+        
         //define default kernel parameters...
         kernel	= new kernelType[]{spatialKernelType, rangeKernelType};
       	P = new int[]{2, N};
@@ -358,12 +337,12 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
       	kp = 2;
       	offset = new float[kp];
 		increment = new double[kp];
-		kN = 0;
-		for (i = 0; i < kp; i++) {
-			kN += P[i];
-		}
-		range = new float[2*kN];
-		uv = new double[kN];
+		//kN = 0;
+		//for (i = 0; i < kp; i++) {
+			//kN += P[i];
+		//}
+		//range = new float[2*kN];
+		//uv = new double[kN];
 		// Generate weight function lookup table
 		// using above information and user
 		// defined weight function list
@@ -407,9 +386,39 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
         		
         		//define input defined on a lattice using mean shift base class
         		defineLInput();
-
+                segment();
+                
+                if (destImage != null) {
+                	try {
+                		destImage.importData(cf*(t*zDim+z)*L, outputBuffer, false);
+                	}
+                	catch (IOException e) {
+                		MipavUtil.displayError("IOException " + e + " on destImage.importData");
+                		setCompleted(false);
+                		return;
+                	}
+                }
+                else {
+                	try {
+                		srcImage.importData(cf*(t*zDim+z)*L, outputBuffer, false);
+                	}
+                	catch (IOException e) {
+                		MipavUtil.displayError("IOException " + e + " on srcImage.importData");
+                		setCompleted(false);
+                		return;
+                	}	
+                }
         	} // for (z = 0; z < zDim; z++)
 		} // for (t = 0; t < tDim; t++)
+		if (destImage != null) {
+			destImage.calcMinMax();
+		}
+		else {
+			srcImage.calcMinMax();
+		}
+		setCompleted(true);
+		return;
+		
 	}
 	
 	/*******************************************************/
@@ -450,7 +459,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		// lookup table w
 		
 		// Assume kernel is uniform
-		uniformKernel = true;
+		//uniformKernel = true;
 		
 		for(i = 0; i < kp; i++)
 	    {
@@ -471,7 +480,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 			case Gaussian:
 				
 				// Set uniformKernel to false
-				uniformKernel = false;
+				//uniformKernel = false;
 				
 				// generate weight function using expression,
 				// exp(-u/2), where u = norm(xi - x)^2/h^2
@@ -493,7 +502,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 			case UserDefined:
 				
 				// Set uniformKernel to false
-				uniformKernel = false;
+				//uniformKernel = false;
 				
 				// Search for user defined weight function
 				// defined for subspace (i+1)
@@ -538,9 +547,9 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	{
 		
 		//initialize input data set kd-tree
-		root						= null;
-		forest						= null;
-		range						= null;
+		//root						= null;
+		//forest						= null;
+		//range						= null;
 		
 		//intialize kernel strucuture...
 		w							= null;
@@ -549,12 +558,12 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		head						= cur	= null;
 		
 		//intialize mean shift processing data structures...
-		uv							= null;
+		//uv							= null;
 
 		//indicate that the lattice weight map is undefined
 		weightMapDefined			= false;
 		
-		ErrorMessage				=  null;
+		//ErrorMessage				=  null;
 		
 		//initialize error status to OKAY
 		ErrorStatus					= ErrorLevel.EL_OKAY;
@@ -563,6 +572,44 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		class_state.INPUT_DEFINED	= false;
 		class_state.LATTICE_DEFINED	= false;
 		class_state.OUTPUT_DEFINED	= false;
+		
+		//intialize basin of attraction structure
+		//used by the filtering algorithm
+		modeTable			= null;
+		pointList			= null;
+		pointCount			= 0;
+
+		//initialize region list
+		//regionList			= null;
+
+		//initialize output structures...
+		msRawData			= null;
+		labels				= null;
+		modes				= null;
+		modePointCounts		= null;
+		regionCount			= 0;
+
+		//intialize temporary buffers used for
+		//performing connected components
+		indexTable			= null;
+		LUV_data			= null;
+
+		//initialize region adjacency matrix
+		raList				= null;
+		freeRAList			= null;
+		raPool				= null;
+
+		//intialize visit table to having NULL entries
+		visitTable			= null;
+
+		//initialize epsilon such that transitive closure
+		//does not take edge strength into consideration when
+		//fusing regions of similar color
+		epsilon				= 1.0;
+
+	//Changed by Sushil from 1.0 to 0.1, 11/11/2008
+	   LUV_threshold = 0.1;
+
 		
 	}
 
@@ -614,8 +661,8 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	{
 		
 		//initialize input data structure for re-use
-		forest	= null;
-		root	= null;
+		//forest	= null;
+		//root	= null;
 		
 		//re-set class input to indicate that
 		//an input is not longer stored by
@@ -700,88 +747,72 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
 	private void segment()
 	{
-
+        long time1 = 0;
+        long time2;
+        long elapsedTime;
+        long time3 = 0;
+        long time4;
+        int pxValue;
 		//Apply mean shift to data set using sigmaS and sigmaR...
 		filter();
 
 		//check for errors
-		/*if(ErrorStatus == EL_ERROR)
+		if(ErrorStatus == ErrorLevel.EL_ERROR)
 			return;
 
 		//check to see if the system has been halted, if so exit
-		if(ErrorStatus == EL_HALT)
+		if(ErrorStatus == ErrorLevel.EL_HALT)
 			return;
 
-		//Check to see if the algorithm is to be halted, if so then
-		//destroy output and exit
-		if((ErrorStatus = msSys.Progress((float)(0.85))) == EL_HALT)
-		{
-			DestroyOutput();
-			return;
-		}
-
-	#ifdef PROMPT
-		msSys.Prompt("Applying transitive closure...");
-		msSys.StartTimer();
-	#endif
+		
+        Preferences.debug("Applying transitive closure...\n", Preferences.DEBUG_ALGORITHM);
+	    if (measureTime) {
+	    	time1 = System.currentTimeMillis();
+	    }
 
 		//allocate memory visit table
-		visitTable = new unsigned char [L];
+		visitTable = new byte [L];
 
 		//Apply transitive closure iteratively to the regions classified
 		//by the RAM updating labels and modes until the color of each neighboring
 		//region is within sqrt(rR2) of one another.
 		rR2 = (float)(h[1]*h[1]*0.25);
-		TransitiveClosure();
+		transitiveClosure();
 		int oldRC = regionCount;
 		int deltaRC, counter = 0;
 		do {
-			TransitiveClosure();
+			transitiveClosure();
 			deltaRC = oldRC-regionCount;
 			oldRC = regionCount;
 			counter++;
 		} while ((deltaRC <= 0)&&(counter < 10));
 
 		//de-allocate memory for visit table
-		delete [] visitTable;
-		visitTable	= NULL;
+		visitTable	= null;
 
-		//Check to see if the algorithm is to be halted, if so then
-		//destroy output and regions adjacency matrix and exit
-		if((ErrorStatus = msSys.Progress((float)(0.95))) == EL_HALT)
-		{
-			DestroyRAM();
-			DestroyOutput();
-			return;
+		if (measureTime) {
+			time2 = System.currentTimeMillis();
+			elapsedTime = time2 - time1;
+			Preferences.debug(elapsedTime + "milliseconds, numRegions = " + regionCount + "\n", 
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("About to prune spurious regions\n", Preferences.DEBUG_ALGORITHM);
+			time3 = System.currentTimeMillis();
 		}
-
-	#ifdef PROMPT
-		double timer	= msSys.ElapsedTime();
-		msSys.Prompt("done. (%6.2f seconds, numRegions = %6d).\nPruning spurious regions\t... ", timer, regionCount);
-		msSys.StartTimer();
-	#endif
 
 		//Prune spurious regions (regions whose area is under
 		//minRegion) using RAM
-		Prune(minRegion);
+		prune(minRegion);
 
-	#ifdef PROMPT
-		timer	= msSys.ElapsedTime();
-		msSys.Prompt("done. (%6.2f seconds, numRegions = %6d)\nPruning spurious regions    ...", timer, regionCount);
-		msSys.StartTimer();
-	#endif
-
-		//Check to see if the algorithm is to be halted, if so then
-		//destroy output and regions adjacency matrix and exit
-		if((ErrorStatus = msSys.Progress(1.0)) == EL_HALT)
-		{
-			DestroyRAM();
-			DestroyOutput();
-			return;
+		if (measureTime) {
+			time4 = System.currentTimeMillis();
+			elapsedTime = time4 - time3;
+			Preferences.debug("done. (" + elapsedTime +  "milliseconds, numRegions = " + regionCount + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Pruned spurious regions\n", Preferences.DEBUG_ALGORITHM);
 		}
 
 		//de-allocate memory for region adjacency matrix
-		DestroyRAM();
+		destroyRAM();
 
 		//output to msRawData
 		int j, i, label;
@@ -793,11 +824,1145 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 					msRawData[N*i+j] = modes[N*label+j];
 				}
 		}
+		
+		if (N  == 1) {
+		    for (i = 0; i < L; i++) {
+		    	pxValue = (byte)(msRawData[i] + 0.5);
+		    	if (pxValue < 0) {
+		    		outputBuffer[i] = (byte)0;
+		    	}
+		    	else if (pxValue > 255) {
+		    	    outputBuffer[i] = (byte)255;	
+		    	}
+		    	else {
+		    		outputBuffer[i] = (byte)pxValue;
+		    	}
+		    }
+		} // if (N == 1)
+		else if (N == 3) {
+			for (i = 0; i < L; i++) {
+				LUVtoRGB(msRawData, 3*i, outputBuffer, 4*i);
+			}
+		}
 
-		//done.*/
+		//done.
 		return;
 
 	}
+	
+	private void LUVtoRGB(float luvVal[], int luvOffset, byte rgbVal[], int rgbOffset)
+	{
+
+		//declare variables...
+		int		r, g, b;
+		double	x, y, z, u_prime, v_prime;
+
+		//perform conversion
+		if(luvVal[luvOffset] < 0.1)
+			r = g = b = 0;
+		else
+		{
+			//convert luv to xyz...
+			if(luvVal[luvOffset] < 8.0)
+				y	= Yn * luvVal[luvOffset] / 903.3;
+			else
+			{
+				y	= (luvVal[luvOffset] + 16.0) / 116.0;
+				y  *= Yn * y * y;
+			}
+
+			u_prime	= luvVal[luvOffset+1] / (13 * luvVal[luvOffset]) + Un_prime;
+			v_prime	= luvVal[luvOffset+2] / (13 * luvVal[luvOffset]) + Vn_prime;
+
+			x		= 9 * u_prime * y / (4 * v_prime);
+			z		= (12 - 3 * u_prime - 20 * v_prime) * y / (4 * v_prime);
+
+			//convert xyz to rgb...
+			//[r, g, b] = RGB*[x, y, z]*255.0
+			r		= my_round((RGB[0][0]*x + RGB[0][1]*y + RGB[0][2]*z)*255.0);
+			g		= my_round((RGB[1][0]*x + RGB[1][1]*y + RGB[1][2]*z)*255.0);
+			b		= my_round((RGB[2][0]*x + RGB[2][1]*y + RGB[2][2]*z)*255.0);
+
+			//check bounds...
+			if(r < 0)	r = 0; if(r > 255)	r = 255;
+			if(g < 0)	g = 0; if(g > 255)	g = 255;
+			if(b < 0)	b = 0; if(b > 255)	b = 255;
+
+		}
+
+		//assign rgb values to rgb vector rgbVal
+		rgbVal[rgbOffset+1]	= (byte)r;
+		rgbVal[rgbOffset+2]	= (byte)g;
+		rgbVal[rgbOffset+3]	= (byte)b;
+
+		//done.
+		return;
+
+	}
+	
+	private int my_round(double in_x)
+	{
+		if (in_x < 0)
+			return (int)(in_x - 0.5);
+		else
+			return (int)(in_x + 0.5);
+	}
+
+
+
+	
+	/*******************************************************/
+	/*Destroy Region Adjacency Matrix                      */
+	/*******************************************************/
+	/*Destroy a region adjacency matrix.                   */
+	/*******************************************************/
+	/*Post:                                                */
+	/*      - the region adjacency matrix has been destr-  */
+	/*        oyed: (1) its memory has been de-allocated,  */
+	/*        (2) the RAM structure has been initialize    */
+	/*        for re-use.                                  */
+	/*******************************************************/
+
+	private void destroyRAM()
+	{
+		//initialize region adjacency matrix
+		raList				= null;
+		freeRAList			= null;
+		raPool				= null;
+
+		//done.
+		return;
+
+	}
+
+	
+	/*******************************************************/
+	/*Prune                                                */
+	/*******************************************************/
+	/*Prunes regions from the image whose pixel density    */
+	/*is less than a specified threshold.                  */
+	/*******************************************************/
+	/*Pre:                                                 */
+	/*      - minRegion is the minimum allowable pixel de- */
+	/*        nsity a region may have without being pruned */
+	/*        from the image                               */
+	/*Post:                                                */
+	/*      - regions whose pixel density is less than     */
+	/*        or equal to minRegion have been pruned from  */
+	/*        the image.                                   */
+	/*******************************************************/
+
+	private void prune(int minRegion)
+	{
+		
+		//Allocate Memory for temporary buffers...
+		
+		//allocate memory for mode and point count temporary buffers...
+		float	modes_buffer[]	= new float	[N*regionCount];
+		int		MPC_buffer[]		= new int	[regionCount];
+		
+		//allocate memory for label buffer
+		int	label_buffer[]		= new int	[regionCount];
+		
+		//Declare variables
+		int		i, k, candidate, iCanEl, neighCanEl, iMPC, label, minRegionCount;
+		double	minSqDistance, neighborDistance;
+		RAList	neighbor[];
+		
+		//Apply pruning algorithm to classification structure, removing all regions whose area
+		//is under the threshold area minRegion (pixels)
+		do
+		{
+			//Assume that no region has area under threshold area  of 
+			minRegionCount	= 0;		
+
+			//Step (1):
+			
+			// Build RAM using classifiction structure originally
+			// generated by the method GridTable::Connect()
+			buildRAM();
+			
+			// Step (2):
+			
+			// Traverse the RAM joining regions whose area is less than minRegion (pixels)
+			// with its respective candidate region.
+			
+			// A candidate region is a region that displays the following properties:
+			
+			//	- it is adjacent to the region being pruned
+			
+			//  - the distance of its mode is a minimum to that of the region being pruned
+			//    such that or it is the only adjacent region having an area greater than
+			//    minRegion
+			
+			for(i = 0; i < regionCount; i++)
+			{
+				//if the area of the ith region is less than minRegion
+				//join it with its candidate region...
+
+				//*******************************************************************************
+
+				//Note: Adjust this if statement if a more sophisticated pruning criterion
+				//      is desired. Basically in this step a region whose area is less than
+				//      minRegion is pruned by joining it with its "closest" neighbor (in color).
+				//      Therefore, by placing a different criterion for fusing a region the
+				//      pruning method may be altered to implement a more sophisticated algorithm.
+
+				//*******************************************************************************
+
+				if(modePointCounts[i] < minRegion)
+				{
+					//update minRegionCount to indicate that a region
+					//having area less than minRegion was found
+					minRegionCount++;
+
+					//obtain a pointer to the first region in the
+					//region adjacency list of the ith region...
+					neighbor	= raList[i].next;
+					
+					//calculate the distance between the mode of the ith
+					//region and that of the neighboring region...
+					candidate		= neighbor[0].label;
+					minSqDistance	= sqDistance(i, candidate);
+					
+					//traverse region adjacency list of region i and select
+					//a candidate region
+					neighbor	= neighbor[0].next;
+					while(neighbor != null)
+					{
+
+						//calculate the square distance between region i
+						//and current neighbor...
+						neighborDistance = sqDistance(i, neighbor[0].label);
+
+						//if this neighbors square distance to region i is less
+						//than minSqDistance, then select this neighbor as the
+						//candidate region for region i
+						if(neighborDistance < minSqDistance)
+						{
+							minSqDistance	= neighborDistance;
+							candidate		= neighbor[0].label;
+						}
+
+						//traverse region list of region i
+						neighbor	= neighbor[0].next;
+
+					}
+
+					//join region i with its candidate region:
+
+					// (1) find the canonical element of region i
+					iCanEl		= i;
+					while(raList[iCanEl].label != iCanEl)
+						iCanEl		= raList[iCanEl].label;
+
+					// (2) find the canonical element of neighboring region
+					neighCanEl	= candidate;
+					while(raList[neighCanEl].label != neighCanEl)
+						neighCanEl	= raList[neighCanEl].label;
+
+					// if the canonical elements of are not the same then assign
+					// the canonical element having the smaller label to be the parent
+					// of the other region...
+					if(iCanEl < neighCanEl)
+						raList[neighCanEl].label	= iCanEl;
+					else
+					{
+						//must replace the canonical element of previous
+						//parent as well
+						raList[raList[iCanEl].label].label	= neighCanEl;
+
+						//re-assign canonical element
+						raList[iCanEl].label				= neighCanEl;
+					}
+				}
+			}
+
+			// Step (3):
+			
+			// Level binary trees formed by canonical elements
+			for(i = 0; i < regionCount; i++)
+			{
+				iCanEl	= i;
+				while(raList[iCanEl].label != iCanEl)
+					iCanEl	= raList[iCanEl].label;
+				raList[i].label	= iCanEl;
+			}
+			
+			// Step (4):
+			
+			//Traverse joint sets, relabeling image.
+			
+			// Accumulate modes and re-compute point counts using canonical
+			// elements generated by step 2.
+			
+			//initialize buffers to zero
+			for(i = 0; i < regionCount; i++)
+				MPC_buffer[i]	= 0;
+			for(i = 0; i < N*regionCount; i++)
+				modes_buffer[i]	= 0;
+			
+			//traverse raList accumulating modes and point counts
+			//using canoncial element information...
+			for(i = 0; i < regionCount; i++)
+			{
+				
+				//obtain canonical element of region i
+				iCanEl	= raList[i].label;
+				
+				//obtain mode point count of region i
+				iMPC	= modePointCounts[i];
+				
+				//accumulate modes_buffer[iCanEl]
+				for(k = 0; k < N; k++)
+					modes_buffer[(N*iCanEl)+k] += iMPC*modes[(N*i)+k];
+				
+				//accumulate MPC_buffer[iCanEl]
+				MPC_buffer[iCanEl] += iMPC;
+				
+			}
+			
+			// (b)
+			
+			// Re-label new regions of the image using the canonical
+			// element information generated by step (2)
+			
+			// Also use this information to compute the modes of the newly
+			// defined regions, and to assign new region point counts in
+			// a consecute manner to the modePointCounts array
+			
+			//initialize label buffer to -1
+			for(i = 0; i < regionCount; i++)
+				label_buffer[i]	= -1;
+			
+			//traverse raList re-labeling the regions
+			label = -1;
+			for(i = 0; i < regionCount; i++)
+			{
+				//obtain canonical element of region i
+				iCanEl	= raList[i].label;
+				if(label_buffer[iCanEl] < 0)
+				{
+					//assign a label to the new region indicated by canonical
+					//element of i
+					label_buffer[iCanEl]	= ++label;
+					
+					//recompute mode storing the result in modes[label]...
+					iMPC	= MPC_buffer[iCanEl];
+					for(k = 0; k < N; k++)
+						modes[(N*label)+k]	= (modes_buffer[(N*iCanEl)+k])/(iMPC);
+					
+					//assign a corresponding mode point count for this region into
+					//the mode point counts array using the MPC buffer...
+					modePointCounts[label]	= MPC_buffer[iCanEl];
+				}
+			}
+			
+			//re-assign region count using label counter
+			regionCount		= label+1;
+			
+			// (c)
+			
+			// Use the label buffer to reconstruct the label map, which specified
+			// the new image given its new regions calculated above
+			
+			for(i = 0; i < height*width; i++)
+				labels[i]	= label_buffer[raList[labels[i]].label];
+
+			
+		}	while(minRegionCount > 0);
+
+		//de-allocate memory
+		modes_buffer = null;
+		MPC_buffer = null;
+		label_buffer = null;
+		
+		//done.
+		return;
+		
+	}
+	
+	/*******************************************************/
+	/*Square Distance                                      */
+	/*******************************************************/
+	/*Computs the normalized square distance between two   */
+	/*modes.                                               */
+	/*******************************************************/
+	/*Pre:                                                 */
+	/*      - mode1 and mode2 are indeces into the modes   */
+	/*        array specifying two modes of the image      */
+	/*Post:                                                */
+	/*      - the normalized square distance between modes */
+	/*        indexed by mode1 and mode2 has been calc-    */
+	/*        ulated and the result has been returned.     */
+	/*******************************************************/
+
+	private float sqDistance(int mode1, int mode2)
+	{
+
+		int		k		= 1, s	= 0, p;
+		float	dist	= 0, el;
+		for(k = 1; k < kp; k++)
+		{
+			//Calculate distance squared of sub-space s	
+			for(p = 0; p < P[k]; p++)
+			{
+				el    = (modes[mode1*N+p+s]-modes[mode2*N+p+s])/(h[k]*offset[k]);
+				dist += el*el;
+			}
+			
+			//next subspace
+			s += P[k];
+			k++;
+		}
+
+		//return normalized square distance between modes
+		//1 and 2
+		return dist;
+
+	}
+
+
+	
+	/*******************************************************/
+	/*transitive Closure                                   */
+	/*******************************************************/
+	/*Applies transitive closure to the RAM updating       */
+	/*labels, modes and modePointCounts to reflect the new */
+	/*set of merged regions resulting from transitive clo- */
+	/*sure.                                                */
+	/*******************************************************/
+	/*Post:                                                */
+	/*      - transitive closure has been applied to the   */
+	/*        regions classified by the RAM and labels,    */
+	/*        modes and modePointCounts have been updated  */
+	/*        to reflect the new set of mergd regions res- */
+	/*        ulting from transitive closure.              */
+	/*******************************************************/
+
+	private void transitiveClosure()
+	{
+
+		//Step (1):
+
+		// Build RAM using classifiction structure originally
+		// generated by the method GridTable::Connect()
+		buildRAM();
+
+		//Step (1a):
+		//Compute weights of weight graph using confidence map
+		//(if defined)
+		if(weightMapDefined)	computeEdgeStrengths();
+
+		//Step (2):
+
+		//Treat each region Ri as a disjoint set:
+
+		// - attempt to join Ri and Rj for all i != j that are neighbors and
+		//   whose associated modes are a normalized distance of < 0.5 from one
+		//   another
+
+		// - the label of each region in the raList is treated as a pointer to the
+		//   canonical element of that region (e.g. raList[i], initially has raList[i].label = i,
+		//   namely each region is initialized to have itself as its canonical element).
+
+		//Traverse RAM attempting to join raList[i] with its neighbors...
+		int		i, iCanEl, neighCanEl;
+		//double	threshold;
+		RAList	neighbor[];
+		for(i = 0; i < regionCount; i++)
+		{
+			//aquire first neighbor in region adjacency list pointed to
+			//by raList[i]
+			neighbor	= raList[i].next;
+
+			//compute edge strenght threshold using global and local
+			//epsilon
+			//if(epsilon > raList[i].edgeStrength)
+				//threshold   = epsilon;
+			//else
+				//threshold   = raList[i].edgeStrength;
+
+			//traverse region adjacency list of region i, attempting to join
+			//it with regions whose mode is a normalized distance < 0.5 from
+			//that of region i...
+			while(neighbor != null)
+			{
+				//attempt to join region and neighbor...
+				if((inWindow(i, neighbor[0].label))&&(neighbor[0].edgeStrength < epsilon))
+				{
+					//region i and neighbor belong together so join them
+					//by:
+
+					// (1) find the canonical element of region i
+					iCanEl		= i;
+					while(raList[iCanEl].label != iCanEl)
+						iCanEl		= raList[iCanEl].label;
+
+					// (2) find the canonical element of neighboring region
+					neighCanEl	= neighbor[0].label;
+					while(raList[neighCanEl].label != neighCanEl)
+						neighCanEl	= raList[neighCanEl].label;
+
+					// if the canonical elements of are not the same then assign
+					// the canonical element having the smaller label to be the parent
+					// of the other region...
+					if(iCanEl < neighCanEl)
+						raList[neighCanEl].label	= iCanEl;
+					else
+					{
+						//must replace the canonical element of previous
+						//parent as well
+						raList[raList[iCanEl].label].label	= neighCanEl;
+
+						//re-assign canonical element
+						raList[iCanEl].label				= neighCanEl;
+					}
+				}
+
+				//check the next neighbor...
+				neighbor	= neighbor[0].next;
+
+			}
+		}
+
+		// Step (3):
+
+		// Level binary trees formed by canonical elements
+		for(i = 0; i < regionCount; i++)
+		{
+			iCanEl	= i;
+			while(raList[iCanEl].label != iCanEl)
+				iCanEl	= raList[iCanEl].label;
+			raList[i].label	= iCanEl;
+		}
+
+		// Step (4):
+
+		//Traverse joint sets, relabeling image.
+
+		// (a)
+
+		// Accumulate modes and re-compute point counts using canonical
+		// elements generated by step 2.
+
+		//allocate memory for mode and point count temporary buffers...
+		float	modes_buffer[]	= new float	[N*regionCount];
+		int		MPC_buffer[]		= new int	[regionCount];
+
+		//initialize buffers to zero
+		for(i = 0; i < regionCount; i++)
+			MPC_buffer[i]	= 0;
+		for(i = 0; i < N*regionCount; i++)
+			modes_buffer[i]	= 0;
+
+		//traverse raList accumulating modes and point counts
+		//using canoncial element information...
+		int k, iMPC;
+		for(i = 0; i < regionCount; i++)
+		{
+
+			//obtain canonical element of region i
+			iCanEl	= raList[i].label;
+
+			//obtain mode point count of region i
+			iMPC	= modePointCounts[i];
+
+			//accumulate modes_buffer[iCanEl]
+			for(k = 0; k < N; k++)
+				modes_buffer[(N*iCanEl)+k] += iMPC*modes[(N*i)+k];
+
+			//accumulate MPC_buffer[iCanEl]
+			MPC_buffer[iCanEl] += iMPC;
+
+		}
+
+		// (b)
+
+		// Re-label new regions of the image using the canonical
+		// element information generated by step (2)
+
+		// Also use this information to compute the modes of the newly
+		// defined regions, and to assign new region point counts in
+		// a consecute manner to the modePointCounts array
+
+		//allocate memory for label buffer
+		int	label_buffer[]	= new int [regionCount];
+
+		//initialize label buffer to -1
+		for(i = 0; i < regionCount; i++)
+			label_buffer[i]	= -1;
+
+		//traverse raList re-labeling the regions
+		int	label = -1;
+		for(i = 0; i < regionCount; i++)
+		{
+			//obtain canonical element of region i
+			iCanEl	= raList[i].label;
+			if(label_buffer[iCanEl] < 0)
+			{
+				//assign a label to the new region indicated by canonical
+				//element of i
+				label_buffer[iCanEl]	= ++label;
+
+				//recompute mode storing the result in modes[label]...
+				iMPC	= MPC_buffer[iCanEl];
+				for(k = 0; k < N; k++)
+					modes[(N*label)+k]	= (modes_buffer[(N*iCanEl)+k])/(iMPC);
+
+				//assign a corresponding mode point count for this region into
+				//the mode point counts array using the MPC buffer...
+				modePointCounts[label]	= MPC_buffer[iCanEl];
+			}
+		}
+
+		//re-assign region count using label counter
+		regionCount	= label+1;
+
+		// (c)
+
+		// Use the label buffer to reconstruct the label map, which specified
+		// the new image given its new regions calculated above
+
+		for(i = 0; i < height*width; i++)
+			labels[i]	= label_buffer[raList[labels[i]].label];
+
+		//de-allocate memory
+		modes_buffer = null;
+		MPC_buffer = null;
+		label_buffer = null;
+
+		//done.
+		return;
+
+	}
+	
+	/*******************************************************/
+	/*in Window                                            */
+	/*******************************************************/
+	/*Returns true if the two specified data points are    */
+	/*within rR of each other.                             */
+	/*******************************************************/
+	/*Pre:                                                 */
+	/*      - mode1 and mode2 are indeces into msRawData   */
+	/*        specifying the modes of the pixels having    */
+	/*        these indeces.                               */
+	/*Post:                                                */
+	/*      - true is returned if mode1 and mode2 are wi-  */
+	/*        thin rR of one another, false is returned    */
+	/*        otherwise.                                   */
+	/*******************************************************/
+
+	private boolean inWindow(int mode1, int mode2)
+	{
+		int		k		= 1, s	= 0, p;
+		double	diff	= 0, el;
+		while((diff < 0.25)&&(k != kp)) // Partial Distortion Search
+		{
+			//Calculate distance squared of sub-space s	
+			diff = 0;
+			for(p = 0; p < P[k]; p++)
+			{
+				el    = (modes[mode1*N+p+s]-modes[mode2*N+p+s])/(h[k]*offset[k]);
+				if((p == 0)&&(k == 1)&&(modes[mode1*N] > 80))
+					diff += 4*el*el;
+				else
+					diff += el*el;
+			}
+			
+			//next subspace
+			s += P[k];
+			k++;
+		}
+		return (diff < 0.25);
+	}
+
+	
+	/*******************************************************/
+	/*Compute Edge Strengths                               */
+	/*******************************************************/
+	/*Computes the a weight for each link in the region    */
+	/*graph maintined by the RAM, resulting in a weighted  */
+	/*graph in which the weights consist of a confidence   */
+	/*between zero and one indicating if the regions are   */
+	/*separated by a strong or weak edge.                  */
+	/*******************************************************/
+	/*Post:                                                */
+	/*      - an edge strength has been computed between   */
+	/*        each region of the image and placed as a     */
+	/*        weight in the RAM to be used during transi-  */
+	/*        tive closure.                                */
+	/*******************************************************/
+
+	private void computeEdgeStrengths()
+	{
+		int i;
+
+		//initialize visit table - used to keep track
+		//of which pixels have already been visited such
+		//as not to contribute their strength value to
+		//a boundary sum multiple times...
+		for (i = 0; i < L; i++) {
+			visitTable[i] = 0;
+		}
+
+		//traverse labeled image computing edge strengths
+		//(excluding image boundary)...
+		int    x, y, dp, curLabel, rightLabel, bottomLabel;
+		RAList curRegion[] = null;
+		for(y = 1; y < height-1; y++)
+		{
+			for(x = 1; x < width-1; x++)
+			{
+				//compute data point location using x and y
+				dp = y*width + x;
+
+				//obtain labels at different pixel locations
+				curLabel	= labels[dp      ];	//current pixel
+				rightLabel	= labels[dp+1    ];	//right   pixel
+				bottomLabel	= labels[dp+width];	//bottom  pixel
+
+				//check right and bottom neighbor to see if there is a
+				//change in label then we are at an edge therefore record
+				//the edge strength at this edge accumulating its value
+				//in the RAM...
+				if(curLabel != rightLabel)
+				{
+					//traverse into RAM...
+					curRegion[0] = raList[curLabel];
+					while((curRegion != null)&&(curRegion[0].label != rightLabel))
+						curRegion = curRegion[0].next;
+
+					//this should not occur...
+					assert(curRegion != null);
+
+					//accumulate edge strength
+					curRegion[0].edgeStrength   += weightMap[dp] + weightMap[dp+1];
+					curRegion[0].edgePixelCount += 2;
+				}
+
+				if(curLabel != bottomLabel)
+				{
+					//traverse into RAM...
+					curRegion[0] = raList[curLabel];
+					while((curRegion != null)&&(curRegion[0].label != bottomLabel))
+						curRegion = curRegion[0].next;
+
+					//this should not occur...
+					assert(curRegion != null);
+
+					//accumulate edge strength
+					if(curLabel == rightLabel)
+					{
+						curRegion[0].edgeStrength   += weightMap[dp] + weightMap[dp+width];
+						curRegion[0].edgePixelCount += 2;
+					} 
+					else
+					{
+						curRegion[0].edgeStrength	  += weightMap[dp+width];
+						curRegion[0].edgePixelCount += 1;
+					}
+
+				}
+			}
+		}
+
+		//compute strengths using accumulated strengths obtained above...
+		RAList neighborRegion[] = null;
+		float	edgeStrength;
+		int		edgePixelCount;
+		for(x = 0; x < regionCount; x++)
+		{
+			//traverse the region list of the current region
+			curRegion[0]	= raList[x];
+			curRegion	= curRegion[0].next;
+			while(curRegion != null)
+			{
+				//with the assumption that regions having a smaller
+				//label in the current region list have already
+				//had their edge strengths computed, only compute
+				//edge strengths for the regions whose label is greater
+				//than x, the current region (region list) under
+				//consideration...
+				curLabel = curRegion[0].label;
+				if(curLabel > x)
+				{
+					//obtain pointer to the element identifying the
+					//current region in the neighbors region list...
+					neighborRegion[0] = raList[curLabel];
+					while((neighborRegion != null)&&(neighborRegion[0].label != x))
+						neighborRegion = neighborRegion[0].next;
+					
+					//this should not occur...
+					assert(neighborRegion != null);
+					
+					//compute edge strengths using accumulated confidence
+					//value and pixel count
+					if((edgePixelCount = curRegion[0].edgePixelCount + neighborRegion[0].edgePixelCount) != 0)
+					{
+						//compute edge strength
+						edgeStrength	= curRegion[0].edgeStrength + neighborRegion[0].edgeStrength;
+						edgeStrength	/= edgePixelCount;
+						
+						//store edge strength and pixel count for corresponding regions
+						curRegion[0].edgeStrength		= neighborRegion[0].edgeStrength		= edgeStrength;
+						curRegion[0].edgePixelCount	= neighborRegion[0].edgePixelCount	= edgePixelCount;
+					}
+				}
+
+				//traverse to the next region in the region adjacency list
+				//of the current region x
+				curRegion = curRegion[0].next;
+
+			}
+		}
+
+		//compute average edge strength amongst the edges connecting
+		//it to each of its neighbors
+		int numNeighbors;
+		for(x = 0; x < regionCount; x++)
+		{
+			//traverse the region list of the current region
+			//accumulating weights
+			curRegion[0]		= raList[x];
+			curRegion		= curRegion[0].next;
+			edgeStrength	= 0;
+			numNeighbors	= 0;
+			while(curRegion != null)
+			{
+				numNeighbors++;
+				edgeStrength   += curRegion[0].edgeStrength;
+				curRegion		= curRegion[0].next;
+			}
+
+			//divide by the number of regions connected
+			//to the current region
+			if(numNeighbors > 0) edgeStrength /= numNeighbors;
+
+			//store the result in the raList for region
+			//x
+			raList[x].edgeStrength = edgeStrength;
+		}
+
+		//traverse raList and output the resulting list
+		//to a file
+
+		//done.
+		return;
+
+	}
+	
+
+/*******************************************************/
+/*Build Region Adjacency Matrix                        */
+/*******************************************************/
+/*Constructs a region adjacency matrix.                */
+/*******************************************************/
+/*Pre:                                                 */
+/*      - the classification data structure has been   */
+/*        constructed.                                 */
+/*Post:                                                */
+/*      - a region adjacency matrix has been built     */
+/*        using the classification data structure.     */
+/*******************************************************/
+
+private void buildRAM()
+{
+
+	//Allocate memory for region adjacency matrix if it hasn't already been allocated
+	raList = new RAList[regionCount];
+	raPool = new RAList[NODE_MULTIPLE * regionCount];
+
+	//initialize the region adjacency list
+	int i;
+	for(i = 0; i < regionCount; i++)
+	{
+		raList[i].edgeStrength		= 0;
+		raList[i].edgePixelCount	= 0;
+		raList[i].label				= i;
+		raList[i].next				= null;
+	}
+
+	//initialize RAM free list
+	freeRAList	= raPool;
+	for(i = 0; i < NODE_MULTIPLE*regionCount-1; i++)
+	{
+		raPool[i].edgeStrength		= 0;
+		raPool[i].edgePixelCount	= 0;
+		raPool[i].next[0] = raPool[i+1];
+	}
+	raPool[NODE_MULTIPLE*regionCount-1].next	= null;
+
+	//traverse the labeled image building
+	//the RAM by looking to the right of
+	//and below the current pixel location thus
+	//determining if a given region is adjacent
+	//to another
+	int		j, curLabel, rightLabel, bottomLabel, exists;
+	RAList	raNode1[], raNode2[], oldRAFreeList[];
+	for(i = 0; i < height - 1; i++)
+	{
+		//check the right and below neighbors
+		//for pixel locations whose x < width - 1
+		for(j = 0; j < width - 1; j++)
+		{
+			//calculate pixel labels
+			curLabel	= labels[i*width+j    ];	//current pixel
+			rightLabel	= labels[i*width+j+1  ];	//right   pixel
+			bottomLabel	= labels[(i+1)*width+j];	//bottom  pixel
+
+			//check to the right, if the label of
+			//the right pixel is not the same as that
+			//of the current one then region[j] and region[j+1]
+			//are adjacent to one another - update the RAM
+			if(curLabel != rightLabel)
+			{
+				//obtain RAList object from region adjacency free
+				//list
+				raNode1			= freeRAList;
+				raNode2			= freeRAList[0].next;
+
+				//keep a pointer to the old region adj. free
+				//list just in case nodes already exist in respective
+				//region lists
+				oldRAFreeList	= freeRAList;
+
+				//update region adjacency free list
+				freeRAList		= freeRAList[0].next[0].next;
+
+				//populate RAList nodes
+				raNode1[0].label	= curLabel;
+				raNode2[0].label	= rightLabel;
+
+				//insert nodes into the RAM
+				exists			= 0;
+				insert(raList[curLabel], raNode2);
+				exists			= insert(raList[rightLabel],raNode1);
+
+				//if the node already exists then place
+				//nodes back onto the region adjacency
+				//free list
+				if(exists > 0)
+					freeRAList = oldRAFreeList;
+
+			}
+
+			//check below, if the label of
+			//the bottom pixel is not the same as that
+			//of the current one then region[j] and region[j+width]
+			//are adjacent to one another - update the RAM
+			if(curLabel != bottomLabel)
+			{
+				//obtain RAList object from region adjacency free
+				//list
+				raNode1			= freeRAList;
+				raNode2			= freeRAList[0].next;
+
+				//keep a pointer to the old region adj. free
+				//list just in case nodes already exist in respective
+				//region lists
+				oldRAFreeList	= freeRAList;
+
+				//update region adjacency free list
+				freeRAList		= freeRAList[0].next[0].next;
+
+				//populate RAList nodes
+				raNode1[0].label	= curLabel;
+				raNode2[0].label	= bottomLabel;
+
+				//insert nodes into the RAM
+				exists			= 0;
+				insert(raList[curLabel],raNode2);
+				exists			= insert(raList[bottomLabel],raNode1);
+
+				//if the node already exists then place
+				//nodes back onto the region adjacency
+				//free list
+				if(exists > 0)
+					freeRAList = oldRAFreeList;
+
+			}
+
+		}
+
+		//check only to the bottom neighbors of the right boundary
+		//pixels...
+
+		//calculate pixel locations (j = width-1)
+		curLabel	= labels[i*width+j    ];	//current pixel
+		bottomLabel = labels[(i+1)*width+j];	//bottom  pixel
+
+		//check below, if the label of
+		//the bottom pixel is not the same as that
+		//of the current one then region[j] and region[j+width]
+		//are adjacent to one another - update the RAM
+		if(curLabel != bottomLabel)
+		{
+			//obtain RAList object from region adjacency free
+			//list
+			raNode1			= freeRAList;
+			raNode2			= freeRAList[0].next;
+			
+			//keep a pointer to the old region adj. free
+			//list just in case nodes already exist in respective
+			//region lists
+			oldRAFreeList	= freeRAList;
+			
+			//update region adjacency free list
+			freeRAList		= freeRAList[0].next[0].next;
+			
+			//populate RAList nodes
+			raNode1[0].label	= curLabel;
+			raNode2[0].label	= bottomLabel;
+			
+			//insert nodes into the RAM
+			exists			= 0;
+			insert(raList[curLabel],raNode2);
+			exists			= insert(raList[bottomLabel],raNode1);
+			
+			//if the node already exists then place
+			//nodes back onto the region adjacency
+			//free list
+			if(exists > 0)
+				freeRAList = oldRAFreeList;
+
+		}
+	}
+
+	//check only to the right neighbors of the bottom boundary
+	//pixels...
+
+	//check the right for pixel locations whose x < width - 1
+	for(j = 0; j < width - 1; j++)
+	{
+		//calculate pixel labels (i = height-1)
+		curLabel	= labels[i*width+j    ];	//current pixel
+		rightLabel	= labels[i*width+j+1  ];	//right   pixel
+		
+		//check to the right, if the label of
+		//the right pixel is not the same as that
+		//of the current one then region[j] and region[j+1]
+		//are adjacent to one another - update the RAM
+		if(curLabel != rightLabel)
+		{
+			//obtain RAList object from region adjacency free
+			//list
+			raNode1			= freeRAList;
+			raNode2			= freeRAList[0].next;
+
+			//keep a pointer to the old region adj. free
+			//list just in case nodes already exist in respective
+			//region lists
+			oldRAFreeList	= freeRAList;
+			
+			//update region adjacency free list
+			freeRAList		= freeRAList[0].next[0].next;
+			
+			//populate RAList nodes
+			raNode1[0].label	= curLabel;
+			raNode2[0].label	= rightLabel;
+			
+			//insert nodes into the RAM
+			exists			= 0;
+			insert(raList[curLabel],raNode2);
+			exists			= insert(raList[rightLabel],raNode1);
+			
+			//if the node already exists then place
+			//nodes back onto the region adjacency
+			//free list
+			if(exists > 0)
+				freeRAList = oldRAFreeList;
+
+		}
+
+	}
+
+	//done.
+	return;
+
+}
+
+/*******************************************************/
+/*Insert                                               */
+/*******************************************************/
+/*Insert a region node into the region adjacency list. */
+/*******************************************************/
+/*Pre:                                                 */
+/*      - entry is a node representing a connected re- */
+/*        gion                                         */
+/*Post:                                                */
+/*      - entry has been inserted into the region adj- */
+/*        acency list if it does not already exist     */
+/*        there.                                       */
+/*      - if the entry already exists in the region    */
+/*        adjacency list 1 is returned otherwise 0 is  */
+/*        returned.                                    */
+/*******************************************************/
+
+private int insert(RAList source, RAList entry[])
+{
+
+	//if the list contains only one element
+	//then insert this element into next
+	if(source.next == null)
+	{
+		//insert entry
+		source.next		= entry;
+		entry[0].next = null;
+
+		//done
+		return 0;
+	}
+
+	//traverse the list until either:
+
+	//(a) entry's label already exists - do nothing
+	//(b) the list ends or the current label is
+	//    greater than entry's label, thus insert the entry
+	//    at this location
+
+	//check first entry
+	if(source.next[0].label > entry[0].label)
+	{
+		//insert entry into the list at this location
+		entry[0].next	= source.next;
+		source.next		= entry;
+
+		//done
+		return 0;
+	}
+
+	//check the rest of the list...
+	source.exists	= 0;
+	source.cur		= source.next;
+	while (source.cur != null)
+	{
+		if(entry[0].label == source.cur[0].label)
+		{
+			//node already exists
+			source.exists = 1;
+			break;
+		}
+		else if(((source.cur[0].next == null))||(source.cur[0].next[0].label > entry[0].label))
+		{
+			//insert entry into the list at this location
+			entry[0].next	= source.cur[0].next;
+			source.cur[0].next	= entry;
+			break;
+		}
+
+		//traverse the region adjacency list
+		source.cur = source.cur[0].next;
+	}
+
+	//done. Return exists indicating whether or not a new node was
+	//      actually inserted into the region adjacency list.
+	return (int)(source.exists);
+
+}
+
+
+
 
 	
 	/*******************************************************/
@@ -828,9 +1993,9 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
 	private void filter()
 	{
-		long time1;
+		long time1 = 0;
 		long time2;
-		long time3;
+		long time3 = 0;
 		long time4;
 		long elapsedTime;
 
@@ -873,7 +2038,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		//*****************************************************
 
 		//filter image according to speedup level...
-		/*switch(speedUpLevel)
+		switch(speedUpLevel)
 		{
 		//no speedup...
 		case NO_SPEEDUP:	
@@ -888,7 +2053,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		//high speedup
 		case HIGH_SPEEDUP: 
 	      //OptimizedFilter2((float)(spatialBandwidth), rangeBandwidth);		break;
-	      NewOptimizedFilter2(spatialBandwidth, rangeBandwidth);		
+	      newOptimizedFilter2(spatialBandwidth, rangeBandwidth);		
 		  break;
 	   // new speedup
 		}
@@ -924,20 +2089,193 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	}
 		
 		//Perform connecting (label image regions) using LUV_data
-		Connect();
+		connect();
 		
 	if (measureTime) {
         time4 = System.currentTimeMillis();
         elapsedTime = time4 - time3;
 		Preferences.debug("done. (" + elapsedTime +  " milliseconds, numRegions = " + regionCount+ "\n",
 		Preferences.DEBUG_ALGORITHM);
-		time5 = System.currentTimeMillis();
-	}*/
+	}
 
 		//done.
 		return;
 
 	}
+	
+	/*******************************************************/
+	/*connect                                              */
+	/*******************************************************/
+	/*Classifies the regions of the mean shift filtered    */
+	/*image.                                               */
+	/*******************************************************/
+	/*Post:                                                */
+	/*      - the regions of the mean shift image have been*/
+	/*        classified using the private classification  */
+	/*        structure of the msImageProcessor Class.     */
+	/*        Namely, each region uniquely identified by   */
+	/*        its LUV color  (stored by LUV_data) and loc- */
+	/*        ation has been labeled and its area computed */
+	/*        via an eight-connected fill.                 */
+	/*******************************************************/
+
+	private void connect()
+	{
+
+		//define eight connected neighbors
+		neigh[0]	= 1;
+		neigh[1]	= 1-width;
+		neigh[2]	= -width;
+		neigh[3]	= -(1+width);
+		neigh[4]	= -1;
+		neigh[5]	= width-1;
+		neigh[6]	= width;
+		neigh[7]	= width+1;
+
+		//initialize labels and modePointCounts
+		int i;
+		for(i = 0; i < width*height; i++)
+		{
+			labels[i]			= -1;
+			modePointCounts[i]	=  0;
+		}
+
+		//Traverse the image labeling each new region encountered
+		int k, label = -1;
+		for(i = 0; i < height*width; i++)
+		{
+			//if this region has not yet been labeled - label it
+			if(labels[i] < 0)
+			{
+				//assign new label to this region
+				labels[i] = ++label;
+
+				//copy region color into modes
+				for(k = 0; k < N; k++)
+	            modes[(N*label)+k] = LUV_data[(N*i)+k];
+//					modes[(N*label)+k]	= (float)(LUV_data[(N*i)+k]);
+
+				//populate labels with label for this specified region
+				//calculating modePointCounts[label]...
+				fill(i, label);
+			}
+		}
+
+		//calculate region count using label
+		regionCount	= label+1;
+
+		//done.
+		return;
+	}
+	
+	/*******************************************************/
+	/*Fill                                                 */
+	/*******************************************************/
+	/*Given a region seed and a region label, Fill uses    */
+	/*the region seed to perform an eight-connected fill   */
+	/*for the specified region, labeling all pixels con-   */
+	/*tained by the region with the specified label:       */
+	/*label.                                               */
+	/*******************************************************/
+	/*Pre:                                                 */
+	/*      - regionLoc is a region seed - a pixel that is */
+	/*        identified as being part of the region       */
+	/*        labled using the label, label.               */
+	/*Post:                                                */
+	/*      - all pixels belonging to the region specified */
+	/*        by regionLoc (having the same integer LUV    */
+	/*        value specified by LUV_data) are classified  */
+	/*        as one region by labeling each pixel in the  */
+	/*        image clasification structure using label    */
+	/*        via an eight-connected fill.                 */
+	/*******************************************************/
+
+	private void fill(int regionLoc, int label)
+	{
+
+		//declare variables
+		int	i, k, neighLoc, neighborsFound, imageSize	= width*height;
+
+		//Fill region starting at region location
+		//using labels...
+
+		//initialzie indexTable
+		int	index		= 0;
+		indexTable[0]	= regionLoc;
+
+		//increment mode point counts for this region to
+		//indicate that one pixel belongs to this region
+		modePointCounts[label]++;
+
+		while(true)
+		{
+
+			//assume no neighbors will be found
+			neighborsFound	= 0;
+
+			//check the eight connected neighbors at regionLoc -
+			//if a pixel has similar color to that located at 
+			//regionLoc then declare it as part of this region
+			for(i = 0; i < 8; i++)
+			{
+	         // no need
+	         /*
+				//if at boundary do not check certain neighbors because
+				//they do not exist...
+				if((regionLoc%width == 0)&&((i == 3)||(i == 4)||(i == 5)))
+					continue;
+				if((regionLoc%(width-1) == 0)&&((i == 0)||(i == 1)||(i == 7)))
+					continue;
+	         */   
+
+				//check bounds and if neighbor has been already labeled
+				neighLoc			= regionLoc + neigh[i];
+				if((neighLoc >= 0)&&(neighLoc < imageSize)&&(labels[neighLoc] < 0))
+				{
+					for(k = 0; k < N; k++)
+					{
+//						if(LUV_data[(regionLoc*N)+k] != LUV_data[(neighLoc*N)+k])
+	               if (Math.abs(LUV_data[(regionLoc*N)+k]-LUV_data[(neighLoc*N)+k])>=LUV_threshold)
+							break;
+					}
+					
+					//neighbor i belongs to this region so label it and
+					//place it onto the index table buffer for further
+					//processing
+					if(k == N)
+					{
+						//assign label to neighbor i
+						labels[neighLoc]	= label;
+						
+						//increment region point count
+						modePointCounts[label]++;
+						
+						//place index of neighbor i onto the index tabel buffer
+						indexTable[++index]	= neighLoc;
+						
+						//indicate that a neighboring region pixel was
+						//identified
+						neighborsFound	= 1;
+					}
+				}
+			}
+
+			//check the indexTable to see if there are any more
+			//entries to be explored - if so explore them, otherwise
+			//exit the loop - we are finished
+			if(neighborsFound > 0)
+				regionLoc	= indexTable[index];
+			else if (index > 1)
+				regionLoc	= indexTable[--index];
+			else
+				break; //fill complete
+		}
+
+		//done.
+		return;
+
+	}
+
 	
 	private void newNonOptimizedFilter(float sigmaS, float sigmaR)
 	{
@@ -1064,7 +2402,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	   // done indexing/hashing
 		
 		// proceed ...
-	   Preferences.debug("done.\nApplying mean shift (Using Lattice)... ", Preferences.DEBUG_ALGORITHM);
+	   Preferences.debug("done.\nApplying mean shift (Using Lattice)... \n", Preferences.DEBUG_ALGORITHM);
 
 		for(i = 0; i < L; i++)
 		{
@@ -1396,7 +2734,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	   }
 		
 		// proceed 
-	   Preferences.debug("done.\nApplying mean shift (Using Lattice) ... ", Preferences.DEBUG_ALGORITHM);
+	   Preferences.debug("done.\nApplying mean shift (Using Lattice) ... \n", Preferences.DEBUG_ALGORITHM);
 
 
 		for(i = 0; i < L; i++)
@@ -1723,9 +3061,487 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		return;
 
 	}
-
-
 	
+	private void newOptimizedFilter2(float sigmaS, float sigmaR)
+	{
+		// Declare Variables
+		int		iterationCount, i, j, k, modeCandidateX, modeCandidateY, modeCandidate_i;
+		double	mvAbs, diff, el;
+
+		//re-assign bandwidths to sigmaS and sigmaR
+		if(((h[0] = sigmaS) <= 0)||((h[1] = sigmaR) <= 0))
+		{
+			MipavUtil.displayError("msImageProcessor Segment sigmaS and/or sigmaR is zero or negative.");
+			return;
+		}
+		
+		//define input data dimension with lattice
+		int lN	= N + 2;
+		
+		// Traverse each data point applying mean shift
+		// to each data point
+		
+		// Allcocate memory for yk
+		double	yk[]		= new double [lN];
+		
+		// Allocate memory for Mh
+		double	Mh[]		= new double [lN];
+
+	   // let's use some temporary data
+	   double sdata[];
+	   sdata = new double[lN*L];
+
+	   // copy the scaled data
+	   int idxs, idxd;
+	   idxs = idxd = 0;
+	   if (N==3)
+	   {
+	      for(i=0; i<L; i++)
+	      {
+	         sdata[idxs++] = (i%width)/sigmaS;
+	         sdata[idxs++] = (i/width)/sigmaS;
+	         sdata[idxs++] = data[idxd++]/sigmaR;
+	         sdata[idxs++] = data[idxd++]/sigmaR;
+	         sdata[idxs++] = data[idxd++]/sigmaR;
+	      }
+	   } else if (N==1)
+	   {
+	      for(i=0; i<L; i++)
+	      {
+	         sdata[idxs++] = (i%width)/sigmaS;
+	         sdata[idxs++] = (i/width)/sigmaS;
+	         sdata[idxs++] = data[idxd++]/sigmaR;
+	      }
+	   } else
+	   {
+	      for(i=0; i<L; i++)
+	      {
+	         sdata[idxs++] = (i%width)/sigmaS;
+	         sdata[idxs++] = (i/width)/sigmaS;
+	         for (j=0; j<N; j++)
+	            sdata[idxs++] = data[idxd++]/sigmaR;
+	      }
+	   }
+	   // index the data in the 3d buckets (x, y, L)
+	   int buckets[];
+	   int slist[];
+	   slist = new int[L];
+	   int bucNeigh[] = new int[27];
+
+	   double sMins; // just for L
+	   double sMaxs[] = new double[3]; // for all
+	   sMaxs[0] = width/sigmaS;
+	   sMaxs[1] = height/sigmaS;
+	   sMins = sMaxs[2] = sdata[2];
+	   idxs = 2;
+	   double cval;
+	   for(i=0; i<L; i++)
+	   {
+	      cval = sdata[idxs];
+	      if (cval < sMins)
+	         sMins = cval;
+	      else if (cval > sMaxs[2])
+	         sMaxs[2] = cval;
+
+	      idxs += lN;
+	   }
+
+	   int nBuck1, nBuck2, nBuck3;
+	   int cBuck1, cBuck2, cBuck3, cBuck;
+	   nBuck1 = (int) (sMaxs[0] + 3);
+	   nBuck2 = (int) (sMaxs[1] + 3);
+	   nBuck3 = (int) (sMaxs[2] - sMins + 3);
+	   buckets = new int[nBuck1*nBuck2*nBuck3];
+	   for(i=0; i<(nBuck1*nBuck2*nBuck3); i++)
+	      buckets[i] = -1;
+
+	   idxs = 0;
+	   for(i=0; i<L; i++)
+	   {
+	      // find bucket for current data and add it to the list
+	      cBuck1 = (int) sdata[idxs] + 1;
+	      cBuck2 = (int) sdata[idxs+1] + 1;
+	      cBuck3 = (int) (sdata[idxs+2] - sMins) + 1;
+	      cBuck = cBuck1 + nBuck1*(cBuck2 + nBuck2*cBuck3);
+
+	      slist[i] = buckets[cBuck];
+	      buckets[cBuck] = i;
+
+	      idxs += lN;
+	   }
+	   // init bucNeigh
+	   idxd = 0;
+	   for (cBuck1=-1; cBuck1<=1; cBuck1++)
+	   {
+	      for (cBuck2=-1; cBuck2<=1; cBuck2++)
+	      {
+	         for (cBuck3=-1; cBuck3<=1; cBuck3++)
+	         {
+	            bucNeigh[idxd++] = cBuck1 + nBuck1*(cBuck2 + nBuck2*cBuck3);
+	         }
+	      }
+	   }
+	   double wsuml, weight;
+	   double hiLTr = 80.0/sigmaR;
+	   // done indexing/hashing
+
+		
+		// Initialize mode table used for basin of attraction
+	   for (i = 0; i < L; i++) {
+		   modeTable[i] = 0;
+	   }
+		
+		// proceed ...
+	   Preferences.debug("done.\nApplying mean shift (Using Lattice) ... \n", Preferences.DEBUG_ALGORITHM);
+
+
+		for(i = 0; i < L; i++)
+		{
+			// if a mode was already assigned to this data point
+			// then skip this point, otherwise proceed to
+			// find its mode by applying mean shift...
+			if (modeTable[i] == 1)
+				continue;
+
+			// initialize point list...
+			pointCount = 0;
+
+			// Assign window center (window centers are
+			// initialized by createLattice to be the point
+			// data[i])
+	      idxs = i*lN;
+	      for (j=0; j<lN; j++)
+	         yk[j] = sdata[idxs+j];
+			
+			// Calculate the mean shift vector using the lattice
+			// LatticeMSVector(Mh, yk); // modify to new
+	      /*****************************************************/
+	   	// Initialize mean shift vector
+		   for(j = 0; j < lN; j++)
+	   		Mh[j] = 0;
+	   	wsuml = 0;
+	      // uniformLSearch(Mh, yk_ptr); // modify to new
+	      // find bucket of yk
+	      cBuck1 = (int) yk[0] + 1;
+	      cBuck2 = (int) yk[1] + 1;
+	      cBuck3 = (int) (yk[2] - sMins) + 1;
+	      cBuck = cBuck1 + nBuck1*(cBuck2 + nBuck2*cBuck3);
+	      for (j=0; j<27; j++)
+	      {
+	         idxd = buckets[cBuck+bucNeigh[j]];
+	         // list parse, crt point is cHeadList
+	         while (idxd>=0)
+	         {
+	            idxs = lN*idxd;
+	            // determine if inside search window
+	            el = sdata[idxs+0]-yk[0];
+	            diff = el*el;
+	            el = sdata[idxs+1]-yk[1];
+	            diff += el*el;
+
+	            if (diff < 1.0)
+	            {
+	               el = sdata[idxs+2]-yk[2];
+	               if (yk[2] > hiLTr)
+	                  diff = 4*el*el;
+	               else
+	                  diff = el*el;
+
+	               if (N>1)
+	               {
+	                  el = sdata[idxs+3]-yk[3];
+	                  diff += el*el;
+	                  el = sdata[idxs+4]-yk[4];
+	                  diff += el*el;
+	               }
+
+	               if (diff < 1.0)
+	               {
+	                  weight = 1-weightMap[idxd];
+	                  for (k=0; k<lN; k++)
+	                     Mh[k] += weight*sdata[idxs+k];
+	                  wsuml += weight;
+
+	      				//set basin of attraction mode table
+	                  if (diff < speedThreshold)
+	                  {
+					         if(modeTable[idxd] == 0)
+					         {
+	         					pointList[pointCount++]	= idxd;
+						         modeTable[idxd]	= 2;
+	      				   }
+	                  }
+	               }
+	            }
+	            idxd = slist[idxd];
+	         }
+	      }
+	   	if (wsuml > 0)
+	   	{
+			   for(j = 0; j < lN; j++)
+	   			Mh[j] = Mh[j]/wsuml - yk[j];
+	   	}
+	   	else
+	   	{
+			   for(j = 0; j < lN; j++)
+	   			Mh[j] = 0;
+	   	}
+	      /*****************************************************/
+	   	// Calculate its magnitude squared
+			//mvAbs = 0;
+			//for(j = 0; j < lN; j++)
+			//	mvAbs += Mh[j]*Mh[j];
+	      mvAbs = (Mh[0]*Mh[0]+Mh[1]*Mh[1])*sigmaS*sigmaS;
+	      if (N==3)
+	         mvAbs += (Mh[2]*Mh[2]+Mh[3]*Mh[3]+Mh[4]*Mh[4])*sigmaR*sigmaR;
+	      else
+	         mvAbs += Mh[2]*Mh[2]*sigmaR*sigmaR;
+
+			
+			// Keep shifting window center until the magnitude squared of the
+			// mean shift vector calculated at the window center location is
+			// under a specified threshold (Epsilon)
+			
+			// NOTE: iteration count is for speed up purposes only - it
+			//       does not have any theoretical importance
+			iterationCount = 1;
+			while((mvAbs >= EPSILON)&&(iterationCount < LIMIT))
+			{
+				
+				// Shift window location
+				for(j = 0; j < lN; j++)
+					yk[j] += Mh[j];
+				
+				// check to see if the current mode location is in the
+				// basin of attraction...
+
+				// calculate the location of yk on the lattice
+				modeCandidateX	= (int) (sigmaS*yk[0]+0.5);
+				modeCandidateY	= (int) (sigmaS*yk[1]+0.5);
+				modeCandidate_i	= modeCandidateY*width + modeCandidateX;
+
+				// if mvAbs != 0 (yk did indeed move) then check
+				// location basin_i in the mode table to see if
+				// this data point either:
+				
+				// (1) has not been associated with a mode yet
+				//     (modeTable[basin_i] = 0), so associate
+				//     it with this one
+				//
+				// (2) it has been associated with a mode other
+				//     than the one that this data point is converging
+				//     to (modeTable[basin_i] = 1), so assign to
+				//     this data point the same mode as that of basin_i
+
+				if ((modeTable[modeCandidate_i] != 2) && (modeCandidate_i != i))
+				{
+					// obtain the data point at basin_i to
+					// see if it is within h*TC_DIST_FACTOR of
+					// of yk
+	            diff = 0;
+	            idxs = lN*modeCandidate_i;
+	            for (k=2; k<lN; k++)
+	            {
+	               el = sdata[idxs+k] - yk[k];
+	               diff += el*el;
+	            }
+
+					// if the data point at basin_i is within
+					// a distance of h*TC_DIST_FACTOR of yk
+					// then depending on modeTable[basin_i] perform
+					// either (1) or (2)
+					if (diff < speedThreshold)
+					{
+						// if the data point at basin_i has not
+						// been associated to a mode then associate
+						// it with the mode that this one will converge
+						// to
+						if (modeTable[modeCandidate_i] == 0)
+						{
+							// no mode associated yet so associate
+							// it with this one...
+							pointList[pointCount++]		= modeCandidate_i;
+							modeTable[modeCandidate_i]	= 2;
+
+						} else
+						{
+
+							// the mode has already been associated with
+							// another mode, thererfore associate this one
+							// mode and the modes in the point list with
+							// the mode associated with data[basin_i]...
+
+							// store the mode info into yk using msRawData...
+							for (j = 0; j < N; j++)
+								yk[j+2] = msRawData[modeCandidate_i*N+j]/sigmaR;
+
+							// update mode table for this data point
+							// indicating that a mode has been associated
+							// with it
+							modeTable[i] = 1;
+
+							// indicate that a mode has been associated
+							// to this data point (data[i])
+							mvAbs = -1;
+
+							// stop mean shift calculation...
+							break;
+						}
+					}
+				}
+				
+	         // Calculate the mean shift vector at the new
+	         // window location using lattice
+	         // Calculate the mean shift vector using the lattice
+	         // LatticeMSVector(Mh, yk); // modify to new
+	         /*****************************************************/
+	         // Initialize mean shift vector
+	         for(j = 0; j < lN; j++)
+	            Mh[j] = 0;
+	         wsuml = 0;
+	         // uniformLSearch(Mh, yk_ptr); // modify to new
+	         // find bucket of yk
+	         cBuck1 = (int) yk[0] + 1;
+	         cBuck2 = (int) yk[1] + 1;
+	         cBuck3 = (int) (yk[2] - sMins) + 1;
+	         cBuck = cBuck1 + nBuck1*(cBuck2 + nBuck2*cBuck3);
+	         for (j=0; j<27; j++)
+	         {
+	            idxd = buckets[cBuck+bucNeigh[j]];
+	            // list parse, crt point is cHeadList
+	            while (idxd>=0)
+	            {
+	               idxs = lN*idxd;
+	               // determine if inside search window
+	               el = sdata[idxs+0]-yk[0];
+	               diff = el*el;
+	               el = sdata[idxs+1]-yk[1];
+	               diff += el*el;
+	               
+	               if (diff < 1.0)
+	               {
+	                  el = sdata[idxs+2]-yk[2];
+	                  if (yk[2] > hiLTr)
+	                     diff = 4*el*el;
+	                  else
+	                     diff = el*el;
+	                  
+	                  if (N>1)
+	                  {
+	                     el = sdata[idxs+3]-yk[3];
+	                     diff += el*el;
+	                     el = sdata[idxs+4]-yk[4];
+	                     diff += el*el;
+	                  }
+	                  
+	                  if (diff < 1.0)
+	                  {
+	                     weight = 1-weightMap[idxd];
+	                     for (k=0; k<lN; k++)
+	                        Mh[k] += weight*sdata[idxs+k];
+	                     wsuml += weight;
+
+	         				//set basin of attraction mode table
+	                     if (diff < speedThreshold)
+	                     {
+	   				         if(modeTable[idxd] == 0)
+					            {
+	            					pointList[pointCount++]	= idxd;
+						            modeTable[idxd]	= 2;
+	      				      }
+	                     }
+
+	                  }
+	               }
+	               idxd = slist[idxd];
+	            }
+	         }
+	         if (wsuml > 0)
+	         {
+	            for(j = 0; j < lN; j++)
+	               Mh[j] = Mh[j]/wsuml - yk[j];
+	         }
+	         else
+	         {
+	            for(j = 0; j < lN; j++)
+	               Mh[j] = 0;
+	         }
+	         /*****************************************************/
+				
+				// Calculate its magnitude squared
+				//mvAbs = 0;
+				//for(j = 0; j < lN; j++)
+				//	mvAbs += Mh[j]*Mh[j];
+	         mvAbs = (Mh[0]*Mh[0]+Mh[1]*Mh[1])*sigmaS*sigmaS;
+	         if (N==3)
+	            mvAbs += (Mh[2]*Mh[2]+Mh[3]*Mh[3]+Mh[4]*Mh[4])*sigmaR*sigmaR;
+	         else
+	            mvAbs += Mh[2]*Mh[2]*sigmaR*sigmaR;
+
+				// Increment iteration count
+				iterationCount++;
+				
+			}
+
+			// if a mode was not associated with this data point
+			// yet associate it with yk...
+			if (mvAbs >= 0)
+			{
+				// Shift window location
+				for(j = 0; j < lN; j++)
+					yk[j] += Mh[j];
+				
+				// update mode table for this data point
+				// indicating that a mode has been associated
+				// with it
+				modeTable[i] = 1;
+
+			}
+			
+	      for (k=0; k<N; k++)
+	         yk[k+2] *= sigmaR;
+
+			// associate the data point indexed by
+			// the point list with the mode stored
+			// by yk
+			for (j = 0; j < pointCount; j++)
+			{
+				// obtain the point location from the
+				// point list
+				modeCandidate_i = pointList[j];
+
+				// update the mode table for this point
+				modeTable[modeCandidate_i] = 1;
+
+				//store result into msRawData...
+				for(k = 0; k < N; k++)
+					msRawData[N*modeCandidate_i+k] = (float)(yk[k+2]);
+			}
+
+			//store result into msRawData...
+			for(j = 0; j < N; j++)
+				msRawData[N*i+j] = (float)(yk[j+2]);
+
+			// Prompt user on progress
+			float percent_complete = (float)(i/(float)(L))*100;
+		    fireProgressStateChanged((int)(percent_complete + 0.5));
+		}
+		
+		
+		// de-allocate memory
+	   buckets = null;
+	   slist = null;
+	   sdata = null;
+
+	   yk = null;
+	   Mh = null;
+		
+		// done.
+		return;
+
+	}
+
+
 	/*******************************************************/
 	/*Initialize Output                                    */
 	/*******************************************************/
@@ -1863,12 +3679,12 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
 	
 	//k-Dimensional Binary Search Tree
-	private class tree {
-	  float x[];
-	  tree  right;
-	  tree  left;
-	  tree  parent;
-	};
+	//private class tree {
+	  //float x[];
+	  //tree  right;
+	  //tree  left;
+	  //tree  parent;
+	//};
 
 	// User Defined Weight Function
 	private class userWeightFunct {
@@ -1888,6 +3704,66 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		boolean	OUTPUT_DEFINED;
 	};
 
- 
+	//define region structure
+	//private class REGION {
+		//int			label;
+		//int			pointCount;
+		//int			region;
+
+	//};
+	
+	//private class RegionList {
+		// REGION LIST PARTITIONED ARRAY
+
+		//REGION		regionList[];			//array of maxRegions regions
+		//int			minRegion;
+
+		//int			maxRegions;				//defines the number maximum number of regions
+											//allowed (determined by user during class construction)
+		//int			numRegions;				//the number of regions currently stored by the
+											//region list
+		//int			freeRegion;				//an index into the regionList pointing to the next
+											//available region in the regionList
+
+		//  INDEX TABLE 
+
+		//int			indexTable[];			//an array of indexes that point into an external structure
+											//specifying which points belong to a region
+		//int			freeBlockLoc;			//points to the next free block of memory in the indexTable
+
+		// INPUT DATA PARAMETERS
+
+		//Dimension of data set
+		//int			N;						//dimension of data set being classified by region list
+											//class
+
+		//Length of the data set
+		//int			L;						//number of points contained by the data set being classified by
+											//region list class
+		
+	//}
+	
+	//define Region Adjacency List class prototype
+	private class RAList {
+
+		// RAM Label
+		public int		label;
+
+		// RAM Weight
+		public float	edgeStrength;
+		public int		edgePixelCount;
+
+		// RAM Link
+		public RAList	next[];
+
+		
+		// current and previous pointer
+		private RAList cur[]; 
+		//private RAList prev[];
+
+		// flag
+		private byte exists;
+
+	};
 
 }
