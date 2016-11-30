@@ -23,6 +23,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,6 +35,7 @@ import java.io.RandomAccessFile;
 import java.util.Enumeration;
 import java.util.Vector;
 
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -117,6 +119,10 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
     private boolean isRangeUniform;
     
     private int speedInt;
+    
+    private JRadioButton newImage;
+    
+    private JRadioButton replaceImage;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -290,12 +296,36 @@ GuiBuilder gui = new GuiBuilder(this);
         gbc.gridx = 0;
         gbc.gridy++;
         mainPanel.add(measureTimeCheckBox, gbc);
+        
+        JPanel destinationPanel = new JPanel(new GridLayout(2, 1));
+        destinationPanel.setForeground(Color.black);
+        destinationPanel.setBorder(buildTitledBorder("Destination"));
+
+        ButtonGroup destinationGroup = new ButtonGroup();
+        newImage = new JRadioButton("New image", true);
+        newImage.setFont(serif12);
+        destinationGroup.add(newImage);
+        destinationPanel.add(newImage);
+
+        replaceImage = new JRadioButton("Replace image", false);
+        replaceImage.setFont(serif12);
+        destinationGroup.add(replaceImage);
+        destinationPanel.add(replaceImage);
+
+        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
+            replaceImage.setEnabled(true);
+        } else {
+            replaceImage.setEnabled(false);
+        }
+        gbc.gridy++;
+        mainPanel.add(destinationPanel, gbc);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
-        setSize(600,500);
+        setSize(600,600);
         setVisible(true);
     }
     
@@ -419,6 +449,12 @@ GuiBuilder gui = new GuiBuilder(this);
         
         measureTime = measureTimeCheckBox.isSelected();
         weightMap = new double[image.getExtents()[0] * image.getExtents()[1]];
+        
+        if (replaceImage.isSelected()) {
+            displayLoc = REPLACE;
+        } else if (newImage.isSelected()) {
+            displayLoc = NEW;
+        }
         return true;
     }
     
