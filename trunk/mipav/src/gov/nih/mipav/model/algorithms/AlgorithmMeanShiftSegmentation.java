@@ -367,6 +367,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	        			return;
         			}
         			
+        			
         			for(i = 0; i < L; i++)
         			{
         					RGBtoLUV(rgb, 4*i, data, 3*i);
@@ -680,14 +681,14 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		double	x, y, z, L0, u_prime, v_prime, constant;
 
 		//convert RGB to XYZ...
-		x		= XYZ[0][0]*rgb[rgbOffset] + XYZ[0][1]*rgb[rgbOffset+1] + XYZ[0][2]*rgb[rgbOffset+2];
-		y		= XYZ[1][0]*rgb[rgbOffset] + XYZ[1][1]*rgb[rgbOffset+1] + XYZ[1][2]*rgb[rgbOffset+2];
-		z		= XYZ[2][0]*rgb[rgbOffset] + XYZ[2][1]*rgb[rgbOffset+1] + XYZ[2][2]*rgb[rgbOffset+2];
+		x		= XYZ[0][0]*rgb[rgbOffset+1] + XYZ[0][1]*rgb[rgbOffset+2] + XYZ[0][2]*rgb[rgbOffset+3];
+		y		= XYZ[1][0]*rgb[rgbOffset+1] + XYZ[1][1]*rgb[rgbOffset+2] + XYZ[1][2]*rgb[rgbOffset+3];
+		z		= XYZ[2][0]*rgb[rgbOffset+1] + XYZ[2][1]*rgb[rgbOffset+2] + XYZ[2][2]*rgb[rgbOffset+3];
 
 		//convert XYZ to LUV...
 
 		//compute L*
-		L0		= y / (255.0 * Yn);
+	    L0		= y / (255.0 * Yn);
 		if(L0 > Lt)
 			luv[luvOffset]	= (116.0 * (Math.pow(L0, 1.0/3.0)) - 16.0);
 		else
