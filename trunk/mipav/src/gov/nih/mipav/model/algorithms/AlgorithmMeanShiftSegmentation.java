@@ -2340,7 +2340,8 @@ private int insert(RAList source, RAList entry[])
 	      for(i=0; i<L; i++)
 	      {
 	         sdata[idxs++] = (i%width)/sigmaS;
-	         sdata[idxs++] = (i%width)/sigmaS;
+	         // sdata[idxs++] = (i%width)/sigmaS; This is a mistake in the source code
+	         sdata[idxs++] = (i/width)/sigmaS;
 	         for (j=0; j<N; j++)
 	            sdata[idxs++] = data[idxd++]/sigmaR;
 	      }
