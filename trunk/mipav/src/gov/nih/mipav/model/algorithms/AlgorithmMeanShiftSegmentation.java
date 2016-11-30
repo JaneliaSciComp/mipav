@@ -827,7 +827,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		
 		if (N  == 1) {
 		    for (i = 0; i < L; i++) {
-		    	pxValue = (byte)(msRawData[i] + 0.5);
+		    	pxValue = (int)(msRawData[i] + 0.5);
 		    	if (pxValue < 0) {
 		    		outputBuffer[i] = (byte)0;
 		    	}
