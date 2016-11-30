@@ -1668,13 +1668,18 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
 private void buildRAM()
 {
-
-	//Allocate memory for region adjacency matrix if it hasn't already been allocated
+     int i;
+	// Allocate memory for region adjacency matrix if it hasn't already been allocated
 	raList = new RAList[regionCount];
+	for (i = 0; i < regionCount; i++) {
+		raList[i] = new RAList();
+	}
 	raPool = new RAList[NODE_MULTIPLE * regionCount];
+	for (i = 0; i < NODE_MULTIPLE * regionCount; i++) {
+		raPool[i] = new RAList();
+	}
 
 	//initialize the region adjacency list
-	int i;
 	for(i = 0; i < regionCount; i++)
 	{
 		raList[i].edgeStrength		= 0;
@@ -1689,6 +1694,7 @@ private void buildRAM()
 	{
 		raPool[i].edgeStrength		= 0;
 		raPool[i].edgePixelCount	= 0;
+		raPool[i].next = new RAList[1];
 		raPool[i].next[0] = raPool[i+1];
 	}
 	raPool[NODE_MULTIPLE*regionCount-1].next	= null;
