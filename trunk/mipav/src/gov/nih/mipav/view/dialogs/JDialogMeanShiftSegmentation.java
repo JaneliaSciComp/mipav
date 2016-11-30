@@ -418,6 +418,7 @@ GuiBuilder gui = new GuiBuilder(this);
         }
         
         measureTime = measureTimeCheckBox.isSelected();
+        weightMap = new double[image.getExtents()[0] * image.getExtents()[1]];
         return true;
     }
     
