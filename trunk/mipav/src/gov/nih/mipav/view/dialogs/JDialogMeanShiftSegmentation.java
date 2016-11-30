@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
@@ -71,7 +72,7 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
 
 	private boolean measureTime;
 	
-	private double speedThreshold; // the fraction of window radius used in new optimized filter 2.
+	private double speedThreshold = 0.5; // the fraction of window radius used in new optimized filter 2.
 	
 	// WEIGHT MAP USED WHEN COMPUTING MEAN SHIFT ON A LATTICE
 	private double  weightMap[]; // weight map that may be used to weight the kernel
@@ -110,6 +111,12 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
     private JTextField speedThresholdText;
     
     private JCheckBox measureTimeCheckBox;
+    
+    private boolean isSpatialUniform;
+    
+    private boolean isRangeUniform;
+    
+    private int speedInt;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -288,7 +295,7 @@ GuiBuilder gui = new GuiBuilder(this);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
-        setSize(600,700);
+        setSize(600,500);
         setVisible(true);
     }
     
@@ -617,6 +624,35 @@ GuiBuilder gui = new GuiBuilder(this);
         } else {
             setDisplayLocReplace();
         }
+        isSpatialUniform = scriptParameters.getParams().getBoolean("is_spatial_uniform");
+        if (isSpatialUniform) {
+        	spatialKernelType = AlgorithmMeanShiftSegmentation.kernelType.Uniform;	
+        }
+        else {
+        	spatialKernelType = AlgorithmMeanShiftSegmentation.kernelType.Gaussian;	
+        }
+        isRangeUniform = scriptParameters.getParams().getBoolean("is_range_uniform");
+        if (isRangeUniform) {
+        	rangeKernelType = AlgorithmMeanShiftSegmentation.kernelType.Uniform;	
+        }
+        else {
+        	rangeKernelType = AlgorithmMeanShiftSegmentation.kernelType.Gaussian;	
+        }
+        spatialBandwidth = scriptParameters.getParams().getFloat("spatial_bandwidth");
+        rangeBandwidth = scriptParameters.getParams().getFloat("range_bandwidth");
+        minRegion = scriptParameters.getParams().getInt("min_region");
+        speedInt = scriptParameters.getParams().getInt("speedInt");
+        if (speedInt == 0) {
+        	speedUpLevel = AlgorithmMeanShiftSegmentation.SpeedUpLevel.NO_SPEEDUP;	
+        }
+        else if (speedInt == 1) {
+        	speedUpLevel = AlgorithmMeanShiftSegmentation.SpeedUpLevel.MED_SPEEDUP;
+        }
+        else {
+        	speedUpLevel = AlgorithmMeanShiftSegmentation.SpeedUpLevel.HIGH_SPEEDUP;
+        }
+        speedThreshold = scriptParameters.getParams().getDouble("speed_threshold");
+        measureTime = scriptParameters.getParams().getBoolean("measure_time");
     }
     
     /**
@@ -625,6 +661,29 @@ GuiBuilder gui = new GuiBuilder(this);
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        if (spatialKernelType == AlgorithmMeanShiftSegmentation.kernelType.Uniform) {
+        	isSpatialUniform = true;
+        }
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_spatial_uniform", isSpatialUniform));
+        if (rangeKernelType == AlgorithmMeanShiftSegmentation.kernelType.Uniform) {
+        	isRangeUniform = true;
+        }
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_range_uniform", isRangeUniform));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("spatial_bandwidth", spatialBandwidth));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("range_bandwidth", rangeBandwidth));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_region", minRegion));
+        if (speedUpLevel == AlgorithmMeanShiftSegmentation.SpeedUpLevel.NO_SPEEDUP) {
+        	speedInt = 0;
+        }
+        else if (speedUpLevel == AlgorithmMeanShiftSegmentation.SpeedUpLevel.MED_SPEEDUP) {
+        	speedInt = 1;
+        }
+        else {
+        	speedInt = 2;
+        }
+        scriptParameters.getParams().put(ParameterFactory.newParameter("speed_int", speedInt));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("speed_threshold", speedThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("measure_time", measureTime));
     }
 
 }
