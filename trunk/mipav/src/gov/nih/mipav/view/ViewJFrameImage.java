@@ -2771,6 +2771,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogKMeans();
         } else if (command.equals("MeanShiftClustering")) {
             new JDialogMeanShiftClustering();
+        } else if (command.equals("MeanShiftSegmentation")) {
+            new JDialogMeanShiftSegmentation(this, getActiveImage());
         } else if (command.equals("SpectralClustering")) {
             new JDialogSpectralClustering();
         } else if (command.equals("HyperGraph")) {
