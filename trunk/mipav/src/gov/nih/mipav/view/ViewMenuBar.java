@@ -395,6 +395,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
 								menuBuilder.buildMenuItem("Lower completion", "LowerCompletion", 0, null, false),
 								menuBuilder.buildMenuItem("Markov random field", "HMRF_EM", 0, null, false),
+								menuBuilder.buildMenuItem("Mean shift", "MeanShiftSegmentation", 0, null, false),
 								menuBuilder.buildMenuItem("Power Watershed", "PowerWatershed", 0, null, false),
 								menuBuilder.buildMenuItem("Regions from Partial Borders", "RegionsFromPartial", 0, null, false),
 								menuBuilder.buildMenuItem("Region merging via boundary melting", "RegionMergingMelting", 0, null, false),
@@ -1873,5 +1874,6 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Region merging via boundary melting", true);
 		menuBuilder.setMenuItemEnabled("Edge Preserving Smoothing", true);
 		menuBuilder.setMenuItemEnabled("Symmetric Nearest Neighbor", true);
+		menuBuilder.setMenuItemEnabled("Mean shift", true);
 	}
 }
