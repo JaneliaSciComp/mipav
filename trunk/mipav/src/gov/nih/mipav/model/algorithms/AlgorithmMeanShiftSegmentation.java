@@ -521,28 +521,15 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	private void meanShift()
 	{
 		
-		//initialize input data set kd-tree
-		//root						= null;
-		//forest						= null;
-		//range						= null;
-		
 		//intialize kernel strucuture...
 		w							= null;
 		
 		//initialize weight function linked list...
 		head						= cur	= null;
 		
-		//intialize mean shift processing data structures...
-		//uv							= null;
-
-		//indicate that the lattice weight map is undefined
-		weightMapDefined			= false;
-		
 		//ErrorMessage				=  null;
 		
 		//Initialize class state...
-		class_state.INPUT_DEFINED	= false;
-		class_state.LATTICE_DEFINED	= false;
 		class_state.OUTPUT_DEFINED	= false;
 		
 		//intialize basin of attraction structure
@@ -550,9 +537,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		modeTable			= null;
 		pointList			= null;
 		pointCount			= 0;
-
-		//initialize region list
-		//regionList			= null;
 
 		//initialize output structures...
 		msRawData			= null;
@@ -585,58 +569,12 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	
 	private void defineLInput()
 	{
-		int i;
-		
-		//if input data is defined de-allocate memory, and
-		//re-initialize the input data structure
-		if((class_state.INPUT_DEFINED)||(class_state.LATTICE_DEFINED))
-			resetInput();
-		
-
-		//initialize weightMap to an array of zeros
-		for (i = 0; i < L; i++) {
-			weightMap[i] = 0.0f;
-		}
-		
-		//Indicate that a lattice input has recently been
-		//defined
-		class_state.LATTICE_DEFINED	= true;
-		class_state.INPUT_DEFINED	= false;
 		class_state.OUTPUT_DEFINED	= false;
 		
 		//done.
 		return;
 		
 	}
-
-	
-	/*******************************************************/
-	/*Reset Input                                          */
-	/*******************************************************/
-	/*De-allocates memory for and re-intializes input data */
-	/*structure.                                           */
-	/*******************************************************/
-	/*Post:                                                */
-	/*      - the memory of the input data structure has   */
-	/*        been de-allocated and this strucuture has    */
-	/*        been initialized for re-use.                 */
-	/*******************************************************/
-
-	private void resetInput()
-	{
-		
-		//initialize input data structure for re-use
-		//forest	= null;
-		//root	= null;
-		
-		//re-set class input to indicate that
-		//an input is not longer stored by
-		//the private data members of this class
-		class_state.INPUT_DEFINED	= class_state.LATTICE_DEFINED = false;
-		
-	}
-
-
 	
 	private void RGBtoLUV(float rgb[], int rgbOffset, double luv[], int luvOffset)
 	{
@@ -3584,20 +3522,6 @@ private int insert(RAList source, RAList entry[])
 	private void classConsistencyCheck(int iN, boolean usingLattice)
 	{
 		
-		//make sure input data set has been loaded into mean shift object...
-		if((class_state.INPUT_DEFINED == false)&&(!usingLattice))
-		{
-			MipavUtil.displayError("MeanShift classConsistencyCheck No input data specified.");
-			return;
-		}
-		
-		//make sure that the lattice is defined if it is being used
-		if((class_state.LATTICE_DEFINED == false)&&(usingLattice))
-		{
-			MipavUtil.displayError("MeanShift classConsistencyCheck Latice not created.");
-			return;
-		}
-		
 		//make sure that dimension of the kernel and the input data set
 		//agree
 		
@@ -3631,8 +3555,6 @@ private int insert(RAList source, RAList entry[])
 	
 	//Define class state structure
 	private class ClassStateStruct {
-		boolean	INPUT_DEFINED;
-		boolean	LATTICE_DEFINED;
 		boolean	OUTPUT_DEFINED;
 	};
 
