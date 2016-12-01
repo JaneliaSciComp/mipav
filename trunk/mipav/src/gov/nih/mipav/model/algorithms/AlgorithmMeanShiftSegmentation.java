@@ -433,9 +433,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		// Traverse through kernel generating weight function
 		// lookup table w
 		
-		// Assume kernel is uniform
-		//uniformKernel = true;
-		
 		for(i = 0; i < kp; i++)
 	    {
 			switch(kernel[i])
@@ -453,9 +450,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 				
 				// *Gaussian Kernel* has weight function w(u) = constant*exp(-u^2/[2h[i]^2])
 			case Gaussian:
-				
-				// Set uniformKernel to false
-				//uniformKernel = false;
 				
 				// generate weight function using expression,
 				// exp(-u/2), where u = norm(xi - x)^2/h^2
@@ -475,9 +469,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 				
 				// *User Define Kernel* uses the weight function wf(u)
 			case UserDefined:
-				
-				// Set uniformKernel to false
-				//uniformKernel = false;
 				
 				// Search for user defined weight function
 				// defined for subspace (i+1)
@@ -526,8 +517,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		
 		//initialize weight function linked list...
 		head						= cur	= null;
-		
-		//ErrorMessage				=  null;
 		
 		//Initialize class state...
 		class_state.OUTPUT_DEFINED	= false;
@@ -1054,7 +1043,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 			// Use the label buffer to reconstruct the label map, which specified
 			// the new image given its new regions calculated above
 			
-			for(i = 0; i < height*width; i++)
+			for(i = 0; i < L; i++)
 				labels[i]	= label_buffer[raList[labels[i]].label];
 
 			
@@ -1160,7 +1149,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		RAList	neighbor[];
 		for(i = 0; i < regionCount; i++)
 		{
-			//aquire first neighbor in region adjacency list pointed to
+			//acquire first neighbor in region adjacency list pointed to
 			//by raList[i]
 			neighbor	= raList[i].next;
 
@@ -1312,7 +1301,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		// Use the label buffer to reconstruct the label map, which specified
 		// the new image given its new regions calculated above
 
-		for(i = 0; i < height*width; i++)
+		for(i = 0; i < L; i++)
 			labels[i]	= label_buffer[raList[labels[i]].label];
 
 		//de-allocate memory
@@ -2013,7 +2002,7 @@ private int insert(RAList source, RAList entry[])
 
 		//initialize labels and modePointCounts
 		int i;
-		for(i = 0; i < width*height; i++)
+		for(i = 0; i < L; i++)
 		{
 			labels[i]			= -1;
 			modePointCounts[i]	=  0;
@@ -2021,7 +2010,7 @@ private int insert(RAList source, RAList entry[])
 
 		//Traverse the image labeling each new region encountered
 		int k, label = -1;
-		for(i = 0; i < height*width; i++)
+		for(i = 0; i < L; i++)
 		{
 			//if this region has not yet been labeled - label it
 			if(labels[i] < 0)
@@ -2073,7 +2062,7 @@ private int insert(RAList source, RAList entry[])
 	{
 
 		//declare variables
-		int	i, k, neighLoc, neighborsFound, imageSize	= width*height;
+		int	i, k, neighLoc, neighborsFound, imageSize	= L;
 
 		//Fill region starting at region location
 		//using labels...
