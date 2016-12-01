@@ -144,22 +144,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
  											 //the class, if a kernel has been defined, etc.)
 
  	// MEAN SHIFT PROCESSING DATA STRUCTURES 
-
- 	//private double	uv[]; // stores normalized distance vector between yk and xi
-
-    // Error Handler
- 	private enum ErrorLevel		{EL_OKAY, EL_ERROR, EL_HALT};
- 	//private enum ErrorType		{NONFATAL, FATAL};
- 	
- 	// ErrorMessage is an error message that is set by a mean shift library class when an error occurs.
-    //private String ErrorMessage;
-    
-    // ErrorStatus indicates if an error has occurred as a result of improper use of a mean shift library
-    // class method or because of insufficient resources. ErrorStatus is set to EL_ERROR (ErrorStatus
-    // = 1) if an error has occurred. If no error occurred when calling a particular method ErrorStatus
-    // is set to EL_OKAY (ErrorStatus = 0). 
-
-    private ErrorLevel	ErrorStatus;
     
     // Speed Up Level
     public enum SpeedUpLevel	{NO_SPEEDUP, MED_SPEEDUP, HIGH_SPEEDUP};
@@ -347,12 +331,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		// using above information and user
 		// defined weight function list
 		generateLookupTable();
-		
-		//check for errors
-		if(ErrorStatus == ErrorLevel.EL_ERROR) {
-		    setCompleted(false);
-		    return;
-		}
 		
 		for (t = 0; t < tDim; t++) {
         	for (z = 0; z < zDim; z++) {
@@ -566,9 +544,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		
 		//ErrorMessage				=  null;
 		
-		//initialize error status to OKAY
-		ErrorStatus					= ErrorLevel.EL_OKAY;
-		
 		//Initialize class state...
 		class_state.INPUT_DEFINED	= false;
 		class_state.LATTICE_DEFINED	= false;
@@ -624,10 +599,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		if((class_state.INPUT_DEFINED)||(class_state.LATTICE_DEFINED))
 			resetInput();
 		
-		
-		//check for errors
-		if(ErrorStatus == ErrorLevel.EL_ERROR)
-			return;
 
 		//initialize weightMap to an array of zeros
 		for (i = 0; i < L; i++) {
@@ -756,15 +727,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
         int pxValue;
 		//Apply mean shift to data set using sigmaS and sigmaR...
 		filter();
-
-		//check for errors
-		if(ErrorStatus == ErrorLevel.EL_ERROR)
-			return;
-
-		//check to see if the system has been halted, if so exit
-		if(ErrorStatus == ErrorLevel.EL_HALT)
-			return;
-
 		
         Preferences.debug("Applying transitive closure...\n", Preferences.DEBUG_ALGORITHM);
 	    if (measureTime) {
@@ -2016,8 +1978,6 @@ private int insert(RAList source, RAList entry[])
 		//     of the defined data set
 		// if not ... flag an error!
 		classConsistencyCheck(N+2, true);
-		if(ErrorStatus == ErrorLevel.EL_ERROR)
-			return;
 		
 		//If the image has just been read then allocate memory
 		//for and initialize output data structure used to store
@@ -2026,9 +1986,6 @@ private int insert(RAList source, RAList entry[])
 		{
 			initializeOutput();
 
-			//check for errors...
-			if(ErrorStatus == ErrorLevel.EL_ERROR)
-				return;
 		}
 
 		//****************** Allocate Memory ******************
@@ -3684,16 +3641,6 @@ private int insert(RAList source, RAList entry[])
 		
 	}
 
-
-	
-	//k-Dimensional Binary Search Tree
-	//private class tree {
-	  //float x[];
-	  //tree  right;
-	  //tree  left;
-	  //tree  parent;
-	//};
-
 	// User Defined Weight Function
 	private class userWeightFunct {
 	   
@@ -3712,44 +3659,6 @@ private int insert(RAList source, RAList entry[])
 		boolean	OUTPUT_DEFINED;
 	};
 
-	//define region structure
-	//private class REGION {
-		//int			label;
-		//int			pointCount;
-		//int			region;
-
-	//};
-	
-	//private class RegionList {
-		// REGION LIST PARTITIONED ARRAY
-
-		//REGION		regionList[];			//array of maxRegions regions
-		//int			minRegion;
-
-		//int			maxRegions;				//defines the number maximum number of regions
-											//allowed (determined by user during class construction)
-		//int			numRegions;				//the number of regions currently stored by the
-											//region list
-		//int			freeRegion;				//an index into the regionList pointing to the next
-											//available region in the regionList
-
-		//  INDEX TABLE 
-
-		//int			indexTable[];			//an array of indexes that point into an external structure
-											//specifying which points belong to a region
-		//int			freeBlockLoc;			//points to the next free block of memory in the indexTable
-
-		// INPUT DATA PARAMETERS
-
-		//Dimension of data set
-		//int			N;						//dimension of data set being classified by region list
-											//class
-
-		//Length of the data set
-		//int			L;						//number of points contained by the data set being classified by
-											//region list class
-		
-	//}
 	
 	//define Region Adjacency List class prototype
 	private class RAList {
@@ -3767,7 +3676,6 @@ private int insert(RAList source, RAList entry[])
 		
 		// current and previous pointer
 		private RAList cur[]; 
-		//private RAList prev[];
 
 		// flag
 		private byte exists;
