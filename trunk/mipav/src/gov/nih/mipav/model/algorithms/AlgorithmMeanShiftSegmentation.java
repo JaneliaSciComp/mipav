@@ -216,10 +216,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
     // COMPUTATION OF EDGE STRENGTHS
  	double			epsilon = 1.0;				//Epsilon used for transitive closure
-
- 	// Visit Table
- 	byte visitTable[];	// Table used to keep track of which pixels have been
-                        // already visited upon computing the boundary edge strengths
  	
  	private byte outputBuffer[];
     
@@ -575,9 +571,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		freeRAList			= null;
 		raPool				= null;
 
-		//intialize visit table to having NULL entries
-		visitTable			= null;
-
 		//initialize epsilon such that transitive closure
 		//does not take edge strength into consideration when
 		//fusing regions of similar color
@@ -733,9 +726,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	    	time1 = System.currentTimeMillis();
 	    }
 
-		//allocate memory visit table
-		visitTable = new byte [L];
-
 		//Apply transitive closure iteratively to the regions classified
 		//by the RAM updating labels and modes until the color of each neighboring
 		//region is within sqrt(rR2) of one another.
@@ -749,9 +739,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 			oldRC = regionCount;
 			counter++;
 		} while ((deltaRC <= 0)&&(counter < 10));
-
-		//de-allocate memory for visit table
-		visitTable	= null;
 
 		if (measureTime) {
 			time2 = System.currentTimeMillis();
@@ -1459,16 +1446,6 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 
 	private void computeEdgeStrengths()
 	{
-		int i;
-
-		//initialize visit table - used to keep track
-		//of which pixels have already been visited such
-		//as not to contribute their strength value to
-		//a boundary sum multiple times...
-		for (i = 0; i < L; i++) {
-			visitTable[i] = 0;
-		}
-
 		//traverse labeled image computing edge strengths
 		//(excluding image boundary)...
 		int    x, y, dp, curLabel, rightLabel, bottomLabel;
