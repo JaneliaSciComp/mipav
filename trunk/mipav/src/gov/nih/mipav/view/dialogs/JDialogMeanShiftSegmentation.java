@@ -129,6 +129,12 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
     private ModelImage filteredImage = null;
     
     private JCheckBox filterCheckBox;
+    
+    private boolean createBoundariesImage = false;
+    
+    private ModelImage boundariesImage = null;
+    
+    private JCheckBox boundariesCheckBox;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -311,6 +317,14 @@ GuiBuilder gui = new GuiBuilder(this);
         gbc.gridy++;
         mainPanel.add(filterCheckBox, gbc);
         
+        boundariesCheckBox = new JCheckBox("Create segmentation boundaries image", false);
+        boundariesCheckBox.setFont(serif12);
+        boundariesCheckBox.setForeground(Color.black);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(boundariesCheckBox, gbc);
+        
         JPanel destinationPanel = new JPanel(new GridLayout(2, 1));
         destinationPanel.setForeground(Color.black);
         destinationPanel.setBorder(buildTitledBorder("Destination"));
@@ -464,6 +478,7 @@ GuiBuilder gui = new GuiBuilder(this);
         measureTime = measureTimeCheckBox.isSelected();
         weightMap = new double[image.getExtents()[0] * image.getExtents()[1]];
         createFilteredImage = filterCheckBox.isSelected();
+        createBoundariesImage = boundariesCheckBox.isSelected();
         
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
@@ -540,6 +555,19 @@ GuiBuilder gui = new GuiBuilder(this);
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
             }
+            
+            if ((msAlgo.isCompleted() == true) && (boundariesImage != null)) {
+                // The algorithm has completed and produced a new image to be displayed.
+
+                updateFileInfo(image, boundariesImage);
+
+                try {
+
+                    new ViewJFrameImage(boundariesImage, null, new Dimension(610, 240));
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            }
 
         }
         // Update frame
@@ -570,6 +598,11 @@ GuiBuilder gui = new GuiBuilder(this);
             	filteredImage = new ModelImage(ModelStorageBase.UBYTE, image.getExtents(), filteredName);	
             }	
         }
+        
+        if (createBoundariesImage) {
+        	String boundariesName = makeImageName(image.getImageName(), "_boundaries");
+            boundariesImage = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), boundariesName);		
+        }
 
         if (displayLoc == NEW) {
 
@@ -589,7 +622,7 @@ GuiBuilder gui = new GuiBuilder(this);
                 // Make algorithm
                 msAlgo = new AlgorithmMeanShiftSegmentation(resultImage, image, spatialKernelType, rangeKernelType,
                 		spatialBandwidth, rangeBandwidth, minRegion, speedUpLevel, measureTime, speedThreshold, 
-                		weightMap, weightMapDefined, filteredImage);
+                		weightMap, weightMapDefined, filteredImage, boundariesImage);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -628,7 +661,7 @@ GuiBuilder gui = new GuiBuilder(this);
                 // Make the algorithm class
                 msAlgo = new AlgorithmMeanShiftSegmentation(null, image, spatialKernelType, rangeKernelType,
                 		spatialBandwidth, rangeBandwidth, minRegion, speedUpLevel, measureTime, speedThreshold, 
-                		weightMap, weightMapDefined, filteredImage);
+                		weightMap, weightMapDefined, filteredImage, boundariesImage);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -730,6 +763,7 @@ GuiBuilder gui = new GuiBuilder(this);
         speedThreshold = scriptParameters.getParams().getDouble("speed_threshold");
         measureTime = scriptParameters.getParams().getBoolean("measure_time");
         createFilteredImage = scriptParameters.getParams().getBoolean("create_filtered_image");
+        createBoundariesImage = scriptParameters.getParams().getBoolean("create_boundaries_image");
     }
     
     /**
@@ -762,6 +796,7 @@ GuiBuilder gui = new GuiBuilder(this);
         scriptParameters.getParams().put(ParameterFactory.newParameter("speed_threshold", speedThreshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("measure_time", measureTime));
         scriptParameters.getParams().put(ParameterFactory.newParameter("create_filtered_image", createFilteredImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("create_boundaries_image", createBoundariesImage));
     }
 
 }
