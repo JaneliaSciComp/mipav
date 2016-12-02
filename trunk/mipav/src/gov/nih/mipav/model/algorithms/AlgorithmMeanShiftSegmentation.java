@@ -194,7 +194,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
  											//together, thus defining image regions
  	
  	//Image Boundaries
- 	//RegionList	regionList[];			// stores the boundary locations for each region
+ 	RegionList	regionList;			// stores the boundary locations for each region
  	
  	//8 Connected Neighbors/////////
  	private int	neigh[] = new int[8];
@@ -221,6 +221,8 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
  	private int zDim;
 	private int t;
 	private int cf;
+	
+	private byte segmentationBoundaries[] = null;
  	
  	private byte outputBuffer[];
     
@@ -247,11 +249,13 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
     private boolean	weightMapDefined = false; // used to indicate if a lattice weight map has been defined
     
     private ModelImage filteredImage = null;
+    
+    private ModelImage boundariesImage = null;
 	
 	public AlgorithmMeanShiftSegmentation(ModelImage destImage, ModelImage srcImage, kernelType spatialKernelType,
 			kernelType rangeKernelType, float spatialBandwidth, float rangeBandwidth, int minRegion,
 			SpeedUpLevel speedUpLevel, boolean measureTime, double speedThreshold, double weightMap[],
-			boolean weightMapDefined, ModelImage filteredImage) {
+			boolean weightMapDefined, ModelImage filteredImage, ModelImage boundariesImage) {
 		super(destImage, srcImage);
 		this.spatialKernelType = spatialKernelType;
 		this.rangeKernelType = rangeKernelType;
@@ -264,6 +268,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		this.weightMap = weightMap;
 		this.weightMapDefined = weightMapDefined;
 		this.filteredImage = filteredImage;
+		this.boundariesImage = boundariesImage;
 	}
 	
 	public void runAlgorithm() {
@@ -311,6 +316,9 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		    N = 1;
 		    outputBuffer = new byte[L];
 		    cf = 1;
+        }
+        if (boundariesImage != null) {
+        	segmentationBoundaries = new byte[L];
         }
         class_state = new ClassStateStruct();
         //allocate memory for weight map
@@ -367,6 +375,9 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
         		//define input defined on a lattice using mean shift base class
         		defineLInput();
                 segment();
+                if (boundariesImage != null) {
+                	defineBoundaries();
+                }
                 
                 if (destImage != null) {
                 	try {
@@ -390,6 +401,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
                 }
         	} // for (z = 0; z < zDim; z++)
 		} // for (t = 0; t < tDim; t++)
+		meanShift();
 		if (destImage != null) {
 			destImage.calcMinMax();
 		}
@@ -400,10 +412,200 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		if (filteredImage != null) {
 			filteredImage.calcMinMax();
 		}
+		
+		if (boundariesImage != null) {
+			boundariesImage.calcMinMax();
+			segmentationBoundaries = null;
+		}
 		setCompleted(true);
 		return;
 		
 	}
+	
+	/*******************************************************/
+	/*Define Boundaries                                    */
+	/*******************************************************/
+	/*Defines the boundaries for each region of the segm-  */
+	/*ented image storing the result into a region list    */
+	/*object.                                              */
+	/*******************************************************/
+	/*Pre:                                                 */
+	/*      - the image has been segmented and a classifi- */
+	/*        cation structure has been created for this   */
+	/*        image                                        */
+	/*Post:                                                */
+	/*      - the boundaries of the segmented image have   */
+	/*        been defined and the boundaries of each reg- */
+	/*        ion has been stored into a region list obj-  */
+	/*        ect.                                         */
+	/*******************************************************/
+
+	private void defineBoundaries()
+	{
+
+		//declare and allocate memory for boundary map and count
+		int	boundaryMap[] = new int[L];
+		int boundaryCount[] = new int[regionCount];
+
+		//initialize boundary map and count
+		int i;
+		for(i = 0; i < L; i++)
+			boundaryMap[i]		= -1;
+		for(i = 0; i < regionCount; i++)
+			boundaryCount[i]	=  0;
+
+		//initialize and declare total boundary count -
+		//the total number of boundary pixels present in
+		//the segmented image
+		int	totalBoundaryCount	= 0;
+
+		//traverse the image checking the right and bottom
+		//four connected neighbors of each pixel marking
+		//boundary map with the boundaries of each region and
+		//incrementing boundaryCount using the label information
+
+		//***********************************************************************
+		//***********************************************************************
+
+		int		j, label, dataPoint;
+
+		//first row (every pixel is a boundary pixel)
+		for(i = 0; i < width; i++)
+		{
+				boundaryMap[i]		= label	= labels[i];
+				boundaryCount[label]++;
+				totalBoundaryCount++;
+		}
+
+		//define boundaries for all rows except for the first
+		//and last one...
+		for(i = 1; i < height - 1; i++)
+		{
+			//mark the first pixel in an image row as an image boundary...
+			dataPoint				= i*width;
+			boundaryMap[dataPoint]	= label	= labels[dataPoint];
+			boundaryCount[label]++;
+			totalBoundaryCount++;
+
+			for(j = 1; j < width - 1; j++)
+			{
+				//define datapoint and its right and bottom
+				//four connected neighbors
+				dataPoint		= i*width+j;
+
+				//check four connected neighbors if they are
+				//different this pixel is a boundary pixel
+				label	= labels[dataPoint];
+				if((label != labels[dataPoint-1])    ||(label != labels[dataPoint+1])||
+				   (label != labels[dataPoint-width])||(label != labels[dataPoint+width]))
+				{
+					boundaryMap[dataPoint]		= label	= labels[dataPoint];
+					boundaryCount[label]++;
+					totalBoundaryCount++;
+				}
+			}
+
+			//mark the last pixel in an image row as an image boundary...
+			dataPoint				= (i+1)*width-1;
+			boundaryMap[dataPoint]	= label	= labels[dataPoint];
+			boundaryCount[label]++;
+			totalBoundaryCount++;
+
+		}
+
+		//last row (every pixel is a boundary pixel) (i = height-1)
+		int	start	= (height-1)*width, stop = L;
+		for(i = start; i < stop; i++)
+		{
+			boundaryMap[i]		= label	= labels[i];
+			boundaryCount[label]++;
+			totalBoundaryCount++;
+		}
+
+		//***********************************************************************
+		//***********************************************************************
+
+		//store boundary locations into a boundary buffer using
+		//boundary map and count
+
+		//***********************************************************************
+		//***********************************************************************
+
+		int	boundaryBuffer[]	= new int [totalBoundaryCount];
+		int boundaryIndex[]	= new int [regionCount];
+
+		//use boundary count to initialize boundary index...
+		int counter = 0;
+		for(i = 0; i < regionCount; i++)
+		{
+			boundaryIndex[i]	= counter;
+			counter			   += boundaryCount[i];
+		}
+
+		//traverse boundary map placing the boundary pixel
+		//locations into the boundaryBuffer
+		for(i = 0; i < L; i++)
+		{
+			//if its a boundary pixel store it into
+			//the boundary buffer
+			if((label = boundaryMap[i]) >= 0)
+			{
+				segmentationBoundaries[i] = 1;
+				boundaryBuffer[boundaryIndex[label]] = i;
+				boundaryIndex[label]++;
+			}
+			else {
+				segmentationBoundaries[i] = 0;
+			}
+		}
+		
+		try {
+    		boundariesImage.importData((t*zDim+z)*L, segmentationBoundaries, false);
+    	}
+    	catch (IOException e) {
+    		MipavUtil.displayError("IOException " + e + " on boundariesImage.importData");
+    		setCompleted(false);
+    		return;
+    	}
+
+		//***********************************************************************
+		//***********************************************************************
+
+		//store the boundary locations stored by boundaryBuffer into
+		//the region list for each region
+
+		//***********************************************************************
+		//***********************************************************************
+
+		//destroy the old region list
+		regionList = null;
+
+		//create a new region list
+		regionList	= new RegionList(regionCount, totalBoundaryCount, N);
+
+		//add boundary locations for each region using the boundary
+		//buffer and boundary counts
+		counter	= 0;
+		for(i = 0; i < regionCount; i++)
+		{
+			regionList.addRegion(i, boundaryCount[i],boundaryBuffer, counter);
+			counter += boundaryCount[i];
+		}
+
+		//***********************************************************************
+		//***********************************************************************
+
+	   // deallocate local used memory
+	  boundaryMap = null;
+	  boundaryCount = null;
+	  boundaryBuffer = null;
+	  boundaryIndex = null;
+
+		//done.
+		return;
+
+	}
+
 	
 	/*******************************************************/
 	/*Generate Lookup Table                                */
@@ -535,6 +737,9 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		modeTable			= null;
 		pointList			= null;
 		pointCount			= 0;
+		
+		//initialize region list
+		regionList			= null;
 
 		//initialize output structures...
 		msRawData			= null;
@@ -3610,5 +3815,179 @@ private int insert(RAList source, RAList entry[])
 		private byte exists;
 
 	};
+	
+	//define region structure
+	private class REGION {
+		int			label;
+		int			pointCount;
+		int			region;
+
+	};
+	
+	//region class prototype...
+	private class RegionList {
+		
+		/*******************************************************/
+		/*Pre:                                                 */
+		/*      - modesPtr is a pointer to an array of modes   */
+		/*      - maxRegions_ is the maximum number of regions */
+		/*        that can be defined                          */
+		/*      - L_ is the number of data points being class- */
+		/*        ified by the region list class               */
+		/*      - N is the dimension of the data set being cl- */
+		/*        assified by the region list class            */
+		/*Post:                                                */
+		/*      - a region list object has been properly init- */
+		/*        ialized.                                     */
+		/*******************************************************/
+
+		public RegionList(int maxRegions_, int L_, int N_)
+		{
+			int i;
+
+			//Obtain maximum number of regions that can be
+			//defined by user
+			if((maxRegions = maxRegions_) <= 0) {
+				MipavUtil.displayError("RegionList Maximum number of regions is zero or negative.");
+			    return;
+			}
+
+			//Obtain dimension of data set being classified by
+			//region list class
+			if((N = N_) <= 0) {
+				MipavUtil.displayError("RegionList Dimension is zero or negative.");
+				return;
+			}
+
+			//Obtain length of input data set...
+			if((L = L_) <= 0) {
+				MipavUtil.displayError("RegionList Length of data set is zero or negative.");
+				return;
+			}
+
+			//Allocate memory for index table
+			indexTable = new int [L];
+
+			//Allocate memory for region list array
+			regionList = new REGION [maxRegions];
+			for (i = 0; i < maxRegions; i++) {
+				regionList[i] = new REGION();
+			}
+
+			//Initialize region list...
+			numRegions		= freeRegion = 0;
+
+			//Initialize indexTable
+			freeBlockLoc	= 0;
+
+			//done.
+			return;
+		}
+		
+		/*******************************************************/
+		/*Add Region                                           */
+		/*******************************************************/
+		/*Adds a region to the region list.                    */
+		/*******************************************************/
+		/*Pre:                                                 */
+		/*      - label is a positive integer used to uniquely */
+		/*        identify a region                            */
+		/*      - pointCount is the number of N-dimensional    */
+		/*        data points that exist in the region being   */
+		/*        classified.                                  */
+		/*      - indeces is a set of indeces specifying the   */
+		/*        data points contained within this region     */
+		/*      - pointCount must be > 0                       */
+		/*Post:                                                */
+		/*      - a new region labeled using label and contai- */
+		/*        ning pointCount number of points has been    */
+		/*        added to the region list.                    */
+		/*******************************************************/
+
+		public void addRegion(int label, int pointCount, int indeces[], int indecesOffset)
+		{
+
+			//make sure that there is enough room for this new region 
+			//in the region list array...
+			if(numRegions >= maxRegions) {
+				MipavUtil.displayError("addRegion Not enough memory allocated.");
+				return;
+			}
+
+			//make sure that label is positive and point Count > 0...
+			if((label < 0)||(pointCount <= 0)) {
+				MipavUtil.displayError("addRegion Label is negative or number of points in region is invalid.");
+				return;
+			}
+
+			//make sure that there is enough memory in the indexTable
+			//for this region...
+			if((freeBlockLoc + pointCount) > L) {
+				MipavUtil.displayError("addRegion Adding more points than what is contained in data set.");
+				return;
+			}
+
+			//place new region into region list array using
+			//freeRegion index
+			regionList[freeRegion].label		= label;
+			regionList[freeRegion].pointCount	= pointCount;
+			regionList[freeRegion].region		= freeBlockLoc;
+
+			//copy indeces into indexTable using freeBlock...
+			int i;
+			for(i = 0; i < pointCount; i++)
+				indexTable[freeBlockLoc+i] = indeces[i + indecesOffset];
+
+			//increment freeBlock to point to the next free
+			//block
+			freeBlockLoc	+= pointCount;
+
+			//increment freeRegion to point to the next free region
+			//also, increment numRegions to indicate that another
+			//region has been added to the region list
+			freeRegion++;
+			numRegions++;
+
+			//done.
+			return;
+
+		}
+
+
+
+		//#####################################
+		//### REGION LIST PARTITIONED ARRAY ###
+		//#####################################
+
+		REGION		regionList[];			//array of maxRegions regions
+		//int			minRegion;
+
+		int			maxRegions;				//defines the number maximum number of regions
+											//allowed (determined by user during class construction)
+		int			numRegions;				//the number of regions currently stored by the
+											//region list
+		int			freeRegion;				//an index into the regionList pointing to the next
+											//available region in the regionList
+
+		//#####################################
+		//###         INDEX TABLE           ###
+		//#####################################
+
+		int			indexTable[];			//an array of indexes that point into an external structure
+											//specifying which points belong to a region
+		int			freeBlockLoc;			//points to the next free block of memory in the indexTable
+
+		//#####################################
+		//###     INPUT DATA PARAMETERS     ###
+		//#####################################
+
+		//Dimension of data set
+		//int			N;				     //dimension of data set being classified by region list
+											//class
+
+		//Length of the data set
+		int			L;						//number of points contained by the data set being classified by
+											//region list class
+	}
 
 }
