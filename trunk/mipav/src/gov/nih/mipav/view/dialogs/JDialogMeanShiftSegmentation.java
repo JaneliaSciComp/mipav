@@ -123,6 +123,12 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
     private JRadioButton newImage;
     
     private JRadioButton replaceImage;
+    
+    private boolean createFilteredImage = false;
+    
+    private ModelImage filteredImage = null;
+    
+    private JCheckBox filterCheckBox;
 	
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -297,6 +303,14 @@ GuiBuilder gui = new GuiBuilder(this);
         gbc.gridy++;
         mainPanel.add(measureTimeCheckBox, gbc);
         
+        filterCheckBox = new JCheckBox("Create filtered image", false);
+        filterCheckBox.setFont(serif12);
+        filterCheckBox.setForeground(Color.black);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(filterCheckBox, gbc);
+        
         JPanel destinationPanel = new JPanel(new GridLayout(2, 1));
         destinationPanel.setForeground(Color.black);
         destinationPanel.setBorder(buildTitledBorder("Destination"));
@@ -449,6 +463,7 @@ GuiBuilder gui = new GuiBuilder(this);
         
         measureTime = measureTimeCheckBox.isSelected();
         weightMap = new double[image.getExtents()[0] * image.getExtents()[1]];
+        createFilteredImage = filterCheckBox.isSelected();
         
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
@@ -512,6 +527,20 @@ GuiBuilder gui = new GuiBuilder(this);
                 resultImage.disposeLocal(); // clean up memory
                 resultImage = null;
             }
+            
+            if ((msAlgo.isCompleted() == true) && (filteredImage != null)) {
+                // The algorithm has completed and produced a new image to be displayed.
+
+                updateFileInfo(image, filteredImage);
+
+                try {
+
+                    new ViewJFrameImage(filteredImage, null, new Dimension(610, 220));
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            }
+
         }
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -531,6 +560,16 @@ GuiBuilder gui = new GuiBuilder(this);
      */
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_meanShiftSegmentation");
+        
+        if (createFilteredImage) {
+        	String filteredName = makeImageName(image.getImageName(), "_filter");
+        	if (image.isColorImage()) {
+                filteredImage = new ModelImage(ModelStorageBase.ARGB, image.getExtents(), filteredName);
+            }
+            else {
+            	filteredImage = new ModelImage(ModelStorageBase.UBYTE, image.getExtents(), filteredName);	
+            }	
+        }
 
         if (displayLoc == NEW) {
 
@@ -550,7 +589,7 @@ GuiBuilder gui = new GuiBuilder(this);
                 // Make algorithm
                 msAlgo = new AlgorithmMeanShiftSegmentation(resultImage, image, spatialKernelType, rangeKernelType,
                 		spatialBandwidth, rangeBandwidth, minRegion, speedUpLevel, measureTime, speedThreshold, 
-                		weightMap, weightMapDefined);
+                		weightMap, weightMapDefined, filteredImage);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -589,7 +628,7 @@ GuiBuilder gui = new GuiBuilder(this);
                 // Make the algorithm class
                 msAlgo = new AlgorithmMeanShiftSegmentation(null, image, spatialKernelType, rangeKernelType,
                 		spatialBandwidth, rangeBandwidth, minRegion, speedUpLevel, measureTime, speedThreshold, 
-                		weightMap, weightMapDefined);
+                		weightMap, weightMapDefined, filteredImage);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -690,6 +729,7 @@ GuiBuilder gui = new GuiBuilder(this);
         }
         speedThreshold = scriptParameters.getParams().getDouble("speed_threshold");
         measureTime = scriptParameters.getParams().getBoolean("measure_time");
+        createFilteredImage = scriptParameters.getParams().getBoolean("create_filtered_image");
     }
     
     /**
@@ -721,6 +761,7 @@ GuiBuilder gui = new GuiBuilder(this);
         scriptParameters.getParams().put(ParameterFactory.newParameter("speed_int", speedInt));
         scriptParameters.getParams().put(ParameterFactory.newParameter("speed_threshold", speedThreshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("measure_time", measureTime));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("create_filtered_image", createFilteredImage));
     }
 
 }
