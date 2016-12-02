@@ -204,18 +204,23 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
  	//  REGION ADJACENCY MATRIX
 
  	// Region Adjacency List
- 	RAList	raList[];				// an array of RAList objects containing an entry for each
+ 	private RAList	raList[];				// an array of RAList objects containing an entry for each
  									// region of the image
 
  	// RAMatrix Free List
- 	RAList	freeRAList[];			// a pointer to the head of a region adjacency list object
+ 	private RAList	freeRAList[];			// a pointer to the head of a region adjacency list object
  											// free list
 
- 	RAList raPool[];				// a pool of RAList objects used in the construction of the
+ 	private RAList raPool[];				// a pool of RAList objects used in the construction of the
  									// RAM
 
     // COMPUTATION OF EDGE STRENGTHS
- 	double			epsilon = 1.0;				//Epsilon used for transitive closure
+ 	private double			epsilon = 1.0;				//Epsilon used for transitive closure
+ 	
+ 	private int z;
+ 	private int zDim;
+	private int t;
+	private int cf;
  	
  	private byte outputBuffer[];
     
@@ -240,11 +245,13 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 	 					         // upon performing mean shift on a lattice
 
     private boolean	weightMapDefined = false; // used to indicate if a lattice weight map has been defined
+    
+    private ModelImage filteredImage = null;
 	
 	public AlgorithmMeanShiftSegmentation(ModelImage destImage, ModelImage srcImage, kernelType spatialKernelType,
 			kernelType rangeKernelType, float spatialBandwidth, float rangeBandwidth, int minRegion,
 			SpeedUpLevel speedUpLevel, boolean measureTime, double speedThreshold, double weightMap[],
-			boolean weightMapDefined) {
+			boolean weightMapDefined, ModelImage filteredImage) {
 		super(destImage, srcImage);
 		this.spatialKernelType = spatialKernelType;
 		this.rangeKernelType = rangeKernelType;
@@ -256,17 +263,15 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		this.speedThreshold = speedThreshold;
 		this.weightMap = weightMap;
 		this.weightMapDefined = weightMapDefined;
+		this.filteredImage = filteredImage;
 	}
 	
 	public void runAlgorithm() {
 		int nDims;
-		int zDim;
 		int tDim;
 		float rgb[] = null;
-		int z;
-		int t;
 		int i;
-		int cf;
+		
 		//int kN;
 		// Start porting from msImageProcessor::DefineImage
 		if (srcImage == null) {
@@ -390,6 +395,10 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		}
 		else {
 			srcImage.calcMinMax();
+		}
+		
+		if (filteredImage != null) {
+			filteredImage.calcMinMax();
 		}
 		setCompleted(true);
 		return;
@@ -645,8 +654,40 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
         long time3 = 0;
         long time4;
         int pxValue;
+        int i;
 		//Apply mean shift to data set using sigmaS and sigmaR...
 		filter();
+		
+		if (filteredImage != null) {
+			if (N  == 1) {
+			    for (i = 0; i < L; i++) {
+			    	pxValue = (int)(msRawData[i] + 0.5);
+			    	if (pxValue < 0) {
+			    		outputBuffer[i] = (byte)0;
+			    	}
+			    	else if (pxValue > 255) {
+			    	    outputBuffer[i] = (byte)255;	
+			    	}
+			    	else {
+			    		outputBuffer[i] = (byte)pxValue;
+			    	}
+			    }
+			} // if (N == 1)
+			else if (N == 3) {
+				for (i = 0; i < L; i++) {
+					LUVtoRGB(msRawData, 3*i, outputBuffer, 4*i);
+				}
+			}
+			
+			try {
+        		filteredImage.importData(cf*(t*zDim+z)*L, outputBuffer, false);
+        	}
+        	catch (IOException e) {
+        		MipavUtil.displayError("IOException " + e + " on filteredImage.importData");
+        		setCompleted(false);
+        		return;
+        	}
+		} // if (filteredImage != null)
 		
         Preferences.debug("Applying transitive closure...\n", Preferences.DEBUG_ALGORITHM);
 	    if (measureTime) {
@@ -692,7 +733,7 @@ public class AlgorithmMeanShiftSegmentation extends AlgorithmBase {
 		destroyRAM();
 
 		//output to msRawData
-		int j, i, label;
+		int j, label;
 		for(i = 0; i < L; i++)
 		{
 			label	= labels[i];
