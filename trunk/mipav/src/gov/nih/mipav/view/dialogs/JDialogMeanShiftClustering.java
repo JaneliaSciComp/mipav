@@ -108,7 +108,7 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
     
     private JButton buttonImage;
     
-    private JComboBox<String> imageList;
+    private JComboBox imageList;
  	
  	private JTextField textPointsFile;
      
