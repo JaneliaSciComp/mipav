@@ -35,9 +35,6 @@ paper Mean shift: A robust approach toward feature space analysis and the edge d
  */
 
 public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
-	private static final double RED_WEIGHT = 0.299;
-	private static final double  GREEN_WEIGHT = 0.587;
-	private static final double BLUE_WEIGHT = 0.114;
 	private static final int MAX_FILTS = 31;
 	private static final int MAX_CUSTT = 30;
 	private static final int NO_ANGLES = 361;
@@ -62,17 +59,6 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
     private static final int FC_LINE= 3;
     private static final int FC_SQUARE_BOX = 4;
     private static final int FC_CUSTOM = 5; 
-
-	private int x_;
-	private int y_;
-	private boolean havePerm_;
-	private double smofil_[] = new double[MAX_FILTS];
-	private double diffil_[] = new double[MAX_FILTS];
-	private double wdx_[] = new double[MAX_FILTS*MAX_FILTS];
-	private double wdy_[] = new double[MAX_FILTS*MAX_FILTS];
-	private double mN_[][] = new double[MAX_FILTS][MAX_FILTS];
-	private double mQ_[][] = new double[MAX_FILTS][MAX_FILTS];
-	private double lookTable_[][] = new double[NO_ANGLES][];
 	
 	private static final int gNb[][]= new int[][]
 		{
@@ -85,37 +71,8 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 		  {-1, 1},
 		  {-1,-1}
 		};
-
-
-	private int WL_;
-	private int WW_;
-	private int nhcust_;
-	private int nlcust_;  
-	private float tcustx_[];
-	private float tcusty_[];
-	private float permGx_[];
-	private float permGy_[];
-	private float permConf_[];
-	private float permRank_[];
-	private float permNmxRank_[];
-	private float permNmxConf_[];
-	private float confTr_;
-	private float rankTr_;
-	private float hcustx_[];
-	private float hcusty_[];
-	private float custx_[];
-	private float custy_[];
-    private int ncust_;
-    private float lcustx_[];
-    private float lcusty_[];
-    private float grx_[];
-    private float gry_[];
-    private float te_[];
-    private float tm_[];
-    private float tc_[];
-    private int tc_Index;
-    private float tl_[];
-    private int npt_;
+    private BgImage cbgImage_;
+    private BgEdgeDetect cbgEdgeDetect_;
 
     private int filtDim;
     // nmxr, nmxc threshold for non-maxima-suppresion rank, confidence
@@ -159,7 +116,6 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 		int sliceSize;
 		int zDim;
 		int tDim;
-		float rgb[] = null;
 		int z;
 		int t;
 		int i;
@@ -168,12 +124,9 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 		double imageMax;
 		double buffer[] = null;
 		boolean rescale;
-		BgImage cim;
 		double a;
 		double b;
 		short sbuf[];
-		//float confMap[];
-		//float rank[];
 		if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -265,609 +218,65 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
        			   }      
         	   }
         	   
-        	   cim = new BgImage(sbuf, xDim, yDim, srcImage.isColorImage());
-        	   bgEdgeDetect(filtDim);
-        	   //computeEdgeInfo(cim, confMap, rank);
-        	   BgEdgeList el = new BgEdgeList();
-        	   doEdgeDetect(cim, el);
-        	   // set total and nmx image
-        	   /*SetTotalImage();
-        	   SetNmxImage();
+        	   cbgImage_ = new BgImage(sbuf, xDim, yDim, srcImage.isColorImage());
+        	   cbgEdgeDetect_ = new BgEdgeDetect(filtDim);
+        	   BgEdgeList cbgEdgeList_  = new BgEdgeList();
+        	   cbgEdgeDetect_.doEdgeDetect(cbgImage_, cbgEdgeList_);
+  
         	   // get binary edge image
-        	   BgImage tempImage = new BgImage(cim.x_, cim.y_, false);
-        	   el.setBinImage(tempImage);
+        	   BgImage tempImage = new BgImage(cbgImage_.x_, cbgImage_.y_, false);
+        	   cbgEdgeList_.setBinImage(tempImage);
         	   int edgex[];
         	   int edgey[];
         	   int nEdgep[] = new int[1];
-        	   edgex = new int[(cim.x_) * (cim.y_)];
-        	   edgey = new int[(cim.x_) * (cim.y_)];
-        	   BgEdge cbgPointSet_ = new BgEdge();
-        	   cbgPointSet_.type_ = 1;
+        	   edgex = new int[(cbgImage_.x_) * (cbgImage_.y_)];
+        	   edgey = new int[(cbgImage_.x_) * (cbgImage_.y_)];
+        	   cbgEdgeList_.getAllEdgePoints(edgex, edgey, nEdgep);
+        	   byte edgeBuffer[] = new byte[sliceSize];
+        	   for (i = 0; i < nEdgep[0]; i++) {
+        		   edgeBuffer[edgex[i] + xDim*edgey[i]] = 1;
+        	   }
+        	   edgey = null;
+        	   edgex = null;
+        	   
+        	   
+        	   if (destImage != null) {
+               	try {
+               		destImage.importData(cf*(t*zDim+z)*sliceSize, edgeBuffer, false);
+               	}
+               	catch (IOException e) {
+               		MipavUtil.displayError("IOException " + e + " on destImage.importData");
+               		setCompleted(false);
+               		return;
+               	}
+               }
+               else {
+               	try {
+               		srcImage.importData(cf*(t*zDim+z)*sliceSize, edgeBuffer, false);
+               	}
+               	catch (IOException e) {
+               		MipavUtil.displayError("IOException " + e + " on srcImage.importData");
+               		setCompleted(false);
+               		return;
+               	}	
+               }
 
-        	   cbgEdgeList.getAllEdgePoints(edgex, edgey, nEdgep);
-        	   cbgPointSet_.SetPoints(edgex, edgey, nEdgep);
-        	   hasEdge_ = 1;
-        	   delete [] edgey;
-        	   delete [] edgex;
-
-        	   // update image canvas
-        	   if (miViewEdge_->IsChecked())
-        	      origEdgeImage_->AddPointSet(&cbgPointSet_);
-
-        	   //active save tool
-        	   SaveEnable();
-
-
-        	   for (i=0; i<(cim.x_*cim.y_); i++)
-        		   if (tempImage.im_[i] == 0)
-        			   permConf_[i] = 0;*/
-
+        	  
         	} // for (z = 0; z < zDim; z++)
         } // for (t = 0; t < tDim; t++)
         
-	}
-	
-	// main function for edge detection
-	// cim input image
-    // cel edge list (will be filled with pixels on edges)
-
-	private void doEdgeDetect(BgImage cim, BgEdgeList cel)
-	{
-	x_ = cim.x_;
-	y_ = cim.y_;
-	Preferences.debug("Start edge detection...\n", Preferences.DEBUG_ALGORITHM);   
-	permGx_ = new float[x_*y_];
-	permGy_ = new float[x_*y_];
-	permConf_ = new float[x_*y_];
-	permRank_ = new float[x_*y_];
-	permNmxRank_ = new float[x_*y_];
-	permNmxConf_ = new float[x_*y_];
-	havePerm_ = true;
-	float tr[];
-	float tc[];
-	float tdh[];
-	float tdl[];
-	
-	tr = new float[x_*y_];
-	tc = new float[x_*y_];
-	tdh = new float[x_*y_];
-	tdl = new float[x_*y_];
-	
-	// compute gradient images
-	Preferences.debug("...smooth-differentiation filtering\n", Preferences.DEBUG_ALGORITHM);
-	gaussDiffFilter(cim, permGx_, permGy_, tr);   
-	
-	// compute confidences (subspace estimate)
-	Preferences.debug("...subspace estimate\n", Preferences.DEBUG_ALGORITHM);
-	subspaceEstim(tr, permGx_, permGy_, permConf_);
-	
-	// compute edge strength from gradient image
-	Preferences.debug("...edge strengths\n", Preferences.DEBUG_ALGORITHM);
-	strength(permGx_, permGy_, tr);
-	
-	// compute ranks of the strengths
-	Preferences.debug("...computing ranks\n", Preferences.DEBUG_ALGORITHM);
-	compRanks(tr, permRank_);
-	
-	// new nonmaxima supression
-	Preferences.debug("...nonmaxima supression: ", Preferences.DEBUG_ALGORITHM);
-	
-	// select appropriate function
-	//float (BgEdgeDetect::*fcomp)(float,float,float,float);
-	//float (BgEdgeDetect::*feval)(float,float);
-	switch(nmxType)
-	{
-	case FC_ELLIPSE:
-	//fcomp = &BgEdgeDetect::EllipseComp;
-	//feval = &BgEdgeDetect::EllipseEval;
-	Preferences.debug("arc\n", Preferences.DEBUG_ALGORITHM);
-	break;
-	case FC_VERT_LINE:
-	//fcomp = &BgEdgeDetect::VerticalLineComp;
-	//feval = &BgEdgeDetect::VerticalLineEval;
-	Preferences.debug("vertical line\n", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_HORIZ_LINE:
-	//fcomp = &BgEdgeDetect::HorizontalLineComp;
-	//feval = &BgEdgeDetect::HorizontalLineEval;
-	Preferences.debug("horizontal line\n", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_SQUARE_BOX:
-	//fcomp = &BgEdgeDetect::SquareComp;
-	//feval = &BgEdgeDetect::SquareEval;
-	Preferences.debug("box\n", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_LINE:
-	//fcomp = &BgEdgeDetect::LineComp;
-	//feval = &BgEdgeDetect::LineEval;		
-	Preferences.debug("line\n", Preferences.DEBUG_ALGORITHM);
-	break;
-	case FC_CUSTOM:
-	custx_ = hcustx_;
-	custy_ = hcusty_;
-	ncust_ = nhcust_;
-	//fcomp = &BgEdgeDetect::CustomRegionComp;
-	//feval = &BgEdgeDetect::CustomRegionEval;
-	Preferences.debug("custom", Preferences.DEBUG_ALGORITHM);
-	break;
-	default:
-	Preferences.debug("Type not known\n", Preferences.DEBUG_ALGORITHM);
-	return;
-	}
-	
-	confTr_ = (float) nmxc;
-	rankTr_ = (float) nmxr;
-	//newNonMaxSupress(permRank_, permConf_, permGx_, permGy_, permNmxRank_, permNmxConf_, fcomp);
-	newNonMaxSupress(permRank_, permConf_, permGx_, permGy_, permNmxRank_, permNmxConf_, nmxType);
-	// new hysteresis thresholding
-	Preferences.debug("...hysteresis thresholding, high: ", Preferences.DEBUG_ALGORITHM);
-	
-	// select function, high curve
-	switch(hystTypeHigh)
-	{
-	case FC_ELLIPSE:
-	//fcomp = &BgEdgeDetect::EllipseComp;
-	//feval = &BgEdgeDetect::EllipseEval;
-	Preferences.debug("arc", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_VERT_LINE:
-	//fcomp = &BgEdgeDetect::VerticalLineComp;
-	//feval = &BgEdgeDetect::VerticalLineEval;
-	Preferences.debug("vertical line", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_HORIZ_LINE:
-	//fcomp = &BgEdgeDetect::HorizontalLineComp;
-	//feval = &BgEdgeDetect::HorizontalLineEval;
-	Preferences.debug("horizontal line", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_SQUARE_BOX:
-	//fcomp = &BgEdgeDetect::SquareComp;
-	//feval = &BgEdgeDetect::SquareEval;
-	Preferences.debug("box", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_LINE:
-	//fcomp = &BgEdgeDetect::LineComp;
-	//feval = &BgEdgeDetect::LineEval;		
-	Preferences.debug("line", Preferences.DEBUG_ALGORITHM);  		
-	break;
-	case FC_CUSTOM:
-	custx_ = hcustx_;
-	custy_ = hcusty_;
-	ncust_ = nhcust_;
-	//fcomp = &BgEdgeDetect::CustomRegionComp;
-	//feval = &BgEdgeDetect::CustomRegionEval;
-	Preferences.debug("custom", Preferences.DEBUG_ALGORITHM);
-	break;
-	}  
-	
-	confTr_ = (float) ch;
-	rankTr_ = (float) rh;
-	//StrConfEstim(permNmxRank_, permNmxConf_, tdh, feval);
-	strConfEstim(permNmxRank_, permNmxConf_, tdh, hystTypeHigh);
-	
-	Preferences.debug("  low: ", Preferences.DEBUG_ALGORITHM);
-	
-	// select function, low curve
-	switch(hystTypeLow)
-	{
-	case FC_ELLIPSE:
-	//fcomp = &BgEdgeDetect::EllipseComp;
-	//feval = &BgEdgeDetect::EllipseEval;
-	Preferences.debug("arc\n", Preferences.DEBUG_ALGORITHM);
-	break;
-	case FC_VERT_LINE:
-	//fcomp = &BgEdgeDetect::VerticalLineComp;
-	//feval = &BgEdgeDetect::VerticalLineEval;
-	Preferences.debug("vertical line\n", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_HORIZ_LINE:
-	//fcomp = &BgEdgeDetect::HorizontalLineComp;
-	//feval = &BgEdgeDetect::HorizontalLineEval;
-	Preferences.debug("horizontal line\n", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_SQUARE_BOX:
-	//fcomp = &BgEdgeDetect::SquareComp;
-	//feval = &BgEdgeDetect::SquareEval;
-	Preferences.debug("box\n", Preferences.DEBUG_ALGORITHM);		
-	break;
-	case FC_LINE:
-	//fcomp = &BgEdgeDetect::LineComp;
-	//feval = &BgEdgeDetect::LineEval;		
-	Preferences.debug("line\n", Preferences.DEBUG_ALGORITHM);  		
-	break;
-	case FC_CUSTOM:
-	custx_ = lcustx_;
-	custy_ = lcusty_;
-	ncust_ = nlcust_;
-	//fcomp = &BgEdgeDetect::CustomRegionComp;
-	//feval = &BgEdgeDetect::CustomRegionEval;
-	Preferences.debug("custom\n", Preferences.DEBUG_ALGORITHM);
-	break;  		
-	} 
-	confTr_ = (float) cl;
-	rankTr_ = (float) rl;
-	
-	//strConfEstim(permNmxRank_, permNmxConf_, tdl, feval);
-	strConfEstim(permNmxRank_, permNmxConf_, tdl, hystTypeLow);
-	
-	grx_ = permGx_;
-	gry_ = permGy_;
-	
-	newHysteresisTr(tdh, tdl, cel, nMin, tr, tc);
-	
-	Preferences.debug("Done edge detection.\n", Preferences.DEBUG_ALGORITHM);
-	
-	tdl = null;
-	tdh = null;
-	tr = null;
-	tc = null;
-}
-	
-	private void newHysteresisTr(float edge[], float low[], BgEdgeList cel, int nMin, float mark[], float coord[])
-	{
-	   float tm[];
-	   float te[];
-	   int i,j;
-	   int tmIndex = 0;
-	   int teIndex = 0;
-	   
-	   for (i=0, tm=mark; i<x_*y_; i++,tmIndex++)
-	      tm[tmIndex]=0;
-	   
-	   te_ = te = edge;
-	   tm_ = tm = mark;
-	   tmIndex = 0;
-	   tl_ = low;
-	   
-	   for (j=0; j<y_; j++)
-	   {
-	      for (i=0; i<x_; i++, tmIndex++, teIndex++)
-	      {
-	         if ((tm[tmIndex]==0) && (te[teIndex]>HYST_LOW_CUT))
-	         {
-	            //found an edge start
-	            npt_ = 0;
-	            tm[tmIndex] = 1;
-	            tc_ = coord;
-	            tc_Index = 0;
-	            newEdgeFollow(i, j);
-	            //store the edge
-	            if (npt_>=nMin) cel.addEdge(coord, npt_);
-	         }
-	      }
-	   }
-	}
-
-	private void newEdgeFollow(int ii,int jj)
-	{
-	   int i;
-	   int iin, jjn;
-	   for (i=0; i<8; i++)
-	   {
-	      iin = ii+gNb[i][0];
-	      jjn = jj+gNb[i][1];
-	      if ((tm_[jjn*x_+iin]==0) && ((tl_[jjn*x_+iin])>0))
-	      {
-	         tm_[jjn*x_+iin] = 1;
-	         newEdgeFollow(iin, jjn);
-	      }
-	   }
-	   tc_[tc_Index++] = (float) ii;
-	   tc_[tc_Index++] = (float) jj;
-	   npt_++;
-	}
-
-	
-	private void strConfEstim(float ranks[], float confidence[], float rezult[],
-            int fevalType)
-	{
-	int i;
-	for (i=0; i<x_*y_; i++)
-	{
-	switch(fevalType) {
-	case FC_ELLIPSE:
-	    rezult[i] = ellipseEval(ranks[i], confidence[i]);
-	    break;
-	case FC_VERT_LINE:
-		rezult[i] = verticalLineEval(ranks[i], confidence[i]);
-		break;
-	case FC_HORIZ_LINE:
-		rezult[i] = horizontalLineEval(ranks[i], confidence[i]);
-		break;
-	case FC_LINE:
-		rezult[i] = lineEval(ranks[i], confidence[i]);
-		break;
-	case FC_SQUARE_BOX:
-		rezult[i] = squareEval(ranks[i], confidence[i]);
-		break;
-	case FC_CUSTOM:
-		rezult[i] = customRegionEval(ranks[i], confidence[i]);
-		break;
-	}
-	}
-	}
-	
-	private float ellipseEval(float x, float y)
-	{
-	   return ((x*x)/(rankTr_*rankTr_)+(y*y)/(confTr_*confTr_)-1);
-	}
-
-
-	private float verticalLineEval(float x, float y)
-	{
-	   return (x-rankTr_);
-	}
-	
-	private float horizontalLineEval(float x, float y)
-	{
-	   return(y-confTr_);
-	}
-	
-	private float lineEval(float x, float y)
-	{
-	   return (confTr_*x+rankTr_*y-confTr_*rankTr_);
-	}
-
-	private float squareEval(float x, float y)
-	{
-	   if ((x/rankTr_)>(y/confTr_))
-	      return(x-rankTr_);
-	   else
-	      return(y-confTr_);
-	}
-	
-	private float customRegionEval(float r,float c)
-	{
-	   //evaluate user region function
-	   //returns -1 if inside +1 if outside
-	   
-	   if ((r+c)<=ZERO_TRESH)
-	      return -1;
-	   int i;
-	   int crossings=0;
-	   float x;
-	   
-	   //shift to origin
-	   for (i=0; i<ncust_; i++)
-	   {
-	      tcustx_[i]=custx_[i]-r;
-	      tcusty_[i]=custy_[i]-c;
-	   }
-	   
-	   for (i=0; i<(ncust_-1); i++)
-	   {
-	      if ( (tcusty_[i]  >0 && tcusty_[i+1]<=0) ||
-	           (tcusty_[i+1]>0 && tcusty_[i]  <=0) )
-	      {
-	         x = (tcustx_[i]*tcusty_[i+1]-tcustx_[i+1]*tcusty_[i])/(tcusty_[i+1]-tcusty_[i]);
-	         if (x>0)
-	            crossings++;
-	      }	   
-	   }		
-	   
-	   if ((crossings % 2) ==1)
-	      return -1;
-	   else
-	      return 1;
-	}
-
-
-
-	private float fcomp(int fcompType, float x0, float y0, float x, float y) {
-		switch (fcompType) {
-		case FC_ELLIPSE:
-			return ellipseComp(x0, y0, x, y);
-		case FC_VERT_LINE:
-			return verticalLineComp(x0,y0, x, y);
-		case FC_HORIZ_LINE:
-			return horizontalLineComp(x0, y0, x, y);
-		case FC_LINE:
-			return lineComp(x0, y0, x, y);
-		case FC_SQUARE_BOX:
-			return squareComp(x0, y0, x, y);
-		case FC_CUSTOM:
-			return customRegionComp(x0, y0, x, y);
-		default:
-			return -1.0f;
+        if (destImage != null) {
+			destImage.calcMinMax();
 		}
+		else {
+			srcImage.calcMinMax();
+		}
+        
+        setCompleted(true);
+		return;
+        
 	}
-	
-	private float ellipseComp(float x0, float y0, float x, float y)
-	{
-	//   return (EllipseEval(x,y)-EllipseEval(x0,y0));
-	   return ((x*x-x0*x0)/(rankTr_*rankTr_)+(y*y-y0*y0)/(confTr_*confTr_));
-	}
-	
-	private float verticalLineComp(float x0, float y0, float x, float y)
-	{
-	//   return (VerticalLineEval(x,y)-VerticalLineEval(x0,y0));
-	   return (x-x0);
-
-	}
-	
-	private float horizontalLineComp(float x0, float y0, float x, float y)
-	{
-	//   return (HorizontalLineEval(x,y)-HorizontalLineEval(x0,y0));
-	   return (y-y0);
-	}
-
-	private float lineComp(float x0, float y0, float x, float y)
-	{
-	//   return (LineEval(x,y)-LineEval(x0,y0));
-	   return (confTr_*(x-x0)+rankTr_*(y-y0));
-	}
-
-	private float squareComp(float x0, float y0, float x, float y)
-	{
-	//   return(SquareEval(x,y)-SquareEval(x0,y0));
-	   float tret;
-	   tret = ((x/rankTr_)>(y/confTr_)) ? x-rankTr_ : y-confTr_;
-	   tret -= ((x0/rankTr_)>(y0/confTr_)) ? x0-rankTr_ : y0-confTr_;
-	   return tret;
-	}
-	
-	private float customRegionComp(float r0, float c0, float r, float c)
-	{
-	   return 0.0f;
-	}
-
-	
-	private void newNonMaxSupress(float rank[], float conf[], float grx[], float gry[], float nmxRank[], float nmxConf[],
-            int fcompType)
-{
-	int i,j;
-	float itr[];
-	float itc[];
-	float itgx[];
-	float itgy[];
-	float itnmxr[];
-	float itnmxc[];
-	float alpha,r1,c1,r2,c2,lambda;
-	itr = rank;
-	itc = conf;
-	itgx = grx;
-	itgy = gry;
-	itnmxr = nmxRank;
-	itnmxc = nmxConf;
-	int itrIndex = 0;
-	int itcIndex = 0;
-	int itgxIndex = 0;
-	int itgyIndex = 0;
-	int itnmxrIndex = 0;
-	int itnmxcIndex = 0;
-	
-	for (i=0; i<x_*y_; i++)
-	{
-	itnmxr[i] = itnmxc[i] = 0;
-	}
-	for(i=0; i<x_; i++)
-	{
-	itr[i] = itc[i] = 0;
-	itr[(y_-1)*x_+i] = itc[(y_-1)*x_+i] = 0;
-	}
-	for(j=0; j<y_; j++)
-	{
-	itr[j*x_] = itc[j*x_] = 0;
-	itr[j*x_+x_-1] = itc[j*x_+x_-1] = 0;
-	}
-	
-	for (j=0; j<y_; j++)
-	{
-	for (i=0; i<x_; i++, itrIndex++, itcIndex++, itgxIndex++, itgyIndex++, itnmxrIndex++, itnmxcIndex++)
-	{
-	if (itr[itrIndex]>0 && itc[itcIndex]>0)
-	{
-	alpha = (float) Math.atan2(itgy[itgyIndex], itgx[itgxIndex]);
-	alpha = (alpha<0) ? alpha+(float)Math.PI : alpha;
-	if (alpha<=Math.PI/4)
-	{
-	lambda = (float) Math.tan(alpha);
-	r1 = (1-lambda)*itr[itrIndex+1]+lambda*itr[itrIndex+x_+1];
-	c1 = (1-lambda)*itc[itcIndex+1]+lambda*itc[itcIndex+x_+1];
-	r2 = (1-lambda)*itr[itrIndex-1]+lambda*itr[itrIndex-x_-1];
-	c2 = (1-lambda)*itc[itcIndex-1]+lambda*itc[itcIndex-x_-1];
-	if (fcomp(fcompType, itr[itrIndex], itc[itcIndex], r1, c1)<0 && fcomp(fcompType, itr[itrIndex], itc[itcIndex], r2, c2)<=0)
-	{
-	itnmxr[itnmxrIndex] = itr[itrIndex];
-	itnmxc[itnmxcIndex] = itc[itcIndex];
-	}
-	}
-	else if (alpha<=Math.PI/2)
-	{
-	lambda = (float) Math.tan(Math.PI/2-alpha);
-	r1 = (1-lambda)*itr[itrIndex+x_]+lambda*itr[itrIndex+x_+1];
-	c1 = (1-lambda)*itc[itcIndex+x_]+lambda*itc[itcIndex+x_+1];
-	r2 = (1-lambda)*itr[itrIndex-x_]+lambda*itr[itrIndex-x_-1];
-	c2 = (1-lambda)*itc[itcIndex-x_]+lambda*itc[itcIndex-x_-1];
-	if (fcomp(fcompType,itr[itrIndex], itc[itcIndex], r1, c1)<0 && fcomp(fcompType,itr[itrIndex], itc[itcIndex], r2, c2)<=0)
-	{
-	itnmxr[itnmxrIndex] = itr[itrIndex];
-	itnmxc[itnmxcIndex] = itc[itcIndex];
-	}
-	
-	}
-	else if(alpha<=3*Math.PI/4)
-	{
-	lambda = (float) Math.tan(alpha-Math.PI/2);
-	r1 = (1-lambda)*itr[itrIndex+x_]+lambda*itr[itrIndex+x_-1];
-	c1 = (1-lambda)*itc[itcIndex+x_]+lambda*itc[itcIndex+x_-1];
-	r2 = (1-lambda)*itr[itrIndex-x_]+lambda*itr[itrIndex-x_+1];
-	c2 = (1-lambda)*itc[itcIndex-x_]+lambda*itc[itcIndex-x_+1];
-	if (fcomp(fcompType, itr[itrIndex], itc[itcIndex], r1, c1)<0 && fcomp(fcompType, itr[itrIndex], itc[itcIndex], r2, c2)<=0)
-	{
-	itnmxr[itnmxrIndex] = itr[itrIndex];
-	itnmxc[itnmxcIndex] = itc[itcIndex];
-	}
-	}
-	else
-	{
-	lambda = (float) Math.tan(Math.PI-alpha);
-	r1 = (1-lambda)*itr[itrIndex-1]+lambda*itr[itrIndex+x_-1];
-	c1 = (1-lambda)*itc[itcIndex-1]+lambda*itc[itcIndex+x_-1];
-	r2 = (1-lambda)*itr[itrIndex+1]+lambda*itr[itrIndex-x_+1];
-	c2 = (1-lambda)*itc[itcIndex+1]+lambda*itc[itcIndex-x_+1];
-	if (fcomp(fcompType, itr[itrIndex], itc[itcIndex], r1, c1)<0 && fcomp(fcompType, itr[itrIndex], itc[itcIndex], r2, c2)<=0)
-	{
-	itnmxr[itnmxrIndex] = itr[itrIndex];
-	itnmxc[itnmxcIndex] = itc[itcIndex];
-	}
-	}
-	}
-	}
-	}
-}
-
-
-	
-	private void bgEdgeDetect(int filtDim)
-	{
-	   havePerm_ = false;
-	   WL_ = filtDim;
-	   WW_ = 2*WL_+1;
-	   nhcust_ = 0;
-	   nlcust_ = 0;
-	   tcustx_ = new float[MAX_CUSTT];
-	   tcusty_ = new float[MAX_CUSTT];
-	   createFilters();
-	   createLookTable();
-	}
-	
-	private void createFilters()
-	{
-	   int i,j;
-	   double w;
-	   for (i=-WL_; i<=WL_; i++)
-	   {
-	      w = Math.pow(2,(-2*WL_))*factorial(2*WL_)/(factorial(WL_-i)*factorial(WL_+i));
-	      smofil_[i+WL_] = w;
-	      diffil_[i+WL_] = (2*i*w)/WL_;
-	   }
-	   for (j=0; j<WW_; j++)
-	   {
-	      for (i=0; i<WW_; i++)
-	      {
-	         wdy_[j+i*WW_] = wdx_[i+j*WW_] = smofil_[j]*diffil_[i];
-	      }
-	   }
-	   
-	   double norms = 0;
-	   double normd = 0;
-	   for (i=0; i<WW_; i++)
-	   {
-	      norms += smofil_[i]*smofil_[i];
-	      normd += diffil_[i]*diffil_[i];
-	   }
-	   
-	   for (j=0; j<WW_; j++)
-	   {
-	      for (i=0; i<WW_; i++)
-	      {
-	         mQ_[i][j] = (smofil_[j]*smofil_[i])/norms + (diffil_[j]*diffil_[i])/normd;
-	         mN_[i][j] = (i==j) ? 1-mQ_[i][j] : -mQ_[i][j];
-	      }
-	   }
-	}
-	
+		
 	private double factorial(double num)
 	{
 	   if (num==0 || num==1)
@@ -875,214 +284,6 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 	   return (num * factorial(num - 1));
 	}
 
-	private void createLookTable()
-	{
-	   Preferences.debug("Creating angle lookup table\n", Preferences.DEBUG_ALGORITHM);
-	   int i;
-	   for (i=-180; i<=180; i++)
-	   {
-	      lookTable_[i+180] = new double[WW_*WW_];
-	      generateMaskAngle(lookTable_[i+180], (double) i);
-	   }
-	}
-	
-	private void generateMaskAngle(double a[],double theta) {
-		   int sflag;
-		   int i,j,k;
-		   double cval[] = new double[4];
-		   double corner[][] = new double[2][4];
-		   double sinv,cosv;
-		   double intrs[][] = new double[2][4];
-		   int scor[] = new int[4];
-		   int nscor[] = new int[4];
-		   int sind,rowind,colind;
-		   double cordi[][] = new double[2][4];
-		   int lsigind,corin;
-		   int sigind[] = new int[4];
-		   double diffin[] = new double[2];
-		   double comcoor;
-
-		   theta = theta*Math.PI/180.0;
-		   sinv = Math.sin(theta);
-		   cosv = Math.cos(theta);
-		   
-		   for (i=0; i<WW_*WW_; i++)
-		      a[i]=0;
-		   
-		   for (i=WL_; i>=-WL_; i--)
-		   {
-		      for(j=-WL_; j<=WL_; j++)
-		      {
-		         corner[0][0] = j-0.5;
-		         corner[0][1] = j+0.5;
-		         corner[0][2] = j+0.5;
-		         corner[0][3] = j-0.5;
-		         
-		         corner[1][0] = i+0.5;
-		         corner[1][1] = i+0.5;
-		         corner[1][2] = i-0.5;
-		         corner[1][3] = i-0.5;
-		         
-		         cval[0] = -sinv*corner[0][0]+cosv*corner[1][0];
-		         cval[1] = -sinv*corner[0][1]+cosv*corner[1][1];
-		         cval[2] = -sinv*corner[0][2]+cosv*corner[1][2];
-		         cval[3] = -sinv*corner[0][3]+cosv*corner[1][3];
-		         
-		         scor[0] = my_sign(cval[0]);
-		         scor[1] = my_sign(cval[1]);
-		         scor[2] = my_sign(cval[2]);
-		         scor[3] = my_sign(cval[3]);
-		         
-		         sind = 0;
-		         if (scor[0]!=0)
-		            nscor[sind++] = scor[0];
-		         if (scor[1]!=0)
-		            nscor[sind++] = scor[1];
-		         if (scor[2]!=0)
-		            nscor[sind++] = scor[2];
-		         if (scor[3]!=0)
-		            nscor[sind++] = scor[3];
-		         
-		         sflag = 0;
-		         for (k=1;k<sind;k++)
-		         {
-		            if (nscor[k]!=nscor[0])
-		               sflag++;
-		         }
-		         
-		         rowind = i+WL_;
-		         colind = j+WL_;
-		         
-		         if (sflag==0)
-		         {
-		            if (nscor[0]==1)
-		               a[colind+rowind*WW_] = 1.0;
-		            else
-		               a[colind+rowind*WW_] = 0.0;
-		         }
-		         
-		         if (sflag!=0)
-		         {
-		            for (k=0; k<4; k++)
-		               intrs[0][k] = intrs[1][k] = 0.0;
-		            
-		            if(scor[0]==0)
-		            {
-		               intrs[0][0] = corner[0][0];
-		               intrs[1][0] = corner[1][0];
-		            }
-		            if (scor[0]*scor[1]<0)
-		            {
-		               intrs[0][0] = corner[1][0]*cosv/sinv;
-		               intrs[1][0] = corner[1][0];
-		            }
-		            if (scor[1]==0)
-		            {
-		               intrs[0][1] = corner[0][1];
-		               intrs[1][1] = corner[1][1];
-		            }
-		            if (scor[1]*scor[2]<0)
-		            {
-		               intrs[0][1] = corner[0][1];
-		               intrs[1][1] = corner[0][1]*sinv/cosv;
-		            }
-		            if (scor[2]==0)
-		            {
-		               intrs[0][2] = corner[0][2];
-		               intrs[1][2] = corner[1][2];
-		            }
-		            if (scor[2]*scor[3]<0)
-		            {
-		               intrs[0][2] = corner[1][2]*cosv/sinv;
-		               intrs[1][2] = corner[1][2];
-		            }
-		            if (scor[3]==0)
-		            {
-		               intrs[0][3] = corner[0][3];
-		               intrs[1][3] = corner[1][3];
-		            }
-		            if (scor[3]*scor[0]<0)
-		            {
-		               intrs[0][3] = corner[0][3];
-		               intrs[1][3] = corner[0][3]*sinv/cosv;
-		            }
-		            
-		            corin = 0;
-		            if (Math.abs(intrs[0][0])>TOL_E || Math.abs(intrs[1][0])>TOL_E)
-		            {
-		               cordi[0][corin] = intrs[0][0];
-		               cordi[1][corin++] = intrs[1][0];
-		            }
-		            if (Math.abs(intrs[0][1])>TOL_E || Math.abs(intrs[1][1])>TOL_E)
-		            {
-		               cordi[0][corin] = intrs[0][1];
-		               cordi[1][corin++] = intrs[1][1];
-		            }
-		            if (Math.abs(intrs[0][2])>TOL_E || Math.abs(intrs[1][2])>TOL_E)
-		            {
-		               cordi[0][corin] = intrs[0][2];
-		               cordi[1][corin++] = intrs[1][2];
-		            }
-		            if (Math.abs(intrs[0][3])>TOL_E || Math.abs(intrs[1][3])>TOL_E)
-		            {
-		               cordi[0][corin] = intrs[0][3];
-		               cordi[1][corin++] = intrs[1][3];
-		            }
-		            
-		            lsigind=0;
-		            if (scor[0]>0)
-		               sigind[lsigind++] = 0;
-		            if (scor[1]>0)
-		               sigind[lsigind++] = 1;
-		            if (scor[2]>0)
-		               sigind[lsigind++] = 2;
-		            if (scor[3]>0)
-		               sigind[lsigind++] = 3;
-		            
-		            if (lsigind==1)
-		            {
-		               a[colind+rowind*WW_] = 0.5*Math.abs(cordi[0][0]-cordi[0][1])*Math.abs(cordi[1][0]-cordi[1][1]);
-		            }
-		            if (lsigind==2)
-		            {
-		               diffin[0] = (int) Math.abs(cordi[0][0]-cordi[0][1]);
-		               diffin[1] = (int) Math.abs(cordi[1][0]-cordi[1][1]);
-		               if (diffin[0]==1)
-		               {
-		                  comcoor = corner[1][sigind[0]];
-		                  a[colind+rowind*WW_] = 0.5*(Math.abs(comcoor-cordi[1][0])+Math.abs(comcoor-cordi[1][1]));
-		               }
-		               if (diffin[1]==1)
-		               {
-		                  comcoor = corner[0][sigind[0]];
-		                  a[colind+rowind*WW_] = 0.5*(Math.abs(comcoor-cordi[0][0])+Math.abs(comcoor-cordi[0][1]));
-		               }
-		            }
-		            if(lsigind==3)
-		            {
-		               a[colind+rowind*WW_] = 1.0-0.5*Math.abs(cordi[0][0]-cordi[0][1])*Math.abs(cordi[1][0]-cordi[1][1]);
-		            }
-		         }
-		      }
-		   }
-		   
-		   //A=A-mean(mean(A));
-		   comcoor = 0;
-		   for (i=0; i<WW_*WW_; i++)
-		      comcoor += a[i];
-		   comcoor /= WW_*WW_;
-		   for (i=0; i<WW_*WW_; i++)
-		      a[i] -= comcoor;
-		   
-		   //A=A/norm(A,'fro')
-		   comcoor = 0;
-		   for (i=0; i<WW_*WW_; i++)
-		      comcoor += a[i]*a[i];
-		   comcoor = Math.sqrt(comcoor);
-		   for (i=0; i<WW_*WW_; i++)
-		      a[i] /= comcoor;
-		}
-	
 	private int my_sign(double val)
 	{
 	   if(val>TOL_E)
@@ -1091,347 +292,6 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 	      return -1;
 	   return 0;
 	}
-
-
-
-     
-	
-	// computes confidence map and rank information of specified image
-	//Computes confedence map and rank
-	//Pre : cim is an image
-	//Post: confidence map and rank has been computed for cim
-//	      and stored into confMap and rank respectively
-	private void computeEdgeInfo(BgImage cim, float confMap[], float rank[])
-	{
-	   x_ = cim.x_;
-	   y_ = cim.y_;
-	   Preferences.debug("Computing confidence map...\n", Preferences.DEBUG_ALGORITHM);   
-	   float pGx[], pGy[], pTemp[];
-	   BgImage tcim = new BgImage(x_, y_,false);
-	   if (cim.colorIm_)
-	   {
-		   tcim.setImageFromRGB(cim.im_, x_, y_, false);
-	   } else
-	   {
-		   tcim = cim;
-	   }
-
-	   pGx = new float[x_*y_];
-	   pGy = new float[x_*y_];   
-	   pTemp = new float[x_*y_];
-	   
-	   // compute gradient images
-	   Preferences.debug("...smooth-differentiation filtering\n", Preferences.DEBUG_ALGORITHM);
-	   gaussDiffFilter(tcim, pGx, pGy, pTemp);   
-
-	   // compute confidences (subspace estimate)
-	   Preferences.debug("...subspace estimate\n", Preferences.DEBUG_ALGORITHM);
-	   subspaceEstim(pTemp, pGx, pGy, confMap);
-
-	   // compute edge strength from gradient image
-	   Preferences.debug("...edge strengths\n", Preferences.DEBUG_ALGORITHM);
-	   strength(pGx, pGy, pTemp);
-	   
-	   // compute ranks of the strengths
-	   Preferences.debug("...computing ranks\n", Preferences.DEBUG_ALGORITHM);
-	   compRanks(pTemp, rank);
-	 
-	   //de-allocate memory
-	   pTemp = null;
-	   pGy = null;
-	   pGx = null;
-	}
-	
-	private void compRanks(float strength[], float ranks[])
-	{
-	   int index[];
-	   float ra[];
-	   ra = new float[x_*y_];
-	   index = new int[x_*y_];
-	   int ii;
-	   
-	   for (ii=0; ii<x_*y_; ii++)
-	   {
-	      index[ii] = ii;
-	      ranks[ii] = 0;
-	      ra[ii] = strength[ii];
-	   }
-
-	   //heap sort with ranks (from numerical recipies)
-	   long i, ir, j, l;
-	   long n;
-	   n = x_*y_;
-	   float rra;
-	   int irra;
-
-	   if (n<2)
-	      return;
-	   l = (n>>1)+1;
-	   ir = n;
-	   for (;;)
-	   {
-	      if (l>1)
-	      {
-	         rra = ra[(int)(--l-1)];
-	         irra = index[(int)(l-1)];
-	      }
-	      else
-	      {
-	         rra = ra[(int)(ir-1)];
-	         irra = index[(int)(ir-1)];
-	         ra[(int)(ir-1)] = ra[1-1];
-	         index[(int)(ir-1)] = index[1-1];
-	         if (--ir==1)
-	         {
-	            ra[1-1] = rra;
-	            index[1-1] = irra;
-	            break;
-	         }
-	      }
-	      i = l;
-	      j = l+l;
-	      while (j<=ir)
-	      {
-	         if (j<ir && ra[(int)(j-1)]<ra[(int)(j+1-1)])
-	            j++;
-	         if (rra<ra[(int)(j-1)])
-	         {
-	            ra[(int)(i-1)] = ra[(int)(j-1)];
-	            index[(int)(i-1)] = index[(int)(j-1)];
-	            i = j;
-	            j <<= 1;
-	         }
-	         else
-	            j = ir+1;
-	      }
-	      ra[(int)(i-1)] = rra;
-	      index[(int)(i-1)] = irra;
-	   }
-	   
-	   //setranks
-	   irra = 1;
-	   for (ii=1; ii<x_*y_; ii++)
-	   {
-	      if (ra[ii]>ZERO_TRESH)
-	      {
-	         ranks[index[ii]] = (float) irra;
-	         if (ra[ii]>ra[ii-1])
-	            irra++;
-	      }
-	   }
-	   irra--;
-	   for (ii=0; ii<x_*y_; ii++) 
-	      ranks[ii] /= irra;
-
-	  index = null;
-	  ra = null;
-	}
-
-	
-	private void strength(float grx[], float gry[], float strength[])
-	{
-	   int i,j;
-	   float itgx[];
-	   float itgy[];
-	   float its[];
-	   double val;
-	   int itgxIndex = 0;
-	   int itgyIndex = 0;
-	   int itsIndex = 0;
-	   itgx = grx;
-	   itgy = gry;
-	   its = strength;
-	   for (j=0; j<y_; j++)
-	      for(i=0; i<x_; i++)
-	      {
-	         val = Math.sqrt((double) (itgx[itgxIndex]*itgx[itgxIndex++])+((double) (itgy[itgyIndex]*itgy[itgyIndex++])));
-	         its[itsIndex++]=(float) (val);
-	      }
-	}
-
-	
-	private void subspaceEstim(float im[], float grx[], float gry[], float cee[])
-	{
-	   // im original image
-	   // grx, gry gradient of image
-	   // cee confidence edge estimate
-	   
-	   float itim[];
-	   float itgx[];
-	   float itgy[];
-	   float itcee[];
-	   itim = im;
-	   itgx = grx;
-	   itgy = gry;
-	   itcee = cee;
-	   int itimIndex = 0;
-	   int itgxIndex = 0;
-	   int itgyIndex = 0;
-	   int itceeIndex = 0;
-
-	   double tae[];
-	   double ti[];
-
-	   ti = new double[WW_*WW_];
-
-	   int i,j,l,c;
-	   double v1;
-	   double angleEdge;
-	   int WW2 = WW_*WW_;
-	   
-	   itimIndex += WL_*x_;
-	   itgxIndex += WL_*x_;
-	   itgyIndex += WL_*x_;
-	   itceeIndex += WL_*x_;
-
-	   for (j=WL_; j<(y_-WL_); j++)
-	   {
-	      for (i=0; i<WL_; i++)
-	         itcee[i] = 0;
-	      itimIndex += WL_;
-	      itgxIndex += WL_;
-	      itgyIndex += WL_;
-	      itceeIndex += WL_;
-
-
-	      for (i=WL_; i<(x_-WL_); i++, itimIndex++, itgxIndex++, itgyIndex++, itceeIndex++)
-	      {
-	         if ((Math.abs(itgx[itgxIndex])+Math.abs(itgy[itgyIndex]))>TOL_E)
-	         {
-	            angleEdge = (-Math.atan2(itgx[itgxIndex], itgy[itgyIndex]))*180.0/Math.PI;
-	            tae = lookTable_[(int) (angleEdge+180.49)];
-	            
-	            //A=A-mean(A)
-	            v1=0;
-	            for (l=0; l<WW_; l++)
-	            {
-	               for (c=0; c<WW_; c++)
-	               {
-	                  v1 += ti[l*WW_+c] = itim[itimIndex+(l-WL_)*x_+c-WL_];
-	               }
-	            }
-	            v1 /= WW2;
-	            for (l=0; l<WW2; l++)
-	               ti[l] -= v1;
-	            
-	            //A/norm(A,'fro')
-	            v1 = 0;
-	            for (l=0; l<WW2; l++)
-	               v1 += ti[l]*ti[l];
-	            v1 = Math.sqrt(v1);
-	            for (l=0; l<WW2; l++)
-	               ti[l] /= v1;
-
-	            //global
-	            v1 = 0;
-	            for (l=0; l<WW2; l++)
-	               v1 += tae[l]*ti[l];
-	            v1 = Math.abs(v1);
-	            itcee[itceeIndex] = (float) v1;
-	         }
-	         else
-	         {
-	            itcee[itceeIndex] = 0;
-	         }
-	      }
-	      for (i=0; i<WL_; i++)
-	         itcee[i] = 0;
-	      itimIndex += WL_;
-	      itgxIndex += WL_;
-	      itgyIndex += WL_;
-	      itceeIndex += WL_;
-	   }
-	   WW2 = x_*y_;
-	   for (j=0; j<(WL_*x_); j++)
-	   {
-	      cee[j] = 0;
-	      cee[WW2-j-1] = 0;
-	   }   
-
-	   
-	   ti = null;
-	}
-
-	
-	private void gaussDiffFilter(BgImage cim, float grx[], float gry[], float rezIm[])
-	{
-	   
-	   double sf[]; //smooth filter
-	   double df[]; //diff filter
-	   short im[];
-	   
-	   double tim[];
-	   double sum = 0;
-	   //double sum1 = 0;
-	   int i, j, k;
-	   
-	   //create kernels
-	   sf = smofil_;
-	   df = diffil_;
-	   
-	   im = cim.im_;
-	   tim = new double[x_*y_];
-	   for (i=0; i<x_*y_; i++)
-	   {
-	      grx[i] = gry[i] = 0;
-	      tim[i] = 0;
-	      rezIm[i] = im[i];
-	   }
-	   
-	   //filter image x
-	   //smooth on y
-	   for (i=0; i<x_; i++)
-	   {
-	      for (j=WL_; j<(y_-WL_); j++)
-	      {
-	         sum = 0;
-	         for (k=-WL_; k<=WL_; k++)
-	            sum += im[(j+k)*x_+i]*sf[k+WL_];
-	         tim[j*x_+i] = sum;
-	      }
-	   }
-	   //diff on x
-	   for (j=0; j<y_; j++)
-	   {
-	      for (i=WL_; i<(x_-WL_); i++)
-	      {
-	         sum = 0;
-	         for (k=-WL_; k<=WL_; k++)
-	            sum += tim[j*x_+i+k]*df[k+WL_];
-	         grx[j*x_+i] = (float) (sum);
-	      }
-	   }
-
-	   //filter image y
-	   for (i=0; i<x_*y_;i++)
-	      tim[i] = 0;
-	   im = cim.im_;
-	   //smooth on x
-	   for (j=0; j<y_; j++)
-	   {
-	      for (i=WL_; i<(x_-WL_); i++)
-	      {
-	         sum = 0;
-	         for (k=-WL_; k<=WL_; k++)
-	            sum += im[j*x_+i+k]*sf[k+WL_];
-	         tim[j*x_+i] = sum;
-	      }
-	   }
-	   //diff on y
-	   for (i=0; i<x_; i++)
-	   {
-	      for (j=WL_; j<(y_-WL_); j++)
-	      {
-	         sum = 0;
-	         for (k=-WL_; k<=WL_; k++)
-	            sum += tim[(j+k)*x_+i]*df[k+WL_];
-	         gry[j*x_+i] = (float) (sum);
-	      }
-	   }
-	   tim = null;
-	}
-
-
 	
 	private class BgImage
 	{
@@ -1483,54 +343,17 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 			      hasIm_ = false;
 			      colorIm_ = false;
 			   }
-			}
-		   
-		  public void setImageFromRGB(short im[], int x, int y, boolean colorIm)
-		   {
-		      privateResize(x, y, colorIm);
-
-		      int i;
-		     
-		      if (colorIm_ == false)
-		      {
-		         for (i=0; i<x*y; i++)
-		   	  {
-		   		 im_[i] = (short) (im[3*i]*RED_WEIGHT + im[3*i+1]*GREEN_WEIGHT + im[3*i+2]*BLUE_WEIGHT);
-		   	  }
-		      }
-		      else
-		      {
-		         for (i=0; i<x*y*3; i++)
-		            im_[i] = im[i];
-		      }
 		   }
-
-		  public void privateResize(int width, int height, boolean color)
-		  {
-		     if ((hasIm_ == false) || (width != x_) || (height != y_) || (color != colorIm_))
-		     {
-		        cleanData();
-		        x_ = width;
-		        y_ = height;
-		        colorIm_ = color;
-		        if (color == false)
-		           im_ = new short[x_*y_];
-		        else
-		           im_ = new short[x_*y_*3];
-		        hasIm_ = true;
-		     }
-		  }
-
 
 	}
 	
 	private class BgEdge
 	{
 		   int edge_[];
-		   double grad_[];
-		   boolean isGradSet_;
-		   boolean isMarkSet_;
-		   byte mark_[];
+		   //double grad_[];
+		   //boolean isGradSet_;
+		   //boolean isMarkSet_;
+		   //byte mark_[];
 		   int nPoints_;
 		   BgEdge next_;
 
@@ -1700,5 +523,1109 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 
 	   }
 	}
+	
+	// main class, edge detection
+	public class BgEdgeDetect {
+		
+	double smofil_[] = new double[MAX_FILTS];
+	   double diffil_[] = new double[MAX_FILTS];
+	   double wdx_[] = new double[MAX_FILTS*MAX_FILTS];
+	   double wdy_[] = new double[MAX_FILTS*MAX_FILTS];
+	   double mN_[][] = new double[MAX_FILTS][MAX_FILTS];
+	   double mQ_[][] = new double[MAX_FILTS][MAX_FILTS];
+	   double lookTable_[][] = new double[NO_ANGLES][];
+
+	   int WW_;
+	   int WL_;
+	   float confTr_;
+	   float rankTr_;
+
+	   float custx_[];
+	   float custy_[];
+	   float tcustx_[];
+	   float tcusty_[];
+	   int ncust_;
+
+	   float hcustx_[];
+	   float hcusty_[];
+	   int nhcust_;
+	   float lcustx_[];
+	   float lcusty_[];
+	   int nlcust_;   
+
+	   int x_;
+	   int y_;
+	   float permConf_[];
+	   float permRank_[];
+	   float permNmxRank_[];
+	   float permNmxConf_[];
+	   boolean havePerm_;
+	   
+	   float te_[];
+	   float tm_[];
+	   double low_;
+	   float tc_[];
+	   int tc_Index;
+	   float tl_[];
+	   int npt_;
+
+	   float grx_[];
+	   float gry_[];
+	   float permGx_[];
+	   float permGy_[]; 
+
+	   public BgEdgeDetect(int filtDim)
+		{
+		   havePerm_ = false;
+		   WL_ = filtDim;
+		   WW_ = 2*WL_+1;
+		   nhcust_ = 0;
+		   nlcust_ = 0;
+		   tcustx_ = new float[MAX_CUSTT];
+		   tcusty_ = new float[MAX_CUSTT];
+		   createFilters();
+		   createLookTable();
+		}
+	   
+	// main function for edge detection
+		// cim input image
+	    // cel edge list (will be filled with pixels on edges)
+
+		public void doEdgeDetect(BgImage cim, BgEdgeList cel)
+		{
+		x_ = cim.x_;
+		y_ = cim.y_;
+		Preferences.debug("Start edge detection...\n", Preferences.DEBUG_ALGORITHM);   
+		permGx_ = new float[x_*y_];
+		permGy_ = new float[x_*y_];
+		permConf_ = new float[x_*y_];
+		permRank_ = new float[x_*y_];
+		permNmxRank_ = new float[x_*y_];
+		permNmxConf_ = new float[x_*y_];
+		havePerm_ = true;
+		float tr[];
+		float tc[];
+		float tdh[];
+		float tdl[];
+		
+		tr = new float[x_*y_];
+		tc = new float[x_*y_];
+		tdh = new float[x_*y_];
+		tdl = new float[x_*y_];
+		
+		// compute gradient images
+		Preferences.debug("...smooth-differentiation filtering\n", Preferences.DEBUG_ALGORITHM);
+		gaussDiffFilter(cim, permGx_, permGy_, tr);   
+		
+		// compute confidences (subspace estimate)
+		Preferences.debug("...subspace estimate\n", Preferences.DEBUG_ALGORITHM);
+		subspaceEstim(tr, permGx_, permGy_, permConf_);
+		
+		// compute edge strength from gradient image
+		Preferences.debug("...edge strengths\n", Preferences.DEBUG_ALGORITHM);
+		strength(permGx_, permGy_, tr);
+		
+		// compute ranks of the strengths
+		Preferences.debug("...computing ranks\n", Preferences.DEBUG_ALGORITHM);
+		compRanks(tr, permRank_);
+		
+		// new nonmaxima supression
+		Preferences.debug("...nonmaxima supression: ", Preferences.DEBUG_ALGORITHM);
+		
+		// select appropriate function
+		//float (BgEdgeDetect::*fcomp)(float,float,float,float);
+		//float (BgEdgeDetect::*feval)(float,float);
+		switch(nmxType)
+		{
+		case FC_ELLIPSE:
+		//fcomp = &BgEdgeDetect::EllipseComp;
+		//feval = &BgEdgeDetect::EllipseEval;
+		Preferences.debug("arc\n", Preferences.DEBUG_ALGORITHM);
+		break;
+		case FC_VERT_LINE:
+		//fcomp = &BgEdgeDetect::VerticalLineComp;
+		//feval = &BgEdgeDetect::VerticalLineEval;
+		Preferences.debug("vertical line\n", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_HORIZ_LINE:
+		//fcomp = &BgEdgeDetect::HorizontalLineComp;
+		//feval = &BgEdgeDetect::HorizontalLineEval;
+		Preferences.debug("horizontal line\n", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_SQUARE_BOX:
+		//fcomp = &BgEdgeDetect::SquareComp;
+		//feval = &BgEdgeDetect::SquareEval;
+		Preferences.debug("box\n", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_LINE:
+		//fcomp = &BgEdgeDetect::LineComp;
+		//feval = &BgEdgeDetect::LineEval;		
+		Preferences.debug("line\n", Preferences.DEBUG_ALGORITHM);
+		break;
+		case FC_CUSTOM:
+		custx_ = hcustx_;
+		custy_ = hcusty_;
+		ncust_ = nhcust_;
+		//fcomp = &BgEdgeDetect::CustomRegionComp;
+		//feval = &BgEdgeDetect::CustomRegionEval;
+		Preferences.debug("custom", Preferences.DEBUG_ALGORITHM);
+		break;
+		default:
+		Preferences.debug("Type not known\n", Preferences.DEBUG_ALGORITHM);
+		return;
+		}
+		
+		confTr_ = (float) nmxc;
+		rankTr_ = (float) nmxr;
+		//newNonMaxSupress(permRank_, permConf_, permGx_, permGy_, permNmxRank_, permNmxConf_, fcomp);
+		newNonMaxSupress(permRank_, permConf_, permGx_, permGy_, permNmxRank_, permNmxConf_, nmxType);
+		// new hysteresis thresholding
+		Preferences.debug("...hysteresis thresholding, high: ", Preferences.DEBUG_ALGORITHM);
+		
+		// select function, high curve
+		switch(hystTypeHigh)
+		{
+		case FC_ELLIPSE:
+		//fcomp = &BgEdgeDetect::EllipseComp;
+		//feval = &BgEdgeDetect::EllipseEval;
+		Preferences.debug("arc", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_VERT_LINE:
+		//fcomp = &BgEdgeDetect::VerticalLineComp;
+		//feval = &BgEdgeDetect::VerticalLineEval;
+		Preferences.debug("vertical line", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_HORIZ_LINE:
+		//fcomp = &BgEdgeDetect::HorizontalLineComp;
+		//feval = &BgEdgeDetect::HorizontalLineEval;
+		Preferences.debug("horizontal line", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_SQUARE_BOX:
+		//fcomp = &BgEdgeDetect::SquareComp;
+		//feval = &BgEdgeDetect::SquareEval;
+		Preferences.debug("box", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_LINE:
+		//fcomp = &BgEdgeDetect::LineComp;
+		//feval = &BgEdgeDetect::LineEval;		
+		Preferences.debug("line", Preferences.DEBUG_ALGORITHM);  		
+		break;
+		case FC_CUSTOM:
+		custx_ = hcustx_;
+		custy_ = hcusty_;
+		ncust_ = nhcust_;
+		//fcomp = &BgEdgeDetect::CustomRegionComp;
+		//feval = &BgEdgeDetect::CustomRegionEval;
+		Preferences.debug("custom", Preferences.DEBUG_ALGORITHM);
+		break;
+		}  
+		
+		confTr_ = (float) ch;
+		rankTr_ = (float) rh;
+		//StrConfEstim(permNmxRank_, permNmxConf_, tdh, feval);
+		strConfEstim(permNmxRank_, permNmxConf_, tdh, hystTypeHigh);
+		
+		Preferences.debug("  low: ", Preferences.DEBUG_ALGORITHM);
+		
+		// select function, low curve
+		switch(hystTypeLow)
+		{
+		case FC_ELLIPSE:
+		//fcomp = &BgEdgeDetect::EllipseComp;
+		//feval = &BgEdgeDetect::EllipseEval;
+		Preferences.debug("arc\n", Preferences.DEBUG_ALGORITHM);
+		break;
+		case FC_VERT_LINE:
+		//fcomp = &BgEdgeDetect::VerticalLineComp;
+		//feval = &BgEdgeDetect::VerticalLineEval;
+		Preferences.debug("vertical line\n", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_HORIZ_LINE:
+		//fcomp = &BgEdgeDetect::HorizontalLineComp;
+		//feval = &BgEdgeDetect::HorizontalLineEval;
+		Preferences.debug("horizontal line\n", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_SQUARE_BOX:
+		//fcomp = &BgEdgeDetect::SquareComp;
+		//feval = &BgEdgeDetect::SquareEval;
+		Preferences.debug("box\n", Preferences.DEBUG_ALGORITHM);		
+		break;
+		case FC_LINE:
+		//fcomp = &BgEdgeDetect::LineComp;
+		//feval = &BgEdgeDetect::LineEval;		
+		Preferences.debug("line\n", Preferences.DEBUG_ALGORITHM);  		
+		break;
+		case FC_CUSTOM:
+		custx_ = lcustx_;
+		custy_ = lcusty_;
+		ncust_ = nlcust_;
+		//fcomp = &BgEdgeDetect::CustomRegionComp;
+		//feval = &BgEdgeDetect::CustomRegionEval;
+		Preferences.debug("custom\n", Preferences.DEBUG_ALGORITHM);
+		break;  		
+		} 
+		confTr_ = (float) cl;
+		rankTr_ = (float) rl;
+		
+		//strConfEstim(permNmxRank_, permNmxConf_, tdl, feval);
+		strConfEstim(permNmxRank_, permNmxConf_, tdl, hystTypeLow);
+		
+		grx_ = permGx_;
+		gry_ = permGy_;
+		
+		newHysteresisTr(tdh, tdl, cel, nMin, tr, tc);
+		
+		Preferences.debug("Done edge detection.\n", Preferences.DEBUG_ALGORITHM);
+		
+		tdl = null;
+		tdh = null;
+		tr = null;
+		tc = null;
+	}
+		
+		private float ellipseEval(float x, float y)
+		{
+		   return ((x*x)/(rankTr_*rankTr_)+(y*y)/(confTr_*confTr_)-1);
+		}
+
+
+		private float verticalLineEval(float x, float y)
+		{
+		   return (x-rankTr_);
+		}
+		
+		private float horizontalLineEval(float x, float y)
+		{
+		   return(y-confTr_);
+		}
+		
+		private float lineEval(float x, float y)
+		{
+		   return (confTr_*x+rankTr_*y-confTr_*rankTr_);
+		}
+
+		private float squareEval(float x, float y)
+		{
+		   if ((x/rankTr_)>(y/confTr_))
+		      return(x-rankTr_);
+		   else
+		      return(y-confTr_);
+		}
+		
+		private float customRegionEval(float r,float c)
+		{
+		   //evaluate user region function
+		   //returns -1 if inside +1 if outside
+		   
+		   if ((r+c)<=ZERO_TRESH)
+		      return -1;
+		   int i;
+		   int crossings=0;
+		   float x;
+		   
+		   //shift to origin
+		   for (i=0; i<ncust_; i++)
+		   {
+		      tcustx_[i]=custx_[i]-r;
+		      tcusty_[i]=custy_[i]-c;
+		   }
+		   
+		   for (i=0; i<(ncust_-1); i++)
+		   {
+		      if ( (tcusty_[i]  >0 && tcusty_[i+1]<=0) ||
+		           (tcusty_[i+1]>0 && tcusty_[i]  <=0) )
+		      {
+		         x = (tcustx_[i]*tcusty_[i+1]-tcustx_[i+1]*tcusty_[i])/(tcusty_[i+1]-tcusty_[i]);
+		         if (x>0)
+		            crossings++;
+		      }	   
+		   }		
+		   
+		   if ((crossings % 2) ==1)
+		      return -1;
+		   else
+		      return 1;
+		}
+
+
+
+		private float fcomp(int fcompType, float x0, float y0, float x, float y) {
+			switch (fcompType) {
+			case FC_ELLIPSE:
+				return ellipseComp(x0, y0, x, y);
+			case FC_VERT_LINE:
+				return verticalLineComp(x0,y0, x, y);
+			case FC_HORIZ_LINE:
+				return horizontalLineComp(x0, y0, x, y);
+			case FC_LINE:
+				return lineComp(x0, y0, x, y);
+			case FC_SQUARE_BOX:
+				return squareComp(x0, y0, x, y);
+			case FC_CUSTOM:
+				return customRegionComp(x0, y0, x, y);
+			default:
+				return -1.0f;
+			}
+		}
+		
+		private float ellipseComp(float x0, float y0, float x, float y)
+		{
+		//   return (EllipseEval(x,y)-EllipseEval(x0,y0));
+		   return ((x*x-x0*x0)/(rankTr_*rankTr_)+(y*y-y0*y0)/(confTr_*confTr_));
+		}
+		
+		private float verticalLineComp(float x0, float y0, float x, float y)
+		{
+		//   return (VerticalLineEval(x,y)-VerticalLineEval(x0,y0));
+		   return (x-x0);
+
+		}
+		
+		private float horizontalLineComp(float x0, float y0, float x, float y)
+		{
+		//   return (HorizontalLineEval(x,y)-HorizontalLineEval(x0,y0));
+		   return (y-y0);
+		}
+
+		private float lineComp(float x0, float y0, float x, float y)
+		{
+		//   return (LineEval(x,y)-LineEval(x0,y0));
+		   return (confTr_*(x-x0)+rankTr_*(y-y0));
+		}
+
+		private float squareComp(float x0, float y0, float x, float y)
+		{
+		//   return(SquareEval(x,y)-SquareEval(x0,y0));
+		   float tret;
+		   tret = ((x/rankTr_)>(y/confTr_)) ? x-rankTr_ : y-confTr_;
+		   tret -= ((x0/rankTr_)>(y0/confTr_)) ? x0-rankTr_ : y0-confTr_;
+		   return tret;
+		}
+		
+		private float customRegionComp(float r0, float c0, float r, float c)
+		{
+		   return 0.0f;
+		}
+
+		private void generateMaskAngle(double a[],double theta) {
+			   int sflag;
+			   int i,j,k;
+			   double cval[] = new double[4];
+			   double corner[][] = new double[2][4];
+			   double sinv,cosv;
+			   double intrs[][] = new double[2][4];
+			   int scor[] = new int[4];
+			   int nscor[] = new int[4];
+			   int sind,rowind,colind;
+			   double cordi[][] = new double[2][4];
+			   int lsigind,corin;
+			   int sigind[] = new int[4];
+			   double diffin[] = new double[2];
+			   double comcoor;
+
+			   theta = theta*Math.PI/180.0;
+			   sinv = Math.sin(theta);
+			   cosv = Math.cos(theta);
+			   
+			   for (i=0; i<WW_*WW_; i++)
+			      a[i]=0;
+			   
+			   for (i=WL_; i>=-WL_; i--)
+			   {
+			      for(j=-WL_; j<=WL_; j++)
+			      {
+			         corner[0][0] = j-0.5;
+			         corner[0][1] = j+0.5;
+			         corner[0][2] = j+0.5;
+			         corner[0][3] = j-0.5;
+			         
+			         corner[1][0] = i+0.5;
+			         corner[1][1] = i+0.5;
+			         corner[1][2] = i-0.5;
+			         corner[1][3] = i-0.5;
+			         
+			         cval[0] = -sinv*corner[0][0]+cosv*corner[1][0];
+			         cval[1] = -sinv*corner[0][1]+cosv*corner[1][1];
+			         cval[2] = -sinv*corner[0][2]+cosv*corner[1][2];
+			         cval[3] = -sinv*corner[0][3]+cosv*corner[1][3];
+			         
+			         scor[0] = my_sign(cval[0]);
+			         scor[1] = my_sign(cval[1]);
+			         scor[2] = my_sign(cval[2]);
+			         scor[3] = my_sign(cval[3]);
+			         
+			         sind = 0;
+			         if (scor[0]!=0)
+			            nscor[sind++] = scor[0];
+			         if (scor[1]!=0)
+			            nscor[sind++] = scor[1];
+			         if (scor[2]!=0)
+			            nscor[sind++] = scor[2];
+			         if (scor[3]!=0)
+			            nscor[sind++] = scor[3];
+			         
+			         sflag = 0;
+			         for (k=1;k<sind;k++)
+			         {
+			            if (nscor[k]!=nscor[0])
+			               sflag++;
+			         }
+			         
+			         rowind = i+WL_;
+			         colind = j+WL_;
+			         
+			         if (sflag==0)
+			         {
+			            if (nscor[0]==1)
+			               a[colind+rowind*WW_] = 1.0;
+			            else
+			               a[colind+rowind*WW_] = 0.0;
+			         }
+			         
+			         if (sflag!=0)
+			         {
+			            for (k=0; k<4; k++)
+			               intrs[0][k] = intrs[1][k] = 0.0;
+			            
+			            if(scor[0]==0)
+			            {
+			               intrs[0][0] = corner[0][0];
+			               intrs[1][0] = corner[1][0];
+			            }
+			            if (scor[0]*scor[1]<0)
+			            {
+			               intrs[0][0] = corner[1][0]*cosv/sinv;
+			               intrs[1][0] = corner[1][0];
+			            }
+			            if (scor[1]==0)
+			            {
+			               intrs[0][1] = corner[0][1];
+			               intrs[1][1] = corner[1][1];
+			            }
+			            if (scor[1]*scor[2]<0)
+			            {
+			               intrs[0][1] = corner[0][1];
+			               intrs[1][1] = corner[0][1]*sinv/cosv;
+			            }
+			            if (scor[2]==0)
+			            {
+			               intrs[0][2] = corner[0][2];
+			               intrs[1][2] = corner[1][2];
+			            }
+			            if (scor[2]*scor[3]<0)
+			            {
+			               intrs[0][2] = corner[1][2]*cosv/sinv;
+			               intrs[1][2] = corner[1][2];
+			            }
+			            if (scor[3]==0)
+			            {
+			               intrs[0][3] = corner[0][3];
+			               intrs[1][3] = corner[1][3];
+			            }
+			            if (scor[3]*scor[0]<0)
+			            {
+			               intrs[0][3] = corner[0][3];
+			               intrs[1][3] = corner[0][3]*sinv/cosv;
+			            }
+			            
+			            corin = 0;
+			            if (Math.abs(intrs[0][0])>TOL_E || Math.abs(intrs[1][0])>TOL_E)
+			            {
+			               cordi[0][corin] = intrs[0][0];
+			               cordi[1][corin++] = intrs[1][0];
+			            }
+			            if (Math.abs(intrs[0][1])>TOL_E || Math.abs(intrs[1][1])>TOL_E)
+			            {
+			               cordi[0][corin] = intrs[0][1];
+			               cordi[1][corin++] = intrs[1][1];
+			            }
+			            if (Math.abs(intrs[0][2])>TOL_E || Math.abs(intrs[1][2])>TOL_E)
+			            {
+			               cordi[0][corin] = intrs[0][2];
+			               cordi[1][corin++] = intrs[1][2];
+			            }
+			            if (Math.abs(intrs[0][3])>TOL_E || Math.abs(intrs[1][3])>TOL_E)
+			            {
+			               cordi[0][corin] = intrs[0][3];
+			               cordi[1][corin++] = intrs[1][3];
+			            }
+			            
+			            lsigind=0;
+			            if (scor[0]>0)
+			               sigind[lsigind++] = 0;
+			            if (scor[1]>0)
+			               sigind[lsigind++] = 1;
+			            if (scor[2]>0)
+			               sigind[lsigind++] = 2;
+			            if (scor[3]>0)
+			               sigind[lsigind++] = 3;
+			            
+			            if (lsigind==1)
+			            {
+			               a[colind+rowind*WW_] = 0.5*Math.abs(cordi[0][0]-cordi[0][1])*Math.abs(cordi[1][0]-cordi[1][1]);
+			            }
+			            if (lsigind==2)
+			            {
+			               diffin[0] = (int) Math.abs(cordi[0][0]-cordi[0][1]);
+			               diffin[1] = (int) Math.abs(cordi[1][0]-cordi[1][1]);
+			               if (diffin[0]==1)
+			               {
+			                  comcoor = corner[1][sigind[0]];
+			                  a[colind+rowind*WW_] = 0.5*(Math.abs(comcoor-cordi[1][0])+Math.abs(comcoor-cordi[1][1]));
+			               }
+			               if (diffin[1]==1)
+			               {
+			                  comcoor = corner[0][sigind[0]];
+			                  a[colind+rowind*WW_] = 0.5*(Math.abs(comcoor-cordi[0][0])+Math.abs(comcoor-cordi[0][1]));
+			               }
+			            }
+			            if(lsigind==3)
+			            {
+			               a[colind+rowind*WW_] = 1.0-0.5*Math.abs(cordi[0][0]-cordi[0][1])*Math.abs(cordi[1][0]-cordi[1][1]);
+			            }
+			         }
+			      }
+			   }
+			   
+			   //A=A-mean(mean(A));
+			   comcoor = 0;
+			   for (i=0; i<WW_*WW_; i++)
+			      comcoor += a[i];
+			   comcoor /= WW_*WW_;
+			   for (i=0; i<WW_*WW_; i++)
+			      a[i] -= comcoor;
+			   
+			   //A=A/norm(A,'fro')
+			   comcoor = 0;
+			   for (i=0; i<WW_*WW_; i++)
+			      comcoor += a[i]*a[i];
+			   comcoor = Math.sqrt(comcoor);
+			   for (i=0; i<WW_*WW_; i++)
+			      a[i] /= comcoor;
+			}
+		
+		private void createFilters()
+		{
+		   int i,j;
+		   double w;
+		   for (i=-WL_; i<=WL_; i++)
+		   {
+		      w = Math.pow(2,(-2*WL_))*factorial(2*WL_)/(factorial(WL_-i)*factorial(WL_+i));
+		      smofil_[i+WL_] = w;
+		      diffil_[i+WL_] = (2*i*w)/WL_;
+		   }
+		   for (j=0; j<WW_; j++)
+		   {
+		      for (i=0; i<WW_; i++)
+		      {
+		         wdy_[j+i*WW_] = wdx_[i+j*WW_] = smofil_[j]*diffil_[i];
+		      }
+		   }
+		   
+		   double norms = 0;
+		   double normd = 0;
+		   for (i=0; i<WW_; i++)
+		   {
+		      norms += smofil_[i]*smofil_[i];
+		      normd += diffil_[i]*diffil_[i];
+		   }
+		   
+		   for (j=0; j<WW_; j++)
+		   {
+		      for (i=0; i<WW_; i++)
+		      {
+		         mQ_[i][j] = (smofil_[j]*smofil_[i])/norms + (diffil_[j]*diffil_[i])/normd;
+		         mN_[i][j] = (i==j) ? 1-mQ_[i][j] : -mQ_[i][j];
+		      }
+		   }
+		}
+		
+		private void createLookTable()
+		{
+		   Preferences.debug("Creating angle lookup table\n", Preferences.DEBUG_ALGORITHM);
+		   int i;
+		   for (i=-180; i<=180; i++)
+		   {
+		      lookTable_[i+180] = new double[WW_*WW_];
+		      generateMaskAngle(lookTable_[i+180], (double) i);
+		   }
+		}
+		
+		private void gaussDiffFilter(BgImage cim, float grx[], float gry[], float rezIm[])
+		{
+		   
+		   double sf[]; //smooth filter
+		   double df[]; //diff filter
+		   short im[];
+		   
+		   double tim[];
+		   double sum = 0;
+		   //double sum1 = 0;
+		   int i, j, k;
+		   
+		   //create kernels
+		   sf = smofil_;
+		   df = diffil_;
+		   
+		   im = cim.im_;
+		   tim = new double[x_*y_];
+		   for (i=0; i<x_*y_; i++)
+		   {
+		      grx[i] = gry[i] = 0;
+		      tim[i] = 0;
+		      rezIm[i] = im[i];
+		   }
+		   
+		   //filter image x
+		   //smooth on y
+		   for (i=0; i<x_; i++)
+		   {
+		      for (j=WL_; j<(y_-WL_); j++)
+		      {
+		         sum = 0;
+		         for (k=-WL_; k<=WL_; k++)
+		            sum += im[(j+k)*x_+i]*sf[k+WL_];
+		         tim[j*x_+i] = sum;
+		      }
+		   }
+		   //diff on x
+		   for (j=0; j<y_; j++)
+		   {
+		      for (i=WL_; i<(x_-WL_); i++)
+		      {
+		         sum = 0;
+		         for (k=-WL_; k<=WL_; k++)
+		            sum += tim[j*x_+i+k]*df[k+WL_];
+		         grx[j*x_+i] = (float) (sum);
+		      }
+		   }
+
+		   //filter image y
+		   for (i=0; i<x_*y_;i++)
+		      tim[i] = 0;
+		   im = cim.im_;
+		   //smooth on x
+		   for (j=0; j<y_; j++)
+		   {
+		      for (i=WL_; i<(x_-WL_); i++)
+		      {
+		         sum = 0;
+		         for (k=-WL_; k<=WL_; k++)
+		            sum += im[j*x_+i+k]*sf[k+WL_];
+		         tim[j*x_+i] = sum;
+		      }
+		   }
+		   //diff on y
+		   for (i=0; i<x_; i++)
+		   {
+		      for (j=WL_; j<(y_-WL_); j++)
+		      {
+		         sum = 0;
+		         for (k=-WL_; k<=WL_; k++)
+		            sum += tim[(j+k)*x_+i]*df[k+WL_];
+		         gry[j*x_+i] = (float) (sum);
+		      }
+		   }
+		   tim = null;
+		}
+		
+		private void strength(float grx[], float gry[], float strength[])
+		{
+		   int i,j;
+		   float itgx[];
+		   float itgy[];
+		   float its[];
+		   double val;
+		   int itgxIndex = 0;
+		   int itgyIndex = 0;
+		   int itsIndex = 0;
+		   itgx = grx;
+		   itgy = gry;
+		   its = strength;
+		   for (j=0; j<y_; j++)
+		      for(i=0; i<x_; i++)
+		      {
+		         val = Math.sqrt((double) (itgx[itgxIndex]*itgx[itgxIndex++])+((double) (itgy[itgyIndex]*itgy[itgyIndex++])));
+		         its[itsIndex++]=(float) (val);
+		      }
+		}
+		
+		private void newNonMaxSupress(float rank[], float conf[], float grx[], float gry[], float nmxRank[], float nmxConf[],
+	            int fcompType)
+	{
+		int i,j;
+		float itr[];
+		float itc[];
+		float itgx[];
+		float itgy[];
+		float itnmxr[];
+		float itnmxc[];
+		float alpha,r1,c1,r2,c2,lambda;
+		itr = rank;
+		itc = conf;
+		itgx = grx;
+		itgy = gry;
+		itnmxr = nmxRank;
+		itnmxc = nmxConf;
+		int itrIndex = 0;
+		int itcIndex = 0;
+		int itgxIndex = 0;
+		int itgyIndex = 0;
+		int itnmxrIndex = 0;
+		int itnmxcIndex = 0;
+		
+		for (i=0; i<x_*y_; i++)
+		{
+		itnmxr[i] = itnmxc[i] = 0;
+		}
+		for(i=0; i<x_; i++)
+		{
+		itr[i] = itc[i] = 0;
+		itr[(y_-1)*x_+i] = itc[(y_-1)*x_+i] = 0;
+		}
+		for(j=0; j<y_; j++)
+		{
+		itr[j*x_] = itc[j*x_] = 0;
+		itr[j*x_+x_-1] = itc[j*x_+x_-1] = 0;
+		}
+		
+		for (j=0; j<y_; j++)
+		{
+		for (i=0; i<x_; i++, itrIndex++, itcIndex++, itgxIndex++, itgyIndex++, itnmxrIndex++, itnmxcIndex++)
+		{
+		if (itr[itrIndex]>0 && itc[itcIndex]>0)
+		{
+		alpha = (float) Math.atan2(itgy[itgyIndex], itgx[itgxIndex]);
+		alpha = (alpha<0) ? alpha+(float)Math.PI : alpha;
+		if (alpha<=Math.PI/4)
+		{
+		lambda = (float) Math.tan(alpha);
+		r1 = (1-lambda)*itr[itrIndex+1]+lambda*itr[itrIndex+x_+1];
+		c1 = (1-lambda)*itc[itcIndex+1]+lambda*itc[itcIndex+x_+1];
+		r2 = (1-lambda)*itr[itrIndex-1]+lambda*itr[itrIndex-x_-1];
+		c2 = (1-lambda)*itc[itcIndex-1]+lambda*itc[itcIndex-x_-1];
+		if (fcomp(fcompType, itr[itrIndex], itc[itcIndex], r1, c1)<0 && fcomp(fcompType, itr[itrIndex], itc[itcIndex], r2, c2)<=0)
+		{
+		itnmxr[itnmxrIndex] = itr[itrIndex];
+		itnmxc[itnmxcIndex] = itc[itcIndex];
+		}
+		}
+		else if (alpha<=Math.PI/2)
+		{
+		lambda = (float) Math.tan(Math.PI/2-alpha);
+		r1 = (1-lambda)*itr[itrIndex+x_]+lambda*itr[itrIndex+x_+1];
+		c1 = (1-lambda)*itc[itcIndex+x_]+lambda*itc[itcIndex+x_+1];
+		r2 = (1-lambda)*itr[itrIndex-x_]+lambda*itr[itrIndex-x_-1];
+		c2 = (1-lambda)*itc[itcIndex-x_]+lambda*itc[itcIndex-x_-1];
+		if (fcomp(fcompType,itr[itrIndex], itc[itcIndex], r1, c1)<0 && fcomp(fcompType,itr[itrIndex], itc[itcIndex], r2, c2)<=0)
+		{
+		itnmxr[itnmxrIndex] = itr[itrIndex];
+		itnmxc[itnmxcIndex] = itc[itcIndex];
+		}
+		
+		}
+		else if(alpha<=3*Math.PI/4)
+		{
+		lambda = (float) Math.tan(alpha-Math.PI/2);
+		r1 = (1-lambda)*itr[itrIndex+x_]+lambda*itr[itrIndex+x_-1];
+		c1 = (1-lambda)*itc[itcIndex+x_]+lambda*itc[itcIndex+x_-1];
+		r2 = (1-lambda)*itr[itrIndex-x_]+lambda*itr[itrIndex-x_+1];
+		c2 = (1-lambda)*itc[itcIndex-x_]+lambda*itc[itcIndex-x_+1];
+		if (fcomp(fcompType, itr[itrIndex], itc[itcIndex], r1, c1)<0 && fcomp(fcompType, itr[itrIndex], itc[itcIndex], r2, c2)<=0)
+		{
+		itnmxr[itnmxrIndex] = itr[itrIndex];
+		itnmxc[itnmxcIndex] = itc[itcIndex];
+		}
+		}
+		else
+		{
+		lambda = (float) Math.tan(Math.PI-alpha);
+		r1 = (1-lambda)*itr[itrIndex-1]+lambda*itr[itrIndex+x_-1];
+		c1 = (1-lambda)*itc[itcIndex-1]+lambda*itc[itcIndex+x_-1];
+		r2 = (1-lambda)*itr[itrIndex+1]+lambda*itr[itrIndex-x_+1];
+		c2 = (1-lambda)*itc[itcIndex+1]+lambda*itc[itcIndex-x_+1];
+		if (fcomp(fcompType, itr[itrIndex], itc[itcIndex], r1, c1)<0 && fcomp(fcompType, itr[itrIndex], itc[itcIndex], r2, c2)<=0)
+		{
+		itnmxr[itnmxrIndex] = itr[itrIndex];
+		itnmxc[itnmxcIndex] = itc[itcIndex];
+		}
+		}
+		}
+		}
+		}
+	}
+		
+		private void strConfEstim(float ranks[], float confidence[], float rezult[],
+	            int fevalType)
+		{
+		int i;
+		for (i=0; i<x_*y_; i++)
+		{
+		switch(fevalType) {
+		case FC_ELLIPSE:
+		    rezult[i] = ellipseEval(ranks[i], confidence[i]);
+		    break;
+		case FC_VERT_LINE:
+			rezult[i] = verticalLineEval(ranks[i], confidence[i]);
+			break;
+		case FC_HORIZ_LINE:
+			rezult[i] = horizontalLineEval(ranks[i], confidence[i]);
+			break;
+		case FC_LINE:
+			rezult[i] = lineEval(ranks[i], confidence[i]);
+			break;
+		case FC_SQUARE_BOX:
+			rezult[i] = squareEval(ranks[i], confidence[i]);
+			break;
+		case FC_CUSTOM:
+			rezult[i] = customRegionEval(ranks[i], confidence[i]);
+			break;
+		}
+		}
+		}
+		
+		private void compRanks(float strength[], float ranks[])
+		{
+		   int index[];
+		   float ra[];
+		   ra = new float[x_*y_];
+		   index = new int[x_*y_];
+		   int ii;
+		   
+		   for (ii=0; ii<x_*y_; ii++)
+		   {
+		      index[ii] = ii;
+		      ranks[ii] = 0;
+		      ra[ii] = strength[ii];
+		   }
+
+		   //heap sort with ranks (from numerical recipies)
+		   long i, ir, j, l;
+		   long n;
+		   n = x_*y_;
+		   float rra;
+		   int irra;
+
+		   if (n<2)
+		      return;
+		   l = (n>>1)+1;
+		   ir = n;
+		   for (;;)
+		   {
+		      if (l>1)
+		      {
+		         rra = ra[(int)(--l-1)];
+		         irra = index[(int)(l-1)];
+		      }
+		      else
+		      {
+		         rra = ra[(int)(ir-1)];
+		         irra = index[(int)(ir-1)];
+		         ra[(int)(ir-1)] = ra[1-1];
+		         index[(int)(ir-1)] = index[1-1];
+		         if (--ir==1)
+		         {
+		            ra[1-1] = rra;
+		            index[1-1] = irra;
+		            break;
+		         }
+		      }
+		      i = l;
+		      j = l+l;
+		      while (j<=ir)
+		      {
+		         if (j<ir && ra[(int)(j-1)]<ra[(int)(j+1-1)])
+		            j++;
+		         if (rra<ra[(int)(j-1)])
+		         {
+		            ra[(int)(i-1)] = ra[(int)(j-1)];
+		            index[(int)(i-1)] = index[(int)(j-1)];
+		            i = j;
+		            j <<= 1;
+		         }
+		         else
+		            j = ir+1;
+		      }
+		      ra[(int)(i-1)] = rra;
+		      index[(int)(i-1)] = irra;
+		   }
+		   
+		   //setranks
+		   irra = 1;
+		   for (ii=1; ii<x_*y_; ii++)
+		   {
+		      if (ra[ii]>ZERO_TRESH)
+		      {
+		         ranks[index[ii]] = (float) irra;
+		         if (ra[ii]>ra[ii-1])
+		            irra++;
+		      }
+		   }
+		   irra--;
+		   for (ii=0; ii<x_*y_; ii++) 
+		      ranks[ii] /= irra;
+
+		  index = null;
+		  ra = null;
+		}
+		
+		private void newHysteresisTr(float edge[], float low[], BgEdgeList cel, int nMin, float mark[], float coord[])
+		{
+		   float tm[];
+		   float te[];
+		   int i,j;
+		   int tmIndex = 0;
+		   int teIndex = 0;
+		   
+		   for (i=0, tm=mark; i<x_*y_; i++,tmIndex++)
+		      tm[tmIndex]=0;
+		   
+		   te_ = te = edge;
+		   tm_ = tm = mark;
+		   tmIndex = 0;
+		   tl_ = low;
+		   
+		   for (j=0; j<y_; j++)
+		   {
+		      for (i=0; i<x_; i++, tmIndex++, teIndex++)
+		      {
+		         if ((tm[tmIndex]==0) && (te[teIndex]>HYST_LOW_CUT))
+		         {
+		            //found an edge start
+		            npt_ = 0;
+		            tm[tmIndex] = 1;
+		            tc_ = coord;
+		            tc_Index = 0;
+		            newEdgeFollow(i, j);
+		            //store the edge
+		            if (npt_>=nMin) cel.addEdge(coord, npt_);
+		         }
+		      }
+		   }
+		}
+		
+		private void newEdgeFollow(int ii,int jj)
+		{
+		   int i;
+		   int iin, jjn;
+		   for (i=0; i<8; i++)
+		   {
+		      iin = ii+gNb[i][0];
+		      jjn = jj+gNb[i][1];
+		      if ((tm_[jjn*x_+iin]==0) && ((tl_[jjn*x_+iin])>0))
+		      {
+		         tm_[jjn*x_+iin] = 1;
+		         newEdgeFollow(iin, jjn);
+		      }
+		   }
+		   tc_[tc_Index++] = (float) ii;
+		   tc_[tc_Index++] = (float) jj;
+		   npt_++;
+		}
+		
+		private void subspaceEstim(float im[], float grx[], float gry[], float cee[])
+		{
+		   // im original image
+		   // grx, gry gradient of image
+		   // cee confidence edge estimate
+		   
+		   float itim[];
+		   float itgx[];
+		   float itgy[];
+		   float itcee[];
+		   itim = im;
+		   itgx = grx;
+		   itgy = gry;
+		   itcee = cee;
+		   int itimIndex = 0;
+		   int itgxIndex = 0;
+		   int itgyIndex = 0;
+		   int itceeIndex = 0;
+
+		   double tae[];
+		   double ti[];
+
+		   ti = new double[WW_*WW_];
+
+		   int i,j,l,c;
+		   double v1;
+		   double angleEdge;
+		   int WW2 = WW_*WW_;
+		   
+		   itimIndex += WL_*x_;
+		   itgxIndex += WL_*x_;
+		   itgyIndex += WL_*x_;
+		   itceeIndex += WL_*x_;
+
+		   for (j=WL_; j<(y_-WL_); j++)
+		   {
+		      for (i=0; i<WL_; i++)
+		         itcee[i] = 0;
+		      itimIndex += WL_;
+		      itgxIndex += WL_;
+		      itgyIndex += WL_;
+		      itceeIndex += WL_;
+
+
+		      for (i=WL_; i<(x_-WL_); i++, itimIndex++, itgxIndex++, itgyIndex++, itceeIndex++)
+		      {
+		         if ((Math.abs(itgx[itgxIndex])+Math.abs(itgy[itgyIndex]))>TOL_E)
+		         {
+		            angleEdge = (-Math.atan2(itgx[itgxIndex], itgy[itgyIndex]))*180.0/Math.PI;
+		            tae = lookTable_[(int) (angleEdge+180.49)];
+		            
+		            //A=A-mean(A)
+		            v1=0;
+		            for (l=0; l<WW_; l++)
+		            {
+		               for (c=0; c<WW_; c++)
+		               {
+		                  v1 += ti[l*WW_+c] = itim[itimIndex+(l-WL_)*x_+c-WL_];
+		               }
+		            }
+		            v1 /= WW2;
+		            for (l=0; l<WW2; l++)
+		               ti[l] -= v1;
+		            
+		            //A/norm(A,'fro')
+		            v1 = 0;
+		            for (l=0; l<WW2; l++)
+		               v1 += ti[l]*ti[l];
+		            v1 = Math.sqrt(v1);
+		            for (l=0; l<WW2; l++)
+		               ti[l] /= v1;
+
+		            //global
+		            v1 = 0;
+		            for (l=0; l<WW2; l++)
+		               v1 += tae[l]*ti[l];
+		            v1 = Math.abs(v1);
+		            itcee[itceeIndex] = (float) v1;
+		         }
+		         else
+		         {
+		            itcee[itceeIndex] = 0;
+		         }
+		      }
+		      for (i=0; i<WL_; i++)
+		         itcee[i] = 0;
+		      itimIndex += WL_;
+		      itgxIndex += WL_;
+		      itgyIndex += WL_;
+		      itceeIndex += WL_;
+		   }
+		   WW2 = x_*y_;
+		   for (j=0; j<(WL_*x_); j++)
+		   {
+		      cee[j] = 0;
+		      cee[WW2-j-1] = 0;
+		   }   
+
+		   
+		   ti = null;
+		}
+		
+	}
+
 	
 }
