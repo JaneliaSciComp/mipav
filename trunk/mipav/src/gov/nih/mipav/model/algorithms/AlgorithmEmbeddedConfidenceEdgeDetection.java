@@ -51,7 +51,7 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
     private static final double CONF_L = 0.91;
     private static final double RANK_L = 0.99;
     private static final int NMIN = 5;
-    // KERNEL_SIZE 2
+    private static final int KERNEL_SIZE = 2;
 
     private static final int FC_ELLIPSE = 0;
     private static final int FC_VERT_LINE = 1;
@@ -74,7 +74,8 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
     private BgImage cbgImage_;
     private BgEdgeDetect cbgEdgeDetect_;
 
-    private int filtDim;
+    // Window side is 2*kernelSize + 1
+    private int kernelSize = KERNEL_SIZE;
     // nmxr, nmxc threshold for non-maxima-suppresion rank, confidence
     private double nmxr = RANK_NMX;
     private double nmxc = CONF_NMX;
@@ -92,11 +93,11 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
     private int hystTypeHigh = FC_SQUARE_BOX;
     private int hystTypeLow = FC_ELLIPSE;
 	
-	public AlgorithmEmbeddedConfidenceEdgeDetection(ModelImage destImage, ModelImage srcImage, int filtDim,
+	public AlgorithmEmbeddedConfidenceEdgeDetection(ModelImage destImage, ModelImage srcImage, int kernelSize,
 			double nmxr, double nmxc, double rh, double ch, double rl, double cl, int nMin,
 			int nmxType, int hystTypeHigh, int hystTypeLow) {
 		super(destImage, srcImage);
-		this.filtDim = filtDim;
+		this.kernelSize = kernelSize;
 		this.nmxr = nmxr;
 		this.nmxc = nmxc;
 		this.rh = rh;
@@ -219,7 +220,7 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
         	   }
         	   
         	   cbgImage_ = new BgImage(sbuf, xDim, yDim, srcImage.isColorImage());
-        	   cbgEdgeDetect_ = new BgEdgeDetect(filtDim);
+        	   cbgEdgeDetect_ = new BgEdgeDetect(kernelSize);
         	   BgEdgeList cbgEdgeList_  = new BgEdgeList();
         	   cbgEdgeDetect_.doEdgeDetect(cbgImage_, cbgEdgeList_);
   
