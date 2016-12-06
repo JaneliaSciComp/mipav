@@ -644,7 +644,7 @@ GuiBuilder gui = new GuiBuilder(this);
                     msAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog Gradient Inverse Weighted Smoothing: unable to allocate enough memory");
+                MipavUtil.displayError("Dialog Mean Shift Segmentation: unable to allocate enough memory");
 
                 if (resultImage != null) {
                     resultImage.disposeLocal(); // Clean up memory of result image
