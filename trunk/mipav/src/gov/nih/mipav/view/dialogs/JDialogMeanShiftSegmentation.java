@@ -2,17 +2,13 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.AlgorithmMeanShiftSegmentation;
 
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientInverseWeightedSmoothing;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewFileChooserBase;
-import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -26,21 +22,11 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.Enumeration;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -162,7 +148,6 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-GuiBuilder gui = new GuiBuilder(this);
     	
         JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
