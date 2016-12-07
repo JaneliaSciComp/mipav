@@ -342,7 +342,7 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         destinationGroup.add(replaceImage);
         destinationPanel.add(replaceImage);
 
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
+        if ((image.getLockStatus() == ModelStorageBase.UNLOCKED) && (!image.isColorImage())) {
             replaceImage.setEnabled(true);
         } else {
             replaceImage.setEnabled(false);
