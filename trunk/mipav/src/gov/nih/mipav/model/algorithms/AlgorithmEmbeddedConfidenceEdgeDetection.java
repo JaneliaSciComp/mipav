@@ -255,7 +255,7 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
         	   
         	   if (destImage != null) {
                	try {
-               		destImage.importData(cf*(t*zDim+z)*sliceSize, edgeBuffer, false);
+               		destImage.importData((t*zDim+z)*sliceSize, edgeBuffer, false);
                	}
                	catch (IOException e) {
                		MipavUtil.displayError("IOException " + e + " on destImage.importData");
@@ -265,7 +265,7 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
                }
                else {
                	try {
-               		srcImage.importData(cf*(t*zDim+z)*sliceSize, edgeBuffer, false);
+               		srcImage.importData((t*zDim+z)*sliceSize, edgeBuffer, false);
                	}
                	catch (IOException e) {
                		MipavUtil.displayError("IOException " + e + " on srcImage.importData");
