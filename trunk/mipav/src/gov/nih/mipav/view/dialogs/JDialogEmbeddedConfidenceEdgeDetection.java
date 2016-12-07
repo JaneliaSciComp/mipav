@@ -355,7 +355,7 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
-        setSize(600,600);
+        setSize(600,550);
         setVisible(true);
     }
     
