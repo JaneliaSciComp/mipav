@@ -401,10 +401,14 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The spatial bandwidth entry is not a valid float");
+			spatialText.requestFocus();
+			spatialText.selectAll();
 			return false;
 		}
         if (spatialBandwidth <= 0) {
         	MipavUtil.displayError("The spatial bandwidth must be greater than zero");
+        	spatialText.requestFocus();
+			spatialText.selectAll();
         	return false;
         }
         
@@ -414,10 +418,14 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The range bandwidth entry is not a valid float");
+			rangeText.requestFocus();
+			rangeText.selectAll();
 			return false;
 		}
         if (rangeBandwidth <= 0) {
         	MipavUtil.displayError("The range bandwidth must be greater than zero");
+        	rangeText.requestFocus();
+			rangeText.selectAll();
         	return false;
         }
         
@@ -427,10 +435,14 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The minimum region pixels entry is not a valid integer");
+			minRegionText.requestFocus();
+			minRegionText.selectAll();
 			return false;
 		}
         if (minRegion <= 0) {
         	MipavUtil.displayError("The minimum region pixels must be greater than zero");
+        	minRegionText.requestFocus();
+			minRegionText.selectAll();
         	return false;
         }
         
@@ -448,14 +460,20 @@ public class JDialogMeanShiftSegmentation extends JDialogScriptableBase implemen
         	}
         	catch (NumberFormatException e) {
     			MipavUtil.displayError("The fraction of window radius used is not a valid double");
+    			speedThresholdText.requestFocus();
+    			speedThresholdText.selectAll();
     			return false;
     		}
         	if (speedThreshold <= 0.0) {
         		MipavUtil.displayError("The fraction of window radius must be greater than 0");
+        		speedThresholdText.requestFocus();
+    			speedThresholdText.selectAll();
         		return false;
         	}
         	if (speedThreshold > 1.0) {
         		MipavUtil.displayError("The fraction of window radius cannot exceed 1");
+        		speedThresholdText.requestFocus();
+    			speedThresholdText.selectAll();
         		return false;	
         	}
         }
