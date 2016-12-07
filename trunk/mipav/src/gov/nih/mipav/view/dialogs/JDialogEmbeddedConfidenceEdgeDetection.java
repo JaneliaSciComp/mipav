@@ -66,6 +66,11 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
     private JRadioButton replaceImage;
     
     // Window side is 2*kernelSize + 1
+    // In the reference:
+    // The 512 by 512 basket image was processed with a 7 by 7 gradient operator.
+    // The 256 by 256 cameraman image was processed with a 5 by 5 gradient operator.
+    // The 512 by 438 grater image was processed with a 7 by 7 gradient operator.
+    // The 548 by 509 golf cart image was processed with a 7 by 7 gradient operator.
     private int kernelSize = KERNEL_SIZE;
     // nmxr, nmxc threshold for non-maxima-suppresion rank, confidence
     private double nmxr = RANK_NMX;
