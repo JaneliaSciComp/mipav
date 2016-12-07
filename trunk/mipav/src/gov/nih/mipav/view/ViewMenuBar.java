@@ -172,6 +172,7 @@ public class ViewMenuBar {
 				menuBuilder.buildMenuItem("Convergence field", "CONVERGENCE", 0, null, false),
 				menuBuilder.makeMenu("Edge detection", false,
 						new JMenuItem[] { menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
+								menuBuilder.buildMenuItem("Embedded confidence", "EmbeddedConfidenceEdgeDetection", 0, null, false),
 								menuBuilder.buildMenuItem("Entropic", "ENTROPIC", 0, null, false),
 								menuBuilder.buildMenuItem("Brejl-Sonka 3D", "edge3D", 0, null, false),
 								// menuBuilder.buildMenuItem("Global Pb",
@@ -1875,5 +1876,6 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Edge Preserving Smoothing", true);
 		menuBuilder.setMenuItemEnabled("Symmetric Nearest Neighbor", true);
 		menuBuilder.setMenuItemEnabled("Mean shift", true);
+		menuBuilder.setMenuItemEnabled("Embedded confidence", true);
 	}
 }
