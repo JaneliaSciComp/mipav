@@ -35,6 +35,10 @@ paper Mean shift: A robust approach toward feature space analysis and the edge d
  */
 
 public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
+	private static final double RED_WEIGHT = 0.299;
+	private static final double GREEN_WEIGHT = 0.587;
+	private static final double BLUE_WEIGHT = 0.114;
+
 	private static final int MAX_FILTS = 31;
 	private static final int MAX_CUSTT = 30;
 	private static final int NO_ANGLES = 361;
@@ -161,13 +165,7 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
         }
         imageMin = srcImage.getMin();
         imageMax = srcImage.getMax();
-        if (srcImage.isColorImage()) {
-            sbuf = new short[3*sliceSize];
-        }
-        else {
-        	sbuf = new short[sliceSize];
-        }
-        
+        sbuf = new short[sliceSize];
         
         if ((imageMin < 0) || (imageMax > 255)) {
             rescale = true;
@@ -198,9 +196,8 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
         		  
         		   if (srcImage.isColorImage()) {
         		       for (i = 0; i < sliceSize; i++) {
-        		           sbuf[3*i] = (short)Math.round(a*buffer[4*i+1] + b);
-        		           sbuf[3*i+1] = (short)Math.round(a*buffer[4*i+2] + b);
-        		           sbuf[3*i+2] = (short)Math.round(a*buffer[4*i+3] + b);
+        		    	   sbuf[i] = (short)Math.round(a*(RED_WEIGHT*buffer[4*i+1] + GREEN_WEIGHT*buffer[4*i+2] 
+        		    			   + BLUE_WEIGHT*buffer[4*i+3]) + b);
         		       }
         		   } // if (srcImage.isColorImage())
         		   else {
@@ -219,9 +216,8 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 	        			return;
        			   }  
         		   for (i = 0; i < sliceSize; i++) {
-    		           sbuf[3*i] = (short)Math.round(buffer[4*i+1]);
-    		           sbuf[3*i+1] = (short)Math.round(buffer[4*i+2]);
-    		           sbuf[3*i+2] = (short)Math.round(buffer[4*i+3]);
+        			   sbuf[i] = (short)Math.round(RED_WEIGHT*buffer[4*i+1] + GREEN_WEIGHT*buffer[4*i+2] 
+    		    			   + BLUE_WEIGHT*buffer[4*i+3]);
     		       }
         	   } // else if (srcImage.isColorImage())
         	   else {
