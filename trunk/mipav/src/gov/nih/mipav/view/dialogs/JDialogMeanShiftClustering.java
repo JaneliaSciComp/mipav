@@ -896,10 +896,14 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 		}
 		catch (NumberFormatException e) {
 			MipavUtil.displayError("The K entry is not a valid integer");
+			KText.requestFocus();
+			KText.selectAll();
 			return false;
 		}
 		if (K <= 0) {
 			MipavUtil.displayError("K must be greater than zero");
+			KText.requestFocus();
+			KText.selectAll();
 			return false;
 		}
 		
@@ -909,10 +913,14 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 		}
 		catch (NumberFormatException e) {
 			MipavUtil.displayError("The L entry is not a valid integer");
+			LText.requestFocus();
+			LText.selectAll();
 			return false;
 		}
 		if (L <= 0) {
 			MipavUtil.displayError("L must be greater than zero");
+			LText.requestFocus();
+			LText.selectAll();
 			return false;
 		}
 		
@@ -925,14 +933,20 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 			}
 			catch (NumberFormatException e) {
 				MipavUtil.displayError("The epsilon entry is not a valid float");
+				epsilonText.requestFocus();
+				epsilonText.selectAll();
 				return false;
 			}
 			if (epsilon <= 0) {
 				MipavUtil.displayError("epsilon must be greater than zero");
+				epsilonText.requestFocus();
+				epsilonText.selectAll();
 				return false;
 			}
 			if (epsilon >= 1) {
 				MipavUtil.displayError("epsilon must be less than 1");
+				epsilonText.requestFocus();
+				epsilonText.selectAll();
 				return false;
 			}
 			
@@ -942,14 +956,20 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 			}
 			catch (NumberFormatException e) {
 				MipavUtil.displayError("The Kmin entry is not a valid integer");
+				KminText.requestFocus();
+				KminText.selectAll();
 				return false;
 			}
 			if (Kmin <= 0) {
 				MipavUtil.displayError("Kmin must be greater than zero");
+				KminText.requestFocus();
+				KminText.selectAll();
 				return false;
 			}
 			if (Kmin > K) {
 				MipavUtil.displayError("Kmin must not be greater than K");
+				KminText.requestFocus();
+				KminText.selectAll();
 				return false;
 			}
 			
@@ -959,10 +979,14 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 			}
 			catch (NumberFormatException e) {
 				MipavUtil.displayError("The Kjump entry is not a valid integer");
+				KjumpText.requestFocus();
+				KjumpText.selectAll();
 				return false;
 			}
 			if (Kjump <= 0) {
 				MipavUtil.displayError("Kjump must be greater than zero");
+				KjumpText.requestFocus();
+				KjumpText.selectAll();
 				return false;
 			}
 		} // if (findOptimalKL)
@@ -973,10 +997,14 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 		}
 		catch (NumberFormatException e) {
 			MipavUtil.displayError("The neighbor entry is not a valid integer");
+			neighborText.requestFocus();
+			neighborText.selectAll();
 			return false;
 		}
 		if (k_neigh <= 0) {
 			MipavUtil.displayError("neighbor must be greater than zero");
+			neighborText.requestFocus();
+			neighborText.selectAll();
 			return false;
 		}
 		
@@ -991,10 +1019,14 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 			}
 			catch (NumberFormatException e) {
 				MipavUtil.displayError("The jump entry is not a valid integer");
+				jumpText.requestFocus();
+				jumpText.selectAll();
 				return false;
 			}
 			if (jump <= 0) {
 				MipavUtil.displayError("jump must be greater than zero");
+				jumpText.requestFocus();
+				jumpText.selectAll();
 				return false;
 			}
 			percent = 0.0;
@@ -1006,14 +1038,20 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 			}
 			catch (NumberFormatException e) {
 				MipavUtil.displayError("The percent entry is not a valid double");
+				percentText.requestFocus();
+				percentText.selectAll();
 				return false;
 			}
 			if (percent <= 0) {
 				MipavUtil.displayError("percent must be greater than zero");
+				percentText.requestFocus();
+				percentText.selectAll();
 				return false;
 			}
 			if (percent >= 100.0) {
 				MipavUtil.displayError("percent must not be greater than 100");
+				percentText.requestFocus();
+				percentText.selectAll();
 				return false;
 			}
 		}
@@ -1027,10 +1065,14 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 			}
 			catch (NumberFormatException e) {
 				MipavUtil.displayError("The width entry is not a valid float");
+				widthText.requestFocus();
+				widthText.selectAll();
 				return false;
 			}
 			if (width <= 0) {
 				MipavUtil.displayError("width must be greater than zero");
+				widthText.requestFocus();
+				widthText.selectAll();
 				return false;
 			}	
 		} // if (fixedWidth)
