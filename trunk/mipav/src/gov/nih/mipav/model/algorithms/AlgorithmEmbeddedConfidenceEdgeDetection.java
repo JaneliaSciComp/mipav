@@ -168,15 +168,16 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
         	sbuf = new short[sliceSize];
         }
         
+        
         if ((imageMin < 0) || (imageMax > 255)) {
             rescale = true;
-            buffer = new double[cf*sliceSize];
         }
         else {
         	rescale = false;
         }
-        //confMap = new float[sliceSize];
-        //rank = new float[sliceSize];
+        if (rescale || srcImage.isColorImage()) {
+        	buffer = new double[cf*sliceSize];	
+        }
         
         // a*imageMin + b = 0
 		// a*imageMax + b = 255
@@ -208,9 +209,24 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
         			   }
         		   }
         	   } // if (rescale)
+        	   else if (srcImage.isColorImage()) {
+        		   try {
+        			   srcImage.exportData(cf*(t*zDim + z)*sliceSize, cf*sliceSize, buffer);
+        		   }
+        		   catch(IOException e) {
+	        			MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+	        			setCompleted(false);
+	        			return;
+       			   }  
+        		   for (i = 0; i < sliceSize; i++) {
+    		           sbuf[3*i] = (short)Math.round(buffer[4*i+1]);
+    		           sbuf[3*i+1] = (short)Math.round(buffer[4*i+2]);
+    		           sbuf[3*i+2] = (short)Math.round(buffer[4*i+3]);
+    		       }
+        	   } // else if (srcImage.isColorImage())
         	   else {
         		   try {
-        			   srcImage.exportData(cf*(t*zDim + z)*sliceSize, cf*sliceSize, sbuf);
+        			   srcImage.exportData((t*zDim + z)*sliceSize, sliceSize, sbuf);
         		   }
         		   catch(IOException e) {
 	        			MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
