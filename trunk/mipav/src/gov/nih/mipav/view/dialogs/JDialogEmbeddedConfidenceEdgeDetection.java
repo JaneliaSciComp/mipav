@@ -401,14 +401,20 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The window entry is not a valid integer");
+			windowSizeText.requestFocus();
+			windowSizeText.selectAll();
 			return false;
 		}
         if (windowSize < 3) {
         	MipavUtil.displayError("Window size must be at least 3");
+        	windowSizeText.requestFocus();
+			windowSizeText.selectAll();
         	return false;
         }
         if ((windowSize % 2) == 0) {
         	MipavUtil.displayError("Window size must be odd");
+        	windowSizeText.requestFocus();
+			windowSizeText.selectAll();
         	return false;
         }
         kernelSize = (windowSize - 1)/2;
@@ -419,14 +425,20 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The non-maxima suppression rank is not a valid double");
+			suppressionRankText.requestFocus();
+			suppressionRankText.selectAll();
 			return false;
 		}
         if (nmxr <= 0.0) {
         	MipavUtil.displayError("The non-maxima suppression rank must exceed zero");
+        	suppressionRankText.requestFocus();
+			suppressionRankText.selectAll();
         	return false;
         }
         if (nmxr > 1.0) {
         	MipavUtil.displayError("The non-maxima suppression rank cannot exceed 1");
+        	suppressionRankText.requestFocus();
+			suppressionRankText.selectAll();
         	return false;	
         }
         
@@ -436,14 +448,20 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The non-maxima suppression confidence is not a valid double");
+			suppressionConfidenceText.requestFocus();
+			suppressionConfidenceText.selectAll();
 			return false;
 		}
         if (nmxc <= 0.0) {
         	MipavUtil.displayError("The non-maxima suppression confidence must exceed zero");
+        	suppressionConfidenceText.requestFocus();
+			suppressionConfidenceText.selectAll();
         	return false;
         }
         if (nmxc > 1.0) {
         	MipavUtil.displayError("The non-maxima suppression confidence cannot exceed 1");
+        	suppressionConfidenceText.requestFocus();
+			suppressionConfidenceText.selectAll();
         	return false;	
         }
         
@@ -453,14 +471,20 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The hysteresis high rank is not a valid double");
+			hysteresisHighRankText.requestFocus();
+			hysteresisHighRankText.selectAll();
 			return false;
 		}
         if (rh <= 0.0) {
         	MipavUtil.displayError("The hysteresis high rank must exceed zero");
+        	hysteresisHighRankText.requestFocus();
+			hysteresisHighRankText.selectAll();
         	return false;
         }
         if (rh > 1.0) {
         	MipavUtil.displayError("The hysteresis high rank cannot exceed 1");
+        	hysteresisHighRankText.requestFocus();
+			hysteresisHighRankText.selectAll();
         	return false;	
         }
         
@@ -470,14 +494,20 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The hysteresis high confidence is not a valid double");
+			hysteresisHighConfidenceText.requestFocus();
+			hysteresisHighConfidenceText.selectAll();
 			return false;
 		}
         if (ch <= 0.0) {
         	MipavUtil.displayError("The hysteresis high confidence must exceed zero");
+        	hysteresisHighConfidenceText.requestFocus();
+			hysteresisHighConfidenceText.selectAll();
         	return false;
         }
         if (ch > 1.0) {
         	MipavUtil.displayError("The hysteresis high confidence cannot exceed 1");
+        	hysteresisHighConfidenceText.requestFocus();
+			hysteresisHighConfidenceText.selectAll();
         	return false;	
         }
         
@@ -487,14 +517,20 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The hysteresis low rank is not a valid double");
+			hysteresisLowRankText.requestFocus();
+			hysteresisLowRankText.selectAll();
 			return false;
 		}
         if (rl <= 0.0) {
         	MipavUtil.displayError("The hysteresis low rank must exceed zero");
+        	hysteresisLowRankText.requestFocus();
+			hysteresisLowRankText.selectAll();
         	return false;
         }
         if (rl > 1.0) {
         	MipavUtil.displayError("The hysteresis low rank cannot exceed 1");
+        	hysteresisLowRankText.requestFocus();
+			hysteresisLowRankText.selectAll();
         	return false;	
         }
         
@@ -504,14 +540,20 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The hysteresis low confidence is not a valid double");
+			hysteresisLowConfidenceText.requestFocus();
+			hysteresisLowConfidenceText.selectAll();
 			return false;
 		}
         if (cl <= 0.0) {
         	MipavUtil.displayError("The hysteresis low confidence must exceed zero");
+        	hysteresisLowConfidenceText.requestFocus();
+			hysteresisLowConfidenceText.selectAll();
         	return false;
         }
         if (cl > 1.0) {
         	MipavUtil.displayError("The hysteresis low confidence cannot exceed 1");
+        	hysteresisLowConfidenceText.requestFocus();
+			hysteresisLowConfidenceText.selectAll();
         	return false;	
         }
         
@@ -521,10 +563,14 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         }
         catch (NumberFormatException e) {
 			MipavUtil.displayError("The minimum number of edge pixels is not a valid integer");
+			nMinText.requestFocus();
+			nMinText.selectAll();
 			return false;
 		}
         if (nMin <= 0) {
         	MipavUtil.displayError("The minimum number of edge pixels must exceed zero");
+        	nMinText.requestFocus();
+			nMinText.selectAll();
         	return false;
         }
         
