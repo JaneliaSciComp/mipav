@@ -1578,7 +1578,7 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 		   for (j=WL_; j<(y_-WL_); j++)
 		   {
 		      for (i=0; i<WL_; i++)
-		         itcee[i] = 0;
+		         itcee[itceeIndex+i] = 0;
 		      itimIndex += WL_;
 		      itgxIndex += WL_;
 		      itgyIndex += WL_;
@@ -1626,7 +1626,7 @@ public class AlgorithmEmbeddedConfidenceEdgeDetection extends AlgorithmBase {
 		         }
 		      }
 		      for (i=0; i<WL_; i++)
-		         itcee[i] = 0;
+		         itcee[itceeIndex+i] = 0;
 		      itimIndex += WL_;
 		      itgxIndex += WL_;
 		      itgyIndex += WL_;
