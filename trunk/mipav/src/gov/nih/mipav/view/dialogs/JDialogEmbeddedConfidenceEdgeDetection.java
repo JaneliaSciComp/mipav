@@ -105,11 +105,11 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
     
     private JTextField nMinText;
     
-    private JComboBox<String> comboBoxSuppression;
+    private JComboBox comboBoxSuppression;
     
-    private JComboBox<String> comboBoxHigh;
+    private JComboBox comboBoxHigh;
     
-    private JComboBox<String> comboBoxLow;
+    private JComboBox comboBoxLow;
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -280,7 +280,7 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         gbc.gridy++;
         mainPanel.add(suppressionLabel, gbc);
         
-        comboBoxSuppression = new JComboBox<String>();
+        comboBoxSuppression = new JComboBox();
         comboBoxSuppression.setFont(serif12);
         comboBoxSuppression.setBackground(Color.white);
         comboBoxSuppression.addItem("Ellipse");
@@ -300,7 +300,7 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         gbc.gridy++;
         mainPanel.add(highLabel, gbc);
         
-        comboBoxHigh = new JComboBox<String>();
+        comboBoxHigh = new JComboBox();
         comboBoxHigh.setFont(serif12);
         comboBoxHigh.setBackground(Color.white);
         comboBoxHigh.addItem("Ellipse");
@@ -320,7 +320,7 @@ public class JDialogEmbeddedConfidenceEdgeDetection extends JDialogScriptableBas
         gbc.gridy++;
         mainPanel.add(lowLabel, gbc);
         
-        comboBoxLow = new JComboBox<String>();
+        comboBoxLow = new JComboBox();
         comboBoxLow.setFont(serif12);
         comboBoxLow.setBackground(Color.white);
         comboBoxLow.addItem("Ellipse");
