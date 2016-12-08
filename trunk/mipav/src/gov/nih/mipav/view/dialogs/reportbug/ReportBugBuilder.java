@@ -124,7 +124,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener {
     // private Icon icon;
 
     /** URL of the page we use to actually send the bug report email. */
-    private static final String BUG_MAIL_URL = "http://mipav.cit.nih.gov/report_bug.php";
+    private static final String BUG_MAIL_URL = "https://mipav.cit.nih.gov/report_bug.php";
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------

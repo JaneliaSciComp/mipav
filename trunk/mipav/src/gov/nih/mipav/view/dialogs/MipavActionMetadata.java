@@ -3,54 +3,68 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.view.MipavUtil;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.Set;
 
 
 public abstract class MipavActionMetadata implements ActionMetadata {
 
+    @Override
     public String[] getAuthors() {
         return new String[] {"Matthew J. McAuliffe"};
     }
 
+    @Override
     public String[] getAffiliation() {
         return new String[] {"National Institutes of Health"};
     }
 
+    @Override
     public String[] getCitations() {
         // returning null indicates no citations according to Bennett
         return null;
     }
 
+    @Override
     public abstract String getCategory();
 
+    @Override
     public String getShortLabel() {
         return new String();
     }
 
+    @Override
     public abstract String getLabel();
 
+    @Override
     public abstract String getName();
 
+    @Override
     public String getDescription() {
         return new String();
     }
 
+    @Override
     public String getDescriptionLong() {
         return new String();
     }
 
+    @Override
     public String getVersion() {
         return MipavUtil.getVersion();
     }
 
+    @Override
     public String getWebsite() {
-        return "http://mipav.cit.nih.gov/";
+        return "https://mipav.cit.nih.gov/";
     }
 
+    @Override
     public Set<ImageRequirements> getInputImageRequirements() {
         return EnumSet.noneOf(ImageRequirements.class);
     }
 
+    @Override
     public String toString() {
         String str = "";
 
