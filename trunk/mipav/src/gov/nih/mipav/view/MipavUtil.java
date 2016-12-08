@@ -1275,7 +1275,7 @@ public class MipavUtil extends JComponent {
      * @param wikiPage The name of the wiki help topic to open.
      */
     public static void showWebHelp(final String wikiPage) {
-        final String wikiBase = "http://mipav.cit.nih.gov/pubwiki/index.php/";
+        final String wikiBase = "https://mipav.cit.nih.gov/pubwiki/index.php/";
         try {
             final URI wikiURI = new URI(wikiBase + wikiPage);
             Desktop.getDesktop().browse(wikiURI);
