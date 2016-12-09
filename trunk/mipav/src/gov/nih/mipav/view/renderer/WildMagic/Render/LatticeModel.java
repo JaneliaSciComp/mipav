@@ -23,6 +23,7 @@ import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -46,6 +47,7 @@ import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.SceneGraph.BoxBV;
 
 
 /**
@@ -94,6 +96,45 @@ public class LatticeModel {
 
 	} // end saveAllVOIsTo()
 
+	
+	/**
+	 */
+	public static void saveSeamCellsTo(final String dir, Vector<Vector3f> pts)
+	{
+
+		final File fileDir = new File(dir);
+
+		if (fileDir.exists() && fileDir.isDirectory()) {} 
+		else if (fileDir.exists() && !fileDir.isDirectory()) { // voiFileDir.delete();
+		} else { // voiFileDir does not exist
+			fileDir.mkdir();
+		}
+
+
+		File file = new File(fileDir + File.separator + "seamCellInfo.csv");
+		if (file.exists()) {
+			file.delete();
+			file = new File(fileDir + File.separator + "seamCellInfo.csv");
+		}
+
+		try {
+
+			final FileWriter fw = new FileWriter(file);
+			final BufferedWriter bw = new BufferedWriter(fw);
+			bw.write("name" + "," + "x_voxels" + "," + "y_voxels" + "," + "z_voxels" + "\n");
+			for (int i = 0; i < pts.size(); i++) {
+
+				Vector3f position = pts.elementAt(i);
+				bw.write("Cell " + (i+1) + "," + position.X + "," + position.Y + ","	+ position.Z + "," + "\n");
+			}
+			bw.newLine();
+			bw.close();
+		} catch (final Exception e) {
+			System.err.println("CAUGHT EXCEPTION WITHIN saveSeamCellsTo");
+			e.printStackTrace();
+		}
+
+	}
 
 	protected ModelImage imageA;
 	protected ModelImage maskImage = null;
@@ -196,6 +237,8 @@ public class LatticeModel {
 	protected String outputDirectory;
 	protected Short voiID = 0;
 
+	private boolean segmentSeamCells = true;
+	
 	/**
 	 * Creates a new LatticeModel
 	 * 
@@ -817,20 +860,41 @@ public class LatticeModel {
 			{
 				//				System.err.println( "interpolateLattice untwist image " + resultExtents[0] + " " + resultExtents[1] );
 
-				ModelImage blur = WormSegmentation.blur(imageA, 3);
-				Vector<Vector3f> positions = new Vector<Vector3f>();
-				float max = (float)blur.getMax();
-				ModelImage seamCells = WormSegmentation.segmentSeamThreshold(blur, positions, Math.min(64, max *.1f), Math.min(10, max*0.01f), max, 0, 0, 0 );
-
-				blur.disposeLocal(false);
-				System.err.println( "Segmented " + positions.size() + " seam cells" );
-				//				new ViewJFrameImage(seamCells);
+				ModelImage seamCells = null;
+				if ( segmentSeamCells )
+				{
+					String seamCellDir = outputDirectory + File.separator + "output_images" + File.separator;
+					File outputDir = new File(seamCellDir);
+					if ( !outputDir.exists() )
+					{
+						outputDir.mkdir();
+					}
+					File inputFile = new File(seamCellDir + "seamCellImage.xml");
+					if ( inputFile.exists() )
+					{
+						FileIO fileIO = new FileIO();
+						seamCells = fileIO.readImage( seamCellDir + "seamCellImage.xml" );
+					}
+					if ( seamCells == null )
+					{
+						ModelImage blur = WormSegmentation.blur(imageA, 3);
+						WormSegmentation.segmentSeam(blur, 8, 25, seamCellDir);
+						blur.disposeLocal(false);		
+						if ( inputFile.exists() )
+						{
+							FileIO fileIO = new FileIO();				
+							seamCells = fileIO.readImage( seamCellDir + "seamCellImage.xml" );
+						}
+					}
+				}
 
 				untwist(imageA, resultExtents, true);
-				untwist(seamCells, resultExtents, false);
+				if ( seamCells != null )
+				{
+					untwist(seamCells, resultExtents, false);
+					seamCells.disposeLocal(false);
+				}
 				untwistLattice(imageA, resultExtents);
-
-				seamCells.disposeLocal(false);
 			}
 			if ( untwistMarkers && (markerCenters != null) )
 			{
@@ -1420,6 +1484,11 @@ public class LatticeModel {
 			pickedPoint.copy(pt);
 			updateLattice(false);
 		}
+	}
+	
+	public void setSegmentSeamCells( boolean doSegmentation )
+	{
+		segmentSeamCells = doSegmentation;
 	}
 
 	/**
@@ -5316,439 +5385,439 @@ public class LatticeModel {
 	 * 
 	 * @param image
 	 */
-	public ModelImage segmentSkin2(final ModelImage image, final int paddingFactor )
-	{
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-
-		String voiDir = outputDirectory + File.separator + "contours" + File.separator;
-		final File voiFileDir = new File(voiDir);
-
-		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-			final String[] list = voiFileDir.list();
-			for (int i = 0; i < list.length; i++) {
-				final File lrFile = new File(voiDir + list[i]);
-				lrFile.delete();
-			}
-		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		} else { // voiFileDir does not exist
-			voiFileDir.mkdir();
-		}
-
-		final int numPts = 360;
-
-
-		FileIO fileIO = new FileIO();
-
-		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
-		int dimZ = resultImage.getExtents().length > 2 ? resultImage.getExtents()[2] : 1;
-
-		ModelImage contourImage = new ModelImage( ModelStorageBase.FLOAT, resultImage.getExtents(), imageName + "_straight_contour.xml" );
-		contourImage.setResolutions( resultImage.getResolutions(0) );
-
-		int dimX = (int) (resultImage.getExtents()[0]);
-		int dimY = (int) (resultImage.getExtents()[1]);
-		Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
-
-		//		System.err.println( dimX + " " + dimY + " " + dimZ );
-
-		VOI outputContour = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
-		resultImage.registerVOI( outputContour );
-
-		//		ModelImage resultBlur = WormSegmentation.blur(resultImage, 3);
-
-		ModelImage seamCellStraight = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + "Seam Cells" + "_straight_unmasked.xml" );
-		for (int i = 0; i < dimZ; i++)
-		{			
-			center.set( dimX/2, dimY/2, 0 );
-			Vector3f leftPt = leftPositions.elementAt(i);
-			Vector3f rightPt = rightPositions.elementAt(i);
-
-			float diameter = rightPt.distance(leftPt);
-			float radius = diameter / 2f;
-			float minDistance = 0.5f * radius;
-			float maxDistance = 1.5f * radius;
-			System.err.println( i + " " + minDistance + " " + radius + " " + maxDistance );
-
-			float diameter2 = (float) (.75 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2));
-			System.err.println( i + " " + (.75f*diameter2) + " " + diameter2 + " " + (1.75f*diameter2) );
-			System.err.println( "" );
-
-
-			VOIContour innerContour = new VOIContour(true);
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, minDistance, innerContour, numPts);	
-
-			VOIContour outerContour = new VOIContour(true);
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, maxDistance, outerContour, numPts);
-
-			VOIContour targetContour = new VOIContour(true);
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, targetContour, numPts);	
-
-			//			Vector<Boolean> fixedPts = new Vector<Boolean>();
-			VOIContour contourMaxPeak = new VOIContour(true);
-			for ( int j = 0; j < outerContour.size(); j++ )
-			{				
-				int x = (int)Math.round(center.X - radius);
-				int y = (int)Math.round(center.Y);
-				int z = (int)Math.round(i);
-				int leftID = seamCellStraight.getInt(x, y, z);
-				x = (int)Math.round(center.X + radius);
-				y = (int)Math.round(center.Y);
-				z = (int)Math.round(i);
-				int rightID = seamCellStraight.getInt(x, y, z);
-
-				x = (int)Math.round(center.X);
-				y = (int)Math.round(center.Y);
-				z = (int)Math.round(i);
-				int centerID = seamCellStraight.getInt(x, y, z);
-
-				Vector3f startPt = new Vector3f( center.X, center.Y, i );
-				Vector3f endPt = new Vector3f( outerContour.elementAt(j) ); endPt.Z = i;
-				Vector3f targetPt = new Vector3f( targetContour.elementAt(j) ); targetPt.Z = i;
-
-				Vector3f seamPt = seamTest(seamCellStraight, centerID, leftID, rightID, startPt, endPt, minDistance, maxDistance, radius );
-				if ( seamPt != null )
-				{
-					x = (int)Math.round(seamPt.X);
-					y = (int)Math.round(seamPt.Y);
-					z = (int)Math.round(i);
-					int id = seamCellStraight.getInt(x, y, z);
-					if ( (id == leftID) || (id == rightID) )
-					{
-						contourMaxPeak.add(seamPt);		
-						//						fixedPts.add(true);
-					}
-					else if ( id == centerID )
-					{
-						float dist = endPt.distance(seamPt);
-						float targetDist = Math.max(0, seamPt.distance(startPt) - radius);
-						Vector3f maxPeak = findMaxPeak( resultImage, seamPt, endPt, 1, dist, targetDist );
-						if ( maxPeak != null )
-						{
-							contourMaxPeak.add(maxPeak);
-							//							fixedPts.add(false);
-						}
-						else
-						{
-							contourMaxPeak.add(targetPt);
-							//							fixedPts.add(true);
-						}
-					}
-					else
-					{
-						Vector3f maxPeak = findMaxPeak( resultImage, startPt, seamPt, minDistance, maxDistance, radius );
-						if ( maxPeak != null )
-						{
-							contourMaxPeak.add(maxPeak);
-							//							fixedPts.add(false);
-						}
-						else
-						{
-							contourMaxPeak.add(targetPt);
-							//							fixedPts.add(true);
-						}
-					}
-				}
-				else 
-				{
-					Vector3f maxPeak = findMaxPeak( resultImage, startPt, endPt, minDistance, maxDistance, radius );
-					if ( maxPeak != null )
-					{
-						contourMaxPeak.add(maxPeak);
-						//						fixedPts.add(false);
-					}
-					else
-					{
-						contourMaxPeak.add( targetPt);
-						//						fixedPts.add(false);						
-					}
-				}
-			}
-			//			outputContour.getCurves().add( contourMaxPeak );
-
-
-
-			//			VOIContour contour = new VOIContour(true);
-			//
-			//
-			//			float diameter = (float) (.75 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2));
-			//
-			//			//			System.err.println( dimX + " " + dimY + " " + diameter );
-			//
-			//			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, diameter, contour, numPts);				
-			//
-			//			Vector3f position = null;
-			//			for (int j = 0; j < Math.min(numPts, contour.size()); j++) {
-			//				int maxDist = -1;
-			//				float maxValue = -Float.MAX_VALUE;
-			//				for ( int dist = (int)(diameter*0.75); dist <= diameter*1.75; dist++ )
-			//				{
-			//					position = Vector3f.sub(contour.elementAt(j), center );
-			//					position.normalize();
-			//					position.scale(dist);
-			//					position.add(center);
-			//					float value = 0;
-			//					if ( resultImage.isColorImage() )
-			//					{
-			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 1);
-			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 2);
-			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 3);
-			//						value /= 3f;
-			//					}
-			//					else
-			//					{
-			//						value = resultImage.getFloat((int)position.X, (int)position.Y, i);
-			//					}
-			//					if ( value > maxValue )
-			//					{
-			//						maxValue = value;
-			//						maxDist = dist;
-			//					}
-			//				}
-			//				for ( int dist = maxDist; dist <= diameter*1.75; dist++ )
-			//				{
-			//					position = Vector3f.sub(contour.elementAt(j), center );
-			//					position.normalize();
-			//					position.scale(dist);
-			//					position.add(center);
-			//					float value = 0;
-			//					if ( resultImage.isColorImage() )
-			//					{
-			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 1);
-			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 2);
-			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 3);
-			//						value /= 3f;
-			//					}
-			//					else
-			//					{
-			//						resultImage.getFloat((int)position.X, (int)position.Y, i);
-			//					}
-			//					if ( value <= maxValue/2 )
-			//					{
-			//						break;
-			//					}
-			//				}
-			//				if ( position != null )
-			//				{
-			////					System.err.println( i + " " + diameter + " " + maxDist );
-			//					contour.elementAt(j).copy(position);					
-			//				}
-			//			}
-
-			for ( int j = 0; j < contourMaxPeak.size(); j++ )
-			{
-				contourMaxPeak.elementAt(j).Z = 0;
-			}
-			// smooth 1:
-			int range = 11;
-			int halfRange = 5;
-			VOIContour avgContour = new VOIContour(true);
-			for ( int j = 0; j < contourMaxPeak.size(); j++ )
-			{
-				//				if ( fixedPts.elementAt(j) )
-				//				{
-				//					avgContour.add(new Vector3f(contourMaxPeak.elementAt(j)));
-				//				}
-				//				else
-				{
-					float avg = 0;
-					for ( int k = 0; k < range; k++ )
-					{
-						int index = (j - halfRange + k + contourMaxPeak.size()) % contourMaxPeak.size();
-						avg += contourMaxPeak.elementAt(index).distance(center);
-					}
-					avg /= (float)range;
-					avg = Math.max( minDistance, avg );
-					Vector3f dir = Vector3f.sub(contourMaxPeak.elementAt(j), center);
-					dir.normalize();
-					dir.scale(avg);
-					Vector3f avgPt = new Vector3f(center);
-					avgPt.add(dir);
-					avgContour.add(avgPt);
-				}
-			}
-			// smooth 2:
-			VOIContour avgContour2 = new VOIContour(true);
-			for ( int j = 0; j < contourMaxPeak.size(); j++ )
-			{
-				//				if ( fixedPts.elementAt(j) )
-				//				{
-				//					avgContour2.add(new Vector3f(contourMaxPeak.elementAt(j)));
-				//				}
-				//				else
-				{
-					float avg = 0;
-					for ( int k = 0; k < range; k++ )
-					{
-						int index = (j - halfRange + k + contourMaxPeak.size()) % contourMaxPeak.size();
-						avg += avgContour.elementAt(index).distance(center);
-					}
-					avg /= (float)range;
-					avg = Math.max( minDistance, avg );
-					Vector3f dir = Vector3f.sub(avgContour.elementAt(j), center);
-					dir.normalize();
-					dir.scale(avg);
-					Vector3f avgPt = new Vector3f(center);
-					avgPt.add(dir);
-					avgContour2.add(avgPt);
-				}
-			}
-
-			for ( int j = 0; j < avgContour2.size(); j++ )
-			{
-				Vector3f dir = Vector3f.sub(avgContour2.elementAt(j), center );
-				float dist = dir.normalize();
-				dist += paddingFactor;
-				dir.scale(dist);
-				dir.add(center);
-				avgContour2.elementAt(j).copy(dir);					
-			}
-			VOIContour convex = new VOIContour(avgContour2);
-			convex.convexHull();
-			//			avgContour2.convexHull();
-			for ( int j = 0; j < avgContour2.size(); j++ )
-			{
-				//				contourMaxPeak.elementAt(j).Z = i;
-				//				avgContour.elementAt(j).Z = i;
-				avgContour2.elementAt(j).Z = i;
-			}
-			for ( int j = 0; j < innerContour.size(); j++ )
-			{
-				innerContour.elementAt(j).Z = i;
-			}
-			for ( int j = 0; j < outerContour.size(); j++ )
-			{
-				outerContour.elementAt(j).Z = i;
-			}
-			for ( int j = 0; j < targetContour.size(); j++ )
-			{
-				targetContour.elementAt(j).Z = i;
-			}
-			for ( int j = 0; j < convex.size(); j++ )
-			{
-				convex.elementAt(j).Z = i;
-			}
-			//			outputContour.getCurves().add( contourMaxPeak );
-			outputContour.getCurves().add( avgContour2 );
-			outputContour.getCurves().add( innerContour );
-			outputContour.getCurves().add( outerContour );
-			outputContour.getCurves().add( targetContour );
-			outputContour.getCurves().add( convex );
-
-			for ( int y = 0; y < dimY; y++ )
-			{
-				for ( int x = 0; x < dimX; x++ )
-				{
-					contourImage.set(x,  y, i, 0 );
-					if ( avgContour2.contains(x, y) )
-					{
-						contourImage.set(x,  y, i, 10 );
-					}
-				}
-			}
-		}
-
-		if ( seamCellStraight != null )
-		{
-			seamCellStraight.disposeLocal(false);
-			seamCellStraight = null;
-		}
-
-		// Optional VOI interpolation & smoothing:
-		ModelImage contourImageBlur = WormSegmentation.blur(contourImage, 3);
-		contourImage.disposeLocal(false);
-		contourImage = null;
-
-		//		for (int z = 0; z < dimZ; z++)
-		//		{			
-		//			for ( int y = 0; y < dimY; y++ )
-		//			{
-		//				for ( int x = 0; x < dimX; x++ )
-		//				{
-		//					if ( contourImageBlur.getFloat(x,y,z) <= 1 )
-		//					{
-		//						if ( resultImage.isColorImage() )
-		//						{
-		//							resultImage.setC(x, y, z, 0, 0);	
-		//							resultImage.setC(x, y, z, 1, 0);	
-		//							resultImage.setC(x, y, z, 2, 0);	
-		//							resultImage.setC(x, y, z, 3, 0);							
-		//						}
-		//						else
-		//						{
-		//							resultImage.set(x, y, z, 0);
-		//						}
-		//					}
-		//				}
-		//			}			
-		//		}
-		//		resultImage.setImageName( imageName + "_straight_masked.xml" );
-		//		saveImage(imageName, resultImage, true);
-
-		// Save the contour vois to file.
-		//		voiDir = outputDirectory + File.separator + "contours" + File.separator;
-		//		saveAllVOIsTo(voiDir, resultImage);
-		//		contourImageBlur.setVOIs(resultImage.getVOIsCopy());
-		//		resultImage.unregisterAllVOIs();
-		new ViewJFrameImage(resultImage);
-		//
-		//		resultImage.disposeLocal(false);
-		//		resultImage = null;
-
-
-
-		//		ModelImage sourceImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked_source.xml" );
-		//		ModelImage curvatureImageTwisted = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), imageName + "_curvature.xml" );
-		//		curvatureImageTwisted.setResolutions( image.getResolutions(0) );
-		//		
-		//		ModelImage curvatureImage = new ModelImage( ModelStorageBase.FLOAT, contourImageBlur.getExtents(), imageName + "_straight_curvature.xml" );
-		//		curvatureImage.setResolutions( contourImageBlur.getResolutions(0) );
-		//		for (int z = 0; z < dimZ; z++)
-		//		{			
-		//			float curvature = centerSpline.GetCurvature(allTimes[z]);
-		//			for ( int y = 0; y < dimY; y++ )
-		//			{
-		//				for ( int x = 0; x < dimX; x++ )
-		//				{
-		//					if ( contourImageBlur.getFloat(x,y,z) > 1 )
-		//					{
-		//						curvatureImage.set(x, y, z, curvature);
-		//						
-		//						if ( sourceImage != null )
-		//						{
-		//							int tX = Math.round(sourceImage.getFloatC(x, y, z, 1));
-		//							int tY = Math.round(sourceImage.getFloatC(x, y, z, 2));
-		//							int tZ = Math.round(sourceImage.getFloatC(x, y, z, 3));
-		//							
-		//							float val = curvatureImageTwisted.getFloat(tX,tY,tZ);
-		//							if ( val < curvature )
-		//							{
-		//								curvatureImageTwisted.set(tX, tY, tZ, curvature);
-		//							}
-		//						}
-		//					}
-		//				}
-		//			}
-		//		}
-		//		saveImage(imageName, curvatureImage, true);			
-		//		curvatureImage.disposeLocal(false);
-		//		curvatureImage = null;
-		//		
-		//		if ( sourceImage != null )
-		//		{
-		//			saveImage(imageName, curvatureImageTwisted, true);	
-		//			sourceImage.disposeLocal(false);
-		//			sourceImage = null;
-		//		}		
-		//		curvatureImageTwisted.disposeLocal(false);
-		//		curvatureImageTwisted = null;
-		//		
-		//		
-		//		
-		return contourImageBlur;
-	}
+//	public ModelImage segmentSkin2(final ModelImage image, final int paddingFactor )
+//	{
+//		String imageName = image.getImageName();
+//		if (imageName.contains("_clone")) {
+//			imageName = imageName.replaceAll("_clone", "");
+//		}
+//
+//		String voiDir = outputDirectory + File.separator + "contours" + File.separator;
+//		final File voiFileDir = new File(voiDir);
+//
+//		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+//			final String[] list = voiFileDir.list();
+//			for (int i = 0; i < list.length; i++) {
+//				final File lrFile = new File(voiDir + list[i]);
+//				lrFile.delete();
+//			}
+//		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+//		} else { // voiFileDir does not exist
+//			voiFileDir.mkdir();
+//		}
+//
+//		final int numPts = 360;
+//
+//
+//		FileIO fileIO = new FileIO();
+//
+//		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
+//		int dimZ = resultImage.getExtents().length > 2 ? resultImage.getExtents()[2] : 1;
+//
+//		ModelImage contourImage = new ModelImage( ModelStorageBase.FLOAT, resultImage.getExtents(), imageName + "_straight_contour.xml" );
+//		contourImage.setResolutions( resultImage.getResolutions(0) );
+//
+//		int dimX = (int) (resultImage.getExtents()[0]);
+//		int dimY = (int) (resultImage.getExtents()[1]);
+//		Vector3f center = new Vector3f( dimX/2, dimY/2, 0 );
+//
+//		//		System.err.println( dimX + " " + dimY + " " + dimZ );
+//
+//		VOI outputContour = new VOI( (short)1, "contours", VOI.POLYLINE, (float) Math.random());
+//		resultImage.registerVOI( outputContour );
+//
+//		//		ModelImage resultBlur = WormSegmentation.blur(resultImage, 3);
+//
+//		ModelImage seamCellStraight = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + "Seam Cells" + "_straight_unmasked.xml" );
+//		for (int i = 0; i < dimZ; i++)
+//		{			
+//			center.set( dimX/2, dimY/2, 0 );
+//			Vector3f leftPt = leftPositions.elementAt(i);
+//			Vector3f rightPt = rightPositions.elementAt(i);
+//
+//			float diameter = rightPt.distance(leftPt);
+//			float radius = diameter / 2f;
+//			float minDistance = 0.5f * radius;
+//			float maxDistance = 1.5f * radius;
+//			System.err.println( i + " " + minDistance + " " + radius + " " + maxDistance );
+//
+//			float diameter2 = (float) (.75 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2));
+//			System.err.println( i + " " + (.75f*diameter2) + " " + diameter2 + " " + (1.75f*diameter2) );
+//			System.err.println( "" );
+//
+//
+//			VOIContour innerContour = new VOIContour(true);
+//			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, minDistance, innerContour, numPts);	
+//
+//			VOIContour outerContour = new VOIContour(true);
+//			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, maxDistance, outerContour, numPts);
+//
+//			VOIContour targetContour = new VOIContour(true);
+//			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, targetContour, numPts);	
+//
+//			//			Vector<Boolean> fixedPts = new Vector<Boolean>();
+//			VOIContour contourMaxPeak = new VOIContour(true);
+//			for ( int j = 0; j < outerContour.size(); j++ )
+//			{				
+//				int x = (int)Math.round(center.X - radius);
+//				int y = (int)Math.round(center.Y);
+//				int z = (int)Math.round(i);
+//				int leftID = seamCellStraight.getInt(x, y, z);
+//				x = (int)Math.round(center.X + radius);
+//				y = (int)Math.round(center.Y);
+//				z = (int)Math.round(i);
+//				int rightID = seamCellStraight.getInt(x, y, z);
+//
+//				x = (int)Math.round(center.X);
+//				y = (int)Math.round(center.Y);
+//				z = (int)Math.round(i);
+//				int centerID = seamCellStraight.getInt(x, y, z);
+//
+//				Vector3f startPt = new Vector3f( center.X, center.Y, i );
+//				Vector3f endPt = new Vector3f( outerContour.elementAt(j) ); endPt.Z = i;
+//				Vector3f targetPt = new Vector3f( targetContour.elementAt(j) ); targetPt.Z = i;
+//
+//				Vector3f seamPt = seamTest(seamCellStraight, centerID, leftID, rightID, startPt, endPt, minDistance, maxDistance, radius );
+//				if ( seamPt != null )
+//				{
+//					x = (int)Math.round(seamPt.X);
+//					y = (int)Math.round(seamPt.Y);
+//					z = (int)Math.round(i);
+//					int id = seamCellStraight.getInt(x, y, z);
+//					if ( (id == leftID) || (id == rightID) )
+//					{
+//						contourMaxPeak.add(seamPt);		
+//						//						fixedPts.add(true);
+//					}
+//					else if ( id == centerID )
+//					{
+//						float dist = endPt.distance(seamPt);
+//						float targetDist = Math.max(0, seamPt.distance(startPt) - radius);
+//						Vector3f maxPeak = findMaxPeak( resultImage, seamPt, endPt, 1, dist, targetDist );
+//						if ( maxPeak != null )
+//						{
+//							contourMaxPeak.add(maxPeak);
+//							//							fixedPts.add(false);
+//						}
+//						else
+//						{
+//							contourMaxPeak.add(targetPt);
+//							//							fixedPts.add(true);
+//						}
+//					}
+//					else
+//					{
+//						Vector3f maxPeak = findMaxPeak( resultImage, startPt, seamPt, minDistance, maxDistance, radius );
+//						if ( maxPeak != null )
+//						{
+//							contourMaxPeak.add(maxPeak);
+//							//							fixedPts.add(false);
+//						}
+//						else
+//						{
+//							contourMaxPeak.add(targetPt);
+//							//							fixedPts.add(true);
+//						}
+//					}
+//				}
+//				else 
+//				{
+//					Vector3f maxPeak = findMaxPeak( resultImage, startPt, endPt, minDistance, maxDistance, radius );
+//					if ( maxPeak != null )
+//					{
+//						contourMaxPeak.add(maxPeak);
+//						//						fixedPts.add(false);
+//					}
+//					else
+//					{
+//						contourMaxPeak.add( targetPt);
+//						//						fixedPts.add(false);						
+//					}
+//				}
+//			}
+//			//			outputContour.getCurves().add( contourMaxPeak );
+//
+//
+//
+//			//			VOIContour contour = new VOIContour(true);
+//			//
+//			//
+//			//			float diameter = (float) (.75 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2));
+//			//
+//			//			//			System.err.println( dimX + " " + dimY + " " + diameter );
+//			//
+//			//			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, diameter, contour, numPts);				
+//			//
+//			//			Vector3f position = null;
+//			//			for (int j = 0; j < Math.min(numPts, contour.size()); j++) {
+//			//				int maxDist = -1;
+//			//				float maxValue = -Float.MAX_VALUE;
+//			//				for ( int dist = (int)(diameter*0.75); dist <= diameter*1.75; dist++ )
+//			//				{
+//			//					position = Vector3f.sub(contour.elementAt(j), center );
+//			//					position.normalize();
+//			//					position.scale(dist);
+//			//					position.add(center);
+//			//					float value = 0;
+//			//					if ( resultImage.isColorImage() )
+//			//					{
+//			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 1);
+//			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 2);
+//			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 3);
+//			//						value /= 3f;
+//			//					}
+//			//					else
+//			//					{
+//			//						value = resultImage.getFloat((int)position.X, (int)position.Y, i);
+//			//					}
+//			//					if ( value > maxValue )
+//			//					{
+//			//						maxValue = value;
+//			//						maxDist = dist;
+//			//					}
+//			//				}
+//			//				for ( int dist = maxDist; dist <= diameter*1.75; dist++ )
+//			//				{
+//			//					position = Vector3f.sub(contour.elementAt(j), center );
+//			//					position.normalize();
+//			//					position.scale(dist);
+//			//					position.add(center);
+//			//					float value = 0;
+//			//					if ( resultImage.isColorImage() )
+//			//					{
+//			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 1);
+//			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 2);
+//			//						value += resultImage.getFloatC((int)position.X, (int)position.Y, i, 3);
+//			//						value /= 3f;
+//			//					}
+//			//					else
+//			//					{
+//			//						resultImage.getFloat((int)position.X, (int)position.Y, i);
+//			//					}
+//			//					if ( value <= maxValue/2 )
+//			//					{
+//			//						break;
+//			//					}
+//			//				}
+//			//				if ( position != null )
+//			//				{
+//			////					System.err.println( i + " " + diameter + " " + maxDist );
+//			//					contour.elementAt(j).copy(position);					
+//			//				}
+//			//			}
+//
+//			for ( int j = 0; j < contourMaxPeak.size(); j++ )
+//			{
+//				contourMaxPeak.elementAt(j).Z = 0;
+//			}
+//			// smooth 1:
+//			int range = 11;
+//			int halfRange = 5;
+//			VOIContour avgContour = new VOIContour(true);
+//			for ( int j = 0; j < contourMaxPeak.size(); j++ )
+//			{
+//				//				if ( fixedPts.elementAt(j) )
+//				//				{
+//				//					avgContour.add(new Vector3f(contourMaxPeak.elementAt(j)));
+//				//				}
+//				//				else
+//				{
+//					float avg = 0;
+//					for ( int k = 0; k < range; k++ )
+//					{
+//						int index = (j - halfRange + k + contourMaxPeak.size()) % contourMaxPeak.size();
+//						avg += contourMaxPeak.elementAt(index).distance(center);
+//					}
+//					avg /= (float)range;
+//					avg = Math.max( minDistance, avg );
+//					Vector3f dir = Vector3f.sub(contourMaxPeak.elementAt(j), center);
+//					dir.normalize();
+//					dir.scale(avg);
+//					Vector3f avgPt = new Vector3f(center);
+//					avgPt.add(dir);
+//					avgContour.add(avgPt);
+//				}
+//			}
+//			// smooth 2:
+//			VOIContour avgContour2 = new VOIContour(true);
+//			for ( int j = 0; j < contourMaxPeak.size(); j++ )
+//			{
+//				//				if ( fixedPts.elementAt(j) )
+//				//				{
+//				//					avgContour2.add(new Vector3f(contourMaxPeak.elementAt(j)));
+//				//				}
+//				//				else
+//				{
+//					float avg = 0;
+//					for ( int k = 0; k < range; k++ )
+//					{
+//						int index = (j - halfRange + k + contourMaxPeak.size()) % contourMaxPeak.size();
+//						avg += avgContour.elementAt(index).distance(center);
+//					}
+//					avg /= (float)range;
+//					avg = Math.max( minDistance, avg );
+//					Vector3f dir = Vector3f.sub(avgContour.elementAt(j), center);
+//					dir.normalize();
+//					dir.scale(avg);
+//					Vector3f avgPt = new Vector3f(center);
+//					avgPt.add(dir);
+//					avgContour2.add(avgPt);
+//				}
+//			}
+//
+//			for ( int j = 0; j < avgContour2.size(); j++ )
+//			{
+//				Vector3f dir = Vector3f.sub(avgContour2.elementAt(j), center );
+//				float dist = dir.normalize();
+//				dist += paddingFactor;
+//				dir.scale(dist);
+//				dir.add(center);
+//				avgContour2.elementAt(j).copy(dir);					
+//			}
+//			VOIContour convex = new VOIContour(avgContour2);
+//			convex.convexHull();
+//			//			avgContour2.convexHull();
+//			for ( int j = 0; j < avgContour2.size(); j++ )
+//			{
+//				//				contourMaxPeak.elementAt(j).Z = i;
+//				//				avgContour.elementAt(j).Z = i;
+//				avgContour2.elementAt(j).Z = i;
+//			}
+//			for ( int j = 0; j < innerContour.size(); j++ )
+//			{
+//				innerContour.elementAt(j).Z = i;
+//			}
+//			for ( int j = 0; j < outerContour.size(); j++ )
+//			{
+//				outerContour.elementAt(j).Z = i;
+//			}
+//			for ( int j = 0; j < targetContour.size(); j++ )
+//			{
+//				targetContour.elementAt(j).Z = i;
+//			}
+//			for ( int j = 0; j < convex.size(); j++ )
+//			{
+//				convex.elementAt(j).Z = i;
+//			}
+//			//			outputContour.getCurves().add( contourMaxPeak );
+//			outputContour.getCurves().add( avgContour2 );
+//			outputContour.getCurves().add( innerContour );
+//			outputContour.getCurves().add( outerContour );
+//			outputContour.getCurves().add( targetContour );
+//			outputContour.getCurves().add( convex );
+//
+//			for ( int y = 0; y < dimY; y++ )
+//			{
+//				for ( int x = 0; x < dimX; x++ )
+//				{
+//					contourImage.set(x,  y, i, 0 );
+//					if ( avgContour2.contains(x, y) )
+//					{
+//						contourImage.set(x,  y, i, 10 );
+//					}
+//				}
+//			}
+//		}
+//
+//		if ( seamCellStraight != null )
+//		{
+//			seamCellStraight.disposeLocal(false);
+//			seamCellStraight = null;
+//		}
+//
+//		// Optional VOI interpolation & smoothing:
+//		ModelImage contourImageBlur = WormSegmentation.blur(contourImage, 3);
+//		contourImage.disposeLocal(false);
+//		contourImage = null;
+//
+//		//		for (int z = 0; z < dimZ; z++)
+//		//		{			
+//		//			for ( int y = 0; y < dimY; y++ )
+//		//			{
+//		//				for ( int x = 0; x < dimX; x++ )
+//		//				{
+//		//					if ( contourImageBlur.getFloat(x,y,z) <= 1 )
+//		//					{
+//		//						if ( resultImage.isColorImage() )
+//		//						{
+//		//							resultImage.setC(x, y, z, 0, 0);	
+//		//							resultImage.setC(x, y, z, 1, 0);	
+//		//							resultImage.setC(x, y, z, 2, 0);	
+//		//							resultImage.setC(x, y, z, 3, 0);							
+//		//						}
+//		//						else
+//		//						{
+//		//							resultImage.set(x, y, z, 0);
+//		//						}
+//		//					}
+//		//				}
+//		//			}			
+//		//		}
+//		//		resultImage.setImageName( imageName + "_straight_masked.xml" );
+//		//		saveImage(imageName, resultImage, true);
+//
+//		// Save the contour vois to file.
+//		//		voiDir = outputDirectory + File.separator + "contours" + File.separator;
+//		//		saveAllVOIsTo(voiDir, resultImage);
+//		//		contourImageBlur.setVOIs(resultImage.getVOIsCopy());
+//		//		resultImage.unregisterAllVOIs();
+//		new ViewJFrameImage(resultImage);
+//		//
+//		//		resultImage.disposeLocal(false);
+//		//		resultImage = null;
+//
+//
+//
+//		//		ModelImage sourceImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked_source.xml" );
+//		//		ModelImage curvatureImageTwisted = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), imageName + "_curvature.xml" );
+//		//		curvatureImageTwisted.setResolutions( image.getResolutions(0) );
+//		//		
+//		//		ModelImage curvatureImage = new ModelImage( ModelStorageBase.FLOAT, contourImageBlur.getExtents(), imageName + "_straight_curvature.xml" );
+//		//		curvatureImage.setResolutions( contourImageBlur.getResolutions(0) );
+//		//		for (int z = 0; z < dimZ; z++)
+//		//		{			
+//		//			float curvature = centerSpline.GetCurvature(allTimes[z]);
+//		//			for ( int y = 0; y < dimY; y++ )
+//		//			{
+//		//				for ( int x = 0; x < dimX; x++ )
+//		//				{
+//		//					if ( contourImageBlur.getFloat(x,y,z) > 1 )
+//		//					{
+//		//						curvatureImage.set(x, y, z, curvature);
+//		//						
+//		//						if ( sourceImage != null )
+//		//						{
+//		//							int tX = Math.round(sourceImage.getFloatC(x, y, z, 1));
+//		//							int tY = Math.round(sourceImage.getFloatC(x, y, z, 2));
+//		//							int tZ = Math.round(sourceImage.getFloatC(x, y, z, 3));
+//		//							
+//		//							float val = curvatureImageTwisted.getFloat(tX,tY,tZ);
+//		//							if ( val < curvature )
+//		//							{
+//		//								curvatureImageTwisted.set(tX, tY, tZ, curvature);
+//		//							}
+//		//						}
+//		//					}
+//		//				}
+//		//			}
+//		//		}
+//		//		saveImage(imageName, curvatureImage, true);			
+//		//		curvatureImage.disposeLocal(false);
+//		//		curvatureImage = null;
+//		//		
+//		//		if ( sourceImage != null )
+//		//		{
+//		//			saveImage(imageName, curvatureImageTwisted, true);	
+//		//			sourceImage.disposeLocal(false);
+//		//			sourceImage = null;
+//		//		}		
+//		//		curvatureImageTwisted.disposeLocal(false);
+//		//		curvatureImageTwisted = null;
+//		//		
+//		//		
+//		//		
+//		return contourImageBlur;
+//	}
 
 	/**
 	 * Used for segmenting the straightened worm image when the skin marker is present.
@@ -5797,7 +5866,7 @@ public class LatticeModel {
 		resultImage.registerVOI( outputContour );
 
 
-		ModelImage seamCellStraight = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + "Seam Cells" + "_straight_unmasked.xml" );
+		ModelImage seamCellStraight = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + "seamCellImage" + "_straight_unmasked.xml" );
 
 		Vector<Integer> leftIDList = new Vector<Integer>();
 		Vector<Integer> rightIDList = new Vector<Integer>();
@@ -5997,7 +6066,7 @@ public class LatticeModel {
 				Vector3f endPt = new Vector3f( outerContour.elementAt(j) ); endPt.Z = i;
 				Vector3f targetPt = new Vector3f( targetContour.elementAt(j) ); targetPt.Z = i;
 
-				Vector3f maxPeak = findMaxPeak( resultImage, startPt, endPt, minDist, maxDist, targetRadius );
+				Vector3f maxPeak = findMaxPeak( resultImage, seamCellStraight, startPt, endPt, minDist, maxDist, targetRadius, ids[i][0], ids[i][1] );
 				if ( maxPeak != null )
 				{
 					contourMaxPeak.add(maxPeak);
@@ -6008,7 +6077,31 @@ public class LatticeModel {
 				}
 				
 			}
-			
+			if ( seamCellStraight != null )
+			{
+//				System.err.println( i + " " + ids[i][0] + " " + ids[i][1] );
+				center.set( dimX/2, dimY/2, i );
+				for ( int j = 0; j < contourMaxPeak.size(); j++ )
+				{
+					Vector3f pt = contourMaxPeak.elementAt(j);
+					int value = seamCellStraight.getInt( Math.round(pt.X), Math.round(pt.Y), i);
+					int count = 0;
+					while ( (value != 0) && (count < 3) && (value != ids[i][0]) && (value != ids[i][1]) )
+					{
+						Vector3f dir = Vector3f.sub(pt, center);
+						float length = dir.normalize();
+						length *= .9f;
+						dir.scale(length);
+						pt.copy(center);
+						pt.add(dir);
+						value = seamCellStraight.getInt( Math.round(pt.X), Math.round(pt.Y), i);
+						count++;
+					}
+					contourMaxPeak.elementAt(j).copy(pt);
+				}
+
+				center.set( dimX/2, dimY/2, 0 );
+			}
 
 			for ( int j = 0; j < contourMaxPeak.size(); j++ )
 			{
@@ -6147,10 +6240,10 @@ public class LatticeModel {
 		saveAllVOIsTo(voiDir, resultImage);
 		contourImageBlur.setVOIs(resultImage.getVOIsCopy());
 		resultImage.unregisterAllVOIs();
-		new ViewJFrameImage(resultImage);
+//		new ViewJFrameImage(resultImage);
 		//
-		//		resultImage.disposeLocal(false);
-		//		resultImage = null;
+		resultImage.disposeLocal(false);
+		resultImage = null;
 
 		return contourImageBlur;
 	}
@@ -7879,7 +7972,8 @@ public class LatticeModel {
 	}
 
 
-	private Vector3f findMaxPeak( ModelImage image, Vector3f startPt, Vector3f endPt, float minDist, float maxDist, float targetDist )
+	private Vector3f findMaxPeak( ModelImage image, ModelImage seamImage, Vector3f startPt, Vector3f endPt,
+			float minDist, float maxDist, float targetDist, int leftTarget, int rightTarget )
 	{
 		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
@@ -7890,9 +7984,11 @@ public class LatticeModel {
 
 		Vector3f dir = Vector3f.sub(endPt, startPt);
 		float length = dir.normalize();
-
+		dir.scale( minDist );
 		Vector3f pt = new Vector3f(startPt);
-		Vector3f maxPt = new Vector3f(startPt);
+		pt.add(dir);
+		dir.normalize();
+		Vector3f maxPt = new Vector3f(pt);
 
 		float max = -1;
 		float min = Float.MAX_VALUE;
@@ -7900,10 +7996,10 @@ public class LatticeModel {
 		boolean down = false;
 		float minOverall = Float.MAX_VALUE;
 		float maxOverall =-Float.MAX_VALUE;
+		int maxIndexOverall = -1;
+		boolean foundTarget = false;
 		for ( int i = 0; i < length; i++ )
 		{
-			pt.add(dir);
-
 			int x = (int)Math.round(pt.X);
 			int y = (int)Math.round(pt.Y);
 			int z = (int)Math.round(pt.Z);
@@ -7918,23 +8014,40 @@ public class LatticeModel {
 				if ( value > maxOverall )
 				{
 					maxOverall = value;
+					maxIndexOverall = i;
 				}
 			}
 			else
 			{
 				break;
 			}
-
-			if ( pt.distance(startPt) <= minDist )
+			if ( seamImage != null )
 			{
-				continue;
+				int id = seamImage.getInt(x,y,z);
+				if ( (id != 0) && (id != leftTarget) && (id != rightTarget) )
+				{
+					break;
+				}
+				else if ( (id != 0) && ((id == leftTarget) || (id == rightTarget)) )
+				{
+					foundTarget = true;
+				}
+				else if ( foundTarget && (id == 0) )
+				{
+					break;
+				}
 			}
-			else if ( pt.distance(startPt) > maxDist )
+
+			if ( pt.distance(startPt) > maxDist )
 			{
+				if ( foundTarget )
+				{
+					return pt;
+				}
 				break;
 			}
 
-			if ( up && (value < (max/2f)) )
+			if ( up && (value < max) )
 			{
 				maxPts.add( new Vector3f(maxPt) );
 				maxVals.add(new Float(max));
@@ -7957,6 +8070,8 @@ public class LatticeModel {
 			{
 				min = value;
 			}
+
+			pt.add(dir);
 		}
 
 
