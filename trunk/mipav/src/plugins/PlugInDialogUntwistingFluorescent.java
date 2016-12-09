@@ -45,6 +45,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModelEM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.ModelImageLargeFormat;
+import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentation;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -57,9 +58,11 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -81,6 +84,8 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 {
 
 	private static final long serialVersionUID = -8451902403280342311L;
+	private JCheckBox segmentSeamCheck;
+	private JCheckBox segmentSeamResultsCheck;
 	private JCheckBox straightenImageCheck;
 	private JCheckBox straightenMarkersCheck;
 	private JRadioButton voxelCoords;
@@ -116,13 +121,16 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 			this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 		}
 	}
-	
+
 
 	private void callAlgorithm()
 	{
 		if ( includeRange != null )
 		{
-			System.err.println("Starting straightening" );
+			System.err.println("Starting plugin" );
+			Vector<String> fileNamesList = null;
+			Vector<Integer> numSegmented = null;
+			Vector<Integer> numMatched = null;
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{				
 				// Build the full image name:
@@ -136,72 +144,107 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 					FileIO fileIO = new FileIO();
 					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
 
-
-					String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
-					VOIVector latticeVector = new VOIVector();
-					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
-
-					if ( latticeVector.size() != 0 )
+					if ( segmentSeamCheck.isSelected() )
 					{
-						LatticeModel model = new LatticeModel(wormImage);
-						model.setLattice(latticeVector.elementAt(0));
-
-						String nucleiFileName = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + "marker" + File.separator + "marker.csv";
-						File nucleiFile = new File(nucleiFileName);
-						if ( nucleiFile.exists() )
+						// Create output directory for seam cell segmentation:
+						String resultsDir = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + "_results";
+						File outputFileDir = new File(resultsDir);
+						if ( !outputFileDir.exists() )
 						{
-							VOIVector vois = readMarkerPositions( nucleiFileName, nucleiFile );
-							VOI nucleiVOIs = vois.elementAt(0);
-							if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
-							{
-								model.setMarkers(nucleiVOIs);
-							}
+							outputFileDir.mkdir();
+						}					
+						String outputDir = resultsDir + File.separator + "output_images" + File.separator;
+						outputFileDir = new File(outputDir);
+						if ( !outputFileDir.exists() )
+						{
+							outputFileDir.mkdir();
 						}
 
-						model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
-						ModelImage contourImage = null;
-						if ( segmentSkinSurface.isSelected() )
-						{
-							contourImage = model.segmentSkin(wormImage, paddingFactor);
-						}
-						else if ( segmentLattice.isSelected() )
-						{
-							model.segmentLattice(wormImage, false);
-						}
-						if ( straightenMarkersCheck.isSelected() )
-						{
-							model.interpolateLattice( false, false, false, true );								
-						}
-						model.dispose();
-						model = null;
+						// Segmented blurred input image:
+						ModelImage blur = WormSegmentation.blur(wormImage, 3);
+						Vector<Vector3f> seamCells = WormSegmentation.segmentSeam(blur, minRadius, maxRadius, outputDir);
+						blur.disposeLocal(false);
 
-						if ( wormImage != null )
-						{
-							wormImage.disposeLocal(false);
-						}
-						
 
-						// Build the full image name:
-						baseFileName = baseFileNameText.getText();
-						fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-						imageFile = new File(baseFileDir2 + File.separator + fileName);
-						if ( imageFile.exists() )
-						{					
-							
-							System.err.println( "   " + fileName );
-							fileIO = new FileIO();
-							wormImage = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null); 
-							model = new LatticeModel(wormImage);
+						String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
+						VOIVector latticeVector = new VOIVector();
+						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
+
+						int numFound = -1;
+						if ( latticeVector.size() != 0 )
+						{
+							numFound = testSeamLattice(seamCells, latticeVector.elementAt(0), maxRadius);
+						}
+
+
+						short id = (short) wormImage.getVOIs().getUniqueID();
+						VOI seamCellAnnotations = new VOI(id, "seam_cells", VOI.ANNOTATION, (float)Math.random());
+						wormImage.registerVOI(seamCellAnnotations);
+						for ( int j = 0; j < seamCells.size(); j++ )
+						{
+							VOIText text = new VOIText();
+							text.setText("T__" + (j+1));
+							text.add( new Vector3f(seamCells.elementAt(j)) );
+							text.add( new Vector3f(seamCells.elementAt(j)) );
+							text.setUseMarker(false);
+							seamCellAnnotations.getCurves().add(text);
+						}
+						String seamCellDir = resultsDir + File.separator + PlugInAlgorithmWormUntwisting.autoSeamCellSegmentationOutput + File.separator;
+						outputFileDir = new File(seamCellDir);
+						if ( !outputFileDir.exists() )
+						{
+							outputFileDir.mkdir();
+						}
+						LatticeModel.saveAllVOIsTo(seamCellDir, wormImage);
+						LatticeModel.saveSeamCellsTo(seamCellDir, seamCells);
+
+						if ( fileNamesList == null )
+						{
+							fileNamesList = new Vector<String>();
+							numSegmented = new Vector<Integer>();
+							numMatched = new Vector<Integer>();
+						}
+						fileNamesList.add( baseFileName + "_"  + includeRange.elementAt(i) );
+						numSegmented.add( seamCells.size() );
+						numMatched.add(numFound);
+					}
+					if ( straightenImageCheck.isSelected() || straightenMarkersCheck.isSelected() )
+					{
+						String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
+						VOIVector latticeVector = new VOIVector();
+						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
+
+						if ( latticeVector.size() != 0 )
+						{
+							LatticeModel model = new LatticeModel(wormImage);
 							model.setLattice(latticeVector.elementAt(0));
+
+							String nucleiFileName = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + "marker" + File.separator + "marker.csv";
+							File nucleiFile = new File(nucleiFileName);
+							if ( nucleiFile.exists() )
+							{
+								VOIVector vois = readMarkerPositions( nucleiFileName, nucleiFile );
+								VOI nucleiVOIs = vois.elementAt(0);
+								if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
+								{
+									model.setMarkers(nucleiVOIs);
+								}
+							}
+
 							model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
-							
+							ModelImage contourImage = null;
 							if ( segmentSkinSurface.isSelected() )
 							{
-								contourImage = model.segmentSkin(wormImage, contourImage, paddingFactor);
+								contourImage = model.segmentSkin(wormImage, paddingFactor);
 							}
 							else if ( segmentLattice.isSelected() )
 							{
 								model.segmentLattice(wormImage, false);
+							}
+							if ( straightenMarkersCheck.isSelected() )
+							{
+								model.setSegmentSeamCells( true );
+								model.interpolateLattice( false, false, false, true );								
 							}
 							model.dispose();
 							model = null;
@@ -210,25 +253,62 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							{
 								wormImage.disposeLocal(false);
 							}
-						}						
 
-						if ( contourImage != null )
-						{
-							contourImage.disposeLocal(false);
+
+							// Build the full image name:
+							baseFileName = baseFileNameText.getText();
+							fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
+							imageFile = new File(baseFileDir2 + File.separator + fileName);
+							if ( imageFile.exists() )
+							{					
+
+								System.err.println( "   " + fileName );
+								fileIO = new FileIO();
+								wormImage = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null); 
+								model = new LatticeModel(wormImage);
+								model.setLattice(latticeVector.elementAt(0));
+								model.setSegmentSeamCells( false );
+								model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
+
+								if ( segmentSkinSurface.isSelected() )
+								{
+									contourImage = model.segmentSkin(wormImage, contourImage, paddingFactor);
+								}
+								else if ( segmentLattice.isSelected() )
+								{
+									model.segmentLattice(wormImage, false);
+								}
+								model.dispose();
+								model = null;
+
+								if ( wormImage != null )
+								{
+									wormImage.disposeLocal(false);
+								}
+							}						
+
+							if ( contourImage != null )
+							{
+								contourImage.disposeLocal(false);
+							}
 						}
-					}
-					else
-					{
-						MipavUtil.displayError( "Error in reading lattice file " + latticeFile );
+						else
+						{
+							MipavUtil.displayError( "Error in reading lattice file " + latticeFile );
+						}
 					}
 				}
 				else
 				{
 					MipavUtil.displayError( "Error in reading image file " + fileName );
 				}
-				
+
 			}
-			System.err.println("Done straightening" );
+			if ( fileNamesList != null )
+			{
+				saveSegmentationStatistics(baseFileDir, fileNamesList, numSegmented, numMatched );
+			}
+			System.err.println("Done plugin" );
 		}
 	}
 
@@ -240,11 +320,11 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 			wormImage.disposeLocal();
 			wormImage = null;
 		}		
-//		if ( maskImage != null )
-//		{
-//			maskImage.disposeLocal();
-//			maskImage = null;
-//		}		
+		//		if ( maskImage != null )
+		//		{
+		//			maskImage.disposeLocal();
+		//			maskImage = null;
+		//		}		
 	}
 
 	@Override
@@ -287,8 +367,12 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 	private Vector<Integer> includeRange;
 	private JPanel inputsPanel;
 	private JTextField rangeFusionText;
+	private JTextField seamCellMinRadiusText;
+	private JTextField seamCellMaxRadiusText;
 	private JTextField segmentationPaddingText;
 	private int paddingFactor;
+	private int minRadius;
+	private int maxRadius;
 
 	/**
 	 * Initializes the panels for a non-integrated display. 
@@ -318,7 +402,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 
-		
+
 
 		inputsPanel = new JPanel(new GridBagLayout());
 		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
@@ -339,38 +423,61 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", "             ");
 		inputsPanel.add(rangeFusionText.getParent(), gbc);
 		gbc.gridy++;
-		
-		
-		
-//		JPanel inputsPanel = new JPanel(new GridBagLayout());
-//		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
-//		inputsPanel.setForeground(Color.black);
-//
-//		inputImageTF = gui.buildFileField("Worm image:  ", "", false, JFileChooser.FILES_ONLY, this);
-//		inputsPanel.add(inputImageTF.getParent(), gbc);
-//		gbc.gridy++;
-//
-//		latticeFileTF = gui.buildFileField("lattice directory:  ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
-//		inputsPanel.add(latticeFileTF.getParent(), gbc);
-//		gbc.gridy++;
-//
-//		nucleiTF = gui.buildFileField("Marker info (spreadsheet csv file): ", "", false, JFileChooser.FILES_ONLY, this);
-//		inputsPanel.add(nucleiTF.getParent(), gbc);
-//		gbc.gridy++;
-//		gbc.gridx = 0;
+
+
+
+		//		JPanel inputsPanel = new JPanel(new GridBagLayout());
+		//		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
+		//		inputsPanel.setForeground(Color.black);
+		//
+		//		inputImageTF = gui.buildFileField("Worm image:  ", "", false, JFileChooser.FILES_ONLY, this);
+		//		inputsPanel.add(inputImageTF.getParent(), gbc);
+		//		gbc.gridy++;
+		//
+		//		latticeFileTF = gui.buildFileField("lattice directory:  ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		//		inputsPanel.add(latticeFileTF.getParent(), gbc);
+		//		gbc.gridy++;
+		//
+		//		nucleiTF = gui.buildFileField("Marker info (spreadsheet csv file): ", "", false, JFileChooser.FILES_ONLY, this);
+		//		inputsPanel.add(nucleiTF.getParent(), gbc);
+		//		gbc.gridy++;
+		//		gbc.gridx = 0;
+
+		JPanel algorithmsPanel = new JPanel(new BorderLayout());
+
+		JPanel segmentationPanel = new JPanel(new GridBagLayout());
+		segmentationPanel.setBorder(JDialogBase.buildTitledBorder("Seam Cell Segmentation Options"));
+		segmentSeamCheck = gui.buildCheckBox( "Segment seam cells", true );
+		segmentationPanel.add(segmentSeamCheck.getParent(), gbc);
+		gbc.gridy++;
+
+		segmentSeamResultsCheck = gui.buildCheckBox( "Display test results", false );
+		segmentationPanel.add(segmentSeamResultsCheck.getParent(), gbc);
+		gbc.gridy++;
+
+		seamCellMinRadiusText = gui.buildField("Seam cell min radius (voxels): ", "           8");
+		segmentationPanel.add(seamCellMinRadiusText.getParent(), gbc);
+		gbc.gridy++;
+
+		seamCellMaxRadiusText = gui.buildField("Seam cell max radius (voxels): ", "           25");
+		segmentationPanel.add(seamCellMaxRadiusText.getParent(), gbc);
+		gbc.gridy++;
+		algorithmsPanel.add(segmentationPanel, BorderLayout.NORTH );
+
 
 		JPanel algorithmPanel = new JPanel(new GridBagLayout());
+		algorithmPanel.setBorder(JDialogBase.buildTitledBorder("Straightening Options"));
 		straightenImageCheck = gui.buildCheckBox( "Straighten Image", true );
 		algorithmPanel.add(straightenImageCheck.getParent(), gbc);
 		gbc.gridy++;
 
 		ButtonGroup group1 = new ButtonGroup();
-		segmentSkinSurface = gui.buildRadioButton( "Segment Skin Surface Marker", false );
+		segmentSkinSurface = gui.buildRadioButton( "Segment Skin Surface Marker", true );
 		algorithmPanel.add(segmentSkinSurface.getParent(), gbc);
 		gbc.gridx++;
 		group1.add(segmentSkinSurface);
-		
-		segmentLattice = gui.buildRadioButton( "Segment Lattice", true );
+
+		segmentLattice = gui.buildRadioButton( "Segment Lattice", false );
 		algorithmPanel.add(segmentLattice.getParent(), gbc);
 		group1.add(segmentLattice);
 		gbc.gridy++;
@@ -379,7 +486,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 		segmentationPaddingText = gui.buildField("Segmentation padding (voxels): ", "           10");
 		algorithmPanel.add(segmentationPaddingText.getParent(), gbc);
 		gbc.gridy++;
-		
+
 		straightenMarkersCheck = gui.buildCheckBox( "Straighten Markers", true );
 		algorithmPanel.add(straightenMarkersCheck.getParent(), gbc);
 		gbc.gridx++;
@@ -391,14 +498,16 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 		micronCoords = gui.buildRadioButton( "microns", true);
 		algorithmPanel.add(micronCoords.getParent(), gbc);
 		group.add(micronCoords);
-		
+
+		algorithmsPanel.add(algorithmPanel, BorderLayout.SOUTH );
+
 		gbc.gridx = 0;
 		gbc.gridy++;
 
 
 		getContentPane().add(inputsPanel, BorderLayout.NORTH);
-		getContentPane().add(algorithmPanel, BorderLayout.CENTER);
-		
+		getContentPane().add(algorithmsPanel, BorderLayout.CENTER);
+
 		JPanel okCancelPanel = gui.buildOKCancelPanel();
 		getContentPane().add(okCancelPanel, BorderLayout.SOUTH);
 
@@ -410,7 +519,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 	}
 
 
-    /**
+	/**
 	 * This method could ensure everything in your dialog box has been set correctly
 	 * 
 	 * @return
@@ -421,6 +530,16 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 			paddingFactor = Integer.valueOf(segmentationPaddingText.getText().trim());
 		} catch(NumberFormatException e) {
 			paddingFactor = 10;
+		}
+		try {
+			minRadius = Integer.valueOf(seamCellMinRadiusText.getText().trim());
+		} catch(NumberFormatException e) {
+			minRadius = 8;
+		}
+		try {
+			maxRadius = Integer.valueOf(seamCellMaxRadiusText.getText().trim());
+		} catch(NumberFormatException e) {
+			maxRadius = 25;
 		}
 		baseFileDir = baseFileLocText.getText();
 		baseFileDir2 = baseFileLocText2.getText();
@@ -457,8 +576,8 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 	}     
 
 
-	
-	
+
+
 	private VOIVector readMarkerPositions( String fileName, File file )
 	{
 		VOIVector vois = new VOIVector();
@@ -488,7 +607,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 				}
 				if (st.hasMoreTokens()) {
 					pos.Z = Float.valueOf(st.nextToken());
-//					System.err.print( text.getText() + " " + pos + "    " );
+					//					System.err.print( text.getText() + " " + pos + "    " );
 					Vector3f out = new Vector3f();
 					if ( micronCoords.isSelected() )
 					{
@@ -499,9 +618,9 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 						out.copy(pos);
 					}
 					text.add(out);
-					
+
 					annotationVOI.getCurves().add(text);
-//					System.err.println( text.getText() + " " + text.elementAt(0) );
+					//					System.err.println( text.getText() + " " + text.elementAt(0) );
 				}
 				line = br.readLine();
 			}
@@ -517,9 +636,115 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 
 		return vois;
 	}
+
+
+	private int testSeamLattice(Vector<Vector3f> seam, VOI lattice, int minDist)
+	{
+
+		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+		int count = 0;
+		for ( int i = 0; i < seam.size(); i++ )
+		{
+			boolean found = false;
+			float closest = Float.MAX_VALUE;
+
+			for ( int j = 0; j < left.size(); j++ )
+			{
+				float distL = left.elementAt(j).distance(seam.elementAt(i));
+				float distR = right.elementAt(j).distance(seam.elementAt(i));
+				if ( distL < closest )
+					closest = distL;
+				if ( distR < closest )
+					closest = distR;
+				if ( (distL <= minDist) || (distR <= minDist) )
+				{
+					found = true;
+					break;
+				}
+			}
+			if ( !found )
+			{
+				//				System.err.println( (i+1) + " " + closest );
+				count++;
+			}
+		}
+		int foundCount = seam.size() - count;
+		if ( foundCount >= 20 )
+		{
+			System.err.println( "     PASS" );
+		}
+		if ( foundCount < 20 )
+		{
+			System.err.println( "     FAIL" );
+			System.err.println( "     " + count + " out of " + seam.size() + " not found" );
+		}
+		return foundCount;
+	}
+
+
+	public void saveSegmentationStatistics(final String dir, Vector<String> fileNamesList, Vector<Integer> numSegmented, Vector<Integer> numMatched )
+	{
+
+		final File fileDir = new File(dir);
+
+
+		File file = new File(fileDir + File.separator + "segmentationSummary.csv");
+		if (file.exists()) {
+			file.delete();
+			file = new File(fileDir + File.separator + "segmentationSummary.csv");
+		}
+
+		boolean noTest = false;
+		int passCount = 0;
+		int segCount = 0;
+		try {
+			for (int i = 0; i < fileNamesList.size(); i++)
+			{
+				if (numMatched.elementAt(i) >= 20)
+				{
+					passCount++;
+				}
+				if (numSegmented.elementAt(i) >= 20)
+				{
+					segCount++;
+				}
+				if (numMatched.elementAt(i) == -1)
+				{
+					noTest = true;
+				}
+			}
+			final FileWriter fw = new FileWriter(file);
+			final BufferedWriter bw = new BufferedWriter(fw);
+			bw.write("Total Files" + "," + "Total Passed" + "\n");
+			bw.write(fileNamesList.size() + "," + passCount + "\n");
+			bw.write("file name" + "," + "number segmented" + "," + "number matched" + "," + "pass/fail" + "\n");
+			for (int i = 0; i < fileNamesList.size(); i++) {
+				bw.write(fileNamesList.elementAt(i) + "," + numSegmented.elementAt(i) + "," + numMatched.elementAt(i) + ","	+ (numMatched.elementAt(i) >= 20) + "," + "\n");
+			}
+			bw.newLine();
+			bw.close();
+		} catch (final Exception e) {
+			System.err.println("CAUGHT EXCEPTION WITHIN saveSeamCellsTo");
+			e.printStackTrace();
+		}
+
+		if ( segmentSeamResultsCheck.isSelected() )
+		{
+			if ( noTest )
+			{
+				MipavUtil.displayInfo( segCount + " out of " + fileNamesList.size() + " files segmented 20 or more seam cells" );
+			}
+			else
+			{
+				MipavUtil.displayInfo( passCount + " out of " + fileNamesList.size() + " matched lattice" );
+			}
+		}
+	}
+
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

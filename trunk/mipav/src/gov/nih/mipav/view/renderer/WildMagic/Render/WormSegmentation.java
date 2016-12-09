@@ -41,6 +41,7 @@ import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.BoxBV;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.Transformation;
@@ -274,13 +275,14 @@ public abstract class WormSegmentation
 	}
 	
 	
-	public static int fill2(final ModelImage image, float cutOffMin, float cutOffMax, final Vector<Vector3f> seedList, ModelImage result, BitSet visited, Vector3f center, Vector3f bbMin, Vector3f bbMax, final int id) {
+	public static BoxBV fill2(final ModelImage image, float cutOffMin, float cutOffMax, final Vector<Vector3f> seedList, ModelImage result, BitSet visited, Vector3f center, final int id) {
 		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
 		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
 
 //		System.err.println( cutOffMin + " " + cutOffMax );
 		int count = 0;
+		Vector<Vector3f> pointsList = new Vector<Vector3f>();
 		while (seedList.size() > 0) {
 			final Vector3f seed = seedList.remove(0);
 
@@ -292,8 +294,7 @@ public abstract class WormSegmentation
 			visited.set(index);
 			
 			center.add(seed);
-			bbMin.min(seed);
-			bbMax.max(seed);
+			pointsList.add(seed);
 			count++;
 
 			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
@@ -325,7 +326,14 @@ public abstract class WormSegmentation
 //		System.err.println("fill2 " + count);
 		center.scale(1f/(float)count);
 //		System.err.println( "        fill2 " + bbMin + "    " + bbMax + "        " + bbMin.distance(bbMax) );
-		return count;
+		Vector3f[] array = new Vector3f[pointsList.size()];
+		for ( int i = 0; i < array.length; i++ )
+		{
+			array[i] = pointsList.remove(0);
+		}
+		BoxBV bBox = new BoxBV();
+		bBox.ComputeFromData(array);
+		return bBox;
 	}
 
 	public static Vector<Vector3f> findCenters( final ModelImage image, Vector<Vector3f> pts )
@@ -5351,7 +5359,32 @@ public abstract class WormSegmentation
 		}
 		return resultImage;
 	}
+	
+	public static Vector<Vector3f> segmentSeam(ModelImage image, int minRadius, int maxRadius, String outputDir)
+	{
+		ModelImage seamCellImage = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), "seamCellImage" );	
+		seamCellImage.setImageName("seamCellImage");
+		JDialogBase.updateFileInfo(image, seamCellImage);
+		
+		
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+		
+		float[] targetP = new float[2];
+		float targetPercentage = .99f;
+		WormSegmentation.estimateHistogram( image, targetP, targetPercentage );
+//		System.err.println( targetPercentage + " % " + targetP[0] + " " + targetP[1] );						
 
+		BitSet mask = new BitSet(dimX*dimY*dimZ);
+
+		// segment the seam cells:
+		Vector<Vector3f> foundNuclei = WormSegmentationWindowing.findMarkers(image, seamCellImage, mask, targetP[0], (float) image.getMax(), minRadius, maxRadius );
+
+		ModelImage.saveImage(seamCellImage, seamCellImage.getImageName() + ".xml", outputDir, false);
+		seamCellImage.disposeLocal(false);
+		return foundNuclei;
+	}
 
 	public static float testVariance( ModelImage image, Vector3f pt, int cubeSize)
 	{
@@ -5897,51 +5930,189 @@ public abstract class WormSegmentation
 
 	}
 	
-	public static ModelImage segmentSeamThreshold(ModelImage image, Vector<Vector3f> positions,
-			float threshold, float thresholdMin, float thresholdMax, int prevSize, int dir, int count )
+	public static ModelImage segmentSeamThreshold(ModelImage image, Vector<Vector3f> positions, Vector<BoxBV> boundingBoxes, float[] finalThreshold,
+			float stepSizeInc, float stepSizeDec, float threshold, float thresholdMin, float thresholdMax, int minCount, int maxCount )
 	{
-
-		Vector<Vector3f> minBoundingBox = new Vector<Vector3f>();
-		Vector<Vector3f> maxBoundingBox = new Vector<Vector3f>();
-		System.err.println( count + " " + positions.size() + " " + thresholdMin + " " + threshold + " " + thresholdMax );
-		ModelImage seamCells = WormSegmentation.segmentSeam(image, positions, minBoundingBox, maxBoundingBox, threshold);
+		ModelImage seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, threshold);
 		int numCells = positions.size();
-		if ( (numCells < prevSize) && (dir == 1) )
+		System.err.println( "Start " + numCells + " " + threshold);
+		if ( (numCells >= minCount) && (numCells <= maxCount) )
 		{
+			finalThreshold[0] = threshold;
 			return seamCells;
 		}
-		if ( (numCells > prevSize) && (dir == -1) )
+
+		positions.clear();
+		boundingBoxes.clear();
+		seamCells.disposeLocal(false);
+		
+		float upThreshold = Math.min(threshold + stepSizeInc, thresholdMax - 1);
+		seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, upThreshold);
+		int upCount = positions.size();
+		System.err.println( "Up " + upCount + " " + upThreshold);
+		if ( (upCount >= minCount) && (upCount <= maxCount) )
 		{
+			finalThreshold[0] = threshold;
 			return seamCells;
 		}
-		if ( (numCells >= 20) && (numCells <= 22) || (count == 10) )
+
+		positions.clear();
+		boundingBoxes.clear();
+		seamCells.disposeLocal(false);
+
+		float downThreshold = Math.min(threshold - stepSizeDec, thresholdMax - 1);
+		seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, downThreshold);
+		int downCount = positions.size();
+		System.err.println( "Down " + downCount + " " + downThreshold);
+		if ( (downCount >= minCount) && (downCount <= maxCount) )
 		{
+			finalThreshold[0] = threshold;
 			return seamCells;
 		}
-		else if ( numCells < 20 )
+
+		positions.clear();
+		boundingBoxes.clear();
+		seamCells.disposeLocal(false);
+
+		float thresholdMinBound = threshold;
+		float thresholdMaxBound = upThreshold;
+		if ( (downCount < numCells) && (numCells < upCount) )
 		{
-			seamCells.disposeLocal(false);
-			positions.clear();
-			
-			// increase threshold
-			float newThreshold = Math.min(threshold*2, thresholdMax - 1);
-			System.err.println( "  " + numCells + "  INcreasing threshold..." + newThreshold );
-			return segmentSeamThreshold( image, positions, newThreshold, threshold, thresholdMax, numCells, 1, ++count );
+			if ( (numCells < minCount) && (upCount > minCount) )
+			{
+				thresholdMinBound = threshold;
+				thresholdMaxBound = upThreshold;
+			}
+			if ( (numCells > minCount) && (upCount > minCount) )
+			{
+				thresholdMinBound = downThreshold;
+				thresholdMaxBound = threshold;
+			}
+			int count = 0;
+			while ( !((numCells >= minCount) && (numCells <= maxCount) || (count == 10) || (thresholdMinBound == thresholdMaxBound)) )
+			{
+				//				System.err.println( count + " " + numCells + " " + threshold);
+				threshold = Math.round((thresholdMinBound + thresholdMaxBound)/2f);
+				seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, threshold);
+				numCells = positions.size();
+				System.err.println( count + " " + numCells + " " + threshold);
+
+				if ( (numCells >= minCount) && (numCells <= maxCount) )
+				{
+					finalThreshold[0] = threshold;
+					return seamCells;
+				}
+				if ( numCells < minCount )
+				{
+					thresholdMinBound = threshold;
+				}
+				else 
+				{
+					thresholdMaxBound = threshold;
+				}
+				count++;
+
+				positions.clear();
+				boundingBoxes.clear();
+				seamCells.disposeLocal(false);
+			}
 		}
-		else
-		{
-			seamCells.disposeLocal(false);
-			positions.clear();
-			
-			// decrease threshold
-			float newThreshold = Math.max(thresholdMin + 1, (threshold - thresholdMin) /2.5f);
-			System.err.println( "  " + numCells + "  DEcreasing threshold..." + newThreshold );
-			return segmentSeamThreshold( image, positions, newThreshold, thresholdMin, threshold, numCells, -1, ++count );
-		}
+//		else if ( (upCount < numCells) && (numCells < downCount) )
+//		{
+//			// decrease down threshold until < numCells
+//		}
+		
+//		float thresholdMinBound = threshold, thresholdMaxBound = threshold;
+//		if ( numCells < minCount )
+//		{
+//			thresholdMinBound = threshold;
+//			int numCellsP = numCells;
+//			int step = 1;
+//			Vector<Vector3f> positions2 = new Vector<Vector3f>();
+//			Vector<BoxBV> boundingBoxes2 = new Vector<BoxBV>();
+//			while ( numCellsP < minCount )
+//			{
+//				float newThreshold = Math.min(threshold + step * stepSizeInc, thresholdMax - 1);
+//				ModelImage seamCells2 = WormSegmentation.segmentSeam(image, positions2, boundingBoxes2, newThreshold);
+//				numCellsP = positions2.size();
+//				thresholdMaxBound = newThreshold;
+//				step++;
+//
+//				positions2.clear();
+//				boundingBoxes2.clear();
+//				seamCells2.disposeLocal(false);
+//
+//				if ( numCellsP < numCells )
+//				{
+//					break;
+//				}
+//				System.err.println( "Up " + numCellsP + " " + newThreshold);
+//			}
+//			
+//			
+//		}
+//		else
+//		{
+//			thresholdMaxBound = threshold;
+//			int numCellsM = numCells;
+//			int step = 1;
+//			Vector<Vector3f> positions2 = new Vector<Vector3f>();
+//			Vector<BoxBV> boundingBoxes2 = new Vector<BoxBV>();
+//			while ( numCellsM > maxCount )
+//			{
+//				float newThreshold = Math.min(threshold - step * stepSizeDec, thresholdMax - 1);
+//				ModelImage seamCells2 = WormSegmentation.segmentSeam(image, positions2, boundingBoxes2, newThreshold);
+//				numCellsM = positions2.size();
+//				thresholdMinBound = newThreshold;
+//				step++;
+//
+//				positions2.clear();
+//				boundingBoxes2.clear();
+//				seamCells2.disposeLocal(false);
+//				
+//				if ( numCellsM > numCells )
+//				{
+//					break;
+//				}
+//				System.err.println( "Down " + numCellsM + " " + newThreshold);
+//			}
+//			
+//		}
+//		
+//		int count = 0;
+//		while ( !((numCells >= minCount) && (numCells <= maxCount) || (count == 10) || (thresholdMinBound == thresholdMaxBound)) )
+//		{
+//			System.err.println( count + " " + numCells + " " + threshold);
+//			threshold = (thresholdMinBound + thresholdMaxBound)/2f;
+//			seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, threshold);
+//			numCells = positions.size();
+//			System.err.println( count + " " + numCells + " " + threshold);
+//			
+//			if ( (numCells >= minCount) && (numCells <= maxCount) )
+//			{
+//				finalThreshold[0] = threshold;
+//				return seamCells;
+//			}
+//			if ( numCells > maxCount )
+//			{
+//				thresholdMaxBound = threshold;
+//			}
+//			else if ( numCells < minCount )
+//			{
+//				thresholdMinBound = threshold;
+//			}
+//			count++;
+//
+//			positions.clear();
+//			boundingBoxes.clear();
+//			seamCells.disposeLocal(false);
+//		}
+		
+		return null;
 	}
 	
 	
-	public static ModelImage segmentSeam(ModelImage image, Vector<Vector3f> positions, Vector<Vector3f> minBoundingBox, Vector<Vector3f> maxBoundingBox, float threshold)
+	public static ModelImage segmentSeam(ModelImage image, Vector<Vector3f> positions, Vector<BoxBV> boundingBoxes, float threshold)
 	{
 		String imageName = image.getImageName();
 		if (imageName.contains("_clone")) {
@@ -5983,22 +6154,23 @@ public abstract class WormSegmentation
 			thresholdImage.setMax(0);
 		}
 
-		ModelImage seamCellImage = separateID(thresholdImage, threshold, positions, minBoundingBox, maxBoundingBox);
+		ModelImage seamCellImage = separateID(thresholdImage, threshold, positions, boundingBoxes);
 		thresholdImage.disposeLocal(false);
 		return seamCellImage;
 	}
-	private static ModelImage separateID( ModelImage image, float threshold, Vector<Vector3f> positions, Vector<Vector3f> minBoundingBox, Vector<Vector3f> maxBoundingBox )
+	
+	private static ModelImage separateID( ModelImage image, float threshold, Vector<Vector3f> positions, Vector<BoxBV> boundingBoxes )
 	{
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
 		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
 
 		BitSet visited = new BitSet(dimX*dimY*dimZ);
-		ModelImage seamCells = new ModelImage( ModelStorageBase.INTEGER, image.getExtents(), "Seam Cells" );
+		ModelImage seamCells = new ModelImage( ModelStorageBase.INTEGER, image.getExtents(), "seamCellsID" );
 		JDialogBase.updateFileInfo(image, seamCells);
 		Vector<Vector3f> seedList = new Vector<Vector3f>();
 		
-		int id = 10;
+		int id = 1;
 		boolean done = false;
 		while ( !done )
 		{
@@ -6031,33 +6203,16 @@ public abstract class WormSegmentation
 			}
 
 			Vector3f center = new Vector3f();
-			Vector3f bbMin = new Vector3f(dimX,dimY,dimZ);
-			Vector3f bbMax = new Vector3f(-1, -1, -1);
-			WormSegmentation.fill2(image, threshold, threshold, seedList, seamCells, visited, center, bbMin, bbMax, id);
+			BoxBV bb = WormSegmentation.fill2(image, threshold, threshold, seedList, seamCells, visited, center, id);
+			if ( bb != null )
+			{
+				boundingBoxes.add(bb);
+			}
 			positions.add(center);
-			minBoundingBox.add(bbMin);
-			maxBoundingBox.add(bbMax);
-			id += 10;
+			id++;
 		}
 		
-		
-//		String parentDir = new String(seamCells.getImageDirectory() + JDialogBase.makeImageName(seamCells.getImageName(), "") + File.separator);
-//		short voiID = (short) image.getVOIs().getUniqueID();
-//		VOI seamCellAnnotations = new VOI(voiID, "seam_cells", VOI.ANNOTATION, (float)Math.random());
-//		seamCells.registerVOI(seamCellAnnotations);
-//		for ( int i = 0; i < positions.size(); i++ )
-//		{
-//			VOIText text = new VOIText();
-//			text.setText("cell__" + i);
-//			text.add( new Vector3f(positions.elementAt(i)) );
-//			text.add( new Vector3f(positions.elementAt(i)) );
-//			seamCellAnnotations.getCurves().add(text);
-//		}
-//		LatticeModel.checkParentDir(parentDir);
-//		LatticeModel.saveAllVOIsTo(parentDir + "seamCells" + File.separator, seamCells);		
-		
 		seamCells.calcMinMax();
-//		System.err.println( seamCells.getMin() + " " + seamCells.getMax() );
 		return seamCells;
 	}
 	
