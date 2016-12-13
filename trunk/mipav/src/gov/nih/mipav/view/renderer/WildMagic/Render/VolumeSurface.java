@@ -1168,12 +1168,28 @@ public class VolumeSurface extends VolumeObject
 		m_kMesh.Local.SetTranslate( position );
 		m_kMesh.UpdateGS();
     }
-    
+
     public void SetTranslateVolumeCoords( Vector3f position, boolean compute )
     {
-    	position.mult( m_kVolumeScale ).scale( m_fVolumeDiv );	
-		m_kMesh.Local.SetTranslate( new Vector3f( position ) );
-		m_kMesh.UpdateGS();
+    	position.mult( m_kVolumeScale ).scale( m_fVolumeDiv );
+    	for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+    	{
+    		Vector3f pos = m_kMesh.VBuffer.GetPosition3( i );
+    		pos.add(position);
+    		m_kMesh.VBuffer.SetPosition3( i, pos );
+
+    		if ( m_kMesh.VBuffer.GetAttributes().HasTCoord(0) )
+    		{
+    			m_kMesh.VBuffer.SetTCoord3( 0, i, 
+    					(m_kMesh.VBuffer.GetPosition3fX(i)  - m_kTranslate.X) * 1.0f/m_fX,
+    					(m_kMesh.VBuffer.GetPosition3fY(i)  - m_kTranslate.Y) * 1.0f/m_fY,
+    					(m_kMesh.VBuffer.GetPosition3fZ(i)  - m_kTranslate.Z) * 1.0f/m_fZ);
+    			//System.err.println( "Set TexCoord: " + m_kMesh.VBuffer.GetTCoord3(0, i).ToString() );
+    		}
+    	}
+    	m_kMesh.UpdateRS();
+    	m_kMesh.UpdateMS();
+    	m_kMesh.UpdateGS();
     }
 
     /**

@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.VOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.VOI;
 
 import java.awt.Cursor;
 import java.util.BitSet;
@@ -18,6 +19,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  */
 public interface VOIManagerInterfaceListener
 {
+    public void addSphereVOIs( VOI annotations );
     public void create3DVOI( boolean bIntersection );
     public ModelImage getActiveImage();
     public ModelLUT getActiveLUT();

@@ -818,6 +818,18 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         tabbedPane.remove(m_kLightsPanel.getMainPanel());
     	resizePanel();
     }
+    
+    public void addSphereVOIs( VOI annotations )
+    {
+        insertTab("Light", m_kLightsPanel.getMainPanel());
+        m_kLightsPanel.enableLight(0, true);
+        m_kLightsPanel.enableLight(1, true);
+        rendererGUI.setDisplaySurfaceCheck(true);
+        
+    	raycastRenderWM.addSphereVOIs(annotations);
+
+    	resizePanel();
+    }
         
     /**
      * Build the clipping control panel for the surface render.
