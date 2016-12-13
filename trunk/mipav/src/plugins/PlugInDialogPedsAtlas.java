@@ -4628,4 +4628,10 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
     }
 
+	@Override
+	public void addSphereVOIs(VOI annotations) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

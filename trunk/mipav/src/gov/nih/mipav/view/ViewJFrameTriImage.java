@@ -5887,4 +5887,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public int getCurrentOrientation() {
     	return currentOrientation;
     }
+
+	@Override
+	public void addSphereVOIs(VOI annotations) {
+		// TODO Auto-generated method stub
+		
+	}
 }

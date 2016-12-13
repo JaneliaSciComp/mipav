@@ -3623,4 +3623,10 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         componentImage.setVOIManager(voiManager.getVOIManager(0));
     }
 
+	@Override
+	public void addSphereVOIs(VOI annotations) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

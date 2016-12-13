@@ -2034,6 +2034,64 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		annotationVOIsUpdate(maxIndex);
 	}  
 	
+
+	public void addSphereVOIs( VOI annotations )
+	{		
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+			text.setUseMarker( false );
+		}
+		
+		Attributes attributes = new Attributes();
+		attributes.SetPChannels(3);
+		attributes.SetNChannels(3);
+		attributes.SetCChannels(0,4);
+		attributes.SetTChannels(0,3);
+		StandardMesh std = new StandardMesh(attributes);
+
+		int dimX = m_kVolumeImageA.GetImage().getExtents().length > 0 ? m_kVolumeImageA.GetImage().getExtents()[0] : 1;
+		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
+		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
+        float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
+		sphereScale = 0.05f * Math.min( dimX, Math.min( dimY, dimZ ) );
+		sphereScale = Math.max( 6, sphereScale );
+		
+		Transformation xfrm = new Transformation();
+//		xfrm.SetUniformScale( sphereScale );
+		xfrm.SetScale( sphereScale/(2*afResolutions[0]), sphereScale/(2*afResolutions[1]), sphereScale/(2*afResolutions[2]) );
+//		xfrm.SetScale( m_fX, m_fY, m_fZ );
+
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		{
+			VOIText text = new VOIText( (VOIText)annotations.getCurves().elementAt(i) );
+			text.setUseMarker(false);
+			Color c = text.getColor();
+			
+			VOI annotationVOI = new VOI( (short)i, text.getName(), VOI.ANNOTATION, 0 );
+			annotationVOI.setColor(c);
+			annotationVOI.getCurves().add(text);
+			text.createVolumeVOI( m_kVolumeImageA, m_kTranslate );
+			m_kVolumeImageA.GetImage().registerVOI( annotationVOI );
+			
+			ColorRGBA colorRGBA = new ColorRGBA(c.getRed()/255f,c.getGreen()/255f,c.getBlue()/255f,1);
+						
+			std.SetTransformation( xfrm );
+			TriMesh sphere = std.Sphere(2);
+			updateSphere( sphere, 0, 0, 0, colorRGBA );
+			SurfaceState kSurface = new SurfaceState( sphere, text.getText() );	
+			VolumeSurface surface = new VolumeSurface(m_kVolumeImageA,
+					m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ, kSurface, false, true);
+			surface.SetTranslateVolumeCoords( text.elementAt(0), true );	
+			surface.SetDisplay(true);
+			m_kDisplayList.add(surface);	
+		}
+		m_bSurfaceUpdate = true;
+	}  
+	
+	
+	
+	
 	private boolean displayedNeurite( String neuriteName )
 	{
 		if ( neuriteVOIs == null )

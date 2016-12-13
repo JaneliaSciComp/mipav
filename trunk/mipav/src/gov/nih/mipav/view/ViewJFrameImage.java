@@ -6385,4 +6385,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         
         return result;
     }
+
+	@Override
+	public void addSphereVOIs(VOI annotations) {
+		// TODO Auto-generated method stub
+		
+	}
 }

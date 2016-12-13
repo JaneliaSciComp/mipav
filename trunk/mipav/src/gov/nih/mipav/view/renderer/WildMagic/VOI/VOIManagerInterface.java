@@ -31,8 +31,10 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.UpdateVOISelectionListener;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIPolyLineSlice;
+import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.structures.event.VOIEvent;
 import gov.nih.mipav.model.structures.event.VOIListener;
@@ -97,10 +99,13 @@ import java.awt.Polygon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -108,6 +113,7 @@ import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
 import java.util.BitSet;
+import java.util.StringTokenizer;
 import java.util.Vector;
 
 import javax.swing.AbstractButton;
@@ -481,6 +487,37 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_LABEL.getActionCommand())) {
             openVOI(false, true);
         } 
+        else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_CSV.getActionCommand())) {
+
+            // get the voi directory
+            String fileName = null;
+            String directory = null;
+            String voiDir = null;
+
+            final JFileChooser chooser = new JFileChooser();
+
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+
+            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+            final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            }
+
+            if (fileName != null) {
+                voiDir = new String(directory + fileName);
+                System.err.println("Opening csv file " + voiDir );
+                readCSV( voiDir, getActiveImage() );
+            }
+        }
         else if (command.equals(CustomUIBuilder.PARAM_OPEN_PAINT.getActionCommand())) {
 
             boolean success = openPaint(false);
@@ -6026,4 +6063,76 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
 
+    
+	private void readCSV( String fileName, ModelImage image )
+	{
+		File file = new File(fileName);
+		if ( file.exists() )
+		{
+
+	        int[] extents = image.getExtents();
+	        int xDim = extents[0];
+	        int yDim = extents[1];
+	        int zDim = extents[2];
+
+	        float[] resols = image.getFileInfo()[0].getResolutions();
+	        float xBox = (xDim - 1) * resols[0];
+	        float yBox = (yDim - 1) * resols[1];
+	        float zBox = (zDim - 1) * resols[2];
+	        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+	        
+	        float[] startLocation = image.getFileInfo(0).getOrigin();
+	        int[] aiModelDirection = MipavCoordinateSystems.getModelDirections(image);
+	        float[] direction = new float[] { aiModelDirection[0], aiModelDirection[1], aiModelDirection[2]}; 
+	        float[] box = new float[]{0f,0f,0f};
+			
+			
+            short sID = (short)(image.getVOIs().getUniqueID());
+			//        	System.err.println( fileName );
+			FileReader fr;
+			try {
+				fr = new FileReader(file);
+				BufferedReader br = new BufferedReader(fr);
+				String line = br.readLine();
+				line = br.readLine();
+
+				VOI annotationVOI = new VOI( (short)sID, fileName, VOI.ANNOTATION, 0 );
+				int count = 1;
+				while ( line != null )
+				{
+					String[] parsed = line.split( "," );
+					if ( parsed.length != 0 )
+					{
+						float z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
+						float x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+						float y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
+		           	   	
+						VOIText text = new VOIText();
+//						text.setText( "pt_" + count++ );
+						text.setText( "" ); count++;
+						text.add( new Vector3f( x, y, z ) );
+						text.add( new Vector3f( x+1, y, z ) );
+//						text.setUseMarker(false);
+						annotationVOI.getCurves().add(text);
+					}
+					line = br.readLine();
+				}
+				fr.close();
+				if ( count > 1 )
+				{
+					m_kParent.addSphereVOIs( annotationVOI );
+//					image.registerVOI(annotationVOI);
+				}
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+    
+    
 }
