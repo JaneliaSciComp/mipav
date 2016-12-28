@@ -1,11 +1,14 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.*;
 
 import java.awt.Point;
 import java.io.IOException;
 import java.util.*;
+
+import Jama.Matrix;
 
 /**Copyright (c) 2011, The University of Nottingham
 All rights reserved.
@@ -165,13 +168,165 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	        }
 
 	        private int spacing = 8;
+	        
+	        /*public void Initialise(SnakeInitialiser snakeInitialiser, int spacing)
+	        {
+	            // Set spacing
+	            this.spacing = spacing;
+
+	            // Create temporary sorted list to speed up processing
+	            SortedList<Tuple<int, int>, SnakeNode> sortingList = new SortedList<Tuple<int, int>, SnakeNode>();
+
+	            foreach (List<Point> nodePoints in snakeInitialiser.WallPositions)
+	            {
+	                List<Point> redistributedNodePoints = CreateAndRedistributePoints(nodePoints, spacing);
+
+	                // Starting junction node
+	                SnakeNode startNode = null;
+	                Tuple<int,int> startKey = new Tuple<int, int>((int)redistributedNodePoints[0].X, (int)redistributedNodePoints[0].Y);
+	                if (sortingList.IndexOfKey(startKey) >= 0)
+	                    startNode = sortingList[startKey];
+	                else
+	                {
+	                    startNode = new SnakeNode();
+	                    startNode.X = (int)redistributedNodePoints[0].X;
+	                    startNode.Y = (int)redistributedNodePoints[0].Y;
+	                    sortingList.Add(startKey, startNode);
+	                }
+
+	                // Ending junction node
+	                SnakeNode endNode = null;
+	                Tuple<int,int> endKey = new Tuple<int, int>((int)redistributedNodePoints.Last().X, (int)redistributedNodePoints.Last().Y);
+	                if (sortingList.IndexOfKey(endKey) >= 0)
+	                    endNode = sortingList[endKey];
+	                else
+	                {
+	                    endNode = new SnakeNode();
+	                    endNode.X = (int)redistributedNodePoints.Last().X;
+	                    endNode.Y = (int)redistributedNodePoints.Last().Y;
+	                    sortingList.Add(endKey, endNode);
+	                }
+
+	                if (redistributedNodePoints.Count == 2)
+	                {
+	                    startNode.Neighbours.Add(endNode);
+	                    endNode.Neighbours.Add(startNode);
+	                }
+	                else
+	                {
+	                    SnakeNode previousNode = startNode;
+	                    for (int i = 1; i < redistributedNodePoints.Count - 1; i++)
+	                    {
+	                        int cX = (int)redistributedNodePoints[i].X, cY = (int)redistributedNodePoints[i].Y;
+	                        Tuple<int,int> currentKey = new Tuple<int,int>(cX, cY);
+	                        SnakeNode currentNode = new SnakeNode();
+	                        currentNode.X = cX;
+	                        currentNode.Y = cY;
+
+	                        if (sortingList.ContainsKey(currentKey))
+	                            continue;
+	                        else
+	                            sortingList.Add(currentKey, currentNode);
+
+	                        // Link nodes
+	                        previousNode.Neighbours.Add(currentNode);
+	                        currentNode.Neighbours.Add(previousNode);
+	                        previousNode = currentNode;
+	                    }
+	                    // Link final nodes
+	                    previousNode.Neighbours.Add(endNode);
+	                    endNode.Neighbours.Add(previousNode);
+	                }
+	            }
+
+	            // Copy all nodes into the final snakes list - after this point ordering is not a concern
+	            foreach (KeyValuePair<Tuple<int, int>, SnakeNode> kvp in sortingList)
+	            {
+	                this.nodes.Add(kvp.Value);
+	            }
+
+	            this.isInitialised = true;
+	        }*/
 
 	}
+	
+	 /*public class SnakeInitialiser
+	    {
+	        [Serializable]
+	        public enum AnchorPosition
+	        {
+	            North, South, East, West, None
+	        }
+
+	        [Serializable]
+	        public class Node
+	        {
+	            private int x, y;
+	            
+	            public int X
+	            {
+	                get { return x; }
+	                set { x = value; }
+	            }
+
+	            public int Y
+	            {
+	                get { return y; }
+	                set { y = value; }
+	            }
+
+	            List<Node> neighbours;
+
+	            public List<Node> Neighbours
+	            {
+	                get { return neighbours; }
+	                set { neighbours = value; }
+	            }
+
+	            List<Node> junctionNeighbours;
+
+	            public List<Node> JunctionNeighbours
+	            {
+	                get { return junctionNeighbours; }
+	                set { junctionNeighbours = value; }
+	            }
+
+	            private AnchorPosition anchor;
+
+	            public AnchorPosition Anchor
+	            {
+	                get { return anchor; }
+	                set { anchor = value; }
+	            }
+
+	            public int NeighbourCount
+	            {
+	                get { return this.neighbours.Count; }
+	            }
+
+	            public Node()
+	            {
+	                this.neighbours = new List<Node>();
+	                this.junctionNeighbours = new List<Node>();
+	                this.anchor = AnchorPosition.None;
+	            }
+
+	            public Node Clone()
+	            {
+	                Node n = new Node();
+	                n.X = this.X;
+	                n.Y = this.Y;
+	                n.Anchor = this.Anchor;
+	                return n;
+	            }
+	        }
+	    }*/
+
 	
 	 public class SnakeNode implements Comparable
 	    {
 	        /// The X and Y Positions of the snake node
-	        private int x, y;
+	        protected int x, y;
 	        public int getX() {
 	        	return x;
 	        }
@@ -242,7 +397,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	        
 	        /// Obtains the average distance between a snake node and its neighbours for an entire line of interlinked snake nodes
 	        /// <returns>The average distance between snake nodes in a chain, ending at junction nodes</returns>
-	        public float FindAverageDistance()
+	        public float findAverageDistance()
 	        {
 	        	int diffX;
 	        	int diffY;
@@ -326,13 +481,15 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	        /// <param name="bufferHeight">The height of the image data buffer</param>
 	        /// <param name="m">The radius of the local window in which to iterate</param>
 	        /// <returns>Returns true if the snake node has moved, false if it is already in the optimal location</returns>
-	       /* public boolean Iterate(float alpha, float beta, float gamma, float d, byte[] imageBuffer, int bufferWidth, int bufferHeight, int m)
+	        public boolean iterate(float alpha, float beta, float gamma, float d, byte[] imageBuffer, int bufferWidth, int bufferHeight, int m)
 	        {
+	        	float diffX;
+	        	float diffY;
 	            // Record starting position
 	            Point startingPosition = new Point(this.x, this.y);
 
 	            // Iterates the SnakeNode once, moving it to a nearby position that minimises internal and external energy
-	            if (this.neighbours.Count == 1)
+	            if (this.neighbours.size() == 1)
 	            {
 	                int xMin = 0, xMax = 0, yMin = 0, yMax = 0;
 
@@ -377,21 +534,21 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 
 	                boolean useEcurve = true;
 
-	                if (this.neighbours[0].Neighbours.Count == 2)
+	                if (this.neighbours.get(0).neighbours.size() == 2)
 	                {
 	                    // Find correct x2 and y2 neighbour
-	                    if (this.neighbours[0].Neighbours[0] == this)
+	                    if (this.neighbours.get(0).neighbours.get(0) == this)
 	                    {
-	                        p2 = new Point( this.neighbours[0].Neighbours[1].X, this.neighbours[0].Neighbours[1].Y);
+	                        p2 = new Point( this.neighbours.get(0).neighbours.get(1).x, this.neighbours.get(0).neighbours.get(1).y);
 	                    }
 	                    else
 	                    {
-	                        p2 = new Point( this.neighbours[0].Neighbours[0].X, this.neighbours[0].Neighbours[0].Y);
+	                        p2 = new Point( this.neighbours.get(0).neighbours.get(0).x, this.neighbours.get(0).neighbours.get(0).y);
 	                    }
 	                }
 	                else
 	                {
-	                    p2 = new Point( this.X, this.Y);
+	                    p2 = new Point( this.x, this.y);
 	                    useEcurve = false;
 	                }
 	                
@@ -402,10 +559,12 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                    for (int x = xMin; x <= xMax; x++)
 	                    {
 	                        Point p0 = new Point(x, y);
-	                        Ecurve[xpos, ypos] = (float)((p0 - p1) - (p1 - p2)).LengthSquared;
+	                        diffX = ((p0.x - p1.x) - (p1.x - p2.x));
+	                        diffY = ((p0.y - p1.y) - (p1.y - p2.y));
+	                        Ecurve[xpos][ ypos] = diffX*diffX + diffY*diffY;
 	                        
-	                        if (Ecurve[xpos, ypos] > EcurveMax)
-	                            EcurveMax = Ecurve[xpos, ypos];
+	                        if (Ecurve[xpos][ ypos] > EcurveMax)
+	                            EcurveMax = Ecurve[xpos][ ypos];
 	                        xpos++;
 	                    }
 	                    ypos++;
@@ -414,22 +573,22 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                // Normalise Ecurve
 	                if (useEcurve)
 	                {
-	                    for (int y = 0; y < Ecurve.GetLength(1); y++)
-	                        for (int x = 0; x < Ecurve.GetLength(0); x++)
-	                            Ecurve[x, y] /= EcurveMax;
+	                    for (int y = 0; y < Ecurve[0].length; y++)
+	                        for (int x = 0; x < Ecurve.length; x++)
+	                            Ecurve[x][ y] /= EcurveMax;
 	                }
 	                else
 	                {
 	                    // Immediately next to a junction, meaning curvature is impossible to calculate
-	                    for (int y = 0; y < Ecurve.GetLength(1); y++)
-	                        for (int x = 0; x < Ecurve.GetLength(0); x++)
-	                            Ecurve[x, y] = 0.0f;
+	                    for (int y = 0; y < Ecurve[0].length; y++)
+	                        for (int x = 0; x < Ecurve.length; x++)
+	                            Ecurve[x][ y] = 0.0f;
 	                }
 
 	                // Eimage
-	                float[,] Eimage = new float[xMax - xMin + 1, yMax - yMin + 1];
-	                float EimageMin = float.MaxValue;
-	                float EimageMax = float.MinValue;
+	                float[][] Eimage = new float[xMax - xMin + 1][ yMax - yMin + 1];
+	                float EimageMin = Float.MAX_VALUE;
+	                float EimageMax = Float.MIN_VALUE;
 
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
@@ -437,25 +596,25 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                    int xpos = 0;
 	                    for (int x = xMin; x <= xMax; x++)
 	                    {
-	                        Eimage[xpos, ypos] = 255 - imageBuffer[y * bufferWidth + x];
+	                        Eimage[xpos][ ypos] = 255 - imageBuffer[y * bufferWidth + x];
 
-	                        if (Eimage[xpos, ypos] > EimageMax)
-	                            EimageMax = Eimage[xpos, ypos];
+	                        if (Eimage[xpos][ ypos] > EimageMax)
+	                            EimageMax = Eimage[xpos][ ypos];
 
-	                        if (Eimage[xpos, ypos] < EimageMin)
-	                            EimageMin = Eimage[xpos, ypos];
+	                        if (Eimage[xpos][ ypos] < EimageMin)
+	                            EimageMin = Eimage[xpos][ ypos];
 	                        xpos++;
 	                    }
 	                    ypos++;
 	                }
 
 	                // Normalise Eimage
-	                for (int y = 0; y < Eimage.GetLength(1); y++)
-	                    for (int x = 0; x < Eimage.GetLength(0); x++)
-	                        Eimage[x, y] = (Eimage[x, y] - EimageMin) / Math.Max(1, EimageMax - EimageMin);
+	                for (int y = 0; y < Eimage[0].length; y++)
+	                    for (int x = 0; x < Eimage.length; x++)
+	                        Eimage[x][ y] = (Eimage[x][ y] - EimageMin) / Math.max(1, EimageMax - EimageMin);
 
 	                // Choose final position for snake point
-	                float EMin = float.MaxValue;
+	                float EMin = Float.MAX_VALUE;
 	                int EminX = 0, EminY = 0;
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
@@ -463,7 +622,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                    int xpos = 0;
 	                    for (int x = xMin; x <= xMax; x++)
 	                    {
-	                        float E = beta * Ecurve[xpos, ypos] + gamma * Eimage[xpos, ypos];
+	                        float E = beta * Ecurve[xpos][ ypos] + gamma * Eimage[xpos][ ypos];
 
 	                        if (E < EMin)
 	                        {
@@ -479,72 +638,72 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                this.x = EminX;
 	                this.y = EminY;
 	            }
-	            else if (this.neighbours.Count == 2)
+	            else if (this.neighbours.size() == 2)
 	            {
 	                // Calculate bounds
-	                int xMin = Math.Max(0, this.x - m);
-	                int xMax = Math.Min(this.x + m, bufferWidth - 1);
-	                int yMin = Math.Max(0, this.y - m);
-	                int yMax = Math.Min(this.y + m, bufferHeight - 1);
+	                int xMin = Math.max(0, this.x - m);
+	                int xMax = Math.min(this.x + m, bufferWidth - 1);
+	                int yMin = Math.max(0, this.y - m);
+	                int yMax = Math.min(this.y + m, bufferHeight - 1);
 
 	                // Econt
-	                float[,] Econt = new float[xMax - xMin + 1, yMax - yMin + 1];
-	                float EcontMax = float.MinValue;
+	                float[][] Econt = new float[xMax - xMin + 1][ yMax - yMin + 1];
+	                float EcontMax = Float.MIN_VALUE;
 	                int ypos = 0;
-	                int x2 = this.Neighbours[0].x;
-	                int y2 = this.Neighbours[0].y;
+	                int x2 = this.neighbours.get(0).x;
+	                int y2 = this.neighbours.get(0).y;
 	                for (int y = yMin; y <= yMax; y++)
 	                {
 	                    int xpos = 0;
 	                    for (int x = xMin; x <= xMax; x++)
 	                    {
-	                        Econt[xpos, ypos] = (float)Math.Pow(x - x2, 2.0) + (float)Math.Pow(y - y2, 2.0);
-	                        Econt[xpos, ypos] = (float)Math.Sqrt(Econt[xpos, ypos]);
-	                        Econt[xpos, ypos] = (float)Math.Pow(d - Econt[xpos, ypos],2.0);
-	                        if (Econt[xpos, ypos] > EcontMax)
-	                            EcontMax = Econt[xpos, ypos];
+	                        Econt[xpos][ ypos] = (float)Math.pow(x - x2, 2.0) + (float)Math.pow(y - y2, 2.0);
+	                        Econt[xpos][ ypos] = (float)Math.sqrt(Econt[xpos][ ypos]);
+	                        Econt[xpos][ ypos] = (float)Math.pow(d - Econt[xpos][ ypos],2.0);
+	                        if (Econt[xpos][ ypos] > EcontMax)
+	                            EcontMax = Econt[xpos][ ypos];
 	                        xpos++;
 	                    }
 	                    ypos++;
 	                }
 
 	                // Normalise Econt
-	                for (int y = 0; y < Econt.GetLength(1); y++)
-	                    for (int x = 0; x < Econt.GetLength(0); x++)
-	                        Econt[x, y] /= EcontMax;
+	                for (int y = 0; y < Econt[0].length; y++)
+	                    for (int x = 0; x < Econt.length; x++)
+	                        Econt[x][ y] /= EcontMax;
 
 	                // Ecurve
-	                float[,] Ecurve = new float[xMax - xMin + 1, yMax - yMin + 1];
-	                float EcurveMax = float.MinValue;
-	                int x0 = this.neighbours[0].x;
-	                int y0 = this.neighbours[0].y;
-	                x2 = this.Neighbours[1].x;
-	                y2 = this.Neighbours[1].y;
+	                float[][] Ecurve = new float[xMax - xMin + 1][ yMax - yMin + 1];
+	                float EcurveMax = Float.MIN_VALUE;
+	                int x0 = this.neighbours.get(0).x;
+	                int y0 = this.neighbours.get(0).y;
+	                x2 = this.neighbours.get(1).x;
+	                y2 = this.neighbours.get(1).y;
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
 	                {
 	                    int xpos = 0;
 	                    for (int x = xMin; x <= xMax; x++)
 	                    {
-	                        Ecurve[xpos, ypos] = (float)Math.Pow((x0 - 2 * x + x2), 2.0) + (float)Math.Pow((y0 - 2 * y + y2), 2.0);
+	                        Ecurve[xpos][ ypos] = (float)Math.pow((x0 - 2 * x + x2), 2.0) + (float)Math.pow((y0 - 2 * y + y2), 2.0);
 
-	                        if (Ecurve[xpos, ypos] > EcurveMax)
-	                            EcurveMax = Ecurve[xpos, ypos];
+	                        if (Ecurve[xpos][ ypos] > EcurveMax)
+	                            EcurveMax = Ecurve[xpos][ ypos];
 	                        xpos++;
 	                    }
 	                    ypos++;
 	                }
 
 	                // Normalise Ecurve
-	                for (int y = 0; y < Ecurve.GetLength(1); y++)
-	                    for (int x = 0; x < Ecurve.GetLength(0); x++)
-	                        Ecurve[x, y] /= EcurveMax;
+	                for (int y = 0; y < Ecurve[0].length; y++)
+	                    for (int x = 0; x < Ecurve.length; x++)
+	                        Ecurve[x][ y] /= EcurveMax;
 
 
 	                // Eimage
-	                float[,] Eimage = new float[xMax - xMin + 1, yMax - yMin + 1];
-	                float EimageMin = float.MaxValue;
-	                float EimageMax = float.MinValue;
+	                float[][] Eimage = new float[xMax - xMin + 1][ yMax - yMin + 1];
+	                float EimageMin = Float.MAX_VALUE;
+	                float EimageMax = Float.MIN_VALUE;
 
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
@@ -552,25 +711,25 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                    int xpos = 0;
 	                    for (int x = xMin; x <= xMax; x++)
 	                    {
-	                        Eimage[xpos, ypos] = 255 - imageBuffer[y * bufferWidth + x];
+	                        Eimage[xpos][ ypos] = 255 - imageBuffer[y * bufferWidth + x];
 
-	                        if (Eimage[xpos, ypos] > EimageMax)
-	                            EimageMax = Eimage[xpos, ypos];
+	                        if (Eimage[xpos][ ypos] > EimageMax)
+	                            EimageMax = Eimage[xpos][ ypos];
 
-	                        if (Eimage[xpos, ypos] < EimageMin)
-	                            EimageMin = Eimage[xpos, ypos];
+	                        if (Eimage[xpos][ ypos] < EimageMin)
+	                            EimageMin = Eimage[xpos][ ypos];
 	                        xpos++;
 	                    }
 	                    ypos++;
 	                }
 
 	                // Normalise Eimage
-	                for (int y = 0; y < Eimage.GetLength(1); y++)
-	                    for (int x = 0; x < Eimage.GetLength(0); x++)
-	                        Eimage[x, y] = (Eimage[x, y] - EimageMin) / Math.Max(1, EimageMax - EimageMin);
+	                for (int y = 0; y < Eimage[0].length; y++)
+	                    for (int x = 0; x < Eimage.length; x++)
+	                        Eimage[x][ y] = (Eimage[x][ y] - EimageMin) / Math.max(1, EimageMax - EimageMin);
 
 	                // Choose final position for snake point
-	                float EMin = float.MaxValue;
+	                float EMin = Float.MAX_VALUE;
 	                int EminX = 0, EminY = 0;
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
@@ -578,12 +737,12 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                    int xpos = 0;
 	                    for (int x = xMin; x <= xMax; x++)
 	                    {
-	                        float E = alpha * Econt[xpos, ypos] + beta * Ecurve[xpos, ypos] + gamma * Eimage[xpos, ypos];
+	                        float E = alpha * Econt[xpos][ ypos] + beta * Ecurve[xpos][ ypos] + gamma * Eimage[xpos][ ypos];
 
 	                        if (E < EMin)
 	                        {
-	                            bool neighbourConflict = false;
-	                            foreach (SnakeNode neighour in this.neighbours)
+	                            boolean neighbourConflict = false;
+	                            for (SnakeNode neighour : this.neighbours)
 	                            {
 	                                if (x == neighour.x && y == neighour.y)
 	                                {
@@ -604,7 +763,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                    ypos++;
 	                }
 
-	                if (EMin != float.MaxValue)
+	                if (EMin != Float.MAX_VALUE)
 	                {
 	                    this.x = EminX;
 	                    this.y = EminY;
@@ -615,15 +774,15 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                // Junction nodes
 
 	                // Find nearest junctions to calculate Rmax
-	                List<SnakeNode> junctionNeighbours = this.FindJunctionNeighbours();
-	                double minimumJunctionDistance = double.MaxValue;
+	                ArrayList<SnakeNode> junctionNeighbours = this.findJunctionNeighbours();
+	                double minimumJunctionDistance = Double.MAX_VALUE;
 
-	                foreach (SnakeNode junctionNeighbour in junctionNeighbours)
+	                for (SnakeNode junctionNeighbour : junctionNeighbours)
 	                {
 	                    // Ignore boundary nodes
-	                    if (junctionNeighbour.Neighbours.Count != 1)
+	                    if (junctionNeighbour.neighbours.size() != 1)
 	                    {
-	                        double junctionDistance = Math.Sqrt(Math.Pow( this.X - junctionNeighbour.X, 2.0) + Math.Pow(this.y - junctionNeighbour.Y, 2.0));
+	                        double junctionDistance = Math.sqrt(Math.pow( this.x - junctionNeighbour.x, 2.0) + Math.pow(this.y - junctionNeighbour.y, 2.0));
 	                        if (junctionDistance < minimumJunctionDistance)
 	                            minimumJunctionDistance = junctionDistance;
 	                    }
@@ -631,44 +790,45 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 
 	                int Rmax = (int)(minimumJunctionDistance / 2.0);
 	                int Rmin = 4;
-	                int offsetX, offsetY;
-	                byte[,] thresholdBuffer = FindThresholdedRegion(this.X, this.Y, imageBuffer, bufferWidth, bufferHeight, Rmax + m, true, out offsetX, out offsetY);
+	                int offsetX[] = new int[1];
+	                int offsetY[] = new int[1];
+	                byte[][] thresholdBuffer = findThresholdedRegion(this.x, this.y, imageBuffer, bufferWidth, bufferHeight, Rmax + m, true, offsetX, offsetY);
 
 	                // Calculate bounds
-	                int xMin = Math.Max(0, this.x - m);
-	                int xMax = Math.Min(this.x + m, bufferWidth - 1);
-	                int yMin = Math.Max(0, this.y - m);
-	                int yMax = Math.Min(this.y + m, bufferHeight - 1);
+	                int xMin = Math.max(0, this.x - m);
+	                int xMax = Math.min(this.x + m, bufferWidth - 1);
+	                int yMin = Math.max(0, this.y - m);
+	                int yMax = Math.min(this.y + m, bufferHeight - 1);
 
 	                // No Econt
 
 	                // Ecurve
-	                float[,] Ecurve = new float[xMax - xMin + 1, yMax - yMin + 1];
-	                float EcurveMax = float.MinValue;
+	                float[][] Ecurve = new float[xMax - xMin + 1][ yMax - yMin + 1];
+	                float EcurveMax = Float.MIN_VALUE;
 
-	                List<Point[]> neighbouringPoints = new List<Point[]>();
+	                ArrayList<Point[]> neighbouringPoints = new ArrayList<Point[]>();
 
 	                int neighbourIndex = 0;
-	                foreach (SnakeNode neighbour in this.neighbours)
+	                for (SnakeNode neighbour : this.neighbours)
 	                {
-	                    neighbouringPoints.Add(new Point[2]);
-	                    neighbouringPoints[neighbourIndex][0] = new Point(neighbour.X, neighbour.Y);
-	                    if (neighbour.Neighbours.Count == 2)
+	                    neighbouringPoints.add(new Point[2]);
+	                    neighbouringPoints.get(neighbourIndex)[0] = new Point(neighbour.x, neighbour.y);
+	                    if (neighbour.neighbours.size() == 2)
 	                    {
 	                        // Find correct next neighbour
-	                        if (neighbour.Neighbours[0] == this)
+	                        if (neighbour.neighbours.get(0) == this)
 	                        {
-	                            neighbouringPoints[neighbourIndex][1] = new Point(neighbour.neighbours[1].X, neighbour.neighbours[1].Y);
+	                            neighbouringPoints.get(neighbourIndex)[1] = new Point(neighbour.neighbours.get(1).x, neighbour.neighbours.get(1).y);
 	                        }
 	                        else
 	                        {
-	                            neighbouringPoints[neighbourIndex][1] = new Point(neighbour.neighbours[0].X, neighbour.neighbours[0].Y);
+	                            neighbouringPoints.get(neighbourIndex)[1] = new Point(neighbour.neighbours.get(0).x, neighbour.neighbours.get(0).y);
 	                        }
 	                    }
 	                    else
 	                    {
 	                        // Current approach when n-2 doesn't exist is to not use that direction in the weight
-	                        neighbouringPoints.RemoveAt(neighbouringPoints.Count - 1);
+	                        neighbouringPoints.remove(neighbouringPoints.size() - 1);
 	                        continue;
 	                    }
 	                    neighbourIndex++;
@@ -681,29 +841,31 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                    for (int x = xMin; x <= xMax; x++)
 	                    {
 	                        Point p0 = new Point(x, y);
-	                        Ecurve[xpos, ypos] = 0;
-	                        foreach (Point[] currentPoints in neighbouringPoints)
+	                        Ecurve[xpos][ ypos] = 0;
+	                        for (Point[] currentPoints : neighbouringPoints)
 	                        {
 	                            Point p1 = currentPoints[0];
 	                            Point p2 = currentPoints[1];
-	                            Ecurve[xpos, ypos] += (float)((p0 - p1) - (p1 - p2)).LengthSquared;
+	                            diffX = ((p0.x - p1.x) - (p1.x - p2.x));
+	                            diffY = ((p0.y - p1.y) - (p1.y - p2.y));
+	                            Ecurve[xpos][ ypos] += (diffX*diffX + diffY*diffY);
 	                        }
-	                        if (Ecurve[xpos, ypos] > EcurveMax)
-	                            EcurveMax = Ecurve[xpos, ypos];
+	                        if (Ecurve[xpos][ ypos] > EcurveMax)
+	                            EcurveMax = Ecurve[xpos][ ypos];
 	                        xpos++;
 	                    }
 	                    ypos++;
 	                }
 
 	                // Normalise Ecurve
-	                for (int y = 0; y < Ecurve.GetLength(1); y++)
-	                    for (int x = 0; x < Ecurve.GetLength(0); x++)
-	                        Ecurve[x, y] /= EcurveMax;
+	                for (int y = 0; y < Ecurve[0].length; y++)
+	                    for (int x = 0; x < Ecurve.length; x++)
+	                        Ecurve[x][ y] /= EcurveMax;
 
 	                // Eimage
-	                float[,] Eimage = new float[xMax - xMin + 1, yMax - yMin + 1];
-	                float EimageMin = float.MaxValue;
-	                float EimageMax = float.MinValue;
+	                float[][] Eimage = new float[xMax - xMin + 1][ yMax - yMin + 1];
+	                float EimageMin = Float.MAX_VALUE;
+	                float EimageMax = Float.MIN_VALUE;
 
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
@@ -714,25 +876,25 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                        // Calculate Eimage based on concentric circles
 	                        int xCentre = xMax - xMin;
 
-	                        Eimage[xpos, ypos] = FindJunctionAppearanceWeight(x - offsetX, y - offsetY, thresholdBuffer, Rmax, Rmin);
+	                        Eimage[xpos][ ypos] = findJunctionAppearanceWeight(x - offsetX[0], y - offsetY[0], thresholdBuffer, Rmax, Rmin);
 
-	                        if (Eimage[xpos, ypos] > EimageMax)
-	                            EimageMax = Eimage[xpos, ypos];
+	                        if (Eimage[xpos][ ypos] > EimageMax)
+	                            EimageMax = Eimage[xpos][ ypos];
 
-	                        if (Eimage[xpos, ypos] < EimageMin)
-	                            EimageMin = Eimage[xpos, ypos];
+	                        if (Eimage[xpos][ ypos] < EimageMin)
+	                            EimageMin = Eimage[xpos][ ypos];
 	                        xpos++;
 	                    }
 	                    ypos++;
 	                }
 
 	                // Normalise Eimage
-	                for (int y = 0; y < Eimage.GetLength(1); y++)
-	                    for (int x = 0; x < Eimage.GetLength(0); x++)
-	                        Eimage[x, y] = (Eimage[x, y] - EimageMin) / Math.Max(1, EimageMax - EimageMin);
+	                for (int y = 0; y < Eimage[0].length; y++)
+	                    for (int x = 0; x < Eimage.length; x++)
+	                        Eimage[x][ y] = (Eimage[x][ y] - EimageMin) / Math.max(1, EimageMax - EimageMin);
 
 	                // Choose final position for snake point
-	                float EMin = float.MaxValue;
+	                float EMin = Float.MAX_VALUE;
 	                int EminX = 0, EminY = 0;
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
@@ -741,12 +903,12 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                    for (int x = xMin; x <= xMax; x++)
 	                    {
 	                        // Energy formula
-	                        float E = beta * Ecurve[xpos, ypos] + gamma * Eimage[xpos, ypos];
+	                        float E = beta * Ecurve[xpos][ ypos] + gamma * Eimage[xpos][ ypos];
 
 	                        if (E < EMin)
 	                        {
-	                            bool neighbourConflict = false;
-	                            foreach (SnakeNode neighour in this.neighbours)
+	                            boolean neighbourConflict = false;
+	                            for (SnakeNode neighour : this.neighbours)
 	                            {
 	                                if (x == neighour.x && y == neighour.y)
 	                                {
@@ -767,7 +929,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                    ypos++;
 	                }
 
-	                if (EMin != float.MaxValue)
+	                if (EMin != Float.MAX_VALUE)
 	                {
 	                    this.x = EminX;
 	                    this.y = EminY;
@@ -776,7 +938,368 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 
 	            Point finalPosition = new Point(this.x, this.y);
 	            return startingPosition != finalPosition;
-	        } */
+	        } 
+	        
+	      /// Finds the appearance weighting of a junction node using the Sethuraman junction weight
+	        /// </summary>
+	        /// <param name="x">The x position of the node</param>
+	        /// <param name="y">The y position of the node</param>
+	        /// <param name="thresholdBuffer">A binary threshold buffer of that region</param>
+	        /// <param name="Rmax">The maximum radius around the node to use for this weighting</param>
+	        /// <param name="Rmin">The minimum radius around the node to use for this weighting</param>
+	        /// <returns>A integer weighting value</returns>
+	        protected int findJunctionAppearanceWeight(int x, int y, byte[][] thresholdBuffer, int Rmax, int Rmin)
+	        {
+	            int weightingFactor = thresholdBuffer[x][y] > 0 ? 1 : 0;
+	            boolean onWall = false;
+	            //double root2 = Math.sqrt(2.0);
+	            final int minWallWidth = 4;
+	            int bufferWidth = thresholdBuffer.length;
+	            int bufferHeight = thresholdBuffer[0].length;
+	            double angleToRadians = Math.PI/180.0;
+	          
+	            for (int currentRadius = Rmax; currentRadius >= Rmin; currentRadius--)
+	            {
+	                int intersectionCount = 0;
+	                int rotationStep = 4;
+	                int wallWidth = 0;
+	                //Vector V = new Vector(0, -currentRadius);
+	                //Matrix rotationMatrix = Matrix.Identity;
+	                //rotationMatrix.setRotate(rotationStep);
+
+	                for (int rotation = 0; rotation <= 360; rotation += rotationStep)
+	                {
+	                	double radians = (rotation + rotationStep) * angleToRadians;
+	                	double cosTheta = Math.cos(radians);
+	                	double sinTheta = Math.sin(radians);
+	                	// xp = x*cosTheta - y*sinTheta;
+	                	// yp = x*sinTheta + y*cosTheta;
+	                	double xp = currentRadius * sinTheta;
+	                	double yp = -currentRadius * cosTheta;
+	                    //Vector position = rotationMatrix.Transform(V);
+	                    //int bufferPositionX = (int)position.X + x;
+	                    //int bufferPositionY = (int)position.Y + y;
+	                	int bufferPositionX = (int)xp + x;
+	                	int bufferPositionY = (int)yp + y;
+
+	                    // Inside the threshold buffer
+	                    bufferPositionX = ExtentionMath.clamp(bufferPositionX, 0, bufferWidth - 1);
+	                    bufferPositionY = ExtentionMath.clamp(bufferPositionY, 0, bufferHeight - 1);
+
+	                    if (thresholdBuffer[bufferPositionX][ bufferPositionY] > 0)
+	                    {
+	                        if (wallWidth >= minWallWidth && !onWall)
+	                        {
+	                            onWall = true;
+	                            intersectionCount++;
+	                        }
+	                        else
+	                        {
+	                            wallWidth++;
+	                        }
+	                    }
+	                    else if (thresholdBuffer[bufferPositionX][ bufferPositionY] == 0)
+	                    {
+	                        onWall = false;
+	                        wallWidth = 0;
+	                    }
+	                    //rotationMatrix.setRotate(rotationStep);
+	                }
+
+	                if (intersectionCount > 2)
+	                    weightingFactor++;
+	            }
+	            return (int)Math.pow(weightingFactor,3.0);
+	        }
+	        
+	        /// Creates a gaussian operator
+	        /// </summary>
+	        /// <param name="radius">The radius of this operator</param>
+	        /// <param name="sigma1">The sigma value for this operator</param>
+	        /// <returns>A two-dimensional array containing this operator</returns>
+	        private double[][] createGOperator(int radius, double sigma1)
+	        {
+	            int dimension = radius * 2 + 1;
+	            double[][] matrix = new double[dimension][ dimension];
+
+	            double TwoSigma2 = 2 * Math.pow(sigma1, 2.0);
+
+	            for (int y = -radius; y <= radius; y++)
+	            {
+	                for (int x = -radius; x <= radius; x++)
+	                {
+	                    double G1 = 1 / (TwoSigma2 * Math.PI);
+	                    G1 *= Math.pow(Math.E, -(Math.pow(x, 2) + Math.pow(y, 2)) / TwoSigma2);
+	                    matrix[x + radius][ y + radius] = G1;
+	                }
+	            }
+	            return matrix;
+	        }
+	        
+	        /// Creates a difference of gaussian operator
+	        /// </summary>
+	        /// <param name="radius">The radius of this operator</param>
+	        /// <param name="sigma1">The sigma value for the first (positive gaussian)</param>
+	        /// <param name="K">The ratio of the first sigma value to the second</param>
+	        /// <param name="scale1">The scale of the first gaussian</param>
+	        /// <param name="scale2">The scale of the second gaussian</param>
+	        /// <returns>A two-dimensional array containing this operator</returns>
+	        private double[][] createDoGOperator(int radius, double sigma1, double K, double scale1, double scale2)
+	        {
+	            int dimension = radius * 2 + 1;
+	            double[][] matrix = new double[dimension][ dimension];
+
+	            double TwoSigma2 = 2 * Math.pow(sigma1, 2.0);
+	            double TwoK2Sigma2 = 2 * Math.pow(K, 2.0) * Math.pow(sigma1, 2.0);
+
+	            for (int y = -radius; y <= radius; y++)
+	            {
+	                for (int x = -radius; x <= radius; x++)
+	                {
+	                    double G1 = 1 / (TwoSigma2 * Math.PI);
+	                    G1 *= Math.pow(Math.E, -(Math.pow(x, 2) + Math.pow(y, 2)) / TwoSigma2);
+
+	                    double G2 = 1 / (TwoK2Sigma2 * Math.PI);
+	                    G2 *= Math.pow(Math.E, -(Math.pow(x, 2) + Math.pow(y, 2)) / TwoK2Sigma2);
+
+	                    matrix[x + radius][ y + radius] = scale1 * G1 - scale2 * G2;
+	                }
+	            }
+	            return matrix;
+	        }
+	        
+	        /// Obtains the thresholded region in an image buffer, for use with the junction weighting algorithm
+	        /// </summary>
+	        /// <param name="x">The x position of the centre of this region</param>
+	        /// <param name="y">The y position of the centre of this region</param>
+	        /// <param name="imageBuffer">The image buffer used as a source for thresholding</param>
+	        /// <param name="bufferWidth">The width of the image buffer</param>
+	        /// <param name="bufferHeight">The height of the image buffer</param>
+	        /// <param name="radius">The radius of the region to threshold</param>
+	        /// <param name="thresholding">A boolean stating whether to apply a threshold to this smaller region in the image buffer</param>
+	        /// <param name="offsetX">The X offset of the resulting region relative to the original source</param>
+	        /// <param name="offsetY">The Y offset of the resulting region relative to the original source</param>
+	        /// <returns>A byte array containing the thresholded sub-region of the source image</returns>
+	        protected byte[][] findThresholdedRegion(int x, int y, byte[] imageBuffer, int bufferWidth, int bufferHeight, int radius, boolean thresholding,
+	        		int offsetX[], int offsetY[])
+	        {
+	            int xMin = Math.max(0, x - radius);
+	            int xMax = Math.min(bufferWidth - 1, x + radius);
+	            int yMin = Math.max(0, y - radius);
+	            int yMax = Math.min(bufferHeight - 1, y + radius);
+
+	            byte[][] regionBuffer = new byte[xMax - xMin + 1][ yMax - yMin + 1];
+	            int totalIntensity = 0;
+
+	            offsetX[0] = xMin;
+	            offsetY[0] = yMin;
+
+	            int ypos = 0;
+	            for (int bY = yMin; bY <= yMax; bY++)
+	            {
+	                int xpos = 0;
+	                for (int bX = xMin; bX <= xMax; bX++)
+	                {
+	                    regionBuffer[xpos][ ypos] = imageBuffer[bY * bufferWidth + bX];
+	                    totalIntensity += regionBuffer[xpos][ ypos];
+	                    xpos++;
+	                }
+	                ypos++;
+	            }
+
+	            // Threshold using mean of intensity level
+	            if (thresholding)
+	            {
+	                int threshold = totalIntensity / (regionBuffer.length * regionBuffer[0].length);
+	                for (int xpos = 0; xpos < regionBuffer.length; xpos++)
+	                {
+	                    for (ypos = 0; ypos < regionBuffer[0].length; ypos++)
+	                    {
+	                        regionBuffer[xpos][ ypos] = (byte)(regionBuffer[xpos][ ypos] >= threshold ? 255 : 0);
+	                    }
+	                }
+	            }
+	            return regionBuffer;
+	        }
+	        
+	      /// Given a snake node, returns a list of all snake nodes up to and including the surrounding junction nodes
+	        /// </summary>
+	        /// <returns>A list of snake nodes along the wall</returns>
+	        public ArrayList<SnakeNode> findWall()
+	        {
+	            if (this.neighbours.size() != 2)
+	                return null;
+	            else
+	            {
+	                ArrayList<SnakeNode> neighbours0 = new ArrayList<SnakeNode>();
+	                ArrayList<SnakeNode> neighbours1 = new ArrayList<SnakeNode>();
+
+	                // 0
+	                SnakeNode neighbour = this.neighbours.get(0);
+	                SnakeNode previousNode = this;
+	                SnakeNode nextNode = neighbour;
+
+	                while (nextNode.neighbours.size() == 2)
+	                {
+	                    neighbours0.add(nextNode);
+	                    if (nextNode.neighbours.get(0) == previousNode)
+	                    {
+	                        previousNode = nextNode;
+	                        nextNode = nextNode.neighbours.get(1);
+	                    }
+	                    else
+	                    {
+	                        previousNode = nextNode;
+	                        nextNode = nextNode.neighbours.get(0);
+	                    }
+	                }
+	                neighbours0.add(nextNode);
+
+	                // 1
+	                neighbour = this.neighbours.get(1);
+	                previousNode = this;
+	                nextNode = neighbour;
+
+	                while (nextNode.neighbours.size() == 2)
+	                {
+	                    neighbours1.add(nextNode);
+	                    if (nextNode.neighbours.get(0) == previousNode)
+	                    {
+	                        previousNode = nextNode;
+	                        nextNode = nextNode.neighbours.get(1);
+	                    }
+	                    else
+	                    {
+	                        previousNode = nextNode;
+	                        nextNode = nextNode.neighbours.get(0);
+	                    }
+	                }
+	                neighbours1.add(nextNode);
+
+	                // Combine lists
+	                ArrayList<SnakeNode> wallNodes = new ArrayList<SnakeNode>();
+
+	                for (int i = neighbours0.size() - 1; i >= 0; i--)
+	                {
+	                    wallNodes.add(neighbours0.get(i));
+	                }
+	                wallNodes.add(this);
+	                for (int i = 0; i < neighbours1.size(); i++)
+	                {
+	                    wallNodes.add(neighbours1.get(i));
+	                }
+
+	                return wallNodes;
+	            }
+	        }
+	        
+	        /// Finds a list of the closest neighbouring junctions to a snakenode
+	        /// </summary>
+	        /// <returns>A list of junction SnakeNodes</returns>
+	        public ArrayList<SnakeNode> findJunctionNeighbours()
+	        {
+	            ArrayList<SnakeNode> junctionNeighbours = new ArrayList<SnakeNode>();
+
+	            for (SnakeNode neighbour : this.neighbours)
+	            {
+	                SnakeNode previousNode = this;
+	                SnakeNode nextNode = neighbour;
+
+	                while (nextNode.neighbours.size() == 2)
+	                {
+	                    if (nextNode.neighbours.get(0) == previousNode)
+	                    {
+	                        previousNode = nextNode;
+	                        nextNode = nextNode.neighbours.get(1);
+	                    }
+	                    else
+	                    {
+	                        previousNode = nextNode;
+	                        nextNode = nextNode.neighbours.get(0);
+	                    }
+	                }   
+	                junctionNeighbours.add(nextNode);
+	            }
+	            return junctionNeighbours;
+	        }
+	        
+	      /// Find a wall linking this node to a destination node
+	        /// </summary>
+	        /// <param name="destination">The snakenode that is the target of this search</param>
+	        /// <returns>A list of nodes from the current snake node, up to the destination node, if such a wall exists.</returns>
+	        public ArrayList<SnakeNode> findWall(SnakeNode destination)
+	        {
+	            ArrayList<SnakeNode> currentWall = new ArrayList<SnakeNode>();
+
+	            for (SnakeNode neighbour : this.neighbours)
+	            {
+	                if (neighbour == destination)
+	                {
+	                    currentWall.add(this);
+	                    currentWall.add(neighbour);
+	                    return currentWall;
+	                }
+
+	                SnakeNode currentNode = this;
+	                SnakeNode nextNode = neighbour;
+
+	                while (nextNode.neighbours.size() == 2)
+	                {
+	                    currentWall.add(currentNode);
+	                    if (nextNode.neighbours.get(0) == currentNode)
+	                    {
+	                        currentNode = nextNode;
+	                        nextNode = nextNode.neighbours.get(1);
+	                    }
+	                    else
+	                    {
+	                        currentNode = nextNode;
+	                        nextNode = nextNode.neighbours.get(0);
+	                    }
+	                }
+
+	                if (nextNode == destination)
+	                {
+	                    currentWall.add(nextNode);
+	                    return currentWall;
+	                }
+	                else
+	                {
+	                    currentWall.clear();
+	                }
+	            }
+	            return null;
+	        }
+	        
+	        /// Resets the neighbour links for a given node
+	        /// </summary>
+	        /// <param name="value">Resets to either true or false, depending on this value</param>
+	        public void resetNeighbourLink(boolean value)
+	        {
+	            this.neighbourLink = new ArrayList<Boolean>();
+	            int count = this.neighbours.size();
+	            while (count > 0)
+	            {
+	                this.neighbourLink.add(value);
+	                count--;
+	            }
+	        }
+
+	    }
+	 
+	 public static class ExtentionMath
+	    {
+	        /// <summary>
+	        /// Clamps a value into a specified range.
+	        /// </summary>
+	        /// <param name="val">The value to be clamped.</param>
+	        /// <param name="lowerBound">The lower bound at which to clamp the value.</param>
+	        /// <param name="upperBound">The upper bound at which to clamp the value.</param>
+	        /// <returns></returns>
+	        public static int clamp(int val, int lowerBound, int upperBound)
+	        {
+	            return (val > upperBound) ? upperBound : (val < lowerBound ? lowerBound : val);
+	        }
 	    }
 	
 	public class Metadata
