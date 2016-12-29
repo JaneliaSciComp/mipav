@@ -6,6 +6,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.Point;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
 
 import Jama.Matrix;
@@ -41,6 +42,11 @@ Porting done by William Gandler
 */
 
 public class AlgorithmNetworkSnake extends AlgorithmBase {
+	
+	public enum AnchorPosition
+    {
+        North, South, East, West, None
+    };
 	
 	public AlgorithmNetworkSnake(ModelImage srcImage) {
 		super (null, srcImage);
@@ -250,77 +256,192 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 
 	}
 	
-	 /*public class SnakeInitialiser
+	 public class SnakeInitialiser implements Serializable
 	    {
-	        [Serializable]
-	        public enum AnchorPosition
-	        {
-	            North, South, East, West, None
-	        }
+	        
 
-	        [Serializable]
-	        public class Node
+	        public class Node implements Serializable
 	        {
 	            private int x, y;
-	            
-	            public int X
-	            {
-	                get { return x; }
-	                set { x = value; }
+	            public int getX() {
+	            	return x;
+	            }
+	            public void setX(int x) {
+	            	this.x = x;
+	            }
+	            public int getY() {
+	            	return y;
+	            }
+	            public void setY(int y) {
+	            	this.y = y;
 	            }
 
-	            public int Y
-	            {
-	                get { return y; }
-	                set { y = value; }
+	            private ArrayList<Node> neighbours;
+	            public ArrayList<Node> getNeigbours() {
+	            	return neighbours;
+	            }
+	            public void setNeighbours(ArrayList<Node> neighbours) {
+	            	this.neighbours = neighbours;
 	            }
 
-	            List<Node> neighbours;
-
-	            public List<Node> Neighbours
-	            {
-	                get { return neighbours; }
-	                set { neighbours = value; }
+	            private ArrayList<Node> junctionNeighbours;
+	            public ArrayList<Node> getJunctionNeighbours() {
+	            	return junctionNeighbours;
 	            }
-
-	            List<Node> junctionNeighbours;
-
-	            public List<Node> JunctionNeighbours
-	            {
-	                get { return junctionNeighbours; }
-	                set { junctionNeighbours = value; }
+	            public void setJunctionNeighbours(ArrayList<Node> junctionNeighbours) {
+	            	this.junctionNeighbours = junctionNeighbours;
 	            }
 
 	            private AnchorPosition anchor;
-
-	            public AnchorPosition Anchor
-	            {
-	                get { return anchor; }
-	                set { anchor = value; }
+	            public AnchorPosition getAnchor() {
+	            	return anchor;
 	            }
-
-	            public int NeighbourCount
+	            public void setAnchor(AnchorPosition anchor) {
+	            	this.anchor = anchor;
+	            }
+	           
+	            public int getNeighbourCount()
 	            {
-	                get { return this.neighbours.Count; }
+	               return this.neighbours.size();
 	            }
 
 	            public Node()
 	            {
-	                this.neighbours = new List<Node>();
-	                this.junctionNeighbours = new List<Node>();
+	                this.neighbours = new ArrayList<Node>();
+	                this.junctionNeighbours = new ArrayList<Node>();
 	                this.anchor = AnchorPosition.None;
 	            }
 
-	            public Node Clone()
+	            public Node clone()
 	            {
 	                Node n = new Node();
-	                n.X = this.X;
-	                n.Y = this.Y;
-	                n.Anchor = this.Anchor;
+	                n.x = this.x;
+	                n.y = this.y;
+	                n.anchor = this.anchor;
 	                return n;
 	            }
+	        } // public class Node implements Serializable
+	        
+	        // Interface SortedMap extends Map and maintains its keys in sorted order -
+	        // either the element's natural order or an order specified by a Comparator.
+	        // Class TreeMap implements SortedMap
+	        private TreeMap<tuple2i, Node> nodeList = new TreeMap<tuple2i, Node>();
+	        
+	        public TreeMap<tuple2i, Node> getNodeList() {
+	        	return nodeList;
 	        }
-	    }*/
+	        
+	        public void setNodeList(TreeMap<tuple2i, Node> nodeList) {
+	            this.nodeList = nodeList;	
+	        }
+	        
+	        private ArrayList<Node> externalNodes = null;
+	        public ArrayList<Node> getExternalNodes() {
+	        	return externalNodes;
+	        }
+	        public void setExternalNodes(ArrayList<Node> externalNodes) {
+	        	this.externalNodes = externalNodes;
+	        }
+	        
+	        private ArrayList<Node> internalNodes = null;
+	        public ArrayList<Node> getInternalNodes() {
+	        	return internalNodes;
+	        }
+	        public void setInternalNodes(ArrayList<Node> internalNodes) {
+	        	this.internalNodes = internalNodes;
+	        }
+	        
+	        private ArrayList<Node> linkingNodes = null;
+	        public ArrayList<Node> getLinkingNodes() {
+	        	return linkingNodes;
+	        }
+	        public void setLinkingNodes(ArrayList<Node> linkingNodes) {
+	        	this.linkingNodes = linkingNodes;
+	        }
+	        
+	        private ArrayList<ArrayList<Point>> wallPositions = new ArrayList<ArrayList<Point>>();
+	        public ArrayList<ArrayList<Point>> getWallPositions() {
+	            return wallPositions;	
+	        }
+	        public void setWallPositions(ArrayList<ArrayList<Point>> wallPositions) {
+	        	this.wallPositions = wallPositions;
+	        }
+	        
+	        private int recordRate = 8;
+	        public int getRecordRate() {
+	        	return recordRate;
+	        }
+	        public void setRecordRate(int recordRate) {
+	            this.recordRate = recordRate;	
+	        }
+	        
+	        private double mergeThreshold = 3.0;
+	        public double getMergeThreshold() {
+	        	return mergeThreshold;
+	        }
+	        public void setMergeThreshold(double mergeThreshold) {
+	        	this.mergeThreshold = mergeThreshold;
+	        }
+	        
+	        public boolean exists(int x, int y)
+	        {
+	            return (this.nodeList.containsKey(new tuple2i(x, y)));
+	        }
+	        
+	        public SnakeInitialiser()
+	        {
+
+	        }
+
+	        public SnakeInitialiser clone()
+	        {
+	            // Perform a deep copy of the SnakeInitialiser
+	            SnakeInitialiser newSnakeInitialiser = new SnakeInitialiser();
+	            newSnakeInitialiser.recordRate = this.recordRate;
+
+	            // Create all the basic nodes, with no neighbours
+	            Set set = this.nodeList.entrySet();
+	            Iterator iterator = set.iterator();
+	            while (iterator.hasNext()) {
+	            	Map.Entry mentry = (Map.Entry)iterator.next();
+	            	newSnakeInitialiser.nodeList.put(new tuple2i(((tuple2i)mentry.getKey()).a, ((tuple2i)mentry.getKey()).b), ((Node)mentry.getValue()).clone());
+	            }
+
+	            // Create all neighbour links
+	            set = this.nodeList.entrySet();
+	            iterator = set.iterator();
+	            while (iterator.hasNext()) {
+	            	Map.Entry mentry = (Map.Entry)iterator.next();
+	                tuple2i currentKey = new tuple2i(((tuple2i)mentry.getKey()).a, ((tuple2i)mentry.getKey()).b);
+	                Node sourceNode = (Node)mentry.getValue();
+	                Node destinationNode = newSnakeInitialiser.nodeList.get(currentKey);
+	                for (Node neighbouringNode : sourceNode.neighbours)
+	                {
+	                    tuple2i neighbouringKey = new tuple2i(neighbouringNode.x, neighbouringNode.y);
+	                    destinationNode.neighbours.add(newSnakeInitialiser.nodeList.get(neighbouringKey));
+	                }
+
+	                for (Node neighbouringJunctionNode : sourceNode.junctionNeighbours)
+	                {
+	                    tuple2i neighbouringKey = new tuple2i(neighbouringJunctionNode.x, neighbouringJunctionNode.y);
+	                    destinationNode.junctionNeighbours.add(newSnakeInitialiser.nodeList.get(neighbouringKey));
+	                }
+	            }
+	            return newSnakeInitialiser;
+	        }
+	    }
+	 
+	 public class tuple2i {
+
+		    public final int a;
+		    public final int b;
+
+		    public tuple2i(int a, int b) {
+		        this.a = a;
+		        this.b = b;
+		    }
+
+		}
 
 	
 	 public class SnakeNode implements Comparable
