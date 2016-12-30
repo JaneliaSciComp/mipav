@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.*;
 
 import java.awt.Point;
+import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
@@ -322,6 +323,17 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	            }
 	        } // public class Node implements Serializable
 	        
+	        public class KeyValuePair {
+	    		public tuple2i key;
+	    		public Node value;
+	    		
+	    		public KeyValuePair(tuple2i key, Node value) {
+	    			this.key = key;
+	    			this.value = value;
+	    		}
+	    		
+	    	}
+	        
 	        // Interface SortedMap extends Map and maintains its keys in sorted order -
 	        // either the element's natural order or an order specified by a Comparator.
 	        // Class TreeMap implements SortedMap
@@ -429,7 +441,795 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	            }
 	            return newSnakeInitialiser;
 	        }
-	    }
+	        
+	        public void loadPixelGrid(PixelGrid pixelGrid)
+	        {
+	            int width = pixelGrid.getGridWidth();
+	            int height = pixelGrid.getGridHeight();
+
+	            // Create internal junctions
+	            for (PixelGrid.PixelGridNode internalJunction : pixelGrid.junctions)
+	            {
+	                tuple2i key = new tuple2i(internalJunction.x, internalJunction.y);
+	                Node junctionNode = new Node();
+	                junctionNode.x = internalJunction.x;
+	                junctionNode.y = internalJunction.y;
+	                this.nodeList.put(key, junctionNode);
+	            }
+
+	            // Create external junctions
+	            for (PixelGrid.PixelGridNode externalJunction : pixelGrid.edgeJunctions)
+	            {
+	                tuple2i key = new tuple2i(externalJunction.x, externalJunction.y);
+	                Node junctionNode = new Node();
+	                junctionNode.x = externalJunction.x;
+	                junctionNode.y = externalJunction.y;
+
+	                if (junctionNode.x == 0)
+	                    junctionNode.anchor = AnchorPosition.West;
+	                else if (junctionNode.x == width - 1)
+	                    junctionNode.anchor = AnchorPosition.East;
+	                else if (junctionNode.y == 0)
+	                    junctionNode.anchor = AnchorPosition.North;
+	                else if (junctionNode.y == height - 1)
+	                    junctionNode.anchor = AnchorPosition.South;
+
+	                this.nodeList.put(key, junctionNode);
+	            }
+
+	            // Find all walls
+	            boolean[][] visitedPixels = new boolean[pixelGrid.getGridWidth()][ pixelGrid.getGridHeight()];
+	            ArrayList<ArrayList<Point>> allWalls = new ArrayList<ArrayList<Point>>();
+	            ArrayList<ArrayList<Point>> finalWalls = new ArrayList<ArrayList<Point>>();
+
+	            Set set = this.nodeList.entrySet();
+	            Iterator iterator = set.iterator();
+	            while (iterator.hasNext()) {
+	            	Map.Entry mentry = (Map.Entry)iterator.next();
+	            	Node currentNode = (Node)mentry.getValue();
+	            	ArrayList<Point>[] walls = pixelGrid.findBranches(currentNode.x, currentNode.y, this.recordRate, visitedPixels);
+
+	                for (ArrayList<Point> wall : walls)
+	                {
+	                    if (wall != null)
+	                        allWalls.add(wall);
+	                }
+	            }
+
+	            for (int i = 0; i < allWalls.size(); i++)
+	            {
+	                ArrayList<Point> wall = redistributePoints(allWalls.get(i));
+	                finalWalls.add(wall);
+
+	                // Obtain reference to starting and finishing nodes
+	                Point currentPoint = wall.get(0);
+	                Node currentNode = this.nodeList.get(new tuple2i((int)currentPoint.x, (int)currentPoint.y));
+
+	                Point lastPoint = wall.get(wall.size()-1);
+	                Node lastNode = this.nodeList.get(new tuple2i((int)lastPoint.x, (int)lastPoint.y));
+
+	                if (currentNode != null && lastNode != null)
+	                {
+	                    if (wall.size() == 2)
+	                    {
+	                        linkNodes(currentNode, lastNode);
+	                    }
+	                    else if (wall.size() == 3)
+	                    {
+	                        Point p = wall.get(1);
+	                        tuple2i key = new tuple2i((int)p.x, (int)p.y);
+	                        Node nextNode = new Node();
+	                        nextNode.x = (int)p.x;
+	                        nextNode.y = (int)p.y;
+	                        linkNodes(currentNode, nextNode);
+	                        linkNodes(nextNode, lastNode);
+	                        this.nodeList.put(key, nextNode);
+	                    }
+	                    else
+	                    {
+	                        for (int j = 1; j < wall.size() - 1; j++)
+	                        {
+	                            Point p = wall.get(j);
+	                            tuple2i key = new tuple2i((int)p.x, (int)p.y);
+	                            Node nextNode = new Node();
+	                            nextNode.x = (int)p.x;
+	                            nextNode.y = (int)p.y;
+
+	                            if (j < wall.size() - 2)
+	                            {
+	                                linkNodes(currentNode, nextNode);
+	                                this.nodeList.put(key, nextNode);
+	                                currentNode = nextNode;
+	                            }
+	                            else if (j < wall.size() - 1)
+	                            {
+	                                linkNodes(currentNode, nextNode);
+	                                linkNodes(nextNode, lastNode);
+	                                this.nodeList.put(key, nextNode);
+	                            }
+	                        }
+	                    }
+	                }
+	            }
+
+	            // Merge junction nodes that are close together
+	            mergeNodes();
+
+	            // Refresh lists
+	            rePopulateLists();
+	        }
+	        
+	        public void mergeNodes()
+	        {
+        	    Set set = this.nodeList.entrySet();
+	            Iterator iterator = set.iterator();
+	            while (iterator.hasNext()) {
+	            	Map.Entry mentry = (Map.Entry)iterator.next();
+	            	Node mergedNode = (Node)mentry.getValue();
+	                do
+	                {
+	                    mergedNode = mergeNearbyJunctionNodes(mergedNode, this.mergeThreshold);
+	                } while (mergedNode != null);
+	            }
+	        }
+
+	        private Node mergeNearbyJunctionNodes(Node currentNode, double minimumJunctionDistance)
+	        {
+	            if (currentNode.getNeighbourCount() > 2) // Discount external and wall nodes
+	            {
+	                for (SnakeInitialiser.Node neighbour : currentNode.neighbours)
+	                {
+	                    if (neighbour.getNeighbourCount() > 2) // Discount external and wall nodes for neighbours
+	                    {
+	                        if (Math.sqrt(Math.pow(currentNode.x - neighbour.x, 2) + Math.pow(currentNode.y - neighbour.y, 2)) < minimumJunctionDistance)
+	                        {
+	                            // Merge nodes - currentNode and Neighbour
+	                            // Create new node at the average position of the previous two
+	                            int newX = (int)((currentNode.x + neighbour.x) / 2 + 0.5);
+	                            int newY = (int)((currentNode.y + neighbour.y) / 2 + 0.5);
+	                            tuple2i newKey = new tuple2i(newX, newY);
+	                            Node newNode = new Node();
+	                            newNode.x = newX; newNode.y = newY;
+
+	                            // Unlink currentNode and Neighbour
+	                            this.unLinkNodes(currentNode, neighbour);
+
+	                            // Remove all references to currentNode and neighbour
+	                            for (Node n : currentNode.neighbours)
+	                            {
+	                                n.neighbours.remove(currentNode);
+	                            }
+	                            for (Node n : neighbour.neighbours)
+	                            {
+	                                n.neighbours.remove(neighbour);
+	                            }
+
+	                            // Link all neighbours to new node
+	                            for (Node n : currentNode.neighbours)
+	                            {
+	                                this.linkNodes(newNode, n);
+	                            }
+	                            for (Node n : neighbour.neighbours)
+	                            {
+	                                this.linkNodes(newNode, n);
+	                            }
+
+	                           
+
+	                            // Add new node
+	                            if (this.nodeList.containsKey(newKey))
+	                            {
+	                                // If new node position already exists, attempt to offset in order to merge next time
+	                                ArrayList<tuple2i> alternateKeys = new ArrayList<tuple2i>();
+	                                
+	                                alternateKeys.add(new tuple2i (newX-1, newY));
+	                                alternateKeys.add(new tuple2i (newX+1, newY));
+	                                alternateKeys.add(new tuple2i (newX, newY-1));
+	                                alternateKeys.add(new tuple2i (newX, newY+1));
+	                                alternateKeys.add(new tuple2i (newX-1, newY-1));
+	                                alternateKeys.add(new tuple2i (newX-1, newY+1));
+	                                alternateKeys.add(new tuple2i (newX+1, newY-1));
+	                                alternateKeys.add(new tuple2i (newX+1, newY+1));
+	                              
+
+	                                for (tuple2i alternateKey : alternateKeys)
+	                                {
+	                                    if (!this.nodeList.containsKey(alternateKey))
+	                                    {
+	                                        newNode.x = alternateKey.a;
+	                                        newNode.y = alternateKey.b;
+	                                        // Remove currentNode and neighbour
+	                                        this.nodeList.remove(new tuple2i(currentNode.x, currentNode.y));
+	                                        this.nodeList.remove(new tuple2i(neighbour.x, neighbour.y));
+	                                        this.nodeList.put(alternateKey, newNode);
+	                                        return newNode;
+	                                    }
+	                                }
+
+	                                // Alternate location search has failed, do not merge these nodes
+	                                return null;
+	                            }
+	                            else
+	                            {
+	                                // Remove currentNode and neighbour
+	                                this.nodeList.remove(new tuple2i(currentNode.x, currentNode.y));
+	                                this.nodeList.remove(new tuple2i(neighbour.x, neighbour.y));
+	                                this.nodeList.put(newKey, newNode);
+	                            }
+
+	                            // Do not attempt to merge with currentNode again - but return the new node to be merged if necessary
+	                            return newNode;
+	                        }
+	                    }
+	                }
+	            }
+	            return null;
+	        }
+	        
+	        public ArrayList<Point> createAndRedistributePoints(ArrayList<Point> originalPoints)
+	        {
+	            double[] cumulativeArray = new double[originalPoints.size()];
+	            for (int i = 1; i < cumulativeArray.length; i++)
+	            {
+	                double distance = Math.sqrt(Math.pow(originalPoints.get(i - 1).x - originalPoints.get(i).x, 2.0) +
+	                		Math.pow(originalPoints.get(i - 1).y - originalPoints.get(i).y, 2.0));
+	                cumulativeArray[i] = cumulativeArray[i - 1] + distance;
+	            }
+	            double totalLength = cumulativeArray[cumulativeArray.length-1];
+
+	            for (int i = 1; i < cumulativeArray.length; i++)
+	            {
+	                cumulativeArray[i] /= totalLength;
+	            }
+
+	            int optimalPointCount = (int)(totalLength / this.recordRate) + 2;
+
+	            ArrayList<Point> redistributedPoints = new ArrayList<Point>();
+	            for (int i = 0; i < optimalPointCount; i++)
+	            {
+	                if (i == 0)
+	                {
+	                    redistributedPoints.add(originalPoints.get(0));
+	                }
+	                else if (i < optimalPointCount - 1)
+	                {
+	                    // Calculate t between 0 and 1
+	                    double t = i / ((double)optimalPointCount - 1);
+	                    int cumulativeIndex = 0;
+	                    while (cumulativeArray[cumulativeIndex] < t)
+	                        cumulativeIndex++;
+
+	                    double subt = (t - cumulativeArray[cumulativeIndex - 1]) / (cumulativeArray[cumulativeIndex] - cumulativeArray[cumulativeIndex - 1]);
+
+	                    Point P1 = originalPoints.get(cumulativeIndex - 1);
+	                    Point P2 = originalPoints.get(cumulativeIndex);
+
+	                    Point redistributedPoint = new Point((int)(P1.x * (1 - subt) + P2.x * (subt)), (int)(P1.y * (1 - subt) + P2.y * (subt)));
+	                    redistributedPoints.add(new Point(redistributedPoint.x, redistributedPoint.y));
+	                }
+	                else if (i == optimalPointCount - 1)
+	                {
+	                    redistributedPoints.add(originalPoints.get(originalPoints.size()-1));
+	                }
+	            }
+	            return redistributedPoints;
+	        }
+	        
+	        public ArrayList<Point> redistributePoints(ArrayList<Point> originalPoints)
+	        {
+	            double[] cumulativeArray = new double[originalPoints.size()];
+	            for (int i = 1; i < cumulativeArray.length; i++)
+	            {
+	                double distance = Math.sqrt(Math.pow(originalPoints.get(i-1).x - originalPoints.get(i).x,2.0) + 
+	                		Math.pow(originalPoints.get(i-1).y - originalPoints.get(i).y,2.0));
+	                cumulativeArray[i] = cumulativeArray[i - 1] + distance;
+	            }
+	            for (int i = 1; i < cumulativeArray.length; i++)
+	            {
+	                cumulativeArray[i] /= cumulativeArray[cumulativeArray.length-1];
+	            }
+
+	            ArrayList<Point> redistributedPoints = new ArrayList<Point>();
+	            for (int i = 0; i < originalPoints.size(); i++)
+	            {
+	                if (i == 0)
+	                {
+	                    redistributedPoints.add(originalPoints.get(0));
+	                }
+	                else if (i < originalPoints.size() - 1)
+	                {
+	                    // Calculate t between 0 and 1
+	                    double t = i / ((double)originalPoints.size() - 1);
+	                    int cumulativeIndex = 0;
+	                    while (cumulativeArray[cumulativeIndex] < t)
+	                        cumulativeIndex++;
+
+	                    double subt = (t - cumulativeArray[cumulativeIndex-1]) / (cumulativeArray[cumulativeIndex] - cumulativeArray[cumulativeIndex-1]);
+
+	                    Point P1 = originalPoints.get(cumulativeIndex - 1);
+	                    Point P2 = originalPoints.get(cumulativeIndex);
+
+	                    Point redistributedPoint = new Point((int)(P1.x * (1 - subt) + P2.x * (subt)), (int)(P1.y * (1 - subt) + P2.y * (subt)));
+	                    redistributedPoints.add(new Point (redistributedPoint.x,redistributedPoint.y));
+	                }
+	                else if (i == originalPoints.size() - 1)
+	                {
+	                    redistributedPoints.add(originalPoints.get(originalPoints.size()-1));
+	                }
+	            }
+	            return redistributedPoints;
+	        }
+	        
+	        public void addNode(int x, int y, AnchorPosition anchor)
+	        {
+	            Node additionNode = new Node();
+	            additionNode.x = x;
+	            additionNode.y = y;
+	            additionNode.anchor = anchor;
+	            this.nodeList.put(new tuple2i(x, y), additionNode);
+	        }
+	        
+	        public Node insertNode(int x, int y, AnchorPosition anchor, int ax, int ay, int bx, int by)
+	        {
+	            Node additionNode = new Node();
+	            additionNode.x = x;
+	            additionNode.y = y;
+	            additionNode.anchor = anchor;
+
+	            tuple2i aKey = new tuple2i(ax, ay);
+	            tuple2i bKey = new tuple2i(bx, by);
+
+	            Node a = this.nodeList.get(aKey);
+	            Node b = this.nodeList.get(bKey);
+
+	            unLinkNodes(a, b);
+	            linkNodes(a, additionNode);
+	            linkNodes(additionNode, b);
+
+	            this.nodeList.put(new tuple2i(x, y), additionNode);
+	            return additionNode;
+	        }
+	        
+	        public Node insertNode(int x, int y, AnchorPosition anchor, int ax, int ay)
+	        {
+	            Node additionNode = new Node();
+	            additionNode.x = x;
+	            additionNode.y = y;
+	            additionNode.anchor = anchor;
+
+	            tuple2i aKey = new tuple2i(ax, ay);
+
+	            Node a = this.nodeList.get(aKey);
+
+	            linkNodes(a, additionNode);
+
+	            this.nodeList.put(new tuple2i(x, y), additionNode);
+	            return additionNode;
+	        }
+	        
+	        public void removeNode(int x, int y, boolean Unlink)
+	        {
+	            tuple2i removalKey = new tuple2i(x,y);
+	            Node removalNode = this.nodeList.get(removalKey);
+	            if (Unlink)
+	            {
+	                for (Node neighbour : removalNode.neighbours)
+	                {
+	                    neighbour.neighbours.remove(removalNode);
+	                }
+	            }
+	            this.nodeList.remove(removalKey);
+	        }
+	        
+	        public void linkNodes(Node node1, Node node2)
+	        {
+	            if (node1 != null && node2 != null)
+	            {
+	                if(node1.neighbours.indexOf(node2) < 0)
+	                {
+	                    node1.neighbours.add(node2);
+	                }
+	                if (node2.neighbours.indexOf(node1) < 0)
+	                {
+	                    node2.neighbours.add(node1);
+	                }
+	            }
+	        }
+	        
+	        public void linkJunctionNodes(Node node1, Node node2)
+	        {
+	            if (node1 != null && node2 != null)
+	            {
+	                //if (node1.JunctionNeighbours.IndexOf(node2) < 0)
+	                //{
+	                    node1.junctionNeighbours.add(node2);
+	                //}
+	                //if (node2.JunctionNeighbours.IndexOf(node1) < 0)
+	                //{
+	                    node2.junctionNeighbours.add(node1);
+	                //}
+	            }
+	        }
+	        
+	        public void unLinkNodes(Node node1, Node node2)
+	        {
+	            if (node1 != null && node2 != null)
+	            {
+	                node1.neighbours.remove(node2);
+	                node2.neighbours.remove(node1);
+	            }
+	        }
+	        
+	        public void refresh()
+	        {
+	            rePopulateLists();
+	        }
+	    
+	        private void rePopulateLists()
+	        {
+	            long DTStart = System.currentTimeMillis();
+	            if (this.internalNodes == null)
+	                this.internalNodes = new ArrayList<Node>();
+	            this.internalNodes.clear();
+
+	            if (this.externalNodes == null)
+	                this.externalNodes = new ArrayList<Node>();
+	            this.externalNodes.clear();
+
+	            if (this.linkingNodes == null)
+	                this.linkingNodes = new ArrayList<Node>();
+	            this.linkingNodes.clear();
+	            
+	            Set set = this.nodeList.entrySet();
+	            Iterator iterator = set.iterator();
+	            while (iterator.hasNext()) {
+	            	Map.Entry mentry = (Map.Entry)iterator.next();
+	            	Node n = (Node)mentry.getValue();
+		            if (n.anchor == AnchorPosition.None)
+	                {
+	                    if (n.getNeighbourCount() > 2)
+	                        this.internalNodes.add(n);
+	                    else
+	                        this.linkingNodes.add(n);
+	                }
+	                else
+	                {
+	                    this.externalNodes.add(n);
+	                }
+	            }
+
+	            long DTMid1 = System.currentTimeMillis();
+	            long ts = DTMid1 - DTStart;
+	            System.out.println("List Junction Nodes: " + ts + " milliseconds");
+
+	            this.reCalculateJunctionNeighbours();
+
+	            long DTMid2 = System.currentTimeMillis();
+	            ts = DTMid2 - DTMid1;
+	            System.out.println("Junction neighbours: " + ts + " milliseconds");
+	            
+	            this.wallPositions = getAllWalls(this.internalNodes, this.externalNodes);
+
+	            long DTMid3 = System.currentTimeMillis();
+	            ts = DTMid3 - DTMid2;
+	            System.out.println("Wall positions: " + ts + " milliseconds");
+
+	            this.reCalculateJunctionNeighbours();
+
+	            ts = System.currentTimeMillis() - DTMid3;
+	            System.out.println("Junction neighbours 2: " + ts + " milliseconds");
+
+	            fixConsistency();
+	        }
+	        
+	        private void fixConsistency()
+	        {
+	            ArrayList<KeyValuePair> removeList = new ArrayList<KeyValuePair>();
+
+	            Set set = this.nodeList.entrySet();
+	            Iterator iterator = set.iterator();
+	            while (iterator.hasNext()) {
+	            	Map.Entry mentry = (Map.Entry)iterator.next();
+	            	tuple2i key = (tuple2i)mentry.getKey();
+	            	Node n = (Node)mentry.getValue();
+	            	if (key.a != n.x || key.b != n.y) {
+	                    MipavUtil.displayError("Keys and node values not identical in SnakeInitialiser");
+	                    return;
+	            	}
+
+	                if (n.getNeighbourCount() == 0 || (n.getNeighbourCount() == 1 && n.anchor == AnchorPosition.None))
+	                {
+	                    // Internal stub node should be removed
+	                    if (n.getNeighbourCount() == 0)
+	                        this.nodeList.remove(key);
+	                    else if (n.getNeighbourCount() == 1)
+	                    {
+	                        removeList.add(new KeyValuePair(key, n));
+	                    }
+	                }
+	            }
+	            
+
+	            // Remove all internal stub nodes
+	            for (int i = 0; i < removeList.size(); i++)
+	            {
+	            	KeyValuePair kvp = removeList.get(i);
+	                Node n = kvp.value;
+	                tuple2i key = kvp.key;
+	                Node nextNode = n.neighbours.get(0);
+	                nextNode.neighbours.remove(n);
+	                nextNode.junctionNeighbours.remove(n);
+	                this.nodeList.remove(key);
+	            }
+
+	            if (removeList.size() != 0)
+	            {
+	                MipavUtil.displayWarning("One or more erroneous internal snake nodes were found and removed. "
+	                		+ "This could be an indication that there is too much noise in the segmented image.");
+	            }
+
+	        }
+	        
+	        private ArrayList<ArrayList<Point>> getAllWalls(ArrayList<Node> internalNodes, ArrayList<Node> externalNodes)
+	        {
+	            ArrayList<ArrayList<Point>> walls = new ArrayList<ArrayList<Point>>();
+
+	            int internalNodeCount = internalNodes.size();
+	            for (int i = 0; i < internalNodeCount; i++)
+	            {
+	                getJunctionWalls(internalNodes.get(i), walls);
+	            }
+
+	            int externalNodeCount = externalNodes.size();
+	            for (int i = 0; i < externalNodeCount; i++)
+	            {
+	                getJunctionWalls(externalNodes.get(i), walls);
+	            }
+
+	            return walls;
+	        }
+
+	        private void getJunctionWalls(Node junction, ArrayList<ArrayList<Point>> walls)
+	        {
+	            for (int i = 0; i < junction.junctionNeighbours.size(); i++)
+	            {
+	                if (junction.junctionNeighbours.get(i) != null)
+	                    walls.add(getWall(junction, i));
+	            }
+	        }
+	        
+	        private ArrayList<Point> getWall(Node sourceNode, int index)
+	        {
+	            Node currentNode = sourceNode;
+
+	            ArrayList<Point> wallPoints = new ArrayList<Point>();
+	            wallPoints.add(new Point(currentNode.x, currentNode.y));
+
+	            Node nextNode = currentNode.neighbours.get(index);
+	            while (nextNode.getNeighbourCount() == 2)
+	            {
+	                wallPoints.add(new Point(nextNode.x, nextNode.y));
+	                if (nextNode.neighbours.get(0) == currentNode)
+	                {
+	                    currentNode = nextNode;
+	                    nextNode = nextNode.neighbours.get(1);
+	                }
+	                else
+	                {
+	                    currentNode = nextNode;
+	                    nextNode = nextNode.neighbours.get(0);
+	                }
+	            }
+
+	            wallPoints.add(new Point(nextNode.x, nextNode.y));
+
+	            sourceNode.junctionNeighbours.set(index,null);
+	            for (int i = 0; i < nextNode.neighbours.size(); i++)
+	            {
+	                if (nextNode.neighbours.get(i) == currentNode)
+	                {
+	                    nextNode.junctionNeighbours.set(i,null);
+	                }
+	            }
+
+	            return wallPoints;
+	        }
+	        
+	        public void RemoveWalls(Node currentNode)
+	        {
+	            removeWall(currentNode, null);
+	            this.rePopulateLists();
+	        }
+
+	        private void removeWall(Node currentNode, Node sourceNode)
+	        {
+	            ArrayList<Node> endPoints = new ArrayList<Node>();
+	            // Find next node along and initiate removal
+	            for (int i = 0; i < currentNode.neighbours.size(); i++)
+	            {
+	                Node nextNode = currentNode.neighbours.get(i);
+	                if (nextNode != sourceNode && nextNode.getNeighbourCount() < 3)
+	                {
+	                    removeWall(nextNode, currentNode);
+	                }
+	                else if (nextNode != sourceNode && nextNode.getNeighbourCount() >= 3)
+	                {
+	                    endPoints.add(nextNode);
+	                }
+	            }
+
+	            for (Node n : endPoints)
+	            {
+	                unLinkNodes(currentNode, n);
+	            }
+
+	            this.removeNode(currentNode.x, currentNode.y, false);
+	        }
+	        
+	        public ArrayList<Node> findNextJunctions(Node currentNode)
+	        {
+	            ArrayList<Node> foundJunctions = new ArrayList<Node>();
+
+	            for (Node n : currentNode.neighbours)
+	            {
+	                if (n.getNeighbourCount() != 2)
+	                    foundJunctions.add(n);
+	                else
+	                {
+	                    Node nextJunction = findNextJunction(n, currentNode);
+	                    if (nextJunction != null)
+	                        foundJunctions.add(nextJunction);
+	                }
+	            }
+	            return foundJunctions;
+	        }
+
+	        private Node findNextJunction(Node currentNode, Node sourceNode)
+	        {
+	            for (Node n : currentNode.neighbours)
+	            {
+	                if (n != sourceNode)
+	                {
+	                    if (n.getNeighbourCount() != 2)
+	                        return n;
+	                    else
+	                        return findNextJunction(n, currentNode);
+	                }
+	            }
+	            return null;
+	        }
+	        
+	        public void addLineSegment(Node StartNodeA, Node StartNodeB, Node EndNodeA, Node EndNodeB, ArrayList<Point> LineSegments)
+	        {
+	            // Create and redistribute points in along the user line.
+	            ArrayList<Point> createdPoints = this.createAndRedistributePoints(LineSegments);
+
+	            // Start Node
+	            SnakeInitialiser.Node startNode = null;
+	            if (StartNodeB == null)
+	            {
+	                // Insert joined to A
+	                startNode = StartNodeA;
+	            }
+	            else
+	            {
+	                // Insert between A and B
+	                SnakeInitialiser.Node SA = StartNodeA;
+	                SnakeInitialiser.Node SB = StartNodeB;
+
+	                int x = (int)createdPoints.get(0).x;
+	                int y = (int)createdPoints.get(0).y;
+
+	                if (this.exists(x, y))
+	                {
+	                    if (pointDistance(new Point(x, y), new Point(SA.x, SA.y)) < pointDistance(new Point(x, y), new Point(SB.x, SB.y)))
+	                    {
+	                        startNode = SA;
+	                        createdPoints.set(0,new Point(SA.x, SA.y));
+	                    }
+	                    else
+	                    {
+	                        startNode = SB;
+	                        createdPoints.set(0,new Point(SB.x, SB.y));
+	                    }
+	                }
+	                else
+	                {
+	                    startNode = this.insertNode(x, y, AnchorPosition.None, SA.x, SA.y, SB.x, SB.y);
+	                }
+	            }
+
+
+	            // End Node
+	            SnakeInitialiser.Node endNode = null;
+	            if (EndNodeB == null)
+	            {
+	                // Insert joined to A
+	                endNode = EndNodeA;
+	            }
+	            else
+	            {
+	                // Insert between A and B
+	                SnakeInitialiser.Node EA = EndNodeA;
+	                SnakeInitialiser.Node EB = EndNodeB;
+
+	                int x = (int)createdPoints.get(createdPoints.size()-1).x;
+	                int y = (int)createdPoints.get(createdPoints.size()-1).y;
+
+	                if (this.exists(x, y))
+	                {
+	                    if (pointDistance(new Point(x, y), new Point(EA.x, EA.y)) < pointDistance(new Point(x, y), new Point(EB.x, EB.y)))
+	                    {
+	                        endNode = EA;
+	                        createdPoints.set(createdPoints.size() - 1,new Point(EA.x, EA.y));
+	                    }
+	                    else
+	                    {
+	                        endNode = EB;
+	                        createdPoints.set(createdPoints.size() - 1,new Point(EB.x, EB.y));
+	                    }
+	                }
+	                else
+	                {
+	                    endNode = this.insertNode((int)createdPoints.get(createdPoints.size()-1).x, (int)createdPoints.get(createdPoints.size()-1).y, AnchorPosition.None, EA.x, EA.y, EB.x, EB.y);
+	                }
+	            }
+
+	            // Intermediate Nodes
+	            SnakeInitialiser.Node currentNode = startNode;
+	            for (int i = 1; i < createdPoints.size() - 1; i++)
+	            {
+	                int x = (int)createdPoints.get(i).x;
+	                int y = (int)createdPoints.get(i).y;
+	                if (!this.exists(x, y))
+	                    currentNode = this.insertNode(x, y, AnchorPosition.None, currentNode.x, currentNode.y);
+	                else
+	                {
+	                    SnakeInitialiser.Node n = this.nodeList.get(new tuple2i(x, y));
+	                    this.linkNodes(currentNode, n);
+	                    currentNode = n;
+	                }
+	            }
+
+	            // Finish by linking to end node
+	            if (endNode.anchor != AnchorPosition.None)
+	            {
+	                endNode = this.insertNode(endNode.x, endNode.y, endNode.anchor, currentNode.x, currentNode.y);
+	            }
+	            else
+	            {
+	                this.linkNodes(currentNode, endNode);
+	            }
+	            this.refresh();
+	        }
+
+	        private double pointDistance(Point P1, Point P2)
+	        {
+	            return Math.sqrt(Math.pow(P1.x - P2.x, 2.0) + Math.pow(P1.y - P2.y, 2.0));
+	        }
+
+	        private void reCalculateJunctionNeighbours()
+	        {
+	        	Set set = this.nodeList.entrySet();
+	            Iterator iterator = set.iterator();
+	            while (iterator.hasNext()) {
+	            	Map.Entry mentry = (Map.Entry)iterator.next();
+	                Node n = (Node)mentry.getValue();
+	                n.junctionNeighbours.clear();
+	                if (n.getNeighbourCount() != 2)
+	                {
+	                    ArrayList<Node> junctionNeighbours = findNextJunctions(n);
+	                    for (Node neighbour : junctionNeighbours)
+	                    {
+	                        n.junctionNeighbours.add(neighbour);
+	                        
+	                        //LinkJunctionNodes(n, neighbour);
+	                    }
+	                }
+	            }
+	        }
+
+	    } // public class SnakeInitialiser implements Serializable
 	 
 	 public class tuple2i {
 
@@ -442,6 +1242,414 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 		    }
 
 		}
+	 
+	 public class PixelGrid
+	    {
+	        public class PixelGridNode
+	        {
+	            private PixelGridNode north = null, south = null, east = null, west = null;
+	            public PixelGridNode getNorth() {
+	                return north;	
+	            }
+	            public void setNorth(PixelGridNode north) {
+	            	this.north = north;
+	            }
+	            public PixelGridNode getSouth() {
+	                return south;	
+	            }
+	            public void setSouth(PixelGridNode south) {
+	            	this.south = south;
+	            }
+	            public PixelGridNode getEast() {
+	                return east;	
+	            }
+	            public void setEast(PixelGridNode east) {
+	            	this.east = east;
+	            }
+	            public PixelGridNode getWest() {
+	                return west;	
+	            }
+	            public void setWest(PixelGridNode west) {
+	            	this.west = west;
+	            }
+	            
+
+	            private int x = 0, y = 0;
+	            public int getX() {
+	            	return x;
+	            }
+	            public void setX(int x) {
+	            	this.x = x;
+	            }
+	            public int getY() {
+	            	return y;
+	            }
+	            public void setY(int y) {
+	            	this.y = y;
+	            }
+	           
+
+	            public PixelGridNode(int x, int y, PixelGridNode North, PixelGridNode South, PixelGridNode East, PixelGridNode West)
+	            {
+	                this.north = North;
+	                this.south = South;
+	                this.east = East;
+	                this.west = West;
+	                this.x = x;
+	                this.y = y;
+	            }
+
+	            public int getNeighbourCount()
+	            {
+	                    return (this.north != null ? 1 : 0) + (this.south != null ? 1 : 0) + (this.east != null ? 1 : 0) + (this.west != null ? 1 : 0);
+	            }
+	        }
+
+
+	        private PixelGridNode[][] pixels;
+	        public PixelGridNode[][] getPixels() {
+	        	return pixels;
+	        }
+	        public void setPixels(PixelGridNode[][] pixels) {
+	        	this.pixels = pixels;
+	        }
+	        
+
+	        private ArrayList<PixelGridNode> junctions;
+	        public ArrayList<PixelGridNode> getJunctions() {
+	            return this.junctions;	
+	        }
+
+	        private ArrayList<PixelGridNode> edgeJunctions;
+	        public ArrayList<PixelGridNode> getEdgeJunctions()
+	        {
+	            return this.edgeJunctions;
+	        }
+
+	        private int gridWidth = 0, gridHeight = 0;
+	        public int getGridWidth()  {
+	        	return this.gridWidth; 
+	        }
+	        public int getGridHeight() {
+	        	return this.gridHeight;
+	        }
+
+	        public PixelGrid(int width, int height)
+	        {
+	            this.gridWidth = width;
+	            this.gridHeight = height;
+	            this.pixels = new PixelGridNode[width][ height];
+	        }
+
+	        //public void loadPixels(IEnumerable<Pixel> pixelList)
+	        public void loadPixels (ArrayList<Pixel> pixelList)
+	        {
+
+	            for (Pixel p : pixelList)
+	            {
+	                setPixel(p.x, p.y);
+	            }
+
+	            findJunctions();
+	            findEdgeJunctions();
+	        }
+
+	        private void findJunctions()
+	        {
+	            this.junctions = new ArrayList<PixelGridNode>();
+	            for (int i = 0; i < pixels.length; i++) {
+		            for (PixelGridNode pgn : this.pixels[i])
+		            {
+		                if (pgn != null)
+		                    if (pgn.getNeighbourCount() > 2)
+		                        junctions.add(pgn);
+		            }
+	            }
+	        }
+
+	        private void findEdgeJunctions()
+	        {
+	            this.edgeJunctions = new ArrayList<PixelGridNode>();
+	            for (int i = 0; i < pixels.length; i++) {
+		            for (PixelGridNode pgn : this.pixels[i])
+		            {
+		                if (pgn != null)
+		                    if (pgn.getNeighbourCount() == 1)
+		                        edgeJunctions.add(pgn);
+		            }
+	            }
+	        }
+
+	        public ArrayList<Point>[] findBranches(int x, int y, int recordRate, boolean[][] visitedPixels)
+	        {
+	            PixelGridNode sourceNode = this.pixels[x][ y];
+	            if (sourceNode.getNeighbourCount() == 2)
+	                return null;
+
+	            ArrayList<Point>[] outputPoints = new ArrayList[4];
+	            for (int i = 0; i < 4; i++) {
+	            	outputPoints[i] = new ArrayList<Point>();
+	            }
+
+	            // North
+	            if (sourceNode.north != null)
+	            {
+	                outputPoints[0] = traverseWall(sourceNode, sourceNode.north, recordRate, visitedPixels);
+	            }
+
+	            if (sourceNode.east != null)
+	            {
+	                outputPoints[1] = traverseWall(sourceNode, sourceNode.east, recordRate, visitedPixels);
+	            }
+
+	            if (sourceNode.south != null)
+	            {
+	                outputPoints[2] = traverseWall(sourceNode, sourceNode.south, recordRate, visitedPixels);
+	            }
+
+	            if (sourceNode.west != null)
+	            {
+	                outputPoints[3] = traverseWall(sourceNode, sourceNode.west, recordRate, visitedPixels);
+	            }
+	            return outputPoints;
+	        }
+
+	        private ArrayList<Point> traverseWall(PixelGridNode sourceNode, PixelGridNode nextNode, int recordRate, boolean[][] visitedPixels)
+	        {
+	            int visitedCount = 0;
+	            PixelGridNode currentNode = nextNode;
+	            PixelGridNode previousNode = sourceNode;
+	            ArrayList<Point> outputPoints = new ArrayList<Point>();
+	            outputPoints.add(new Point(previousNode.x, previousNode.y));
+	            
+	            // Detect wall of length 1 and return
+	            if (nextNode.getNeighbourCount() != 2)
+	            {
+	                outputPoints.add(new Point(nextNode.x, nextNode.y));
+	                return outputPoints;
+	            }
+	            
+	            while (true)
+	            {
+	                // Make sure we haven't been down this wall already
+	                if (visitedPixels[currentNode.x][ currentNode.y])
+	                {
+	                    outputPoints = null;
+	                    break;
+	                }
+	                else
+	                {
+	                    visitedPixels[currentNode.x][ currentNode.y] = true;
+	                }
+
+	                // Do we need to record the current pixel
+	                if (visitedCount == recordRate)
+	                {
+	                    // Record current pixel
+	                    outputPoints.add(new Point(currentNode.x, currentNode.y));
+	                    visitedCount = 0;
+	                }
+
+	                // Search for next neighbour and end if we are at a junction
+	                if (currentNode.north != null && currentNode.north != previousNode)
+	                {
+	                    if (currentNode.north.getNeighbourCount() != 2)
+	                    {
+	                        outputPoints.add(new Point(currentNode.north.x, currentNode.north.y));
+	                        break;
+	                    }
+	                    previousNode = currentNode;
+	                    currentNode = currentNode.north;
+	                }
+	                else if (currentNode.east != null && currentNode.east != previousNode)
+	                {
+	                    if (currentNode.east.getNeighbourCount() != 2)
+	                    {
+	                        outputPoints.add(new Point(currentNode.east.x, currentNode.east.y));
+	                        break;
+	                    }
+	                    previousNode = currentNode;
+	                    currentNode = currentNode.east;
+	                }
+	                else if (currentNode.south != null && currentNode.south != previousNode)
+	                {
+	                    if (currentNode.south.getNeighbourCount() != 2)
+	                    {
+	                        outputPoints.add(new Point(currentNode.south.x, currentNode.south.y));
+	                        break;
+	                    }
+	                    previousNode = currentNode;
+	                    currentNode = currentNode.south;
+	                }
+	                else if (currentNode.west != null && currentNode.west != previousNode)
+	                {
+	                    if (currentNode.west.getNeighbourCount() != 2)
+	                    {
+	                        outputPoints.add(new Point(currentNode.west.x, currentNode.west.y));
+	                        break;
+	                    }
+	                    previousNode = currentNode;
+	                    currentNode = currentNode.west;
+	                }
+	                visitedCount++;
+	            }
+	            return outputPoints;
+	        }
+
+
+	        public void addPixelLine(int x1, int y1, int x2, int y2)
+	        {
+	            int dx = Math.abs(x2 - x1);
+	            int dy = Math.abs(y2 - y1);
+	            int sx = x1 < x2 ? 1 : -1;
+	            int sy = y1 < y2 ? 1 : -1;
+	            int err = dx - dy;
+
+	            while (!(x1 == x2 && y1 == y2))
+	            {
+	                setPixel(x1, y1);
+	                int e2 = 2 * err;
+	                if (e2 > -dy)
+	                {
+	                    err = err - dy;
+	                    x1 += sx;
+	                }
+	                
+	                if (e2 < dx)
+	                {
+	                    err += dx;
+	                    y1 += sy;
+	                }
+
+	                // Adaption to draw thicker lines - to avoid diagonal jumps
+	                if (e2 > -dy && e2 < dx)
+	                {
+	                    if (sx > 0 && sy > 0)
+	                        setPixel(x1-sx, y1);
+	                    else if (sx < 0 && sy > 0)
+	                        setPixel(x1, y1-sy);
+	                    else if (sx > 0 && sy < 0)
+	                        setPixel(x1-sx, y1);
+	                    else if (sx < 0 && sy < 0)
+	                        setPixel(x1, y1-sy);
+	                }
+	            }
+	           
+	            findJunctions();
+	            findEdgeJunctions();
+	        }
+
+	        private void setPixel(int x, int y)
+	        {
+	            if (x < 0 || x >= this.gridWidth || y < 0 || y >= this.gridHeight)
+	                return;
+
+	            // North neighbour
+	            PixelGridNode north = null;
+	            if (y < this.gridHeight - 1)
+	                north = this.pixels[x][ y + 1];
+
+	            // South neighbour
+	            PixelGridNode south = null;
+	            if (y > 0)
+	                south = this.pixels[x][ y - 1];
+
+	            // East neighbour
+	            PixelGridNode east = null;
+	            if (x < this.gridWidth - 1)
+	                east = this.pixels[x + 1][ y];
+
+	            // West neighbour
+	            PixelGridNode west = null;
+	            if (x > 0)
+	                west = this.pixels[x - 1][ y];
+
+	            PixelGridNode current = new PixelGridNode(x, y, north, south, east, west);
+
+	            // Link from neighbours to current
+	            if (current.north != null)
+	                current.north.south = current;
+
+	            if (current.south != null)
+	                current.south.north = current;
+
+	            if (current.east != null)
+	                current.east.west = current;
+
+	            if (current.west != null)
+	                current.west.east = current;
+
+	            this.pixels[x][ y] = current;
+	        }
+	        
+	    }
+	 
+	 //public structure Pixel
+	 public class Pixel
+	    {
+	        /// <summary>
+	        /// The x and y components
+	        /// </summary>
+	        public int x, y;
+
+	        /// <summary>
+	        /// Constructs a new <c>Pixel</c> given the specified coordinates
+	        /// </summary>
+	        /// <param name="x"></param>
+	        /// <param name="y"></param>
+	        public Pixel(int x, int y)
+	        {
+	            this.x = x;
+	            this.y = y;
+	        }
+
+	        /// <summary>
+	        /// Creates a string representation of the <c>Pixel</c> in the form "(X,Y)"
+	        /// </summary>
+	        /// <returns></returns>
+	        @Override
+	        public String toString()
+	        {
+	            StringBuilder sb = new StringBuilder();
+	            sb.append('(');
+	            sb.append(x);
+	            sb.append(',');
+	            sb.append(y);
+	            sb.append(')');
+	            return sb.toString();
+	        }
+
+	        /// <summary>
+	        /// Compares pixel coordinates for equality
+	        /// </summary>
+	        /// <param name="obj">The object to query for equality</param>
+	        /// <returns>True if the specified object is a pixel with the same coordinates as this, false otherwise</returns>
+	        @Override
+	        public boolean equals(Object obj)
+	        {
+	            if (obj == null) return false;
+	            if (obj instanceof Pixel)
+	            {
+	                Pixel op = (Pixel)obj;
+
+	                return x == op.x && y == op.y;
+	            }
+	            else
+	            {
+	                return super.equals(obj);
+	            }
+	        }
+
+	        /// <summary>
+	        /// Delegates to base
+	        /// </summary>
+	        /// <returns>See [base].GetHashCode() for this type</returns>
+	        @Override
+	        public int hashCode()
+	        {
+	            return super.hashCode();
+	        }
+	    }
 
 	
 	 public class SnakeNode implements Comparable
@@ -1465,6 +2673,8 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
         	this.instanceTitle = instanceTitle;
         }
     }
+	
+	
 
     public interface IMetadataProvider
     {
