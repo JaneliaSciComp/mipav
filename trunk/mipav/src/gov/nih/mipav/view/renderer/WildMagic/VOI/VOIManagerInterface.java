@@ -5252,12 +5252,17 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION && !fileName.endsWith(".lbl")) {
                     fileName += ".lbl";
                 }
-            } else if (!fileName.endsWith(".xml")) {
+            } else if ((!fileName.endsWith(".xml")) && (!fileName.endsWith(".voi"))) {
                 fileName += ".xml";
             }
             
           //New code
-            voiName = fileName.substring(0, fileName.indexOf(".xml"));
+            if (fileName.endsWith(".voi")) {
+            	voiName = fileName.substring(0, fileName.indexOf(".voi"));
+            }
+            else {
+                voiName = fileName.substring(0, fileName.indexOf(".xml"));
+            }
             String newName = voiName;
             int cnt = 0;
             while(nameVector.contains(newName)){
