@@ -176,86 +176,542 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 
 	        private int spacing = 8;
 	        
-	        /*public void Initialise(SnakeInitialiser snakeInitialiser, int spacing)
+	        public void Initialise(SnakeInitialiser snakeInitialiser, int spacing)
 	        {
 	            // Set spacing
 	            this.spacing = spacing;
 
 	            // Create temporary sorted list to speed up processing
-	            SortedList<Tuple<int, int>, SnakeNode> sortingList = new SortedList<Tuple<int, int>, SnakeNode>();
+	            TreeMap<tuple2i, SnakeNode> sortingList = new TreeMap<tuple2i, SnakeNode>();
 
-	            foreach (List<Point> nodePoints in snakeInitialiser.WallPositions)
+	            for (ArrayList<Point> nodePoints : snakeInitialiser.wallPositions)
 	            {
-	                List<Point> redistributedNodePoints = CreateAndRedistributePoints(nodePoints, spacing);
+	                ArrayList<Point> redistributedNodePoints = createAndRedistributePoints(nodePoints, spacing);
 
 	                // Starting junction node
 	                SnakeNode startNode = null;
-	                Tuple<int,int> startKey = new Tuple<int, int>((int)redistributedNodePoints[0].X, (int)redistributedNodePoints[0].Y);
-	                if (sortingList.IndexOfKey(startKey) >= 0)
-	                    startNode = sortingList[startKey];
+	                tuple2i startKey = new tuple2i((int)redistributedNodePoints.get(0).x, (int)redistributedNodePoints.get(0).y);
+	                if (sortingList.containsKey(startKey))
+	                    startNode = sortingList.get(startKey);
 	                else
 	                {
 	                    startNode = new SnakeNode();
-	                    startNode.X = (int)redistributedNodePoints[0].X;
-	                    startNode.Y = (int)redistributedNodePoints[0].Y;
-	                    sortingList.Add(startKey, startNode);
+	                    startNode.x = (int)redistributedNodePoints.get(0).x;
+	                    startNode.y = (int)redistributedNodePoints.get(0).y;
+	                    sortingList.put(startKey, startNode);
 	                }
 
 	                // Ending junction node
 	                SnakeNode endNode = null;
-	                Tuple<int,int> endKey = new Tuple<int, int>((int)redistributedNodePoints.Last().X, (int)redistributedNodePoints.Last().Y);
-	                if (sortingList.IndexOfKey(endKey) >= 0)
-	                    endNode = sortingList[endKey];
+	                tuple2i endKey = new tuple2i((int)redistributedNodePoints.get(redistributedNodePoints.size()-1).x,
+	                		(int)redistributedNodePoints.get(redistributedNodePoints.size()-1).y);
+	                if (sortingList.containsKey(endKey))
+	                    endNode = sortingList.get(endKey);
 	                else
 	                {
 	                    endNode = new SnakeNode();
-	                    endNode.X = (int)redistributedNodePoints.Last().X;
-	                    endNode.Y = (int)redistributedNodePoints.Last().Y;
-	                    sortingList.Add(endKey, endNode);
+	                    endNode.x = (int)redistributedNodePoints.get(redistributedNodePoints.size()-1).x;
+	                    endNode.y = (int)redistributedNodePoints.get(redistributedNodePoints.size()-1).y;
+	                    sortingList.put(endKey, endNode);
 	                }
 
-	                if (redistributedNodePoints.Count == 2)
+	                if (redistributedNodePoints.size() == 2)
 	                {
-	                    startNode.Neighbours.Add(endNode);
-	                    endNode.Neighbours.Add(startNode);
+	                    startNode.neighbours.add(endNode);
+	                    endNode.neighbours.add(startNode);
 	                }
 	                else
 	                {
 	                    SnakeNode previousNode = startNode;
-	                    for (int i = 1; i < redistributedNodePoints.Count - 1; i++)
+	                    for (int i = 1; i < redistributedNodePoints.size() - 1; i++)
 	                    {
-	                        int cX = (int)redistributedNodePoints[i].X, cY = (int)redistributedNodePoints[i].Y;
-	                        Tuple<int,int> currentKey = new Tuple<int,int>(cX, cY);
+	                        int cX = (int)redistributedNodePoints.get(i).x, cY = (int)redistributedNodePoints.get(i).y;
+	                        tuple2i currentKey = new tuple2i(cX, cY);
 	                        SnakeNode currentNode = new SnakeNode();
-	                        currentNode.X = cX;
-	                        currentNode.Y = cY;
+	                        currentNode.x = cX;
+	                        currentNode.y = cY;
 
-	                        if (sortingList.ContainsKey(currentKey))
+	                        if (sortingList.containsKey(currentKey))
 	                            continue;
 	                        else
-	                            sortingList.Add(currentKey, currentNode);
+	                            sortingList.put(currentKey, currentNode);
 
 	                        // Link nodes
-	                        previousNode.Neighbours.Add(currentNode);
-	                        currentNode.Neighbours.Add(previousNode);
+	                        previousNode.neighbours.add(currentNode);
+	                        currentNode.neighbours.add(previousNode);
 	                        previousNode = currentNode;
 	                    }
 	                    // Link final nodes
-	                    previousNode.Neighbours.Add(endNode);
-	                    endNode.Neighbours.Add(previousNode);
+	                    previousNode.neighbours.add(endNode);
+	                    endNode.neighbours.add(previousNode);
 	                }
 	            }
 
 	            // Copy all nodes into the final snakes list - after this point ordering is not a concern
-	            foreach (KeyValuePair<Tuple<int, int>, SnakeNode> kvp in sortingList)
-	            {
-	                this.nodes.Add(kvp.Value);
+	            Set set = sortingList.entrySet();
+	            Iterator iterator = set.iterator();
+	            while (iterator.hasNext()) {
+	            	Map.Entry mentry = (Map.Entry)iterator.next();
+	            	this.nodes.add((SnakeNode)mentry.getValue());
 	            }
+	           
 
 	            this.isInitialised = true;
-	        }*/
+	        }
+	        
+	        public void iterate(byte[] imageBuffer, int bufferWidth, int bufferHeight, int m, int timeout)
+	        {
+
+	            if (!this.isInitialised) {
+	                MipavUtil.displayError("Cannot iterate a network snake that has not been initialised");
+	                return;
+	            }
+
+	            // Iterate the network snake
+	            float[] distances = new float[this.nodes.size()];
+
+	            for (int i = 0; i < this.nodes.size(); i++)
+	            {
+	                distances[i] = this.nodes.get(i).findAverageDistance();
+	            }
+
+	            long startTime = System.currentTimeMillis();
+
+	            //int iterationCount = 0;
+	            double movedThreshold = 0.02;
+	            int movedCount;
+	            do
+	            {
+	                movedCount = 0;
+	                for (int i = 0; i < this.nodes.size(); i++)
+	                {
+	                    if (this.nodes.get(i).iterate(this.alpha, this.beta, this.gamma, distances[i], imageBuffer, bufferWidth, bufferHeight, m))
+	                        movedCount++;
+	                }
+	                //iterationCount++;
+	            } while ((movedCount / (double)this.nodes.size() > movedThreshold) && ((System.currentTimeMillis() - startTime) < timeout));
+
+	            this.data.clear();
+	            HashMap<String, String> dataValues = new HashMap<String, String>();
+	            
+	            dataValues.put( "spacing", String.valueOf(spacing) );
+	            dataValues.put( "curvature", String.valueOf(alpha) );
+	            dataValues.put( "continuity", String.valueOf(beta) );
+	            dataValues.put( "image", String.valueOf(gamma) );
+	            
+	            this.data.add(dataValues);
+	        }
+	        
+	        public ArrayList<Point> createAndRedistributePoints(ArrayList<Point> originalPoints, int recordRate)
+	        {
+	            double[] cumulativeArray = new double[originalPoints.size()];
+	            for (int i = 1; i < cumulativeArray.length; i++)
+	            {
+	                double distance = Math.sqrt(Math.pow(originalPoints.get(i - 1).x - originalPoints.get(i).x, 2.0) + 
+	                		Math.pow(originalPoints.get(i - 1).y - originalPoints.get(i).y, 2.0));
+	                cumulativeArray[i] = cumulativeArray[i - 1] + distance;
+	            }
+	            double totalLength = cumulativeArray[cumulativeArray.length-1];
+
+	            for (int i = 1; i < cumulativeArray.length; i++)
+	            {
+	                cumulativeArray[i] /= totalLength;
+	            }
+
+	            int optimalPointCount = (int)(totalLength / recordRate) + 2;
+
+	            ArrayList<Point> redistributedPoints = new ArrayList<Point>();
+	            for (int i = 0; i < optimalPointCount; i++)
+	            {
+	                if (i == 0)
+	                {
+	                    redistributedPoints.add(originalPoints.get(0));
+	                }
+	                else if (i < optimalPointCount - 1)
+	                {
+	                    // Calculate t between 0 and 1
+	                    double t = i / ((double)optimalPointCount - 1);
+	                    int cumulativeIndex = 0;
+	                    while (cumulativeArray[cumulativeIndex] < t)
+	                        cumulativeIndex++;
+
+	                    double subt = (t - cumulativeArray[cumulativeIndex - 1]) / (cumulativeArray[cumulativeIndex] - cumulativeArray[cumulativeIndex - 1]);
+
+	                    Point P1 = originalPoints.get(cumulativeIndex - 1);
+	                    Point P2 = originalPoints.get(cumulativeIndex);
+
+	                    Point redistributedPoint = new Point((int)(P1.x * (1 - subt) + P2.x * (subt)), (int)(P1.y * (1 - subt) + P2.y * (subt)));
+	                    redistributedPoints.add(new Point(redistributedPoint.x, redistributedPoint.y));
+	                }
+	                else if (i == optimalPointCount - 1)
+	                {
+	                    redistributedPoints.add(originalPoints.get(originalPoints.size()-1));
+	                }
+	            }
+	            return redistributedPoints;
+	        }
+
 
 	}
+	
+	public class ContractingSnake
+    {
+        private boolean isInitialised = false;
+        public boolean getIsInitialised()
+        {
+            return isInitialised;
+        }
+
+        private ArrayList<ContractingSnakeNode> nodes = new ArrayList<ContractingSnakeNode>();
+        public ArrayList<ContractingSnakeNode> getNodes() {
+        	return nodes;
+        }
+        public void setNodes(ArrayList<ContractingSnakeNode> nodes) {
+        	this.nodes = nodes;
+        }
+        
+
+        private float alpha = 1.0f;
+        public float getAlpha() {
+        	return alpha;
+        }
+        public void setAlpha(float alpha) {
+            this.alpha = alpha;	
+        }
+
+        private float beta = 1.0f;
+        public float getBeta() {
+        	return beta;
+        }
+        public void setBeta(float beta) {
+        	this.beta = beta;
+        }
+
+        private float gamma = 1.0f;
+        public float getGamma() {
+        	return gamma;
+        }
+        public void setGamma(float gamma) {
+        	this.gamma = gamma;
+        }
+
+        public ContractingSnake()
+        {
+        }
+
+        //public void Initialise(IEnumerable<Point> snakePoints)
+        public void initialize(ArrayList<Point> snakePoints)
+        {
+            ContractingSnakeNode previousNode = null;
+            for (Point p : snakePoints)
+            {
+                ContractingSnakeNode currentNode = new ContractingSnakeNode();
+                currentNode.x = (int)p.x;
+                currentNode.y = (int)p.y;
+
+                if (previousNode != null)
+                {
+                    currentNode.neighbours.add(previousNode);
+                    previousNode.neighbours.add(currentNode);
+                }
+
+                this.nodes.add(currentNode);
+                previousNode = currentNode;
+            }
+
+            // Link the end nodes
+            ContractingSnakeNode firstNode = nodes.get(0);
+            ContractingSnakeNode lastNode = nodes.get(nodes.size()-1);
+            firstNode.neighbours.add(lastNode);
+            lastNode.neighbours.add(firstNode);
+
+            this.isInitialised = true;
+        }
+
+        public void iterate(byte[] imageBuffer, int bufferWidth, int bufferHeight, int m)
+        {
+            if (!this.isInitialised) {
+                MipavUtil.displayError("Cannot iterate a contracting snake that has not been initialised");
+                return;
+            }
+
+            // Iterate the network snake
+            int iterationCount = 0;
+            double movedThreshold = 0.02;
+            int movedCount;
+            do
+            {
+                boolean imaging = iterationCount > 3;
+                movedCount = 0;
+                for (int i = 0; i < this.nodes.size(); i++)
+                {
+                    if (this.nodes.get(i).iterate(this.alpha, this.beta, this.gamma, 0, imageBuffer, bufferWidth, bufferHeight, m, imaging))
+                        movedCount++;
+                }
+                iterationCount++;
+
+            } while (movedCount / (double)this.nodes.size() > movedThreshold);
+        }
+
+    }
+	
+	 public class ContractingSnakeNode implements Comparable
+	    {
+	        protected int x, y;
+
+	        public int getX() {
+	        	return x;
+	        }
+	        public void setX(int x) {
+	        	this.x = x;
+	        }
+	       
+
+	        public int getY() {
+	        	return y;
+	        }
+	        public void setY(int y) {
+	        	this.y = y;
+	        }
+	        
+
+	        protected ArrayList<ContractingSnakeNode> neighbours;
+	        public ArrayList<ContractingSnakeNode> getNeighbours() {
+	        	return neighbours;
+	        }
+	        public void setNeighbours(ArrayList neighbours) {
+	        	this.neighbours = neighbours;
+	        }
+	        
+
+	        private ArrayList<Boolean> neighbourLink;
+	        public ArrayList<Boolean> getNeighbourLink() {
+	        	return neighbourLink;
+	        }
+	        public void setNeighbourLink(ArrayList<Boolean> neighbourLink) {
+	        	this.neighbourLink = neighbourLink;
+	        }
+	        
+
+
+	        public ContractingSnakeNode()
+	        {
+	            this.neighbours = new ArrayList<ContractingSnakeNode>();
+	        }
+
+	        public boolean iterate(float alpha, float beta, float gamma, float d, byte[] imageBuffer, int bufferWidth, int bufferHeight, int m, boolean imaging)
+	        { 
+	            // Record starting position
+	            Point startingPosition = new Point(this.x, this.y);
+
+	            if (this.neighbours.size() == 2)
+	            {
+	                ContractingSnakeNode neighbour0 = this.neighbours.get(0);
+	                ContractingSnakeNode neighbour1 = this.neighbours.get(1);
+
+	                if (neighbour0 == null || neighbour1 == null) {
+	                    MipavUtil.displayError("Contracting snake node has incompatible or missing neighbour");
+	                    return false;
+	                }
+
+	                // Calculate bounds
+	                int xMin = Math.max(0, this.x - m);
+	                int xMax = Math.min(this.x + m, bufferWidth - 1);
+	                int yMin = Math.max(0, this.y - m);
+	                int yMax = Math.min(this.y + m, bufferHeight - 1);
+
+	                // Econt
+	                float[][] Econt = new float[xMax - xMin + 1][ yMax - yMin + 1];
+	                float EcontMax = -Float.MAX_VALUE;
+	                int ypos = 0;
+	                int x2 = neighbour0.x;
+	                int y2 = neighbour0.y;
+	                for (int y = yMin; y <= yMax; y++)
+	                {
+	                    int xpos = 0;
+	                    for (int x = xMin; x <= xMax; x++)
+	                    {
+	                        // Altered continuity term should shrink the snake
+	                        Econt[xpos][ ypos] = (float)Math.pow(x - x2, 2.0) + (float)Math.pow(y - y2, 2.0);
+	                        if (Econt[xpos][ ypos] > EcontMax)
+	                            EcontMax = Econt[xpos][ ypos];
+	                        xpos++;
+	                    }
+	                    ypos++;
+	                }
+
+	                // Normalise Econt
+	                for (int y = 0; y < Econt[0].length; y++)
+	                    for (int x = 0; x < Econt.length; x++)
+	                        Econt[x][ y] /= EcontMax;
+
+	                // Ecurve
+	                float[][] Ecurve = new float[xMax - xMin + 1][ yMax - yMin + 1];
+	                float EcurveMax = -Float.MAX_VALUE;
+	                int x0 = neighbour0.x;
+	                int y0 = neighbour0.y;
+	                x2 = neighbour1.x;
+	                y2 = neighbour1.y;
+	                ypos = 0;
+	                for (int y = yMin; y <= yMax; y++)
+	                {
+	                    int xpos = 0;
+	                    for (int x = xMin; x <= xMax; x++)
+	                    {
+	                        Ecurve[xpos][ ypos] = (float)Math.pow((x0 - 2 * x + x2), 2.0) + (float)Math.pow((y0 - 2 * y + y2), 2.0);
+
+	                        if (Ecurve[xpos][ ypos] > EcurveMax)
+	                            EcurveMax = Ecurve[xpos][ ypos];
+	                        xpos++;
+	                    }
+	                    ypos++;
+	                }
+
+	                // Normalise Ecurve
+	                for (int y = 0; y < Ecurve[0].length; y++)
+	                    for (int x = 0; x < Ecurve.length; x++)
+	                        Ecurve[x][ y] /= EcurveMax;
+
+
+	                // Eimage
+	                float[][] Eimage = new float[xMax - xMin + 1][ yMax - yMin + 1];
+	                float EimageMin = Float.MAX_VALUE;
+	                float EimageMax = -Float.MAX_VALUE;
+
+	                ypos = 0;
+	                for (int y = yMin; y <= yMax; y++)
+	                {
+	                    int xpos = 0;
+	                    for (int x = xMin; x <= xMax; x++)
+	                    {
+	                        Eimage[xpos][ ypos] = 255 - imageBuffer[y * bufferWidth + x];
+
+	                        if (Eimage[xpos][ ypos] > EimageMax)
+	                            EimageMax = Eimage[xpos][ ypos];
+
+	                        if (Eimage[xpos][ ypos] < EimageMin)
+	                            EimageMin = Eimage[xpos][ ypos];
+	                        xpos++;
+	                    }
+	                    ypos++;
+	                }
+
+	                // Normalise Eimage
+	                for (int y = 0; y < Eimage[0].length; y++)
+	                    for (int x = 0; x < Eimage.length; x++)
+	                    {
+	                        Eimage[x][ y] = (Eimage[x][ y] - EimageMin) / Math.max(1, EimageMax - EimageMin);
+	                        if (!imaging)
+	                            Eimage[x][ y] = 1;
+	                    }
+
+	                // Choose final position for snake point
+	                float EMin = Float.MAX_VALUE;
+	                int EminX = 0, EminY = 0;
+	                ypos = 0;
+	                for (int y = yMin; y <= yMax; y++)
+	                {
+	                    int xpos = 0;
+	                    for (int x = xMin; x <= xMax; x++)
+	                    {
+	                        float E = alpha * Econt[xpos][ ypos] + beta * Ecurve[xpos][ ypos] + gamma * Eimage[xpos][ ypos];
+
+	                        if (E < EMin)
+	                        {
+	                            EMin = E;
+	                            EminX = x;
+	                            EminY = y;
+	                        }
+	                        xpos++;
+	                    }
+	                    ypos++;
+	                }
+
+	                this.x = EminX;
+	                this.y = EminY;
+	            }
+	            else
+	            {
+	                MipavUtil.displayError("Contracting snake node does not have exactly two neighbours");
+	                return false;
+	            }
+
+	            Point finalPosition = new Point(this.x, this.y);
+	            return startingPosition != finalPosition;
+	        }
+
+	        protected byte[][] findThresholdedRegion(int x, int y, byte[] imageBuffer, int bufferWidth, int bufferHeight, int radius, boolean thresholding, 
+	        		int offsetX[], int offsetY[])
+	        {
+	            int xMin = Math.max(0, x - radius);
+	            int xMax = Math.min(bufferWidth - 1, x + radius);
+	            int yMin = Math.max(0, y - radius);
+	            int yMax = Math.min(bufferHeight - 1, y + radius);
+
+	            byte[][] regionBuffer = new byte[xMax - xMin + 1][ yMax - yMin + 1];
+	            int totalIntensity = 0;
+
+	            offsetX[0] = xMin;
+	            offsetY[0] = yMin;
+
+	            int ypos = 0;
+	            for (int bY = yMin; bY <= yMax; bY++)
+	            {
+	                int xpos = 0;
+	                for (int bX = xMin; bX <= xMax; bX++)
+	                {
+	                    regionBuffer[xpos][ ypos] = imageBuffer[bY * bufferWidth + bX];
+	                    totalIntensity += regionBuffer[xpos][ ypos];
+	                    xpos++;
+	                }
+	                ypos++;
+	            }
+
+	            // Threshold using mean of intensity level
+	            if (thresholding)
+	            {
+	                int threshold = totalIntensity / (regionBuffer.length * regionBuffer[0].length);
+	                for (int xpos = 0; xpos < regionBuffer.length; xpos++)
+	                {
+	                    for (ypos = 0; ypos < regionBuffer[0].length; ypos++)
+	                    {
+	                        regionBuffer[xpos][ ypos] = (byte)(regionBuffer[xpos][ ypos] >= threshold ? 255 : 0);
+	                    }
+	                }
+	            }
+	            return regionBuffer;
+	        }
+
+	        public int compareTo(Object obj)
+	        {
+	            if (obj instanceof ContractingSnakeNode)
+	            {
+	                ContractingSnakeNode compare = (ContractingSnakeNode)obj;
+	                if (this.x > compare.x) {
+	                	return 1;
+	                }
+	                else if (this.x < compare.x) {
+	                	return -1;
+	                }
+	                else if (this.y > compare.y) {
+	                	return 1;
+	                }
+	                else if (this.y < compare.y) {
+	                	return -1;
+	                }
+	                else {
+	                	return 0;
+	                }
+	            }
+	            MipavUtil.displayError("Object is not a ContractingSnakenode");
+	            return Integer.MAX_VALUE;
+	        }
+	        
+	        private int clamp(int val, int lowerBound, int upperBound)
+	        {
+	            return (val > upperBound) ? upperBound : (val < lowerBound ? lowerBound : val);
+	        }
+	    }
 	
 	 public class SnakeInitialiser implements Serializable
 	    {
@@ -1857,7 +2313,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 
 	                // Ecurve
 	                float[][] Ecurve = new float[xMax - xMin + 1] [yMax - yMin + 1];
-	                float EcurveMax = Float.MIN_VALUE;
+	                float EcurveMax = -Float.MAX_VALUE;
 	                Point p1 = new Point (this.neighbours.get(0).x, this.neighbours.get(0).y);
 	                Point p2 = new Point (0, 0);
 
@@ -1917,7 +2373,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                // Eimage
 	                float[][] Eimage = new float[xMax - xMin + 1][ yMax - yMin + 1];
 	                float EimageMin = Float.MAX_VALUE;
-	                float EimageMax = Float.MIN_VALUE;
+	                float EimageMax = -Float.MAX_VALUE;
 
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
@@ -1977,7 +2433,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 
 	                // Econt
 	                float[][] Econt = new float[xMax - xMin + 1][ yMax - yMin + 1];
-	                float EcontMax = Float.MIN_VALUE;
+	                float EcontMax = -Float.MAX_VALUE;
 	                int ypos = 0;
 	                int x2 = this.neighbours.get(0).x;
 	                int y2 = this.neighbours.get(0).y;
@@ -2003,7 +2459,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 
 	                // Ecurve
 	                float[][] Ecurve = new float[xMax - xMin + 1][ yMax - yMin + 1];
-	                float EcurveMax = Float.MIN_VALUE;
+	                float EcurveMax = -Float.MAX_VALUE;
 	                int x0 = this.neighbours.get(0).x;
 	                int y0 = this.neighbours.get(0).y;
 	                x2 = this.neighbours.get(1).x;
@@ -2032,7 +2488,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                // Eimage
 	                float[][] Eimage = new float[xMax - xMin + 1][ yMax - yMin + 1];
 	                float EimageMin = Float.MAX_VALUE;
-	                float EimageMax = Float.MIN_VALUE;
+	                float EimageMax = -Float.MAX_VALUE;
 
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
@@ -2133,7 +2589,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 
 	                // Ecurve
 	                float[][] Ecurve = new float[xMax - xMin + 1][ yMax - yMin + 1];
-	                float EcurveMax = Float.MIN_VALUE;
+	                float EcurveMax = -Float.MAX_VALUE;
 
 	                ArrayList<Point[]> neighbouringPoints = new ArrayList<Point[]>();
 
@@ -2194,7 +2650,7 @@ public class AlgorithmNetworkSnake extends AlgorithmBase {
 	                // Eimage
 	                float[][] Eimage = new float[xMax - xMin + 1][ yMax - yMin + 1];
 	                float EimageMin = Float.MAX_VALUE;
-	                float EimageMax = Float.MIN_VALUE;
+	                float EimageMax = -Float.MAX_VALUE;
 
 	                ypos = 0;
 	                for (int y = yMin; y <= yMax; y++)
