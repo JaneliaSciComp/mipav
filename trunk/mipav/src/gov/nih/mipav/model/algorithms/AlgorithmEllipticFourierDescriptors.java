@@ -86,12 +86,16 @@ public class AlgorithmEllipticFourierDescriptors extends AlgorithmBase {
      */
     private void calc() {
     	boolean isPoint = false;
+    	boolean isPolyLine = false;                    
         fireProgressStateChanged(srcImage.getImageName(), "Elliptic Fourier Descriptors smooth: Evolving boundary ...");
 
         fireProgressStateChanged(25);
         if(activeVOI.getCurveType() == VOI.POINT) {
         	resultVOI = new VOI((short) srcImage.getVOIs().size(), "Esmooth-VOI", VOI.POINT, -1.0f);
         	isPoint = true;
+        } else if (activeVOI.getCurveType() == VOI.POLYLINE) {
+        	resultVOI = new VOI((short) srcImage.getVOIs().size(), "Esmooth-VOI", VOI.POLYLINE, -1.0f);
+        	isPolyLine = true;
         }else {
         	resultVOI = new VOI((short) srcImage.getVOIs().size(), "Esmooth-VOI", VOI.CONTOUR, -1.0f);
         }
@@ -125,7 +129,42 @@ public class AlgorithmEllipticFourierDescriptors extends AlgorithmBase {
             } 
              
              
-   
+        } else if (isPolyLine) {
+        	for (int elementNum = 0; elementNum < nContours; elementNum++) {
+	            fireProgressStateChanged((int) (25 + (75 * (((float) elementNum) / nContours))));
+	
+	            if (((VOIContour) (contours.elementAt(elementNum))).isActive()) {
+	                int nPoints = contours.elementAt(elementNum).size();
+	                //System.err.println("Element number is: " + elementNum);
+	                    float[] xPoints = new float[nPoints];
+	                    float[] yPoints = new float[nPoints];
+	                    float[] xSmooth = new float[nPoints];
+	                    float[] ySmooth = new float[nPoints];
+	              
+	                    float zPoint = contours.elementAt(elementNum).elementAt(0).Z;
+	                    for (int i = 0; i < nPoints; i++) {
+	                        xPoints[i] = contours.elementAt(elementNum).elementAt(i).X;
+	                        yPoints[i] = contours.elementAt(elementNum).elementAt(i).Y;
+	                    }
+	            
+	                    VOIContour resultContour = new VOIContour( false, contours.elementAt(elementNum).isClosed());
+	                    runEllipticFourierDescriptorsOpenCurve(xPoints, yPoints, xSmooth, ySmooth);
+	                    for (int i = 0; i < nPoints; i++) {
+	                        resultContour.add(new Vector3f(xSmooth[i], ySmooth[i], zPoint));
+	                    }
+	                    fireProgressStateChanged(25 + (((75 * elementNum) + 50) / nContours));
+	
+	                    
+	                    resultVOI.importCurve(resultContour);
+	
+	                    if (threadStopped) {
+	                        finalize();
+	
+	                        return;
+	                    }
+	                
+	            } // if ( ((VOIContour)(contours[0].elementAt(elementNum))).isActive() )
+	        } // for(elementNum = 0; elementNum < nContours; elementNum++)	
         }else {
 	        for (int elementNum = 0; elementNum < nContours; elementNum++) {
 	            fireProgressStateChanged((int) (25 + (75 * (((float) elementNum) / nContours))));
@@ -225,6 +264,65 @@ public class AlgorithmEllipticFourierDescriptors extends AlgorithmBase {
         		sinProd = Math.sin(prod);
         		xCurv = xCurv + ax[k]*cosProd + bx[k]*sinProd;
         		yCurv = yCurv + ay[k]*cosProd + by[k]*sinProd;
+        	}
+        	xSmooth[i] = (float)xCurv;
+        	ySmooth[i] = (float)yCurv;
+        }
+    }
+    
+    private void runEllipticFourierDescriptorsOpenCurve(float xPoints[], float yPoints[], float xSmooth[], float ySmooth[]) {
+    	int i, k;
+    	double prod;
+    	double cosProd;
+    	int m = xPoints.length;
+    	double scale = 1.0/m;
+    	double xCurv;
+    	double yCurv;
+    	int localCoefficients = Math.min(coefficients, m/2);
+    	// Fourier coefficients
+    	double ax[] = new double[localCoefficients+1];
+    	double ay[] = new double[localCoefficients+1];
+    	
+    	double xSum = 0;
+    	double ySum = 0;
+    	for (i = 0; i < m; i++) {
+    		xSum = xSum + xPoints[i];
+    		ySum = ySum + yPoints[i];
+    	}
+    	double xAverage = xSum/m;
+    	double yAverage = ySum/m;
+    	ax[0] = 2.0 * xAverage;
+    	ay[0] = 2.0 * yAverage;
+    	
+    	
+    	double t = Math.PI/m;
+    	
+    	for (k = 1; k <= localCoefficients; k++) {
+    		for (i = 1; i <= m; i++) {
+    			prod = k * t * (i-1);
+    			cosProd = Math.cos(prod);
+    			ax[k] = ax[k] + xPoints[i-1] * cosProd;
+    			ay[k] = ay[k] + yPoints[i-1] * cosProd;
+    		}
+    		for (i = m+1; i <= 2*m; i++) {
+    			prod = k * t * (i-1);
+    			cosProd = Math.cos(prod);
+    			ax[k] = ax[k] + xPoints[2*m-i] * cosProd;
+    			ay[k] = ay[k] + yPoints[2*m-i] * cosProd;
+    		}
+    		ax[k] = ax[k] * scale;
+    		ay[k] = ay[k] * scale;
+    	}
+    	
+        double omega = 2.0 * Math.PI/m;
+    	for (i = 0; i < m; i++) {
+        	xCurv = ax[0]/2.0;
+        	yCurv = ay[0]/2.0;
+        	for (k = 1; k <= localCoefficients; k++) {
+        		prod = k * i * omega;
+        		cosProd = Math.cos(prod);
+        		xCurv = xCurv + ax[k]*cosProd;
+        		yCurv = yCurv + ay[k]*cosProd;
         	}
         	xSmooth[i] = (float)xCurv;
         	ySmooth[i] = (float)yCurv;
