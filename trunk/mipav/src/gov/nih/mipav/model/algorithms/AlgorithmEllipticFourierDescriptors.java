@@ -7,9 +7,10 @@ import java.util.*;
 
 /** Smoothing VOI with Elliptic Fourier Descriptors.  The number of coefficients can range from 1 to the number of 
  * points in the curve divided by 2.
- * Reference:
- * Feature Extraction & Image Processing for Computer Vision, Third Edition, Mark S. Nixon and
+ * References:
+ * 1.) Feature Extraction & Image Processing for Computer Vision, Third Edition, Mark S. Nixon and
  * Alberto S. Aguado, 2012, pp. 369-378.
+ * 2.) Boundary Finding with Parametrically Deformable Models by Lawrence H. Staib and James S. Duncan.
  * @author ilb
  *
  */
