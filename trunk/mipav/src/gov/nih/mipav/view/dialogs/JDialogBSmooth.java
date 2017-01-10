@@ -120,7 +120,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
 
         for (groupNum = 0; groupNum < nVOI; groupNum++) {
 
-            if ((VOIs.VOIAt(groupNum).isActive() == true) && (VOIs.VOIAt(groupNum).getCurveType() == VOI.CONTOUR)) {
+            if ((VOIs.VOIAt(groupNum).isActive() == true) && ((VOIs.VOIAt(groupNum).getCurveType() == VOI.CONTOUR) ||
+            		(VOIs.VOIAt(groupNum).getCurveType() == VOI.POLYLINE))) {
                 break;
             }
         }
@@ -154,38 +155,40 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         VOIBase activeContour = contours.elementAt(elementNum);
         nPoints = activeContour.size();
 
-        xPoints = new float[nPoints + 5];
-        yPoints = new float[nPoints + 5];
-        zPoints = new float[nPoints + 5];
-
-        xPoints[0] = activeContour.elementAt(nPoints - 2).X;
-        yPoints[0] = activeContour.elementAt(nPoints - 2).Y;
-        zPoints[0] = activeContour.elementAt(nPoints - 2).Z;
-
-        xPoints[1] = activeContour.elementAt(nPoints - 1).X;
-        yPoints[1] = activeContour.elementAt(nPoints - 1).Y;
-        zPoints[1] = activeContour.elementAt(nPoints - 1).Z;
-
-        for (i = 0; i < nPoints; i++) {
-            xPoints[i + 2] = activeContour.elementAt(i).X;
-            yPoints[i + 2] = activeContour.elementAt(i).Y;
-            zPoints[i + 2] = activeContour.elementAt(i).Z;
-        }
-
-        xPoints[nPoints + 2] = activeContour.elementAt(0).X;
-        yPoints[nPoints + 2] = activeContour.elementAt(0).Y;
-        zPoints[nPoints + 2] = activeContour.elementAt(0).Z;
-        
-        xPoints[nPoints + 3] = activeContour.elementAt(1).X;
-        yPoints[nPoints + 3] = activeContour.elementAt(1).Y;
-        zPoints[nPoints + 3] = activeContour.elementAt(1).Z;
-        
-        xPoints[nPoints + 4] = activeContour.elementAt(2).X;
-        yPoints[nPoints + 4] = activeContour.elementAt(2).Y;
-        zPoints[nPoints + 4] = activeContour.elementAt(2).Z;
-        
-        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
-        defaultPts = Math.round(arcLength.getTotalArcLength() / 3);
+        if (VOIs.VOIAt(groupNum).getCurveType() == VOI.CONTOUR) {
+	        xPoints = new float[nPoints + 5];
+	        yPoints = new float[nPoints + 5];
+	        zPoints = new float[nPoints + 5];
+	
+	        xPoints[0] = activeContour.elementAt(nPoints - 2).X;
+	        yPoints[0] = activeContour.elementAt(nPoints - 2).Y;
+	        zPoints[0] = activeContour.elementAt(nPoints - 2).Z;
+	
+	        xPoints[1] = activeContour.elementAt(nPoints - 1).X;
+	        yPoints[1] = activeContour.elementAt(nPoints - 1).Y;
+	        zPoints[1] = activeContour.elementAt(nPoints - 1).Z;
+	
+	        for (i = 0; i < nPoints; i++) {
+	            xPoints[i + 2] = activeContour.elementAt(i).X;
+	            yPoints[i + 2] = activeContour.elementAt(i).Y;
+	            zPoints[i + 2] = activeContour.elementAt(i).Z;
+	        }
+	
+	        xPoints[nPoints + 2] = activeContour.elementAt(0).X;
+	        yPoints[nPoints + 2] = activeContour.elementAt(0).Y;
+	        zPoints[nPoints + 2] = activeContour.elementAt(0).Z;
+	        
+	        xPoints[nPoints + 3] = activeContour.elementAt(1).X;
+	        yPoints[nPoints + 3] = activeContour.elementAt(1).Y;
+	        zPoints[nPoints + 3] = activeContour.elementAt(1).Z;
+	        
+	        xPoints[nPoints + 4] = activeContour.elementAt(2).X;
+	        yPoints[nPoints + 4] = activeContour.elementAt(2).Y;
+	        zPoints[nPoints + 4] = activeContour.elementAt(2).Z;
+	        
+	        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
+	        defaultPts = Math.round(arcLength.getTotalArcLength() / 3);
+        } // if (VOIs.VOIAt(groupNum).getCurveType() == VOI.CONTOUR)
 
         init();
     }
@@ -221,7 +224,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         		trimCheckBox.setSelected(false);
         		trimCheckBox.setEnabled(false);
         		labelInterpNPts.setText("Number of coefficients (<= " + String.valueOf(nPoints/2) + ")");
-        		textInterpNPts.setText(String.valueOf(nPoints/4));
+        		textInterpNPts.setText(String.valueOf(Math.max(1,nPoints/4)));
         	}
         	else {
         		trimCheckBox.setEnabled(true);
@@ -452,13 +455,22 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         trimCheckBox.setFont(serif12);
         trimCheckBox.setForeground(Color.black);
         trimCheckBox.setSelected(false);
+        if (VOIs.VOIAt(groupNum).getCurveType() == VOI.POLYLINE) {
+        	trimCheckBox.setEnabled(false);
+        }
         imageVOIPanel.add(trimCheckBox);
         
         smoothGroup = new ButtonGroup();
         BSplineButton = new JRadioButton("Smooth with Bspline interpolation");
         BSplineButton.setFont(serif12);
         BSplineButton.setForeground(Color.black);
-        BSplineButton.setSelected(true);
+        if (VOIs.VOIAt(groupNum).getCurveType() == VOI.POLYLINE) {
+        	BSplineButton.setSelected(false);
+        	BSplineButton.setEnabled(false);
+        }
+        else {
+            BSplineButton.setSelected(true);
+        }
         BSplineButton.addActionListener(this);
         smoothGroup.add(BSplineButton);
         imageVOIPanel.add(BSplineButton);
@@ -466,7 +478,12 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         ellipticButton = new JRadioButton("Smooth with Elliptic Fourier Descriptors");
         ellipticButton.setFont(serif12);
         ellipticButton.setForeground(Color.black);
-        ellipticButton.setSelected(false);
+        if (VOIs.VOIAt(groupNum).getCurveType() == VOI.POLYLINE) {
+            ellipticButton.setSelected(true);
+        }
+        else {
+        	ellipticButton.setSelected(false);
+        }
         ellipticButton.addActionListener(this);
         smoothGroup.add(ellipticButton);
         imageVOIPanel.add(ellipticButton);
@@ -475,13 +492,23 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         paramPanel.setForeground(Color.black);
         paramPanel.setBorder(buildTitledBorder("Algorithm parameters"));
 
-        labelInterpNPts = new JLabel("Number of interpolation points ");
+        if (VOIs.VOIAt(groupNum).getCurveType() == VOI.POLYLINE) {
+        	labelInterpNPts = new JLabel("Number of coefficients (<= " + String.valueOf(nPoints/2) + ")");	
+        }
+        else {
+            labelInterpNPts = new JLabel("Number of interpolation points ");
+        }
         labelInterpNPts.setForeground(Color.black);
         labelInterpNPts.setFont(serif12);
         paramPanel.add(labelInterpNPts);
 
         textInterpNPts = new JTextField();
-        textInterpNPts.setText(String.valueOf(defaultPts));
+        if (VOIs.VOIAt(groupNum).getCurveType() == VOI.POLYLINE) {
+        	textInterpNPts.setText(String.valueOf(Math.max(1,nPoints/4)));	
+        }
+        else {
+            textInterpNPts.setText(String.valueOf(defaultPts));
+        }
         textInterpNPts.setFont(serif12);
         paramPanel.add(textInterpNPts);
 
