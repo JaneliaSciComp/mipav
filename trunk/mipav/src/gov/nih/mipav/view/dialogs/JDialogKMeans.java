@@ -7,6 +7,8 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewFileChooserBase;
 import gov.nih.mipav.view.ViewImageFileFilter;
@@ -26,10 +28,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Vector;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -40,6 +44,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInterface {
 	
@@ -227,7 +233,11 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	public void actionPerformed(ActionEvent event) {
 		int dimPt;
 		int i;
-		
+		String extension = null;
+		boolean haveCSV = false;
+		float xMax;
+		float yMax;
+		float zMax;
 		int nval;
 
 		String fileNameBase = null;
@@ -413,237 +423,307 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                	i = fileNamePoints.indexOf(".");
 	    				if (i > 0) {
 	    					fileNameBase = chooser.getSelectedFile().getName().substring(0,i);
+	    					extension = chooser.getSelectedFile().getName().substring(i+1);
+	    					if (extension.equalsIgnoreCase("CSV")) {
+	    						haveCSV = true;
+	    					}
 	    				}
 	    				else {
 	    					fileNameBase = new String(chooser.getSelectedFile().getName());
 	    				}
-	                	resultsFileName = directoryPoints + fileNameBase + "_kmeans.txt";
+	    				if (haveCSV) {
+	    					resultsFileName = directoryPoints + fileNameBase + "_kmeans.csv";	
+	    				}
+	    				else {
+	                	    resultsFileName = directoryPoints + fileNameBase + "_kmeans.txt";
+	    				}
 	                	resultsFileNameLabel.setEnabled(true);
 	                	resultsFileNameText.setEnabled(true);
 	                	resultsFileNameText.setText(resultsFileName);
-	                    
-	                    try {
-	                        br = new BufferedReader(new InputStreamReader(new FileInputStream(filePoints)));
-	                    }
-	                    catch (FileNotFoundException e) {
-	                        MipavUtil.displayError((directoryPoints + fileNamePoints) + " was not found");
-	                        return;
-	                    }
-	                    
-	                    // Read lines until first character is not blank and not #
-	                    int ii = 0;
-	                    String line = null;
-	                    do {
-	                        try {
-	                            // Contains the contents of the line not including line termination characters
-	                            line = br.readLine(); 
-	                        }
-	                        catch(IOException e) {
-	                            MipavUtil.displayError("IOException on br.readLine");
-	                            br.close();
-	                            return;
-	                        }
-	                        // have reached end of stream
-	                        if (line == null) {
-	                            MipavUtil.displayError("Have reached end of stream on br.readLine");
-	                            br.close();
-	                            return;
-	                        }
-	                        for (ii = 0; ((ii < line.length()) && (Character.isSpaceChar(line.charAt(ii)))); ii++);
-	                    } while ((ii == line.length()) || (line.charAt(ii) == '#'));
-	                    
-	                    int start = 0;
-	                    int end = 0;
-	                    for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
-	                    end = start;
-	                    for (; ((end < line.length()) && (Character.isDigit(line.charAt(end)))); end++);
-	                    if (start == end) {
-	                        MipavUtil.displayError("No digit starts line which should contain number of dimensions");
-	                        br.close();
-	                        return;
-	                    }
-	                    nDims = Integer.valueOf(line.substring(start, end)).intValue();
-	                    extents = new int[nDims];
-	                    scale = new double[nDims];
-	                    nval = 0;
-	                   l1: while (true) {
-	                    	try {
-	                            // Contains the contents of the line not including line termination characters
-	                            line = br.readLine();  
-	                        }
-	                        catch(IOException e) {
-	                            MipavUtil.displayError("IOException on br.readLine");
-	                            br.close();
-	                            return;
-	                        }
-	                        // have reached end of stream
-	                        if (line == null) {
-	                            MipavUtil.displayError("Have reached end of stream on br.readLine");
-	                            break;
-	                        }
-	                    	start = 0;
-	                    	end = 0;
-	                    	while (start < line.length()) {
-		                    	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
-		                        end = start;
-		                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))))); end++);
-		                        if (start == end) {
-		                            continue l1;
+	                	
+	                	if (haveCSV) {
+	                		FileReader fr;
+            				fr = new FileReader(filePoints);
+            				BufferedReader br = new BufferedReader(fr);
+            				String line = br.readLine();
+            				line = br.readLine();
+            				Vector<Float>xVector = new Vector<Float>();
+            				Vector<Float>yVector = new Vector<Float>();
+            				Vector<Float>zVector = new Vector<Float>();
+            				nPoints = 0;
+            				nDims = 3;
+            				xMax = 0;
+            				yMax = 0;
+            				zMax = 0;
+            				while ( line != null )
+            				{
+            					String[] parsed = line.split( "," );
+            					if ( parsed.length != 0 )
+            					{
+            						float z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
+            						float x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+            						float y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
+            						xVector.add(x);
+            						yVector.add(y);
+            						zVector.add(z);
+            		           	   	nPoints++;
+            		           	   	if (x > xMax) {
+            		           	   		xMax = x;
+            		           	   	}
+            		           	   	if (y > yMax) {
+            		           	   		yMax = y;
+            		           	   	}
+            		           	   	if (z > zMax) {
+            		           	   		zMax = z;
+            		           	   	}
+            					}
+            					line = br.readLine();
+	            				}
+	            				fr.close();
+	            				scale = new double[nDims];
+	            				for (i = 0; i < nDims; i++) {
+	            					scale[i] = 1.0;
+	            				}
+	            				extents = new int[nDims];
+	            				extents[0] = (int)Math.ceil(xMax) + 1;
+	            				extents[1] = (int)Math.ceil(yMax) + 1;
+	            				extents[2] = (int)Math.ceil(zMax) + 1;
+	            				weight = new double[nPoints];
+	            				for (i = 0; i < nPoints; i++) {
+	            					weight[i] = 1.0;
+	            				}
+	            				pos = new double[nDims][nPoints];
+	            				for (i = 0; i < nPoints; i++) {
+	            					pos[0][i] = xVector.get(i);
+	            					pos[1][i] = yVector.get(i);
+	            					pos[2][i] = zVector.get(i);
+	            				}
+	            				groupNum = new int[nPoints];
+	                	} // if (haveCSV)
+	                	else { // not csv
+		                    try {
+		                        br = new BufferedReader(new InputStreamReader(new FileInputStream(filePoints)));
+		                    }
+		                    catch (FileNotFoundException e) {
+		                        MipavUtil.displayError((directoryPoints + fileNamePoints) + " was not found");
+		                        return;
+		                    }
+		                    
+		                    // Read lines until first character is not blank and not #
+		                    int ii = 0;
+		                    String line = null;
+		                    do {
+		                        try {
+		                            // Contains the contents of the line not including line termination characters
+		                            line = br.readLine(); 
 		                        }
-		                        extents[nval++] = Integer.valueOf(line.substring(start, end)).intValue();
-		                        if (nval ==  nDims) {
-		                            break l1;
+		                        catch(IOException e) {
+		                            MipavUtil.displayError("IOException on br.readLine");
+		                            br.close();
+		                            return;
 		                        }
-		                        start = end;
-	                    	} // while (start < line.length())
-	                    } // while (true)
-	                    if (nval < 1) {
-	                        MipavUtil.displayError("No extent values found in " + fileNamePoints);
-	                        return;
-	                    }
-	                    if (nval < nDims) {
-	                    	MipavUtil.displayError("Only " + nval + " of " + nDims + " required dimension lengths found");
-	                    	return;
-	                    }
-	                    start = 0;
-	                    end = 0;
-	                    nval = 0;
-	                   l2: while (true) {
-	                    	try {
-	                            // Contains the contents of the line not including line termination characters
-	                            line = br.readLine();  
-	                        }
-	                        catch(IOException e) {
-	                            MipavUtil.displayError("IOException on br.readLine");
-	                            br.close();
-	                            return;
-	                        }
-	                        // have reached end of stream
-	                        if (line == null) {
-	                            MipavUtil.displayError("Have reached end of stream on br.readLine");
-	                            break;
-	                        }
-	                    	start = 0;
-	                    	end = 0;
-	                    	while (start < line.length()) {
-		                    	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
-		                        end = start;
-		                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))) || (line.charAt(end) == '.') || 
+		                        // have reached end of stream
+		                        if (line == null) {
+		                            MipavUtil.displayError("Have reached end of stream on br.readLine");
+		                            br.close();
+		                            return;
+		                        }
+		                        for (ii = 0; ((ii < line.length()) && (Character.isSpaceChar(line.charAt(ii)))); ii++);
+		                    } while ((ii == line.length()) || (line.charAt(ii) == '#'));
+		                    
+		                    int start = 0;
+		                    int end = 0;
+		                    for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
+		                    end = start;
+		                    for (; ((end < line.length()) && (Character.isDigit(line.charAt(end)))); end++);
+		                    if (start == end) {
+		                        MipavUtil.displayError("No digit starts line which should contain number of dimensions");
+		                        br.close();
+		                        return;
+		                    }
+		                    nDims = Integer.valueOf(line.substring(start, end)).intValue();
+		                    extents = new int[nDims];
+		                    scale = new double[nDims];
+		                    nval = 0;
+		                   l1: while (true) {
+		                    	try {
+		                            // Contains the contents of the line not including line termination characters
+		                            line = br.readLine();  
+		                        }
+		                        catch(IOException e) {
+		                            MipavUtil.displayError("IOException on br.readLine");
+		                            br.close();
+		                            return;
+		                        }
+		                        // have reached end of stream
+		                        if (line == null) {
+		                            MipavUtil.displayError("Have reached end of stream on br.readLine");
+		                            break;
+		                        }
+		                    	start = 0;
+		                    	end = 0;
+		                    	while (start < line.length()) {
+			                    	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
+			                        end = start;
+			                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))))); end++);
+			                        if (start == end) {
+			                            continue l1;
+			                        }
+			                        extents[nval++] = Integer.valueOf(line.substring(start, end)).intValue();
+			                        if (nval ==  nDims) {
+			                            break l1;
+			                        }
+			                        start = end;
+		                    	} // while (start < line.length())
+		                    } // while (true)
+		                    if (nval < 1) {
+		                        MipavUtil.displayError("No extent values found in " + fileNamePoints);
+		                        return;
+		                    }
+		                    if (nval < nDims) {
+		                    	MipavUtil.displayError("Only " + nval + " of " + nDims + " required dimension lengths found");
+		                    	return;
+		                    }
+		                    start = 0;
+		                    end = 0;
+		                    nval = 0;
+		                   l2: while (true) {
+		                    	try {
+		                            // Contains the contents of the line not including line termination characters
+		                            line = br.readLine();  
+		                        }
+		                        catch(IOException e) {
+		                            MipavUtil.displayError("IOException on br.readLine");
+		                            br.close();
+		                            return;
+		                        }
+		                        // have reached end of stream
+		                        if (line == null) {
+		                            MipavUtil.displayError("Have reached end of stream on br.readLine");
+		                            break;
+		                        }
+		                    	start = 0;
+		                    	end = 0;
+		                    	while (start < line.length()) {
+			                    	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
+			                        end = start;
+			                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))) || (line.charAt(end) == '.') || 
+			                                       (line.charAt(end) == 'e') || (line.charAt(end) == 'E') ||
+			                                       (line.charAt(end) == '+') || (line.charAt(end) == '-'))); end++);
+			                        if (start == end) {
+			                            continue l2;
+			                        }
+			                        scale[nval++] = Double.valueOf(line.substring(start, end)).doubleValue();
+			                        if (nval ==  nDims) {
+			                            break l2;
+			                        }
+			                        start = end;
+		                    	} // while (start < line.length())
+		                    } // while (true)
+		                    if (nval < 1) {
+		                        MipavUtil.displayError("No scale values found in " + fileNamePoints);
+		                        return;
+		                    }
+		                    if (nval < nDims) {
+		                    	MipavUtil.displayError("Only " + nval + " of " + nDims + " required scale values found");
+		                    	return;
+		                    }
+		                    // Read lines until first character is not blank and not #
+		                    ii = 0;
+		                    line = null;
+		                    do {
+		                        try {
+		                            // Contains the contents of the line not including line termination characters
+		                            line = br.readLine(); 
+		                        }
+		                        catch(IOException e) {
+		                            MipavUtil.displayError("IOException on br.readLine");
+		                            br.close();
+		                            return;
+		                        }
+		                        // have reached end of stream
+		                        if (line == null) {
+		                            MipavUtil.displayError("Have reached end of stream on br.readLine");
+		                            br.close();
+		                            return;
+		                        }
+		                        for (ii = 0; ((ii < line.length()) && (Character.isSpaceChar(line.charAt(ii)))); ii++);
+		                    } while ((ii == line.length()) || (line.charAt(ii) == '#'));
+		                    start = 0;
+		                    end = 0;
+		                    for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
+		                    end = start;
+		                    for (; ((end < line.length()) && (Character.isDigit(line.charAt(end)))); end++);
+		                    if (start == end) {
+		                        MipavUtil.displayError("No digit starts line which should contain number of points");
+		                        br.close();
+		                        return;
+		                    }
+		                    nPoints = Integer.valueOf(line.substring(start, end)).intValue();
+		                    groupNum = new int[nPoints];
+		                    pos = new double[nDims][nPoints];
+		                    weight = new double[nPoints];
+		                    nval = 0;
+		                    dimPt = 0;
+		                    l3: while (true) {
+		                    	try {
+		                            // Contains the contents of the line not including line termination characters
+		                            line = br.readLine();  
+		                        }
+		                        catch(IOException e) {
+		                            MipavUtil.displayError("IOException on br.readLine");
+		                            br.close();
+		                            return;
+		                        }
+		                        // have reached end of stream
+		                        if (line == null) {
+		                            MipavUtil.displayError("Have reached end of stream on br.readLine");
+		                            break;
+		                        }
+		                    	start = 0;
+		                    	end = 0;
+		                    	readWeight = false;
+		                    	while (start < line.length()) {
+			                    	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
+			                        end = start;
+			                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))) || (line.charAt(end) == '.') || 
 		                                       (line.charAt(end) == 'e') || (line.charAt(end) == 'E') ||
 		                                       (line.charAt(end) == '+') || (line.charAt(end) == '-'))); end++);
-		                        if (start == end) {
-		                            continue l2;
-		                        }
-		                        scale[nval++] = Double.valueOf(line.substring(start, end)).doubleValue();
-		                        if (nval ==  nDims) {
-		                            break l2;
-		                        }
-		                        start = end;
-	                    	} // while (start < line.length())
-	                    } // while (true)
-	                    if (nval < 1) {
-	                        MipavUtil.displayError("No scale values found in " + fileNamePoints);
-	                        return;
-	                    }
-	                    if (nval < nDims) {
-	                    	MipavUtil.displayError("Only " + nval + " of " + nDims + " required scale values found");
-	                    	return;
-	                    }
-	                    // Read lines until first character is not blank and not #
-	                    ii = 0;
-	                    line = null;
-	                    do {
-	                        try {
-	                            // Contains the contents of the line not including line termination characters
-	                            line = br.readLine(); 
-	                        }
-	                        catch(IOException e) {
-	                            MipavUtil.displayError("IOException on br.readLine");
-	                            br.close();
-	                            return;
-	                        }
-	                        // have reached end of stream
-	                        if (line == null) {
-	                            MipavUtil.displayError("Have reached end of stream on br.readLine");
-	                            br.close();
-	                            return;
-	                        }
-	                        for (ii = 0; ((ii < line.length()) && (Character.isSpaceChar(line.charAt(ii)))); ii++);
-	                    } while ((ii == line.length()) || (line.charAt(ii) == '#'));
-	                    start = 0;
-	                    end = 0;
-	                    for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
-	                    end = start;
-	                    for (; ((end < line.length()) && (Character.isDigit(line.charAt(end)))); end++);
-	                    if (start == end) {
-	                        MipavUtil.displayError("No digit starts line which should contain number of points");
-	                        br.close();
-	                        return;
-	                    }
-	                    nPoints = Integer.valueOf(line.substring(start, end)).intValue();
-	                    groupNum = new int[nPoints];
-	                    pos = new double[nDims][nPoints];
-	                    weight = new double[nPoints];
-	                    nval = 0;
-	                    dimPt = 0;
-	                    l3: while (true) {
-	                    	try {
-	                            // Contains the contents of the line not including line termination characters
-	                            line = br.readLine();  
-	                        }
-	                        catch(IOException e) {
-	                            MipavUtil.displayError("IOException on br.readLine");
-	                            br.close();
-	                            return;
-	                        }
-	                        // have reached end of stream
-	                        if (line == null) {
-	                            MipavUtil.displayError("Have reached end of stream on br.readLine");
-	                            break;
-	                        }
-	                    	start = 0;
-	                    	end = 0;
-	                    	readWeight = false;
-	                    	while (start < line.length()) {
-		                    	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
-		                        end = start;
-		                        for (; ((end < line.length()) && ((Character.isDigit(line.charAt(end))) || (line.charAt(end) == '.') || 
-	                                       (line.charAt(end) == 'e') || (line.charAt(end) == 'E') ||
-	                                       (line.charAt(end) == '+') || (line.charAt(end) == '-'))); end++);
-		                        if (start == end) {
-		                            continue l3;
-		                        }
-		                        if (!readWeight) {
-		                        	readWeight = true;
-		                        	weight[nval] = Double.valueOf(line.substring(start, end)).doubleValue();
-		                        	start = end;
-		                        	continue;
-		                        }
-		                         pos[dimPt][nval] = Double.valueOf(line.substring(start, end)).doubleValue();
-		                        if (dimPt == nDims-1) {
-		                        	nval++;
-		                        }
-		                        if (dimPt < nDims-1) {
-		                        	dimPt++;
-		                        }
-		                        else {
-		                        	dimPt = 0;
-		                        }
-		                        if (nval ==  nPoints) {
-		                            break l3;
-		                        }
-		                        start = end;
-	                    	} // while (start < line.length())
-	                    } // while (true)
-	                    br.close();
-	                    if (nval < 1) {
-	                        MipavUtil.displayError("No set of point values found in " + fileNamePoints);
-	                        return;
-	                    }
-	                    if (nval < nPoints) {
-	                    	MipavUtil.displayError("Only " + nval + " of " + nPoints + " required points found");
-	                    	return;
-	                    }
+			                        if (start == end) {
+			                            continue l3;
+			                        }
+			                        if (!readWeight) {
+			                        	readWeight = true;
+			                        	weight[nval] = Double.valueOf(line.substring(start, end)).doubleValue();
+			                        	start = end;
+			                        	continue;
+			                        }
+			                         pos[dimPt][nval] = Double.valueOf(line.substring(start, end)).doubleValue();
+			                        if (dimPt == nDims-1) {
+			                        	nval++;
+			                        }
+			                        if (dimPt < nDims-1) {
+			                        	dimPt++;
+			                        }
+			                        else {
+			                        	dimPt = 0;
+			                        }
+			                        if (nval ==  nPoints) {
+			                            break l3;
+			                        }
+			                        start = end;
+		                    	} // while (start < line.length())
+		                    } // while (true)
+		                    br.close();
+		                    if (nval < 1) {
+		                        MipavUtil.displayError("No set of point values found in " + fileNamePoints);
+		                        return;
+		                    }
+		                    if (nval < nPoints) {
+		                    	MipavUtil.displayError("Only " + nval + " of " + nPoints + " required points found");
+		                    	return;
+		                    }
+	                	} // else not csv
                         havePoints = true;
 	                	textPointsFile.setText(fileNamePoints);
 	                }
