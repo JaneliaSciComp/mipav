@@ -22,8 +22,10 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Enumeration;
@@ -545,6 +547,8 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 		String dataLine;
 		int i;
 		boolean selected;
+		String extension = null;
+		boolean haveCSV = false;
 		Object source = event.getSource();
 		String command = event.getActionCommand();
 		 if (command.equals("OK")) {
@@ -599,87 +603,138 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 
 	                if (data_file_name != null) {
 	                	filePoints = new File(input_directory + data_file_name);
-	                	try {
-	            	    	raFile = new RandomAccessFile(filePoints, "r");
-	            	    }
-	                	catch (FileNotFoundException e) {
-	                		MipavUtil.displayError((input_directory + data_file_name) + " was not found");
-	                        return;	
-	                	}
-	            	    
-	            	    do {
-	            		    try {
-	            		    	firstLine = raFile.readLine();
-	            		    }
-	            		    catch (IOException e) {
-	            		    	MipavUtil.displayError("IOException " + e + " firstLine = raFile.readLine)"); 
-	            		    	return;
-	            		    }
-	            	    } while ((firstLine == null) || (firstLine.isEmpty()));
-	            	    values = retrieveValues(firstLine);
-	            	    if (values == null) {
-	            	    	MipavUtil.displayError("No values found in first line");
-	            	    	return;
-	            	    }
-	            	    if (values.length != 2) {
-	            	    	MipavUtil.displayError("First line has " + values.length + " values instead of the expected 2");
-	            	    	return;
-	            	    }
-	            	    try {
-	            	        nPoints = Integer.parseInt(values[0]);
-	            	    }
-	            	    catch (NumberFormatException e) {
-	            	    	MipavUtil.displayError("NumberFormatException " + e + " on nPoints = Integer.parseInt(values[0])");
-	            	    	return;
-	            	    }
-	            	    if (nPoints < 1) {
-	            	    	MipavUtil.displayError("nPoints = " + nPoints);
-	            	    	return;
-	            	    }
-	            	    try {
-	            	    	nDims= Integer.parseInt(values[1]);
-	            	    }
-	            	    catch (NumberFormatException e) {
-	            	    	MipavUtil.displayError("NumberFormatException " + e + " on nDims = Integer.parseInt(values[1])");
-	            	    	return;
-	            	    }
-	            	    if (nDims < 1) {
-	            	    	MipavUtil.displayError("nDims = " + nDims);
-	            	    	return;
-	            	    }
-	            	    numValues = nPoints * nDims;
-	            	    presentValues = 0;
-	            	    // Allocate data
-	            	    pttemp = new float[numValues];
-	            	    while (presentValues < numValues) {
-	            	    	try {
-	            		    	dataLine = raFile.readLine();
-	            		    }
-	            		    catch (IOException e) {
-	            		    	MipavUtil.displayError("IOException " + e + " dataLine = raFile.readLine)"); 
-	            		    	return;
-	            		    }
-	            	    	 values = retrieveValues(dataLine);
-	            	    	 if (values != null) {
-	            	    		 for (i = 0; i < values.length && presentValues < numValues; i++) {
-	            	    			 try {
-	            	    				 pttemp[presentValues++] = Float.parseFloat(values[i]);
-	            	    			 }
-	            	    			 catch (NumberFormatException e) {
-	            	    				 MipavUtil.displayError("NumberFormatException " + e + " pttemp["+presentValues+"++] = "+
-	            	    			     "Float.parseFloat(values["+i+"])");
-	            	    			    return;	 
-	            	    			 }
-	            	    		 } // for (i = 0; i < values.length; i++)
-	            	    	 } // if (values != null)
-	            	    } // while (presentValues < numValues)
-	            	    try {
-	            	    	raFile.close();
-	            	    }
-	            	    catch (IOException e) {
-	            	    	MipavUtil.displayError("IOException " + e + " on raFile.close()");
-	            	    	return;
-	            	    }
+	                	i = data_file_name.indexOf(".");
+	    				if (i > 0) {
+	    					extension = chooser.getSelectedFile().getName().substring(i+1);
+	    					if (extension.equalsIgnoreCase("CSV")) {
+	    						haveCSV = true;
+	    					}
+	    				}
+	    				if (haveCSV) {
+	    					try {
+		    					FileReader fr;
+	            				fr = new FileReader(filePoints);
+	            				BufferedReader br = new BufferedReader(fr);
+	            				String line = br.readLine();
+	            				line = br.readLine();
+	            				Vector<Float>xVector = new Vector<Float>();
+	            				Vector<Float>yVector = new Vector<Float>();
+	            				Vector<Float>zVector = new Vector<Float>();
+	            				nPoints = 0;
+	            				nDims = 3;
+	            				while ( line != null )
+	            				{
+	            					String[] parsed = line.split( "," );
+	            					if ( parsed.length != 0 )
+	            					{
+	            						float z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
+	            						float x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+	            						float y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
+	            						xVector.add(x);
+	            						yVector.add(y);
+	            						zVector.add(z);
+	            		           	   	nPoints++;
+	            					}
+	            					line = br.readLine();
+		            				}
+		            				fr.close();	
+		    					
+		    					numValues = nPoints * nDims;
+		    					pttemp = new float[numValues];
+		    					for (i = 0; i < nPoints; i++) {
+		    						pttemp[3*i] = xVector.get(i);
+		    						pttemp[3*i+1] = yVector.get(i);
+		    						pttemp[3*i+2] = zVector.get(i);
+		    					}
+	    					}
+	    					catch (IOException e) {
+	    						MipavUtil.displayError("IOException on BufferedReader");
+	    		            	return;
+	    					}
+	    				} // if (haveCSV)
+	    				else { // not CSV
+		                	try {
+		            	    	raFile = new RandomAccessFile(filePoints, "r");
+		            	    }
+		                	catch (FileNotFoundException e) {
+		                		MipavUtil.displayError((input_directory + data_file_name) + " was not found");
+		                        return;	
+		                	}
+		            	    
+		            	    do {
+		            		    try {
+		            		    	firstLine = raFile.readLine();
+		            		    }
+		            		    catch (IOException e) {
+		            		    	MipavUtil.displayError("IOException " + e + " firstLine = raFile.readLine)"); 
+		            		    	return;
+		            		    }
+		            	    } while ((firstLine == null) || (firstLine.isEmpty()));
+		            	    values = retrieveValues(firstLine);
+		            	    if (values == null) {
+		            	    	MipavUtil.displayError("No values found in first line");
+		            	    	return;
+		            	    }
+		            	    if (values.length != 2) {
+		            	    	MipavUtil.displayError("First line has " + values.length + " values instead of the expected 2");
+		            	    	return;
+		            	    }
+		            	    try {
+		            	        nPoints = Integer.parseInt(values[0]);
+		            	    }
+		            	    catch (NumberFormatException e) {
+		            	    	MipavUtil.displayError("NumberFormatException " + e + " on nPoints = Integer.parseInt(values[0])");
+		            	    	return;
+		            	    }
+		            	    if (nPoints < 1) {
+		            	    	MipavUtil.displayError("nPoints = " + nPoints);
+		            	    	return;
+		            	    }
+		            	    try {
+		            	    	nDims= Integer.parseInt(values[1]);
+		            	    }
+		            	    catch (NumberFormatException e) {
+		            	    	MipavUtil.displayError("NumberFormatException " + e + " on nDims = Integer.parseInt(values[1])");
+		            	    	return;
+		            	    }
+		            	    if (nDims < 1) {
+		            	    	MipavUtil.displayError("nDims = " + nDims);
+		            	    	return;
+		            	    }
+		            	    numValues = nPoints * nDims;
+		            	    presentValues = 0;
+		            	    // Allocate data
+		            	    pttemp = new float[numValues];
+		            	    while (presentValues < numValues) {
+		            	    	try {
+		            		    	dataLine = raFile.readLine();
+		            		    }
+		            		    catch (IOException e) {
+		            		    	MipavUtil.displayError("IOException " + e + " dataLine = raFile.readLine)"); 
+		            		    	return;
+		            		    }
+		            	    	 values = retrieveValues(dataLine);
+		            	    	 if (values != null) {
+		            	    		 for (i = 0; i < values.length && presentValues < numValues; i++) {
+		            	    			 try {
+		            	    				 pttemp[presentValues++] = Float.parseFloat(values[i]);
+		            	    			 }
+		            	    			 catch (NumberFormatException e) {
+		            	    				 MipavUtil.displayError("NumberFormatException " + e + " pttemp["+presentValues+"++] = "+
+		            	    			     "Float.parseFloat(values["+i+"])");
+		            	    			    return;	 
+		            	    			 }
+		            	    		 } // for (i = 0; i < values.length; i++)
+		            	    	 } // if (values != null)
+		            	    } // while (presentValues < numValues)
+		            	    try {
+		            	    	raFile.close();
+		            	    }
+		            	    catch (IOException e) {
+		            	    	MipavUtil.displayError("IOException " + e + " on raFile.close()");
+		            	    	return;
+		            	    }
+	    				} // else not CSV
 	                    
 	                    
                      havePoints = true;
@@ -1090,7 +1145,6 @@ public class JDialogMeanShiftClustering extends JDialogScriptableBase implements
 	 */
 	protected void callAlgorithm() {
 		try {
-			
 			 alg = new AlgorithmMeanShiftClustering(image, K, L, k_neigh, data_file_name, input_directory, choosePoints,
 					 jump, percent, fixedWidth, width, findOptimalKL, epsilon, Kmin, Kjump, FAMS_DO_SPEEDUP,
 					 nPoints, nDims, pttemp, modesImage, prunedModesImage);
