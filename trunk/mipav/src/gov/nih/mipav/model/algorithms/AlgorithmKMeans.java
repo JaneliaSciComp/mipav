@@ -1039,13 +1039,17 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	dataString += "(number of clusters)*(number of clusters)*determinant(withinGroupMatrix)/determinant(totalSquaresMatrix) = " + 
     	              String.valueOf(MarriottFigureOfMerit/totalSquaresDeterminant) + "\n";
     	if (haveCSV) {
-			dataString += "#";
+    		dataString += "#If this value is constant and equal to 1 for all numbers of clusters then the population is uniform\n";
 		}
-    	dataString += "If this value is constant and equal to 1 for all numbers of clusters, then the population is uniform\n";
+    	else {
+    	    dataString += "If this value is constant and equal to 1 for all numbers of clusters, then the population is uniform\n";
+    	}
     	if (haveCSV) {
-			dataString += "#";
+    		dataString += "#If this value > 1 for all numbers of clusters then only a single group is present\n\n";
 		}
-    	dataString += "If this value > 1 for all numbers of clusters, then only a single group is present\n\n";
+    	else {
+    	    dataString += "If this value > 1 for all numbers of clusters, then only a single group is present\n\n";
+    	}
     	
     	for (i = 0; i < numberClusters; i++) {
     		
