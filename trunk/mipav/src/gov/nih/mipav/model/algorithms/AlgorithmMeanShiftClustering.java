@@ -362,7 +362,7 @@ Dear Ilan Shimshoni,
 	        findEpsilon = epsilon + 1;
 	        
 	        // select points on which test is run
-	        selectMSPoints(FAMS_FKL_NEL*100.0/nPoints, 0);
+	        selectMSPoints(Math.min(100.0,FAMS_FKL_NEL*100.0/nPoints), 0);
 	        
 	        // Compute bandwidths for selected points
 	        computeRealBandwidths(hWidth);
@@ -556,6 +556,12 @@ Dear Ilan Shimshoni,
 	   float xarr[] = new float[1];
 	   float yarr[] = new float[1];
 	   float zarr[] = new float[1];
+	   String extension = null;
+	   boolean haveCSV = false;
+	   String valueX = null;
+	   String valueY = null;
+	   String valueZ = null;
+	   String dataString = null;
 	   if (npm < 1)
 	      return;
 	   Preferences.debug("Save joined convergence points in " + fn + "\n", Preferences.DEBUG_ALGORITHM);
@@ -589,19 +595,40 @@ Dear Ilan Shimshoni,
 	    	   volume = sliceSize * extents[2];
 	       }
 	   } // if (prunedModesImage != null)
+	   i = fn.indexOf(".");
+		if (i > 0) {
+			extension = fn.substring(i+1);
+			if (extension.equalsIgnoreCase("CSV")) {
+				haveCSV = true;
+			}
+		}
 	   for (i=0; i<npm; i++)
 	   {
-		   try {
-				writeInt(nprunedmodes[i],endianess);
-			}
-			catch (IOException e) {
-		    	MipavUtil.displayError("Error in savePrunedModes writeInt");
-		    	return;
-		    }
+		   if (!haveCSV) { 
+			   try {
+					writeInt(nprunedmodes[i],endianess);
+				}
+				catch (IOException e) {
+			    	MipavUtil.displayError("Error in savePrunedModes writeInt");
+			    	return;
+			    }
+		   }
 		   index = 0;
 	      for (j=0; j<nDims; j++)
 	      {
 	         value = (float)(prunedmodes[i][j]*(maxVal-minVal)/65535.0 + minVal);
+	         if (haveCSV) {
+	             if (j == 0) {
+	            	 valueX = String.valueOf(value);
+	             }
+	             else if (j == 1) {
+	            	 valueY = String.valueOf(value);
+	             }
+	             else if (j == 2) {
+	            	 valueZ = String.valueOf(value);
+	             }
+	         }
+	         else {
 	         try {
 					writeFloat(value, endianess);
 				}
@@ -609,6 +636,7 @@ Dear Ilan Shimshoni,
 			    	MipavUtil.displayError("Error in savePrunedModes writeFloat");
 			    	return;
 			    }
+	         }
 	         if (prunedModesImage != null) {
 	        	 if (j == 0) {
 	        		 index += Math.round(value);
@@ -627,6 +655,16 @@ Dear Ilan Shimshoni,
 	        	 }
 	         } // if (pruendModesImage != null)
 	      } // for (j = 0; j < nDims; j++)
+	      if (haveCSV) {
+	    	  dataString = valueZ + "," + valueX + "," + valueY + "," + String.valueOf(nprunedmodes[i]+1) + "\n";
+	    	  try {
+	    	      raFile.write(dataString.getBytes());
+	    	  }
+	    	  catch (IOException e) {
+	  	    	MipavUtil.displayError("Error in savePrunedModes raFile.write");
+	  	    	return;
+	  	    }
+	      }
 	      if (prunedModesImage != null) {
 	          buffer[index] = nprunedmodes[i];
 	          voiName = String.valueOf(i);
@@ -664,15 +702,17 @@ Dear Ilan Shimshoni,
 	
 	private void saveModes(String fn)
 	{
-		int extents[];
-		   int length;
-		   int xDim = 0;
-		   int sliceSize = 0;
 		   String voiName;
 		   VOI newPtVOI;
 		   float xarr[] = new float[1];
 		   float yarr[] = new float[1];
 		   float zarr[] = new float[1];
+		   String extension = null;
+		   boolean haveCSV = false;
+		   String valueX = null;
+		   String valueY = null;
+		   String valueZ = null;
+		   String dataString = null;
 	   if (nsel < 1)
 	      return;
 	   Preferences.debug("Save convergence points in " + fn + "\n",Preferences.DEBUG_ALGORITHM);
@@ -693,20 +733,31 @@ Dear Ilan Shimshoni,
 	   
 	   int i,j;
 	   float value;
-	   if (modesImage != null) {
-	       extents = modesImage.getExtents();
-	       length = extents[0];
-	       for (i = 1; i < nDims; i++) {
-	    	   length *= extents[i];
-	       }
-	       xDim = extents[0];
-	       sliceSize = xDim * extents[1];
-	   } // if (modesImage != null)	   
+	   // if (modesImage != null)	
+	   i = fn.indexOf(".");
+		if (i > 0) {
+			extension = fn.substring(i+1);
+			if (extension.equalsIgnoreCase("CSV")) {
+				haveCSV = true;
+			}
+		}
 	   for (i=0; i<nsel; i++)
 	   {
 	      for (j=0; j<nDims; j++)
 	      {
 	         value = (float)(modes[i][j]*(maxVal-minVal)/65535.0 + minVal);
+	         if (haveCSV) {
+	             if (j == 0) {
+	            	 valueX = String.valueOf(value);
+	             }
+	             else if (j == 1) {
+	            	 valueY = String.valueOf(value);
+	             }
+	             else if (j == 2) {
+	            	 valueZ = String.valueOf(value);
+	             }
+	         }
+	         else {
 	         try {
 					writeFloat(value, endianess);
 				}
@@ -714,6 +765,7 @@ Dear Ilan Shimshoni,
 			    	MipavUtil.displayError("Error in saveModes writeFloat");
 			    	return;
 			    }
+	         }
 	         if (modesImage != null) {
 	        	 if (j == 0) {
 	        		 xarr[0] = value;
@@ -726,6 +778,16 @@ Dear Ilan Shimshoni,
 	        	 }
 	         } // if (modesImage != null)
 	      } // for (j = 0; j < nDims; j++)
+	      if (haveCSV) {
+	    	  dataString = valueZ + "," + valueX + "," + valueY + "," + String.valueOf(i+1) + "\n";
+	    	  try {
+	    	      raFile.write(dataString.getBytes());
+	    	  }
+	    	  catch (IOException e) {
+	  	    	MipavUtil.displayError("Error in saveModes raFile.write");
+	  	    	return;
+	  	    }
+	      }
 	      if (modesImage != null) {
 	          voiName = String.valueOf(i);
               newPtVOI = new VOI((short) (i), voiName, VOI.POINT, -1.0f);
