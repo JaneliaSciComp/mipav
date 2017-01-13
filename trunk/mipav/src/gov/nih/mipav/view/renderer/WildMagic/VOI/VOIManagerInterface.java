@@ -6108,13 +6108,24 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 					String[] parsed = line.split( "," );
 					if ( parsed.length != 0 )
 					{
-						float z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
-						float x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
-						float y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
-		           	   	
 						VOIText text = new VOIText();
-//						text.setText( "pt_" + count++ );
-						text.setText( "" ); count++;
+						float x, y, z;
+						if ( parsed.length > 3 )
+						{
+							int parsedIndex = 0;
+							String name = String.valueOf( parsed[parsedIndex++] );
+							text.setText(name);
+							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
+							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
+							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0; 
+						}
+						else
+						{
+							z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
+							x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+							y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
+							text.setText( "" ); count++;
+						}
 						text.add( new Vector3f( x, y, z ) );
 						text.add( new Vector3f( x+1, y, z ) );
 //						text.setUseMarker(false);

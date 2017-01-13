@@ -832,6 +832,17 @@ public class WormSegmentationWindowing extends WormSegmentation
 					clusterCount--;
 					centerList.remove( centerList.lastElement() );
 					boundingBoxes.remove( boundingBoxes.lastElement() );
+					
+
+					for ( int j = 0; j < cluster.size(); j++ )
+					{
+						x = Math.round(cluster.elementAt(j).X);
+						y = Math.round(cluster.elementAt(j).Y);
+						z = Math.round(cluster.elementAt(j).Z);
+
+						results.set(x, y, z, 0);
+					}
+					
 				}
 			}
 			else
