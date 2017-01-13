@@ -6117,19 +6117,22 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 							text.setText(name);
 							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
-							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0; 
+							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
+							text.add( new Vector3f( x, y, z ) );
+							text.add( new Vector3f( x+1, y, z ) );
+							annotationVOI.getCurves().add(text);
 						}
-						else
+						else if ( parsed.length == 3 )
 						{
 							z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
 							x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
 							y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
-							text.setText( "" ); count++;
+							text.setText( "" );
+							text.add( new Vector3f( x, y, z ) );
+							text.add( new Vector3f( x+1, y, z ) );
+							annotationVOI.getCurves().add(text);
 						}
-						text.add( new Vector3f( x, y, z ) );
-						text.add( new Vector3f( x+1, y, z ) );
-//						text.setUseMarker(false);
-						annotationVOI.getCurves().add(text);
+						count++;
 					}
 					line = br.readLine();
 				}

@@ -2054,9 +2054,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		int dimY = m_kVolumeImageA.GetImage().getExtents().length > 1 ? m_kVolumeImageA.GetImage().getExtents()[1] : 1;
 		int dimZ = m_kVolumeImageA.GetImage().getExtents().length > 2 ? m_kVolumeImageA.GetImage().getExtents()[2] : 1;
         float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
-		sphereScale = 0.05f * Math.min( dimX, Math.min( dimY, dimZ ) );
-		sphereScale = Math.max( 6, sphereScale );
-		
+		sphereScale = 12*afResolutions[0];
+		System.err.println( sphereScale );
 		Transformation xfrm = new Transformation();
 //		xfrm.SetUniformScale( sphereScale );
 		xfrm.SetScale( sphereScale/(2*afResolutions[0]), sphereScale/(2*afResolutions[1]), sphereScale/(2*afResolutions[2]) );
