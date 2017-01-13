@@ -241,6 +241,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							{
 								model.segmentLattice(wormImage, false);
 							}
+							model.retwist(wormImage);
 							if ( straightenMarkersCheck.isSelected() )
 							{
 								model.setSegmentSeamCells( true );
@@ -483,11 +484,11 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 		gbc.gridy++;
 		gbc.gridx = 0;
 
-		segmentationPaddingText = gui.buildField("Segmentation padding (voxels): ", "           10");
+		segmentationPaddingText = gui.buildField("Segmentation padding (voxels): ", "           0");
 		algorithmPanel.add(segmentationPaddingText.getParent(), gbc);
 		gbc.gridy++;
 
-		straightenMarkersCheck = gui.buildCheckBox( "Straighten Markers", true );
+		straightenMarkersCheck = gui.buildCheckBox( "Straighten Markers", false );
 		algorithmPanel.add(straightenMarkersCheck.getParent(), gbc);
 		gbc.gridx++;
 		ButtonGroup group = new ButtonGroup();
