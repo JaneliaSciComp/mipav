@@ -149,6 +149,8 @@ public class AlgorithmSpectralClustering extends AlgorithmBase  {
         File file;
         RandomAccessFile raFile;
         String dataString = "";
+        String extension = null;
+        boolean haveCSV = false;
         
         nDims = pos.length;
         nPoints = pos[0].length;
@@ -283,21 +285,44 @@ public class AlgorithmSpectralClustering extends AlgorithmBase  {
             setCompleted(false);
             return; 
         }
+        i = resultsFileName.indexOf(".");
+		if (i > 0) {
+			extension = resultsFileName.substring(i+1);
+			if (extension.equalsIgnoreCase("CSV")) {
+				haveCSV = true;
+			}
+		}
         
         if (scaleVariablesToUnitVariance) {
+        	if (haveCSV) {
+    			dataString += "#";
+    		}
             dataString += "Variables scaled to unit variance\n";
         }
         else {
+        	if (haveCSV) {
+    			dataString += "#";
+    		}
             dataString += "Variables not scaled to unit variance\n";
         }
+        if (haveCSV) {
+			dataString += "#";
+		}
         dataString += "Number of clusters = " + String.valueOf(numberClusters) + "\n\n";
         
         for (i = 0; i < nPoints; i++) {
-            dataString += "Point number " + String.valueOf(i+1) + "  Location  ";
-            for (j = 0; j < nDims; j++) {
-                dataString += String.valueOf(pos[j][i]) + "  "; 
-            }
-            dataString += "Cluster  " + String.valueOf(groupNum[i]+1) + "\n";
+        	if (haveCSV) {
+        		// z x y
+    		    dataString += String.valueOf(pos[2][i]) + "," + String.valueOf(pos[0][i]) + "," +
+    			String.valueOf(pos[1][i]) + "," + String.valueOf(groupNum[i] + 1) + "\n";	
+        	} // if (haveCSV)
+        	else {
+	            dataString += "Point number " + String.valueOf(i+1) + "  Location  ";
+	            for (j = 0; j < nDims; j++) {
+	                dataString += String.valueOf(pos[j][i]) + "  "; 
+	            }
+	            dataString += "Cluster  " + String.valueOf(groupNum[i]+1) + "\n";
+        	}
         }
         try {
             raFile.write(dataString.getBytes());
