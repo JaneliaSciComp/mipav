@@ -3,8 +3,6 @@ package gov.nih.mipav.view.dialogs;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
@@ -15,13 +13,10 @@ import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTree;
@@ -40,10 +35,9 @@ import javax.swing.tree.TreePath;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.AlgorithmVOILogicalOperations;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIHausdorffDistance;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
@@ -62,7 +56,6 @@ import gov.nih.mipav.view.VOIGroupNode;
 import gov.nih.mipav.view.VOIHandlerInterface;
 import gov.nih.mipav.view.VOIContourNode;
 import gov.nih.mipav.view.VOIOrientationNode;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
 
@@ -70,7 +63,7 @@ import gov.nih.mipav.view.ViewVOIVector;
 /**
  * @author ilb
  * 
- * This dialog and utility allows for logical operations of VOIs
+ * This dialog and utility allows for calculating the Hausdorff distance between 2 VOIs.
  *
  */
 public class JDialogVOIHausdorffDistance extends JDialogScriptableBase implements AlgorithmInterface, VOIStatisticList,
@@ -78,7 +71,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	
 	
 	 /** image and cloned image */
-    protected ModelImage image, clonedImage;
+    protected ModelImage image;
     
     protected ViewUserInterface userInterface;
     
@@ -92,28 +85,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
     private JPanelAddRemoveVOI addremove;
     
     /** algorithm **/
-    private AlgorithmVOILogicalOperations alg;
-    
-    /** panels **/
-    private JPanel logicalOptionsPanel, imageOptionsPanel;
-
-    /** radio button **/
-    private JRadioButton and;
-
-    /** radio button **/
-    private JRadioButton or;
-
-    /** radio button **/
-    private JRadioButton xor;
-
-    /** radio button **/
-    private JRadioButton createVoiImage;
-    
-    /** radio button **/
-    private JRadioButton createMaskImage;
-
-    /** flag indicating whether output should be VOI image or mask image **/
-    private boolean doVOIImage = false;
+    private AlgorithmVOIHausdorffDistance alg;
     
     /** DOCUMENT ME! */
     private DefaultMutableTreeNode sourceRoot, selectedRoot;
@@ -212,7 +184,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	 * @param voiList
 	 */
 	protected void buildDialog(final VOIVector voiList) {
-        setTitle("Calculate Logical Operations on VOI groups");
+        setTitle("Calculate Hausdorff distance on 2 VOI groups");
 
         this.userInterface = ViewUserInterface.getReference();
         
@@ -221,7 +193,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         everything.setFont(MipavUtil.font12B);
         everything.insertTab("VOI selection", null, buildVOIPanel(voiList), // we must store this panel so we can
                 // create a new listing later
-                "Choose VOIs and statistics file", JDialogVOIStatistics.VOI_TAB);
+                "Choose 2 VOIs", JDialogVOIStatistics.VOI_TAB);
 
 
         
@@ -622,22 +594,6 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         // we must store sourcePanel so we can create a new directory listing later
         imagePanel.add(buildSourcePanel(VOIlist), BorderLayout.CENTER);
 
-        final JPanel optionsPanel = new JPanel(new GridBagLayout());
-        
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        logicalOptionsPanel = new JPanelLogicalOptions();
-        imageOptionsPanel = new JPanelImageOptions();
-        gbc.gridx = 0;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        optionsPanel.add(logicalOptionsPanel, gbc);
-        gbc.gridx = 1;
-        optionsPanel.add(imageOptionsPanel, gbc);
-
-        imagePanel.add(optionsPanel, BorderLayout.SOUTH);
-
         return imagePanel;
     }
 	
@@ -710,33 +666,8 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         	 processList.add(voi);
         	
         	
-        }
-		
-
-        
-        
-        doVOIImage = false;
-        
-        if(and.isSelected()) {
-        	logicalOperation = AlgorithmVOILogicalOperations.ADD;
-        }else if(or.isSelected()) {
-        	logicalOperation = AlgorithmVOILogicalOperations.OR;
-        }else {
-        	logicalOperation = AlgorithmVOILogicalOperations.XOR;
-        }
-        
-        if(createVoiImage.isSelected()) {
-        	doVOIImage = true;
-        }
-        
-        
-        
-        clonedImage = (ModelImage)(image.clone());
-        
-        clonedImage.unregisterAllVOIs();
-        
-        
-        alg = new AlgorithmVOILogicalOperations(clonedImage, processList,logicalOperation, doVOIImage);
+        } 
+        alg = new AlgorithmVOIHausdorffDistance(image, processList);
         
         alg.addListener(this);
 
@@ -757,38 +688,14 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	 * 
 	 */
 	protected void setGUIFromParams() {
-		setLogicalOperation(Integer.valueOf(scriptParameters.getParams().getString("operation")).intValue());
-		setDoVOIImage(Boolean.valueOf(scriptParameters.getParams().getString("doVOIImg")).booleanValue());
 		image = scriptParameters.retrieveInputImage();
 		processList = image.getVOIs();
-		clonedImage = (ModelImage)(image.clone());
-        clonedImage.unregisterAllVOIs();
-
 	}
 
 	/**
 	 * 
 	 */
-	protected void storeParamsFromGUI() throws ParserException {
-
-		if(and.isSelected()) {
-        	logicalOperation = AlgorithmVOILogicalOperations.ADD;
-        	
-        }else if(or.isSelected()) {
-        	logicalOperation = AlgorithmVOILogicalOperations.OR;
-        }else {
-        	logicalOperation = AlgorithmVOILogicalOperations.XOR;
-        }
-		scriptParameters.getParams().put(ParameterFactory.newParameter("operation", logicalOperation));
-        
-		boolean doVOIImg = false;
-        if(createVoiImage.isSelected()) {
-        	doVOIImg = true;
-        }
-        scriptParameters.getParams().put(ParameterFactory.newParameter("doVOIImg", doVOIImg));
-        
-        
-		
+	protected void storeParamsFromGUI() throws ParserException {	
 
 	}
 
@@ -796,23 +703,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	 * 
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		if(doVOIImage) {
-
-	        VOIVector kVOIs = clonedImage.getVOIs();
-	        for ( int i = 0; i < kVOIs.size(); i++ )
-	        {
-	            kVOIs.elementAt(i).setAllActive(true);
-	        }
-	        clonedImage.groupVOIs();
-			
-			
-			new ViewJFrameImage(clonedImage);
-
-			
-		}else {
-			ModelImage finalMaskImage = ((AlgorithmVOILogicalOperations)algorithm).getFinalMaskImage();
-			new ViewJFrameImage(finalMaskImage);
-		}
+		
 		cleanUpAndDispose();
 
 	}
@@ -828,16 +719,12 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 				return;
 			}*/
 	           
-	           if(selectedVoiTree.getRowCount() == 1) {
-	        	   MipavUtil.displayError("You must select at least 1 VOI");
+	           if(selectedVoiTree.getRowCount() != 3) {
+	        	   MipavUtil.displayError("You must select 2 VOIs");
 	        	   return;
 	           }
 			callAlgorithm();
 		}else if(command.equals("Cancel")) {
-			if(clonedImage != null) {
-				 clonedImage.disposeLocal();
-				 clonedImage = null;
-			 }
 			cleanUpAndDispose();
 		} else {
             super.actionPerformed(e);
@@ -847,10 +734,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	
 	
 	 public void windowClosing(WindowEvent event) {
-		 if(clonedImage != null) {
-			 clonedImage.disposeLocal();
-			 clonedImage = null;
-		 }
+		 
 		 cleanUpAndDispose();
 		 
 	 }
@@ -1677,64 +1561,6 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
     
     
 
-    public class JPanelLogicalOptions extends JPanel {
-
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = -4726615904924397356L;
-
-        
-
-        /**
-         * Creates a default layout, of the radio button options laid-out vertically. Currently, &quot;XML&quot; is not
-         * selectable.
-         */
-        public JPanelLogicalOptions() {
-            final ButtonGroup group = new ButtonGroup();
-            setBorder(buildTitledBorder("Logical Operations"));
-            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            and = new JRadioButton("AND", true);
-            and.setFont(MipavUtil.font12);
-            or = new JRadioButton("OR", false);
-            or.setFont(MipavUtil.font12);
-            xor = new JRadioButton("XOR", false);
-            xor.setFont(MipavUtil.font12);
-
-
-            // add to grouping
-            group.add(and);
-            group.add(or);
-            group.add(xor);
-
-            add(and);
-            add(or);
-            add(xor);
-        }
-
-
-    }
-    
-    
-    
-    public class JPanelImageOptions extends JPanel {
-    	
-    	  public JPanelImageOptions() {
-    		  final ButtonGroup group = new ButtonGroup();
-              setBorder(buildTitledBorder("Output Image"));
-              setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-              createVoiImage = new JRadioButton("VOI Image", true);
-              createVoiImage.setFont(MipavUtil.font12);
-              createMaskImage = new JRadioButton("Mask Image", false);
-              createMaskImage.setFont(MipavUtil.font12);
-              
-              group.add(createVoiImage);
-              group.add(createMaskImage);
-
-              add(createVoiImage);
-              add(createMaskImage);
-    	  }
-    	
-    }
-    
     
     
     /**
@@ -1837,27 +1663,27 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	public ActionMetadata getActionMetadata() {
 		return new MipavActionMetadata() {
             public String getCategory() {
-                return new String("VOI.VOI Logical Operations");
+                return new String("VOI.VOI Hausdorff Distance");
             }
 
             public String getDescription() {
-                return new String("VOI Logical Operations");
+                return new String("VOI Hausdorff Distance");
             }
 
             public String getDescriptionLong() {
-                return new String("VOI Logical Operations");
+                return new String("VOI Hausdorff Distance");
             }
 
             public String getShortLabel() {
-                return new String("VOI Logical Operations");
+                return new String("VOI Hausdorff Distance");
             }
 
             public String getLabel() {
-                return new String("VOI Logical Operations");
+                return new String("VOI Hausdorff Distance");
             }
 
             public String getName() {
-                return new String("VOI Logical Operations");
+                return new String("VOI Hausdorff Distance");
             }
         };
 
@@ -1878,23 +1704,4 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
-
-	public void setDoVOIImage(boolean doVOIImage) {
-		this.doVOIImage = doVOIImage;
-	}
-
-	public void setLogicalOperation(int logicalOperation) {
-		this.logicalOperation = logicalOperation;
-	}
-	
-	
-	
-	
-
-
-
-	
-	
-
 }
