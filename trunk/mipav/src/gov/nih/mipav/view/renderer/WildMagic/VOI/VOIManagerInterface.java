@@ -84,6 +84,7 @@ import gov.nih.mipav.view.dialogs.JDialogSurfaceReconstruction;
 import gov.nih.mipav.view.dialogs.JDialogTransformVOI;
 import gov.nih.mipav.view.dialogs.JDialogTrim;
 import gov.nih.mipav.view.dialogs.JDialogVOIBoolean;
+import gov.nih.mipav.view.dialogs.JDialogVOIHausdorffDistance;
 import gov.nih.mipav.view.dialogs.JDialogVOILogicalOperations;
 import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
@@ -221,6 +222,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     protected JDialogVOIStats m_kVOIDialog;
     
     private JDialogVOILogicalOperations m_kVOILogicalOperationsDialog;
+    private JDialogVOIHausdorffDistance m_kVOIHausdorffDistanceDialog;
     
     private int m_iMaxUndo = 1000;
     /** Saved VOI states for undo. */
@@ -1172,6 +1174,18 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
             } else {
                 MipavUtil.displayError("At least 1 VOI must be present to perform Logical Operations");
+            }
+        } 
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_HAUSDORFF_DISTANCE.getActionCommand())) {
+        	if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() >= 2 )) {
+        		m_kVOIHausdorffDistanceDialog = new JDialogVOIHausdorffDistance(this,getActiveImage().getVOIs());
+
+                 //addVOIUpdateListener(m_kVOIHausdorffDistanceDialog);
+                 
+                 
+                 m_kVOIHausdorffDistanceDialog.setVisible(true);
+            } else {
+                MipavUtil.displayError("At least 2 VOIs must be present to perform Hausdorff Distance");
             }
         } 
         else if ( command.equals("TransformVOI")){
