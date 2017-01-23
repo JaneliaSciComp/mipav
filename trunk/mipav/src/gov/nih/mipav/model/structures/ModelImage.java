@@ -2178,61 +2178,63 @@ public class ModelImage extends ModelStorageBase {
         }
 
         nVOIs = voiVector.size();
+        if (nVOIs >= 1) {
         
-        short id = (short) (voiVector.lastElement().getID()+1);
-        short index = 0;
-        final String joinedStr = "joined";
-        for(int j=0; j<voiVector.size(); j++) {
-            if(voiVector.get(j).getName().contains("joined")) {
-                index++;
-            }
-        }
-
-        int type = -1;
-        int existingIndex = -1;
-        String name = null;
-        for(int i=nVOIs-1; i>=0; i--) {
-            if(type == -1 && voiVector.get(i).isActive()) {
-                type = voiVector.get(i).getCurveType();
-            }
-            if(voiVector.get(i).isAllActive()) {
-                existingIndex = i;
-                name = voiVector.get(i).getName();
-            }
-        }
-        
-        if(existingIndex == -1) {
-            name = joinedStr+index;
-            if(type == VOI.POLYLINE || type == VOI.LINE || type == VOI.PROTRACTOR || type == VOI.POINT) {
-                name += nameExt;
-            }
-            newVOI = new VOI(id, name, type, -1.0f);
-        } else {
-            newVOI = voiVector.get(existingIndex);
-        }
-        
-        for (int i = nVOIs - 1; i >= 0; i--) {
-            VOI subVOI = voiVector.get(i);
-            if(subVOI != newVOI && subVOI.getCurveType() == type) {
-                VOIBaseVector subBase = subVOI.getCurves();
-                int nCurves = subBase.size();
-                for(int j = nCurves-1; j >= 0; j--) {
-                    VOIBase subBaseInst = subBase.get(j);
-                    if(subBaseInst.isActive()) {
-                        subBase.removeElementAt(j);
-                        newVOI.getCurves().addElement(subBaseInst);
-                    }
-                }
-            }
-            if(subVOI.getCurves().isEmpty()) {
-                voiVector.remove(i);
-            }
-        }
-        
-        newVOI.setAllActive(true);
-        if(!voiVector.contains(newVOI)) {
-            voiVector.add(newVOI);
-        }
+	        short id = (short) (voiVector.lastElement().getID()+1);
+	        short index = 0;
+	        final String joinedStr = "joined";
+	        for(int j=0; j<voiVector.size(); j++) {
+	            if(voiVector.get(j).getName().contains("joined")) {
+	                index++;
+	            }
+	        }
+	
+	        int type = -1;
+	        int existingIndex = -1;
+	        String name = null;
+	        for(int i=nVOIs-1; i>=0; i--) {
+	            if(type == -1 && voiVector.get(i).isActive()) {
+	                type = voiVector.get(i).getCurveType();
+	            }
+	            if(voiVector.get(i).isAllActive()) {
+	                existingIndex = i;
+	                name = voiVector.get(i).getName();
+	            }
+	        }
+	        
+	        if(existingIndex == -1) {
+	            name = joinedStr+index;
+	            if(type == VOI.POLYLINE || type == VOI.LINE || type == VOI.PROTRACTOR || type == VOI.POINT) {
+	                name += nameExt;
+	            }
+	            newVOI = new VOI(id, name, type, -1.0f);
+	        } else {
+	            newVOI = voiVector.get(existingIndex);
+	        }
+	        
+	        for (int i = nVOIs - 1; i >= 0; i--) {
+	            VOI subVOI = voiVector.get(i);
+	            if(subVOI != newVOI && subVOI.getCurveType() == type) {
+	                VOIBaseVector subBase = subVOI.getCurves();
+	                int nCurves = subBase.size();
+	                for(int j = nCurves-1; j >= 0; j--) {
+	                    VOIBase subBaseInst = subBase.get(j);
+	                    if(subBaseInst.isActive()) {
+	                        subBase.removeElementAt(j);
+	                        newVOI.getCurves().addElement(subBaseInst);
+	                    }
+	                }
+	            }
+	            if(subVOI.getCurves().isEmpty()) {
+	                voiVector.remove(i);
+	            }
+	        }
+	        
+	        newVOI.setAllActive(true);
+	        if(!voiVector.contains(newVOI)) {
+	            voiVector.add(newVOI);
+	        }
+        } // if (nVOIs >= 1)
 
         notifyImageDisplayListeners();
 
