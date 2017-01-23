@@ -1097,6 +1097,8 @@ public class ViewMenuBar {
 						// false),
 						menuBuilder.buildMenuItem("VOI Logical Operations", "VOILogicalOperations", 0, null, true),
 						ViewMenuBar.separator,
+						menuBuilder.buildMenuItem("VOI Hausdorff Distance", "VOIHausdorffDistance", 0, null, true),
+						ViewMenuBar.separator,
 						menuBuilder
 								.makeMenu("Propagate", true,
 										new JMenuItem[] {
@@ -1255,6 +1257,8 @@ public class ViewMenuBar {
 						// menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS,
 						// false),
 						menuBuilder.buildMenuItem("VOI Logical Operations", "VOILogicalOperations", 0, null, true),
+						ViewMenuBar.separator,
+						menuBuilder.buildMenuItem("VOI Hausdorff Distance", "VOIHausdorffDistance", 0, null, true),
 						ViewMenuBar.separator,
 						menuBuilder
 								.makeMenu("Propagate", true,
