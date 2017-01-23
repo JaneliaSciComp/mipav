@@ -18,7 +18,7 @@ import gov.nih.mipav.model.algorithms.itk.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
-
+import gov.nih.mipav.model.scripting.parameters.Parameter;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
