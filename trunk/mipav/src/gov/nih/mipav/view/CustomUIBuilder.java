@@ -50,6 +50,7 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_VOI_TRIM = new UIParams("Trim parameter", "Trim", 0, "Trim points from contour", null);
     public static final UIParams PARAM_VOI_STATISTICS = new UIParams("Statistics generator", "VOIStistics", 'G', null, null );
     public static final UIParams PARAM_VOI_LOGICAL_OPERATIONS = new UIParams("VOI Logical Operations", "VOILogicalOperations", UIParams.INVALID_MNEMONIC, null, null );
+    public static final UIParams PARAM_VOI_HAUSDORFF_DISTANCE = new UIParams("VOI Hausdorff Distance", "VOIHausdorffDistance", UIParams.INVALID_MNEMONIC, null, null );
     public static final UIParams PARAM_VOI_EDIT_CIRCLE_DIAM = new UIParams("Edit Circle Diameter", "editCircleDiameter", UIParams.INVALID_MNEMONIC, "Edit Circle Diameter", null );
     public static final UIParams PARAM_VOI_EDIT_SQUARE_LENGTH = new UIParams("Edit Square Length", "editSquareLength", UIParams.INVALID_MNEMONIC, "Edit Square Length", null );
     public static final UIParams PARAM_VOI_SHOW_CONTOUR_BOUNDING_BOX = new UIParams("Show/Hide Bounding Box", "showContourBoundingBox", UIParams.INVALID_MNEMONIC, "Show contour bounding box", "empty" );
