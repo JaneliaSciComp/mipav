@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 import java.awt.Color;
 import java.util.BitSet;
 
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -123,6 +124,9 @@ public class AlgorithmVOIHausdorffDistance extends AlgorithmBase {
 		int selectedXj = -1;
 		int selectedYj = -1;
 		int selectedZj = -1;
+		int finalXj = -1;
+		int finalYj = -1;
+		int finalZj = -1;
 		int j;
 		int x, y, z, xj, yj, zj;
 		double diffX;
@@ -163,6 +167,9 @@ public class AlgorithmVOIHausdorffDistance extends AlgorithmBase {
         		        	selectedYi = y;
         		        	selectedZi = z;
         		        	sourceVOI = 1;
+        		        	finalXj = selectedXj;
+        		        	finalYj = selectedYj;
+        		        	finalZj = selectedZj;
         		        }
         		    } // if ((mask[i] == 1) || (mask[i] == 3)) 	
         		} // for (x = 0; x < xDim; x++, i++)
@@ -203,6 +210,9 @@ public class AlgorithmVOIHausdorffDistance extends AlgorithmBase {
         		        	selectedYi = y;
         		        	selectedZi = z;
         		        	sourceVOI = 2;
+        		        	finalXj = selectedXj;
+        		        	finalYj = selectedYj;
+        		        	finalZj = selectedZj;
         		        }
         		    } // if ((mask[i] == 2) || (mask[i] == 3)) 	
         		} // for (x = 0; x < xDim; x++, i++)
@@ -211,7 +221,7 @@ public class AlgorithmVOIHausdorffDistance extends AlgorithmBase {
         
         hausdorffDistance = Math.sqrt(hausdorffDistanceSquared);
         ViewUserInterface UI = ViewUserInterface.getReference();
-        UI.setDataText("The Hausdorff distance = " + hausdorffDistance + "\n");
+        UI.setDataText("The Hausdorff distance = " + hausdorffDistance +  " " + resXUnit.toString() + "\n");
         String sourceName = null;
         String destName = null;
         if (sourceVOI == 1) {
@@ -230,21 +240,22 @@ public class AlgorithmVOIHausdorffDistance extends AlgorithmBase {
         }
         
         if (image.getNDims() > 2) {
-            UI.setDataText("Ends at x = " + selectedXj + " y = " + selectedYj + " z = " + selectedZj + " in " + destName + "\n");
+            UI.setDataText("Ends at x = " + finalXj + " y = " + finalYj + " z = " + finalZj + " in " + destName + "\n");
         }
         else {
-        	UI.setDataText("Ends at x = " + selectedXj + " y = " + selectedYj + " in " + destName + "\n");	
+        	UI.setDataText("Ends at x = " + finalXj + " y = " + finalYj + " in " + destName + "\n");	
         }
         
-        if (image.getNDims() == 2) {
+        if (selectedZi == finalZj) {
         	VOI hLineVOI = new VOI((short) 0, "hLine", VOI.LINE, -1.0f);
-        	int xArray[] = new int[]{selectedXi, selectedXj};
-        	int yArray[] = new int[]{selectedYi, selectedYj};
-        	int zArray[] = new int[]{selectedZi, selectedZj};
+        	int xArray[] = new int[]{selectedXi, finalXj};
+        	int yArray[] = new int[]{selectedYi, finalYj};
+        	int zArray[] = new int[]{selectedZi, finalZj};
             hLineVOI.importCurve(xArray, yArray, zArray);
             image.registerVOI(hLineVOI);
             hLineVOI.setFixed(true);
-            hLineVOI.setColor(Color.orange);	
+            hLineVOI.setColor(Color.orange);
+            image.notifyImageDisplayListeners();
         }
         
         setCompleted(true);
