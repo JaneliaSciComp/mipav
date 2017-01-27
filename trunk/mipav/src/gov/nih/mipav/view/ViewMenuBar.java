@@ -534,6 +534,7 @@ public class ViewMenuBar {
 										menuBuilder.buildMenuItem("Circular sector to rectangle", "CirToRec", 0, null,
 												false),
 								menuBuilder.buildMenuItem("Color saturation", "ColorSaturation", 0, null, false),
+								menuBuilder.buildMenuItem("Ellipse to circle", "EllipseToCircle", 0, null, false),
 								menuBuilder.buildMenuItem("Nearly circle to circle", "NearlyCircleToCircle", 0, null,
 										false),
 								menuBuilder.buildMenuItem("Reslice - isotropic voxels", null, 0, null, false),
