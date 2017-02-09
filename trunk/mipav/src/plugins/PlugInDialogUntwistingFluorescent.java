@@ -42,10 +42,11 @@ import gov.nih.mipav.view.ViewOpenFileUI;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModelEM;
-import gov.nih.mipav.view.renderer.WildMagic.Render.ModelImageLargeFormat;
-import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentation;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModelEM;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.ModelImageLargeFormat;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -142,8 +143,10 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 				{	
 					System.err.println( "   " + fileName );
 					FileIO fileIO = new FileIO();
-					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-
+					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
+					WormData wormData = new WormData(wormImage); 
+					
+					ModelImage seamImage = null;
 					if ( segmentSeamCheck.isSelected() )
 					{
 						// Create output directory for seam cell segmentation:
@@ -161,11 +164,10 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 						}
 
 						// Segmented blurred input image:
-						ModelImage blur = WormSegmentation.blur(wormImage, 3);
-						Vector<Vector3f> seamCells = WormSegmentation.segmentSeam(blur, minRadius, maxRadius, outputDir);
-						blur.disposeLocal(false);
-
-
+						wormData.segmentSeamCells(minRadius, maxRadius);
+						seamImage = wormData.getSeamSegmentation();
+						Vector<Vector3f> seamCells = wormData.getSeamCells();
+						
 						String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
 						VOIVector latticeVector = new VOIVector();
 						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
@@ -207,6 +209,8 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 						fileNamesList.add( baseFileName + "_"  + includeRange.elementAt(i) );
 						numSegmented.add( seamCells.size() );
 						numMatched.add(numFound);
+						
+
 					}
 					if ( straightenImageCheck.isSelected() || straightenMarkersCheck.isSelected() )
 					{
@@ -217,8 +221,15 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 						if ( latticeVector.size() != 0 )
 						{
 							LatticeModel model = new LatticeModel(wormImage);
+							model.setSeamCellImage(seamImage);
 							model.setLattice(latticeVector.elementAt(0));
-
+//							float[] length = new float[1];
+//							float[] curvature = new float[1];
+//							float[] intersectionCount = new float[1];
+//							model.testLatticeConflicts(length, curvature, intersectionCount);
+//							float[] avgLatticeValue = model.testLatticeImage();
+//							System.err.println( wormImage.getImageName() + " intersection:    " + intersectionCount[0] + "      " + avgLatticeValue[0] + "   " + avgLatticeValue[1] );
+							
 							String nucleiFileName = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + "marker" + File.separator + "marker.csv";
 							File nucleiFile = new File(nucleiFileName);
 							if ( nucleiFile.exists() )
@@ -244,17 +255,13 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							model.retwist(wormImage);
 							if ( straightenMarkersCheck.isSelected() )
 							{
-								model.setSegmentSeamCells( true );
 								model.interpolateLattice( false, false, false, true );								
 							}
-							model.dispose();
-							model = null;
 
 							if ( wormImage != null )
 							{
 								wormImage.disposeLocal(false);
 							}
-
 
 							// Build the full image name:
 							baseFileName = baseFileNameText.getText();
@@ -266,9 +273,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 								System.err.println( "   " + fileName );
 								fileIO = new FileIO();
 								wormImage = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null); 
-								model = new LatticeModel(wormImage);
-								model.setLattice(latticeVector.elementAt(0));
-								model.setSegmentSeamCells( false );
+								model.setImage(wormImage);
 								model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
 
 								if ( segmentSkinSurface.isSelected() )
@@ -291,6 +296,11 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							if ( contourImage != null )
 							{
 								contourImage.disposeLocal(false);
+							}
+
+							if ( wormData != null )
+							{
+								wormData.dispose();
 							}
 						}
 						else
@@ -671,15 +681,15 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 			}
 		}
 		int foundCount = seam.size() - count;
-		if ( foundCount >= 20 )
-		{
-			System.err.println( "     PASS" );
-		}
-		if ( foundCount < 20 )
-		{
-			System.err.println( "     FAIL" );
-			System.err.println( "     " + count + " out of " + seam.size() + " not found" );
-		}
+//		if ( foundCount >= 20 )
+//		{
+//			System.err.println( "     PASS" );
+//		}
+//		if ( foundCount < 20 )
+//		{
+//			System.err.println( "     FAIL" );
+//			System.err.println( "     " + count + " out of " + seam.size() + " not found" );
+//		}
 		return foundCount;
 	}
 

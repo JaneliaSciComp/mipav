@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer.WildMagic.Render;
+package gov.nih.mipav.view.renderer.WildMagic.WormUntwisting;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;

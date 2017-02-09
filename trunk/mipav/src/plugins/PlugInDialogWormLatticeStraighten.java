@@ -41,8 +41,8 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
-import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentation;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -3591,7 +3591,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 //					JDialogBase.updateFileInfo(wormImageA, contourImage);
 					
 					fileName = baseFileDir + File.separator;
-					WormSegmentation.outside( fileName, wormImageA, maximumProjectionImage, 5 /*(float) (wormImageA.getMax() * 0.01) */, 3, currentMP++ );
+					WormSegmentation.outside( fileName, wormImageA, maximumProjectionImage, 5 /*(float) (wormImageA.getMax() * 0.01) */, 3 );
 					
 					
 					System.err.println("Done segmentation");

@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer.WildMagic.Render;
+package gov.nih.mipav.view.renderer.WildMagic.WormUntwisting;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -17,6 +17,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
 import java.awt.Color;
@@ -28,6 +29,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
@@ -175,6 +177,7 @@ public class LatticeModel {
 	protected VOIContour rightPositions;
 
 	protected float length;
+	protected float totalCurvature;
 
 	private VOI leftLine;
 
@@ -240,10 +243,9 @@ public class LatticeModel {
 	protected String outputDirectory;
 	protected Short voiID = 0;
 
-	private boolean segmentSeamCells = true;
-
-	private int[][] seamCellIDs;
-	private int[][] allSeamCellIDs;
+	private boolean latticeShifted = false;
+	private int[][] seamCellIDs = null;
+	private int[][] allSeamCellIDs = null;
 	
 	/**
 	 * Creates a new LatticeModel
@@ -295,25 +297,6 @@ public class LatticeModel {
 		updateLattice(true);
 	}
 
-	/**
-	 * Creates a new LatticeModel with the given set of annotations.
-	 * 
-	 * @param imageA
-	 * @param annotation
-	 * @param doAnnotation
-	 */
-	public LatticeModel(final ModelImage imageA, final VOI annotation, final boolean doAnnotation) {
-		this.imageA = imageA;
-		String imageName = imageA.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
-		String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
-		checkParentDir(parentDir);			
-		this.lattice = null;
-		this.setAnnotations(annotation);
-	}
 
 	/**
 	 * Add an annotation to the worm image.
@@ -629,12 +612,6 @@ public class LatticeModel {
 		pickedPoint = null;
 		showSelectedVOI = null;
 		showSelected = null;
-		
-		if ( seamCellImage != null )
-		{
-			seamCellImage.disposeLocal(false);
-			seamCellImage = null;
-		}
 	}
 
 	public int getCurrentIndex()
@@ -747,124 +724,8 @@ public class LatticeModel {
 	 *            image.
 	 */
 	public void interpolateLattice(final boolean displayResult, final boolean useModel, final boolean untwistImage, final boolean untwistMarkers) {
-		// save the original lattice into a backup in case the lattice
-		// is modified to better fit the fluorescent marker segmentation:
-		leftBackup = new VOIContour(false);
-		rightBackup = new VOIContour(false);
-		for (int i = 0; i < left.size(); i++) {
-			leftBackup.add(new Vector3f(left.elementAt(i)));
-			rightBackup.add(new Vector3f(right.elementAt(i)));
-		}
-		
 
-		if ( segmentSeamCells )
-		{
-			String seamCellDir = outputDirectory + File.separator + "output_images" + File.separator;
-			File outputDir = new File(seamCellDir);
-			if ( !outputDir.exists() )
-			{
-				outputDir.mkdir();
-			}
-			File inputFile = new File(seamCellDir + "seamCellImage.xml");
-			if ( inputFile.exists() )
-			{
-				FileIO fileIO = new FileIO();
-				seamCellImage = fileIO.readImage( seamCellDir + "seamCellImage.xml" );
-			}
-			if ( seamCellImage == null )
-			{
-				ModelImage blur = WormSegmentation.blur(imageA, 3);
-				WormSegmentation.segmentSeam(blur, 8, 25, seamCellDir);
-				blur.disposeLocal(false);		
-				if ( inputFile.exists() )
-				{
-					FileIO fileIO = new FileIO();				
-					seamCellImage = fileIO.readImage( seamCellDir + "seamCellImage.xml" );
-				}
-			}
-			
-			if ( seamCellImage !=  null )
-			{
-				seamCellIDs = new int[left.size()][2];
-				for ( int i = 0; i < left.size(); i++ )
-				{
-					Vector3f leftPt = left.elementAt(i);
-					int leftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
-					seamCellIDs[i][0] = leftID;
-					Vector3f rightPt = right.elementAt(i);
-					int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
-					seamCellIDs[i][1] = rightID;
-
-					if ( (leftID != 0) || (rightID != 0) )
-					{
-						Vector3f centerPt = Vector3f.add(leftPt, rightPt);
-						centerPt.scale(0.5f);
-						Vector3f leftDir = Vector3f.sub(leftPt, centerPt);   leftDir.normalize();
-						Vector3f rightDir = Vector3f.sub(rightPt, centerPt); rightDir.normalize();
-
-						int newLeftID = leftID;
-						while ( (leftID != newLeftID) && (newLeftID != 0) )
-						{
-							leftPt.add(leftDir);
-							newLeftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
-						}
-						if ( leftID != 0 )
-						{
-							leftPt.sub(leftDir);
-						}
-						int newRightID = leftID;
-						while ( (rightID != newRightID) && (newRightID != 0) )
-						{
-							rightPt.add(rightDir);
-							newRightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
-						}
-						if ( rightID != 0 )
-						{
-							rightPt.sub(rightDir);
-						}
-					}
-					if ( leftID == 0 )
-					{
-						Vector3f centerPt = Vector3f.add(leftPt, rightPt);
-						centerPt.scale(0.5f);
-						Vector3f leftDir = Vector3f.sub(leftPt, centerPt);
-						float length = leftDir.normalize();
-						int newLeftID = leftID;
-						for ( int j = 1; j < length; j++ )
-						{
-							centerPt.add(leftDir);
-							newLeftID = seamCellImage.getInt( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
-							if ( newLeftID != 0 )
-							{
-								seamCellIDs[i][0] = newLeftID;
-								break;
-							}
-						}						
-					}
-					if ( rightID == 0 )
-					{
-						Vector3f centerPt = Vector3f.add(leftPt, rightPt);
-						centerPt.scale(0.5f);
-						Vector3f rightDir = Vector3f.sub(rightPt, centerPt);
-						float length = rightDir.normalize();
-						int newRightID = rightID;
-						for ( int j = 1; j < length; j++ )
-						{
-							centerPt.add(rightDir);
-							newRightID = seamCellImage.getInt( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
-							if ( newRightID != 0 )
-							{
-								seamCellIDs[i][1] = newRightID;
-								break;
-							}
-						}	
-					}
-					System.err.println( "Left " + i + " " + seamCellIDs[i][0] );
-					System.err.println( "Right " + i + " " + seamCellIDs[i][1] );
-				}
-			}
-		}
-		
+		shiftLattice();
 
 		// Determine the distances between points on the lattice
 		// distances are along the curve, not straight-line distances:
@@ -929,48 +790,7 @@ public class LatticeModel {
 		// also generated. Eventually, the center-line curve will be used to determine the number of sample points
 		// along the length of the straightened worm, and therefore the final length of the straightened worm volume.
 		generateCurves();
-		
-
-		boxBounds = new Vector<Box3f>();
-		ellipseBounds = new Vector<Ellipsoid3f>();
-		final short sID = (short) (imageA.getVOIs().getUniqueID());
-		samplingPlanes = new VOI(sID, "samplingPlanes");
-		for (int i = 0; i < centerPositions.size(); i++) {
-			final Vector3f rkEye = centerPositions.elementAt(i);
-			final Vector3f rkRVector = rightVectors.elementAt(i);
-			final Vector3f rkUVector = upVectors.elementAt(i);
-
-			final Vector3f[] output = new Vector3f[4];
-			final Vector3f rightV = Vector3f.scale(extent, rkRVector);
-			final Vector3f upV = Vector3f.scale(extent, rkUVector);
-			output[0] = Vector3f.add(Vector3f.neg(rightV), Vector3f.neg(upV));
-			output[1] = Vector3f.add(rightV, Vector3f.neg(upV));
-			output[2] = Vector3f.add(rightV, upV);
-			output[3] = Vector3f.add(Vector3f.neg(rightV), upV);
-			for (int j = 0; j < 4; j++) {
-				output[j].add(rkEye);
-			}
-			final VOIContour kBox = new VOIContour(true);
-			for (int j = 0; j < 4; j++) {
-				kBox.addElement(output[j].X, output[j].Y, output[j].Z);
-			}
-			kBox.update(new ColorRGBA(0, 0, 1, 1));
-			{
-				samplingPlanes.importCurve(kBox);
-			}
-
-			//			final float curve = centerSpline.GetCurvature(allTimes[i]);
-			//			final float scale = curve;
-			final VOIContour ellipse = new VOIContour(true);
-			final Ellipsoid3f ellipsoid = makeEllipse(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), wormDiameters.elementAt(i)/2f, ellipse);
-			ellipseBounds.add(ellipsoid);
-
-			final Box3f box = new Box3f(ellipsoid.Center, ellipsoid.Axis, new float[] {extent, extent, 1});
-			boxBounds.add(box);
-		}
-
-		saveSamplePlanes( samplingPlanes, outputDirectory + File.separator );
-		saveDiameters( wormDiameters, outputDirectory + File.separator );
+		generateEllipses();
 
 		final int[] resultExtents = new int[] {(int) ((2 * extent)), (int) ((2 * extent)), samplingPlanes.getCurves().size()};
 		if ( useModel )
@@ -994,6 +814,11 @@ public class LatticeModel {
 				untwistMarkers(imageA, resultExtents, true);
 			}
 		}
+	}
+	
+	public float getLength()
+	{
+		return length;
 	}
 
 	public VOI getSamplingPlanes( boolean scale )
@@ -1505,6 +1330,16 @@ public class LatticeModel {
 	public void setImage(ModelImage image)
 	{
 		imageA = image;
+		if ( imageA != null )
+		{
+			String imageName = imageA.getImageName();
+			if (imageName.contains("_clone")) {
+				imageName = imageName.replaceAll("_clone", "");
+			}
+			outputDirectory = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
+			String parentDir = new String(imageA.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
+			checkParentDir(parentDir);			
+		}
 	}
 
 	/**
@@ -1578,11 +1413,6 @@ public class LatticeModel {
 		}
 	}
 	
-	public void setSegmentSeamCells( boolean doSegmentation )
-	{
-		segmentSeamCells = doSegmentation;
-	}
-
 	/**
 	 * Enables the user to visualize the final expanded contours.
 	 */
@@ -1616,6 +1446,152 @@ public class LatticeModel {
 		}
 	}
 
+	public void setSeamCellImage(ModelImage image)
+	{
+		seamCellImage = image;
+	}
+	
+	public float testLatticeLength()
+	{
+		generateCurves();
+		return length;
+	}
+	
+	public float[] testLatticeImage( )
+	{
+		generateCurves();
+		Vector<Integer> seamCellIds = new Vector<Integer>();
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			Vector3f leftPt = left.elementAt(i);
+			Vector3f rightPt = right.elementAt(i);
+
+			if ( seamCellImage != null )
+			{
+				int leftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
+				if ( leftID != 0 )
+				{
+					if ( !seamCellIds.contains(leftID) )
+					{
+						seamCellIds.add(leftID);
+					}
+				}
+				int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
+				if ( rightID != 0 )
+				{
+					if ( !seamCellIds.contains(rightID) )
+					{
+						seamCellIds.add(rightID);
+					}
+				}
+			}
+		}
+		
+		float[] avgValue = new float[]{0,0};
+		for ( int i = 0; i < leftPositions.size(); i++ )
+		{
+			Vector3f leftPt = leftPositions.elementAt(i);
+			Vector3f rightPt = rightPositions.elementAt(i);
+			Vector3f centerPt = centerPositions.elementAt(i);
+
+			avgValue[0] += imageA.getFloat( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
+			avgValue[0] += imageA.getFloat( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
+			avgValue[1] += imageA.getFloat( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
+			
+			if ( (seamCellImage != null) && (allSeamCellIDs != null) )
+			{
+				int leftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
+				int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
+				int centerID = seamCellImage.getInt( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
+				
+				if ( (leftID != 0) && !((leftID == allSeamCellIDs[i][0]) || (leftID == allSeamCellIDs[i][1])) && (allSeamCellIDs[i][0] != 0) && (allSeamCellIDs[i][1] != 0))
+				{
+//					System.err.println( "  Left: " + leftID + "   " + allSeamCellIDs[i][0] + "  " + allSeamCellIDs[i][1] + "   " + !((leftID == allSeamCellIDs[i][0]) || (leftID == allSeamCellIDs[i][1])));
+					return new float[]{-1,1};
+				}
+				if ( (rightID != 0) && !((rightID == allSeamCellIDs[i][2]) || (rightID == allSeamCellIDs[i][3])) && (allSeamCellIDs[i][2] != 0) && (allSeamCellIDs[i][3] != 0))
+				{
+//					System.err.println( "  Right: " + rightID + "   " + allSeamCellIDs[i][2] + "  " + allSeamCellIDs[i][3] + "   " + !((rightID == allSeamCellIDs[i][2]) || (rightID == allSeamCellIDs[i][3])));
+					return new float[]{-1,1};
+				}
+				if ( seamCellIds.contains(centerID) && !((centerID == leftID) || (centerID == rightID)) && (leftID != 0) && (rightID != 0) )
+				{
+//					System.err.println( "  Center: " + centerID + "   " + leftID + "  " + rightID + "   " + !((centerID == leftID) || (centerID == rightID)));
+					return new float[]{-1,1};
+				}
+			}
+		}
+		avgValue[0] /= (2f *(float)leftPositions.size());
+		avgValue[1] /= (float)leftPositions.size();
+		
+		return avgValue;
+	}
+	
+	public void testLatticeConflicts( float[] lengthResult, float[] curvatureResult, float[] intersectionCountResult )
+	{		
+		generateCurves();
+		generateEllipses();
+			
+		lengthResult[0] = length;
+		curvatureResult[0] = totalCurvature;
+		
+		final int[] resultExtents = new int[] {2 * extent, 2 * extent, samplingPlanes.getCurves().size()};
+
+		String imageName = imageA.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		ModelImage model = new ModelImage(ModelStorageBase.INTEGER, imageA.getExtents(), imageName + "_model.xml");
+		JDialogBase.updateFileInfo(imageA, model);
+
+
+		// 7. The set of ellipses from the head of the worm to the tail defines an approximate outer boundary of the
+		// worm in 3D.
+		// The centers of each ellipse are spaced one voxel apart along the center line curve of the worm, and each
+		// ellipse
+		// corresponds to a single output slice in the final straightened image. This step generates a model of the worm
+		// where each voxel that falls within one of the ellipses is labeled with the corresponding output slice value.
+		// Voxels where multiple ellipses intersect are labeled as conflict voxels. Once all ellipses have been
+		// evaluated,
+		// the conflict voxels are removed from the model.
+		final int dimX = imageA.getExtents().length > 0 ? imageA.getExtents()[0] : 1;
+		final int dimY = imageA.getExtents().length > 1 ? imageA.getExtents()[1] : 1;
+		final int dimZ = imageA.getExtents().length > 2 ? imageA.getExtents()[2] : 1;
+
+
+		BitSet conflicts = new BitSet(dimX*dimY*dimZ);
+		for (int i = 0; i < samplingPlanes.getCurves().size(); i++) {
+			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
+			final Vector3f[] corners = new Vector3f[4];
+			for (int j = 0; j < 4; j++) {
+				corners[j] = kBox.elementAt(j);
+			} 
+			
+			testConflicts( imageA, model, conflicts, i, resultExtents, corners, ellipseBounds.elementAt(i), i + 1);
+		}
+
+		int conflictCount = 0;
+		int totalCount = 0;
+		for ( int i = 0; i < model.getDataSize(); i++ )
+		{
+			if ( model.getInt(i) > 0 )
+			{
+				totalCount++;
+			}
+			if ( conflicts.get(i) )
+			{
+				conflictCount++;
+			}
+		}
+		
+		model.disposeLocal(true);
+		model = null;
+
+//		System.err.println( "Lattice conflicts " + conflictCount + "   " + totalCount );
+		intersectionCountResult[0] = 100f * (float)conflictCount/(float)totalCount;
+		conflicts = null;
+	}
+	
 	/**
 	 * VOI operation undo.
 	 */
@@ -1722,6 +1698,102 @@ public class LatticeModel {
 	 */
 	private boolean checkAnnotations(final ModelImage model) {
 		return checkAnnotations(model, false);
+	}
+
+	private void shiftLattice()
+	{	
+		if ( latticeShifted || (seamCellImage == null) )
+		{
+			return;
+		}
+		
+		// save the original lattice into a backup in case the lattice
+		// is modified to better fit the fluorescent marker segmentation:
+		leftBackup = new VOIContour(false);
+		rightBackup = new VOIContour(false);
+		for (int i = 0; i < left.size(); i++) {
+			leftBackup.add(new Vector3f(left.elementAt(i)));
+			rightBackup.add(new Vector3f(right.elementAt(i)));
+		}
+
+		latticeShifted = true;
+		seamCellIDs = new int[left.size()][2];
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			Vector3f leftPt = left.elementAt(i);
+			int leftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
+			seamCellIDs[i][0] = leftID;
+			Vector3f rightPt = right.elementAt(i);
+			int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
+			seamCellIDs[i][1] = rightID;
+
+			if ( (leftID != 0) || (rightID != 0) )
+			{
+				Vector3f centerPt = Vector3f.add(leftPt, rightPt);
+				centerPt.scale(0.5f);
+				Vector3f leftDir = Vector3f.sub(leftPt, centerPt);   leftDir.normalize();
+				Vector3f rightDir = Vector3f.sub(rightPt, centerPt); rightDir.normalize();
+
+				int newLeftID = leftID;
+				while ( (leftID != newLeftID) && (newLeftID != 0) )
+				{
+					leftPt.add(leftDir);
+					newLeftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
+				}
+				if ( leftID != 0 )
+				{
+					leftPt.sub(leftDir);
+				}
+				int newRightID = leftID;
+				while ( (rightID != newRightID) && (newRightID != 0) )
+				{
+					rightPt.add(rightDir);
+					newRightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
+				}
+				if ( rightID != 0 )
+				{
+					rightPt.sub(rightDir);
+				}
+			}
+			if ( leftID == 0 )
+			{
+				Vector3f centerPt = Vector3f.add(leftPt, rightPt);
+				centerPt.scale(0.5f);
+				Vector3f leftDir = Vector3f.sub(leftPt, centerPt);
+				float length = leftDir.normalize();
+				int newLeftID = leftID;
+				for ( int j = 1; j < length; j++ )
+				{
+					centerPt.add(leftDir);
+					newLeftID = seamCellImage.getInt( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
+					if ( newLeftID != 0 )
+					{
+						seamCellIDs[i][0] = newLeftID;
+						break;
+					}
+				}						
+			}
+			if ( rightID == 0 )
+			{
+				Vector3f centerPt = Vector3f.add(leftPt, rightPt);
+				centerPt.scale(0.5f);
+				Vector3f rightDir = Vector3f.sub(rightPt, centerPt);
+				float length = rightDir.normalize();
+				int newRightID = rightID;
+				for ( int j = 1; j < length; j++ )
+				{
+					centerPt.add(rightDir);
+					newRightID = seamCellImage.getInt( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
+					if ( newRightID != 0 )
+					{
+						seamCellIDs[i][1] = newRightID;
+						break;
+					}
+				}	
+			}
+			//					System.err.println( "Left " + i + " " + seamCellIDs[i][0] );
+			//					System.err.println( "Right " + i + " " + seamCellIDs[i][1] );
+		}
 	}
 
 	protected boolean checkAnnotations(final ModelImage model, final boolean print) {
@@ -2449,15 +2521,30 @@ public class LatticeModel {
 		clearCurves(false);
 		short sID;
 
-		System.err.println("generateCurves");
+		if ( (seamCellIDs) == null && (seamCellImage != null) )
+		{
+			seamCellIDs = new int[left.size()][2];
+		}
+		
+//		System.err.println("generateCurves");
 		// 1. The center line of the worm is calculated from the midpoint between the left and right points of the
 		// lattice.
 		center = new VOIContour(false);
-		for (int i = 0; i < left.size(); i++) {
+		for (int i = 0; i < left.size(); i++)
+		{
 			final Vector3f centerPt = Vector3f.add(left.elementAt(i), right.elementAt(i));
 			centerPt.scale(0.5f);
 			center.add(centerPt);
 			
+			if ( seamCellImage != null )
+			{
+				Vector3f leftPt = left.elementAt(i);
+				int leftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
+				seamCellIDs[i][0] = leftID;
+				Vector3f rightPt = right.elementAt(i);
+				int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
+				seamCellIDs[i][1] = rightID;
+			}
 //			System.err.println( i + " " + left.elementAt(i).distance(right.elementAt(i) ) );
 		}
 
@@ -2498,7 +2585,7 @@ public class LatticeModel {
 		// worm.
 
 		length = centerSpline.GetLength(0, 1);
-		System.err.println( "Generate Curves " + length );
+//		System.err.println( "Generate Curves " + length );
 		int maxLength = (int) Math.ceil(length);
 		float step = 1;
 		if ( maxLength != length )
@@ -2626,9 +2713,10 @@ public class LatticeModel {
 		}
 		
 		
-		
+		totalCurvature = 0;
 		for (int i = 0; i <= maxLength; i++) {
 			final float t = centerSpline.GetTime(i*step);
+			totalCurvature += centerSpline.GetCurvature(t);
 			centerPositions.add(centerSpline.GetPosition(t));
 
 			allTimes[i] = t;
@@ -2826,6 +2914,50 @@ public class LatticeModel {
 		imageA.registerVOI(leftLine);
 		imageA.registerVOI(rightLine);
 		imageA.registerVOI(centerLine);
+	}
+	
+	private void generateEllipses()
+	{
+		boxBounds = new Vector<Box3f>();
+		ellipseBounds = new Vector<Ellipsoid3f>();
+		final short sID = (short) (imageA.getVOIs().getUniqueID());
+		samplingPlanes = new VOI(sID, "samplingPlanes");
+		for (int i = 0; i < centerPositions.size(); i++) {
+			final Vector3f rkEye = centerPositions.elementAt(i);
+			final Vector3f rkRVector = rightVectors.elementAt(i);
+			final Vector3f rkUVector = upVectors.elementAt(i);
+
+			final Vector3f[] output = new Vector3f[4];
+			final Vector3f rightV = Vector3f.scale(extent, rkRVector);
+			final Vector3f upV = Vector3f.scale(extent, rkUVector);
+			output[0] = Vector3f.add(Vector3f.neg(rightV), Vector3f.neg(upV));
+			output[1] = Vector3f.add(rightV, Vector3f.neg(upV));
+			output[2] = Vector3f.add(rightV, upV);
+			output[3] = Vector3f.add(Vector3f.neg(rightV), upV);
+			for (int j = 0; j < 4; j++) {
+				output[j].add(rkEye);
+			}
+			final VOIContour kBox = new VOIContour(true);
+			for (int j = 0; j < 4; j++) {
+				kBox.addElement(output[j].X, output[j].Y, output[j].Z);
+			}
+			kBox.update(new ColorRGBA(0, 0, 1, 1));
+			{
+				samplingPlanes.importCurve(kBox);
+			}
+
+			//			final float curve = centerSpline.GetCurvature(allTimes[i]);
+			//			final float scale = curve;
+			final VOIContour ellipse = new VOIContour(true);
+			final Ellipsoid3f ellipsoid = makeEllipse(rkRVector, rkUVector, rkEye, wormDiameters.elementAt(i), wormDiameters.elementAt(i)/2f, ellipse);
+			ellipseBounds.add(ellipsoid);
+
+			final Box3f box = new Box3f(ellipsoid.Center, ellipsoid.Axis, new float[] {extent, extent, 1});
+			boxBounds.add(box);
+		}
+
+		saveSamplePlanes( samplingPlanes, outputDirectory + File.separator );
+		saveDiameters( wormDiameters, outputDirectory + File.separator );
 	}
 
 	/**
@@ -3095,6 +3227,119 @@ public class LatticeModel {
 									}
 								}
 							}
+						}
+					}
+				}
+
+				/*
+				 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+				 * ySlopeX and zSlopeX values:
+				 */
+				x = x + xSlopeX;
+				y = y + ySlopeX;
+				z = z + zSlopeX;
+			}
+
+			/*
+			 * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+			 * ySlopeY and zSlopeY values:
+			 */
+			x0 = x0 + xSlopeY;
+			y0 = y0 + ySlopeY;
+			z0 = z0 + zSlopeY;
+		}
+	}
+	
+	private void testConflicts( ModelImage image, ModelImage model, BitSet conflicts,
+			final int slice, final int[] extents, final Vector3f[] verts, final Ellipsoid3f ellipseBound, final int value) {
+		final int iBound = extents[0];
+		final int jBound = extents[1];
+
+		final int[] dimExtents = image.getExtents();
+
+		/*
+		 * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+		 * coordinate-systems: transformation:
+		 */
+		final int iFactor = 1;
+		final int jFactor = dimExtents[0];
+		final int kFactor = dimExtents[0] * dimExtents[1];
+
+		int buffFactor = 1;
+
+		if ( (image.getType() == ModelStorageBase.ARGB) || (image.getType() == ModelStorageBase.ARGB_USHORT)
+				|| (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
+			buffFactor = 4;
+		}
+
+		final Vector3f center = new Vector3f();
+		for (int i = 0; i < verts.length; i++) {
+			center.add(verts[i]);
+		}
+		center.scale(1f / verts.length);
+
+		/* Calculate the slopes for traversing the data in x,y,z: */
+		float xSlopeX = verts[1].X - verts[0].X;
+		float ySlopeX = verts[1].Y - verts[0].Y;
+		float zSlopeX = verts[1].Z - verts[0].Z;
+
+		float xSlopeY = verts[3].X - verts[0].X;
+		float ySlopeY = verts[3].Y - verts[0].Y;
+		float zSlopeY = verts[3].Z - verts[0].Z;
+
+		float x0 = verts[0].X;
+		float y0 = verts[0].Y;
+		float z0 = verts[0].Z;
+
+		xSlopeX /= (iBound);
+		ySlopeX /= (iBound);
+		zSlopeX /= (iBound);
+
+		xSlopeY /= (jBound);
+		ySlopeY /= (jBound);
+		zSlopeY /= (jBound);
+
+		/* loop over the 2D image (values) we're writing into */
+		float x = x0;
+		float y = y0;
+		float z = z0;
+
+		final Vector3f currentPoint = new Vector3f();
+
+		for (int j = 0; j < jBound; j++) {
+
+			/* Initialize the first diagonal point(x,y,z): */
+			x = x0;
+			y = y0;
+			z = z0;
+
+			for (int i = 0; i < iBound; i++) {
+				final int iIndex = Math.round(x);
+				final int jIndex = Math.round(y);
+				final int kIndex = Math.round(z);
+
+				/* calculate the ModelImage space index: */
+				final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor));
+
+				// Bounds checking:
+				if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+						|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > image.getSize()))) {
+
+					// do nothing
+				} else {
+					currentPoint.set(x, y, z);
+					final boolean isInside = ellipseBound.Contains(currentPoint);
+					if ( !isInside) {
+						// do nothing
+					} else {
+						final int currentValue = model.getInt(iIndex, jIndex, kIndex);
+						if (currentValue != 0) {
+							if (Math.abs(currentValue - value) < SampleLimit) {
+							} else {
+								conflicts.set(index);
+							}
+						} else {
+							model.set(iIndex, jIndex, kIndex, value);
 						}
 					}
 				}
@@ -6910,6 +7155,9 @@ public class LatticeModel {
 			distanceImage.disposeLocal(false);
 			distanceImage = null;
 		}
+		
+		sourceImage.disposeLocal(false);
+		sourceImage = null;
 	}
 
 
