@@ -39,9 +39,9 @@ import gov.nih.mipav.view.ViewOpenFileUI;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModelEM;
-import gov.nih.mipav.view.renderer.WildMagic.Render.ModelImageLargeFormat;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModelEM;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.ModelImageLargeFormat;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

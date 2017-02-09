@@ -48,7 +48,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentation;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
 import java.awt.BorderLayout;

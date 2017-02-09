@@ -13,9 +13,8 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.Render.LatticeModel;
-import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationKMeans;
-import gov.nih.mipav.view.renderer.WildMagic.Render.WormSegmentationWindowing;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
