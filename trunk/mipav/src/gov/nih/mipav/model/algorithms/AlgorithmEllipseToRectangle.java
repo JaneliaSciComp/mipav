@@ -236,8 +236,8 @@ public class AlgorithmEllipseToRectangle extends AlgorithmBase {
         
         xc = (xDimDest - 1.0)/2.0;
         yc = (yDimDest - 1.0)/2.0;
-        // Scale xc down to < PI/2.  Scale xc down to 3.1.
-        scaleFactor = xc/3.1;
+        // Scale xc down to < PI/2.  Scale xc down to (3.1/2.0)
+        scaleFactor = xc/(3.1/2.0);
 
         if (!srcImage.isColorImage()) {
             imageMin = (float) srcImage.getMin();
