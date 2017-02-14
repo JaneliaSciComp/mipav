@@ -535,6 +535,7 @@ public class ViewMenuBar {
 												false),
 								menuBuilder.buildMenuItem("Color saturation", "ColorSaturation", 0, null, false),
 								menuBuilder.buildMenuItem("Ellipse to circle", "EllipseToCircle", 0, null, false),
+								menuBuilder.buildMenuItem("Ellipse to rectangle", "EllipseToRectangle", 0, null, false),
 								menuBuilder.buildMenuItem("Nearly circle to circle", "NearlyCircleToCircle", 0, null,
 										false),
 								menuBuilder.buildMenuItem("Reslice - isotropic voxels", null, 0, null, false),
@@ -1501,6 +1502,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
+			menuBuilder.setMenuItemEnabled("Ellipse to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
 			menuBuilder.setMenuItemEnabled("Hough transform", false);
 			menuBuilder.setMenuItemEnabled("Graph Based", false);
@@ -1536,6 +1538,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
+			menuBuilder.setMenuItemEnabled("Ellipse to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
 			menuBuilder.setMenuItemEnabled("Hough transform", false);
 			menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
@@ -1819,6 +1822,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Circular sector to rectangle", true);
 		menuBuilder.setMenuItemEnabled("Circle to rectangle", true);
 		menuBuilder.setMenuItemEnabled("Ellipse to circle", true);
+		menuBuilder.setMenuItemEnabled("Ellipse to rectangle", true);
 		menuBuilder.setMenuItemEnabled("Nearly circle to circle", true);
 		menuBuilder.setMenuItemEnabled("Hough transform", true);
 		menuBuilder.setMenuItemEnabled("Convert 4D to RGB", true);
