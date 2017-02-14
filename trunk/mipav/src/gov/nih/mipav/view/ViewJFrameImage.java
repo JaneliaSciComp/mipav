@@ -1879,6 +1879,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogColorSaturation(this, getActiveImage());
         } else if (command.equals("EllipseToCircle")) {
             new JDialogEllipseToCircle(this, getActiveImage());
+        } else if (command.equals("EllipseToRectangle")) {
+            new JDialogEllipseToRectangle(this, getActiveImage());
         } else if (command.equals("NearlyCircleToCircle")) {
             new JDialogNearlyCircleToCircle(this, getActiveImage());
         } else if (command.equals("Transform")) {
