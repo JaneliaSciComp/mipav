@@ -54,7 +54,7 @@ public class JDialogEllipseToCircle extends JDialogBase implements AlgorithmInte
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates a new JDialogCircleToRectangle object.
+     * Creates a new JDialogEllipseToCircle object.
      *
      * @param  image  DOCUMENT ME!
      */
