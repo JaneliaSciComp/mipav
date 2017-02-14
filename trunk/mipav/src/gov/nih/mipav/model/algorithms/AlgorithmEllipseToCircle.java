@@ -154,6 +154,12 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         double sinr[] = new double[1];
         double sini[] = new double[1];
         boolean test = false;
+        VOIContour ellipseContour;
+        double boundaryDistance;
+        boolean snear[] = new boolean[1];
+        int firstIndex[] = new int[1];
+        int secondIndex[] = new int[1];
+        int outerPolarity = 1;
         
         if (test) {
             selfTest();
@@ -219,7 +225,12 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
             return;
         }
         
+        ellipseContour = (VOIContour)selectedVOI.getCurves().elementAt(0);
         geometricCenter = ((VOIContour)(contours.elementAt(0))).getGeometricCenter();
+        boundaryDistance = ellipseContour.pinpol(geometricCenter.X, geometricCenter.Y, snear, firstIndex, secondIndex);
+        if (boundaryDistance > 0.0) {
+        	outerPolarity = -1;
+        }
         Preferences.debug("X center = " + geometricCenter.X + "\n");
         Preferences.debug("Y center = " + geometricCenter.Y + "\n");
         
@@ -410,54 +421,57 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
                     // Use bilinear interpolation to find the contributions from the
                     // 4 nearest neighbors in the original ellipse space
                     if ((xSrc >= 0.0) && ((xSrc) <= (xDimSource - 1)) && (ySrc >= 0.0) && (ySrc <= (yDimSource - 1))) {
-                        xBase = (int) Math.floor(xSrc);
-                        delX = (float) (xSrc - xBase);
-                        yBase = (int) Math.floor(ySrc);
-                        delY = (float) (ySrc - yBase);
-                        index = index1 + i;
-                        sIndex = (yBase * xDimSource) + xBase;
-
-                        if (srcImage.isColorImage()) {
-                            destBuffer[(4 * index) + 1] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
-                            destBuffer[(4 * index) + 2] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
-                            destBuffer[(4 * index) + 3] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
-    
-                            if (xSrc < (xDimSource - 1)) {
-                                destBuffer[(4 * index) + 1] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
-                                destBuffer[(4 * index) + 2] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
-                                destBuffer[(4 * index) + 3] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
-                            }
-    
-                            if (ySrc < (yDimSource - 1)) {
-                                destBuffer[(4 * index) + 1] += (1 - delX) * delY *
-                                                                   srcBuffer[(4 * (sIndex + xDimSource)) + 1];
-                                destBuffer[(4 * index) + 2] += (1 - delX) * delY *
-                                                                   srcBuffer[(4 * (sIndex + xDimSource)) + 2];
-                                destBuffer[(4 * index) + 3] += (1 - delX) * delY *
-                                                                   srcBuffer[(4 * (sIndex + xDimSource)) + 3];
-                            }
-    
-                            if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
-                                destBuffer[(4 * index) + 1] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 1];
-                                destBuffer[(4 * index) + 2] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 2];
-                                destBuffer[(4 * index) + 3] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 3];
-                            }
-                        } // if (srcImage.isColorImage())
-                        else { // black and white image
-                            destBuffer[index] = (1 - delX) * (1 - delY) * srcBuffer[sIndex];
-    
-                            if (xSrc < (xDimSource - 1)) {
-                                destBuffer[index] += delX * (1 - delY) * srcBuffer[sIndex + 1];
-                            }
-    
-                            if (ySrc < (yDimSource - 1)) {
-                                destBuffer[index] += (1 - delX) * delY * srcBuffer[sIndex + xDimSource];
-                            }
-    
-                            if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
-                                destBuffer[index] += delX * delY * srcBuffer[sIndex + xDimSource + 1];
-                            }
-                        } // else black and white image
+                    	boundaryDistance = ellipseContour.pinpol(xSrc, ySrc, snear, firstIndex, secondIndex) * outerPolarity;
+                    	if (boundaryDistance <= 0.0) {
+	                        xBase = (int) Math.floor(xSrc);
+	                        delX = (float) (xSrc - xBase);
+	                        yBase = (int) Math.floor(ySrc);
+	                        delY = (float) (ySrc - yBase);
+	                        index = index1 + i;
+	                        sIndex = (yBase * xDimSource) + xBase;
+	
+	                        if (srcImage.isColorImage()) {
+	                            destBuffer[(4 * index) + 1] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
+	                            destBuffer[(4 * index) + 2] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
+	                            destBuffer[(4 * index) + 3] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
+	    
+	                            if (xSrc < (xDimSource - 1)) {
+	                                destBuffer[(4 * index) + 1] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
+	                                destBuffer[(4 * index) + 2] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
+	                                destBuffer[(4 * index) + 3] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
+	                            }
+	    
+	                            if (ySrc < (yDimSource - 1)) {
+	                                destBuffer[(4 * index) + 1] += (1 - delX) * delY *
+	                                                                   srcBuffer[(4 * (sIndex + xDimSource)) + 1];
+	                                destBuffer[(4 * index) + 2] += (1 - delX) * delY *
+	                                                                   srcBuffer[(4 * (sIndex + xDimSource)) + 2];
+	                                destBuffer[(4 * index) + 3] += (1 - delX) * delY *
+	                                                                   srcBuffer[(4 * (sIndex + xDimSource)) + 3];
+	                            }
+	    
+	                            if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
+	                                destBuffer[(4 * index) + 1] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 1];
+	                                destBuffer[(4 * index) + 2] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 2];
+	                                destBuffer[(4 * index) + 3] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 3];
+	                            }
+	                        } // if (srcImage.isColorImage())
+	                        else { // black and white image
+	                            destBuffer[index] = (1 - delX) * (1 - delY) * srcBuffer[sIndex];
+	    
+	                            if (xSrc < (xDimSource - 1)) {
+	                                destBuffer[index] += delX * (1 - delY) * srcBuffer[sIndex + 1];
+	                            }
+	    
+	                            if (ySrc < (yDimSource - 1)) {
+	                                destBuffer[index] += (1 - delX) * delY * srcBuffer[sIndex + xDimSource];
+	                            }
+	    
+	                            if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
+	                                destBuffer[index] += delX * delY * srcBuffer[sIndex + xDimSource + 1];
+	                            }
+	                        } // else black and white image
+                    	} // if (boundaryDistance <= 0.0)
                     }
                 } // if (((j - yc)*(j - yc) + (i - xc)*(i - xc)) <= radSq)
             } // for (i = 0; i < xDimDest; i++)
