@@ -32,6 +32,9 @@ import java.util.*;
 public class AlgorithmEllipseToRectangle extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+	private int xDimDest;
+	
+	private ModelImage resultImage;
 	
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -43,11 +46,12 @@ public class AlgorithmEllipseToRectangle extends AlgorithmBase {
     /**
      * AlgorithmEllipseToRectangle.
      *
-     * @param  destImg  DOCUMENT ME!
      * @param  srcImg   DOCUMENT ME!
+     * @param  xDimDest
      */
-    public AlgorithmEllipseToRectangle(ModelImage destImg, ModelImage srcImg) {
-        super(destImg, srcImg);
+    public AlgorithmEllipseToRectangle(ModelImage srcImg, int xDimDest) {
+        super(null, srcImg);
+        this.xDimDest = xDimDest;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -75,7 +79,6 @@ public class AlgorithmEllipseToRectangle extends AlgorithmBase {
         int i, j;
         int index, index1;
 
-        int xDimDest;
         int yDimDest;
         int destSlice;
         float[] srcBuffer;
@@ -110,7 +113,7 @@ public class AlgorithmEllipseToRectangle extends AlgorithmBase {
         double theta;
         double costh, sinth;
         double axisRatio;
-        double xi;
+        double c;
         double ellipseRatio;
         double scaleFactor;
         boolean test = false;
@@ -120,6 +123,14 @@ public class AlgorithmEllipseToRectangle extends AlgorithmBase {
         double sinx;
         double u;
         double v;
+        String name;
+        int extents[] = new int[2];
+        double boundaryDistance;
+        VOIContour ellipseContour;
+        boolean snear[] = new boolean[1];
+        int firstIndex[] = new int[1];
+        int secondIndex[] = new int[1];
+        int outerPolarity = -1;
         
         if (test) {
             selfTest();
@@ -185,7 +196,12 @@ public class AlgorithmEllipseToRectangle extends AlgorithmBase {
             return;
         }
         
+        ellipseContour = (VOIContour)selectedVOI.getCurves().elementAt(0);
         geometricCenter = ((VOIContour)(contours.elementAt(0))).getGeometricCenter();
+        boundaryDistance = ellipseContour.pinpol(geometricCenter.X, geometricCenter.Y, snear, firstIndex, secondIndex);
+        if (boundaryDistance > 0.0) {
+        	outerPolarity = -1;
+        }
         Preferences.debug("X center = " + geometricCenter.X + "\n");
         Preferences.debug("Y center = " + geometricCenter.Y + "\n");
         
@@ -207,18 +223,22 @@ public class AlgorithmEllipseToRectangle extends AlgorithmBase {
         // For an ellipse with its center at the origin and foci on the x axis:
         //(x*x)/(a*a) + (y*y)/(b*b) = 1
         // The standard ellipse used here will have foci at +-1 and will be of the form:
-        // (x*x)/((cosh(xi)**2) + (y*y)/((sinh(xi)**2) = 1
+        // (x*x)/((cosh(c)**2) + (y*y)/((sinh(c)**2) = 1
         // So to scale from the original ellipse to the standard ellipse use:
-        // tanh(xi) = sinh(xi)/cosh(xi) = b/a = minorAxis/majorAxis = axisRatio
-        // xi = arg tanh(axisRatio)
-        // xi = 0.5 * log((1 + axisRatio)/(1 - axisRatio))
+        // tanh(c) = sinh(c)/cosh(c) = b/a = minorAxis/majorAxis = axisRatio
+        // c = arg tanh(axisRatio)
+        // c = 0.5 * log((1 + axisRatio)/(1 - axisRatio))
         axisRatio = minorAxis[0]/majorAxis[0];
-        xi = 0.5 * Math.log((1.0 + axisRatio)/(1.0 - axisRatio));
-        ellipseRatio = (majorAxis[0]/2.0)/((Math.exp(xi) + Math.exp(-xi))/2.0);
+        c = 0.5 * Math.log((1.0 + axisRatio)/(1.0 - axisRatio));
+        ellipseRatio = (majorAxis[0]/2.0)/((Math.exp(c) + Math.exp(-c))/2.0);
         
-
-        xDimDest = destImage.getExtents()[0];
-        yDimDest = destImage.getExtents()[1];
+        name = srcImage.getImageName() +  "_rectangle";
+        yDimDest = (int)Math.ceil(axisRatio * xDimDest);
+        extents[0] = xDimDest;
+        extents[1] = yDimDest;
+        resultImage = new ModelImage(srcImage.getType(), extents, name);
+        resultImage.setResolutions(srcImage.getFileInfo(0).getResolutions());
+        resultImage.setImageName(name);
         destSlice = xDimDest * yDimDest;
         srcBuffer = new float[cf * sourceSlice];
 
@@ -278,62 +298,65 @@ public class AlgorithmEllipseToRectangle extends AlgorithmBase {
                 // Use bilinear interpolation to find the contributions from the
                 // 4 nearest neighbors in the original ellipse space
                 if ((xSrc >= 0.0) && ((xSrc) <= (xDimSource - 1)) && (ySrc >= 0.0) && (ySrc <= (yDimSource - 1))) {
-                    xBase = (int) Math.floor(xSrc);
-                    delX = (float) (xSrc - xBase);
-                    yBase = (int) Math.floor(ySrc);
-                    delY = (float) (ySrc - yBase);
-                    index = index1 + i;
-                    sIndex = (yBase * xDimSource) + xBase;
-
-                    if (srcImage.isColorImage()) {
-                        destBuffer[(4 * index) + 1] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
-                        destBuffer[(4 * index) + 2] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
-                        destBuffer[(4 * index) + 3] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
-
-                        if (xSrc < (xDimSource - 1)) {
-                            destBuffer[(4 * index) + 1] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
-                            destBuffer[(4 * index) + 2] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
-                            destBuffer[(4 * index) + 3] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
-                        }
-
-                        if (ySrc < (yDimSource - 1)) {
-                            destBuffer[(4 * index) + 1] += (1 - delX) * delY *
-                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 1];
-                            destBuffer[(4 * index) + 2] += (1 - delX) * delY *
-                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 2];
-                            destBuffer[(4 * index) + 3] += (1 - delX) * delY *
-                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 3];
-                        }
-
-                        if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
-                            destBuffer[(4 * index) + 1] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 1];
-                            destBuffer[(4 * index) + 2] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 2];
-                            destBuffer[(4 * index) + 3] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 3];
-                        }
-                    } // if (srcImage.isColorImage())
-                    else { // black and white image
-                        destBuffer[index] = (1 - delX) * (1 - delY) * srcBuffer[sIndex];
-
-                        if (xSrc < (xDimSource - 1)) {
-                            destBuffer[index] += delX * (1 - delY) * srcBuffer[sIndex + 1];
-                        }
-
-                        if (ySrc < (yDimSource - 1)) {
-                            destBuffer[index] += (1 - delX) * delY * srcBuffer[sIndex + xDimSource];
-                        }
-
-                        if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
-                            destBuffer[index] += delX * delY * srcBuffer[sIndex + xDimSource + 1];
-                        }
-                    } // else black and white image
+                	boundaryDistance = ellipseContour.pinpol(xSrc, ySrc, snear, firstIndex, secondIndex) * outerPolarity;
+                	if (boundaryDistance <= 0.0) {
+	                    xBase = (int) Math.floor(xSrc);
+	                    delX = (float) (xSrc - xBase);
+	                    yBase = (int) Math.floor(ySrc);
+	                    delY = (float) (ySrc - yBase);
+	                    index = index1 + i;
+	                    sIndex = (yBase * xDimSource) + xBase;
+	
+	                    if (srcImage.isColorImage()) {
+	                        destBuffer[(4 * index) + 1] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
+	                        destBuffer[(4 * index) + 2] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
+	                        destBuffer[(4 * index) + 3] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
+	
+	                        if (xSrc < (xDimSource - 1)) {
+	                            destBuffer[(4 * index) + 1] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
+	                            destBuffer[(4 * index) + 2] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
+	                            destBuffer[(4 * index) + 3] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
+	                        }
+	
+	                        if (ySrc < (yDimSource - 1)) {
+	                            destBuffer[(4 * index) + 1] += (1 - delX) * delY *
+	                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 1];
+	                            destBuffer[(4 * index) + 2] += (1 - delX) * delY *
+	                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 2];
+	                            destBuffer[(4 * index) + 3] += (1 - delX) * delY *
+	                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 3];
+	                        }
+	
+	                        if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
+	                            destBuffer[(4 * index) + 1] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 1];
+	                            destBuffer[(4 * index) + 2] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 2];
+	                            destBuffer[(4 * index) + 3] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 3];
+	                        }
+	                    } // if (srcImage.isColorImage())
+	                    else { // black and white image
+	                        destBuffer[index] = (1 - delX) * (1 - delY) * srcBuffer[sIndex];
+	
+	                        if (xSrc < (xDimSource - 1)) {
+	                            destBuffer[index] += delX * (1 - delY) * srcBuffer[sIndex + 1];
+	                        }
+	
+	                        if (ySrc < (yDimSource - 1)) {
+	                            destBuffer[index] += (1 - delX) * delY * srcBuffer[sIndex + xDimSource];
+	                        }
+	
+	                        if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
+	                            destBuffer[index] += delX * delY * srcBuffer[sIndex + xDimSource + 1];
+	                        }
+	                    } // else black and white image
+                	} // if (boundaryDistance <= 0.0)
                 }
             } // for (i = 0; i < xDimDest; i++)
         } // for (j = 0; j < yDimDest; j++)
 
         try {
-            destImage.importData(0, destBuffer, true);
+            resultImage.importData(0, destBuffer, true);
         } catch (IOException e) {
-            MipavUtil.displayError("IOException " + e + " on destImage.importData");
+            MipavUtil.displayError("IOException " + e + " on resultImage.importData");
 
             setCompleted(false);
 
@@ -346,7 +369,9 @@ public class AlgorithmEllipseToRectangle extends AlgorithmBase {
     }
     
     
-    
+    public ModelImage getResultImage() {
+    	return resultImage;
+    }
     
     
     private void selfTest() {
