@@ -114,7 +114,7 @@ public class JDialogEllipseToRectangle extends JDialogBase implements AlgorithmI
         if (algorithm instanceof AlgorithmEllipseToRectangle) {
             Preferences.debug("Ellipse To Rectangle: " + algorithm.getElapsedTime());
             image.clearMask();
-
+            resultImage = erAlgo.getResultImage();
             if ((erAlgo.isCompleted() == true) && (resultImage != null)) {
 
 
@@ -175,15 +175,8 @@ public class JDialogEllipseToRectangle extends JDialogBase implements AlgorithmI
     private void callAlgorithm() {
 
         try {
-            String name = makeImageName(image.getImageName(), "_rectangle");
-            extents[0] = xDim;
-            extents[1] = xDim;
-            resultImage = new ModelImage(image.getType(), extents, name);
-            resultImage.setResolutions(image.getFileInfo(0).getResolutions());
-            resultImage.setImageName(name);
-
             // Make algorithm
-            erAlgo = new AlgorithmEllipseToRectangle(resultImage, image);
+            erAlgo = new AlgorithmEllipseToRectangle(image, xDim);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -256,7 +249,7 @@ public class JDialogEllipseToRectangle extends JDialogBase implements AlgorithmI
         gbc6.gridx = 0;
         gbc6.gridy = 0;
 
-        xLabel = new JLabel("X and Y dimensions of output image ");
+        xLabel = new JLabel("X dimension of output image ");
         xLabel.setForeground(Color.black);
         xLabel.setFont(serif12);
         xLabel.setEnabled(true);
@@ -269,7 +262,7 @@ public class JDialogEllipseToRectangle extends JDialogBase implements AlgorithmI
         gbc6.gridx = 1;
         paramPanel.add(xText, gbc6);
 
-        yLabel = new JLabel("Y dimension of output image ");
+        /*yLabel = new JLabel("Y dimension of output image ");
         yLabel.setForeground(Color.black); 
         yLabel.setFont(serif12); 
         yLabel.setEnabled(true); 
@@ -282,7 +275,7 @@ public class JDialogEllipseToRectangle extends JDialogBase implements AlgorithmI
         yText.setFont(serif12);
         yText.setEnabled(true); 
         gbc6.gridx = 1;
-        paramPanel.add(yText, gbc6);
+        paramPanel.add(yText, gbc6);*/
 
         getContentPane().add(inputPanel, BorderLayout.NORTH);
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -312,14 +305,14 @@ public class JDialogEllipseToRectangle extends JDialogBase implements AlgorithmI
             xDim = Integer.valueOf(xText.getText()).intValue();
         }
 
-        if (!testParameter(yText.getText(), 5, 1000000)) {
+        /*if (!testParameter(yText.getText(), 5, 1000000)) {
            yText.requestFocus(); 
            yText.selectAll();
          
            return false; 
          } else { 
         	 yDim = Integer.valueOf(yText.getText()).intValue();
-         }
+         }*/
 
         VOIs = image.getVOIs();
 
