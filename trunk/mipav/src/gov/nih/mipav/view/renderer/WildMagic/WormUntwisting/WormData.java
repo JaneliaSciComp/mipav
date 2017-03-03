@@ -1,7 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.WormUntwisting;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Containment.ContBox3f;
@@ -11,17 +10,24 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
-import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 public class WormData
 {
 	public static float VoxelSize =  0.1625f;
-	
+
+	public static final String autoSeamCellSegmentationOutput = new String("seam_cells");
+	public static final String editSeamCellOutput = new String("seam_cell_final");
+	public static final String autoLatticeGenerationOutput = new String("lattice_");
+	public static final String editLatticeOutput = new String("lattice_final");
+	public static final String editAnnotationInput = new String("annotation");
+	public static final String editAnnotationOutput = new String("annotation_final");
+	public static final String outputImages = new String("output_images");
+	public static final String straightenedLattice = new String("straightened_lattice");
+	public static final String straightenedAnnotations = new String("straightened_annotations");
 
 	private static final int minPairDist = 5;
 	private static final int maxPairDist = 15;		
@@ -50,6 +56,7 @@ public class WormData
 
 	private Vector<Vector3f> seamCellPoints;
 	private VOI seamAnnotations;
+	private VOIVector autoLattice;
 	private float minSeamCellSegmentationIntensity = -1;
 	
 	private String outputDirectory = null;
@@ -76,7 +83,7 @@ public class WormData
 				VoxelSize = voxelResolution;
 			}
 			minSeamCellSegmentationIntensity = (float) (0.1 * wormImage.getMin());
-			System.err.println( minSeamCellSegmentationIntensity );
+//			System.err.println( minSeamCellSegmentationIntensity );
 		}
 	}
 	
@@ -118,9 +125,26 @@ public class WormData
 		}
 	}
 	
+	public Vector<Vector3f> readSeamCells()
+	{	
+		VOIVector annotationVector = new VOIVector();
+		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoSeamCellSegmentationOutput + File.separator, true, annotationVector, false);
+		if ( annotationVector.size() > 0 )
+		{
+			seamAnnotations = annotationVector.elementAt(0);
+		}
+		seamCellPoints = new Vector<Vector3f>();
+		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			seamCellPoints.add(new Vector3f(text.elementAt(0)));
+		}
+		return seamCellPoints;
+	}
+	
 	public void segmentSeamCells(int minRadius, int maxRadius)
 	{
-		System.err.println( "segmentSeamCells: start" );
+//		System.err.println( "   segmentSeamCells: start" );
 		if (seamCellPoints == null)
 		{
 			String seamCellDir = outputImagesDirectory + File.separator;
@@ -148,27 +172,30 @@ public class WormData
 			}
 		}
 		
-		seamAnnotations = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
-		wormImage.registerVOI(seamAnnotations);
-		for ( int i = 0; i < seamCellPoints.size(); i++ )
+		if ( seamAnnotations == null )
 		{
-//			System.err.println( i );
-			VOIText text = new VOIText();
-			text.add(seamCellPoints.elementAt(i));
-			text.add(seamCellPoints.elementAt(i));
-			text.setText( "" + (i+1) );
-			text.setUseMarker(false);
-			text.update();
+			seamAnnotations = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
+			wormImage.registerVOI(seamAnnotations);
+			for ( int i = 0; i < seamCellPoints.size(); i++ )
+			{
+				//			System.err.println( i );
+				VOIText text = new VOIText();
+				text.add(seamCellPoints.elementAt(i));
+				text.add(seamCellPoints.elementAt(i));
+				text.setText( "" + (i+1) );
+				text.setUseMarker(false);
+				text.update();
 
-//			int x = (int)seamCellPoints.elementAt(i).X;
-//			int y = (int)seamCellPoints.elementAt(i).Y;
-//			int z = (int)seamCellPoints.elementAt(i).Z;
-//			System.err.println( "Seam Cell " + (i+1) + "  " + wormImage.getFloat(x,y,z) );
-			seamAnnotations.getCurves().add(text);
+				//			int x = (int)seamCellPoints.elementAt(i).X;
+				//			int y = (int)seamCellPoints.elementAt(i).Y;
+				//			int z = (int)seamCellPoints.elementAt(i).Z;
+				//			System.err.println( "Seam Cell " + (i+1) + "  " + wormImage.getFloat(x,y,z) );
+				seamAnnotations.getCurves().add(text);
+			}
+
+			LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + autoSeamCellSegmentationOutput + File.separator, wormImage);
 		}
-
-		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + "seamCells" + File.separator, wormImage);
-		System.err.println( "segmentSeamCells: end " + minSeamCellSegmentationIntensity );
+//		System.err.println( "   segmentSeamCells: end " + minSeamCellSegmentationIntensity );
 	}
 	
 	public Vector<Vector3f> getSeamCells()
@@ -250,7 +277,7 @@ public class WormData
 				}
 				for ( int i = 0; i < seamCellPoints.size(); i++ )
 				{
-					System.err.println( i + " " + distances.elementAt(i) );
+//					System.err.println( i + " " + distances.elementAt(i) );
 //					if ( distances.elementAt(i) < 30 )
 //					{
 						seamAnnotations.getCurves().elementAt(i).remove(1);
@@ -263,13 +290,238 @@ public class WormData
 		}
 	}
 	
+	public void testLattice()
+	{
+		LatticeBuilder builder = new LatticeBuilder();
+		builder.setSeamImage(seamSegmentation);
+		builder.setSkinImage(skinSegmentation);
+
+		//40:
+//		Vector<Vector3f> left = new Vector<Vector3f>();
+//		left.add(seamCellPoints.elementAt(16));
+//		left.add(seamCellPoints.elementAt(8));
+//		left.add(seamCellPoints.elementAt(1));
+//		left.add(seamCellPoints.elementAt(2));
+//		left.add(seamCellPoints.elementAt(9));
+//		left.add(seamCellPoints.elementAt(12));
+//		left.add(seamCellPoints.elementAt(20));
+//		left.add(seamCellPoints.elementAt(23));
+//		left.add(seamCellPoints.elementAt(17));
+//		left.add(seamCellPoints.elementAt(11));
+//		
+//		Vector<Vector3f> right = new Vector<Vector3f>();
+//		right.add(seamCellPoints.elementAt(14));
+//		right.add(seamCellPoints.elementAt(6));
+//		right.add(seamCellPoints.elementAt(0));
+//		right.add(seamCellPoints.elementAt(3));
+//		right.add(seamCellPoints.elementAt(10));
+//		right.add(seamCellPoints.elementAt(13));
+//		right.add(seamCellPoints.elementAt(19));
+//		right.add(seamCellPoints.elementAt(22));
+//		right.add(seamCellPoints.elementAt(15));
+//		right.add(seamCellPoints.elementAt(7));
+		
+
+//		//41:
+//		Vector<Vector3f> left = new Vector<Vector3f>();
+//		left.add(seamCellPoints.elementAt(5));
+//		left.add(seamCellPoints.elementAt(13));
+//		left.add(seamCellPoints.elementAt(17));
+//		left.add(seamCellPoints.elementAt(11));
+//		left.add(seamCellPoints.elementAt(6));
+//		left.add(seamCellPoints.elementAt(1));
+//		left.add(seamCellPoints.elementAt(3));
+//		left.add(seamCellPoints.elementAt(8));
+//		left.add(seamCellPoints.elementAt(15));
+//		left.add(seamCellPoints.elementAt(20));
+//		
+//		Vector<Vector3f> right = new Vector<Vector3f>();
+//		right.add(seamCellPoints.elementAt(7));
+//		right.add(seamCellPoints.elementAt(12));
+//		right.add(seamCellPoints.elementAt(14));
+//		right.add(seamCellPoints.elementAt(10));
+//		right.add(seamCellPoints.elementAt(4));
+//		right.add(seamCellPoints.elementAt(0));
+//		right.add(seamCellPoints.elementAt(2));
+//		right.add(seamCellPoints.elementAt(9));
+//		right.add(seamCellPoints.elementAt(16));
+//		right.add(seamCellPoints.elementAt(18));
+
+		
+		//55:
+//		Vector<Vector3f> left = new Vector<Vector3f>();
+//		left.add(seamCellPoints.elementAt(2));
+//		left.add(seamCellPoints.elementAt(4));
+//		left.add(seamCellPoints.elementAt(16));
+//		left.add(seamCellPoints.elementAt(18));
+//		left.add(seamCellPoints.elementAt(19));
+//		left.add(seamCellPoints.elementAt(17));
+//		left.add(seamCellPoints.elementAt(15));
+//		left.add(seamCellPoints.elementAt(13));
+//		left.add(seamCellPoints.elementAt(8));
+//		left.add(seamCellPoints.elementAt(11));
+//		
+//		Vector<Vector3f> right = new Vector<Vector3f>();
+//		right.add(seamCellPoints.elementAt(5));
+//		right.add(seamCellPoints.elementAt(6));
+//		right.add(seamCellPoints.elementAt(12));
+//		right.add(seamCellPoints.elementAt(10));
+//		right.add(seamCellPoints.elementAt(9));
+//		right.add(seamCellPoints.elementAt(7));
+//		right.add(seamCellPoints.elementAt(3));
+//		right.add(seamCellPoints.elementAt(0));
+//		right.add(seamCellPoints.elementAt(1));
+//		right.add(seamCellPoints.elementAt(14));
+
+//		
+//		//60:
+//		Vector<Vector3f> left = new Vector<Vector3f>();
+//		left.add(seamCellPoints.elementAt(20));
+//		left.add(seamCellPoints.elementAt(8));
+//		left.add(seamCellPoints.elementAt(14));
+//		left.add(seamCellPoints.elementAt(13));
+//		left.add(seamCellPoints.elementAt(6));
+//		left.add(seamCellPoints.elementAt(3));
+//		left.add(seamCellPoints.elementAt(0));
+//		left.add(seamCellPoints.elementAt(2));
+//		left.add(seamCellPoints.elementAt(12));
+//		left.add(seamCellPoints.elementAt(17));
+//		
+//		Vector<Vector3f> right = new Vector<Vector3f>();
+//		right.add(seamCellPoints.elementAt(9));
+//		right.add(seamCellPoints.elementAt(11));
+//		right.add(seamCellPoints.elementAt(16));
+//		right.add(seamCellPoints.elementAt(15));
+//		right.add(seamCellPoints.elementAt(7));
+//		right.add(seamCellPoints.elementAt(5));
+//		right.add(seamCellPoints.elementAt(1));
+//		right.add(seamCellPoints.elementAt(4));
+//		right.add(seamCellPoints.elementAt(10));
+//		right.add(seamCellPoints.elementAt(18));
+		
+//		
+//
+//		//80:
+//		Vector<Vector3f> left = new Vector<Vector3f>();
+//		left.add(seamCellPoints.elementAt(15));
+//		left.add(seamCellPoints.elementAt(7));
+//		left.add(seamCellPoints.elementAt(2));
+//		left.add(seamCellPoints.elementAt(8));
+//		left.add(seamCellPoints.elementAt(12));
+//		left.add(seamCellPoints.elementAt(17));
+//		left.add(seamCellPoints.elementAt(18));
+//		left.add(seamCellPoints.elementAt(10));
+//		left.add(seamCellPoints.elementAt(5));
+//		left.add(seamCellPoints.elementAt(1));
+//		
+//		Vector<Vector3f> right = new Vector<Vector3f>();
+//		right.add(seamCellPoints.elementAt(14));
+//		right.add(seamCellPoints.elementAt(9));
+//		right.add(seamCellPoints.elementAt(3));
+//		right.add(seamCellPoints.elementAt(6));
+//		right.add(seamCellPoints.elementAt(11));
+//		right.add(seamCellPoints.elementAt(16));
+//		right.add(seamCellPoints.elementAt(19));
+//		right.add(seamCellPoints.elementAt(13));
+//		right.add(seamCellPoints.elementAt(4));
+//		right.add(seamCellPoints.elementAt(0));
+		
+
+
+//		//95:
+//		Vector<Vector3f> left = new Vector<Vector3f>();
+//		left.add(seamCellPoints.elementAt(5));
+//		left.add(seamCellPoints.elementAt(12));
+//		left.add(seamCellPoints.elementAt(15));
+//		left.add(seamCellPoints.elementAt(14));
+//		left.add(seamCellPoints.elementAt(8));
+//		left.add(seamCellPoints.elementAt(7));
+//		left.add(seamCellPoints.elementAt(0));
+//		left.add(seamCellPoints.elementAt(2));
+//		left.add(seamCellPoints.elementAt(13));
+//		left.add(seamCellPoints.elementAt(18));
+//		
+//		Vector<Vector3f> right = new Vector<Vector3f>();
+//		right.add(seamCellPoints.elementAt(3));
+//		right.add(seamCellPoints.elementAt(10));
+//		right.add(seamCellPoints.elementAt(16));
+//		right.add(seamCellPoints.elementAt(19));
+//		right.add(seamCellPoints.elementAt(9));
+//		right.add(seamCellPoints.elementAt(6));
+//		right.add(seamCellPoints.elementAt(1));
+//		right.add(seamCellPoints.elementAt(4));
+//		right.add(seamCellPoints.elementAt(11));
+//		right.add(seamCellPoints.elementAt(17));
+
+//
+//
+//		//120:
+//		Vector<Vector3f> left = new Vector<Vector3f>();
+//		left.add(seamCellPoints.elementAt(21));
+//		left.add(seamCellPoints.elementAt(15));
+//		left.add(seamCellPoints.elementAt(10));
+//		left.add(seamCellPoints.elementAt(16));
+//		left.add(seamCellPoints.elementAt(20));
+//		left.add(seamCellPoints.elementAt(18));
+//		left.add(seamCellPoints.elementAt(9));
+//		left.add(seamCellPoints.elementAt(0));
+//		left.add(seamCellPoints.elementAt(2));
+//		left.add(seamCellPoints.elementAt(8));
+//		
+//		Vector<Vector3f> right = new Vector<Vector3f>();
+//		right.add(seamCellPoints.elementAt(23));
+//		right.add(seamCellPoints.elementAt(13));
+//		right.add(seamCellPoints.elementAt(5));
+//		right.add(seamCellPoints.elementAt(17));
+//		right.add(seamCellPoints.elementAt(22));
+//		right.add(seamCellPoints.elementAt(19));
+//		right.add(seamCellPoints.elementAt(12));
+//		right.add(seamCellPoints.elementAt(1));
+//		right.add(seamCellPoints.elementAt(3));
+//		right.add(seamCellPoints.elementAt(11));
+
+		//120:
+		Vector<Vector3f> left = new Vector<Vector3f>();
+		left.add(seamCellPoints.elementAt(21));
+		left.add(seamCellPoints.elementAt(15));
+		left.add(seamCellPoints.elementAt(10));
+		left.add(seamCellPoints.elementAt(16));
+		left.add(seamCellPoints.elementAt(20));
+		left.add(seamCellPoints.elementAt(18));
+		left.add(seamCellPoints.elementAt(9));
+		left.add(seamCellPoints.elementAt(0));
+		left.add(seamCellPoints.elementAt(2));
+		left.add(seamCellPoints.elementAt(8));
+		
+		Vector<Vector3f> right = new Vector<Vector3f>();
+		right.add(seamCellPoints.elementAt(23));
+		right.add(seamCellPoints.elementAt(13));
+		right.add(seamCellPoints.elementAt(5));
+		right.add(seamCellPoints.elementAt(17));
+		right.add(seamCellPoints.elementAt(22));
+		right.add(seamCellPoints.elementAt(19));
+		right.add(seamCellPoints.elementAt(12));
+		right.add(seamCellPoints.elementAt(1));
+		right.add(seamCellPoints.elementAt(3));
+		right.add(seamCellPoints.elementAt(11));
+		
+		
+		
+		System.err.println( "lattice test " + builder.testLattice(wormImage, left, right) );
+	}
+	
 	public void generateLattice()
 	{
 		LatticeBuilder builder = new LatticeBuilder();
 		builder.setSeamImage(seamSegmentation);
 		builder.setSkinImage(skinSegmentation);
 		// build the lattices from input image and list of points:
-		builder.buildLattice( null, 0, 0, wormImage, seamAnnotations, null, outputDirectory );
+		autoLattice = builder.buildLattice( null, 0, 0, wormImage, seamAnnotations, null, outputDirectory );
+	}
+	
+	public VOIVector getAutoLattice()
+	{
+		return autoLattice;
 	}
 
 	private float surfaceCount( ModelImage skinImage, Vector3f pt1, Vector3f pt2 )

@@ -142,7 +142,8 @@ public class PlugInAlgorithmWormUntwisting
 				
 				LatticeBuilder builder = new LatticeBuilder();
 				// build the lattices from input image and list of points:
-				if ( builder.buildLattice( batchProgress, i, includeRange.size(), image, seamCells.elementAt(0), nose, baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) ) )
+				if ( builder.buildLattice( batchProgress, i, includeRange.size(), image, seamCells.elementAt(0), nose, 
+						baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) ) != null )
 				{
 					foundCount++;
 				}

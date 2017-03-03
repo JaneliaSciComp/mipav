@@ -338,6 +338,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			saveVOIs("loadLattice");
 		}
 		latticeModel.setLattice( newLattice );	
+//		latticeModel.expandLattice();
 	}
 	
 	public void openAnnotations( String directory, String fileName )

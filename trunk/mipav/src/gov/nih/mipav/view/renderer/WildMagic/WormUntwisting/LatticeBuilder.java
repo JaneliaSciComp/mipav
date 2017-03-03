@@ -6,10 +6,12 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Vector;
 
 import javax.swing.JProgressBar;
@@ -39,19 +41,21 @@ public class LatticeBuilder {
 	private static final int maxPairDist = 20;		
 	public static final float tenMinDist = 1;
 	public static final float tenMaxDist = 5;  
-	private static final float noseP1MinDist = 10;
-	private static final float noseP1MaxDist = 30;
+//	private static final float noseP1MinDist = 10;
+//	private static final float noseP1MaxDist = 30;
 	private static final int minSequenceMidDist = 4;
-	private static final int maxSequenceMidDist = 30;
+	private static final int maxSequenceMidDist = 25;
 	private static final int minSequenceDist = 4;
-	private static final int maxSequenceDist = 25;
-	private static final int sequenceDistDiffLimit = 12;
-	private static final double sequenceTwistLimit = (Math.PI/2f);
+	private static final int maxSequenceDist = 28;
+	private static final int sequenceDistDiffLimit = 16;
+//	private static final double sequenceTwistLimit = (Math.PI/2f);
 	private static final int wormLengthMin = 100;
 	private static final int wormLengthMax = 140;
 	private static final int sequenceBendMin = 6;
 	private static final int sequenceBendMax = 12;
 	private static final int sequenceTimeLimit = 1000;
+	
+	private static final float midPointTestScale = 0.3f;
 
 	private Vector<int []> testSequence = new Vector<int[]>();
 	
@@ -70,151 +74,124 @@ public class LatticeBuilder {
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 * @return true if the algorithm successfully build at least one lattice for the inputs.
 	 */
-	public boolean buildLattice( JProgressBar batchProgress, int imageCount, int numImages, ModelImage image, VOI annotations, VOI nose, String outputDir )
+	public VOIVector buildLattice( JProgressBar batchProgress, int imageCount, int numImages, ModelImage image, VOI annotations, VOI nose, String outputDir )
 	{
 		wormImage = image;
+
+		long startTime = System.currentTimeMillis();
+		System.err.println( "buildLattice outer: " + annotations.getCurves().size() );
+		VOI pointSets = makeGroups(annotations);
+		HashMap<Integer, Vector<Vector<int[]>>> sequenceList = new HashMap<Integer, Vector<Vector<int[]>>>(pointSets.getCurves().size());
+		for ( int i = 0; i < pointSets.getCurves().size(); i++ )
+		{
+			if ( pointSets.getCurves().elementAt(i).size() == 20 )
+			{
+				// save the seam cell subset:
+				image.unregisterAllVOIs();
+				VOIContour seamCells = (VOIContour) pointSets.getCurves().elementAt(i);
+				VOI annotationsSubSet = new VOI((short)0, "seamCells" + (i+1), VOI.ANNOTATION, 1);
+				for ( int j = 0; j < seamCells.size(); j++ )
+				{
+					VOIText text = new VOIText();
+					text.setText( "" + (j+1) );
+					text.add(seamCells.elementAt(j));
+					text.add(seamCells.elementAt(j));
+					text.setUseMarker(false);
+					annotationsSubSet.getCurves().add(text);
+				}
+				image.registerVOI(annotationsSubSet);
+				String fileName = outputDir + File.separator + autoSeamCellSegmentationOutput + "_subset_" + (i+1) + File.separator;
+//				System.err.println( "saving seam cells to " + fileName );
+				File outputFileDir = new File(fileName);
+				if ( !outputFileDir.exists() )
+				{
+					outputFileDir.mkdir();
+				}
+				LatticeModel.saveAllVOIsTo(fileName, image);
+				image.unregisterAllVOIs();
+
+				widthErrorCount = 0;
+				midDistErrorCount = 0;
+				sequenceDistErrorCount = 0;
+				wormLengthErrorCount = 0;
+				avgWidthErrorCount = 0;
+				bendSumErrorCount = 0;
+				latticeImageErrorCount = 0;
+				
+				setSeamIDs( pointSets.getCurves().elementAt(i) );
+				Vector<Vector<int[]>> sequences = buildLattice(batchProgress, imageCount, numImages, pointSets.getCurves().elementAt(i) );
+				sequenceList.put(i, sequences);
+				
+				System.err.println( widthErrorCount + "  " + midDistErrorCount + "  " + sequenceDistErrorCount + "  " + wormLengthErrorCount + "  " + 
+						avgWidthErrorCount + "  " + bendSumErrorCount + "  " + latticeImageErrorCount );
+			}
+			else
+			{
+				System.err.println( "makeGroups error" );
+			}
+		}
+
+
+
+		LatticeModel model = new LatticeModel( wormImage );
+		
+		VOIVector finalLatticeList = new VOIVector();
+		// Order the sequences based on how well they fit the lattice parameters:		
+//		sequenceList.add(0, testSequence);
+
+		orderSequences( startTime, model, pointSets, sequenceList, finalLatticeList );
+
+		if ( batchProgress != null )
+		{
+			batchProgress.setValue((int)100);
+			batchProgress.update(batchProgress.getGraphics());
+		}
+		
+//		System.err.println( finalLatticeList.size() );
+		// Save the top 5 lattices found for the user to select the best:
+		for ( int i = 0; i < Math.min( 5, finalLatticeList.size()); i++ )
+		{
+			image.unregisterAllVOIs();
+			VOI lattice = finalLatticeList.elementAt(i);
+			image.registerVOI(lattice);
+			String fileName = outputDir + File.separator + autoLatticeGenerationOutput + (i+1) + File.separator;
+			File outputFileDir = new File(fileName);
+			if ( !outputFileDir.exists() )
+			{
+				outputFileDir.mkdir();
+			}
+
+			LatticeModel.saveAllVOIsTo(fileName, image);
+		}
+
+		System.err.println( "done buildLattice = " + AlgorithmBase.computeElapsedTime(startTime) );
+		
+		model.dispose();
+		model = null;
+		return finalLatticeList;
+	}
+		
+		
+	
+
+	private Vector<Vector<int[]>> buildLattice( JProgressBar batchProgress, int imageCount, int numImages, Vector<Vector3f> seamCells )
+	{
 		int numSteps = 3;
 		int step = 1;
 		long startTime = System.currentTimeMillis();
-		boolean print = true;
+		boolean print = false;
 		/** Step (1) Attempt to find the tenth pair of seam cells in the lattice. 
 		 * The 10th pair is distinct in that it has the smallest between-cell distance */
 		Vector<int[]> tenthPairs = new Vector<int[]>();
 		Vector<Vector3f> positions = new Vector<Vector3f>();
-		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		for ( int i = 0; i < seamCells.size(); i++ )
 		{
-			VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-			// skip extra annotations (origin, nose)
-			// use annotations list?
-			if ( !text.getText().equalsIgnoreCase("origin") )
-			{
-				Vector3f pos = new Vector3f(text.elementAt(0));
-				pos.scale( VOILatticeManagerInterface.VoxelSize );
-				positions.add( pos );
-			}
-		}
-		Vector<Vector3f> nosePts = new Vector<Vector3f>();
-		if ( nose != null )
-		{
-			for ( int i = 0; i < nose.getCurves().size(); i++ )
-			{
-				VOIText text = (VOIText)nose.getCurves().elementAt(i);
-				nosePts.add(new Vector3f(text.elementAt(0)));
-				nosePts.lastElement().scale( VOILatticeManagerInterface.VoxelSize );
-			}
+			Vector3f pos = new Vector3f(seamCells.elementAt(i));
+			pos.scale( VOILatticeManagerInterface.VoxelSize );
+			positions.add( pos );
 		}
 		
-		System.err.println( positions.size() );
-
-		// 100
-//		testSequence.add( new int[]{5,7} );
-//		testSequence.add( new int[]{14,13} );
-//		testSequence.add( new int[]{15,16} );
-//		testSequence.add( new int[]{9,11} );
-//		testSequence.add( new int[]{2,3} );
-//		testSequence.add( new int[]{1,0} );
-//		testSequence.add( new int[]{6,4} );
-//		testSequence.add( new int[]{12,10} );
-//		testSequence.add( new int[]{19,20} );
-//		testSequence.add( new int[]{18,21} );
-//		Vector<Vector3f> left = new Vector<Vector3f>();
-//		left.add(positions.elementAt(5));
-//		left.add(positions.elementAt(14));
-//		left.add(positions.elementAt(16));
-//		left.add(positions.elementAt(9));
-//		left.add(positions.elementAt(2));
-//		left.add(positions.elementAt(1));
-//		left.add(positions.elementAt(6));
-//		left.add(positions.elementAt(12));
-//		left.add(positions.elementAt(19));
-//		left.add(positions.elementAt(18));
-//		
-//		Vector<Vector3f> right = new Vector<Vector3f>();
-//		right.add(positions.elementAt(7));
-//		right.add(positions.elementAt(13));
-//		right.add(positions.elementAt(16));
-//		right.add(positions.elementAt(11));
-//		right.add(positions.elementAt(3));
-//		right.add(positions.elementAt(0));
-//		right.add(positions.elementAt(4));
-//		right.add(positions.elementAt(10));
-//		right.add(positions.elementAt(20));
-//		right.add(positions.elementAt(21));
-		
-		
-		// 40
-		testSequence.add( new int[]{12,14} );
-		testSequence.add( new int[]{4,6} );
-		testSequence.add( new int[]{0,1} );
-		testSequence.add( new int[]{3,2} );
-		testSequence.add( new int[]{8,7} );
-		testSequence.add( new int[]{11,10} );
-		testSequence.add( new int[]{16,17} );
-		testSequence.add( new int[]{19,20} );
-		testSequence.add( new int[]{13,15} );
-		testSequence.add( new int[]{5,9} );
-//		
-//		Vector<Vector3f> left = new Vector<Vector3f>();
-//		left.add(positions.elementAt(14));
-//		left.add(positions.elementAt(6));
-//		left.add(positions.elementAt(1));
-//		left.add(positions.elementAt(2));
-//		left.add(positions.elementAt(7));
-//		left.add(positions.elementAt(10));
-//		left.add(positions.elementAt(17));
-//		left.add(positions.elementAt(20));
-//		left.add(positions.elementAt(15));
-//		left.add(positions.elementAt(9));
-//		
-//		Vector<Vector3f> right = new Vector<Vector3f>();
-//		right.add(positions.elementAt(12));
-//		right.add(positions.elementAt(4));
-//		right.add(positions.elementAt(0));
-//		right.add(positions.elementAt(3));
-//		right.add(positions.elementAt(8));
-//		right.add(positions.elementAt(11));
-//		right.add(positions.elementAt(16));
-//		right.add(positions.elementAt(19));
-//		right.add(positions.elementAt(13));
-//		right.add(positions.elementAt(5));
-
-		// 41
-//		testSequence.add( new int[]{7,5} );
-//		testSequence.add( new int[]{12,13} );
-//		testSequence.add( new int[]{14,17} );
-//		testSequence.add( new int[]{10,11} );
-//		testSequence.add( new int[]{4,6} );
-//		testSequence.add( new int[]{0,1} );
-//		testSequence.add( new int[]{2,3} );
-//		testSequence.add( new int[]{9,8} );
-//		testSequence.add( new int[]{16,15} );
-//		testSequence.add( new int[]{18,19} );
-//		
-//		Vector<Vector3f> left = new Vector<Vector3f>();
-//		left.add(positions.elementAt(7));
-//		left.add(positions.elementAt(12));
-//		left.add(positions.elementAt(14));
-//		left.add(positions.elementAt(10));
-//		left.add(positions.elementAt(4));
-//		left.add(positions.elementAt(0));
-//		left.add(positions.elementAt(2));
-//		left.add(positions.elementAt(9));
-//		left.add(positions.elementAt(16));
-//		left.add(positions.elementAt(18));
-//		
-//		Vector<Vector3f> right = new Vector<Vector3f>();
-//		right.add(positions.elementAt(5));
-//		right.add(positions.elementAt(13));
-//		right.add(positions.elementAt(17));
-//		right.add(positions.elementAt(11));
-//		right.add(positions.elementAt(6));
-//		right.add(positions.elementAt(1));
-//		right.add(positions.elementAt(3));
-//		right.add(positions.elementAt(8));
-//		right.add(positions.elementAt(15));
-//		right.add(positions.elementAt(19));
-
-//		testLattice(left, right, null);
+		System.err.println( "Start buildLattice inner " + positions.size() );
 		
 		// look for potential 10 pair:
 		float maxDist = -1;
@@ -247,6 +224,11 @@ public class LatticeBuilder {
 			}
 		}
 
+		if ( tenthPairs.size() == 0 )
+		{
+			return null;
+		}
+		
 		// Given a set of potential tenth pairs, remove any that fail the mid-point test:
 //		System.err.println( tenthPairs.size() + " " + tempMin + " " + tempMax );
 		if ( tenthPairs.size() > 1 )
@@ -280,80 +262,67 @@ public class LatticeBuilder {
 		
 
 
-		if ( print ) System.err.println( "10th pair " + tenthPairs.size() );
-		float minIntensity = Float.MAX_VALUE;
-		int minIndex = -1;
-		for ( int i = 0; i < tenthPairs.size(); i++ )
-		{
-			int[] pair = tenthPairs.elementAt(i);
-			int index1 = pair[0];
-			int index2 = pair[1];
-			Vector3f pt1 = positions.elementAt(index1);
-			Vector3f pt2 = positions.elementAt(index2);
-
-			Vector3f pt1Voxel = new Vector3f(pt1);
-			pt1Voxel.scale(1f/VOILatticeManagerInterface.VoxelSize);
-			Vector3f pt1Voxel2 = new Vector3f(pt2);
-			pt1Voxel2.scale(1f/VOILatticeManagerInterface.VoxelSize);
-			
-			
-			int x = (int) pt1Voxel.X;
-			int y = (int) pt1Voxel.Y;
-			int z = (int) pt1Voxel.Z;
-			float value1 = image.getFloat(x,y,z);
-			x = (int) pt1Voxel2.X;
-			y = (int) pt1Voxel2.Y;
-			z = (int) pt1Voxel2.Z;
-			float value2 = image.getFloat(x,y,z);
-			if ( print ) System.err.println( "10th " + (index1 + 1) + " " + (index2 + 1) + " " + value1 + " " + value2 );
-			
-			if ( (value1 + value2) < minIntensity )
-			{
-				minIntensity = (value1 + value2);
-				minIndex = i;
-			}
-		}
-
-		if ( minIndex != -1 )
-		{
-			int[] pair = tenthPairs.elementAt(minIndex);
-			tenthPairs.removeAllElements();
-			tenthPairs.add(pair);
-			
-			System.err.println( "Tenth pair = [" + pair[0] + "," + pair[1] + "]" );
-		}
+//		if ( print ) System.err.println( "10th pair " + tenthPairs.size() );
+//		float minIntensity = Float.MAX_VALUE;
+//		int minIndex = -1;
+//		for ( int i = 0; i < tenthPairs.size(); i++ )
+//		{
+//			int[] pair = tenthPairs.elementAt(i);
+//			int index1 = pair[0];
+//			int index2 = pair[1];
+//			Vector3f pt1 = positions.elementAt(index1);
+//			Vector3f pt2 = positions.elementAt(index2);
+//
+//			Vector3f pt1Voxel = new Vector3f(pt1);
+//			pt1Voxel.scale(1f/VOILatticeManagerInterface.VoxelSize);
+//			Vector3f pt1Voxel2 = new Vector3f(pt2);
+//			pt1Voxel2.scale(1f/VOILatticeManagerInterface.VoxelSize);
+//			
+//			
+//			int x = (int) pt1Voxel.X;
+//			int y = (int) pt1Voxel.Y;
+//			int z = (int) pt1Voxel.Z;
+//			float value1 = wormImage.getFloat(x,y,z);
+//			x = (int) pt1Voxel2.X;
+//			y = (int) pt1Voxel2.Y;
+//			z = (int) pt1Voxel2.Z;
+//			float value2 = wormImage.getFloat(x,y,z);
+//			if ( print ) System.err.println( "10th " + (index1 + 1) + " " + (index2 + 1) + " " + value1 + " " + value2 );
+//			
+//			if ( (value1 + value2) < minIntensity )
+//			{
+//				minIntensity = (value1 + value2);
+//				minIndex = i;
+//			}
+//		}
+//
+//		if ( minIndex != -1 )
+//		{
+//			int[] pair = tenthPairs.elementAt(minIndex);
+//			tenthPairs.removeAllElements();
+//			tenthPairs.add(pair);
+//			
+//			if ( print ) System.err.println( "Tenth pair = [" + pair[0] + "," + pair[1] + "]" );
+//		}
 		
 		
-		
-		
-//		if ( print ) System.err.println( tenthPairs.size() );
 		if ( batchProgress != null )
 		{
 			batchProgress.setValue((int)(100 * (float)(imageCount*numSteps + step++)/(numSteps*numImages)));
 			batchProgress.update(batchProgress.getGraphics());
 		}
 		
-		LatticeModel model = new LatticeModel( image );
 		int[] total = new int[]{0};
 		int[] max = new int[]{0};
 		Vector<Vector<int[]>> sequenceList = new Vector<Vector<int[]>>();
 
-		for ( int i = 0; i < annotations.getCurves().size(); i++ )
-		{
-			VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-			Vector3f pos = text.elementAt(0);
-			int x = (int)pos.X;
-			int y = (int)pos.Y;
-			int z = (int)pos.Z;
-			float val = wormImage.getFloat(x,y,z);
-			System.err.println( i + "   " + val );
-		}
 		
 		// Loop over all potential tenthPairs:
 		for ( int i = 0; i < tenthPairs.size(); i++ )
 		{
 			int minMaxCount = 0;
 			int[] tenthPair = tenthPairs.elementAt(i);
+//			System.err.println( "Tenth pair = [" + tenthPair[0] + "," + tenthPair[1] + "]" );
 			int[][] pairs = new int[positions.size()][positions.size()];
 			// Find potential pairs in the remaining set of points:
 			for ( int j = 0; j < positions.size(); j++ )
@@ -369,7 +338,7 @@ public class LatticeBuilder {
 							float distance = positions.elementAt(j).distance( positions.elementAt(k) );
 							// pairs must be within a minimum and maximum distance thresholds:
 							
-							System.err.print( "Pair " + j + " " + k );
+							if ( print ) System.err.print( "Pair " + j + " " + k );
 							if (  (distance >= minPairDist) && (distance <= maxPairDist) )
 							{
 								minMaxCount++;
@@ -385,26 +354,26 @@ public class LatticeBuilder {
 											pairs[j][k] = 1;
 											countJ++;
 											
-											System.err.println(" added" );
+											if ( print ) System.err.println(" added" );
 										}
 										else
 										{
-											System.err.println(" checkSeam fail" );
+											if ( print ) System.err.println(" checkSeam fail" );
 										}
 									}
 									else
 									{
-										System.err.println(" checkSurface fail" );
+										if ( print ) System.err.println(" checkSurface fail" );
 									}
 								}
 								else
 								{
-									System.err.println(" midPointFail fail" );
+									if ( print ) System.err.println(" midPointFail fail" );
 								}
 							}
 							else
 							{
-								System.err.println(" distance fail " + distance + "  " + (distance >= minPairDist) + "  " + (distance <= maxPairDist) );
+								if ( print ) System.err.println(" distance fail " + distance + "  " + (distance >= minPairDist) + "  " + (distance <= maxPairDist) );
 							}
 						}
 					}
@@ -414,10 +383,17 @@ public class LatticeBuilder {
 					if ( countJ == 0 )
 					{
 						if ( print ) System.err.println( "   No pairs found for " + j );
+						return null;
 					}
 				}
 			}
-			if ( print ) System.err.println( "   Initial Pairset " + countPairs(pairs, tenthPair) );
+			
+			boolean pairCount = countPairs(pairs, tenthPair);
+			if ( !pairCount )
+			{
+				if ( print ) System.err.println( "   Initial Pairset " + countPairs(pairs, tenthPair) );
+				return null;
+			}
 
 			Vector<int[]> pairLists = new Vector<int[]>();
 			for ( int j = 0; j < pairs.length; j++ )
@@ -428,12 +404,12 @@ public class LatticeBuilder {
 					{
 						pairLists.add( new int[]{j,k} );
 						
-						System.err.println( pairLists.size() + "   [" + j + "," + k + "]" );
+						if ( print ) System.err.println( pairLists.size() + "   [" + j + "," + k + "]" );
 					}
 				}
 			}
 
-//			System.err.println( pairLists.size() + " " + minMaxCount + " " + positions.size() );
+			if ( print ) System.err.println( pairLists.size() + " " + minMaxCount + " " + positions.size() );
 			pairLists.add( tenthPair );
 
 			// This step looks for seam cell pairs
@@ -453,59 +429,116 @@ public class LatticeBuilder {
 				}
 			}
 			checkPairs( pairLists, positions.size() );
-//			if ( print ) System.err.println( pairLists.size() );
+			if ( print ) System.err.println( pairLists.size() );
 			
 			Vector<int[]> sequence = new Vector<int[]>();
 			int targetLength = (positions.size() % 2) == 0 ? positions.size() : positions.size() -1;
 			targetLength = Math.max(0, targetLength);
 			targetLength = Math.min(20, targetLength);
+			
+//			savePairs(pairLists, positions);
 			// Starting at the 10th pair, add pairs to the sequence building it up until the sequence contains 10 pairs:
-			sequencePairs( startTime, nosePts, positions, sequence, pairLists, tenthPair, targetLength, total, max, sequenceList );
+			sequencePairs( startTime, null, positions, sequence, pairLists, tenthPair, targetLength, total, max, sequenceList );
 		}
 		if ( batchProgress != null )
 		{
 			batchProgress.setValue((int)(100 * (float)(imageCount*numSteps + step++)/(numSteps*numImages)));
 			batchProgress.update(batchProgress.getGraphics());
 		}
-		if ( print ) System.err.println( "buildLattice time 1 = " + AlgorithmBase.computeElapsedTime(startTime) + " " + sequenceList.size() );
-		long startTime2 = System.currentTimeMillis();
-//		System.err.println( sequenceList.size() + " " + max[0] );
-		VOIVector finalLatticeList = new VOIVector();
-		// Order the sequences based on how well they fit the lattice parameters:
+		if ( print ) System.err.println( "buildLattice inner: time = " + AlgorithmBase.computeElapsedTime(startTime) + " " + sequenceList.size() );
 		
-		sequenceList.add(0, testSequence);
-		orderSequences( startTime2, image, model, nosePts, positions, sequenceList, finalLatticeList );
-
-		if ( batchProgress != null )
-		{
-			batchProgress.setValue((int)(100 * (float)(imageCount*numSteps + step++)/(numSteps*numImages)));
-			batchProgress.update(batchProgress.getGraphics());
-		}
-		if ( print ) System.err.println( finalLatticeList.size() );
-		// Save the top 5 lattices found for the user to select the best:
-		for ( int j = 0; j < Math.min( 5, finalLatticeList.size()); j++ )
-//			for ( int j = 0; j < finalLatticeList.size(); j++ )
-		{
-			image.unregisterAllVOIs();
-			VOI lattice = finalLatticeList.elementAt(j);
-			image.registerVOI(lattice);
-			String fileName = outputDir + File.separator + autoLatticeGenerationOutput + (j+1) + File.separator;
-			File outputFileDir = new File(fileName);
-			if ( !outputFileDir.exists() )
-			{
-				outputFileDir.mkdir();
-			}
-
-			LatticeModel.saveAllVOIsTo(fileName, image);
-		}
-
-		if ( print ) System.err.println( "done buildLattice = " + AlgorithmBase.computeElapsedTime(startTime) );
-		
-		model.dispose();
-		model = null;
-		return (finalLatticeList.size() > 0);
+		return sequenceList;
 	}
 
+	private VOI makeGroups( VOI annotations )
+	{
+		if ( seamSegmentation == null )
+		{
+			return null;
+		}
+		
+//		System.err.println( "Seam segmentation " + annotations.getCurves().size() );
+		
+		Vector<Vector3f> centerList = new Vector<Vector3f>();
+		for ( int i = 0; i < annotations.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+			// skip extra annotations (origin, nose)
+			// use annotations list?
+			if ( !text.getText().equalsIgnoreCase("origin") )
+			{
+				Vector3f pos = new Vector3f(text.elementAt(0));
+				centerList.add( pos );
+			}
+		}
+		
+		boolean[] idFound = new boolean[centerList.size()];
+		for ( int i = 0; i < centerList.size(); i++ )
+		{
+			idFound[i] = false;
+		}
+		Vector2d[] values = new Vector2d[centerList.size()];
+		for ( int i = 0; i < centerList.size(); i++ )
+		{
+			int x = (int)centerList.elementAt(i).X;
+			int y = (int)centerList.elementAt(i).Y;
+			int z = (int)centerList.elementAt(i).Z;
+			int id = seamSegmentation.getInt(x, y, z );
+			float value = wormImage.getFloat(x, y, z );
+			values[i] = new Vector2d(value, id);
+			if ( idFound[id-1] )
+			{
+				//error:
+				System.err.println( "error: " + x + " " + y + " " + z + "    " + id + " already found!");				
+			}
+			idFound[id-1] = true;
+		}
+
+		Arrays.sort(values);
+//		float median = (float)values[values.length/2].X;
+//		System.err.println( median );
+		
+		Vector<Vector3f> coreGroup = new Vector<Vector3f>();
+		Vector<Vector3f> extraGroup = new Vector<Vector3f>();
+		for ( int i = values.length-1; i >= 0; i-- )
+		{
+//			System.err.println( (int)values[i].Y + "   " + values[i].X );
+			if ( coreGroup.size() < 18 )
+			{
+				coreGroup.add( centerList.elementAt( (int)(values[i].Y) - 1) );
+			}
+			else
+			{
+				extraGroup.add( centerList.elementAt( (int)(values[i].Y) - 1) );
+			}
+		}
+		
+		VOI clusterLists = new VOI( (short)0, "clusterList", VOI.POLYLINE, 0);
+		for ( int i = 0; i < extraGroup.size(); i++ )
+		{
+			for ( int j = i+1; j < extraGroup.size(); j++ )
+			{
+				VOIContour newCombo = new VOIContour(false);
+				newCombo.add( new Vector3f(extraGroup.elementAt(i)) );
+				newCombo.add( new Vector3f(extraGroup.elementAt(j)) );
+				for ( int k = 0; k < coreGroup.size(); k++ )
+				{
+					newCombo.add( new Vector3f(coreGroup.elementAt(k)) );
+				}
+				setSeamIDs(newCombo);
+				boolean pass = findTenthPair(wormImage, newCombo);
+				if ( pass )
+				{
+					clusterLists.getCurves().add(newCombo);
+//					System.err.println( "New Group " + clusterLists.getCurves().size() + "   " + i + "   " + j + "   " + pass  + "   " + newCombo.size() );
+				}
+			}
+		}
+		return clusterLists;
+	}
+	
+	
+	
 	/**
 	 * @param pairs  list of potential seam cell pairs
 	 * @param size   the total number of seam cells
@@ -675,9 +708,9 @@ public class LatticeBuilder {
 		// calculate the mid point:
 		Vector3f midPt = Vector3f.add(p1,p2);
 		midPt.scale(0.5f);
-		// calculate the distance between the two seam cells and divide by 2:
+		// calculate the distance between the two seam cells and scale:
 		float distance = p1.distance(p2);
-		distance /= 2f;
+		distance *= midPointTestScale;
 		// Loop through all seam cells:
 		for ( int i = 0; i < positions.size(); i++ )
 		{
@@ -713,9 +746,9 @@ public class LatticeBuilder {
 		// calculate the mid point:
 		Vector3f midPt = Vector3f.add(p1,p2);
 		midPt.scale(0.5f);
-		// calculate the distance between the two seam cells and divide by 2:
+		// calculate the distance between the two seam cells and scale:
 		float distance = p1.distance(p2);
-		distance /= 2f;
+		distance *= midPointTestScale;
 		// Loop through all seam cells:
 		for ( int i = 0; i < positions.size(); i++ )
 		{
@@ -738,14 +771,12 @@ public class LatticeBuilder {
 	 * The lattice with the smoothest curvature and minimum self-intersections is scored higher than a lattice
 	 * with a lot of curvature and high amount of self-intersection.
 	 * @param startTime the algorithm total run-time, to limit the length spent optimizing the lattice search.
-	 * @param image input worm image
 	 * @param model model of the worm, based on the lattice.
-	 * @param nose nose positions
 	 * @param positions seam cell positions
 	 * @param sequenceList list of sequences representing lattices
 	 * @param finalLatticeList final list of output lattices.
 	 */
-	private void orderSequences( long startTime, ModelImage image, LatticeModel model, Vector<Vector3f> nose, Vector<Vector3f> positions, Vector<Vector<int[]>> sequenceList, VOIVector finalLatticeList )
+	private void orderSequences( long startTime, LatticeModel model, VOI seamCellLists, HashMap<Integer, Vector<Vector<int[]>>> sequenceList, VOIVector finalLatticeList )
 	{
 		if ( sequenceList.size() <= 0 )
 		{
@@ -755,59 +786,84 @@ public class LatticeBuilder {
 		model.setSeamCellImage(seamSegmentation);	
 		
 		VOIVector lattices = new VOIVector();
-		Vector2d[] latticeImageCounts = new Vector2d[sequenceList.size()];
+		Vector<Vector2d> latticeImageCounts = new Vector<Vector2d>();
 		for ( int i = 0; i < sequenceList.size(); i++ )
 		{
-			Vector<int[]>sequence = sequenceList.elementAt(i); 
+			Vector<Vector<int[]>> sequences = sequenceList.get(i); 
+			if ( sequences == null )
+				continue;
+			Vector<Vector3f> positions = seamCellLists.getCurves().elementAt(i);
 			
-			VOIContour left = new VOIContour( false );
-			VOIContour right = new VOIContour( false );
-			VOI lattice = new VOI((short) i, "lattice", 1, VOI.POLYLINE );
-			lattice.getCurves().add(left);
-			lattice.getCurves().add(right);
-			for ( int j = 0; j < sequence.size(); j++ )
+			for ( int j = 0; j < sequences.size(); j++ )
 			{
-				int[] pair = sequence.elementAt(j);
-				Vector3f p1 = new Vector3f(positions.elementAt(pair[0]));
-				Vector3f p2 = new Vector3f(positions.elementAt(pair[1]));
-				p1.scale(1f/VOILatticeManagerInterface.VoxelSize);
-				p2.scale(1f/VOILatticeManagerInterface.VoxelSize);
-				left.add(0, p1);
-				right.add(0, p2);
+				Vector<int[]> sequence = sequences.elementAt(j);
+
+				VOIContour left = new VOIContour( false );
+				VOIContour right = new VOIContour( false );
+				VOI lattice = new VOI((short) lattices.size(), "lattice", 1, VOI.POLYLINE );
+				lattice.getCurves().add(left);
+				lattice.getCurves().add(right);
+				for ( int k = 0; k < sequence.size(); k++ )
+				{
+					int[] pair = sequence.elementAt(k);
+					Vector3f p1 = new Vector3f(positions.elementAt(pair[0]));
+					Vector3f p2 = new Vector3f(positions.elementAt(pair[1]));
+					left.add(0, p1);
+					right.add(0, p2);
+				}
+
+				model.setLattice(lattice);		
+				float[] avgVals = model.testLatticeImage();
+				if ( avgVals[0] != -1 )
+				{
+					lattices.add(lattice);
+					latticeImageCounts.add( new Vector2d(avgVals[0], lattices.size()-1) );
+				}
 			}
-			lattices.add(lattice);
-			
-			model.setLattice(lattice);		
-			float[] avgVals = model.testLatticeImage();
-			latticeImageCounts[i] = new Vector2d( avgVals[0], i );
 		}
 				
-		Arrays.sort(latticeImageCounts);
-		for ( int i = latticeImageCounts.length -1; i >= 0; i-- )
+		if ( latticeImageCounts.size() == 0 )
+			return;
+		
+		Vector2d[] latticeSort = new Vector2d[latticeImageCounts.size()];
+		for ( int i = 0; i < latticeImageCounts.size(); i++ )
 		{
-			if ( latticeImageCounts[i].X != -1 )
+			latticeSort[i] = latticeImageCounts.elementAt(i);
+		}
+		Arrays.sort(latticeSort);
+		for ( int i = latticeSort.length -1; i >= 0; i-- )
+		{
+			VOI lattice = lattices.elementAt((int)latticeSort[i].Y);
+			model.setLattice(lattice);
+			float[] length2 = new float[1];
+			float[] curvature = new float[1];
+			float[] intersectionCount = new float[1];
+			model.testLatticeConflicts(length2, curvature, intersectionCount);
+			if ( intersectionCount[0] < .2 )
 			{
-				VOI lattice = lattices.elementAt((int)latticeImageCounts[i].Y);
-				model.setLattice(lattice);
-				float[] length2 = new float[1];
-				float[] curvature = new float[1];
-				float[] intersectionCount = new float[1];
-				model.testLatticeConflicts(length2, curvature, intersectionCount);
-				if ( intersectionCount[0] < .2 )
-				{
-					finalLatticeList.add(lattice);
-				}
-				
-				System.err.println( latticeImageCounts[i].X + "   curve vals: " + latticeImageCounts[i].Y + "     " +  intersectionCount[0] );
+				finalLatticeList.add(lattice);
 			}
-			
+			System.err.println( latticeSort[i].X + "   curve vals: " + latticeSort[i].Y + "     " +  intersectionCount[0] );
+
+
 			if ( finalLatticeList.size() >= 5 )
 			{
-				return;
+				break;
 			}
 		}
+		if ( finalLatticeList.size() == 0 )
+		{
+			for ( int i = latticeSort.length -1; i >= 0; i-- )
+			{
+				VOI lattice = lattices.elementAt((int)latticeSort[i].Y);
+				finalLatticeList.add(lattice);
+				if ( finalLatticeList.size() >= 5 )
+				{
+					break;
+				}
+			}			
+		}
 	}
-	
 	
 	/**
 	 * Generates sequences of pairs of seam cells to build a lattice. 
@@ -827,6 +883,23 @@ public class LatticeBuilder {
 		Vector<int[]> newSequence = new Vector<int[]>();
 		newSequence.addAll(sequence);
 		newSequence.add(lastPair);
+		
+		if ( newSequence.size() >= 3 )
+		{
+			Vector<Vector3f> left = new Vector<Vector3f>();
+			Vector<Vector3f> right = new Vector<Vector3f>();
+//			boolean testFound = true;
+			for ( int i = 0; i < newSequence.size(); i++ )
+			{
+				int[] pair = newSequence.elementAt(i);
+				left.add(positions.elementAt(pair[0]));
+				right.add(positions.elementAt(pair[1]));
+			}
+			if ( !testLatticeInProgress(left, right) )
+			{
+				return;
+			}
+		}
 		
 		// Test if the current sequence is the correct length:
 		boolean allFound = (count == newSequence.size() * 2);
@@ -856,7 +929,8 @@ public class LatticeBuilder {
 			if ( testLattice(left, right, nose) )
 			{
 				total[0]++;
-				sequenceList.add(newSequence);				
+				sequenceList.add(newSequence);
+				System.err.println( "    adding sequence " + total[0] + "  " + max[0]);
 			}
 			// return, do not add more to this sequence:
 			return;
@@ -886,7 +960,11 @@ public class LatticeBuilder {
 				newPairs.remove(pair);
 			}			
 		}
-		
+		int pairGoal = count / 2;
+		if ( newSequence.size() + newPairs.size() < pairGoal )
+		{
+			return;
+		}
 		for ( int i = 0; i < newPairs.size(); i++ )
 		{
 			int[] pair = newPairs.elementAt(i);
@@ -962,7 +1040,300 @@ public class LatticeBuilder {
 
 	}
 
+	public boolean testLattice( ModelImage image, Vector<Vector3f> leftIn, Vector<Vector3f> rightIn )
+	{
+		wormImage = image;
+		
+		Vector<Vector3f> left = new Vector<Vector3f>();
+		Vector<Vector3f> right = new Vector<Vector3f>();
+		for ( int i = 0; i < leftIn.size(); i++ )
+		{
+			Vector3f p1 = new Vector3f(leftIn.elementAt(i));
+			Vector3f p2 = new Vector3f(rightIn.elementAt(i));
+			p1.scale(VOILatticeManagerInterface.VoxelSize);
+			p2.scale(VOILatticeManagerInterface.VoxelSize);
+			left.add(p1);
+			right.add(p2);
+		}
+		
+		boolean pass = true;
+		System.err.println( "pair" + "\t" + "diff" + "\t" + "midDistance" +  "\t" + "L00" + "\t" + "R00"   );
+		for ( int i = 0; i < left.size()-1; i++ )
+		{
+			Vector3f ptL = left.elementAt(i);
+			Vector3f ptL1 = left.elementAt(i+1);
+			Vector3f ptR = right.elementAt(i);
+			Vector3f ptR1 = right.elementAt(i+1);
+			
+			Vector3f edge00 = Vector3f.sub( ptL, ptL1 );  float L00 = edge00.normalize();
+			Vector3f edge11 = Vector3f.sub( ptR, ptR1 );  float R00 = edge11.normalize();
+			
+			Vector3f edge00A = Vector3f.sub( ptL, ptR1 );  float L00A = edge00A.normalize();
+			Vector3f edge11A = Vector3f.sub( ptR, ptL1 );  float R00A = edge11A.normalize();
+			
+			
+			boolean path1 = true;
+			float min = L00;
+			if ( R00 < min )
+			{
+				min = R00;
+			}
+			if ( L00A < min )
+			{
+				min = L00A;
+				path1 = false;
+			}
+			if ( R00A < min )
+			{
+				path1 = false;
+			}
+			
+			
+			Vector3f edge1 = Vector3f.sub(ptR, ptL);      edge1.normalize();
+			Vector3f edgeA = Vector3f.sub(ptR1, ptL1);    edgeA.normalize();
+			Vector3f edgeB = Vector3f.sub(ptL1, ptR1);    edgeB.normalize();
+			
+//			System.err.print( diff + "  " + angle1 + "  " + angle2 + "     " + angleA + "  " + angleB + "  " );
+			
+//			float path1 = L00 + R00;
+//			float path2 = L00A + R00A;
 
+			Vector3f midPt = Vector3f.add(ptL, ptR);
+			midPt.scale(0.5f);
+			Vector3f midPtSequence = Vector3f.add(ptL1, ptR1);
+			midPtSequence.scale(0.5f);
+			float midDistance = midPt.distance(midPtSequence);
+			float diff = Math.abs(L00-R00);
+			
+			System.err.println( i + "\t" + diff + "\t" + midDistance +  "\t" + L00 + "\t" + R00   );
+		
+		
+
+			if ( path1 && (diff <= sequenceDistDiffLimit) && (midDistance > minSequenceMidDist) && (midDistance < maxSequenceMidDist) && (L00 > minSequenceDist) && (L00 < maxSequenceDist) && (R00 > minSequenceDist) && (R00 < maxSequenceDist))
+			{		
+			}
+			else
+			{
+				System.err.println( i + "  " + path1 + "   " + (diff <= sequenceDistDiffLimit) + "   " + (midDistance > minSequenceMidDist) + "   " + (midDistance < maxSequenceMidDist) + "   " +
+						(L00 > minSequenceDist) + "   " + (L00 < maxSequenceDist) + "   " + (R00 > minSequenceDist) + "    " +  (R00 < maxSequenceDist) );
+
+				pass = false;	
+			}
+
+		}
+
+		for ( int i = 1; i < left.size()-1; i++ )
+		{
+			float distM1 = left.elementAt(i-1).distance(right.elementAt(i-1));
+			float dist = 1.1f * left.elementAt(i).distance(right.elementAt(i));
+			float distP1 = left.elementAt(i+1).distance(right.elementAt(i+1));
+			if ( (dist < distM1) && (dist < distP1) )
+			{
+				System.err.println( i + " widthError " + dist + " " + distM1 + " " + distP1 );
+				pass = false;
+			}
+		}
+
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			Vector3f mid1 = Vector3f.add(left.elementAt(i), right.elementAt(i));
+			mid1.scale(0.5f);
+			// distance measures the width of the worm at this point in the lattice model:
+			float distance = left.elementAt(i).distance(right.elementAt(i));
+			distance /= 2;
+
+			// Check distance of sequential mid-points to make
+			// sure they are not closer together than the 'width' of the worm
+			// at this point:
+			for ( int j = i+1; j < left.size(); j++ )
+			{
+				Vector3f mid2 = Vector3f.add(left.elementAt(j), right.elementAt(j));
+				mid2.scale(0.5f);
+				
+				if ( mid1.distance(mid2) < distance)
+				{
+					System.err.println( i + " midDistErrorCount " +  mid1.distance(mid2) + " " + distance );
+					pass = false;
+				}
+			}
+		}
+		
+		
+		float length = 0;
+		// Check the sequence distances between midpoints
+		// the distance expected ranges vary based on the pair number:
+		for ( int i = 0; i < left.size() - 1; i++ )
+		{
+			Vector3f mid1 = Vector3f.add(left.elementAt(i), right.elementAt(i));     mid1.scale(0.5f);
+			Vector3f mid2 = Vector3f.add(left.elementAt(i+1), right.elementAt(i+1)); mid2.scale(0.5f);
+			float sequenceDistance = mid1.distance(mid2);
+			length += sequenceDistance;
+			if ( (i <= 3) && ((sequenceDistance < 5) || (sequenceDistance > 26)) )
+			{
+				System.err.println( i + " sequenceDistErrorCount " + sequenceDistance );
+				pass = false;
+			}
+			if ( (i > 3) && (i <= 6) && ((sequenceDistance < 5) || (sequenceDistance > 16)) )
+			{
+				System.err.println( i + " sequenceDistErrorCount " + sequenceDistance );
+				pass = false;
+			}
+			if ( (i == 7) && ((sequenceDistance < 10) || (sequenceDistance > 26)) )
+			{
+				System.err.println( i + " sequenceDistErrorCount " + sequenceDistance );
+				pass = false;
+			}
+			if ( (i == 8) && ((sequenceDistance < 5) || (sequenceDistance > 16)) )
+			{
+				System.err.println( i + " sequenceDistErrorCount " + sequenceDistance );
+				pass = false;
+			}
+		}
+		
+		// Check total length:
+		if ( (length < wormLengthMin) || (length > wormLengthMax) )
+		{
+			System.err.println( "wormLengthErrorCount " + length + "  " + wormLengthMin + "   " + wormLengthMax );
+			pass = false;
+		}		
+
+		// Check the 'width' of the pairs:
+		float maxWidth = -Float.MAX_VALUE;
+		int maxIndex = -1;
+		float minWidth = Float.MAX_VALUE;
+		int minIndex = -1;
+		int countFirst = 0;
+		int countSecond = 0;
+		float avgWidthFirst4 = 0;
+		float avgWidthLast5 = 0;
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			float dist = left.elementAt(i).distance( right.elementAt(i) );
+			if ( i < 5 )
+			{
+				avgWidthLast5 += dist;
+				countSecond++;
+			}
+			else
+			{
+				avgWidthFirst4 += dist;	
+				countFirst++;
+			}
+			if ( dist > maxWidth )
+			{
+				maxWidth = dist;
+				maxIndex = i;
+			}			
+			if ( dist < minWidth )
+			{
+				minWidth = dist;
+				minIndex = i;
+			}				
+		}
+		avgWidthFirst4 /= countFirst;
+		avgWidthLast5 /= countSecond;
+		if ( !((avgWidthFirst4 > avgWidthLast5) && (maxIndex >= 4) && (minIndex <= 4)) )
+		{			
+			System.err.println( "avgWidthErrorCount " + avgWidthFirst4 + "  " + avgWidthLast5  );
+			pass = false;
+		}
+
+		float bendSum = measureCurvature(left, right);
+		if ( (bendSum < sequenceBendMin) || (bendSum > sequenceBendMax) )
+		{
+			System.err.println( "bendSumErrorCount " + bendSum + "  " + sequenceBendMin + "  " + sequenceBendMax  );
+			pass = false;
+		}
+				
+			
+			
+			
+			
+
+			VOIContour leftImage = new VOIContour( false );
+			VOIContour rightImage = new VOIContour( false );
+			VOI lattice = new VOI((short) 0, "lattice", 1, VOI.POLYLINE );
+			lattice.getCurves().add(leftImage);
+			lattice.getCurves().add(rightImage);
+			for ( int i = 0; i < left.size(); i++ )
+			{
+				Vector3f p1 = new Vector3f(left.elementAt(i));
+				Vector3f p2 = new Vector3f(right.elementAt(i));
+				p1.scale(1f/VOILatticeManagerInterface.VoxelSize);
+				p2.scale(1f/VOILatticeManagerInterface.VoxelSize);
+				leftImage.add(0, p1);
+				rightImage.add(0, p2);
+			}
+			wormImage.unregisterAllVOIs();
+			LatticeModel model = new LatticeModel(wormImage);
+			model.setSeamCellImage(seamSegmentation);
+			model.setLattice(lattice);
+			float[] avgVals = model.testLatticeImage();
+			wormImage.unregisterAllVOIs();
+			if ( avgVals[1] > avgVals[0] )
+			{
+				System.err.println( "latticeImageErrorCount " + avgVals[0] + "  " + avgVals[1] + "  " + (avgVals[0] / avgVals[1])  );
+				pass = false;
+			}
+			if ( (avgVals[0] / avgVals[1]) < 3 )
+			{
+				System.err.println( "latticeImageErrorCount " + avgVals[0] + "  " + avgVals[1] + "  " + (avgVals[0] / avgVals[1])  );
+				pass = false;
+			}
+			
+			
+		return pass;
+	}
+
+	int widthErrorCount = 0;
+	int midDistErrorCount = 0;
+	int sequenceDistErrorCount = 0;
+	int wormLengthErrorCount = 0;
+	int avgWidthErrorCount = 0;
+	int bendSumErrorCount = 0;
+	int latticeImageErrorCount = 0;
+	
+	private boolean testLatticeInProgress( Vector<Vector3f> left, Vector<Vector3f> right )
+	{
+		
+		for ( int i = 1; i < left.size()-1; i++ )
+		{
+			float distM1 = left.elementAt(i-1).distance(right.elementAt(i-1));
+			float dist = 1.1f * left.elementAt(i).distance(right.elementAt(i));
+			float distP1 = left.elementAt(i+1).distance(right.elementAt(i+1));
+			if ( (dist < distM1) && (dist < distP1) )
+			{
+				widthErrorCount++;
+				return false;
+			}
+		}
+
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			Vector3f mid1 = Vector3f.add(left.elementAt(i), right.elementAt(i));
+			mid1.scale(0.5f);
+			// distance measures the width of the worm at this point in the lattice model:
+			float distance = left.elementAt(i).distance(right.elementAt(i));
+			distance /= 2;
+
+			// Check distance of sequential mid-points to make
+			// sure they are not closer together than the 'width' of the worm
+			// at this point:
+			for ( int j = i+1; j < left.size(); j++ )
+			{
+				Vector3f mid2 = Vector3f.add(left.elementAt(j), right.elementAt(j));
+				mid2.scale(0.5f);
+				
+				if ( mid1.distance(mid2) < distance)
+				{
+					midDistErrorCount++;
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
 	/**
 	 * Checks the lattice based on observations of the embryonic worm and compares the lattice to threshold values.
 	 * Return true if the lattice fits within bounds.
@@ -978,7 +1349,6 @@ public class LatticeBuilder {
 		{
 			return false;
 		}
-		
 
 //		for ( int i = 0; i < left.size()-1; i++ )
 //		{
@@ -989,13 +1359,10 @@ public class LatticeBuilder {
 //			
 //			Vector3f edge00 = Vector3f.sub( ptL, ptL1 );  float L00 = edge00.normalize();
 //			Vector3f edge11 = Vector3f.sub( ptR, ptR1 );  float R00 = edge11.normalize();
-//			float angle1 = edge00.angle(edge11);
 //			
 //			Vector3f edge00A = Vector3f.sub( ptL, ptR1 );  float L00A = edge00A.normalize();
 //			Vector3f edge11A = Vector3f.sub( ptR, ptL1 );  float R00A = edge11A.normalize();
-//			float angle2 = edge00A.angle(edge11A);
 //			
-//			float diff = Math.abs(L00 - R00);
 //			
 //			boolean path1 = true;
 //			float min = L00;
@@ -1018,10 +1385,7 @@ public class LatticeBuilder {
 //			Vector3f edgeA = Vector3f.sub(ptR1, ptL1);    edgeA.normalize();
 //			Vector3f edgeB = Vector3f.sub(ptL1, ptR1);    edgeB.normalize();
 //			
-//			float angleA = edge1.angle(edgeA);
-//			float angleB = edge1.angle(edgeB);
-//			
-//			System.err.print( diff + "  " + angle1 + "  " + angle2 + "     " + angleA + "  " + angleB + "  " );
+////			System.err.print( diff + "  " + angle1 + "  " + angle2 + "     " + angleA + "  " + angleB + "  " );
 //			
 ////			float path1 = L00 + R00;
 ////			float path2 = L00A + R00A;
@@ -1031,60 +1395,46 @@ public class LatticeBuilder {
 //			Vector3f midPtSequence = Vector3f.add(ptL1, ptR1);
 //			midPtSequence.scale(0.5f);
 //			float midDistance = midPt.distance(midPtSequence);
+//			
+//			
+//			float diff = Math.abs(L00-R00);
 //
-//			if ( path1 && (midDistance > minSequenceMidDist) && (midDistance < maxSequenceMidDist) && (L00 > minSequenceDist) && (L00 < maxSequenceDist) && (R00 > minSequenceDist) && (R00 < maxSequenceDist))
+//			if ( path1 && (diff <= sequenceDistDiffLimit) && (midDistance > minSequenceMidDist) && (midDistance < maxSequenceMidDist) && (L00 > minSequenceDist) && (L00 < maxSequenceDist) && (R00 > minSequenceDist) && (R00 < maxSequenceDist))
 //			{
 //				System.err.println( true );				
+//			}
+//			else
+//			{
+//				System.err.println( i + "  " + path1 + "   " + (diff <= sequenceDistDiffLimit) + "   " + (midDistance > minSequenceMidDist) + "   " + (midDistance < maxSequenceMidDist) + "   " +
+//						(L00 > minSequenceDist) + "   " + (L00 < maxSequenceDist) + "   " + (R00 > minSequenceDist) + "    " +  (R00 < maxSequenceDist) );
 //			}
 //			System.err.println( "" );
 //		}
 		
 		
-		if ( nose != null )
-		{
-			Vector3f mid = Vector3f.add(left.lastElement(), right.lastElement());
-			mid.scale(0.5f);
-			
-			float distance = -1;
-			if ( nose.size() == 1 )
-			{
-				distance = mid.distance(nose.elementAt(0));
-			}
-			else if ( nose.size() >= 2 )
-			{
-				Vector3f midNose = Vector3f.add(nose.elementAt(0), nose.elementAt(1));
-				midNose.scale(0.5f);
-				distance = mid.distance(midNose);
-			}
-			if ( (distance != -1) && ((distance < noseP1MinDist) || (distance > noseP1MaxDist)) )
-			{
-//				System.err.println( distance );
-				return false;
-			}
-		}
+//		if ( nose != null )
+//		{
+//			Vector3f mid = Vector3f.add(left.lastElement(), right.lastElement());
+//			mid.scale(0.5f);
+//			
+//			float distance = -1;
+//			if ( nose.size() == 1 )
+//			{
+//				distance = mid.distance(nose.elementAt(0));
+//			}
+//			else if ( nose.size() >= 2 )
+//			{
+//				Vector3f midNose = Vector3f.add(nose.elementAt(0), nose.elementAt(1));
+//				midNose.scale(0.5f);
+//				distance = mid.distance(midNose);
+//			}
+//			if ( (distance != -1) && ((distance < noseP1MinDist) || (distance > noseP1MaxDist)) )
+//			{
+////				System.err.println( distance );
+//				return false;
+//			}
+//		}
 		
-		for ( int i = 0; i < left.size(); i++ )
-		{
-			Vector3f mid1 = Vector3f.add(left.elementAt(i), right.elementAt(i));
-			mid1.scale(0.5f);
-			// distance measures the width of the worm at this point in the lattice model:
-			float distance = left.elementAt(i).distance(right.elementAt(i));
-			distance /= 2;
-
-			// Check distance of sequential mid-points to make
-			// sure they are not closer together than the 'width' of the worm
-			// at this point:
-			for ( int j = i+1; j < left.size(); j++ )
-			{
-				Vector3f mid2 = Vector3f.add(left.elementAt(j), right.elementAt(j));
-				mid2.scale(0.5f);
-				
-				if ( mid1.distance(mid2) < distance)
-				{
-					return false;
-				}
-			}
-		}
 		
 		float length = 0;
 		// Check the sequence distances between midpoints
@@ -1097,18 +1447,22 @@ public class LatticeBuilder {
 			length += sequenceDistance;
 			if ( (i <= 3) && ((sequenceDistance < 5) || (sequenceDistance > 26)) )
 			{
+				sequenceDistErrorCount++;
 				return false;
 			}
 			if ( (i > 3) && (i <= 6) && ((sequenceDistance < 5) || (sequenceDistance > 16)) )
 			{
+				sequenceDistErrorCount++;
 				return false;
 			}
 			if ( (i == 7) && ((sequenceDistance < 10) || (sequenceDistance > 26)) )
 			{
+				sequenceDistErrorCount++;
 				return false;
 			}
 			if ( (i == 8) && ((sequenceDistance < 5) || (sequenceDistance > 16)) )
 			{
+				sequenceDistErrorCount++;
 				return false;
 			}
 		}
@@ -1116,6 +1470,7 @@ public class LatticeBuilder {
 		// Check total length:
 		if ( (length < wormLengthMin) || (length > wormLengthMax) )
 		{
+			wormLengthErrorCount++;
 			return false;
 		}		
 
@@ -1156,60 +1511,16 @@ public class LatticeBuilder {
 		avgWidthLast5 /= countSecond;
 		if ( !((avgWidthFirst4 > avgWidthLast5) && (maxIndex >= 4) && (minIndex <= 4)) )
 		{			
+			avgWidthErrorCount++;
 			return false;
 		}
-//		{
-//			// Check the amount of 'bend' in the worm:
-//			if ( nose != null )
-//			{
-//				if ( nose.size() == 1 )
-//				{
-//					Vector3f nosePt = new Vector3f(nose.elementAt(0));
-//					left.add(nosePt);
-//					right.add(nosePt);
-//				}
-//				else if ( nose.size() >= 2 )
-//				{
-//					Vector3f nosePt0 = new Vector3f(nose.elementAt(0));
-//					Vector3f nosePt1 = new Vector3f(nose.elementAt(1));
-//
-//					float distanceL0 = left.elementAt(0).distance(nosePt0);
-//					float distanceL1 = left.elementAt(0).distance(nosePt1);
-//					if ( distanceL0 < distanceL1 )
-//					{
-//						left.add(nosePt0);
-//						right.add(nosePt1);
-//					}
-//					else if ( distanceL0 > distanceL1 )
-//					{
-//						left.add(nosePt1);
-//						right.add(nosePt0);					
-//					}
-//					else
-//					{
-//						float distanceR0 = right.elementAt(0).distance(nosePt0);
-//						float distanceR1 = right.elementAt(0).distance(nosePt1);
-//						if ( distanceR0 < distanceR1 )
-//						{
-//							right.add(nosePt0);
-//							left.add(nosePt1);
-//						}
-//						else
-//						{
-//							right.add(nosePt1);			
-//							left.add(nosePt0);		
-//						}					
-//					}
-//				}
-//			}
-			float bendSum = measureCurvature(left, right);
-			if ( (bendSum < sequenceBendMin) || (bendSum > sequenceBendMax) )
-			{
-				return false;
-			}
-//			
-//			return true;
-//		}		
+
+		float bendSum = measureCurvature(left, right);
+		if ( (bendSum < sequenceBendMin) || (bendSum > sequenceBendMax) )
+		{
+			bendSumErrorCount++;
+			return false;
+		}
 				
 			
 			
@@ -1238,6 +1549,12 @@ public class LatticeBuilder {
 			wormImage.unregisterAllVOIs();
 			if ( avgVals[1] > avgVals[0] )
 			{
+				latticeImageErrorCount++;
+				return false;
+			}
+			if ( (avgVals[0] / avgVals[1]) < 3 )
+			{
+				latticeImageErrorCount++;
 				return false;
 			}
 			
@@ -1365,22 +1682,22 @@ public class LatticeBuilder {
 		if ( seamSegmentation == null )
 			return true;
 		
-		Vector3f pt1Voxel = new Vector3f(pt1);
-		pt1Voxel.scale(1f/VOILatticeManagerInterface.VoxelSize);
-		Vector3f pt1Voxel2 = new Vector3f(pt2);
-		pt1Voxel2.scale(1f/VOILatticeManagerInterface.VoxelSize);
+		Vector3f ptVoxel1 = new Vector3f(pt1);
+		ptVoxel1.scale(1f/VOILatticeManagerInterface.VoxelSize);
+		Vector3f ptVoxel2 = new Vector3f(pt2);
+		ptVoxel2.scale(1f/VOILatticeManagerInterface.VoxelSize);
 		
-		int x = (int) pt1Voxel.X;
-		int y = (int) pt1Voxel.Y;
-		int z = (int) pt1Voxel.Z;
+		int x = (int) ptVoxel1.X;
+		int y = (int) ptVoxel1.Y;
+		int z = (int) ptVoxel1.Z;
 		int seamID1 = seamSegmentation.getInt(x, y, z);
-		x = (int) pt1Voxel2.X;
-		y = (int) pt1Voxel2.Y;
-		z = (int) pt1Voxel2.Z;
+		x = (int) ptVoxel2.X;
+		y = (int) ptVoxel2.Y;
+		z = (int) ptVoxel2.Z;
 		int seamID2 = seamSegmentation.getInt(x, y, z);
-		Vector3f dir = Vector3f.sub(pt1Voxel2, pt1Voxel);
+		Vector3f dir = Vector3f.sub(ptVoxel2, ptVoxel1);
 		float length = dir.normalize();
-		Vector3f startPt = new Vector3f(pt1Voxel);
+		Vector3f startPt = new Vector3f(ptVoxel1);
 		startPt.add(dir);
 		for ( int i = 0; i < length; i++ )
 		{
@@ -1388,14 +1705,69 @@ public class LatticeBuilder {
 			y = (int) startPt.Y;
 			z = (int) startPt.Z;
 			int id = seamSegmentation.getInt(x, y, z);
-			if ( (id != 0) && (id != seamID1) && (id != seamID2) )
+			if ( (id != 0) && (id != seamID1) && (id != seamID2) && seamCellIds.contains(id) )
 			{
-				System.err.println( seamID1 + " " + seamID2 + " " + id);
+//				System.err.println( seamID1 + " " + seamID2 + " " + id);
 				return false;
 			}
 			startPt.add(dir);
 		}
 		return true;
+	}
+	
+	Vector<Integer> seamCellIds;
+	public void setSeamIDs(Vector<Vector3f> seamCells)
+	{
+		if ( seamSegmentation == null )
+		{
+			return;
+		}
+		if ( seamCellIds != null )
+		{
+			seamCellIds = null;
+		}
+		seamCellIds = new Vector<Integer>();
+		for ( int i = 0; i < seamCells.size(); i++ )
+		{
+			Vector3f pt = seamCells.elementAt(i);
+
+			int id = seamSegmentation.getInt( (int)pt.X, (int)pt.Y, (int)pt.Z );
+			if ( id != 0 )
+			{
+				if ( !seamCellIds.contains(id) )
+				{
+					seamCellIds.add(id);
+				}
+			}
+		}
+	}
+	
+	private void savePairs( Vector<int[]> pairLists, Vector<Vector3f> positions )
+	{
+		System.err.println( "" );
+		VOI pairs = new VOI( (short)0, "all pairs", VOI.POLYLINE, 0);
+		for ( int i = 0; i < pairLists.size(); i++ )
+		{
+			int[] pair = pairLists.elementAt(i);
+			System.err.println( (pair[0]+1) + "   " + (pair[1]+1) );
+			Vector3f pt1 = new Vector3f(positions.elementAt(pair[0]));
+			Vector3f pt2 = new Vector3f(positions.elementAt(pair[1]));
+			pt1.scale(1f/VOILatticeManagerInterface.VoxelSize);
+			pt2.scale(1f/VOILatticeManagerInterface.VoxelSize);
+			
+			VOIContour link = new VOIContour(false);
+			link.add(pt1);
+			link.add(pt2);
+			pairs.getCurves().add(link);
+		}
+		
+		ModelImage wormClone = (ModelImage)wormImage.clone();
+		wormClone.unregisterAllVOIs();
+		wormClone.registerVOI(pairs);
+		wormClone.calcMinMax();
+		new ViewJFrameImage(wormClone);
+		
+		System.err.println( "Num pairs " + pairLists.size() );
 	}
 	
 	public boolean findTenthPair( ModelImage image, Vector<Vector3f> seamCells )
@@ -1479,6 +1851,7 @@ public class LatticeBuilder {
 		for ( int i = 0; i < tenthPairs.size(); i++ )
 		{
 			int[] pair = tenthPairs.elementAt(i);
+//			System.err.println( "     Tenth pair = [" + i + "]   =   [" + pair[0] + "," + pair[1] + "]" );
 			int index1 = pair[0];
 			int index2 = pair[1];
 			Vector3f pt1 = positions.elementAt(index1);
@@ -1498,7 +1871,7 @@ public class LatticeBuilder {
 			y = (int) pt1Voxel2.Y;
 			z = (int) pt1Voxel2.Z;
 			float value2 = image.getFloat(x,y,z);
-			System.err.println( "10th " + (index1 + 1) + " " + (index2 + 1) + " " + value1 + " " + value2 );
+//			System.err.println( "10th " + (index1 + 1) + " " + (index2 + 1) + " " + value1 + " " + value2 );
 			
 			if ( (value1 + value2) < minIntensity )
 			{
@@ -1513,7 +1886,7 @@ public class LatticeBuilder {
 			tenthPairs.removeAllElements();
 			tenthPairs.add(pair);
 			
-			System.err.println( "Tenth pair = [" + pair[0] + "," + pair[1] + "]" );
+//			System.err.println( "     Tenth pair = [" + pair[0] + "," + pair[1] + "]" );
 		}
 		
 		
