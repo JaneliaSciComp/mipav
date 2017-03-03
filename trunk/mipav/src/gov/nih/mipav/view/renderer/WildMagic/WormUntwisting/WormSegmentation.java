@@ -6894,22 +6894,29 @@ public class WormSegmentation
 	public Vector<Vector3f> findMarkers( ModelImage image, ModelImage seamCellImage, BitSet mask, float intensityMin, float intensityMax, int minRadius, int maxRadius )
 	{
 		Vector<Vector3f> pts = initFindMarkers(image, intensityMin, intensityMax);
-		return findMarkers2( image, seamCellImage, pts, null, minRadius, maxRadius );
+		return findMarkers2( image, seamCellImage, pts, null, intensityMin - 1, minRadius, maxRadius );
 	}
 
 
-	private VOIContour makeCluster( Vector<Vector3f> pts, Vector3f pt1, float radius )
+	private VOIContour makeCluster( ModelImage image, Vector<Vector3f> pts, Vector3f pt1, float minIntensity, float radius )
 	{
 		VOIContour cluster = new VOIContour(false);
 		Vector3f center = new Vector3f();
 		for ( int i = 0; i < pts.size(); i++ )
 		{
 			Vector3f pt2 = pts.elementAt(i);
-			float distance = pt1.distance(pt2);
-			if ( distance <= radius )
+			int x = Math.round(pt2.X);
+			int y = Math.round(pt2.Y);
+			int z = Math.round(pt2.Z);
+			float value = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+			if ( value > minIntensity )
 			{
-				cluster.add(pt2);
-				center.add(pt2);
+				float distance = pt1.distance(pt2);
+				if ( distance <= radius )
+				{
+					cluster.add(pt2);
+					center.add(pt2);
+				}
 			}
 		}
 		center.scale( 1f/(float)cluster.size());
@@ -6933,10 +6940,11 @@ public class WormSegmentation
 		return cluster;
 	}
 	
-	private VOIContour findClusterCenter( ModelImage image, Vector<Vector3f> pts, Vector3f pt1, float radius )
+	
+	private VOIContour findClusterCenter( ModelImage image, Vector<Vector3f> pts, Vector3f pt1, float minIntensity, float radius )
 	{
 		// create cluster around pt1:
-		VOIContour cluster = makeCluster(pts, pt1, radius);
+		VOIContour cluster = makeCluster(image, pts, pt1, minIntensity, radius);
 		if ( cluster.size() > 0 )
 		{
 			Vector3f newCenter = cluster.remove(0);
@@ -6946,7 +6954,7 @@ public class WormSegmentation
 			while ( pt1.distance(newCenter) > 2 )
 			{
 				pt1.copy(newCenter);
-				newCluster = makeCluster(pts, pt1, radius );
+				newCluster = makeCluster(image, pts, pt1, minIntensity, radius );
 				if ( newCluster.size() == 0 )
 				{
 					newCenter.copy(pt1);
@@ -6990,25 +6998,25 @@ public class WormSegmentation
 		return null;
 	}
 	
-	private Vector<Vector3f> findMarkers2( ModelImage image, ModelImage results, Vector<Vector3f> pts, BitSet mask, int minRadius, int maxRadius )
+	private Vector<Vector3f> findMarkers2( ModelImage image, ModelImage results, Vector<Vector3f> pts, BitSet mask, float minIntensity, int minRadius, int maxRadius )
 	{    	
-		Vector<BoxBV> boundingBoxesAA = new Vector<BoxBV>();
 		Vector<Box3f> boundingBoxesOO = new Vector<Box3f>();
-		Vector<Vector3f> centerList = new Vector<Vector3f>();
+		Vector<Vector2d> valuePairs = new Vector<Vector2d>();
+		VOIContour centerList = new VOIContour(false);
 		VOI clusterList = new VOI((short)0, "temp", VOI.POLYLINE, 0);
 		int steps = 2 * (int) Math.floor(maxRadius - minRadius);
 		int clusterCount = 0;
 		while (pts.size() > 0)
 		{
-			Vector3f pt1 = pts.firstElement();
-			VOIContour cluster = findClusterCenter(image, pts, pt1, minRadius);
+			Vector3f pt1 = new Vector3f(pts.firstElement());
+			VOIContour cluster = findClusterCenter(image, pts, pt1, minIntensity, minRadius);
 			int x = Math.round(cluster.firstElement().X);
 			int y = Math.round(cluster.firstElement().Y);
 			int z = Math.round(cluster.firstElement().Z);
 			float clusterValue1 = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
 			for ( int j = 1; j < steps; j++ )
 			{
-				VOIContour cluster2 = findClusterCenter(image, pts, pt1, minRadius + j);
+				VOIContour cluster2 = findClusterCenter(image, pts, pt1, minIntensity, minRadius + j);
 				x = Math.round(cluster2.firstElement().X);
 				y = Math.round(cluster2.firstElement().Y);
 				z = Math.round(cluster2.firstElement().Z);
@@ -7033,8 +7041,9 @@ public class WormSegmentation
 				// found a cluster!
 				clusterCount++;
 				clusterList.getCurves().add(cluster);
-				centerList.add(cluster.firstElement());
+				centerList.add(new Vector3f(cluster.firstElement()));
 				Vector3f[] clusterPts = new Vector3f[cluster.size()];
+				float value = 0;
 				for ( int j = 0; j < cluster.size(); j++ )
 				{
 					x = Math.round(cluster.elementAt(j).X);
@@ -7043,22 +7052,29 @@ public class WormSegmentation
 
 					results.set(x, y, z, clusterCount);
 					clusterPts[j] = cluster.elementAt(j);
+					
+					if ( j == 0 )
+					{
+						value = image.getFloat(x, y, z);
+					}
 				}
 				Box3f box = ContBox3f.ContOrientedBox(cluster.size(), cluster);
-				BoxBV boxBV = new BoxBV();
-				boxBV.ComputeFromData( clusterPts );
-				boundingBoxesAA.add( boxBV );
+//				System.err.println("");
+								
+//				System.err.println( clusterCount + "       " + Math.ceil(box.Extent[0]) + "   " + Math.ceil(box.Extent[1]) + "   " + Math.ceil(box.Extent[2]) + "   " + value );
 				boundingBoxesOO.add(box);
-				
+				valuePairs.add( new Vector2d( value, clusterCount) );
 				pts.removeAll(cluster);
-				float[] extents = boundingBoxesAA.lastElement().GetBox().Extent;
-				if ( (extents[0] <= 2) || (extents[1] <= 2) || (extents[2] <= 2) )
+//				System.err.println( clusterCount + "       " + Math.ceil(extents[0]) + "   " + Math.ceil(extents[1]) + "   " + Math.ceil(extents[2]) );
+				if ( (box.Extent[0] <= 2) || (box.Extent[1] <= 2) || (box.Extent[2] <= 2) )
 				{
+//					System.err.println( clusterCount + "       " + box.Extent[0] + "   " + box.Extent[1] + "   " + box.Extent[2] );
+					
 					// Remove Cluster:
 					clusterCount--;
 					clusterList.getCurves().remove( clusterList.getCurves().lastElement() );
 					centerList.remove( centerList.lastElement() );
-					boundingBoxesAA.remove( boundingBoxesAA.lastElement() );
+					valuePairs.remove( valuePairs.lastElement() );
 					boundingBoxesOO.remove(box);
 					for ( int j = 0; j < cluster.size(); j++ )
 					{
@@ -7068,162 +7084,23 @@ public class WormSegmentation
 						results.set(x, y, z, 0);
 					}					
 				}
-				else
-				{
-					extents = box.Extent;
-					
-					Vector3f minB = new Vector3f();
-					Vector3f maxB = new Vector3f();
-					boundingBoxesAA.lastElement().GetBox().ComputeBounds(minB, maxB);
-					int imageCount = cluster.size();
-					float diameter = minB.distance(maxB);
-					float radius = diameter / 2f;
-					float sphereVolume1 = (float) ((4f/3f) * (Math.PI * radius * radius * radius));
-					float sphereVolume2 = (float) ((4f/3f) * (Math.PI * Math.ceil(extents[0]) * Math.ceil(extents[1]) * Math.ceil(extents[2]) ));
-					float percent1 = 100*((float)imageCount/sphereVolume1);
-					float percent2 = 100*((float)imageCount/sphereVolume2);
-					System.err.println( clusterCount + "   " + radius + "       " + Math.ceil(extents[0]) + "   " + Math.ceil(extents[1]) + "   " + Math.ceil(extents[2]) + "       " + sphereVolume1 + "    " + sphereVolume2 + "    " + imageCount + "   " + percent1 + "   " + percent2 );
-				
-					if ( percent1 < 10 )
-					{
-						// Remove cluster:
-						clusterCount--;
-						clusterList.getCurves().remove( clusterList.getCurves().lastElement() );
-						centerList.remove( centerList.lastElement() );
-						boundingBoxesAA.remove( boundingBoxesAA.lastElement() );
-						boundingBoxesOO.remove(box);
-						for ( int j = 0; j < cluster.size(); j++ )
-						{
-							x = Math.round(cluster.elementAt(j).X);
-							y = Math.round(cluster.elementAt(j).Y);
-							z = Math.round(cluster.elementAt(j).Z);
-							results.set(x, y, z, 0);
-						}			
-					}
-				
-				}
 			}
 			else
 			{
 				pts.remove(pt1);
 			}
 		}
-		
+
 		LatticeBuilder buildTest = new LatticeBuilder();
+		buildTest.setSeamImage(results);
+		buildTest.setSeamIDs(centerList);
 		boolean pass = buildTest.findTenthPair(image, centerList);
-		
-		System.err.println( "Found 10th pair " + pass );
-		
-		// If less than 20 seam cells or none match the 10th pair, try to split a seam cell:
-		if ( (centerList.size() < 20) || !pass )
+		if ( !pass )
 		{
-			
-			int maxIndex = -1;
-			float maxDiff = -1;
-			for ( int i = 0; i < boundingBoxesOO.size(); i++ )
-			{
-				System.err.println( (i+1) + " " + boundingBoxesOO.elementAt(i).Extent[0] + " " + 
-						boundingBoxesOO.elementAt(i).Extent[1] + " " + 
-						boundingBoxesOO.elementAt(i).Extent[2] );
-				
-				float diff = Math.abs(boundingBoxesOO.elementAt(i).Extent[0] - boundingBoxesOO.elementAt(i).Extent[1]);
-				if ( diff > maxDiff )
-				{
-					maxDiff = diff;
-					maxIndex = i;
-				}
-				diff = Math.abs(boundingBoxesOO.elementAt(i).Extent[0] - boundingBoxesOO.elementAt(i).Extent[2]);
-				if ( diff > maxDiff )
-				{
-					maxDiff = diff;
-					maxIndex = i;
-				}
-				diff = Math.abs(boundingBoxesOO.elementAt(i).Extent[1] - boundingBoxesOO.elementAt(i).Extent[2]);
-				if ( diff > maxDiff )
-				{
-					maxDiff = diff;
-					maxIndex = i;
-				}
-			}
-			
-			if ( maxDiff > minRadius )
-			{
-				Box3f box = boundingBoxesOO.elementAt(maxIndex);
-				float maxExtent = box.Extent[0];
-				Vector3f maxAxis = box.Axis[0];
-				int index = 0;
-				if ( box.Extent[1] > maxExtent )
-				{
-					maxExtent = box.Extent[1];
-					maxAxis = box.Axis[1];
-					index = 1;
-				}
-				if ( box.Extent[2] > maxExtent )
-				{
-					maxExtent = box.Extent[2];
-					maxAxis = box.Axis[2];
-					index = 2;
-				}
-				Vector3f vector = new Vector3f(maxAxis);
-				vector.scale(maxExtent/2f);
-				Vector3f center1 = new Vector3f(box.Center);
-				center1.add(vector);
-				Vector3f center2 = new Vector3f(box.Center);
-				center2.sub(vector);
-
-				int x = Math.round(box.Center.X);
-				int y = Math.round(box.Center.Y);
-				int z = Math.round(box.Center.Z);
-				float valueCenter = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
-
-				x = Math.round(center1.X);
-				y = Math.round(center1.Y);
-				z = Math.round(center1.Z);
-				float valueCenter1 = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
-
-				x = Math.round(center2.X);
-				y = Math.round(center2.Y);
-				z = Math.round(center2.Z);
-				float valueCenter2 = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
-				
-				float distance = center1.distance(center2);
-				distance *= WormData.VoxelSize;
-				if ( ((distance >= LatticeBuilder.tenMinDist) && (distance <= LatticeBuilder.tenMaxDist)) && ((valueCenter2 >= valueCenter) || (valueCenter1 >= valueCenter)) )
-				{				
-					Box3f box1 = new Box3f(center1, box.Axis[0], box.Axis[1], box.Axis[2], box.Extent[0], box.Extent[1], box.Extent[2]);
-					box1.Extent[index] /= 2f;
-					
-					Box3f box2 = new Box3f(center2, box.Axis[0], box.Axis[1], box.Axis[2], box.Extent[0], box.Extent[1], box.Extent[2]);
-					box2.Extent[index] /= 2f;
-					
-					VOIContour cluster = (VOIContour)clusterList.getCurves().elementAt(maxIndex);
-					clusterCount++;
-					for ( int j = 0; j < cluster.size(); j++ )
-					{
-						x = Math.round(cluster.elementAt(j).X);
-						y = Math.round(cluster.elementAt(j).Y);
-						z = Math.round(cluster.elementAt(j).Z);
-						results.set(x, y, z, 0);
-						
-						if ( ContBox3f.InBox(cluster.elementAt(j), box1) )
-						{
-							results.set(x, y, z, (maxIndex+1));
-						}
-						
-						else if ( ContBox3f.InBox(cluster.elementAt(j), box2) )
-						{
-							results.set(x, y, z, clusterCount);
-						}
-					}		
-					centerList.elementAt( maxIndex ).copy(center1);
-					centerList.add(center2);
-				}
-			}
+			expandList( image, results, clusterCount, clusterList, centerList, boundingBoxesOO, minRadius );
+			pass = buildTest.findTenthPair(image, centerList);
 		}
-		
-		
-		
-//		System.err.println( "     Num Clusters " + clusterCount + " " + foundCount + " " + lostCount );
+		System.err.println("clusters : " + centerList.size() + " " + pass );
 		return centerList;
 	}
 
@@ -7442,6 +7319,151 @@ public class WormSegmentation
 		return sortedList;
 	}
 	
+	private void expandList(ModelImage image, ModelImage results, int clusterCount, VOI clusterList, VOIContour centerList, Vector<Box3f> boxes, float minRadius )
+	{
+		VOIContour newCenters = new VOIContour(false);
+		// Try to split a seam cell:
+		float maxDiff = -1;
+		int maxIndex = -1;
+		for ( int i = 0; i < boxes.size(); i++ )
+		{
+			//				System.err.println( (i+1) + " " + boundingBoxesOO.elementAt(i).Extent[0] + " " + 
+			//						boundingBoxesOO.elementAt(i).Extent[1] + " " + 
+			//						boundingBoxesOO.elementAt(i).Extent[2] );
+
+			float maxExtent = boxes.elementAt(i).Extent[0];
+			if ( boxes.elementAt(i).Extent[1] > maxExtent )
+			{
+				maxExtent = boxes.elementAt(i).Extent[1];
+			}
+			if ( boxes.elementAt(i).Extent[2] > maxExtent )
+			{
+				maxExtent = boxes.elementAt(i).Extent[2];
+			}
+			float minExtent = boxes.elementAt(i).Extent[0];
+			if ( boxes.elementAt(i).Extent[1] < minExtent )
+			{
+				minExtent = boxes.elementAt(i).Extent[1];
+			}
+			if ( boxes.elementAt(i).Extent[2] < minExtent )
+			{
+				minExtent = boxes.elementAt(i).Extent[2];
+			}
+			if ( (maxExtent - minExtent) > maxDiff )
+			{
+				maxDiff = maxExtent - minExtent;
+				maxIndex = -1;
+			}
+		}
+		if ( maxDiff > minRadius )
+		{
+			int maxD1 = -1;
+			int maxD2 = -1;
+			float maxD = -1;
+			VOIContour cluster = (VOIContour)clusterList.getCurves().elementAt(maxIndex);
+			float minIntensity = Float.MAX_VALUE;
+			float maxIntensity = -Float.MAX_VALUE;
+			for ( int j = 0; j < cluster.size(); j++ )
+			{
+				Vector3f p1 = cluster.elementAt(j);
+				int x = Math.round(p1.X);
+				int y = Math.round(p1.Y);
+				int z = Math.round(p1.Z);
+				float value = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+				if ( value < minIntensity )
+				{
+					minIntensity = value;
+				}
+				if ( value > maxIntensity )
+				{
+					maxIntensity = value;
+				}
+				for ( int k = j+1; k < cluster.size(); k++ )
+				{
+					Vector3f p2 = cluster.elementAt(k);
+					float distance = p1.distance(p2);
+					if ( distance > maxD )
+					{
+						maxD = distance;
+						maxD1 = j;
+						maxD2 = k;
+					}
+				}
+			}
+			if ( (maxD1 != -1) && (maxD2 != -1) )
+			{
+				float intensityLimit = (minIntensity + maxIntensity)/2f;
+
+				Vector3f pt1 = new Vector3f(cluster.elementAt(maxD1));
+				VOIContour subCluster1 = findClusterCenter(image, cluster, pt1, intensityLimit, minRadius);
+				while ( subCluster1 == null )
+				{
+					intensityLimit = Math.max( minIntensity, intensityLimit/2f );
+					if ( intensityLimit == minIntensity )
+					{
+						break;
+					}
+					pt1 = new Vector3f(cluster.elementAt(maxD1));
+					subCluster1 = findClusterCenter(image, cluster, pt1, intensityLimit, minRadius);
+				}
+				if ( intensityLimit == minIntensity )
+					return;
+				if ( subCluster1.size() == 0 )
+					return;
+
+				Vector3f pt2 = new Vector3f(cluster.elementAt(maxD2));
+				VOIContour subCluster2 = findClusterCenter(image, cluster, pt2, intensityLimit, minRadius);
+				if ( (subCluster2 == null) || (subCluster2.size() == 0) )
+					return;
+
+
+				Vector3f center1 = subCluster1.elementAt(0);
+				Vector3f center2 = subCluster2.elementAt(0);
+				//					System.err.println( center1.distance(center2) + "  " + cluster.size() + "   " + subCluster1.size() + "  " + subCluster2.size() );
+				//					System.err.println( center1 );
+				//					System.err.println( center2 );
+				//					System.err.println( subCluster2.contains( center1 ) + "   " + subCluster1.contains(center2) );
+				if ( center1.distance(center2) > minRadius )
+				{
+					int x = Math.round(pt1.X);
+					int y = Math.round(pt1.Y);
+					int z = Math.round(pt1.Z);
+					int origID = results.getInt( x, y, z );
+					//						System.err.println( origID + "    " + i );
+					for ( int j = 0; j < cluster.size(); j++ )
+					{
+						pt1 = cluster.elementAt(j);
+						x = Math.round(pt1.X);
+						y = Math.round(pt1.Y);
+						z = Math.round(pt1.Z);
+						results.set( x, y, z, 0 );
+					}
+					centerList.elementAt(maxIndex).copy(center1);
+					for ( int j = 0; j < subCluster1.size(); j++ )
+					{
+						pt1 = subCluster1.elementAt(j);
+						x = Math.round(pt1.X);
+						y = Math.round(pt1.Y);
+						z = Math.round(pt1.Z);
+						results.set( x, y, z, origID );
+					}
+					centerList.add(center2);
+					int newID = centerList.size();
+					for ( int j = 0; j < subCluster2.size(); j++ )
+					{
+						pt1 = subCluster2.elementAt(j);
+						x = Math.round(pt1.X);
+						y = Math.round(pt1.Y);
+						z = Math.round(pt1.Z);
+						results.set( x, y, z, newID );
+					}
+				}
+			}
+		}
+	}
+
+	
+
 	public static void findLargestConnected( ModelImage image, BitSet mask, float minValue )
 	{
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
