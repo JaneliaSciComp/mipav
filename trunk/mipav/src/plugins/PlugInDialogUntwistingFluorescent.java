@@ -95,6 +95,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 	private JRadioButton segmentSkinSurface;
 	private JRadioButton segmentLattice;
 	private ModelImage wormImage;
+	private ModelImage nucleiImage;
 
 
 	public PlugInDialogUntwistingFluorescent()
@@ -147,6 +148,25 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 					FileIO fileIO = new FileIO();
 					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null); 
 					WormData wormData = new WormData(wormImage); 
+
+
+//					wormData.segmentSkin();
+					
+					
+					// build the nuclei image file name 
+					String baseFileName2 = baseFileNameText.getText();
+					String fileName2 = baseFileName2 + "_" + includeRange.elementAt(i) + ".tif";
+					File imageFile2 = new File(baseFileDir2 + File.separator + fileName);
+					if ( imageFile2.exists() )
+					{			
+						System.err.println( "   " + fileName );
+						FileIO fileIO2 = new FileIO();
+						nucleiImage = fileIO2.readImage(fileName2, baseFileDir2 + File.separator, false, null); 
+//						wormData.setNucleiImage(nucleiImage);
+					}
+					
+					
+					
 					
 					
 					String latticeFileName = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
@@ -308,33 +328,26 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 								wormImage.disposeLocal(false);
 							}
 
-							// Build the full image name:
-							baseFileName = baseFileNameText.getText();
-							fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-							imageFile = new File(baseFileDir2 + File.separator + fileName);
-							if ( imageFile.exists() )
+							if ( nucleiImage != null )
 							{					
-
-								System.err.println( "   " + fileName );
-								fileIO = new FileIO();
-								wormImage = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null); 
-								model.setImage(wormImage);
+								nucleiImage.setImageName(baseFileName2 + "_" + includeRange.elementAt(i) + ".tif");
+								model.setImage(nucleiImage);
 								model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
 
 								if ( segmentSkinSurface.isSelected() )
 								{
-									contourImage = model.segmentSkin(wormImage, contourImage, paddingFactor);
+									contourImage = model.segmentSkin(nucleiImage, contourImage, paddingFactor);
 								}
 								else if ( segmentLattice.isSelected() )
 								{
-									model.segmentLattice(wormImage, false);
+									model.segmentLattice(nucleiImage, false);
 								}
 								model.dispose();
 								model = null;
 
-								if ( wormImage != null )
+								if ( nucleiImage != null )
 								{
-									wormImage.disposeLocal(false);
+									nucleiImage.disposeLocal(false);
 								}
 							}						
 

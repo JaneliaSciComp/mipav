@@ -1712,8 +1712,8 @@ public class LatticeModel {
 				int leftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
 				int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
 				int centerID = seamCellImage.getInt( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
-
-				if ( (leftID != 0) && !((leftID == allSeamCellIDs[i][0]) || (leftID == allSeamCellIDs[i][1])) && (allSeamCellIDs[i][0] != 0) && (allSeamCellIDs[i][1] != 0))
+				
+				if ( seamCellIds.contains(leftID) && (leftID != 0) && !((leftID == allSeamCellIDs[i][0]) || (leftID == allSeamCellIDs[i][1])) && (allSeamCellIDs[i][0] != 0) && (allSeamCellIDs[i][1] != 0))
 				{
 					if ( !((leftID == allSeamCellIDs[i][2]) || (leftID == allSeamCellIDs[i][3])) )
 					{
@@ -1721,7 +1721,7 @@ public class LatticeModel {
 						return new float[]{-1,1};
 					}
 				}
-				if ( (rightID != 0) && !((rightID == allSeamCellIDs[i][2]) || (rightID == allSeamCellIDs[i][3])) && (allSeamCellIDs[i][2] != 0) && (allSeamCellIDs[i][3] != 0))
+				if ( seamCellIds.contains(rightID) && (rightID != 0) && !((rightID == allSeamCellIDs[i][2]) || (rightID == allSeamCellIDs[i][3])) && (allSeamCellIDs[i][2] != 0) && (allSeamCellIDs[i][3] != 0))
 				{
 					if ( !((rightID == allSeamCellIDs[i][0]) || (rightID == allSeamCellIDs[i][1])) )
 					{
@@ -6751,17 +6751,12 @@ public class LatticeModel {
 				left2 = allSeamCellIDs[i][1];
 				right1 = allSeamCellIDs[i][2];
 				right2 = allSeamCellIDs[i][3];
-
-				if ( i == 330 )
-				{
-					System.err.println( "SEGMENT SKIN " + left1 + " " + left2 + " " + right1 + " " + right2 );
-				}
 			}
 			Vector3f maxLeft = new Vector3f( targetContour.elementAt(numPts/2) ); maxLeft.Z = i;
 			Vector3f maxRight = new Vector3f( targetContour.elementAt(0) ); maxRight.Z = i;
 			Vector3f minEdge = new Vector3f( maxLeft ); minEdge.Z = i;
-			int minBottomIndex = -1;
-			int minTopIndex = -1;
+//			int minBottomIndex = -1;
+//			int minTopIndex = -1;
 			for ( int j = 0; j < outerContour.size(); j++ )
 			{				
 				Vector3f startPt = new Vector3f( center ); startPt.Z = i;
