@@ -10,9 +10,11 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 public class WormData
@@ -49,9 +51,12 @@ public class WormData
 	
 	private String imageName;
 	private ModelImage wormImage;
+	private ModelImage nucleiImage;
+	private ModelImage nucleiBlur;
 	private ModelImage wormBlur;
 	private ModelImage seamSegmentation;
 	private ModelImage skinSegmentation;
+	private ModelImage insideSegmentation;
 	private ModelImage nucleiSegmentation;
 
 	private Vector<Vector3f> seamCellPoints;
@@ -99,6 +104,11 @@ public class WormData
 			skinSegmentation.disposeLocal(false);
 			skinSegmentation = null;
 		}
+		if ( insideSegmentation != null )
+		{
+			insideSegmentation.disposeLocal(false);
+			insideSegmentation = null;
+		}
 		if ( seamSegmentation != null )
 		{
 			seamSegmentation.disposeLocal(false);
@@ -132,6 +142,10 @@ public class WormData
 		if ( annotationVector.size() > 0 )
 		{
 			seamAnnotations = annotationVector.elementAt(0);
+		}
+		if ( seamAnnotations == null )
+		{
+			return null;
 		}
 		seamCellPoints = new Vector<Vector3f>();
 		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
@@ -198,6 +212,39 @@ public class WormData
 //		System.err.println( "   segmentSeamCells: end " + minSeamCellSegmentationIntensity );
 	}
 	
+	public void setNucleiImage(ModelImage image)
+	{
+		nucleiImage = image;
+		if ( nucleiBlur == null )
+		{
+			nucleiBlur = WormSegmentation.blur(nucleiImage, 3);
+		}
+		if ( wormBlur != null )
+		{
+			wormBlur = WormSegmentation.blur(wormImage, 3);
+		}
+
+		ModelImage insideOut = new ModelImage(ModelStorageBase.FLOAT, nucleiImage.getExtents(), "insideOut.tif");
+		float min = Float.MAX_VALUE;
+		float max = -Float.MAX_VALUE;
+		for ( int i = 0; i < nucleiImage.getDataSize(); i++ )
+		{
+			float inside = insideSegmentation.getFloat(i);
+			if ( inside > 0 )
+			{
+				float wormValue = wormBlur.getFloat(i);
+				float nucleiValue = nucleiBlur.getFloat(i);
+				if ( wormValue > nucleiValue )
+				{
+					insideOut.set(i, 10);
+				}
+			}
+		}
+		insideOut.setMax(10);
+		insideOut.setMin(0);
+		new ViewJFrameImage(insideOut);
+	}
+	
 	public Vector<Vector3f> getSeamCells()
 	{
 		return seamCellPoints;
@@ -233,60 +280,65 @@ public class WormData
 //			ModelImage surface = new ModelImage( ModelStorageBase.ARGB_FLOAT, wormImage.getExtents(), imageName + "_skin" );
 //			WormSegmentation.outline2( outputImagesDirectory, wormImage, surface, minSeamCellSegmentationIntensity);
 			
-			skinSegmentation = WormSegmentation.outside(wormBlur, 5);
+			ModelImage[] outsideInside = WormSegmentation.outside(wormBlur, 5);
+			skinSegmentation = outsideInside[0];
+			insideSegmentation = outsideInside[1];
 			
-			skinSegmentation.calcMinMax();
+//			skinSegmentation.calcMinMax();
 //			new ViewJFrameImage((ModelImage)skinSegmentation.clone());
+//			
+//			insideSegmentation.calcMinMax();
+//			new ViewJFrameImage((ModelImage)insideSegmentation.clone());
 			
-			if ( seamCellPoints != null )
-			{
-				// scan skinSegmentation image for nearest skin pt to each seam cell point...
-				int dimX = skinSegmentation.getExtents().length > 0 ? skinSegmentation.getExtents()[0] : 1;
-				int dimY = skinSegmentation.getExtents().length > 1 ? skinSegmentation.getExtents()[1] : 1;
-				int dimZ = skinSegmentation.getExtents().length > 2 ? skinSegmentation.getExtents()[2] : 1;
-
-				Vector<Vector3f> nearest = new Vector<Vector3f>();
-				Vector<Float>  distances = new Vector<Float>();
-				for ( int i = 0; i < seamCellPoints.size(); i++ )
-				{
-					nearest.add(new Vector3f());
-					distances.add( nearest.elementAt(i).distance(seamCellPoints.elementAt(i)));
-				}
-				Vector3f temp = new Vector3f();
-				for ( int z = 0; z < dimZ; z++ )
-				{
-					for ( int y = 0; y < dimY; y++ )
-					{
-						for ( int x = 0; x < dimX; x++ )
-						{
-							if ( skinSegmentation.getFloat(x, y, z ) > 0 )
-							{
-								temp.set(x, y, z);
-								for ( int i = 0; i < seamCellPoints.size(); i++ )
-								{
-									if ( temp.distance(seamCellPoints.elementAt(i)) < distances.elementAt(i) )
-									{
-										nearest.elementAt(i).copy(temp);
-										distances.remove(i);
-										distances.add(i, temp.distance(seamCellPoints.elementAt(i)));
-									}
-								}
-							}
-						}
-					}
-				}
-				for ( int i = 0; i < seamCellPoints.size(); i++ )
-				{
-//					System.err.println( i + " " + distances.elementAt(i) );
-//					if ( distances.elementAt(i) < 30 )
+//			if ( seamCellPoints != null )
+//			{
+//				// scan skinSegmentation image for nearest skin pt to each seam cell point...
+//				int dimX = skinSegmentation.getExtents().length > 0 ? skinSegmentation.getExtents()[0] : 1;
+//				int dimY = skinSegmentation.getExtents().length > 1 ? skinSegmentation.getExtents()[1] : 1;
+//				int dimZ = skinSegmentation.getExtents().length > 2 ? skinSegmentation.getExtents()[2] : 1;
+//
+//				Vector<Vector3f> nearest = new Vector<Vector3f>();
+//				Vector<Float>  distances = new Vector<Float>();
+//				for ( int i = 0; i < seamCellPoints.size(); i++ )
+//				{
+//					nearest.add(new Vector3f());
+//					distances.add( nearest.elementAt(i).distance(seamCellPoints.elementAt(i)));
+//				}
+//				Vector3f temp = new Vector3f();
+//				for ( int z = 0; z < dimZ; z++ )
+//				{
+//					for ( int y = 0; y < dimY; y++ )
 //					{
-						seamAnnotations.getCurves().elementAt(i).remove(1);
-						seamAnnotations.getCurves().elementAt(i).add(nearest.elementAt(i));
-						((VOIText)seamAnnotations.getCurves().elementAt(i)).setUseMarker(true);
-						seamAnnotations.getCurves().elementAt(i).update();
+//						for ( int x = 0; x < dimX; x++ )
+//						{
+//							if ( skinSegmentation.getFloat(x, y, z ) > 0 )
+//							{
+//								temp.set(x, y, z);
+//								for ( int i = 0; i < seamCellPoints.size(); i++ )
+//								{
+//									if ( temp.distance(seamCellPoints.elementAt(i)) < distances.elementAt(i) )
+//									{
+//										nearest.elementAt(i).copy(temp);
+//										distances.remove(i);
+//										distances.add(i, temp.distance(seamCellPoints.elementAt(i)));
+//									}
+//								}
+//							}
+//						}
 //					}
-				}
-			}
+//				}
+//				for ( int i = 0; i < seamCellPoints.size(); i++ )
+//				{
+////					System.err.println( i + " " + distances.elementAt(i) );
+////					if ( distances.elementAt(i) < 30 )
+////					{
+//						seamAnnotations.getCurves().elementAt(i).remove(1);
+//						seamAnnotations.getCurves().elementAt(i).add(nearest.elementAt(i));
+//						((VOIText)seamAnnotations.getCurves().elementAt(i)).setUseMarker(true);
+//						seamAnnotations.getCurves().elementAt(i).update();
+////					}
+//				}
+//			}
 		}
 	}
 	

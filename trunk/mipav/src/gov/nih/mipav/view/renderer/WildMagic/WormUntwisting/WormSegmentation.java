@@ -4519,7 +4519,7 @@ public class WormSegmentation
 	}
 
 
-	public static ModelImage outside( ModelImage blur, float threshold )
+	public static ModelImage[] outside( ModelImage blur, float threshold )
 	{
 		final int dimX = blur.getExtents().length > 0 ? blur.getExtents()[0] : 1;
 		final int dimY = blur.getExtents().length > 1 ? blur.getExtents()[1] : 1;
@@ -4530,20 +4530,26 @@ public class WormSegmentation
 			imageName = imageName.replaceAll("_clone", "");
 		}
 		imageName = imageName + "_" + threshold;
-		final ModelImage output = new ModelImage(blur.getType(), blur.getExtents(), imageName);
-		JDialogBase.updateFileInfo(blur, output);
+		final ModelImage outside = new ModelImage(ModelStorageBase.INTEGER, blur.getExtents(), imageName);
+		JDialogBase.updateFileInfo(blur, outside);
 		
-
+		final ModelImage inside = new ModelImage(ModelStorageBase.INTEGER, blur.getExtents(), imageName);
+		JDialogBase.updateFileInfo(blur, inside);
+		
+		
 		for ( int z = 0; z < dimZ; z++ )
 		{
 			for ( int y = 0; y < dimY; y++ )
 			{
+				int xStart = dimX;
+				int xEnd = -1;
 				for ( int x = 0; x < dimX; x++ )
 				{
 					float val = blur.getFloat(x, y, z);
 					if ( val >= threshold )
 					{
-						output.set(x, y, z, 1);
+						outside.set(x, y, z, 1);
+						xStart = x;
 						break;
 					}
 				}
@@ -4552,8 +4558,16 @@ public class WormSegmentation
 					float val = blur.getFloat(x, y, z);
 					if ( val >= threshold )
 					{
-						output.set(x, y, z, 1);
+						outside.set(x, y, z, 1);
+						xEnd = x;
 						break;
+					}
+				}
+				if ( xEnd > xStart )
+				{
+					for ( int x = xStart+1; x < xEnd; x++ )
+					{
+						inside.set(x, y, z, 1);
 					}
 				}
 			}
@@ -4564,12 +4578,15 @@ public class WormSegmentation
 		{
 			for ( int x = 0; x < dimX; x++ )
 			{
+				int yStart = dimY;
+				int yEnd = -1;
 				for ( int y = 0; y < dimY; y++ )
 				{
 					float val = blur.getFloat(x, y, z);
 					if ( val >= threshold )
 					{
-						output.set(x, y, z, 1);
+						outside.set(x, y, z, 1);
+						yStart = y;
 						break;
 					}
 				}
@@ -4578,8 +4595,17 @@ public class WormSegmentation
 					float val = blur.getFloat(x, y, z);
 					if ( val >= threshold )
 					{
-						output.set(x, y, z, 1);
+						outside.set(x, y, z, 1);
+						yEnd = y;
 						break;
+					}
+				}
+				if ( yEnd > yStart )
+				{
+					for ( int y = yStart +1; y < yEnd; y++ )
+					{
+						int value = inside.getInt(x,y,z);
+						inside.set(x, y, z, value+1);
 					}
 				}
 			}
@@ -4589,12 +4615,15 @@ public class WormSegmentation
 		{
 			for ( int y = 0; y < dimY; y++ )
 			{
+				int zStart = dimZ;
+				int zEnd = -1;
 				for ( int z = 0; z < dimZ; z++ )
 				{
 					float val = blur.getFloat(x, y, z);
 					if ( val >= threshold )
 					{
-						output.set(x, y, z, 1);
+						outside.set(x, y, z, 1);
+						zStart = z;
 						break;
 					}
 				}
@@ -4603,14 +4632,36 @@ public class WormSegmentation
 					float val = blur.getFloat(x, y, z);
 					if ( val >= threshold )
 					{
-						output.set(x, y, z, 1);
+						outside.set(x, y, z, 1);
+						zEnd = z;
 						break;
+					}
+				}
+				if ( zEnd > zStart )
+				{
+					for ( int z = zStart +1; z < zEnd; z++ )
+					{
+						int value = inside.getInt(x,y,z);
+						inside.set(x, y, z, value+1);
 					}
 				}
 			}
 		}
 		
-		return output;
+		for ( int i = 0; i < inside.getDataSize(); i++ )
+		{
+			int value = inside.getInt(i);
+			if ( value >= 3 )
+			{
+				inside.set(i, 1);
+			}
+			else
+			{
+				inside.set(i, 0);
+			}
+		}
+		
+		return new ModelImage[]{outside,inside};
 	}
 
 	private static Sphere3f findMaxSphere(Vector<Vector3f> seeds, Vector<Vector3f> surfacePoints, Vector<Sphere3f> surfaces)
