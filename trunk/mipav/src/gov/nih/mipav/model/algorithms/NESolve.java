@@ -50,6 +50,7 @@ MathWorks Technical Support Department
     	// (Optional) A vector whose elements select various algorithmic options
     	// and specify various tolerances
     	// details[0] is not used
+    	// Use 17 for Java even though 16 is used for MATLAB so 0 based Java and 1 based MATLAB numbers match.
     	protected double details[] = new double[17];
     	
     	// (Optional) A set of parameters (constants) which if nonemepty
@@ -125,6 +126,11 @@ MathWorks Technical Support Department
 	    	double M[][];
 	    	double hc[][];
 	    	double sn[];
+	    	int retcode[] = new int[1];
+	    	double xplus[];
+	    	double fplus[];
+	    	boolean maxtaken[] = new boolean[1];
+	    	double trilm[][];
 	    	// Initialization
 	    	// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
 	    	// epsilon = D1MACH(4)
@@ -179,6 +185,9 @@ MathWorks Technical Support Department
 	        M = new double[x0.length][x0.length];
 	        hc = new double[x0.length][x0.length];
 	        sn = new double[x0.length];
+	        xplus = new double[x0.length];
+	        fplus = new double[x0.length];
+	        trilm = new double[x0.length][x0.length];
 	        // Algorithm step 2
 	        if (details[16] > 0) { // Might need F(x0) for scaling
 	           for (i = 0; i < x0.length; i++) {
@@ -289,6 +298,20 @@ MathWorks Technical Support Department
 	            if ((details[4] > 0) || (details[3] > 0) || ((1 - details[5]) > 0)) {
 	                nemodel(M, hc, sn, fvc, jc, gc, sf, sx, details[2]);
 	            } // if ((details[4] > 0) || (details[3] > 0) || ((1 - details[5]) > 0))
+	            else {
+	            	MipavUtil.displayError("Factored model not implemented.");
+	            }
+	            if (details[2] == 1) {
+	                nelnsrch(retcode, xplus, fplus, fvplus, maxtaken, nofun, btrack, xc, fc[0], gc, sn, 
+	                		 sx, sf, details, fparam);
+	                for (i = 0; i < x0.length; i++) {
+	                	for (j = 0; j <= i; j++) {
+	                		trilm[i][j] = M[i][j];
+	                	}
+	                }
+	                nehook(retcode, xplus, fplus, fvplus, maxtaken, details, trustvars, nofun, xc, fc, gc, trilm,
+	                		hc, sn, sx, sf, itncount, fparam);
+	            } // if (details[2] == 1)
 	        } // while (termcode[0] == 0)
 	    } // driver
 	    
@@ -307,9 +330,9 @@ MathWorks Technical Support Department
 	    	fplus[0] = 0.0;
 	    	for (i= 0; i < sf.length; i++) {
 	    	    prod = sf[i] * fvplus[i];
-	    	    fvplus[0] += (prod * prod);
+	    	    fplus[0] += (prod * prod);
 	    	}
-	    	fvplus[0] = 0.5 * fvplus[0];
+	    	fplus[0] = 0.5 * fplus[0];
 	    	nofun[0]++;
 	    } // nefn
 	    
@@ -607,8 +630,36 @@ MathWorks Technical Support Department
 	    	    			m[i][j] = trium[i][j] + triumTranspose[i][j];
 	    	    		}
 	    	    	}
+	    	    	double diagdiagm[][] = new double[n][n];
+	    	    	for (i = 0; i < n; i++) {
+	    	    		diagdiagm[i][i] = m[i][i];
+	    	    	}
+	    	    	double diagm2[][] = new double[n][n];
+	    	    	for (i = 0; i < n; i++) {
+	    	    		diagm2[i][i] = m2[i];
+	    	    	}
+	    	    	for (i = 0; i < n; i++) {
+	    	    		for (j = 0; j < n; j++) {
+	    	    			m[i][j] = m[i][j] - diagdiagm[i][j] + diagm2[i][j];
+	    	    		}
+	    	    	}
 	    		} // if ((globmeth == 2) || (globmeth == 3))
+	    		if (globmeth == 2) {
+	    			double L[][] = new double[n][n];
+	    			for (i = 0; i < n; i++) {
+	    				for (j = 0; j <= i; j++) {
+	    					L[i][j] = m[i][j];
+	    				}
+	    			}
+	    			Matrix matL = new Matrix(L);
+	    			// This is J' * J, an approximation of H.
+	    			h = (matL.times(matL.transpose())).getArray();
+	    		} // if (globmeth == 2)
+	    		else {
+	    			h = null;
+	    		}
 	    	} // else
+	    	return;
 	    } // nemodel
 	    
 	    private void neqrdcmp(double M[][], double M1[], double M2[], int sing[]) {
@@ -932,4 +983,329 @@ MathWorks Technical Support Department
 	    	nersolv(b, M, M2);
 	    	return;
 	    } // neqrsolv
+	    
+	    private void nelnsrch(int retcode[], double xp[], double fp[], double Fp[], boolean maxtaken[], int nofun[],
+	    		double btrack[], double xc[], double fc, double g[], double p[], double sx[], double sf[],
+	    		double details[], double fparam[]) {
+	    	// input/output nofun, btrack
+	    	// output retcode, xp, fp, Fp, maxtaken
+	    	// input xc, fc, g, p, sx, sf, details, fparam
+	    	// This routine is part of the Nonlinear Equations package and the Unconstrained Minimization package.
+	    	// It is a line search for use with Newton's Method of solving nonlinear equations.  For function
+	    	// evaluations, it needs to know whether it is doing Nonlinear Equations (NE) or Unconstrained Minimization
+	    	// (UM); it distinguishes the two by the length of details which is 17 for NE and 18 for UM (Java adds one 
+	    	// more for details so the zero based Java and one based MATLAB numbers match).
+	    	// Algorithm A6.3.1: Part of the modular software system from the appendix of the book "Numerical Methods
+	    	// for Unconstrained Optimization and Nonlinear Equations" by Dennis & Schnabel, 1983.
+	    	// Coded in MATLAB by Richard T. Behrens, March, 1988.
+	    	// Modified slightly for UM usage, January, 1989.
+	    	int i;
+	    	double prod;
+	    	double val;
+	    	double lambdatemp;
+	    	double lambdaprev = 1.0;
+	    	double fpprev = 0.0;
+	    	double a[] = new double[2];
+	    	
+	    	// Initialization
+	    	fp[0] = 0;
+	    	boolean umflag = (details.length == 18);  // This is how we tell NE from UM.
+	    	
+	    	// Algorithm step 1.
+	    	maxtaken[0] = false;
+	    	
+	    	// Algorithm step 2.
+	    	retcode[0] = 2;
+	    	
+	    	// Algorithm step 3.
+	    	double alpha = 1.0E-4;
+	    	
+	    	// Algorithm step 4.
+	    	double newtlen = 0.0;
+	    	for (i = 0; i < sx.length; i++) {
+	    	    prod = sx[i] * p[i];
+	    	    newtlen += (prod * prod);
+	    	}
+	    	newtlen = Math.sqrt(newtlen);
+	    	
+	    	// Algorithm step 5
+	    	if (newtlen > details[11]) {
+	    		double ratio = details[11]/newtlen;
+	    		for (i = 0; i < p.length; i++) {
+	    			p[i] = p[i] * ratio;
+	    		}
+	    		newtlen = details[11];
+	    	} // if (newtlen > details[11])
+	    	
+	    	// Algorithm step 6.
+	    	double initslope = 0.0;
+	    	for (i = 0; i < g.length; i++) {
+	    		initslope += (g[i] * p[i]);
+	    	}
+	    	
+	    	// Algorithm step 7.
+	    	double rellength = -Double.MAX_VALUE;
+	    	for (i = 0; i < p.length; i++) {
+	    		val = Math.abs(p[i])/Math.max(Math.abs(xc[i]), 1.0/sx[i]);
+	    		if (val > rellength) {
+	    			rellength = val;
+	    		}
+	    	} // for (i = 0; i < p.length; i++) 
+	    	
+	    	// Algorithm step 8.
+	    	double minlambda = details[9]/rellength;
+	    	
+	    	// Algorithm step 9.
+	    	double lambda = 1.0;
+	    	
+	    	// Algorithm step 10.
+	    	int bt = 0;
+	    	while (retcode[0] >= 2) {
+	    		for (i = 0; i < xc.length; i++) {
+	    			xp[i] = xc[i] + lambda * p[i];
+	    		}
+	    		if (umflag) {
+	    			// fp must be a single value in umflag
+	    	        fitToFunction(fp, xp, fparam);
+	    	        nofun[0]++;
+	    		} // if (umflag)
+	    		else { // !umflag
+	    			// fp is a single value
+	    			nefn(fp, Fp, nofun, xp, sf, fparam);
+	    		} // else !umflag
+	    		if (fp[0] <= fc + alpha*lambda*initslope) { // step 10.3a
+	    			retcode[0] = 0;
+	    			maxtaken[0] = ((lambda == 1) && (newtlen > 0.99 * details[11]));
+	    		}
+	    		else if (lambda < minlambda) { // step 10.3b
+	    			retcode[0] = 1;
+	    			for (i = 0; i < xc.length; i++) {
+	    				xp[i] = xc[i];
+	    			}
+	    		} // else if (lambda < minlambda) 
+	    		else { // step 10.3c
+	    		    if (lambda == 1.0) {
+	    		        if (details[1] > 0) {
+	    		        	System.out.println("Quadratic Backtrack");
+	    		        }
+	    		        Preferences.debug("Quadratic Backtrack\n", Preferences.DEBUG_ALGORITHM);
+	    		        bt++;
+	    		        lambdatemp = -initslope / (2*(fp[0]-fc-initslope));
+	    		    } // if (lambda == 1.0)
+	    		    else { // lambda != 1.0
+	    		        if (details[1] > 0) {
+	    		        	System.out.println("Cubic Backtrack");
+	    		        }
+	    		        Preferences.debug("Cubic Backtrack\n", Preferences.DEBUG_ALGORITHM);
+	    		        bt++;
+	    		        double k = (1.0/(lambda - lambdaprev));
+	    		        double lambdaSquared = lambda * lambda;
+	    		        double lambdaprevSquared = lambdaprev*lambdaprev;
+	    		        double b00 = 1.0/(lambdaSquared);
+	    		        double b01 = -1.0/lambdaprevSquared;
+	    		        double b10 = -lambdaprev/lambdaSquared;
+	    		        double b11 = lambda/lambdaprevSquared;
+	    		        double c00 = fp[0] - fc - lambda*initslope;
+	    		        double c10 = fpprev - fc - lambdaprev*initslope;
+	    		        a[0] = k*(b00*c00 + b01*c10);
+	    		        a[1] = k*(b10*c00 + b11*c10);
+	    		        double disc = a[1]*a[1] - 3.0*a[0]*initslope;
+	    		        if (a[0] == 0) {
+	    		        	lambdatemp = -initslope/(2.0*a[1]);
+	    		        }
+	    		        else {
+	    		        	lambdatemp = (-a[1] + Math.sqrt(disc))/(3.0*a[0]);
+	    		        }
+	    		        if (lambdatemp > 0.5 * lambda) {
+	    		        	lambdatemp = 0.5 * lambda;
+	    		        }
+	    		    } // else lambda != 1.0
+	    		    lambdaprev = lambda;
+	    		    fpprev = fp[0];
+	    		    if (lambdatemp <= 0.1 * lambda) {
+	    		    	lambda = 0.1 * lambda;
+	    		    }
+	    		    else {
+	    		    	lambda = lambdatemp;
+	    		    }
+	    		} // else step 10.3c
+	    	} // while (retcode[0] >= 2)
+	    	if (bt < btrack.length) {
+	    		btrack[bt] = btrack[bt] + 1;
+	    	}
+	    	else {
+	    		btrack[bt] = 1;
+	    	}
+	    	return;
+	    } // nelnsrch
+	    
+	    private void nehook (int retcode[], double xp[], double fp[], double Fp[], boolean maxtaken[], double details[], 
+	    		double trustvars[], int nofun[], double xc[], double fc[], double g[], double L[][], double H[][],
+	    		double sn[], double sx[], double sf[], int itn, double fparam[]) {
+	    	// input/output details, trustvar, nofun
+	    	// output retcode, xp, fp, Fp, maxtaken
+	    	// input xc, fc, g, L, H, sn, sx, sf, itn, fparam
+	    	// This routine is part of the Nonlinear Equations package and Unconstrained Minimization package.
+	    	// It is a driver for locally constrained optimal ("hook") steps for use with Newton's Method of
+	    	// solving nonlinear equations.  For function evaluations, it needs to know whether is doing
+	    	// Nonlinear Equations (NE) or Unconstrained Minimization (UM).  it distinguishes the two by the
+	    	// length of details which is 17 for NE and 18 for UM (Java adds one more for details so the zero based 
+	    	// Java and one based MATLAB numbers match).
+	    	// trustvars is a vector of variables that, though not used externally, needs to be preserved between calls
+	    	// to nehook.  The elements are defined as:
+	    	// 1 = mu
+	    	// 2 = deltaprev
+	    	// 3 = phi
+	    	// 4 = phiprime
+	    	// Algorithms A6.4.1 a nd A6.4.2: Incorporates both the "hookdriver" and "hookstep" algorithms.  Part of
+	    	// the modular software system from the appendix of the book "Numerical Methods for Unconstrained Optimization
+	    	// and Nonlinear Equations" by Dennis & Schnabel, 1983.
+	    	// Coded in MATLAB by Richard T. Behrens, August, 1990.
+	    	int i;
+	    	int j;
+	    	double prod;
+	    	double val;
+	    	double alpha;
+	    	
+	    	// Initialization
+	    	int n = xc.length;
+	    	boolean umflag = (details.length == 18); // This is how we tell NE from UM.
+	    	double xpprev[] = new double[n];
+	    	double fpprev = 0;
+	    	double Fpprev[] = new double[n];
+	    	int newttaken;
+	    	double s[];
+	    	double phiprimeinit[][] = null;
+	    	double mulow;
+	    	double muup;
+	    	double div;
+	    	double L642[][] = new double[sx.length][sx.length];
+	        double maxadd[] = new double[1];
+	        double Hadd[][] = new double[sx.length][sx.length];
+	    	double sxdiag[][] = new double[sx.length][sx.length];
+	    	// Algorithm steps 1-3.
+	    	retcode[0] = 4;
+	    	int firsthook = 1;
+	    	double newtlen = 0.0;
+	    	for (i = 0; i < sx.length; i++) {
+	    	    prod = sx[i] * sn[i];
+	    	    newtlen += (prod*prod);
+	    	}
+	    	newtlen = Math.sqrt(newtlen);
+	    	
+	    	// Algorithm step 4.
+	    	if ((itn == 1) || (details[7] == -1)) { // details[7] is delta.
+	    	    trustvars[0] = 0; // trustvars[0] is mu.
+	    	    if (details[7] == -1) {
+	    	    	alpha = 0.0;
+	    	    	for (i = 0; i < g.length; i++) {
+	    	    		val = g[i]/sx[i];
+	    	    		alpha += (val*val);
+	    	    	}
+	    	    	double gsx[][] = new double[g.length][1];
+	    	    	for (i = 0; i <g.length; i++) {
+	    	    		gsx[i][0] = g[i]/(sx[i]*sx[i]);
+	    	    	}
+	    	    	Matrix matL = new Matrix(L);
+	    	    	Matrix matGSX = new Matrix(gsx);
+	    	    	Matrix matBeta = (matL.transpose()).times(matGSX);
+	    	    	Matrix matBB = (matBeta.transpose()).times(matBeta);
+	    	    	double beta[][] = matBB.getArray();
+	    	    	details[7] = Math.pow(alpha, 1.5)/beta[0][0];
+	    	    	if (details[7] > details[11]) { // details[11] is maxstep
+	    	    		details[7] = details[11];
+	    	    	}
+	    	    } // if (details[7] == -1)
+	    	} // if ((itn == 1) || (details[7] == -1))
+	    	
+	    	// Algorithm step 5 (incorporating algorithm A6.4.2).
+	    	while (retcode[0] >= 2) { // Calculate and check a new step
+	    		double hi = 1.5; // Start of A.6.4.2.
+	    		double lo = 0.75;
+	    		if (newtlen <= hi * details[7]) {
+	    		    newttaken = 1;	
+	    		    s = new double[sn.length];
+	    		    for (i = 0; i < sn.length; i++) {
+	    		    	s[i] = sn[i];
+	    		    }
+	    		    trustvars[0] = 0; // trustvars[0] is mu
+	    		    details[7] = Math.min(details[7],  newtlen);
+	    		} // if (newtlen <= hi * details[7])
+	    		else { // newtlen > hi * details[7]
+	    		    newttaken = 0;
+	    		    if (trustvars[0] > 0) {
+	    		        trustvars[0] = trustvars[0] - ((trustvars[2] + trustvars[1])/details[7]) *
+	    		        		(((trustvars[1] - details[7]) + trustvars[2])/trustvars[3]);
+	    		    } // if (trustvars[0] > 0)
+	    		    trustvars[2] = newtlen - details[7];
+	    		    if (firsthook > 0) {
+	    		    	firsthook = 0;
+	    		    	double sxsn[][] = new double[sx.length][1];
+	    		    	for (i = 0; i < sx.length; i++) {
+	    		    		sxsn[i][0] = (sx[i]*sx[i])*sn[i];
+	    		    	}
+	    		    	Matrix matL = new Matrix(L);
+	    		    	Matrix matSxsn = new Matrix(sxsn);
+	    		    	Matrix matTempvec = (matL.inverse()).times(matSxsn);
+	    		    	phiprimeinit = ((matTempvec.transpose()).times(matTempvec)).getArray();
+	    		    	phiprimeinit[0][0] = -phiprimeinit[0][0]/newtlen;
+	    		    }
+	    		    mulow = -trustvars[2]/phiprimeinit[0][0];
+	    		    muup = 0.0;
+	    		    for (i = 0; i < g.length; i++) {
+	    		    	div = g[i]/sx[i];
+	    		    	muup += (div*div);
+	    		    }
+	    		    muup = Math.sqrt(muup);
+	    		    muup = muup/details[7];
+	    		    boolean done = false;
+	    		    while (!done) {
+	    		        if ((trustvars[0] < mulow) || (trustvars[0] > muup)) {
+	    		            if (mulow < 0) {
+	    		            	System.err.println("Warning, mulow < 0");
+	    		            	Preferences.debug("Warning, mulow < 0\n", Preferences.DEBUG_ALGORITHM);
+	    		            }
+	    		            trustvars[0] = Math.max(Math.sqrt(mulow*muup), muup*1.0E-3);
+	    		        } // if ((trustvars[0] < mulow) || (trustvars[0] > muup))
+	    		        for (i = 0; i < sx.length; i++) {
+	    		            sxdiag[i][i] = trustvars[0]*sx[i]*sx[i];	
+	    		        }
+	    		        for (i = 0; i < sx.length; i++) {
+	    		        	for (j = 0; j < sx.length; j++) {
+	    		        	    Hadd[i][j] = H[i][j] + sxdiag[i][j];	
+	    		        	}
+	    		        }
+	    		        nechdcmp(L642, maxadd, Hadd, 0);
+	    		        // L642 is a copy of L local to A6.4.2.
+	    		        double g2[][] = new double[g.length][0];
+	    		        for (i = 0; i < g.length; i++) {
+	    		        	g2[i][0] = g[i];
+	    		        }
+	    		        Matrix matG = new Matrix(g2);
+	    		        Matrix matL642 = new Matrix(L642);
+	    		        Matrix matLInverse = matL642.inverse();
+	    		        Matrix matLG = (matLInverse).times(matG);
+	    		        Matrix matS = ((matL642.transpose()).inverse()).times(matLG);
+	    		        double s2[][] = matS.getArray();
+	    		        s = new double[s2.length];
+	    		        for (i = 0; i < s.length; i++) {
+	    		        	s[i] = -s2[i][0];
+	    		        }
+	    		        double steplen = 0.0;
+	    		        for (i = 0; i < sx.length; i++) {
+	    		        	prod = sx[i]* s[i];
+	    		        	steplen += (prod*prod);
+	    		        }
+	    		        steplen = Math.sqrt(steplen);
+	    		        trustvars[2] = steplen - details[7];
+	    		        double sxs[][] = new double[sx.length][1];
+	    		        for (i = 0; i < sx.length; i++) {
+	    		        	sxs[i][0] = (sx[i]*sx[i])*s[i];
+	    		        }
+	    		        Matrix matSXS = new Matrix(sxs);
+	    		        double tempvec[][] = (matLInverse.times(matSXS)).getArray();
+	    		    } // while (!done)
+	    		} // else newtlen > hi * details[7]
+	    	} // while (retcode[0] >= 2)
+	    } // nehook
     }
