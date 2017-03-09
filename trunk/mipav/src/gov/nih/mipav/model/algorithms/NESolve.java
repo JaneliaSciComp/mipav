@@ -29,7 +29,16 @@ If you have any more related questions, let me know and I would be happy to help
 
 Sincerely, 
 Stephen Jue
-MathWorks Technical Support Department 
+MathWorks Technical Support Department
+
+ In a document with the title
+                             NONLINPK
+                      NESOLVE  and  UMSOLVE
+                  Release 1.1, August 31, 1990
+by Richard T. Behrens
+He states:
+The UMSOLVE files are distributed as Shareware (but NESOLVE is
+public domain).  
 
  nesolve.m is based on Algorithm D6.1.3: Part of the modular software system from the 
  appendix of the book "Numerical Methods for Unconstrained Optimization and Nonlinear Equations"
@@ -49,12 +58,20 @@ MathWorks Technical Support Department
     	
     	// (Optional) A vector whose elements select various algorithmic options
     	// and specify various tolerances
-    	// details[0] is not used
-    	// Use 17 for Java even though 16 is used for MATLAB so 0 based Java and 1 based MATLAB numbers match.
-    	protected double details[] = new double[17];
+    	// details[0] = 2 => btrack is null
+    	// details[3] = 1 => analytic jacobian is present
+    	// details[4] > 0 => Factored secant method present, not implemented in this software.
+    	// details[6] = delta
+    	// details[8] = steptol
+    	// details[10] maxstep
+    	// sqrt(details[12]) = sqrteta in nefdjac
+    	// details[13] = 1 => path is present
+    	// details[14] = 1 => fparam is present
+    	// details[15] = scaling
+    	protected double details[] = new double[16];
     	
     	// (Optional) A set of parameters (constants) which if nonemepty
-    	// is paased on to the function and Jacobian
+    	// is passed on to the function and Jacobian
     	protected double fparam[] = null;
     	
     	protected boolean analyticJacobian = false;
@@ -77,6 +94,9 @@ MathWorks Technical Support Department
     	// Number of function evaluations
     	protected int nofun[] = new int[1];
     	
+    	// Number of iterations
+    	protected int itncount;
+    	
     	// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
     	private double eps;
     	
@@ -87,7 +107,7 @@ MathWorks Technical Support Department
 	 	    this.analyticJacobian = analyticJacobian;
 	 	    this.scale = scale;
 	 	    this.path = path;
-	 	    this.btrack = null;
+	 	    this.btrack = btrack;
 	 	    this.scaling = scaling;
 	    }
 	    
@@ -110,15 +130,14 @@ MathWorks Technical Support Department
 	    	double sin[];
 	    	double sx[];
 	    	double sf[];
-	    	int itncount;
-	    	int consecmax;
+	    	int consecmax[] = new int[1];
 	    	double prod;
 	    	double maxProd;
 	    	int addfun[] = new int[1];
 	    	double jc[][];
 	    	double gc[];
 	    	double xc[];
-	    	int restart;
+	    	boolean restart;
 	    	int norest;
 	    	double normfv0 = 0.0;
 	    	double fracdone;
@@ -128,7 +147,7 @@ MathWorks Technical Support Department
 	    	double sn[];
 	    	int retcode[] = new int[1];
 	    	double xplus[];
-	    	double fplus[];
+	    	double fplus[] = new double[1];
 	    	boolean maxtaken[] = new boolean[1];
 	    	double trilm[][];
 	    	// Initialization
@@ -153,25 +172,25 @@ MathWorks Technical Support Department
 	        } // while(true)
 	    	
 	        if (fparam != null) {
-	        	details[15] = 1;
+	        	details[14] = 1;
 	        }
 	        if (analyticJacobian) {
-	        	details[4] = 1;
+	        	details[3] = 1;
 	        }
 	        if ((scale == null) && (scaling == SCALING_WITH_SCALE)) {
 	            scaling = SCALING_WITHOUT_SCALE;	
 	        }
-	        details[16] = scaling;
+	        details[15] = scaling;
 	        if (path != null) {
-	        	details[14] = 1;
+	        	details[13] = 1;
 	        }
-	        if (details[14] == 1) {
+	        if (details[13] == 1) {
 	        	for (i = 0; i < x0.length; i++) {
 	        		path.add(x0[i]);
 	        	}
 	        }
 	        if (btrack == null) {
-	        	details[1] = 2;
+	        	details[0] = 2;
 	        }
 	        xf = new double[x0.length];
 	        fvplus = new double[x0.length];
@@ -186,15 +205,14 @@ MathWorks Technical Support Department
 	        hc = new double[x0.length][x0.length];
 	        sn = new double[x0.length];
 	        xplus = new double[x0.length];
-	        fplus = new double[x0.length];
 	        trilm = new double[x0.length][x0.length];
 	        // Algorithm step 2
-	        if (details[16] > 0) { // Might need F(x0) for scaling
+	        if (details[15] > 0) { // Might need F(x0) for scaling
 	           for (i = 0; i < x0.length; i++) {
 	        	   sin[i] = 1.0;
 	           }
 	           nefn(fc, fvplus, nofun, x0, sin, fparam);
-	        } // if (details[16] > 0)
+	        } // if (details[15] > 0)
 	        neinck(details, sx, sf, termcode, x0, fvplus, details, scale);
 	        
 	        // Algorithm step 3
@@ -202,7 +220,7 @@ MathWorks Technical Support Department
 	        	for (i = 0; i < x0.length; i++) {
 	        		xf[i] = x0[i];
 	        	}
-	        	if (details[14] > 0) {
+	        	if (details[13] > 0) {
 	        		for (i = 0; i < xf.length; i++) {
 	        			path.add(xf[i]);
 	        		}
@@ -216,7 +234,7 @@ MathWorks Technical Support Department
 	        nefn(fc, fvplus, nofun, x0, sf, fparam);
 	        
 	        // Algorithm step 6.
-	        consecmax = 0;
+	        consecmax[0] = 0;
 	        maxProd = 0.0;
 	        for (i = 0; i < x0.length; i++) {
 	            prod = sf[i] * Math.abs(fvplus[i]);
@@ -224,7 +242,7 @@ MathWorks Technical Support Department
 	            	maxProd = prod;
 	            }
 	        } // for (i = 0; i < x0.length; i++)
-	        if (maxProd <= 1.0e-2 * details[8]) {
+	        if (maxProd <= 1.0e-2 * details[7]) {
 	        	termcode[0] = 1;
 	        }
 	        else {
@@ -236,20 +254,20 @@ MathWorks Technical Support Department
 	        	for (i = 0; i < x0.length; i++) {
 	        		xf[i] = x0[i];
 	            }
-	        	if (details[14] > 0) {
+	        	if (details[13] > 0) {
 	        		for (i = 0; i < xf.length; i++) {
 	        			path.add(xf[i]);
 	        	    }
-	        	} // if (details[14] > 0)
+	        	} // if (details[13] > 0)
 	        } // if (termcode[0] > 0)
 	        else { // termcode[0] <= 0
-	            if (details[4] > 0) {
+	            if (details[3] > 0) {
 	            	fitToJacobian(jc, addfun, x0, fparam);
 	            	nofun[0] = nofun[0] + addfun[0];
-	            } // if (details[4] > 0)
-	            else { // details[4] <= 0
+	            } // if (details[3] > 0)
+	            else { // details[3] <= 0
 	                nefdjac(jc, nofun, fvplus, x0, sx, details, fparam); 
-	            } // else details[4] <= 0)
+	            } // else details[3] <= 0)
 	            for (j = 0; j < x0.length; j++) {
 	            	gc[j] = 0.0;
 	            	for (i = 0; i < x0.length; i++) {
@@ -267,21 +285,21 @@ MathWorks Technical Support Department
 	        }
 	        
 	        // Algorithm step 9.
-	        restart = 1;
+	        restart = true;
 	        norest = 0;
 	        
 	        // Algorithm step 10 (iteration).
-	        if (details[1] > 0) {
+	        if (details[0] > 0) {
 	            normfv0 = 0.0;
 	            for (i = 0; i < x0.length; i++) {
 	            	if (Math.abs(fvc[i]) > normfv0) {
 	            		normfv0 = Math.abs(fvc[i]);
 	            	}
 	            }
-	        } // if (details[1] > 0)
+	        } // if (details[0] > 0)
 	        
 	        while (termcode[0] == 0) {
-	            if (details[1] > 0) {
+	            if (details[0] > 0) {
 	                maxfvc = 0.0;
 	                for (i = 0; i < x0.length; i++) {
 	                	if (Math.abs(fvc[i]) > maxfvc) {
@@ -291,19 +309,21 @@ MathWorks Technical Support Department
 	                Preferences.debug("itncount = " + itncount + "\n", Preferences.DEBUG_ALGORITHM);
 	                Preferences.debug("nofun[0] = " + nofun[0] + "\n", Preferences.DEBUG_ALGORITHM);
 	                Preferences.debug("max(abs(fvc)) = " + maxfvc + "\n", Preferences.DEBUG_ALGORITHM);
-	                fracdone = Math.log(maxfvc/normfv0)/Math.log(details[8]/normfv0);
+	                fracdone = Math.log(maxfvc/normfv0)/Math.log(details[7]/normfv0);
 	                Preferences.debug("fracdone = " + fracdone + "\n", Preferences.DEBUG_ALGORITHM);
-	            } // if (details[1] > 0)
+	            } // if (details[0] > 0)
 	            itncount++;
-	            if ((details[4] > 0) || (details[3] > 0) || ((1 - details[5]) > 0)) {
-	                nemodel(M, hc, sn, fvc, jc, gc, sf, sx, details[2]);
-	            } // if ((details[4] > 0) || (details[3] > 0) || ((1 - details[5]) > 0))
+	            if ((details[3] > 0) || (details[2] > 0) || ((1 - details[4]) > 0)) {
+	                nemodel(M, hc, sn, fvc, jc, gc, sf, sx, details[1]);
+	            } // if ((details[3] > 0) || (details[2] > 0) || ((1 - details[4]) > 0))
 	            else {
 	            	MipavUtil.displayError("Factored model not implemented.");
 	            }
-	            if (details[2] == 1) {
+	            if (details[1] == 1) {
 	                nelnsrch(retcode, xplus, fplus, fvplus, maxtaken, nofun, btrack, xc, fc[0], gc, sn, 
 	                		 sx, sf, details, fparam);
+	            } // if (details[1] == 1)
+	            else if (details[1] == 2) {
 	                for (i = 0; i < x0.length; i++) {
 	                	for (j = 0; j <= i; j++) {
 	                		trilm[i][j] = M[i][j];
@@ -311,7 +331,92 @@ MathWorks Technical Support Department
 	                }
 	                nehook(retcode, xplus, fplus, fvplus, maxtaken, details, trustvars, nofun, xc, fc, gc, trilm,
 	                		hc, sn, sx, sf, itncount, fparam);
-	            } // if (details[2] == 1)
+	            } // else if (details[1] == 2)
+	            else {
+	            	MipavUtil.displayError("Dogleg not implemented");
+	            }
+	            if ((retcode[0] != 1) || (restart) || (details[3] > 0) || (details[2] > 0)) {
+	                if (details[3] > 0) {
+	                	fitToJacobian(jc, addfun, xplus, fparam);
+	                	nofun[0] = nofun[0] + addfun[0];
+	                } // if (details[3] > 0)
+	                else if (details[2] > 0) {
+	                    nefdjac(jc, nofun, fvplus, xplus, sx, details, fparam);	
+	                } // else if (details[2] > 0)
+	                else if (details[4] > 0) {
+	                	MipavUtil.displayError("Factored secant method not implemented.");
+	                }
+	                else {
+	                    nebroyuf(jc, xc, xplus, fvc, fvplus, sx, details[12]); // Broyden update
+	                }
+	                if (details[4] > 0) {
+	                	MipavUtil.displayError("Gradient method for factored method not implemented");
+	                	// Calculate gc using QR factorization (see book).
+	                }
+	                else {
+	                	double fs[][] = new double[x0.length][1];
+	                	for (i = 0; i < x0.length; i++) {
+	                		fs[i][0] = fvplus[i] * (sf[i] * sf[i]);
+	                	}
+	                	Matrix matfs = new Matrix(fs);
+	                	Matrix matjc = new Matrix(jc);
+	                	double gc2[][] = ((matjc.transpose()).times(matfs)).getArray();
+	                	for (i = 0; i < x0.length; i++) {
+	                		gc[i] = gc2[i][0];
+	                	}
+	                }
+	                nestop(consecmax, termcode, xc, xplus, fvplus, fplus, gc, sx, sf, retcode[0],
+	                		details, itncount, maxtaken[0]);
+	            } // if ((retcode[0] != 1) || (restart) || (details[3] > 0) || (details[2] > 0))
+	            if (((retcode[0] == 1) || (termcode[0] == 2)) && (!restart) && ((1 - details[3]) > 0) &&
+	            		((1 - details[2]) > 0)) {
+	            	nefdjac(jc, nofun, fvc, xc, sx, details, fparam);
+	            	double fs[][] = new double[x0.length][1];
+                	for (i = 0; i < x0.length; i++) {
+                		fs[i][0] = fvc[i] * (sf[i] * sf[i]);
+                	}
+                	Matrix matfs = new Matrix(fs);
+                	Matrix matjc = new Matrix(jc);
+                	double gc2[][] = ((matjc.transpose()).times(matfs)).getArray();
+                	for (i = 0; i < x0.length; i++) {
+                		gc[i] = gc2[i][0];
+                	}
+                	if ((details[1] == 2) || (details[1] == 3)) {
+                		details[6] = -1;
+                	}
+                	restart = true;
+                	norest++;
+                	if (termcode[0] == 2) {
+                		termcode[0] = 0; // added by TAD
+                	}
+	            } // if (((retcode[0] == 1) || (termcode[0] == 2)) && (!restart) && ((1 - details[3]) > 0) &&
+	            else {
+	                if (termcode[0] > 0) {
+	                    for (i = 0; i < xf.length; i++) {
+	                    	xf[i] = xplus[i];
+	                    }
+	                    if (details[13] > 0) {
+	                    	for (i = 0; i < xf.length; i++) {
+	                    		path.add(xf[i]);
+	                    	}
+	                    }
+	                } // if (termcode[0] = 0)
+	                else {
+	                	restart = false;
+	                	if (details[13] > 0) {
+	                		for (i = 0; i < xplus.length; i++) {
+	                			path.add(xplus[i]);
+	                		}
+	                	}
+	                } // else
+	                for (i = 0; i < xc.length; i++) {
+	                	xc[i] = xplus[i];
+	                }
+	                fc[0] = fplus[0];
+	                for (i = 0; i < fvc.length; i++) {
+	                	fvc[i] = fvplus[i];
+	                }
+	            } // else
 	        } // while (termcode[0] == 0)
 	    } // driver
 	    
@@ -457,7 +562,7 @@ MathWorks Technical Support Department
 	    	// Algorithm step 1.
 	    	double fj[] = new double[xc.length];
 	    	int n = fc.length;
-	    	double sqrteta = Math.sqrt(details[13]);
+	    	double sqrteta = Math.sqrt(details[12]);
 	    	
 	    	// Algorithm step 2.
 	    	for (int j = 0; j < n; j++) {
@@ -677,6 +782,10 @@ MathWorks Technical Support Department
 	    	int j;
 	    	
 	    	int n = Math.max(M.length, M[0].length);
+	    	for (i = 0; i < n; i++) {
+	    		M1[i] = 0;
+	    		M2[i] = 0;
+	    	}
 	    	// Algorithm step 1.
 	    	sing[0] = 0;
 	    	
@@ -993,8 +1102,7 @@ MathWorks Technical Support Department
 	    	// This routine is part of the Nonlinear Equations package and the Unconstrained Minimization package.
 	    	// It is a line search for use with Newton's Method of solving nonlinear equations.  For function
 	    	// evaluations, it needs to know whether it is doing Nonlinear Equations (NE) or Unconstrained Minimization
-	    	// (UM); it distinguishes the two by the length of details which is 17 for NE and 18 for UM (Java adds one 
-	    	// more for details so the zero based Java and one based MATLAB numbers match).
+	    	// (UM); it distinguishes the two by the length of details which is 16 for NE and 17 for UM.
 	    	// Algorithm A6.3.1: Part of the modular software system from the appendix of the book "Numerical Methods
 	    	// for Unconstrained Optimization and Nonlinear Equations" by Dennis & Schnabel, 1983.
 	    	// Coded in MATLAB by Richard T. Behrens, March, 1988.
@@ -1009,7 +1117,10 @@ MathWorks Technical Support Department
 	    	
 	    	// Initialization
 	    	fp[0] = 0;
-	    	boolean umflag = (details.length == 18);  // This is how we tell NE from UM.
+	    	for (i = 0; i < xp.length; i++) {
+	    		xp[i] = 0;
+	    	}
+	    	boolean umflag = (details.length == 17);  // This is how we tell NE from UM.
 	    	
 	    	// Algorithm step 1.
 	    	maxtaken[0] = false;
@@ -1029,13 +1140,13 @@ MathWorks Technical Support Department
 	    	newtlen = Math.sqrt(newtlen);
 	    	
 	    	// Algorithm step 5
-	    	if (newtlen > details[11]) {
-	    		double ratio = details[11]/newtlen;
+	    	if (newtlen > details[10]) {
+	    		double ratio = details[10]/newtlen;
 	    		for (i = 0; i < p.length; i++) {
 	    			p[i] = p[i] * ratio;
 	    		}
-	    		newtlen = details[11];
-	    	} // if (newtlen > details[11])
+	    		newtlen = details[10];
+	    	} // if (newtlen > details[10])
 	    	
 	    	// Algorithm step 6.
 	    	double initslope = 0.0;
@@ -1053,7 +1164,7 @@ MathWorks Technical Support Department
 	    	} // for (i = 0; i < p.length; i++) 
 	    	
 	    	// Algorithm step 8.
-	    	double minlambda = details[9]/rellength;
+	    	double minlambda = details[8]/rellength;
 	    	
 	    	// Algorithm step 9.
 	    	double lambda = 1.0;
@@ -1075,7 +1186,7 @@ MathWorks Technical Support Department
 	    		} // else !umflag
 	    		if (fp[0] <= fc + alpha*lambda*initslope) { // step 10.3a
 	    			retcode[0] = 0;
-	    			maxtaken[0] = ((lambda == 1) && (newtlen > 0.99 * details[11]));
+	    			maxtaken[0] = ((lambda == 1) && (newtlen > 0.99 * details[10]));
 	    		}
 	    		else if (lambda < minlambda) { // step 10.3b
 	    			retcode[0] = 1;
@@ -1085,7 +1196,7 @@ MathWorks Technical Support Department
 	    		} // else if (lambda < minlambda) 
 	    		else { // step 10.3c
 	    		    if (lambda == 1.0) {
-	    		        if (details[1] > 0) {
+	    		        if (details[0] > 0) {
 	    		        	System.out.println("Quadratic Backtrack");
 	    		        }
 	    		        Preferences.debug("Quadratic Backtrack\n", Preferences.DEBUG_ALGORITHM);
@@ -1093,7 +1204,7 @@ MathWorks Technical Support Department
 	    		        lambdatemp = -initslope / (2*(fp[0]-fc-initslope));
 	    		    } // if (lambda == 1.0)
 	    		    else { // lambda != 1.0
-	    		        if (details[1] > 0) {
+	    		        if (details[0] > 0) {
 	    		        	System.out.println("Cubic Backtrack");
 	    		        }
 	    		        Preferences.debug("Cubic Backtrack\n", Preferences.DEBUG_ALGORITHM);
@@ -1149,8 +1260,7 @@ MathWorks Technical Support Department
 	    	// It is a driver for locally constrained optimal ("hook") steps for use with Newton's Method of
 	    	// solving nonlinear equations.  For function evaluations, it needs to know whether is doing
 	    	// Nonlinear Equations (NE) or Unconstrained Minimization (UM).  it distinguishes the two by the
-	    	// length of details which is 17 for NE and 18 for UM (Java adds one more for details so the zero based 
-	    	// Java and one based MATLAB numbers match).
+	    	// length of details which is 16 for NE and 17 for UM.
 	    	// trustvars is a vector of variables that, though not used externally, needs to be preserved between calls
 	    	// to nehook.  The elements are defined as:
 	    	// 1 = mu
@@ -1169,12 +1279,12 @@ MathWorks Technical Support Department
 	    	
 	    	// Initialization
 	    	int n = xc.length;
-	    	boolean umflag = (details.length == 18); // This is how we tell NE from UM.
+	    	boolean umflag = (details.length == 17); // This is how we tell NE from UM.
 	    	double xpprev[] = new double[n];
-	    	double fpprev = 0;
+	    	double fpprev[] = new double[1];
 	    	double Fpprev[] = new double[n];
-	    	int newttaken;
-	    	double s[];
+	    	boolean newttaken;
+	    	double s[] = null;
 	    	double phiprimeinit[][] = null;
 	    	double mulow;
 	    	double muup;
@@ -1194,9 +1304,9 @@ MathWorks Technical Support Department
 	    	newtlen = Math.sqrt(newtlen);
 	    	
 	    	// Algorithm step 4.
-	    	if ((itn == 1) || (details[7] == -1)) { // details[7] is delta.
+	    	if ((itn == 1) || (details[6] == -1)) { // details[6] is delta.
 	    	    trustvars[0] = 0; // trustvars[0] is mu.
-	    	    if (details[7] == -1) {
+	    	    if (details[6] == -1) {
 	    	    	alpha = 0.0;
 	    	    	for (i = 0; i < g.length; i++) {
 	    	    		val = g[i]/sx[i];
@@ -1211,33 +1321,33 @@ MathWorks Technical Support Department
 	    	    	Matrix matBeta = (matL.transpose()).times(matGSX);
 	    	    	Matrix matBB = (matBeta.transpose()).times(matBeta);
 	    	    	double beta[][] = matBB.getArray();
-	    	    	details[7] = Math.pow(alpha, 1.5)/beta[0][0];
-	    	    	if (details[7] > details[11]) { // details[11] is maxstep
-	    	    		details[7] = details[11];
+	    	    	details[6] = Math.pow(alpha, 1.5)/beta[0][0];
+	    	    	if (details[6] > details[10]) { // details[10] is maxstep
+	    	    		details[6] = details[10];
 	    	    	}
-	    	    } // if (details[7] == -1)
-	    	} // if ((itn == 1) || (details[7] == -1))
+	    	    } // if (details[6] == -1)
+	    	} // if ((itn == 1) || (details[6] == -1))
 	    	
 	    	// Algorithm step 5 (incorporating algorithm A6.4.2).
 	    	while (retcode[0] >= 2) { // Calculate and check a new step
 	    		double hi = 1.5; // Start of A.6.4.2.
 	    		double lo = 0.75;
-	    		if (newtlen <= hi * details[7]) {
-	    		    newttaken = 1;	
+	    		if (newtlen <= hi * details[6]) {
+	    		    newttaken = true;	
 	    		    s = new double[sn.length];
 	    		    for (i = 0; i < sn.length; i++) {
 	    		    	s[i] = sn[i];
 	    		    }
 	    		    trustvars[0] = 0; // trustvars[0] is mu
-	    		    details[7] = Math.min(details[7],  newtlen);
-	    		} // if (newtlen <= hi * details[7])
-	    		else { // newtlen > hi * details[7]
-	    		    newttaken = 0;
+	    		    details[6] = Math.min(details[6],  newtlen);
+	    		} // if (newtlen <= hi * details[6])
+	    		else { // newtlen > hi * details[6]
+	    		    newttaken = false;
 	    		    if (trustvars[0] > 0) {
-	    		        trustvars[0] = trustvars[0] - ((trustvars[2] + trustvars[1])/details[7]) *
-	    		        		(((trustvars[1] - details[7]) + trustvars[2])/trustvars[3]);
+	    		        trustvars[0] = trustvars[0] - ((trustvars[2] + trustvars[1])/details[6]) *
+	    		        		(((trustvars[1] - details[6]) + trustvars[2])/trustvars[3]);
 	    		    } // if (trustvars[0] > 0)
-	    		    trustvars[2] = newtlen - details[7];
+	    		    trustvars[2] = newtlen - details[6];
 	    		    if (firsthook > 0) {
 	    		    	firsthook = 0;
 	    		    	double sxsn[][] = new double[sx.length][1];
@@ -1257,7 +1367,7 @@ MathWorks Technical Support Department
 	    		    	muup += (div*div);
 	    		    }
 	    		    muup = Math.sqrt(muup);
-	    		    muup = muup/details[7];
+	    		    muup = muup/details[6];
 	    		    boolean done = false;
 	    		    while (!done) {
 	    		        if ((trustvars[0] < mulow) || (trustvars[0] > muup)) {
@@ -1297,15 +1407,308 @@ MathWorks Technical Support Department
 	    		        	steplen += (prod*prod);
 	    		        }
 	    		        steplen = Math.sqrt(steplen);
-	    		        trustvars[2] = steplen - details[7];
+	    		        trustvars[2] = steplen - details[6];
 	    		        double sxs[][] = new double[sx.length][1];
 	    		        for (i = 0; i < sx.length; i++) {
 	    		        	sxs[i][0] = (sx[i]*sx[i])*s[i];
 	    		        }
 	    		        Matrix matSXS = new Matrix(sxs);
-	    		        double tempvec[][] = (matLInverse.times(matSXS)).getArray();
+	    		        Matrix matTempvec = matLInverse.times(matSXS);
+	    		        double tv3[][] = ((matTempvec.transpose()).times(matTempvec)).getArray();
+	    		        trustvars[3] = -tv3[0][0]/steplen;
+	    		        if (((steplen >= lo*details[6]) && (steplen <= hi*details[6])) || (muup - mulow <= 0)) {
+	    		        	done = true;
+	    		        }
+	    		        else {
+	    		        	mulow = Math.max(mulow,  trustvars[0] - (trustvars[2]/trustvars[3]));
+	    		        	if (trustvars[2] < 0) {
+	    		        		muup = trustvars[0];
+	    		        	}
+	    		        	trustvars[0] = trustvars[0] - ((steplen/details[6]) * (trustvars[2]/trustvars[3]));
+	    		        }
 	    		    } // while (!done)
-	    		} // else newtlen > hi * details[7]
+	    		} // else newtlen > hi * details[6] End of A6.4.2
+	    		trustvars[1] = details[6]; // trustvars[1] is deltaprev
+	    		netrust(xp, fp, Fp, maxtaken, retcode, xpprev, fpprev, Fpprev, details, nofun, xc, fc, g, L, s, sx, sf,
+	    				newttaken, 1, H, umflag, fparam);
 	    	} // while (retcode[0] >= 2)
 	    } // nehook
+	    
+	    private void netrust(double xp[], double fp[], double Fp[], boolean maxtaken[], int retcode[], double xpprev[],
+	    		double fpprev[], double Fpprev[], double details[], int nofun[], double xc[], double fc[], double g[], 
+	    		double L[][], double s[], double sx[], double sf[], boolean newttaken, int steptype, double H[][], boolean umflag,
+	    		double fparam[]) {
+	    	// input/output retcode, xpprev, fpprev, Fpprev, details, nofun
+	    	// output xp, fp, Fp, maxtaken
+	    	// input xc, fc, g, L, s, sx, sf, newttaken, steptype, H, umflag, fparam
+	    	// This routine is part of the Nonlinear Equations package and the Unconstrained Minimization package.
+	    	// It decides whether or not the proposed step is acceptable, and adjusts the trust radius accordingly.
+	    	// Algorithm A6.4.5: Part of the modular software system from the appendix of the book "Numerical Methods
+	    	// for Unconstrained Optimization and Nonlinear Equations" by Dennis & Schnable, 1983.
+	    	// Coded in MATLAB by Richard T. Behrens, August, 1990.
+	    	int i;
+	    	double prod;
+	    	double div;
+	    	
+	    	// Initialization
+	    	int n = xc.length;
+	    	for (i = 0; i < n; i++) {
+	    		xp[i] = 0;
+	    	}
+	    	fp[0] = 0;
+	    	
+	    	// Algorithm steps 1-4.
+	    	maxtaken[0] = false;
+	    	double alpha = 1.0E-4;
+	    	double steplen = 0.0;
+	    	for (i = 0; i < sx.length; i++) {
+	    		prod = sx[i] * s[i];
+	    		steplen += (prod * prod);
+	    	}
+	    	steplen = Math.sqrt(steplen);
+	    	for (i = 0; i < n; i++) {
+	    		xp[i] = xc[i] + s[i];
+	    	}
+	    	
+	    	// Algorithm step 5.
+	    	if (umflag) {
+	    		fitToFunction(fp, xp, fparam);
+	    		nofun[0]++;
+	    	}
+	    	else {
+	    		nefn(fp, Fp, nofun, xp, sf, fparam);
+	    	}
+	    	
+	    	// Algorithm steps 6-8.
+	    	double deltaf = fp[0] - fc[0];
+	    	
+	    	double initslope = 0.0;
+	    	for (i = 0; i < g.length; i++) {
+	    		initslope += (g[i] * s[i]);
+	    	}
+	    	if (retcode[0] != 3) {
+	    		fpprev[0] = 0;
+	    	}
+	    	
+	    	// Algorithm step 9.
+	    	if ((retcode[0] == 3) && ((fp[0] >= fpprev[0]) || (deltaf > alpha * initslope))) { // step 9a.
+	    		retcode[0] = 0;
+	    		for (i = 0; i < xp.length; i++) {
+	    			xp[i] = xpprev[i];
+	    		}
+	    		fp[0] = fpprev[0];
+	    		for (i = 0; i < Fp.length; i++) {
+	    			Fp[i] = Fpprev[i];
+	    		}
+	    		details[6] = details[6]/2;
+	    	} // if ((retcode[0] == 3) && ((fp[0] >= fpprev[0]) || (deltaf > alpha * initslope)))
+	    	else {
+	    	    if (deltaf >= alpha * initslope) { // step 9b.
+	    	        double rellength = -Double.MAX_VALUE;
+	    	        for (i = 0; i < s.length; i++) {
+	    	        	div = Math.abs(s[i])/Math.max(Math.abs(xp[i]), 1.0/sx[i]);
+	    	        	if (div > rellength) {
+	    	        		rellength = div;
+	    	        	}
+	    	        } // for (i = 0; i < s.length; i++)
+	    	        if (rellength < details[8]) { // details[8] is steptol
+	    	        	retcode[0] = 1;
+	    	        	for (i = 0; i < xp.length; i++) {
+	    	        		xp[i] = xc[i];
+	    	        	}
+	    	        } // if (rellength < details[8])
+	    	        else { // rellength >= details[8]
+	    	            retcode[0] = 2;
+	    	            double deltatemp = -initslope*steplen/(2*(deltaf-initslope));
+	    	            if (deltatemp < 0.1 * details[6]) {
+	    	            	details[6] = 0.1 * details[6];
+	    	            }
+	    	            else if (deltatemp > 0.5 * details[6]) {
+	    	            	details[6] = 0.5 * details[6];
+	    	            }
+	    	            else {
+	    	            	details[6] = deltatemp;
+	    	            }
+	    	        } // else rellength >= details[8]
+	    	    } // if (deltaf >= alpha * initslope)
+	    	    else { // step 9c.
+	    	        double deltafpred = initslope;
+	    	        double s2[][] = new double[s.length][1];
+    	            for (i = 0; i < s.length; i++) {
+    	            	s2[i][0] = s[i];
+    	            }
+    	            Matrix matS = new Matrix(s2);
+	    	        if (steptype == 1) {
+	    	            Matrix matH = new Matrix(H);
+	    	            double shs[][] = (((matS.transpose()).times(matH)).times(matS)).getArray();
+	    	            deltafpred = deltafpred + 0.5 * shs[0][0];
+	    	        } // if (steptype == 1)
+	    	        else {
+	    	        	Matrix matL = new Matrix(L);
+	    	        	Matrix matTtemp = (matL.transpose()).times(matS);
+	    	        	double tt[][] = ((matTtemp.transpose()).times(matTtemp)).getArray();
+	    	        	deltafpred = deltafpred + 0.5 * tt[0][0];
+	    	        }
+	    	        if ((retcode[0] != 2) && ((Math.abs(deltafpred-deltaf) <= 0.1*Math.abs(deltaf)) ||
+	    	        		(deltaf <= initslope)) && (!newttaken) && (details[6] <= 0.99*details[10])) {
+	    	        	retcode[0] = 3;
+	    	        	for (i = 0; i < xp.length; i++) {
+	    	        		xpprev[i] = xp[i];
+	    	        	}
+	    	        	fpprev[0] = fp[0];
+	    	        	for (i = 0; i < Fp.length; i++) {
+	    	        		Fpprev[i] = Fp[i];
+	    	        	}
+	    	        	details[6] = Math.min(2.0 * details[6], details[10]); // details[10] is maxstep
+	    	        } // if ((retcode[0] != 2) && ((Math.abs(deltafpred-deltaf) <= 0.1*Math.abs(deltaf)) ||
+	    	        else {
+	    	        	retcode[0] = 0;
+	    	        	if (steplen > 0.99 * details[10]) {
+	    	        		maxtaken[0] = true;
+	    	        	}
+	    	        	if (deltaf >= 0.1 * deltafpred) {
+	    	        		details[6] = details[6]/2;
+	    	        	}
+	    	        	else if (deltaf <= 0.75 * deltafpred) {
+	    	        		details[6] = Math.min(2.0*details[6], details[10]);
+	    	        	}
+	    	        } // else
+	    	    } // else step 9c.
+	    	} // else
+	    } // netrust
+	    
+	    private void nebroyuf(double A[][], double xc[], double xp[], double fc[], double fp[], double sx[], double eta) {
+	        // input/output A
+	    	// input xc, xp, fc, fp, sx, eta
+	    	// This routine is part of the Nonlinear Equations package.
+	    	// This updates A, a secant approximation to the jacobian, using Broyden's unfactored secant update.
+	    	// Algorithm A8.3.1: Part of the modular software system from the appendix of the book "Numerical Methods
+	    	// for Unconstrained Optimization and Nonlinear Equations" by Dennis & Schnabel, 1983.
+	    	// Coded in MATLAB by Sherkat Masoum M., April, 1988.
+	    	// Edited by Richard T. Behrens, June, 1988.
+	    	int i;
+	    	int j;
+	    	double prod;
+	    	
+	    	// Algorithm step 1.
+	    	int n = Math.max(A.length, A[0].length);
+	    	double s[] = new double[xp.length];
+	    	for (i = 0; i < xp.length; i++) {
+	    		s[i] = xp[i] - xc[i];
+	    	}
+	    	
+	    	// Algorithm step 2.
+	    	double denom = 0.0;
+	    	for (i = 0; i < sx.length; i++) {
+	    		prod = sx[i] * s[i];
+	    		denom  += (prod * prod);
+	    	}
+	    	
+	    	// Algorithm step 3.
+	    	double s2[][] = new double[s.length][1];
+	    	for (i = 0; i < s.length; i++) {
+	    		s2[i][0] = s[i];
+	    	}
+	    	Matrix matS = new Matrix(s2);
+	    	Matrix matA = new Matrix(A);
+	    	double As[][] = (matA.times(matS)).getArray();
+	    	double tempi[] = new double[fp.length];
+	    	for (i = 0; i < fp.length; i++) {
+	    		tempi[i] = fp[i] - fc[i] - As[i][0];
+	    	}
+	    	for (i = 0; i < tempi.length; i++) {
+	    		if (Math.abs(tempi[i]) < eta * (Math.abs(fp[i] + Math.abs(fc[i])))) {
+	    			tempi[i] = 0.0;
+	    		}
+	    	}
+	    	for (i = 0; i < tempi.length; i++) {
+	    		tempi[i] = tempi[i]/denom;
+	    	}
+	    	double ssx[] = new double[s.length];
+	    	for (i = 0; i < s.length; i++) {
+	    		ssx[i] = s[i] * (sx[i] * sx[i]);
+	    	}
+	    	double addon[][] = new double[tempi.length][s.length];
+	    	for (i = 0; i < tempi.length; i++) {
+	    		for (j = 0; j < ssx.length; j++) {
+	    			addon[i][j] = tempi[i] * ssx[j];
+	    		}
+	    	}
+	    	for (i = 0; i < A.length; i++) {
+	    		for (j = 0; j < A[0].length; j++) {
+	    			A[i][j] = A[j][j] + addon[i][j];
+	    		}
+	    	}
+	    	return;
+	    } // nebroyuf
+	    
+	    private void nestop(int consecmax[], int termcode[], double xc[], double xp[], double F[], double Fnorm[], double g[],
+	    		double sx[], double sf[], int retcode, double details[], int itncount, boolean maxtaken) {
+	    	// input/ output consecmax
+	    	// output termcode
+	    	// input xc, xp, F, Fnorm, g, sx, sf, retcode, details, itncount, maxtaken
+	    	// This routine is part of the Nonlinear Equations package.
+	    	// It decides whether or not to stop iterating when solving a set of nonlinear equations.
+	    	// Algorithm A7.2.3: Part of the modular software system from the appendix of the book "Numerical Methods for
+	    	// Unconstrained Optimization and Nonlinear Equations" by Dennis & Schnabel, 1983.
+	    	// Coded in MATLAB by Richard T. Behrens, March, 1988.
+	    	int i;
+	    	double term;
+	    	double maxProd;
+	    	double maxDiv;
+	    	
+	    	// Algorithm step 1.
+	    	int n = xc.length;
+	    	termcode[0] = 0;
+	    	
+	    	// Algorithm step 2.
+	    	maxProd = -Double.MAX_VALUE;
+	    	for (i = 0; i < sf.length; i++) {
+	    		term = sf[i] * Math.abs(F[i]);
+	    		if (term > maxProd) {
+	    			maxProd = term;
+	    		}
+	    	}
+	    	maxDiv = -Double.MAX_VALUE;
+	    	for (i = 0; i < n; i++) {
+	    		term = Math.abs(xp[i] - xc[i]) / Math.max(Math.abs(xp[i]), 1.0/sx[i]);
+	    		if (term > maxDiv) {
+	    			maxDiv = term;
+	    		}
+	    	}
+	    	if (retcode == 1) {
+	    		termcode[0] = 3;
+	    	}
+	    	else if (maxProd <= details[7]) {
+	    		termcode[0] = 1;
+	    	}
+	    	else if (maxDiv <= details[8]) {
+	    		termcode[0] = 2;
+	    	}
+	    	else if (itncount >= details[5]) {
+	    		termcode[0] = 4;
+	    	}
+	    	else if (maxtaken) {
+	    		consecmax[0]++;
+	    		if (consecmax[0] == 5) {
+	    			termcode[0] = 5;
+	    		}
+	    	} // else if (maxtaken)
+	    	else {
+	    		consecmax[0] = 0;
+	    		if ((details[3] > 0) || (details[2] > 0)) {
+	    		    maxProd = -Double.MAX_VALUE;
+	    		    for (i = 0; i < n; i++) {
+	    		    	term = Math.abs(g[i]) * Math.max(Math.abs(xp[i]), 1.0/sx[i]);
+	    		    	if (term > maxProd) {
+	    		    		maxProd = term;
+	    		    	}
+	    		    }
+	    		    maxProd = maxProd/Math.max(Fnorm[0], n/2.0);
+	    		    if (maxProd <= details[9]) {
+	    		    	termcode[0] = 6;
+	    		    }
+	    		} // if ((details[3] > 0) || (details[2] > 0))
+	    	} // else
+	    } // nestop
     }
