@@ -38,7 +38,7 @@ MathWorks Technical Support Department
 by Richard T. Behrens
 He states:
 The UMSOLVE files are distributed as Shareware (but NESOLVE is
-public domain).  
+public domain).  3+
 
  nesolve.m is based on Algorithm D6.1.3: Part of the modular software system from the 
  appendix of the book "Numerical Methods for Unconstrained Optimization and Nonlinear Equations"
@@ -48,27 +48,88 @@ public domain).
 
     public abstract class NESolve {
     	
-    	private int NO_SCALING = 0;
-    	private int SCALING_WITHOUT_SCALE = 1;
-    	private int SCALING_WITH_SCALE = 2;
-        private int scaling = NO_SCALING;
+    	public int NO_SCALING = 0;
+    	public int SCALING_WITHOUT_SCALE = 1;
+    	public int SCALING_WITH_SCALE = 2;
+    	
+    	public int LINE_SEARCH = 1;
+    	public int TRUST_REGION = 2;
     
 	    // An initial guess of the solution (starting point for iterations)
     	protected double x0[];
+    	// In the Schwarz-Christoffel toolbox:
+    	// JAC and SCALE inputs are never used.
+    	// PATH output is never used.
+    	// crparam calls nesolvei
+    	// deparam, dparam, hpparam, rparam, rsparam, stparam call nesolve
+    	
+    	// crparam has:
+    	// opt = zeros(16,1)
+    	// opt(1) = trace;
+    	// opt(2) = method;
+    	// opt(6) = 100*(n-3); % max # of iterations
+    	// opt(8) = tol;
+    	// opt(9) = tol/10;
+    	// opt(11) = 12;  % max step size
+    	// opt(12) = nqpts;
+    	
+    	// deparam, dparam, hpparam, rparam, rsparam have:
+    	// opt = zeros(16,1)
+    	// opt(1) = trace;
+    	// opt(2) = method;
+    	// opt(6) = 100*(n-3); % max # of iterations
+    	// opt(8) = tol;
+    	// opt(9) = min(eps^(2/3),tol/10);
+    	// opt(12) = nqpts;
+    	
+    	// stparam has:
+    	// opt = zeros(16,1)
+    	// opt(1) = trace;
+    	// opt(2) = method;
+    	// opt(6) = 100*(n-1); % max # of iterations
+    	// opt(8) = tol;
+    	// opt(9) = tol/10;
+    	// opt(12) = nqpts;
+    	
+    	// Trace solution default: on, alternatives: full, off.  How much progress information to show during
+    	// and after the solution to the parameter problem.
+    	// Solver method: default: trustregion alternative: linesearch Different strategies in the nonlinear
+    	// solver that attempt to globalize convergence.
+    	// Tolerance default: 1.0e-8.  Desired accuracy in the map.  This may not be met exactly.
+    	// nqpts default: 4  Number of quadrature points per integration or subinterval.  Approximately equals
+    	// -log10(error).  Increase if plot has false little zigzags in curves.
     	
     	// (Optional) A vector whose elements select various algorithmic options
     	// and specify various tolerances
-    	// details[0] = 2 => btrack is null
+    	// details[0] trace = 2 => on, set btrack null
+    	//                  = 1 =>, on, leave btrack alone
+    	//                  = 0 => off
+    	// details[1] method, trustregion or linesearch 1 = linesearch 2 = trustregion
+    	//            Default of trustregion in Schwarz-Christoffel package.
+    	//            Program defaults to line search if not specified.
     	// details[3] = 1 => analytic jacobian is present
     	// details[4] > 0 => Factored secant method present, not implemented in this software.
+    	// details[5] maximum number of iterations, default to 100 if not specified.
     	// details[6] = delta
-    	// details[8] = steptol
-    	// details[10] maxstep
-    	// sqrt(details[12]) = sqrteta in nefdjac
+    	// details[7] = fvectol, defaults to eps ^ (1/3) if not specified.
+    	// details[8] = steptol, defaults to eps ^ (2/3) if not specified.
+    	// details[9] = mintol, defaults to eps ^ (2/3) if non specified
+    	// details[10] maximum step size 
+    	// details[11] is not directly used by the program.  It is only used in setting details[12] in neinck:
+    	// Step 4
+    	// if (dout[11] <= 0) {
+    		// dout[12] = eps;
+    	// }
+    	// else {
+    		// dout[12] = Math.max(eps, Math.pow(10.0, -dout[11]));
+    	// }
+    	// sqrteta = sqrt(details[1]2) in nefdjac
     	// details[13] = 1 => path is present
     	// details[14] = 1 => fparam is present
     	// details[15] = scaling
     	protected double details[] = new double[16];
+    	
+    	protected boolean initialJacobianIdentity = false;
     	
     	// (Optional) A set of parameters (constants) which if nonemepty
     	// is passed on to the function and Jacobian
@@ -84,6 +145,7 @@ public domain).
     	protected double xf[];
     	
     	// Indicates the stopping reason (equals 1 for normal)
+    	// = 4 if iteration count has reached maximum number of iterations
     	protected int termcode[] = new int[1];
     	
     	// (Optional) Returns the sequence of iterates
@@ -100,15 +162,86 @@ public domain).
     	// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
     	private double eps;
     	
-	    public NESolve(double x0[], double fparam[], boolean analyticJacobian, double scale[][], Vector<Double> path,
-	    		double btrack[], int scaling) {
+    	private boolean testMode = false; 
+    	
+    	private int testCase;
+    	
+    	private final int ROSENBROCK = 1;
+    	
+    	private double tol;
+    	
+    	public NESolve() {
+    		int i;
+    		// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
+	    	// epsilon = D1MACH(4)
+	        // Machine epsilon is the smallest positive epsilon such that
+	        // (1.0 + epsilon) != 1.0.
+	        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+	        // epsilon = 2.2204460e-16
+	        // epsilon is called the largest relative spacing
+	        eps = 1.0;
+	        double neweps = 1.0;
+
+	        while (true) {
+
+	            if (1.0 == (1.0 + neweps)) {
+	                break;
+	            } else {
+	                eps = neweps;
+	                neweps = neweps / 2.0;
+	            }
+	        } // while(true)
+	        
+	        details[0] = 1; // trace
+	        tol = 1.0E-8;
+	        details[7] = tol; // fvectol
+	        details[8] = Math.min(Math.pow(eps,(2.0/3.0)),tol/10); // steptol
+	        details[11] = 4;
+    		// Below is an example to fit y(0) = 10.0*(a1 - a0**2)
+            //                            y(1) = 1.0 - a[0]
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Rosenbrock function standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+            testMode = true;
+            testCase = ROSENBROCK;
+            x0 = new double[2];
+            x0[0] = -1.2;
+            x0[1] = 1.0;
+            fitTestModel();
+            driverCalls();
+    	}
+    	
+    	private void fitTestModel() {
+    		details[5] = 100 * x0.length; // maxIterations	
+    	}
+    	
+    	private void driverCalls() {
+    		details[1] = 1; // linesearch
+    		
+    		details[1] = 2; // trustregion
+    	}
+    	
+	    public NESolve(boolean initialJacobianIdentity, double x0[], double fparam[], 
+	    		boolean analyticJacobian, double scale[][], Vector<Double> path,
+	    		double btrack[], int trace, int method, int maxIterations, double fvectol, 
+	    		double steptol, double maxStepSize, double details11, int scaling) {
+	    	this.initialJacobianIdentity = initialJacobianIdentity;
 	    	this.x0 = x0;
 	 	    this.fparam = fparam;
 	 	    this.analyticJacobian = analyticJacobian;
 	 	    this.scale = scale;
 	 	    this.path = path;
 	 	    this.btrack = btrack;
-	 	    this.scaling = scaling;
+	 	    details[0] = trace;
+	 	    details[1] = method;
+	 	    details[5] = maxIterations;
+	 	    details[7] = fvectol;
+	 	    details[8] = steptol;
+	 	    details[10] = maxStepSize;
+	 	    details[11] = details11;
+	 	    details[15] = scaling;
 	    }
 	    
 	    // fvplus is an output
@@ -120,6 +253,7 @@ public domain).
 	    public abstract void fitToJacobian(double jc[][], int addfun[], double x0[], double fparam[]);
 	    
 	    public void driver() {
+	    	// Contains port from nesolve.m
 	    	int i;
 	    	int j;
 	    	// Variables for trust region methods
@@ -177,10 +311,9 @@ public domain).
 	        if (analyticJacobian) {
 	        	details[3] = 1;
 	        }
-	        if ((scale == null) && (scaling == SCALING_WITH_SCALE)) {
-	            scaling = SCALING_WITHOUT_SCALE;	
+	        if ((scale == null) && (details[15] == SCALING_WITH_SCALE)) {
+	            details[15] = SCALING_WITHOUT_SCALE;	
 	        }
-	        details[15] = scaling;
 	        if (path != null) {
 	        	details[13] = 1;
 	        }
@@ -189,8 +322,8 @@ public domain).
 	        		path.add(x0[i]);
 	        	}
 	        }
-	        if (btrack == null) {
-	        	details[0] = 2;
+	        if (details[0] == 2) {
+	        	btrack = null;
 	        }
 	        xf = new double[x0.length];
 	        fvplus = new double[x0.length];
@@ -265,9 +398,21 @@ public domain).
 	            	fitToJacobian(jc, addfun, x0, fparam);
 	            	nofun[0] = nofun[0] + addfun[0];
 	            } // if (details[3] > 0)
-	            else { // details[3] <= 0
+	            else if (initialJacobianIdentity) {
+	            	for (i = 0; i < x0.length; i++) {
+	            		for (j = 0; j < x0.length; j++) {
+	            			if (i == j) {
+	            				jc[i][j] = 1.0;
+	            			}
+	            			else {
+	            				jc[i][j] = 0.0;
+	            			}
+	            		}
+	            	}
+	            }
+	            else { 
 	                nefdjac(jc, nofun, fvplus, x0, sx, details, fparam); 
-	            } // else details[3] <= 0)
+	            } // else
 	            for (j = 0; j < x0.length; j++) {
 	            	gc[j] = 0.0;
 	            	for (i = 0; i < x0.length; i++) {
@@ -466,7 +611,7 @@ public domain).
 	    	// Steps 2 & 3
 	    	int l = scale.length;
 	    	int m = scale[0].length;
-	    	if (dout[16] == 2) {
+	    	if (dout[15] == 2) {
 	    		if ((l == n) && (m == 2)) {
 	    			for (i = 0; i < n; i++) {
 	    				sx[i] = 1.0/Math.abs(scale[i][0]);
@@ -474,16 +619,16 @@ public domain).
 	    			}
 	    		}
 	    		else {
-	    			dout[16] = 1;
+	    			dout[15] = 1;
 	    		}
-	    	} // if (dout[16] == 2)
-	    	if (dout[16] == 0) {
+	    	} // if (dout[15] == 2)
+	    	if (dout[15] == 0) {
 	    		for (i = 0; i < n; i++) {
 	    			sx[i] = 1.0;
 	    			sf[i] = 1.0;
 	    		}
-	    	} // if (dout[16] == 0)
-	    	if (dout[16] == 1) {
+	    	} // if (dout[15] == 0)
+	    	if (dout[15] == 1) {
 	    	    for (i = 0; i < n; i++) {
 	    	    	if (x0[i] == 0) {
 	    	    		x0[i] = 1;
@@ -494,42 +639,42 @@ public domain).
 	    	    	sx[i] = 1.0/Math.abs(x0[i]);
 	    	    	sf[i] = 1.0/Math.abs(f0[i]);
 	    	    } // for (i = 0; i < n; i++)
-	    	} // if (dout[16] == 1)
+	    	} // if (dout[15] == 1)
 	    	
 	    	// Step 4
-	    	if (dout[12] <= 0) {
-	    		dout[13] = eps;
+	    	if (dout[11] <= 0) {
+	    		dout[12] = eps;
 	    	}
 	    	else {
-	    		dout[13] = Math.max(eps, Math.pow(10.0, -dout[12]));
+	    		dout[12] = Math.max(eps, Math.pow(10.0, -dout[11]));
 	    	}
-	    	if (dout[13] > 0.01) {
+	    	if (dout[12] > 0.01) {
 	    		termcode[0] = -2;
 	    		return;
 	    	}
 	    	
 	    	// Step 5
-	    	if (dout[2] <= 0) {
-	    		dout[2] = 1; // Default to linesearch
+	    	if (dout[1] <= 0) {
+	    		dout[1] = 1; // Default to linesearch
 	    	}
-	    	if (((dout[2] == 2) || (dout[2] == 3)) && (dout[7] <= 0)) {
-	    		dout[7] = -1;
+	    	if (((dout[1] == 2) || (dout[1] == 3)) && (dout[6] <= 0)) {
+	    		dout[6] = -1;
 	    	}
 	    	
 	    	// Step 6
-	    	if (dout[6] <= 1) {
-	    		dout[6] = 100; // Default to 100 iteration limit.
+	    	if (dout[5] <= 1) {
+	    		dout[5] = 100; // Default to 100 iteration limit.
+	    	}
+	    	if (dout[7] <= 0) {
+	    		dout[7] = Math.pow(eps, (1.0/3.0)); // fvectol
 	    	}
 	    	if (dout[8] <= 0) {
-	    		dout[8] = Math.pow(eps, (1.0/3.0)); // fvectol
+	    		dout[8] = Math.pow(eps, (2.0/3.0)); // steptol
 	    	}
 	    	if (dout[9] <= 0) {
-	    		dout[9] = Math.pow(eps, (2.0/3.0)); // steptol
+	    		dout[9] = Math.pow(eps, (2.0/3.0)); // mintol
 	    	}
 	    	if (dout[10] <= 0) {
-	    		dout[10] = Math.pow(eps, (2.0/3.0)); // mintol
-	    	}
-	    	if (dout[11] <= 0) {
 	    		double normsxx0 = 0.0;
 	    		for (i = 0; i < n; i++) {
 	    			double prod = sx[i] * x0[i];
@@ -542,8 +687,8 @@ public domain).
 	    				maxsx = sx[i];
 	    			}
 	    		}
-	    		dout[11] = 1000.0 * Math.max(normsxx0, maxsx); // maxstep
-	    	} // if (dout[11] <= 0)
+	    		dout[10] = 1000.0 * Math.max(normsxx0, maxsx); // maxstep
+	    	} // if (dout[10] <= 0)
 	    } // neinck
 	    
 	    private void nefdjac(double J[][], int nofun[], double fc[], double xc[], double sx[], double details[], double fparam[]) {
