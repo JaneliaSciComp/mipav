@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 import java.util.Vector;
 
 import Jama.Matrix;
+import gov.nih.mipav.model.algorithms.AlgorithmCircleToRectangle.FitAll;
 import gov.nih.mipav.view.*;
 
 /**
@@ -170,6 +171,34 @@ public domain).  3+
     	
     	private double tol;
     	
+    	// To run the self tests put the following code in another file:
+    	// boolean netest = true;
+        // if (netest) {
+        	// FitAll fa = new FitAll();
+        	// return;	
+        // }
+    	
+    	// class FitAll extends NESolve {
+
+ 	       
+            // public FitAll() {
+
+                //  super();
+
+                
+            // }
+
+            
+            // public void fitToFunction(double fvplus[], double xplus[], double fparam[]) {
+            	
+            // }
+
+           
+            // public void fitToJacobian(double jc[][], int addfun[], double x0[], double fparam[]) {
+            	
+            // }
+        // }
+    	
     	public NESolve() {
     		int i;
     		// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
@@ -197,6 +226,7 @@ public domain).  3+
 	        details[7] = tol; // fvectol
 	        details[8] = Math.min(Math.pow(eps,(2.0/3.0)),tol/10); // steptol
 	        details[11] = 4;
+	        testMode = true;
     		// Below is an example to fit y(0) = 10.0*(a1 - a0**2)
             //                            y(1) = 1.0 - a[0]
             // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -204,12 +234,10 @@ public domain).  3+
             Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
-            testMode = true;
             testCase = ROSENBROCK;
             x0 = new double[2];
             x0[0] = -1.2;
             x0[1] = 1.0;
-            fitTestModel();
             driverCalls();
     	}
     	
@@ -218,9 +246,59 @@ public domain).  3+
     	}
     	
     	private void driverCalls() {
+    		analyticJacobian = false;
     		details[1] = 1; // linesearch
-    		
+    		fitTestModel();
+            driver();
+            dumpTestResults();
+    		analyticJacobian = true;
+    		details[1] = 1; // linesearch
+    		fitTestModel();
+            driver();
+            dumpTestResults();
+    		analyticJacobian = false;
     		details[1] = 2; // trustregion
+    		fitTestModel();
+            driver();
+            dumpTestResults();
+    		analyticJacobian = true;
+    		details[1] = 2; // trustregion;
+    		fitTestModel();
+            driver();
+            dumpTestResults();
+    	}
+    	
+    	public void dumpTestResults() {
+    		int i;
+            Preferences.debug("analyticJacobian = " + analyticJacobian + "\n", Preferences.DEBUG_ALGORITHM);
+            switch((int)details[1]) {
+            case 1:
+            	Preferences.debug("Method = line search\n", Preferences.DEBUG_ALGORITHM);
+            	break;
+            case 2:
+            	Preferences.debug("Method = trust region\n", Preferences.DEBUG_ALGORITHM);
+            	break;
+            default:
+            	Preferences.debug("Illegal method = " + details[1] + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+    		switch(termcode[0]) {
+    		case -1:
+    			Preferences.debug("termcode[0] = -1 indicating x0.length < 1\n", Preferences.DEBUG_ALGORITHM);
+    			break;
+    		case 1:
+    			Preferences.debug("termcode[0] = 1 indicating normal termination.\n", Preferences.DEBUG_ALGORITHM);
+    			break;
+    		case 4:
+    			Preferences.debug("termcode[0] = 4 indicating maximum iteration count reached.\n", Preferences.DEBUG_ALGORITHM);
+    			break;
+    		default:
+    			Preferences.debug("termcode[0] = " + termcode[0] + " indicating illegal termination\n", Preferences.DEBUG_ALGORITHM);
+    		}
+    		Preferences.debug("iteration count = " + itncount + "\n", Preferences.DEBUG_ALGORITHM);
+    		Preferences.debug("Final output values:\n", Preferences.DEBUG_ALGORITHM);
+    		for (i = 0; i < x0.length; i++) {
+    			Preferences.debug("xf["+i+"] = " + xf[i] + "\n",Preferences.DEBUG_ALGORITHM);
+    		}
     	}
     	
 	    public NESolve(boolean initialJacobianIdentity, double x0[], double fparam[], 
@@ -248,9 +326,30 @@ public domain).  3+
 	    // xplus and fparam are inputs
 	    public abstract void fitToFunction(double fvplus[], double xplus[], double fparam[]);
 	    
+	    public void fitToTestFunction(double fvplus[], double xplus[], double fparam[]) {
+	        switch(testCase) {
+	        case ROSENBROCK:
+	        	fvplus[0] = 10.0*(xplus[1] - xplus[0]*xplus[0]);
+         	    fvplus[1] = 1.0 - xplus[0];
+	        	break;
+	        }
+	    }
+	    
 	    // jc and addfun are outputs addfun is the number of additional function evaluations
 	    // x0 and fparam are inputs
 	    public abstract void fitToJacobian(double jc[][], int addfun[], double x0[], double fparam[]);
+	    
+	    public void fitToTestJacobian(double jc[][], int addfun[], double x0[], double fparam[]) {
+	        switch(testCase) {
+	        case ROSENBROCK:
+	        	jc[0][0] = -20.0*x0[0];
+    		    jc[0][1] = 10.0;
+    		    jc[1][0] = -1.0;
+    		    jc[1][1] = 0.0;
+    		    addfun[0] = 1;
+	        	break;
+	        }
+	    }
 	    
 	    public void driver() {
 	    	// Contains port from nesolve.m
@@ -395,7 +494,12 @@ public domain).  3+
 	        } // if (termcode[0] > 0)
 	        else { // termcode[0] <= 0
 	            if (details[3] > 0) {
-	            	fitToJacobian(jc, addfun, x0, fparam);
+	            	if (testMode) {
+	            		fitToTestJacobian(jc, addfun, x0, fparam);	
+	            	}
+	            	else {
+	            	    fitToJacobian(jc, addfun, x0, fparam);
+	            	}
 	            	nofun[0] = nofun[0] + addfun[0];
 	            } // if (details[3] > 0)
 	            else if (initialJacobianIdentity) {
@@ -482,7 +586,12 @@ public domain).  3+
 	            }
 	            if ((retcode[0] != 1) || (restart) || (details[3] > 0) || (details[2] > 0)) {
 	                if (details[3] > 0) {
-	                	fitToJacobian(jc, addfun, xplus, fparam);
+	                	if (testMode) {
+	                		fitToTestJacobian(jc, addfun, xplus, fparam);	
+	                	}
+	                	else {
+	                	    fitToJacobian(jc, addfun, xplus, fparam);
+	                	}
 	                	nofun[0] = nofun[0] + addfun[0];
 	                } // if (details[3] > 0)
 	                else if (details[2] > 0) {
@@ -576,7 +685,12 @@ public domain).  3+
 	    	// Originally coded in MATLAB by RIchard T. Behrens, April, 1988.
 	    	int i;
 	    	double prod;
-	    	fitToFunction(fvplus, xplus, fparam);
+	    	if (testMode) {
+	    		fitToTestFunction(fvplus, xplus, fparam);	
+	    	}
+	    	else {
+	    	    fitToFunction(fvplus, xplus, fparam);
+	        }
 	    	fplus[0] = 0.0;
 	    	for (i= 0; i < sf.length; i++) {
 	    	    prod = sf[i] * fvplus[i];
@@ -609,8 +723,12 @@ public domain).  3+
 	    	}
 	    	
 	    	// Steps 2 & 3
-	    	int l = scale.length;
-	    	int m = scale[0].length;
+	    	int l = 0;
+	    	int m = 0;
+	    	if (scale != null) {
+	    	    l = scale.length;
+	    	    m = scale[0].length;
+	    	}
 	    	if (dout[15] == 2) {
 	    		if ((l == n) && (m == 2)) {
 	    			for (i = 0; i < n; i++) {
@@ -721,7 +839,12 @@ public domain).  3+
 	    	    xc[j] = xc[j] + stepsizej;
 	    	    stepsizej = xc[j] - tempj;
 	    	    // The privious line reduces finite precision error slightly, see section 5.4 of the book.
-	    	    fitToFunction(fj, xc, fparam);
+	    	    if (testMode) {
+	    	    	fitToTestFunction(fj, xc, fparam);	
+	    	    }
+	    	    else {
+	    	        fitToFunction(fj, xc, fparam);
+	    	    }
 	    	    nofun[0]++;
 	    	    for (int i = 0; i < n; i++) {
 	    	    	J[i][j] = (fj[i] - fc[i])/stepsizej;
@@ -1261,10 +1384,10 @@ public domain).  3+
 	    	double a[] = new double[2];
 	    	
 	    	// Initialization
-	    	fp[0] = 0;
 	    	for (i = 0; i < xp.length; i++) {
 	    		xp[i] = 0;
 	    	}
+	    	fp[0] = 0;
 	    	boolean umflag = (details.length == 17);  // This is how we tell NE from UM.
 	    	
 	    	// Algorithm step 1.
@@ -1298,6 +1421,10 @@ public domain).  3+
 	    	for (i = 0; i < g.length; i++) {
 	    		initslope += (g[i] * p[i]);
 	    	}
+	    	if (initslope >= 0.0) {
+	    		System.err.println("nelnsrch requires gTp < 0, but gTp = " + initslope);
+	    		System.exit(0);
+	    	}
 	    	
 	    	// Algorithm step 7.
 	    	double rellength = -Double.MAX_VALUE;
@@ -1317,12 +1444,20 @@ public domain).  3+
 	    	// Algorithm step 10.
 	    	int bt = 0;
 	    	while (retcode[0] >= 2) {
-	    		for (i = 0; i < xc.length; i++) {
+	    		if (Double.isNaN(lambda)) {
+	    			System.exit(0);
+	    		}
+	    		for (i = 0; i < xc.length; i++) { // step 10.1
 	    			xp[i] = xc[i] + lambda * p[i];
 	    		}
-	    		if (umflag) {
+	    		if (umflag) { // step 10.2
 	    			// fp must be a single value in umflag
-	    	        fitToFunction(fp, xp, fparam);
+	    			if (testMode) {
+	    				fitToTestFunction(fp, xp, fparam);	
+	    			}
+	    			else {
+	    	            fitToFunction(fp, xp, fparam);
+	    			}
 	    	        nofun[0]++;
 	    		} // if (umflag)
 	    		else { // !umflag
@@ -1341,18 +1476,18 @@ public domain).  3+
 	    		} // else if (lambda < minlambda) 
 	    		else { // step 10.3c
 	    		    if (lambda == 1.0) {
-	    		        if (details[0] > 0) {
-	    		        	System.out.println("Quadratic Backtrack");
-	    		        }
-	    		        Preferences.debug("Quadratic Backtrack\n", Preferences.DEBUG_ALGORITHM);
+	    		        //if (details[0] > 0) {
+	    		        	//System.out.println("Quadratic Backtrack");
+	    		        //}
+	    		        //Preferences.debug("Quadratic Backtrack\n", Preferences.DEBUG_ALGORITHM);
 	    		        bt++;
 	    		        lambdatemp = -initslope / (2*(fp[0]-fc-initslope));
 	    		    } // if (lambda == 1.0)
 	    		    else { // lambda != 1.0
-	    		        if (details[0] > 0) {
-	    		        	System.out.println("Cubic Backtrack");
-	    		        }
-	    		        Preferences.debug("Cubic Backtrack\n", Preferences.DEBUG_ALGORITHM);
+	    		        //if (details[0] > 0) {
+	    		        	//System.out.println("Cubic Backtrack");
+	    		        //}
+	    		        //Preferences.debug("Cubic Backtrack\n", Preferences.DEBUG_ALGORITHM);
 	    		        bt++;
 	    		        double k = (1.0/(lambda - lambdaprev));
 	    		        double lambdaSquared = lambda * lambda;
@@ -1386,12 +1521,14 @@ public domain).  3+
 	    		    }
 	    		} // else step 10.3c
 	    	} // while (retcode[0] >= 2)
-	    	if (bt < btrack.length) {
-	    		btrack[bt] = btrack[bt] + 1;
-	    	}
-	    	else {
-	    		btrack[bt] = 1;
-	    	}
+	    	if (btrack != null) {
+		    	if (bt < btrack.length) {
+		    		btrack[bt] = btrack[bt] + 1;
+		    	}
+		    	else {
+		    		btrack[bt] = 1;
+		    	}
+	    	} // if (btrack != null)
 	    	return;
 	    } // nelnsrch
 	    
@@ -1617,7 +1754,12 @@ public domain).  3+
 	    	
 	    	// Algorithm step 5.
 	    	if (umflag) {
-	    		fitToFunction(fp, xp, fparam);
+	    		if (testMode) {
+	    			fitToTestFunction(fp, xp, fparam);	
+	    		}
+	    		else {
+	    		    fitToFunction(fp, xp, fparam);
+	    		}
 	    		nofun[0]++;
 	    	}
 	    	else {
@@ -1736,7 +1878,7 @@ public domain).  3+
 	    	double prod;
 	    	
 	    	// Algorithm step 1.
-	    	int n = Math.max(A.length, A[0].length);
+	    	//int n = Math.max(A.length, A[0].length);
 	    	double s[] = new double[xp.length];
 	    	for (i = 0; i < xp.length; i++) {
 	    		s[i] = xp[i] - xc[i];
