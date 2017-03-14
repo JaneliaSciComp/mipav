@@ -18,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
 
 import javax.swing.JProgressBar;
 
-import com.mentorgen.tools.profile.runtime.Profile;
+//import com.mentorgen.tools.profile.runtime.Profile;
 
 import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Intersection.IntrSegment3Triangle3f;
