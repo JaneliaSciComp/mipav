@@ -1345,7 +1345,7 @@ public domain).  3+
 	    	for (j = 0; j < n-1; j++) {
 	    	    sum = 0.0;
 	    	    for (i = j; i < n; i++) {
-	    	    	sum += (M[j][i] * b[i]);
+	    	    	sum += (M[i][j] * b[i]);
 	    	    }
 	    	    double tau = sum/M1[j];
 	    	    for (i = j; i < n; i++) {
