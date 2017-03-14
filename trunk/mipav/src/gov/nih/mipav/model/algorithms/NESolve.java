@@ -3,7 +3,6 @@ package gov.nih.mipav.model.algorithms;
 import java.util.Vector;
 
 import Jama.Matrix;
-import gov.nih.mipav.model.algorithms.AlgorithmCircleToRectangle.FitAll;
 import gov.nih.mipav.view.*;
 
 /**
