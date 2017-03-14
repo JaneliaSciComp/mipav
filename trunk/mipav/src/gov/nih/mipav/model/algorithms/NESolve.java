@@ -811,11 +811,11 @@ public domain).  3+
 	    
 	    private void nefdjac(double J[][], int nofun[], double fc[], double xc[], double sx[], double details[], double fparam[]) {
 	        // J is an output
-	    	// nofn is an input/output
+	    	// nofun is an input/output
 	    	// fc, xc, sx, details, and fparam are inputs
 	    	// This function is part of the Nonlinear Equations package.
 	    	// This is a "Finite Difference Jacobian Approximation".  It calculates a finite 
-	    	// difference approximation to J(xc), the Jacobian of F9X0 at x = xc.
+	    	// difference approximation to J(xc), the Jacobian of F(X) at x = xc.
 	    	// Algorithm A5.4.1: Part of the modular software system from the appendix of the book
 	    	// "Numerical Methods for Unconstrained Optimization and Nonlinear Equations" by
 	    	// Dennis & Schnabel, 1983.
@@ -833,12 +833,12 @@ public domain).  3+
 	    	    if (xc[j] == 0) {
 	    	    	addOne = 1.0;
 	    	    }
-	    	    double stepsizej = sqrteta * Math.max(Math.abs(xc[j]), 1.0/sx[j]) * (sign(xc[j])) + addOne;
+	    	    double stepsizej = sqrteta * Math.max(Math.abs(xc[j]), 1.0/sx[j]) * (sign(xc[j]) + addOne);
 	    	    // To incorporate a different stepsize rule, change the previous line.
 	    	    double tempj = xc[j];
 	    	    xc[j] = xc[j] + stepsizej;
 	    	    stepsizej = xc[j] - tempj;
-	    	    // The privious line reduces finite precision error slightly, see section 5.4 of the book.
+	    	    // The previous line reduces finite precision error slightly, see section 5.4 of the book.
 	    	    if (testMode) {
 	    	    	fitToTestFunction(fj, xc, fparam);	
 	    	    }
