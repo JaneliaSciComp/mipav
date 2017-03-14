@@ -221,7 +221,7 @@ public domain).  3+
 	            }
 	        } // while(true)
 	        
-	        details[0] = 1; // trace
+	        details[0] = 0; // trace
 	        tol = 1.0E-8;
 	        details[7] = tol; // fvectol
 	        details[8] = Math.min(Math.pow(eps,(2.0/3.0)),tol/10); // steptol
@@ -1126,38 +1126,14 @@ public domain).  3+
 	    	double x[] = new double[n];
 	    	
 	    	// Algorithm steps 1 & 2
-	    	double triuM[][] = new double[M.length][M.length];
-	    	for (i = 0; i < M.length; i++) {
-	    		for (j = i; j < M.length; j++) {
-	    		    triuM[i][j] = M[i][j];	
+	    	est = Math.abs(M2[0]);
+	    	for (j = 1; j < n; j++) {
+	    		double temp = Math.abs(M2[j]);
+	    		for (i = 0; i <= j-1; i++) {
+	    			temp += Math.abs(M[i][j]);
 	    		}
-	    	}
-	    	double diagdiagM[][] = new double[M.length][M.length];
-	    	for (i = 0; i < M.length; i++) {
-	    		diagdiagM[i][i] = M[i][i];
-	    	}
-	    	double diagM2[][] = new double[M2.length][M2.length];
-	    	for (i = 0; i < M2.length; i++) {
-	    		diagM2[i][i] = M2[i];
-	    	}
-	    	double sumM[][] = new double[M.length][M.length];
-	    	for (i = 0; i < M.length; i++) {
-	    		for (j = 0; j < M.length; j++) {
-	    			sumM[i][j] = triuM[i][j] - diagdiagM[i][j] + diagM2[i][j];
-	    		}
-	    	}
-	    	double colsum[] = new double[M.length];
-	    	for (j = 0; j < M.length; j++) {
-	    		for (i = 0; i < M.length; i++) {
-	    			colsum[j] += Math.abs(sumM[i][j]);
-	    		}
-	    	}
-	    	est = 0.0;
-	    	for (i = 0; i < M.length; i++) {
-	    		if (colsum[i] > est) {
-	    			est = colsum[i];
-	    		}
-	    	}
+	    		est = Math.max(temp,  est);
+	    	} // for (j = 1; j < n; j++)
 	    	
 	    	// Algorithm step 3.
 	    	x[0] = 1.0/M2[0];
@@ -1175,7 +1151,8 @@ public domain).  3+
 	    		double tempm = Math.abs(xm);
 	    		for (i = j+1; i < n; i++) {
 	    			pm[i] = p[i] + M[j][i] * xm;
-	    			tempm = tempm + Math.abs(p[i])/Math.abs(M2[i]);
+	    			// MATLAB has tempm = tempm + Math.abs(p[i])/Math.abs(M2[i]);
+	    			tempm = tempm + Math.abs(pm[i])/Math.abs(M2[i]);
 	    			p[i] = p[i] + M[j][i] * xp;
 	    			temp = temp + Math.abs(p[i])/Math.abs(M2[i]);
 	    		} // for (i = j+1; i < n; i++)
