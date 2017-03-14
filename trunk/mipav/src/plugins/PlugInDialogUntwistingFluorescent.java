@@ -150,7 +150,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 					WormData wormData = new WormData(wormImage); 
 
 
-//					wormData.segmentSkin();
+					wormData.segmentSkin();
 					
 					
 					// build the nuclei image file name 
@@ -162,7 +162,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 						System.err.println( "   " + fileName );
 						FileIO fileIO2 = new FileIO();
 						nucleiImage = fileIO2.readImage(fileName2, baseFileDir2 + File.separator, false, null); 
-//						wormData.setNucleiImage(nucleiImage);
+						wormData.setNucleiImage(nucleiImage);
 					}
 					
 					
