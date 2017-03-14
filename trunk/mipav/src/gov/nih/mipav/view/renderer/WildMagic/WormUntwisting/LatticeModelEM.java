@@ -59,6 +59,7 @@ public class LatticeModelEM extends LatticeModel
 	private boolean unTwist = true;
 	private boolean mask = true;
 	private boolean untwistSpreadSheet = true;
+	private float length;
 	
 	/**
 	 * Creates a new LatticeModel

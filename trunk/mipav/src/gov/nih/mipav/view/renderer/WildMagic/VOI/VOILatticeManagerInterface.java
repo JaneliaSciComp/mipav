@@ -14,6 +14,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 
 import java.awt.BorderLayout;
@@ -214,7 +215,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				latticeModel.showModel( );
 			}
 		}
-		else if ( command.equals("StraightenLattice") ) {
+		else if ( command.equals("TestLattice") ) {
+			WormData wormData = new WormData( m_kImageA );
+			wormData.testLattice( latticeModel.getLeft(), latticeModel.getRight() );
+		} else if ( command.equals("StraightenLattice") ) {
 			if ( latticeModel != null )
 			{
 				latticeModel.interpolateLattice( true, false, true, false );

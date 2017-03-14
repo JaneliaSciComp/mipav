@@ -697,6 +697,7 @@ public class VolumeDTI extends VolumeObject
 							afVectorData[k] = m_kEigenVector.getFloatTriLinearBoundsTime(kPos.X, kPos.Y, kPos.Z, k);
 						}
 						kV1.set( afVectorData[0], afVectorData[1], afVectorData[2] );
+						kV1.normalize();
 						kAxis = Vector3f.cross( Vector3f.UNIT_Z, kV1 );
 						kAxis.normalize();
 

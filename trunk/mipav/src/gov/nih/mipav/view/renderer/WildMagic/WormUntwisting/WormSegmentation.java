@@ -7403,7 +7403,7 @@ public class WormSegmentation
 			if ( (maxExtent - minExtent) > maxDiff )
 			{
 				maxDiff = maxExtent - minExtent;
-				maxIndex = -1;
+				maxIndex = i;
 			}
 		}
 		if ( maxDiff > minRadius )
