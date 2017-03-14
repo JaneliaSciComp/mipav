@@ -21,7 +21,7 @@ import gov.nih.mipav.view.*;
 Thank you for contacting MathWorks Technical Support. My name is Stephen and I am writing in reference to your 
 Technical Support Case #02445410 regarding 'Permission to port nesolve.m'. 
 
-Thank you for contacting us about this. It appears that “nesolve” is a File Exchange function that is not part
+Thank you for contacting us about this. It appears that "nesolve" is a File Exchange function that is not part
 of the MATLAB code base. The author included parts of a MATLAB function help header, but none of its source code.
 Therefore, we neither grant nor deny permission to copy the contents of that file as it does not pertain to
 the MATLAB code base.
