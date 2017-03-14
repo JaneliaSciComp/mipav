@@ -875,7 +875,7 @@ public domain).  3+
 	    	// "Numerical Methods for Unconstrained Optimization and Nonlinear Equations" by
 	    	// Dennis & Schnabel, 1983.
 	    	// Coded in MATLAB by Sherkat Masoum M., March, 1988.
-	    	// Edited by Richard T. Behrens
+	    	// Edited by Richard T. Behrens, June, 1988.
 	    	
 	    	// Algorithm step 1.
 	    	int i;
@@ -970,7 +970,7 @@ public domain).  3+
 	    	    double mTInverse[][] = ((matM.transpose()).inverse()).getArray();
 	    	    for (i = 0; i < n; i++) {
 	    	    	for (j = 0; j < n; j++) {
-	    	    		sn[i] = -mTInverse[i][j] * mg[j];
+	    	    		sn[i] -= mTInverse[i][j] * mg[j];
 	    	    	}
 	    	    }
 	    	} // if ((sing[0] == 1) || (est > 1.0/eps) || Double.isNaN(est))
@@ -1214,7 +1214,7 @@ public domain).  3+
 	    } // neconest
 	    
 	    private void nersolv(double b[], double M[][], double M2[]) {
-	        // b is input/outpt
+	        // b is input/output
 	    	// input M and M2
 	    	// This routine is part of the Nonlinear Equations package.
 	    	// It a a linear equation solve function for upper triangular systems.
