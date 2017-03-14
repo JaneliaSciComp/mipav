@@ -1666,7 +1666,7 @@ public domain).  3+
 	    		        }
 	    		        nechdcmp(L642, maxadd, Hadd, 0);
 	    		        // L642 is a copy of L local to A6.4.2.
-	    		        double g2[][] = new double[g.length][0];
+	    		        double g2[][] = new double[g.length][1];
 	    		        for (i = 0; i < g.length; i++) {
 	    		        	g2[i][0] = g[i];
 	    		        }
