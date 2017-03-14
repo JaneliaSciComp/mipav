@@ -1055,22 +1055,25 @@ public domain).  3+
 	    		M2[i] = 0;
 	    	}
 	    	// Algorithm step 1.
+	    	// sing becomes true if singularity of M is detected during the decomposition
 	    	sing[0] = 0;
 	    	
 	    	// Algorithm step 2.
 	    	for (int k = 0; k < n-1; k++) {
 	    	    double eta = -Double.MAX_VALUE;
 	    	    for (i = k; i < n; i++) {
-	    	    	if (M[i][k] > eta) {
-	    	    		eta = M[i][k];
+	    	    	// Absolute value present in book is missing in MATLAB code.
+	    	    	if (Math.abs(M[i][k]) > eta) {
+	    	    		eta = Math.abs(M[i][k]);
 	    	        }
 	    	    } // for (i = k; i < n; i++)
-	    	    if (eta == 0.0) {
+	    	    if (eta == 0.0) { // matrix is singular
 	    	    	M1[k] = 0;
 	    	    	M2[k] = 0;
 	    	    	sing[0] = 1;
 	    	    }
 	    	    else {
+	    	    	// Form Qk and premultiply M by it.`
 	    	    	for (i = k; i < n; i++) {
 	    	    		M[i][k] = M[i][k]/eta;
 	    	    	}
@@ -1087,23 +1090,16 @@ public domain).  3+
 	    	    	M[k][k] = M[k][k] + sigma;
 	    	    	M1[k] = sigma * M[k][k];
 	    	    	M2[k] = -eta * sigma;
-	    	    	double tau[] = new double[n-k-1];
-	    	    	for (i = 0; i < n-k-1; i++) {
-	    	    		for (j = k; j < n; j++) {
-	    	    			tau[i] += (M[k][j] * M[j][i+k+1])/M1[k];
+	    	    	for (j = k+1; j < n; j++) {
+	    	    		double tau = 0.0;
+	    	    		for (i = k; i < n; i++) {
+	    	    			tau += (M[i][k] * M[i][j]);
 	    	    		}
-	    	    	}
-	    	    	double prod[][] = new double[n-k][n-k-1];
-	    	    	for (i = 0; i < n-k; i++) {
-	    	    		for (j = 0; j < n-k-1; j++) {
-	    	    			prod[i][j] = M[i+k][k] * tau[j];
+	    	    		tau = tau / M1[k];
+	    	    		for (i = k; i < n; i++) {
+	    	    			M[i][j] = M[i][j] - tau * M[i][k];
 	    	    		}
-	    	    	}
-	    	    	for (i = 0; i < n-k; i++) {
-	    	    		for (j = 0; j < n-k-1; j++) {
-	    	    			M[i+k][j+k+1] = M[i+k][j+k+1] - prod[i][j];
-	    	    		}
-	    	    	}
+	    	    	} // for (j = k+1; j < n; j++)
 	    	    } // else
 	    	} // for (int k = 0; k < n-1; k++)
 	    	
@@ -1114,7 +1110,7 @@ public domain).  3+
 	    
 	    private double neconest(double M[][], double M2[]) {
 	    	// This function is part of the Nonlinear Equations package.
-	    	// This is an estimate of the 1-1 condition number of an upper triangular matrix.
+	    	// This is an estimate of the l-1 condition number of an upper triangular matrix.
 	    	// Algorithm A3.3.1: Part of the modular software system from the appendix of the book
 	    	// "Numerical Methods for Unconstrained Optimization Methods and Nonlinear Equations"
 	    	// by Dennis & Schnabel, 1983.
@@ -1273,8 +1269,9 @@ public domain).  3+
 	    	    // This is the case when H is known to be positive def.
 	    	    double maxdiagH = -Double.MAX_VALUE;
 	    	    for (i = 0; i < n; i++) {
-	    	    	if (H[i][i] > maxdiagH) {
-	    	    		maxdiagH = H[i][i];
+	    	    	// Book has absolute value missing in MATLAB.
+	    	    	if (Math.abs(H[i][i]) > maxdiagH) {
+	    	    		maxdiagH = Math.abs(H[i][i]);
 	    	    	}
 	    	    }
 	    	    maxoffl = Math.sqrt(maxdiagH);
@@ -1292,7 +1289,7 @@ public domain).  3+
 	    		else {
 	    		    sum = 0.0;
 	    		    for (i = 0; i <= j-1; i++) {
-	    		    	sum += (L[j][i] *L[i][j]);
+	    		    	sum += (L[j][i] *L[j][i]);
 	    		    }
 	    		    L[j][j] = H[j][j] - sum;
 	    		} // else
@@ -1304,7 +1301,7 @@ public domain).  3+
 	    		    else {
 	    		    	sum = 0.0;
 	    		    	for (k = 0; k <= j-1; k++) {
-	    		    		sum += (L[i][k]*L[k][j]);
+	    		    		sum += (L[i][k]*L[j][k]);
 	    		    	}
 	    		    	L[i][j] = H[j][i] - sum;
 	    		    } // else
@@ -1726,7 +1723,7 @@ public domain).  3+
 	    	// This routine is part of the Nonlinear Equations package and the Unconstrained Minimization package.
 	    	// It decides whether or not the proposed step is acceptable, and adjusts the trust radius accordingly.
 	    	// Algorithm A6.4.5: Part of the modular software system from the appendix of the book "Numerical Methods
-	    	// for Unconstrained Optimization and Nonlinear Equations" by Dennis & Schnable, 1983.
+	    	// for Unconstrained Optimization and Nonlinear Equations" by Dennis & Schnabel, 1983.
 	    	// Coded in MATLAB by Richard T. Behrens, August, 1990.
 	    	int i;
 	    	double prod;
