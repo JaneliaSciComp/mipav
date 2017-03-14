@@ -1240,7 +1240,7 @@ public domain).  3+
 	    
 	    private void nechdcmp(double L[][], double maxadd[], double H[][], double maxoffl) {
 	    	// outputs L and maxadd
-	    	// input H and maxoff1
+	    	// inputs H and maxoff1
 	    	// This routine is part of the Nonlinear Equations package.
 	    	// This is a "Perturbed Cholesky Decomposition".  It finds a lower triangular
 	    	// matrix L such that LL' is a factorization of H+D, where D is a diagonal (non-negative)
@@ -1292,7 +1292,7 @@ public domain).  3+
 	    		else {
 	    		    sum = 0.0;
 	    		    for (i = 0; i <= j-1; i++) {
-	    		    	sum += (L[j][i] *L[j][i]);
+	    		    	sum += (L[j][i] *L[i][j]);
 	    		    }
 	    		    L[j][j] = H[j][j] - sum;
 	    		} // else
@@ -1304,7 +1304,7 @@ public domain).  3+
 	    		    else {
 	    		    	sum = 0.0;
 	    		    	for (k = 0; k <= j-1; k++) {
-	    		    		sum += (L[i][k]*L[j][k]);
+	    		    		sum += (L[i][k]*L[k][j]);
 	    		    	}
 	    		    	L[i][j] = H[j][i] - sum;
 	    		    } // else
