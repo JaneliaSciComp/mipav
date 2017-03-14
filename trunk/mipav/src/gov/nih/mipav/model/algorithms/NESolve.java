@@ -880,21 +880,15 @@ public domain).  3+
 	    	// Algorithm step 1.
 	    	int i;
 	    	int j;
+	    	int k;
 	    	double est;
+	    	double sum;
 	    	int n = Math.max(J.length, J[0].length);
-	    	for (i = 0; i < sf.length; i++) {
-	    		for (j = 0; j < sf.length; j++) {
-	    			if (i == j) {
-	    				m[i][j] = sf[i];
-	    			}
-	    			else {
-	    				m[i][j] = 0;
-	    			}
+	    	for (i = 0; i < n; i++) {
+	    		for (j = 0; j < n; j++) {
+	    			m[i][j] = sf[i] * J[i][j];
 	    		}
 	    	}
-	    	Matrix matM = new Matrix(m);
-	    	Matrix matJ = new Matrix(J);
-	    	m = (matM.times(matJ)).getArray();
 	    	
 	    	// Algorithm step 2.
 	    	int n2 = Math.max(m.length, m[0].length);
@@ -921,45 +915,40 @@ public domain).  3+
 	    	
 	    	// Algorithm step 4.
 	    	if ((sing[0] == 1) || (est > 1.0/eps) || Double.isNaN(est)) {
-	    	    matJ = new Matrix(J);
-	    	    double diagsf[][] = new double[sf.length][sf.length];
-	    	    for (i = 0; i < sf.length; i++) {
-	    	    	diagsf[i][i] = sf[i];
-	    	    }
-	    	    Matrix matSF = new Matrix(diagsf);
-	    	    Matrix matH = (matJ.transpose()).times(matSF);
-	    	    h = (matH.times(matH.transpose())).getArray();
+	    		for (i = 0; i < n; i++) {
+	    			for (j = i; j < n; j++) {
+	    				h[i][j] = 0.0;
+	    				for (k = 0; k < n; k++) {
+	    					h[i][j] += J[k][i] * J[k][j] * sf[k] * sf[k];
+	    				}
+	    			}
+	    		}
 	    	    // Calculate hnorm = norm(invDxHinvDx)
 	    	    double tem = 0.0;
 	    	    for (i = 0; i < n; i++) {
-	    	    	tem += (Math.abs(h[0][i]) * (1.0/sx[i]));
+	    	    	tem += (Math.abs(h[0][i])/sx[i]);
 	    	    }
 	    	    double hnorm = (1.0/sx[0]) * tem;
 	    	    for (i = 1; i < n; i++) {
 	    	    	double tem1 = 0.0;
-	    	    	for (j = 0; j < n; j++) {
+	    	    	for (j = 0; j <= i; j++) {
 	    	    		tem1 += (Math.abs(h[j][i])/sx[j]);
 	    	    	}
 	    	    	double tem2 = 0.0;
-	    	    	for (j = 0; j < n; j++) {
+	    	    	for (j = i+1; j < n; j++) {
 	    	    		tem2 += (Math.abs(h[i][j])/sx[j]);
 	    	    	}
-	    	    	double temp = (1.0/sx[i])/(tem1+tem2);
+	    	    	// MATLAB has (1.0/sx[i])/(tem1 + tem2)
+	    	    	double temp = (1.0/sx[i]) * (tem1+tem2);
 	    	    	hnorm = Math.max(temp, hnorm);
 	    	    } // for (i = 1; i < n; i++)
-	    	    double diagsx2[][] = new double[n][n];
 	    	    for (i = 0; i < n; i++) {
-	    	    	diagsx2[i][i] = (sx[i]*sx[i]);
-	    	    }
-	    	    for (i = 0; i < n; i++) {
-	    	    	for (j = 0; j < n; j++) {
-	    	    		h[i][j] = h[i][j] + Math.sqrt(n*eps) * hnorm * diagsx2[i][j];
-	    	    	}
-	    	    } // for (i = 0; i < n; i++)
+	    	    	h[i][i] = h[i][i] + Math.sqrt(n*eps) * hnorm * sx[i] * sx[i];
+	    	    } 
 	    	    // Calculate sn = inv(H) * g, and keep m (the cholesky factor) for later use.
 	    	    double maxadd[] = new double[1];
 	    	    nechdcmp(m, maxadd, h, 0);
-	    	    matM = new Matrix(m);
+	    	    Matrix matM = new Matrix(m);
 	    	    double mInverse[][] = (matM.inverse()).getArray();
 	    	    double mg[] = new double[n];
 	    	    for (i = 0; i < n; i++) {
@@ -990,43 +979,26 @@ public domain).  3+
 	    		neqrsolv(sn,m,m1,m2);
 	    		if ((globmeth == 2) || (globmeth == 3)) {
 	    		    // The cholesky factor (for later use) is the same as R' from QR.
-	    			double trium[][] = new double[n][n];
-	    			double triumTranspose[][] = new double[n][n];
-	    	    	for (i = 0; i < n; i++) {
-	    	    		for (j = i; j < n; j++) {
-	    	    		    trium[i][j] = m[i][j];
-	    	    		    triumTranspose[j][i] = m[i][j];
-	    	    		}
-	    	    	}
-	    	    	for (i = 0; i < n; i++) {
-	    	    		for (j = 0; j < n; j++) {
-	    	    			m[i][j] = trium[i][j] + triumTranspose[i][j];
-	    	    		}
-	    	    	}
-	    	    	double diagdiagm[][] = new double[n][n];
-	    	    	for (i = 0; i < n; i++) {
-	    	    		diagdiagm[i][i] = m[i][i];
-	    	    	}
-	    	    	double diagm2[][] = new double[n][n];
-	    	    	for (i = 0; i < n; i++) {
-	    	    		diagm2[i][i] = m2[i];
-	    	    	}
-	    	    	for (i = 0; i < n; i++) {
-	    	    		for (j = 0; j < n; j++) {
-	    	    			m[i][j] = m[i][j] - diagdiagm[i][j] + diagm2[i][j];
-	    	    		}
-	    	    	}
-	    		} // if ((globmeth == 2) || (globmeth == 3))
-	    		if (globmeth == 2) {
-	    			double L[][] = new double[n][n];
 	    			for (i = 0; i < n; i++) {
-	    				for (j = 0; j <= i; j++) {
-	    					L[i][j] = m[i][j];
+	    				m[i][i] = m2[i];
+	    				for (j = 0; j <= i-1; j++) {
+	    					m[i][j] = m[j][i];
 	    				}
 	    			}
-	    			Matrix matL = new Matrix(L);
-	    			// This is J' * J, an approximation of H.
-	    			h = (matL.times(matL.transpose())).getArray();
+	    		} // if ((globmeth == 2) || (globmeth == 3))
+	    		if (globmeth == 2) {
+	    			for (i = 0; i < n; i++) {
+	    				h[i][i] = 0;
+	    				for (k = 0; k <= i; k++) {
+	    					h[i][i] += (m[i][k]*m[i][k]);
+	    				}
+	    				for (j=i+1; j < n; j++) {
+	    					h[i][j] = 0;
+	    					for (k = 0; k <= i; k++) {
+	    						h[i][j] += (m[i][k] * m[j][k]);
+	    					}
+	    				}
+	    			} // for (i = 0; i < n; i++)
 	    		} // if (globmeth == 2)
 	    		else {
 	    			h = null;
