@@ -1090,7 +1090,7 @@ public domain).  3+
 	    	    	double tau[] = new double[n-k-1];
 	    	    	for (i = 0; i < n-k-1; i++) {
 	    	    		for (j = k; j < n; j++) {
-	    	    			tau[i] += (M[j][k] * M[j][i+k+1])/M1[k];
+	    	    			tau[i] += (M[k][j] * M[j][i+k+1])/M1[k];
 	    	    		}
 	    	    	}
 	    	    	double prod[][] = new double[n-k][n-k-1];
