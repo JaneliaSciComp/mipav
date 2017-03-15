@@ -7,6 +7,8 @@ import gov.nih.mipav.view.*;
 
 /**
     This is a port of nesolve.m and supporting files coded in MATLAB by Richard T. Behrens in 1988
+    with portions replaced to be closer to original pseudocode in appendix A of
+    Numerical Methods for Unconstrained Optimization and Nonlinear Equations.
     NESolve produces the solution to a system of nonlinear equations
     For example, find the x, y, and z that solve the simultaneous equations:
     sin(x) + y^2 + log(z) - 7 = 0
@@ -913,6 +915,7 @@ public domain).  3+
 	    	}
 	    	
 	    	// Algorithm step 4.
+	    	// Book has est > 1/sqrt(macheps)
 	    	if ((sing[0] == 1) || (est > 1.0/eps) || Double.isNaN(est)) {
 	    		for (i = 0; i < n; i++) {
 	    			for (j = i; j < n; j++) {
@@ -1674,8 +1677,10 @@ public domain).  3+
 	    	// for Unconstrained Optimization and Nonlinear Equations" by Dennis & Schnabel, 1983.
 	    	// Coded in MATLAB by Richard T. Behrens, August, 1990.
 	    	int i;
+	    	int j;
 	    	double prod;
 	    	double div;
+	    	double temp;
 	    	
 	    	// Initialization
 	    	int n = xc.length;
@@ -1765,21 +1770,23 @@ public domain).  3+
 	    	    } // if (deltaf >= alpha * initslope)
 	    	    else { // step 9c.
 	    	        double deltafpred = initslope;
-	    	        double s2[][] = new double[s.length][1];
-    	            for (i = 0; i < s.length; i++) {
-    	            	s2[i][0] = s[i];
-    	            }
-    	            Matrix matS = new Matrix(s2);
 	    	        if (steptype == 1) {
-	    	            Matrix matH = new Matrix(H);
-	    	            double shs[][] = (((matS.transpose()).times(matH)).times(matS)).getArray();
-	    	            deltafpred = deltafpred + 0.5 * shs[0][0];
+	    	        	for (i = 0; i < n; i++) {
+	    	        		temp = 0.5 * H[i][i] * s[i] * s[i];
+	    	        		for (j = i+1; j < n; j++) {
+	    	        		    temp += H[i][j] * s[i] * s[j];    	
+	    	        		}
+	    	        		deltafpred = deltafpred + temp;
+	    	        	} // for (i = 0; i < n; i++)
 	    	        } // if (steptype == 1)
 	    	        else {
-	    	        	Matrix matL = new Matrix(L);
-	    	        	Matrix matTtemp = (matL.transpose()).times(matS);
-	    	        	double tt[][] = ((matTtemp.transpose()).times(matTtemp)).getArray();
-	    	        	deltafpred = deltafpred + 0.5 * tt[0][0];
+	    	        	for (i = 0; i < n; i++) {
+	    	        	    temp = 0.0;
+	    	        	    for (j = i; j < n; j++) {
+	    	        	    	temp += (L[j][i] * s[j]);
+	    	        	    }
+	    	        	    deltafpred = deltafpred + (temp * temp/2);
+	    	        	} // for (i = 0; i < n; i++)
 	    	        }
 	    	        if ((retcode[0] != 2) && ((Math.abs(deltafpred-deltaf) <= 0.1*Math.abs(deltaf)) ||
 	    	        		(deltaf <= initslope)) && (!newttaken) && (details[6] <= 0.99*details[10])) {
