@@ -1828,9 +1828,10 @@ public domain).  3+
 	    	int i;
 	    	int j;
 	    	double prod;
+	    	double tempi;
 	    	
 	    	// Algorithm step 1.
-	    	//int n = Math.max(A.length, A[0].length);
+	    	int n = Math.max(A.length, A[0].length);
 	    	double s[] = new double[xp.length];
 	    	for (i = 0; i < xp.length; i++) {
 	    		s[i] = xp[i] - xc[i];
@@ -1844,40 +1845,18 @@ public domain).  3+
 	    	}
 	    	
 	    	// Algorithm step 3.
-	    	double s2[][] = new double[s.length][1];
-	    	for (i = 0; i < s.length; i++) {
-	    		s2[i][0] = s[i];
-	    	}
-	    	Matrix matS = new Matrix(s2);
-	    	Matrix matA = new Matrix(A);
-	    	double As[][] = (matA.times(matS)).getArray();
-	    	double tempi[] = new double[fp.length];
-	    	for (i = 0; i < fp.length; i++) {
-	    		tempi[i] = fp[i] - fc[i] - As[i][0];
-	    	}
-	    	for (i = 0; i < tempi.length; i++) {
-	    		if (Math.abs(tempi[i]) < eta * (Math.abs(fp[i] + Math.abs(fc[i])))) {
-	    			tempi[i] = 0.0;
-	    		}
-	    	}
-	    	for (i = 0; i < tempi.length; i++) {
-	    		tempi[i] = tempi[i]/denom;
-	    	}
-	    	double ssx[] = new double[s.length];
-	    	for (i = 0; i < s.length; i++) {
-	    		ssx[i] = s[i] * (sx[i] * sx[i]);
-	    	}
-	    	double addon[][] = new double[tempi.length][s.length];
-	    	for (i = 0; i < tempi.length; i++) {
-	    		for (j = 0; j < ssx.length; j++) {
-	    			addon[i][j] = tempi[i] * ssx[j];
-	    		}
-	    	}
-	    	for (i = 0; i < A.length; i++) {
-	    		for (j = 0; j < A[0].length; j++) {
-	    			A[i][j] = A[j][j] + addon[i][j];
-	    		}
-	    	}
+	    	for (i = 0; i < n; i++) {
+	    	    tempi = fp[i] - fc[i];
+	    	    for (j = 0; j < n; j++) {
+	    	    	tempi = tempi - (A[i][j] * s[j]);
+	    	    }
+	    	    if (Math.abs(tempi) >= eta * (Math.abs(fp[i]) + Math.abs(fc[i]))) {
+	    	        tempi = tempi/denom;
+	    	        for (j = 0; j < n; j++) {
+	    	        	A[i][j] = A[i][j] + tempi * s[j] * sx[j] * sx[j];
+	    	        }
+	    	    }
+	    	} // for (i = 0; i < n; i++)
 	    	return;
 	    } // nebroyuf
 	    
