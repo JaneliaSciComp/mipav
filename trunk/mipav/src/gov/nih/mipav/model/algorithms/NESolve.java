@@ -1483,12 +1483,12 @@ public domain).  3+
 	    private void nehook (int retcode[], double xp[], double fp[], double Fp[], boolean maxtaken[], double details[], 
 	    		double trustvars[], int nofun[], double xc[], double fc[], double g[], double L[][], double H[][],
 	    		double sn[], double sx[], double sf[], int itn, double fparam[]) {
-	    	// input/output details, trustvar, nofun
+	    	// input/output details, trustvars, nofun
 	    	// output retcode, xp, fp, Fp, maxtaken
 	    	// input xc, fc, g, L, H, sn, sx, sf, itn, fparam
 	    	// This routine is part of the Nonlinear Equations package and Unconstrained Minimization package.
 	    	// It is a driver for locally constrained optimal ("hook") steps for use with Newton's Method of
-	    	// solving nonlinear equations.  For function evaluations, it needs to know whether is doing
+	    	// solving nonlinear equations.  For function evaluations, it needs to know whether it is doing
 	    	// Nonlinear Equations (NE) or Unconstrained Minimization (UM).  it distinguishes the two by the
 	    	// length of details which is 16 for NE and 17 for UM.
 	    	// trustvars is a vector of variables that, though not used externally, needs to be preserved between calls
@@ -1497,7 +1497,7 @@ public domain).  3+
 	    	// 2 = deltaprev
 	    	// 3 = phi
 	    	// 4 = phiprime
-	    	// Algorithms A6.4.1 a nd A6.4.2: Incorporates both the "hookdriver" and "hookstep" algorithms.  Part of
+	    	// Algorithms A6.4.1 and A6.4.2: Incorporates both the "hookdriver" and "hookstep" algorithms.  Part of
 	    	// the modular software system from the appendix of the book "Numerical Methods for Unconstrained Optimization
 	    	// and Nonlinear Equations" by Dennis & Schnabel, 1983.
 	    	// Coded in MATLAB by Richard T. Behrens, August, 1990.
@@ -1515,7 +1515,7 @@ public domain).  3+
 	    	double Fpprev[] = new double[n];
 	    	boolean newttaken;
 	    	double s[] = null;
-	    	double phiprimeinit[][] = null;
+	    	double phiprimeinit = 0.0;
 	    	double mulow;
 	    	double muup;
 	    	double div;
@@ -1527,6 +1527,10 @@ public domain).  3+
 	    	retcode[0] = 4;
 	    	int firsthook = 1;
 	    	double newtlen = 0.0;
+	    	double beta;
+	    	double temp;
+	    	double sum;
+	    	double tempvec[][];
 	    	for (i = 0; i < sx.length; i++) {
 	    	    prod = sx[i] * sn[i];
 	    	    newtlen += (prod*prod);
@@ -1542,16 +1546,15 @@ public domain).  3+
 	    	    		val = g[i]/sx[i];
 	    	    		alpha += (val*val);
 	    	    	}
-	    	    	double gsx[][] = new double[g.length][1];
-	    	    	for (i = 0; i <g.length; i++) {
-	    	    		gsx[i][0] = g[i]/(sx[i]*sx[i]);
-	    	    	}
-	    	    	Matrix matL = new Matrix(L);
-	    	    	Matrix matGSX = new Matrix(gsx);
-	    	    	Matrix matBeta = (matL.transpose()).times(matGSX);
-	    	    	Matrix matBB = (matBeta.transpose()).times(matBeta);
-	    	    	double beta[][] = matBB.getArray();
-	    	    	details[6] = Math.pow(alpha, 1.5)/beta[0][0];
+	    	    	beta = 0.0;
+	    	    	for (i = 0; i < n; i++) {
+	    	    		temp = 0.0;
+	    	    		for (j = i; j < n; j++) {
+	    	    	        temp += (L[j][i] * g[j]/(sx[j] * sx[j]));
+	    	    		}
+	    	    		beta = beta + temp * temp;
+	    	    	} // for (i = 0; i < n; i++)
+	    	    	details[6] = Math.pow(alpha, 1.5)/beta;
 	    	    	if (details[6] > details[10]) { // details[10] is maxstep
 	    	    		details[6] = details[10];
 	    	    	}
@@ -1586,11 +1589,14 @@ public domain).  3+
 	    		    	}
 	    		    	Matrix matL = new Matrix(L);
 	    		    	Matrix matSxsn = new Matrix(sxsn);
-	    		    	Matrix matTempvec = (matL.inverse()).times(matSxsn);
-	    		    	phiprimeinit = ((matTempvec.transpose()).times(matTempvec)).getArray();
-	    		    	phiprimeinit[0][0] = -phiprimeinit[0][0]/newtlen;
+	    		    	tempvec = ((matL.inverse()).times(matSxsn)).getArray();
+	    		        sum = 0.0;
+	    		        for (i = 0; i < tempvec.length; i++) {
+	    		        	sum += (tempvec[i][0] * tempvec[i][0]);
+	    		        }
+	    		    	phiprimeinit = -sum/newtlen;
 	    		    }
-	    		    mulow = -trustvars[2]/phiprimeinit[0][0];
+	    		    mulow = -trustvars[2]/phiprimeinit;
 	    		    muup = 0.0;
 	    		    for (i = 0; i < g.length; i++) {
 	    		    	div = g[i]/sx[i];
@@ -1643,9 +1649,12 @@ public domain).  3+
 	    		        	sxs[i][0] = (sx[i]*sx[i])*s[i];
 	    		        }
 	    		        Matrix matSXS = new Matrix(sxs);
-	    		        Matrix matTempvec = matLInverse.times(matSXS);
-	    		        double tv3[][] = ((matTempvec.transpose()).times(matTempvec)).getArray();
-	    		        trustvars[3] = -tv3[0][0]/steplen;
+	    		        tempvec = (matLInverse.times(matSXS)).getArray();
+	    		        sum = 0.0;
+	    		        for (i = 0; i < tempvec.length; i++) {
+	    		        	sum += (tempvec[i][0]*tempvec[i][0]);
+	    		        }
+	    		        trustvars[3] = -sum/steplen;
 	    		        if (((steplen >= lo*details[6]) && (steplen <= hi*details[6])) || (muup - mulow <= 0)) {
 	    		        	done = true;
 	    		        }
