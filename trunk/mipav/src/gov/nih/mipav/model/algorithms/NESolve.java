@@ -509,6 +509,7 @@ public domain).  3+
 	        			path.add(xf[i]);
 	        		}
 	        	}
+	        	return;
 	        } // if (termcode[0] < 0)
 	        
 	        // Algorithm step 4.
@@ -569,12 +570,12 @@ public domain).  3+
 	            else { 
 	                nefdjac(jc, nofun, fvplus, x0, sx, details, fparam); 
 	            } // else
-	            for (j = 0; j < x0.length; j++) {
-	            	gc[j] = 0.0;
-	            	for (i = 0; i < x0.length; i++) {
-	            		gc[j] = gc[j] + jc[i][j] * (fvplus[i] * sf[i] * sf[i]);
+	            for (i = 0; i < x0.length; i++) {
+	            	gc[i] = 0.0;
+	            	for (j = 0; j < x0.length; j++) {
+	            		gc[i] = gc[i] + jc[j][i] * (fvplus[j] * sf[j] * sf[j]);
 	            	}
-	            } // for (j = 0; j < x0.length; j++)
+	            } // for (i = 0; i < x0.length; i++)
 	            for (i = 0; i < x0.length; i++) {
 	            	fvc[i] = fvplus[i];
 	            }
@@ -660,16 +661,12 @@ public domain).  3+
 	                	// Calculate gc using QR factorization (see book).
 	                }
 	                else {
-	                	double fs[][] = new double[x0.length][1];
 	                	for (i = 0; i < x0.length; i++) {
-	                		fs[i][0] = fvplus[i] * (sf[i] * sf[i]);
-	                	}
-	                	Matrix matfs = new Matrix(fs);
-	                	Matrix matjc = new Matrix(jc);
-	                	double gc2[][] = ((matjc.transpose()).times(matfs)).getArray();
-	                	for (i = 0; i < x0.length; i++) {
-	                		gc[i] = gc2[i][0];
-	                	}
+	    	            	gc[i] = 0.0;
+	    	            	for (j = 0; j < x0.length; j++) {
+	    	            		gc[i] = gc[i] + jc[j][i] * (fvplus[j] * sf[j] * sf[j]);
+	    	            	}
+	    	            } // for (i = 0; i < x0.length; i++)
 	                }
 	                nestop(consecmax, termcode, xc, xplus, fvplus, fplus, gc, sx, sf, retcode[0],
 	                		details, itncount, maxtaken[0]);
@@ -677,16 +674,12 @@ public domain).  3+
 	            if (((retcode[0] == 1) || (termcode[0] == 2)) && (!restart) && ((1 - details[3]) > 0) &&
 	            		((1 - details[2]) > 0)) {
 	            	nefdjac(jc, nofun, fvc, xc, sx, details, fparam);
-	            	double fs[][] = new double[x0.length][1];
-                	for (i = 0; i < x0.length; i++) {
-                		fs[i][0] = fvc[i] * (sf[i] * sf[i]);
-                	}
-                	Matrix matfs = new Matrix(fs);
-                	Matrix matjc = new Matrix(jc);
-                	double gc2[][] = ((matjc.transpose()).times(matfs)).getArray();
-                	for (i = 0; i < x0.length; i++) {
-                		gc[i] = gc2[i][0];
-                	}
+	            	for (i = 0; i < x0.length; i++) {
+    	            	gc[i] = 0.0;
+    	            	for (j = 0; j < x0.length; j++) {
+    	            		gc[i] = gc[i] + jc[j][i] * (fvc[j] * sf[j] * sf[j]);
+    	            	}
+    	            } // for (i = 0; i < x0.length; i++)
                 	if ((details[1] == 2) || (details[1] == 3)) {
                 		details[6] = -1;
                 	}
@@ -706,7 +699,7 @@ public domain).  3+
 	                    		path.add(xf[i]);
 	                    	}
 	                    }
-	                } // if (termcode[0] = 0)
+	                } // if (termcode[0] > 0)
 	                else {
 	                	restart = false;
 	                	if (details[13] > 0) {
