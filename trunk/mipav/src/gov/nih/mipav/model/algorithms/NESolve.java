@@ -147,7 +147,24 @@ public domain).  3+
     	protected double xf[];
     	
     	// Indicates the stopping reason (equals 1 for normal)
-    	// = 4 if iteration count has reached maximum number of iterations
+    	// termcode = 0 no termination criterion satisfied
+    	// termcode > 0: some termination criteria satisfied
+    	// termcode = 1: Normal termination, Norm of scaled function value is less than fvectol, 
+    	//               xp is probably an approximate root of F(x) (unless fvectol is too large)
+    	// termcode = 2: Scaled distance between last two steps is less than steptol;
+    	//               xp may be an approximate root of F(x), but it is also possible that the
+    	//               algorithm is making very slow progress and is not near a root, or that
+    	//               steptol is too large.
+    	// termcode = 3: last global step failed to decrease ||F(x)||2 sufficiently; either xc is
+    	//               close to a root of F(x) and no more accuracy is possible, or an incorrectly
+    	//               coded analytic Jacobian is being used, or the secant approximation to the
+    	//               Jacobian is inaccurate, or steptol is too large.
+    	// termcode = 4: if iteration count has reached maximum number of iterations.
+    	// termcode = 5: Five consecutive steps of length maxstep have been taken: either ||F(x)||2 
+    	//               asymptotes from above to a finite value in some direction, or maxstep is
+    	//               too small.
+    	// termcode = 6: xc seems to be an approximate local minimizer of ||F(x)||2 that is not a root
+    	//               of F(x), the algorithm must be restarted from a different region.
     	protected int termcode[] = new int[1];
     	
     	// (Optional) Returns the sequence of iterates
@@ -286,11 +303,45 @@ public domain).  3+
     		case -1:
     			Preferences.debug("termcode[0] = -1 indicating x0.length < 1\n", Preferences.DEBUG_ALGORITHM);
     			break;
+    		case 0:
+    			Preferences.debug("termcode[0] = 0 indicating no termination criterion satisfied\n", Preferences.DEBUG_ALGORITHM);
+    			break;
     		case 1:
     			Preferences.debug("termcode[0] = 1 indicating normal termination.\n", Preferences.DEBUG_ALGORITHM);
     			break;
+    		case 2:
+    			Preferences.debug("termcode[0] = 2 indicating scaled distance between last two steps less than steptol.\n",
+    					Preferences.DEBUG_ALGORITHM);
+    			Preferences.debug("xp may be an approximate root of F(x), but it is also possible that the algorithm\n",
+    					Preferences.DEBUG_ALGORITHM);
+    			Preferences.debug("is making very slow progress and is not near a root, or that steptol is too large.\n",
+    					Preferences.DEBUG_ALGORITHM);
+    	        break;
+    		case 3:
+    			Preferences.debug("termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;\n",
+    					Preferences.DEBUG_ALGORITHM);
+    			Preferences.debug("either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly\n",
+    					Preferences.DEBUG_ALGORITHM);
+    			Preferences.debug("coded analytic Jacobian is being used, or the secant approximation to the Jacobian is\n",
+    					Preferences.DEBUG_ALGORITHM);
+    			Preferences.debug("inaccuate, or steptol is too large.\n", Preferences.DEBUG_ALGORITHM);
+    			break;
     		case 4:
     			Preferences.debug("termcode[0] = 4 indicating maximum iteration count reached.\n", Preferences.DEBUG_ALGORITHM);
+    			break;
+    		case 5:
+    			Preferences.debug("termcode[0] = 5 indicating five consecutive steps of length maxstep have been taken:\n",
+    			Preferences.DEBUG_ALGORITHM);
+    			Preferences.debug("either ||F(x)||2 asymptotes from above to a finite value in some direction, or\n",
+    					Preferences.DEBUG_ALGORITHM);
+    			Preferences.debug("maxstep is too small.\n", Preferences.DEBUG_ALGORITHM);
+    		    break;
+    		case 6:
+    			Preferences.debug("termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2\n",
+    					Preferences.DEBUG_ALGORITHM);
+    			Preferences.debug("that is not a root of F(x) (or mintol is too small); to find a root of F(x),\n",
+    					Preferences.DEBUG_ALGORITHM);
+    			Preferences.debug("the algorithm must be restarted from a different region.\n", Preferences.DEBUG_ALGORITHM);
     			break;
     		default:
     			Preferences.debug("termcode[0] = " + termcode[0] + " indicating illegal termination\n", Preferences.DEBUG_ALGORITHM);
@@ -1926,12 +1977,12 @@ public domain).  3+
 	    		if ((details[3] > 0) || (details[2] > 0)) {
 	    		    maxProd = -Double.MAX_VALUE;
 	    		    for (i = 0; i < n; i++) {
-	    		    	term = Math.abs(g[i]) * Math.max(Math.abs(xp[i]), 1.0/sx[i]);
+	    		    	// MATLAB has 2 absolute values missing in the source book
+	    		    	term = Math.abs(g[i]) * Math.max(Math.abs(xp[i]), 1.0/sx[i])/Math.max(Fnorm[0], n/2.0);
 	    		    	if (term > maxProd) {
 	    		    		maxProd = term;
 	    		    	}
 	    		    }
-	    		    maxProd = maxProd/Math.max(Fnorm[0], n/2.0);
 	    		    if (maxProd <= details[9]) {
 	    		    	termcode[0] = 6;
 	    		    }
