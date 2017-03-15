@@ -423,7 +423,6 @@ public domain).  3+
 	    	double gc[];
 	    	double xc[];
 	    	boolean restart;
-	    	int norest;
 	    	double normfv0 = 0.0;
 	    	double fracdone;
 	    	double maxfvc;
@@ -588,7 +587,6 @@ public domain).  3+
 	        
 	        // Algorithm step 9.
 	        restart = true;
-	        norest = 0;
 	        
 	        // Algorithm step 10 (iteration).
 	        if (details[0] > 0) {
@@ -684,7 +682,6 @@ public domain).  3+
                 		details[6] = -1;
                 	}
                 	restart = true;
-                	norest++;
                 	if (termcode[0] == 2) {
                 		termcode[0] = 0; // added by TAD
                 	}
