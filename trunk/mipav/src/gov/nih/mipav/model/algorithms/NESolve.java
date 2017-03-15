@@ -187,6 +187,14 @@ public domain).  3+
     	
     	private final int ROSENBROCK = 1;
     	
+    	private final int FREUDENSTEIN_AND_ROTH = 2;
+    	
+    	private final int HELICAL_VALLEY = 7;
+    	
+    	private final int POWELL_SINGULAR = 13;
+    	
+    	private final int BROWN_ALMOST_LINEAR = 27;
+    	
     	private double tol;
     	
     	// To run the self tests put the following code in another file:
@@ -229,6 +237,7 @@ public domain).  3+
 	        eps = 1.0;
 	        double neweps = 1.0;
 
+
 	        while (true) {
 
 	            if (1.0 == (1.0 + neweps)) {
@@ -239,6 +248,13 @@ public domain).  3+
 	            }
 	        } // while(true)
 	        
+	        // For the self tests:
+	        // NESolve passes ROSENBROCK at stadard starting point, 10 * standard starting point, and 100 * standard starting point.
+	        // NESolve passes HELICAL_VALLEY at stadard starting point, 10 * standard starting point, and 100 * standard starting point.
+	        // NESolve gives acceptable second solution answers for trust region but not for line search in FREUNDENSTEIN_AND_ROTH 
+	        // at standard starting point, but termcode is always 2 or 3.
+	        // NESolve is close to the correct all zeros for POWELL_SINGULAR at standard starting point but termcode is
+	        // always 6.
 	        details[0] = 0; // trace
 	        tol = 1.0E-8;
 	        details[7] = tol; // fvectol
@@ -257,6 +273,236 @@ public domain).  3+
             x0[0] = -1.2;
             x0[1] = 1.0;
             driverCalls();
+            
+            // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
+            //                            y(1) = 1.0 - a[0]
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Rosenbrock function at 10 * standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+            testCase = ROSENBROCK;
+            x0 = new double[2];
+            x0[0] = -12.0;
+            x0[1] = 10.0;
+            driverCalls();
+            
+            // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
+            //                            y(1) = 1.0 - a[0]
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Rosenbrock function at 100 * standard starting point unconstrained\n",
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+            testCase = ROSENBROCK;
+            x0 = new double[2];
+            x0[0] = -120.0;
+            x0[1] = 100.0;
+            driverCalls();
+            
+            // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+            //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            
+            // analyticJacobian = false
+    		// Method = line search
+    		// termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
+    		// either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
+    		// coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
+    		// inaccuate, or steptol is too large.
+    		// iteration count = 15
+    		// Final output values:
+    		// xf[0] = 13.528273554797948
+    		// xf[1] = -0.8968052564252424
+    		// analyticJacobian = true
+    		// Method = line search
+    		// termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
+    		// either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
+    		// coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
+    		// inaccuate, or steptol is too large.
+    		// iteration count = 15
+    		// Final output values:
+    		// xf[0] = 13.528273554797948
+    		// xf[1] = -0.8968052564252424
+    		// analyticJacobian = false
+    		// Method = trust region
+    		// termcode[0] = 2 indicating scaled distance between last two steps less than steptol.
+    		// xp may be an approximate root of F(x), but it is also possible that the algorithm
+    		// is making very slow progress and is not near a root, or that steptol is too large.
+    		// iteration count = 35
+    		// Final output values:
+    		// xf[0] = 11.41277899920439
+    		// xf[1] = -0.8968052519506211
+    		// analyticJacobian = true
+    		// Method = trust region
+    		// termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
+    		// either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
+    		// coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
+    		// inaccuate, or steptol is too large.
+    		// iteration count = 30
+    		// Final output values:
+    		// xf[0] = 11.412779037312623
+    		// xf[1] = -0.896805251685121
+            Preferences.debug("Freudenstein and Roth function at standard starting point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Second solution obtained by original ELSUNC\n", Preferences.DEBUG_ALGORITHM);
+            testCase = FREUDENSTEIN_AND_ROTH;
+            x0 = new double[2];
+            x0[0] = 0.5;
+            x0[1] = -2.0;
+            driverCalls();
+            
+            // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+            //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+            //                            y(2) = a2
+            // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+            //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+            //                    = 0.25 if a0 = 0 and a1 >= 0
+            //                    = -0.25 if a0 = 0 and a1 < 0
+            Preferences.debug("Helical valley function at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
+            testCase = HELICAL_VALLEY;
+            x0 = new double[3];
+            x0[0] = -1.0;
+            x0[1] = 0.0;
+            x0[2] = 0.0;
+            driverCalls();
+            
+         // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+            //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+            //                            y(2) = a2
+            // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+            //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+            //                    = 0.25 if a0 = 0 and a1 >= 0
+            //                    = -0.25 if a0 = 0 and a1 < 0
+            Preferences.debug("Helical valley function at 10 * standard starting point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
+            testCase = HELICAL_VALLEY;
+            x0 = new double[3];
+            x0[0] = -10.0;
+            x0[1] = 0.0;
+            x0[2] = 0.0;
+            driverCalls();
+            
+            // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+            //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+            //                            y(2) = a2
+            // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+            //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+            //                    = 0.25 if a0 = 0 and a1 >= 0
+            //                    = -0.25 if a0 = 0 and a1 < 0
+            Preferences.debug("Helical valley function at 100 * standard starting point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
+            testCase = HELICAL_VALLEY;
+            x0 = new double[3];
+            x0[0] = -100.0;
+            x0[1] = 0.0;
+            x0[2] = 0.0;
+            driverCalls();
+            
+            // Below is an example to fit y(0) = a0 + 10*a1
+            //                            y(1) = sqrt(5)*(a2 - a3)
+            //                            y(2) = (a1 - 2*a2)**2
+            //                            y(3) = sqrt(10)*(a0 - a3)**2
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            
+            // analyticJacobian = false
+    		// Method = line search
+    		// termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2
+    		// that is not a root of F(x) (or mintol is too small); to find a root of F(x),
+    		// the algorithm must be restarted from a different region.
+    		// iteration count = 14
+    		// Final output values:
+    		// xf[0] = 1.4532180059522858E-4
+    		// xf[1] = -1.453218005952286E-5
+    		// xf[2] = 2.325148809522691E-5
+    		// xf[3] = 2.325148809522691E-5
+    		// analyticJacobian = true
+    		// Method = line search
+    		// termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2
+    		// that is not a root of F(x) (or mintol is too small); to find a root of F(x),
+    		// the algorithm must be restarted from a different region.
+    		// iteration count = 14
+    		// Final output values:
+    		// xf[0] = 1.4532180059522858E-4
+    		// xf[1] = -1.453218005952286E-5
+    		// xf[2] = 2.325148809522691E-5
+    		// xf[3] = 2.325148809522691E-5
+    		// analyticJacobian = false
+    		// Method = trust region
+    		// termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2
+    		// that is not a root of F(x) (or mintol is too small); to find a root of F(x),
+    		// the algorithm must be restarted from a different region.
+    		// iteration count = 14
+    		// Final output values:
+    		// xf[0] = 1.4532180059522858E-4
+    		// xf[1] = -1.453218005952286E-5
+    		// xf[2] = 2.325148809522691E-5
+    		// xf[3] = 2.325148809522691E-5
+    		// analyticJacobian = true
+    		// Method = trust region
+    		// termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2
+    		// that is not a root of F(x) (or mintol is too small); to find a root of F(x),
+    		// the algorithm must be restarted from a different region.
+    		// iteration count = 14
+    		// Final output values:
+    		// xf[0] = 1.4532180059522858E-4
+    		// xf[1] = -1.453218005952286E-5
+    		// xf[2] = 2.325148809522691E-5
+    		// xf[3] = 2.325148809522691E-5
+            
+            Preferences.debug("Powell singular function at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(2) = (a1 - 2*a2)**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            testCase = POWELL_SINGULAR;
+            x0 = new double[4];
+            x0[0] = 3.0;
+            x0[1] = -1.0;
+            x0[2] = 0.0;
+            x0[3] = 1.0;
+            driverCalls();
+            
+            // Below is an example to fit the Brown almost linear function with 10 parameters
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Brown almost linear with 10 parameters at standard staring point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+            testCase = BROWN_ALMOST_LINEAR;
     	}
     	
     	private void fitTestModel() {
@@ -384,6 +630,34 @@ public domain).  3+
 	        	fvplus[0] = 10.0*(xplus[1] - xplus[0]*xplus[0]);
          	    fvplus[1] = 1.0 - xplus[0];
 	        	break;
+	        case FREUDENSTEIN_AND_ROTH:
+	        	fvplus[0] = -13.0 + xplus[0] + ((5.0 - xplus[1])*xplus[1] - 2.0)*xplus[1];
+        		fvplus[1] = -29.0 + xplus[0] + ((xplus[1] + 1)*xplus[1] - 14.0)*xplus[1];
+        		break;
+	        case HELICAL_VALLEY:
+	        	double theta;
+	        	if (xplus[0] > 0) {
+        	        theta = Math.atan(xplus[1]/xplus[0])/(2.0*Math.PI);
+        		}
+        		else if (xplus[0] < 0) {
+        	    	theta = Math.atan(xplus[1]/xplus[0])/(2.0*Math.PI) + 0.5;
+        	    }
+        	    else if (xplus[1] >= 0) {
+        	    	theta = 0.25;
+        	    }
+        	    else {
+        	    	theta = -0.25;
+        	    }
+        	    fvplus[0] = 10.0*(xplus[2] - 10.0*theta);
+        	    fvplus[1] = 10.0*(Math.sqrt(xplus[0]*xplus[0] + xplus[1]*xplus[1]) - 1.0);
+        	    fvplus[2] = xplus[2];
+	        	break;
+	        case POWELL_SINGULAR:
+	        	fvplus[0] = xplus[0] + 10.0*xplus[1];
+        	    fvplus[1] = Math.sqrt(5.0)*(xplus[2] - xplus[3]);
+        	    fvplus[2] = (xplus[1] - 2.0*xplus[2])*(xplus[1] - 2.0*xplus[2]);
+        	    fvplus[3] = Math.sqrt(10.0)*(xplus[0] - xplus[3])*(xplus[0] - xplus[3]);
+	        	break;
 	        }
 	    }
 	    
@@ -399,6 +673,45 @@ public domain).  3+
     		    jc[1][0] = -1.0;
     		    jc[1][1] = 0.0;
     		    addfun[0] = 1;
+	        	break;
+	        case FREUDENSTEIN_AND_ROTH:
+	        	jc[0][0] = 1.0;
+    		    jc[0][1] = 10.0*x0[1] - 3.0*x0[1]*x0[1] - 2.0;
+    		    jc[1][0] = 1.0;
+    		    jc[1][1] = 3.0*x0[1]*x0[1] + 2.0*x0[1] - 14.0;
+    		    addfun[0] = 2;
+	        	break;
+	        case HELICAL_VALLEY:
+	        	double tmp;
+    			tmp = x0[0]*x0[0] + x0[1]*x0[1];
+    		    jc[0][0] = (50.0*x0[1])/(Math.PI * tmp);
+    			jc[0][1] = (-50.0*x0[0])/(Math.PI * tmp);
+    			jc[0][2] = 10.0;
+    			jc[1][0]= 10.0*x0[0]/Math.sqrt(tmp);
+    			jc[1][1] = 10.0*x0[1]/Math.sqrt(tmp);
+    			jc[1][2] = 0.0;
+    			jc[2][0] = 0.0;
+    			jc[2][1] = 0.0;
+    			jc[2][2] = 1.0;
+    			addfun[0] = 5;
+	        	break;
+	        case POWELL_SINGULAR:
+	        	jc[0][0] = 1.0;
+    		    jc[0][1] = 10.0;
+    		    jc[0][2] = 0.0;
+    		    jc[0][3] = 0.0;
+    		    jc[1][0] = 0.0;
+    		    jc[1][1] = 0.0;
+    		    jc[1][2] = Math.sqrt(5.0);
+    		    jc[1][3] = -Math.sqrt(5.0);
+    		    jc[2][0] = 0.0;
+    		    jc[2][1] = 2.0*x0[1] - 4.0*x0[2];
+    		    jc[2][2] = 8.0*x0[2] - 4.0*x0[1];
+    		    jc[2][3] = 0.0;
+    		    jc[3][0] = 2.0*Math.sqrt(10.0)*x0[0] - 2.0*Math.sqrt(10.0)*x0[3];
+    		    jc[3][1] = 0.0;
+    		    jc[3][2] = 0.0;
+    		    jc[3][3] = 2.0*Math.sqrt(10.0)*x0[3] - 2.0*Math.sqrt(10.0)*x0[0];
 	        	break;
 	        }
 	    }
@@ -924,7 +1237,6 @@ public domain).  3+
 	    	int j;
 	    	int k;
 	    	double est;
-	    	double sum;
 	    	int n = Math.max(J.length, J[0].length);
 	    	for (i = 0; i < n; i++) {
 	    		for (j = 0; j < n; j++) {
