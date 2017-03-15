@@ -1740,8 +1740,11 @@ public class LatticeModel {
 		
 		
 		
-		generateCurves(5);
-
+		if ( !generateCurves(5) )
+		{
+			return new float[]{-1,1};
+		}
+			
 		// Test how much the angle changes between seam cells:
 		Vector<Integer> closestIndex = new Vector<Integer>();
 		Vector<Float> closestDist = new Vector<Float>();
@@ -2829,7 +2832,7 @@ public class LatticeModel {
 	/**
 	 * Generates the set of natural spline curves to fit the current lattice.
 	 */
-	protected void generateCurves( float stepSize ) {
+	protected boolean generateCurves( float stepSize ) {
 		clearCurves(false);
 
 		if ( (seamCellIDs) == null && (seamCellImage != null) )
@@ -2934,6 +2937,7 @@ public class LatticeModel {
 
 
 		int[] indexes = new int[center.size()];
+		int maxIndex = -1;
 		for ( int i = 0; i < center.size(); i++ )
 		{
 			indexes[i] = -1;
@@ -2963,6 +2967,19 @@ public class LatticeModel {
 				indexes[i] = minIndex;
 			}
 			//			System.err.println( i + " " + indexes[i] );
+			
+			if ( i == 0 )
+			{
+				maxIndex = indexes[i];
+			}
+			if ( indexes[i] < maxIndex )
+			{
+				return false;
+			}
+			if ( indexes[i] > maxIndex )
+			{
+				maxIndex = indexes[i];
+			}
 		}
 
 		if ( seamCellIDs != null )
@@ -3051,6 +3068,14 @@ public class LatticeModel {
 				//				System.err.println("ERROR");
 			}
 		}
+		
+		for ( int i = 0; i < rightVectorsInterp.length; i++ )
+		{
+			if ( rightVectorsInterp[i] == null )
+			{
+				System.err.println( step + " " + maxLength + " " + stepSize + " " + length );
+			}
+		}
 
 //		System.err.println( maxLength );
 //		totalCurvature = 0;
@@ -3074,6 +3099,10 @@ public class LatticeModel {
 			}
 			wormDiameters.add(diameter);
 			rightVectors.add(rightDir);
+			if (rightDir == null || normal == null )
+			{
+				System.err.println("error");
+			}
 
 			final Vector3f upDir = Vector3f.cross(normal, rightDir);
 			upDir.normalize();
@@ -3250,6 +3279,8 @@ public class LatticeModel {
 		imageA.registerVOI(leftLine);
 		imageA.registerVOI(rightLine);
 		imageA.registerVOI(centerLine);
+		
+		return true;
 	}
 
 	private void generateEllipses()
@@ -6772,7 +6803,11 @@ public class LatticeModel {
 
 		if ( seamCellImage == null )
 		{
-			seamCellImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + "seamCellImage.xml" );
+			File seamFile = new File(outputDirectory + File.separator + "output_images" + File.separator + "seamCellImage.xml");
+			if ( seamFile.exists() )
+			{
+				seamCellImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + "seamCellImage.xml" );
+			}
 		}
 		Vector<Integer> seamCellIds = new Vector<Integer>();
 		for ( int i = 0; i < left.size(); i++ )
@@ -6801,7 +6836,13 @@ public class LatticeModel {
 			}
 		}
 		
-		ModelImage seamCellStraight = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + "seamCellImage" + "_straight_unmasked.xml" );
+		ModelImage seamCellStraight = null;
+
+		File seamStraightFile = new File(outputDirectory + File.separator + "output_images" + File.separator + "seamCellImage" + "_straight_unmasked.xml");
+		if ( seamStraightFile.exists() )
+		{
+			seamCellStraight = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + "seamCellImage" + "_straight_unmasked.xml" );
+		}
 
 		Vector3f leftPt = new Vector3f();
 		Vector3f rightPt = new Vector3f();

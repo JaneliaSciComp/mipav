@@ -887,7 +887,7 @@ public class LatticeBuilder {
 			{
 				finalLatticeList.add(lattice);
 			}
-			System.err.println( latticeSort[i].X + "   curve vals: " + latticeSort[i].Y + "     " +  intersectionCount[0] );
+//			System.err.println( latticeSort[i].X + "   curve vals: " + latticeSort[i].Y + "     " +  intersectionCount[0] );
 
 
 			if ( finalLatticeList.size() >= 5 )
@@ -966,7 +966,7 @@ public class LatticeBuilder {
 			{
 				total[0]++;
 				sequenceList.add(newSequence);
-				System.err.println( "    adding sequence " + total[0] + "  " + max[0]);
+//				System.err.println( "    adding sequence " + total[0] + "  " + max[0]);
 			}
 			// return, do not add more to this sequence:
 			return;
