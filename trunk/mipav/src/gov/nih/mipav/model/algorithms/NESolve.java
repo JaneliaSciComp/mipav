@@ -198,6 +198,8 @@ public domain).  3+
     	
     	private double tol;
     	
+    	private int param;
+    	
     	// To run the self tests put the following code in another file:
     	// boolean netest = true;
         // if (netest) {
@@ -496,6 +498,47 @@ public domain).  3+
             Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
             testCase = BROWN_ALMOST_LINEAR;
+            param = 10;
+            // Guess all parameters are 0.5
+            x0 = new double[param];
+            for (i = 0; i < param; i++) {
+            	x0[i] = 0.5;
+            }
+            driverCalls();
+            
+            // Below is an example to fit the Brown almost linear function with 10 parameters
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Brown almost linear with 10 parameters at 10 * standard staring point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+            testCase = BROWN_ALMOST_LINEAR;
+            param = 10;
+            // Guess all parameters are 5.0
+            x0 = new double[param];
+            for (i = 0; i < param; i++) {
+            	x0[i] = 5.0;
+            }
+            driverCalls();
+            
+            // Below is an example to fit the Brown almost linear function with 10 parameters
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Brown almost linear with 10 parameters at 100 * standard staring point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+            testCase = BROWN_ALMOST_LINEAR;
+            param = 10;
+            // Guess all parameters are 50.0
+            x0 = new double[param];
+            for (i = 0; i < param; i++) {
+            	x0[i] = 50.0;
+            }
+            driverCalls();
     	}
     	
     	private void fitTestModel() {
@@ -618,6 +661,7 @@ public domain).  3+
 	    public abstract void fitToFunction(double fvplus[], double xplus[], double fparam[]);
 	    
 	    public void fitToTestFunction(double fvplus[], double xplus[], double fparam[]) {
+	    	int i;
 	        switch(testCase) {
 	        case ROSENBROCK:
 	        	fvplus[0] = 10.0*(xplus[1] - xplus[0]*xplus[0]);
@@ -651,6 +695,18 @@ public domain).  3+
         	    fvplus[2] = (xplus[1] - 2.0*xplus[2])*(xplus[1] - 2.0*xplus[2]);
         	    fvplus[3] = Math.sqrt(10.0)*(xplus[0] - xplus[3])*(xplus[0] - xplus[3]);
 	        	break;
+	        case BROWN_ALMOST_LINEAR:
+	        	double sumParam = 0.0;
+    			double prodParam = 1.0;
+    			for (i = 0; i < param; i++) {
+    				sumParam += xplus[i];
+    				prodParam *= xplus[i];
+    			}
+    		    for (i = 0; i < param -1; i++) {
+    		    	fvplus[i] = xplus[i] + sumParam - (param + 1.0);
+    		    } // for (i = 0; i < nPts - 1; i++)
+    		    fvplus[param-1] = prodParam - 1.0;	
+	        	break;
 	        }
 	    }
 	    
@@ -659,6 +715,7 @@ public domain).  3+
 	    public abstract void fitToJacobian(double jc[][], int addfun[], double x0[], double fparam[]);
 	    
 	    public void fitToTestJacobian(double jc[][], int addfun[], double x0[], double fparam[]) {
+	    	int i;
 	        switch(testCase) {
 	        case ROSENBROCK:
 	        	jc[0][0] = -20.0*x0[0];
@@ -705,6 +762,30 @@ public domain).  3+
     		    jc[3][1] = 0.0;
     		    jc[3][2] = 0.0;
     		    jc[3][3] = 2.0*Math.sqrt(10.0)*x0[3] - 2.0*Math.sqrt(10.0)*x0[0];
+    		    addfun[0] = 4;
+	        	break;
+	        case BROWN_ALMOST_LINEAR:
+	        	double prodParam;
+    			for (i = 0; i < param - 1; i++) {
+    				for (int j = 0; j < param; j++) {
+    				    if (i == j) {
+    				    	jc[i][j] = 2.0;
+    				    }
+    				    else {
+    				    	jc[i][j] = 1.0;
+    				    }
+    				}
+    			}
+    			for (i = 0; i < param; i++) {
+    				prodParam = 1.0;
+    				for (int j = 0; j < param; j++) {
+    					if (i != j) {
+    						prodParam = prodParam*x0[j];
+    					}
+    				}
+    			    jc[param-1][i] = prodParam;	
+    			}
+    			addfun[0] = param-1;
 	        	break;
 	        }
 	    }
@@ -1669,6 +1750,9 @@ public domain).  3+
 	    	// for Unconstrained Optimization and Nonlinear Equations" by Dennis & Schnabel, 1983.
 	    	// Coded in MATLAB by Richard T. Behrens, March, 1988.
 	    	// Modified slightly for UM usage, January, 1989.
+	    	
+	    	// retcode[0] = 0: satisfactory xp found
+	    	// retcode[0] = 1: routine failed to locate satisfactory xp sufficiently distinct from xc.
 	    	int i;
 	    	double prod;
 	    	double val;
@@ -1717,7 +1801,9 @@ public domain).  3+
 	    	}
 	    	if (initslope >= 0.0) {
 	    		System.err.println("nelnsrch requires gTp < 0, but gTp = " + initslope);
-	    		System.exit(0);
+	    		Preferences.debug("nelnsrch requires gTp < 0, but gTp = " + initslope + "\n", Preferences.DEBUG_ALGORITHM);
+	    		retcode[0] = 1;
+	    		return;
 	    	}
 	    	
 	    	// Algorithm step 7.
@@ -1738,9 +1824,6 @@ public domain).  3+
 	    	// Algorithm step 10.
 	    	int bt = 0;
 	    	while (retcode[0] >= 2) {
-	    		if (Double.isNaN(lambda)) {
-	    			System.exit(0);
-	    		}
 	    		for (i = 0; i < xc.length; i++) { // step 10.1
 	    			xp[i] = xc[i] + lambda * p[i];
 	    		}
