@@ -1268,8 +1268,8 @@ public domain).  3+
 	    	}
 	    	
 	    	// Algorithm step 4.
-	    	// Book has est > 1/sqrt(macheps)
-	    	if ((sing[0] == 1) || (est > 1.0/eps) || Double.isNaN(est)) {
+	    	// MATLAB has (est > 1.0/eps)
+	    	if ((sing[0] == 1) || (est > 1.0/Math.sqrt(eps)) || Double.isNaN(est)) {
 	    		for (i = 0; i < n; i++) {
 	    			for (j = i; j < n; j++) {
 	    				h[i][j] = 0.0;
