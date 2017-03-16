@@ -164,7 +164,8 @@ public domain).  3+
     	//               asymptotes from above to a finite value in some direction, or maxstep is
     	//               too small.
     	// termcode = 6: xc seems to be an approximate local minimizer of ||F(x)||2 that is not a root
-    	//               of F(x), the algorithm must be restarted from a different region.
+    	//               of F(x) (or mintol is too large): to find a root of F(x), the algorithm must be
+    	//               restarted from a different region.
     	protected int termcode[] = new int[1];
     	
     	// (Optional) Returns the sequence of iterates
@@ -252,9 +253,8 @@ public domain).  3+
 	        // NESolve passes ROSENBROCK at stadard starting point, 10 * standard starting point, and 100 * standard starting point.
 	        // NESolve passes HELICAL_VALLEY at stadard starting point, 10 * standard starting point, and 100 * standard starting point.
 	        // NESolve gives acceptable second solution answers for trust region but not for line search in FREUNDENSTEIN_AND_ROTH 
-	        // at standard starting point, but termcode is always 2 or 3.
-	        // NESolve is close to the correct all zeros for POWELL_SINGULAR at standard starting point but termcode is
-	        // always 6.
+	        // at standard starting point, but termcode is always 3 for trust region.
+	        // NESolve passes POWELL_SINGULAR at standard starting point, 10 * standard starting point, and 100 * standard starting point.
 	        details[0] = 0; // trace
 	        tol = 1.0E-8;
 	        details[7] = tol; // fvectol
@@ -307,43 +307,39 @@ public domain).  3+
             
             // analyticJacobian = false
     		// Method = line search
-    		// termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
-    		// either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
-    		// coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
-    		// inaccuate, or steptol is too large.
-    		// iteration count = 15
+    		// termcode[0] = 4 indicating maximum iteration count reached.
+    		// iteration count = 200
     		// Final output values:
-    		// xf[0] = 13.528273554797948
-    		// xf[1] = -0.8968052564252424
+    		// xf[0] = 13.52766610996132
+    		// xf[1] = -0.8968139167187972
     		// analyticJacobian = true
     		// Method = line search
+    		// termcode[0] = 4 indicating maximum iteration count reached.
+    		// iteration count = 200
+    		// Final output values:
+    		// xf[0] = 13.52766610996132
+    		// xf[1] = -0.8968139167187972
+    		// analyticJacobian = false
+    		// Method = trust region
     		// termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
     		// either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
     		// coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
     		// inaccuate, or steptol is too large.
-    		// iteration count = 15
+    		// iteration count = 37
     		// Final output values:
-    		// xf[0] = 13.528273554797948
-    		// xf[1] = -0.8968052564252424
-    		// analyticJacobian = false
-    		// Method = trust region
-    		// termcode[0] = 2 indicating scaled distance between last two steps less than steptol.
-    		// xp may be an approximate root of F(x), but it is also possible that the algorithm
-    		// is making very slow progress and is not near a root, or that steptol is too large.
-    		// iteration count = 35
-    		// Final output values:
-    		// xf[0] = 11.41277899920439
-    		// xf[1] = -0.8968052519506211
+    		// xf[0] = 11.412778913314154
+    		// xf[1] = -0.8968052594525763
     		// analyticJacobian = true
     		// Method = trust region
     		// termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
     		// either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
     		// coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
     		// inaccuate, or steptol is too large.
-    		// iteration count = 30
+    		// iteration count = 31
     		// Final output values:
-    		// xf[0] = 11.412779037312623
-    		// xf[1] = -0.896805251685121
+    		// xf[0] = 11.412778985045028
+    		// xf[1] = -0.8968052544000359
+            		
             Preferences.debug("Freudenstein and Roth function at standard starting point unconstrained\n", 
             		Preferences.DEBUG_ALGORITHM);
             Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
@@ -434,51 +430,6 @@ public domain).  3+
             //                            y(3) = sqrt(10)*(a0 - a3)**2
             // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
             
-            // analyticJacobian = false
-    		// Method = line search
-    		// termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2
-    		// that is not a root of F(x) (or mintol is too small); to find a root of F(x),
-    		// the algorithm must be restarted from a different region.
-    		// iteration count = 14
-    		// Final output values:
-    		// xf[0] = 1.4532180059522858E-4
-    		// xf[1] = -1.453218005952286E-5
-    		// xf[2] = 2.325148809522691E-5
-    		// xf[3] = 2.325148809522691E-5
-    		// analyticJacobian = true
-    		// Method = line search
-    		// termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2
-    		// that is not a root of F(x) (or mintol is too small); to find a root of F(x),
-    		// the algorithm must be restarted from a different region.
-    		// iteration count = 14
-    		// Final output values:
-    		// xf[0] = 1.4532180059522858E-4
-    		// xf[1] = -1.453218005952286E-5
-    		// xf[2] = 2.325148809522691E-5
-    		// xf[3] = 2.325148809522691E-5
-    		// analyticJacobian = false
-    		// Method = trust region
-    		// termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2
-    		// that is not a root of F(x) (or mintol is too small); to find a root of F(x),
-    		// the algorithm must be restarted from a different region.
-    		// iteration count = 14
-    		// Final output values:
-    		// xf[0] = 1.4532180059522858E-4
-    		// xf[1] = -1.453218005952286E-5
-    		// xf[2] = 2.325148809522691E-5
-    		// xf[3] = 2.325148809522691E-5
-    		// analyticJacobian = true
-    		// Method = trust region
-    		// termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2
-    		// that is not a root of F(x) (or mintol is too small); to find a root of F(x),
-    		// the algorithm must be restarted from a different region.
-    		// iteration count = 14
-    		// Final output values:
-    		// xf[0] = 1.4532180059522858E-4
-    		// xf[1] = -1.453218005952286E-5
-    		// xf[2] = 2.325148809522691E-5
-    		// xf[3] = 2.325148809522691E-5
-            
             Preferences.debug("Powell singular function at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
@@ -492,6 +443,48 @@ public domain).  3+
             x0[1] = -1.0;
             x0[2] = 0.0;
             x0[3] = 1.0;
+            driverCalls();
+            
+            // Below is an example to fit y(0) = a0 + 10*a1
+            //                            y(1) = sqrt(5)*(a2 - a3)
+            //                            y(2) = (a1 - 2*a2)**2
+            //                            y(3) = sqrt(10)*(a0 - a3)**2
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Powell singular function at 10 * standard starting point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(2) = (a1 - 2*a2)**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            testCase = POWELL_SINGULAR;
+            x0 = new double[4];
+            x0[0] = 30.0;
+            x0[1] = -10.0;
+            x0[2] = 0.0;
+            x0[3] = 10.0;
+            driverCalls();
+            
+            // Below is an example to fit y(0) = a0 + 10*a1
+            //                            y(1) = sqrt(5)*(a2 - a3)
+            //                            y(2) = (a1 - 2*a2)**2
+            //                            y(3) = sqrt(10)*(a0 - a3)**2
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Powell singular function at 100 * standard starting point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(2) = (a1 - 2*a2)**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            testCase = POWELL_SINGULAR;
+            x0 = new double[4];
+            x0[0] = 300.0;
+            x0[1] = -100.0;
+            x0[2] = 0.0;
+            x0[3] = 100.0;
             driverCalls();
             
             // Below is an example to fit the Brown almost linear function with 10 parameters
@@ -585,7 +578,7 @@ public domain).  3+
     		case 6:
     			Preferences.debug("termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2\n",
     					Preferences.DEBUG_ALGORITHM);
-    			Preferences.debug("that is not a root of F(x) (or mintol is too small); to find a root of F(x),\n",
+    			Preferences.debug("that is not a root of F(x) (or mintol is too large); to find a root of F(x),\n",
     					Preferences.DEBUG_ALGORITHM);
     			Preferences.debug("the algorithm must be restarted from a different region.\n", Preferences.DEBUG_ALGORITHM);
     			break;
@@ -1145,7 +1138,7 @@ public domain).  3+
 	    		dout[8] = Math.pow(eps, (2.0/3.0)); // steptol
 	    	}
 	    	if (dout[9] <= 0) {
-	    		dout[9] = Math.pow(eps, (2.0/3.0)); // mintol
+	    		dout[9] = eps; // mintol
 	    	}
 	    	if (dout[10] <= 0) {
 	    		double normsxx0 = 0.0;
