@@ -146,6 +146,10 @@ public domain).  3+
     	// The final approximation of the solution
     	protected double xf[];
     	
+    	protected double fvc[];
+    	
+    	protected double chiSquared;
+    	
     	// Indicates the stopping reason (equals 1 for normal)
     	// termcode = 0 no termination criterion satisfied
     	// termcode > 0: some termination criteria satisfied
@@ -196,9 +200,19 @@ public domain).  3+
     	
     	private final int BROWN_ALMOST_LINEAR = 27;
     	
+    	private final int CHEBYQUAD = 35;
+    	
+    	private final int LEVMAR_ROSENBROCK = 50;
+    	
+    	private final int POWELL_2_PARAMETER = 52;
+    	
+    	private final int HOCK1 = 61;
+    	
     	private double tol;
     	
     	private int param;
+    	
+    	private int nPts;
     	
     	// To run the self tests put the following code in another file:
     	// boolean netest = true;
@@ -252,14 +266,31 @@ public domain).  3+
 	        } // while(true)
 	        
 	        // For the self tests:
-	        // NESolve passes ROSENBROCK at stadard starting point, 10 * standard starting point, and 100 * standard starting point.
-	        // NESolve passes HELICAL_VALLEY at stadard starting point, 10 * standard starting point, and 100 * standard starting point.
-	        // NESolve gives acceptable second solution answers for trust region but not for line search in FREUNDENSTEIN_AND_ROTH 
-	        // at standard starting point, but termcode is always 3 for trust region.
+	        // NESolve passes ROSENBROCK at standard starting point, 10 * standard starting point, and 100 * standard starting point.
+	        // In FREUNDENSTEIN_AND_ROTH at standard starting point and 10 * standard starting point
+	        // trust region has correct second solution answers with chiSquared = 49.9842 even though termcode[0] = 3, 
+	        // but line search gives incorrect answers with termcode[0] = 4.
+	        // In FREUNDENSTEIN_AND_ROTH at 100 * standard starting point
+	        // trust region has correct second solution answers with chiSquared = 49.9842 even though termcode[0] = 3, 
+	        // but line search gives incorrect answers with termcode[0] = 5.
+	        // NESolve passes HELICAL_VALLEY at standard starting point, 10 * standard starting point, and 100 * standard starting point.
 	        // NESolve passes POWELL_SINGULAR at standard starting point, 10 * standard starting point, and 100 * standard starting point.
-	        // NESolve passes BROWN_ALMOST_LINEAR at standard starting point and 10 * standard starting point.
-	        //               At 100 * standard starting point NESolve fails with retcode[0] = 3 for line search and
-	        //               NESolve passes for trust region.                                                                    
+	        // NESolve passes BROWN_ALMOST_LINEAR 10 parameters at standard starting point and 10 * standard starting point.
+	        //               At 100 * standard starting point NESolve passes for trust region,
+	        //               but fails for line search with termcode[0] = 3..
+	        // NESolve passes BROWN_ALMOST_LINEAR 30 parameters at standard starting point.
+	        // NESolve passes BROWN_ALMOST_LINEAR 40 parameters at standard starting point
+	        // NESolve passes CHEBYQUAD with 8 parameters and 8 points for trust region with termcode[0] = 2 and termcode[0] = 3,
+	        //               but fails for line search with termcode[0] = 4.
+	        // NESolve passes CHEBYQUAD with 9 parameters and 9 points for trust region with termcode[0] = 1,
+	        //               but fails for line search with termcode[0] = 3.
+	        // NESolve passes CHEBYQUAD with 10 parameters and 10 points for trust region with termcode[0] = 2 and termcode[0] = 3,
+	        //               but fails for line search with termcode[0] = 3.
+	        // NESolve passes LEVMAR_ROSENBROCK for trust region with termcode[0] = 1 with 8396 and 8573 iterations,
+	        //               but fails for line search with termcode[0] = 3.
+	        // NESolve passes POWELL_2_PARAMETER with termcode[0] = 1.
+	        // NESolve passes HOCK1 with termcode[0] = 1.
+	        
 	        details[0] = 0; // trace
 	        tol = 1.0E-8;
 	        details[7] = tol; // fvectol
@@ -310,41 +341,46 @@ public domain).  3+
             //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
             // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
             
+            
             // analyticJacobian = false
-    		// Method = line search
-    		// termcode[0] = 4 indicating maximum iteration count reached.
-    		// iteration count = 200
-    		// Final output values:
-    		// xf[0] = 13.52766610996132
-    		// xf[1] = -0.8968139167187972
-    		// analyticJacobian = true
-    		// Method = line search
-    		// termcode[0] = 4 indicating maximum iteration count reached.
-    		// iteration count = 200
-    		// Final output values:
-    		// xf[0] = 13.52766610996132
-    		// xf[1] = -0.8968139167187972
-    		// analyticJacobian = false
-    		// Method = trust region
-    		// termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
-    		// either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
-    		// coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
-    		// inaccuate, or steptol is too large.
-    		// iteration count = 37
-    		// Final output values:
-    		// xf[0] = 11.412778913314154
-    		// xf[1] = -0.8968052594525763
-    		// analyticJacobian = true
-    		// Method = trust region
-    		// termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
-    		// either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
-    		// coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
-    		// inaccuate, or steptol is too large.
-    		// iteration count = 31
-    		// Final output values:
-    		// xf[0] = 11.412778985045028
-    		// xf[1] = -0.8968052544000359
-            		
+            // Method = line search
+            // termcode[0] = 4 indicating maximum iteration count reached.
+            // iteration count = 2000
+            // Final output values:
+            // xf[0] = 13.523136663183204
+            // xf[1] = -0.8968137650695506
+            // chiSquared = 57.89243419329399
+            // analyticJacobian = true
+            // Method = line search
+            // termcode[0] = 4 indicating maximum iteration count reached.
+            // iteration count = 2000
+            // Final output values:
+            // xf[0] = 13.523136663183204
+            // xf[1] = -0.8968137650695506
+            // chiSquared = 57.89243419329399
+            // analyticJacobian = false
+            // Method = trust region
+            // termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
+            // either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
+            // coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
+            // inaccuate, or steptol is too large.
+            // iteration count = 37
+            // Final output values:
+            // xf[0] = 11.412778913314154
+            // xf[1] = -0.8968052594525763
+            // chiSquared = 48.98425367924003
+            // analyticJacobian = true
+            // Method = trust region
+            // termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;
+            // either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly
+            // coded analytic Jacobian is being used, or the secant approximation to the Jacobian is
+            // inaccuate, or steptol is too large.
+            // iteration count = 31
+            // Final output values:
+            // xf[0] = 11.412778985045028
+            // xf[1] = -0.8968052544000359
+            // chiSquared = 48.984253679240034
+            
             Preferences.debug("Freudenstein and Roth function at standard starting point unconstrained\n", 
             		Preferences.DEBUG_ALGORITHM);
             Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
@@ -356,6 +392,38 @@ public domain).  3+
             x0 = new double[2];
             x0[0] = 0.5;
             x0[1] = -2.0;
+            driverCalls();
+            
+            // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+            //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Freudenstein and Roth function at 10 * standard starting point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Second solution obtained by original ELSUNC\n", Preferences.DEBUG_ALGORITHM);
+            testCase = FREUDENSTEIN_AND_ROTH;
+            x0 = new double[2];
+            x0[0] = 5.0;
+            x0[1] = -20.0;
+            driverCalls();
+            
+         // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+            //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Freudenstein and Roth function at 100 * standard starting point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Second solution obtained by original ELSUNC\n", Preferences.DEBUG_ALGORITHM);
+            testCase = FREUDENSTEIN_AND_ROTH;
+            x0 = new double[2];
+            x0[0] = 50.0;
+            x0[1] = -200.0;
             driverCalls();
             
             // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
@@ -381,7 +449,7 @@ public domain).  3+
             x0[2] = 0.0;
             driverCalls();
             
-         // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+            // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
             //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
             //                            y(2) = a2
             // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
@@ -542,10 +610,122 @@ public domain).  3+
             	x0[i] = 50.0;
             }
             driverCalls();
+            
+            // Below is an example to fit the Brown almost linear function with 30 parameters
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Brown almost linear with 30 parameters at standard staring point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+            testCase = BROWN_ALMOST_LINEAR;
+            param = 30;
+            // Guess all parameters are 0.5
+            x0 = new double[param];
+            for (i = 0; i < param; i++) {
+            	x0[i] = 0.5;
+            }
+            driverCalls();
+            
+            // Below is an example to fit the Brown almost linear function with 40 parameters
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Brown almost linear with 40 parameters at standard staring point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
+            testCase = BROWN_ALMOST_LINEAR;
+            param = 40;
+            // Guess all parameters are 0.5
+            x0 = new double[param];
+            for (i = 0; i < param; i++) {
+            	x0[i] = 0.5;
+            }
+            driverCalls();
+            
+            // Below is an example to fit the Chebyquad function with 8 parameters and 8 points
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            // Correct answer from NLConstrainedEngined:
+            // a0 = 0.043152745306997475
+            // a1 = 0.19309080895383032
+            // a2 = 0.2663286909535495
+            // a3 = 0.5000000012476513
+            // a4 = 0.4999999274501084
+            // a5 = 0.7336712516240429
+            // a6 = 0.8069090604951162
+            // a7 = 0.9568471106755537
+            Preferences.debug("Chebyquad function with 8 parameters and 8 points\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct chi-squared = 3.51687E-3\n", Preferences.DEBUG_ALGORITHM);
+            testCase = CHEBYQUAD;
+            nPts = 8;
+            param = 8;
+            x0 = new double[param];
+            for (i = 1; i <= param; i++) {
+               x0[i-1] = i/(param + 1.0);
+            }
+            driverCalls();
+            
+            // Below is an example to fit the Chebyquad function with 9 parameters and 9 points
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Chebyquad function with 9 parameters and 9 points\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct chi-squared = 0.0\n", Preferences.DEBUG_ALGORITHM);
+            testCase = CHEBYQUAD;
+            nPts = 9;
+            param = 9;
+            x0 = new double[param];
+            for (i = 1; i <= param; i++) {
+                x0[i-1] = i/(param + 1.0);
+            }
+            driverCalls();
+            
+            // Below is an example to fit the Chebyquad function with 10 parameters and 10 points
+            // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+            Preferences.debug("Chebyquad function with 10 parameters and 10 points\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct chi-squared = 6.50395E-3\n", Preferences.DEBUG_ALGORITHM);
+            testCase = CHEBYQUAD;
+            nPts = 10;
+            param = 10;
+            x0 = new double[param];
+            for (i = 1; i <= param; i++) {
+                x0[i-1] = i/(param + 1.0);
+            }
+            driverCalls();
+            
+            Preferences.debug("Rosenbrock function used as LEVMAR example standard starting point unconstrained\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = ((1.0 - a0)*(1.0 - a0) + 105.0*(a1 - a0*a0)*(a1 - a0*a0));\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(1) = y(0)\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+            testCase = LEVMAR_ROSENBROCK;
+            x0 = new double[2];
+            x0[0] = -1.2;
+            x0[1] = 1.0;
+            driverCalls();
+            
+            Preferences.debug("Powell's 2 parameter function\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = a0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("y(0) = 10.0*a0/(a0 + 0.1) + 2*a1*a1\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Correct answer a0 = 0 a1 = 0\n", Preferences.DEBUG_ALGORITHM);
+            testCase = POWELL_2_PARAMETER;
+            x0 = new double[2];
+            x0[0] = 3.0;
+            x0[1] = 1.0;
+            driverCalls();
+            
+            Preferences.debug("Hock - Schittkowski problem #1\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("Correct answer has a0 = a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+        	testCase = HOCK1;
+        	x0 = new double[2];
+        	x0[0] = -2.0;
+        	x0[1] = 1.0;
+        	driverCalls();
+        	
     	}
     	
     	private void fitTestModel() {
-    		details[5] = 100 * x0.length; // maxIterations	
+    		details[5] = 10000 * x0.length; // maxIterations	
     	}
     	
     	private void driverCalls() {
@@ -636,6 +816,11 @@ public domain).  3+
     		for (i = 0; i < x0.length; i++) {
     			Preferences.debug("xf["+i+"] = " + xf[i] + "\n",Preferences.DEBUG_ALGORITHM);
     		}
+    		chiSquared = 0.0;
+    		for (i = 0; i < x0.length; i++) {
+    			chiSquared += (fvc[i]*fvc[i]);
+    		}
+    		Preferences.debug("chiSquared = " + chiSquared + "\n", Preferences.DEBUG_ALGORITHM);
     	}
     	
 	    public NESolve(boolean initialJacobianIdentity, double x0[], double fparam[], 
@@ -709,6 +894,34 @@ public domain).  3+
     		    	fvplus[i] = xplus[i] + sumParam - (param + 1.0);
     		    } // for (i = 0; i < nPts - 1; i++)
     		    fvplus[param-1] = prodParam - 1.0;	
+	        	break;
+	        case CHEBYQUAD:
+	        	double chebySum;
+        	    for (i = 1; i <= nPts; i++) {
+        	        chebySum = 0.0;
+        	        for (int j = 0; j < param; j++) {
+        	        	chebySum += shiftedChebyshev(xplus[j],i);
+        	        }
+        	        if ((i % 2) == 1) {
+        	        	fvplus[i-1] = chebySum/param;
+        	        }
+        	        else {
+        	        	fvplus[i-1] = chebySum/param + 1.0/(i*i - 1.0);
+        	        }
+        	    }
+	        	break;
+	        case LEVMAR_ROSENBROCK:
+	        	fvplus[0] = ((1.0 - xplus[0])*(1.0 - xplus[0]) 
+		    			+ 105.0*(xplus[1]- xplus[0]*xplus[0])*(xplus[1] - xplus[0]*xplus[0]));
+        		fvplus[1] = fvplus[0];
+	        	break;
+	        case POWELL_2_PARAMETER:
+	        	fvplus[0] = xplus[0];
+		    	fvplus[1] = 10.0*xplus[0]/(xplus[0] + 0.1) + 2.0*xplus[1]*xplus[1];	
+	        	break;
+	        case HOCK1:
+	        	fvplus[0] = 10.0*(xplus[1] - xplus[0]*xplus[0]);
+        	    fvplus[1] = 1.0 - xplus[0];
 	        	break;
 	        }
 	    }
@@ -790,8 +1003,208 @@ public domain).  3+
     			}
     			addfun[0] = param-1;
 	        	break;
+	        case CHEBYQUAD:
+	        	for (i = 1; i <= nPts; i++) {
+        		    for (int j = 0; j < param; j++) {
+        		    	jc[i-1][j] = shiftedChebyshevDerivative(x0[j],i)/param;
+        		    }
+        		}
+	        	addfun[0] = nPts*param*(param+1)/2;
+	        	break;
+	        case LEVMAR_ROSENBROCK:
+	        	jc[0][0] = (-2.0 + 2.0*x0[0] - 4.0*105.0*(x0[1] - x0[0]*x0[0])*x0[0]);
+	        	jc[0][1] = (2*105.0*(x0[1] - x0[0]*x0[0]));
+	        	jc[1][0] = (-2.0 + 2.0*x0[0] - 4.0*105.0*(x0[1] - x0[0]*x0[0])*x0[0]);
+	        	jc[1][1] = (2*105.0*(x0[1] - x0[0]*x0[0]));	
+	        	addfun[0] = 4;
+	        	break;
+	        case POWELL_2_PARAMETER:
+	        	jc[0][0] = 1.0;
+	        	jc[0][1] = 0.0;
+	        	jc[1][0] = 1.0/((x0[0] + 0.1)*(x0[0] + 0.1));
+	        	jc[1][1] = 4.0*x0[1];	
+	        	addfun[0] = 2;
+	        	break;
+	        case HOCK1:
+	        	jc[0][0] = -20.0*x0[0];
+    		    jc[0][1] = 10.0;
+    		    jc[1][0] = -1.0;
+    		    jc[1][1] = 0.0;
+    		    addfun[0] = 1;
+    		    break;
 	        }
 	    }
+	    
+	 // Shifted Chebyshev polynomial
+        // Used over the half interval 0 <= x <= 1 instead of the full Chebyshev interval of -1 <= x <= 1
+        private double shiftedChebyshev(double x, int n) {
+        	// T*n+1(x) = (4x-2)*T*n(x) - T*n-1(x), where T* represents a shifted Chebyshev polynomial
+        	double sc = 1.0;
+        	double x2, x3, x4, x5, x6, x7, x8, x9, x10;
+        	switch (n) {
+        	    case 0:
+        	    	sc = 1.0;
+        	    	break;
+        	    case 1:
+        	        sc = 2.0*x - 1.0;
+        	        break;
+        	    case 2:
+        	    	x2 = x*x;
+        	    	sc = 8.0*x2 - 8.0*x + 1.0;
+        	    	break;
+        	    case 3:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	sc = 32.0*x3 - 48.0*x2 + 18.0*x - 1.0;
+        	    	break;
+        	    case 4:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	sc = 128.0*x4 - 256.0*x3 + 160.0*x2 - 32.0*x + 1.0;
+        	    	break;
+        	    case 5:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	sc = 512.0*x5 - 1280.0*x4 + 1120.0*x3 - 400.0*x2 + 50.0*x - 1.0;
+        	    	break;
+        	    case 6:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	sc = 2048.0*x6 - 6144.0*x5 + 6912.0*x4 - 3584.0*x3 + 840.0*x2 - 72.0*x + 1.0;
+        	    	break;
+        	    case 7:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	sc = 8192.0*x7 - 28672.0*x6 + 39424.0*x5 - 26880.0*x4 + 9408.0*x3 - 1568.0*x2 + 98.0*x - 1.0;
+        	    	break;
+        	    case 8:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	sc = 32768.0*x8 - 131072.0*x7 + 212992.0*x6 - 180224.0*x5 + 84480.0*x4 - 21504.0*x3
+        	    	     + 2688.0*x2 - 128.0*x + 1.0;
+        	    	break;
+        	    case 9:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	x9 = x8*x;
+        	    	sc = 131072.0*x9 - 589824.0*x8 + 1105920.0*x7 - 1118208.0*x6 + 658944.0*x5
+        	    	     - 228096.0*x4 + 44352.0*x3 - 4320.0*x2 + 162.0*x - 1.0;
+        	    	break;
+        	    case 10:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	x9 = x8*x;
+        	    	x10 = x9*x;
+        	    	sc = 524288.0*x10 - 2621440.0*x9 + 5570560.0*x8 - 6553600.0*x7 + 4659200.0*x6
+        	    	     - 2050048.0*x5 + 549120.0*x4 - 84480.0*x3 + 6600.0*x2 - 200.0*x + 1.0;
+        	} // switch (n)
+        	return sc;
+        } // private double shiftedChebyshev
+        
+     // Shifted Chebyshev polynomial derivative
+        private double shiftedChebyshevDerivative(double x, int n) {
+        	double sc = 0.0;
+        	double x2, x3, x4, x5, x6, x7, x8, x9;
+        	switch (n) {
+        	    case 0:
+        	    	sc = 0.0;
+        	    	break;
+        	    case 1:
+        	    	sc = 2.0;
+        	        break;
+        	    case 2:
+        	    	sc = 16.0*x - 8.0;
+        	    	break;
+        	    case 3:
+        	    	x2 = x*x;
+        	    	sc = 96.0*x2 - 96.0*x + 18.0;
+        	    	break;
+        	    case 4:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	sc = 512.0*x3 - 768.0*x2 + 320.0*x - 32.0;
+        	    	break;
+        	    case 5:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	sc = 2560.0*x4 - 5120.0*x3 + 3360.0*x2 - 800.0*x + 50.0;
+        	    	break;
+        	    case 6:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	sc = 12288.0*x5 - 30720.0*x4 + 27648.0*x3 - 10752.0*x2 + 1680.0*x - 72.0;
+        	    	break;
+        	    case 7:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	sc = 57344.0*x6 - 172032.0*x5 + 197120.0*x4 - 107520.0*x3 + 28224.0*x2 - 3136.0*x + 98.0;
+        	    	break;
+        	    case 8:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	sc = 262144.0*x7 - 917504.0*x6 + 1277952.0*x5 - 901120.0*x4 + 337920.0*x3
+        	    	     - 64512.0*x2 + 5376.0*x - 128.0;
+        	    	break;
+        	    case 9:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	sc = 1179648.0*x8 - 4718592.0*x7 + 7741440.0*x6 - 6709248.0*x5 + 3294720.0*x4
+        	    	     - 912384.0*x3 + 133056.0*x2 - 8640.0*x + 162.0;
+        	    	break;
+        	    case 10:
+        	    	x2 = x*x;
+        	    	x3 = x2*x;
+        	    	x4 = x3*x;
+        	    	x5 = x4*x;
+        	    	x6 = x5*x;
+        	    	x7 = x6*x;
+        	    	x8 = x7*x;
+        	    	x9 = x8*x;
+        	    	sc = 5242880.0*x9 - 23592960.0*x8 + 44564480.0*x7 - 45875200.0*x6 + 27955200.0*x5
+        	    	     - 10250240.0*x4 + 2196480.0*x3 - 253440.0*x2 + 13200.0*x - 200.0;
+        	} // switch (n)
+        	return sc;
+        } // private double shiftedChebyshevDerivative
 	    
 	    public void driver() {
 	    	// Contains port from nesolve.m
@@ -799,7 +1212,6 @@ public domain).  3+
 	    	int j;
 	    	// Variables for trust region methods
 	    	double trustvars[] = new double[4];
-	    	double fvc[];
 	    	double fvplus[];
 	        double fc[] = new double[1];
 	    	double sin[];
