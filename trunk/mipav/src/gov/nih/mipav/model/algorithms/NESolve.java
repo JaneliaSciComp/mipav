@@ -257,6 +257,9 @@ public domain).  3+
 	        // NESolve gives acceptable second solution answers for trust region but not for line search in FREUNDENSTEIN_AND_ROTH 
 	        // at standard starting point, but termcode is always 3 for trust region.
 	        // NESolve passes POWELL_SINGULAR at standard starting point, 10 * standard starting point, and 100 * standard starting point.
+	        // NESolve passes BROWN_ALMOST_LINEAR at standard starting point and 10 * standard starting point.
+	        //               At 100 * standard starting point NESolve fails with retcode[0] = 3 for line search and
+	        //               NESolve passes for trust region.                                                                    
 	        details[0] = 0; // trace
 	        tol = 1.0E-8;
 	        details[7] = tol; // fvectol
@@ -2084,7 +2087,8 @@ public domain).  3+
 	    		        	sum += (tempvec[i][0]*tempvec[i][0]);
 	    		        }
 	    		        trustvars[3] = -sum/steplen;
-	    		        if (((steplen >= lo*details[6]) && (steplen <= hi*details[6])) || (muup - mulow <= 0)) {
+	    		        if (((steplen >= lo*details[6]) && (steplen <= hi*details[6])) || (muup - mulow <= 0) ||
+	    		        		(muup == trustvars[0]) && (trustvars[2] < 0)) {
 	    		        	done = true;
 	    		        }
 	    		        else {
