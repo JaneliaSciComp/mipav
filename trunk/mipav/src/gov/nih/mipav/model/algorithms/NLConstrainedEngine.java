@@ -1134,7 +1134,7 @@ public abstract class NLConstrainedEngine {
         //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
         //                            y(2) = a2
         // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
-        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = (1/(2*PI))*arctan(a1/a0)  + 0.5 if a0 < 0
         //                    = 0.25 if a0 = 0 and a1 >= 0
         //                    = -0.25 if a0 = 0 and a1 < 0
         Preferences.debug("Helical valley function at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
@@ -1142,7 +1142,7 @@ public abstract class NLConstrainedEngine {
         Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
@@ -1168,7 +1168,7 @@ public abstract class NLConstrainedEngine {
         //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
         //                            y(2) = a2
         // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
-        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0
         //                    = 0.25 if a0 = 0 and a1 >= 0
         //                    = -0.25 if a0 = 0 and a1 < 0
         Preferences.debug("Helical valley function at 10 * standard starting point unconstrained\n", 
@@ -1177,7 +1177,7 @@ public abstract class NLConstrainedEngine {
         Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
@@ -1202,7 +1202,7 @@ public abstract class NLConstrainedEngine {
         //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
         //                            y(2) = a2
         // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
-        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0
         //                    = 0.25 if a0 = 0 and a1 >= 0
         //                    = -0.25 if a0 = 0 and a1 < 0
         Preferences.debug("Helical valley function at 100 * standard starting point unconstrained\n", 
@@ -1211,7 +1211,7 @@ public abstract class NLConstrainedEngine {
         Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
