@@ -40,7 +40,7 @@ MathWorks Technical Support Department
 by Richard T. Behrens
 He states:
 The UMSOLVE files are distributed as Shareware (but NESOLVE is
-public domain).  3+
+public domain).
 
  nesolve.m is based on Algorithm D6.1.3: Part of the modular software system from the 
  appendix of the book "Numerical Methods for Unconstrained Optimization and Nonlinear Equations"
@@ -208,6 +208,8 @@ public domain).  3+
     	
     	private final int HOCK1 = 61;
     	
+    	private final int TRIGONOMETRIC = 66;
+    	
     	private double tol;
     	
     	private int param;
@@ -244,6 +246,7 @@ public domain).  3+
     	
     	public NESolve() {
     		int i;
+    		int j;
     		// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
 	    	// epsilon = D1MACH(4)
 	        // Machine epsilon is the smallest positive epsilon such that
@@ -290,6 +293,8 @@ public domain).  3+
 	        //               but fails for line search with termcode[0] = 3.
 	        // NESolve passes POWELL_2_PARAMETER with termcode[0] = 1.
 	        // NESolve passes HOCK1 with termcode[0] = 1.
+	        // NESolve passes TRIGONOMETRIC at starting point, 10 * starting point, and 100 * start9ng point
+	        // for param = 1 to 10 with termcode[0] = 1.
 	        
 	        details[0] = 0; // trace
 	        tol = 1.0E-8;
@@ -430,7 +435,7 @@ public domain).  3+
             //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
             //                            y(2) = a2
             // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
-            //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+            //                    = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0
             //                    = 0.25 if a0 = 0 and a1 >= 0
             //                    = -0.25 if a0 = 0 and a1 < 0
             Preferences.debug("Helical valley function at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
@@ -438,7 +443,7 @@ public domain).  3+
             Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 + 0.5 < 0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
@@ -453,7 +458,7 @@ public domain).  3+
             //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
             //                            y(2) = a2
             // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
-            //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+            //                    = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0
             //                    = 0.25 if a0 = 0 and a1 >= 0
             //                    = -0.25 if a0 = 0 and a1 < 0
             Preferences.debug("Helical valley function at 10 * standard starting point unconstrained\n", 
@@ -462,7 +467,7 @@ public domain).  3+
             Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
@@ -477,7 +482,7 @@ public domain).  3+
             //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
             //                            y(2) = a2
             // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
-            //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+            //                    = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0
             //                    = 0.25 if a0 = 0 and a1 >= 0
             //                    = -0.25 if a0 = 0 and a1 < 0
             Preferences.debug("Helical valley function at 100 * standard starting point unconstrained\n", 
@@ -486,7 +491,7 @@ public domain).  3+
             Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) + 0.5 if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
@@ -722,6 +727,41 @@ public domain).  3+
         	x0[1] = 1.0;
         	driverCalls();
         	
+        	Preferences.debug("Trigonometric function at standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("for i = 1,...n: fi(x) = n - sum from j = 1 to n of:\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("cos(xj) + i*(1-cos(xi)) - sin(xi)\n", Preferences.DEBUG_ALGORITHM);
+        	testCase = TRIGONOMETRIC;
+        	for (param = 1; param <= 10; param++) {
+        		x0 = new double[param];
+        		for (j = 0; j < param; j++) {
+        			x0[j] = 1.0/param;
+        		}
+        		driverCalls();
+        	} // for (param = 1; param <= 10; param++)
+        	
+        	Preferences.debug("Trigonometric function at 10 * standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("for i = 1,...n: fi(x) = n - sum from j = 1 to n of:\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("cos(xj) + i*(1-cos(xi)) - sin(xi)\n", Preferences.DEBUG_ALGORITHM);
+        	testCase = TRIGONOMETRIC;
+        	for (param = 1; param <= 10; param++) {
+        		x0 = new double[param];
+        		for (j = 0; j < param; j++) {
+        			x0[j] = 10.0/param;
+        		}
+        		driverCalls();
+        	} // for (param = 1; param <= 10; param++)
+        	
+        	Preferences.debug("Trigonometric function at 100 * standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("for i = 1,...n: fi(x) = n - sum from j = 1 to n of:\n", Preferences.DEBUG_ALGORITHM);
+        	Preferences.debug("cos(xj) + i*(1-cos(xi)) - sin(xi)\n", Preferences.DEBUG_ALGORITHM);
+        	testCase = TRIGONOMETRIC;
+        	for (param = 1; param <= 10; param++) {
+        		x0 = new double[param];
+        		for (j = 0; j < param; j++) {
+        			x0[j] = 100.0/param;
+        		}
+        		driverCalls();
+        	} // for (param = 1; param <= 10; param++)
     	}
     	
     	private void fitTestModel() {
@@ -850,6 +890,7 @@ public domain).  3+
 	    
 	    public void fitToTestFunction(double fvplus[], double xplus[], double fparam[]) {
 	    	int i;
+	    	int j;
 	        switch(testCase) {
 	        case ROSENBROCK:
 	        	fvplus[0] = 10.0*(xplus[1] - xplus[0]*xplus[0]);
@@ -899,7 +940,7 @@ public domain).  3+
 	        	double chebySum;
         	    for (i = 1; i <= nPts; i++) {
         	        chebySum = 0.0;
-        	        for (int j = 0; j < param; j++) {
+        	        for (j = 0; j < param; j++) {
         	        	chebySum += shiftedChebyshev(xplus[j],i);
         	        }
         	        if ((i % 2) == 1) {
@@ -922,6 +963,15 @@ public domain).  3+
 	        case HOCK1:
 	        	fvplus[0] = 10.0*(xplus[1] - xplus[0]*xplus[0]);
         	    fvplus[1] = 1.0 - xplus[0];
+	        	break;
+	        case TRIGONOMETRIC:
+	        	for (i = 1; i <= param; i++) {
+	        		double sum = 0.0;
+	        		for (j = 1; j <= param; j++) {
+	        		    sum += (Math.cos(xplus[j-1]) + i*(1.0 - Math.cos(xplus[i-1])) - Math.sin(xplus[i-1]));	
+	        		}
+	        		fvplus[i-1] = param - sum;
+	        	}
 	        	break;
 	        }
 	    }
@@ -1032,6 +1082,20 @@ public domain).  3+
     		    jc[1][1] = 0.0;
     		    addfun[0] = 1;
     		    break;
+	        case TRIGONOMETRIC:
+	        	for (i = 1; i <= param; i++) {
+	        		jc[i-1][i-1] = 0;
+	        		for (int j = 1; j <= param; j++) {
+	        		    if (i != j) {
+	        		    	jc[i-1][j-1] = Math.sin(x0[j-1]);
+	        		    	jc[i-1][i-1] += (-i*Math.sin(x0[i-1]) + Math.cos(x0[i-1]));
+	        		    }
+	        		    else {
+	        		    	jc[i-1][i-1] += (-(i-1)*Math.sin(x0[i-1]) + Math.cos(x0[i-1]));
+	        		    }
+	        		}
+	        	}
+	        	break;
 	        }
 	    }
 	    
