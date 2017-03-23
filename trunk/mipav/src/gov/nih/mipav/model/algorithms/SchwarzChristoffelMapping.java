@@ -1,10 +1,15 @@
 package gov.nih.mipav.model.algorithms;
 
-
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 public class SchwarzChristoffelMapping extends AlgorithmBase {
 	
@@ -178,6 +183,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	    }
 	    int nqpts = Math.max((int)Math.ceil(-Math.log10(tol)), 4);
 	    qdat = scqdata(beta, nqpts);  // quadrature data
+	    
+	    // Check input data
+	    int err = sccheck("r", w, beta, cnr);
 	}
 	
 	// Gauss-Jacobi quadrature data for SC Toolbox.
@@ -190,10 +198,165 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	// probably never have to call this routine directly.
 	// Original MATLAB code copyright 1998 by Toby Driscoll.
 	private double[][] scqdata(double beta[], int nqpts) {
-	    double qdata[][] = null;
-	    return qdata;
+		int i, j;
+	    double qdat[][] = null;
+	    int n = beta.length;
+	    double qnode[][] = new double[nqpts][n+1];
+	    double qwght[][] = new double[nqpts][n+1];
+	    double z[] = new double[nqpts];
+	    double w[] = new double[nqpts];
+	    for (j = 0; j < n; j++) {
+	    	if (beta[j] > -1.0) {
+	    	    gaussj(z, w, nqpts, 0, beta[j]);
+	    	    for (i = 0; i < nqpts; i++) {
+	    	    	qnode[i][j] = z[i];
+	    	    	qwght[i][j] = w[i];
+	    	    }
+	    	}
+	    } // for (j = 0; j < n; j++)
+	    gaussj(z, w, nqpts, 0, 0);
+	    for (i = 0; i < nqpts; i++) {
+	    	qnode[i][n] = z[i];
+	    	qwght[i][n] = w[i];
+	    }
+	    qdat = new double[nqpts][2*n+2];
+	    for (i = 0; i < nqpts; i++) {
+	    	for (j = 0; j < n+1; j++) {
+	    		qdat[i][j] = qnode[i][j];
+	    		qdat[i][j+n+1] = qwght[i][j];
+	    	}
+	    }
+	    return qdat;
 	}
 	
+	// gaussj returns nodes and weights for Gauss-Jacobi integration.  z and w are n-vectors such that the integral from
+	// x = -1 to x = +1 of f(x)*((1-x)^alf)*((1+x)^bet)dx
+	// is approximated by sum(f(z) .* w).
+	// Original MATLAB code copyright 1997 by Toby Driscoll and last updated 04/11/97.
+	// Uses the Lanczos iteration connection to orthogonal polynomials.
+	// Borrows heavily from gaussj out of scpack FORTRAN.
+	// Calculate coeffs a, b of Lanczos recurrence relation (closed form is known).
+	// Break out n = 1 specially to avoid possible divide by zero.
+	private void gaussj(double z[], double w[], int n,  double alf, double bet) {
+		int i;
+		double a[] = new double[n];
+		double b[] = new double[n-1];
+	    double apb = alf + bet;
+	    a[0] = (bet-alf)/(apb+2);
+	    double var = apb+2.0;
+	    b[0] = Math.sqrt(4.0*(1.0+alf)*(1.0+bet)/ ((apb+3.0)*var*var));
+	    for (i = 2; i <= n; i++) {
+	    	a[i-1] = apb * (bet-alf) /((apb+2*i)*(apb+2*i-2));
+	    }
+	    for (i=2; i <= n-1; i++) {
+	    	var = apb+2*i;
+	    	var = var * var;
+	    	b[i-1] = Math.sqrt(4.0*i*(i+alf)*(i+bet)*(i+apb)/((var-1)*var));
+	    }
+	    // Find eigvals/eigvecs of tridiag "Ritz" matrix
+	    double eigenvector[][] = new double[n][n];
+        double eigenvalue[] = new double[n];
+	    if (n > 1) {
+	        double sum[][] = new double[n][n];
+	        for (i = 0; i < n; i++) {
+	        	sum[i][i] = a[i];
+	        }
+	        for (i = 0; i < n-1; i++) {
+	        	sum[i][i+1] = b[i];
+	        	sum[i+1][i] = b[i];
+	        }
+	        // MATLAB puts eigenvalues in increasing order.
+	        // Eigenvalue.decompose also puts eigenvalues in increasing order.
+	        Eigenvalue.decompose(sum, eigenvector, eigenvalue);
+	    } // if (n > 1)
+	    else {
+	    	eigenvector[0][0] = 1;
+	    	eigenvalue[0] = a[0];
+	    }
+	    
+	    // Compute normalization (integral of w(x))
+	    double result1[] = new double[1];
+	    Gamma gamma1 = new Gamma(alf+1, result1);
+	    gamma1.run();
+	    double result2[] = new double[1];
+	    Gamma gamma2 = new Gamma(bet+1, result2);
+	    gamma2.run();
+	    double result3[] = new double[1];
+	    Gamma gamma3 = new Gamma(apb+2, result3);
+	    gamma3.run();
+	    double c = Math.pow(2.0, apb+1.0)*result1[0]*result2[0]/result3[0];
+	    
+	    // Return the values
+	    double prew[] = new double[n];
+	    for (i = 0; i < n; i++) {
+	    	prew[i] = c * eigenvector[0][i] * eigenvector[0][i];
+	    }
+	    ArrayList<indexValueItem> valueList = new ArrayList<indexValueItem>();
+	    for (i = 0; i < n; i++) {
+	    	valueList.add(new indexValueItem(i, eigenvalue[i]));
+	    }
+	    Collections.sort(valueList, new indexValueComparator());
+	    for (i = 0; i < n; i++) {
+	    	z[i] = eigenvalue[valueList.get(i).getIndex()];
+	    	w[i] = prew[valueList.get(i).getIndex()];
+	    }
+	}
 	
+	private int sccheck(String type, double w[][], double beta[], int aux[]) {
+	    int err;
+	    err = 0;
+	    return err;
+	}
+	
+	private class indexValueComparator implements Comparator<indexValueItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(final indexValueItem o1, final indexValueItem o2) {
+            final double a = o1.getValue();
+            final double b = o2.getValue();
+            final int c = o1.getIndex();
+            final int d = o2.getIndex();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else if (c < d) {
+            	return -1;
+            }
+            else if (c > d) {
+            	return 1;
+            }
+            else {
+            	return 0;
+            }
+        }
+
+    }
+	
+	private class indexValueItem {
+		private int index;
+		private double value;
+		
+		public indexValueItem(int index, double value) {
+			this.value = value;
+			this.index = index;
+		}
+		
+		public int getIndex() {
+			return index;
+		}
+		
+		public double getValue() {
+			return value;
+		}
+	}
 	
 }
