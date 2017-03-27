@@ -2011,7 +2011,7 @@ public domain).
 	    		double temp = Math.abs(M2[j]);
 	    		for (i = 0; i <= j-1; i++) {
 	    			temp += Math.abs(M[i][j]);
-	    		}
+	    		}                      
 	    		est = Math.max(temp,  est);
 	    	} // for (j = 1; j < n; j++)
 	    	
@@ -2835,7 +2835,6 @@ public domain).
 	    		if ((details[3] > 0) || (details[2] > 0)) {
 	    		    maxProd = -Double.MAX_VALUE;
 	    		    for (i = 0; i < n; i++) {
-	    		    	// MATLAB has 2 absolute values missing in the source book
 	    		    	term = Math.abs(g[i]) * Math.max(Math.abs(xp[i]), 1.0/sx[i])/Math.max(Fnorm[0], n/2.0);
 	    		    	if (term > maxProd) {
 	    		    		maxProd = term;
