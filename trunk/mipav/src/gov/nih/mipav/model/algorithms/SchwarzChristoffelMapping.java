@@ -156,7 +156,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	// rparam uses a vector of control parameters.  See scparopt.
 	// Original MATLAB code copyright 1998 by Toby Driscoll.
 	// If NESolve, method will be be NESolve.TRUST_REGION (default) or NESolve.LINE_SEARCH.
-	private void rparam(double z[][], double c[], double L[], double qdat[][], 
+	private void rparam(double z[][], double c[], double L[][], double qdat[][], 
 			double w[][], double beta[], int cnr[], double z0[][], boolean trace, double tol,
 			int method) {
 		int i;
@@ -315,6 +315,73 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	        	z0[cnr[3]+i][1] = 1;
 	        }
 	    } // if (z0 == null)
+	    else {
+	    	if (z0.length != n) {
+	    		MipavUtil.displayError("Initial guess has wrong number of prevertices");
+	    		return;
+	    	}
+	    	double z0temp[][] = new double[n][2];
+	    	for (i = cnr[0]; i < n; i++) {
+		        z0temp[i-cnr[0]][0] = z0[i][0];
+		        z0temp[i-cnr[0]][1] = z0[i][1];
+		    }
+		    for (i = 0; i <= cnr[0]-1; i++) {
+		    	z0temp[i+n-cnr[0]][0] = z0[i][0];
+		    	z0temp[i+n-cnr[0]][1] = z0[i][1];
+		    }
+		    for (i = 0; i < n; i++) {
+		    	z0[i][0] = z0temp[i][0];
+		    	z0[i][1] = Math.round(z0temp[i][1]);
+		    }
+		    for (i = 0; i < n; i++) {
+		    	z0temp[i] = null;
+		    }
+		    z0temp = null;
+            for (i = cnr[0]; i <= cnr[1]; i++) {
+            	if (z0[i][1] == 0) {
+            		MipavUtil.displayError("Initial guess has prevertices on wrong side of strip");
+            		return;
+            	}
+            } // for (i = cnr[0]; i <= cnr[1]; i++)
+            for (i = cnr[2]; i <= cnr[3]; i++) {
+            	if (z0[i][1] == 0) {
+            		MipavUtil.displayError("Initial guess has prevertices on wrong side of strip");
+            		return;
+            	}
+            } // for (i = cnr[2]; i <= cnr[3]; i++)
+	    } // else
+	    
+	    // Convert z0 to unconstrained vars
+	    double y0[][] = new double[n-3][2];
+	    double dz[][] = new double[n-1][2];
+	    for (i = 0; i < n-1; i++) {
+	    	dz[i][0] = z0[i+1][0] - z0[i][0];
+	    	dz[i][1] = z0[i+1][1] - z0[i][1];
+	    }
+	    for (i = cnr[2]; i < n-1; i++) {
+	    	dz[i][0] = -dz[i][0];
+	    	dz[i][1] = -dz[i][1];
+	    }
+	    for (i = 0; i <= cnr[1]-2; i++) {
+	    	y0[i][0] = Math.log(Math.sqrt(dz[i][0]*dz[i][0] + dz[i][1]*dz[i][1]));
+	    	y0[i][1] = Math.atan2(dz[i][1], dz[i][0]);
+	    }
+	    for (i = cnr[2]-1; i <= cnr[3]-3; i++) {
+	    	y0[i][0] = Math.log(Math.sqrt(dz[i+2][0]*dz[i+2][0] + dz[i+2][1]*dz[i+2][1]));
+	    	y0[i][1] = Math.atan2(dz[i+2][1], dz[i+2][0]);	
+	    }
+	    y0[cnr[1]-1][0] = (Math.log(Math.sqrt(dz[cnr[1]-1][0]*dz[cnr[1]-1][0] + dz[cnr[1]-1][1]*dz[cnr[1]-1][1])) +
+	    		(Math.log(Math.sqrt(dz[cnr[2]][0]*dz[cnr[2]][0] + dz[cnr[2]][1]*dz[cnr[2]][1])))/2.0);
+	    y0[cnr[1]-1][1] = (Math.atan2(dz[cnr[1]-1][1],dz[cnr[1]-1][0]) + Math.atan2(dz[cnr[2]][1], dz[cnr[2]][0])/2.0);
+	    
+	    // Vertices on the "short" edges are transformed into the interval [-1,1],
+	    // and then the Trefethen-style transformation is used.
+	    L[0][0] = z0[cnr[1]][0] - z0[cnr[0]][0];
+	    L[0][1] = z0[cnr[1]][1] - z0[cnr[0]][1];
+	    double x[] = new double[cnr[2]-cnr[1]-1];
+	    for (i = cnr[1]+1; i <= cnr[2]-1; i++) {
+	    	x[i-cnr[1]-1] = Math.exp(Math.PI*(L[0][0] - z0[i][0]))*Math.cos(Math.PI*(L[0][1] + z0[i][1]));
+	    }
 	}
 	
 	// Gauss-Jacobi quadrature data for SC Toolbox.
