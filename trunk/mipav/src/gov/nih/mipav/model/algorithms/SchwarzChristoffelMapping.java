@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.algorithms.AlgorithmFRAP.FitFullIntModel;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
@@ -10,6 +11,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrator;
 
 public class SchwarzChristoffelMapping extends AlgorithmBase {
 	
@@ -382,6 +384,303 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	    for (i = cnr[1]+1; i <= cnr[2]-1; i++) {
 	    	x[i-cnr[1]-1] = Math.exp(Math.PI*(L[0][0] - z0[i][0]))*Math.cos(Math.PI*(L[0][1] + z0[i][1]));
 	    }
+	    double dx2[] = new double[x.length+1];
+	    dx2[0] = 1 - x[0];
+	    for (i = 0; i < x.length-1; i++) {
+	    	dx2[i+1] = x[i] - x[i+1];
+	    }
+	    dx2[x.length] = x[x.length-1] + 1;
+	    for (i = 0; i <= dx2.length-2; i++) {
+	        y0[i+cnr[1]][0] = Math.log(dx2[i]/dx2[i+1]);
+	        y0[i+cnr[1]][1] = 0;
+	    }
+	    x = new double[n-1-cnr[3]];
+	    for (i = 0; i < n-1-cnr[3]; i++) {
+	    	x[i] = Math.exp(Math.PI*z0[cnr[3]+1+i][0])*Math.cos(Math.PI*z0[cnr[3]+1+i][1]);
+	    }
+	    dx2[0] = x[0]+1;
+	    for (i = 0; i < x.length-1; i++) {
+	    	dx2[i+1] = x[i+1] - x[i];
+	    }
+	    dx2[x.length] = 1 - x[x.length-1];
+	    for (i = 0; i <= dx2.length-2; i++) {
+	        y0[i+cnr[3]-2][0] = Math.log(dx2[i]/dx2[i+1]);
+	        y0[i+cnr[3]-2][1] = 0;
+	    }
+	    
+	    // Find prevertices (solve param problem)
+	    
+	    // Set up normalized lengths for nonlinear equations:
+	    // indices of left and right integration endpoints
+	    // Delete indices corresponding to vertices at infinity
+	    int numleft = 0;
+	    int numright = 0;
+	    for (i = 0; i < n-2; i++) {
+	    	if (!atinf[i]) {
+	    		numleft++;
+	    	}
+	    	if (!atinf[i+1]) {
+	    		numright++;
+	    	}
+	    }
+	    if (atinf[n-2]) {
+	    	numright++;
+	    }
+	    int left[] = new int[numleft];
+	    int right[] = new int[numright];
+	    int jl = 0;
+	    int jr = 0;
+	    for (i = 0; i < n-2; i++) {
+	    	if (!atinf[i]) {
+	    		left[jl++] = i;
+	    	}
+		    if (!atinf[i+1]) {
+		    	right[jr++] = i;
+		    }
+	    }
+	    if (atinf[n-2]) {
+	    	right[jr++] = n-1;
+	    }
+	    if (left.length != right.length) {
+	    	MipavUtil.displayError("left.length != right.length");
+	    	return;
+	    }
+	    boolean cmplx[] = new boolean[left.length];
+	    int numcmplx = 0;
+	    for (i = 0; i < left.length; i++) {
+	    	if ((right[i] - left[i]) == 2) {
+	    		cmplx[i] = true;
+	    		numcmplx++;
+	    	}
+	    }
+	    // It's possible we replaced the last single condition by a complex one
+	    if ((cmplx.length + numcmplx) > n-2) {
+	    	cmplx[cmplx.length-1] = false;
+	    }
+	    // Normalize lengths by w[1] - w[0]
+	    double wdenomreal = w[1][0] - w[0][0];
+	    double wdenomimag = w[1][1] - w[0][1];
+	    // Multiply 1/(wdenomreal + i*wdenomimag) by (wdenomreal - i * wdenomimag)/(wdenomreal - i * wdenomimag)
+	    // Giving (wdenomreal - i * wdenomimag)/(wdenomreal**2 + wdenomimag**2)
+	    double denom = wdenomreal*wdenomreal + wdenomimag*wdenomimag;
+	    // First entry is useless = 1.
+	    double nmlen[][] = new double[left.length-1][2];
+	    for (i = 1; i < left.length; i++) {
+	    	double realpart = w[right[i]][0] - w[left[i]][0];
+	    	double imagpart = w[right[i]][1] - w[left[i]][1];
+	    	nmlen[i-1][0] = (realpart*wdenomreal + imagpart*wdenomimag)/denom;
+	    	nmlen[i-1][1] = (imagpart*wdenomreal - realpart*wdenomimag)/denom;
+	    	// Absolute value for finite ones
+	    	if (!cmplx[i]) {
+	    		nmlen[i-1][0] = Math.sqrt(nmlen[i-1][0]*nmlen[i-1][0] + nmlen[i-1][1]*nmlen[i-1][1]);
+	    		nmlen[i-1][1] = 0;
+	    	}
+	    } // for (i = 1; i < left.length; i++)
+	    
+	    // Solve nonlinear system of equations
+	    double y0sep[] = new double[2*y0.length];
+	    for (i = 0; i < y0.length; i++) {
+	    	y0sep[2*i] = y0[i][0];
+	    	y0sep[2*i+1] = y0[i][1];
+	    }
+	    rpfun fm = new rpfun(y0sep, n, beta, nmlen, left, right, cmplx, qdat, cnr);
+	    fm.driver();
+		fm.dumpResults();
+	    int exitStatus = fm.getExitStatus();
+	    if (exitStatus < 0 ) {
+	    	printExitStatus(exitStatus);
+	    	return;
+	    }
+		double params[] = fm.getParameters();
+	}
+	
+	private void printExitStatus(int exitStatus) {
+		if (exitStatus == -1) {
+            System.err.println("Abnormal termination because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or");
+            System.err.println("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry");
+        } 
+        else if (exitStatus == -2) {
+        	System.err.println("Abnormal termination because the number of iterations has exceeded the maximum allowed iterations");
+        }
+        else if (exitStatus == -3) {
+        	System.err.println("Abnormal termination because the Hessian emanating from the 2nd order method is not positive definite");
+        }
+        else if (exitStatus == -4) {
+        	System.err.println("Abnormal termination because the algorithm would like to use 2nd derivatives but is not allowed to do that");
+        }
+        else if (exitStatus == -5) {
+        	System.err.println("Abnormal termination because an undamped step with Newtons method is a failure");
+        }
+        else if (exitStatus == -6) {
+        	System.err.println("Abnormal termination because the latest search direction computed using subspace minimization");
+        	System.err.println("was not a descent direction (probably caused by a wrongly computed Jacobian)");
+        }
+        else if (exitStatus == -7) {
+        	System.err.println("Abnormal termination because there is only one feasible point");
+        	System.err.println("namely X(I) = BL(I) = BU(I), I = 1,2,...,N");
+        }
+        else if (exitStatus == -8) {
+        	System.err.println("Abnormal termination due to driver error");
+        }
+        else {
+        	System.err.println("Exit status = " + exitStatus);
+        }
+	}
+	
+	class rpfun extends NLConstrainedEngine {
+		int n;
+		double beta[];
+		double nmlen[][];
+		int left[];
+		int right[];
+		boolean cmplx[];
+		double qdat[][];
+		int corners[];
+		
+    	public rpfun (double y0sep[], int n, double beta[], double nmlen[][], int left[],
+    			int right[], boolean cmplx[], double qdat[][], int corners[]) {
+    		// nPoints, params
+    		super(y0sep.length, y0sep.length);
+    		this.n = n;
+    		this.beta = beta;
+    		this.nmlen = nmlen;
+    		this.left = left;
+    		this.right = right;
+    		this.cmplx = cmplx;
+    		this.qdat = qdat;
+    		this.corners = corners;
+    		
+    		bounds = 0; // bounds = 0 means unconstrained
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < y0sep.length; i++) {
+				gues[i] = y0sep[i];
+			}
+    	}
+    	
+    	/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		/**
+		 * Display results of displaying exponential fitting parameters.
+		 */
+		public void dumpResults() {
+			Preferences
+					.debug(" ******* Fit Elsunc Schwarz-Christoffel rparam ********* \n\n",
+							Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters)
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			for (int i = 0; i < a.length; i++) {
+			Preferences.debug("a"+i+" " + String.valueOf(a[i]) + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			}
+		}
+    	
+    	public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+    		int ctrl;
+    		int i;
+    		double z[][];
+    		
+    		try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+                    // Returns residual for solution of nonlinear equations
+					
+					// Transform y (unconstrained variables) to z (actual params)
+					double y[][] = new double[a.length/2][2];
+					for (i = 0; i < a.length; i++) {
+						if ((i % 2) == 0) {
+							y[i/2][0] = a[i];
+						}
+						else {
+							y[i/2][1] = a[i];
+						}
+					}
+					z = rptrnsfm(y, corners);
+				} // if ((ctrl == -1) || (ctrl == 1))
+
+				// Calculate the Jacobian numerically
+				else if (ctrl == 2) {
+					ctrlMat[0] = 0;
+				}
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+    		
+    	}
+    }
+	
+	private double[][] rptrnsfm(double y[][], int cnr[]) {
+		// rptrnsfm not intended for calling directly by the user
+		// Transformation optimization vars to prevertices for rectangle problem
+		// Original MATLAB code copyright 1997 by Toby Driscoll.  Last updated 05/06/97
+		int i;
+		int n = y.length+3;
+		double z[][] = new double[n][2];
+		
+		// Fill interior of long edges first
+		double cumsumreal = 0.0;
+		double cumsumimag = 0.0;
+		for (i = cnr[0]; i <= cnr[1] - 2; i++) {
+		    cumsumreal += Math.exp(y[i][0])*Math.cos(y[i][1]);
+		    cumsumimag += Math.exp(y[i][0])*Math.sin(y[i][1]);
+		    z[i+1][0] = cumsumreal;
+		    z[i+1][1] = cumsumimag;
+		}
+		cumsumreal = 0.0;
+		cumsumimag = 0.0;
+		for (i = cnr[3]-3; i >= cnr[2]-1; i--) {
+			cumsumreal += Math.exp(y[i][0])*Math.cos(y[i][1]);
+		    cumsumimag += Math.exp(y[i][0])*Math.sin(y[i][1]);
+		    z[i+2][0] = cumsumreal;
+		    z[i+2][1] = 1.0 + cumsumimag;	
+		}
+		
+		// Find L
+		double xr[] = new double[2];
+		xr[0] = z[cnr[1]-1][0];
+		xr[1] = z[cnr[2]+1][0];
+		double meanxr = (xr[0] + xr[1])/2.0;
+		double diff = (xr[1] - xr[0])/2.0;
+		double diffSquared = diff * diff;
+		double yexpreal = Math.exp(2*y[cnr[1]-1][0])*Math.cos(2*y[cnr[1]-1][1]);
+		double yexpimag = Math.exp(2*y[cnr[1]-1][0])*Math.sin(2*y[cnr[1]-1][1]);
+		double realtotal = diffSquared + yexpreal;
+		double mag = Math.sqrt(realtotal*realtotal + yexpimag*yexpimag);
+		double sqrtmag = Math.sqrt(mag);
+		double angle = Math.atan2(yexpimag,realtotal);
+		double halfangle = angle/2.0;
+		double realsqrt = sqrtmag * Math.cos(halfangle);
+		double imagsqrt = sqrtmag * Math.sin(halfangle);
+		z[cnr[1]][0] = meanxr + realsqrt;
+		z[cnr[1]][1] = imagsqrt;
+		z[cnr[2]][0] = z[cnr[1]][0];
+		z[cnr[2]][1] = 1 + z[cnr[1]][1];
+		z[cnr[3]][0] = 0.0;
+		z[cnr[3]][1] = 1.0;
+		
+		// Now fill in "short edges"
+		return z;
 	}
 	
 	// Gauss-Jacobi quadrature data for SC Toolbox.
