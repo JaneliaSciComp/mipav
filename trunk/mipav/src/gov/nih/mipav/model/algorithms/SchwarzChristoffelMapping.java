@@ -594,7 +594,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
     	
     	public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
     		int ctrl;
-    		int i;
+    		int i, j;
     		double z[][];
     		
     		try {
@@ -614,6 +614,81 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 						}
 					}
 					z = rptrnsfm(y, corners);
+					
+					// Compute the integrals appearing in the nonlinear equations
+					double zleft[][] = new double[left.length][2];
+					for (i = 0; i < left.length; i++) {
+						zleft[i][0] = z[left[i]][0];
+						zleft[i][1] = z[left[i]][1];
+					}
+					double zright[][] = new double[right.length][2];
+					for (i = 0; i < right.length; i++) {
+						zright[i][0] = z[right[i]][0];
+						zright[i][1] = z[right[i]][1];
+					}
+					
+					// To use stquad, must put strip ends into z, beta
+					double diffz[] = new double[z.length];
+					int nonzerodiff = 0;
+					for (i = 0; i < n-1; i++) {
+						diffz[i] = z[i+1][1] - z[i][1];
+						if (diffz[i] != 0) {
+							nonzerodiff++;
+						}
+					}
+					diffz[n-1] = z[0][1] - z[n-1][1];
+					if (diffz[n-1] != 0) {
+						nonzerodiff++;
+					}
+					int ends[] = new int[nonzerodiff];
+					for (i = 0, j = 0; i < diffz.length; i++) {
+						if (diffz[i] != 0) {
+						    ends[j++] = i;	
+						}
+					}
+					double z2[][] = new double[n+2][2];
+					double beta2[] = new double[n+2];
+					for (i = 0; i <= ends[0]; i++) {
+						z2[i][0] = z[i][0];
+						z2[i][0] = z[i][1];
+						beta2[i] = beta[i];
+					}
+					z2[ends[0]+1][0] = Double.POSITIVE_INFINITY;
+					z2[ends[0]+1][1] = 0;
+					beta2[ends[0]+1] = 0;
+					for (i = ends[0]+1; i <= ends[1]; i++) {
+						z2[i+1][0] = z[i][0];
+						z2[i+1][1] = z[i][1];
+						beta2[i+1] = beta[i];
+					}
+					z2[ends[1]+2][0] = Double.NEGATIVE_INFINITY;
+					z2[ends[1]+2][1] = 0;
+					beta2[ends[1]+2] = 0;
+					for (i = ends[1]+1; i < n; i++) {
+						z2[i+2][0] = z[i][0];
+						z2[i+2][1] = z[i][1];
+						beta2[i+2] = beta[i];
+					}
+					// Put dummy columns into qdat at ends
+					double qdat2[][] = new double[qdat.length][qdat[0].length+2];
+					for (i = 0; i <= ends[0]; i++) {
+						qdat2[i][qdat[0].length] = i;
+						qdat2[i][qdat[0].length+1] = i+n+1;
+					}
+					qdat2[ends[0]+1][qdat[0].length] = n;
+					qdat2[ends[0]+1][qdat[0].length+1] = n+n+1;
+					for (i = ends[0]+1; i <= ends[1]; i++) {
+						qdat2[i+1][qdat[0].length] = i;
+						qdat2[i+1][qdat[0].length+1] = i+n+1;	
+					}
+					qdat2[ends[1]+2][qdat[0].length] = n;
+					qdat2[ends[1]+2][qdat[0].length+1] = n+n+1;
+					for (i = ends[1]+1; i <= n-1; i++) {
+						qdat2[i+2][qdat[0].length] = i;
+						qdat2[i+2][qdat[0].length+1] = i+n+1;	
+					}
+					qdat2[n+3][qdat[0].length] = n;
+					qdat2[n+3][qdat[0].length+1] = n+n+1;
 				} // if ((ctrl == -1) || (ctrl == 1))
 
 				// Calculate the Jacobian numerically
@@ -680,6 +755,171 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 		z[cnr[3]][1] = 1.0;
 		
 		// Now fill in "short edges"
+		double cp[][] = new double[cnr[2] - cnr[1]][2];
+		cp[0][0] = 1;
+		cp[0][1] = 0;
+		for (i = 1; i < cnr[2] - cnr[1]; i++) {
+			cp[i][0] = cp[i-1][0] * Math.exp(-y[cnr[1] + i-1][0]) * Math.cos(-y[cnr[1] + i-1][1]) 
+					- cp[i-1][1] * Math.exp(-y[cnr[1]+i-1][0]) * Math.sin(-y[cnr[1]+i-1][1]);
+			cp[i][1] = cp[i-1][0] * Math.exp(-y[cnr[1]+i-1][0]) * Math.sin(-y[cnr[1]+i-1][1])
+					+ cp[i-1][1] * Math.exp(-y[cnr[1]+i-1][0]) * Math.cos(-y[cnr[1]+i-1][1]);
+		}
+		double flipudcp[][] = new double[cp.length][2];
+		for (i = 0; i < cp.length; i++) {
+			flipudcp[i][0] = cp[cp.length-1-i][0];
+			flipudcp[i][1] = cp[cp.length-1-i][1];
+		}
+		double cumsumflip[][] = new double[cp.length][2];
+		cumsumflip[0][0] = flipudcp[0][0];
+		cumsumflip[0][1] = flipudcp[0][1];
+		for (i = 1; i < cp.length; i++) {
+			cumsumflip[i][0] = cumsumflip[i-1][0] + flipudcp[i][0];
+			cumsumflip[i][1] = cumsumflip[i-1][1] + flipudcp[i][1];
+		}
+		double flipcumsum[][] = new double[cp.length][2];
+		for (i = 0; i < cp.length; i++) {
+			flipcumsum[i][0] = cumsumflip[cp.length-i-1][0];
+			flipcumsum[i][1] = cumsumflip[cp.length-i-1][1];
+		}
+		double cumsumcp[][] = new double[cp.length][2];
+		cumsumcp[0][0] = cp[0][0];
+		cumsumcp[0][1] = cp[0][1];
+		for (i = 1; i < cp.length; i++) {
+			cumsumcp[i][0] = cumsumcp[i-1][0] + cp[i][0];
+			cumsumcp[i][1] = cumsumcp[i-1][1] + cp[i][1];
+		}
+		double x[][] = new double[cp.length+1][2];
+		x[0][0] = -flipcumsum[0][0];
+		x[0][1] = -flipcumsum[0][1];
+		for (i = 1; i < cp.length; i++) {
+			x[i][0] = cumsumcp[i-1][0] - flipcumsum[i][0];
+			x[i][1] = cumsumcp[i-1][1] - flipcumsum[i][1];
+		}
+		x[cp.length][0] = cumsumcp[cp.length-1][0];
+		x[cp.length][1] = cumsumcp[cp.length-1][1];
+		// (1/(x[cp.length][0] + i * x[cp.length][1])) * (x[cp.length][0] - i * x[cp.length][1])/(x[cp.length][0] - i * x[cp.length][1])
+		double denom = x[cp.length][0]*x[cp.length][0] + x[cp.length][1]*x[cp.length][1];
+		double x2[][] = new double[x.length-2][2];
+		for (i = 0; i < x2.length; i++) {
+			x2[i][0] = (x[i+1][0]*x[cp.length][0] + x[i+1][1]*x[cp.length][1])/denom;
+			x2[i][1] = (-x[i+1][0]*x[cp.length][1] + x[i+1][1]*x[cp.length][0])/denom;
+		}
+		boolean mask[] = new boolean[x2.length];
+		for (i = 0; i < x2.length; i++) {
+			double absx = Math.sqrt(x2[i][0]*x2[i][0] + x2[i][1]*x2[i][1]);
+			if (absx < eps) {
+				mask[i] = true;
+			}
+		}
+		double u[][] = new double[x2.length][2];
+		for (i = 0; i < x2.length; i++) {
+			u[i][0] = x2[i][0];
+			u[i][1] = x2[i][1];
+		}
+		for (i = 0; i < x2.length; i++) {
+			if (!mask[i]) {
+				mag = Math.sqrt(x2[i][0]*x2[i][0] + x2[i][1]*x2[i][1]);
+				angle = Math.atan2(x2[i][1], x2[i][0]);
+				u[i][0] = Math.log(mag)/Math.PI;
+				u[i][1] = angle/Math.PI;
+			}
+			else {
+				u[i][0] = -z[cnr[1]][0]/eps;
+				u[i][1] = -z[cnr[1]][1]/eps;
+			}
+		} // for (i = 0; i < x2.length; i++)
+		for (i = cnr[1]+1; i <= cnr[2]-1; i++) {
+			z[i][0] = z[cnr[1]][0] - u[i][0];
+			z[i][1] = u[i][1];
+		}
+		
+		cp = new double[1 + n-4-(cnr[3]-2)+1+cnr[0]][2];
+		cp[0][0] = 1;
+		cp[0][1] = 0;
+		for (i = 1; i <= n - cnr[3] - 1; i++) {
+			cp[i][0] = cp[i-1][0]*Math.exp(-y[i+cnr[3]-3][0])*Math.cos(-y[i+cnr[3]-3][1]) 
+					- cp[i-1][1]*Math.exp(-y[i+cnr[3]-3][0])*Math.sin(-y[i+cnr[3]-3][1]);
+			cp[i][1] = cp[i-1][0]*Math.exp(-y[i+cnr[3]-3][0])*Math.sin(-y[i+cnr[3]-3][1])
+					+ cp[i-1][1]*Math.exp(-y[i+cnr[3]-3][0])*Math.cos(-y[i+cnr[3]-3][1]);
+		}
+		for (i = n - cnr[3]; i < n -cnr[3] + cnr[0]; i++) {
+			cp[i][0] = cp[i-1][0]*Math.exp(-y[i-n+cnr[3]][0])*Math.cos(-y[i-n+cnr[3]][1]) 
+					- cp[i-1][1]*Math.exp(-y[i-n+cnr[3]][0])*Math.sin(-y[i-n+cnr[3]][1]);
+			cp[i][1] = cp[i-1][0]*Math.exp(-y[i-n+cnr[3]][0])*Math.sin(-y[i-n+cnr[3]][1])
+					+ cp[i-1][1]*Math.exp(-y[i-n+cnr[3]][0])*Math.cos(-y[i-n+cnr[3]][1]);	
+		}
+		flipudcp = new double[cp.length][2];
+		for (i = 0; i < cp.length; i++) {
+			flipudcp[i][0] = cp[cp.length-1-i][0];
+			flipudcp[i][1] = cp[cp.length-1-i][1];
+		}
+		cumsumflip = new double[cp.length][2];
+		cumsumflip[0][0] = flipudcp[0][0];
+		cumsumflip[0][1] = flipudcp[0][1];
+		for (i = 1; i < cp.length; i++) {
+			cumsumflip[i][0] = cumsumflip[i-1][0] + flipudcp[i][0];
+			cumsumflip[i][1] = cumsumflip[i-1][1] + flipudcp[i][1];
+		}
+		flipcumsum = new double[cp.length][2];
+		for (i = 0; i < cp.length; i++) {
+			flipcumsum[i][0] = cumsumflip[cp.length-i-1][0];
+			flipcumsum[i][1] = cumsumflip[cp.length-i-1][1];
+		}
+		cumsumcp = new double[cp.length][2];
+		cumsumcp[0][0] = cp[0][0];
+		cumsumcp[0][1] = cp[0][1];
+		for (i = 1; i < cp.length; i++) {
+			cumsumcp[i][0] = cumsumcp[i-1][0] + cp[i][0];
+			cumsumcp[i][1] = cumsumcp[i-1][1] + cp[i][1];
+		}
+		x = new double[cp.length+1][2];
+		x[0][0] = -flipcumsum[0][0];
+		x[0][1] = -flipcumsum[0][1];
+		for (i = 1; i < cp.length; i++) {
+			x[i][0] = cumsumcp[i-1][0] - flipcumsum[i][0];
+			x[i][1] = cumsumcp[i-1][1] - flipcumsum[i][1];
+		}
+		x[cp.length][0] = cumsumcp[cp.length-1][0];
+		x[cp.length][1] = cumsumcp[cp.length-1][1];
+		// (1/(x[cp.length][0] + i * x[cp.length][1])) * (x[cp.length][0] - i * x[cp.length][1])/(x[cp.length][0] - i * x[cp.length][1])
+		denom = x[cp.length][0]*x[cp.length][0] + x[cp.length][1]*x[cp.length][1];
+		x2 = new double[x.length-2][2];
+		for (i = 0; i < x2.length; i++) {
+			x2[i][0] = (x[i+1][0]*x[cp.length][0] + x[i+1][1]*x[cp.length][1])/denom;
+			x2[i][1] = (-x[i+1][0]*x[cp.length][1] + x[i+1][1]*x[cp.length][0])/denom;
+		}
+		mask = new boolean[x2.length];
+		for (i = 0; i < x2.length; i++) {
+			double absx = Math.sqrt(x2[i][0]*x2[i][0] + x2[i][1]*x2[i][1]);
+			if (absx < eps) {
+				mask[i] = true;
+			}
+		}
+		u = new double[x2.length][2];
+		for (i = 0; i < x2.length; i++) {
+			u[i][0] = x2[i][0];
+			u[i][1] = x2[i][1];
+		}
+		for (i = 0; i < x2.length; i++) {
+			if (!mask[i]) {
+				mag = Math.sqrt(x2[i][0]*x2[i][0] + x2[i][1]*x2[i][1]);
+				angle = Math.atan2(x2[i][1], x2[i][0]);
+				u[i][0] = Math.log(mag)/Math.PI;
+				u[i][1] = angle/Math.PI;
+			}
+			else {
+				u[i][0] = -z[cnr[1]][0]/eps;
+				u[i][1] = -z[cnr[1]][1]/eps;
+			}
+		} // for (i = 0; i < x2.length; i++)
+		for (i = 0; i < n-cnr[3]-1; i++) {
+			z[i+cnr[3]+1][0] = u[i][0];
+			z[i+cnr[3]+1][1] = u[i][1];
+		}
+		for (i = n-cnr[3]; i < n - cnr[3] + cnr[0]; i++) {
+			z[i-n+cnr[3]][0] = u[i][0];
+			z[i-n+cnr[3]][1] = u[i][1];
+		}
 		return z;
 	}
 	
