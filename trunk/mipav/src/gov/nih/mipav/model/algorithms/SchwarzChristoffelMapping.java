@@ -596,7 +596,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
     		int ctrl;
     		int i, j;
     		double z[][];
-    		
+    		double I1[][];
+    		double I2[][];
     		try {
 				ctrl = ctrlMat[0];
 
@@ -687,8 +688,92 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 						qdat2[i+2][qdat[0].length] = i;
 						qdat2[i+2][qdat[0].length+1] = i+n+1;	
 					}
-					qdat2[n+3][qdat[0].length] = n;
-					qdat2[n+3][qdat[0].length+1] = n+n+1;
+					qdat2[n+2][qdat[0].length] = n;
+					qdat2[n+2][qdat[0].length+1] = n+n+1;
+					// Change singularity indices to reflect ends
+					for (i = 0; i < left.length; i++) {
+						if (left[i] > ends[0]) {
+							left[i]++;
+						}
+						if (left[i] > ends[1]) {
+							left[i]++;
+						}
+					} // for (i = 0; i < left.length; i++)
+					for (i = 0; i < right.length; i++) {
+						if (right[i] > ends[0]) {
+							right[i]++;
+						}
+						if (right[i] > ends[1]) {
+							right[i]++;
+						}
+					} // for (i = 0; i < right.length; i++)
+					
+					double ints[][] = new double[zleft.length][2];
+					int nums2 = 0;
+					for (i = 0; i < left.length; i++) {
+						if ((right[i] - left[i] == 1) && (zleft[i][1] == zright[i][1])) {
+							nums2++;
+						}
+					}
+					int s2[] = new int[nums2];
+					for (i = 0, j = 0; i < left.length; i++) {
+						if ((right[i] - left[i] == 1) && (zleft[i][1] == zright[i][1])) {
+							s2[j++] = i;
+						}	
+					}
+					double mid[][] = new double[s2.length][2];
+					for (i = 0; i < s2.length; i++) {
+						mid[i][0] = (zleft[s2[i]][0] + zright[s2[i]][0])/2.0;
+						mid[i][1] = (zleft[s2[i]][1] + zright[s2[i]][1])/2.0;
+					}
+				    double zlefts2[][] = new double[s2.length][2];
+				    int lefts2[] = new int[s2.length];
+				    double zrights2[][] = new double[s2.length][2];
+				    int rights2[] = new int[s2.length];
+				    for (i = 0; i < s2.length; i++) {
+				    	zlefts2[i][0] = zleft[s2[i]][0];
+				    	zlefts2[i][1] = zleft[s2[i]][1];
+				    	lefts2[i] = left[s2[i]];
+				    	zrights2[i][0] = zright[s2[i]][0];
+				    	zrights2[i][1] = zright[s2[i]][1];
+				    	rights2[i] = right[s2[i]];
+				    }
+				    I1 = stquadh(zlefts2, mid, lefts2, z, beta, qdat);
+				    I2 = stquadh(zrights2, mid, rights2, z, beta, qdat);
+				    for (i = 0, j = 0; i < s2.length; i++) {
+				        ints[s2[j]][0] = I1[i][0] - I2[i][0];
+				        ints[s2[j++]][1] = I1[i][1] - I2[i][1];
+				    }
+				    
+				    // Three-stage integrations
+				    int lengthnots2 = zleft.length - s2.length;
+				    int nots2[] = new int[lengthnots2];
+				    for (i = 0, j = 0; i < left.length; i++) {
+				    	if ((right[i] - left[i] != 1) || (zleft[i][1] != zright[i][1])) {
+				    	    nots2[j++] = i;	
+				    	}
+				    }
+				    double mid1[][] = new double[lengthnots2][2];
+				    double mid2[][] = new double[lengthnots2][2];
+				    for (i = 0; i < lengthnots2; i++) {
+				    	mid1[i][0] = zleft[nots2[i]][0];
+				    	mid1[i][1] = 0.5;
+				    	mid2[i][0] = zright[nots2[i]][0];
+				    	mid2[i][1] = 0.5;
+				    }
+				    double zleftns2[][] = new double[nots2.length][2];
+				    int leftns2[] = new int[nots2.length];
+				    double zrightns2[][] = new double[nots2.length][2];
+				    int rightns2[] = new int[nots2.length];
+				    for (i = 0; i < nots2.length; i++) {
+				    	zleftns2[i][0] = zleft[nots2[i]][0];
+				    	zleftns2[i][1] = zleft[nots2[i]][1];
+				    	leftns2[i] = left[nots2[i]];
+				    	zrightns2[i][0] = zright[nots2[i]][0];
+				    	zrightns2[i][1] = zright[nots2[i]][1];
+				    	rightns2[i] = right[nots2[i]];
+				    }
+				    double zero[][] = new double[nots2.length][2];
 				} // if ((ctrl == -1) || (ctrl == 1))
 
 				// Calculate the Jacobian numerically
@@ -704,6 +789,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
     		
     	}
     }
+	
+	private double[][] stquadh(double z1[][], double z2[][], int sing1[], double z[][], double beta[], double qdat[][]) {
+		double I[][] = null;
+		return I;
+	}
 	
 	private double[][] rptrnsfm(double y[][], int cnr[]) {
 		// rptrnsfm not intended for calling directly by the user
