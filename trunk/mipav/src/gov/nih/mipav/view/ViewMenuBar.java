@@ -1194,7 +1194,8 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES, true),
 								menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES_TO, true),
 								menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_LABEL, true),
-								menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_LABEL, true) }),
+								menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_LABEL, true),
+								menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_CSV, true) }),
 						ViewMenuBar.separator,
 						menuBuilder.makeMenu("Save Paint", true,
 								new JMenuItem[] { menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_PAINT, true),
@@ -1325,6 +1326,7 @@ public class ViewMenuBar {
 								menuBuilder.buildCheckBoxMenuItem("Show Model", "ShowModel", false),
 								menuBuilder.buildCheckBoxMenuItem("Show Expanded Model", "ShowExpandedModel", false),
 								menuBuilder.buildMenuItem("Straighten", "StraightenLattice", 0, null, false),
+								menuBuilder.buildMenuItem("Test Lattice", "TestLattice", 0, null, false),
 //								menuBuilder.buildMenuItem("Segment Neuclei", "SegmentNeuclei", 0, null, false),
 								menuBuilder.buildMenuItem("Default Voxel Size", "voxelSize", 0, null, false) /*
 												 * , menuBuilder.buildMenuItem(

@@ -90,6 +90,7 @@ import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -655,6 +656,47 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 ProvenanceRecorder.getReference().addLine(new ActionSaveVOIIntensities(getActiveImage(), directory));
             }
         } 
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_VOI_CSV.getActionCommand())) {
+            // get the voi directory
+            String fileName = null;
+            String directory = null;
+            String filePathName = null;
+            
+            final JFileChooser chooser = new JFileChooser();
+	        chooser.setDialogTitle("Save annotations as csv...");
+	        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+	
+	        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".csv"}));
+	
+	        final int returnVal = chooser.showSaveDialog(m_kParent.getFrame());
+	
+	        if (returnVal == JFileChooser.APPROVE_OPTION) {
+	            fileName = chooser.getSelectedFile().getName();
+	            directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+	            
+	
+	        } else {
+	            return;
+	        }
+
+
+            if (fileName != null) {
+            	VOIVector vois = getActiveImage().getVOIs();
+            	
+            	for ( int i = 0; i < vois.size(); i++ )
+            	{
+            		if ( vois.elementAt(i).getCurveType() == VOI.ANNOTATION )
+            		{
+            			LatticeModel.saveSeamCellsTo(directory, fileName,  vois.elementAt(i));
+            			break;
+            		}
+            	}
+            }
+        }
         else if (command.equals(CustomUIBuilder.PARAM_SAVE_PAINT.getActionCommand())) {
             savePaint();
         } 
@@ -4989,6 +5031,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     } // end saveAllVOIsTo()
 
+    
     /**
      * Save the dicom matrix header info. The .ply file format can't save the dicom info. We decide to save the dicom
      * info when save the VOI file. So, the dicom info will be read when load the .ply surface into the volume render.
@@ -6123,7 +6166,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 					if ( parsed.length != 0 )
 					{
 						VOIText text = new VOIText();
-						float x, y, z;
+						float x, y, z, r;
 						if ( parsed.length > 3 )
 						{
 							int parsedIndex = 0;
@@ -6132,8 +6175,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
 							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
 							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
+							r    = (parsed.length > parsedIndex+3) ? (parsed[parsedIndex+3].length() > 0) ? Float.valueOf( parsed[parsedIndex+3] ) : 1 : 1;
+							System.err.println( name + " " + x + " " + y + " " + z + " " + r );
 							text.add( new Vector3f( x, y, z ) );
-							text.add( new Vector3f( x+1, y, z ) );
+							text.add( new Vector3f( x+r, y, z ) );
 							annotationVOI.getCurves().add(text);
 						}
 						else if ( parsed.length == 3 )
