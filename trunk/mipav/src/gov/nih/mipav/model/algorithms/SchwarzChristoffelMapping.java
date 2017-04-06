@@ -156,10 +156,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	// rparam uses a vector of control parameters.  See scparopt.
 	// Original MATLAB code copyright 1998 by Toby Driscoll.
 	// If NESolve, method will be be NESolve.TRUST_REGION (default) or NESolve.LINE_SEARCH.
-	private void rparam(double z[][], double c[], double L[][], double qdat[][], 
+	private void rparam(double z[][], double c[], double L[], double qdat[][], 
 			double w[][], double beta[], int cnr[], double z0[][], boolean trace, double tol,
 			int method) {
-		int i, j;
+		int i, j, k, m, p;
 		double diffR;
 		double diffI;
 		double sum;
@@ -189,6 +189,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	    // } // if ((cnr == null) || (cnr.length == 0))
 	
 	    // Renumber the vertices so that cnr[0] = 0.
+	    int renum[] = new int[n];
+	    for (i = cnr[0]; i < n; i++) {
+	    	renum[i-cnr[0]] = i;
+	    }
+	    for (i = 0; i <= cnr[0]-1; i++) {
+	    	renum[n-cnr[0]+i] = i;
+	    }
 	    double wcopy[][] = new double[n][2];
 	    double betacopy[] = new double[n];
 	    for (i = cnr[0]; i < n; i++) {
@@ -376,11 +383,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	    
 	    // Vertices on the "short" edges are transformed into the interval [-1,1],
 	    // and then the Trefethen-style transformation is used.
-	    L[0][0] = z0copy[cnrcopy[1]][0] - z0copy[cnrcopy[0]][0];
-	    L[0][1] = z0copy[cnrcopy[1]][1] - z0copy[cnrcopy[0]][1];
+	    L[0] = z0copy[cnrcopy[1]][0] - z0copy[cnrcopy[0]][0];
+	    L[1] = z0copy[cnrcopy[1]][1] - z0copy[cnrcopy[0]][1];
 	    double x[] = new double[cnrcopy[2]-cnrcopy[1]-1];
 	    for (i = cnrcopy[1]+1; i <= cnrcopy[2]-1; i++) {
-	    	x[i-cnrcopy[1]-1] = Math.exp(Math.PI*(L[0][0] - z0copy[i][0]))*Math.cos(Math.PI*(L[0][1] + z0copy[i][1]));
+	    	x[i-cnrcopy[1]-1] = Math.exp(Math.PI*(L[0] - z0copy[i][0]))*Math.cos(Math.PI*(L[1] + z0copy[i][1]));
 	    }
 	    double dx2[] = new double[x.length+1];
 	    dx2[0] = 1 - x[0];
@@ -523,20 +530,262 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	    for (i = 0; i < n; i++) {
 	    	bs[i+2] = beta[i];
 	    }
-	    int idx[] = new int[n+3];
-	    for (i = 0; i <= ends[0]; i++) {
-	    	idx[i] = i;
+	    double qs[][] = new double[qdat.length][qdat[0].length+4];
+		for (i = 0; i < qdat.length; i++) {
+			for (j = 0; j <= ends[0]; j++) {
+				qs[i][j] = qdat[i][j];
+				qs[i][j+2+n+1] = qdat[i][j+n+1];
+			}
+			qs[i][ends[0]+1] = qdat[i][n];
+			qs[i][ends[0]+3+n+1] = qdat[i][2*n+1];
+			for (j = ends[0]+1; j <= ends[1]; j++) {
+				qs[i][j+1] = qdat[i][j];
+				qs[i][j+3+n+1] = qdat[i][j+n+1];
+			}
+			qs[i][ends[1]+2] = qdat[i][n];
+			qs[i][ends[1]+4+n+1] = qdat[i][2*n+1];
+			for (j = ends[1]+1; j <= n-1; j++) {
+				qs[i][j+2] = qdat[i][j];
+				qs[i][j+4+n+1] = qdat[i][j+n+1];
+			}
+			qs[i][n+2] = qdat[i][n];
+			qs[i][2*n+5] = qdat[i][2*n+1];
+		} // for (i = 0; i < qdat.length; i++)
+	    
+		// Determine multiplicative constant
+		double mid[][] = new double[1][2];
+		mid[0][0] = (zs[0][0] + zs[1][0])/2.0;
+		mid[0][1] = (zs[0][1] + zs[1][1])/2.0;
+		int sing1[] = new int[1];
+		sing1[0] = 2;
+		double z1[][] = new double[1][2];
+		z1[0][0] = zs[1][0];
+		z1[0][1] = zs[1][1];
+		double I1[][] = stquad(z1, mid, sing1, zs, bs, qs);
+		sing1[0] = 1;
+		z1[0][0] = zs[0][0];
+		z1[0][1] = zs[0][1];
+		double I2[][] = stquad(z1, mid, sing1, zs, bs, qs);
+		double g[] = new double[2];
+		g[0] = I1[0][0] - I2[0][0];
+		g[1] = I1[0][1] - I2[0][1];
+		double ar = w[0][0] - w[1][0];
+		double ai = w[0][1] - w[1][1];
+		zdiv(ar, ai, g[0], g[1], cr, ci);
+		c[0] = cr[0];
+		c[1] = ci[0];
+		
+		// Find prevertices on the rectangle
+		
+		// Find corners of the rectangle
+		zs = new double[z.length][2];
+		for (i = 0; i < z.length; i++) {
+			zs[i][0] = z[i][0];
+			zs[i][1] = z[i][1];
+		}
+		// In rptrnsfm z[cnr[0]] is never changed from its initial value of zero
+		// so zs[cnrcopy[0]][0] = 0 and zs[cnrcopy[0]][1] = 0;
+		// so L is real
+		L[0] = Math.max(zs[cnrcopy[1]][0], zs[cnrcopy[2]][0]) - zs[cnrcopy[0]][0];
+		L[1] = -zs[cnrcopy[0]][1];
+		double K[] = new double[1];
+		double Kp[] = new double[1];
+		ellipkkp(K, Kp, L[0]);
+		double rect[][] = new double[4][2];
+		rect[0][0] = K[0];
+		rect[1][0] = K[0];
+		rect[1][1] = Kp[0];
+		rect[2][0] = -K[0];
+		rect[2][1] = Kp[0];
+		rect[3][0] = -K[0];
+		int tllength = 0;
+		int trlength = 0;
+		int bllength = 0;
+		int brlength = 0;
+		for (i = 0; i < zs.length; i++) {
+			if ((zs[i][0] > L[0]) && (zs[i][1] > 0.0)) {
+				// top-left side
+				tllength++;
+			}
+			else if ((zs[i][0] > L[0]) && (zs[i][1] == 0.0)) {
+				// top-right side
+				trlength++;
+			}
+			else if ((zs[i][0] < 0.0) && (zs[i][1] > 0.0)) {
+				// bottom-left side
+				bllength++;
+			}
+			else if ((zs[i][0] < 0.0) && (zs[i][1] == 0.0)) {
+				// bottom-right side
+				brlength++;
+			}
+		} // for (i = 0; i < zs.length; i++)
+		int tl[] = new int[tllength];
+		int tr[] = new int[trlength];
+		int bl[] = new int[bllength];
+		int br[] = new int[brlength];
+		for (i = 0, j = 0, k = 0, m = 0, p = 0; i < zs.length; i++) {
+			if ((zs[i][0] > L[0]) && (zs[i][1] > 0.0)) {
+				// top-left side
+				tl[j++] = i;
+			}
+			else if ((zs[i][0] > L[0]) && (zs[i][1] == 0.0)) {
+				// top-right side
+				tr[k++] = i;
+			}
+			else if ((zs[i][0] < 0.0) && (zs[i][1] > 0.0)) {
+				// bottom-left side
+				bl[m++] = i;
+			}
+			else if ((zs[i][0] < 0.0) && (zs[i][1] == 0.0)) {
+				// bottom-right side
+				br[p++] = i;
+			}
+		} // for (i = 0, j = 0, k = 0, m = 0, p = 0; i < zs.length; i++)
+		
+		// Initial guesses
+		z = new double[zs.length][2];
+		// Corners
+		for (i = 0; i < 4; i++) {
+		    z[cnrcopy[i]][0] = rect[i][0];
+		    z[cnrcopy[i]][1] = rect[i][1];
+		}
+		// Left and right sides are simple
+		int denom = cnrcopy[3] - cnrcopy[2];
+		double realDiff = (rect[3][0] - rect[2][0])/denom;
+		double imagDiff = (rect[3][1] - rect[2][1])/denom;
+		for (i = cnrcopy[2]; i <= cnrcopy[3]; i++) {
+			z[i][0] = rect[2][0] + (i - cnrcopy[2]) * realDiff;
+			z[i][1] = rect[2][1] + (i - cnrcopy[2]) * imagDiff;
+		}
+		denom = cnrcopy[1] - cnrcopy[0];
+		realDiff = (rect[1][0] - rect[0][0])/denom;
+		imagDiff = (rect[1][1] - rect[0][1])/denom;
+		for (i = cnrcopy[0]; i <= cnrcopy[1]; i++) {
+			z[i][0] = rect[0][0] + (i - cnrcopy[0]) * realDiff;
+			z[i][1] = rect[0][1] + (i - cnrcopy[0]) * imagDiff;
+		}
+		// Cluster the top and bottom guesses near 0.
+		double h = K[0]/20.0;
+		for (i = 0; i < tl.length; i++) {
+			z[tl[i]][0] = -(i+1)*h;
+			z[tl[i]][1] = Kp[0];
+		}
+		for (i = 0; i < tr.length; i++) {
+			z[tr[i]][0] = h*(tr.length - i);
+			z[tr[i]][1] = Kp[0];
+		}
+		for (i = 0; i < bl.length; i++) {
+			z[bl[i]][0] = -h * (bl.length - i);
+			z[bl[i]][1] = 0.0;
+		}
+		for (i = 0; i < br.length; i++) {
+			z[br[i]][0] = (i+1)*h;
+			z[br[i]][1] = 0.0;
+		}
+		
+		// Newton iteration on "r2strip() - zs = 0"
+		double zn[][] = new double[z.length][2];
+		for (i = 0; i < z.length; i++) {
+			zn[i][0] = z[i][0];
+			zn[i][1] = z[i][1];
+		}
+		int maxiter = 50;
+		boolean done[] = new boolean[zn.length];
+		for (i = 0; i < 4; i++) {
+			done[cnrcopy[i]] = true;
+		}
+		k = 0;
+		double F[] = new double[2];
+		boolean alldone = true;
+		for (i = 0; i < done.length && alldone; i++) {
+			if (!done[i]) {
+				alldone = false;
+			}
+		} // for (i = 0; i < done.length && alldone; i++)
+		while ((!alldone) && (k < maxiter)) {
+			
+		} // while ((!alldone) && (k < maxiter))
+    }
+	
+	// ellipkkp is the complete elliptic integral of the first kind, with complement.
+	// K[0] returns the value of the complete elliptic integral of the first kind, evaluated at
+	// M = exp(-2*PI*L), 0 < L < Infinity/
+	// Kp[0] returns the result for the complementary parameter 1-m, which is useful when m < eps.
+	// Even when m < 1.0e-6, the built-in ellipke can lose digits of accuracy for Kp.
+	// Recall that the elliptic modulus k is related to the parameter m by m = k^2.
+	// Original MATLAB routine copyright 1999 by Toby Driscoll.
+	
+	// elipkkp uses the method of the arithmetic-geometric mean described in 17.6 of M. Abramowitz
+	// and I. A. Stegun, "Handbook of Mathematical Functions," Dover, 1965.  Same method as in 
+	// ellipke, only interchanging 1 and1-m to find Kp.
+	private void ellipkkp(double K[], double Kp[], double L) {
+	    double m;
+	    double a0;
+	    double b0;
+	    double s0;
+	    int i1;
+	    double mm;
+	    double a1 = 0.0;
+	    double b1;
+	    double c1;
+	    double w1;
+	    // When m = exp(-2*PI*L) is extremely small, use O(m) approximations.
+	    if (L > 10.0) {
+	    	K[0] = Math.PI/2.0;
+	    	Kp[0] = Math.PI*L + Math.log(4.0);
+	    	return;
+	    } // if (L > 10.0)
+	    
+	    m = Math.exp(-2.0*Math.PI*L);
+	    a0 = 1;
+	    b0 = Math.sqrt(1.0-m);
+	    s0 = m;
+	    i1 = 0;
+	    mm = 1.0;
+	    while (mm > eps) {
+	        a1 = (a0 + b0)/2.0;
+	        b1 = Math.sqrt(a0*b0);
+	        c1 = (a0-b0)/2.0;
+	        i1 = i1 + 1;
+	        w1 = Math.pow(2, i1)*c1*c1;
+	        mm = w1;
+	        s0 = s0 + w1;
+	        a0 = a1;
+	        b0 = b1;
+	    } // while (mm > eps)
+	    
+	    if (m == 1.0) {
+	    	K[0] = Double.POSITIVE_INFINITY;
 	    }
-	    idx[ends[0]+1] = n;
-	    for (i = ends[0]+1; i <= ends[1]; i++) {
-	    	idx[i+1] = i;
+	    else {
+	    	K[0] = Math.PI/(2.0 * a1);
 	    }
-	    idx[ends[1]+2] = n;
-	    for (i = ends[1]+1; i <= n-1; i++) {
-	    	idx[i+2] = i;
+	    
+	    a0 = 1.0;
+	    b0 = Math.sqrt(m);
+	    s0 = 1.0 - m;
+	    i1 = 0;
+	    mm = 1.0;
+	    while (mm > eps) {
+	    	a1 = (a0 + b0)/2.0;
+	    	b1 = Math.sqrt(a0*b0);
+	    	c1 = (a0-b0)/2.0;
+	    	i1 = i1 + 1;
+	    	w1 = Math.pow(2, i1)*c1*c1;
+	    	mm = w1;
+	    	s0 = s0 + w1;
+	    	a0 = a1;
+	    	b0 = b1;
+	    } // while (mm > eps)
+	    
+	    if (m == 0) {
+	    	Kp[0] = Double.POSITIVE_INFINITY;
 	    }
-	    idx[n+2] = n;
-	}
+	    else {
+	    	Kp[0] = Math.PI/(2.0 * a1);
+	    }
+ 	}
 	
 	private void printExitStatus(int exitStatus) {
 		if (exitStatus == -1) {
@@ -708,26 +957,31 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 						z2[i+2][1] = z[i][1];
 						beta2[i+2] = beta[i];
 					}
-					// Put dummy columns into qdat at ends
-					double qdat2[][] = new double[qdat.length][qdat[0].length+2];
-					for (i = 0; i <= ends[0]; i++) {
-						qdat2[i][qdat[0].length] = i;
-						qdat2[i][qdat[0].length+1] = i+n+1;
-					}
-					qdat2[ends[0]+1][qdat[0].length] = n;
-					qdat2[ends[0]+1][qdat[0].length+1] = n+n+1;
-					for (i = ends[0]+1; i <= ends[1]; i++) {
-						qdat2[i+1][qdat[0].length] = i;
-						qdat2[i+1][qdat[0].length+1] = i+n+1;	
-					}
-					qdat2[ends[1]+2][qdat[0].length] = n;
-					qdat2[ends[1]+2][qdat[0].length+1] = n+n+1;
-					for (i = ends[1]+1; i <= n-1; i++) {
-						qdat2[i+2][qdat[0].length] = i;
-						qdat2[i+2][qdat[0].length+1] = i+n+1;	
-					}
-					qdat2[n+2][qdat[0].length] = n;
-					qdat2[n+2][qdat[0].length+1] = n+n+1;
+					// Put dummy columns into qdat after ends[0] and ends[1] columns
+					// qdata ia nqpts rows by 2*n+2 columns
+					// so we are expanding it to 2*n+6 columns with the insertion
+					// of 2 more of column n and 2 more of column 2*n+1.
+					double qdat2[][] = new double[qdat.length][qdat[0].length+4];
+					for (i = 0; i < qdat.length; i++) {
+						for (j = 0; j <= ends[0]; j++) {
+							qdat2[i][j] = qdat[i][j];
+							qdat2[i][j+2+n+1] = qdat[i][j+n+1];
+						}
+						qdat2[i][ends[0]+1] = qdat[i][n];
+						qdat2[i][ends[0]+3+n+1] = qdat[i][2*n+1];
+						for (j = ends[0]+1; j <= ends[1]; j++) {
+							qdat2[i][j+1] = qdat[i][j];
+							qdat2[i][j+3+n+1] = qdat[i][j+n+1];
+						}
+						qdat2[i][ends[1]+2] = qdat[i][n];
+						qdat2[i][ends[1]+4+n+1] = qdat[i][2*n+1];
+						for (j = ends[1]+1; j <= n-1; j++) {
+							qdat2[i][j+2] = qdat[i][j];
+							qdat2[i][j+4+n+1] = qdat[i][j+n+1];
+						}
+						qdat2[i][n+2] = qdat[i][n];
+						qdat2[i][2*n+5] = qdat[i][2*n+1];
+					} // for (i = 0; i < qdat.length; i++)
 					// Change singularity indices to reflect ends
 					for (i = 0; i < left.length; i++) {
 						if (left[i] > ends[0]) {
