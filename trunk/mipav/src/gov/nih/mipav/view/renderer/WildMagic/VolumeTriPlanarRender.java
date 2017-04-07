@@ -2037,9 +2037,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		sphereScale = 12*afResolutions[0];
 		System.err.println( sphereScale );
 		Transformation xfrm = new Transformation();
-//		xfrm.SetUniformScale( sphereScale );
 		xfrm.SetScale( sphereScale/(2*afResolutions[0]), sphereScale/(2*afResolutions[1]), sphereScale/(2*afResolutions[2]) );
-//		xfrm.SetScale( m_fX, m_fY, m_fZ );
 
 		for ( int i = 0; i < annotations.getCurves().size(); i++ )
 		{
@@ -2055,6 +2053,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			
 			ColorRGBA colorRGBA = new ColorRGBA(c.getRed()/255f,c.getGreen()/255f,c.getBlue()/255f,1);
 						
+			float radius = text.elementAt(0).distance(text.elementAt(1));
+			System.err.println(i + " " + radius);
+			xfrm.SetScale( radius*sphereScale/(2*afResolutions[0]), radius*sphereScale/(2*afResolutions[1]), radius*sphereScale/(2*afResolutions[2]) );
 			std.SetTransformation( xfrm );
 			TriMesh sphere = std.Sphere(2);
 			updateSphere( sphere, 0, 0, 0, colorRGBA );

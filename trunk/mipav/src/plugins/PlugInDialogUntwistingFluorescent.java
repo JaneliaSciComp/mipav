@@ -135,6 +135,9 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 			Vector<Integer> numSegmented = null;
 			Vector<Integer> numMatched = null;
 			
+			int latticeMatches = 0;
+			int latticeCount = 0;
+			
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{				
 				// Build the full image name:
@@ -150,7 +153,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 					WormData wormData = new WormData(wormImage); 
 
 
-					wormData.segmentSkin();
+//					wormData.segmentSkin();
 					
 					
 					// build the nuclei image file name 
@@ -206,6 +209,8 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 
 							// Segmented blurred input image:
 							wormData.segmentSeamCells(minRadius, maxRadius);
+							if ( true )
+								return;
 							seamImage = wormData.getSeamSegmentation();
 							seamCells = wormData.getSeamCells();
 
@@ -215,7 +220,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							{
 								outputFileDir.mkdir();
 							}
-							LatticeModel.saveSeamCellsTo(seamCellDir, seamCells);
+							LatticeModel.saveSeamCellsTo(seamCellDir, "seamCellInfo.csv", wormData.getSeamAnnotations());
 						}
 						if ( seamCells != null)
 						{
@@ -250,6 +255,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							wormData.segmentSkin();
 						}
 						wormData.generateLattice();
+						latticeCount++;
 						autoLattice = wormData.getAutoLattice();
 						if ( latticeBuildTestResults.isSelected() && (latticeVector.size() != 0) )
 						{
@@ -267,6 +273,10 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 									match |= newMatch;
 								}
 								System.err.println( fileName + " lattice match " + match + "   " + matchIndex );
+								if ( match )
+								{
+									latticeMatches++;
+								}
 							}
 							else
 							{
@@ -380,6 +390,10 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 				saveSegmentationStatistics(baseFileDir, fileNamesList, numSegmented, numMatched );
 			}
 			System.err.println("Done plugin" );
+			if ( latticeBuildTestResults.isSelected() && (latticeCount > 0) )
+			{
+				MipavUtil.displayInfo( "Found " + latticeMatches + " out of " + latticeCount + " tested" );
+			}
 		}
 	}
 

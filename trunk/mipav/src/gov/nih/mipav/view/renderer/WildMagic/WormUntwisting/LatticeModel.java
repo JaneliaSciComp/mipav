@@ -104,7 +104,7 @@ public class LatticeModel {
 
 	/**
 	 */
-	public static void saveSeamCellsTo(final String dir, Vector<Vector3f> pts)
+	public static void saveSeamCellsTo(final String dir, final String fileName, VOI annotations)
 	{
 
 		final File fileDir = new File(dir);
@@ -116,10 +116,10 @@ public class LatticeModel {
 		}
 
 
-		File file = new File(fileDir + File.separator + "seamCellInfo.csv");
+		File file = new File(fileDir + File.separator + fileName);
 		if (file.exists()) {
 			file.delete();
-			file = new File(fileDir + File.separator + "seamCellInfo.csv");
+			file = new File(fileDir + File.separator + fileName);
 		}
 
 		try {
@@ -127,10 +127,11 @@ public class LatticeModel {
 			final FileWriter fw = new FileWriter(file);
 			final BufferedWriter bw = new BufferedWriter(fw);
 			bw.write("name" + "," + "x_voxels" + "," + "y_voxels" + "," + "z_voxels" + "\n");
-			for (int i = 0; i < pts.size(); i++) {
+			for (int i = 0; i < annotations.getCurves().size(); i++) {
 
-				Vector3f position = pts.elementAt(i);
-				bw.write("Cell " + (i+1) + "," + position.X + "," + position.Y + ","	+ position.Z + "," + "\n");
+				VOIText annotation = (VOIText)annotations.getCurves().elementAt(i);
+				Vector3f position = annotation.elementAt(0);
+				bw.write(annotation.getText() + "," + position.X + "," + position.Y + ","	+ position.Z + "," + "\n");
 			}
 			bw.newLine();
 			bw.close();
@@ -1241,7 +1242,7 @@ public class LatticeModel {
 				imageA.registerVOI(marker);
 			}
 
-			saveAllVOIsTo(voiDir, imageA);
+			saveAllVOIsTo(voiDir + File.separator, imageA);
 
 			imageA.unregisterAllVOIs();
 			imageA.registerVOI(lattice);
@@ -1621,7 +1622,7 @@ public class LatticeModel {
 //		//		imageA.registerVOI(derivatives);
 	}
 
-	public float[] testLatticeImage( VOIContour leftIn, VOIContour rightIn )
+	public float[] testLatticeImage( VOIContour leftIn, VOIContour rightIn, float minValue )
 	{		
 		
 		
@@ -1663,146 +1664,106 @@ public class LatticeModel {
 		
 		
 		
-//		if ( seamCellImage != null )
-//		{
-//			Vector3f leftPt1 = new Vector3f();
-//			Vector3f rightPt1 = new Vector3f();
-//			Vector3f centerPt = new Vector3f();
-//			for ( int i = 0; i < left.size() - 1; i++ )
-//			{
-//				leftPt1.copy(left.elementAt(i));
-//				rightPt1.copy(right.elementAt(i));
-//
-//				int leftID1 = seamCellImage.getInt( (int)leftPt1.X, (int)leftPt1.Y, (int)leftPt1.Z );
-//				int rightID1 = seamCellImage.getInt( (int)rightPt1.X, (int)rightPt1.Y, (int)rightPt1.Z );
-//
-//
-//				Vector3f leftPt2 = left.elementAt(i+1);
-//				Vector3f rightPt2 = right.elementAt(i+1);
-//
-//				int leftID2 = seamCellImage.getInt( (int)leftPt2.X, (int)leftPt2.Y, (int)leftPt2.Z );
-//				int rightID2 = seamCellImage.getInt( (int)rightPt2.X, (int)rightPt2.Y, (int)rightPt2.Z );
-//
-//				Vector3f leftDir   = Vector3f.sub(leftPt2,   leftPt1);     float lengthLeft   = leftDir.normalize();
-//				Vector3f rightDir  = Vector3f.sub(rightPt2,  rightPt1);    float lengthRight  = rightDir.normalize();
-//
-//				float steps = Math.min(lengthLeft, lengthRight);
-//				leftDir.scale(lengthLeft/steps);
-//				rightDir.scale(lengthRight/steps);
-//				for ( int j = 0; j < steps; j++ )
-//				{
-//					leftPt1.add(leftDir);
-//					rightPt1.add(rightDir);
-//					
-//					centerPt.copy(leftPt1); centerPt.add(rightPt1);   centerPt.scale(0.5f);
-//
-//					int leftID = seamCellImage.getInt( (int)leftPt1.X, (int)leftPt1.Y, (int)leftPt1.Z );
-//					int rightID = seamCellImage.getInt( (int)rightPt1.X, (int)rightPt1.Y, (int)rightPt1.Z );
-//					int centerID = seamCellImage.getInt( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
-//
-//					if ( seamCellIds.contains(leftID) && (leftID != 0) && !((leftID == leftID1) || (leftID == leftID2)) && (leftID1 != 0) && (leftID2 != 0))
-//					{
-//						if ( !((leftID == rightID1) || (leftID == rightID2)) )
-//						{
-//							//					System.err.println( "  Left: " + leftID + "   " + allSeamCellIDs[i][0] + "  " + allSeamCellIDs[i][1] + "   " + !((leftID == allSeamCellIDs[i][0]) || (leftID == allSeamCellIDs[i][1])));
-//							return new float[]{-1,1};
-//						}
-//					}
-//					if ( seamCellIds.contains(rightID) && (rightID != 0) && !((rightID == rightID1) || (rightID == rightID2)) && (rightID1 != 0) && (rightID2 != 0))
-//					{
-//						if ( !((rightID == leftID1) || (rightID == leftID2)) )
-//						{
-//							//					System.err.println( "  Right: " + rightID + "   " + allSeamCellIDs[i][2] + "  " + allSeamCellIDs[i][3] + "   " + !((rightID == allSeamCellIDs[i][2]) || (rightID == allSeamCellIDs[i][3])));
-//							return new float[]{-1,1};
-//						}
-//					}
-//					if ( seamCellIds.contains(centerID) && !((centerID == leftID) || (centerID == rightID)) && (leftID != 0) && (rightID != 0) )
-//					{
-//						//					System.err.println( "  Center: " + centerID + "   " + leftID + "  " + rightID + "   " + !((centerID == leftID) || (centerID == rightID)));
-//						return new float[]{-1,1};
-//					}
-//				}
-//			}
-//		}
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
 		if ( !generateCurves(5) )
 		{
 			return new float[]{-1,1};
 		}
-			
-		// Test how much the angle changes between seam cells:
-		Vector<Integer> closestIndex = new Vector<Integer>();
-		Vector<Float> closestDist = new Vector<Float>();
-		Vector<Vector3f> centerPts = new Vector<Vector3f>();
-		for ( int i = 0; i < left.size(); i++ )
+		
+		int step = 5;
+		for ( int i = 0; i < upVectors.size()-step; i++ )
 		{
-			Vector3f centerPt = Vector3f.add(left.elementAt(i), right.elementAt(i) );
-			centerPt.scale(0.5f);
-			centerPts.add( centerPt );
-			closestIndex.add( -1 );
-			closestDist.add( Float.MAX_VALUE );
-		}
-		for ( int i = 0; i < centerPositions.size(); i++ )
-		{
-			for ( int j = 0; j < centerPts.size(); j++ )
+			float angle = upVectors.elementAt(i).angle(upVectors.elementAt(i+step));
+//			System.err.println( angle );
+			if ( angle > (Math.PI/2f) )
 			{
-				float dist = centerPositions.elementAt(i).distance(centerPts.elementAt(j));
-				if ( dist < closestDist.elementAt(j) )
-				{
-					closestDist.set(j, dist);
-					closestIndex.set(j, i );
-				}
-			}
-		}
-		for ( int i = 0; i < closestIndex.size()-1; i++ )
-		{
-			int index = closestIndex.elementAt(i);
-			int indexP1 = closestIndex.elementAt(i+1);
-			if ( index == -1 || indexP1 == -1 )
-				continue;
-			float totalAngle = 0;
-			for ( int j = index; j < indexP1; j++ )
-			{
-				Vector3f up1 = upVectors.elementAt(j);
-				Vector3f up2 = upVectors.elementAt(j+1);
-
-				float angle = up1.angle(up2);
-				totalAngle += angle;
-			}
-			//			System.err.println( "   testLatticeImage angle:   " + totalAngle );
-			if ( totalAngle  > (2*Math.PI/3f) )
-			{
+//				System.err.println( i + "   " + angle );
 				return new float[]{-1,1};
 			}
 		}
+			
+//		// Test how much the angle changes between seam cells:
+//		Vector<Integer> closestIndex = new Vector<Integer>();
+//		Vector<Float> closestDist = new Vector<Float>();
+//		Vector<Vector3f> centerPts = new Vector<Vector3f>();
+//		for ( int i = 0; i < left.size(); i++ )
+//		{
+//			Vector3f centerPt = Vector3f.add(left.elementAt(i), right.elementAt(i) );
+//			centerPt.scale(0.5f);
+//			centerPts.add( centerPt );
+//			closestIndex.add( -1 );
+//			closestDist.add( Float.MAX_VALUE );
+//		}
+//		for ( int i = 0; i < centerPositions.size(); i++ )
+//		{
+//			for ( int j = 0; j < centerPts.size(); j++ )
+//			{
+//				float dist = centerPositions.elementAt(i).distance(centerPts.elementAt(j));
+//				if ( dist < closestDist.elementAt(j) )
+//				{
+//					closestDist.set(j, dist);
+//					closestIndex.set(j, i );
+//				}
+//			}
+//		}
+//		for ( int i = 0; i < closestIndex.size()-1; i++ )
+//		{
+//			int index = closestIndex.elementAt(i);
+//			int indexP1 = closestIndex.elementAt(i+1);
+//			if ( index == -1 || indexP1 == -1 )
+//				continue;
+//			float totalAngle = 0;
+//			for ( int j = index; j < indexP1; j++ )
+//			{
+//				Vector3f up1 = upVectors.elementAt(j);
+//				Vector3f up2 = upVectors.elementAt(j+1);
+//
+//				float angle = up1.angle(up2);
+//				totalAngle += angle;
+//			}
+//			//			System.err.println( "   testLatticeImage angle:   " + totalAngle );
+//			if ( totalAngle  > (2*Math.PI/3f) )
+//			{
+//				return new float[]{-1,1};
+//			}
+//		}
 
 		// Look for intersecting seam cells along the curve path:
 		float[] avgValue = new float[]{0,0};
+		float leftVals = 0;
+		float rightVals = 0;
+//		float centerVals = 0;
+		float min = (float)imageA.getMin();
 		for ( int i = 0; i < leftPositions.size(); i++ )
 		{
 			Vector3f leftPt = leftPositions.elementAt(i);
 			Vector3f rightPt = rightPositions.elementAt(i);
 			Vector3f centerPt = centerPositions.elementAt(i);
 
+//			if ( seamCellImage != null )
+//			{
+//				leftVals = seamCellImage.getFloat( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
+//				rightVals = seamCellImage.getFloat( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
+//			}
+//			else
+//			{
+//				leftVals = 1;
+//				rightVals = 1;
+//			}
+//			leftVals = imageA.getFloat( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
+//			if ( leftVals > min )
+//			{
+//				avgValue[0]++;
+//			}
+//			rightVals = imageA.getFloat( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
+//			if ( rightVals > min )
+//			{
+//				avgValue[1]++;
+//			}
+//			centerVals = imageA.getFloat( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
 			avgValue[0] += imageA.getFloat( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
 			avgValue[0] += imageA.getFloat( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
 			avgValue[1] += imageA.getFloat( (int)centerPt.X, (int)centerPt.Y, (int)centerPt.Z );
-
+			
 			if ( (seamCellImage != null) && (allSeamCellIDs != null) )
 			{
 				int leftID = seamCellImage.getInt( (int)leftPt.X, (int)leftPt.Y, (int)leftPt.Z );
@@ -1832,9 +1793,12 @@ public class LatticeModel {
 				}
 			}
 		}
-		avgValue[0] /= (2f *(float)leftPositions.size());
+		avgValue[0] /= (2* (float)leftPositions.size());
 		avgValue[1] /= (float)leftPositions.size();
 
+		
+//		System.err.println( leftVals/(float)leftPositions.size() + "   " + rightVals/(float)leftPositions.size() + "      " + centerVals/(float)leftPositions.size() );
+		
 		return avgValue;
 	}
 
@@ -2017,10 +1981,6 @@ public class LatticeModel {
 
 	private void shiftLattice()
 	{	
-		if ( latticeShifted || (seamCellImage == null) )
-		{
-			return;
-		}
 
 		// save the original lattice into a backup in case the lattice
 		// is modified to better fit the fluorescent marker segmentation:
@@ -2029,6 +1989,11 @@ public class LatticeModel {
 		for (int i = 0; i < left.size(); i++) {
 			leftBackup.add(new Vector3f(left.elementAt(i)));
 			rightBackup.add(new Vector3f(right.elementAt(i)));
+		}
+		
+		if ( latticeShifted || (seamCellImage == null) )
+		{
+			return;
 		}
 
 		latticeShifted = true;

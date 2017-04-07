@@ -38,6 +38,7 @@ import WildMagic.LibFoundation.Containment.ContBox3f;
 import WildMagic.LibFoundation.Curves.Curve3f;
 import WildMagic.LibFoundation.Intersection.IntrSphere3Sphere3f;
 import WildMagic.LibFoundation.Mathematics.Box3f;
+import WildMagic.LibFoundation.Mathematics.Plane3f;
 import WildMagic.LibFoundation.Mathematics.Sphere3f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
@@ -153,7 +154,7 @@ public class WormSegmentation
 	}
 
 
-	private HashMap<Float, Integer> estimateHistogram( final ModelImage image, float[] targetValues, float percentage )
+	private static float[] estimateHistogram( final ModelImage image, float[] targetValues, float percentage )
 	{    	
 		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
@@ -236,8 +237,9 @@ public class WormSegmentation
 		//    		System.err.println( countValues[i].X + " " + countValues[i].Y );
 		//    	}
 		map = null;
-		keyArray = null;
-		return countValues;
+//		keyArray = null;
+		countValues = null;
+		return keyArray;
 	}
 
 	// need edges
@@ -284,68 +286,7 @@ public class WormSegmentation
 		}
 		return count;
 	}
-	
-	
-	public static BoxBV fill2(final ModelImage image, float cutOffMin, float cutOffMax, final Vector<Vector3f> seedList, ModelImage result, BitSet visited, Vector3f center, final int id) {
-		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
 
-//		System.err.println( cutOffMin + " " + cutOffMax );
-		int count = 0;
-		Vector<Vector3f> pointsList = new Vector<Vector3f>();
-		while (seedList.size() > 0) {
-			final Vector3f seed = seedList.remove(0);
-
-			final int z = Math.round(seed.Z);
-			final int y = Math.round(seed.Y);
-			final int x = Math.round(seed.X);
-			int index = z*dimY*dimX + y*dimX + x;
-			result.set(x,  y, z, id);
-			visited.set(index);
-			
-			center.add(seed);
-			pointsList.add(seed);
-			count++;
-
-			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
-			{
-				for (int y1 = Math.max(0, y - 1); y1 <= Math.min(dimY - 1, y + 1); y1++)
-				{
-					for (int x1 = Math.max(0, x - 1); x1 <= Math.min(dimX - 1, x + 1); x1++)
-					{
-						if ( ! ( (x == x1) && (y == y1) && (z == z1))) {
-							index = z1*dimY*dimX + y1*dimX + x1;
-							if ( !visited.get(index) )
-							{
-								float value = image.getFloat(x1, y1, z1);
-								if ( (value >= cutOffMin) && (value <= cutOffMax) )
-								{
-									seedList.add( new Vector3f(x1,y1,z1) );
-								}
-								visited.set(index);
-							}
-						}
-					}
-				}
-			}							
-			if ( count >= image.getDataSize() )
-			{
-				break;
-			}
-		}
-//		System.err.println("fill2 " + count);
-		center.scale(1f/(float)count);
-//		System.err.println( "        fill2 " + bbMin + "    " + bbMax + "        " + bbMin.distance(bbMax) );
-		Vector3f[] array = new Vector3f[pointsList.size()];
-		for ( int i = 0; i < array.length; i++ )
-		{
-			array[i] = pointsList.remove(0);
-		}
-		BoxBV bBox = new BoxBV();
-		bBox.ComputeFromData(array);
-		return bBox;
-	}
 
 	public static Vector<Vector3f> findCenters( final ModelImage image, Vector<Vector3f> pts )
 	{
@@ -1489,7 +1430,7 @@ public class WormSegmentation
 
 
 		ModelImage blur = blur(image, blurVal);
-		
+
 		for ( int z = 0; z < dimZ; z++ )
 		{
 			for ( int y = 0; y < dimY; y++ )
@@ -1512,7 +1453,7 @@ public class WormSegmentation
 						}
 					}
 					average /= (float)count;
-					
+
 
 					for ( int z1 = Math.max(0, z-cubeSize); z1 <= Math.min(dimZ-1, z+cubeSize); z1++ )
 					{
@@ -1526,18 +1467,18 @@ public class WormSegmentation
 						}
 					}
 					meanVariance /= (float)count;
-					
+
 
 					float value = image.getFloat(x,y,z);
-						mp.setC(x, y, z, 3, average);
-						mp.setC(x, y, z, 2, meanVariance);
-						mp.setC(x, y, z, 1, value);
+					mp.setC(x, y, z, 3, average);
+					mp.setC(x, y, z, 2, meanVariance);
+					mp.setC(x, y, z, 1, value);
 				}
 			}
 		}
 
-//		System.err.println( "Saving mp image to : " + directory + mp.getImageName() + "_segmentation_" + ".tif" );
-//		ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
+		//		System.err.println( "Saving mp image to : " + directory + mp.getImageName() + "_segmentation_" + ".tif" );
+		//		ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
 		mp.calcMinMax();
 		new ViewJFrameImage((ModelImage) mp);
 	}
@@ -1571,8 +1512,8 @@ public class WormSegmentation
 				for ( int z = 0; z < dimZ; z++ )
 				{
 					float value = blur.getFloat(x,y,z);
-//					if ( value >= threshold )
-//						continue;
+					//					if ( value >= threshold )
+					//						continue;
 					//					System.err.println( value );
 					if ( up && (value < max) )
 					{
@@ -1616,7 +1557,7 @@ public class WormSegmentation
 				{
 					int zStart1 = (int) maxPts.firstElement().Z;
 					int zStart2 = (int) maxPts.lastElement().Z;
-					
+
 					float maxValue = maxVals.firstElement();
 					for ( int z = zStart1; z <= zStart2; z++ )
 					{
@@ -1627,7 +1568,7 @@ public class WormSegmentation
 						}
 						skinMask.set(z*dimY*dimX + y*dimX + x);
 					}
-					
+
 					maxValue = maxVals.lastElement();
 					for ( int z = zStart2; z >= zStart1; z-- )
 					{
@@ -1663,8 +1604,8 @@ public class WormSegmentation
 				for ( int x = 0; x < dimX; x++ )
 				{
 					float value = blur.getFloat(x,y,z);
-//					if ( value >= threshold )
-//						continue;
+					//					if ( value >= threshold )
+					//						continue;
 					//					System.err.println( value );
 					if ( up && (value < max) )
 					{
@@ -1708,7 +1649,7 @@ public class WormSegmentation
 				{
 					int xStart1 = (int) maxPts.firstElement().X;
 					int xStart2 = (int) maxPts.lastElement().X;
-					
+
 					float maxValue = maxVals.firstElement();
 					for ( int x = xStart1; x <= xStart2; x++ )
 					{
@@ -1719,7 +1660,7 @@ public class WormSegmentation
 						}
 						skinMask.set(z*dimY*dimX + y*dimX + x);
 					}
-					
+
 					maxValue = maxVals.lastElement();
 					for ( int x = xStart2; x >= xStart1; x-- )
 					{
@@ -1738,7 +1679,7 @@ public class WormSegmentation
 				maxHighPts.clear();
 			}
 		}
-		
+
 		for ( int z = 0; z < dimZ; z++ )
 		{
 			for ( int x = 0; x < dimX; x++ )
@@ -1752,8 +1693,8 @@ public class WormSegmentation
 				for ( int y = 0; y < dimY; y++ )
 				{
 					float value = blur.getFloat(x,y,z);
-//					if ( value >= threshold )
-//						continue;
+					//					if ( value >= threshold )
+					//						continue;
 					//					System.err.println( value );
 					if ( up && (value < max) )
 					{
@@ -1797,7 +1738,7 @@ public class WormSegmentation
 				{
 					int yStart1 = (int) maxPts.firstElement().Y;
 					int yStart2 = (int) maxPts.lastElement().Y;
-					
+
 					float maxValue = maxVals.firstElement();
 					for ( int y = yStart1; y <= yStart2; y++ )
 					{
@@ -1808,7 +1749,7 @@ public class WormSegmentation
 						}
 						skinMask.set(z*dimY*dimX + y*dimX + x);
 					}
-					
+
 					maxValue = maxVals.lastElement();
 					for ( int y = yStart2; y >= yStart1; y-- )
 					{
@@ -1820,7 +1761,7 @@ public class WormSegmentation
 						skinMask.set(z*dimY*dimX + y*dimX + x);
 					}					
 				}
-				
+
 				maxVals.clear();
 				minVals.clear();
 				maxPts.clear();
@@ -1869,8 +1810,8 @@ public class WormSegmentation
 		BitSet largest = skinMask;
 		if ( maxIndex != -1 )
 		{
-			 largest = components.elementAt(maxIndex);	
-			 System.err.println( "Skin Surface " + maxIndex + " " + components.elementAt(maxIndex).cardinality() );
+			largest = components.elementAt(maxIndex);	
+			System.err.println( "Skin Surface " + maxIndex + " " + components.elementAt(maxIndex).cardinality() );
 		}
 
 		BitSet visited2 = new BitSet(dimX*dimY*dimZ);
@@ -1897,7 +1838,7 @@ public class WormSegmentation
 						{
 							minV = val;
 						}
-//						mp.setC(x, y, z, 1, 255);
+						//						mp.setC(x, y, z, 1, 255);
 						seedList.add(new Vector3f(x,y,z));
 						surface.set(x, y, z, 10);
 						visited2.set(index);
@@ -1908,657 +1849,657 @@ public class WormSegmentation
 		System.err.println( "min max " + minV + " " + maxV );
 		System.err.println( seedList.size() );
 
-//		System.err.println( "Saving mp image to : " + directory + mp.getImageName() + ".tif" );
-//		ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
-//		
-//		blur.calcMinMax();
-//		fill2(blur, (float) Math.min(minV, blur.getMax() ), (float) blur.getMax(), seedList, surface, visited2, 10);
-//		surface.calcMinMax();
-//		new ViewJFrameImage((ModelImage) surface);
-		
+		//		System.err.println( "Saving mp image to : " + directory + mp.getImageName() + ".tif" );
+		//		ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
+		//		
+		//		blur.calcMinMax();
+		//		fill2(blur, (float) Math.min(minV, blur.getMax() ), (float) blur.getMax(), seedList, surface, visited2, 10);
+		//		surface.calcMinMax();
+		//		new ViewJFrameImage((ModelImage) surface);
+
 		return surface;
 
 	}
 
-//	public static ModelImage outlineB( String directory, ModelImage image, ModelImage mp, float threshold, int blurVal, boolean edgesOnly )
-//	{
-//		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-//		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-//		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
-//
-//		String imageName = image.getImageName();
-//		if (imageName.contains("_clone")) {
-//			imageName = imageName.replaceAll("_clone", "");
-//		}
-//		imageName = imageName + "_Outline_MP_Z";
-//
-//		ModelImage blur = blur(image, blurVal);
-//
-//		System.err.println( "Threshold value = " + threshold );		
-//
-//		BitSet skinMask = new BitSet(dimX*dimY*dimZ);
-//
-//		int count = 0;
-//		Vector<Float> maxVals = new Vector<Float>();
-//		Vector<Float> minVals = new Vector<Float>();
-//		Vector<Vector3f> maxPts = new Vector<Vector3f>();
-//		Vector<Vector3f> maxHighPts = new Vector<Vector3f>();
-//		Vector<Vector3f> minPts = new Vector<Vector3f>();
-//		for ( int y = 0; y < dimY; y++ )
-//		{
-//			for ( int x = 0; x < dimX; x++ )
-//			{
-//				float max = -1;
-//				int maxZ = -1;
-//				float min = Float.MAX_VALUE;
-//				int minZ = -1;
-//				boolean up = true;
-//				boolean down = false;
-//				for ( int z = 0; z < dimZ; z++ )
-//				{
-//					float value = blur.getFloat(x,y,z);
-//					//					System.err.println( value );
-//					if ( up && (value < max) )
-//					{
-//						if ( maxZ != -1 )
-//						{
-//							//							System.err.println( "max = " + max + " " + maxX );
-//							maxPts.add( new Vector3f(x, y, maxZ) );
-//							maxVals.add(new Float(max));
-//							max = -1;
-//							maxZ = -1;
-//							up = false;
-//							down = true;
-//						}
-//					}
-//					if ( down && (value > min) )
-//					{
-//						if ( minZ != -1 )
-//						{
-//							//							System.err.println( "min = " + min + " " + minX );
-//							minPts.add( new Vector3f(x, y, minZ) );
-//							minVals.add(new Float(min));
-//							min = Float.MAX_VALUE;
-//							minZ = -1;
-//							up = true;
-//							down = false;
-//						}
-//					}
-//					if ( up && (value > max) )
-//					{
-//						max = value;
-//						maxZ = z;
-//					}
-//					if ( down && (value < min) )
-//					{
-//						min = value;
-//						minZ = z;
-//					}
-//				}
-//
-//				for ( int i = 0; i < maxPts.size(); i++ )
-//				{
-//					int zStart = (int) maxPts.elementAt(i).Z;
-//					int zEnd = zStart;
-//					float maxValue = maxVals.elementAt(i);
-//					for ( int z = zStart; z < dimZ; z++ )
-//					{
-//						float value = blur.getFloat(x, y, z);
-//						if ( value < maxValue )
-//						{
-//							break;
-//						}
-//						zEnd = z;
-//						if ( maxValue > threshold )
-//						{
-////							mp.setC(x, y, z, 3, 10);
-////							skinMask.set(z*dimY*dimX + y*dimX + x);
-//						}
-//					}
-//					int avgZ = (int)((zStart + zEnd)/2f);
-//					maxPts.elementAt(i).Z = avgZ;
-//					if ( maxValue > threshold )
-//					{
-//						maxHighPts.add( new Vector3f(x, y, avgZ) );
-//					}
-//
-//					count++;
-//					//					System.err.println( avgX + " " + maxValue );
-//				}
-//
-//				for ( int i = 0; i < minPts.size(); i++ )
-//				{
-//					int zStart = (int) minPts.elementAt(i).Z;
-//					int zEnd = zStart;
-//					float minValue = minVals.elementAt(i);
-//					for ( int z = zStart; z < dimZ; z++ )
-//					{
-//						float value = blur.getFloat(x, y, z);
-//						if ( value > minValue )
-//						{
-//							break;
-//						}
-//						zEnd = z;
-//					}
-//					int avgZ = (int)((zStart + zEnd)/2f);
-//					minPts.elementAt(i).Z = avgZ;
-//					//					mp.setC(avgX,  y, z, 2, 255 );
-//					count++;
-//					//					System.err.println( avgX + " " + minValue );
-//				}
-//
-//				if ( maxHighPts.size() > 1 )
-//				{
-//				for ( int i = 0; i < maxHighPts.size(); i++ )
-//				{
-//					Vector3f pt = maxHighPts.elementAt(i);
-//					float val = blur.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
-//					
-//					Vector3f first = maxHighPts.firstElement();
-//					float firstVal = blur.getFloat((int)first.X, (int)first.Y, (int)first.Z);
-//					
-//					Vector3f last = maxHighPts.firstElement();
-//					float lastVal = blur.getFloat((int)last.X, (int)last.Y, (int)last.Z);
-//					if ( (i == 0) || (i == maxHighPts.size() -1) )
-//					{
-//						skinMask.set((int)pt.Z*dimY*dimX + y*dimX + x);
-////						mp.setC(x, y, (int)pt.Z, 1, 255);
-//					}
-////					else if ( (val > firstVal) && (val > lastVal) )
-////					{
-////						skinMask.set((int)pt.Z*dimY*dimX + y*dimX + x);
-//////						mp.setC(x, y, (int)pt.Z, 1, 255);
-////					}
-//				}
-//				}
-//
-//				maxVals.clear();
-//				minVals.clear();
-//				maxPts.clear();
-//				minPts.clear();
-//				maxHighPts.clear();
-//			}
-//		}
-//
-//
-//
-//		for ( int z = 0; z < dimZ; z++ )
-//		{
-//			for ( int y = 0; y < dimY; y++ )
-//			{
-//				float max = -1;
-//				int maxX = -1;
-//				float min = Float.MAX_VALUE;
-//				int minX = -1;
-//				boolean up = true;
-//				boolean down = false;
-//				for ( int x = 0; x < dimX; x++ )
-//				{
-//					float value = blur.getFloat(x,y,z);
-//					//					System.err.println( value );
-//					if ( up && (value < max) )
-//					{
-//						if ( maxX != -1 )
-//						{
-//							//							System.err.println( "max = " + max + " " + maxX );
-//							maxPts.add( new Vector3f(maxX, y, z) );
-//							maxVals.add(new Float(max));
-//							max = -1;
-//							maxX = -1;
-//							up = false;
-//							down = true;
-//						}
-//					}
-//					if ( down && (value > min) )
-//					{
-//						if ( minX != -1 )
-//						{
-//							//							System.err.println( "min = " + min + " " + minX );
-//							minPts.add( new Vector3f(minX, y, z) );
-//							minVals.add(new Float(min));
-//							min = Float.MAX_VALUE;
-//							minX = -1;
-//							up = true;
-//							down = false;
-//						}
-//					}
-//					if ( up && (value > max) )
-//					{
-//						max = value;
-//						maxX = x;
-//					}
-//					if ( down && (value < min) )
-//					{
-//						min = value;
-//						minX = x;
-//					}
-//				}
-//
-//				for ( int i = 0; i < maxPts.size(); i++ )
-//				{
-//					int xStart = (int) maxPts.elementAt(i).X;
-//					int xEnd = xStart;
-//					float maxValue = maxVals.elementAt(i);
-//					for ( int x = xStart; x < dimX; x++ )
-//					{
-//						float value = blur.getFloat(x, y, z);
-//						if ( value < maxValue )
-//						{
-//							break;
-//						}
-//						xEnd = x;
-//						if ( maxValue > threshold )
-//						{
-////							mp.setC(x, y, z, 1, 10);
-////							skinMask.set(z*dimY*dimX + y*dimX + x);
-//						}
-//					}
-//					int avgX = (int)((xStart + xEnd)/2f);
-//					maxPts.elementAt(i).X = avgX;
-//					if ( maxValue > threshold )
-//					{
-//						maxHighPts.add( new Vector3f(avgX,y,z));
-//					}
-//
-//					count++;
-//					//					System.err.println( avgX + " " + maxValue );
-//				}
-//
-//				for ( int i = 0; i < minPts.size(); i++ )
-//				{
-//					int xStart = (int) minPts.elementAt(i).X;
-//					int xEnd = xStart;
-//					float minValue = minVals.elementAt(i);
-//					for ( int x = xStart; x < dimX; x++ )
-//					{
-//						float value = blur.getFloat(x, y, z);
-//						if ( value > minValue )
-//						{
-//							break;
-//						}
-//						xEnd = x;
-//					}
-//					int avgX = (int)((xStart + xEnd)/2f);
-//					minPts.elementAt(i).X = avgX;
-//					//					mp.setC(avgX,  y, z, 2, 255 );
-//					count++;
-//					//					System.err.println( avgX + " " + minValue );
-//				}
-//				
-//				if ( maxHighPts.size() > 1 )
-//				{
-//				for ( int i = 0; i < maxHighPts.size(); i++ )
-//				{
-//					Vector3f pt = maxHighPts.elementAt(i);
-//					float val = blur.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
-//					
-//					Vector3f first = maxHighPts.firstElement();
-//					float firstVal = blur.getFloat((int)first.X, (int)first.Y, (int)first.Z);
-//					
-//					Vector3f last = maxHighPts.firstElement();
-//					float lastVal = blur.getFloat((int)last.X, (int)last.Y, (int)last.Z);
-//					if ( (i == 0) || (i == maxHighPts.size() -1) )
-//					{
-//						skinMask.set(z*dimY*dimX + y*dimX + (int)pt.X);
-////						mp.setC((int)pt.X, y, z, 2, 255);
-//					}
-////					else if ( (val > firstVal) && (val > lastVal) )
-////					{
-////						skinMask.set(z*dimY*dimX + y*dimX + (int)pt.X);
-//////						mp.setC((int)pt.X, y, z, 2, 255);
-////					}
-//				}
-//				}
-//
-//				maxVals.clear();
-//				minVals.clear();
-//				maxPts.clear();
-//				minPts.clear();
-//				maxHighPts.clear();
-//			}
-//		}
-//		
-//		for ( int z = 0; z < dimZ; z++ )
-//		{
-//			for ( int x = 0; x < dimX; x++ )
-//			{
-//				float max = -1;
-//				int maxY = -1;
-//				float min = Float.MAX_VALUE;
-//				int minY = -1;
-//				boolean up = true;
-//				boolean down = false;
-//				for ( int y = 0; y < dimY; y++ )
-//				{
-//					float value = blur.getFloat(x,y,z);
-//					//					System.err.println( value );
-//					if ( up && (value < max) )
-//					{
-//						if ( maxY != -1 )
-//						{
-//							//							System.err.println( "max = " + max + " " + maxX );
-//							maxPts.add( new Vector3f(x, maxY, z) );
-//							maxVals.add(new Float(max));
-//							max = -1;
-//							maxY = -1;
-//							up = false;
-//							down = true;
-//						}
-//					}
-//					if ( down && (value > min) )
-//					{
-//						if ( minY != -1 )
-//						{
-//							//							System.err.println( "min = " + min + " " + minX );
-//							minPts.add( new Vector3f(x, minY, z) );
-//							minVals.add(new Float(min));
-//							min = Float.MAX_VALUE;
-//							minY = -1;
-//							up = true;
-//							down = false;
-//						}
-//					}
-//					if ( up && (value > max) )
-//					{
-//						max = value;
-//						maxY = y;
-//					}
-//					if ( down && (value < min) )
-//					{
-//						min = value;
-//						minY = y;
-//					}
-//				}
-//
-//				for ( int i = 0; i < maxPts.size(); i++ )
-//				{
-//					int yStart = (int) maxPts.elementAt(i).Y;
-//					int yEnd = yStart;
-//					float maxValue = maxVals.elementAt(i);
-//					for ( int y = yStart; y < dimY; y++ )
-//					{
-//						float value = blur.getFloat(x, y, z);
-//						if ( value < maxValue )
-//						{
-//							break;
-//						}
-//						yEnd = y;
-//						if ( maxValue > threshold )
-//						{
-////							mp.setC(x, y, z, 2, 10);
-////							skinMask.set(z*dimY*dimX + y*dimX + x);
-//						}
-//					}
-//					int avgY = (int)((yStart + yEnd)/2f);
-//					maxPts.elementAt(i).Y = avgY;
-//					if ( maxValue > threshold )
-//					{
-//						maxHighPts.add( new Vector3f(x, avgY, z) );
-//					}
-//
-//					count++;
-//					//					System.err.println( avgX + " " + maxValue );
-//				}
-//
-//				for ( int i = 0; i < minPts.size(); i++ )
-//				{
-//					int yStart = (int) minPts.elementAt(i).Y;
-//					int yEnd = yStart;
-//					float minValue = minVals.elementAt(i);
-//					for ( int y = yStart; y < dimY; y++ )
-//					{
-//						float value = blur.getFloat(x, y, z);
-//						if ( value > minValue )
-//						{
-//							break;
-//						}
-//						yEnd = y;
-//					}
-//					int avgY = (int)((yStart + yEnd)/2f);
-//					minPts.elementAt(i).Y = avgY;
-//					//					mp.setC(avgX,  y, z, 2, 255 );
-//					count++;
-//					//					System.err.println( avgX + " " + minValue );
-//				}
-//
-//				if ( maxHighPts.size() > 1 )
-//				{
-//				for ( int i = 0; i < maxHighPts.size(); i++ )
-//				{
-//					Vector3f pt = maxHighPts.elementAt(i);
-//					float val = blur.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
-//					
-//					Vector3f first = maxHighPts.firstElement();
-//					float firstVal = blur.getFloat((int)first.X, (int)first.Y, (int)first.Z);
-//					
-//					Vector3f last = maxHighPts.firstElement();
-//					float lastVal = blur.getFloat((int)last.X, (int)last.Y, (int)last.Z);
-//					if ( (i == 0) || (i == maxHighPts.size() -1) )
-//					{
-//						skinMask.set(z*dimY*dimX + (int)pt.Y*dimX + x);
-////						mp.setC(x, (int)pt.Y, z, 3, 255);
-//					}
-////					else if ( (val > firstVal) && (val > lastVal) )
-////					{
-////						skinMask.set(z*dimY*dimX + (int)pt.Y*dimX + x);
-//////						mp.setC(x, (int)pt.Y, z, 3, 255);
-////					}
-//				}
-//				}
-//				maxVals.clear();
-//				minVals.clear();
-//				maxPts.clear();
-//				minPts.clear();
-//				maxHighPts.clear();
-//			}
-//		}
-//
-////		mp.calcMinMax();
-////		new ViewJFrameImage((ModelImage)mp.clone());
-//
-//		Vector<BitSet> components = new Vector<BitSet>();
-//		BitSet visited = new BitSet(dimZ*dimY*dimX);
-//		for ( int y = 0; y < dimY; y++ )
-//		{
-//			for ( int x = 0; x < dimX; x++ )
-//			{
-//				for ( int z = 0; z < dimZ; z++ )
-//				{
-//					int index = z*dimY*dimX + y*dimX + x;
-//					if ( skinMask.get(index) && !visited.get(index) )
-//					{
-//						BitSet filled = new BitSet(dimZ*dimY*dimX);
-//						Vector<Vector3f> seeds = new Vector<Vector3f>();
-//						seeds.add( new Vector3f(x, y, z) );
-//						fillMask( skinMask, visited, filled, seeds, dimX, dimY, dimZ );
-//						if ( filled.cardinality() > 1 )
-//						{
-//							components.add(filled);
-//							//							System.err.println( x + " " + y + " " + z + "    " + filled.cardinality() );
-//						}
-//					}
-//				}
-//			}
-//		}
-//
-//		int maxIndex = -1;
-//		int max = -1;
-//		for ( int i = 0; i < components.size(); i++ )
-//		{
-//			if ( components.elementAt(i).cardinality() > max )
-//			{
-//				max = components.elementAt(i).cardinality();
-//				maxIndex = i;
-//			}
-//		}
-//
-//		BitSet largest = skinMask;
-//		if ( maxIndex != -1 )
-//		{
-//			 largest = components.elementAt(maxIndex);	
-//			 System.err.println( "Skin Surface " + maxIndex + " " + components.elementAt(maxIndex).cardinality() );
-//		}
-////		BitSet xAdd = new BitSet(dimX*dimY*dimZ);
-////		BitSet yAdd = new BitSet(dimX*dimY*dimZ);
-////		BitSet zAdd = new BitSet(dimX*dimY*dimZ);
-////		int sliceCount = 10;
-////		while ( sliceCount > 0 )
-////		{
-////			sliceCount = 0;
-////			for ( int z = 1; z < dimZ-1; z++ )
-////			{
-////				for ( int y = 0; y < dimY; y++ )
-////				{
-////					for ( int x = 0; x < dimX; x++ )
-////					{
-////						int index = z*dimX*dimY + y*dimX + x;
-////						int indexM1 = (z-1)*dimX*dimY + y*dimX + x;
-////						int indexP1 = (z+1)*dimX*dimY + y*dimX + x;
-////						if ( !largest.get(index) && largest.get(indexM1) && largest.get(indexP1) )
-////						{
-////							xAdd.set(index);
-////							sliceCount++;
-////						}	
-////					}
-////				}
-////			}
-////			for ( int x = 1; x < dimX-1; x++ )
-////			{
-////				for ( int y = 0; y < dimY; y++ )
-////				{
-////					for ( int z = 0; z < dimZ; z++ )
-////					{
-////						int index = z*dimX*dimY + y*dimX + x;
-////						int indexM1 = z*dimX*dimY + y*dimX + (x-1);
-////						int indexP1 = z*dimX*dimY + y*dimX + (x+1);
-////						if ( !largest.get(index) && largest.get(indexM1) && largest.get(indexP1) )
-////						{
-////							yAdd.set(index);
-////							sliceCount++;
-////						}	
-////					}
-////				}
-////			}
-////			for ( int y = 1; y < dimY-1; y++ )
-////			{
-////				for ( int x = 0; x < dimX; x++ )
-////				{
-////					for ( int z = 0; z < dimZ; z++ )
-////					{
-////						int index = z*dimX*dimY + y*dimX + x;
-////						int indexM1 = z*dimX*dimY + (y-1)*dimX + x;
-////						int indexP1 = z*dimX*dimY + (y+1)*dimX + x;
-////						if ( !largest.get(index) && largest.get(indexM1) && largest.get(indexP1) )
-////						{
-////							zAdd.set(index);
-////							sliceCount++;
-////						}		
-////					}
-////				}
-////			}
-////			largest.or(xAdd);  xAdd.clear();
-////			largest.or(yAdd);  yAdd.clear();
-////			largest.or(zAdd);  zAdd.clear();
-////
-////			System.err.println( sliceCount );
-////		}
-//
-//		BitSet visited2 = new BitSet(dimX*dimY*dimZ);
-//		ModelImage surface = new ModelImage( ModelStorageBase.INTEGER, image.getExtents(), "Surface Test" );
-//		JDialogBase.updateFileInfo(image, surface);
-//		Vector<Vector3f> seedList = new Vector<Vector3f>();
-//		float minV = Float.MAX_VALUE;
-//		float maxV = -Float.MAX_VALUE;
-//		for ( int z = 0; z < dimZ; z++ )
-//		{
-//			for ( int y = 0; y < dimY; y++ )
-//			{
-//				for ( int x = 0; x < dimX; x++ )
-//				{
-//					int index = z*dimX*dimY + y*dimX + x;
-//					if ( largest.get(index) )
-//					{
-//						float val = blur.getFloat(x,y,z);
-//						if ( val > maxV )
-//						{
-//							maxV = val;
-//						}
-//						if ( val < minV )
-//						{
-//							minV = val;
-//						}
-//						mp.setC(x, y, z, 1, 255);
-//						seedList.add(new Vector3f(x,y,z));
-//						surface.set(x, y, z, 10);
-//						visited2.set(index);
-//					}	
-//				}
-//			}
-//		}
-//		System.err.println( "min max " + minV + " " + maxV );
-//		System.err.println( seedList.size() );
-//		
-////		ModelImage inside = new ModelImage( ModelStorageBase.SHORT, mp.getExtents(), "inside mask" );
-////		inside(mp, mp);
-////		center(mp, mp);
-//		
-//
-////		ModelImage3DLayout volumeLayout = new ModelImage3DLayout(dimX, dimY, dimZ, 1, 1, 1, 0, 0, 0);
-////
-////        // Perform the skeletonization of the input image.
-////        // Extract the centerline curve.
-////		Skeleton3D skeleton = new Skeleton3D(mp,volumeLayout);
-////
-////        FlyPathGraphSamples kFlyPathGraphSamples = skeleton.getPathGraph(1, minV.distance(maxV) );
-////
-////        FlyPathGraphCurve flyPathGraphCurve = new FlyPathGraphCurve(kFlyPathGraphSamples, 0.07f, 2);
-////
-////        if ( flyPathGraphCurve.getNumBranches() > 0 )
-////        {
-////        	System.err.println( "Path found" );
-////        	int numV = 100;
-////        	Curve3f kCurve = flyPathGraphCurve.getCurvePosition(0);
-////        	float fStep = kCurve.GetTotalLength() / (numV - 1);
-////
-////        	short id = (short) mp.getVOIs().getUniqueID();
-////        	VOI centerPath = new VOI(id, "centerPath", VOI.POLYLINE, (float) Math.random());
-////        	mp.registerVOI(centerPath);
-////        	VOIContour path = new VOIContour(false);
-////        	for (int i = 0; i < numV; i++ )
-////        	{
-////        		float fDist = i * fStep;
-////        		float fTime = kCurve.GetTime(fDist, 100, 1e-02f);      
-////        		Vector3f kPoint = kCurve.GetPosition(fTime);
-////        		path.add(kPoint);
-////        		System.err.println(kPoint);
-////        	}
-////        }
-////		System.err.println( count );
-//
-//
-//		System.err.println( "Saving mp image to : " + directory + mp.getImageName() + ".tif" );
-//		ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
-//		
-//		blur.calcMinMax();
-//		fill2(blur, (float) Math.min(minV, blur.getMax() ), (float) blur.getMax(), seedList, surface, visited2, new Vector3f(), 10);
-//		surface.calcMinMax();
-//		new ViewJFrameImage((ModelImage) surface);
-//		
-//		return surface;
-//
-////		ModelImage surface2 = new ModelImage( ModelStorageBase.INTEGER, image.getExtents(), "Surface Test 2" );
-////		JDialogBase.updateFileInfo(image, surface2);
-////		outside(surface, surface2, 10, 10);
-////		surface2.calcMinMax();
-////		new ViewJFrameImage((ModelImage) surface2);
-////		mp.calcMinMax();
-////		new ViewJFrameImage((ModelImage) mp);
-//
-//	}
+	//	public static ModelImage outlineB( String directory, ModelImage image, ModelImage mp, float threshold, int blurVal, boolean edgesOnly )
+	//	{
+	//		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+	//		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+	//		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+	//
+	//		String imageName = image.getImageName();
+	//		if (imageName.contains("_clone")) {
+	//			imageName = imageName.replaceAll("_clone", "");
+	//		}
+	//		imageName = imageName + "_Outline_MP_Z";
+	//
+	//		ModelImage blur = blur(image, blurVal);
+	//
+	//		System.err.println( "Threshold value = " + threshold );		
+	//
+	//		BitSet skinMask = new BitSet(dimX*dimY*dimZ);
+	//
+	//		int count = 0;
+	//		Vector<Float> maxVals = new Vector<Float>();
+	//		Vector<Float> minVals = new Vector<Float>();
+	//		Vector<Vector3f> maxPts = new Vector<Vector3f>();
+	//		Vector<Vector3f> maxHighPts = new Vector<Vector3f>();
+	//		Vector<Vector3f> minPts = new Vector<Vector3f>();
+	//		for ( int y = 0; y < dimY; y++ )
+	//		{
+	//			for ( int x = 0; x < dimX; x++ )
+	//			{
+	//				float max = -1;
+	//				int maxZ = -1;
+	//				float min = Float.MAX_VALUE;
+	//				int minZ = -1;
+	//				boolean up = true;
+	//				boolean down = false;
+	//				for ( int z = 0; z < dimZ; z++ )
+	//				{
+	//					float value = blur.getFloat(x,y,z);
+	//					//					System.err.println( value );
+	//					if ( up && (value < max) )
+	//					{
+	//						if ( maxZ != -1 )
+	//						{
+	//							//							System.err.println( "max = " + max + " " + maxX );
+	//							maxPts.add( new Vector3f(x, y, maxZ) );
+	//							maxVals.add(new Float(max));
+	//							max = -1;
+	//							maxZ = -1;
+	//							up = false;
+	//							down = true;
+	//						}
+	//					}
+	//					if ( down && (value > min) )
+	//					{
+	//						if ( minZ != -1 )
+	//						{
+	//							//							System.err.println( "min = " + min + " " + minX );
+	//							minPts.add( new Vector3f(x, y, minZ) );
+	//							minVals.add(new Float(min));
+	//							min = Float.MAX_VALUE;
+	//							minZ = -1;
+	//							up = true;
+	//							down = false;
+	//						}
+	//					}
+	//					if ( up && (value > max) )
+	//					{
+	//						max = value;
+	//						maxZ = z;
+	//					}
+	//					if ( down && (value < min) )
+	//					{
+	//						min = value;
+	//						minZ = z;
+	//					}
+	//				}
+	//
+	//				for ( int i = 0; i < maxPts.size(); i++ )
+	//				{
+	//					int zStart = (int) maxPts.elementAt(i).Z;
+	//					int zEnd = zStart;
+	//					float maxValue = maxVals.elementAt(i);
+	//					for ( int z = zStart; z < dimZ; z++ )
+	//					{
+	//						float value = blur.getFloat(x, y, z);
+	//						if ( value < maxValue )
+	//						{
+	//							break;
+	//						}
+	//						zEnd = z;
+	//						if ( maxValue > threshold )
+	//						{
+	////							mp.setC(x, y, z, 3, 10);
+	////							skinMask.set(z*dimY*dimX + y*dimX + x);
+	//						}
+	//					}
+	//					int avgZ = (int)((zStart + zEnd)/2f);
+	//					maxPts.elementAt(i).Z = avgZ;
+	//					if ( maxValue > threshold )
+	//					{
+	//						maxHighPts.add( new Vector3f(x, y, avgZ) );
+	//					}
+	//
+	//					count++;
+	//					//					System.err.println( avgX + " " + maxValue );
+	//				}
+	//
+	//				for ( int i = 0; i < minPts.size(); i++ )
+	//				{
+	//					int zStart = (int) minPts.elementAt(i).Z;
+	//					int zEnd = zStart;
+	//					float minValue = minVals.elementAt(i);
+	//					for ( int z = zStart; z < dimZ; z++ )
+	//					{
+	//						float value = blur.getFloat(x, y, z);
+	//						if ( value > minValue )
+	//						{
+	//							break;
+	//						}
+	//						zEnd = z;
+	//					}
+	//					int avgZ = (int)((zStart + zEnd)/2f);
+	//					minPts.elementAt(i).Z = avgZ;
+	//					//					mp.setC(avgX,  y, z, 2, 255 );
+	//					count++;
+	//					//					System.err.println( avgX + " " + minValue );
+	//				}
+	//
+	//				if ( maxHighPts.size() > 1 )
+	//				{
+	//				for ( int i = 0; i < maxHighPts.size(); i++ )
+	//				{
+	//					Vector3f pt = maxHighPts.elementAt(i);
+	//					float val = blur.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
+	//					
+	//					Vector3f first = maxHighPts.firstElement();
+	//					float firstVal = blur.getFloat((int)first.X, (int)first.Y, (int)first.Z);
+	//					
+	//					Vector3f last = maxHighPts.firstElement();
+	//					float lastVal = blur.getFloat((int)last.X, (int)last.Y, (int)last.Z);
+	//					if ( (i == 0) || (i == maxHighPts.size() -1) )
+	//					{
+	//						skinMask.set((int)pt.Z*dimY*dimX + y*dimX + x);
+	////						mp.setC(x, y, (int)pt.Z, 1, 255);
+	//					}
+	////					else if ( (val > firstVal) && (val > lastVal) )
+	////					{
+	////						skinMask.set((int)pt.Z*dimY*dimX + y*dimX + x);
+	//////						mp.setC(x, y, (int)pt.Z, 1, 255);
+	////					}
+	//				}
+	//				}
+	//
+	//				maxVals.clear();
+	//				minVals.clear();
+	//				maxPts.clear();
+	//				minPts.clear();
+	//				maxHighPts.clear();
+	//			}
+	//		}
+	//
+	//
+	//
+	//		for ( int z = 0; z < dimZ; z++ )
+	//		{
+	//			for ( int y = 0; y < dimY; y++ )
+	//			{
+	//				float max = -1;
+	//				int maxX = -1;
+	//				float min = Float.MAX_VALUE;
+	//				int minX = -1;
+	//				boolean up = true;
+	//				boolean down = false;
+	//				for ( int x = 0; x < dimX; x++ )
+	//				{
+	//					float value = blur.getFloat(x,y,z);
+	//					//					System.err.println( value );
+	//					if ( up && (value < max) )
+	//					{
+	//						if ( maxX != -1 )
+	//						{
+	//							//							System.err.println( "max = " + max + " " + maxX );
+	//							maxPts.add( new Vector3f(maxX, y, z) );
+	//							maxVals.add(new Float(max));
+	//							max = -1;
+	//							maxX = -1;
+	//							up = false;
+	//							down = true;
+	//						}
+	//					}
+	//					if ( down && (value > min) )
+	//					{
+	//						if ( minX != -1 )
+	//						{
+	//							//							System.err.println( "min = " + min + " " + minX );
+	//							minPts.add( new Vector3f(minX, y, z) );
+	//							minVals.add(new Float(min));
+	//							min = Float.MAX_VALUE;
+	//							minX = -1;
+	//							up = true;
+	//							down = false;
+	//						}
+	//					}
+	//					if ( up && (value > max) )
+	//					{
+	//						max = value;
+	//						maxX = x;
+	//					}
+	//					if ( down && (value < min) )
+	//					{
+	//						min = value;
+	//						minX = x;
+	//					}
+	//				}
+	//
+	//				for ( int i = 0; i < maxPts.size(); i++ )
+	//				{
+	//					int xStart = (int) maxPts.elementAt(i).X;
+	//					int xEnd = xStart;
+	//					float maxValue = maxVals.elementAt(i);
+	//					for ( int x = xStart; x < dimX; x++ )
+	//					{
+	//						float value = blur.getFloat(x, y, z);
+	//						if ( value < maxValue )
+	//						{
+	//							break;
+	//						}
+	//						xEnd = x;
+	//						if ( maxValue > threshold )
+	//						{
+	////							mp.setC(x, y, z, 1, 10);
+	////							skinMask.set(z*dimY*dimX + y*dimX + x);
+	//						}
+	//					}
+	//					int avgX = (int)((xStart + xEnd)/2f);
+	//					maxPts.elementAt(i).X = avgX;
+	//					if ( maxValue > threshold )
+	//					{
+	//						maxHighPts.add( new Vector3f(avgX,y,z));
+	//					}
+	//
+	//					count++;
+	//					//					System.err.println( avgX + " " + maxValue );
+	//				}
+	//
+	//				for ( int i = 0; i < minPts.size(); i++ )
+	//				{
+	//					int xStart = (int) minPts.elementAt(i).X;
+	//					int xEnd = xStart;
+	//					float minValue = minVals.elementAt(i);
+	//					for ( int x = xStart; x < dimX; x++ )
+	//					{
+	//						float value = blur.getFloat(x, y, z);
+	//						if ( value > minValue )
+	//						{
+	//							break;
+	//						}
+	//						xEnd = x;
+	//					}
+	//					int avgX = (int)((xStart + xEnd)/2f);
+	//					minPts.elementAt(i).X = avgX;
+	//					//					mp.setC(avgX,  y, z, 2, 255 );
+	//					count++;
+	//					//					System.err.println( avgX + " " + minValue );
+	//				}
+	//				
+	//				if ( maxHighPts.size() > 1 )
+	//				{
+	//				for ( int i = 0; i < maxHighPts.size(); i++ )
+	//				{
+	//					Vector3f pt = maxHighPts.elementAt(i);
+	//					float val = blur.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
+	//					
+	//					Vector3f first = maxHighPts.firstElement();
+	//					float firstVal = blur.getFloat((int)first.X, (int)first.Y, (int)first.Z);
+	//					
+	//					Vector3f last = maxHighPts.firstElement();
+	//					float lastVal = blur.getFloat((int)last.X, (int)last.Y, (int)last.Z);
+	//					if ( (i == 0) || (i == maxHighPts.size() -1) )
+	//					{
+	//						skinMask.set(z*dimY*dimX + y*dimX + (int)pt.X);
+	////						mp.setC((int)pt.X, y, z, 2, 255);
+	//					}
+	////					else if ( (val > firstVal) && (val > lastVal) )
+	////					{
+	////						skinMask.set(z*dimY*dimX + y*dimX + (int)pt.X);
+	//////						mp.setC((int)pt.X, y, z, 2, 255);
+	////					}
+	//				}
+	//				}
+	//
+	//				maxVals.clear();
+	//				minVals.clear();
+	//				maxPts.clear();
+	//				minPts.clear();
+	//				maxHighPts.clear();
+	//			}
+	//		}
+	//		
+	//		for ( int z = 0; z < dimZ; z++ )
+	//		{
+	//			for ( int x = 0; x < dimX; x++ )
+	//			{
+	//				float max = -1;
+	//				int maxY = -1;
+	//				float min = Float.MAX_VALUE;
+	//				int minY = -1;
+	//				boolean up = true;
+	//				boolean down = false;
+	//				for ( int y = 0; y < dimY; y++ )
+	//				{
+	//					float value = blur.getFloat(x,y,z);
+	//					//					System.err.println( value );
+	//					if ( up && (value < max) )
+	//					{
+	//						if ( maxY != -1 )
+	//						{
+	//							//							System.err.println( "max = " + max + " " + maxX );
+	//							maxPts.add( new Vector3f(x, maxY, z) );
+	//							maxVals.add(new Float(max));
+	//							max = -1;
+	//							maxY = -1;
+	//							up = false;
+	//							down = true;
+	//						}
+	//					}
+	//					if ( down && (value > min) )
+	//					{
+	//						if ( minY != -1 )
+	//						{
+	//							//							System.err.println( "min = " + min + " " + minX );
+	//							minPts.add( new Vector3f(x, minY, z) );
+	//							minVals.add(new Float(min));
+	//							min = Float.MAX_VALUE;
+	//							minY = -1;
+	//							up = true;
+	//							down = false;
+	//						}
+	//					}
+	//					if ( up && (value > max) )
+	//					{
+	//						max = value;
+	//						maxY = y;
+	//					}
+	//					if ( down && (value < min) )
+	//					{
+	//						min = value;
+	//						minY = y;
+	//					}
+	//				}
+	//
+	//				for ( int i = 0; i < maxPts.size(); i++ )
+	//				{
+	//					int yStart = (int) maxPts.elementAt(i).Y;
+	//					int yEnd = yStart;
+	//					float maxValue = maxVals.elementAt(i);
+	//					for ( int y = yStart; y < dimY; y++ )
+	//					{
+	//						float value = blur.getFloat(x, y, z);
+	//						if ( value < maxValue )
+	//						{
+	//							break;
+	//						}
+	//						yEnd = y;
+	//						if ( maxValue > threshold )
+	//						{
+	////							mp.setC(x, y, z, 2, 10);
+	////							skinMask.set(z*dimY*dimX + y*dimX + x);
+	//						}
+	//					}
+	//					int avgY = (int)((yStart + yEnd)/2f);
+	//					maxPts.elementAt(i).Y = avgY;
+	//					if ( maxValue > threshold )
+	//					{
+	//						maxHighPts.add( new Vector3f(x, avgY, z) );
+	//					}
+	//
+	//					count++;
+	//					//					System.err.println( avgX + " " + maxValue );
+	//				}
+	//
+	//				for ( int i = 0; i < minPts.size(); i++ )
+	//				{
+	//					int yStart = (int) minPts.elementAt(i).Y;
+	//					int yEnd = yStart;
+	//					float minValue = minVals.elementAt(i);
+	//					for ( int y = yStart; y < dimY; y++ )
+	//					{
+	//						float value = blur.getFloat(x, y, z);
+	//						if ( value > minValue )
+	//						{
+	//							break;
+	//						}
+	//						yEnd = y;
+	//					}
+	//					int avgY = (int)((yStart + yEnd)/2f);
+	//					minPts.elementAt(i).Y = avgY;
+	//					//					mp.setC(avgX,  y, z, 2, 255 );
+	//					count++;
+	//					//					System.err.println( avgX + " " + minValue );
+	//				}
+	//
+	//				if ( maxHighPts.size() > 1 )
+	//				{
+	//				for ( int i = 0; i < maxHighPts.size(); i++ )
+	//				{
+	//					Vector3f pt = maxHighPts.elementAt(i);
+	//					float val = blur.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
+	//					
+	//					Vector3f first = maxHighPts.firstElement();
+	//					float firstVal = blur.getFloat((int)first.X, (int)first.Y, (int)first.Z);
+	//					
+	//					Vector3f last = maxHighPts.firstElement();
+	//					float lastVal = blur.getFloat((int)last.X, (int)last.Y, (int)last.Z);
+	//					if ( (i == 0) || (i == maxHighPts.size() -1) )
+	//					{
+	//						skinMask.set(z*dimY*dimX + (int)pt.Y*dimX + x);
+	////						mp.setC(x, (int)pt.Y, z, 3, 255);
+	//					}
+	////					else if ( (val > firstVal) && (val > lastVal) )
+	////					{
+	////						skinMask.set(z*dimY*dimX + (int)pt.Y*dimX + x);
+	//////						mp.setC(x, (int)pt.Y, z, 3, 255);
+	////					}
+	//				}
+	//				}
+	//				maxVals.clear();
+	//				minVals.clear();
+	//				maxPts.clear();
+	//				minPts.clear();
+	//				maxHighPts.clear();
+	//			}
+	//		}
+	//
+	////		mp.calcMinMax();
+	////		new ViewJFrameImage((ModelImage)mp.clone());
+	//
+	//		Vector<BitSet> components = new Vector<BitSet>();
+	//		BitSet visited = new BitSet(dimZ*dimY*dimX);
+	//		for ( int y = 0; y < dimY; y++ )
+	//		{
+	//			for ( int x = 0; x < dimX; x++ )
+	//			{
+	//				for ( int z = 0; z < dimZ; z++ )
+	//				{
+	//					int index = z*dimY*dimX + y*dimX + x;
+	//					if ( skinMask.get(index) && !visited.get(index) )
+	//					{
+	//						BitSet filled = new BitSet(dimZ*dimY*dimX);
+	//						Vector<Vector3f> seeds = new Vector<Vector3f>();
+	//						seeds.add( new Vector3f(x, y, z) );
+	//						fillMask( skinMask, visited, filled, seeds, dimX, dimY, dimZ );
+	//						if ( filled.cardinality() > 1 )
+	//						{
+	//							components.add(filled);
+	//							//							System.err.println( x + " " + y + " " + z + "    " + filled.cardinality() );
+	//						}
+	//					}
+	//				}
+	//			}
+	//		}
+	//
+	//		int maxIndex = -1;
+	//		int max = -1;
+	//		for ( int i = 0; i < components.size(); i++ )
+	//		{
+	//			if ( components.elementAt(i).cardinality() > max )
+	//			{
+	//				max = components.elementAt(i).cardinality();
+	//				maxIndex = i;
+	//			}
+	//		}
+	//
+	//		BitSet largest = skinMask;
+	//		if ( maxIndex != -1 )
+	//		{
+	//			 largest = components.elementAt(maxIndex);	
+	//			 System.err.println( "Skin Surface " + maxIndex + " " + components.elementAt(maxIndex).cardinality() );
+	//		}
+	////		BitSet xAdd = new BitSet(dimX*dimY*dimZ);
+	////		BitSet yAdd = new BitSet(dimX*dimY*dimZ);
+	////		BitSet zAdd = new BitSet(dimX*dimY*dimZ);
+	////		int sliceCount = 10;
+	////		while ( sliceCount > 0 )
+	////		{
+	////			sliceCount = 0;
+	////			for ( int z = 1; z < dimZ-1; z++ )
+	////			{
+	////				for ( int y = 0; y < dimY; y++ )
+	////				{
+	////					for ( int x = 0; x < dimX; x++ )
+	////					{
+	////						int index = z*dimX*dimY + y*dimX + x;
+	////						int indexM1 = (z-1)*dimX*dimY + y*dimX + x;
+	////						int indexP1 = (z+1)*dimX*dimY + y*dimX + x;
+	////						if ( !largest.get(index) && largest.get(indexM1) && largest.get(indexP1) )
+	////						{
+	////							xAdd.set(index);
+	////							sliceCount++;
+	////						}	
+	////					}
+	////				}
+	////			}
+	////			for ( int x = 1; x < dimX-1; x++ )
+	////			{
+	////				for ( int y = 0; y < dimY; y++ )
+	////				{
+	////					for ( int z = 0; z < dimZ; z++ )
+	////					{
+	////						int index = z*dimX*dimY + y*dimX + x;
+	////						int indexM1 = z*dimX*dimY + y*dimX + (x-1);
+	////						int indexP1 = z*dimX*dimY + y*dimX + (x+1);
+	////						if ( !largest.get(index) && largest.get(indexM1) && largest.get(indexP1) )
+	////						{
+	////							yAdd.set(index);
+	////							sliceCount++;
+	////						}	
+	////					}
+	////				}
+	////			}
+	////			for ( int y = 1; y < dimY-1; y++ )
+	////			{
+	////				for ( int x = 0; x < dimX; x++ )
+	////				{
+	////					for ( int z = 0; z < dimZ; z++ )
+	////					{
+	////						int index = z*dimX*dimY + y*dimX + x;
+	////						int indexM1 = z*dimX*dimY + (y-1)*dimX + x;
+	////						int indexP1 = z*dimX*dimY + (y+1)*dimX + x;
+	////						if ( !largest.get(index) && largest.get(indexM1) && largest.get(indexP1) )
+	////						{
+	////							zAdd.set(index);
+	////							sliceCount++;
+	////						}		
+	////					}
+	////				}
+	////			}
+	////			largest.or(xAdd);  xAdd.clear();
+	////			largest.or(yAdd);  yAdd.clear();
+	////			largest.or(zAdd);  zAdd.clear();
+	////
+	////			System.err.println( sliceCount );
+	////		}
+	//
+	//		BitSet visited2 = new BitSet(dimX*dimY*dimZ);
+	//		ModelImage surface = new ModelImage( ModelStorageBase.INTEGER, image.getExtents(), "Surface Test" );
+	//		JDialogBase.updateFileInfo(image, surface);
+	//		Vector<Vector3f> seedList = new Vector<Vector3f>();
+	//		float minV = Float.MAX_VALUE;
+	//		float maxV = -Float.MAX_VALUE;
+	//		for ( int z = 0; z < dimZ; z++ )
+	//		{
+	//			for ( int y = 0; y < dimY; y++ )
+	//			{
+	//				for ( int x = 0; x < dimX; x++ )
+	//				{
+	//					int index = z*dimX*dimY + y*dimX + x;
+	//					if ( largest.get(index) )
+	//					{
+	//						float val = blur.getFloat(x,y,z);
+	//						if ( val > maxV )
+	//						{
+	//							maxV = val;
+	//						}
+	//						if ( val < minV )
+	//						{
+	//							minV = val;
+	//						}
+	//						mp.setC(x, y, z, 1, 255);
+	//						seedList.add(new Vector3f(x,y,z));
+	//						surface.set(x, y, z, 10);
+	//						visited2.set(index);
+	//					}	
+	//				}
+	//			}
+	//		}
+	//		System.err.println( "min max " + minV + " " + maxV );
+	//		System.err.println( seedList.size() );
+	//		
+	////		ModelImage inside = new ModelImage( ModelStorageBase.SHORT, mp.getExtents(), "inside mask" );
+	////		inside(mp, mp);
+	////		center(mp, mp);
+	//		
+	//
+	////		ModelImage3DLayout volumeLayout = new ModelImage3DLayout(dimX, dimY, dimZ, 1, 1, 1, 0, 0, 0);
+	////
+	////        // Perform the skeletonization of the input image.
+	////        // Extract the centerline curve.
+	////		Skeleton3D skeleton = new Skeleton3D(mp,volumeLayout);
+	////
+	////        FlyPathGraphSamples kFlyPathGraphSamples = skeleton.getPathGraph(1, minV.distance(maxV) );
+	////
+	////        FlyPathGraphCurve flyPathGraphCurve = new FlyPathGraphCurve(kFlyPathGraphSamples, 0.07f, 2);
+	////
+	////        if ( flyPathGraphCurve.getNumBranches() > 0 )
+	////        {
+	////        	System.err.println( "Path found" );
+	////        	int numV = 100;
+	////        	Curve3f kCurve = flyPathGraphCurve.getCurvePosition(0);
+	////        	float fStep = kCurve.GetTotalLength() / (numV - 1);
+	////
+	////        	short id = (short) mp.getVOIs().getUniqueID();
+	////        	VOI centerPath = new VOI(id, "centerPath", VOI.POLYLINE, (float) Math.random());
+	////        	mp.registerVOI(centerPath);
+	////        	VOIContour path = new VOIContour(false);
+	////        	for (int i = 0; i < numV; i++ )
+	////        	{
+	////        		float fDist = i * fStep;
+	////        		float fTime = kCurve.GetTime(fDist, 100, 1e-02f);      
+	////        		Vector3f kPoint = kCurve.GetPosition(fTime);
+	////        		path.add(kPoint);
+	////        		System.err.println(kPoint);
+	////        	}
+	////        }
+	////		System.err.println( count );
+	//
+	//
+	//		System.err.println( "Saving mp image to : " + directory + mp.getImageName() + ".tif" );
+	//		ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
+	//		
+	//		blur.calcMinMax();
+	//		fill2(blur, (float) Math.min(minV, blur.getMax() ), (float) blur.getMax(), seedList, surface, visited2, new Vector3f(), 10);
+	//		surface.calcMinMax();
+	//		new ViewJFrameImage((ModelImage) surface);
+	//		
+	//		return surface;
+	//
+	////		ModelImage surface2 = new ModelImage( ModelStorageBase.INTEGER, image.getExtents(), "Surface Test 2" );
+	////		JDialogBase.updateFileInfo(image, surface2);
+	////		outside(surface, surface2, 10, 10);
+	////		surface2.calcMinMax();
+	////		new ViewJFrameImage((ModelImage) surface2);
+	////		mp.calcMinMax();
+	////		new ViewJFrameImage((ModelImage) mp);
+	//
+	//	}
 
-	
-	
-	
+
+
+
 	public static void outside( String directory, ModelImage image, ModelImage mp, float threshold, int blurVal )
 	{
 		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
@@ -2585,7 +2526,7 @@ public class WormSegmentation
 
 		Vector<Vector3f> leftSide = new Vector<Vector3f>();
 		Vector<Vector3f> rightSide = new Vector<Vector3f>();
-		
+
 		for ( int z = 0; z < dimZ; z++ )
 		{
 			for ( int y = 0; y < dimY; y++ )
@@ -2653,8 +2594,8 @@ public class WormSegmentation
 						xEnd = x;
 						if ( maxValue > threshold )
 						{
-//							mp.setC(x, y, z, 1, 10);
-//							skinMask.set(z*dimY*dimX + y*dimX + x);
+							//							mp.setC(x, y, z, 1, 10);
+							//							skinMask.set(z*dimY*dimX + y*dimX + x);
 						}
 					}
 					int avgX = (int)((xStart + xEnd)/2f);
@@ -2665,7 +2606,7 @@ public class WormSegmentation
 					maxPts.elementAt(i).X = avgX;
 					if ( maxValue > threshold )
 					{
-//						maxHighPts.add( new Vector3f(avgX,y,z));
+						//						maxHighPts.add( new Vector3f(avgX,y,z));
 						leftSide.add( new Vector3f( avgX, y, z ) );
 						break;
 					}
@@ -2673,48 +2614,48 @@ public class WormSegmentation
 					//					System.err.println( avgX + " " + maxValue );
 				}
 
-				
-//				if ( maxHighPts.size() > 1 )
-//				{
-//					for ( int i = 0; i < maxHighPts.size(); i++ )
-//					{
-//						Vector3f pt = maxHighPts.elementAt(i);
-//						float val = blur.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
-//
-//						Vector3f first = maxHighPts.firstElement();
-//						float firstVal = blur.getFloat((int)first.X, (int)first.Y, (int)first.Z);
-//
-//						Vector3f last = maxHighPts.firstElement();
-//						float lastVal = blur.getFloat((int)last.X, (int)last.Y, (int)last.Z);
-//						if ( (i == 0) || (i == maxHighPts.size() -1) )
-//						{
-//							skinMask.set(z*dimY*dimX + y*dimX + (int)pt.X);
-//							if ( i == 0 )
-//							{
-//								leftSide.add( new Vector3f((int)pt.X, y, z) );
-//							}
-//							else
-//							{
-//								rightSide.add(0, new Vector3f((int)pt.X, y, z));
-//							}
-//							
-//							//						mp.setC((int)pt.X, y, z, 2, 255);
-//						}
-//						//					else if ( (val > firstVal) && (val > lastVal) )
-//						//					{
-//						//						skinMask.set(z*dimY*dimX + y*dimX + (int)pt.X);
-//						//					}
-//					}
-//				}
+
+				//				if ( maxHighPts.size() > 1 )
+				//				{
+				//					for ( int i = 0; i < maxHighPts.size(); i++ )
+				//					{
+				//						Vector3f pt = maxHighPts.elementAt(i);
+				//						float val = blur.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
+				//
+				//						Vector3f first = maxHighPts.firstElement();
+				//						float firstVal = blur.getFloat((int)first.X, (int)first.Y, (int)first.Z);
+				//
+				//						Vector3f last = maxHighPts.firstElement();
+				//						float lastVal = blur.getFloat((int)last.X, (int)last.Y, (int)last.Z);
+				//						if ( (i == 0) || (i == maxHighPts.size() -1) )
+				//						{
+				//							skinMask.set(z*dimY*dimX + y*dimX + (int)pt.X);
+				//							if ( i == 0 )
+				//							{
+				//								leftSide.add( new Vector3f((int)pt.X, y, z) );
+				//							}
+				//							else
+				//							{
+				//								rightSide.add(0, new Vector3f((int)pt.X, y, z));
+				//							}
+				//							
+				//							//						mp.setC((int)pt.X, y, z, 2, 255);
+				//						}
+				//						//					else if ( (val > firstVal) && (val > lastVal) )
+				//						//					{
+				//						//						skinMask.set(z*dimY*dimX + y*dimX + (int)pt.X);
+				//						//					}
+				//					}
+				//				}
 
 				maxVals.clear();
 				minVals.clear();
 				maxPts.clear();
 				minPts.clear();
 				maxHighPts.clear();
-				
-				
-				
+
+
+
 
 				max = -1;
 				maxX = -1;
@@ -2779,8 +2720,8 @@ public class WormSegmentation
 						xEnd = x;
 						if ( maxValue > threshold )
 						{
-//							mp.setC(x, y, z, 1, 10);
-//							skinMask.set(z*dimY*dimX + y*dimX + x);
+							//							mp.setC(x, y, z, 1, 10);
+							//							skinMask.set(z*dimY*dimX + y*dimX + x);
 						}
 					}
 					int avgX = (int)((xStart + xEnd)/2f);
@@ -2791,7 +2732,7 @@ public class WormSegmentation
 					maxPts.elementAt(i).X = avgX;
 					if ( maxValue > threshold )
 					{
-//						maxHighPts.add( new Vector3f(avgX,y,z));
+						//						maxHighPts.add( new Vector3f(avgX,y,z));
 						rightSide.add( 0, new Vector3f( avgX, y, z ) );
 						break;
 					}
@@ -2804,9 +2745,9 @@ public class WormSegmentation
 				minPts.clear();
 				maxHighPts.clear();
 			}
-			
-			
-//			System.err.println( "Left edge " + leftSide.size() );
+
+
+			//			System.err.println( "Left edge " + leftSide.size() );
 			if ( leftSide.size() > 1 )
 			{
 				VOIContour contour = new VOIContour(true);
@@ -2822,17 +2763,17 @@ public class WormSegmentation
 				VOI wormContours = new VOI(id, "contours" + z, VOI.POLYLINE, (float) Math.random());
 				blur.registerVOI(wormContours);
 				wormContours.getCurves().add(contour);
-				
+
 				leftSide.clear();
 				rightSide.clear();
 			}
 		}
 		blur.calcMinMax();
 		new ViewJFrameImage(blur);
-		
-		
+
+
 		BitSet largest = skinMask;
-		
+
 		for ( int z = 0; z < dimZ; z++ )		
 		{
 			for ( int y = 0; y < dimY; y++ )
@@ -2847,7 +2788,7 @@ public class WormSegmentation
 				}
 			}
 		}
-				
+
 
 		System.err.println( "Saving mp image to : " + directory + mp.getImageName() + ".tif" );
 		ModelImage.saveImage( mp, mp.getImageName() + ".tif", directory, false ); 
@@ -2856,7 +2797,7 @@ public class WormSegmentation
 
 	}
 
-	
+
 
 	public static void outline2( String directory, ModelImage image, ModelImage mp, float threshold )
 	{
@@ -2901,111 +2842,111 @@ public class WormSegmentation
 		Vector<Float> minVals = new Vector<Float>();
 		Vector<Vector3f> maxPts = new Vector<Vector3f>();
 		Vector<Vector3f> minPts = new Vector<Vector3f>();
-//		for ( int y = 0; y < dimY; y++ )
-//		{
-//			for ( int x = 0; x < dimX; x++ )
-//			{
-//				float max = -1;
-//				int maxZ = -1;
-//				float min = Float.MAX_VALUE;
-//				int minZ = -1;
-//				boolean up = true;
-//				boolean down = false;
-//				for ( int z = 0; z < dimZ; z++ )
-//				{
-//					float value = blur.getFloat(x,y,z);
-//					//					System.err.println( value );
-//					if ( up && (value < max) )
-//					{
-//						if ( maxZ != -1 )
-//						{
-//							//							System.err.println( "max = " + max + " " + maxX );
-//							maxPts.add( new Vector3f(x, y, maxZ) );
-//							maxVals.add(new Float(max));
-//							max = -1;
-//							maxZ = -1;
-//							up = false;
-//							down = true;
-//						}
-//					}
-//					if ( down && (value > min) )
-//					{
-//						if ( minZ != -1 )
-//						{
-//							//							System.err.println( "min = " + min + " " + minX );
-//							minPts.add( new Vector3f(x, y, minZ) );
-//							minVals.add(new Float(min));
-//							min = Float.MAX_VALUE;
-//							minZ = -1;
-//							up = true;
-//							down = false;
-//						}
-//					}
-//					if ( up && (value > max) )
-//					{
-//						max = value;
-//						maxZ = z;
-//					}
-//					if ( down && (value < min) )
-//					{
-//						min = value;
-//						minZ = z;
-//					}
-//				}
-//
-//				for ( int i = 0; i < maxPts.size(); i++ )
-//				{
-//					int zStart = (int) maxPts.elementAt(i).Z;
-//					int zEnd = zStart;
-//					float maxValue = maxVals.elementAt(i);
-//					for ( int z = zStart; z < dimZ; z++ )
-//					{
-//						float value = blur.getFloat(x, y, z);
-//						if ( value < maxValue )
-//						{
-//							break;
-//						}
-//						zEnd = z;
-//						if ( maxValue > threshold )
-//						{
-////							mp.setC(x, y, z, 3, 10);
-//							skinMask.set(z*dimY*dimX + y*dimX + x);
-//						}
-//					}
-//					int avgZ = (int)((zStart + zEnd)/2f);
-//					maxPts.elementAt(i).Z = avgZ;
-//
-//					count++;
-//					//					System.err.println( avgX + " " + maxValue );
-//				}
-//
-//				for ( int i = 0; i < minPts.size(); i++ )
-//				{
-//					int zStart = (int) minPts.elementAt(i).Z;
-//					int zEnd = zStart;
-//					float minValue = minVals.elementAt(i);
-//					for ( int z = zStart; z < dimZ; z++ )
-//					{
-//						float value = blur.getFloat(x, y, z);
-//						if ( value > minValue )
-//						{
-//							break;
-//						}
-//						zEnd = z;
-//					}
-//					int avgZ = (int)((zStart + zEnd)/2f);
-//					minPts.elementAt(i).Z = avgZ;
-//					//					mp.setC(avgX,  y, z, 2, 255 );
-//					count++;
-//					//					System.err.println( avgX + " " + minValue );
-//				}
-//
-//				maxVals.clear();
-//				minVals.clear();
-//				maxPts.clear();
-//				minPts.clear();
-//			}
-//		}
+		//		for ( int y = 0; y < dimY; y++ )
+		//		{
+		//			for ( int x = 0; x < dimX; x++ )
+		//			{
+		//				float max = -1;
+		//				int maxZ = -1;
+		//				float min = Float.MAX_VALUE;
+		//				int minZ = -1;
+		//				boolean up = true;
+		//				boolean down = false;
+		//				for ( int z = 0; z < dimZ; z++ )
+		//				{
+		//					float value = blur.getFloat(x,y,z);
+		//					//					System.err.println( value );
+		//					if ( up && (value < max) )
+		//					{
+		//						if ( maxZ != -1 )
+		//						{
+		//							//							System.err.println( "max = " + max + " " + maxX );
+		//							maxPts.add( new Vector3f(x, y, maxZ) );
+		//							maxVals.add(new Float(max));
+		//							max = -1;
+		//							maxZ = -1;
+		//							up = false;
+		//							down = true;
+		//						}
+		//					}
+		//					if ( down && (value > min) )
+		//					{
+		//						if ( minZ != -1 )
+		//						{
+		//							//							System.err.println( "min = " + min + " " + minX );
+		//							minPts.add( new Vector3f(x, y, minZ) );
+		//							minVals.add(new Float(min));
+		//							min = Float.MAX_VALUE;
+		//							minZ = -1;
+		//							up = true;
+		//							down = false;
+		//						}
+		//					}
+		//					if ( up && (value > max) )
+		//					{
+		//						max = value;
+		//						maxZ = z;
+		//					}
+		//					if ( down && (value < min) )
+		//					{
+		//						min = value;
+		//						minZ = z;
+		//					}
+		//				}
+		//
+		//				for ( int i = 0; i < maxPts.size(); i++ )
+		//				{
+		//					int zStart = (int) maxPts.elementAt(i).Z;
+		//					int zEnd = zStart;
+		//					float maxValue = maxVals.elementAt(i);
+		//					for ( int z = zStart; z < dimZ; z++ )
+		//					{
+		//						float value = blur.getFloat(x, y, z);
+		//						if ( value < maxValue )
+		//						{
+		//							break;
+		//						}
+		//						zEnd = z;
+		//						if ( maxValue > threshold )
+		//						{
+		////							mp.setC(x, y, z, 3, 10);
+		//							skinMask.set(z*dimY*dimX + y*dimX + x);
+		//						}
+		//					}
+		//					int avgZ = (int)((zStart + zEnd)/2f);
+		//					maxPts.elementAt(i).Z = avgZ;
+		//
+		//					count++;
+		//					//					System.err.println( avgX + " " + maxValue );
+		//				}
+		//
+		//				for ( int i = 0; i < minPts.size(); i++ )
+		//				{
+		//					int zStart = (int) minPts.elementAt(i).Z;
+		//					int zEnd = zStart;
+		//					float minValue = minVals.elementAt(i);
+		//					for ( int z = zStart; z < dimZ; z++ )
+		//					{
+		//						float value = blur.getFloat(x, y, z);
+		//						if ( value > minValue )
+		//						{
+		//							break;
+		//						}
+		//						zEnd = z;
+		//					}
+		//					int avgZ = (int)((zStart + zEnd)/2f);
+		//					minPts.elementAt(i).Z = avgZ;
+		//					//					mp.setC(avgX,  y, z, 2, 255 );
+		//					count++;
+		//					//					System.err.println( avgX + " " + minValue );
+		//				}
+		//
+		//				maxVals.clear();
+		//				minVals.clear();
+		//				maxPts.clear();
+		//				minPts.clear();
+		//			}
+		//		}
 
 
 
@@ -3076,7 +3017,7 @@ public class WormSegmentation
 						xEnd = x;
 						if ( maxValue > threshold )
 						{
-//							mp.setC(x, y, z, 1, 10);
+							//							mp.setC(x, y, z, 1, 10);
 							skinMask.set(z*dimY*dimX + y*dimX + x);
 						}
 					}
@@ -3341,7 +3282,7 @@ public class WormSegmentation
 						yEnd = y;
 						if ( maxValue > threshold )
 						{
-//							mp.setC(x, y, z, 2, 10);
+							//							mp.setC(x, y, z, 2, 10);
 							skinMask.set(z*dimY*dimX + y*dimX + x);
 						}
 					}
@@ -3712,8 +3653,8 @@ public class WormSegmentation
 				}
 			}
 		}
-				
-		
+
+
 		System.err.println( count );
 
 
@@ -3724,9 +3665,9 @@ public class WormSegmentation
 
 	}
 
-	
-	
-	
+
+
+
 	public static void findContours( String directory, ModelImage image, ModelImage mp, ModelImage contourImage, float threshold )
 	{
 		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
@@ -4202,7 +4143,7 @@ public class WormSegmentation
 		{
 			return;
 		}
-		
+
 		Vector<Vector3f> surfacePts = new Vector<Vector3f>();
 		for ( int z = 0; z < dimZ; z++ )
 		{
@@ -4226,11 +4167,11 @@ public class WormSegmentation
 		{
 			for ( int i = 0; i < surfacePts.size(); i++ )
 			{
-				
+
 			}
 		}
 	}
-	
+
 	private static void inside( ModelImage skinSurface, ModelImage output )
 	{
 		final int dimX = skinSurface.getExtents().length > 0 ? skinSurface.getExtents()[0] : 1;
@@ -4477,22 +4418,22 @@ public class WormSegmentation
 		}
 		xMask.and(yMask);
 		xMask.and(zMask);
-		
-		
-//		BitSet xy = new BitSet(dimX*dimY*dimZ);
-//		xy.or(xMask);
-//		xy.and(yMask);
-//		BitSet xz = new BitSet(dimX*dimY*dimZ);
-//		xz.or(xMask);
-//		xz.and(zMask);
-//		BitSet zy = new BitSet(dimX*dimY*dimZ);
-//		zy.or(zMask);
-//		zy.and(yMask);
-//		
-//		xMask.clear();
-//		xMask.or(xy);
-//		xMask.or(xz);
-//		xMask.or(zy);
+
+
+		//		BitSet xy = new BitSet(dimX*dimY*dimZ);
+		//		xy.or(xMask);
+		//		xy.and(yMask);
+		//		BitSet xz = new BitSet(dimX*dimY*dimZ);
+		//		xz.or(xMask);
+		//		xz.and(zMask);
+		//		BitSet zy = new BitSet(dimX*dimY*dimZ);
+		//		zy.or(zMask);
+		//		zy.and(yMask);
+		//		
+		//		xMask.clear();
+		//		xMask.or(xy);
+		//		xMask.or(xz);
+		//		xMask.or(zy);
 
 
 		for ( int z = 0; z < dimZ; z++ )
@@ -4532,11 +4473,11 @@ public class WormSegmentation
 		imageName = imageName + "_" + threshold;
 		final ModelImage outside = new ModelImage(ModelStorageBase.INTEGER, blur.getExtents(), imageName);
 		JDialogBase.updateFileInfo(blur, outside);
-		
+
 		final ModelImage inside = new ModelImage(ModelStorageBase.INTEGER, blur.getExtents(), imageName);
 		JDialogBase.updateFileInfo(blur, inside);
-		
-		
+
+
 		for ( int z = 0; z < dimZ; z++ )
 		{
 			for ( int y = 0; y < dimY; y++ )
@@ -4647,7 +4588,7 @@ public class WormSegmentation
 				}
 			}
 		}
-		
+
 		for ( int i = 0; i < inside.getDataSize(); i++ )
 		{
 			int value = inside.getInt(i);
@@ -4660,7 +4601,7 @@ public class WormSegmentation
 				inside.set(i, 0);
 			}
 		}
-		
+
 		return new ModelImage[]{outside,inside};
 	}
 
@@ -5421,65 +5362,158 @@ public class WormSegmentation
 		}
 		return resultImage;
 	}
-	
-//	public static Vector<Vector3f> segmentSeam(ModelImage image, int minRadius, int maxRadius, String outputDir)
-//	{
-//		ModelImage seamCellImage = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), "seamCellImage" );	
-//		seamCellImage.setImageName("seamCellImage");
-//		JDialogBase.updateFileInfo(image, seamCellImage);
-//		
-//		
-//		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-//		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-//		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
-//		
-//		float[] targetP = new float[2];
-//		float targetPercentage = .99f;
-//		WormSegmentation.estimateHistogram( image, targetP, targetPercentage );
-////		System.err.println( targetPercentage + " % " + targetP[0] + " " + targetP[1] );						
-//
-//		BitSet mask = new BitSet(dimX*dimY*dimZ);
-//
-//		// segment the seam cells:
-//		Vector<Vector3f> foundNuclei = WormSegmentation.findMarkers(image, seamCellImage, mask, targetP[0], (float) image.getMax(), minRadius, maxRadius );
-//
-//		ModelImage.saveImage(seamCellImage, seamCellImage.getImageName() + ".xml", outputDir, false);
-//		seamCellImage.disposeLocal(false);
-//		return foundNuclei;
-//	}
-	
+
+	//	public static Vector<Vector3f> segmentSeam(ModelImage image, int minRadius, int maxRadius, String outputDir)
+	//	{
+	//		ModelImage seamCellImage = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), "seamCellImage" );	
+	//		seamCellImage.setImageName("seamCellImage");
+	//		JDialogBase.updateFileInfo(image, seamCellImage);
+	//		
+	//		
+	//		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+	//		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+	//		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+	//		
+	//		float[] targetP = new float[2];
+	//		float targetPercentage = .99f;
+	//		WormSegmentation.estimateHistogram( image, targetP, targetPercentage );
+	////		System.err.println( targetPercentage + " % " + targetP[0] + " " + targetP[1] );						
+	//
+	//		BitSet mask = new BitSet(dimX*dimY*dimZ);
+	//
+	//		// segment the seam cells:
+	//		Vector<Vector3f> foundNuclei = WormSegmentation.findMarkers(image, seamCellImage, mask, targetP[0], (float) image.getMax(), minRadius, maxRadius );
+	//
+	//		ModelImage.saveImage(seamCellImage, seamCellImage.getImageName() + ".xml", outputDir, false);
+	//		seamCellImage.disposeLocal(false);
+	//		return foundNuclei;
+	//	}
+
 	private float intensityMin;
 	public float getMinSegmentationIntensity()
 	{
 		return intensityMin;
 	}
+
+	public Vector<Vector3f> segmentSeamNew(ModelImage image, ModelImage results, int minRadius, int maxRadius, String outputDir)
+	{
+		ModelImage wormBlur = WormSegmentation.blur(image, minRadius);
+		ModelImage blurMin = WormSegmentation.blur(image, (int) Math.max(minRadius/2f, minRadius - 2));
+		
+		for ( int i = 0; i < wormBlur.getDataSize(); i++ )
+		{
+			wormBlur.set(i, Math.max(0, blurMin.getFloat(i) - wormBlur.getFloat(i) ));
+		}
+		wormBlur.calcMinMax();
+
+		VOIContour centerList = new VOIContour(false);
+		VOI clusterList = new VOI((short)0, "temp", VOI.POLYLINE, 0);
+		float[] finalThreshold = new float[1];
+		WormSegmentation.segmentSeamThreshold(wormBlur, centerList, clusterList, finalThreshold,
+				1f, (float)(wormBlur.getMax()-1), 5f, (float)wormBlur.getMax(), 22, 25 );
+		System.err.println( centerList.size() );
+		
+		for ( int i = centerList.size() - 1; i >= 0; i-- )
+		{
+			VOIContour cluster = (VOIContour) clusterList.getCurves().elementAt(i);
+			if ( cluster.size() > 0 )
+			{
+				Box3f box = ContBox3f.ContOrientedBox(cluster.size(), cluster);
+				System.err.println( (i+1) + "    " + cluster.size() + "    " + box.Extent[0] + "   " + box.Extent[1] + "   " + box.Extent[2]);
+				if ( (box.Extent[0] <= 2) || (box.Extent[1] <= 2) || (box.Extent[2] <= 2) )
+				{
+					// Remove Cluster:
+					clusterList.getCurves().remove( i );
+					centerList.remove( i );
+				}
+			}
+		}
+		int clusterCount = 1;
+		for ( int i = 0; i < centerList.size(); i++ )
+		{
+			VOIContour cluster = (VOIContour) clusterList.getCurves().elementAt(i);
+			for ( int j = 0; j < cluster.size(); j++ )
+			{
+				int x = Math.round(cluster.elementAt(j).X);
+				int y = Math.round(cluster.elementAt(j).Y);
+				int z = Math.round(cluster.elementAt(j).Z);
+
+				results.set(x, y, z, clusterCount);
+			}
+			clusterCount++;
+		}
+
+		LatticeBuilder buildTest = new LatticeBuilder();
+		buildTest.setSeamImage(results);
+		buildTest.setSeamIDs(centerList);
+		boolean pass = buildTest.findTenthPair(image, centerList) & (clusterList.getCurves().size() >= 20);
+		System.err.println("clusters : " + centerList.size() + " " + pass );
+		while ( !pass )
+		{
+			for ( int i = 0; i < results.getDataSize(); i++ )
+			{
+				results.set(i, 0);
+			}
+			boolean changed = expandList( image, clusterList, centerList, minRadius );
+			pass = buildTest.findTenthPair(image, centerList) & (clusterList.getCurves().size() >= 20);
+
+			clusterCount = 1;
+			for ( int i = 0; i < centerList.size(); i++ )
+			{
+				VOIContour cluster = (VOIContour) clusterList.getCurves().elementAt(i);
+				for ( int j = 0; j < cluster.size(); j++ )
+				{
+					int x = Math.round(cluster.elementAt(j).X);
+					int y = Math.round(cluster.elementAt(j).Y);
+					int z = Math.round(cluster.elementAt(j).Z);
+
+					results.set(x, y, z, clusterCount);
+				}
+				clusterCount++;
+			}
+			
+			if ( !changed )
+				break;
+		}
+		System.err.println("clusters : " + centerList.size() + " " + pass );
+
+
+
+		results.setImageName("seamCellImage");
+		JDialogBase.updateFileInfo(image, results);
+		ModelImage.saveImage(results, results.getImageName() + ".xml", outputDir, false);
+		
+		return centerList;
+	}
 	
-	public Vector<Vector3f> segmentSeamNew(ModelImage image, int minRadius, int maxRadius, String outputDir)
+	public Vector<Vector3f> segmentSeamNew2(ModelImage image, int minRadius, int maxRadius, String outputDir)
 	{
 		ModelImage seamCellImage = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), "seamCellImage" );	
 		seamCellImage.setImageName("seamCellImage");
 		JDialogBase.updateFileInfo(image, seamCellImage);
-		
-		
+
+
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
 		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
-		
+
 		float[] targetP = new float[2];
-		float targetPercentage = .99f;
+		float targetPercentage = .95f;
 		estimateHistogram( image, targetP, targetPercentage );
-//		System.err.println( targetPercentage + " % " + targetP[0] + " " + targetP[1] );						
+		//		System.err.println( targetPercentage + " % " + targetP[0] + " " + targetP[1] );						
 
 		BitSet mask = new BitSet(dimX*dimY*dimZ);
-		
+
 		intensityMin = targetP[0];
 		// segment the seam cells:
-		Vector<Vector3f> foundNuclei = findMarkers(image, seamCellImage, mask, targetP[0], (float) image.getMax(), minRadius, maxRadius );
+		Vector<Vector3f> foundNuclei = findMarkers(image, seamCellImage, mask, targetP[0], (float) image.getMax(), minRadius, maxRadius );	
 
 		ModelImage.saveImage(seamCellImage, seamCellImage.getImageName() + ".xml", outputDir, false);
 		seamCellImage.disposeLocal(false);
 		return foundNuclei;
 	}
+	
+	
 
 	public static float testVariance( ModelImage image, Vector3f pt, int cubeSize)
 	{
@@ -6024,302 +6058,9 @@ public class WormSegmentation
 		}
 
 	}
-	
-	public static ModelImage segmentSeamThreshold(ModelImage image, Vector<Vector3f> positions, Vector<BoxBV> boundingBoxes, float[] finalThreshold,
-			float stepSizeInc, float stepSizeDec, float threshold, float thresholdMin, float thresholdMax, int minCount, int maxCount )
-	{
-		ModelImage seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, threshold);
-		int numCells = positions.size();
-		System.err.println( "Start " + numCells + " " + threshold);
-		if ( (numCells >= minCount) && (numCells <= maxCount) )
-		{
-			finalThreshold[0] = threshold;
-			return seamCells;
-		}
-
-		positions.clear();
-		boundingBoxes.clear();
-		seamCells.disposeLocal(false);
-		
-		float upThreshold = Math.min(threshold + stepSizeInc, thresholdMax - 1);
-		seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, upThreshold);
-		int upCount = positions.size();
-		System.err.println( "Up " + upCount + " " + upThreshold);
-		if ( (upCount >= minCount) && (upCount <= maxCount) )
-		{
-			finalThreshold[0] = threshold;
-			return seamCells;
-		}
-
-		positions.clear();
-		boundingBoxes.clear();
-		seamCells.disposeLocal(false);
-
-		float downThreshold = Math.min(threshold - stepSizeDec, thresholdMax - 1);
-		seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, downThreshold);
-		int downCount = positions.size();
-		System.err.println( "Down " + downCount + " " + downThreshold);
-		if ( (downCount >= minCount) && (downCount <= maxCount) )
-		{
-			finalThreshold[0] = threshold;
-			return seamCells;
-		}
-
-		positions.clear();
-		boundingBoxes.clear();
-		seamCells.disposeLocal(false);
-
-		float thresholdMinBound = threshold;
-		float thresholdMaxBound = upThreshold;
-		if ( (downCount < numCells) && (numCells < upCount) )
-		{
-			if ( (numCells < minCount) && (upCount > minCount) )
-			{
-				thresholdMinBound = threshold;
-				thresholdMaxBound = upThreshold;
-			}
-			if ( (numCells > minCount) && (upCount > minCount) )
-			{
-				thresholdMinBound = downThreshold;
-				thresholdMaxBound = threshold;
-			}
-			int count = 0;
-			while ( !((numCells >= minCount) && (numCells <= maxCount) || (count == 10) || (thresholdMinBound == thresholdMaxBound)) )
-			{
-				//				System.err.println( count + " " + numCells + " " + threshold);
-				threshold = Math.round((thresholdMinBound + thresholdMaxBound)/2f);
-				seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, threshold);
-				numCells = positions.size();
-				System.err.println( count + " " + numCells + " " + threshold);
-
-				if ( (numCells >= minCount) && (numCells <= maxCount) )
-				{
-					finalThreshold[0] = threshold;
-					return seamCells;
-				}
-				if ( numCells < minCount )
-				{
-					thresholdMinBound = threshold;
-				}
-				else 
-				{
-					thresholdMaxBound = threshold;
-				}
-				count++;
-
-				positions.clear();
-				boundingBoxes.clear();
-				seamCells.disposeLocal(false);
-			}
-		}
-//		else if ( (upCount < numCells) && (numCells < downCount) )
-//		{
-//			// decrease down threshold until < numCells
-//		}
-		
-//		float thresholdMinBound = threshold, thresholdMaxBound = threshold;
-//		if ( numCells < minCount )
-//		{
-//			thresholdMinBound = threshold;
-//			int numCellsP = numCells;
-//			int step = 1;
-//			Vector<Vector3f> positions2 = new Vector<Vector3f>();
-//			Vector<BoxBV> boundingBoxes2 = new Vector<BoxBV>();
-//			while ( numCellsP < minCount )
-//			{
-//				float newThreshold = Math.min(threshold + step * stepSizeInc, thresholdMax - 1);
-//				ModelImage seamCells2 = WormSegmentation.segmentSeam(image, positions2, boundingBoxes2, newThreshold);
-//				numCellsP = positions2.size();
-//				thresholdMaxBound = newThreshold;
-//				step++;
-//
-//				positions2.clear();
-//				boundingBoxes2.clear();
-//				seamCells2.disposeLocal(false);
-//
-//				if ( numCellsP < numCells )
-//				{
-//					break;
-//				}
-//				System.err.println( "Up " + numCellsP + " " + newThreshold);
-//			}
-//			
-//			
-//		}
-//		else
-//		{
-//			thresholdMaxBound = threshold;
-//			int numCellsM = numCells;
-//			int step = 1;
-//			Vector<Vector3f> positions2 = new Vector<Vector3f>();
-//			Vector<BoxBV> boundingBoxes2 = new Vector<BoxBV>();
-//			while ( numCellsM > maxCount )
-//			{
-//				float newThreshold = Math.min(threshold - step * stepSizeDec, thresholdMax - 1);
-//				ModelImage seamCells2 = WormSegmentation.segmentSeam(image, positions2, boundingBoxes2, newThreshold);
-//				numCellsM = positions2.size();
-//				thresholdMinBound = newThreshold;
-//				step++;
-//
-//				positions2.clear();
-//				boundingBoxes2.clear();
-//				seamCells2.disposeLocal(false);
-//				
-//				if ( numCellsM > numCells )
-//				{
-//					break;
-//				}
-//				System.err.println( "Down " + numCellsM + " " + newThreshold);
-//			}
-//			
-//		}
-//		
-//		int count = 0;
-//		while ( !((numCells >= minCount) && (numCells <= maxCount) || (count == 10) || (thresholdMinBound == thresholdMaxBound)) )
-//		{
-//			System.err.println( count + " " + numCells + " " + threshold);
-//			threshold = (thresholdMinBound + thresholdMaxBound)/2f;
-//			seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, threshold);
-//			numCells = positions.size();
-//			System.err.println( count + " " + numCells + " " + threshold);
-//			
-//			if ( (numCells >= minCount) && (numCells <= maxCount) )
-//			{
-//				finalThreshold[0] = threshold;
-//				return seamCells;
-//			}
-//			if ( numCells > maxCount )
-//			{
-//				thresholdMaxBound = threshold;
-//			}
-//			else if ( numCells < minCount )
-//			{
-//				thresholdMinBound = threshold;
-//			}
-//			count++;
-//
-//			positions.clear();
-//			boundingBoxes.clear();
-//			seamCells.disposeLocal(false);
-//		}
-		
-		return null;
-	}
-	
-	
-	public static ModelImage segmentSeam(ModelImage image, Vector<Vector3f> positions, Vector<BoxBV> boundingBoxes, float threshold)
-	{
-		String imageName = image.getImageName();
-		if (imageName.contains("_clone")) {
-			imageName = imageName.replaceAll("_clone", "");
-		}
-		imageName = imageName + "_" + threshold;
-		final ModelImage thresholdImage = new ModelImage(image.getType(), image.getExtents(), imageName);
-		JDialogBase.updateFileInfo(image, thresholdImage);
 
 
-		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
 
-		boolean maxSet = false;
-		for ( int z = 0; z < dimZ; z++ )
-		{
-			for ( int y = 0; y < dimY; y++ )
-			{
-				for ( int x = 0; x < dimX; x++ )
-				{
-					float value = image.getFloat(x, y, z);
-					if ( value >= threshold )
-					{
-						thresholdImage.set(x, y, z, threshold );
-						thresholdImage.setMax(threshold);
-						maxSet = true;
-					}
-					else
-					{
-						thresholdImage.set(x, y, z, 0 );
-					}
-				}
-			}
-		}
-		thresholdImage.setMin(0);
-		if ( !maxSet )
-		{
-			thresholdImage.setMax(0);
-		}
-
-		ModelImage seamCellImage = separateID(thresholdImage, threshold, positions, boundingBoxes);
-		thresholdImage.disposeLocal(false);
-		return seamCellImage;
-	}
-	
-	private static ModelImage separateID( ModelImage image, float threshold, Vector<Vector3f> positions, Vector<BoxBV> boundingBoxes )
-	{
-		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
-
-		BitSet visited = new BitSet(dimX*dimY*dimZ);
-		ModelImage seamCells = new ModelImage( ModelStorageBase.INTEGER, image.getExtents(), "seamCellsID" );
-		JDialogBase.updateFileInfo(image, seamCells);
-		Vector<Vector3f> seedList = new Vector<Vector3f>();
-		
-		int id = 1;
-		boolean done = false;
-		while ( !done )
-		{
-			boolean found = false;
-			for ( int z = 0; z < dimZ && !found; z++ )
-			{
-				for ( int y = 0; y < dimY && !found; y++ )
-				{
-					for ( int x = 0; x < dimX && !found; x++ )
-					{
-						float value = image.getFloat(x, y, z);
-						int index = z*dimX*dimY + y*dimX + x;
-						if ( !visited.get(index) )
-						{
-							if ( value >= threshold )
-							{
-								seedList.add(new Vector3f(x,y,z));
-								seamCells.set(x, y, z, id);
-								visited.set(index);
-								found = true;
-							}
-						}
-					}
-				}
-			}
-			if ( !found )
-			{
-				done = true;
-				break;
-			}
-
-			Vector3f center = new Vector3f();
-			BoxBV bb = WormSegmentation.fill2(image, threshold, threshold, seedList, seamCells, visited, center, id);
-			if ( bb != null )
-			{
-				boundingBoxes.add(bb);
-			}
-			positions.add(center);
-			id++;
-		}
-		
-		seamCells.calcMinMax();
-		return seamCells;
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 
 	public static float[] robustHistogram(ModelImage image, Vector<Vector3f> dataPoints )
 	{
@@ -6944,7 +6685,7 @@ public class WormSegmentation
 
 	public Vector<Vector3f> findMarkers( ModelImage image, ModelImage seamCellImage, BitSet mask, float intensityMin, float intensityMax, int minRadius, int maxRadius )
 	{
-		Vector<Vector3f> pts = initFindMarkers(image, intensityMin, intensityMax);
+		VOIContour pts = initFindMarkers(image, intensityMin, intensityMax);
 		return findMarkers2( image, seamCellImage, pts, null, intensityMin - 1, minRadius, maxRadius );
 	}
 
@@ -6990,101 +6731,174 @@ public class WormSegmentation
 		}
 		return cluster;
 	}
-	
-	
-	private VOIContour findClusterCenter( ModelImage image, Vector<Vector3f> pts, Vector3f pt1, float minIntensity, float radius )
+
+	private float avgClusterValue( ModelImage image, Vector3f pt, float radius )
+	{
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+
+		int centerX = Math.round(pt.X);
+		int centerY = Math.round(pt.Y);
+		int centerZ = Math.round(pt.Z);
+		double value = 0;
+		float count = 0;
+		for ( int z = (int) Math.max(0, centerZ-radius); z <= Math.min(dimZ-1, centerZ+radius); z++ )
+		{
+			for ( int y = (int) Math.max(0, centerY-radius); y <= Math.min(dimY-1, centerY+radius); y++ )
+			{
+				for ( int x = (int) Math.max(0, centerX-radius); x <= Math.min(dimX-1, centerX+radius); x++ )
+				{
+					value += image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+					count++;
+				}
+			}
+
+		}
+		return (float)(value/count);
+	}
+
+	private VOIContour findClusterCenter( ModelImage image, Vector<Vector3f> pts, Vector3f pt1, float minIntensity, float radius, float[] value )
 	{
 		// create cluster around pt1:
 		VOIContour cluster = makeCluster(image, pts, pt1, minIntensity, radius);
 		if ( cluster.size() > 0 )
 		{
 			Vector3f newCenter = cluster.remove(0);
-			VOIContour newCluster = null;
+			pt1.copy(newCenter);
+			//			VOIContour newCluster = null;
+
+			//			float clusterValue = avgClusterValue(image, newCenter, radius);
+			//			float prevValue = -1;
+
+			//			int x = Math.round(pt1.X);
+			//			int y = Math.round(pt1.Y);
+			//			int z = Math.round(pt1.Z);
+			//			float prevValue = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+			//			
+			//			x = Math.round(newCenter.X);
+			//			y = Math.round(newCenter.Y);
+			//			z = Math.round(newCenter.Z);
+			//			float newValue = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+
+
+
 			// repeat while distance between original pt and new cluster center is big
-//			System.err.println( "  findClusterCenter " + pt1.distance(newCenter) );
+			//			while ( clusterValue > prevValue )
 			while ( pt1.distance(newCenter) > 2 )
 			{
-				pt1.copy(newCenter);
-				newCluster = makeCluster(image, pts, pt1, minIntensity, radius );
+				//				pt1.copy(newCenter);
+				VOIContour newCluster = makeCluster(image, pts, newCenter, minIntensity, radius );
 				if ( newCluster.size() == 0 )
 				{
-					newCenter.copy(pt1);
-					newCluster = cluster;
+					//					newCenter.copy(pt1);
+					//					newCluster = cluster;
 					break;
 				}
+				pt1.copy(newCenter);
+				cluster = newCluster;
 				newCenter = newCluster.remove(0);
 
-				int x = Math.round(pt1.X);
-				int y = Math.round(pt1.Y);
-				int z = Math.round(pt1.Z);
-				float prevValue = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
-				
-				x = Math.round(newCenter.X);
-				y = Math.round(newCenter.Y);
-				z = Math.round(newCenter.Z);
-				float newValue = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
-				
-				// If the new cluster center has a lower value, stop
-				if ( newValue < (0.9*prevValue) )
-				{
-					newCenter.copy(pt1);
-					newCluster = cluster;
-					break;
-				}				
+				//				prevValue = clusterValue;
+				//				clusterValue = avgClusterValue(image, newCenter, radius);
+				//				x = Math.round(pt1.X);
+				//				y = Math.round(pt1.Y);
+				//				z = Math.round(pt1.Z);
+				//				prevValue = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+				//				
+				//				x = Math.round(newCenter.X);
+				//				y = Math.round(newCenter.Y);
+				//				z = Math.round(newCenter.Z);
+				//				newValue = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
 
-				cluster = newCluster;
-//				System.err.println( "  findClusterCenter " + pt1.distance(newCenter) );
+				//				System.err.println( "  findClusterCenter " + newValue + "   " + prevValue );
+				// If the new cluster center has a lower value, stop
+				//				if ( clusterValue < prevValue )
+				//				{
+				//					newCenter.copy(pt1);
+				//					newCluster = cluster;
+				//					clusterValue = prevValue;
+				//					break;
+				//				}				
+
+				//				cluster = newCluster;
+				//				System.err.println( "  findClusterCenter " + pt1.distance(newCenter) );
 			}
-			if ( newCluster != null )
-			{
-				newCluster.add(0, newCenter);
-				return newCluster;
-			}
+			//			if ( newCluster != null )
+			//			{
+			//				newCluster.add(0, newCenter);
+			//				value[0] = clusterValue;
+			//				return newCluster;
+			//			}
 			if ( cluster != null )
 			{
-				cluster.add(0, newCenter);
+				cluster.add(0, pt1);
+				//				value[0] = clusterValue;
 				return cluster;				
 			}
 		}
 		return null;
 	}
-	
+
+
+
+
+	private float sphereTest( VOIContour cluster, Vector3f center, int radius )
+	{
+		int insideCount = 0;
+		for ( int i = 0; i < cluster.size(); i++ )
+		{
+			if ( center.distance(cluster.elementAt(i)) <= radius )
+			{
+				insideCount++;
+			}
+		}
+		float sphereVolume = (float)((4f/3f)*Math.PI*radius*radius*radius);
+		return (float)insideCount/(sphereVolume);
+	}
+
+
 	private Vector<Vector3f> findMarkers2( ModelImage image, ModelImage results, Vector<Vector3f> pts, BitSet mask, float minIntensity, int minRadius, int maxRadius )
 	{    	
 		Vector<Box3f> boundingBoxesOO = new Vector<Box3f>();
 		Vector<Vector2d> valuePairs = new Vector<Vector2d>();
 		VOIContour centerList = new VOIContour(false);
 		VOI clusterList = new VOI((short)0, "temp", VOI.POLYLINE, 0);
-		int steps = 2 * (int) Math.floor(maxRadius - minRadius);
+		//		int steps = 2 * (int) Math.floor(maxRadius - minRadius);
+		int steps = (int) Math.floor(maxRadius - minRadius);
 		int clusterCount = 0;
 		while (pts.size() > 0)
+			//		while ( clusterList.getCurves().size() < 20 )
 		{
 			Vector3f pt1 = new Vector3f(pts.firstElement());
-			VOIContour cluster = findClusterCenter(image, pts, pt1, minIntensity, minRadius);
+			float[] clusterValue1 = new float[]{-1};
+			VOIContour cluster = findClusterCenter(image, pts, pt1, minIntensity, minRadius, clusterValue1);
 			int x = Math.round(cluster.firstElement().X);
 			int y = Math.round(cluster.firstElement().Y);
 			int z = Math.round(cluster.firstElement().Z);
-			float clusterValue1 = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+			//			float clusterValue1 = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
 			for ( int j = 1; j < steps; j++ )
 			{
-				VOIContour cluster2 = findClusterCenter(image, pts, pt1, minIntensity, minRadius + j);
+				System.err.println( minRadius + j );
+				float[] clusterValue2 = new float[]{-1};
+				VOIContour cluster2 = findClusterCenter(image, pts, pt1, minIntensity, minRadius + j, clusterValue2);
 				x = Math.round(cluster2.firstElement().X);
 				y = Math.round(cluster2.firstElement().Y);
 				z = Math.round(cluster2.firstElement().Z);
-				float clusterValue2 = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
-//				System.err.println( "   " + clusterValue1 + " " + clusterValue2 );
+				//				float clusterValue2 = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+				//				System.err.println( "   " + clusterValue1 + " " + clusterValue2 );
 				if ( cluster.size() == cluster2.size() )
 				{
 					break;
 				}
-				if ( clusterValue2 < (0.9f * clusterValue1) )
-				{
-					break;
-				}
+				//				if ( clusterValue2[0] < clusterValue1[0] )
+				//				{
+				//					break;
+				//				}
 				else
 				{
 					cluster = cluster2;
-					clusterValue1 = clusterValue2;
+					clusterValue1[0] = clusterValue2[0];
 				}				
 			}
 			if ( cluster.size() > 0 )
@@ -7103,24 +6917,24 @@ public class WormSegmentation
 
 					results.set(x, y, z, clusterCount);
 					clusterPts[j] = cluster.elementAt(j);
-					
+
 					if ( j == 0 )
 					{
 						value = image.getFloat(x, y, z);
 					}
 				}
 				Box3f box = ContBox3f.ContOrientedBox(cluster.size(), cluster);
-//				System.err.println("");
-								
-//				System.err.println( clusterCount + "       " + Math.ceil(box.Extent[0]) + "   " + Math.ceil(box.Extent[1]) + "   " + Math.ceil(box.Extent[2]) + "   " + value );
+				//				System.err.println("");
+
+				//				System.err.println( clusterCount + "       " + Math.ceil(box.Extent[0]) + "   " + Math.ceil(box.Extent[1]) + "   " + Math.ceil(box.Extent[2]) + "   " + value );
 				boundingBoxesOO.add(box);
 				valuePairs.add( new Vector2d( value, clusterCount) );
 				pts.removeAll(cluster);
-//				System.err.println( clusterCount + "       " + Math.ceil(extents[0]) + "   " + Math.ceil(extents[1]) + "   " + Math.ceil(extents[2]) );
+				//				System.err.println( clusterCount + "       " + Math.ceil(extents[0]) + "   " + Math.ceil(extents[1]) + "   " + Math.ceil(extents[2]) );
 				if ( (box.Extent[0] <= 2) || (box.Extent[1] <= 2) || (box.Extent[2] <= 2) )
 				{
-//					System.err.println( clusterCount + "       " + box.Extent[0] + "   " + box.Extent[1] + "   " + box.Extent[2] );
-					
+					//					System.err.println( clusterCount + "       " + box.Extent[0] + "   " + box.Extent[1] + "   " + box.Extent[2] );
+
 					// Remove Cluster:
 					clusterCount--;
 					clusterList.getCurves().remove( clusterList.getCurves().lastElement() );
@@ -7135,6 +6949,16 @@ public class WormSegmentation
 						results.set(x, y, z, 0);
 					}					
 				}
+				else
+				{
+					float r01 = Math.abs(box.Extent[0]-box.Extent[1]);
+					float r02 = Math.abs(box.Extent[0]-box.Extent[2]);
+					float r12 = Math.abs(box.Extent[1]-box.Extent[2]);
+					float maxR = Math.max(r01, Math.max(r02,r12));
+					//					System.err.println( clusterCount + "," + centerList.lastElement().X + "," + centerList.lastElement().Y + "," + 
+					//							centerList.lastElement().Z + "," + maxR/2f );
+
+				}
 			}
 			else
 			{
@@ -7142,183 +6966,314 @@ public class WormSegmentation
 			}
 		}
 
+		//		expandList( image, results, clusterList, centerList, minRadius );
 		LatticeBuilder buildTest = new LatticeBuilder();
 		buildTest.setSeamImage(results);
 		buildTest.setSeamIDs(centerList);
-		boolean pass = buildTest.findTenthPair(image, centerList);
-		if ( !pass )
-		{
-			expandList( image, results, clusterCount, clusterList, centerList, boundingBoxesOO, minRadius );
-			pass = buildTest.findTenthPair(image, centerList);
-		}
+		boolean pass = buildTest.findTenthPair(image, centerList) & (clusterList.getCurves().size() >= 20);
+		//		while ( !pass )
+		//		{
+		//			boolean changed = expandList( image, results, clusterList, centerList, minRadius );
+		//			pass = buildTest.findTenthPair(image, centerList) & (clusterList.getCurves().size() >= 20);
+		//			if ( !changed )
+		//				break;
+		//		}
 		System.err.println("clusters : " + centerList.size() + " " + pass );
 		return centerList;
 	}
 
 
-//	private static Vector<Vector3f> findMarkers( ModelImage image, ModelImage results, Vector<Vector3f> pts, BitSet mask, int minRadius, int maxRadius )
-//	{    	
-//		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-//		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-//		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;    
-//
-//		Vector<Vector3f> cubeCenters = new Vector<Vector3f>();
-//
-//		Vector3f centerP = new Vector3f();
-//		Vector3f testP = new Vector3f();
-//
-//		for ( int i = pts.size() -1; i >= 0; i-- )
-//		{
-//			centerP = pts.elementAt(i);
-//			int index = (((int)centerP.Z) * dimX * dimY + ((int)centerP.Y) * dimX + ((int)centerP.X));
-//			if ( mask.get(index) )
-//			{
-//				continue;
-//			}
-//
-//			boolean foundInside = false;
-//			boolean foundOutside = false;
-//			int outR = -1;
-//			int inR = -1;
-////			for ( int radius = minRadius; radius <= (maxRadius+1); radius++ )
-//			for ( int radius = (maxRadius+1); radius >= minRadius; radius-- )
-//			{
-//				int startZ = (int)(centerP.Z - radius);
-//				int stopZ  = (int)(centerP.Z + radius);
-//				int startY = (int)(centerP.Y - radius);
-//				int stopY  = (int)(centerP.Y + radius);
-//				int startX = (int)(centerP.X - radius);
-//				int stopX  = (int)(centerP.X + radius);
-//				if ( (startZ < 0) || (startY < 0) || (startX < 0) ||
-//						(stopZ >= dimZ) || (stopY >= dimY) || (stopX >= dimX) )
-//				{
-//					continue;
-//				}
-//				
-//				float centerValue = 0;
-//				if ( image.isColorImage() )
-//				{
-//					centerValue = image.getFloatC((int)centerP.X, (int)centerP.Y, (int)centerP.Z, 1 ); 
-//				}
-//				else
-//				{
-//					centerValue = image.getFloat((int)centerP.X, (int)centerP.Y, (int)centerP.Z);
-//				}
-//
-//				int insideCount = 0;
-//				double insideAverage = 0;
-//				int outsideCount = 0;
-//				double outsideAverage = 0;
-//				
-//				boolean insideMask = false;
-//				for ( int z = startZ; z <= stopZ && !insideMask; z++ )
-//				{
-//					for ( int y = startY; y <= stopY && !insideMask; y++ )
-//					{
-//						for ( int x = startX; x <= stopX && !insideMask; x++ )
-//						{
-//
-//							index = (z * dimX * dimY + y * dimX + x);
-////							if ( mask.get(index) )
-////							{
-////								insideMask = true;
-////								break;
-////							}
-//							
-//							float value = 0;
-//							if ( image.isColorImage() )
-//							{
-//								value = image.getFloatC(x, y, z, 1 ); 
-//							}
-//							else
-//							{
-//								value = image.getFloat(x, y, z);
-//							}
-//
-//							testP.set(x,y,z);
-//							if ( centerP.distance(testP) <= radius )
-//							{
-//								insideAverage += value;
-//								insideCount++;
-//							}
-//							else
-//							{
-//								outsideAverage += value;
-//								outsideCount++;
-//							}
-//						}
-//					}
-//				}
-////				if ( insideMask )
-////				{
-////					break;
-////				}
-//				
-//				insideAverage /= insideCount;
-//				outsideAverage /= outsideCount;
-//
-//				foundInside = foundInside || (insideAverage >= (0.95 *centerValue));
-//				foundOutside = foundOutside || (foundInside && (outsideAverage <= (0.75 * centerValue)));
-//				if ( foundInside && (inR == -1) )
-//				{
-//					inR = radius;
-//				}
-//				if ( foundOutside && (outR == -1) )
-//				{
-//					outR = radius;
-//				}
-//				if ( foundInside && foundOutside )
-//				{
-////					System.err.println( i + " " + centerValue + " " + insideAverage + " " + outsideAverage + " " +
-////							insideAverage/centerValue + " " + outsideAverage/centerValue + " " +
-////							(insideAverage >= (0.75 *centerValue)) + " " + (outsideAverage <= (0.5 * centerValue)) );
-//
-//					cubeCenters.add( pts.remove(i) );
-//					startZ = (int)(centerP.Z - outR);
-//					stopZ  = (int)(centerP.Z + outR);
-//					startY = (int)(centerP.Y - outR);
-//					stopY  = (int)(centerP.Y + outR);
-//					startX = (int)(centerP.X - outR);
-//					stopX  = (int)(centerP.X + outR);
-//					for ( int z = startZ; z <= stopZ; z++ )
-//					{
-//						for ( int y = startY; y <= stopY; y++ )
-//						{
-//							for ( int x = startX; x <= stopX; x++ )
-//							{
-//								testP.set(x,y,z);
-////								if ( centerP.distance(testP) <= outR )
-////								{
-//////									results.setC(x,  y, z, 0, 255);
-//////									results.setC(x,  y, z, 3, 255);
-////								}
-//								if ( centerP.distance(testP) <= inR )
-//								{
-//									index = (z * dimX * dimY + y * dimX + x);
-//									mask.set(index);
-////									results.setC(x,  y, z, 0, 255);
-////									results.setC(x,  y, z, 1, 255);
-//									results.set(x, y, z, cubeCenters.size());
-//								}
-////								if ( centerP.distance(testP) == outR )
-////								{
-////									results.set(x,  y, z, 1);
-////								}
-////								if ( centerP.distance(testP) == inR )
-////								{
-////									results.set(x,  y, z, 1);
-////								}
-//							}
-//						}
-//					}
-//					break;
-//				}
-//			}
-//		}
-//		return cubeCenters;
-//	}
 
-	private Vector<Vector3f> initFindMarkers( ModelImage image, float intensityMin, float intensityMax )
+
+
+	//	private Vector<Vector3f> findMarkers3( ModelImage image, ModelImage results, Vector<Vector3f> pts, BitSet mask, float minIntensity, int minRadius, int maxRadius )
+	//	{    	
+	//		Vector<Box3f> boundingBoxesOO = new Vector<Box3f>();
+	//		Vector<Vector2d> valuePairs = new Vector<Vector2d>();
+	//		VOIContour centerList = new VOIContour(false);
+	//		VOI clusterList = new VOI((short)0, "temp", VOI.POLYLINE, 0);
+	//		int steps = 2 * (int) Math.floor(maxRadius - minRadius);
+	//		int clusterCount = 0;
+	//		while (pts.size() > 0)
+	//		{
+	//			Vector3f pt1 = new Vector3f(pts.firstElement());
+	//			VOIContour cluster = findClusterCenter(image, pts, pt1, minIntensity, minRadius);
+	//			int x = Math.round(cluster.firstElement().X);
+	//			int y = Math.round(cluster.firstElement().Y);
+	//			int z = Math.round(cluster.firstElement().Z);
+	//			float clusterValue1 = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+	//			for ( int j = 1; j < steps; j++ )
+	//			{
+	//				VOIContour cluster2 = findClusterCenter(image, pts, pt1, minIntensity, minRadius + j);
+	//				x = Math.round(cluster2.firstElement().X);
+	//				y = Math.round(cluster2.firstElement().Y);
+	//				z = Math.round(cluster2.firstElement().Z);
+	//				float clusterValue2 = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+	////				System.err.println( "   " + clusterValue1 + " " + clusterValue2 );
+	//				if ( cluster.size() == cluster2.size() )
+	//				{
+	//					break;
+	//				}
+	//				if ( clusterValue2 < (0.9f * clusterValue1) )
+	//				{
+	//					break;
+	//				}
+	//				else
+	//				{
+	//					cluster = cluster2;
+	//					clusterValue1 = clusterValue2;
+	//				}				
+	//			}
+	//			if ( cluster.size() > 0 )
+	//			{
+	//				// found a cluster!
+	//				clusterCount++;
+	//				clusterList.getCurves().add(cluster);
+	//				centerList.add(new Vector3f(cluster.firstElement()));
+	//				Vector3f[] clusterPts = new Vector3f[cluster.size()];
+	//				float value = 0;
+	//				for ( int j = 0; j < cluster.size(); j++ )
+	//				{
+	//					x = Math.round(cluster.elementAt(j).X);
+	//					y = Math.round(cluster.elementAt(j).Y);
+	//					z = Math.round(cluster.elementAt(j).Z);
+	//
+	//					results.set(x, y, z, clusterCount);
+	//					clusterPts[j] = cluster.elementAt(j);
+	//					
+	//					if ( j == 0 )
+	//					{
+	//						value = image.getFloat(x, y, z);
+	//					}
+	//				}
+	//				Box3f box = ContBox3f.ContOrientedBox(cluster.size(), cluster);
+	////				System.err.println("");
+	//								
+	////				System.err.println( clusterCount + "       " + Math.ceil(box.Extent[0]) + "   " + Math.ceil(box.Extent[1]) + "   " + Math.ceil(box.Extent[2]) + "   " + value );
+	//				boundingBoxesOO.add(box);
+	//				valuePairs.add( new Vector2d( value, clusterCount) );
+	//				pts.removeAll(cluster);
+	////				System.err.println( clusterCount + "       " + Math.ceil(extents[0]) + "   " + Math.ceil(extents[1]) + "   " + Math.ceil(extents[2]) );
+	//				if ( (box.Extent[0] <= 2) || (box.Extent[1] <= 2) || (box.Extent[2] <= 2) )
+	//				{
+	////					System.err.println( clusterCount + "       " + box.Extent[0] + "   " + box.Extent[1] + "   " + box.Extent[2] );
+	//					
+	//					// Remove Cluster:
+	//					clusterCount--;
+	//					clusterList.getCurves().remove( clusterList.getCurves().lastElement() );
+	//					centerList.remove( centerList.lastElement() );
+	//					valuePairs.remove( valuePairs.lastElement() );
+	//					boundingBoxesOO.remove(box);
+	//					for ( int j = 0; j < cluster.size(); j++ )
+	//					{
+	//						x = Math.round(cluster.elementAt(j).X);
+	//						y = Math.round(cluster.elementAt(j).Y);
+	//						z = Math.round(cluster.elementAt(j).Z);
+	//						results.set(x, y, z, 0);
+	//					}					
+	//				}
+	//				else
+	//				{
+	//					float r01 = Math.abs(box.Extent[0]-box.Extent[1]);
+	//					float r02 = Math.abs(box.Extent[0]-box.Extent[2]);
+	//					float r12 = Math.abs(box.Extent[1]-box.Extent[2]);
+	//					float maxR = Math.max(r01, Math.max(r02,r12));
+	////					System.err.println( clusterCount + "," + centerList.lastElement().X + "," + centerList.lastElement().Y + "," + 
+	////							centerList.lastElement().Z + "," + maxR/2f );
+	//					
+	//				}
+	//			}
+	//			else
+	//			{
+	//				pts.remove(pt1);
+	//			}
+	//		}
+	//
+	////		expandList( image, results, clusterList, centerList, minRadius );
+	//		LatticeBuilder buildTest = new LatticeBuilder();
+	//		buildTest.setSeamImage(results);
+	//		buildTest.setSeamIDs(centerList);
+	//		boolean pass = buildTest.findTenthPair(image, centerList) & (clusterList.getCurves().size() >= 20);
+	////		while ( !pass )
+	////		{
+	////			boolean changed = expandList( image, results, clusterList, centerList, minRadius );
+	////			pass = buildTest.findTenthPair(image, centerList) & (clusterList.getCurves().size() >= 20);
+	////			if ( !changed )
+	////				break;
+	////		}
+	//		System.err.println("clusters : " + centerList.size() + " " + pass );
+	//		return centerList;
+	//	}
+
+
+
+
+
+
+	//	private static Vector<Vector3f> findMarkers( ModelImage image, ModelImage results, Vector<Vector3f> pts, BitSet mask, int minRadius, int maxRadius )
+	//	{    	
+	//		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+	//		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+	//		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;    
+	//
+	//		Vector<Vector3f> cubeCenters = new Vector<Vector3f>();
+	//
+	//		Vector3f centerP = new Vector3f();
+	//		Vector3f testP = new Vector3f();
+	//
+	//		for ( int i = pts.size() -1; i >= 0; i-- )
+	//		{
+	//			centerP = pts.elementAt(i);
+	//			int index = (((int)centerP.Z) * dimX * dimY + ((int)centerP.Y) * dimX + ((int)centerP.X));
+	//			if ( mask.get(index) )
+	//			{
+	//				continue;
+	//			}
+	//
+	//			boolean foundInside = false;
+	//			boolean foundOutside = false;
+	//			int outR = -1;
+	//			int inR = -1;
+	////			for ( int radius = minRadius; radius <= (maxRadius+1); radius++ )
+	//			for ( int radius = (maxRadius+1); radius >= minRadius; radius-- )
+	//			{
+	//				int startZ = (int)(centerP.Z - radius);
+	//				int stopZ  = (int)(centerP.Z + radius);
+	//				int startY = (int)(centerP.Y - radius);
+	//				int stopY  = (int)(centerP.Y + radius);
+	//				int startX = (int)(centerP.X - radius);
+	//				int stopX  = (int)(centerP.X + radius);
+	//				if ( (startZ < 0) || (startY < 0) || (startX < 0) ||
+	//						(stopZ >= dimZ) || (stopY >= dimY) || (stopX >= dimX) )
+	//				{
+	//					continue;
+	//				}
+	//				
+	//				float centerValue = 0;
+	//				if ( image.isColorImage() )
+	//				{
+	//					centerValue = image.getFloatC((int)centerP.X, (int)centerP.Y, (int)centerP.Z, 1 ); 
+	//				}
+	//				else
+	//				{
+	//					centerValue = image.getFloat((int)centerP.X, (int)centerP.Y, (int)centerP.Z);
+	//				}
+	//
+	//				int insideCount = 0;
+	//				double insideAverage = 0;
+	//				int outsideCount = 0;
+	//				double outsideAverage = 0;
+	//				
+	//				boolean insideMask = false;
+	//				for ( int z = startZ; z <= stopZ && !insideMask; z++ )
+	//				{
+	//					for ( int y = startY; y <= stopY && !insideMask; y++ )
+	//					{
+	//						for ( int x = startX; x <= stopX && !insideMask; x++ )
+	//						{
+	//
+	//							index = (z * dimX * dimY + y * dimX + x);
+	////							if ( mask.get(index) )
+	////							{
+	////								insideMask = true;
+	////								break;
+	////							}
+	//							
+	//							float value = 0;
+	//							if ( image.isColorImage() )
+	//							{
+	//								value = image.getFloatC(x, y, z, 1 ); 
+	//							}
+	//							else
+	//							{
+	//								value = image.getFloat(x, y, z);
+	//							}
+	//
+	//							testP.set(x,y,z);
+	//							if ( centerP.distance(testP) <= radius )
+	//							{
+	//								insideAverage += value;
+	//								insideCount++;
+	//							}
+	//							else
+	//							{
+	//								outsideAverage += value;
+	//								outsideCount++;
+	//							}
+	//						}
+	//					}
+	//				}
+	////				if ( insideMask )
+	////				{
+	////					break;
+	////				}
+	//				
+	//				insideAverage /= insideCount;
+	//				outsideAverage /= outsideCount;
+	//
+	//				foundInside = foundInside || (insideAverage >= (0.95 *centerValue));
+	//				foundOutside = foundOutside || (foundInside && (outsideAverage <= (0.75 * centerValue)));
+	//				if ( foundInside && (inR == -1) )
+	//				{
+	//					inR = radius;
+	//				}
+	//				if ( foundOutside && (outR == -1) )
+	//				{
+	//					outR = radius;
+	//				}
+	//				if ( foundInside && foundOutside )
+	//				{
+	////					System.err.println( i + " " + centerValue + " " + insideAverage + " " + outsideAverage + " " +
+	////							insideAverage/centerValue + " " + outsideAverage/centerValue + " " +
+	////							(insideAverage >= (0.75 *centerValue)) + " " + (outsideAverage <= (0.5 * centerValue)) );
+	//
+	//					cubeCenters.add( pts.remove(i) );
+	//					startZ = (int)(centerP.Z - outR);
+	//					stopZ  = (int)(centerP.Z + outR);
+	//					startY = (int)(centerP.Y - outR);
+	//					stopY  = (int)(centerP.Y + outR);
+	//					startX = (int)(centerP.X - outR);
+	//					stopX  = (int)(centerP.X + outR);
+	//					for ( int z = startZ; z <= stopZ; z++ )
+	//					{
+	//						for ( int y = startY; y <= stopY; y++ )
+	//						{
+	//							for ( int x = startX; x <= stopX; x++ )
+	//							{
+	//								testP.set(x,y,z);
+	////								if ( centerP.distance(testP) <= outR )
+	////								{
+	//////									results.setC(x,  y, z, 0, 255);
+	//////									results.setC(x,  y, z, 3, 255);
+	////								}
+	//								if ( centerP.distance(testP) <= inR )
+	//								{
+	//									index = (z * dimX * dimY + y * dimX + x);
+	//									mask.set(index);
+	////									results.setC(x,  y, z, 0, 255);
+	////									results.setC(x,  y, z, 1, 255);
+	//									results.set(x, y, z, cubeCenters.size());
+	//								}
+	////								if ( centerP.distance(testP) == outR )
+	////								{
+	////									results.set(x,  y, z, 1);
+	////								}
+	////								if ( centerP.distance(testP) == inR )
+	////								{
+	////									results.set(x,  y, z, 1);
+	////								}
+	//							}
+	//						}
+	//					}
+	//					break;
+	//				}
+	//			}
+	//		}
+	//		return cubeCenters;
+	//	}
+	
+	
+	private Vector<Vector3f> initFindMarkers2( ModelImage image, float intensityMin, float intensityMax )
 	{    	
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
@@ -7359,170 +7314,274 @@ public class WormSegmentation
 		Vector<Vector3f> sortedList = new Vector<Vector3f>();
 		for ( int i = 0; i < posArray.length; i++ )
 		{
-//			System.err.println( i + " " + posArray[i] );
+			//			System.err.println( i + " " + posArray[i] );
 			sortedList.add(new Vector3f(posArray[i].Y, posArray[i].Z, posArray[i].W) );
 		}
 		positions = null;
 		posArray = null;
 
-//		System.err.println( sortedList.size() );
+		//		System.err.println( sortedList.size() );
 
 		return sortedList;
 	}
-	
-	private void expandList(ModelImage image, ModelImage results, int clusterCount, VOI clusterList, VOIContour centerList, Vector<Box3f> boxes, float minRadius )
+
+	private VOIContour initFindMarkers( ModelImage image, float intensityMin, float intensityMax )
+	{    	
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;    
+
+		VOIContour positions = new VOIContour(false);
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					float value = 0;
+					if ( image.isColorImage() )
+					{
+						value = image.getFloatC(x, y, z, 2 ); 
+					}
+					else
+					{
+						value = image.getFloat(x,y,z);
+					}
+					if ( (value >= intensityMin) && (value <= intensityMax) )
+					{
+						positions.add( new Vector3f(x,y,z));
+					}
+				}
+			}
+		}
+		return positions;
+	}
+
+	private boolean expandList(ModelImage image, VOI clusterList, VOIContour centerList, float minRadius )
 	{
-		VOIContour newCenters = new VOIContour(false);
+		boolean modified = false;
 		// Try to split a seam cell:
 		float maxDiff = -1;
 		int maxIndex = -1;
-		for ( int i = 0; i < boxes.size(); i++ )
+		Box3f[] boxes = new Box3f[clusterList.getCurves().size()];
+		for ( int i = 0; i < clusterList.getCurves().size(); i++ )
 		{
-			//				System.err.println( (i+1) + " " + boundingBoxesOO.elementAt(i).Extent[0] + " " + 
-			//						boundingBoxesOO.elementAt(i).Extent[1] + " " + 
-			//						boundingBoxesOO.elementAt(i).Extent[2] );
+			boxes[i] = ContBox3f.ContOrientedBox(clusterList.getCurves().elementAt(i).size(), clusterList.getCurves().elementAt(i));
 
-			float maxExtent = boxes.elementAt(i).Extent[0];
-			if ( boxes.elementAt(i).Extent[1] > maxExtent )
+			float maxExtent = boxes[i].Extent[0];
+			if ( boxes[i].Extent[1] > maxExtent )
 			{
-				maxExtent = boxes.elementAt(i).Extent[1];
+				maxExtent = boxes[i].Extent[1];
 			}
-			if ( boxes.elementAt(i).Extent[2] > maxExtent )
+			if ( boxes[i].Extent[2] > maxExtent )
 			{
-				maxExtent = boxes.elementAt(i).Extent[2];
+				maxExtent = boxes[i].Extent[2];
 			}
-			float minExtent = boxes.elementAt(i).Extent[0];
-			if ( boxes.elementAt(i).Extent[1] < minExtent )
+			if ( maxExtent > maxDiff )
 			{
-				minExtent = boxes.elementAt(i).Extent[1];
-			}
-			if ( boxes.elementAt(i).Extent[2] < minExtent )
-			{
-				minExtent = boxes.elementAt(i).Extent[2];
-			}
-			if ( (maxExtent - minExtent) > maxDiff )
-			{
-				maxDiff = maxExtent - minExtent;
+				maxDiff = maxExtent;
 				maxIndex = i;
 			}
 		}
-		if ( maxDiff > minRadius )
+		if ( maxIndex == -1 )
+			return false;
+		Box3f box = boxes[maxIndex];
+		float minExtent = box.Extent[0];
+		if ( box.Extent[1] < minExtent )
 		{
-			int maxD1 = -1;
-			int maxD2 = -1;
-			float maxD = -1;
+			minExtent = box.Extent[1];
+		}
+		if ( box.Extent[2] < minExtent )
+		{
+			minExtent = box.Extent[2];
+		}
+		if ( (minExtent*1.5 < maxDiff) && (maxDiff > 2*minRadius) )
+		{
+			System.err.println( "Splitting cluster " + (maxIndex+1) );
 			VOIContour cluster = (VOIContour)clusterList.getCurves().elementAt(maxIndex);
-			float minIntensity = Float.MAX_VALUE;
-			float maxIntensity = -Float.MAX_VALUE;
-			for ( int j = 0; j < cluster.size(); j++ )
+			modified = splitCluster( image, clusterList, cluster, centerList, box, maxIndex, minRadius );
+		}
+		return modified;
+	}
+
+	private boolean splitCluster( ModelImage image, VOI clusterList, VOIContour cluster, Vector<Vector3f> centerList, Box3f box, int index, float minRadius )
+	{
+		boolean modified = false;
+
+		int maxIndex = 0;
+		float maxE = box.Extent[0];
+		if ( box.Extent[1] > maxE)
+		{
+			maxE = box.Extent[1];
+			maxIndex = 1;
+		}
+		if ( box.Extent[2] > maxE)
+		{
+			maxE = box.Extent[2];
+			maxIndex = 2;
+		}
+
+		Vector3f dir0 = box.Axis[maxIndex];
+		dir0.normalize();
+		dir0.scale(box.Extent[maxIndex]/2f);
+				
+
+		Vector3f maxPtFromStart = new Vector3f(box.Center);
+		maxPtFromStart.add(dir0);
+		Vector3f maxPtFromStop = new Vector3f(box.Center);
+		maxPtFromStop.sub(dir0);
+
+		float maxPointDistance = maxPtFromStart.distance(maxPtFromStop);
+		if ( maxPointDistance < minRadius )
+		{
+			// no split
+			return false;
+		}
+		else
+		{
+			Vector3f start = new Vector3f(maxPtFromStart);
+			Vector3f dir = Vector3f.sub(maxPtFromStop,maxPtFromStart);
+			float length = dir.normalize();			
+			float minValue = Float.MAX_VALUE;
+			Vector3f minPtFromStart = new Vector3f();
+			for ( int k = 0; k <= length; k++ )
 			{
-				Vector3f p1 = cluster.elementAt(j);
-				int x = Math.round(p1.X);
-				int y = Math.round(p1.Y);
-				int z = Math.round(p1.Z);
+				int x = Math.round(start.X);
+				int y = Math.round(start.Y);
+				int z = Math.round(start.Z);
 				float value = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
-				if ( value < minIntensity )
+				if ( value < minValue )
 				{
-					minIntensity = value;
+					minValue = value;
+					minPtFromStart.copy(start);
 				}
-				if ( value > maxIntensity )
-				{
-					maxIntensity = value;
-				}
-				for ( int k = j+1; k < cluster.size(); k++ )
-				{
-					Vector3f p2 = cluster.elementAt(k);
-					float distance = p1.distance(p2);
-					if ( distance > maxD )
-					{
-						maxD = distance;
-						maxD1 = j;
-						maxD2 = k;
-					}
-				}
+				start.add(dir);
 			}
-			if ( (maxD1 != -1) && (maxD2 != -1) )
+
+			Vector3f stop = new Vector3f(maxPtFromStop);
+			dir = Vector3f.sub(maxPtFromStart,maxPtFromStop);
+			length = dir.normalize();			
+			minValue = Float.MAX_VALUE;
+			Vector3f minPtFromStop = new Vector3f();
+			for ( int k = 0; k <= length; k++ )
 			{
-				float intensityLimit = (minIntensity + maxIntensity)/2f;
-
-				Vector3f pt1 = new Vector3f(cluster.elementAt(maxD1));
-				VOIContour subCluster1 = findClusterCenter(image, cluster, pt1, intensityLimit, minRadius);
-				while ( subCluster1 == null )
+				int x = Math.round(stop.X);
+				int y = Math.round(stop.Y);
+				int z = Math.round(stop.Z);
+				float value = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+				if ( value < minValue )
 				{
-					intensityLimit = Math.max( minIntensity, intensityLimit/2f );
-					if ( intensityLimit == minIntensity )
-					{
-						break;
-					}
-					pt1 = new Vector3f(cluster.elementAt(maxD1));
-					subCluster1 = findClusterCenter(image, cluster, pt1, intensityLimit, minRadius);
+					minValue = value;
+					minPtFromStop.copy(stop);
 				}
-				if ( intensityLimit == minIntensity )
-					return;
-				if ( subCluster1.size() == 0 )
-					return;
+				stop.add(dir);
+			}
 
-				Vector3f pt2 = new Vector3f(cluster.elementAt(maxD2));
-				VOIContour subCluster2 = findClusterCenter(image, cluster, pt2, intensityLimit, minRadius);
-				if ( (subCluster2 == null) || (subCluster2.size() == 0) )
-					return;
+			Vector3f minPt = Vector3f.add(minPtFromStart,minPtFromStop);
+			minPt.scale(0.5f);
 
 
-				Vector3f center1 = subCluster1.elementAt(0);
-				Vector3f center2 = subCluster2.elementAt(0);
-				//					System.err.println( center1.distance(center2) + "  " + cluster.size() + "   " + subCluster1.size() + "  " + subCluster2.size() );
-				//					System.err.println( center1 );
-				//					System.err.println( center2 );
-				//					System.err.println( subCluster2.contains( center1 ) + "   " + subCluster1.contains(center2) );
-				if ( center1.distance(center2) > minRadius )
+			int x = Math.round(minPt.X);
+			int y = Math.round(minPt.Y);
+			int z = Math.round(minPt.Z);
+			float minPtValue = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+
+			x = Math.round(maxPtFromStart.X);
+			y = Math.round(maxPtFromStart.Y);
+			z = Math.round(maxPtFromStart.Z);
+			float max1Value = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+
+			x = Math.round(maxPtFromStop.X);
+			y = Math.round(maxPtFromStop.Y);
+			z = Math.round(maxPtFromStop.Z);
+			float max2Value = image.isColorImage() ? image.getFloatC(x, y, z, 2) : image.getFloat(x, y, z);
+			
+			System.err.println( minPtValue + "   " + max1Value + "   " + max2Value );
+			System.err.println( minPt.distance(maxPtFromStart) + "    " + minPt.distance(maxPtFromStop) );
+			System.err.println("");
+			
+			if ( (minPtValue < 0.9f*max1Value) && (minPtValue < 0.9f*max2Value) && 
+					(minPt.distance(maxPtFromStart) > minRadius) && (minPt.distance(maxPtFromStop) > minRadius) )
+			{						
+				Plane3f halfPlane = new Plane3f( dir, minPt );
+				VOIContour subCluster1 = new VOIContour(false);
+				VOIContour subCluster2 = new VOIContour(false);
+
+				Vector3f center1 = new Vector3f();
+				Vector3f center2 = new Vector3f();
+				for ( int i = 0; i < cluster.size(); i++ )
 				{
-					int x = Math.round(pt1.X);
-					int y = Math.round(pt1.Y);
-					int z = Math.round(pt1.Z);
-					int origID = results.getInt( x, y, z );
-					//						System.err.println( origID + "    " + i );
-					for ( int j = 0; j < cluster.size(); j++ )
+					int side = halfPlane.WhichSide(cluster.elementAt(i));
+					if ( side == -1 )
 					{
-						pt1 = cluster.elementAt(j);
-						x = Math.round(pt1.X);
-						y = Math.round(pt1.Y);
-						z = Math.round(pt1.Z);
-						results.set( x, y, z, 0 );
+						subCluster1.add(cluster.elementAt(i));
+						center1.add(cluster.elementAt(i));
 					}
-					centerList.elementAt(maxIndex).copy(center1);
+					else //if ( side == 1 )
+					{
+						subCluster2.add(cluster.elementAt(i));
+						center2.add(cluster.elementAt(i));
+					}
+				}
+				center1.scale(1f/(float)subCluster1.size());
+				center2.scale(1f/(float)subCluster2.size());
+
+				Vector3f pt1;
+				if ( subCluster1.size() == 0 )
+					return false;
+				Box3f boxSub1 = ContBox3f.ContOrientedBox(subCluster1.size(), subCluster1);
+				if ( (boxSub1.Extent[0] <= 2) || (boxSub1.Extent[1] <= 2) || (boxSub1.Extent[2] <= 2) )
+				{
+					//subCluster1 invalid
 					for ( int j = 0; j < subCluster1.size(); j++ )
 					{
-						pt1 = subCluster1.elementAt(j);
-						x = Math.round(pt1.X);
-						y = Math.round(pt1.Y);
-						z = Math.round(pt1.Z);
-						results.set( x, y, z, origID );
+						cluster.remove(subCluster1.elementAt(j));
 					}
-					centerList.add(center2);
-					int newID = centerList.size();
+					return true;
+				}
+
+				
+				if ( (subCluster2 == null) || (subCluster2.size() == 0) )
+					return false;
+
+				Box3f boxSub2 = ContBox3f.ContOrientedBox(subCluster2.size(), subCluster2);
+				if ( (boxSub2.Extent[0] <= 2) || (boxSub2.Extent[1] <= 2) || (boxSub2.Extent[2] <= 2) )
+				{
+					//subCluster1 invalid
 					for ( int j = 0; j < subCluster2.size(); j++ )
 					{
-						pt1 = subCluster2.elementAt(j);
-						x = Math.round(pt1.X);
-						y = Math.round(pt1.Y);
-						z = Math.round(pt1.Z);
-						results.set( x, y, z, newID );
+						cluster.remove(subCluster2.elementAt(j));
 					}
+					return true;
+				}
+				
+				
+
+
+				if ( center1.distance(center2) > minRadius )
+				{
+					centerList.elementAt(index).copy(center1);
+					centerList.add(center2);
+					
+					cluster.removeAllElements();
+					cluster.addAll(subCluster1);
+					clusterList.getCurves().add(subCluster2);
+					modified = true;
 				}
 			}
 		}
+		return modified;
 	}
 
-	
 
 	public static void findLargestConnected( ModelImage image, BitSet mask, float minValue )
 	{
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
 		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
-		
-//		float minValue = Float.MAX_VALUE;
-		
+
+		//		float minValue = Float.MAX_VALUE;
+
 		Vector<Vector3f> seeds = new Vector<Vector3f>();
 		for ( int z = 0; z < dimZ; z++ )
 		{
@@ -7534,19 +7593,19 @@ public class WormSegmentation
 					if ( mask.get(index) )
 					{
 						seeds.add( new Vector3f(x,y,z));
-//						float value = 0;
-//						if ( image.isColorImage() )
-//						{
-//							value = image.getFloatC(x, y, z, 1 ); 
-//						}
-//						else
-//						{
-//							value = image.getFloat(x,y,z);
-//						}
-//						if ( value < minValue )
-//						{
-//							minValue = value;
-//						}
+						//						float value = 0;
+						//						if ( image.isColorImage() )
+						//						{
+						//							value = image.getFloatC(x, y, z, 1 ); 
+						//						}
+						//						else
+						//						{
+						//							value = image.getFloat(x,y,z);
+						//						}
+						//						if ( value < minValue )
+						//						{
+						//							minValue = value;
+						//						}
 					}
 				}
 			}
@@ -7557,13 +7616,13 @@ public class WormSegmentation
 			System.err.println("findLargest " + minValue + " == " + image.getMin() );
 			return;
 		}
-		
+
 		BitSet visited = new BitSet(dimX*dimY*dimZ);
-//		visited.or(mask);
-		
+		//		visited.or(mask);
+
 		fillMask(  image, visited, mask, seeds, 
 				dimX, dimY, dimZ, minValue, (float)image.getMax() );
-		
+
 
 		ModelImage results = new ModelImage( ModelStorageBase.ARGB, image.getExtents(), "skin" );
 		for ( int z = 0; z < dimZ; z++ )
@@ -7583,7 +7642,7 @@ public class WormSegmentation
 		results.calcMinMax();
 		new ViewJFrameImage(results);
 	}
-	
+
 	private static void fillMask( ModelImage image, BitSet visited, BitSet connected, Vector<Vector3f> seeds, 
 			int dimX, int dimY, int dimZ, float min, float max )
 	{
@@ -7620,14 +7679,387 @@ public class WormSegmentation
 			}
 		}
 	}
+
+
+
+
+
+	private Vector<Vector3f> findMaxPeak( ModelImage image, Vector3f startPt, Vector3f endPt )
+	{
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+
+		Vector<Float> maxVals = new Vector<Float>();
+		Vector<Vector3f> maxPts = new Vector<Vector3f>();
+
+		Vector3f dir = Vector3f.sub(endPt, startPt);
+		float length = dir.normalize();
+		Vector3f pt = new Vector3f(startPt);
+		pt.add(dir);
+		Vector3f maxPt = new Vector3f(pt);
+
+		float max = -1;
+		float min = Float.MAX_VALUE;
+		boolean up = true;
+		boolean down = false;
+		float minOverall = Float.MAX_VALUE;
+		float maxOverall =-Float.MAX_VALUE;
+		for ( int i = 0; i < length; i++ )
+		{
+			int x = (int)Math.round(pt.X);
+			int y = (int)Math.round(pt.Y);
+			int z = (int)Math.round(pt.Z);
+			float value;
+			if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
+			{				
+				value = image.getFloat(x,y,z);
+				if ( value < minOverall )
+				{
+					minOverall = value;
+				}
+				if ( value > maxOverall )
+				{
+					maxOverall = value;
+				}
+			}
+			else
+			{
+				break;
+			}
+
+			if ( up && (value < max) )
+			{
+				maxPts.add( new Vector3f(maxPt) );
+				maxVals.add(new Float(max));
+				max = -1;
+				up = false;
+				down = true;
+			}
+			if ( down && (value > min) )
+			{
+				min = Float.MAX_VALUE;
+				up = true;
+				down = false;
+			}
+			if ( up && (value > max) )
+			{
+				max = value;
+				maxPt.copy(pt);
+			}
+			if ( down && (value < min) )
+			{
+				min = value;
+			}
+
+			pt.add(dir);
+		}
+
+		return maxPts;
+	}
+
+
+
+	public static void segmentSeamThreshold(ModelImage image, Vector<Vector3f> positions, VOI clusterList, float[] finalThreshold,
+			float stepSize, float threshold, float thresholdMin, float thresholdMax, int minCount, int maxCount )
+	{
+
+		int count = 1;
+		float[] targetP = new float[2];
+		float targetPercentage = .95f;
+		float[] sortedValues = WormSegmentation.estimateHistogram( image, targetP, targetPercentage );
+		int index = sortedValues.length - 1;
+		threshold = sortedValues[index];
+		while ( threshold > thresholdMin )
+		{
+			WormSegmentation.segmentSeam(image, positions, clusterList, threshold);
+			int numCells = positions.size();
+			//		if ( 0 == (count%10))
+//			{
+//				System.err.println( count + "  " + numCells + " " + threshold);
+//			}
+			if ( (numCells >= minCount) && (numCells <= maxCount) )
+			{
+				finalThreshold[0] = threshold;
+				break;
+			}
+			if ( numCells > maxCount )
+			{
+				positions.clear();
+				clusterList.getCurves().clear();		
+//				seamCells.disposeLocal(false);
+
+				index++;
+				threshold = sortedValues[index];
+				WormSegmentation.segmentSeam(image, positions, clusterList, threshold);
+				numCells = positions.size();
+
+				finalThreshold[0] = threshold;
+				break;
+			}
+
+			positions.clear();
+			clusterList.getCurves().clear();		
+			index--;
+			threshold = sortedValues[index];
+			count++;
+		}
+	}
+		
+		
+		
+		
+		
+		
+
+//	public static ModelImage segmentSeamThreshold(ModelImage image, Vector<Vector3f> positions, Vector<BoxBV> boundingBoxes, float[] finalThreshold,
+//			float stepSizeInc, float stepSizeDec, float threshold, float thresholdMin, float thresholdMax, int minCount, int maxCount )
+//	{
+//		
+//		
+//		ModelImage seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, threshold);
+//		int numCells = positions.size();
+//		System.err.println( "Start " + numCells + " " + threshold);
+//		if ( (numCells >= minCount) && (numCells <= maxCount) )
+//		{
+//			finalThreshold[0] = threshold;
+//			return seamCells;
+//		}
+//
+//		positions.clear();
+//		boundingBoxes.clear();
+//		seamCells.disposeLocal(false);
+//		
+//		float upThreshold = Math.min(threshold + stepSizeInc, thresholdMax - 1);
+//		seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, upThreshold);
+//		int upCount = positions.size();
+//		System.err.println( "Up " + upCount + " " + upThreshold);
+//		if ( (upCount >= minCount) && (upCount <= maxCount) )
+//		{
+//			finalThreshold[0] = threshold;
+//			return seamCells;
+//		}
+//
+//		positions.clear();
+//		boundingBoxes.clear();
+//		seamCells.disposeLocal(false);
+//
+//		float downThreshold = Math.min(threshold - stepSizeDec, thresholdMax - 1);
+//		seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, downThreshold);
+//		int downCount = positions.size();
+//		System.err.println( "Down " + downCount + " " + downThreshold);
+//		if ( (downCount >= minCount) && (downCount <= maxCount) )
+//		{
+//			finalThreshold[0] = threshold;
+//			return seamCells;
+//		}
+//
+//		positions.clear();
+//		boundingBoxes.clear();
+//		seamCells.disposeLocal(false);
+//
+//		float thresholdMinBound = threshold;
+//		float thresholdMaxBound = upThreshold;
+//		if ( (downCount < numCells) && (numCells < upCount) )
+//		{
+//			if ( (numCells < minCount) && (upCount > minCount) )
+//			{
+//				thresholdMinBound = threshold;
+//				thresholdMaxBound = upThreshold;
+//			}
+//			if ( (numCells > minCount) && (upCount > minCount) )
+//			{
+//				thresholdMinBound = downThreshold;
+//				thresholdMaxBound = threshold;
+//			}
+//			int count = 0;
+//			while ( !((numCells >= minCount) && (numCells <= maxCount) || (count == 10) || (thresholdMinBound == thresholdMaxBound)) )
+//			{
+//				//				System.err.println( count + " " + numCells + " " + threshold);
+//				threshold = Math.round((thresholdMinBound + thresholdMaxBound)/2f);
+//				seamCells = WormSegmentation.segmentSeam(image, positions, boundingBoxes, threshold);
+//				numCells = positions.size();
+//				System.err.println( count + " " + numCells + " " + threshold);
+//
+//				if ( (numCells >= minCount) && (numCells <= maxCount) )
+//				{
+//					finalThreshold[0] = threshold;
+//					return seamCells;
+//				}
+//				if ( numCells < minCount )
+//				{
+//					thresholdMinBound = threshold;
+//				}
+//				else 
+//				{
+//					thresholdMaxBound = threshold;
+//				}
+//				count++;
+//
+//				positions.clear();
+//				boundingBoxes.clear();
+//				seamCells.disposeLocal(false);
+//			}
+//		}
+//		
+//		return null;
+//	}
 	
 	
-	
-	
-	
-	
-	
-	
+	public static VOIContour fill2(final ModelImage image, float cutOffMin, float cutOffMax, final Vector<Vector3f> seedList, 
+			BitSet visited, Vector3f center ) {
+		final int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		final int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		final int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+
+//		System.err.println( cutOffMin + " " + cutOffMax );
+		int count = 0;
+		VOIContour pointsList = new VOIContour(false);
+		while (seedList.size() > 0) {
+			final Vector3f seed = seedList.remove(0);
+
+			final int z = Math.round(seed.Z);
+			final int y = Math.round(seed.Y);
+			final int x = Math.round(seed.X);
+			int index = z*dimY*dimX + y*dimX + x;
+			visited.set(index);
+			
+			center.add(seed);
+			pointsList.add(seed);
+			count++;
+
+			for (int z1 = Math.max(0, z - 1); z1 <= Math.min(dimZ - 1, z + 1); z1++)
+			{
+				for (int y1 = Math.max(0, y - 1); y1 <= Math.min(dimY - 1, y + 1); y1++)
+				{
+					for (int x1 = Math.max(0, x - 1); x1 <= Math.min(dimX - 1, x + 1); x1++)
+					{
+						if ( ! ( (x == x1) && (y == y1) && (z == z1))) {
+							index = z1*dimY*dimX + y1*dimX + x1;
+							if ( !visited.get(index) )
+							{
+								float value = image.getFloat(x1, y1, z1);
+								if ( (value >= cutOffMin) && (value <= cutOffMax) )
+								{
+									seedList.add( new Vector3f(x1,y1,z1) );
+								}
+								visited.set(index);
+							}
+						}
+					}
+				}
+			}							
+			if ( count >= image.getDataSize() )
+			{
+				break;
+			}
+		}
+//		System.err.println("fill2 " + count);
+		center.scale(1f/(float)count);
+		return pointsList;
+	}
 	
 
+	
+	public static void segmentSeam(ModelImage image, Vector<Vector3f> positions, VOI clusterList, float threshold)
+	{
+		separateID(image, threshold, positions, clusterList);
+	}
+
+	
+	private static void separateID( ModelImage image, float threshold, Vector<Vector3f> positions, VOI clusterList )
+	{
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+		BitSet visited = new BitSet(dimX*dimY*dimZ);
+		Vector<Vector3f> seedList = new Vector<Vector3f>();
+		boolean done = false;
+		while ( !done )
+		{
+			boolean found = false;
+			for ( int z = 0; z < dimZ && !found; z++ )
+			{
+				for ( int y = 0; y < dimY && !found; y++ )
+				{
+					for ( int x = 0; x < dimX && !found; x++ )
+					{
+						float value = image.getFloat(x, y, z);
+						int index = z*dimX*dimY + y*dimX + x;
+						if ( !visited.get(index) )
+						{
+							if ( value >= threshold )
+							{
+								seedList.add(new Vector3f(x,y,z));
+//								seamCells.set(x, y, z, id);
+								visited.set(index);
+								found = true;
+							}
+						}
+					}
+				}
+			}
+			if ( !found )
+			{
+				done = true;
+				break;
+			}
+
+			Vector3f center = new Vector3f();
+			VOIContour cluster = WormSegmentation.fill2(image, threshold, (float)image.getMax(), seedList, visited, center);
+			clusterList.getCurves().add(cluster);
+			positions.add(center);
+		}
+	}
+	
+	/*
+	private static void separateID( ModelImage image, float threshold, Vector<Vector3f> positions, VOI clusterList )
+	{
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1; 
+
+		BitSet visited = new BitSet(dimX*dimY*dimZ);
+		Vector<Vector3f> seedList = new Vector<Vector3f>();
+		
+		int id = 1;
+		boolean done = false;
+		while ( !done )
+		{
+			boolean found = false;
+			for ( int z = 0; z < dimZ && !found; z++ )
+			{
+				for ( int y = 0; y < dimY && !found; y++ )
+				{
+					for ( int x = 0; x < dimX && !found; x++ )
+					{
+						float value = image.getFloat(x, y, z);
+						int index = z*dimX*dimY + y*dimX + x;
+						if ( !visited.get(index) )
+						{
+							if ( value >= threshold )
+							{
+								seedList.add(new Vector3f(x,y,z));
+//								seamCells.set(x, y, z, id);
+								visited.set(index);
+								found = true;
+							}
+						}
+					}
+				}
+			}
+			if ( !found )
+			{
+				done = true;
+				break;
+			}
+
+			Vector3f center = new Vector3f();
+			VOIContour cluster = WormSegmentation.fill2(image, threshold, threshold, seedList, visited, center);
+			clusterList.getCurves().add(cluster);
+			positions.add(center);
+			id++;
+		}
+	}
+	*/
 }
