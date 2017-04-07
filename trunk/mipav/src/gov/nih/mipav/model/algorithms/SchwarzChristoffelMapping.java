@@ -598,6 +598,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 		rect[2][0] = -K[0];
 		rect[2][1] = Kp[0];
 		rect[3][0] = -K[0];
+		boolean l[] = new boolean[n]; // on left side
+		for (i = cnr[2]; i <= cnr[3]; i++) {
+			l[i] = true;
+		}
+		boolean r[] = new boolean[n]; // on right side
+		for (i = cnr[0]; i <= cnr[1]; i++) {
+			r[i] = true;
+ 		}
 		int tllength = 0;
 		int trlength = 0;
 		int bllength = 0;
@@ -692,21 +700,382 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 		}
 		int maxiter = 50;
 		boolean done[] = new boolean[zn.length];
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < 4; i++) {;
 			done[cnrcopy[i]] = true;
 		}
 		k = 0;
-		double F[] = new double[2];
 		boolean alldone = true;
-		for (i = 0; i < done.length && alldone; i++) {
+		int numnotdone = 0;
+		for (i = 0; i < done.length; i++) {
 			if (!done[i]) {
 				alldone = false;
+				numnotdone++;
 			}
-		} // for (i = 0; i < done.length && alldone; i++)
+		} // for (i = 0; i < done.length; i++)
+		double znnotdone[][] = new double[numnotdone][2];
+		double zsnotdone[][] = new double[numnotdone][2];
+		boolean lr[] = new boolean[numnotdone];
+		boolean tbl[] = new boolean[numnotdone];
+		boolean tlnotdone;
+		boolean blnotdone;
+		boolean tbr[] = new boolean[numnotdone];
+		boolean trnotdone;
+		boolean brnotdone;
+		for (i = 0, j = 0; i < done.length; i++) {
+		    if (!done[i]) {
+		    	znnotdone[j][0] = zn[i][0];
+		    	znnotdone[j][1] = zn[i][1];
+		    	zsnotdone[j][0] = zs[i][0];
+		    	zsnotdone[j][1] = zs[i][1];
+		    	lr[j] = r[i] || l[i];
+		    	tlnotdone = (zs[i][0] > L[0]) && (zs[i][1] > 0);
+		    	blnotdone = (zs[i][0] < 0) && (zs[i][1] > 0);
+		    	tbl[j] = tlnotdone || blnotdone;
+		    	trnotdone = (zs[i][0] > L[0]) && (zs[i][1] == 0);
+		    	brnotdone = (zs[i][0] < 0) && (zs[i][1] == 0);
+		    	tbr[j++] = trnotdone || brnotdone;
+		    } 
+		} // for (i = 0, j = 0; i < done.length; i++)
+		double zcnr[][] = new double[4][2];
+		for (i = 0; i < 4; i++) {
+			zcnr[i][0] = z[cnrcopy[i]][0];
+			zcnr[i][1] = z[cnrcopy[i]][1];
+		}
+		double F[][] = new double[numnotdone][2];
+		double dF[][] = new double[numnotdone][2];
+		double step[] = new double[2];
+		double znew[] = new double[2];
+		double xn;
 		while ((!alldone) && (k < maxiter)) {
-			
+		    r2strip(F, dF, znnotdone, zcnr, L[0]);
+		    for (i = 0; i < numnotdone; i++) {
+		    	F[i][0] = zsnotdone[i][0] - F[i][0];
+		    	F[i][1] = zsnotdone[i][1] - F[i][1];
+		    	
+		    	// Adjust Newton step to stay exactly on rectangle boundary
+		    	zdiv(F[i][0], F[i][1], dF[i][0], dF[i][1], cr, ci);
+		    	step[0] = cr[0];
+		    	step[1] = ci[0];
+		    	if (lr[i]) {
+		    	    step[0] = 0;	
+		    	}
+		    	else {
+		    		step[1] = 0;
+		    	}
+		    	
+		    	// Newton step
+		    	znew[0] = znnotdone[i][0] + step[0];
+		    	znew[1] = znnotdone[i][1] + step[1];
+		    	// Keep prevertices from moving too far (past boundaries)
+		    	// Left/rigth sides capped in Im direction
+		        if (lr[i]) {
+		        	xn = Math.min(Math.max(znew[1], 0), Kp[0]);
+		        	znew[1] = xn;
+		        } // if (lr[i])
+		        // Top/bottom-left sides capped in Re direction
+		        if (tbl[i]) {
+		        	xn = Math.min(Math.max(znew[0], -K[0]), -eps);
+		        	znew[0] = xn;
+		        }
+		        // Top/bottom-right sides capped in Re direction
+		        if (tbr[i]) {
+		            xn = Math.min(Math.max(znew[0], eps), K[0]);
+		            znew[0] = xn;
+		        } 
+		        
+		        //  Update
+		        znnotdone[i][0] = znew[0];
+		        znnotdone[i][1] = znew[1];
+		    } // for (i = 0; i < numnotdone; i++)
+		    
+		    numnotdone = 0;
+		    for (i = 0, j = 0; i < done.length; i++) {
+		    	if (!done[i]) {
+		    		if (zabs(F[j][0], F[j][1]) < tol) {
+		    			done[i] = true;
+		    		}
+		    		else {
+		    			numnotdone++;
+		    			alldone = false;
+		    		}
+		    	}
+		    } // for (i = 0, j = 0; i < done.length; i++)
+		    if (!alldone) {
+			    znnotdone = new double[numnotdone][2];
+				zsnotdone = new double[numnotdone][2];
+				lr = new boolean[numnotdone];
+				tbl = new boolean[numnotdone];
+				tbr = new boolean[numnotdone];
+				for (i = 0, j = 0; i < done.length; i++) {
+				    if (!done[i]) {
+				    	znnotdone[j][0] = zn[i][0];
+				    	znnotdone[j][1] = zn[i][1];
+				    	zsnotdone[j][0] = zs[i][0];
+				    	zsnotdone[j][1] = zs[i][1];
+				    	lr[j] = r[i] || l[i];
+				    	tlnotdone = (zs[i][0] > L[0]) && (zs[i][1] > 0);
+				    	blnotdone = (zs[i][0] < 0) && (zs[i][1] > 0);
+				    	tbl[j] = tlnotdone || blnotdone;
+				    	trnotdone = (zs[i][0] > L[0]) && (zs[i][1] == 0);
+				    	brnotdone = (zs[i][0] < 0) && (zs[i][1] == 0);
+				    	tbr[j++] = trnotdone || brnotdone;
+				    } 
+				} // for (i = 0, j = 0; i < done.length; i++)
+				F = new double[numnotdone][2];
+				dF = new double[numnotdone][2];
+		    } // if (!alldone)
+		    k++;
 		} // while ((!alldone) && (k < maxiter))
+		
+		boolean warning = false;
+		for (i = 0; i < F.length && !warning; i++) {
+			if (zabs(F[i][0], F[i][1]) > tol) {
+				warning = true;
+				MipavUtil.displayWarning("Could not converge to the rectangel prevertices");
+			}
+		} // for (i = 0; i < F.length && !warning; i++)
+		
+		for (i = 0; i < z.length; i++) {
+			z[i][0] = zn[i][0];
+			z[i][1] = zn[i][1];
+		}
+		
+		// Undo renumbering
+		double temp[][] = new double[z.length][2];
+		for (i = 0; i < z.length; i++) {
+			temp[renum[i]][0] = z[i][0];
+			temp[renum[i]][1] = z[i][1];
+		}
+		for (i = 0; i < z.length; i++) {
+			z[i][0] = temp[i][0];
+			z[i][1] = temp[i][1];
+		}
+		
+		return;
     }
+	
+	// Map from rectangle to strip.
+	// r2strip maps from a rectangle to the strip 0 <= Im z <= 1, with the function log(sn(z|m))/pi,
+	// where sn is a Jacobi elliptic function and m = exp(-2*PI*L).  The prevertices of the map 
+	// (in the rectangle domain) are given by z; only the corners of the rectangle defined by z
+	// are used.
+	
+	// The derivative of the map is returned as yprime.
+	
+	// Note: The functionality is not parallel to hp2disk and disk2hp.
+	
+	// Original MATLAB routine copyright 1998 by Toby Driscoll.
+	
+	// The built-in ellipj accepts only real arguments.  The standard identity is not helpful
+	// when m is near zero, because (1-m) loses digits of accuracy.
+	private void r2strip(double yp[][], double yprime[][], double zp[][], double z[][], double L) {
+	    int i;
+	    double cr[] = new double[1];
+	    double ci[] = new double[1];
+		double K = z[0][0];
+		//double Kp = z[0][1];
+		for (i = 1; i < z.length; i++) {
+			if (z[i][0] > K) {
+				K = z[i][0];
+			}
+			//if (z[i][1] > Kp) {
+				//Kp = z[i][1];
+			//}
+		} // for (i = 1; i < z.length; i++) 
+		for (i = 0; i < z.length; i++) {
+			yp[i][0] = zp[i][0];
+			yp[i][1] = zp[i][1];
+			yprime[i][0] = zp[i][0];
+			yprime[i][1] = zp[i][1];
+		}
+		
+		double sn[][] = new double[zp.length][2];
+		double cn[][] = new double[zp.length][2];
+		double dn[][] = new double[zp.length][2];
+		ellipjc(sn, cn, dn, zp, L, false);
+		// Make sure everything is in the upper half-plane (fix roundoff)
+		for (i = 0; i < sn.length; i++) {
+			sn[i][1] = Math.max(0, sn[i][1]);
+			yp[i][0] = Math.log(zabs(sn[i][0], sn[i][1]))/Math.PI;
+			yp[i][1] = Math.atan2(sn[i][1], sn[i][0])/Math.PI;
+			zmlt(cn[i][0], cn[i][1], dn[i][0], dn[i][1], cr, ci);
+			zdiv(cr[0], ci[0], sn[i][0], sn[i][1], cr, ci);
+			yprime[i][0] = cr[0]/Math.PI;
+			yprime[i][1] = ci[0]/Math.PI;
+		}
+		
+		// Make sure everything is in the strip (roundoff could put it outside).
+		for (i = 0; i < yp.length; i++) {
+			yp[i][1] = Math.min(1, Math.max(0, yp[i][1]));
+		}
+	
+	}
+	
+	// Jacobi elliptic functions for complex argument
+	// ellipjc returns the values of the Jacobi elliptic functions evaluated at comples argument U and
+	// parameter m = exp(-2*PI*L), 0 < L < Infinity.  Recall that m = k^2, where k is the elliptic modulus.
+	
+	// u may be a vector: L must be a scalar.  The entries of U are expected to lie within the rectangle
+	// |Re u| < K, 0 < Im u < Kp, where K and Kp are returned by ellipkkp.
+	
+	// Original MATLAB routine copyright 1999 by Toby Driscoll.
+	
+	// The built-in ellipj can't handle complex arguments, and standard transformations to handle this
+	// would require ellipj called with parameter 1-m.  When m < eps (or is even close), this can't be
+	// done accurately.
+	
+	// The algorithm is the descending Landen transformation, described in L Howell's PhD thesis from MIT.
+	// Additional formulas come from Gradshteyn & Ryzhik, 5th ed., and Abramowitz & Stegun.
+	private void ellipjc(double sn[][], double cn[][], double dn[][], double u[][], double L, boolean flag) {
+		int i, j;
+		int numhigh = 0;
+		int high[];
+		double m;
+		double sinu[] = new double[2];
+		double cosu[] = new double[2];
+		double sincos[] = new double[2];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double realPart;
+		double imagPart;
+		double cosSq[] = new double[2];
+		double sinSq[] = new double[2];
+		double kappa;
+		double sqrt1m;
+		double md4;
+		double md42;
+		double md43;
+		double md44;
+		double md45;
+		double md46;
+		double mu;
+		double v[][] = new double[u.length][2];
+		double sn1[][] = new double[u.length][2];
+		double cn1[][] = new double[u.length][2];
+		double dn1[][] = new double[u.length][2];
+		double denom[] = new double[2];
+		double sn1Sq[] = new double[2];
+		
+	    if (!flag) {
+	    	// flag = false indicates we must check for and transform u in the upper half of the rectangle.
+	    	double K[] = new double[1];
+	    	double Kp[] = new double[1];
+	    	ellipkkp(K, Kp, L);
+	    	for (i = 0; i < u.length; i++) {
+	    		if (u[i][1] > Kp[0]/2.0) {
+	    			numhigh++;
+	    		}
+	    	} // for (i = 0; i < u.length; i++)
+	    	high = new int[numhigh];
+	    	for (i = 0, j = 0; i < u.length; i++) {
+	    		if (u[i][1] > Kp[0]/2.0) {
+	    			u[i][0] = -u[i][0];
+	    			u[i][1] = Kp[0] - u[i][1];
+	    			high[j++] = i;
+	    		}
+	    	} // for (i = 0, j = 0; i < u.length; i++)
+	    	m = Math.exp(-2.0*Math.PI*L);
+	    } // if (!flag)
+	    else {
+	    	// Recursive call - L is actually m.
+	    	high = null;
+	    	m = L;
+	    }
+	    
+	    if (m < 4.0 * eps) {
+	        for (i = 0; i < u.length; i++) {
+	            sinu[0] = Math.sin(u[i][0])*Math.cosh(u[i][1]);
+	            sinu[1] = Math.cos(u[i][0])*Math.sinh(u[i][1]);
+	            cosu[0] = Math.cos(u[i][0])*Math.cosh(u[i][1]);
+	            cosu[1] = -Math.sin(u[i][0])*Math.sinh(u[i][1]);
+	            zmlt(sinu[0], sinu[1], cosu[0], cosu[1], cr, ci);
+	            sincos[0] = cr[0];
+	            sincos[1] = ci[0];
+	            realPart = sincos[0] - u[i][0];
+	            imagPart = sincos[1] - u[i][1];
+	            zmlt(realPart, imagPart, cosu[0], cosu[1], cr, ci);
+	            sn[i][0] = sinu[0] + (m/4.0)*cr[0];
+	            sn[i][1] = sinu[1] + (m/4.0)*ci[0];
+	            realPart = -sincos[0] + u[i][0];
+	            imagPart = -sincos[1] + u[i][1];
+	            zmlt(realPart, imagPart, sinu[0], sinu[1], cr, ci);
+	            cn[i][0] = cosu[0] + (m/4.0)*cr[0];
+	            cn[i][1] = cosu[1] + (m/4.0)*ci[0];
+	            zmlt(cosu[0], cosu[1], cosu[0], cosu[1], cr, ci);
+	            cosSq[0] = cr[0];
+	            cosSq[1] = ci[0];
+	            zmlt(sinu[0], sinu[1], sinu[0], sinu[1], cr, ci);
+	            sinSq[0] = cr[0];
+	            sinSq[1] = ci[0];
+	            realPart = cosSq[0] - sinSq[0] - 1;
+	            imagPart = cosSq[1] - sinSq[1];
+	            dn[i][0] = 1.0 + (m/4.0)*realPart;
+	            dn[i][1] = (m/4.0)*imagPart;
+	        } // for (i = 0; i < u.length; i++)
+	    } // if (m < 4.0 * eps)
+	    else {
+	    	if (m > 1.0e-3) {
+	    		sqrt1m = Math.sqrt(1.0 - m);
+	    	    kappa = (1 - sqrt1m)/(1.0 + sqrt1m);	
+	    	}
+	    	else {
+	    	    md4 = (m/4.0);
+	    	    md42 = md4 * md4;
+	    	    md43 = md42 * md4;
+	    	    md44 = md43 * md4;
+	    	    md45 = md44 * md4;
+	    	    md46 = md45 * md4;
+	    	    kappa = 132*md46 + 42*md45 + 14*md44 + 5*md43 + 2*md42 + md4;
+	    	}
+	    	mu = kappa * kappa;
+	    	for (i = 0; i < u.length; i++) {
+	    	    v[i][0] = u[i][0]/(1.0 + kappa);
+	    	    v[i][1] = u[i][1]/(1.0 + kappa);
+	    	} // for (i = 0; i < u.length; i++)
+	    	ellipjc(sn1, cn1, dn1, v, mu, true);
+	    	for (i = 0; i < u.length; i++) {
+	    	    zmlt(sn1[i][0], sn1[i][1], sn1[i][0], sn1[i][1], cr, ci);
+	    	    sn1Sq[0] = cr[0];
+	    	    sn1Sq[1] = ci[0];
+	    	    denom[0] = 1.0 + kappa*sn1Sq[0];
+	    	    denom[1] = kappa*sn1Sq[1];
+	    	    zdiv((1.0 + kappa)*sn1[i][0], (1.0 + kappa)*sn1[i][1], denom[0], denom[1], cr, ci);
+	    	    sn[i][0] = cr[0];
+	    	    sn[i][1] = ci[0];
+	    	    zmlt(cn1[i][0], cn1[i][1],dn1[i][0], dn1[i][1], cr, ci);
+	    	    zdiv(cr[0], ci[0], denom[0], denom[1], cr, ci);
+	    	    cn[i][0] = cr[0];
+	    	    cn[i][1] = ci[0];
+	    	    zdiv((1.0 - kappa*sn1Sq[0]), -kappa*sn1Sq[1], denom[0], denom[1], cr, ci);
+	    	    dn[i][0] = cr[0];
+	    	    dn[i][1] = ci[0];
+	    	} // for (i = 0; i < u.length; i++)
+	    } // else
+	    
+	    if (numhigh > 0) {
+	    	double snh[] = new double[2];
+			double cnh[] = new double[2];
+			double dnh[] = new double[2];
+		    double sqrtm = Math.sqrt(m);
+		    for (i = 0; i < numhigh; i++) {
+		        snh[0] = sn[high[i]][0];
+		        snh[1] = sn[high[i]][1];
+		        cnh[0] = cn[high[i]][0];
+		        cnh[1] = cn[high[i]][1];
+		        dnh[0] = dn[high[i]][0];
+		        dnh[1] = dn[high[i]][1];
+		        zdiv(-1.0, 0.0, sqrtm*snh[0], sqrtm*snh[1], cr, ci);
+		        sn[high[i]][0] = cr[0];
+		        sn[high[i]][1] = ci[0];
+		        zdiv(-dnh[1], dnh[0], sqrtm*snh[0], sqrtm*snh[1], cr, ci);
+		        cn[high[i]][0] = cr[0];
+		        cn[high[i]][1] = ci[0];
+		        zdiv(-cnh[1], cnh[0], snh[0], snh[1], cr, ci);
+		        dn[high[i]][0] = cr[0];
+		        dn[high[i]][1] = ci[0];
+		    } // for (i = 0; i < numhigh; i++) 
+	    } // if (numhigh > 0)
+	}
 	
 	// ellipkkp is the complete elliptic integral of the first kind, with complement.
 	// K[0] returns the value of the complete elliptic integral of the first kind, evaluated at
@@ -1221,6 +1590,28 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
             return (v * Math.sqrt(1.0 + (q * q)));
         }
     }
+    
+    /**
+     * complex multiply c = a * b.
+     * 
+     * @param ar double
+     * @param ai double
+     * @param br double
+     * @param bi double
+     * @param cr double[]
+     * @param ci double[]
+     */
+    private void zmlt(final double ar, final double ai, final double br, final double bi, final double[] cr,
+            final double[] ci) {
+        double ca, cb;
+
+        ca = (ar * br) - (ai * bi);
+        cb = (ar * bi) + (ai * br);
+        cr[0] = ca;
+        ci[0] = cb;
+
+        return;
+    }
 	
 	// Original MATLAB stquadh routine copyright 1998 by Tody Driscoll.
 	// stquad applies the "1/2 rule" by assuming that the distance from the integration interval to the nearest
@@ -1409,6 +1800,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 		double scale;
 		double zl[] = new double[2];
 		double prod[] = new double[2];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
 		int n = z.length;
 		if (sing1 == null) {
 			sing1 = new int[z1.length];
@@ -1507,8 +1900,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 		    	I[k][0] = 0;
 		    	I[k][1] = 0;
 		    	for (i = 0; i < wt.length; i++) {
-		    	    I[k][0] += (out[i][0]*wt[i][0] - out[i][1]*wt[i][1]);
-		    	    I[k][1] += (out[i][0]*wt[i][1] + out[i][1]*wt[i][0]);
+		    		zmlt(out[i][0], out[i][1], wt[i][0], wt[i][1], cr, ci);
+		    	    I[k][0] += cr[0];
+		    	    I[k][1] += ci[0];
 		    	}
 		    	while ((dist < 1)&& (!Double.isNaN(I[k][0])) && (!Double.isNaN(I[k][1]))) {
 		    	    // Do regular Gaussian quad on other subintervals.
@@ -1539,8 +1933,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	                prod[0] = 0;
 	                prod[1] = 0;
 	                for (i = 0; i < wt.length; i++) {
-	                	prod[0] += (out[i][0]*wt[i][0] - out[i][1]*wt[i][1]);
-	                	prod[1] += (out[i][0]*wt[i][1] + out[i][1]*wt[i][0]);
+	                	zmlt(out[i][0], out[i][1], wt[i][0], wt[i][1], cr, ci);
+	                	prod[0] += cr[0];
+	                	prod[1] += ci[0];
 	                }
 	                I[k][0] = I[k][0] + prod[0];
 	                I[k][1] = I[k][1] + prod[1];
