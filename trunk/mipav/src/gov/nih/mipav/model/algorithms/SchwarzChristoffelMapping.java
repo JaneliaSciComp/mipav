@@ -3,15 +3,23 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Vector;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
-public class SchwarzChristoffelMapping extends AlgorithmBase {
+public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseListener {
 	
 	// This is a port of portions of the Schwarz-Christoffel Toolbox from MATLAB to Java
 	// with the kind permission of Professor Toby Driscoll.  The original code is:
@@ -26,6 +34,21 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	
 	// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
 	private double eps;
+	
+	private final Lock accessLock = new ReentrantLock();
+	private final Condition canProcessMouseClick = accessLock.newCondition();
+	private int xClick;
+	private int yClick;
+	
+	// polygon vertices
+	// w[i][0] x coordinate of ith vertex
+	// w[i][1] y coordinate of ith vertex
+	private double w[][];
+	
+	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double w[][]) {
+		super(destImg, srcImg);
+		this.w = w;
+	}
 	
 	public void runAlgorithm() {
 		// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
@@ -182,10 +205,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 	    // The polygon as specified by w and beta is drawn on the image and the
 	    // user selects 4 vertices using the mouse.
 	    //if ((cnr == null) || (cnr.length == 0)) {
-	    	//String msg[] = new String[2];
-	        //msg[0] = "Select the images of the corners of the rectangle";
-	        //msg[1] = "Go in counerclockwise order and select a long rectangle edge first";
-	        //cnr = scselect(w, beta, 4, "Select corners", msg);
+	    	String msg[] = new String[2];
+	        msg[0] = "Select the images of the corners of the rectangle";
+	        msg[1] = "Go in counerclockwise order and select a long rectangle edge first";
+	        cnr = scselect(w, beta, 4, "Select corners", msg);
 	    // } // if ((cnr == null) || (cnr.length == 0))
 	
 	    // Renumber the vertices so that cnr[0] = 0.
@@ -853,6 +876,143 @@ public class SchwarzChristoffelMapping extends AlgorithmBase {
 		
 		return;
     }
+	
+	// Select one or more vertices in a polygon
+	// The polygon given by w and beta is in the source image window.
+	// The user to select m vertices using the mouse. If m <= 0, m defaults to 1.
+	// On exit K is a vector of indices into W.
+	// scselect provides an instructional message
+	private int[] scselect(double w[][], double beta[], int m,  String titl, String msg[]) {
+		int i, j;
+		int nearestIndex;
+		double nearestDistance;
+		double xDiff;
+		double yDiff;
+		double nearestXDiff;
+		double nearestYDiff;
+		double distance;
+		if (m <= 0) {
+			m = 1;
+		}
+		int K[] = new int[m];
+		int n = w.length;
+		for (i = 0; i < n-1; i++) {
+		    if ((Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) &&
+		    	(Double.isInfinite(w[i+1][0]) || Double.isInfinite(w[i+1][1]))) {
+		    	MipavUtil.displayError("Infinite vertices must not be adjacent");
+		    	System.exit(-1);
+		    }
+		}
+		if ((Double.isInfinite(w[n-1][0]) || Double.isInfinite(w[n-1][1])) &&
+			(Double.isInfinite(w[0][0]) || Double.isInfinite(w[0][1]))) {
+			MipavUtil.displayError("Infinite vertices must not be adjacent");
+	    	System.exit(-1);	
+		}
+
+        if (n < m) {
+            MipavUtil.displayError("Number of vertices = " + n + " less than required " + m);
+
+            System.exit(-1);
+        }
+		
+		if (titl != null) {
+		    System.out.println(titl);
+		}
+		if ((msg != null) && (msg.length > 0)) {
+			for (i = 0; i < msg.length; i++) {
+				System.out.println(msg[i]);
+			}
+		}
+		
+		// Begin selection(s)
+		accessLock.lock();
+		boolean addedPoint[] = new boolean[n];
+		for (i = 0; i < m;) {
+			try {
+			    canProcessMouseClick.await();
+			}
+			catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			nearestIndex = -1;
+		    nearestDistance = Double.MAX_VALUE;
+		    nearestXDiff = Double.MAX_VALUE;
+		    nearestYDiff = Double.MAX_VALUE;
+			for (j = 0; j < n; j++) {
+			    xDiff = xClick - w[i][0];
+			    yDiff = yClick - w[i][1];
+			    distance = Math.sqrt(xDiff*xDiff + yDiff*yDiff);
+			    if (distance < nearestDistance) {
+			    	nearestIndex = j;
+			    	nearestDistance = distance;
+			    	nearestXDiff = Math.abs(xDiff);
+			    	nearestYDiff = Math.abs(yDiff);
+			    }
+			} // for (j = 0; j < n; j++)
+			if (nearestXDiff >= 3) {
+				System.out.println("Cannot add vertex " + j + " when xDiff = " + nearestXDiff + " is >= 3");
+				continue;
+			}
+			if (nearestYDiff >= 3) {
+				System.out.println("Cannot add vertex " + j + " when yDiff = " + nearestYDiff + " is >= 3");
+				continue;
+			}
+			if (addedPoint[j]) {
+				System.out.println("Cannot add vertex " + j + " twice");
+				continue;
+			}
+			else {
+			    K[i] = nearestIndex;
+			    addedPoint[nearestIndex] = true;
+			    i++;
+			}
+		} // for (i = 0; i < m; i++)
+		accessLock.unlock();
+		return K;
+	}
+	
+	
+	
+	public void mouseClicked(MouseEvent mouseEvent) {
+		 int xS, yS;
+	     ViewJComponentBase vBase= (ViewJComponentBase)srcImage.getParentFrame().getComponentImage();
+		try {
+
+			xS = Math.round((mouseEvent.getX() / (vBase.getZoomX() * vBase.getResolutionX())) - 0.5f);
+            yS = Math.round((mouseEvent.getY() / (vBase.getZoomY() * vBase.getResolutionY())) - 0.5f);
+            xClick = mouseEvent.getX();
+            yClick = mouseEvent.getY();
+
+            if ((xS < 0) || (xS >= srcImage.getExtents()[0]) || (yS < 0) || (yS >= srcImage.getExtents()[1])) {
+                return;
+            }
+
+           
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: SchwarzChristoffelMapping.mousePressed");
+
+            return;
+        }
+		
+	    canProcessMouseClick.signalAll();
+	}
+	
+	public void mousePressed(MouseEvent event) {
+		
+	}
+	
+	public void mouseReleased(MouseEvent event) {
+		
+	}
+	
+	public void mouseEntered(MouseEvent event) {
+		
+	}
+	
+	public void mouseExited(MouseEvent event) {
+		
+	}
 	
 	// Map from rectangle to strip.
 	// r2strip maps from a rectangle to the strip 0 <= Im z <= 1, with the function log(sn(z|m))/pi,
