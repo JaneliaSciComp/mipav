@@ -74,6 +74,72 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 	}
 	
+	private class polygon {
+		double vertex[][];
+		double angle[];
+		String className = "polygon";
+		
+		
+		polygon(double x[], double y[]) {
+			int n;
+			// Vertices passed as two real vectors
+			// If first point is repeated at the end, delete the second copy
+			double xdiff = x[x.length-1] - x[0];
+			double ydiff = y[x.length-1] - y[0];
+			if (zabs(xdiff, ydiff) < 3.0*eps) {
+			    n = x.length-1;	
+			} // if (zabs(xdiff, ydiff) < 3.0*eps)
+			else {
+				n = x.length;
+			}
+			vertex = new double[n][2];
+			for (int i = 0; i < n; i++) {
+				vertex[i][0] = x[i];
+				vertex[i][1] = y[i];
+			}
+			
+			// Now compute angles if needed
+			if (n > 0) {
+			    angle = new double[n];
+			    boolean isccw[] = new boolean[1];
+			    int index[] = new int[1];
+			    angle(angle, isccw, index, vertex);
+			    if (!isccw[0]) {
+			    	double vertextemp[][] = new double[n][2];
+			    	for (int i = 0; i < n; i++) {
+			    	    vertextemp[i][0] = vertex[n-1-i][0];
+			    	    vertextemp[i][1] = vertex[n-1-i][1];
+			    	}
+			    	for (int i = 0; i < n; i++) {
+			    		vertex[i][0] = vertextemp[i][0];
+			    		vertex[i][1] = vertextemp[i][1];
+			    	}
+			    	for (int i = 0; i < n; i++) {
+			    		vertextemp[i] = null;
+			    	}
+			    	vertex = null;
+			    	double angletemp[] = new double[n];
+			    	for (int i = 0; i < n; i++) {
+			    		angletemp[i] = angle[n-1-i];
+			    	}
+			    	for (int i = 0; i < n; i++) {
+			    		angle[i] = angletemp[i];
+			    	}
+			    	angletemp = null;
+			    } // if (!isccw)
+			    if (Math.abs(index[0]) > 1) {
+			    	MipavUtil.displayWarning("Polygon is multiple-sheeted");
+			    }
+			} // if (n > 0)
+		} // polygon(double x[], double y[])
+	} // private class polygon
+	
+	private void angle(double alpha[], boolean[] isccw, int index[], double w[][]) {
+		
+	}
+	
+	
+	
 	// scangle computes the turning angles of the polygon whose vertices are specified in the vector w.
 	// The turning angle of a vertex measures how much the heading changes at that vertex from the
 	// incoming to the outgoing edge, normalized by pi.  For a finite vertex, it is equal in absolute
@@ -990,7 +1056,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
            
         } catch (OutOfMemoryError error) {
             System.gc();
-            MipavUtil.displayError("Out of memory: SchwarzChristoffelMapping.mousePressed");
+            MipavUtil.displayError("Out of memory: SchwarzChristoffelMapping.mouseClicked+"
+            		+ "");
 
             return;
         }
