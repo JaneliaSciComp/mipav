@@ -551,14 +551,14 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			fw = new FileWriter(file);
 			BufferedWriter bw = new BufferedWriter(fw);
 			//			bw.write( "Name,x,y,z\n");
-			bw.write( "Name,x,y,z,spread\n");
+			bw.write( "Name,x,y,z,radius,spread\n");
 			for ( int i = 0; i < annotations.getCurves().size(); i++ )
 			{
 				VOIText text = (VOIText) annotations.getCurves().elementAt(i);
 				Vector3f pos = text.elementAt(0);
 				Vector3f out = new Vector3f(pos);
 				int distance = distanceList != null ? distanceList.elementAt(i) : 0;
-				bw.write( text.getText() + "," + out.X + "," + out.Y + "," + out.Z + "," + distance + "\n" );
+				bw.write( text.getText() + "," + out.X + "," + out.Y + "," + out.Z + ",1," + distance + "\n" );
 				//				bw.write( text.getText() + "," + out.X + "," + out.Y + "," + out.Z + "\n" );
 				//				System.err.println( text.getText() + " " + out + "    " + spread);
 			}
