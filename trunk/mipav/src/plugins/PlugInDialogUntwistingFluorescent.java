@@ -209,8 +209,6 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 
 							// Segmented blurred input image:
 							wormData.segmentSeamCells(minRadius, maxRadius);
-							if ( true )
-								return;
 							seamImage = wormData.getSeamSegmentation();
 							seamCells = wormData.getSeamCells();
 
