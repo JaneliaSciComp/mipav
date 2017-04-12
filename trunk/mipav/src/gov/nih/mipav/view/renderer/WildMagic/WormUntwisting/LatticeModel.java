@@ -727,7 +727,7 @@ public class LatticeModel {
 	 */
 	public void interpolateLattice(final boolean displayResult, final boolean useModel, final boolean untwistImage, final boolean untwistMarkers) {
 
-		shiftLattice();
+//		shiftLattice();
 
 		// Determine the distances between points on the lattice
 		// distances are along the curve, not straight-line distances:
