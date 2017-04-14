@@ -74,13 +74,19 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 	}
 	
+	// Construct polygon object
+	// x and y are 2 double[] vectors used to specify the vertices.
+	// alpha if supplied manually specifies the interior angles at the vedrtices, divided by PI
+	// polygon accepts unbounded polygons (vertices at infinity).  However, you must
+	// supply alpha, and the vertices must be in counterclockwise order about the interior.
+	// Ported from original MATLAB routine copyright 1998 by Toby Driscoll.
 	private class polygon {
 		double vertex[][];
 		double angle[];
 		String className = "polygon";
 		
 		
-		polygon(double x[], double y[]) {
+		polygon(double x[], double y[], double alpha[]) {
 			int n;
 			// Vertices passed as two real vectors
 			// If first point is repeated at the end, delete the second copy
@@ -93,17 +99,23 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				n = x.length;
 			}
 			vertex = new double[n][2];
+			if ((alpha != null) && (alpha.length == x.length)) {
+				angle = new double[n];
+			}
 			for (int i = 0; i < n; i++) {
 				vertex[i][0] = x[i];
 				vertex[i][1] = y[i];
+				if ((alpha != null) && (alpha.length == x.length)) {
+					angle[i] = alpha[i];
+				}
 			}
 			
 			// Now compute angles if needed
 			if (n > 0) {
-			    angle = new double[n];
+			    alpha = new double[n];
 			    boolean isccw[] = new boolean[1];
 			    int index[] = new int[1];
-			    angle(angle, isccw, index, vertex);
+			    angle(alpha, isccw, index, vertex, angle);
 			    if (!isccw[0]) {
 			    	double vertextemp[][] = new double[n][2];
 			    	for (int i = 0; i < n; i++) {
@@ -134,11 +146,336 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		} // polygon(double x[], double y[])
 	} // private class polygon
 	
-	private void angle(double alpha[], boolean[] isccw, int index[], double w[][]) {
-		
+	// Normalized interior angles of a polygon.
+	// alpha contains the returned interior angles, normalized by PI, of the polygon
+	// 0 < alpha[j] <= 2 if vertex j is finite, and -2 <= alpha[j] <= 0 if j is an infinite vertex.
+	// (This is consistent with the definition as the angle swept from the exiting side through
+	// the interior to the incoming side, with the vertices in counterclockwise order.)  It is
+	// impossible to compute angles for an unbounded polygon; they must be supplied to the
+	// polygon constructor to be well-defined.
+	// Original MATLAB routine copyright 1998 by Toby Driscoll
+	private void angle(double alpha[], boolean[] isccw, int index[], double w[][], double angle[]) {
+		int i, j, k;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+	    int n = w.length;
+	    
+	    if ((angle != null) && (angle.length > 0)) {
+	    	// If the angles have been assigned, return them
+	    	for (i = 0; i < angle.length; i++) {
+	    		alpha[i] = angle[i];
+	    	}
+	    } // if ((angle != null) && (angle.length > 0))
+	    else {
+	        if (n == 0) {
+	        	alpha = null;
+	        	isccw = null;
+	        	index = null;
+	        	return;
+	        }
+	        
+	        for (i = 0; i < n; i++) {
+	        	if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+	        		System.err.println("Cannot compute angles for unbounded polyhgons");
+	        		return;
+	        	}
+	        } // for (i = 0; i < w.length; i++)
+	        
+	        // Compute angles
+	        double incoming[][] = new double[n][2];
+	        incoming[0][0] = w[0][0] - w[n-1][0];
+	        incoming[0][1] = w[0][1] - w[n-1][1];
+	        for (i = 1; i < n; i++) {
+	        	incoming[i][0] = w[i][0] - w[i-1][0];
+	        	incoming[i][1] = w[i][1] - w[i-1][1];
+	        }
+	        double outgoing[][] = new double[n][2];
+	        for (i = 0; i < n-1; i++) {
+	        	outgoing[i][0] = incoming[i+1][0];
+	        	outgoing[i][1] = incoming[i+1][1];
+	        }
+	        outgoing[n-1][0] = incoming[0][0];
+	        outgoing[n-1][1] = incoming[0][1];
+	        for (i = 0; i < n; i++) {
+	            zmlt(-incoming[i][0], -incoming[i][1], outgoing[i][0], -outgoing[i][1], cr, ci);
+	            double theta = Math.atan2(ci[0], cr[0]);
+	            double tdiv = theta/Math.PI;
+	            alpha[i] = tdiv - 2 * Math.floor(tdiv/2);
+	        } // for (i = 0; i < n; i++)
+	        
+	        // It's ill-posed to determine locally the slits (inward-pointing) from 
+	        // points (outward-pointing).  Check suspicious cases at the tips to see if
+	        // they are interior to the rest of the polygon
+	        boolean mask[] = new boolean[n];
+	        int nummask = 0;
+	        for (i = 0; i < n; i++) {
+	        	if ((alpha[i] < 100.0  *eps) || ((2 - alpha[i]) < 100.0 * eps)) {
+	        		mask[i] = true;
+	        		nummask++;
+	        	}
+	        } // for (i = 0; i < n; i++)
+	        if (nummask == n) {
+	        	// This can happen if all vertices are collinear.
+	        	for (i = 0; i < alpha.length; i++) {
+	        		alpha[i] = 0;
+	        	}
+	        	isccw[0] = true; // irrelevant
+	        	index[0] = 1; // irrelevant
+	        	return;
+	        } // if (nummask == n)
+	        int numnotmask = n - nummask;
+	        double wmask[][] = new double[nummask][2];
+	        double wnotmask[][] = new double[numnotmask][2];
+	        for (i = 0, j = 0, k = 0; i < n; i++) {
+	            if (mask[i]) {
+	            	wmask[j][0] = w[i][0];
+	            	wmask[j++][1] = w[i][1];
+	            }
+	            else {
+	            	wnotmask[k][0] = w[i][0];
+	            	wnotmask[k++][1] = w[i][1];
+	            }
+	        } // for (i = 0, j = 0, k = 0; i < n; i++)
+	        boolean isinpolyindex[] = new boolean[wmask.length];
+	        boolean onvtx[][] = new boolean[wnotmask.length][wmask.length];
+	        isinpoly(isinpolyindex, onvtx, wmask, wnotmask, null, eps);
+	    } // else
 	}
 	
-	
+	// isinpoly identifies points inside a polygon
+	// isinpoly return a vector the size of z that each nonzero corresponds to a point inside
+	// the polygon defined by w and beta.
+	// ontvx = new boolean[w.length][z.length]
+	// More precisely, the value returned for a point is the winding number of the polygon about
+	// that point.
+	// The problem becomes ill-defined for points very near an edge or vertex.  isinpoly considers
+	// points within roughly tol of the boundary to be "inside", and computes winding number for wuch points
+	// as the number of conformal images the point ought to have
+	// Original MATLAB routine copyright 1998 by Toby Driscoll.
+	// Uses the argument principle, with some gymnastics for boundary points.
+	private void isinpoly(boolean indexout[], boolean onvtx[][], double z[][], double w[][], double beta[], double tol) {
+		int i, j, k, p;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+	    if (beta == null) {
+	    	beta = scangle(w);
+	    }
+	    int n = w.length;
+	    double index[] = new double[z.length];
+	    
+	    // Rescale to make diferences relative
+	    double diffw[][] = new double[n][2];
+	    for (i = 0; i < n-1; i++) {
+	        diffw[i][0] = w[i+1][0] - w[i][0];
+	        diffw[i][1] = w[i+1][1] - w[i][1];
+	    }
+	    diffw[n-1][0] = w[0][0] - w[n-1][0];
+	    diffw[n-1][1] = w[0][1] - w[n-1][1];
+	    double absdiffw[] = new double[n];
+	    double sum = 0.0;
+	    boolean anygt = false;
+	    for (i = 0; i < n; i++) {
+	    	absdiffw[i] = zabs(diffw[i][0], diffw[i][1]);
+	    	if (absdiffw[i] > eps) {
+	    		anygt = true;
+	    	}
+	    	sum += absdiffw[i];
+	    }
+	    double scale = sum/n;
+	    // Trivial case (e.g., a single or repeated point)
+	    if (!anygt) {
+	    	return;
+	    }
+	    
+	    for (i = 0; i < n; i++) {
+	    	w[i][0] = w[i][0]/scale;
+	    	w[i][1] = w[i][1]/scale;
+	    }
+	    
+	    for (i = 0; i < z.length; i++) {
+	    	z[i][0] = z[i][0]/scale;
+	    	z[i][1] = z[i][1]/scale;
+	    }
+	    
+	    // Array of differences between each z and each w
+	    int np = z.length;
+	    double d[][][] = new double[n][np][2];
+	    for (i = 0; i < n; i++) {
+	    	for (j = 0; j < np; j++) {
+	    	    d[i][j][0] = w[i][0] - z[j][0];
+	    	    d[i][j][1] = w[i][1] - z[j][1];
+	    	}
+	    } // for (i = 0; i < n; i++)
+	    
+	    // Avoid divides by zero
+	    for (i = 0; i < n; i++) {
+	    	for (j = 0; j < np; j++) {
+	    		if (zabs(d[i][j][0], d[i][j][1]) < eps) {
+	    			d[i][j][0] = eps;
+	    			d[i][j][1] = 0.0;
+	    		}
+	    	}
+	    } // for (i = 0; i < n; i++)
+	    
+	    // Diffs of imag(log(w-z)) around the polygon
+	    double ang[][] = new double[n][np];
+	    for (i = 0; i < n-1; i++) {
+	    	for (j = 0; j < np; j++) {
+	    		zdiv(d[i+1][j][0], d[i+1][j][1], d[i][j][0], d[i][j][1], cr, ci);
+	    		ang[i][j] = Math.atan2(ci[0], cr[0])/Math.PI;
+	    	}	
+	    } // for (i = 0; i < n-1; i++)
+	    for (j = 0; j < np; j++) {
+	    	zdiv(d[0][j][0], d[0][j][1], d[n-1][j][0], d[n-1][j][1], cr, ci);
+	    	ang[i][j] = Math.atan2(ci[0], cr[0])/Math.PI;
+	    }
+	    
+	    // Find boundary points (edge and vertex)
+	    double wdiff[][] = new double[n][2];
+	    for (i = 0; i < n-1; i++) {
+	    	wdiff[i][0] = w[i+1][0] - w[i][0];
+	    	wdiff[i][1] = w[i+1][1] - w[i][1];
+	    }
+	    wdiff[n-1][0] = w[0][0] - w[n-1][0];
+	    wdiff[n-1][1] = w[0][1] - w[n-1][1];
+	    double tangents[][] = new double[n][2];
+	    for (i = 0; i < n; i++) {
+	    	zdiv(wdiff[i][0], wdiff[i][1], zabs(wdiff[i][0], wdiff[i][1]), 0, cr, ci);
+	    	tangents[i][0] = cr[0];
+	    	tangents[i][1] = ci[0];
+	    } // for (i = 0; i < n; i++)
+	    
+	    // If points are repeated (e.g. crowding), skip to new point
+	    for (p = 0; p < n; p++) {
+	    	if ((tangents[p][0] == 0) && (tangents[p][1] == 0)) {
+	    		double v[][] = new double[2*n-p-1][2];
+	    		for (i = p+1; i < n; i++) {
+	    		    v[i-p-1][0] = w[i][0];
+	    		    v[i-p-1][1] = w[i][1];
+	    		}
+	    		for (i = 0; i < n; i++) {
+	    		    v[n-p-1+i][0] = w[i][0];
+	    		    v[n-p-1+i][1] = w[i][1];
+	    		}
+	    		boolean found = false;
+	    		for (i = 0; i < v.length && (!found); i++) {
+	    			if ((v[i][0] != w[p][0]) || (v[i][1] != w[p][1])) {
+	    			    found = true;
+	    			    double vdiffreal = v[i][0] - w[p][0];
+	    			    double vdiffimag = v[i][1] - w[p][1];
+	    			    zdiv(vdiffreal, vdiffimag, zabs(vdiffreal, vdiffimag), 0, cr, ci);
+	    			    tangents[p][0] = cr[0];
+	    			    tangents[p][1] = ci[0];
+	    			}
+	    		}
+	    	} // if ((tangents[p][0] == 0) && (tangents[p][1] == 0))
+	    } // for (p = 0; p < n; p++)
+	    
+	    // Points which are close to an edge
+	    boolean onbdy[][] = new boolean[n][np];
+	    for (i = 0; i < n; i++) {
+	    	for (j = 0; j < np; j++) {
+	    		zdiv(d[i][j][0], d[i][j][1],tangents[i][0], tangents[i][1], cr, ci);
+	    		if (ci[0] < 10.0 * tol) {
+	    			onbdy[i][j] = true;
+	    		}
+	    	}
+	    } // for (i = 0; i < n; i++)
+	    // Points which are essentially vertices
+	    for (i = 0; i < n; i++) {
+	    	for (j = 0; j < np; j++) {
+	    		if (zabs(d[i][j][0], d[i][j][1]) < tol) {
+	    			onvtx[i][j] = true;
+	    		}
+	    	}
+	    } // for (i = 0; i < n; i++)
+	    // Correction: points must be closed, finite edge segment
+	    boolean onvtxshift[][] = new boolean[n][np];
+	    for (i = 0; i < n-1; i++) {
+	    	for (j = 0; j < np; j++) {
+	    		onvtxshift[i][j] = onvtx[i+1][j];
+	    	}
+	    }
+	    for (j = 0; j < np; j++) {
+	    	onvtxshift[n-1][j] = onvtx[0][j];
+	    }
+	    for (i = 0; i < n; i++) {
+	    	for (j = 0; j < np; j++) {
+	    		onbdy[i][j] = onbdy[i][j] && ((Math.abs(ang[i][j]) > 0.9)  || onvtx[i][j] || onvtxshift[i][j]);
+	    	}
+	    }
+	    
+	    // Truly interior points are easy: ad up the args
+	    boolean interior[] = new boolean[np];
+	    boolean anyinterior = false;
+	    for (j = 0; j < np; j++) {
+	    	boolean found = false;
+	    	for (i = 0; i < n && (!found); i++) {
+	    		if (!onbdy[i][j]) {
+	    			found = true;
+	    			interior[j] = true;
+	    			anyinterior = true;
+	    		}
+	    	}
+	    } //  for (j = 0; j < np; j++)
+	    
+	    if (anyinterior) {
+	        for (j = 0; j < np; j++) {
+	        	sum = 0.0;
+	        	for (i = 0; i < n; i++) {
+	        		sum += ang[i][j];
+	        	}
+	        	sum = sum/2.0;
+	        	index[j] = (int)Math.round(sum);
+	        }
+	    } // if (anyinterior) 
+	    
+	    // Boundary points are tricky
+	    for (k = 0; k < np; k++) {
+	        if (!interior[k]) {
+	            // Index wrt other parts of polygon
+	            double S = 0.0;
+	        	for (i = 0; i < n; i++) {
+	        		if (!onbdy[i][k]) {
+	        			S += ang[i][k];
+	        		}
+	        	}
+	        	// We pretend a vertex point is on either adjacent side
+	        	int numb = 0;
+	        	for (i = 0; i < n; i++) {
+	        		if (onvtx[i][k]) {
+	        			numb++;
+	        		}
+	        	}
+	        	double b[] = new double[numb];
+	        	for (i = 0, j = 0; i < n; i++) {
+	        	    if (onvtx[i][k]) {
+	        	    	b[j++] = beta[i];
+	        	    }
+	        	}
+	        	// Each edge membership counts as 1/2 winding number (either side)
+	        	double augment = 0.0;
+	        	for (i = 0; i < n; i++) {
+	        		if (onbdy[i][k]) {
+	        			augment += 1.0;
+	        		}
+	        		if (onvtx[i][k]) {
+	        			augment += 1.0;
+	        		}
+	        	}
+	        	for (i = 0; i < b.length; i++) {
+	        		augment += b[i];
+	        	}
+	        	index[k] = Math.round(augment*sign(S) + S)/2.0;
+	        } // if (!interior[k])
+	    } // for (k = 0; k < np; k++)
+	    
+	    for (i = 0; i < index.length; i++) {
+	    	if (index[i] != 0) {
+	    		indexout[i] = true;
+	    	}
+	    }
+	}
 	
 	// scangle computes the turning angles of the polygon whose vertices are specified in the vector w.
 	// The turning angle of a vertex measures how much the heading changes at that vertex from the
