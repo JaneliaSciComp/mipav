@@ -74,6 +74,128 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 	}
 	
+	private void rcorners(double w[][], double beta[], double z[][], int corners[], int renum[]) {
+		// w, beta, and z are input/output
+		// w, beta, and z have the same length n
+		// corners and renum are output
+		// int corners[] = new int[4]
+		// int renum[] = new int[w.length] = new int[n];
+		// Find corners of rectangle whose map is represented by prevertices z
+		// on the strip, then renumber w, beta, and z (and the corners) so that
+		// corners[0] = 0.
+		// Original MATLAB routine copyright 1998 by Toby Driscoll
+		int left;
+		int right;
+		int top;
+		int bot;
+		int i, j;
+		int offset = -1;
+		int n = w.length;
+		
+		// Deduce corner locations
+		double minrealz = Double.MAX_VALUE;
+		double maxrealz = -Double.MAX_VALUE;
+		double minimagz = Double.MAX_VALUE;
+		double maximagz = -Double.MAX_VALUE;
+		for (i = 0; i < n; i++) {
+		    if (z[i][0] < minrealz) {
+		    	minrealz = z[i][0];
+		    }
+		    if (z[i][0] > maxrealz) {
+		    	maxrealz = z[i][0];
+		    }
+		    if (z[i][1] < minimagz) {
+		    	minimagz = z[i][1];
+		    }
+		    if (z[i][1] > maximagz) {
+		    	maximagz = z[i][1];
+		    }
+		} // for (i = 0; i < n; i++)
+		for (i = 0, j = 0; i < n; i++) {
+		    if (Math.abs(z[i][0] - minrealz) < eps) {
+		    	left = 1;
+		    }
+		    else {
+		    	left = 0;
+		    }
+		    if (Math.abs(z[i][0] - maxrealz) < eps) {
+		    	right = 1;
+		    }
+		    else {
+		    	right = 0;
+		    }
+		    // Reverse top and bot defintions from original MATLAB code
+		    if (Math.abs(z[i][1] - minimagz) < eps) {
+		    	top = 1;
+		    }
+		    else {
+		    	top = 0;
+		    }
+		    if (Math.abs(z[i][1] - maximagz) < eps) {
+		    	bot = 1;
+		    }
+		    else {
+		    	bot = 0;
+		    }
+		    if (left + right + top + bot == 2) {
+		    	corners[j] = i;
+		    	if (right + bot == 2) {
+		    		offset = j;
+		    	}
+		    	j++;
+		    }
+		} // for (i = 0; i < n; i++)
+		int tempcorners[] = new int[4];
+		for (i = offset; i <= 3; i++) {
+		    tempcorners[i-offset] = corners[i];	
+		}
+		for (i = 0; i <= offset-1; i++) {
+			tempcorners[4-offset+i] = corners[i];
+		}
+		for (i = 0; i <= 3; i++) {
+			corners[i] = tempcorners[i];
+		}
+		
+		// Renumber vertices so that corners[0] = 0
+		double wtemp[][] = new double[n][2];
+		double betatemp[] = new double[n];
+		double ztemp[][] = new double[n][2];
+		for (i = corners[0]; i <= n-1; i++) {
+			renum[i-corners[0]] = i;
+			wtemp[i-corners[0]][0] = w[i][0];
+			wtemp[i-corners[0]][1] = w[i][1];
+			betatemp[i-corners[0]] = beta[i];
+			ztemp[i-corners[0]][0] = z[i][0];
+			ztemp[i-corners[0]][1] = z[i][1];
+		}
+		for (i = 0; i <= corners[0]-1; i++) {
+			renum[n-corners[0]+i] = i;
+			wtemp[n-corners[0]+i][0] = w[i][0];
+			wtemp[n-corners[0]+i][1] = w[i][1];
+			betatemp[n-corners[0]+i] = beta[i];
+			ztemp[n-corners[0]+i][0] = z[i][0];
+			ztemp[n-corners[0]+i][1] = z[i][1];
+		}
+		for (i = 0; i < n; i++) {
+			w[i][0] = wtemp[i][0];
+			w[i][1] = wtemp[i][1];
+			beta[i] = betatemp[i];
+			z[i][0] = ztemp[i][0];
+			z[i][1] = ztemp[i][1];
+		}
+		for (i = 0; i < n; i++) {
+			wtemp[i] = null;
+			ztemp[i] = null;
+		}
+		wtemp = null;
+		betatemp = null;
+		ztemp = null;
+		for (i = 0; i <= 3; i++) {
+			corners[i] = ((tempcorners[i]-tempcorners[0] + n)%n);
+		}
+		tempcorners = null;
+	}
+	
 	// Construct polygon object
 	// x and y are 2 double[] vectors used to specify the vertices.
 	// alpha if supplied manually specifies the interior angles at the vedrtices, divided by PI
@@ -159,6 +281,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double cr[] = new double[1];
 		double ci[] = new double[1];
 	    int n = w.length;
+	    boolean mask[] = new boolean[n];
 	    
 	    if ((angle != null) && (angle.length > 0)) {
 	    	// If the angles have been assigned, return them
@@ -206,7 +329,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        // It's ill-posed to determine locally the slits (inward-pointing) from 
 	        // points (outward-pointing).  Check suspicious cases at the tips to see if
 	        // they are interior to the rest of the polygon
-	        boolean mask[] = new boolean[n];
 	        int nummask = 0;
 	        for (i = 0; i < n; i++) {
 	        	if ((alpha[i] < 100.0  *eps) || ((2 - alpha[i]) < 100.0 * eps)) {
@@ -236,10 +358,50 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	            	wnotmask[k++][1] = w[i][1];
 	            }
 	        } // for (i = 0, j = 0, k = 0; i < n; i++)
-	        boolean isinpolyindex[] = new boolean[wmask.length];
+	        boolean slit[] = new boolean[wmask.length];
 	        boolean onvtx[][] = new boolean[wnotmask.length][wmask.length];
-	        isinpoly(isinpolyindex, onvtx, wmask, wnotmask, null, eps);
+	        isinpoly(slit, onvtx, wmask, wnotmask, null, eps);
+	        for (i = 0; i < alpha.length; i++) {
+	        	if (mask[i]) {
+	        		if (slit[i]) {
+	        			alpha[i] = 2.0;
+	        		}
+	        		else {
+	        			alpha[i] = 0.0;
+	        		}
+	        	} // if (mask[i])
+	        } // for (i = 0; i < alpha.length; i++)
 	    } // else
+	    
+	    // Now test--if incorrect, assume the orientation is clockwise
+	    double sindex = 0.0;
+	    for (i = 0; i < alpha.length; i++) {
+	        sindex += (alpha[i] - 1.0);	
+	    }
+	    sindex = sindex/2.0; // sindex should be integer
+	    if (Math.abs(sindex - Math.round(sindex)) > 100.0*Math.sqrt(n)*eps) {
+	    	// Try reversing the interpretation of a crack
+	    	sindex = 0.0;
+	    	for (i = 0; i < alpha.length; i++) {
+	    		if ((alpha[i] < 2.0*eps) || ((2.0 - alpha[i]) < 2.0*eps)) {
+	    			mask[i] = true;
+	    		}
+	    		else {
+	    			mask[i] = false;
+	    			alpha[i] = 2.0 - alpha[i];
+	    		}
+	    		sindex += (alpha[i] - 1.0);
+	    	} // for (i = 0; i < alpha.length; i++)
+	    	sindex = sindex/2.0; // should be integer
+	    	// If still not OK, something is wrong
+	    	if (Math.abs(sindex - Math.round(sindex)) > 100.0*Math.sqrt(n)*eps) {
+	    		System.err.println("Invalid polygon");
+	    		return;
+	    	}
+	    } // if (Math.abs(sindex - Math.round(sindex)) > 100.0*Math.sqrt(n)*eps)
+	    
+	    index[0] = (int)Math.round(sindex);
+	    isccw[0] = (index[0] < 0);
 	}
 	
 	// isinpoly identifies points inside a polygon
@@ -3224,6 +3386,217 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        }
 	    } // else if (type.equalsIgnoreCase("r"))
 	    return err;
+	}
+	
+	private void scfix(String type, double w[][], double beta[], int aux[]) {
+		// w, beta, and aux are input/output
+		// type is input
+		// Fix polygon to meet Schwarz-Christoffel toolbox constraints.
+		// scfix attempts to fix a problem in the given polygon that arises from the
+		// posing of the parameter problem.  scfix is used when a call to xxparam results
+		// in an error and so advises.  In this case the polygon as given violates some
+		// fairly arbitrary constraint.  scifx remedies the situation by renumbering the
+		// vertices, or, if necessary, adding a trivial (zero-turn) vertex.  type is one
+		// of {"hp", "d", "de", "st", "r"}.  if an additional aux input and output argument
+		// is given, it represents the indices of the strip ends or the rectangle corners.
+		
+		// Original MATLAB routine copyright 1998 by Toby Driscoll
+		
+		// You may wonder, why not let the xxparam functions call scfix automatically?  The 
+		// trouble with that approach is that since a function can't modify its inputs in
+		// the calling workspace, either the xxparam functions would have to return more
+		// arguments, or the mapping and plotting functions also would have to detect and 
+		// correct the problem every time there called.  The problem is rare enough that this
+		// method seems adequate.
+		int i;
+		int n = w.length;
+		int renum[] = new int[n];
+		for (i = 0; i < n; i++) {
+			renum[i] = i;
+		}
+		int renumtemp[] = new int[n];
+		double wtemp[][] = new double[n][2];
+		double betatemp[] = new double[n];
+		
+		// Orientation conventions
+		int sumb;
+		if (type.equalsIgnoreCase("de")) {
+			sumb = 2;
+		}
+		else {
+			sumb = -2;
+		}
+		double sumbeta = 0.0;
+		for (i = 0; i < beta.length; i++) {
+			sumbeta += beta[i];
+		}
+		if (Math.abs(sumbeta + sumb) < 1.0E-9) {
+			// reverse order
+			wtemp[0][0] = w[0][0];
+			wtemp[0][1] = w[0][1];
+			for (i = 1; i <= n-1; i++) {
+				wtemp[i][0] = w[n-i][0];
+				wtemp[i][1] = w[n-1][1];
+			}
+			for (i = 0; i < n; i++) {
+				w[i][0] = wtemp[i][0];
+				w[i][1] = wtemp[i][1];
+			}
+			
+			beta = scangle(w);
+			renumtemp[0] = renum[0];
+			for (i = 1; i <= n-1; i++) {
+				renumtemp[i] = renum[n-i];
+			}
+			for (i = 0; i < n; i++) {
+				renum[i] = renumtemp[i];
+			}
+			if (aux != null) {
+				int auxtemp[] = new int[n];
+				auxtemp[0] = aux[0];
+				for (i = 1; i <= n-1; i++) {
+					auxtemp[i] = aux[n-i];
+				}
+				for (i = 0; i < n; i++) {
+					aux[i] = auxtemp[i];
+				}
+				auxtemp = null;
+			}
+		} // if (Math.abs(sumbeta + sumb) < 1.0E-9)
+		
+		// Less obvious restrictions
+		if (type.equalsIgnoreCase("hp") || type.equalsIgnoreCase("d")) {
+		    int shift[] = new int[n];
+		    for (i = 0; i < n-1; i++) {
+		    	shift[i] = i+1;
+		    }
+		    shift[n-1] = 0;
+		    // Remember, if necessary, to meet requirements:
+		    // w([0,1,n-2]) finite && sides at w[n-1] not colinear
+		    while (true) {
+		    	boolean anyisinf = false;
+		    	if (Double.isInfinite(w[0][0]) || Double.isInfinite(w[0][1]) || Double.isInfinite(w[1][0]) ||
+		    		Double.isInfinite(w[1][1]) || Double.isInfinite(w[n-2][0]) || Double.isInfinite(w[n-2][1])) {
+		    		anyisinf = true;
+		    	}
+		    	if (!anyisinf && (Math.abs(beta[n-1]) >= eps) && (Math.abs(beta[n-1] - 1) >= eps)) {
+		    		break;
+		    	}
+		        for (i = 0; i < n-1; i++) {
+		        	renumtemp[i] = renum[i+1];
+		        	wtemp[i][0] = w[i+1][0];
+		        	wtemp[i][1] = w[i+1][1];
+		        	betatemp[i] = beta[i+1];
+		        }
+		        renumtemp[n-1] = renum[0];
+		        wtemp[n-1][0] = w[0][0];
+		        wtemp[n-1][1] = w[0][1];
+		        betatemp[n-1] = beta[0];
+		        for (i = 0; i < n; i++) {
+		        	renum[i] = renumtemp[i];
+		        	w[i][0] = wtemp[i][0];
+		        	w[i][1] = wtemp[i][1];
+		        	beta[i] = betatemp[i];
+		        }
+		        if (renum[0] == 0) { // tried all orderings
+		        	// First be sure beta[n-1] is no longer a problem.
+		        	boolean betaproblem = true;
+		        	for (i = 0; i < beta.length && betaproblem; i++) {
+		        		if ((Math.abs(beta[i]-1.0) >= eps) && (Math.abs(beta[i]) >= eps)) {
+		        			betaproblem = false;
+		        		}
+		        	} // for (i = 0; i < beta.length && betaproblem; i++)
+		        	if (betaproblem) {
+		        		System.err.println("Polygon has empty interior");
+		        		return;
+		        	}
+		        	while ((Math.abs(beta[n-1]) < eps) || (Math.abs(beta[n-1] - 1) < eps)) {
+		        		for (i = 0; i < n-1; i++) {
+				        	wtemp[i][0] = w[i+1][0];
+				        	wtemp[i][1] = w[i+1][1];
+				        	betatemp[i] = beta[i+1];
+				        }
+				        wtemp[n-1][0] = w[0][0];
+				        wtemp[n-1][1] = w[0][1];
+				        betatemp[n-1] = beta[0];
+				        for (i = 0; i < n; i++) {
+				        	w[i][0] = wtemp[i][0];
+				        	w[i][1] = wtemp[i][1];
+				        	beta[i] = betatemp[i];
+				        }	
+		        	} // while ((Math.abs(beta[n-1]) < eps) || (Math.abs(beta[n-1] - 1) < eps))
+		        	// Next, add one or tow veretices as needed.
+		        	if (Double.isInfinite(w[0][0]) || Double.isInfinite(w[0][1]) || Double.isInfinite(w[1][0]) ||
+		        			Double.isInfinite(w[1][1])) {
+		        		
+		        	}
+		        } // if (renum[0] == 0)
+		    } // while (true)
+		} // if (type.equalsIgnoreCase("hp") || type.equalsIgnoreCase("d"))
+	}
+	
+	private void scaddvtx(double wn[][], double betan[], double w[][], double beta[], int pos, double window[]) {
+		// wn and betan are outputs
+		// w, beta, pos, and window are inputs
+		// Add a vertex to a polygon
+		// scaddvtx adds a new vertex to the polygon described by w and beta immediately
+		// after vertex pos.  If w[pos:pos+1] are finite, the new vertex is at the midpoint of an
+		// edge; otherwise, the new vertex is a reasonable distance from its finite neighbor
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		double newv[] = new double[2];
+		int numadj;
+		int i, j;
+		int base = -1;
+		boolean found;
+		int rbase;
+		double wreal;
+		double wimag;
+		int jrem;
+		if (window == null) {
+			window = new double[]{Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
+					Double.POSITIVE_INFINITY};
+		}
+		int n = w.length;
+		double ang[] = new double[n];
+		if (pos < 0) {
+			pos = n-1;
+		}
+		int pos1 = (pos+1)%n;
+		if (Double.isFinite(w[pos][0]) && Double.isFinite(w[pos][1]) && Double.isFinite(w[1][0]) &&
+				Double.isFinite(w[1][1])) {
+			// Easy case
+		    newv[0] = (w[pos][0] + w[pos1][0])/2.0;	
+		    newv[1] = (w[pos][1] + w[pos1][1])/2.0;
+		}
+		else {
+			// Messy case
+			// Find a pair of adjacent finite vertices as a basis.
+			numadj = 0;
+			found = false;
+			for (i = 0; i < n-1 && (!found); i++) {
+				if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1]) && Double.isFinite(w[i+1][0]) &&
+						Double.isFinite(w[i+1][1])) {	
+				    found = true;
+				    base = i;
+				}
+			}
+			if (!found) {
+				if (Double.isFinite(w[n-1][0]) && Double.isFinite(w[n-1][1]) && Double.isFinite(w[0][0]) &&
+						Double.isFinite(w[0][1])) {	
+				    found = true;
+				    base = n-1;
+				}
+			} // if (!found)
+			rbase = (base+1) % n;
+			wreal = w[rbase][0] - w[base][0];
+			wimag = w[rbase][1] - w[base][1];
+			ang[base] = Math.atan2(wimag, wreal);
+			
+			// Detrmine the absolute angle of side pos->pos1.
+			for (j = base+1; j < n; j++) {
+			    jrem =( j-1 + n) % n;	
+			}
+		}
 	}
 	
 	private class indexValueComparator implements Comparator<indexValueItem> {
