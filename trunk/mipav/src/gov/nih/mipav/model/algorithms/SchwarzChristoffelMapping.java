@@ -74,6 +74,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 	}
 	
+	public void rectmap() {
+		
+	}
+	
 	private void rcorners(double w[][], double beta[], double z[][], int corners[], int renum[]) {
 		// w, beta, and z are input/output
 		// w, beta, and z have the same length n
@@ -3388,9 +3392,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    return err;
 	}
 	
-	private void scfix(String type, double w[][], double beta[], int aux[]) {
-		// w, beta, and aux are input/output
-		// type is input
+	private void scfix(double wn[][], double betan[], int auxn[], String type, double w[][], double beta[], int aux[]) {
+		// wn,betan, and auxn are output
+		// w, beta, and type are input
+		// aux is input
 		// Fix polygon to meet Schwarz-Christoffel toolbox constraints.
 		// scfix attempts to fix a problem in the given polygon that arises from the
 		// posing of the parameter problem.  scfix is used when a call to xxparam results
@@ -3408,15 +3413,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// arguments, or the mapping and plotting functions also would have to detect and 
 		// correct the problem every time there called.  The problem is rare enough that this
 		// method seems adequate.
-		int i;
+		int i, j, k;
 		int n = w.length;
 		int renum[] = new int[n];
 		for (i = 0; i < n; i++) {
 			renum[i] = i;
 		}
 		int renumtemp[] = new int[n];
-		double wtemp[][] = new double[n][2];
-		double betatemp[] = new double[n];
+		wn = new double[n][2];
+		betan = new double[n];
 		
 		// Orientation conventions
 		int sumb;
@@ -3432,15 +3437,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		if (Math.abs(sumbeta + sumb) < 1.0E-9) {
 			// reverse order
-			wtemp[0][0] = w[0][0];
-			wtemp[0][1] = w[0][1];
+			wn[0][0] = w[0][0];
+			wn[0][1] = w[0][1];
 			for (i = 1; i <= n-1; i++) {
-				wtemp[i][0] = w[n-i][0];
-				wtemp[i][1] = w[n-1][1];
+				wn[i][0] = w[n-i][0];
+				wn[i][1] = w[n-1][1];
 			}
 			for (i = 0; i < n; i++) {
-				w[i][0] = wtemp[i][0];
-				w[i][1] = wtemp[i][1];
+				w[i][0] = wn[i][0];
+				w[i][1] = wn[i][1];
 			}
 			
 			beta = scangle(w);
@@ -3484,19 +3489,19 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	}
 		        for (i = 0; i < n-1; i++) {
 		        	renumtemp[i] = renum[i+1];
-		        	wtemp[i][0] = w[i+1][0];
-		        	wtemp[i][1] = w[i+1][1];
-		        	betatemp[i] = beta[i+1];
+		        	wn[i][0] = w[i+1][0];
+		        	wn[i][1] = w[i+1][1];
+		        	betan[i] = beta[i+1];
 		        }
 		        renumtemp[n-1] = renum[0];
-		        wtemp[n-1][0] = w[0][0];
-		        wtemp[n-1][1] = w[0][1];
-		        betatemp[n-1] = beta[0];
+		        wn[n-1][0] = w[0][0];
+		        wn[n-1][1] = w[0][1];
+		        betan[n-1] = beta[0];
 		        for (i = 0; i < n; i++) {
 		        	renum[i] = renumtemp[i];
-		        	w[i][0] = wtemp[i][0];
-		        	w[i][1] = wtemp[i][1];
-		        	beta[i] = betatemp[i];
+		        	w[i][0] = wn[i][0];
+		        	w[i][1] = wn[i][1];
+		        	beta[i] = betan[i];
 		        }
 		        if (renum[0] == 0) { // tried all orderings
 		        	// First be sure beta[n-1] is no longer a problem.
@@ -3512,32 +3517,340 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        	}
 		        	while ((Math.abs(beta[n-1]) < eps) || (Math.abs(beta[n-1] - 1) < eps)) {
 		        		for (i = 0; i < n-1; i++) {
-				        	wtemp[i][0] = w[i+1][0];
-				        	wtemp[i][1] = w[i+1][1];
-				        	betatemp[i] = beta[i+1];
+				        	wn[i][0] = w[i+1][0];
+				        	wn[i][1] = w[i+1][1];
+				        	betan[i] = beta[i+1];
 				        }
-				        wtemp[n-1][0] = w[0][0];
-				        wtemp[n-1][1] = w[0][1];
-				        betatemp[n-1] = beta[0];
+				        wn[n-1][0] = w[0][0];
+				        wn[n-1][1] = w[0][1];
+				        betan[n-1] = beta[0];
 				        for (i = 0; i < n; i++) {
-				        	w[i][0] = wtemp[i][0];
-				        	w[i][1] = wtemp[i][1];
-				        	beta[i] = betatemp[i];
+				        	w[i][0] = wn[i][0];
+				        	w[i][1] = wn[i][1];
+				        	beta[i] = betan[i];
 				        }	
 		        	} // while ((Math.abs(beta[n-1]) < eps) || (Math.abs(beta[n-1] - 1) < eps))
 		        	// Next, add one or tow veretices as needed.
 		        	if (Double.isInfinite(w[0][0]) || Double.isInfinite(w[0][1]) || Double.isInfinite(w[1][0]) ||
 		        			Double.isInfinite(w[1][1])) {
-		        		
+		        	    wn = new double[w.length+1][2];
+		        	    betan = new double[w.length+1];
+		        	    scaddvtx(wn,betan,w,beta,0,null);
+		        	    w = new double[wn.length][2];
+		        	    beta = new double[wn.length];
+		        	    n = n+1;
+		        	    for (i = 0; i < n; i++) {
+		        	    	w[i][0] = wn[i][0];
+		        	    	w[i][1] = wn[i][1];
+		        	    	beta[i] = betan[i];
+		        	    }
+		        	} // if (Double.isInfinite(w[0][0]) || Double.isInfinite(w[0][1]) || Double.isInfinite(w[1][0]) ||
+		        	if (Double.isInfinite(w[n-2][0]) || Double.isInfinite(w[n-2][1])) {
+		        		wn = new double[w.length+1][2];
+		        		betan = new double[w.length+1];
+		        		scaddvtx(wn,betan,w,beta,n-2,null);
+		        		w = new double[wn.length][2];
+			        	beta = new double[wn.length];
+		        		n=n+1;
+		        		for (i = 0; i < n; i++) {
+		        	    	w[i][0] = wn[i][0];
+		        	    	w[i][1] = wn[i][1];
+		        	    	beta[i] = betan[i];
+		        	    }
+		        	} // if (Double.isInfinite(w[n-2][0]) || Double.isInfinite(w[n-2][1]))
+		        	renum = new int[n];
+		        	for (i = 0; i < n; i++) {
+		        		renum[i] = i;
 		        	}
+		        	System.out.println("Warning: A vertex has been added");
+		        	break;
 		        } // if (renum[0] == 0)
 		    } // while (true)
 		} // if (type.equalsIgnoreCase("hp") || type.equalsIgnoreCase("d"))
+		else if (type.equalsIgnoreCase("de")) {
+			int shift[] = new int[n];
+		    for (i = 0; i < n-1; i++) {
+		    	shift[i] = i+1;
+		    }
+		    shift[n-1] = 0;
+		    // Remember, if necessary, to ensure sides at w[n-1] not collinear
+		    // (except if n==2, which is to be handled explicitly anyway)
+		    while (true) {
+		    	if (((Math.abs(beta[n-1]) >= eps) && (Math.abs(beta[n-1] - 1) >= eps)) || (n <= 2)) {
+		    		break;
+		    	}
+		    	for (i = 0; i < n-1; i++) {
+		        	renumtemp[i] = renum[i+1];
+		        	wn[i][0] = w[i+1][0];
+		        	wn[i][1] = w[i+1][1];
+		        	betan[i] = beta[i+1];
+		        }
+		        renumtemp[n-1] = renum[0];
+		        wn[n-1][0] = w[0][0];
+		        wn[n-1][1] = w[0][1];
+		        betan[n-1] = beta[0];
+		        for (i = 0; i < n; i++) {
+		        	renum[i] = renumtemp[i];
+		        	w[i][0] = wn[i][0];
+		        	w[i][1] = wn[i][1];
+		        	beta[i] = betan[i];
+		        }
+		        if (renum[0] == 0) {
+		        	wn = new double[2][2];
+		        	betan = new double[2];
+		        	for (i = 0, j = 0; i < beta.length; i++) {
+		        		if (Math.abs(beta[i]) >= eps) {
+		        		    wn[j][0] = w[i][0];
+		        		    wn[j][1] = w[i][1];
+		        		    betan[j++] = beta[i];
+		        		    renum = new int[2];
+		        		    renum[0] = 0;
+		        		    renum[1] = 1;
+		        		    n = 2;
+		        		    System.out.println("Polygon is a line segment); removing superfluous vertices");
+		        		    break;
+		        		}
+		        	}
+		        } // if (renum[0] == 0)
+		    } // while (true)
+		} // else if (type.equalsIgnoreCase("de"))
+		else if (type.equalsIgnoreCase("st")) {
+			int ends[] = null;
+			if ((aux != null) && (aux.length > 0)) {
+			    ends = new int[aux.length];	
+			    for (i = 0; i < aux.length; i++) {
+			    	ends[i] = aux[i];
+			    }
+			} // if ((aux != null) && (aux.length > 0))
+			else {
+			    MipavUtil.displayInfo("Use mouse to select images of left and right ends of the strip.");
+			    ends = scselect(w, beta, 2, null, null);
+			}
+			for (i = ends[0]; i < n; i++) {
+				renum[i-ends[0]] = i;
+				wn[i-ends[0]][0] = w[i][0];
+				wn[i-ends[0]][1] = w[i][1];
+				betan[i-ends[0]] = beta[i];
+			}
+			for (i = 0; i <= ends[0]-1; i++) {
+				renum[n-ends[0]+i] = i;
+				wn[n-ends[0]+i][0] = w[i][0];
+				wn[n-ends[0]+i][1] = w[i][1];
+				betan[n-ends[0]+i] = beta[i];
+			}
+			for (i = 0; i < n; i++) {
+				w[i][0] = wn[i][0];
+				w[i][1] = wn[i][1];
+				beta[i] = betan[i];
+			}
+			for (k = 0; k < renum.length; k++) {
+			    if (renum[k] == ends[1]) {
+			    	break;
+			    }
+			} // for (k = 0; k < renum.length; k++)
+			if (k < 3) {
+				if (k < n-2) {
+				    // Switch ends
+					for (i = k; i < n; i++) {
+						renum[i-k] = i;
+						wn[i-k][0] = w[i][0];
+						wn[i-k][1] = w[i][1];
+						betan[i-k] = beta[i];
+					}
+					for (i = 0; i <= k-1; i++) {
+						renum[n-k+i] = i;
+						wn[n-k+i][0] = w[i][0];
+						wn[n-k+i][1] = w[i][1];
+						betan[n-k+i] = beta[i];
+					}
+					for (i = 0; i < n; i++) {
+						w[i][0] = wn[i][0];
+						w[i][1] = wn[i][1];
+						beta[i] = betan[i];
+					}
+				} // if (k < n-2)
+				else {
+				    // Add one or two vertices.
+					for (j = 1; j <= 4-(k+1); j++) {
+					    wn = new double[w.length+1][2];
+					    betan = new double[w.length+1];
+					    scaddvtx(wn, betan, w, beta, j-1, null);
+					    w = new double[wn.length][2];
+					    beta = new double[wn.length];
+					    n = n+1;
+					    for (i = 0; i < n; i++) {
+					    	w[i][0] = wn[i][0];
+					    	w[i][1] = wn[i][1];
+					    	beta[i] = betan[i];
+					    }
+					    k = k+1;
+					    System.out.println("Warning: A vertex has been added.");
+					} // for (j = 1; j <= 4-(k+1); j++)
+				} // else
+			} // if (k < 3)
+			
+			if (k == n-1) {
+				// Must add a vertex in any case
+				 wn = new double[w.length+1][2];
+				 betan = new double[w.length+1];
+				 scaddvtx(wn, betan, w, beta, n-1, null);
+				 w = new double[wn.length][2];
+			     beta = new double[wn.length];
+			     n = n+1;
+			     for (i = 0; i < n; i++) {
+			    	 w[i][0] = wn[i][0];
+			    	 w[i][1] = wn[i][1];
+			    	 beta[i] = betan[i];
+			     }
+			     System.out.println("Warning: A vertex has been added.");
+			} // if (k == n-1)
+			
+			if (Double.isInfinite(w[1][0]) || Double.isInfinite(w[1][1])) {
+			    // Add two vertices
+				for (j = 0; j <= 1; j++) {
+					 wn = new double[w.length+1][2];
+					 betan = new double[w.length+1];
+					 scaddvtx(wn, betan, w, beta, j, null);
+					 w = new double[wn.length][2];
+				     beta = new double[wn.length];
+				     n = n+1;
+				     k = k+1;
+				     for (i = 0; i < n; i++) {
+				    	 w[i][0] = wn[i][0];
+				    	 w[i][1] = wn[i][1];
+				    	 beta[i] = betan[i];
+				     }
+				     System.out.println("Warning: A vertex has been added.");	
+				}
+			} // if (Double.isInfinite(w[1][0]) || Double.isInfinite(w[1][1]))
+			else if (Double.isInfinite(w[2][0]) || Double.isInfinite(w[2][1])) {
+			    // Add one vertex.
+				 wn = new double[w.length+1][2];
+				 betan = new double[w.length+1];
+				 scaddvtx(wn, betan, w, beta, 1, null);
+				 w = new double[wn.length][2];
+			     beta = new double[wn.length];
+			     n = n+1;
+			     k = k+1;
+			     for (i = 0; i < n; i++) {
+			    	 w[i][0] = wn[i][0];
+			    	 w[i][1] = wn[i][1];
+			    	 beta[i] = betan[i];
+			     }
+			     System.out.println("Warning: A vertex has been added.");	
+			} // else if (Double.isInfinite(w[2][0]) || Double.isInfinite(w[2][1]))
+			else if (Double.isInfinite(w[n-1][0]) || Double.isInfinite(w[n-1][1])) {
+			    // Add one vertex.
+				 wn = new double[w.length+1][2];
+				 betan = new double[w.length+1];
+				 scaddvtx(wn, betan, w, beta, n-1, null);
+				 w = new double[wn.length][2];
+			     beta = new double[wn.length];
+			     n = n+1;
+			     for (i = 0; i < n; i++) {
+			    	 w[i][0] = wn[i][0];
+			    	 w[i][1] = wn[i][1];
+			    	 beta[i] = betan[i];
+			     }
+			     System.out.println("Warning: A vertex has been added.");	
+			} // else if (Double.isInfinite(w[2][0]) || Double.isInfinite(w[2][1]))
+			
+			auxn = new int[k+1];
+			for (i = 0; i <= k; i++) {
+				auxn[i] = i;
+			}
+		} // else if (type.equalsIgnoreCase("st"))
+		else if (type.equalsIgnoreCase("r")) {
+		    int corner[] = new int[aux.length];
+		    for (i = 0; i < aux.length; i++) {
+		    	corner[i] = aux[i];
+		    }
+		    for (i = corner[0]; i < n; i++) {
+				renum[i-corner[0]] = i;
+				wn[i-corner[0]][0] = w[i][0];
+				wn[i-corner[0]][1] = w[i][1];
+				betan[i-corner[0]] = beta[i];
+			}
+			for (i = 0; i <= corner[0]-1; i++) {
+				renum[n-corner[0]+i] = i;
+				wn[n-corner[0]+i][0] = w[i][0];
+				wn[n-corner[0]+i][1] = w[i][1];
+				betan[n-corner[0]+i] = beta[i];
+			}
+			for (i = 0; i < n; i++) {
+				w[i][0] = wn[i][0];
+				w[i][1] = wn[i][1];
+				beta[i] = betan[i];
+			}
+			int cornertemp[] = new int[corner.length];
+			for (i = 0; i < corner.length; i++) {
+				cornertemp[i] = (corner[i]-corner[0]+n) % n;
+			} 
+			for (i = 0; i < corner.length; i++) {
+				corner[i] = cornertemp[i];
+			}
+			// Note: These problems are pretty rare.
+			if ((Math.abs(beta[n-1]) <eps) || (Math.abs(beta[n-1]-1.0) < eps)) {
+			    // Try swapping sides 1-2 and 3-4.
+				if ((Math.abs(beta[corner[2]-1]) >= eps) && (Math.abs(beta[corner[2]-1]-1) >= eps) && Double.isFinite(w[corner[2]][0])
+						&& Double.isFinite(w[corner[2]][1])) {
+					for (i = corner[2]; i < n; i++) {
+						renum[i-corner[2]] = i;
+						wn[i-corner[2]][0] = w[i][0];
+						wn[i-corner[2]][1] = w[i][1];
+						betan[i-corner[2]] = beta[i];
+					}
+					for (i = 0; i <= corner[2]-1; i++) {
+						renum[n-corner[2]+i] = i;
+						wn[n-corner[2]+i][0] = w[i][0];
+						wn[n-corner[2]+i][1] = w[i][1];
+						betan[n-corner[2]+i] = beta[i];
+					}
+					for (i = 0; i < n; i++) {
+						w[i][0] = wn[i][0];
+						w[i][1] = wn[i][1];
+						beta[i] = betan[i];
+					}
+					for (i = 0; i < corner.length; i++) {
+						cornertemp[i] = (corner[i]-corner[2]+n) % n;
+					} 
+					Arrays.sort(cornertemp);
+					for (i = 0; i < corner.length; i++) {
+						corner[i] = cornertemp[i];
+					}
+				}
+				else {
+					System.err.println("Collinear sides make posing problem impossible");
+					return;
+				}
+			} // if ((Math.abs(beta[n-1]) <eps) || (Math.abs(beta[n-1]-1.0) < eps))
+			if (Double.isInfinite(w[1][0]) || Double.isInfinite(w[1][1])) {
+			    wn = new double[w.length+1][2];
+				betan = new double[w.length+1];
+				scaddvtx(wn, betan, w, beta, 0, null);
+				w = new double[wn.length][2];
+			    beta = new double[wn.length];
+			    n = n+1;
+			    for (i = 0; i < n; i++) {
+			    	w[i][0] = wn[i][0];
+			    	w[i][1] = wn[i][1];
+			    	beta[i] = betan[i];
+			    }
+			    for (i = 1; i <= 3; i++) {
+			    	corner[i] = corner[i] + 1;
+			    }
+			} // if (Double.isInfinite(w[1][0]) || Double.isInfinite(w[1][1]))
+			
+			auxn = new int[corner.length];
+			for (i = 0; i < corner.length; i++) {
+				auxn[i] = corner[i];
+			}
+		} // else if (type.equalsIgnoreCase("r"))
 	}
 	
 	private void scaddvtx(double wn[][], double betan[], double w[][], double beta[], int pos, double window[]) {
-		// wn and betan are outputs
-		// w, beta, pos, and window are inputs
+		// wn and betan are outputs of length n+1
+		// w, beta, pos, and window are inputs w and beta are of length n
 		// Add a vertex to a polygon
 		// scaddvtx adds a new vertex to the polygon described by w and beta immediately
 		// after vertex pos.  If w[pos:pos+1] are finite, the new vertex is at the midpoint of an
@@ -3592,10 +3905,68 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			wimag = w[rbase][1] - w[base][1];
 			ang[base] = Math.atan2(wimag, wreal);
 			
-			// Detrmine the absolute angle of side pos->pos1.
+			// Determine the absolute angle of side pos->pos1.
 			for (j = base+1; j < n; j++) {
-			    jrem =( j-1 + n) % n;	
+			    jrem =( j-1 + n) % n;
+			    ang[j] = ang[jrem] - Math.PI * beta[j];
+			    if (j == pos) {
+			    	break;
+			    }
+			} // for (j = base+1; j < n; j++)
+			
+			// Find a nice side length
+			double len[] = new double[n];
+			for (i = 0; i < n-1; i++) {
+				len[i] = zabs(w[i+1][0] - w[i][0], w[i+1][1] - w[i][1]);
 			}
+			len[n-1] = zabs(w[0][0] - w[n-1][0], w[0][1] - w[n-1][1]);
+			double sum = 0.0;
+			int numfinite = 0;
+			for (i = 0; i < n; i++) {
+				if (Double.isFinite(len[i])) {
+					numfinite++;
+					sum += len[i];
+				}
+			} // for (i = 0; i < n; i++)
+			double avglen = sum/numfinite;
+			
+			double wbase[] = new double[2];
+			double dir[] = new double[2];
+			if (Double.isInfinite(w[pos][0]) || Double.isInfinite(w[pos][1])) {
+			    wbase[0] = w[pos1][0];
+			    wbase[1] = w[pos1][1];
+			    dir[0] = Math.cos(ang[pos] + Math.PI);
+			    dir[1] = Math.sin(ang[pos] + Math.PI);
+			}
+			else {
+				wbase[0] = w[pos][0];
+				wbase[1] = w[pos][1];
+				dir[0] = Math.cos(ang[pos]);
+				dir[1] = Math.sin(ang[pos]);
+			}
+			
+			// Restrict point to a window (to help out graphics)
+			newv[0] = wbase[0] + avglen*dir[0];
+			newv[1] = wbase[1] + avglen*dir[1];
+			while ((newv[0] < window[0]) || (newv[0] > window[1]) || (newv[1] < window[2]) || (newv[1] > window[3])) {
+				avglen = avglen/2;
+				newv[0] = wbase[0] + avglen*dir[0];
+				newv[1] = wbase[1] + avglen*dir[1];
+			}
+		} // else
+		
+		for (i = 0; i <= pos; i++) {
+			wn[i][0] = w[i][0];
+			wn[i][1] = w[i][1];
+			betan[i] = beta[i];
+		}
+		wn[pos+1][0] = newv[0];
+		wn[pos+1][1] = newv[1];
+		betan[pos+1] = 0;
+		for (i = pos+1; i <= n-1; i++) {
+			wn[i+1][0] = w[i][0];
+			wn[i+1][1] = w[i][1];
+			betan[i+1] = beta[i];
 		}
 	}
 	
