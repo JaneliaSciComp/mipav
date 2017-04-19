@@ -74,8 +74,292 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 	}
 	
-	public void rectmap() {
+	public scmap rectmap(double w[][], double tolerance) {
+		int i;
+		double z[][] = null;
+		double c[] = null;
+		double L[] = null;
+		double qdata[][] = null;
+		int corner[] = null;
+		double wn[][] = null;
+		double betan[] = null;
+		int cornern[] = null;
+		double z0[][] = null;
+		//rparam(double z[][], double c[], double L[], double qdat[][], 
+				//double w[][], double beta[], int cnr[], double z0[][], double tol)
+		// z, c, L, and qdat are outputs
+		// w, beta, cnr, z0, and tolerance are inputs
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, null);
+		double beta[] = new double[poly.angle.length];
+		for (i = 0; i < poly.angle.length; i++) {
+			beta[i] = poly.angle[i] - 1.0;
+		}
+		if ((z == null) || (z.length == 0)) {
+			if ((corner == null) || (corner.length == 0)) {
+				String msg[] = new String[2];
+		        msg[0] = "Select the images of the corners of the rectangle";
+		        msg[1] = "Go in counerclockwise order and select a long rectangle edge first";
+		        corner = scselect(w, beta, 4, "Select corners", msg);
+			} // if ((corner == null) || (corner.length == 0))
+			
+			// Apply scfix to enforce solver rules
+			scfix(wn, betan, cornern, "r", w, beta, corner);
+			double xn[] = new double[wn.length];
+			double yn[] = new double[wn.length];
+			for (i = 0; i < wn.length; i++) {
+				xn[i] = wn[i][0];
+				yn[i] = wn[i][1];
+			}
+			double alpha[] = new double[betan.length];
+			for (i = 0; i < betan.length; i++) {
+				alpha[i] = beta[i] + 1.0;
+			}
+			poly = new polygon(xn, yn, alpha);
+			
+			// Solve parameter problem (always necessary)
+		    rparam(z, c, L, qdata, w, beta, corner, z0, tolerance );
+		} // if ((z == null) || (z.length == 0))
+		else {
+			// Prevertices, etc. given.  Renumber to conform
+			corner = new int[4];
+			int renum[] = new int[w.length];
+			rcorners(w, beta, z, corner, renum);
+			int nqpts = (int)Math.ceil(-Math.log10(tolerance));
+			qdata = scqdata(beta, nqpts);
+			for (i = 0; i < w.length; i++) {
+				x[i] = w[i][0];
+				y[i] = w[i][1];
+			}
+			double  alpha[] = new double[beta.length];
+			for (i = 0; i < beta.length; i++) {
+				alpha[i] = beta[i] + 1.0;
+			}
+			poly = new polygon(x, y, alpha);
+		} // else
+		scmap M = new scmap();
+		M.prevertex = z;
+		M.constant = c[0];
+		M.stripL = L;
+		M.qdata = qdata;
+		M.poly = poly;
 		
+		// Now fill in apparent accuracy
+		M.accuracy = accuracy(M);
+		return M;
+	}
+	
+	private double accuracy(scmap M) {
+		// Apparent accuracy of Schwarz-Christoffel rectangle map.
+		// accuracy estimates the accuracy of the Schwarz-Christoffel rectangle map M.
+		// The technique used is to compare the differences between successive finite
+		// vertices to the integral between the corresponding prevertices, and return
+		// the maximum.
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		double acc = 0.0;
+		// If an accuracy has been assigned, don't question it.
+		if (!Double.isNaN(M.accuracy)) {
+			return M.accuracy;
+		}
+		// Get data for low-level functions
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		int n = w.length;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		double z[][] = M.prevertex;
+		double c = M.constant;
+		double L[] = M.stripL;
+		double qdata[][] = M.qdata;
+		
+		// Remember to put first corner first
+		int corner[] = new int[4];
+		int renum[] = new int[n];
+		rcorners(w, beta, z, corner, renum);
+		
+		// Map prevertices to strip
+		double K = -Double.MAX_VALUE;
+		for (i = 0; i < n; i++) {
+			if (z[i][0] > K) {
+				K = z[i][0];
+			}
+		}
+		double Kp = -Double.MAX_VALUE;
+		for (i = 0; i < n; i++) {
+			if (z[i][1] > Kp) {
+				Kp = z[i][1];
+			}
+		}
+		double zs[][] = new double[z.length][2];
+		double zsprime[][] = new double[z.length][2];
+		r2strip(zs, zsprime, z, z, L[0]);
+		for (i = 0; i < zs.length; i++) {
+			// Put them *exactly* on edges
+			zs[i][1] = Math.round(zs[i][1]);
+		}
+		
+		// Integrate between consecutive finite pairs on bottom and top
+		int numidxbot = 0;
+		for (i = 0; i <=corner[2]-1; i++) {
+			if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1])) {
+				numidxbot++;
+			}
+		}
+		int idxbot[] = new int[numidxbot];
+		for (i = 0, j = 0; i <= corner[2] -1; i++) {
+			if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1])) {
+				idxbot[j++] = i;
+			}
+		}
+		int numidxtop = 0;
+		for (i = corner[2]; i <= n-1; i++) {
+			if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1])) {
+				numidxtop++;
+			}	
+		}
+		int idxtop[] = new int[numidxtop];
+		for (i = corner[2], j = 0; i <= n-1; i++) {
+			if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1])) {
+				idxtop[j++] = i;
+			}	
+		}
+		
+		// Two columns hold endpoint indices for integrations
+		int idx[][] = new int[numidxbot+numidxtop-2][2];
+		for (i = 0; i < numidxbot-1; i++) {
+			idx[i][0] = idxbot[i];
+			idx[i][1] = idxbot[i+1];
+		}
+		for (i = 0; i < numidxtop-1; i++) {
+			idx[numidxbot-1+i][0] = idxtop[i];
+			idx[numidxbot-1+i][1] = idxtop[i+1];
+		}
+		// Find midpoints.  Go into the interior of strip to avoid integrating
+		// through skipped prevertices.
+		double zz[][][] = new double[2][numidxbot+numidxtop-2][2];
+		for (i = 0; i < numidxbot+numidxtop-2; i++) {
+			for (j = 0; j < 2; j++) {
+				zz[j][i][0] = zs[idx[i][j]][0];
+				zz[j][i][1] = zs[idx[i][j]][1];
+			}
+		}
+		double mid[][] = new double[numidxbot+numidxtop-2][2];
+		for (j = 0; j < numidxbot+numidxtop-2; j++) {
+			for (i = 0; i < 2; i++) {
+				mid[j][0] += zz[i][j][0];
+				mid[j][1] += zz[i][j][1];
+			}
+		}
+		for (i = 0; i < numidxbot+numidxtop-2; i++) {
+			mid[i][0] = mid[i][0]/2.0;
+			mid[i][1] = 0.5;
+		}
+		
+		// As a final check, integrate once more across the strip
+		double tmp = Double.MAX_VALUE;
+		int k = -1;
+		for (i = 0; i < numidxtop; i++) {
+			if (Math.abs(zs[idxtop[i]][0] - zs[0][0]) < tmp) {
+			    tmp = Math.abs(zs[idxtop[i]][0] - zs[0][0]);
+			    k = idxtop[i];
+			}
+		}
+		int idx2[][] = new int[numidxbot+numidxtop-1][2];
+		for (i = 0; i < numidxbot+numidxtop-2; i++) {
+			for (j = 0; j < 2; j++) {
+			    idx2[i][j] = idx[i][j];	
+			}
+		}
+		idx2[numidxbot+numidxtop-2][0] = 0;
+		idx2[numidxbot+numidxtop-2][1] = idxtop[k];
+		double mid2[][] = new double[numidxbot+numidxtop-1][2];
+		for (i = 0; i < numidxbot+numidxtop-2; i++) {
+			mid2[i][0] = mid[i][0];
+			mid2[i][1] = mid[i][1];
+		}
+		mid2[numidxbot+numidxtop-2][0] = (zs[0][0] + zs[idxtop[k]][0])/2.0;
+		mid2[numidxbot+numidxtop-2][1] = (zs[0][1] + zs[idxtop[k]][1])/2.0;
+		
+		// Add in ends of strip
+		int ends[] = new int[2];
+		for (i = 0, j = 0; i < n-1 && j < 2; i++) {
+			if (zs[i+1][1] != zs[i][1]) {
+				ends[j++] = i;
+			}
+		}
+		if (j < 2) {
+			if (zs[n-1][1] != zs[0][1]) {
+				ends[j++] = n-1;
+			}
+		}
+		double zq[][] = new double[n+2][2];
+		double bq[] = new double[n+2];
+		double wq[][] = new double[n+2][2];
+		for (i = 0; i <= ends[0]; i++) {
+		    zq[i][0] = zs[i][0];
+		    zq[i][1] = zs[i][1];
+		    bq[i] = beta[i];
+		    wq[i][0] = w[i][0];
+		    wq[i][1] = w[i][1];
+		}
+		zq[ends[0]+1][0] = Double.POSITIVE_INFINITY;
+		zq[ends[0]+1][1] = 0.0;
+		bq[ends[0]+1] = 0.0;
+		wq[ends[0]+1][0] = Double.NaN;
+		wq[ends[0]+1][1] = 0.0;
+		for (i = ends[0]+1; i <= ends[1]; i++) {
+			zq[i+1][0] = zs[i][0];
+			zq[i+1][1] = zs[i][1];
+		    bq[i+1] = beta[i];
+		    wq[i+1][0] = w[i][0];
+		    wq[i+1][1] = w[i][1];
+		}
+		zq[ends[1]+2][0] = Double.NEGATIVE_INFINITY;
+		zq[ends[1]+2][1] = 0.0;
+		bq[ends[1]+2] = 0.0;
+		wq[ends[1]+2][0] = Double.NaN;
+		wq[ends[1]+2][1] = 0.0;
+		for (i = ends[1]+1; i < n; i++) {
+			zq[i+2][0] = zs[i][0];
+			zq[i+2][1] = zs[i][1];
+		    bq[i+2] = beta[i];
+		    wq[i+2][0] = w[i][0];
+		    wq[i+2][1] = w[i][1];	
+		}
+		// Extend qdat with useless columns at ends
+		double qdata2[][] = new double[n+3][qdata[0].length+2];
+		for (i = 0; i < qdata.length; i++) {
+			for (j = 0; j < qdata[0].length; j++) {
+				qdata2[i][j] = qdata[i][j];
+			}
+		}
+		for (i = 0; i <= ends[0]; i++) {
+		    qdata2[i][qdata[0].length] = i;
+		    qdata2[i][qdata[0].length+1] = i+n+1;
+		}
+		qdata2[ends[0]+1][qdata[0].length] = n;
+		return acc;
+	}
+	
+	public class scmap {
+	    double prevertex[][];
+	    double constant;
+	    double stripL[];
+	    double qdata[][];
+	    polygon poly;
+	    double accuracy = Double.NaN;
+	    String className = "rectmap";
+	    scmap() {
+	    	
+	    }
 	}
 	
 	private void rcorners(double w[][], double beta[], double z[][], int corners[], int renum[]) {
@@ -749,8 +1033,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// Original MATLAB code copyright 1998 by Toby Driscoll.
 	// If NESolve, method will be be NESolve.TRUST_REGION (default) or NESolve.LINE_SEARCH.
 	private void rparam(double z[][], double c[], double L[], double qdat[][], 
-			double w[][], double beta[], int cnr[], double z0[][], boolean trace, double tol,
-			int method) {
+			double w[][], double beta[], int cnr[], double z0[][], double tol) {
 		int i, j, k, m, p;
 		double diffR;
 		double diffI;
