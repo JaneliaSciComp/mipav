@@ -5395,80 +5395,31 @@ public class WormSegmentation
 		return intensityMin;
 	}
 
-	public Vector<Vector3f> segmentSeamNew(ModelImage image, ModelImage results, int minRadius, int maxRadius, String outputDir)
+	public boolean segmentSeamNew(ModelImage image, VOIContour centerList, VOI clusterList, int minRadius, int maxRadius, String outputDir, int numCells, boolean needTenth)
 	{
 		ModelImage wormBlur = WormSegmentation.blur(image, minRadius);
-		ModelImage blurMin = WormSegmentation.blur(image, (int) Math.max(minRadius/2f, minRadius - 2));
+		ModelImage temp = WormSegmentation.blur(image, (int) Math.max(minRadius/2f, minRadius - 2));
 		
 		for ( int i = 0; i < wormBlur.getDataSize(); i++ )
 		{
-			wormBlur.set(i, Math.max(0, blurMin.getFloat(i) - wormBlur.getFloat(i) ));
+			wormBlur.set(i, Math.max(0, temp.getFloat(i) - wormBlur.getFloat(i) ));
 		}
 		wormBlur.calcMinMax();
 
-		VOIContour centerList = new VOIContour(false);
-		VOI clusterList = new VOI((short)0, "temp", VOI.POLYLINE, 0);
 		float[] finalThreshold = new float[1];
-		WormSegmentation.segmentSeamThreshold(wormBlur, results, centerList, clusterList, finalThreshold,
-				1f, (float)(wormBlur.getMax()-1), 5f, (float)wormBlur.getMax(), 20, 25, minRadius );
-//		System.err.println( centerList.size() );
-		
-		for ( int i = centerList.size() - 1; i >= 0; i-- )
-		{
-			VOIContour cluster = (VOIContour) clusterList.getCurves().elementAt(i);
-			if ( cluster.size() > 0 )
-			{
-				Box3f box = ContBox3f.ContOrientedBox(cluster.size(), cluster);
-//				System.err.println( (i+1) + "    " + cluster.size() + "    " + box.Extent[0] + "   " + box.Extent[1] + "   " + box.Extent[2]);
-				if ( (box.Extent[0] <= 2) || (box.Extent[1] <= 2) || (box.Extent[2] <= 2) )
-				{
-					// Remove Cluster:
-					clusterList.getCurves().remove( i );
-					centerList.remove( i );
-				}
-			}
-		}
-//		System.err.println( centerList.size() );
-		
-		expandList( wormBlur, clusterList, centerList, minRadius );
-		int clusterCount = 1;
+		boolean pass = WormSegmentation.segmentSeamThreshold(wormBlur, temp, centerList, clusterList, finalThreshold,
+				1f, (float)(wormBlur.getMax()-1), 5f, (float)wormBlur.getMax(), numCells, minRadius, needTenth );
 		
 
-		for ( int i = 0; i < results.getDataSize(); i++ )
-		{
-			results.set(i, 0);
-		}
-		for ( int i = 0; i < centerList.size(); i++ )
-		{
-			VOIContour cluster = (VOIContour) clusterList.getCurves().elementAt(i);
-			for ( int j = 0; j < cluster.size(); j++ )
-			{
-				int x = Math.round(cluster.elementAt(j).X);
-				int y = Math.round(cluster.elementAt(j).Y);
-				int z = Math.round(cluster.elementAt(j).Z);
-
-				results.set(x, y, z, clusterCount);
-			}
-			clusterCount++;
-		}
-
-		LatticeBuilder buildTest = new LatticeBuilder();
-		buildTest.setSeamImage(results);
-		buildTest.setSeamIDs(centerList);
-		boolean pass = buildTest.findTenthPair(image, centerList) & (clusterList.getCurves().size() >= 20);
 		System.err.println("clusters : " + centerList.size() + " " + pass );
 
-//		new ViewJFrameImage( (ModelImage)wormBlur.clone() );
 		wormBlur.disposeLocal(false);
 		wormBlur = null;
-		blurMin.disposeLocal(false);
-		blurMin = null;
+		temp.disposeLocal(false);
+		temp = null;
 
-		results.setImageName("seamCellImage");
-		JDialogBase.updateFileInfo(image, results);
-		ModelImage.saveImage(results, results.getImageName() + ".xml", outputDir, false);
 		
-		return centerList;
+		return pass;
 	}
 	
 	public Vector<Vector3f> segmentSeamNew2(ModelImage image, int minRadius, int maxRadius, String outputDir)
@@ -7373,16 +7324,7 @@ public class WormSegmentation
 			}
 
 		}
-		return modified;
-		
-		
-		
-		
-		
-		
-		
-		
-		
+		return modified;		
 	}
 
 	private static boolean splitCluster( ModelImage image, VOI clusterList, VOIContour cluster, Vector<Vector3f> centerList, Box3f box, int index, float minRadius )
@@ -7703,12 +7645,9 @@ public class WormSegmentation
 
 
 
-	public static void segmentSeamThreshold(ModelImage image, ModelImage result, VOIContour positions, VOI clusterList, float[] finalThreshold,
-			float stepSize, float threshold, float thresholdMin, float thresholdMax, int minCount, int maxCount, int minRadius )
+	public static boolean segmentSeamThreshold(ModelImage image, ModelImage temp, VOIContour positions, VOI clusterList, float[] finalThreshold,
+			float stepSize, float threshold, float thresholdMin, float thresholdMax, int minCount, int minRadius, boolean needTenth )
 	{
-//		System.err.println( "segmentSeamThreshold " + minCount );
-		if ( minCount < 18 )
-			return;
 		int count = 1;
 		float[] targetP = new float[2];
 		float targetPercentage = .95f;
@@ -7716,36 +7655,127 @@ public class WormSegmentation
 		int index = sortedValues.length - 1;
 		threshold = sortedValues[index];
 		boolean found = false;
-		while ( threshold > thresholdMin )
+//		while ( (threshold > thresholdMin) && (index >= 0) )
+//		{
+//			positions.clear();
+//			clusterList.getCurves().clear();	
+//			threshold = sortedValues[index];
+//			WormSegmentation.segmentSeam(image, positions, clusterList, threshold);
+//			int numCells = positions.size();
+////			if ( 0 == (count%10))
+////			{
+//				System.err.println( count + "  " + numCells + " " + threshold + "  " + index );
+////			}
+//			if ( numCells >= minCount )
+//			{
+//				index += 10;
+//				for ( int i = 0; i < 10; i++ )
+//				{
+//					positions.clear();
+//					clusterList.getCurves().clear();	
+//					threshold = sortedValues[index--];
+//					WormSegmentation.segmentSeam(image, positions, clusterList, threshold);
+//					numCells = positions.size();
+//					boolean pass = testSeamCells(image, temp, positions, clusterList, minCount, minRadius, needTenth);
+//					System.err.println( "    " + i + "  " + numCells + " " + threshold + "  " + index + "   " + pass );
+//					if ( pass )
+//					{
+//						finalThreshold[0] = threshold;
+//						found = true;
+//						break;
+//					}
+//				}
+//				if ( found )
+//					break;
+//			}	
+//			index -= 10;
+//			count++;
+//		}
+		Vector<Integer> indexValues = new Vector<Integer>();
+		Vector<Integer> cellCounts = new Vector<Integer>();
+		threshold = sortedValues[index];
+		while ( (threshold > thresholdMin) && (index >= 0) )
 		{
+			positions.clear();
+			clusterList.getCurves().clear();	
 			WormSegmentation.segmentSeam(image, positions, clusterList, threshold);
 			int numCells = positions.size();
-//			if ( 0 == (count%10))
-//			{
-//				System.err.println( count + "  " + numCells + " " + threshold);
-//			}
-			if ( numCells >= minCount )
+			indexValues.add(index);
+			cellCounts.add(numCells);
+//			System.err.println( indexValues.size() + "   " + index + "   " + numCells );
+			index -= 10;
+			if ( index >= 0 )
 			{
-				boolean pass = testSeamCells(image, result, positions, clusterList, minCount, minRadius);
-				if ( pass )
+				threshold = sortedValues[index];
+			}
+		}
+		for ( int i = 0; i < indexValues.size()-1; i++ )
+		{
+			if ( (cellCounts.elementAt(i) >= minCount) && (cellCounts.elementAt(i+1) > cellCounts.elementAt(i)) )
+			{
+				index = indexValues.elementAt(i);
+				index += 10;
+				for ( int j = 0; j < 10; j++ )
 				{
-					finalThreshold[0] = threshold;
-					found = true;
-					break;
+					positions.clear();
+					clusterList.getCurves().clear();	
+					threshold = sortedValues[index--];
+					WormSegmentation.segmentSeam(image, positions, clusterList, threshold);
+					int numCells = positions.size();
+					boolean pass = testSeamCells(image, temp, positions, clusterList, minCount, minRadius, needTenth);
+//					System.err.println( "    " + i + "  " + numCells + " " + threshold + "  " + index + "   " + pass );
+					if ( pass )
+					{
+						finalThreshold[0] = threshold;
+						found = true;
+						break;
+					}
 				}
 			}
-
-			positions.clear();
-			clusterList.getCurves().clear();		
-			index--;
-			threshold = sortedValues[index];
-			count++;
-		}
-		if ( !found )
-		{
-//			System.err.println( "calling segmentSeamThreshold again" );
-			segmentSeamThreshold(image, result, positions, clusterList, finalThreshold, stepSize, threshold, thresholdMin, thresholdMax, minCount - 1, maxCount, minRadius);
-		}
+			else if ( ((i + 1) == (indexValues.size()-1)) &&  
+					(cellCounts.elementAt(i) < minCount) && (cellCounts.elementAt(i+1) >= minCount) )
+			{
+				index = indexValues.elementAt(i+1);
+				index += 10;
+				for ( int j = 0; j < 10; j++ )
+				{
+					positions.clear();
+					clusterList.getCurves().clear();	
+					threshold = sortedValues[index--];
+					WormSegmentation.segmentSeam(image, positions, clusterList, threshold);
+					int numCells = positions.size();
+					boolean pass = testSeamCells(image, temp, positions, clusterList, minCount, minRadius, needTenth);
+//					System.err.println( "    " + i + "  " + numCells + " " + threshold + "  " + index + "   " + pass );
+					if ( pass )
+					{
+						finalThreshold[0] = threshold;
+						found = true;
+						break;
+					}
+				}
+			}
+//				if ( !found )
+//				{
+//					for ( int j = 0; j < 10; j++ )
+//					{
+//						positions.clear();
+//						clusterList.getCurves().clear();	
+//						threshold = sortedValues[index--];
+//						WormSegmentation.segmentSeam(image, positions, clusterList, threshold);
+//						//					numCells = positions.size();
+//						boolean pass = testSeamCells(image, temp, positions, clusterList, minCount, minRadius, needTenth);
+//						//					System.err.println( "    " + i + "  " + numCells + " " + threshold + "  " + index + "   " + pass );
+//						if ( pass )
+//						{
+//							finalThreshold[0] = threshold;
+//							found = true;
+//							break;
+//						}
+//					}
+//				}
+			}
+		
+		return found;
 	}
 		
 		
@@ -7954,7 +7984,7 @@ public class WormSegmentation
 		}
 	}
 	
-	private static boolean testSeamCells( ModelImage image, ModelImage results, VOIContour positions, VOI clusterList, int numCells, int minRadius )
+	private static boolean testSeamCells( ModelImage image, ModelImage temp, VOIContour positions, VOI clusterList, int numCells, int minRadius, boolean needTenth )
 	{
 //		System.err.println( positions.size() );
 		for ( int i = positions.size() - 1; i >= 0; i-- )
@@ -7975,9 +8005,17 @@ public class WormSegmentation
 //		System.err.println( positions.size() );
 		
 		expandList( image, clusterList, positions, minRadius );
-		for ( int i = 0; i < results.getDataSize(); i++ )
+		if ( positions.size() < numCells)
 		{
-			results.set(i, 0);
+			return false;
+		}
+		if ( !needTenth && (positions.size() == numCells) )
+		{
+			return true;
+		}
+		for ( int i = 0; i < temp.getDataSize(); i++ )
+		{
+			temp.set(i, 0);
 		}
 		int clusterCount = 1;
 		for ( int i = 0; i < positions.size(); i++ )
@@ -7989,13 +8027,13 @@ public class WormSegmentation
 				int y = Math.round(cluster.elementAt(j).Y);
 				int z = Math.round(cluster.elementAt(j).Z);
 
-				results.set(x, y, z, clusterCount);
+				temp.set(x, y, z, clusterCount);
 			}
 			clusterCount++;
 		}
 
 		LatticeBuilder buildTest = new LatticeBuilder();
-		buildTest.setSeamImage(results);
+		buildTest.setSeamImage(temp);
 		buildTest.setSeamIDs(positions);
 		boolean pass = buildTest.findTenthPair(image, positions) & (clusterList.getCurves().size() >= numCells);
 		return pass;

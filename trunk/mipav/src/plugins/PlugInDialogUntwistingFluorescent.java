@@ -726,48 +726,42 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 	}
 
 
-	private int testSeamLattice(Vector<Vector3f> seam, VOI lattice, int minDist)
+	private int testSeamLattice(Vector<Vector3f> seam, VOI lattice, float minDist)
 	{
 
+		int count = 0;
 		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
 		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
-		int count = 0;
-		for ( int i = 0; i < seam.size(); i++ )
+		for ( int i = 0; i < left.size(); i++ )
 		{
-			boolean found = false;
-			float closest = Float.MAX_VALUE;
-
-			for ( int j = 0; j < left.size(); j++ )
+			float minLD = Float.MAX_VALUE;
+			Vector3f closestL = new Vector3f();
+			float minRD = Float.MAX_VALUE;
+			Vector3f closestR = new Vector3f();
+			for ( int j = 0; j < seam.size(); j++ )
 			{
-				float distL = left.elementAt(j).distance(seam.elementAt(i));
-				float distR = right.elementAt(j).distance(seam.elementAt(i));
-				if ( distL < closest )
-					closest = distL;
-				if ( distR < closest )
-					closest = distR;
-				if ( (distL <= minDist) || (distR <= minDist) )
+				float distL = left.elementAt(i).distance(seam.elementAt(j));
+				if ( distL < minLD )
 				{
-					found = true;
-					break;
+					minLD = distL;
+					closestL.copy(seam.elementAt(j));
+				}
+				float distR = right.elementAt(i).distance(seam.elementAt(j));
+				if ( distR < minRD )
+				{
+					minRD = distR;
+					closestR.copy(seam.elementAt(j));
 				}
 			}
-			if ( !found )
+//			System.err.println( "lattice match " + minLD + "  " + minRD );
+			if ( (minLD < minDist) && (minRD < minDist) && !closestL.equals(closestR) )
 			{
-				//				System.err.println( (i+1) + " " + closest );
-				count++;
+				// match both left and right add 2:
+				count += 2;
 			}
 		}
-		int foundCount = seam.size() - count;
-//		if ( foundCount >= 20 )
-//		{
-//			System.err.println( "     PASS" );
-//		}
-//		if ( foundCount < 20 )
-//		{
-//			System.err.println( "     FAIL" );
-//			System.err.println( "     " + count + " out of " + seam.size() + " not found" );
-//		}
-		return foundCount;
+		System.err.println( "lattice match " + count );
+		return count;
 	}
 
 

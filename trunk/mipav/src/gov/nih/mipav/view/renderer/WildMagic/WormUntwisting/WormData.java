@@ -207,16 +207,252 @@ public class WormData
 			{
 				outputDir.mkdir();
 			}
+			seamCellPoints = new Vector<Vector3f>();
+			VOI finalClusterList = new VOI((short)0, "temp", VOI.POLYLINE, 0);
 
 			seamSegmentation = new ModelImage( ModelStorageBase.FLOAT, wormImage.getExtents(), "seamCellImage" );	
 			seamSegmentation.setImageName("seamCellImage");
 			JDialogBase.updateFileInfo(wormImage, seamSegmentation);
 			
 			WormSegmentation segmentation = new WormSegmentation();
-			seamCellPoints = segmentation.segmentSeamNew( wormImage, seamSegmentation, minRadius, maxRadius, outputImagesDirectory );
-			minSeamCellSegmentationIntensity = segmentation.getMinSegmentationIntensity();
+			boolean[] passTest = new boolean[6];
+			VOIContour[] ptsTest = new VOIContour[6];
+			VOI[] clusterTest = new VOI[6];
+			
+			int testCount = 0;
+			ptsTest[testCount] = new VOIContour(false);
+			clusterTest[testCount] = new VOI((short)0, "temp", VOI.POLYLINE, 0);			
+			passTest[testCount] = segmentation.segmentSeamNew( wormImage, ptsTest[0], clusterTest[0], minRadius, maxRadius, outputImagesDirectory, 22, true );
+
+			//			VOI seamTemp = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
+			//			wormImage.unregisterAllVOIs();
+			//			wormImage.registerVOI(seamTemp);
+			//			for ( int i = 0; i < pts1.size(); i++ )
+			//			{
+			//				//			System.err.println( i );
+			//				VOIText text = new VOIText();
+			//				text.add(pts1.elementAt(i));
+			//				text.add(pts1.elementAt(i));
+			//				text.setText( "" + (i+1) );
+			//				text.setUseMarker(false);
+			//				text.update();
+			//
+			//				//			int x = (int)seamCellPoints.elementAt(i).X;
+			//				//			int y = (int)seamCellPoints.elementAt(i).Y;
+			//				//			int z = (int)seamCellPoints.elementAt(i).Z;
+			//				//			System.err.println( "Seam Cell " + (i+1) + "  " + wormImage.getFloat(x,y,z) );
+			//				seamTemp.getCurves().add(text);
+			//			}
+			//			LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + "seam_test1" + File.separator, wormImage);
+
+
+
+			testCount++;
+			ptsTest[testCount] = new VOIContour(false);
+			clusterTest[testCount] = new VOI((short)0, "temp", VOI.POLYLINE, 0);
+			passTest[testCount] = segmentation.segmentSeamNew( wormImage, ptsTest[1], clusterTest[1], minRadius-2, maxRadius, outputImagesDirectory, 22, true );
+
+			//			seamTemp = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
+			//			wormImage.unregisterAllVOIs();
+			//			wormImage.registerVOI(seamTemp);
+			//			for ( int i = 0; i < pts1a.size(); i++ )
+			//			{
+			//				//			System.err.println( i );
+			//				VOIText text = new VOIText();
+			//				text.add(pts1a.elementAt(i));
+			//				text.add(pts1a.elementAt(i));
+			//				text.setText( "" + (i+1) );
+			//				text.setUseMarker(false);
+			//				text.update();
+			//
+			//				//			int x = (int)seamCellPoints.elementAt(i).X;
+			//				//			int y = (int)seamCellPoints.elementAt(i).Y;
+			//				//			int z = (int)seamCellPoints.elementAt(i).Z;
+			//				//			System.err.println( "Seam Cell " + (i+1) + "  " + wormImage.getFloat(x,y,z) );
+			//				seamTemp.getCurves().add(text);
+			//			}
+			//			LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + "seam_test2" + File.separator, wormImage);
+
+
+
+
+
+
+			boolean found = false;
+			if ( passTest[0] && passTest[1] && allMatch(ptsTest[0], clusterTest[0], ptsTest[1], clusterTest[1], minRadius, seamCellPoints, finalClusterList ) )
+			{
+				found = true;
+			}
+
+			if ( !found )
+			{
+				testCount++;
+				ptsTest[testCount] = new VOIContour(false);
+				clusterTest[testCount] = new VOI((short)0, "temp", VOI.POLYLINE, 0);
+				passTest[testCount] = segmentation.segmentSeamNew( wormImage, ptsTest[2], clusterTest[2], minRadius, maxRadius, outputImagesDirectory, 20, true );
+				//				seamTemp = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
+				//				wormImage.unregisterAllVOIs();
+				//				wormImage.registerVOI(seamTemp);
+				//				for ( int i = 0; i < pts2.size(); i++ )
+				//				{
+				//					//			System.err.println( i );
+				//					VOIText text = new VOIText();
+				//					text.add(pts2.elementAt(i));
+				//					text.add(pts2.elementAt(i));
+				//					text.setText( "" + (i+1) );
+				//					text.setUseMarker(false);
+				//					text.update();
+				//
+				//					//			int x = (int)seamCellPoints.elementAt(i).X;
+				//					//			int y = (int)seamCellPoints.elementAt(i).Y;
+				//					//			int z = (int)seamCellPoints.elementAt(i).Z;
+				//					//			System.err.println( "Seam Cell " + (i+1) + "  " + wormImage.getFloat(x,y,z) );
+				//					seamTemp.getCurves().add(text);
+				//				}
+				//				LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + "seam_test3" + File.separator, wormImage);
+				for ( int i = 0; i <= testCount; i++ )
+				{
+					for ( int j = i+1; j <= testCount; j++ )
+					{
+						if ( passTest[i] && passTest[j] && allMatch(ptsTest[i], clusterTest[1], ptsTest[j], clusterTest[i], minRadius, seamCellPoints, finalClusterList) )
+						{
+							found = true;
+							break;
+						}
+					}
+					if ( found )
+					{
+						break;
+					}
+				}
+				
+				if ( !found )
+				{
+					testCount++;
+					ptsTest[testCount] = new VOIContour(false);
+					clusterTest[testCount] = new VOI((short)0, "temp", VOI.POLYLINE, 0);
+					passTest[testCount] = segmentation.segmentSeamNew( wormImage, ptsTest[3], clusterTest[3], minRadius-2, maxRadius, outputImagesDirectory, 20, true );
+					//					seamTemp = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
+					//					wormImage.unregisterAllVOIs();
+					//					wormImage.registerVOI(seamTemp);
+					//					for ( int i = 0; i < pts2a.size(); i++ )
+					//					{
+					//						//			System.err.println( i );
+					//						VOIText text = new VOIText();
+					//						text.add(pts2a.elementAt(i));
+					//						text.add(pts2a.elementAt(i));
+					//						text.setText( "" + (i+1) );
+					//						text.setUseMarker(false);
+					//						text.update();
+					//
+					//						//			int x = (int)seamCellPoints.elementAt(i).X;
+					//						//			int y = (int)seamCellPoints.elementAt(i).Y;
+					//						//			int z = (int)seamCellPoints.elementAt(i).Z;
+					//						//			System.err.println( "Seam Cell " + (i+1) + "  " + wormImage.getFloat(x,y,z) );
+					//						seamTemp.getCurves().add(text);
+					//					}
+					//					LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + "seam_test4" + File.separator, wormImage);
+
+					for ( int i = 0; i <= testCount; i++ )
+					{
+						for ( int j = i+1; j <= testCount; j++ )
+						{
+							if ( passTest[i] && passTest[j] && allMatch(ptsTest[i], clusterTest[1], ptsTest[j], clusterTest[i], minRadius, seamCellPoints, finalClusterList) )
+							{
+								found = true;
+								break;
+							}
+						}
+						if ( found )
+						{
+							break;
+						}
+					}
+
+
+					if ( !found )
+					{
+						testCount++;
+						ptsTest[testCount] = new VOIContour(false);
+						clusterTest[testCount] = new VOI((short)0, "temp", VOI.POLYLINE, 0);
+						passTest[testCount] = segmentation.segmentSeamNew( wormImage, ptsTest[4], clusterTest[4], minRadius, maxRadius, outputImagesDirectory, 18, false );
+						for ( int i = 0; i <= testCount; i++ )
+						{
+							for ( int j = i+1; j <= testCount; j++ )
+							{
+								if ( passTest[i] && passTest[j] && allMatch(ptsTest[i], clusterTest[1], ptsTest[j], clusterTest[i], minRadius, seamCellPoints, finalClusterList) )
+								{
+									found = true;
+									break;
+								}
+							}
+							if ( found )
+							{
+								break;
+							}
+						}
+
+						if ( !found )
+						{
+							testCount++;
+							ptsTest[testCount] = new VOIContour(false);
+							clusterTest[testCount] = new VOI((short)0, "temp", VOI.POLYLINE, 0);
+							passTest[testCount] = segmentation.segmentSeamNew( wormImage, ptsTest[4], clusterTest[4], minRadius-2, maxRadius, outputImagesDirectory, 18, false );
+							for ( int i = 0; i <= testCount; i++ )
+							{
+								for ( int j = i+1; j <= testCount; j++ )
+								{
+									if ( passTest[i] && passTest[j] && allMatch(ptsTest[i], clusterTest[1], ptsTest[j], clusterTest[i], minRadius, seamCellPoints, finalClusterList) )
+									{
+										found = true;
+										break;
+									}
+								}
+								if ( found )
+								{
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			
+			
+			System.err.println( found + "   " + seamCellPoints.size() );
+			if ( found )
+			{
+				int clusterCount = 1;
+				for ( int i = 0; i < seamSegmentation.getDataSize(); i++ )
+				{
+					seamSegmentation.set(i, 0);
+				}
+				for ( int i = 0; i < finalClusterList.getCurves().size(); i++ )
+				{
+					VOIContour cluster = (VOIContour) finalClusterList.getCurves().elementAt(i);
+					for ( int j = 0; j < cluster.size(); j++ )
+					{
+						int x = Math.round(cluster.elementAt(j).X);
+						int y = Math.round(cluster.elementAt(j).Y);
+						int z = Math.round(cluster.elementAt(j).Z);
+
+						seamSegmentation.set(x, y, z, clusterCount);
+						float value = wormImage.getFloat(x,y,z);
+						if ( value < minSeamCellSegmentationIntensity )
+						{
+							minSeamCellSegmentationIntensity = value;
+						}
+					}
+					clusterCount++;
+				}
+				seamSegmentation.setImageName("seamCellImage");
+				JDialogBase.updateFileInfo(wormImage, seamSegmentation);
+				ModelImage.saveImage(seamSegmentation, seamSegmentation.getImageName() + ".xml", outputImagesDirectory, false);
+			}
+			
+//			minSeamCellSegmentationIntensity = segmentation.getMinSegmentationIntensity();
 		}
-		
 		if ( seamAnnotations == null )
 		{
 			seamAnnotations = new VOI((short) 0, "seam cells", VOI.ANNOTATION, -1.0f);
@@ -542,4 +778,45 @@ public class WormData
 		}
 		return (skinCount/totalCount);
 	}
+	
+	private boolean allMatch(VOIContour pts1, VOI clusterList1, VOIContour pts2, VOI clusterList2, float minDist, Vector<Vector3f> finalPtsList, VOI finalClusterList )
+	{
+		if ( pts1.size() > pts2.size() )
+		{
+			return allMatch(pts2, clusterList2, pts1, clusterList1, minDist, finalPtsList, finalClusterList);
+		}
+		
+		for ( int i = 0; i < pts1.size(); i++ )
+		{
+			boolean foundMatch = false;
+			float minDistTest = Float.MAX_VALUE;
+			for ( int j = 0; j < pts2.size(); j++ )
+			{
+				float distance = pts1.elementAt(i).distance(pts2.elementAt(j));
+				if ( distance < minDistTest )
+				{
+					minDistTest = distance;
+				}
+				if ( distance < minDist )
+				{
+					foundMatch = true;
+					break;
+				}
+			}
+			if ( !foundMatch )
+			{
+				System.err.println( i + "   " + minDistTest + "   " + minDist );
+				return false;
+			}
+		}
+
+		// Add larger list:
+		for ( int i = 0; i < pts2.size(); i++ )
+		{
+			finalPtsList.add( pts2.elementAt(i) );
+			finalClusterList.getCurves().add( clusterList2.getCurves().elementAt(i) );
+		}
+		return true;
+	}
+	
 }

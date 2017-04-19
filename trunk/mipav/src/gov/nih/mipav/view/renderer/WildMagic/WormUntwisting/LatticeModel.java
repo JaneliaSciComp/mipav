@@ -106,7 +106,11 @@ public class LatticeModel {
 	 */
 	public static void saveSeamCellsTo(final String dir, final String fileName, VOI annotations)
 	{
-
+		if ( annotations == null )
+			return;
+		if ( annotations.getCurves().size() == 0 )
+			return;
+		
 		final File fileDir = new File(dir);
 
 		if (fileDir.exists() && fileDir.isDirectory()) {} 
