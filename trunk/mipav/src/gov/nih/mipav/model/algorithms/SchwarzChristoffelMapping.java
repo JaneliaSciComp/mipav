@@ -162,7 +162,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// the maximum.
 		// Original MATLAB routine copyright 1998 by Toby Driscoll.
 		int i, j;
-		double acc = 0.0;
+		double acc;
 		// If an accuracy has been assigned, don't question it.
 		if (!Double.isNaN(M.accuracy)) {
 			return M.accuracy;
@@ -346,6 +346,70 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    qdata2[i][qdata[0].length+1] = i+n+1;
 		}
 		qdata2[ends[0]+1][qdata[0].length] = n;
+		qdata2[ends[0]+1][qdata[0].length+1] = 2*n + 1;
+		for (i = ends[0]+1; i <= ends[1]; i++) {
+			qdata2[i+1][qdata[0].length] = i;
+			qdata2[i+1][qdata[0].length+1] = i + n + 1;
+		}
+		qdata2[ends[1]+2][qdata[0].length] = n;
+		qdata2[ends[1]+2][qdata[0].length+1] = 2*n + 1;
+		for (i = ends[1]+1; i < n; i++) {
+			qdata2[i+2][qdata[0].length] = i;
+			qdata2[i+2][qdata[0].length+1] = i + n + 1;	
+		}
+		qdata2[n+2][qdata[0].length] = n;
+		qdata2[n+2][qdata[0].length+1] = 2*n+1;
+		
+		// Do the integrations
+		double zleft[][] = new double[idx2.length][2];
+		double zright[][] = new double[idx2.length][2];
+		for (i = 0; i < idx2.length; i++) {
+			zleft[i][0] = zs[idx2[i][0]][0];
+			zleft[i][1] = zs[idx2[i][0]][1];
+			zright[i][0] = zs[idx2[i][1]][0];
+			zright[i][1] = zs[idx2[i][1]][1];
+		}
+		for (i = 0; i < idx2.length; i++) {
+			for (j = 0; j < 2; j++) {
+				if (idx2[i][j] > ends[0]) {
+					idx2[i][j] = idx2[i][j] + 1;
+				}
+				if (idx2[i][j] > ends[1]) {
+					idx2[i][j] = idx2[i][j] + 1;
+				}
+			}
+		}
+		int idxc0[] = new int[idx2.length];
+		int idxc1[] = new int[idx2.length];
+		for (i = 0; i < idx2.length; i++) {
+			idxc0[i] = idx2[i][0];
+			idxc1[i] = idx2[i][1];
+		}
+		double I1[][] = stquad(zleft, mid2, idxc0, zq, bq, qdata2);
+		double I2[][] = stquad(zright, mid2, idxc1, zq, bq, qdata2);
+		double I[][] = new double[I1.length][I1[0].length];
+		for (i = 0; i < I1.length; i++) {
+			for (j = 0; j < I1[0].length; i++) {
+				I[i][j] = I1[i][j] - I2[i][j];
+			}
+		}
+		//double diffw[][][] = new double[idx2[0].length-1][idx2.length][2];
+		// idx2[0].length = 2
+		double diffw[][] = new double[idx2.length][2];
+		for (i = 0; i < idx2.length; i++) {
+			diffw[i][0] = wq[idx2[i][1]][0] - wq[idx2[i][0]][0];
+			diffw[i][1] = wq[idx2[i][1]][1] - wq[idx2[i][0]][1];
+		}
+		double absdiff[] = new double[idx2.length];
+		for (i = 0; i < idx2.length; i++) {
+			absdiff[i] = zabs(c*I[i][0] - diffw[i][0], c*I[i][1] - diffw[i][1]);
+		}
+		acc = -Double.MAX_VALUE;
+		for (i = 0; i < idx2.length; i++) {
+			if (absdiff[i] > acc) {
+				acc = absdiff[i];
+			}
+		}
 		return acc;
 	}
 	
