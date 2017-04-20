@@ -27,7 +27,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// Copyright (c) 1994-2003 by Toby Driscoll (driscoll@math.udel.edu).
 
 	// How much progress information to show during and after the solution to the parameter problem.
-	private boolean traceSolution = false;
+	//private boolean traceSolution = false;
 	
 	// Desired accuracy in the map.  This may not be met exactly.
 	private double tolerance = 1.0E-8;
@@ -109,21 +109,43 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			} // if ((corner == null) || (corner.length == 0))
 			
 			// Apply scfix to enforce solver rules
-			scfix(wn, betan, cornern, "r", w, beta, corner);
-			double xn[] = new double[wn.length];
-			double yn[] = new double[wn.length];
-			for (i = 0; i < wn.length; i++) {
-				xn[i] = wn[i][0];
-				yn[i] = wn[i][1];
+			// For type "r" wn and betan will stay the same in length or increase by one
+			wn = new double[w.length+1][2];
+			betan = new double[w.length+1];
+			cornern = new int[corner.length];
+			// Number of vertices added by scfix
+			int verticesAdded[] = new int[1];
+			int initialVertices = w.length;
+			scfix(wn, betan, verticesAdded, cornern, "r", w, beta, corner);
+			double wn2[][];
+			double betan2[];
+			if (verticesAdded[0] == 0) {
+			    wn2 = new double[initialVertices][0];
+				betan2 = new double[initialVertices];
+				for (i = 0; i < initialVertices; i++) {
+					wn2[i][0] = wn[i][0];
+					wn2[i][1] = wn[i][1];
+					betan2[i] = betan[i];
+				}
 			}
-			double alpha[] = new double[betan.length];
-			for (i = 0; i < betan.length; i++) {
-				alpha[i] = beta[i] + 1.0;
+			else {
+				wn2 = wn;
+				betan2 = betan;
+			}
+			double xn[] = new double[wn2.length];
+			double yn[] = new double[wn2.length];
+			for (i = 0; i < wn2.length; i++) {
+				xn[i] = wn2[i][0];
+				yn[i] = wn2[i][1];
+			}
+			double alpha[] = new double[betan2.length];
+			for (i = 0; i < betan2.length; i++) {
+				alpha[i] = betan2[i] + 1.0;
 			}
 			poly = new polygon(xn, yn, alpha);
 			
 			// Solve parameter problem (always necessary)
-		    rparam(z, c, L, qdata, w, beta, corner, z0, tolerance );
+		    rparam(z, c, L, qdata, wn2, betan2, cornern, z0, tolerance );
 		} // if ((z == null) || (z.length == 0))
 		else {
 			// Prevertices, etc. given.  Renumber to conform
@@ -3739,7 +3761,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    return err;
 	}
 	
-	private void scfix(double wn[][], double betan[], int auxn[], String type, double w[][], double beta[], int aux[]) {
+	private void scfix(double wn[][], double betan[], int verticesAdded[], int auxn[], String type, double w[][], double beta[], int aux[]) {
 		// wn,betan, and auxn are output
 		// w, beta, and type are input
 		// aux is input
@@ -3767,8 +3789,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			renum[i] = i;
 		}
 		int renumtemp[] = new int[n];
-		wn = new double[n][2];
-		betan = new double[n];
 		
 		// Orientation conventions
 		int sumb;
@@ -3879,10 +3899,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        	} // while ((Math.abs(beta[n-1]) < eps) || (Math.abs(beta[n-1] - 1) < eps))
 		        	// Next, add one or tow veretices as needed.
 		        	if (Double.isInfinite(w[0][0]) || Double.isInfinite(w[0][1]) || Double.isInfinite(w[1][0]) ||
-		        			Double.isInfinite(w[1][1])) {
-		        	    wn = new double[w.length+1][2];
-		        	    betan = new double[w.length+1];
+		        			Double.isInfinite(w[1][1])) { 
 		        	    scaddvtx(wn,betan,w,beta,0,null);
+		        	    verticesAdded[0] = verticesAdded[0]+1;
 		        	    w = new double[wn.length][2];
 		        	    beta = new double[wn.length];
 		        	    n = n+1;
@@ -3893,9 +3912,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        	    }
 		        	} // if (Double.isInfinite(w[0][0]) || Double.isInfinite(w[0][1]) || Double.isInfinite(w[1][0]) ||
 		        	if (Double.isInfinite(w[n-2][0]) || Double.isInfinite(w[n-2][1])) {
-		        		wn = new double[w.length+1][2];
-		        		betan = new double[w.length+1];
 		        		scaddvtx(wn,betan,w,beta,n-2,null);
+		        		verticesAdded[0] = verticesAdded[0]+1;
 		        		w = new double[wn.length][2];
 			        	beta = new double[wn.length];
 		        		n=n+1;
@@ -4019,9 +4037,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				else {
 				    // Add one or two vertices.
 					for (j = 1; j <= 4-(k+1); j++) {
-					    wn = new double[w.length+1][2];
-					    betan = new double[w.length+1];
 					    scaddvtx(wn, betan, w, beta, j-1, null);
+					    verticesAdded[0] = verticesAdded[0]+1;
 					    w = new double[wn.length][2];
 					    beta = new double[wn.length];
 					    n = n+1;
@@ -4038,9 +4055,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			
 			if (k == n-1) {
 				// Must add a vertex in any case
-				 wn = new double[w.length+1][2];
-				 betan = new double[w.length+1];
 				 scaddvtx(wn, betan, w, beta, n-1, null);
+				 verticesAdded[0] = verticesAdded[0]+1;
 				 w = new double[wn.length][2];
 			     beta = new double[wn.length];
 			     n = n+1;
@@ -4055,9 +4071,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			if (Double.isInfinite(w[1][0]) || Double.isInfinite(w[1][1])) {
 			    // Add two vertices
 				for (j = 0; j <= 1; j++) {
-					 wn = new double[w.length+1][2];
-					 betan = new double[w.length+1];
 					 scaddvtx(wn, betan, w, beta, j, null);
+					 verticesAdded[0] = verticesAdded[0]+1;
 					 w = new double[wn.length][2];
 				     beta = new double[wn.length];
 				     n = n+1;
@@ -4072,9 +4087,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			} // if (Double.isInfinite(w[1][0]) || Double.isInfinite(w[1][1]))
 			else if (Double.isInfinite(w[2][0]) || Double.isInfinite(w[2][1])) {
 			    // Add one vertex.
-				 wn = new double[w.length+1][2];
-				 betan = new double[w.length+1];
 				 scaddvtx(wn, betan, w, beta, 1, null);
+				 verticesAdded[0] = verticesAdded[0]+1;
 				 w = new double[wn.length][2];
 			     beta = new double[wn.length];
 			     n = n+1;
@@ -4088,9 +4102,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			} // else if (Double.isInfinite(w[2][0]) || Double.isInfinite(w[2][1]))
 			else if (Double.isInfinite(w[n-1][0]) || Double.isInfinite(w[n-1][1])) {
 			    // Add one vertex.
-				 wn = new double[w.length+1][2];
-				 betan = new double[w.length+1];
 				 scaddvtx(wn, betan, w, beta, n-1, null);
+				 verticesAdded[0] = verticesAdded[0]+1;
 				 w = new double[wn.length][2];
 			     beta = new double[wn.length];
 			     n = n+1;
@@ -4102,7 +4115,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			     System.out.println("Warning: A vertex has been added.");	
 			} // else if (Double.isInfinite(w[2][0]) || Double.isInfinite(w[2][1]))
 			
-			auxn = new int[k+1];
 			for (i = 0; i <= k; i++) {
 				auxn[i] = i;
 			}
@@ -4172,23 +4184,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				}
 			} // if ((Math.abs(beta[n-1]) <eps) || (Math.abs(beta[n-1]-1.0) < eps))
 			if (Double.isInfinite(w[1][0]) || Double.isInfinite(w[1][1])) {
-			    wn = new double[w.length+1][2];
-				betan = new double[w.length+1];
 				scaddvtx(wn, betan, w, beta, 0, null);
-				w = new double[wn.length][2];
-			    beta = new double[wn.length];
+				verticesAdded[0] = verticesAdded[0]+1;
 			    n = n+1;
-			    for (i = 0; i < n; i++) {
-			    	w[i][0] = wn[i][0];
-			    	w[i][1] = wn[i][1];
-			    	beta[i] = betan[i];
-			    }
 			    for (i = 1; i <= 3; i++) {
 			    	corner[i] = corner[i] + 1;
 			    }
 			} // if (Double.isInfinite(w[1][0]) || Double.isInfinite(w[1][1]))
 			
-			auxn = new int[corner.length];
 			for (i = 0; i < corner.length; i++) {
 				auxn[i] = corner[i];
 			}
@@ -4204,7 +4207,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// edge; otherwise, the new vertex is a reasonable distance from its finite neighbor
 		// Original MATLAB routine copyright 1998 by Toby Driscoll.
 		double newv[] = new double[2];
-		int numadj;
+		//int numadj;
 		int i, j;
 		int base = -1;
 		boolean found;
@@ -4231,7 +4234,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		else {
 			// Messy case
 			// Find a pair of adjacent finite vertices as a basis.
-			numadj = 0;
+			//numadj = 0;
 			found = false;
 			for (i = 0; i < n-1 && (!found); i++) {
 				if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1]) && Double.isFinite(w[i+1][0]) &&
