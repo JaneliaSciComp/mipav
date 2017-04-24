@@ -297,17 +297,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				idxtop[j++] = i;
 			}	
 		}
-		
 		// Two columns hold endpoint indices for integrations
 		int idx[][] = new int[numidxbot+numidxtop-2][2];
 		for (i = 0; i < numidxbot-1; i++) {
 			idx[i][0] = idxbot[i];
 			idx[i][1] = idxbot[i+1];
 		}
+		
 		for (i = 0; i < numidxtop-1; i++) {
 			idx[numidxbot-1+i][0] = idxtop[i];
 			idx[numidxbot-1+i][1] = idxtop[i+1];
 		}
+		
 		// Find midpoints.  Go into the interior of strip to avoid integrating
 		// through skipped prevertices.
 		double zz[][][] = new double[2][numidxbot+numidxtop-2][2];
@@ -329,7 +330,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			mid[i][1] = 0.5;
 		}
 		
-		// As a final check, integrate once more across the strip
+		// As a final check, integrate once across the strip
 		double tmp = Double.MAX_VALUE;
 		int k = -1;
 		for (i = 0; i < numidxtop; i++) {
@@ -418,11 +419,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   for (j = n+1; j <= ends[0]+n+1; j++) {
 				qdata2[i][j+2] = qdata[i][j];
 			}
-		   qdata2[i][ends[0]+n+5] = qdata[i][2*n+1];
+		   qdata2[i][ends[0]+n+4] = qdata[i][2*n+1];
 		   for (j = ends[0]+n+2; j <= ends[1]+n+1; j++) {
 			   qdata2[i][j+3] = qdata[i][j];   
 		   }
-		   qdata2[i][ends[1]+n+6] = qdata[i][2*n+1];
+		   qdata2[i][ends[1]+n+5] = qdata[i][2*n+1];
 		   for (j = ends[1]+n+2; j < 2*n+1; j++) {
 			   qdata2[i][j+4] = qdata[i][j];   
 		   }
@@ -438,21 +439,25 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			zright[i][0] = zs[idx2[i][1]][0];
 			zright[i][1] = zs[idx2[i][1]][1];
 		}
+		int idx3[][] = new int[idx2.length][2];
 		for (i = 0; i < idx2.length; i++) {
 			for (j = 0; j < 2; j++) {
-				if (idx2[i][j] > ends[0]) {
-					idx2[i][j] = idx2[i][j] + 1;
-				}
 				if (idx2[i][j] > ends[1]) {
-					idx2[i][j] = idx2[i][j] + 1;
+					idx3[i][j] = idx2[i][j]+2;
+				}
+				else if (idx2[i][j] > ends[0]) {
+					idx3[i][j] = idx2[i][j] +1;
+				}
+				else {
+					idx3[i][j] = idx2[i][j];
 				}
 			}
 		}
-		int idxc0[] = new int[idx2.length];
-		int idxc1[] = new int[idx2.length];
-		for (i = 0; i < idx2.length; i++) {
-			idxc0[i] = idx2[i][0];
-			idxc1[i] = idx2[i][1];
+		int idxc0[] = new int[idx3.length];
+		int idxc1[] = new int[idx3.length];
+		for (i = 0; i < idx3.length; i++) {
+			idxc0[i] = idx3[i][0];
+			idxc1[i] = idx3[i][1];
 		}
 		double I1[][] = stquad(zleft, mid2, idxc0, zq, bq, qdata2);
 		double I2[][] = stquad(zright, mid2, idxc1, zq, bq, qdata2);
@@ -462,19 +467,19 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				I[i][j] = I1[i][j] - I2[i][j];
 			}
 		}
-		//double diffw[][][] = new double[idx2[0].length-1][idx2.length][2];
-		// idx2[0].length = 2
-		double diffw[][] = new double[idx2.length][2];
-		for (i = 0; i < idx2.length; i++) {
-			diffw[i][0] = wq[idx2[i][1]][0] - wq[idx2[i][0]][0];
-			diffw[i][1] = wq[idx2[i][1]][1] - wq[idx2[i][0]][1];
+		//double diffw[][][] = new double[idx3[0].length-1][idx3.length][2];
+		// idx3[0].length = 2
+		double diffw[][] = new double[idx3.length][2];
+		for (i = 0; i < idx3.length; i++) {
+			diffw[i][0] = wq[idx3[i][1]][0] - wq[idx3[i][0]][0];
+			diffw[i][1] = wq[idx3[i][1]][1] - wq[idx3[i][0]][1];
 		}
-		double absdiff[] = new double[idx2.length];
-		for (i = 0; i < idx2.length; i++) {
+		double absdiff[] = new double[idx3.length];
+		for (i = 0; i < idx3.length; i++) {
 			absdiff[i] = zabs(c*I[i][0] - diffw[i][0], c*I[i][1] - diffw[i][1]);
 		}
 		acc = -Double.MAX_VALUE;
-		for (i = 0; i < idx2.length; i++) {
+		for (i = 0; i < idx3.length; i++) {
 			if (absdiff[i] > acc) {
 				acc = absdiff[i];
 			}
@@ -1572,12 +1577,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		mid[0][0] = (zs[0][0] + zs[1][0])/2.0;
 		mid[0][1] = (zs[0][1] + zs[1][1])/2.0;
 		int sing1[] = new int[1];
-		sing1[0] = 2;
+		sing1[0] = 1;
 		double z1[][] = new double[1][2];
 		z1[0][0] = zs[1][0];
 		z1[0][1] = zs[1][1];
 		double I1[][] = stquad(z1, mid, sing1, zs, bs, qs);
-		sing1[0] = 1;
+		sing1[0] = 0;
 		z1[0][0] = zs[0][0];
 		z1[0][1] = zs[0][1];
 		double I2[][] = stquad(z1, mid, sing1, zs, bs, qs);
@@ -2923,7 +2928,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	// Numerical quadrature for the strip map.
 	// Original MATLAB routine copyright 1998 by Toby Driscoll
-	// z1,z2 are vectors of left and right endpoints.  sing1 is a vecotr of integer indices which label the
+	// z1,z2 are vectors of left and right endpoints.  sing1 is a vector of integer indices which label the
 	// singularities in z1.  So if sing1[5] = 3, then z1[5] = z[3].  -1 means no singularity.  z is the vector
 	// of *all* singularities, including the "ends" of the strip at +-infinity.  beta is the vector of associated
 	// turning angles.  qdat is the quadrature data from scqdata.  It should include all the beta values, even
@@ -2953,7 +2958,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		boolean anydiffzero;
 		double scale;
 		double zl[] = new double[2];
-		double prod[] = new double[2];
 		double cr[] = new double[1];
 		double ci[] = new double[1];
 		int n = z.length;
@@ -2987,7 +2991,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    sng = sing1[k];
 		    
 		    // Allowable integration step, based on nearest singularity
-		    dist = 1;
+		    dist = 1.00;
 		    for (j = 0; j <= sng-1; j++) {
 		    	zreal = z[j][0] - za[0];
 		    	zimag = z[j][1] - za[1];
@@ -3084,15 +3088,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    			wt[i][1] = ((zr[1]-zl[1])/2.0) * qdat[i][2*n+1];
 		    		} // for (i = 0; i < qdat.length; i++)
 		    		out = stderiv(nd,z,beta,1,-1);
-	                prod[0] = 0;
-	                prod[1] = 0;
 	                for (i = 0; i < wt.length; i++) {
 	                	zmlt(out[i][0], out[i][1], wt[i][0], wt[i][1], cr, ci);
-	                	prod[0] += cr[0];
-	                	prod[1] += ci[0];
+	                	I[k][0] += cr[0];
+	                	I[k][1] += ci[0];
 	                }
-	                I[k][0] = I[k][0] + prod[0];
-	                I[k][1] = I[k][1] + prod[1];
 		    	} // while ((dist < 1)&& (!Double.isNaN(I[k][0])) && (!Double.isNaN(I[k][1])))
 		    } // else
 		} // for (i = 0; i < nontriv.length; i++)
@@ -3103,7 +3103,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// stderiv returns the derivative at the points of zp of the Schwarz-Christoffel
 	// strip map defined by z, beta, and c.
 	// See also stparam, stmap.
-	// Original MATLAB rotuine copyright 1998 by Toby Driscoll.
+	// Original MATLAB routine copyright 1998 by Toby Driscoll.
 	// If j >= 0, the terms corresponding to z[j] are normalized by abs(zp - z[j]).
 	// This is for Gauss_jacobi quadrature.
 	private double[][] stderiv(double zp[][], double z[][], double beta[], int c, int j) {
@@ -3180,10 +3180,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        beta2 = null;
 	        // Adjust singularity index if given
 	        if (j >= 0) {
-	        	if (j > ends[0]) {
-	        		j--;
-	        	}
 	        	if (j > ends[1]) {
+	        		j = j-2;
+	        	}
+	        	else if (j > ends[0]) {
 	        		j--;
 	        	}
 	        } // if (j >= 0)
@@ -3273,7 +3273,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
     	double sum2[][] = new double[npts][2];
     	for (i = 0; i < npts; i++) {
     		sum2[i][0] = (Math.PI/2.0)*theta[0]*zprow[i][0] + sum[i][0];
-    		sum2[i][1] = (Math.PI/2.0)*theta[0]*zprow[i][1] + sum[i][0];
+    		sum2[i][1] = (Math.PI/2.0)*theta[0]*zprow[i][1] + sum[i][1];
     	}
     	for (i = 0; i < npts; i++) {
     		fprime[i][0] = c*Math.exp(sum2[i][0])*Math.cos(sum2[i][1]);
