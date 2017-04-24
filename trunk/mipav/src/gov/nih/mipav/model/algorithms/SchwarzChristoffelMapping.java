@@ -45,6 +45,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// w[i][1] y coordinate of ith vertex
 	private double w[][];
 	
+	public SchwarzChristoffelMapping() {
+		
+	}
+	
 	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double w[][]) {
 		super(destImg, srcImg);
 		this.w = w;
@@ -71,16 +75,51 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
                 neweps = neweps / 2.0;
             }
         } // while(true)
+        
+        testRectmap1();
 		
 	}
 	
-	public scmap rectmap(double w[][], double tolerance) {
+	public void testRectmap1() {
+		// Example from users guide
+		// Test with
+		// SchwarzChristoffelMapping sc = new SchwarzChristoffelMapping();
+    	// sc.runAlgorithm();
+		double w[][] = new double[6][2];
+        w[0][0] = -5;
+        w[0][1] = -1;
+        w[1][0] = -5;
+        w[1][1] = -3;
+        w[2][0] = 5;
+        w[2][1] = -3;
+        w[3][0] = 5;
+        w[3][1] = 1;
+        w[4][0] = 5;
+        w[4][1] = 3;
+        w[5][0] = -5;
+        w[5][1] = 3;
+        int corner[] = new int[4];
+        corner[0] = 0;
+        corner[1] = 1;
+        corner[2] = 3;
+        corner[3] = 4;
+        rectmap(w, corner, tolerance, null, null, null);
+	}
+	
+	public scmap rectmap(double w[][], int corner[], double tolerance,
+			double z[][], double c[], double L[]) {
+		// Schwarz-Christoffel rectangle map object
+		// rectmap cpondtructs a Schwarz-Christoffel rectangle map object for the polygon
+		// whose vertices are given by w.  corner is a 4 integer vector containing the
+		// indices of the vertices that are the images of the rectangle's corners.
+		// These indices should be specified in counterclockwise order, and the first
+		// two should be the endpoints of a long side of the rectangle.
+		// If corner is null, rectmap requires you to choose the corners graphically.
+		// If w, z, c, and L are given, rectmap constructs a rectmap using the
+		// explicitly given prevertices z[][], constant c[0], and strip length L[0].
+		// Original MATLAB routine copyright 1998-2001 by Toby Driscoll.
 		int i;
-		double z[][] = null;
-		double c[] = null;
-		double L[] = null;
 		double qdata[][] = null;
-		int corner[] = null;
 		double wn[][] = null;
 		double betan[] = null;
 		int cornern[] = null;
@@ -120,7 +159,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			double wn2[][];
 			double betan2[];
 			if (verticesAdded[0] == 0) {
-			    wn2 = new double[initialVertices][0];
+			    wn2 = new double[initialVertices][2];
 				betan2 = new double[initialVertices];
 				for (i = 0; i < initialVertices; i++) {
 					wn2[i][0] = wn[i][0];
@@ -143,7 +182,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				alpha[i] = betan2[i] + 1.0;
 			}
 			poly = new polygon(xn, yn, alpha);
-			
+		    L = new double[2];
+			c = new double[2];
+			z = new double[wn2.length][2];
+			int nqpts = Math.max((int)Math.ceil(-Math.log10(tolerance)), 4);
+			qdata = new double[nqpts][2*betan2.length+2];
 			// Solve parameter problem (always necessary)
 		    rparam(z, c, L, qdata, wn2, betan2, cornern, z0, tolerance );
 		} // if ((z == null) || (z.length == 0))
@@ -153,7 +196,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			int renum[] = new int[w.length];
 			rcorners(w, beta, z, corner, renum);
 			int nqpts = (int)Math.ceil(-Math.log10(tolerance));
-			qdata = scqdata(beta, nqpts);
+		    qdata = new double[nqpts][2*beta.length+2];
+			scqdata(qdata, beta, nqpts);
 			for (i = 0; i < w.length; i++) {
 				x[i] = w[i][0];
 				y[i] = w[i][1];
@@ -291,7 +335,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		for (i = 0; i < numidxtop; i++) {
 			if (Math.abs(zs[idxtop[i]][0] - zs[0][0]) < tmp) {
 			    tmp = Math.abs(zs[idxtop[i]][0] - zs[0][0]);
-			    k = idxtop[i];
+			    k = i;
 			}
 		}
 		int idx2[][] = new int[numidxbot+numidxtop-1][2];
@@ -357,30 +401,33 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    wq[i+2][1] = w[i][1];	
 		}
 		// Extend qdat with useless columns at ends
-		double qdata2[][] = new double[n+3][qdata[0].length+2];
+		double qdata2[][] = new double[qdata.length][2*n+6];
 		for (i = 0; i < qdata.length; i++) {
-			for (j = 0; j < qdata[0].length; j++) {
+			for (j = 0; j <= ends[0]; j++) {
 				qdata2[i][j] = qdata[i][j];
 			}
+			qdata2[i][ends[0]+1] = qdata[i][n];
+			for (j = ends[0]+1; j <= ends[1]; j++) {
+				qdata2[i][j+1] = qdata[i][j];
+			}
+			qdata2[i][ends[1]+2] = qdata[i][n];
+		    for (j = ends[1]+1; j < n; j++) {
+			   qdata2[i][j+2] = qdata[i][j];
+		    }
+		   qdata[i][n+2] = qdata[i][n];
+		   for (j = n+1; j <= ends[0]+n+1; j++) {
+				qdata2[i][j+2] = qdata[i][j];
+			}
+		   qdata2[i][ends[0]+n+5] = qdata[i][2*n+1];
+		   for (j = ends[0]+n+2; j <= ends[1]+n+1; j++) {
+			   qdata2[i][j+3] = qdata[i][j];   
+		   }
+		   qdata2[i][ends[1]+n+6] = qdata[i][2*n+1];
+		   for (j = ends[1]+n+2; j < 2*n+1; j++) {
+			   qdata2[i][j+4] = qdata[i][j];   
+		   }
+		   qdata2[i][2*n+5] = qdata[i][2*n+1];
 		}
-		for (i = 0; i <= ends[0]; i++) {
-		    qdata2[i][qdata[0].length] = i;
-		    qdata2[i][qdata[0].length+1] = i+n+1;
-		}
-		qdata2[ends[0]+1][qdata[0].length] = n;
-		qdata2[ends[0]+1][qdata[0].length+1] = 2*n + 1;
-		for (i = ends[0]+1; i <= ends[1]; i++) {
-			qdata2[i+1][qdata[0].length] = i;
-			qdata2[i+1][qdata[0].length+1] = i + n + 1;
-		}
-		qdata2[ends[1]+2][qdata[0].length] = n;
-		qdata2[ends[1]+2][qdata[0].length+1] = 2*n + 1;
-		for (i = ends[1]+1; i < n; i++) {
-			qdata2[i+2][qdata[0].length] = i;
-			qdata2[i+2][qdata[0].length+1] = i + n + 1;	
-		}
-		qdata2[n+2][qdata[0].length] = n;
-		qdata2[n+2][qdata[0].length+1] = 2*n+1;
 		
 		// Do the integrations
 		double zleft[][] = new double[idx2.length][2];
@@ -411,7 +458,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double I2[][] = stquad(zright, mid2, idxc1, zq, bq, qdata2);
 		double I[][] = new double[I1.length][I1[0].length];
 		for (i = 0; i < I1.length; i++) {
-			for (j = 0; j < I1[0].length; i++) {
+			for (j = 0; j < I1[0].length; j++) {
 				I[i][j] = I1[i][j] - I2[i][j];
 			}
 		}
@@ -432,6 +479,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				acc = absdiff[i];
 			}
 		}
+		System.out.println("rectmap accuracy = " + acc);
 		return acc;
 	}
 	
@@ -625,16 +673,22 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    	for (int i = 0; i < n; i++) {
 			    		vertextemp[i] = null;
 			    	}
-			    	vertex = null;
-			    	double angletemp[] = new double[n];
+			    	vertextemp = null;
+			    	double alphatemp[] = new double[n];
 			    	for (int i = 0; i < n; i++) {
-			    		angletemp[i] = angle[n-1-i];
+			    		alphatemp[i] = alpha[n-1-i];
 			    	}
 			    	for (int i = 0; i < n; i++) {
-			    		angle[i] = angletemp[i];
+			    		alpha[i] = alphatemp[i];
 			    	}
-			    	angletemp = null;
+			    	alphatemp = null;
 			    } // if (!isccw)
+			    if (angle == null) {
+			    	angle = new double[n];
+			    }
+			    for (int i = 0; i < n; i++) {
+			    	angle[i] = alpha[i];
+			    }
 			    if (Math.abs(index[0]) > 1) {
 			    	MipavUtil.displayWarning("Polygon is multiple-sheeted");
 			    }
@@ -1142,12 +1196,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    // cnr should be set by initial MIPAV dialog, so this should never happen.
 	    // The polygon as specified by w and beta is drawn on the image and the
 	    // user selects 4 vertices using the mouse.
-	    //if ((cnr == null) || (cnr.length == 0)) {
+	    if ((cnr == null) || (cnr.length == 0)) {
 	    	String msg[] = new String[2];
 	        msg[0] = "Select the images of the corners of the rectangle";
 	        msg[1] = "Go in counerclockwise order and select a long rectangle edge first";
 	        cnr = scselect(w, beta, 4, "Select corners", msg);
-	    // } // if ((cnr == null) || (cnr.length == 0))
+	    } // if ((cnr == null) || (cnr.length == 0))
 	
 	    // Renumber the vertices so that cnr[0] = 0.
 	    int renum[] = new int[n];
@@ -1172,7 +1226,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    
 	    int offset = n - cnr[0]; // cnr - cnr[0] so no need to add one
 	    int cnrcopy[] = new int[cnr.length];
-	    for (i = 0; i < n; i++) {
+	    for (i = 0; i < cnr.length; i++) {
 	    	cnrcopy[i] = ((cnr[i] + offset) % n);
 	    }
 	    double z0copy[][] = null;
@@ -1189,7 +1243,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    }
 	    } // if (z0 != null)
 	    int nqpts = Math.max((int)Math.ceil(-Math.log10(tol)), 4);
-	    qdat = scqdata(betacopy, nqpts);  // quadrature data
+	    scqdata(qdat, betacopy, nqpts);  // quadrature data
 	    
 	    // Check input data
 	    int err = sccheck("r", wcopy, betacopy, cnrcopy);
@@ -1452,7 +1506,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double y[] = fm.getParameters();
 		
 		// Convert y values to z on a strip
-		z = rptrnsfm(y,cnrcopy);
+		rptrnsfm(z, y,cnrcopy);
 		int ends[] = new int[2];
 		for (i = 0, j = 0; i < n-1; i++) {
 			if (z[i][1] != z[i+1][1]) {
@@ -1981,7 +2035,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				//Kp = z[i][1];
 			//}
 		} // for (i = 1; i < z.length; i++) 
-		for (i = 0; i < z.length; i++) {
+		for (i = 0; i < zp.length; i++) {
 			yp[i][0] = zp[i][0];
 			yp[i][1] = zp[i][1];
 			yprime[i][0] = zp[i][0];
@@ -2369,7 +2423,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
                     // Returns residual for solution of nonlinear equations
 					
 					// Transform a (unconstrained variables) to z (actual params)
-					z = rptrnsfm(a, corners);
+					z = new double[a.length+3][2];
+					rptrnsfm(z, a, corners);
 					
 					// Compute the integrals appearing in the nonlinear equations
 					double zleft[][] = new double[left.length][2];
@@ -3239,13 +3294,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 	}
 	
-	private double[][] rptrnsfm(double y[], int cnr[]) {
+	private void rptrnsfm(double z[][], double y[], int cnr[]) {
 		// rptrnsfm not intended for calling directly by the user
 		// Transformation optimization vars to prevertices for rectangle problem
 		// Original MATLAB code copyright 1997 by Toby Driscoll.  Last updated 05/06/97
-		int i;
+		int i, j;
 		int n = y.length+3;
-		double z[][] = new double[n][2];
+		//double z[][] = new double[n][2];
+		for (i = 0; i < z.length; i++) {
+			for (j = 0; j < 2; j++) {
+				z[i][j] = 0.0;
+			}
+		}
 		
 		// Fill interior of long edges first
 		double cumsum = 0.0;
@@ -3282,7 +3342,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double cp[] = new double[cnr[2] - cnr[1]];
 		cp[0] = 1;
 		for (i = 1; i < cnr[2] - cnr[1]; i++) {
-			cp[i] = cp[i-1] * Math.exp(-y[cnr[1] + i-1]);
+			cp[i] = cp[i-1] * Math.exp(-(y[cnr[1] + i-1]));
 		}
 		double flipudcp[] = new double[cp.length];
 		for (i = 0; i < cp.length; i++) {
@@ -3325,8 +3385,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		for (i = 0; i < x2.length; i++) {
 			if (!mask[i]) {
-				u[i][0] = Math.log(x2[i])/Math.PI;
-				u[i][1] = 0;
+				u[i][0] = Math.log(Math.abs(x2[i]))/Math.PI;
+				u[i][1] = Math.atan2(0, x2[i])/Math.PI;
 			}
 			else {
 				u[i][0] = -z[cnr[1]][0]/eps;
@@ -3334,8 +3394,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			}
 		} // for (i = 0; i < x2.length; i++)
 		for (i = cnr[1]+1; i <= cnr[2]-1; i++) {
-			z[i][0] = z[cnr[1]][0] - u[i][0];
-			z[i][1] = u[i][1];
+			z[i][0] = z[cnr[1]][0] - u[i-(cnr[1]+1)][0];
+			z[i][1] = u[i-(cnr[1]+1)][1];
 		}
 		
 		cp = new double[1 + n-4-(cnr[3]-2)+1+cnr[0]];
@@ -3387,8 +3447,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		for (i = 0; i < x2.length; i++) {
 			if (!mask[i]) {
-				u[i][0] = Math.log(x2[i])/Math.PI;
-				u[i][1] = 0;
+				u[i][0] = Math.log(Math.abs(x2[i]))/Math.PI;
+				u[i][1] = Math.atan2(0, x2[i])/Math.PI;
 			}
 			else {
 				u[i][0] = -z[cnr[1]][0]/eps;
@@ -3400,10 +3460,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			z[i+cnr[3]+1][1] = u[i][1];
 		}
 		for (i = n-cnr[3]; i < n - cnr[3] + cnr[0]; i++) {
-			z[i-n+cnr[3]][0] = u[i][0];
-			z[i-n+cnr[3]][1] = u[i][1];
+			z[i-n+cnr[3]][0] = u[i-1][0];
+			z[i-n+cnr[3]][1] = u[i-1][1];
 		}
-		return z;
+		
+		return;
 	}
 	
 	// Gauss-Jacobi quadrature data for SC Toolbox.
@@ -3415,9 +3476,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// All the SC routines call this routine as needed, and the work required is small, so you will
 	// probably never have to call this routine directly.
 	// Original MATLAB code copyright 1998 by Toby Driscoll.
-	private double[][] scqdata(double beta[], int nqpts) {
+	private void scqdata(double qdat[][], double beta[], int nqpts) {
 		int i, j;
-	    double qdat[][] = null;
 	    int n = beta.length;
 	    double qnode[][] = new double[nqpts][n+1];
 	    double qwght[][] = new double[nqpts][n+1];
@@ -3437,14 +3497,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	qnode[i][n] = z[i];
 	    	qwght[i][n] = w[i];
 	    }
-	    qdat = new double[nqpts][2*n+2];
+	    //qdat = new double[nqpts][2*n+2];
 	    for (i = 0; i < nqpts; i++) {
 	    	for (j = 0; j < n+1; j++) {
 	    		qdat[i][j] = qnode[i][j];
 	    		qdat[i][j+n+1] = qwght[i][j];
 	    	}
 	    }
-	    return qdat;
+	    return;
 	}
 	
 	// gaussj returns nodes and weights for Gauss-Jacobi integration.  z and w are n-vectors such that the integral from
@@ -3722,7 +3782,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        	betarenum[n- aux[0] + i] = beta[i];
 	        }
 	        int offset = n - corner[0]; // corner - corner[0] so no need to add one
-		    for (i = 0; i < n; i++) {
+		    for (i = 0; i < corner.length; i++) {
 		    	corner[i] = ((corner[i] + offset) % n);
 		    }
 		    if (n < 4) {
