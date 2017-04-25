@@ -275,25 +275,25 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Integrate between consecutive finite pairs on bottom and top
 		int numidxbot = 0;
 		for (i = 0; i <=corner[2]-1; i++) {
-			if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1])) {
+			if (isFinite(w[i][0]) && isFinite(w[i][1])) {
 				numidxbot++;
 			}
 		}
 		int idxbot[] = new int[numidxbot];
 		for (i = 0, j = 0; i <= corner[2] -1; i++) {
-			if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1])) {
+			if (isFinite(w[i][0]) && isFinite(w[i][1])) {
 				idxbot[j++] = i;
 			}
 		}
 		int numidxtop = 0;
 		for (i = corner[2]; i <= n-1; i++) {
-			if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1])) {
+			if (isFinite(w[i][0]) && isFinite(w[i][1])) {
 				numidxtop++;
 			}	
 		}
 		int idxtop[] = new int[numidxtop];
 		for (i = corner[2], j = 0; i <= n-1; i++) {
-			if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1])) {
+			if (isFinite(w[i][0]) && isFinite(w[i][1])) {
 				idxtop[j++] = i;
 			}	
 		}
@@ -4211,8 +4211,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			// Note: These problems are pretty rare.
 			if ((Math.abs(beta[n-1]) <eps) || (Math.abs(beta[n-1]-1.0) < eps)) {
 			    // Try swapping sides 1-2 and 3-4.
-				if ((Math.abs(beta[corner[2]-1]) >= eps) && (Math.abs(beta[corner[2]-1]-1) >= eps) && Double.isFinite(w[corner[2]][0])
-						&& Double.isFinite(w[corner[2]][1])) {
+				if ((Math.abs(beta[corner[2]-1]) >= eps) && (Math.abs(beta[corner[2]-1]-1) >= eps) && isFinite(w[corner[2]][0])
+						&& isFinite(w[corner[2]][1])) {
 					for (i = corner[2]; i < n; i++) {
 						renum[i-corner[2]] = i;
 						wn[i-corner[2]][0] = w[i][0];
@@ -4285,8 +4285,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			pos = n-1;
 		}
 		int pos1 = (pos+1)%n;
-		if (Double.isFinite(w[pos][0]) && Double.isFinite(w[pos][1]) && Double.isFinite(w[1][0]) &&
-				Double.isFinite(w[1][1])) {
+		if (isFinite(w[pos][0]) && isFinite(w[pos][1]) && isFinite(w[1][0]) &&
+				isFinite(w[1][1])) {
 			// Easy case
 		    newv[0] = (w[pos][0] + w[pos1][0])/2.0;	
 		    newv[1] = (w[pos][1] + w[pos1][1])/2.0;
@@ -4297,15 +4297,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			//numadj = 0;
 			found = false;
 			for (i = 0; i < n-1 && (!found); i++) {
-				if (Double.isFinite(w[i][0]) && Double.isFinite(w[i][1]) && Double.isFinite(w[i+1][0]) &&
-						Double.isFinite(w[i+1][1])) {	
+				if (isFinite(w[i][0]) && isFinite(w[i][1]) && isFinite(w[i+1][0]) &&
+						isFinite(w[i+1][1])) {	
 				    found = true;
 				    base = i;
 				}
 			}
 			if (!found) {
-				if (Double.isFinite(w[n-1][0]) && Double.isFinite(w[n-1][1]) && Double.isFinite(w[0][0]) &&
-						Double.isFinite(w[0][1])) {	
+				if (isFinite(w[n-1][0]) && isFinite(w[n-1][1]) && isFinite(w[0][0]) &&
+						isFinite(w[0][1])) {	
 				    found = true;
 				    base = n-1;
 				}
@@ -4333,7 +4333,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			double sum = 0.0;
 			int numfinite = 0;
 			for (i = 0; i < n; i++) {
-				if (Double.isFinite(len[i])) {
+				if (isFinite(len[i])) {
 					numfinite++;
 					sum += len[i];
 				}
@@ -4429,6 +4429,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		public double getValue() {
 			return value;
 		}
+	}
+	
+	private static final boolean isFinite(double d) {
+	    return (!Double.isInfinite(d) && !Double.isNaN(d));
 	}
 	
 }
