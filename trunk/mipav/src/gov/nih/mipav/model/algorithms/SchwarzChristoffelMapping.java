@@ -459,6 +459,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			idxc0[i] = idx3[i][0];
 			idxc1[i] = idx3[i][1];
 		}
+		
 		double I1[][] = stquad(zleft, mid2, idxc0, zq, bq, qdata2);
 		double I2[][] = stquad(zright, mid2, idxc1, zq, bq, qdata2);
 		double I[][] = new double[I1.length][I1[0].length];
@@ -477,6 +478,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double absdiff[] = new double[idx3.length];
 		for (i = 0; i < idx3.length; i++) {
 			absdiff[i] = zabs(c*I[i][0] - diffw[i][0], c*I[i][1] - diffw[i][1]);
+			System.out.println("absdiff["+i+"] = " + absdiff[i]);
 		}
 		acc = -Double.MAX_VALUE;
 		for (i = 0; i < idx3.length; i++) {
@@ -2051,6 +2053,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double cn[][] = new double[zp.length][2];
 		double dn[][] = new double[zp.length][2];
 		ellipjc(sn, cn, dn, zp, L, false);
+		
 		// Make sure everything is in the upper half-plane (fix roundoff)
 		for (i = 0; i < sn.length; i++) {
 			sn[i][1] = Math.max(0, sn[i][1]);
@@ -2961,6 +2964,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double cr[] = new double[1];
 		double ci[] = new double[1];
 		int n = z.length;
+		
 		if (sing1 == null) {
 			sing1 = new int[z1.length];
 			for (i = 0; i < z1.length; i++) {
@@ -3012,6 +3016,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    zimag = zb[1] - za[1];
 		    zabs = zabs(zreal,zimag);
 		    dist = dist/zabs;
+		    // saw dist = 0, zb[0] = -Infinity generate zr[0] = NaN
 		    zr[0] = za[0] + dist*(zb[0] - za[0]);
 		    zr[1] = za[1] + dist*(zb[1] - za[1]);
 		    ind = ((sng+n+1) % (n+1));
@@ -3021,7 +3026,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        nd[j][0] = ((zr[0]-za[0])*qdat[j][ind] + zr[0] + za[0])/2.0; // G-J nodes
 		        nd[j][1] = ((zr[1]-za[1])*qdat[j][ind] + zr[1] + za[1])/2.0;
 		        wt[j][0] = ((zr[0]-za[0])/2) * qdat[j][ind+n+1]; // G-J weights
-		        wt[1][1] = ((zr[1]-za[1])/2) * qdat[j][ind+n+1];
+		        wt[j][1] = ((zr[1]-za[1])/2) * qdat[j][ind+n+1];
 		    } // for (j = 0; j < qdat.length; j++)
 		    anydiffzero = false;
 		    if ((nd[0][0] == za[0]) && (nd[0][1] == za[1])) {
@@ -3057,8 +3062,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	double out[][] = stderiv(nd, z, beta, 1, sng);
 		    	I[k][0] = 0;
 		    	I[k][1] = 0;
-		    	for (i = 0; i < wt.length; i++) {
-		    		zmlt(out[i][0], out[i][1], wt[i][0], wt[i][1], cr, ci);
+		    	for (j = 0; j < wt.length; j++) {
+		    		zmlt(out[j][0], out[j][1], wt[j][0], wt[j][1], cr, ci);
 		    	    I[k][0] += cr[0];
 		    	    I[k][1] += ci[0];
 		    	}
@@ -3067,29 +3072,29 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		zl[0] = zr[0];
 		    		zl[1] = zr[1];
 		    		dist = 1;
-		    		for (i = 0; i < n; i++) {
-		    			zreal = z[i][0] - zl[0];
-		    			zimag = z[i][1] - zl[1];
+		    		for (j = 0; j < n; j++) {
+		    			zreal = z[j][0] - zl[0];
+		    			zimag = z[j][1] - zl[1];
 		    			zabs = 2.0*zabs(zreal,zimag);
 		    			if (zabs < dist) {
 		    				dist = zabs;
 		    			}
-		    		} // for (i = 0; i < n; i++)
+		    		} // for (j = 0; j < n; j++)
 		    		zreal = zl[0] - zb[0];
 		    		zimag = zl[1] - zb[1];
 		    		zabs = zabs(zreal,zimag);
 		    		dist = dist/zabs;
 		    		zr[0] = zl[0] + dist*(zb[0]-zl[0]);
 		    		zr[1] = zl[1] + dist*(zb[1]-zl[1]);
-		    		for (i = 0; i < qdat.length; i++) {
-		    			nd[i][0] = ((zr[0]-zl[0]) * qdat[i][n] + zr[0] + zl[0])/2.0;
-		    			nd[i][1] = ((zr[1]-zl[1]) * qdat[i][n] + zr[1] + zl[1])/2.0;
-		    			wt[i][0] = ((zr[0]-zl[0])/2.0) * qdat[i][2*n+1];
-		    			wt[i][1] = ((zr[1]-zl[1])/2.0) * qdat[i][2*n+1];
-		    		} // for (i = 0; i < qdat.length; i++)
+		    		for (j = 0; j < qdat.length; j++) {
+		    			nd[j][0] = ((zr[0]-zl[0]) * qdat[j][n] + zr[0] + zl[0])/2.0;
+		    			nd[j][1] = ((zr[1]-zl[1]) * qdat[j][n] + zr[1] + zl[1])/2.0;
+		    			wt[j][0] = ((zr[0]-zl[0])/2.0) * qdat[j][2*n+1];
+		    			wt[j][1] = ((zr[1]-zl[1])/2.0) * qdat[j][2*n+1];
+		    		} // for (j = 0; j < qdat.length; j++)
 		    		out = stderiv(nd,z,beta,1,-1);
-	                for (i = 0; i < wt.length; i++) {
-	                	zmlt(out[i][0], out[i][1], wt[i][0], wt[i][1], cr, ci);
+	                for (j = 0; j < wt.length; j++) {
+	                	zmlt(out[j][0], out[j][1], wt[j][0], wt[j][1], cr, ci);
 	                	I[k][0] += cr[0];
 	                	I[k][1] += ci[0];
 	                }
@@ -3149,7 +3154,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        	else {
 	        		notends[m++] = i;
 	        	}
-	        } // for (i = 0, k = 0; i < zcopy.length; i++)
+	        } // for (i = 0, k = 0, m = 0; i < zcopy.length; i++)
 	        theta = new double[ends.length-1];
 	        for (i = 0; i < ends.length-1; i++) {
 	        	theta[i] = beta[ends[i+1]] - beta[ends[i]];
@@ -3180,7 +3185,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        beta2 = null;
 	        // Adjust singularity index if given
 	        if (j >= 0) {
-	        	if (j > ends[1]) {
+	        	if ((numinfz >= 3) && (j > ends[2])) {
+	        		j = j-3;
+	        	}
+	        	else if (j > ends[1]) {
 	        		j = j-2;
 	        	}
 	        	else if (j > ends[0]) {
