@@ -840,13 +840,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	// isinpoly identifies points inside a polygon
-	// isinpoly return a vector the size of z that each nonzero corresponds to a point inside
+	// isinpoly returns a vector the size of z such that each nonzero corresponds to a point inside
 	// the polygon defined by w and beta.
 	// ontvx = new boolean[w.length][z.length]
 	// More precisely, the value returned for a point is the winding number of the polygon about
 	// that point.
 	// The problem becomes ill-defined for points very near an edge or vertex.  isinpoly considers
-	// points within roughly tol of the boundary to be "inside", and computes winding number for wuch points
+	// points within roughly tol of the boundary to be "inside", and computes winding number for such points
 	// as the number of conformal images the point ought to have
 	// Original MATLAB routine copyright 1998 by Toby Driscoll.
 	// Uses the argument principle, with some gymnastics for boundary points.
@@ -860,7 +860,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    int n = w.length;
 	    double index[] = new double[z.length];
 	    
-	    // Rescale to make diferences relative
+	    // Rescale to make differences relative
 	    double diffw[][] = new double[n][2];
 	    for (i = 0; i < n-1; i++) {
 	        diffw[i][0] = w[i+1][0] - w[i][0];
@@ -973,7 +973,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    for (i = 0; i < n; i++) {
 	    	for (j = 0; j < np; j++) {
 	    		zdiv(d[i][j][0], d[i][j][1],tangents[i][0], tangents[i][1], cr, ci);
-	    		if (ci[0] < 10.0 * tol) {
+	    		if (Math.abs(ci[0]) < 10.0 * tol) {
 	    			onbdy[i][j] = true;
 	    		}
 	    	}
@@ -1002,7 +1002,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	}
 	    }
 	    
-	    // Truly interior points are easy: ad up the args
+	    // Truly interior points are easy: add up the args
 	    boolean interior[] = new boolean[np];
 	    boolean anyinterior = false;
 	    for (j = 0; j < np; j++) {
@@ -1018,12 +1018,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    
 	    if (anyinterior) {
 	        for (j = 0; j < np; j++) {
-	        	sum = 0.0;
-	        	for (i = 0; i < n; i++) {
-	        		sum += ang[i][j];
+	        	if (interior[j]) {
+		        	sum = 0.0;
+		        	for (i = 0; i < n; i++) {
+		        		sum += ang[i][j];
+		        	}
+		        	sum = sum/2.0;
+		        	index[j] = (int)Math.round(sum);
 	        	}
-	        	sum = sum/2.0;
-	        	index[j] = (int)Math.round(sum);
 	        }
 	    } // if (anyinterior) 
 	    
@@ -1057,11 +1059,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        			augment += 1.0;
 	        		}
 	        		if (onvtx[i][k]) {
-	        			augment += 1.0;
+	        			augment -= 1.0;
 	        		}
 	        	}
 	        	for (i = 0; i < b.length; i++) {
-	        		augment += b[i];
+	        		augment -= b[i];
 	        	}
 	        	index[k] = Math.round(augment*sign(S) + S)/2.0;
 	        } // if (!interior[k])
@@ -2469,7 +2471,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					double beta2[] = new double[n+2];
 					for (i = 0; i <= ends[0]; i++) {
 						z2[i][0] = z[i][0];
-						z2[i][0] = z[i][1];
+						z2[i][1] = z[i][1];
 						beta2[i] = beta[i];
 					}
 					z2[ends[0]+1][0] = Double.POSITIVE_INFINITY;
@@ -2489,7 +2491,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						beta2[i+2] = beta[i];
 					}
 					// Put dummy columns into qdat after ends[0] and ends[1] columns
-					// qdata ia nqpts rows by 2*n+2 columns
+					// qdata is nqpts rows by 2*n+2 columns
 					// so we are expanding it to 2*n+6 columns with the insertion
 					// of 2 more of column n and 2 more of column 2*n+1.
 					double qdat2[][] = new double[qdat.length][qdat[0].length+4];
@@ -2515,18 +2517,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					} // for (i = 0; i < qdat.length; i++)
 					// Change singularity indices to reflect ends
 					for (i = 0; i < left.length; i++) {
-						if (left[i] > ends[0]) {
-							left[i]++;
-						}
 						if (left[i] > ends[1]) {
+							left[i] += 2;
+						}
+						else if (left[i] > ends[0]) {
 							left[i]++;
 						}
 					} // for (i = 0; i < left.length; i++)
 					for (i = 0; i < right.length; i++) {
-						if (right[i] > ends[0]) {
-							right[i]++;
-						}
 						if (right[i] > ends[1]) {
+							right[i] += 2;
+						}
+						else if (right[i] > ends[0]) {
 							right[i]++;
 						}
 					} // for (i = 0; i < right.length; i++)
@@ -2565,11 +2567,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    	zrights2[i][1] = zright[s2[i]][1];
 				    	rights2[i] = right[s2[i]];
 				    }
-				    I1 = stquadh(zlefts2, mid, lefts2, z2, beta, qdat2);
-				    I2 = stquadh(zrights2, mid, rights2, z2, beta, qdat2);
-				    for (i = 0, j = 0; i < s2.length; i++) {
-				        ints[s2[j]][0] = I1[i][0] - I2[i][0];
-				        ints[s2[j++]][1] = I1[i][1] - I2[i][1];
+				    I1 = stquadh(zlefts2, mid, lefts2, z2, beta2, qdat2);
+				    I2 = stquadh(zrights2, mid, rights2, z2, beta2, qdat2);
+				    for (i = 0; i < s2.length; i++) {
+				        ints[s2[i]][0] = I1[i][0] - I2[i][0];
+				        ints[s2[i]][1] = I1[i][1] - I2[i][1];
 				    }
 				    
 				    // Three-stage integrations
@@ -2595,12 +2597,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    	rightns2[i] = right[nots2[i]];
 				    }
 				    int zero[] = new int[nots2.length];
-				    I1 = stquad(zleftns2, mid1, leftns2, z, beta, qdat);
-				    I2 = stquadh(mid1, mid2, zero, z, beta, qdat);
-				    I3 = stquad(zrightns2, mid2, rightns2, z, beta, qdat);
-				    for (i = 0, j = 0; i < nots2.length; i++) {
-				    	ints[nots2[j]][0] = I1[i][0] + I2[i][0] - I3[i][0];
-				    	ints[nots2[j++]][1] = I1[i][1] + I2[i][1] - I3[i][1];
+				    I1 = stquad(zleftns2, mid1, leftns2, z2, beta2, qdat2);
+				    I2 = stquadh(mid1, mid2, zero, z2, beta2, qdat2);
+				    I3 = stquad(zrightns2, mid2, rightns2, z2, beta2, qdat2);
+				    for (i = 0; i < nots2.length; i++) {
+				    	ints[nots2[i]][0] = I1[i][0] + I2[i][0] - I3[i][0];
+				    	ints[nots2[i]][1] = I1[i][1] + I2[i][1] - I3[i][1];
 				    }
 				    
 				    boolean found = false;
@@ -2856,7 +2858,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    // We have to be concerned with singularities lying to the right (left if d < 0) of the left
 		    // integration endpoint.
 		    for (j = 0; j < n; j++) {
-		    	if ((dx[j] > 0.0) && (Double.isInfinite(z[j][0]) || Double.isInfinite(z[j][1]))) {
+		    	if ((dx[j] > 0.0) && Double.isFinite(z[j][0]) && Double.isFinite(z[j][1])) {
 		    	    toright[j] = true;	
 		    	}
 		    	else {
@@ -2909,6 +2911,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    } // for (j = 0; j < n; j++)
 		    
 		    if (Lmin < Math.abs(d)) {
+		    	// Apply stquad on the safe part and recurse on the rest
 			    zmid[0][0] = za[0][0] + Lmin*sign(d);
 			    zmid[0][1] = za[0][1];
 			    result = stquad(za, zmid,sng,z,beta,qdat);
