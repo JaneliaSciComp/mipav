@@ -553,14 +553,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    else {
 		    	right = 0;
 		    }
-		    // Reverse top and bot defintions from original MATLAB code
-		    if (Math.abs(z[i][1] - minimagz) < eps) {
+		    if (Math.abs(z[i][1] - maximagz) < eps) {
 		    	top = 1;
 		    }
 		    else {
 		    	top = 0;
 		    }
-		    if (Math.abs(z[i][1] - maximagz) < eps) {
+		    if (Math.abs(z[i][1] - minimagz) < eps) {
 		    	bot = 1;
 		    }
 		    else {
@@ -568,7 +567,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    }
 		    if (left + right + top + bot == 2) {
 		    	corners[j] = i;
-		    	if (right + bot == 2) {
+		    	if (zabs(z[i][0] - maxrealz, z[i][1]) < eps) {
 		    		offset = j;
 		    	}
 		    	j++;
@@ -1180,7 +1179,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// rparam attempts to find an answer within the tolerance tol.  (Also see scparopt.)
 	// rparam uses a vector of control parameters.  See scparopt.
 	// Original MATLAB code copyright 1998 by Toby Driscoll.
-	// If NESolve, method will be be NESolve.TRUST_REGION (default) or NESolve.LINE_SEARCH.
+	// NESolve has been replaced the the MIAPV implementation of ELSUNC
 	private void rparam(double z[][], double c[], double L[], double qdat[][], 
 			double w[][], double beta[], int cnr[], double z0[][], double tol) {
 		int i, j, k, m, p;
@@ -1319,9 +1318,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        wid = (sum1 + sum2)/2.0;
 	        modest = Math.min(len/wid, 100);
 	        // Evenly space prevertices to match this conformal modulus.
-	        // z0[0] to z0[cnr[2]-1] has an imaginary part = 0.
-	        // z0[cnr[2]] to z0[n-1] has an imaginary part = 1.
-	        // Only dz[cnr[2]-1] has an imaginary part
+	        // z0[0] to z0[cnr[2]-1] has an imaginary part = 0 with increasing positive numbers
+	        // z0[cnr[2]] to z0[n-1] has an imaginary part = 1 with decreasing positive numbers.
+	        // Only dz[cnr[2]-1] has an imaginary part and this is not used in forming y0
+	        // Initially dz fron 0 to cnrcopy[2] -1 is positive and dz from concopy[2] to n-2 is negative
+	        // However, dz from cnrcopy[2] to n-1 is multiplied by negative one to become positive
+	        // Therefore, all the dz used in forming y0 are positive real numbers.
 	        // y0 is all real
 	        npoints = cnrcopy[1] - cnrcopy[0] +1;
 	        spacing = modest/(npoints - 1.0);
@@ -1393,16 +1395,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    }
 	    for (i = cnrcopy[2]; i < n-1; i++) {
 	    	dz[i][0] = -dz[i][0];
-	    	dz[i][1] = -dz[i][1];
 	    }
 	    for (i = 0; i <= cnrcopy[1]-2; i++) {
-	    	y0[i] = Math.log(zabs(dz[i][0],dz[i][1]));
+	    	y0[i] = Math.log(dz[i][0]);
 	    }
 	    for (i = cnrcopy[2]-1; i <= cnrcopy[3]-3; i++) {
-	    	y0[i] = Math.log(zabs(dz[i+2][0],dz[i+2][1]));	
+	    	y0[i] = Math.log(dz[i+2][0]);	
 	    }
-	    y0[cnrcopy[1]-1] = (Math.log(zabs(dz[cnrcopy[1]-1][0],dz[cnrcopy[1]-1][1])) +
-	    		(Math.log(zabs(dz[cnrcopy[2]][0],dz[cnrcopy[2]][1])))/2.0);
+	    y0[cnrcopy[1]-1] = (Math.log(dz[cnrcopy[1]-1][0]) + Math.log(dz[cnrcopy[2]][0]))/2.0;
 	    
 	    
 	    // Vertices on the "short" edges are transformed into the interval [-1,1],
@@ -1462,7 +1462,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    		left[jl++] = i;
 	    	}
 		    if (!atinf[i+1]) {
-		    	right[jr++] = i;
+		    	right[jr++] = i+1;
 		    }
 	    }
 	    if (atinf[n-2]) {
@@ -1544,15 +1544,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 	    double bs[] = new double[n+2];
 	    for (i = 0; i <= ends[0]; i++) {
-	    	bs[i] = beta[i];
+	    	bs[i] = betacopy[i];
 	    }
 	    bs[ends[0]+1] = 0;
 	    for (i = ends[0]+1; i <= ends[1]; i++) {
-	    	bs[i+1] = beta[i];
+	    	bs[i+1] = betacopy[i];
 	    }
 	    bs[ends[1]+2] = 0;
-	    for (i = 0; i < n; i++) {
-	    	bs[i+2] = beta[i];
+	    for (i = ends[1]+1; i < n; i++) {
+	    	bs[i+2] = betacopy[i];
 	    }
 	    double qs[][] = new double[qdat.length][qdat[0].length+4];
 		for (i = 0; i < qdat.length; i++) {
@@ -1607,7 +1607,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			zs[i][0] = z[i][0];
 			zs[i][1] = z[i][1];
 		}
-		// In rptrnsfm z[cnr[0]] is never changed from its initial value of zero
+		// In rptrnsfm z[cnrcopy[0]] is never changed from its initial value of zero
 		// so zs[cnrcopy[0]][0] = 0 and zs[cnrcopy[0]][1] = 0;
 		// so L is real
 		L[0] = Math.max(zs[cnrcopy[1]][0], zs[cnrcopy[2]][0]) - zs[cnrcopy[0]][0];
@@ -1623,11 +1623,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		rect[2][1] = Kp[0];
 		rect[3][0] = -K[0];
 		boolean l[] = new boolean[n]; // on left side
-		for (i = cnr[2]; i <= cnr[3]; i++) {
+		for (i = cnrcopy[2]; i <= cnrcopy[3]; i++) {
 			l[i] = true;
 		}
 		boolean r[] = new boolean[n]; // on right side
-		for (i = cnr[0]; i <= cnr[1]; i++) {
+		for (i = cnrcopy[0]; i <= cnrcopy[1]; i++) {
 			r[i] = true;
  		}
 		int tllength = 0;
@@ -1766,6 +1766,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			zcnr[i][1] = z[cnrcopy[i]][1];
 		}
 		double F[][] = new double[numnotdone][2];
+		double Fabs;
 		double dF[][] = new double[numnotdone][2];
 		double step[] = new double[2];
 		double znew[] = new double[2];
@@ -1791,7 +1792,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	znew[0] = znnotdone[i][0] + step[0];
 		    	znew[1] = znnotdone[i][1] + step[1];
 		    	// Keep prevertices from moving too far (past boundaries)
-		    	// Left/rigth sides capped in Im direction
+		    	// Left/right sides capped in Im direction
 		        if (lr[i]) {
 		        	xn = Math.min(Math.max(znew[1], 0), Kp[0]);
 		        	znew[1] = xn;
@@ -1812,10 +1813,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        znnotdone[i][1] = znew[1];
 		    } // for (i = 0; i < numnotdone; i++)
 		    
+		    
+		    alldone = true;
 		    numnotdone = 0;
 		    for (i = 0, j = 0; i < done.length; i++) {
 		    	if (!done[i]) {
-		    		if (zabs(F[j][0], F[j][1]) < tol) {
+		    		Fabs = zabs(F[j][0], F[j][1]);
+		    		j++;
+		    		if (Fabs < tol) {
 		    			done[i] = true;
 		    		}
 		    		else {
@@ -1855,7 +1860,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		for (i = 0; i < F.length && !warning; i++) {
 			if (zabs(F[i][0], F[i][1]) > tol) {
 				warning = true;
-				MipavUtil.displayWarning("Could not converge to the rectangel prevertices");
+				MipavUtil.displayWarning("Could not converge to the rectangle prevertices");
 			}
 		} // for (i = 0; i < F.length && !warning; i++)
 		
