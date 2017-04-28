@@ -1400,10 +1400,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 //									Vector3f dir = world.InvertVector(m_spkCamera.GetRVector());
 //									dir.scale(5);
 //									textVOI.add( Vector3f.add( dir, maxPt) );
-									textVOI.setText("A"+id);
+									textVOI.setText(""+id);
 									if ( m_kVOIInterface != null )
 									{
-										textVOI.setText("A" + m_kVOIInterface.getCurrentIndex() );
+										if ( doAutomaticLabels() )
+										{
+											textVOI.setText("" + m_kVOIInterface.getCurrentIndex() );
+										}
+										else
+										{
+											textVOI.setText("A"+ m_kVOIInterface.getCurrentIndex() );	
+										}
+									}
+									else if ( doAutomaticLabels() )
+									{
+										textVOI.setText(""+id);										
+									}
+									else if ( !doAutomaticLabels() )
+									{
+										textVOI.setText("A"+id);	
 									}
 									newTextVOI.getCurves().add(textVOI);
 									add3DMarker( newTextVOI, doAutomaticLabels() );

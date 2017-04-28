@@ -128,6 +128,30 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 
 	private void callAlgorithm()
 	{
+		maxParallelAngle = -Float.MAX_VALUE;
+		maxBendAngle = -Float.MAX_VALUE;
+		min10thWidth = Float.MAX_VALUE;
+		max10thWidth = -Float.MAX_VALUE;
+
+		totalLengthMin = Float.MAX_VALUE;
+		totalLengthMax = -Float.MAX_VALUE;
+		
+		minMidLength = Float.MAX_VALUE;
+		maxMidLength = -Float.MAX_VALUE;
+
+		minLength = Float.MAX_VALUE;
+		maxLength = -Float.MAX_VALUE;
+		minLengthDiff = Float.MAX_VALUE;
+		maxLengthDiff = -Float.MAX_VALUE;
+		
+		minWidth = Float.MAX_VALUE;
+		maxWidth = -Float.MAX_VALUE;
+		minPAngle = Float.MAX_VALUE;
+		maxPAngle = -Float.MAX_VALUE;
+		minTAngle = Float.MAX_VALUE;
+		maxTAngle = -Float.MAX_VALUE;
+		
+		
 		if ( includeRange != null )
 		{
 			System.err.println("Starting plugin" );
@@ -225,7 +249,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							int numFound = -1;
 							if ( latticeVector.size() != 0 )
 							{
-								numFound = testSeamLattice(seamCells, latticeVector.elementAt(0), maxRadius);
+								numFound = testSeamLattice(wormImage, wormData, seamCells, latticeVector.elementAt(0), maxRadius);
 
 								if ( fileNamesList == null )
 								{
@@ -387,6 +411,26 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 			{
 				saveSegmentationStatistics(baseFileDir, fileNamesList, numSegmented, numMatched );
 			}
+			System.err.println( "maxBendAngle     " + maxBendAngle );
+			System.err.println( "totalLengthMin   " + totalLengthMin*WormData.VoxelSize );
+			System.err.println( "totalLengthMax   " + totalLengthMax*WormData.VoxelSize );
+			System.err.println( "minMidLength     " + minMidLength*WormData.VoxelSize  );
+			System.err.println( "maxMidLength     " + maxMidLength*WormData.VoxelSize );
+			System.err.println( "minLength        " + minLength*WormData.VoxelSize );
+			System.err.println( "maxLength        " + maxLength*WormData.VoxelSize );
+			System.err.println( "minLengthDiff    " + minLengthDiff*WormData.VoxelSize );
+			System.err.println( "maxLengthDiff    " + maxLengthDiff*WormData.VoxelSize );
+			System.err.println( "minWidth         " + minWidth*WormData.VoxelSize );
+			System.err.println( "maxWidth         " + maxWidth*WormData.VoxelSize );
+			System.err.println( "min10thWidth     " + min10thWidth*WormData.VoxelSize );
+			System.err.println( "max10thWidth     " + max10thWidth*WormData.VoxelSize );
+			System.err.println( "minPAngle        " + minPAngle );
+			System.err.println( "maxPAngle        " + maxPAngle );
+			System.err.println( "minTAngle        " + minTAngle );
+			System.err.println( "maxTangle        " + maxTAngle );
+
+			
+			
 			System.err.println("Done plugin" );
 			if ( latticeBuildTestResults.isSelected() && (latticeCount > 0) )
 			{
@@ -725,19 +769,46 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 		return vois;
 	}
 
+	private float maxParallelAngle = -Float.MAX_VALUE;
+	private float maxBendAngle = -Float.MAX_VALUE;
+	private float min10thWidth = Float.MAX_VALUE;
+	private float max10thWidth = -Float.MAX_VALUE;
 
-	private int testSeamLattice(Vector<Vector3f> seam, VOI lattice, float minDist)
+	private float totalLengthMin = Float.MAX_VALUE;
+	private float totalLengthMax = -Float.MAX_VALUE;
+	
+	private float minMidLength = Float.MAX_VALUE;
+	private float maxMidLength = -Float.MAX_VALUE;
+
+	private float minLength = Float.MAX_VALUE;
+	private float maxLength = -Float.MAX_VALUE;
+	private float minLengthDiff = Float.MAX_VALUE;
+	private float maxLengthDiff = -Float.MAX_VALUE;
+	
+	private float minWidth = Float.MAX_VALUE;
+	private float maxWidth = -Float.MAX_VALUE;
+	private float minPAngle = Float.MAX_VALUE;
+	private float maxPAngle = -Float.MAX_VALUE;
+	private float minTAngle = Float.MAX_VALUE;
+	private float maxTAngle = -Float.MAX_VALUE;
+	private int testSeamLattice( ModelImage image, WormData wormData, Vector<Vector3f> seam, VOI lattice, float minDist )
 	{
 
 		int count = 0;
 		VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
 		VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+		boolean[] latticePt = new boolean[left.size()];
+		VOIContour newLeft = new VOIContour(false);
+		VOIContour newRight = new VOIContour(false);
+		boolean tenthFound = false;
 		for ( int i = 0; i < left.size(); i++ )
 		{
 			float minLD = Float.MAX_VALUE;
 			Vector3f closestL = new Vector3f();
 			float minRD = Float.MAX_VALUE;
 			Vector3f closestR = new Vector3f();
+			int closestIndexL = -1;
+			int closestIndexR = -1;
 			for ( int j = 0; j < seam.size(); j++ )
 			{
 				float distL = left.elementAt(i).distance(seam.elementAt(j));
@@ -745,22 +816,173 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 				{
 					minLD = distL;
 					closestL.copy(seam.elementAt(j));
+					closestIndexL = j;
 				}
 				float distR = right.elementAt(i).distance(seam.elementAt(j));
 				if ( distR < minRD )
 				{
 					minRD = distR;
 					closestR.copy(seam.elementAt(j));
+					closestIndexR = j;
 				}
 			}
 //			System.err.println( "lattice match " + minLD + "  " + minRD );
-			if ( (minLD < minDist) && (minRD < minDist) && !closestL.equals(closestR) )
+			if ( (minLD < minDist) && (minRD < minDist) && !closestL.equals(closestR) && !newLeft.contains(closestL) && !newRight.contains(closestR) )
 			{
 				// match both left and right add 2:
 				count += 2;
+				newLeft.add(closestL);
+				newRight.add(closestR);
+				
+
+				if ( i == (left.size()-1))
+				{
+					tenthFound = true;
+				}
 			}
 		}
-		System.err.println( "lattice match " + count );
+		
+		if ( !tenthFound )
+		{
+			System.err.println( "lattice match " + count + "    " + tenthFound  );
+			return 0;
+		}
+		else
+		{
+			System.err.println( "lattice match " + count + "    " + tenthFound + "   " + wormData.testLattice(newLeft, newRight, true) );			
+		}
+		
+		for ( int i = 0; i < newLeft.size(); i++ )
+		{
+			int x = (int) newLeft.elementAt(i).X;
+			int y = (int) newLeft.elementAt(i).Y;
+			int z = (int) newLeft.elementAt(i).Z;
+			float valueL = image.getFloat(x,y,z);
+			x = (int) newRight.elementAt(i).X;
+			y = (int) newRight.elementAt(i).Y;
+			z = (int) newRight.elementAt(i).Z;
+			float valueR = image.getFloat(x,y,z);
+//			System.err.println( i + "   " + valueL + "   " + valueR );
+		}
+		
+
+		float totalLengthL = 0;
+		float totalLengthR = 0;
+		float totalPAngle = 0;
+		float totalBAngle = 0;
+		for ( int i = 0; i < newLeft.size(); i++ )
+		{
+			if ( i > 0 )
+			{
+				Vector3f dirL = Vector3f.sub(newLeft.elementAt(i), newLeft.elementAt(i-1));
+				Vector3f dirR = Vector3f.sub(newRight.elementAt(i), newRight.elementAt(i-1));
+				float lengthL = dirL.normalize();
+				float lengthR = dirR.normalize();
+				float angle = dirL.angle(dirR);
+
+				Vector3f dir1 = Vector3f.sub(newLeft.elementAt(i), newRight.elementAt(i));
+				Vector3f dir2 = Vector3f.sub(newLeft.elementAt(i-1), newRight.elementAt(i-1));
+				dir1.normalize();
+				dir2.normalize();
+				
+				float width1 = newLeft.elementAt(i).distance(newRight.elementAt(i));
+				float angleTwist = dir1.angle(dir2);
+
+				Vector3f mid0 = Vector3f.add(newLeft.elementAt(i-1), newRight.elementAt(i-1));  mid0.scale(0.5f);
+				Vector3f mid1 = Vector3f.add(newLeft.elementAt(i), newRight.elementAt(i));  mid1.scale(0.5f);
+				float midLength = mid0.distance(mid1);
+				if ( midLength < minMidLength )
+					minMidLength = midLength;
+				if ( midLength > maxMidLength )
+					maxMidLength = midLength;
+				
+//				System.err.println( lengthL + "   " + lengthR + "   " + Math.abs(lengthL - lengthR) + "   " + angle + "        " + width1 + "    " + width2 + "    " + angleTwist);
+				totalLengthL += lengthL;
+				totalLengthR += lengthR;
+				totalPAngle += angle;
+				
+				if ( lengthL < minLength )
+					minLength = lengthL;
+				if ( lengthR < minLength )
+					minLength = lengthR;
+				if( lengthL > maxLength )
+					maxLength = lengthL;
+				if ( lengthR > maxLength )
+					maxLength = lengthR;
+				
+				float diff = Math.abs(lengthL - lengthR);
+				if ( diff < minLengthDiff )
+					minLengthDiff = diff;
+				if ( diff > maxLengthDiff )
+					maxLengthDiff = diff;
+				
+				if ( angle < minPAngle )
+					minPAngle = angle;
+				if ( angle > maxPAngle )
+					maxPAngle = angle;
+				
+				if ( i < (newLeft.size() - 1) )
+				{
+					if ( width1 < minWidth )
+						minWidth = width1;
+					if ( width1 > maxWidth )
+						maxWidth = width1;
+				}
+				else if ( i == (newLeft.size() -1 ) )
+				{
+					if ( width1 < min10thWidth )
+						min10thWidth = width1;
+					if ( width1 > max10thWidth )
+					{
+						max10thWidth = width1;			
+					}
+				}
+
+				if ( angleTwist < minTAngle )
+					minTAngle = angleTwist;
+				if ( angleTwist > maxTAngle )
+					maxTAngle = angleTwist;
+				
+			}
+			if ( i > 1 )
+			{
+				Vector3f mid0 = Vector3f.add(newLeft.elementAt(i-2), newRight.elementAt(i-2));  mid0.scale(0.5f);
+				Vector3f mid1 = Vector3f.add(newLeft.elementAt(i-1), newRight.elementAt(i-1));  mid1.scale(0.5f);
+				Vector3f mid2 = Vector3f.add(newLeft.elementAt(i), newRight.elementAt(i));  mid2.scale(0.5f);
+				Vector3f dir1 = Vector3f.sub(mid1, mid0);
+				Vector3f dir2 = Vector3f.sub(mid2, mid1);
+				dir1.normalize();
+				dir2.normalize();
+				float angle = dir1.angle(dir2);
+				totalBAngle += angle;
+				if ( angle > maxBendAngle )
+				{
+					maxBendAngle = angle;
+				}
+			}
+		}
+		if ( totalLengthL < totalLengthMin )
+			totalLengthMin = totalLengthL;
+		if ( totalLengthR < totalLengthMin )
+			totalLengthMin = totalLengthR;
+		
+		if ( totalLengthL > totalLengthMax )
+			totalLengthMax = totalLengthL;
+		if ( totalLengthR > totalLengthMax )
+			totalLengthMax = totalLengthR;
+
+		if ( totalPAngle > maxParallelAngle )
+		{
+			maxParallelAngle = totalPAngle;
+		}
+		System.err.println("Max parallel error: " + totalPAngle);
+		System.err.println("Max bend : " + totalBAngle);
+//		System.err.println( minLength + "," + maxLength + "," + minLengthDiff + "," + maxLengthDiff + "," + minWidth + "," + maxWidth + "," + minPAngle + "," + maxPAngle + "," + minTAngle + "," + maxTAngle + "," + totalLengthL + "," + totalLengthR + "," + Math.abs(totalLengthL - totalLengthR) + "," + totalAngle );
+////		System.err.println("");
+////		System.err.println( totalLengthL + "     " + totalLengthR + "    " + Math.abs(totalLengthL - totalLengthR) + "    " + totalAngle );
+//		System.err.println("");
+//		System.err.println("");
+		
 		return count;
 	}
 

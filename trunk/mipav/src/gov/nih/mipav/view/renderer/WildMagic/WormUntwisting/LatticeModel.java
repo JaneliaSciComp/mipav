@@ -230,7 +230,7 @@ public class LatticeModel {
 	protected VOI growContours;
 
 	protected VOI annotationVOIs;
-	private int highestIndex = -1;
+	private int highestIndex = 0;
 
 	protected Vector3f wormOrigin = null;
 	protected Vector3f transformedOrigin = new Vector3f();
@@ -1284,7 +1284,7 @@ public class LatticeModel {
 		}
 		showSelectedVOI = null;
 		clearAddLeftRightMarkers();		
-		highestIndex = 1;
+		highestIndex = 0;
 
 		if ( annotationVOIs == null )
 		{
@@ -1321,10 +1321,8 @@ public class LatticeModel {
 						//						System.err.println( name + " " + value + " " + name.substring(j,j+1) + " " + Integer.valueOf(name.substring(j,j+1)));
 					}
 				}
-				highestIndex = Math.max( highestIndex, value );
+				highestIndex = Math.max( highestIndex, value ) + 1;
 			}
-
-			highestIndex++;
 		}
 		colorAnnotations();
 	}
@@ -2804,12 +2802,10 @@ public class LatticeModel {
 	protected boolean generateCurves( float stepSize ) {
 		clearCurves(false);
 
-		if ( (seamCellIDs) == null && (seamCellImage != null) )
+		if ( seamCellImage != null )
 		{
 			seamCellIDs = new int[left.size()][2];
 		}
-		
-		
 
 //		System.err.println( "generateCurves test angles" );
 //		for ( int i = 0; i < left.size()-1; i++ )
@@ -5239,10 +5235,14 @@ public class LatticeModel {
 			final VOIVector temp = resultImage.getVOIsCopy();
 			resultImage.resetVOIs();
 			if (transformedAnnotations != null) {
-				resultImage.registerVOI(transformedAnnotations);
-				voiDir = outputDirectory + File.separator + "straightened_annotations"
-						+ File.separator;
-				saveAllVOIsTo(voiDir, resultImage);
+
+				if ( transformedAnnotations.getCurves().size() > 0 )
+				{
+					resultImage.registerVOI(transformedAnnotations);
+					voiDir = outputDirectory + File.separator + "straightened_annotations"
+							+ File.separator;
+					saveAllVOIsTo(voiDir, resultImage);
+				}
 			}
 			saveLatticeStatistics(outputDirectory + File.separator, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
 
@@ -7136,7 +7136,7 @@ public class LatticeModel {
 				}
 			}			
 		}
-		resultImage.setImageName( imageName + "_straight_masked.xml" );
+		resultImage.setImageName( imageName + "_straight.xml" );
 		saveImage(imageName, resultImage, true);
 		saveImage(imageName, sourceImage, true);
 
@@ -8470,12 +8470,16 @@ public class LatticeModel {
 			//			System.err.println( markerNames.elementAt(i) + " " + target + " " + markerCenters.size() );
 		}
 
+		String voiDir;
 		// Save the markers as a VOI file:
 		resultImage.unregisterAllVOIs();
-		resultImage.registerVOI(annotationsStraight);
-		String voiDir = outputDirectory + File.separator + "straightened_annotations" + File.separator;
-		saveAllVOIsTo(voiDir, resultImage);
-		resultImage.unregisterAllVOIs();
+		if ( annotationsStraight.getCurves().size() > 0 )
+		{
+			resultImage.registerVOI(annotationsStraight);
+			voiDir = outputDirectory + File.separator + "straightened_annotations" + File.separator;
+			saveAllVOIsTo(voiDir, resultImage);
+			resultImage.unregisterAllVOIs();
+		}
 
 		System.err.println( "Untwist Markers found " + count + " out of " + markerCenters.size() );
 
