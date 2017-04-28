@@ -26,6 +26,7 @@ This software may NOT be used for diagnostic purposes.
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
@@ -48,6 +49,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
@@ -144,7 +146,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JPanel opacityPanel;
 	
 	private PlugInDialogVolumeRender parent;
-	
+	private VOI finalLattice;
 	private VOIVector[] potentialLattices;
 	private JTextField rangeFusionText;
 	
@@ -166,6 +168,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private Container volumePanel;
 	private VolumeTriPlanarRender volumeRenderer;
 	private ModelImage wormImage;
+	private WormData wormData;
 	
 	
 	public PlugInDialogVolumeRender()
@@ -472,6 +475,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				if ( annotations.size() > 0 )
 				{
 					voiManager.setAnnotations(annotations);
+					if ( editMode == EditAnnotations )
+					{
+						VOIVector latticeVector = new VOIVector();
+						latticeVector.add(finalLattice);
+						voiManager.setLattice(latticeVector);
+					}
 
 					for (int i = 0; i < annotations.elementAt(0).getCurves().size(); i++)
 					{
@@ -705,26 +714,30 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( openImages( voiFile, fileName ) )
 				{
+					wormData = new WormData(wormImage);
+					finalLattice = wormData.readFinalLattice();
+					wormImage.registerVOI( finalLattice );
+					wormData.readMarkers();				
+					
 					if ( annotations != null )
 					{
 						annotations.clear();
 						annotations = null;
 					}
 					annotations = new VOIVector();
-					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editAnnotationOutput;
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
-
-					if ( annotations.size() == 0 )
+					VOI markers = wormData.getMarkerAnnotations();
+					if ( markers != null )
 					{
-						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editAnnotationInput;
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
+						annotations.add( markers );
+						wormImage.registerVOI( markers );
 					}
-					if ( voiManager != null )
+					if ( (annotations.size() > 0) && (voiManager != null) )
 					{
 						voiManager.setAnnotations(annotations);
 						voiManager.editAnnotations(false);
+						VOIVector latticeVector = new VOIVector();
+						latticeVector.add(finalLattice);
+						voiManager.setLattice(latticeVector);
 					}
 				}
 			}
@@ -751,7 +764,19 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				wormImage = null;
 			}
 			wormImage = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
-			wormImage.calcMinMax();      
+			wormImage.calcMinMax();     
+			float[] res = wormImage.getResolutions(0);
+			res[0] = res[2]; 
+			res[1] = res[2]; 
+			int[] units = wormImage.getUnitsOfMeasure();
+			units[0] = units[2];
+			units[1] = units[2];
+			FileInfoBase[] fileInfo = wormImage.getFileInfo();
+			for ( int i = 0; i < fileInfo.length; i++ )
+			{
+				fileInfo[i].setResolutions(res);
+	            fileInfo[0].setUnitsOfMeasure(units);
+			}
 			
 			boolean updateRenderer = false;
 			if ( voiManager != null )
@@ -821,31 +846,17 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						{
 							potentialLattices[i].clear();
 						}
-					}
-					if ( potentialLattices == null )
-					{
-						potentialLattices = new VOIVector[5];
-						for ( int i = 0; i < potentialLattices.length; i++ )
-						{
-							potentialLattices[i] = new VOIVector();
-						}
-					}
-
+						potentialLattices = null;
+					}	
+					wormData = new WormData(wormImage);
+					potentialLattices = wormData.readAutoLattice();
 					latticeSelectionPanel.removeAll();
 					latticeSelectionPanel.setVisible(false);
-					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editLatticeOutput;
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, potentialLattices[0], false);
-
 					int latticeIndex = -1;
-					if ( potentialLattices[0].size() == 0 )
+					for ( int i = 0; i < potentialLattices.length; i++ )
 					{
-						for ( int i = 0; i < potentialLattices.length; i++ )
+						if ( potentialLattices[i] != null )
 						{
-							fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + (i+1);
-							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-							PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, potentialLattices[i], false);
-
 							if ( potentialLattices[i].size() != 0 )
 							{
 								latticeSelectionPanel.add(latticeChoices[i]);
@@ -855,13 +866,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 								}
 							}
 						}
-						latticeSelectionPanel.add(newLatticeButton);
-						latticeSelectionPanel.setVisible(true);
 					}
-					else
-					{
-						latticeIndex = 0;
-					}
+					latticeSelectionPanel.add(newLatticeButton);
+					latticeSelectionPanel.setVisible(true);
 					if ( voiManager != null )
 					{
 						if ( latticeIndex != -1 )
@@ -889,23 +896,18 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( openImages( voiFile, fileName ) )
 				{
+					wormData = new WormData(wormImage);
+					wormData.readSeamCells();				
+					
 					if ( annotations != null )
 					{
 						annotations.clear();
 						annotations = null;
 					}
 					annotations = new VOIVector();
+					annotations.add( wormData.getSeamAnnotations() );
+					wormImage.registerVOI( wormData.getSeamAnnotations() );
 
-					fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editSeamCellOutput;
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
-
-					if ( annotations.size() == 0 )
-					{						
-						fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.autoSeamCellSegmentationOutput;
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, annotations, true);
-					}
 					if ( (annotations.size() > 0) && (voiManager != null) )
 					{
 						voiManager.setAnnotations(annotations);
@@ -927,19 +929,18 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				String imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
 				String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
-				File voiFile = new File(baseFileDir + File.separator + subDirName + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+				String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+				File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				if ( openImages( voiFile, imageName ) )
 				{
 					if ( volumeRenderer != null )
 					{
 						volumeRenderer.resetAxisX();
 					}
-					VOIVector results = new VOIVector();
-					String voiDir = new String( baseFileDir + File.separator + subDirName + PlugInAlgorithmWormUntwisting.straightenedAnnotations + File.separator );
-					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, results, true);
 					
-					voiDir = new String( baseFileDir + File.separator + subDirName + PlugInAlgorithmWormUntwisting.straightenedLattice + File.separator );
-					PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, voiDir, true, results, true);
+					wormData = new WormData(wormImage);
+					wormData.openStraightLattice();
+					wormData.openStraightAnnotations();
 				}
 			}
 		}
@@ -1188,7 +1189,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		setResizable(true);
 		setForeground(Color.black);
-		setTitle("Untwisting C.elegans - lattice - 1.0");
+		setTitle("Untwisting C.elegans - lattice - 2.0");
 		try {
 			setIconImage(MipavUtil.getIconImage("divinci.gif"));
 		} catch (FileNotFoundException e) {
@@ -1272,7 +1273,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		setResizable(true);
 		setForeground(Color.black);
-		setTitle("Untwisting C.elegans - lattice - 1.0");
+		setTitle("Untwisting C.elegans - lattice - 2.0");
 		try {
 			setIconImage(MipavUtil.getIconImage("divinci.gif"));
 		} catch (FileNotFoundException e) {
@@ -1495,7 +1496,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridx = 0;
 		calcMaxProjection = gui.buildRadioButton("generate maximum intensity projection animation", false );
 		calcMaxProjection.addActionListener(this);
-		panel.add(calcMaxProjection.getParent(), gbc);
+//		panel.add(calcMaxProjection.getParent(), gbc);
 		gbc.gridy++;
 
 		gbc.gridx = 0;
@@ -1566,7 +1567,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		createAnimation = gui.buildRadioButton("create annotation animation", false );
 		createAnimation.addActionListener(this);
 		createAnimation.setActionCommand("createAnimation");
-		panel.add(createAnimation.getParent(), gbc);
+//		panel.add(createAnimation.getParent(), gbc);
 		gbc.gridy++;
 
 		group.add(editSeamCells);
@@ -1610,10 +1611,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			return;
 		}
-
-		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editAnnotationOutput;  
-		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
+		if ( wormData == null )
+		{
+			return;
+		}
+		wormData.saveMarkerAnnotations();
+		wormData.dispose();
 	}
 
 	/**
@@ -1629,8 +1632,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			return;
 		}
-		voiManager.saveLattice( baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(imageIndex) + File.separator, 
-				PlugInAlgorithmWormUntwisting.editLatticeOutput );
+		String imageName = wormImage.getImageName();
+		if (imageName.contains("_clone")) {
+			imageName = imageName.replaceAll("_clone", "");
+		}
+		String outputDirectory = new String(wormImage.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + JDialogBase.makeImageName(imageName, "_results") );
+		voiManager.saveLattice( outputDirectory + File.separator, PlugInAlgorithmWormUntwisting.editLatticeOutput );
 	}
 
 	/**
@@ -1646,10 +1653,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			return;
 		}
-
-		String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator + PlugInAlgorithmWormUntwisting.editSeamCellOutput;  
-		String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-		WormSegmentation.saveAllVOIsTo(voiDir, wormImage);
+		if ( wormData == null )
+		{
+			return;
+		}
+		wormData.saveSeamAnnotations();
+		wormData.dispose();
 	}
 
 	/**

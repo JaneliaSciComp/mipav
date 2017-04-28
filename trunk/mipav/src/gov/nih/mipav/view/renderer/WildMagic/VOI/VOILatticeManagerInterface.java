@@ -217,7 +217,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		else if ( command.equals("TestLattice") ) {
 			WormData wormData = new WormData( m_kImageA );
-			wormData.testLattice( latticeModel.getLeft(), latticeModel.getRight() );
+			wormData.testLattice( latticeModel.getLeft(), latticeModel.getRight(), true );
 		} else if ( command.equals("StraightenLattice") ) {
 			if ( latticeModel != null )
 			{

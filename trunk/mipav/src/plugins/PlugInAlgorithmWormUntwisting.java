@@ -23,7 +23,6 @@ This software may NOT be used for diagnostic purposes.
  ******************************************************************
  ******************************************************************/
 
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmConstrainedOAR3D;
@@ -36,31 +35,18 @@ import gov.nih.mipav.model.structures.ModelImageToImageJConversion;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
-import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
-import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeBuilder;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import ij.ImagePlus;
 import ij.ImageStack;
 
-import java.awt.Color;
 import java.io.File;
-import java.util.Arrays;
 import java.util.Vector;
 
 import javax.swing.JProgressBar;
-
-import WildMagic.LibFoundation.Containment.ContBox3f;
-import WildMagic.LibFoundation.Mathematics.Box3f;
-import WildMagic.LibFoundation.Mathematics.Vector2d;
-import WildMagic.LibFoundation.Mathematics.Vector3d;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  * Implements batch algorithms for worm untwisting:
@@ -105,62 +91,22 @@ public class PlugInAlgorithmWormUntwisting
 				FileIO fileIO = new FileIO();
 				if ( image != null )
 				{
-					image.disposeLocal();
+					image.disposeLocal(false);
 				}
 				image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
-//				System.err.println( fileName );
-				
-				// Open the seam cells files as input to the algorithm:
-				// an unordered list of up to 22 positions in the volume representing the seam cell locations
-				VOIVector seamCells = new VOIVector();
-				// start with the user edited version:
-				fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + editSeamCellOutput;
-				String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-				loadAllVOIsFrom(image, voiDir, true, seamCells, false);
-				if ( seamCells.size() <= 0 )
-				{
-					// if no edited version, use the default automatically-segmented seam cell file:
-					fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + autoSeamCellSegmentationOutput;
-					voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					loadAllVOIsFrom(image, voiDir, true, seamCells, false);
-				}
-				if ( seamCells.size() == 0 )
-				{
-					continue;
-				}
-				// find the 'nose' position labeled by the user (may be excluded)
-				VOI nose = new VOI( (short)1, "nose", VOI.ANNOTATION, 1);
-				for ( int j = seamCells.elementAt(0).getCurves().size() - 1; j >= 0; j-- )
-				{
-					VOIText text = (VOIText) seamCells.elementAt(0).getCurves().elementAt(j);
-					// skip extra annotations (origin, nose)
-					if ( text.getText().contains("nose") || text.getText().contains("Nose") )
-					{
-						nose.getCurves().add(seamCells.elementAt(0).getCurves().remove(j));
-					}
-				}
-				
-				LatticeBuilder builder = new LatticeBuilder();
-				// build the lattices from input image and list of points:
-				if ( builder.buildLattice( batchProgress, i, includeRange.size(), image, seamCells.elementAt(0), 0, nose, 
-						baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) ) != null )
-				{
-					foundCount++;
-				}
-
+				WormData wormData = new WormData(image);
+				foundCount += wormData.generateLattice() > 0 ? 1 : 0;
+				wormData.dispose();
 				count++;
 			}
-//			System.err.println( "Tested " + count + " success " + foundCount + " success rate = " + 100 * (float)foundCount/count +"%" );
 			MipavUtil.displayInfo( "Found lattices for " + foundCount + " out of " + count + " volumes tested (" + (int)(100 * (float)foundCount/count) + "%)" );
 		}
 
 		if ( image != null )
 		{
-			image.disposeLocal();
+			image.disposeLocal(false);
 			image = null;
-		}
-//		System.err.println( "Done lattice building" );
-		
+		}		
 	}
 	
 	/**
@@ -280,8 +226,7 @@ public class PlugInAlgorithmWormUntwisting
 	 */
 	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
 	{
-		ModelImage image = null;
-		ModelImage maskImage = null;
+		ModelImage wormImage = null;
 		if ( includeRange != null )
 		{
 			for ( int i = 0; i < includeRange.size(); i++ )
@@ -294,81 +239,95 @@ public class PlugInAlgorithmWormUntwisting
 				{
 //					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
-					if(image != null) {
-						if ( (i%10) == 0 )
-						{
-							image.disposeLocal(true);
-						}
-						else
-						{
-							image.disposeLocal();
-						}
-						image = null;
+					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					WormData wormData = new WormData(wormImage); 
+					VOI lattice = wormData.readFinalLattice();
+					if ( lattice == null )
+					{
+						MipavUtil.displayError( "Error in reading lattice file" );
 					}
-					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+
+					ModelImage seamImage = wormData.readSeamSegmentation();					
+					LatticeModel model = new LatticeModel(wormImage);
+					model.setSeamCellImage(seamImage);
+					model.setLattice(lattice);
 					
+//							String nucleiFileName = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + "marker" + File.separator + "marker.csv";
+//							File nucleiFile = new File(nucleiFileName);
+//							if ( nucleiFile.exists() )
+//							{
+//								VOIVector vois = readMarkerPositions( nucleiFileName, nucleiFile );
+//								VOI nucleiVOIs = vois.elementAt(0);
+//								if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
+//								{
+//									model.setMarkers(nucleiVOIs);
+//								}
+//							}
 
-					fileName = baseFileName + "_" + includeRange.elementAt(i) + "_mask_image.tif";
-					voiFile = new File(baseFileDir + File.separator + fileName);
-					if ( voiFile.exists() )
-					{
-						if ( maskImage != null )
-						{
-							maskImage.disposeLocal();
-							maskImage = null;
-						}
-						maskImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-					}
-
-					// load the user-edited lattice if it exists:
-					fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + editLatticeOutput;
-					VOIVector lattice = new VOIVector();
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					loadAllVOIsFrom(image, voiDir, true, lattice, false);
-					if ( lattice.size() == 0 )
-					{
-						// otherwise load the default automatically-generated lattice:
-						fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + autoLatticeGenerationOutput + "1";
-						lattice = new VOIVector();
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						loadAllVOIsFrom(image, voiDir, true, lattice, false);						
-					}
-					if ( lattice.size() == 0 )
-					{
-//						System.err.println( "no lattice" );
-						continue;
-					}
-					// Load user-specified annotations, they are included in the straightening process:
-					if ( (lattice.elementAt(0) != null) && (lattice.elementAt(0).getCurves().size() == 2) )
-					{
-						LatticeModel model = new LatticeModel( image, lattice.elementAt(0) );
-						// load user-edited annotations:
-						fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + editAnnotationOutput;            	    		
-						VOIVector annotations = new VOIVector();
-						voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-						loadAllVOIsFrom(image, voiDir, true, annotations, false);
-						if ( annotations.size() > 0 )
-						{
-							model.setAnnotations( annotations.elementAt(0) );
-						}
-						else
-						{
-							// otherwise load default annotation file:
-							fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + editAnnotationInput;            	    		
-							annotations = new VOIVector();
-							voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-							loadAllVOIsFrom(image, voiDir, true, annotations, false);
-							if ( annotations.size() > 0 )
+							model.interpolateLattice( false, false, true, false );
+							ModelImage contourImage = null;
+//							if ( segmentSkinSurface.isSelected() )
 							{
-								model.setAnnotations( annotations.elementAt(0) );
-							}							
-						}
-						// interpolate the lattice and untwist the worm, saving the output images and straightened lattice + annotations:
-						model.setMaskImage(maskImage);
-						model.interpolateLattice( false, true, false, false );
+								contourImage = model.segmentSkin(wormImage, 0);
+							}
+//							else if ( segmentLattice.isSelected() )
+//							{
+//								model.segmentLattice(wormImage, false);
+//							}
+							model.retwist(wormImage);
+							wormData.readMarkers();
+							VOI markers = wormData.getMarkerAnnotations();
+							if ( markers != null )
+							{
+								model.setMarkers(markers);
+								model.interpolateLattice( false, false, false, true );	
+							}
+
+//							if ( nucleiImage != null )
+//							{					
+//
+//							if ( wormImage != null )
+//							{
+//								wormImage.unregisterAllVOIs();
+//								wormImage.disposeLocal(false);
+//							}
+//								nucleiImage.setImageName(baseFileName2 + "_" + includeRange.elementAt(i) + ".tif");
+//								model.setImage(nucleiImage);
+//								model.interpolateLattice( false, false, straightenImageCheck.isSelected(), false );
+//
+//								if ( segmentSkinSurface.isSelected() )
+//								{
+//									contourImage = model.segmentSkin(nucleiImage, contourImage, paddingFactor);
+//								}
+//								else if ( segmentLattice.isSelected() )
+//								{
+//									model.segmentLattice(nucleiImage, false);
+//								}
+//								model.dispose();
+//								model = null;
+//
+//								if ( nucleiImage != null )
+//								{
+//									nucleiImage.disposeLocal(false);
+//								}
+//							}						
+
+							if ( contourImage != null )
+							{
+								contourImage.disposeLocal(false);
+							}
+							
 						model.dispose();
 						model = null;
-					}
+						if ( wormImage != null )
+						{
+							wormImage.disposeLocal(false);
+						}
+						if ( wormData != null )
+						{
+							wormData.dispose();
+						}
+						
 				}
 				if ( batchProgress != null )
 				{
@@ -378,11 +337,11 @@ public class PlugInAlgorithmWormUntwisting
 			}
 		}
 
-		if ( image != null )
+		if ( wormImage != null )
 		{
-			image.disposeLocal();
-			image = null;
+			wormImage.disposeLocal(false);
 		}
+		
 		MipavUtil.displayInfo( "Lattice straightening complete." );
 	}
 	
@@ -622,73 +581,20 @@ public class PlugInAlgorithmWormUntwisting
 							image.setImageName(name);
 						}
 					}
-
-//					Vector<Vector3f> dataPoints = new Vector<Vector3f>();
-					// calculate a robust histogram of the data values, used to find the left-right marker thresholds:
-					float[] max_LR = WormSegmentation.robustHistogram(image, null);	
-					if ( batchProgress != null )
-					{
-						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
-						batchProgress.update(batchProgress.getGraphics());
-					}
-					
-					// Calculate the windowing segmentation:
-					Vector<Vector3f> annotationsWindow = WormSegmentation.seamCellSegmentation(image, max_LR[0], max_LR[1]);
-					if ( batchProgress != null )
-					{
-						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
-						batchProgress.update(batchProgress.getGraphics());
-					}
-					image.unregisterAllVOIs();
-					
-					Vector<Vector3f> seamCells = new Vector<Vector3f>();
-					Vector<Vector3f> tempSeamCells = new Vector<Vector3f>();
-					for ( int k = 0; k < annotationsWindow.size(); k++ )
-					{
-						tempSeamCells.add( new Vector3f(annotationsWindow.elementAt(k)) );
-					}
-					int prevSize = tempSeamCells.size();
-					if ( prevSize > 22 )
-					{
-						int newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells, 5, 15, false);
-						while ( (prevSize > newSize) && (newSize > 22) )
-						{
-							prevSize = newSize;
-							newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells, 5, 15, false);
-						}
-						if ( newSize > 22 )
-						{
-							newSize = WormSegmentation.reduceDuplicates(image, tempSeamCells);
-						}
-					}
-					if ( batchProgress != null )
-					{
-						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
-						batchProgress.update(batchProgress.getGraphics());
-					}
-
-					Vector3f negCenter = new Vector3f(-1,-1,-1);
-					for ( int j = 0; j < tempSeamCells.size(); j++ )
-					{
-						if ( !tempSeamCells.elementAt(j).equals(negCenter) )
-						{
-							seamCells.add(tempSeamCells.elementAt(j));
-						}
-					}
-					if ( seamCells.size() > 0 )
+					WormData wormData = new WormData(image); 
+					wormData.segmentSeamCells(8, 25);
+					if ( wormData.getSeamCells().size() > 0 )
 					{
 						foundCount++;
 					}
 					count++;
-					WormSegmentation.saveAnnotations(image, seamCells, Color.blue );
-					File voiFileDir = new File(baseFileDir + File.separator +  baseFileName + "_" + includeRange.elementAt(i) + File.separator);
-					if ( !voiFileDir.exists()) {
-						voiFileDir.mkdir();
+					wormData.dispose();
+					
+					if ( batchProgress != null )
+					{
+						batchProgress.setValue((int)(100 * (float)(i*numSteps + step++)/(numSteps*includeRange.size())));
+						batchProgress.update(batchProgress.getGraphics());
 					}
-					fileName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + autoSeamCellSegmentationOutput;  
-					String voiDir = new String(baseFileDir + File.separator + fileName + File.separator);
-					WormSegmentation.saveAllVOIsTo(voiDir, image);
-					image.unregisterAllVOIs();
 				}
 			}
 			if ( batchProgress != null )
