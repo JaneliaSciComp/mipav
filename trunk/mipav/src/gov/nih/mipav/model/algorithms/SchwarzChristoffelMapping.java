@@ -2863,7 +2863,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    // We have to be concerned with singularities lying to the right (left if d < 0) of the left
 		    // integration endpoint.
 		    for (j = 0; j < n; j++) {
-		    	if ((dx[j] > 0.0) && Double.isFinite(z[j][0]) && Double.isFinite(z[j][1])) {
+		    	if ((dx[j] > 0.0) && isFinite(z[j][0]) && isFinite(z[j][1])) {
 		    	    toright[j] = true;	
 		    	}
 		    	else {
