@@ -109,7 +109,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	public scmap rectmap(double w[][], int corner[], double tolerance,
 			double z[][], double c[], double L[]) {
 		// Schwarz-Christoffel rectangle map object
-		// rectmap cpondtructs a Schwarz-Christoffel rectangle map object for the polygon
+		// rectmap constructs a Schwarz-Christoffel rectangle map object for the polygon
 		// whose vertices are given by w.  corner is a 4 integer vector containing the
 		// indices of the vertices that are the images of the rectangle's corners.
 		// These indices should be specified in counterclockwise order, and the first
@@ -1414,11 +1414,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	x[i-cnrcopy[1]-1] = Math.exp(Math.PI*(L[0] - z0copy[i][0]))*Math.cos(Math.PI*(L[1] + z0copy[i][1]));
 	    }
 	    double dx2[] = new double[x.length+1];
-	    dx2[0] = 1 - x[0];
-	    for (i = 0; i < x.length-1; i++) {
-	    	dx2[i+1] = x[i] - x[i+1];
+	    if (x.length >= 1) {
+		    dx2[0] = 1 - x[0];
+		    for (i = 0; i < x.length-1; i++) {
+		    	dx2[i+1] = x[i] - x[i+1];
+		    }
+		    dx2[x.length] = x[x.length-1] + 1;
 	    }
-	    dx2[x.length] = x[x.length-1] + 1;
+	    else {
+	    	dx2[0] = 2.0;
+	    }
 	    for (i = 0; i <= dx2.length-2; i++) {
 	        y0[i+cnrcopy[1]] = Math.log(dx2[i]/dx2[i+1]);
 	    }
@@ -1426,13 +1431,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    for (i = 0; i < n-1-cnrcopy[3]; i++) {
 	    	x[i] = Math.exp(Math.PI*z0copy[cnrcopy[3]+1+i][0])*Math.cos(Math.PI*z0copy[cnrcopy[3]+1+i][1]);
 	    }
-	    dx2[0] = x[0]+1;
-	    for (i = 0; i < x.length-1; i++) {
-	    	dx2[i+1] = x[i+1] - x[i];
+	    dx2 = new double[x.length+1];
+	    if (x.length >= 1) {
+		    dx2[0] = x[0]+1;
+		    for (i = 0; i < x.length-1; i++) {
+		    	dx2[i+1] = x[i+1] - x[i];
+		    }
+		    dx2[x.length] = 1 - x[x.length-1];
 	    }
-	    dx2[x.length] = 1 - x[x.length-1];
-	    for (i = 0; i <= dx2.length-2; i++) {
-	        y0[i+cnrcopy[3]-2] = Math.log(dx2[i]/dx2[i+1]);
+	    else {
+	    	dx2[0] = -2.0;
 	    }
 	    
 	    // Find prevertices (solve param problem)
@@ -1885,7 +1893,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	// Select one or more vertices in a polygon
 	// The polygon given by w and beta is in the source image window.
-	// The user to select m vertices using the mouse. If m <= 0, m defaults to 1.
+	// The user selects m vertices using the mouse. If m <= 0, m defaults to 1.
 	// On exit K is a vector of indices into W.
 	// scselect provides an instructional message
 	private int[] scselect(double w[][], double beta[], int m,  String titl, String msg[]) {
@@ -2080,7 +2088,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	// Jacobi elliptic functions for complex argument
-	// ellipjc returns the values of the Jacobi elliptic functions evaluated at comples argument U and
+	// ellipjc returns the values of the Jacobi elliptic functions evaluated at complex argument U and
 	// parameter m = exp(-2*PI*L), 0 < L < Infinity.  Recall that m = k^2, where k is the elliptic modulus.
 	
 	// u may be a vector: L must be a scalar.  The entries of U are expected to lie within the rectangle
@@ -2292,11 +2300,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        b0 = b1;
 	    } // while (mm > eps)
 	    
+	    K[0] = Math.PI/(2.0 * a1);
 	    if (m == 1.0) {
-	    	K[0] = Double.POSITIVE_INFINITY;
-	    }
-	    else {
-	    	K[0] = Math.PI/(2.0 * a1);
+	    	K[0] = K[0] * Double.POSITIVE_INFINITY;
 	    }
 	    
 	    a0 = 1.0;
@@ -2316,11 +2322,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	b0 = b1;
 	    } // while (mm > eps)
 	    
+	    Kp[0] = Math.PI/(2.0 * a1);
 	    if (m == 0) {
-	    	Kp[0] = Double.POSITIVE_INFINITY;
-	    }
-	    else {
-	    	Kp[0] = Math.PI/(2.0 * a1);
+	    	Kp[0] = Kp[0] * Double.POSITIVE_INFINITY;
 	    }
  	}
 	
@@ -3798,21 +3802,22 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        	betarenum[n- aux[0] + i] = beta[i];
 	        }
 	        int offset = n - corner[0]; // corner - corner[0] so no need to add one
+	        int corner2[] = new int[corner.length];
 		    for (i = 0; i < corner.length; i++) {
-		    	corner[i] = ((corner[i] + offset) % n);
+		    	corner2[i] = ((corner[i] + offset) % n);
 		    }
 		    if (n < 4) {
 		    	MipavUtil.displayError("Polygon must have at least 4 vertices");
 		    	err = -1;
 		    	return err;
 		    }
-		    int sortcorner[] = new int[corner.length];
-		    for (i = 0; i < corner.length; i++) {
-		    	sortcorner[i] = corner[i];
+		    int sortcorner[] = new int[corner2.length];
+		    for (i = 0; i < corner2.length; i++) {
+		    	sortcorner[i] = corner2[i];
 		    }
 		    Arrays.sort(sortcorner);
-		    for (i = 0; i < corner.length; i++) {
-		    	if (corner[i] != sortcorner[i]) {
+		    for (i = 0; i < corner2.length; i++) {
+		    	if (corner2[i] != sortcorner[i]) {
 		    		MipavUtil.displayError("Corners must be specified in ccw order");
 		    		err = -1;
 		    		return err;
@@ -3824,7 +3829,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	return err;
 		    }
 		    if (Double.isInfinite(wrenum[1][0]) || Double.isInfinite(wrenum[1][1])) {
-		        MipavUtil.displayError("Corner[0] + 1 must be finite");
+		        MipavUtil.displayError("Vertex corner[0] + 1 must be finite");
 		        err = 1;
 		        return err;
 		    }
@@ -3856,7 +3861,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// trouble with that approach is that since a function can't modify its inputs in
 		// the calling workspace, either the xxparam functions would have to return more
 		// arguments, or the mapping and plotting functions also would have to detect and 
-		// correct the problem every time there called.  The problem is rare enough that this
+		// correct the problem every time they're called.  The problem is rare enough that this
 		// method seems adequate.
 		int i, j, k;
 		int n = w.length;
@@ -3920,7 +3925,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    }
 		    shift[n-1] = 0;
 		    // Remember, if necessary, to meet requirements:
-		    // w([0,1,n-2]) finite && sides at w[n-1] not colinear
+		    // w([0,1,n-2]) finite && sides at w[n-1] not collinear
 		    while (true) {
 		    	boolean anyisinf = false;
 		    	if (Double.isInfinite(w[0][0]) || Double.isInfinite(w[0][1]) || Double.isInfinite(w[1][0]) ||
@@ -3973,7 +3978,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				        	beta[i] = betan[i];
 				        }	
 		        	} // while ((Math.abs(beta[n-1]) < eps) || (Math.abs(beta[n-1] - 1) < eps))
-		        	// Next, add one or tow veretices as needed.
+		        	// Next, add one or two vertices as needed.
 		        	if (Double.isInfinite(w[0][0]) || Double.isInfinite(w[0][1]) || Double.isInfinite(w[1][0]) ||
 		        			Double.isInfinite(w[1][1])) { 
 		        	    scaddvtx(wn,betan,w,beta,0,null);
@@ -4044,14 +4049,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        		    wn[j][0] = w[i][0];
 		        		    wn[j][1] = w[i][1];
 		        		    betan[j++] = beta[i];
-		        		    renum = new int[2];
-		        		    renum[0] = 0;
-		        		    renum[1] = 1;
-		        		    n = 2;
-		        		    System.out.println("Polygon is a line segment); removing superfluous vertices");
-		        		    break;
 		        		}
 		        	}
+        		    renum = new int[2];
+        		    renum[0] = 0;
+        		    renum[1] = 1;
+        		    n = 2;
+        		    System.out.println("Polygon is a line segment); removing superfluous vertices");
+        		    break;
 		        } // if (renum[0] == 0)
 		    } // while (true)
 		} // else if (type.equalsIgnoreCase("de"))
@@ -4109,6 +4114,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						w[i][1] = wn[i][1];
 						beta[i] = betan[i];
 					}
+					for (k = 0; k < renum.length; k++) {
+					    if (renum[k] == 0) {
+					    	break;
+					    }
+					} // for (k = 0; k < renum.length; k++)
 				} // if (k < n-2)
 				else {
 				    // Add one or two vertices.
@@ -4227,8 +4237,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			// Note: These problems are pretty rare.
 			if ((Math.abs(beta[n-1]) <eps) || (Math.abs(beta[n-1]-1.0) < eps)) {
 			    // Try swapping sides 1-2 and 3-4.
-				if ((Math.abs(beta[corner[2]-1]) >= eps) && (Math.abs(beta[corner[2]-1]-1) >= eps) && isFinite(w[corner[2]][0])
-						&& isFinite(w[corner[2]][1])) {
+				if ((Math.abs(beta[corner[2]-1]) >= eps) && (Math.abs(beta[corner[2]-1]-1) >= eps) && (!Double.isInfinite(w[corner[2]][0]))
+						&& (!Double.isInfinite(w[corner[2]][1]))) {
 					for (i = corner[2]; i < n; i++) {
 						renum[i-corner[2]] = i;
 						wn[i-corner[2]][0] = w[i][0];
@@ -4276,7 +4286,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	private void scaddvtx(double wn[][], double betan[], double w[][], double beta[], int pos, double window[]) {
 		// wn and betan are outputs of length n+1
-		// w, beta, pos, and window are inputs w and beta are of length n
+		// w, beta, pos, and window are inputs. w and beta are of length n
 		// Add a vertex to a polygon
 		// scaddvtx adds a new vertex to the polygon described by w and beta immediately
 		// after vertex pos.  If w[pos:pos+1] are finite, the new vertex is at the midpoint of an
@@ -4297,12 +4307,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		int n = w.length;
 		double ang[] = new double[n];
+		double ang2[] = new double[n];
 		if (pos < 0) {
 			pos = n-1;
 		}
 		int pos1 = (pos+1)%n;
-		if (isFinite(w[pos][0]) && isFinite(w[pos][1]) && isFinite(w[1][0]) &&
-				isFinite(w[1][1])) {
+		if (isFinite(w[pos][0]) && isFinite(w[pos][1]) && isFinite(w[pos1][0]) &&
+				isFinite(w[pos1][1])) {
 			// Easy case
 		    newv[0] = (w[pos][0] + w[pos1][0])/2.0;	
 		    newv[1] = (w[pos][1] + w[pos1][1])/2.0;
@@ -4332,9 +4343,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			ang[base] = Math.atan2(wimag, wreal);
 			
 			// Determine the absolute angle of side pos->pos1.
+			for (j = 0; j < n; j++) {
+				ang2[j] = ang[j];
+			}
 			for (j = base+1; j < n; j++) {
 			    jrem =( j-1 + n) % n;
-			    ang[j] = ang[jrem] - Math.PI * beta[j];
+			    ang[j] = ang2[jrem] - Math.PI * beta[j];
 			    if (j == pos) {
 			    	break;
 			    }
