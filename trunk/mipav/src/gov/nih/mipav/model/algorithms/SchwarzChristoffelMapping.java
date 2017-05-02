@@ -1440,7 +1440,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    dx2[x.length] = 1 - x[x.length-1];
 	    }
 	    else {
-	    	dx2[0] = -2.0;
+	    	dx2[0] = 2.0;
 	    }
 	    
 	    // Find prevertices (solve param problem)
@@ -2691,6 +2691,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    	    }
 				    	} // for (i = 0; i < numcmplx; i++)
 				    } // if (numcmplx > 0)
+				    
 				} // if ((ctrl == -1) || (ctrl == 1))
 
 				// Calculate the Jacobian numerically
@@ -3280,7 +3281,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
     	for (i = 0; i < n; i++) {
     		for (k = 0; k < npts; k++) {
     		    mult[i][k][0] = terms[i][k][0]*bcol[i];
-    		    mult[i][k][1] = terms[i][k][0]*bcol[i];
+    		    mult[i][k][1] = terms[i][k][1]*bcol[i];
     		}
     	}
     	double sum[][] = new double[npts][2];
@@ -3418,7 +3419,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			z[i][1] = u[i-(cnr[1]+1)][1];
 		}
 		
-		cp = new double[1 + n-4-(cnr[3]-2)+1+cnr[0]];
+		cp = new double[1 + n-4-(cnr[3]-2)+1+(cnr[0]-1)+1];
 		cp[0] = 1;
 		for (i = 1; i <= n - cnr[3] - 1; i++) {
 			cp[i] = cp[i-1]*Math.exp(-y[i+cnr[3]-3]);
