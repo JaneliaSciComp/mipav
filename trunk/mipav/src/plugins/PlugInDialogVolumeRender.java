@@ -579,10 +579,20 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			voiManager = null;
 		}
 		gpuPanel.removeAll();
+		if ( volumeImage != null )
+		{
+			volumeImage.dispose();
+			volumeImage = null;
+		}
 		if ( wormImage != null )
 		{
 			wormImage.disposeLocal();
 			wormImage = null;
+		}
+		if ( wormData != null )
+		{
+			wormData.dispose();
+			wormData = null;
 		}
 		if ( mode == EditSeamCells )
 		{

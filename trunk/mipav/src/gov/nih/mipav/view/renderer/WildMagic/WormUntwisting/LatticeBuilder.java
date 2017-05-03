@@ -194,6 +194,7 @@ public class LatticeBuilder {
 			File outputFileDir = new File(fileName);
 			if ( !outputFileDir.exists() )
 			{
+//				System.err.println( "buildLattice " + fileName);
 				outputFileDir.mkdir();
 			}
 

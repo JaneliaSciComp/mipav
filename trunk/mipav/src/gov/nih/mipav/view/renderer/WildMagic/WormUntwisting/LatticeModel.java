@@ -77,6 +77,7 @@ public class LatticeModel {
 				}
 			} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 			} else { // voiFileDir does not exist
+//				System.err.println( "saveAllVOIsTo " + voiDir);
 				voiFileDir.mkdir();
 			}
 
@@ -113,6 +114,7 @@ public class LatticeModel {
 		if (fileDir.exists() && fileDir.isDirectory()) {} 
 		else if (fileDir.exists() && !fileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "saveAnnotationsAsCSV " + dir);
 			fileDir.mkdir();
 		}
 
@@ -4313,6 +4315,7 @@ public class LatticeModel {
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "saveAnnotationStatistics " + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = imageDir + "statistics" + File.separator;
@@ -4323,6 +4326,7 @@ public class LatticeModel {
 			// does
 			// not
 			// exist
+//			System.err.println( "saveAnnotationStatistics " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -4383,6 +4387,7 @@ public class LatticeModel {
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "saveImage " + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = outputDirectory + File.separator + "output_images" + File.separator;
@@ -4395,6 +4400,7 @@ public class LatticeModel {
 			// does
 			// not
 			// exist
+//			System.err.println( "saveImage " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -4520,6 +4526,7 @@ public class LatticeModel {
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "saveLatticeStatistics " + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = imageDir + "statistics" + File.separator;
@@ -4533,6 +4540,7 @@ public class LatticeModel {
 			// lrFile.delete();
 			// }
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir does not exist
+//			System.err.println( "saveLatticeStatistics " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -4616,6 +4624,7 @@ public class LatticeModel {
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "saveSpline " + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = outputDirectory + File.separator + "statistics" + File.separator;
@@ -4624,6 +4633,7 @@ public class LatticeModel {
 			// does
 			// not
 			// exist
+//			System.err.println( "saveSpline " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -6763,6 +6773,7 @@ public class LatticeModel {
 			}
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "segmentSkin " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -7237,6 +7248,7 @@ public class LatticeModel {
 			}
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "segmentLattice" + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -7568,6 +7580,7 @@ public class LatticeModel {
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "saveImage " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -7591,6 +7604,7 @@ public class LatticeModel {
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "saveSamplePlanes " + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = imageDir + "statistics" + File.separator;
@@ -7598,6 +7612,7 @@ public class LatticeModel {
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir does not exist
+//			System.err.println( "saveSamplePlanes " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -7648,6 +7663,7 @@ public class LatticeModel {
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "saveDiameters " + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = imageDir + "statistics" + File.separator;
@@ -7655,6 +7671,7 @@ public class LatticeModel {
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir does not exist
+//			System.err.println( "saveDiameters " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -7759,6 +7776,7 @@ public class LatticeModel {
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "savePositions " + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = imageDir + "statistics" + File.separator;
@@ -7766,6 +7784,7 @@ public class LatticeModel {
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir does not exist
+//			System.err.println( "savePositions " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -7957,6 +7976,7 @@ public class LatticeModel {
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
+//			System.err.println( "untwistLattice" + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = outputDirectory + File.separator + "statistics" + File.separator;
@@ -7964,6 +7984,7 @@ public class LatticeModel {
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir does not exist
+//			System.err.println( "untwistLattice" + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -8869,6 +8890,7 @@ public class LatticeModel {
 		if (parentFileDir.exists() && parentFileDir.isDirectory()) { // do nothing
 		} else if (parentFileDir.exists() && !parentFileDir.isDirectory()) { // do nothing
 		} else { // voiFileDir does not exist
+//			System.err.println( "LatticeModel:checkParentDir" + parentDir);
 			parentFileDir.mkdir();
 		}
 	}
