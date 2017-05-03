@@ -82,15 +82,20 @@ public class WormData
 				outputDirectory = outputDirectory.substring(0, outputDirectory.length() - 2);
 			}
 			String parentDir = new String(wormImage.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator);
-			checkParentDir(parentDir);
+			if ( !isStraight )
+			{
+				checkParentDir(parentDir);
+			}
 			File dir = new File(outputDirectory);
 			if ( !dir.exists() )
 			{
+//				System.err.println( "WormData " + outputDirectory);
 				dir.mkdir();
 			}
 			dir = new File(outputImagesDirectory);
 			if ( !dir.exists() )
 			{
+//				System.err.println( "WormData " + outputImagesDirectory);
 				dir.mkdir();
 			}
 			
@@ -517,6 +522,7 @@ public class WormData
 			File outputDir = new File(seamCellDir);
 			if ( !outputDir.exists() )
 			{
+//				System.err.println( "segmentSeamCells " + seamCellDir);
 				outputDir.mkdir();
 			}
 			seamCellPoints = new Vector<Vector3f>();
@@ -804,6 +810,7 @@ public class WormData
 		File outputFileDir = new File(seamCellDir);
 		if ( !outputFileDir.exists() )
 		{
+//			System.err.println( "segmentSeamCells " + seamCellDir);
 			outputFileDir.mkdir();
 		}
 
@@ -1016,6 +1023,7 @@ public class WormData
 		if (parentFileDir.exists() && parentFileDir.isDirectory()) { // do nothing
 		} else if (parentFileDir.exists() && !parentFileDir.isDirectory()) { // do nothing
 		} else { // parentDir does not exist
+			System.err.println( "WormData:checkParentDir " + parentDir);
 			parentFileDir.mkdir();
 		}
 	}
