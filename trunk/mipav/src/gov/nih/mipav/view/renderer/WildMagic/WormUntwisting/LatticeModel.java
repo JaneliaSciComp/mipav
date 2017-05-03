@@ -450,6 +450,13 @@ public class LatticeModel {
 				imageA.unregisterVOI(voi);
 			}
 		}
+		if (showSelected != null) {
+			for (int i = 0; i < showSelected.length; i++) {
+				showSelected[i].dispose();
+			}
+			showSelected = null;
+		}
+		showSelectedVOI = null;
 	}
 
 	/**
