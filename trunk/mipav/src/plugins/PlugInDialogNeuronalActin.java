@@ -17,6 +17,8 @@ import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -177,28 +179,22 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 
                     if (compare == 0) {
                         // Without numbers, the two are the same
-                        final String s1Num = s1.replaceAll("[^0-9]", "");
-                        final String s2Num = s2.replaceAll("[^0-9]", "");
-                        final String s1NumFinal;
-                        final String s2NumFinal;
-
-                        // Truncate so that you aren't growing too large
-                        final int length = String.valueOf(Integer.MAX_VALUE).length() - 1;
-                        if (s1Num.length() > length) {
-                            s1NumFinal = s1Num.substring(s1Num.length() - length);
-                        } else {
-                            s1NumFinal = s1Num;
+                        String s1Num = "";
+                        String s2Num = "";
+                        
+                        final Pattern p = Pattern.compile(".*(\\d+)\\.swc$");
+                        Matcher m = p.matcher(s1);
+                        if (m.find()) {
+                            s1Num = m.group(1);
                         }
-
-                        if (s2Num.length() > length) {
-                            s2NumFinal = s2Num.substring(s2Num.length() - length);
-                        } else {
-                            s2NumFinal = s2Num;
+                        m = p.matcher(s2);
+                        if (m.find()) {
+                            s2Num = m.group(1);
                         }
 
                         // Compare the left over numbers
-                        final int s1Int = Integer.valueOf(s1NumFinal);
-                        final int s2Int = Integer.valueOf(s2NumFinal);
+                        final int s1Int = Integer.valueOf(s1Num);
+                        final int s2Int = Integer.valueOf(s2Num);
 
                         return Integer.valueOf(s1Int).compareTo(Integer.valueOf(s2Int));
                     } else {
