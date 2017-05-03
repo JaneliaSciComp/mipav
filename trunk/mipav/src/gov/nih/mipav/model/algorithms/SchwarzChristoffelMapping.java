@@ -3271,8 +3271,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
     	} // for (i = 0; i < n; i++)
     	if (j >= 0) {
     		for (k = 0; k < npts; k++) {
-    			double zreal = zprow[k][0] - z[j][0];
-    			double zimag = zprow[k][1] - z[j][1];
+    			double zreal = zprow[k][0] - zcopy[j][0];
+    			double zimag = zprow[k][1] - zcopy[j][1];
     			double zabs = zabs(zreal,zimag);
     			terms[j][k][0] = terms[j][k][0] - Math.log(zabs);
     		}
