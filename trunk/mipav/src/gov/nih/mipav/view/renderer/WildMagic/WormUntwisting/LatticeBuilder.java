@@ -198,6 +198,25 @@ public class LatticeBuilder {
 			}
 
 			LatticeModel.saveAllVOIsTo(fileName, image);
+			
+			VOI latticePoints = new VOI( (short)0, "lattice" + (i+1), VOI.ANNOTATION, 0);
+			VOIContour left = (VOIContour) lattice.getCurves().elementAt(0);
+			VOIContour right = (VOIContour) lattice.getCurves().elementAt(1);
+			for ( int j = 0; j < left.size(); j++ )
+			{
+				VOIText text = new VOIText();
+				text.setText( "L" + j );
+				text.add(left.elementAt(j));
+				text.add(left.elementAt(j));
+				latticePoints.getCurves().add(text);
+				
+				text = new VOIText();
+				text.setText( "R" + j );
+				text.add(right.elementAt(j));
+				text.add(right.elementAt(j));
+				latticePoints.getCurves().add(text);
+			}
+			LatticeModel.saveAnnotationsAsCSV(fileName, "lattice.csv", latticePoints);
 		}
 
 		System.err.println( "done buildLattice = " + AlgorithmBase.computeElapsedTime(startTime) );

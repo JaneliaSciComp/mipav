@@ -423,13 +423,6 @@ public class VolumeImage implements Serializable {
 		final int iYBound = kImage.getExtents()[1];
 		final int iZBound = kImage.getExtents()[2];
 		int iSize = iXBound * iYBound * iZBound;
-		boolean release = false;
-		if ( kGraphicsImage.GetData().length != (iSize * 4) )
-		{
-			byte[] aucData = new byte[iSize*4];
-			kGraphicsImage.SetData(aucData, iXBound, iYBound, iZBound);
-			release = true;
-		}
 
 		byte[] aucData = null;
 		if (kImage.isColorImage()) {
@@ -470,11 +463,11 @@ public class VolumeImage implements Serializable {
 
 		}
 		if (kVolumeTexture != null) {
-			if ( release )
-			{
-				kVolumeTexture.Remove();
-			}
-			else
+//			if ( release )
+//			{
+//				kVolumeTexture.Remove();
+//			}
+//			else
 			{
 				kVolumeTexture.Reload(true);
 			}
@@ -1312,14 +1305,25 @@ public class VolumeImage implements Serializable {
 	 * @param kImage the modified ModelImage
 	 * @param bCopytoCPU when true the data is copied from the GPU GraphicsImage into the ModelImage
 	 */
-	public void UpdateData(final ModelImage kImage) {
-		if ( m_kImage != kImage )
-		{
-			m_kImage = kImage;
-			InitScale();
+	public void UpdateData(final ModelImage kImage, boolean reload) {
+		m_kImage = kImage;
+		initLUT();
+		if ( reload )
+		{			
+			if ( m_kVolume[m_iTimeSlice] != null )
+			{
+				m_kVolume[m_iTimeSlice].dispose();
+			}
+			m_kVolumeTarget.Remove();
+			m_kVolume[m_iTimeSlice] = initVolumeData(m_kImage, m_iTimeSlice, m_kVolumeTarget, m_kImage.getImageName(), true, false);
+			m_kVolumeTarget.SetImage(m_kVolume[m_iTimeSlice]);
 		}
-		m_kVolume[m_iTimeSlice] = resetVolumeData(m_kImage, m_iTimeSlice, m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kImage
-				.getImageName(), true, false);
+		else
+		{
+			m_kVolume[m_iTimeSlice] = resetVolumeData(m_kImage, m_iTimeSlice, m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kImage
+					.getImageName(), true, false);
+		}
+		InitScale();
 	}
 
 	/**

@@ -1,18 +1,5 @@
 package gov.nih.mipav.view.renderer.WildMagic.WormUntwisting;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Vector;
-
-import WildMagic.LibFoundation.Containment.ContBox3f;
-import WildMagic.LibFoundation.Mathematics.Box3f;
-import WildMagic.LibFoundation.Mathematics.Matrix3f;
-import WildMagic.LibFoundation.Mathematics.Vector2d;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibGraphics.SceneGraph.BoxBV;
-
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -20,8 +7,16 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Vector;
+
+import WildMagic.LibFoundation.Containment.ContBox3f;
+import WildMagic.LibFoundation.Mathematics.Box3f;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 public class WormData
 {
@@ -133,18 +128,52 @@ public class WormData
 		}
 	}
 
-	/**
-	 * Creates the parent directory for the output images and data created by worm segmentation and untwisting:
-	 * @param parentDir
-	 */
-	private void checkParentDir( String parentDir )
+	public int generateLattice()
 	{
-		File parentFileDir = new File(parentDir);
-		if (parentFileDir.exists() && parentFileDir.isDirectory()) { // do nothing
-		} else if (parentFileDir.exists() && !parentFileDir.isDirectory()) { // do nothing
-		} else { // parentDir does not exist
-			parentFileDir.mkdir();
+		if ( seamSegmentation == null )
+		{
+			readSeamSegmentation();
+			if ( seamSegmentation == null )
+			{
+				segmentSeamCells(minSeamRadius, maxSeamRadius);
+			}
 		}
+		if ( seamAnnotations == null )
+		{
+			readSeamCells();
+			if ( seamAnnotations == null )
+			{
+				segmentSeamCells(minSeamRadius, maxSeamRadius);
+			}
+		}
+		if ( skinSegmentation == null )
+		{
+			readSkinSegmentation();
+			if ( skinSegmentation == null )
+			{
+				segmentSkin();
+			}
+		}
+		LatticeBuilder builder = new LatticeBuilder();
+		builder.setSeamImage(seamSegmentation);
+		builder.setSkinImage(skinSegmentation);
+		// build the lattices from input image and list of points:
+		autoLattice = builder.buildLattice( null, 0, 0, wormImage, seamAnnotations, minSeamCellSegmentationIntensity, null, outputDirectory, seamEdited );
+		builder.dispose();
+		builder = null;
+		return autoLattice.size();
+	}
+	
+	public VOIVector getAutoLattice()
+	{
+		return autoLattice;
+	}
+	
+	public VOI getMarkerAnnotations()
+	{
+		if ( markerAnnotations == null )
+			markerAnnotations = new VOI( (short)0, "markers", VOI.ANNOTATION, 0 );
+		return markerAnnotations;
 	}
 	
 	public String getOutputDirectory()
@@ -159,28 +188,14 @@ public class WormData
 		return seamAnnotations;
 	}
 	
-	public VOI getMarkerAnnotations()
+	public Vector<Vector3f> getSeamCells()
 	{
-		if ( markerAnnotations == null )
-			markerAnnotations = new VOI( (short)0, "markers", VOI.ANNOTATION, 0 );
-		return markerAnnotations;
+		return seamCellPoints;
 	}
 	
-	public void saveMarkerAnnotations()
-	{		
-		wormImage.unregisterAllVOIs();
-		wormImage.registerVOI(markerAnnotations);
-		markerAnnotations.setName("markers");
-		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editAnnotationOutput + File.separator, wormImage);
-		LatticeModel.saveSeamCellsTo(outputDirectory + File.separator + editAnnotationOutput + File.separator, "markerInfo.csv", markerAnnotations);
-		wormImage.unregisterAllVOIs();
-	}
-	
-	public VOIVector openStraightLattice()
+	public ModelImage getSeamSegmentation()
 	{
-		VOIVector lattice = new VOIVector();
-		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + straightenedLattice + File.separator, true, lattice, true);
-		return lattice;
+		return seamSegmentation;
 	}
 	
 	public VOI openStraightAnnotations()
@@ -192,6 +207,168 @@ public class WormData
 			return annotationVector.elementAt(0);
 		}
 		return null;
+	}
+	
+	public VOIVector openStraightLattice()
+	{
+		VOIVector lattice = new VOIVector();
+		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + straightenedLattice + File.separator, true, lattice, true);
+		return lattice;
+	}
+	
+	public VOIVector[] readAutoLattice()
+	{
+		VOIVector[] latticeList = new VOIVector[5];
+		// read top 5 lattices:
+		for ( int i = 0; i < 5; i++ )
+		{
+			String fileName = outputDirectory + File.separator + autoLatticeGenerationOutput + (i+1) + File.separator;
+			File outputFileDir = new File(fileName);
+			if ( outputFileDir.exists() )
+			{
+				latticeList[i] = new VOIVector();
+				LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoLatticeGenerationOutput + (i+1) + File.separator, true, latticeList[i], false);
+			}
+		}
+		return latticeList;
+	}
+	
+	public VOI readFinalLattice()
+	{
+		// try reading the edited lattice:
+		String fileName = outputDirectory + File.separator + editLatticeOutput + File.separator;
+		File outputFileDir = new File(fileName);
+		if ( outputFileDir.exists() )
+		{
+			VOIVector finalLattice = new VOIVector();
+			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editLatticeOutput + File.separator, true, finalLattice, false);
+			if ( finalLattice.size() > 0 )
+			{
+				return finalLattice.elementAt(0);
+			}
+		}
+		// try reading one of the generated lattices:
+		fileName = outputDirectory + File.separator + autoLatticeGenerationOutput + 1 + File.separator;
+		outputFileDir = new File(fileName);
+		if ( outputFileDir.exists() )
+		{
+			VOIVector lattice = new VOIVector();
+			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoLatticeGenerationOutput + 1 + File.separator, true, lattice, false);
+			if ( lattice.size() > 0 )
+			{
+				return lattice.elementAt(0);
+			}
+		}
+		return null;
+	}
+
+	public void readMarkers()
+	{
+		VOIVector annotationVector = new VOIVector();
+		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editAnnotationOutput + File.separator, true, annotationVector, false);
+		if ( annotationVector.size() > 0 )
+		{
+			markerAnnotations = annotationVector.elementAt(0);
+		}
+		if ( markerAnnotations == null )
+		{
+			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editAnnotationInput + File.separator, true, annotationVector, false);
+			if ( annotationVector.size() > 0 )
+			{
+				markerAnnotations = annotationVector.elementAt(0);
+			}
+		}
+	}
+	
+	public Vector<Vector3f> readSeamCells()
+	{	
+		seamEdited = false;
+		VOIVector annotationVector = new VOIVector();
+		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editSeamCellOutput + File.separator, true, annotationVector, false);
+		if ( annotationVector.size() > 0 )
+		{
+			seamAnnotations = annotationVector.elementAt(0);
+			seamEdited = true;
+		}
+		if ( seamAnnotations == null )
+		{
+			seamEdited = false;
+			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoSeamCellSegmentationOutput + File.separator, true, annotationVector, false);
+			if ( annotationVector.size() > 0 )
+			{
+				seamAnnotations = annotationVector.elementAt(0);
+			}
+			if ( seamAnnotations == null )
+			{
+				return null;
+			}
+		}
+		seamCellPoints = new Vector<Vector3f>();
+		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			seamCellPoints.add(new Vector3f(text.elementAt(0)));
+		}
+		return seamCellPoints;
+	}
+	
+	public ModelImage readSeamSegmentation()
+	{
+		String seamCellDir = outputImagesDirectory + File.separator;
+		File inputFile = new File(seamCellDir + "seamCellImage.xml");
+		if ( inputFile.exists() )
+		{
+			FileIO fileIO = new FileIO();
+			seamSegmentation = fileIO.readImage( seamCellDir + "seamCellImage.xml" );
+		} 
+		else
+		{
+			return null;
+		}
+		float minSeam = Float.MAX_VALUE;
+		for ( int i = 0; i < seamSegmentation.getDataSize(); i++ )
+		{
+			if ( seamSegmentation.getFloat(i) > 0 )
+			{
+				float value = wormImage.getFloat(i);
+				if ( value < minSeam )
+				{
+					minSeam = value;
+				}
+			}
+		}
+		if ( minSeam != Float.MAX_VALUE )
+		{
+			minSeamCellSegmentationIntensity = minSeam;
+		}
+		return seamSegmentation;
+	}
+	
+	public ModelImage readSkinSegmentation()
+	{
+		String seamCellDir = outputImagesDirectory + File.separator;
+		File inputFile = new File(seamCellDir + "skinImage.xml");
+		if ( inputFile.exists() )
+		{
+			FileIO fileIO = new FileIO();
+			skinSegmentation = fileIO.readImage( seamCellDir + "skinImage.xml" );
+		} 
+		return skinSegmentation;
+	}
+	
+	public void saveLattice()
+	{
+		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editLatticeOutput + File.separator, wormImage);
+	}
+	
+	public void saveMarkerAnnotations()
+	{		
+		wormImage.unregisterAllVOIs();
+		wormImage.registerVOI(markerAnnotations);
+		markerAnnotations.setName("markers");
+		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editAnnotationOutput + File.separator, wormImage);
+		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editAnnotationOutput + File.separator, "markerInfo.csv", markerAnnotations);
+		wormImage.unregisterAllVOIs();
 	}
 	
 	public void saveSeamAnnotations()
@@ -326,64 +503,9 @@ public class WormData
 		
 		seamAnnotations.setName("seam cells");
 		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editSeamCellOutput + File.separator, wormImage);
-		LatticeModel.saveSeamCellsTo(outputDirectory + File.separator + editSeamCellOutput + File.separator, "seamCellInfo.csv", seamAnnotations);
+		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editSeamCellOutput + File.separator, "seamCellInfo.csv", seamAnnotations);
 	}
 	
-	public void saveLattice()
-	{
-		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editLatticeOutput + File.separator, wormImage);
-	}
-	
-	public void readMarkers()
-	{
-		VOIVector annotationVector = new VOIVector();
-		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editAnnotationOutput + File.separator, true, annotationVector, false);
-		if ( annotationVector.size() > 0 )
-		{
-			markerAnnotations = annotationVector.elementAt(0);
-		}
-		if ( markerAnnotations == null )
-		{
-			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editAnnotationInput + File.separator, true, annotationVector, false);
-			if ( annotationVector.size() > 0 )
-			{
-				markerAnnotations = annotationVector.elementAt(0);
-			}
-		}
-	}
-	
-	public Vector<Vector3f> readSeamCells()
-	{	
-		seamEdited = false;
-		VOIVector annotationVector = new VOIVector();
-		LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editSeamCellOutput + File.separator, true, annotationVector, false);
-		if ( annotationVector.size() > 0 )
-		{
-			seamAnnotations = annotationVector.elementAt(0);
-			seamEdited = true;
-		}
-		if ( seamAnnotations == null )
-		{
-			seamEdited = false;
-			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoSeamCellSegmentationOutput + File.separator, true, annotationVector, false);
-			if ( annotationVector.size() > 0 )
-			{
-				seamAnnotations = annotationVector.elementAt(0);
-			}
-			if ( seamAnnotations == null )
-			{
-				return null;
-			}
-		}
-		seamCellPoints = new Vector<Vector3f>();
-		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
-		{
-			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
-			seamCellPoints.add(new Vector3f(text.elementAt(0)));
-		}
-		return seamCellPoints;
-	}
-
 	public void segmentSeamCells(int minRadius, int maxRadius)
 	{
 		minSeamRadius = minRadius;
@@ -686,135 +808,9 @@ public class WormData
 		}
 
 		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + autoSeamCellSegmentationOutput + File.separator, wormImage);
-		LatticeModel.saveSeamCellsTo(seamCellDir, "seamCellInfo.csv", seamAnnotations);
+		LatticeModel.saveAnnotationsAsCSV(seamCellDir, "seamCellInfo.csv", seamAnnotations);
 			
 //		System.err.println( "   segmentSeamCells: end " + minSeamCellSegmentationIntensity );
-	}
-	
-	private VOI getSeamClusters()
-	{
-		if ( seamSegmentation == null )
-		{
-			readSeamSegmentation();
-		}
-		VOI clusterList = new VOI((short)0, "temp", VOI.POLYLINE, 0);
-		HashMap<Integer, VOIContour> clusters = new HashMap<Integer, VOIContour>();
-		int dimX = seamSegmentation.getExtents().length > 0 ? seamSegmentation.getExtents()[0] : 1;
-		int dimY = seamSegmentation.getExtents().length > 1 ? seamSegmentation.getExtents()[1] : 1;
-		int dimZ = seamSegmentation.getExtents().length > 2 ? seamSegmentation.getExtents()[2] : 1;
-		for ( int z = 0; z < dimZ; z++ )
-		{
-			for ( int y = 0; y < dimY; y++ )
-			{
-				for ( int x = 0; x < dimX; x++ )
-				{
-					int id = seamSegmentation.getInt(x, y, z );
-					if ( id > 0 )
-					{
-						if ( !clusters.containsKey(id) )
-						{
-							VOIContour cluster = new VOIContour(false);
-							clusters.put(id, cluster);
-							clusterList.getCurves().add(cluster);
-							System.err.println( "Adding cluster " + id );
-						}
-						VOIContour cluster = clusters.get(id);
-						cluster.add( new Vector3f(x,y,z));
-					}
-				}
-			}
-		}
-		System.err.println( "Done reading clusters" );
-		return clusterList;
-	}
-	
-	public void setNucleiImage(ModelImage image)
-	{
-//		nucleiImage = image;
-//		if ( nucleiBlur == null )
-//		{
-//			nucleiBlur = WormSegmentation.blur(nucleiImage, 3);
-//		}
-//		if ( wormBlur != null )
-//		{
-//			wormBlur = WormSegmentation.blur(wormImage, 3);
-//		}
-//		float maxNuclei = (float) nucleiBlur.getMax();
-//		float maxWorm = (float) wormBlur.getMax();
-//
-//		ModelImage insideOut = new ModelImage(ModelStorageBase.FLOAT, nucleiImage.getExtents(), "insideOut.tif");
-//		float min = Float.MAX_VALUE;
-//		float max = -Float.MAX_VALUE;
-//		for ( int i = 0; i < nucleiImage.getDataSize(); i++ )
-//		{
-//			float inside = insideSegmentation.getFloat(i);
-//			if ( inside > 0 )
-//			{
-//				float wormValue = wormBlur.getFloat(i);
-//				float nucleiValue = nucleiBlur.getFloat(i);
-//				if ( (wormValue > minSeamCellSegmentationIntensity) && (nucleiValue < .1*maxNuclei) )
-//				{
-//					insideOut.set(i, 10);
-//				}
-//			}
-//		}
-//		insideOut.setMax(10);
-//		insideOut.setMin(0);
-//		new ViewJFrameImage(insideOut);
-	}
-	
-	public Vector<Vector3f> getSeamCells()
-	{
-		return seamCellPoints;
-	}
-	
-	public ModelImage getSeamSegmentation()
-	{
-		return seamSegmentation;
-	}
-	
-	public ModelImage readSeamSegmentation()
-	{
-		String seamCellDir = outputImagesDirectory + File.separator;
-		File inputFile = new File(seamCellDir + "seamCellImage.xml");
-		if ( inputFile.exists() )
-		{
-			FileIO fileIO = new FileIO();
-			seamSegmentation = fileIO.readImage( seamCellDir + "seamCellImage.xml" );
-		} 
-		else
-		{
-			return null;
-		}
-		float minSeam = Float.MAX_VALUE;
-		for ( int i = 0; i < seamSegmentation.getDataSize(); i++ )
-		{
-			if ( seamSegmentation.getFloat(i) > 0 )
-			{
-				float value = wormImage.getFloat(i);
-				if ( value < minSeam )
-				{
-					minSeam = value;
-				}
-			}
-		}
-		if ( minSeam != Float.MAX_VALUE )
-		{
-			minSeamCellSegmentationIntensity = minSeam;
-		}
-		return seamSegmentation;
-	}
-	
-	public ModelImage readSkinSegmentation()
-	{
-		String seamCellDir = outputImagesDirectory + File.separator;
-		File inputFile = new File(seamCellDir + "skinImage.xml");
-		if ( inputFile.exists() )
-		{
-			FileIO fileIO = new FileIO();
-			skinSegmentation = fileIO.readImage( seamCellDir + "skinImage.xml" );
-		} 
-		return skinSegmentation;
 	}
 	
 	public void segmentSkin()
@@ -894,6 +890,41 @@ public class WormData
 		}
 	}
 	
+	public void setNucleiImage(ModelImage image)
+	{
+//		nucleiImage = image;
+//		if ( nucleiBlur == null )
+//		{
+//			nucleiBlur = WormSegmentation.blur(nucleiImage, 3);
+//		}
+//		if ( wormBlur != null )
+//		{
+//			wormBlur = WormSegmentation.blur(wormImage, 3);
+//		}
+//		float maxNuclei = (float) nucleiBlur.getMax();
+//		float maxWorm = (float) wormBlur.getMax();
+//
+//		ModelImage insideOut = new ModelImage(ModelStorageBase.FLOAT, nucleiImage.getExtents(), "insideOut.tif");
+//		float min = Float.MAX_VALUE;
+//		float max = -Float.MAX_VALUE;
+//		for ( int i = 0; i < nucleiImage.getDataSize(); i++ )
+//		{
+//			float inside = insideSegmentation.getFloat(i);
+//			if ( inside > 0 )
+//			{
+//				float wormValue = wormBlur.getFloat(i);
+//				float nucleiValue = nucleiBlur.getFloat(i);
+//				if ( (wormValue > minSeamCellSegmentationIntensity) && (nucleiValue < .1*maxNuclei) )
+//				{
+//					insideOut.set(i, 10);
+//				}
+//			}
+//		}
+//		insideOut.setMax(10);
+//		insideOut.setMin(0);
+//		new ViewJFrameImage(insideOut);
+	}
+	
 	public boolean testLattice( Vector<Vector3f> left, Vector<Vector3f> right, boolean reorder )
 	{
 		if ( seamSegmentation == null )
@@ -935,93 +966,97 @@ public class WormData
 		return pass;
 	}
 	
-	public int generateLattice()
+	private boolean allMatch(VOIContour pts1, VOI clusterList1, VOIContour pts2, VOI clusterList2, float minDist, Vector<Vector3f> finalPtsList, VOI finalClusterList )
+	{
+		if ( pts1.size() > pts2.size() )
+		{
+			return allMatch(pts2, clusterList2, pts1, clusterList1, minDist, finalPtsList, finalClusterList);
+		}
+		
+		for ( int i = 0; i < pts1.size(); i++ )
+		{
+			boolean foundMatch = false;
+			float minDistTest = Float.MAX_VALUE;
+			for ( int j = 0; j < pts2.size(); j++ )
+			{
+				float distance = pts1.elementAt(i).distance(pts2.elementAt(j));
+				if ( distance < minDistTest )
+				{
+					minDistTest = distance;
+				}
+				if ( distance < minDist )
+				{
+					foundMatch = true;
+					break;
+				}
+			}
+			if ( !foundMatch )
+			{
+//				System.err.println( i + "   " + minDistTest + "   " + minDist );
+				return false;
+			}
+		}
+
+		// Add larger list:
+		for ( int i = 0; i < pts2.size(); i++ )
+		{
+			finalPtsList.add( pts2.elementAt(i) );
+			finalClusterList.getCurves().add( clusterList2.getCurves().elementAt(i) );
+		}
+		return true;
+	}
+	
+	/**
+	 * Creates the parent directory for the output images and data created by worm segmentation and untwisting:
+	 * @param parentDir
+	 */
+	private void checkParentDir( String parentDir )
+	{
+		File parentFileDir = new File(parentDir);
+		if (parentFileDir.exists() && parentFileDir.isDirectory()) { // do nothing
+		} else if (parentFileDir.exists() && !parentFileDir.isDirectory()) { // do nothing
+		} else { // parentDir does not exist
+			parentFileDir.mkdir();
+		}
+	}
+
+	private VOI getSeamClusters()
 	{
 		if ( seamSegmentation == null )
 		{
 			readSeamSegmentation();
-			if ( seamSegmentation == null )
-			{
-				segmentSeamCells(minSeamRadius, maxSeamRadius);
-			}
 		}
-		if ( seamAnnotations == null )
+		VOI clusterList = new VOI((short)0, "temp", VOI.POLYLINE, 0);
+		HashMap<Integer, VOIContour> clusters = new HashMap<Integer, VOIContour>();
+		int dimX = seamSegmentation.getExtents().length > 0 ? seamSegmentation.getExtents()[0] : 1;
+		int dimY = seamSegmentation.getExtents().length > 1 ? seamSegmentation.getExtents()[1] : 1;
+		int dimZ = seamSegmentation.getExtents().length > 2 ? seamSegmentation.getExtents()[2] : 1;
+		for ( int z = 0; z < dimZ; z++ )
 		{
-			readSeamCells();
-			if ( seamAnnotations == null )
+			for ( int y = 0; y < dimY; y++ )
 			{
-				segmentSeamCells(minSeamRadius, maxSeamRadius);
+				for ( int x = 0; x < dimX; x++ )
+				{
+					int id = seamSegmentation.getInt(x, y, z );
+					if ( id > 0 )
+					{
+						if ( !clusters.containsKey(id) )
+						{
+							VOIContour cluster = new VOIContour(false);
+							clusters.put(id, cluster);
+							clusterList.getCurves().add(cluster);
+							System.err.println( "Adding cluster " + id );
+						}
+						VOIContour cluster = clusters.get(id);
+						cluster.add( new Vector3f(x,y,z));
+					}
+				}
 			}
 		}
-		if ( skinSegmentation == null )
-		{
-			readSkinSegmentation();
-			if ( skinSegmentation == null )
-			{
-				segmentSkin();
-			}
-		}
-		LatticeBuilder builder = new LatticeBuilder();
-		builder.setSeamImage(seamSegmentation);
-		builder.setSkinImage(skinSegmentation);
-		// build the lattices from input image and list of points:
-		autoLattice = builder.buildLattice( null, 0, 0, wormImage, seamAnnotations, minSeamCellSegmentationIntensity, null, outputDirectory, seamEdited );
-		builder.dispose();
-		builder = null;
-		return autoLattice.size();
+		System.err.println( "Done reading clusters" );
+		return clusterList;
 	}
 	
-	public VOIVector getAutoLattice()
-	{
-		return autoLattice;
-	}
-	
-	public VOI readFinalLattice()
-	{
-		// try reading the edited lattice:
-		String fileName = outputDirectory + File.separator + editLatticeOutput + File.separator;
-		File outputFileDir = new File(fileName);
-		if ( outputFileDir.exists() )
-		{
-			VOIVector finalLattice = new VOIVector();
-			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + editLatticeOutput + File.separator, true, finalLattice, false);
-			if ( finalLattice.size() > 0 )
-			{
-				return finalLattice.elementAt(0);
-			}
-		}
-		// try reading one of the generated lattices:
-		fileName = outputDirectory + File.separator + autoLatticeGenerationOutput + 1 + File.separator;
-		outputFileDir = new File(fileName);
-		if ( outputFileDir.exists() )
-		{
-			VOIVector lattice = new VOIVector();
-			LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoLatticeGenerationOutput + 1 + File.separator, true, lattice, false);
-			if ( lattice.size() > 0 )
-			{
-				return lattice.elementAt(0);
-			}
-		}
-		return null;
-	}
-	
-	public VOIVector[] readAutoLattice()
-	{
-		VOIVector[] latticeList = new VOIVector[5];
-		// read top 5 lattices:
-		for ( int i = 0; i < 5; i++ )
-		{
-			String fileName = outputDirectory + File.separator + autoLatticeGenerationOutput + (i+1) + File.separator;
-			File outputFileDir = new File(fileName);
-			if ( outputFileDir.exists() )
-			{
-				latticeList[i] = new VOIVector();
-				LatticeModel.loadAllVOIsFrom(wormImage, outputDirectory + File.separator + autoLatticeGenerationOutput + (i+1) + File.separator, true, latticeList[i], false);
-			}
-		}
-		return latticeList;
-	}
-
 	private float surfaceCount( ModelImage skinImage, Vector3f pt1, Vector3f pt2 )
 	{
 		Vector3f dir = Vector3f.sub(pt2, pt1);
@@ -1069,46 +1104,6 @@ public class WormData
 			}
 		}
 		return (skinCount/totalCount);
-	}
-	
-	private boolean allMatch(VOIContour pts1, VOI clusterList1, VOIContour pts2, VOI clusterList2, float minDist, Vector<Vector3f> finalPtsList, VOI finalClusterList )
-	{
-		if ( pts1.size() > pts2.size() )
-		{
-			return allMatch(pts2, clusterList2, pts1, clusterList1, minDist, finalPtsList, finalClusterList);
-		}
-		
-		for ( int i = 0; i < pts1.size(); i++ )
-		{
-			boolean foundMatch = false;
-			float minDistTest = Float.MAX_VALUE;
-			for ( int j = 0; j < pts2.size(); j++ )
-			{
-				float distance = pts1.elementAt(i).distance(pts2.elementAt(j));
-				if ( distance < minDistTest )
-				{
-					minDistTest = distance;
-				}
-				if ( distance < minDist )
-				{
-					foundMatch = true;
-					break;
-				}
-			}
-			if ( !foundMatch )
-			{
-//				System.err.println( i + "   " + minDistTest + "   " + minDist );
-				return false;
-			}
-		}
-
-		// Add larger list:
-		for ( int i = 0; i < pts2.size(); i++ )
-		{
-			finalPtsList.add( pts2.elementAt(i) );
-			finalClusterList.getCurves().add( clusterList2.getCurves().elementAt(i) );
-		}
-		return true;
 	}
 	
 }

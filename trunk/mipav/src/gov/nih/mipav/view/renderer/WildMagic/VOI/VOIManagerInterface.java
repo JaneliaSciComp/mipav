@@ -691,7 +691,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             	{
             		if ( vois.elementAt(i).getCurveType() == VOI.ANNOTATION )
             		{
-            			LatticeModel.saveSeamCellsTo(directory, fileName,  vois.elementAt(i));
+            			LatticeModel.saveAnnotationsAsCSV(directory, fileName,  vois.elementAt(i));
             			break;
             		}
             	}

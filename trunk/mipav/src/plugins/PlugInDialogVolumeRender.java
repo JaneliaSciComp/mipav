@@ -110,7 +110,9 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private VOIVector annotations;
 	private JButton backButton;
 	private String baseFileDir;
+	private String baseFileDir2;
 	private JTextField  baseFileLocText;
+	private JTextField  baseFileLocText2;
 	private String baseFileName;
 	private JTextField  baseFileNameText;
 	private JProgressBar batchProgress;
@@ -230,7 +232,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					try {
 					// Batch Untwisting:
-					PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
+					PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileNameText.getText() );
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish straightening." );
 						e.printStackTrace();
@@ -756,10 +758,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	{
 		if ( imageFile.exists() )
 		{
+			int[] previousExtents = null;
 			//					System.err.println( fileName );
 			gpuPanel.setBorder(JDialogBase.buildTitledBorder(fileName));
 			FileIO fileIO = new FileIO();
 			if ( wormImage != null ) {
+				previousExtents = new int[]{wormImage.getExtents()[0], wormImage.getExtents()[1], wormImage.getExtents()[2]};
 				wormImage.disposeLocal();
 				wormImage = null;
 			}
@@ -778,24 +782,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	            fileInfo[0].setUnitsOfMeasure(units);
 			}
 			
-			boolean updateRenderer = false;
-			if ( voiManager != null )
-			{
-				voiManager.setImage(wormImage);
-			}
-			if ( volumeImage == null )
+			if ( previousExtents == null )
 			{
 				volumeImage = new VolumeImage(false, wormImage, "", null, 0, false);
 				updateHistoLUTPanels();
-			}
-			else
-			{
-				updateRenderer = (wormImage.getDataSize() != volumeImage.GetImage().getDataSize());
-				volumeImage.UpdateData(wormImage);
-				updateHistoLUTPanels();
-			}
-			if ( volumeRenderer == null )
-			{
+
 				volumeRenderer = new VolumeTriPlanarRender(volumeImage);
 				volumeRenderer.addConfiguredListener(this);
 				gpuPanel.add(volumeRenderer.GetCanvas(), BorderLayout.CENTER);
@@ -806,6 +797,19 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			else
 			{
+				if ( voiManager != null )
+				{
+					voiManager.setImage(wormImage);
+				}
+
+				boolean updateRenderer = (wormImage.getExtents()[0] != previousExtents[0]) || 
+						(wormImage.getExtents()[1] != previousExtents[1]) ||
+						(wormImage.getExtents()[2] != previousExtents[2]);
+
+
+				volumeImage.UpdateData(wormImage, updateRenderer);
+				updateHistoLUTPanels();
+
 				if ( updateRenderer )
 				{
 					volumeRenderer.resetAxis();
@@ -844,7 +848,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					{
 						for ( int i = 0; i < potentialLattices.length; i++ )
 						{
-							potentialLattices[i].clear();
+							if (potentialLattices[i] != null )
+							{
+								potentialLattices[i].clear();
+							}
 						}
 						potentialLattices = null;
 					}	
@@ -1213,8 +1220,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
 		inputsPanel.setForeground(Color.black);
 
-		baseFileLocText = gui.buildFileField("Data directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		baseFileLocText = gui.buildFileField("Data directory (marker 1): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
 		inputsPanel.add(baseFileLocText.getParent(), gbc);
+		gbc.gridy++;
+
+		baseFileLocText2 = gui.buildFileField("Data directory (marker 2): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(baseFileLocText2.getParent(), gbc);
 		gbc.gridy++;
 
 		baseFileNameText = gui.buildField("Base images name: ", "Decon");
@@ -1297,8 +1308,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
 		inputsPanel.setForeground(Color.black);
 
-		baseFileLocText = gui.buildFileField("Data directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		baseFileLocText = gui.buildFileField("Data directory (marker 1): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
 		inputsPanel.add(baseFileLocText.getParent(), gbc);
+		gbc.gridy++;
+
+		baseFileLocText2 = gui.buildFileField("Data directory (marker 2): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(baseFileLocText2.getParent(), gbc);
 		gbc.gridy++;
 
 		baseFileNameText = gui.buildField("Base images name: ", "Decon");
@@ -1669,6 +1684,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	{	    
 		baseFileName = baseFileNameText.getText();
 		baseFileDir = baseFileLocText.getText();
+		baseFileDir2 = baseFileLocText2.getText();
 		includeRange = new Vector<Integer>();
 		String rangeFusion = rangeFusionText.getText();
 		if( rangeFusion != null )
@@ -1736,6 +1752,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{
 			lutHistogramPanel.setImages(volumeImage.GetImage(), null, volumeImage.getLUT(), null);
 			lutHistogramPanel.histogramLUT(true, false, true);
+			lutHistogramPanel.redrawFrames();
 		}
 		volumeImage.GetImage().addImageDisplayListener(this);
 	}
