@@ -176,7 +176,7 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 			if ( latticeStraighten.isSelected() )
 			{
-				PlugInAlgorithmWormUntwisting.latticeStraighten( null, includeRange,  baseFileDir, baseFileNameText.getText() );
+				PlugInAlgorithmWormUntwisting.latticeStraighten( null, includeRange, baseFileDir, null, baseFileNameText.getText() );
 			}
 			if ( calcStatistics.isSelected() )
 			{

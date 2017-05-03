@@ -242,7 +242,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							{
 								outputFileDir.mkdir();
 							}
-							LatticeModel.saveSeamCellsTo(seamCellDir, "seamCellInfo.csv", wormData.getSeamAnnotations());
+							LatticeModel.saveAnnotationsAsCSV(seamCellDir, "seamCellInfo.csv", wormData.getSeamAnnotations());
 						}
 						if ( seamCells != null)
 						{
