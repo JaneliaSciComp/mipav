@@ -1,35 +1,29 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.AlgorithmSkullRemoval;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.ScriptableActionInterface;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.*;
 
-import java.awt.BorderLayout;
-import java.awt.Frame;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
+import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 
 
 /**
  */
-public class JDialogFaceAnonymize extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
+public class JDialogFaceAnonymize extends JDialogScriptableBase
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface 
+{
 
-    private static final long serialVersionUID = 4849596386051779471L;
+	private static final long serialVersionUID = 4849596386051779471L;
 
-    /** Face orientation not obtained from file information. */
+	/** Face orientation not obtained from file information. */
     public static final int FACING_UNKNOWN = -1;
 
     /** Indicates sagittal image with x-axis oriented posterior to anterior. */
@@ -53,25 +47,12 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
     /** The face orientation parameter. */
     private static final String PARAM_FACE_ORIENTATION = "face_orientation";
 
-    private static final String PARAM_ATLAS_IMG = "atlas_image";
 
-    private static final String PARAM_DO_BLUR = "do_blur";
-
-    private static final String PARAM_DO_REMOVE = "do_remove";
-
-    private static final String PARAM_DO_FACE_ONLY = "do_face_only";
-
-    private static final String PARAM_SHOW_FACE_SEG = "show_face_seg";
-
-    private static final String PARAM_SHOW_SKULL_SEG = "show_skull_seg";
-
-    private static final String PARAM_PAD_MM = "pad_in_mm";
-
-    // ~ Instance fields
-    // ------------------------------------------------------------------------------------------------
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The algorithm corresponding to this dialog box. */
     private AlgorithmSkullRemoval defaceAlgo;
+
 
     /** Indicates face orientation of the image. */
     private int faceOrientation;
@@ -120,107 +101,108 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
      * millimeters. Initially set to 20.
      */
     private int extraMMsToPad = 0;
-
+    
     private JTextField imageTextField;
 
     /** The image that face anonymization will be performed on. */
     private ModelImage srcImage;
 
     private boolean blur = false;
-
     private boolean remove = false;
-
     private boolean face = true;
-
     private boolean showFaceSegmentation = false;
-
     private boolean showSkullSegmentation = false;
-
     private ModelImage atlasImage = null;
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogFaceAnonymize() {}
+    public JDialogFaceAnonymize() { }
 
     /**
      * Creates the face anonymizer dialog.
-     * 
-     * @param theParentFrame Parent frame.
-     * @param im Source image.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  im              Source image.
      */
-    public JDialogFaceAnonymize(final Frame theParentFrame, final ModelImage im) {
+    public JDialogFaceAnonymize(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         parentFrame = theParentFrame;
         srcImage = im;
         faceOrientation = getFaceOrientation(srcImage);
-        if (faceOrientation == FACING_UNKNOWN) {
-            initDirection();
-        } else {
-            init();
+        if (faceOrientation == FACING_UNKNOWN )
+        {
+        	initDirection();
+        }
+        else
+        {
+        	init();
         }
     }
 
-    // ~ Methods
-    // --------------------------------------------------------------------------------------------------------
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Presently only the script function calls this method. When the script sends this dialog the action command, this
      * method calls run.
-     * 
-     * @param event event that triggers function
+     *
+     * @param  event  event that triggers function
      */
-    @Override
-    public void actionPerformed(final ActionEvent event) {
-        final String command = event.getActionCommand();
-
-        if (command.equalsIgnoreCase("atlasImageBrowse")) {
-            ViewUserInterface.getReference().openImageFrame();
-            final ViewJFrameImage imageFrame = ViewUserInterface.getReference().getActiveImageFrame();
-            if (imageFrame != null) {
-                if (atlasImage != null) {
-                    atlasImage.disposeLocal();
-                    atlasImage = null;
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
+        
+        if ( command.equalsIgnoreCase("atlasImageBrowse") )
+		{
+        	ViewUserInterface.getReference().openImageFrame();
+        	ViewJFrameImage imageFrame =  ViewUserInterface.getReference().getActiveImageFrame();
+        	if ( imageFrame != null )
+        	{
+                if(atlasImage != null) {
+                	atlasImage.disposeLocal();
+                	atlasImage = null;
                 }
-                atlasImage = imageFrame.getActiveImage();
-                if (atlasImage != null) {
-                    imageTextField.setText(atlasImage.getImageFileName());
-                }
-            }
-            // JFileChooser chooser = new JFileChooser();
-            // if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-            // chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-            // } else {
-            // chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-            // }
-            // chooser.setDialogTitle("Choose image");
-            // chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            // int returnValue = chooser.showOpenDialog(this);
-            // if (returnValue == JFileChooser.APPROVE_OPTION) {
-            // FileIO fileIO = new FileIO();
-            // if(atlasImage != null) {
-            // atlasImage.disposeLocal();
-            // atlasImage = null;
-            // }
-            // atlasImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() +
-            // File.separator, false, null);
-            //
-            // imageTextField.setText(chooser.getSelectedFile().getAbsolutePath());
-            // ViewUserInterface.getReference().setDefaultDirectory(chooser.getCurrentDirectory().toString() );
-            // }
-        }
+        		atlasImage = imageFrame.getActiveImage();
+        		if ( atlasImage != null )
+        		{
+        			imageTextField.setText( atlasImage.getImageFileName());
+        		}
+        	}
+//            JFileChooser chooser = new JFileChooser();   
+//            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+//                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+//            } else {
+//                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+//            }
+//            chooser.setDialogTitle("Choose image");
+//            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+//            int returnValue = chooser.showOpenDialog(this);
+//            if (returnValue == JFileChooser.APPROVE_OPTION) {
+//                FileIO fileIO = new FileIO();
+//                if(atlasImage != null) {
+//                	atlasImage.disposeLocal();
+//                	atlasImage = null;
+//                }
+//                atlasImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, false, null);  
+//
+//                imageTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+//                ViewUserInterface.getReference().setDefaultDirectory(chooser.getCurrentDirectory().toString() );
+//            }
+        } 
         if (command.equals("OK")) {
-            if (faceOrientation == FACING_UNKNOWN) {
-                if (setVariablesDirection()) {
-                    init();
-                }
-            } else if (setVariables()) {
+        	if ( faceOrientation == FACING_UNKNOWN )
+        	{
+        		if ( setVariablesDirection() )
+        		{
+        			init();
+        		}
+        	}
+        	else if (setVariables()) {
                 callAlgorithm();
             }
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("19014");
+            //MipavUtil.showHelp("19014");
             MipavUtil.showWebHelp("Face_Anonymizer_(BET)#Applying_the_Face_Anonymizer_Algorithm");
         } else {
             super.actionPerformed(event);
@@ -230,13 +212,12 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to to complete, so that the dialog can display the result image and/or clean up.
-     * 
-     * @param algorithm Algorithm that caused the event.
+     *
+     * @param  algorithm  Algorithm that caused the event.
      */
-    @Override
-    public void algorithmPerformed(final AlgorithmBase algorithm) {
+    public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if ( (algorithm instanceof AlgorithmSkullRemoval) && algorithm.isCompleted()) {
+        if ((algorithm instanceof AlgorithmSkullRemoval) && algorithm.isCompleted()) {
             insertScriptLine();
             setComplete(algorithm.isCompleted());
 
@@ -247,10 +228,10 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
 
     /**
      * Construct a delimited string that contains the parameters to this algorithm.
-     * 
-     * @param delim the parameter delimiter (defaults to " " if empty)
-     * 
-     * @return the parameter string
+     *
+     * @param   delim  the parameter delimiter (defaults to " " if empty)
+     *
+     * @return  the parameter string
      */
     public String getParameterString(String delim) {
 
@@ -263,75 +244,48 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
         return str;
     }
 
+
     /**
      * {@inheritDoc}
      */
-    @Override
     public void setGUIFromParams() {
         srcImage = scriptParameters.retrieveInputImage();
         parentFrame = srcImage.getParentFrame();
 
-        blur = scriptParameters.getParams().getBoolean(PARAM_DO_BLUR);
-        remove = scriptParameters.getParams().getBoolean(PARAM_DO_REMOVE);
-        face = scriptParameters.getParams().getBoolean(PARAM_DO_FACE_ONLY);
-        showFaceSegmentation = scriptParameters.getParams().getBoolean(PARAM_SHOW_FACE_SEG);
-        showSkullSegmentation = scriptParameters.getParams().getBoolean(PARAM_SHOW_SKULL_SEG);
-        extraMMsToPad = scriptParameters.getParams().getInt(PARAM_PAD_MM);
+        faceOrientation = getFaceOrientation(srcImage);
 
-        if (scriptParameters.getParams().containsParameter(PARAM_ATLAS_IMG)) {
-            atlasImage = scriptParameters.getParams().getImage(PARAM_ATLAS_IMG);
+        int scriptFaceOrientation = scriptParameters.getParams().getInt(PARAM_FACE_ORIENTATION);
+
+        if (faceOrientation == FACING_UNKNOWN) {
+            faceOrientation = scriptFaceOrientation;
         }
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override
     public void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(srcImage);
 
-        if (atlasImage != null) {
-            scriptParameters.storeImage(atlasImage, PARAM_ATLAS_IMG);
-        }
-
-        scriptParameters.getParams().put(ParameterFactory.newBoolean(PARAM_DO_BLUR, blur));
-        scriptParameters.getParams().put(ParameterFactory.newBoolean(PARAM_DO_REMOVE, remove));
-        scriptParameters.getParams().put(ParameterFactory.newBoolean(PARAM_DO_FACE_ONLY, face));
-        scriptParameters.getParams().put(ParameterFactory.newBoolean(PARAM_SHOW_FACE_SEG, showFaceSegmentation));
-        scriptParameters.getParams().put(ParameterFactory.newBoolean(PARAM_SHOW_SKULL_SEG, showSkullSegmentation));
-        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_PAD_MM, extraMMsToPad));
-    }
-
-    /**
-     * Perform any actions required after the running of the algorithm is complete.
-     */
-    @Override
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(defaceAlgo.getDestImage());
-
-        if (showFaceSegmentation || showSkullSegmentation) {
-            AlgorithmParameters.storeImageInRunner(defaceAlgo.getSegmentationImage());
-        }
-
-        if (defaceAlgo.getMaskImage() != null) {
-            AlgorithmParameters.storeImageInRunner(defaceAlgo.getMaskImage());
-        }
+        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_FACE_ORIENTATION, faceOrientation));
     }
 
     /**
      * Calls the algorithm.
      */
-    @Override
     protected void callAlgorithm() {
 
         try {
             System.gc();
-            if (atlasImage != null) {
-                defaceAlgo = new AlgorithmSkullRemoval(srcImage, atlasImage);
-            } else {
-                defaceAlgo = new AlgorithmSkullRemoval(srcImage);
+            if ( atlasImage != null )
+            {
+            	defaceAlgo = new AlgorithmSkullRemoval(srcImage, atlasImage);
             }
-            defaceAlgo.setOutputOption(blur, remove, face, showFaceSegmentation, showSkullSegmentation);
+            else
+            {
+            	defaceAlgo = new AlgorithmSkullRemoval(srcImage);
+            }
+            defaceAlgo.setOutputOption( blur, remove, face, showFaceSegmentation, showSkullSegmentation );
             defaceAlgo.setOffSet(extraMMsToPad);
             defaceAlgo.addListener(this);
 
@@ -349,7 +303,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
             } else {
                 defaceAlgo.run();
             }
-        } catch (final OutOfMemoryError x) {
+        } catch (OutOfMemoryError x) {
             System.gc();
             MipavUtil.displayError("Dialog Extract Brain : unable to allocate enough memory");
 
@@ -359,15 +313,15 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
 
     /**
      * Return the guess at the face's orientation based on the image orientation information.
-     * 
-     * @param img the image to guess from
-     * 
-     * @return the direction the face is likely pointing in (or FACING_UNKNOWN if a guess cannot be made)
+     *
+     * @param   img  the image to guess from
+     *
+     * @return  the direction the face is likely pointing in (or FACING_UNKNOWN if a guess cannot be made)
      */
-    private static int getFaceOrientation(final ModelImage img) {
+    private static int getFaceOrientation(ModelImage img) {
 
         // See if the image orientation is known
-        final int[] axisOrientation = img.getFileInfo(0).getAxisOrientation();
+        int[] axisOrientation = img.getFileInfo(0).getAxisOrientation();
 
         if (axisOrientation[0] == FileInfoBase.ORI_P2A_TYPE) {
             return FACING_RIGHT;
@@ -393,7 +347,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
         setTitle("Anonymize Face");
         getContentPane().setLayout(new BorderLayout());
 
-        final JPanel orientationPanel = new JPanel(new GridLayout(3, 2));
+        JPanel orientationPanel = new JPanel(new GridLayout(3, 2));
         orientationPanel.setBorder(MipavUtil.buildTitledBorder("Which way is the patient's face pointing?"));
 
         facingRightRadio = new JRadioButton("Right");
@@ -438,7 +392,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
             facingOutRadio.setSelected(true);
         }
 
-        final ButtonGroup group = new ButtonGroup();
+        ButtonGroup group = new ButtonGroup();
         group.add(facingDownRadio);
         group.add(facingUpRadio);
         group.add(facingRightRadio);
@@ -453,16 +407,18 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
         orientationPanel.add(facingIntoRadio);
         orientationPanel.add(facingOutRadio);
 
-        final JPanel mainPanel = new JPanel(new BorderLayout());
+        JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(orientationPanel, BorderLayout.NORTH);
 
         getContentPane().add(mainPanel, BorderLayout.NORTH);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
-        // setResizable(false);
+        //setResizable(false);
         setVisible(true);
     }
+
+    
 
     /**
      * Makes the GUI elements of the dialog. Not called at present because it is not necessary.
@@ -471,7 +427,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
         setTitle("Anonymize Face");
         getContentPane().setLayout(new BorderLayout());
 
-        final JPanel orientationPanel = new JPanel(new GridLayout(3, 2));
+        JPanel orientationPanel = new JPanel(new GridLayout(3, 2));
         orientationPanel.setBorder(MipavUtil.buildTitledBorder("Options"));
 
         blurFaceRadio = new JRadioButton("Blur face.");
@@ -494,7 +450,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
         showAllSegmentationRadio.setFont(MipavUtil.font12);
         showAllSegmentationRadio.setSelected(true);
 
-        final ButtonGroup group = new ButtonGroup();
+        ButtonGroup group = new ButtonGroup();
         group.add(blurFaceRadio);
         group.add(removeFaceRadio);
         group.add(blurAllRadio);
@@ -508,32 +464,35 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
         orientationPanel.add(removeAllRadio);
         orientationPanel.add(showFaceSegmentationRadio);
         orientationPanel.add(showAllSegmentationRadio);
-
-        final JPanel removalPanel = new JPanel(new GridLayout(1, 2));
+        
+        
+        JPanel removalPanel = new JPanel(new GridLayout(1, 2));
         removalPanel.setBorder(MipavUtil.buildTitledBorder("Face removal options"));
 
         extraBrainPaddingField = new JTextField();
         extraBrainPaddingField.setText("" + extraMMsToPad);
         extraBrainPaddingField.setColumns(2);
 
-        final JLabel extraPaddingLabel = new JLabel("Extracted brain is avoided by a buffer of this many mms");
+        JLabel extraPaddingLabel = new JLabel("Extracted brain is avoided by a buffer of this many mms");
         extraPaddingLabel.setFont(MipavUtil.font12);
-        removalPanel.add(extraPaddingLabel);
+        removalPanel.add( extraPaddingLabel );
         removalPanel.add(extraBrainPaddingField);
+        
 
-        final JPanel atlasPanel = new JPanel(new BorderLayout());
-        atlasPanel.add(new JLabel("Optional Atlas Image:"), BorderLayout.WEST);
+        JPanel atlasPanel = new JPanel(new BorderLayout());
+        atlasPanel.add( new JLabel("Optional Atlas Image:"), BorderLayout.WEST );
         imageTextField = new JTextField();
-        atlasPanel.add(imageTextField, BorderLayout.CENTER);
-        final JButton browseButton = new JButton("Browse");
-        browseButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        browseButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        browseButton.setFont(serif12B);
-        browseButton.addActionListener(this);
-        browseButton.setActionCommand("atlasImageBrowse");
-        atlasPanel.add(browseButton, BorderLayout.EAST);
+        atlasPanel.add( imageTextField, BorderLayout.CENTER );
+		JButton browseButton = new JButton("Browse");
+		browseButton.setMinimumSize(MipavUtil.defaultButtonSize);
+		browseButton.setPreferredSize(MipavUtil.defaultButtonSize);
+		browseButton.setFont(serif12B);
+		browseButton.addActionListener(this);
+		browseButton.setActionCommand("atlasImageBrowse");	
+		atlasPanel.add( browseButton, BorderLayout.EAST );
+        
 
-        final JPanel mainPanel = new JPanel(new BorderLayout());
+        JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(orientationPanel, BorderLayout.NORTH);
         mainPanel.add(removalPanel, BorderLayout.CENTER);
         mainPanel.add(atlasPanel, BorderLayout.SOUTH);
@@ -546,10 +505,15 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
         setVisible(true);
     }
 
+    
+    
+    
+
+    
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
-     * 
-     * @return <code>true</code> if parameters set successfully, <code>false</code> otherwise.
+     *
+     * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariablesDirection() {
 
@@ -574,10 +538,11 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
         return true;
     }
 
+    
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
-     * 
-     * @return <code>true</code> if parameters set successfully, <code>false</code> otherwise.
+     *
+     * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
 
@@ -585,7 +550,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
         remove = removeFaceRadio.isSelected() || removeAllRadio.isSelected();
         face = blurFaceRadio.isSelected() || removeFaceRadio.isSelected();
         showFaceSegmentation = showFaceSegmentationRadio.isSelected();
-        showSkullSegmentation = showAllSegmentationRadio.isSelected();
+        showSkullSegmentation = showAllSegmentationRadio.isSelected() ;
         if (MipavUtil.testParameter(extraBrainPaddingField.getText(), 0, 500)) {
             extraMMsToPad = Integer.parseInt(extraBrainPaddingField.getText());
         } else {
@@ -602,40 +567,34 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
      * 
      * @return Metadata for this action.
      */
-    @Override
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
-            @Override
             public String getCategory() {
                 return new String("Algorithms.Brain tools");
             }
 
-            @Override
             public String getDescription() {
                 return new String("Removes the face from 3d brain scans.");
             }
 
-            @Override
             public String getDescriptionLong() {
                 return new String("Removes the face from 3d brain scans.");
             }
 
-            @Override
             public String getShortLabel() {
                 return new String("AnonymizeFace");
             }
 
-            @Override
             public String getLabel() {
                 return new String("Anonymize Face");
             }
 
-            @Override
             public String getName() {
                 return new String("Anonymize Face");
             }
         };
     }
+
 
     /**
      * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
@@ -643,10 +602,9 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
      * 
      * @return A parameter table listing the inputs of this algorithm.
      */
-    @Override
     public ParameterTable createInputParameters() {
         final ParameterTable table = new ParameterTable();
-
+        
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterInt(PARAM_FACE_ORIENTATION, 5));
@@ -664,7 +622,6 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
      * 
      * @return A parameter table listing the outputs of this algorithm.
      */
-    @Override
     public ParameterTable createOutputParameters() {
         final ParameterTable table = new ParameterTable();
 
@@ -677,7 +634,6 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
 
         return table;
     }
-
     /**
      * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
      * (which can be used to retrieve the image object from the image registry).
@@ -685,11 +641,11 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
      * @param imageParamName The output image parameter label for which to get the image name.
      * @return The image name of the requested output image parameter label.
      */
-    @Override
     public String getOutputImageName(final String imageParamName) {
         if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
-            return srcImage.getImageName();
-        }
+                return srcImage.getImageName();
+            }
+        
 
         Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
 
@@ -701,7 +657,6 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase implements Algor
      * 
      * @return True, if the action is complete. False, if the action failed or is still running.
      */
-    @Override
     public boolean isActionComplete() {
         return isComplete();
     }
