@@ -2868,7 +2868,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    // We have to be concerned with singularities lying to the right (left if d < 0) of the left
 		    // integration endpoint.
 		    for (j = 0; j < n; j++) {
-		    	if ((dx[j] > 0.0) && isFinite(z[j][0]) && isFinite(z[j][1])) {
+		    	if ((dx[j] > 0.0) && (!Double.isInfinite(z[j][0])) && (!Double.isInfinite(z[j][1])) ) {
 		    	    toright[j] = true;	
 		    	}
 		    	else {
@@ -3131,6 +3131,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    fprime = new double[zp.length][2];
 	    double zprow[][] = new double[zp.length][2];
 	    double theta[] = null;
+	    
 	    for (i = 0; i < zp.length; i++) {
 	        zprow[i][0] = zp[i][0];
 	        zprow[i][1] = zp[i][1];
@@ -3139,6 +3140,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    // z and beta are passed call by value. Make sure they are not changed
 	    double zcopy[][] = new double[z.length][2];
 	    double betacopy[] = new double[beta.length];
+	    double z2[][];
+	    double beta2[];
 	    for (i = 0; i < z.length; i++) {
 	    	zcopy[i][0] = z[i][0];
 	    	zcopy[i][1] = z[i][1];
@@ -3177,25 +3180,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	            	theta[i] = -theta[i];
 	            }
 	        } // if (zcopy[ends[0]][0] < 0)
-	        double z2[][] = new double[numfinitez][2];
-	        double beta2[] = new double[numfinitez];
+	        z2 = new double[numfinitez][2];
+	        beta2 = new double[numfinitez];
 	        for (i = 0; i < numfinitez; i++) {
 	        	z2[i][0] = zcopy[notends[i]][0];
 	        	z2[i][1] = zcopy[notends[i]][1];
 	        	beta2[i] = betacopy[notends[i]];
 	        }
-	        zcopy = new double[numfinitez][2];
-	        betacopy = new double[numfinitez];
-	        for (i = 0; i < numfinitez; i++) {
-	        	zcopy[i][0] = z2[i][0];
-	        	zcopy[i][1] = z2[i][1];
-	        	betacopy[i] = beta2[i];
+	        for (i = 0; i < zcopy.length; i++) {
+	        	zcopy[i] = null;
 	        }
-	        for (i = 0; i < numfinitez; i++) {
-	        	z2[i] = null;
-	        }
-	        z2 = null;
-	        beta2 = null;
+	        zcopy = null;
+	        betacopy = null;
 	        // Adjust singularity index if given
 	        if (j >= 0) {
 	        	if ((numinfz >= 3) && (j > ends[2])) {
@@ -3213,16 +3209,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	MipavUtil.displayError("Vector of preveretices must include +/- Inf entries");
 	    	return null;
 	    }
-	    double zcol[][] = new double[zcopy.length][2];
+	    double zcol[][] = new double[z2.length][2];
 	    for (i = 0; i < zcol.length; i++) {
-	    	zcol[i][0] = zcopy[i][0];
-	    	zcol[i][1] = zcopy[i][1];
+	    	zcol[i][0] = z2[i][0];
+	    	zcol[i][1] = z2[i][1];
 	    }
-	    double bcol[] = new double[betacopy.length];
+	    double bcol[] = new double[beta2.length];
 	    for (i = 0; i < bcol.length; i++) {
-	    	bcol[i] = betacopy[i];
+	    	bcol[i] = beta2[i];
 	    }
-	    int n = zcopy.length;
+	    int n = z2.length;
 	    
 	    double terms[][][] = new double[n][npts][2];
 	    for (i = 0; i < n; i++) {
@@ -3232,7 +3228,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	}
 	    } // for (i = 0; i < n; i++)
 	    for (i = 0; i < n; i++) {
-	    	if (zcopy[i][1] == 0) {
+	    	if (z2[i][1] == 0) {
 	    		for (k = 0; k < npts; k++) {
 	    			terms[i][k][0] = -terms[i][k][0];
 	    			terms[i][k][1] = -terms[i][k][1];
@@ -3271,8 +3267,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
     	} // for (i = 0; i < n; i++)
     	if (j >= 0) {
     		for (k = 0; k < npts; k++) {
-    			double zreal = zprow[k][0] - zcopy[j][0];
-    			double zimag = zprow[k][1] - zcopy[j][1];
+    			double zreal = zprow[k][0] - z2[j][0];
+    			double zimag = zprow[k][1] - z2[j][1];
     			double zabs = zabs(zreal,zimag);
     			terms[j][k][0] = terms[j][k][0] - Math.log(zabs);
     		}
@@ -3360,7 +3356,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		z[cnr[3]][1] = 1.0;
 		
 		// Now fill in "short edges"
-		double cp[] = new double[cnr[2] - cnr[1]];
+		double cp[] = new double[Math.max(0, 1 + cnr[2] - 2 - cnr[1]) + 1];
 		cp[0] = 1;
 		for (i = 1; i < cnr[2] - cnr[1]; i++) {
 			cp[i] = cp[i-1] * Math.exp(-(y[cnr[1] + i-1]));
@@ -3418,8 +3414,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			z[i][0] = z[cnr[1]][0] - u[i-(cnr[1]+1)][0];
 			z[i][1] = u[i-(cnr[1]+1)][1];
 		}
-		
-		cp = new double[1 + n-4-(cnr[3]-2)+1+(cnr[0]-1)+1];
+				 
+		cp = new double[Math.max(0, 1 + n-4-(cnr[3]-2))+1+(cnr[0]-1)+1];
 		cp[0] = 1;
 		for (i = 1; i <= n - cnr[3] - 1; i++) {
 			cp[i] = cp[i-1]*Math.exp(-y[i+cnr[3]-3]);
