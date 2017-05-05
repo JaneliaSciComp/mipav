@@ -182,7 +182,7 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
                         String s1Num = "";
                         String s2Num = "";
                         
-                        final Pattern p = Pattern.compile(".*(\\d+)\\.swc$");
+                        final Pattern p = Pattern.compile("(\\d+)\\.swc$");
                         Matcher m = p.matcher(s1);
                         if (m.find()) {
                             s1Num = m.group(1);
@@ -195,6 +195,8 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
                         // Compare the left over numbers
                         final int s1Int = Integer.valueOf(s1Num);
                         final int s2Int = Integer.valueOf(s2Num);
+                        
+                        System.err.println(s1Num + "\t" + s2Num);
 
                         return Integer.valueOf(s1Int).compareTo(Integer.valueOf(s2Int));
                     } else {
