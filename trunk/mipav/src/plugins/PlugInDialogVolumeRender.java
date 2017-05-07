@@ -25,6 +25,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -724,7 +725,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( openImages( voiFile, fileName ) )
+				File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
+				if ( openImages( voiFile, voiFile2, fileName ) )
 				{
 					wormData = new WormData(wormImage);
 					finalLattice = wormData.readFinalLattice();
@@ -764,7 +766,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	 * @param fileName file name
 	 * @return true if the file exists.
 	 */
-	protected boolean openImages( File imageFile, String fileName )
+	protected boolean openImages( File imageFile, File imageFile2, String fileName )
 	{
 		if ( imageFile.exists() )
 		{
@@ -791,7 +793,35 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				fileInfo[i].setResolutions(res);
 	            fileInfo[0].setUnitsOfMeasure(units);
 			}
-			
+			ModelImage secondImage = null;
+			if ( imageFile2.exists() )
+			{
+				secondImage = fileIO.readImage(fileName, imageFile2.getParent() + File.separator, false, null); 
+				secondImage.calcMinMax();     
+				res = secondImage.getResolutions(0);
+				res[0] = res[2]; 
+				res[1] = res[2]; 
+				units = secondImage.getUnitsOfMeasure();
+				units[0] = units[2];
+				units[1] = units[2];
+				fileInfo = secondImage.getFileInfo();
+				for ( int i = 0; i < fileInfo.length; i++ )
+				{
+					fileInfo[i].setResolutions(res);
+		            fileInfo[0].setUnitsOfMeasure(units);
+				}
+			}
+//			ModelImage displayImage = wormImage;
+//			if ( secondImage != null )
+//			{
+//
+//				displayImage = new ModelImage( ModelStorageBase.ARGB, wormImage.getExtents(),
+//                                             makeImageName(wormImage.getImageName(), "_rgb"));
+//
+//                // Make algorithm
+//				AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(wormImage, secondImage, null, displayImage, true, false, 255, true, true);
+//				mathAlgo.run();
+//			}
 			if ( previousExtents == null )
 			{
 				volumeImage = new VolumeImage(false, wormImage, "", null, 0, false);
@@ -852,7 +882,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( openImages( voiFile, fileName ) )
+				if ( openImages( voiFile, null, fileName ) )
 				{
 					if ( potentialLattices != null )
 					{
@@ -911,7 +941,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( openImages( voiFile, fileName ) )
+				if ( openImages( voiFile, null, fileName ) )
 				{
 					wormData = new WormData(wormImage);
 					wormData.readSeamCells();				
@@ -948,7 +978,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
 				String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
 				File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
-				if ( openImages( voiFile, imageName ) )
+				File voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+				if ( openImages( voiFile, voiFile2, imageName ) )
 				{
 					if ( volumeRenderer != null )
 					{

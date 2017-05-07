@@ -338,9 +338,11 @@ public class PlugInAlgorithmWormUntwisting
 					{
 						contourImage.disposeLocal(false);
 					}
-
-					model.dispose();
-					model = null;
+					if ( model != null )
+					{
+						model.dispose();
+						model = null;
+					}
 					if ( wormImage != null )
 					{
 						wormImage.disposeLocal(false);
