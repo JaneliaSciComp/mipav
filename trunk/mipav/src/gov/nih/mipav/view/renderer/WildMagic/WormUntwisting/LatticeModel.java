@@ -229,7 +229,7 @@ public class LatticeModel {
 	protected VOI growContours;
 
 	protected VOI annotationVOIs;
-	private int highestIndex = 0;
+	private int highestIndex = 1;
 
 	protected Vector3f wormOrigin = null;
 	protected Vector3f transformedOrigin = new Vector3f();
@@ -1307,7 +1307,7 @@ public class LatticeModel {
 		}
 		showSelectedVOI = null;
 		clearAddLeftRightMarkers();		
-		highestIndex = 0;
+		highestIndex = 1;
 
 		if ( annotationVOIs == null )
 		{
@@ -8214,6 +8214,9 @@ public class LatticeModel {
 
 		System.err.println( "untwist markers " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
+		
+		resultImage.disposeLocal(false);
+		resultImage = null;
 	}
 
 
@@ -8281,7 +8284,7 @@ public class LatticeModel {
 		HashMap<Integer,Vector<Vector2d>> targetSlice = new HashMap<Integer,Vector<Vector2d>>();
 		for ( int i = 0; i < markerCenters.size(); i++ )
 		{
-			System.err.println( markerNames.elementAt(i) );
+//			System.err.println( markerNames.elementAt(i) );
 			int closeCount = 0;
 			for ( int j = 0; j < size; j++ )
 			{			
@@ -8327,13 +8330,16 @@ public class LatticeModel {
 					}
 				}
 			}
-			System.err.println( markerNames.elementAt(i) + " " + closeCount );
+//			System.err.println( markerNames.elementAt(i) + " " + closeCount );
 		}
 
 		untwistMarkersTarget( image, resultImage, resultExtents, targetSlice );
 
 		System.err.println( "untwist markers (skin segmentation) " + AlgorithmBase.computeElapsedTime(time) );
 		time = System.currentTimeMillis();
+		
+		resultImage.disposeLocal(false);
+		resultImage = null;
 	}
 
 	private VOI annotationsStraight = null;
@@ -8366,6 +8372,9 @@ public class LatticeModel {
 			LatticeModel.saveAnnotationsAsCSV(voiDir, fileName, annotationsStraight);
 			resultImage.unregisterAllVOIs();
 		}
+		
+		resultImage.disposeLocal(false);
+		resultImage = null;
 	}
 
 	private void untwistMarkersTarget( ModelImage image, ModelImage resultImage, int[] resultExtents, HashMap<Integer,Vector<Vector2d>> targetSlice )
@@ -8392,10 +8401,10 @@ public class LatticeModel {
 				for ( int j = 0; j < listArray.length; j++ )
 				{
 					targetSliceLists[i][j] = (int)listArray[j].Y;
-					System.err.println( markerNames.elementAt(i) + " " + listArray[j].X + " " + (int)listArray[j].Y );
+//					System.err.println( markerNames.elementAt(i) + " " + listArray[j].X + " " + (int)listArray[j].Y );
 				}
-				System.err.println( "" );
-				System.err.println( "" );
+//				System.err.println( "" );
+//				System.err.println( "" );
 			}
 			else
 			{
@@ -8426,7 +8435,7 @@ public class LatticeModel {
 			if ( (maxIndex - minIndex) > targetSliceLists[i].length )
 			{
 				// Find the separate sections based on target slice index:
-				System.err.println( markerNames.elementAt(i) + " " + minIndex + " " + maxIndex + " " + ((maxIndex - minIndex) > targetSliceLists[i].length) );
+//				System.err.println( markerNames.elementAt(i) + " " + minIndex + " " + maxIndex + " " + ((maxIndex - minIndex) > targetSliceLists[i].length) );
 				Arrays.sort(targetSliceLists[i]);
 				Vector<Integer> rangeCounts = new Vector<Integer>();
 				Vector<Integer> minIndexValues = new Vector<Integer>();
@@ -8434,7 +8443,7 @@ public class LatticeModel {
 				minIndex = Integer.MAX_VALUE;
 				for ( int j = 0; j < targetSliceLists[i].length; j++ )
 				{
-					System.err.println( j + " " + targetSliceLists[i][j] );
+//					System.err.println( j + " " + targetSliceLists[i][j] );
 					if ( minIndex > targetSliceLists[i][j] )
 					{
 						minIndex = targetSliceLists[i][j];
@@ -8453,7 +8462,7 @@ public class LatticeModel {
 						rangeCounts.add(new Integer(count) );
 						minIndexValues.add(minIndex);
 						minIndex = targetSliceLists[i][j];
-						System.err.println( " range " + minIndexValues.lastElement() + " to " + (minIndexValues.lastElement() + rangeCounts.lastElement())  + " " + count );
+//						System.err.println( " range " + minIndexValues.lastElement() + " to " + (minIndexValues.lastElement() + rangeCounts.lastElement())  + " " + count );
 						count = 1;
 					}
 				}
@@ -8461,10 +8470,10 @@ public class LatticeModel {
 				rangeCounts.add(new Integer(count) );
 				minIndexValues.add(minIndex);
 
-				for ( int j = 0; j < rangeCounts.size(); j++ )
-				{
-					System.err.println( "    " + minIndexValues.elementAt(j) + " " + rangeCounts.elementAt(j) );
-				}
+//				for ( int j = 0; j < rangeCounts.size(); j++ )
+//				{
+//					System.err.println( "    " + minIndexValues.elementAt(j) + " " + rangeCounts.elementAt(j) );
+//				}
 
 				// Calculate the average error for each segment of the worm the marker falls into:
 				Vector<Vector2d> list = targetSlice.get(i);
@@ -8498,16 +8507,16 @@ public class LatticeModel {
 								minErrorIndex = j;							
 							}
 						}
-						System.err.println( "    " + minIndexValues.elementAt(j) + " " + (minIndexValues.elementAt(j) + rangeCounts.elementAt(j)) + " " + error + " " + errorCount+ " " + rangeCounts.elementAt(j) );
+//						System.err.println( "    " + minIndexValues.elementAt(j) + " " + (minIndexValues.elementAt(j) + rangeCounts.elementAt(j)) + " " + error + " " + errorCount+ " " + rangeCounts.elementAt(j) );
 					}
 
 					// Take the segment with the smallest overall error:
-					System.err.println( "    " + "Minimum error = " + minError + "  range = " + minIndexValues.elementAt(minErrorIndex) + "  to " + (minIndexValues.elementAt(minErrorIndex) + rangeCounts.elementAt(minErrorIndex) ) );
+//					System.err.println( "    " + "Minimum error = " + minError + "  range = " + minIndexValues.elementAt(minErrorIndex) + "  to " + (minIndexValues.elementAt(minErrorIndex) + rangeCounts.elementAt(minErrorIndex) ) );
 
 
 					count = 0;
 					Vector2d[] listArray = new Vector2d[rangeCounts.elementAt(minErrorIndex)];
-					System.err.println( "    " + listArray.length );
+//					System.err.println( "    " + listArray.length );
 					for ( int j = 0; j < list.size(); j++ )
 					{
 						if ( (list.elementAt(j).Y >= minIndexValues.elementAt(minErrorIndex)) && (list.elementAt(j).Y <= (minIndexValues.elementAt(minErrorIndex) + rangeCounts.elementAt(minErrorIndex)) ) )
@@ -8515,16 +8524,16 @@ public class LatticeModel {
 							listArray[count++] = new Vector2d(list.elementAt(j));
 						}
 					}
-					System.err.println( "    " + listArray.length + " " + count );
+//					System.err.println( "    " + listArray.length + " " + count );
 					Arrays.sort(listArray);
 					targetSliceLists[i] = new int[listArray.length];
 					for ( int j = 0; j < listArray.length; j++ )
 					{
 						targetSliceLists[i][j] = (int)listArray[j].Y;
-						System.err.println( "    " + markerNames.elementAt(i) + " " + listArray[j].X + " " + (int)listArray[j].Y );
+//						System.err.println( "    " + markerNames.elementAt(i) + " " + listArray[j].X + " " + (int)listArray[j].Y );
 					}
-					System.err.println( "" );
-					System.err.println( "" );
+//					System.err.println( "" );
+//					System.err.println( "" );
 
 				}
 			}
@@ -8553,7 +8562,7 @@ public class LatticeModel {
 					text.add( new Vector3f(averageCenters[i]) );
 					text.add( new Vector3f(averageCenters[i]) );
 					annotationsStraight.getCurves().add(text);
-					System.err.println( "untwist markers " + i + " " + text.getText() + "  " + averageCenters[i] );
+//					System.err.println( "untwist markers " + i + " " + text.getText() + "  " + averageCenters[i] );
 				}
 			}
 			//			System.err.println( markerNames.elementAt(i) + " " + target + " " + markerCenters.size() );
