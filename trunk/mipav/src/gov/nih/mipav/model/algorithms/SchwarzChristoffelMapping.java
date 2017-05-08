@@ -1442,6 +1442,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    else {
 	    	dx2[0] = 2.0;
 	    }
+	    for (i = 0; i <= dx2.length-2; i++) {
+	    	y0[cnrcopy[3]-2+i] = Math.log(dx2[i]/dx2[i+1]);
+	    }
 	    
 	    // Find prevertices (solve param problem)
 	    
