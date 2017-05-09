@@ -794,7 +794,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	            fileInfo[0].setUnitsOfMeasure(units);
 			}
 			ModelImage secondImage = null;
-			if ( imageFile2.exists() )
+			if ( (imageFile2 != null) && imageFile2.exists() )
 			{
 				secondImage = fileIO.readImage(fileName, imageFile2.getParent() + File.separator, false, null); 
 				secondImage.calcMinMax();     
