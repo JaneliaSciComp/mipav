@@ -15,6 +15,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.print.attribute.standard.PrinterLocation;
+
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
@@ -2528,34 +2530,42 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						qdat2[i][2*n+5] = qdat[i][2*n+1];
 					} // for (i = 0; i < qdat.length; i++)
 					// Change singularity indices to reflect ends
+					int left2[] = new int[left.length];
 					for (i = 0; i < left.length; i++) {
 						if (left[i] > ends[1]) {
-							left[i] += 2;
+							left2[i] = left[i] + 2;
 						}
 						else if (left[i] > ends[0]) {
-							left[i]++;
+							left2[i] = left[i] + 1;
+						}
+						else {
+							left2[i] = left[i];
 						}
 					} // for (i = 0; i < left.length; i++)
+					int right2[] = new int[right.length];
 					for (i = 0; i < right.length; i++) {
 						if (right[i] > ends[1]) {
-							right[i] += 2;
+							right2[i] = right[i] + 2;
 						}
 						else if (right[i] > ends[0]) {
-							right[i]++;
+							right2[i] = right[i] +1;
+						}
+						else {
+							right2[i] = right[i];
 						}
 					} // for (i = 0; i < right.length; i++)
 					
 					double ints[][] = new double[zleft.length][2];
 					int nums2 = 0;
-					for (i = 0; i < left.length; i++) {
-						if ((right[i] - left[i] == 1) && (zleft[i][1] == zright[i][1])) {
+					for (i = 0; i < left2.length; i++) {
+						if ((right2[i] - left2[i] == 1) && (zleft[i][1] == zright[i][1])) {
 							nums2++;
 						}
 					}
 					int s2[] = new int[nums2];
-					int nots2[] = new int[left.length-nums2];
-					for (i = 0, j = 0, k = 0; i < left.length; i++) {
-						if ((right[i] - left[i] == 1) && (zleft[i][1] == zright[i][1])) {
+					int nots2[] = new int[left2.length-nums2];
+					for (i = 0, j = 0, k = 0; i < left2.length; i++) {
+						if ((right2[i] - left2[i] == 1) && (zleft[i][1] == zright[i][1])) {
 							s2[j++] = i;
 						}
 						else {
@@ -2574,10 +2584,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    for (i = 0; i < s2.length; i++) {
 				    	zlefts2[i][0] = zleft[s2[i]][0];
 				    	zlefts2[i][1] = zleft[s2[i]][1];
-				    	lefts2[i] = left[s2[i]];
+				    	lefts2[i] = left2[s2[i]];
 				    	zrights2[i][0] = zright[s2[i]][0];
 				    	zrights2[i][1] = zright[s2[i]][1];
-				    	rights2[i] = right[s2[i]];
+				    	rights2[i] = right2[s2[i]];
 				    }
 				    I1 = stquadh(zlefts2, mid, lefts2, z2, beta2, qdat2);
 				    I2 = stquadh(zrights2, mid, rights2, z2, beta2, qdat2);
@@ -2603,10 +2613,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    for (i = 0; i < nots2.length; i++) {
 				    	zleftns2[i][0] = zleft[nots2[i]][0];
 				    	zleftns2[i][1] = zleft[nots2[i]][1];
-				    	leftns2[i] = left[nots2[i]];
+				    	leftns2[i] = left2[nots2[i]];
 				    	zrightns2[i][0] = zright[nots2[i]][0];
 				    	zrightns2[i][1] = zright[nots2[i]][1];
-				    	rightns2[i] = right[nots2[i]];
+				    	rightns2[i] = right2[nots2[i]];
 				    }
 				    int zero[] = new int[nots2.length];
 				    I1 = stquad(zleftns2, mid1, leftns2, z2, beta2, qdat2);
@@ -2677,8 +2687,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    	double intscmplx[][] = new double[numcmplx][2];
 				    	for (i = 0, j = 0; i < cmplx.length; i++) {
 					    	if (cmplx[i]) {
-					    	intscmplx[j][0] = ints[i][0];
-					    	intscmplx[j++][1] = ints[i][1];
+					    	    intscmplx[j][0] = ints[i][0];
+					    	    intscmplx[j++][1] = ints[i][1];
 					    	}
 					    } // for (i = 0, j = 0; i < cmplx.length; i++)
 				    	double realF2[] = new double[numcmplx];
@@ -2688,11 +2698,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    	    zdiv(cr[0], ci[0], nmlencmplx2[i][0], nmlencmplx2[i][1], cr, ci);
 				    	    realF2[i] = Math.log(zabs(cr[0],ci[0]));
 				    	    imagF2[i] = Math.atan2(ci[0], cr[0]);
-				    	    for (i = 0; i < numcmplx; i++) {
-				    	    	residuals[i+Fmod.length] = realF2[i];
-				    	    	residuals[i+Fmod.length+numcmplx] = imagF2[i];
-				    	    }
 				    	} // for (i = 0; i < numcmplx; i++)
+				    	for (i = 0; i < numcmplx; i++) {
+			    	    	residuals[i+Fmod.length] = realF2[i];
+			    	    	residuals[i+Fmod.length+numcmplx] = imagF2[i];
+			    	    }
 				    } // if (numcmplx > 0)
 				    
 				} // if ((ctrl == -1) || (ctrl == 1))
