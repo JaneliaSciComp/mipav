@@ -1647,16 +1647,8 @@ public class LatticeModel {
 //		//		imageA.registerVOI(derivatives);
 	}
 
-	public float[] testLatticeImage( VOIContour leftIn, VOIContour rightIn, float minValue )
+	public float[] testLatticeImage( VOIContour leftIn, VOIContour rightIn )
 	{		
-		
-		
-		
-		
-		
-
-		
-		
 		left = leftIn;
 		right = rightIn;
 
