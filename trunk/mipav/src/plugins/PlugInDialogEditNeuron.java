@@ -50,6 +50,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.PriorityQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -2202,6 +2204,7 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
         };
         final File[] files = dir.listFiles(imFilter);
 
+        // Sort list into correct order
         Arrays.sort(files, new Comparator<File>() {
 
             @Override
@@ -2216,35 +2219,28 @@ public class PlugInDialogEditNeuron extends JDialogStandalonePlugin implements M
 
                 if (compare == 0) {
                     // Without numbers, the two are the same
-					String s1Num = s1.replaceAll("[^0-9]", "");
-					String s2Num = s2.replaceAll("[^0-9]", "");
-					final String s1NumFinal;
-					final String s2NumFinal;
-
-					// Truncate so that you aren't growing too large
-					int length = String.valueOf(Integer.MAX_VALUE).length() - 1;
-					if (s1Num.length() > length) {
-						s1NumFinal = s1Num.substring(s1Num.length() - length);
-					} else {
-						s1NumFinal = s1Num;
-					}
-
-					if (s2Num.length() > length) {
-						s2NumFinal = s2Num.substring(s2Num.length() - length);
-					} else {
-						s2NumFinal = s2Num;
-					}
+                    String s1Num = "";
+                    String s2Num = "";
+                    
+                    final Pattern p = Pattern.compile("(\\d+)\\.\\w+$");
+                    Matcher m = p.matcher(s1);
+                    if (m.find()) {
+                        s1Num = m.group(1);
+                    }
+                    m = p.matcher(s2);
+                    if (m.find()) {
+                        s2Num = m.group(1);
+                    }
 
                     // Compare the left over numbers
-					final int s1Int = Integer.valueOf(s1NumFinal);
-					final int s2Int = Integer.valueOf(s2NumFinal);
+                    final int s1Int = Integer.valueOf(s1Num);
+                    final int s2Int = Integer.valueOf(s2Num);
 
                     return Integer.valueOf(s1Int).compareTo(Integer.valueOf(s2Int));
                 } else {
                     return compare;
                 }
             }
-
         });
 
         String dirStr = dir.toString();

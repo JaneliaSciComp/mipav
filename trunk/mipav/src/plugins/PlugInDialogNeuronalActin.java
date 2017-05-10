@@ -182,7 +182,7 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
                         String s1Num = "";
                         String s2Num = "";
                         
-                        final Pattern p = Pattern.compile("(\\d+)\\.swc$");
+                        final Pattern p = Pattern.compile("(\\d+)\\.\\w+$");
                         Matcher m = p.matcher(s1);
                         if (m.find()) {
                             s1Num = m.group(1);
