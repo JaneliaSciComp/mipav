@@ -100,10 +100,9 @@ public class LatticeBuilder {
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 * @return true if the algorithm successfully build at least one lattice for the inputs.
 	 */
-	public VOIVector buildLattice( JProgressBar batchProgress, int imageCount, int numImages, ModelImage image, VOI annotations, float minSeamValue, VOI nose, String outputDir, boolean wasEdited )
+	public VOIVector buildLattice( JProgressBar batchProgress, int imageCount, int numImages, ModelImage image, VOI annotations, VOI nose, String outputDir, boolean wasEdited )
 	{
 		wormImage = image;
-		this.minSeamValue = minSeamValue;
 		
 		Vector3f originPt = null;
 		for ( int i = annotations.getCurves().size() - 1; i >= 0; i-- )
@@ -1046,7 +1045,7 @@ public class LatticeBuilder {
 			model.testLatticeConflicts( (VOIContour)lattice.getCurves().elementAt(0), (VOIContour)lattice.getCurves().elementAt(1), intersectionCount);
 			if ( intersectionCount[0] < .2 )
 			{
-				float[] avgVals = model.testLatticeImage((VOIContour)lattice.getCurves().elementAt(0), (VOIContour)lattice.getCurves().elementAt(1), minSeamValue);
+				float[] avgVals = model.testLatticeImage((VOIContour)lattice.getCurves().elementAt(0), (VOIContour)lattice.getCurves().elementAt(1));
 				System.err.println( finalLatticeList.size() + "   " + (int)latticeSort[i].Y + "   " + latticeSort[i].X + "     " +  avgVals[0] + "     " + intersectionCount[0] );
 				finalLatticeList.add(lattice);
 			}
@@ -1544,7 +1543,7 @@ public class LatticeBuilder {
 			wormImage.unregisterAllVOIs();
 			LatticeModel model = new LatticeModel(wormImage);
 			model.setSeamCellImage(seamSegmentation);
-			float[] avgVals = model.testLatticeImage(leftImage, rightImage, minSeamValue);
+			float[] avgVals = model.testLatticeImage(leftImage, rightImage);
 			wormImage.unregisterAllVOIs();
 			if ( avgVals[0] == -1)
 			{
@@ -1955,7 +1954,7 @@ public class LatticeBuilder {
 		
 		// test against seam segmentation image:
 		wormImage.unregisterAllVOIs();
-		float[] avgVals = model.testLatticeImage(leftImage, rightImage, minSeamValue);
+		float[] avgVals = model.testLatticeImage(leftImage, rightImage);
 		wormImage.unregisterAllVOIs();
 		if ( avgVals[0] == -1)
 		{
@@ -2047,7 +2046,6 @@ public class LatticeBuilder {
 	private ModelImage wormImage = null;
 	private ModelImage seamSegmentation = null;
 	private ModelImage skinSegmentation = null;
-	float minSeamValue;
 	
 	public void setSeamImage(ModelImage image)
 	{
