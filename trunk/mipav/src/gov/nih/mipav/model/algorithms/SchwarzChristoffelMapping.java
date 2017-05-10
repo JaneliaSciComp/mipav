@@ -2980,6 +2980,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double zreal;
 		double zimag;
 		double zabs;
+		double num;
+		double denom;
+		double result;
 		double zr[] = new double[2];
 		int ind;
 		double nd[][] = new double[qdat.length][2];
@@ -3025,24 +3028,27 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    for (j = 0; j <= sng-1; j++) {
 		    	zreal = z[j][0] - za[0];
 		    	zimag = z[j][1] - za[1];
-		    	zabs = 2.0*zabs(zreal,zimag);
-		    	if (zabs < dist) {
-		    		dist = zabs;
+		    	num = 2.0*zabs(zreal,zimag);
+		    	zreal = zb[0] - za[0];
+			    zimag = zb[1] - za[1];
+			    denom = zabs(zreal,zimag);
+			    result = num/denom;
+		    	if (result < dist) {
+		    		dist = result;
 		    	}
 		    } // for (j = 0; j <= sng-1; j++)
 		    for (j = sng+1; j <= n-1; j++) {
 		    	zreal = z[j][0] - za[0];
 		    	zimag = z[j][1] - za[1];
-		    	zabs = 2.0*zabs(zreal,zimag);
-		    	if (zabs < dist) {
-		    		dist = zabs;
-		    	}
+		    	num = 2.0*zabs(zreal,zimag);
+		    	zreal = zb[0] - za[0];
+			    zimag = zb[1] - za[1];
+			    denom = zabs(zreal,zimag);
+			    result = num/denom;
+		    	if (result < dist) {
+		    		dist = result;
+		    	}	
 		    } // for (j = sng+1; j <= n-1; j++)
-		    zreal = zb[0] - za[0];
-		    zimag = zb[1] - za[1];
-		    zabs = zabs(zreal,zimag);
-		    dist = dist/zabs;
-		    // saw dist = 0, zb[0] = -Infinity generate zr[0] = NaN
 		    zr[0] = za[0] + dist*(zb[0] - za[0]);
 		    zr[1] = za[1] + dist*(zb[1] - za[1]);
 		    ind = ((sng+n+1) % (n+1));
@@ -3101,15 +3107,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		for (j = 0; j < n; j++) {
 		    			zreal = z[j][0] - zl[0];
 		    			zimag = z[j][1] - zl[1];
-		    			zabs = 2.0*zabs(zreal,zimag);
-		    			if (zabs < dist) {
-		    				dist = zabs;
+		    			num = 2.0*zabs(zreal,zimag);
+		    			zreal = zl[0] - zb[0];
+			    		zimag = zl[1] - zb[1];
+			    		denom = zabs(zreal,zimag);
+			    		result = num/denom;
+		    			if (result < dist) {
+		    				dist = result;
 		    			}
 		    		} // for (j = 0; j < n; j++)
-		    		zreal = zl[0] - zb[0];
-		    		zimag = zl[1] - zb[1];
-		    		zabs = zabs(zreal,zimag);
-		    		dist = dist/zabs;
+		    		
 		    		zr[0] = zl[0] + dist*(zb[0]-zl[0]);
 		    		zr[1] = zl[1] + dist*(zb[1]-zl[1]);
 		    		for (j = 0; j < qdat.length; j++) {
