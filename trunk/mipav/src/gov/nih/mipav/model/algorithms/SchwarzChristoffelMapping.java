@@ -1781,49 +1781,70 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double F[][] = new double[numnotdone][2];
 		double Fabs;
 		double dF[][] = new double[numnotdone][2];
-		double step[] = new double[2];
-		double znew[] = new double[2];
+		double step[][] = new double[numnotdone][2];
+		double znew[][] = new double[numnotdone][2];
 		double xn;
 		while ((!alldone) && (k < maxiter)) {
+			System.out.println("k = " + k);
+			for (i = 0; i < znnotdone.length; i++) {
+				System.out.println("znnotdone = " + znnotdone[i][0] + " " + znnotdone[i][1]);
+			}
 		    r2strip(F, dF, znnotdone, zcnr, L[0]);
 		    for (i = 0; i < numnotdone; i++) {
 		    	F[i][0] = zsnotdone[i][0] - F[i][0];
 		    	F[i][1] = zsnotdone[i][1] - F[i][1];
+		    }
+		   for (i = 0; i < F.length; i++) {
+			   System.out.println("F["+i+"] = " + F[i][0] + " " + F[i][1]);
+		   }
 		    	
 		    	// Adjust Newton step to stay exactly on rectangle boundary
+		    for (i = 0; i < numnotdone; i++) {
 		    	zdiv(F[i][0], F[i][1], dF[i][0], dF[i][1], cr, ci);
-		    	step[0] = cr[0];
-		    	step[1] = ci[0];
+		    	step[i][0] = cr[0];
+		    	step[i][1] = ci[0];
+		    }
+		    for (i = 0; i < numnotdone; i++) {
 		    	if (lr[i]) {
-		    	    step[0] = 0;	
+		    	    step[i][0] = 0;	
 		    	}
 		    	else {
-		    		step[1] = 0;
+		    		step[i][1] = 0;
 		    	}
+		    }
 		    	
 		    	// Newton step
-		    	znew[0] = znnotdone[i][0] + step[0];
-		    	znew[1] = znnotdone[i][1] + step[1];
+		    for (i = 0; i < numnotdone; i++) {
+		    	znew[i][0] = znnotdone[i][0] + step[i][0];
+		    	znew[i][1] = znnotdone[i][1] + step[i][1];
+		    }
 		    	// Keep prevertices from moving too far (past boundaries)
 		    	// Left/right sides capped in Im direction
+		    for (i = 0; i < numnotdone; i++) {
 		        if (lr[i]) {
-		        	xn = Math.min(Math.max(znew[1], 0), Kp[0]);
-		        	znew[1] = xn;
+		        	xn = Math.min(Math.max(znew[i][1], 0), Kp[0]);
+		        	znew[i][1] = xn;
 		        } // if (lr[i])
+		    }
 		        // Top/bottom-left sides capped in Re direction
+		    for (i = 0; i < numnotdone; i++) {
 		        if (tbl[i]) {
-		        	xn = Math.min(Math.max(znew[0], -K[0]), -eps);
-		        	znew[0] = xn;
+		        	xn = Math.min(Math.max(znew[i][0], -K[0]), -eps);
+		        	znew[i][0] = xn;
 		        }
+		    }
 		        // Top/bottom-right sides capped in Re direction
+		    for (i = 0; i < numnotdone; i++) {
 		        if (tbr[i]) {
-		            xn = Math.min(Math.max(znew[0], eps), K[0]);
-		            znew[0] = xn;
+		            xn = Math.min(Math.max(znew[i][0], eps), K[0]);
+		            znew[i][0] = xn;
 		        } 
+		    }
 		        
 		        //  Update
-		        znnotdone[i][0] = znew[0];
-		        znnotdone[i][1] = znew[1];
+		    for (i = 0; i < numnotdone; i++) {
+		        znnotdone[i][0] = znew[i][0];
+		        znnotdone[i][1] = znew[i][1];
 		    } // for (i = 0; i < numnotdone; i++)
 		    
 		    
@@ -1892,6 +1913,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			z[i][0] = temp[i][0];
 			z[i][1] = temp[i][1];
 		}
+		
+		for (i = 0; i < z.length; i++) {
+			System.out.println("z["+i+"] = " + z[i][0] + " " + z[i][1]);
+		}
+		
 		
 		return;
     }
