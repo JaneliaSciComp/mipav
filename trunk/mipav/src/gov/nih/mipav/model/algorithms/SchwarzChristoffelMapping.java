@@ -1785,18 +1785,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double znew[][] = new double[numnotdone][2];
 		double xn;
 		while ((!alldone) && (k < maxiter)) {
-			System.out.println("k = " + k);
-			for (i = 0; i < znnotdone.length; i++) {
-				System.out.println("znnotdone = " + znnotdone[i][0] + " " + znnotdone[i][1]);
-			}
+			
 		    r2strip(F, dF, znnotdone, zcnr, L[0]);
 		    for (i = 0; i < numnotdone; i++) {
 		    	F[i][0] = zsnotdone[i][0] - F[i][0];
 		    	F[i][1] = zsnotdone[i][1] - F[i][1];
 		    }
-		   for (i = 0; i < F.length; i++) {
-			   System.out.println("F["+i+"] = " + F[i][0] + " " + F[i][1]);
-		   }
 		    	
 		    	// Adjust Newton step to stay exactly on rectangle boundary
 		    for (i = 0; i < numnotdone; i++) {
@@ -1804,6 +1798,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	step[i][0] = cr[0];
 		    	step[i][1] = ci[0];
 		    }
+		    
 		    for (i = 0; i < numnotdone; i++) {
 		    	if (lr[i]) {
 		    	    step[i][0] = 0;	
@@ -1812,12 +1807,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		step[i][1] = 0;
 		    	}
 		    }
+		    
 		    	
 		    	// Newton step
 		    for (i = 0; i < numnotdone; i++) {
 		    	znew[i][0] = znnotdone[i][0] + step[i][0];
 		    	znew[i][1] = znnotdone[i][1] + step[i][1];
 		    }
+		    
 		    	// Keep prevertices from moving too far (past boundaries)
 		    	// Left/right sides capped in Im direction
 		    for (i = 0; i < numnotdone; i++) {
@@ -1913,11 +1910,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			z[i][0] = temp[i][0];
 			z[i][1] = temp[i][1];
 		}
-		
-		for (i = 0; i < z.length; i++) {
-			System.out.println("z["+i+"] = " + z[i][0] + " " + z[i][1]);
-		}
-		
 		
 		return;
     }
@@ -2162,25 +2154,31 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double dn1[][] = new double[u.length][2];
 		double denom[] = new double[2];
 		double sn1Sq[] = new double[2];
+		double ucopy[][] = new double[u.length][2];
+		
+		for (i = 0; i < u.length; i++) {
+			ucopy[i][0] = u[i][0];
+			ucopy[i][1] = u[i][1];
+		}
 		
 	    if (!flag) {
 	    	// flag = false indicates we must check for and transform u in the upper half of the rectangle.
 	    	double K[] = new double[1];
 	    	double Kp[] = new double[1];
 	    	ellipkkp(K, Kp, L);
-	    	for (i = 0; i < u.length; i++) {
-	    		if (u[i][1] > Kp[0]/2.0) {
+	    	for (i = 0; i < ucopy.length; i++) {
+	    		if (ucopy[i][1] > Kp[0]/2.0) {
 	    			numhigh++;
 	    		}
-	    	} // for (i = 0; i < u.length; i++)
+	    	} // for (i = 0; i < ucopy.length; i++)
 	    	high = new int[numhigh];
-	    	for (i = 0, j = 0; i < u.length; i++) {
-	    		if (u[i][1] > Kp[0]/2.0) {
-	    			u[i][0] = -u[i][0];
-	    			u[i][1] = Kp[0] - u[i][1];
+	    	for (i = 0, j = 0; i < ucopy.length; i++) {
+	    		if (ucopy[i][1] > Kp[0]/2.0) {
+	    			ucopy[i][0] = -ucopy[i][0];
+	    			ucopy[i][1] = Kp[0] - ucopy[i][1];
 	    			high[j++] = i;
 	    		}
-	    	} // for (i = 0, j = 0; i < u.length; i++)
+	    	} // for (i = 0, j = 0; i < ucopy.length; i++)
 	    	m = Math.exp(-2.0*Math.PI*L);
 	    } // if (!flag)
 	    else {
@@ -2191,20 +2189,20 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    
 	    if (m < 4.0 * eps) {
 	        for (i = 0; i < u.length; i++) {
-	            sinu[0] = Math.sin(u[i][0])*Math.cosh(u[i][1]);
-	            sinu[1] = Math.cos(u[i][0])*Math.sinh(u[i][1]);
-	            cosu[0] = Math.cos(u[i][0])*Math.cosh(u[i][1]);
-	            cosu[1] = -Math.sin(u[i][0])*Math.sinh(u[i][1]);
+	            sinu[0] = Math.sin(ucopy[i][0])*Math.cosh(ucopy[i][1]);
+	            sinu[1] = Math.cos(ucopy[i][0])*Math.sinh(ucopy[i][1]);
+	            cosu[0] = Math.cos(ucopy[i][0])*Math.cosh(ucopy[i][1]);
+	            cosu[1] = -Math.sin(ucopy[i][0])*Math.sinh(ucopy[i][1]);
 	            zmlt(sinu[0], sinu[1], cosu[0], cosu[1], cr, ci);
 	            sincos[0] = cr[0];
 	            sincos[1] = ci[0];
-	            realPart = sincos[0] - u[i][0];
-	            imagPart = sincos[1] - u[i][1];
+	            realPart = sincos[0] - ucopy[i][0];
+	            imagPart = sincos[1] - ucopy[i][1];
 	            zmlt(realPart, imagPart, cosu[0], cosu[1], cr, ci);
 	            sn[i][0] = sinu[0] + (m/4.0)*cr[0];
 	            sn[i][1] = sinu[1] + (m/4.0)*ci[0];
-	            realPart = -sincos[0] + u[i][0];
-	            imagPart = -sincos[1] + u[i][1];
+	            realPart = -sincos[0] + ucopy[i][0];
+	            imagPart = -sincos[1] + ucopy[i][1];
 	            zmlt(realPart, imagPart, sinu[0], sinu[1], cr, ci);
 	            cn[i][0] = cosu[0] + (m/4.0)*cr[0];
 	            cn[i][1] = cosu[1] + (m/4.0)*ci[0];
@@ -2235,12 +2233,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	    kappa = 132*md46 + 42*md45 + 14*md44 + 5*md43 + 2*md42 + md4;
 	    	}
 	    	mu = kappa * kappa;
-	    	for (i = 0; i < u.length; i++) {
-	    	    v[i][0] = u[i][0]/(1.0 + kappa);
-	    	    v[i][1] = u[i][1]/(1.0 + kappa);
-	    	} // for (i = 0; i < u.length; i++)
+	    	for (i = 0; i < ucopy.length; i++) {
+	    	    v[i][0] = ucopy[i][0]/(1.0 + kappa);
+	    	    v[i][1] = ucopy[i][1]/(1.0 + kappa);
+	    	} // for (i = 0; i < ucopy.length; i++)
 	    	ellipjc(sn1, cn1, dn1, v, mu, true);
-	    	for (i = 0; i < u.length; i++) {
+	    	for (i = 0; i < ucopy.length; i++) {
 	    	    zmlt(sn1[i][0], sn1[i][1], sn1[i][0], sn1[i][1], cr, ci);
 	    	    sn1Sq[0] = cr[0];
 	    	    sn1Sq[1] = ci[0];
@@ -2256,7 +2254,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	    zdiv((1.0 - kappa*sn1Sq[0]), -kappa*sn1Sq[1], denom[0], denom[1], cr, ci);
 	    	    dn[i][0] = cr[0];
 	    	    dn[i][1] = ci[0];
-	    	} // for (i = 0; i < u.length; i++)
+	    	} // for (i = 0; i < ucopy.length; i++)
 	    } // else
 	    
 	    if (numhigh > 0) {
