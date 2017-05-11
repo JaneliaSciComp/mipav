@@ -1785,7 +1785,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double znew[][] = new double[numnotdone][2];
 		double xn;
 		while ((!alldone) && (k < maxiter)) {
-			
 		    r2strip(F, dF, znnotdone, zcnr, L[0]);
 		    for (i = 0; i < numnotdone; i++) {
 		    	F[i][0] = zsnotdone[i][0] - F[i][0];
@@ -1830,6 +1829,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        	znew[i][0] = xn;
 		        }
 		    }
+		    
 		        // Top/bottom-right sides capped in Re direction
 		    for (i = 0; i < numnotdone; i++) {
 		        if (tbr[i]) {
@@ -1846,20 +1846,23 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    
 		    
 		    alldone = true;
+		    double znnotdone2[][] = new double[numnotdone][2];
 		    numnotdone = 0;
-		    for (i = 0, j = 0; i < done.length; i++) {
+		    for (i = 0, j = 0, m = 0; i < done.length; i++) {
 		    	if (!done[i]) {
 		    		Fabs = zabs(F[j][0], F[j][1]);
-		    		j++;
 		    		if (Fabs < tol) {
 		    			done[i] = true;
 		    		}
 		    		else {
 		    			numnotdone++;
 		    			alldone = false;
+		    			znnotdone2[m][0] = znnotdone[j][0];
+		    			znnotdone2[m++][1] = znnotdone[j][1];
 		    		}
+		    		j++;
 		    	}
-		    } // for (i = 0, j = 0; i < done.length; i++)
+		    } // for (i = 0, j = 0, m = 0; i < done.length; i++)
 		    if (!alldone) {
 			    znnotdone = new double[numnotdone][2];
 				zsnotdone = new double[numnotdone][2];
@@ -1868,8 +1871,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				tbr = new boolean[numnotdone];
 				for (i = 0, j = 0; i < done.length; i++) {
 				    if (!done[i]) {
-				    	znnotdone[j][0] = zn[i][0];
-				    	znnotdone[j][1] = zn[i][1];
+				    	znnotdone[j][0] = znnotdone2[j][0];
+				    	znnotdone[j][1] = znnotdone2[j][1];
 				    	zsnotdone[j][0] = zs[i][0];
 				    	zsnotdone[j][1] = zs[i][1];
 				    	lr[j] = r[i] || l[i];
