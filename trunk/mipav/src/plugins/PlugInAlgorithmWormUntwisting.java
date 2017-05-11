@@ -263,18 +263,6 @@ public class PlugInAlgorithmWormUntwisting
 						nucleiFile = new File(baseFileDir2 + File.separator + fileName);
 					}
 
-					//					String nucleiFileName = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + "marker" + File.separator + "marker.csv";
-					//					File nucleiFile = new File(nucleiFileName);
-					//					if ( nucleiFile.exists() )
-					//					{
-					//						VOIVector vois = readMarkerPositions( nucleiFileName, nucleiFile );
-					//						VOI nucleiVOIs = vois.elementAt(0);
-					//						if ( (nucleiVOIs != null) && (nucleiVOIs.getCurves().size() > 0) )
-					//						{
-					//							model.setMarkers(nucleiVOIs);
-					//						}
-					//					}
-
 					model.interpolateLattice( false, false, true, false );
 					ModelImage contourImage = null;
 					//							if ( segmentSkinSurface.isSelected() )
@@ -294,7 +282,7 @@ public class PlugInAlgorithmWormUntwisting
 					
 					wormData.readMarkers();
 					VOI markers = wormData.getMarkerAnnotations();
-					if ( markers != null )
+					if ( (markers != null) && (markers.getCurves().size() > 0) )
 					{
 						model.setMarkers(markers);
 						model.interpolateLattice( false, false, false, true );	
@@ -310,11 +298,18 @@ public class PlugInAlgorithmWormUntwisting
 							wormImage.unregisterAllVOIs();
 							wormImage.disposeLocal(false);
 						}
+						if ( wormData != null )
+						{
+							wormData.dispose();
+						}
 
 						FileIO fileIO2 = new FileIO();
 						nucleiImage = fileIO2.readImage(nucleiFileName, baseFileDir2 + File.separator, false, null); 
 						nucleiImage.setImageName(baseFileName + "_" + includeRange.elementAt(i) + ".tif");
+						
+						
 						model.setImage(nucleiImage);
+						model.setSeamCellImage(null);
 						model.interpolateLattice( false, false, true, false );
 
 						//								if ( segmentSkinSurface.isSelected() )
@@ -325,6 +320,16 @@ public class PlugInAlgorithmWormUntwisting
 						//								{
 						//									model.segmentLattice(nucleiImage, false);
 						//								}
+
+						wormData = new WormData(nucleiImage);
+						wormData.readMarkers();
+						markers = wormData.getMarkerAnnotations();
+						if ( (markers != null) && (markers.getCurves().size() > 0) )
+						{
+							model.setMarkers(markers);
+							model.interpolateLattice( false, false, false, true );	
+							model.saveAnnotationStraight(nucleiImage, "straightened_annotations", "straightened_annotations.csv" );	
+						}
 						model.dispose();
 						model = null;
 

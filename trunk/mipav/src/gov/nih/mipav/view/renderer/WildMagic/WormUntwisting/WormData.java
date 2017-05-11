@@ -211,6 +211,17 @@ public class WormData
 		return null;
 	}
 	
+	public VOI openStraightAnnotations( String dir )
+	{
+		VOIVector annotationVector = new VOIVector();
+		LatticeModel.loadAllVOIsFrom(wormImage, dir + File.separator + straightenedAnnotations + File.separator, true, annotationVector, true);	
+		if ( annotationVector.size() > 0 )
+		{
+			return annotationVector.elementAt(0);
+		}
+		return null;
+	}
+	
 	public VOIVector openStraightLattice()
 	{
 		VOIVector lattice = new VOIVector();

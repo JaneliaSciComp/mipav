@@ -7221,7 +7221,7 @@ public class LatticeModel {
 				}
 			}			
 		}
-		resultImage.setImageName( imageName + "_straight_masked.xml" );
+		resultImage.setImageName( imageName + "_straight.xml" );
 		saveImage(imageName, resultImage, true);
 		resultImage.disposeLocal(false);
 		resultImage = null;
@@ -8349,6 +8349,7 @@ public class LatticeModel {
 		
 		// Load the straightened image:
 		FileIO fileIO = new FileIO();
+		System.err.println( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
 		ModelImage resultImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_straight_unmasked.xml" );
 
 
