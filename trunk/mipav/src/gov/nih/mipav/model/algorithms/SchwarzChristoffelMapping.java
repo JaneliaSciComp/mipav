@@ -1839,10 +1839,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    }
 		        
 		        //  Update
-		    for (i = 0; i < numnotdone; i++) {
-		        znnotdone[i][0] = znew[i][0];
-		        znnotdone[i][1] = znew[i][1];
-		    } // for (i = 0; i < numnotdone; i++)
+		    for (i = 0, j = 0; i < done.length; i++) {
+		    	if (!done[i]) {
+		            znnotdone[j][0] = znew[j][0];
+		            znnotdone[j][1] = znew[j][1];
+		            zn[i][0] = znew[j][0];
+		            zn[i][1] = znew[j][1];
+		    	}
+		    } // for (i = 0, j = 0; i < done.length; i++)
 		    
 		    
 		    alldone = true;
