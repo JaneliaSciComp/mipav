@@ -1532,29 +1532,27 @@ public class FileAnalyze extends FileBase {
         fileInfo.setRegular('r');
 
         extents = myFileInfo.getExtents();
-        nDims = 4; // Analyze always expects 4D !!!!!!!!!.
+        nDims = image.getNDims();
+        analyzeExtents = new int[nDims];
 
-        // 2D example = 256 x 256 x  1 x 1
-        // 3D example = 256 x 256 x 17 x 1
+        
 
         Preferences.debug("FileAnalyze:writeHeader - nImagesSaved = " + nImagesSaved + "\n", Preferences.DEBUG_FILEIO);
         Preferences.debug("FileAnalyze:writeHeader - nDims = " + nDims + "\n", Preferences.DEBUG_FILEIO);
 
-        analyzeExtents = new int[] { 1, 1, 1, 1, 1 };
-        analyzeExtents[0] = 4;
+        for (int i = 0; i < nDims; i++) {
 
-        for (int i = 1; i <= nDims; i++) {
-
-            if (i == 3) {
+            if (i == 2) {
                 analyzeExtents[i] = nImagesSaved;
-            } else if (i == 4) {
+            } else if (i == 3) {
                 analyzeExtents[i] = nTimeSaved;
             } else {
-                analyzeExtents[i] = extents[i - 1];
-            }
+                analyzeExtents[i] = extents[i];
+           }
         }
-
+       
         for (int i = 0; i < analyzeExtents.length; i++) {
+        	analyzeExtents[i] = image.getExtents()[i];
             Preferences.debug("FileAnalyze:writeHeader - i = " + i + " dim = " + analyzeExtents[i] + "\n",
             		Preferences.DEBUG_FILEIO);
         }
@@ -1617,9 +1615,9 @@ public class FileAnalyze extends FileBase {
             setBufferShort(bufferImageHeader, fileInfo.getSessionErr(), 36, endianess);
             bufferImageHeader[38] = (byte) 'r';
             bufferImageHeader[39] = 0;
-
+            setBufferShort(bufferImageHeader, (short)nDims, 40, endianess);
             for (int i = 0; i < analyzeExtents.length; i++) {
-                setBufferShort(bufferImageHeader, (short) analyzeExtents[i], 40 + (i * 2), endianess);
+                setBufferShort(bufferImageHeader, (short) analyzeExtents[i], 42 + (i * 2), endianess);
             }
 
             // make sure that VoxUnits has been updated to match the unitsOfMeasure
@@ -1731,9 +1729,9 @@ public class FileAnalyze extends FileBase {
             setBufferShort(bufferImageHeader, (short) 0, 36, endianess);
             bufferImageHeader[38] = (byte) 'r';
             bufferImageHeader[39] = 0;
-
+            setBufferShort(bufferImageHeader, (short)nDims, 40, endianess);
             for (int i = 0; i < analyzeExtents.length; i++) {
-                setBufferShort(bufferImageHeader, (short) analyzeExtents[i], 40 + (i * 2), endianess);
+                setBufferShort(bufferImageHeader, (short) analyzeExtents[i], 42 + (i * 2), endianess);
             }
 
             // set the voxUnits based on the Units of Measure
