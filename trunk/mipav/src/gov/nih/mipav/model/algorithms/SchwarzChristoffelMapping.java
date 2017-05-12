@@ -1689,7 +1689,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		} // for (i = 0, j = 0, k = 0, m = 0, p = 0; i < zs.length; i++)
 		
 		// Initial guesses
-		z = new double[zs.length][2];
+		//z = new double[zs.length][2];
+		for (i = 0; i < z.length; i++) {
+			z[i][0] = 0;
+			z[i][1] = 0;
+		}
 		// Corners
 		for (i = 0; i < 4; i++) {
 		    z[cnrcopy[i]][0] = rect[i][0];
