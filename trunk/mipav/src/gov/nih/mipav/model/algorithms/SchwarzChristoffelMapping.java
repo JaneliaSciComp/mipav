@@ -212,7 +212,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		} // else
 		scmap M = new scmap();
 		M.prevertex = z;
-		M.constant = c[0];
+		M.constant[0] = c[0];
+		M.constant[1]= c[1];
 		M.stripL = L;
 		M.qdata = qdata;
 		M.poly = poly;
@@ -231,6 +232,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Original MATLAB routine copyright 1998 by Toby Driscoll.
 		int i, j;
 		double acc;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
 		// If an accuracy has been assigned, don't question it.
 		if (!Double.isNaN(M.accuracy)) {
 			return M.accuracy;
@@ -244,7 +247,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			beta[i] = p.angle[i] - 1;
 		}
 		double z[][] = M.prevertex;
-		double c = M.constant;
+		double c[] = new double[2];
+		c[0] = M.constant[0];
+		c[1] = M.constant[1];
 		double L[] = M.stripL;
 		double qdata[][] = M.qdata;
 		
@@ -431,11 +436,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   }
 		   qdata2[i][2*n+5] = qdata[i][2*n+1];
 		}
-		for (i = 0; i < qdata2.length; i++) {
-			for (j = 0; j < qdata2[0].length; j++) {
-				System.out.println("qdata2["+i+"]["+j+"] = " + qdata2[i][j]);
-			}
-		}
 		
 		// Do the integrations
 		double zleft[][] = new double[idx2.length][2];
@@ -484,8 +484,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		double absdiff[] = new double[idx3.length];
 		for (i = 0; i < idx3.length; i++) {
-			absdiff[i] = zabs(c*I[i][0] - diffw[i][0], c*I[i][1] - diffw[i][1]);
-			System.out.println("absdiff["+i+"] = " + absdiff[i]);
+			zmlt(c[0], c[1], I[i][0], I[i][1], cr, ci);
+			absdiff[i] = zabs(cr[0] - diffw[i][0], ci[0] - diffw[i][1]);
 		}
 		acc = -Double.MAX_VALUE;
 		for (i = 0; i < idx3.length; i++) {
@@ -499,7 +499,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	public class scmap {
 	    double prevertex[][];
-	    double constant;
+	    double constant[] = new double[2];
 	    double stripL[];
 	    double qdata[][];
 	    polygon poly;
