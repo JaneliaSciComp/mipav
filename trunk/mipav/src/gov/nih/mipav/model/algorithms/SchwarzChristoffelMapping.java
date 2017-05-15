@@ -223,6 +223,157 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return M;
 	}
 	
+	public void plot(scmap M, int nre, int nim) {
+	    // plot plots the polygon associated with the Schwarz-Christoffel
+		// rectangle map M and the images of nre evenly spaced vertical 
+	    // and nim horizontal line segments.  
+		// The usual values are nre = nim = 10
+		// Extracted from original routine by Toby Driscoll copyright 1998.
+		int i;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		double L[] = M.stripL;
+		rplot(w, beta, z, c, L, nre, nim);
+	}
+	
+	private void rplot(double w[][], double beta[], double z[][], double c[],
+			double L[], int re, int im) {
+		// Image of cartesian grid under Schwarz-Christoffel rectangle map.
+		// rplot will adaptively plot the images under the Schwarz-Christoffel
+		// rectangle map of re evenly spaced vertical and im evenly spaced
+		// horizontal lines.
+		// Extracted form original routine by Toby Driscoll copyright 1998.
+		int i;
+		int n = w.length;
+		int corners[] = new int[4];
+		int renum[] = new int[w.length];
+		rcorners(w, beta, z, corners, renum);
+		double rect[][] = new double[4][2];
+		for (i = 0; i < 4; i++) {
+			rect[i][0] = z[corners[i]][0];
+			rect[i][1] = z[corners[i]][1];
+		}
+		
+		double Kp = rect[1][1];
+		double K[] = new double[2];
+		K[0] = rect[0][0];
+		K[1] = rect[0][1];
+		double recoords[][] = new double[re][2];
+		double rexspacing = 2.0*K[0]/(re+1);
+		double reyspacing = 2*K[1]/(re+1);
+		for (i = 1; i <= re; i++) {
+			recoords[i-1][0] = -K[0] + i*rexspacing;
+			recoords[i-1][1] = -K[1] + i*reyspacing;
+		}
+		double imcoords[] = new double[im];
+		double imspacing = Kp/(im+1);
+		for (i = 1; i <= im; i++) {
+			imcoords[i-1] = i*imspacing;
+		}
+		plotpoly(w, beta);
+	}
+	
+	private void plotpoly(double w[][], double beta[]) {
+		// plotpoly plots the polygon whose vertices are in vector w
+		// and whose turning angles are in beta.  Vertices at infinity
+		// permitted, but there must be at least two consecutive finite
+		// vertices somewhere in w.
+		// Extracted from original MATLAB routine by Toby Driscoll copyright 1998.
+		int n = w.length;
+		int numfinite = 0;
+		int numinfinite = 0;
+		int i, j;
+		boolean atinf[] = new boolean[w.length];
+		for (i = 0; i < w.length; i++) {
+			if ((!Double.isInfinite(w[i][0])) && (!Double.isInfinite(w[i][1]))) {
+				numfinite++;
+			}
+			else {
+				numinfinite++;
+				atinf[i] = true;
+			}
+		}
+		double wf[][] = new double[numfinite][2];
+		for (i = 0, j = 0; i < w.length; i++) {
+			if ((!Double.isInfinite(w[i][0])) && (!Double.isInfinite(w[i][1]))) {
+				wf[j][0] = w[i][0];
+				wf[j++][1] = w[i][1];
+			}
+		}
+		
+		double minrealwf = Double.MAX_VALUE;
+		double maxrealwf = -Double.MAX_VALUE;
+		double minimagwf = Double.MAX_VALUE;
+		double maximagwf = -Double.MAX_VALUE;
+		for (i = 0; i < wf.length; i++) {
+			if (wf[i][0] < minrealwf) {
+				minrealwf = wf[i][0];
+			}
+			if (wf[i][0] > maxrealwf) {
+				maxrealwf = wf[i][0];
+			}
+			if (wf[i][1] < minimagwf) {
+				minimagwf = wf[i][1];
+			}
+			if (wf[i][1] > maximagwf) {
+				maximagwf = wf[i][1];
+			}
+		}
+		double lim[] = new double[4];
+		lim[0] = minrealwf;
+		lim[1] = maxrealwf;
+		lim[2] = minimagwf;
+		lim[3] = maximagwf;
+		double maxdiff = Math.max(lim[1] - lim[0], lim[3] - lim[2]);
+		double fac = 0.6;
+		if (numinfinite > 0) {
+			fac = 0.7;
+		}
+		double meanlim01 = (lim[0] + lim[1])/2.0;
+		double meanlim23 = (lim[2] + lim[3])/2.0;
+		lim[0] = meanlim01 - fac * maxdiff;
+		lim[1] = meanlim01 + fac * maxdiff;
+		lim[2] = meanlim23 - fac * maxdiff;
+		lim[3] = meanlim23 + fac * maxdiff;
+		double R = Math.max(lim[1] - lim[0], lim[3] - lim[2]);
+		int first = -1;
+		for (i = 0; i < n-1 && (first == -1); i++) {
+			if ((!atinf[i]) && (!atinf[i+1])) {
+			    first = i;	
+			}
+		}
+		if ((first == -1) && (!atinf[n-1]) && (!atinf[0])) {
+			first = n-1;
+		}
+		if (first == -1) {
+			MipavUtil.displayError("There must be two consecutive finite vertices.");
+			return;
+		}
+		int renum[] = new int[n];
+		for (i = 0; i < n - first; i++) {
+			renum[i] = first +i;
+		}
+		for (i = 0; i < first; i++) {
+			renum[n-first+i] = i;
+		}
+		double wrenum[][] = new double[n][2];
+		double betarenum[] = new double[n];
+		boolean atinfrenum[] = new boolean[n];
+		for (i = 0; i < n; i++) {
+			wrenum[i][0] = w[renum[i]][0];
+			wrenum[i][1] = w[renum[i]][1];
+			betarenum[i] = beta[renum[i]];
+			atinfrenum[i] = atinf[renum[i]];
+		}
+		
+	}
+	
 	private double accuracy(scmap M) {
 		// Apparent accuracy of Schwarz-Christoffel rectangle map.
 		// accuracy estimates the accuracy of the Schwarz-Christoffel rectangle map M.
