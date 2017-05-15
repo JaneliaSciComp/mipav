@@ -417,7 +417,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    for (j = ends[1]+1; j < n; j++) {
 			   qdata2[i][j+2] = qdata[i][j];
 		    }
-		   qdata[i][n+2] = qdata[i][n];
+		   qdata2[i][n+2] = qdata[i][n];
 		   for (j = n+1; j <= ends[0]+n+1; j++) {
 				qdata2[i][j+2] = qdata[i][j];
 			}
@@ -430,6 +430,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			   qdata2[i][j+4] = qdata[i][j];   
 		   }
 		   qdata2[i][2*n+5] = qdata[i][2*n+1];
+		}
+		for (i = 0; i < qdata2.length; i++) {
+			for (j = 0; j < qdata2[0].length; j++) {
+				System.out.println("qdata2["+i+"]["+j+"] = " + qdata2[i][j]);
+			}
 		}
 		
 		// Do the integrations
