@@ -171,18 +171,12 @@ public class LatticeModel {
 
 	protected NaturalSpline3 centerSpline;
 
-	protected NaturalSpline3 leftSpline;
-
-	protected NaturalSpline3 rightSpline;
-
 	protected VOIContour centerPositions;
 
 	protected VOIContour leftPositions;
 
 	protected VOIContour rightPositions;
 
-//	protected float length;
-//	protected float totalCurvature;
 
 	private VOI leftLine;
 
@@ -577,8 +571,6 @@ public class LatticeModel {
 		afTimeC = null;
 		allTimes = null;
 		centerSpline = null;
-		leftSpline = null;
-		rightSpline = null;
 		centerPositions = null;
 		leftPositions = null;
 		rightPositions = null;
@@ -733,65 +725,12 @@ public class LatticeModel {
 	 */
 	public void interpolateLattice(final boolean displayResult, final boolean useModel, final boolean untwistImage, final boolean untwistMarkers) {
 
-//		shiftLattice();
-
-		// Determine the distances between points on the lattice
-		// distances are along the curve, not straight-line distances:
-		//		final float[] closestTimes = new float[afTimeC.length];
-		//		final float[] leftDistances = new float[afTimeC.length];
-		//		final float[] rightDistances = new float[afTimeC.length];
-		//		for (int i = 0; i < afTimeC.length; i++) {
-		//			float minDif = Float.MAX_VALUE;
-		//			for (int j = 0; j < allTimes.length; j++) {
-		//				final float dif = Math.abs(allTimes[j] - afTimeC[i]);
-		//				if (dif < minDif) {
-		//					minDif = dif;
-		//					closestTimes[i] = allTimes[j];
-		//				}
-		//			}
-		//			leftDistances[i] = 0;
-		//			rightDistances[i] = 0;
-		//			if (i > 0) {
-		//				rightDistances[i] = rightSpline.GetLength(closestTimes[i - 1], closestTimes[i]);
-		//				leftDistances[i] = leftSpline.GetLength(closestTimes[i - 1], closestTimes[i]);
-		//			}
-		//		}
-
 		// save the lattice statistics -- distance between pairs and distances between
 		// lattice points along the curves
 		String imageName = imageA.getImageName();
 		if (imageName.contains("_clone")) {
 			imageName = imageName.replaceAll("_clone", "");
 		}
-		//		saveLatticeStatistics(outputDirectory + File.separator, length, left, right, leftDistances, rightDistances, "_before");
-		// save the original annotation positions
-//		saveAnnotationStatistics(outputDirectory + File.separator, null, null, null, "_before");
-
-		// modify markers based on volume segmentation:
-//		markerVolumes = new int[left.size()][2];
-//		markerIDs = new int[left.size()];
-//		completedIDs = new boolean[left.size()];
-//		currentID = new int[] {0};
-		// segment the left-right markers based on the lattice points:
-//		if ( useModel )
-//		{
-//			if ( maskImage == null )
-//			{
-//				markerSegmentation = segmentMarkers(imageA, left, right, markerIDs, markerVolumes, false);
-//			}
-//			else
-//			{
-//				markerSegmentation = segmentMarkersSimple(imageA, left, right, markerIDs, markerVolumes);
-//			}
-//		}
-		// save the updated lattice positions, including any volume estimation for the marker segmentation at that lattice
-		// point:
-//		saveLatticePositions(imageA, null, left, right, markerVolumes, "_before");
-//		for (int i = 0; i < completedIDs.length; i++) {
-//			if (markerIDs[i] == 0) {
-//				completedIDs[i] = true;
-//			}
-//		}
 
 		// The algorithm interpolates between the lattice points, creating two smooth curves from head to tail along
 		// the left and right-hand sides of the worm body. A third curve down the center-line of the worm body is
@@ -799,28 +738,21 @@ public class LatticeModel {
 		// along the length of the straightened worm, and therefore the final length of the straightened worm volume.
 		generateCurves(1);
 		generateEllipses();
+		saveLatticeStatistics();
 
 		final int[] resultExtents = new int[] {(int) ((2 * extent)), (int) ((2 * extent)), samplingPlanes.getCurves().size()};
-//		if ( useModel )
-//		{
-//			createWormModel(imageA, samplingPlanes, ellipseBounds, wormDiameters, 2 * extent, displayResult);
-//		}
-//		else
+		if ( untwistImage )
 		{
-			if ( untwistImage )
+			untwist(imageA, resultExtents, true);
+			if ( seamCellImage != null )
 			{
-				untwist(imageA, resultExtents, true);
-				if ( seamCellImage != null )
-				{
-					untwist(seamCellImage, resultExtents, false);
-				}
-				untwistLattice(imageA, resultExtents);
+				untwist(seamCellImage, resultExtents, false);
 			}
-			if ( untwistMarkers && (markerCenters != null) )
-			{
-				//				System.err.println( "interpolateLattice untwist markers " + resultExtents[0] + " " + resultExtents[1] );
-				untwistMarkers(imageA, resultExtents, true);
-			}
+			untwistLattice(imageA, resultExtents);
+		}
+		if ( untwistMarkers && (markerCenters != null) )
+		{
+			untwistMarkers(imageA, resultExtents, true);
 		}
 	}
 
@@ -2155,8 +2087,6 @@ public class LatticeModel {
 		}
 		afTimeC = null;
 		centerSpline = null;
-		leftSpline = null;
-		rightSpline = null;
 
 		centerPositions = null;
 		leftPositions = null;
@@ -2856,16 +2786,13 @@ public class LatticeModel {
 				int rightID = seamCellImage.getInt( (int)rightPt.X, (int)rightPt.Y, (int)rightPt.Z );
 				seamCellIDs[i][1] = rightID;
 			}
-			//			System.err.println( i + " " + left.elementAt(i).distance(right.elementAt(i) ) );
 		}
 
-		// 2. Three curves are generated from the three sets of points (left, center, right) using natural splines
+		// 2. The center curve is generated from the center points using natural splines
 		// to fit the points. Natural splines generate curves that pass through the control points, have continuous
 		// first and second derivatives and minimize the bending between points.
 		afTimeC = new float[center.size()];
 		centerSpline = smoothCurve(center, afTimeC);
-//		leftSpline = smoothCurve2(left, afTimeC);
-//		rightSpline = smoothCurve2(right, afTimeC);
 
 		centerPositions = new VOIContour(false);
 		leftPositions = new VOIContour(false);
@@ -3062,12 +2989,6 @@ public class LatticeModel {
 		for (int i = 0; i <= maxLength; i++) {
 			final float t = allTimes[i];
 			Vector3f normal = centerSpline.GetTangent(t);
-			//			final Vector3f leftPt = leftSpline.GetPosition(t);
-			//			final Vector3f rightPt = rightSpline.GetPosition(t);
-
-			//			final Vector3f rightDir = Vector3f.sub(rightPt, leftPt);
-			//			float diameter = rightDir.normalize();
-			//			diameter /= 2f;
 			final Vector3f rightDir = rightVectorsInterp[i];
 			float diameter = diameters[i];
 			if (diameter > extent) {
@@ -4507,39 +4428,19 @@ public class LatticeModel {
 	 */
 	protected void saveLatticeStatistics( String imageDir, final float length, final VOIContour left, final VOIContour right, final float[] leftPairs,
 			final float[] rightPairs, final String postFix) {
-		//		String imageName = image.getImageName();
-		//		if (imageName.contains("_clone")) {
-		//			imageName = imageName.replaceAll("_clone", "");
-		//		}
-		//		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator;
-		//		File voiFileDir = new File(voiDir);
-		//		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
-		//		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
-		//		} else { // voiFileDir does not exist
-		//			voiFileDir.mkdir();
-		//		}
-		//		voiDir = image.getImageDirectory() + JDialogBase.makeImageName(imageName, "") + File.separator + "statistics" + File.separator;
-
+		
 		String voiDir = imageDir;
 		File voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
-//			System.err.println( "saveLatticeStatistics " + voiDir);
 			voiFileDir.mkdir();
 		}
 		voiDir = imageDir + "statistics" + File.separator;
 
 		voiFileDir = new File(voiDir);
 		if (voiFileDir.exists() && voiFileDir.isDirectory()) {
-			// String[] list = voiFileDir.list();
-			// for ( int i = 0; i < list.length; i++ )
-			// {
-			// File lrFile = new File( voiDir + list[i] );
-			// lrFile.delete();
-			// }
 		} else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {} else { // voiFileDir does not exist
-//			System.err.println( "saveLatticeStatistics " + voiDir);
 			voiFileDir.mkdir();
 		}
 
@@ -4961,25 +4862,7 @@ public class LatticeModel {
 
 		return new NaturalSpline3(NaturalSpline3.BoundaryType.BT_FREE, curve.size() - 1, time, akPoints);
 	}
-
-	/**
-	 * Generates the Natural Spline curves for the left and right curves for the lattice. The time points are passed to
-	 * the spline and correspond to the time points along the center-line curve so that all three curves match in
-	 * time-space.
-	 * 
-	 * @param curve
-	 * @param time
-	 * @return
-	 */
-	protected NaturalSpline3 smoothCurve2(final VOIContour curve, final float[] time) {
-		final Vector3f[] akPoints = new Vector3f[curve.size()];
-		for (int i = 0; i < curve.size(); i++) {
-			akPoints[i] = new Vector3f(curve.elementAt(i));
-			//			System.err.println( akPoints[i] + " " + time[i] );
-		}
-
-		return new NaturalSpline3(NaturalSpline3.BoundaryType.BT_FREE, curve.size() - 1, time, akPoints);
-	}
+	
 
 	/**
 	 * Once the 3D model of the worm is finalized, a 2D slice plane is swept through the model. At each sample-point
@@ -8070,10 +7953,10 @@ public class LatticeModel {
 		for (int i = 0; i < leftSide.size(); i++) {
 			leftDistances[i] = 0;
 			rightDistances[i] = 0;
-			if (i > 1) {
-				leftDistances[i] = leftSide.elementAt(i).distance(leftSide.elementAt(i - 1));
-				rightDistances[i] = rightSide.elementAt(i).distance(rightSide.elementAt(i - 1));
-			}
+		}
+		for (int i = 0; i < leftSide.size() -1; i++) {
+			leftDistances[i] = leftSide.elementAt(i).distance(leftSide.elementAt(i + 1));
+			rightDistances[i] = rightSide.elementAt(i).distance(rightSide.elementAt(i + 1));
 		}
 
 		resultImage.registerVOI(lattice);
@@ -8120,14 +8003,9 @@ public class LatticeModel {
 			latticePoints.getCurves().add(text);
 		}
 		LatticeModel.saveAnnotationsAsCSV(voiDir, "straightened_lattice.csv", latticePoints);
-		
-		
-		
-
-//		saveLatticeStatistics(outputDirectory + File.separator, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
+		saveLatticeStatistics(outputDirectory + File.separator, resultExtents[2], leftSide, rightSide, leftDistances, rightDistances, "_after");
 
 		transformedOrigin = new Vector3f( center );
-//		saveLatticePositions(imageA, null, leftSide, rightSide, markerVolumes, "_after");
 
 		resultImage.disposeLocal(false);
 		resultImage = null;
@@ -9243,68 +9121,29 @@ public class LatticeModel {
 	}
 
 
-
-//	private Vector3f seamTest( ModelImage seamCells, int centerID, int leftID, int rightID, Vector3f startPt, Vector3f endPt, float minDist, float maxDist, float targetDist )
-//	{
-//		final int dimX = seamCells.getExtents().length > 0 ? seamCells.getExtents()[0] : 1;
-//		final int dimY = seamCells.getExtents().length > 1 ? seamCells.getExtents()[1] : 1;
-//		final int dimZ = seamCells.getExtents().length > 2 ? seamCells.getExtents()[2] : 1; 
-//
-//		Vector3f dir = Vector3f.sub(endPt, startPt);
-//		float length = dir.normalize();
-//
-//		Vector3f pt = new Vector3f(startPt);
-//		boolean idFound = false;
-//		for ( int i = 0; i < length; i++ )
-//		{
-//			pt.add(dir);
-//			if ( pt.distance(startPt) <= minDist )
-//			{
-//				continue;
-//			}
-//			else if ( pt.distance(startPt) > maxDist )
-//			{
-//				break;
-//			}
-//
-//			int x = (int)Math.round(pt.X);
-//			int y = (int)Math.round(pt.Y);
-//			int z = (int)Math.round(pt.Z);
-//			if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
-//			{				
-//				int id = seamCells.getInt(x,y,z);
-//				if ( id != 0 )
-//				{
-//					if ( (id != centerID) && (id != leftID) && (id != rightID) )
-//					{
-//						pt.sub(dir);
-//						return pt;
-//					}
-//					else if ( (id == leftID) || (id == rightID) || (id == centerID) )
-//					{
-//						idFound = true;
-//					}
-//				}
-//				else if ( idFound )
-//				{
-//					pt.sub(dir);
-//					return pt;					
-//				}
-//			}
-//			else
-//			{
-//				break;
-//			}
-//		}
-//		if ( idFound )
-//		{
-//			pt.sub(dir);
-//			return pt;				
-//		}
-//		return null;
-//	}
-
-
-
+	private void saveLatticeStatistics()
+	{
+		// Determine the distances between points on the lattice
+		// distances are along the curve, not straight-line distances:			
+		final float[] leftDistances = new float[left.size()];
+		final float[] rightDistances = new float[right.size()];
+		for ( int i = 0; i < left.size(); i++ )
+		{
+			leftDistances[i] = 0;
+			rightDistances[i] = 0;
+		}
+		for ( int i = 0; i < left.size() - 1; i++ )
+		{
+			leftDistances[i] = 0;
+			rightDistances[i] = 0;
+			for ( int j = latticeSlices[i]; j < latticeSlices[i+1]; j++ )
+			{
+				leftDistances[i] += leftPositions.elementAt(j).distance(leftPositions.elementAt(j+1));
+				rightDistances[i] += rightPositions.elementAt(j).distance(rightPositions.elementAt(j+1));
+			}
+		}
+		
+		saveLatticeStatistics(outputDirectory + File.separator, centerSpline.GetLength(0, 1), left, right, leftDistances, rightDistances, "_before");
+	}
 
 }

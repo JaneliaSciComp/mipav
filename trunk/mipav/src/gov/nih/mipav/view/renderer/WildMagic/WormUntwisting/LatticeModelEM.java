@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Curves.NaturalSpline3;
 import WildMagic.LibFoundation.Distance.DistanceVector3Ellipsoid3;
 import WildMagic.LibFoundation.Distance.DistanceVector3Plane3;
 import WildMagic.LibFoundation.Mathematics.Box3f;
@@ -60,6 +61,7 @@ public class LatticeModelEM extends LatticeModel
 	private boolean mask = true;
 	private boolean untwistSpreadSheet = true;
 	private float length;
+	private NaturalSpline3 leftSpline, rightSpline;
 	
 	/**
 	 * Creates a new LatticeModel
@@ -1873,4 +1875,23 @@ public class LatticeModelEM extends LatticeModel
 		
 	}
 
+	/**
+	 * Generates the Natural Spline curves for the left and right curves for the lattice. The time points are passed to
+	 * the spline and correspond to the time points along the center-line curve so that all three curves match in
+	 * time-space.
+	 * 
+	 * @param curve
+	 * @param time
+	 * @return
+	 */
+	protected NaturalSpline3 smoothCurve2(final VOIContour curve, final float[] time) {
+		final Vector3f[] akPoints = new Vector3f[curve.size()];
+		for (int i = 0; i < curve.size(); i++) {
+			akPoints[i] = new Vector3f(curve.elementAt(i));
+			//			System.err.println( akPoints[i] + " " + time[i] );
+		}
+
+		return new NaturalSpline3(NaturalSpline3.BoundaryType.BT_FREE, curve.size() - 1, time, akPoints);
+	}
+	
 }
