@@ -127,6 +127,7 @@ public class PlugInAlgorithmWormUntwisting
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
@@ -138,6 +139,7 @@ public class PlugInAlgorithmWormUntwisting
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 
@@ -186,7 +188,7 @@ public class PlugInAlgorithmWormUntwisting
 		if ( maximumProjectionImage != null )
 		{
 			String fileName = baseFileDir + File.separator;
-//			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
+			System.err.println( "Saving mp image to : " + fileName + " " + maximumProjectionImage.getImageName() + ".tif" );
 			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".tif", fileName, false ); 
 
 			maximumProjectionImage.calcMinMax();
@@ -470,6 +472,7 @@ public class PlugInAlgorithmWormUntwisting
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight" + ".xml";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				if ( voiFile.exists() )
@@ -493,16 +496,18 @@ public class PlugInAlgorithmWormUntwisting
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight" + ".xml";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 
 				File registrationDir = new File(baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+						baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
 						"output_images");
 				if ( voiFile.exists() )
 				{
 //					System.err.println( fileName );
 					FileIO fileIO = new FileIO();
-					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  						
 
 					ModelImage result = register( prevImage, image, registrationDir, maxExtents );
 					if ( result == null )

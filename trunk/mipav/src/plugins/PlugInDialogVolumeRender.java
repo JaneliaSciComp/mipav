@@ -1644,7 +1644,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridx = 0;
 		calcMaxProjection = gui.buildRadioButton("generate maximum intensity projection animation", false );
 		calcMaxProjection.addActionListener(this);
-//		panel.add(calcMaxProjection.getParent(), gbc);
+		panel.add(calcMaxProjection.getParent(), gbc);
 		gbc.gridy++;
 
 		gbc.gridx = 0;

@@ -123,7 +123,7 @@ public class LatticeBuilder {
 //		Profile.clear();
 //		Profile.start();
 		
-		final int targetLength = wasEdited ? annotations.getCurves().size() : 20;
+		final int targetLength = wasEdited ? ((annotations.getCurves().size()%2) == 0) ? annotations.getCurves().size() : (annotations.getCurves().size() - 1) : 20;
 
 		long startTime = System.currentTimeMillis();
 		final VOI pointSets = makeGroups(annotations, targetLength);
