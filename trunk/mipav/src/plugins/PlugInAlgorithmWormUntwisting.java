@@ -28,6 +28,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmConstrainedOAR3D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -37,6 +38,7 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
@@ -116,7 +118,7 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
-	public static void calcMaxProjection(JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
+	public static void calcMaxProjection(JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileDir2, final String baseFileName)
 	{
 		ModelImage image = null, maximumProjectionImage = null;
 		int[] currentMPImage = new int[]{0};
@@ -161,11 +163,50 @@ public class PlugInAlgorithmWormUntwisting
 					}
 					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);
 					image.calcMinMax();
+					
+					if ( (baseFileDir2 != null) && !baseFileDir2.isEmpty() )
+					{
+						fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+								baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
+								"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight_register" + ".tif";
+						File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
+
+//						System.err.println( fileName );
+						ModelImage secondImage = null;
+						if ( voiFile2.exists() )
+						{
+							secondImage = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null);
+							secondImage.calcMinMax();     
+						}
+						if ( secondImage != null )
+						{
+							ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB, image.getExtents(),
+									JDialogBase.makeImageName(image.getImageName(), "_rgb"));
+							JDialogBase.updateFileInfo(image, displayImage);
+
+			                // Make algorithm
+							ModelImage blank = new ModelImage(ModelImage.SHORT, image.getExtents(), JDialogBase.makeImageName(image.getImageName(), ""));
+							AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(image, secondImage, blank, displayImage, true, false, 255, true, true);
+							mathAlgo.run();
+							
+							ModelImage.saveImage(displayImage, displayImage.getImageName(), voiFile.getParent() + File.separator);
+							image.disposeLocal(false);
+							secondImage.disposeLocal(false);
+							blank.disposeLocal(false);
+							image = displayImage;
+						}
+					}
+					
+					
+					
+					
+					
 					if ( maximumProjectionImage == null )
 					{
+						String name = ( (baseFileDir2 != null) && !baseFileDir2.isEmpty() ) ? "_combined" : "";
 						int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1; // dimX
 						int dimY = image.getExtents().length > 2 ? image.getExtents()[2] : 1; // use dimZ for y projection
-						maximumProjectionImage = new ModelImage( image.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileName + "_MP_Y.tif" );
+						maximumProjectionImage = new ModelImage( image.getType(), new int[]{ dimX, dimY, mpSliceCount}, baseFileName + name + "_MP_Y.tif" );
 						currentMPImage[0] = 0;
 					}
 					calcMaximumProjectionY( image, maximumProjectionImage, currentMPImage );
@@ -192,7 +233,7 @@ public class PlugInAlgorithmWormUntwisting
 			ModelImage.saveImage( maximumProjectionImage, maximumProjectionImage.getImageName() + ".tif", fileName, false ); 
 
 			maximumProjectionImage.calcMinMax();
-//			new ViewJFrameImage(maximumProjectionImage);
+//			new ViewJFrameImage( (ModelImage)maximumProjectionImage.clone());
 			
 			// Launch ImageJ for viewing:
             final ImageStack is = ModelImageToImageJConversion.convert3D(maximumProjectionImage);
@@ -211,12 +252,18 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
-	public static void createMaximumProjectionAVI( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
+	public static void createMaximumProjectionAVI( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileDir2, final String baseFileName)
 	{
 		// register images and save output files:
-		registerImages(batchProgress, includeRange, baseFileDir, baseFileName);
+		registerImages(batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileName);
 		// calculate the maximum projection of each image and save the image stack:
-		calcMaxProjection(batchProgress, includeRange, baseFileDir, baseFileName);		
+		calcMaxProjection(batchProgress, includeRange, baseFileDir, null, baseFileName);	
+		if ( (baseFileDir2 != null) && !baseFileDir2.isEmpty())
+		{
+			// calculate the maximum projection of each image and save the image stack:
+			calcMaxProjection(batchProgress, includeRange, baseFileDir2, null, baseFileName);	
+			calcMaxProjection(batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileName);		
+		}
 	}
 
 	/**
@@ -463,7 +510,7 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
-	public static void registerImages( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName)
+	public static void registerImages( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileDir2, final String baseFileName)
 	{
 		ModelImage image = null, prevImage = null;
 		int[] maxExtents = new int[]{0,0,0};
@@ -493,6 +540,7 @@ public class PlugInAlgorithmWormUntwisting
 				}
 			}
 
+			TransMatrix[] matrixList = new TransMatrix[includeRange.size()];
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
 				String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
@@ -509,7 +557,9 @@ public class PlugInAlgorithmWormUntwisting
 					FileIO fileIO = new FileIO();
 					image = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  						
 
-					ModelImage result = register( prevImage, image, registrationDir, maxExtents );
+					TransMatrix[] resultMatrix = new TransMatrix[1];
+					ModelImage result = register( prevImage, image, registrationDir, maxExtents, resultMatrix );
+					matrixList[i] = resultMatrix[0];
 					if ( result == null )
 					{
 						prevImage = image;
@@ -536,6 +586,64 @@ public class PlugInAlgorithmWormUntwisting
 					batchProgress.update(batchProgress.getGraphics());
 				}
 			}
+
+			if ( image != null )
+			{
+				image.disposeLocal();
+				image = null;
+			}
+			if ( prevImage != null )
+			{
+				prevImage.disposeLocal();
+				prevImage = null;
+			}
+
+			if ( (baseFileDir2 != null) && !baseFileDir2.isEmpty() )
+			{
+				for ( int i = 0; i < includeRange.size(); i++ )
+				{
+					String fileName = baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+							baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
+							"output_images" + File.separator + baseFileName + "_" + includeRange.elementAt(i) + "_straight" + ".xml";
+					File voiFile = new File(baseFileDir2 + File.separator + fileName);
+
+					File registrationDir = new File(baseFileDir2 + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + 
+							baseFileName + "_"  + includeRange.elementAt(i) + "_results" + File.separator +
+							"output_images");
+					if ( voiFile.exists() )
+					{
+						//				System.err.println( fileName );
+						FileIO fileIO = new FileIO();
+						image = fileIO.readImage(fileName, baseFileDir2 + File.separator, false, null);  						
+
+						ModelImage result = registerToMatrix( prevImage, image, registrationDir, maxExtents, matrixList[i] );
+						if ( result == null )
+						{
+							prevImage = image;
+						}
+						else
+						{
+							if ( image != null )
+							{
+								image.disposeLocal();
+								image = null;
+							}
+							if ( prevImage != null )
+							{
+								prevImage.disposeLocal();
+								prevImage = null;
+							}
+							prevImage = result;
+						}
+					}
+
+					if ( batchProgress != null )
+					{
+						batchProgress.setValue((int)(100 * (float)(i+1)/includeRange.size()));
+						batchProgress.update(batchProgress.getGraphics());
+					}
+				}
+			}
 		}
 
 		if ( image != null )
@@ -548,6 +656,7 @@ public class PlugInAlgorithmWormUntwisting
 			prevImage.disposeLocal();
 			prevImage = null;
 		}
+		
 	}
 	
 	/**
@@ -704,6 +813,10 @@ public class PlugInAlgorithmWormUntwisting
 
 			zSlice[0]++;
 		}
+		for ( int i = 0; i < resultImages.size(); i++ )
+		{
+			resultImages.elementAt(i).disposeLocal(false);
+		}
 		mipAlgo.finalize();
 	}
 
@@ -716,7 +829,7 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param matchImage
 	 * @return
 	 */
-	private static ModelImage getTransformedImage( AlgorithmConstrainedOAR3D reg3, ModelImage refImage, ModelImage matchImage )
+	private static ModelImage getTransformedImage( AlgorithmConstrainedOAR3D reg3, ModelImage refImage, ModelImage matchImage, TransMatrix[] finalMatrix )
 	{
 		// get the image extents and resolutions from the reference image:
 		final int xdimA = refImage.getExtents()[0];
@@ -727,10 +840,10 @@ public class PlugInAlgorithmWormUntwisting
 		final float zresA = refImage.getFileInfo(0).getResolutions()[2];
 		if (reg3.isCompleted()) {
 			// get the transformation from the registration algorithm:
-			final TransMatrix finalMatrix = reg3.getTransform();
+			finalMatrix[0] = reg3.getTransform();
 			// transform the input image (matchImage) based on the transformation:
 			final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
-			AlgorithmTransform transform = new AlgorithmTransform(matchImage, finalMatrix, 0, xresA, yresA, zresA, xdimA,
+			AlgorithmTransform transform = new AlgorithmTransform(matchImage, finalMatrix[0], 0, xresA, yresA, zresA, xdimA,
 					ydimA, zdimA, true, false, false);
 
 			transform.setUpdateOriginFlag(true);
@@ -761,6 +874,47 @@ public class PlugInAlgorithmWormUntwisting
 	}
 	
 
+	private static ModelImage getTransformedImage( TransMatrix finalMatrix, ModelImage refImage, ModelImage matchImage )
+	{
+		// get the image extents and resolutions from the reference image:
+		final int xdimA = refImage.getExtents()[0];
+		final int ydimA = refImage.getExtents()[1];
+		final int zdimA = refImage.getExtents()[2];
+		final float xresA = refImage.getFileInfo(0).getResolutions()[0];
+		final float yresA = refImage.getFileInfo(0).getResolutions()[1];
+		final float zresA = refImage.getFileInfo(0).getResolutions()[2];
+		
+		// transform the input image (matchImage) based on the transformation:
+		final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
+		AlgorithmTransform transform = new AlgorithmTransform(matchImage, finalMatrix, 0, xresA, yresA, zresA, xdimA,
+				ydimA, zdimA, true, false, false);
+
+		transform.setUpdateOriginFlag(true);
+		transform.setFillValue((float)matchImage.getMin());
+		transform.run();
+		ModelImage resultImage = transform.getTransformedImage();
+		if ( resultImage != null )
+		{
+			resultImage.calcMinMax();
+			resultImage.setImageName(name);
+
+			resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
+
+			for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+				resultImage.getFileInfo(i).setOrigin(refImage.getFileInfo(i).getOrigin());
+			}
+		}
+
+		transform.finalize();
+		if (transform != null) {
+			transform.disposeLocal();
+			transform = null;
+		}
+		// return the transformed image:
+		return resultImage;
+	}
+	
+
 
 	/**
 	 * Register the input image to the previous image in the sequence.
@@ -770,7 +924,7 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param maxExtents extents of the registered images in the sequence.
 	 * @return the transformed image.
 	 */
-	private static ModelImage register( ModelImage prevImage, ModelImage image, final File registrationDir, final int[] maxExtents )
+	private static ModelImage register( ModelImage prevImage, ModelImage image, final File registrationDir, final int[] maxExtents, TransMatrix[] resultMatrix )
 	{
 		int[] marginX = new int[2];
 		int[] marginY = new int[2];
@@ -834,13 +988,80 @@ public class PlugInAlgorithmWormUntwisting
 //					true, true, true, false, 2, 3);
 			reg.setRunningInSeparateThread(false);
 			reg.run();
-			result = getTransformedImage( reg, regTo, regInput );
+			result = getTransformedImage( reg, regTo, regInput, resultMatrix );
 			if ( result != null )
 			{
 				saveTransformImage( registrationDir, result );
 			}
 			reg.finalize();
 			reg = null;
+		}
+		if ( (result != padResult) && (padResult != null) )
+		{
+			padResult.disposeLocal();
+			padResult = null;
+		}
+		
+		return result;
+	}
+	
+
+	private static ModelImage registerToMatrix( ModelImage prevImage, ModelImage image, final File registrationDir, final int[] maxExtents, TransMatrix resultMatrix )
+	{
+		int[] marginX = new int[2];
+		int[] marginY = new int[2];
+		int[] marginZ = new int[2];
+
+		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 0;  
+		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 0;  
+		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 0;
+
+		ModelImage regInput;
+		ModelImage regTo = prevImage;
+		ModelImage result = null;
+		ModelImage padResult = null;
+		AlgorithmAddMargins pad = null;
+		if ( dimX != maxExtents[0] || dimY != maxExtents[1] || dimZ != maxExtents[2] )
+		{
+			int diff = maxExtents[0] - dimX;
+			marginX[0] = diff/2;
+			marginX[1] = diff - marginX[0];
+
+			diff = maxExtents[1] - dimY;
+			marginY[0] = diff/2;
+			marginY[1] = diff - marginY[0];
+
+			diff = maxExtents[2] - dimZ;
+			marginZ[0] = 0;
+			marginZ[1] = diff;
+
+
+			padResult = new ModelImage( image.getType(), maxExtents, image.getImageName() + "_pad" );
+			JDialogBase.updateFileInfo( image, padResult );
+			pad = new AlgorithmAddMargins(image, padResult, marginX, marginY, marginZ );
+			pad.setRunningInSeparateThread(false);
+			pad.run();
+			regInput = padResult;
+
+			pad.finalize();
+			pad = null;
+		}
+		else
+		{
+			regInput = image;
+		}
+		if ( regTo == null )
+		{
+			result = regInput;
+			saveTransformImage( registrationDir, result );
+		}
+		else
+		{
+			result = getTransformedImage( resultMatrix, regTo, regInput  );
+			if ( result != null )
+			{
+				saveTransformImage( registrationDir, result );
+			}
 		}
 		if ( (result != padResult) && (padResult != null) )
 		{

@@ -253,7 +253,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					try {
 					// Batch Registration/MP calculation:
-					PlugInAlgorithmWormUntwisting.createMaximumProjectionAVI( batchProgress, includeRange,  baseFileDir, baseFileNameText.getText() );
+					PlugInAlgorithmWormUntwisting.createMaximumProjectionAVI( batchProgress, includeRange,  baseFileDir,  baseFileDir2, baseFileNameText.getText() );
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish maximum-projection calculation." );
 						return;
@@ -890,7 +890,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			if ( secondImage != null )
 			{
-				ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB, wormImage.getExtents(),
+				ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, wormImage.getExtents(),
 						JDialogBase.makeImageName(wormImage.getImageName(), "_rgb"));
 				JDialogBase.updateFileInfo(wormImage, displayImage);
 

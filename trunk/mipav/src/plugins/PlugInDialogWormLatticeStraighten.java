@@ -184,11 +184,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 			}
 			if ( registerImages.isSelected() )
 			{
-				PlugInAlgorithmWormUntwisting.registerImages( null, includeRange,  baseFileDir, baseFileNameText.getText() );
+				PlugInAlgorithmWormUntwisting.registerImages( null, includeRange, baseFileDir, null, baseFileNameText.getText() );
 			}
 			if ( calcMaxProjection.isSelected() )
 			{
-				PlugInAlgorithmWormUntwisting.calcMaxProjection( null, includeRange,  baseFileDir, baseFileNameText.getText() );
+				PlugInAlgorithmWormUntwisting.calcMaxProjection( null, includeRange, baseFileDir, null, baseFileNameText.getText() );
 			}
 			if ( generateTrainingData.isSelected() )
 			{
