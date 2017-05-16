@@ -2,6 +2,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.MipavUtil;
@@ -92,31 +93,48 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
         final int timeOffset = timePt * length;
 
         if (srcImage.isColorImage()) {
-
             final short[] buffer = new short[length];
             try {
-                srcImage.exportRGBData(actinChannel, timeOffset, length, buffer);
-                imgVolume = new ModelImage(ModelImage.SHORT, new int[] {width, height, depth}, srcImage.getImageName() + "_actin");
-                imgVolume.importData(0, buffer, true);
+                int[] extents3D = new int[] {extents[0], extents[1], extents[2]};
+                ModelImage image3D = null;
+                if (srcImage.is4DImage()) {
+                    append("Extracting 3D volume from time point " + timePt, PlugInDialogNeuronalActin.BLACK_TEXT);
+                    image3D = new ModelImage(srcImage.getType(), extents3D, srcImage.getImageName() + "_3dVol");
+                    AlgorithmSubset subsetAlgo = new AlgorithmSubset(srcImage, image3D, AlgorithmSubset.REMOVE_T, timePt);
+                    subsetAlgo.run();
+                    
+                    append("Extracting actin channel", PlugInDialogNeuronalActin.BLACK_TEXT);
+                    image3D.exportRGBData(actinChannel, 0, length, buffer);
+                    imgVolume = new ModelImage(ModelImage.SHORT, extents3D, srcImage.getImageName() + "_actin");
+                    imgVolume.importData(0, buffer, true);
+                    
+                    image3D.disposeLocal();
+                    image3D = null;
+                } else {
+                    append("Extracting actin channel", PlugInDialogNeuronalActin.BLACK_TEXT);
+                    srcImage.exportRGBData(actinChannel, 0, length, buffer);
+                    imgVolume = new ModelImage(ModelImage.SHORT, extents3D, srcImage.getImageName() + "_actin");
+                    imgVolume.importData(0, buffer, true);
+                }
             } catch (final IOException e) {
                 e.printStackTrace();
                 append("Could not extract actin channel from color image", PlugInDialogNeuronalActin.RED_TEXT);
                 return;
             }
-        }
+        } else {
+            if (srcImage.is4DImage()) {
+                append("Extracting 3D volume from time point " + timePt, PlugInDialogNeuronalActin.BLACK_TEXT);
 
-        if (srcImage.is4DImage()) {
-            append("Extracting 3D volume from time point " + timePt, PlugInDialogNeuronalActin.BLACK_TEXT);
-
-            final short[] buffer = new short[length];
-            try {
-                srcImage.exportData(timeOffset, length, buffer);
-                imgVolume = new ModelImage(ModelImage.SHORT, new int[] {width, height, depth}, srcImage.getImageName() + "_3dVol");
-                imgVolume.importData(0, buffer, true);
-            } catch (final IOException e) {
-                e.printStackTrace();
-                append("Could not extract 3D time point from 4D image", PlugInDialogNeuronalActin.RED_TEXT);
-                return;
+                final short[] buffer = new short[length];
+                try {
+                    srcImage.exportData(timeOffset, length, buffer);
+                    imgVolume = new ModelImage(ModelImage.SHORT, new int[] {width, height, depth}, srcImage.getImageName() + "_3dVol");
+                    imgVolume.importData(0, buffer, true);
+                } catch (final IOException e) {
+                    e.printStackTrace();
+                    append("Could not extract 3D time point from 4D image", PlugInDialogNeuronalActin.RED_TEXT);
+                    return;
+                }
             }
         }
 
