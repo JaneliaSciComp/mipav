@@ -4571,5 +4571,15 @@ public class ViewJFrameGraph extends JFrame
                 colorDialog.dispose();
             }
         }
+        
+    }
+    
+    public ViewJComponentGraph getGraph() {
+    	return graph;
+    }
+    
+    public Graphics getFrameGraphics() {
+    	Graphics g = getGraphics();
+    	return g;
     }
 }
