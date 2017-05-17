@@ -2490,6 +2490,14 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             }
         }
     }
+    
+    public Rectangle getGraphBounds() {
+    	return graphBounds;
+    }
+    
+    public void drawString(Graphics g, String str, int x, int y) {
+    	g.drawString(str, x, y);
+    }
 
 
 }
