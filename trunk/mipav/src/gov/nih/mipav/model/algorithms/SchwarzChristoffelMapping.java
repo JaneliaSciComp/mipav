@@ -3,6 +3,9 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.*;
@@ -105,7 +108,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         corner[1] = 1;
         corner[2] = 3;
         corner[3] = 4;
-        rectmap(w, corner, tolerance, null, null, null);
+        scmap M = rectmap(w, corner, tolerance, null, null, null);
+        plot(M, 10, 10);
 	}
 	
 	public scmap rectmap(double w[][], int corner[], double tolerance,
@@ -276,19 +280,37 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		for (i = 1; i <= im; i++) {
 			imcoords[i-1] = i*imspacing;
 		}
-		plotpoly(w, beta);
+		plotpoly(w, beta, false);
 	}
 	
-	private void plotpoly(double w[][], double beta[]) {
+	private void plotpoly(double w[][], double beta[], boolean addMarkerLabel) {
 		// plotpoly plots the polygon whose vertices are in vector w
 		// and whose turning angles are in beta.  Vertices at infinity
 		// permitted, but there must be at least two consecutive finite
 		// vertices somewhere in w.
+		// If addMarkerLabel is true markers and numeric labels are put at vertices
 		// Extracted from original MATLAB routine by Toby Driscoll copyright 1998.
 		int n = w.length;
 		int numfinite = 0;
 		int numinfinite = 0;
 		int i, j;
+		int j2 = 0;
+		int xPos;
+		int yPos;
+		double theta;
+		double Rx[] = new double[2];
+		double Ry[] = new double[2];
+		double RR[] = new double[4];
+		double denom;
+		double costheta;
+		double sintheta;
+		double pos[] = new double[2]; 
+		float xPointArray[];
+		float yPointArray[];
+		float xPointArray2[] = null;
+		float yPointArray2[] = null;
+		float temp[];
+		double minRR;
 		boolean atinf[] = new boolean[w.length];
 		for (i = 0; i < w.length; i++) {
 			if ((!Double.isInfinite(w[i][0])) && (!Double.isInfinite(w[i][1]))) {
@@ -372,6 +394,212 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			atinfrenum[i] = atinf[renum[i]];
 		}
 		
+		// First edge
+		double edgeh[] = new double[n];
+		double lblh[][] = new double[n][2];
+		for (i = 0; i < n; i++) {
+			for (j = 0; j < 2; j++) {
+				lblh[i][j] = Double.NaN;
+			}
+		}
+		String lblhString[][] = new String[n][2];
+		double lblhx[][] = new double[n][2];
+		double lblhy[][] = new double[n][2];
+		xPointArray = new float[n+1];
+		yPointArray = new float[n+1];
+		xPointArray[0] = (float)wrenum[0][0];
+		yPointArray[0] = (float)wrenum[0][1];
+		xPointArray[1] = (float)wrenum[1][0];
+		yPointArray[1] = (float)wrenum[1][1];
+		xPointArray[n] = xPointArray[0];
+		yPointArray[n] = yPointArray[0];
+		
+		double ang = Math.atan2(wrenum[1][1] - wrenum[0][1], wrenum[1][0] - wrenum[0][0]);
+		
+		// Remaining edges
+		j = 2;
+		while (j <= n) {
+		    int jp1 = (j%n)+1;
+		    
+		    // Draw marker/label
+		    if (addMarkerLabel) {
+		    	theta = ang;
+		    	// May need to modify position of label
+		    	if ((Math.abs(betarenum[j-2]-1) < 3.0*eps) ||
+		    			(Math.abs(betarenum[jp1-1] - 1) < 3.0*eps)) {
+		    		// Next to a slit, perturb label inside
+		    		theta = theta + Math.PI - (betarenum[j-1]+ 1)*Math.PI/2.0;
+		    	}
+		    	else if (Math.abs(betarenum[j-1]) < 3.0*eps) {
+		            // For a "trivial" vertex, put number outside
+		    		theta = theta - Math.PI/2.0;
+		    	}
+		    	// Mark label; markers will be added last
+		    	lblhx[j-1][1] = wrenum[j-1][0] + 0.035*R*Math.cos(theta);
+		    	lblhy[j-1][1] = wrenum[j-1][1] + 0.035*R*Math.sin(theta);
+		    	lblhString[j-1][1] =String.valueOf(renum[j-1]);
+		    } // if (addMarkerLabel)
+		    
+		    // Next edge
+		    if (!atinfrenum[jp1-1]) {
+		    	// Bounded edge; straightforward
+			    if (xPointArray2 == null) {
+			    	xPointArray[j] = (float)wrenum[jp1-1][0];
+			    	yPointArray[j] = (float)wrenum[jp1-1][1];
+			    	ang = ang - Math.PI*betarenum[j-1];
+			    	j = j+1;
+		    	}
+			    else {
+			    	xPointArray2[j2] = (float)wrenum[jp1-1][0];
+			    	yPointArray2[j2] = (float)wrenum[jp1-1][1];
+			    	ang = ang - Math.PI*betarenum[j-1];
+			    	j = j+1;
+			    	j2 = j2+1;
+			    }
+		    } // if (!atinfrenum[jp1-1])
+		    else {
+		        // Unbounded edge (first of two consecutive)
+		    	ang= ang - Math.PI*betarenum[j-1];
+		    	xPointArray[j] = (float)(wrenum[j-1][0] + R*Math.cos(ang));
+		    	yPointArray[j] = (float)(wrenum[j-1][1] + R*Math.sin(ang));
+		    	temp = new float[j+1];
+		    	for (i = 0; i <= j; i++) {
+		    		temp[i] = xPointArray[i];
+		    	}
+		    	xPointArray = new float[j+1];
+		    	for (i = 0; i <= j; i++) {
+		    		xPointArray[i] = temp[i];
+		    	}
+		    	for (i = 0; i <= j; i++) {
+		    		temp[i] = yPointArray[i];
+		    	}
+		    	yPointArray = new float[j+1];
+		    	for (i = 0; i <= j; i++) {
+		    		yPointArray[i] = temp[i];
+		    	}
+		    	xPointArray2 = new float[n+1-xPointArray.length];
+		    	xPointArray2[xPointArray2.length-1] = xPointArray[0];
+		    	yPointArray2 = new float[n+1-yPointArray.length];
+		    	yPointArray2[yPointArray2.length-1] = yPointArray[0];
+		    	// Make first label outside axes box
+		    	if (addMarkerLabel) {
+		    		theta = ang;
+		    		costheta = Math.cos(theta);
+		    		if (costheta == 0) {
+		    			denom = eps;
+		    		}
+		    		else {
+		    			denom = costheta;
+		    		}
+		    		Rx[0] = (lim[0] - wrenum[j-1][0])/denom;
+		    		Rx[1] = (lim[1] - wrenum[j-1][0])/denom;
+		    		sintheta = Math.sin(theta);
+		    		if (sintheta == 0) {
+		    			denom = eps;
+		    		}
+		    		else {
+		    			denom = sintheta;
+		    		}
+		    		Ry[0] = (lim[2] - wrenum[j-1][1])/denom;
+		    		Ry[1] = (lim[3] - wrenum[j-1][1])/denom;
+		    		RR[0] = Rx[0];
+		    		RR[1] = Rx[1];
+		    		RR[2] = Ry[0];
+		    		RR[3] = Ry[1];
+		    		minRR = Double.MAX_VALUE;
+		    		for (i = 0; i <= 3; i++) {
+		    		    if ((RR[i] > 0)	&& (RR[i] < minRR)) {
+		    		    	minRR = RR[i];
+		    		    }   		
+		    		}
+		    		if (minRR == Double.MAX_VALUE) {
+		    			minRR = 0.0;
+		    		}
+		    		lblhx[j][0] = wrenum[j-1][0] + (minRR + 0.07*R)*costheta;
+		    		lblhy[j][0] = wrenum[j-1][1] + (minRR + 0.07*R)*sintheta;
+		    		lblhString[j][0] = renum[j] + " (inf)";
+		    	} // if (addMarkerLabel)
+		    	
+		    	// Second unbounded edge
+		    	ang = ang - Math.PI*betarenum[jp1-1];
+		    	xPointArray2[j2] = (float)(wrenum[(j+1)%n][0] - R*Math.cos(ang));
+		    	yPointArray2[j2] = (float)(wrenum[(j+1)%n][1] - R*Math.sin(ang));
+		    	xPointArray2[j2+1] = (float)(wrenum[(j+1)%n][0]);
+		    	xPointArray2[j2+1] = (float)(wrenum[(j+1)%n][1]);
+		    	if (addMarkerLabel) {
+		    	    theta = ang + Math.PI;
+		    	    costheta = Math.cos(theta);
+		    		if (costheta == 0) {
+		    			denom = eps;
+		    		}
+		    		else {
+		    			denom = costheta;
+		    		}
+		    		Rx[0] = (lim[0] - wrenum[(j+1)%n][0])/denom;
+		    		Rx[1] = (lim[1] - wrenum[(j+1)%n][0])/denom;
+		    		sintheta = Math.sin(theta);
+		    		if (sintheta == 0) {
+		    			denom = eps;
+		    		}
+		    		else {
+		    			denom = sintheta;
+		    		}
+		    		Ry[0] = (lim[2] - wrenum[(j+1)%n][1])/denom;
+		    		Ry[1] = (lim[3] - wrenum[(j+1)%n][1])/denom;
+		    		RR[0] = Rx[0];
+		    		RR[1] = Rx[1];
+		    		RR[2] = Ry[0];
+		    		RR[3] = Ry[1];
+		    		minRR = Double.MAX_VALUE;
+		    		for (i = 0; i <= 3; i++) {
+		    		    if ((RR[i] > 0)	&& (RR[i] < minRR)) {
+		    		    	minRR = RR[i];
+		    		    }   		
+		    		}
+		    		if (minRR == Double.MAX_VALUE) {
+		    			minRR = 0.0;
+		    		}
+		    		lblhx[j][1] = wrenum[(j+1)%n][0] + (minRR + 0.07*R)*costheta;
+		    		lblhy[j][1] = wrenum[(j+1)%n][1] + (minRR + 0.07*R)*sintheta;
+		    		lblhString[j][1] = renum[j] + " (inf)";
+
+		    	} // if (addMarkerLabel)
+		    	
+		    	// We've done tow
+		    	j = j+2;
+		    	j2 = j2+2;
+		    } // else
+		} // while (j <= n)
+		
+		// Last item, label for first point
+		if (addMarkerLabel) {
+			theta = ang;
+			if ((Math.abs(betarenum[n-1]-1) < 3.0*eps) || 
+					(Math.abs(betarenum[0]) < 3.0*eps) || (Math.abs(betarenum[1]-1) < 3.0*eps)) {
+				theta = theta + Math.PI - (betarenum[0] + 1)*Math.PI/2.0;
+			}
+			lblhx[0][1] = (int)Math.round(wrenum[0][0] + 0.035*R*Math.cos(theta));
+			lblhy[0][1] = (int)Math.round(wrenum[0][1] + 0.035*R*Math.sin(theta));
+			lblhString[0][1] = String.valueOf(renum[0]);
+		} // if (addMarkerLabel)
+		
+		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray,
+				"title", "lablelX", "labelY", Color.BLUE);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		if (addMarkerLabel) {
+		    graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_AND_LINES);
+		}
+		else {
+			 graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);	
+		}
+		Graphics g = pointGraph.getFrameGraphics();
+		graph.paintComponent(g);
+		Rectangle graphBounds = graph.getGraphBounds();
+		double xScale = graphBounds.width / (maxrealwf - minrealwf);
+        double yScale = graphBounds.height / (maximagwf - minimagwf);
+        //lblhx[j-1] = (int)Math.round(graphBounds.x + xScale*(pos[0] - minrealwf));
+    	//lblhy[j-1] = (int)Math.round(graphBounds.y + yScale*(pos[1] - minimagwf));
+		pointGraph.setVisible(true);
 	}
 	
 	private double accuracy(scmap M) {
