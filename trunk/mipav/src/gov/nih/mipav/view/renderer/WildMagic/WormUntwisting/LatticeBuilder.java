@@ -10,6 +10,7 @@ import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -116,55 +117,103 @@ public class LatticeBuilder {
 				annotations.getCurves().remove(i);
 			}
 		}
-		final Vector3f origin = new Vector3f(originPt);
+		final Vector3f origin = (originPt == null) ? null : new Vector3f(originPt);
 		
 		//-javaagent:C:\GeometricToolsInc\mipav\src\lib\profile.jar
 		//-Dprofile.properties=C:\GeometricToolsInc\mipav\src\lib\profile.properties
 //		Profile.clear();
 //		Profile.start();
-		
-		final int targetLength = wasEdited ? ((annotations.getCurves().size()%2) == 0) ? annotations.getCurves().size() : (annotations.getCurves().size() - 1) : 20;
 
 		long startTime = System.currentTimeMillis();
-		final VOI pointSets = makeGroups(annotations, targetLength);
-		System.err.println( "buildLattice outer: " + annotations.getCurves().size() + "   groups: " + pointSets.getCurves().size() );
+		
+		VOI finalPointSets = null;
+		SequenceList[] finalSequenceList = null;
+		
+		if ( wasEdited )
+		{
+			finalPointSets = new VOI( (short)0, "clusterList", VOI.POLYLINE, 0);
+			VOIContour newCombo = new VOIContour(false);
+			VOIContour headPair = new VOIContour(false);
+			VOIContour tailPair = new VOIContour(false);
+			finalPointSets.getCurves().add(newCombo);
+			for ( int i = 0; i < annotations.getCurves().size(); i++ )
+			{
+				VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+				if ( !LatticeModel.match(text.getColor(), Color.red) && !LatticeModel.match(text.getColor(), Color.green)  )
+				{
+					newCombo.add(new Vector3f(text.elementAt(0)));
+				}
+				if ( LatticeModel.match(text.getColor(), Color.red) )
+				{
+					tailPair.add(new Vector3f(text.elementAt(0)));
+				}
+				if ( LatticeModel.match(text.getColor(), Color.green) )
+				{
+					headPair.add(new Vector3f(text.elementAt(0)));
+				}
+			}			
+			
+			
+			finalSequenceList = new SequenceList[1];
+			LatticeBuilder builder = new LatticeBuilder(wormImage, seamSegmentation, skinSegmentation);				
+			builder.setSeamIDs( newCombo );
+			finalSequenceList[0] = builder.buildLattice(newCombo, origin, headPair, tailPair, newCombo.size() );	
 
-        int nthreads = ThreadUtil.getAvailableCores();
-        final CountDownLatch doneSignalx = new CountDownLatch(nthreads);
-        float size = pointSets.getCurves().size();
-        final float step2 = size / nthreads;
-        
-		final SequenceList[] sequenceList = new SequenceList[pointSets.getCurves().size()+1];
-        for (int i = 0; i < nthreads; i++) {
-            final int start2 = (int) (step2 * i);
-            final int end2 = (int) (step2 * (i + 1));
-            final Runnable task = new Runnable() {
-                public void run() {
-                	for ( int j = start2; j < end2; j++ )
-                	{
-        				LatticeBuilder builder = new LatticeBuilder(wormImage, seamSegmentation, skinSegmentation);				
-        				builder.setSeamIDs( pointSets.getCurves().elementAt(j) );
-        				sequenceList[j] = builder.buildLattice(pointSets.getCurves().elementAt(j), origin, targetLength );
+			for ( int i = 0; i < tailPair.size(); i++ )
+			{
+				newCombo.add(tailPair.elementAt(i));
+			}
+			for ( int i = 0; i < headPair.size(); i++ )
+			{
+				newCombo.add(headPair.elementAt(i));
+			}
+		}
+		else
+		{
+			final int targetLength = wasEdited ? ((annotations.getCurves().size()%2) == 0) ? annotations.getCurves().size() : (annotations.getCurves().size() - 1) : 20;
 
-        				System.err.println( (j+1) + " / " + pointSets.getCurves().size() + "   " + sequenceList[j].size() );
-//        				System.err.println( (j+1) + " / " + pointSets.getCurves().size() + "   " + sequenceList[j].size() + "                " +
-//        						builder.widthErrorCount + "  " + builder.parallelErrorCount + "  " + builder.midDistErrorCount + "  " +  
-//        						builder.avgWidthErrorCount + "  " + builder.bendSumErrorCount + "  " + 
-//        						builder.intersectionErrorCount + "   " +  builder.latticeImageErrorCount );
-                		
-                	}
-                    doneSignalx.countDown();
-                }
-            };
-            ThreadUtil.mipavThreadPool.execute(task);
-        }
-        try {
-            doneSignalx.await();
-        } catch (final InterruptedException e) {
-            gov.nih.mipav.view.MipavUtil.displayError(e.getMessage());
-            return null;
-        }
+			final VOI pointSets = makeGroups(annotations, targetLength);
+			System.err.println( "buildLattice outer: " + annotations.getCurves().size() + "   groups: " + pointSets.getCurves().size() );
 
+			int nthreads = ThreadUtil.getAvailableCores();
+			final CountDownLatch doneSignalx = new CountDownLatch(nthreads);
+			float size = pointSets.getCurves().size();
+			final float step2 = size / nthreads;
+
+			final SequenceList[] sequenceList = new SequenceList[pointSets.getCurves().size()+1];
+			for (int i = 0; i < nthreads; i++) {
+				final int start2 = (int) (step2 * i);
+				final int end2 = (int) (step2 * (i + 1));
+				final Runnable task = new Runnable() {
+					public void run() {
+						for ( int j = start2; j < end2; j++ )
+						{
+							LatticeBuilder builder = new LatticeBuilder(wormImage, seamSegmentation, skinSegmentation);				
+							builder.setSeamIDs( pointSets.getCurves().elementAt(j) );
+							sequenceList[j] = builder.buildLattice(pointSets.getCurves().elementAt(j), origin, targetLength );
+
+							System.err.println( (j+1) + " / " + pointSets.getCurves().size() + "   " + sequenceList[j].size() );
+							//        				System.err.println( (j+1) + " / " + pointSets.getCurves().size() + "   " + sequenceList[j].size() + "                " +
+							//        						builder.widthErrorCount + "  " + builder.parallelErrorCount + "  " + builder.midDistErrorCount + "  " +  
+							//        						builder.avgWidthErrorCount + "  " + builder.bendSumErrorCount + "  " + 
+							//        						builder.intersectionErrorCount + "   " +  builder.latticeImageErrorCount );
+
+						}
+						doneSignalx.countDown();
+					}
+				};
+				ThreadUtil.mipavThreadPool.execute(task);
+			}
+			try {
+				doneSignalx.await();
+			} catch (final InterruptedException e) {
+				gov.nih.mipav.view.MipavUtil.displayError(e.getMessage());
+				return null;
+			}
+			
+			finalPointSets = pointSets;
+			finalSequenceList = sequenceList;
+		}
 
 		LatticeModel model = new LatticeModel( wormImage );
 		model.setSeamCellImage(seamSegmentation);	
@@ -173,7 +222,7 @@ public class LatticeBuilder {
 		// Order the sequences based on how well they fit the lattice parameters:		
 //		sequenceList.add(0, testSequence);
 
-		orderSequences2( startTime, model, origin, pointSets, sequenceList, finalLatticeList );
+		orderSequences2( startTime, model, origin, finalPointSets, finalSequenceList, finalLatticeList );
 
 		if ( batchProgress != null )
 		{
@@ -531,6 +580,229 @@ public class LatticeBuilder {
 		
 		return sequenceList;
 	}
+	
+	private SequenceList buildLattice( Vector<Vector3f> seamCells, Vector3f origin, Vector<Vector3f> headPair, Vector<Vector3f> tailPair, int targetLength )
+	{
+		midPts = new Vector3f[targetLength];
+		widths = new float[targetLength];
+		pL1 = new Vector3f();
+		pL2 = new Vector3f();
+		pR1 = new Vector3f();
+		pR2 = new Vector3f();
+		leftDir = new Vector3f();
+		rightDir = new Vector3f();
+		parallel1 = new Vector3f();
+		parallel2 = new Vector3f();
+		
+		
+		
+		int numSteps = 3;
+		int step = 1;
+		long startTime = System.currentTimeMillis();
+		boolean print = false;
+		
+		Vector<Vector3f> positions = new Vector<Vector3f>();
+		for ( int i = 0; i < seamCells.size(); i++ )
+		{
+			Vector3f pos = new Vector3f(seamCells.elementAt(i));
+			pos.scale( VOILatticeManagerInterface.VoxelSize );
+			positions.add( pos );
+		}
+		
+		System.err.println( "Start buildLattice inner " + positions.size() );
+				
+		int[] total = new int[]{0};
+		int[] max = new int[]{0};
+		SequenceList sequenceList = new SequenceList();
+
+
+		LatticeModel model = new LatticeModel( wormImage );
+		model.setSeamCellImage(seamSegmentation);	
+
+
+		int minMaxCount = 0;
+		//			System.err.println( "Tenth pair = [" + tenthPair[0] + "," + tenthPair[1] + "]" );
+		int[][] pairs = new int[positions.size()][positions.size()];
+		// Find potential pairs in the remaining set of points:
+		for ( int j = 0; j < positions.size(); j++ )
+		{
+			int countJ = 0;
+			for ( int k = 0; k < positions.size(); k++ )
+			{
+				pairs[j][k] = -1;
+				float distance = positions.elementAt(j).distance( positions.elementAt(k) );
+				// pairs must be within a minimum and maximum distance thresholds:
+
+				if ( print ) System.err.print( "Pair " + j + " " + k );
+				if (  (distance >= minPairDist) && (distance <= maxPairDist) )
+				{
+					minMaxCount++;
+					// only add pairs that pass the mid-point test:
+					if ( !midPointFail(j,k, positions) )
+					{
+						Vector3f pt1 = positions.elementAt(j);
+						Vector3f pt2 = positions.elementAt(k);
+						if ( checkSurface(pt1, pt2) )
+						{
+							if ( checkSeam( pt1, pt2) )
+							{
+								if ( checkOrigin( pt1, pt2, origin ) )
+								{
+									pairs[j][k] = 1;
+									countJ++;
+
+									if ( print ) System.err.println(" added" );
+								}
+								else
+								{
+									if ( print ) System.err.println(" origin check fail");
+								}
+							}
+							else
+							{
+								if ( print ) System.err.println(" checkSeam fail" );
+							}
+						}
+						else
+						{
+							if ( print ) System.err.println(" checkSurface fail" );
+						}
+					}
+					else
+					{
+						if ( print ) System.err.println(" midPointFail fail" );
+					}
+				}
+				else
+				{
+					if ( print ) System.err.println(" distance fail " + distance + "  " + (distance >= minPairDist) + "  " + (distance <= maxPairDist) );
+				}
+			}
+			if ( countJ == 0 )
+			{
+				if ( print ) System.err.println( "   No pairs found for " + j );
+				return null;
+			}
+		}
+
+		boolean pairCount = countPairs(pairs, null);
+		if ( !pairCount )
+		{
+			if ( print ) System.err.println( "   Initial Pairset " + countPairs(pairs, null) );
+			return null;
+		}
+
+		Vector<int[]> pairLists = new Vector<int[]>();
+		for ( int j = 0; j < pairs.length; j++ )
+		{
+			for ( int k = j+1; k < pairs[j].length; k++ )
+			{
+				if ( pairs[j][k] != -1 )
+				{
+					pairLists.add( new int[]{j,k} );
+
+					if ( print ) System.err.println( pairLists.size() + "   [" + j + "," + k + "]" );
+				}
+			}
+		}
+
+		if ( print ) System.err.println( pairLists.size() + " " + minMaxCount + " " + positions.size() );
+		
+		int[] tenthPair = new int[2];
+		for ( int i = 0; i < tailPair.size(); i++ )
+		{
+			Vector3f pos = new Vector3f(tailPair.elementAt(i));
+			pos.scale( VOILatticeManagerInterface.VoxelSize );
+			positions.add( pos );
+			tenthPair[i] = positions.indexOf(pos);
+		}
+		pairLists.add( tenthPair );
+
+		// This step looks for seam cell pairs
+		// where one member of the pair is only in
+		// one potential pair. When that's the case
+		// the pair is essential to the list
+		// this step removes all other potential pairs
+		// that link to the non-singleton member of the
+		// essential pair:
+		int prevSize = pairLists.size();
+		if ( checkPairs( pairLists, positions.size() ) )
+		{
+			while ( prevSize > pairLists.size() )
+			{
+				prevSize = pairLists.size();
+				checkPairs( pairLists, positions.size() );
+			}
+		}
+		checkPairs( pairLists, positions.size() );
+		if ( print ) System.err.println( pairLists.size() );
+
+		Vector<int[]> sequence = new Vector<int[]>();
+		//			int targetLength = (positions.size() % 2) == 0 ? positions.size() : positions.size() -1;
+		//			targetLength = Math.max(0, targetLength);
+		//			targetLength = Math.min(20, targetLength);
+
+		//			savePairs(pairLists, positions);
+		// Starting at the 10th pair, add pairs to the sequence building it up until the sequence contains 10 pairs:
+		sequencePairs( startTime, model, origin, positions, sequence, pairLists, tenthPair, targetLength + 2, total, max, sequenceList );
+
+		if (headPair.size() == 2)
+		{
+			int[] firstPair = new int[2];
+			for ( int i = 0; i < headPair.size(); i++ )
+			{
+				Vector3f pos = new Vector3f(headPair.elementAt(i));
+				pos.scale( VOILatticeManagerInterface.VoxelSize );
+				positions.add( pos );
+				firstPair[i] = positions.indexOf(pos);
+			}
+			int[] firstPair2 = new int[]{firstPair[1], firstPair[0]};
+			SequenceList newSequenceList = new SequenceList();
+			for ( int i = sequenceList.size() -1; i >= 0; i-- )
+			{
+				Sequence s = sequenceList.elementAt(i);
+				s.add(firstPair);	
+				Vector<Vector3f> left = new Vector<Vector3f>();
+				Vector<Vector3f> right = new Vector<Vector3f>();
+				for ( int j = 0; j < s.size(); j++ )
+				{
+					int[] pair = s.elementAt(j);
+					left.add(positions.elementAt(pair[0]));
+					right.add(positions.elementAt(pair[1]));
+				}
+				// test the lattice, if it fits add to the list:
+				if ( !testLattice(model, left, right, origin) )
+				{
+					sequenceList.remove(s);
+				}
+
+				s.remove(s.lastElement());
+				s.add(firstPair2);	
+				left = new Vector<Vector3f>();
+				right = new Vector<Vector3f>();
+				for ( int j = 0; j < s.size(); j++ )
+				{
+					int[] pair = s.elementAt(j);
+					left.add(positions.elementAt(pair[0]));
+					right.add(positions.elementAt(pair[1]));
+				}
+				// test the lattice, if it fits add to the list:
+				if ( testLattice(model, left, right, origin) )
+				{
+					newSequenceList.add(s);
+				}
+			}
+			sequenceList.addAll(newSequenceList);
+		}
+			
+		if ( print ) System.err.println( "buildLattice inner: time = " + AlgorithmBase.computeElapsedTime(startTime) + " " + sequenceList.size() );
+		
+		return sequenceList;
+	}
+
+	
+	
+	
 
 	private VOI makeGroups( VOI annotations, int targetLength )
 	{
@@ -717,7 +989,7 @@ public class LatticeBuilder {
 					count++;
 				}
 			}
-			if ( (i != tenthPair[0]) && (i != tenthPair[1]) )
+			if ( (tenthPair != null) && (i != tenthPair[0]) && (i != tenthPair[1]) )
 			{
 				if ( count == 0 )
 				{

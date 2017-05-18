@@ -2140,7 +2140,7 @@ public class FileVOI extends FileXML {
                     b = Integer.parseInt(st.nextToken());
 
                     if (currentKey.equals("Color")) {
-                        voi.setColor(new Color(r, g, b, a));
+//                        voi.setColor(new Color(r, g, b, a));
                         voiText.setColor(new Color(r, g, b, a));
                     } else {
                         voiText.setBackgroundColor(new Color(r, g, b, a));

@@ -1002,6 +1002,25 @@ public class LatticeModel {
 			}
 		}
 	}
+	
+
+	public void updateSelectedPoint( Color color )
+	{
+		if (pickedPoint != null) {
+			VOIText text = (VOIText)annotationVOIs.getCurves().elementAt(pickedAnnotation);
+
+			if ( !match(text.getColor(), color) )
+			{
+				text.setColor(color);
+			}
+			else
+			{
+				text.setColor(Color.blue);
+			}
+			text.updateText();
+			colorAnnotations();
+		}
+	}
 
 	/**
 	 * VOI operation redo
@@ -1249,6 +1268,7 @@ public class LatticeModel {
 			final VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
 			//			text.setColor(Color.blue);
 			final Color c = text.getColor();
+//			System.err.println( text.getText() + "  " + text.getColor() );
 			text.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
 			text.elementAt(1).copy(text.elementAt(0));
 			//			text.elementAt(1).add(6, 0, 0);
@@ -2142,10 +2162,9 @@ public class LatticeModel {
 	private void colorAnnotations()
 	{
 		// count markers (not nose or origin)
-		// if < 20 -- all red
-		// if > 20 -- all yellow
-		// if == 20 or 22 -- all green
-
+		// even = all blue
+		// odd = yellow
+		// some colors are now used to designate the first and last pairs of seam cells - first = green; last = red
 		if ( annotationVOIs == null )
 		{
 			return;
@@ -2161,13 +2180,9 @@ public class LatticeModel {
 			}
 		}
 		Color c = Color.yellow;
-		if ( (count == 20) || (count == 22) )
+		if ( (count % 2) == 0 )
 		{
-			c = Color.green;
-		}
-		else if ( count > 22 )
-		{
-			c = Color.red;
+			c = Color.blue;
 		}
 
 
@@ -2176,12 +2191,19 @@ public class LatticeModel {
 			VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
 			if ( !(text.getText().contains("nose") || text.getText().contains("Nose")) && !text.getText().equalsIgnoreCase("origin"))
 			{
-				text.setColor(c);
-				text.updateText();
-				//				System.err.println( text.getText() + " " + c );
+//				System.err.println( text.getText() + "   " + text.getColor() );
+				if ( !match(text.getColor(), Color.red) && !match(text.getColor(), Color.green)  )
+				{
+					text.setColor(c);
+					text.updateText();
+				}
 			}
 		}
-		annotationVOIs.setColor(c);
+	}
+	
+	static public boolean match( Color c1, Color c2 )
+	{
+		return ( (c1.getRed() == c2.getRed()) && (c1.getGreen() == c2.getGreen()) && (c1.getBlue() == c2.getBlue()) );
 	}
 
 	private VOI convertToStraight( ModelImage model, ModelImage originToStraight, VOI data )
