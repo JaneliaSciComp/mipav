@@ -352,6 +352,24 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			// sequence to edit and opens the associated VOIs.
 			if ( command.equals("next") )
 			{
+				if ( editMode == EditSeamCells )
+				{
+					if ( (wormData != null) && !wormData.checkSeamCells() )
+					{
+						MipavUtil.displayError( "Please designate an even number of seam cells (optional: one nose point; optional: highlight first pair and last pair)");
+						return;
+					}
+					if ( (wormData != null) && !wormData.checkHeadSeamCells() )
+					{
+						MipavUtil.displayError( "Please designate two seam cells as the first pair");
+						return;
+					}
+					if ( (wormData != null) && !wormData.checkTailSeamCells() )
+					{
+						MipavUtil.displayError( "Please designate two seam cells as the last pair");
+						return;
+					}
+				}
 				voiManager.clear3DSelection();
 				save();
 				imageIndex++;
@@ -379,6 +397,24 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			else if ( command.equals("back") )
 			{
+				if ( editMode == EditSeamCells )
+				{
+					if ( (wormData != null) && !wormData.checkSeamCells() )
+					{
+						MipavUtil.displayError( "Please designate an even number of seam cells (optional: one nose point; optional: highlight first pair and last pair)");
+						return;
+					}
+					if ( (wormData != null) && !wormData.checkHeadSeamCells() )
+					{
+						MipavUtil.displayError( "Please designate two seam cells as the first pair");
+						return;
+					}
+					if ( (wormData != null) && !wormData.checkTailSeamCells() )
+					{
+						MipavUtil.displayError( "Please designate two seam cells as the last pair");
+						return;
+					}
+				}
 				voiManager.clear3DSelection();
 				save();
 				imageIndex--;
@@ -406,6 +442,24 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			// Closes the editing:
 			else if (command.equals("done"))
 			{			
+				if ( editMode == EditSeamCells )
+				{
+					if ( (wormData != null) && !wormData.checkSeamCells() )
+					{
+						MipavUtil.displayError( "Please designate an even number of seam cells (optional: one nose point; optional: highlight first pair and last pair)");
+						return;
+					}
+					if ( (wormData != null) && !wormData.checkHeadSeamCells() )
+					{
+						MipavUtil.displayError( "Please designate two seam cells as the first pair");
+						return;
+					}
+					if ( (wormData != null) && !wormData.checkTailSeamCells() )
+					{
+						MipavUtil.displayError( "Please designate two seam cells as the last pair");
+						return;
+					}
+				}
 				if ( voiManager != null )
 				{
 					voiManager.clear3DSelection();
@@ -951,15 +1005,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					pack();									
 				}
 			}
-
-			
-			wormData = new WormData(wormImage);
-			wormData.openStraightLattice();
-			wormData.openStraightAnnotations();
-			if ( imageFile2 != null )
-			{
-				wormData.openStraightAnnotations(imageFile2.getParentFile().getParent());
-			}
 			
 			
 			return true;
@@ -1076,7 +1121,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				File voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				if ( openImages( voiFile, voiFile2, imageName ) )
-				{
+				{			
+					wormData = new WormData(wormImage);
+					wormData.openStraightLattice();
+					wormData.openStraightAnnotations();
+					if ( voiFile2 != null )
+					{
+						wormData.openStraightAnnotations(voiFile2.getParentFile().getParent());
+					}
+					
 					if ( volumeRenderer != null )
 					{
 						volumeRenderer.resetAxisX();

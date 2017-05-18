@@ -9,6 +9,7 @@ import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Vector;
@@ -366,6 +367,61 @@ public class WormData
 		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editAnnotationOutput + File.separator, wormImage);
 		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editAnnotationOutput + File.separator, "markerInfo.csv", markerAnnotations);
 		wormImage.unregisterAllVOIs();
+	}
+	
+	public boolean checkSeamCells()
+	{
+		if ( seamAnnotations.getCurves().size() == 0 )
+		{
+			return false;
+		}
+		int count = 0;
+		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			if ( !(text.getText().equalsIgnoreCase("origin") || text.getText().contains("nose") || text.getText().contains("Nose")) )
+			{
+				count++;
+			}
+		}
+		System.err.println("checkSeamCells " + count );
+		return ((count%2) == 0);
+	}
+	
+	public boolean checkHeadSeamCells()
+	{
+		if ( seamAnnotations.getCurves().size() == 0 )
+		{
+			return false;
+		}
+		int count = 0;
+		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			if ( LatticeModel.match(text.getColor(), Color.green) )
+			{
+				count++;
+			}
+		}
+		return (count == 2) || (count == 0);
+	}
+	
+	public boolean checkTailSeamCells()
+	{
+		if ( seamAnnotations.getCurves().size() == 0 )
+		{
+			return false;
+		}
+		int count = 0;
+		for ( int i = 0; i < seamAnnotations.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText)seamAnnotations.getCurves().elementAt(i);
+			if ( LatticeModel.match(text.getColor(), Color.red) )
+			{
+				count++;
+			}
+		}
+		return (count == 2) || (count == 0);
 	}
 	
 	public void saveSeamAnnotations()

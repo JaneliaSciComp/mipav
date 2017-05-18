@@ -1045,6 +1045,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				break;
 			}
 	        // look for shortcuts now
+			if ( m_kVOIInterface != null )
+			{
+				System.err.println( "keyPressed " + e.getKeyChar() );
+				if ( e.getKeyChar() == 'f' || e.getKeyChar() == 'F' ||
+					e.getKeyChar() == 'h' || e.getKeyChar() == 'H' ||
+					e.getKeyChar() == 's' || e.getKeyChar() == 'S' )
+				{
+					m_kVOIInterface.updateSelectedPoint( Color.green );
+				}
+				if ( e.getKeyChar() == 'e' || e.getKeyChar() == 'E' ||
+					 e.getKeyChar() == 'l' || e.getKeyChar() == 'L' ||
+					 e.getKeyChar() == 't' || e.getKeyChar() == 'T' )
+				{
+					m_kVOIInterface.updateSelectedPoint( Color.red );
+				}
+				if ( e.getKeyChar() == 'b' || e.getKeyChar() == 'B' )
+				{
+					m_kVOIInterface.updateSelectedPoint( Color.blue );
+				}
+				
+			}
 
 	        String command = null;
 	        final KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);

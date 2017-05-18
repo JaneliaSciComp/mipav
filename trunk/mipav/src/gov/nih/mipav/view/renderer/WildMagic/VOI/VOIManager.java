@@ -54,6 +54,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Curves.*;
@@ -1857,7 +1858,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		m_kPopupVOI = kPopupVOI;
 	}
-
+	
 	/**
 	 * Called from VOIManagerInterface when several VOIs are selected and moved as a group.
 	 * This function first tests that the move does not move any of the VOIs in the group out of bounds.

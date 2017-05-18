@@ -204,7 +204,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     /** Reference to the color chooser. */
     protected ViewJColorChooser colorChooser;
     /** List of VOIManagers, one per canvas displayed. */
-    private Vector<VOIManager> m_kVOIManagers;
+    protected Vector<VOIManager> m_kVOIManagers;
     /** The index of the current active VOIManager. */
     private int m_iActive = 0;
     /** VOI ID used to set the VOI color button on a call to newVOI() */

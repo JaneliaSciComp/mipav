@@ -34,6 +34,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -443,6 +444,14 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 				saveVOIs("moveSelectedPoint");
 			}
 			latticeModel.moveSelectedPoint(direction, doAnnotations);
+		}
+	}
+
+	public void updateSelectedPoint( Color color )
+	{
+		if ( latticeModel != null )
+		{
+			latticeModel.updateSelectedPoint(color);
 		}
 	}
 	
