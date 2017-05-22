@@ -253,7 +253,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// rectangle map of re evenly spaced vertical and im evenly spaced
 		// horizontal lines.
 		// Extracted form original routine by Toby Driscoll copyright 1998.
-		int i;
+		
+		// Number of quadrature points per integration.
+		// Approximately equals -log10(error).  Increase if plot
+		// has false little zigzags in curves. 
+		int nqpts = 5; 
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+        // Max allowed number of adaptive refinements made to meet other requirements 
+        int maxrefn = 16;
+		int i, j, m;
 		int n = w.length;
 		int corners[] = new int[4];
 		int renum[] = new int[w.length];
@@ -265,25 +276,80 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		
 		double Kp = rect[1][1];
-		double K[] = new double[2];
-		K[0] = rect[0][0];
-		K[1] = rect[0][1];
-		double recoords[][] = new double[re][2];
-		double rexspacing = 2.0*K[0]/(re+1);
-		double reyspacing = 2*K[1]/(re+1);
+		// double K[] = new double[2];
+		// For testRectmap1 K[0] = 2.1555087314127523 K[1] = 0.0
+		// K[0] = rect[0][0];
+		//K[1] = rect[0][1];
+	    double K = rect[0][0];
+		double recoords[] = new double[re];
+		double rexspacing = 2.0*K/(re+1);
 		for (i = 1; i <= re; i++) {
-			recoords[i-1][0] = -K[0] + i*rexspacing;
-			recoords[i-1][1] = -K[1] + i*reyspacing;
+			recoords[i-1] = -K + i*rexspacing;
 		}
 		double imcoords[] = new double[im];
 		double imspacing = Kp/(im+1);
 		for (i = 1; i <= im; i++) {
 			imcoords[i-1] = i*imspacing;
 		}
-		plotpoly(w, beta, false);
+		float xPointArray[] = new float[n+1];
+		float yPointArray[] = new float[n+1];
+		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray,
+				"title", "lablelX", "labelY", Color.BLUE);
+		plotpoly(xPointArray, yPointArray, pointGraph, w, beta, false);
+		double qdat[][] = new double[nqpts][2*beta.length+2];
+		scqdata(qdat, beta, nqpts);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		double len = Math.max(graphBounds.width, graphBounds.height);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		
+		// Plot vertical lines
+		double linhx[][] = new double[re][2];
+		double linhy[][] = new double[re][2];
+		double zp[][] = new double[15][2]; 
+		for (j = 0; j < re; j++) {
+		    // Start evenly spaced
+			for (i = 0; i < 15; i++) {
+				zp[i][0] = recoords[j];
+				zp[i][1] = i*Kp/14.0;
+			}
+			boolean neww[] = new boolean[15];
+			for (i = 0; i < 15; i++) {
+				neww[i] = true;
+			}
+			double wp[] = new double[15];
+			for (i = 0; i < 15; i++) {
+				wp[i] = Double.NaN;
+			}
+			
+			// The individual points will be shown as they are found.
+			
+			// Adaptive refinement to make curve smooth
+			int iter = 0;
+			while (iter < maxrefn) {
+				int numneww = 0;
+				for (i = 0; i < 15; i++) {
+				    if (neww[i]) {
+				    	numneww++;
+				    }
+				} // for (i = 0; i < 15; i++)
+				if (numneww == 0) {
+					break;
+				}
+				double zpnew[][] = new double[numneww][2];
+				for (i = 0, m = 0; i < 15; i++) {
+				    if (neww[i]) {
+				    	zp[m][0] = zp[i][0];
+				    	zp[m++][1] = zp[i][1];
+				    }
+				} // for (i = 0, m = 0; i < 15; i++)
+			} // while (iter < maxrefn)
+		} // for (j = 0; j < re; j++)
 	}
 	
-	private void plotpoly(double w[][], double beta[], boolean addMarkerLabel) {
+	private void plotpoly(float xPointArray[], float yPointArray[], ViewJFrameGraph pointGraph,
+			double w[][], double beta[], boolean addMarkerLabel) {
 		// plotpoly plots the polygon whose vertices are in vector w
 		// and whose turning angles are in beta.  Vertices at infinity
 		// permitted, but there must be at least two consecutive finite
@@ -294,9 +360,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		int numfinite = 0;
 		int numinfinite = 0;
 		int i, j;
-		int j2 = 0;
-		int xPos;
-		int yPos;
 		double theta;
 		double Rx[] = new double[2];
 		double Ry[] = new double[2];
@@ -304,12 +367,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double denom;
 		double costheta;
 		double sintheta;
-		double pos[] = new double[2]; 
-		float xPointArray[];
-		float yPointArray[];
-		float xPointArray2[] = null;
-		float yPointArray2[] = null;
-		float temp[];
 		double minRR;
 		boolean atinf[] = new boolean[w.length];
 		for (i = 0; i < w.length; i++) {
@@ -405,8 +462,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		String lblhString[][] = new String[n][2];
 		double lblhx[][] = new double[n][2];
 		double lblhy[][] = new double[n][2];
-		xPointArray = new float[n+1];
-		yPointArray = new float[n+1];
 		xPointArray[0] = (float)wrenum[0][0];
 		yPointArray[0] = (float)wrenum[0][1];
 		xPointArray[1] = (float)wrenum[1][0];
@@ -443,44 +498,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    // Next edge
 		    if (!atinfrenum[jp1-1]) {
 		    	// Bounded edge; straightforward
-			    if (xPointArray2 == null) {
-			    	xPointArray[j] = (float)wrenum[jp1-1][0];
-			    	yPointArray[j] = (float)wrenum[jp1-1][1];
-			    	ang = ang - Math.PI*betarenum[j-1];
-			    	j = j+1;
-		    	}
-			    else {
-			    	xPointArray2[j2] = (float)wrenum[jp1-1][0];
-			    	yPointArray2[j2] = (float)wrenum[jp1-1][1];
-			    	ang = ang - Math.PI*betarenum[j-1];
-			    	j = j+1;
-			    	j2 = j2+1;
-			    }
+		    	xPointArray[j] = (float)wrenum[jp1-1][0];
+		    	yPointArray[j] = (float)wrenum[jp1-1][1];
+		    	ang = ang - Math.PI*betarenum[j-1];
+		    	j = j+1;
 		    } // if (!atinfrenum[jp1-1])
 		    else {
 		        // Unbounded edge (first of two consecutive)
 		    	ang= ang - Math.PI*betarenum[j-1];
 		    	xPointArray[j] = (float)(wrenum[j-1][0] + R*Math.cos(ang));
 		    	yPointArray[j] = (float)(wrenum[j-1][1] + R*Math.sin(ang));
-		    	temp = new float[j+1];
-		    	for (i = 0; i <= j; i++) {
-		    		temp[i] = xPointArray[i];
-		    	}
-		    	xPointArray = new float[j+1];
-		    	for (i = 0; i <= j; i++) {
-		    		xPointArray[i] = temp[i];
-		    	}
-		    	for (i = 0; i <= j; i++) {
-		    		temp[i] = yPointArray[i];
-		    	}
-		    	yPointArray = new float[j+1];
-		    	for (i = 0; i <= j; i++) {
-		    		yPointArray[i] = temp[i];
-		    	}
-		    	xPointArray2 = new float[n+1-xPointArray.length];
-		    	xPointArray2[xPointArray2.length-1] = xPointArray[0];
-		    	yPointArray2 = new float[n+1-yPointArray.length];
-		    	yPointArray2[yPointArray2.length-1] = yPointArray[0];
+		    	
+		    	
 		    	// Make first label outside axes box
 		    	if (addMarkerLabel) {
 		    		theta = ang;
@@ -522,10 +551,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	
 		    	// Second unbounded edge
 		    	ang = ang - Math.PI*betarenum[jp1-1];
-		    	xPointArray2[j2] = (float)(wrenum[(j+1)%n][0] - R*Math.cos(ang));
-		    	yPointArray2[j2] = (float)(wrenum[(j+1)%n][1] - R*Math.sin(ang));
-		    	xPointArray2[j2+1] = (float)(wrenum[(j+1)%n][0]);
-		    	xPointArray2[j2+1] = (float)(wrenum[(j+1)%n][1]);
+		    	xPointArray[j] = (float)(wrenum[(j+1)%n][0] - R*Math.cos(ang));
+		    	yPointArray[j] = (float)(wrenum[(j+1)%n][1] - R*Math.sin(ang));
+		    	xPointArray[j+1] = (float)(wrenum[(j+1)%n][0]);
+		    	xPointArray[j+1] = (float)(wrenum[(j+1)%n][1]);
 		    	if (addMarkerLabel) {
 		    	    theta = ang + Math.PI;
 		    	    costheta = Math.cos(theta);
@@ -567,7 +596,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	
 		    	// We've done tow
 		    	j = j+2;
-		    	j2 = j2+2;
 		    } // else
 		} // while (j <= n)
 		
@@ -583,8 +611,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			lblhString[0][1] = String.valueOf(renum[0]);
 		} // if (addMarkerLabel)
 		
-		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray,
-				"title", "lablelX", "labelY", Color.BLUE);
+		// Plot markers last, to keep them on top
+		// Not needed with SHOW_POINTS_AND_LINES
+		//if (addMarkerLabel) {
+		   // for (j = 0; j < n; j++) {
+		    	//if (!atinfrenum[j]) {
+		    		//lblhx[j][0] = wrenum[j][0];
+		    		//lblhy[j][0] = wrenum[j][1];
+		    		//lblhString[j][0] = ".";
+		    	//}
+		   // }
+		//} // if (addMarkerLabel)
+		
 		ViewJComponentGraph graph = pointGraph.getGraph();
 		if (addMarkerLabel) {
 		    graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_AND_LINES);
@@ -597,8 +635,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		Rectangle graphBounds = graph.getGraphBounds();
 		double xScale = graphBounds.width / (maxrealwf - minrealwf);
         double yScale = graphBounds.height / (maximagwf - minimagwf);
-        //lblhx[j-1] = (int)Math.round(graphBounds.x + xScale*(pos[0] - minrealwf));
-    	//lblhy[j-1] = (int)Math.round(graphBounds.y + yScale*(pos[1] - minimagwf));
+        for (i = 0; i < n; i++) {
+        	for (j = 0; j < 2; j++) {
+        		if (lblhString[i][j] != null) {
+        			int posX =  (int)Math.round(graphBounds.x + xScale*(lblhx[i][j] - minrealwf));
+        			int posY =  (int)Math.round(graphBounds.y + yScale*(lblhy[i][j] - minimagwf));
+        			graph.drawString(g, lblhString[i][j], posX, posY);
+        		}
+        	}
+        }
+        
 		pointGraph.setVisible(true);
 	}
 	
