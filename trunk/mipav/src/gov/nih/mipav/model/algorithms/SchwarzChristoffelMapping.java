@@ -314,9 +314,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				zp[i][0] = recoords[j];
 				zp[i][1] = i*Kp/14.0;
 			}
-			boolean neww[] = new boolean[15];
+			boolean newlog[] = new boolean[15];
 			for (i = 0; i < 15; i++) {
-				neww[i] = true;
+				newlog[i] = true;
 			}
 			double wp[] = new double[15];
 			for (i = 0; i < 15; i++) {
@@ -328,24 +328,339 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			// Adaptive refinement to make curve smooth
 			int iter = 0;
 			while (iter < maxrefn) {
-				int numneww = 0;
+				int numnewlog = 0;
 				for (i = 0; i < 15; i++) {
-				    if (neww[i]) {
-				    	numneww++;
+				    if (newlog[i]) {
+				    	numnewlog++;
 				    }
 				} // for (i = 0; i < 15; i++)
-				if (numneww == 0) {
+				if (numnewlog == 0) {
 					break;
 				}
-				double zpnew[][] = new double[numneww][2];
+				double zpnew[][] = new double[numnewlog][2];
 				for (i = 0, m = 0; i < 15; i++) {
-				    if (neww[i]) {
-				    	zp[m][0] = zp[i][0];
-				    	zp[m++][1] = zp[i][1];
+				    if (newlog[i]) {
+				    	zpnew[m][0] = zp[i][0];
+				    	zpnew[m++][1] = zp[i][1];
 				    }
 				} // for (i = 0, m = 0; i < 15; i++)
+				double neww[][] = new double[numnewlog][2];
+				rmap(neww, zpnew, w, beta, z, c, L, qdat);
 			} // while (iter < maxrefn)
 		} // for (j = 0; j < re; j++)
+	}
+	
+	private void rmap(double wp[][], double zp[][], double w[][], double beta[],
+			double z[][], double c[], double L[], double qdat[][]) {
+		// Schwarz-Christoffel rectangle map
+		// rmap computes the values of the Schwarz-Christoffel rectangle map
+		// at the points in the vector zp.  wp is the same size as zp.
+		// The remaining arguments are in as rparam
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		double qdat2[][] = null;
+		if ((zp == null) || (zp.length == 0)) {
+			wp = null;
+			return;
+		}
+		int n = w.length;
+		int corners[] = new int[4];
+		int renum[] = new int[w.length];
+		rcorners(w, beta, z, corners, renum);
+		
+		if (qdat == null) {
+			qdat2 = new double[8][2*beta.length+2];
+			scqdata(qdat2, beta, 8);		
+		}
+		else if ((qdat.length == 1) && (qdat[0].length == 1)) {
+			int nqpts = (int)Math.max(Math.ceil(-Math.log10(qdat[0][0])), 8);
+			qdat2 = new double[nqpts][2*beta.length+2];
+			scqdata(qdat2, beta, nqpts);	
+		}
+		else {
+			qdat2 = qdat;
+		}
+		
+		// Map prevertices to strip.
+		double K = -Double.MAX_VALUE;
+		for (i = 0; i < z.length; i++) {
+			if (z[i][0] > K) {
+				K = z[i][0];
+			}
+		}
+		double Kp = -Double.MAX_VALUE;
+		for (i = 0; i < z.length; i++) {
+			if (z[i][1] > Kp) {
+				Kp = z[i][1];
+			}
+		}
+		double zs[][] = new double[z.length][2];
+		double zsprime[][] = new double[z.length][2];
+		r2strip(zs, zsprime, z, z, L[0]);
+		for (i = 0; i < zs.length; i++) {
+			// Put them *exactly* on edges
+			zs[i][1] = Math.round(zs[i][1]);
+		}
+		
+		// Add in ends of strip
+		double diffzs[] = new double[n];
+		int nonzerodiff = 0;
+		for (i = 0; i < n-1; i++) {
+			diffzs[i] = zs[i+1][1] - zs[i][1];
+			if (diffzs[i] != 0) {
+				nonzerodiff++;
+			}
+		}
+		diffzs[n-1] = zs[0][1] - zs[n-1][1];
+		if (diffzs[n-1] != 0) {
+			nonzerodiff++;
+		}
+		int ends[] = new int[nonzerodiff];
+		for (i = 0, j = 0; i < diffzs.length; i++) {
+			if (diffzs[i] != 0) {
+			    ends[j++] = i;	
+			}
+		}
+		double zs2[][] = new double[n+2][2];
+		double ws[][] = new double[n+2][2];
+		double bs[] = new double[n+2];
+		for (i = 0; i <= ends[0]; i++) {
+			zs2[i][0] = zs[i][0];
+			zs2[i][1] = zs[i][1];
+			ws[i][0] = w[i][0];
+			ws[i][1] = w[i][1];
+			bs[i] = beta[i];
+		}
+		zs2[ends[0]+1][0] = Double.POSITIVE_INFINITY;
+		zs2[ends[0]+1][1] = 0;
+		ws[ends[0]+1][0] = Double.NaN;
+		ws[ends[0]+1][1] = 0;
+		bs[ends[0]+1] = 0;
+		for (i = ends[0]+1; i <= ends[1]; i++) {
+			zs2[i+1][0] = zs[i][0];
+			zs2[i+1][1] = zs[i][1];
+			ws[i+1][0] = w[i][0];
+			ws[i+1][1] = w[i][1];
+			bs[i+1] = beta[i];
+		}
+		zs2[ends[1]+2][0] = Double.NEGATIVE_INFINITY;
+		zs2[ends[1]+2][1] = 0;
+		ws[ends[1]+2][0] = Double.NaN;
+		ws[ends[1]+2][1] = 0;
+		bs[ends[1]+2] = 0;
+		for (i = ends[1]+1; i < n; i++) {
+			zs2[i+2][0] = zs[i][0];
+			zs2[i+2][1] = zs[i][1];
+			ws[i+2][0] = w[i][0];
+			ws[i+2][1] = w[i][1];
+			bs[i+2] = beta[i];
+		}
+		// Put dummy columns into qdat2 after ends[0] and ends[1] columns
+		// qdat2 is nqpts rows by 2*n+2 columns
+		// so we are expanding it to 2*n+6 columns with the insertion
+		// of 2 more of column n and 2 more of column 2*n+1.
+		double qdat3[][] = new double[qdat2.length][qdat2[0].length+4];
+		for (i = 0; i < qdat2.length; i++) {
+			for (j = 0; j <= ends[0]; j++) {
+				qdat3[i][j] = qdat2[i][j];
+				qdat3[i][j+2+n+1] = qdat2[i][j+n+1];
+			}
+			qdat3[i][ends[0]+1] = qdat2[i][n];
+			qdat3[i][ends[0]+3+n+1] = qdat2[i][2*n+1];
+			for (j = ends[0]+1; j <= ends[1]; j++) {
+				qdat3[i][j+1] = qdat2[i][j];
+				qdat3[i][j+3+n+1] = qdat2[i][j+n+1];
+			}
+			qdat3[i][ends[1]+2] = qdat2[i][n];
+			qdat3[i][ends[1]+4+n+1] = qdat2[i][2*n+1];
+			for (j = ends[1]+1; j <= n-1; j++) {
+				qdat3[i][j+2] = qdat2[i][j];
+				qdat3[i][j+4+n+1] = qdat2[i][j+n+1];
+			}
+			qdat3[i][n+2] = qdat2[i][n];
+			qdat3[i][2*n+5] = qdat2[i][2*n+1];
+		} // for (i = 0; i < qdat2.length; i++)
+		
+		for (i = 0; i < wp.length; i++) {
+			wp[i][0] = 0;
+			wp[i][1] = 0;
+		}
+		int p = zp.length;
+		
+		// Trap points which map to +/- Infinity on the strip.
+		for (i = 0; i < p; i++) {
+			if (zabs(zp[i][0],zp[i][1]) < 2.0*eps) {
+				zp[i][0] = zp[i][0] + 100.0*eps;
+			}
+		}
+		
+		for (i = 0; i < p; i++) {
+			if (zabs(zp[i][0],zp[i][1] - Kp) < 2.0*eps) {
+				zp[i][1] = zp[i][1] - 100.0*eps*Kp;
+			}
+		}
+		
+		// Map from rectangle to strip.
+		double yp[][] = new double[zp.length][2];
+		double ypprime[][] = new double[zp.length][2];
+		r2strip(yp, ypprime, zp, z, L[0]);
+		
+		// Now map from strip to polygon
+		stmap(wp, yp, ws, bs, zs2, c, qdat3);
+	}
+	
+	private void stmap(double wp[][], double zp[][], double w[][], double beta[],
+			double z[][], double c[], double qdat[][]) {
+		// Schwarz-Christoffel strip map.
+		// stmap computes the values of the Schwarz-Christoffel strip map
+		// at the points in the vector zp.  The arguments w, beta, z, c, and 
+		// qdat are as in stparam.  stmap returns a vector wp the same size
+		// as zp.
+		// Original matlab routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		double qdat2[][] = null;
+		
+		if ((zp == null) || (zp.length == 0)) {
+			wp = null;
+			return;
+		}
+		
+		int n = w.length;
+		
+		// Quadrature data;
+		if (qdat == null) {
+			qdat2 = new double[8][2*beta.length+2];
+			scqdata(qdat2, beta, 8);		
+		}
+		else if ((qdat.length == 1) && (qdat[0].length == 1)) {
+			int nqpts = (int)Math.max(Math.ceil(-Math.log10(qdat[0][0])), 8);
+			qdat2 = new double[nqpts][2*beta.length+2];
+			scqdata(qdat2, beta, nqpts);	
+		}
+		else {
+			qdat2 = qdat;
+		}
+		double tol = Math.pow(10.0, -qdat.length);
+		
+		int shape = zp.length;
+		double zprow[][] = new double[zp.length][2];
+		for (i = 0; i < zp.length; i++) {
+			zprow[i][0] = zp[i][0];
+			zprow[i][1] = zp[i][1];
+		}
+		int p = zp.length;
+		for (i = 0; i < wp.length; i++) {
+			wp[i][0] = 0;
+			wp[i][1] = 0;
+		}
+		
+		// For each point in zp, find the nearest prevertex
+		double dist[] = new double[p];
+		int sing[] = new int[p];
+		for (i = 0; i < p; i++) {
+			dist[i] = Double.MAX_VALUE;
+			sing[i] = -1;
+			for (j = 0; j < n; n++) {
+				double presentDist = zabs(zprow[i][0] - z[j][0], zprow[i][1] - z[j][1]);
+				if (presentDist < dist[i]) {
+					dist[i] = presentDist;
+					sing[i] = j;
+				}
+			}
+		} // for (i = 0; i < p; i++)
+		
+		// Screen out images of prevertices
+		boolean vertex[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			if (dist[i] < tol) {
+			    vertex[i] = true;
+			    wp[i][0] = w[sing[i]][0];
+			    wp[i][1] = w[sing[i]][1];
+			}
+		}
+		
+		boolean leftend[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			if ((Double.isInfinite(zp[i][0]) || Double.isInfinite(zp[i][1])) && (zp[i][0] < 0.0)) {
+				leftend[i] = true;
+			}
+		}
+		
+		int windex = -1;
+		for (i = 0; i < z.length && (windex == -1); i++) {
+			if (Double.isInfinite(z[i][0]) && (z[i][0] < 0) && (z[i][1] == 0)) {
+				windex = i;
+			}
+		}
+		for (i = 0; i < p; i++) {
+			if (leftend[i]) {
+				wp[i][0] = w[windex][0];
+				wp[i][1] = w[windex][1];
+			}
+		}
+		
+		boolean rightend[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			if ((Double.isInfinite(zp[i][0]) || Double.isInfinite(zp[i][1])) && (zp[i][0] > 0.0)) {
+				rightend[i] = true;
+			}
+		}
+		
+		windex = -1;
+		for (i = 0; i < z.length && (windex == -1); i++) {
+			if (Double.isInfinite(z[i][0]) && (z[i][0] > 0) && (z[i][1] == 0)) {
+				windex = i;
+			}
+		}
+		for (i = 0; i < p; i++) {
+			if (rightend[i]) {
+				wp[i][0] = w[windex][0];
+				wp[i][1] = w[windex][1];
+			}
+		}
+		
+		for (i = 0; i < p; i++) {
+			vertex[i] = vertex[i] || leftend[i] || rightend[i];
+		}
+		
+		// "Bad" points are closest to a prevertex of infinity.
+		boolean atinf[] = new boolean[n];
+		for (i = 0; i < n; i++) {
+			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				// Infinite vertices
+				atinf[i] = true;
+			}
+		}
+		
+		
+		boolean bad[] = new boolean[p];
+		int numbad = 0;
+		for (i = 0; i < p; i++) {
+			if ((atinf[sing[i]]) && (!vertex[i])) {
+				bad[i] = true;
+				numbad++;
+			}
+		}
+		
+		if (numbad > 0) {
+			// we can't begin integrations at a preimage of infinity.  We
+			// will pick the next-closest qualified prevertex
+			double zf[][] = new double[z.length][2];
+			for (i = 0; i < z.length; i++) {
+				zf[i][0] = z[i][0];
+				zf[i][1] = z[i][1];
+			}
+			for (i = 0; i < n; i++) {
+				if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				    zf[i][0] = Double.POSITIVE_INFINITY;
+				    zf[i][1] = 0.0;
+				}
+			}
+		} // if (numbad > 0)
+		else {
+			// all clear
+			bad = new boolean[p];
+		}
 	}
 	
 	private void plotpoly(float xPointArray[], float yPointArray[], ViewJFrameGraph pointGraph,
