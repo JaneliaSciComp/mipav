@@ -305,8 +305,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		maxlen = len * maxlen;
 		
 		// Plot vertical lines
-		double linhx[][] = new double[re][2];
-		double linhy[][] = new double[re][2];
+		double linhx[][][] = new double[re][2][15];
+		double linhy[][][] = new double[re][2][15];
 		double zp[][] = new double[15][2]; 
 		for (j = 0; j < re; j++) {
 		    // Start evenly spaced
@@ -318,9 +318,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			for (i = 0; i < 15; i++) {
 				newlog[i] = true;
 			}
-			double wp[] = new double[15];
+			double wp[][] = new double[15][2];
 			for (i = 0; i < 15; i++) {
-				wp[i] = Double.NaN;
+				wp[i][0] = Double.NaN;
 			}
 			
 			// The individual points will be shown as they are found.
@@ -346,8 +346,138 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				} // for (i = 0, m = 0; i < 15; i++)
 				double neww[][] = new double[numnewlog][2];
 				rmap(neww, zpnew, w, beta, z, c, L, qdat);
+				for (i = 0, m = 0; i < 15; i++) {
+					if (newlog[i]) {
+					    wp[i][0] = neww[m][0];
+					    wp[i][1] = neww[m++][1];
+					} 
+				} // for (i = 0, m = 0; i < 15; i++)
+				iter = iter + 1;
+				
+				// Update the points to show progress
+				for (i = 0; i < 15; i++) {
+				    linhx[j][0][i] = wp[i][0];
+				    linhy[j][0][i] = wp[i][1];
+				    linhx[j][1][i] = zp[i][0];
+				    linhy[j][1][i] = zp[i][1];
+				}
+				
+				// Add points to zp where necessary
 			} // while (iter < maxrefn)
 		} // for (j = 0; j < re; j++)
+	}
+	
+	private void scpadapt(Vector<Double> zpReal, Vector<Double> zpImag,
+		Vector<Double> wpReal, Vector<Double> wpImag, Vector<Boolean> newout[],
+			double minlen, double maxlen, boolean clip) {
+		// This function looks for unacceptable nobnsmoothness in the curve(s)
+		// represented by wp.  At such points it adds in-between points to zp.
+		// On return zp is the combined vector of points in order, wp has NaN's 
+		// at the new points, and newout is a 0-1 vector flagging the newly added 
+		// points.
+		
+		// The algorithm is basically stolen form fplot.  If extrapolation of the
+		// linear interpolation that the graphics will use results in an estimate
+		// too far from reality, refinement is called for.
+		
+		// When the clip argument is used, the criteria do not apply for points
+		// outside the clip region.  Why refine for invisible points?
+		
+		// wp can have multiple columns (curves).  Any curve needing refinement
+		// causes it for all of them.
+		
+		// This should become the adaptive routine for all SC plotting.  Allowances
+		// must be made for cases when the ends of zp need not be bounded (as with
+		// the half-plane and strip).  Perhaps the newly added points should be
+		// spaced exponentially rather than added algebraically.
+		
+		// Original MATLAB routine copyright 1997-2003 by Toby Driscoll.
+		int i;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		int m = wpReal.size();
+		double dwp[][] = new double[m-1][2];
+		for (i = 0; i < m-1; i++) {
+			dwp[i][0] = wpReal.get(i+1) - wpReal.get(i);
+			dwp[i][1] = wpImag.get(i+1) - wpImag.get(i);
+		}
+		
+		// Infinities at the ends of zp mean that we go out forever.  However,
+		// we will pick a finite bound.
+		boolean linf = (Double.isInfinite(zpReal.get(0)) || Double.isInfinite(zpImag.get(0)));
+		if (linf) {
+			double absVal = zabs(zpReal.get(2) - zpReal.get(1), zpImag.get(2) - zpImag.get(1));
+			double maxVal = Math.max(3, absVal * absVal);
+			double signVal[] = sign(zpReal.get(1) - zpReal.get(2),
+					                zpImag.get(1) - zpImag.get(2));
+			zpReal.set(0, zpReal.get(1) + maxVal*signVal[0]);
+			zpImag.set(0, zpImag.get(1) + maxVal*signVal[1]);
+		} // if (linf)
+		boolean rinf = (Double.isInfinite(zpReal.get(m-1)) || Double.isInfinite(zpImag.get(m-1)));
+		if (rinf) {
+			double absVal = zabs(zpReal.get(m-2) - zpReal.get(m-3), 
+					zpImag.get(m-2) - zpImag.get(m-3));	
+			double maxVal = Math.max(3, absVal * absVal);
+			double signVal[] = sign(zpReal.get(m-2) - zpReal.get(m-3),
+	                zpImag.get(m-2) - zpImag.get(m-3));
+			zpReal.set(m-1, zpReal.get(m-2) + maxVal*signVal[0]);
+			zpImag.set(m-1, zpImag.get(m-2) + maxVal*signVal[1]);
+		} // if (rinf)
+		
+		// Sines of the turning angles at interior points
+		double sines[] = new double[m-2];
+		for (i = 0; i < m-2; i++) {
+		    zmlt(dwp[i][0], dwp[i][1], dwp[i+1][0], -dwp[i+1][1], cr, ci);
+		    double ang = Math.atan2(ci[0], cr[0]);
+		    double sinang = Math.sin(ang);
+		    sines[i] = Math.abs(sinang);
+		} // for (i = 0; i < m-2; i++)
+		
+		// Distances from linear extrapolation to actual value.  Each interior
+		// point has a column, with two rows being errors to either side.
+		double absdwp[] = new double[m-1];
+		for (i = 0; i < m-1; i++) {
+			absdwp[i] = zabs(dwp[i][0], dwp[i][1]);
+		}
+		double err[][] = new double[m-2][2];
+		/*err[0] = -Double.MAX_VALUE;
+		for (i = 0; i < m-2; i++) {
+			double presentErr = absdwp[i]*sines[i];
+			if (presentErr > err[0]) {
+				err[0] = presentErr;
+			}
+		} // for (i = 0; i < m-2; i++) 
+		err[1] = -Double.MAX_VALUE;
+		for (i = 0; i < m-2; i++) {
+			double presentErr = absdwp[i+1]*sines[i];
+			if (presentErr > err[1]) {
+				err[1] = presentErr;
+			}
+		} // for (i = 0; i < m-2; i++)
+		
+		// Forget about NaNs.
+		for (i = 0; i < err.length; i++) {
+			if (Double.isNaN(err[i])) {
+				err[i] = 0;
+			}
+		}
+		for (i = 0; i < absdwp.length; i++) {
+			if (Double.isNaN(absdwp[i])) {
+				absdwp[i] = 0;
+			}
+		}
+		
+		// Flag large errors
+		boolean bad[][] = new boolean[3][2];
+		bad[1][0] = err[0] > maxlen/12.0;
+		bad[1][1] = err[1] > maxlen/12.0;
+		
+		// Also flag if the segments themselves are too long.
+		// However, exclude where segments are very short.
+		int numlong[]
+		for (i = 0; i < absdwp.length; i++) {
+			
+		}*/
 	}
 	
 	private void rmap(double wp[][], double zp[][], double w[][], double beta[],
@@ -519,6 +649,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Original matlab routine copyright 1998 by Toby Driscoll.
 		int i, j;
 		double qdat2[][] = null;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double mid1[][] = null;
+		double mid2[][] = null;
 		
 		if ((zp == null) || (zp.length == 0)) {
 			wp = null;
@@ -656,11 +790,127 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    zf[i][1] = 0.0;
 				}
 			}
+			double zprowbad[][] = new double[numbad][2];
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					zprowbad[j][0] = zprow[i][0];
+					zprowbad[j++][1] = zprow[i][1];
+				}
+			}
+			double tmp[] = new double[numbad];
+			int s[] = new int[numbad];
+			for (i = 0; i < numbad; i++) {
+				tmp[i] = Double.MAX_VALUE;
+				s[i] = -1;
+				for (j = 0; j < n; n++) {
+					double presentTmp = zabs(zprowbad[i][0] - zf[j][0], zprowbad[i][1] - zf[j][1]);
+					if (presentTmp < tmp[i]) {
+						tmp[i] = presentTmp;
+						s[i] = j;
+					}
+				}
+			} // for (i = 0; i < p; i++)
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					sing[i] = s[j++];
+				}
+			} // for (i = 0, j = 0; i < p; i++)
+			
+			// Because we no longer integrate from the closest prevertex,  we
+			// must go in stages to maintain accuracy.
+			mid1 = new double[numbad][2];
+			mid2 = new double[numbad][2];
+			for (i = 0; i < numbad; i++) {
+				mid1[i][0] = z[s[i]][0];
+				mid1[i][1] = 0.5;
+			}
+			for (i = 0, j = 0; i < p; i++) {
+			    if (bad[i]) {
+			    	mid2[j][0] = zp[i][0];
+			    	mid2[j++][1] = 0.5;
+			    }
+			} // for (i = 0, j = 0; i < p; i++)
 		} // if (numbad > 0)
 		else {
 			// all clear
 			bad = new boolean[p];
 		}
+		
+		// zs = the starting singularities
+		double zs[][] = new double[p][2];
+		for (i = 0; i < p; i++) {
+			zs[i][0] = z[sing[i]][0];
+			zs[i][1] = z[sing[i]][1];
+		}
+		// ws = map(zs)
+		double ws[][] = new double[p][2];
+		for (i = 0; i < p; i++) {
+			ws[i][0] = w[sing[i]][0];
+			ws[i][1] = w[sing[i]][1];
+		}
+		
+		// Compute the map directly at "normal" points.
+		boolean normal[] = new boolean[p];
+		int numnormal = 0;
+		for (i = 0; i < p; i++) {
+			normal[i] = (!bad[i]) && (!vertex[i]);
+			if (normal[i]) {
+				numnormal++;
+			}
+		} // for (i = 0; i < p; i++) 
+		
+		if (numnormal > 0) {
+		    double zsnormal[][] = new double[numnormal][2];
+		    double zpnormal[][] = new double[numnormal][2];
+		    int singnormal[] = new int[numnormal];
+		    for (i = 0, j = 0; i < p; i++) {
+		        if (normal[i]) {
+		        	zsnormal[j][0] = zs[i][0];
+		        	zsnormal[j][1] = zs[i][1];
+		        	zpnormal[j][0] = zp[i][0];
+		        	zpnormal[j][1] = zp[i][1];
+		        	singnormal[j++] = sing[i];
+		        }
+		    } // for (i = 0, j = 0; i < p; i++)
+		    double I[][] = stquad(zsnormal, zpnormal, singnormal, z, beta, qdat2);
+		    for (i = 0, j = 0; i < p; i++) {
+		    	if (normal[i]) {
+		    		zmlt(c[0], c[1], I[j][0], I[j][1], cr, ci);
+		    		j++;
+		    		wp[i][0] = ws[i][0] + cr[0];
+		    		wp[i][1] = ws[i][1] + ci[0];
+		    	}
+		    } // for (i = 0, j = 0; i < p; i++)
+		} // if (numnormal > 0)
+		
+		// Compute map at "bad" points in stages.
+		if (numbad > 0) {
+			double zsbad[][] = new double[numbad][2];
+			double zpbad[][] = new double[numbad][2];
+			int singbad[]= new int[numbad];
+			int zerosbad[] = new int[numbad];
+			for (i = 0, j = 0; i < p; i++) {
+			    if (bad[i]) {
+			    	zsbad[j][0] = zs[i][0];
+			    	zsbad[j][1] = zs[i][1];
+			    	zpbad[j][0] = zp[i][0];
+			    	zpbad[j][1] = zp[i][1];
+			    	singbad[j++] = sing[i];
+			    }
+			} // for (i = 0, j = 0; i < p; i++)
+			double I1[][] = stquad(zsbad, mid1, singbad, z, beta, qdat2);
+			double I2[][] = stquadh(mid1, mid2, zerosbad, z, beta, qdat2);
+			double I3[][] = stquad(zpbad, mid2, zerosbad, z, beta, qdat2);
+			for (i = 0, j = 0; i < p; i++) {
+			    if (bad[i]) {
+			    	zmlt(c[0], c[1], (I1[j][0] + I2[j][0] - I3[j][0]), 
+			    			(I1[j][1] + I2[j][1] - I3[j][1]), cr, ci);
+			    	j++;
+			    	wp[i][0] = ws[i][0] + cr[0];
+			    	wp[i][1] = ws[i][1] + ci[0];
+			    }
+			} // for (i = 0, j = 0; i < p; i++)
+		} // if (numbad > 0)
 	}
 	
 	private void plotpoly(float xPointArray[], float yPointArray[], ViewJFrameGraph pointGraph,
@@ -4109,6 +4359,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		else {
 			return -1.0;
 		}
+	}
+	
+	private double[] sign(double dReal, double dImag) {
+		// x/abs(x) for complex numbers
+		double realResult[] = new double[1];
+		double imagResult[] = new double[1];
+		double absd = zabs(dReal, dImag);
+		zdiv(dReal, dImag, absd, 0, realResult, imagResult);
+		double result[] = new double[]{realResult[0], imagResult[0]};
+		return result;
 	}
 	
 	private void rptrnsfm(double z[][], double y[], int cnr[]) {
