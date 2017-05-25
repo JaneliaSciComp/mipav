@@ -2498,6 +2498,10 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
     public void drawString(Graphics g, String str, int x, int y) {
     	g.drawString(str, x, y);
     }
+    
+    public void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
+    	g.drawLine(x1,  y1,  x2, y2);
+    }
 
 
 }
