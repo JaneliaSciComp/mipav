@@ -85,6 +85,19 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 	}
 	
+	public void testDiskmap1() {
+		double w[][] = new double[4][2];
+		w[0][0] = 1;
+		w[0][1] = 1;
+		w[1][0] = -1;
+		w[1][1] = 1;
+		w[2][0] = -1;
+		w[2][1] = -1;
+		w[3][0] = 1;
+		w[3][1] = -1;
+		scmap M = diskmap(w, tolerance, null, null);
+	}
+	
 	public void testRectmap1() {
 		// Example from users guide
 		// Test with
@@ -110,6 +123,82 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         corner[3] = 4;
         scmap M = rectmap(w, corner, tolerance, null, null, null);
         plot(M, 10, 10);
+	}
+	
+	public scmap diskmap(double w[][], double tolerance, double z[][], double c[]) {
+		// Schwarz-Christoffel disk map object
+		// diskmap constructs a Schwarz-Christoffel disk map object for the polygon
+		// whose vertices are given by w.  The parameter problem is solved using
+		// default options for the prevertices and the multiplicative constant.
+		// If z is supplied diskmap creates a diskmap object having the given
+		// prevertices z (the multiplicative constant is found automatically).
+		// There is no checking to ensure that the prevertices are consistent with
+		// the given polygon.  diskmap uses the supplied constant c when provided.
+		// Based on original MATLAB routine copyright 1998-2001 by Toby Driscoll.
+		int i;
+		double qdata[][] = null;
+		double wn[][] = null;
+		double betan[] = null;
+		double z0[][] = null;
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, null);
+		double beta[] = new double[poly.angle.length];
+		for (i = 0; i < poly.angle.length; i++) {
+			beta[i] = poly.angle[i] - 1.0;
+		}
+		if ((z == null) || (z.length == 0)) {
+			// Solve parameter problem
+			// Apply scfix to enforce solver rules
+			wn = new double[w.length+1][2];
+			betan = new double[w.length+1];
+			// Number of vertices added by scfix
+			int verticesAdded[] = new int[1];
+			int initialVertices = w.length;
+			scfix(wn, betan, verticesAdded, null, "d", w, beta, null);
+			double wn2[][];
+			double betan2[];
+			if (verticesAdded[0] == 0) {
+			    wn2 = new double[initialVertices][2];
+				betan2 = new double[initialVertices];
+				for (i = 0; i < initialVertices; i++) {
+					wn2[i][0] = wn[i][0];
+					wn2[i][1] = wn[i][1];
+					betan2[i] = betan[i];
+				}
+			}
+			else {
+				wn2 = wn;
+				betan2 = betan;
+			}
+			double xn[] = new double[wn2.length];
+			double yn[] = new double[wn2.length];
+			for (i = 0; i < wn2.length; i++) {
+				xn[i] = wn2[i][0];
+				yn[i] = wn2[i][1];
+			}
+			double alpha[] = new double[betan2.length];
+			for (i = 0; i < betan2.length; i++) {
+				alpha[i] = betan2[i] + 1.0;
+			}
+			poly = new polygon(xn, yn, alpha);
+			c = new double[2];
+			z = new double[wn2.length][2];
+			int nqpts = Math.max((int)Math.ceil(-Math.log10(tolerance)), 4);
+			qdata = new double[nqpts][2*betan2.length+2];
+			 dparam(z, c, qdata, wn2, betan2, z0, tolerance );
+		} // if ((z == null) || (z.length == 0))
+		scmap map = new scmap();
+		map.prevertex = z;
+		map.constant[0] = c[0];
+		map.constant[1]= c[1];
+		map.qdata = qdata;
+		map.poly = poly;
+		return map;
 	}
 	
 	public scmap rectmap(double w[][], int corner[], double tolerance,
@@ -1832,6 +1921,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    double stripL[];
 	    double qdata[][];
 	    polygon poly;
+	    double center[];
 	    double accuracy = Double.NaN;
 	    String className = "rectmap";
 	    scmap() {
@@ -2491,6 +2581,139 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		return beta;
 	}
+	
+	// Schwarz-Crhistoffel disk parameter problem.
+	// dparam soves the Schwarz-Christoffel mapping parameter problem with the disk
+	// as fundamental domain and the polygon specified by w as the target. w must be
+	// a vector of the vertices of the polygon, specified in counterclockwise order,
+	// and beta should be a vector of the turning angles of the polygon, see scangle
+	// for details.  If sucessful, dparam will return z, a vector of the pre-images of w;
+	// c, the multiplicative constant of the conformal map; and qdat, an optional
+	// matrix of quadrature data used by some of the other S-C routines. z0 is an initial
+	// guess for z.  dparam attempts to find an answer within tolerance tol.
+	// Original MATLAN dparam copyright 1998 by Toby Driscoll.
+	private void dparam(double z[][], double c[], double qdat[][], 
+			double w[][], double beta[], double z0[][], double tol) {
+		int i, j, k;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+	    int n = w.length; // number of vertices
+	    
+	 // Check input data
+	    int err = sccheck("d", w, beta, null);
+	    if (err == -1) {
+	    	return;
+	    }
+	    if (err == 1) {
+	    	MipavUtil.displayError("Use scfix to make polygon obey requirements");
+	    	return;
+	    }
+	    
+	    int nqpts = (int)Math.max(Math.ceil(-Math.log(tol)),4);
+	    scqdata(qdat, beta, nqpts);  // quadrature data
+	    
+	    boolean atinf[] = new boolean[beta.length];
+	    for (i = 0; i < beta.length; i++) {
+	    	if (beta[i] <= -1) {
+	    		atinf[i] = true;
+	    	}
+	    } // for (i = 0; i < beta.length; i++)
+	    
+	    if (n == 3) {
+	    	// Trivial solution
+	    	z[0][0] = 0.0;
+	    	z[0][1] = -1.0;
+	    	double sqrt2 = Math.sqrt(2.0);
+	    	z[1][0] = 1.0/sqrt2;
+	    	z[1][1] = -1.0/sqrt2;
+	    	z[2][0] = 1.0;
+	    	z[2][1] = 0.0;
+	    } // if (n == 3)
+	    else {
+	        // Set up normalized lengths for nonlinear equations
+	    	
+	    	// indices of left and right integration endpoints
+	    	int numleft = 0;
+	    	for (i = 0; i < n-2; i++) {
+	    		if (!atinf[i]) {
+	    			numleft++;
+	    		}
+	    	} // for (i = 0; i < n-2; i++)
+	    	int left[] = new int[numleft];
+	    	for (i = 0, j = 0; i < n-2; i++) {
+	    		if (!atinf[i]) {
+	    			left[j++] = i;
+	    		}
+	    	} // for (i = 0, j = 0; i < n-2; i++)
+	    	int numright = 0;
+	    	for (i = 1; i < n-1; i++) {
+	    		if (!atinf[i]) {
+	    			numright++;
+	    		}
+	    	} // for (i = 1; i < n-1; i++)
+	    	int right[] = new int[numright];
+	    	for (i = 1, j = 0; i < n-1; i++) {
+	    	    if (!atinf[i]) {
+	    	    	right[j++] = i+1;
+	    	    }
+	    	} // for (i = 1, j = 0; i < n-1; i++)
+	    	// Assumes numright == numleft
+	    	boolean cmplx[] = new boolean[numright];
+	    	int numcmplx = 0;
+	    	for (i = 0; i < numright; i++) {
+	    		if ((right[i] - left[i]) == 2) {
+	    			cmplx[i] = true;
+	    			numcmplx++;
+	    		}
+	    	} // for (i = 0; i < numright; i++)
+	    	// Normalize lengths by w[1] - w[0]
+	    	double diffw[] = new double[2];
+	    	diffw[0] = w[1][0] - w[0][0];
+	    	diffw[1] = w[1][1] - w[0][1];
+	    	double nmlen[][] = new double[numright][2];
+	    	for (i = 0; i < numright; i++) {
+	    	    zdiv(w[right[i]][0] - w[left[i]][0], w[right[i]][1] - w[left[i]][1], 
+	    	    		diffw[0], diffw[1], cr, ci);
+	    	    nmlen[i][0] = cr[0];
+	    	    nmlen[i][1] = ci[0];
+	    	} // for (i = 0; i < numright; i++)
+	    	// abs value for finite ones; Re/Im or Infinite ones
+	    	int numnotcmplx = numright-numcmplx;
+	    	double nmlen2[] = new double[numnotcmplx + 2*numcmplx];
+	    	for (i = 0, j = 0, k = 0; i < numright; i++) {
+	    	    if (!cmplx[i]) {
+	    	    	nmlen2[j++] = zabs(nmlen[i][0], nmlen[i][1]);
+	    	    }
+	    	    else {
+	    	    	nmlen2[numnotcmplx + k] = nmlen[i][0];
+	    	    	nmlen2[numnotcmplx + numcmplx + k] = nmlen[i][1];
+	    	    	k++;
+	    	    }
+	    	} // for (i = 0, j = 0, k = 0; i < numright; i++)
+	    	// First entry is useless (= 0)
+	    	double nmlen3[] = new double[nmlen2.length-1];
+	    	for (i = 0; i < nmlen3.length; i++) {
+	    		nmlen3[i] = nmlen2[i+1];
+	    	}
+	    	
+	    	// Set up initial guess
+	    	double y0[][];
+	    	if ((z0 == null) || (z0.length == 0)) {
+	    		y0 = new double[n-3][2];
+	    	}
+	    	else {
+	    		double z02[][] = new double[z0.length][2];
+	    		for (i = 0; i < z0.length; i++) {
+	    			zdiv(z0[i][0], z0[i][1], zabs(z0[i][0], z0[i][1]), 0.0, cr, ci);
+	    			z02[i][0] = cr[0];
+	    			z02[i][1] = ci[0];
+	    		} // for (i = 0; i < z0.length; i++)
+	    		// Moebius to make th(n-3:n-1) = [1,1.5,2]*PI
+	    		
+	    	} // else
+	    } // else
+	}
+	
 	
 	// Schwarz-Christoffel rectangle parameter problem
 	// rparam solves the Schwarz-Christoffel parameter problem with a rectangle as a fundamental domain
