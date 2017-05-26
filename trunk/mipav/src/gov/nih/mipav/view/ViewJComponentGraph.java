@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Vector;
 
 import javax.swing.*;
 
@@ -192,6 +193,12 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
     private boolean doLog = false;
     
     private boolean zeroYMin = false;
+    
+    private Vector<Double> x1Vector = null;
+    private Vector<Double> y1Vector = null;
+    private Vector<Double> x2Vector = null;
+    private Vector<Double> y2Vector = null;
+    private boolean addSchwarzChristoffelLines = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2161,6 +2168,56 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 }
             }
         }
+        
+        if (addSchwarzChristoffelLines) {
+            plotSchwarzChristoffel(g);	
+        }
+    }
+    
+    private void plotSchwarzChristoffel(Graphics g) {
+    	if (g == null) {
+            MipavUtil.displayError("ComponentGraph.SchwarzChristoffel: graphics = null");
+
+            return;
+        }
+    	
+    	if (x1Vector == null) {
+    		 MipavUtil.displayError("ComponentGraph.SchwarzChristoffel: x1Vector = null");
+
+             return;	
+    	}
+    	
+    	if (x2Vector == null) {
+   		 MipavUtil.displayError("ComponentGraph.SchwarzChristoffel: x2Vector = null");
+
+            return;	
+   	    }
+    	
+    	if (y1Vector == null) {
+   		 MipavUtil.displayError("ComponentGraph.SchwarzChristoffel: y1Vector = null");
+
+            return;	
+   	    }
+    	
+    	if (y2Vector == null) {
+   		 MipavUtil.displayError("ComponentGraph.SchwarzChristoffel: y2Vector = null");
+
+            return;	
+   	    }
+    	
+    	for (int i = 0; i < x1Vector.size(); i++) {
+    		double posx1 = x1Vector.get(i);
+    		double posy1 = y1Vector.get(i);
+    		double posx2 = x2Vector.get(i);
+    		double posy2 = y2Vector.get(i);
+    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - minDomain));
+		    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - minRange));
+		    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+		    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - minDomain));
+		    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - minRange));
+		    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+		    g.drawLine(x1, y1, x2, y2);
+    	}
     }
 
     /**
@@ -2501,6 +2558,26 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
     
     public void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
     	g.drawLine(x1,  y1,  x2, y2);
+    }
+    
+    public void setX1Vector(Vector<Double> x1Vector) {
+    	this.x1Vector = x1Vector;
+    }
+    
+    public void setX2Vector(Vector<Double> x2Vector) {
+    	this.x2Vector = x2Vector;
+    }
+    
+    public void setY1Vector(Vector<Double> y1Vector) {
+    	this.y1Vector = y1Vector;
+    }
+    
+    public void setY2Vector(Vector<Double> y2Vector) {
+    	this.y2Vector = y2Vector;
+    }
+    
+    public void setAddSchwarzChristoffelLines(boolean addSchwarzChristoffelLines) {
+    	this.addSchwarzChristoffelLines = addSchwarzChristoffelLines;
     }
 
 
