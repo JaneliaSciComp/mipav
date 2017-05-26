@@ -299,14 +299,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		float xPointArray[] = new float[n+1];
 		float yPointArray[] = new float[n+1];
-		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray,
-				"title", "lablelX", "labelY", Color.BLUE);
-		plotpoly(xPointArray, yPointArray, pointGraph, w, beta, false, axlim);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
 		Rectangle graphBounds = graph.getGraphBounds();
-		Graphics g = pointGraph.getFrameGraphics();
+		Graphics g = graph.getGraphics();
 		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
         double yScale = graphBounds.height / (axlim[3] - axlim[2]);
 		double len = Math.max(graphBounds.width, graphBounds.height);
@@ -1228,7 +1226,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		} // if (numbad > 0)
 	}
 	
-	private void plotpoly(float xPointArray[], float yPointArray[], ViewJFrameGraph pointGraph,
+	private ViewJFrameGraph plotpoly(float xPointArray[], float yPointArray[],
 			double w[][], double beta[], boolean addMarkerLabel, double axlim[]) {
 		// plotpoly plots the polygon whose vertices are in vector w
 		// and whose turning angles are in beta.  Vertices at infinity
@@ -1261,7 +1259,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		double wf[][] = new double[numfinite][2];
 		for (i = 0, j = 0; i < w.length; i++) {
-			System.out.println("w = " + w[i][0] + " " + w[i][1]);
 			if ((!Double.isInfinite(w[i][0])) && (!Double.isInfinite(w[i][1]))) {
 				wf[j][0] = w[i][0];
 				wf[j++][1] = w[i][1];
@@ -1316,7 +1313,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		if (first == -1) {
 			MipavUtil.displayError("There must be two consecutive finite vertices.");
-			return;
+			return null;
 		}
 		int renum[] = new int[n];
 		for (i = 0; i < n - first; i++) {
@@ -1507,6 +1504,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   // }
 		//} // if (addMarkerLabel)
 		
+		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray,
+				"title", "lablelX", "labelY", Color.BLUE);
+		pointGraph.setVisible(true);
 		ViewJComponentGraph graph = pointGraph.getGraph();
 		if (addMarkerLabel) {
 		    graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_AND_LINES);
@@ -1530,7 +1530,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	}
         }
         
-		pointGraph.setVisible(true);
+		return pointGraph;
 	}
 	
 	private double accuracy(scmap M) {
