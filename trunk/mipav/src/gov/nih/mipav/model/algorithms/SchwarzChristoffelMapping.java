@@ -266,6 +266,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         int maxrefn = 16;
         double axlim[] = new double[4];
 		int i, j, m;
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
 		Vector<Double>zpReal = new Vector<Double>();
 		Vector<Double>zpImag = new Vector<Double>();
 		Vector<Double>wpReal = new Vector<Double>();
@@ -395,6 +399,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		double posy1 = linhy[i][0].get(j);
 		    		double posx2 = linhx[i][0].get(j+1);
 		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
 		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
     			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
     			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
@@ -490,6 +498,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		double posy1 = linhy[i][0].get(j);
 		    		double posx2 = linhx[i][0].get(j+1);
 		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
 		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
     			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
     			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
@@ -500,6 +512,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	}
 		    }
 		}
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
 	}
 	
 	private void scpadapt(Vector<Double> zpReal, Vector<Double> zpImag,
