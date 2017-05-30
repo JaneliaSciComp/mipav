@@ -81,7 +81,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
             }
         } // while(true)
         
-        testRectmap1();
+        //testRectmap1();
+        testDiskmap1();
 		
 	}
 	
@@ -159,6 +160,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			// Number of vertices added by scfix
 			int verticesAdded[] = new int[1];
 			int initialVertices = w.length;
+			for (i = 0; i < w.length; i++) {
+				wn[i][0] = w[i][0];
+				wn[i][1] = w[i][1];
+				betan[i] = beta[i];
+			}
 			scfix(wn, betan, verticesAdded, null, "d", w, beta, null);
 			double wn2[][];
 			double betan2[];
@@ -2609,7 +2615,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	return;
 	    }
 	    
-	    int nqpts = (int)Math.max(Math.ceil(-Math.log(tol)),4);
+	    int nqpts = (int)Math.max(Math.ceil(-Math.log10(tol)),4);
 	    scqdata(qdat, beta, nqpts);  // quadrature data
 	    
 	    boolean atinf[] = new boolean[beta.length];
@@ -2697,9 +2703,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	}
 	    	
 	    	// Set up initial guess
-	    	double y0[][];
+	    	double y0[] = null;
 	    	if ((z0 == null) || (z0.length == 0)) {
-	    		y0 = new double[n-3][2];
+	    		y0 = new double[n-3];
 	    	}
 	    	else {
 	    		double z02[][] = new double[z0.length][2];
@@ -2709,8 +2715,22 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    			z02[i][1] = ci[0];
 	    		} // for (i = 0; i < z0.length; i++)
 	    		// Moebius to make th(n-3:n-1) = [1,1.5,2]*PI
-	    		
+	    		// The MATLAB lines are:
+	    		// Am = moebius(z0(n-2:n),[-1;-i;1]));
+	    		// z0 = Am(z0);
+	    		// The line Z0 = Am(z0); generates the error message:
+	    		// Subscript indices must be either real positive integers or logicals.
 	    	} // else
+	    	// Solve nonlinear system of equations
+		    dpfun fm = new dpfun(y0, n, beta, nmlen3, left, right, cmplx, qdat);
+		    fm.driver();
+			fm.dumpResults();
+		    int exitStatus = fm.getExitStatus();
+		    if (exitStatus < 0 ) {
+		    	printExitStatus(exitStatus);
+		    	return;
+		    }
+			double y[] = fm.getParameters();
 	    } // else
 	}
 	
@@ -3956,6 +3976,454 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         else {
         	System.err.println("Exit status = " + exitStatus);
         }
+	}
+	
+	class dpfun extends NLConstrainedEngine {
+		int n;
+		double beta[];
+		double nmlen[];
+		int left[];
+		int right[];
+		boolean cmplx[];
+		double qdat[][];
+		
+    	public dpfun (double y0[], int n, double beta[], double nmlen[], int left[],
+    			int right[], boolean cmplx[], double qdat[][]) {
+    		// nPoints, params
+    		super(y0.length, y0.length);
+    		this.n = n;
+    		this.beta = beta;
+    		this.nmlen = nmlen;
+    		this.left = left;
+    		this.right = right;
+    		this.cmplx = cmplx;
+    		this.qdat = qdat;
+    		
+    		bounds = 0; // bounds = 0 means unconstrained
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < y0.length; i++) {
+				gues[i] = y0[i];
+			}
+    	}
+    	
+    	/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		/**
+		 * Display results of displaying exponential fitting parameters.
+		 */
+		public void dumpResults() {
+			Preferences
+					.debug(" ******* Fit Elsunc Schwarz-Christoffel dparam ********* \n\n",
+							Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters)
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			for (int i = 0; i < a.length; i++) {
+			Preferences.debug("a"+i+" " + String.valueOf(a[i]) + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			}
+		}
+    	
+    	public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+    		int ctrl;
+    		int i, j, k;
+    		double z[][];
+    		double I1[][];
+    		double I2[][];
+    		double I3[][];
+    		double cr[] = new double[1];
+    		double ci[] = new double[1];
+    		try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+                    // Returns residual for solution of nonlinear equations
+					
+					// Convert a values to z (prevertices)
+					double cumprod[] = new double[a.length+1];
+					cumprod[0] = 1;
+					for (i = 1; i <= a.length; i++) {
+						cumprod[i] = cumprod[i-1]*Math.exp(-a[i-1]);
+					}
+					double cs[] = new double[a.length+1];
+					cs[0] = cumprod[0];
+					for (i = 1; i <= a.length; i++) {
+						cs[i] = cs[i-1] + cumprod[i];
+					}
+					double theta[] = new double[n-3];
+					for (i = 0; i < n-3; i++) {
+						theta[i] = Math.PI*cs[i]/cs[cs.length-1];
+					}
+					z = new double[n][2];
+					for (i = 0; i < n-3; i++) {
+						z[i][0] = Math.cos(theta[i]);
+						z[i][1] = Math.sin(theta[i]);
+					}
+					z[n-3][0] = -1;
+					z[n-3][1] = 0;
+					z[n-2][0] = 0;
+					z[n-2][1] = -1;					
+					
+					// Compute the integrals
+					double zleft[][] = new double[left.length][2];
+					for (i = 0; i < left.length; i++) {
+						zleft[i][0] = z[left[i]][0];
+						zleft[i][1] = z[left[i]][1];
+					}
+					double zright[][] = new double[right.length][2];
+					for (i = 0; i < right.length; i++) {
+						zright[i][0] = z[right[i]][0];
+						zright[i][1] = z[right[i]][1];
+					}
+					double angl[] = new double[left.length];
+					for (i = 0; i < left.length; i++) {
+						angl[i] = Math.atan2(zleft[i][1], zleft[i][0]);
+					}
+					double mid[][] = new double[left.length][2];
+				    for (i = 0; i < left.length; i++) {
+				    	zdiv(zright[i][0], zright[i][1], zleft[i][0], zleft[i][1], cr, ci);
+				    	double ang = Math.atan2(ci[0],  cr[0]) + 2.0*Math.PI;
+				    	double div = ang/(2.0*Math.PI);
+				    	double fix;
+				    	if (div >= 0) {
+				    		fix = Math.floor(div);
+				    	}
+				    	else {
+				    		fix = Math.ceil(div);
+				    	}
+				    	double rem = ang - 2.0*Math.PI*fix;
+				    	double expvar = (angl[i] + rem)/2.0;
+				    	mid[i][0] = Math.cos(expvar);
+				    	mid[i][1] = Math.sin(expvar);
+				    }
+				    // For integrals between nonadjacent singularities, choose 0
+				    // as intermediate integration point.
+				    int numcmplx = 0;
+				    for (i = 0; i < cmplx.length; i++) {
+				        if (cmplx[i]) {
+				        	numcmplx++;
+				        	mid[i][0] = 0;
+				        	mid[i][1] = 0;
+				        }
+				    } // for (i = 0; i < cmplx.length; i++)
+				    if (numcmplx > 0) {
+				        cmplx[0] = true;	
+				    }
+				    double ints[][] = new double[left.length][2];
+				    for (i = 0; i < left.length; i++) {
+				    	ints[i][0] = Double.NaN;
+				    }
+				    numcmplx = 0;
+				    for (i = 0; i < cmplx.length; i++) {
+				        if (cmplx[i]) {
+				        	numcmplx++;
+				        }
+				    } // for (i = 0; i < cmplx.length; i++)
+				    int numnotcmplx = cmplx.length - numcmplx;
+				    double zleftnotcmplx[][] = new double[numnotcmplx][2];
+				    double midnotcmplx[][] = new double[numnotcmplx][2];
+				    int leftnotcmplx[] = new int[numnotcmplx];
+				    double zrightnotcmplx[][] = new double[numnotcmplx][2];
+				    int rightnotcmplx[] = new int[numnotcmplx];
+				    for (i = 0, j = 0; i < cmplx.length; i++) {
+				        if (cmplx[i]) {
+				        	zleftnotcmplx[j][0] = zleft[i][0];
+				        	zleftnotcmplx[j][1] = zleft[i][1];
+				        	midnotcmplx[j][0] = mid[i][0];
+				        	midnotcmplx[j][1] = mid[i][1];
+				        	leftnotcmplx[j] = left[i];
+				        	zrightnotcmplx[j][0] = zright[i][0];
+				        	zrightnotcmplx[j][1] = zright[i][1];
+				        	rightnotcmplx[j++] = right[i];
+				        }
+				    } // for (i = 0, j = 0; i < cmplx.length; i++)
+				} // if ((ctrl == -1) || (ctrl == 1))
+
+				// Calculate the Jacobian numerically
+				else if (ctrl == 2) {
+					ctrlMat[0] = 0;
+				}
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+    		
+    	}
+    }
+	
+	private double[][] dabsquad(double z1[][], double z2[][], int sing1[], double z[][],
+			double beta[], double qdat[][]) {
+		// Numerical quadrature for side lengths in the disk map.
+		
+		// dabsquad is similar to dquad, but the integrand is replaced by its
+		// absolute value and the path of integration is along the unit circle
+		// rather than the straight line between endpoints.  This allows the use
+		// of real rather than complex logarithms in the computations of powers, 
+		// which can result in substantial savings.
+		
+		// z1,z2 are vectors of left and right endpoints.  sing1 is a vector of 
+		// indices which label the singularities in z1.  So if sing1[5] = 3,
+		// then z1[5] = z[3].  A -1 means no singularity.  z is the vector of
+		// singularities; beta is the vector of associated turning angles. qdat
+		// is quadrature data from scqdata.
+		
+		// Make sure z and beta are column vectors.
+		
+		// dabsquad integrates from a possible singularity at the left end to a
+		// regular point at the right.  If both endpoints are singularities,
+		// you must break the integral into two pieces and make two calls.  The
+		// integration always takes along the smaller arc of the circle between
+		// the endpoints.
+		
+		// The integral is subdivided, if necessary, so that no singularity lies
+		// closer  to the left endpoint than 1/2 the length of the integration
+		// (sub) interval
+		
+		// Original MATLAB routine copyright 1997 by Toby Driscoll.
+		// Last updated 05/08/97.
+		int i, j, k, m;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		int nqpts = qdat.length;
+		int n = z.length;
+		double argz[] = new double[n];
+		for (i = 0; i < n; i++) {
+			argz[i] = Math.atan2(z[i][1], z[i][0]); 
+		}
+		double argz1[] = new double[z1.length];
+		for (i = 0; i < z1.length; i++) {
+			argz1[i] = Math.atan2(z1[i][1], z1[i][0]);
+		}
+		double argz2[] = new double[z2.length];
+		for (i = 0; i < z2.length; i++) {
+			argz2[i] = Math.atan2(z2[i][1], z2[i][0]);
+		}
+		double ang21[] = new double[z1.length];
+		for (i = 0; i < z1.length; i++) {
+			zdiv(z2[i][0], z2[i][1], z1[i][0], z1[i][1], cr, ci);
+			ang21[i] = Math.atan2(ci[0], cr[0]);
+		}
+		// Modification needed if integration passes through -1
+		for (i = 0; i < z1.length; i++) {
+			if (((argz2[i] - argz1[i]) * ang21[i]) < 0.0) {
+				argz2[i] = argz2[i] + 2.0*Math.PI*sign(ang21[i]);
+			}
+		} // for (i = 0; i < z1.length; i++)
+		double bigargz[][] = new double[n][nqpts];
+		for (i = 0; i < n; i++) {
+		    for (j = 0; j < nqpts; j++) {
+		    	bigargz[i][j] = argz[i];
+		    }
+		} // for (i = 0; i < n; i++)
+		double bigbeta[][] = new double[beta.length][nqpts];
+		for (i = 0; i < beta.length; i++) {
+			for (j = 0; j < nqpts; j++) {
+				bigbeta[i][j] = beta[i];
+			}
+		} // for (i = 0; i < beta.length; i++)
+		if ((sing1 == null) || (sing1.length == 0)) {
+			sing1 = new int[z1.length];
+			for (i = 0; i < z1.length; i++) {
+				sing1[i] = -1;
+			}
+		} // if ((sing1 == null) || (sing1.length == 0))
+		
+		
+		double I[][] = new double[z1.length][2];
+		int numnontriv = 0;
+		for (i = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				numnontriv++;
+			}
+		} // for (i = 0; i < z1.length; i++)
+		int nontriv[] = new int[numnontriv];
+		for (i = 0, j = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				nontriv[j++] = i;
+			}
+		} // for (i = 0, j = 0; i < z1.length; i++)
+		
+		double za[] = new double[2];
+		double zb[] = new double[2];
+		double nd[] = new double[nqpts];
+		double wt[] = new double[nqpts];
+		double theta[][] = new double[n][nqpts];
+		double terms[][] = new double[n][nqpts];
+		double logterms[] = new double[2];
+		double prod[] = new double[2];
+		double expSum[] = new double[2];
+		double z11[] = new double[2];
+		for (i = 0; i < nontriv.length; i++) {
+			k = nontriv[i];
+			double arga = argz1[k];
+			double argb = argz2[k];
+			za[0] = z1[k][0];
+			za[1] = z1[k][1];
+			zb[0] = z2[k][0];
+			zb[1] = z2[k][1];
+			int sng = sing1[k];
+			
+			// Allowable integration step, based on nearest singularity.
+			double dist = 1.0;
+			double denom = zabs(zb[0]-za[0],zb[1]-za[1]);
+			double minVal = Double.MAX_VALUE;
+			double absDiff;
+			for (j = 0; j <=sng-1; j++) {
+				absDiff = zabs(z[j][0] - za[0],z[j][1] - za[1]);
+				if (absDiff < minVal) {
+					minVal = absDiff;
+				}
+			} // for (j = 0; j <=sng-1; j++)
+			for (j = sng+1; j <= n-1; j++) {
+				absDiff = zabs(z[j][0] - za[0],z[j][1] - za[1]);
+				if (absDiff < minVal) {
+					minVal = absDiff;
+				}	
+			} // for (j = sng+1; j <= n-1; j++)
+			double minVal2 = 2.0*minVal/denom;
+			if (minVal2 < dist) {
+				dist = minVal2;
+			}
+			double argr = arga + dist * (argb-arga);
+			// Adjust GVauss-Jacobi nodes and weights to interval.
+			int ind = (sng+n+1)%(n+1);
+			for (j = 0; j < nqpts; j++) {
+				nd[j] = ((argr - arga)*qdat[j][ind] + argr + arga)/2.0; // G-J nodes
+				wt[j] = (Math.abs(argr-arga)/2.0) * qdat[j][ind+n+1]; // G-J weights
+			} // for (j = 0; j < nqpts; j++)
+			int zeroterms = 0;
+			for (j = 0; j < n; j++) {
+				for (m = 0; m < nqpts; m++) {
+					double ang = nd[m] - bigargz[j][m] + 2.0*Math.PI;
+					double div = ang/(2.0*Math.PI);
+			    	double fix;
+			    	if (div >= 0) {
+			    		fix = Math.floor(div);
+			    	}
+			    	else {
+			    		fix = Math.ceil(div);
+			    	}
+			    	theta[j][m] = ang - 2.0*Math.PI*fix;
+			    	if (theta[j][m] > Math.PI) {
+			    		theta[j][m] = 2.0*Math.PI - theta[j][m];
+			    	}
+			    	terms[j][m] = 2.0 * Math.sin(theta[j][m]/2.0);
+			    	if (terms[j][m] == 0) {
+			    		zeroterms++;
+			    	}
+				}
+			} // for (j = 0; j < n; j++)
+			if (zeroterms > 0) {
+				// Endpoints are practically coincident
+				I[k][0] = 0;
+				I[k][1] = 0;
+			}
+			else {
+			    // Use Gauss-Jacobi on first subinterval, if necessary.
+				if (sng >= 0) {
+					double fac = Math.abs(argr-arga)/2.0;
+				    double fac2 = Math.pow(fac, beta[sng]);
+					for (m = 0; m < nqpts; m++) {
+					    denom = Math.abs(nd[m] - arga);
+					    terms[sng][m] = terms[sng][m]/denom;
+					    wt[m] = wt[m] * fac2;
+					}
+				} // if (sng >= 0)
+				I[k][0] = 0;
+				I[k][1] = 0;
+			    for (m = 0; m < nqpts; m++) {
+			    	expSum[0] = 0;
+			    	expSum[1] = 0;
+			    	for (j = 0; j < n; j++) {
+						logterms[0] = Math.log(Math.abs(terms[j][m]));
+						logterms[1] = Math.atan2(0, terms[j][m]);
+						prod[0] = logterms[0] * bigbeta[j][m];
+						prod[1] = logterms[1] * bigbeta[j][m];
+						expSum[0] += prod[0];
+						expSum[1] += prod[1];
+					} // for (j = 0; j < n; j++)
+			    	I[k][0] += Math.exp(expSum[0])*Math.cos(expSum[1]) * wt[m];
+			    	I[k][1] += Math.exp(expSum[0])*Math.sin(expSum[1]) * wt[m];
+				} // for (m = 0; m < nqpts; m++)
+			    while (dist < 1) {
+			        // Do regular Gaussian quad on other subintervals.
+			    	double argl = argr;
+			    	z11[0] = Math.cos(argl);
+			    	z11[1] = Math.sin(argl);
+			    	dist = 1.0;
+			    	minVal = Double.MAX_VALUE;
+			    	for (j = 0; j < n; j++) {
+			    	    double num = zabs(z[j][0] - z11[0], z[j][1] - z11[1]);
+			    	    denom = zabs(z11[0] - zb[0], z11[1] - zb[1]);
+			    	    double fac = num/denom;
+			    	    if (fac < minVal) {
+			    	    	minVal = fac;
+			    	    }
+			    	} // (j = 0; j < n; j++)
+			    	minVal = 2.0*minVal;
+			    	if (minVal < dist) {
+			    		dist = minVal;
+			    	}
+			    	argr = argl + dist*(argb-argl);
+			    	for (j = 0; j < nqpts; j++) {
+						nd[j] = ((argr - argl)*qdat[j][n] + argr + argl)/2.0; 
+						wt[j] = (Math.abs(argr-argl)/2.0) * qdat[j][2*n+1];
+					} // for (j = 0; j < nqpts; j++)
+			    	for (j = 0; j < n; j++) {
+						for (m = 0; m < nqpts; m++) {
+							double ang = nd[m] - bigargz[j][m] + 2.0*Math.PI;
+							double div = ang/(2.0*Math.PI);
+					    	double fix;
+					    	if (div >= 0) {
+					    		fix = Math.floor(div);
+					    	}
+					    	else {
+					    		fix = Math.ceil(div);
+					    	}
+					    	theta[j][m] = ang - 2.0*Math.PI*fix;
+					    	if (theta[j][m] > Math.PI) {
+					    		theta[j][m] = 2.0*Math.PI - theta[j][m];
+					    	}
+						}
+					} // for (j = 0; j < n; j++)
+			    	for (m = 0; m < nqpts; m++) {
+				    	expSum[0] = 0;
+				    	expSum[1] = 0;
+				    	for (j = 0; j < n; j++) {
+				    		double term = 2.0*Math.sin(theta[j][m]/2.0);
+							logterms[0] = Math.log(Math.abs(term));
+							logterms[1] = Math.atan2(0, term);
+							prod[0] = logterms[0] * bigbeta[j][m];
+							prod[1] = logterms[1] * bigbeta[j][m];
+							expSum[0] += prod[0];
+							expSum[1] += prod[1];
+						} // for (j = 0; j < n; j++)
+				    	I[k][0] += Math.exp(expSum[0])*Math.cos(expSum[1]) * wt[m];
+				    	I[k][1] += Math.exp(expSum[0])*Math.sin(expSum[1]) * wt[m];
+					} // for (m = 0; m < nqpts; m++)
+			    } // while (dist < 1)
+			} // else
+		} // for (i = 0; i < nontriv.length; i++)
+		return I;
 	}
 	
 	class rpfun extends NLConstrainedEngine {
