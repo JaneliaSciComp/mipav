@@ -7134,7 +7134,7 @@ public class LatticeModel {
 	}
 
 
-	public void segmentLattice(final ModelImage image, boolean saveContourImage )
+	public void segmentLattice(final ModelImage image, boolean saveContourImage, int paddingFactor )
 	{
 		String imageName = image.getImageName();
 		if (imageName.contains("_clone")) {
@@ -7158,6 +7158,7 @@ public class LatticeModel {
 
 		final int numPts = 360;
 
+		System.err.println( "Segment Lattice " + paddingFactor );
 
 		FileIO fileIO = new FileIO();
 
@@ -7180,11 +7181,11 @@ public class LatticeModel {
 			VOIContour contour = new VOIContour(true);
 
 
-			float diameter = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2));
-
+			float radius = (float) (1.05 * rightPositions.elementAt(i).distance(leftPositions.elementAt(i))/(2f));
+			radius += paddingFactor;
 			//			System.err.println( dimX + " " + dimY + " " + diameter );
 
-			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, diameter, contour, numPts);			
+			makeEllipse2DA(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, radius, contour, numPts);			
 			for ( int j = 0; j < contour.size(); j++ )
 			{
 				contour.elementAt(j).Z = i;
@@ -7246,7 +7247,7 @@ public class LatticeModel {
 				}
 			}			
 		}
-		resultImage.setImageName( imageName + "_straight_masked.xml" );
+		resultImage.setImageName( imageName + "_straight.xml" );
 		saveImage(imageName, resultImage, true);
 		saveImage(imageName, sourceImage, true);
 

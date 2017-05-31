@@ -141,6 +141,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JPanel latticeSelectionPanel;
 	private JRadioButton latticeStraighten;
 	private JFrameHistogram lutHistogramPanel;
+	
+
+	private JTextField seamCellMinRadiusText;
+	private JTextField seamCellMaxRadiusText;
+	private JTextField segmentationPaddingText;
+	private int paddingFactor;
+	private int minRadius;
+	private int maxRadius;
 
 	private JPanel lutPanel;
 
@@ -215,7 +223,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					try {
 					// Batch Automatic Seam Cell Segmentation:
-					PlugInAlgorithmWormUntwisting.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText() );
+					PlugInAlgorithmWormUntwisting.segmentSeamCells( batchProgress, includeRange, baseFileDir, baseFileNameText.getText(), minRadius, maxRadius );
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish seam cell segmentation." );
 						return;
@@ -240,7 +248,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					try {
 					// Batch Untwisting:
-					PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileNameText.getText() );
+					PlugInAlgorithmWormUntwisting.latticeStraighten( batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileNameText.getText(), paddingFactor );
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish straightening." );
 						e.printStackTrace();
@@ -1432,6 +1440,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		buttonPanel.add(new JPanel());
 		//		panel.add(buttonPanel, gbc);
 
+		JPanel optionsPanel = makeOptionsPanel(gui);
+		
 		ButtonGroup group = new ButtonGroup();
 		algorithmsPanel = makeAlgorithmsPanel(gui, group);
 		editPanel = makeEditPanel(gui, group);
@@ -1440,9 +1450,21 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		choicePanel.add(algorithmsPanel);
 		choicePanel.add(editPanel);
 
-		dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
-		dialogGUI.getContentPane().add(choicePanel, BorderLayout.CENTER);
-		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+		JPanel panel1 = new JPanel(new BorderLayout());
+		panel1.add(inputsPanel, BorderLayout.NORTH);
+		panel1.add(optionsPanel, BorderLayout.SOUTH);
+
+		JPanel panel2 = new JPanel(new BorderLayout());
+		panel2.add(choicePanel, BorderLayout.NORTH);
+		panel2.add(buttonPanel, BorderLayout.SOUTH);
+		
+		dialogGUI.getContentPane().add(panel1, BorderLayout.NORTH);
+		dialogGUI.getContentPane().add(panel2, BorderLayout.SOUTH);
+		
+//		dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
+//		dialogGUI.getContentPane().add(choicePanel, BorderLayout.CENTER);
+//		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
 		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
 
@@ -1519,6 +1541,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		buttonPanel.add( closeButton );
 		buttonPanel.add(new JPanel());
 
+		JPanel optionsPanel = makeOptionsPanel(gui);
+		
 		ButtonGroup group = new ButtonGroup();
 		algorithmsPanel = makeAlgorithmsPanel(gui, group);
 		editPanel = makeEditPanel(gui, group);
@@ -1527,9 +1551,20 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		choicePanel.add(algorithmsPanel);
 		choicePanel.add(editPanel);
 
-		dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
-		dialogGUI.getContentPane().add(choicePanel, BorderLayout.CENTER);
-		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+		JPanel panel1 = new JPanel(new BorderLayout());
+		panel1.add(inputsPanel, BorderLayout.NORTH);
+		panel1.add(optionsPanel, BorderLayout.SOUTH);
+
+		JPanel panel2 = new JPanel(new BorderLayout());
+		panel2.add(choicePanel, BorderLayout.NORTH);
+		panel2.add(buttonPanel, BorderLayout.SOUTH);
+		
+		dialogGUI.getContentPane().add(panel1, BorderLayout.NORTH);
+		dialogGUI.getContentPane().add(panel2, BorderLayout.SOUTH);
+		
+//		dialogGUI.getContentPane().add(inputsPanel, BorderLayout.NORTH);
+//		dialogGUI.getContentPane().add(choicePanel, BorderLayout.CENTER);
+//		dialogGUI.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
 //		getContentPane().add(dialogGUI.getContentPane(), BorderLayout.CENTER);
 
@@ -1787,6 +1822,39 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		return panel;
 	}
+	
+	private JPanel makeOptionsPanel(GuiBuilder gui)
+	{
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.anchor = GridBagConstraints.NORTHWEST;
+		gbc.weightx = 1;
+//		gbc.insets = new Insets(3, 3, 3, 3);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		JPanel panel = new JPanel(new GridBagLayout());
+		panel.setBorder(JDialogBase.buildTitledBorder("Options"));
+		panel.setForeground(Color.black);
+		
+		seamCellMinRadiusText = gui.buildField("Seam cell min radius (voxels): ", "           8");
+		panel.add(seamCellMinRadiusText.getParent(), gbc);
+		gbc.gridy++;
+
+		seamCellMaxRadiusText = gui.buildField("Seam cell max radius (voxels): ", "           25");
+		panel.add(seamCellMaxRadiusText.getParent(), gbc);
+		gbc.gridy++;
+		
+		segmentationPaddingText = gui.buildField("Segmentation padding (voxels): ", "           0");
+		panel.add(segmentationPaddingText.getParent(), gbc);
+		gbc.gridy++;
+		
+		return panel;
+	}
 
 	/**
 	 * Saves seam cells, lattice, or annotations based on the current edit mode.
@@ -1880,10 +1948,25 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	 */
 	private boolean setVariables()
 	{	    
+		try {
+			paddingFactor = Integer.valueOf(segmentationPaddingText.getText().trim());
+		} catch(NumberFormatException e) {
+			paddingFactor = 0;
+		}
+		try {
+			minRadius = Integer.valueOf(seamCellMinRadiusText.getText().trim());
+		} catch(NumberFormatException e) {
+			minRadius = 8;
+		}
+		try {
+			maxRadius = Integer.valueOf(seamCellMaxRadiusText.getText().trim());
+		} catch(NumberFormatException e) {
+			maxRadius = 25;
+		}
+		
 		baseFileName = baseFileNameText.getText();
 		baseFileDir = baseFileLocText.getText();
 		baseFileDir2 = baseFileLocText2.getText();
-		System.err.println( baseFileDir + "   " + baseFileDir2 + "   " + baseFileDir2.isEmpty() );
 		editAnnotations2.setEnabled( !baseFileDir2.isEmpty() );
 		
 		includeRange = new Vector<Integer>();

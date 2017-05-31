@@ -384,7 +384,7 @@ public class WormData
 				count++;
 			}
 		}
-		System.err.println("checkSeamCells " + count );
+//		System.err.println("checkSeamCells " + count );
 		return ((count%2) == 0);
 	}
 	
@@ -437,10 +437,10 @@ public class WormData
 				temp.Y = Math.round(temp.Y);
 				temp.Z = Math.round(temp.Z);
 				seamCellPoints.add(temp);
-				System.err.println( seamCellPoints.size() + "   " + text.getText() );
+//				System.err.println( seamCellPoints.size() + "   " + text.getText() );
 			}
 		}
-		System.err.println( "Seam Cells " + seamCellPoints.size() );
+//		System.err.println( "Seam Cells " + seamCellPoints.size() );
 		
 		
 		// check that all seam cell points match the seam segmentation image...  redo image if necessary...
@@ -476,6 +476,7 @@ public class WormData
 			}
 			if ( !found )
 			{
+				System.err.println( "new seam " + (i+1) );
 				// New seam cell: put the seam cell at the center and use maxSeamRadius to generate a cluster:
 				clusters[i] = new VOIContour(false);
 				clusters[i].add(seamCellPoints.elementAt(i));
@@ -500,6 +501,63 @@ public class WormData
 								clusters[i].add( temp );
 							}
 						}
+					}
+				}
+			}
+		}
+		
+		for ( int i = 0; i < clusters.length; i++ )
+		{
+			Vector<Vector3f> splitList = null;
+			Vector<Integer> splitIndex = null;
+			for ( int j = i+1; j < clusters.length; j++ )
+			{
+				if ( clusters[i] == clusters[j] )
+				{
+					if ( splitList == null )
+					{
+						splitList = new Vector<Vector3f>();
+						splitList.add(seamCellPoints.elementAt(i));
+						
+						splitIndex = new Vector<Integer>();
+						splitIndex.add(i);
+					}
+					splitList.add(seamCellPoints.elementAt(j));		
+					splitIndex.add(j);			
+				}
+			}
+			if ( splitList != null && splitIndex != null )
+			{
+				VOIContour splitContour = clusters[i];
+				for ( int j = 0; j < splitIndex.size(); j++ )
+				{
+					int index = splitIndex.elementAt(j);
+					clusters[index] = new VOIContour(false);
+				}
+				for ( int j = 0; j < splitContour.size(); j++ )
+				{
+					int minIndex = -1;
+					float minDist = Float.MAX_VALUE;
+					for ( int k = 0; k < splitList.size(); k++ )
+					{
+						float dist = splitContour.elementAt(j).distance(splitList.elementAt(k));
+						if ( dist < minDist )
+						{
+							minDist = dist;
+							minIndex = splitIndex.elementAt(k);
+						}
+					}
+					if ( minIndex != -1 )
+					{
+						clusters[minIndex].add(splitContour.elementAt(j));
+					}
+				}
+				for ( int j = 0; j < splitIndex.size(); j++ )
+				{
+					int index = splitIndex.elementAt(j);
+					if ( !clusters[index].contains(splitContour.elementAt(j)) )
+					{
+						clusters[index].add(splitContour.elementAt(j));
 					}
 				}
 			}
@@ -1034,7 +1092,7 @@ public class WormData
 							VOIContour cluster = new VOIContour(false);
 							clusters.put(id, cluster);
 							clusterList.getCurves().add(cluster);
-							System.err.println( "Adding cluster " + id );
+//							System.err.println( "Adding cluster " + id );
 						}
 						VOIContour cluster = clusters.get(id);
 						cluster.add( new Vector3f(x,y,z));
@@ -1042,7 +1100,7 @@ public class WormData
 				}
 			}
 		}
-		System.err.println( "Done reading clusters" );
+//		System.err.println( "Done reading clusters" );
 		return clusterList;
 	}
 	

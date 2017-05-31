@@ -273,7 +273,8 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
-	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileDir2, final String baseFileName )
+	public static void latticeStraighten( JProgressBar batchProgress, final Vector<Integer> includeRange, 
+			final String baseFileDir, final String baseFileDir2, final String baseFileName, final int paddingFactor )
 	{
 		ModelImage wormImage = null;
 		ModelImage nucleiImage = null;
@@ -315,12 +316,12 @@ public class PlugInAlgorithmWormUntwisting
 					model.interpolateLattice( false, false, true, false );
 					ModelImage contourImage = null;
 					//							if ( segmentSkinSurface.isSelected() )
-					{
-						contourImage = model.segmentSkin(wormImage, 0);
-					}
+//					{
+//						contourImage = model.segmentSkin(wormImage, paddingFactor);
+//					}
 					//							else if ( segmentLattice.isSelected() )
 					//							{
-					//								model.segmentLattice(wormImage, false);
+					model.segmentLattice(wormImage, false, paddingFactor);
 					//							}
 					model.retwist(wormImage);
 					
@@ -361,14 +362,14 @@ public class PlugInAlgorithmWormUntwisting
 						model.setSeamCellImage(null);
 						model.interpolateLattice( false, false, true, false );
 
-						//								if ( segmentSkinSurface.isSelected() )
-						{
-							contourImage = model.segmentSkin(nucleiImage, contourImage, 0);
-						}
-						//								else if ( segmentLattice.isSelected() )
-						//								{
-						//									model.segmentLattice(nucleiImage, false);
-						//								}
+//						if ( segmentSkinSurface.isSelected() )
+//						{
+//							contourImage = model.segmentSkin(nucleiImage, contourImage, paddingFactor);
+//						}
+//						else if ( segmentLattice.isSelected() )
+//						{
+							model.segmentLattice(nucleiImage, false, paddingFactor);
+//						}
 
 						wormData = new WormData(nucleiImage);
 						wormData.readMarkers();
@@ -666,7 +667,8 @@ public class PlugInAlgorithmWormUntwisting
 	 * @param baseFileDir  the base file directory containing the volume data files.
 	 * @param baseFileName  the base file name to which the file ID is added to generate the full file name.
 	 */
-	public static void segmentSeamCells( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName )
+	public static void segmentSeamCells( JProgressBar batchProgress, final Vector<Integer> includeRange, final String baseFileDir, final String baseFileName,
+			final int minRadius, final int maxRadius)
 	{
 		ModelImage image = null; 
 		if ( includeRange != null )
@@ -725,7 +727,7 @@ public class PlugInAlgorithmWormUntwisting
 						}
 					}
 					WormData wormData = new WormData(image); 
-					wormData.segmentSeamCells(8, 25);
+					wormData.segmentSeamCells(minRadius, maxRadius);
 					if ( wormData.getSeamCells().size() > 0 )
 					{
 						foundCount++;

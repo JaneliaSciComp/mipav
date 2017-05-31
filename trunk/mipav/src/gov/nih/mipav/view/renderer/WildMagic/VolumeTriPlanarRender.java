@@ -1047,7 +1047,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	        // look for shortcuts now
 			if ( m_kVOIInterface != null )
 			{
-				System.err.println( "keyPressed " + e.getKeyChar() );
+//				System.err.println( "keyPressed " + e.getKeyChar() );
 				if ( e.getKeyChar() == 'f' || e.getKeyChar() == 'F' ||
 					e.getKeyChar() == 'h' || e.getKeyChar() == 'H' ||
 					e.getKeyChar() == 's' || e.getKeyChar() == 'S' )
