@@ -1849,7 +1849,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		panel.add(seamCellMaxRadiusText.getParent(), gbc);
 		gbc.gridy++;
 		
-		segmentationPaddingText = gui.buildField("Segmentation padding (voxels): ", "           0");
+		segmentationPaddingText = gui.buildField("Segmentation padding (voxels): ", "          5");
 		panel.add(segmentationPaddingText.getParent(), gbc);
 		gbc.gridy++;
 		

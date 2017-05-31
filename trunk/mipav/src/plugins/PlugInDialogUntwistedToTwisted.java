@@ -250,10 +250,11 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 					{			
 						if ( twistedToUntwisted.isSelected() )
 						{
-							String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator + PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
+							String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator +
+									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 									
+									PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
 							VOIVector latticeVector = new VOIVector();
 							PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
-
 							if ( latticeVector.size() != 0 )
 							{
 								VOIVector vois = readMarkerPositions(positionsFile, textFile, null);
