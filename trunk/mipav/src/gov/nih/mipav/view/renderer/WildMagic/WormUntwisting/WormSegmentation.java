@@ -5747,7 +5747,8 @@ public class WormSegmentation
 		}
 		else
 		{
-
+//			Vector3f minPt = getMid(maxPtFromStart, maxPtFromStop, cluster);
+			
 			Vector3f minPt = Vector3f.add(maxPtFromStart,maxPtFromStop);
 			minPt.scale(0.5f);
 
@@ -6131,7 +6132,23 @@ public class WormSegmentation
 
 
 
-
+	private static Vector3f getMid( Vector3f pt1, Vector3f pt2, Vector<Vector3f> points)
+	{
+		Vector3f mid = new Vector3f();
+		float minDist = Float.MAX_VALUE;
+		for ( int i = 0; i < points.size(); i++ )
+		{
+			float distance1 = points.elementAt(i).distance(pt1);
+			float distance2 = points.elementAt(i).distance(pt2);
+			float diff = Math.abs(distance1 - distance2);
+			if ( diff < minDist )
+			{
+				minDist = diff;
+				mid.copy(points.elementAt(i));
+			}
+		}
+		return mid;
+	}
 
 
 

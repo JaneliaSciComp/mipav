@@ -347,7 +347,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 							}
 							else if ( segmentLattice.isSelected() )
 							{
-								model.segmentLattice(wormImage, false);
+								model.segmentLattice(wormImage, false, 0);
 							}
 							model.retwist(wormImage);
 							if ( straightenMarkersCheck.isSelected() )
@@ -373,7 +373,7 @@ public class PlugInDialogUntwistingFluorescent extends JDialogStandalonePlugin i
 								}
 								else if ( segmentLattice.isSelected() )
 								{
-									model.segmentLattice(nucleiImage, false);
+									model.segmentLattice(nucleiImage, false, 0);
 								}
 								model.dispose();
 								model = null;
