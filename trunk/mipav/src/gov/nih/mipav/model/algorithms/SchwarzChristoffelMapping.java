@@ -281,6 +281,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// Original MATLAB routine copyright 1998 by Toby Driscoll.
 		int i, j;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
 		double tol;
 		if ((zp == null) || (zp.length == 0)) {
 			return null;
@@ -343,16 +345,103 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			}
 		} // for (i = 0; i < p; i++)
 		
+		double wc[] = new double[2];
 		if (numbad > 0) {
 			// Can't integrate starting at pre-infinity; find conformal center to use
 			// as integration basis.
+			double z1[][] = new double[1][2];
+			double z2[][] = new double[1][2];
+			int sing1[] = new int[1];
+			double I1[][];
 			if ((!Double.isInfinite(w[n-2][0])) && (!Double.isInfinite(w[n-2][1]))) {
-				
+			    z1[0][0] = z[n-2][0];
+			    z1[0][1] = z[n-2][1];   
+			    sing1[0] = n-2;
+			    I1 = dquad(z1,z2,sing1, z, beta, qdat);
+			    zmlt(c[0], c[1], I1[0][0], I1[0][1], cr, ci);
+			    wc[0] = w[n-2][0] + cr[0];
+			    wc[1] = w[n-2][1] + ci[0];
 			}
 			else {
-				
+				z1[0][0] = z[n-1][0];
+			    z1[0][1] = z[n-1][1];   
+			    sing1[0] = n-1;
+			    I1 = dquad(z1,z2,sing1, z, beta, qdat);
+			    zmlt(c[0], c[1], I1[0][0], I1[0][1], cr, ci);
+			    wc[0] = w[n-1][0] + cr[0];
+			    wc[1] = w[n-1][1] + ci[0];	
 			}
 		} // if (numbad > 0)
+		
+		// zs = the starting singularities
+		double zs[][] = new double[p][2];
+		double ws[][] = new double[p][2];
+		for (i = 0; i < p; i++) {
+			zs[i][0] = z[sing[i]][0];
+			zs[i][1] = z[sing[i]][1];
+			ws[i][0] = w[sing[i]][0];
+			ws[i][1] = w[sing[i]][1];
+		}
+		
+		// Compute the map directly at "normal" points.
+		boolean normal[] = new boolean[p];
+		int numnormal = 0;
+		for (i = 0; i < p; i++) {
+			normal[i] = (!bad[i]) && (!vertex[i]);
+			if (normal[i]) {
+				numnormal++;
+			}
+		}
+		double I[][];
+		if (numnormal > 0) {
+		    double zsnormal[][] = new double[numnormal][2];
+		    double zpnormal[][] = new double[numnormal][2];
+		    int singnormal[] = new int[numnormal];
+		    for (i = 0, j = 0; i < p; i++) {
+		    	if (normal[i]) {
+		    		zsnormal[j][0] = zs[i][0];
+		    		zsnormal[j][1] = zs[i][1];
+		    		zpnormal[j][0] = zp[i][0];
+		    		zpnormal[j][1] = zp[i][1];
+		    		singnormal[j++] = sing[i];
+		    	}
+		    } // for (i = 0, j = 0; i < p; i++)
+		    I = dquad(zsnormal, zpnormal, singnormal, z,beta, qdat);
+		    for (i = 0, j = 0; i < p; i++) {
+		    	if (normal[i]) {
+		    	    zmlt(c[0], c[1], I[j][0], I[j][1], cr, ci);
+		    	    j++;
+		    	    wp[i][0] = ws[i][0] + cr[0];
+		    	    wp[i][1] = ws[i][1] + ci[0];
+		    	}
+		    } // for (i = 0, j = 0; i < p; i++)
+		} // if (numnormal > 0)
+		
+		// Compute map at "bad" points, using conformal center as basis, to avoid
+		// integration where right endpoint is too close to a singularity.
+		if (numbad > 0) {
+	        double zpbad[][] = new double[numbad][2];
+	        for (i = 0, j = 0; i < p; i++) {
+	        	if (bad[i]) {
+	        		zpbad[j][0] = zp[i][0];
+	        		zpbad[j++][1] = zp[i][1];
+	        	}
+	        }
+	        double zerosbad[][] = new double[numbad][2];
+	        int singbad[] = new int[numbad];
+	        for (i = 0; i < numbad; i++) {
+	        	singbad[i] = -1;
+	        }
+	        I = dquad(zpbad, zerosbad, singbad, z, beta, qdat);
+	        for (i = 0, j = 0; i < p; i++) {
+	        	if (bad[i]) {
+	        		zmlt(c[0], c[1], I[j][0], I[j][1], cr, ci);
+	        		j++;
+	        		wp[i][0] = wc[0] - cr[0];
+	        		wp[i][1] = wc[1] - ci[0];
+	        	}
+	        } // for (i = 0, j = 0; i < p; i++)
+		} // if (numbad > 0) 
 		return wp;
 	}
 	
