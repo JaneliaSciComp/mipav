@@ -156,8 +156,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		if ((z == null) || (z.length == 0)) {
 			// Solve parameter problem
 			// Apply scfix to enforce solver rules
-			wn = new double[w.length+1][2];
-			betan = new double[w.length+1];
+			wn = new double[w.length+2][2];
+			betan = new double[w.length+2];
 			// Number of vertices added by scfix
 			int verticesAdded[] = new int[1];
 			int initialVertices = w.length;
@@ -169,10 +169,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			scfix(wn, betan, verticesAdded, null, "d", w, beta, null);
 			double wn2[][];
 			double betan2[];
-			if (verticesAdded[0] == 0) {
-			    wn2 = new double[initialVertices][2];
-				betan2 = new double[initialVertices];
-				for (i = 0; i < initialVertices; i++) {
+			if ((verticesAdded[0] == 0) ||(verticesAdded[0] == 1)) {
+			    wn2 = new double[initialVertices + verticesAdded[0]][2];
+				betan2 = new double[initialVertices + verticesAdded[0]];
+				for (i = 0; i < initialVertices + verticesAdded[0]; i++) {
 					wn2[i][0] = wn[i][0];
 					wn2[i][1] = wn[i][1];
 					betan2[i] = betan[i];
@@ -197,7 +197,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			z = new double[wn2.length][2];
 			nqpts = Math.max((int)Math.ceil(-Math.log10(tolerance)), 4);
 			qdata = new double[nqpts][2*betan2.length+2];
-			 dparam(z, c, qdata, wn2, betan2, z0, tolerance);
+			dparam(z, c, qdata, wn2, betan2, z0, tolerance);
 		} // if ((z == null) || (z.length == 0))
 		
 		if ((qdata == null) || (qdata.length == 0)) {
@@ -269,7 +269,121 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double center[][] = dmap(zp, poly.vertex, beta,map.prevertex,map.constant,map.qdata);
 		map.center[0] = center[0][0];
 		map.center[1] = center[0][1];
+		
+		// Fill in apparent accuracy
+		map.accuracy = diskAccuracy(map);
 		return map;
+	}
+	
+	private double diskAccuracy(scmap M) {
+	    // Apparent accuracy of Schwarz-Christoffel disk map.
+		// diskAccuracy estimates the accuracy of the Schwarz-Christoffel disk
+		// map M.  The technique used is to compare the differences between
+		// successive finite vertices to the integral between the corresponding
+		// prevertices, and return the maximum.
+		
+		// See also diskmap.
+		
+		// Original MATLAB accuracy routine copyright 1998 by Toby Driscoll.
+		
+		// If an accuracy has been assigned, don't question it.
+		int i, j;
+		double acc;
+		if (!Double.isNaN(M.accuracy)) {
+			acc =  M.accuracy;
+			return acc;
+		}
+		
+		// Get data for low-level funcions
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i]  - 1;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		double qdata[][] = M.qdata;
+		
+		// Test accuracy by integrating between consecutive finite prevertices, and
+		// comparing to differences of vertices.
+		int n = w.length;
+		int numidx = 0;
+		for (i = 0; i < n; i++) {
+			if ((!Double.isInfinite(w[i][0])) && (!Double.isInfinite(w[i][1]))) {
+				numidx++;
+			}
+		} // for (i = 0; i < n; i++)
+		int idx[] = new int[numidx];
+		double wf[][] = new double[numidx][2]; // finite vertices
+		for (i = 0, j = 0; i < n; i++) {
+			if ((!Double.isInfinite(w[i][0])) && (!Double.isInfinite(w[i][1]))) {
+				idx[j] = i;
+				wf[j][0] = w[i][0];
+				wf[j++][1] = w[i][1];
+			}
+		} // for (i = 0, j = 0; i < n; i++)
+		
+		// Two columns hold endpoint indices for integrations
+		int idx2[][] = new int[idx.length][2];
+		for (i = 0; i < idx.length; i++) {
+			idx2[i][0] = idx[i];
+			if (i < idx.length-1) {
+				idx2[i][1] = idx[i+1];
+			}
+			else {
+				idx2[i][1] = idx[0];
+			}
+		} // for (i = 0; i < idx.length; i++)
+		
+		double mid[][] = new double[idx.length][2];
+		
+		// Do the integrations
+		double z1[][] = new double[numidx][2];
+		double z2[][] = new double[numidx][2];
+		int i1[] = new int[numidx];
+		int i2[] = new int[numidx];
+		for (i = 0; i < numidx; i++) {
+			z1[i][0] = z[idx2[i][0]][0];
+			z1[i][1] = z[idx2[i][0]][1];
+			z2[i][0] = z[idx2[i][1]][0];
+			z2[i][1] = z[idx2[i][1]][1];
+			i1[i] = idx2[i][0];
+			i2[i] = idx2[i][1];
+		}
+		
+		double I1[][] = dquad(z1,mid,i1,z,beta,qdata);
+		double I2[][] = dquad(z2,mid,i2,z,beta,qdata);
+		double I[][] = new double[numidx][2];
+		for (i = 0; i < numidx; i++) {
+			I[i][0] = I1[i][0] - I2[i][0];
+			I[i][1] = I1[i][1] - I2[i][1];
+		}
+		
+		double diffwf[][] = new double[numidx][2];
+		for (i = 0; i < numidx-1; i++) {
+			diffwf[i][0] = wf[i+1][0] - wf[i][0];
+			diffwf[i][1] = wf[i+1][1] - wf[i][1];
+		}
+		diffwf[numidx-1][0] = wf[0][0] - wf[numidx-1][0];
+		diffwf[numidx-1][1] = wf[0][1] - wf[numidx-1][1];
+		double cI[][] = new double[numidx][2];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		for (i = 0; i < numidx; i++) {
+			zmlt(c[0],c[1],I[i][0],I[i][1],cr,ci);
+			cI[i][0] = cr[0];
+			cI[i][1] = ci[0];
+		}
+		acc = 0.0;
+		for (i = 0; i < numidx; i++) {
+			double currentAcc = zabs(cI[i][0] - diffwf[i][0],cI[i][1] - diffwf[i][1]);
+			if (currentAcc > acc) {
+				acc = currentAcc;
+			}
+		} // for (i = 0; i < numidx; i++)
+		System.out.println("Accuracy = " + acc);
+		return acc;
 	}
 	
 	private double[][] dmap(double zp[][], double w[][], double beta[],
@@ -299,7 +413,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		else {
 			tol = Math.pow(10.0, -qdat.length);
 		}
-		int shape = zp.length;
+		//int shape = zp.length;
 		int p = zp.length;
 		double wp[][] = new double[p][2];
 		
@@ -347,7 +461,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		double wc[] = new double[2];
 		if (numbad > 0) {
-			// Can't integrate starting at pre-infinity; find conformal center to use
+			// Can't integrate starting at pre-infinity: find conformal center to use
 			// as integration basis.
 			double z1[][] = new double[1][2];
 			double z2[][] = new double[1][2];
@@ -556,7 +670,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		M.poly = poly;
 		
 		// Now fill in apparent accuracy
-		M.accuracy = accuracy(M);
+		M.accuracy = rectAccuracy(M);
 		return M;
 	}
 	
@@ -1885,7 +1999,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return pointGraph;
 	}
 	
-	private double accuracy(scmap M) {
+	private double rectAccuracy(scmap M) {
 		// Apparent accuracy of Schwarz-Christoffel rectangle map.
 		// accuracy estimates the accuracy of the Schwarz-Christoffel rectangle map M.
 		// The technique used is to compare the differences between successive finite
@@ -2831,11 +2945,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// as fundamental domain and the polygon specified by w as the target. w must be
 	// a vector of the vertices of the polygon, specified in counterclockwise order,
 	// and beta should be a vector of the turning angles of the polygon, see scangle
-	// for details.  If sucessful, dparam will return z, a vector of the pre-images of w;
+	// for details.  If successful, dparam will return z, a vector of the pre-images of w;
 	// c, the multiplicative constant of the conformal map; and qdat, an optional
 	// matrix of quadrature data used by some of the other S-C routines. z0 is an initial
 	// guess for z.  dparam attempts to find an answer within tolerance tol.
-	// Original MATLAN dparam copyright 1998 by Toby Driscoll.
+	// Original MATLAB dparam copyright 1998-2001 by Toby Driscoll.
 	private void dparam(double z[][], double c[], double qdat[][], 
 			double w[][], double beta[], double z0[][], double tol) {
 		int i, j, k;
@@ -2843,7 +2957,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double ci[] = new double[1];
 	    int n = w.length; // number of vertices
 	    
-	 // Check input data
+	    // Check input data
 	    int err = sccheck("d", w, beta, null);
 	    if (err == -1) {
 	    	return;
@@ -2993,6 +3107,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			z[n-3][1] = 0.0;
 			z[n-2][0] = 0.0;
 			z[n-2][1] = -1.0;
+			z[n-1][0] = 1.0;
+			z[n-1][1] = 0.0;
 	    } // else
 	    
 	    // Determine scaling constant
@@ -4370,7 +4486,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					z[n-3][1] = 0;
 					z[n-2][0] = 0;
 					z[n-2][1] = -1;					
-					
+					z[n-1][0] = 1;
+					z[n-1][1] = 0;
 					// Compute the integrals
 					double zleft[][] = new double[left.length][2];
 					for (i = 0; i < left.length; i++) {
@@ -4480,13 +4597,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					    I1 = dquad(zleftcmplx, midcmplx, leftcmplx, z, beta, qdat);
 					    I2 = dquad(zrightcmplx, midcmplx, rightcmplx, z, beta, qdat);
 					    intscmplx = new double[I1.length][I1[0].length];
-					    for (i = 0; i < I1.length; i++) {
-					        intscmplx[i][0] = I1[i][0] - I2[i][0];
-					        intscmplx[i][1] = I1[i][1] - I2[i][1];
-					        if ((intscmplx[i][0] == 0) && (intscmplx[i][1] == 0)) {
-					        	numintszero++;
-					        }
-					    }
+					    
 					    for (i = 0, j = 0; i < cmplx.length; i++) {
 					    	if (cmplx[i]) {
 						        intscmplx[j][0] = I1[j][0] - I2[j][0];
@@ -4497,14 +4608,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						        	numintszero++;
 						        }
 					    	} 
-					    }
+					    } // for (i = 0, j = 0; i < cmplx.length; i++)
 				    } // if (numcmplx > 0)
 				    if (numintszero > 0) {
 				    	// Singularities were too crowded in practice
 				    	MipavUtil.displayWarning("Severe crowding");
 				    }
 				    
-				    // Compute nonlinear equation residual valu
+				    // Compute nonlinear equation residual values.
 				    cmplx[0] = false;
 				    numcmplx = 0;
 				    numnotcmplx = 0;
