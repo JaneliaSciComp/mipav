@@ -4488,16 +4488,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					z[n-2][1] = -1;					
 					z[n-1][0] = 1;
 					z[n-1][1] = 0;
+					
 					// Compute the integrals
 					double zleft[][] = new double[left.length][2];
 					for (i = 0; i < left.length; i++) {
 						zleft[i][0] = z[left[i]][0];
-						zleft[i][1] = z[left[i]][1];
+						zleft[i][1] = z[left[i]][1];	
 					}
 					double zright[][] = new double[right.length][2];
 					for (i = 0; i < right.length; i++) {
 						zright[i][0] = z[right[i]][0];
-						zright[i][1] = z[right[i]][1];
+						zright[i][1] = z[right[i]][1];	
 					}
 					double angl[] = new double[left.length];
 					for (i = 0; i < left.length; i++) {
@@ -4516,7 +4517,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    		fix = Math.ceil(div);
 				    	}
 				    	double rem = ang - 2.0*Math.PI*fix;
-				    	double expvar = (angl[i] + rem)/2.0;
+				    	double expvar = (angl[i] + rem/2.0);
 				    	mid[i][0] = Math.cos(expvar);
 				    	mid[i][1] = Math.sin(expvar);
 				    }
