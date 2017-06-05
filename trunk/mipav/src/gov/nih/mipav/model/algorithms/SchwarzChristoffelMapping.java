@@ -3012,7 +3012,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	int right[] = new int[numright];
 	    	for (i = 1, j = 0; i < n-1; i++) {
 	    	    if (!atinf[i]) {
-	    	    	right[j++] = i+1;
+	    	    	right[j++] = i;
 	    	    }
 	    	} // for (i = 1, j = 0; i < n-1; i++)
 	    	// Assumes numright == numleft
