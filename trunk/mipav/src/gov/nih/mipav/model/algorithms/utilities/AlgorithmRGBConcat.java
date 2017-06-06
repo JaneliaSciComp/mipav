@@ -219,7 +219,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         float minB = (float) srcImageB.getMin();
         float maxB = (float) srcImageB.getMax();
         float min = Math.min(minR, Math.min(minG, minB));
-        float max = Math.min(maxR, Math.max(maxG, maxB));
+        float max = Math.max(maxR, Math.max(maxG, maxB));
 
         int nImages = 1;
         float upperLimit = dataType.getTypeMax().floatValue();
@@ -453,7 +453,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         float minB = (float) srcImageB.getMin();
         float maxB = (float) srcImageB.getMax();
         float min = Math.min(minR, Math.min(minG, minB));
-        float max = Math.min(maxR, Math.max(maxG, maxB));
+        float max = Math.max(maxR, Math.max(maxG, maxB));
         int[] extents;
         String imageName;
         FileInfoBase[] fInfoBase = null;
