@@ -386,6 +386,131 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return acc;
 	}
 	
+	private scmap center(scmap map, double wc[]) {
+		// center (map, wc) computes a map conformally equivalent to map but with
+		// the conformal center wc (provided wc is inside the polygon of map),
+		// and returns the new map.  If wc is empty, you will be asked to select
+		// it graphically.
+		
+		// See also diskmap.
+		
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		
+		int i,j;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		scmap mapout = new scmap();
+		// Set center
+		polygon p = map.poly;
+		double qdata[][] = map.qdata;
+		double qdataout[][] = new double[qdata.length][qdata[0].length];
+		for (i = 0; i < qdata.length; i++) {
+			for (j = 0; j < qdataout[0].length; j++) {
+				qdataout[i][j] = qdata[i][j];
+			}
+		}
+		double z[][] = map.prevertex;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1.0;
+		}
+		double x[] = new double[w.length];
+		double yar[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			yar[i] = w[i][1];
+		}
+		double angleout[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			angleout[i] = p.angle[i];
+		}
+		polygon pout = new polygon(x,yar,angleout);
+		
+		if ((wc == null) || (wc.length == 0)) {
+			
+		}
+		boolean indexout[] = new boolean[wc.length];
+		boolean onvtx[][] = new boolean[w.length][wc.length];
+		double wcin[][] = new double[1][2];
+		wcin[0][0] = wc[0];
+		wcin[0][1] = wc[1];
+		isinpoly(indexout, onvtx, wcin, w, beta, eps);
+		boolean haveInfinity = false;
+		for (i = 0; i < w.length && (!haveInfinity); i++) {
+			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				haveInfinity = true;
+			}
+		}
+		if ((!haveInfinity) && (!indexout[0])) {
+			MipavUtil.displayError("Conformal center must be inside polygon");
+			return null;
+		}
+		
+		// Find inverse image of wc under current map
+		double zc[][] = new double[wc.length][2];
+		boolean flag[] = new boolean[wc.length];
+		dinvmap(zc, flag, wcin, w, beta, z, map.constant, qdata, null);
+		
+		// Use Moebius transform to reset prevertices
+		double y[][] = new double[z.length][2];
+		for (i = 0; i < z.length; i++) {
+			zmlt(zc[0][0], zc[0][1], z[i][0], z[i][1], cr, ci);
+			zdiv(z[i][0] - zc[0][0], z[i][1] - zc[0][1], 1 - cr[0], -ci[0], cr, ci);
+			y[i][0] = cr[0];
+			y[i][1] = ci[0];
+		} 
+		// Force it to be exact.
+		y[y.length-1][0] = 1;
+		y[y.length-1][1] = 0;
+		for (i = 0; i < y.length-1; i++) {
+		    double yabs = zabs(y[i][0], y[i][1]);
+		    y[i][0] = y[i][0]/yabs;
+		    y[i][1] = y[i][1]/yabs;
+		}
+		
+		// Recalculate constant
+		double mid[][] = new double[1][2];
+		mid[0][0] = (y[0][0] + y[1][0])/2.0;
+		mid[0][1] = (y[0][1] + y[1][1])/2.0;
+		double y0[][] = new double[1][2];
+		y0[0][0] = y[0][0];
+		y0[0][1] = y[0][1];
+		int sing0[] = new int[1];
+		sing0[0] = 0;
+		double y1[][] = new double[1][2];
+		y1[0][0] = y[1][0];
+		y1[0][1] = y[1][1];
+		int sing1[] = new int[1];
+		sing1[0] = 1;
+		double I1[][] = dquad(y0, mid, sing0, y, beta, qdata);
+		double I2[][] = dquad(y1, mid, sing1, y, beta, qdata);
+		double I[] = new double[2];
+		I[0] = I1[0][0] - I2[0][0];
+		I[1] = I1[0][1] - I2[0][1];
+		double diffw[] = new double[2];
+		diffw[0] = w[1][0] - w[0][0];
+		diffw[1] = w[1][1] - w[0][1];
+		zdiv(diffw[0], diffw[1], I[0], I[1], cr, ci);
+		double c[] = new double[2];
+		c[0] = cr[0];
+		c[1] = ci[0];
+		
+		// Assign new values
+		mapout.prevertex = y;
+		mapout.constant = c;
+		mapout.center = wc;
+		mapout.poly = pout;
+		mapout.qdata = qdataout;
+		mapout.accuracy = diskAccuracy(mapout);
+		return mapout;
+	}
+	
+	private void dinvmap(double zp[][], boolean flag[], double wp[][], double w[][],
+			double beta[], double z[][], double c[], double qdat[][], double z0[][]) {
+	  // Schwarz-Christoffel disk inverse map.	
+	}
+	
 	private double[][] dmap(double zp[][], double w[][], double beta[],
 			double z[][], double c[], double qdat[][]) {
 		// Schwarz-christoffel disk map.
