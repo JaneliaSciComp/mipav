@@ -450,7 +450,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Find inverse image of wc under current map
 		double zc[][] = new double[wc.length][2];
 		boolean flag[] = new boolean[wc.length];
-		dinvmap(zc, flag, wcin, w, beta, z, map.constant, qdata, null);
+		boolean ode = true;
+		boolean newton = true;
+		double tol = 1.0E-8;
+		int maxiter = 10;
+		dinvmap(zc, flag, wcin, w, beta, z, map.constant, qdata, null,
+				ode, newton, tol, maxiter);
 		
 		// Use Moebius transform to reset prevertices
 		double y[][] = new double[z.length][2];
@@ -507,9 +512,374 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	private void dinvmap(double zp[][], boolean flag[], double wp[][], double w[][],
-			double beta[], double z[][], double c[], double qdat[][], double z0[][]) {
-	  // Schwarz-Christoffel disk inverse map.	
+			double beta[], double z[][], double c[], double qdat[][], double z0[][],
+			boolean ode, boolean newton, double tol, int maxiter) {
+	    // Schwarz-Christoffel disk inverse map.	
+	    // dinvmap computes the inverse of the Schwarz-Christoffel disk map (i.e., from
+	    // a polygon to the disk) at the points given in vector wp.  The other
+		// arguments are as in dparam.
+		
+		// The default algorithm is to solve an ODE in order to obtain a fair
+		// approximation for zp, and then improve zp with Newton iterations.
+		// The 2 other possbile algorithms are:
+		// 1.) Use ODE only.
+		// 2.) Use Newton only; take z0 as an initial guess.
+		// The ODE solution at wp requires a vector z0 whose forward image w0
+		// is such that for each j, the line segment connecting wp[j] and w0[j]
+		// lies inside the polygon.  By default z0 is chosen by a fairly robust
+		// automatic process.  Using the parameters ode and newton, you can choose
+		// to use either an ODE solution or Newton solution exclusively.
+		
+		// dinvmap has two interpretations.  If the ODE solution is being used,
+		// z0 overrides the automatic selection of initial points.  (This can
+		// be handy in convex polygons, where the choice of z0 is trivial.)
+		// Otherwise, z0 is taken as an initial guess to zp.  In either case,
+		// if length(z0) == 1, the value z0 is used for all elements of wp;
+		// otherwise, length(z0) should equal length(wp).
+		
+		// tol, error tolerance for solution (default 1e-8)
+	    // maxiter, maximum number of Newton iterations (default 10)
+		
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		int i, j, k;
+		double qdat2[][];
+		
+		int n = w.length;
+		for (i = 0; i < wp.length; i++) {
+			zp[i][0] = 0;
+			zp[i][1] = 0;
+		}
+		int lenwp = wp.length;
+		
+		if ((qdat == null) || (qdat.length == 0)) {
+			qdat2 = new double[1][1];
+			qdat2[0][0] = tol;
+		}
+		else if (qdat.length == 1) {
+			int nqpts = (int)Math.max(Math.ceil(-Math.log10(qdat[0][0])), 2);
+			qdat2 = new double[nqpts][2*beta.length+2];
+			scqdata(qdat2, beta, nqpts);	
+		}
+		else {
+			qdat2 = qdat;
+		}
+		
+		boolean done[] = new boolean[wp.length];
+		// First, trap all points indistinguishable from vertices, or they will cause
+		// trouble.
+		// Modified 05/14/2007 to work around bug in matlab 2007a.
+		for (j = 0; j < n; j++) {
+			int numidx = 0;
+			for (i = 0; i < lenwp; i++) {
+				if (zabs(wp[i][0] - w[j][0], wp[i][1] - w[j][1]) < 3.0*eps) {
+					numidx++;
+				}
+			} // for (i = 0; i < lenwp; i++)
+			int idx[] = new int[numidx];
+			for (i = 0, k = 0; i < lenwp; i++) {
+				if (zabs(wp[i][0] - w[j][0], wp[i][1] - w[j][1]) < 3.0*eps) {
+					idx[k++] = i;
+				}
+			} // for (i = 0, k = 0; i < lenwp; i++)
+			for (i = 0; i < numidx; i++) {
+				zp[idx[i]][0] = z[j][0];
+				zp[idx[i]][1] = z[j][1];
+				done[idx[i]] = true;
+			} // for (i = 0; i < numidx; i++)
+		} // for (j = 0; j < n; j++)
+		int sumdone = 0;
+		for (i = 0; i < done.length; i++) {
+			if (done[i]) {
+				sumdone++;
+			}
+		} // for (i = 0; i < done.length; i++)
+		int notdone = done.length - sumdone;
+		lenwp = lenwp - sumdone;
+		if (lenwp == 0) {
+			flag = null;
+			return;
+		}
+
+		// ODE
+		if (ode) {
+			double w0[][];
+			if ((z0 == null) || (z0.length == 0)) {
+			  // Pick a value z0 (not a singularity) and compute the map there.	
+				double wpnotdone[][] = new double[notdone][2];
+				for (i = 0, j = 0; i < done.length; i++) {
+					if (!done[i]) {
+						wpnotdone[j][0] = wp[i][0];
+						wpnotdone[j++][1] = wp[i][1];
+					}
+				} // for (i = 0, j = 0; i < done.length; i++)
+				z0 = new double[notdone][2];
+				w0 = new double[notdone][2];
+				scimapz0(z0, w0, "d", wpnotdone, w, beta, z, c, qdat, null);
+			} // if ((z0 == null) || (z0.length == 0)) 
+		} // if (ode)
 	}
+	
+	private void scimapz0(double z0[][], double w0[][], String prefix, double wp[][],
+			double w[][], double beta[], double z[][], double c[], double qdat[][],
+			double aux[][]) {
+	    // scimapz0 returns starting points for computing inverses of 
+		// Schwarz-Christoffel maps.
+		
+		// Each wp[j] (in the polygon plane) requires z0[j] (in the fundamental domain)
+		// whose image w0[j] is such that the line segment from w0[j] to wp[j] lies in
+		// the target (interior or exterior) region.  The algorithm here is to choose
+		// z0[j] as a (weighted) average of successive pairs of adjacent prevertices.
+		// The resulting w0[j] is on a polygon side.  Each choice is tested by looking
+		// for intersections of the segment with (other) sides of the polygon.
+		
+		// After randomly trying 10 weights with such prevertex pairs, the rotine gives
+		// up.  Failures are pretty rare.  Slits are the most likely cause of trouble,
+		// since  the intersection method doesn't know "which side" of the slit it's on.
+		// In such a case you will have to supply starting points manually, perhaps by
+		// a continuation method.
+		
+		// See also hpinvmap, dinvmap, deinvmap, rinvmap, stinvmap.
+		
+		// Original MATLAB routine copyright 1997 by Toby Driscoll.  Last updated 05/07/97.
+		
+		// P.S.  This file illustrates why the different domains in the SC toolbox
+		// have mostly independent M-files.  The contingencies for the various
+		// geometries become rather cumbersome.
+		
+		int i,j;
+		int n = w.length;
+		boolean from_disk = false;
+		boolean from_hp = false;
+		boolean from_strip = false;
+		boolean from_rect = false;
+		double shape[][] = new double[wp.length][2];
+		for (i = 0; i < wp.length; i++) {
+			shape[i][0] = wp[i][0];
+			shape[i][1] = wp[i][1];
+			z0[i][0] = wp[i][0];
+			z0[i][1] = wp[i][1];
+			w0[i][0] = wp[i][0];
+			w0[i][1] = wp[i][1];
+		}
+		if (prefix.substring(0,1).equalsIgnoreCase("d")) {
+			from_disk = true;
+		}
+		else if (prefix.equalsIgnoreCase("hp")) {
+			from_hp = true;
+		}
+		else if (prefix.equalsIgnoreCase("st")) {
+			from_strip = true;
+		}
+		else if (prefix.equalsIgnoreCase("r")) {
+			from_rect = true;
+		}
+		double w2[][];
+		double z2[][];
+		double beta2[];
+		double qdat2[][];
+		double argw[] = new double[n];
+		int kinf = -1;
+		// Calculate arguments of the directed polygon edges.
+		if (from_strip) {
+		    // Renumber to put left end of strip first
+			int numinf = 0;
+			for (i = 0; i < z.length; i++) {
+				if (Double.isInfinite(z[i][0]) || (Double.isInfinite(z[i][1]))) {
+					numinf++;
+				}
+			}
+			int atinf[] = new int[numinf];
+			for (i = 0, j = 0; i < z.length; i++) {
+				if (Double.isInfinite(z[i][0]) || (Double.isInfinite(z[i][1]))) {
+					atinf[j++] = i;
+				}
+			}
+			int renum[] = new int[n];
+			for (i = 0; i < n-atinf[0]; i++) {
+				renum[i] = i+atinf[0];
+			}
+			for (i = n-atinf[0]; i < n; i++) {
+				renum[i] = i-n+atinf[0];
+			}
+			w2 = new double[n][2];
+			z2 = new double[n][2];
+			beta2 = new double[n];
+			qdat2 = new double[qdat.length][n];
+			for (i = 0; i < n; i++) {
+				w2[i][0] = w[renum[i]][0];
+				w2[i][1] = w[renum[i]][1];
+				z2[i][0] = z[renum[i]][0];
+				z2[i][1] = z[renum[i]][1];
+				if (Double.isInfinite(z2[i][0]) || Double.isInfinite(z2[i][1])) {
+				    kinf = i;	
+				}
+				beta2[i] = beta[renum[i]];
+				for (j = 0; j < qdat.length; j++) {
+					qdat2[j][i] = qdat[j][renum[i]];
+					qdat2[j][n+1+i] = qdat[j][n+1+renum[i]];
+				}
+			} // for (i = 0; i < n; i++)
+			double diffw[] = new double[2];
+			diffw[0] = w[2][0] - w[1][0];
+			diffw[1] = w[2][1] - w[1][1];
+			double argwp[] = new double[n];
+			argwp[0] = Math.atan2(diffw[1], diffw[0]);
+			for (i = 1; i < n-1; i++) {
+				argwp[i] = argwp[i-1] - Math.PI*beta[i+1];
+			}
+			argwp[n-1] = argwp[n-2] - Math.PI*beta[0];
+			argw[0] = argwp[n-1];
+			for (i = 1; i < n; i++) {
+				argw[i] = argwp[i-1];
+			}
+		} // if (from_strip)
+		else {
+			double diffw[] = new double[2];
+			diffw[0] = w[1][0] - w[0][0];
+			diffw[1] = w[1][1] - w[0][1];
+			argw[0] = Math.atan2(diffw[1], diffw[0]);
+			for (i = 1; i < n; i++) {
+				argw[i] = argw[i-1] - Math.PI*beta[i];
+			}
+			w2 = w;
+			z2 = z;
+			beta2 = beta;
+			qdat2 = qdat;
+		} // else
+		
+		// Express each side in a form to allow detection of intersections.
+		boolean infty[] = new boolean[n];
+		for (i = 0; i < n; i++) {
+			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				infty[i] = true;
+			}
+		} // for (i = 0; i < n; i++)
+		int fwd[] = new int[n];
+		for (i = 0; i < n-1; i++) {
+			fwd[i] = i+1;
+		}
+		fwd[n-1] = 0;
+		double anchor[][] = new double[n][2];
+		for (i = 0; i < n; i++) {
+			if (!infty[i]) {
+				anchor[i][0] = w[i][0];
+				anchor[i][1] = w[i][1];
+			}
+			else {
+				anchor[i][0] = w[fwd[i]][0];
+				anchor[i][1] = w[fwd[i]][1];  // Use the finite endpoint
+			}
+		} // for (i = 0; i < n; i++)
+		double direcn[][] = new double[n][2];
+		for (i = 0; i < n; i++) {
+			direcn[i][0] = Math.cos(argw[i]);
+			direcn[i][1] = Math.sin(argw[i]);
+			if (infty[i]) {
+				// reverse
+				direcn[i][0] = -direcn[i][0];
+				direcn[i][1] = -direcn[i][1];
+			}
+		} // for (i = 0; i < n; i++)
+		double len[] = new double[n];
+		for (i = 0; i < n; i++) {
+			len[i] = zabs(w[fwd[i]][0] - w[i][0], w[fwd[i]][1] - w[i][1]);
+		}
+		
+		double argz[] = new double[n];
+		if (from_disk) {
+			for (i = 0; i < n; i++) {
+				argz[i] = Math.atan2(z[i][1], z[i][0]);
+				if (argz[i] <= 0) {
+					argz[i] = argz[i] + 2.0 * Math.PI;
+				}
+			}
+		} // if (from_disk)
+		
+		double L[];
+		if (from_rect) {
+			// Extra argument given
+			L = qdat[0];
+			qdat2 = aux;
+		}
+		
+		double factor = 0.5;  // images of midpoints of preverts
+		boolean done[] = new boolean[wp.length];
+		int m = wp.length;
+		int iter = 0;
+		double tol;
+		if (qdat2.length > 1) {
+		    tol = 1000 * Math.pow(10.0, -qdat2.length);	
+		}
+		else {
+			tol = qdat2[0][0];
+		}
+		
+		double zbase[][] = new double[n][2];
+		double wbase[][] = new double[n][2];
+		for (i = 0; i < n; i++) {
+			zbase[i][0] = Double.NaN;
+			wbase[i][0] = Double.NaN;
+		}
+		int idx[] = null;
+		while (m > 0) {  // while some not done
+			// Choose a "basis point" on each side of the polygon.
+			for (j = 0; j < n; j++) {
+				if (from_disk) {
+					if (j < n-1) {
+						zbase[j][0] = Math.cos(factor*argz[j] + (1-factor)*argz[j+1]);
+						zbase[j][1] = Math.sin(factor*argz[j] + (1-factor)*argz[j+1]);
+					}
+					else {
+						zbase[j][0] = Math.cos(factor*argz[n-1] 
+								+ (1-factor)*(2.0*Math.PI + argz[0]));
+						zbase[j][1] = Math.sin(factor*argz[n-1] 
+								+ (1-factor)*(2.0*Math.PI + argz[0]));
+					}
+				} // if (from_disk)
+				else if (from_hp) {
+					if (j < n-2) { // between two finite points
+						zbase[j][0] = z[j][0] + factor*(z[j+1][0] - z[j][0]);
+						zbase[j][1] = z[j][1] + factor*(z[j+1][1] - z[j][1]);
+					}
+					else if (j == n-2) {
+						if (10.0 >= zabs(z[n-2][0], z[n-2][1])) {
+							zbase[j][0] = 10.0/factor;
+							zbase[j][1] = 0.0;
+						}
+						else {
+							zbase[j][0] = z[n-2][0]/factor;
+							zbase[j][1] = z[n-2][1]/factor;
+						}
+					} // else if (j == n-2)
+					else {
+						if (-10.0 <= zabs(z[0][0],z[0][1])) {
+							zbase[j][0] = -10.0/factor;
+						    zbase[j][1] = 0.0;	
+						}
+						else {
+							zbase[j][0] = z[0][0]/factor;
+							zbase[j][1] = z[0][1]/factor;
+						}
+					}
+				} // else if (from_hp)
+				else if (from_strip) {
+				    if (j == 0) {
+				    	if (-1 <= z[1][0]) {
+				    		zbase[j][0] = -1/factor;
+				    		zbase[j][1] = 0.0;
+				    	}
+				    	else {
+				    		zbase[j][0] = z[1][0]/factor;
+				    		zbase[j][1] = 0.0;
+				    	}
+				    } // if (j == 0)
+				    else if (j == kinf-1) {
+				    	
+				    } // else if (j == kinf-1)
+				} // else if (from_strip)
+			} // from (j = 0; j < n; j++)
+		} // while (m > 0)
+ 	}
 	
 	private double[][] dmap(double zp[][], double w[][], double beta[],
 			double z[][], double c[], double qdat[][]) {
