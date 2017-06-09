@@ -647,6 +647,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// geometries become rather cumbersome.
 		
 		int i,j;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
 		int n = w.length;
 		boolean from_disk = false;
 		boolean from_hp = false;
@@ -795,7 +797,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			}
 		} // if (from_disk)
 		
-		double L[];
+		double L[] = null;
 		if (from_rect) {
 			// Extra argument given
 			L = qdat[0];
@@ -805,6 +807,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double factor = 0.5;  // images of midpoints of preverts
 		boolean done[] = new boolean[wp.length];
 		int m = wp.length;
+		double wpnotdone[][] = new double[m][2];
+		for (i = 0; i < m; i++) {
+			wpnotdone[i][0] = wp[i][0];
+			wpnotdone[i][1] = wp[i][1];
+		}
 		int iter = 0;
 		double tol;
 		if (qdat2.length > 1) {
@@ -838,46 +845,109 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				} // if (from_disk)
 				else if (from_hp) {
 					if (j < n-2) { // between two finite points
-						zbase[j][0] = z[j][0] + factor*(z[j+1][0] - z[j][0]);
-						zbase[j][1] = z[j][1] + factor*(z[j+1][1] - z[j][1]);
+						zbase[j][0] = z2[j][0] + factor*(z2[j+1][0] - z2[j][0]);
+						zbase[j][1] = z2[j][1] + factor*(z2[j+1][1] - z2[j][1]);
 					}
 					else if (j == n-2) {
-						if (10.0 >= zabs(z[n-2][0], z[n-2][1])) {
+						if (10.0 >= zabs(z2[n-2][0], z2[n-2][1])) {
 							zbase[j][0] = 10.0/factor;
 							zbase[j][1] = 0.0;
 						}
 						else {
-							zbase[j][0] = z[n-2][0]/factor;
-							zbase[j][1] = z[n-2][1]/factor;
+							zbase[j][0] = z2[n-2][0]/factor;
+							zbase[j][1] = z2[n-2][1]/factor;
 						}
 					} // else if (j == n-2)
 					else {
-						if (-10.0 <= zabs(z[0][0],z[0][1])) {
+						if (-10.0 <= zabs(z2[0][0],z2[0][1])) {
 							zbase[j][0] = -10.0/factor;
 						    zbase[j][1] = 0.0;	
 						}
 						else {
-							zbase[j][0] = z[0][0]/factor;
-							zbase[j][1] = z[0][1]/factor;
+							zbase[j][0] = z2[0][0]/factor;
+							zbase[j][1] = z2[0][1]/factor;
 						}
 					}
 				} // else if (from_hp)
 				else if (from_strip) {
 				    if (j == 0) {
-				    	if (-1 <= z[1][0]) {
-				    		zbase[j][0] = -1/factor;
-				    		zbase[j][1] = 0.0;
-				    	}
-				    	else {
-				    		zbase[j][0] = z[1][0]/factor;
-				    		zbase[j][1] = 0.0;
-				    	}
+			    		zbase[j][0] = Math.min(-1, z2[1][0])/factor;
+			    		zbase[j][1] = 0.0;
 				    } // if (j == 0)
 				    else if (j == kinf-1) {
-				    	
+				        zbase[j][0] = Math.max(1,z2[kinf-1][0])/factor;
+				        zbase[j][1] = 0.0;
 				    } // else if (j == kinf-1)
+				    else if (j == kinf) {
+				    	zbase[j][0] = Math.max(1,z2[kinf+1][0])/factor;
+				    	zbase[j][1] = 1.0;
+				    } // else if (j == kinf)
+				    else if (j == n-1) {
+				    	zbase[j][0] = Math.min(-1,z2[n-1][0])/factor;
+				    	zbase[j][1] = 1.0;
+				    } // else if (j == n-1)
+				    else {
+				    	zbase[j][0] = z2[j][0] + factor*(z2[j+1][0] - z2[j][0]);
+				    	zbase[j][1] = z2[j][1] + factor*(z2[j+1][1] - z2[j][1]);
+				    }
 				} // else if (from_strip)
+				else if (from_rect) {
+					int rem = (j+1)%n;
+					zbase[j][0] = z2[j][0] + factor * (z2[rem][0] - z2[j][0]);
+					zbase[j][1] = z2[j][1] + factor * (z2[rem][1] - z2[j][1]);
+					double maximagz2 = -Double.MAX_VALUE;
+					for (i = 0; i < z2.length; i++) {
+						if (z2[i][1] > maximagz2) {
+							maximagz2 = z2[i][1];
+						}
+					}
+					// Can't use 0 or iK' as basis points.
+					if (zabs(zbase[j][0], zbase[j][1]) < 1.0E-4) {
+						zbase[j][1] = zbase[j][1] + 0.2;
+					}
+					else if (zabs(zbase[j][0],zbase[j][1] - maximagz2) < 1.0E-4) {
+						zbase[j][1] = zbase[j][1] - 0.2;
+					}
+				} // else if (from_rect)
+				
+				// Find images of all the z-plane basis points.
+				if (from_rect) {
+					double neww[][] = new double[1][2];
+					double zpnew[][] = new double[1][2];
+					zpnew[0][0] = zbase[j][0];
+					zpnew[0][1] = zbase[j][1];
+					rmap(neww, zpnew, w2, beta2, z2, c, L, qdat2);
+					wbase[j][0] = neww[0][0];
+					wbase[j][1] = neww[0][1];
+				} // if (from_rect)
+				else if (from_disk) {
+					double zpnew[][] = new double[1][2];
+					zpnew[0][0] = zbase[j][0];
+					zpnew[0][1] = zbase[j][1];
+					double neww[][] = dmap(zpnew, w2 , beta2, z2, c, qdat2);
+					wbase[j][0] = neww[0][0];
+					wbase[j][1] = neww[0][1];
+				} // else if (from_disk)
+				else if (from_hp) {
+				  // Fill in hpmap	
+				} // else if (from_hp)
+				else if (from_strip) {
+				  // Fill in stmap	
+				} // else if (from_strip)
+				
+				// Project each base point exactly to the nearest polygon side.
+				// This is needed to make intersection detection go smoothly in
+				// borderline cases.
+				zmlt(wbase[j][0] - anchor[j][0], wbase[j][1] - anchor[j][1],
+						direcn[j][0], -direcn[j][1], cr, ci);
+				double proj = cr[0];
+				wbase[j][0] = anchor[j][0] + proj*direcn[j][0];
+				wbase[j][1] = anchor[j][1] + proj*direcn[j][1];
 			} // from (j = 0; j < n; j++)
+			
+			if ((idx == null) || (idx.length == 0)) {
+				// First time through, assign nearest basis point to each image point.
+			} // if ((idx == null) || (idx.length == 0))
 		} // while (m > 0)
  	}
 	
