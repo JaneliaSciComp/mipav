@@ -2784,7 +2784,7 @@ public class LinearEquations2 implements java.io.Serializable {
            = 0:  successful exit
            < 0:  if info[0] = -i, the i-th argument had an illegal value
      */
-    private void dgecon(char norm, int n, double[][] A, int lda, double anorm,
+    public void dgecon(char norm, int n, double[][] A, int lda, double anorm,
                         double[] rcond, double[] work, int[] iwork, int[] info) {
         boolean onenrm;
         char normin;
