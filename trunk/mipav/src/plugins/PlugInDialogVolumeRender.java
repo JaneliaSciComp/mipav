@@ -925,7 +925,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			wormImage = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
 			wormImage.calcMinMax();     
 			
-			if ( thresholdImageCheck.isSelected() )
+			if ( thresholdImageCheck.isSelected() && (imageFile2 == null) )
 			{
 				for ( int i = 0; i < wormImage.getDataSize(); i++ )
 				{
