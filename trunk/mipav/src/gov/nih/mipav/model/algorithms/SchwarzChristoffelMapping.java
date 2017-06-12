@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.*;
 
 import java.awt.Color;
@@ -593,7 +595,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				sumdone++;
 			}
 		} // for (i = 0; i < done.length; i++)
-		int notdone = done.length - sumdone;
+		// lenwp contains number not done
 		lenwp = lenwp - sumdone;
 		if (lenwp == 0) {
 			flag = null;
@@ -603,19 +605,59 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// ODE
 		if (ode) {
 			double w0[][];
+			double z02[][];
+			double w02[][];
+			double z03[][];
+			double w03[][];
 			if ((z0 == null) || (z0.length == 0)) {
 			  // Pick a value z0 (not a singularity) and compute the map there.	
-				double wpnotdone[][] = new double[notdone][2];
+				double wpnotdone[][] = new double[lenwp][2];
 				for (i = 0, j = 0; i < done.length; i++) {
 					if (!done[i]) {
 						wpnotdone[j][0] = wp[i][0];
 						wpnotdone[j++][1] = wp[i][1];
 					}
 				} // for (i = 0, j = 0; i < done.length; i++)
-				z0 = new double[notdone][2];
-				w0 = new double[notdone][2];
-				scimapz0(z0, w0, "d", wpnotdone, w, beta, z, c, qdat, null);
+				z03 = new double[lenwp][2];
+				w03 = new double[lenwp][2];
+				scimapz0(z03, w03, "d", wpnotdone, w, beta, z, c, qdat2, null);
 			} // if ((z0 == null) || (z0.length == 0)) 
+			else {
+			    w0 = dmap(z0,w,beta,z,c,qdat2);
+			    if ((z0.length == 1) && (lenwp > 1)) {
+			        z02 = new double[lenwp][2];
+			        w02 = new double[lenwp][2];
+			        for (i = 0; i < lenwp; i++) {
+			        	z02[i][0] = z0[0][0];
+			        	z02[i][1] = z0[0][1];
+			        	w02[i][0] = w0[0][0];
+			        	w02[i][1] = w0[i][1];
+			        }
+			    } // if ((z0.length == 1) && (lenwp > 1)
+			    else {
+			    	w02 = w0;
+			    	z02 = z0;
+			    }
+			    w03 = new double[lenwp][2];
+			    z03 = new double[lenwp][2];
+			    for (i = 0, j = 0; i < done.length; i++) {
+			    	if (!done[i]) {
+			    		w03[j][0] = w02[i][0];
+			    		w03[j][1] = w02[i][1];
+			    		z03[j][0] = z02[i][0];
+			    		z03[j++][1] = z02[i][1];
+			    	}
+			    } // for (i = 0, j = 0; i < done.length; i++)
+			} // else
+			
+			// Use relaxed ODE tol if improving with Newton.
+			double odetol;
+			if (newton) {
+			    odetol = Math.max(tol,  1.0E-4);
+			}
+			else {
+				odetol = tol;
+			}
 		} // if (ode)
 	}
 	
@@ -646,7 +688,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// have mostly independent M-files.  The contingencies for the various
 		// geometries become rather cumbersome.
 		
-		int i,j;
+		int i,j,k,p;
 		double cr[] = new double[1];
 		double ci[] = new double[1];
 		int n = w.length;
@@ -807,11 +849,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double factor = 0.5;  // images of midpoints of preverts
 		boolean done[] = new boolean[wp.length];
 		int m = wp.length;
-		double wpnotdone[][] = new double[m][2];
-		for (i = 0; i < m; i++) {
-			wpnotdone[i][0] = wp[i][0];
-			wpnotdone[i][1] = wp[i][1];
-		}
+		double wpnotdone[][];
 		int iter = 0;
 		double tol;
 		if (qdat2.length > 1) {
@@ -828,6 +866,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			wbase[i][0] = Double.NaN;
 		}
 		int idx[] = null;
+		boolean active[] = new boolean[done.length];
+		int numactive;
+		double A[][] = new double[2][2];
+		double dif[] = new double[2];
+		double Ainv[][] = new double[2][2];
+		double s[] = new double[2];
+		RandomNumberGen randomGen = new RandomNumberGen();
 		while (m > 0) {  // while some not done
 			// Choose a "basis point" on each side of the polygon.
 			for (j = 0; j < n; j++) {
@@ -947,7 +992,164 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			
 			if ((idx == null) || (idx.length == 0)) {
 				// First time through, assign nearest basis point to each image point.
+				double dist[] =  new double[m];
+				idx = new int[m];
+				wpnotdone = new double[m][2];
+				for (i = 0, j = 0; i < done.length; i++) {
+					if (!done[i]) {
+						wpnotdone[j][0] = wp[i][0];
+						wpnotdone[j++][1] = wp[i][1];
+					}
+				}
+				for (i = 0; i < m; i++) {
+					dist[i] = Double.MAX_VALUE;
+					idx[i] = -1;
+					for (j = 0; j < n; j++) {
+						double currentDist = zabs(wpnotdone[i][0] - wbase[j][0],
+								wpnotdone[i][1] - wbase[j][1]);
+						if (currentDist < dist[i]) {
+							dist[i] = currentDist;
+							idx[i] = j;
+						}
+					}
+				} // for (i = 0; i < m; i++)
 			} // if ((idx == null) || (idx.length == 0))
+			else {
+				// Other times, just change those that failed.
+				for (i = 0; i < done.length; i++) {
+					if (!done[i]) {
+						idx[i] = ((idx[i]+1)%n);
+					}
+				} // for (i = 0; i < done.length; i++)
+			} // else
+			for (i = 0; i < done.length; i++) {
+				if (!done[i]) {
+					z0[i][0] = zbase[idx[i]][0];
+					z0[i][1] = zbase[idx[i]][1];
+					w0[i][0] = wbase[idx[i]][0];
+					w0[i][1] = wbase[idx[i]][1];
+				}
+			} // for (i = 0; i < done.length; i++)
+			
+			// Now, cycle thru basis points
+			loopj: for (j = 0; j < n; j++) {
+				// Those points who come from basis j and need checking.
+				numactive = 0;
+				for (i = 0; i < done.length; i++) {
+				   active[i] = (idx[i] == j)	&& (!done[i]);
+				   if (active[i]) {
+					   numactive++;
+				   }
+				} // for (i = 0; i < done.length; i++)
+				if (numactive > 0) {
+					// Assume for now that it's good
+					for (i = 0; i < done.length; i++) {
+						if (active[i]) {
+							done[i] = true;
+						}
+					} // for (i = 0; i < done.length; i++)
+					// Test line segment for intersections with other sides.
+					// We'll parameterize line segment and polygon side, compute
+					// parameters at intersection, and check parameters at intersection.
+					for (k = 0; k < n; k++) {
+						if (k != j) {
+						    A[0][0] = direcn[k][0];
+						    A[1][0] = direcn[k][1];
+						    for (p = 0; p < active.length; p++) {
+						    	if (active[p]) {
+						    	    dif[0] = w0[p][0] - wp[p][0];
+						    	    dif[1] = w0[p][1] - wp[p][1];
+						    	    A[0][1] = dif[0];
+						    	    A[1][1] = dif[1];
+						    	    // Get line segment and side parameters at intersection.
+						    	    LinearEquations2 le2 = new LinearEquations2();
+						    	    GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+						    	    double anorm;
+						    	    double rcond[] = new double[1];
+						    	    double work[] = new double[2];
+						    	    int iwork[] = new int[2];
+						    	    int info[] = new int[1];
+						    	    int ipiv[] = new int[2];
+						    	    anorm = ge.dlange('1', 2, 2, A, 2, work);
+						    	    le2.dgetrf(2, 2, A, 2, ipiv, info);
+						    	    le2.dgecon('1', 2, A, 2, anorm, rcond, work, iwork, info);
+						    	    // Reciprocal condition number of A in 1-norm.
+						    	    if (rcond[0] < eps) {
+						    	        // All 4 involved points are collinear
+						    	    	zdiv(wp[p][0] - anchor[k][0], wp[p][1] - anchor[k][1],
+						    	    			direcn[k][0], direcn[k][1], cr, ci);
+						    	    	double wpx = cr[0];
+						    	    	zdiv(w0[p][0] - anchor[k][0], w0[p][1] - anchor[k][1],
+						    	    			direcn[k][0], direcn[k][1], cr, ci);
+						    	    	double w0x = cr[0];
+						    	    	if ((wpx*w0x < 0) || (((wpx-len[k])*(w0x-len[k])) < 0)) {
+						    	    		// Intersection interior to segment: it's no good
+						    	    		done[p] = false;
+						    	    	}
+						    	    } // if (rcond[0] < eps)
+						    	    else {
+						    	        dif[0] = w0[p][0] - anchor[k][0];
+						    	        dif[1] = w0[p][1] - anchor[k][1];
+						    	        double detA = A[0][0]*A[1][1] - A[0][1]*A[1][0];
+						    	        Ainv[0][0] = A[1][1]/detA;
+						    	        Ainv[0][1] = -A[0][1]/detA;
+						    	        Ainv[1][0] = -A[1][0]/detA;
+						    	        Ainv[1][1] = A[0][0]/detA;
+						    	        s[0] = Ainv[0][0]*dif[0] + Ainv[0][1]*dif[1];
+						    	        s[1] = Ainv[1][0]*dif[0] + Ainv[1][1]*dif[1];
+						    	        // Intersection occurs interior to side? and segment?
+						    	        if ((s[0] >= 0) && (s[0] <= len[k])) {
+						    	            if (Math.abs(s[1] - 1) < tol) {
+						    	                // Special case: wp[p] is on polygon side k
+						    	            	z0[p][0] = zbase[k][0];
+						    	            	z0[p][1] = zbase[k][1];
+						    	            	w0[p][0] = wbase[k][0];
+						    	            	w0[p][1] = wbase[k][1];
+						    	            } // if (Math.abs(s[1] - 1) < tol)
+						    	            else if (Math.abs(s[1]) < tol) {
+						    	                // Happens when two sides are partially coincident
+						    	            	// (slit)
+						    	            	// Check against normal to that side
+						    	            	zmlt(wp[p][0] - w0[p][0], -(wp[p][1] - w0[p][1]),
+						    	            			-direcn[k][1], direcn[k][0], cr, ci);
+						    	            	if (cr[0] > 0) {
+						    	            		// Line segment came from "outside"
+						    	            		done[p] = false;
+						    	            	} // if (cr[0] > 0)
+						    	            } // else if (Math.abs(s[1]) < tol)
+					    	            	else if ((s[1] > 0) && (s[1] < 1)) {
+					    	            	    // Intersection interior to segment:
+					    	            		// it's no good
+					    	            		done[p] = false;
+					    	            	} // else if ((s[1] > 0) && (s[1] < 1))
+						    	        } // if ((s[0] >= 0) && (s[0] <= len[k]))
+						    	    } // else
+						    	} // if (active[p])
+						    } // for (p = 0; p < active.length; p++)
+						} // if (k != j)
+					} // for (k = 0; k < n; k++)
+					
+					// Short circuit if everything is finished
+					m = 0;
+					for (i= 0; i < done.length; i++) {
+						if (!done[i]) {
+							m++;
+						}
+					} // for (i= 0; i < done.length; i++)
+					if (m == 0) {
+					    break loopj;	
+					} // if (m == 0)
+				} // if (numactive > 0)
+			} // for (j = 0; j < n; j++)
+			if (iter > 2*n) {
+				MipavUtil.displayError("Can't seem to choose starting points.  Supply them manually");
+				return;
+			}
+			else {
+				iter = iter + 1;
+			}
+			// Abandon midpoints
+			factor = randomGen.genUniformRandomNum(0.0, 1.0);
 		} // while (m > 0)
  	}
 	
