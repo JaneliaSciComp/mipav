@@ -448,9 +448,6 @@ public class VolumeImage implements Serializable {
 			try {
 				kImage.exportDataUseMask(iTimeSlice * iSize, iSize, bRescale, aucData);
 				byte[] aucData2 = kGraphicsImage.GetData();
-//				for (int i = 0; i < iSize; i++) {
-//					aucData2[i * 4 + 0] = aucData[i];
-//				}
 				for (int i = 0; i < iSize; i++) {
 					aucData2[i * 4 + 0] = aucData[i];
 					aucData2[i * 4 + 1] = aucData[i];
@@ -463,14 +460,7 @@ public class VolumeImage implements Serializable {
 
 		}
 		if (kVolumeTexture != null) {
-//			if ( release )
-//			{
-//				kVolumeTexture.Remove();
-//			}
-//			else
-			{
-				kVolumeTexture.Reload(true);
-			}
+			kVolumeTexture.Reload(true);
 		}
 		return kGraphicsImage;
 	}

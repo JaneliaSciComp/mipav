@@ -78,6 +78,7 @@ import java.util.Vector;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -146,9 +147,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JTextField seamCellMinRadiusText;
 	private JTextField seamCellMaxRadiusText;
 	private JTextField segmentationPaddingText;
+	private JCheckBox thresholdImageCheck;
+	private JTextField thresholdValue;
 	private int paddingFactor;
 	private int minRadius;
 	private int maxRadius;
+	private int threshold = -1;
 
 	private JPanel lutPanel;
 
@@ -920,6 +924,19 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			wormImage = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
 			wormImage.calcMinMax();     
+			
+			if ( thresholdImageCheck.isSelected() )
+			{
+				for ( int i = 0; i < wormImage.getDataSize(); i++ )
+				{
+					if ( wormImage.getFloat(i) > threshold )
+					{
+						wormImage.set(i, threshold);
+					}
+				}
+				wormImage.calcMinMax();     
+			}
+			
 			float[] res = wormImage.getResolutions(0);
 			res[0] = res[2]; 
 			res[1] = res[2]; 
@@ -992,7 +1009,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				boolean updateRenderer = (wormImage.getExtents()[0] != previousExtents[0]) || 
 						(wormImage.getExtents()[1] != previousExtents[1]) ||
 						(wormImage.getExtents()[2] != previousExtents[2]);
-
 
 				volumeImage.UpdateData(wormImage, updateRenderer);
 				updateHistoLUTPanels();
@@ -1852,6 +1868,17 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		segmentationPaddingText = gui.buildField("Segmentation padding (voxels): ", "          5");
 		panel.add(segmentationPaddingText.getParent(), gbc);
 		gbc.gridy++;
+
+		thresholdImageCheck = gui.buildCheckBox( "Threshold image (volume viewing)", false);
+		panel.add(thresholdImageCheck.getParent(), gbc);
+		gbc.gridx++;
+		
+		thresholdValue = gui.buildField( "value: ", "75" );
+		panel.add(thresholdValue.getParent(), gbc);
+		gbc.gridx++;
+		
+		gbc.gridx = 0;
+		gbc.gridy++;
 		
 		return panel;
 	}
@@ -1962,6 +1989,15 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			maxRadius = Integer.valueOf(seamCellMaxRadiusText.getText().trim());
 		} catch(NumberFormatException e) {
 			maxRadius = 25;
+		}
+		try {
+			threshold = -1;
+			if ( thresholdImageCheck.isSelected() )
+			{
+				threshold = Integer.valueOf(thresholdValue.getText().trim());
+			}
+		} catch(NumberFormatException e) {
+			threshold = 75;
 		}
 		
 		baseFileName = baseFileNameText.getText();
