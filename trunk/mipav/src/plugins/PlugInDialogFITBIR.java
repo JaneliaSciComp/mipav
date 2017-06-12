@@ -43,6 +43,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumnModel;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -61,9 +62,6 @@ import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
 
 
-/**
- * TODO: Test csv handling of incorrect form/de names (and add in case-insensitivity)
- */
 public class PlugInDialogFITBIR extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
         PreviewImageContainer, WindowListener, FocusListener {
     private static final long serialVersionUID = -5516621806537554154L;
@@ -231,7 +229,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String pluginVersion = "0.40";
+    private static final String pluginVersion = "0.41";
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -277,6 +275,73 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private FormStructureData fsData = null;
 
     private JLabel requiredLabel;
+
+    private JDialog deidentDialog;
+    
+    public static final String[] anonymizeTagIDs = {
+        //"0008,0014", // instance creator UID
+        //"0008,0018", // SOP instance UID
+        //"0008,0050", // accession number
+        //"0008,0080", // institution name
+        //"0008,0081", // institution address
+        "0008,0090", // referring physician's name
+        "0008,0092", // referring physician's address
+        "0008,0094", // referring physician's telephone numbers
+        //"0008,1010", // station name
+        //"0008,1030", // study description
+        //"0008,103E", // series description
+        //"0008,1040", // institutional department name
+        "0008,1048", // physician(s) of record
+        "0008,1050", // performing physician's name
+        "0008,1060", // name of physician reading study
+        "0008,1070", // operator's name
+        "0008,1080", // admitting diagnoses description
+        //"0008,1155", // Referenced SOP instance UID
+        "0008,2111", // derivation description
+        
+        "0010,0010", // patient name
+        "0010,0020", // patient ID
+        "0010,0030", // patient's birth date
+        "0010,0032", // patient's birth time
+        //"0010,0040", // patient's sex
+        "0010,0050", // patient Insurance plan code sequence
+        "0010,1000", // other patient IDs
+        "0010,1001", // other patient names
+        "0010,1005", // patient's birth name
+        //"0010,1010", // patient's age
+        //"0010,1020", // patient's size
+        //"0010,1030", // patient's weight
+        "0010,1040", // patient's address
+        "0010,1060", // patient's mother's birth name
+        "0010,1090", // medical record locator
+        "0010,2154", // patient's telephone numbers
+        //"0010,2160", // patient ethnic group
+        "0010,2180", // occupation
+        "0010,21B0", // additional patient's history
+        "0010,21D0", // patient's last menstrual date
+        "0010,21F0", // patient religious preference
+        "0010,4000", // patient comments.
+
+        //"0018,1000", // device serial number
+        //"0018,1030", // protocol name
+
+        //"0020,000D", // study instance UID
+        //"0020,000E", // series instance UID
+        //"0020,0010", // study ID
+        //"0020,0052", // frame of reference UID
+        //"0020,0200", // synchronization frame of reference UID
+        "0020,4000", // image comments
+
+        // "0040,0275",// request attributes sequence
+        //"0040,A124", // UID
+        "0040,A730", // content sequence
+        
+        //"0088,0140", // storage media file-set UID
+
+        //"3006,0024", // referenced frame of reference UID
+        //"3006,00C2", // related frame of reference UID
+    };
+
 
     /**
      * Text of the privacy notice displayed to the user before the plugin can be used.
@@ -551,6 +616,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 outputDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
             }
+        } else if (command.equalsIgnoreCase("okayPII")) {
+            // continue w/ image load. close PII de-id dialog
+            if (deidentDialog != null) {
+                deidentDialog.dispose();
+                deidentDialog = null;
+            }
+        } else if (command.equalsIgnoreCase("cancelPII")) {
+            // PII not de-id, close everything
+            windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         }
     }
 
@@ -1189,13 +1263,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 files = sessionFiles[i][j].listFiles();
                 for (k = 0; k < files.length; k++) {
                     if (files[k].isDirectory()) {
-                        if ((files[k].getName().equalsIgnoreCase("ANAT")) && (files[k].listFiles().length > 0)) {
+                        if ( (files[k].getName().equalsIgnoreCase("ANAT")) && (files[k].listFiles().length > 0)) {
                             anatNumber++;
-                        } else if ((files[k].getName().equalsIgnoreCase("FUNC")) && (files[k].listFiles().length > 0)) {
+                        } else if ( (files[k].getName().equalsIgnoreCase("FUNC")) && (files[k].listFiles().length > 0)) {
                             funcNumber++;
-                        } else if ((files[k].getName().equalsIgnoreCase("DWI")) && (files[k].listFiles().length > 0)) {
+                        } else if ( (files[k].getName().equalsIgnoreCase("DWI")) && (files[k].listFiles().length > 0)) {
                             dwiNumber++;
-                        } else if ((files[k].getName().equalsIgnoreCase("FMAP")) && (files[k].listFiles().length > 0)) {
+                        } else if ( (files[k].getName().equalsIgnoreCase("FMAP")) && (files[k].listFiles().length > 0)) {
                             fmapNumber++;
                         }
                     } // if (files[k].isDirectory())
@@ -1361,7 +1435,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     pValue = 20 + 80 * subdirectoriesRead / subdirectoriesFound;
                     progressBar.updateValue(pValue);
                     if ( (anatFiles[i][j] != null) && (anatFiles[i][j].length > 0)) {
-                    	subdirectoriesRead++;
+                        subdirectoriesRead++;
                         sessionImagesRead = 0;
                         sessionJsonRead = 0;
                         previewImages.add(null);
@@ -1471,8 +1545,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 for (j = 0; j < funcFiles[i].length; j++) {
                     pValue = 20 + 80 * subdirectoriesRead / subdirectoriesFound;
                     progressBar.updateValue(pValue);
-                    if ((funcFiles[i][j] != null) && (funcFiles[i][j].length > 0)) {
-                    	subdirectoriesRead++;
+                    if ( (funcFiles[i][j] != null) && (funcFiles[i][j].length > 0)) {
+                        subdirectoriesRead++;
                         sessionImagesRead = 0;
                         sessionJsonRead = 0;
                         sessionEventsRead = 0;
@@ -1724,8 +1798,8 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 for (j = 0; j < funcFiles[i].length; j++) {
                     pValue = 20 + 80 * subdirectoriesRead / subdirectoriesFound;
                     progressBar.updateValue(pValue);
-                    if ((dwiFiles[i][j] != null) && (dwiFiles[i][j].length > 0)) {
-                    	subdirectoriesRead++;
+                    if ( (dwiFiles[i][j] != null) && (dwiFiles[i][j].length > 0)) {
+                        subdirectoriesRead++;
                         sessionImagesRead = 0;
                         sessionJsonRead = 0;
                         sessionBvalRead = 0;
@@ -2086,7 +2160,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
                 siteName[i] = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
                 // CNRM anonymization of the institution tag sets the value to Institution instead of clearing the value
-                if (siteName[i] != null && siteName[i].trim().equalsIgnoreCase("Institution")) {
+                if (isValueSet(siteName[i]) && siteName[i].trim().equalsIgnoreCase("Institution")) {
                     siteName[i] = "";
                 }
                 visitDate[i] = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
@@ -2109,7 +2183,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 contrastAgent[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
                 contrastMethod[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
                 if (isValueSet(contrastMethod[i])) {
-                    // TODO
                     System.err.println(patientName[i] + "\tContrast route: " + contrastMethod[i]);
                     if (contrastMethod[i].equalsIgnoreCase("IV") || contrastMethod[i].equalsIgnoreCase("Oral & IV")) {
                         contrastMethod[i] = "Infusion";
@@ -2130,7 +2203,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 if (modalityString[i].equalsIgnoreCase("magnetic resonance")) {
                     seriesDescription[i] = ((String) (fileInfoDicom.getTagTable().getValue("0008,103E")));
-                    if (seriesDescription[i].toLowerCase().contains("rest")) {
+                    if (isValueSet(seriesDescription[i]) && seriesDescription[i].toLowerCase().contains("rest")) {
                         isRestingFMRI[i] = true;
                     }
 
@@ -2148,7 +2221,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     scanOptions[i] = (String) (fileInfoDicom.getTagTable().getValue("0018,0022"));
                     // FC ==> flow compensation
-                    if (scanOptions[i] != null && scanOptions[i].contains("FC")) {
+                    if (isValueSet(scanOptions[i]) && scanOptions[i].contains("FC")) {
                         flowCompensation[i] = "Yes";
                     }
                 } else if (modalityString[i].equalsIgnoreCase("computed tomography")) {
@@ -3037,10 +3110,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     private boolean readCSVFile() {
+        BufferedReader br = null;
+        
         try {
             String str;
             final FileInputStream fis = new FileInputStream(csvFile);
-            final BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+            br = new BufferedReader(new InputStreamReader(fis));
 
             // first line is data structure name and version
             str = br.readLine();
@@ -3164,6 +3239,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         } catch (final Exception e) {
             e.printStackTrace();
             return false;
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    System.err.println("Problem closing CSV file handle.");
+                    e.printStackTrace();
+                }
+            }
         }
 
         return true;
@@ -5843,7 +5927,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         public InfoDialog(final PlugInDialogFITBIR owner, final String name, final boolean launchedFromInProcessState, final boolean setInitialVisible,
                 final ArrayList<ArrayList<String>> record) {
-            super(owner, true);
+            super(owner, false);
 
             this.owner = owner;
             this.launchedFromInProcessState = launchedFromInProcessState;
@@ -6033,6 +6117,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         srcImage = readImgFromCSV(csvFile.getParentFile().getAbsolutePath(), imageFile);
 
                         if (srcImage != null) {
+                            // basic check that image data is de-identified
+                            boolean isDeidentifed = deindentificationCheck(srcImage);
+                            
+                            if (!isDeidentifed) {
+                                // if not de-identified, the dialog currently exits the imaging tool completely
+                                continue;
+                            }
+                            
                             for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
                                 if (group.getName().equalsIgnoreCase(IMG_IMAGE_INFO_GROUP)) {
                                     final GroupRepeat repeat = fsData.getGroupRepeat(group.getName(), curRepeatNum);
@@ -6474,13 +6566,29 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     isMultifile = true;
                 } else {
                     // try to only open as a single file, since it wasn't zipped
-                    filePath = parentDir + File.separator + imageFile;
                     origSrcFile = new File(imageFile);
                     if ( !origSrcFile.isAbsolute()) {
                         origSrcFile = new File(parentDir + File.separator + imageFile);
                     }
                     filePath = origSrcFile.getAbsolutePath();
-                    isMultifile = false;
+                    
+                    // if directory, try to open all files within as multifile
+                    if (origSrcFile.isDirectory()) {
+                        isMultifile = true;
+                        File[] fileList = origSrcFile.listFiles();
+                        if (fileList.length > 0) {
+                            origSrcFile = fileList[0];
+                            filePath = origSrcFile.getAbsolutePath();
+                            
+                            System.out.println("Opening from dir:\t" + filePath);
+                        } else {
+                            MipavUtil.displayError("Unable to open image files in specified directory: " + filePath);
+                            validFile = false;
+                            return null;
+                        }
+                    } else {
+                        isMultifile = false;
+                    }
                 }
 
                 final File file = new File(filePath);
@@ -7103,7 +7211,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
                 siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
                 // CNRM anonymization of the institution tag sets the value to Institution instead of clearing the value
-                if (siteName != null && siteName.trim().equalsIgnoreCase("Institution")) {
+                if (isValueSet(siteName) && siteName.trim().equalsIgnoreCase("Institution")) {
                     siteName = "";
                 }
                 visitDate = convertDateToISOFormat((String) (fileInfoDicom.getTagTable().getValue("0008,0020")));
@@ -7126,7 +7234,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 contrastAgent = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
                 contrastMethod = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
                 if (isValueSet(contrastMethod)) {
-                    // TODO
                     System.err.println(patientName + "\tContrast route: " + contrastMethod);
                     if (contrastMethod.equalsIgnoreCase("IV") || contrastMethod.equalsIgnoreCase("Oral & IV")) {
                         contrastMethod = "Infusion";
@@ -7146,7 +7253,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 if (modalityString.equalsIgnoreCase("magnetic resonance")) {
                     seriesDescription = ((String) (fileInfoDicom.getTagTable().getValue("0008,103E")));
-                    if (seriesDescription.toLowerCase().contains("rest")) {
+                    if (isValueSet(seriesDescription) && seriesDescription.toLowerCase().contains("rest")) {
                         isRestingFMRI = true;
                     }
 
@@ -7164,7 +7271,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     scanOptions = (String) (fileInfoDicom.getTagTable().getValue("0018,0022"));
                     // FC ==> flow compensation
-                    if (scanOptions != null && scanOptions.contains("FC")) {
+                    if (isValueSet(scanOptions) && scanOptions.contains("FC")) {
                         flowCompensation = "Yes";
                     }
                 } else if (modalityString.equalsIgnoreCase("computed tomography")) {
@@ -7717,7 +7824,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 }
                 siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
                 // CNRM anonymization of the institution tag sets the value to Institution instead of clearing the value
-                if (siteName != null && siteName.trim().equalsIgnoreCase("Institution")) {
+                if (isValueSet(siteName) && siteName.trim().equalsIgnoreCase("Institution")) {
                     siteName = "";
                 }
                 visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
@@ -7740,7 +7847,6 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 contrastAgent = (String) (fileInfoDicom.getTagTable().getValue("0018,0010"));
                 contrastMethod = (String) (fileInfoDicom.getTagTable().getValue("0018,1040"));
                 if (isValueSet(contrastMethod)) {
-                    // TODO
                     System.err.println(patientName + "\tContrast route: " + contrastMethod);
                     if (contrastMethod.equalsIgnoreCase("IV") || contrastMethod.equalsIgnoreCase("Oral & IV")) {
                         contrastMethod = "Infusion";
@@ -7760,7 +7866,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 if (modalityString.equalsIgnoreCase("magnetic resonance")) {
                     seriesDescription = ((String) (fileInfoDicom.getTagTable().getValue("0008,103E")));
-                    if (seriesDescription.toLowerCase().contains("rest")) {
+                    if (isValueSet(seriesDescription) && seriesDescription.toLowerCase().contains("rest")) {
                         isRestingFMRI = true;
                     }
 
@@ -7778,7 +7884,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                     scanOptions = (String) (fileInfoDicom.getTagTable().getValue("0018,0022"));
                     // FC ==> flow compensation
-                    if (scanOptions != null && scanOptions.contains("FC")) {
+                    if (isValueSet(scanOptions) && scanOptions.contains("FC")) {
                         flowCompensation = "Yes";
                     }
                 } else if (modalityString.equalsIgnoreCase("computed tomography")) {
@@ -8154,25 +8260,30 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         }
 
                         if (srcImage != null) {
-                            String tempName = currFile;
-
-                            for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
-                                final String curDeName = deVal.getName();
-                                if (curDeName.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
-                                    final JTextField tf = (JTextField) deVal.getComp();
-                                    tf.setText("Automatically generated from selected image files.");
-                                } else if (curDeName.equalsIgnoreCase(deName)) {
-                                    final JTextField tf = (JTextField) deVal.getComp();
-                                    tf.setText(file.getName());
-                                    tempName = file.getName();
-                                    tf.setEnabled(false);
+                            // basic check that image data is de-identified
+                            boolean isDeidentifed = deindentificationCheck(srcImage);
+                            
+                            if (isDeidentifed) {
+                                String tempName = currFile;
+    
+                                for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
+                                    final String curDeName = deVal.getName();
+                                    if (curDeName.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+                                        final JTextField tf = (JTextField) deVal.getComp();
+                                        tf.setText("Automatically generated from selected image files.");
+                                    } else if (curDeName.equalsIgnoreCase(deName)) {
+                                        final JTextField tf = (JTextField) deVal.getComp();
+                                        tf.setText(file.getName());
+                                        tempName = file.getName();
+                                        tf.setEnabled(false);
+                                    }
                                 }
+    
+                                if ( !currFile.equals(tempName) && !currFile.equals("")) {
+                                    clearFields(fsData);
+                                }
+                                populateFields(fsData, srcImage);
                             }
-
-                            if ( !currFile.equals(tempName) && !currFile.equals("")) {
-                                clearFields(fsData);
-                            }
-                            populateFields(fsData, srcImage);
 
                             srcImage.disposeLocal();
                             srcImage = null;
@@ -8529,6 +8640,109 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         return filteredList;
+    }
+
+    private boolean deindentificationCheck(ModelImage img) {
+        final String fileFormatString = FileUtility.getFileTypeStr(img.getFileInfo(0).getFileFormat());
+
+        if (fileFormatString.equalsIgnoreCase("dicom")) {
+            Vector<FileDicomTag> problemTags = new Vector<FileDicomTag>();
+            //for (FileInfoBase fInfo : img.getFileInfo()) {
+            FileInfoBase fInfo = img.getFileInfo(0);
+            FileInfoDicom dicomInfo = (FileInfoDicom) fInfo;
+
+            FileDicomTagTable tagTable = dicomInfo.getTagTable();
+
+            for (String anonTagKey : anonymizeTagIDs) {
+                FileDicomTag tag = tagTable.get(anonTagKey);
+                if ( tag != null && tag.getValue(true) != null && ! ((String) tag.getValue(true)).trim().equals("")) {
+                    problemTags.add(tag);
+                }
+            }
+            //}
+            
+            if (problemTags.size() > 0) {
+                String disclaimerText = new String(
+                        "<html>" +
+                        "The table below lists fields in the loaded image data with potential Personally Identifiable Information (PII) or Protected Health Information." +
+                        "<br><br>" + 
+                        "Please review all the fields below.  If any fields contain PII/PHI, exit the Imaging Tool and fully de-identify your image data." +
+                        "<br><br>" + 
+                        "There may be fields in your data that contain PII/PHI that are not highlighted in this table.  DICOM private tags, and sequence tags are not examined." +
+                        "<br><br>" + 
+                        "<b>Remember, <em>YOU</em> are responible for the de-identification of all submitted data.</b>  This table is for informational purposes only." + 
+                        "<br><br>" + 
+                        "Base file loaded:" +
+                        "<br>" + 
+                        fInfo.getFileDirectory() + fInfo.getFileName() +
+                		"</html>");
+                JLabel disclaimerLabel = new JLabel(disclaimerText);
+                disclaimerLabel.setFont(serif12);
+                
+                Vector<String> columnNames = new Vector(Arrays.asList(new String[] {"DICOM Tag", "Name", "Value"}));
+                
+                Vector<Vector<String>> rowData = new Vector<Vector<String>>();
+                
+                for (FileDicomTag tag : problemTags) {
+                    Vector<String> colData = new Vector<String>();
+                    colData.add(tag.getKey().toString());
+                    colData.add(tag.getName());
+                    colData.add((String) tag.getValue(true));
+                    rowData.add(colData);
+                }
+                
+                JTable table = new JTable(rowData, columnNames);
+                table.setFont(serif12);
+                table.getTableHeader().setFont(serif12);
+                table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+                TableColumnModel colModel = table.getColumnModel();
+                colModel.getColumn(0).setMaxWidth(120);
+                
+                JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
+                
+                JButton okButton = new JButton("I have reviewed the data and no PII/PHI is present");
+                okButton.setActionCommand("okayPII");
+                okButton.addActionListener(this);
+                JButton cancelButton = new JButton("Exit the Imaging Tool");
+                cancelButton.setActionCommand("cancelPII");
+                cancelButton.addActionListener(this);
+                buttonPanel.add(okButton);
+                buttonPanel.add(cancelButton);
+                
+                GridBagConstraints gbc = new GridBagConstraints();
+                gbc.insets = new Insets(2, 5, 2, 5);
+                gbc.fill = GridBagConstraints.BOTH;
+                gbc.weightx = 0;
+                gbc.weighty = 0;
+                gbc.gridx = 0;
+                gbc.anchor = GridBagConstraints.NORTH;
+                gbc.gridy = 0;
+                
+                JPanel dialogPanel = new JPanel(new GridBagLayout());
+                dialogPanel.add(disclaimerLabel, gbc);
+                
+                gbc.weighty = 1;
+                gbc.weighty = 1;
+                gbc.gridy++;
+                dialogPanel.add(new JScrollPane(table), gbc);
+                
+                gbc.weightx = 0;
+                gbc.weighty = 0;
+                gbc.gridy++;
+                gbc.fill = GridBagConstraints.NONE;
+                gbc.anchor = GridBagConstraints.SOUTH;
+                dialogPanel.add(buttonPanel, gbc);
+                
+                deidentDialog = new JDialog(this, true);
+                deidentDialog.add(dialogPanel);
+                deidentDialog.setSize(1000, 800);
+                MipavUtil.centerInWindow(this, deidentDialog);
+                deidentDialog.setTitle("De-identification review: " + fInfo.getFileName());
+                deidentDialog.setVisible(true);
+            }
+        }
+
+        return true;
     }
 
     /**
