@@ -609,15 +609,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			double w02[][];
 			double z03[][];
 			double w03[][];
+			double wpnotdone[][] = new double[lenwp][2];
+			for (i = 0, j = 0; i < done.length; i++) {
+				if (!done[i]) {
+					wpnotdone[j][0] = wp[i][0];
+					wpnotdone[j++][1] = wp[i][1];
+				}
+			} // for (i = 0, j = 0; i < done.length; i++)
 			if ((z0 == null) || (z0.length == 0)) {
 			  // Pick a value z0 (not a singularity) and compute the map there.	
-				double wpnotdone[][] = new double[lenwp][2];
-				for (i = 0, j = 0; i < done.length; i++) {
-					if (!done[i]) {
-						wpnotdone[j][0] = wp[i][0];
-						wpnotdone[j++][1] = wp[i][1];
-					}
-				} // for (i = 0, j = 0; i < done.length; i++)
 				z03 = new double[lenwp][2];
 				w03 = new double[lenwp][2];
 				scimapz0(z03, w03, "d", wpnotdone, w, beta, z, c, qdat2, null);
@@ -658,7 +658,112 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			else {
 				odetol = tol;
 			}
+			double abstol = odetol;
+			double reltol = odetol;
+			
+			// Rescale dependent coordinate
+			double scale[][] = new double[lenwp][2];
+			for (i = 0; i < lenwp; i++) {
+				scale[i][0] = wpnotdone[i][0] - w03[i][0];
+				scale[i][1] = wpnotdone[i][1] - w03[i][1];
+			}
+			
+			// Solve ODE
+			double z04[] = new double[2*z03.length];
+			for (i = 0; i < z03.length; i++) {
+				z04[i] = z03[i][0];
+				z04[i + z03.length] = z03[i][1];
+			}
+			double tspan[] = new double[3];
+			tspan[0] = 0;
+			tspan[1] = 0.5;
+			tspan[2] = 1.0;
+			double t[] = new double[tspan.length];
+			double y[][] = new double[tspan.length][z04.length];
+			dimapfun(t, y, tspan, z04, abstol, reltol,scale, z, beta, c);
 		} // if (ode)
+	}
+	
+	private void dimapfun(double t[], double y[][], double wp[], double yp[], double abstol, double reltol,
+			double scale[][], double z[][], double beta[], double c[]) {
+		// Used by dinvmap for the solution of an ODE.
+		// t is the vector of output times
+		// For each time the y values y1 to yn of the differential equations
+		// in different columns
+		// wp are the time span
+		// yp are the intial conditions
+		// Original MATLAB dimapfun copyright 1998 by Toby Driscoll
+		int i;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		int lenyp = yp.length;
+		int lenzp = lenyp/2;
+		double zp[][] = new double[lenyp][2];
+		for (i = 0; i < lenzp; i++) {
+			zp[i][0] = yp[i];
+		}
+		for (i = lenzp; i < lenyp; i++) {
+			zp[i][1] = yp[i];
+		}
+		
+		double fprime[][] = dderiv(zp, z, beta, c);
+		double f[][] = new double[scale.length][2];
+		for (i = 0; i < scale.length; i++) {
+			zdiv(scale[i][0], scale[i][1], fprime[i][0], fprime[i][1], cr, ci);
+			f[i][0] = cr[0];
+			f[i][1] = ci[0];
+		}
+		
+		double zdot[] = new double[2*f.length];
+		for (i = 0; i < f.length; i++) {
+			zdot[i] = f[i][0];
+			zdot[f.length + i] = f[i][1];
+		}
+	}
+	
+	private double[][] dderiv(double zp[][], double z[][], double beta[], double c[]) {
+		// Derivative of the disk map.
+		// dderiv returns the derivative at the points of zp of the 
+		// Schwarz-Christoffel disk map defined by z, beta, and c.
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		int i,j;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double zprow[][] = new double[zp.length][2];
+		for (i = 0; i < zp.length; i++) {
+			zprow[i][0] = zp[i][0];
+			zprow[i][1] = zp[i][1];
+		}
+		double fprime[][] = new double[zp.length][2];
+		
+		int npts = zp.length;
+		double terms[] = new double[2];
+		double logterms[] = new double[2];
+		double betaterms[] = new double[2];
+		double sumterms[][] = new double[npts][2];
+		for (j = 0; j < npts; j++) {
+		    for (i = 0; i < beta.length; i++) {
+				zdiv(zprow[j][0], zprow[j][1], z[i][0], z[i][1], cr, ci);
+				terms[0] = 1 - cr[0];
+				terms[1] = -ci[0];
+				logterms[0] = zabs(terms[0], terms[1]);
+				logterms[1] = Math.atan2(terms[1],terms[0]);
+				betaterms[0] = logterms[0] * beta[i];
+				betaterms[1] = logterms[1] * beta[i];
+				sumterms[j][0] += betaterms[0];
+				sumterms[j][1] += betaterms[1];
+			}
+		}
+		
+		for (i = 0; i < npts; i++) {
+			double expterm = Math.exp(sumterms[i][0]);
+			zmlt(c[0], c[1],expterm*Math.cos(sumterms[i][1]), 
+					expterm*Math.sin(sumterms[i][1]), cr, ci);
+			fprime[i][0] = cr[0];
+			fprime[i][1] =ci[0];
+		}
+		
+		return fprime;
 	}
 	
 	private void scimapz0(double z0[][], double w0[][], String prefix, double wp[][],
