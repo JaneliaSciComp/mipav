@@ -42,7 +42,9 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import org.apache.commons.io.FileUtils;
@@ -228,8 +230,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private static final int RESOLVE_CONFLICT_CSV = 1;
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
+    
+    private static final String svnVersion = "$Rev$";
+    private static final String svnLastUpdate = "$Date$";
 
-    private static final String pluginVersion = "0.41";
+    private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
 
     private static final String VALUE_OTHER_SPECIFY = "Other, specify";
 
@@ -3288,7 +3293,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     private void init() {
-        setTitle("Image Submission Package Creation Tool v" + pluginVersion + " (" + ddEnvName + ")");
+        setTitle("Image Submission Package Creation Tool - built " + pluginVersion + " (" + ddEnvName + ")");
         dsMainPanel = new JPanel(new GridBagLayout());
         final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -8679,24 +8684,31 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 JLabel disclaimerLabel = new JLabel(disclaimerText);
                 disclaimerLabel.setFont(serif12);
                 
-                Vector<String> columnNames = new Vector(Arrays.asList(new String[] {"DICOM Tag", "Name", "Value"}));
-                
-                Vector<Vector<String>> rowData = new Vector<Vector<String>>();
-                
-                for (FileDicomTag tag : problemTags) {
-                    Vector<String> colData = new Vector<String>();
-                    colData.add(tag.getKey().toString());
-                    colData.add(tag.getName());
-                    colData.add((String) tag.getValue(true));
-                    rowData.add(colData);
-                }
-                
-                JTable table = new JTable(rowData, columnNames);
+                TagTableModel tableModel = new TagTableModel(problemTags);
+                JTable table = new JTable(tableModel);
                 table.setFont(serif12);
                 table.getTableHeader().setFont(serif12);
                 table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+                table.setDefaultRenderer(String.class, new LineWrapCellRenderer());
                 TableColumnModel colModel = table.getColumnModel();
                 colModel.getColumn(0).setMaxWidth(120);
+                
+                final int fontHeight = table.getFontMetrics(this.getFont()).getHeight();
+                final int fontMaxAdv = table.getFontMetrics(this.getFont()).getMaxAdvance();
+                for (int i = 0; i < table.getRowCount(); i++) {
+                    int textLength = ((String) table.getModel().getValueAt(i, 2)).length();
+                    int lines = textLength / fontMaxAdv + 1;
+                    int height = fontHeight * lines;
+                    
+                    table.setRowHeight(i, height + 5);
+                }
+                
+                DefaultTableCellRenderer textRenderer = new DefaultTableCellRenderer();
+                textRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+                textRenderer.setVerticalAlignment(SwingConstants.TOP);
+                for (int i = 0; i < table.getColumnCount(); i++) {
+                    table.getColumnModel().getColumn(i).setCellRenderer(textRenderer);
+                }
                 
                 JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
                 
@@ -8743,6 +8755,81 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         return true;
+    }
+    
+    private class TagTableModel extends AbstractTableModel {
+        private static final long serialVersionUID = 51886231625427264L;
+
+        private String[] columnNames = new String[] {"DICOM Tag", "Name", "Value"};
+        
+        private Vector<Vector<String>> rowData;
+        
+        public TagTableModel(Vector<FileDicomTag> problemTags) {
+            rowData = new Vector<Vector<String>>();
+            
+            for (FileDicomTag tag : problemTags) {
+                Vector<String> colData = new Vector<String>();
+                colData.add(tag.getKey().toString());
+                colData.add(tag.getName());
+                colData.add("<html>" + (String) tag.getValue(true) + "</html>");
+                rowData.add(colData);
+            }
+        }
+
+        public int getColumnCount() {
+            return columnNames.length;
+        }
+
+        public int getRowCount() {
+            return rowData.size();
+        }
+
+        public String getColumnName(int col) {
+            return columnNames[col];
+        }
+
+        public Object getValueAt(int row, int col) {
+            return rowData.get(row).get(col);
+        }
+
+        public Class getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
+
+        public boolean isCellEditable(int row, int col) {
+            return false;
+        }
+    }
+    
+    private class LineWrapCellRenderer extends JTextArea implements TableCellRenderer {
+        private static final long serialVersionUID = -942403827312154298L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            this.setText((String)value);
+            this.setWrapStyleWord(true);
+            this.setLineWrap(true);
+            
+            int fontHeight = this.getFontMetrics(this.getFont()).getHeight();
+            int textLength = this.getText().length();
+            int lines = textLength / this.getColumns() + 1;
+            
+            final int height = fontHeight * lines;
+            
+            final int rowIndex = row;
+            final JTable jTable = table;
+            
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    jTable.setRowHeight(rowIndex, height);
+                }
+            });
+            table.setRowHeight(row, height);
+            
+            return this;
+        }
+
     }
 
     /**
