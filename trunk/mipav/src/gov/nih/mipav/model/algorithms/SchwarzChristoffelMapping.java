@@ -674,14 +674,108 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				z04[i] = z03[i][0];
 				z04[i + z03.length] = z03[i][1];
 			}
-			double tspan[] = new double[3];
-			tspan[0] = 0;
-			tspan[1] = 0.5;
-			tspan[2] = 1.0;
-			double t[] = new double[tspan.length];
-			double y[][] = new double[tspan.length][z04.length];
-			dimapfun(t, y, tspan, z04, abstol, reltol,scale, z, beta, c);
+			//double tspan[] = new double[3];
+			//tspan[0] = 0;
+			//tspan[1] = 0.5;
+			//tspan[2] = 1.0;
+			//double t[] = new double[tspan.length];
+			//double y[][] = new double[tspan.length][z04.length];
+			//dimapfun(t, y, tspan, z04, abstol, reltol,scale, z, beta, c);
+			// Because ode113.m is copyrighted by MATLAB use a port of the
+			// original FORTRAN ode.f code 
+			double yarr[][] = new double[3][z04.length];
+			for (i = 0; i < z04.length; i++) {
+				yarr[0][i] = z04[i];
+			}
+			double t[] = new double[1];
+			t[0] = 0;
+			double tout = 0.5;
+			double relerr[] = new double[1];
+			relerr[0] = reltol;
+			double abserr[] = new double[1];
+			abserr[0] = abstol;
+			int iflag[] = new int[1];
+			iflag[0] = 1;
+			double work[] = new double[100 + 21*z04.length];
+			int iwork[] = new int[5];
+			ODEModel modODE = new ODEModel(z04.length, z04, t, tout, relerr,
+					abserr, iflag, work, iwork, scale, z, beta, c);
+			modODE.driver();
+			System.out.println(modODE.getErrorMessage());
+			for (i = 0; i < z04.length; i++) {
+				yarr[1][i] = z04[i];
+			}
+			t[0] = 0.5;
+			tout = 1.0;
+			relerr[0] = reltol;
+			abserr[0] = abstol;
+			iflag[0] = 1;
+			for (i = 0; i < work.length; i++) {
+				work[i] = 0.0;
+			}
+			for (i = 0; i < iwork.length; i++) {
+				iwork[i] = 0;
+			}
+			modODE = new ODEModel(z04.length, z04, t, tout, relerr,
+					abserr, iflag, work, iwork, scale, z, beta, c);
+			modODE.driver();
+			System.out.println(modODE.getErrorMessage());
+			for (i = 0; i < z04.length; i++) {
+				yarr[2][i] = z04[i];
+			}
 		} // if (ode)
+	}
+	
+	class ODEModel extends ODE {
+		double scale[][];
+		double z[][];
+		double beta[];
+		double c[];
+		public ODEModel(int neqn, double y[], double t[], double tout, double relerr[],
+				double abserr[], int iflag[], double work[], int iwork[],
+				double scale[][], double z[][], double beta[], double c[]) {
+			super(neqn, y, t, tout, relerr, abserr, iflag, work, iwork);
+			this.scale = scale;
+			this.z = z;
+			this.beta = beta;
+			this.c = c;
+			
+		}
+		
+		/**
+		 * DOCUMENT ME!
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		public void f(double x, double yy[], double yp[]) {
+			int i;
+			double cr[] = new double[1];
+			double ci[] = new double[1];
+			int lenyy = yy.length;
+			int lenzp = lenyy/2;
+			double zp[][] = new double[lenyy][2];
+			for (i = 0; i < lenzp; i++) {
+				zp[i][0] = yy[i];
+			}
+			for (i = lenzp; i < lenyy; i++) {
+				zp[i][1] = yy[i];
+			}
+			
+			double fprime[][] = dderiv(zp, z, beta, c);
+			double f[][] = new double[scale.length][2];
+			for (i = 0; i < scale.length; i++) {
+				zdiv(scale[i][0], scale[i][1], fprime[i][0], fprime[i][1], cr, ci);
+				f[i][0] = cr[0];
+				f[i][1] = ci[0];
+			}
+			
+			for (i = 0; i < f.length; i++) {
+				yp[i] = f[i][0];
+				yp[f.length + i] = f[i][1];
+			}	
+		}
 	}
 	
 	private void dimapfun(double t[], double y[][], double wp[], double yp[], double abstol, double reltol,
@@ -692,6 +786,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// in different columns
 		// wp are the time span
 		// yp are the intial conditions
+		// zdot is a column vector dy1/dt, dy2/dt,...,dyn/dt
 		// Original MATLAB dimapfun copyright 1998 by Toby Driscoll
 		int i;
 		double cr[] = new double[1];
