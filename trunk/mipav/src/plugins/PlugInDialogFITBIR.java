@@ -3293,7 +3293,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     private void init() {
-        setTitle("Image Submission Package Creation Tool - built " + pluginVersion + " (" + ddEnvName + ")");
+        setTitle("Image Submission Package Creation Tool - " + pluginVersion + " (" + ddEnvName + ")");
         dsMainPanel = new JPanel(new GridBagLayout());
         final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
