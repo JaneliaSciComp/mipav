@@ -21,7 +21,7 @@ public class CustomHashtable<V> extends Hashtable<String, V> {
     /**
      * MAX_APPENDED_KEYS is the maximum number of keys that will* appended to a "keyname" in order to make a key unique.
      */
-    public static final int MAX_APPENDED_KEYS = 500;
+    public static final int MAX_APPENDED_KEYS = 2000;
 
     /**
      * Constructs a new, empty hashtable with a default capacity and load factor, which is 0.75.
