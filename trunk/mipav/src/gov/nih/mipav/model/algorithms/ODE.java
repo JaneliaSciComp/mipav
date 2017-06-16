@@ -1,10 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewUserInterface;
-
 public abstract class ODE {
 	
 	 // ~ Constructors
@@ -164,6 +159,9 @@ public abstract class ODE {
     private boolean phase1 = false;
     private boolean nornd = false;
     
+    private double twou;
+    private double fouru;
+    
     // input neqn = number of equations to be integrated
     // input/output double y[] = new double[neqn]
     // y input contains y values at starting time
@@ -243,6 +241,28 @@ public abstract class ODE {
      public void driver() {   
         int i;
     	int j;
+    	
+    	// epsilon = D1MACH(4)
+        // Machine epsilon is the smallest positive epsilon such that
+        // (1.0 + epsilon) != 1.0.
+        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+        // epsilon = 2.2204460e-16
+        // epsilon is called the largest relative spacing
+        double epsilon = 1.0;
+        double neweps = 1.0;
+
+        while (true) {
+
+            if (1.0 == (1.0 + neweps)) {
+                break;
+            } else {
+                epsilon = neweps;
+                neweps = neweps / 2.0;
+            }
+        } // while(true)
+        
+        twou = 2.0 * epsilon;
+        fouru = 4.0 * epsilon;
 
         if (Math.abs(iflag[0]) != 1) {
             start = (work[istart] > 0.0);
@@ -315,26 +335,6 @@ public abstract class ODE {
     	//            ***            ***            ***
     	//   test for improper parameters
     	//
-    	// epsilon = D1MACH(4)
-        // Machine epsilon is the smallest positive epsilon such that
-        // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.2204460e-16
-        // epsilon is called the largest relative spacing
-        double epsilon = 1.0;
-        double neweps = 1.0;
-
-        while (true) {
-
-            if (1.0 == (1.0 + neweps)) {
-                break;
-            } else {
-                epsilon = neweps;
-                neweps = neweps / 2.0;
-            }
-        } // while(true)
-        
-        double fouru = 4.0 * epsilon;
         if (neqn < 1) {
         	iflag[0] = 6;
         	return;
@@ -515,7 +515,7 @@ public abstract class ODE {
     	//
     	//   double precision subroutine  step
     	//   integrates a system of first order ordinary
-    	//   differential equations one step, normally from x to x+h, using a
+    	//   differential equations one step, normally from x to x+h work[ih], using a
     	//   modified divided difference form of the adams pece formulas.  local
     	//   extrapolation is used to improve absolute stability and accuracy.
     	//   the code adjusts its order and step size to control the local error
@@ -529,24 +529,24 @@ public abstract class ODE {
     	//
     	//
     	//   the parameters represent:
-    	//      x -- independent variable             (real*8)
-    	//      y(*) -- solution vector at x          (real*8)
-    	//      yp(*) -- derivative of solution vector at  x  after successful
+    	//      x (work[ix]) -- independent variable             (real*8)
+    	//      y(*)(work[iyy]) -- solution vector at x          (real*8)
+    	//      yp(*) (work[iyp])-- derivative of solution vector at  x (work[ix]) after successful
     	//           step                             (real*8)
     	//      neqn -- number of equations to be integrated (integer*4)
-    	//      h -- appropriate step size for next step.  normally determined by
+    	//      h (work[ih])-- appropriate step size for next step.  normally determined by
     	//           code                             (real*8)
     	//      eps -- local error tolerance.  must be variable  (real*8)
-    	//      wt(*) -- vector of weights for error criterion   (real*8)
+    	//      wt(*)(work[iwt]) -- vector of weights for error criterion   (real*8)
     	//      start -- logical variable set .true. for first step,  .false.
     	//           otherwise                        (logical*4)
-    	//      hold -- step size used for last successful step  (real*8)
-    	//      k -- appropriate order for next step (determined by code)
-    	//      kold -- order used for last successful step
+    	//      hold work[ihold])-- step size used for last successful step  (real*8)
+    	//      k (iwork[k])-- appropriate order for next step (determined by code)
+    	//      kold (iwork[kold])-- order used for last successful step
     	//      crash -- logical variable set .true. when no step can be taken,
     	//           .false. otherwise.
-    	//   the arrays  phi, psi  are required for the interpolation subroutine
-    	//   intrp.  the array p is internal to the code.  all are real*8
+    	//   the arrays  phi, psi (work[ipsi])  are required for the interpolation subroutine
+    	//   intrp.  the array p (work[ip]) is internal to the code.  all are real*8
     	//
     	//   input to  step
     	//
@@ -630,8 +630,45 @@ public abstract class ODE {
     	//      dimension alpha(12),beta(12),sig(13),w(12),v(12),g(13),
     	//     1  gstr(13),two(13)
     	//      external f
-    	double gstr[] = new double[13];
-    	double two[] = new double[13];
+    	boolean do450;
+    	boolean do455;
+    	int i;
+    	int ifail;
+    	int ip1;
+    	int iq;
+    	int j;
+    	int km1;
+    	int km2;
+    	int knew;
+    	int kp1;
+    	int kp2;
+    	int l;
+    	int limit2;
+    	double absh;
+    	double erk;
+    	double erkm1;
+    	double erkm2;
+    	double erkp1;
+    	double err;
+    	double hnew;
+    	double r;
+    	double rho;
+    	double tau;
+    	double temp1;
+    	double temp2;
+    	double temp3;
+    	double temp4;
+    	double temp5;
+    	double temp6;
+    	double var;
+    	double xold;
+    	double yp[];
+    	double yy[];
+    	double gstr[] = new double[]{0.500,0.0833,0.0417,0.0264,0.0188,0.0143,
+    			0.0114,0.00936,0.00789,0.00679,0.00592,0.00524,0.00468};
+    	double two[] = new double[]{2.0,4.0,8.0,16.0,32.0,64.0,128.0,256.0,
+    			512.0,1024.0,2048.0,4096.0,8192.0};
+  
     	//***********************************************************************
     	//*  the only machine dependent constants are based on the machine unit *
     	//*  roundoff error  u  which is the smallest positive number such that *
@@ -639,7 +676,501 @@ public abstract class ODE {
     	//*  twou=2.0*u  and  fouru=4.0*u  in the data statement before calling *
     	//*  the code.  the routine  machin  calculates  u .                    *
     	//     data twou,fouru/.444d-15,.888d-15/                                ***
-    	//***********************************************************************	
+    	//***********************************************************************
+    	//       ***     begin block 0     ***
+    	//   check if step size or error tolerance is too small for machine
+    	//   precision.  if first step, initialize phi array and estimate a
+    	//   starting step size.
+    	//                   ***
+    	//
+    	//   if step size is too small, determine an acceptable one
+    	//
+    	crash[0] = true;
+    	if (Math.abs(work[ih]) < fouru*Math.abs(work[ix])) {
+    		if (work[ih] >= 0) {
+    			work[ih] = fouru*Math.abs(work[ix]);
+    		}
+    		else {
+    			work[ih] = -fouru*Math.abs(work[ix]);
+    		}
+    		return;
+    	} // if (Math.abs(work[ih]) < fouru*Math.abs(work[ix]))
+    	double p5eps = 0.5 * eps[0];
+    	//
+    	// if step size is too small, determine an acceptable one
+    	//
+    	double round = 0.0;
+    	for (l = 0; l < neqn; l++) {
+    		var = (work[iyy + l]/work[iwt + l]);
+    	    round = round + var*var;	
+    	} // for (l = 0; l < neqn; l++)
+    	round = twou * Math.sqrt(round);
+    	if (p5eps < round) {
+    		eps[0] = 2.0*round*(1.0 + fouru);
+    		return;
+    	} // if (p5eps < round)
+    	crash[0] = false;
+    	work[ig] = 1.0;
+    	work[ig+1] = 0.5;
+    	work[isig] = 1.0;
+    	if (start) {
+    	    //
+    		// initialize.  Compute appropriate step size for first step
+    		//
+    		yy = new double[neqn];
+    	    for (i = 0; i < neqn; i++) {
+    	    	yy[i] = work[iyy + i];
+    	    }
+    	    yp = new double[neqn];
+    	    f(work[ix], yy, yp);
+    	    for (i = 0; i < neqn; i++) {
+    	    	work[iyp + i] = yp[i];
+    	    }
+    	    double sum = 0.0;
+    	    for (l = 0; l < neqn; l++) {
+    	    	phi[l][0] = work[iyp + l];
+    	    	phi[l][1] = 0.0;
+    	    	var = (work[iyp + l]/work[iwt + l]);
+    	    	sum = sum + var*var;
+    	    } // for (l = 0; l < neqn; l++)
+    	    sum = Math.sqrt(sum);
+    	    absh = Math.abs(work[ih]);
+    	    if (eps[0] < 16.0*sum*work[ih]*work[ih]) {
+    	    	absh = 0.25*Math.sqrt(eps[0]/sum);
+    	    }
+    	    if (work[ih] >= 0) {
+    	    	work[ih] = Math.max(absh, fouru*Math.abs(work[ix]));
+    	    }
+    	    else {
+    	    	work[ih] = -Math.max(absh, fouru*Math.abs(work[ix]));	
+    	    }
+    	    work[ihold] = 0.0;
+    	    iwork[k] = 1;
+    	    iwork[kold] = 0;
+    	    start = false;
+    	    phase1 = true;
+    	    nornd = true;
+    	    if (p5eps <= 100.0*round) {
+    	        nornd = false;
+    	        for (l = 0; l < neqn; l++) {
+    	        	phi[l][14] = 0.0;
+    	        }
+    	    } // if (p5eps <= 100.0*round)
+    	} // if (start)
+    	ifail = 0;
+    	//       ***     end block 0     ***
+    	//
+    	//       ***     begin block 1     ***
+    	//   compute coefficients of formulas for this step.  avoid computing
+    	//   those quantities not changed when step size is not changed.
+    	//                   ***
+    	//
+    	while (true) {
+	    	kp1 = iwork[k]+1;
+	    	kp2 = iwork[k]+2;
+	    	km1 = iwork[k]-1;
+	    	km2 = iwork[k]-2;
+	    	//
+	    	//   ns is the number of steps taken with size h, including the current
+	    	//   one.  when k.lt.ns, no coefficients change
+	    	//
+	    	if (work[ih] != work[ihold]) {
+	    		iwork[ns] = 0;
+	    	}
+	    	if (iwork[ns] <= iwork[kold]) {
+	    		iwork[ns] = iwork[ns] + 1;
+	    	}
+	    	int nsp1 = iwork[ns] + 1;
+	    	if (iwork[k] >= iwork[ns]) {
+	    		//
+	    		//   compute those components of alpha(*),beta(*),psi(*),sig(*) which
+	    		//   are changed
+	    		//
+	    		work[ibeta + iwork[ns] - 1] = 1.0;
+	    		double realns = (double)iwork[ns];
+	    		work[ialpha + iwork[ns] - 1] = 1.0/realns;
+	    		temp1 = work[ih] * realns;
+	    		work[isig + nsp1 - 1] = 1.0;
+	    		if (iwork[k] >= nsp1) {
+	    		    for (i = nsp1; i <= iwork[k]; i++) {
+	    		        int im1 = i - 1;
+	    		        temp2 = work[ipsi + im1 - 1];
+	    		        work[ipsi + im1 -1] = temp1;
+	    		        work[ibeta + i - 1] = work[ibeta + im1-1]*work[ipsi + im1-1]/temp2;
+	    		        temp1 = temp2 + work[ih];
+	    		        work[ialpha + i - 1] = work[ih]/temp1;
+	    		        double reali = (double)i;
+	    		        work[isig + i] = reali*work[ialpha + i - 1]*work[isig + i - 1];
+	    		    } // for (i = nsp1; i <= iwork[k]; i++)
+	    		} // if (iwork[k] >= nsp1)
+	    		work[ipsi + iwork[k] - 1] = temp1;
+	    		//
+	    		//   compute coefficients g(*)
+	    		//
+	    		//   initialize v(*) and set w(*).  g(2) is set in data statement
+	    		//
+	    		if (iwork[ns] <= 1) {
+	    		    for (iq = 1; iq <= iwork[k]; iq++) {
+	    		        temp3 = iq*(iq+1);
+	    		        work[iv + iq - 1] = 1.0/temp3;
+	    		        work[iw + iq - 1] = work[iv + iq - 1];
+	    		    } // for (iq = 1; iq <= iwork[k]; iq++)
+	    		} // if (iwork[ns] <= 1)
+	    		else {
+	    			//
+	    			// if order was raised, update diagonal part of v(*)
+	    			//
+		    		if (iwork[k] > iwork[kold]) {
+		    		    temp4 = iwork[k]*kp1;
+		    		    work[iv + k - 1] = 1.0/temp4;
+		    		    int nsm2 = iwork[ns] - 2;
+		    		    if (nsm2 >= 1) {
+		    		    	for (j = 1; j <= nsm2; j++) {
+		    		    	    i = iwork[k] - j;
+		    		    	    work[iv + i - 1] = work[iv + i - 1] - work[ialpha + j]*work[iv + i];
+		    		    	} // for (j = 1; j <= nsm2; j++)
+		    		    } // if (nsm2 >= 1)
+		    		} // if (iwork[k] > iwork[kold])
+		    		//
+		    		// update v(8) and set w(*)
+		    		//
+		    		int limit1 = kp1 - iwork[ns];
+		    		temp5 = work[ialpha + iwork[ns] - 1];
+		    		for (iq = 1; iq <= limit1; iq++) {
+		    			work[iv + iq - 1] = work[iv + iq - 1] - temp5 * work[iv + iq];
+		    			work[iw + iq - 1] = work[iv + iq - 1];
+		    		} // for (iq = 1; iq <= limit1; iq++)
+		    		work[ig + nsp1 - 1] = work[iw];
+	    		} // else
+	    		//
+	    		// compute the g(*) in the work vector w(*)
+	    		//
+	    		int nsp2 = iwork[ns] + 2;
+	    		if (kp1 >= nsp2) {
+	    		    for (i = nsp2; i <= kp1; i++) {
+	    		    	limit2 = kp2 - i;
+	    		    	temp6 = work[ialpha + i - 2];
+	    		    	for (iq = 1; iq <= limit2; iq++) {
+	    		    	    work[iw + iq - 1] = work[iw + iq - 1] - temp6 * work[iw + iq];	
+	    		    	} // for (iq = 1; iq <= limit2; iq++)
+	    		    	work[ig + i - 1] = work[iw];
+	    		    } // for (i = nsp2; i <= kp1; i++)
+	    		} // if (kp1 >= nsp2)
+	    	} // if (iwork[k] >= iwork[ns])
+	    	//       ***     end block 1     ***
+	    	//
+	    	//       ***     begin block 2     ***
+	    	//   predict a solution p(*), evaluate derivatives using predicted
+	    	//   solution, estimate local error at order k and errors at orders k,
+	    	//   k-1, k-2 as if constant step size were used.
+	    	//                   ***
+	    	//
+	    	//   change phi to phi star
+	    	//
+	    	if (iwork[k] >= nsp1) {
+	    		for (i = nsp1; i <= iwork[k]; i++) {
+	    		    temp1 = work[ibeta + i - 1];
+	    		    for (l = 1; l <= neqn; l++) {
+	    		        phi[l-1][i-1] = temp1*phi[l-1][i-1];	
+	    		    } // for (l = 1; l <= neqn; l++)
+	    		} // for (i = nsp1; i <= iwork[k]; i++)
+	    	} // if (iwork[k] >= nsp1)
+	    	//
+	    	// predict solution and differences
+	    	//
+	    	for (l = 1; l <= neqn; l++) {
+	    	    phi[l-1][kp2-1]	 = phi[l-1][kp1-1];
+	    	    phi[l-1][kp1-1] = 0.0;
+	    	    work[ip + l - 1] = 0.0;
+	    	} // for (l = 1; l <= neqn; l++)
+	    	for (j = 1; j <= iwork[k]; j++) {
+	    	    i = kp1 - j;
+	    	    ip1 = i+1;
+	    	    temp2 = work[ig + i - 1];
+	    	    for (l = 1; l <= neqn; l++) {
+	    	        work[ip + l - 1] = work[ip + l - 1] + temp2*phi[l-1][i-1];
+	    	        phi[l-1][i-1] = phi[l-1][i-1] + phi[l-1][ip1-1];
+	    	    } // for (l = 1; l <= neqn; l++)
+	    	} // for (j = 1; j <= iwork[k]; j++)
+	    	if (!nornd) {
+	    		for (l = 1; l <= neqn; l++) {
+	    		    tau = work[ih]*work[ip + l - 1] - phi[l-1][14];
+	    		    work[ip + l - 1] = work[iyy + l - 1] + tau;
+	    		    phi[l-1][15] = (work[ip + l - 1] - work[iyy + l - 1]) - tau;
+	    		} // for (l = 1; l <= neqn; l++)
+	    	} // if (!nornd)
+	    	else {
+	    		for (l = 1; l <= neqn; l++) {
+	    			work[ip + l - 1] = work[iyy + l - 1] + work[ih]*work[ip + l - 1];
+	    		} // for (l = 1; l <= neqn; l++)
+	    	} // else
+	    	xold = work[ix];
+	    	work[ix] = work[ix] + work[ih];
+	    	absh = Math.abs(work[ih]);
+	    	double p[] = new double[neqn];
+		    for (i = 0; i < neqn; i++) {
+		    	p[i] = work[ip + i];
+		    }
+		    yp = new double[neqn];
+		    f(work[ix], p, yp);
+		    for (i = 0; i < neqn; i++) {
+		    	work[iyp + i] = yp[i];
+		    }
+		    //
+		    // estimate errors at k,k-1,k-2
+		    //
+		    erkm2 = 0.0;
+		    erkm1 = 0.0;
+		    erk = 0.0;
+		    for (l = 1; l <= neqn; l++) {
+		    	temp3 = 1.0/work[iwt + l - 1];
+		    	temp4 = work[iyp + l - 1] - phi[l-1][0];
+		    	if (km2 > 0) {
+		    		erkm2 = erkm2 + Math.pow(((phi[l-1][km1-1]+temp4)*temp3),2);
+		    	}
+		    	if (km2 >= 0) {
+		    		erkm1 = erkm1 + Math.pow(((phi[l-1][iwork[k]-1]+temp4)*temp3), 2);
+		    	}
+		        erk = erk + Math.pow((temp4*temp3), 2);
+		    } // for (l = 1; l <= neqn; l++)
+		    if (km2 > 0) {
+		    	erkm2 = absh * work[isig + km1 -1]*gstr[km2-1]*Math.sqrt(erkm2);
+		    }
+		    if (km2 >= 0) {
+		    	erkm1 = absh * work[isig + iwork[k] - 1]*gstr[km1-1]*Math.sqrt(erkm1);
+		    }
+		    temp5 = absh*Math.sqrt(erk);
+		    err = temp5*(work[ig + iwork[k] - 1] - work[ig + kp1 - 1]);
+		    erk = temp5 * work[isig + kp1 -1]*gstr[iwork[k] - 1];
+		    knew = iwork[k];
+		    //
+		    // test if order should be lowered
+		    //
+		    if (km2 > 0) {
+		    	if (Math.max(erkm1, erkm2) <= erk) {
+		    		knew = km1;
+		    	}
+		    } // if (km2 > 0)
+		    else if (km2 == 0) {
+		    	if (erkm1 <= 0.5*erk) {
+		    		knew = km1;
+		    	}
+		    } // else if (km2 == 0)
+		    //
+		    // test if successful
+		    //
+		    if (err <= eps[0]) {
+		    	break;
+		    }
+	    	//       ***     end block 2     ***
+	    	//
+	    	//       ***     begin block 3     ***
+	    	//   the step is unsuccessful.  restore  x, phi(*,*), psi(*) .
+	    	//   if third consecutive failure, set order to one.  if step fails more
+	    	//   than three times, consider an optimal step size.  double error
+	    	//   tolerance and return if estimated step size is too small for machine
+	    	//   precision.
+	    	//                   ***
+	    	//
+	    	//   restore x, phi(*,*) and psi(*)
+	    	//
+	    	phase1 = false;
+	    	work[ix] = xold;
+	    	for (i = 1; i <= iwork[k]; i++) {
+	    	    temp1 = 1.0/work[ibeta + i - 1];
+	    	    ip1 = i+1;
+	    	    for (l = 1; l <= neqn; l++) {
+	    	        phi[l-1][i-1] = temp1*(phi[l-1][i-1] - phi[l-1][ip1-1]);	
+	    	    } // for (l = 1; l <= neqn; l++) 
+	    	} // for (i = 1; i <= iwork[k]; i++)
+	    	if (iwork[k] >= 2) {
+	    		for (i = 2; i <= iwork[k]; i++) {
+	    		    work[ipsi + i - 2] = work[ipsi + i - 1] - work[ih];	
+	    		} // for (i = 2; i <= iwork[k]; i++)
+	    	} // if (iwork[k] >= 2)
+	    	//
+	    	// on third failure, set order to one.  thereafter, use optimal step size
+	    	//
+	    	ifail = ifail + 1;
+	    	temp2 = 0.5;
+	    	if ((ifail -3) > 0) {
+	    		if (p5eps < 0.25*erk) {
+	    			temp2 = Math.sqrt(p5eps/erk);
+	    		}
+	    	} // if ((ifail -3) > 0)
+	    	if ((ifail - 3) >= 0) {
+	    		knew = 1;
+	    	}
+	    	work[ih] = temp2*work[ih];
+	    	iwork[k] = knew;
+		    if (Math.abs(work[ih]) >= fouru*Math.abs(work[ix])) {
+		    	continue;
+		    }
+		    crash[0] = true;
+		    if (work[ih] >= 0) {
+		    	work[ih] = fouru*Math.abs(work[ix]);
+		    }
+		    else {
+		    	work[ih] = -fouru*Math.abs(work[ix]);	
+		    }
+		    eps[0] = eps[0] + eps[0];
+		    return;
+    	} // while(true)
+    	//       ***     end block 3     ***
+    	//
+    	//       ***     begin block 4     ***
+    	//   the step is successful.  correct the predicted solution, evaluate
+    	//   the derivatives using the corrected solution and update the
+    	//   differences.  determine best order and step size for next step.
+    	//                   ***
+	    iwork[kold] = iwork[k];
+	    work[ihold] = work[ih];
+	    //
+	    // correct and evaluate
+	    //
+	    temp1 = work[ih]*work[ig + kp1 - 1];
+	    if (!nornd) {
+	    	for (l = 1; l <= neqn; l++) {
+	    	    rho = temp1 * (work[iyp+l-1] - phi[l-1][0]) - phi[l-1][15]; 
+	    	    work[iyy+l-1] = work[ip+l-1] + rho;
+	    	    phi[l-1][14] = (work[iyy+l-1] - work[ip+l-1]) - rho;
+	    	} // for (l = 1; l <= neqn; l++)
+	    } // if (!nornd)
+	    else {
+	    	for (l = 1; l <= neqn; l++) {
+	    	    work[iyy+l-1] = work[ip+l-1] + temp1*(work[iyp+l-1] - phi[l-1][0]);	
+	    	} // for (l = 1; l <= neqn; l++)
+	    } // else
+	    yy = new double[neqn];
+	    for (i = 0; i < neqn; i++) {
+	    	yy[i] = work[iyy + i];
+	    }
+	    yp = new double[neqn];
+	    f(work[ix], yy, yp);
+	    for (i = 0; i < neqn; i++) {
+	    	work[iyp + i] = yp[i];
+	    }
+	    // 
+	    // update differences for next step
+	    //
+	    for (l = 1; l <= neqn; l++) {
+	        phi[l-1][kp1-1] = work[iyp+l-1] - phi[l-1][0];
+	        phi[l-1][kp2-1] = phi[l-1][kp1-1] - phi[l-1][kp2-1];
+	    } // for (l = 1; l <= neqn; l++)
+	    for (i = 1; i <= iwork[k]; i++) {
+	        for (l = 1; l <= neqn; l++) {
+	        	phi[l-1][i-1] = phi[l-1][i-1] + phi[l-1][kp1-1];
+	        } // for (l = 1; l <= neqn; l++) 
+	    } // for (i = 1; i <= iwork[k]; i++)
+	    //
+	    //   estimate error at order k+1 unless:
+	    //     in first phase when always raise order,
+	    //     already decided to lower order,
+	    //     step size not constant so estimate unreliable
+	    //
+	    erkp1 = 0.0;
+	    if ((knew == km1) || (iwork[k] == 12)) {
+	    	phase1 = false;
+	    }
+	    if (phase1) {
+	        do450 = true;
+	        do455 = true;
+	    } // if (phase1)
+	    else { // !phase1
+	        if (knew == km1) {
+	        	do450 = false;
+	        	do455 = true;
+	        } // if (knew == km1)
+	        else { // knew != km1
+	            if (kp1 > iwork[ns]) {
+	            	do450 = false;
+	            	do455 = false;
+	            } // if (kp1 > iwork[ns])
+	            else { // kp1 <= iwork[ns]
+	            	for (l = 1; l <= neqn; l++) {
+	            	    erkp1 = erkp1 + Math.pow((phi[l-1][kp2-1]/work[iwt+l-1]), 2);	
+	            	} // for (l = 1; l <= neqn; l++)
+	            	erkp1 = absh*gstr[kp1-1]*Math.sqrt(erkp1);
+	            	//
+	            	// using estimated error at order k+1, determine approximate order
+	            	// for next step
+	            	//
+	            	if (iwork[k] <= 1) {
+	            	    if (erkp1 >= 0.5*erk) {
+	            	    	do450 = false;
+	            	    	do455 = false;
+	            	    }
+	            	    else {
+	            	    	do450 = true;
+	            	    	do455 = true;
+	            	    }
+	            	} // if (iwork[k] <= 1)
+	            	else { // iwork[k] > 1
+	            	    if (erkm1 <= Math.min(erk, erkp1)) {
+	            	    	do450 = false;
+	            	    	do455 = true;
+	            	    }
+	            	    else {
+	            	    	if ((erkp1 >= erk) || (iwork[k] == 12)) {
+	            	    		do450 = false;
+	            	    		do455 = false;
+	            	    	}
+	            	    	else {
+	            	    		do450 = true;
+	            	    		do455 = true;
+	            	    	}
+	            	    }
+	            	} // else iwork[k] > 1
+	            } // else kp1 <= iwork[ns]
+	        } // else knew != km1
+	    } // else !phase1
+	    //
+	    // here erkp1 .lt. erk .lt. dmax1(erkm1,erkm2) else ordere would have
+	    // been lowered in block 2.  thus order is to be raised
+	    //
+	    // raise order\
+	    // 
+	    if (do450) {
+	    	iwork[k] = kp1;
+	    	erk = erkp1;
+	    	do455 = false;
+	    } // if (do450)
+	    //
+	    // lower order
+	    //
+	    if (do455) {
+	    	iwork[k] = km1;
+	    	erk = erkm1;
+	    } // if (do455)
+	    //
+	    // with new order detrmine appropriate step size for next step
+	    //
+	    hnew = work[ih] + work[ih];
+	    if (phase1) {
+	    	work[ih] = hnew;
+	    	return;
+	    }
+	    if (p5eps >= erk*two[iwork[k]]) {
+	    	work[ih] = hnew;
+	    	return;
+	    }
+	    hnew = work[ih];
+	    if (p5eps >= erk) {
+	    	work[ih] = hnew;
+	    	return;
+	    }
+	    temp2 = iwork[k] + 1;
+	    r = Math.pow((p5eps/erk), (1.0/temp2));
+	    hnew = absh*Math.max(0.5, Math.min(0.9,r));
+	    if (work[ih] >= 0) {
+	    	hnew = Math.abs(Math.max(hnew, fouru*Math.abs(work[ix])));
+	    }
+	    else {
+	    	hnew = -Math.abs(Math.max(hnew, fouru*Math.abs(work[ix])));	
+	    }
+	    work[ih] = hnew;
+	    return;
+	    // ***  end block 4 ***
     }
     
     public abstract void f(double t, double y[], double yp[]);
