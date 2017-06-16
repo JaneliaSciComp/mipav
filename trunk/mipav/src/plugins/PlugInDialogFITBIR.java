@@ -37,15 +37,9 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -230,8 +224,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     private static final int RESOLVE_CONFLICT_CSV = 1;
 
     private static final int RESOLVE_CONFLICT_IMG = 2;
-    
+
     private static final String svnVersion = "$Rev$";
+
     private static final String svnLastUpdate = "$Date$";
 
     private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
@@ -278,75 +273,76 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     private FormStructureData fsData = null;
+    
+    private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
 
     private JLabel requiredLabel;
 
     private JDialog deidentDialog;
-    
+
     public static final String[] anonymizeTagIDs = {
-        //"0008,0014", // instance creator UID
-        //"0008,0018", // SOP instance UID
-        //"0008,0050", // accession number
-        //"0008,0080", // institution name
-        //"0008,0081", // institution address
-        "0008,0090", // referring physician's name
-        "0008,0092", // referring physician's address
-        "0008,0094", // referring physician's telephone numbers
-        //"0008,1010", // station name
-        //"0008,1030", // study description
-        //"0008,103E", // series description
-        //"0008,1040", // institutional department name
-        "0008,1048", // physician(s) of record
-        "0008,1050", // performing physician's name
-        "0008,1060", // name of physician reading study
-        "0008,1070", // operator's name
-        "0008,1080", // admitting diagnoses description
-        //"0008,1155", // Referenced SOP instance UID
-        "0008,2111", // derivation description
-        
-        "0010,0010", // patient name
-        "0010,0020", // patient ID
-        "0010,0030", // patient's birth date
-        "0010,0032", // patient's birth time
-        //"0010,0040", // patient's sex
-        "0010,0050", // patient Insurance plan code sequence
-        "0010,1000", // other patient IDs
-        "0010,1001", // other patient names
-        "0010,1005", // patient's birth name
-        //"0010,1010", // patient's age
-        //"0010,1020", // patient's size
-        //"0010,1030", // patient's weight
-        "0010,1040", // patient's address
-        "0010,1060", // patient's mother's birth name
-        "0010,1090", // medical record locator
-        "0010,2154", // patient's telephone numbers
-        //"0010,2160", // patient ethnic group
-        "0010,2180", // occupation
-        "0010,21B0", // additional patient's history
-        "0010,21D0", // patient's last menstrual date
-        "0010,21F0", // patient religious preference
-        "0010,4000", // patient comments.
+            // "0008,0014", // instance creator UID
+            // "0008,0018", // SOP instance UID
+            // "0008,0050", // accession number
+            // "0008,0080", // institution name
+            // "0008,0081", // institution address
+            "0008,0090", // referring physician's name
+            "0008,0092", // referring physician's address
+            "0008,0094", // referring physician's telephone numbers
+            // "0008,1010", // station name
+            // "0008,1030", // study description
+            // "0008,103E", // series description
+            // "0008,1040", // institutional department name
+            "0008,1048", // physician(s) of record
+            "0008,1050", // performing physician's name
+            "0008,1060", // name of physician reading study
+            "0008,1070", // operator's name
+            "0008,1080", // admitting diagnoses description
+            // "0008,1155", // Referenced SOP instance UID
+            "0008,2111", // derivation description
 
-        //"0018,1000", // device serial number
-        //"0018,1030", // protocol name
+            "0010,0010", // patient name
+            "0010,0020", // patient ID
+            "0010,0030", // patient's birth date
+            "0010,0032", // patient's birth time
+            // "0010,0040", // patient's sex
+            "0010,0050", // patient Insurance plan code sequence
+            "0010,1000", // other patient IDs
+            "0010,1001", // other patient names
+            "0010,1005", // patient's birth name
+            // "0010,1010", // patient's age
+            // "0010,1020", // patient's size
+            // "0010,1030", // patient's weight
+            "0010,1040", // patient's address
+            "0010,1060", // patient's mother's birth name
+            "0010,1090", // medical record locator
+            "0010,2154", // patient's telephone numbers
+            // "0010,2160", // patient ethnic group
+            "0010,2180", // occupation
+            "0010,21B0", // additional patient's history
+            "0010,21D0", // patient's last menstrual date
+            "0010,21F0", // patient religious preference
+            "0010,4000", // patient comments.
 
-        //"0020,000D", // study instance UID
-        //"0020,000E", // series instance UID
-        //"0020,0010", // study ID
-        //"0020,0052", // frame of reference UID
-        //"0020,0200", // synchronization frame of reference UID
-        "0020,4000", // image comments
+            // "0018,1000", // device serial number
+            // "0018,1030", // protocol name
 
-        // "0040,0275",// request attributes sequence
-        //"0040,A124", // UID
-        "0040,A730", // content sequence
-        
-        //"0088,0140", // storage media file-set UID
+            // "0020,000D", // study instance UID
+            // "0020,000E", // series instance UID
+            // "0020,0010", // study ID
+            // "0020,0052", // frame of reference UID
+            // "0020,0200", // synchronization frame of reference UID
+            "0020,4000", // image comments
 
-        //"3006,0024", // referenced frame of reference UID
-        //"3006,00C2", // related frame of reference UID
+            // "0040,0275",// request attributes sequence
+            // "0040,A124", // UID
+            "0040,A730", // content sequence
+
+    // "0088,0140", // storage media file-set UID
+
+    // "3006,0024", // referenced frame of reference UID
+    // "3006,00C2", // related frame of reference UID
     };
-
 
     /**
      * Text of the privacy notice displayed to the user before the plugin can be used.
@@ -422,6 +418,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         if (response == JOptionPane.NO_OPTION) {
             if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
+                System.gc();
                 System.exit(0);
             } else {
                 return;
@@ -521,14 +518,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         } else if (command.equalsIgnoreCase("Finish")) {
 
-            if (isFinished) {
+            if (isFinished && fileWriterWorkerThread != null && fileWriterWorkerThread.isDone()) {
                 dispose();
                 if (JDialogStandalonePlugin.isExitRequired()) {
+                    System.gc();
                     System.exit(0);
                 }
             } else {
 
-                final javax.swing.SwingWorker<Object, Object> worker = new javax.swing.SwingWorker<Object, Object>() {
+                fileWriterWorkerThread = new javax.swing.SwingWorker<Object, Object>() {
                     @Override
                     public Object doInBackground() {
                         try {
@@ -537,13 +535,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                             e.printStackTrace();
                         }
 
-                        // need to fix this so it actually works
+                        return null;
+                    }
+                    
+                    @Override
+                    public void done() {
                         if (isFinished) {
                             finishButton.setText("Close");
                             finishButton.setEnabled(true);
                         }
-
-                        return null;
                     }
                 };
                 final int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?", "Done adding image datasets?",
@@ -601,7 +601,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     loadCSVButton.setEnabled(false);
                     selectBIDSButton.setEnabled(false);
 
-                    worker.execute();
+                    fileWriterWorkerThread.execute();
                 }
             }
         } else if (command.equalsIgnoreCase("EditDataElements")) {
@@ -3116,7 +3116,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private boolean readCSVFile() {
         BufferedReader br = null;
-        
+
         try {
             String str;
             final FileInputStream fis = new FileInputStream(csvFile);
@@ -3690,16 +3690,11 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 printlnToLog("Creating thumbnail image:\t" + outputSubDir + outputFileNameBase + ".jpg");
 
-                ModelImage thumbnailImage = imgFileInfo.getThumbnailImg();
+                MemoryImageSource thumbnailImageData = imgFileInfo.getThumbnailImgData();
 
-                if (thumbnailImage != null) {
+                if (thumbnailImageData != null) {
                     final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputSubDir, true);
-                    writeThumbnailJIMI(thumbnailImage, opts);
-                    if (thumbnailImage != null) {
-                        thumbnailImage.disposeLocal();
-                        thumbnailImage = null;
-                        imgFileInfo.setThumbnailImg(null);
-                    }
+                    writeThumbnailJIMI(thumbnailImageData, opts);
                 }
 
                 String imagePath = null;
@@ -4356,16 +4351,56 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     public Dimension getPanelSize() {
         return new Dimension(previewImgPanel.getBounds().width, previewImgPanel.getBounds().height);
     }
-
+    
     /**
      * Writes a JIMI file to store the image.
      * 
-     * @param image The image to write.
+     * @param imgData The image to write.
      * @param options The options to use to write the image.
      * 
      * @return Flag indicating that this was a successful write.
      */
-    private boolean writeThumbnailJIMI(final ModelImage image, final FileWriteOptions options) {
+    private boolean writeThumbnailJIMI(final MemoryImageSource imgData, final FileWriteOptions options) {
+
+        final int extIndex = options.getFileName().indexOf(".");
+        final String prefix = options.getFileName().substring(0, extIndex); // Used
+                                                                            // for
+                                                                            // setting
+                                                                            // file
+                                                                            // name
+        final String fileSuffix = options.getFileName().substring(extIndex);
+        String name;
+
+        name = options.getFileDirectory() + prefix + fileSuffix;
+
+        try {
+            Image img = createImage(imgData);
+            Jimi.putImage(img, name);
+            img.flush();
+            img = null;
+        } catch (final JimiException jimiException) {
+            Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
+
+            jimiException.printStackTrace();
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Creates a set of thumbnail image data from a lightbox ModelImage.
+     * 
+     * @param image The lightbox image to create an Image from.
+     * 
+     * @return The image data, ready for rendering/JIMI writing.
+     */
+    private MemoryImageSource createThumbnailDataForWriting(final ModelImage image) {
+        if (image == null) {
+            return null;
+        }
+        
         final int imageSize = image.getExtents()[0] * image.getExtents()[1];
         final int[] paintBuffer = new int[imageSize];
         final ColorRGBA colorMappedA = new ColorRGBA();
@@ -4424,32 +4459,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
         }
 
-        final MemoryImageSource memImageA = new MemoryImageSource(image.getExtents()[0], image.getExtents()[1], paintBuffer, 0, image.getExtents()[0]);
-
-        final int extIndex = options.getFileName().indexOf(".");
-        final String prefix = options.getFileName().substring(0, extIndex); // Used
-                                                                            // for
-                                                                            // setting
-                                                                            // file
-                                                                            // name
-        final String fileSuffix = options.getFileName().substring(extIndex);
-        String name;
-
-        final Image img = createImage(memImageA);
-
-        name = options.getFileDirectory() + prefix + fileSuffix;
-
-        try {
-            Jimi.putImage(img, name);
-        } catch (final JimiException jimiException) {
-            Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
-
-            jimiException.printStackTrace();
-
-            return false;
-        }
-
-        return true;
+        return new MemoryImageSource(image.getExtents()[0], image.getExtents()[1], paintBuffer, 0, image.getExtents()[0]);
     }
 
     @Override
@@ -6124,12 +6134,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         if (srcImage != null) {
                             // basic check that image data is de-identified
                             boolean isDeidentifed = deindentificationCheck(srcImage);
-                            
-                            if (!isDeidentifed) {
+
+                            if ( !isDeidentifed) {
                                 // if not de-identified, the dialog currently exits the imaging tool completely
                                 continue;
                             }
-                            
+
                             for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
                                 if (group.getName().equalsIgnoreCase(IMG_IMAGE_INFO_GROUP)) {
                                     final GroupRepeat repeat = fsData.getGroupRepeat(group.getName(), curRepeatNum);
@@ -6576,7 +6586,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         origSrcFile = new File(parentDir + File.separator + imageFile);
                     }
                     filePath = origSrcFile.getAbsolutePath();
-                    
+
                     // if directory, try to open all files within as multifile
                     if (origSrcFile.isDirectory()) {
                         isMultifile = true;
@@ -6584,7 +6594,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         if (fileList.length > 0) {
                             origSrcFile = fileList[0];
                             filePath = origSrcFile.getAbsolutePath();
-                            
+
                             System.out.println("Opening from dir:\t" + filePath);
                         } else {
                             MipavUtil.displayError("Unable to open image files in specified directory: " + filePath);
@@ -6622,20 +6632,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                 addedPreviewImage = true;
 
-                final ModelImage thumbnailImage = createThumbnailImage(srcImage);
+                ModelImage thumbnailImage = createThumbnailImage(srcImage);
 
                 if (launchedFromInProcessState) {
                     final int selectedRow = structTable.getSelectedRow();
                     previewImages.set(selectedRow, previewImg);
                     previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
                     structRowImgFileInfoList.set(selectedRow, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile,
-                            FileUtility.getFileNameList(srcImage), thumbnailImage));
+                            FileUtility.getFileNameList(srcImage), createThumbnailDataForWriting(thumbnailImage)));
                 } else {
                     final int size = previewImages.size();
                     previewImages.set(size - 1, previewImg);
                     previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
                     structRowImgFileInfoList.set(size - 1, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile, FileUtility.getFileNameList(srcImage),
-                            thumbnailImage));
+                            createThumbnailDataForWriting(thumbnailImage)));
+                }
+                
+                // cleanup thumbnail modelimage
+                if (thumbnailImage != null) {
+                    thumbnailImage.disposeLocal();
+                    thumbnailImage = null;
                 }
 
                 previewImgPanel.validate();
@@ -8244,20 +8260,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                             addedPreviewImage = true;
 
-                            final ModelImage thumbnailImage = createThumbnailImage(srcImage);
+                            ModelImage thumbnailImage = createThumbnailImage(srcImage);
 
                             if (launchedFromInProcessState) {
                                 final int selectedRow = structTable.getSelectedRow();
                                 previewImages.set(selectedRow, previewImg);
                                 previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
                                 structRowImgFileInfoList.set(selectedRow,
-                                        new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage), thumbnailImage));
+                                        new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage), createThumbnailDataForWriting(thumbnailImage)));
                             } else {
                                 final int size = previewImages.size();
                                 previewImages.set(size - 1, previewImg);
                                 previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
                                 structRowImgFileInfoList.set(size - 1,
-                                        new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage), thumbnailImage));
+                                        new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage), createThumbnailDataForWriting(thumbnailImage)));
+                            }
+                            
+                            // cleanup thumbnail modelimage
+                            if (thumbnailImage != null) {
+                                thumbnailImage.disposeLocal();
+                                thumbnailImage = null;
                             }
 
                             previewImgPanel.validate();
@@ -8267,10 +8289,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         if (srcImage != null) {
                             // basic check that image data is de-identified
                             boolean isDeidentifed = deindentificationCheck(srcImage);
-                            
+
                             if (isDeidentifed) {
                                 String tempName = currFile;
-    
+
                                 for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
                                     final String curDeName = deVal.getName();
                                     if (curDeName.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
@@ -8283,7 +8305,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         tf.setEnabled(false);
                                     }
                                 }
-    
+
                                 if ( !currFile.equals(tempName) && !currFile.equals("")) {
                                     clearFields(fsData);
                                 }
@@ -8652,7 +8674,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         if (fileFormatString.equalsIgnoreCase("dicom")) {
             Vector<FileDicomTag> problemTags = new Vector<FileDicomTag>();
-            //for (FileInfoBase fInfo : img.getFileInfo()) {
+            // for (FileInfoBase fInfo : img.getFileInfo()) {
             FileInfoBase fInfo = img.getFileInfo(0);
             FileInfoDicom dicomInfo = (FileInfoDicom) fInfo;
 
@@ -8660,30 +8682,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             for (String anonTagKey : anonymizeTagIDs) {
                 FileDicomTag tag = tagTable.get(anonTagKey);
-                if ( tag != null && tag.getValue(true) != null && ! ((String) tag.getValue(true)).trim().equals("")) {
+                if (tag != null && tag.getValue(true) != null && ! ((String) tag.getValue(true)).trim().equals("")) {
                     problemTags.add(tag);
                 }
             }
-            //}
-            
+            // }
+
             if (problemTags.size() > 0) {
                 String disclaimerText = new String(
-                        "<html>" +
-                        "The table below lists fields in the loaded image data with potential Personally Identifiable Information (PII) or Protected Health Information." +
-                        "<br><br>" + 
-                        "Please review all the fields below.  If any fields contain PII/PHI, exit the Imaging Tool and fully de-identify your image data." +
-                        "<br><br>" + 
-                        "There may be fields in your data that contain PII/PHI that are not highlighted in this table.  DICOM private tags, and sequence tags are not examined." +
-                        "<br><br>" + 
-                        "<b>Remember, <em>YOU</em> are responible for the de-identification of all submitted data.</b>  This table is for informational purposes only." + 
-                        "<br><br>" + 
-                        "Base file loaded:" +
-                        "<br>" + 
-                        fInfo.getFileDirectory() + fInfo.getFileName() +
-                		"</html>");
+                        "<html>"
+                                + "The table below lists fields in the loaded image data with potential Personally Identifiable Information (PII) or Protected Health Information."
+                                + "<br><br>"
+                                + "Please review all the fields below.  If any fields contain PII/PHI, exit the Imaging Tool and fully de-identify your image data."
+                                + "<br><br>"
+                                + "There may be fields in your data that contain PII/PHI that are not highlighted in this table.  DICOM private tags, and sequence tags are not examined."
+                                + "<br><br>"
+                                + "<b>Remember, <em>YOU</em> are responible for the de-identification of all submitted data.</b>  This table is for informational purposes only."
+                                + "<br><br>" + "Base file loaded:" + "<br>" + fInfo.getFileDirectory() + fInfo.getFileName() + "</html>");
                 JLabel disclaimerLabel = new JLabel(disclaimerText);
                 disclaimerLabel.setFont(serif12);
-                
+
                 TagTableModel tableModel = new TagTableModel(problemTags);
                 JTable table = new JTable(tableModel);
                 table.setFont(serif12);
@@ -8692,26 +8710,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 table.setDefaultRenderer(String.class, new LineWrapCellRenderer());
                 TableColumnModel colModel = table.getColumnModel();
                 colModel.getColumn(0).setMaxWidth(120);
-                
+
                 final int fontHeight = table.getFontMetrics(this.getFont()).getHeight();
                 final int fontMaxAdv = table.getFontMetrics(this.getFont()).getMaxAdvance();
                 for (int i = 0; i < table.getRowCount(); i++) {
                     int textLength = ((String) table.getModel().getValueAt(i, 2)).length();
                     int lines = textLength / fontMaxAdv + 1;
                     int height = fontHeight * lines;
-                    
+
                     table.setRowHeight(i, height + 5);
                 }
-                
+
                 DefaultTableCellRenderer textRenderer = new DefaultTableCellRenderer();
                 textRenderer.setHorizontalAlignment(SwingConstants.LEFT);
                 textRenderer.setVerticalAlignment(SwingConstants.TOP);
                 for (int i = 0; i < table.getColumnCount(); i++) {
                     table.getColumnModel().getColumn(i).setCellRenderer(textRenderer);
                 }
-                
+
                 JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
-                
+
                 JButton okButton = new JButton("I have reviewed the data and no PII/PHI is present");
                 okButton.setActionCommand("okayPII");
                 okButton.addActionListener(this);
@@ -8720,7 +8738,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 cancelButton.addActionListener(this);
                 buttonPanel.add(okButton);
                 buttonPanel.add(cancelButton);
-                
+
                 GridBagConstraints gbc = new GridBagConstraints();
                 gbc.insets = new Insets(2, 5, 2, 5);
                 gbc.fill = GridBagConstraints.BOTH;
@@ -8729,22 +8747,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 gbc.gridx = 0;
                 gbc.anchor = GridBagConstraints.NORTH;
                 gbc.gridy = 0;
-                
+
                 JPanel dialogPanel = new JPanel(new GridBagLayout());
                 dialogPanel.add(disclaimerLabel, gbc);
-                
+
                 gbc.weighty = 1;
                 gbc.weighty = 1;
                 gbc.gridy++;
                 dialogPanel.add(new JScrollPane(table), gbc);
-                
+
                 gbc.weightx = 0;
                 gbc.weighty = 0;
                 gbc.gridy++;
                 gbc.fill = GridBagConstraints.NONE;
                 gbc.anchor = GridBagConstraints.SOUTH;
                 dialogPanel.add(buttonPanel, gbc);
-                
+
                 deidentDialog = new JDialog(this, true);
                 deidentDialog.add(dialogPanel);
                 deidentDialog.setSize(1000, 800);
@@ -8756,17 +8774,17 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         return true;
     }
-    
+
     private class TagTableModel extends AbstractTableModel {
         private static final long serialVersionUID = 51886231625427264L;
 
         private String[] columnNames = new String[] {"DICOM Tag", "Name", "Value"};
-        
+
         private Vector<Vector<String>> rowData;
-        
+
         public TagTableModel(Vector<FileDicomTag> problemTags) {
             rowData = new Vector<Vector<String>>();
-            
+
             for (FileDicomTag tag : problemTags) {
                 Vector<String> colData = new Vector<String>();
                 colData.add(tag.getKey().toString());
@@ -8800,33 +8818,33 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             return false;
         }
     }
-    
+
     private class LineWrapCellRenderer extends JTextArea implements TableCellRenderer {
         private static final long serialVersionUID = -942403827312154298L;
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            this.setText((String)value);
+            this.setText((String) value);
             this.setWrapStyleWord(true);
             this.setLineWrap(true);
-            
-            int fontHeight = this.getFontMetrics(this.getFont()).getHeight();
+
+            /*int fontHeight = this.getFontMetrics(this.getFont()).getHeight();
             int textLength = this.getText().length();
             int lines = textLength / this.getColumns() + 1;
-            
+
             final int height = fontHeight * lines;
-            
+
             final int rowIndex = row;
             final JTable jTable = table;
-            
+
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                     jTable.setRowHeight(rowIndex, height);
                 }
             });
-            table.setRowHeight(row, height);
-            
+            table.setRowHeight(row, height);*/
+
             return this;
         }
 
@@ -8918,6 +8936,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     MipavUtil.displayError("Error in connecting to web service");
                     parent.dispose();
                     if (JDialogStandalonePlugin.isExitRequired()) {
+                        System.gc();
                         System.exit(0);
                     }
                 }
@@ -8929,6 +8948,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if (e.getSource() == progressCancelButton) {
                 dispose();
                 if (JDialogStandalonePlugin.isExitRequired()) {
+                    System.gc();
                     System.exit(0);
                 }
             }
@@ -9017,6 +9037,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     MipavUtil.displayError("Error in connecting to web service");
                     parent.dispose();
                     if (JDialogStandalonePlugin.isExitRequired()) {
+                        System.gc();
                         System.exit(0);
                     }
                 }
@@ -9028,6 +9049,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             if (e.getSource() == progressCancelButton) {
                 dispose();
                 if (JDialogStandalonePlugin.isExitRequired()) {
+                    System.gc();
                     System.exit(0);
                 }
             }
@@ -9305,7 +9327,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     public class ImgFileInfo {
         public List<String> origFiles;
 
-        public ModelImage thumbnailImg;
+        public MemoryImageSource thumbnailImgData;
 
         public boolean isMultifile;
 
@@ -9317,10 +9339,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             this.imgFilePath = imgFilePath;
         }
 
-        public ImgFileInfo(final String imgFilePath, final boolean isMultifile, final List<String> origFiles, final ModelImage thumbnailImg) {
+        public ImgFileInfo(final String imgFilePath, final boolean isMultifile, final List<String> origFiles, final MemoryImageSource thumbnailImgData) {
             super();
             this.origFiles = origFiles;
-            this.thumbnailImg = thumbnailImg;
+            this.thumbnailImgData = thumbnailImgData;
             this.isMultifile = isMultifile;
             this.imgFilePath = imgFilePath;
         }
@@ -9333,12 +9355,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             this.origFiles = origFiles;
         }
 
-        public ModelImage getThumbnailImg() {
-            return thumbnailImg;
+        public MemoryImageSource getThumbnailImgData() {
+            return thumbnailImgData;
         }
 
-        public void setThumbnailImg(final ModelImage thumbnailImg) {
-            this.thumbnailImg = thumbnailImg;
+        public void setThumbnailImgData(final MemoryImageSource thumbnailImgData) {
+            this.thumbnailImgData = thumbnailImgData;
         }
 
         public boolean isMultifile() {
