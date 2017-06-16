@@ -40,7 +40,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter impl
     /** .tps contains int N and float C[][] for thin plate spline */
     public static final int MATRIX = 7;
 
-    /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head; *.nii, *.rec, *.frec, *.nrrd). */
+    /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head; *.nii, *.rec, *.frec, *.nrrd, *.gz, *.bz2, *.zip). */
     public static final int TECH = 8;
 
     /** Microscopy files (*.avi; *.ics; *.liff; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml). */
@@ -101,7 +101,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter impl
             "Graphs (*.plt)", // PLOT
             "Look-Up-Table Files (*.lut)", // LUT
             "Matrix Files (*.mtx; *.mat; *.xfm; *.tps; *.1D)", // MATRIX
-            "Medical (*.dcm; *.xml, *ima; *.img; *.mnc; *.sig; *.head; *.nii; *.rec; *.frec; *.nrrd; *.gz; *.bz2)", // TECH
+            "Medical (*.dcm; *.xml, *ima; *.img; *.mnc; *.sig; *.head; *.nii; *.rec; *.frec; *.nrrd; *.gz; *.bz2; *.zip)", // TECH
             "Microscopy (*.avi; *.ics; *.liff; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml)", // MICROSCOPY
             "Misc.(*.avi; *.bmp; *.pcx; *.png; *.tga; *.xbm; *.xpm)", // MISC
             "Optical (*.avi; *.bmp; *.img; *.jpg; *.pict; *.psd; *.tif; *.tiff; *.xml)", // OPTICAL
@@ -317,7 +317,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter impl
                         || (extension.equals(".mnc")) || (extension.equals(".sig")) || (extension.equals(".xml"))
                         || (extension.equals(".head")) || (extension.equals(".nii")) || (extension.equals(".rec"))
                         || (extension.equals(".frec")) || (extension.equals(".nrrd")) || (extension.equals(".gz")) || (extension
-                        .equals(".bz2")))) {
+                        .equals(".bz2")) || (extension.equals(".zip")))) {
             return true;
         } else if ( (filterType == ViewImageFileFilter.VOI)
                 && ( (extension.equals(".voi")) || (extension.equals(".oly")))) {
