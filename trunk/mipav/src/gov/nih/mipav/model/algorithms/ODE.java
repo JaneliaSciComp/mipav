@@ -1,14 +1,11 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.view.Preferences;
+
 public abstract class ODE {
 	
 	 // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
-
-    /**
-     * Creates a new ODE object.
-     */
-    public ODE() {}
     
     // This is a port of the FORTRAN code ode.f by L. F. Shampine and M. K. Gordon.
     
@@ -161,6 +158,58 @@ public abstract class ODE {
     
     private double twou;
     private double fouru;
+    
+    private boolean testMode = false;
+    
+    private int testCase;
+    
+    private final int ENRIGHT_AND_PRYCE_A1 = 0;
+    
+    /**
+     * Creates a new ODE object.
+     */
+    public ODE() {
+        int i;
+        int j;
+    	testMode = true;
+    	testCase = ENRIGHT_AND_PRYCE_A1;
+    	Preferences.debug("Enright andPryce #A1 neqn = 1 y' = -y Exponential decay\n");
+    	Preferences.debug("y[0] = 1/n");
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	work = new double[100 + 21*neqn];
+    	iwork = new int[5];
+    	for (i = 0; i < 10; i++) {
+    		y[0] = 0;
+    		t[0] = 0;
+    		tout = 2.0*(i+1);
+    		relerr[0] = 1.0E-8;
+    		abserr[0] = 1.0E-8;
+    		iflag[0] = 1;
+    		for (j = 0; j < work.length; j++) {
+    			work[j] = 0.0;
+    		}
+    		for (j = 0; j < iwork.length; j++) {
+    		    iwork[j] = 0;	
+    		}
+    		driver();
+    		getErrorMessage();
+    		Preferences.debug("Actual value = " + Math.exp(tout) + 
+    				" Calculated value = " + y[0] + "\n");
+    	} // for (i = 0; i < 10; i++)
+    }
+    
+    private void fTestMode(double x, double yy[], double yp[]) {
+        switch(testCase) {
+        case ENRIGHT_AND_PRYCE_A1:
+        	yp[0] = -yy[0];
+        	return;
+        }
+    }
     
     // input neqn = number of equations to be integrated
     // input/output double y[] = new double[neqn]
@@ -438,7 +487,12 @@ public abstract class ODE {
 	    	    	yy[i] = work[iyy + i];
 	    	    }
 	    	    double yp[] = new double[neqn];
-	    	    f(work[ix], yy, yp);
+	    	    if (testMode) {
+	    	    	fTestMode(work[ix], yy, yp);
+	    	    }
+	    	    else {
+	    	        f(work[ix], yy, yp);
+	    	    }
 	    	    for (i = 0; i < neqn; i++) {
 	    	    	work[iyp + i] = yp[i];
 	    	    }
@@ -722,7 +776,12 @@ public abstract class ODE {
     	    	yy[i] = work[iyy + i];
     	    }
     	    yp = new double[neqn];
-    	    f(work[ix], yy, yp);
+    	    if (testMode) {
+    	    	fTestMode(work[ix], yy, yp);
+    	    }
+    	    else {
+    	        f(work[ix], yy, yp);
+    	    }
     	    for (i = 0; i < neqn; i++) {
     	    	work[iyp + i] = yp[i];
     	    }
@@ -912,7 +971,12 @@ public abstract class ODE {
 		    	p[i] = work[ip + i];
 		    }
 		    yp = new double[neqn];
-		    f(work[ix], p, yp);
+		    if (testMode) {
+		    	fTestMode(work[ix], p, yp);
+		    }
+		    else {
+		        f(work[ix], p, yp);
+		    }
 		    for (i = 0; i < neqn; i++) {
 		    	work[iyp + i] = yp[i];
 		    }
@@ -1046,7 +1110,12 @@ public abstract class ODE {
 	    	yy[i] = work[iyy + i];
 	    }
 	    yp = new double[neqn];
-	    f(work[ix], yy, yp);
+	    if (testMode) {
+	    	fTestMode(work[ix], yy, yp);
+	    }
+	    else {
+	        f(work[ix], yy, yp);
+	    }
 	    for (i = 0; i < neqn; i++) {
 	    	work[iyp + i] = yp[i];
 	    }
