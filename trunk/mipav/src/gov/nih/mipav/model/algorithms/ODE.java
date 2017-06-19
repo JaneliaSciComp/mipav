@@ -214,7 +214,7 @@ public abstract class ODE {
     public String getErrorMessage() {
     	String message = null;
     	if (iflag[0] == 2) {
-    		message = new String("In ODE normal return.  Integration reached tout");
+    		message = new String("In ODE normal return.  Integration reached tout\n");
     	}
     	else if (iflag[0] == 3) {
     		message = new String("In ODE integration did not reach tout because error\n" +
@@ -1128,7 +1128,7 @@ public abstract class ODE {
 	    // here erkp1 .lt. erk .lt. dmax1(erkm1,erkm2) else ordere would have
 	    // been lowered in block 2.  thus order is to be raised
 	    //
-	    // raise order\
+	    // raise order
 	    // 
 	    if (do450) {
 	    	iwork[k] = kp1;
@@ -1143,7 +1143,7 @@ public abstract class ODE {
 	    	erk = erkm1;
 	    } // if (do455)
 	    //
-	    // with new order detrmine appropriate step size for next step
+	    // with new order determine appropriate step size for next step
 	    //
 	    hnew = work[ih] + work[ih];
 	    if (phase1) {
@@ -1239,7 +1239,7 @@ public abstract class ODE {
     	//
     	for (j = 2; j <= ki; j++) {
     	    jm1 = j - 1;
-    	    psijm1 = work[ipsi + jm1];
+    	    psijm1 = work[ipsi + jm1 - 1];
     	    gamma = (hi + term)/psijm1;
     	    eta = hi/psijm1;
     	    limit1 = kip1 - j;
