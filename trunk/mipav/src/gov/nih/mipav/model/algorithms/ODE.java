@@ -174,7 +174,7 @@ public abstract class ODE {
     	testMode = true;
     	testCase = ENRIGHT_AND_PRYCE_A1;
     	Preferences.debug("Enright andPryce #A1 neqn = 1 y' = -y Exponential decay\n");
-    	Preferences.debug("y[0] = 1/n");
+    	Preferences.debug("y[0] = 1\n");
     	neqn = 1;
     	y = new double[1];
     	t = new double[1];
@@ -184,7 +184,7 @@ public abstract class ODE {
     	work = new double[100 + 21*neqn];
     	iwork = new int[5];
     	for (i = 0; i < 10; i++) {
-    		y[0] = 0;
+    		y[0] = 1;
     		t[0] = 0;
     		tout = 2.0*(i+1);
     		relerr[0] = 1.0E-8;
@@ -197,8 +197,8 @@ public abstract class ODE {
     		    iwork[j] = 0;	
     		}
     		driver();
-    		getErrorMessage();
-    		Preferences.debug("Actual value = " + Math.exp(tout) + 
+    		Preferences.debug(getErrorMessage());
+    		Preferences.debug("Actual value = " + Math.exp(-tout) + 
     				" Calculated value = " + y[0] + "\n");
     	} // for (i = 0; i < 10; i++)
     }
@@ -207,7 +207,7 @@ public abstract class ODE {
         switch(testCase) {
         case ENRIGHT_AND_PRYCE_A1:
         	yp[0] = -yy[0];
-        	return;
+        	break;
         }
     }
     
@@ -881,7 +881,7 @@ public abstract class ODE {
 	    			//
 		    		if (iwork[k] > iwork[kold]) {
 		    		    temp4 = iwork[k]*kp1;
-		    		    work[iv + k - 1] = 1.0/temp4;
+		    		    work[iv + iwork[k] - 1] = 1.0/temp4;
 		    		    int nsm2 = iwork[ns] - 2;
 		    		    if (nsm2 >= 1) {
 		    		    	for (j = 1; j <= nsm2; j++) {
