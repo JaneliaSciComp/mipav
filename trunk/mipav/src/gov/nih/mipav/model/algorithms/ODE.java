@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.algorithms.AlgorithmCircleToRectangle.ODEtest;
 import gov.nih.mipav.view.Preferences;
 
 public abstract class ODE {
@@ -121,56 +122,74 @@ public abstract class ODE {
     private double relerr[];
     private double abserr[];
     private int iflag[];
-    private double work[];
-    private int iwork[];
     
     // For work:
-    private int ialpha = 0;
-    private int ibeta = 12;
-    private int isig = 24;
-    private int iv = 37;
-    private int iw = 49;
-    private int ig = 61;
-    private int iphase = 74;
-    private int ipsi = 75;
-    private int ix = 87;
-    private int ih = 88;
-    private int ihold = 89;
-    private int istart = 90;
-    private int itold = 91;
-    private int idelsn = 92;
-    private int iyy = 99;
-    private int iwt = iyy + neqn;
-    private int ip = iwt + neqn;
-    private int iyp = ip + neqn;
-    private int iypout = iyp + neqn;
-    private int iphi = iypout + neqn;
+    private double alpha[] = new double[12];
+    private double beta[] = new double[12];
+    private double sig[] = new double[13];
+    private double v[] = new double[12];
+    private double w[] = new double[12];
+    private double g[] = new double[13];
+    private double phase;
+    private double psi[] = new double[12];
+    private double x;
+    private double h;
+    private double hold;
+    private double istart;
+    private double told;
+    private double delsn;
+    private double yy[];
+    private double wt[];
+    private double p[];
+    private double yp[];
+    private double ypout[];
+    private double phi[][];
     
     // For iwork
-    private int ns = 0;
-    private int k = 2;
-    private int kold = 3;
-    private int isnold = 4;
+    private int ns;
+    private int iwork1;
+    private int k;
+    private int kold;
+    private int isnold;
     
-    private boolean start = false;
-    private boolean phase1 = false;
-    private boolean nornd = false;
+    private boolean start;
+    private boolean phase1;
+    private boolean nornd;
     
     private double twou;
     private double fouru;
+    //   the constant  maxnum  is the maximum number of steps allowed in one
+   	//   call to  de .  the user may change this limit by altering the
+   	//   following statement
+    private int maxnum = 2000;
     
     private boolean testMode = false;
     
     private int testCase;
     
     private final int ENRIGHT_AND_PRYCE_A1 = 0;
+    private final int ENRIGHT_AND_PRYCE_A2 = 1;
+    private final int ENRIGHT_AND_PRYCE_A3 = 2;
+    private final int ENRIGHT_AND_PRYCE_A4 = 3;
+    private final int ENRIGHT_AND_PRYCE_A5 = 4;
+    private final int ENRIGHT_AND_PRYCE_B1 = 5;
     
     /**
      * Creates a new ODE object.
+     * Test with:
+     * new ODEtest();
+     * class ODEtest extends ODE {
+    	  public ODEtest() {
+    		  super();
+    	  }
+    	
+    	  public void f(double x, double yy[], double yp[]) {
+    		
+    	  }
+      }
      */
     public ODE() {
         int i;
-        int j;
     	testMode = true;
     	testCase = ENRIGHT_AND_PRYCE_A1;
     	Preferences.debug("Enright andPryce #A1 neqn = 1 y' = -y Exponential decay\n");
@@ -181,32 +200,210 @@ public abstract class ODE {
     	relerr = new double[1];
     	abserr = new double[1];
     	iflag = new int[1];
-    	work = new double[100 + 21*neqn];
-    	iwork = new int[5];
+    	allocateArrays();
     	for (i = 0; i < 10; i++) {
     		y[0] = 1;
     		t[0] = 0;
     		tout = 2.0*(i+1);
-    		relerr[0] = 1.0E-8;
-    		abserr[0] = 1.0E-8;
+    		relerr[0] = 4.441E-16;
+    		abserr[0] = 4.441E-16;
+    		//relerr[0] = 1.0E-16;
+    		//abserr[0] = 1.0E-16;
+    		// If set error tolerances to 1.0E-16, receive message:
+    		//In ODE integration did not reach tout because error
+    		//tolerances too small.  relerr increased to 4.44089209850063E-16
+    		//abserr increased to 4.44089209850063E-16
     		iflag[0] = 1;
-    		for (j = 0; j < work.length; j++) {
-    			work[j] = 0.0;
-    		}
-    		for (j = 0; j < iwork.length; j++) {
-    		    iwork[j] = 0;	
-    		}
+    		clearArrays();
     		driver();
     		Preferences.debug(getErrorMessage());
     		Preferences.debug("Actual value = " + Math.exp(-tout) + 
     				" Calculated value = " + y[0] + "\n");
+    		Preferences.debug("Final time = " + t[0] + "\n");
+    		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
     	} // for (i = 0; i < 10; i++)
+    	
+    	testCase = ENRIGHT_AND_PRYCE_A2;
+    	Preferences.debug("Enright and Pryce #A2 neqn = 1 y' = -(y^3)/2\n");
+    	Preferences.debug("y[0] = 1\n");
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 0.218218"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_A3;
+    	Preferences.debug("Enright and Pryce #A3 neqn = 1 y' = cost(t)*y\n");
+    	Preferences.debug("y[0] = 1\n");
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 2.49165"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_A4;
+    	Preferences.debug("Enright and Pryce #A4 neqn = 1 y' = y*(20-y)/80\n");
+    	Preferences.debug("y[0] = 1\n");
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 17.7302"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_A5;
+    	Preferences.debug("Enright and Pryce #A5 neqn = 1 y' = (y-t)/(y+t)\n");
+    	Preferences.debug("y[0] = 4.0\n");
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 4.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = -0.788783"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_B1;
+    	Preferences.debug("Enright and Pryce #B1 neqn = 2 y1' 2*y1*(1-y2)\n");
+    	Preferences.debug("y2' = -y2*(1-y1)\n");
+    	Preferences.debug("y[0] = 1.0  y[1] = 3.0\n");
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1.0;
+    	y[1] = 3.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= 0.676188"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 0.186082"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+    	
+    }
+    
+    private void allocateArrays() {
+    	 yy = new double[neqn];
+         wt = new double[neqn];
+         p = new double[neqn];
+         yp = new double[neqn];
+         ypout = new double[neqn];
+         phi = new double[neqn][16];	
+    }
+    
+    private void clearArrays() {
+    	int i;
+    	int j;
+    	for (i = 0; i < 12; i++) {
+    		alpha[i] = 0.0;
+    		beta[i] = 0.0;
+    		v[i] = 0.0;
+    		w[i] = 0.0;
+    		psi[i] = 0.0;
+    	}
+    	for (i = 0; i < 13; i++) {
+    		sig[i] = 0.0;
+    		g[i] = 0.0;
+    	}
+    	for (i = 0; i < neqn; i++) {
+    		yy[i] = 0.0;
+    		wt[i] = 0.0;
+    		p[i] = 0.0;
+    		yp[i] = 0.0;
+    		ypout[i] = 0.0;
+    		for (j = 0; j < 16; j++) {
+    			phi[i][j] = 0.0;
+    		}
+    	}
     }
     
     private void fTestMode(double x, double yy[], double yp[]) {
         switch(testCase) {
         case ENRIGHT_AND_PRYCE_A1:
         	yp[0] = -yy[0];
+        	break;
+        case ENRIGHT_AND_PRYCE_A2:
+        	yp[0] = -Math.pow(yy[0], 3.0)/2.0;
+        	break;
+        case ENRIGHT_AND_PRYCE_A3:
+        	yp[0] = Math.cos(x)*yy[0];
+        	break;
+        case ENRIGHT_AND_PRYCE_A4:
+        	yp[0] = yy[0]*(20.0-yy[0])/80.0;
+        	break;
+        case ENRIGHT_AND_PRYCE_A5:
+        	yp[0] = (yy[0] - x)/(yy[0] + x);
+        	break;
+        case ENRIGHT_AND_PRYCE_B1:
+        	yp[0] = 2*yy[0]*(1 - yy[1]);
+        	yp[1] = -yy[1]*(1 - yy[0]);
         	break;
         }
     }
@@ -233,7 +430,7 @@ public abstract class ODE {
     // internal double work[] = new double[100 + 21*neqn]
     // internal int iwork[] = new int[5]
     public ODE(int neqn, double y[], double t[], double tout, double relerr[],
-    		double abserr[], int iflag[], double work[], int iwork[]) {
+    		double abserr[], int iflag[]) {
     	        this.neqn = neqn;
         this.y = y;
         this.t = t;
@@ -241,8 +438,12 @@ public abstract class ODE {
         this.relerr = relerr;
         this.abserr = abserr;
         this.iflag = iflag;
-        this.work = work;
-        this.iwork = iwork;
+        yy = new double[neqn];
+        wt = new double[neqn];
+        p = new double[neqn];
+        yp = new double[neqn];
+        ypout = new double[neqn];
+        phi = new double[neqn][16];
     }
     
     public double[] getY() {
@@ -272,7 +473,7 @@ public abstract class ODE {
     	}
     	else if (iflag[0] == 4) {
     		message = new String("In ODE integration did not reach tout because more than\n" + 
-                       "500 steps needed\n");
+                       maxnum + " steps needed\n");
     	}
     	else if (iflag[0] == 5) {
     		message = new String("In ODE integration did not reach tout because equations\n" + 
@@ -288,8 +489,6 @@ public abstract class ODE {
     	return abserr[0];
     }
      public void driver() {   
-        int i;
-    	int j;
     	
     	// epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
@@ -314,39 +513,29 @@ public abstract class ODE {
         fouru = 4.0 * epsilon;
 
         if (Math.abs(iflag[0]) != 1) {
-            start = (work[istart] > 0.0);
-            phase1 = (work[iphase] > 0.0);
-            nornd = iwork[1] != -1;
+            start = (istart > 0.0);
+            phase1 = (phase > 0.0);
+            nornd = iwork1 != -1;
         }
-        double phi[][] = new double[neqn][16];
-        // While Java is row major order, FORTRAN is column major order
-        for (j =  0; j < 16; j++) {
-        	for (i = 0; i < neqn; i++) {
-        		phi[i][j] = work[iphi + i + j*neqn];
-        	}
-        }
-        de(phi);
-        for (j =  0; j < 16; j++) {
-        	for (i = 0; i < neqn; i++) {
-        		work[iphi + i + j*neqn] = phi[i][j];
-        	}
-        }
-        work[istart] = -1.0;
+       
+        de();
+        
+        istart = -1.0;
         if (start) {
-        	work[istart] = 1.0;
+        	istart = 1.0;
         }
-        work[iphase] = -1.0;
+        phase = -1.0;
         if (phase1) {
-        	work[iphase] = 1.0;
+        	phase = 1.0;
         }
-        iwork[1] = -1;
+        iwork1 = -1;
         if (nornd) {
-        	iwork[1] = 1;
+        	iwork1 = 1;
         }
         return;
     }
     
-    private void de(double phi[][]) {
+    private void de() {
     	//
     	//   ode  merely allocates storage for  de  to relieve the user of the
     	//   inconvenience of a long call list.  consequently  de  is used as
@@ -359,7 +548,6 @@ public abstract class ODE {
     	boolean stiff;
     	boolean crash[] = new boolean[1];
     	double eps[] = new double[1];
-    	int i;
     	int l;
     	//      logical stiff,crash,start,phase1,nornd
     	//      dimension y(neqn),yy(neqn),wt(neqn),phi(neqn,16),p(neqn),yp(neqn),
@@ -376,10 +564,6 @@ public abstract class ODE {
     	//     data fouru/.888d-15/                                              ***
     	//***********************************************************************
     	//
-    	//   the constant  maxnum  is the maximum number of steps allowed in one
-    	//   call to  de .  the user may change this limit by altering the
-    	//   following statement
-    	int maxnum = 500;
     	//
     	//            ***            ***            ***
     	//   test for improper parameters
@@ -414,7 +598,7 @@ public abstract class ODE {
     	}
     	iflag[0] = Math.abs(iflag[0]);
     	if (iflag[0] != 1) {
-    		if (t[0] != work[itold]) {
+    		if (t[0] != told) {
     			iflag[0] = 6;
     			return;
     		}
@@ -440,71 +624,63 @@ public abstract class ODE {
     	stiff = false;
     	double releps = relerr[0]/eps[0];
     	double abseps = abserr[0]/eps[0];
-    	if ((iflag[0] == 1) || (iwork[isnold] < 0) || (work[idelsn]*del <= 0.0)) {
+    	if ((iflag[0] == 1) || (isnold < 0) || (delsn*del <= 0.0)) {
     		//
     		//   on start and restart also set work variables x and yy(*), store the
     		//   direction of integration and initialize the step size
     		//
     		start = true;
-    		work[ix] = t[0];
+    		x = t[0];
     		for (l = 0; l < neqn; l++) {
-    			work[iyy+l] = y[l];
+    			yy[l] = y[l];
     		}
     		if (del >= 0.0) {
-    		    work[idelsn] = 1.0;	
+    		   delsn = 1.0;	
     		}
     		else {
-    			work[idelsn] = -1.0;
+    			delsn = -1.0;
     		}
-    		double maxVal = Math.max(Math.abs(tout-work[ix]), fouru*Math.abs(work[ix]));
-    		if ((tout - work[ix])>= 0.0) {
-    			work[ih] = maxVal;
+    		double maxVal = Math.max(Math.abs(tout-x), fouru*Math.abs(x));
+    		if ((tout - x)>= 0.0) {
+    			h = maxVal;
     		}
     		else {
-    			work[ih] = -maxVal;
+    			h = -maxVal;
     		}
-    	} // if ((iflag[0] == 1) || (iwork[isnold] < 0) || (work[idelsn]*del <= 0.0))
+    	} // if ((iflag[0] == 1) || (isnold < 0) || (delsn*del <= 0.0))
     	//
     	// if already past output point, interpolate and return
     	//
     	while (true) {
-	    	if (Math.abs(work[ix] - t[0]) >= absdel) {
-	    	    intrp(phi);
+	    	if (Math.abs(x - t[0]) >= absdel) {
+	    	    intrp();
 	    	    iflag[0] = 2;
 	    	    t[0] = tout;
-	    	    work[itold] = t[0];
-	    	    iwork[isnold] = isn;
+	    	    told = t[0];
+	    	    isnold = isn;
 	    	    return;
-	    	} // if (Math.abs(work[ix] - t[0]) >= absdel)
+	    	} // if (Math.abs(x - t[0]) >= absdel)
 	    	//
 	    	// if cannot go past output point and sufficiently close,
 	    	// extrapolate and return
 	    	//
-	    	if ((isn <= 0) && (Math.abs(tout - work[ix]) < fouru*Math.abs(work[ix]))) {
-	    	    work[ih] = tout - work[ix];	
-	    	    double yy[] = new double[neqn];
-	    	    for (i = 0; i < neqn; i++) {
-	    	    	yy[i] = work[iyy + i];
-	    	    }
-	    	    double yp[] = new double[neqn];
+	    	if ((isn <= 0) && (Math.abs(tout - x) < fouru*Math.abs(x))) {
+	    	    h = tout - x;	
 	    	    if (testMode) {
-	    	    	fTestMode(work[ix], yy, yp);
+	    	    	fTestMode(x, yy, yp);
 	    	    }
 	    	    else {
-	    	        f(work[ix], yy, yp);
-	    	    }
-	    	    for (i = 0; i < neqn; i++) {
-	    	    	work[iyp + i] = yp[i];
+	    	        f(x, yy, yp);
 	    	    }
 	    	    for (l = 0; l < neqn; l++) {
-	    	        y[l] = work[iyy+l]+ work[ih]*work[iyp+l];
+	    	        y[l] = yy[l]+ h*yp[l];
 	    	    }
 	    	    iflag[0] = 2;
 	    	    t[0] = tout;
-	    	    work[itold] = t[0];
-	    	    iwork[isnold] = isn;
+	    	    told = t[0];
+	    	    isnold = isn;
 	    	    return;
-	    	} // if ((isn <= 0) && (Math.abs(tout - work[ix]) < fouru*Math.abs(work[ix])))
+	    	} // if ((isn <= 0) && (Math.abs(tout - x) < fouru*Math.abs(x)))
 	    	//
 	    	// test for too many steps
 	    	//
@@ -514,27 +690,27 @@ public abstract class ODE {
 	    			iflag[0] = isn * 5;
 	    		}
 	    		for (l = 0; l < neqn; l++) {
-	    			y[l] = work[iyy +l];
+	    			y[l] = yy[l];
 	    		}
-	    		t[0] = work[ix];
-	    		work[itold] = t[0];
-	    		iwork[isnold] = 1;
+	    		t[0] = x;
+	    		told = t[0];
+	    		isnold = 1;
 	    		return;
 	    	} // if (nostep >= maxnum)
 	    	//
 	    	// limit step size, set weight vector and take a step
 	    	//
-	    	double minVal = Math.min(Math.abs(work[ih]), Math.abs(tend-work[ix]));
-	    	if (work[ih] >= 0) {
-	    		work[ih] = minVal;
+	    	double minVal = Math.min(Math.abs(h), Math.abs(tend-x));
+	    	if (h >= 0) {
+	    		h = minVal;
 	    	}
 	    	else {
-	    		work[ih] = -minVal;
+	    		h = -minVal;
 	    	}
 	    	for (l = 0; l < neqn; l++) {
-	    		work[iwt+l] = releps * Math.abs(work[iyy+l]) + abseps;
+	    		wt[l] = releps * Math.abs(yy[l]) + abseps;
 	    	}
-	    	step(eps, crash, phi);
+	    	step(eps, crash);
 	    	//
 	    	// test for tolerances not too small
 	    	//
@@ -543,11 +719,11 @@ public abstract class ODE {
 	    		relerr[0] = eps[0]*releps;
 	    		abserr[0] = eps[0]*abseps;
 	    		for (l = 0; l < neqn; l++) {
-	    		    y[l] = work[iyy + l];	
+	    		    y[l] = yy[l];	
 	    		}
-	    		t[0] = work[ix];
-	    		work[itold] = t[0];
-	    		iwork[isnold] = 1;
+	    		t[0] = x;
+	    		told = t[0];
+	    		isnold = 1;
 	    		return;
 	    	} // if (crash[0])
 	    	
@@ -556,7 +732,7 @@ public abstract class ODE {
 	    	//
 	    	nostep = nostep + 1;
 	    	kle4 = kle4 + 1;
-	    	if (iwork[kold] > 4) {
+	    	if (kold > 4) {
 	    		kle4 = 0;
 	    	}
 	    	if (kle4 >= 50) {
@@ -565,7 +741,7 @@ public abstract class ODE {
     	} // while (true)
     }
     
-    public void step(double eps[], boolean crash[], double phi[][]) {
+    public void step(double eps[], boolean crash[]) {
     	//
     	//   double precision subroutine  step
     	//   integrates a system of first order ordinary
@@ -716,8 +892,6 @@ public abstract class ODE {
     	double temp6;
     	double var;
     	double xold;
-    	double yp[];
-    	double yy[];
     	double gstr[] = new double[]{0.500,0.0833,0.0417,0.0264,0.0188,0.0143,
     			0.0114,0.00936,0.00789,0.00679,0.00592,0.00524,0.00468};
     	double two[] = new double[]{2.0,4.0,8.0,16.0,32.0,64.0,128.0,256.0,
@@ -740,22 +914,22 @@ public abstract class ODE {
     	//   if step size is too small, determine an acceptable one
     	//
     	crash[0] = true;
-    	if (Math.abs(work[ih]) < fouru*Math.abs(work[ix])) {
-    		if (work[ih] >= 0) {
-    			work[ih] = fouru*Math.abs(work[ix]);
+    	if (Math.abs(h) < fouru*Math.abs(x)) {
+    		if (h >= 0) {
+    			h = fouru*Math.abs(x);
     		}
     		else {
-    			work[ih] = -fouru*Math.abs(work[ix]);
+    			h = -fouru*Math.abs(x);
     		}
     		return;
-    	} // if (Math.abs(work[ih]) < fouru*Math.abs(work[ix]))
+    	} // if (Math.abs(h]) < fouru*Math.abs(x))
     	double p5eps = 0.5 * eps[0];
     	//
     	// if step size is too small, determine an acceptable one
     	//
     	double round = 0.0;
     	for (l = 0; l < neqn; l++) {
-    		var = (work[iyy + l]/work[iwt + l]);
+    		var = (yy[l]/wt[l]);
     	    round = round + var*var;	
     	} // for (l = 0; l < neqn; l++)
     	round = twou * Math.sqrt(round);
@@ -764,48 +938,40 @@ public abstract class ODE {
     		return;
     	} // if (p5eps < round)
     	crash[0] = false;
-    	work[ig] = 1.0;
-    	work[ig+1] = 0.5;
-    	work[isig] = 1.0;
+    	g[0] = 1.0;
+    	g[1] = 0.5;
+    	sig[0] = 1.0;
     	if (start) {
     	    //
     		// initialize.  Compute appropriate step size for first step
     		//
-    		yy = new double[neqn];
-    	    for (i = 0; i < neqn; i++) {
-    	    	yy[i] = work[iyy + i];
-    	    }
-    	    yp = new double[neqn];
     	    if (testMode) {
-    	    	fTestMode(work[ix], yy, yp);
+    	    	fTestMode(x, yy, yp);
     	    }
     	    else {
-    	        f(work[ix], yy, yp);
-    	    }
-    	    for (i = 0; i < neqn; i++) {
-    	    	work[iyp + i] = yp[i];
+    	        f(x, yy, yp);
     	    }
     	    double sum = 0.0;
     	    for (l = 0; l < neqn; l++) {
-    	    	phi[l][0] = work[iyp + l];
+    	    	phi[l][0] = yp[l];
     	    	phi[l][1] = 0.0;
-    	    	var = (work[iyp + l]/work[iwt + l]);
+    	    	var = (yp[l]/wt[l]);
     	    	sum = sum + var*var;
     	    } // for (l = 0; l < neqn; l++)
     	    sum = Math.sqrt(sum);
-    	    absh = Math.abs(work[ih]);
-    	    if (eps[0] < 16.0*sum*work[ih]*work[ih]) {
+    	    absh = Math.abs(h);
+    	    if (eps[0] < 16.0*sum*h*h) {
     	    	absh = 0.25*Math.sqrt(eps[0]/sum);
     	    }
-    	    if (work[ih] >= 0) {
-    	    	work[ih] = Math.max(absh, fouru*Math.abs(work[ix]));
+    	    if (h >= 0) {
+    	    	h = Math.max(absh, fouru*Math.abs(x));
     	    }
     	    else {
-    	    	work[ih] = -Math.max(absh, fouru*Math.abs(work[ix]));	
+    	    	h = -Math.max(absh, fouru*Math.abs(x));	
     	    }
-    	    work[ihold] = 0.0;
-    	    iwork[k] = 1;
-    	    iwork[kold] = 0;
+    	    hold = 0.0;
+    	    k = 1;
+    	    kold = 0;
     	    start = false;
     	    phase1 = true;
     	    nornd = true;
@@ -825,97 +991,97 @@ public abstract class ODE {
     	//                   ***
     	//
     	while (true) {
-	    	kp1 = iwork[k]+1;
-	    	kp2 = iwork[k]+2;
-	    	km1 = iwork[k]-1;
-	    	km2 = iwork[k]-2;
+	    	kp1 = k+1;
+	    	kp2 = k+2;
+	    	km1 = k-1;
+	    	km2 = k-2;
 	    	//
 	    	//   ns is the number of steps taken with size h, including the current
 	    	//   one.  when k.lt.ns, no coefficients change
 	    	//
-	    	if (work[ih] != work[ihold]) {
-	    		iwork[ns] = 0;
+	    	if (h != hold) {
+	    		ns = 0;
 	    	}
-	    	if (iwork[ns] <= iwork[kold]) {
-	    		iwork[ns] = iwork[ns] + 1;
+	    	if (ns <= kold) {
+	    		ns = ns + 1;
 	    	}
-	    	int nsp1 = iwork[ns] + 1;
-	    	if (iwork[k] >= iwork[ns]) {
+	    	int nsp1 = ns + 1;
+	    	if (k >= ns) {
 	    		//
 	    		//   compute those components of alpha(*),beta(*),psi(*),sig(*) which
 	    		//   are changed
 	    		//
-	    		work[ibeta + iwork[ns] - 1] = 1.0;
-	    		double realns = (double)iwork[ns];
-	    		work[ialpha + iwork[ns] - 1] = 1.0/realns;
-	    		temp1 = work[ih] * realns;
-	    		work[isig + nsp1 - 1] = 1.0;
-	    		if (iwork[k] >= nsp1) {
-	    		    for (i = nsp1; i <= iwork[k]; i++) {
+	    		beta[ns - 1] = 1.0;
+	    		double realns = (double)ns;
+	    		alpha[ns - 1] = 1.0/realns;
+	    		temp1 = h * realns;
+	    		sig[nsp1 - 1] = 1.0;
+	    		if (k >= nsp1) {
+	    		    for (i = nsp1; i <= k; i++) {
 	    		        int im1 = i - 1;
-	    		        temp2 = work[ipsi + im1 - 1];
-	    		        work[ipsi + im1 -1] = temp1;
-	    		        work[ibeta + i - 1] = work[ibeta + im1-1]*work[ipsi + im1-1]/temp2;
-	    		        temp1 = temp2 + work[ih];
-	    		        work[ialpha + i - 1] = work[ih]/temp1;
+	    		        temp2 = psi[im1 - 1];
+	    		        psi[im1 -1] = temp1;
+	    		        beta[i - 1] = beta[im1-1]*psi[im1-1]/temp2;
+	    		        temp1 = temp2 + h;
+	    		        alpha[i - 1] = h/temp1;
 	    		        double reali = (double)i;
-	    		        work[isig + i] = reali*work[ialpha + i - 1]*work[isig + i - 1];
-	    		    } // for (i = nsp1; i <= iwork[k]; i++)
-	    		} // if (iwork[k] >= nsp1)
-	    		work[ipsi + iwork[k] - 1] = temp1;
+	    		        sig[i] = reali*alpha[i - 1]*sig[i - 1];
+	    		    } // for (i = nsp1; i <= k; i++)
+	    		} // if (k >= nsp1)
+	    		psi[k - 1] = temp1;
 	    		//
 	    		//   compute coefficients g(*)
 	    		//
 	    		//   initialize v(*) and set w(*).  g(2) is set in data statement
 	    		//
-	    		if (iwork[ns] <= 1) {
-	    		    for (iq = 1; iq <= iwork[k]; iq++) {
+	    		if (ns <= 1) {
+	    		    for (iq = 1; iq <= k; iq++) {
 	    		        temp3 = iq*(iq+1);
-	    		        work[iv + iq - 1] = 1.0/temp3;
-	    		        work[iw + iq - 1] = work[iv + iq - 1];
-	    		    } // for (iq = 1; iq <= iwork[k]; iq++)
-	    		} // if (iwork[ns] <= 1)
+	    		        v[iq - 1] = 1.0/temp3;
+	    		        w[iq - 1] = v[iq - 1];
+	    		    } // for (iq = 1; iq <= k; iq++)
+	    		} // if (ns <= 1)
 	    		else {
 	    			//
 	    			// if order was raised, update diagonal part of v(*)
 	    			//
-		    		if (iwork[k] > iwork[kold]) {
-		    		    temp4 = iwork[k]*kp1;
-		    		    work[iv + iwork[k] - 1] = 1.0/temp4;
-		    		    int nsm2 = iwork[ns] - 2;
+		    		if (k > kold) {
+		    		    temp4 = k*kp1;
+		    		    v[k - 1] = 1.0/temp4;
+		    		    int nsm2 = ns - 2;
 		    		    if (nsm2 >= 1) {
 		    		    	for (j = 1; j <= nsm2; j++) {
-		    		    	    i = iwork[k] - j;
-		    		    	    work[iv + i - 1] = work[iv + i - 1] - work[ialpha + j]*work[iv + i];
+		    		    	    i = k - j;
+		    		    	    v[i - 1] = v[i - 1] - alpha[j]*v[i];
 		    		    	} // for (j = 1; j <= nsm2; j++)
 		    		    } // if (nsm2 >= 1)
-		    		} // if (iwork[k] > iwork[kold])
+		    		} // if (k > kold)
 		    		//
 		    		// update v(8) and set w(*)
 		    		//
-		    		int limit1 = kp1 - iwork[ns];
-		    		temp5 = work[ialpha + iwork[ns] - 1];
+		    		int limit1 = kp1 - ns;
+		    		temp5 = alpha[ns - 1];
 		    		for (iq = 1; iq <= limit1; iq++) {
-		    			work[iv + iq - 1] = work[iv + iq - 1] - temp5 * work[iv + iq];
-		    			work[iw + iq - 1] = work[iv + iq - 1];
+		    			v[iq - 1] = v[iq - 1] - temp5 *v[iq];
+		    			w[iq - 1] = v[iq - 1];
 		    		} // for (iq = 1; iq <= limit1; iq++)
-		    		work[ig + nsp1 - 1] = work[iw];
+		    		g[nsp1 - 1] = w[0];
 	    		} // else
 	    		//
 	    		// compute the g(*) in the work vector w(*)
 	    		//
-	    		int nsp2 = iwork[ns] + 2;
+	    		int nsp2 = ns + 2;
 	    		if (kp1 >= nsp2) {
 	    		    for (i = nsp2; i <= kp1; i++) {
 	    		    	limit2 = kp2 - i;
-	    		    	temp6 = work[ialpha + i - 2];
+	    		    	temp6 = alpha[i - 2];
 	    		    	for (iq = 1; iq <= limit2; iq++) {
-	    		    	    work[iw + iq - 1] = work[iw + iq - 1] - temp6 * work[iw + iq];	
+	    		    	    w[iq - 1] = w[iq - 1] - temp6 * w[iq];	
 	    		    	} // for (iq = 1; iq <= limit2; iq++)
-	    		    	work[ig + i - 1] = work[iw];
+	    		    	g[i - 1] = w[0];
 	    		    } // for (i = nsp2; i <= kp1; i++)
 	    		} // if (kp1 >= nsp2)
-	    	} // if (iwork[k] >= iwork[ns])
+	    	} // if (k >= ns)
 	    	//       ***     end block 1     ***
 	    	//
 	    	//       ***     begin block 2     ***
@@ -926,59 +1092,51 @@ public abstract class ODE {
 	    	//
 	    	//   change phi to phi star
 	    	//
-	    	if (iwork[k] >= nsp1) {
-	    		for (i = nsp1; i <= iwork[k]; i++) {
-	    		    temp1 = work[ibeta + i - 1];
+	    	if (k >= nsp1) {
+	    		for (i = nsp1; i <= k; i++) {
+	    		    temp1 = beta[i - 1];
 	    		    for (l = 1; l <= neqn; l++) {
 	    		        phi[l-1][i-1] = temp1*phi[l-1][i-1];	
 	    		    } // for (l = 1; l <= neqn; l++)
-	    		} // for (i = nsp1; i <= iwork[k]; i++)
-	    	} // if (iwork[k] >= nsp1)
+	    		} // for (i = nsp1; i <= k; i++)
+	    	} // if (k >= nsp1)
 	    	//
 	    	// predict solution and differences
 	    	//
 	    	for (l = 1; l <= neqn; l++) {
 	    	    phi[l-1][kp2-1]	 = phi[l-1][kp1-1];
 	    	    phi[l-1][kp1-1] = 0.0;
-	    	    work[ip + l - 1] = 0.0;
+	    	    p[l - 1] = 0.0;
 	    	} // for (l = 1; l <= neqn; l++)
-	    	for (j = 1; j <= iwork[k]; j++) {
+	    	for (j = 1; j <= k; j++) {
 	    	    i = kp1 - j;
 	    	    ip1 = i+1;
-	    	    temp2 = work[ig + i - 1];
+	    	    temp2 = g[i - 1];
 	    	    for (l = 1; l <= neqn; l++) {
-	    	        work[ip + l - 1] = work[ip + l - 1] + temp2*phi[l-1][i-1];
+	    	        p[l - 1] = p[l - 1] + temp2*phi[l-1][i-1];
 	    	        phi[l-1][i-1] = phi[l-1][i-1] + phi[l-1][ip1-1];
 	    	    } // for (l = 1; l <= neqn; l++)
-	    	} // for (j = 1; j <= iwork[k]; j++)
+	    	} // for (j = 1; j <= k; j++)
 	    	if (!nornd) {
 	    		for (l = 1; l <= neqn; l++) {
-	    		    tau = work[ih]*work[ip + l - 1] - phi[l-1][14];
-	    		    work[ip + l - 1] = work[iyy + l - 1] + tau;
-	    		    phi[l-1][15] = (work[ip + l - 1] - work[iyy + l - 1]) - tau;
+	    		    tau = h*p[l - 1] - phi[l-1][14];
+	    		    p[l - 1] = yy[l - 1] + tau;
+	    		    phi[l-1][15] = (p[l - 1] - yy[l - 1]) - tau;
 	    		} // for (l = 1; l <= neqn; l++)
 	    	} // if (!nornd)
 	    	else {
 	    		for (l = 1; l <= neqn; l++) {
-	    			work[ip + l - 1] = work[iyy + l - 1] + work[ih]*work[ip + l - 1];
+	    			p[l - 1] = yy[l - 1] + h*p[l - 1];
 	    		} // for (l = 1; l <= neqn; l++)
 	    	} // else
-	    	xold = work[ix];
-	    	work[ix] = work[ix] + work[ih];
-	    	absh = Math.abs(work[ih]);
-	    	double p[] = new double[neqn];
-		    for (i = 0; i < neqn; i++) {
-		    	p[i] = work[ip + i];
-		    }
-		    yp = new double[neqn];
+	    	xold = x;
+	    	x = x + h;
+	    	absh = Math.abs(h);
 		    if (testMode) {
-		    	fTestMode(work[ix], p, yp);
+		    	fTestMode(x, p, yp);
 		    }
 		    else {
-		        f(work[ix], p, yp);
-		    }
-		    for (i = 0; i < neqn; i++) {
-		    	work[iyp + i] = yp[i];
+		        f(x, p, yp);
 		    }
 		    //
 		    // estimate errors at k,k-1,k-2
@@ -987,26 +1145,26 @@ public abstract class ODE {
 		    erkm1 = 0.0;
 		    erk = 0.0;
 		    for (l = 1; l <= neqn; l++) {
-		    	temp3 = 1.0/work[iwt + l - 1];
-		    	temp4 = work[iyp + l - 1] - phi[l-1][0];
+		    	temp3 = 1.0/wt[l - 1];
+		    	temp4 = yp[l - 1] - phi[l-1][0];
 		    	if (km2 > 0) {
 		    		erkm2 = erkm2 + Math.pow(((phi[l-1][km1-1]+temp4)*temp3),2);
 		    	}
 		    	if (km2 >= 0) {
-		    		erkm1 = erkm1 + Math.pow(((phi[l-1][iwork[k]-1]+temp4)*temp3), 2);
+		    		erkm1 = erkm1 + Math.pow(((phi[l-1][k-1]+temp4)*temp3), 2);
 		    	}
 		        erk = erk + Math.pow((temp4*temp3), 2);
 		    } // for (l = 1; l <= neqn; l++)
 		    if (km2 > 0) {
-		    	erkm2 = absh * work[isig + km1 -1]*gstr[km2-1]*Math.sqrt(erkm2);
+		    	erkm2 = absh * sig[km1 -1]*gstr[km2-1]*Math.sqrt(erkm2);
 		    }
 		    if (km2 >= 0) {
-		    	erkm1 = absh * work[isig + iwork[k] - 1]*gstr[km1-1]*Math.sqrt(erkm1);
+		    	erkm1 = absh * sig[k - 1]*gstr[km1-1]*Math.sqrt(erkm1);
 		    }
 		    temp5 = absh*Math.sqrt(erk);
-		    err = temp5*(work[ig + iwork[k] - 1] - work[ig + kp1 - 1]);
-		    erk = temp5 * work[isig + kp1 -1]*gstr[iwork[k] - 1];
-		    knew = iwork[k];
+		    err = temp5*(g[k - 1] - g[kp1 - 1]);
+		    erk = temp5 * sig[kp1 -1]*gstr[k - 1];
+		    knew = k;
 		    //
 		    // test if order should be lowered
 		    //
@@ -1039,19 +1197,19 @@ public abstract class ODE {
 	    	//   restore x, phi(*,*) and psi(*)
 	    	//
 	    	phase1 = false;
-	    	work[ix] = xold;
-	    	for (i = 1; i <= iwork[k]; i++) {
-	    	    temp1 = 1.0/work[ibeta + i - 1];
+	    	x = xold;
+	    	for (i = 1; i <= k; i++) {
+	    	    temp1 = 1.0/beta[i - 1];
 	    	    ip1 = i+1;
 	    	    for (l = 1; l <= neqn; l++) {
 	    	        phi[l-1][i-1] = temp1*(phi[l-1][i-1] - phi[l-1][ip1-1]);	
 	    	    } // for (l = 1; l <= neqn; l++) 
-	    	} // for (i = 1; i <= iwork[k]; i++)
-	    	if (iwork[k] >= 2) {
-	    		for (i = 2; i <= iwork[k]; i++) {
-	    		    work[ipsi + i - 2] = work[ipsi + i - 1] - work[ih];	
-	    		} // for (i = 2; i <= iwork[k]; i++)
-	    	} // if (iwork[k] >= 2)
+	    	} // for (i = 1; i <= k; i++)
+	    	if (k >= 2) {
+	    		for (i = 2; i <= k; i++) {
+	    		    psi[i - 2] = psi[i - 1] - h;	
+	    		} // for (i = 2; i <= k; i++)
+	    	} // if (k >= 2)
 	    	//
 	    	// on third failure, set order to one.  thereafter, use optimal step size
 	    	//
@@ -1065,17 +1223,17 @@ public abstract class ODE {
 	    	if ((ifail - 3) >= 0) {
 	    		knew = 1;
 	    	}
-	    	work[ih] = temp2*work[ih];
-	    	iwork[k] = knew;
-		    if (Math.abs(work[ih]) >= fouru*Math.abs(work[ix])) {
+	    	h = temp2*h;
+	    	k = knew;
+		    if (Math.abs(h) >= fouru*Math.abs(x)) {
 		    	continue;
 		    }
 		    crash[0] = true;
-		    if (work[ih] >= 0) {
-		    	work[ih] = fouru*Math.abs(work[ix]);
+		    if (h >= 0) {
+		    	h = fouru*Math.abs(x);
 		    }
 		    else {
-		    	work[ih] = -fouru*Math.abs(work[ix]);	
+		    	h = -fouru*Math.abs(x);	
 		    }
 		    eps[0] = eps[0] + eps[0];
 		    return;
@@ -1087,50 +1245,42 @@ public abstract class ODE {
     	//   the derivatives using the corrected solution and update the
     	//   differences.  determine best order and step size for next step.
     	//                   ***
-	    iwork[kold] = iwork[k];
-	    work[ihold] = work[ih];
+	    kold = k;
+	    hold = h;
 	    //
 	    // correct and evaluate
 	    //
-	    temp1 = work[ih]*work[ig + kp1 - 1];
+	    temp1 = h*g[kp1 - 1];
 	    if (!nornd) {
 	    	for (l = 1; l <= neqn; l++) {
-	    	    rho = temp1 * (work[iyp+l-1] - phi[l-1][0]) - phi[l-1][15]; 
-	    	    work[iyy+l-1] = work[ip+l-1] + rho;
-	    	    phi[l-1][14] = (work[iyy+l-1] - work[ip+l-1]) - rho;
+	    	    rho = temp1 * (yp[l-1] - phi[l-1][0]) - phi[l-1][15]; 
+	    	    yy[l-1] = p[l-1] + rho;
+	    	    phi[l-1][14] = (yy[l-1] - p[l-1]) - rho;
 	    	} // for (l = 1; l <= neqn; l++)
 	    } // if (!nornd)
 	    else {
 	    	for (l = 1; l <= neqn; l++) {
-	    	    work[iyy+l-1] = work[ip+l-1] + temp1*(work[iyp+l-1] - phi[l-1][0]);	
+	    	    yy[l-1] = p[l-1] + temp1*(yp[l-1] - phi[l-1][0]);	
 	    	} // for (l = 1; l <= neqn; l++)
 	    } // else
-	    yy = new double[neqn];
-	    for (i = 0; i < neqn; i++) {
-	    	yy[i] = work[iyy + i];
-	    }
-	    yp = new double[neqn];
 	    if (testMode) {
-	    	fTestMode(work[ix], yy, yp);
+	    	fTestMode(x, yy, yp);
 	    }
 	    else {
-	        f(work[ix], yy, yp);
-	    }
-	    for (i = 0; i < neqn; i++) {
-	    	work[iyp + i] = yp[i];
+	        f(x, yy, yp);
 	    }
 	    // 
 	    // update differences for next step
 	    //
 	    for (l = 1; l <= neqn; l++) {
-	        phi[l-1][kp1-1] = work[iyp+l-1] - phi[l-1][0];
+	        phi[l-1][kp1-1] = yp[l-1] - phi[l-1][0];
 	        phi[l-1][kp2-1] = phi[l-1][kp1-1] - phi[l-1][kp2-1];
 	    } // for (l = 1; l <= neqn; l++)
-	    for (i = 1; i <= iwork[k]; i++) {
-	        for (l = 1; l <= neqn; l++) {
+	    for (i = 1; i <= k; i++) {
+	        for (l = 1; l <= neqn; l++) { 
 	        	phi[l-1][i-1] = phi[l-1][i-1] + phi[l-1][kp1-1];
 	        } // for (l = 1; l <= neqn; l++) 
-	    } // for (i = 1; i <= iwork[k]; i++)
+	    } // for (i = 1; i <= k; i++)
 	    //
 	    //   estimate error at order k+1 unless:
 	    //     in first phase when always raise order,
@@ -1138,7 +1288,7 @@ public abstract class ODE {
 	    //     step size not constant so estimate unreliable
 	    //
 	    erkp1 = 0.0;
-	    if ((knew == km1) || (iwork[k] == 12)) {
+	    if ((knew == km1) || (k == 12)) {
 	    	phase1 = false;
 	    }
 	    if (phase1) {
@@ -1151,20 +1301,20 @@ public abstract class ODE {
 	        	do455 = true;
 	        } // if (knew == km1)
 	        else { // knew != km1
-	            if (kp1 > iwork[ns]) {
+	            if (kp1 > ns) {
 	            	do450 = false;
 	            	do455 = false;
-	            } // if (kp1 > iwork[ns])
-	            else { // kp1 <= iwork[ns]
+	            } // if (kp1 > ns)
+	            else { // kp1 <= ns
 	            	for (l = 1; l <= neqn; l++) {
-	            	    erkp1 = erkp1 + Math.pow((phi[l-1][kp2-1]/work[iwt+l-1]), 2);	
+	            	    erkp1 = erkp1 + Math.pow((phi[l-1][kp2-1]/wt[l-1]), 2);	
 	            	} // for (l = 1; l <= neqn; l++)
 	            	erkp1 = absh*gstr[kp1-1]*Math.sqrt(erkp1);
 	            	//
 	            	// using estimated error at order k+1, determine approximate order
 	            	// for next step
 	            	//
-	            	if (iwork[k] <= 1) {
+	            	if (k <= 1) {
 	            	    if (erkp1 >= 0.5*erk) {
 	            	    	do450 = false;
 	            	    	do455 = false;
@@ -1173,14 +1323,14 @@ public abstract class ODE {
 	            	    	do450 = true;
 	            	    	do455 = true;
 	            	    }
-	            	} // if (iwork[k] <= 1)
-	            	else { // iwork[k] > 1
+	            	} // if (k <= 1)
+	            	else { // k > 1
 	            	    if (erkm1 <= Math.min(erk, erkp1)) {
 	            	    	do450 = false;
 	            	    	do455 = true;
 	            	    }
 	            	    else {
-	            	    	if ((erkp1 >= erk) || (iwork[k] == 12)) {
+	            	    	if ((erkp1 >= erk) || (k == 12)) {
 	            	    		do450 = false;
 	            	    		do455 = false;
 	            	    	}
@@ -1189,8 +1339,8 @@ public abstract class ODE {
 	            	    		do455 = true;
 	            	    	}
 	            	    }
-	            	} // else iwork[k] > 1
-	            } // else kp1 <= iwork[ns]
+	            	} // else k > 1
+	            } // else kp1 <= ns
 	        } // else knew != km1
 	    } // else !phase1
 	    //
@@ -1200,7 +1350,7 @@ public abstract class ODE {
 	    // raise order
 	    // 
 	    if (do450) {
-	    	iwork[k] = kp1;
+	    	k = kp1;
 	    	erk = erkp1;
 	    	do455 = false;
 	    } // if (do450)
@@ -1208,43 +1358,43 @@ public abstract class ODE {
 	    // lower order
 	    //
 	    if (do455) {
-	    	iwork[k] = km1;
+	    	k = km1;
 	    	erk = erkm1;
 	    } // if (do455)
 	    //
 	    // with new order determine appropriate step size for next step
 	    //
-	    hnew = work[ih] + work[ih];
+	    hnew = h + h;
 	    if (phase1) {
-	    	work[ih] = hnew;
+	    	h = hnew;
 	    	return;
 	    }
-	    if (p5eps >= erk*two[iwork[k]]) {
-	    	work[ih] = hnew;
+	    if (p5eps >= erk*two[k]) {
+	    	h = hnew;
 	    	return;
 	    }
-	    hnew = work[ih];
+	    hnew = h;
 	    if (p5eps >= erk) {
-	    	work[ih] = hnew;
+	    	h = hnew;
 	    	return;
 	    }
-	    temp2 = iwork[k] + 1;
+	    temp2 = k + 1;
 	    r = Math.pow((p5eps/erk), (1.0/temp2));
 	    hnew = absh*Math.max(0.5, Math.min(0.9,r));
-	    if (work[ih] >= 0) {
-	    	hnew = Math.abs(Math.max(hnew, fouru*Math.abs(work[ix])));
+	    if (h >= 0) {
+	    	hnew = Math.abs(Math.max(hnew, fouru*Math.abs(x)));
 	    }
 	    else {
-	    	hnew = -Math.abs(Math.max(hnew, fouru*Math.abs(work[ix])));	
+	    	hnew = -Math.abs(Math.max(hnew, fouru*Math.abs(x)));	
 	    }
-	    work[ih] = hnew;
+	    h = hnew;
 	    return;
 	    // ***  end block 4 ***
     }
     
     public abstract void f(double t, double y[], double yp[]);
     
-    private void intrp(double phi[][]) {
+    private void intrp() {
     	//
     	//   the methods in subroutine  step  approximate the solution near  x (work[ix])
     	//   by a polynomial.  subroutine  intrp  approximates the solution at
@@ -1293,8 +1443,8 @@ public abstract class ODE {
     	g[0] = 1.0;
     	rho[0] = 1.0;
     	
-    	double hi = tout - work[ix];
-    	int ki = iwork[kold] + 1;
+    	double hi = tout - x;
+    	int ki = kold + 1;
     	int kip1 = ki + 1;
     	//
     	// initialize w[] for computing g[]
@@ -1308,7 +1458,7 @@ public abstract class ODE {
     	//
     	for (j = 2; j <= ki; j++) {
     	    jm1 = j - 1;
-    	    psijm1 = work[ipsi + jm1 - 1];
+    	    psijm1 = psi[jm1 - 1];
     	    gamma = (hi + term)/psijm1;
     	    eta = hi/psijm1;
     	    limit1 = kip1 - j;
@@ -1323,7 +1473,7 @@ public abstract class ODE {
     	// interpolate
     	//
     	for (l = 0; l < neqn; l++) {
-    		work[iypout+l] = 0.0;
+    	    ypout[l] = 0.0;
     		y[l] = 0.0;
     	} // for (l = 0; l < neqn; l++)
     	for (j = 1; j <= ki; j++) {
@@ -1332,11 +1482,11 @@ public abstract class ODE {
     	    temp3 = rho[i-1];
     	    for (l = 0; l < neqn; l++) {
     	        y[l] = y[l] + temp2*phi[l][i-1];
-    	        work[iypout+l] = work[iypout+l] + temp3*phi[l][i-1];
+    	        ypout[l] = ypout[l] + temp3*phi[l][i-1];
     	    } // for (l = 0; l < neqn; l++)
     	} // for (j = 1; j <= ki; j++)
     	for (l = 0; l < neqn; l++) {
-    	    y[l] = work[iyy+l] + hi*y[l];	
+    	    y[l] = yy[l] + hi*y[l];	
     	} // for (l = 0; l < neqn; l++)
     	return;
     }
