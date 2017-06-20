@@ -273,7 +273,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     }
 
     private FormStructureData fsData = null;
-    
+
     private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
 
     private JLabel requiredLabel;
@@ -537,7 +537,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                         return null;
                     }
-                    
+
                     @Override
                     public void done() {
                         if (isFinished) {
@@ -3225,18 +3225,39 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             final int progressInc = 95 / recordList.size();
             final int rowsPerInc = (recordList.size() / 95) + 1;
             int i = 1;
+            Vector<Vector<FileDicomTag>> csvProblemTagList = new Vector<Vector<FileDicomTag>>(recordList.size());
+            Vector<String> csvProblemFileDirList = new Vector<String>(recordList.size());
+            Vector<String> csvProblemFileNameList = new Vector<String>(recordList.size());
             for (final ArrayList<ArrayList<String>> record : recordList) {
                 progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
-                new InfoDialog(this, dsName, false, false, record);
+                InfoDialog csvDialog = new InfoDialog(this, dsName, false, false, record);
                 if (progressInc > 0) {
                     progressBar.updateValue(progressBar.getValue() + progressInc);
                 } else if ( (i % rowsPerInc) == 0) {
                     progressBar.updateValue(progressBar.getValue() + 1);
                 }
+
+                // change i counter to 0-based for problem lists
+                csvProblemTagList.add(i - 1, csvDialog.getProblemTags());
+                csvProblemFileDirList.add(i - 1, csvDialog.getProblemFileDir());
+                csvProblemFileNameList.add(i - 1, csvDialog.getProblemFileName());
+
                 i++;
             }
             final long csvReadEndTime = System.currentTimeMillis();
             System.out.println("CSV input read took " + ( (csvReadEndTime - csvReadStartTime) / 1000) + " seconds (" + recordList.size() + " records)");
+
+            for (int j = 0; j < csvProblemTagList.size(); j++) {
+                final Vector<FileDicomTag> problemTags = csvProblemTagList.get(j);
+                if (problemTags != null) {
+                    boolean isDeidentified = deidentificationDialogDicom(csvProblemFileDirList.get(j), csvProblemFileNameList.get(j), problemTags);
+
+                    if ( !isDeidentified) {
+                        // should have already exited
+                        continue;
+                    }
+                }
+            }
 
             progressBar.dispose();
 
@@ -4351,7 +4372,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
     public Dimension getPanelSize() {
         return new Dimension(previewImgPanel.getBounds().width, previewImgPanel.getBounds().height);
     }
-    
+
     /**
      * Writes a JIMI file to store the image.
      * 
@@ -4400,7 +4421,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         if (image == null) {
             return null;
         }
-        
+
         final int imageSize = image.getExtents()[0] * image.getExtents()[1];
         final int[] paintBuffer = new int[imageSize];
         final ColorRGBA colorMappedA = new ColorRGBA();
@@ -5924,6 +5945,12 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         private FormStructureData fsData;
 
+        private Vector<FileDicomTag> problemTags = null;
+
+        private String problemTagsFileDir;
+
+        private String problemTagsFileName;
+
         private final ArrayList<File> allOtherFiles = new ArrayList<File>();
 
         private boolean addedPreviewImage = false;
@@ -6133,12 +6160,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                         if (srcImage != null) {
                             // basic check that image data is de-identified
-                            boolean isDeidentifed = deindentificationCheck(srcImage);
-
-                            if ( !isDeidentifed) {
-                                // if not de-identified, the dialog currently exits the imaging tool completely
-                                continue;
-                            }
+                            problemTags = deidentificationCheckDicomTags(srcImage);
+                            problemTagsFileDir = srcImage.getFileInfo(0).getFileDirectory();
+                            problemTagsFileName = srcImage.getFileInfo(0).getFileName();
 
                             for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
                                 if (group.getName().equalsIgnoreCase(IMG_IMAGE_INFO_GROUP)) {
@@ -6647,7 +6671,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     structRowImgFileInfoList.set(size - 1, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile, FileUtility.getFileNameList(srcImage),
                             createThumbnailDataForWriting(thumbnailImage)));
                 }
-                
+
                 // cleanup thumbnail modelimage
                 if (thumbnailImage != null) {
                     thumbnailImage.disposeLocal();
@@ -6670,6 +6694,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
 
             return srcImage;
+        }
+
+        public Vector<FileDicomTag> getProblemTags() {
+            return problemTags;
+        }
+
+        public String getProblemFileDir() {
+            return problemTagsFileDir;
+        }
+
+        public String getProblemFileName() {
+            return problemTagsFileName;
         }
 
         private void parseForInitLabelsAndComponents(final FormStructureData fsData) {
@@ -8234,6 +8270,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                         ViewUserInterface.getReference().setDefaultDirectory(file.getParent());
 
                         ModelImage srcImage = null;
+                        boolean isDeidentified = false;
                         if (file.getName().endsWith(".zip") || file.getName().endsWith(".tar.gz") || file.getName().endsWith(".tgz")) {
                             // if the user selects a zip file containing a dataset, try to open it as if pointed to from
                             // CSV
@@ -8266,16 +8303,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 final int selectedRow = structTable.getSelectedRow();
                                 previewImages.set(selectedRow, previewImg);
                                 previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
-                                structRowImgFileInfoList.set(selectedRow,
-                                        new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage), createThumbnailDataForWriting(thumbnailImage)));
+
+                                ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
+                                        createThumbnailDataForWriting(thumbnailImage));
+
+                                structRowImgFileInfoList.set(selectedRow, imgInfo);
                             } else {
                                 final int size = previewImages.size();
                                 previewImages.set(size - 1, previewImg);
                                 previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
-                                structRowImgFileInfoList.set(size - 1,
-                                        new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage), createThumbnailDataForWriting(thumbnailImage)));
+
+                                ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
+                                        createThumbnailDataForWriting(thumbnailImage));
+
+                                structRowImgFileInfoList.set(size - 1, imgInfo);
                             }
-                            
+
                             // cleanup thumbnail modelimage
                             if (thumbnailImage != null) {
                                 thumbnailImage.disposeLocal();
@@ -8288,9 +8331,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
                         if (srcImage != null) {
                             // basic check that image data is de-identified
-                            boolean isDeidentifed = deindentificationCheck(srcImage);
+                            Vector<FileDicomTag> problemTags = deidentificationCheckDicomTags(srcImage);
+                            if (problemTags != null) {
+                                isDeidentified = deidentificationDialogDicom(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getFileInfo(0).getFileName(),
+                                        problemTags);
+                            }
 
-                            if (isDeidentifed) {
+                            if (isDeidentified) {
                                 String tempName = currFile;
 
                                 for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
@@ -8669,7 +8716,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         return filteredList;
     }
 
-    private boolean deindentificationCheck(ModelImage img) {
+    private Vector<FileDicomTag> deidentificationCheckDicomTags(ModelImage img) {
         final String fileFormatString = FileUtility.getFileTypeStr(img.getFileInfo(0).getFileFormat());
 
         if (fileFormatString.equalsIgnoreCase("dicom")) {
@@ -8688,6 +8735,14 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             }
             // }
 
+            return problemTags;
+        }
+
+        return null;
+    }
+
+    private boolean deidentificationDialogDicom(String fDir, String fName, Vector<FileDicomTag> problemTags) {
+        if (problemTags != null) {
             if (problemTags.size() > 0) {
                 String disclaimerText = new String(
                         "<html>"
@@ -8698,7 +8753,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 + "There may be fields in your data that contain PII/PHI that are not highlighted in this table.  DICOM private tags, and sequence tags are not examined."
                                 + "<br><br>"
                                 + "<b>Remember, <em>YOU</em> are responible for the de-identification of all submitted data.</b>  This table is for informational purposes only."
-                                + "<br><br>" + "Base file loaded:" + "<br>" + fInfo.getFileDirectory() + fInfo.getFileName() + "</html>");
+                                + "<br><br>" + "Base file loaded:" + "<br>" + fDir + fName + "</html>");
                 JLabel disclaimerLabel = new JLabel(disclaimerText);
                 disclaimerLabel.setFont(serif12);
 
@@ -8767,7 +8822,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                 deidentDialog.add(dialogPanel);
                 deidentDialog.setSize(1000, 800);
                 MipavUtil.centerInWindow(this, deidentDialog);
-                deidentDialog.setTitle("De-identification review: " + fInfo.getFileName());
+                deidentDialog.setTitle("De-identification review: " + fName);
                 deidentDialog.setVisible(true);
             }
         }
@@ -8828,22 +8883,19 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             this.setWrapStyleWord(true);
             this.setLineWrap(true);
 
-            /*int fontHeight = this.getFontMetrics(this.getFont()).getHeight();
-            int textLength = this.getText().length();
-            int lines = textLength / this.getColumns() + 1;
-
-            final int height = fontHeight * lines;
-
-            final int rowIndex = row;
-            final JTable jTable = table;
-
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    jTable.setRowHeight(rowIndex, height);
-                }
-            });
-            table.setRowHeight(row, height);*/
+            /*
+             * int fontHeight = this.getFontMetrics(this.getFont()).getHeight(); int textLength =
+             * this.getText().length(); int lines = textLength / this.getColumns() + 1;
+             * 
+             * final int height = fontHeight * lines;
+             * 
+             * final int rowIndex = row; final JTable jTable = table;
+             * 
+             * SwingUtilities.invokeLater(new Runnable() {
+             * 
+             * @Override public void run() { jTable.setRowHeight(rowIndex, height); } }); table.setRowHeight(row,
+             * height);
+             */
 
             return this;
         }
