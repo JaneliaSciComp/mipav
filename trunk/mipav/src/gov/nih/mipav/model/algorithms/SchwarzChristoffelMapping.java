@@ -696,10 +696,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			abserr[0] = abstol;
 			int iflag[] = new int[1];
 			iflag[0] = 1;
-			double work[] = new double[100 + 21*z04.length];
-			int iwork[] = new int[5];
 			ODEModel modODE = new ODEModel(z04.length, z04, t, tout, relerr,
-					abserr, iflag, work, iwork, scale, z, beta, c);
+					abserr, iflag, scale, z, beta, c);
 			modODE.driver();
 			System.out.println(modODE.getErrorMessage());
 			for (i = 0; i < z04.length; i++) {
@@ -710,14 +708,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			relerr[0] = reltol;
 			abserr[0] = abstol;
 			iflag[0] = 1;
-			for (i = 0; i < work.length; i++) {
-				work[i] = 0.0;
-			}
-			for (i = 0; i < iwork.length; i++) {
-				iwork[i] = 0;
-			}
 			modODE = new ODEModel(z04.length, z04, t, tout, relerr,
-					abserr, iflag, work, iwork, scale, z, beta, c);
+					abserr, iflag, scale, z, beta, c);
 			modODE.driver();
 			System.out.println(modODE.getErrorMessage());
 			for (i = 0; i < z04.length; i++) {
@@ -732,9 +724,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double beta[];
 		double c[];
 		public ODEModel(int neqn, double y[], double t[], double tout, double relerr[],
-				double abserr[], int iflag[], double work[], int iwork[],
-				double scale[][], double z[][], double beta[], double c[]) {
-			super(neqn, y, t, tout, relerr, abserr, iflag, work, iwork);
+				double abserr[], int iflag[], double scale[][], double z[][], 
+				double beta[], double c[]) {
+			super(neqn, y, t, tout, relerr, abserr, iflag);
 			this.scale = scale;
 			this.z = z;
 			this.beta = beta;
