@@ -161,7 +161,7 @@ public abstract class ODE {
     //   the constant  maxnum  is the maximum number of steps allowed in one
    	//   call to  de .  the user may change this limit by altering the
    	//   following statement
-    private int maxnum = 2000;
+    private int maxnum = 4000;
     
     private boolean testMode = false;
     
@@ -173,6 +173,23 @@ public abstract class ODE {
     private final int ENRIGHT_AND_PRYCE_A4 = 3;
     private final int ENRIGHT_AND_PRYCE_A5 = 4;
     private final int ENRIGHT_AND_PRYCE_B1 = 5;
+    private final int ENRIGHT_AND_PRYCE_B2 = 6;
+    private final int ENRIGHT_AND_PRYCE_B3 = 7;
+    private final int ENRIGHT_AND_PRYCE_B4 = 8;
+    private final int ENRIGHT_AND_PRYCE_B5 = 9;
+    private final int ENRIGHT_AND_PRYCE_C1 = 10;
+    private final int ENRIGHT_AND_PRYCE_C2 = 11;
+    private final int ENRIGHT_AND_PRYCE_C3 = 12;
+    private final int ENRIGHT_AND_PRYCE_C4 = 13;
+    private final int ENRIGHT_AND_PRYCE_C5 = 14;
+    private final int ENRIGHT_AND_PRYCE_D1 = 15;
+    private final int ENRIGHT_AND_PRYCE_D2 = 16;
+    private final int ENRIGHT_AND_PRYCE_D3 = 17;
+    private final int ENRIGHT_AND_PRYCE_D4 = 18;
+    private final int ENRIGHT_AND_PRYCE_D5 = 19;
+    private final int ENRIGHT_AND_PRYCE_E1 = 20;
+    private final int ENRIGHT_AND_PRYCE_E2 = 21;
+    private final int SHAMPINES_BALL_OF_FLAME = 37;
     
     /**
      * Creates a new ODE object.
@@ -242,7 +259,7 @@ public abstract class ODE {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = 0.218218"  + 
+    	Preferences.debug("Actual value = 0.2182178902359887"  + 
 				" Calculated value = " + y[0] + "\n");
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
@@ -266,7 +283,7 @@ public abstract class ODE {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = 2.49165"  + 
+    	Preferences.debug("Actual value = 2.491650271850414E"  + 
 				" Calculated value = " + y[0] + "\n");
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
@@ -290,7 +307,7 @@ public abstract class ODE {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = 17.7302"  + 
+    	Preferences.debug("Actual value = 17.73016648131483"  + 
 				" Calculated value = " + y[0] + "\n");
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
@@ -314,13 +331,13 @@ public abstract class ODE {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = -0.788783"  + 
+    	Preferences.debug("Actual value = -0.7887826688964196"  + 
 				" Calculated value = " + y[0] + "\n");
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
 		
 		testCase = ENRIGHT_AND_PRYCE_B1;
-    	Preferences.debug("Enright and Pryce #B1 neqn = 2 y1' 2*y1*(1-y2)\n");
+    	Preferences.debug("Enright and Pryce #B1 neqn = 2 y1' = 2*y1*(1-y2)\n");
     	Preferences.debug("y2' = -y2*(1-y1)\n");
     	Preferences.debug("y[0] = 1.0  y[1] = 3.0\n");
     	neqn = 2;
@@ -340,12 +357,773 @@ public abstract class ODE {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value y[0]= 0.676188"  + 
+    	Preferences.debug("Actual value y[0]= 0.6761876008576667"  + 
 				" Calculated value = " + y[0] + "\n");
-    	Preferences.debug("Actual value y[1]= 0.186082"  + 
+    	Preferences.debug("Actual value y[1]= 0.1860816099640036"  + 
 				" Calculated value = " + y[1] + "\n");
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_B2;
+    	Preferences.debug("Enright and Pryce #B2 neqn = 3 y1' = -y1 + y2\n");
+    	Preferences.debug("y2' = y1 - 2*y2 + y3\n");
+    	Preferences.debug("y3' = y2 - y3\n");
+    	Preferences.debug("y[0] = 2.0  y[1] = 0.0 y[2] = 1.0\n");
+    	neqn = 3;
+    	y = new double[3];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 2.0;
+    	y[1] = 0.0;
+    	y[2] = 1.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= 1.000000001030576"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 1.000000000000000"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value y[2]= 0.9999999989694235"  + 
+				" Calculated value = " + y[2] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_B3;
+    	Preferences.debug("Enright and Pryce #B3 neqn = 3 y1' = -y1\n");
+    	Preferences.debug("y2' = y1 - y2^2\n");
+    	Preferences.debug("y3' = y2^2\n");
+    	Preferences.debug("y[0] = 2.0  y[1] = 0.0 y[2] = 1.0\n");
+    	neqn = 3;
+    	y = new double[3];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1.0;
+    	y[1] = 0.0;
+    	y[2] = 0.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= = 2.061153488557776E-09"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 5.257228022048349E-02"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value y[2]= 0.9474277177183630"  + 
+				" Calculated value = " + y[2] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_B4;
+    	Preferences.debug("Enright and Pryce #B4 neqn = 3 y1' = (-y2-y1*y3)/sqrt(y1^2+y2^2)\n");
+    	Preferences.debug("y2' = (y1 - y2*y3)/sqrt(y1^2+y2^2)\n");
+    	Preferences.debug("y3' = y1/sqrt(y1^2+y2^2)n");
+    	Preferences.debug("y[0] = 3.0  y[1] = 0.0 y[2] = 0.0\n");
+    	// Failed with:
+    	// In ODE integration did not reach tout because equations
+    	// appear to be stiff
+    	// Actual value y[0]= 0.982695 Calculated value = -1.8978356526431914E-15
+    	// Actual value y[1]= 2.19845 Calculated value = 1.891190949841856E-15
+    	// Actual value y[2]= 0.912945 Calculated value = 1.8834833796744186
+    	// Final time = 2.5728618669553334
+    	neqn = 3;
+    	y = new double[3];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 3.0;
+    	y[1] = 0.0;
+    	y[2] = 0.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 8.0E-15;
+    	abserr[0] = 8.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= 0.9826950928005993"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= = 2.198447081694832"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value y[2]= 0.9129452507276399"  + 
+				" Calculated value = " + y[2] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_B5;
+    	Preferences.debug("Enright and Pryce #B5 neqn = 3 y1' = y2*y3\n");
+    	Preferences.debug("y2' = -y1*y3\n");
+    	Preferences.debug("y3' = -0.51*y1*y2\n");
+    	Preferences.debug("y[0] = 2.0  y[1] = 1.0 y[2] = 1.0\n");
+    	neqn = 3;
+    	y = new double[3];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 0.0;
+    	y[1] = 1.0;
+    	y[2] = 1.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= -0.9396570798729192"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= -0.3421177754000779"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value y[2]= 0.7414126596199957"  + 
+				" Calculated value = " + y[2] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_C1;
+    	Preferences.debug("Enright and Pryce #C1 neqn = 10 \n");
+    	Preferences.debug("y[0] = 1\n");
+    	Preferences.debug("y[1] to y[9] == 0\n");
+    	neqn = 10;
+    	y = new double[10];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1;
+    	for (i = 1; i < 10 ; i++) {
+    		y[i] = 0;
+    	}
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 2.061153622240064D-09"  + 
+				" Calculated value = " + y[0] + "\n");
+        Preferences.debug("Actual value = 4.122307244619555D-08"  + 
+    			" Calculated value = " + y[1] + "\n");
+        Preferences.debug("Actual value = 4.122307244716968D-07"  + 
+    			" Calculated value = " + y[2] + "\n");
+        Preferences.debug("Actual value = 2.748204829855288D-06"  + 
+    			" Calculated value = " + y[3] + "\n");
+        Preferences.debug("Actual value = 1.374102414941961D-05"  + 
+    			" Calculated value = " + y[4] + "\n");
+        Preferences.debug("Actual value = 5.496409659803266D-05"  + 
+    			" Calculated value = " + y[5] + "\n");
+        Preferences.debug("Actual value = 1.832136553274552D-04"  + 
+    			" Calculated value = " + y[6] + "\n");
+        Preferences.debug("Actual value = 5.234675866508716D-04"  + 
+    			" Calculated value = " + y[7] + "\n");
+        Preferences.debug("Actual value = 1.308668966628220D-03"  + 
+    			" Calculated value = " + y[8] + "\n");
+        Preferences.debug("Actual value = 9.979127409508656D-01"  + 
+    			" Calculated value = " + y[9] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_C2;
+    	Preferences.debug("Enright and Pryce #C2 neqn = 10 \n");
+    	Preferences.debug("y[0] = 1\n");
+    	Preferences.debug("y[1] to y[9] == 0\n");
+    	neqn = 10;
+    	y = new double[10];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1;
+    	for (i = 1; i < 10 ; i++) {
+    		y[i] = 0;
+    	}
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage()); 
+    	Preferences.debug("Actual value = 2.061153577984930D-09"  + 
+				" Calculated value = " + y[0] + "\n");
+        Preferences.debug("Actual value = 2.061153573736588D-09"  + 
+    			" Calculated value = " + y[1] + "\n");
+        Preferences.debug("Actual value = 2.061153569488245D-09"  + 
+    			" Calculated value = " + y[2] + "\n");
+        Preferences.debug("Actual value = 2.061153565239902D-09"  + 
+    			" Calculated value = " + y[3] + "\n");
+        Preferences.debug("Actual value = 2.061153560991560D-09"  + 
+    			" Calculated value = " + y[4] + "\n");
+        Preferences.debug("Actual value = 2.061153556743217D-09"  + 
+    			" Calculated value = " + y[5] + "\n");
+        Preferences.debug("Actual value =  2.061153552494874D-09"  + 
+    			" Calculated value = " + y[6] + "\n");
+        Preferences.debug("Actual value = 2.061153548246532D-09"  + 
+    			" Calculated value = " + y[7] + "\n");
+        Preferences.debug("Actual value = 2.061153543998189D-09"  + 
+    			" Calculated value = " + y[8] + "\n");
+        Preferences.debug("Actual value = 9.999999814496180D-01"  + 
+    			" Calculated value = " + y[9] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");	
+
+		testCase = ENRIGHT_AND_PRYCE_C3;
+    	Preferences.debug("Enright and Pryce #C3 neqn = 10 \n");
+    	Preferences.debug("y[0] = 1\n");
+    	Preferences.debug("y[1] to y[9] == 0\n");
+    	neqn = 10;
+    	y = new double[10];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1;
+    	for (i = 1; i < 10 ; i++) {
+    		y[i] = 0;
+    	}
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage()); 
+    	Preferences.debug("Actual value = 2.948119211022058D-03"  + 
+				" Calculated value = " + y[0] + "\n");
+        Preferences.debug("Actual value = 5.635380154844266D-03"  + 
+    			" Calculated value = " + y[1] + "\n");
+        Preferences.debug("Actual value = 7.829072515926013D-03"  + 
+    			" Calculated value = " + y[2] + "\n");
+        Preferences.debug("Actual value = 9.348257908594937D-03"  + 
+    			" Calculated value = " + y[3] + "\n");
+        Preferences.debug("Actual value = 1.007943610301970D-02"  + 
+    			" Calculated value = " + y[4] + "\n");
+        Preferences.debug("Actual value = 9.982674171429909D-03"  + 
+    			" Calculated value = " + y[5] + "\n");
+        Preferences.debug("Actual value =  9.088693332766085D-03"  + 
+    			" Calculated value = " + y[6] + "\n");
+        Preferences.debug("Actual value = 7.489115195185912D-03"  + 
+    			" Calculated value = " + y[7] + "\n");
+        Preferences.debug("Actual value =  5.322964130953349D-03"  + 
+    			" Calculated value = " + y[8] + "\n");
+        Preferences.debug("Actual value = 2.762434379029886D-03"  + 
+    			" Calculated value = " + y[9] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_C4;
+    	Preferences.debug("Enright and Pryce #C4 neqn = 51 \n");
+    	Preferences.debug("y[0] = 1\n");
+    	Preferences.debug("y[1] to y[50] == 0\n");
+    	neqn = 51;
+    	y = new double[51];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1;
+    	for (i = 1; i < 51 ; i++) {
+    		y[i] = 0;
+    	}
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 3.124111453721466D-03"  + 
+				" Calculated value = " + y[0] + "\n");
+        Preferences.debug("Actual value = 6.015416842150318D-03"  + 
+    			" Calculated value = " + y[1] + "\n");
+        Preferences.debug("Actual value = 8.470021834842650D-03"  + 
+    			" Calculated value = " + y[2] + "\n");
+        Preferences.debug("Actual value = 1.033682931733337D-02"  + 
+    			" Calculated value = " + y[3] + "\n");
+        Preferences.debug("Actual value = 1.153249572873923D-02"  + 
+    			" Calculated value = " + y[4] + "\n");
+        Preferences.debug("Actual value = 1.204549525737964D-02"  + 
+    			" Calculated value = " + y[5] + "\n");
+        Preferences.debug("Actual value = 1.192957068015293D-02"  + 
+    			" Calculated value = " + y[6] + "\n");
+        Preferences.debug("Actual value = 1.128883207111195D-02"  + 
+    			" Calculated value = " + y[7] + "\n");
+        Preferences.debug("Actual value = 1.025804501391024D-02"  + 
+    			" Calculated value = " + y[8] + "\n");
+        Preferences.debug("Actual value = 8.982017581934167D-03"  + 
+    			" Calculated value = " + y[9] + "\n");
+        Preferences.debug("Actual value = 7.597500902492453D-03"  + 
+				" Calculated value = " + y[10] + "\n");
+        Preferences.debug("Actual value = 6.219920556824985D-03"  + 
+    			" Calculated value = " + y[11] + "\n");
+        Preferences.debug("Actual value = 4.935916341009131D-03"  + 
+    			" Calculated value = " + y[12] + "\n");
+        Preferences.debug("Actual value = 3.801432544256119D-03"  + 
+    			" Calculated value = " + y[13] + "\n");
+        Preferences.debug("Actual value = 2.844213677587894D-03"  + 
+    			" Calculated value = " + y[14] + "\n");
+        Preferences.debug("Actual value = 2.069123394222672D-03"  + 
+    			" Calculated value = " + y[15] + "\n");
+        Preferences.debug("Actual value =  1.464687282843915D-03"  + 
+    			" Calculated value = " + y[16] + "\n");
+        Preferences.debug("Actual value = 1.009545263941126D-03"  + 
+    			" Calculated value = " + y[17] + "\n");
+        Preferences.debug("Actual value =  6.779354330227017D-04"  + 
+    			" Calculated value = " + y[18] + "\n");
+        Preferences.debug("Actual value = 4.437815269118510D-04"  + 
+    			" Calculated value = " + y[19] + "\n");
+        Preferences.debug("Actual value = 2.833264542938954D-04"  + 
+				" Calculated value = " + y[20] + "\n");
+        Preferences.debug("Actual value = 1.765005798796805D-04"  + 
+    			" Calculated value = " + y[21] + "\n");
+        Preferences.debug("Actual value = 1.073342592697238D-04"  + 
+    			" Calculated value = " + y[22] + "\n");
+        Preferences.debug("Actual value = 6.374497601777217D-05"  + 
+    			" Calculated value = " + y[23] + "\n");
+        Preferences.debug("Actual value = 3.698645309704183D-05"  + 
+    			" Calculated value = " + y[24] + "\n");
+        Preferences.debug("Actual value = 2.097466832643746D-05"  + 
+    			" Calculated value = " + y[25] + "\n");
+        Preferences.debug("Actual value = 1.162956710412555D-05"  + 
+    			" Calculated value = " + y[26] + "\n");
+        Preferences.debug("Actual value = 6.306710405783322D-06"  + 
+    			" Calculated value = " + y[27] + "\n");
+        Preferences.debug("Actual value = 3.346286430868515D-06"  + 
+    			" Calculated value = " + y[28] + "\n");
+        Preferences.debug("Actual value = 1.737760074184334D-06"  + 
+    			" Calculated value = " + y[29] + "\n");
+        Preferences.debug("Actual value = 8.835366904275847D-07"  + 
+				" Calculated value = " + y[30] + "\n");
+        Preferences.debug("Actual value = 4.399520411127637D-07"  + 
+    			" Calculated value = " + y[31] + "\n");
+        Preferences.debug("Actual value = 2.146181897152360D-07"  + 
+    			" Calculated value = " + y[32] + "\n");
+        Preferences.debug("Actual value = 1.025981211654928D-07"  + 
+    			" Calculated value = " + y[33] + "\n");
+        Preferences.debug("Actual value = 4.807864068784215D-08"  + 
+    			" Calculated value = " + y[34] + "\n");
+        Preferences.debug("Actual value = 2.209175152474847D-08"  + 
+    			" Calculated value = " + y[35] + "\n");
+        Preferences.debug("Actual value = 9.956251263138180D-09"  + 
+    			" Calculated value = " + y[36] + "\n");
+        Preferences.debug("Actual value = 4.402193653748924D-09"  + 
+    			" Calculated value = " + y[37] + "\n");
+        Preferences.debug("Actual value = 1.910149382204028D-09"  + 
+    			" Calculated value = " + y[38] + "\n");
+        Preferences.debug("Actual value = 8.135892921473050D-10"  + 
+    			" Calculated value = " + y[39] + "\n");
+        Preferences.debug("Actual value = 3.402477118549235D-10"  + 
+				" Calculated value = " + y[40] + "\n");
+        Preferences.debug("Actual value = 1.397485617545782D-10"  + 
+    			" Calculated value = " + y[41] + "\n");
+        Preferences.debug("Actual value = 5.638575303049199D-11"  + 
+    			" Calculated value = " + y[42] + "\n");
+        Preferences.debug("Actual value = 2.235459707956947D-11"  + 
+    			" Calculated value = " + y[43] + "\n");
+        Preferences.debug("Actual value = 8.710498036398032D-12"  + 
+    			" Calculated value = " + y[44] + "\n");
+        Preferences.debug("Actual value = 3.336554275346643D-12"  + 
+    			" Calculated value = " + y[45] + "\n");
+        Preferences.debug("Actual value =  1.256679567784939D-12"  + 
+    			" Calculated value = " + y[46] + "\n");
+        Preferences.debug("Actual value = 4.654359053128788D-13"  + 
+    			" Calculated value = " + y[47] + "\n");
+        Preferences.debug("Actual value = 1.693559145599857D-13"  + 
+    			" Calculated value = " + y[48] + "\n");
+        Preferences.debug("Actual value = 5.996593816663054D-14"  + 
+    			" Calculated value = " + y[49] + "\n");
+        Preferences.debug("Actual value = 1.891330702629865D-14"  + 
+				" Calculated value = " + y[50] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_C5;
+    	Preferences.debug("Enright and Pryce #C5 neqn = 30 \n");
+    	neqn = 30;
+    	y = new double[30];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 3.42947415189;
+    	y[1] = 3.35386959711;
+    	y[2] = 1.35494901715;
+    	y[3] = 6.64145542550;
+    	y[4] = 5.97156957878;
+    	y[5] = 2.18231499728;
+    	y[6] = 11.2630437207;
+    	y[7] = 14.6952576794;
+    	y[8] = 6.27960525067;
+    	y[9] = -30.1552268759;
+    	y[10] = 1.65699966404;
+    	y[11] = 1.43785752721;
+    	y[12] = -21.1238353380;
+    	y[13] = 28.4465098142;
+    	y[14] = 15.3882659679;
+    	y[15] = -.557160570446;
+    	y[16] = .505696783289;
+    	y[17] = .230578543901;
+    	y[18] = -.415570776342;
+    	y[19] = .365682722812;
+    	y[20] = .169143213293;
+    	y[21] = -.325325669158;
+    	y[22] = .189706021964;
+    	y[23] = .0877265322780;
+    	y[24] = -.0240476254170;
+    	y[25] = -.287659532608;
+    	y[26] = -.117219543175;
+    	y[27] = -.176860753121;
+    	y[28] = -.216393453025;
+    	y[29] = -.0148647893090;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 3.0E-15;
+    	abserr[0] = 3.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = -4.792730224323733"  + 
+				" Calculated value = " + y[0] + "\n");
+        Preferences.debug("Actual value = -2.420550725448973"  + 
+    			" Calculated value = " + y[1] + "\n");
+        Preferences.debug("Actual value = -9.212509306014886D-01"  + 
+    			" Calculated value = " + y[2] + "\n");
+        Preferences.debug("Actual value = -4.217310404035213"  + 
+    			" Calculated value = " + y[3] + "\n");
+        Preferences.debug("Actual value = 7.356202947498970"  + 
+    			" Calculated value = " + y[4] + "\n");
+        Preferences.debug("Actual value = 3.223785985421212"  + 
+    			" Calculated value = " + y[5] + "\n");
+        Preferences.debug("Actual value = 4.035559443262270"  + 
+    			" Calculated value = " + y[6] + "\n");
+        Preferences.debug("Actual value =  1.719865528670555D+01"  + 
+    			" Calculated value = " + y[7] + "\n");
+        Preferences.debug("Actual value = 7.478910794233703"  + 
+    			" Calculated value = " + y[8] + "\n");
+        Preferences.debug("Actual value =-2.998759326324844D+01 "  + 
+    			" Calculated value = " + y[9] + "\n");
+        Preferences.debug("Actual value = -4.107310937550929"  + 
+				" Calculated value = " + y[10] + "\n");
+        Preferences.debug("Actual value = -9.277008321754407D-01"  + 
+    			" Calculated value = " + y[11] + "\n");
+        Preferences.debug("Actual value = -2.442125302518482D+01"  + 
+    			" Calculated value = " + y[12] + "\n");
+        Preferences.debug("Actual value = 2.381459045746554D+01"  + 
+    			" Calculated value = " + y[13] + "\n");
+        Preferences.debug("Actual value = 1.492096306951359D+01"  + 
+    			" Calculated value = " + y[14] + "\n");
+        Preferences.debug("Actual value = 3.499208963063806D-01"  + 
+    			" Calculated value = " + y[15] + "\n");
+        Preferences.debug("Actual value = -5.748487687912825D-01"  + 
+    			" Calculated value = " + y[16] + "\n");
+        Preferences.debug("Actual value = -2.551694020879149D-01"  + 
+    			" Calculated value = " + y[17] + "\n");
+        Preferences.debug("Actual value = -5.237040978903326D-01"  + 
+    			" Calculated value = " + y[18] + "\n");
+        Preferences.debug("Actual value = -2.493000463579661D-01"  + 
+    			" Calculated value = " + y[19] + "\n");
+        Preferences.debug("Actual value = -8.045341642044464D-02"  + 
+				" Calculated value = " + y[20] + "\n");
+        Preferences.debug("Actual value = -3.875289237334110D-01"  + 
+    			" Calculated value = " + y[21] + "\n");
+        Preferences.debug("Actual value = 5.648603288767891D-02"  + 
+    			" Calculated value = " + y[22] + "\n");
+        Preferences.debug("Actual value = 3.023606472143342D-02"  + 
+    			" Calculated value = " + y[23] + "\n");
+        Preferences.debug("Actual value =  4.133856546712445D-02"  + 
+    			" Calculated value = " + y[24] + "\n");
+        Preferences.debug("Actual value = -2.862393029841379D-01"  + 
+    			" Calculated value = " + y[25] + "\n");
+        Preferences.debug("Actual value = -1.183032405136207D-01"  + 
+    			" Calculated value = " + y[26] + "\n");
+        Preferences.debug("Actual value = -1.511986457359206D-01"  + 
+    			" Calculated value = " + y[27] + "\n");
+        Preferences.debug("Actual value = -2.460068894318766D-01"  + 
+    			" Calculated value = " + y[28] + "\n");
+        Preferences.debug("Actual value = -3.189687411323877D-02"  + 
+    			" Calculated value = " + y[29] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_D1;
+    	Preferences.debug("Enright and Pryce #D1 neqn = 4 \n");
+    	neqn = 4;
+    	y = new double[4];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	int ID = 31;
+    	double E = .2*((double)ID-30.0) - .1;
+    	y[0] = 1.0 - E;
+    	y[1] = 0.0;
+    	y[2] = 0.0;
+    	y[3] = Math.sqrt((1.0 + E)/(1.0 - E));
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= 2.198835352008397D-01"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 9.427076846341813D-01"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value y[2]= -9.787659841058176D-01"  + 
+				" Calculated value = " + y[2] + "\n");
+    	Preferences.debug("Actual value y[3]= 3.287977990962036D-01"  + 
+				" Calculated value = " + y[3] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_D2;
+    	Preferences.debug("Enright and Pryce #D2 neqn = 4 \n");
+    	neqn = 4;
+    	y = new double[4];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	ID = 32;
+    	E = .2*((double)ID-30.0) - .1;
+    	y[0] = 1.0 - E;
+    	y[1] = 0.0;
+    	y[2] = 0.0;
+    	y[3] = Math.sqrt((1.0 + E)/(1.0 - E));
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= -1.777027357140412D-01"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 9.467784719905892D-01"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value y[2]= -1.030294163192969"  + 
+				" Calculated value = " + y[2] + "\n");
+    	Preferences.debug("Actual value y[3]= 1.211074890053952D-01"  + 
+				" Calculated value = " + y[3] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_D3;
+    	Preferences.debug("Enright and Pryce #D3 neqn = 4 \n");
+    	neqn = 4;
+    	y = new double[4];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	ID = 33;
+    	E = .2*((double)ID-30.0) - .1;
+    	y[0] = 1.0 - E;
+    	y[1] = 0.0;
+    	y[2] = 0.0;
+    	y[3] = Math.sqrt((1.0 + E)/(1.0 - E));
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= -5.780432953035361D-01"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 8.633840009194193D-01"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value y[2]= -9.595083730380727D-01"  + 
+				" Calculated value = " + y[2] + "\n");
+    	Preferences.debug("Actual value y[3]= -6.504915126712089D-02"  + 
+				" Calculated value = " + y[3] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_D4;
+    	Preferences.debug("Enright and Pryce #D4 neqn = 4 \n");
+    	neqn = 4;
+    	y = new double[4];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	ID = 34;
+    	E = .2*((double)ID-30.0) - .1;
+    	y[0] = 1.0 - E;
+    	y[1] = 0.0;
+    	y[2] = 0.0;
+    	y[3] = Math.sqrt((1.0 + E)/(1.0 - E));
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= -9.538990293416394D-01"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 6.907409024219432D-01"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value y[2]= -8.212674270877433D-01"  + 
+				" Calculated value = " + y[2] + "\n");
+    	Preferences.debug("Actual value y[3]= -1.539574259125825D-01"  + 
+				" Calculated value = " + y[3] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_D5;
+    	Preferences.debug("Enright and Pryce #D5 neqn = 4 \n");
+    	neqn = 4;
+    	y = new double[4];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	ID = 35;
+    	E = .2*((double)ID-30.0) - .1;
+    	y[0] = 1.0 - E;
+    	y[1] = 0.0;
+    	y[2] = 0.0;
+    	y[3] = Math.sqrt((1.0 + E)/(1.0 - E));
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= -1.295266250987574"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 4.003938963792321D-01"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value y[2]= -6.775390924707566D-01"  + 
+				" Calculated value = " + y[2] + "\n");
+    	Preferences.debug("Actual value y[3]= -1.270838154278686D-01"  + 
+				" Calculated value = " + y[3] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_E1;
+    	Preferences.debug("Enright and Pryce #E1 neqn = 2 \n");
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	E = .79788456080286536;
+    	y[0] = E*.84147098480789651;
+    	y[1] = E*.11956681346419146;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= 1.456723600728308D-01"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= -9.883500195574063D-02"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_E2;
+    	Preferences.debug("Enright and Pryce #E2 neqn = 2 \n");
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 2.0;
+    	y[1] = 0.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]=  2.008149762174948"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= -4.250887527320057D-02"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+
+
+		testCase = SHAMPINES_BALL_OF_FLAME;
+    	Preferences.debug("Shampine's Ball of Flame neqn = 1 y' = y^2-y^3\n");
+    	Preferences.debug("y[0] = 1.0E-2\n");
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1.0E-2;
+    	t[0] = 0;
+    	tout = 200.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 1.00000"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		
     	
     }
     
@@ -385,6 +1163,21 @@ public abstract class ODE {
     }
     
     private void fTestMode(double x, double yy[], double yp[]) {
+    	int i;
+    	int i3;
+    	int i3m2;
+    	int j;
+    	int l;
+    	int ll;
+    	int mm;
+    	double denom;
+    	double diff1;
+    	double diff2;
+    	double diff3;
+    	double p;
+    	double Q[][];
+    	double r[];
+    	double var;
         switch(testCase) {
         case ENRIGHT_AND_PRYCE_A1:
         	yp[0] = -yy[0];
@@ -404,6 +1197,131 @@ public abstract class ODE {
         case ENRIGHT_AND_PRYCE_B1:
         	yp[0] = 2*yy[0]*(1 - yy[1]);
         	yp[1] = -yy[1]*(1 - yy[0]);
+        	break;
+        case ENRIGHT_AND_PRYCE_B2:
+        	yp[0] = -yy[0] + yy[1];
+        	yp[1] = yy[0] - 2*yy[1] + yy[2];
+        	yp[2] = yy[1] - yy[2];
+        	break;
+        case ENRIGHT_AND_PRYCE_B3:
+        	yp[0] = -yy[0];
+        	yp[1] = yy[0] - yy[1]*yy[1];
+        	yp[2] = yy[1]*yy[1];
+        	break;
+        case ENRIGHT_AND_PRYCE_B4:
+            denom = Math.sqrt(yy[0]*yy[0] + yy[1]*yy[1]);
+            yp[0] = (-yy[1] - yy[0]*yy[2])/denom;
+            yp[1] = (yy[0] - yy[1]*yy[2])/denom;
+            yp[2] = yy[0]/denom;
+            break;
+        case ENRIGHT_AND_PRYCE_B5:
+        	yp[0] = yy[1]*yy[2];
+        	yp[1] = -yy[0]*yy[2];
+        	yp[2] = -0.51*yy[0]*yy[1];
+        	break;
+        case ENRIGHT_AND_PRYCE_C1:
+            yp[0] = -yy[0];
+        	for (i = 1; i <= 8; i++) {
+        		yp[i] = yy[i-1] - yy[i];
+        	}
+        	yp[9] = yy[8];
+        	break;
+        case ENRIGHT_AND_PRYCE_C2:
+            yp[0] = -yy[0];
+        	for (i = 2; i <= 9; i++) {
+        		yp[i-1] = (i-1)*yy[i-2] - i*yy[i-1];
+        	}
+        	yp[9] = 9.0*yy[8];
+        	break;
+        case ENRIGHT_AND_PRYCE_C3:
+            yp[0] = -2.0*yy[0] + yy[1];
+        	for (i = 1; i <= 8; i++) {
+        		yp[i] = yy[i-1] - 2.0*yy[i] + yy[i+1];
+        	}
+        	yp[9] = yy[8] - 2.0*yy[9];
+            break;
+        case ENRIGHT_AND_PRYCE_C4:
+            yp[0] = -2.0*yy[0] + yy[1];
+        	for (i = 1; i <= 49; i++) {
+        		yp[i] = yy[i-1] - 2.0*yy[i] + yy[i+1];
+        	}
+        	yp[50] = yy[49] - 2.0*yy[50];
+            break;
+        case ENRIGHT_AND_PRYCE_C5:
+        	r = new double[5];
+        	Q = new double[5][5];
+        	// THE FOLLOWING DATA IS FOR PROBLEM C5 AND DEFINES THE MASSES
+        	// OF THE 5 OUTER PLANETS ETC. IN SOLAR UNITS.
+        	// K2 IS THE GRAVITATIONAL CONSTANT.
+
+        	double m0 = 1.00000597682;
+        	double m[] = new double[]{.954786104043E-3,
+                             .285583733151E-3, .437273164546E-4,
+                            .517759138449E-4, .277777777778E-5};
+        	double k2 = 2.95912208286;
+        	i = 0;
+            for (l = 3; l <= 15; l +=3) {
+               i = i + 1;
+               p = yy[l-3]*yy[l-3] + yy[l-2]*yy[l-2] + yy[l-1]*yy[l-1];
+               r[i-1] = 1.0/(p*Math.sqrt(p));
+               j = 0;
+               for (ll = 3; ll <= 15; ll += 3) {
+                  j = j + 1;
+                  if (ll == l) {
+                	  continue;
+                  }
+                  diff1 = yy[l-3] - yy[ll-3];
+                  diff2 = yy[l-2] - yy[ll-2];
+                  diff3 = yy[l-1] - y[ll-1];
+                  p = diff1*diff1 + diff2*diff2 + diff3*diff3;
+                  Q[i-1][j-1] = 1.D/(p*Math.sqrt(p));
+                  Q[j-1][i-1] = Q[i-1][j-1];
+               } // for (ll = 3; ll <= 15; ll += 3)
+            } // for (l = 3; l <= 15; l +=3)
+            i3 = 0;
+            for (i = 1; i <= 5; i++) {
+               i3 = i3 + 3;
+               i3m2 = i3 - 2;
+               for (ll = i3m2; ll <= i3; ll++) {
+                  mm = ll - i3;
+                  yp[ll-1] = yy[ll+14];
+                  p = 0.0;
+                  for (j = 1; j <= 5; j++) {
+                     mm = mm + 3;
+                     if (j != i) { 
+                    	 p = p + m[j-1]*(yy[mm-1]*(Q[i-1][j-1]-r[j-1])-yy[ll-1]*Q[i-1][j-1]);
+                     } // if (j != i)
+                  } // for (j = 1; j <= 5; j++)
+                  yp[ll+14] = k2*(-(m0+m[i-1])*yy[ll-1]*r[i-1]+p);
+               } // for (ll = i3m2; ll <= i3; ll++)
+            } // for (i = 1; i <= 5; i++)
+
+        	break;
+        case ENRIGHT_AND_PRYCE_D1:
+        case ENRIGHT_AND_PRYCE_D2:
+        case ENRIGHT_AND_PRYCE_D3:
+        case ENRIGHT_AND_PRYCE_D4:
+        case ENRIGHT_AND_PRYCE_D5:
+            yp[0] = yy[2];
+        	yp[1] = yy[3];
+        	denom = yy[0]*yy[0] + yy[1]*yy[1];
+        	denom = Math.sqrt(denom*denom*denom);
+        	yp[2] = -yy[0]/denom;
+        	yp[3] = -yy[1]/denom;
+        	break;
+        case ENRIGHT_AND_PRYCE_E1:
+            var = x + 1.0;
+            yp[0] = yy[1];
+        	yp[1] = -(yy[1]/var+(1.0 -0.25/(var*var))*yy[0]);
+        	break;
+        case ENRIGHT_AND_PRYCE_E2:
+            yp[0] = yy[1];
+        	yp[1] = (1.0 - yy[0]*yy[0])*yy[1] - yy[0];
+            break;
+        case SHAMPINES_BALL_OF_FLAME:
+        	double yySquared;
+        	yySquared = yy[0]*yy[0];
+        	yp[0] = yySquared - yySquared*yy[0];
         	break;
         }
     }
