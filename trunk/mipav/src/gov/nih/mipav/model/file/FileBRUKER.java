@@ -2126,7 +2126,7 @@ public class FileBRUKER extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    public void readd3proc() throws IOException {
+    public void read3dproc() throws IOException {
 
         // This reads d3proc header file of the BRUKER file format
         String lineString = null;
