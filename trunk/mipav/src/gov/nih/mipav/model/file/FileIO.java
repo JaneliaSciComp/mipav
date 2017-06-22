@@ -6987,24 +6987,18 @@ public class FileIO {
         FileBRUKER imageFile = null;
         FileInfoBase myFileInfo;
         File directoryFile;
-        String workingDirectory; // refers to loaction of 2dseq, d3proc, and reco file
+        String workingDirectory = null; // refers to loaction of 2dseq, d3proc, and reco file
         String parentDirectoryName;
         DTIParameters dtiParams = null;
+        boolean d3ProcFound = true;
 
         try {
             fileName = "d3proc";
-            imageFile = new FileBRUKER(fileName, fileDir); // read in files
+            imageFile = new FileBRUKER(fileName, fileDir); // read in files]
             workingDirectory = imageFile.getFileDir();
-            imageFile.readd3proc();
+            imageFile.read3dproc();
         } catch (final IOException error) {
-
-            if ( !quiet) {
-                MipavUtil.displayError("d3proc FileIO: " + error);
-            }
-
-            error.printStackTrace();
-
-            return null;
+        	d3ProcFound = false;
         } catch (final OutOfMemoryError error) {
 
             if ( !quiet) {
@@ -7015,8 +7009,26 @@ public class FileIO {
 
             return null;
         }
+        
+        if (d3ProcFound) {
+        	 imageFile.setFileName("reco");
+        }
+        else {
+        	try {
+        		fileName = "reco";
+            	imageFile = new FileBRUKER(fileName, fileDir); // read in file
+            	workingDirectory = imageFile.getFileDir();
+        	}
+        	catch (IOException e) {
+        		if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + e);
+                }
 
-        imageFile.setFileName("reco");
+                e.printStackTrace();
+
+                return null;	
+        	}
+        }
 
         try {
             imageFile.readreco();
