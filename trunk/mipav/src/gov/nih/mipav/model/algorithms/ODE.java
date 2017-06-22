@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import gov.nih.mipav.model.algorithms.AlgorithmCircleToRectangle.ODEtest;
 import gov.nih.mipav.view.Preferences;
 
 public abstract class ODE {
@@ -161,7 +160,7 @@ public abstract class ODE {
     //   the constant  maxnum  is the maximum number of steps allowed in one
    	//   call to  de .  the user may change this limit by altering the
    	//   following statement
-    private int maxnum = 4000;
+    private int maxnum = 16000;
     
     private boolean testMode = false;
     
@@ -189,8 +188,24 @@ public abstract class ODE {
     private final int ENRIGHT_AND_PRYCE_D5 = 19;
     private final int ENRIGHT_AND_PRYCE_E1 = 20;
     private final int ENRIGHT_AND_PRYCE_E2 = 21;
+    private final int ENRIGHT_AND_PRYCE_E3 = 22;
+    private final int ENRIGHT_AND_PRYCE_E4 = 23;
+    private final int ENRIGHT_AND_PRYCE_E5 = 24;
+    private final int ENRIGHT_AND_PRYCE_F1 = 25;
+    private final int ENRIGHT_AND_PRYCE_F2 = 26;
+    private final int ENRIGHT_AND_PRYCE_F3 = 27;
+    private final int ENRIGHT_AND_PRYCE_F4 = 28;
+    private final int ENRIGHT_AND_PRYCE_F5 = 29;
+    private final int LOTKA_VOLTERRA_PREDATOR_PREY = 30;
+    private final int LORENZ_SYSTEM = 31;
+    private final int VAN_DER_POL = 32;
+    private final int LINEARIZED_DAMPED_PENDULUM = 33;
+    private final int NONLINEAR_DAMPED_PENDULUM = 34;
+    private final int DUFFINGS = 35;
+    private final int DUFFINGS_WITH_DAMPING_AND_FORCING = 36;
     private final int SHAMPINES_BALL_OF_FLAME = 37;
-    
+    private final int POLKINGS_FIRST_ORDER = 38;
+    private final int KNEE_PROBLEM = 39;
     /**
      * Creates a new ODE object.
      * Test with:
@@ -206,6 +221,16 @@ public abstract class ODE {
       }
      */
     public ODE() {
+    	// Passed 31 out of 40 tests
+    	// 1.) ENRIGHT_AND_PRYCE_B4 Appears stiff
+    	// 2.) ENRIGHT_AND_PRYCE_F1 Calculated y[0] correctly, failed on y[1]
+    	// 3.) LORENTZ failed
+    	// 4.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
+    	// 5.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
+    	// 6.) DUFFINGS failed
+    	// 7.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 8.) POLKINGS_FIRST_ORDER Off 1%
+    	// 9.) KNEE_PROBLEM failed
         int i;
     	testMode = true;
     	testCase = ENRIGHT_AND_PRYCE_A1;
@@ -1098,7 +1123,415 @@ public abstract class ODE {
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
 
-
+		testCase = ENRIGHT_AND_PRYCE_E3;
+    	Preferences.debug("Enright and Pryce #E3 neqn = 2 \n");
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 0.0;
+    	y[1] = 0.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= -1.004178858647128D-01"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 2.411400132095954D-01"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_E4;
+    	Preferences.debug("Enright and Pryce #E4 neqn = 2 \n");
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 30.0;
+    	y[1] = 0.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= 3.395091444646555D+01"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 2.767822659672869D-01"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_E5;
+    	Preferences.debug("Enright and Pryce #E5 neqn = 2 \n");
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 0.0;
+    	y[1] = 0.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.1E-15;
+    	abserr[0] = 1.1E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= 1.411797390542629D+01"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= 2.400000000000002"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_F1;
+    	Preferences.debug("Enright and Pryce #F1 neqn = 2 \n");
+    	// Calculated y[0] correctly, failed on y[1}:
+    	// In ODE normal return.  Integration reached tout
+        // Actual value y[0]= -1.294460621213470D1 Calculated value = -12.944606212133303
+        // Actual value y[1]= -2.208575158908672D-15 Calculated value = 1.0635633256705237E-11
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 0.0;
+    	y[1] = 0.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 4.0E-14;
+    	abserr[0] = 4.0E-14;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value y[0]= -1.294460621213470D1"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value y[1]= -2.208575158908672D-15"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_F2;
+		Preferences.debug("Enright and Pryce #F2 neqn = 1 \n");
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 110.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-14;
+    	abserr[0] = 1.0E-14;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 70.03731057008607"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_F3;
+		Preferences.debug("Enright and Pryce #F3 neqn = 2 \n");
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 0.0;
+    	y[1] = 0.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = -3.726957553088175D-1"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value = -6.230137949234190D-1"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_F4;
+		Preferences.debug("Enright and Pryce #F4 neqn = 1 \n");
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 9.815017249707434D-11"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = ENRIGHT_AND_PRYCE_F5;
+		Preferences.debug("Enright and Pryce #F5 neqn = 1 \n");
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 1.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 1.0"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = LOTKA_VOLTERRA_PREDATOR_PREY;
+		Preferences.debug("Lotka-Volterra Predator-Prey Equations neqn = 2 \n");
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 2.0;
+    	y[1] = 2.0;
+    	t[0] = 0;
+    	tout = 10.0;
+    	relerr[0] = 2.0E-15;
+    	abserr[0] = 2.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 2.20050"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value = 10.2726"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = LORENZ_SYSTEM;
+		Preferences.debug("The Lorenz System neqn = 3 \n");
+		// Failed with:
+		// In ODE normal return.  Integration reached tout
+	    // Actual value = 0.00000 Calculated value = 6.624713916677911
+		// Actual value = 0.00000 Calculated value = 11.138672199161253
+		// Actual value = 0.00000 Calculated value = 15.101172841295767
+    	neqn = 3;
+    	y = new double[3];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 2.0;
+    	y[1] = 2.0;
+    	y[2] = 21.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 2.0E-15;
+    	abserr[0] = 2.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 0.00000"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value = 0.00000"  + 
+				" Calculated value = " + y[1] + "\n");
+    	Preferences.debug("Actual value = 0.00000"  + 
+				" Calculated value = " + y[2] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = VAN_DER_POL;
+		Preferences.debug("The Van der Pol equation neqn = 2 \n");
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 2.0;
+    	y[1] = 2.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 0.756245"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value = 2.67294"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = LINEARIZED_DAMPED_PENDULUM;
+		Preferences.debug("The Linearized Damped Pendulum neqn = 2 \n");
+		// Answers are a bit off:
+		// In ODE normal return.  Integration reached tout
+	    // Actual value = 6.95786E-5 Calculated value = 7.40427575180152E-5
+	    // Actual value = 2.77616E-4 Calculated value = 2.889432159883312E-4
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 2.0;
+    	y[1] = 2.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 6.95786E-5"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value = 2.77616E-4"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = NONLINEAR_DAMPED_PENDULUM;
+		Preferences.debug("The Nonlinear Damped Pendulum neqn = 2 \n");
+		// A bit off:
+		// In ODE normal return.  Integration reached tout
+		// Actual value = -5.84253E-5 Calculated value = -6.123467982092676E-5
+	    // Actual value = 3.59969E-4 Calculated value = 3.8103739806513953E-4
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 2.0;
+    	y[1] = 2.0;
+    	t[0] = 0;
+    	tout = 20.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = -5.84253E-5"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value = 3.59969E-4"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = DUFFINGS;
+		Preferences.debug("Duffing's Equation neqn = 2 \n");
+		// Failed with:
+		// In ODE normal return.  Integration reached tout
+		// Actual value = 0.667226 Calculated value = 1.189557865820521
+		// Actual value = -0.254738 Calculated value = 0.4417211944833467
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 0.5;
+    	y[1] = 0.0;
+    	t[0] = 0;
+    	tout = 100.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = 0.667226"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value = -0.254738"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
+		testCase = DUFFINGS_WITH_DAMPING_AND_FORCING;
+		Preferences.debug("Duffing's Equation with Damping and Forcing neqn = 2 \n");
+		// Failed with:
+		// In ODE normal return.  Integration reached tout
+	    // Actual value = -1.21774 Calculated value = -0.6103319657339887
+		// Actual value = -0.548248 Calculated value = 0.21114867070040705
+    	neqn = 2;
+    	y = new double[2];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 0.5;
+    	y[1] = 0.0;
+    	t[0] = 0;
+    	tout = 100.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = -1.21774"  + 
+				" Calculated value = " + y[0] + "\n");
+    	Preferences.debug("Actual value = -0.548248"  + 
+				" Calculated value = " + y[1] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
+		
 		testCase = SHAMPINES_BALL_OF_FLAME;
     	Preferences.debug("Shampine's Ball of Flame neqn = 1 y' = y^2-y^3\n");
     	Preferences.debug("y[0] = 1.0E-2\n");
@@ -1123,7 +1556,57 @@ public abstract class ODE {
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
 		
+		testCase = POLKINGS_FIRST_ORDER;
+    	Preferences.debug("Polking's first order ODE neqn = 1 \n");
+    	// Off slightly:
+    	// In ODE normal return.  Integration reached tout
+        // Actual value = -3.00000 Calculated value = -2.9715400444864772
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = 0.5;
+    	t[0] = 0;
+    	tout = 9.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = -3.00000"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
 		
+		testCase = KNEE_PROBLEM;
+    	Preferences.debug("the Knee problem neqn = 1 \n");
+    	// Failed with:
+    	// In ODE normal return.  Integration reached tout
+    	// Actual value = -9.15216E-24 Calculated value = 1.2249382520735495E-15
+    	neqn = 1;
+    	y = new double[1];
+    	t = new double[1];
+    	relerr = new double[1];
+    	abserr = new double[1];
+    	iflag = new int[1];
+    	allocateArrays();
+    	y[0] = -1.0;
+    	t[0] = -1.0;
+    	tout = 1.0;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
+    	iflag[0] = 1;
+    	clearArrays();
+    	driver();
+    	Preferences.debug(getErrorMessage());
+    	Preferences.debug("Actual value = -9.15216E-24"  + 
+				" Calculated value = " + y[0] + "\n");
+		Preferences.debug("Final time = " + t[0] + "\n");
+		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
     	
     }
     
@@ -1166,10 +1649,15 @@ public abstract class ODE {
     	int i;
     	int i3;
     	int i3m2;
+    	int itemp;
     	int j;
     	int l;
     	int ll;
     	int mm;
+    	double a;
+    	double b;
+    	double c;
+    	double d;
     	double denom;
     	double diff1;
     	double diff2;
@@ -1177,7 +1665,12 @@ public abstract class ODE {
     	double p;
     	double Q[][];
     	double r[];
+    	double temp;
     	double var;
+    	double g = 32.0;
+    	double length = 1.0;
+    	double dampingCoefficient = 1.0;
+    	double mass = 1.0;
         switch(testCase) {
         case ENRIGHT_AND_PRYCE_A1:
         	yp[0] = -yy[0];
@@ -1318,12 +1811,144 @@ public abstract class ODE {
             yp[0] = yy[1];
         	yp[1] = (1.0 - yy[0]*yy[0])*yy[1] - yy[0];
             break;
+        case ENRIGHT_AND_PRYCE_E3:
+            yp[0] = yy[1];
+        	yp[1] = yy[0]*yy[0]*yy[0]/6.0 - yy[0] + 2.0*Math.sin(2.78535 * x);
+            break;
+        case ENRIGHT_AND_PRYCE_E4
+:           yp[0] = yy[1];
+            yp[1] = 0.032 - 0.4*yy[1]*yy[1];
+            break;
+        case ENRIGHT_AND_PRYCE_E5:
+            yp[0] = yy[1];
+        	yp[1] = Math.sqrt(1.0 + yy[1]*yy[1])/(25.0-x);
+        	break;
+        case ENRIGHT_AND_PRYCE_F1:
+        	// C1 IS PI**2 + 0.1**2 
+        	double c1 = Math.PI*Math.PI + 0.1*0.1;
+            yp[0] = yy[1];
+        	yp[1] = 0.2*yy[1] - c1*yy[0];
+        	itemp = (int)Math.floor(x);
+        	if ((itemp/2)*2 != itemp) {
+        		yp[1] = yp[1] - 1.0;
+        	}
+        	else {
+        		yp[1] = yp[1] + 1.0;
+        	}
+        	break;
+        case ENRIGHT_AND_PRYCE_F2:
+            itemp = (int)Math.floor(x);
+        	if ((itemp/2)*2 != itemp) {
+        		yp[0] = 55.0 - 0.5*yy[0];
+        	}
+        	else {
+        		yp[0] = 55.0 - 1.5*yy[0];
+        	}
+        	break;
+        case ENRIGHT_AND_PRYCE_F3:
+            yp[0] = yy[1];
+        	yp[1] = 0.01*yy[1]*(1.0 - yy[0]*yy[0]) - yy[0] - Math.abs(Math.sin(Math.PI*x));
+        	break;
+        case ENRIGHT_AND_PRYCE_F4:
+            if (x <= 10.0) {
+                temp = x - 5.0;	
+                yp[0] = -2.0/21.0 - 120.0*temp/Math.pow((1.0 + 4.0*temp*temp), 16);
+            }
+            else {
+            	yp[0] = -2.0*yy[0];
+            }
+        	break;
+        case ENRIGHT_AND_PRYCE_F5:
+        	double ex = 1.0/3.0;
+        	// C2 IS SUM I**(4/3) FOR I=1 TO 19.
+        	double c2 = 0.0;
+        	for (i = 1; i <= 19; i++) {
+        		c2 += Math.pow(i, (4.0/3.0));
+        	}
+        	yp[0] = yy[0]*(4.0/(3.0*c2))*(dsign(Math.pow(Math.abs(x-1.0),ex),x-1.0)
+             +dsign(Math.pow(Math.abs(x-2.0),ex),x-2.0)
+             +dsign(Math.pow(Math.abs(x-3.0),ex),x-3.0)
+             +dsign(Math.pow(Math.abs(x-4.0),ex),x-4.0)
+             +dsign(Math.pow(Math.abs(x-5.0),ex),x-5.0)
+             +dsign(Math.pow(Math.abs(x-6.0),ex),x-6.0)
+             +dsign(Math.pow(Math.abs(x-7.0),ex),x-7.0)
+             +dsign(Math.pow(Math.abs(x-8.0),ex),x-8.0)
+             +dsign(Math.pow(Math.abs(x-9.0),ex),x-9.0)
+             +dsign(Math.pow(Math.abs(x-10.0),ex),x-10.0)
+             +dsign(Math.pow(Math.abs(x-11.0),ex),x-11.0)
+             +dsign(Math.pow(Math.abs(x-12.0),ex),x-12.0)
+             +dsign(Math.pow(Math.abs(x-13.0),ex),x-13.0)
+             +dsign(Math.pow(Math.abs(x-14.0),ex),x-14.0)
+             +dsign(Math.pow(Math.abs(x-15.0),ex),x-15.0)
+             +dsign(Math.pow(Math.abs(x-16.0),ex),x-16.0)
+             +dsign(Math.pow(Math.abs(x-17.0),ex),x-17.0)
+             +dsign(Math.pow(Math.abs(x-18.0),ex),x-18.0)
+             +dsign(Math.pow(Math.abs(x-19.0),ex),x-19.0));
+        	break;
+        case LOTKA_VOLTERRA_PREDATOR_PREY:
+        	a = 5.0;
+        	b = 1.0;
+        	c = 0.5;
+        	d = 2.0;
+        	yp[0] = (a - b * yy[1]) * yy[0];
+        	yp[1] = (c * yy[0] - d) * yy[1];
+        	break;
+        case LORENZ_SYSTEM:
+        	double sigma = 10.0;
+        	double rho = 28.0;
+        	double beta = 8.0/3.0;
+            yp[0] = sigma * (yy[1] - yy[0]);
+        	yp[1] = rho * yy[0] - yy[1] - yy[0] * yy[2];
+        	yp[2] = -beta * yy[2] + yy[0] * yy[1];
+        	break;
+        case VAN_DER_POL:
+        	double delta = 1.0;
+        	yp[0] = yy[1];
+        	yp[1] = delta * (1.0 - yy[0]*yy[0]) * yy[1] - yy[0];
+        	break;
+        case LINEARIZED_DAMPED_PENDULUM:
+            yp[0] = yy[1];
+        	yp[1] = -(g / length) * yy[0] - (dampingCoefficient / mass) * yy[1];
+        	break;
+        case NONLINEAR_DAMPED_PENDULUM:
+        	yp[0] = yy[1];
+        	yp[1] = -(g / length) * Math.sin(yy[0]) - (dampingCoefficient / mass) * yy[1];
+        	break;
+        case DUFFINGS:
+        	yp[0] = yy[1];
+        	yp[1] = yy[0] * (1.0 - yy[0]*yy[0]);
+        	break;
+        case DUFFINGS_WITH_DAMPING_AND_FORCING:
+        	double amplitude = 0.3;
+        	double kdamp = 0.2;
+        	double w = 1.0;
+        	yp[0] = yy[1];
+        	yp[1] = yy[0] * (1.0 - yy[0]*yy[0]) - kdamp * yy[1] + amplitude * Math.cos(w * x);
+        	break;
         case SHAMPINES_BALL_OF_FLAME:
         	double yySquared;
         	yySquared = yy[0]*yy[0];
         	yp[0] = yySquared - yySquared*yy[0];
         	break;
+        case POLKINGS_FIRST_ORDER:
+        	a = 1.0;
+        	b = 0.0;
+        	yp[0] = yy[0]*yy[0] - a * x + b;
+        	break;
+        case KNEE_PROBLEM:
+        	double e = 0.01;
+        	yp[0] = yy[0] * (yy[0] - x) / e;
+        	break;
         }
+    }
+    
+    private double dsign(double a, double b) {
+    	if (b >= 0) {
+    		return Math.abs(a);
+    	}
+    	else {
+    		return -Math.abs(a);
+    	}
     }
     
     // input neqn = number of equations to be integrated
