@@ -1760,7 +1760,7 @@ public abstract class ODE {
                   }
                   diff1 = yy[l-3] - yy[ll-3];
                   diff2 = yy[l-2] - yy[ll-2];
-                  diff3 = yy[l-1] - y[ll-1];
+                  diff3 = yy[l-1] - yy[ll-1];
                   p = diff1*diff1 + diff2*diff2 + diff3*diff3;
                   Q[i-1][j-1] = 1.D/(p*Math.sqrt(p));
                   Q[j-1][i-1] = Q[i-1][j-1];
