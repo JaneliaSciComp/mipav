@@ -18,8 +18,7 @@ public abstract class ODE {
     //   the user has only to define a new value  tout  and call  ode  again.
     //
     //   the differential equations are actually solved by a suite of codes
-    //   de ,  step , and  intrp .  ode  allocates virtual storage in the
-    //   arrays  work  and  iwork  and calls  de .  de  is a supervisor which
+    //   de ,  step , and  intrp .  ode  calls  de .  de  is a supervisor which
     //   directs the solution.  it calls on the routines  step  and  intrp
     //   to advance the integration and to interpolate at output points.
     //   step  uses a modified divided difference form of the adams pece
@@ -49,14 +48,12 @@ public abstract class ODE {
     //             dabs(local error) .le. dabs(y)*relerr + abserr
     //           for each component of the local error and solution vectors
     //      iflag -- indicates status of integration     (integer*4)
-    //      work(*)  (real*8)  -- arrays to hold information internal to
-    //      iwork(*) (integer*4)    which is necessary for subsequent calls
     //
     //   first call to ode --
     //
     //   the user must provide storage in his calling program for the arrays
     //   in the call list,
-    //      y(neqn), work(100+21*neqn), iwork(5),
+    //      y(neqn)
     //   declare  f  in an external statement, supply the double precision
     //   subroutine f(t,y,yp)  to evaluate
     //      dy(i)/dt = yp(i) = f(t,y(1),y(2),...,y(neqn))
@@ -93,8 +90,6 @@ public abstract class ODE {
     //           the value of  iflag  is returned negative when the input
     //           value is negative and the integration does not reach  tout ,
     //           i.e., -3, -4, -5.
-    //      work(*),iwork(*) -- information generally of no interest to the
-    //           user but necessary for subsequent calls.
     //
     //   subsequent calls to  ode --
     //
@@ -122,7 +117,7 @@ public abstract class ODE {
     private double abserr[];
     private int iflag[];
     
-    // For work:
+    // From work storage in original program:
     private double alpha[] = new double[12];
     private double beta[] = new double[12];
     private double sig[] = new double[13];
@@ -144,7 +139,7 @@ public abstract class ODE {
     private double ypout[];
     private double phi[][];
     
-    // For iwork
+    // From iwork storage in original program
     private int ns;
     private int iwork1;
     private int k;
@@ -1970,8 +1965,6 @@ public abstract class ODE {
     // The user should set iflag[0] = -1 only if it is impossible to continue
     // integration beyond tout.
     // iflag output as described above.
-    // internal double work[] = new double[100 + 21*neqn]
-    // internal int iwork[] = new int[5]
     public ODE(int neqn, double y[], double t[], double tout, double relerr[],
     		double abserr[], int iflag[]) {
     	        this.neqn = neqn;
@@ -2169,7 +2162,7 @@ public abstract class ODE {
     	double abseps = abserr[0]/eps[0];
     	if ((iflag[0] == 1) || (isnold < 0) || (delsn*del <= 0.0)) {
     		//
-    		//   on start and restart also set work variables x and yy(*), store the
+    		//   on start and restart also set variables x and yy(*), store the
     		//   direction of integration and initialize the step size
     		//
     		start = true;
@@ -2288,7 +2281,7 @@ public abstract class ODE {
     	//
     	//   double precision subroutine  step
     	//   integrates a system of first order ordinary
-    	//   differential equations one step, normally from x to x+h work[ih], using a
+    	//   differential equations one step, normally from x to x+h , using a
     	//   modified divided difference form of the adams pece formulas.  local
     	//   extrapolation is used to improve absolute stability and accuracy.
     	//   the code adjusts its order and step size to control the local error
@@ -2302,24 +2295,24 @@ public abstract class ODE {
     	//
     	//
     	//   the parameters represent:
-    	//      x (work[ix]) -- independent variable             (real*8)
-    	//      y(*)(work[iyy]) -- solution vector at x          (real*8)
-    	//      yp(*) (work[iyp])-- derivative of solution vector at  x (work[ix]) after successful
+    	//      x  -- independent variable             (real*8)
+    	//      y(*) -- solution vector at x          (real*8)
+    	//      yp(*)-- derivative of solution vector at  x after successful
     	//           step                             (real*8)
     	//      neqn -- number of equations to be integrated (integer*4)
-    	//      h (work[ih])-- appropriate step size for next step.  normally determined by
+    	//      h -- appropriate step size for next step.  normally determined by
     	//           code                             (real*8)
     	//      eps -- local error tolerance.  must be variable  (real*8)
-    	//      wt(*)(work[iwt]) -- vector of weights for error criterion   (real*8)
+    	//      wt(*) -- vector of weights for error criterion   (real*8)
     	//      start -- logical variable set .true. for first step,  .false.
     	//           otherwise                        (logical*4)
-    	//      hold work[ihold])-- step size used for last successful step  (real*8)
-    	//      k (iwork[k])-- appropriate order for next step (determined by code)
-    	//      kold (iwork[kold])-- order used for last successful step
+    	//      hold -- step size used for last successful step  (real*8)
+    	//      k -- appropriate order for next step (determined by code)
+    	//      kold -- order used for last successful step
     	//      crash -- logical variable set .true. when no step can be taken,
     	//           .false. otherwise.
-    	//   the arrays  phi, psi (work[ipsi])  are required for the interpolation subroutine
-    	//   intrp.  the array p (work[ip]) is internal to the code.  all are real*8
+    	//   the arrays  phi, psi   are required for the interpolation subroutine
+    	//   intrp.  the array p  is internal to the code.  all are real*8
     	//
     	//   input to  step
     	//
@@ -2611,7 +2604,7 @@ public abstract class ODE {
 		    		g[nsp1 - 1] = w[0];
 	    		} // else
 	    		//
-	    		// compute the g(*) in the work vector w(*)
+	    		// compute the g(*) in the vector w(*)
 	    		//
 	    		int nsp2 = ns + 2;
 	    		if (kp1 >= nsp2) {
@@ -2939,9 +2932,9 @@ public abstract class ODE {
     
     private void intrp() {
     	//
-    	//   the methods in subroutine  step  approximate the solution near  x (work[ix])
+    	//   the methods in subroutine  step  approximate the solution near  x 
     	//   by a polynomial.  subroutine  intrp  approximates the solution at
-    	//   xout (tout) by evaluating the polynomial there.  information defining this
+    	//   tout by evaluating the polynomial there.  information defining this
     	//   polynomial is passed from  step  so  intrp  cannot be used alone.
     	//
     	//   this code is completely explained and documented in the text,
@@ -2954,19 +2947,16 @@ public abstract class ODE {
     	//   the user provides storage in the calling program for the arrays in
     	//   the call list
     	//       dimension y(neqn),yout(neqn),ypout(neqn),phi(neqn,16),psi(12)
-    	// y = work[iyy]
     	// yout = y
-    	// ypout = work[iypout]
-    	// psi = work[ipsi]
     	//   and defines
-    	//      xout (tout) -- point at which solution is desired.
+    	//      tout -- point at which solution is desired.
     	//   the remaining parameters are defined in  step  and passed to  intrp
     	//   from that subroutine
     	//
     	//   output from  intrp --
     	//
-    	//      yout(*) (y)-- solution at  xout (tout)
-    	//       ypout(*) (work[iypout]) -- derivative of solution at  xout (tout)
+    	//      yout(*) (y)-- solution at tout
+    	//       ypout(*) ) -- derivative of solution at  tout
     	//   the remaining parameters are returned unaltered from their input
     	//   values.  integration with  step  may be continued.
     	//
