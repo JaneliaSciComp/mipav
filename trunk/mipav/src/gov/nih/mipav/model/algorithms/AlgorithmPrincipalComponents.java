@@ -429,9 +429,12 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         double diff;
         double diffSquared;
         double minDiffSquared;
+        double maxDiffSquared;
         double minDiff;
         int zClosest;
         int cClosest;
+        int zFarthest;
+        int cFarthest;
         double total;
         ViewUserInterface UI = ViewUserInterface.getReference();
         double totalVariance;
@@ -1396,9 +1399,12 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             // Find the z = zClosest that minimizes that minimizes the Euclidean or Mahalanobis distance
             // between weight and weightf[z]
             minDiffSquared = Double.MAX_VALUE;
+            maxDiffSquared = -Double.MAX_VALUE;
             zClosest = 0;
+            zFarthest = 0;
             if (haveColor) {
                 cClosest = 1;
+                cFarthest = 1;
                 for (z = 0; z < zDim; z++) {
                     for (i = 1; i < 4; i++) {
                         diffSquared = 0.0;
@@ -1415,6 +1421,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                             minDiffSquared = diffSquared;
                             zClosest = z;
                             cClosest = i;
+                        }
+                        if (diffSquared > maxDiffSquared) {
+                        	maxDiffSquared = diffSquared;
+                        	zFarthest = z;
+                        	cFarthest = i;
                         }
                     } // for (i = 1; i < 4; i++)
                 } // for (z = 0; z < zDim; z++)
@@ -1434,6 +1445,22 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                     Preferences.debug("The closest color to the matchImage is blue\n");
                     UI.setDataText("The closest color to the matchImage is blue\n");
                 }
+                if (zDim > 1) {
+                    Preferences.debug("The farthest slice to the matchImage is z = " + zFarthest + "\n", Preferences.DEBUG_ALGORITHM);
+                    UI.setDataText("The farthest slice to the matchImage is z = " + zFarthest + "\n");  
+                }
+                if (cFarthest == 1) {
+                    Preferences.debug("The farthest color to the matchImage is red\n");
+                    UI.setDataText("The farthest color to the matchImage is red\n");
+                }
+                else if (cFarthest == 2) {
+                    Preferences.debug("The farthest color to the matchImage is green\n");
+                    UI.setDataText("The farthest color to the matchImage is green\n");    
+                }
+                else {
+                    Preferences.debug("The farthest color to the matchImage is blue\n");
+                    UI.setDataText("The farthest color to the matchImage is blue\n");
+                }
             } // if (haveColor)
             else { // not color
                 for (z = 0; z < zDim; z++) {
@@ -1451,9 +1478,15 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                         minDiffSquared = diffSquared;
                         zClosest = z;
                     }
+                    if (diffSquared > maxDiffSquared) {
+                    	maxDiffSquared = diffSquared;
+                    	zFarthest = z;
+                    }
                 } // for (z = 0; z < zDim; z++)
                 Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
                 UI.setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");
+                Preferences.debug("The farthest slice to the matchImage is z = " + zFarthest + "\n", Preferences.DEBUG_ALGORITHM);
+                UI.setDataText("The farthest slice to the matchImage is z = " + zFarthest + "\n");
             } // else not color
             minDiff = Math.sqrt(minDiffSquared);
             if (doMahalanobisDistance) {
