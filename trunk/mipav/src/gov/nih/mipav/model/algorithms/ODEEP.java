@@ -156,7 +156,7 @@ public abstract class ODEEP {
     //   the constant  maxnum  is the maximum number of steps allowed in one
    	//   call to  de .  the user may change this limit by altering the
    	//   following statement
-    private int maxnum = 16000;
+    private int maxnum = 64000;
     
     private boolean testMode = false;
     
@@ -203,10 +203,10 @@ public abstract class ODEEP {
     private final int POLKINGS_FIRST_ORDER = 38;
     private final int KNEE_PROBLEM = 39;
     /**
-     * Creates a new ODE object.
+     * Creates a new ODEEP object.
      * Test with:
-     * new ODEtest();
-     * class ODEtest extends ODE {
+     * new ODEEPtest();
+     * class ODEtest extends ODEEP {
     	  public ODEtest() {
     		  super();
     	  }
@@ -217,6 +217,8 @@ public abstract class ODEEP {
       }
      */
     public ODEEP() {
+    	// 1.) ENRIGHT_AND_PRYCE_B4 Appears stiff
+    	// 2.) ENRIGHT_AND_PRYCE_F1 calculated y[0], failed on y[1]
         int i;
     	testMode = true;
     	testCase = ENRIGHT_AND_PRYCE_A1;
@@ -238,9 +240,9 @@ public abstract class ODEEP {
     		driver();
     		Preferences.debug(getErrorMessage());
     		Preferences.debug("Actual value = " + (tout.negate()).exp() + 
-    				" Calculated value = " + y + "\n");
-    		Preferences.debug("Final time = " + t + "\n");
-    		Preferences.debug("relerr = " + relerr + " abserr = " + abserr + "\n");
+    				" Calculated value = " + y[0] + "\n");
+    		Preferences.debug("Final time = " + t+ "\n");
+    		Preferences.debug("relerr = " + relerr + " abserr = " + abserr.toString() + "\n");
     	} // for (i = 0; i < 10; i++)
     	
     	testCase = ENRIGHT_AND_PRYCE_A2;
@@ -260,7 +262,7 @@ public abstract class ODEEP {
     	driver();
     	Preferences.debug(getErrorMessage());
     	Preferences.debug("Actual value = 0.2182178902359887"  + 
-				" Calculated value = " + y + "\n");
+				" Calculated value = " + y[0] + "\n");
 		Preferences.debug("Final time = " + t + "\n");
 		Preferences.debug("relerr = " + relerr + " abserr = " + abserr + "\n");
 		
@@ -281,7 +283,7 @@ public abstract class ODEEP {
     	driver();
     	Preferences.debug(getErrorMessage());
     	Preferences.debug("Actual value = 2.491650271850414E"  + 
-				" Calculated value = " + y + "\n");
+				" Calculated value = " + y[0] + "\n");
 		Preferences.debug("Final time = " + t + "\n");
 		Preferences.debug("relerr = " + relerr + " abserr = " + abserr + "\n");
 		
@@ -415,6 +417,12 @@ public abstract class ODEEP {
     	Preferences.debug("y2' = (y1 - y2*y3)/sqrt(y1^2+y2^2)\n");
     	Preferences.debug("y3' = y1/sqrt(y1^2+y2^2)n");
     	Preferences.debug("y[0] = 3.0  y[1] = 0.0 y[2] = 0.0\n");
+    	// Failed with:
+    	// In ODE integration did not reach tout because equations
+    	// appear to be stiff
+    	// Actual value y[0]= 0.9826950928005993 Calculated value = -3.830316246110876146530195874803E-15
+    	// Actual value y[1]= = 2.198447081694832 Calculated value = -1.7060411269063053994597986023754E-15
+    	// Actual value y[2]= 0.9129452507276399 Calculated value = 1.8834833796744185213418706629898
     	neqn = 3;
     	y = new DoubleDouble[3];
     	iflag = new int[1];
@@ -1102,6 +1110,10 @@ public abstract class ODEEP {
 		
 		testCase = ENRIGHT_AND_PRYCE_F1;
     	Preferences.debug("Enright and Pryce #F1 neqn = 2 \n");
+    	// Calculated y[0], failed on y[1]
+    	// In ODE normal return.  Integration reached tout
+        // Actual value y[0]= -1.294460621213470D1 Calculated value = -12.944606212134735258130029482344
+    	// Actual value y[1]= -2.208575158908672D-15 Calculated value = 6.8000440607758703506550279126979E-14
     	neqn = 2;
     	y = new DoubleDouble[2];
     	iflag = new int[1];
@@ -1110,8 +1122,8 @@ public abstract class ODEEP {
     	y[1] = DoubleDouble.valueOf(0.0);
     	t = DoubleDouble.valueOf(0.0);
     	tout = DoubleDouble.valueOf(20.0);
-    	relerr = DoubleDouble.valueOf(4.0E-14);
-    	abserr = DoubleDouble.valueOf(4.0E-14);
+    	relerr = DoubleDouble.valueOf(1.0E-30);
+    	abserr = DoubleDouble.valueOf(1.0E-30);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
@@ -1420,8 +1432,8 @@ public abstract class ODEEP {
     	y[0] = DoubleDouble.valueOf(-1.0);
     	t = DoubleDouble.valueOf(-1.0);
     	tout = DoubleDouble.valueOf(1.0);
-    	relerr = DoubleDouble.valueOf(1.0E-15);
-    	abserr = DoubleDouble.valueOf(1.0E-15);
+    	relerr = DoubleDouble.valueOf(1.0E-35);
+    	abserr = DoubleDouble.valueOf(1.0E-35);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
@@ -1636,11 +1648,15 @@ public abstract class ODEEP {
         case ENRIGHT_AND_PRYCE_E1:
             var = x.add(DoubleDouble.valueOf(1.0));
             yp[0] = yy[1];
-        	yp[1] = ((yy[1].divide(var)).add((DoubleDouble.valueOf(1.0)).subtract((DoubleDouble.valueOf(0.25)).divide(var.multiply(var)))).multiply(yy[0])).negate();
+            yp[1] = (DoubleDouble.valueOf(0.25)).divide(var.multiply(var));
+            yp[1] = ((DoubleDouble.valueOf(1.0)).subtract(yp[1])).multiply(yy[0]);
+            yp[1] = ((yy[1].divide(var)).add(yp[1])).negate();
         	break;
         case ENRIGHT_AND_PRYCE_E2:
             yp[0] = yy[1];
-        	yp[1] = (((DoubleDouble.valueOf(1.0)).subtract(yy[0].multiply(yy[0]))).multiply(yy[1])).subtract(yy[0]);
+            yp[1] = (DoubleDouble.valueOf(1.0)).subtract(yy[0].multiply(yy[0]));
+            yp[1] = yp[1].multiply(yy[1]);
+            yp[1] = yp[1].subtract(yy[0]);
             break;
         case ENRIGHT_AND_PRYCE_E3:
             yp[0] = yy[1];
@@ -1682,9 +1698,10 @@ public abstract class ODEEP {
         	break;
         case ENRIGHT_AND_PRYCE_F3:
             yp[0] = yy[1];
-        	yp[1] =(( ((DoubleDouble.valueOf(0.01)).multiply(yy[1])).
-        			multiply((DoubleDouble.valueOf(1.0)).subtract(yy[0].multiply(yy[0])))).
-        			subtract(yy[0])).subtract(((DoubleDouble.PI.multiply(x)).sin()).abs());
+            yp[1] = (DoubleDouble.valueOf(0.01)).multiply(yy[1]);
+            yp[1] = yp[1].multiply((DoubleDouble.valueOf(1.0)).subtract(yy[0].multiply(yy[0])));
+            yp[1] = yp[1].subtract(yy[0]);
+            yp[1] = yp[1].subtract((((DoubleDouble.PI).multiply(x)).sin()).abs());
         	break;
         case ENRIGHT_AND_PRYCE_F4:
             if (x.le(DoubleDouble.valueOf(10.0))) {
@@ -1952,7 +1969,7 @@ public abstract class ODEEP {
         	iflag[0] = 6;
         	return;
         }
-        if (t == tout) {
+        if (t.equals(tout)) {
         	iflag[0] = 6;
         	return;
         }
@@ -1978,7 +1995,7 @@ public abstract class ODEEP {
     	}
     	iflag[0] = Math.abs(iflag[0]);
     	if (iflag[0] != 1) {
-    		if (t != told) {
+    		if (t.ne(told)) {
     			iflag[0] = 6;
     			return;
     		}
@@ -2386,7 +2403,7 @@ public abstract class ODEEP {
 	    	//   ns is the number of steps taken with size h, including the current
 	    	//   one.  when k.lt.ns, no coefficients change
 	    	//
-	    	if (h != hold) {
+	    	if (h.ne(hold)) {
 	    		ns = 0;
 	    	}
 	    	if (ns <= kold) {
