@@ -12,7 +12,8 @@ import Jama.Matrix;
 
 
 /**
- * Reads a BRUKER file by first reading in the d3proc header file, second the reco header file, third the acqp file in the 
+ * Reads a BRUKER file by first reading in the d3proc header file or if the d3proc header file is not\
+ * present the visu_pars file, second the reco header file, third the acqp file in the 
  * same directory or up one or two two parent directories, then the method file,l and finally the 2dseq binary file.
  * Paravision uses a subject patient coordinate system (L->R, P->A, F->H), with X = L->R, Y = P->A, and Z = F->H.  
  * This is different from the DICOM R->L, A->P, F->H.
@@ -2119,6 +2120,77 @@ public class FileBRUKER extends FileBase {
         }
 
     }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public void readvisu_pars() throws IOException {
+
+        // This reads d3proc header file of the BRUKER file format
+        String lineString = null;
+        String[] parseString;
+        int dataType;
+        int xDim = 0;
+        int yDim = 0;
+        int zDim = 0;
+        int tDim = 0;
+        int[] imageExtents;
+        int i;
+
+        file = new File(fileDir + fileName);
+        raFile = new RandomAccessFile(file, "r");
+        fileInfo = new FileInfoBRUKER(fileName, fileDir, FileUtility.BRUKER); // dummy fileInfo
+        lineString = readLine();
+
+        while (lineString != null) {
+            parseString = parse(lineString);
+            
+            if (parseString[0].equalsIgnoreCase("##$VisuCoreSize")) {
+                lineString = readLine();
+                parseString = parse(lineString);
+                if (parseString.length == 2) {
+                    xDim = Integer.valueOf(parseString[0]).intValue();
+                    yDim = Integer.valueOf(parseString[1]).intValue();
+                }
+            }
+            else if (parseString[0].equalsIgnoreCase("##$VisuCoreFrameCount")) {
+                if (parseString.length == 2) {
+                	zDim = Integer.valueOf(parseString[1]).intValue();
+                }
+            }
+
+            
+            lineString = readLine();
+        } // while (lineString != null)
+            
+
+        raFile.close();
+        
+        if ((xDim > 1) && (yDim > 1) && (zDim > 1) && (tDim > 1)) {
+            imageExtents = new int[4];
+            imageExtents[0] = xDim;
+            imageExtents[1] = yDim;
+            imageExtents[2] = zDim;
+            imageExtents[3] = tDim;
+            fileInfo.setExtents(imageExtents);
+        } else if ((xDim > 1) && (yDim > 1) && (zDim > 1)) {
+            imageExtents = new int[3];
+            imageExtents[0] = xDim;
+            imageExtents[1] = yDim;
+            imageExtents[2] = zDim;
+            fileInfo.setExtents(imageExtents);
+        } else if ((xDim > 1) && (yDim > 1)) {
+            imageExtents = new int[2];
+            imageExtents[0] = xDim;
+            imageExtents[1] = yDim;
+            fileInfo.setExtents(imageExtents);
+        }
+
+        
+
+    }
 
 
     /**
@@ -2331,14 +2403,13 @@ public class FileBRUKER extends FileBase {
 
         float[] fov = null;
         int[] recoSize = null;
+        int[] recoInpSize = null;
         int i;
         float temp;
 
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
-        if (fileInfo ==  null) {
-        	fileInfo = new FileInfoBRUKER(fileName, fileDir, FileUtility.BRUKER); // dummy fileInfo
-        }
+        
         lineString = readLine();
 
         while (lineString != null) {
@@ -2381,6 +2452,14 @@ public class FileBRUKER extends FileBase {
                 for (i = 0; i < parseString.length; i++) {
                 	recoSize[i] = Integer.valueOf(parseString[i]).intValue();
                 }
+            } else if (parseString[0].equalsIgnoreCase("##$RECO_inp_size")) {
+                lineString = readLine();
+                parseString = parse(lineString);
+                fileInfo.setRecoInpSize(parseString.length);
+                recoInpSize = new int[parseString.length];
+                for (i = 0; i < parseString.length; i++) {
+                	recoInpSize[i] = Integer.valueOf(parseString[i]).intValue();
+                }
             } else if (parseString[0].equalsIgnoreCase("##$RECO_fov")) {
                 lineString = readLine();
                 parseString = parse(lineString);
@@ -2417,7 +2496,7 @@ public class FileBRUKER extends FileBase {
     }
 
     /**
-     * Accessor to set the file directoyr (used for reading BRUKER files).
+     * Accessor to set the file directory (used for reading BRUKER files).
      *
      * @param  fDir  file directory of image to read.
      */
