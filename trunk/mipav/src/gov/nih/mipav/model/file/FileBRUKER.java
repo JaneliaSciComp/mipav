@@ -2336,6 +2336,9 @@ public class FileBRUKER extends FileBase {
 
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
+        if (fileInfo ==  null) {
+        	fileInfo = new FileInfoBRUKER(fileName, fileDir, FileUtility.BRUKER); // dummy fileInfo
+        }
         lineString = readLine();
 
         while (lineString != null) {
@@ -2439,7 +2442,7 @@ public class FileBRUKER extends FileBase {
      * @return  DOCUMENT ME!
      */
     private String[] parse(String inString) {
-        String[] tmpString = new String[50];
+        String[] tmpString = new String[1000];
         String[] outString;
         int i;
         int sNum = 0;
