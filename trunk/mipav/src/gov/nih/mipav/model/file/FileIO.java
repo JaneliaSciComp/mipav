@@ -6996,7 +6996,7 @@ public class FileIO {
             fileName = "d3proc";
             imageFile = new FileBRUKER(fileName, fileDir); // read in files]
             workingDirectory = imageFile.getFileDir();
-            imageFile.read3dproc();
+            imageFile.readd3proc();
         } catch (final IOException error) {
         	d3ProcFound = false;
         } catch (final OutOfMemoryError error) {
