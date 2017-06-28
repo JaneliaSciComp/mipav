@@ -7010,14 +7010,12 @@ public class FileIO {
             return null;
         }
         
-        if (d3ProcFound) {
-        	 imageFile.setFileName("reco");
-        }
-        else {
+        if (!d3ProcFound) {
         	try {
-        		fileName = "reco";
+        		fileName = "visu_pars";
             	imageFile = new FileBRUKER(fileName, fileDir); // read in file
             	workingDirectory = imageFile.getFileDir();
+            	imageFile.readvisu_pars();
         	}
         	catch (IOException e) {
         		if ( !quiet) {
@@ -7029,6 +7027,8 @@ public class FileIO {
                 return null;	
         	}
         }
+        
+        imageFile.setFileName("reco");
 
         try {
             imageFile.readreco();
