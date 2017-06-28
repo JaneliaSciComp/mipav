@@ -2131,13 +2131,11 @@ public class FileBRUKER extends FileBase {
         // This reads d3proc header file of the BRUKER file format
         String lineString = null;
         String[] parseString;
-        int dataType;
         int xDim = 0;
         int yDim = 0;
         int zDim = 0;
         int tDim = 0;
         int[] imageExtents;
-        int i;
 
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
