@@ -25,6 +25,8 @@ public class FileInfoBRUKER extends FileInfoBase {
     /** The size of the reconstruction */
     private int recoSize = -1;
     
+    private int recoInpSize;
+    
     /** The slice inversion time of the scan */
     private String sliceSeparationMode = null;
 
@@ -407,6 +409,10 @@ public class FileInfoBRUKER extends FileInfoBase {
         return recoSize;
     }
     
+    public int getRecoInpSize() {
+    	return recoInpSize;
+    }
+    
     /**
      * Gets the inversion time of the scan.
      * 
@@ -432,6 +438,10 @@ public class FileInfoBRUKER extends FileInfoBase {
      */
     public void setRecoSize(int recoSize) {
         this.recoSize = recoSize;
+    }
+    
+    public void setRecoInpSize(int recoInpSize) {
+    	this.recoInpSize = recoInpSize;
     }
 
     /**
