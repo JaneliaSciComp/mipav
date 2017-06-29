@@ -2128,7 +2128,7 @@ public class FileBRUKER extends FileBase {
      */
     public void readvisu_pars() throws IOException {
 
-        // This reads d3proc header file of the BRUKER file format
+        // This reads visu_pars header file of the BRUKER file format
         String lineString = null;
         String[] parseString;
         int xDim = 0;
