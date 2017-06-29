@@ -216,16 +216,15 @@ public abstract class ODE {
       }
      */
     public ODE() {
-    	// Passed 31 out of 40 tests
-    	// 1.) ENRIGHT_AND_PRYCE_B4 Appears stiff
-    	// 2.) ENRIGHT_AND_PRYCE_F1 Calculated y[0] correctly, failed on y[1]
-    	// 3.) LORENTZ failed
-    	// 4.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
-    	// 5.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
-    	// 6.) DUFFINGS failed
-    	// 7.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
-    	// 8.) POLKINGS_FIRST_ORDER Off 1%
-    	// 9.) KNEE_PROBLEM failed
+    	// Passed 32 out of 40 tests
+    	// 1.) ENRIGHT_AND_PRYCE_F1 Calculated y[0] correctly, failed on y[1]
+    	// 2.) LORENTZ failed
+    	// 3.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
+    	// 4.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
+    	// 5.) DUFFINGS failed
+    	// 6.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 7.) POLKINGS_FIRST_ORDER Off 1%
+    	// 8.) KNEE_PROBLEM failed
         int i;
     	testMode = true;
     	testCase = ENRIGHT_AND_PRYCE_A1;
@@ -453,13 +452,6 @@ public abstract class ODE {
     	Preferences.debug("y2' = (y1 - y2*y3)/sqrt(y1^2+y2^2)\n");
     	Preferences.debug("y3' = y1/sqrt(y1^2+y2^2)n");
     	Preferences.debug("y[0] = 3.0  y[1] = 0.0 y[2] = 0.0\n");
-    	// Failed with:
-    	// In ODE integration did not reach tout because equations
-    	// appear to be stiff
-    	// Actual value y[0]= 0.982695 Calculated value = -1.8978356526431914E-15
-    	// Actual value y[1]= 2.19845 Calculated value = 1.891190949841856E-15
-    	// Actual value y[2]= 0.912945 Calculated value = 1.8834833796744186
-    	// Final time = 2.5728618669553334
     	neqn = 3;
     	y = new double[3];
     	t = new double[1];
@@ -472,8 +464,8 @@ public abstract class ODE {
     	y[2] = 0.0;
     	t[0] = 0;
     	tout = 20.0;
-    	relerr[0] = 8.0E-15;
-    	abserr[0] = 8.0E-15;
+    	relerr[0] = 1.0E-15;
+    	abserr[0] = 1.0E-15;
     	iflag[0] = 1;
     	clearArrays();
     	driver();
@@ -1698,8 +1690,8 @@ public abstract class ODE {
         	break;
         case ENRIGHT_AND_PRYCE_B4:
             denom = Math.sqrt(yy[0]*yy[0] + yy[1]*yy[1]);
-            yp[0] = (-yy[1] - yy[0]*yy[2])/denom;
-            yp[1] = (yy[0] - yy[1]*yy[2])/denom;
+            yp[0] = -yy[1] - yy[0]*yy[2]/denom;
+            yp[1] = yy[0] - yy[1]*yy[2]/denom;
             yp[2] = yy[0]/denom;
             break;
         case ENRIGHT_AND_PRYCE_B5:
