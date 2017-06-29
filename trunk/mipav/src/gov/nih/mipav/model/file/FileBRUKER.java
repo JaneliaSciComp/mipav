@@ -2135,6 +2135,7 @@ public class FileBRUKER extends FileBase {
         int yDim = 0;
         int zDim = 0;
         int tDim = 0;
+        int frameCount = 0;
         int[] imageExtents;
 
         file = new File(fileDir + fileName);
@@ -2152,10 +2153,15 @@ public class FileBRUKER extends FileBase {
                     xDim = Integer.valueOf(parseString[0]).intValue();
                     yDim = Integer.valueOf(parseString[1]).intValue();
                 }
+                else if (parseString.length == 3) {
+                	xDim = Integer.valueOf(parseString[0]).intValue();
+                    yDim = Integer.valueOf(parseString[1]).intValue();	
+                    zDim = Integer.valueOf(parseString[2]).intValue();
+                }
             }
             else if (parseString[0].equalsIgnoreCase("##$VisuCoreFrameCount")) {
                 if (parseString.length == 2) {
-                	zDim = Integer.valueOf(parseString[1]).intValue();
+                	frameCount = Integer.valueOf(parseString[1]).intValue();
                 }
             }
 
@@ -2165,6 +2171,10 @@ public class FileBRUKER extends FileBase {
             
 
         raFile.close();
+        
+        if ((zDim == 0) && (frameCount > 0)) {
+        	zDim = frameCount;
+        }
         
         if ((xDim > 1) && (yDim > 1) && (zDim > 1) && (tDim > 1)) {
             imageExtents = new int[4];
