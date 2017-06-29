@@ -216,15 +216,15 @@ public abstract class ODE {
       }
      */
     public ODE() {
-    	// Passed 32 out of 40 tests
+    	// Passed 32 out of 39 tests
     	// 1.) ENRIGHT_AND_PRYCE_F1 Calculated y[0] correctly, failed on y[1]
-    	// 2.) LORENTZ failed
-    	// 3.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
-    	// 4.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
-    	// 5.) DUFFINGS failed
-    	// 6.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
-    	// 7.) POLKINGS_FIRST_ORDER Off 1%
-    	// 8.) KNEE_PROBLEM failed
+    	// 2.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
+    	// 3.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
+    	// 4.) DUFFINGS failed
+    	// 5.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 6.) POLKINGS_FIRST_ORDER Off 1%
+    	// 7.) KNEE_PROBLEM failed
+    	// The Lorenz system does not have a well defined stopping point
         int i;
     	testMode = true;
     	testCase = ENRIGHT_AND_PRYCE_A1;
@@ -1341,11 +1341,9 @@ public abstract class ODE {
 		
 		testCase = LORENZ_SYSTEM;
 		Preferences.debug("The Lorenz System neqn = 3 \n");
-		// Failed with:
-		// In ODE normal return.  Integration reached tout
-	    // Actual value = 0.00000 Calculated value = 6.624713916677911
-		// Actual value = 0.00000 Calculated value = 11.138672199161253
-		// Actual value = 0.00000 Calculated value = 15.101172841295767
+		// The discussion for P32_STOP says:
+		// The system is chaotic, and so a dummy stop value is put here.
+		// so essentially no stop value is given
     	neqn = 3;
     	y = new double[3];
     	t = new double[1];
@@ -1364,11 +1362,11 @@ public abstract class ODE {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = 0.00000"  + 
+    	Preferences.debug("Actual value = ?"  + 
 				" Calculated value = " + y[0] + "\n");
-    	Preferences.debug("Actual value = 0.00000"  + 
+    	Preferences.debug("Actual value = ?"  + 
 				" Calculated value = " + y[1] + "\n");
-    	Preferences.debug("Actual value = 0.00000"  + 
+    	Preferences.debug("Actual value = ?"  + 
 				" Calculated value = " + y[2] + "\n");
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
