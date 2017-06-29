@@ -156,7 +156,7 @@ public abstract class ODEEP {
     //   the constant  maxnum  is the maximum number of steps allowed in one
    	//   call to  de .  the user may change this limit by altering the
    	//   following statement
-    private int maxnum = 64000;
+    private int maxnum = 1000000;
     
     private boolean testMode = false;
     
@@ -1458,7 +1458,7 @@ public abstract class ODEEP {
     	Preferences.debug("the Knee problem neqn = 1 \n");
     	// Failed:
     	// In ODE normal return.  Integration reached tout
-        // Actual value = -9.15216E-24 Calculated value = -7.6945986267056744358986464759936E-24
+        // Actual value = -9.15216E-24 Calculated value = -7.6945986267061649790067189031426E-24
     	neqn = 1;
     	y = new DoubleDouble[1];
     	iflag = new int[1];
@@ -1466,8 +1466,8 @@ public abstract class ODEEP {
     	y[0] = DoubleDouble.valueOf(-1.0);
     	t = DoubleDouble.valueOf(-1.0);
     	tout = DoubleDouble.valueOf(1.0);
-    	relerr = DoubleDouble.valueOf(1.0E-35);
-    	abserr = DoubleDouble.valueOf(1.0E-35);
+    	relerr = DoubleDouble.valueOf(1.0E-36);
+    	abserr = DoubleDouble.valueOf(1.0E-36);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
