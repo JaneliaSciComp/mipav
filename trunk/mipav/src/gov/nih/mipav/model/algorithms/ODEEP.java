@@ -217,13 +217,13 @@ public abstract class ODEEP {
       }
      */
     public ODEEP() {
-    	// 1.) LORENTZ failed
-    	// 2.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
-    	// 3.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
-    	// 4.) DUFFINGS failed
-    	// 5.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
-    	// 6.) POLKINGS_FIRST_ORDER Off 1%
-    	// 7.) KNEE_PROBLEM failed
+    	// 1.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
+    	// 2.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
+    	// 3.) DUFFINGS failed
+    	// 4.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 5.) POLKINGS_FIRST_ORDER Off 1%
+    	// 6.) KNEE_PROBLEM failed
+    	// The Lorenz system does not have a well defined stopping point.
         int i;
     	testMode = true;
     	testCase = ENRIGHT_AND_PRYCE_A1;
@@ -1252,10 +1252,9 @@ public abstract class ODEEP {
 		
 		testCase = LORENZ_SYSTEM;
 		Preferences.debug("The Lorenz System neqn = 3 \n");
-		// In ODE normal return.  Integration reached tout
-		// Actual value = 0.00000 Calculated value = 6.6247132086548512800829464549324
-		// Actual value = 0.00000 Calculated value = 11.13867128000668437760486278846
-	    // Actual value = 0.00000 Calculated value = 15.101171544419132390901139907793
+		// The discussion for P32_STOP says:
+	    // The system is chaotic, and so a dummy stop value is put here.
+	    // so essentially no stop value is given
     	neqn = 3;
     	y = new DoubleDouble[3];
     	iflag = new int[1];
@@ -1271,11 +1270,11 @@ public abstract class ODEEP {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = 0.00000"  + 
+    	Preferences.debug("Actual value = ?"  + 
 				" Calculated value = " + y[0] + "\n");
-    	Preferences.debug("Actual value = 0.00000"  + 
+    	Preferences.debug("Actual value = ?"  + 
 				" Calculated value = " + y[1] + "\n");
-    	Preferences.debug("Actual value = 0.00000"  + 
+    	Preferences.debug("Actual value = ?"  + 
 				" Calculated value = " + y[2] + "\n");
 		Preferences.debug("Final time = " + t + "\n");
 		Preferences.debug("relerr = " + relerr + " abserr = " + abserr + "\n");
