@@ -217,8 +217,14 @@ public abstract class ODEEP {
       }
      */
     public ODEEP() {
-    	// 1.) ENRIGHT_AND_PRYCE_B4 Appears stiff
-    	// 2.) ENRIGHT_AND_PRYCE_F1 calculated y[0], failed on y[1]
+    	// 1.) ENRIGHT_AND_PRYCE_F1 calculated y[0], failed on y[1]
+    	// 2.) LORENTZ failed
+    	// 3.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
+    	// 4.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
+    	// 5.) DUFFINGS failed
+    	// 6.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 7.) POLKINGS_FIRST_ORDER Off 1%
+    	// 8.) KNEE_PROBLEM failed
         int i;
     	testMode = true;
     	testCase = ENRIGHT_AND_PRYCE_A1;
@@ -417,12 +423,6 @@ public abstract class ODEEP {
     	Preferences.debug("y2' = (y1 - y2*y3)/sqrt(y1^2+y2^2)\n");
     	Preferences.debug("y3' = y1/sqrt(y1^2+y2^2)n");
     	Preferences.debug("y[0] = 3.0  y[1] = 0.0 y[2] = 0.0\n");
-    	// Failed with:
-    	// In ODE integration did not reach tout because equations
-    	// appear to be stiff
-    	// Actual value y[0]= 0.9826950928005993 Calculated value = -3.830316246110876146530195874803E-15
-    	// Actual value y[1]= = 2.198447081694832 Calculated value = -1.7060411269063053994597986023754E-15
-    	// Actual value y[2]= 0.9129452507276399 Calculated value = 1.8834833796744185213418706629898
     	neqn = 3;
     	y = new DoubleDouble[3];
     	iflag = new int[1];
@@ -1248,6 +1248,10 @@ public abstract class ODEEP {
 		
 		testCase = LORENZ_SYSTEM;
 		Preferences.debug("The Lorenz System neqn = 3 \n");
+		// In ODE normal return.  Integration reached tout
+		// Actual value = 0.00000 Calculated value = 6.6247132086548512800829464549324
+		// Actual value = 0.00000 Calculated value = 11.13867128000668437760486278846
+	    // Actual value = 0.00000 Calculated value = 15.101171544419132390901139907793
     	neqn = 3;
     	y = new DoubleDouble[3];
     	iflag = new int[1];
@@ -1257,8 +1261,8 @@ public abstract class ODEEP {
     	y[2] = DoubleDouble.valueOf(21.0);
     	t = DoubleDouble.valueOf(0.0);
     	tout = DoubleDouble.valueOf(20.0);
-    	relerr = DoubleDouble.valueOf(2.0E-15);
-    	abserr = DoubleDouble.valueOf(2.0E-15);
+    	relerr = DoubleDouble.valueOf(1.0E-20);
+    	abserr = DoubleDouble.valueOf(1.0E-20);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
@@ -1297,6 +1301,10 @@ public abstract class ODEEP {
 		
 		testCase = LINEARIZED_DAMPED_PENDULUM;
 		Preferences.debug("The Linearized Damped Pendulum neqn = 2 \n");
+		// Off a bit:
+		// In ODE normal return.  Integration reached tout
+		// Actual value = 6.95786E-5 Calculated value = 7.4042757518424133359760448349168E-5
+		// Actual value = 2.77616E-4 Calculated value = 2.8894321598544419736147170343314E-4
     	neqn = 2;
     	y = new DoubleDouble[2];
     	iflag = new int[1];
@@ -1305,8 +1313,8 @@ public abstract class ODEEP {
     	y[1] = DoubleDouble.valueOf(2.0);
     	t = DoubleDouble.valueOf(0.0);
     	tout = DoubleDouble.valueOf(20.0);
-    	relerr = DoubleDouble.valueOf(1.0E-15);
-    	abserr = DoubleDouble.valueOf(1.0E-15);
+    	relerr = DoubleDouble.valueOf(1.0E-25);
+    	abserr = DoubleDouble.valueOf(1.0E-25);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
@@ -1320,6 +1328,10 @@ public abstract class ODEEP {
 		
 		testCase = NONLINEAR_DAMPED_PENDULUM;
 		Preferences.debug("The Nonlinear Damped Pendulum neqn = 2 \n");
+		// Off a bit:
+		// In ODE normal return.  Integration reached tout
+		// Actual value = -5.84253E-5 Calculated value = -6.1234679821033738345060488750149E-5
+		// Actual value = 3.59969E-4 Calculated value = 3.8103739806483336540659849541942E-4
     	neqn = 2;
     	y = new DoubleDouble[2];
     	iflag = new int[1];
@@ -1328,8 +1340,8 @@ public abstract class ODEEP {
     	y[1] = DoubleDouble.valueOf(2.0);
     	t = DoubleDouble.valueOf(0.0);
     	tout = DoubleDouble.valueOf(20.0);
-    	relerr = DoubleDouble.valueOf(1.0E-15);
-    	abserr = DoubleDouble.valueOf(1.0E-15);
+    	relerr = DoubleDouble.valueOf(1.0E-25);
+    	abserr = DoubleDouble.valueOf(1.0E-25);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
@@ -1343,6 +1355,10 @@ public abstract class ODEEP {
 		
 		testCase = DUFFINGS;
 		Preferences.debug("Duffing's Equation neqn = 2 \n");
+		// Failed
+		// In ODE normal return.  Integration reached tout
+		// Actual value = 0.667226 Calculated value = 1.1895578658192423382766128867461
+		// Actual value = -0.254738 Calculated value = 0.44172119448478295111843474419498
     	neqn = 2;
     	y = new DoubleDouble[2];
     	iflag = new int[1];
@@ -1351,8 +1367,8 @@ public abstract class ODEEP {
     	y[1] = DoubleDouble.valueOf(0.0);
     	t = DoubleDouble.valueOf(0.0);
     	tout = DoubleDouble.valueOf(100.0);
-    	relerr = DoubleDouble.valueOf(1.0E-15);
-    	abserr = DoubleDouble.valueOf(1.0E-15);
+    	relerr = DoubleDouble.valueOf(1.0E-20);
+    	abserr = DoubleDouble.valueOf(1.0E-20);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
@@ -1366,6 +1382,10 @@ public abstract class ODEEP {
 		
 		testCase = DUFFINGS_WITH_DAMPING_AND_FORCING;
 		Preferences.debug("Duffing's Equation with Damping and Forcing neqn = 2 \n");
+		// Failed:
+		// In ODE normal return.  Integration reached tout
+		// Actual value = -1.21774 Calculated value = -0.61033142121573199381498839168845
+	    // Actual value = -0.548248 Calculated value = 0.21114908857192905940947860835968
     	neqn = 2;
     	y = new DoubleDouble[2];
     	iflag = new int[1];
@@ -1374,8 +1394,8 @@ public abstract class ODEEP {
     	y[1] = DoubleDouble.valueOf(0.0);
     	t = DoubleDouble.valueOf(0.0);
     	tout = DoubleDouble.valueOf(100.0);
-    	relerr = DoubleDouble.valueOf(1.0E-15);
-    	abserr = DoubleDouble.valueOf(1.0E-15);
+    	relerr = DoubleDouble.valueOf(1.0E-20);
+    	abserr = DoubleDouble.valueOf(1.0E-20);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
@@ -1410,6 +1430,9 @@ public abstract class ODEEP {
 		
 		testCase = POLKINGS_FIRST_ORDER;
     	Preferences.debug("Polking's first order ODE neqn = 1 \n");
+    	// Off about 1%:
+    	// In ODE normal return.  Integration reached tout
+    	// Actual value = -3.00000 Calculated value = -2.9715400444864765695057329614553
     	neqn = 1;
     	y = new DoubleDouble[1];
     	iflag = new int[1];
@@ -1417,8 +1440,8 @@ public abstract class ODEEP {
     	y[0] = DoubleDouble.valueOf(0.5);
     	t = DoubleDouble.valueOf(0.0);
     	tout = DoubleDouble.valueOf(9.0);
-    	relerr = DoubleDouble.valueOf(1.0E-15);
-    	abserr = DoubleDouble.valueOf(1.0E-15);
+    	relerr = DoubleDouble.valueOf(1.0E-25);
+    	abserr = DoubleDouble.valueOf(1.0E-25);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
@@ -1430,6 +1453,9 @@ public abstract class ODEEP {
 		
 		testCase = KNEE_PROBLEM;
     	Preferences.debug("the Knee problem neqn = 1 \n");
+    	// Failed:
+    	// In ODE normal return.  Integration reached tout
+        // Actual value = -9.15216E-24 Calculated value = -7.6945986267056744358986464759936E-24
     	neqn = 1;
     	y = new DoubleDouble[1];
     	iflag = new int[1];
@@ -1546,8 +1572,8 @@ public abstract class ODEEP {
         	break;
         case ENRIGHT_AND_PRYCE_B4:
             denom = ((yy[0].multiply(yy[0])).add(yy[1].multiply(yy[1]))).sqrt();
-            yp[0] = ((yy[1].negate()).subtract(yy[0].multiply(yy[2]))).divide(denom);
-            yp[1] = (yy[0].subtract(yy[1].multiply(yy[2]))).divide(denom);
+            yp[0] = (yy[1].negate()).subtract((yy[0].multiply(yy[2])).divide(denom));
+            yp[1] = yy[0].subtract((yy[1].multiply(yy[2])).divide(denom));
             yp[2] = yy[0].divide(denom);
             break;
         case ENRIGHT_AND_PRYCE_B5:
