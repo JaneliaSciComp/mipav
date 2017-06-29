@@ -1569,6 +1569,18 @@ public abstract class ODE {
 		
 		testCase = KNEE_PROBLEM;
     	Preferences.debug("the Knee problem neqn = 1 \n");
+    	// Using the below equation gives yout = -0.0
+    	//double e = 0.01;
+    	//double yout = - 2.0 * Math.sqrt ( e )
+    	//	    * Math.exp ( ( 1.0 - tout * tout ) / ( 2.0 * e ) ) / 
+    	//	    ( 
+    	//	      2 * Math.sqrt ( e ) + 
+    	//	      ( 
+    	//	        errorFunction ( 1.0 / Math.sqrt ( 2.0 * e ) )  + 
+    	//	        errorFunction ( tout  / Math.sqrt ( 2.0 + e ) ) 
+    	//	      ) 
+    	//	      * Math.exp ( 0.5 / e ) * Math.sqrt ( 2.0 * Math.PI ) 
+    	//	    );
     	// Failed with:
     	// In ODE normal return.  Integration reached tout
     	// Actual value = -9.15216E-24 Calculated value = 1.2249382520735495E-15
@@ -1594,6 +1606,46 @@ public abstract class ODE {
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
     	
     }
+    
+    //private double errorFunction(double x) { 
+    	// From Computation of Special Functions by Shanjie Zhang and Jianming Jin,
+    	// pp.620-623.
+    	//double er;
+    	//double err;
+    	//double r;
+    	//int k;
+    	//double c0;
+    	//double eps = 1.0E-15;
+    	//double x2 = x * x;
+    	//double sqrtPi = Math.sqrt(Math.PI);
+    	//if (Math.abs(x) < 3.5) {
+    	    //er = 1.0;
+    	    //r = 1.0;
+    	    //for (k = 1; k <= 50; k++) {
+    	        //r = r*x2/(k+0.50);
+    	        //er = er + r;
+    	        //if (Math.abs(r) <= Math.abs(er)*eps) {
+    	        	//break;
+    	       // }
+    	    //} // for (k = 1; k <= 50; k++)
+    	    //c0 = 2.0/sqrtPi*x*Math.exp(-x2);
+    	    //err = c0*er;
+    	//} // if (Math.abs(x) < 3.5)
+    	//else {
+    		//er = 1.0;
+    		//r = 1.0;
+    		//for (k = 1; k <= 12; k++) {
+    			//r = -r*(k-0.5)/x2;
+    			//er = er + r;
+    		//}
+    		//c0 = Math.exp(-x2)/(Math.abs(x)*sqrtPi);
+    		//err = 1.0 - c0*er;
+    		//if (x < 0.0) {
+    			//err = -err;
+    		//}
+    	//} // else
+    	//return err;
+    //}
     
     private void allocateArrays() {
     	 yy = new double[neqn];
