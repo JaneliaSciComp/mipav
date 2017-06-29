@@ -217,14 +217,13 @@ public abstract class ODEEP {
       }
      */
     public ODEEP() {
-    	// 1.) ENRIGHT_AND_PRYCE_F1 calculated y[0], failed on y[1]
-    	// 2.) LORENTZ failed
-    	// 3.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
-    	// 4.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
-    	// 5.) DUFFINGS failed
-    	// 6.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
-    	// 7.) POLKINGS_FIRST_ORDER Off 1%
-    	// 8.) KNEE_PROBLEM failed
+    	// 1.) LORENTZ failed
+    	// 2.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
+    	// 3.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
+    	// 4.) DUFFINGS failed
+    	// 5.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 6.) POLKINGS_FIRST_ORDER Off 1%
+    	// 7.) KNEE_PROBLEM failed
         int i;
     	testMode = true;
     	testCase = ENRIGHT_AND_PRYCE_A1;
@@ -1110,10 +1109,15 @@ public abstract class ODEEP {
 		
 		testCase = ENRIGHT_AND_PRYCE_F1;
     	Preferences.debug("Enright and Pryce #F1 neqn = 2 \n");
-    	// Calculated y[0], failed on y[1]
+    	// Using c1 = PI * Pi + 0.l * 0.1 = 9.8796044010893586199447140245012
     	// In ODE normal return.  Integration reached tout
         // Actual value y[0]= -1.294460621213470D1 Calculated value = -12.944606212134735258130029482344
     	// Actual value y[1]= -2.208575158908672D-15 Calculated value = 6.8000440607758703506550279126979E-14
+    	// Using their c1  = 9.879604401089358
+    	// In ODE normal return.  Integration reached tout
+        // Actual value y[0]= -1.294460621213470D1 Calculated value = -12.944606212134737084682048136178
+        // Actual value y[1]= -2.208575158908672D-15 Calculated value = -3.6170938725826828467167589182374E-15
+    	// So my y[1] is within the bounds caused by very small changes in c1.
     	neqn = 2;
     	y = new DoubleDouble[2];
     	iflag = new int[1];
