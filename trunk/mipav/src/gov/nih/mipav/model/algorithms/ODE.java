@@ -216,14 +216,13 @@ public abstract class ODE {
       }
      */
     public ODE() {
-    	// Passed 32 out of 39 tests
+    	// Passed 33 out of 39 tests
     	// 1.) ENRIGHT_AND_PRYCE_F1 Calculated y[0] correctly, failed on y[1]
-    	// 2.) LINEARIZED_DAMPED_PENDULUM Answer a bit off
-    	// 3.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
-    	// 4.) DUFFINGS failed
-    	// 5.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
-    	// 6.) POLKINGS_FIRST_ORDER Off 1%
-    	// 7.) KNEE_PROBLEM failed
+    	// 2.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
+    	// 3.) DUFFINGS failed
+    	// 4.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 5.) POLKINGS_FIRST_ORDER Off 1%
+    	// 6.) KNEE_PROBLEM failed
     	// The Lorenz system does not have a well defined stopping point
         int i;
     	testMode = true;
@@ -1399,10 +1398,27 @@ public abstract class ODE {
 		
 		testCase = LINEARIZED_DAMPED_PENDULUM;
 		Preferences.debug("The Linearized Damped Pendulum neqn = 2 \n");
-		// Answers are a bit off:
-		// In ODE normal return.  Integration reached tout
-	    // Actual value = 6.95786E-5 Calculated value = 7.40427575180152E-5
-	    // Actual value = 2.77616E-4 Calculated value = 2.889432159883312E-4
+		// yy[0] = x
+		// yy[1] = x'
+		// yp[0] = x'
+		// yp[1] = x"
+		// x" + (g/length)x + (d/m)x' = 0
+		// x" + 32x + x' = 0
+		// Let x = exp(rt)
+		// r^2 + r + 32 = 0
+		// r = -0.5 +-jsqrt(127)/2
+		// x = Aexp(-t/2)cos(sqrt(127)*t/2) + Bexp(-t/2)sin(sqrt(127)*t/2)
+		// At t = 0, yy[0] = A = 2
+		// x' = exp(-t/2)[(-1 + B*sqrt(127)/2)*cos(sqrt(127)*t/2) +
+		// (-B/2 - sqrt(127)*sin(sqrt(127)*t/2)]
+		// At t = 0, yy[1] = 2 = B*sqrt(127)/2 - 1
+		// B = 6/sqrt(127)
+		// x = 2exp(-t/2)cos(sqrt(127)*t/2) + (6/sqrt(127))exp(-t/2)sin(sqrt(127)*t/2)
+		//double sqrt127 = Math.sqrt(127.0);
+		//double yout0 = Math.exp(-10.0)*(2.0*Math.cos(10.0*sqrt127) - (6/sqrt127)*Math.sin(10.0*sqrt127));
+		// gives yout0 = 7.404275751842365E-5
+		//double yout1 =  Math.exp(-10.0)*(2.0*Math.cos(10.0*sqrt127) + (-3.0/sqrt127 - sqrt127)*Math.sin(10.0*sqrt127));
+		// gives yout1 = 2.8894321598544795E-4
     	neqn = 2;
     	y = new double[2];
     	t = new double[1];
@@ -1420,9 +1436,9 @@ public abstract class ODE {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = 6.95786E-5"  + 
+    	Preferences.debug("Actual value = 7.404275751842365E-5"  + 
 				" Calculated value = " + y[0] + "\n");
-    	Preferences.debug("Actual value = 2.77616E-4"  + 
+    	Preferences.debug("Actual value = 2.8894321598544795E-4"  + 
 				" Calculated value = " + y[1] + "\n");
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
