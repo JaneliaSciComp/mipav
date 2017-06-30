@@ -156,7 +156,7 @@ public abstract class ODEEP {
     //   the constant  maxnum  is the maximum number of steps allowed in one
    	//   call to  de .  the user may change this limit by altering the
    	//   following statement
-    private int maxnum = 1000000;
+    private int maxnum = 10000000;
     
     private boolean testMode = false;
     
@@ -221,7 +221,6 @@ public abstract class ODEEP {
     	// 2.) DUFFINGS failed
     	// 3.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
     	// 4.) POLKINGS_FIRST_ORDER Off 1%
-    	// 5.) KNEE_PROBLEM failed
     	// The Lorenz system does not have a well defined stopping point.
         int i;
     	testMode = true;
@@ -1472,9 +1471,22 @@ public abstract class ODEEP {
 		
 		testCase = KNEE_PROBLEM;
     	Preferences.debug("the Knee problem neqn = 1 \n");
-    	// Failed:
-    	// In ODE normal return.  Integration reached tout
-        // Actual value = -9.15216E-24 Calculated value = -7.6945986267061649790067189031426E-24
+    	//DoubleDouble e = DoubleDouble.valueOf(0.01);
+    	//DoubleDouble p5 = DoubleDouble.valueOf(0.5);
+    	//DoubleDouble one = DoubleDouble.valueOf(1.0);
+    	//DoubleDouble two = DoubleDouble.valueOf(2.0);
+    	//DoubleDouble negtwo = two.negate();
+    	//DoubleDouble yout = ((negtwo.multiply(e.sqrt()))
+    	//        .multiply(( (one.subtract(tout.multiply(tout)) ).divide (two.multiply(e) ) ).exp())).divide
+    	//	    ( 
+    	//	      (two.multiply( e.sqrt() )).add 
+    	//	      ((( 
+    	//	       ((one.divide((two.multiply(e) ).sqrt()) ).erf()).add 
+    	//	         (( tout.divide((two.add(e) ).sqrt()) ).erf()) 
+    	//	      ) 
+    	//	      .multiply((p5.divide(e) ).exp())).multiply((DoubleDouble.TWO_PI ).sqrt())) 
+    	// 	    );
+    	// yout calculated as -0.0
     	neqn = 1;
     	y = new DoubleDouble[1];
     	iflag = new int[1];
@@ -1482,13 +1494,13 @@ public abstract class ODEEP {
     	y[0] = DoubleDouble.valueOf(-1.0);
     	t = DoubleDouble.valueOf(-1.0);
     	tout = DoubleDouble.valueOf(1.0);
-    	relerr = DoubleDouble.valueOf(1.0E-36);
-    	abserr = DoubleDouble.valueOf(1.0E-36);
+    	relerr = DoubleDouble.valueOf(1.0E-37);
+    	abserr = DoubleDouble.valueOf(1.0E-37);
     	iflag[0] = 1;
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = -9.15216E-24"  + 
+    	Preferences.debug("Actual value = -0.0"  + 
 				" Calculated value = " + y[0] + "\n");
 		Preferences.debug("Final time = " + t + "\n");
 		Preferences.debug("relerr = " + relerr + " abserr = " + abserr + "\n");
