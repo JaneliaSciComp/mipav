@@ -1338,9 +1338,9 @@ public abstract class ODEEP {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = 6.95786E-5"  + 
+    	Preferences.debug("Actual value = 7.404275751842365E-5"  + 
 				" Calculated value = " + y[0] + "\n");
-    	Preferences.debug("Actual value = 2.77616E-4"  + 
+    	Preferences.debug("Actual value = 2.8894321598544795E-4"  + 
 				" Calculated value = " + y[1] + "\n");
 		Preferences.debug("Final time = " + t + "\n");
 		Preferences.debug("relerr = " + relerr + " abserr = " + abserr + "\n");
