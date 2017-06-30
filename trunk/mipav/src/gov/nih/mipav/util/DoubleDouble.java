@@ -823,6 +823,36 @@ public strictfp class DoubleDouble
 		return s;
 	}
 	
+	public DoubleDouble erf() {
+		if (isNaN()) {
+			return NaN;
+		}
+		DoubleDouble coefficient = (DoubleDouble.valueOf(2.0)).divide(PI.sqrt());
+		DoubleDouble x = this;
+		DoubleDouble x2 = x.multiply(x);
+		DoubleDouble oldSum = x;
+		DoubleDouble sum = x;
+		DoubleDouble num = DoubleDouble.valueOf(1.0);
+		DoubleDouble denom = DoubleDouble.valueOf(1.0);
+		DoubleDouble xPow = x;
+		DoubleDouble term;
+		int n = 0;
+		do {
+		    num = num.negate();
+		    denom.divide(DoubleDouble.valueOf(2*n+1));
+		    n = n + 1;
+		    denom = denom.multiply((DoubleDouble.valueOf(n)));
+		    denom = denom.multiply(DoubleDouble.valueOf(2*n+1));
+		    xPow = xPow.multiply(x2);
+		    term = num.divide(denom);
+		    term = term.multiply(xPow);
+		    oldSum = sum;
+		    sum = sum.add(term);
+		} while(sum.ne(oldSum));
+		DoubleDouble ans = coefficient.multiply(sum);
+		return ans;
+	}
+	
 	/**
 	 * For all real x, cos(x) = 1 - x**2/2! + x**4/4! - x**6/6! + ...
 	 * @return
