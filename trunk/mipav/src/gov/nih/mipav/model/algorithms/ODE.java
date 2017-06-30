@@ -1586,6 +1586,7 @@ public abstract class ODE {
 		testCase = KNEE_PROBLEM;
     	Preferences.debug("the Knee problem neqn = 1 \n");
     	// Using the below equation gives yout = -0.0
+    	// DoubleDouble version also gives yout = -0.0
     	//double e = 0.01;
     	//double yout = - 2.0 * Math.sqrt ( e )
     	//	    * Math.exp ( ( 1.0 - tout * tout ) / ( 2.0 * e ) ) / 
@@ -1599,7 +1600,7 @@ public abstract class ODE {
     	//	    );
     	// Failed with:
     	// In ODE normal return.  Integration reached tout
-    	// Actual value = -9.15216E-24 Calculated value = 1.2249382520735495E-15
+    	// Actual value = -0.0 Calculated value = 1.2249382520735495E-15
     	neqn = 1;
     	y = new double[1];
     	t = new double[1];
@@ -1616,7 +1617,7 @@ public abstract class ODE {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = -9.15216E-24"  + 
+    	Preferences.debug("Actual value = -0.0"  + 
 				" Calculated value = " + y[0] + "\n");
 		Preferences.debug("Final time = " + t[0] + "\n");
 		Preferences.debug("relerr = " + relerr[0] + " abserr = " + abserr[0] + "\n");
