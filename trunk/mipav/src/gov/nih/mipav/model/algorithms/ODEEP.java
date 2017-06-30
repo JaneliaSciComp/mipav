@@ -219,7 +219,7 @@ public abstract class ODEEP {
     public ODEEP() {
     	// 1.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
     	// 2.) DUFFINGS failed
-    	// 3.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 3.) DUFFINGS_WITH_DAMPING_AND_FORCING_FAILED
     	// 4.) POLKINGS_FIRST_ORDER Off 1%
     	// The Lorenz system does not have a well defined stopping point.
         int i;
