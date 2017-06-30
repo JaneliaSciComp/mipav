@@ -257,9 +257,26 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
     private static final String SITE_NAME_ELEMENT_NAME = "SiteName";
 
-    private static final String[] PDBP_ALLOWED_SITE_NAMES = {"Brigham and Women's", "Columbia University", "Emory University", "Johns Hopkins University",
-            "Pennsylvania State University (Hershey)", "Pacific Northwest National Laboratory", "University of Alabama (Birmingham)",
-            "University of Pennsylvania", "University of Florida (Gainesville)", "University of Washington", "UT-Southwestern Medical Center",};
+    private static final String[] PDBP_ALLOWED_SITE_NAMES = {
+        "Brigham and Women's",
+        "Cleveland Clinic",
+        "Columbia University",
+        "Emory University",
+        "Florida Atlantic University",
+        "Johns Hopkins University",
+        "Pennsylvania State University (Hershey)",
+        "Pacific Northwest National Laboratory",
+        "Rush University",
+        "Thomas Jefferson University",
+        "University of Alabama (Birmingham)",
+        "University of California San Diego",
+        "University of Florida (Gainesville)",
+        "University of Michigan",
+        "University of Pennsylvania",
+        "University of Pittsburgh",
+        "University of Washington",
+        "UT-Southwestern Medical Center",
+        "VA-Pugent Sound Health Care System/University of Washington",};
 
     private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD", "NEI"};
 
