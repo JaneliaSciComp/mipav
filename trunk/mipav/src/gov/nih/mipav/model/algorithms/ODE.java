@@ -218,9 +218,10 @@ public abstract class ODE {
     public ODE() {
     	// Passed 33 out of 39 tests
     	// 1.) ENRIGHT_AND_PRYCE_F1 Calculated y[0] correctly, failed on y[1]
+    	// Answers for these last 5 are uncertain:
     	// 2.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
     	// 3.) DUFFINGS failed
-    	// 4.) DUFFINGDS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 4.) DUFFINGS_WITH_DAMPING_AND_FORCING_FAILED
     	// 5.) POLKINGS_FIRST_ORDER Off 1%
     	// 6.) KNEE_PROBLEM failed
     	// The Lorenz system does not have a well defined stopping point
