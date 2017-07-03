@@ -217,11 +217,11 @@ public abstract class ODEEP {
       }
      */
     public ODEEP() {
-    	// Answers for these 4 are uncertain:
+    	// Passed 36 out of 39 tests
+    	// Answers for these 3 are uncertain:
     	// 1.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
-    	// 2.) DUFFINGS failed
-    	// 3.) DUFFINGS_WITH_DAMPING_AND_FORCING_FAILED
-    	// 4.) POLKINGS_FIRST_ORDER Off 1%
+    	// 2.) DUFFINGS_WITH_DAMPING_AND_FORCING_FAILED
+    	// 3.) POLKINGS_FIRST_ORDER Off 1%
     	// The Lorenz system does not have a well defined stopping point.
         int i;
     	testMode = true;
@@ -1374,10 +1374,31 @@ public abstract class ODEEP {
 		
 		testCase = DUFFINGS;
 		Preferences.debug("Duffing's Equation neqn = 2 \n");
-		// Failed
-		// In ODE normal return.  Integration reached tout
-		// Actual value = 0.667226 Calculated value = 1.1895578658192423382766128867461
-		// Actual value = -0.254738 Calculated value = 0.44172119448478295111843474419498
+		// From Exact Solution to the Duffing Equation and the Pendulum Equation by
+		// Alvaro H. Salas
+		// For x" + alpha*x + beta*x^3 = 0 for x(0) = x0 and x'(0) = 0
+		// With alpha = -1, beta = 1, x0 = 0.5, x'(0) = 0
+		// x(t) = x0*cn(sqrt(alpha + beta*x0^2)*tout, sqrt((beta*x0^2)/(2*(alpha + beta*x0^2)))
+		// for (alpha + beta*x0^2) != 0 
+		// x(t) = 0.5*cn(sqrt(-3/4)*t, sqrt(-1/6))
+		// From Exact solutions to cubic duffing equation for a nonlinear electrical circuit
+		// by Alvaro H. Salas and Jairo E. Castillo
+		// For both arguments pure imaginary:
+		// cn(iwt, im) = 1/dn(sqrt(m^2 + 1)*w*t,1/sqrt(m^2 + 1)) 
+		// d(dn(t,m))/dt = -m^2*sn(t,m)*cn(t,m)
+		// Derivative = 0.5*m^2*(m^2 + 1)*w*sn*cn/(dn*dn)
+		//double esn[] = new double[1];
+		//double ecn[] = new double[1];
+		//double edn[] = new double[1];
+		//double esd[] = new double[1];
+		//double dph[] = new double[1];
+		//JacobianElliptic je = new JacobianElliptic(Math.sqrt(7.0/8.0)*100.0, Math.sqrt(6.0/7.0), esn, ecn, edn,
+		//		esd, dph);
+		//je.run();
+		//double calculatedy0 = 0.5/edn[0];
+		//System.out.println("calculatedy0 = " + calculatedy0);
+		//double calculatedy1 = 0.5*(6.0/7.0)*Math.sqrt(7.0/8.0)*esn[0]*ecn[0]/(edn[0]*edn[0]);
+		//System.out.println("calculatedy1 = " + calculatedy1);
     	neqn = 2;
     	y = new DoubleDouble[2];
     	iflag = new int[1];
@@ -1392,9 +1413,9 @@ public abstract class ODEEP {
     	clearArrays();
     	driver();
     	Preferences.debug(getErrorMessage());
-    	Preferences.debug("Actual value = 0.667226"  + 
+    	Preferences.debug("Actual value = 1.18955786581925"  + 
 				" Calculated value = " + y[0] + "\n");
-    	Preferences.debug("Actual value = -0.254738"  + 
+    	Preferences.debug("Actual value = 0.4417211944847741"  + 
 				" Calculated value = " + y[1] + "\n");
 		Preferences.debug("Final time = " + t + "\n");
 		Preferences.debug("relerr = " + relerr + " abserr = " + abserr + "\n");
