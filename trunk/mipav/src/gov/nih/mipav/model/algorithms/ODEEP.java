@@ -217,6 +217,7 @@ public abstract class ODEEP {
       }
      */
     public ODEEP() {
+    	// Answers for these 4 are uncertain:
     	// 1.) NONLINEAR_DAMPED_PENDULUM Answer a bit off
     	// 2.) DUFFINGS failed
     	// 3.) DUFFINGS_WITH_DAMPING_AND_FORCING_FAILED
