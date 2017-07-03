@@ -2017,6 +2017,49 @@ public abstract class ODE {
         }
     }
     
+    private double calculateDampedDuffing() {
+    	double ans = 0.0;
+    	double x[] = new double[13];
+    	x[0] = 0.5;
+    	x[1] = 0.0;
+    	double lapcoef[] = new double[13];
+    	lapcoef[0] = 0.5;
+    	lapcoef[1] = 0.0;
+    	double sum = 0.0;
+    	double factorial = 1.0;
+    	double fac2later = 2.0;
+    	double cosval = 1.0;
+    	int n;
+        int m;
+    	for (k = 0; k <= 10; k++) {
+    		if ((k % 4) == 0) {
+    			cosval = 1.0;
+    		}
+    		else if ((k % 4) == 1) {
+    			cosval = 0.0;
+    		}
+    		else if ((k % 4) == 2) {
+    			cosval = -1.0;
+    		}
+    		else {
+    			cosval = 0.0;
+    		}
+    		if (k != 0) {
+    			factorial = factorial * k;
+    		}
+    		fac2later = factorial * (k+1) * (k+2);
+    		sum = 0.0;
+    		for (n = 0; n <= k ; n++) {
+    			for (m = 0; m <= n; m++) {
+    				sum = sum + x[m]*x[n-m]*x[k-n];
+    			}
+    		}
+    		x[k+2] = (x[k] - 0.2*(k+1)*x[k+1] - sum + (0.3/factorial)*cosval)/((k+1)*(k+2));
+    		lapcoef[k+2] = fac2later*x[k+2];
+    	}
+    	return ans;
+    }
+    
     private double dsign(double a, double b) {
     	if (b >= 0) {
     		return Math.abs(a);
