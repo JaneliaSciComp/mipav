@@ -1422,6 +1422,51 @@ public abstract class ODEEP {
 		
 		testCase = DUFFINGS_WITH_DAMPING_AND_FORCING;
 		Preferences.debug("Duffing's Equation with Damping and Forcing neqn = 2 \n");
+		tout = DoubleDouble.valueOf(100.0);
+		// From Approximate Solution of Nonlinear Duffing Oscillator Using Taylor
+	    // Expansion by A. Okasha El-Nady and Maha M.A.Lashin
+		// DoubleDouble delt = DoubleDouble.valueOf(1.0E-6);
+		// DoubleDouble deltSquared = delt.multiply(delt);
+    	// 0 to tout + delt
+    	// int timePositions = (tout.divide(delt)).intValue();
+    	// DoubleDouble x[] = new DoubleDouble[timePositions];
+    	// DoubleDouble dx[] = new DoubleDouble[timePositions];
+    	// DoubleDouble dx2[] = new DoubleDouble[timePositions];
+    	// DoubleDouble zero = DoubleDouble.valueOf(0.0);
+    	// DoubleDouble p2 = DoubleDouble.valueOf(0.2);
+    	// DoubleDouble p3 = DoubleDouble.valueOf(0.3);
+    	// DoubleDouble p5 = DoubleDouble.valueOf(0.5);
+    	// DoubleDouble two = DoubleDouble.valueOf(2.0);
+    	// x[0] = p5;
+    	// dx[0] = zero;
+    	// dx2[0] = x[0].subtract((x[0].multiply(x[0])).multiply(x[0]));
+    	// dx2[0] = dx2[0].subtract(p2.multiply(dx[0]));
+    	// dx2[0] = dx2[0].add(p3.multiply(zero.cos()));
+    	// x[1] = x[0].add(dx[0].multiply(delt));
+    	// x[1] = x[1].add((p5.multiply(dx2[0])).multiply(deltSquared));
+    	// x[2] = x[0].add((two.multiply(dx[0])).multiply(delt));
+    	// x[2] = x[2].add((two.multiply(dx2[0])).multiply(deltSquared));
+    	// dx[1] = (x[2].subtract(x[0])).divide(two.multiply(delt));
+    	// dx2[1] = x[1].subtract((x[1].multiply(x[1])).multiply(x[1]));
+    	// dx2[1] = dx2[1].subtract(p2.multiply(dx[1]));
+    	// dx2[1] = dx2[1].add(p3.multiply(delt.cos()));
+    	// for (i = 2; i < timePositions-1; i++) {
+    		// x[i] = x[i-1].add(dx[i-1].multiply(delt));
+    		// x[i] = x[i].add((p5.multiply(dx2[i-1])).multiply(deltSquared));
+    		// x[i+1] = x[i-1].add((two.multiply(dx[i-1])).multiply(delt));
+    		// x[i+1] = x[i+1].add((two.multiply(dx2[i-1])).multiply(deltSquared));
+    		// dx[i] = (x[i+1].subtract(x[i-1])).divide(two.multiply(delt));
+    		// dx2[i] = x[i].subtract((x[i].multiply(x[i])).multiply(x[i]));
+        	// dx2[i] = dx2[i].subtract(p2.multiply(dx[i]));
+        	// dx2[i] = dx2[i].add(p3.multiply(((DoubleDouble.valueOf(i-1)).multiply(delt)).cos()));
+    	// } 
+    	// DoubleDouble yout0 = x[timePositions - 2];
+    	// System.out.println("yout0 = " + yout0);
+    	// DoubleDouble yout1 = dx[timePositions - 2];
+    	// System.out.println("yout1 = " + yout1);
+    	// Recurrence equations at delt = 1.0E-6 yield
+    	// yout0 = -0.90072788840276037178110317710702
+        // yout1 = -0.59945614403229628906295032931339
 		// Failed:
 		// In ODE normal return.  Integration reached tout
 		// Actual value = -1.21774 Calculated value = -0.61033142121573199381498839168845
@@ -1433,7 +1478,6 @@ public abstract class ODEEP {
     	y[0] = DoubleDouble.valueOf(0.5);
     	y[1] = DoubleDouble.valueOf(0.0);
     	t = DoubleDouble.valueOf(0.0);
-    	tout = DoubleDouble.valueOf(100.0);
     	relerr = DoubleDouble.valueOf(1.0E-20);
     	abserr = DoubleDouble.valueOf(1.0E-20);
     	iflag[0] = 1;
