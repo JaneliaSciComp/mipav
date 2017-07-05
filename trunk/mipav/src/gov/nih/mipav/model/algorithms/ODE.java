@@ -1526,6 +1526,35 @@ public abstract class ODE {
 		
 		testCase = DUFFINGS_WITH_DAMPING_AND_FORCING;
 		Preferences.debug("Duffing's Equation with Damping and Forcing neqn = 2 \n");
+		tout = 100.0;
+		// From Approximate Solution of Nonlinear Duffing Oscillator Using Taylor
+		// Expansion by A. Okasha El-Nady and Maha M.A.Lashin
+    	// double delt = 1.0E-6;
+    	// 0 to tout + delt
+    	// int timePositions = (int)Math.round(tout/delt + 2);
+    	// double x[] = new double[timePositions];
+    	// double dx[] = new double[timePositions];
+    	// double dx2[] = new double[timePositions];
+    	// x[0] = 0.5;
+    	// dx[0] = 0.0;
+    	// dx2[0] = x[0] - x[0]*x[0]*x[0] - 0.2*dx[0] + 0.3*Math.cos(0.0);
+    	// x[1] = x[0] + dx[0]*delt + 0.5*dx2[0]*delt*delt;
+    	// x[2] = x[0] + 2.0*dx[0]*delt + 2.0*dx2[0]*delt*delt;
+    	// dx[1] = (x[2] - x[0])/(2.0*delt);
+    	// // dx2[1] = x[1] - x[1]*x[1]*x[1] - 0.2*dx[1] + 0.3*Math.cos(delt);
+    	// for (i = 2; i < timePositions-1; i++) {
+    		// x[i] = x[i-1] + dx[i-1]*delt + 0.5*dx2[i-1]*delt*delt;
+    		// x[i+1] = x[i-1] + 2.0*dx[i-1]*delt + 2.0*dx2[i-1]*delt*delt;
+    		// dx[i] = (x[i+1] - x[i-1])/(2.0*delt);
+    		// dx2[i] = x[i] - x[i]*x[i]*x[i] - 0.2*dx[i] + 0.3*Math.cos((i-1)*delt);
+    	// } 
+    	// double yout0 = x[timePositions - 2];
+    	// System.out.println("yout0 = " + yout0);
+    	// double yout1 = dx[timePositions - 2];
+    	// System.out.println("yout1 = " + yout1);\
+		// DoubleDouble recurrence equations at delt = 1.0E-6 yield
+    	// yout0 = -0.90072788840276037178110317710702
+        // yout1 = -0.59945614403229628906295032931339
 		// Failed with:
 		// In ODE normal return.  Integration reached tout
 	    // Actual value = -1.21774 Calculated value = -0.6103319657339887
@@ -2015,49 +2044,6 @@ public abstract class ODE {
         	yp[0] = yy[0] * (yy[0] - x) / e;
         	break;
         }
-    }
-    
-    private double calculateDampedDuffing() {
-    	double ans = 0.0;
-    	double x[] = new double[13];
-    	x[0] = 0.5;
-    	x[1] = 0.0;
-    	double lapcoef[] = new double[13];
-    	lapcoef[0] = 0.5;
-    	lapcoef[1] = 0.0;
-    	double sum = 0.0;
-    	double factorial = 1.0;
-    	double fac2later = 2.0;
-    	double cosval = 1.0;
-    	int n;
-        int m;
-    	for (k = 0; k <= 10; k++) {
-    		if ((k % 4) == 0) {
-    			cosval = 1.0;
-    		}
-    		else if ((k % 4) == 1) {
-    			cosval = 0.0;
-    		}
-    		else if ((k % 4) == 2) {
-    			cosval = -1.0;
-    		}
-    		else {
-    			cosval = 0.0;
-    		}
-    		if (k != 0) {
-    			factorial = factorial * k;
-    		}
-    		fac2later = factorial * (k+1) * (k+2);
-    		sum = 0.0;
-    		for (n = 0; n <= k ; n++) {
-    			for (m = 0; m <= n; m++) {
-    				sum = sum + x[m]*x[n-m]*x[k-n];
-    			}
-    		}
-    		x[k+2] = (x[k] - 0.2*(k+1)*x[k+1] - sum + (0.3/factorial)*cosval)/((k+1)*(k+2));
-    		lapcoef[k+2] = fac2later*x[k+2];
-    	}
-    	return ans;
     }
     
     private double dsign(double a, double b) {
