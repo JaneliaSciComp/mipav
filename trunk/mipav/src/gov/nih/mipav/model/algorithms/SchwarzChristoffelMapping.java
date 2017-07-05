@@ -715,7 +715,29 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			for (i = 0; i < z04.length; i++) {
 				yarr[2][i] = z04[i];
 			}
+			int m = yarr.length;
+			int leny = yarr[0].length;
+			for (i = 0, j = 0; i < done.length; i++) {
+				if (!done[i]) {
+				    zp[i][0] = yarr[m-1][j];
+					zp[i][1] = yarr[m-1][j + lenwp];
+					j++;
+				}
+			} // for (i = 0, j = 0; i < done.length; i++)
+			double abszp;
+			for (i = 0; i < zp.length; i++) {
+				abszp = zabs(zp[i][0], zp[i][1]);
+				if (abszp > 1.0) {
+					zp[i][0] = zp[i][0]/abszp;
+					zp[i][1] = zp[i][1]/abszp;
+				}
+			} // for (i = 0; i < zp.length; i++)
 		} // if (ode)
+		
+		// Newton iterations
+		if (newton) {
+			
+		} // if (newton)
 	}
 	
 	class ODEModel extends ODE {
