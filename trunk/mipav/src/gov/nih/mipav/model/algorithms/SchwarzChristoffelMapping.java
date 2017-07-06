@@ -10,7 +10,6 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,10 +18,6 @@ import java.util.Vector;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import javax.print.attribute.standard.PrinterLocation;
-
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
@@ -99,6 +94,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		w[3][0] = 1;
 		w[3][1] = -1;
 		scmap M = diskmap(w, tolerance, null, null);
+		double wc[] = new double[2];
+		M = center(M, wc);
 	}
 	
 	public void testRectmap1() {
@@ -451,12 +448,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// Find inverse image of wc under current map
 		double zc[][] = new double[wc.length][2];
-		boolean flag[] = new boolean[wc.length];
+		int flag[] = null;
 		boolean ode = true;
 		boolean newton = true;
 		double tol = 1.0E-8;
 		int maxiter = 10;
-		dinvmap(zc, flag, wcin, w, beta, z, map.constant, qdata, null,
+		flag = dinvmap(zc, wcin, w, beta, z, map.constant, qdata, null,
 				ode, newton, tol, maxiter);
 		
 		// Use Moebius transform to reset prevertices
@@ -513,7 +510,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return mapout;
 	}
 	
-	private void dinvmap(double zp[][], boolean flag[], double wp[][], double w[][],
+	private int[] dinvmap(double zp[][], double wp[][], double w[][],
 			double beta[], double z[][], double c[], double qdat[][], double z0[][],
 			boolean ode, boolean newton, double tol, int maxiter) {
 	    // Schwarz-Christoffel disk inverse map.	
@@ -542,9 +539,24 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// tol, error tolerance for solution (default 1e-8)
 	    // maxiter, maximum number of Newton iterations (default 10)
 		
+		// flag has a vector of indices where the method was unable to produce a
+		// sufficiently small residual.  A warning is issued when this occurs.
+		
 		// Original MATLAB routine copyright 1998 by Toby Driscoll.
-		int i, j, k;
+		int flag[] = null;
+		int i, j, k, m;
 		double qdat2[][];
+		double zn[][];
+		double w0[][];
+		double F[][] = null;
+		double logreal;
+		double logimag;
+		double betamult[][][];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double sumbeta[][];
+		double expbeta[][];
+		double dF[][];
 		
 		int n = w.length;
 		for (i = 0; i < wp.length; i++) {
@@ -598,13 +610,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// lenwp contains number not done
 		lenwp = lenwp - sumdone;
 		if (lenwp == 0) {
-			flag = null;
-			return;
+			return null;
 		}
 
 		// ODE
 		if (ode) {
-			double w0[][];
 			double z02[][];
 			double w02[][];
 			double z03[][];
@@ -631,7 +641,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			        	z02[i][0] = z0[0][0];
 			        	z02[i][1] = z0[0][1];
 			        	w02[i][0] = w0[0][0];
-			        	w02[i][1] = w0[i][1];
+			        	w02[i][1] = w0[0][1];
 			        }
 			    } // if ((z0.length == 1) && (lenwp > 1)
 			    else {
@@ -687,35 +697,63 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			for (i = 0; i < z04.length; i++) {
 				yarr[0][i] = z04[i];
 			}
+			double coef = 1.0;
 			double t[] = new double[1];
-			t[0] = 0;
-			double tout = 0.5;
 			double relerr[] = new double[1];
-			relerr[0] = reltol;
 			double abserr[] = new double[1];
-			abserr[0] = abstol;
 			int iflag[] = new int[1];
-			iflag[0] = 1;
-			ODEModel modODE = new ODEModel(z04.length, z04, t, tout, relerr,
-					abserr, iflag, scale, z, beta, c);
-			modODE.driver();
-			System.out.println(modODE.getErrorMessage());
+			ODEModel modODE;
+			double tout;
+			while (true) {
+				t[0] = 0;
+				tout = 0.5;
+				relerr[0] = reltol;
+				abserr[0] = abstol;
+				iflag[0] = 1;
+				for (i = 0; i < z04.length; i++) {
+				    z04[i] = yarr[0][i];	
+				}
+				modODE = new ODEModel(z04.length, z04, t, tout, relerr,
+						abserr, iflag, scale, z, beta, c);
+				modODE.driver();
+				System.out.println(modODE.getErrorMessage());
+				if ((iflag[0] >= 3) && (iflag[0] <= 5)) {
+					System.out.println("Final time reached = " + t[0]);
+				}
+				if ((iflag[0] != 3) || (coef >= 1024.0)) {
+					break;
+				}
+				coef = 2.0 * coef;
+			} // while (true)
 			for (i = 0; i < z04.length; i++) {
 				yarr[1][i] = z04[i];
 			}
-			t[0] = 0.5;
-			tout = 1.0;
-			relerr[0] = reltol;
-			abserr[0] = abstol;
-			iflag[0] = 1;
-			modODE = new ODEModel(z04.length, z04, t, tout, relerr,
-					abserr, iflag, scale, z, beta, c);
-			modODE.driver();
-			System.out.println(modODE.getErrorMessage());
+			coef = 1.0;
+			while (true) {
+				t[0] = 0.5;
+				tout = 1.0;
+				relerr[0] = coef*reltol;
+				abserr[0] = coef*abstol;
+				iflag[0] = 1;
+				for (i = 0; i < z04.length; i++) {
+				    z04[i] = yarr[1][i];	
+				}
+				modODE = new ODEModel(z04.length, z04, t, tout, relerr,
+						abserr, iflag, scale, z, beta, c);
+				modODE.driver();
+				System.out.println(modODE.getErrorMessage());
+				if ((iflag[0] >= 3) && (iflag[0] <= 5)) {
+					System.out.println("Final time reached = " + t[0]);
+				}
+				if ((iflag[0] != 3) || (coef >= 1024.0)) {
+					break;
+				}
+				coef = 2.0 * coef;
+			} // while (true)
 			for (i = 0; i < z04.length; i++) {
 				yarr[2][i] = z04[i];
 			}
-			int m = yarr.length;
+			m = yarr.length;
 			int leny = yarr[0].length;
 			for (i = 0, j = 0; i < done.length; i++) {
 				if (!done[i]) {
@@ -736,8 +774,141 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// Newton iterations
 		if (newton) {
-			
+		    if (!ode) {
+		        if ((z0.length == 1) & (lenwp > 1)) {
+		        	zn = new double[lenwp][2];
+		        	for (i = 0; i < lenwp; i++) {
+		        		zn[i][0] = z0[0][0];
+		        		zn[i][1] = z0[0][1];
+		        	}
+		        } // if ((z0.length == 1) & (lenwp > 1))
+		        else {
+		        	zn = new double[z0.length][2];
+		        	for (i = 0; i < z0.length; i++) {
+		        		zn[i][0] = z0[i][0];
+		        		zn[i][1] = z0[i][1];
+		        	}
+		        } // else
+		        for (i = 0; i < done.length; i++) {
+		        	if (done[i]) {
+		        		zn[i][0] = zp[i][0];
+		        		zn[i][1] = zp[i][1];
+		        	}
+		        }
+		    } // if (!ode)
+		    else { // ode
+		    	zn = new double[zp.length][2];
+		    	for (i = 0; i < zp.length; i++) {
+		    		zn[i][0] = zp[i][0];
+		    		zn[i][1] = zp[i][1];
+		    	}
+		    } // else ode
+		    
+		    k = 0;
+		    while ((sumdone < done.length) && (k < maxiter)) {
+		        m = done.length - sumdone;
+		        double znnotdone[][] = new double[m][2];
+		        double wpnotdone[][] = new double[m][2];
+		        for (i = 0, j = 0; i < done.length; i++) {
+		        	if (!done[i]) {
+		        		znnotdone[j][0] = zn[i][0];
+		        		znnotdone[j][1] = zn[i][1];
+		        		wpnotdone[j][0] = wp[i][0];
+		        		wpnotdone[j][1] = wp[i][1];
+		        		j++;
+		        	}
+		        } // for (i = 0, j = 0; i < done.length; i++)
+		        w0 = dmap(znnotdone, w, beta, z, c, qdat2);
+		        F = new double[m][2];
+		        for (i = 0; i < m; i++) {
+		        	F[i][0] = wpnotdone[i][0] - w0[i][0];
+		        	F[i][1] = wpnotdone[i][1] - w0[i][1];
+		        }
+		        betamult = new double[n][m][2];
+		        for (i = 0; i < n; i++) {
+		        	for (j = 0; j < m; j++) {
+		        		zdiv(znnotdone[j][0], znnotdone[j][1], z[i][0], z[i][1], cr, ci);
+		        		logreal = zabs(1.0 - cr[0], -ci[0]);
+		        		logimag = Math.atan2(-ci[0], 1- cr[0]);
+		        		betamult[i][j][0] = beta[i] * logreal;
+		        		betamult[i][j][1] = beta[i] * logimag;
+		        	}
+		        } // for (i = 0; i < n; i++)
+		        sumbeta = new double[m][2];
+		        for (j = 0; j < m; j++) {
+		            for (i = 0; i < n; i++) {
+		            	sumbeta[j][0] += betamult[i][j][0];
+		            	sumbeta[j][1] += betamult[i][j][1];
+		            }
+		        } // for (j = 0; j < m; j++)
+		        expbeta = new double[m][2];
+		        for (i = 0; i < m; i++) {
+		        	double var = Math.exp(sumbeta[i][0]);
+		        	expbeta[i][0] = var*Math.cos(sumbeta[i][1]);
+		        	expbeta[i][1] = var*Math.sin(sumbeta[i][1]);
+		        } // for (i = 0; i < m; i++)
+		        dF = new double[m][2];
+		        for (i = 0; i < m; i++) {
+		        	zmlt(c[0], c[1], expbeta[i][0], expbeta[i][1], cr, ci);
+		        	dF[i][0] = cr[0];
+		        	dF[i][1] = ci[0];
+		        } // for (i = 0; i < m; i++)
+		        for (i = 0, j = 0; i < done.length; i++) {
+		        	if (!done[i]) {
+		        		zdiv(F[j][0], F[j][1], dF[j][0], dF[j][1], cr, ci);
+		        		zn[i][0] = zn[i][0] + cr[0];
+		        		zn[i][1] = zn[i][1] + ci[0];
+		        		j++;
+		        	}
+		        } // for (i = 0, j = 0; i < done.length; i++)
+		        for (i = 0; i < zn.length; i++) {
+		        	double znabs = zabs(zn[i][0], zn[i][1]);
+		        	if (znabs > 1) {
+		        		zn[i][0] = zn[i][0]/znabs;
+		        		zn[i][1] = zn[i][1]/znabs;
+		        	}
+		        }
+		        for (i = 0, j = 0; i < done.length; i++) {
+		        	if (!done[i]) {
+		        		if (zabs(F[j][0], F[j][1]) < tol) {
+		        			done[i] = true;
+		        			sumdone++;
+		        		}
+		        		j++;
+		        	}
+		        } // for (i = 0, j = 0; i < done.length; i++)
+		        k = k + 1;
+		    } //  while ((sumdone < done.length) && (k < maxiter))
+		    double maxtol = 0.0;
+		    if (F != null) {
+			    for (i = 0; i < F.length; i++) {
+			    	double currentTol = zabs(F[i][0], F[i][1]);
+			    	if (currentTol > maxtol) {
+			    		maxtol = currentTol;
+			    	}
+			    }
+		    } // if (F != null)
+		    if (maxtol > tol) {
+		    	MipavUtil.displayWarning("Check solution: maximum residual = " + maxtol);
+		    }
+		    for (i = 0; i <zn.length; i++) {
+		    	zp[i][0] = zn[i][0];
+		    	zp[i][1] = zn[i][1];
+		    }
 		} // if (newton)
+		int numnotdone = 0;
+		for (i = 0; i < done.length; i++) {
+			if (!done[i]) {
+			    numnotdone++;	
+			}
+		} // for (i = 0; i < done.length; i++)
+		flag = new int[numnotdone];
+		for (i = 0, j = 0; i < done.length; i++) {
+			if (!done[i]) {
+				flag[j++] = i;
+			}
+		} // for (i = 0, j = 0; i < done.length; i++)
+		return flag;
 	}
 	
 	class ODEModel extends ODE {
@@ -888,7 +1059,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// The resulting w0[j] is on a polygon side.  Each choice is tested by looking
 		// for intersections of the segment with (other) sides of the polygon.
 		
-		// After randomly trying 10 weights with such prevertex pairs, the rotine gives
+		// After randomly trying 10 weights with such prevertex pairs, the routine gives
 		// up.  Failures are pretty rare.  Slits are the most likely cause of trouble,
 		// since  the intersection method doesn't know "which side" of the slit it's on.
 		// In such a case you will have to supply starting points manually, perhaps by
