@@ -40,7 +40,7 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 
     private final float sigma = 5f;
 
-    private final float sensitivity = 0.01f;
+    private float sensitivity = 0.01f;
 
     private final float radialThreshold = 0.80f;
 
@@ -177,10 +177,12 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
 
             probImage = probabilityMap(cloneImage);
 
-            final float[] threshold = {0, (float) ( -sensitivity * Math.log(sensitivity))};
-
-            final AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(probImage, threshold, 1, 1, true, false);
-            nThresh.run();
+            if (sensitivity > 0) {
+                final float[] threshold = {0, (float) ( -sensitivity * Math.log(sensitivity))};
+    
+                final AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(probImage, threshold, 1, 1, true, false);
+                nThresh.run();
+            }
 
             // ViewJFrameImage probFrame = new ViewJFrameImage(probImage);
             // probFrame.setVisible(true);
@@ -255,6 +257,10 @@ public class PlugInAlgorithmNeuronalActin extends AlgorithmBase {
         actinChannel = channel;
     }
 
+    public void setSensitivity(final float val) {
+        sensitivity = val;
+    }
+    
     private void append(final String message, final AttributeSet a) {
         final Document doc = textArea.getDocument();
         try {
