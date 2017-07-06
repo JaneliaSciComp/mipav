@@ -482,7 +482,7 @@ public abstract class ODE {
     	Preferences.debug("Enright and Pryce #B5 neqn = 3 y1' = y2*y3\n");
     	Preferences.debug("y2' = -y1*y3\n");
     	Preferences.debug("y3' = -0.51*y1*y2\n");
-    	Preferences.debug("y[0] = 2.0  y[1] = 1.0 y[2] = 1.0\n");
+    	Preferences.debug("y[0] = 0.0  y[1] = 1.0 y[2] = 1.0\n");
     	neqn = 3;
     	y = new double[3];
     	t = new double[1];
