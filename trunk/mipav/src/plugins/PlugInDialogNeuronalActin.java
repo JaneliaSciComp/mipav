@@ -40,6 +40,10 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
     private JTextField actinField;
 
     private int channel = -1;
+    
+    private JTextField sensitivityField;
+    
+    private float sensitivity = 0.01f;
 
     private final String[] acceptedImTypes = new String[] {".ics"};
 
@@ -58,6 +62,8 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
     private static final String LAST_SWC_FILE_PREF = "PlugInNeuronalActinStats_LastSWCFile";
 
     private static final String LAST_ACTIN_FILE_PREF = "PlugInNeuronalActinStats_LastActinFile";
+    
+    private static final String THRESHOLD_SENSITIVITY = "PlugInNeuronalActinStats_ThresholdSensitivity";
 
     static {
         BLACK_TEXT = new SimpleAttributeSet();
@@ -226,6 +232,15 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
                 return;
             }
         }
+        
+        try {
+            sensitivity = Float.valueOf(sensitivityField.getText());
+            Preferences.setProperty(THRESHOLD_SENSITIVITY, "" + sensitivity);
+        } catch (final NumberFormatException e) {
+            e.printStackTrace();
+            append("The threshold sensitivity is not a floating point number", RED_TEXT);
+            return;
+        }
 
         srcImage = readImage(imgFile);
         if (srcImage.is4DImage()) {
@@ -241,6 +256,7 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
         if (channel != -1) {
             alg.setActinChannel(channel);
         }
+        alg.setSensitivity(sensitivity);
 
         if (isRunInSeparateThread()) {
             if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -400,6 +416,25 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
         actinField.setFont(serif12);
         actinField.setText("1");
         actinField.setHorizontalAlignment(JTextField.RIGHT);
+        
+        final JLabel sensitivityLabel = new JLabel("Threshold sensitivity (0.01 default; 0 for no thresholding)");
+        sensitivityLabel.setFont(serif12B);
+
+        if (Preferences.isPreferenceSet(THRESHOLD_SENSITIVITY)) {
+            try {
+                sensitivity = Float.parseFloat(Preferences.getProperty(THRESHOLD_SENSITIVITY));
+            } catch (final NumberFormatException e) {
+                e.printStackTrace();
+                append("The threshold sensitivity preference is not a floating point number. Defaulting to 0.01.", RED_TEXT);
+                sensitivity = 0.01f;
+                return;
+            }
+        }
+        
+        sensitivityField = new JTextField(5);
+        sensitivityField.setFont(serif12);
+        sensitivityField.setText("" + sensitivity);
+        sensitivityField.setHorizontalAlignment(JTextField.RIGHT);
 
         final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -449,6 +484,15 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.NONE;
         mainPanel.add(actinField, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+
+        mainPanel.add(sensitivityLabel, gbc);
+
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        mainPanel.add(sensitivityField, gbc);
 
         getContentPane().add(mainPanel);
 
@@ -466,7 +510,6 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
 
         final JPanel debugPanel = new JPanel();
         debugPanel.setLayout(new BoxLayout(debugPanel, BoxLayout.PAGE_AXIS));
-        ;
         debugPanel.setForeground(Color.black);
         debugPanel.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(), "Debugging Output"));
 
