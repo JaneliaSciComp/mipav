@@ -940,12 +940,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			double ci[] = new double[1];
 			int lenyy = yy.length;
 			int lenzp = lenyy/2;
-			double zp[][] = new double[lenyy][2];
+			double zp[][] = new double[lenzp][2];
 			for (i = 0; i < lenzp; i++) {
 				zp[i][0] = yy[i];
 			}
 			for (i = lenzp; i < lenyy; i++) {
-				zp[i][1] = yy[i];
+				zp[i-lenzp][1] = yy[i];
 			}
 			
 			double fprime[][] = dderiv(zp, z, beta, c);
