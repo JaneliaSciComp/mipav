@@ -1133,7 +1133,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			w2 = new double[n][2];
 			z2 = new double[n][2];
 			beta2 = new double[n];
-			qdat2 = new double[qdat.length][n];
+			qdat2 = new double[qdat.length][2*n+1];
 			for (i = 0; i < n; i++) {
 				w2[i][0] = w[renum[i]][0];
 				w2[i][1] = w[renum[i]][1];
@@ -1278,17 +1278,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						zbase[j][0] = z2[j][0] + factor*(z2[j+1][0] - z2[j][0]);
 						zbase[j][1] = z2[j][1] + factor*(z2[j+1][1] - z2[j][1]);
 					}
-					else if (j == n-2) {
+					else if (j == n-2) { // between x[n-2] & Inf
 						if (10.0 >= zabs(z2[n-2][0], z2[n-2][1])) {
 							zbase[j][0] = 10.0/factor;
 							zbase[j][1] = 0.0;
 						}
-						else {
+						else { 
 							zbase[j][0] = z2[n-2][0]/factor;
 							zbase[j][1] = z2[n-2][1]/factor;
 						}
 					} // else if (j == n-2)
-					else {
+					else { // between -Inf and x[0]
 						if (-10.0 <= zabs(z2[0][0],z2[0][1])) {
 							zbase[j][0] = -10.0/factor;
 						    zbase[j][1] = 0.0;	
@@ -1457,6 +1457,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						    	    int ipiv[] = new int[2];
 						    	    anorm = ge.dlange('1', 2, 2, A, 2, work);
 						    	    le2.dgetrf(2, 2, A, 2, ipiv, info);
+						    	    if (info[0] > 0) {
+						    	    	MipavUtil.displayError("In dgetrf factor U is exactly singular");
+						    	    }
 						    	    le2.dgecon('1', 2, A, 2, anorm, rcond, work, iwork, info);
 						    	    // Reciprocal condition number of A in 1-norm.
 						    	    if (rcond[0] < eps) {
