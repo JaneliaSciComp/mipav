@@ -630,6 +630,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			  // Pick a value z0 (not a singularity) and compute the map there.	
 				z03 = new double[lenwp][2];
 				w03 = new double[lenwp][2];
+				for (i = 0; i < w.length; i++) {
+					System.out.println("w["+i+"] = " + w[i][0] + " " + w[i][1]);
+				}
 				scimapz0(z03, w03, "d", wpnotdone, w, beta, z, c, qdat2, null);
 			} // if ((z0 == null) || (z0.length == 0)) 
 			else {
@@ -707,8 +710,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			while (true) {
 				t[0] = 0;
 				tout = 0.5;
-				relerr[0] = reltol;
-				abserr[0] = abstol;
+				relerr[0] = coef*reltol;
+				abserr[0] = coef*abstol;
 				iflag[0] = 1;
 				for (i = 0; i < z04.length; i++) {
 				    z04[i] = yarr[0][i];	
