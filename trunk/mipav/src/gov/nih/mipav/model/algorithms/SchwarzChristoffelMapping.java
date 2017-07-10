@@ -3797,6 +3797,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    }
 	    int n = w.length;
 	    double index[] = new double[z.length];
+	    double zcopy[][] = new double[z.length][2];
+	    for (i = 0; i < z.length; i++) {
+	    	zcopy[i][0] = z[i][0];
+	    	zcopy[i][1] = z[i][1];
+	    }
+	    double wcopy[][] = new double[w.length][2];
+	    for (i = 0; i < w.length; i++) {
+	    	wcopy[i][0] = w[i][0];
+	    	wcopy[i][1] = w[i][1];
+	    }
+	    
 	    
 	    // Rescale to make differences relative
 	    double diffw[][] = new double[n][2];
@@ -3823,13 +3834,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    }
 	    
 	    for (i = 0; i < n; i++) {
-	    	w[i][0] = w[i][0]/scale;
-	    	w[i][1] = w[i][1]/scale;
+	    	wcopy[i][0] = w[i][0]/scale;
+	    	wcopy[i][1] = w[i][1]/scale;
 	    }
 	    
 	    for (i = 0; i < z.length; i++) {
-	    	z[i][0] = z[i][0]/scale;
-	    	z[i][1] = z[i][1]/scale;
+	    	zcopy[i][0] = z[i][0]/scale;
+	    	zcopy[i][1] = z[i][1]/scale;
 	    }
 	    
 	    // Array of differences between each z and each w
@@ -3837,8 +3848,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    double d[][][] = new double[n][np][2];
 	    for (i = 0; i < n; i++) {
 	    	for (j = 0; j < np; j++) {
-	    	    d[i][j][0] = w[i][0] - z[j][0];
-	    	    d[i][j][1] = w[i][1] - z[j][1];
+	    	    d[i][j][0] = wcopy[i][0] - zcopy[j][0];
+	    	    d[i][j][1] = wcopy[i][1] - zcopy[j][1];
 	    	}
 	    } // for (i = 0; i < n; i++)
 	    
@@ -3868,11 +3879,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    // Find boundary points (edge and vertex)
 	    double wdiff[][] = new double[n][2];
 	    for (i = 0; i < n-1; i++) {
-	    	wdiff[i][0] = w[i+1][0] - w[i][0];
-	    	wdiff[i][1] = w[i+1][1] - w[i][1];
+	    	wdiff[i][0] = wcopy[i+1][0] - wcopy[i][0];
+	    	wdiff[i][1] = wcopy[i+1][1] - wcopy[i][1];
 	    }
-	    wdiff[n-1][0] = w[0][0] - w[n-1][0];
-	    wdiff[n-1][1] = w[0][1] - w[n-1][1];
+	    wdiff[n-1][0] = wcopy[0][0] - wcopy[n-1][0];
+	    wdiff[n-1][1] = wcopy[0][1] - wcopy[n-1][1];
 	    double tangents[][] = new double[n][2];
 	    for (i = 0; i < n; i++) {
 	    	zdiv(wdiff[i][0], wdiff[i][1], zabs(wdiff[i][0], wdiff[i][1]), 0, cr, ci);
@@ -3885,19 +3896,19 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	if ((tangents[p][0] == 0) && (tangents[p][1] == 0)) {
 	    		double v[][] = new double[2*n-p-1][2];
 	    		for (i = p+1; i < n; i++) {
-	    		    v[i-p-1][0] = w[i][0];
-	    		    v[i-p-1][1] = w[i][1];
+	    		    v[i-p-1][0] = wcopy[i][0];
+	    		    v[i-p-1][1] = wcopy[i][1];
 	    		}
 	    		for (i = 0; i < n; i++) {
-	    		    v[n-p-1+i][0] = w[i][0];
-	    		    v[n-p-1+i][1] = w[i][1];
+	    		    v[n-p-1+i][0] = wcopy[i][0];
+	    		    v[n-p-1+i][1] = wcopy[i][1];
 	    		}
 	    		boolean found = false;
 	    		for (i = 0; i < v.length && (!found); i++) {
-	    			if ((v[i][0] != w[p][0]) || (v[i][1] != w[p][1])) {
+	    			if ((v[i][0] != wcopy[p][0]) || (v[i][1] != wcopy[p][1])) {
 	    			    found = true;
-	    			    double vdiffreal = v[i][0] - w[p][0];
-	    			    double vdiffimag = v[i][1] - w[p][1];
+	    			    double vdiffreal = v[i][0] - wcopy[p][0];
+	    			    double vdiffimag = v[i][1] - wcopy[p][1];
 	    			    zdiv(vdiffreal, vdiffimag, zabs(vdiffreal, vdiffimag), 0, cr, ci);
 	    			    tangents[p][0] = cr[0];
 	    			    tangents[p][1] = ci[0];
