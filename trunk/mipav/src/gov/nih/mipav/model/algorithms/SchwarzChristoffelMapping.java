@@ -630,9 +630,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			  // Pick a value z0 (not a singularity) and compute the map there.	
 				z03 = new double[lenwp][2];
 				w03 = new double[lenwp][2];
-				for (i = 0; i < w.length; i++) {
-					System.out.println("w["+i+"] = " + w[i][0] + " " + w[i][1]);
-				}
 				scimapz0(z03, w03, "d", wpnotdone, w, beta, z, c, qdat2, null);
 			} // if ((z0 == null) || (z0.length == 0)) 
 			else {
@@ -714,7 +711,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				abserr[0] = coef*abstol;
 				iflag[0] = 1;
 				for (i = 0; i < z04.length; i++) {
-				    z04[i] = yarr[0][i];	
+				    z04[i] = yarr[0][i];
 				}
 				modODE = new ODEModel(z04.length, z04, t, tout, relerr,
 						abserr, iflag, scale, z, beta, c);
@@ -1029,7 +1026,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				zdiv(zprow[j][0], zprow[j][1], z[i][0], z[i][1], cr, ci);
 				terms[0] = 1 - cr[0];
 				terms[1] = -ci[0];
-				logterms[0] = zabs(terms[0], terms[1]);
+				logterms[0] = Math.log(zabs(terms[0], terms[1]));
 				logterms[1] = Math.atan2(terms[1],terms[0]);
 				betaterms[0] = logterms[0] * beta[i];
 				betaterms[1] = logterms[1] * beta[i];
@@ -1043,9 +1040,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			zmlt(c[0], c[1],expterm*Math.cos(sumterms[i][1]), 
 					expterm*Math.sin(sumterms[i][1]), cr, ci);
 			fprime[i][0] = cr[0];
-			fprime[i][1] =ci[0];
+			fprime[i][1] = ci[0];
 		}
-		
+	    
 		return fprime;
 	}
 	
