@@ -125,6 +125,7 @@ public class PlugInDialogNeuronalActin extends JDialogStandalonePlugin implement
                 if (channel != -1) {
                     alg.setActinChannel(channel);
                 }
+                alg.setSensitivity(sensitivity);
 
                 if (isRunInSeparateThread()) {
                     if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
