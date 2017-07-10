@@ -828,7 +828,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        for (i = 0; i < n; i++) {
 		        	for (j = 0; j < m; j++) {
 		        		zdiv(znnotdone[j][0], znnotdone[j][1], z[i][0], z[i][1], cr, ci);
-		        		logreal = zabs(1.0 - cr[0], -ci[0]);
+		        		logreal = Math.log(zabs(1.0 - cr[0], -ci[0]));
 		        		logimag = Math.atan2(-ci[0], 1- cr[0]);
 		        		betamult[i][j][0] = beta[i] * logreal;
 		        		betamult[i][j][1] = beta[i] * logimag;
