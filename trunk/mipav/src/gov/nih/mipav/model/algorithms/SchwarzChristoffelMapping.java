@@ -697,7 +697,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			for (i = 0; i < z04.length; i++) {
 				yarr[0][i] = z04[i];
 			}
-			double coef = 1.0;
+			double coef = 0.1;
 			double t[] = new double[1];
 			double relerr[] = new double[1];
 			double abserr[] = new double[1];
@@ -728,7 +728,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			for (i = 0; i < z04.length; i++) {
 				yarr[1][i] = z04[i];
 			}
-			coef = 1.0;
+			coef = 0.1;
 			while (true) {
 				t[0] = 0.5;
 				tout = 1.0;
