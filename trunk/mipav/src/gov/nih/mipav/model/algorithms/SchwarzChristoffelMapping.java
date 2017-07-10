@@ -447,7 +447,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		
 		// Find inverse image of wc under current map
-		double zc[][] = new double[wc.length][2];
+		double zc[][] = new double[wcin.length][2];
 		int flag[] = null;
 		boolean ode = true;
 		boolean newton = true;
