@@ -79,7 +79,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         } // while(true)
         
         //testRectmap1();
-        testDiskmap1();
+        //testDiskmap1();
+        testDiskmap2();
 		
 	}
 	
@@ -96,6 +97,32 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		scmap M = diskmap(w, tolerance, null, null);
 		double wc[] = new double[2];
 		M = center(M, wc);
+	}
+	
+	public void testDiskmap2() {
+		int i;
+		double w[][] = new double[4][2];
+		w[0][0] = -4;
+		w[0][1] = -1;
+		w[1][0] = 4;
+		w[1][1] = -1;
+		w[2][0] = 4;
+		w[2][1] = 1;
+		w[3][0] = -4;
+		w[3][1] = 1;
+		scmap M = diskmap(w, tolerance, null, null);
+		double wc[] = new double[2];
+		M = center(M, wc);
+		double R[] = new double[4];
+		for (i = 0; i < 4; i++) {
+			R[i] = 0.2*(i+1);
+		}
+		double prevertex[][] = M.prevertex;
+		double theta[] = new double[4];
+		for (i = 0; i < 4; i++) {
+			theta[i] = Math.atan2(prevertex[i][1], prevertex[i][0]);
+		}
+		diskplot(M, R, theta, null);
 	}
 	
 	public void testRectmap1() {
@@ -122,7 +149,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         corner[2] = 3;
         corner[3] = 4;
         scmap M = rectmap(w, corner, tolerance, null, null, null);
-        plot(M, 10, 10);
+        rectplot(M, 10, 10);
 	}
 	
 	public scmap diskmap(double w[][], double tolerance, double z[][], double c[]) {
@@ -508,6 +535,65 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		mapout.qdata = qdataout;
 		mapout.accuracy = diskAccuracy(mapout);
 		return mapout;
+	}
+	
+	private int[] evalinv(double zp[][], scmap M, double wp[][], double tol[][], double z0[][], int maxiter) {
+		// Invert Schwarz-Christoffel disk map at points.
+		// evalinv evaluates the inverse of the Schwarz-Christoffel map M at the points
+		// wp in the polygon. evalinv attempts to give an answer accurate to tol.  If
+		// tol is smaller than the accuracy of M, this is unlikely to be met.
+		// If z0 is supplied, z0 are the given starting points.  z0 must be the
+		// same size as wp or a complex scalar (to be expanded to that size).
+		// It is used for the starting approximation to the inverse image of wp.
+		// The starting guess need not be close to the correct answer; however, the
+		// straight line segment between wp[k] and the forward image of z0[k] must
+		// lie entirely inside the polygon, for each k. evalinv aslo returns a vector of 
+		// indices where the methods was unable to produce a sufficiently small residual.
+		// A warning was issued when this occurs.
+		// Original MATLAB evalinv routine copyright 1998 by Toby Driscoll.
+		int i;
+		double qdata[][] = null;
+		double tolerance = M.accuracy;
+		double z02[][] = null;
+		int flag[] = null;
+		polygon p = M.poly;
+		double vertex[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < beta.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		
+		// Check inputs/supply defaults
+		if ((tol != null) && (tol.length != 0)) {
+			if (tol.length == 1) {
+			    qdata = M.qdata;
+			    tolerance = M.accuracy;
+			}
+			else {
+				qdata = tol;
+				tolerance = Math.pow(10.0, -qdata.length);
+			}
+		} // if ((tol != null) && (tol.length != 0))
+		
+		if ((z0 != null) && (z0.length != 0)) {
+		    if (z0.length == 1) {
+		    	z02 = new double[wp.length][2];
+		    	for (i = 0; i < wp.length; i++) {
+		    		z02[i][0] = z0[0][0];
+		    		z02[i][1] = z0[0][1];
+		    	}
+		    } // if (z0.length == 1)
+		    else if (z0.length != wp.length) {
+		    	MipavUtil.displayError("Argument z0 must be a complex scalar or the same size as wp");
+		    	return null;
+		    }
+		    else {
+		    	z02 = z0;
+		    }
+		} // if ((z0 != null) && (z0.length != 0))
+		
+		flag = dinvmap(zp, wp, vertex, beta, M.prevertex, M.constant, qdata, z02, true,  true, tolerance, maxiter);
+		return flag;
 	}
 	
 	private int[] dinvmap(double zp[][], double wp[][], double w[][],
@@ -1829,7 +1915,356 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return M;
 	}
 	
-	public void plot(scmap M, int nre, int nim) {
+	public void diskplot(scmap M, double R[], double theta[], double error[]) {
+	    // Visualize a Schwarz-Christoffel disk map.
+		// diskplot plots the polygon associated with the Schwarz-Christoffel
+		// disk map and the images of circles and radii under the S-C
+		// transformation.  If R.length == 1 and theta.length == 1, R[0] is the
+		// number of evenly spaced circles and theta[0] is the number of
+		// evenly spaced rays.  If R.length > 1 and theta.length > 1, then the
+		// circles are plotted at radii given by the entries of R and rays at
+		// the angles specified in theta.
+		
+		// tolerance normally defaults to max(1.0E-4, M.accuracy)
+		
+		// From original MATLAB plot routine copyright 1998 by Toby Driscoll
+		int i;
+		int nqpts;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < beta.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		if (R == null) {
+			R = new double[1];
+			R[0] = 10;
+		}
+		if (theta == null) {
+			theta = new double[1];
+			theta[0] = 10;
+		}
+		if (error != null) {
+			nqpts = (int)Math.ceil(-Math.log10(error[0]));
+		}
+		else {
+			nqpts = 5;
+		}
+		dplot(w, beta, z, c, R, theta, nqpts);
+	}
+	
+	private void dplot(double w[][], double beta[], double z[][], double c[],
+			double R[], double theta[], int nqpts) {
+		// Image of polar grid under Schwarz-Christoffel disk map.
+		// dplot will adptielvely plot the images under the Schwarz-Christoffel 
+		// disk amp of circles and rays in the unit disk. 
+		// If R.length == 1 and theta.length == 1, R[0] is the
+		// number of evenly spaced circles and theta[0] is the number of
+		// evenly spaced rays.  If R.length > 1 and theta.length > 1, then the
+		// circles are plotted at radii given by the entries of R and rays at
+		// the angles specified in theta.
+		
+		// nqpts Number of quadrature points per integration.
+		// Approximately equals -log10(error).  Increase if plot
+	    // has false little zigzags in curves. 
+		
+		// Original MATLAB dplot routine copyright 1998 by Toby Driscoll.
+		
+		int i;
+		int j;
+		int m;
+		int Rlength;
+		int thetalength;
+		double spacing;
+		double R2[];
+		double theta2[];
+		int n = w.length;
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+        // Max allowed number of adaptive refinements made to meet other requirements 
+        int maxrefn = 16;
+		double axlim[] = new double[4];
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
+		Vector<Double>tpReal = new Vector<Double>();
+		Vector<Double>tpImag = new Vector<Double>();
+		Vector<Double>RpReal = new Vector<Double>();
+		Vector<Double>RpImag = new Vector<Double>();
+		Vector<Double>zpReal = new Vector<Double>();
+		Vector<Double>zpImag = new Vector<Double>();
+		Vector<Double>wpReal = new Vector<Double>();
+		Vector<Double>wpImag = new Vector<Double>();
+		Vector<Boolean>newlog = new Vector<Boolean>();
+		double zp[][];
+		double neww[][];
+		// Empty arguments default to 10.
+		if ((R == null) || (R.length == 0)) {
+			R = new double[1];
+			R[0] = 10;
+		}
+		if ((theta == null) || (theta.length == 0)) {
+			theta = new double[1];
+			theta[0] = 10;
+		}
+		
+		// Integer arguments must be converted to specific values
+		if ((R.length == 1) && (R[0] == Math.round(R[0]))) {
+			Rlength = (int)R[0];
+			R2 = new double[Rlength];
+		    spacing = (1.0/(R[0] + 1.0));
+		    for (i = 1; i <= Rlength; i++) {
+		        R2[i-1] = i*spacing;	
+		    }
+		} // if ((R.length == 1) && (R[0] == Math.round(R[0])))
+		else {
+			R2 = new double[R.length];
+			for (i = 0; i < R.length; i++) {
+				R2[i] = R[i];
+			}
+		}
+		if ((theta.length == 1) && (theta[0] == Math.round(theta[0]))) {
+			thetalength = (int)theta[0];
+			theta2 = new double[thetalength];
+		    spacing = ((2.0*Math.PI)/theta[0]);
+		    for (i = 1; i <= thetalength; i++) {
+		        theta2[i-1] = i*spacing;	
+		    }
+		} // if ((theta.length == 1) && (theta[0] == Math.round(theta[0])))
+		else {
+			theta2 = new double[theta.length];
+			for (i = 0; i < theta.length; i++) {
+				theta2[i] = theta[i];
+			}
+		}
+		float xPointArray[] = new float[n+1];
+		float yPointArray[] = new float[n+1];
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim);
+		double qdat[][] = new double[nqpts][2*beta.length+2];
+		scqdata(qdat, beta, nqpts);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		Graphics g = graph.getGraphics();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+		double len = Math.max(graphBounds.width, graphBounds.height);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		
+		// Plot circles...
+		Vector<Double> linhx[][] = new Vector[R2.length][2];
+		Vector<Double> linhy[][] = new Vector[R2.length][2];
+		for (i = 0; i < R2.length; i++) {
+			for (j = 0; j < 2; j++) {
+				linhx[i][j] = new Vector<Double>();
+				linhy[i][j] = new Vector<Double>();
+			}
+		}
+		for (j = 0; j < R2.length; j++) {
+		    // Start with evenly spaced theta
+			tpReal.clear();
+			tpImag.clear();
+			for (i = 0; i < 20; i++) {
+				tpReal.add(i*(2.0*Math.PI)/19.0);
+				tpImag.add(0.0);
+			}
+			newlog.clear();
+			for (i = 0; i < 20; i++) {
+				newlog.add(true);
+			}
+			wpReal.clear();
+			wpImag.clear();
+			for (i = 0; i < 20; i++) {
+				wpReal.add(Double.NaN);
+				wpImag.add(0.0);
+			}
+			
+			// The individual points will be shown as they are found.
+			
+			// Adaptive refinement to make curve smooth
+			int iter = 0;
+			while (iter < maxrefn) {
+				int numnewlog = 0;
+				for (i = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	numnewlog++;
+				    }
+				} // for (i = 0; i < newlog.size(); i++)
+				if (numnewlog == 0) {
+					break;
+				}
+				zp = new double[numnewlog][2];
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	zp[m][0] = R2[j]*Math.cos(tpReal.get(i));
+				    	zp[m++][1] = R2[j]*Math.sin(tpReal.get(i));
+				    }
+				} // for (i = 0, m = 0; i < newlog.length; i++)
+				neww = new double[numnewlog][2];
+				neww = dmap(zp,w,beta,z,c,qdat);
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+					if (newlog.get(i)) {
+					    wpReal.set(i, neww[m][0]);
+					    wpImag.set(i, neww[m++][1]);
+					} 
+				} // for (i = 0, m = 0; i < newlog.size(); i++)
+				iter = iter + 1;
+				
+				linhx[j][0].clear();
+				linhy[j][0].clear();
+				linhx[j][1].clear();
+				linhy[j][1].clear();
+				// Update the points to show progress
+				for (i = 0; i < wpReal.size(); i++) {
+				    linhx[j][0].add(wpReal.get(i));
+				    linhy[j][0].add(wpImag.get(i));
+				}
+				for (i = 0; i < zp.length; i++) {
+					linhx[j][1].add(zp[i][0]);
+				    linhy[j][1].add(zp[i][1]);	
+				}
+				
+				// Add points to tp where necessary
+				scpadapt(tpReal, tpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+			} // while (iter < maxrefn)
+		} // for (j = 0; j < R2.length; j++)
+		
+		for (i = 0; i < R2.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		double posx1 = linhx[i][0].get(j);
+		    		double posy1 = linhy[i][0].get(j);
+		    		double posx2 = linhx[i][0].get(j+1);
+		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		} // for (i = 0; i < R2.length; i++)
+		
+		// Plot radii
+		linhx = new Vector[theta2.length][2];
+		linhy = new Vector[theta2.length][2];
+		for (i = 0; i < theta2.length; i++) {
+			for (j = 0; j < 2; j++) {
+				linhx[i][j] = new Vector<Double>();
+				linhy[i][j] = new Vector<Double>();
+			}
+		}
+		for (j = 0; j < theta2.length; j++) {
+			RpReal.clear();
+			RpImag.clear();
+			zpReal.clear();
+			zpImag.clear();
+			for (i = 0; i < 14; i++) {
+				RpReal.add(i/13.0);
+				RpImag.add(0.0);
+				zpReal.add(RpReal.get(i)*Math.cos(theta2[j]));
+				zpImag.add(RpReal.get(i)*Math.sin(theta2[j]));
+			}
+			newlog.clear();
+			for (i = 0; i < 14; i++) {
+				newlog.add(true);
+			}
+			wpReal.clear();
+			wpImag.clear();
+			for (i = 0; i < 14; i++) {
+				wpReal.add(Double.NaN);
+				wpImag.add(0.0);
+			}
+			
+			// The individual points will be shown as they are found.
+			
+			// Adaptive refinement to make curve smooth
+			int iter = 0;
+			while (iter < maxrefn) {
+				int numnewlog = 0;
+				for (i = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	numnewlog++;
+				    }
+				} // for (i = 0; i < newlog.size(); i++)
+				if (numnewlog == 0) {
+					break;
+				}
+				double zpnew[][] = new double[numnewlog][2];
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	zpnew[m][0] = zpReal.get(i);
+				    	zpnew[m++][1] = zpImag.get(i);
+				    }
+				} // for (i = 0, m = 0; i < newlog.length; i++)
+				neww = dmap(zpnew, w, beta, z, c, qdat);
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+					if (newlog.get(i)) {
+					    wpReal.set(i, neww[m][0]);
+					    wpImag.set(i, neww[m++][1]);
+					} 
+				} // for (i = 0, m = 0; i < newlog.size(); i++)
+				iter = iter + 1;
+				
+				linhx[j][0].clear();
+				linhy[j][0].clear();
+				linhx[j][1].clear();
+				linhy[j][1].clear();
+				// Update the points to show progress
+				for (i = 0; i < wpReal.size(); i++) {
+				    linhx[j][0].add(wpReal.get(i));
+				    linhy[j][0].add(wpImag.get(i));
+				    linhx[j][1].add(zpReal.get(i));
+				    linhy[j][1].add(zpImag.get(i));
+				}
+				
+				// Add points to zp where necessary
+				scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+			} // while (iter < maxrefn)
+		} // for (j = 0; j < theta2.length; j++)
+		
+		for (i = 0; i < theta2.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		double posx1 = linhx[i][0].get(j);
+		    		double posy1 = linhy[i][0].get(j);
+		    		double posx2 = linhx[i][0].get(j+1);
+		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		} // for (i = 0; i < theta2.length; i++)
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
+	}
+	
+	public void rectplot(scmap M, int nre, int nim) {
 	    // plot plots the polygon associated with the Schwarz-Christoffel
 		// rectangle map M and the images of nre evenly spaced vertical 
 	    // and nim horizontal line segments.  
@@ -2395,8 +2830,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		} // for (j = 0; j < m; j++)
 		
 		// Update wp
-		double wpold[][] =  new double[zpReal.size()][2];
-		for (i = 0; i < zpReal.size(); i++) {
+		double wpold[][] =  new double[wpReal.size()][2];
+		for (i = 0; i < wpReal.size(); i++) {
 			wpold[i][0] = wpReal.get(i);
 			wpold[i][1] = wpImag.get(i);
 		}
