@@ -4711,7 +4711,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			z[n-1][0] = 1.0;
 			z[n-1][1] = 0.0;
 	    } // else
-	    
+	    	    
 	    // Determine scaling constant
 	    double mid[][] = new double[1][2];
 	    mid[0][0] = (z[0][0] + z[1][0])/2.0;
@@ -6350,6 +6350,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double logterms[] = new double[2];
 		double prod[] = new double[2];
 		double expSum[] = new double[2];
+		double expTerm;
+		double realExp;
+		double imagExp;
 		for (i = 0; i < nontriv.length; i++) {
 			k = nontriv[i];
 			za[0] = z1[k][0];
@@ -6431,7 +6434,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						expSum[0] += prod[0];
 						expSum[1] += prod[1];
 					} // for (j = 0; j < n; j++)
-			    	double expTerm = Math.exp(expSum[0]);
+			    	expTerm = Math.exp(expSum[0]);
 			    	zmlt(expTerm*Math.cos(expSum[1]), expTerm*Math.sin(expSum[1]),
 			    			wt[m][0], wt[m][1], cr, ci);
 			    	I[k][0] += cr[0];
@@ -6462,6 +6465,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						wt[j][0] = ((zr[0]-zl[0])/2.0) * qdat[j][2*n+1];
 						wt[j][1] = ((zr[1]-zl[1])/2.0) * qdat[j][2*n+1];
 					} // for (j = 0; j < nqpts; j++)
+			    	//I(k) = I(k) + exp(sum(log(1 - nd(ones(n,1),:)./bigz).*bigbeta)) * wt
 			    	for (m = 0; m < nqpts; m++) {
 			    		expSum[0] = 0;
 			    		expSum[1] = 0;
@@ -6474,7 +6478,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						    expSum[0] += prod[0];
 						    expSum[1] += prod[1];
 						}
-						zmlt(expSum[0], expSum[1], wt[m][0], wt[m][1], cr, ci);
+						expTerm = Math.exp(expSum[0]);
+						zmlt(expTerm*Math.cos(expSum[1]), expTerm*Math.sin(expSum[1]), wt[m][0], wt[m][1], cr, ci);
 						I[k][0] += cr[0];
 						I[k][1] += ci[0];
 			    	} // for (m = 0; m < nqpts; m++)
