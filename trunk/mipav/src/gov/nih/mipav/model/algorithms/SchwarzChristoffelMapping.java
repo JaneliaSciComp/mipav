@@ -2032,8 +2032,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			thetalength = (int)theta[0];
 			theta2 = new double[thetalength];
 		    spacing = ((2.0*Math.PI)/theta[0]);
-		    for (i = 1; i <= thetalength; i++) {
-		        theta2[i-1] = i*spacing;	
+		    for (i = 0; i < thetalength; i++) {
+		        theta2[i] = i*spacing;	
 		    }
 		} // if ((theta.length == 1) && (theta[0] == Math.round(theta[0])))
 		else {
