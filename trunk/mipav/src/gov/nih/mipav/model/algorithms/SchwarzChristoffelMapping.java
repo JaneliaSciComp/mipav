@@ -79,12 +79,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         } // while(true)
         
         //testRectmap1();
-        //testDiskmap1();
-        testDiskmap2();
+        testDiskmap1();
+        //testDiskmap2();
 		
 	}
 	
 	public void testDiskmap1() {
+		int i;
+		int j;
 		double w[][] = new double[4][2];
 		w[0][0] = 1;
 		w[0][1] = 1;
@@ -97,6 +99,113 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		scmap M = diskmap(w, tolerance, null, null);
 		double wc[] = new double[2];
 		M = center(M, wc);
+		// Points for unit circle
+		int n = 180;
+		double wcir[][] = new double[n][2];
+		double xcir[] = new double[n];
+		double ycir[] = new double[n];
+		for (i = 0; i < n; i++) {
+			wcir[i][0] = Math.cos(i*2.0*Math.PI/(n+1.0));
+			wcir[i][1] = Math.sin(i*2.0*Math.PI/(n+1.0));
+			xcir[i] = wcir[i][0];
+			ycir[i] = wcir[i][1];
+		}
+		polygon poly = new polygon(xcir, ycir, null);
+		double beta[] = new double[poly.angle.length];
+		for (i = 0; i < poly.angle.length; i++) {
+			beta[i] = poly.angle[i] - 1.0;
+		}
+		float xPointArray[] = new float[n+1];
+		float yPointArray[] = new float[n+1];
+		int nqpts = 5;
+		double axlim[] = new double[4];
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, wcir, beta, false, axlim);
+		double qdat[][] = new double[nqpts][2*beta.length+2];
+		scqdata(qdat, beta, nqpts);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		Graphics g = graph.getGraphics();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+		double len = Math.max(graphBounds.width, graphBounds.height);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		
+		double X[][] = new double[201][9];
+		double Y[][] = new double[201][9];
+		double wp[][] = new double[201*9][2];
+		double zp[][] = new double[201*9][2];
+		for (i = 0; i < 201; i++) {
+			for (j = 0; j < 9; j++) {
+			    X[i][j] = -0.8 + 0.2*j;
+			    Y[i][j] = -1.0 + 0.01*i;
+			    wp[201*j + i][0] = X[i][j];
+			    wp[201*j + i][1] = Y[i][j];
+			}
+		}
+		int flag[] = null;
+		int maxiter = 200;
+		flag = evalinv(zp, M, wp, M.qdata, null, maxiter);
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
+		for (i = 0; i < 9; i++) {
+			for (j = 0; j < 200; j++) {
+				double posx1 = zp[201*i + j][0];
+	    		double posy1 = zp[201*i + j][1];
+	    		double posx2 = zp[201*i + j + 1][0];
+	    		double posy2 = zp[201*i + j + 1][1];
+	    		x1Vector.add(posx1);
+	    		y1Vector.add(posy1);
+	    		x2Vector.add(posx2);
+	    		y2Vector.add(posy2);
+	    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+			    graph.drawLine(g, x1, y1, x2, y2);	
+			}
+		}
+		for (i = 0; i < 201; i++) {
+			for (j = 0; j < 9; j++) {
+			    wp[201*j + i][0] = Y[i][j];
+			    wp[201*j + i][1] = X[i][j];
+			}
+		}
+		flag = evalinv(zp, M, wp, M.qdata, null, maxiter);
+		for (i = 0; i < 9; i++) {
+			for (j = 0; j < 200; j++) {
+				double posx1 = zp[201*i + j][0];
+	    		double posy1 = zp[201*i + j][1];
+	    		double posx2 = zp[201*i + j + 1][0];
+	    		double posy2 = zp[201*i + j + 1][1];
+	    		x1Vector.add(posx1);
+	    		y1Vector.add(posy1);
+	    		x2Vector.add(posx2);
+	    		y2Vector.add(posy2);
+	    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+			    graph.drawLine(g, x1, y1, x2, y2);	
+			}
+		}
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
 	}
 	
 	public void testDiskmap2() {
