@@ -2069,17 +2069,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    // Start with evenly spaced theta
 			tpReal.clear();
 			tpImag.clear();
-			for (i = 0; i < 20; i++) {
-				tpReal.add(i*(2.0*Math.PI)/19.0);
+			// Increase from 20 in original code to 200.
+			for (i = 0; i < 200; i++) {
+				tpReal.add(i*(2.0*Math.PI)/199.0);
 				tpImag.add(0.0);
 			}
 			newlog.clear();
-			for (i = 0; i < 20; i++) {
+			for (i = 0; i < 200; i++) {
 				newlog.add(true);
 			}
 			wpReal.clear();
 			wpImag.clear();
-			for (i = 0; i < 20; i++) {
+			for (i = 0; i < 200; i++) {
 				wpReal.add(Double.NaN);
 				wpImag.add(0.0);
 			}
@@ -2170,19 +2171,20 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			RpImag.clear();
 			zpReal.clear();
 			zpImag.clear();
-			for (i = 0; i < 14; i++) {
-				RpReal.add(i/13.0);
+			// Increase from 14 in original code to 140.
+			for (i = 0; i < 140; i++) {
+				RpReal.add(i/139.0);
 				RpImag.add(0.0);
 				zpReal.add(RpReal.get(i)*Math.cos(theta2[j]));
 				zpImag.add(RpReal.get(i)*Math.sin(theta2[j]));
 			}
 			newlog.clear();
-			for (i = 0; i < 14; i++) {
+			for (i = 0; i < 140; i++) {
 				newlog.add(true);
 			}
 			wpReal.clear();
 			wpImag.clear();
-			for (i = 0; i < 14; i++) {
+			for (i = 0; i < 140; i++) {
 				wpReal.add(Double.NaN);
 				wpImag.add(0.0);
 			}
@@ -2229,7 +2231,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    linhy[j][1].add(zpImag.get(i));
 				}
 				
-				// Add points to zp where necessary
 				scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
 			} // while (iter < maxrefn)
 		} // for (j = 0; j < theta2.length; j++)
@@ -2238,6 +2239,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
 		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
 		    		double posx1 = linhx[i][0].get(j);
+		    		
 		    		double posy1 = linhy[i][0].get(j);
 		    		double posx2 = linhx[i][0].get(j+1);
 		    		double posy2 = linhy[i][0].get(j+1);
