@@ -79,8 +79,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         } // while(true)
         
         //testRectmap1();
-        testDiskmap1();
+        //testDiskmap1();
         //testDiskmap2();
+        testDiskmap3();
 		
 	}
 	
@@ -233,6 +234,40 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		diskplot(M, R, theta, null);
 	}
+	
+	public void testDiskmap3() {
+		int i;
+		double w[][] = new double[6][2];
+		w[0][0] = 0.0;
+		w[0][1] = 1.0;
+		w[1][0] = -1.0;
+		w[1][1] = 1.0;
+		w[2][0] = -1.0;
+		w[2][1] = -1.0;
+		w[3][0] = 1.0;
+		w[3][1] = -1.0;
+		w[4][0] = 1.0;
+		w[4][1] = 0.0;
+		w[5][0] = 0.0;
+		w[5][1] = 0.0;
+		scmap M = diskmap(w, tolerance, null, null);
+		for (i = 0; i < 6; i++) {
+			System.out.println("prevertex["+i+"] = " + M.prevertex[i][0] + " " + M.prevertex[i][1]+"i");
+		}
+		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
+		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
+		diskplot(M, null, null, null);
+		double wc[] = new double[2];
+		wc[0] = -0.5;
+		wc[1] = -0.5;
+		M = center(M, wc);
+		for (i = 0; i < 6; i++) {
+			System.out.println("prevertex["+i+"] = " + M.prevertex[i][0] + " " + M.prevertex[i][1]+"i");
+		}
+		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
+		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
+		diskplot(M, null, null, null);
+    }
 	
 	public void testRectmap1() {
 		// Example from users guide
@@ -594,9 +629,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// Use Moebius transform to reset prevertices
 		double y[][] = new double[z.length][2];
+		zdiv(1.0 - zc[0][0], zc[0][1], 1.0 - zc[0][0], -zc[0][1], cr, ci);
+		double var[] = new double[2];
+		var[0] = cr[0];
+		var[1] = ci[0];
+		double num[] = new double[2];
 		for (i = 0; i < z.length; i++) {
-			zmlt(zc[0][0], zc[0][1], z[i][0], z[i][1], cr, ci);
-			zdiv(z[i][0] - zc[0][0], z[i][1] - zc[0][1], 1 - cr[0], -ci[0], cr, ci);
+			zmlt(var[0], var[1], z[i][0] - zc[0][0], z[i][1] - zc[0][1], cr, ci);
+			num[0] = cr[0];
+			num[1] = ci[0];
+			zmlt(zc[0][0], -zc[0][1], z[i][0], z[i][1], cr, ci);
+			zdiv(num[0], num[1], 1 - cr[0], -ci[0], cr, ci);
 			y[i][0] = cr[0];
 			y[i][1] = ci[0];
 		} 
