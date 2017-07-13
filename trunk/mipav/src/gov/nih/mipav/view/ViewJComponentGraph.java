@@ -2054,9 +2054,15 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             tmp = (i * (xMax - xMin) / xGridLines) + xMin;
             tmpString = String.valueOf(tmp);
             index = tmpString.indexOf('.');
+            indexExp = tmpString.toUpperCase().indexOf('E');
 
             if ((index + 3) <= tmpString.length()) {
-                tmpString = tmpString.substring(0, index + 3);
+            	
+            	if (indexExp > -1) {
+                    tmpString = tmpString.substring(0, index + 3) + tmpString.substring(indexExp);
+                } else {
+                    tmpString = tmpString.substring(0, index + 3);
+                }
             }
 
             g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 20,
@@ -2067,9 +2073,14 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             tmp = (i * (xMax - xMin) / xGridLines) + xMin;
             tmpString = String.valueOf(tmp);
             index = tmpString.indexOf('.');
+            indexExp = tmpString.toUpperCase().indexOf('E');		
 
             if ((index + 3) <= tmpString.length()) {
-                tmpString = tmpString.substring(0, index + 3);
+            	if (indexExp > -1) {
+                    tmpString = tmpString.substring(0, index + 3) + tmpString.substring(indexExp);
+                } else {
+                    tmpString = tmpString.substring(0, index + 3);
+                }    
             }
 
             g.drawString(tmpString, graphBounds.x + (int) Math.round(i * xTick) - 20,
