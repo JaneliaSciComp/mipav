@@ -81,8 +81,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         //testRectmap1();
         //testDiskmap1();
         //testDiskmap2();
-        testDiskmap3();
-        //testDiskmap4();
+        //testDiskmap3();
+        testDiskmap4();
 		
 	}
 	
@@ -276,7 +276,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				.705, Double.POSITIVE_INFINITY};
 		double y[] = new double[]{1.0, 2.0,0.0,.971,0,-1.0,0.0,-.971,0.0};
 		double alpha[] = new double[]{2,1,-.3,2,-.7,2,-.3,2,-.7};
-		polygon p = new polygon(x, y, alpha);
+		//polygon p = new polygon(x, y, alpha);
 		double w[][] = new double[9][2];
 		for (i = 0; i < 9; i++) {
 			w[i][0] = x[i];
@@ -6318,38 +6318,40 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				        }
 				    } // for (i = 0; i < cmplx.length; i++)
 				    int numnotcmplx = cmplx.length - numcmplx;
-				    double zleftnotcmplx[][] = new double[numnotcmplx][2];
-				    double midnotcmplx[][] = new double[numnotcmplx][2];
-				    int leftnotcmplx[] = new int[numnotcmplx];
-				    double zrightnotcmplx[][] = new double[numnotcmplx][2];
-				    int rightnotcmplx[] = new int[numnotcmplx];
-				    for (i = 0, j = 0; i < cmplx.length; i++) {
-				        if (!cmplx[i]) {
-				        	zleftnotcmplx[j][0] = zleft[i][0];
-				        	zleftnotcmplx[j][1] = zleft[i][1];
-				        	midnotcmplx[j][0] = mid[i][0];
-				        	midnotcmplx[j][1] = mid[i][1];
-				        	leftnotcmplx[j] = left[i];
-				        	zrightnotcmplx[j][0] = zright[i][0];
-				        	zrightnotcmplx[j][1] = zright[i][1];
-				        	rightnotcmplx[j++] = right[i];
-				        }
-				    } // for (i = 0, j = 0; i < cmplx.length; i++)
-				    I1 = dabsquad(zleftnotcmplx, midnotcmplx, leftnotcmplx, z, beta, qdat);
-				    I2 = dabsquad(zrightnotcmplx, midnotcmplx, rightnotcmplx, z, beta, qdat);
-				    intsnotcmplx = new double[I1.length][I1[0].length];
 				    int numintszero = 0;
-				    for (i = 0, j = 0; i < cmplx.length; i++) {
-				    	if (!cmplx[i]) {
-					        intsnotcmplx[j][0] = I1[j][0] + I2[j][0];
-					        intsnotcmplx[j][1] = I1[j][1] + I2[j][1];
-					        ints[i][0] = intsnotcmplx[j][0];
-					        ints[i][1] = intsnotcmplx[j++][1];
-					        if ((ints[i][0] == 0) && (ints[i][1] == 0)) {
-					        	numintszero++;
+				    if (numnotcmplx > 0) {
+					    double zleftnotcmplx[][] = new double[numnotcmplx][2];
+					    double midnotcmplx[][] = new double[numnotcmplx][2];
+					    int leftnotcmplx[] = new int[numnotcmplx];
+					    double zrightnotcmplx[][] = new double[numnotcmplx][2];
+					    int rightnotcmplx[] = new int[numnotcmplx];
+					    for (i = 0, j = 0; i < cmplx.length; i++) {
+					        if (!cmplx[i]) {
+					        	zleftnotcmplx[j][0] = zleft[i][0];
+					        	zleftnotcmplx[j][1] = zleft[i][1];
+					        	midnotcmplx[j][0] = mid[i][0];
+					        	midnotcmplx[j][1] = mid[i][1];
+					        	leftnotcmplx[j] = left[i];
+					        	zrightnotcmplx[j][0] = zright[i][0];
+					        	zrightnotcmplx[j][1] = zright[i][1];
+					        	rightnotcmplx[j++] = right[i];
 					        }
-				    	} 
-				    }
+					    } // for (i = 0, j = 0; i < cmplx.length; i++)
+					    I1 = dabsquad(zleftnotcmplx, midnotcmplx, leftnotcmplx, z, beta, qdat);
+					    I2 = dabsquad(zrightnotcmplx, midnotcmplx, rightnotcmplx, z, beta, qdat);
+					    intsnotcmplx = new double[I1.length][I1[0].length];
+					    for (i = 0, j = 0; i < cmplx.length; i++) {
+					    	if (!cmplx[i]) {
+						        intsnotcmplx[j][0] = I1[j][0] + I2[j][0];
+						        intsnotcmplx[j][1] = I1[j][1] + I2[j][1];
+						        ints[i][0] = intsnotcmplx[j][0];
+						        ints[i][1] = intsnotcmplx[j++][1];
+						        if ((ints[i][0] == 0) && (ints[i][1] == 0)) {
+						        	numintszero++;
+						        }
+					    	} 
+					    }
+				    } // if (numnotcmplx > 0)
 				    if (numcmplx > 0) {
 					    double zleftcmplx[][] = new double[numcmplx][2];
 					    double midcmplx[][] = new double[numcmplx][2];
