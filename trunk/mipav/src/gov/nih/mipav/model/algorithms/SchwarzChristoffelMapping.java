@@ -81,8 +81,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         //testRectmap1();
         //testDiskmap1();
         //testDiskmap2();
-        //testDiskmap3();
-        testDiskmap4();
+        testDiskmap3();
+        //testDiskmap4();
 		
 	}
 	
@@ -98,7 +98,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		w[2][1] = -1;
 		w[3][0] = 1;
 		w[3][1] = -1;
-		scmap M = diskmap(w, tolerance, null, null);
+		scmap M = diskmap(w, null, tolerance, null, null);
 		double wc[] = new double[2];
 		M = center(M, wc);
 		// Points for unit circle
@@ -221,7 +221,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		w[2][1] = 1;
 		w[3][0] = -4;
 		w[3][1] = 1;
-		scmap M = diskmap(w, tolerance, null, null);
+		scmap M = diskmap(w, null, tolerance, null, null);
 		double wc[] = new double[2];
 		M = center(M, wc);
 		double R[] = new double[4];
@@ -251,7 +251,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		w[4][1] = 0.0;
 		w[5][0] = 0.0;
 		w[5][1] = 0.0;
-		scmap M = diskmap(w, tolerance, null, null);
+		scmap M = diskmap(w, null, tolerance, null, null);
 		for (i = 0; i < 6; i++) {
 			System.out.println("prevertex["+i+"] = " + M.prevertex[i][0] + " " + M.prevertex[i][1]+"i");
 		}
@@ -283,7 +283,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			w[i][1] = y[i];
 		}
 		double wc[] = new double[2];
-		scmap f = center(diskmap(w, tolerance, null, null), wc);
+		scmap f = center(diskmap(w, alpha, tolerance, null, null), wc);
 	}
 	
 	public void testRectmap1() {
@@ -313,7 +313,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         rectplot(M, 10, 10);
 	}
 	
-	public scmap diskmap(double w[][], double tolerance, double z[][], double c[]) {
+	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
 		// Schwarz-Christoffel disk map object
 		// diskmap constructs a Schwarz-Christoffel disk map object for the polygon
 		// whose vertices are given by w.  The parameter problem is solved using
@@ -331,11 +331,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double z0[][] = null;
 		double x[] = new double[w.length];
 		double y[] = new double[w.length];
+		double alpha2[] = null;
 		for (i = 0; i < w.length; i++) {
 			x[i] = w[i][0];
 			y[i] = w[i][1];
 		}
-		polygon poly = new polygon(x, y, null);
+		polygon poly = new polygon(x, y, alpha);
 		double beta[] = new double[poly.angle.length];
 		for (i = 0; i < poly.angle.length; i++) {
 			beta[i] = poly.angle[i] - 1.0;
@@ -375,11 +376,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				xn[i] = wn2[i][0];
 				yn[i] = wn2[i][1];
 			}
-			double alpha[] = new double[betan2.length];
+			alpha2 = new double[betan2.length];
 			for (i = 0; i < betan2.length; i++) {
-				alpha[i] = betan2[i] + 1.0;
+				alpha2[i] = betan2[i] + 1.0;
 			}
-			poly = new polygon(xn, yn, alpha);
+			poly = new polygon(xn, yn, alpha2);
 			c = new double[2];
 			z = new double[wn2.length][2];
 			nqpts = Math.max((int)Math.ceil(-Math.log10(tolerance)), 4);
@@ -4207,10 +4208,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			
 			// Now compute angles if needed
 			if (n > 0) {
-			    alpha = new double[n];
+			    double alpha2[] = new double[n];
 			    boolean isccw[] = new boolean[1];
 			    int index[] = new int[1];
-			    angle(alpha, isccw, index, vertex, angle);
+			    angle(alpha2, isccw, index, vertex, angle);
 			    if (!isccw[0]) {
 			    	double vertextemp[][] = new double[n][2];
 			    	for (int i = 0; i < n; i++) {
@@ -4227,10 +4228,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    	vertextemp = null;
 			    	double alphatemp[] = new double[n];
 			    	for (int i = 0; i < n; i++) {
-			    		alphatemp[i] = alpha[n-1-i];
+			    		alphatemp[i] = alpha2[n-1-i];
 			    	}
 			    	for (int i = 0; i < n; i++) {
-			    		alpha[i] = alphatemp[i];
+			    		alpha2[i] = alphatemp[i];
 			    	}
 			    	alphatemp = null;
 			    } // if (!isccw)
@@ -4238,7 +4239,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    	angle = new double[n];
 			    }
 			    for (int i = 0; i < n; i++) {
-			    	angle[i] = alpha[i];
+			    	angle[i] = alpha2[i];
 			    }
 			    if (Math.abs(index[0]) > 1) {
 			    	MipavUtil.displayWarning("Polygon is multiple-sheeted");
