@@ -81,7 +81,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         //testRectmap1();
         //testDiskmap1();
         //testDiskmap2();
-        testDiskmap3();
+        //testDiskmap3();
+        testDiskmap4();
 		
 	}
 	
@@ -268,6 +269,22 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
 		diskplot(M, null, null, null);
     }
+	
+	public void testDiskmap4() {
+		int i;
+		double x[] = new double[]{1.0, 1.0, Double.POSITIVE_INFINITY, -.705, Double.POSITIVE_INFINITY, -1.0, Double.POSITIVE_INFINITY,
+				.705, Double.POSITIVE_INFINITY};
+		double y[] = new double[]{1.0, 2.0,0.0,.971,0,-1.0,0.0,-.971,0.0};
+		double alpha[] = new double[]{2,1,-.3,2,-.7,2,-.3,2,-.7};
+		polygon p = new polygon(x, y, alpha);
+		double w[][] = new double[9][2];
+		for (i = 0; i < 9; i++) {
+			w[i][0] = x[i];
+			w[i][1] = y[i];
+		}
+		double wc[] = new double[2];
+		scmap f = center(diskmap(w, tolerance, null, null), wc);
+	}
 	
 	public void testRectmap1() {
 		// Example from users guide
@@ -4261,7 +4278,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        
 	        for (i = 0; i < n; i++) {
 	        	if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
-	        		System.err.println("Cannot compute angles for unbounded polyhgons");
+	        		System.err.println("Cannot compute angles for unbounded polygons");
 	        		return;
 	        	}
 	        } // for (i = 0; i < w.length; i++)
