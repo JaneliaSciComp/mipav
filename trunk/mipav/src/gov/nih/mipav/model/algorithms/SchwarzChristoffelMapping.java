@@ -86,6 +86,34 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 	}
 	
+	public void testRectmap1() {
+		// Example from users guide
+		// Test with
+		// SchwarzChristoffelMapping sc = new SchwarzChristoffelMapping();
+    	// sc.runAlgorithm();
+		double w[][] = new double[6][2];
+        w[0][0] = -5;
+        w[0][1] = -1;
+        w[1][0] = -5;
+        w[1][1] = -3;
+        w[2][0] = 5;
+        w[2][1] = -3;
+        w[3][0] = 5;
+        w[3][1] = 1;
+        w[4][0] = 5;
+        w[4][1] = 3;
+        w[5][0] = -5;
+        w[5][1] = 3;
+        int corner[] = new int[4];
+        corner[0] = 0;
+        corner[1] = 1;
+        corner[2] = 3;
+        corner[3] = 4;
+        scmap M = rectmap(w, corner, tolerance, null, null, null);
+        rectplot(M, 10, 10);
+	}
+
+	
 	public void testDiskmap1() {
 		int i;
 		int j;
@@ -100,7 +128,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		w[3][1] = -1;
 		scmap M = diskmap(w, null, tolerance, null, null);
 		double wc[] = new double[2];
-		M = center(M, wc);
+		M = center(M, wc, null);
 		// Points for unit circle
 		int n = 180;
 		double wcir[][] = new double[n][2];
@@ -223,7 +251,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		w[3][1] = 1;
 		scmap M = diskmap(w, null, tolerance, null, null);
 		double wc[] = new double[2];
-		M = center(M, wc);
+		M = center(M, wc, null);
 		double R[] = new double[4];
 		for (i = 0; i < 4; i++) {
 			R[i] = 0.2*(i+1);
@@ -261,7 +289,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double wc[] = new double[2];
 		wc[0] = -0.5;
 		wc[1] = -0.5;
-		M = center(M, wc);
+		M = center(M, wc, null);
 		for (i = 0; i < 6; i++) {
 			System.out.println("prevertex["+i+"] = " + M.prevertex[i][0] + " " + M.prevertex[i][1]+"i");
 		}
@@ -272,6 +300,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	public void testDiskmap4() {
 		int i;
+		// Without z0 supplied to cneter MIPAV and MATLAB end when center calls dinvmap which calls scimapz0 which returns the
+	    // error can't seem to choose starting points.  Supply them manually.
 		double x[] = new double[]{1.0, 1.0, Double.POSITIVE_INFINITY, -.705, Double.POSITIVE_INFINITY, -1.0, Double.POSITIVE_INFINITY,
 				.705, Double.POSITIVE_INFINITY};
 		double y[] = new double[]{1.0, 2.0,0.0,.971,0,-1.0,0.0,-.971,0.0};
@@ -283,35 +313,19 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			w[i][1] = y[i];
 		}
 		double wc[] = new double[2];
-		scmap f = center(diskmap(w, alpha, tolerance, null, null), wc);
-	}
+		double z0[][] = new double[1][2];
+		z0[0][0] = 0.4;
+		z0[0][1] = -0.9;
+		scmap f = center(diskmap(w, alpha, tolerance, null, null), wc, z0);
+		double R[] = new double[6];
+		for (i = 0; i < 6; i++) {
+			R[i] = 0.70  + 0.05*i;
+		}
+		double theta[] = new double[1];
+		theta[0] = 0.0;
+		diskplot(f, R, theta, null);
+    }
 	
-	public void testRectmap1() {
-		// Example from users guide
-		// Test with
-		// SchwarzChristoffelMapping sc = new SchwarzChristoffelMapping();
-    	// sc.runAlgorithm();
-		double w[][] = new double[6][2];
-        w[0][0] = -5;
-        w[0][1] = -1;
-        w[1][0] = -5;
-        w[1][1] = -3;
-        w[2][0] = 5;
-        w[2][1] = -3;
-        w[3][0] = 5;
-        w[3][1] = 1;
-        w[4][0] = 5;
-        w[4][1] = 3;
-        w[5][0] = -5;
-        w[5][1] = 3;
-        int corner[] = new int[4];
-        corner[0] = 0;
-        corner[1] = 1;
-        corner[2] = 3;
-        corner[3] = 4;
-        scmap M = rectmap(w, corner, tolerance, null, null, null);
-        rectplot(M, 10, 10);
-	}
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
 		// Schwarz-Christoffel disk map object
@@ -574,7 +588,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return acc;
 	}
 	
-	private scmap center(scmap map, double wc[]) {
+	private scmap center(scmap map, double wc[], double z0[][]) {
 		// center (map, wc) computes a map conformally equivalent to map but with
 		// the conformal center wc (provided wc is inside the polygon of map),
 		// and returns the new map.  If wc is empty, you will be asked to select
@@ -642,7 +656,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		boolean newton = true;
 		double tol = 1.0E-8;
 		int maxiter = 10;
-		flag = dinvmap(zc, wcin, w, beta, z, map.constant, qdata, null,
+		flag = dinvmap(zc, wcin, w, beta, z, map.constant, qdata, z0,
 				ode, newton, tol, maxiter);
 		
 		// Use Moebius transform to reset prevertices
@@ -1790,8 +1804,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				} // if (numactive > 0)
 			} // for (j = 0; j < n; j++)
 			if (iter > 2*n) {
-				MipavUtil.displayError("Can't seem to choose starting points.  Supply them manually");
-				return;
+				MipavUtil.displayError("In scimapz0 can't seem to choose starting points.  Supply them manually");
+				System.exit(-1);
 			}
 			else {
 				iter = iter + 1;
@@ -2153,7 +2167,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		int thetalength;
 		double spacing;
 		double R2[];
-		double theta2[];
+		double theta2[] = null;
+		boolean drawTheta = true;
 		int n = w.length;
 		// Minimum line segment length, as a proportion of the axes box
         double minlen = 0.005;
@@ -2202,7 +2217,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				R2[i] = R[i];
 			}
 		}
-		if ((theta.length == 1) && (theta[0] == Math.round(theta[0]))) {
+		if ((theta.length == 1) && (theta[0] == 0.0)) {
+			drawTheta = false;
+		}
+		else if ((theta.length == 1) && (theta[0] == Math.round(theta[0]))) {
 			thetalength = (int)theta[0];
 			theta2 = new double[thetalength];
 		    spacing = ((2.0*Math.PI)/theta[0]);
@@ -2216,8 +2234,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				theta2[i] = theta[i];
 			}
 		}
-		float xPointArray[] = new float[n+1];
-		float yPointArray[] = new float[n+1];
+		int numinfinite = 0;
+		// Put 2 finite points at every infinity in plotpoly
+		for (i = 0; i < w.length; i++) {
+		    if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1]))	{
+		        numinfinite++;	
+		    }
+		}
+		float xPointArray[] = new float[n+1+numinfinite];
+		float yPointArray[] = new float[n+1+numinfinite];
 		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
@@ -2332,105 +2357,107 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		} // for (i = 0; i < R2.length; i++)
 		
 		// Plot radii
-		linhx = new Vector[theta2.length][2];
-		linhy = new Vector[theta2.length][2];
-		for (i = 0; i < theta2.length; i++) {
-			for (j = 0; j < 2; j++) {
-				linhx[i][j] = new Vector<Double>();
-				linhy[i][j] = new Vector<Double>();
-			}
-		}
-		for (j = 0; j < theta2.length; j++) {
-			RpReal.clear();
-			RpImag.clear();
-			zpReal.clear();
-			zpImag.clear();
-			// Increase from 14 in original code to 140.
-			for (i = 0; i < 140; i++) {
-				RpReal.add(i/139.0);
-				RpImag.add(0.0);
-				zpReal.add(RpReal.get(i)*Math.cos(theta2[j]));
-				zpImag.add(RpReal.get(i)*Math.sin(theta2[j]));
-			}
-			newlog.clear();
-			for (i = 0; i < 140; i++) {
-				newlog.add(true);
-			}
-			wpReal.clear();
-			wpImag.clear();
-			for (i = 0; i < 140; i++) {
-				wpReal.add(Double.NaN);
-				wpImag.add(0.0);
-			}
-			
-			// The individual points will be shown as they are found.
-			
-			// Adaptive refinement to make curve smooth
-			int iter = 0;
-			while (iter < maxrefn) {
-				int numnewlog = 0;
-				for (i = 0; i < newlog.size(); i++) {
-				    if (newlog.get(i)) {
-				    	numnewlog++;
-				    }
-				} // for (i = 0; i < newlog.size(); i++)
-				if (numnewlog == 0) {
-					break;
+		if (drawTheta) {
+			linhx = new Vector[theta2.length][2];
+			linhy = new Vector[theta2.length][2];
+			for (i = 0; i < theta2.length; i++) {
+				for (j = 0; j < 2; j++) {
+					linhx[i][j] = new Vector<Double>();
+					linhy[i][j] = new Vector<Double>();
 				}
-				double zpnew[][] = new double[numnewlog][2];
-				for (i = 0, m = 0; i < newlog.size(); i++) {
-				    if (newlog.get(i)) {
-				    	zpnew[m][0] = zpReal.get(i);
-				    	zpnew[m++][1] = zpImag.get(i);
-				    }
-				} // for (i = 0, m = 0; i < newlog.length; i++)
-				neww = dmap(zpnew, w, beta, z, c, qdat);
-				for (i = 0, m = 0; i < newlog.size(); i++) {
-					if (newlog.get(i)) {
-					    wpReal.set(i, neww[m][0]);
-					    wpImag.set(i, neww[m++][1]);
-					} 
-				} // for (i = 0, m = 0; i < newlog.size(); i++)
-				iter = iter + 1;
-				
-				linhx[j][0].clear();
-				linhy[j][0].clear();
-				linhx[j][1].clear();
-				linhy[j][1].clear();
-				// Update the points to show progress
-				for (i = 0; i < wpReal.size(); i++) {
-				    linhx[j][0].add(wpReal.get(i));
-				    linhy[j][0].add(wpImag.get(i));
-				    linhx[j][1].add(zpReal.get(i));
-				    linhy[j][1].add(zpImag.get(i));
+			}
+			for (j = 0; j < theta2.length; j++) {
+				RpReal.clear();
+				RpImag.clear();
+				zpReal.clear();
+				zpImag.clear();
+				// Increase from 14 in original code to 140.
+				for (i = 0; i < 140; i++) {
+					RpReal.add(i/139.0);
+					RpImag.add(0.0);
+					zpReal.add(RpReal.get(i)*Math.cos(theta2[j]));
+					zpImag.add(RpReal.get(i)*Math.sin(theta2[j]));
+				}
+				newlog.clear();
+				for (i = 0; i < 140; i++) {
+					newlog.add(true);
+				}
+				wpReal.clear();
+				wpImag.clear();
+				for (i = 0; i < 140; i++) {
+					wpReal.add(Double.NaN);
+					wpImag.add(0.0);
 				}
 				
-				scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
-			} // while (iter < maxrefn)
-		} // for (j = 0; j < theta2.length; j++)
-		
-		for (i = 0; i < theta2.length; i++) {
-		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
-		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
-		    		double posx1 = linhx[i][0].get(j);
-		    		
-		    		double posy1 = linhy[i][0].get(j);
-		    		double posx2 = linhx[i][0].get(j+1);
-		    		double posy2 = linhy[i][0].get(j+1);
-		    		x1Vector.add(posx1);
-		    		y1Vector.add(posy1);
-		    		x2Vector.add(posx2);
-		    		y2Vector.add(posy2);
-		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
-    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
-    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
-    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
-    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
-    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
-    			    graph.drawLine(g, x1, y1, x2, y2);
-		    	}
-		    }
-		} // for (i = 0; i < theta2.length; i++)
+				// The individual points will be shown as they are found.
+				
+				// Adaptive refinement to make curve smooth
+				int iter = 0;
+				while (iter < maxrefn) {
+					int numnewlog = 0;
+					for (i = 0; i < newlog.size(); i++) {
+					    if (newlog.get(i)) {
+					    	numnewlog++;
+					    }
+					} // for (i = 0; i < newlog.size(); i++)
+					if (numnewlog == 0) {
+						break;
+					}
+					double zpnew[][] = new double[numnewlog][2];
+					for (i = 0, m = 0; i < newlog.size(); i++) {
+					    if (newlog.get(i)) {
+					    	zpnew[m][0] = zpReal.get(i);
+					    	zpnew[m++][1] = zpImag.get(i);
+					    }
+					} // for (i = 0, m = 0; i < newlog.length; i++)
+					neww = dmap(zpnew, w, beta, z, c, qdat);
+					for (i = 0, m = 0; i < newlog.size(); i++) {
+						if (newlog.get(i)) {
+						    wpReal.set(i, neww[m][0]);
+						    wpImag.set(i, neww[m++][1]);
+						} 
+					} // for (i = 0, m = 0; i < newlog.size(); i++)
+					iter = iter + 1;
+					
+					linhx[j][0].clear();
+					linhy[j][0].clear();
+					linhx[j][1].clear();
+					linhy[j][1].clear();
+					// Update the points to show progress
+					for (i = 0; i < wpReal.size(); i++) {
+					    linhx[j][0].add(wpReal.get(i));
+					    linhy[j][0].add(wpImag.get(i));
+					    linhx[j][1].add(zpReal.get(i));
+					    linhy[j][1].add(zpImag.get(i));
+					}
+					
+					scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+				} // while (iter < maxrefn)
+			} // for (j = 0; j < theta2.length; j++)
+			
+			for (i = 0; i < theta2.length; i++) {
+			    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+			    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+			    		double posx1 = linhx[i][0].get(j);
+			    		
+			    		double posy1 = linhy[i][0].get(j);
+			    		double posx2 = linhx[i][0].get(j+1);
+			    		double posy2 = linhy[i][0].get(j+1);
+			    		x1Vector.add(posx1);
+			    		y1Vector.add(posy1);
+			    		x2Vector.add(posx2);
+			    		y2Vector.add(posy2);
+			    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+	    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+	    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+	    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+	    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+	    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+	    			    graph.drawLine(g, x1, y1, x2, y2);
+			    	}
+			    }
+			} // for (i = 0; i < theta2.length; i++)
+		} // if (drawTheta)
 		
 		graph.setX1Vector(x1Vector);
 		graph.setY1Vector(y1Vector);
@@ -3618,7 +3645,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    } // if (!atinfrenum[jp1-1])
 		    else {
 		        // Unbounded edge (first of two consecutive)
-		    	ang= ang - Math.PI*betarenum[j-1];
+		    	ang = ang - Math.PI*betarenum[j-1];
 		    	xPointArray[j] = (float)(wrenum[j-1][0] + R*Math.cos(ang));
 		    	yPointArray[j] = (float)(wrenum[j-1][1] + R*Math.sin(ang));
 		    	
@@ -3761,6 +3788,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		}
         	}
         }
+        
+        //for (i = 0; i < xPointArray.length; i++) {
+        	//System.out.println("xPointArray["+i+"] = " + xPointArray[i]);
+        	//System.out.println("yPointArray["+i+"] = " + yPointArray[i]);
+        //}
         
 		return pointGraph;
 	}
