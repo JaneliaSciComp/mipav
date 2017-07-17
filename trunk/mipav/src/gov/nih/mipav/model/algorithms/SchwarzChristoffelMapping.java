@@ -1510,6 +1510,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		boolean active[] = new boolean[done.length];
 		int numactive;
 		double A[][] = new double[2][2];
+		double ACopy[][] = new double[2][2];
 		double dif[] = new double[2];
 		double Ainv[][] = new double[2][2];
 		double s[] = new double[2];
@@ -1671,7 +1672,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					w0[i][1] = wbase[idx[i]][1];
 				}
 			} // for (i = 0; i < done.length; i++)
-			
 			// Now, cycle thru basis points
 			loopj: for (j = 0; j < n; j++) {
 				// Those points who come from basis j and need checking.
@@ -1695,13 +1695,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					for (k = 0; k < n; k++) {
 						if (k != j) {
 						    A[0][0] = direcn[k][0];
+						    ACopy[0][0] = A[0][0];
 						    A[1][0] = direcn[k][1];
+						    ACopy[1][0] = A[1][0];
 						    for (p = 0; p < active.length; p++) {
 						    	if (active[p]) {
 						    	    dif[0] = w0[p][0] - wp[p][0];
 						    	    dif[1] = w0[p][1] - wp[p][1];
 						    	    A[0][1] = dif[0];
+						    	    ACopy[0][1] = A[0][1];
 						    	    A[1][1] = dif[1];
+						    	    ACopy[1][1] = A[1][1];
 						    	    // Get line segment and side parameters at intersection.
 						    	    LinearEquations2 le2 = new LinearEquations2();
 						    	    GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
@@ -1711,12 +1715,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 						    	    int iwork[] = new int[2];
 						    	    int info[] = new int[1];
 						    	    int ipiv[] = new int[2];
-						    	    anorm = ge.dlange('1', 2, 2, A, 2, work);
-						    	    le2.dgetrf(2, 2, A, 2, ipiv, info);
+						    	    anorm = ge.dlange('1', 2, 2, ACopy, 2, work);
+						    	    le2.dgetrf(2, 2, ACopy, 2, ipiv, info);
 						    	    if (info[0] > 0) {
 						    	    	MipavUtil.displayError("In dgetrf factor U is exactly singular");
 						    	    }
-						    	    le2.dgecon('1', 2, A, 2, anorm, rcond, work, iwork, info);
+						    	    le2.dgecon('1', 2, ACopy, 2, anorm, rcond, work, iwork, info);
 						    	    // Reciprocal condition number of A in 1-norm.
 						    	    if (rcond[0] < eps) {
 						    	        // All 4 involved points are collinear
