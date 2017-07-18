@@ -47,6 +47,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// w[i][1] y coordinate of ith vertex
 	private double w[][];
 	
+	Vector<Double> linhx[][] = null;
+	Vector<Double> linhy[][] = null;
+	
 	public SchwarzChristoffelMapping() {
 		
 	}
@@ -299,7 +302,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
     }
 	
 	public void testDiskmap4() {
-		int i;
+		int i, j, k;
 		// Without z0 supplied to cneter MIPAV and MATLAB end when center calls dinvmap which calls scimapz0 which returns the
 	    // error can't seem to choose starting points.  Supply them manually.
 		double x[] = new double[]{1.0, 1.0, Double.POSITIVE_INFINITY, -.705, Double.POSITIVE_INFINITY, -1.0, Double.POSITIVE_INFINITY,
@@ -324,6 +327,144 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double theta[] = new double[1];
 		theta[0] = 0.0;
 		diskplot(f, R, theta, null);
+		double x2[] = new double[2];
+		double y2[] = new double[2];
+		double denom[] = new double[2];
+		double wr[] = new double[2];
+		double wi[] = new double[2];
+		Vector<Double>uxr[][] = new Vector[linhx.length][];
+		Vector<Double>uyr[][] = new Vector[linhx.length][];
+		double ux;
+		double uy;
+		double uxi;
+		double uyi;
+		double den;
+		double axlim[] = new double[4];
+		axlim[0] = Double.MAX_VALUE;
+		axlim[1] = -Double.MAX_VALUE;
+		axlim[2] = Double.MAX_VALUE;
+		axlim[3] = -Double.MAX_VALUE;
+		int j2;
+		for (i = 0; i < linhx.length; i++) {
+			uxr[i] = new Vector[linhx[i][0].size()/10];
+			uyr[i] = new Vector[linhx[i][0].size()/10];
+		    for (j = 0, j2 = -1; j < linhx[i][0].size(); j++) {
+		    	if ((j % 10) == 0) {
+		    	j2++;
+		    	uxr[i][j2] = new Vector<Double>();
+		    	uyr[i][j2] = new Vector<Double>();
+		    	x2[0] = linhx[i][0].get(j);
+		    	x2[1] = linhx[i][1].get(j);
+		    	y2[0] = linhy[i][0].get(j);
+		    	y2[1] = linhy[i][1].get(j);
+		    	denom[0] = x2[0]*x2[0] + y2[0]*y2[0];
+		    	denom[1] = x2[1]*x2[1] + y2[1]*y2[1];
+		    	wr[0] = x2[0]/denom[0];
+		    	wr[1] = x2[1]/denom[1];
+		    	wi[0] = -y2[0]/denom[0];
+		    	wi[1] = -y2[1]/denom[1];
+		    	if (zabs(wr[0], wi[0]) > zabs(wr[1],wi[1])) {
+		    	    double temp = wr[0];
+		    	    wr[0] = wr[1];
+		    	    wr[1] = temp;
+		    	    temp = wi[0];
+		    	    wi[0] = wi[1];
+		    	    wi[1] = temp;
+		    	}
+		    	double twodiffwr = 2.0*(wr[1] - wr[0]);
+		    	double twodiffwi = 2.0*(wi[1] - wi[0]);
+		    	double hundreddiffwr = 100.0*(wr[1] - wr[0]);
+		    	double hundreddiffwi = 100*(wi[1] - wi[0]);
+		    	for (k = 0; k < 100; k++) {
+		    		ux = wr[0] + k*twodiffwr/99.0;
+		    		uy = wi[0] + k*twodiffwi/99.0;
+		    		den = ux*ux + uy*uy;
+		    		uxi = ux/den;
+		    		uyi = -uy/den;
+		    	    uxr[i][j2].add(uxi);
+		    	    uyr[i][j2].add(uyi);
+		    	    if (uxi < axlim[0]) {
+		    	    	axlim[0] = uxi;
+		    	    }
+		    	    if (uxi > axlim[1]) {
+		    	    	axlim[1] = uxi;
+		    	    }
+		    	    if (uyi < axlim[2]) {
+		    	    	axlim[2] = uyi;
+		    	    }
+		    	    if (uyi > axlim[3]) {
+		    	    	axlim[3] = uyi;
+		    	    }
+		    	}
+		    	for (k = 0; k < 100; k++) {
+		    		ux = wr[0] + k*(hundreddiffwr - twodiffwr)/99.0;
+		    		uy = wi[0] + k*(hundreddiffwi - twodiffwi)/99.0;
+		    		den = ux*ux + uy*uy;
+		    		uxi = ux/den;
+		    		uyi = -uy/den;
+		    	    uxr[i][j2].add(uxi);
+		    	    uyr[i][j2].add(uyi);
+		    	    if (uxi < axlim[0]) {
+		    	    	axlim[0] = uxi;
+		    	    }
+		    	    if (uxi > axlim[1]) {
+		    	    	axlim[1] = uxi;
+		    	    }
+		    	    if (uyi < axlim[2]) {
+		    	    	axlim[2] = uyi;
+		    	    }
+		    	    if (uyi > axlim[3]) {
+		    	    	axlim[3] = uyi;
+		    	    }
+		    	}
+		    	} // if ((j % 10) == 0) {
+		    } // for (j = 0; j < linhx[i][0].size(); j++)
+		} // for (i = 0; i < linhx.length; i++)
+		float xPointArray[] = new float[]{(float)axlim[0], (float)axlim[1], (float)axlim[1], (float)axlim[0], (float)axlim[0]};
+		float yPointArray[] = new float[]{(float)axlim[2], (float)axlim[2], (float)axlim[3], (float)axlim[3], (float)axlim[2]};
+		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray, "title", "lablelX", "labelY", Color.BLUE);
+		pointGraph.setVisible(true);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);	
+		Graphics g = pointGraph.getFrameGraphics();
+		graph.paintComponent(g);
+		Rectangle graphBounds = graph.getGraphBounds();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+        
+        Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
+        
+        for (i = 0; i < uxr.length; i++) {
+		    for (j = 0; j < uxr[i].length; j++) {
+		        for (k = 0; k < uxr[i][j].size()-1; k++) {
+		        	double posx1 = uxr[i][j].get(k);
+		    		double posy1 = uyr[i][j].get(k);
+		    		double posx2 = uxr[i][j].get(k+1);
+		    		double posy2 = uyr[i][j].get(k+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2i =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2i =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2i = -y2i + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2i, y2i);	
+		        }
+		    }
+        }
+        
+        graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
     }
 	
 	
@@ -2141,6 +2282,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			nqpts = 5;
 		}
 		dplot(w, beta, z, c, R, theta, nqpts);
+		return;
 	}
 	
 	private void dplot(double w[][], double beta[], double z[][], double c[],
@@ -2256,8 +2398,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		maxlen = len * maxlen;
 		
 		// Plot circles...
-		Vector<Double> linhx[][] = new Vector[R2.length][2];
-		Vector<Double> linhy[][] = new Vector[R2.length][2];
+	    linhx = new Vector[R2.length][2];
+		linhy = new Vector[R2.length][2];
 		for (i = 0; i < R2.length; i++) {
 			for (j = 0; j < 2; j++) {
 				linhx[i][j] = new Vector<Double>();
@@ -2438,8 +2580,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			for (i = 0; i < theta2.length; i++) {
 			    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
 			    	for (j = 0; j < linhx[i][0].size()-1; j++) {
-			    		double posx1 = linhx[i][0].get(j);
-			    		
+			    		double posx1 = linhx[i][0].get(j);	
 			    		double posy1 = linhy[i][0].get(j);
 			    		double posx2 = linhx[i][0].get(j+1);
 			    		double posy2 = linhy[i][0].get(j+1);
@@ -2465,6 +2606,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		graph.setY2Vector(y2Vector);
 		graph.setAddSchwarzChristoffelLines(true);
 		graph.paintComponent(g);
+		return;
 	}
 	
 	public void rectplot(scmap M, int nre, int nim) {
