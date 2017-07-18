@@ -9331,6 +9331,9 @@ public class FileNIFTI extends FileBase {
             }else {
             	FileRaw rawFile;
                 rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
+                if (image.isColorImage()) {
+                    rawFile.setNumChannels(3);
+                }
                 linkProgress(rawFile);
                 rawFile.readImage(image, offset);
             }
