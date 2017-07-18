@@ -3593,26 +3593,27 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// First edge
 		//double edgeh[] = new double[n];
-		double lblh[][] = new double[n][2];
-		for (i = 0; i < n; i++) {
+		double lblh[][] = new double[xPointArray.length-1][2];
+		for (i = 0; i < xPointArray.length-1; i++) {
 			for (j = 0; j < 2; j++) {
 				lblh[i][j] = Double.NaN;
 			}
 		}
-		String lblhString[][] = new String[n][2];
-		double lblhx[][] = new double[n][2];
-		double lblhy[][] = new double[n][2];
+		String lblhString[][] = new String[xPointArray.length-1][2];
+		double lblhx[][] = new double[xPointArray.length-1][2];
+		double lblhy[][] = new double[xPointArray.length-1][2];
 		xPointArray[0] = (float)wrenum[0][0];
 		yPointArray[0] = (float)wrenum[0][1];
 		xPointArray[1] = (float)wrenum[1][0];
 		yPointArray[1] = (float)wrenum[1][1];
-		xPointArray[n] = xPointArray[0];
-		yPointArray[n] = yPointArray[0];
+		xPointArray[xPointArray.length-1] = xPointArray[0];
+		yPointArray[xPointArray.length-1] = yPointArray[0];
 		
 		double ang = Math.atan2(wrenum[1][1] - wrenum[0][1], wrenum[1][0] - wrenum[0][0]);
 		
 		// Remaining edges
 		j = 2;
+		int jext = 2;
 		while (j <= n) {
 		    int jp1 = (j%n)+1;
 		    
@@ -3630,24 +3631,25 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		theta = theta - Math.PI/2.0;
 		    	}
 		    	// Mark label; markers will be added last
-		    	lblhx[j-1][1] = wrenum[j-1][0] + 0.035*R*Math.cos(theta);
-		    	lblhy[j-1][1] = wrenum[j-1][1] + 0.035*R*Math.sin(theta);
-		    	lblhString[j-1][1] =String.valueOf(renum[j-1]);
+		    	lblhx[jext-1][1] = wrenum[j-1][0] + 0.035*R*Math.cos(theta);
+		    	lblhy[jext-1][1] = wrenum[j-1][1] + 0.035*R*Math.sin(theta);
+		    	lblhString[jext-1][1] =String.valueOf(renum[j-1]);
 		    } // if (addMarkerLabel)
 		    
 		    // Next edge
 		    if (!atinfrenum[jp1-1]) {
 		    	// Bounded edge; straightforward
-		    	xPointArray[j] = (float)wrenum[jp1-1][0];
-		    	yPointArray[j] = (float)wrenum[jp1-1][1];
+		    	xPointArray[jext] = (float)wrenum[jp1-1][0];
+		    	yPointArray[jext] = (float)wrenum[jp1-1][1];
 		    	ang = ang - Math.PI*betarenum[j-1];
 		    	j = j+1;
+		    	jext = jext+1;
 		    } // if (!atinfrenum[jp1-1])
 		    else {
 		        // Unbounded edge (first of two consecutive)
 		    	ang = ang - Math.PI*betarenum[j-1];
-		    	xPointArray[j] = (float)(wrenum[j-1][0] + R*Math.cos(ang));
-		    	yPointArray[j] = (float)(wrenum[j-1][1] + R*Math.sin(ang));
+		    	xPointArray[jext] = (float)(wrenum[j-1][0] + R*Math.cos(ang));
+		    	yPointArray[jext] = (float)(wrenum[j-1][1] + R*Math.sin(ang));
 		    	
 		    	
 		    	// Make first label outside axes box
@@ -3684,17 +3686,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		if (minRR == Double.MAX_VALUE) {
 		    			minRR = 0.0;
 		    		}
-		    		lblhx[j][0] = wrenum[j-1][0] + (minRR + 0.07*R)*costheta;
-		    		lblhy[j][0] = wrenum[j-1][1] + (minRR + 0.07*R)*sintheta;
-		    		lblhString[j][0] = renum[j] + " (inf)";
+		    		lblhx[jext][0] = wrenum[j-1][0] + (minRR + 0.07*R)*costheta;
+		    		lblhy[jext][0] = wrenum[j-1][1] + (minRR + 0.07*R)*sintheta;
+		    		lblhString[jext][0] = renum[j] + " (inf)";
 		    	} // if (addMarkerLabel)
 		    	
 		    	// Second unbounded edge
 		    	ang = ang - Math.PI*betarenum[jp1-1];
-		    	xPointArray[j] = (float)(wrenum[(j+1)%n][0] - R*Math.cos(ang));
-		    	yPointArray[j] = (float)(wrenum[(j+1)%n][1] - R*Math.sin(ang));
-		    	xPointArray[j+1] = (float)(wrenum[(j+1)%n][0]);
-		    	xPointArray[j+1] = (float)(wrenum[(j+1)%n][1]);
+		    	xPointArray[jext+1] = (float)(wrenum[(j+1)%n][0] - R*Math.cos(ang));
+		    	yPointArray[jext+1] = (float)(wrenum[(j+1)%n][1] - R*Math.sin(ang));
+		    	xPointArray[jext+2] = (float)(wrenum[(j+1)%n][0]);
+		    	yPointArray[jext+2] = (float)(wrenum[(j+1)%n][1]);
 		    	if (addMarkerLabel) {
 		    	    theta = ang + Math.PI;
 		    	    costheta = Math.cos(theta);
@@ -3728,14 +3730,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		if (minRR == Double.MAX_VALUE) {
 		    			minRR = 0.0;
 		    		}
-		    		lblhx[j][1] = wrenum[(j+1)%n][0] + (minRR + 0.07*R)*costheta;
-		    		lblhy[j][1] = wrenum[(j+1)%n][1] + (minRR + 0.07*R)*sintheta;
-		    		lblhString[j][1] = renum[j] + " (inf)";
+		    		lblhx[jext+1][1] = wrenum[(j+1)%n][0] + (minRR + 0.07*R)*costheta;
+		    		lblhy[jext+1][1] = wrenum[(j+1)%n][1] + (minRR + 0.07*R)*sintheta;
+		    		lblhString[jext+1][1] = renum[j] + " (inf)";
 
 		    	} // if (addMarkerLabel)
 		    	
-		    	// We've done tow
+		    	// We've done two
 		    	j = j+2;
+		    	jext = jext+3;
 		    } // else
 		} // while (j <= n)
 		
@@ -3763,6 +3766,31 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   // }
 		//} // if (addMarkerLabel)
 		
+		if (numinfinite > 0) {
+			minrealwf = Double.MAX_VALUE;
+			maxrealwf = -Double.MAX_VALUE;
+			minimagwf = Double.MAX_VALUE;
+			maximagwf = -Double.MAX_VALUE;
+			for (i = 0; i < xPointArray.length; i++) {
+				if (xPointArray[i] < minrealwf) {
+					minrealwf = xPointArray[i];
+				}
+				if (xPointArray[i] > maxrealwf) {
+					maxrealwf = xPointArray[i];
+				}
+				if (yPointArray[i] < minimagwf) {
+					minimagwf = yPointArray[i];
+				}
+				if (yPointArray[i] > maximagwf) {
+					maximagwf = yPointArray[i];
+				}
+			}
+			axlim[0] = minrealwf;
+			axlim[1] = maxrealwf;
+			axlim[2] = minimagwf;
+			axlim[3] = maximagwf;	
+		} // if (numinfinite > 0)
+		
 		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray,
 				"title", "lablelX", "labelY", Color.BLUE);
 		pointGraph.setVisible(true);
@@ -3778,7 +3806,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		Rectangle graphBounds = graph.getGraphBounds();
 		double xScale = graphBounds.width / (maxrealwf - minrealwf);
         double yScale = graphBounds.height / (maximagwf - minimagwf);
-        for (i = 0; i < n; i++) {
+        for (i = 0; i < xPointArray.length-1; i++) {
         	for (j = 0; j < 2; j++) {
         		if (lblhString[i][j] != null) {
         			int posX =  (int)Math.round(graphBounds.x + xScale*(lblhx[i][j] - minrealwf));
@@ -3788,11 +3816,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		}
         	}
         }
-        
-        //for (i = 0; i < xPointArray.length; i++) {
-        	//System.out.println("xPointArray["+i+"] = " + xPointArray[i]);
-        	//System.out.println("yPointArray["+i+"] = " + yPointArray[i]);
-        //}
         
 		return pointGraph;
 	}
