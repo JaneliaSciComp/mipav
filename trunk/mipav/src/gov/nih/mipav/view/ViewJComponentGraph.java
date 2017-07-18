@@ -2575,16 +2575,32 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
     	this.x1Vector = x1Vector;
     }
     
+    public Vector<Double> getX1Vector() {
+    	return x1Vector;
+    }
+    
     public void setX2Vector(Vector<Double> x2Vector) {
     	this.x2Vector = x2Vector;
+    }
+    
+    public Vector<Double> getX2Vector() {
+    	return x2Vector;
     }
     
     public void setY1Vector(Vector<Double> y1Vector) {
     	this.y1Vector = y1Vector;
     }
     
+    public Vector<Double> getY1Vector() {
+    	return y1Vector;
+    }
+    
     public void setY2Vector(Vector<Double> y2Vector) {
     	this.y2Vector = y2Vector;
+    }
+    
+    public Vector<Double> getY2Vector() {
+    	return y2Vector;
     }
     
     public void setAddSchwarzChristoffelLines(boolean addSchwarzChristoffelLines) {
