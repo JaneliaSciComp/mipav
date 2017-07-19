@@ -82,10 +82,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         } // while(true)
         
         //testRectmap1();
+        testRectmap2();
         //testDiskmap1();
         //testDiskmap2();
         //testDiskmap3();
-        testDiskmap4();
+        //testDiskmap4();
 		
 	}
 	
@@ -114,6 +115,30 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         corner[3] = 4;
         scmap M = rectmap(w, corner, tolerance, null, null, null);
         rectplot(M, 10, 10);
+	}
+	
+	public void testRectmap2() {
+		// Example from Algorithm 843: Scwarz-Christoffel Toolbox for MATLAB
+		double w[][] = new double[6][2];
+        w[0][0] = -1;
+        w[0][1] = 1;
+        w[1][0] = -1;
+        w[1][1] = -1;
+        w[2][0] = 2;
+        w[2][1] = -1;
+        w[3][0] = 2;
+        w[3][1] = 0;
+        w[4][0] = 0;
+        w[4][1] = 0;
+        w[5][0] = 0;
+        w[5][1] = 1;
+        int corner[] = new int[4];
+        corner[0] = 0;
+        corner[1] = 2;
+        corner[2] = 3;
+        corner[3] = 5;
+        scmap M = rectmap(w, corner, tolerance, null, null, null);
+        rectplot(M, 8, 4);
 	}
 
 	
@@ -264,7 +289,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		for (i = 0; i < 4; i++) {
 			theta[i] = Math.atan2(prevertex[i][1], prevertex[i][0]);
 		}
-		diskplot(M, R, theta, null);
+		diskplot(M, R, theta, 200, 140, null);
 	}
 	
 	public void testDiskmap3() {
@@ -288,7 +313,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
 		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
-		diskplot(M, null, null, null);
+		diskplot(M, null, null, 200, 140, null);
 		double wc[] = new double[2];
 		wc[0] = -0.5;
 		wc[1] = -0.5;
@@ -298,13 +323,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
 		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
-		diskplot(M, null, null, null);
+		diskplot(M, null, null, 200, 140, null);
     }
 	
 	public void testDiskmap4() {
 		int i, j, k;
 		// Without z0 supplied to cneter MIPAV and MATLAB end when center calls dinvmap which calls scimapz0 which returns the
 	    // error can't seem to choose starting points.  Supply them manually.
+		// This example does not seem to make sense.  Each h(1) to h(6) contains about 235 or so complex values.
+		// If abs(w(1) > w(2)), we interchange the first two and reduce the size of w to 2, so diffw has only 1 value.
+		// Otherwise diff(w) has 235-1 or 234 values which we multiply by 100 in linspace.
 		double x[] = new double[]{1.0, 1.0, Double.POSITIVE_INFINITY, -.705, Double.POSITIVE_INFINITY, -1.0, Double.POSITIVE_INFINITY,
 				.705, Double.POSITIVE_INFINITY};
 		double y[] = new double[]{1.0, 2.0,0.0,.971,0,-1.0,0.0,-.971,0.0};
@@ -326,14 +354,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		double theta[] = new double[1];
 		theta[0] = 0.0;
-		diskplot(f, R, theta, null);
+		diskplot(f, R, theta, 20, 14, null);
 		double x2[] = new double[2];
 		double y2[] = new double[2];
 		double denom[] = new double[2];
 		double wr[] = new double[2];
 		double wi[] = new double[2];
-		Vector<Double>uxr[][] = new Vector[linhx.length][];
-		Vector<Double>uyr[][] = new Vector[linhx.length][];
+		Vector<Double>uxr[] = new Vector[linhx.length];
+		Vector<Double>uyr[] = new Vector[linhx.length];
 		double ux;
 		double uy;
 		double uxi;
@@ -344,24 +372,19 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		axlim[1] = -Double.MAX_VALUE;
 		axlim[2] = Double.MAX_VALUE;
 		axlim[3] = -Double.MAX_VALUE;
-		int j2;
+		
 		for (i = 0; i < linhx.length; i++) {
-			uxr[i] = new Vector[linhx[i][0].size()/10];
-			uyr[i] = new Vector[linhx[i][0].size()/10];
-		    for (j = 0, j2 = -1; j < linhx[i][0].size(); j++) {
-		    	if ((j % 10) == 0) {
-		    	j2++;
-		    	uxr[i][j2] = new Vector<Double>();
-		    	uyr[i][j2] = new Vector<Double>();
-		    	x2[0] = linhx[i][0].get(j);
-		    	x2[1] = linhx[i][1].get(j);
-		    	y2[0] = linhy[i][0].get(j);
-		    	y2[1] = linhy[i][1].get(j);
+		    	uxr[i] = new Vector<Double>();
+		    	uyr[i] = new Vector<Double>();
+		    	x2[0] = linhx[i][0].get(0);
+		    	y2[0] = linhy[i][0].get(0);
+		    	x2[1] = linhx[i][0].get(1);
+		    	y2[1] = linhy[i][0].get(1);
 		    	denom[0] = x2[0]*x2[0] + y2[0]*y2[0];
 		    	denom[1] = x2[1]*x2[1] + y2[1]*y2[1];
 		    	wr[0] = x2[0]/denom[0];
-		    	wr[1] = x2[1]/denom[1];
 		    	wi[0] = -y2[0]/denom[0];
+		    	wr[1] = x2[1]/denom[1];
 		    	wi[1] = -y2[1]/denom[1];
 		    	if (zabs(wr[0], wi[0]) > zabs(wr[1],wi[1])) {
 		    	    double temp = wr[0];
@@ -381,8 +404,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		den = ux*ux + uy*uy;
 		    		uxi = ux/den;
 		    		uyi = -uy/den;
-		    	    uxr[i][j2].add(uxi);
-		    	    uyr[i][j2].add(uyi);
+		    	    uxr[i].add(uxi);
+		    	    uyr[i].add(uyi);
 		    	    if (uxi < axlim[0]) {
 		    	    	axlim[0] = uxi;
 		    	    }
@@ -402,8 +425,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		den = ux*ux + uy*uy;
 		    		uxi = ux/den;
 		    		uyi = -uy/den;
-		    	    uxr[i][j2].add(uxi);
-		    	    uyr[i][j2].add(uyi);
+		    	    uxr[i].add(uxi);
+		    	    uyr[i].add(uyi);
 		    	    if (uxi < axlim[0]) {
 		    	    	axlim[0] = uxi;
 		    	    }
@@ -417,8 +440,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	    	axlim[3] = uyi;
 		    	    }
 		    	}
-		    	} // if ((j % 10) == 0) {
-		    } // for (j = 0; j < linhx[i][0].size(); j++)
 		} // for (i = 0; i < linhx.length; i++)
 		float xPointArray[] = new float[]{(float)axlim[0], (float)axlim[1], (float)axlim[1], (float)axlim[0], (float)axlim[0]};
 		float yPointArray[] = new float[]{(float)axlim[2], (float)axlim[2], (float)axlim[3], (float)axlim[3], (float)axlim[2]};
@@ -438,25 +459,23 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		Vector<Double>y2Vector = new Vector<Double>();
         
         for (i = 0; i < uxr.length; i++) {
-		    for (j = 0; j < uxr[i].length; j++) {
-		        for (k = 0; k < uxr[i][j].size()-1; k++) {
-		        	double posx1 = uxr[i][j].get(k);
-		    		double posy1 = uyr[i][j].get(k);
-		    		double posx2 = uxr[i][j].get(k+1);
-		    		double posy2 = uyr[i][j].get(k+1);
-		    		x1Vector.add(posx1);
-		    		y1Vector.add(posy1);
-		    		x2Vector.add(posx2);
-		    		y2Vector.add(posy2);
-		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
-    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
-    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
-    			    int x2i =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
-    			    int y2i =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
-    			    y2i = -y2i + 2*graphBounds.y + graphBounds.height;
-    			    graph.drawLine(g, x1, y1, x2i, y2i);	
-		        }
-		    }
+	        for (k = 0; k < uxr[i].size()-1; k++) {
+	        	double posx1 = uxr[i].get(k);
+	    		double posy1 = uyr[i].get(k);
+	    		double posx2 = uxr[i].get(k+1);
+	    		double posy2 = uyr[i].get(k+1);
+	    		x1Vector.add(posx1);
+	    		y1Vector.add(posy1);
+	    		x2Vector.add(posx2);
+	    		y2Vector.add(posy2);
+	    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+			    int x2i =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+			    int y2i =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+			    y2i = -y2i + 2*graphBounds.y + graphBounds.height;
+			    graph.drawLine(g, x1, y1, x2i, y2i);	
+	        }
         }
         
         graph.setX1Vector(x1Vector);
@@ -2244,7 +2263,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return M;
 	}
 	
-	public void diskplot(scmap M, double R[], double theta[], double error[]) {
+	public void diskplot(scmap M, double R[], double theta[], int num1draw, int num2draw, double error[]) {
 	    // Visualize a Schwarz-Christoffel disk map.
 		// diskplot plots the polygon associated with the Schwarz-Christoffel
 		// disk map and the images of circles and radii under the S-C
@@ -2281,12 +2300,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		else {
 			nqpts = 5;
 		}
-		dplot(w, beta, z, c, R, theta, nqpts);
+		dplot(w, beta, z, c, R, theta, nqpts, num1draw, num2draw);
 		return;
 	}
 	
 	private void dplot(double w[][], double beta[], double z[][], double c[],
-			double R[], double theta[], int nqpts) {
+			double R[], double theta[], int nqpts, int num1draw, int num2draw) {
 		// Image of polar grid under Schwarz-Christoffel disk map.
 		// dplot will adptielvely plot the images under the Schwarz-Christoffel 
 		// disk amp of circles and rays in the unit disk. 
@@ -2301,6 +2320,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    // has false little zigzags in curves. 
 		
 		// Original MATLAB dplot routine copyright 1998 by Toby Driscoll.
+		
+		// In original code num1draw = 20 and num2draw = 14
 		
 		int i;
 		int j;
@@ -2410,18 +2431,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    // Start with evenly spaced theta
 			tpReal.clear();
 			tpImag.clear();
-			// Increase from 20 in original code to 200.
-			for (i = 0; i < 200; i++) {
-				tpReal.add(i*(2.0*Math.PI)/199.0);
+			for (i = 0; i < num1draw; i++) {
+				tpReal.add(i*(2.0*Math.PI)/(num1draw-1.0));
 				tpImag.add(0.0);
 			}
 			newlog.clear();
-			for (i = 0; i < 200; i++) {
+			for (i = 0; i < num1draw; i++) {
 				newlog.add(true);
 			}
 			wpReal.clear();
 			wpImag.clear();
-			for (i = 0; i < 200; i++) {
+			for (i = 0; i < num1draw; i++) {
 				wpReal.add(Double.NaN);
 				wpImag.add(0.0);
 			}
@@ -2513,20 +2533,19 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				RpImag.clear();
 				zpReal.clear();
 				zpImag.clear();
-				// Increase from 14 in original code to 140.
-				for (i = 0; i < 140; i++) {
-					RpReal.add(i/139.0);
+				for (i = 0; i < num2draw; i++) {
+					RpReal.add(i/(num2draw-1.0));
 					RpImag.add(0.0);
 					zpReal.add(RpReal.get(i)*Math.cos(theta2[j]));
 					zpImag.add(RpReal.get(i)*Math.sin(theta2[j]));
 				}
 				newlog.clear();
-				for (i = 0; i < 140; i++) {
+				for (i = 0; i < num2draw; i++) {
 					newlog.add(true);
 				}
 				wpReal.clear();
 				wpImag.clear();
-				for (i = 0; i < 140; i++) {
+				for (i = 0; i < num2draw; i++) {
 					wpReal.add(Double.NaN);
 					wpImag.add(0.0);
 				}
