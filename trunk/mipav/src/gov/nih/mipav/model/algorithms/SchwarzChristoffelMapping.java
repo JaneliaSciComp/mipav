@@ -338,7 +338,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
     }
 	
 	public void testDiskmap4() {
-		int i, j, k;
+		int i, k;
 		// Without z0 supplied to cneter MIPAV and MATLAB end when center calls dinvmap which calls scimapz0 which returns the
 	    // error can't seem to choose starting points.  Supply them manually.
 		// This example does not seem to make sense.  Each h(1) to h(6) contains about 235 or so complex values.
@@ -996,6 +996,549 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return flag;
 	}
 	
+	private double[][] rinvmap(double wp[][], double w[][], double beta[], double z[][],
+			double c[], double L[], double qdat[][], double z0[][], boolean ode, boolean newton,
+			double tol, int maxiter) {
+		// rinvmap computes the inverse of the Schwarz-Christoffel rectangle map (i.e., from the
+		// polygon to the rectangle) at the points given in the vector wp.  The other arguments
+		// are as in rparam. 
+		
+		// The default algorithm is to solve an ODE in order to obtain a fair
+		// approximation for zp, and then improve zp with Newton iterations.
+		// The 2 other possible algorithms are:
+		// 1.) Use ODE only.
+		// 2.) Use Newton only; take z0 as an initial guess.
+		// The ODE solution at wp requires a vector z0 whose forward image w0
+		// is such that for each j, the line segment connecting wp[j] and w0[j]
+		// lies inside the polygon.  By default z0 is chosen by a fairly robust
+		// automatic process.  Using the parameters ode and newton, you can choose
+		// to use either an ODE solution or Newton solution exclusively.
+		
+		// rinvmap has two interpretations.  If the ODE solution is being used,
+		// z0 overrides the automatic selection of initial points.  (This can
+		// be handy in convex polygons, where the choice of z0 is trivial.)
+		// Otherwise, z0 is taken as an initial guess to zp.  In either case,
+		// if length(z0) == 1, the value z0 is used for all elements of wp;
+		// otherwise, length(z0) should equal length(wp).
+		
+		// tol, error tolerance for solution (default 1e-8)
+	    // maxiter, maximum number of Newton iterations (default 10)
+		
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		
+		int i, j, k, m;
+		double qdat2[][] = null;
+		double w0[][] = null;
+		double zn[][] = null;
+		double F[][] = null;
+		double dF[][] = null;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		int n = w.length;
+		int corners[] = new int[4];
+		int renum[] = new int[n];
+		rcorners(w, beta, z, corners, renum);
+		double rect[] = new double[4];
+		double minreal = Double.MAX_VALUE;
+		double maxreal = -Double.MAX_VALUE;
+		double minimag = Double.MAX_VALUE;
+		double maximag = -Double.MAX_VALUE;
+		for (i = 0; i < 4; i++) {
+			if (z[corners[i]][0] < minreal) {
+			    minreal = z[corners[i]][0];	
+			}
+			if (z[corners[i]][0] > maxreal) {
+				maxreal = z[corners[i]][0];
+			}
+			if (z[corners[i]][1] < minimag) {
+			    minimag = z[corners[i]][1];	
+			}
+			if (z[corners[i]][1] > maximag) {
+				maximag = z[corners[i]][1];
+			}
+		}
+		rect[0] = minreal;
+		rect[1] = maxreal;
+		rect[2] = minimag;
+		rect[3] = maximag;
+		double K = -Double.MAX_VALUE;
+		double Kp = -Double.MAX_VALUE;
+		for (i = 0; i < z.length; i++) {
+			if (z[i][0] > K) {
+				K = z[i][0];
+			}
+			if (z[i][1] > Kp) {
+				Kp = z[i][1];
+			}
+		} // for (i = 0; i < z.length; i++)
+		
+		double zs[][] = new double[z.length][2];
+		double zsprime[][] = new double[z.length][2];
+		r2strip(zs, zsprime, z, z, L[0]);
+		for (i = 0; i < zs.length; i++) {
+			// Put them *exactly* on edges
+			zs[i][1] = Math.round(zs[i][1]);
+		}
+		
+		double zp[][] = new double[wp.length][2];
+		int lenwp = wp.length;
+		
+		if ((qdat == null) || (qdat.length == 0)) {
+			qdat2 = new double[1][1];
+			qdat2[0][0] = tol;
+		}
+		else if (qdat.length == 1) {
+			int nqpts = (int)Math.max(Math.ceil(-Math.log10(qdat[0][0])), 2);
+			qdat2 = new double[nqpts][2*beta.length+2];
+			scqdata(qdat2, beta, nqpts);	
+		}
+		else {
+			qdat2 = qdat;
+		}
+		
+		boolean done[] = new boolean[wp.length];
+		// First, trap all points indistinguishable from vertices, or they will cause
+		// trouble.
+		// Modified 05/14/2007 to work around bug in matlab 2007a.
+		for (j = 0; j < n; j++) {
+			int numidx = 0;
+			for (i = 0; i < lenwp; i++) {
+				if (zabs(wp[i][0] - w[j][0], wp[i][1] - w[j][1]) < 3.0*eps) {
+					numidx++;
+				}
+			} // for (i = 0; i < lenwp; i++)
+			int idx[] = new int[numidx];
+			for (i = 0, k = 0; i < lenwp; i++) {
+				if (zabs(wp[i][0] - w[j][0], wp[i][1] - w[j][1]) < 3.0*eps) {
+					idx[k++] = i;
+				}
+			} // for (i = 0, k = 0; i < lenwp; i++)
+			for (i = 0; i < numidx; i++) {
+				zp[idx[i]][0] = z[j][0];
+				zp[idx[i]][1] = z[j][1];
+				done[idx[i]] = true;
+			} // for (i = 0; i < numidx; i++)
+		} // for (j = 0; j < n; j++)
+		int sumdone = 0;
+		for (i = 0; i < done.length; i++) {
+			if (done[i]) {
+				sumdone++;
+			}
+		} // for (i = 0; i < done.length; i++)
+		// lenwp contains number not done
+		lenwp = lenwp - sumdone;
+		if (lenwp == 0) {
+			return null;
+		}
+		
+		// ODE
+		if (ode) {
+			double z02[][];
+			double w02[][];
+			double z03[][];
+			double w03[][];
+			double wpnotdone[][] = new double[lenwp][2];
+			double zpnotdone[][] = new double[lenwp][2];
+			for (i = 0, j = 0; i < done.length; i++) {
+				if (!done[i]) {
+					wpnotdone[j][0] = wp[i][0];
+					wpnotdone[j++][1] = wp[i][1];
+				}
+			} // for (i = 0, j = 0; i < done.length; i++)
+			if ((z0 == null) || (z0.length == 0)) {
+			  // Pick a value z0 (not a singularity) and compute the map there.	
+				z03 = new double[lenwp][2];
+				w03 = new double[lenwp][2];
+				double Lenclose[][] = new double[1][L.length];
+				for (i = 0; i < L.length; i++) {
+					Lenclose[0][i] = L[i];
+				}
+				scimapz0(z03, w03, "r", wpnotdone, w, beta, z, c, Lenclose, qdat2);
+			} // if ((z0 == null) || (z0.length == 0)) 
+			else {
+				w0 = new double[z0.length][2];
+			    rmap(w0,z0,w,beta,z,c,L,qdat2);
+			    if ((z0.length == 1) && (lenwp > 1)) {
+			        z02 = new double[lenwp][2];
+			        w02 = new double[lenwp][2];
+			        for (i = 0; i < lenwp; i++) {
+			        	z02[i][0] = z0[0][0];
+			        	z02[i][1] = z0[0][1];
+			        	w02[i][0] = w0[0][0];
+			        	w02[i][1] = w0[0][1];
+			        }
+			    } // if ((z0.length == 1) && (lenwp > 1)
+			    else {
+			    	w02 = w0;
+			    	z02 = z0;
+			    }
+			    w03 = new double[lenwp][2];
+			    z03 = new double[lenwp][2];
+			    for (i = 0, j = 0; i < done.length; i++) {
+			    	if (!done[i]) {
+			    		w03[j][0] = w02[i][0];
+			    		w03[j][1] = w02[i][1];
+			    		z03[j][0] = z02[i][0];
+			    		z03[j++][1] = z02[i][1];
+			    	}
+			    } // for (i = 0, j = 0; i < done.length; i++)
+			} // else
+			
+			// Use relaxed ODE tol if improving with Newton.
+			double odetol;
+			if (newton) {
+			    odetol = Math.max(tol,  1.0E-3);
+			}
+			else {
+				odetol = tol;
+			}
+			double abstol = odetol;
+			double reltol = odetol;
+			
+			// Rescale dependent coordinate
+			double scale[][] = new double[lenwp][2];
+			for (i = 0; i < lenwp; i++) {
+				scale[i][0] = wpnotdone[i][0] - w03[i][0];
+				scale[i][1] = wpnotdone[i][1] - w03[i][1];
+			}
+			
+			// Solve ODE
+			double z04[] = new double[2*z03.length];
+			for (i = 0; i < z03.length; i++) {
+				z04[i] = z03[i][0];
+				z04[i + z03.length] = z03[i][1];
+			}
+			//double tspan[] = new double[3];
+			//tspan[0] = 0;
+			//tspan[1] = 0.5;
+			//tspan[2] = 1.0;
+			//double t[] = new double[tspan.length];
+			//double y[][] = new double[tspan.length][z04.length];
+			//rimapfun(t, y, tspan, z04, abstol, reltol,scale, z, beta, c, zs, L);
+			// Because ode23.m is copyrighted by MATLAB use a port of the
+			// original FORTRAN ode.f code 
+			double yarr[][] = new double[3][z04.length];
+			for (i = 0; i < z04.length; i++) {
+				yarr[0][i] = z04[i];
+			}
+			double coef = 0.1;
+			double t[] = new double[1];
+			double relerr[] = new double[1];
+			double abserr[] = new double[1];
+			int iflag[] = new int[1];
+			ODERectModel modODE;
+			double tout;
+			while (true) {
+				t[0] = 0;
+				tout = 0.5;
+				relerr[0] = coef*reltol;
+				abserr[0] = coef*abstol;
+				iflag[0] = 1;
+				for (i = 0; i < z04.length; i++) {
+				    z04[i] = yarr[0][i];
+				}
+				modODE = new ODERectModel(z04.length, z04, t, tout, relerr,
+						abserr, iflag, scale, z, beta, c, zs, L);
+				modODE.driver();
+				System.out.println(modODE.getErrorMessage());
+				if ((iflag[0] >= 3) && (iflag[0] <= 5)) {
+					System.out.println("Final time reached = " + t[0]);
+				}
+				if ((iflag[0] != 3) || (coef >= 1024.0)) {
+					break;
+				}
+				coef = 2.0 * coef;
+			} // while (true)
+			for (i = 0; i < z04.length; i++) {
+				yarr[1][i] = z04[i];
+			}
+			coef = 0.1;
+			while (true) {
+				t[0] = 0.5;
+				tout = 1.0;
+				relerr[0] = coef*reltol;
+				abserr[0] = coef*abstol;
+				iflag[0] = 1;
+				for (i = 0; i < z04.length; i++) {
+				    z04[i] = yarr[1][i];	
+				}
+				modODE = new ODERectModel(z04.length, z04, t, tout, relerr,
+						abserr, iflag, scale, z, beta, c, zs, L);
+				modODE.driver();
+				System.out.println(modODE.getErrorMessage());
+				if ((iflag[0] >= 3) && (iflag[0] <= 5)) {
+					System.out.println("Final time reached = " + t[0]);
+				}
+				if ((iflag[0] != 3) || (coef >= 1024.0)) {
+					break;
+				}
+				coef = 2.0 * coef;
+			} // while (true)
+			for (i = 0; i < z04.length; i++) {
+				yarr[2][i] = z04[i];
+			}
+			m = yarr.length;
+			//int leny = yarr[0].length;
+			for (i = 0, j = 0; i < done.length; i++) {
+				if (!done[i]) {
+				    zpnotdone[j][0] = yarr[m-1][j];
+					zpnotdone[j][1] = yarr[m-1][j + lenwp];
+					j++;
+				}
+			} // for (i = 0, j = 0; i < done.length; i++)
+			zpnotdone = rectproject(zpnotdone, rect);
+			for (i = 0, j = 0; i < done.length; i++) {
+				if (!done[i]) {
+					zp[i][0] = zpnotdone[j][0];
+					zp[i][1] = zpnotdone[j][1];
+					j++;
+				}
+			} // for (i = 0, j = 0; i < done.length; i++)
+		} // if (ode)
+		
+		// Newton iterations
+		if (newton) {
+		    if (!ode) {
+		        if ((z0.length == 1) & (lenwp > 1)) {
+		        	zn = new double[lenwp][2];
+		        	for (i = 0; i < lenwp; i++) {
+		        		zn[i][0] = z0[0][0];
+		        		zn[i][1] = z0[0][1];
+		        	}
+		        } // if ((z0.length == 1) & (lenwp > 1))
+		        else {
+		        	zn = new double[z0.length][2];
+		        	for (i = 0; i < z0.length; i++) {
+		        		zn[i][0] = z0[i][0];
+		        		zn[i][1] = z0[i][1];
+		        	}
+		        } // else
+		        for (i = 0; i < done.length; i++) {
+		        	if (done[i]) {
+		        		zn[i][0] = zp[i][0];
+		        		zn[i][1] = zp[i][1];
+		        	}
+		        }
+		    } // if (!ode)
+		    else { // ode
+		    	zn = new double[zp.length][2];
+		    	for (i = 0; i < zp.length; i++) {
+		    		zn[i][0] = zp[i][0];
+		    		zn[i][1] = zp[i][1];
+		    	}
+		    } // else ode
+		    
+		    k = 0;
+		    while ((sumdone < done.length) && (k < maxiter)) {
+		        m = done.length - sumdone;
+		        double znnotdone[][] = new double[m][2];
+		        double wpnotdone[][] = new double[m][2];
+		        for (i = 0, j = 0; i < done.length; i++) {
+		        	if (!done[i]) {
+		        		znnotdone[j][0] = zn[i][0];
+		        		znnotdone[j][1] = zn[i][1];
+		        		wpnotdone[j][0] = wp[i][0];
+		        		wpnotdone[j][1] = wp[i][1];
+		        		j++;
+		        	}
+		        } // for (i = 0, j = 0; i < done.length; i++)
+		        w0 = new double[znnotdone.length][2];
+		        rmap(w0, znnotdone, w, beta, z, c, L, qdat2);
+		        F = new double[m][2];
+		        for (i = 0; i < m; i++) {
+		        	F[i][0] = wpnotdone[i][0] - w0[i][0];
+		        	F[i][1] = wpnotdone[i][1] - w0[i][1];
+		        }
+		        dF = rderiv(znnotdone, z, beta, c, L, zs);
+		        for (i = 0; i < m; i++) {
+		        	zdiv(F[i][0], F[i][1], dF[i][0], dF[i][1], cr, ci);
+		        	znnotdone[i][0] = znnotdone[i][0] + cr[0];
+		        	znnotdone[i][1] = znnotdone[i][1] + ci[0];
+		        }
+		        znnotdone = rectproject(znnotdone, rect);
+		        for (i = 0, j = 0; i < done.length; i++) {
+		        	if (!done[i]) {
+		        		if (zabs(F[j][0], F[j][1]) < tol) {
+		        			done[i] = true;
+		        			sumdone++;
+		        		}
+		        		j++;
+		        	}
+		        } // for (i = 0, j = 0; i < done.length; i++)
+		        k = k + 1;
+		    } //  while ((sumdone < done.length) && (k < maxiter))
+		    double maxtol = 0.0;
+		    if (F != null) {
+			    for (i = 0; i < F.length; i++) {
+			    	double currentTol = zabs(F[i][0], F[i][1]);
+			    	if (currentTol > maxtol) {
+			    		maxtol = currentTol;
+			    	}
+			    }
+		    } // if (F != null)
+		    if (maxtol > tol) {
+		    	MipavUtil.displayWarning("Check solution: maximum residual = " + maxtol);
+		    }
+		    for (i = 0; i < zn.length; i++) {
+		    	zp[i][0] = zn[i][0];
+		    	zp[i][1] = zn[i][1];
+		    }
+		} // if (newton)
+		
+		return zp;
+	}
+	
+	private double[][] rectproject(double zp[][], double rect[]) {
+		// Project points into the rectangle
+		int i;
+		double zz[][] = new double[zp.length][2];
+		for (i = 0; i < zp.length; i++) {
+			zz[i][0] = Math.max(Math.min(zp[i][0], rect[1]), rect[0]);
+			zz[i][1] = Math.max(Math.min(zp[i][1], rect[3]), rect[2]);
+		}
+		return zz;
+	}
+	
+	class ODERectModel extends ODE {
+		double scale[][];
+		double z[][];
+		double beta[];
+		double c[];
+		double zs[][];
+		double L[];
+		public ODERectModel(int neqn, double y[], double t[], double tout, double relerr[],
+				double abserr[], int iflag[], double scale[][], double z[][], 
+				double beta[], double c[], double zs[][], double L[]) {
+			super(neqn, y, t, tout, relerr, abserr, iflag);
+			this.scale = scale;
+			this.z = z;
+			this.beta = beta;
+			this.c = c;
+			this.zs = zs;
+			this.L = L;
+		}
+		
+		/**
+		 * DOCUMENT ME!
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		public void f(double x, double yy[], double yp[]) {
+			int i;
+			double cr[] = new double[1];
+			double ci[] = new double[1];
+			int lenyy = yy.length;
+			int lenzp = lenyy/2;
+			double zp[][] = new double[lenzp][2];
+			for (i = 0; i < lenzp; i++) {
+				zp[i][0] = yy[i];
+			}
+			for (i = lenzp; i < lenyy; i++) {
+				zp[i-lenzp][1] = yy[i];
+			}
+			
+			double fprime[][] = rderiv(zp, z, beta, c, L, zs);
+			double f[][] = new double[scale.length][2];
+			for (i = 0; i < scale.length; i++) {
+				zdiv(scale[i][0], scale[i][1], fprime[i][0], fprime[i][1], cr, ci);
+				f[i][0] = cr[0];
+				f[i][1] = ci[0];
+			}
+			
+			for (i = 0; i < f.length; i++) {
+				yp[i] = f[i][0];
+				yp[f.length + i] = f[i][1];
+			}	
+		}
+	}
+	
+	private double[][] rderiv(double zp[][], double z[][], double beta[], double c[],
+			double L[], double zs[][]) {
+	    // Derivative of the rectangle map.
+		// rderiv returns the derivative at the points of zp of the Schwarz-Christoffel
+		// map defined by z, beta, c, and L.  If zs is supplied, it is assumed to be
+		// the image of z on the intermediate strip.
+		
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		
+		 int i, j;
+		 double dG[][] = null;
+		 double cr[] = new double[1];
+		 double ci[] = new double[1];
+		 int n = z.length;
+		 if ((zs == null) || (zs.length == 0)) {
+			 // Find prevertices on the strip
+			 zs = new double[z.length][2];
+			 double zsprime[][] = new double[z.length][2];
+		     r2strip(zs, zsprime, z, z, L[0]);
+			 for (i = 0; i < zs.length; i++) {
+				// Put them *exactly* on edges
+				zs[i][1] = Math.round(zs[i][1]);
+			 }
+		 } // if ((zs == null) || (zs.length == 0))
+		 
+		 // First compute map and derivative from rectangle to strip
+		 double F[][] = new double[zp.length][2];
+		 double dF[][] = new double[zp.length][2];
+		 r2strip(F, dF, zp, z, L[0]);
+		 
+		 // Now compute derivative of map from strip to polygon
+		 // Add in ends of strip
+		 double diffimagz[] = new double[z.length];
+		 for (i = 0; i < z.length-1; i++) {
+			 diffimagz[i] = z[i+1][1] -z[i][1]; 
+		 }
+		 diffimagz[z.length-1] = z[0][1] - z[z.length-1][1];
+		 int numends = 0;
+		 for (i = 0; i < z.length; i++) {
+			 if (diffimagz[i] != 0) {
+				 numends++;
+			 }
+		 } // for (i = 0; i < z.length; i++)
+		 int ends[] = new int[numends];
+		 for (i = 0, j = 0; i < numends; i++) {
+			 if (diffimagz[i] != 0) {
+				 ends[j++] = i;
+			 }
+		 } // for (i = 0, j = 0; i < numends; i++)
+		 double zs2[][] = new double[zs.length+2][2];
+		 double bs[] = new double[zs.length+2];
+		 for (i = 0; i <= ends[0]; i++) {
+			 zs2[i][0] = zs[i][0];
+			 zs2[i][1] = zs[i][1];
+			 bs[i] = beta[i];
+		 }
+		 zs2[ends[0]+1][0] = Double.POSITIVE_INFINITY;
+		 zs2[ends[0]+1][1] = 0;
+		 bs[ends[0]+1] = 0;
+		 for (i = ends[0]+1; i <= ends[1]; i++) {
+			 zs2[i+1][0] = zs[i][0];
+			 zs2[i+1][1] = zs[i][1];
+			 bs[i+1] = beta[i];	 
+		 }
+		 zs2[ends[1]+2][0] = Double.NEGATIVE_INFINITY;
+		 zs2[ends[1]+2][1] = 0;
+		 bs[ends[1]+2] = 0;
+		 for (i = ends[1]+1; i < n; i++) {
+			 zs2[i+2][0] = zs[i][0];
+			 zs2[i+2][1] = zs[i][1];
+			 bs[i+2] = beta[i];	 
+		 }
+		 dG = stderiv(F, zs2, bs, 1, -1);
+		 
+		 // Put it together;
+		 double fprime[][] = new double[zp.length][2];
+		 for (i = 0; i < zp.length; i++) {
+		     zmlt(c[0], c[1], dF[i][0], dF[i][1], cr, ci);
+		     zmlt(cr[0], ci[0], dG[i][0], dG[i][1], cr, ci);
+		     fprime[i][0] = cr[0];
+		     fprime[i][1] = ci[0];
+		 }
+		 return fprime;
+	}
+	
 	private int[] dinvmap(double zp[][], double wp[][], double w[][],
 			double beta[], double z[][], double c[], double qdat[][], double z0[][],
 			boolean ode, boolean newton, double tol, int maxiter) {
@@ -1006,7 +1549,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// The default algorithm is to solve an ODE in order to obtain a fair
 		// approximation for zp, and then improve zp with Newton iterations.
-		// The 2 other possbile algorithms are:
+		// The 2 other possible algorithms are:
 		// 1.) Use ODE only.
 		// 2.) Use Newton only; take z0 as an initial guess.
 		// The ODE solution at wp requires a vector z0 whose forward image w0
@@ -1240,7 +1783,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				yarr[2][i] = z04[i];
 			}
 			m = yarr.length;
-			int leny = yarr[0].length;
+			//int leny = yarr[0].length;
 			for (i = 0, j = 0; i < done.length; i++) {
 				if (!done[i]) {
 				    zp[i][0] = yarr[m-1][j];
@@ -1449,7 +1992,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 	}
 	
-	private void dimapfun(double t[], double y[][], double wp[], double yp[], double abstol, double reltol,
+	/*private void dimapfun(double t[], double y[][], double wp[], double yp[], double abstol, double reltol,
 			double scale[][], double z[][], double beta[], double c[]) {
 		// Used by dinvmap for the solution of an ODE.
 		// t is the vector of output times
@@ -1485,7 +2028,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			zdot[i] = f[i][0];
 			zdot[f.length + i] = f[i][1];
 		}
-	}
+	}*/
 	
 	private double[][] dderiv(double zp[][], double z[][], double beta[], double c[]) {
 		// Derivative of the disk map.
@@ -4532,7 +5075,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private class polygon {
 		double vertex[][];
 		double angle[];
-		String className = "polygon";
+		//String className = "polygon";
 		
 		
 		polygon(double x[], double y[], double alpha[]) {
@@ -6879,8 +7422,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double prod[] = new double[2];
 		double expSum[] = new double[2];
 		double expTerm;
-		double realExp;
-		double imagExp;
+	
 		for (i = 0; i < nontriv.length; i++) {
 			k = nontriv[i];
 			za[0] = z1[k][0];
@@ -8052,7 +8594,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// Original MATLAB routine copyright 1998 by Toby Driscoll.
 	// If j >= 0, the terms corresponding to z[j] are normalized by abs(zp - z[j]).
 	// This is for Gauss_jacobi quadrature.
-	private double[][] stderiv(double zp[][], double z[][], double beta[], int c, int j) {
+	private double[][] stderiv(double zp[][], double z[][], double beta[], double c, int j) {
 		int i, k, m;
 	    double fprime[][] =  null;
 	    double log2 = 0.69314718055994531;
