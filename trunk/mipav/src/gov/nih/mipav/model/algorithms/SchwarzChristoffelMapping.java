@@ -119,6 +119,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	public void testRectmap2() {
 		// Example from Algorithm 843: Scwarz-Christoffel Toolbox for MATLAB
+		int i;
 		double w[][] = new double[6][2];
         w[0][0] = -1;
         w[0][1] = 1;
@@ -139,6 +140,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         corner[3] = 5;
         scmap M = rectmap(w, corner, tolerance, null, null, null);
         rectplot(M, 8, 4);
+        double zr[][] = rectangle(M);
+        for (i = 0; i < zr.length; i++) {
+        	if (zr[i][1] >= 0.0) {
+                System.out.println("Corner " + i + " in the fundmemtal domain = " + zr[i][0] + " + " + zr[i][1]+"i");	
+        	}
+        	else {
+        		System.out.println("Corner " + i + " in the fundmemtal domain = " + zr[i][0] + " " + zr[i][1]+"i");		
+        	}
+        }
 	}
 
 	
@@ -1474,6 +1484,83 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 	    
 		return fprime;
+	}
+	
+	private double[][] rectangle(scmap M) {
+		// Return the corners of the rectangle in the fundamental domain.
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		int i;
+		double zrp[][] = M.prevertex;
+        int cor[] = corners(M);
+        double zr[][] = new double[cor.length][2];
+        for (i = 0; i < cor.length; i++) {
+        	zr[i] = zrp[cor[i]];
+        }
+        return zr;
+	}
+	
+	private int[] corners(scmap M) {
+		// Indices of rectangle/generalized quadrilateral corners.
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		double z[][] = M.prevertex;
+		
+		// Find extent of rectangle
+		double K = -Double.MAX_VALUE;
+		double Kp = -Double.MAX_VALUE;
+		for (i = 0; i < z.length; i++) {
+		    if (z[i][0] > K) {
+		    	K = z[i][0];
+		    }
+		    if (z[i][1] > Kp) {
+		    	Kp = z[i][1];
+		    }
+		} // for (i = 0; i < z.length; i++)
+		
+		// First corner is K  + 0i
+		double zmat[][][] = new double[z.length][4][2];
+		for (i = 0; i < z.length; i++) {
+			for (j = 0; j < 4; j++) {
+				zmat[i][j][0] = z[i][0];
+				zmat[i][j][1] = z[i][1];
+			}
+		}
+		double kmat[][][] = new double[z.length][4][2];
+		for (i = 0; i < z.length; i++) {
+			kmat[i][0][0] = K;
+			kmat[i][0][1] = 0;
+			kmat[i][1][0] = K;
+			kmat[i][1][1] = Kp;
+			kmat[i][2][0] = -K;
+			kmat[i][2][1] = Kp;
+			kmat[i][3][0] = -K;
+			kmat[i][3][1] = 0;
+		}
+		double dif[][][] = new double[z.length][4][2];
+		for (i = 0; i < z.length; i++) {
+			for (j = 0; j < 4; j++) {
+				dif[i][j][0] = zmat[i][j][0] - kmat[i][j][0];
+				dif[i][j][1] = zmat[i][j][1] - kmat[i][j][1];
+			} 
+		}
+		double absdif[][] = new double[z.length][4];
+		for (i = 0; i < z.length; i++) {
+			for (j = 0; j < 4; j++) {
+				absdif[i][j] = zabs(dif[i][j][0], dif[i][j][1]);
+			}
+		}
+		int corner[] = new int[4];
+		for (j = 0; j < 4; j++) {
+			double minVal = Double.MAX_VALUE;
+			corner[j] = -1;
+			for (i = 0; i < z.length; i++) {
+				if (absdif[i][j] < minVal) {
+					minVal = absdif[i][j];
+					corner[j] = i;
+				}
+			}
+		}
+		return corner;
 	}
 	
 	private void scimapz0(double z0[][], double w0[][], String prefix, double wp[][],
