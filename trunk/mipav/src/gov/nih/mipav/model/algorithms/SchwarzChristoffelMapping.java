@@ -82,11 +82,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         } // while(true)
         
         //testRectmap1();
-        testRectmap2();
+        //testRectmap2();
         //testDiskmap1();
         //testDiskmap2();
         //testDiskmap3();
         //testDiskmap4();
+        testDiskmap5();
 		
 	}
 	
@@ -494,7 +495,52 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		graph.setY2Vector(y2Vector);
 		graph.setAddSchwarzChristoffelLines(true);
 		graph.paintComponent(g);
-    }
+	}
+	
+	public void testDiskmap5() {
+		// From Table 1. in Algorithm 756: A MATLAB Toolbox for Schwarz-Christoffel Mapping
+		// Error in NLConstrainedEngine during dparam call to dpfun
+		// Abnormal termination because the latest search direction computed using subspace minimization
+		// was not a descent direction (probably caused by a wrongly computed Jacobian)
+		// Error because 4 prevertices are extremely close together in disk
+		// (arg zk)?PI
+	    // k = 1              0.00800451739
+		// k = 2              0.606337224
+		// k = 3              1.49999746
+		// k = 4              1.49999860
+		// k = 5              1.49999865
+		// k = 6              1.5
+		// k = 7              1.75
+		// k = 8              2
+		// Would have to use NLConstrainedEngineEP with DoubleDouble and a dpfun with DoubleDouble for this to work.
+		int i;
+		double w[][] = new double[8][2];
+		w[0][0] = 3.2;
+		w[0][1] = 2.4;
+		w[1][0] = 0.8;
+		w[1][1] = -0.4;
+		w[2][0] = -0.8;
+		w[2][1] = -0.4;
+		w[3][0] = -2.8;
+		w[3][1] = 2.0;
+		w[4][0] = -2.8;
+		w[4][1] = -2.0;
+		w[5][0] = -0.8;
+		w[5][1] = -0.8;
+		w[6][0] = 0.8;
+		w[6][1]= -0.8;
+		w[7][0] = 3.2;
+		w[7][1] = -2.0;
+		scmap M = diskmap(w, null, tolerance, null, null);
+		double diskang[] = new double[8];
+		for (i = 0; i < 8; i++) {
+		    diskang[i] = (Math.atan2(M.prevertex[i][1], M.prevertex[i][0]))/Math.PI;
+		    System.out.println("diskang["+i+"] = " + diskang[i]);
+		}
+		double R[] = new double[]{10.0};
+		double theta[] = new double[]{10.0};
+		diskplot(M, R, theta, 200, 140, null);
+	}
 	
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
@@ -5159,8 +5205,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			fm.dumpResults();
 		    int exitStatus = fm.getExitStatus();
 		    if (exitStatus < 0 ) {
+		    	System.out.println("Error in NLConstrainedEngine during dparam call to dpfun");
 		    	printExitStatus(exitStatus);
-		    	return;
+		    	System.exit(-1);
 		    }
 			double y[] = fm.getParameters();
 			
