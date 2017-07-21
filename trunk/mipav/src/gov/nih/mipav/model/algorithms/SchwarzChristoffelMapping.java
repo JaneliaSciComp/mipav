@@ -218,7 +218,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		int flag[] = null;
 		int maxiter = 200;
-		flag = evalinv(zp, M, wp, M.qdata, null, maxiter);
+		flag = diskevalinv(zp, M, wp, M.qdata, null, maxiter);
 		Vector<Double>x1Vector = new Vector<Double>();
 		Vector<Double>y1Vector = new Vector<Double>();
 		Vector<Double>x2Vector = new Vector<Double>();
@@ -248,7 +248,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    wp[201*j + i][1] = X[i][j];
 			}
 		}
-		flag = evalinv(zp, M, wp, M.qdata, null, maxiter);
+		flag = diskevalinv(zp, M, wp, M.qdata, null, maxiter);
 		for (i = 0; i < 9; i++) {
 			for (j = 0; j < 200; j++) {
 				double posx1 = zp[201*i + j][0];
@@ -937,22 +937,75 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return mapout;
 	}
 	
-	private int[] evalinv(double zp[][], scmap M, double wp[][], double tol[][], double z0[][], int maxiter) {
+	private double[][] rectevalinv(scmap M, double wp[][], double tol[][], double z0[][], int maxiter) {
+		// rectevalinv inverts Schwarz-Christoffel rectangle map at points.
+		// rectevalinv evaluates the inverse of the Schwarz-Christoffel rectangle map M at the points
+		// wp in the polygon.  rectevalinv attempts to give an answer accurate to tol.  If tol is
+		// smaller than the accuracy of M, this is unlikely to be met.
+		// If z0 is supplied, z0 are the given starting points.  z0 must be the
+		// same size as wp or a complex scalar (to be expanded to that size).
+		// It is used for the starting approximation to the inverse image of wp.
+		// The starting guess need not be close to the correct answer; however, the
+		// straight line segment between wp[k] and the forward image of z0[k] must
+		// lie entirely inside the polygon, for each k.
+		// Original MATLAB evalinv routine copyright 1998 by Toby Driscoll.
+		int i;
+		double z02[][] = null;
+		double qdata[][] = M.qdata;
+		double tolerance = M.accuracy;
+		
+		// Check inputs/supply defaults
+		if ((tol != null) && (tol.length > 1)) {
+			qdata = tol;
+			tolerance = Math.pow(10.0, -qdata.length);
+		} // if ((tol != null) && (tol.length > 1)
+		
+		if ((z0 != null) && (z0.length != 0)) {
+		    if (z0.length == 1) {
+		    	z02 = new double[wp.length][2];
+		    	for (i = 0; i < wp.length; i++) {
+		    		z02[i][0] = z0[0][0];
+		    		z02[i][1] = z0[0][1];
+		    	}
+		    } // if (z0.length == 1)
+		    else if (z0.length != wp.length) {
+		    	MipavUtil.displayError("Argument z0 must be a complex scalar or the same size as wp");
+		    	return null;
+		    }
+		    else {
+		    	z02 = z0;
+		    }
+		} // if ((z0 != null) && (z0.length != 0))
+		
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < beta.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		double L[] = M.stripL;
+		double zp[][] =  rinvmap(wp, w, beta, z, c, L, qdata, z02, true, true, tolerance, maxiter);
+		return zp;
+	}
+	
+	private int[] diskevalinv(double zp[][], scmap M, double wp[][], double tol[][], double z0[][], int maxiter) {
 		// Invert Schwarz-Christoffel disk map at points.
-		// evalinv evaluates the inverse of the Schwarz-Christoffel map M at the points
-		// wp in the polygon. evalinv attempts to give an answer accurate to tol.  If
+		// diskevalinv evaluates the inverse of the Schwarz-Christoffel map M at the points
+		// wp in the polygon. diskevalinv attempts to give an answer accurate to tol.  If
 		// tol is smaller than the accuracy of M, this is unlikely to be met.
 		// If z0 is supplied, z0 are the given starting points.  z0 must be the
 		// same size as wp or a complex scalar (to be expanded to that size).
 		// It is used for the starting approximation to the inverse image of wp.
 		// The starting guess need not be close to the correct answer; however, the
 		// straight line segment between wp[k] and the forward image of z0[k] must
-		// lie entirely inside the polygon, for each k. evalinv aslo returns a vector of 
+		// lie entirely inside the polygon, for each k. diskevalinv also returns a vector of 
 		// indices where the methods was unable to produce a sufficiently small residual.
 		// A warning was issued when this occurs.
 		// Original MATLAB evalinv routine copyright 1998 by Toby Driscoll.
 		int i;
-		double qdata[][] = null;
+		double qdata[][] = M.qdata;
 		double tolerance = M.accuracy;
 		double z02[][] = null;
 		int flag[] = null;
@@ -964,16 +1017,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		
 		// Check inputs/supply defaults
-		if ((tol != null) && (tol.length != 0)) {
-			if (tol.length == 1) {
-			    qdata = M.qdata;
-			    tolerance = M.accuracy;
-			}
-			else {
-				qdata = tol;
-				tolerance = Math.pow(10.0, -qdata.length);
-			}
-		} // if ((tol != null) && (tol.length != 0))
+		if ((tol != null) && (tol.length > 1)) {
+			qdata = tol;
+			tolerance = Math.pow(10.0, -qdata.length);
+		} // if ((tol != null) && (tol.length > 1))
 		
 		if ((z0 != null) && (z0.length != 0)) {
 		    if (z0.length == 1) {
