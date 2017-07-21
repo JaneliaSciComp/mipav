@@ -62,6 +62,11 @@ public class JDialogPolygonToRectangle extends JDialogBase
 
     /** DOCUMENT ME! */
     private JTextField yText;
+    
+    private JTextField v0Text;
+    private JTextField v1Text;
+    private JTextField v2Text;
+    private JTextField v3Text;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -236,11 +241,14 @@ public class JDialogPolygonToRectangle extends JDialogBase
         JLabel point1Label;
         JLabel point2Label;
         JLabel point3Label;
-        JLabel point4Label;
         JLabel xLabel;
         JLabel yLabel;
+        JLabel v0Label;
+        JLabel v1Label;
+        JLabel v2Label;
+        JLabel v3Label;
         setForeground(Color.black);
-        setTitle("Circular Sector To Rectangle");
+        setTitle("Polygon To Rectangle");
 
         JPanel pointPanel = new JPanel(new GridBagLayout());
         pointPanel.setBorder(buildTitledBorder("Select Points"));
@@ -259,24 +267,69 @@ public class JDialogPolygonToRectangle extends JDialogBase
         point1Label.setForeground(Color.black);
         point1Label.setFont(serif12);
         pointPanel.add(point1Label, gbc4);
-        
-        point2Label = new JLabel("When all polygon points entered click Polygon entered button");
+
+        point2Label = new JLabel("Enter the 4 polygon vertex numbers that will be at corners of the rectangle");
         point2Label.setForeground(Color.black);
         point2Label.setFont(serif12);
         gbc4.gridy = 1;
         pointPanel.add(point2Label, gbc4);
 
-        point3Label = new JLabel("Put points 1 and 2 at edges of maximum radius boundary");
+        point3Label = new JLabel("Go in counterclockwise order and select along a long rectangle edge first");
         point3Label.setForeground(Color.black);
         point3Label.setFont(serif12);
         gbc4.gridy = 2;
         pointPanel.add(point3Label, gbc4);
-
-        point4Label = new JLabel("Put points 3 and 4 at edges of minimum radius boundary");
-        point4Label.setForeground(Color.black);
-        point4Label.setFont(serif12);
+        
+        v0Label = new JLabel("Index of vertex 0 of output rectangle");
+        v0Label.setForeground(Color.black);
+        v0Label.setFont(serif12);
         gbc4.gridy = 3;
-        pointPanel.add(point4Label, gbc4);
+        pointPanel.add(v0Label, gbc4);
+        
+        v0Text = new JTextField(10);
+        v0Text.setFont(serif12);
+        v0Text.setEnabled(true);
+        gbc4.gridx = 1;
+        pointPanel.add(v0Text, gbc4);
+        
+        v1Label = new JLabel("Index of vertex 1 of output rectangle");
+        v1Label.setForeground(Color.black);
+        v1Label.setFont(serif12);
+        gbc4.gridx = 0;
+        gbc4.gridy = 4;
+        pointPanel.add(v1Label, gbc4);
+        
+        v1Text = new JTextField(10);
+        v1Text.setFont(serif12);
+        v1Text.setEnabled(true);
+        gbc4.gridx = 1;
+        pointPanel.add(v1Text, gbc4);
+        
+        v2Label = new JLabel("Index of vertex 2 of output rectangle");
+        v2Label.setForeground(Color.black);
+        v2Label.setFont(serif12);
+        gbc4.gridx = 0;
+        gbc4.gridy = 5;
+        pointPanel.add(v2Label, gbc4);
+        
+        v2Text = new JTextField(10);
+        v2Text.setFont(serif12);
+        v2Text.setEnabled(true);
+        gbc4.gridx = 1;
+        pointPanel.add(v2Text, gbc4);
+        
+        v3Label = new JLabel("Index of vertex 3 of output rectangle");
+        v3Label.setForeground(Color.black);
+        v3Label.setFont(serif12);
+        gbc4.gridx = 0;
+        gbc4.gridy = 6;
+        pointPanel.add(v3Label, gbc4);
+        
+        v3Text = new JTextField(10);
+        v3Text.setFont(serif12);
+        v3Text.setEnabled(true);
+        gbc4.gridx = 1;
+        pointPanel.add(v3Text, gbc4);
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
@@ -335,7 +388,7 @@ public class JDialogPolygonToRectangle extends JDialogBase
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        int i;
+        int i, j;
         Vector<VOIBase> curves;
         int nPts;
         Vector3f[] pts = null;
@@ -359,14 +412,14 @@ public class JDialogPolygonToRectangle extends JDialogBase
         }
 
         if ((image.getVOIs() == null) || (image.getVOIs().size() == 0)) {
-            MipavUtil.displayError("4 points must be entered");
+            MipavUtil.displayError("At least points must be entered");
             return false;
         }
         curves = image.getVOIs().VOIAt(0).getCurves();
         nPts = curves.size();
 
-        if (nPts != 4) {
-            MipavUtil.displayError("Number of points = " + nPts + " instead of required 4");
+        if (nPts < 4) {
+            MipavUtil.displayError("Number of points = " + nPts + " less than required 4");
 
             return false;
         }
@@ -378,6 +431,55 @@ public class JDialogPolygonToRectangle extends JDialogBase
         for (i = 0; i < pts.length; i++) {
             xSource[i] = pts[i].X;
             ySource[i] = pts[i].Y;
+        }
+        
+        if (!testParameter(v0Text.getText(), 0, pts.length-1)) {
+        	v0Text.requestFocus();
+        	v0Text.selectAll();
+        	MipavUtil.displayError("Index of vertex 0 must be >= 0 and <= " + (pts.length-1));
+        	return false;
+        }
+        else {
+        	corners[0] = Integer.valueOf(v0Text.getText()).intValue();
+        }
+        
+        if (!testParameter(v1Text.getText(), 0, pts.length-1)) {
+        	v1Text.requestFocus();
+        	v1Text.selectAll();
+        	MipavUtil.displayError("Index of vertex 1 must be >= 0 and <= " + (pts.length-1));
+        	return false;
+        }
+        else {
+        	corners[1] = Integer.valueOf(v1Text.getText()).intValue();
+        }
+        
+        if (!testParameter(v2Text.getText(), 0, pts.length-1)) {
+        	v2Text.requestFocus();
+        	v2Text.selectAll();
+        	MipavUtil.displayError("Index of vertex 2 must be >= 0 and <= " + (pts.length-1));
+        	return false;
+        }
+        else {
+        	corners[2] = Integer.valueOf(v2Text.getText()).intValue();
+        }
+        
+        if (!testParameter(v3Text.getText(), 0, pts.length-1)) {
+        	v3Text.requestFocus();
+        	v3Text.selectAll();
+        	MipavUtil.displayError("Index of vertex 3 must be >= 0 and <= " + (pts.length-1));
+        	return false;
+        }
+        else {
+        	corners[3] = Integer.valueOf(v3Text.getText()).intValue();
+        }
+        
+        for (i = 0; i < 3; i++) {
+        	for (j = i+1; j < 4; j++) {
+        		if (corners[i] == corners[j]) {
+        			MipavUtil.displayError("Index of vertex " + i + " and index of vertex " + j + " both equal " + corners[i]);
+        			return false;
+        		}
+        	}
         }
 
         return true;
