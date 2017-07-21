@@ -50,6 +50,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	Vector<Double> linhx[][] = null;
 	Vector<Double> linhy[][] = null;
 	
+	private double xSource[] = null;
+	private double ySource[] = null;
+	private int corners[] = null;
+	
 	public SchwarzChristoffelMapping() {
 		
 	}
@@ -57,6 +61,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double w[][]) {
 		super(destImg, srcImg);
 		this.w = w;
+	}
+	
+	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double xSource[], double ySource[], int corners[]) {
+		super(destImg, srcImg);
+		this.xSource = xSource;
+		this.ySource = ySource;
+		this.corners = corners;
 	}
 	
 	public void runAlgorithm() {
