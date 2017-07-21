@@ -10,6 +10,7 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,6 +72,25 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	public void runAlgorithm() {
+		int i, j;
+		int index;
+		int cf;
+		int xDimSource;
+		int yDimSource;
+		int sourceSlice;
+		int xDimDest;
+		int yDimDest;
+		int destSlice;
+		double srcBuffer[];
+		double destBuffer[];
+		double imageMin;
+		int y;
+		int x;
+		double zp[][];
+		double z[][];
+		int MCorners[];
+		double zr[][];
+		double wpinpoly[][];
 		// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
     	// epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
@@ -98,8 +118,117 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         //testDiskmap2();
         //testDiskmap3();
         //testDiskmap4();
-        testDiskmap5();
-		
+        //testDiskmap5();
+        if (srcImage == null) {
+            displayError("Source Image is null");
+            finalize();
+
+            return;
+        }
+
+        
+
+        fireProgressStateChanged(srcImage.getImageName(), "Polygon to rectangle ...");
+
+        if (srcImage.isColorImage()) {
+            cf = 4;
+        } else {
+            cf = 1;
+        }
+        xDimSource = srcImage.getExtents()[0];
+        yDimSource = srcImage.getExtents()[1];
+        sourceSlice = xDimSource * yDimSource;
+
+        xDimDest = destImage.getExtents()[0];
+        yDimDest = destImage.getExtents()[1];
+        destSlice = xDimDest * yDimDest;
+        srcBuffer = new double[cf * sourceSlice];
+
+        try {
+            srcImage.exportData(0, cf * sourceSlice, srcBuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+
+            setCompleted(false);
+
+            return;
+        }
+
+        destBuffer = new double[cf * destSlice];
+
+        if (!srcImage.isColorImage()) {
+            imageMin = srcImage.getMin();
+
+            for (i = 0; i < destSlice; i++) {
+                destBuffer[i] = imageMin;
+            }
+        } // if (!srcImage.isColorImage())
+        double w[][] = new double[xSource.length][2];
+        for (i = 0; i < xSource.length; i++) {
+        	w[i][0] = xSource[i];
+        	w[i][1] = ySource[i];
+        }
+        scmap M = rectmap(w, corners, tolerance, null, null, null);
+        rectplot(M, 10, 10);
+        double zrec[][] = rectangle(M);
+        for (i = 0; i < zrec.length; i++) {
+        	if (zrec[i][1] >= 0.0) {
+                System.out.println("Corner " + i + " in the fundmemtal domain = " + zrec[i][0] + " + " + zrec[i][1]+"i");	
+        	}
+        	else {
+        		System.out.println("Corner " + i + " in the fundmemtal domain = " + zrec[i][0] + " " + zrec[i][1]+"i");		
+        	}
+        }
+        zp = new double[destSlice][2];
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		zp[index][0] = x;
+        		zp[index][1] = y;
+        	}
+        } // for (y = 0; y < yDimDest; y++)
+        z = M.prevertex;
+        MCorners = corners(M);
+        zr = new double[MCorners.length][2];
+        for (i = 0; i < MCorners.length; i++) {
+            zr[i][0] = z[MCorners[i]][0];
+            zr[i][1] = z[MCorners[i]][1];
+        }
+        boolean indexout[] = new boolean[destSlice];
+		boolean onvtx[][] = new boolean[w.length][destSlice];
+		polygon p = M.poly;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		isinpoly(indexout, onvtx, zp, w, beta, eps);
+		int numinpoly = 0;
+		for (i = 0; i < destSlice; i++) {
+		    if (indexout[i]) {
+		    	numinpoly++;
+		    }
+		} // for (i = 0; i < destSlice; i++)
+		double zpinpoly[][] = new double[numinpoly][2];
+		for (i = 0, j = 0; i < destSlice; i++) {
+			if (indexout[i]) {
+				zpinpoly[j][0] = zp[i][0];
+				zpinpoly[j][1] = zp[i][1];
+				j++;
+			}
+		} // for (i = 0, j = 0; i < destSlice; i++)
+		wpinpoly = new double[numinpoly][2];
+		rmap(wpinpoly, zpinpoly, w, beta, z, M.constant, M.stripL, M.qdata);
+		j = 0;
+		for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		if (indexout[index]) {
+        			double xsrc = wpinpoly[j][0];
+        			double ysrc = wpinpoly[j][1];
+        			j++;
+        		}
+        	}
+		}
 	}
 	
 	public void testRectmap1() {
