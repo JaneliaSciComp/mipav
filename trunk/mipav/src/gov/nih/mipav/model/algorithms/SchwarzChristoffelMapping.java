@@ -90,7 +90,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    int MCorners[];
 	    double zr[][];
 	    double wpinpoly[][];
-		double wp[][];
 		double zp[][];
 		double xp;
 		double yp;
@@ -3137,7 +3136,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			if ((corner == null) || (corner.length == 0)) {
 				String msg[] = new String[2];
 		        msg[0] = "Select the images of the corners of the rectangle";
-		        msg[1] = "Go in counerclockwise order and select a long rectangle edge first";
+		        msg[1] = "Go in clockwise order and select a long rectangle edge first if y increases downward";
 		        corner = scselect(w, beta, 4, "Select corners", msg);
 			} // if ((corner == null) || (corner.length == 0))
 			
