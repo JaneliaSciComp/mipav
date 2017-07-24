@@ -72,7 +72,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	public void runAlgorithm() {
-		int i, j;
+		int i;
 		int index;
 		int cf;
 		int xDimSource;
@@ -86,11 +86,20 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double imageMin;
 		int y;
 		int x;
+		double wp[][];
 		double zp[][];
-		double z[][];
-		int MCorners[];
-		double zr[][];
-		double wpinpoly[][];
+		double xp;
+		double yp;
+		int x0;
+		int y0;
+		int deltaX;
+		int deltaY;
+		double dx;
+		double dy;
+		double dx1;
+		double dy1;
+		int position;
+		int c;
 		// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
     	// epsilon = D1MACH(4)
         // Machine epsilon is the smallest positive epsilon such that
@@ -125,8 +134,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 
             return;
         }
-
-        
 
         fireProgressStateChanged(srcImage.getImageName(), "Polygon to rectangle ...");
 
@@ -179,56 +186,117 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		System.out.println("Corner " + i + " in the fundmemtal domain = " + zrec[i][0] + " " + zrec[i][1]+"i");		
         	}
         }
-        zp = new double[destSlice][2];
+        wp = new double[destSlice][2];
         for (y = 0; y < yDimDest; y++) {
         	for (x = 0; x < xDimDest; x++) {
         		index = x + xDimDest*y;
-        		zp[index][0] = x;
-        		zp[index][1] = y;
+        		wp[index][0] = x;
+        		wp[index][1] = y;
         	}
         } // for (y = 0; y < yDimDest; y++)
-        z = M.prevertex;
-        MCorners = corners(M);
-        zr = new double[MCorners.length][2];
-        for (i = 0; i < MCorners.length; i++) {
-            zr[i][0] = z[MCorners[i]][0];
-            zr[i][1] = z[MCorners[i]][1];
-        }
-        boolean indexout[] = new boolean[destSlice];
-		boolean onvtx[][] = new boolean[w.length][destSlice];
-		polygon p = M.poly;
-		double beta[] = new double[p.angle.length];
-		for (i = 0; i < p.angle.length; i++) {
-			beta[i] = p.angle[i] - 1;
-		}
-		isinpoly(indexout, onvtx, zp, w, beta, eps);
-		int numinpoly = 0;
-		for (i = 0; i < destSlice; i++) {
-		    if (indexout[i]) {
-		    	numinpoly++;
-		    }
-		} // for (i = 0; i < destSlice; i++)
-		double zpinpoly[][] = new double[numinpoly][2];
-		for (i = 0, j = 0; i < destSlice; i++) {
-			if (indexout[i]) {
-				zpinpoly[j][0] = zp[i][0];
-				zpinpoly[j][1] = zp[i][1];
-				j++;
-			}
-		} // for (i = 0, j = 0; i < destSlice; i++)
-		wpinpoly = new double[numinpoly][2];
-		rmap(wpinpoly, zpinpoly, w, beta, z, M.constant, M.stripL, M.qdata);
-		j = 0;
-		for (y = 0; y < yDimDest; y++) {
-        	for (x = 0; x < xDimDest; x++) {
-        		index = x + xDimDest*y;
-        		if (indexout[index]) {
-        			double xsrc = wpinpoly[j][0];
-        			double ysrc = wpinpoly[j][1];
-        			j++;
-        		}
-        	}
-		}
+       zp = rectevalinv(M, wp, M.qdata, null, 1000);
+       if (cf == 1) {
+    	   for (i = 0; i < zp.length; i++) {
+    	       xp = zp[i][0];
+    	       yp = zp[i][1];
+    	       if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
+    	    	   if (xp <= 0) {
+                       x0 = 0;
+                       dx = 0;
+                       deltaX = 0;
+                   } else if (xp >= (xDimSource - 1)) {
+                       x0 = xDimSource - 1;
+                       dx = 0;
+                       deltaX = 0;
+                   } else {
+                       x0 = (int) xp;
+                       dx = xp - x0;
+                       deltaX = 1;
+                   }
+
+                   if (yp <= 0) {
+                       y0 = 0;
+                       dy = 0;
+                       deltaY = 0;
+                   } else if (yp >= (yDimSource - 1)) {
+                       y0 = yDimSource - 1;
+                       dy = 0;
+                       deltaY = 0;
+                   } else {
+                       y0 = (int) yp;
+                       dy = yp - y0;
+                       deltaY = xDimSource;
+                   }
+
+                   dx1 = 1 - dx;
+                   dy1 = 1 - dy;
+
+                   position = (y0 * xDimSource) + x0;
+
+                   destBuffer[i] = (dy1 * ( (dx1 * srcBuffer[position]) + (dx * srcBuffer[position + deltaX])))
+                           + (dy * ( (dx1 * srcBuffer[position + deltaY]) + (dx * srcBuffer[position + deltaY + deltaX])));   
+    	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))
+    	   } // for (i = 0; i < zp.length; i++)
+       } // if (cf == 1)
+       else { // cf == 4
+    	   for (i = 0; i < zp.length; i++) {
+    		   xp = zp[i][0];
+    	       yp = zp[i][1];
+    	       if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
+    	    	   if (xp <= 0) {
+                       x0 = 0;
+                       dx = 0;
+                       deltaX = 0;
+                   } else if (xp >= (xDimSource - 1)) {
+                       x0 = xDimSource - 1;
+                       dx = 0;
+                       deltaX = 0;
+                   } else {
+                       x0 = (int) xp;
+                       dx = xp - x0;
+                       deltaX = 1;
+                   }
+
+                   if (yp <= 0) {
+                       y0 = 0;
+                       dy = 0;
+                       deltaY = 0;
+                   } else if (yp >= (yDimSource - 1)) {
+                       y0 = yDimSource - 1;
+                       dy = 0;
+                       deltaY = 0;
+                   } else {
+                       y0 = (int) yp;
+                       dy = yp - y0;
+                       deltaY = xDimSource;
+                   }
+
+                   dx1 = 1 - dx;
+                   dy1 = 1 - dy;
+
+                   position = (y0 * xDimSource) + x0;
+
+                   for (c = 0; c < 4; c++) {
+                   destBuffer[4*i+c] = (dy1 * ( (dx1 * srcBuffer[4*position]+c) + (dx * srcBuffer[4*(position + deltaX) + c])))
+                           + (dy * ( (dx1 * srcBuffer[4*(position + deltaY) + c]) + (dx * srcBuffer[4*(position + deltaY + deltaX) + c])));
+                   } // for (c = 0; c < 4; c++)
+    	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))   
+    	   } // for (i = 0; i < zp.length; i++)
+       } // else cf == 4
+       
+       try {
+           destImage.importData(0, destBuffer, true);
+       } catch (IOException e) {
+           MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+           setCompleted(false);
+
+           return;
+       }
+
+       setCompleted(true);
+
+       return;
 	}
 	
 	public void testRectmap1() {
