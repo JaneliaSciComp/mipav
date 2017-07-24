@@ -72,7 +72,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	public void runAlgorithm() {
-		int i;
+		int i, j;
 		int index;
 		int cf;
 		int xDimSource;
@@ -86,6 +86,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double imageMin;
 		int y;
 		int x;
+		double z[][];
+	    int MCorners[];
+	    double zr[][];
+	    double wpinpoly[][];
 		double wp[][];
 		double zp[][];
 		double xp;
@@ -177,112 +181,129 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         }
         scmap M = rectmap(w, corners, tolerance, null, null, null);
         rectplot(M, 10, 10);
-        double zrec[][] = rectangle(M);
-        for (i = 0; i < zrec.length; i++) {
-        	if (zrec[i][1] >= 0.0) {
-                System.out.println("Corner " + i + " in the fundmemtal domain = " + zrec[i][0] + " + " + zrec[i][1]+"i");	
-        	}
-        	else {
-        		System.out.println("Corner " + i + " in the fundmemtal domain = " + zrec[i][0] + " " + zrec[i][1]+"i");		
-        	}
+        z = M.prevertex;
+        MCorners = corners(M);
+        double xMin = Double.MAX_VALUE;
+        double xMax = -Double.MAX_VALUE;
+        double yMin = Double.MAX_VALUE;
+        double yMax = -Double.MAX_VALUE;
+        zr = new double[MCorners.length][2];
+        double xr[] = new double[MCorners.length];
+        double yr[] = new double[MCorners.length];
+        for (i = 0; i < MCorners.length; i++) {
+            zr[i][0] = z[MCorners[i]][0];
+            xr[i] = zr[i][0];
+            zr[i][1] = z[MCorners[i]][1];
+            yr[i] = zr[i][1];
+            System.out.println("zr["+i+"] = " + zr[i][0] + " " + zr[i][1] + "i");
+            if (zr[i][0] < xMin) {
+            	xMin = zr[i][0];
+            }
+            if (zr[i][0] > xMax) {
+            	xMax = zr[i][0];
+            }
+            if (zr[i][1] < yMin) {
+            	yMin = zr[i][1];
+            }
+            if (zr[i][1] > yMax) {
+            	yMax = zr[i][1];
+            }
         }
-        wp = new double[destSlice][2];
+        polygon pr = new polygon(xr, yr, null);
+        double betar[] = new double[pr.angle.length];
+        for (i = 0; i < pr.angle.length; i++) {
+        	betar[i] = pr.angle[i] - 1.0;
+        }
+        double xSlope = (xMax - xMin)/(xDimDest - 1.0);
+        double ySlope = (yMax - yMin)/(yDimDest - 1.0);
+        zp = new double[destSlice][2];
         for (y = 0; y < yDimDest; y++) {
         	for (x = 0; x < xDimDest; x++) {
         		index = x + xDimDest*y;
-        		wp[index][0] = x;
-        		wp[index][1] = y;
+        		zp[index][0] = x*xSlope + xMin;
+        		zp[index][1] = y*ySlope + yMin;
         	}
         } // for (y = 0; y < yDimDest; y++)
-       zp = rectevalinv(M, wp, M.qdata, null, 1000);
-       if (cf == 1) {
-    	   for (i = 0; i < zp.length; i++) {
-    	       xp = zp[i][0];
-    	       yp = zp[i][1];
-    	       if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
-    	    	   if (xp <= 0) {
-                       x0 = 0;
-                       dx = 0;
-                       deltaX = 0;
-                   } else if (xp >= (xDimSource - 1)) {
-                       x0 = xDimSource - 1;
-                       dx = 0;
-                       deltaX = 0;
-                   } else {
-                       x0 = (int) xp;
-                       dx = xp - x0;
-                       deltaX = 1;
-                   }
+        boolean indexout[] = new boolean[destSlice];
+		boolean onvtx[][] = new boolean[w.length][destSlice];
+		polygon p = M.poly;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		isinpoly(indexout, onvtx, zp, zr, betar, eps);
+		int numinpoly = 0;
+		for (i = 0; i < destSlice; i++) {
+		    if (indexout[i]) {
+		    	numinpoly++;
+		    }
+		} // for (i = 0; i < destSlice; i++)
+		double zpinpoly[][] = new double[numinpoly][2];
+		for (i = 0, j = 0; i < destSlice; i++) {
+			if (indexout[i]) {
+				zpinpoly[j][0] = zp[i][0];
+				zpinpoly[j][1] = zp[i][1];
+				j++;
+			}
+		} // for (i = 0, j = 0; i < destSlice; i++)
+		wpinpoly = new double[numinpoly][2];
+		rmap(wpinpoly, zpinpoly, w, beta, z, M.constant, M.stripL, M.qdata);
+		j = 0;
+		for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		if (indexout[index]) {
+        			xp = wpinpoly[j][0];
+        			yp = wpinpoly[j][1];
+        			j++;
+        			if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
+         	    	   if (xp <= 0) {
+                            x0 = 0;
+                            dx = 0;
+                            deltaX = 0;
+                        } else if (xp >= (xDimSource - 1)) {
+                            x0 = xDimSource - 1;
+                            dx = 0;
+                            deltaX = 0;
+                        } else {
+                            x0 = (int) xp;
+                            dx = xp - x0;
+                            deltaX = 1;
+                        }
 
-                   if (yp <= 0) {
-                       y0 = 0;
-                       dy = 0;
-                       deltaY = 0;
-                   } else if (yp >= (yDimSource - 1)) {
-                       y0 = yDimSource - 1;
-                       dy = 0;
-                       deltaY = 0;
-                   } else {
-                       y0 = (int) yp;
-                       dy = yp - y0;
-                       deltaY = xDimSource;
-                   }
+                        if (yp <= 0) {
+                            y0 = 0;
+                            dy = 0;
+                            deltaY = 0;
+                        } else if (yp >= (yDimSource - 1)) {
+                            y0 = yDimSource - 1;
+                            dy = 0;
+                            deltaY = 0;
+                        } else {
+                            y0 = (int) yp;
+                            dy = yp - y0;
+                            deltaY = xDimSource;
+                        }
 
-                   dx1 = 1 - dx;
-                   dy1 = 1 - dy;
+                        dx1 = 1 - dx;
+                        dy1 = 1 - dy;
 
-                   position = (y0 * xDimSource) + x0;
+                        position = (y0 * xDimSource) + x0;
 
-                   destBuffer[i] = (dy1 * ( (dx1 * srcBuffer[position]) + (dx * srcBuffer[position + deltaX])))
-                           + (dy * ( (dx1 * srcBuffer[position + deltaY]) + (dx * srcBuffer[position + deltaY + deltaX])));   
-    	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))
-    	   } // for (i = 0; i < zp.length; i++)
-       } // if (cf == 1)
-       else { // cf == 4
-    	   for (i = 0; i < zp.length; i++) {
-    		   xp = zp[i][0];
-    	       yp = zp[i][1];
-    	       if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
-    	    	   if (xp <= 0) {
-                       x0 = 0;
-                       dx = 0;
-                       deltaX = 0;
-                   } else if (xp >= (xDimSource - 1)) {
-                       x0 = xDimSource - 1;
-                       dx = 0;
-                       deltaX = 0;
-                   } else {
-                       x0 = (int) xp;
-                       dx = xp - x0;
-                       deltaX = 1;
-                   }
-
-                   if (yp <= 0) {
-                       y0 = 0;
-                       dy = 0;
-                       deltaY = 0;
-                   } else if (yp >= (yDimSource - 1)) {
-                       y0 = yDimSource - 1;
-                       dy = 0;
-                       deltaY = 0;
-                   } else {
-                       y0 = (int) yp;
-                       dy = yp - y0;
-                       deltaY = xDimSource;
-                   }
-
-                   dx1 = 1 - dx;
-                   dy1 = 1 - dy;
-
-                   position = (y0 * xDimSource) + x0;
-
-                   for (c = 0; c < 4; c++) {
-                   destBuffer[4*i+c] = (dy1 * ( (dx1 * srcBuffer[4*position]+c) + (dx * srcBuffer[4*(position + deltaX) + c])))
-                           + (dy * ( (dx1 * srcBuffer[4*(position + deltaY) + c]) + (dx * srcBuffer[4*(position + deltaY + deltaX) + c])));
-                   } // for (c = 0; c < 4; c++)
-    	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))   
-    	   } // for (i = 0; i < zp.length; i++)
-       } // else cf == 4
+                        if (cf == 1) {
+                            destBuffer[index] = (dy1 * ( (dx1 * srcBuffer[position]) + (dx * srcBuffer[position + deltaX])))
+                                + (dy * ( (dx1 * srcBuffer[position + deltaY]) + (dx * srcBuffer[position + deltaY + deltaX])));   
+                        }
+                        else {
+                        	 for (c = 0; c < 4; c++) {
+                                 destBuffer[4*index+c] = (dy1 * ( (dx1 * srcBuffer[4*position]+c) + (dx * srcBuffer[4*(position + deltaX) + c])))
+                                         + (dy * ( (dx1 * srcBuffer[4*(position + deltaY) + c]) + (dx * srcBuffer[4*(position + deltaY + deltaX) + c])));
+                             } // for (c = 0; c < 4; c++)	
+                        }
+         	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))
+        		}
+        	}
+		}
        
        try {
            destImage.importData(0, destBuffer, true);
