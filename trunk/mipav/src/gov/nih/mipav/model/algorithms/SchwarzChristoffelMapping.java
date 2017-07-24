@@ -9550,7 +9550,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    Arrays.sort(sortcorner);
 		    for (i = 0; i < corner2.length; i++) {
 		    	if (corner2[i] != sortcorner[i]) {
-		    		MipavUtil.displayError("Corners must be specified in ccw order");
+		    		// ccw order for y increasing going up
+		    		// clockwise order for y increasing going down
+		    		MipavUtil.displayError("Corners must be specified in clockwise order when y increases going down");
+		    		//MipavUtil.displayError("Corners must be specified in ccw order");
 		    		err = -1;
 		    		return err;
 		    	}
