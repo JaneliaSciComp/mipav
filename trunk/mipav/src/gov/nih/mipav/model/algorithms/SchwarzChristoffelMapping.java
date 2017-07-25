@@ -194,7 +194,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	w[i][1] = yDimSource-1-ySource[i];
         }
         scmap M = rectmap(w, corners, tolerance, null, null, null);
-        rectplot(M, 10, 10);
+        rectplot(M, 10, 10, yDimSource-1);
         z = M.prevertex;
         MCorners = corners(M);
         double xMin = Double.MAX_VALUE;
@@ -375,7 +375,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         corner[2] = 3;
         corner[3] = 4;
         scmap M = rectmap(w, corner, tolerance, null, null, null);
-        rectplot(M, 10, 10);
+        rectplot(M, 10, 10, Integer.MIN_VALUE);
 	}
 	
 	public void testRectmap2() {
@@ -400,7 +400,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         corner[2] = 3;
         corner[3] = 5;
         scmap M = rectmap(w, corner, tolerance, null, null, null);
-        rectplot(M, 8, 4);
+        rectplot(M, 8, 4, Integer.MIN_VALUE);
         double zr[][] = rectangle(M);
         for (i = 0; i < zr.length; i++) {
         	if (zr[i][1] >= 0.0) {
@@ -452,7 +452,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         double minlen = 0.005;
         // Maximum line segment length, as a proportion of the axes box
         double maxlen = 0.02;
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, wcir, beta, false, axlim);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, wcir, beta, false, axlim, Integer.MIN_VALUE);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -560,7 +560,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		for (i = 0; i < 4; i++) {
 			theta[i] = Math.atan2(prevertex[i][1], prevertex[i][0]);
 		}
-		diskplot(M, R, theta, 200, 140, null);
+		diskplot(M, R, theta, 200, 140, null, Integer.MIN_VALUE);
 	}
 	
 	public void testDiskmap3() {
@@ -584,7 +584,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
 		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
-		diskplot(M, null, null, 200, 140, null);
+		diskplot(M, null, null, 200, 140, null, Integer.MIN_VALUE);
 		double wc[] = new double[2];
 		wc[0] = -0.5;
 		wc[1] = -0.5;
@@ -594,7 +594,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
 		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
-		diskplot(M, null, null, 200, 140, null);
+		diskplot(M, null, null, 200, 140, null, Integer.MIN_VALUE);
     }
 	
 	public void testDiskmap4() {
@@ -625,7 +625,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		double theta[] = new double[1];
 		theta[0] = 0.0;
-		diskplot(f, R, theta, 20, 14, null);
+		diskplot(f, R, theta, 20, 14, null, Integer.MIN_VALUE);
 		double x2[] = new double[2];
 		double y2[] = new double[2];
 		double denom[] = new double[2];
@@ -799,7 +799,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		double R[] = new double[]{10.0};
 		double theta[] = new double[]{10.0};
-		diskplot(M, R, theta, 200, 140, null);
+		diskplot(M, R, theta, 200, 140, null, Integer.MIN_VALUE);
 	}
 	
 	
@@ -3246,7 +3246,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return M;
 	}
 	
-	public void diskplot(scmap M, double R[], double theta[], int num1draw, int num2draw, double error[]) {
+	public void diskplot(scmap M, double R[], double theta[], int num1draw, int num2draw, double error[], int yInvert) {
 	    // Visualize a Schwarz-Christoffel disk map.
 		// diskplot plots the polygon associated with the Schwarz-Christoffel
 		// disk map and the images of circles and radii under the S-C
@@ -3283,12 +3283,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		else {
 			nqpts = 5;
 		}
-		dplot(w, beta, z, c, R, theta, nqpts, num1draw, num2draw);
+		dplot(w, beta, z, c, R, theta, nqpts, num1draw, num2draw, yInvert);
 		return;
 	}
 	
 	private void dplot(double w[][], double beta[], double z[][], double c[],
-			double R[], double theta[], int nqpts, int num1draw, int num2draw) {
+			double R[], double theta[], int nqpts, int num1draw, int num2draw, int yInvert) {
 		// Image of polar grid under Schwarz-Christoffel disk map.
 		// dplot will adptielvely plot the images under the Schwarz-Christoffel 
 		// disk amp of circles and rays in the unit disk. 
@@ -3389,7 +3389,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		float xPointArray[] = new float[n+1+numinfinite];
 		float yPointArray[] = new float[n+1+numinfinite];
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -3611,7 +3611,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return;
 	}
 	
-	public void rectplot(scmap M, int nre, int nim) {
+	public void rectplot(scmap M, int nre, int nim, int yInvert) {
 	    // plot plots the polygon associated with the Schwarz-Christoffel
 		// rectangle map M and the images of nre evenly spaced vertical 
 	    // and nim horizontal line segments.  
@@ -3627,11 +3627,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double z[][] = M.prevertex;
 		double c[] = M.constant;
 		double L[] = M.stripL;
-		rplot(w, beta, z, c, L, nre, nim);
+		rplot(w, beta, z, c, L, nre, nim, yInvert);
 	}
 	
 	private void rplot(double w[][], double beta[], double z[][], double c[],
-			double L[], int re, int im) {
+			double L[], int re, int im, int yInvert) {
 		// Image of cartesian grid under Schwarz-Christoffel rectangle map.
 		// rplot will adaptively plot the images under the Schwarz-Christoffel
 		// rectangle map of re evenly spaced vertical and im evenly spaced
@@ -3687,7 +3687,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		float xPointArray[] = new float[n+1];
 		float yPointArray[] = new float[n+1];
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -4630,7 +4630,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	private ViewJFrameGraph plotpoly(float xPointArray[], float yPointArray[],
-			double w[][], double beta[], boolean addMarkerLabel, double axlim[]) {
+			double w[][], double beta[], boolean addMarkerLabel, double axlim[], int yInvert) {
 		// plotpoly plots the polygon whose vertices are in vector w
 		// and whose turning angles are in beta.  Vertices at infinity
 		// permitted, but there must be at least two consecutive finite
@@ -4939,6 +4939,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				"title", "lablelX", "labelY", Color.BLUE);
 		pointGraph.setVisible(true);
 		ViewJComponentGraph graph = pointGraph.getGraph();
+		if (yInvert != Integer.MIN_VALUE) {
+			graph.setYInvert(yInvert);
+		}
 		if (addMarkerLabel) {
 		    graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_AND_LINES);
 		}
