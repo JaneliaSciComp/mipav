@@ -199,6 +199,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
     private Vector<Double> x2Vector = null;
     private Vector<Double> y2Vector = null;
     private boolean addSchwarzChristoffelLines = false;
+    private int yInvert = Integer.MIN_VALUE;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2013,6 +2014,9 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             } else {
                 tmp = (i * (yMax - yMin) / yGridLines) + yMin;
             }
+            if (yInvert != Integer.MIN_VALUE) {
+            	tmp = yInvert - tmp;
+            }
             if (doLog) {
                 if (zeroYMin && tmp == yMin) {
                     tmp = 0.0f;
@@ -2605,6 +2609,10 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
     
     public void setAddSchwarzChristoffelLines(boolean addSchwarzChristoffelLines) {
     	this.addSchwarzChristoffelLines = addSchwarzChristoffelLines;
+    }
+    
+    public void setYInvert(int yInvert) {
+    	this.yInvert = yInvert;
     }
 
 
