@@ -159,7 +159,7 @@ public class JDialogPolygonToRectangle extends JDialogBase
             }
 
             // insertScriptLine(algorithm);
-        } // if (algorithm instanceof AlgorithmPolygonToRectangle)
+        } // if (algorithm instanceof SchwarzChristoffelMapping)
 
         if (sAlgo != null) {
             sAlgo.finalize();
