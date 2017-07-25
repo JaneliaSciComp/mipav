@@ -163,6 +163,20 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 
             return;
         }
+        // Invert so y axis increases going up so can use ccw ordering
+        double srcBuffer2[] = new double[cf *sourceSlice];
+        for (y = 0; y < yDimSource; y++) {
+        	for (x = 0; x < xDimSource; x++) {
+        		if (cf == 1) {
+        	        srcBuffer2[x + (yDimSource - 1 - y)*xDimSource]	= srcBuffer[ x + y*xDimSource];
+        		}
+        		else {
+        		    for (c = 0; c < 4; c++) {
+        		    	srcBuffer2[4*(x + (yDimSource - 1 - y)*xDimSource) + c]	= srcBuffer[4*(x + y*xDimSource) + c];	
+        		    }
+        		}
+        	}
+        }
 
         destBuffer = new double[cf * destSlice];
 
@@ -176,7 +190,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         double w[][] = new double[xSource.length][2];
         for (i = 0; i < xSource.length; i++) {
         	w[i][0] = xSource[i];
-        	w[i][1] = ySource[i];
+        	// Invert so y axis increases going up so can use ccw ordering
+        	w[i][1] = yDimDest-1-ySource[i];
         }
         scmap M = rectmap(w, corners, tolerance, null, null, null);
         rectplot(M, 10, 10);
@@ -290,22 +305,39 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
                         position = (y0 * xDimSource) + x0;
 
                         if (cf == 1) {
-                            destBuffer[index] = (dy1 * ( (dx1 * srcBuffer[position]) + (dx * srcBuffer[position + deltaX])))
-                                + (dy * ( (dx1 * srcBuffer[position + deltaY]) + (dx * srcBuffer[position + deltaY + deltaX])));   
+                            destBuffer[index] = (dy1 * ( (dx1 * srcBuffer2[position]) + (dx * srcBuffer2[position + deltaX])))
+                                + (dy * ( (dx1 * srcBuffer2[position + deltaY]) + (dx * srcBuffer2[position + deltaY + deltaX])));   
                         }
                         else {
                         	 for (c = 0; c < 4; c++) {
-                                 destBuffer[4*index+c] = (dy1 * ( (dx1 * srcBuffer[4*position]+c) + (dx * srcBuffer[4*(position + deltaX) + c])))
-                                         + (dy * ( (dx1 * srcBuffer[4*(position + deltaY) + c]) + (dx * srcBuffer[4*(position + deltaY + deltaX) + c])));
+                                 destBuffer[4*index+c] = (dy1 * ( (dx1 * srcBuffer2[4*position]+c) + (dx * srcBuffer2[4*(position + deltaX) + c])))
+                                         + (dy * ( (dx1 * srcBuffer2[4*(position + deltaY) + c]) + (dx * srcBuffer2[4*(position + deltaY + deltaX) + c])));
                              } // for (c = 0; c < 4; c++)	
                         }
          	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))
         		}
         	}
 		}
+		
+	// Undo y axis inversion
+    double destBuffer2[] = new double[cf * destSlice];
+	for (y = 0; y < yDimDest; y++) {
+    	for (x = 0; x < xDimDest; x++) {
+    		if (cf == 1) {
+    	        destBuffer2[x + (yDimDest - 1 - y)*xDimDest]	= destBuffer[ x + y*xDimDest];
+    		}
+    		else {
+    		    for (c = 0; c < 4; c++) {
+    		    	destBuffer2[4*(x + (yDimDest - 1 - y)*xDimDest) + c]	= destBuffer[4*(x + y*xDimDest) + c];
+    		    }
+    		}
+    	}
+    }
+    
+
        
        try {
-           destImage.importData(0, destBuffer, true);
+           destImage.importData(0, destBuffer2, true);
        } catch (IOException e) {
            MipavUtil.displayError("IOException " + e + " on destImage.importData");
 
@@ -3136,7 +3168,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			if ((corner == null) || (corner.length == 0)) {
 				String msg[] = new String[2];
 		        msg[0] = "Select the images of the corners of the rectangle";
-		        msg[1] = "Go in clockwise order and select a long rectangle edge first if y increases downward";
+		        msg[1] = "Go in counterclockwise order and select a long rectangle edge first";
 		        corner = scselect(w, beta, 4, "Select corners", msg);
 			} // if ((corner == null) || (corner.length == 0))
 			
