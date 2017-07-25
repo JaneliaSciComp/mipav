@@ -538,6 +538,7 @@ public class ViewMenuBar {
 								menuBuilder.buildMenuItem("Ellipse to rectangle", "EllipseToRectangle", 0, null, false),
 								menuBuilder.buildMenuItem("Nearly circle to circle", "NearlyCircleToCircle", 0, null,
 										false),
+								menuBuilder.buildMenuItem("Polygon to circle", "PolygonToCircle", 0, null, false),
 								menuBuilder.buildMenuItem("Polygon to rectangle", "PolygonToRec", 0, null, false),
 								menuBuilder.buildMenuItem("Reslice - isotropic voxels", null, 0, null, false),
 								menuBuilder.buildMenuItem("Subsample", "subsample", 0, null, false),
@@ -1504,6 +1505,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Barrel distortion correction", false);
 			menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
+			menuBuilder.setMenuItemEnabled("Polygon to circle", false);
 			menuBuilder.setMenuItemEnabled("Polygon to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to rectangle", false);
@@ -1541,6 +1543,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Barrel distortion correction", false);
 			menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
+			menuBuilder.setMenuItemEnabled("Polygon to circle", false);
 			menuBuilder.setMenuItemEnabled("Polygon to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to rectangle", false);
@@ -1826,6 +1829,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Barrel distortion correction", true);
 		menuBuilder.setMenuItemEnabled("Circular sector to rectangle", true);
 		menuBuilder.setMenuItemEnabled("Circle to rectangle", true);
+		menuBuilder.setMenuItemEnabled("Polygon to circle", true);
 		menuBuilder.setMenuItemEnabled("Polygon to rectangle", true);
 		menuBuilder.setMenuItemEnabled("Ellipse to circle", true);
 		menuBuilder.setMenuItemEnabled("Ellipse to rectangle", true);
