@@ -212,17 +212,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	w[i][1] = yDimSource-1-ySource[i];
         }
         scmap M = diskmap(w, null, tolerance, null, null);
-		for (i = 0; i < 6; i++) {
-			System.out.println("prevertex["+i+"] = " + M.prevertex[i][0] + " " + M.prevertex[i][1]+"i");
-		}
-		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
-		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
-		diskplot(M, null, null, 200, 140, null, yDimSource-1);
-		double wc[] = new double[2];
-		wc[0] = -0.5;
-		wc[1] = -0.5;
-		M = center(M, wc, null);
-		for (i = 0; i < 6; i++) {
+		for (i = 0; i < M.prevertex.length; i++) {
 			System.out.println("prevertex["+i+"] = " + M.prevertex[i][0] + " " + M.prevertex[i][1]+"i");
 		}
 		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
