@@ -191,7 +191,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         for (i = 0; i < xSource.length; i++) {
         	w[i][0] = xSource[i];
         	// Invert so y axis increases going up so can use ccw ordering
-        	w[i][1] = yDimDest-1-ySource[i];
+        	w[i][1] = yDimSource-1-ySource[i];
         }
         scmap M = rectmap(w, corners, tolerance, null, null, null);
         rectplot(M, 10, 10);
