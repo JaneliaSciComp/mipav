@@ -54,6 +54,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private double xSource[] = null;
 	private double ySource[] = null;
 	private int corners[] = null;
+	private final int POLYGON_TO_RECTANGLE = 1;
+	private final int POLYGON_TO_CIRCLE = 2;
+	private int algorithm = POLYGON_TO_RECTANGLE;
 	
 	public SchwarzChristoffelMapping() {
 		
@@ -64,14 +67,268 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		this.w = w;
 	}
 	
+	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double xSource[], double ySource[]) {
+		super(destImg, srcImg);
+		this.xSource = xSource;
+		this.ySource = ySource;
+		algorithm = POLYGON_TO_CIRCLE;
+	}
+	
 	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double xSource[], double ySource[], int corners[]) {
 		super(destImg, srcImg);
 		this.xSource = xSource;
 		this.ySource = ySource;
 		this.corners = corners;
+		algorithm = POLYGON_TO_RECTANGLE;
 	}
 	
 	public void runAlgorithm() {
+		// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
+    	// epsilon = D1MACH(4)
+        // Machine epsilon is the smallest positive epsilon such that
+        // (1.0 + epsilon) != 1.0.
+        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+        // epsilon = 2.2204460e-16
+        // epsilon is called the largest relative spacing
+        eps = 1.0;
+        double neweps = 1.0;
+
+
+        while (true) {
+
+            if (1.0 == (1.0 + neweps)) {
+                break;
+            } else {
+                eps = neweps;
+                neweps = neweps / 2.0;
+            }
+        } // while(true)
+        
+        //testRectmap1();
+        //testRectmap2();
+        //testDiskmap1();
+        //testDiskmap2();
+        //testDiskmap3();
+        //testDiskmap4();
+        //testDiskmap5();
+		if (algorithm == POLYGON_TO_RECTANGLE) {
+			runPolygonToRectangle();
+		}
+		else if (algorithm == POLYGON_TO_CIRCLE) {
+			runPolygonToCircle();
+		}
+	}
+	
+	public void runPolygonToCircle() {
+		int i;
+		int index;
+		int cf;
+		int xDimSource;
+		int yDimSource;
+		int sourceSlice;
+		int xDimDest;
+		int yDimDest;
+		int destSlice;
+		double srcBuffer[];
+		double destBuffer[];
+		double imageMin;
+		int x;
+		int y; 
+		int c;
+		double zp[][];
+		double wp[][];
+		double xp;
+		double yp;
+		int x0;
+		int y0;
+		int deltaX;
+		int deltaY;
+		double dx;
+		double dy;
+		double dx1;
+		double dy1;
+		int position;
+		
+		if (srcImage == null) {
+            displayError("Source Image is null");
+            finalize();
+
+            return;
+        }
+
+        fireProgressStateChanged(srcImage.getImageName(), "Polygon to circle ...");
+
+        if (srcImage.isColorImage()) {
+            cf = 4;
+        } else {
+            cf = 1;
+        }
+        xDimSource = srcImage.getExtents()[0];
+        yDimSource = srcImage.getExtents()[1];
+        sourceSlice = xDimSource * yDimSource;
+
+        xDimDest = destImage.getExtents()[0];
+        yDimDest = destImage.getExtents()[1];
+        destSlice = xDimDest * yDimDest;
+        srcBuffer = new double[cf * sourceSlice];
+
+        try {
+            srcImage.exportData(0, cf * sourceSlice, srcBuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+
+            setCompleted(false);
+
+            return;
+        }
+        // Invert so y axis increases going up so can use ccw ordering
+        double srcBuffer2[] = new double[cf *sourceSlice];
+        for (y = 0; y < yDimSource; y++) {
+        	for (x = 0; x < xDimSource; x++) {
+        		if (cf == 1) {
+        	        srcBuffer2[x + (yDimSource - 1 - y)*xDimSource]	= srcBuffer[ x + y*xDimSource];
+        		}
+        		else {
+        		    for (c = 0; c < 4; c++) {
+        		    	srcBuffer2[4*(x + (yDimSource - 1 - y)*xDimSource) + c]	= srcBuffer[4*(x + y*xDimSource) + c];	
+        		    }
+        		}
+        	}
+        }
+
+        destBuffer = new double[cf * destSlice];
+
+        if (!srcImage.isColorImage()) {
+            imageMin = srcImage.getMin();
+
+            for (i = 0; i < destSlice; i++) {
+                destBuffer[i] = imageMin;
+            }
+        } // if (!srcImage.isColorImage())
+        double w[][] = new double[xSource.length][2];
+        for (i = 0; i < xSource.length; i++) {
+        	w[i][0] = xSource[i];
+        	// Invert so y axis increases going up so can use ccw ordering
+        	w[i][1] = yDimSource-1-ySource[i];
+        }
+        scmap M = diskmap(w, null, tolerance, null, null);
+		for (i = 0; i < 6; i++) {
+			System.out.println("prevertex["+i+"] = " + M.prevertex[i][0] + " " + M.prevertex[i][1]+"i");
+		}
+		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
+		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
+		diskplot(M, null, null, 200, 140, null, yDimSource-1);
+		double wc[] = new double[2];
+		wc[0] = -0.5;
+		wc[1] = -0.5;
+		M = center(M, wc, null);
+		for (i = 0; i < 6; i++) {
+			System.out.println("prevertex["+i+"] = " + M.prevertex[i][0] + " " + M.prevertex[i][1]+"i");
+		}
+		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
+		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
+		diskplot(M, null, null, 200, 140, null, yDimSource-1);
+		double xcenter = (xDimDest-1.0)/2.0;
+		double ycenter = (yDimDest-1.0)/2.0;
+		double maxDistance = Math.sqrt(xcenter*xcenter + ycenter*ycenter);
+		zp = new double[destSlice][2];
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		zp[index][0] = (x-xcenter)/maxDistance;
+        		zp[index][1] = (y-ycenter)/maxDistance;
+        	}
+        } // for (y = 0; y < yDimDest; y++)
+        polygon p = M.poly;
+        double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+        wp = dmap(zp, w, beta, M.prevertex, M.constant, M.qdata);
+        
+         for (i = 0; i < wp.length; i++) {
+			xp = wp[i][0];
+			yp = wp[i][1];
+			if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
+ 	    	   if (xp <= 0) {
+                    x0 = 0;
+                    dx = 0;
+                    deltaX = 0;
+                } else if (xp >= (xDimSource - 1)) {
+                    x0 = xDimSource - 1;
+                    dx = 0;
+                    deltaX = 0;
+                } else {
+                    x0 = (int) xp;
+                    dx = xp - x0;
+                    deltaX = 1;
+                }
+
+                if (yp <= 0) {
+                    y0 = 0;
+                    dy = 0;
+                    deltaY = 0;
+                } else if (yp >= (yDimSource - 1)) {
+                    y0 = yDimSource - 1;
+                    dy = 0;
+                    deltaY = 0;
+                } else {
+                    y0 = (int) yp;
+                    dy = yp - y0;
+                    deltaY = xDimSource;
+                }
+
+                dx1 = 1 - dx;
+                dy1 = 1 - dy;
+
+                position = (y0 * xDimSource) + x0;
+
+                if (cf == 1) {
+                    destBuffer[i] = (dy1 * ( (dx1 * srcBuffer2[position]) + (dx * srcBuffer2[position + deltaX])))
+                        + (dy * ( (dx1 * srcBuffer2[position + deltaY]) + (dx * srcBuffer2[position + deltaY + deltaX])));   
+                }
+                else {
+                	 for (c = 0; c < 4; c++) {
+                         destBuffer[4*i+c] = (dy1 * ( (dx1 * srcBuffer2[4*position]+c) + (dx * srcBuffer2[4*(position + deltaX) + c])))
+                                 + (dy * ( (dx1 * srcBuffer2[4*(position + deltaY) + c]) + (dx * srcBuffer2[4*(position + deltaY + deltaX) + c])));
+                     } // for (c = 0; c < 4; c++)	
+                }
+ 	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))
+		} // for (i = 0; i < wp.length; i++)
+		
+	// Undo y axis inversion
+    double destBuffer2[] = new double[cf * destSlice];
+	for (y = 0; y < yDimDest; y++) {
+    	for (x = 0; x < xDimDest; x++) {
+    		if (cf == 1) {
+    	        destBuffer2[x + (yDimDest - 1 - y)*xDimDest]	= destBuffer[ x + y*xDimDest];
+    		}
+    		else {
+    		    for (c = 0; c < 4; c++) {
+    		    	destBuffer2[4*(x + (yDimDest - 1 - y)*xDimDest) + c]	= destBuffer[4*(x + y*xDimDest) + c];
+    		    }
+    		}
+    	}
+    }
+    
+
+       
+       try {
+           destImage.importData(0, destBuffer2, true);
+       } catch (IOException e) {
+           MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+           setCompleted(false);
+
+           return;
+       }
+
+       setCompleted(true);
+
+       return;
+	}
+	
+	public void runPolygonToRectangle() {
 		int i, j;
 		int index;
 		int cf;
@@ -103,34 +360,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double dy1;
 		int position;
 		int c;
-		// eps returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
-    	// epsilon = D1MACH(4)
-        // Machine epsilon is the smallest positive epsilon such that
-        // (1.0 + epsilon) != 1.0.
-        // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
-        // epsilon = 2.2204460e-16
-        // epsilon is called the largest relative spacing
-        eps = 1.0;
-        double neweps = 1.0;
-
-
-        while (true) {
-
-            if (1.0 == (1.0 + neweps)) {
-                break;
-            } else {
-                eps = neweps;
-                neweps = neweps / 2.0;
-            }
-        } // while(true)
-        
-        //testRectmap1();
-        //testRectmap2();
-        //testDiskmap1();
-        //testDiskmap2();
-        //testDiskmap3();
-        //testDiskmap4();
-        //testDiskmap5();
+		
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
