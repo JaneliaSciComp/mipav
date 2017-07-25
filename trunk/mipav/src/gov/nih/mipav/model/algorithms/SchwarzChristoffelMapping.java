@@ -120,7 +120,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	public void runPolygonToCircle() {
-		int i;
+		int i, j;
 		int index;
 		int cf;
 		int xDimSource;
@@ -220,13 +220,21 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		diskplot(M, null, null, 200, 140, null, yDimSource-1);
 		double xcenter = (xDimDest-1.0)/2.0;
 		double ycenter = (yDimDest-1.0)/2.0;
-		double maxDistance = Math.sqrt(xcenter*xcenter + ycenter*ycenter);
+		double maxDistance = Math.min(xcenter,ycenter);
 		zp = new double[destSlice][2];
+		boolean idx[] = new boolean[destSlice];
+		j = 0;
         for (y = 0; y < yDimDest; y++) {
         	for (x = 0; x < xDimDest; x++) {
         		index = x + xDimDest*y;
-        		zp[index][0] = (x-xcenter)/maxDistance;
-        		zp[index][1] = (y-ycenter)/maxDistance;
+        		double distX = (x-xcenter)/maxDistance;
+        		double distY = (y-ycenter)/maxDistance;
+        		if ((distX*distX + distY*distY) < 1.0) {
+        			idx[index] = true;
+        			zp[j][0] = distX;
+        			zp[j][1] = distY;
+        			j++;
+        		}
         	}
         } // for (y = 0; y < yDimDest; y++)
         polygon p = M.poly;
@@ -236,55 +244,62 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
         wp = dmap(zp, w, beta, M.prevertex, M.constant, M.qdata);
         
-         for (i = 0; i < wp.length; i++) {
-			xp = wp[i][0];
-			yp = wp[i][1];
-			if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
- 	    	   if (xp <= 0) {
-                    x0 = 0;
-                    dx = 0;
-                    deltaX = 0;
-                } else if (xp >= (xDimSource - 1)) {
-                    x0 = xDimSource - 1;
-                    dx = 0;
-                    deltaX = 0;
-                } else {
-                    x0 = (int) xp;
-                    dx = xp - x0;
-                    deltaX = 1;
-                }
-
-                if (yp <= 0) {
-                    y0 = 0;
-                    dy = 0;
-                    deltaY = 0;
-                } else if (yp >= (yDimSource - 1)) {
-                    y0 = yDimSource - 1;
-                    dy = 0;
-                    deltaY = 0;
-                } else {
-                    y0 = (int) yp;
-                    dy = yp - y0;
-                    deltaY = xDimSource;
-                }
-
-                dx1 = 1 - dx;
-                dy1 = 1 - dy;
-
-                position = (y0 * xDimSource) + x0;
-
-                if (cf == 1) {
-                    destBuffer[i] = (dy1 * ( (dx1 * srcBuffer2[position]) + (dx * srcBuffer2[position + deltaX])))
-                        + (dy * ( (dx1 * srcBuffer2[position + deltaY]) + (dx * srcBuffer2[position + deltaY + deltaX])));   
-                }
-                else {
-                	 for (c = 0; c < 4; c++) {
-                         destBuffer[4*i+c] = (dy1 * ( (dx1 * srcBuffer2[4*position]+c) + (dx * srcBuffer2[4*(position + deltaX) + c])))
-                                 + (dy * ( (dx1 * srcBuffer2[4*(position + deltaY) + c]) + (dx * srcBuffer2[4*(position + deltaY + deltaX) + c])));
-                     } // for (c = 0; c < 4; c++)	
-                }
- 	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))
-		} // for (i = 0; i < wp.length; i++)
+        j = 0;
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		if (idx[index]) {
+        			xp = wp[j][0];
+        			yp = wp[j][1];
+        			j++;
+					if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
+		 	    	   if (xp <= 0) {
+		                    x0 = 0;
+		                    dx = 0;
+		                    deltaX = 0;
+		                } else if (xp >= (xDimSource - 1)) {
+		                    x0 = xDimSource - 1;
+		                    dx = 0;
+		                    deltaX = 0;
+		                } else {
+		                    x0 = (int) xp;
+		                    dx = xp - x0;
+		                    deltaX = 1;
+		                }
+		
+		                if (yp <= 0) {
+		                    y0 = 0;
+		                    dy = 0;
+		                    deltaY = 0;
+		                } else if (yp >= (yDimSource - 1)) {
+		                    y0 = yDimSource - 1;
+		                    dy = 0;
+		                    deltaY = 0;
+		                } else {
+		                    y0 = (int) yp;
+		                    dy = yp - y0;
+		                    deltaY = xDimSource;
+		                }
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position = (y0 * xDimSource) + x0;
+		
+		                if (cf == 1) {
+		                    destBuffer[index] = (dy1 * ( (dx1 * srcBuffer2[position]) + (dx * srcBuffer2[position + deltaX])))
+		                        + (dy * ( (dx1 * srcBuffer2[position + deltaY]) + (dx * srcBuffer2[position + deltaY + deltaX])));   
+		                }
+		                else {
+		                	 for (c = 0; c < 4; c++) {
+		                         destBuffer[4*index+c] = (dy1 * ( (dx1 * srcBuffer2[4*position]+c) + (dx * srcBuffer2[4*(position + deltaX) + c])))
+		                                 + (dy * ( (dx1 * srcBuffer2[4*(position + deltaY) + c]) + (dx * srcBuffer2[4*(position + deltaY + deltaX) + c])));
+		                     } // for (c = 0; c < 4; c++)	
+		                }
+		 	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))
+        		}
+        	}
+		} // for (y = 0; y < yDimDest; y++)
 		
 	// Undo y axis inversion
     double destBuffer2[] = new double[cf * destSlice];
