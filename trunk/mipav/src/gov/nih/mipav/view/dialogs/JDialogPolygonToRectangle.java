@@ -265,8 +265,9 @@ public class JDialogPolygonToRectangle extends JDialogBase
         
         // Clockwise order for y increasing going down.
         // Counterclockwise order for y increasing going up.
+        // Invert y axis before processing to use ccw order.
 
-        point1Label = new JLabel("Enter 4 or more polygon points in a clockwise path");
+        point1Label = new JLabel("Enter 4 or more polygon points in a counterclockwise path");
         point1Label.setForeground(Color.black);
         point1Label.setFont(serif12);
         pointPanel.add(point1Label, gbc4);
@@ -277,7 +278,7 @@ public class JDialogPolygonToRectangle extends JDialogBase
         gbc4.gridy = 1;
         pointPanel.add(point2Label, gbc4);
 
-        point3Label = new JLabel("Go in clockwise order and select along a long rectangle edge first");
+        point3Label = new JLabel("Go in counterclockwise order and select along a long rectangle edge first");
         point3Label.setForeground(Color.black);
         point3Label.setFont(serif12);
         gbc4.gridy = 2;
