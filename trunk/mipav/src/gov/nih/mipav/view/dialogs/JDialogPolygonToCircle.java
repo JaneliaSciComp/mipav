@@ -51,13 +51,7 @@ public class JDialogPolygonToCircle extends JDialogBase
     private JTextField xText;
 
     /** DOCUMENT ME! */
-    private int yDim;
-
-    /** DOCUMENT ME! */
     private double ySource[];
-
-    /** DOCUMENT ME! */
-    private JTextField yText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -190,7 +184,7 @@ public class JDialogPolygonToCircle extends JDialogBase
         try {
             String name = makeImageName(image.getImageName(), "_circle");
             extents[0] = xDim;
-            extents[1] = yDim;
+            extents[1] = xDim;
             resultImage = new ModelImage(image.getType(), extents, name);
             resultImage.setImageName(name);
 
@@ -272,7 +266,7 @@ public class JDialogPolygonToCircle extends JDialogBase
         gbc6.gridx = 0;
         gbc6.gridy = 0;
 
-        xLabel = new JLabel("X dimension of output image ");
+        xLabel = new JLabel("X dimension = y dimension of output image ");
         xLabel.setForeground(Color.black);
         xLabel.setFont(serif12);
         xLabel.setEnabled(true);
@@ -284,21 +278,6 @@ public class JDialogPolygonToCircle extends JDialogBase
         xText.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(xText, gbc6);
-
-        yLabel = new JLabel("Y dimension of output image ");
-        yLabel.setForeground(Color.black);
-        yLabel.setFont(serif12);
-        yLabel.setEnabled(true);
-        gbc6.gridx = 0;
-        gbc6.gridy = 1;
-        paramPanel.add(yLabel, gbc6);
-
-        yText = new JTextField(10);
-        yText.setText(String.valueOf(image.getExtents()[1]));
-        yText.setFont(serif12);
-        yText.setEnabled(true);
-        gbc6.gridx = 1;
-        paramPanel.add(yText, gbc6);
 
         getContentPane().add(pointPanel, BorderLayout.NORTH);
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -326,15 +305,6 @@ public class JDialogPolygonToCircle extends JDialogBase
             return false;
         } else {
             xDim = Integer.valueOf(xText.getText()).intValue();
-        }
-
-        if (!testParameter(yText.getText(), 5, 1000000)) {
-            yText.requestFocus();
-            yText.selectAll();
-
-            return false;
-        } else {
-            yDim = Integer.valueOf(yText.getText()).intValue();
         }
 
         if ((image.getVOIs() == null) || (image.getVOIs().size() == 0)) {
