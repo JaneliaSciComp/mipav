@@ -1037,6 +1037,61 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		diskplot(M, R, theta, 200, 140, null, Integer.MIN_VALUE);
 	}
 	
+	public scmap crdiskmap(polygon poly, double tolerance, double cr[][], qlgraph Q) {
+		// crdiskmap constructs a cross-ratio disk map object for the polygon p. The
+		// parameter problem is solved using default options for the crossratios of
+		// the prevertices.  If cr and Q are supplied, crdiskmap creates a diskmap
+		// object having prevertex crossratios cr and quadrilateral graph Q.
+		// Use crdiskmap instead of diskmap when the polygon has elongations, or 
+		// when diskmap fails to converge.
+		// Original MATLAB routine copyright 1998-2001 by Toby Driscoll
+		int i;
+		double wn[][];
+		double betan[];
+		
+		// Get data for the low-level functions
+		double w[][] = poly.vertex;
+		double beta[] = new double[poly.angle.length];
+		for (i = 0; i < poly.angle.length; i++) {
+			beta[i] = poly.angle[i] - 1.0;
+		}
+		
+		// Find prevertices if necessary
+		if ((cr == null) || (cr.length == 0)) {
+		    // Apply scfix to enforce solver rules
+			// Solve parameter problem
+			// Apply scfix to enforce solver rules
+			wn = new double[w.length+2][2];
+			betan = new double[w.length+2];
+			// Number of vertices added by scfix
+			int verticesAdded[] = new int[1];
+			int initialVertices = w.length;
+			for (i = 0; i < w.length; i++) {
+				wn[i][0] = w[i][0];
+				wn[i][1] = w[i][1];
+				betan[i] = beta[i];
+			}
+			scfix(wn, betan, verticesAdded, null, "d", w, beta, null);
+			double wn2[][];
+			double betan2[];
+			if ((verticesAdded[0] == 0) ||(verticesAdded[0] == 1)) {
+			    wn2 = new double[initialVertices + verticesAdded[0]][2];
+				betan2 = new double[initialVertices + verticesAdded[0]];
+				for (i = 0; i < initialVertices + verticesAdded[0]; i++) {
+					wn2[i][0] = wn[i][0];
+					wn2[i][1] = wn[i][1];
+					betan2[i] = betan[i];
+				}
+			}
+			else {
+				wn2 = wn;
+				betan2 = betan;
+			}
+		} // if ((cr == null) || (cr.length == 0))
+		scmap M = new scmap();
+		return M;
+	}
+	
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
 		// Schwarz-Christoffel disk map object
@@ -5485,9 +5540,23 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    double center[] = new double[]{Double.NaN, Double.NaN};
 	    double accuracy = Double.NaN;
 	    String className = "rectmap";
+	    qlgraph qgraph;
+	    double crossratio[];
+	    double affine[][];
+	    boolean original[];
 	    scmap() {
 	    	
 	    }
+	}
+	
+	private class qlgraph {
+		int edge[][];
+		int qledge[][];
+		int qlvert[][];
+		boolean adjacent[][];
+		qlgraph() {
+			
+		}
 	}
 	
 	private void rcorners(double w[][], double beta[], double z[][], int corners[], int renum[]) {
