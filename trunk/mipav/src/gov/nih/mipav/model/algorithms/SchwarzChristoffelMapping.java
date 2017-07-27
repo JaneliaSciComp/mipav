@@ -58,6 +58,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private final int POLYGON_TO_CIRCLE = 2;
 	private int algorithm = POLYGON_TO_RECTANGLE;
 	
+	private double crsplit_neww[][] = null;
+	private boolean crsplit_orig[] = null;
+	
+	private int crtriang_edge[][] = null;
+	private int crtriang_triedge[][] = null;
+	private int crtriang_edgetri[][] = null;
+	
+	private double crparam_beta[] = null;
+	
 	public SchwarzChristoffelMapping() {
 		
 	}
@@ -1087,9 +1096,220 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				wn2 = wn;
 				betan2 = betan;
 			}
+			// Standard solution
+			// Return crsplit_neww
+			// Return crparam_beta
+			// Return crsplit_orig
+			crparam(wn2, betan2, null, tolerance);
 		} // if ((cr == null) || (cr.length == 0))
 		scmap M = new scmap();
 		return M;
+	}
+	
+	public void crparam(double w[][], double beta[], double cr0[], double tol) {
+		// Crossratio parameter problem
+		//  crparam solves the parameter problem associated with the crossratio formulation for the
+		// polygon given by w and beta.  The polygon is first subdivided, then a Delaunay triangulation
+		// and associated quadrilateral graph are found.  The nonlinear system of equations is solved
+		// to find the prevertex crossratios cr.
+		// The returned arguments are the subdivded polygon (w and beta), the crossratios (cr),
+		// the afine transformation data computed by craffine (aff), the quadrilateral data
+		// structure (Q), and the original-vertex flag vector returned by crsplit (orig).
+		
+		// If the output arguments are just [cr, aff, Q], the subdivision step is skipped.
+		// This is likely to destroy accuracy if the polygon has elongations or pinches,
+		// unless subdivision has already occurred.  
+		
+		// crparam uses cr0 as an initial guess in the nonlinear solution for cr.  Note that
+		// cr0.length must be w.length - 3 after subdivision, so this parameter is useful only
+		// when the subdivision step has been preprocessed.
+		
+		// Original MATLAB routine copyright 1998-2001 by Toby Driscoll.\
+		
+		int n = w.length;
+		
+		 // Check inputs
+	    int err = sccheck("cr", w, beta, null);
+	    if (err == -1) {
+	    	return;
+	    }
+	    if (err == 1) {
+	    	MipavUtil.displayError("Use scfix to make polygon obey requirements");
+	    	return;
+	    }
+	    
+	    int nqpts = (int)Math.max(Math.ceil(-Math.log10(tol)), 4);
+	    
+	    // Split
+	    // Return crsplit_neww
+	    // Return crsplit_orig
+	    crsplit(w);
+	    n = crsplit_neww.length;
+	    crparam_beta = scangle(crsplit_neww);
+	}
+	
+	private void crsplit(double w[][]) {
+		// Split polygon edges to ensure good crossratios.
+		// crsplit splits the edges of the polygon vertices w to attempt to ensure that subsequent
+		// triangulation will produce quadrilaterals having reasonable crossratios.  The first step
+		// is to "chop off" very sharp exterior corners.  Then, an iterative procedure subdivides
+		// the long edges of narrow "channels."  This process is guaranteed to terminate, but not
+		// necessarily to be optimal.
+		
+	    // crsplit also returns a logical vector crsplit_orig of the same length as crsplit_neww.
+		// The 1 entries of crsplit_orig correspond to the original entries of w; i.e.
+		// crsplit_neww(crsplit_orig) returns the original w.
+		
+		// crsplit uses Delaunay triangulations to do its job..  crsplit returns a cdt as computed
+		// by cdtriang/crcdt.
+		
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		
+		// First, isolate sharp corners.
+		int i, j, k;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		int n = w.length;
+		double beta[] = scangle(w);
+		boolean sharp[] = new boolean[n];
+		for (i = 0; i < n; i++) {
+			sharp[i] = (beta[i] < -0.75);
+		}
+		double neww[][][] = new double[3][n][2];
+		for (i = 0; i < 3; i++) {
+			for (j = 0; j < n; j++) {
+				neww[i][j][0] = Double.NaN;
+			}
+		}
+		for (i = 0; i < n; i++) {
+			neww[1][i][0] = w[i][0];
+			neww[1][i][1] = w[i][1];
+		}
+		double ang[] = new double[n];
+    	boolean vis[] = new boolean[n];
+	    for (j = 0; j < n; j++) {
+	        if (sharp[j]) {
+	        	// Find disance to nearest "visible" vertex
+	        	int jm1 = (j-1+n)%n;
+	        	int jp1 = (j+1)%n;
+	        	for (i = 0; i < n; i++) {
+	        		zdiv(w[i][0] - w[j][0], w[i][1] - w[j][1], w[jp1][0] - w[j][0], w[jp1][1] - w[j][1], cr, ci);
+	        		double theta = Math.atan2(ci[0],  cr[0]) + 2.0*Math.PI;
+	        		ang[i] = theta - 2.0*Math.PI*Math.floor(theta/(2.0*Math.PI));
+	        	}
+	        	for (i = 0; i < n; i++) {
+	        		vis[i] = (ang[i] > 0) && (ang[i] < ang[jm1]);
+	        	} 
+	        	vis[(j-1+n)%n] = true;
+	        	vis[(j+n)%n] = false;
+	        	vis[(j+1+n)%n] = true;
+	        	double mindist = Double.MAX_VALUE;
+	        	for (i = 0; i < n; i++) {
+	        		if (vis[i]) {
+	        		    double dist = zabs(w[i][0] - w[j][0], w[i][1] - w[j][1]);
+	        		    if (dist < mindist) {
+	        		    	mindist = dist;
+	        		    }
+	        		}
+	        	} // for (i = 0; i < n; i++)
+	        	double result[] = sign(w[jm1][0] - w[j][0], w[jm1][1] - w[j][1]);
+	        	neww[0][j][0] = w[j][0] + 0.5*mindist*result[0];
+	        	neww[0][j][1] = w[j][1] + 0.5*mindist*result[1];
+	        	result = sign(w[jp1][0] - w[j][0], w[jp1][1] - w[j][1]);
+	        	neww[2][j][0] = w[j][0] + 0.5*mindist*result[0];
+	        	neww[2][j][1] = w[j][1] + 0.5*mindist*result[1];
+	        } // if (sharp[j])
+	    } // for (j = 0; j < n; j++)
+	    double w2[][] = new double[3*n][2];
+	    for (j = 0; j < n; j++) {
+	    	for (i = 0; i < 3; i++) {
+	    		w2[i+3*j][0] = neww[i][j][0];
+	    		w2[i+3*j][1] = neww[i][j][1];
+	    	}
+	    } // for (j = 0; j < n; j++)
+	    boolean sharp2[][] = new boolean[3][n];
+	    for (i = 0; i < n; i++) {
+	    	sharp2[1][i] = sharp[i];
+	    }
+	    boolean sharp3[] = new boolean[3*n];
+	    for (j = 0; j < n; j++) {
+	    	for (i = 0; i < 3; i++) {
+	    		sharp3[i+3*j] = sharp2[i][j];
+	    	}
+	    }
+	    for (i = 0; i < 3*n; i++) {
+	    	if (Double.isNaN(w2[i][0]) || Double.isNaN(w2[i][1])) {
+	    		sharp3[i] = false;
+	    	}
+	    } // for (i = 0; i < 3*n; i++)
+	    boolean orig[][] = new boolean[3][n];
+	    for (i = 0; i < n; i++) {
+	    	orig[1][i] = true;
+	    }
+	    boolean orig2[] = new boolean[3*n];
+	    for (j = 0; j < n; j++) {
+	    	for (i = 0; i < 3; i++) {
+	    		orig2[i+3*j] = orig[i][j];
+	    	}
+	    } // for (j = 0; j < n; j++)
+	    for (i = 0; i < 3*n; i++) {
+	    	if (Double.isNaN(w2[i][0]) || Double.isNaN(w2[i][1])) {
+	    		orig2[i] = false;
+	    		w2[i][0] = 0.0;
+	    		w2[i][1] = 0.0;
+	    	}
+	    } // for (i = 0; i < 3*n; i++)
+	    beta = scangle(w2);
+	    
+	    // Triangulate polygon.  This is done to allow the use of geodesic distance.
+	    crtriang(w);
+	}
+	
+	private void crtriang(double w[][]) {
+	    // Triangulate a polygon.
+		// crtriang triangulates a polygon at the n vertices w.  On exit,k edge is a 2 by (2*n-3)
+		// matrix of edge endpoint indices (interior edges in columns 0:n-4), triedge is a 3 by
+		// (n-2) matrix of triangle edge indices, and edgetri is a 2 by (2*n-3) matrix of
+		// triangle membership indices for the edges.  If edge k is a member of just one triangle
+		// (a boundary edge), then edgetri[1][k] = 0.
+		
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		
+		// Uses a stack-based approach.  The recursive version is simpler but prone to cause
+		// memory errors.
+        int i, j;
+        
+        double W[][] = new double[w.length][2];
+        for (i = 0; i < w.length; i++) {
+            W[i][0] = w[i][0];
+            W[i][1] = w[i][1];
+        }
+        int n = w.length;
+        // Initialize outputs
+        crtriang_edge = new int[2][2*n-3];
+        crtriang_triedge = new int[3][n-2];
+        crtriang_edgetri = new int[2][2*n-3];
+        
+        // Enter the original boundary edges at the end of edge.
+        for (i = 0; i < n; i++) {
+        	crtriang_edge[0][n-3+i] = i;
+        }
+        for (i = 0; i < n-1; i++) {
+        	crtriang_edge[1][n-3+i] = i+1;
+        }
+        crtriang_edge[1][2*n-4] = 0;
+        
+        // Each row is a (potential) stack entry, consisting of n entries of 0-1 indices.  These
+        // indices describe a subdivision of the original polygon.  We preallocate memory to avoid
+        // repeated resizing that could bog down.  To avoid hogging too much memory if n is large,
+        // we will hope that the number of polygon subdivisions does not exceed 300.
+        int maxstack = Math.min(n, 300);
+        double stack[][] = new double[maxstack][n];
+        for (i = 0; i < maxstack; i++) {
+        	for (j = 0; j < n; j++) {
+        		stack[i][j] = Double.NaN;
+        	}
+        }
 	}
 	
 	
