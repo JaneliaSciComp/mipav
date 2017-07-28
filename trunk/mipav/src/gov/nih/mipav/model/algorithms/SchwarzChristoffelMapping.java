@@ -1277,41 +1277,444 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// Uses a stack-based approach.  The recursive version is simpler but prone to cause
 		// memory errors.
-        int i, j;
+        int i, j, k;
+        int enumb;
+        double segment[][] = new double[2][2];
+        double s[] = new double[2];
+        double win[][] = new double[1][2];
+        boolean onvtx[][];
+        int e2[] = new int[2];
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+        double dw[][] = new double[2][2];
+        int vis[];
         
         double W[][] = new double[w.length][2];
         for (i = 0; i < w.length; i++) {
             W[i][0] = w[i][0];
             W[i][1] = w[i][1];
         }
-        int n = w.length;
+        int N = w.length;
         // Initialize outputs
-        crtriang_edge = new int[2][2*n-3];
-        crtriang_triedge = new int[3][n-2];
-        crtriang_edgetri = new int[2][2*n-3];
+        crtriang_edge = new int[2][2*N-3];
+        crtriang_triedge = new int[3][N-2];
+        crtriang_edgetri = new int[2][2*N-3];
         
         // Enter the original boundary edges at the end of edge.
-        for (i = 0; i < n; i++) {
-        	crtriang_edge[0][n-3+i] = i;
+        for (i = 0; i < N; i++) {
+        	crtriang_edge[0][N-3+i] = i;
         }
-        for (i = 0; i < n-1; i++) {
-        	crtriang_edge[1][n-3+i] = i+1;
+        for (i = 0; i < N-1; i++) {
+        	crtriang_edge[1][N-3+i] = i+1;
         }
-        crtriang_edge[1][2*n-4] = 0;
+        crtriang_edge[1][2*N-4] = 0;
         
         // Each row is a (potential) stack entry, consisting of n entries of 0-1 indices.  These
         // indices describe a subdivision of the original polygon.  We preallocate memory to avoid
         // repeated resizing that could bog down.  To avoid hogging too much memory if n is large,
         // we will hope that the number of polygon subdivisions does not exceed 300.
-        int maxstack = Math.min(n, 300);
-        double stack[][] = new double[maxstack][n];
+        int maxstack = Math.min(N, 300);
+        double stack[][] = new double[maxstack][N];
         for (i = 0; i < maxstack; i++) {
-        	for (j = 0; j < n; j++) {
+        	for (j = 0; j < N; j++) {
         		stack[i][j] = Double.NaN;
         	}
         }
+        
+        // Initialize stack
+        for (i = 0; i < N; i++) {
+        	stack[0][i] = 1;
+        }
+        int stackptr = 1;
+        while (stackptr > 0) {
+        	int numidx = 0;
+        	for (i = 0; i < N; i++) {
+        	    if (stack[stackptr-1][i] > 0) {
+        	    	numidx++;
+        	    }
+        	}
+        	int idx[] = new int[numidx];
+        	for (i = 0, j = 0; i < N; i++) {
+        		if (stack[stackptr-1][i] > 0) {
+        		idx[j++] = i;	
+        		}
+        	} // for (i = 0, j = 0; i < n; i++)
+        	stackptr = stackptr - 1;
+        	double w2[][] = new double[numidx][2];
+        	for (i = 0, j = 0; i < numidx; i++) {
+        	    w2[j][0] = W[idx[i]][0];
+        	    w2[j++][1] = W[idx[i]][1];
+        	}
+        	int n = w2.length;
+        	if (n == 3) {
+        		// Base case: polygon is a triangle
+        		
+        		// Assign the triangle a new number
+        		boolean any[] = new boolean[N-2];
+        		int tnum = -1;
+        		for (j = 0; j < N-2; j++) {
+        			if ((crtriang_triedge[0][j] == 0) || (crtriang_triedge[1][j] == 0) || (crtriang_triedge[2][j] == 0)) {
+        				tnum = j;
+        				break;
+        			}
+        		} // for (j = 0; j < N-2; j++)
+        		int e[][] = new int[2][3];
+        		// Edge vertices
+        		e[0][0] = idx[0];
+        		e[1][0] = idx[1];
+        		e[0][1] = idx[1];
+        		e[1][1] = idx[2];
+        		e[0][2] = idx[2];
+        		e[1][2] = idx[0];
+        		for (j = 0; j < 3; j++) {
+        			if (e[i][j] < e[0][j]) {
+        				int tmp = e[0][j];
+        				e[0][j] = e[1][j];
+        				e[1][j] = tmp;
+        			}
+        		} // for (j = 0; j < 3; j++)
+        		int de[] = new int[3];
+        		for (j = 0; j < 3; j++) {
+        			de[j] = e[1][j] - e[0][j];
+        		}
+        		for (j = 0; j < 3; j++) {
+        			// Find reference number of triangle edge j
+        			if (de[j] == 1) {
+        			    // Adjacent vertices
+        				enumb = N-3 + e[0][j];
+        			}
+        			else if (de[j] == N-1) {
+        				// Vertices are [0 N-1]
+        				enumb = 2*N-4;
+        			}
+        			else {
+        				// Find the edge number among the first N-3
+        				enumb = -1;
+        				for (i = 0; i < n-3 && (enumb == -1); i++) {
+        					if ((crtriang_edge[0][i] == e[0][j]) && (crtriang_edge[1][i] == e[1][j])) {
+        						enumb = i;
+        					}
+        				}
+        			} // else
+        			// Assign edge # to triangle and triangle # to edge
+        			crtriang_triedge[j][tnum] = enumb;
+        			if (crtriang_edgetri[0][enumb] == 0) {
+        				crtriang_edgetri[0][enumb] = tnum;
+        			}
+        			else if (crtriang_edgetri[1][enumb] == 0) {
+        				crtriang_edgetri[1][enumb] = tnum;
+        			}
+        		} // for (j = 0; j < 3; j++)
+        	} // if (n == 3)
+        	else { // n > 3
+        		// More than 3 vertices, so add an edge and subdivide
+        		
+        		// Start with sharpest outward point in polygon
+        		double beta[] = scangle(w2);
+        		double minbeta = Double.MAX_VALUE;
+        		for (i = 0; i < beta.length; i++) {
+        			if (beta[i] < minbeta) {
+        				minbeta = beta[i];
+        				j = i;
+        			}
+        		} // for (i = 0; i < beta.length; i++)
+        		
+        		// Trial triangle has vertices at j and its neighbors
+        		int jm1 = (j+n-1)%n;
+        		int jp1 = (j+1)%n;
+        		boolean t[] = new boolean[n];
+        		t[jm1] = true;
+        		t[j] = true;
+        		t[jp1] = true;
+        		
+        		// Determine which remaining vertices lie in trial triangle
+        		double triangle[][] = new double[3][2];
+        		triangle[0][0] = w2[jm1][0];
+        		triangle[0][1] = w2[jm1][1];
+        		triangle[1][0] = w2[j][0];
+        		triangle[1][1] = w2[j][1];
+        		triangle[2][0] = w2[jp1][0];
+        		triangle[2][1] = w2[jp1][1];
+        		boolean inside[] = new boolean[n];
+        		double w2nott[][] = new double[n-3][2];
+        		for (i = 0, j = 0; i < n; i++) {
+        		    if (!t[i]) {
+        		    	w2nott[j][0] = w2[i][0];
+        		    	w2nott[j++][1] = w2[i][1];
+        		    }
+        		}
+        		boolean insidenott[] = new boolean[n-3];
+        		onvtx = new boolean[3][n-3];
+        		isinpoly(insidenott, onvtx, w2nott, triangle, null, eps);
+        		for (i = 0, j = 0; i < n; i++) {
+        		    if (!t[i]) {
+        		    	inside[i] = insidenott[j++];
+        		    }
+        		} // for (i = 0, j = 0; i < n; i++)
+        		// Borderline cases: on a triangle edge.
+        		for (k = 1; k <= 3; k++) {
+        			double d[] = new double[n];
+        			for (i = 0; i < n; i++) {
+        				d[i] = 1.0;
+        			}
+        		    segment[0][0] = triangle[k%3][0];
+        		    segment[0][1] = triangle[k%3][1];
+        		    segment[1][0] = triangle[(k+1)%3][0];
+        		    segment[1][1] = triangle[(k+1)%3][1];
+        		    double dnott[] = crpsdist(segment, w2nott);
+        		    for (i = 0, j = 0; i < n; i++) {
+        		    	if (!t[i]) {
+        		    		d[i] = dnott[j++];
+        		    	}
+        		    } // for (i = 0, j = 0; i < n; i++)
+        		    int nump = 0;
+        		    for (i = 0; i < n; i++) {
+        		    	if (d[i] < eps) {
+        		    		nump++;
+        		    	}
+        		    } // for (i = 0; i < n; i++)
+        		    int p[] = new int[nump];
+        		    for (i = 0, j = 0; i < n; i++) {
+        		    	if (d[i] < eps) {
+        		    	    p[j++] = i;	
+        		    	}
+        		    } // for (i = 0, j = 0; i < n; i++)
+        		    for (i = 0; i < nump; i++) {
+        		    	int pi = p[i];
+        		    	inside[pi] = false;
+        		        // If vertex is coincident with a triangle vertex, not "inside
+        		    	if ((zabs(w2[pi][0] - triangle[0][0], w2[pi][1] - triangle[0][1]) > eps) &&
+        		    			(zabs(w2[pi][0] - triangle[1][0], w2[pi][1] - triangle[1][1]) > eps) &&
+        		    			(zabs(w2[pi][0] - triangle[2][0], w2[pi][1] - triangle[2][1]) > eps)) {
+        		    		// Polygon slits/cracks need special care
+        		    		// If inward perturbation goes into triangle, it's "inside"
+        		    		int windex = (pi-1+n)%n;
+        		    		double ang = Math.atan2(w2[windex][1] - w2[pi][1], w2[windex][0] - w2[pi][0]);
+        		    		double ang2 = ang - Math.PI*(beta[pi] + 1.0)/2.0;
+        		    		s[0] = Math.cos(ang2);
+        		    		s[1] = Math.sin(ang2);
+        		    		double absw = zabs(w2[pi][0], w2[pi][1]);
+        		    		win[0][0] = w2[pi][0] + 1.0E-13*absw*s[0];
+        		    		win[0][1] = w2[pi][1] + 1.0E-13*absw*s[1];
+        		    		boolean indexout[] = new boolean[1];
+        		    		onvtx = new boolean[3][1];
+        		    		isinpoly(indexout, onvtx, win, triangle, null, eps);
+        		    		if (indexout[0]) {
+        		    			inside[pi] = true;
+        		    		}
+        		    	}
+        		    }
+        		} // for (k = 1; k <= 3; k++)
+        		int numinside = 0;
+        		for (i = 0; i < n; i++) {
+        			if (inside[i]) {
+        				numinside++;
+        			}
+        		}
+        		int inside2[] = new int[numinside];
+        		for (i = 0, j = 0; i < n; i++) {
+        			if (inside[i]) {
+        				inside2[j++] = i;
+        			}
+        		}
+        		if (numinside == 0) {
+        			// The trial triangle is OK; use its new edge
+        			if (jp1 >= jm1) {
+        				e2[0] = jm1;
+        				e2[1] = jp1;
+        			}
+        			else {
+        				e2[0] = jp1;
+        				e2[1] = jm1;
+        			}
+        		} // if (numinside == 0)
+        		else { // numinside > 0
+        			// Edge must be drawn from w2[j] to a vertex inside t
+        			
+        			if (inside2.length > 1) {
+        				// thanks to S. Vavasis for following
+        				// Vertices must be "visible" to each other
+        				// Find angle between forward side and connecting ray
+        				int fwd[] = new int[numinside];
+        				for (i = 0; i < numinside; i++) {
+        					fwd[i] = (inside2[i]+1)%n;
+        				}
+        				double ang1[] = new double[numinside];
+        				double ang2[] = new double[numinside];
+        				for (i = 0; i < numinside; i++) {
+        					zdiv(w2[j][0] - w2[inside2[i]][0], w2[j][1] - w2[inside2[i]][1], w2[fwd[i]][0] - w2[inside2[i]][0],
+        							w2[fwd[i]][1] - w2[inside2[i]][1], cr, ci);
+        					ang1[i] = Math.atan2(ci[0], cr[0])/Math.PI + 2.0;
+        					ang1[i] = ang1[i] - 2.0*Math.floor(ang1[i]/2.0);
+        					zdiv(w2[inside2[i]][0] - w2[j][0], w2[inside2[i]][1] - w2[j][1], w2[jp1][0] - w2[j][0],
+        							w2[jp1][1] - w2[j][1], cr, ci);
+        					ang2[i] = Math.atan2(ci[0], cr[0])/Math.PI + 2.0;
+        					ang2[i] = ang2[i] - 2.0*Math.floor(ang2[i]/2.0);
+        					// Detect visibility by requiring ang to be less than interior angle
+        				} // for (i = 0; i < numinside; i++)
+        				int numvis = 0;
+        				for (i = 0; i < numinside; i++) {
+        					if ((ang1[i] < beta[inside2[i]] + 1) && (ang2[i] < beta[j] + 1)) {
+        						numvis++;
+        					}
+        				} // for (i = 0; i < numinside; i++)
+        				vis = new int[numvis];
+        				for (i = 0, j = 0; i < numinside; i++) {
+        					if ((ang1[i] < beta[inside2[i]] + 1) && (ang2[i] < beta[j] + 1)) {
+        						vis[j++] = i;
+        					}
+        				} // for (i = 0, j = 0; i < numinside; i++)
+        				
+        				// Find a line through w[j] outisde the polygon
+        				dw[0][0] = w2[jp1][0] - w2[j][0];
+        				dw[0][1] = w2[jp1][1] - w2[j][1];
+        				dw[1][0] = w2[j][0] - w2[jm1][0];
+        				dw[1][1] = w2[j][1] - w2[jm1][1];
+        				zdiv(dw[1][0], dw[1][1], dw[0][0], dw[0][1], cr, ci);
+        				double theta = Math.atan2(dw[0][1],  dw[0][0]) + Math.atan2(ci[0], cr[0])/2.0;
+        				
+        				// Find nearest visible point to that line
+        				double wvis[][] = new double[numvis][2];
+        				for (i = 0; i < numvis; i++) {
+        					wvis[i][0] = w2[inside2[vis[i]]][0] - w2[j][0];
+        					wvis[i][1] = w2[inside2[vis[i]]][1] - w2[j][1];
+        				}
+        				double D[] = new double[numvis];
+        				double minD = Double.MAX_VALUE;
+        				for (i = 0; i < numvis; i++) {
+        					zmlt(wvis[i][0], wvis[i][1], Math.cos(theta), -Math.sin(theta), cr, ci);
+        					D[i] = zabs(wvis[i][0] - cr[0]*Math.cos(theta), wvis[i][1] + cr[0]*Math.sin(theta));
+        					if (D[i] < minD) {
+        						minD= D[i];
+        						k = i;
+        					}
+        				} // for (i = 0; i < numvis; i++)
+        			} // if (inside2.length > 1)
+        			else {
+        				vis = new int[1];
+        				vis[0] = 0;
+        				k = 0;
+        			}
+        			if (j >= inside2[vis[k]]) {
+        				e2[0] = inside2[vis[k]];
+        				e2[1] = j;
+        			}
+        			else {
+        				e2[0] = j;
+        				e2[1] = inside2[vis[k]];
+        			}
+        		} // else numinside > 0
+        		// Assign the next available edge number
+        		enumb = -1;
+        		for (j = 0; j < 2*N-3 && (enumb == -1); j++) {
+        			if ((crtriang_edge[0][j] == 0) || (crtriang_edge[1][j] == 0)) {
+        				enumb = j;
+        			}
+        		} // for (j = 0; j < 2*N-3 && (enumb == -1); j++)
+        		crtriang_edge[0][enumb] = idx[e2[0]];
+        		crtriang_edge[1][enumb] = idx[e2[1]];
+        		
+        		// Indices of subdivided pieces
+        		int i1[] = new int[2];
+        		i1[0] = e2[0];
+        		i1[1] = e2[1];
+        	    int i2[] = new int[n-e2[1]+e2[0]+1];
+        	    for (i = 0; i < n-e2[1]; i++) {
+        	    	i2[i] = e2[1] + i;
+        	    }
+        	    for (i = n-e2[1]; i < n-e2[1]+e2[0]+1; i++) {
+        	    	i2[i] = i -(n -e2[1]);
+        	    }
+        	    
+        	    // If stack will overflow, allocate a big chunk of memory
+        	    if (stackptr > maxstack - 2) {
+        	    	int addlen = Math.min(maxstack, N-maxstack);
+        	    	int origLength = stack.length;
+        	    	double tempstack[][] = new double[stack.length + addlen][N];
+        	    	for (i = 0; i < stack.length; i++) {
+        	    		for (j = 0; j < N; j++) {
+        	    			tempstack[i][j] = stack[i][j];
+        	    		}
+        	    	}
+        	    	stack = new double[tempstack.length][N];
+        	    	for (i = 0; i < origLength; i++) {
+        	    		for (j = 0; j < N; j++) {
+        	    			stack[i][j] = tempstack[i][j];
+        	    		}
+        	    	}
+        	    	maxstack = maxstack + addlen;
+        	    } // if (stackptr > maxstack - 2)
+        	    
+        	    // Put the two new pieces on the stack
+        	    stackptr = stackptr+1;
+        	    for (i = 0; i < N; i++) {
+        	    	stack[stackptr-1][i] = 0;
+        	    }
+        	    for (i = 0; i < i1.length; i++) {
+        	    	stack[stackptr-1][idx[i1[i]]] = 1;
+        	    }
+        	    stackptr = stackptr+1;
+        	    for (i = 0; i < N; i++) {
+        	    	stack[stackptr-1][i] = 0;
+        	    }
+        	    for (i = 0; i < i2.length; i++) {
+        	    	stack[stackptr-1][idx[i2[i]]] = 1;
+        	    }
+        	} // else n > 3
+        } // while (stackptr > 0)
 	}
-	
+
+   private double[] crpsdist(double segment[][], double pts[][]) {
+	   // Distance from point(s) to a line segment.
+	   // crpsdist returns a vector the size of pts indicating the distance from each
+	   // entry to the line segment described by seg.
+	   
+	   // Original MATLAB routine copyright 1997 bt Toby Driscoll.
+	   int i;
+	   double cr[] = new double[1];
+	   double ci[] = new double[1];
+	   
+	   if ((pts == null) || (pts.length == 0)) {
+		   return null;
+	   }
+	   
+	   double d[] = new double[pts.length];
+	   for (i = 0; i < pts.length; i++) {
+		   d[i] = Double.POSITIVE_INFINITY;
+	   }
+	   
+	   // Rotate to make segment equal [0, xmax].
+	   double diff[] = new double[2];
+	   diff[0] = segment[1][0] - segment[0][0];
+	   diff[1] = segment[1][1] - segment[0][1];
+	   double denom[] = sign(diff[0], diff[1]);
+	   double pts2[][] = new double[pts.length][2];
+	   for (i = 0; i < pts.length; i++) {
+		   zdiv(pts[i][0] - segment[0][0], pts[i][1] - segment[0][1], denom[0], denom[1], cr, ci);
+		   pts2[i][0] = cr[0];
+		   pts2[i][1] = ci[0];
+	   }
+	   double xmax = zabs(diff[0], diff[1]);
+	   
+	   // Some points are closest to segment's interior.
+	   for (i = 0; i < pts2.length; i++) {
+		   if ((pts2[i][0] >= 0) && (pts2[i][0] <= xmax)) {
+			   d[i] = Math.abs(pts2[i][1]);
+		   }
+	   }
+	   
+	   // The others are closest to an endpoint
+	   for (i = 0; i < pts2.length; i++) {
+		   if (pts2[i][0] < 0) {
+			   d[i] = zabs(pts2[i][0], pts2[i][1]);
+		   }
+		   else if (pts2[i][0] > xmax) {
+			   d[i] = zabs(pts2[i][0] - xmax, pts2[i][1]);
+		   }
+	   }
+	   
+	   return d;
+   }
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
 		// Schwarz-Christoffel disk map object
