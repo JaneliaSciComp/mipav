@@ -67,6 +67,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	private double crparam_beta[] = null;
 	
+	private qlgraph crqgraph_Q = null;
+	
 	public SchwarzChristoffelMapping() {
 		
 	}
@@ -1146,6 +1148,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    crsplit(w);
 	    n = crsplit_neww.length;
 	    crparam_beta = scangle(crsplit_neww);
+	    crtriang(w);
+	    crcdt(w);
+	    
+	    // Quadrilateral graph'
+	    crqgraph(w);
+	    
+	    // Quadrature data
+	    double qdat[][] = new double[nqpts][2*beta.length+2];
+	    scqdata(qdat, beta, nqpts);
+	    
+	    // Find the crossratios to be sought
 	}
 	
 	private void crsplit(double w[][]) {
@@ -1166,7 +1179,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Original MATLAB routine copyright 1998 by Toby Driscoll.
 		
 		// First, isolate sharp corners.
-		int i, j, k;
+		int i, j;
 		double cr[] = new double[1];
 		double ci[] = new double[1];
 		int n = w.length;
@@ -1714,6 +1727,375 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	   }
 	   
 	   return d;
+   }
+   
+   private void crcdt(double w[][]) {
+	   // Constrained Delaunay triangulation of a polygon.
+	   // crcdt computes a constrained Delaunay triangulation of a polygon given any initial
+	   // triangulation.  The parameters crtriang_edge, crtriang_triedge, and 
+	   // crtriang_edgetri describe the triangulation as in polytri.
+	   
+	   // Original MATLAB routine copyright 1998 by Toby Driscoll.
+	   
+	   int i, j;
+	   int t1[] = new int[3];
+	   int t2[] = new int[3];
+	   int e1[] = new int[6];
+	   int e2[] = new int[6];
+	   int e13[] =  new int[3];
+	   int e23[] = new int[3];
+	   double edgew[] = new double[2];
+	   double diffw[] = new double[2];
+	   double cr[] = new double[1];
+	   double ci[] = new double[1];
+	   double alpha[] = new double[4];
+	    // crtriang_edge[0].length = 2*n-3 ande crtriang_edgetri[i].length = 2n-3
+	   int numedge = crtriang_edge[0].length;
+	   boolean interior[] = new boolean[numedge];
+	   for (i = 0; i < interior.length; i++) {
+		   if (crtriang_edgetri[1][i] != 0) {
+			   interior[i] = true;
+		   }
+	   } // for (i = 0; i < interior.length; i++)
+	   // done marks that are known to be correct.
+	   boolean done[] = new boolean[numedge];
+	   for (i = 0; i < numedge; i++) {
+		   done[i] = true;
+	   }
+	   int numnotdone =  0;
+	   // Boundaries are fixed.
+	   for (i = 0; i < numedge; i++) {
+	       if (interior[i]) {
+	    	   done[i] = false;
+	    	   numnotdone++;;
+	       }
+	   }
+	   int quadvtx[] = new int[4];
+	   
+	   while (numnotdone > 0) {
+		   int e = -1;
+		   for (i= 0; i < numedge && (e == -1); i++) {
+			   if (!done[i]) {
+			       e = i;   
+			   }
+		   } // for (i= 0; i < numedge && (e == -1); i++)
+		   
+		   // Get the two triangles in which edge e participates
+		   for (i = 0; i < 3; i++) {
+			   t1[i] = crtriang_triedge[i][crtriang_edgetri[0][e]];
+			   t2[i] = crtriang_triedge[i][crtriang_edgetri[1][e]];
+		   }
+		   
+		   // Find the quadrilateral of which e is the diagonal 
+		   quadvtx[0] = crtriang_edge[0][e];
+		   quadvtx[2] = crtriang_edge[1][e];
+		   for (i = 0; i < 2; i++) {
+			   for (j = 0; j < 3; j++) {
+				   e1[i + 2*j] = crtriang_edge[i][t1[j]];
+			   }
+		   }
+		   Arrays.sort(e1);
+		   e13[0] = e1[0];
+		   e13[1] = e1[1];
+		   e13[2] = e1[4];
+		   for (i = 0; i < 2; i++) {
+			   for (j = 0; j < 3; j++) {
+				   e2[i + 2*j] = crtriang_edge[i][t2[j]];
+			   }
+		   }
+		   Arrays.sort(e2);
+		   e23[0] = e2[0];
+		   e23[1] = e2[1];
+		   e23[2] = e2[4];
+		   for (i = 0; i < 3; i++) {
+			   if ((e13[i] != quadvtx[0]) && (e13[i] != quadvtx[2])) {
+				   quadvtx[1] = e13[i];
+			   }
+			   if ((e23[i] != quadvtx[0]) && (e23[i] != quadvtx[2])) {
+				   quadvtx[3] = e23[i];
+			   }
+		   }
+		   
+		   // Find the angles where diagonal meets quadrilateral
+		   edgew[0] = w[crtriang_edge[1][e]][0] - w[crtriang_edge[0][e]][0];
+		   edgew[1] = w[crtriang_edge[1][e]][1] - w[crtriang_edge[0][e]][1];
+		   diffw[0] = w[quadvtx[1]][0] - w[quadvtx[0]][0];
+		   diffw[1] = w[quadvtx[1]][1] - w[quadvtx[0]][1];
+		   zdiv(edgew[0], edgew[1], diffw[0], diffw[1], cr, ci);
+		   alpha[0] = Math.atan2(ci[0], cr[0]);
+		   diffw[0] = w[quadvtx[3]][0] - w[quadvtx[0]][0];
+		   diffw[1] = w[quadvtx[3]][1] - w[quadvtx[0]][1];
+		   zdiv(diffw[0], diffw[1], edgew[0], edgew[1], cr, ci);
+		   alpha[1] = Math.atan2(ci[0], cr[0]);
+		   diffw[0] = w[quadvtx[3]][0] - w[quadvtx[2]][0];
+		   diffw[1] = w[quadvtx[3]][1] - w[quadvtx[2]][1];
+		   zdiv(-edgew[0], -edgew[1], diffw[0], diffw[1], cr, ci);
+		   alpha[2] = Math.atan2(ci[0], cr[0]);
+		   diffw[0] = w[quadvtx[2]][0] - w[quadvtx[1]][0];
+		   diffw[1] = w[quadvtx[2]][1] - w[quadvtx[1]][1];
+		   zdiv(diffw[0], diffw[1], edgew[0], edgew[1], cr, ci);
+		   alpha[3] = Math.atan2(ci[0], cr[0]);
+		   for (i = 0; i < 4; i++) {
+			   alpha[i] = Math.abs(alpha[i]);
+		   }
+		   
+		   // Flip if sum of angles is < PI
+		   if ((alpha[0] + alpha[1] + alpha[2] + alpha[3]) < Math.PI) {
+			
+		       // Change endpts of edge e
+			   crtriang_edge[0][e] = quadvtx[1];
+			   crtriang_edge[1][e] = quadvtx[3];
+			   // Find a quadrilateral side in each triangle
+			   int foundt1 =-1;
+			   int foundt2 = -1;
+			   for (i = 0; i < 3; i++) {
+				   if (t1[i] == e) {
+					   foundt1 = i;
+				   }
+				   if (t2[i] == e) {
+					   foundt2 = i;
+				   }
+			   } // for (i = 0; i < 3; i++)
+			   int i1 = (foundt1 + 1)%3;
+			   int i2 = (foundt2 + 1)%3;
+			   // They must be opposites in the quadrilateral (no common endpts)
+			   if ((crtriang_edge[0][t1[i1]] == crtriang_edge[0][t2[i2]]) ||
+				   (crtriang_edge[0][t1[i1]] == crtriang_edge[1][t2[i2]]) ||
+				   (crtriang_edge[1][t1[i1]] == crtriang_edge[0][t2[i2]]) ||
+				   (crtriang_edge[1][t1[i1]] == crtriang_edge[1][t2[i2]])) {
+				   i2 = (foundt2 + 2)%3;
+			   }
+			   // Change triangle/edge assignments
+			   crtriang_triedge[i1][crtriang_edgetri[0][e]] = t2[i2];
+			   int foundi = -1;
+			   for (i = 0; i < 2 && (foundi == -1); i++) {
+				   if (crtriang_edgetri[i][t2[i2]] == crtriang_edgetri[1][e]) {
+					   foundi = i;
+				   }
+			   } //  for (i = 0; i < 2 && (foundi == -1); i++)
+			   crtriang_edgetri[foundi][t2[i2]] = crtriang_edgetri[0][e];
+			   crtriang_triedge[i2][crtriang_edgetri[1][e]] = t1[i1];
+			   foundi = -1;
+			   for (i = 0; i < 2 && (foundi == -1); i++) {
+				   if (crtriang_edgetri[i][t1[i1]] == crtriang_edgetri[0][e]) {
+					   foundi = i;
+				   }
+			   } //  for (i = 0; i < 2 && (foundi == -1); i++)
+			   crtriang_edgetri[foundi][t1[i1]] = crtriang_edgetri[1][e];
+			   
+			   // The (non-bdy) edges of the triangles must be reconsidered
+			   for (i = 0; i < 3; i++) {
+				   done[t1[i]] = !interior[t1[i]];
+				   done[t2[i]] = !interior[t2[i]];
+			   }
+		   } // if ((alpha[0] + alpha[1] + alpha[2] + alpha[3]) < Math.PI)
+		   // Edge e is done, unless a neighbor resets it
+		   done[e] = true;
+		   numnotdone = 0;
+		   for (i = 0; i < numedge; i++) {
+			   if (!done[i]) {
+				   numnotdone++;
+			   }
+		   }
+	   } // while (numnotdone > 0)
+	   
+   }
+   
+   private void crqgraph(double w[][]) {
+       // Quadrilateral graph of a triangulation
+	   // crqgraph constructs the "quadrilateral graph" of a polygon triangulation.  crtriang_triedge and
+	   // crtriang_edgetri are as in crtriang.  On return, crqgraph_Q is a structure. Q.edge is 2 by (2n-3),
+	   // each column being the endpoint indices of an edge of the triangulation.  The n-3 interior edges
+	   // (diagonals) come first.  Q.qledge is 4 by (m-3), column k being the indices of the four edges
+	   // (in counterclockwise order) of the quadrilateral of which edge k is a diagonal.  Q.qlvert is
+	   // 4 by (n-3), with column k being the indices of the four vertices (in clockwise
+	   // order) of that quadrilateral.  An endpoint of the diagonal of the quadrilateral will be the first
+	   // entry of the column.  Q.adjacent is an (n-3) by (n-3) logical matrix; it indicates which 
+	   // quadrilaterals share a common triangle.
+	   
+	   // Original MATLAB routine copyright 1998 by Toby Driscoll.
+	   
+	   int e;
+	   int t1[] = new int[3];
+	   int t2[] = new int[3];
+	   int tmp[] = new int[3];
+	   int i, j;
+	   double we[][][] = new double[2][3][2];
+	   double meanwe[][] = new double[3][2];
+	   double ang[];
+	   double sumang;
+	   int t[];
+	   double win[][] = new double[4][2];
+	   // Get # of quadrilaterals
+	   int N = crtriang_edge[0].length;
+	   int n3 = (N+3)/2 - 3; // n3 = n - 3
+	   
+	   // Now construct the graph
+	   int qlvert[][] = new int[4][n3];
+	   int qledge[][] = new int[4][n3];
+	   boolean T[][] = new boolean[n3][n3];
+	   int e1[] = new int[6];
+	   int e2[] = new int[6];
+	   int e13[] =  new int[3];
+	   int e23[] = new int[3];
+	   for (e = 0; e < n3; e++) {
+	       // Find the triangles that include edge e
+		   for (i = 0; i < 3; i++) {
+			   t1[i] = crtriang_triedge[i][crtriang_edgetri[0][e]];
+			   t2[i] = crtriang_triedge[i][crtriang_edgetri[1][e]];
+		   } // for (i = 0; i < 3; i++)
+			   
+		   // Re-order triangles so that edge e is first
+		   int i1 = -1;
+		   for (i = 0; i < 3 && (i1 == -1); i++) {
+			   if (t1[i] == e) {
+				   i1 = i;
+			   }
+		   } // for (i = 0; i < 3 && (i1 == -1); i++)
+		   for (i = i1; i < 3; i++) {
+			   tmp[i-i1] = t1[i];
+		   }
+		   for (i = 0; i <= i1-1; i++) {
+			   tmp[3-i1+i] = t1[i];
+		   }
+		   for (i = 0; i < 3; i++) {
+			   t1[i] = tmp[i];
+		   }
+		   int i2 = -1;
+		   for (i = 0; i < 3 && (i2 == -1); i++) {
+			   if (t2[i] == e) {
+				   i2 = i;
+			   }
+		   } // for (i = 0; i < 3 && (i2 == -1); i++)
+		   for (i = i2; i < 3; i++) {
+			   tmp[i-i2] = t2[i];
+		   }
+		   for (i = 0; i <= i2-1; i++) {
+			   tmp[3-i2+i] = t2[i];
+		   }
+		   for (i = 0; i < 3; i++) {
+			   t2[i] = tmp[i];
+		   }
+		   
+		   // Ensure ccw ordering of edges
+		   for (j = 0; j < 3; j++) {
+		       for (i = 0; i < 2; i++) {
+		    	   we[i][j][0] = w[crtriang_edge[i][t1[j]]][0];
+		    	   we[i][j][1] = w[crtriang_edge[i][t1[j]]][1];
+		       }
+		   }
+		   for (j = 0; j < 3; j++) {
+			   meanwe[j][0]= (we[0][j][0] + we[1][j][0])/2.0;
+			   meanwe[j][1]= (we[0][j][1] + we[1][j][1])/2.0;
+		   }
+		   ang = scangle(meanwe);
+		   sumang = 0.0;
+		   for (i = 0; i < 3; i++) {
+			   sumang += ang[i];
+		   }
+		   if (sumang > 0.0) {
+			   i = t1[2];
+			   t1[2] = t1[1];
+			   t1[1] = i;
+		   }
+		   for (j = 0; j < 3; j++) {
+		       for (i = 0; i < 2; i++) {
+		    	   we[i][j][0] = w[crtriang_edge[i][t2[j]]][0];
+		    	   we[i][j][1] = w[crtriang_edge[i][t2[j]]][1];
+		       }
+		   }
+		   for (j = 0; j < 3; j++) {
+			   meanwe[j][0]= (we[0][j][0] + we[1][j][0])/2.0;
+			   meanwe[j][1]= (we[0][j][1] + we[1][j][1])/2.0;
+		   }
+		   ang = scangle(meanwe);
+		   sumang = 0.0;
+		   for (i = 0; i < 3; i++) {
+			   sumang += ang[i];
+		   }
+		   if (sumang > 0.0) {
+			   i = t2[2];
+			   t2[2] = t2[1];
+			   t2[1] = i;
+		   }
+		   
+		   // Read off quadrilateral edges
+		   qledge[0][e] = t1[1];
+		   qledge[1][e] = t1[2];
+		   qledge[2][e] = t2[1];
+		   qledge[3][e] = t2[2];
+		   
+		   // Any ql edge that is also a diagonal, is adjacent
+		   int numt = 0;
+		   for (i = 0; i < 4; i++) {
+			   if (qledge[i][e] < n3) {
+				   numt++;
+			   }
+		   }
+		   t = new int[numt];
+		   for (i = 0, j = 0; i < 4; i++) {
+			   if (qledge[i][e] < n3) {
+				   t[j++] = qledge[i][e];
+			   }
+		   }
+		   for ( i = 0 ; i < numt; i++) {
+			   T[t[i]][e] = true;
+			   T[e][t[i]] = true;
+		   }
+		   
+		   // Extract vertices
+		   // An endpoint of e must be first (and third)
+		   qlvert[0][e] = crtriang_edge[0][e];
+		   qlvert[2][e] = crtriang_edge[1][e];
+		   // Find unique vertices of t1 and t2 to get other ql vertices
+		   for (i = 0; i < 2; i++) {
+			   for (j = 0; j < 3; j++) {
+				   e1[i + 2*j] = crtriang_edge[i][t1[j]];
+			   }
+		   }
+		   Arrays.sort(e1);
+		   e13[0] = e1[0];
+		   e13[1] = e1[1];
+		   e13[2] = e1[4];
+		   for (i = 0; i < 2; i++) {
+			   for (j = 0; j < 3; j++) {
+				   e2[i + 2*j] = crtriang_edge[i][t2[j]];
+			   }
+		   }
+		   Arrays.sort(e2);
+		   e23[0] = e2[0];
+		   e23[1] = e2[1];
+		   e23[2] = e2[4];
+		   for (i = 0; i < 3; i++) {
+			   if ((e13[i] != qlvert[0][e]) && (e13[i] != qlvert[2][e])) {
+				   qlvert[1][e] = e13[i];
+			   }
+			   if ((e23[i] != qlvert[0][e]) && (e23[i] != qlvert[2][e])) {
+				   qlvert[3][e] = e23[i];
+			   }
+		   } // for (i = 0; i < 3; i++)
+		   // Reverse ordering if necesary to clockwise
+		   for (i = 0; i < 4; i++) {
+			   win[i][0] = w[qlvert[i][e]][0];
+			   win[i][1] = w[qlvert[i][e]][1];
+		   }
+		   ang = scangle(win);
+		   sumang = 0.0;
+		   for (i = 0; i < 4; i++) {
+			   sumang += ang[i];
+		   }
+		   if (Math.abs(sumang - 2.0) > 1.0E-8) {
+			   i= qlvert[3][e];
+			   qlvert[3][e] = qlvert[1][e];
+			   qlvert[1][e] = i;
+		   }
+	   } // for (e = 0; e < n3; e++)
+	   
+	   // Output form
+	   crqgraph_Q.edge = crtriang_edge;
+	   crqgraph_Q.qledge = qledge;
+	   crqgraph_Q.qlvert = qlvert;
+	   crqgraph_Q.adjacent = T;
    }
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
