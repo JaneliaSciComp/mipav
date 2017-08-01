@@ -1108,7 +1108,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return M;
 	}
 	
-	public void crparam(double w[][], double beta[], double cr0[], double tol) {
+	public void crparam(double w[][], double beta[], double cr0[][], double tol) {
 		// Crossratio parameter problem
 		//  crparam solves the parameter problem associated with the crossratio formulation for the
 		// polygon given by w and beta.  The polygon is first subdivided, then a Delaunay triangulation
@@ -1128,6 +1128,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// Original MATLAB routine copyright 1998-2001 by Toby Driscoll.\
 		
+		int i;
 		int n = w.length;
 		
 		 // Check inputs
@@ -1159,6 +1160,34 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    scqdata(qdat, beta, nqpts);
 	    
 	    // Find the crossratios to be sought
+	    double target[][] = crossrat(w);
+	    
+	    double z0[];
+	    // Set up starting guess
+	    if ((cr0 == null) || (cr0.length == 0)) {
+	        z0 = new double[target.length];
+	        for (i= 0; i < target.length; i++) {
+	        	z0[i] = Math.log(zabs(target[i][0], target[i][1]));
+	        }
+	    }
+	    else {
+	    	z0 = new double[cr0.length];
+	    	for (i= 0; i < cr0.length; i++) {
+	        	z0[i] = Math.log(zabs(cr0[i][0], cr0[i][1]));
+	        }
+	    }
+	    
+	    // Solve nonlinear system of equations
+	    crpfun fm = new crpfun(z0, n, beta, target, crqgraph_Q, qdat);
+	    fm.driver();
+		fm.dumpResults();
+	    int exitStatus = fm.getExitStatus();
+	    if (exitStatus < 0 ) {
+	    	System.out.println("Error in NLConstrainedEngine during crpparam call to crppfun");
+	    	printExitStatus(exitStatus);
+	    	System.exit(-1);
+	    }
+		double z[] = fm.getParameters();
 	}
 	
 	private void crsplit(double w[][]) {
@@ -1312,6 +1341,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         crtriang_edge = new int[2][2*N-3];
         crtriang_triedge = new int[3][N-2];
         crtriang_edgetri = new int[2][2*N-3];
+        for (i = 0; i < 3; i++) {
+        	for (j = 0; j < N-2; j++) {
+        		crtriang_triedge[i][j] = -1;
+        	}
+        }
+        for (i = 0; i < 2; i++) {
+        	for (j = 0; j < 2*N-3; j++) {
+        		crtriang_edgetri[i][j] = -1;
+        		crtriang_edge[i][j] = -1;
+        	}
+        }
         
         // Enter the original boundary edges at the end of edge.
         for (i = 0; i < N; i++) {
@@ -1366,7 +1406,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		boolean any[] = new boolean[N-2];
         		int tnum = -1;
         		for (j = 0; j < N-2; j++) {
-        			if ((crtriang_triedge[0][j] == 0) || (crtriang_triedge[1][j] == 0) || (crtriang_triedge[2][j] == 0)) {
+        			if ((crtriang_triedge[0][j] == -1) || (crtriang_triedge[1][j] == -1) || (crtriang_triedge[2][j] == -1)) {
         				tnum = j;
         				break;
         			}
@@ -1411,10 +1451,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         			} // else
         			// Assign edge # to triangle and triangle # to edge
         			crtriang_triedge[j][tnum] = enumb;
-        			if (crtriang_edgetri[0][enumb] == 0) {
+        			if (crtriang_edgetri[0][enumb] == -1) {
         				crtriang_edgetri[0][enumb] = tnum;
         			}
-        			else if (crtriang_edgetri[1][enumb] == 0) {
+        			else if (crtriang_edgetri[1][enumb] == -1) {
         				crtriang_edgetri[1][enumb] = tnum;
         			}
         		} // for (j = 0; j < 3; j++)
@@ -1620,7 +1660,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		// Assign the next available edge number
         		enumb = -1;
         		for (j = 0; j < 2*N-3 && (enumb == -1); j++) {
-        			if ((crtriang_edge[0][j] == 0) || (crtriang_edge[1][j] == 0)) {
+        			if ((crtriang_edge[0][j] == -1) || (crtriang_edge[1][j] == -1)) {
         				enumb = j;
         			}
         		} // for (j = 0; j < 2*N-3 && (enumb == -1); j++)
@@ -1753,7 +1793,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	   int numedge = crtriang_edge[0].length;
 	   boolean interior[] = new boolean[numedge];
 	   for (i = 0; i < interior.length; i++) {
-		   if (crtriang_edgetri[1][i] != 0) {
+		   if (crtriang_edgetri[1][i] != -1) {
 			   interior[i] = true;
 		   }
 	   } // for (i = 0; i < interior.length; i++)
@@ -1933,6 +1973,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	   // Now construct the graph
 	   int qlvert[][] = new int[4][n3];
 	   int qledge[][] = new int[4][n3];
+	   for (i = 0; i < 4; i++) {
+		   for (j = 0; j < n3; j++) {
+			   qlvert[i][j] = -1;
+			   qledge[i][j] = -1;
+		   }
+	   }
 	   boolean T[][] = new boolean[n3][n3];
 	   int e1[] = new int[6];
 	   int e2[] = new int[6];
@@ -2096,6 +2142,45 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	   crqgraph_Q.qledge = qledge;
 	   crqgraph_Q.qlvert = qlvert;
 	   crqgraph_Q.adjacent = T;
+   }
+   
+   private double[][] crossrat(double w[][]) {
+	   // Crossratios of a triangulated polygon.
+	   // crossrat returns the n-3 crossratios of the n polygon vertices w defined by triangulation
+	   // as given by the quadrilateral graph in crqgraph_q.
+	   
+	   // See also crtriang, crct, qlgraph
+	   
+	   // Original MATLAB routine copyright 1998 by Toby Driscoll
+	   
+	   int i, j;
+	   double cre[] = new double[1];
+	   double cim[] = new double[1];
+	   double num[] = new double[2];
+	   double denom[] = new double[2];
+	   int ql[][] = crqgraph_Q.qlvert;
+	   double wql[][][] = new double[4][ql[0].length][2];
+	   for (i = 0; i < 4; i++) {
+		   for (j = 0; j < ql[0].length; j++) {
+			   wql[i][j][0] = w[ql[i][j]][0];
+			   wql[i][j][1] = w[ql[i][j]][1];
+		   }
+	   } // for (i = 0; i < 4; i++)
+	   double cr[][] = new double[ql[0].length][2];
+	   for (i = 0; i < ql[0].length; i++) {
+	       zmlt(wql[1][i][0]-wql[0][i][0], wql[1][i][1]- wql[0][i][1], wql[3][i][0]-wql[2][i][0],
+	    		   wql[3][i][1]-wql[2][i][1], cre, cim);
+	       num[0] = cre[0];
+	       num[1] = cim[0];
+	       zmlt(wql[2][i][0]-wql[1][i][0], wql[2][i][1]- wql[1][i][1], wql[0][i][0]-wql[3][i][0],
+	    		   wql[0][i][1]-wql[3][i][1], cre, cim);
+	       denom[0] = cre[0];
+	       denom[1] = cre[1];
+	       zdiv(num[0], num[1], denom[0], denom[1], cre, cim);
+	       cr[i][0] = cre[0];
+	       cr[i][1] = cim[0];
+	   }
+	   return cr;
    }
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
@@ -9439,6 +9524,489 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return I;
 	}
 	
+	class crpfun extends NLConstrainedEngine {
+		int n;
+		double beta[];
+		double crtarget[][];
+		qlgraph Q;
+		double qdat[][];
+		public crpfun(double x[], int n, double beta[], double crtarget[][], qlgraph Q, double qdat[][]) {
+			// nPoints, params
+			super(x.length, x.length);
+			this.n = n;
+			this.beta = beta;
+			this.crtarget = crtarget;
+			this.Q = Q;
+			this.qdat = qdat;
+			
+			bounds = 0; // bounds = 0 means unconstrained
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < x.length; i++) {
+				gues[i] = x[i];
+			}
+		}
+		
+		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		/**
+		 * Display results of displaying exponential fitting parameters.
+		 */
+		public void dumpResults() {
+			Preferences
+					.debug(" ******* Fit Elsunc Schwarz-Christoffel crparam ********* \n\n",
+							Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters)
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			for (int i = 0; i < a.length; i++) {
+			Preferences.debug("a"+i+" " + String.valueOf(a[i]) + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			}
+		}
+		
+		public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+    		int ctrl;
+    		int i, j, k;
+    		double prever[][];
+    		double w[][];
+    		double z1[][] = new double[4][2];
+    		int sing1[] = new int[4];
+    		double cr[] = new double[1];
+    		double ci[] = new double[1];
+    		double num[] = new double[2];
+    		double denom[] = new double[2];
+    		try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+                    // Returns residual for solution of nonlinear equations
+					// prevertex crossratios
+					double crprever[] = new double[a.length];
+					for (i = 0; i < a.length; i++) {
+						crprever[i] = Math.exp(a[i]);
+					}
+					// image vertex crossratios
+					double crimage[][] = new double[n-3][2];
+					
+					// Compute crossratio for each image quadrilateral
+					for (k = 0; k < n-3; k++) {
+					    prever = crembed(crprever, Q, k);
+					    for (i = 0; i < 4; i++) {
+					    	z1[i][0] = prever[Q.qlvert[i][k]][0];
+					    	z1[i][1] = prever[Q.qlvert[i][k]][1];
+					    	sing1[i] = Q.qlvert[i][k];
+					    }
+					    w = crquad(z1, sing1, prever, beta, qdat);
+					    for (i = 0; i < w.length; i++) {
+					    	w[i][0] = -w[i][0];
+					    	w[i][1] = -w[i][1];
+					    }
+					    zmlt(w[1][0] - w[0][0], w[1][1] - w[0][1], w[3][0] - w[2][0], w[3][1] - w[2][1], cr, ci);
+					    num[0] = cr[0];
+					    num[1] = ci[0];
+					    zmlt(w[2][0] - w[1][0], w[2][1] - w[1][1], w[0][0] - w[3][0], w[0][1] - w[3][1], cr, ci);
+					    denom[0] = cr[0];
+					    denom[1] = ci[0];
+					    zdiv(num[0], num[1], denom[0], denom[1], cr, ci);
+					    crimage[k][0] = cr[0];
+					    crimage[k][1] = ci[0];
+					} // for (k = 0; k < n-3; k++)
+					
+					// Logarithmic scaling for residual
+					for (i = 0; i < n-3; i++) {
+						zdiv(crimage[i][0], crimage[i][1], crtarget[i][0], crtarget[i][1], cr, ci);
+						residuals[i] = Math.log(zabs(cr[0], ci[0]));
+					}
+				} // if ((ctrl == -1) || (ctrl == 1))
+
+				// Calculate the Jacobian numerically
+				else if (ctrl == 2) {
+					ctrlMat[0] = 0;
+				}
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+		}
+	}
+	
+	private double[][] crembed(double cr[], qlgraph Q, int qnum) {
+		// Embed prevertices for given crossratios
+		// crembed embeds prevertices of given crossratios cr and quadrilateral graph
+		// information Q (see qlgraph).  The embedding is constructed so that the 
+		// prevertices of quadrilateral qnum are in a rectangle and do not crowd up
+		// against each other or any other prevertices (as long as no crossratios are
+		// very far from unity).  The resulting S-C map should be accurate for that
+		// rectangle, including the four prevertices ofquadrilateral qnum.
+		
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		// This function was adapted from a C routine written by Stephen Vavasis.
+		
+		int i;
+		int n = cr.length + 3;
+		double z[][] = new double[n][2];
+		int itmp[] = new int[4];
+		double diff[] = new double[2];
+		double cre[] = new double[1];
+		double cim[] = new double[1];
+		double fac[] = new double[2];
+		double zmod[];
+		
+		// Place the quadrilateral spanned by the initial diagonal at a rectangle 
+		// around the origin.
+		double r = cr[qnum];
+		double f1 = Math.sqrt(1.0/(r+1.0));
+		double f2 = Math.sqrt(r/(r+1.0));
+		// Quadrilateral vertices
+		int idx[] = new int[4];
+		for (i = 0; i < 4; i++) {
+		    idx[i] = Q.qlvert[i][qnum];	
+		}
+		z[idx[0]][0] = -f1;
+		z[idx[0]][1] = -f2;
+		z[idx[1]][0] = -f1;
+		z[idx[1]][1] = f2;
+		z[idx[2]][0] = f1;
+		z[idx[2]][1] = f2;
+		z[idx[3]][0] = f1;
+		z[idx[3]][1] = -f2;
+		
+		// Set up "already visited" lists
+		boolean vtxdone[] = new boolean[n];
+		for (i = 0; i < 4; i++) {
+			vtxdone[idx[i]] = true;
+		}
+		boolean edgedone[] = new boolean[2*n-3];
+		edgedone[qnum] = true;
+		// Mark boundary edges as "done" so they will be ignored
+		for (i = n-3; i < 2*n-3; i++) {
+			edgedone[i] = true;
+		}
+		
+		// Set up "ready to do" list.  There does not need to be a strict ordering as
+		// in a queue or stack; any ready edge can go next.
+		boolean edgetodo[] = new boolean[2*n-3];
+		// The edges of the initial quadrilateral are ready to go
+		for (i = 0; i < 4; i++) {
+			edgetodo[Q.qledge[i][qnum]] = !edgedone[Q.qledge[i][qnum]];
+		}
+		int numedgetodo = 0;
+		for (i = 0; i < 2*n-3; i++) {
+			if (edgetodo[i]) {
+				numedgetodo++;
+			}
+		}
+		
+		// Begin iteration
+		while (numedgetodo > 0) {
+			int e = -1;
+			for (i = 0; i < 2*n-3 && (e == -1); i++) {
+				if (edgetodo[i]) {
+					e = i;
+				}
+			} // for (i = 0; i < 2*n-3 && (e == -1); i++) 
+			for (i = 0; i < 4; i++) {
+				idx[i] = Q.qlvert[i][e];
+			}
+			// If necessary, renumber so that z[idx[3]] is to be determined
+			if (!vtxdone[idx[1]]) {
+			    itmp[0] = idx[2];
+			    itmp[1] = idx[3];
+			    itmp[2] = idx[0];
+			    itmp[3] = idx[1];
+			    for (i = 0; i < 4; i++) {
+			    	idx[i] = itmp[i];
+			    }
+			} // if (!vtxdone[idx[1]])
+			
+			// Work around divide by zero.  This will have no dire effects,
+			// since there is no guarantee that the prevertices nt in qnum will be separated.
+			diff[0] = z[idx[1]][0] - z[idx[0]][0];
+			diff[1] = z[idx[1]][1] - z[idx[0]][1];
+			if (zabs(diff[0], diff[1]) < 5.0*eps) {
+				z[idx[3]][0] = z[idx[1]][0];
+				z[idx[3]][1] = z[idx[1]][1];
+			}
+			else {
+				// Place z[idx[3]]
+				diff[0] = z[idx[2]][0] - z[idx[1]][0];
+				diff[1] = z[idx[2]][1] - z[idx[1]][1];
+				zdiv(-cr[e]*diff[0], -cr[e]*diff[1], z[idx[1]][0] - z[idx[0]][0], z[idx[1]][1] - z[idx[0]][1], cre, cim);
+				fac[0] = cre[0];
+				fac[1] = cim[0];
+				zmlt(fac[0], fac[1], z[idx[0]][0], z[idx[0]][1], cre, cim);
+				zdiv(z[idx[2]][0] + cre[0], z[idx[2]][1] + cim[0], 1.0 + fac[0], fac[1], cre, cim);
+				z[idx[3]][0] = cre[0];
+				z[idx[3]][1] = cim[0];
+				// Keep vertices exactly on the unit circle (fix roundoff)
+				zmod = sign(z[idx[3]][0], z[idx[3]][1]);
+				z[idx[3]][0] = zmod[0];
+				z[idx[3]][1] = zmod[1];
+			} // else
+			
+			vtxdone[idx[3]] = true;
+			edgedone[e] = true;
+			edgetodo[e] = false;
+			// Ready to do neighboring edges that still have not been visited.
+			for (i = 0; i < 4; i++) {
+				edgetodo[Q.qledge[i][e]] = !edgedone[Q.qledge[i][e]];
+			}
+			numedgetodo = 0;
+			for (i = 0; i < 2*n-3; i++) {
+				if (edgetodo[i]) {
+					numedgetodo++;
+				}
+			}
+		} // while (numedgetodo > 0)
+		return z;
+	}
+	
+	private double[][] crquad(double z1[][], int sing1[], double z[][], double beta[], double qdat[][]) {
+		// Numerical quadrature for the disk map, crossratio formulation
+		
+		// z1 is a vector of left endpoints; -1 is always the right endpoint.
+		// sing1 is a vector of integer indices which label the singularities
+		// in z1.  So if sing1[5] = 3, then z1[5] = z[3].  A -1 means no 
+		// singularity.  z is the vector of prevertices; beta is the vector of
+		// associated turning angles.  qdat is the quadrature data from scqdata.
+		
+		// The integral is subdivided, if necessary, so that no singularity
+		// lies closer to the left endpoint than 1/2 the length of the
+		// integration (sub)interval.
+		
+		// The conceptual differences between crquad and dquad are tiny.
+		
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		
+		int i,j, k, m;
+		double za[] = new double[2];
+		double zb[] = new double[2];
+		int sng;
+		int qcol;
+		int nqpts = qdat.length;
+		double nd[][] = new double[nqpts][2];
+		double wt[][] = new double[nqpts][2];
+		double diff[] = new double[2];
+		int n = z.length;
+		boolean mask[] = new boolean[n];
+		double bigz[][][] = new double[n][nqpts][2];
+		double ndmask[] = new double[2];
+		double bigzmask[] = new double[2];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double h = 0.0;
+		for (i = 0; i < n; i++) {
+			for (j = 0; j < nqpts; j++) {
+			    bigz[i][j][0] = z[i][0];
+			    bigz[i][j][1] = z[i][1];
+			}
+		}
+		double bigbeta[][] = new double[n][nqpts];
+		for (i = 0; i < n; i++) {
+			for (j = 0; j < nqpts; j++) {
+				bigbeta[i][j] = beta[i];
+			}
+		}
+		if ((sing1 == null) || (sing1.length == 0)) {
+			sing1 = new int[z1.length];
+			for (i = 0; i < z1.length; i++) {
+				sing1[i] = -1;
+			}
+		}
+		
+		// Will ignore zero values of beta
+		boolean ignore[] = new boolean[n];
+		for (i = 0; i < n; i++) {
+			if (Math.abs(beta[i]) < eps) {
+				ignore[i] = true;
+			}
+		}
+		double I[][] = new double[z1.length][2];
+		double z1abs[] = new double[z1.length];
+		for (i = 0; i < z1.length; i++) {
+		    z1abs[i] = zabs(z1[i][0], z1[i][1]);
+		}
+		int numnontriv = 0;
+		for (i = 0; i < z1.length; i++) {
+			if (z1abs[i] > eps) {
+				numnontriv++;
+			}
+		}
+	    int nontriv[] = new int[numnontriv];
+		for (i = 0, j = 0; i < z1.length; i++) {
+			if (z1abs[i] > eps) {
+				nontriv[j++] = i;
+			}
+		}
+		for (k = 0; k < numnontriv; k++) {
+		    za[0] = z1[k][0];
+		    za[1] = z1[k][1];
+		    sng = sing1[k];
+		    for (i = 0; i < n; i++) {
+		        mask[i] = !ignore[i];	
+		    }
+		    
+		    // Integration subintervals are based on nearest singularity
+		    if (sng >= 0) {
+		    	mask[sng] = false;
+		    }
+		    double mindist = Double.MAX_VALUE;
+		    for (i = 0; i < n; i++) {
+		    	if (mask[i] ) {
+		    		double dist = zabs(z[i][0]-za[0], z[i][1]-za[1]);
+		    		if (dist < mindist) {
+		    			mindist = dist;
+		    		}
+		    	}
+		    } // for (i = 0; i < n; i++)
+		    int panels = (int)Math.max(1, Math.ceil(-Math.log(mindist)/Math.log(2.0)));
+		    if (sng >= 0) {
+		    	mask[sng] = !ignore[sng];
+		    }
+		    
+		    qcol = (sng+n+1)%(n+1);
+		    int numkeep = 0;
+		    for (i = 0; i < n; i++) {
+		    	if (mask[i]) {
+		    		numkeep++;
+		    	}
+		    }
+		    int keep[] = new int[numkeep];
+		    for (i = 0, j = 0; i < n; i++) {
+		        if (mask[i]) {
+		        	keep[j++] = i;
+		        }
+		    } // for (i = 0, j = 0; i < n; i++)
+		    
+		    // Adjust sng for ignored vertices
+		    if (sng >= 0) {
+		    	if (ignore[sng]) {
+		    		sng = -1;
+		    	}
+		    	else {
+		    		int sum = 0;
+		    		for (i = 0; i <= sng; i++) {
+		    			if (ignore[i]) {
+		    				sum++;
+		    			}
+		    		}
+		    		sng = sng - sum;
+		    	}
+		    } // if (sng >= 0)
+		    
+		    for (j = 1; j <= panels; j++) {
+		        if (j == 1) {
+		            h = Math.pow(2, (1-panels));	
+		        }
+		        else {
+		        	h = h + Math.pow(2, (j-panels-1));
+		        	za[0] = zb[0];
+		        	za[1] = zb[1];
+		        	qcol = n;
+		        }
+		        zb[0] = z1[k][0]*(1-h);
+		        zb[1] = z1[k][1]*(1-h);
+		        
+		        // Adjust Gauss-Jacobi nodes and weights to interval
+		        diff[0] = zb[0] - za[0];
+		        diff[1] = zb[1] - za[1];
+		        int numdiffndzero = 0;
+		        for (i = 0; i < nqpts; i++) {
+		        	// G-J nodes
+		            nd[i][0] = (diff[0]*qdat[i][qcol] + zb[0] + za[0])/2.0;
+		            nd[i][1] = (diff[1]*qdat[i][qcol] + zb[1] + za[1])/2.0;
+		            if ((i >= 1) && (nd[i][0] == nd[i-1][0]) && (nd[i][1] == nd[i-1][1])) {
+		            	numdiffndzero++;
+		            }
+		            // G-J weights
+		            wt[i][0] = (diff[0]/2.0) * qdat[i][qcol+n+1];
+		            wt[i][1] = (diff[1]/2.0) * qdat[i][qcol+n+1];
+		        }
+		       
+		        double terms[][][] = new double[numkeep][nqpts][2];
+		        int numtermszero = 0;
+		        for (i = 0; i < numkeep; i++) {
+		            for (m = 0; m < nqpts; m++) {
+		            	ndmask[0] = nd[m][0];
+		            	ndmask[1] = nd[m][1];
+		            	bigzmask[0] = bigz[keep[i]][m][0];
+		            	bigzmask[1] = bigz[keep[i]][m][1];
+		            	zdiv(ndmask[0], ndmask[1], bigzmask[0], bigzmask[1], cr, ci);
+		            	terms[i][m][0] = 1.0 - cr[0];
+		            	terms[i][m][1] = -ci[0];
+		            	if ((terms[i][m][0] == 0) && (terms[i][m][1] == 0)) {
+		            		numtermszero++;
+		            	}
+		            }
+		        } // for (i = 0; i < numkeep; i++)
+		        // Check for coincident values indicating crowding (Should never happen!)
+		        if ((numdiffndzero > 0) || (numtermszero > 0)) {
+		        	MipavUtil.displayWarning("Prevertices are too crowded");
+		        	I[k][0] = 0;
+		        	I[k][1] = 0;
+		        }
+		        else {
+		        	// Use Guass-Jacobi on first subinterval, if necessary.
+		        	if ((sng >= 0) && (qcol < n)) {
+		        		for (i = 0; i < nqpts; i++) {
+		        			double absterm = zabs(terms[sng][i][0], terms[sng][i][1]);
+		        			terms[sng][i][0] = terms[sng][i][0]/absterm;
+		        			terms[sng][i][1] = terms[sng][i][1]/absterm;
+		        			absterm = zabs(zb[0]-za[0],zb[1]-za[1]);
+		        			double fac = Math.pow(absterm/2.0, beta[keep[sng]]);
+		        			wt[i][0] = wt[i][0] * fac;
+		        			wt[i][1] = wt[i][1] * fac;
+		        		}
+		        	} // if ((sng >= 0) && (qcol < n))
+		        	double bigbetamask;
+		        	double realsum[] = new double[nqpts];
+		        	double imagsum[] = new double[nqpts];
+		        	for (m = 0; m < nqpts; m++) {
+		        	    for (i = 0; i < numkeep; i++) {
+		        			bigbetamask = bigbeta[keep[i]][m];
+		        			double reallog = Math.log(zabs(terms[i][m][0],terms[i][m][1]));
+		        			double imaglog = Math.atan2(terms[i][m][1],terms[i][m][0]);
+		        			double realmult = bigbetamask*reallog;
+		        			double imagmult = bigbetamask*imaglog;
+		        			realsum[m] += realmult;
+		        			imagsum[m] += imagmult;
+		        		} // for (i = 0; i < numkeep; i++)
+		        	} // for (m = 0; m < nqpts; m++)
+		        	double realexp[] = new double[nqpts];
+		        	double imagexp[] = new double[nqpts];
+		        	for (m = 0; m < nqpts; m++) {
+		        		double expterm = Math.exp(realexp[m]);
+		        		realexp[m] = expterm*Math.cos(imagexp[m]);
+		        		imagexp[m] = expterm*Math.sin(imagexp[m]);
+		        		zmlt(realexp[m],imagexp[m], wt[m][0], wt[m][1], cr, ci);
+		        		I[k][0] += cr[0];
+		        		I[k][1] += ci[0];
+		        	}
+		        }
+		    } // for (j = 1; j <= panels; j++)
+		} // for (k = 0; k < numnontriv; k++)
+		return I;
+	}
+	
 	class rpfun extends NLConstrainedEngine {
 		int n;
 		double beta[];
@@ -9488,7 +10056,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		
 		/**
-		 * Display results of displaying exponential fitting parameters.
 		 */
 		public void dumpResults() {
 			Preferences
