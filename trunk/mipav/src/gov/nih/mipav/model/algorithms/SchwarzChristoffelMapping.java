@@ -6634,6 +6634,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	j++;
 		    }
 		} // for (i = 0; i < n; i++)
+		if (offset == -1) {
+			MipavUtil.displayError("In rcorners none of 4 corners have abs(z-max(real(z))) < eps");
+			System.exit(-1);
+		}
 		int tempcorners[] = new int[4];
 		for (i = offset; i <= 3; i++) {
 		    tempcorners[i-offset] = corners[i];	
