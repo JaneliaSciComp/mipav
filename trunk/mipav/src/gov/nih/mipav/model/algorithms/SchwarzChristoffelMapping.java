@@ -66,6 +66,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private int crtriang_edgetri[][] = null;
 	
 	private double crparam_beta[] = null;
+	private double crparam_cr[] = null;
+	
+	private double craffine_aff[][][] = null;
+	private double craffine_wn[][] = null;
 	
 	private qlgraph crqgraph_Q = null;
 	
@@ -1126,7 +1130,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// cr0.length must be w.length - 3 after subdivision, so this parameter is useful only
 		// when the subdivision step has been preprocessed.
 		
-		// Original MATLAB routine copyright 1998-2001 by Toby Driscoll.\
+		// Original MATLAB routine copyright 1998-2001 by Toby Driscoll.
 		
 		int i;
 		int n = w.length;
@@ -1188,6 +1192,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	System.exit(-1);
 	    }
 		double z[] = fm.getParameters();
+		
+		// Results
+		crparam_cr = new double[z.length];
+		for (i = 0; i < z.length; i++) {
+			crparam_cr[i] = Math.exp(z[i]);
+		}
+		
+		craffine(w, crparam_beta, crparam_cr, crqgraph_Q, tol);
 	}
 	
 	private void crsplit(double w[][]) {
@@ -2181,6 +2193,288 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	       cr[i][1] = cim[0];
 	   }
 	   return cr;
+   }
+   
+   public void craffine(double w[][], double beta[], double cr[], qlgraph Q, double tol) {
+	    // Affine transformations for crossratio formulation.
+	   // craffine computers an (n-3) by 2 array.  The cr formulation has n-3 implied "raw"
+	   // conformal maps based on the S-C integral, each of which is an affine transformation
+	   // away from the true target polygon.  The output array craffine_aff describes these 
+	   // transformations.
+	   
+	   // Because of the overlapping nature of the quadrilaterals in the polygon's 
+	   // decomposition, only one side of w need be specified in order to define these
+	   // transformations uniquely.  If w is an n-vector of NaN's with at least 2 adjacent
+	   // vertices filled in, craffine will also return the full polygon thus defined.  
+	   // This is useful for computing maps to a rectangle, for example, where the aspect
+	   // ratio -- hence the side lengths -- of the target w are not known in advance.
+	   
+	   // Original MATLAB routine copyright 1998 by Toby Driscoll.
+	   
+	   int i, j, k;
+	   double cre[] = new double[1];
+	   double cim[] = new double[1];
+	   double cre2[] = new double[1];
+	   double cim2[] = new double[1];
+	   double oldv[][] = new double[4][2];
+	   int oldidx[] = new int[4];
+	   boolean done[]  = new boolean[4];
+	   int n = beta.length;
+	   if (Q == null) {
+	       crqgraph(w);
+	       Q = crqgraph_Q;
+	   }
+	   
+	   int nqpts = (int)Math.max(4,Math.ceil(-Math.log10(tol)));
+	   double qdat[][] = new double[nqpts][2*beta.length+2];
+	   scqdata(qdat, beta, nqpts);
+	   
+	   craffine_wn = new double[n][2];
+	   for (i = 0; i < n; i++) {
+		   craffine_wn[i][0] = Double.NaN;
+	   }
+	   craffine_aff = new double[n-3][2][2];
+	   for (i = 0; i < n-3; i++) {
+		   for (j = 0; j < 2; j++) {
+			   craffine_aff[i][j][0] = Double.NaN;
+		   }
+	   }
+	   double rawimage[][][] = new double[4][n-3][2];
+	   for (i = 0; i < 4; i++) {
+		   for (j = 0; j < n-3; j++) {
+			   rawimage[i][j][0] = 1.0;
+		   }
+	   }
+	   
+	   // Deduce the side we will start with
+	   int sidenum = -1;
+	   for (i = 0; i < n-1 && (sidenum == -1); i++) {
+		   if ((!Double.isNaN(w[i][0])) && (!Double.isNaN(w[i][1])) && (!Double.isNaN(w[i+1][0])) && (!Double.isNaN(w[i+1][1]))) {
+			   sidenum = i;
+		   }
+	   }
+	   if (sidenum == -1) {
+		   if ((!Double.isNaN(w[n-1][0])) && (!Double.isNaN(w[n-1][1])) && (!Double.isNaN(w[0][0])) && (!Double.isNaN(w[0][1]))) {
+			   sidenum = n-1;
+		   }   
+	   }
+	   if (sidenum == -1) {
+		   MipavUtil.displayError("You must specify at least one side of the target polygon");
+		   System.exit(-1);
+	   }
+	   int s[] = new int[2];
+	   s[0] = sidenum;
+	   s[1] = (sidenum+1)%n;
+	   double side[][] = new double[2][2];
+	   for (i = 0; i < 2; i++) {
+		   for (j = 0; j < 2; j++) {
+			   side[i][j] = w[s[i]][j];
+		   }
+	   }
+	   
+	   // Start by embedding for the quadrilateral containing the boundary edge given by sidenum
+	   
+	   // Which edge # is it?
+	   int edgenum = -1;
+	   for (i = 0; i < 2*n-3 && (edgenum == -1); i++) {
+		   if ((Q.edge[0][i] == s[0]) && (Q.edge[1][i] == s[1])) {
+			   edgenum = i;
+		   }
+	   }
+	   for (i = 0; i < 2*n-3 && (edgenum == -1); i++) {
+		   if ((Q.edge[1][i] == s[0]) && (Q.edge[0][i] == s[1])) {
+			   edgenum = i;
+		   }
+	   }
+	   // Which quadrilateral?
+	   int quadnum = -1;
+	   for (j = 0; j < n-3 && (quadnum == -1); j++) {
+		   for (i = 0; i < 4 && (quadnum == -1); i++) {
+			   if (Q.qledge[i][j] == edgenum) {
+				   quadnum = i + 4*j;
+			   }
+		   }
+	   } // for (j = 0; j < n-3 && (quadnum == -1); j++)
+	   // Do the embedding and calculate the affine constants
+	   double z[][] = crembed(cr, Q, quadnum);
+	   int idx[] = new int[4];
+	   for (i = 0; i < 4; i++) {
+		   idx[i] = Q.qlvert[i][quadnum];
+	   }
+	   double z1[][] = new double[4][2];
+	   for (i = 0; i < 4; i++) {
+		   for (j = 0; j < 2; j++) {
+			   z1[i][j] = z[idx[i]][j];
+		   }
+	   }
+	   double v[][] = crquad(z1, idx, z, beta, qdat);
+	   for (i = 0; i < 4; i++) {
+		   for (j = 0; j < 2; j++) {
+			   v[i][j] = -v[i][j];
+		   }
+	   }
+	   for (i = 0; i < 4; i++) {
+		   for (j = 0; j < 2; j++) {
+			   craffine_wn[idx[i]][j] = v[i][j];
+		   }
+	   }
+	   double wns[][] = new double[2][2];
+	   for (i =  0; i < 2; i++) {
+		   for (j = 0; j < 2; j++) {
+			   wns[i][j] = craffine_wn[s[i]][j];
+		   }
+	   }
+	   // 2 by 2 matrix is:
+	   // wns[0]    1
+	   // wns[1]    1
+	   // det = wns[0] - wns[1]
+	   // 2 by 2 matrix  inverse is 
+	   // 1/det         -1/det
+	   // -wns[1]/det   wns[0]/det
+	   double det[] = new double[2];
+	   det[0] = wns[0][0] - wns[1][0];
+	   det[1] = wns[0][1] - wns[1][1];
+	   zdiv(1.0, 0.0, det[0], det[1], cre, cim);
+	   double a00[] = new double[2];
+	   a00[0] = cre[0];
+	   a00[1] = cim[0];
+	   double a01[] = new double[2];
+	   a01[0] = -cre[0];
+	   a01[1] = -cim[0];
+	   zdiv(-wns[1][0], -wns[1][1], det[0], det[1], cre, cim);
+	   double a10[] = new double[2];
+	   a10[0] = cre[0];
+	   a10[1] = cim[0];
+	   zdiv(wns[0][0], wns[0][1], det[0], det[1], cre, cim);
+	   double a11[] = new double[2];
+	   a11[0] = cre[0];
+	   a11[1] = cim[0];
+	   double y[][] = new double[2][2];
+	   zmlt(a00[0], a00[1], side[0][0], side[0][1], cre, cim);
+	   zmlt(a01[0], a01[1], side[1][0], side[1][1], cre2, cim2);
+	   y[0][0] = cre[0] + cre2[0];
+	   y[0][1] = cim[0] + cim2[0];
+	   zmlt(a10[0], a10[1], side[0][0], side[0][1], cre, cim);
+	   zmlt(a11[0], a11[1], side[1][0], side[1][1], cre2, cim2);
+	   y[1][0] = cre[0] + cre2[0];
+	   y[1][1] = cim[0] + cim2[0];
+	   for (i = 0; i < 2; i++) {
+		   for (j = 0; j < 2; j++) {
+			   craffine_aff[quadnum][i][j] = y[i][j];
+		   }
+	   } // for (i = 0; i < 2; i++)
+	   for (i = 0; i < 4; i++) {
+		   zmlt(craffine_wn[idx[i]][0], craffine_wn[idx[i]][1], craffine_aff[quadnum][0][0], craffine_aff[quadnum][0][1], cre, cim);
+		   craffine_wn[idx[i]][0] = cre[0] + craffine_aff[quadnum][1][0];
+		   craffine_wn[idx[i]][1] = cim[0] + craffine_aff[quadnum][1][1];
+	   }
+	   
+	   // Set up stack and begin
+	   
+	   // Keep track of "raw" quadrilateral images as they are found
+	   for (i = 0; i < 4; i++) {
+		   for (j = 0; j < 2; j++) {
+			   rawimage[i][quadnum][j] = v[i][j];
+		   }
+	   } // for (i = 0; i < 4; i++)\
+	   int stack[] = new int[n-3];
+	   for (i = 0; i < n-3; i++) {
+		   stack[i] = -1;
+	   }
+	   int m = 0;
+	   for (i = 0; i < n-3; i++) {
+		   if (Q.adjacent[i][quadnum] && (Double.isNaN(craffine_aff[i][0][0]) || Double.isNaN(craffine_aff[i][0][1]))) {
+			  m++;
+		   }
+	   }
+	   // Neighbors of quadnum
+	   int newnbrs[] = new int[m];
+	   for (i = 0, j = 0; i < n-3; i++) {
+		   if (Q.adjacent[i][quadnum] && (Double.isNaN(craffine_aff[i][0][0]) || Double.isNaN(craffine_aff[i][0][1]))) {
+			   newnbrs[j++] = i;
+		   }
+	   }
+	   // Go on the stack first
+	   for (i = 0; i < m; i++) {
+		   stack[i] = newnbrs[i];
+	   }
+	   // Keep track of who put a diagonal on the stack
+	   int origin[] = new int[n-3];
+	   for (i = 0; i < n-3; i++) {
+		   origin[i] = -1;
+	   }
+	   for (i = 0; i < m; i++) {
+		   origin[i] = quadnum;
+	   }
+	   int stackptr = m-1;
+	   while (stackptr >= 0) {
+	       int q = stack[stackptr];
+	       int oldq = origin[stackptr];
+	       stackptr = stackptr-1;
+	       
+	       // Embedding & raw image
+	       for (i = 0; i < 4; i++) {
+	    	   idx[i] = Q.qlvert[i][q];
+	       }
+	       z = crembed(cr, Q, q);
+	       for (i = 0; i < 4; i++) {
+			   for (j = 0; j < 2; j++) {
+				   z1[i][j] = z[idx[i]][j];
+			   }
+		   }
+	       double newv[][] = crquad(z1, idx, z, beta, qdat);
+	       for (i = 0; i < 4; i++) {
+	    	   for (j = 0; j < 2; j++) {
+	    		   newv[i][j] = -newv[i][j];
+	    		   rawimage[i][q][j] = newv[i][j];
+        	   }
+	       }
+	       
+	       for (i = 0; i < 4; i++) {
+	    	   for (j = 0; j < 2; j++) {
+	    		   oldv[i][j] = rawimage[i][oldq][j];
+	    	   }
+	       }
+	       for (i = 0; i < 4; i++) {
+	    	   oldidx[i] = Q.qlvert[i][oldq];
+	       }
+	       
+	       // Find new transformation by composing with the old one
+	       int numfound = 0;
+	       for (i = 0; i < 4; i++) {
+	    	   for (j = 0; j < 4; j++) {
+	    		   if (idx[i] == oldidx[j]) {
+	    			   numfound++;
+	    		   }
+	    	   }
+	       }
+	       int ref[] = new int[numfound];
+	       int oldref[] = new int[numfound];
+	       k = 0;
+	       for (i = 0; i < 4; i++) {
+	    	   for (j = 0; j < 4; j++) {
+	    		   if (idx[i] == oldidx[j]) {
+	    			   ref[k] = i;
+	    			   oldref[k++] = j;
+	    		   }
+	    	   }
+	       } // for (i = 0; i < 4; i++)
+	       for (i = 0; i < 4; i++) {
+	    	   done[i] = false;
+	       }
+	       for (i = 0; i < 3; i++) {
+	    	   done[ref[i]] = true;
+	       }
+	       double newvref[][] = new double[3][2];
+	       for (i = 0; i < 3; i++) {
+	    	   for (j = 0; j < 2; j++) {
+	    		   newvref[i][j] = newv[ref[i]][j];
+	    	   }
+	       }
+	       
+	       // Need LAPACK ZGETRF to factorize complex matrices and LAPACK ZGETRS to use the factorization to 
+	       // solve AX = B by forward or backwards substitution.
+	   } // while (stackptr >= 0)
    }
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
