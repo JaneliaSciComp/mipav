@@ -32026,7 +32026,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param uplo input char On entry, uplo specifies whether the matrix A is an upper or lower triangular matrix as
      *            follows: = 'U' or 'u' A is an upper triangular matrix = 'L' or 'l' A is a lower triangular matrix
      * @param transa input char On entry, transa specifies the form of op(A) to be used in the matrix multiplication as
-     *            follows: = 'N' or 'n' op(A) = A = 'T' or 't' op(A) = A' = 'C' or 'c' op(A) = A'
+     *            follows: = 'N' or 'n' op(A) = A, 'T' or 't' op(A) = A', 'C' or 'c' op(A) = A'
      * @param diag input char On entry, diag specifies whether or not A is unit triangular as follows: = 'U' or 'u' A is
      *            assumed to be unit triangular. = 'N' or 'n' A is not assumed to be unit triangular.
      * @param m input int On entry, m specifies the number of rows of B. m must be at least zero.
