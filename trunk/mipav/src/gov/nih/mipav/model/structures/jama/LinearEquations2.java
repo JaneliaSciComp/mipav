@@ -4528,9 +4528,9 @@ public class LinearEquations2 implements java.io.Serializable {
     } // dlaqge
     
     /*
-     * This is a port of a portion of LAPACK auxiliary routine DLASWP.f version 3.4.2
+     * This is a port of a portion of LAPACK auxiliary routine DLASWP.f version 3.7.1
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
-     * University of Colorado Denver, and NAG Ltd., September, 2012
+     * University of Colorado Denver, and NAG Ltd., June, 2017
      * Modified by
        R. C. Whaley, Computer Science Dept., Univ. of Tenn., Knoxville, USA
 
@@ -4554,10 +4554,10 @@ public class LinearEquations2 implements java.io.Serializable {
        @param input int k2
            The last element of IPIV for which a row interchange will
            be done.
-       @param input int[] ipiv of dimension (k2 * abs(incx))
+       @param input int[] ipiv of dimension (k1 + (k2-k1) * abs(incx))
            The vector of pivot indices.  Only the elements in positions
-           k1 through k2 of ipiv are accessed.
-           ipiv[k] = L implies rows k and L are to be interchanged
+           k1 through k1  + (k2-k1)*abs(incx) of ipiv are accessed.
+           ipiv[k1 + (k-k1)*abs(incx) ] = L implies rows k and L are to be interchanged
        @param input int incx
            The increment between successive values of IPIV.  If IPIV
            is negative, the pivots are applied in reverse order.
@@ -4584,7 +4584,7 @@ public class LinearEquations2 implements java.io.Serializable {
            inc = 1;
         }
         else if (incx < 0) {
-           ix0 = 1 + (1-k2)*incx;
+           ix0 = k1 + (k1-k2)*incx;
            i1 = k2;
            i2 = k1;
            inc = -1;
