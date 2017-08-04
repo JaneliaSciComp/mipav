@@ -18566,7 +18566,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         if (first_dlatb4) {
             first_dlatb4 = false;
             eps_dlatb4 = dlamch('P'); // Precision
-            badc2_dlatb4 = 0.1 / eps;
+            badc2_dlatb4 = 0.1 / eps_dlatb4;
             badc1_dlatb4 = Math.sqrt(badc2_dlatb4);
             small_dlatb4[0] = dlamch('S'); // Safe minimum
             large_dlatb4[0] = 1.0 / small_dlatb4[0];
