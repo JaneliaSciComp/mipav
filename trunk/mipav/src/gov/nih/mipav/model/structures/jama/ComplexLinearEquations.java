@@ -26,6 +26,121 @@ public class ComplexLinearEquations implements java.io.Serializable {
     public ComplexLinearEquations() {}
     
     /*
+     * This is a port of a portion of LAPACK routine ZGETRS.f version 3.7.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., December, 2016
+     * 
+     * zgetrs solves a system of linear equations
+          A * X = B, A**T * X = B, or A**H * X = B
+       with a general N-by-N matrix A using the LU factorization computed
+       by zgetrf.
+       
+       @param input char trans
+           Specifies the form of the system of equations:
+           = 'N':  A * X = B  (No transpose)
+           = 'T':  A**T* X = B  (Transpose)
+           = 'C':  A**H* X = B  (Conjugate transpose)
+       @param input int n
+           The order of the matrix A.  n >= 0.
+       @param input int nrhs
+           The number of right hand sides, i.e., the number of columns
+           of the matrix B.  nrhs >= 0.
+       @param input double[][][2] A complex of dimension (lda, n)
+           The factors L and U from the factorization A = P*L*U
+           as computed by zgetrf.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(1,n).
+       @param input int[] ipiv of dimension (n)
+           The pivot indices from zgetrf; for 1<=i<=n, row i of the
+           matrix was interchanged with row ipiv[i].
+       @param (input/output) double[][][2] complex B of dimension (ldb,nrhs)
+           On entry, the right hand side matrix B.
+           On exit, the solution matrix X.
+       @param input int ldb
+           The leading dimension of the array B.  ldb >= max(1,n).
+       @param output int[] info of dimension (1)
+           = 0:  successful exit
+           < 0:  if info[0] = -i, the i-th argument had an illegal value
+     */
+    public void zgetrs(char trans, int n, int nrhs, double[][][] A, int lda, int[] ipiv,
+                        double[][][] B, int ldb, int[] info) {
+        boolean notran;
+        double alpha[] = new double[2];
+        alpha[0] = 1.0;
+        alpha[1] = 0.0;
+        
+        // Test the input parameters.
+    
+        info[0] = 0;
+        notran = ((trans == 'N') || (trans == 'n'));
+        if (!notran && !((trans == 'T') || (trans == 't')) && !((trans == 'C') || (trans == 'c'))) {
+            info[0] = -1;
+        }
+        else if (n < 0) {
+            info[0] = -2;
+        }
+        else if (nrhs < 0) {
+            info[0] = -3;
+        }
+        else if (lda < Math.max(1, n)) {
+            info[0] = -5;
+        }
+        else if (ldb < Math.max(1, n)) {
+            info[0] = -8;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("zgetrs had info[0] = " + info[0]);
+            return;
+        }
+    
+        // Quick return if possible
+    
+        if (n == 0 || nrhs == 0) {
+            return;
+        }
+    
+        if (notran) {
+    
+            // Solve A * X = B.
+    
+            // Apply row interchanges to the right hand sides.
+    
+            zlaswp(nrhs, B, ldb, 1, n, ipiv, 1);
+    
+            // Solve L*X = B, overwriting B with X.
+    
+            ztrsm('L', 'L', 'N', 'U', n, nrhs,
+                     alpha, A, lda, B, ldb);
+    
+            // Solve U*X = B, overwriting B with X.
+    
+            ztrsm('L', 'U', 'N', 'N', n,
+                     nrhs, alpha, A, lda, B, ldb);
+        } // if (notran)
+        else {
+    
+            // Solve A**T * X = B oe A**H * X = B.
+    
+            // Solve U**T *X = B or U**H *X = B, overwriting B with X.
+    
+            ztrsm('L', 'U', 'T', 'N', n, nrhs,
+                     alpha, A, lda, B, ldb);
+    
+            // Solve L**T *X = B or L**H *X = B, overwriting B with X.
+    
+            ztrsm('L', 'L', 'T', 'U', n, nrhs, alpha,
+                     A, lda, B, ldb);
+    
+            // Apply row interchanges to the solution vectors.
+    
+            zlaswp(nrhs, B, ldb, 1, n, ipiv, -1);
+        } // else
+    
+        return;
+
+    } // zgetrs
+    
+    /*
      * This is a port of a portion of LAPACK routine ZGETRF.f version 3.7.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., December, 2016
@@ -304,12 +419,6 @@ public class ComplexLinearEquations implements java.io.Serializable {
         int i;
         int j;
         int jp;
-        int index;
-        double maxVal;
-        double temp;
-        double vec[];
-        double vec2[];
-        double arr[][];
         int k;
         int p;
         double cr[] = new double[1];
@@ -321,6 +430,10 @@ public class ComplexLinearEquations implements java.io.Serializable {
         double A2[][][];
         double alpha[] = new double[2];
         double beta[] = new double[2];
+        double A3[][][];
+        double A4[][][];
+        int ipiv2[];
+        double temp;
         
         // Test the input parameters.
         
@@ -431,7 +544,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
         			}
         		}
         	} // for (i = 0; i < lda; i++)
-        	zlaswp(n2, A2, lda, 0, n1-1, ipiv, 1);
+        	zlaswp(n2, A2, lda, 1, n1, ipiv, 1);
         	for (i = 0; i < lda; i++) {
         		for (j = 0; j < n2; j++) {
         			for (p = 0; p < 2; p++) {
@@ -451,6 +564,53 @@ public class ComplexLinearEquations implements java.io.Serializable {
         			}
         		}
         	} // for (i = 0; i < lda; i++)
+        	A3 = new double[m-n1][n1][2];
+        	for (i = 0; i < m-n1; i++) {
+        	    for (j = 0; j < n1; j++) {
+        	    	for (p = 0; p < 2; p++) {
+        	    	    A3[i][j][p] = A[i+n1][j][p];	
+        	    	}
+        	    }
+        	}
+        	A4 = new double[m-n1][n2][2];
+        	for (i = 0; i < m-n1; i++) {
+        		for (j = 0; j < n2; j++) {
+        			for (p = 0; p < 2; p++) {
+        				A4[i][j][p] = A[i+n1][j+n1][p];
+        			}
+        		}
+        	}
+        	alpha[0] = -1.0;
+        	alpha[1] = 0.0;
+        	beta[0] = 1.0;
+        	beta[1] = 0.0;
+        	// Update A22
+        	zgemm('N', 'N', m-n1, n2, n1, alpha, A3, m-n1, A2, lda, beta, A4, m-n1);
+        	
+        	// Factor A22
+        	ipiv2 = new int[Math.min(m-n1, n2)];
+        	zgetrf2(m-n1, n2, A4, m-n1, ipiv2, iinfo);
+        	for (i = 0; i < m-n1; i++) {
+        		for (j = 0; j < n2; j++) {
+        			for (p = 0; p < 2; p++) {
+        				A[i+n1][j+n1][p] = A4[i][j][p];
+        			}
+        		}
+        	}
+        	for (i = 0; i < Math.min(m-n1, n2); i++) {
+        		ipiv[i+n1] = ipiv2[i];
+        	}
+        	
+        	// Adjust info and the pivot indices
+        	if ((info[0] == 0) && (iinfo[0] > 0)) {
+        		info[0] = iinfo[0] + n1;
+        	}
+        	for ( i = n1; i < Math.min(m,n); i++) {
+        		ipiv[i] = ipiv[i] + n1;
+        	}
+        	
+        	// Apply interchanges to A21
+        	zlaswp(n1, A, lda, n1+1, Math.min(m, n), ipiv, 1);
         } // else
     
         
