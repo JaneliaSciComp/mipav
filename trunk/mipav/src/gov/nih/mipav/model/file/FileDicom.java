@@ -985,7 +985,10 @@ public class FileDicom extends FileDicomBase {
                                                                                   // green(1202), or blue(1203)
                     }
                 case OB:
-                    if (name.matches(FileDicom.IMAGE_TAG) && !inSequence && (elementLength > 50)) { // can be either OW or OB
+                    if (name.matches(FileDicom.IMAGE_TAG) && !inSequence && (elementLength > 50 || elementLength == -1)) {
+                        // can be either OW or OB
+                        // check for either a significant tag length (>50), or an undefined length sequence (-1)
+                        
                     	// 7FD1,0010 with an elementLength = 6 matched FileDicom.IMAGE_TAG
                         return processImageData(extents, numEmbeddedImages, getFilePointer() + (fileInfo.getVr_type() == VRtype.IMPLICIT ? 4 : 0)); // finished
                                                                                                                                                     // reading
@@ -3590,10 +3593,8 @@ public class FileDicom extends FileDicomBase {
         	haveDoublePixelData = true;
         	fileInfo.setDataType(ModelStorageBase.DOUBLE);
         }
-        // Preferences.debug("(just found: )"+Integer.toString(groupWord, 0x10) + ":"+Integer.toString(elementWord,
-        // 0x10)+" - " , Preferences.DEBUG_FILEIO); System.err.print("( just found: ) "+ Integer.toString(groupWord,
-        // 0x10) +
-        // ":"+Integer.toString(elementWord, 0x10)+ " - ");
+        // Preferences.debug("(just found: )"+Integer.toString(groupWord, 0x10) + ":"+Integer.toString(elementWord, 0x10)+" - " , Preferences.DEBUG_FILEIO);
+        //System.err.print("( just found: ) "+ convertGroupElement(groupWord, elementWord) + " - ");
 
         if (fileInfo.getVr_type() == VRtype.EXPLICIT) {
 
@@ -3607,17 +3608,20 @@ public class FileDicom extends FileDicomBase {
                     || tagname.equals("FFFE,EEEE")) // reserved
             {
                 elementLength = getInt(bigEndian);
+                //System.err.println(" seq length " + Integer.toString(elementLength, 0x10));
             } else {
                 read(byteBuffer4); // Reads the explicit VR and following two bytes.
                 elementLength = getLength(bigEndian, byteBuffer4[0], byteBuffer4[1], byteBuffer4[2], byteBuffer4[3]);
-                // Preferences.debug(" length " + Integer.toString(elementLength, 0x10) + "\n",
-                // Preferences.DEBUG_FILEIO);
+                //System.err.print(" vr = " + new String(new byte[] {byteBuffer4[0], byteBuffer4[1]}) + " - ");
+                // Preferences.debug(" length " + Integer.toString(elementLength, 0x10) + "\n", Preferences.DEBUG_FILEIO);
+                //System.err.println(" exp length " + Integer.toString(elementLength, 0x10));
             }
         } else {
 
             // either IMPLICIT or group element is not SEQ_ITEM_BEGIN
             read(byteBuffer4);
             elementLength = getLength(bigEndian, byteBuffer4[0], byteBuffer4[1], byteBuffer4[2], byteBuffer4[3]);
+            //System.err.println(" imp length " + Integer.toString(elementLength, 0x10));
         }
     }
 
