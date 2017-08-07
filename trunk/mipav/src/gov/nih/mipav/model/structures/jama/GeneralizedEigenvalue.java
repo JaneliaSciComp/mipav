@@ -16496,16 +16496,19 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * <p>
      * One example is a symmetric matrix in SB format (bandwidth=4), for which uplo = 'L': Two adjacent rows will have
-     * the format: row j: * * * * * . . . . row j+1: * * * * * . . . . '*' indicates elements for which storage is
+     * the format: 
+     * row j: * * * * * . . . . 
+     * row j+1: * * * * * . . . . '*' indicates elements for which storage is
      * provided, '.' indicates elements for which no storage is provided, but are not necessrily zero; their values are
-     * determined by symmetry. ' ' indicatres elements which are mecessarily zero, and have no storage provided.
+     * determined by symmetry. ' ' indicates elements which are necessarily zero, and have no storage provided.
      * </p>
      * 
      * <p>
      * Those columns which have two '*'s can be handled by drot. Those columns which have no '*'s can be ignored, since
      * as long as the Givens rotations are carefully applied to preserve symmetry, their values are determined. Those
-     * columns which have one '*' have to be handled separately, by using separate variables "p" and "q": row j: * * * *
-     * * p . . . row j+1: q * * * * * . . . .
+     * columns which have one '*' have to be handled separately, by using separate variables "p" and "q": 
+     * row j: * * * * * p . . . 
+     * row j+1: q * * * *  . . . .
      * </p>
      * 
      * <p>
@@ -16576,8 +16579,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            involving xleft and/or xright may not be negative, i.e., nl minus how many of lleft and lright are
      *            true must be at least zero; if not, an error message will be output.
      * @param c input double
-     * @param s input double c and s specify the Givens rotation to be applied. If lrows is true, then the matrix ( c s
-     *            ) (-s c ) is applied from the left; if false, then the transpose thereof is applied from the right.
+     * @param s input double c and s specify the Givens rotation to be applied. If lrows is true, then the matrix
+     *          ( c s )
+     *          (-s c ) 
+     *            is applied from the left; if false, then the transpose thereof is applied from the right.
      *            For a Givens rotation, c**2 + s**2 should be 1, but this is not checked.
      * @param A input/output double[] The array containing the rows/columns to be rotated. The first element of A should
      *            be the upper left element to be rotated.
