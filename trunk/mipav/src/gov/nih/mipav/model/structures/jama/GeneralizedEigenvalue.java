@@ -20991,19 +20991,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // Diagonal Matrix -- We are done, unless it is to be stored SP/PP/TP
         // (pack = 'R' or 'C')
         if ( (llb == 0) && (uub == 0)) {
-
-            if (ipack > 4) {
-
-                for (i = 0; i < mnmin; i++) {
-                    A[ -iskew + ioffst][i] = D[i];
-                }
-            } // if (ipack > 4)
-            else { // ipack <= 4
-
-                for (i = 0; i < mnmin; i++) {
-                    A[i - iskew + ioffst][i] = D[i];
-                }
-            } // else ipack <= 4
+        	
+        	for (i = 0; i < mnmin; i++) {
+                A[ (1-iskew)*i + ioffst][i] = D[i];
+            }
 
             if ( (ipack <= 2) || (ipack >= 5)) {
                 ipackg = ipack;
@@ -21022,19 +21013,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                     ipackg = 0;
                 }
 
-                if (ipack > 4) {
-
-                    for (i = 0; i < mnmin; i++) {
-                        A[ -iskew + ioffst][i] = D[i];
-                    }
-                } // if (ipack > 4)
-                else { // ipack <= 4
-
-                    for (i = 0; i < mnmin; i++) {
-                        A[i - iskew + ioffst][i] = D[i];
-                    }
-                } // else ipack <= 4
-
+                for (i = 0; i < mnmin; i++) {
+                    A[ (1-iskew)*i + ioffst][i] = D[i];
+                }
+                
                 if (topdwn) {
                     jkl = 0;
 
