@@ -23,6 +23,18 @@ public class ComplexLinearEquations implements java.io.Serializable {
     private double badc1_zlatb4;
 
     private double badc2_zlatb4;
+    
+    /** Double precison machine variables found in routine dlartg. */
+    private boolean first_zlartg = true;
+    
+    /** DOCUMENT ME! */
+    private double safmin;
+
+    /** DOCUMENT ME! */
+    private double safmn2;
+
+    /** DOCUMENT ME! */
+    private double safmx2;
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -1159,7 +1171,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
      *            + min(kl,m-1) + 1. 1 => Error return from dlatm1 2 => Cannot scale to dmax (maximum singular value is
      *            0) 3 => Error return from zlagge or dlagsy
      */
-    /*public void zlatms(final int m, final int n, final char dist, final int[] iseed, final char sym, final double[] D,
+     /*public void zlatms(final int m, final int n, final char dist, final int[] iseed, final char sym, final double[] D,
             final int mode, final double cond, final double dmax, final int kl, final int ku, final char pack,
             final double[][][] A, final int lda, final double[][] work, final int[] info) {
         boolean givens;
@@ -1203,15 +1215,21 @@ public class ComplexLinearEquations implements java.io.Serializable {
         double alpha2[] = new double[2];
         double beta[] = new double[2];
         double angle;
-        final double[] c = new double[1];
-        final double[] dummy = new double[1];
+        final double[] c = new double[2];
+        final double[] dummy = new double[2];
         final double[] extra = new double[2];
-        final double[] s = new double[1];
+        final double[] s = new double[2];
         final double[] temp = new double[1];
         int length;
-        double[] ap;
+        double[][] ap;
         int index;
         boolean zsym;
+        double result[] = new double[2];
+        double var;
+        double realc[] = new double[1];
+        double f[] = new double[2];
+        double cr[] = new double[1];
+        double ci[] = new double[1];
 
         // Decode and test the input parameters. Initialize flags & seed.
         info[0] = 0;
@@ -1472,38 +1490,48 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             extra[0] = 0.0;
                             extra[1] = 0.0;
                             angle = 2.0 * Math.PI * ge.dlarnd(1, iseed);
-                            c[0] = Math.cos(angle);
-                            s[0] = Math.sin(angle);
+                            result = zlarnd(5, iseed);
+                            var =  Math.cos(angle);
+                            c[0] = var * result[0];
+                            c[1] = var * result[1];
+                            result = zlarnd(5, iseed);
+                            var = Math.sin(angle);
+                            s[0] = var * result[0];
+                            s[1] = var * result[1];
                             icol = Math.max(1, jr - jkl);
 
                             if (jr < m) {
                                 il = Math.min(n, jr + jku) + 1 - icol;
-                                length = lda - (jr - (iskew * icol) + ioffst) + 1 + (lda * (n - icol));
-                                ap = new double[length];
+                                length = ilda - (jr - (iskew * icol) + ioffst) + 1 + (ilda * (n - icol));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = jr - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                    ap[index++] = A[i][icol - 1];
+                                for (i = jr - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][icol - 1][0];
+                                    ap[index++][1] = A[i][icol-1][1];
                                 }
 
                                 for (j = icol; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(true, jr > jkl, false, il, c[0], s[0], ap, ilda, extra, dummy);
+                                zlarot(true, jr > jkl, false, il, c, s, ap, ilda, extra, dummy);
                                 index = 0;
 
-                                for (i = jr - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                    A[i][icol - 1] = ap[index++];
+                                for (i = jr - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                    A[i][icol - 1][0] = ap[index][0];
+                                    A[i][icol - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = icol; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
                             } // if (jr < m)
@@ -1515,7 +1543,15 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             for (jch = jr - jkl; jch >= 1; jch -= (jkl + jku)) {
 
                                 if (ir < m) {
-                                    dlartg(A[ir - (iskew * (ic + 1)) + ioffst][ic], extra[0], c, s, dummy);
+                                	f[0] = A[ir - (iskew * (ic + 1)) + ioffst][ic][0];
+                                	f[1] = A[ir - (iskew * (ic + 1)) + ioffst][ic][1];
+                                    zlartg(A[ir - (iskew * (ic + 1)) + ioffst][ic], extra, realc, s, dummy);
+                                    dummy = zlarnd(5, iseed);
+                                    c[0] = realc[0] * dummy[0];
+                                    c[1] = -realc[0] * dummy[1];
+                                    zmlt(-s[0], -s[1], dummy[0], dummy[1], cr, ci);
+                                    s[0] = cr[0];
+                                    s[1] = -ci[0];
                                 } // if (ir < m)
 
                                 irow = Math.max(1, jch - jku);
@@ -1523,7 +1559,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                 temp[0] = 0.0;
                                 iltemp = jch > jku;
                                 length = lda - (irow - (iskew * ic) + ioffst) + 1 + (lda * (n - ic));
-                                ap = new double[length];
+                                ap = new double[length][2];
                                 index = 0;
 
                                 for (i = irow - (iskew * ic) + ioffst - 1; i < lda; i++) {
@@ -2537,7 +2573,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
         } // if (ipack != ipackg)
 
         return;
-    } // zlatms */
+    } // zlatms*/
     
     /**
      * This is a port of version 3.7.0 auxiliary routine ZLASET. Original ZLASET created by Univ. of Tennessee, Univ. of
@@ -2634,9 +2670,11 @@ public class ComplexLinearEquations implements java.io.Serializable {
      * real number from a uniform (0,1) distribution.  The Box-Muller method
      * is used to transform numbers from a uniform to a normal distribution
      */
-    private double[] zlarand(int idist, int iseed[]) {
+    private double[] zlarnd(int idist, int iseed[]) {
     	double t1;
     	double t2;
+    	double var;
+    	double arg;
     	double result[] = new double[2];
     	
     	// Generate a pair of real random numbers from a uniform (0,1) distribution
@@ -2653,10 +2691,417 @@ public class ComplexLinearEquations implements java.io.Serializable {
     		result[0] = 2.0*t1-1.0;
     		result[1] = 2.0*t2-1.0;
     	}
+    	else if (idist == 3) {
+    		// real and imaginary parts 4each normal (0,1)
+    	    var = Math.sqrt(-2.0*Math.log(t1));
+    	    arg = 2.0*Math.PI*t2;
+    	    result[0] = var * Math.cos(arg);
+    	    result[1] = var * Math.sin(arg);
+    	}
+    	else if (idist == 4) {
+    		// uniform distribution of the unit disc abs(z) <= 1
+    		var = Math.sqrt(t1);
+    		arg = 2.0*Math.PI*t2;
+    	    result[0] = var * Math.cos(arg);
+    	    result[1] = var * Math.sin(arg);
+    	}
+    	else if (idist == 5) {
+    		// uniform distribution on the unit circle abs(z) = 1
+    		arg = 2.0*Math.PI*t2;
+    	    result[0] = Math.cos(arg);
+    	    result[1] = Math.sin(arg);
+    	}
     	return result;
     }
-
     
+    /**
+     * This is a port of version 3.7.0 LAPACK auxiliary test routine ZLAROT Original ZLAROT created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., December, 2016 zlarot applies a (Givens) rotation to two adjacent
+     * rows or columns, where one element of the first and/or last collumn/row for use on matrices stored in some format
+     * other than GE, so that elements of the matrix may be used or modified for which no array element is provided. 
+     * <p>
+     * One example is a symmetric matrix in SB format (bandwidth=4), for which uplo = 'L': Two adjacent rows will have
+     * the format: 
+     * row j: * * * * * . . . . 
+     * row j+1: * * * * * . . . . '*' indicates elements for which storage is
+     * provided, '.' indicates elements for which no storage is provided, but are not necessrily zero; their values are
+     * determined by symmetry. ' ' indicates elements which are necessarily zero, and have no storage provided.
+     * </p>
+     * 
+     * <p>
+     * Those columns which have two '*'s can be handled by zrot. Those columns which have no '*'s can be ignored, since
+     * as long as the Givens rotations are carefully applied to preserve symmetry, their values are determined. Those
+     * columns which have one '*' have to be handled separately, by using separate variables "p" and "q": 
+     * row j: * * * * * * p . . . 
+     * row j+1: q * * * * * . . . .
+     * </p>
+     * 
+     * <p>
+     * The element p would have to be set correctly, then that column is rotated, setting p to its new value. The next
+     * call to zlarot would rotate columns j and j+1, using p, and restore symmetry. The element q would start out being
+     * zero, and be made non-zero by the rotation. Later, rotations would presumably be chosen to zero q out.
+     * </p>
+     * 
+     * <p>
+     * Typical Calling Sequences: rotating the i-th and (i+1)-st rows.
+     * </p>
+     * 
+     * <p>
+     * General dense matrix: zlarot(true, false, false, n, c, s, A[i-1][0], lda, dummy, dummy);
+     * </p>
+     * 
+     * <p>
+     * General banded matrix in GB format: j = Math.max(1, i-kl); nl = Math.min(n, i+ku+1) + 1 - j; dlarot(true, (i-kl)
+     * >= 1, (i+ku) < n, nl, c,s,A[ku+i-j][j-1], lda - 1, xleft, xright); Note that i+1-j is just min(i,kl+1)
+     * </p>
+     * 
+     * <p>
+     * Symmetric banded matrix in SY format, bandwidth k, lower triangle only: j = Math.max(1,i-k); nl = Math.min(k+1,i)
+     * + 1; zlarot(true, (i-k) >= 1, true, nl, c, s, A[i-1][j-1], lda, xleft, xright);
+     * </p>
+     * 
+     * <p>
+     * Same, but upper triangle only: nl = Math.min(k+1,n-i) + 1; zlarot(true, true, (i+k) < n, nl, c, s, A[i-1][i-1],
+     * lda, xleft, xright);
+     * </p>
+     * 
+     * <p>
+     * Symmetric banded matrix in SB format, bandwidth k, lower triangle only: same as for sy, except: A[i-j][j-1], lda
+     * - 1, xleft, xright); Note that i+1-j is just min(i,k+1)
+     * </p>
+     * 
+     * <p>
+     * Same, but upper triangle only: A[k][i-1], lda-1, xleft, xright);
+     * </p>
+     * 
+     * <p>
+     * Rotating columns is just the transpose of rotating rows, except for GB and SB: (rotating columns i and i+1)
+     * </p>
+     * 
+     * <p>
+     * GB: j = Math.max(1,i-ku); nl = Math.min(n, i+kl+1) + 1 - j; zlarot(true, i-ku >= 1, i+kl < n, nl, c, s,
+     * A[ku+j-i][i-1], lda - 1, xtop, xbottm); Note that ku+j+1-i is just max(1,ku+2-i)
+     * </p>
+     * 
+     * <p>
+     * SB: (upper triangle) ............. A[k+j-i][i-1], lda-1, xtop, xbottm);
+     * </p>
+     * 
+     * <p>
+     * SB: (lower triangle) ................... A[0][i-1], lda-1, xtop, xbottm);
+     * </p>
+     * 
+     * @param lrows input boolean If true, then zlarot will rotate two rows. If false, then it will rotate two columns.
+     * @param lleft input boolean If true, then xleft will be used instead of the corresponding element of A for the
+     *            first element in the second row (if lrows = false) or column (if lrows = true) If false, then the
+     *            corresponding element of A will be used.
+     * @param lright input boolean If true, then xright will be used instead of the corresponding element of A for the
+     *            last element in the first row (if lrows = false) or column (if lrows = true). If false, then the
+     *            corresponding element of A will be used.
+     * @param nl input int The length of the rows (if lrows = true) or columns (if lrows = false) to be rotated. If
+     *            xleft and/or xright are used, the columns/rows they are in should be included in nl, e.g., if lleft =
+     *            lright = true, then nl must be at least 2. The number of rows/columns to be rotated exclusive of those
+     *            involving xleft and/or xright may not be negative, i.e., nl minus how many of lleft and lright are
+     *            true must be at least zero; if not, an error message will be output.
+     * @param c input double[2] complex
+     * @param s input double[2] complex c and s specify the Givens rotation to be applied. If lrows is true, then the matrix
+     *                ( c s) 
+     *                (-s c ) 
+     *            is applied from the left; if false, then the transpose (not conjugated) thereof is applied from the right.
+     *            Note that in contrast to the output of zrotg or to most versions of zrot, both c and s are complex.
+     *            For a Givens rotation, |c|**2 + |s|**2 should be 1, but this is not checked.
+     * @param A input/output double[][2] The complex array containing the rows/columns to be rotated. The first element of A should
+     *            be the upper left element to be rotated.
+     * @param lda input int The "effective" leading dimension of A. If A contains a matrix stored in GE, HE, or SY format,
+     *            then this is just the leading dimension of A as dimensioned in the calling routine. If A contains a
+     *            matrix stored in band (GB, HB, or SB) format, then this should be *one less* than the leading dimension
+     *            used in the calling routine. Thus, if A were dimensioned A(lda,*) in zlarot, then A[0][j-1] would be
+     *            the j-th element in the first of the two rows to be rotated, and A[1][j-1] would be the j-th in the
+     *            second, regardless of how the array may be stored in the calling routine. [A cannot, however, actually
+     *            be dimensioned thus, since for band format, the row number may exceed lda, which is not legal code.]
+     *            If lrows = true, then lda must be at least 1, otherwise it must be at least nl minus the number of
+     *            true values in xleft and xright.
+     * @param xleft input/output double[][2] complex If lleft is true, then xleft will be used and modified instead of A[1][0] (if
+     *            lrows = true) or A[0][1] (if lrows = false).
+     * @param xright input/output double[][2] complex If lright is true, then xright will be used and modified instead of
+     *            A[0][nl-1] (if lrows = true) or A[nl-1][0] (if lrows = false).
+     */
+    public void zlarot(final boolean lrows, final boolean lleft, final boolean lright, final int nl, final double c[],
+            final double s[], final double[][] A, final int lda, final double[] xleft, final double[] xright) {
+        int iinc;
+        int inext;
+        int ix;
+        int iy;
+        int iyt = 0;
+        int nt;
+        final double[][] xt = new double[2][2];
+        final double[][] yt = new double[2][2];
+        int j;
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+        double cr2[] = new double[1];
+        double ci2[] = new double[1];
+        double tempx[] = new double[2];
+
+        // Set up indices, arrays for ends
+        if (lrows) {
+            iinc = lda;
+            inext = 1;
+        } else {
+            iinc = 1;
+            inext = lda;
+        }
+
+        if (lleft) {
+            nt = 1;
+            ix = 1 + iinc;
+            iy = 2 + lda;
+            xt[0][0] = A[0][0];
+            xt[0][1] = A[0][1];
+            yt[0][0] = xleft[0];
+            yt[0][1] = xleft[1];
+        } else {
+            nt = 0;
+            ix = 1;
+            iy = 1 + inext;
+        }
+
+        if (lright) {
+            iyt = 1 + inext + ( (nl - 1) * iinc);
+            nt = nt + 1;
+            xt[nt - 1][0] = xright[0];
+            xt[nt - 1][0] = xright[1];
+            yt[nt - 1][0] = A[iyt - 1][0];
+            yt[nt - 1][1] = A[iyt - 1][1];
+        }
+
+        // Check for errors
+        if (nl < nt) {
+            MipavUtil.displayError("zlarot has error 4");
+
+            return;
+        }
+
+        if ( (lda <= 0) || ( ( !lrows) && (lda < (nl - nt)))) {
+            MipavUtil.displayError("zlarot had error 8");
+
+            return;
+        }
+
+        // Rotate
+        for (j = 0; j <= nl-nt-1; j++) {
+        	zmlt(c[0], c[1], A[ix+j*iinc-1][0], A[ix+j*iinc-1][1], cr, ci);
+        	zmlt(s[0], s[1], A[iy+j*iinc-1][0], A[iy+j*iinc-1][1], cr2, ci2);
+        	tempx[0] = cr[0] + cr2[0];
+        	tempx[1] = ci[0] + ci2[0];
+        	zmlt(-s[0], s[1], A[ix+j*iinc-1][0], A[ix+j*iinc-1][1], cr, ci);
+        	zmlt(c[0], -c[1], A[iy+j*iinc-1][0], A[iy+j*iinc-1][1], cr2, ci2);
+        	A[iy+j*iinc-1][0] = cr[0] + cr2[0];
+        	A[iy+j*iinc-1][1] = ci[0] + ci2[0];
+        	A[ix+j*iinc-1][0] = tempx[0];
+        	A[ix+j*iinc-1][1] = tempx[1];
+        } // for (j = 0; j <= nl-nt-1; j++)
+        
+        for (j = 1; j <= nt; j++) {
+            zmlt(c[0], c[1], xt[j-1][0], xt[j-1][1], cr, ci);
+            zmlt(s[0], s[1], yt[j-1][0], yt[j-1][1], cr2, ci2);
+            tempx[0] = cr[0] + cr2[0];
+            tempx[1] = ci[0] + ci2[0];
+            zmlt(-s[0], s[1], xt[j-1][0], xt[j-1][1], cr, ci);
+            zmlt(c[0], -c[1], yt[j-1][0], yt[j-1][1], cr2, ci2);
+            yt[j-1][0] = cr[0] + cr2[0];
+            yt[j-1][1] = ci[0] + ci2[0];
+            xt[j-1][0] = tempx[0];
+            xt[j-1][1] = tempx[1];
+        } // for (j = 1; j <= nt; j++)
+
+        // Stuff values back into xleft, xright, etc.
+        if (lleft) {
+            A[0][0] = xt[0][0];
+            A[0][1] = xt[0][1];
+            xleft[0] = yt[0][0];
+            xleft[1] = yt[0][1];
+        }
+
+        if (lright) {
+            xright[0] = xt[nt - 1][0];
+            xright[1] = xt[nt - 1][1];
+            A[iyt - 1][0] = yt[nt - 1][0];
+            A[iyt - 1][1] = yt[nt - 1][1];
+        }
+
+        return;
+    } // zlarot
+    
+    /**
+     * This is a port of version 3.7.0 LAPACK auxiliary routine ZLARTG Original ZLARTG created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., December, 2016
+     * zlartg generates a plane rotation with real cosine and complex sine.
+     * zlartg generates a plane rotation so that 
+     * [  cs  sn ] . [ f ] = [ r ] where cs**2 + |sn|**2 = 1.
+     * [ -sn  cs ]   [ g ]   [ 0 ] 
+     * If g = 0, then cs = 1 and sn = 0. 
+     * If f = 0, then cs = 0 and sn is chosenso that r is real.
+     * 
+     * @param f input double[2] The first complex component of the vector to be rotated.
+     * @param g input double[2] The second complex component of the vector to be rotated.
+     * @param cs output double[1] The real cosine of the rotation.
+     * @param sn output double[2] The complex sine of the rotation.
+     * @param r output double[2] The nonzero complex component of the rotated vector.
+     * 
+     * 3/5/1996 Modified with a new algorithm by W. Kahan and J. Demmel
+     */
+    public void zlartg(final double f[], final double g[], final double[] cs, final double[] sn, final double[] r) {
+        int count;
+        int i;
+        double eps;
+        double f1;
+        double g1;
+        double scale;
+        double fs[] = new double[2];
+        double gs[] = new double[2];
+        double f2;
+        double g2;
+        double d;
+        double f2s;
+        double g2s;
+        double ff[] = new double[2];
+        double dr;
+        double di;
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+
+        if (first_zlartg) {
+            first_zlartg = false;
+            safmin = ge.dlamch('S');
+            eps = ge.dlamch('E');
+            safmn2 = Math.pow(ge.dlamch('B'), (int) (Math.log(safmin / eps) / Math.log(ge.dlamch('B')) / 2.0));
+            safmx2 = 1.0 / safmn2;
+        } // if (first_zlartg)
+        scale = Math.max(abs1(f), abs1(g));
+        fs[0] = f[0];
+        fs[1] = f[1];
+        gs[0] = g[0];
+        gs[1] = g[1];
+        count = 0;
+        
+        if (scale >= safmx2) {
+            do {
+                count = count + 1;
+                fs[0] = fs[0] * safmn2;
+                fs[1] = fs[1] * safmn2;
+                gs[0] = gs[0] * safmn2;
+                gs[1] = gs[1] * safmn2;
+                scale = scale * safmn2;
+            } while (scale >= safmx2);
+        } // if (scale >= safmx2)
+        else if (scale <= safmn2) {
+            if (((g[0] == 0.0) && (g[1] == 0.0)) || Double.isNaN(zabs(g[0],g[1]))) {
+                cs[0] = 1.0;
+                sn[0] = 0.0;
+                sn[1] = 0.0;
+                r[0] = f[0];
+                r[1] = f[1];
+                return;
+            } // if (((g[0] == 0.0) && (g[1] == 0.0)) || Double.isNaN(zabs(g[0],g[1])))
+            do {
+                count = count + 1;
+                fs[0] = fs[0] * safmx2;
+                fs[1] = fs[1] * safmx2;
+                gs[0] = gs[0] * safmx2;
+                gs[1] = gs[1] * safmx2;
+                scale = scale * safmx2;
+            } while(scale <= safmn2);
+        } // else if (scale <= safmn2)
+        f2 = abssq(fs);
+        g2 = abssq(gs);
+        if (f2 <= Math.max(g2,  1.0) * safmin) {
+            // This is a rare case: f is very small.
+        	if ((f[0] == 0.0) && (f[1] == 0.0)) {
+        	    cs[0] = 0.0;
+        	    r[0] = ge.dlapy2(g[0],  g[1]);
+        	    // Do complex/rea division explicitly with two real divisions
+        	    d = ge.dlapy2(gs[0], gs[1]);
+        	    sn[0] = gs[0]/d;
+        	    sn[1] = -gs[1]/d;
+        	    return;
+        	} // if ((f[0] == 0.0) && (f[1] == 0.0))
+        	f2s = ge.dlapy2(fs[0],  fs[1]);
+        	// g2 and g2s are accurate.
+        	// g2s is at least safmin, and g2s is at least safmn2
+        	g2s = Math.sqrt(g2);
+        	// Error in cs form underflow in f2s is at most
+        	// unfl / safmn2 .lt. sqrt(unfl*eps) .lt. eps
+        	// If max(g2,1.0) = g2, then f2 .lt. g2*safmin
+        	// and so cs .lt. sqrt(safmin)
+        	// If max(g2,1.0) = 1.0, then f2 .lt. safmin
+        	// and so cs .lt. sqrt(safmin)/safmn2 = sqrt(eps)
+        	// Therefore, cs = f2s/g2s/sqrt(1 + (f2s/g2s)**2) = f2s/g2s
+        	cs[0] = f2s/g2s;
+        	// Make sure abs(ff) = 1
+        	// Do complex/real division explicitly with 2 real divisions
+        	if (abs1(f) > 1.0) {
+        	    d = ge.dlapy2(f[0], f[1]);
+        	    ff[0] = f[0]/d;
+        	    ff[1] = f[1]/d;
+        	} // if (abs1(f) > 1.0)
+        	else {
+        		dr = safmx2 * f[0];
+        		di = safmx2 * f[1];
+        		d = ge.dlapy2(dr, di);
+        		ff[0] = dr/d;
+        		ff[1] = di/d;
+        	} // else
+        	zmlt(ff[0], ff[1], gs[0]/g2s, -gs[1]/g2s, cr, ci);
+        	sn[0] = cr[0];
+        	sn[1] = ci[0];
+        	zmlt(sn[0], sn[1], g[0], g[1], cr, ci);
+        	r[0] = cs[0]*f[0] + cr[0];
+        	r[1] = cs[0]*f[1] + ci[0];
+        } // if (f2 <= Math.max(g2,  1.0) * safmin)
+        else {
+        	// This is the most common case.
+        	// Neither f2 nor f2/g2 are less than safmin
+        	// f2s cannot overflow, and it is accurate
+        	
+        	f2s = Math.sqrt(1.0 + g2/f2);
+        	// DO the f2s(ral)*fs(complex) multiply with two real multipliers
+        	r[0] = f2s * fs[0];
+        	r[1] = f2s * fs[1];
+        	cs[0] = 1.0/f2s;
+        	d = f2 + g2;
+        	// Do complex/real division explicitly with two real divisions
+        	sn[0] = r[0]/d;
+        	sn[1] = r[1]/d;
+        	zmlt(sn[0], sn[1], gs[0], -gs[1], cr, ci);
+        	sn[0] = cr[0];
+        	sn[1] = ci[0];
+        	if (count != 0) {
+        		if (count > 0) {
+        			for (i = 1; i <= count; i++) {
+        				r[0] = r[0] * safmx2;
+        				r[1] = r[1] * safmx2;
+        			}
+        		} // if (count > 0)
+        		else { // count < 0
+        			for (i = 1; i <= -count; i++) {
+        				r[0] = r[0] * safmn2;
+        				r[1] = r[1] * safmn2;
+        			}
+        		} // else count < 0
+        	} // if (count != 0)
+        } // else
+
+        return;
+    } // zlartg
+
+    private double abs1(double ff[]) {
+    	return Math.max(Math.abs(ff[0]), Math.abs(ff[1]));
+    }
+    
+    private double abssq(double ff[]) {
+    	return (ff[0]*ff[0] + ff[1]*ff[1]);
+    }
     /*
      * This is a port of a portion of LAPACK routine ZGETRS.f version 3.7.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
