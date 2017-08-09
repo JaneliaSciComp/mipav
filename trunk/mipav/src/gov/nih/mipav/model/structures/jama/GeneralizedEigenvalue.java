@@ -21562,19 +21562,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                     } else {
                         ipackg = 1;
                     }
-
-                    if (ipack > 4) {
-
-                        for (i = 0; i < mnmin; i++) {
-                            A[ -iskew + ioffg][i] = D[i];
-                        }
-                    } // if (ipack > 4)
-                    else { // ipack <= 4
-
-                        for (i = 0; i < mnmin; i++) {
-                            A[i - iskew + ioffg][i] = D[i];
-                        }
-                    } // else ipack <= 4
+                    
+                    for (i = 0; i < mnmin; i++) {
+                        A[(1-iskew)*i + ioffg][i] = D[i];
+                    }
 
                     for (k = 1; k <= uub; k++) {
 
