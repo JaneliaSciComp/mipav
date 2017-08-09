@@ -16804,7 +16804,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            48-bit integers are stored in 4 integer array elements with 12 bits per element. Hence the routine is
      *            portable across machines with integers of 32 bits or more.
      */
-    private void dlaruv(final int[] iseed, final int n, final double[] x) {
+    public void dlaruv(final int[] iseed, final int n, final double[] x) {
         final int lv = 128;
         final int ipw2 = 4096;
         final double r = 1.0 / ipw2;
