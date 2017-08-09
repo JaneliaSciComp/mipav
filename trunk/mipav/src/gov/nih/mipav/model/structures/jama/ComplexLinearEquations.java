@@ -1230,6 +1230,8 @@ public class ComplexLinearEquations implements java.io.Serializable {
         double f[] = new double[2];
         double cr[] = new double[1];
         double ci[] = new double[1];
+        double ct[] = new double[2];
+        double st[] = new double[2];
 
         // Decode and test the input parameters. Initialize flags & seed.
         info[0] = 0;
@@ -1557,67 +1559,83 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                 irow = Math.max(1, jch - jku);
                                 il = ir + 2 - irow;
                                 temp[0] = 0.0;
+                                temp[1] = 0.0;
                                 iltemp = jch > jku;
-                                length = lda - (irow - (iskew * ic) + ioffst) + 1 + (lda * (n - ic));
+                                length = ilda - (irow - (iskew * ic) + ioffst) + 1 + (ilda * (n - ic));
                                 ap = new double[length][2];
                                 index = 0;
 
-                                for (i = irow - (iskew * ic) + ioffst - 1; i < lda; i++) {
-                                    ap[index++] = A[i][ic - 1];
+                                for (i = irow - (iskew * ic) + ioffst - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][ic - 1][0];
+                                    ap[index++][1] = A[i][ic - 1][1];
                                 }
 
                                 for (j = ic; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(false, iltemp, true, il, c[0], -s[0], ap, ilda, temp, extra);
+                                zlarot(false, iltemp, true, il, c, s, ap, ilda, temp, extra);
                                 index = 0;
 
-                                for (i = irow - (iskew * ic) + ioffst - 1; i < lda; i++) {
-                                    A[i][ic - 1] = ap[index++];
+                                for (i = irow - (iskew * ic) + ioffst - 1; i < ilda; i++) {
+                                    A[i][ic - 1][0] = ap[index][0];
+                                    A[i][ic - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = ic; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
 
                                 if (iltemp) {
-                                    dlartg(A[irow - (iskew * (ic + 1)) + ioffst][ic], temp[0], c, s, dummy);
+                                    zlartg(A[irow - (iskew * (ic + 1)) + ioffst][ic], temp, realc, s, dummy);
+                                    dummy = zlarnd(5, iseed);
+                                    c[0] = realc[0] * dummy[0];
+                                    c[1] = -realc[0] * dummy[1];
+                                    zmlt(-s[0], -s[1], dummy[0], dummy[1], cr, ci);
+                                    s[0] = cr[0];
+                                    s[1] = -ci[0];
                                     icol = Math.max(1, jch - jku - jkl);
                                     il = ic + 2 - icol;
                                     extra[0] = 0.0;
-                                    length = lda - (irow - (iskew * icol) + ioffst) + 1 + (lda * (n - icol));
-                                    ap = new double[length];
+                                    extra[1] = 0.0;
+                                    length = ilda - (irow - (iskew * icol) + ioffst) + 1 + (ilda * (n - icol));
+                                    ap = new double[length][2];
                                     index = 0;
 
-                                    for (i = irow - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                        ap[index++] = A[i][icol - 1];
+                                    for (i = irow - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                        ap[index][0] = A[i][icol - 1][0];
+                                        ap[index++][1] = A[i][icol - 1][1];
                                     }
 
                                     for (j = icol; j < n; j++) {
 
-                                        for (i = 0; i < lda; i++) {
-                                            ap[index++] = A[i][j];
+                                        for (i = 0; i < ilda; i++) {
+                                            ap[index][0] = A[i][j][0];
+                                            ap[index++][1] = A[i][j][1];
                                         }
                                     }
 
-                                    dlarot(true, jch > (jku + jkl), true, il, c[0], -s[0], ap, ilda, extra, temp);
+                                    zlarot(true, jch > (jku + jkl), true, il, c, s, ap, ilda, extra, temp);
                                     index = 0;
 
-                                    for (i = irow - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                        A[i][icol - 1] = ap[index++];
+                                    for (i = irow - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                        A[i][icol - 1][0] = ap[index][0];
+                                        A[i][icol - 1][1] = ap[index++][1];
                                     }
 
                                     for (j = icol; j < n; j++) {
 
-                                        for (i = 0; i < lda; i++) {
-                                            A[i][j] = ap[index++];
+                                        for (i = 0; i < ilda; i++) {
+                                            A[i][j][0] = ap[index][0];
+                                            A[i][j][1] = ap[index++][1];
                                         }
                                     }
 
@@ -1635,39 +1653,50 @@ public class ComplexLinearEquations implements java.io.Serializable {
                         // Transform from bandwidth jkl-1, jku to jkl, jku
                         for (jc = 1; jc <= (Math.min(n + jkl, m) + jku - 1); jc++) {
                             extra[0] = 0.0;
-                            angle = 2.0 * Math.PI * dlarnd(1, iseed);
-                            c[0] = Math.cos(angle);
-                            s[0] = Math.sin(angle);
+                            extra[1] = 0.0;
+                            angle = 2.0 * Math.PI * ge.dlarnd(1, iseed);
+                            result = zlarnd(5, iseed);
+                            var = Math.cos(angle);
+                            c[0] = var*result[0];
+                            c[1] = var*result[1];
+                            result = zlarnd(5, iseed);
+                            var = Math.sin(angle);
+                            s[0] = var * result[0];
+                            s[1] = var * result[1];
                             irow = Math.max(1, jc - jku);
 
                             if (jc < n) {
                                 il = Math.min(m, jc + jkl) + 1 - irow;
-                                length = lda - (irow - (iskew * jc) + ioffst) + 1 + (lda * (n - jc));
-                                ap = new double[length];
+                                length = ilda - (irow - (iskew * jc) + ioffst) + 1 + (ilda * (n - jc));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = irow - (iskew * jc) + ioffst - 1; i < lda; i++) {
-                                    ap[index++] = A[i][jc - 1];
+                                for (i = irow - (iskew * jc) + ioffst - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][jc - 1][0];
+                                    ap[index++][1] = A[i][jc - 1][1];
                                 }
 
                                 for (j = jc; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(false, jc > jku, false, il, c[0], s[0], ap, ilda, extra, dummy);
+                                zlarot(false, jc > jku, false, il, c, s, ap, ilda, extra, dummy);
                                 index = 0;
 
-                                for (i = irow - (iskew * jc) + ioffst - 1; i < lda; i++) {
-                                    A[i][jc - 1] = ap[index++];
+                                for (i = irow - (iskew * jc) + ioffst - 1; i < ilda; i++) {
+                                    A[i][jc - 1][0] = ap[index][0];
+                                    A[i][jc - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = jc; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
                             } // if (jc < n)
@@ -1679,73 +1708,95 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             for (jch = jc - jku; jch >= 1; jch -= (jkl + jku)) {
 
                                 if (ic < n) {
-                                    dlartg(A[ir - (iskew * (ic + 1)) + ioffst][ic], extra[0], c, s, dummy);
+                                    zlartg(A[ir - (iskew * (ic + 1)) + ioffst][ic], extra, realc, s, dummy);
+                                    dummy = zlarnd(5, iseed);
+                                    c[0] = realc[0] * dummy[0];
+                                    c[1] = -realc[0] * dummy[1];
+                                    zmlt(-s[0], -s[1], dummy[0], dummy[1], cr, ci);
+                                    s[0] = cr[0];
+                                    s[1] = -ci[0];
                                 } // if (ic < n)
 
                                 icol = Math.max(1, jch - jkl);
                                 il = ic + 2 - icol;
                                 temp[0] = 0.0;
+                                temp[1] = 0.0;
                                 iltemp = jch > jkl;
-                                length = lda - (ir - (iskew * icol) + ioffst) + 1 + (lda * (n - icol));
-                                ap = new double[length];
+                                length = ilda - (ir - (iskew * icol) + ioffst) + 1 + (ilda * (n - icol));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = ir - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                    ap[index++] = A[i][icol - 1];
+                                for (i = ir - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][icol - 1][0];
+                                    ap[index++][1] = A[i][icol - 1][1];
                                 }
 
                                 for (j = icol; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(true, iltemp, true, il, c[0], -s[0], ap, ilda, temp, extra);
+                                zlarot(true, iltemp, true, il, c, s, ap, ilda, temp, extra);
                                 index = 0;
 
-                                for (i = ir - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                    A[i][icol - 1] = ap[index++];
+                                for (i = ir - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                    A[i][icol - 1][0] = ap[index][0];
+                                    A[i][icol - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = icol; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
 
                                 if (iltemp) {
-                                    dlartg(A[ir - (iskew * (icol + 1)) + ioffst][icol], temp[0], c, s, dummy);
+                                    zlartg(A[ir - (iskew * (icol + 1)) + ioffst][icol], temp, realc, s, dummy);
+                                    dummy = zlarnd(5, iseed);
+                                    c[0] = realc[0] * dummy[0];
+                                    c[1] = -realc[0] * dummy[1];
+                                    zmlt(-s[0], -s[1], dummy[0], dummy[1], cr, ci);
+                                    s[0] = cr[0];
+                                    s[1] = -ci[0];
                                     irow = Math.max(1, jch - jkl - jku);
                                     il = ir + 2 - irow;
                                     extra[0] = 0.0;
-                                    length = lda - (irow - (iskew * icol) + ioffst) + 1 + (lda * (n - icol));
-                                    ap = new double[length];
+                                    extra[1] = 0.0;
+                                    length = ilda - (irow - (iskew * icol) + ioffst) + 1 + (ilda * (n - icol));
+                                    ap = new double[length][0];
                                     index = 0;
 
-                                    for (i = irow - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                        ap[index++] = A[i][icol - 1];
+                                    for (i = irow - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                        ap[index][0] = A[i][icol - 1][0];
+                                        ap[index++][1] = A[i][icol - 1][1];
                                     }
 
                                     for (j = icol; j < n; j++) {
 
-                                        for (i = 0; i < lda; i++) {
-                                            ap[index++] = A[i][j];
+                                        for (i = 0; i < ilda; i++) {
+                                            ap[index][0] = A[i][j][0];
+                                            ap[index++][1] = A[i][j][1];
                                         }
                                     }
 
-                                    dlarot(false, jch > (jkl + jku), true, il, c[0], -s[0], ap, ilda, extra, temp);
+                                    zlarot(false, jch > (jkl + jku), true, il, c, s, ap, ilda, extra, temp);
                                     index = 0;
 
-                                    for (i = irow - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                        A[i][icol - 1] = ap[index++];
+                                    for (i = irow - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                        A[i][icol - 1][0] = ap[index][0];
+                                        A[i][icol - 1][1] = ap[index++][1];
                                     }
 
                                     for (j = icol; j < n; j++) {
 
-                                        for (i = 0; i < lda; i++) {
-                                            A[i][j] = ap[index++];
+                                        for (i = 0; i < ilda; i++) {
+                                            A[i][j][0] = ap[index][0];
+                                            A[i][j][1] = ap[index++][1];
                                         }
                                     }
 
@@ -1770,39 +1821,50 @@ public class ComplexLinearEquations implements java.io.Serializable {
 
                         for (jc = Math.min(m + jku, n) - 1; jc >= (1 - jkl); jc--) {
                             extra[0] = 0.0;
-                            angle = 2.0 * Math.PI * dlarnd(1, iseed);
-                            c[0] = Math.cos(angle);
-                            s[0] = Math.sin(angle);
+                            extra[1] = 0.0;
+                            angle = 2.0 * Math.PI * ge.dlarnd(1, iseed);
+                            result = zlarnd(5, iseed);
+                            var = Math.cos(angle);
+                            c[0] = var*result[0];
+                            c[1] = var*result[1];
+                            result = zlarnd(5, iseed);
+                            var = Math.sin(angle);
+                            s[0] = var * result[0];
+                            s[1] = var * result[1];
                             irow = Math.max(1, jc - jku + 1);
 
                             if (jc > 0) {
                                 il = Math.min(m, jc + jkl + 1) + 1 - irow;
-                                length = lda - (irow - (iskew * jc) + ioffst) + 1 + (lda * (n - jc));
-                                ap = new double[length];
+                                length = ilda - (irow - (iskew * jc) + ioffst) + 1 + (ilda * (n - jc));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = irow - (iskew * jc) + ioffst - 1; i < lda; i++) {
-                                    ap[index++] = A[i][jc - 1];
+                                for (i = irow - (iskew * jc) + ioffst - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][jc - 1][0];
+                                    ap[index++][1] = A[i][jc - 1][1];
                                 }
 
                                 for (j = jc; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(false, false, (jc + jkl) < m, il, c[0], s[0], ap, ilda, dummy, extra);
+                                zlarot(false, false, (jc + jkl) < m, il, c, s, ap, ilda, dummy, extra);
                                 index = 0;
 
-                                for (i = irow - (iskew * jc) + ioffst - 1; i < lda; i++) {
-                                    A[i][jc - 1] = ap[index++];
+                                for (i = irow - (iskew * jc) + ioffst - 1; i < ilda; i++) {
+                                    A[i][jc - 1][0] = ap[index][0];
+                                    A[i][jc - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = jc; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
                             } // if (jc > 0)
@@ -1814,73 +1876,95 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                 ilextr = ic > 0;
 
                                 if (ilextr) {
-                                    dlartg(A[jch - (iskew * ic) + ioffst - 1][ic - 1], extra[0], c, s, dummy);
+                                    zlartg(A[jch - (iskew * ic) + ioffst - 1][ic - 1], extra, realc, s, dummy);
+                                    dummy = zlarnd(5, iseed);
+                                    c[0] = realc[0] * dummy[0];
+                                    c[1] = realc[0] * dummy[1];
+                                    zmlt(s[0], s[1], dummy[0], dummy[1], cr, ci);
+                                    s[0] = cr[0];
+                                    s[1] = ci[0];
                                 } // if (ilextr)
 
                                 ic = Math.max(1, ic);
                                 icol = Math.min(n - 1, jch + jku);
                                 iltemp = (jch + jku) < n;
                                 temp[0] = 0.0;
-                                length = lda - (jch - (iskew * ic) + ioffst) + 1 + (lda * (n - ic));
-                                ap = new double[length];
+                                temp[1] = 0.0;
+                                length = ilda - (jch - (iskew * ic) + ioffst) + 1 + (ilda * (n - ic));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = jch - (iskew * ic) + ioffst - 1; i < lda; i++) {
-                                    ap[index++] = A[i][ic - 1];
+                                for (i = jch - (iskew * ic) + ioffst - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][ic - 1][0];
+                                    ap[index++][1] = A[i][ic - 1][1];
                                 }
 
                                 for (j = ic; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(true, ilextr, iltemp, icol + 2 - ic, c[0], s[0], ap, ilda, extra, temp);
+                                zlarot(true, ilextr, iltemp, icol + 2 - ic, c, s, ap, ilda, extra, temp);
                                 index = 0;
 
                                 for (i = jch - (iskew * ic) + ioffst - 1; i < lda; i++) {
-                                    A[i][ic - 1] = ap[index++];
+                                    A[i][ic - 1][0] = ap[index][0];
+                                    A[i][ic - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = ic; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
 
                                 if (iltemp) {
-                                    dlartg(A[jch - (iskew * icol) + ioffst - 1][icol - 1], temp[0], c, s, dummy);
+                                    zlartg(A[jch - (iskew * icol) + ioffst - 1][icol - 1], temp, realc, s, dummy);
+                                    dummy = zlarnd(5, iseed);
+                                    c[0] = realc[0] * dummy[0];
+                                    c[1] = realc[0] * dummy[1];
+                                    zmlt(s[0], s[1], dummy[0], dummy[1], cr, ci);
+                                    s[0] = cr[0];
+                                    s[1] = ci[0];
                                     il = Math.min(iendch, jch + jkl + jku) + 2 - jch;
                                     extra[0] = 0.0;
-                                    length = lda - (jch - (iskew * icol) + ioffst) + 1 + (lda * (n - icol));
-                                    ap = new double[length];
+                                    extra[1] = 0.0;
+                                    length = ilda - (jch - (iskew * icol) + ioffst) + 1 + (ilda * (n - icol));
+                                    ap = new double[length][2];
                                     index = 0;
 
-                                    for (i = jch - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                        ap[index++] = A[i][icol - 1];
+                                    for (i = jch - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                        ap[index][0] = A[i][icol - 1][0];
+                                        ap[index++][1] = A[i][icol - 1][1];
                                     }
 
                                     for (j = icol; j < n; j++) {
 
-                                        for (i = 0; i < lda; i++) {
-                                            ap[index++] = A[i][j];
+                                        for (i = 0; i < ilda; i++) {
+                                            ap[index][0] = A[i][j][0];
+                                            ap[index++][1] = A[i][j][1];
                                         }
                                     }
 
-                                    dlarot(false, true, (jch + jkl + jku) <= iendch, il, c[0], s[0], ap, ilda, temp,
+                                    zlarot(false, true, (jch + jkl + jku) <= iendch, il, c, s, ap, ilda, temp,
                                             extra);
                                     index = 0;
 
-                                    for (i = jch - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                        A[i][icol - 1] = ap[index++];
+                                    for (i = jch - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                        A[i][icol - 1][0] = ap[index][0];
+                                        A[i][icol - 1][1] = ap[index++][1];
                                     }
 
                                     for (j = icol; j < n; j++) {
 
-                                        for (i = 0; i < lda; i++) {
-                                            A[i][j] = ap[index++];
+                                        for (i = 0; i < ilda; i++) {
+                                            A[i][j][0] = ap[index][0];
+                                            A[i][j][1] = ap[index++][1];
                                         }
                                     }
 
@@ -1901,39 +1985,50 @@ public class ComplexLinearEquations implements java.io.Serializable {
 
                         for (jr = Math.min(n + jkl, m) - 1; jr >= (1 - jku); jr--) {
                             extra[0] = 0.0;
-                            angle = 2.0 * Math.PI * dlarnd(1, iseed);
-                            c[0] = Math.cos(angle);
-                            s[0] = Math.sin(angle);
+                            extra[1] = 0.0;
+                            angle = 2.0 * Math.PI * ge.dlarnd(1, iseed);
+                            result = zlarnd(5, iseed);
+                            var = Math.cos(angle);
+                            c[0] = var*result[0];
+                            c[1] = var*result[1];
+                            result = zlarnd(5, iseed);
+                            var = Math.sin(angle);
+                            s[0] = var * result[0];
+                            s[1] = var * result[1];
                             icol = Math.max(1, jr - jkl + 1);
 
                             if (jr > 0) {
                                 il = Math.min(n, jr + jku + 1) + 1 - icol;
-                                length = lda - (jr - (iskew * icol) + ioffst) + 1 + (lda * (n - icol));
-                                ap = new double[length];
+                                length = ilda - (jr - (iskew * icol) + ioffst) + 1 + (ilda * (n - icol));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = jr - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                    ap[index++] = A[i][icol - 1];
+                                for (i = jr - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][icol - 1][0];
+                                    ap[index++][1] = A[i][icol-1][1];
                                 }
 
                                 for (j = icol; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(true, false, (jr + jku) < n, il, c[0], s[0], ap, ilda, dummy, extra);
+                                zlarot(true, false, (jr + jku) < n, il, c, s, ap, ilda, dummy, extra);
                                 index = 0;
 
-                                for (i = jr - (iskew * icol) + ioffst - 1; i < lda; i++) {
-                                    A[i][icol - 1] = ap[index++];
+                                for (i = jr - (iskew * icol) + ioffst - 1; i < ilda; i++) {
+                                    A[i][icol - 1][0] = ap[index][0];
+                                    A[i][icol - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = icol; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
                             } // if (jr > 0)
@@ -1945,73 +2040,95 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                 ilextr = ir > 0;
 
                                 if (ilextr) {
-                                    dlartg(A[ir - (iskew * jch) + ioffst - 1][jch - 1], extra[0], c, s, dummy);
+                                    zlartg(A[ir - (iskew * jch) + ioffst - 1][jch - 1], extra, realc, s, dummy);
+                                    dummy = zlarnd(5, iseed);
+                                    c[0] = realc[0] * dummy[0];
+                                    c[1] = realc[0] * dummy[1];
+                                    zmlt(s[0], s[1], dummy[0], dummy[1], cr, ci);
+                                    s[0] = cr[0];
+                                    s[1] = ci[0];
                                 } // if (ilextr)
 
                                 ir = Math.max(1, ir);
                                 irow = Math.min(m - 1, jch + jkl);
                                 iltemp = (jch + jkl) < m;
                                 temp[0] = 0.0;
-                                length = lda - (ir - (iskew * jch) + ioffst) + 1 + (lda * (n - jch));
-                                ap = new double[length];
+                                temp[1] = 0.0;
+                                length = ilda - (ir - (iskew * jch) + ioffst) + 1 + (ilda * (n - jch));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = ir - (iskew * jch) + ioffst - 1; i < lda; i++) {
-                                    ap[index++] = A[i][jch - 1];
+                                for (i = ir - (iskew * jch) + ioffst - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][jch - 1][0];
+                                    ap[index++][1] = A[i][jch - 1][1];
                                 }
 
                                 for (j = jch; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(false, ilextr, iltemp, irow + 2 - ir, c[0], s[0], ap, ilda, extra, temp);
+                                zlarot(false, ilextr, iltemp, irow + 2 - ir, c, s, ap, ilda, extra, temp);
                                 index = 0;
 
-                                for (i = ir - (iskew * jch) + ioffst - 1; i < lda; i++) {
-                                    A[i][jch - 1] = ap[index++];
+                                for (i = ir - (iskew * jch) + ioffst - 1; i < ilda; i++) {
+                                    A[i][jch - 1][0] = ap[index][0];
+                                    A[i][jch - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = jch; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
 
                                 if (iltemp) {
-                                    dlartg(A[irow - (iskew * jch) + ioffst - 1][jch - 1], temp[0], c, s, dummy);
+                                    zlartg(A[irow - (iskew * jch) + ioffst - 1][jch - 1], temp, realc, s, dummy);
+                                    dummy = zlarnd(5, iseed);
+                                    c[0] = realc[0] * dummy[0];
+                                    c[1] = realc[0] * dummy[1];
+                                    zmlt(s[0], s[1], dummy[0], dummy[1], cr, ci);
+                                    s[0] = cr[0];
+                                    s[1] = ci[0];
                                     il = Math.min(iendch, jch + jkl + jku) + 2 - jch;
                                     extra[0] = 0.0;
-                                    length = lda - (irow - (iskew * jch) + ioffst) + 1 + (lda * (n - jch));
-                                    ap = new double[length];
+                                    extra[1] = 0.0;
+                                    length = ilda - (irow - (iskew * jch) + ioffst) + 1 + (ilda * (n - jch));
+                                    ap = new double[length][2];
                                     index = 0;
 
-                                    for (i = irow - (iskew * jch) + ioffst - 1; i < lda; i++) {
-                                        ap[index++] = A[i][jch - 1];
+                                    for (i = irow - (iskew * jch) + ioffst - 1; i < ilda; i++) {
+                                        ap[index][0] = A[i][jch - 1][0];
+                                        ap[index++][1] = A[i][jch - 1][1];
                                     }
 
                                     for (j = jch; j < n; j++) {
 
-                                        for (i = 0; i < lda; i++) {
-                                            ap[index++] = A[i][j];
+                                        for (i = 0; i < ilda; i++) {
+                                            ap[index][0] = A[i][j][0];
+                                            ap[index++][1] = A[i][j][1];
                                         }
                                     }
 
-                                    dlarot(true, true, (jch + jkl + jku) <= iendch, il, c[0], s[0], ap, ilda, temp,
+                                    zlarot(true, true, (jch + jkl + jku) <= iendch, il, c, s, ap, ilda, temp,
                                             extra);
                                     index = 0;
 
-                                    for (i = irow - (iskew * jch) + ioffst - 1; i < lda; i++) {
-                                        A[i][jch - 1] = ap[index++];
+                                    for (i = irow - (iskew * jch) + ioffst - 1; i < ilda; i++) {
+                                        A[i][jch - 1][0] = ap[index][0];
+                                        A[i][jch - 1][1] = ap[index++][1];
                                     }
 
                                     for (j = jch; j < n; j++) {
 
-                                        for (i = 0; i < lda; i++) {
-                                            A[i][j] = ap[index++];
+                                        for (i = 0; i < ilda; i++) {
+                                            A[i][j][0] = ap[index][0];
+                                            A[i][j][1] = ap[index++][1];
                                         }
                                     }
 
@@ -2025,6 +2142,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
             else { // isym != 1
 
                 // Symmetric -- A = U D U'
+            	// Hermitian -- A = U D U*
                 ipackg = ipack;
                 ioffg = ioffst;
 
@@ -2037,19 +2155,11 @@ public class ComplexLinearEquations implements java.io.Serializable {
                     } else {
                         ipackg = 1;
                     }
-
-                    if (ipack > 4) {
-
-                        for (i = 0; i < mnmin; i++) {
-                            A[ -iskew + ioffg][i] = D[i];
-                        }
-                    } // if (ipack > 4)
-                    else { // ipack <= 4
-
-                        for (i = 0; i < mnmin; i++) {
-                            A[i - iskew + ioffg][i] = D[i];
-                        }
-                    } // else ipack <= 4
+                    
+                    for (i = 0; i < mnmin; i++) {
+                        A[(1-iskew)*i + ioffg][i][0] = D[i];
+                        A[(1-iskew)*i + ioffg][i][1] = 0.0;
+                    }
 
                     for (k = 1; k <= uub; k++) {
 
@@ -2057,65 +2167,94 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             irow = Math.max(1, jc - k);
                             il = Math.min(jc + 1, k + 2);
                             extra[0] = 0.0;
-                            temp[0] = A[jc - (iskew * (jc + 1)) + ioffg - 1][jc];
-                            angle = 2.0 * Math.PI * dlarnd(1, iseed);
-                            c[0] = Math.cos(angle);
-                            s[0] = Math.sin(angle);
-                            length = lda - (irow - (iskew * jc) + ioffg) + 1 + (lda * (n - jc));
-                            ap = new double[length];
+                            extra[1] = 0.0;
+                            temp[0] = A[jc - (iskew * (jc + 1)) + ioffg - 1][jc][0];
+                            temp[1] = A[jc - (iskew * (jc + 1)) + ioffg - 1][jc][1];
+                            angle = 2.0 * Math.PI * ge.dlarnd(1, iseed);
+                            result = zlarnd(5, iseed);
+                            var = Math.cos(angle);
+                            c[0] = var*result[0];
+                            c[1] = var*result[1];
+                            result = zlarnd(5, iseed);
+                            var = Math.sin(angle);
+                            s[0] = var * result[0];
+                            s[1] = var * result[1];
+                            if (zsym) {
+                            	ct[0] = c[0];
+                            	ct[1] = c[1];
+                            	st[0] = s[0];
+                            	st[1] = s[1];
+                            }
+                            else {
+                            	temp[1] = -temp[1];
+                            	ct[0] = c[0];
+                            	ct[1] = -c[1];
+                            	st[0] = s[0];
+                            	st[1] = -s[1];
+                            } 
+                            length = ilda - (irow - (iskew * jc) + ioffg) + 1 + (ilda * (n - jc));
+                            ap = new double[length][2];
                             index = 0;
 
-                            for (i = irow - (iskew * jc) + ioffg - 1; i < lda; i++) {
-                                ap[index++] = A[i][jc - 1];
+                            for (i = irow - (iskew * jc) + ioffg - 1; i < ilda; i++) {
+                                ap[index][0] = A[i][jc - 1][0];
+                                ap[index++][1] = A[i][jc - 1][1];
                             }
 
                             for (j = jc; j < n; j++) {
 
-                                for (i = 0; i < lda; i++) {
-                                    ap[index++] = A[i][j];
+                                for (i = 0; i < ilda; i++) {
+                                    ap[index][0] = A[i][j][0];
+                                    ap[index++][1] = A[i][j][1];
                                 }
                             }
 
-                            dlarot(false, jc > k, true, il, c[0], s[0], ap, ilda, extra, temp);
+                            zlarot(false, jc > k, true, il, c, s, ap, ilda, extra, temp);
                             index = 0;
 
-                            for (i = irow - (iskew * jc) + ioffg - 1; i < lda; i++) {
-                                A[i][jc - 1] = ap[index++];
+                            for (i = irow - (iskew * jc) + ioffg - 1; i < ilda; i++) {
+                                A[i][jc - 1][0] = ap[index][0];
+                                A[i][jc - 1][1] = ap[index++][1];
                             }
 
                             for (j = jc; j < n; j++) {
 
-                                for (i = 0; i < lda; i++) {
-                                    A[i][j] = ap[index++];
+                                for (i = 0; i < ilda; i++) {
+                                    A[i][j][0] = ap[index][0];
+                                    A[i][j][1] = ap[index++][1];
                                 }
                             }
 
-                            length = lda - ( ( (1 - iskew) * jc) + ioffg) + 1 + (lda * (n - jc));
-                            ap = new double[length];
+                            length = ilda - ( ( (1 - iskew) * jc) + ioffg) + 1 + (ilda * (n - jc));
+                            ap = new double[length][2];
                             index = 0;
 
-                            for (i = ( (1 - iskew) * jc) + ioffg - 1; i < lda; i++) {
-                                ap[index++] = A[i][jc - 1];
+                            for (i = ( (1 - iskew) * jc) + ioffg - 1; i < ilda; i++) {
+                                ap[index][0] = A[i][jc - 1][0];
+                                ap[index++][1] = A[i][jc - 1][1];
                             }
 
                             for (j = jc; j < n; j++) {
 
-                                for (i = 0; i < lda; i++) {
-                                    ap[index++] = A[i][j];
+                                for (i = 0; i < ilda; i++) {
+                                    ap[index][0] = A[i][j][0];
+                                    ap[index++][1] = A[i][j][1];
                                 }
                             }
 
-                            dlarot(true, true, false, Math.min(k, n - jc) + 1, c[0], s[0], ap, ilda, temp, dummy);
+                            zlarot(true, true, false, Math.min(k, n - jc) + 1, ct, st, ap, ilda, temp, dummy);
                             index = 0;
 
-                            for (i = ( (1 - iskew) * jc) + ioffg - 1; i < lda; i++) {
-                                A[i][jc - 1] = ap[index++];
+                            for (i = ( (1 - iskew) * jc) + ioffg - 1; i < ilda; i++) {
+                                A[i][jc - 1][0] = ap[index][0];
+                                A[i][jc - 1][1] = ap[index++][1];
                             }
 
                             for (j = jc; j < n; j++) {
 
-                                for (i = 0; i < lda; i++) {
-                                    A[i][j] = ap[index++];
+                                for (i = 0; i < ilda; i++) {
+                                    A[i][j][0] = ap[index][0];
+                                    A[i][j][1] = ap[index++][1];
                                 }
                             }
 
@@ -2123,66 +2262,95 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             icol = jc;
 
                             for (jch = jc - k; jch >= 1; jch -= k) {
-                                dlartg(A[jch - (iskew * (icol + 1)) + ioffg][icol], extra[0], c, s, dummy);
-                                temp[0] = A[jch - (iskew * (jch + 1)) + ioffg - 1][jch];
-                                length = lda - ( ( (1 - iskew) * jch) + ioffg) + 1 + (lda * (n - jch));
-                                ap = new double[length];
+                                zlartg(A[jch - (iskew * (icol + 1)) + ioffg][icol], extra, realc, s, dummy);
+                                dummy = zlarnd(5, iseed);
+                                c[0] = realc[0] * dummy[0];
+                                c[1] = -realc[0] * dummy[1];
+                                zmlt(-s[0], -s[1], dummy[0], dummy[1], cr, ci);
+                                s[0] = cr[0];
+                                s[1] = -ci[0];
+                                temp[0] = A[jch - (iskew * (jch + 1)) + ioffg - 1][jch][0];
+                                temp[1] = A[jch - (iskew * (jch + 1)) + ioffg - 1][jch][1];
+                                if (zsym) {
+                                	ct[0] = c[0];
+                                	ct[1] = c[1];
+                                	st[0] = s[0];
+                                	st[1] = s[1];
+                                }
+                                else {
+                                	temp[1] = -temp[1];
+                                	ct[0] = c[0];
+                                	ct[1] = -c[1];
+                                	st[0] = s[0];
+                                	st[1] = -s[1];
+                                } 
+                                length = ilda - ( ( (1 - iskew) * jch) + ioffg) + 1 + (ilda * (n - jch));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = ( (1 - iskew) * jch) + ioffg - 1; i < lda; i++) {
-                                    ap[index++] = A[i][jch - 1];
+                                for (i = ( (1 - iskew) * jch) + ioffg - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][jch - 1][0];
+                                    ap[index++][1] = A[i][jch - 1][1];
                                 }
 
                                 for (j = jch; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(true, true, true, k + 2, c[0], -s[0], ap, ilda, temp, extra);
+                                zlarot(true, true, true, k + 2, c, s, ap, ilda, temp, extra);
                                 index = 0;
 
-                                for (i = ( (1 - iskew) * jch) + ioffg - 1; i < lda; i++) {
-                                    A[i][jch - 1] = ap[index++];
+                                for (i = ( (1 - iskew) * jch) + ioffg - 1; i < ilda; i++) {
+                                    A[i][jch - 1][0] = ap[index][0];
+                                    A[i][jch - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = jch; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
 
                                 irow = Math.max(1, jch - k);
                                 il = Math.min(jch + 1, k + 2);
                                 extra[0] = 0.0;
-                                length = lda - (irow - (iskew * jch) + ioffg) + 1 + (lda * (n - jch));
-                                ap = new double[length];
+                                extra[1] = 0.0;
+                                length = ilda - (irow - (iskew * jch) + ioffg) + 1 + (ilda * (n - jch));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = irow - (iskew * jch) + ioffg - 1; i < lda; i++) {
-                                    ap[index++] = A[i][jch - 1];
+                                for (i = irow - (iskew * jch) + ioffg - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][jch - 1][0];
+                                    ap[index++][1] = A[i][jch - 1][1];
                                 }
 
                                 for (j = jch; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(false, jch > k, true, il, c[0], -s[0], ap, ilda, extra, temp);
+                                zlarot(false, jch > k, true, il, ct, st, ap, ilda, extra, temp);
                                 index = 0;
 
-                                for (i = irow - (iskew * jch) + ioffg - 1; i < lda; i++) {
-                                    A[i][jch - 1] = ap[index++];
+                                for (i = irow - (iskew * jch) + ioffg - 1; i < ilda; i++) {
+                                    A[i][jch - 1][0] = ap[index][0];
+                                    A[i][jch - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = jch; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
 
@@ -2198,8 +2366,17 @@ public class ComplexLinearEquations implements java.io.Serializable {
                         for (jc = 1; jc <= n; jc++) {
                             irow = ioffst - (iskew * jc);
 
-                            for (jr = jc; jr <= Math.min(n, jc + uub); jr++) {
-                                A[jr + irow - 1][jc - 1] = A[jc - (iskew * jr) + ioffg - 1][jr - 1];
+                            if (zsym) {
+	                            for (jr = jc; jr <= Math.min(n, jc + uub); jr++) {
+	                                A[jr + irow - 1][jc - 1][0] = A[jc - (iskew * jr) + ioffg - 1][jr - 1][0];
+	                                A[jr + irow - 1][jc - 1][1] = A[jc - (iskew * jr) + ioffg - 1][jr - 1][1];
+	                            }
+                            } // if (zsym)
+                            else {
+                            	for (jr = jc; jr <= Math.min(n, jc + uub); jr++) {
+	                                A[jr + irow - 1][jc - 1][0] = A[jc - (iskew * jr) + ioffg - 1][jr - 1][0];
+	                                A[jr + irow - 1][jc - 1][1] = -A[jc - (iskew * jr) + ioffg - 1][jr - 1][1];
+	                            }	
                             }
                         } // for (jc = 1; jc <= n; jc++)
 
@@ -2208,7 +2385,8 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             for (jc = n - uub + 1; jc <= n; jc++) {
 
                                 for (jr = n + 2 - jc; jr <= (uub + 1); jr++) {
-                                    A[jr - 1][jc - 1] = 0.0;
+                                    A[jr - 1][jc - 1][0] = 0.0;
+                                    A[jr - 1][jc - 1][1] = 0.0;
                                 }
                             }
                         } // if (ipack == 5)
@@ -2233,85 +2411,106 @@ public class ComplexLinearEquations implements java.io.Serializable {
                     else { // ipack < 5
                         ipackg = 2;
                     } // else ipack < 5
-
-                    if (ipack > 4) {
-
-                        for (i = 0; i < mnmin; i++) {
-                            A[ -iskew + ioffg][i] = D[i];
-                        }
-                    } // if (ipack > 4)
-                    else { // ipack <= 4
-
-                        for (i = 0; i < mnmin; i++) {
-                            A[i - iskew + ioffg][i] = D[i];
-                        }
-                    } // else ipack <= 4
+                    
+                    for (i = 0; i < mnmin; i++) {
+                        A[(1-iskew)*i + ioffg][i][0] = D[i];
+                        A[(1-iskew)*i + ioffg][i][1] = 0.0;
+                    }
 
                     for (k = 1; k <= uub; k++) {
 
                         for (jc = n - 1; jc >= 1; jc--) {
                             il = Math.min(n + 1 - jc, k + 2);
                             extra[0] = 0.0;
-                            temp[0] = A[ ( (1 - iskew) * jc) + ioffg][jc - 1];
-                            angle = 2.0 * Math.PI * dlarnd(1, iseed);
-                            c[0] = Math.cos(angle);
-                            s[0] = -Math.sin(angle);
-                            length = lda - ( ( (1 - iskew) * jc) + ioffg) + 1 + (lda * (n - jc));
-                            ap = new double[length];
+                            extra[1] = 0.0;
+                            temp[0] = A[ ( (1 - iskew) * jc) + ioffg][jc - 1][0];
+                            temp[1] = A[ ( (1 - iskew) * jc) + ioffg][jc - 1][1];
+                            angle = 2.0 * Math.PI * ge.dlarnd(1, iseed);
+                            result = zlarnd(5, iseed);
+                            var = Math.cos(angle);
+                            c[0] = var*result[0];
+                            c[1] = var*result[1];
+                            result = zlarnd(5, iseed);
+                            var = Math.sin(angle);
+                            s[0] = var * result[0];
+                            s[1] = var * result[1];
+                            if (zsym) {
+                            	ct[0] = c[0];
+                            	ct[1] = c[1];
+                            	st[0] = s[0];
+                            	st[1] = s[1];
+                            }
+                            else {
+                            	temp[1] = -temp[1];
+                            	ct[0] = c[0];
+                            	ct[1] = -c[1];
+                            	st[0] = s[0];
+                            	st[1] = -s[1];
+                            } 
+                            length = ilda - ( ( (1 - iskew) * jc) + ioffg) + 1 + (ilda * (n - jc));
+                            ap = new double[length][2];
                             index = 0;
 
-                            for (i = ( (1 - iskew) * jc) + ioffg - 1; i < lda; i++) {
-                                ap[index++] = A[i][jc - 1];
+                            for (i = ( (1 - iskew) * jc) + ioffg - 1; i < ilda; i++) {
+                                ap[index][0] = A[i][jc - 1][0];
+                                ap[index++][1] = A[i][jc - 1][1];
                             }
 
                             for (j = jc; j < n; j++) {
 
-                                for (i = 0; i < lda; i++) {
-                                    ap[index++] = A[i][j];
+                                for (i = 0; i < ilda; i++) {
+                                    ap[index][0] = A[i][j][0];
+                                    ap[index++][1] = A[i][j][1];
                                 }
                             }
 
-                            dlarot(false, true, (n - jc) > k, il, c[0], s[0], ap, ilda, temp, extra);
+                            zlarot(false, true, (n - jc) > k, il, c, s, ap, ilda, temp, extra);
                             index = 0;
 
-                            for (i = ( (1 - iskew) * jc) + ioffg - 1; i < lda; i++) {
-                                A[i][jc - 1] = ap[index++];
+                            for (i = ( (1 - iskew) * jc) + ioffg - 1; i < ilda; i++) {
+                                A[i][jc - 1][0] = ap[index][0];
+                                A[i][jc - 1][1] = ap[index++][1];
                             }
 
                             for (j = jc; j < n; j++) {
 
-                                for (i = 0; i < lda; i++) {
-                                    A[i][j] = ap[index++];
+                                for (i = 0; i < ilda; i++) {
+                                    A[i][j][0] = ap[index][0];
+                                    A[i][j][1] = ap[index++][1];
                                 }
                             }
 
                             icol = Math.max(1, jc - k + 1);
-                            length = lda - (jc - (iskew * icol) + ioffg) + 1 + (lda * (n - icol));
-                            ap = new double[length];
+                            length = ilda - (jc - (iskew * icol) + ioffg) + 1 + (ilda * (n - icol));
+                            ap = new double[length][2];
                             index = 0;
 
-                            for (i = jc - (iskew * icol) + ioffg - 1; i < lda; i++) {
-                                ap[index++] = A[i][icol - 1];
+                            for (i = jc - (iskew * icol) + ioffg - 1; i < ilda; i++) {
+                                ap[index][0] = A[i][icol - 1][0];
+                                ap[index++][1] = A[i][icol - 1][1];
                             }
 
                             for (j = icol; j < n; j++) {
 
-                                for (i = 0; i < lda; i++) {
-                                    ap[index++] = A[i][j];
+                                for (i = 0; i < ilda; i++) {
+                                    ap[index][0] = A[i][j][0];
+                                    ap[index++][1] = A[i][j][1];
                                 }
                             }
 
-                            dlarot(true, false, true, jc + 2 - icol, c[0], s[0], ap, ilda, dummy, temp);
+                            zlarot(true, false, true, jc + 2 - icol, ct, st, ap, ilda, dummy, temp);
                             index = 0;
 
-                            for (i = jc - (iskew * icol) + ioffg - 1; i < lda; i++) {
-                                A[i][icol - 1] = ap[index++];
+                            for (i = jc - (iskew * icol) + ioffg - 1; i < ilda; i++) {
+                                A[i][icol - 1][0] = ap[index][0];
+                                A[i][icol - 1][1] = ap[index++][1];
                             }
 
                             for (j = icol; j < n; j++) {
 
-                                for (i = 0; i < lda; i++) {
-                                    A[i][j] = ap[index++];
+                                for (i = 0; i < ilda; i++) {
+                                    A[i][j][0] = ap[index][0];
+                                    A[i][j][1] = ap[index++][1];
                                 }
                             }
 
@@ -2319,65 +2518,94 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             icol = jc;
 
                             for (jch = jc + k; jch <= (n - 1); jch += k) {
-                                dlartg(A[jch - (iskew * icol) + ioffg - 1][icol - 1], extra[0], c, s, dummy);
-                                temp[0] = A[ ( (1 - iskew) * jch) + ioffg][jch - 1];
-                                length = lda - (jch - (iskew * icol) + ioffg) + 1 + (lda * (n - icol));
-                                ap = new double[length];
+                                zlartg(A[jch - (iskew * icol) + ioffg - 1][icol - 1], extra, realc, s, dummy);
+                                dummy = zlarnd(5, iseed);
+                                c[0] = realc[0] * dummy[0];
+                                c[1] = realc[0] * dummy[1];
+                                zmlt(s[0], s[1], dummy[0], dummy[1], cr, ci);
+                                s[0] = cr[0];
+                                s[1] = ci[0];
+                                temp[0] = A[ ( (1 - iskew) * jch) + ioffg][jch - 1][0];
+                                temp[1] = A[ ( (1 - iskew) * jch) + ioffg][jch - 1][1];
+                                if (zsym) {
+                                	ct[0] = c[0];
+                                	ct[1] = c[1];
+                                	st[0] = s[0];
+                                	st[1] = s[1];
+                                }
+                                else {
+                                	temp[1] = -temp[1];
+                                	ct[0] = c[0];
+                                	ct[1] = -c[1];
+                                	st[0] = s[0];
+                                	st[1] = -s[1];
+                                } 
+                                length = ilda - (jch - (iskew * icol) + ioffg) + 1 + (ilda * (n - icol));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = jch - (iskew * icol) + ioffg - 1; i < lda; i++) {
-                                    ap[index++] = A[i][icol - 1];
+                                for (i = jch - (iskew * icol) + ioffg - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][icol - 1][0];
+                                    ap[index++][1] = A[i][icol - 1][1];
                                 }
 
                                 for (j = icol; j < n; j++) {
 
                                     for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(true, true, true, k + 2, c[0], s[0], ap, ilda, extra, temp);
+                                zlarot(true, true, true, k + 2, c, s, ap, ilda, extra, temp);
                                 index = 0;
 
-                                for (i = jch - (iskew * icol) + ioffg - 1; i < lda; i++) {
-                                    A[i][icol - 1] = ap[index++];
+                                for (i = jch - (iskew * icol) + ioffg - 1; i < ilda; i++) {
+                                    A[i][icol - 1][0] = ap[index][0];
+                                    A[i][icol - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = icol; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
 
                                 il = Math.min(n + 1 - jch, k + 2);
                                 extra[0] = 0.0;
-                                length = lda - ( ( (1 - iskew) * jch) + ioffg) + 1 + (lda * (n - jch));
-                                ap = new double[length];
+                                extra[1] = 0.0;
+                                length = ilda - ( ( (1 - iskew) * jch) + ioffg) + 1 + (ilda * (n - jch));
+                                ap = new double[length][2];
                                 index = 0;
 
-                                for (i = ( (1 - iskew) * jch) + ioffg - 1; i < lda; i++) {
-                                    ap[index++] = A[i][jch - 1];
+                                for (i = ( (1 - iskew) * jch) + ioffg - 1; i < ilda; i++) {
+                                    ap[index][0] = A[i][jch - 1][0];
+                                    ap[index++][1] = A[i][jch - 1][1];
                                 }
 
                                 for (j = jch; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        ap[index++] = A[i][j];
+                                    for (i = 0; i < ilda; i++) {
+                                        ap[index][0] = A[i][j][0];
+                                        ap[index++][1] = A[i][j][1];
                                     }
                                 }
 
-                                dlarot(false, true, (n - jch) > k, il, c[0], s[0], ap, ilda, temp, extra);
+                                zlarot(false, true, (n - jch) > k, il, ct, st, ap, ilda, temp, extra);
                                 index = 0;
 
-                                for (i = ( (1 - iskew) * jch) + ioffg - 1; i < lda; i++) {
-                                    A[i][jch - 1] = ap[index++];
+                                for (i = ( (1 - iskew) * jch) + ioffg - 1; i < ilda; i++) {
+                                    A[i][jch - 1][0] = ap[index][0];
+                                    A[i][jch - 1][1] = ap[index++][1];
                                 }
 
                                 for (j = jch; j < n; j++) {
 
-                                    for (i = 0; i < lda; i++) {
-                                        A[i][j] = ap[index++];
+                                    for (i = 0; i < ilda; i++) {
+                                        A[i][j][0] = ap[index][0];
+                                        A[i][j][1] = ap[index++][1];
                                     }
                                 }
 
@@ -2392,10 +2620,19 @@ public class ComplexLinearEquations implements java.io.Serializable {
 
                         for (jc = n; jc >= 1; jc--) {
                             irow = ioffst - (iskew * jc);
-
-                            for (jr = jc; jr >= Math.max(1, jc - uub); jr--) {
-                                A[jr + irow - 1][jc - 1] = A[jc - (iskew * jr) + ioffg - 1][jr - 1];
-                            }
+                            
+                            if (zsym) {
+	                            for (jr = jc; jr >= Math.max(1, jc - uub); jr--) {
+	                                A[jr + irow - 1][jc - 1][0] = A[jc - (iskew * jr) + ioffg - 1][jr - 1][0];
+	                                A[jr + irow - 1][jc - 1][1] = A[jc - (iskew * jr) + ioffg - 1][jr - 1][1];
+	                            }
+                            } // if (zsym)
+                            else {
+                            	for (jr = jc; jr >= Math.max(1, jc - uub); jr--) {
+	                                A[jr + irow - 1][jc - 1][0] = A[jc - (iskew * jr) + ioffg - 1][jr - 1][0];
+	                                A[jr + irow - 1][jc - 1][1] = -A[jc - (iskew * jr) + ioffg - 1][jr - 1][1];
+	                            }	
+                            } // else
                         } // for (jc = n; jc >= 1; jc--)
 
                         if (ipack == 6) {
@@ -2403,7 +2640,8 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             for (jc = 1; jc <= uub; jc++) {
 
                                 for (jr = 1; jr <= (uub + 1 - jc); jr++) {
-                                    A[jr - 1][jc - 1] = 0.0;
+                                    A[jr - 1][jc - 1][0] = 0.0;
+                                    A[jr - 1][jc - 1][1] = 0.0;
                                 }
                             }
                         } // if (ipack == 6)
@@ -2416,6 +2654,14 @@ public class ComplexLinearEquations implements java.io.Serializable {
                         } // else ipackg != 5
                     } // if ((ipack != ipackg) && (ipack != 4))
                 } // else !topdwn
+                
+                // Ensure that the diagonal is real if Hermitian
+                if (!zsym) {
+                	for (jc = 1; jc <= n; jc++) {
+                	    irow = ioffst + (1 - iskew)*jc;
+                	    A[irow - 1][jc - 1][1] = 0.0;
+                	} // for (jc = 1; jc <= n; jc++)
+                } // if (!zsym)
             } // else isym != 1
         } // else if (givens)
         else {
@@ -2427,7 +2673,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
             if (isym == 1) {
 
                 // Non-symmetric -- A = U D V
-                dlagge(mr, nc, llb, uub, D, A, lda, iseed, work, iinfo);
+                zlagge(mr, nc, llb, uub, D, A, lda, iseed, work, iinfo);
             } // if (isym == 1)
             else { // isym != 1
 
@@ -2574,6 +2820,826 @@ public class ComplexLinearEquations implements java.io.Serializable {
 
         return;
     } // zlatms*/
+     
+     /**
+      * This is a port of version 3.7.0 LAPACK auxiliary test routine ZLAGGE Original ZLAGGE created by Univ. of Tennessee,
+      * Univ. of California Berkeley, and NAG Ltd., December, 2016 zlagge generates a complex general m by n matrix A, by
+      * pre- and post- multiplying a real diagonal matrix D with random unitary matrices: A = U*D*V. The lower and
+      * upper bandwidths may then be reduced to kl and ku by additional unitary transformations.
+      * 
+      * @param m input int The number of rows of the matrix A. m >= 0.
+      * @param n input int The number of columns of the matrix A. n >= 0.
+      * @param kl input int The number of nonzero subdiagonals within the band of A. 0 <= kl <= m-1.
+      * @param ku input int The number of nonzero superdiagonals within the band of A. 0 <= ku <= n-1.
+      * @param D input double[] of dimension (min(m,n)) The diagonal elements of the diagonal matrix D
+      * @param A output double[][][2] complex of dimension (lda,n) The generated m by n matrix A.
+      * @param lda input int The leading dimension of the array A. lda >= m.
+      * @param iseed input/output int[] of dimension 4 On entry, the seed of the random number generator; the array
+      *            elements must be between 0 and 4095, and iseed[3] must be odd. On exit, the seed is updated.
+      * @param work workspace double[][2] complex of dimension (m+n)
+      * @param info output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
+      */
+     /*public void zlagge(final int m, final int n, final int kl, final int ku, final double[] D, final double[][][] A,
+             final int lda, final int[] iseed, final double[][] work, final int[] info) {
+         int i;
+         int j;
+         int k;
+         double tau[] = new double[2];
+         double wa[] = new double[2];
+         double wb[] = new double[2];
+         double wn;
+         double[][][] B;
+         double[][] work2;
+         double[] x;
+         double ratio;
+         double cr[] = new double[1];
+         double ci[] = new double[1];
+         double cr2[] = new double[1];
+         double ci2[] = new double[1];
+         int p;
+
+         // Test the input arguments
+         info[0] = 0;
+
+         if (m < 0) {
+             info[0] = -1;
+         } else if (n < 0) {
+             info[0] = -2;
+         } else if ( (kl < 0) || (kl > (m - 1))) {
+             info[0] = -3;
+         } else if ( (ku < 0) || (ku > (n - 1))) {
+             info[0] = -4;
+         } else if (lda < Math.max(1, m)) {
+             info[0] = -7;
+         }
+
+         if (info[0] < 0) {
+             MipavUtil.displayError("Error zlagge had info[0] = " + info[0]);
+
+             return;
+         }
+
+         // Initialize A to diagonal matrix
+         for (j = 0; j < n; j++) {
+
+             for (i = 0; i < m; i++) {
+                 A[i][j][0] = 0.0;
+                 A[i][j][1] = 0.0;
+             }
+         }
+
+         for (i = 0; i < Math.min(m, n); i++) {
+             A[i][i][0] = D[i];
+         }
+         
+         // Quick exit if the user wants a diagonal matrix
+         if ((kl == 0) && (ku == 0)) {
+        	 return;
+         }
+
+         // pre- and post- multiply A by random unitary matrices
+         for (i = Math.min(m, n); i >= 1; i--) {
+
+             if (i < m) {
+
+                 // generate random reflection
+                 zlarnv(3, iseed, m - i + 1, work);
+                 wn = dznrm2(m - i + 1, work, 1);
+
+                 
+                 ratio = wn/zabs(work[0][0], work[0][1]);
+                 wa[0] = ratio * work[0][0];
+                 wa[1] = ratio * work[0][1];
+                 if (wn == 0.0) {
+                     tau[0] = 0.0;
+                     tau[1] = 0.0;
+                 } else {
+                     wb[0] = work[0][0] + wa[0];
+                     wb[1] = work[0][1] + wa[1];
+
+                     zdiv(1.0, 0.0, wb[0], wb[1], cr, ci);
+                     for (j = 0; j < (m - i); j++) {
+                    	 zmlt(cr[0], ci[0], work[j+1][0], work[j+1][1], cr2, ci2);
+                         work[j + 1][0] = cr2[0];
+                         work[j + 1][1] = ci2[0];
+                     }
+
+                     work[0][0] = 1.0;
+                     work[0][1] = 0.0;
+                     zdiv(wb[0], wb[1], wa[0], wa[1], cr, ci);
+                     tau[0] = cr[0];
+                     tau[1] = 0.0;
+                 }
+
+                 // multiply A(i-1:m-1,i-1:n-1) by random reflection from the left
+                 B = new double[m - i + 1][n - i + 1][2];
+
+                 for (j = 0; j < (m - i + 1); j++) {
+
+                     for (k = 0; k < (n - i + 1); k++) {
+                    	 for (p = 0; p < 2; p++) {
+                            B[j][k][p] = A[j + i - 1][k + i - 1][p];
+                    	 }
+                     }
+                 }
+
+                 work2 = new double[work.length - m][2];
+
+                 for (j = 0; j < (work.length - m); j++) {
+                	 for (p = 0; p < 2; p++) {
+                         work2[j][p] = work[m + j][p];
+                	 }
+                 }
+
+                 dgemv('T', m - i + 1, n - i + 1, 1.0, B, m - i + 1, work, 1, 0.0, work2, 1);
+                 dger(m - i + 1, n - i + 1, -tau, work, 1, work2, 1, B, m - i + 1);
+
+                 for (j = 0; j < (m - i + 1); j++) {
+
+                     for (k = 0; k < (n - i + 1); k++) {
+                         A[j + i - 1][k + i - 1] = B[j][k];
+                     }
+                 }
+
+                 for (j = 0; j < (work.length - m); j++) {
+                     work[m + j] = work2[j];
+                 }
+             } // if (i < m)
+
+             if (i < n) {
+
+                 // generate random reflection
+                 dlarnv(3, iseed, n - i + 1, work);
+                 wn = dnrm2(n - i + 1, work, 1);
+
+                 if (work[0] >= 0) {
+                     wa = Math.abs(wn);
+                 } else {
+                     wa = -Math.abs(wn);
+                 }
+
+                 if (wn == 0.0) {
+                     tau = 0.0;
+                 } else {
+                     wb = work[0] + wa;
+
+                     for (j = 0; j < (n - i); j++) {
+                         work[j + 1] = (1.0 / wb) * work[j + 1];
+                     }
+
+                     work[0] = 1.0;
+                     tau = wb / wa;
+                 }
+
+                 // multiply A(i-1:m-1,i-1:n-1) by random reflection from right
+                 B = new double[m - i + 1][n - i + 1];
+
+                 for (j = 0; j < (m - i + 1); j++) {
+
+                     for (k = 0; k < (n - i + 1); k++) {
+                         B[j][k] = A[j + i - 1][k + i - 1];
+                     }
+                 }
+
+                 work2 = new double[work.length - n];
+
+                 for (j = 0; j < (work.length - n); j++) {
+                     work2[j] = work[n + j];
+                 }
+
+                 dgemv('N', m - i + 1, n - i + 1, 1.0, B, m - i + 1, work, 1, 0.0, work2, 1);
+                 dger(m - i + 1, n - i + 1, -tau, work2, 1, work, 1, B, m - i + 1);
+
+                 for (j = 0; j < (m - i + 1); j++) {
+
+                     for (k = 0; k < (n - i + 1); k++) {
+                         A[j + i - 1][k + i - 1] = B[j][k];
+                     }
+                 }
+
+                 for (j = 0; j < (work.length - n); j++) {
+                     work[n + j] = work2[j];
+                 }
+             } // if (i < n)
+         } // for (i = Math.min(m,n); i >= 1; i--)
+
+         // Reduce number of subdiagonals to kl and number of superdiagonals to
+         // ku
+         for (i = 1; i <= Math.max(m - 1 - kl, n - 1 - ku); i++) {
+
+             if (kl <= ku) {
+
+                 // annihilate subdiagonal elements first (necessary if kl = 0)
+                 if (i <= Math.min(m - 1 - kl, n)) {
+
+                     // generate reflection to annihilate A(kl+i:m-1,i-1)
+                     x = new double[m - kl - i + 1];
+
+                     for (j = 0; j < (m - kl - i + 1); j++) {
+                         x[j] = A[kl + i - 1 + j][i - 1];
+                     }
+
+                     wn = dnrm2(m - kl - i + 1, x, 1);
+
+                     if (A[kl + i - 1][i - 1] >= 0) {
+                         wa = Math.abs(wn);
+                     } else {
+                         wa = -Math.abs(wn);
+                     }
+
+                     if (wn == 0.0) {
+                         tau = 0.0;
+                     } else {
+                         wb = A[kl + i - 1][i - 1] + wa;
+
+                         for (j = 0; j < (m - kl - i); j++) {
+                             A[kl + i + j][i - 1] = (1.0 / wb) * A[kl + i + j][i - 1];
+                         }
+
+                         A[kl + i - 1][i - 1] = 1.0;
+                         tau = wb / wa;
+                     }
+
+                     // apply reflection to A(kl+i-1:m-1,i:n-1) from the left
+                     B = new double[m - kl - i + 1][n - i];
+
+                     for (j = 0; j < (m - kl - i + 1); j++) {
+
+                         for (k = 0; k < (n - i); k++) {
+                             B[j][k] = A[kl + i - 1 + j][i + k];
+                         }
+                     }
+
+                     x = new double[m - kl - i + 1];
+
+                     for (j = 0; j < (m - kl - i + 1); j++) {
+                         x[j] = A[kl + i - 1 + j][i - 1];
+                     }
+
+                     dgemv('T', m - kl - i + 1, n - i, 1.0, B, m - kl - i + 1, x, 1, 0.0, work, 1);
+                     dger(m - kl - i + 1, n - i, -tau, x, 1, work, 1, B, m - kl - i + 1);
+
+                     for (j = 0; j < (m - kl - i + 1); j++) {
+
+                         for (k = 0; k < (n - i); k++) {
+                             A[kl + i - 1 + j][i + k] = B[j][k];
+                         }
+                     }
+
+                     A[kl + i - 1][i - 1] = -wa;
+                 } // if (i <= Math.min(m-1-kl, n))
+
+                 if (i <= Math.min(n - 1 - ku, m)) {
+
+                     // generate reflection to annihilate A(i-1,ku+i:n-1)
+                     x = new double[n - ku - i + 1];
+
+                     for (j = 0; j < (n - ku - i + 1); j++) {
+                         x[j] = A[i - 1][ku + i - 1 + j];
+                     }
+
+                     wn = dnrm2(n - ku - i + 1, x, 1);
+
+                     if (A[i - 1][ku + i - 1] >= 0) {
+                         wa = Math.abs(wn);
+                     } else {
+                         wa = -Math.abs(wn);
+                     }
+
+                     if (wn == 0.0) {
+                         tau = 0.0;
+                     } else {
+                         wb = A[i - 1][ku + i - 1] + wa;
+
+                         for (j = 0; j < (n - ku - i); j++) {
+                             A[i - 1][ku + i + j] = (1.0 / wb) * A[i - 1][ku + i + j];
+                         }
+
+                         A[i - 1][ku + i - 1] = 1.0;
+                         tau = wb / wa;
+                     }
+
+                     // Apply reflection to A(i:m-1,ku+i-1:n-1) from the right
+                     B = new double[m - i][n - ku - i + 1];
+
+                     for (j = 0; j < (m - i); j++) {
+
+                         for (k = 0; k < (n - ku - i + 1); k++) {
+                             B[j][k] = A[i + j][ku + i - 1 + k];
+                         }
+                     }
+
+                     x = new double[n - ku - i + 1];
+
+                     for (j = 0; j < (n - ku - i + 1); j++) {
+                         x[j] = A[i - 1][ku + i - 1 + j];
+                     }
+
+                     dgemv('N', m - i, n - ku - i + 1, 1.0, B, m - i, x, 1, 0.0, work, 1);
+                     dger(m - i, n - ku - i + 1, -tau, work, 1, x, 1, B, m - i);
+
+                     for (j = 0; j < (m - i); j++) {
+
+                         for (k = 0; k < (n - ku - i + 1); k++) {
+                             A[i + j][ku + i - 1 + k] = B[j][k];
+                         }
+                     }
+
+                     A[i - 1][ku + i - 1] = -wa;
+                 } // if (i <= Math.min(n-1-ku, m))
+             } // if (kl <= ku)
+             else { // kl > ku
+
+                 // annihilate superdiagonal elements first (necessary if ku = 0)
+                 if (i <= Math.min(n - 1 - ku, m)) {
+
+                     // generate reflection to annihilate A(i-1,ku+i:n-1)
+                     x = new double[n - ku - i + 1];
+
+                     for (j = 0; j < (n - ku - i + 1); j++) {
+                         x[j] = A[i - 1][ku + i - 1 + j];
+                     }
+
+                     wn = dnrm2(n - ku - i + 1, x, 1);
+
+                     if (A[i - 1][ku + i - 1] >= 0) {
+                         wa = Math.abs(wn);
+                     } else {
+                         wa = -Math.abs(wn);
+                     }
+
+                     if (wn == 0.0) {
+                         tau = 0.0;
+                     } else {
+                         wb = A[i - 1][ku + i - 1] + wa;
+
+                         for (j = 0; j < (n - ku - i); j++) {
+                             A[i - 1][ku + i + j] = (1.0 / wb) * A[i - 1][ku + i + j];
+                         }
+
+                         A[i - 1][ku + i - 1] = 1.0;
+                         tau = wb / wa;
+                     }
+
+                     // apply reflection to A(i:m-1,ku+i-1:n-1) from the right
+                     B = new double[m - i][n - ku - i + 1];
+
+                     for (j = 0; j < (m - i); j++) {
+
+                         for (k = 0; k < (n - ku - i + 1); k++) {
+                             B[j][k] = A[i + j][ku + i - 1 + k];
+                         }
+                     }
+
+                     x = new double[n - ku - i + 1];
+
+                     for (j = 0; j < (n - ku - i + 1); j++) {
+                         x[j] = A[i - 1][ku + i - 1 + j];
+                     }
+
+                     dgemv('N', m - i, n - ku - i + 1, 1.0, B, m - i, x, 1, 0.0, work, 1);
+                     dger(m - i, n - ku - i + 1, -tau, work, 1, x, 1, B, m - i);
+
+                     for (j = 0; j < (m - i); j++) {
+
+                         for (k = 0; k < (n - ku - i + 1); k++) {
+                             A[i + j][ku + i - 1 + k] = B[j][k];
+                         }
+                     }
+
+                     A[i - 1][ku + i - 1] = -wa;
+                 } // if (i <= Math.min(n-1-ku,m))
+
+                 if (i <= Math.min(m - 1 - kl, n)) {
+
+                     // generate reflection to annihilate A(kl+i:m-1,i-1)
+                     x = new double[m - kl - i + 1];
+
+                     for (j = 0; j < (m - kl - i + 1); j++) {
+                         x[j] = A[kl + i - 1 + j][i - 1];
+                     }
+
+                     wn = dnrm2(m - kl - i + 1, x, 1);
+
+                     if (A[kl + i - 1][i - 1] >= 0.0) {
+                         wa = Math.abs(wn);
+                     } else {
+                         wa = -Math.abs(wn);
+                     }
+
+                     if (wn == 0.0) {
+                         tau = 0.0;
+                     } else {
+                         wb = A[kl + i - 1][i - 1] + wa;
+
+                         for (j = 0; j < (m - kl - i); j++) {
+                             A[kl + i + j][i - 1] = (1.0 / wb) * A[kl + i + j][i - 1];
+                         }
+
+                         A[kl + i - 1][i - 1] = 1.0;
+                         tau = wb / wa;
+                     }
+
+                     // apply reflection to A(kl+i-1:m-1,i:n-1) from the left
+                     B = new double[m - kl - i + 1][n - i];
+
+                     for (j = 0; j < (m - kl - i + 1); j++) {
+
+                         for (k = 0; k < (n - i); k++) {
+                             B[j][k] = A[kl + i - 1 + j][i + k];
+                         }
+                     }
+
+                     x = new double[m - kl - i + 1];
+
+                     for (j = 0; j < (m - kl - i + 1); j++) {
+                         x[j] = A[kl + i - 1 + j][i - 1];
+                     }
+
+                     dgemv('T', m - kl - i + 1, n - i, 1.0, B, m - kl - i + 1, x, 1, 0.0, work, 1);
+                     dger(m - kl - i + 1, n - i, -tau, x, 1, work, 1, B, m - kl - i + 1);
+
+                     for (j = 0; j < (m - kl - i + 1); j++) {
+
+                         for (k = 0; k < (n - i); k++) {
+                             A[kl + i - 1 + j][i + k] = B[j][k];
+                         }
+                     }
+
+                     A[kl + i - 1][i - 1] = -wa;
+                 } // if (i <= Math.min(m-1-kl, n))
+             } // else kl > ku
+
+             for (j = kl + i + 1; j <= m; j++) {
+                 A[j - 1][i - 1] = 0.0;
+             }
+
+             for (j = ku + i + 1; j <= n; j++) {
+                 A[i - 1][j - 1] = 0.0;
+             }
+         } // for (i = 1; i <= Math.max(m-1-kl, n-1-ku); i++)
+
+         return;
+     } // zlagge*/
+     
+     /**
+      * This is a port of version 3.7.0 LAPACK auxiliary routine ZLARNV Original ZLARNV created by Univ. of Tennessee,
+      * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., December, 2016 zlarnv returns a vector of n
+      * random complex numbers from a uniform or normal distribution
+      * 
+      * @param idist input int Specifies the distribution of the random numbers: 
+      * = 1: real and imaginary parts each uniform (0,1) 
+      * = 2: real and imaginary parts each uniform (-1,1) 
+      * = 3: real and imaginary parts each normal (0,1)
+      * = 4: uniformly distributed on the disc abs(z) < 1
+      * = 5: Uniformly distributed on the circle abs(z) = 1
+      * @param iseed input/output int[] of dimension 4. On entry, the seed of the random number generator; the array
+      *            elements must be between 0 and 4095, and iseed[3] must be odd. On exit, the seed is updated
+      * @param n input int The number of random numbers to be generated.
+      * @param x output double[][2] complex of dimension n. The random generated numbers.
+      * 
+      *            The routine calls the auxiliary routine dlaruv to generate random real numbers from a uniform (0,1)
+      *            distribution, in batches of up to 128 using vectorizable code. The Box-Muller method is used to
+      *            transform numbers from a uniform to a normal distribution.
+      */
+     public void zlarnv(final int idist, final int[] iseed, final int n, final double[][] x) {
+         final int lv = 128;
+         int i;
+         int il;
+         int il2;
+         int iv;
+         final double[] u = new double[lv];
+         double root;
+         double arg;
+
+         for (iv = 1; iv <= n; iv += lv / 2) {
+             il = Math.min(lv / 2, n - iv + 1);
+
+             // Call dlaruv to generate 2*il real numbers from a uniform (0,1)
+             // distribution (2*il <= lv)
+             ge.dlaruv(iseed, 2*il, u);
+
+             if (idist == 1) {
+
+                 // Copy generated numbers
+                 for (i = 1; i <= il; i++) {
+                     x[iv + i - 2][0] = u[2*i-2];
+                     x[iv + i - 2][1] = u[2*i-1];
+                 }
+             } // if (idist == 1)
+             else if (idist == 2) {
+
+                 // Convert generated numbers to uniform (-1,1) distribution
+                 for (i = 1; i <= il; i++) {
+                     x[iv + i - 2][0] = (2.0 * u[2*i-2]) - 1.0;
+                     x[iv + i - 2][1] = (2.0 * u[2*i-1]) - 1.0;
+                 }
+             } // else if (idist == 2)
+             else if (idist == 3) {
+
+                 // Convert generated numbers to normal (0,1) distribution
+                 for (i = 1; i <= il; i++) {
+                	 root = Math.sqrt(-2.0*Math.log(u[2*i-2]));
+                	 arg = 2.0 * Math.PI * u[2*i-1];
+                	 x[iv + i - 2][0] = root * Math.cos(arg);
+                	 x[iv + i - 2][1] = root * Math.sin(arg);
+                 }
+             } // else if (idist == 3)
+             else if (idist == 4) {
+            	 // Convert generated numbers to complex numbers uniformly distributed
+            	 // on the unit disc
+            	 for (i = 1; i <= il; i++) {
+            		 root = Math.sqrt(u[2*i-2]);
+            		 arg = 2.0 * Math.PI * u[2*i-1];
+            		 x[iv + i - 2][0] = root * Math.cos(arg);
+            		 x[iv + i - 2][1] = root * Math.sin(arg);
+            	 }
+             } // else if (idist == 4)
+             else if (idist == 5) {
+            	 // Convert generated numbers ot complex numbers uniformly distributed
+            	 // on the unit circle
+            	 for (i = 1; i <= il; i++) {
+            		 arg = 2.0 * Math.PI * u[2*i-1];
+            		 x[iv + i - 2][0] = Math.cos(arg);
+            		 x[iv + i - 2][1] = Math.sin(arg);	 
+            	 }
+             } // else if (idist == 5)
+
+         } // for (iv = 1; iv <= n; iv += lv/2)
+         return;
+     } // zlarnv
+     
+     /**
+      * BLAS level1 routine version 3.7.0 December, 2016
+      * This is a port of the 10/14/93 DZNRM2 function Original code written by Sven Hammarling, Nag Ltd. dznrm2 returns
+      * the euclidean norm of a vector via the function sqrt(x**H*x)
+      * 
+      * @param n int
+      * @param x double[][2] complex vector
+      * @param incx int
+      * 
+      * @return double
+      */
+     public double dznrm2(final int n, final double[][] x, final int incx) {
+         int ix;
+         double norm;
+         double scale;
+         double ssq;
+         double ratio;
+         double temp;
+
+         if ( (n < 1) || (incx < 1)) {
+             norm = 0.0;
+         } else {
+             scale = 0.0;
+             ssq = 1.0;
+             
+             for (ix = 0; ix <= ( (n - 1) * incx); ix += incx) {
+                 if (x[ix][0] != 0.0) {
+                	temp = Math.abs(x[ix][0]);
+                    if (scale < temp) {
+                    	ratio = scale/temp;
+                    	ssq = 1.0 + ssq * ratio * ratio;
+                    	scale = temp;
+                    }
+                    else {
+                    	ratio = temp/scale;
+                    	ssq = ssq + ratio*ratio;
+                    }
+                 } // if (x[ix][0] != 0)
+                 if (x[ix][1] != 0.0) {
+                	 temp = Math.abs(x[ix][1]);
+                     if (scale < temp) {
+                     	ratio = scale/temp;
+                     	ssq = 1.0 + ssq * ratio * ratio;
+                     	scale = temp;
+                     }
+                     else {
+                     	ratio = temp/scale;
+                     	ssq = ssq + ratio*ratio;
+                     }   
+                 } // if (x[ix][1] != 0.0)
+             } // for (ix = 0; ix <= ( (n - 1) * incx); ix += incx)
+
+             norm = scale * Math.sqrt(ssq);
+         } // else
+
+         return norm;
+     } // dznrm2
+     
+     /**
+      * From LAPACK 3.7.0 December 2106
+      * Routine ported from 10/22/86 blas zgemv subroutine Original version written by: Jack Dongarra, Argonne National
+      * Lab. Jeremy Du Croz, Nag Central Office Sven Hammarling, Nag Central Office. Richard Hanson, Sandia National
+      * Labs. dgemv performs one of the matrix-vector operations y = alpha*A*x + beta*y, or y = alpha*A**T*x + beta*y,
+      * or y = alpha*A**H*x + beta*y
+      * where alpha and beta are scalars, x and y are vectors, and A is an m by n matrix
+      * 
+      * @param trans input char On entry, trans specifies the operation to be performed as follows: 
+      * = 'N' or 'n' y = alpha*A*x + beta*y 
+      * = 'T' or 't' y = alpha*A**T*x + beta*y 
+      * = 'C' or 'c' y = alpha*A**H*x + beta*y
+      * @param m input int On entry, m specifies the mumber of rows of matrix A. m must be at least zero.
+      * @param n input int On entry, n specifies the number of columns of matrix A. n must be at least zero.
+      * @param alpha input double[2] complex specified scalar
+      * @param A input double[][][2] complex dimension lda by n Before entry, the leading m by n part of the array A must contain
+      *            the matrix of coefficients.
+      * @param lda input int On entry, lda specifies the first dimension of A as declared in the calling (sub) program.
+      *            lda must be at least max(1, m).
+      * @param x input double[][2] complex array of dimension at least (1 + (n-1)*abs(incx)) when trans = 'N' or 'n' and at least (1
+      *            + (m-1)*abs(incx)) otherwise. Before entry, the incremented array x must contain the vector x.
+      * @param incx input int On entry, incx specifies the increment for the elements of x. incx must not be zero.
+      * @param beta input double[2] complex specified scalar When beta is supplied as zero, then y need not be set on input.
+      * @param y input/output double[][2] complex array of dimension at least (1 + (m-1)*abs(incy)) when trans = 'N' or 'n' and at
+      *            least (1 + (n-1)*abs(incy)) otherwise. Before entry with beta non-zero, the incremented array y must
+      *            contain the vector y. On exit, array y is overwritten with the updated vector y.
+      * @param incy input int On entry, incy specifies the increment for the elements of y. incy must not be zero.
+      */
+     /*public void zgemv(final char trans, final int m, final int n, final double alpha[], final double[][][] A,
+             final int lda, final double[][] x, final int incx, final double beta[], final double[][] y, final int incy) {
+         int info;
+         int lenx;
+         int leny;
+         int kx;
+         int ky;
+         int i;
+         int iy;
+         int jx;
+         int j;
+         int jy;
+         int ix;
+         double temp;
+
+         // Test the input parameters
+         info = 0;
+
+         if ( (trans != 'N') && (trans != 'n') && (trans != 'T') && (trans != 't') && (trans != 'C') && (trans != 'c')) {
+             info = 1;
+         } else if (m < 0) {
+             info = 2;
+         } else if (n < 0) {
+             info = 3;
+         } else if (lda < Math.max(1, m)) {
+             info = 6;
+         } else if (incx == 0) {
+             info = 8;
+         } else if (incy == 0) {
+             info = 11;
+         }
+
+         if (info != 0) {
+             MipavUtil.displayError("Error dgemv has info = " + info);
+
+             return;
+         } // if (info != 0)
+
+         // Quick return if possible
+         if ( (m == 0) || (n == 0) || ( (alpha == 0.0) && (beta == 1.0))) {
+             return;
+         }
+
+         // Set lenx and leny, the lengths of vectors x and y, and set up the
+         // start points in arrays x and y.
+
+         if ( (trans == 'N') || (trans == 'n')) {
+             lenx = n;
+             leny = m;
+         } else {
+             lenx = m;
+             leny = n;
+         }
+
+         if (incx > 0) {
+             kx = 1;
+         } else {
+             kx = 1 - ( (lenx - 1) * incx);
+         }
+
+         if (incy > 0) {
+             ky = 1;
+         } else {
+             ky = 1 - ( (leny - 1) * incy);
+         }
+
+         // Start the operations. In this version the elements of A are accessed
+         // sequentially with one pass through A.
+         // First form y = beta*y.
+         if (beta != 1.0) {
+
+             if (incy == 1) {
+
+                 if (beta == 0.0) {
+
+                     for (i = 0; i < leny; i++) {
+                         y[i] = 0.0;
+                     }
+                 } // if (beta == 0.0)
+                 else { // beta != 0.0
+
+                     for (i = 0; i < leny; i++) {
+                         y[i] = beta * y[i];
+                     }
+                 } // else beta != 0.0
+             } // if (incy == 1)
+             else { // incy != 1
+                 iy = ky - 1;
+
+                 if (beta == 0.0) {
+
+                     for (i = 1; i <= leny; i++) {
+                         y[iy] = 0.0;
+                         iy = iy + incy;
+                     }
+                 } // if (beta == 0.0)
+                 else { // beta != 0.0
+
+                     for (i = 1; i <= leny; i++) {
+                         y[iy] = beta * y[iy];
+                         iy = iy + incy;
+                     }
+                 } // else beta != 0.0
+             } // else incy != 1
+         } // if (beta != 1.0)
+
+         if (alpha == 0.0) {
+             return;
+         }
+
+         if ( (trans == 'N') || (trans == 'n')) {
+
+             // Form y = alpha*A*x + y.
+             jx = kx - 1;
+
+             if (incy == 1) {
+
+                 for (j = 0; j < n; j++) {
+
+                     if (x[jx] != 0.0) {
+                         temp = alpha * x[jx];
+
+                         for (i = 0; i < m; i++) {
+                             y[i] = y[i] + (temp * A[i][j]);
+                         } // for (i = 0; i < m; i++)
+                     } // if (x[jx] != 0.0)
+
+                     jx = jx + incx;
+                 } // for (j = 0; j < n; j++)
+             } // if (incy == 1)
+             else { // incy != 1
+
+                 for (j = 0; j < n; j++) {
+
+                     if (x[jx] != 0.0) {
+                         temp = alpha * x[jx];
+                         iy = ky - 1;
+
+                         for (i = 0; i < m; i++) {
+                             y[iy] = y[iy] + (temp * A[i][j]);
+                             iy = iy + incy;
+                         } // for (i = 0; i < m; i++)
+                     } // if (x[jx] != 0.0)
+
+                     jx = jx + incx;
+                 } // for (j = 0; j < n; j++)
+             } // else incy != 1
+         } // if (trans == 'N') || (trans == 'n'))
+         else { // trans != 'N' && trans != 'n'
+
+             // Form y = alpha*A'*x + y.
+             jy = ky - 1;
+
+             if (incx == 1) {
+
+                 for (j = 0; j < n; j++) {
+                     temp = 0.0;
+
+                     for (i = 0; i < m; i++) {
+                         temp = temp + (A[i][j] * x[i]);
+                     } // for (i = 0; i < m; i++)
+
+                     y[jy] = y[jy] + (alpha * temp);
+                     jy = jy + incy;
+                 } // for (j = 0; j < n; j++)
+             } // if (incx == 1)
+             else { // incx != 1
+
+                 for (j = 0; j < n; j++) {
+                     temp = 0.0;
+                     ix = kx - 1;
+
+                     for (i = 0; i < m; i++) {
+                         temp = temp + (A[i][j] * x[ix]);
+                         ix = ix + incx;
+                     } // for (i = 0; i < m; i++)
+
+                     y[jy] = y[jy] + (alpha * temp);
+                     jy = jy + incy;
+                 } // for (j = 0; j < n; j++)
+             } // else incx != 1
+         } // else trans != 'N' && trans != 'n'
+
+         return;
+     } // dgemv*/
     
     /**
      * This is a port of version 3.7.0 auxiliary routine ZLASET. Original ZLASET created by Univ. of Tennessee, Univ. of
