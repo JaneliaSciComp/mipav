@@ -2683,7 +2683,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                     zlagsy(m, llb, D, A, lda, iseed, work, iinfo);
             	}
             	else {
-            		
+            		zlaghe(m, llb, D, A, lda, iseed, work, iinfo);	
             	}
             } // else isym != 1
 
@@ -2826,6 +2826,459 @@ public class ComplexLinearEquations implements java.io.Serializable {
 
         return;
     } // zlatms*/
+    
+    /**
+     * This is a port of LAPACK auxiliary routine ZLAGHE version 3.7.0.  Provided by the Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ.of Colorado Denver and NAG Ltd. Decmeber 2016.
+     * zlaghe generates a complex hermitian matrix A, by pre- and post- multiplying a real diagonal matrix D
+     * with a random unitary matrix:
+     * A = U*D*U'.  The semi-bandwith may then be reduced to k by additional unitary transformations.
+     * @param n input integer The order of the matrix A.  n >= 0.
+     * @param k input integer The number of nonzero subdiagonals within the band of A.  0 <= k <= n-1.
+     * @param D input double[] array, dimension n.  The diagonal elements of tghe diaognla matrix D.
+     */
+    
+     /**
+      * This is a port of version 3.7.0 BLAS level2 routine ZHEMV proivded by Univ. of Tennessee, Univ. of California
+      * Berkeley, University of Colorado Denver and NAG Ltd., December, 2016  Originally written 22-October-1986 by
+      * Jack Dongarra, Argonne National Lab, Jeremy Du Croz, Nag Central Office, Sven Hammarling, Nag Central Office,
+      * and Richard Hanson, Sandia National Labs.
+      * zhemv performs the matrix-vector operation y := alpha*A*x + beta*y
+      * where alpha and beta are scalars, x and y are n element vectors and A is an n by n hermitian matrix.
+      * @param uplo input char On entry, uplo specifies whther the upper or lower triangular part of the
+      *             array A is to be referenced as follows:
+      *             uplo = 'U' or 'u' Only the upper triangular part of A is to be referenced.
+      *             uplo = 'L' or 'l' Only the lower triangular part of A is to be referenced.
+      * @param n input integer On entry, n specifies the order of the matrix A.  n must be at least zero.
+      * @param alpha input double[2] complex scalar
+      * @param A input double[][][2] complex array, of dimension (lda, n)
+      *             Before entry with uplo = 'U' or 'u', the leading n by n upper triangular part of the array A
+      *             must contain the upper triangular part of the hermitian matrix and the strictly lower part of 
+      *             A is not referenced.  Before entry with uplo = 'L' or 'l', the leading n by n lower triangular
+      *             part of the array A must contain the lower triangular part of the hermitian matrix and the
+      *             strictly upper triangular part of A is not referenced.  Note that the imaginary parts of the
+      *             diagonal elements need not be set and are assumed to be zero.
+      * @param lda input integer On entry, lda specifies the first dimension of A in tbe calling (sub) program.
+      *             lda must be at least max(1,n).
+      * @param x input double[][2] complex array, dimension at least (1 + (n-1)*abs(incx)).
+      * @param incx input integer  On entry, incx specifies the increment for the elements of x.  incx
+      *             must not be zero.
+      * @param beta input double[2] complex scalar.  When beta is supplied as zero, y need not be set on input.
+      * @param y input/output double[][2] complex array, dimension at least (1 + (n-1)*abs(incy))
+      * @param incy input integer  incy specifies the increment for the elements of y.  incy must not be zero.
+      */
+      private void zhemv(char uplo, int n, double alpha[], double A[][][], int lda, double x[][], int incx,
+    		  double beta[], double y[][], int incy) {
+    	  double temp1[] = new double[2];
+    	  double temp2[] = new double[2];
+    	  double cr[] = new double[1];
+    	  double ci[] = new double[1];
+    	  int i, info, ix, iy, j, jx, jy, kx, ky;
+    	  
+    	  // Test the input parameters
+    	  info = 0;
+    	  if ((uplo != 'U') && (uplo != 'u') && (uplo != 'L') && (uplo != 'l')) {
+    		  info = 1;
+    	  }
+    	  else if (n < 0) {
+    		  info = 2;
+    	  }
+    	  else if (lda < Math.max(1, n)) {
+    		  info = 5;
+    	  }
+    	  else if (incx == 0) {
+    		  info = 7;
+    	  }
+    	  else if (incy == 0) {
+    		  info = 10;
+    	  }
+    	  if (info != 0) {
+    		  MipavUtil.displayError("zhemv had info = " + info);
+    		  return;
+    	  }
+    	  
+    	  // Quick return if possible
+    	  if ((n == 0) || (((alpha[0] == 0) && (alpha[1] == 0)) && ((beta[0] == 1.0) && (beta[1] == 0.0)))) {
+    		  return;
+    	  }
+    	  
+    	  // Set up the start points in x and y.
+    	  if (incx > 0) {
+    		  kx = 1;
+    	  }
+    	  else {
+    		  kx = 1 - (n-1)*incx;
+    	  }
+    	  if (incy > 0) {
+    		  ky = 1;
+    	  }
+    	  else {
+    		  ky = 1 - (n-1)*incy;
+    	  }
+    	  
+    	  // Start the operations.  In this version the elements of A are accessed sequentially with one pass
+    	  // through the triangular part of A.
+    	  
+    	  // First form y := beta*y
+    	  if ((beta[0] != 1.0) || (beta[1] != 0.0)) {
+    	      if (incy == 1) {
+    	    	  if ((beta[0] == 0.0) && (beta[1] == 0.0)) {
+    	    		  for (i = 0; i < n; i++) {
+    	    			  y[i][0] = 0.0;
+    	    			  y[i][1] = 0.0;
+    	    		  }
+    	    	  } // if ((beta[0] == 0.0) && (beta[1] == 0.0))
+    	    	  else {
+    	    		  for (i = 0; i < n; i++) {
+    	    			  zmlt(beta[0], beta[1], y[i][0], y[i][1], cr ,ci);
+    	    			  y[i][0] = cr[0];
+    	    			  y[i][1] = ci[0];
+    	    		  }
+    	    	  } // else beta != 0
+    	      } // if (incy == 1)
+    	      else { // incy != 1
+    	    	  iy = ky-1;
+    	    	  if ((beta[0] == 0.0) && (beta[1] == 0.0)) {
+    	    	    for (i = 1; i <= n; i++) {
+    	    	    	y[iy][0] = 0.0;
+    	    	    	y[iy][1] = 0.0;
+    	    	    	iy = iy + incy;
+    	    	    }
+    	    	  } // if ((beta[0] == 0.0) && (beta[1] == 0.0))
+    	    	  else {
+    	    		   for (i = 1; i <= n; i++) {
+    	    			   zmlt(beta[0], beta[1], y[iy][0], y[iy][1], cr, ci);
+    	    			   y[iy][0] = cr[0];
+    	    			   y[iy][1] = ci[0];
+    	    			   iy = iy + incy;
+    	    		   }
+    	    	  } // else beta != 0
+    	      } // else incy != 1
+    	  } // if ((beta[0] != 1.0) || (beta[1] != 0.0))
+    	  if ((alpha[0] == 0.0) && (alpha[1] == 0.0)) {
+    		  return;
+    	  }
+    	  
+    	  if ((uplo == 'U') || (uplo == 'u')) {
+    	
+              // Form y when A is stored in upper triangle.
+    		  
+    		  if ((incx == 1) && (incy == 1)) {
+    		      for (j = 0; j < n; j++) {
+    		          zmlt(alpha[0], alpha[1], x[j][0], x[j][1], cr, ci);
+    		          temp1[0] = cr[0];
+    		          temp1[1] = ci[0];
+    		          temp2[0] = 0.0;
+    		          temp2[1] = 0.0;
+    		          for (i = 0; i <= j-1; i++) {
+    		        	  zmlt(temp1[0], temp1[1], A[i][j][0], A[i][j][1], cr, ci);
+    		        	  y[i][0] = y[i][0] + cr[0];
+    		        	  y[i][1] = y[i][1] + ci[0];
+    		        	  zmlt(A[i][j][0], -A[i][j][1], x[i][0], x[i][1], cr, ci);
+    		        	  temp2[0] = temp2[0] + cr[0];
+    		        	  temp2[1] = temp2[1] + ci[0];
+    		          } // for (i = 0; i <= j-1; i++)
+    		          zmlt(alpha[0], alpha[1], temp2[0], temp2[1], cr, ci);
+    		          y[j][0] = y[j][0] + temp1[0]*A[j][j][0] + cr[0];
+    		          y[j][1] = y[j][1] + temp1[1]*A[j][j][0] + ci[0];
+    		      } // for (j = 0; j < n; j++)
+    		  } // if ((incx == 1) && (incy == 1))
+    		  else {
+    			  jx = kx-1;
+    			  jy = ky-1;
+    			  for (j = 0; j < n; j++) {
+    				  zmlt(alpha[0], alpha[1], x[jx][0], x[jx][1], cr, ci);
+    				  temp1[0] = cr[0];
+    				  temp1[1] = ci[0];
+    				  temp2[0] = 0.0;
+    				  temp2[1] = 0.0;
+    				  ix = kx-1;
+    				  iy = ky-1;
+    				  for (i = 0; i <= j-1; i++) {
+    				      zmlt(temp1[0], temp1[1], A[i][j][0], A[i][j][1], cr, ci);
+    				      y[iy][0] = y[iy][0] + cr[0];
+    				      y[iy][1] = y[iy][1] + ci[0];
+    				      zmlt(A[i][j][0], -A[i][j][1], x[ix][0], x[ix][1], cr, ci);
+    				      temp2[0] = temp2[0] + cr[0];
+    				      temp2[1] = temp2[1] + ci[0];
+    				      ix = ix + incx;
+    				      iy = iy + incy;
+    				  } // for (i = 0; i <= j-1; i++)
+    				  zmlt(alpha[0], alpha[1], temp2[0], temp2[1], cr, ci);
+    				  y[jy][0] = y[jy][0] + temp1[0]*A[j][j][0] + cr[0];
+    				  y[jy][1] = y[jy][1] + temp1[1]*A[j][j][0] + ci[0];
+    				  jx = jx + incx;
+    				  jy = jy + incy;
+    			  } // for (j = 0; j < n; j++)
+    		  } // else
+    	  } // if ((uplo == 'U') || (uplo == 'u'))
+    	  else {
+    		  // Form y when A is stored in the lower triangle
+    		  if ((incx == 1) && (incy == 1)) {
+    			  for (j = 0; j < n; j++) {
+    				  zmlt(alpha[0], alpha[1], x[j][0], x[j][1], cr, ci);
+    				  temp1[0] = cr[0];
+    				  temp1[1] = ci[0];
+    				  temp2[0] = 0.0;
+    				  temp2[1] = 0.0;
+    				  y[j][0] = y[j][0] + temp1[0]*A[j][j][0];
+    				  y[j][1] = y[j][1] = temp1[1]*A[j][j][0];
+    				  for (i = j+1; i < n; i++) {
+    					  zmlt(temp1[0], temp1[1], A[i][j][0], A[i][j][1], cr, ci);
+    					  y[i][0] = y[i][0] + cr[0];
+    					  y[i][1] = y[i][1] + ci[0];
+    					  zmlt(A[i][j][0], -A[i][j][1], x[i][0], x[i][1], cr, ci);
+    					  temp2[0] = temp2[0] + cr[0];
+    					  temp2[1] = temp2[1] + ci[0];
+    				  }
+    				  zmlt(alpha[0], alpha[1], temp2[0], temp2[1], cr, ci);
+    				  y[j][0] = y[j][0] + cr[0];
+    				  y[j][1] = y[j][1] + ci[0];
+    			  } // for (j = 0; j < n; j++)
+    		  } // if ((incx == 1) && (incy == 1))
+    		  else {
+    			  jx = kx-1;
+    			  jy = ky-1;
+    			  for (j = 0; j < n; j++) {
+    				  zmlt(alpha[0], alpha[1], x[jx][0], x[jx][1], cr, ci);
+    				  temp1[0] = cr[0];
+    				  temp1[1] = ci[0];
+    				  temp2[0] = 0.0;
+    				  temp2[1] = 0.0;
+    				  y[jy][0] = y[jy][0] + temp1[0]*A[j][j][0];
+    				  y[jy][1] = y[jy][1] + temp1[1]*A[j][j][0];
+    				  ix = jx - 1;
+    				  iy = jy - 1;
+    				  for (i = j+1; i < n; i++) {
+    					  ix = ix + incx;
+    					  iy = iy + incy;
+    					  zmlt(temp1[0], temp1[1], A[i][j][0], A[i][j][1], cr, ci);
+    					  y[iy][0] = y[iy][0] + cr[0];
+    					  y[iy][1] = y[iy][1] + ci[0];
+    					  zmlt(A[i][j][0], -A[i][j][1], x[ix][0], x[ix][1], cr, ci);
+    					  temp2[0] = temp2[0] + cr[0];
+    					  temp2[1] = temp2[1] + ci[0];
+    				  } // for (i = j+1; i < n; i++)
+    				  zmlt(alpha[0], alpha[1], temp2[0], temp2[1], cr, ci);
+    				  y[jy][0] = y[jy][0] + cr[0];
+    				  y[jy][1] = y[jy][1] + ci[0];
+    				  jx = jx + incx;
+    				  jy = jy + incy;
+    			  } // for (j = 0; j < n; j++)
+    		  }
+    	  } // else
+      } // zhemv
+      
+      /**
+       * This is a port of version 3.7.0 BLAS level2 routine ZHER2 proivded by Univ. of Tennessee, Univ. of California
+       * Berkeley, University of Colorado Denver and NAG Ltd., December, 2016  Originally written 22-October-1986 by
+       * Jack Dongarra, Argonne National Lab, Jeremy Du Croz, Nag Central Office, Sven Hammarling, Nag Central Office,
+       * and Richard Hanson, Sandia National Labs.
+       * zher2 performs the hermitian rank 2 operation A := alpha*x*y**H + conj(alpha)*y*x**H + A,
+       * where alpha is a scalar, x and y are n element vectors, and A is an n by n hermitian matrix.
+       * @param uplo input char On entry, uplo specifies whether the upper or lower triangular part of the array A is
+       *             to be referenced as follows:
+       *             uplo = 'U' or 'u' Only the upper triangular part of A is to be referenced.
+       *             uplo = 'L' or 'l' Only the lower triangular part of A is to be referenced.
+       * @param n input integer On entry, n specifies the order of the matrix A.  n must be at least zero.
+       * @param alpha input double[2] complex scalar
+       * @param x input double[][2] complex array, dimension at least (1 + (n-1)*abs(incx)).
+       * @param incx input integer On entry, incx specifies the increment for the elements of x.  incx must not be zero.
+       * @param y input double[][2] complex array, dimension at least (1 + (n-1)*abs(incy)).
+       * @param A input/output double[][][2] complex array, dimension (lda, n)  Before entry with uplo = 'U' or
+       *              'u', the leading n by m upper triangular part of the array A must contain the upper triangular
+       *              part of the hermitian matrix and the strictly lower part of A is not referenced.  On exit,
+       *              the upper triangular part of A is overwritten by the upper triangular part of the updated matrix.
+       *              Before entry iwth uplo = 'L' or 'l', the leading n by n lower triangular part of the array A
+       *              must contain the lower triangular part of the hermitian matrix and the strictly upper part of
+       *              A is not referenced.  On exit, the lower triangular part of the array A is overwritten by the
+       *              lower triangular part of the updated matrix.  Note that the imaginary parts of the diagonal 
+       *              elements need not be set, they are assumed to be zero, and on exit they are set to zero.
+       * @param lda input integer On entry, lda specifies the first dimension of A as declared in the calling
+       *             (sub) program.  lda must be at least max(1,n).
+       */
+      private void zher2(char uplo, int n, double alpha[], double x[][], int incx, double y[][], int incy,
+    		  double A[][][], int lda) {
+          double temp1[] = new double[2];
+          double temp2[] = new double[2];
+          int i, info, ix, iy, j; 
+          int kx = 0;
+          int ky = 0;
+          int jx = 0;
+          int jy = 0;
+          double cr[] = new double[1];
+          double ci[] = new double[1];
+          double cr2[] = new double[1];
+          double ci2[] = new double[1];
+          
+          // Test the input parameters
+          info = 0;
+          if ((uplo != 'U') && (uplo != 'u') && (uplo != 'L') && (uplo != 'l')) {
+        	  info = 1;
+          }
+          else if (n < 0) {
+        	   info = 2;
+          }
+          else if (incx == 0) {
+        	  info = 5;
+          }
+          else if (incy == 0) {
+        	  info = 7;
+          }
+          else if (lda < Math.max(1, n)) {
+        	  info = 9;
+          }
+          if (info != 0) {
+        	  MipavUtil.displayError("zher2 has info = " + info);
+        	  return;
+          }
+          
+          // Quick return if possible.
+          
+          if ((n == 0) || ((alpha[0] == 0.0) && (alpha[1] == 0.0))) {
+        	  return;
+          }
+          
+          // Set up the start points in x and y if the increments are not both unity.
+          if ((incx != 1) || (incy != 1)) {
+              if (incx > 0) {
+            	  kx = 1;
+              }
+              else {
+            	  kx = 1 - (n-1)*incx;
+              }
+              if (incy > 0) {
+            	  ky = 1;
+              }
+              else {
+            	  ky = 1 - (n-1)*incy;
+              }
+              jx = kx-1;
+              jy = ky-1;
+          } // if ((incx != 1) || (incy != 1))
+          
+          // Start the operations.  In this version the elements of A are accessed sequentially with one pass
+          // through the triangular part of A.
+          if ((uplo == 'U') || (uplo == 'u')) {
+              // Form A when A is stored in the upper triangle.
+        	  
+        	  if ((incx == 1) && (incy == 1)) {
+        		  for (j = 0; j < n; j++) {
+        			  if ((x[j][0] != 0.0) || (x[j][1] != 0.0) || (y[j][0] != 0.0) || (y[j][1] != 0.0)) {
+        			      zmlt(alpha[0], alpha[1], y[j][0], -y[j][1], cr, ci);
+        			      temp1[0] = cr[0];
+        			      temp1[1] = ci[0];
+        			      zmlt(alpha[0], alpha[1], x[j][0], x[j][1], cr, ci);
+        			      temp2[0] = cr[0];
+        			      temp2[1] = -ci[0];
+        			      for (i = 0; i <= j-1; i++) {
+        			          zmlt(x[i][0], x[i][1], temp1[0], temp1[1], cr, ci); 
+        			          zmlt(y[i][0], y[i][1], temp2[0], temp2[1], cr2, ci2);
+        			          A[i][j][0] = A[i][j][0] + cr[0] + cr2[0];
+        			          A[i][j][1] = A[i][j][1] + ci[0] + ci2[0];
+        			      } // for (i = 0; i <= j-1; i++)
+        			      zmlt(x[j][0], x[j][1], temp1[0], temp1[1], cr, ci);
+        			      zmlt(y[j][0], y[j][1], temp2[0], temp2[1], cr2, ci2);
+        			      A[j][j][0] = A[j][j][0] + cr[0] + cr2[0];
+        			      A[j][j][1] = 0.0;
+        			  } // if ((x[j][0] != 0.0) || (x[j][1] != 0.0) || (y[j][0] != 0.0) || (y[j][1] != 0.0))
+        			  else {
+        				  A[j][j][1] = 0.0;
+        			  }
+        		  } // for (j = 0; j < n; j++)
+        	  } // if ((incx == 1) && (incy == 1))
+        	  else {
+        		  for (j = 0; j < n; j++) {
+        			  if ((x[jx][0] != 0.0) || (x[jx][1] != 0.0) || (y[jy][0] != 0.0) || (y[jy][1] != 0.0)) {
+        			      zmlt(alpha[0], alpha[1], y[jy][0], -y[jy][1], cr, ci);
+        			      temp1[0] = cr[0];
+        			      temp1[1] = ci[0];
+        			      zmlt(alpha[0], alpha[1], x[jx][0], x[jx][1], cr, ci);
+        			      temp2[0] = cr[0];
+        			      temp2[1] = -ci[0];
+        			      ix = kx-1;
+        			      iy =ky-1;
+        			      for (i = 0; i <= j-1; i++) {
+        			    	  zmlt(x[ix][0], x[ix][1], temp1[0], temp1[1], cr, ci); 
+        			          zmlt(y[iy][0], y[iy][1], temp2[0], temp2[1], cr2, ci2);
+        			          A[i][j][0] = A[i][j][0] + cr[0] + cr2[0];
+        			          A[i][j][1] = A[i][j][1] + ci[0] + ci2[0]; 
+        			          ix = ix + incx;
+        			          iy = iy + incy;
+        			      } // for (i = 0; i <= j-1; i++)
+        			      zmlt(x[jx][0], x[jx][1], temp1[0], temp1[1], cr, ci);
+        			      zmlt(y[jy][0], y[jy][1], temp2[0], temp2[1], cr2, ci2);
+        			      A[j][j][0] = A[j][j][0] + cr[0] + cr2[0];
+        			      A[j][j][1] = 0.0;
+        			  } // if ((x[jx][0] != 0.0) || (x[jx][1] != 0.0) || (y[jy][0] != 0.0) || (y[jy][1] != 0.0))
+        			  else {
+        				  A[j][j][1] = 0.0;
+        			  }
+        			  jx = jx + incx;
+        			  jy = jy + incy;
+        		  } // for (j = 0; j < n; j++)
+        	  } // else
+          } // if ((uplo == 'U') || (uplo == 'u'))
+          else {
+        	  // Form A when A is stored in the lower triangle
+        	  if ((incx == 1) && (incy == 1)) {
+        		  for (j = 0; j < n; j++) {
+        			  if ((x[j][0] != 0.0) || (x[j][1] != 0.0) || (y[j][0] != 0.0) || (y[j][1] != 0.0)) {
+        			      zmlt(alpha[0], alpha[1], y[j][0], -y[j][1], cr, ci);
+        			      temp1[0] = cr[0];
+        			      temp1[1] = ci[0];
+        			      zmlt(alpha[0], alpha[1], x[j][0], x[j][1], cr, ci);
+        			      temp2[0] = cr[0];
+        			      temp2[1] = -ci[0];
+        			      zmlt(x[j][0], x[j][1], temp1[0], temp1[1], cr, ci);
+        			      zmlt(y[j][0], y[j][1], temp2[0], temp2[1], cr2, ci2);
+        			      A[j][j][0] = A[j][j][0] + cr[0] + cr2[0];
+        			      A[j][j][1] = 0.0;
+        			      for (i = j+1; i < n; i++) {
+        			          zmlt(x[i][0], x[i][1], temp1[0], temp1[1], cr, ci); 
+        			          zmlt(y[i][0], y[i][1], temp2[0], temp2[1], cr2, ci2);
+        			          A[i][j][0] = A[i][j][0] + cr[0] + cr2[0];
+        			          A[i][j][1] = A[i][j][1] + ci[0] + ci2[0];
+        			      } // for (i = j+1; i < n; i++)
+        			  } // if ((x[j][0] != 0.0) || (x[j][1] != 0.0) || (y[j][0] != 0.0) || (y[j][1] != 0.0))
+        			  else {
+        				  A[j][j][1] = 0.0;
+        			  }
+        		  } // for (j = 0; j < n; j++)
+        	  } // if ((incx == 1) && (incy == 1))
+        	  else {
+        		  for (j = 0; j < n; j++) {
+        			  if ((x[jx][0] != 0.0) || (x[jx][1] != 0.0) || (y[jy][0] != 0.0) || (y[jy][1] != 0.0)) {
+        			      zmlt(alpha[0], alpha[1], y[jy][0], -y[jy][1], cr, ci);
+        			      temp1[0] = cr[0];
+        			      temp1[1] = ci[0];
+        			      zmlt(alpha[0], alpha[1], x[jx][0], x[jx][1], cr, ci);
+        			      temp2[0] = cr[0];
+        			      temp2[1] = -ci[0];
+        			      zmlt(x[jx][0], x[jx][1], temp1[0], temp1[1], cr, ci);
+        			      zmlt(y[jy][0], y[jy][1], temp2[0], temp2[1], cr2, ci2);
+        			      A[j][j][0] = A[j][j][0] + cr[0] + cr2[0];
+        			      A[j][j][1] = 0.0;
+        			      ix = jx;
+        			      iy = jy;
+        			      for (i = j+1; i < n; i++) {
+        			    	  ix = ix + incx;
+        			          iy = iy + incy;
+        			    	  zmlt(x[ix][0], x[ix][1], temp1[0], temp1[1], cr, ci); 
+        			          zmlt(y[iy][0], y[iy][1], temp2[0], temp2[1], cr2, ci2);
+        			          A[i][j][0] = A[i][j][0] + cr[0] + cr2[0];
+        			          A[i][j][1] = A[i][j][1] + ci[0] + ci2[0]; 
+        			      } // for (i = j+1; i < n; i++)
+        			  } // if ((x[jx][0] != 0.0) || (x[jx][1] != 0.0) || (y[jy][0] != 0.0) || (y[jy][1] != 0.0))
+        			  else {
+        				  A[j][j][1] = 0.0;
+        			  }
+        			  jx = jx + incx;
+        			  jy = jy + incy;
+        		  } // for (j = 0; j < n; j++)
+        	  } // else
+          } // else 
+      } // zher2
      
      /**
       * This is a port of version 3.7.0 LAPACK auxiliary test routine ZLAGGE Original ZLAGGE created by Univ. of Tennessee,
@@ -4457,7 +4910,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
      * @param work workspace double[][2] complex of dimension (2*n)
      * @param info output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value
      */
-    /*public void zlagsy(final int n, final int k, final double[] D, final double[][][] A, final int lda,
+    public void zlagsy(final int n, final int k, final double[] D, final double[][][] A, final int lda,
             final int[] iseed, final double[][] work, final int[] info) {
         int i;
         int j;
@@ -4472,9 +4925,15 @@ public class ComplexLinearEquations implements java.io.Serializable {
         double[][] x;
         double cr[] = new double[1];
         double ci[] = new double[1];
+        double cr2[] = new double[1];
+        double ci2[] = new double[1];
         int p;
         double ratio;
+        double alp[] = new double[2];
         double beta[] = new double[2];
+        double ztemp[];
+        int jj;
+        int ii;
 
         // Test the input arguments
         info[0] = 0;
@@ -4562,116 +5021,175 @@ public class ComplexLinearEquations implements java.io.Serializable {
             	work[i][1] = -work[i][1];
             }
 
-            // compute v = y - 1/2 * tau * (y, u) * u
-            alpha = -0.5 * tau * ddot(n - i + 1, work2, 1, work, 1);
-            daxpy(n - i + 1, alpha, work, 1, work2, 1);
+            // compute v = y - 1/2 * tau * (u, y) * u
+            ztemp = zdotc(n - i + 1, work, 1, work2, 1);
+            zmlt(-0.5*tau[0], -0.5*tau[1], ztemp[0], ztemp[1], cr, ci);
+            alpha[0] = cr[0];
+            alpha[1] = ci[0];
+            zaxpy(n - i + 1, alpha, work, 1, work2, 1);
 
             // apply the transformation as a rank-2 update to A(i-1:n-1,i-1:n-1)
-            dsyr2('L', n - i + 1, -1.0, work, 1, work2, 1, B, n - i + 1);
+            //zsyr2('L', n - i + 1, -1.0, work, 1, work2, 1, B, n - i + 1);
 
-            for (j = 0; j < (n - i + 1); j++) {
+            //for (j = 0; j < (n - i + 1); j++) {
 
-                for (m = 0; m < (n - i + 1); m++) {
-                    A[i - 1 + j][i - 1 + m] = B[j][m];
-                }
-            }
+                //for (m = 0; m < (n - i + 1); m++) {
+                	//for (p = 0; p < 2; p++) {
+                       // A[i - 1 + j][i - 1 + m][p] = B[j][m][p];
+                	//}
+                //}
+            //}
+            for (jj = i; jj <= n; jj++) {
+                for (ii = jj; ii <= n; ii++) {
+                    zmlt(work[ii-i][0], work[ii-i][1], work2[jj-i][0], work2[jj-i][1], cr, ci);
+                    zmlt(work2[ii-i][0], work2[ii-i][1], work[jj-i][0], work[jj-i][1], cr2, ci2);
+                    A[ii-1][jj-1][0] = A[ii-1][jj-1][0] - cr[0] - cr2[0];
+                    A[ii-1][jj-1][1] = A[ii-1][jj-1][1] - ci[0] - ci2[0];
+                } // for (ii = jj; ii <= n; ii++)
+            } //  for (jj = i; jj <= n; jj++)
         } // for (i = n-1; i >= 1; i--)
 
         // Reduce number of subdiagonals to k
         for (i = 1; i <= (n - 1 - k); i++) {
 
             // generate reflection to annihilate A(k+i:n-1,i-1)
-            x = new double[n - k - i + 1];
+            x = new double[n - k - i + 1][2];
 
             for (j = 0; j < (n - k - i + 1); j++) {
-                x[j] = A[k + i - 1 + j][i - 1];
+            	for (p = 0; p < 2; p++) {
+                    x[j][p] = A[k + i - 1 + j][i - 1][p];
+            	}
             }
 
-            wn = dnrm2(n - k - i + 1, x, 1);
-
-            if (A[k + i - 1][i - 1] >= 0.0) {
-                wa = Math.abs(wn);
-            } else {
-                wa = -Math.abs(wn);
-            }
-
+            wn = dznrm2(n - k - i + 1, x, 1);
+            ratio = wn/zabs(A[k+i-1][i-1][0], A[k+i-1][i-1][1]);
+            wa[0] = ratio * A[k+i-1][i-1][0];
+            wa[1] = ratio * A[k+i-1][i-1][1];
             if (wn == 0.0) {
-                tau = 0.0;
-            } else {
-                wb = A[k + i - 1][i - 1] + wa;
-
-                for (j = 0; j < (n - k - i); j++) {
-                    A[k + i + j][i - 1] = (1.0 / wb) * A[k + i + j][i - 1];
-                }
-
-                A[k + i - 1][i - 1] = 1.0;
-                tau = wb / wa;
+            	tau[0] = 0.0;
+            	tau[1] = 0.0;
+            }
+            else {
+            	wb[0] =   A[k+i-1][i-1][0] + wa[0];
+            	wb[1] =   A[k+i-1][i-1][1] + wa[1];
+            	zdiv(1.0, 0.0, wb[0], wb[1], cr, ci);
+            	for (j = 0; j < (n-k-i); j++) {
+            		zmlt(cr[0], ci[0], A[k+i+j][i-1][0], A[k+i+j][i-1][1], cr, ci);
+            		A[k+i+j][i-1][0] = cr[0];
+            		A[k+i+j][i-1][1] = ci[0];
+            	}
+            	A[k+i-1][i-1][0] = 1.0;
+            	A[k+i-1][i-1][1] = 0.0;
+            	zdiv(wb[0], wb[1], wa[0], wa[1], cr, ci);
+            	tau[0] = cr[0];
+            	tau[1] = 0.0;
             }
 
             // apply reflection to A(k+i-1:n-1,i:k+i-2) from the left
-            B = new double[n - k - i + 1][k - 1];
+            B = new double[n - k - i + 1][k - 1][2];
 
             for (j = 0; j < (n - k - i + 1); j++) {
 
                 for (m = 0; m < (k - 1); m++) {
-                    B[j][m] = A[k + i - 1 + j][i + m];
+                	for (p = 0; p < 2; p++) {
+                        B[j][m][p] = A[k + i - 1 + j][i + m][p];
+                	}
                 }
             }
 
-            x = new double[n - k - i + 1];
+            x = new double[n - k - i + 1][2];
 
             for (j = 0; j < (n - k - i + 1); j++) {
-                x[j] = A[k + i - 1 + j][i - 1];
+            	for (p = 0; p < 2; p++) {
+                    x[j][p] = A[k + i - 1 + j][i - 1][p];
+            	}
             }
 
-            dgemv('T', n - k - i + 1, k - 1, 1.0, B, n - k - i + 1, x, 1, 0.0, work, 1);
-            dger(n - k - i + 1, k - 1, -tau, x, 1, work, 1, B, n - k - i + 1);
+            alp[0] = 1.0;
+            alp[1] = 0.0;
+            beta[0] = 0.0;
+            beta[1] = 0.0;
+            zgemv('C', n - k - i + 1, k - 1, alp, B, n - k - i + 1, x, 1, beta, work, 1);
+            alp[0] = -tau[0];
+            alp[1] = -tau[1];
+            zgerc(n - k - i + 1, k - 1, alp, x, 1, work, 1, B, n - k - i + 1);
 
             for (j = 0; j < (n - k - i + 1); j++) {
 
                 for (m = 0; m < (k - 1); m++) {
-                    A[k + i - 1 + j][i + m] = B[j][m];
+                	for (p = 0; p < 2; p++) {
+                        A[k + i - 1 + j][i + m][p] = B[j][m][p];
+                	}
                 }
             }
 
             // apply reflection to A(k+i-1:n-1,k+i-1:n-1) from the left and
             // the right
-            // compute y = tau * A * u
-            B = new double[n - k - i + 1][n - k - i + 1];
+            // compute y = tau * A * conjg(u)
+            for (j = 0; j < n-k-i+1; j++) {
+            	A[k+i-1+j][i-1][1] = -A[k+i-1+j][i-1][1];
+            }
+            B = new double[n - k - i + 1][n - k - i + 1][2];
 
             for (j = 0; j < (n - k - i + 1); j++) {
 
                 for (m = 0; m < (n - k - i + 1); m++) {
-                    B[j][m] = A[k + i - 1 + j][k + i - 1 + m];
+                	for (p = 0; p < 2; p++) {
+                        B[j][m][p] = A[k + i - 1 + j][k + i - 1 + m][p];
+                	}
                 }
             }
 
-            x = new double[n - k - i + 1];
+            x = new double[n - k - i + 1][2];
 
             for (j = 0; j < (n - k - i + 1); j++) {
-                x[j] = A[k + i - 1 + j][i - 1];
+            	for (p = 0; p < 2; p++) {
+                    x[j][p] = A[k + i - 1 + j][i - 1][p];
+            	}
             }
 
-            dsymv('L', n - k - i + 1, tau, B, n - k - i + 1, x, 1, 0.0, work, 1);
+            beta[0] = 0.0;
+            beta[1] = 0.0;
+            zsymv('L', n - k - i + 1, tau, B, n - k - i + 1, x, 1, beta, work, 1);
+            
+            for (j = 0; j < n-k-i+1; j++) {
+            	A[k+i-1+j][i-1][1] = -A[k+i-1+j][i-1][1];
+            }
 
-            // compute v = y - 1/2 * tau * (y, u) * u
-            alpha = -0.5 * tau * ddot(n - k - i + 1, work, 1, x, 1);
-            daxpy(n - k - i + 1, alpha, x, 1, work, 1);
+            // compute v = y - 1/2 * tau * (u, y) * u
+            ztemp = zdotc(n - k - i + 1, work, 1, x, 1);
+            zmlt(-0.5*tau[0], -0.5*tau[1], ztemp[0], ztemp[1], cr, ci);
+            alpha[0] = cr[0];
+            alpha[1] = ci[0];
+            zaxpy(n - k - i + 1, alpha, x, 1, work, 1);
 
             // apply symmetric rank-2 update to A(k+i-1:n-1,k+i-1:n-1)
-            dsyr2('L', n - k - i + 1, -1.0, x, 1, work, 1, B, n - k - i + 1);
+            //zsyr2('L', n - k - i + 1, -1.0, x, 1, work, 1, B, n - k - i + 1);
 
-            for (j = 0; j < (n - k - i + 1); j++) {
+            //for (j = 0; j < (n - k - i + 1); j++) {
 
-                for (m = 0; m < (n - k - i + 1); m++) {
-                    A[k + i - 1 + j][k + i - 1 + m] = B[j][m];
-                }
+                //for (m = 0; m < (n - k - i + 1); m++) {
+                    //A[k + i - 1 + j][k + i - 1 + m] = B[j][m];
+                //}
+            //}
+            
+            for (jj = k + i; jj <= n; jj++) {
+            	for (ii = jj; ii <= n; ii++) {
+            	    zmlt(A[ii-1][i-1][0], A[ii-1][i-1][1],work[jj-k-i][0], work[jj-k-i][1], cr, ci);
+            	    zmlt(work[ii-k+i][0], work[ii-k+i][1], A[jj-1][i-1][0], A[jj-1][i-1][1], cr2, ci2);
+            	    A[ii-1][jj-1][0] = A[ii-1][jj-1][0] - cr[0] - cr2[0];
+            	    A[ii-1][jj-1][1] = A[ii-1][jj-1][1] - ci[0] - ci2[0];
+            	} // for (ii = jj; i <= n; ii++)
+            } // for (jj = k + i; jj <= n; jj++)
+
+            for (p = 0; p < 2; p++) {
+                A[k + i - 1][i - 1][p] = -wa[p];
             }
 
-            A[k + i - 1][i - 1] = -wa;
-
             for (j = k + i + 1; j <= n; j++) {
-                A[j - 1][i - 1] = 0.0;
+            	for (p = 0; p < 2; p++) {
+                    A[j - 1][i - 1][p] = 0.0;
+            	}
             }
         } // for (i = 1; i <= n - 1 - k; i++)
 
@@ -4679,12 +5197,14 @@ public class ComplexLinearEquations implements java.io.Serializable {
         for (j = 0; j < n; j++) {
 
             for (i = j + 1; i < n; i++) {
-                A[j][i] = A[i][j];
+            	for (p = 0; p < 2; p++) {
+                    A[j][i][p] = A[i][j][p];
+            	}
             }
         }
 
         return;
-    } // zlagsy*/
+    } // zlagsy
     
     /**
      * BLAS level1 routine version 3.7.0 December, 2016
