@@ -4745,8 +4745,8 @@ public class ComplexLinearEquations implements java.io.Serializable {
      } // zlange
      
      /**
-      * This is a port of version 3.2 LAPACK auxiliary routine ZLASSQ Original ZLASSQ created by Univ. of Tennessee,
-      * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006 dlassq returns the values
+      * This is a port of version 3.7.0 LAPACK auxiliary routine ZLASSQ Original ZLASSQ created by Univ. of Tennessee,
+      * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., December, 2016 zlassq returns the values
       * scl and smsq such that (scl**2)*smsq = x[0]**2 + x[incx]**2 + ... + x[(n-1)*incx]**2 + (scale**2)*sumsq The value
       * of sumsq is assumed to be non-negative and scl returns the value 
       * scl = max(scale,abs(real(x[i])),abs(imag(x[i))). scale and sumsq
