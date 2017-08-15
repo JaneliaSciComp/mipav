@@ -6195,7 +6195,7 @@ public class LinearEquations implements java.io.Serializable {
 
            On exit, the (triangular) inverse of the original matrix, in
            the same storage format.
-       @param inpuut int lda  The leading dimension of the array A.  lda >= max(1,n).
+       @param input int lda  The leading dimension of the array A.  lda >= max(1,n).
        @param output int[] info of dimension 1.
            = 0: successful exit
            < 0: if info[0] = -k, the k-th argument had an illegal value  
