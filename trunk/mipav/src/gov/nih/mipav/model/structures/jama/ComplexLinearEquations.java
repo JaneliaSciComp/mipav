@@ -156,12 +156,15 @@ public class ComplexLinearEquations implements java.io.Serializable {
         double workspace[][];
         double res[] = new double[2];
         double rwork2[];
-        double vec[];
+        double vec[][];
         //String srnamt;
         boolean do60 = true;
         char xtype;
         double alpha[] = new double[2];
         double beta[] = new double[2];
+        boolean tran;
+        int nx;
+        int mb;
         
         // Initialize constants and the random number seed.
         
@@ -304,7 +307,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                         zlacpy('F', m, n, A, lda, AFAC, lda);
                         zgetrf(m, n, AFAC, lda, iwork, info);
     
-                        // Check error code from dgetrf.
+                        // Check error code from zgetrf.
     
                         if (info[0] != izero) {
                          // Print the header if this is the first error message.
@@ -345,13 +348,13 @@ public class ComplexLinearEquations implements java.io.Serializable {
                         // and compute the residual.
     
                         if (m == n && info[0] == 0) {
-                            ge.dlacpy('F', n, n, AFAC, lda, AINV, lda);
+                            zlacpy('F', n, n, AFAC, lda, AINV, lda);
                             nrhs = nsval[0];
                             lwork = nmax*Math.max(3, nrhs);
-                            workspace = new double[lwork];
-                            dgetri(n, AINV, lda, iwork, workspace, lwork, info);
+                            workspace = new double[lwork][2];
+                            zgetri(n, AINV, lda, iwork, workspace, lwork, info);
     
-                            // Check error code from dgetri.
+                            // Check error code from zgetri.
     
                             if (info[0] != 0) {
                                 // Print the header if this is the first error message.
@@ -359,7 +362,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                     printHeader();
                                 } // if (nfail == 0 && nerrs == 0)
                                 nerrs++;
-                                Preferences.debug("Error from dgetri info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("Error from zgetri info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
                                 Preferences.debug("m = " + m + "\n", Preferences.DEBUG_ALGORITHM);
                                 Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
                                 Preferences.debug("nb = " + nb + "\n", Preferences.DEBUG_ALGORITHM);
@@ -370,15 +373,15 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             // inverse.  Also compute the 1-norm condition number
                             // of A.
     
-                            dget03(n, A, lda, AINV, lda, WORK, lda,
+                            zget03(n, A, lda, AINV, lda, WORK, lda,
                                    rwork, rcondo, res);
                             result[1] = res[0];
-                            anormo = ge.dlange('O', m, n, A, lda, rwork);
+                            anormo = zlange('O', m, n, A, lda, rwork);
     
                             // Compute the infinity-norm condition number of A.
     
-                           anormi = ge.dlange('I', m, n, A, lda, rwork);
-                           ainvnm = ge.dlange('I', n, n, AINV, lda, rwork);
+                           anormi = zlange('I', m, n, A, lda, rwork);
+                           ainvnm = zlange('I', n, n, AINV, lda, rwork);
                            if (anormi <= 0.0 || ainvnm <= 0.0) {
                                rcondi = 1.0;
                            }
@@ -392,8 +395,8 @@ public class ComplexLinearEquations implements java.io.Serializable {
                             // Do only the condition estimate if info[0] > 0.
     
                             trfcon = true;
-                            anormo = ge.dlange('O', m, n, A, lda, rwork);
-                            anormi = ge.dlange('I', m, n, A, lda, rwork);
+                            anormo = zlange('O', m, n, A, lda, rwork);
+                            anormi = zlange('I', m, n, A, lda, rwork);
                             rcondo[0] = 0.0;
                             rcondi = 0.0;
                         } // else
@@ -431,6 +434,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                         if (do60) {
                             for (irhs = 1; irhs <= nns; irhs++) {
                                 nrhs = nsval[irhs-1];
+                                xtype = 'N';
     
                                 for (itran = 1; itran <= ntran; itran++) {
                                     trans = transs[itran-1];
@@ -445,20 +449,36 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                     // Solve and compute residual for A * X = B.
     
                                     // Initialize XACT to nrhs random vectors
-                                    vec = new double[n];
+                                    tran = ((trans == 'T') || (trans == 't') || (trans == 'C') || (trans == 'c'));
+                                    if (tran) {
+                                    	nx = m;
+                                    	mb = n;
+                                    }
+                                    else {
+                                    	nx = n;
+                                    	mb = m;
+                                    }
+                                    if ((xtype != 'C') && (xtype != 'c')) {
+                                    vec = new double[n][2];
                                     for (j = 0; j < nrhs; j++) {
-                                        ge.dlarnv(2, iseed, n, vec);
+                                        zlarnv(2, iseed, n, vec);
                                         for (i = 0; i < n; i++) {
-                                            XACT[i][j] = vec[i];
+                                            XACT[i][j][0] = vec[i][0];
+                                            XACT[i][j][1] = vec[i][1];
                                         }
                                     }
+                                    } // 
                                     // Multiply XACT by op( A ) using an appropriate
                                     // matrix multiply routine.
                                     
-                                    ge.dgemm(trans, 'N', n, nrhs, n, 1.0, A, lda, XACT, lda, 0.0, B, lda);
-    
-                                    ge.dlacpy('F', n, nrhs, B, lda, X, lda);
-                                    dgetrs(trans, n, nrhs, AFAC, lda, iwork, X, lda, info);
+                                    alpha[0] = 1.0;
+                                    alpha[1] = 0.0;
+                                    beta[0] = 0.0;
+                                    beta[1] = 0.0;
+                                    zgemm(trans, 'N', mb, nrhs, nx, alpha, A, lda, XACT, lda, beta, B, lda);
+                                    xtype = 'C';
+                                    zlacpy('F', n, nrhs, B, lda, X, lda);
+                                    zgetrs(trans, n, nrhs, AFAC, lda, iwork, X, lda, info);
     
                                     // Check error code from dgetrs.
     
@@ -468,14 +488,14 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                             printHeader();
                                         } // if (nfail == 0 && nerrs == 0)
                                         nerrs++;
-                                        Preferences.debug("Error from dgetrs info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("Error from zgetrs info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
                                         Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
                                         Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
                                         Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
                                         Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
                                     } // if (info[0] != 0)
     
-                                    ge.dlacpy('F', n, nrhs, B, lda, WORK, lda);
+                                    zlacpy('F', n, nrhs, B, lda, WORK, lda);
                                     ge.dget02(trans, n, n, nrhs, A, lda, X, lda,
                                               WORK, lda, rwork, res);
                                     result[2] = res[0];
@@ -2844,6 +2864,259 @@ public class ComplexLinearEquations implements java.io.Serializable {
 
         return;
     } // zlatms
+     
+     /*
+      * This is a port of a portion of LAPACK test routine ZGET01.f version 3.7.0
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., December, 2016
+      * 
+      * zget01 reconstructs a matrix A from its L*U factorization and
+        computes the residual
+           norm(L*U - A) / ( N * norm(A) * eps ),
+        where eps is the machine epsilon.
+
+        @param input int m
+            The number of rows of the matrix A.  m >= 0.
+        @param input int n
+            The number of columns of the matrix A.  n >= 0.
+        @param input double[][][2] complex A of dimension (lda, n)
+            The original m x n matrix A.
+        @param input int lda
+            The leading dimension of the array A.  lda >= max(1,m).
+        @param (input/output) double[][][2] complex AFAC of dimension (ldafac, n)
+            The factored form of the matrix A.  AFAC contains the factors
+            L and U from the L*U factorization as computed by zgetrf.
+            Overwritten with the reconstructed matrix, and then with the
+            difference L*U - A.
+        @param input int ldafac
+            The leading dimension of the array AFAC.  ldafac >= max(1,m).
+        @param input int[] ipiv of dimension (n)
+            The pivot indices from zgetrf.
+        @param output double[] rwork of dimension (m)
+        @param output double[] resid of dimension (1)
+            norm(L*U - A) / ( n * norm(A) * eps )
+      */
+     private void zget01(int m, int n, double[][][] A, int lda, double[][][] AFAC,
+                         int ldafac, int[] ipiv, double[] rwork, double[] resid) {
+         int i;
+         int j;
+         int k;
+         int p;
+         double anorm;
+         double eps;
+         double t[] = new double[2];
+         double vec[][];
+         double arr[][][];
+         double vec2[][];
+         double cr[] = new double[1];
+         double ci[] = new double[1];
+         double alpha[] = new double[2];
+         double beta[] = new double[2];
+         double result[] = new double[2];
+         
+         // Quick exit if M = 0 or N = 0.
+                 
+         if (m <= 0 || n <= 0) {
+             resid[0] = 0.0;
+             return;
+         }
+     
+         // Determine eps and the norm of A.
+     
+         eps = ge.dlamch('E'); // Epsilon
+         anorm = zlange('1', m, n, A, lda, rwork);
+    
+         // Compute the product L*U and overwrite AFAC with the result.
+         // A column at a time of the product is obtained, starting with
+         // column n.
+     
+         for (k = n; k >= 1; k--) {
+             if (k > m) {
+                 vec = new double[m][2];
+                 for (i = 0; i < m; i++) {
+                     vec[i][0] = AFAC[i][k-1][0];
+                     vec[i][1] = AFAC[i][k-1][1];
+                 }
+                 ztrmv('L', 'N', 'U', m, AFAC, ldafac, vec, 1);
+                 for (i = 0; i < m; i++) {
+                     AFAC[i][k-1][0] = vec[i][0];
+                     AFAC[i][k-1][1] = vec[i][1];
+                 }
+             } // if (k > m)
+             else {
+     
+                 // Compute elements (K+1:M,K)
+     
+                 t[0] = AFAC[k-1][k-1][0];
+                 t[1] = AFAC[k-1][k-1][1];
+                 if (k+1 <= m) {
+                     for (i = 0; i < m-k; i++) {
+                    	 zmlt(t[0], t[1], AFAC[k+i][k-1][0], AFAC[k+i][k-1][1], cr, ci);
+                         AFAC[k+i][k-1][0] = cr[0];
+                         AFAC[k+i][k-1][1] = ci[0];
+                     }
+                     arr = new double[m-k][k-1][2];
+                     for (i = 0; i < m-k; i++) {
+                         for (j = 0; j < k-1; j++) {
+                             arr[i][j][0] = AFAC[k+i][j][0];
+                             arr[i][j][1] = AFAC[k+i][j][1];
+                         }
+                     }
+                     vec = new double[k-1][2];
+                     for (i = 0; i < k-1; i++) {
+                         vec[i][0] = AFAC[i][k-1][0];
+                         vec[i][1] = AFAC[i][k-1][1];
+                     }
+                     vec2 = new double[m-k][2];
+                     for (i = 0; i < m-k; i++) {
+                         vec2[i][0] = AFAC[k+i][k-1][0];
+                         vec2[i][1] = AFAC[k+i][k-1][1];
+                     }
+                     alpha[0] = 1.0;
+                     alpha[1] = 0.0;
+                     beta[0] = 1.0;
+                     beta[1] = 0.0;
+                     zgemv('N', m-k, k-1, alpha, arr, ldafac, vec, 1, beta, vec2, 1);
+                     for (i = 0; i < m-k; i++) {
+                         AFAC[k+i][k-1][0] = vec2[i][0];
+                         AFAC[k+i][k-1][1] = vec2[i][1];
+                     }
+                 } // if (k+1 <= m)
+     
+                 // Compute the (K,K) element
+     
+                 vec = new double[k-1][2];
+                 vec2 = new double[k-1][2];
+                 for (i = 0; i < k-1; i++) {
+                     for (p = 0; p < 2; p++) {
+                         vec[i][p] = AFAC[k-1][i][p];
+                         vec2[i][p] = AFAC[i][k-1][p];
+                     }
+                 }
+                 result = zdotu(k-1, vec, 1, vec2, 1);
+                 AFAC[k-1][k-1][0] = t[0] + result[0];
+                 AFAC[k-1][k-1][1] = t[1] + result[1];                 
+     
+                 // Compute elements (1:K-1,K)
+                 for (i = 0; i < k-1; i++) {
+                     vec[i][0] = AFAC[i][k-1][0];
+                     vec[i][1] = AFAC[i][k-1][1];
+                 }
+                 ztrmv('L', 'N', 'U', k-1, AFAC, ldafac, vec, 1);
+                 for (i = 0; i < k-1; i++) {
+                     AFAC[i][k-1][0] = vec[i][0];
+                     AFAC[i][k-1][1] = vec[i][1];
+                 }
+             } // else 
+         } // for (k = n; k >= 1; k--)
+         zlaswp(n, AFAC, ldafac, 1, Math.min(m, n), ipiv, -1);
+     
+         // Compute the difference  L*U - A  and store in AFAC.
+     
+         for (j = 0; j < n; j++) {
+             for (i = 0; i < m; i++) {
+                 AFAC[i][j][0] = AFAC[i][j][0] - A[i][j][0];
+                 AFAC[i][j][1] = AFAC[i][j][1] - A[i][j][1];
+             }
+         }
+     
+         // Compute norm( L*U - A ) / ( n * norm(A) * eps )
+     
+         resid[0] = zlange('1', m, n, AFAC, ldafac, rwork);
+     
+         if (anorm <= 0.0) {
+             if (resid[0] != 0.0) {
+                 resid[0] = 1.0 / eps;
+             }
+         }
+         else {
+             resid[0] = ( ( resid[0] /(double)( n ) ) / anorm ) / eps;
+         }
+     
+         return;
+
+     } // zget01
+     
+     /*
+      * This is a port of a portion of LAPACK test routine ZGET03.f version 3.7.0
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., December, 2016
+      * 
+      * zget03 computes the residual for a general matrix times its inverse:
+        norm( I - AINV*A ) / ( n * norm(A) * norm(AINV) * eps ),
+        where eps is the machine epsilon.
+
+        @param input int n
+            The number of rows and columns of the matrix A.  n >= 0.
+        @param input double[][][2] complex A of dimension (lda, n)
+            The original n x n matrix A.
+        @param input int lda
+            The leading dimension of the array A.  lda >= max(1,n).
+        @param input double[][][2] AINV complex of dimension (ldainv, n)
+            The inverse of the matrix A.
+        @param input int ldainv
+            The leading dimension of the array AINV.  ldainv >= max(1,n).
+        @param output double[][][2] WORK complex of dimension (ldwork, n)
+        @param input int ldwork
+            The leading dimension of the array WORK.  ldwork >= max(1,n).
+        @param output double[] rwork of dimension (n)
+        @param output double[] rcond of dimension (1)
+            The reciprocal of the condition number of A, computed as
+            ( 1/norm(A) ) / norm(AINV).
+        @param output double[] resid of dimension (1)
+            norm(I - AINV*A) / ( n * norm(A) * norm(AINV) * eps )
+      */
+     private void zget03(int n, double[][][] A, int lda, double[][][] AINV, int ldainv,
+                         double[][][] WORK, int ldwork, double[] rwork, double[] rcond,
+                         double[] resid) {
+         int i;
+         double ainvnm;
+         double anorm;
+         double eps;
+         double alpha[] = new double[2];
+         double beta[] = new double[2];
+         
+         // Quick exit if n = 0.
+                 
+         if (n <= 0) {
+             rcond[0] = 1.0;
+             resid[0] = 0.0;
+             return;
+         }
+     
+         // Exit with resid[0] = 1/eps if anorm = 0 or ainvnm = 0.
+     
+         eps = ge.dlamch('E');
+         anorm = zlange('1', n, n, A, lda, rwork);
+         ainvnm = zlange('1', n, n, AINV, ldainv, rwork);
+         if (anorm <= 0.0 || ainvnm <= 0.0) {
+             rcond[0] = 0.0;
+             resid[0] = 1.0 / eps;
+             return;
+         }
+         rcond[0] = ( 1.0 / anorm ) / ainvnm;
+     
+         // Compute I - A * AINV
+     
+         alpha[0] = -1.0;
+         alpha[1] = 0.0;
+         beta[0] = 0.0;
+         beta[1] = 0.0;
+         zgemm('N', 'N', n, n, n, alpha, AINV,
+                  ldainv, A, lda, beta, WORK, ldwork);
+         for (i = 0; i < n; i++) {
+             WORK[i][i][0] = 1.0 + WORK[i][i][0];
+         }
+     
+         // Compute norm(I - AINV*A) / (n * norm(A) * norm(AINV) * eps)
+     
+         resid[0] = zlange('1', n, n, WORK, ldwork, rwork);
+     
+         resid[0] = ((resid[0]*rcond[0]) / eps ) / (double)( n );
+     
+         return;
+
+     } // zget03
     
     /**
      * This is a port of LAPACK auxiliary routine ZLAGHE version 3.7.0.  Provided by the Univ. of Tennessee, Univ.
@@ -6489,6 +6762,716 @@ public class ComplexLinearEquations implements java.io.Serializable {
     private double abssq(double ff[]) {
     	return (ff[0]*ff[0] + ff[1]*ff[1]);
     }
+    
+    /*
+     * This is a port of a portion of LAPACK routine ZGETRI.f version 3.7.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., December, 2016
+     * 
+     * zgetri computes the inverse of a matrix using the LU factorization
+       computed by zgetrf.
+
+       This method inverts U and then computes inv(A) by solving the system
+       inv(A)*L = inv(U) for inv(A).
+       
+       @param input int n
+           The order of the matrix A.  n >= 0.
+       @param (input/output) double[][][2] complex A of (lda, n)
+           On entry, the factors L and U from the factorization
+           A = P*L*U as computed by zgetrf.
+           On exit, if info[0] = 0, the inverse of the original matrix A.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(1,n).
+       @param input int[] ipiv of dimension (n)
+           The pivot indices from zgetrf; for 1<=i<=n, row i of the
+           matrix was interchanged with row ipiv[i].
+       @param output double[][2] complex work of dimension (max(1, lwork))
+           On exit, if info[0] =0, then work[0] returns the optimal lwork.
+       @param input int lwork
+           The dimension of the array work.  lwork >= max(1,n).
+           For optimal performance lwork >= n*nb, where nb is
+           the optimal blocksize returned by ilaenv.
+
+           If lwork = -1, then a workspace query is assumed; the routine
+           only calculates the optimal size of the work array, returns
+           this value as the first entry of the work array, and no error
+           message related to lwork is issued.
+       @param output int[] info of dimension (1)
+           = 0:  successful exit
+           < 0:  if info[0] = -i, the i-th argument had an illegal value
+           > 0:  if info[0] = i, U[i-1][i-1] is exactly zero; the matrix is
+                 singular and its inverse could not be computed.
+     */
+    public void zgetri(int n, double[][][] A, int lda, int[] ipiv, double[][] work,
+                        int lwork, int[] info) {
+        boolean lquery;
+        int i;
+        int iws;
+        int j;
+        int jb;
+        int jj;
+        int jp;
+        int ldwork;
+        int lwkopt;
+        int nb;
+        int nbmin;
+        int nn;
+        String name;
+        String opts;
+        double arr[][][];
+        double vec[][];
+        double vec2[][];
+        int k;
+        double arr2[][][];
+        int i1;
+        int i2;
+        double arr3[][][];
+        double temp[] = new double[2];
+        double alpha[] = new double[2];
+        double beta[] = new double[2];
+        int p;
+        
+        // Test the input parameters.
+        
+        info[0] = 0;
+        name = new String("ZGETRI");
+        opts = new String(" ");
+        nb = ge.ilaenv(1, name, opts, n, -1, -1, -1);
+        lwkopt = n*nb;
+        work[0][0] = lwkopt;
+        lquery = (lwork == -1);
+        if (n < 0) {
+            info[0] = -1;
+        }
+        else if (lda < Math.max(1, n)) {
+            info[0] = -3;
+        }
+        else if (lwork < Math.max(1, n) && !lquery) {
+            info[0] = -6;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("zgetri had info[0] = " + info[0]);
+            return;
+        }
+        else if (lquery) {
+            return;
+        }
+    
+        // Quick return if possible
+    
+        if (n == 0) {
+            return;
+        }
+    
+        // Form inv(U).  If INFO[0] > 0 from dtrtri, then U is singular,
+        // and the inverse is not computed.
+    
+        ztrtri('U', 'N', n, A, lda, info);
+        if (info[0] > 0) {
+            return;
+        }
+    
+        nbmin = 2;
+        ldwork = n;
+        if (nb > 1 && nb < n) {
+            iws = Math.max(ldwork*nb, 1);
+            if (lwork < iws) {
+                nb = lwork / ldwork;
+                nbmin = Math.max(2, ge.ilaenv(2, name, opts, n, -1, -1, -1));
+            } // if (lwork < iws)
+        } // if (nb > 1 && nb < n)
+        else {
+            iws = n;
+        }
+    
+        // Solve the equation inv(A)*L = inv(U) for inv(A).
+    
+        if (nb < nbmin || nb >= n) {
+    
+            // Use unblocked code.
+    
+            for (j = n; j >= 1; j--) {
+    
+                // Copy current column of L to WORK and replace with zeros.
+    
+                for(i = j + 1; i <= n; i++) {
+                    work[i-1][0] = A[i-1][j-1][0];
+                    work[i-1][1] = A[i-1][j-1][1];
+                    A[i-1][j-1][0] = 0.0;
+                    A[i-1][j-1][1] = 0.0;
+                } // for (i = j + 1; i <= n; i++)
+    
+                // Compute current column of inv(A).
+    
+                if (j < n) {
+                    arr = new double[n][n-j][2];
+                    for (i = 0; i < n; i++) {
+                        for (k = 0; k < n-j; k++) {
+                            arr[i][k][0] = A[i][j+k][0];
+                            arr[i][k][1] = A[i][j+k][1];
+                        }
+                    }
+                    vec = new double[n-j][2];
+                    for (i = 0; i < n-j; i++) {
+                        vec[i][0] = work[j+i][0];
+                        vec[i][1] = work[j+i][1];
+                    }
+                    vec2 = new double[n][2];
+                    for (i = 0; i < n; i++) {
+                        vec2[i][0] = A[i][j-1][0];
+                        vec2[i][1] = A[i][j-1][1];
+                    }
+                    alpha[0] = -1.0;
+                    alpha[1] = 0.0;
+                    beta[0] = 1.0;
+                    beta[1] = 0.0;
+                    zgemv('N', n, n-j, alpha, arr,
+                             lda, vec, 1, beta, vec2, 1);
+                    for (i = 0; i < n; i++) {
+                        A[i][j-1][0] = vec2[i][0];
+                        A[i][j-1][1] = vec2[i][1];
+                    }
+                } // if (j < n)
+            } // for (j = n; j >= 1; j--)
+        } // if (nb < nbmin || nb >= n)
+        else {
+    
+            // Use blocked code.
+    
+            nn = ((n-1) / nb )*nb + 1;
+            for (j = nn; j >= 1; j -= nb) {
+                jb = Math.min(nb, n-j+1);
+    
+                // Copy current block column of L to WORK and replace with
+                // zeros.
+    
+                for (jj = j; jj <= j + jb - 1; jj++) {
+                    for (i = jj + 1; i <= n; i++) {
+                        work[i+(jj-j)*ldwork-1][0] = A[i-1][jj-1][0];
+                        work[i+(jj-j)*ldwork-1][1] = A[i-1][jj-1][1];
+                        A[i-1][jj-1][0] = 0.0;
+                        A[i-1][jj-1][1] = 0.0;
+                    } // for (i = jj + 1; i <= n; i++)
+                } //  for (jj = j; jj <= j + jb - 1; jj++)
+    
+                // Compute current block column of inv(A).
+    
+                if (j+jb <= n) {
+                    arr = new double[n][n-j-jb+1][2];
+                    for (i = 0; i < n; i++) {
+                        for (k = 0; k < n-j-jb+1; k++) {
+                            arr[i][k][0] = A[i][j+jb-1+k][0];
+                            arr[i][k][1] = A[i][j+jb-1+k][1];
+                        }
+                    }
+                    arr2 = new double[n-j-jb+1][jb][2];
+                    i = 0;
+                    for (i2 = 0; i2 < jb; i2++) {
+                        for (i1 = 0; i1 < n-j-jb+1; i1++) {
+                            arr2[i1][i2][0] = work[j+jb-1+i][0];
+                            arr2[i1][i2][1] = work[j+jb-1+i][1];
+                            i++;
+                        }
+                    }
+                    arr3 = new double[n][jb][2];
+                    for (i = 0; i < n; i++) {
+                        for (k = 0; k < jb; k++) {
+                            arr3[i][k][0] = A[i][j-1+k][0];
+                            arr3[i][k][1] = A[i][j-1+k][1];
+                        }
+                    }
+                    alpha[0] = -1.0;
+                    alpha[1] = 0.0;
+                    beta[0] = 1.0;
+                    beta[1] = 0.0;
+                    zgemm('N', 'N', n, jb,
+                             n-j-jb+1, alpha, arr, lda,
+                             arr2, ldwork, beta, arr3, lda);
+                    for (i = 0; i < n; i++) {
+                        for (k = 0; k < jb; k++) {
+                            A[i][j-1+k][0] = arr3[i][k][0];
+                            A[i][j-1+k][1] = arr3[i][k][1];
+                        }
+                    }
+                } // if (j+jb <= n)
+                arr = new double[jb][jb][2];
+                i = 0;
+                for (i2 = 0; i2 < jb; i2++) {
+                    for (i1 = 0; i1 < jb; i1++) {
+                        arr[i1][i2][0] = work[j-1+i][0];
+                        arr[i1][i2][1] = work[j-1+i][1];
+                        i++;
+                    }
+                }
+                arr2 = new double[n][jb][2];
+                for (i = 0; i < n; i++) {
+                    for (k = 0; k < jb; k++) {
+                        arr2[i][k][0] = A[i][j-1+k][0];
+                        arr2[i][k][1] = A[i][j-1+k][1];
+                    }
+                }
+                alpha[0] = 1.0;
+                alpha[1] = 0.0;
+                ztrsm('R', 'L', 'N', 'U', n, jb,
+                         alpha, arr, ldwork, arr2, lda);
+                for (i = 0; i < n; i++) {
+                    for (k = 0; k < jb; k++) {
+                        A[i][j-1+k][0] = arr2[i][k][0];
+                        A[i][j-1+k][1] = arr2[i][k][1];
+                    }
+                }
+            } // for (j = nn; j >= 1; j -= nb)
+        } // else
+    
+        // Apply column interchanges.
+    
+        for (j = n - 1; j >= 1; j--) {
+            jp = ipiv[j-1];
+            if (jp != j) {
+                for (i = 0; i < n; i++) {
+                	for (p = 0; p < 2; p++) {
+	                    temp[p] = A[i][j-1][p];
+	                    A[i][j-1][p] = A[i][jp-1][p];
+	                    A[i][jp-1][p] = temp[p];
+                	}
+                }
+            } // if (jp != j)
+        } // for (j = n - 1; j >= 1; j--)
+    
+        work[0][0] = iws;
+        return;
+
+    } // zgetri
+    
+    /**
+     * This is a port of LAPACK version routine 3.7.0 ZTRTRI.F created by the University of Tennessee, University
+     * of California Berkeley, University of Colorado Denver, and NAG Ltd., December 2016.
+     * 
+     * ztrtri computes the inverse of a complex upper or lower triangular matrix A.
+     * This is a level 3 BLAS version of the algorithm.
+     * 
+       @param input char uplo
+           = 'U':  A is upper triangular
+           = 'L':  A is lower triangular
+       @param input char diag 
+           = 'N':  A is non-unit triangular
+           = 'U':  A is unit triangular
+       @param input int n  The order of the matrix A.  n >= 0.
+       @param (input/output) double[][][2] complex A of dimension (lda, n)
+           On entry, the triangular matrix A.  If uplo = 'U', the
+           leading n by n upper triangular part of the array A contains
+           the upper triangular matrix, and the strictly lower
+           triangular part of A is not referenced.  If uplo = 'L', the
+           leading n by n lower triangular part of the array A contains
+           the lower triangular matrix, and the strictly upper
+           triangular part of A is not referenced.  If diag = 'U', the
+           diagonal elements of A are also not referenced and are
+           assumed to be 1.
+
+           On exit, the (triangular) inverse of the original matrix, in
+           the same storage format.
+       @param inpuut int lda  The leading dimension of the array A.  lda >= max(1,n).
+       @param output int[] info of dimension 1.
+           = 0: successful exit
+           < 0: if info[0] = -i, the i-th argument had an illegal value
+           > 0: if info[0] = i, A[i-1][i-1] is exactly zero.  The triangular matrix is 
+                singular and its inverse can not be computed.  
+     */
+      public void ztrtri(char uplo, char diag, int n, double[][][] A, int lda, int info[]) {
+          boolean nounit;
+          boolean upper;
+          int j;
+          int jb;
+          int nb;
+          int nn;
+          int i;
+          double arr[][][];
+          int k;
+          String name;
+          char charOpts[] = new char[2];
+          String opts;
+          double arr2[][][];
+          double alpha[] = new double[2];
+          
+          //Test the input parameters.
+      
+          info[0] = 0;
+          upper = ((uplo == 'U') || (uplo == 'u'));
+          nounit = ((diag == 'N') || (diag == 'n'));
+          if(!upper && !(uplo == 'L') || (uplo == 'l')) {
+              info[0] = -1;
+          }
+          else if (!nounit && !((diag == 'U') || (diag == 'u'))) {
+              info[0] = -2;
+          }
+          else if (n < 0) {
+              info[0] = -3;
+          }
+          else if (lda < Math.max(1, n)) {
+              info[0] = -5;
+          }
+          if (info[0] != 0) {
+              MipavUtil.displayError("ztrtri had info[0] = " + info[0]);
+              return;
+          }
+          
+      
+          // Quick return if possible
+      
+          if (n == 0) {
+              return;
+          }
+      
+          // Check for singularity if non-unit.
+      
+          if (nounit) {
+               for (info[0] = 1; info[0] <= n; info[0]++) {
+                   if ((A[info[0]-1][info[0]-1][0] == 0.0) && (A[info[0]-1][info[0]-1][1] == 0.0)){
+                       return;
+                   }
+               } // for (info[0] = 1; info[0] <= n; info[0]++)
+               info[0] = 0;
+          } // if (nounit)
+      
+          // Determine the block size for this environment.
+          name = new String("ZTRTRI");
+          charOpts[0] = uplo;
+          charOpts[1] = diag;
+          opts = new String(charOpts);
+          nb = ge.ilaenv( 1, name, opts, n, -1, -1, -1);
+          if (nb <= 1 || nb >= n) {
+      
+              // Use unblocked code
+       
+              ztrti2(uplo, diag, n, A, lda, info);
+          }
+          else {
+      
+              // Use blocked code
+      
+              if (upper) {
+      
+                  // Compute inverse of upper triangular matrix
+      
+                  for (j = 1; j <= n; j += nb) {
+                      jb = Math.min(nb, n-j+1);
+      
+                      // Compute rows 0:j-2 of current block column
+                      arr = new double[j-1][jb][2];
+                      for (i = 0; i < j-1; i++) {
+                          for (k = 0; k < jb; k++) {
+                              arr[i][k][0] = A[i][j-1+k][0];
+                              arr[i][k][1] = A[i][j-1+k][1];
+                          }
+                      }
+                      alpha[0] = 1.0;
+                      alpha[1] = 0.0;
+                      ztrmm('L', 'U', 'N', diag, j-1,
+                               jb, alpha, A, lda, arr, lda);
+                      for (i = 0; i < j-1; i++) {
+                          for (k = 0; k < jb; k++) {
+                              A[i][j-1+k][0] = arr[i][k][0];
+                              A[i][j-1+k][1] = arr[i][k][1];
+                          }
+                      }
+                      arr2 = new double[jb][jb][2];
+                      for (i = 0; i < jb; i++) {
+                          for (k = 0; k < jb; k++) {
+                              arr2[i][k][0] = A[j-1+i][j-1+k][0];
+                              arr2[i][k][1] = A[j-1+i][j-1+k][1];
+                          }
+                      }
+                      alpha[0] = -1.0;
+                      alpha[1] = 0.0;
+                      ztrsm('R', 'U', 'N', diag, j-1,
+                               jb, alpha, arr2, lda, arr, lda);
+                      for (i = 0; i < j-1; i++) {
+                          for (k = 0; k < jb; k++) {
+                              A[i][j-1+k][0] = arr[i][k][0];
+                              A[i][j-1+k][1] = arr[i][k][1];
+                          }
+                      }
+                      for (i = 0; i < jb; i++) {
+                          for (k = 0; k < jb; k++) {
+                              arr2[i][k][0] = A[j-1+i][j-1+k][0];
+                              arr2[i][k][1] = A[j-1+i][j-1+k][1];
+                          }
+                      }
+      
+                      //  Compute inverse of current diagonal block
+      
+                      ztrti2('U', diag, jb, arr2, lda, info);
+                      for (i = 0; i < jb; i++) {
+                          for (k = 0; k < jb; k++) {
+                              A[j-1+i][j-1+k][0] = arr2[i][k][0];
+                              A[j-1+i][j-1+k][1] = arr2[i][k][1];
+                          }
+                      }
+                  } // for (j = 1; j <= n; j += nb)
+              } // if (upper)
+              else { // lower
+      
+                  // Compute inverse of lower triangular matrix
+      
+                  nn = ((n-1) / nb )*nb + 1;
+                  for (j = nn; j >= 1; j -= nb) {
+                      jb = Math.min(nb, n-j+1);
+                      if (j+jb <= n) {
+      
+                          // Compute rows j+jb-1:n-1 of current block column
+                          arr = new double[n-j-jb+1][n-j-jb+1][2];
+                          for (i = 0; i < n-j-jb+1; i++) {
+                              for (k = 0; k < n-j-jb+1; k++) {
+                                  arr[i][k][0] = A[j+jb-1+i][j+jb-1+k][0];
+                                  arr[i][k][1] = A[j+jb-1+i][j+jb-1+k][1];
+                              }
+                          }
+                          arr2 = new double[n-j-jb+1][jb][2];
+                          for (i = 0; i < n-j-jb+1; i++) {
+                              for (k = 0; k < jb; k++) {
+                                  arr2[i][k][0] = A[j+jb-1+i][j-1+k][0];
+                                  arr2[i][k][1] = A[j+jb-1+i][j-1+k][1];
+                              }
+                          }
+                          alpha[0] = 1.0;
+                          alpha[1] = 0.0;
+                          ztrmm('L', 'L', 'N', diag,
+                                    n-j-jb+1, jb, alpha, arr, lda,
+                                    arr2, lda);
+                          for (i = 0; i < n-j-jb+1; i++) {
+                              for (k = 0; k < jb; k++) {
+                                  A[j+jb-1+i][j-1+k][0] = arr2[i][k][0];
+                                  A[j+jb-1+i][j-1+k][1] = arr2[i][k][1];
+                              }
+                          }
+                          arr = new double[jb][jb][2];
+                          for (i = 0; i < jb; i++) {
+                              for (k = 0; k < jb; k++) {
+                                  arr[i][k][0] = A[j-1+i][j-1+k][0];
+                                  arr[i][k][1] = A[j-1+i][j-1+k][1];
+                              }
+                          }
+                          alpha[0] = -1.0;
+                          alpha[1] = 0.0;
+                          ztrsm('R', 'L', 'N', diag,
+                                   n-j-jb+1, jb, alpha, arr, lda,
+                                   arr2, lda);
+                          for (i = 0; i < n-j-jb+1; i++) {
+                              for (k = 0; k < jb; k++) {
+                                  A[j+jb-1+i][j-1+k][0] = arr2[i][k][0];
+                                  A[j+jb-1+i][j-1+k][1] = arr2[i][k][1];
+                              }
+                          }
+                      } // if (j+jb <= n)
+      
+                     // Compute inverse of current diagonal block
+                     arr = new double[jb][jb][2];
+                     for (i = 0; i < jb; i++) {
+                         for (k = 0; k < jb; k++) {
+                             arr[i][k][0] = A[j-1+i][j-1+k][0];
+                             arr[i][k][1] = A[j-1+i][j-1+k][1];
+                         }
+                     }
+                     ztrti2('L', diag, jb, arr, lda, info);
+                     for (i = 0; i < jb; i++) {
+                         for (k = 0; k < jb; k++) {
+                             A[j-1+i][j-1+k][0] = arr[i][k][0];
+                             A[j-1+i][j-1+k][1] = arr[i][k][1];
+                         }
+                     }
+                  } // for (j = nn; j >= 1; j -= nb)
+              } // else lower
+          } // else Use blocked code
+
+          return;
+
+      } // ztrtri
+      
+      /**
+       * This is a port of LAPACK version routine 3.7.0 ZTRTI2.F created by the University of Tennessee, University
+       * of California Berkeley, University of Colorado Denver, and NAG Ltd., December 2016.
+       *
+       * ztrti2 computes the inverse of a triangular matrix (unblocked algorithm).
+       * 
+       * ztrti2 computes the inverse of a complex upper or lower triangular matrix.
+       * This is the level 2 BLAS version of the algorithm.
+         @param input char uplo  Specifies whether the matrix A is upper or lower triangular.
+             = 'U':  Upper triangular
+             = 'L':  Lower triangular
+         @param input char diag  Specifies whether or not the matrix A is unit triangular.
+             = 'N':  Non-unit triangular
+             = 'U':  Unit triangular
+         @param input int n  The order of the matrix A.  n >= 0.
+         @param (input/output) double[][][2] complex A of dimension (lda, n)
+             On entry, the triangular matrix A.  If uplo = 'U', the
+             leading n by n upper triangular part of the array A contains
+             the upper triangular matrix, and the strictly lower
+             triangular part of A is not referenced.  If uplo = 'L', the
+             leading n by n lower triangular part of the array A contains
+             the lower triangular matrix, and the strictly upper
+             triangular part of A is not referenced.  If diag = 'U', the
+             diagonal elements of A are also not referenced and are
+             assumed to be 1.
+
+             On exit, the (triangular) inverse of the original matrix, in
+             the same storage format.
+         @param input int lda  The leading dimension of the array A.  lda >= max(1,n).
+         @param output int[] info of dimension 1.
+             = 0: successful exit
+             < 0: if info[0] = -k, the k-th argument had an illegal value  
+       */
+        private void ztrti2(char uplo, char diag, int n, double[][][] A, int lda, int info[]) {
+            boolean nounit;
+            boolean upper;
+            int j;
+            double ajj[] = new double[2];
+            double vec[][];
+            int i;
+            double arr[][][];
+            int k;
+            double cr[] = new double[1];
+            double ci[] = new double[1];
+            
+            //Test the input parameters.
+        
+            info[0] = 0;
+            upper = ((uplo == 'U') || (uplo == 'u'));
+            nounit = ((diag == 'N') || (diag == 'n'));
+            if(!upper && !(uplo == 'L') || (uplo == 'l')) {
+                info[0] = -1;
+            }
+            else if (!nounit && !((diag == 'U') || (diag == 'u'))) {
+                info[0] = -2;
+            }
+            else if (n < 0) {
+                info[0] = -3;
+            }
+            else if (lda < Math.max(1, n)) {
+                info[0] = -5;
+            }
+            if (info[0] != 0) {
+                MipavUtil.displayError("ztrti2 had info[0] = " + info[0]);
+                return;
+            }
+        
+            if (upper) {
+        
+                // Compute inverse of upper triangular matrix.
+        
+                for (j = 1; j <= n; j++) {
+                    if (nounit) {
+                       zdiv(1.0, 0.0, A[j-1][j-1][0], A[j-1][j-1][1], cr, ci);
+                       A[j-1][j-1][0] = cr[0];
+                       A[j-1][j-1][1] = ci[0];
+                       ajj[0] = -A[j-1][j-1][0];
+                       ajj[1] = -A[j-1][j-1][1];
+                    }
+                    else {
+                       ajj[0] = -1.0;
+                       ajj[1] = 0.0;
+                    }
+        
+                    // Compute elements 0:j-2 of (j-1)-th column.
+                    vec = new double[j-1][2];
+                    for (i = 0; i < j-1; i++) {
+                        vec[i][0] = A[i][j-1][0];
+                        vec[i][1] = A[i][j-1][1];
+                    }
+                    ztrmv('U', 'N', diag, j-1, A, lda, vec, 1);
+                    zscal(j-1, ajj, vec, 1 );
+                    for (i = 0; i < j-1; i++) {
+                        A[i][j-1][0] = vec[i][0];
+                        A[i][j-1][1] = vec[i][1];
+                    }
+                } // for (j = 1; j <= n; j++)
+            } // if (upper)
+            else { // lower
+        
+                // Compute inverse of lower triangular matrix.
+   
+                for (j = n; j >= 1; j--) {
+                    if (nounit) {
+                    	zdiv(1.0, 0.0, A[j-1][j-1][0], A[j-1][j-1][1], cr, ci);
+                        A[j-1][j-1][0] = cr[0];
+                        A[j-1][j-1][1] = ci[0];
+                        ajj[0] = -A[j-1][j-1][0];
+                        ajj[1] = -A[j-1][j-1][1];
+                     }
+                     else {
+                        ajj[0] = -1.0;
+                        ajj[1] = 0.0;
+                     }
+                     if (j < n) {
+        
+                         // Compute elements j+1:n of j-th column.
+                         arr = new double[n-j][n-j][2];
+                         for (i = 0; i < n-j; i++) {
+                             for (k = 0; k < n-j; k++) {
+                                 arr[i][k][0] = A[j+i][j+k][0];
+                                 arr[i][k][1] = A[j+i][j+k][1];
+                             }
+                         }
+                         vec = new double[n-j][2];
+                         for (i = 0; i < n-j; i++) {
+                             vec[i][0] = A[j+i][j-1][0];
+                             vec[i][1] = A[j+i][j-1][1];
+                         }
+                         ztrmv('L', 'N', diag, n-j, arr, lda, vec, 1);
+                         zscal(n-j, ajj, vec, 1);
+                         for (i = 0; i < n-j; i++) {
+                             A[j+i][j-1][0] = vec[i][0];
+                             A[j+i][j-1][1] = vec[i][1];
+                         }
+                     } // if (j < n)
+                } // for (j = n; j >= 1; j--)
+            } // else lower
+        
+            return;
+
+        } // ztrti2
+        
+        /**
+         * Routine ported from 12/3/93 linpack dscal Original version written by Jack Dongarra Scales a vector by a
+         * constant zscal scales a vector by a constant.
+         * BLAS level1 routine version 3.7.0
+         * BLAS is a software package provided by Univ. of Tennessee, Univ. of California Berkeley, Univ. of
+         * Colorado Denver, and NAG Ltd.
+         * 
+         * @param n int number of elements in input vector
+         * @param za double[] complex scalar
+         * @param zx double[][2] complex array, dimension (!= (n-1)*abs(incx))
+         * @param incx int storage spacing between elements of zx
+         */
+        public void zscal(final int n, final double za[], final double[][] zx, final int incx) {
+            int nincx;
+            int i;
+            double cr[] = new double[1];
+            double ci[] = new double[1];
+            
+
+            if ( (n <= 0) || (incx <= 0)) {
+                return;
+            }
+
+            if (incx == 1) {
+            	// Code for increment equal to 1
+            	for (i = 0; i < n; i++) {
+            	    zmlt(za[0], za[1], zx[i][0], zx[i][1], cr, ci);
+            	    zx[i][0] = cr[0];
+            	    zx[i][1] = ci[0];
+            	}
+            } // if (incx == 1)
+            else {
+            	// Code for increments not equal to 1
+            	nincx = n*incx;
+            	for (i = 0; i < nincx; i += incx) {
+            		zmlt(za[0], za[1], zx[i][0], zx[i][1], cr, ci);
+            	    zx[i][0] = cr[0];
+            	    zx[i][1] = ci[0];    	
+            	}
+            } // else
+            return;
+        } // zscal
     /*
      * This is a port of a portion of LAPACK routine ZGETRS.f version 3.7.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
@@ -7221,6 +8204,467 @@ public class ComplexLinearEquations implements java.io.Serializable {
         return;
 
     } // zlaswp
+    
+    /**
+     * This is a port of the 2/8/89 Blas level 3 routine ZTRMM Original code written by: Jack Dongarra, Argonne National
+     * Laboratory Iain Duff, AERE Harwell. Jeremy Du Croz, Numerical Algorithms Group Ltd. Sven Hammarling, Numerical
+     * Algorithms Group Ltd. ztrmm performs one of the matrix-matrix operations B = alpha*op(A)*B or B = alpha*B*op(A),
+     * where alpha is scalar, B is an m by n matrix, A is a unit, or non-unit, upper or lower tringular matrix and op(A)
+     * is one of op(A) = A or op(A) = A**T or op(A) = A**H.
+     * Version 3.7.0 December, 2016
+     * 
+     * @param side input char On entry, side specifies whether op(A) multiplies B from the left or right as follows: =
+     *            'L' or 'l' B = alpha*op(A)*B = 'R' or 'r' B = alpha*B*op(A)
+     * @param uplo input char On entry, uplo specifies whether matrix A is an upper or lower triangular matrix as
+     *            follows: = 'U' or 'u' A is an upper triangular matrix = 'L' or 'l' A is a lower triangular matrix
+     * @param transa input char On entry, transa specifies the form of op(A) to be used in the matrix multiplication as
+     *            follows: = 'N' or 'n' op(A) = A
+     *                     = 'T' or 't' op(A) = A**T 
+     *                     = 'C' or 'c' op(A) = A**H
+     * @param diag input char On entry, diag specifies whether or not A is unit triangular as follows: = 'U' or 'u' A is
+     *            assumed to be unit triangular = 'N' or 'n' A is not assumed to be unit triangular
+     * @param m input int On entry, m specifies the number of rows of B. m must be at least zero.
+     * @param n input int On entry, n specifies the number of columns of B. n must be at least zero.
+     * @param alpha input double[2] Specified complex scalar. When alpha is zero then A is not referenced and B need not be set
+     *            before entry.
+     * @param A input double[][][2] complex of dimension lda by k, where k is m when side = 'L' or 'l' and is n when side = 'R' or
+     *            'r'. Before entry with uplo = 'U' or 'u', the leading k by k upper triangular part of the array A must
+     *            contain the upper triangular matrix and the strictly lower triangular part of A is not referenced.
+     *            Before entry with uplo = 'L' or 'l', the leading k by k lower triangular part of the array A must
+     *            contain the lower triangular matrix and the strictly upper triangular part of A is not referenced.
+     *            Note that when diag = 'U' or 'u', the diagonal elements of A are not referenced either, but are
+     *            assumed to be unity.
+     * @param lda input int On entry, lda specifies the first dimension of A as declared in the calling (sub) program.
+     *            When side = 'L' or 'l' then lda must be at least max(1,m), when side = 'R' or 'r' then lda must be at
+     *            least max(1,n).
+     * @param B input/output double[][][2] complex of dimension ldb by n Before entry, the leading m by n part of the array B must
+     *            contain the matrix B, and on exit is overwritten by the transformed matrix.
+     * @param ldb input int On entry, ldb specifies the first dimension of B as declared in the calling (sub) program.
+     *            ldb must be at least max(1,m).
+     */
+    public void ztrmm(final char side, final char uplo, final char transa, final char diag, final int m, final int n,
+            final double alpha[], final double[][][] A, final int lda, final double[][][] B, final int ldb) {
+        boolean lside;
+        boolean noconj;
+        boolean nounit;
+        boolean upper;
+        int i;
+        int info;
+        int j;
+        int k;
+        int nrowa;
+        double temp[] = new double[2];
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+
+        // Test the input parameters
+        if ( (side == 'L') || (side == 'l')) {
+            lside = true;
+        } else {
+            lside = false;
+        }
+
+        if (lside) {
+            nrowa = m;
+        } else {
+            nrowa = n;
+        }
+        
+        noconj = ((transa == 'T') || (transa == 't')); 
+
+        if ( (diag == 'N') || (diag == 'n')) {
+            nounit = true;
+        } else {
+            nounit = false;
+        }
+
+        if ( (uplo == 'U') || (uplo == 'u')) {
+            upper = true;
+        } else {
+            upper = false;
+        }
+
+        info = 0;
+
+        if ( ( !lside) && (side != 'R') && (side != 'r')) {
+            info = 1;
+        } else if ( ( !upper) && (uplo != 'L') && (uplo != 'l')) {
+            info = 2;
+        } else if ( (transa != 'N') && (transa != 'n') && (transa != 'T') && (transa != 't') && (transa != 'C')
+                && (transa != 'c')) {
+            info = 3;
+        } else if ( (diag != 'U') && (diag != 'u') && (diag != 'N') && (diag != 'n')) {
+            info = 4;
+        } else if (m < 0) {
+            info = 5;
+        } else if (n < 0) {
+            info = 6;
+        } else if (lda < Math.max(1, nrowa)) {
+            info = 9;
+        } else if (ldb < Math.max(1, m)) {
+            info = 11;
+        }
+
+        if (info != 0) {
+            MipavUtil.displayError("Error ztrmm had info = " + info);
+
+            return;
+        }
+
+        // Quick return if possible
+        if ((m == 0) || (n == 0)) {
+            return;
+        }
+
+        if ((alpha[0] == 0.0) && (alpha[1] == 0)) {
+
+            for (j = 0; j < n; j++) {
+
+                for (i = 0; i < m; i++) {
+                    B[i][j][0] = 0.0;
+                    B[i][j][1] = 0.0;
+                }
+            }
+
+            return;
+        } // if ((alpha[0] == 0.0) && (alpha[1] == 0))
+
+        if (lside) {
+
+            if ( (transa == 'N') || (transa == 'n')) {
+
+                // Form B = alpha*A*B
+                if (upper) {
+
+                    for (j = 0; j < n; j++) {
+
+                        for (k = 0; k < m; k++) {
+
+                            if ((B[k][j][0] != 0.0) || (B[k][j][1] != 0.0)) {
+                            	zmlt(alpha[0], alpha[1], B[k][j][0], B[k][j][1], cr, ci);
+                            	temp[0] = cr[0];
+                            	temp[1] = ci[0];
+
+                                for (i = 0; i <= (k - 1); i++) {
+                                	zmlt(temp[0], temp[1], A[i][k][0], A[i][k][1], cr, ci);
+                                	B[i][j][0] = B[i][j][0] + cr[0];
+                                	B[i][j][1] = B[i][j][1] + ci[0];
+                                }
+
+                                if (nounit) {
+                                	zmlt(temp[0], temp[1], A[k][k][0], A[k][k][1], cr, ci);
+                                	temp[0] = cr[0];
+                                	temp[1] = ci[0];
+                                }
+
+                                B[k][j][0] = temp[0];
+                                B[k][j][1] = temp[1];
+                            } // if ((B[k][j][0] != 0.0) || (B[k][j][1] != 0.0))
+                        } // for (k = 0; k < m; k++)
+                    } // for (j = 0; j < n; j++)
+                } // if (upper)
+                else { // lower
+
+                    for (j = 0; j < n; j++) {
+
+                        for (k = m - 1; k >= 0; k--) {
+
+                        	if ((B[k][j][0] != 0.0) || (B[k][j][1] != 0.0)) {
+                        		zmlt(alpha[0], alpha[1], B[k][j][0], B[k][j][1], cr, ci);
+                            	temp[0] = cr[0];
+                            	temp[1] = ci[0];
+                            	B[k][j][0] = temp[0];
+                                B[k][j][1] = temp[1];
+
+                                if (nounit) {
+                                	zmlt(B[k][j][0], B[k][j][1], A[k][k][0], A[k][k][1], cr, ci);
+                                	B[k][j][0] = cr[0];
+                                	B[k][j][1] = ci[0];
+                                }
+
+                                for (i = k + 1; i < m; i++) {
+                                	zmlt(temp[0], temp[1], A[i][k][0], A[i][k][1], cr, ci);
+                                	B[i][j][0] = B[i][j][0] + cr[0];
+                                	B[i][j][1] = B[i][j][1] + ci[0];
+                                }
+                            } // if ((B[k][j][0] != 0.0) || (B[k][j][1] != 0.0))
+                        } // for (k = m-1; k >= 0; k--)
+                    } // for (j = 0; j < n; j++)
+                } // lower
+            } // if (transa == 'N') || (transa == 'n'))
+            else { // ((transa != 'N') && (transa != 'n'))
+
+                // Form B = alpha*A**T*B or B = alpha*A**H*B
+                if (upper) {
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = m - 1; i >= 0; i--) {
+                            temp[0] = B[i][j][0];
+                            temp[1] = B[i][j][1];
+
+                            if (noconj) {
+	                            if (nounit) {
+	                            	zmlt(temp[0], temp[1], A[i][i][0], A[i][i][1], cr, ci);
+	                            	temp[0] = cr[0];
+	                            	temp[1] = ci[0];
+	                            }
+	
+	                            for (k = 0; k <= (i - 1); k++) {
+	                            	zmlt(A[k][i][0], A[k][i][1], B[k][j][0], B[k][j][1], cr, ci);
+	                            	temp[0] = temp[0] + cr[0];
+	                            	temp[1] = temp[1] + ci[0];
+	                            }
+                            } // if (noconj)
+                            else {
+                            	if (nounit) {
+	                            	zmlt(temp[0], temp[1], A[i][i][0], -A[i][i][1], cr, ci);
+	                            	temp[0] = cr[0];
+	                            	temp[1] = ci[0];
+	                            }
+	
+	                            for (k = 0; k <= (i - 1); k++) {
+	                            	zmlt(A[k][i][0], -A[k][i][1], B[k][j][0], B[k][j][1], cr, ci);
+	                            	temp[0] = temp[0] + cr[0];
+	                            	temp[1] = temp[1] + ci[0];
+	                            }	
+                            } // else
+
+                            zmlt(alpha[0], alpha[1], temp[0], temp[1], cr, ci);
+                            B[i][j][0] = cr[0];
+                            B[i][j][1] = ci[0];
+                        } // for (i = m-1; i >= 0; i--)
+                    } // for (j = 0; j < n; j++)
+                } // if (upper)
+                else { // lower
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = 0; i < m; i++) {
+                        	temp[0] = B[i][j][0];
+                            temp[1] = B[i][j][1];
+
+                            if (noconj) {
+	                            if (nounit) {
+	                            	zmlt(temp[0], temp[1], A[i][i][0], A[i][i][1], cr, ci);
+	                            	temp[0] = cr[0];
+	                            	temp[1] = ci[0];
+	                            }
+	
+	                            for (k = i + 1; k < m; k++) {
+	                            	zmlt(A[k][i][0], A[k][i][1], B[k][j][0], B[k][j][1], cr, ci);
+	                            	temp[0] = temp[0] + cr[0];
+	                            	temp[1] = temp[1] + ci[0];
+	                            }
+                            } // if (noconj)
+                            else {
+                            	if (nounit) {
+	                            	zmlt(temp[0], temp[1], A[i][i][0], -A[i][i][1], cr, ci);
+	                            	temp[0] = cr[0];
+	                            	temp[1] = ci[0];
+	                            }
+	
+	                            for (k = i + 1; k < m; k++) {
+	                            	zmlt(A[k][i][0], -A[k][i][1], B[k][j][0], B[k][j][1], cr, ci);
+	                            	temp[0] = temp[0] + cr[0];
+	                            	temp[1] = temp[1] + ci[0];
+	                            }	
+                            } // else
+
+                            zmlt(alpha[0], alpha[1], temp[0], temp[1], cr, ci);
+                            B[i][j][0] = cr[0];
+                            B[i][j][1] = ci[0];
+                        } // for (i = 0; i < m; i++)
+                    } // for (j = 0; j < n; j++)
+                } // lower
+            } // else ((transa != 'N') && (transa != 'n'))
+        } // if (lside)
+        else { // !lside
+
+            if ( (transa == 'N') || (transa == 'n')) {
+
+                // Form B = alpha*B*A
+                if (upper) {
+
+                    for (j = n - 1; j >= 0; j--) {
+                        temp[0] = alpha[0];
+                        temp[1] = alpha[1];
+
+                        if (nounit) {
+                        	zmlt(temp[0], temp[1], A[j][j][0], A[j][j][1], cr, ci);
+                            temp[0] = cr[0];
+                            temp[1] = ci[0];
+                        }
+
+                        for (i = 0; i < m; i++) {
+                        	zmlt(temp[0], temp[1], B[i][j][0], B[i][j][1], cr, ci);
+                        	B[i][j][0] = cr[0];
+                        	B[i][j][1] = ci[0];
+                        }
+
+                        for (k = 0; k <= (j - 1); k++) {
+
+                            if ((A[k][j][0] != 0.0) || (A[k][j][1] != 0.0)) {
+                            	zmlt(alpha[0], alpha[1], A[k][j][0], A[k][j][1], cr, ci);
+                            	temp[0] = cr[0];
+                            	temp[1] = ci[0];
+
+                                for (i = 0; i < m; i++) {
+                                	zmlt(temp[0], temp[1], B[i][k][0], B[i][k][1], cr, ci);
+                                	B[i][j][0] = B[i][j][0] + cr[0];
+                                	B[i][j][1] = B[i][j][1] + ci[0];
+                                }
+                            } // if ((A[k][j][0] != 0.0) || (A[k][j][1] != 0.0))
+                        } // for (k = 0; k <= j-1; k++)
+                    } // for (j = n-1; j >= 0; j--)
+                } // if (upper)
+                else { // lower
+
+                    for (j = 0; j < n; j++) {
+                    	 temp[0] = alpha[0];
+                         temp[1] = alpha[1];
+
+                        if (nounit) {
+                        	zmlt(temp[0], temp[1], A[j][j][0], A[j][j][1], cr, ci);
+                            temp[0] = cr[0];
+                            temp[1] = ci[0];
+                        }
+
+                        for (i = 0; i < m; i++) {
+                        	zmlt(temp[0], temp[1], B[i][j][0], B[i][j][1], cr, ci);
+                        	B[i][j][0] = cr[0];
+                        	B[i][j][1] = ci[0];
+                        }
+
+                        for (k = j + 1; k < n; k++) {
+
+                        	if ((A[k][j][0] != 0.0) || (A[k][j][1] != 0.0)) {
+                        		zmlt(alpha[0], alpha[1], A[k][j][0], A[k][j][1], cr, ci);
+                            	temp[0] = cr[0];
+                            	temp[1] = ci[0];
+
+                                for (i = 0; i < m; i++) {
+                                	zmlt(temp[0], temp[1], B[i][k][0], B[i][k][1], cr, ci);
+                                	B[i][j][0] = B[i][j][0] + cr[0];
+                                	B[i][j][1] = B[i][j][1] + ci[0];
+                                }
+                            } // if ((A[k][j][0] != 0.0) || (A[k][j][1] != 0.0))
+                        } // for (k = j+1; k < n; k++)
+                    } // for (j = 0; j < n; j++)
+                } // lower
+            } // if (transa == 'N') || (transa == 'n'))
+            else { // ((transa != 'N') && (transa != 'n'))
+
+                // Form B = alpha*B*A'
+                if (upper) {
+
+                    for (k = 0; k < n; k++) {
+
+                        for (j = 0; j <= (k - 1); j++) {
+
+                        	if ((A[j][k][0] != 0.0) || (A[j][k][1] != 0.0)) {
+                        		if (noconj) {
+                        			zmlt(alpha[0], alpha[1], A[j][k][0], A[j][k][1], cr, ci);
+                                	temp[0] = cr[0];
+                                	temp[1] = ci[0];
+                        		}
+                        		else {
+                        			zmlt(alpha[0], alpha[1], A[j][k][0], -A[j][k][1], cr, ci);
+                                	temp[0] = cr[0];
+                                	temp[1] = ci[0];	
+                        		}
+
+                                for (i = 0; i < m; i++) {
+                                	zmlt(temp[0], temp[1], B[i][k][0], B[i][k][1], cr, ci);
+                                	B[i][j][0] = B[i][j][0] + cr[0];
+                                	B[i][j][1] = B[i][j][1] + ci[0];
+                                }
+                            } // if ((A[j][k][0] != 0.0) || (A[j][k][1] != 0.0))
+                        } // for (j = 0; j <= k-1; j++)
+
+                        temp[0] = alpha[0];
+                        temp[1] = alpha[1];
+
+                        if (nounit) {
+                        	if (noconj) {
+                        		zmlt(temp[0], temp[1], A[k][k][0], A[k][k][1], cr, ci);
+                        		temp[0] = cr[0];
+                        		temp[1] = ci[0];
+                        	}
+                        	else {
+                        		zmlt(temp[0], temp[1], A[k][k][0], -A[k][k][1], cr, ci);
+                        		temp[0] = cr[0];
+                        		temp[1] = ci[0];	
+                        	}
+                        }
+
+                        if ((temp[0] != 1.0) || (temp[1] != 0.0)) {
+
+                            for (i = 0; i < m; i++) {
+                            	zmlt(temp[0], temp[1], B[i][k][0], B[i][k][1], cr, ci);
+                            	B[i][k][0] = cr[0];
+                            	B[i][k][1] = ci[0];
+                            }
+                        } // if ((temp[0] != 1.0) || (temp[1] != 0.0))
+                    } // for (k = 0; k < n; k++)
+                } // if (upper)
+                else { // lower
+
+                    for (k = n - 1; k >= 0; k--) {
+
+                        for (j = k + 1; j < n; j++) {
+
+                            if ((A[j][k][0] != 0.0) || (A[j][k][1] != 0.0)) {
+                            	if (noconj) {
+                            		zmlt(alpha[0], alpha[1], A[j][k][0], A[j][k][1], cr, ci);
+                                	temp[0] = cr[0];
+                                	temp[1] = ci[0];
+                            	}
+                            	else {
+                            		zmlt(alpha[0], alpha[1], A[j][k][0], -A[j][k][1], cr, ci);
+                                	temp[0] = cr[0];
+                                	temp[1] = ci[0];	
+                            	}
+
+                                for (i = 0; i < m; i++) {
+                                	zmlt(temp[0], temp[1], B[i][k][0], B[i][k][1], cr, ci);
+                                	B[i][j][0] = B[i][j][0] + cr[0];
+                                	B[i][j][1] = B[i][j][1] + ci[0];
+                                }
+                            } // if ((A[j][k][0] != 0.0) || (A[j][k][1] != 0.0))
+                        } // for (j = k+1; j < n; j++)
+
+                        temp[0] = alpha[0];
+                        temp[1] = alpha[1];
+
+                        if (nounit) {
+                        	if (noconj) {
+                        		zmlt(temp[0], temp[1], A[k][k][0], A[k][k][1], cr, ci);
+                        		temp[0] = cr[0];
+                        		temp[1] = ci[0];
+                        	}
+                        	else {
+                        		zmlt(temp[0], temp[1], A[k][k][0], -A[k][k][1], cr, ci);
+                        		temp[0] = cr[0];
+                        		temp[1] = ci[0];	
+                        	}
+                        }
+
+                        if ((temp[0] != 1.0) || (temp[1] != 0.0)) {
+
+                            for (i = 0; i < m; i++) {
+                            	zmlt(temp[0], temp[1], B[i][k][0], B[i][k][1], cr, ci);
+                            	B[i][k][0] = cr[0];
+                            	B[i][k][1] = ci[0];
+                            } // for (i = 0; i < m; i++)
+                        } // if ((temp[0] != 1.0) || (temp[1] != 0.0))
+                    } // for (k = n-1; k >= 0; k--)
+                } // lower
+            } // else ((transa != 'N') && (transa != 'n'))
+        } // else !lside
+
+        return;
+    } // ztrmm
     
     /**
      * This is a port of the 2/8/89 Blas routine ZTRSM Original code written by: Jack Dongarra, Argonne National
