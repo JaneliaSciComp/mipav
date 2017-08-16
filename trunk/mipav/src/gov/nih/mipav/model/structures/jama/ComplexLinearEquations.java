@@ -7,6 +7,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 public class ComplexLinearEquations implements java.io.Serializable {
 	GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+	LinearEquations le = new LinearEquations();
     private ViewUserInterface UI = ViewUserInterface.getReference();
     
     private int iparms[];
@@ -24,7 +25,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
 
     private double badc2_zlatb4;
     
-    /** Double precison machine variables found in routine dlartg. */
+    /** Double precision machine variables found in routine zlartg. */
     private boolean first_zlartg = true;
     
     /** DOCUMENT ME! */
@@ -95,7 +96,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
        @param output double[] rwork of dimension (max(2*nmax, 2*nsmax+nwork))
        @param output int[] iwork of dimension (2*nmax)
      */
-    /*private void zchkge(boolean[] dotype, int nm, int[] mval, int nn, int[] nval, int nnb,
+    private void zchkge(boolean[] dotype, int nm, int[] mval, int nn, int[] nval, int nnb,
                         int[] nbval, int nns, int[] nsval, double thresh, int nmax, double[][][] A,
                         double[][][] AFAC, double[][][] AINV, double[][][] B, double[][][] X,
                         double[][][] XACT, double[][][] WORK, double[] rwork, int[] iwork) {
@@ -156,6 +157,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
         double workspace[][];
         double res[] = new double[2];
         double rwork2[];
+        double rwork3[];
         double vec[][];
         //String srnamt;
         boolean do60 = true;
@@ -448,7 +450,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                     // TEST 3
                                     // Solve and compute residual for A * X = B.
     
-                                    // Initialize XACT to nrhs random vectors
+                                    // Initialize XACT to nrhs random vectors unless xtype = 'C'.
                                     tran = ((trans == 'T') || (trans == 't') || (trans == 'C') || (trans == 'c'));
                                     if (tran) {
                                     	nx = m;
@@ -459,15 +461,15 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                     	mb = m;
                                     }
                                     if ((xtype != 'C') && (xtype != 'c')) {
-                                    vec = new double[n][2];
-                                    for (j = 0; j < nrhs; j++) {
-                                        zlarnv(2, iseed, n, vec);
-                                        for (i = 0; i < n; i++) {
-                                            XACT[i][j][0] = vec[i][0];
-                                            XACT[i][j][1] = vec[i][1];
-                                        }
-                                    }
-                                    } // 
+	                                    vec = new double[n][2];
+	                                    for (j = 0; j < nrhs; j++) {
+	                                        zlarnv(2, iseed, n, vec);
+	                                        for (i = 0; i < n; i++) {
+	                                            XACT[i][j][0] = vec[i][0];
+	                                            XACT[i][j][1] = vec[i][1];
+	                                        }
+	                                    }
+                                    } // if ((xtype != 'C') && (xtype != 'c'))
                                     // Multiply XACT by op( A ) using an appropriate
                                     // matrix multiply routine.
                                     
@@ -480,7 +482,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                     zlacpy('F', n, nrhs, B, lda, X, lda);
                                     zgetrs(trans, n, nrhs, AFAC, lda, iwork, X, lda, info);
     
-                                    // Check error code from dgetrs.
+                                    // Check error code from zgetrs.
     
                                     if (info[0] != 0) {
                                         // Print the header if this is the first error message.
@@ -496,25 +498,26 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                     } // if (info[0] != 0)
     
                                     zlacpy('F', n, nrhs, B, lda, WORK, lda);
-                                    ge.dget02(trans, n, n, nrhs, A, lda, X, lda,
+                                    zget02(trans, n, n, nrhs, A, lda, X, lda,
                                               WORK, lda, rwork, res);
                                     result[2] = res[0];
     
                                     // TEST 4
                                     // Check solution from generated exact solution.
     
-                                    le.dget04(n, nrhs, X, lda, XACT, lda, rcondc, res);
+                                    zget04(n, nrhs, X, lda, XACT, lda, rcondc, res);
                                     result[3] = res[0];
     
                                     // TESTS 5, 6, and 7
                                     // Use iterative refinement to improve the solution.
     
                                     rwork2 = new double[nrhs];
-                                    workspace = new double[n];
+                                    rwork3 = new double[n];
+                                    workspace = new double[n][2];
                                     iwork2 = new int[n];
-                                    dgerfs(trans, n, nrhs, A, lda, AFAC, lda,
+                                    zgerfs(trans, n, nrhs, A, lda, AFAC, lda,
                                            iwork, B, lda, X, lda, rwork,
-                                           rwork2, workspace, iwork2, info);
+                                           rwork2, workspace, rwork3, info);
     
                                     // Check error code from dgerfs.
     
@@ -524,16 +527,16 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                             printHeader();
                                         } // if (nfail == 0 && nerrs == 0)
                                         nerrs++;
-                                        Preferences.debug("Error from dgerfs info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("Error from zgerfs info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
                                         Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
                                         Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
                                         Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
                                         Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
                                     } // if (info[0] != 0)
     
-                                    le.dget04(n, nrhs, X, lda, XACT, lda, rcondc, res);
+                                    zget04(n, nrhs, X, lda, XACT, lda, rcondc, res);
                                     result[4] = res[0];
-                                    dget07(trans, n, nrhs, A, lda, B, lda, X,
+                                    zget07(trans, n, nrhs, A, lda, B, lda, X,
                                            lda, XACT, lda, rwork, true,
                                            rwork2, res);
                                     result[5] = res[0];
@@ -575,12 +578,12 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                 rcondc = rcondi;
                                 norm = 'I';
                             }
-                            workspace = new double[n];
-                            iwork2 = new int[n];
-                            dgecon(norm, n, AFAC, lda, anorm[0], rcond,
-                                   workspace, iwork2, info);
+                            workspace = new double[2*n][2];
+                            rwork = new double[2*n];
+                            zgecon(norm, n, AFAC, lda, anorm[0], rcond,
+                                   workspace, rwork, info);
     
-                            // Check error code from dgecon.
+                            // Check error code from zgecon.
     
                             if (info[0] != 0) {
                                 // Print the header if this is the first error message.
@@ -588,7 +591,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                     printHeader();
                                 } // if (nfail == 0 && nerrs == 0)
                                 nerrs++;
-                                Preferences.debug("Error from dgecon info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("Error from zgecon info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
                                 Preferences.debug("norm = " + norm + "\n", Preferences.DEBUG_ALGORITHM);
                                 Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
                                 Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
@@ -631,7 +634,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
         }
         
         return;
-    } // zchkge */
+    } // zchkge 
     
     private void printHeader() {
         Preferences.debug("DGE General dense matrices\n", Preferences.DEBUG_ALGORITHM);
@@ -2866,6 +2869,493 @@ public class ComplexLinearEquations implements java.io.Serializable {
     } // zlatms
      
      /*
+      * This is a port of a portion of LAPACK routine ZGECON.f version 3.7.0
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., December, 2016
+      * 
+      * zgecon estimates the reciprocal of the condition number of a general
+        complex matrix A, in either the 1-norm or the infinity-norm, using
+        the LU factorization computed by zgetrf.
+ *
+ *      An estimate is obtained for norm(inv(A)), and the reciprocal of the
+        condition number is computed as
+        rcond[0] = 1 / ( norm(A) * norm(inv(A)) ).
+
+        @param input char norm
+            Specifies whether the 1-norm condition number or the
+            infinity-norm condition number is required:
+            = '1' or 'O':  1-norm;
+            = 'I':         Infinity-norm.
+        @param input int n
+            The order of the matrix A.  n >= 0.
+        @param input double[][][2] complex A of dimension (lda, n)
+            The factors L and U from the factorization A = P*L*U
+            as computed by zgetrf.
+        @param input int lda
+            The leading dimension of the array A.  lda >= max(1,n).
+        @param input double anorm
+            If norm = '1' or 'O', the 1-norm of the original matrix A.
+            If norm = 'I', the infinity-norm of the original matrix A.
+        @param output double[] rcond of dimension (1)
+            The reciprocal of the condition number of the matrix A,
+            computed as rcond[0] = 1/(norm(A) * norm(inv(A))).
+        @param output double[][2] complex work of dimension (2*n)
+        @param output double[] rwork of dimension (2*n)
+        @param output int[] info of dimension (1)
+            = 0:  successful exit
+            < 0:  if info[0] = -i, the i-th argument had an illegal value
+      */
+     public void zgecon(char norm, int n, double[][][] A, int lda, double anorm,
+                         double[] rcond, double[][] work, double[] rwork, int[] info) {
+         boolean onenrm;
+         char normin;
+         int ix;
+         int kase[] = new int[1];
+         int kase1;
+         int isave[] = new int[3];
+         double ainvnm[] = new double[1];
+         double scale;
+         double sl[] = new double[1];
+         double smlnum;
+         double su[] = new double[1];
+         double work2[][];
+         int i;
+         double maxVal;
+         double rwork2[] = new double[n];
+         
+         // Test the input parameters.
+         
+         info[0] = 0;
+         onenrm = norm == '1' || ((norm == 'O') || (norm == 'o'));
+         if (!onenrm && !((norm == 'I') || (norm == 'i'))) {
+             info[0] = -1;
+         }
+         else if (n < 0) {
+             info[0] = -2;
+         }
+         else if (lda < Math.max(1, n)) {
+             info[0] = -4;
+         }
+         else if (anorm < 0.0) {
+             info[0] = -5;
+         }
+         if (info[0] != 0) {
+             MipavUtil.displayError("zgecon had info[0] = " + info[0]);
+             return;
+         }
+     
+         // Quick return if possible
+     
+         rcond[0] = 0.0;
+         if (n == 0) {
+             rcond[0] = 1.0;
+             return;
+         }
+         else if (anorm == 0.0) {
+             return;
+         }
+     
+         smlnum = ge.dlamch('S'); // Safe minimum
+         work2 = new double[n][2];
+     
+         // Estimate the norm of inv(A).
+     
+         ainvnm[0] = 0.0;
+         normin = 'N';
+         if (onenrm) {
+             kase1 = 1;
+         }
+         else {
+             kase1 = 2;
+         }
+         kase[0] = 0;
+         while (true) {
+             zlacn2(n, work2, work, ainvnm, kase, isave);
+             if (kase[0] != 0) {
+                 if (kase[0] == kase1) {
+     
+                     // Multiply by inv(L).
+     
+                     zlatrs('L', 'N', 'U', normin, n, A,
+                               lda, work, sl, rwork, info);
+     
+                     // Multiply by inv(U).
+     
+                     zlatrs('U', 'N', 'N', normin, n,
+                               A, lda, work, su, rwork2, info);
+                 } // if (kase[0] == kase1)
+                 else {
+     
+                     // Multiply by inv(U**H).
+     
+                     zlatrs('U', 'C', 'N', normin, n, A,
+                               lda, work, su, rwork2, info);
+     
+                     // Multiply by inv(L**T).
+     
+                     zlatrs('L', 'C', 'U', normin, n, A,
+                               lda, work, sl, rwork, info);
+                 } // else
+     
+                 // Divide X by 1/(sl[0]*su[0]) if doing so will not cause overflow.
+     
+                 scale = sl[0]*su[0];
+                 normin = 'Y';
+                 if (scale != 1.0) {
+                     ix = 0;
+                     maxVal = Math.abs(work[0][0]) + Math.abs(work[0][1]);
+                     for (i = 1; i < n; i++) {
+                         if ((Math.abs(work[i][0]) + Math.abs(work[i][1])) > maxVal) {
+                             ix = i;
+                             maxVal = Math.abs(work[i][0]) + Math.abs(work[i][1]);
+                         }
+                     }
+                     if (scale < (Math.abs(work[ix][0]) + Math.abs(work[ix][1]))*smlnum || scale == 0.0) {
+                         return;
+                     }
+                     zdrscl(n, scale, work, 1);
+                 } // if (scale != 1.0)
+                 continue;
+             } // if (kase[0] != 0)
+             break;
+         } // while (true)
+         
+         for (i = 0; i < n; i++) {
+        	 rwork[i+n] = rwork2[i];
+         }
+     
+         // Compute the estimate of the reciprocal condition number.
+     
+         if (ainvnm[0] != 0.0) {
+             rcond[0] = (1.0 / ainvnm[0] ) / anorm;
+         }
+     
+         return;
+
+     } // zgecon
+     
+     private void zlatrs(char uplo, char trans, char diag, char normin, int n, double A[][][],
+    		 int lda, double x[][], double scale[], double cnorm[], int info[]) {
+    	 
+     }
+     
+     /**
+      * This is a port of LAPACK version auxiliary routine 3.7.0 December, 2016 ZDRSCL.  LAPACK is a software package
+      * provided by by the University of Tennessee, University of California Berkeley, University of Colorado Denver,
+      * and NAG Ltd.
+      * zdrslc multiplies a vector by the reciprocal of a real scalar.
+      * zdrscl multiplies an n-element complex vector x by the real scalar 1/a.  This is done without overflow or
+      * underflow as long as the final result x/a does not overflow or underflow.
+      * @param n input integer The number of components of the vector x.
+      * @param sa input double.  The scalar which is used to divide each component.  sa must be > 0, or the
+      *           subroutine will divide by zero
+      * @param sx input/output double[][2] complex array dimension (1 + (n-1)*abs(incx))
+      *           The n-element vector x
+      * @param incx input integer  The increment between successive values of the vector
+      * 
+      */
+     private void zdrscl(int n, double sa, double sx[][], int incx) {
+    	 double smlnum[] = new double[1];
+    	 double bignum[] = new double[1];
+    	 double cden;
+    	 double cnum;
+    	 double cden1;
+    	 double cnum1;
+    	 double mul;
+    	 boolean done;
+    	 // Quick return if possible
+    	 if (n <= 0) {
+    		 return;
+    	 }
+    	 
+    	 // Get machine parameters
+    	 smlnum[0] = ge.dlamch('S');
+         bignum[0] = 1.0 / smlnum[0];
+         ge.dlabad(smlnum, bignum);
+         
+         // Initialize the denominator to sa and the numerator to 1
+         cden = sa;
+         cnum = 1.0;
+         
+         do {
+             cden1 = cden*smlnum[0];
+             cnum1 = cnum / bignum[0];
+             if ((Math.abs(cden1) > Math.abs(cnum)) && (cnum != 0.0)) {
+            	 // Pre-multply x by smlnum[0] if cden if large compared to cnum.
+                 mul = smlnum[0];
+                 done = false;
+                 cden = cden1;
+             }
+             else if (Math.abs(cnum1) > Math.abs(cden)) {
+            	 // Pre-multiply x by bignum'[0] if cden is small compared to cnum
+            	 mul = bignum[0];
+            	 done = false;
+            	 cnum = cnum1;
+             }
+             else {
+            	 // Multiply x by cnum/cden and return.
+            	 mul = cnum / cden;
+            	 done = true;
+             }
+             
+             // Scale the vector x by mul
+             zdscal(n, mul, sx, incx);
+         } while (!done);
+    	 
+     } // zdrscl
+     
+     /** This is a port of the BLAS level1 routine ZDSCAL version 3.7.0 December, 2016. BLAS is a software package
+      * provided by by the University of Tennessee, University of California Berkeley, University of Colorado Denver,
+      * and NAG Ltd.
+      * zdscal scales a vector by a constant
+      * @param n input integer  Number of elements in input vector
+      * @param da input double
+      * @param zx input/output double[][2] complex array, dimension (1 + (n-1)*abs(incx))
+      * @param incx storage spacing between elements of zx
+      */
+     private void zdscal(int n, double da, double zx[][], int incx) {
+    	 int i;
+    	 int nincx;
+    	 
+         if ((n <= 0) || (incx <= 0)) {
+        	 return;
+         }
+         
+         if (incx == 1) {
+        	 // Code for increment equal to 1
+        	 for (i = 0; i < n; i++) {
+        		 zx[i][0] = da * zx[i][0];
+        		 zx[i][1] = da * zx[i][1];
+        	 }
+         }
+         else {
+        	 // Code for increment not equal to 1
+        	 nincx = n*incx;
+        	 for (i = 0; i < nincx; i += incx) {
+        		 zx[i][0] = da*zx[i][0];
+        		 zx[i][1] = da*zx[i][1];
+        	 }
+         } // else
+         return;
+     }
+     
+     /**
+      * This is a port of LAPACK version auxiliary routine 3.7.0 ZLACN2.F created by the University of Tennessee, University
+      * of California Berkeley, University of Colorado Denver, and NAG Ltd., December 2016.
+      * 
+      * Contributor: Nick Higham, University of Manchester
+      * 
+      * Reference: N.J. Higham, "FORTRAN codes for estimating the one-norm of
+        a real or complex matrix, with applications to condition estimation",
+        ACM Trans. Math. Soft., vol. 14, no. 4, pp. 381-396, December 1988.
+      * 
+      * zlacn2 estimates the 1-norm of a square matrix, using reverse communication for evaluating matrix-vector products.
+      * 
+      * zlacn2 estimates the 1-norm of a square, complex matrix A.
+        Reverse communication is used for evaluating matrix-vector products.
+         
+        @param input int n
+            The order of the matrix.  n >= 1.
+        @param output double[][2] complex v of dimension (n).
+            On the final return, V = A*W,  where  EST = norm(V)/norm(W)
+            (W is not returned).
+        @param (input/output) double[][2] complex x of dimension (n).
+            On an intermediate return, x should be overwritten by
+                  A * x,   if KASE=1,
+                  A**H * x,  if KASE=2,
+                  where A**H is the conjugate transpose of A,
+            and zlacn2 must be re-called with all the other parameters
+            unchanged.
+        @param (input/output) double[] est of dimension (1).
+            On entry with kase[0] = 1 or 2 and isave[0] = 3, est should be
+            unchanged from the previous call to dlacn2.
+            On exit, est[0] is an estimate (a lower bound) for norm(A). 
+        @param (input/output) int[] kase of dimension (1).
+            On the initial call to dlacn2, kase[0] should be 0.
+            On an intermediate return, kase[0] will be 1 or 2, indicating
+            whether x should be overwritten by A * x  or A**T * x.
+            On the final return from dlacn2, kase[0] will again be 0.
+        @param (input/output) int[] isave of dimension (3).
+            isave is used to save variables between calls to dlacn2
+      */
+     public void zlacn2(int n, double[][] v, double[][] x, double[] est, int[] kase, int[] isave) {
+         final int itmax = 5;
+         int i;
+         int jlast;
+         double altsgn;
+         double estold;
+         double temp;
+         double maxVal;
+         double absSum;
+         double safmin;
+         double absxi;
+         
+         safmin = ge.dlamch('S');
+         if (kase[0] == 0) {
+             for (i = 0; i < n; i++) {
+                 x[i][0] = 1.0 / (double)n;
+                 x[i][1] = 0.0;
+             } // for (i = 0; i < n; i++)
+             kase[0] = 1;
+             isave[0] = 1;
+             return;
+         } // if (kase[0] == 0)
+         
+         if (isave[0] == 1) {
+             // ENTRY   (isave[0] = 1)
+             // FIRST ITERATION.  x HAS BEEN OVERWRITTEN BY A*x. 
+             if (n == 1) {
+                 v[0][0] = x[0][0];
+                 est[0] = zabs(v[0][0], v[0][1]);
+                 // QUIT
+                 kase[0] = 0;
+                 return;
+             } // if (n == 1)
+             est[0] = zabs(x[0][0], x[0][1]);
+             for (i = 1; i < n; i++) {
+                 est[0] += zabs(x[i][0], x[i][1]);
+             }
+     
+             for (i = 0; i < n; i++) {
+                 absxi = zabs(x[i][0], x[i][1]);
+                 if (absxi > safmin) {
+                	 x[i][0] = x[i][0]/absxi;
+                	 x[i][1] = x[i][1]/absxi;
+                 }
+                 else {
+                	 x[i][0] = 1.0;
+                	 x[i][1] = 0.0;
+                 }
+             } // for (i = 0; i < n; i++)
+             kase[0] = 2;
+             isave[0] = 2;
+             return;
+         } // if (isave[0] == 1)
+         else if (isave[0] == 2) {
+             // ENTRY   (isave[0] = 2)
+             // FIRST ITERATION.  x HAS BEEN OVERWRITTEN BY CTRANSPOSE(A)*x.
+         
+             isave[1] = 0;
+             maxVal = zabs(x[0][0],x[0][1]);
+             for (i = 1; i < n; i++) {
+                 if (zabs(x[i][0],x[i][1]) > maxVal) {
+                     maxVal = zabs(x[i][0],x[i][1]);
+                     isave[1] = i;
+                 }
+             }
+             isave[2] = 2;
+             
+             // MAIN LOOP - ITERATIONS 2,3,...,ITMAX.
+             for (i = 0; i < n; i++) {
+                 x[i][0] = 0.0;
+                 x[i][1] = 0.0;
+             }
+             x[isave[1]][0] = 1.0;
+             x[isave[1]][1] = 0.0;
+             kase[0] = 1;
+             isave[0] = 3;
+             return;    
+         } // else if (isave[0] == 2)
+         else if (isave[0] == 3) {
+             // ENTRY   (isave[0] = 3)
+             // x HAS BEEN OVERWRITTEN BY A*x.
+             for (i = 0; i < n; i++) {
+                 v[i][0] = x[i][0];
+                 v[i][1] = x[i][1];
+             }
+             estold = est[0];
+             est[0] = zabs(v[0][0], v[0][1]);
+             for (i = 1; i < n; i++) {
+                 est[0] += zabs(v[i][0], v[i][1]);
+             }
+             if (est[0] <= estold) {
+            	 altsgn = 1.0;
+            	 for (i = 1; i <= n; i++) {
+            		 x[i-1][0] = altsgn * (1.0 + (i-1.0)/(n-1.0));
+            		 x[i-1][1] = 0.0;
+            		 altsgn = -altsgn;
+            	 } // for (i = 1; i <= n; i++)
+            	 kase[0] = 1;
+            	 isave[0] = 5;
+            	 return;
+             } // if (est[0] <= estold)
+             for (i = 0; i < n; i++) {
+            	 absxi = zabs(x[i][0], x[i][1]);
+            	 if (absxi > safmin) {
+            		 x[i][0] = x[i][0]/absxi;
+            		 x[i][1] = x[i][1]/absxi;
+            	 }
+            	 else {
+            		 x[i][0] = 1.0;
+            		 x[i][1] = 0.0;
+            	 }
+             } // for (i = 0; i < n; i++)
+             kase[0] = 2;
+             isave[0] = 4;
+             return;
+         } // else if (isave[0] == 3)
+         else if (isave[0] == 4) {
+             // ENTRY   (isave[0] = 4)
+             // x HAS BEEN OVERWRITTEN BY CTRANSPOSE(A)*x.
+             
+             jlast = isave[1];
+             isave[1] = 0;
+             maxVal = zabs(x[0][0], x[0][1]);
+             for (i = 1; i < n; i++) {
+                 if (zabs(x[i][0], x[i][1]) > maxVal) {
+                     maxVal = zabs(x[i][0],x[i][1]);
+                     isave[1] = i;
+                 }
+             }
+             if ((zabs(x[jlast][0],x[jlast][1]) != zabs(x[isave[1]][0], x[isave[1]][1])) && (isave[2] < itmax)) {
+                 isave[2] = isave[2] + 1;
+                 for (i = 0; i < n; i++) {
+                     x[i][0] = 0.0;
+                     x[i][1] = 0.0;
+                 }
+                 x[isave[1]][0] = 1.0;
+                 x[isave[1]][1] = 0.0;
+                 kase[0] = 1;
+                 isave[0] = 3;
+                 return;    
+             }
+             
+             // ITERATION COMPLETE.  FINAL STAGE.
+             
+             altsgn = 1.0;
+             for (i = 1; i <= n; i++) {
+                 x[i-1][0] = altsgn*(1.0+(double)(i-1) /(double)( n-1 ) );
+                 x[i-1][1] = 0.0;
+                 altsgn = -altsgn;
+             } // for (i = 1; i <= n; i++)
+             kase[0] = 1;
+             isave[0] = 5;
+             return;    
+         } // else if (isave[0] == 4)
+         else if (isave[0] == 5) {
+             // ENTRY   (isave[0] = 5)
+             // x HAS BEEN OVERWRITTEN BY A*x.
+             absSum = zabs(x[0][0],x[0][1]);
+             for (i = 1; i < n; i++) {
+                 absSum += zabs(x[i][0],x[i][1]);
+             }
+             temp = 2.0 * (absSum / (double)(3*n));
+             if (temp > est[0]) {
+                 for (i = 0; i < n; i++) {
+                     v[i][0] = x[i][0];
+                     v[i][1] = x[i][1];
+                 }
+                 est[0] = temp;
+             } // if (temp > est[0])
+             
+             kase[0] = 0;
+             return;   
+         } // else if (isave[0] == 5)
+
+      
+     } // zlacn2
+     
+     /*
       * This is a port of a portion of LAPACK test routine ZGET01.f version 3.7.0
       * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
       * University of Colorado Denver, and NAG Ltd., December, 2016
@@ -3037,6 +3527,116 @@ public class ComplexLinearEquations implements java.io.Serializable {
 
      } // zget01
      
+     /**
+      * This is a port of version 3.7.0 LAPACK test routine ZGET02. Univ. of Tennessee, Univ. of California Berkeley and
+      * NAG Ltd.. December 2016
+      * 
+      * .. Scalar Arguments .. CHARACTER TRANS INTEGER LDA, LDB, LDX, M, N, NRHS DOUBLE PRECISION RESID .. .. Array
+      * Arguments .. DOUBLE PRECISION A( LDA, * ), B( LDB, * ), RWORK( * ), $ X( LDX, * ) ..
+      * 
+      * Purpose =======
+      * 
+      * ZGET02 computes the residual for a solution of a system of linear equations A*x = b or A'*x = b: RESID = norm(B -
+      * A*X) / ( norm(A) * norm(X) * EPS ), where EPS is the machine epsilon.
+      * 
+      * Arguments =========
+      * 
+      * TRANS (input) CHARACTER*1 Specifies the form of the system of equations: 
+      * = 'N': A *x = b 
+      * = 'T': A^T*x = b, where A^T is the transpose of A 
+      * = 'C': A^H*x = b, where A' is the conjugate transpose of A
+      * 
+      * M (input) INTEGER The number of rows of the matrix A. M >= 0.
+      * 
+      * N (input) INTEGER The number of columns of the matrix A. N >= 0.
+      * 
+      * NRHS (input) INTEGER The number of columns of B, the matrix of right hand sides. NRHS >= 0.
+      * 
+      * A (input) DOUBLE PRECISION [][][2] complex array, dimension (LDA,N) The original M x N matrix A.
+      * 
+      * LDA (input) INTEGER The leading dimension of the array A. LDA >= max(1,M).
+      * 
+      * X (input) DOUBLE PRECISION [][][2] complex array, dimension (LDX,NRHS) The computed solution vectors for the system of linear
+      * equations.
+      * 
+      * LDX (input) INTEGER The leading dimension of the array X. If TRANS = 'N', LDX >= max(1,N); if TRANS = 'T' or 'C',
+      * LDX >= max(1,M).
+      * 
+      * B (input/output) DOUBLE PRECISION [][][2] complex array, dimension (LDB,NRHS) On entry, the right hand side vectors for the
+      * system of linear equations. On exit, B is overwritten with the difference B - A*X.
+      * 
+      * LDB (input) INTEGER The leading dimension of the array B. IF TRANS = 'N', LDB >= max(1,M); if TRANS = 'T' or 'C',
+      * LDB >= max(1,N).
+      * 
+      * RWORK (workspace) DOUBLE PRECISION array, dimension (M)
+      * 
+      * RESID (output) DOUBLE PRECISION The maximum over the number of right hand sides of norm(B - A*X) / ( norm(A) *
+      * norm(X) * EPS ).
+      */
+     public void zget02(final char trans, final int m, final int n, final int nrhs, final double[][][] A, final int lda,
+             final double[][][] X, final int ldx, final double[][][] B, final int ldb, final double[] rwork,
+             final double[] resid) {
+         int j;
+         int n1;
+         int n2;
+         double anorm;
+         double bnorm;
+         double eps;
+         double xnorm;
+         int p;
+         double alpha[] = new double[2];
+         double beta[] = new double[2];
+
+         // Quick exit if m == 0 or n == 0 or nrhs == 0
+         if ( (m <= 0) || (n <= 0) || (nrhs <= 0)) {
+             resid[0] = 0.0;
+             return;
+         }
+
+         if ( (trans == 'T') || (trans == 't') || (trans == 'C') || (trans == 'c')) {
+             n1 = n;
+             n2 = m;
+         } else {
+             n1 = m;
+             n2 = n;
+         }
+
+         // Exit with resid[0] = 1/eps if anorm = 0.
+         eps = ge.dlamch('E'); // Epsilon
+         anorm = zlange('1', n1, n2, A, lda, rwork);
+         if (anorm <= 0.0) {
+             resid[0] = 1.0 / eps;
+             return;
+         }
+
+         // Compute B - A*X (or B - A'*X) and store in B.
+         alpha[0] = -1.0;
+         alpha[1] = 0.0;
+         beta[0] = 1.0;
+         beta[1] = 0.0;
+         zgemm(trans, 'N', n1, nrhs, n2, alpha, A, lda, X, ldx, beta, B, ldb);
+
+         // Compute the maximum overr the number of right hand sides of
+         // norm(B - A*X)/(norm(A) * norm(X) * eps).
+         resid[0] = 0.0;
+         for (j = 1; j <= nrhs; j++) {
+             bnorm = 0.0;
+             for (p = 0; p < n1; p++) {
+                 bnorm += (Math.abs(B[p][j - 1][0]) + Math.abs(B[p][j - 1][1]));
+             }
+             xnorm = 0.0;
+             for (p = 0; p < n2; p++) {
+                 xnorm += (Math.abs(X[p][j - 1][0]) + Math.abs(X[p][j - 1][1]));
+             }
+             if (xnorm <= 0.0) {
+                 resid[0] = 1.0 / eps;
+             } else {
+                 resid[0] = Math.max(resid[0], ( (bnorm / anorm) / xnorm) / eps);
+             }
+         } // for (j = 1; j <= nrhs; j++)
+         return;
+     } // zget02
+     
      /*
       * This is a port of a portion of LAPACK test routine ZGET03.f version 3.7.0
       * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
@@ -3117,6 +3717,263 @@ public class ComplexLinearEquations implements java.io.Serializable {
          return;
 
      } // zget03
+     
+     /**
+      * This is a port of LAPACK version test routine 3.7.0 ZGET04.F created by the University of Tennessee, University
+      * of California Berkeley, University of Colorado Denver, and NAG Ltd., December 2016.
+      * 
+      * zget04 computes the difference between a computed solution and the
+        true solution to a system of linear equations.
+
+        resid[0] =  ( norm(X-XACT) * rcond) / ( norm(XACT) * eps),
+        where rcond is the reciprocal of the condition number and eps is the
+        machine epsilon.
+        
+        @param input int n  The number of rows of the matrices X and XACT.  n >= 0.
+        @param input int nrhs  The number of columns of the matrices X and XACT.  nrhs >= 0.
+        @param input double[][][2] complex X of dimension (ldx, nrhs)
+            The computed solution vectors.  Each vector is stored as a column of the matrix X.
+        @param input int ldx  The leading dimension of the array X.  ldx >= max(1, n).
+        @param input double[][][2] complex XACT of dimension (ldx, nrhs)
+            The exact solution vectors.  Each vector is stored as a column of the matrix XACT.
+        @param input int ldxact  The leading dimension of the array XACT.  ldxact >= max(1, n).
+        @param input double rcond  
+            The reciprocal of the condition number of the coefficient
+            matrix in the system of equations.
+        @param output double[] of dimension 1
+            The maximum over the NRHS solution vectors of
+            ( norm(X-XACT) * rcond) / ( norm(XACT) * eps)
+      */
+     public void zget04(int n, int nrhs, double[][][] X, int ldx, double[][][] XACT, int ldxact,
+                         double rcond, double[] resid) {
+         int i;
+         int ix;
+         int j;
+         double diffnm;
+         double eps;
+         double xnorm;
+         int k;
+         double maxVal;
+         double zdum[] = new double[2];
+         
+         // Quick exit if n = 0 or nrhs = 0.
+     
+         if (n <= 0 || nrhs <= 0) {
+             resid[0] = 0.0;
+             return;
+         }
+     
+         // Exit with resid[0] = 1/eps if rcond is invalid.
+     
+         eps = ge.dlamch('E'); // Epsilon
+         if (rcond < 0.0) {
+              resid[0] = 1.0 / eps;
+              return;
+         }
+     
+         // Compute the maximum of
+         // norm(X - XACT) / ( norm(XACT) * eps)
+         // over all the vectors X and XACT .
+     
+           resid[0] = 0.0;
+           for (j = 0; j < nrhs; j++) {
+              ix = 0;
+              maxVal = Math.abs(XACT[0][j][0]) + Math.abs(XACT[0][j][1]);
+              for (k = 1; k < n; k++) {
+                  if ((Math.abs(XACT[k][j][0]) + Math.abs(XACT[k][j][1])) > maxVal) {
+                      maxVal = Math.abs(XACT[k][j][0]) + Math.abs(XACT[k][j][1]);
+                      ix = k;
+                  }
+              }
+              xnorm = Math.abs(XACT[ix][j][0]) + Math.abs(XACT[ix][j][1]);
+              diffnm = 0.0;
+              for (i = 0; i < n; i++) {
+                  diffnm = Math.max(diffnm, (Math.abs( X[i][j][0]-XACT[i][j][0]) + Math.abs( X[i][j][1]-XACT[i][j][1])));
+              }
+              if (xnorm <= 0.0) {
+                 if (diffnm > 0.0) {
+                    resid[0] = 1.0 / eps;
+                 }
+              }
+              else {
+                 resid[0] = Math.max(resid[0], ( diffnm / xnorm )*rcond );
+              }
+           } // for (j = 0; j < nrhs; j++)
+           if (resid[0]*eps < 1.0) {
+              resid[0] = resid[0] / eps;
+           }
+     
+           return;
+
+     } // zget04
+     
+     /*
+      * This is a port of a portion of LAPACK test routine ZGET07.f version 3.7.0
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., December, 2016
+      * 
+      * zget07 tests the error bounds from iterative refinement for the
+        computed solution to a system of equations op(A)*X = B, where A is a
+        general n by n matrix and op(A) = A or A**T, depending on TRANS.
+
+        reslts[0] = test of the error bound
+                  = norm(X - XACT) / ( norm(X) * FERR )
+
+        A large value is returned if this ratio is not less than one.
+
+        reslts[1] = residual from the iterative refinement routine
+                  = the maximum of BERR / ( (n+1)*EPS + (*) ), where
+                    (*) = (n+1)*UNFL / (min_i (abs(op(A))*abs(X) +abs(b))_i )
+        
+        @param input char trans
+            Specifies the form of the system of equations.
+            = 'N':  A * X = B     (No transpose)
+            = 'T':  A**T * X = B  (Transpose)
+            = 'C':  A**H * X = B  (Conjugate transpose)
+        @param input int n
+            The number of rows of the matrices X and XACT.  n >= 0.
+        @param input int nrhs
+            The number of columns of the matrices X and XACT.  nrhs >= 0
+        @param input double[][][2] A complex of dimension (lda, n)
+        @param input input lda The leading dimension of the array A.  lda >= max(1,n).
+        @param input double[][][2] B complex of dimension (ldb, nrhs)
+            The right hand side vectors for the system of linear
+            equations.
+        @param input int ldb
+            The leading dimension of the array B.  ldb >= max(1,n).
+        @param input double[][][2] X complex of dimension (ldx, nrhs)
+            The computed solution vectors.  Each vector is stored as a
+            column of the matrix X.
+        @param input int ldx
+            The leading dimension of the array X.  ldx >= max(1,n).
+        @param input double[][][2] XACT complex of dimension (ldxact, nrhs)
+            The exact solution vectors.  Each vector is stored as a
+            column of the matrix XACT.
+        @param input int ldxact
+            The leading dimension of the array XACT.  LDXACT >= max(1,n).
+        @param input double[] ferr of dimension (nrhs)
+            The estimated forward error bounds for each solution vector
+            X.  If XTRUE is the true solution, ferr bounds the magnitude
+            of the largest entry in (X - XTRUE) divided by the magnitude
+            of the largest entry in X.
+        @param input boolean chkferr
+            Set to true to check ferr, false not to check ferr.
+            When the test system is ill-conditioned, the "true"
+            solution in XACT may be incorrect.
+        @param input double[] berr of dimension (nrhs)
+            The componentwise relative backward error of each solution
+            vector (i.e., the smallest relative change in any entry of A
+            or B that makes X an exact solution).
+        @param output double[] reslts of dimension (2)
+            The maximum over the NRHS solution vectors of the ratios:
+            reslts[0] = norm(X - XACT) / ( norm(X) * ferr )
+            reslts[1] = berr / ( (n+1)*eps + (*) )
+      */
+     private void zget07(char trans, int n, int nrhs, double[][][] A, int lda, double[][][] B,
+                         int ldb, double[][][] X, int ldx, double[][][] XACT, int ldxact, 
+                         double[] ferr, boolean chkferr, double[] berr, double[] reslts) {
+         boolean notran;
+         int i;
+         int imax;
+         int j;
+         int k;
+         double axbi = 0.0;
+         double diff;
+         double eps;
+         double errbnd;
+         double ovfl;
+         double tmp;
+         double unfl;
+         double xnorm;
+         double maxVal;
+         
+         // Quick exit if n = 0 or nrhs = 0.
+                 
+         if (n <= 0 || nrhs <= 0) {
+             reslts[0] = 0.0;
+             reslts[1] = 0.0;
+             return;
+         }
+     
+         eps = ge.dlamch('E'); // Epsilon
+         unfl = ge.dlamch('S'); // Safe minimum
+         ovfl = 1.0 / unfl;
+         notran = ((trans == 'N') || (trans == 'n'));
+     
+         // Test 1:  Compute the maximum of
+         //    norm(X - XACT) / ( norm(X) * ferr )
+         // over all the vectors X and XACT using the infinity-norm.
+     
+         errbnd = 0.0;
+         if (chkferr) {
+             for (j = 0; j < nrhs; j++) {
+                 imax = 0;
+                 maxVal = Math.abs(X[0][j][0]) + Math.abs(X[0][j][1]);
+                 for (i = 1; i < n; i++) {
+                     if ((Math.abs(X[i][j][0]) + Math.abs(X[i][j][1])) > maxVal) {
+                         maxVal = Math.abs(X[i][j][0]) + Math.abs(X[i][j][1]);
+                         imax = i;
+                     }
+                 }
+                 xnorm = Math.max((Math.abs(X[imax][j][0]) + Math.abs(X[imax][j][1])), unfl);
+                 diff = 0.0;
+                 for (i = 0; i < n; i++) {
+                     diff = Math.max(diff, (Math.abs(X[i][j][0]-XACT[i][j][0]) + Math.abs(X[i][j][1]-XACT[i][j][1])));
+                 }
+     
+                 if ((xnorm <= 1.0) && (diff > ovfl*xnorm)) {
+                     errbnd = 1.0 / eps;
+                     continue;
+                 }
+                    
+                 if (diff / xnorm <= ferr[j]) {
+                     errbnd = Math.max(errbnd, (diff / xnorm ) / ferr[j] );
+                 }
+                 else {
+                     errbnd = 1.0 / eps;
+                 }
+             } // for (j = 0; j < nrhs; j++)
+         } // if (chkferr)
+         reslts[0] = errbnd;
+     
+         // Test 2:  Compute the maximum of BERR / ( (n+1)*EPS + (*) ), where
+         // (*) = (n+1)*UNFL / (min_i (abs(op(A))*abs(X) +abs(b))_i )
+     
+         for (k = 0; k < nrhs; k++) {
+             for (i = 0; i < n; i++) {
+                 tmp = Math.abs(B[i][k][0]) + Math.abs(B[i][k][1]);
+                 if (notran) {
+                     for (j = 0; j < n; j++) {
+                         tmp = tmp + (Math.abs(A[i][j][0]) + Math.abs(A[i][j][1]))
+                        		 * (Math.abs(X[j][k][0]) + Math.abs(X[j][k][1]));
+                     }
+                 } // if (notran)
+                 else {
+                     for (j = 0; j < n; j++) {
+                         tmp = tmp + (Math.abs(A[j][i][0]) + Math.abs(A[j][i][1]))
+                        		 * (Math.abs(X[j][k][0]) + Math.abs(X[j][k][1]));
+                     }
+                 } // else 
+                 if (i == 0) {
+                     axbi = tmp;
+                 }
+                 else {
+                     axbi = Math.min(axbi, tmp);
+                 }
+             } // for (i = 0; i < n; i++)
+             tmp = berr[k] / ((n+1)*eps+(n+1)*unfl /
+                    Math.max(axbi, (n+1)*unfl));
+             if (k == 0) {
+                 reslts[1] = tmp;
+             }
+             else {
+                 reslts[1] = Math.max(reslts[1], tmp);
+             }
+         } // for (k = 0; k < nrhs; k++)
+     
+         return;
+
+     } // zget07
     
     /**
      * This is a port of LAPACK auxiliary routine ZLAGHE version 3.7.0.  Provided by the Univ. of Tennessee, Univ.
@@ -7472,6 +8329,344 @@ public class ComplexLinearEquations implements java.io.Serializable {
             } // else
             return;
         } // zscal
+        
+        /*
+         * This is a port of a portion of LAPACK routine ZGERFS.f version 3.7.0
+         * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+         * University of Colorado Denver, and NAG Ltd., December, 2016
+         * 
+         * zgerfs improves the computed solution to a system of linear
+           equations and provides error bounds and backward error estimates for
+           the solution.
+
+           @param input char trans
+               Specifies the form of the system of equations:
+               = 'N':  A * X = B     (No transpose)
+               = 'T':  A**T * X = B  (Transpose)
+               = 'C':  A**H * X = B  (Conjugate transpose)
+           @param input int n
+               The order of the matrix A.  n >= 0.
+           @param input int nrhs
+               The number of right hand sides, i.e., the number of columns
+               of the matrices B and X.  nrhs >= 0.
+           @param input double[][][2] complex A of dimension (lda, n)
+               The original N-by-N matrix A.
+           @param input int lda
+               The leading dimension of the array A.  lda >= max(1,n).
+           @param input double[][][2] complex AF of dimension (ldaf, n)
+               The factors L and U from the factorization A = P*L*U
+               as computed by zgetrf.
+           @param input int ldaf
+               The leading dimension of the array AF.  ldaf >= max(1,n).
+           @param input int[] ipiv of dimension (n)
+               The pivot indices from zgetrf; for 1<=i<=n, row i of the
+               matrix was interchanged with row ipiv[i].
+           @param input double[][][2] complex B of dimension (ldb, nrhs)
+               The right hand side matrix B.
+           @param input int ldb
+               The leading dimension of the array B.  ldb >= max(1,n).
+           @param (input/output) double[][][2] complex X of dimension (ldx, nrhs)
+               On entry, the solution matrix X, as computed by dgetrs.
+               On exit, the improved solution matrix X.
+           @param input int ldx
+               The leading dimension of the array X.  ldx >= max(1,n).
+           @param output double[] ferr of dimension (nrhs)
+               The estimated forward error bound for each solution vector
+               X(j) (the j-th column of the solution matrix X).
+               If XTRUE is the true solution corresponding to X(j), ferr[j]
+               is an estimated upper bound for the magnitude of the largest
+               element in (X(j) - XTRUE) divided by the magnitude of the
+               largest element in X(j).  The estimate is as reliable as
+               the estimate for rcond, and is almost always a slight
+               overestimate of the true error.
+           @param output double[] berr of dimension (nrhs)
+               The componentwise relative backward error of each solution
+               vector X(j) (i.e., the smallest relative change in
+               any element of A or B that makes X(j) an exact solution).
+           @param output double[][2] complex work of dimension (2*n)
+           @param output double[] rwork of dimension (n)
+           @param output int[] info of dimension (1)
+               = 0:  successful exit
+               < 0:  if info[0] = -i, the i-th argument had an illegal value
+         */
+        private void zgerfs(char trans, int n, int nrhs, double[][][] A, int lda, double[][][] AF,
+                            int ldaf, int[] ipiv, double[][][] B, int ldb, double[][][] X, int ldx,
+                            double[] ferr, double[] berr, double[][] work, double[] rwork, int[] info) {
+            // itmax is the maximum number of steps of iterative refinement.
+            final int itmax = 5;
+            boolean notran;
+            char transn;
+            char transt;
+            int count;
+            int i;
+            int j;
+            int k;
+            int kase[] = new int[1];
+            int nz;
+            int isave[] = new int[3];
+            double eps;
+            double lstres;
+            double s;
+            double safe1;
+            double safe2;
+            double safmin;
+            double xk;
+            double work2[][];
+            double vec[][];
+            double work3[];
+            double arr[][][];
+            double zdum[] = new double[2];
+            double alpha[] = new double[2];
+            double beta[] = new double[2];
+            double vfer[] = new double[1];
+            
+            // Test the input parameters.
+            
+            info[0] = 0;
+            notran = ((trans == 'N') || (trans == 'n'));
+            if (!notran && !((trans == 'T') || (trans == 't')) && !((trans == 'C') || (trans == 'c'))) {
+                info[0] = -1;
+            }
+            else if (n < 0) {
+                info[0] = -2;
+            }
+            else if (nrhs < 0) {
+                info[0] = -3;
+            }
+            else if (lda < Math.max(1, n)) {
+                info[0] = -5;
+            }
+            else if (ldaf < Math.max(1, n)) {
+                info[0] = -7;
+            }
+            else if (ldb < Math.max(1, n)) {
+                info[0] = -10;
+            }
+            else if (ldx < Math.max(1, n)) {
+                info[0] = -12;
+            }
+            if (info[0] != 0) {
+                MipavUtil.displayError("zgerfs had info[0] = " + info[0]);
+                return;
+            }
+        
+            // Quick return if possible
+        
+            if (n == 0 || nrhs == 0) {
+                for (j = 0; j < nrhs; j++) {
+                    ferr[j] = 0.0;
+                    berr[j] = 0.0;
+                }
+                return;
+            }
+        
+            if (notran) {
+            	transn = 'N';
+                transt = 'C';
+            }
+            else {
+            	transn = 'C';
+                transt = 'N';
+            }
+        
+            // nz = maximum number of nonzero elements in each row of A, plus 1
+        
+            nz = n + 1;
+            eps = ge.dlamch('E'); // Epsilon
+            safmin = ge.dlamch('S'); // Safe minimum
+            safe1 = nz*safmin;
+            safe2 = safe1 / eps;
+            work2 = new double[n][2];
+            work3 = new double[n];
+            arr = new double[n][1][2];
+        
+            // Do for each right hand side
+        
+            for (j = 0; j < nrhs; j++) {
+        
+                count = 1;
+                lstres = 3.0;
+                while (true) {
+        
+                    // Loop until stopping criterion is satisfied.
+        
+                    // Compute residual R = B - op(A) * X,
+                    // where op(A) = A, A**T, or A**H, depending on trans.
+                    for (i = 0; i < n; i++) {
+                        work[i][0] = B[i][j][0];
+                        work[i][1] = B[i][j][1];
+                    }
+                    vec = new double[n][2];
+                    for (i = 0; i < n; i++) {
+                        vec[i][0] = X[i][j][0];
+                        vec[i][1] = X[i][j][1];
+                    }
+                    alpha[0] = -1.0;
+                    alpha[1] = 0.0;
+                    beta[0] = 1.0;
+                    beta[1] = 0.0;
+                    zgemv(trans, n, n, alpha, A, lda, vec, 1, beta, work, 1);
+        
+                    // Compute componentwise relative backward error from formula
+        
+                    // max(i) ( abs(R(i)) / ( abs(op(A))*abs(X) + abs(B) )(i) )
+        
+                    // where abs(Z) is the componentwise absolute value of the matrix
+                    // or vector Z.  If the i-th component of the denominator is less
+                    // than safe2, then safe1 is added to the i-th components of the
+                    // numerator and denominator before dividing.
+        
+                    for (i = 0; i < n; i++) {
+                        rwork[i] = Math.abs(B[i][j][0]) + Math.abs(B[i][j][1]);
+                    } 
+        
+                    // Compute abs(op(A))*abs(X) + abs(B).
+        
+                    if (notran) {
+                        for (k = 0; k < n; k++) {
+                            xk = Math.abs(X[k][j][0]) + Math.abs(X[k][j][1]);
+                            for (i = 0; i < n; i++) {
+                                rwork[i] = rwork[i] + (Math.abs(A[i][k][0]) + Math.abs(A[i][k][1]))*xk;
+                            } // for (i = 0; i < n; i++)
+                        } // for (k = 0; k < n; k++)
+                    } // if (notran)
+                    else {
+                        for (k = 0; k < n; k++) {
+                            s = 0.0;
+                            for (i = 0; i < n; i++) {
+                                s = s + (Math.abs(A[i][k][0])+ Math.abs(A[i][k][1]))
+                                		* (Math.abs(X[i][j][0]) + Math.abs(X[i][j][1]));
+                            } // for (i = 0; i < n; i++)
+                            rwork[k] = rwork[k] + s;
+                        } // for (k = 0; k < n; k++)
+                    } // else
+                    s= 0.0;
+                    for (i = 0; i < n; i++) {
+                        if (rwork[i] > safe2) {
+                            s = Math.max(s, (Math.abs(work[i][0]) + Math.abs(work[i][1])) / rwork[i]);
+                        }
+                        else {
+                            s = Math.max(s, (Math.abs(work[i][0])+Math.abs(work[i][1])+safe1) /(rwork[i]+safe1));
+                        }
+                    } // for (i = 0; i < n; i++)
+                    berr[j] = s;
+        
+                    // Test stopping criterion. Continue iterating if
+                        // 1) The residual berr[j] is larger than machine epsilon, and
+                        // 2) berr[j] decreased by at least a factor of 2 during the
+                        //    last iteration, and
+                        // 3) At most itmax iterations tried.
+        
+                    if (berr[j] > eps && 2.0*berr[j] <= lstres && count <= itmax) {
+        
+                        // Update solution and try again.
+         
+                        for (i = 0; i < n; i++) {
+                            arr[i][0][0] = work[i][0];
+                            arr[i][0][1] = work[i][1];
+                        }
+                        zgetrs(trans, n, 1, AF, ldaf, ipiv, arr, n, info);
+                        for (i = 0; i < n; i++) {
+                            work[i][0] = arr[i][0][0];
+                            work[i][1] = arr[i][0][1];
+                            X[i][j][0] = X[i][j][0] + work[i][0];
+                            X[i][j][1] = X[i][j][1] + work[i][1];
+                        }
+                        lstres = berr[j];
+                        count++;
+                        continue;
+                    } // if (berr[j] > eps && 2.0*berr[j] <= lstres && count <= itmax)
+                    break;
+                } // while (true)
+        
+                // Bound error from formula
+        
+                // norm(X - XTRUE) / norm(X) .le. ferr =
+                // norm( abs(inv(op(A)))*
+                //    ( abs(R) + NZ*EPS*( abs(op(A))*abs(X)+abs(B) ))) / norm(X)
+        
+                // where
+                //   norm(Z) is the magnitude of the largest component of Z
+                //   inv(op(A)) is the inverse of op(A)
+                //   abs(Z) is the componentwise absolute value of the matrix or vector Z
+                //   nz is the maximum number of nonzeros in any row of A, plus 1
+                //   eps is machine epsilon
+        
+                // The i-th component of abs(R)+nz*eps*(abs(op(A))*abs(X)+abs(B))
+                // is incremented by safe1 if the i-th component of
+                // abs(op(A))*abs(X) + abs(B) is less than safe2.
+        
+                // Use dlacn2 to estimate the infinity-norm of the matrix
+                //    inv(op(A)) * diag(W),
+                // where W = abs(R) + nz*eps*( abs(op(A))*abs(X)+abs(B) )))
+        
+                for (i = 0; i < n; i++) {
+                    if (rwork[i] > safe2) {
+                        rwork[i] = Math.abs(work[i][0]) + Math.abs(work[i][1])+ nz*eps*rwork[i];
+                    }
+                    else {
+                        rwork[i] = Math.abs(work[i][0]) + Math.abs(work[i][1]) + nz*eps*rwork[i] + safe1;
+                    }
+                } // for (i = 0; i < n; i++)
+        
+                kase[0] = 0;
+                while (true) {
+                    vfer[0] = ferr[j];
+                    zlacn2(n, work2, work, vfer, kase, isave);
+                    ferr[j] = vfer[0];
+                    if (kase[0] != 0) {
+                        if (kase[0] == 1) {
+        
+                            // Multiply by diag(W)*inv(op(A)**H).
+        
+                            for (i = 0; i < n; i++) {
+                                arr[i][0][0] = work[i][0];
+                                arr[i][0][1] = work[i][1];
+                            }
+                            zgetrs(transt, n, 1, AF, ldaf, ipiv, arr, n, info);
+                            for (i = 0; i < n; i++) {
+                                work[i][0] = arr[i][0][0];
+                                work[i][1] = arr[i][0][1];
+                                work[i][0] = rwork[i]*work[i][0];
+                                work[i][0] = rwork[i]*work[i][1];
+                            }
+                        } // if (kase[0] == 1)
+                        else {
+        
+                            // Multiply by inv(op(A))*diag(W).
+        
+                            for (i = 0; i < n; i++) {
+                                work[i][0] = rwork[i]*work[i][0];
+                                work[i][1] = rwork[i]*work[i][1];
+                                arr[i][0][0] = work[i][0];
+                                arr[i][0][1] = work[i][1];
+                            }
+                            zgetrs(transn, n, 1, AF, ldaf, ipiv, arr, n, info);
+                            for (i = 0; i < n; i++) {
+                                work[i][0] = arr[i][0][0];
+                                work[i][1] = arr[i][0][1];
+                            }
+                        } // else
+                        continue;
+                    } // if (kase[0] != 0)
+                    break;
+                } // while (true)
+        
+                // Normalize error.
+        
+                lstres = 0.0;
+                for (i = 0; i < n; i++) {
+                    lstres = Math.max(lstres, (Math.abs(X[i][j][0]) + Math.abs(X[i][j][1])));
+                }
+                if (lstres != 0.0) {
+                    ferr[j] = ferr[j] / lstres;
+                }
+        
+            } // for (j = 0; j < nrhs; j++)
+        
+            return;
+
+        } // zgerfs
     /*
      * This is a port of a portion of LAPACK routine ZGETRS.f version 3.7.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
