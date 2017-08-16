@@ -63,7 +63,7 @@ public class LinearEquations2 implements java.io.Serializable {
         // thresh if the threshold value of the test ratio
         double thresh = 20.0;
         // tstchk is the flag to test the LAPACK routines
-        boolean tstchk = false;
+        boolean tstchk = true;
         // tstdrv is the flag to test the driver routines
         boolean tstdrv = true;
         
@@ -977,6 +977,10 @@ public class LinearEquations2 implements java.io.Serializable {
         double vec[];
         //String srnamt;
         boolean do60 = true;
+        char xtype;
+        boolean tran;
+        int nx;
+        int mb;
         
         // Initialize constants and the random number seed.
         
@@ -1002,6 +1006,7 @@ public class LinearEquations2 implements java.io.Serializable {
     
             for (in = 1; in <= nn; in++) {
                 n = nval[in-1];
+                xtype = 'N';
                
                 nimat = ntypes;
                 if (m <= 0 || n <= 0) {
@@ -1238,6 +1243,7 @@ public class LinearEquations2 implements java.io.Serializable {
                         if (do60) {
                             for (irhs = 1; irhs <= nns; irhs++) {
                                 nrhs = nsval[irhs-1];
+                                xtype = 'N';
     
                                 for (itran = 1; itran <= ntran; itran++) {
                                     trans = transs[itran-1];
@@ -1250,20 +1256,33 @@ public class LinearEquations2 implements java.io.Serializable {
     
                                     // TEST 3
                                     // Solve and compute residual for A * X = B.
+                                    tran = ((trans == 'T') || (trans == 't') || (trans == 'C') || (trans == 'c'));
+                                    
     
-                                    // Initialize XACT to nrhs random vectors
-                                    vec = new double[n];
-                                    for (j = 0; j < nrhs; j++) {
-                                        ge.dlarnv(2, iseed, n, vec);
-                                        for (i = 0; i < n; i++) {
-                                            XACT[i][j] = vec[i];
-                                        }
+                                    // Initialize XACT to nrhs random vectors unless xtype == 'C'
+                                    if (tran) {
+                                    	nx = m;
+                                    	mb = n;
                                     }
+                                    else {
+                                    	nx = n;
+                                    	mb = m;
+                                    }
+                                    if ((xtype != 'C') && (xtype != 'c')) {
+	                                    vec = new double[n];
+	                                    for (j = 0; j < nrhs; j++) {
+	                                        ge.dlarnv(2, iseed, n, vec);
+	                                        for (i = 0; i < n; i++) {
+	                                            XACT[i][j] = vec[i];
+	                                        }
+	                                    }
+                                    } // if ((xtype != 'C') && (xtype != 'c'))
                                     // Multiply XACT by op( A ) using an appropriate
                                     // matrix multiply routine.
                                     
-                                    ge.dgemm(trans, 'N', n, nrhs, n, 1.0, A, lda, XACT, lda, 0.0, B, lda);
+                                    ge.dgemm(trans, 'N', mb, nrhs, nx, 1.0, A, lda, XACT, lda, 0.0, B, lda);
     
+                                    xtype = 'C';
                                     ge.dlacpy('F', n, nrhs, B, lda, X, lda);
                                     dgetrs(trans, n, nrhs, AFAC, lda, iwork, X, lda, info);
     
