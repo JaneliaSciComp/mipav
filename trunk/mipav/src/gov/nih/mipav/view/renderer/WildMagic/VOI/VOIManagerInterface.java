@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
+import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FilePaintBitmap;
@@ -443,6 +444,36 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 ProvenanceRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
             }else {
             	MipavUtil.displayError("VOI failed to open for this image");
+            }
+        } 
+        else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_IMAGEJ.getActionCommand())) {
+        	// get the voi directory
+            String fileName = null;
+            String directory = null;
+            String voiDir = null;
+
+            final JFileChooser chooser = new JFileChooser();
+
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+
+            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+            final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            }
+
+            if (fileName != null) {
+                voiDir = new String(directory + fileName);
+                System.err.println("Opening ImageJ voi file " + voiDir );
+                readImageJ( voiDir, fileName, getActiveImage());
             }
         } 
         else if (command.equals("NewVOIOtherOrientation")) {
@@ -6122,6 +6153,418 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         if (m_kVOIDialog != null) {
             m_kVOIDialog.setVisible(true);
             m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, getActiveImage() );
+        }
+    }
+    
+    private void readImageJ( String pathName, String fileName, ModelImage image )
+	{
+    	// header offsets
+    	final int VERSION_OFFSET = 4;
+    	final int TYPE = 6;
+    	final int TOP = 8;
+    	final int LEFT = 10;
+    	final int BOTTOM = 12;
+    	final int RIGHT = 14;
+    	final int N_COORDINATES = 16;
+    	final int X1 = 18;
+    	final int Y1 = 22;
+    	final int X2 = 26;
+    	final int Y2 = 30;
+    	final int XD = 18;
+    	final int YD = 22;
+    	final int WIDTHD = 26;
+    	final int HEIGHTD = 30;
+    	final int STROKE_WIDTH = 34;
+    	final int SHAPE_ROI_SIZE = 36;
+    	final int STROKE_COLOR = 40;
+    	final int FILL_COLOR = 44;
+    	final int SUBTYPE = 48;
+    	final int OPTIONS = 50;
+    	final int ARROW_STYLE = 52;
+    	final int FLOAT_PARAM = 52; // ellipse ratio or rotated rect width
+    	final int POINT_TYPE = 52;
+    	final int ARROW_HEAD_SIZE = 53;
+    	final int ROUNDED_RECT_ARC_SIZE = 54;
+    	final int POSITION = 56;
+    	final int HEADER2_OFFSET = 60;
+    	final int COORDINATES = 64;
+    	// header2 offsets
+    	final int C_POSITION = 4;
+    	final int Z_POSITION = 8;
+    	final int T_POSITION = 12;
+    	final int NAME_OFFSET = 16;
+    	final int NAME_LENGTH = 20;
+    	final int OVERLAY_LABEL_COLOR = 24;
+    	final int OVERLAY_FONT_SIZE = 28; // short
+    	final int AVAILABLE_BYTE1 = 30; // byte
+    	final int IMAGE_OPACITY = 31; // byte
+    	final int IMAGE_SIZE = 32; // int
+    	final int FLOAT_STROKE_WIDTH = 36; // float
+    	final int ROI_PROPS_OFFSET = 40;
+    	final int ROI_PROPS_LENGTH = 44;
+    	final int COUNTERS_OFFSET = 48;
+    	// Types
+    	final int polygon = 0;
+    	final int rect = 1;
+    	final int oval = 2;
+    	final int line = 3;
+    	final int freeline = 4;
+    	final int polyline = 5;
+    	final int noRoi = 6;
+    	final int freehand = 7;
+    	final int traced = 8;
+    	final int angle = 9;
+    	final int point = 10;
+    	// Subtypes
+    	final int TEXT = 1;
+    	final int ARROW = 2;
+    	final int ELLIPSE = 3;
+    	final int IMAGE = 4;
+    	final int ROTATED_RECT = 5;
+    	// Options
+    	final int SPLINE_FIT = 1;
+    	final int DOUBLE_HEADED = 2;
+    	final int OUTLINE = 4;
+    	final int OVERLAY_LABELS = 8;
+    	final int OVERLAY_NAMES = 16;
+    	final int OVERLAY_BACKGROUNDS = 32;
+    	final int OVERLAY_BOLD = 64;
+    	final int SUB_PIXEL_RESOLUTION = 128;
+    	final int DRAW_OFFSET = 256;
+    	final int ZERO_TRANSPARENT = 512;
+    	long lsize;
+    	int size;
+    	int ns;
+    	float shapeArray[];
+    	int i;
+    	boolean bigEndian = true;
+    	File file = null;
+    	FileInputStream is = null;
+    	byte data[] = null;
+    	String roiName;
+    	int roiNameOffset;
+    	int roiNameLength;
+    	char roiCharName[];
+    	if (!fileName.endsWith(".roi")) {
+    		MipavUtil.displayError("This is not an ImageJ ROI file");
+    		return;
+    	}
+        file = new File(pathName);
+        if (!file.exists()) {
+        	MipavUtil.displayError(pathName + " does not exist");
+        	return;
+        }
+    	
+        VOIManager currentManager = m_kVOIManagers.get(m_iActive);
+        int nDims = image.getNDims();
+        int[] extents = image.getExtents();
+        int xDim = extents[0];
+        int yDim = extents[1];
+        int zDim;
+        if (nDims > 2) {
+            zDim = extents[2];
+	    }
+        else {
+        	zDim = 1;
+        }
+        int tDim;
+        if (nDims > 3) {
+        	tDim = extents[3];
+        }
+        else {
+        	tDim = 1;
+        }
+  
+
+        float[] resols = image.getFileInfo()[0].getResolutions();
+        
+        try {
+            lsize = file.length();
+            if (lsize > 5242880) {
+                MipavUtil.displayError("imageJ VOI file size = " + lsize + " > 5 MB");
+                return;
+            }
+            size = (int)lsize;
+            is = new FileInputStream(pathName);
+            data = new byte[(int)size];
+            int total = 0;
+            while (total < size) {
+            	total += is.read(data, total, size - total);
+            }
+            is.close();
+            // Look for "Iout in first 4 bytes"
+            if ((data[0] != 73) || (data[1] != 111) || (data[2] != 117) || (data[3] != 116)) {
+                MipavUtil.displayError("First 4 bytes do not have required Iout for an ImageJ ROI file");
+                return;
+            }
+            else {
+            	Preferences.debug("First 4 bytes have required IOut\n", Preferences.DEBUG_FILEIO);
+            }
+            int version = getBufferShort(data, VERSION_OFFSET, bigEndian);
+            Preferences.debug("Version = " + version + "\n", Preferences.DEBUG_FILEIO);
+            int type = getByte(data, TYPE);
+            switch (type) {
+            case 0:
+            	Preferences.debug("Type = polygon\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 1:
+            	Preferences.debug("Type = rect\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 2:
+            	Preferences.debug("Type = oval\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 3:
+            	Preferences.debug("Type = line\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 4:
+            	Preferences.debug("Type = freeline\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 5:
+            	Preferences.debug("Type = polyline\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 6:
+            	Preferences.debug("Type = noRoi\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 7:
+            	Preferences.debug("Type = freehand\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 8:
+            	Preferences.debug("Type = traced\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 9:
+            	Preferences.debug("Type = angle\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 10:
+            	Preferences.debug("Type = point\n", Preferences.DEBUG_FILEIO);
+            	break;
+            default:
+            	Preferences.debug("Type has an illegal value = " + type + "\n", Preferences.DEBUG_FILEIO);
+            }
+            int subtype = getBufferShort(data, SUBTYPE, bigEndian);
+            switch(subtype) {
+            case 1:
+            	Preferences.debug("Subtype = TEXT\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 2:
+            	Preferences.debug("Subtye = ARROW\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 3:
+            	Preferences.debug("Subtype = ELLIPSE\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 4:
+            	Preferences.debug("Subtype = IMAGE\n", Preferences.DEBUG_FILEIO);
+            	break;
+            case 5:
+            	Preferences.debug("Subtype = ROTATED_RECT\n", Preferences.DEBUG_FILEIO);
+            	break;
+            }
+            int top = getBufferShort(data, TOP, bigEndian);
+            Preferences.debug("Top = " + top + "\n", Preferences.DEBUG_FILEIO);
+            int left = getBufferShort(data, LEFT, bigEndian);
+            Preferences.debug("Left = " + left + "\n", Preferences.DEBUG_FILEIO);
+            int bottom = getBufferShort(data, BOTTOM, bigEndian);
+            Preferences.debug("Bottom = " + bottom + "\n", Preferences.DEBUG_FILEIO);
+            int right = getBufferShort(data, RIGHT, bigEndian);
+            Preferences.debug("Right = " + right + "\n", Preferences.DEBUG_FILEIO);
+            int width = right - left;
+            Preferences.debug("Width = " + width + "\n", Preferences.DEBUG_FILEIO);
+            int height = bottom - top;
+            Preferences.debug("Height = " + height + "\n", Preferences.DEBUG_FILEIO);
+            int n = getBufferShort(data, N_COORDINATES, bigEndian);
+            Preferences.debug("Number coordinates = " + n + "\n", Preferences.DEBUG_FILEIO);
+            int options = getBufferShort(data, OPTIONS, bigEndian);
+            Preferences.debug("Options = " + options + "\n", Preferences.DEBUG_FILEIO);
+            int hdr2Offset = getBufferShort(data, HEADER2_OFFSET, bigEndian);
+            Preferences.debug("Header 2 offset = " + hdr2Offset + "\n", Preferences.DEBUG_FILEIO);
+            int channel = 0;
+            int slice = 0;
+            int frame = 0;
+            int overlayLabelColor = 0;
+            int overlayFontSize = 0;
+            int imageOpacity = 0;
+            int imageSize = 0;
+            boolean subPixelResolution = ((options & SUB_PIXEL_RESOLUTION) != 0) && version >= 222;
+            if (subPixelResolution) {
+            	Preferences.debug("Subpixel resolution present\n", Preferences.DEBUG_FILEIO);
+            }
+            boolean drawOffset = subPixelResolution && ((options & DRAW_OFFSET) != 0);
+            if (drawOffset) {
+            	Preferences.debug("Draw offset present\n", Preferences.DEBUG_FILEIO);
+            }
+            boolean subPixelRect = version >= 223 && subPixelResolution && ((type == rect)|| (type == oval));
+            if (subPixelRect) {
+            	Preferences.debug("Subpixel rect present\n", Preferences.DEBUG_FILEIO);
+            }
+            float xd = 0.0f;
+            float yd = 0.0f;
+            float widthd = 0.0f;
+            float heightd = 0.0f;
+            if(subPixelRect) {
+            	xd = getBufferFloat(data, XD, bigEndian);
+            	Preferences.debug("xd = " + xd + "\n", Preferences.DEBUG_FILEIO);
+            	yd = getBufferFloat(data, YD, bigEndian);
+            	Preferences.debug("yd = " + yd + "\n", Preferences.DEBUG_FILEIO);
+            	widthd = getBufferFloat(data, WIDTHD, bigEndian);
+            	Preferences.debug("widthd = " + widthd + "\n", Preferences.DEBUG_FILEIO);
+            	heightd = getBufferFloat(data, HEIGHTD, bigEndian);
+            	Preferences.debug("heightd = " + heightd + "\n", Preferences.DEBUG_FILEIO);
+            } // if (subPixelRect)
+            
+            roiName = fileName;
+            if ((hdr2Offset > 0) && (hdr2Offset + IMAGE_SIZE + 4 <= size)) {
+                channel = getBufferInt(data, hdr2Offset + C_POSITION, bigEndian);
+                Preferences.debug("Channel = " + channel + "\n", Preferences.DEBUG_FILEIO);
+                slice = getBufferInt(data, hdr2Offset + Z_POSITION, bigEndian);
+                Preferences.debug("Slice = " + slice + "\n", Preferences.DEBUG_FILEIO);
+                frame = getBufferInt(data, hdr2Offset + T_POSITION, bigEndian);
+                Preferences.debug("frame = " + frame + "\n", Preferences.DEBUG_FILEIO);
+                overlayLabelColor = getBufferInt(data, hdr2Offset + OVERLAY_LABEL_COLOR, bigEndian);
+                Preferences.debug("Overlay label color = " + overlayLabelColor + "\n", Preferences.DEBUG_FILEIO);
+                overlayFontSize = getBufferShort(data, hdr2Offset+OVERLAY_FONT_SIZE, bigEndian);
+                Preferences.debug("Overlay font size = " + overlayFontSize + "\n", Preferences.DEBUG_FILEIO);
+                imageOpacity = getByte(data, hdr2Offset + IMAGE_OPACITY);
+                Preferences.debug("Image opacity = " + imageOpacity + "\n", Preferences.DEBUG_FILEIO);
+                imageSize = getBufferInt(data, hdr2Offset + IMAGE_SIZE, bigEndian);
+                Preferences.debug("Image size = " + imageSize + "\n", Preferences.DEBUG_FILEIO);
+                roiNameOffset = getBufferInt(data, hdr2Offset+NAME_OFFSET, bigEndian);
+                Preferences.debug("Roi name offset = " + roiNameOffset + "\n", Preferences.DEBUG_FILEIO);
+                roiNameLength = getBufferInt(data, hdr2Offset + NAME_LENGTH, bigEndian);
+                Preferences.debug("Roi name length = " + roiNameLength + "\n", Preferences.DEBUG_FILEIO);
+                if ((roiNameOffset > 0) && (roiNameLength > 0) && (roiNameOffset + 2*roiNameLength < size)) {
+                    roiCharName = new char[roiNameLength];
+                    for (i = 0; i < roiNameLength; i++) {
+                    	roiCharName[i] = (char)getBufferShort(data, roiNameOffset+2*i, bigEndian);
+                    }
+                    roiName = new String(roiCharName);
+                    Preferences.debug("Roi name = " + roiName + "\n", Preferences.DEBUG_FILEIO);
+                }
+            } // if ((hdr2Offset > 0) && (hdr2Offset + IMAGE_SIZE + 4 <= size))
+            else {
+            	// Must obtain slice from fileName
+            	int index = fileName.indexOf("-");
+            	if ((index >= 1) && (index <= 4)) {
+            		String sliceNumber = fileName.substring(0, index);
+            		try {
+            	        slice = Integer.valueOf(sliceNumber).intValue();
+            		}
+            		catch (NumberFormatException e) {
+            			Preferences.debug("NumberFormatException in trying to obtain slice from roi file name\n",
+            					Preferences.DEBUG_FILEIO);
+            			slice = -1;
+            		}
+            		if ((slice < 0) || (slice > zDim-1)) {
+            			Preferences.debug("Slice number obtained from file is not in 0 to zDim-1 range\n",
+            					Preferences.DEBUG_FILEIO);
+            			slice = -1;
+            		}
+            		if (slice == -1) {
+            			Preferences.debug("No slice number information so using slice = 0\n",
+            					Preferences.DEBUG_FILEIO);
+            			slice = 0;
+            		}
+            	} // if ((index >= 1) && (index <= 4))
+            }
+            
+            boolean isComposite = (getBufferInt(data, SHAPE_ROI_SIZE, bigEndian) > 0);
+            if (isComposite) {
+            	Preferences.debug("Is composite\n", Preferences.DEBUG_FILEIO);
+            	if (type != rect) {
+            		MipavUtil.displayError("Invalid composite ROI type");
+            		return;
+            	}
+            	ns = getBufferInt(data, SHAPE_ROI_SIZE, bigEndian);
+            	shapeArray = new float[ns];
+            	for (i = 0; i < ns; i++) {
+            		shapeArray[i] = getBufferFloat(data, COORDINATES + 4*i, bigEndian);
+            	}
+            } // if (isCompoiste)
+            
+            switch(type) {
+            case oval:
+            	if (subPixelRect) {
+            	    //new OvalRoi(xd, yd, widthd, heightd);	
+            	}
+            	else {
+            		//new OvalRoi(left, top, width, height);
+            		currentManager.createOvalVOI(left, top, width, height, slice);
+            	}
+            	break;
+            }
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+    
+    
+    /**
+     * Converts byte data to short data.
+     * 
+     * @param buffer Array of byte data.
+     * @param index Index into array data.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @return Short value extracted from byte array.
+     */
+    public final short getBufferShort(final byte[] buffer, final int index, final boolean bigEndian) {
+
+        if (bigEndian) {
+            return (short) ( ( (buffer[index] & 0xff) << 8) | (buffer[index + 1] & 0xff));
+        } else {
+            return (short) ( ( (buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
+        }
+    }
+    
+    public final short getByte(final byte[] buffer, final int index) {
+    	return (short) (buffer[index] & 255);
+    }
+    
+    /**
+     * Converts byte data to int data.
+     * 
+     * @param buffer Array of byte data.
+     * @param index Index into array data.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @return Integer value extracted from byte array.
+     */
+    public final int getBufferInt(final byte[] buffer, final int index, final boolean bigEndian) {
+
+        if (bigEndian) {
+            return ( ( (buffer[index] & 0xff) << 24) | ( (buffer[index + 1] & 0xff) << 16)
+                    | ( (buffer[index + 2] & 0xff) << 8) | (buffer[index + 3] & 0xff));
+        } else {
+            return ( ( (buffer[index + 3] & 0xff) << 24) | ( (buffer[index + 2] & 0xff) << 16)
+                    | ( (buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
+        }
+    }
+
+    
+    /**
+     * Converts byte data to float data.
+     * 
+     * @param buffer Array of byte data.
+     * @param index Index into array data.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @return Float value extracted from byte array.
+     */
+    public final float getBufferFloat(final byte[] buffer, final int index, final boolean bigEndian) {
+        int tmpInt;
+
+        if (bigEndian) {
+            tmpInt = ( ( (buffer[index] & 0xff) << 24) | ( (buffer[index + 1] & 0xff) << 16)
+                    | ( (buffer[index + 2] & 0xff) << 8) | (buffer[index + 3] & 0xff));
+
+            return (Float.intBitsToFloat(tmpInt));
+        } else {
+            tmpInt = ( ( (buffer[index + 3] & 0xff) << 24) | ( (buffer[index + 2] & 0xff) << 16)
+                    | ( (buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
+
+            return (Float.intBitsToFloat(tmpInt));
         }
     }
 
