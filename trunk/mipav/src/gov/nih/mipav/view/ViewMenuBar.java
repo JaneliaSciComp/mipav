@@ -1180,6 +1180,7 @@ public class ViewMenuBar {
 										menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI, true),
 										menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_ALL, true),
 										menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_ALL_FROM, true),
+										menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_IMAGEJ, true),
 										menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_LABEL, true),
 										menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_CSV, true) }),
 						ViewMenuBar.separator, menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_PAINT, true),
