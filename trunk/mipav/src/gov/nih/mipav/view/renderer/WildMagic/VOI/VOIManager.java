@@ -2587,6 +2587,22 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		kVOI.setPlane(m_iPlane);
 		return kVOI;
 	}
+	
+	public void createOvalVOI(int left, int top, int width, int height, int slice) {
+		// Change from pixel to screen coordinates.
+		float fRadiusX = width/2.0f;
+		float fRadiusY = height/2.0f;
+		float xCenter = left + fRadiusX;
+		float yCenter = top + fRadiusY;
+		Vector<Vector3f> kPositions = new Vector<Vector3f>();
+		for ( int i = 0; i < m_iCirclePts; i++ )
+		{
+			kPositions.add( new Vector3f ((float)(xCenter + fRadiusX * m_adCos[i]),
+					(float)(yCenter + fRadiusY * m_adSin[i]), slice));
+		}
+		m_kCurrentVOI = createVOI(OVAL, true, false, kPositions );	
+		m_kParent.addVOI( m_kCurrentVOI, false, true, true);
+	}
 
 	/**
 	 * Creates a new VOI Contour or adds a new point to the existing VOI Contour.
