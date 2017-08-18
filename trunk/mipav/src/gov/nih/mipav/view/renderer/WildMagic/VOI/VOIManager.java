@@ -2589,16 +2589,28 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	}
 	
 	public void createOvalVOI(int left, int top, int width, int height, int slice) {
+		if ( m_bFirstVOI )
+		{
+			m_bFirstVOI = false;            
+			for ( int i = 0; i < m_iCirclePts; i++ )
+			{
+				m_adCos[i] = Math.cos( Math.PI * 2.0 * i/m_iCirclePts );
+				m_adSin[i] = Math.sin( Math.PI * 2.0 * i/m_iCirclePts);
+			}
+		}
 		// Change from pixel to screen coordinates.
+		float zoomX = m_kDrawingContext.getZoomX();
 		float fRadiusX = width/2.0f;
 		float fRadiusY = height/2.0f;
 		float xCenter = left + fRadiusX;
 		float yCenter = top + fRadiusY;
+		Vector3f fileCenter = new Vector3f(xCenter, yCenter, slice);
+		Vector3f sCtr = m_kDrawingContext.fileToScreenVOI(fileCenter);
 		Vector<Vector3f> kPositions = new Vector<Vector3f>();
 		for ( int i = 0; i < m_iCirclePts; i++ )
 		{
-			kPositions.add( new Vector3f ((float)(xCenter + fRadiusX * m_adCos[i]),
-					(float)(yCenter + fRadiusY * m_adSin[i]), slice));
+			kPositions.add( new Vector3f ((float)(sCtr.X + fRadiusX * zoomX * m_adCos[i]),
+					(float)(sCtr.Y + fRadiusY * zoomX * m_adSin[i]), slice));
 		}
 		m_kCurrentVOI = createVOI(OVAL, true, false, kPositions );	
 		m_kParent.addVOI( m_kCurrentVOI, false, true, true);
