@@ -11649,37 +11649,119 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dlacpy
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLADIV Original DLADIV created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006 dladiv performs complex division in real arithmetic p
-     * + i*q = (a + i*b) / (c + i*d) The algorithm is due to Robert L. Smith and can be found in D. Knuth, The Art of
-     * Computer Programming, Vol. 2, p.195.
+     * This is a port of version 3.7.0 LAPACK auxiliary routine DLADIV Original DLADIV created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., Januaary, 2013 dladiv performs complex division in real arithmetic
+     *  p + i*q = (a + i*b) / (c + i*d) The algorithm is due to Michael Baudin and RObert L. Smith and can be found
+     *  in the paper "A Robust Complex Division in Scilab".
      * 
      * @param a input double
      * @param b input double
      * @param c input double
      * @param d input double
-     * @param p input double[]
-     * @param q input double[]
+     * @param p output double[]
+     * @param q output double[]
      */
-    private void dladiv(final double a, final double b, final double c, final double d, final double[] p,
+    public void dladiv(final double a, final double b, final double c, final double d, final double[] p,
             final double[] q) {
-        double e;
-        double f;
+    	final double bs = 2.0;
+        double aa, bb, cc, dd, ab, cd, s, ov, un, be, eps;
 
-        if (Math.abs(d) < Math.abs(c)) {
-            e = d / c;
-            f = c + (d * e);
-            p[0] = (a + (b * e)) / f;
-            q[0] = (b - (a * e)) / f;
-        } else {
-            e = c / d;
-            f = d + (c * e);
-            p[0] = (b + (a * e)) / f;
-            q[0] = ( -a + (b * e)) / f;
+        aa = a;
+        bb = b;
+        cc = c;
+        dd = d;
+        ab = Math.max(Math.abs(a), Math.abs(b));
+        cd = Math.max(Math.abs(c), Math.abs(d));
+        s = 1.0;
+        
+        ov = dlamch('O');
+        un = dlamch('S');
+        eps = dlamch('E');
+        be = bs / (eps * eps);
+        
+        if (ab >= 0.5 * ov) {
+        	aa = 0.5 * aa;
+        	bb = 0.5 * bb;
+        	s = 2.0 * s;
         }
+        if (cd >= 0.5*ov) {
+        	cc = 0.5 * cc;
+        	dd = 0.5 * dd;
+        	s = 0.5 * s;
+        }
+        if (ab <= un*bs/eps) {
+        	aa = aa * be;
+        	bb = bb * be;
+        	s = s / be;
+        }
+        if (cd <= un*bs/eps) {
+        	cc = cc * be;
+        	dd = dd * be;
+        	s = s * be;
+        }
+        if (Math.abs(d) <= Math.abs(c)) {
+        	dladiv1(aa, bb, cc, dd, p, q);
+        }
+        else {
+        	dladiv1(bb, aa, dd, cc, p, q);
+        	q[0] = -q[0];
+        }
+        
+        p[0] = p[0] * s;
+        q[0] = q[0] * s;
 
         return;
     } // dladiv
+    
+    /**
+     * LAPACK auxiliary routine (version 3.7.0)
+     * LAPACK is a software package provided by Univ. of Tennessee, Univ. of California Berkeley, Univ. of
+     * Colorado Denver, and NAG Ltd, January, 2013.
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @param p
+     * @param q
+     */
+    private void dladiv1(double a, double b, double c, double d, double p[], double q[]) {
+        double r, t;
+        r = d/c;
+        t = 1.0/(c + d * r);
+        p[0] = dladiv2(a, b, c, d, r, t);
+        a = -a;
+        q[0] = dladiv2(b, a, c, d, r, t);
+        return;
+    }
+    
+    /**
+     * LAPACK auxiliary routine version 3.7.0
+     * LAPACK is a software package provided by Univ. of Tennessee, Univ. of California Berkeley, Univ. of
+     * Colorado Denver, and NAG Ltd, January, 2013.
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     * @param r
+     * @param t
+     * @return
+     */
+    private double dladiv2(double a, double b, double c, double d, double r, double t) {
+        double br;
+        
+        if (r != 0.0) {
+        	br = b * r;
+        	if (br != 0.0) {
+        		return ((a + br) * t);
+        	}
+        	else {
+        	    return (a*t + (b*t) * r);
+        	}
+        }
+        else {
+        	return ((a + d * (b/c)) * t);
+        }
+    }
 
     /**
      * This is a port of the version 3.1 LAPACK auxiliary routine DLAE2 Original DLAE2 created by Univ. of Tennessee,
