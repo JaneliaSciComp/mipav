@@ -6294,6 +6294,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             	total += is.read(data, total, size - total);
             }
             is.close();
+            file.delete();
             // Look for "Iout in first 4 bytes"
             if ((data[0] != 73) || (data[1] != 111) || (data[2] != 117) || (data[3] != 116)) {
                 MipavUtil.displayError("First 4 bytes do not have required Iout for an ImageJ ROI file");
