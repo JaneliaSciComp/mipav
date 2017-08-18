@@ -6245,6 +6245,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	int roiNameOffset;
     	int roiNameLength;
     	char roiCharName[];
+    	int xCenter = -1;
+    	int yCenter = -1;
     	if (!fileName.endsWith(".roi")) {
     		MipavUtil.displayError("This is not an ImageJ ROI file");
     		return;
@@ -6461,6 +6463,45 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             			Preferences.debug("No slice number information so using slice = 0\n",
             					Preferences.DEBUG_FILEIO);
             			slice = 0;
+            		}
+            		else {
+            			Preferences.debug("Slice = " + slice + " obtained from first number in file name\n", Preferences.DEBUG_FILEIO);
+            		}
+            		int index2 = fileName.indexOf("-", index+1);
+            		if ((index2 >= index + 2) && (index2 <= index + 5)) {
+            			String yCenterString = fileName.substring(index+1, index2);
+            			try {
+            			    yCenter = Integer.valueOf(yCenterString).intValue();    	
+            			}
+            			catch (NumberFormatException e) {
+                			Preferences.debug("NumberFormatException in trying to obtain yCenter from roi file name\n",
+                					Preferences.DEBUG_FILEIO);
+                			yCenter = -1;
+                		}
+            		}
+            		if ((yCenter > top) && (yCenter < bottom)) {
+            			Preferences.debug("yCenter = " + yCenter + " obtained from second number in file name\n");
+            		}
+            		else {
+            			yCenter = -1;
+            		}
+            		int index3 = fileName.indexOf(".",index2+1);
+            		if ((index3 >= index2 + 2) && (index2 <= index2 + 5)) {
+            			String xCenterString = fileName.substring(index2+1, index3);
+            			try {
+            			    xCenter = Integer.valueOf(xCenterString).intValue();    	
+            			}
+            			catch (NumberFormatException e) {
+                			Preferences.debug("NumberFormatException in trying to obtain xCenter from roi file name\n",
+                					Preferences.DEBUG_FILEIO);
+                			xCenter = -1;
+                		}
+            		}
+            		if ((xCenter > left) && (xCenter < right)) {
+            			Preferences.debug("xCenter = " + xCenter + " obtained from third number in file name\n");
+            		}
+            		else {
+            			xCenter = -1;
             		}
             	} // if ((index >= 1) && (index <= 4))
             }
