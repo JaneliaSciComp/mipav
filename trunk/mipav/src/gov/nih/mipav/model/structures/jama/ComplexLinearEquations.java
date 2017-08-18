@@ -3034,10 +3034,2028 @@ public class ComplexLinearEquations implements java.io.Serializable {
 
      } // zgecon
      
+     /**
+      * This is a port of LAPACK version auxiliary routine 3.7.0 ZLATRS.F created by the University of Tennessee, University
+      * of California Berkeley, University of Colorado Denver, and NAG Ltd., December 2016.
+      * 
+      * zlatrs solves a triangular system of equations with the scale factor set to prevent overflow.
+      * 
+      * zlatrs solves one of the triangular systems
+
+        A *x = s*b,  A**T *x = s*b, or A**H * x = s*b
+
+        with scaling to prevent overflow.  Here A is an upper or lower
+        triangular matrix, A**T denotes the transpose of A, A**H denotes the conjugate transpose of A, 
+        x and b are n-element vectors, and s is a scaling factor, usually less than
+        or equal to 1, chosen so that the components of x will be less than
+        the overflow threshold.  If the unscaled problem will not cause
+        overflow, the Level 2 BLAS routine ZTRSV is called.  If the matrix A
+        is singular (A[j][j] = 0 for some j), then s is set to 0 and a
+        non-trivial solution to A*x = 0 is returned.
+        
+        A rough bound on x is computed; if that is less than overflow, ztrsv
+        is called, otherwise, specific code is used which checks for possible
+        overflow or divide-by-zero at every operation.
+  
+        A columnwise scheme is used for solving A*x = b.  The basic algorithm
+        if A is lower triangular is
+
+        x[1:n] := b[1:n]
+        for j = 1, ..., n
+             x(j) := x(j) / A(j,j)
+             x[j+1:n] := x[j+1:n] - x(j) * A[j+1:n,j]
+        end
+
+        Define bounds on the components of x after j iterations of the loop:
+           M(j) = bound on x[1:j]
+           G(j) = bound on x[j+1:n]
+        Initially, let M(0) = 0 and G(0) = max{x(i), i=1,...,n}.
+
+        Then for iteration j+1 we have
+           M(j+1) <= G(j) / | A(j+1,j+1) |
+           G(j+1) <= G(j) + M(j+1) * | A[j+2:n,j+1] |
+                  <= G(j) ( 1 + cnorm(j+1) / | A(j+1,j+1) | )
+
+        where cnorm(j+1) is greater than or equal to the infinity-norm of
+        column j+1 of A, not counting the diagonal.  Hence
+
+           G(j) <= G(0) product ( 1 + CNORM(i) / | A(i,i) | )
+                        1<=i<=j
+     and
+
+           |x(j)| <= ( G(0) / |A(j,j)| ) product ( 1 + CNORM(i) / |A(i,i)| )
+                                         1<=i< j
+
+        Since |x(j)| <= M(j), we use the Level 2 BLAS routine ZTRSV if the
+        reciprocal of the largest M(j), j=1,..,n, is larger than
+        max(underflow, 1/overflow).
+
+        The bound on x(j) is also used to determine when a step in the
+        columnwise method can be performed without fear of overflow.  If
+        the computed bound is greater than a large constant, x is scaled to
+        prevent overflow, but if the bound overflows, x is set to 0, x(j) to
+        1, and scale to 0, and a non-trivial solution to A*x = 0 is found.
+
+        Similarly, a row-wise scheme is used to solve A**T*x = b or A**H*x = b.  The basic
+        algorithm for A upper triangular is
+
+          for j = 1, ..., n
+               x(j) := ( b(j) - A[1:j-1,j]**T * x[1:j-1] ) / A(j,j)
+          end
+  
+        We simultaneously compute two bounds
+             G(j) = bound on ( b(i) - A[1:i-1,i]**T * x[1:i-1] ), 1<=i<=j
+             M(j) = bound on x(i), 1<=i<=j
+
+        The initial values are G(0) = 0, M(0) = max{b(i), i=1,..,n}, and we
+        add the constraint G(j) >= G(j-1) and M(j) >= M(j-1) for j >= 1.
+        Then the bound on x(j) is
+
+             M(j) <= M(j-1) * ( 1 + CNORM(j) ) / | A(j,j) |
+
+                  <= M(0) * product ( ( 1 + CNORM(i) ) / |A(i,i)| )
+                            1<=i<=j
+
+        and we can safely call ZTRSV if 1/M(n) and 1/G(n) are both greater
+        than max(underflow, 1/overflow).
+
+        @param input char uplo
+            Specifies whether the matrix A is upper or lower triangular.
+            = 'U':  Upper triangular
+            = 'L':  Lower triangular
+        @param input char trans
+            Specifies the operation applied to A.
+            = 'N':  Solve A * x = s*b  (No transpose)
+            = 'T':  Solve A**T* x = s*b  (Transpose)
+            = 'C':  Solve A**H* x = s*b  (Conjugate transpose)
+        @param input char diag
+            Specifies whether or not the matrix A is unit triangular.
+            = 'N':  Non-unit triangular
+            = 'U':  Unit triangular
+        @param input char normin
+            Specifies whether cnorm has been set or not.
+            = 'Y':  cnorm contains the column norms on entry
+            = 'N':  cnorm is not set on entry.  On exit, the norms will
+                    be computed and stored in cnorm.
+        @param input int n
+            The order of the matrix A.  n >= 0.
+        @param input double[][][2] complex A of dimension (lda, n)
+            The triangular matrix A.  If uplo = 'U', the leading n by n
+            upper triangular part of the array A contains the upper
+            triangular matrix, and the strictly lower triangular part of
+            A is not referenced.  If uplo = 'L', the leading n by n lower
+            triangular part of the array A contains the lower triangular
+            matrix, and the strictly upper triangular part of A is not
+            referenced.  If diag = 'U', the diagonal elements of A are
+            also not referenced and are assumed to be 1.
+        @param input int lda
+            The leading dimension of the array A.  lda >= max (1,n).
+        @param (input/output) double[][2] complex x of dimension (n).
+            On entry, the right hand side b of the triangular system.
+            On exit, x is overwritten by the solution vector x.
+        @param output double[] scale of dimension (1)
+            The scaling factor s for the triangular system
+                A * x = s*b , A**T* x = s*b, or A**H * x = s*b.
+            If scale[0] = 0, the matrix A is singular or badly scaled, and
+            the vector x is an exact or approximate solution to A*x = 0.
+        @param (input/output) double[] cnorm of dimension (n)
+            If normin = 'Y', cnorm is an input argument and cnorm[j]
+            contains the norm of the off-diagonal part of the j-th column
+            of A.  If trans = 'N', cnorm[j] must be greater than or equal
+            to the infinity-norm, and if trans = 'T' or 'C', cnorm[j]
+            must be greater than or equal to the 1-norm.
+
+            If normin = 'N', cnorm is an output argument and cnorm[j]
+            returns the 1-norm of the offdiagonal part of the j-th column
+            of A.
+        @param output int[] info of dimension (1)
+            = 0:  successful exit
+            < 0:  if INFO = -k, the k-th argument had an illegal value
+      */
      private void zlatrs(char uplo, char trans, char diag, char normin, int n, double A[][][],
     		 int lda, double x[][], double scale[], double cnorm[], int info[]) {
-    	 
-     }
+    	 boolean notran;
+         boolean nounit;
+         boolean upper;
+         int i;
+         int imax;
+         int j;
+         int jfirst;
+         int jinc;
+         int jlast;
+         double bignum[] = new double[1];
+         double grow;
+         double rec;
+         double smlnum[] = new double[1];
+         double csumj[] = new double[2];
+         double tjj;
+         double tjjs[] = new double[2];
+         double tmax;
+         double tscal;
+         double uscal[] = new double[2];
+         double xbnd;
+         double xj;
+         double xmax;
+         double maxVal;
+         boolean assignGrow;
+         boolean doBlock;
+         double vec[][];
+         int k;
+         double vec2[][];
+         double alpha[] = new double[2];
+         double cr[] = new double[1];
+         double ci[] = new double[1];
+         
+         info[0] = 0;
+         upper = ((uplo == 'U') || (uplo == 'u'));
+         notran = ((trans == 'N') || (trans == 'n'));
+         nounit = ((diag == 'N') || (diag == 'n'));
+   
+         // Test the input parameters.
+    
+         if (!upper && !((uplo == 'L') || (uplo == 'l'))) {
+            info[0] = -1;
+         }
+         else if (!notran && !((trans == 'T') || (trans == 't')) && !((trans == 'C') || (trans == 'c'))) {
+            info[0] = -2;
+         }
+         else if (!nounit && !((diag == 'U') || (diag == 'u'))) {
+            info[0] = -3;
+         }
+         else if (!((normin == 'Y') || (normin == 'y')) && !((normin == 'N') || (normin == 'n'))) {
+            info[0] = -4;
+         }
+         else if (n < 0) {
+            info[0] = -5;
+         }
+         else if(lda < Math.max(1, n)) {
+            info[0] = -7;
+         }
+         if(info[0] != 0) {
+            MipavUtil.displayError("zlatrs had info[0] = " + info[0]);
+            return;
+         }
+   
+         // Quick return if possible
+   
+         if (n == 0) {
+            return;
+         }
+   
+         // Determine machine dependent parameters to control overflow.
+   
+         smlnum[0] = ge.dlamch('S');
+         bignum[0] = 1.0/smlnum[0];
+         ge.dlabad(smlnum, bignum);
+         smlnum[0] = smlnum[0]/ge.dlamch('P');
+         bignum[0] = 1.0 / smlnum[0];
+         scale[0] = 1.0;
+   
+         if((normin == 'N') || (normin == 'n')) {
+   
+            // Compute the 1-norm of each column, not including the diagonal.
+   
+            if (upper) {
+    
+               // A is upper triangular.
+    
+               for (j = 1; j <= n; j++) {
+                  cnorm[j-1] = Math.abs(A[0][j-1][0]) + Math.abs(A[0][j-1][1]);
+                  for (i = 1; i < j-1; i++) {
+                      cnorm[j-1] += (Math.abs(A[i][j-1][0]) + Math.abs(A[i][j-1][1]));
+                  }
+               } // for (j = 1; j <= n; j++)
+            }
+            else {
+    
+               // A is lower triangular.
+    
+               for (j = 1; j <= n-1; j++) {
+                  cnorm[j-1] = Math.abs(A[j][j-1][0]) + Math.abs(A[j][j-1][1]);
+                  for (i = 1; i < n-j; i++) {
+                      cnorm[j-1] += (Math.abs(A[j+i][j-1][0]) + Math.abs(A[j+i][j-1][1]));
+                  }
+               } // for (j = 1; j <= n-1; j++)
+               cnorm[n-1] = 0.0;
+            }
+         } // if((normin == 'N') || (normin == 'n'))
+   
+         // Scale the column norms by tscal if the maximum element in cnorm is
+         // greater than bignum.
+   
+         imax = 0;
+         maxVal = Math.abs(cnorm[0]);
+         for (i = 1; i < n; i++) {
+             if (Math.abs(cnorm[i]) > maxVal) {
+                 maxVal = Math.abs(cnorm[i]);
+                 imax = i;
+             }
+         }
+         tmax = cnorm[imax];
+         if (tmax <= 0.5*bignum[0]) {
+            tscal = 1.0;
+         }
+         else {
+            tscal = 0.5/ ( smlnum[0]*tmax );
+            ge.dscal(n, tscal, cnorm, 1);
+         }
+   
+         // Compute a bound on the computed solution vector to see if the
+         // Level 2 BLAS routine ztrsv can be used.
+    
+         j = 0;
+         xmax = (Math.abs(x[0][0]) + Math.abs(x[0][1]))/2.0;
+         for (i = 1; i < n; i++) {
+             if ((Math.abs(x[i][0]) + Math.abs(x[i][1]))/2.0 > xmax) {
+                 xmax = (Math.abs(x[i][0]) + Math.abs(x[i][1]))/2.0;
+                 j = i;
+             }
+         }
+         xbnd = xmax;
+         if (notran) {
+   
+            // Compute the growth in A * x = b.
+   
+            if (upper) {
+               jfirst = n;
+               jlast = 1;
+               jinc = -1;
+            }
+            else {
+               jfirst = 1;
+               jlast = n;
+               jinc = 1;
+            }
+   
+            if(tscal != 1.0) {
+               grow = 0.0;
+            }
+            else if (nounit) {
+    
+               // A is non-unit triangular.
+    
+               // Compute GROW = 1/G(j) and XBND = 1/M(j).
+               // Initially, G(0) = max{x(i), i=1,...,n}.
+    
+               grow = 0.5 / Math.max(xbnd, smlnum[0]);
+               xbnd = grow;
+               assignGrow = true;
+               if (jinc == 1) {
+                   for (j = jfirst - 1; j < jlast; j++) {
+   
+                       // Exit the loop if the growth factor is too small.
+   
+                      if (grow <= smlnum[0]) {
+                          assignGrow = false;
+                          break;
+                      }
+   
+    
+                      tjjs[0] = A[j][j][0];
+                      tjjs[1] = A[j][j][1];
+                      tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                      
+                      if (tjj >= smlnum[0]) {
+                    	  // M[j] = G[j-1] / abs(A[j][j])
+                    	  xbnd = Math.min(xbnd, Math.min(1.0, tjj)*grow);
+                      }
+                      else {
+                    	  // M[j] could overflow, set xbnd to 0.
+                    	  xbnd = 0.0;
+                      }
+                      if (tjj+cnorm[j] >= smlnum[0]) {
+   
+                          // G(j) = G(j-1)*( 1 + CNORM(j) / abs(A(j,j)) )
+   
+                          grow = grow*(tjj / (tjj+cnorm[j]));
+                      }
+                      else {
+   
+                          // G(j) could overflow, set GROW to 0.
+   
+                          grow = 0.0;
+                      } // else
+                   } // for (j = jfirst - 1; j < jlast; j++)
+               } // if (jinc == 1)
+               else { // jinc == -1
+                   for (j = jfirst - 1; j >= jlast-1; j--) {
+                       
+                       // Exit the loop if the growth factor is too small.
+   
+                      if (grow <= smlnum[0]) {
+                          assignGrow = false;
+                          break;
+                      }
+    
+                      tjjs[0] = A[j][j][0];
+                      tjjs[1] = A[j][j][1];
+                      tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                      
+                      if (tjj >= smlnum[0]) {
+                    	  // M[j] = G[j-1] / abs(A[j][j])
+                    	  xbnd = Math.min(xbnd, Math.min(1.0, tjj)*grow);
+                      }
+                      else {
+                    	  // M[j] could overflow, set xbnd to 0.
+                    	  xbnd = 0.0;
+                      }
+                      if (tjj+cnorm[j] >= smlnum[0]) {
+   
+                          // G(j) = G(j-1)*( 1 + CNORM(j) / abs(A(j,j)) )
+   
+                          grow = grow*(tjj / (tjj+cnorm[j]));
+                      }
+                      else {
+   
+                          // G(j) could overflow, set GROW to 0.
+   
+                          grow = 0.0;
+                      } // else
+                   } // for (j = jfirst - 1; j < jlast; j++)    
+               } // else jinc == -1
+               if (assignGrow) {
+                   grow = xbnd;
+               }
+            } // else if (nounit)
+            else { 
+   
+                // A is unit triangular.
+   
+                // Compute GROW = 1/G(j), where G(0) = max{x(i), i=1,...,n}.
+    
+                grow = Math.min(1.0, 0.5 / Math.max(xbnd, smlnum[0]));
+                if (jinc == 1) {
+                    for (j = jfirst - 1; j < jlast; j++) {
+   
+                        // Exit the loop if the growth factor is too small.
+    
+                        if (grow <= smlnum[0]) {
+                            break;
+                        }
+   
+                        // G(j) = G(j-1)*( 1 + CNORM(j) )
+    
+                        grow = grow*(1.0 / ( 1.0+cnorm[j]));
+                    } // for (j = jfirst - 1; j < jlast; j++)
+                } // if (jinc == 1)
+                else { // jinc == -1
+                    for (j = jfirst - 1; j >= jlast-1; j--) {
+
+                        // Exit the loop if the growth factor is too small.
+    
+                        if (grow <= smlnum[0]) {
+                            break;
+                        }
+   
+                        // G(j) = G(j-1)*( 1 + CNORM(j) )
+    
+                        grow = grow*(1.0 / ( 1.0+cnorm[j]));    
+                    } // for (j = jfirst - 1; j >= jlast-1; j--)
+                } // else jinc == -1
+            } //else
+         } // if (notran)      
+         else { // !notran
+   
+             // Compute the growth in A**T * x = b or A**H * x = b.
+   
+             if (upper) {
+                 jfirst = 1;
+                 jlast = n;
+                 jinc = 1;
+             }
+             else {
+                 jfirst = n;
+                 jlast = 1;
+                 jinc = -1;
+             }
+   
+             if (tscal != 1.0) {
+                 grow = 0.0;
+             } // if (tscal != 1.0)
+             else if (nounit) {
+   
+                 // A is non-unit triangular.
+   
+                 // Compute GROW = 1/G(j) and XBND = 1/M(j).
+                 // Initially, M(0) = max{x(i), i=1,...,n}.
+    
+                 grow = 0.5 / Math.max(xbnd, smlnum[0]);
+                 xbnd = grow;
+                 assignGrow = true;
+                 if (jinc == 1) {        
+                     for (j = jfirst - 1; j < jlast; j++) {
+   
+                         // Exit the loop if the growth factor is too small.
+    
+                         if (grow <= smlnum[0]) {
+                             assignGrow = false;
+                             break;
+                         }
+   
+                         // G(j) = max( G(j-1), M(j-1)*( 1 + CNORM(j) ) )
+   
+                         xj = 1.0 + cnorm[j];
+                         grow = Math.min(grow, xbnd / xj);
+   
+                         // M(j) = M(j-1)*( 1 + CNORM(j) ) / abs(A(j,j))
+   
+                         tjjs[0] = A[j][j][0];
+                         tjjs[1] = A[j][j][1];
+                         tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                         if (tjj >= smlnum[0]) {
+                        	 // M[j]= M[j-1] * (1 + cnorm[j])/abs(A[j][j]
+	                         if (xj > tjj) {
+	                             xbnd = xbnd*(tjj / xj);
+	                         }
+                         }
+                         else {
+                        	 // M[j] could overflow, set xbnd to 0.
+                        	 xbnd = 0.0;
+                         }
+                     } // for (j = jfirst - 1; j < jlast; j++)
+                 } // if (jinc == 1)
+                 else { // jinc == -1
+                     for (j = jfirst - 1; j >= jlast-1; j--) {
+                    	// Exit the loop if the growth factor is too small.
+                    	    
+                         if (grow <= smlnum[0]) {
+                             assignGrow = false;
+                             break;
+                         }
+   
+                         // G(j) = max( G(j-1), M(j-1)*( 1 + CNORM(j) ) )
+   
+                         xj = 1.0 + cnorm[j];
+                         grow = Math.min(grow, xbnd / xj);
+   
+                         // M(j) = M(j-1)*( 1 + CNORM(j) ) / abs(A(j,j))
+   
+                         tjjs[0] = A[j][j][0];
+                         tjjs[1] = A[j][j][1];
+                         tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                         if (tjj >= smlnum[0]) {
+                        	 // M[j]= M[j-1] * (1 + cnorm[j])/abs(A[j][j]
+	                         if (xj > tjj) {
+	                             xbnd = xbnd*(tjj / xj);
+	                         }
+                         }
+                         else {
+                        	 // M[j] could overflow, set xbnd to 0.
+                        	 xbnd = 0.0;
+                         }
+                        
+                     } // for (j = jfirst - 1; j >= jlast-1; j--)
+                 } // else jinc == -1
+                 if (assignGrow) {
+                     grow = Math.min(grow, xbnd);
+                 } // if (assignGrow)
+             } // else if (nounit)
+             else {
+    
+                 // A is unit triangular.
+   
+                 // Compute GROW = 1/G(j), where G(0) = max{x(i), i=1,...,n}.
+   
+                 grow = Math.min(1.0, 0.5 / Math.max(xbnd, smlnum[0]));
+                 if (jinc == 1) {
+                     for (j = jfirst - 1; j < jlast; j++) {
+   
+                         // Exit the loop if the growth factor is too small.
+   
+                         if (grow <= smlnum[0]) {
+                             break;
+                         }
+   
+                         // G(j) = ( 1 + CNORM(j) )*G(j-1)
+   
+                         xj = 1.0 + cnorm[j];
+                         grow = grow / xj;
+                     } // for (j = jfirst - 1; j < jlast; j++)
+                 } // if (jinc == 1)
+                 else { // jinc == -1
+                     for (j = jfirst - 1; j >= jlast-1; j--) {
+
+                         // Exit the loop if the growth factor is too small.
+   
+                         if (grow <= smlnum[0]) {
+                             break;
+                         }
+   
+                         // G(j) = ( 1 + CNORM(j) )*G(j-1)
+   
+                         xj = 1.0 + cnorm[j];
+                         grow = grow / xj;
+                     } // for (j = jfirst - 1; j >= jlast-1; j--)
+                 } // else jinc == -1
+             } // else
+         } // else !notran
+   
+         if ((grow*tscal) > smlnum[0]) {
+   
+             // Use the Level 2 BLAS solve if the reciprocal of the bound on
+             // elements of x is not too small.
+    
+             ztrsv(uplo, trans, diag, n, A, lda, x, 1);
+         } // if ((grow*tscal) > smlnum[0])
+         else { // ((grow*tscal) <= smlnum
+   
+             // Use a Level 1 BLAS solve, scaling intermediate results.
+   
+             if (xmax > 0.5*bignum[0]) {
+   
+                 // Scale x so that its components are less than or equal to
+                 // bignum in absolute value.
+    
+                 scale[0] = (0.5*bignum[0]) / xmax;
+                 zdscal(n, scale[0], x, 1);
+                 xmax = bignum[0];
+             } // if (xmax > 0.5*bignum[0])
+   
+             if (notran) {
+   
+                 // Solve A * x = b
+             
+                 if (jinc == 1) {
+                     for (j = jfirst; j <= jlast; j++) {
+   
+                         // Compute x(j) = b(j) / A(j,j), scaling x if necessary.
+   
+                         xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                         doBlock = true;
+                         if (nounit) {
+                             tjjs[0] = A[j-1][j-1][0]*tscal;
+                             tjjs[1] = A[j-1][j-1][1]*tscal;
+                         } // if (nounit)
+                         else {
+                             tjjs[0] = tscal;
+                             tjjs[1] = 0.0;
+                             if (tscal == 1.0) {
+                                 doBlock = false;;
+                             }
+                         } // else
+                         if (doBlock) {
+                             tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                             if (tjj > smlnum[0]) {
+   
+                                 // abs(A[j)[j]) > smlnum[0]:
+   
+                                 if (tjj < 1.0) {
+                                     if (xj > tjj*bignum[0]) {
+   
+                                         // Scale x by 1/b(j).
+   
+                                         rec = 1.0 / xj;
+                                         zdscal(n, rec, x, 1);
+                                         scale[0] = scale[0]*rec;
+                                         xmax = xmax*rec;
+                                     } // if (xj > tjj*bignum[0])
+                                 } // if (tjj < 1.0)
+                                 ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                 x[j-1][0] = cr[0];
+                                 x[j-1][1] = ci[0];
+                                 xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                             } // if (tjj > smlnum[0])
+                             else if (tjj > 0.0) {
+   
+                                 // 0 < abs(A[j][j]) <= smlnum[0]:
+   
+                                 if (xj > tjj*bignum[0]) {
+   
+                                     // Scale x by (1/abs(x(j)))*abs(A[j][j])*bignum
+                                     // to avoid overflow when dividing by A[j][j].
+   
+                                     rec = (tjj*bignum[0]) / xj;
+                                     if (cnorm[j-1] > 1.0) {
+    
+                                         // Scale by 1/cnorm[j] to avoid overflow when
+                                         // multiplying x[j] times column j.
+    
+                                         rec = rec / cnorm[j-1];
+                                     } // if (cnorm[j] > 1.0)
+                                     zdscal(n, rec, x, 1);
+                                     scale[0] = scale[0]*rec;
+                                     xmax = xmax*rec;
+                                 } // if (xj > tjj*bignum[0])
+                                 ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                 x[j-1][0] = cr[0];
+                                 x[j-1][1] = ci[0];
+                                 xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                             } // else if (tjj > 0.0)
+                             else {
+    
+                                 // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                 // scale[0] = 0, and compute a solution to A*x = 0.
+    
+                                 for (i = 0; i < n; i++) {
+                                     x[i][0] = 0.0;
+                                     x[i][1] = 0.0;
+                                 } // for (i = 0; i < n; i++)
+                                 x[j-1][0] = 1.0;
+                                 x[j-1][1] = 0.0;
+                                 xj = 1.0;
+                                 scale[0] = 0.0;
+                                 xmax = 0.0;
+                             } // else 
+                         } // if (doBlock)
+   
+                         // Scale x if necessary to avoid overflow when adding a
+                         // multiple of column j of A.
+   
+                         if (xj > 1.0) {
+                             rec = 1.0 / xj;
+                             if (cnorm[j-1] > (bignum[0]-xmax)*rec) {
+   
+                                 // Scale x by 1/(2*abs(x(j))).
+    
+                                 rec = rec*0.5;
+                                 zdscal(n, rec, x, 1);
+                                 scale[0] = scale[0]*rec;
+                             } // if (cnorm[j-1] > (bignum[0]-xmax)*rec) 
+                         } // if (xj > 1.0)
+                         else if (xj*cnorm[j-1] > (bignum[0]-xmax)) {
+    
+                             // Scale x by 1/2.
+    
+                             zdscal(n, 0.5, x, 1);
+                             scale[0] = scale[0]*05;
+                         } // else if (xj*cnorm[j-1] > (bignum[0]-xmax))
+   
+                         if (upper) {
+                             if (j > 1) {
+   
+                                 // Compute the update
+                                 // x(1:j-1) := x(1:j-1) - x(j) * A(1:j-1,j)
+               
+                                 vec = new double[j-1][2];
+                                 for (i = 0; i < j-1; i++) {
+                                     vec[i][0] = A[i][j-1][0];
+                                     vec[i][1] = A[i][j-1][1];
+                                 }
+                                 alpha[0] = -x[j][0]*tscal;
+                                 alpha[1] = -x[j][1]*tscal;
+                                 zaxpy(j-1, alpha, vec, 1, x, 1);
+                                 i = 0;
+                                 xmax = Math.abs(x[0][0]) + Math.abs(x[0][1]);
+                                 for (k = 1; k < j-1; k++) {
+                                     if ((Math.abs(x[k][0]) + Math.abs(x[k][1])) > xmax) {
+                                         xmax = Math.abs(x[k][0]) + Math.abs(x[k][1]);
+                                         i = k;
+                                     }
+                                 }
+                             } // if (j > 1)
+                         } // if (upper)
+                         else { // lower
+                             if (j < n) {
+   
+                                 // Compute the update
+                                 // x(j+1:n) := x(j+1:n) - x(j) * A(j+1:n,j)
+   
+                                 vec = new double[n-j][2];
+                                 for (i = 0; i < n-j; i++) {
+                                     vec[i][0] = A[j+i][j-1][0];
+                                     vec[i][1] = A[j+i][j-1][1];
+                                 }
+                                 vec2 = new double[n-j][2];
+                                 for (i = 0; i < n-j; i++) {
+                                     vec2[i][0] = x[j+i][0];
+                                     vec2[i][1] = x[j+i][1];
+                                 }
+                                 alpha[0] = -x[j-1][0]*tscal;
+                                 alpha[1] = -x[j-1][1]*tscal;
+                                 zaxpy(n-j, alpha, vec, 1, vec2, 1);
+                                 for (i = 0; i < n-j; i++) {
+                                     x[j+i][0] = vec2[i][0];
+                                     x[j+i][1] = vec2[i][1];
+                                 }
+                                 i = j;
+                                 xmax = Math.abs(x[j][0]) + Math.abs(x[j][1]);
+                                 for (k = 1; k < n-j; k++) {
+                                     if ((Math.abs(x[j+k][0]) + Math.abs(x[j+k][1])) > xmax) {
+                                         xmax = Math.abs(x[j+k][0]) + Math.abs(x[j+k][1]);
+                                         i = j+k;
+                                     }
+                                 }
+                             } // if (j < n)
+                         } // else lower
+                     } // for (j = jfirst; j <= jlast; j++)
+                 } // if (jinc == 1)
+                 else { // jinc == -1
+                     for (j = jfirst; j >= jlast; j--) {
+
+                         // Compute x(j) = b(j) / A(j,j), scaling x if necessary.
+   
+                         xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                         doBlock = true;
+                         if (nounit) {
+                             tjjs[0] = A[j-1][j-1][0]*tscal;
+                             tjjs[1] = A[j-1][j-1][1]*tscal;
+                         } // if (nounit)
+                         else {
+                             tjjs[0] = tscal;
+                             tjjs[1] = 0.0;
+                             if (tscal == 1.0) {
+                                 doBlock = false;;
+                             }
+                         } // else
+                         if (doBlock) {
+                             tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                             if (tjj > smlnum[0]) {
+   
+                                 // abs(A[j)[j]) > smlnum[0]:
+   
+                                 if (tjj < 1.0) {
+                                     if (xj > tjj*bignum[0]) {
+   
+                                         // Scale x by 1/b(j).
+   
+                                         rec = 1.0 / xj;
+                                         zdscal(n, rec, x, 1);
+                                         scale[0] = scale[0]*rec;
+                                         xmax = xmax*rec;
+                                     } // if (xj > tjj*bignum[0])
+                                 } // if (tjj < 1.0)
+                                 ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                 x[j-1][0] = cr[0];
+                                 x[j-1][1] = ci[0];
+                                 xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                             } // if (tjj > smlnum[0])
+                             else if (tjj > 0.0) {
+   
+                                 // 0 < abs(A[j][j]) <= smlnum[0]:
+   
+                                 if (xj > tjj*bignum[0]) {
+   
+                                     // Scale x by (1/abs(x(j)))*abs(A[j][j])*bignum
+                                     // to avoid overflow when dividing by A[j][j].
+   
+                                     rec = (tjj*bignum[0]) / xj;
+                                     if (cnorm[j-1] > 1.0) {
+    
+                                         // Scale by 1/cnorm[j] to avoid overflow when
+                                         // multiplying x[j] times column j.
+    
+                                         rec = rec / cnorm[j-1];
+                                     } // if (cnorm[j] > 1.0)
+                                     zdscal(n, rec, x, 1);
+                                     scale[0] = scale[0]*rec;
+                                     xmax = xmax*rec;
+                                 } // if (xj > tjj*bignum[0])
+                                 ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                 x[j-1][0] = cr[0];
+                                 x[j-1][1] = ci[0];
+                                 xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                             } // else if (tjj > 0.0)
+                             else {
+    
+                                 // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                 // scale[0] = 0, and compute a solution to A*x = 0.
+    
+                                 for (i = 0; i < n; i++) {
+                                     x[i][0] = 0.0;
+                                     x[i][1] = 0.0;
+                                 } // for (i = 0; i < n; i++)
+                                 x[j-1][0] = 1.0;
+                                 x[j-1][1] = 0.0;
+                                 xj = 1.0;
+                                 scale[0] = 0.0;
+                                 xmax = 0.0;
+                             } // else 
+                         } // if (doBlock)
+   
+                         // Scale x if necessary to avoid overflow when adding a
+                         // multiple of column j of A.
+   
+                         if (xj > 1.0) {
+                             rec = 1.0 / xj;
+                             if (cnorm[j-1] > (bignum[0]-xmax)*rec) {
+   
+                                 // Scale x by 1/(2*abs(x(j))).
+    
+                                 rec = rec*0.5;
+                                 zdscal(n, rec, x, 1);
+                                 scale[0] = scale[0]*rec;
+                             } // if (cnorm[j-1] > (bignum[0]-xmax)*rec) 
+                         } // if (xj > 1.0)
+                         else if (xj*cnorm[j-1] > (bignum[0]-xmax)) {
+    
+                             // Scale x by 1/2.
+    
+                             zdscal(n, 0.5, x, 1);
+                             scale[0] = scale[0]*05;
+                         } // else if (xj*cnorm[j-1] > (bignum[0]-xmax))
+   
+                         if (upper) {
+                             if (j > 1) {
+   
+                                 // Compute the update
+                                 // x(1:j-1) := x(1:j-1) - x(j) * A(1:j-1,j)
+               
+                                 vec = new double[j-1][2];
+                                 for (i = 0; i < j-1; i++) {
+                                     vec[i][0] = A[i][j-1][0];
+                                     vec[i][1] = A[i][j-1][1];
+                                 }
+                                 alpha[0] = -x[j][0]*tscal;
+                                 alpha[1] = -x[j][1]*tscal;
+                                 zaxpy(j-1, alpha, vec, 1, x, 1);
+                                 i = 0;
+                                 xmax = Math.abs(x[0][0]) + Math.abs(x[0][1]);
+                                 for (k = 1; k < j-1; k++) {
+                                     if ((Math.abs(x[k][0]) + Math.abs(x[k][1])) > xmax) {
+                                         xmax = Math.abs(x[k][0]) + Math.abs(x[k][1]);
+                                         i = k;
+                                     }
+                                 }
+                             } // if (j > 1)
+                         } // if (upper)
+                         else { // lower
+                             if (j < n) {
+   
+                                 // Compute the update
+                                 // x(j+1:n) := x(j+1:n) - x(j) * A(j+1:n,j)
+   
+                                 vec = new double[n-j][2];
+                                 for (i = 0; i < n-j; i++) {
+                                     vec[i][0] = A[j+i][j-1][0];
+                                     vec[i][1] = A[j+i][j-1][1];
+                                 }
+                                 vec2 = new double[n-j][2];
+                                 for (i = 0; i < n-j; i++) {
+                                     vec2[i][0] = x[j+i][0];
+                                     vec2[i][1] = x[j+i][1];
+                                 }
+                                 alpha[0] = -x[j-1][0]*tscal;
+                                 alpha[1] = -x[j-1][1]*tscal;
+                                 zaxpy(n-j, alpha, vec, 1, vec2, 1);
+                                 for (i = 0; i < n-j; i++) {
+                                     x[j+i][0] = vec2[i][0];
+                                     x[j+i][1] = vec2[i][1];
+                                 }
+                                 i = j;
+                                 xmax = Math.abs(x[j][0]) + Math.abs(x[j][1]);
+                                 for (k = 1; k < n-j; k++) {
+                                     if ((Math.abs(x[j+k][0]) + Math.abs(x[j+k][1])) > xmax) {
+                                         xmax = Math.abs(x[j+k][0]) + Math.abs(x[j+k][1]);
+                                         i = j+k;
+                                     }
+                                 }
+                             } // if (j < n)
+                         } // else lower
+                         
+                     } // for (j = jfirst; j >= jlast; j--)
+                 } // else jinc == -1
+             } // if (notran)
+             else if ((trans == 'T') || (trans == 't')) {
+   
+                 // Solve A**T * x = b
+                 if (jinc == 1) {
+                     for (j = jfirst; j <= jlast; j++) {
+   
+                         // Compute x(j) = b(j) - sum A(k,j)*x(k).
+                         //                       k<>j
+   
+                         xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                         uscal[0] = tscal;
+                         uscal[1] = 0.0;
+                         rec = 1.0 / Math.max(xmax, 1.0);
+                         if (cnorm[j-1] > (bignum[0]-xj)*rec) {
+   
+                             // If x(j) could overflow, scale x by 1/(2*XMAX).
+   
+                             rec = rec*0.5;
+                             if (nounit) {
+                                 tjjs[0] = A[j-1][j-1][0]*tscal;
+                                 tjjs[1] = A[j-1][j-1][1]*tscal;
+                             }
+                             else {
+                                 tjjs[0] = tscal;
+                                 tjjs[1] = 0.0;
+                             }
+                             tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                             if (tjj > 1.0) {
+   
+                                 // Divide by A(j,j) when scaling x if A(j,j) > 1.
+    
+                                 rec = Math.min(1.0, rec*tjj);
+                                 ge.dladiv(uscal[0], uscal[1], tjjs[0], tjjs[1], cr, ci);
+                                 uscal[0] = cr[0];
+                                 uscal[1] = ci[0];
+                             } // if (tjj > 1.0)
+                             if (rec < 1.0) {
+                                 zdscal(n, rec, x, 1);
+                                 scale[0] = scale[0]*rec;
+                                 xmax = xmax*rec;
+                             } // if (rec < 1.0)
+                         } // (cnorm[j-1] > (bignum[0]-xj)*rec)
+   
+                         csumj[0] = 0.0;
+                         csumj[1] = 0.0;
+                         if ((uscal[0] == 1.0) && (uscal[1] == 0.0)) {
+   
+                             // If the scaling needed for A in the dot product is 1,
+                             // call zdotu to perform the dot product.
+    
+                             if (upper) {
+                                 vec = new double[j-1][2];
+                                 for (i = 0; i < j-1; i++) {
+                                     vec[i][0] = A[i][j-1][0];
+                                     vec[i][1] = A[i][j-1][1];
+                                 }
+                                 csumj = zdotu(j-1, vec, 1, x, 1);
+                             } // if (upper)
+                             else if (j < n) {
+                                 vec = new double[n-j][2];
+                                 vec2 = new double[n-j][2];
+                                 for (i = 0; i < n-j; i++) {
+                                     vec[i][0] = A[j+i][j-1][0];
+                                     vec[i][1] = A[j+i][j-1][1];
+                                     vec2[i][0] = x[j+i][0];
+                                     vec2[i][1] = x[j+i][1];
+                                 }
+                                 csumj = zdotu(n-j, vec, 1, vec2, 1);
+                             } // else if (j < n)
+                         } // if ((uscal[0] == 1.0) && (uscal[1] == 0.0))
+                         else { // uscal != 1.0
+        
+                             // Otherwise, use in-line code for the dot product.
+   
+                             if (upper) {
+                                 for (i = 1; i <= j-1; i++) {
+                                	 zmlt(A[i-1][j-1][0], A[i-1][j-1][1], uscal[0], uscal[1], cr, ci);
+                                	 zmlt(cr[0], ci[0], x[i-1][0], x[i-1][1], cr, ci);
+                                     csumj[0] = csumj[0] + cr[0];
+                                     csumj[1] = csumj[1] + ci[0];
+                                 } // for (i = 1; i <= j-1; i++)
+                             } // if (upper)
+                             else if (j < n) {
+                                 for (i = j+1; i <= n; i++) {
+                                	 zmlt(A[i-1][j-1][0], A[i-1][j-1][1], uscal[0], uscal[1], cr, ci);
+                                	 zmlt(cr[0], ci[0], x[i-1][0], x[i-1][1], cr, ci);
+                                     csumj[0] = csumj[0] + cr[0];
+                                     csumj[1] = csumj[1] + ci[0];
+                                 } // for (i = j+1; i <= n; i++)
+                             } // else if (j < n)
+                         } // else uscal != 1.0
+   
+                         if ((uscal[0] == tscal) && (uscal[1] == 0.0)) {
+   
+                             // Compute x(j) := ( x(j) - csumj ) / A(j,j) if 1/A(j,j)
+                             // was not used to scale the dotproduct.
+   
+                             x[j-1][0] = x[j-1][0] - csumj[0];
+                             x[j-1][1] = x[j-1][1] - csumj[1];
+                             xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                             doBlock = true;
+                             if (nounit) {
+                                 tjjs[0] = A[j-1][j-1][0]*tscal;
+                                 tjjs[1] = A[j-1][j-1][1]*tscal;
+                             }
+                             else {
+                                 tjjs[0] = tscal;
+                                 tjjs[1] = 0.0;
+                                 if (tscal == 1.0) {
+                                     doBlock = false;
+                                 }
+                             } // else
+                             if (doBlock) {
+   
+                                 // Compute x(j) = x(j) / A(j,j), scaling if necessary.
+   
+                                 tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                                 if (tjj > smlnum[0]) {
+   
+                                     // abs(A[j][j]) > smlnum[0]:
+   
+                                     if (tjj  < 1.0) {
+                                         if (xj > tjj*bignum[0]) {
+   
+                                             // Scale X by 1/abs(x(j)).
+   
+                                             rec = 1.0 / xj;
+                                             zdscal(n, rec, x, 1);
+                                             scale[0] = scale[0]*rec;
+                                             xmax = xmax*rec;
+                                         } // if (xj > tjj*bignum[0])
+                                     } // if (tjj < 1.0)
+                                     ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                     x[j-1][0] = cr[0];
+                                     x[j-1][1] = ci[0];
+                                 } // if (tjj > smlnum[0])
+                                 else if (tjj > 0.0) {
+   
+                                     // 0 < abs(A[j][j]) <= smlnum[0]:
+   
+                                     if (xj > tjj*bignum[0]) {
+   
+                                         // Scale x by (1/abs(x(j)))*abs(A(j,j))*bignum[0].
+   
+                                         rec = (tjj*bignum[0]) / xj;
+                                         zdscal(n, rec, x, 1);
+                                         scale[0] = scale[0]*rec;
+                                         xmax = xmax*rec;
+                                     } // if (xj > tjj*bignum[0])
+                                     ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                     x[j-1][0] = cr[0];
+                                     x[j-1][1] = ci[0];
+                                 } // else if (tjj > 0)
+                                 else {
+   
+                                     // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                     // scale[0] = 0, and compute a solution to A**T*x = 0.
+   
+                                     for (i = 0; i < n; i++) {
+                                         x[i][0] = 0.0;
+                                         x[i][1] = 0.0;
+                                     } // for (i = 0; i < n; i++)
+                                     x[j-1][0] = 1.0;
+                                     x[j-1][1] = 0.0;
+                                     scale[0] = 0.0;
+                                     xmax = 0.0;
+                                 } // else
+                             } // if (doBlock)
+                         } // if ((uscal[0] == tscal) && (uscal[1] == 0.0))
+                         else { // uscal != tscal
+   
+                             // Compute x(j) := x(j) / A(j,j)  - csumj if the dot
+                             // product has already been divided by 1/A(j,j).
+   
+                        	 ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                             x[j-1][0] = cr[0] - csumj[0];
+                             x[j-1][1] = ci[0] - csumj[1];
+                         } // else uscal != tscal
+                         xmax = Math.max(xmax, (Math.abs(x[j-1][0]) + Math.abs(x[j-1][1])));
+                     } // for (j = jfirst; j <= jlast; j++)
+                 } // if (jinc == 1)
+                 else { // jinc == -1
+                     for (j = jfirst; j >= jlast; j--) {
+                    	// Compute x(j) = b(j) - sum A(k,j)*x(k).
+                         //                       k<>j
+   
+                         xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                         uscal[0] = tscal;
+                         uscal[1] = 0.0;
+                         rec = 1.0 / Math.max(xmax, 1.0);
+                         if (cnorm[j-1] > (bignum[0]-xj)*rec) {
+   
+                             // If x(j) could overflow, scale x by 1/(2*XMAX).
+   
+                             rec = rec*0.5;
+                             if (nounit) {
+                                 tjjs[0] = A[j-1][j-1][0]*tscal;
+                                 tjjs[1] = A[j-1][j-1][1]*tscal;
+                             }
+                             else {
+                                 tjjs[0] = tscal;
+                                 tjjs[1] = 0.0;
+                             }
+                             tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                             if (tjj > 1.0) {
+   
+                                 // Divide by A(j,j) when scaling x if A(j,j) > 1.
+    
+                                 rec = Math.min(1.0, rec*tjj);
+                                 ge.dladiv(uscal[0], uscal[1], tjjs[0], tjjs[1], cr, ci);
+                                 uscal[0] = cr[0];
+                                 uscal[1] = ci[0];
+                             } // if (tjj > 1.0)
+                             if (rec < 1.0) {
+                                 zdscal(n, rec, x, 1);
+                                 scale[0] = scale[0]*rec;
+                                 xmax = xmax*rec;
+                             } // if (rec < 1.0)
+                         } // (cnorm[j-1] > (bignum[0]-xj)*rec)
+   
+                         csumj[0] = 0.0;
+                         csumj[1] = 0.0;
+                         if ((uscal[0] == 1.0) && (uscal[1] == 0.0)) {
+   
+                             // If the scaling needed for A in the dot product is 1,
+                             // call zdotu to perform the dot product.
+    
+                             if (upper) {
+                                 vec = new double[j-1][2];
+                                 for (i = 0; i < j-1; i++) {
+                                     vec[i][0] = A[i][j-1][0];
+                                     vec[i][1] = A[i][j-1][1];
+                                 }
+                                 csumj = zdotu(j-1, vec, 1, x, 1);
+                             } // if (upper)
+                             else if (j < n) {
+                                 vec = new double[n-j][2];
+                                 vec2 = new double[n-j][2];
+                                 for (i = 0; i < n-j; i++) {
+                                     vec[i][0] = A[j+i][j-1][0];
+                                     vec[i][1] = A[j+i][j-1][1];
+                                     vec2[i][0] = x[j+i][0];
+                                     vec2[i][1] = x[j+i][1];
+                                 }
+                                 csumj = zdotu(n-j, vec, 1, vec2, 1);
+                             } // else if (j < n)
+                         } // if ((uscal[0] == 1.0) && (uscal[1] == 0.0))
+                         else { // uscal != 1.0
+        
+                             // Otherwise, use in-line code for the dot product.
+   
+                             if (upper) {
+                                 for (i = 1; i <= j-1; i++) {
+                                	 zmlt(A[i-1][j-1][0], A[i-1][j-1][1], uscal[0], uscal[1], cr, ci);
+                                	 zmlt(cr[0], ci[0], x[i-1][0], x[i-1][1], cr, ci);
+                                     csumj[0] = csumj[0] + cr[0];
+                                     csumj[1] = csumj[1] + ci[0];
+                                 } // for (i = 1; i <= j-1; i++)
+                             } // if (upper)
+                             else if (j < n) {
+                                 for (i = j+1; i <= n; i++) {
+                                	 zmlt(A[i-1][j-1][0], A[i-1][j-1][1], uscal[0], uscal[1], cr, ci);
+                                	 zmlt(cr[0], ci[0], x[i-1][0], x[i-1][1], cr, ci);
+                                     csumj[0] = csumj[0] + cr[0];
+                                     csumj[1] = csumj[1] + ci[0];
+                                 } // for (i = j+1; i <= n; i++)
+                             } // else if (j < n)
+                         } // else uscal != 1.0
+   
+                         if ((uscal[0] == tscal) && (uscal[1] == 0.0)) {
+   
+                             // Compute x(j) := ( x(j) - csumj ) / A(j,j) if 1/A(j,j)
+                             // was not used to scale the dotproduct.
+   
+                             x[j-1][0] = x[j-1][0] - csumj[0];
+                             x[j-1][1] = x[j-1][1] - csumj[1];
+                             xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                             doBlock = true;
+                             if (nounit) {
+                                 tjjs[0] = A[j-1][j-1][0]*tscal;
+                                 tjjs[1] = A[j-1][j-1][1]*tscal;
+                             }
+                             else {
+                                 tjjs[0] = tscal;
+                                 tjjs[1] = 0.0;
+                                 if (tscal == 1.0) {
+                                     doBlock = false;
+                                 }
+                             } // else
+                             if (doBlock) {
+   
+                                 // Compute x(j) = x(j) / A(j,j), scaling if necessary.
+   
+                                 tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                                 if (tjj > smlnum[0]) {
+   
+                                     // abs(A[j][j]) > smlnum[0]:
+   
+                                     if (tjj  < 1.0) {
+                                         if (xj > tjj*bignum[0]) {
+   
+                                             // Scale X by 1/abs(x(j)).
+   
+                                             rec = 1.0 / xj;
+                                             zdscal(n, rec, x, 1);
+                                             scale[0] = scale[0]*rec;
+                                             xmax = xmax*rec;
+                                         } // if (xj > tjj*bignum[0])
+                                     } // if (tjj < 1.0)
+                                     ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                     x[j-1][0] = cr[0];
+                                     x[j-1][1] = ci[0];
+                                 } // if (tjj > smlnum[0])
+                                 else if (tjj > 0.0) {
+   
+                                     // 0 < abs(A[j][j]) <= smlnum[0]:
+   
+                                     if (xj > tjj*bignum[0]) {
+   
+                                         // Scale x by (1/abs(x(j)))*abs(A(j,j))*bignum[0].
+   
+                                         rec = (tjj*bignum[0]) / xj;
+                                         zdscal(n, rec, x, 1);
+                                         scale[0] = scale[0]*rec;
+                                         xmax = xmax*rec;
+                                     } // if (xj > tjj*bignum[0])
+                                     ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                     x[j-1][0] = cr[0];
+                                     x[j-1][1] = ci[0];
+                                 } // else if (tjj > 0)
+                                 else {
+   
+                                     // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                     // scale[0] = 0, and compute a solution to A**T*x = 0.
+   
+                                     for (i = 0; i < n; i++) {
+                                         x[i][0] = 0.0;
+                                         x[i][1] = 0.0;
+                                     } // for (i = 0; i < n; i++)
+                                     x[j-1][0] = 1.0;
+                                     x[j-1][1] = 0.0;
+                                     scale[0] = 0.0;
+                                     xmax = 0.0;
+                                 } // else
+                             } // if (doBlock)
+                         } // if ((uscal[0] == tscal) && (uscal[1] == 0.0))
+                         else { // uscal != tscal
+   
+                             // Compute x(j) := x(j) / A(j,j)  - csumj if the dot
+                             // product has already been divided by 1/A(j,j).
+   
+                        	 ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                             x[j-1][0] = cr[0] - csumj[0];
+                             x[j-1][1] = ci[0] - csumj[1];
+                         } // else uscal != tscal
+                         xmax = Math.max(xmax, (Math.abs(x[j-1][0]) + Math.abs(x[j-1][1])));
+                         
+                     } // for (j = jfirst; j >= jlast; j--)
+                 } // else jinc == -1
+             } // else if ((trans == 'T') || (trans == 't'))
+             else { // trans == 'C'
+                 // Solve A**H * x = b	
+            	 if (jinc == 1) {
+                     for (j = jfirst; j <= jlast; j++) {
+   
+                         // Compute x(j) = b(j) - sum A(k,j)*x(k).
+                         //                       k<>j
+   
+                         xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                         uscal[0] = tscal;
+                         uscal[1] = 0.0;
+                         rec = 1.0 / Math.max(xmax, 1.0);
+                         if (cnorm[j-1] > (bignum[0]-xj)*rec) {
+   
+                             // If x(j) could overflow, scale x by 1/(2*XMAX).
+   
+                             rec = rec*0.5;
+                             if (nounit) {
+                                 tjjs[0] = A[j-1][j-1][0]*tscal;
+                                 tjjs[1] = -A[j-1][j-1][1]*tscal;
+                             }
+                             else {
+                                 tjjs[0] = tscal;
+                                 tjjs[1] = 0.0;
+                             }
+                             tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                             if (tjj > 1.0) {
+   
+                                 // Divide by A(j,j) when scaling x if A(j,j) > 1.
+    
+                                 rec = Math.min(1.0, rec*tjj);
+                                 ge.dladiv(uscal[0], uscal[1], tjjs[0], tjjs[1], cr, ci);
+                                 uscal[0] = cr[0];
+                                 uscal[1] = ci[0];
+                             } // if (tjj > 1.0)
+                             if (rec < 1.0) {
+                                 zdscal(n, rec, x, 1);
+                                 scale[0] = scale[0]*rec;
+                                 xmax = xmax*rec;
+                             } // if (rec < 1.0)
+                         } // (cnorm[j-1] > (bignum[0]-xj)*rec)
+   
+                         csumj[0] = 0.0;
+                         csumj[1] = 0.0;
+                         if ((uscal[0] == 1.0) && (uscal[1] == 0.0)) {
+   
+                             // If the scaling needed for A in the dot product is 1,
+                             // call zdotu to perform the dot product.
+    
+                             if (upper) {
+                                 vec = new double[j-1][2];
+                                 for (i = 0; i < j-1; i++) {
+                                     vec[i][0] = A[i][j-1][0];
+                                     vec[i][1] = A[i][j-1][1];
+                                 }
+                                 csumj = zdotc(j-1, vec, 1, x, 1);
+                             } // if (upper)
+                             else if (j < n) {
+                                 vec = new double[n-j][2];
+                                 vec2 = new double[n-j][2];
+                                 for (i = 0; i < n-j; i++) {
+                                     vec[i][0] = A[j+i][j-1][0];
+                                     vec[i][1] = A[j+i][j-1][1];
+                                     vec2[i][0] = x[j+i][0];
+                                     vec2[i][1] = x[j+i][1];
+                                 }
+                                 csumj = zdotc(n-j, vec, 1, vec2, 1);
+                             } // else if (j < n)
+                         } // if ((uscal[0] == 1.0) && (uscal[1] == 0.0))
+                         else { // uscal != 1.0
+        
+                             // Otherwise, use in-line code for the dot product.
+   
+                             if (upper) {
+                                 for (i = 1; i <= j-1; i++) {
+                                	 zmlt(A[i-1][j-1][0], -A[i-1][j-1][1], uscal[0], uscal[1], cr, ci);
+                                	 zmlt(cr[0], ci[0], x[i-1][0], x[i-1][1], cr, ci);
+                                     csumj[0] = csumj[0] + cr[0];
+                                     csumj[1] = csumj[1] + ci[0];
+                                 } // for (i = 1; i <= j-1; i++)
+                             } // if (upper)
+                             else if (j < n) {
+                                 for (i = j+1; i <= n; i++) {
+                                	 zmlt(A[i-1][j-1][0], -A[i-1][j-1][1], uscal[0], uscal[1], cr, ci);
+                                	 zmlt(cr[0], ci[0], x[i-1][0], x[i-1][1], cr, ci);
+                                     csumj[0] = csumj[0] + cr[0];
+                                     csumj[1] = csumj[1] + ci[0];
+                                 } // for (i = j+1; i <= n; i++)
+                             } // else if (j < n)
+                         } // else uscal != 1.0
+   
+                         if ((uscal[0] == tscal) && (uscal[1] == 0.0)) {
+   
+                             // Compute x(j) := ( x(j) - csumj ) / A(j,j) if 1/A(j,j)
+                             // was not used to scale the dotproduct.
+   
+                             x[j-1][0] = x[j-1][0] - csumj[0];
+                             x[j-1][1] = x[j-1][1] - csumj[1];
+                             xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                             doBlock = true;
+                             if (nounit) {
+                                 tjjs[0] = A[j-1][j-1][0]*tscal;
+                                 tjjs[1] = -A[j-1][j-1][1]*tscal;
+                             }
+                             else {
+                                 tjjs[0] = tscal;
+                                 tjjs[1] = 0.0;
+                                 if (tscal == 1.0) {
+                                     doBlock = false;
+                                 }
+                             } // else
+                             if (doBlock) {
+   
+                                 // Compute x(j) = x(j) / A(j,j), scaling if necessary.
+   
+                                 tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                                 if (tjj > smlnum[0]) {
+   
+                                     // abs(A[j][j]) > smlnum[0]:
+   
+                                     if (tjj  < 1.0) {
+                                         if (xj > tjj*bignum[0]) {
+   
+                                             // Scale X by 1/abs(x(j)).
+   
+                                             rec = 1.0 / xj;
+                                             zdscal(n, rec, x, 1);
+                                             scale[0] = scale[0]*rec;
+                                             xmax = xmax*rec;
+                                         } // if (xj > tjj*bignum[0])
+                                     } // if (tjj < 1.0)
+                                     ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                     x[j-1][0] = cr[0];
+                                     x[j-1][1] = ci[0];
+                                 } // if (tjj > smlnum[0])
+                                 else if (tjj > 0.0) {
+   
+                                     // 0 < abs(A[j][j]) <= smlnum[0]:
+   
+                                     if (xj > tjj*bignum[0]) {
+   
+                                         // Scale x by (1/abs(x(j)))*abs(A(j,j))*bignum[0].
+   
+                                         rec = (tjj*bignum[0]) / xj;
+                                         zdscal(n, rec, x, 1);
+                                         scale[0] = scale[0]*rec;
+                                         xmax = xmax*rec;
+                                     } // if (xj > tjj*bignum[0])
+                                     ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                     x[j-1][0] = cr[0];
+                                     x[j-1][1] = ci[0];
+                                 } // else if (tjj > 0)
+                                 else {
+   
+                                     // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                     // scale[0] = 0, and compute a solution to A**T*x = 0.
+   
+                                     for (i = 0; i < n; i++) {
+                                         x[i][0] = 0.0;
+                                         x[i][1] = 0.0;
+                                     } // for (i = 0; i < n; i++)
+                                     x[j-1][0] = 1.0;
+                                     x[j-1][1] = 0.0;
+                                     scale[0] = 0.0;
+                                     xmax = 0.0;
+                                 } // else
+                             } // if (doBlock)
+                         } // if ((uscal[0] == tscal) && (uscal[1] == 0.0))
+                         else { // uscal != tscal
+   
+                             // Compute x(j) := x(j) / A(j,j)  - csumj if the dot
+                             // product has already been divided by 1/A(j,j).
+   
+                        	 ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                             x[j-1][0] = cr[0] - csumj[0];
+                             x[j-1][1] = ci[0] - csumj[1];
+                         } // else uscal != tscal
+                         xmax = Math.max(xmax, (Math.abs(x[j-1][0]) + Math.abs(x[j-1][1])));
+                     } // for (j = jfirst; j <= jlast; j++)
+                 } // if (jinc == 1)
+                 else { // jinc == -1
+                     for (j = jfirst; j >= jlast; j--) {
+                    	// Compute x(j) = b(j) - sum A(k,j)*x(k).
+                         //                       k<>j
+   
+                         xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                         uscal[0] = tscal;
+                         uscal[1] = 0.0;
+                         rec = 1.0 / Math.max(xmax, 1.0);
+                         if (cnorm[j-1] > (bignum[0]-xj)*rec) {
+   
+                             // If x(j) could overflow, scale x by 1/(2*XMAX).
+   
+                             rec = rec*0.5;
+                             if (nounit) {
+                                 tjjs[0] = A[j-1][j-1][0]*tscal;
+                                 tjjs[1] = -A[j-1][j-1][1]*tscal;
+                             }
+                             else {
+                                 tjjs[0] = tscal;
+                                 tjjs[1] = 0.0;
+                             }
+                             tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                             if (tjj > 1.0) {
+   
+                                 // Divide by A(j,j) when scaling x if A(j,j) > 1.
+    
+                                 rec = Math.min(1.0, rec*tjj);
+                                 ge.dladiv(uscal[0], uscal[1], tjjs[0], tjjs[1], cr, ci);
+                                 uscal[0] = cr[0];
+                                 uscal[1] = ci[0];
+                             } // if (tjj > 1.0)
+                             if (rec < 1.0) {
+                                 zdscal(n, rec, x, 1);
+                                 scale[0] = scale[0]*rec;
+                                 xmax = xmax*rec;
+                             } // if (rec < 1.0)
+                         } // (cnorm[j-1] > (bignum[0]-xj)*rec)
+   
+                         csumj[0] = 0.0;
+                         csumj[1] = 0.0;
+                         if ((uscal[0] == 1.0) && (uscal[1] == 0.0)) {
+   
+                             // If the scaling needed for A in the dot product is 1,
+                             // call zdotu to perform the dot product.
+    
+                             if (upper) {
+                                 vec = new double[j-1][2];
+                                 for (i = 0; i < j-1; i++) {
+                                     vec[i][0] = A[i][j-1][0];
+                                     vec[i][1] = A[i][j-1][1];
+                                 }
+                                 csumj = zdotc(j-1, vec, 1, x, 1);
+                             } // if (upper)
+                             else if (j < n) {
+                                 vec = new double[n-j][2];
+                                 vec2 = new double[n-j][2];
+                                 for (i = 0; i < n-j; i++) {
+                                     vec[i][0] = A[j+i][j-1][0];
+                                     vec[i][1] = A[j+i][j-1][1];
+                                     vec2[i][0] = x[j+i][0];
+                                     vec2[i][1] = x[j+i][1];
+                                 }
+                                 csumj = zdotc(n-j, vec, 1, vec2, 1);
+                             } // else if (j < n)
+                         } // if ((uscal[0] == 1.0) && (uscal[1] == 0.0))
+                         else { // uscal != 1.0
+        
+                             // Otherwise, use in-line code for the dot product.
+   
+                             if (upper) {
+                                 for (i = 1; i <= j-1; i++) {
+                                	 zmlt(A[i-1][j-1][0], -A[i-1][j-1][1], uscal[0], uscal[1], cr, ci);
+                                	 zmlt(cr[0], ci[0], x[i-1][0], x[i-1][1], cr, ci);
+                                     csumj[0] = csumj[0] + cr[0];
+                                     csumj[1] = csumj[1] + ci[0];
+                                 } // for (i = 1; i <= j-1; i++)
+                             } // if (upper)
+                             else if (j < n) {
+                                 for (i = j+1; i <= n; i++) {
+                                	 zmlt(A[i-1][j-1][0], -A[i-1][j-1][1], uscal[0], uscal[1], cr, ci);
+                                	 zmlt(cr[0], ci[0], x[i-1][0], x[i-1][1], cr, ci);
+                                     csumj[0] = csumj[0] + cr[0];
+                                     csumj[1] = csumj[1] + ci[0];
+                                 } // for (i = j+1; i <= n; i++)
+                             } // else if (j < n)
+                         } // else uscal != 1.0
+   
+                         if ((uscal[0] == tscal) && (uscal[1] == 0.0)) {
+   
+                             // Compute x(j) := ( x(j) - csumj ) / A(j,j) if 1/A(j,j)
+                             // was not used to scale the dotproduct.
+   
+                             x[j-1][0] = x[j-1][0] - csumj[0];
+                             x[j-1][1] = x[j-1][1] - csumj[1];
+                             xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
+                             doBlock = true;
+                             if (nounit) {
+                                 tjjs[0] = A[j-1][j-1][0]*tscal;
+                                 tjjs[1] = -A[j-1][j-1][1]*tscal;
+                             }
+                             else {
+                                 tjjs[0] = tscal;
+                                 tjjs[1] = 0.0;
+                                 if (tscal == 1.0) {
+                                     doBlock = false;
+                                 }
+                             } // else
+                             if (doBlock) {
+   
+                                 // Compute x(j) = x(j) / A(j,j), scaling if necessary.
+   
+                                 tjj = Math.abs(tjjs[0]) + Math.abs(tjjs[1]);
+                                 if (tjj > smlnum[0]) {
+   
+                                     // abs(A[j][j]) > smlnum[0]:
+   
+                                     if (tjj  < 1.0) {
+                                         if (xj > tjj*bignum[0]) {
+   
+                                             // Scale X by 1/abs(x(j)).
+   
+                                             rec = 1.0 / xj;
+                                             zdscal(n, rec, x, 1);
+                                             scale[0] = scale[0]*rec;
+                                             xmax = xmax*rec;
+                                         } // if (xj > tjj*bignum[0])
+                                     } // if (tjj < 1.0)
+                                     ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                     x[j-1][0] = cr[0];
+                                     x[j-1][1] = ci[0];
+                                 } // if (tjj > smlnum[0])
+                                 else if (tjj > 0.0) {
+   
+                                     // 0 < abs(A[j][j]) <= smlnum[0]:
+   
+                                     if (xj > tjj*bignum[0]) {
+   
+                                         // Scale x by (1/abs(x(j)))*abs(A(j,j))*bignum[0].
+   
+                                         rec = (tjj*bignum[0]) / xj;
+                                         zdscal(n, rec, x, 1);
+                                         scale[0] = scale[0]*rec;
+                                         xmax = xmax*rec;
+                                     } // if (xj > tjj*bignum[0])
+                                     ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                                     x[j-1][0] = cr[0];
+                                     x[j-1][1] = ci[0];
+                                 } // else if (tjj > 0)
+                                 else {
+   
+                                     // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                     // scale[0] = 0, and compute a solution to A**T*x = 0.
+   
+                                     for (i = 0; i < n; i++) {
+                                         x[i][0] = 0.0;
+                                         x[i][1] = 0.0;
+                                     } // for (i = 0; i < n; i++)
+                                     x[j-1][0] = 1.0;
+                                     x[j-1][1] = 0.0;
+                                     scale[0] = 0.0;
+                                     xmax = 0.0;
+                                 } // else
+                             } // if (doBlock)
+                         } // if ((uscal[0] == tscal) && (uscal[1] == 0.0))
+                         else { // uscal != tscal
+   
+                             // Compute x(j) := x(j) / A(j,j)  - csumj if the dot
+                             // product has already been divided by 1/A(j,j).
+   
+                        	 ge.dladiv(x[j-1][0], x[j-1][1], tjjs[0], tjjs[1], cr, ci);
+                             x[j-1][0] = cr[0] - csumj[0];
+                             x[j-1][1] = ci[0] - csumj[1];
+                         } // else uscal != tscal
+                         xmax = Math.max(xmax, (Math.abs(x[j-1][0]) + Math.abs(x[j-1][1])));
+                         
+                     } // for (j = jfirst; j >= jlast; j--)
+                 } // else jinc == -1
+             } // else trans == 'C'
+             scale[0] = scale[0] / tscal;
+         } // // ((grow*tscal) <= smlnum
+   
+         // Scale the column norms by 1/tscal for return.
+   
+         if (tscal != 1.0) {
+             ge.dscal(n, 1.0 / tscal, cnorm, 1);
+         }
+   
+         return;
+	 
+     } // zlatrs
+     
+     /**
+      * This is a port of the 10/22/86 Blas routine ZTRSV Original version written by: Jack Dongarra, Argonne National
+      * Lab. Jeremy Du Croz, Nag Central Office Sven Hammarling, Nag Central Office. Richard Hanson, Sandia National
+      * Labs. dtrsv solves one of the systems of equations A*x = b or A**T*x = b or A**H*X = b where b and x are n 
+      * element vectors and A is an n by n unit, or non-unit, upper or lower triangular matrix.
+      * Veresion 3.7.0 December, 2016.
+      * 
+      * <p>
+      * No test for singularity or near-singularity is included in this routine. Such test must be performed before
+      * calling this routine.
+      * </p>
+      * 
+      * @param uplo input char On entry, uplo specifies whether the matrix is an upper or lower triangular matrix as
+      *            follows = 'U' or 'u' A is an upper triangular matrix. = 'L' or 'l' A is a lower triangular matrix.
+      * @param trans input char On entry, trans specifies the equations to be solved as follows: = 'N' or 'n' A*x = b =
+      *            'T' or 't' A**T*x = b 
+      *            = 'C' or 'c' A**H*x = b
+      * @param diag input char On entry, diag specifies whether or not A is unit triangular as follows: = 'U' or 'u' A is
+      *            assumed to be unit triangular. = 'N' or 'n' A is not assumed to be unit triangular.
+      * @param n input int On entry, n specifies the order of matrix A. n must be at least zero.
+      * @param A input double[][][2] complex of dimension lda by n Before entry with uplo = 'U' or 'u', the leading n by n upper
+      *            triangular part of the array A must contain the upper triangular matrix and the strictly lower
+      *            triangular part of A is not referenced. Before entry with uplo = 'L' or 'l', the leading n by n lower
+      *            triangular part of the array A must contain the lower triangular matrix and the strictly upper
+      *            triangular part of A is not referenced. Note that when diag = 'U' or 'u', the diagonal elements of A
+      *            are not referenced either, but are assumed to be unity.
+      * @param lda input int On entry, lda specifies the first dimension of A as declared in the calling (sub) program.
+      *            lda must be at least max(1,n).
+      * @param x input/output double[][2] complex of dimension at least (1 + (n-1)*abs(incx)). Before entry, the incremented array x
+      *            must contain the n element right-hand side vector b. On exit, array x is overwritten with the solution
+      *            vector x.
+      * @param incx input int On entry, incx specifies the increment for the elements of x. incx must not be zero.
+      */
+     public void ztrsv(final char uplo, final char trans, final char diag, final int n, final double[][][] A,
+             final int lda, final double[][] x, final int incx) {
+         double temp[] = new double[2];
+         int i;
+         int info;
+         int ix;
+         int j;
+         int jx;
+         int kx = 1;
+         boolean noconj;
+         boolean nounit;
+         double cr[] = new double[1];
+         double ci[] = new double[1];
+
+         // Test the input parameters
+         info = 0;
+
+         if ( (uplo != 'U') && (uplo != 'u') && (uplo != 'L') && (uplo != 'l')) {
+             info = 1;
+         } else if ( (trans != 'N') && (trans != 'n') && (trans != 'T') && (trans != 't') && (trans != 'C')
+                 && (trans != 'c')) {
+             info = 2;
+         } else if ( (diag != 'U') && (diag != 'u') && (diag != 'N') && (diag != 'n')) {
+             info = 3;
+         } else if (n < 0) {
+             info = 4;
+         } else if (lda < Math.max(1, n)) {
+             info = 6;
+         } else if (incx == 0) {
+             info = 8;
+         }
+
+         if (info != 0) {
+             MipavUtil.displayError("Error ztrsv had info = " + info);
+
+             return;
+         }
+
+         // Quick return if possible
+         if (n == 0) {
+             return;
+         }
+
+         noconj = ((trans == 'T') || (trans == 't'));
+         if ( (diag == 'N') || (diag == 'n')) {
+             nounit = true;
+         } else {
+             nounit = false;
+         }
+
+         // Set up the start point in x if the increment is not unity. This will
+         // be (n-1)*incx too small for descending loops.
+
+         if (incx <= 0) {
+             kx = 1 - ( (n - 1) * incx);
+         } else if (incx != 1) {
+             kx = 1;
+         }
+
+         // Start the operations. In this version the elements of A are accessed
+         // sequentially with one pass through A.
+
+         if ( (trans == 'N') || (trans == 'n')) {
+
+             // Form x = inv(A)*x
+             if ( (uplo == 'U') || (uplo == 'u')) {
+
+                 if (incx == 1) {
+
+                     for (j = n - 1; j >= 0; j--) {
+
+                         if ((x[j][0] != 0.0) || (x[j][1] != 0.0)) {
+
+                             if (nounit) {
+                            	 zdiv(x[j][0], x[j][1], A[j][j][0], A[j][j][1], cr, ci);
+                            	 x[j][0] = cr[0];
+                            	 x[j][1] = ci[0];
+                             }
+
+                             temp[0] = x[j][0];
+                             temp[1] = x[j][1];
+
+                             for (i = j - 1; i >= 0; i--) {
+                            	 zmlt(temp[0], temp[1], A[i][j][0], A[i][j][1], cr, ci);
+                            	 x[i][0] = x[i][0] - cr[0];
+                            	 x[i][1] = x[i][1] - ci[0];
+                             }
+                         } // if ((x[j][0] != 0.0) || (x[j][1] != 0.0))
+                     } // for (j = n-1; j >= 0; j--)
+                 } // if (incx == 1)
+                 else { // incx != 1
+                     jx = kx + ( (n - 1) * incx) - 1;
+
+                     for (j = n - 1; j >= 0; j--) {
+
+                         if ((x[jx][0] != 0.0) || (x[jx][1] != 0)) {
+
+                             if (nounit) {
+                            	 zdiv(x[jx][0], x[jx][1], A[j][j][0], A[j][j][1], cr, ci);
+                            	 x[jx][0] = cr[0];
+                            	 x[jx][1] = ci[0];
+                             }
+
+                             temp[0] = x[jx][0];
+                             temp[1] = x[jx][1];
+                             ix = jx;
+
+                             for (i = j - 1; i >= 0; i--) {
+                                 ix = ix - incx;
+                                 zmlt(temp[0], temp[1], A[i][j][0], A[i][j][1], cr, ci);
+                            	 x[ix][0] = x[ix][0] - cr[0];
+                            	 x[ix][1] = x[ix][1] - ci[0];
+                             }
+                         } // if ((x[jx][0] != 0.0) || (x[jx][1] != 0))
+
+                         jx = jx - incx;
+                     } // for (j = n-1; j >= 0; j--)
+                 } // else incx != 1
+             } // if ((uplo == 'U') || (uplo == 'u'))
+             else { // ((uplo == 'L') || (uplo == 'l'))
+
+                 if (incx == 1) {
+
+                     for (j = 0; j < n; j++) {
+
+                         if ((x[j][0] != 0.0) || (x[j][1] != 0.0)) {
+
+                             if (nounit) {
+                            	 zdiv(x[j][0], x[j][1], A[j][j][0], A[j][j][1], cr, ci);
+                            	 x[j][0] = cr[0];
+                            	 x[j][1] = ci[0];
+                             }
+
+                             temp[0] = x[j][0];
+                             temp[1] = x[j][1];
+
+                             for (i = j + 1; i < n; i++) {
+                            	 zmlt(temp[0], temp[1], A[i][j][0], A[i][j][1], cr, ci);
+                            	 x[i][0] = x[i][0] - cr[0];
+                            	 x[i][1] = x[i][1] - ci[0];
+                             }
+                         } // if ((x[j][0] != 0.0) || (x[j][1] != 0.0))
+                     } // for (j = 0; j < n; j++)
+                 } // if (incx == 1)
+                 else { // incx != 1
+                     jx = kx - 1;
+
+                     for (j = 0; j < n; j++) {
+
+                    	 if ((x[jx][0] != 0.0) || (x[jx][1] != 0)) {
+
+                             if (nounit) {
+                            	 zdiv(x[jx][0], x[jx][1], A[j][j][0], A[j][j][1], cr, ci);
+                            	 x[jx][0] = cr[0];
+                            	 x[jx][1] = ci[0];
+                             }
+
+                             temp[0] = x[jx][0];
+                             temp[1] = x[jx][1];
+                             ix = jx;
+
+                             for (i = j + 1; i < n; i++) {
+                                 ix = ix + incx;
+                                 zmlt(temp[0], temp[1], A[i][j][0], A[i][j][1], cr, ci);
+                            	 x[ix][0] = x[ix][0] - cr[0];
+                            	 x[ix][1] = x[ix][1] - ci[0];
+                             } // for (i = j+1; i < n; i++)
+                         } // if ((x[jx][0] != 0.0) || (x[jx][1] != 0))
+
+                         jx = jx + incx;
+                     } // for (j = 0; j < n; j++)
+                 } // else incx != 1
+             } // else ((uplo == 'L') || (uplo == 'l'))
+         } // if ((trans == 'N') || (trans == 'n'))
+         else { // ((trans != 'N') && (trans != 'n'))
+
+             // Form x = inv(A**T)*x or x = inv(A**H)*x.
+             if ( (uplo == 'U') || (uplo == 'u')) {
+
+                 if (incx == 1) {
+
+                     for (j = 0; j < n; j++) {
+                         temp[0] = x[j][0];
+                         temp[1] = x[j][1];
+
+                         if (noconj) {
+	                         for (i = 0; i <= (j - 1); i++) {
+	                        	 zmlt(A[i][j][0], A[i][j][1], x[i][0], x[i][1], cr, ci);
+	                        	 temp[0] = temp[0] - cr[0];
+	                        	 temp[1] = temp[1] - ci[0];
+	                         }
+	
+	                         if (nounit) {
+	                        	 zdiv(temp[0], temp[1], A[j][j][0], A[j][j][1], cr, ci);
+	                        	 temp[0] = cr[0];
+	                        	 temp[1] = ci[0];
+	                         }
+                         } // if (noconj)
+                         else {
+                        	 for (i = 0; i <= (j - 1); i++) {
+	                        	 zmlt(A[i][j][0], -A[i][j][1], x[i][0], x[i][1], cr, ci);
+	                        	 temp[0] = temp[0] - cr[0];
+	                        	 temp[1] = temp[1] - ci[0];
+	                         }
+	
+	                         if (nounit) {
+	                        	 zdiv(temp[0], temp[1], A[j][j][0], -A[j][j][1], cr, ci);
+	                        	 temp[0] = cr[0];
+	                        	 temp[1] = ci[0];
+	                         }	 
+                         } // else
+
+                         x[j][0] = temp[0];
+                         x[j][1] = temp[1];
+                     } // for (j = 0; j < n; j++)
+                 } // if (incx == 1)
+                 else { // incx != 1
+                     jx = kx - 1;
+
+                     for (j = 0; j < n; j++) {
+                         temp[0] = x[jx][0];
+                         temp[1] = x[jx][1];
+                         ix = kx - 1;
+
+                         if (noconj) {
+	                         for (i = 0; i <= (j - 1); i++) {
+	                        	 zmlt(A[i][j][0], A[i][j][1], x[ix][0], x[ix][1], cr, ci);
+	                        	 temp[0] = temp[0] - cr[0];
+	                        	 temp[1] = temp[1] - ci[0];
+	                             ix = ix + incx;
+	                         } // for (i = 0; i <= j-1; i++)
+	
+	                         if (nounit) {
+	                        	 zdiv(temp[0], temp[1], A[j][j][0], A[j][j][1], cr, ci);
+	                        	 temp[0] = cr[0];
+	                        	 temp[1] = ci[0];
+	                         }
+                         } // if (noconj)
+                         else {
+                        	 for (i = 0; i <= (j - 1); i++) {
+	                        	 zmlt(A[i][j][0], -A[i][j][1], x[ix][0], x[ix][1], cr, ci);
+	                        	 temp[0] = temp[0] - cr[0];
+	                        	 temp[1] = temp[1] - ci[0];
+	                             ix = ix + incx;
+	                         } // for (i = 0; i <= j-1; i++)
+	
+	                         if (nounit) {
+	                        	 zdiv(temp[0], temp[1], A[j][j][0], -A[j][j][1], cr, ci);
+	                        	 temp[0] = cr[0];
+	                        	 temp[1] = ci[0];
+	                         }	 
+                         } // else
+
+                         x[jx][0] = temp[0];
+                         x[jx][1] = temp[1];
+                         jx = jx + incx;
+                     } // for (j = 0; j < n; j++)
+                 } // else incx != 1
+             } // if ((uplo == 'U') || (uplo == 'u'))
+             else { // ((uplo == 'L') || (uplo == 'l'))
+
+                 if (incx == 1) {
+
+                     for (j = n - 1; j >= 0; j--) {
+                         temp[0] = x[j][0];
+                         temp[1] = x[j][1];
+
+                         if (noconj) {
+	                         for (i = n - 1; i >= (j + 1); i--) {
+	                        	 zmlt(A[i][j][0], A[i][j][1], x[i][0], x[i][1], cr, ci);
+	                        	 temp[0] = temp[0] - cr[0];
+	                        	 temp[1] = temp[1] - ci[0];
+	                         }
+	
+	                         if (nounit) {
+	                        	 zdiv(temp[0], temp[1], A[j][j][0], A[j][j][1], cr, ci);
+	                        	 temp[0] = cr[0];
+	                        	 temp[1] = ci[0];
+	                         }
+                         } // if (nocon)
+                         else {
+                        	 for (i = n - 1; i >= (j + 1); i--) {
+	                        	 zmlt(A[i][j][0], -A[i][j][1], x[i][0], x[i][1], cr, ci);
+	                        	 temp[0] = temp[0] - cr[0];
+	                        	 temp[1] = temp[1] - ci[0];
+	                         }
+	
+	                         if (nounit) {
+	                        	 zdiv(temp[0], temp[1], A[j][j][0], -A[j][j][1], cr, ci);
+	                        	 temp[0] = cr[0];
+	                        	 temp[1] = ci[0];
+	                         }	 
+                         } // else
+
+                         x[j][0] = temp[0];
+                         x[j][1] = temp[1];
+                     } // for (j = n-1; j >= 0; j--)
+                 } // if (incx == 1)
+                 else { // incx != 1
+                     kx = kx + ( (n - 1) * incx);
+                     jx = kx - 1;
+
+                     for (j = n - 1; j >= 0; j--) {
+                         temp[0] = x[jx][0];
+                         temp[1] = x[jx][1];
+                         ix = kx - 1;
+
+                         if (noconj) {
+	                         for (i = n - 1; i >= (j + 1); i--) {
+	                        	 zmlt(A[i][j][0], A[i][j][1], x[ix][0], x[ix][1], cr, ci);
+	                        	 temp[0] = temp[0] - cr[0];
+	                        	 temp[1] = temp[1] - ci[0];
+	                             ix = ix - incx;
+	                         } // for (i = n-1; i >= j+1; i--)
+	
+	                         if (nounit) {
+	                        	 zdiv(temp[0], temp[1], A[j][j][0], A[j][j][1], cr, ci);
+	                        	 temp[0] = cr[0];
+	                        	 temp[1] = ci[0];
+	                         }
+                         } // if (noconj)
+                         else {
+                        	 for (i = n - 1; i >= (j + 1); i--) {
+	                        	 zmlt(A[i][j][0], -A[i][j][1], x[ix][0], x[ix][1], cr, ci);
+	                        	 temp[0] = temp[0] - cr[0];
+	                        	 temp[1] = temp[1] - ci[0];
+	                             ix = ix - incx;
+	                         } // for (i = n-1; i >= j+1; i--)
+	
+	                         if (nounit) {
+	                        	 zdiv(temp[0], temp[1], A[j][j][0], -A[j][j][1], cr, ci);
+	                        	 temp[0] = cr[0];
+	                        	 temp[1] = ci[0];
+	                         }	 
+                         } // else
+
+                         x[jx][0] = temp[0];
+                         x[jx][1] = temp[1];
+                         jx = jx - incx;
+                     } // for (j = n-1; j >= 0; j--)
+                 } // else incx != 1
+             } // else ((uplo == 'L') || (uplo == 'l'))
+         } // else ((trans != 'N') && (trans != 'n'))
+
+         return;
+     } // ztrsv
      
      /**
       * This is a port of LAPACK version auxiliary routine 3.7.0 December, 2016 ZDRSCL.  LAPACK is a software package
