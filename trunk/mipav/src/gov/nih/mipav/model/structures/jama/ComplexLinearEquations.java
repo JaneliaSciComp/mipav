@@ -10544,9 +10544,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
             double xk;
             double work2[][];
             double vec[][];
-            double work3[];
             double arr[][][];
-            double zdum[] = new double[2];
             double alpha[] = new double[2];
             double beta[] = new double[2];
             double vfer[] = new double[1];
@@ -10608,7 +10606,6 @@ public class ComplexLinearEquations implements java.io.Serializable {
             safe1 = nz*safmin;
             safe2 = safe1 / eps;
             work2 = new double[n][2];
-            work3 = new double[n];
             arr = new double[n][1][2];
         
             // Do for each right hand side
@@ -10759,7 +10756,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                 work[i][0] = arr[i][0][0];
                                 work[i][1] = arr[i][0][1];
                                 work[i][0] = rwork[i]*work[i][0];
-                                work[i][0] = rwork[i]*work[i][1];
+                                work[i][1] = rwork[i]*work[i][1];
                             }
                         } // if (kase[0] == 1)
                         else {
