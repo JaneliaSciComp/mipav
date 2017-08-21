@@ -52,6 +52,120 @@ public class ComplexLinearEquations implements java.io.Serializable {
     public ComplexLinearEquations() {}
     
     /*
+     * This is a port of a portion of LAPACK test routine ZCHKAA.f version 3.7.0 and data file dtest.in.
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., April, 2012
+     * 
+     * zchkaa is the main test program for the complex LAPACK linear equation routines
+     */
+    public void zchkaa() {
+        // nmax is the maximum allowable value for m and n.
+        final int nmax = 132;
+        final int maxrhs = 16;
+        // nm is the number of values of m.
+        int nm = 7;
+        // mval is the values of m (row dimension)
+        int mval[] = new int[]{0, 1, 2, 3, 5, 10, 16};
+        // nn is the number of values of n
+        int nn = 7;
+        // nval is the values of n (column dimension)
+        int nval[] = new int[]{0, 1, 2, 3, 5, 10, 16};
+        //  nns is the number of values of nrhs
+        int nns = 3;
+        // nsval is the values of nrhs (number of right hand sides)
+        int nsval[] = new int[]{1, 2, 15};
+        // nnb is the number of values of nb
+        int nnb = 5;
+        // nbval is the values of nb (the blocksize)
+        int nbval[] = new int[]{1, 3, 3, 3, 20};
+        // nxval is the values of nx (crossover points)
+        // int nxval[] = new int[]{1, 0, 5, 9 , 1};
+        // nrank is the number of values of rank
+        // int nrank = 3;
+        // rankval is the values of rank (as a % of n)
+        // int rankval[] = new int[]{30, 50, 90};
+        // thresh if the threshold value of the test ratio
+        double thresh = 30.0;
+        // tstchk is the flag to test the LAPACK routines
+        boolean tstchk = true;
+        // tstdrv is the flag to test the driver routines
+        boolean tstdrv = true;
+        
+        // Number of unique values of nb
+        int nnb2;
+        // nbval2 is the set of unique values of nb
+        int nbval2[] = new int[nbval.length];
+
+        int lda;
+        int i;
+        int j;
+        int nrhs;
+        int nb;
+        double eps;
+        int ntypes = 11;
+        boolean dotype[] = new boolean[ntypes];
+        double A[][][] = new double[nmax][nmax][2];
+        double AFAC[][][] = new double[nmax][nmax][2];
+        double AINV[][][] = new double[nmax][nmax][2];
+        double ASAV[][] = new double[nmax][nmax];
+        double s[] = new double[nmax];
+        // nsmax is the largest entry in nsval
+        int nsmax;
+        nsmax = nsval[0];
+        for (i = 1; i < nsval.length; i++) {
+            if (nsval[i] > nsmax) {
+                nsmax = nsval[i];  
+            }
+        }
+        double B[][][] = new double[nmax][maxrhs][2];
+        double BSAV[][] = new double[nmax][maxrhs];
+        double X[][][] = new double[nmax][maxrhs][2];
+        double XACT[][][] = new double[nmax][maxrhs][2];
+        double WORK[][][] = new double[nmax][maxrhs][2];
+        double rwork[] = new double[nmax + 2*maxrhs];
+        int iwork[] = new int[nmax];
+        
+        lda = nmax;
+        
+        // Set nbval2 to be the set of unique values of nb
+        nnb2 = 0;
+        loop:
+        for (i = 0; i < nnb; i++) {
+            nb = nbval[i];
+            for (j = 0; j < nnb2; j++) {
+                if (nb == nbval2[j]) {
+                    continue loop;
+                }
+            } // for (j = 0; j < nnb2; j++)
+            nbval2[nnb2++] = nb;
+        } // for (i = 0; i < nnb; i++)
+
+        for (i = 0; i < ntypes; i++) {
+            dotype[i] = true;
+        }
+        // Calculate and print the machine dependent constants.
+        eps = ge.dlamch('U'); // Underflow threshold
+        Preferences.debug("Relative machine underflow is taken to be " + eps + "\n", Preferences.DEBUG_ALGORITHM);
+        eps = ge.dlamch('O'); // Overflow threshold
+        Preferences.debug("Relative machine overflow is taken to be " + eps + "\n", Preferences.DEBUG_ALGORITHM);
+        eps = ge.dlamch('E'); // Epsilon
+        Preferences.debug("Relative machine precision is taken to be " + eps + "\n", Preferences.DEBUG_ALGORITHM);
+        
+        if (tstchk) {
+            zchkge(dotype, nm, mval, nn, nval, nnb, nbval, nns,
+                   nsval, thresh, nmax, A, AFAC, AINV, B,
+                   X, XACT, WORK, rwork, iwork);
+        }
+        //if (tstdrv) {
+            //for (i = 0; i < nns; i++) {
+                //nrhs = nsval[i];
+                //zdrvge(dotype, nn, nval, nrhs, thresh, lda, A, AFAC, ASAV, B , BSAV, X, XACT, s,
+                      // WORK, rwork, iwork);
+            //}
+       //}
+    } // zchkaa
+    
+    /*
      * This is a port of a portion of LAPACK test routine ZCHKGE.f version 3.7.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., December, 2016
@@ -579,7 +693,6 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                 norm = 'I';
                             }
                             workspace = new double[2*n][2];
-                            rwork = new double[2*n];
                             zgecon(norm, n, AFAC, lda, anorm[0], rcond,
                                    workspace, rwork, info);
     
@@ -1251,7 +1364,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
         double[] dummy = new double[2];
         double[] extra = new double[2];
         double[] s = new double[2];
-        double[] temp = new double[1];
+        double[] temp = new double[2];
         int length;
         double[][] ap;
         int index;
@@ -4400,7 +4513,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
    
                              // Compute x(j) := ( x(j) - csumj ) / A(j,j) if 1/A(j,j)
                              // was not used to scale the dotproduct.
-   
+                    
                              x[j-1][0] = x[j-1][0] - csumj[0];
                              x[j-1][1] = x[j-1][1] - csumj[1];
                              xj = Math.abs(x[j-1][0]) + Math.abs(x[j-1][1]);
@@ -8388,7 +8501,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
          double ci[] = new double[1];
          
          if (n <= 0) {
-        	 return null;
+        	 return ztemp;
          }
          
          if ((incx == 1) && (incy == 1)) {
@@ -9273,7 +9386,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
         int i;
         
         if (n <= 0) {
-        	return null;
+        	return ztemp;
         }
         
         if ((incx == 1) && (incy == 1)) {
@@ -10783,12 +10896,12 @@ public class ComplexLinearEquations implements java.io.Serializable {
     
             // Solve U**T *X = B or U**H *X = B, overwriting B with X.
     
-            ztrsm('L', 'U', 'T', 'N', n, nrhs,
+            ztrsm('L', 'U', trans, 'N', n, nrhs,
                      alpha, A, lda, B, ldb);
     
             // Solve L**T *X = B or L**H *X = B, overwriting B with X.
     
-            ztrsm('L', 'L', 'T', 'U', n, nrhs, alpha,
+            ztrsm('L', 'L', trans, 'U', n, nrhs, alpha,
                      A, lda, B, ldb);
     
             // Apply row interchanges to the solution vectors.
@@ -11119,7 +11232,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
         if (m == 1) {
         	// Use unblocked code for one row case
         	// Just need to handel ipiv and info
-        	ipiv[0] = 0;
+        	ipiv[0] = 1;
         	if ((A[0][0][0] == 0.0) && (A[0][0][1] == 0.0)) {
         		info[0] = 1;
         	}
@@ -11140,7 +11253,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
                 	i = j;
                 }
         	} // for (j = 0; j < m; j++)
-        	ipiv[0] = i;
+        	ipiv[0] = i+1;
         	if ((A[i][0][0] != 0.0) || (A[i][0][1] != 0.0)) {
         	    // Apply the interchange
         		if (i != 0) {
