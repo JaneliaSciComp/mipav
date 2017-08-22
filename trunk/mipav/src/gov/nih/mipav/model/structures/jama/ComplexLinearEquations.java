@@ -1279,7 +1279,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
     
                             if (info[0] != izero) {
                                 // Print the header if this is the first error message.
-                                if (nfail == 0 && nerrs == 0) {
+                                if (nfail == 0 && nerrs == 0 && (info[0] != n+1)) {
                                     printsvHeader();
                                 } // if (nfail == 0 && nerrs == 0)
                                 //info[0] from zgesvx = n+1: U is nonsingular, but rcond[0] is less than machine
@@ -1295,6 +1295,12 @@ public class ComplexLinearEquations implements java.io.Serializable {
                                 if (izero != 0) {
                                     Preferences.debug("zgesvx returned with info[0] = " + info[0] + 
                                             " instead of " + izero + '\n', Preferences.DEBUG_ALGORITHM);
+                                }
+                                else if (info[0] == n+1) {
+                                	Preferences.debug("zgesvx returned with info[0] = " + info[0] + 
+                                			"  for matrix singular to working precision, but solution computed\n",
+                                			Preferences.DEBUG_ALGORITHM);
+                                	
                                 }
                                 else {
                                     Preferences.debug("zgesvx returned with info[0] = " + info[0] + '\n', 
