@@ -107,7 +107,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
         double A[][][] = new double[nmax][nmax][2];
         double AFAC[][][] = new double[nmax][nmax][2];
         double AINV[][][] = new double[nmax][nmax][2];
-        double ASAV[][] = new double[nmax][nmax];
+        double ASAV[][][] = new double[nmax][nmax][2];
         double s[] = new double[nmax];
         // nsmax is the largest entry in nsval
         int nsmax;
@@ -118,7 +118,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
             }
         }
         double B[][][] = new double[nmax][maxrhs][2];
-        double BSAV[][] = new double[nmax][maxrhs];
+        double BSAV[][][] = new double[nmax][maxrhs][2];
         double X[][][] = new double[nmax][maxrhs][2];
         double XACT[][][] = new double[nmax][maxrhs][2];
         double WORK[][][] = new double[nmax][maxrhs][2];
@@ -156,13 +156,13 @@ public class ComplexLinearEquations implements java.io.Serializable {
                    nsval, thresh, nmax, A, AFAC, AINV, B,
                    X, XACT, WORK, rwork, iwork);
         }
-        //if (tstdrv) {
-            //for (i = 0; i < nns; i++) {
-                //nrhs = nsval[i];
-                //zdrvge(dotype, nn, nval, nrhs, thresh, lda, A, AFAC, ASAV, B , BSAV, X, XACT, s,
-                      // WORK, rwork, iwork);
-            //}
-       //}
+        if (tstdrv) {
+            for (i = 0; i < nns; i++) {
+                nrhs = nsval[i];
+                zdrvge(dotype, nn, nval, nrhs, thresh, lda, A, AFAC, ASAV, B , BSAV, X, XACT, s,
+                       WORK, rwork, iwork);
+            }
+       }
     } // zchkaa
     
     /*
@@ -750,7 +750,7 @@ public class ComplexLinearEquations implements java.io.Serializable {
     } // zchkge 
     
     private void printHeader() {
-        Preferences.debug("DGE General dense matrices\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("ZGE General dense matrices\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
         // GE matrix types
         Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
@@ -775,6 +775,760 @@ public class ComplexLinearEquations implements java.io.Serializable {
         Preferences.debug("8. rcond * condum[0] - 1.0\n", Preferences.DEBUG_ALGORITHM);
         return;
     } // printHeader
+    
+    /*
+     * This is a port of a portion of LAPACK test routine ZDRVGE.f version 3.7.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., December, 2016
+     * 
+     * zdrvge tests the driver routines zgesv and zgesvx
+     * 
+     * @param input boolean dotype of dimension (ntypes)
+     *     The matrix types to be used for testing.  Matrices of type j
+           (for 1 <= j <= ntypes) are used for testing if dotype[j] =
+           true; if dotype[j] = false, then type j is not used.
+       @param input int nn
+           The number of values of n contained in the vector nval.
+       @param input int[] nval of dimension (nn)
+           The values of the matrix column dimension n.
+       @param input int nrhs
+           The number of right hand side vectors to be generated for
+           each linear system.
+       @param input double thresh
+           The threshold value for the test ratios.  A result is
+           included in the output file if result >= thresh.  To have
+           every test ratio printed, use thresh = 0.
+       @param input int nmax
+           The maximum value permitted for n, used in dimensioning
+           the work arrays.
+       @param output double[][][2] complex A of dimension (nmax, nmax)
+       @param output double[][][2] complex AFAC of dimension (nmax, nmax)
+       @param output double[][][2] complex ASAV of dimension (nmax, nmax)
+       @param output double[][][2] complex B of dimension (nmax, nrhs)
+       @param output double[][][2] complex BSAV of dimension (nmax, nrhs)
+       @param output double[][][2] complex X of dimension (nmax, nrhs)
+       @param output double[][][2] complex XACT of dimension (nmax, nrhs)
+       @param output double[] s of dimension (2*nmax)
+       @param output double[][][2] complex WORK of dimension (nmax, max(3, nrhs))
+       @param output double[] rwork of dimension (2*nrhs+nmax)
+       @param output int[] iwork of dimension (nmax)
+     */
+    private void zdrvge(boolean[] dotype, int nn, int[] nval, int nrhs, double thresh, int nmax,
+                        double[][][] A, double[][][] AFAC, double[][][] ASAV, double[][][] B, double[][][] BSAV,
+                        double[][][] X, double[][][] XACT, double[] s, double[][][] WORK, double[] rwork,
+                        int[] iwork) {
+        final int ntypes = 11;
+        final int ntests = 7;
+        final int ntran = 3;
+        
+        boolean equil;
+        boolean nofact;
+        boolean prefac;
+        boolean trfcon;
+        boolean zerot;
+        char dist[] = new char[1];
+        char equed[] = new char[1];
+        char fact;
+        char trans;
+        char equeds[] = new char[]{'N', 'R', 'C', 'B'};
+        char facts[] = new char[]{'F', 'N', 'E'};
+        char transs[] = new char[]{'N', 'T', 'C'};
+        char type[] = new char[1];
+        char xtype;
+        String path;
+        int i;
+        int j;
+        int iequed;
+        int ifact;
+        int imat;
+        int in;
+        int info[] = new int[1];
+        int ioff;
+        int itran;
+        int izero;
+        int k;
+        int k1;
+        int kL[] = new int[1];
+        int ku[] = new int[1];
+        int lda;
+        int lwork;
+        int mode[] = new int[1];
+        int n;
+        int nb;
+        int nbmin;
+        int nerrs;
+        int nfact;
+        int nfail;
+        int nimat;
+        int nrun;
+        int nt;
+        int iseed[] = new int[4];
+        int iseedy[] = new int[]{1988, 1989, 1990, 1991};
+        int itot;
+        int irow;
+        int icol;
+        int iwork2[];
+        double ainvnm;
+        double amax[] = new double[1];
+        double anorm[] = new double[1];
+        double anormi;
+        double anormo;
+        double cndnum[] = new double[1];
+        double colcnd[] = new double[1];
+        double rcond[] = new double[1];
+        double rcondc;
+        double rcondi = 0.0;
+        double rcondo = 0.0;
+        double roldc;
+        double roldi = 0.0;
+        double roldo = 0.0;
+        double rowcnd[] = new double[1];
+        double rpvgrw;
+        double result[] = new double[ntests];
+        double arr[][][];
+        double workspace[][];
+        double[] s2;
+        double[][] vec;
+        double res[] = new double[2];
+        double rwork2[] = new double[nrhs];
+        double rwork3[] = new double[nrhs];
+        double alpha[] = new double[2];
+        double beta[] = new double[2];
+        double rdum[] = new double[1];
+        
+        // Initialize constants and the random number seed.
+        
+        path = new String("ZGE");
+        nrun = 0;
+        nfail = 0;
+        nerrs = 0;
+        for (i = 0; i < 4; i++) {
+            iseed[i] = iseedy[i];
+        }
+    
+        // Set the block size and minimum block size for testing.
+    
+        nb = 1;
+        nbmin = 2;
+        iparms = new int[2];
+        xlaenv(1, nb);
+        xlaenv(2, nbmin);
+    
+        // Do for each value of n in nval
+    
+        for (in = 1; in <= nn; in++) {
+            n = nval[in-1];
+            s2 = new double[n];
+            iwork2 = new int[n];
+            lda = Math.max(n, 1);
+            xtype = 'N';
+            nimat = ntypes;
+            if (n <= 0) {
+                nimat = 1;
+            }
+    
+            for (imat = 1; imat <= nimat; imat++) {
+    
+                // Do the tests only if dotype[imat-1] is true.
+    
+                if (!dotype[imat-1]) {
+                    continue;
+                }
+    
+                // Skip types 5, 6, or 7 if the matrix size is too small.
+    
+                zerot = imat >= 5 && imat <= 7;
+                if (zerot && n < imat-4) {
+                    continue;
+                }
+    
+                // Set up parameters with zlatb4 and generate a test matrix
+                // with zlatms.
+    
+                zlatb4(path, imat, n, n, type, kL, ku, anorm, mode,
+                        cndnum, dist);
+                rcondc = 1.0/cndnum[0];
+
+                workspace = new double[3*n][2];
+                zlatms(n, n, dist[0], iseed, type[0], rwork, mode[0],
+                          cndnum[0], anorm[0], kL[0], ku[0], 'N', A, lda,
+                          workspace, info);
+               
+    
+                // Check error code from zlatms.
+    
+                if (info[0] != 0) {
+                    // Print the header if this is the first error message.
+                    if (nfail == 0 && nerrs == 0) {
+                        printsvHeader();
+                    } // if (nfail == 0 && nerrs == 0)
+                    nerrs++;
+                    Preferences.debug("Error from zlatms info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("kL[0] = " + kL[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ku[0] = " + ku[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                    continue;
+                } // if (info[0] != 0)
+                
+                // For types 5-7, zero one or more columns of the matrix to
+                // test that info[0] is returned correctly.
+ 
+                if (zerot) {
+                    if (imat == 5) {
+                        izero = 1;
+                    }
+                    else if (imat == 6) {
+                        izero = n;
+                    }
+                    else {
+                        izero = n / 2 + 1;
+                    }
+                    ioff = (izero-1)*lda;
+                    if (imat < 7) {
+                        for (i = 1; i <= n; i++) {
+                            itot = ioff + i - 1;
+                            irow = itot % lda;
+                            icol = itot / lda;
+                            A[irow][icol][0] = 0.0;
+                            A[irow][icol][1] = 0.0;
+                        } // for (i = 1; i <= n; i++)
+                    } // if (imat < 7)
+                    else {
+                        irow = ioff % lda;
+                        icol = ioff / lda;
+                        arr = new double[n][n-izero+1][2];
+                        for (i = 0; i < n; i++) {
+                            for (j = 0; j < n-izero+1; j++) {
+                                arr[i][j][0] = A[irow+i][icol+j][0];
+                                arr[i][j][1] = A[irow+i][icol+j][1];
+                            }
+                        }
+                        alpha[0] = 0.0;
+                        alpha[1] = 0.0;
+                        beta[0] = 0.0;
+                        beta[1] = 0.0;
+                        zlaset('F', n, n-izero+1, alpha, alpha, arr, lda);
+                        for (i = 0; i < n; i++) {
+                          for (j = 0; j < n-izero+1; j++) {
+                              A[irow+i][icol+j][0] = arr[i][j][0];
+                              A[irow+i][icol+j][1] = arr[i][j][1];
+                          }
+                        }
+                    } // else
+                } // if (zerot)
+                else {
+                    izero = 0;
+                }
+    
+                // Save a copy of the matrix A in ASAV.
+    
+                zlacpy('F', n, n, A, lda, ASAV, lda);
+    
+                for (iequed = 1; iequed <= 4; iequed++) {
+                    equed[0] = equeds[iequed-1];
+                    if (iequed == 1) {
+                        nfact = 3;
+                    }
+                    else {
+                        nfact = 1;
+                    }
+    
+                    for (ifact = 1; ifact <= nfact; ifact++) {
+                        fact = facts[ifact-1];
+                        prefac = fact == 'F';
+                        nofact = fact == 'N';
+                        equil = fact == 'E';
+    
+                        if (zerot) {
+                            if (prefac) {
+                                continue;
+                            }
+                            rcondo = 0.0;
+                            rcondi = 0.0;
+                        } // if (zerot)
+                        else if (!nofact) {
+    
+                            // Compute the condition number for comparison with
+                            // the value returned by zgesvx (fact = 'N' reuses
+                            // the condition number from the previous iteration
+                            // with fact = 'F').
+    
+                            zlacpy('F', n, n, ASAV, lda, AFAC, lda);
+                            if (equil || iequed > 1) {
+    
+                                // Compute row and column scale factors to
+                                // equilibrate the matrix A.
+    
+                                zgeequ(n, n, AFAC, lda, s, s2, rowcnd, colcnd, amax, info);
+                                if (info[0] == 0 && n > 0) {
+                                    if (equed[0] == 'R') {
+                                        rowcnd[0] = 0.0;
+                                        colcnd[0] = 1.0;
+                                    }
+                                    else if (equed[0] == 'C') {
+                                        rowcnd[0] = 1.0;
+                                        colcnd[0] = 0.0;
+                                    }
+                                    else if (equed[0] == 'B') {
+                                        rowcnd[0] = 0.0;
+                                        colcnd[0] = 0.0;
+                                    }
+    
+                                    // Equilibrate the matrix.
+    
+                                    zlaqge(n, n, AFAC, lda, s, s2,
+                                           rowcnd[0], colcnd[0], amax[0], equed);
+                                } // if (info[0] == 0 && n > 0)
+                            } // if (equil || iequed > 1)
+    
+                            // Save the condition number of the non-equilibrated
+                            // system for use in zget04.
+    
+                            if (equil) {
+                                roldo = rcondo;
+                                roldi = rcondi;
+                            }
+    
+                            // Compute the 1-norm and infinity-norm of A.
+    
+                            anormo = zlange('1', n, n, AFAC, lda, rwork);
+                            anormi = zlange('I', n, n, AFAC, lda, rwork);
+    
+                            // Factor the matrix A.
+    
+                            zgetrf(n, n, AFAC, lda, iwork, info);
+    
+                            // Form the inverse of A.
+    
+                            zlacpy('F', n, n, AFAC, lda, A, lda);
+                            lwork = nmax*Math.max(3, nrhs);
+                            workspace = new double[lwork][2];
+                            zgetri(n, A, lda, iwork, workspace, lwork, info);
+    
+                            // Compute the 1-norm condition number of A.
+    
+                            ainvnm = zlange('1', n, n, A, lda, rwork);
+                            if (anormo <= 0.0 || ainvnm <= 0.0) {
+                                rcondo = 1.0;
+                            }
+                            else {
+                                rcondo = ( 1.0 / anormo ) / ainvnm;
+                            }
+    
+                            // Compute the infinity-norm condition number of A.
+    
+                            ainvnm = zlange('I', n, n, A, lda, rwork);
+                            if (anormi <= 0.0 || ainvnm <= 0.0) {
+                                rcondi = 1.0;
+                            }
+                            else {
+                                rcondi = ( 1.0 / anormi ) / ainvnm;
+                            }
+                        } // else if (!nofact)
+    
+                        for (itran = 1; itran <= ntran; itran++) {
+    
+                            // Do for each value of trans.
+    
+                            trans = transs[itran-1];
+                            if (itran == 1) {
+                                rcondc = rcondo;
+                            }
+                            else {
+                                rcondc = rcondi;
+                            }
+    
+                            // Restore the matrix A.
+    
+                            zlacpy('F', n, n, ASAV, lda, A, lda);
+    
+                            // Form an exact solution and set the right hand side.
+    
+                            if (!(xtype == 'C')) {
+                                // Initialize XACT to nrhs random vectors
+                                vec = new double[n][2];
+                                for (j = 0; j < nrhs; j++) {
+                                    zlarnv(2, iseed, n, vec);
+                                    for (i = 0; i < n; i++) {
+                                        XACT[i][j][0] = vec[i][0];
+                                        XACT[i][j][1] = vec[i][1];
+                                    }
+                                }
+                            }
+                            
+                            // Multiply XACT by op( A ) using an appropriate
+                            // matrix multiply routine.
+                                
+                            alpha[0] = 1.0;
+                            alpha[1] = 0.0;
+                            beta[0] = 0.0;
+                            beta[1] = 0.0;
+                            zgemm(trans, 'N', n, nrhs, n, alpha, A, lda, XACT, lda, beta, B, lda);
+                            
+                            xtype = 'C';
+                            zlacpy('F', n, nrhs, B, lda, BSAV, lda);
+    
+                            if (nofact && itran == 1) {
+    
+                                // --- Test zGESV  ---
+    
+                                // Compute the LU factorization of the matrix and
+                                // solve the system.
+    
+                                zlacpy('F', n, n, A, lda, AFAC, lda);
+                                zlacpy('F', n, nrhs, B, lda, X, lda);
+    
+                                zgesv(n, nrhs, AFAC, lda, iwork, X, lda, info);
+    
+                                // Check error code from zgesv .
+    
+                                if (info[0] != izero) {
+                                    if (nfail == 0 && nerrs == 0) {
+                                        printsvHeader();
+                                    } // if (nfail == 0 && nerrs == 0)
+                                    nerrs++;   
+                                    if (izero != 0) {
+                                        Preferences.debug("zgesv returned with info[0] = " + info[0] + 
+                                        " instead of " + izero + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                    }
+                                    else {
+                                        Preferences.debug("zgesv returned with info[0] = " + info[0] + "\n", 
+                                                Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);    
+                                    }                
+                                } // if (info[0] != izero)
+    
+                                // Reconstruct matrix from factors and compute residual.
+    
+                                zget01(n, n, A, lda, AFAC, lda, iwork, rwork, result);
+                                nt = 1;
+                                if (izero == 0) {
+    
+                                    // Compute residual of the computed solution.
+     
+                                    zlacpy('F', n, nrhs, B, lda, WORK, lda);
+                                    zget02('N', n, n, nrhs, A, lda, X, lda, 
+                                              WORK, lda, rwork, res);
+                                    result[1] = res[0];
+    
+                                    // Check solution from generated exact solution.
+    
+                                    zget04(n, nrhs, X, lda, XACT, lda,
+                                              rcondc, res);
+                                    result[2] = res[0];
+                                    nt = 3;
+                                } // if (izero == 0)
+    
+                                // Print information about the tests that did not
+                                // pass the threshold.
+     
+                                for (k = 0; k < nt; k++) {
+                                    if (result[k] >= thresh) {
+                                        if (nfail == 0 && nerrs == 0) {
+                                            printsvHeader();
+                                        }
+                                        Preferences.debug("zgesv n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(" + (k+1) + ") = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        nfail++;
+                                    } // if (result[k] >= thresh)
+                                } // for (k = 0; k < nt; k++)
+                                nrun = nrun + nt;
+                            } // if (nofact && itran == 1)
+    
+                            // --- Test ZGESVX ---
+    
+                            if (!prefac) {
+                            	alpha[0] = 0.0;
+                            	alpha[1] = 0.0;
+                            	beta[0] = 0.0;
+                            	beta[1] = 0.0;
+                                zlaset('F', n, n, alpha, beta, AFAC, lda);
+                            } // if (!prefac)
+                            alpha[0] = 0.0;
+                        	alpha[1] = 0.0;
+                        	beta[0] = 0.0;
+                        	beta[1] = 0.0;
+                            zlaset('F', n, nrhs, alpha, beta, X, lda);
+                            if (iequed > 1 && n > 0) {
+    
+                                // Equilibrate the matrix if fact = 'F' and
+                                // equed[0] = 'R', 'C', or 'B'.
+    
+                                zlaqge(n, n, A, lda, s, s2, rowcnd[0],
+                                       colcnd[0], amax[0], equed);
+                            } // if (iequed > 1 && n > 0)
+    
+                            // Solve the system and compute the condition number
+                            // and error bounds using zgesvx.
+    
+                            workspace = new double[Math.max(4*n,1)][2];
+                            rwork3 = new double[2*Math.max(n, nrhs)];
+                            zgesvx(fact, trans, n, nrhs, A, lda, AFAC,
+                                   lda, iwork, equed, s, s2, B,
+                                   lda, X, lda, rcond, rwork,
+                                   rwork2, workspace, rwork3, info);
+    
+                            // Check the error code from zgesvx.
+    
+                            if (info[0] != izero) {
+                                // Print the header if this is the first error message.
+                                if (nfail == 0 && nerrs == 0) {
+                                    printsvHeader();
+                                } // if (nfail == 0 && nerrs == 0)
+                                //info[0] from zgesvx = n+1: U is nonsingular, but rcond[0] is less than machine
+                                        //precision, meaning that the matrix is singular
+                                        //to working precision.  Nevertheless, the
+                                        //solution and error bounds are computed because
+                                        //there are a number of situations where the
+                                        //computed solution can be more accurate than the
+                                        //value of rcond[0] would suggest.
+                                if (info[0] != n+1) {
+                                    nerrs++;
+                                }
+                                if (izero != 0) {
+                                    Preferences.debug("zgesvx returned with info[0] = " + info[0] + 
+                                            " instead of " + izero + '\n', Preferences.DEBUG_ALGORITHM);
+                                }
+                                else {
+                                    Preferences.debug("zgesvx returned with info[0] = " + info[0] + '\n', 
+                                            Preferences.DEBUG_ALGORITHM);  
+                                }
+                                Preferences.debug("fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                            } // if (info[0] != izero)
+    
+                            // Compare rwork3[0] from zgesvx with the computed
+                            // reciprocal pivot growth factor rpvgrw
+    
+                            if (info[0] != 0 && info[0] <= n) {
+                                rpvgrw = zlantr('M', 'U', 'N', info[0], info[0],
+                                                AFAC, lda, rdum);
+                                if (rpvgrw == 0.0) {
+                                    rpvgrw = 1.0;
+                                }
+                                else {
+                                    rpvgrw = zlange('M', n, info[0], A, lda, rdum) / rpvgrw;
+                                } // else
+                            } // if (info[0] != 0 && info[0] <= n)
+                            else {
+                                rpvgrw = zlantr('M', 'U', 'N', n, n, AFAC, lda, rdum);
+                                if (rpvgrw == 0.0) {
+                                    rpvgrw = 1.0;
+                                }
+                                else {
+                                   rpvgrw = zlange('M', n, n, A, lda, rdum) / rpvgrw;
+                                } // else
+                            } // else
+                            result[6] = Math.abs(rpvgrw-rwork3[0] ) / Math.max(rwork3[0], rpvgrw) /
+                                        ge.dlamch('E');
+    
+                            if (!prefac) {
+    
+                                // Reconstruct matrix from factors and compute residual.
+    
+                                zget01(n, n, A, lda, AFAC, lda, iwork,
+                                       rwork3, result);
+                                k1 = 1;
+                            } // if (!prefac)
+                            else {
+                                k1 = 2;
+                            }
+    
+                            if (info[0] == 0) {
+                                trfcon = false;
+    
+                                // Compute residual of the computed solution.
+     
+                                zlacpy('F', n, nrhs, BSAV, lda, WORK, lda);
+                                zget02(trans, n, n, nrhs, ASAV, lda, X,
+                                          lda, WORK, lda, rwork3, res);
+                                result[1] = res[0];
+     
+                                // Check solution from generated exact solution.
+     
+                                if (nofact || (prefac && (equed[0] == 'N'))) {
+                                    zget04(n, nrhs, X, lda, XACT, lda, rcondc, res);
+                                    result[2] = res[0];
+                                }
+                                else {
+                                    if (itran == 1) {
+                                        roldc = roldo;
+                                    }
+                                    else {
+                                        roldc = roldi;
+                                    }
+                                    zget04(n, nrhs, X, lda, XACT, lda, roldc, res);
+                                    result[2] = res[0];
+                                } // else 
+    
+                                // Check the error bounds from iterative refinement.
+    
+                                zget07(trans, n, nrhs, ASAV, lda, B, lda,
+                                       X, lda, XACT, lda, rwork, true,
+                                       rwork2, res);
+                                result[3] = res[0];
+                                result[4] = res[1];
+                            } // if (info[0] == 0)
+                            else {
+                                trfcon = true;
+                            }
+    
+                            // Compare rcond[0] from zgesvx with the computed value in rcondc.
+     
+                            result[5] = le.dget06(rcond[0], rcondc);
+    
+                            // Print information about the tests that did not pass
+                            // the threshold.
+    
+                            if (!trfcon) {
+                                for (k = k1-1; k < ntests; k++) {
+                                    if (result[k] >= thresh) {
+                                        // Print the header if this is the first error message.
+                                        if (nfail == 0 && nerrs == 0) {
+                                            printsvHeader();
+                                        } // if (nfail == 0 && nerrs == 0)
+                                        if (prefac) {
+                                            Preferences.debug("zgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("equed[0] = " + equed[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("test("+(k+1) + ") = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        } // if (prefac)
+                                        else { // !prefac
+                                            Preferences.debug("zgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("test("+(k+1) + ") = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        } // else !prefac
+                                        nfail++;
+                                    } // if (result[k] >= thresh)
+                                } // for (k = k1-1; k < ntests; k++)
+                                nrun = nrun + 7 - k1;
+                            } // if (!trfcon)
+                            else { // trfcon
+                                if (result[0] >= thresh && !prefac) {
+                                    // Print the header if this is the first error message.
+                                    if (nfail == 0 && nerrs == 0) {
+                                        printsvHeader();
+                                    } // if (nfail == 0 && nerrs == 0)
+                                    Preferences.debug("zgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("test(1) = " + result[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    nfail++;
+                                    nrun++;
+                                } // if (result[0] >= thresh && !prefac)
+                                if (result[5] >= thresh) {
+                                    // Print the header if this is the first error message.
+                                    if (nfail == 0 && nerrs == 0) {
+                                        printsvHeader();
+                                    } // if (nfail == 0 && nerrs == 0)
+                                    if (prefac) {
+                                        Preferences.debug("zgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("equed[0] = " + equed[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(6) = " + result[5] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // if (prefac)
+                                    else { // !prefac
+                                        Preferences.debug("zgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(6) = " + result[5] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // else !prefac
+                                    nfail++;
+                                    nrun++;
+                                } // if (result[5] >= thresh)
+                                if (result[6] >= thresh) {
+                                    // Print the header if this is the first error message.
+                                    if (nfail == 0 && nerrs == 0) {
+                                        printsvHeader();
+                                    } // if (nfail == 0 && nerrs == 0)
+                                    if (prefac) {
+                                        Preferences.debug("zgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("equed[0] = " + equed[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(7) = " + result[6] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // if (prefac)
+                                    else { // !prefac
+                                        Preferences.debug("zgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(7) = " + result[6] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // else !prefac
+                                    nfail++;
+                                    nrun++;
+                                } // if (result[6] >= thresh)
+                            
+                            } // else trfcon
+    
+                        } // for (itran = 1; itran <= ntran; itran++)
+                    } // for (ifact = 1; ifact <= nfact; ifact++)
+                } // for (iequed = 1; iequed <= 4; iequed++)
+            } // for (imat = 1; imat <= nimat; imat++)
+        } // for (in = 1; in <= nn; in++)
+        
+        // Print a summary of results
+        if (nfail > 0) {
+            Preferences.debug("zdrvge: " + nfail + " out of " + nrun + " tests failed with values >= threshold\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("zdrvge: " + nfail + " out of " + nrun + " tests failed with values >= threshold\n");
+        }
+        else {
+            Preferences.debug("All " + nrun + " tests for zdrvge passed\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("All " + nrun + " tests for zdrvge passed\n");
+        }
+        if (nerrs > 0) {
+            Preferences.debug("zdrvge: " + nerrs + " error messages recorded\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("zdrvge: " + nerrs + " error messages recorded\n");
+        }
+    
+        return;
+
+    } // zdrvge
+    
+    private void printsvHeader() {
+        Preferences.debug("ZGE drivers:  General dense matrices\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
+        // GE matrix types
+        Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("2. Upper triangular\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("3. Lower triangular\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("4. Random, cndnum[0] = 2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("5. First column zero\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("6. Last column zero\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("7. Last n/2 columns zero\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("8. Random, cndnum[0] = sqrt(0.1/eps)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("9. Random, cndnum[0] = 0.1/eps\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("10. Scaled near underflow\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("11. Scaled near overflow\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Test ratios:\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("1. norm(L * U - A) / ( n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("2. norm(B - A * X) / (norm(A) * norm(X) * eps)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("3. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("4. norm(X - XACT) / (norm(XACT) * (error bound))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("5. (backward error) / eps\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("6. rcond * condum[0] - 1.0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("7. abs(work[0] - rpvgrw) / (max(work[0], rpvgrw) * eps)\n", Preferences.DEBUG_ALGORITHM);
+        return;
+    }
     
     /**
      * This is a port of version 3.1 LAPACK auxiliary routine XLAENV. Univ. of Tennessee, Univ. of California Berkeley
@@ -6105,6 +6859,1133 @@ public class ComplexLinearEquations implements java.io.Serializable {
          return;
 
      } // zget07
+     
+     /*
+      * This is a port of LAPACK auxiliary routine ZLANTR.f version 3.7.0
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., December, 2016
+      * 
+      * zlantr  returns the value of the one norm,  or the Frobenius norm, or
+        the  infinity norm,  or the  element of  largest absolute value  of a
+        trapezoidal or triangular matrix A.
+        
+        zlantr = ( max(abs(A(i,j))), norm = 'M' or 'm'
+                 (
+                 ( norm1(A),         norm = '1', 'O' or 'o'
+                 (
+                 ( normI(A),         norm = 'I' or 'i'
+                 (
+                 ( normF(A),         norm = 'F', 'f', 'E' or 'e'
+
+        where  norm1  denotes the  one norm of a matrix (maximum column sum),
+        normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
+        normF  denotes the  Frobenius norm of a matrix (square root of sum of
+        squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
+
+        @param input char norm
+            Specifies the value to be returned in zlantr as described above.
+        @param input char uplo
+            Specifies whether the matrix A is upper or lower trapezoidal.
+            = 'U':  Upper trapezoidal
+            = 'L':  Lower trapezoidal
+            Note that A is triangular instead of trapezoidal if m = n.
+        @param input char diag
+            Specifies whether or not the matrix A has unit diagonal.
+            = 'N':  Non-unit diagonal
+            = 'U':  Unit diagonal
+        @param input int m
+            The number of rows of the matrix A.  m >= 0, and if
+            uplo = 'U', m <= n.  When m = 0, zlantr is set to zero.
+        @param input int n
+            The number of columns of the matrix A.  n >= 0, and if
+            uplo = 'L', n <= m.  When n = 0, zlantr is set to zero.
+        @param input double[][][2] complex A of dimension (lda, n)
+            The trapezoidal matrix A (A is triangular if m = n).
+            If uplo = 'U', the leading m by n upper trapezoidal part of
+            the array A contains the upper trapezoidal matrix, and the
+            strictly lower triangular part of A is not referenced.
+            If uplo = 'L', the leading m by n lower trapezoidal part of
+            the array A contains the lower trapezoidal matrix, and the
+            strictly upper triangular part of A is not referenced.  Note
+            that when diag = 'U', the diagonal elements of A are not
+            referenced and are assumed to be one.
+        @param input int lda
+            The leading dimension of the array A.  lda >= max(m,1).
+        @param output double[] work of dimension max(1, lwork)
+            where lwork >= m when norm = 'I'; otherwise, work is not
+            referenced.
+      */
+     private double zlantr(char norm, char uplo, char diag, int m, int n,
+                           double[][][] A, int lda, double[] work) {
+         boolean udiag;
+         int i;
+         int j;
+         double scale[] = new double[1];
+         double sum[] = new double[1];
+         double value = 0.0;
+         double vec[][];
+         
+         if (Math.min(m, n) == 0) {
+             value = 0.0;
+         }
+         else if ((norm == 'M') || (norm == 'm')) {
+
+             // Find max(abs(A[i][j])).
+
+             if ((diag == 'U') || (diag == 'u')) {
+                 value = 1.0;
+                 if ((uplo == 'U') || (uplo == 'u')) {
+                     for (j = 1; j <= n; j++) {
+                         for (i = 1; i <= Math.min(m, j-1); i++) {
+                             sum[0] = Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                             if (value < sum[0] || Double.isNaN(sum[0])) {
+                                 value = sum[0];
+                             }
+                         } // for (i = 1; i <= Math.min(m, j-1); i++)
+                     } // for (j = 1; j <= n; j++)
+                 } // if ((uplo == 'U') || (uplo == 'u'))
+                 else { // ((uplo == 'L') || (uplo == 'l'))
+                     for (j = 1; j <= n; j++) {
+                         for (i = j+1; i <= m; i++) {
+                             sum[0] = Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                             if (value < sum[0] || Double.isNaN(sum[0])) {
+                                 value = sum[0];
+                             }
+                         } // for (i = j+1; i <= m; i++)
+                     } // for (j = 1; j <= n; j++)
+                 } // else ((uplo == 'L') || (uplo == 'l'))
+             } // if ((diag == 'U') || (diag == 'u'))
+             else { // ((diag == 'N) || (diag == 'n))
+                 value = 0.0;
+                 if ((uplo == 'U') || (uplo == 'u')) {
+                     for (j = 1; j <= n; j++) {
+                         for (i = 1; i <= Math.min(m, j); i++) {
+                        	 sum[0] = Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                             if (value < sum[0] || Double.isNaN(sum[0])) {
+                                 value = sum[0];
+                             }
+                         } // for (i = 1; i <= Math.min(m, j); i++) 
+                     } // for (j = 1; j <= n; j++)
+                 } // if ((uplo == 'U') || (uplo == 'u'))
+                 else { // else ((uplo == 'L') || (uplo == 'l'))
+                     for (j = 1; j <= n; j++) {
+                         for (i = j; i <= m; i++) {
+                        	 sum[0] = Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                             if (value < sum[0] || Double.isNaN(sum[0])) {
+                                 value = sum[0];
+                             }
+                         } // for (i = j; i <= m; i++)
+                     } // for (j = 1; j <= n; j++)
+                 } // else ((uplo == 'L') || (uplo == 'l'))
+             } // else ((diag == 'N) || (diag == 'n))
+         } // else if ((norm == 'M') || (norm == 'm'))
+         else if ((norm == 'O') || (norm == 'o') || (norm == '1')) {
+
+             // Find norm1(A).
+
+             value = 0.0;
+             udiag = ((diag == 'U') || (diag == 'u'));
+             if ((uplo == 'U') || (uplo == 'u')) {
+                 for (j = 1; j <= n; j++) {
+                     if ((udiag) && (j <= m)) {
+                         sum[0] = 1.0;
+                         for (i = 1; i <= j-1; i++) {
+                             sum[0] = sum[0] + Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                         } // for (i = 1; i <= j-1; i++)
+                     } // if ((udiag) && (j <= m))
+                     else {
+                         sum[0] = 0.0;
+                         for (i = 1; i <= Math.min(m, j); i++) {
+                             sum[0] = sum[0] + Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                         } // for (i = 1; i <= Math.min(m, j); i++)
+                     } // else
+                     if (value < sum[0] || Double.isNaN(sum[0])) {
+                         value = sum[0];
+                     }
+                 } // for (j = 1; j <= n; j++)
+             } // if ((uplo == 'U') || (uplo == 'u'))
+             else { // ((uplo == 'L') || (uplo == 'l'))
+                 for (j = 1; j <= n; j++) {
+                     if (udiag) {
+                         sum[0] = 1.0;
+                         for (i = j+1; i <= m; i++) {
+                             sum[0] = sum[0] + Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                         } // for (i = j+1; i <= m; i++)
+                     } // if (udiag)
+                     else { // !udiag
+                         sum[0] = 0.0;
+                         for (i = j; i <= m; i++) {
+                             sum[0] = sum[0] + Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                         } // for (i = j; i <= m; i++)
+                     } // else !udiag
+                     if (value < sum[0] || Double.isNaN(sum[0])) {
+                         value = sum[0];
+                     }
+                 } // for (j = 1; j <= n; j++)
+             } // else ((uplo == 'L') || (uplo == 'l'))
+         } // else if ((norm == 'O') || (norm == 'o') || (norm == '1'))
+         else if ((norm == 'I') || (norm == 'i')) {
+
+             // Find normI(A).
+
+             if ((uplo == 'U') || (uplo == 'u')) {
+                 if ((diag == 'U') || (diag == 'u')) {
+                     for ( i = 0; i < m; i++) {
+                         work[i] = 1.0;
+                     } // for (i = 0; i < m; i++)
+                     for (j = 1; j <= n; j++) {
+                         for (i = 1; i <= Math.min(m, j-1); i++) {
+                             work[i-1] = work[i-1] + Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                         } // for (i = 1; i <= Math.min(m, j-1); i++)
+                     } // for (j = 1; j <= n; j++)
+                 } // if ((diag == 'U') || (diag == 'u'))
+                 else { // ((diag == 'N') || (diag == 'n'))
+                     for (i = 0; i < m; i++) {
+                         work[i] = 0.0;
+                     } // for (i = 0; i < m; i++)
+                     for (j = 1; j <= n; j++) {
+                         for (i = 1; i <= Math.min(m, j); i++) {
+                             work[i-1] = work[i-1] + Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                         } // for (i = 1; i <= Math.min(m, j); i++)
+                     } // for (j = 1; j <= n; j++)
+                 } // else ((diag == 'N') || (diag == 'n'))
+             } // if ((uplo == 'U') || (uplo == 'u'))
+             else { // ((uplo == 'L') || (uplo == 'l'))
+                 if ((diag == 'U') || (diag == 'u')) {
+                     for (i = 0; i < n; i++) {
+                         work[i] = 1.0;
+                     } // for (i = 0; i < n; i++)
+                     for (i = n; i < m; i++) {
+                         work[i] = 0.0;
+                     } // for (i = n; i < m; i++)
+                     for (j = 1; j <= n; j++) {
+                         for (i = j + 1; i <= m; i++) {
+                             work[i-1] = work[i-1] + Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                         } // for (i = j + 1; i <= m; i++)
+                     } // for (j = 1; j <= n; j++)
+                 } // if ((diag == 'U') || (diag == 'u'))
+                 else { // ((diag == 'N') || (diag == 'n))
+                     for (i = 0; i < m; i++) {
+                         work[i] = 0.0;
+                     } // for (i = 0; i < m; i++0
+                     for (j = 1; j <= n; j++) {
+                         for (i = j; i <= m; i++) {
+                             work[i-1] = work[i-1] + Math.sqrt(A[i-1][j-1][0]*A[i-1][j-1][0] + A[i-1][j-1][1]*A[i-1][j-1][1]);
+                         } // for (i = j; i <= m; i++)
+                     } // for (j = 1; j <= n; j++)
+                 } // else ((diag == 'N) || (diag == 'n))
+             } // else ((uplo == 'L') || (uplo == 'l'))
+             value = 0.0;
+             for (i = 0; i < m; i++) {
+                 sum[0] = work[i];
+                 if (value < sum[0] || Double.isNaN(sum[0])) {
+                     value = sum[0];
+                 }
+             } // for (i = 0; i < m; i++)
+         } // else if ((norm == 'I') || (norm == 'i'))
+         else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e')) {
+
+             // Find normF(A).
+
+             if ((uplo == 'U') || (uplo == 'u')) {
+                 if ((diag == 'U') || (diag == 'u')) {
+                     scale[0] = 1.0;
+                     sum[0] = Math.min(m, n);
+                     for (j = 2; j <= n; j++) {
+                         vec = new double[Math.min(m,  j-1)][2];
+                         for (i = 0; i < Math.min(m, j-1); i++) {
+                             vec[i][0] = A[i][j-1][0];
+                             vec[i][1] = A[i][j-1][1];
+                         }
+                         zlassq(Math.min(m, j-1), vec, 1, scale, sum);
+                     } // for (j = 2; j <= n; j++)
+                 } // if ((diag == 'U') || (diag == 'u'))
+                 else { // ((diag == 'N) || (diag == 'n'))
+                     scale[0] = 0.0;
+                     sum[0] = 1.0;
+                     for (j = 1; j <= n; j++) {
+                         vec = new double[Math.min(m, j)][2];
+                         for (i = 0; i < Math.min(m, j); i++) {
+                             vec[i][0] = A[i][j-1][0];
+                             vec[i][1] = A[i][j-1][1];
+                         }
+                         zlassq(Math.min(m, j), vec, 1, scale, sum);
+                     } // for (j = 1; j <= n; j++)
+                 } // else ((diag == 'N) || (diag == 'n'))
+             } // if ((uplo == 'U') || (uplo == 'u'))
+             else { // ((uplo == 'L') || (uplo == 'l'))
+                 if ((diag == 'U') || (diag == 'u')) {
+                     scale[0] = 1.0;
+                     sum[0] = Math.min(m, n);
+                     for (j = 1; j <= n; j++) {
+                         vec = new double[m-j][2];
+                         for (i = 0; i < m-j; i++) {
+                             vec[i][0] = A[Math.min(m-1, j)+i][j-1][0];
+                             vec[i][1] = A[Math.min(m-1, j)+i][j-1][1];
+                         }
+                         zlassq(m-j, vec, 1, scale, sum);
+                     } // for (j = 1; j <= n; j++)
+                 } // if ((diag == 'U') || (diag == 'u'))
+                 else { // ((diag == 'N') || (diag == 'n'))
+                     scale[0] = 0.0;
+                     sum[0] = 1.0;
+                     for (j = 1; j <= n; j++) {
+                         vec = new double[m-j+1][2];
+                         for (i = 0; i < m-j+1; i++) {
+                             vec[i][0] = A[j-1+i][j-1][0];
+                             vec[i][1] = A[j-1+i][j-1][1];
+                         }
+                         zlassq(m-j+1, vec, 1, scale, sum);
+                     } // for (j = 1; j <= n; j++0
+                 } // else ((diag == 'N') || (diag == 'n'))
+             } // else ((uplo == 'L') || (uplo == 'l'))
+         value = scale[0]*Math.sqrt(sum[0]);
+         } // else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e'))
+
+         return value;
+     } // zlantr
+     
+     /*
+      * This is a port of a portion of LAPACK routine ZGEEQU.f version 3.7.0
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., December, 2016
+      * 
+      * zgeequ computes row and column scalings intended to equilibrate an
+        m-by-n matrix A and reduce its condition number.  r returns the row
+        scale factors and c the column scale factors, chosen to try to make
+        the largest element in each row and column of the matrix B with
+        elements B[i][j]=r[i]*A[i][j]*c[j] have absolute value 1.
+
+        r[i] and c[j] are restricted to be between smlnum = smallest safe
+        number and bignum = largest safe number.  Use of these scaling
+        factors is not guaranteed to reduce the condition number of A but
+        works well in practice.
+
+        @param input int m
+            The number of rows of the matrix A.  m >= 0.
+        @param input int n
+            The number of columns of the matrix A.  n >= 0.
+        @param input double[][][2] complex A of dimension (lda, n)
+            The m-by-n matrix whose equilibration factors are
+            to be computed.
+        @param input int lda
+            The leading dimension of the array A.  lda >= max(1,m).
+        @param output double[] r of dimension (n)
+            If info[0] = 0 or info[0] > m, r contains the row scale factors
+            for A.
+        @param output double[] c of dimension (n)
+            If info[0] = 0,  c contains the column scale factors for A.
+        @param output double[] rowcnd of dimension (1)
+            If info[0] = 0 or info[0] > m, rowcnd[0] contains the ratio of the
+            smallest r[i] to the largest r[i].  If rowcnd[0] >= 0.1 and
+            amax is neither too large nor too small, it is not worth
+            scaling by r.
+        @param output double[] colcnd of dimension (1)
+            If info[0] = 0, colcnd[0] contains the ratio of the smallest
+            c[i] to the largest c[i].  If colcnd[0] >= 0.1, it is not
+            worth scaling by c.
+        @param output double[] amax of dimension (1)
+            Absolute value of largest matrix element.  If AMAX is very
+            close to overflow or very close to underflow, the matrix
+            should be scaled.
+        @param output int[] info of dimension (1)
+            = 0:  successful exit
+            < 0:  if info[0] = -i, the i-th argument had an illegal value
+            > 0:  if info[0] = i,  and i is
+                  <= m:  the i-th row of A is exactly zero
+                  >  m:  the (i-m)-th column of A is exactly zero
+      */
+     private void zgeequ(int m, int n, double[][][] A, int lda, double r[], double c[], double rowcnd[],
+                         double[] colcnd, double[] amax, int[] info) {
+         int i;
+         int j;
+         double bignum;
+         double rcmax;
+         double rcmin;
+         double smlnum;
+         
+         // Test the input parameters.
+         
+         info[0] = 0;
+         if (m < 0) {
+             info[0] = -1;
+         }
+         else if (n < 0) {
+             info[0] = -2;
+         }
+         else if (lda < Math.max(1, m)) {
+             info[0] = -4;
+         }
+         if (info[0] != 0) {
+             MipavUtil.displayError("zgeqqu had info[0] = " + info[0]);
+             return;
+         }
+     
+         // Quick return if possible
+     
+         if (m == 0 || n == 0) {
+             rowcnd[0] = 1.0;
+             colcnd[0] = 1.0;
+             amax[0] = 0.0;
+             return;
+         } // if (m == 0 || n == 0)
+     
+         // Get machine constants.
+     
+         smlnum = ge.dlamch('S');
+         bignum = 1.0 / smlnum;
+     
+         // Compute row scale factors.
+      
+         for (i = 0; i < m; i++) {
+             r[i] = 0.0;
+         } // for (i = 0; i < m; i++)
+     
+         // Find the maximum element in each row.
+     
+         for (j = 0; j < n; j++) {
+             for (i = 0; i < m; i++) {
+                 r[i] = Math.max(r[i], (Math.abs(A[i][j][0]) + Math.abs(A[i][j][1])));
+             } // for (i = 0; i < m; i++)
+         } // for (j = 0; j < n; j++)
+     
+         // Find the maximum and minimum scale factors.
+     
+         rcmin = bignum;
+         rcmax = 0.0;
+         for (i = 0; i < m; i++) {
+             rcmax = Math.max(rcmax, r[i]);
+             rcmin = Math.min(rcmin, r[i]);
+         } // for (i = 0; i < m; i++)
+         amax[0] = rcmax;
+     
+         if (rcmin == 0.0) {
+     
+             // Find the first zero scale factor and return an error code.
+     
+             for (i = 1; i <= m; i++) {
+                 if (r[i-1] == 0.0) {
+                     info[0] = i;
+                     return;
+                 } // if (r[i-1] == 0.0)
+             } // for (i = 1; i <= m; i++)
+         } // if (rcmin == 0.0)
+         else { // rcmin != 0.0
+     
+             // Invert the scale factors.
+     
+             for (i = 0; i < m; i++) {
+                 r[i] = 1.0 / Math.min(Math.max(r[i], smlnum), bignum);
+             } // for (i = 0; i < m; i++)
+     
+             // Compute rowcnd[0] = min(r[i]) / max(r[i])
+     
+             rowcnd[0] = Math.max(rcmin, smlnum) / Math.min(rcmax, bignum);
+         } // else rcmin != 0.0
+     
+         // Compute column scale factors
+     
+         for (j = 0; j < n; j++) {
+             c[j] = 0.0;
+         } // for (j = 0; j < n; j++)
+     
+         // Find the maximum element in each column,
+         // assuming the row scaling computed above.
+     
+         for (j = 0; j < n; j++) {
+             for (i = 0; i < m; i++) {
+                 c[j] = Math.max(c[j], (Math.abs(A[i][j][0]) + Math.abs(A[i][j][1]))*r[i]);
+             } // for (i = 0; i < m; i++)
+         } // for (j = 0; j < n; j++)
+     
+         // Find the maximum and minimum scale factors.
+     
+         rcmin = bignum;
+         rcmax = 0.0;
+         for (j = 0; j < n; j++) {
+             rcmin = Math.min(rcmin, c[j]);
+             rcmax = Math.max(rcmax, c[j]);
+         } // for (j = 0; j < n; j++0
+     
+         if (rcmin == 0.0) {
+     
+             // Find the first zero scale factor and return an error code.
+     
+             for (j = 1; j <= n; j++) {
+                 if (c[j-1] == 0.0) {
+                     info[0] = m + j;
+                     return;
+                 } // if (c[j-1] == 0.0)
+             } // for (j = 1; j <= n; j++)
+         } // if (rcmin == 0.0)
+         else { // rcmin != 0.0
+     
+             // Invert the scale factors.
+     
+             for (j = 0; j < n; j++) {
+                 c[j] = 1.0 / Math.min(Math.max(c[j], smlnum), bignum);
+             } // for (j = 0; j < n; j++)
+     
+             // Compute colcnd[0] = min(c[j]) / max(c[j])
+     
+             colcnd[0] = Math.max(rcmin, smlnum) / Math.min(rcmax, bignum);
+         } // else rcmin != 0.0
+     
+         return;
+
+     } // zgeequ
+     
+     /*
+      * This is a port of a portion of LAPACK driver routine ZGESV.f version 3.7.1
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., June, 2017
+      * 
+      * zgesv computes the solution to system of linear equations A * X = B for GE matrices (simple driver)
+      * 
+      * zgesv computes the solution to a complex system of linear equations
+           A * X = B,
+        where A is an n-by-n matrix and X and B are n-by-nrhs matrices.
+
+        The LU decomposition with partial pivoting and row interchanges is
+        used to factor A as
+           A = P * L * U,
+        where P is a permutation matrix, L is unit lower triangular, and U is
+        upper triangular.  The factored form of A is then used to solve the
+        system of equations A * X = B.
+
+        @param input int n
+            The number of linear equations, i.e., the order of the
+            matrix A.  n >= 0.
+        @param input int nrhs
+            The number of right hand sides, i.e., the number of columns
+            of the matrix B.  nrhs >= 0.
+        @param (input/output) double[][][2] complex A of dimension (lda,n)
+            On entry, the n-by-n coefficient matrix A.
+            On exit, the factors L and U from the factorization
+            A = P*L*U; the unit diagonal elements of L are not stored.
+        @param input int lda
+            The leading dimension of the array A.  lda >= max(1,n).
+        @param output int[] ipiv of dimension (n)
+            The pivot indices that define the permutation matrix P;
+            row i of the matrix was interchanged with row ipiv[i].
+        @param (input/output) double[][][2] complex B of dimension (ldb, nrhs)
+            On entry, the n-by-nrhs matrix of right hand side matrix B.
+            On exit, if info[0] = 0, the n-by-nrhs solution matrix X.
+        @param input int ldb
+            The leading dimension of the array B.  ldb >= max(1,n).
+        @param output int[] info of dimension (1)
+            = 0:  successful exit
+            < 0:  if info[0] = -i, the i-th argument had an illegal value
+            > 0:  if info[0] = i, U[i-1][i-1] is exactly zero.  The factorization
+                  has been completed, but the factor U is exactly
+                  singular, so the solution could not be computed.
+      */
+     public void zgesv(int n, int nrhs, double[][][] A, int lda, int ipiv[], double[][][] B,
+                       int ldb, int info[]) {
+         // Test the input parameters.
+         
+         info[0] = 0;
+         if (n < 0) {
+             info[0] = -1;
+         }
+         else if (nrhs < 0) {
+             info[0] = -2;
+         }
+         else if (lda < Math.max(1, n)) {
+             info[0] = -4;
+         }
+         else if (ldb < Math.max(1,n)) {
+             info[0] = -7;
+         }
+         if (info[0] != 0) {
+             MipavUtil.displayError("zgesv had info[0] = " + info[0]);
+             return;
+         }
+     
+         // Compute the LU factorization of A.
+     
+         zgetrf(n, n, A, lda, ipiv, info);
+         if (info[0] == 0) {
+     
+             // Solve the system A*X = B, overwriting B with X.
+     
+             zgetrs('N', n, nrhs, A, lda, ipiv, B, ldb, info);
+         } // if (info[0] == 0)
+         return;
+     
+     } // zgesv
+     
+     /*
+      * This is a port of a portion of LAPACK driver routine ZGESVX.f version 3.7.0
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., April, 2012
+      * 
+      * zgesvx computes the solution to system of linear equations A * X = B for GE matrices
+      * 
+      * zgesvx uses the LU factorization to compute the solution to a complex
+        system of linear equations
+           A * X = B,
+        where A is an n-by-n matrix and X and B are n-by-nrhs matrices.
+
+        Error bounds on the solution and a condition estimate are also provided.
+        
+        The following steps are performed:
+
+        1. If fact = 'E', real scaling factors are computed to equilibrate
+           the system:
+              trans = 'N':  diag(r)*A*diag(c)     *inv(diag(c))*X = diag(r)*B
+              trans = 'T': (diag(r)*A*diag(c))**T *inv(diag(r))*X = diag(c)*B
+              trans = 'C': (diag(r)*A*diag(c))**H *inv(diag(r))*X = diag(c)*B
+           Whether or not the system will be equilibrated depends on the
+           scaling of the matrix A, but if equilibration is used, A is
+           overwritten by diag(r)*A*diag(c) and B by diag(r)*B (if trans='N')
+           or diag(c)*B (if trans = 'T' or 'C').
+
+        2. If fact = 'N' or 'E', the LU decomposition is used to factor the
+           matrix A (after equilibration if fact = 'E') as
+              A = P * L * U,
+           where P is a permutation matrix, L is a unit lower triangular
+           matrix, and U is upper triangular.
+
+        3. If some U[i][i]=0, so that U is exactly singular, then the routine
+           returns with info[0] = i. Otherwise, the factored form of A is used
+           to estimate the condition number of the matrix A.  If the
+           reciprocal of the condition number is less than machine precision,
+           info[0] = n+1 is returned as a warning, but the routine still goes on
+           to solve for X and compute error bounds as described below.
+
+        4. The system of equations is solved for X using the factored form
+           of A.
+
+        5. Iterative refinement is applied to improve the computed solution
+           matrix and calculate error bounds and backward error estimates
+           for it.
+
+        6. If equilibration was used, the matrix X is premultiplied by
+           diag(c) (if trans = 'N') or diag(r) (if trans = 'T' or 'C') so
+           that it solves the original system before equilibration.
+
+        @param input char fact
+            Specifies whether or not the factored form of the matrix A is
+            supplied on entry, and if not, whether the matrix A should be
+            equilibrated before it is factored.
+            = 'F':  On entry, AF and ipiv contain the factored form of A.
+                    If equed[0] is not 'N', the matrix A has been
+                    equilibrated with scaling factors given by r and c.
+                    A, AF, and ipiv are not modified.
+            = 'N':  The matrix A will be copied to AF and factored.
+            = 'E':  The matrix A will be equilibrated if necessary, then
+                    copied to AF and factored.
+        @param input char trans
+            Specifies the form of the system of equations:
+            = 'N':  A * X = B     (No transpose)
+            = 'T':  A**T * X = B  (Transpose)
+            = 'C':  A**H * X = B  (Conjugate Transpose)
+        @param input int n
+            The number of linear equations, i.e., the order of the
+            matrix A.  n >= 0.
+        @param input int nrhs
+            The number of right hand sides, i.e., the number of columns
+            of the matrices B and X.  nrhs >= 0.
+        @param (input/output) double[][][2] complex A of dimension (lda, n)
+            On entry, the n-by-n matrix A.  If fact = 'F' and equed[0] is
+            not 'N', then A must have been equilibrated by the scaling
+            factors in r and/or c.  A is not modified if fact = 'F' or
+            'N', or if fact = 'E' and equed[0] = 'N' on exit.
+
+            On exit, if equed[0] != 'N', A is scaled as follows:
+            equed[0] = 'R':  A := diag(r) * A
+            equed[0] = 'C':  A := A * diag(c)
+            equed[0] = 'B':  A := diag(r) * A * diag(c).
+        @param input int lda
+            The leading dimension of the array A.  lda >= max(1,n).
+        @param (input/output) double[][][2] complex AF of dimension (ldaf, n)
+            If fact = 'F', then AF is an input argument and on entry
+            contains the factors L and U from the factorization
+            A = P*L*U as computed by zgetrf.  If equed[0] != 'N', then
+            AF is the factored form of the equilibrated matrix A.
+
+            If fact = 'N', then AF is an output argument and on exit
+            returns the factors L and U from the factorization A = P*L*U
+            of the original matrix A.
+  
+            If fact = 'E', then AF is an output argument and on exit
+            returns the factors L and U from the factorization A = P*L*U
+            of the equilibrated matrix A (see the description of A for
+            the form of the equilibrated matrix).
+        @param input int ldaf
+            The leading dimension of the array AF.  ldaf >= max(1,n).
+        @param (input/output) int[] ipiv of dimension (n)
+            If fact = 'F', then ipiv is an input argument and on entry
+            contains the pivot indices from the factorization A = P*L*U
+            as computed by zgetrf; row i of the matrix was interchanged
+            with row ipiv[i].
+
+            If fact = 'N', then ipiv is an output argument and on exit
+            contains the pivot indices from the factorization A = P*L*U
+            of the original matrix A.
+
+            If fact = 'E', then IPIV is an output argument and on exit
+            contains the pivot indices from the factorization A = P*L*U
+            of the equilibrated matrix A.
+        @param (input/output) char[] equed of dimension (1)
+            Specifies the form of equilibration that was done.
+            = 'N':  No equilibration (always true if fact = 'N').
+            = 'R':  Row equilibration, i.e., A has been premultiplied by
+                    diag(r).
+            = 'C':  Column equilibration, i.e., A has been postmultiplied
+                    by diag(c).
+            = 'B':  Both row and column equilibration, i.e., A has been
+                    replaced by diag(r) * A * diag(c).
+            equed[0] is an input argument if fact = 'F'; otherwise, it is an
+            output argument.
+        @param (input/output) double[] r of dimension (n)
+            The row scale factors for A.  If equed[0] = 'R' or 'B', A is
+            multiplied on the left by diag(r); if equed[0] = 'N' or 'C', r
+            is not accessed.  r is an input argument if fact = 'F';
+            otherwise, r is an output argument.  If fact = 'F' and
+            equed[0] = 'R' or 'B', each element of r must be positive.
+        @param (input/output) double[] c of dimension (n)
+            The column scale factors for A.  If equed[0] = 'C' or 'B', A is
+            multiplied on the right by diag(c); if equed[0] = 'N' or 'R', c
+            is not accessed.  c is an input argument if fact = 'F';
+            otherwise, c is an output argument.  If fact = 'F' and
+            equed[0] = 'C' or 'B', each element of c must be positive.
+        @param (input/output) double[][][2] complex B of dimension (ldb, nrhs)
+            On entry, the n-by-nrhs right hand side matrix B.
+            On exit,
+            if equed[0] = 'N', B is not modified;
+            if trans = 'N' and equed[0] = 'R' or 'B', B is overwritten by
+            diag(r)*B;
+            if trans = 'T' or 'C' and equed[0] = 'C' or 'B', B is
+            overwritten by diag(c)*B.
+        @param input int ldb
+            The leading dimension of the array B.  ldb >= max(1,n).
+        @param output double[][][2] complex X of dimension (ldx, nrhs)
+            If info[0] = 0 or info[0] = n+1, the n-by-nrhs solution matrix X
+            to the original system of equations.  Note that A and B are
+            modified on exit if equed[0] != 'N', and the solution to the
+            equilibrated system is inv(diag(c))*X if trans = 'N' and
+            equed[0] = 'C' or 'B', or inv(diag(r))*X if trans = 'T' or 'C'
+            and equed[0] = 'R' or 'B'.
+        @param input int ldx
+            The leading dimension of the array X.  ldx >= max(1,n).
+        @param output double[] rcond of dimension (1)
+            The estimate of the reciprocal condition number of the matrix
+            A after equilibration (if done).  If rcond[0] is less than the
+            machine precision (in particular, if rcond[0] = 0), the matrix
+            is singular to working precision.  This condition is
+            indicated by a return code of info[0] > 0.
+        @param output double[] ferr of dimension (nrhs)
+            The estimated forward error bound for each solution vector
+            X(j) (the j-th column of the solution matrix X).
+            If XTRUE is the true solution corresponding to X(j), ferr[j]
+            is an estimated upper bound for the magnitude of the largest
+            element in (X(j) - XTRUE) divided by the magnitude of the
+            largest element in X(j).  The estimate is as reliable as
+            the estimate for rcond[0], and is almost always a slight
+            overestimate of the true error.
+        @param output double[] berr of dimension (nrhs)
+            The componentwise relative backward error of each solution
+            vector X(j) (i.e., the smallest relative change in
+            any element of A or B that makes X(j) an exact solution).
+        @param output double[][2] complex work of dimension (2*n)
+        @param output rwork double[] of dimension (2*n)
+            On exit, rwork[0] contains the reciprocal pivot growth
+            factor norm(A)/norm(U). The "max absolute element" norm is
+            used. If rwork[0] is much less than 1, then the stability
+            of the LU factorization of the (equilibrated) matrix A
+            could be poor. This also means that the solution X, condition
+            estimator rcond[0], and forward error bound ferr could be
+            unreliable. If factorization fails with 0<info[0]<=n, then
+            rwork[0] contains the reciprocal pivot growth factor for the
+            leading info[0] columns of A.
+        @param output int[] info of dim (1)
+            = 0:  successful exit
+            < 0:  if info[0] = -i, the i-th argument had an illegal value
+            > 0:  if info[0] = i, and i is
+                  <= n:  U[i-1][i-1\ is exactly zero.  The factorization has
+                         been completed, but the factor U is exactly
+                         singular, so the solution and error bounds
+                         could not be computed. rcond[0] = 0 is returned.
+                  = n+1: U is nonsingular, but rcond[0] is less than machine
+                         precision, meaning that the matrix is singular
+                         to working precision.  Nevertheless, the
+                         solution and error bounds are computed because
+                         there are a number of situations where the
+                         computed solution can be more accurate than the
+                         value of rcond[0] would suggest.
+      */
+     public void zgesvx(char fact, char trans, int n, int nrhs, double[][][] A, int lda,
+                        double[][][] AF, int ldaf, int[] ipiv, char[] equed, double[] r,
+                        double[] c, double[][][] B, int ldb, double[][][] X, int ldx, 
+                        double[] rcond, double[] ferr, double[] berr, double[][] work,
+                        double [] rwork, int[] info) {
+         boolean colequ;
+         boolean equil;
+         boolean nofact;
+         boolean notran;
+         boolean rowequ;
+         char norm;
+         int i;
+         int infequ[] = new int[1];
+         int j;
+         double amax[] = new double[1];
+         double anorm;
+         double bignum;
+         double colcnd[] = new double[1];
+         double rcmax;
+         double rcmin;
+         double rowcnd[] = new double[1];
+         double rpvgrw;
+         double smlnum;
+         
+         info[0] = 0;
+         nofact = ((fact == 'N') || (fact == 'n'));
+         equil = ((fact == 'E') || (fact == 'e'));
+         notran = ((trans == 'N') || (trans == 'n'));
+         smlnum = ge.dlamch('S');
+         bignum = 1.0 / smlnum;
+         if (nofact || equil) {
+            equed[0] = 'N';
+            rowequ = false;
+            colequ = false;
+         } // if (nofact || equil)
+         else {
+            rowequ = ((equed[0] == 'R') || (equed[0] == 'r')) || ((equed[0] == 'B') || (equed[0] == 'b'));
+            colequ = ((equed[0] == 'C') || (equed[0] == 'c')) || ((equed[0] == 'B') || (equed[0] == 'b'));
+         } // else
+   
+         // Test the input parameters.
+   
+         if (!nofact && !equil && !((fact == 'F') || (fact == 'f'))) {
+            info[0] = -1;
+         }
+         else if (!notran && !((trans == 'T') || (trans == 't')) && !((trans == 'C') || (trans == 'c'))) {
+            info[0] = -2;
+         }
+         else if (n < 0) {
+            info[0] = -3;
+         }
+         else if (nrhs < 0) {
+            info[0] = -4;
+         }
+         else if (lda < Math.max(1, n)) {
+            info[0] = -6;
+         }
+         else if (ldaf < Math.max(1, n)) {
+            info[0] = -8;
+         }
+         else if (((fact == 'F') || (fact == 'f')) && 
+                 !(rowequ || colequ || ((equed[0] == 'N') || (equed[0] == 'n')))) {
+            info[0] = -10;
+         }
+         else {
+            if (rowequ) {
+               rcmin = bignum;
+               rcmax = 0.0;
+               for (j = 0; j < n; j++) {
+                  rcmin = Math.min(rcmin, r[j]);
+                  rcmax = Math.max(rcmax, r[j]);
+               } // for (j = 0; j < n; j++)
+               if (rcmin <= 0.0) {
+                  info[0] = -11;
+               }
+               else if (n > 0) {
+                  rowcnd[0] = Math.max(rcmin, smlnum) / Math.min(rcmax, bignum);
+               }
+               else {
+                  rowcnd[0] = 1.0;
+               }
+            } // if (rowequ)
+            if (colequ && info[0] == 0) {
+               rcmin = bignum;
+               rcmax = 0.0;
+               for (j = 0; j < n; j++) {
+                  rcmin = Math.min(rcmin, c[j]);
+                  rcmax = Math.max(rcmax, c[j]);
+               } // for (j = 0; j < n; j++)
+               if (rcmin <= 0.0) {
+                  info[0] = -12;
+               }
+               else if (n > 0) {
+                  colcnd[0] = Math.max(rcmin, smlnum) / Math.min(rcmax, bignum);
+               }
+               else {
+                  colcnd[0] = 1.0;
+               }
+            } // if (colequ && info[0] == 0)
+            if (info[0] == 0) {
+               if (ldb < Math.max(1, n)) {
+                  info[0] = -14;
+               }
+               else if (ldx < Math.max(1, n)) {
+                  info[0] = -16;
+               }
+            } // if (info[0] == 0)
+         } // else
+   
+         if (info[0] != 0) {
+            MipavUtil.displayError("zgesvx had info[0] = " +  info[0]);
+            return;
+         }
+   
+         if (equil) {
+   
+            // Compute row and column scalings to equilibrate the matrix A.
+    
+            zgeequ(n, n, A, lda, r, c, rowcnd, colcnd, amax, infequ);
+            if (infequ[0] == 0) {
+   
+               // Equilibrate the matrix.
+    
+               zlaqge(n, n, A, lda, r, c, rowcnd[0], colcnd[0], amax[0], equed);
+               rowequ = ((equed[0] == 'R') || (equed[0] == 'r')) || ((equed[0] == 'B') || (equed[0] == 'b'));
+               colequ = ((equed[0] == 'C') || (equed[0] == 'c')) || ((equed[0] == 'B') || (equed[0] == 'b'));
+            } // if (infequ[0] == 0)
+         } // if (equil)
+   
+         // Scale the right hand side.
+   
+         if (notran) {
+            if (rowequ) {
+               for (j = 0; j < nrhs; j++) {
+                  for (i = 0; i < n; i++) {
+                     B[i][j][0] = r[i]*B[i][j][0];
+                     B[i][j][1] = r[i]*B[i][j][1];
+                  }
+               }
+            } // if (rowequ)
+         } // if (notran)
+         else if (colequ) {
+            for (j = 0; j < nrhs; j++) {
+               for (i = 0; i < n; i++) {
+                  B[i][j][0] = c[i]*B[i][j][0];
+                  B[i][j][1] = c[i]*B[i][j][1];
+               }
+            }
+         } // else if (colequ)
+   
+         if (nofact || equil) {
+   
+            // Compute the LU factorization of A.
+    
+            zlacpy('F', n, n, A, lda, AF, ldaf);
+            zgetrf(n, n, AF, ldaf, ipiv, info);
+   
+            // Return if info[0] is non-zero.
+   
+            if (info[0] > 0) {
+   
+               // Compute the reciprocal pivot growth factor of the
+               // leading rank-deficient INFO columns of A.
+    
+               rpvgrw = zlantr('M', 'U', 'N', info[0], info[0], AF, ldaf, rwork);
+               if (rpvgrw == 0.0) {
+                  rpvgrw = 1.0;
+               }
+               else {
+                  rpvgrw = zlange('M', n, info[0], A, lda, rwork) / rpvgrw;
+               }
+               rwork[0] = rpvgrw;
+               rcond[0] = 0.0;
+               return;
+            } // if (info[0] > 0)
+         } // if (nofact || equil)
+   
+         // Compute the norm of the matrix A and the
+         // reciprocal pivot growth factor rpvgrw.
+   
+         if (notran) {
+            norm = '1';
+         }
+         else {
+            norm = 'I';
+         }
+         anorm = zlange(norm, n, n, A, lda, rwork);
+         rpvgrw = zlantr('M', 'U', 'N', n, n, AF, ldaf, rwork);
+         if (rpvgrw == 0.0) {
+            rpvgrw = 1.0;
+         }
+         else {
+            rpvgrw = zlange('M', n, n, A, lda, rwork) / rpvgrw;
+         }
+   
+         // Compute the reciprocal of the condition number of A.
+   
+         zgecon(norm, n, AF, ldaf, anorm, rcond, work, rwork, info);
+   
+         // Compute the solution matrix X.
+    
+         zlacpy('F', n, nrhs, B, ldb, X, ldx);
+         zgetrs(trans, n, nrhs, AF, ldaf, ipiv, X, ldx, info);
+   
+         // Use iterative refinement to improve the computed solution and
+         // compute error bounds and backward error estimates for it.
+   
+         zgerfs(trans, n, nrhs, A, lda, AF, ldaf, ipiv, B, ldb, X,
+                ldx, ferr, berr, work, rwork, info);
+   
+         // Transform the solution matrix X to a solution of the original system.
+   
+         if (notran) {
+            if (colequ) {
+               for (j = 0; j < nrhs; j++) {
+                  for (i = 0; i < n; i++) {
+                     X[i][j][0] = c[i]*X[i][j][0];
+                     X[i][j][1] = c[i]*X[i][j][1];
+                  }
+               }
+               for (j = 0; j < nrhs; j++) {
+                  ferr[j] = ferr[j] / colcnd[0];
+               }
+            } // if (colequ)
+         } // if (notran)
+         else if (rowequ) {
+            for (j = 0; j < nrhs; j++) {
+               for (i = 0; i < n; i++) {
+                  X[i][j][0] = r[i]*X[i][j][0];
+                  X[i][j][1] = r[i]*X[i][j][1];
+               }
+            }
+            for (j = 0; j < nrhs; j++) {
+               ferr[j] = ferr[j] / rowcnd[0];
+            }
+         } // else if (rowequ)
+   
+         // Set info[0] = n+1 if the matrix is singular to working precision.
+   
+         if (rcond[0] < ge.dlamch('E')) {
+            info[0] = n + 1;
+         }
+         
+         rwork[0] = rpvgrw;
+         return;
+
+     } // zgesvx
+     
+     /*
+      * This is a port of LAPACK auxiliary routine ZLAQGE.f version 3.7.0
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., December, 2016
+      * 
+      * zlaqge scales a general rectangular matrix, using row and column scaling factors computed by zgeequ.
+      * 
+      * zlaqge equilibrates a general m by n matrix A using the row and
+        column scaling factors in the vectors r and c.
+
+        @param input int m
+            The number of rows of the matrix A.  m >= 0.
+        @param input int n
+            The number of columns of the matrix A.  n >= 0.
+        @param (input/output) double[][][2] complex of dimension (lda, n)
+            On entry, the m by n matrix A.
+            On exit, the equilibrated matrix.  See equed for the form of
+            the equilibrated matrix.
+        @param input int lda
+            The leading dimension of the array A.  lda >= max(m,1).
+        @param input double[] r of dimension (m)
+            The row scale factors for A.
+        @param input double[] c of dimension (n)
+            The column scale factors for A.
+        @param input double rowcnd
+            Ratio of the smallest r[i] to the largest r[i].
+        @param input double colcnd
+            Ratio of the smallest c[i] to the largest c[i].
+        @param input double amax
+            Absolute value of the largest matrix entry.
+        @param output char[] equed of dimension (1)
+            Specifies the form of equilibration that was done.
+            = 'N':  No equilibration
+            = 'R':  Row equilibration, i.e., A has been premultiplied by
+                    diag(r).
+            = 'C':  Column equilibration, i.e., A has been postmultiplied
+                    by diag(c).
+            = 'B':  Both row and column equilibration, i.e., A has been
+                    replaced by diag(r) * A * diag(c).
+      */
+     private void zlaqge(int m, int n, double[][][] A, int lda, double[] r, double[] c,
+                         double rowcnd, double colcnd, double amax, char[] equed) {
+         // thresh is a threshold value used to decide if row or column scaling
+         // should be done based on the ratio of the row or column scaling
+         // factors.  If rowcnd < thresh, row scaling is done, and if
+         // colcnd < thresh, column scaling is done.
+    	 
+    	 // large and small are threshold values used to decide if row scaling
+    	 // should be done based on the absolute size of the largest matrix
+    	 // element.  If amax > large or amax < small, row scaling is done.
+         final double thresh = 0.1;
+         int i;
+         int j;
+         double cj;
+         double large;
+         double small;
+         
+         // Quick return if possible
+                 
+         if (m <= 0 || n <= 0) {
+             equed[0] = 'N';
+             return;
+         }
+     
+         // Initialize large and small.
+     
+         small = ge.dlamch('S') / ge.dlamch('P');
+         large = 1.0 / small;
+     
+         if (rowcnd >= thresh && amax >= small && amax <= large) {
+     
+             // No row scaling
+     
+             if (colcnd >= thresh) {
+     
+                 // No column scaling
+     
+                 equed[0] = 'N';
+             } // if (colcnd >= thresh)
+             else { // colcnd < thresh
+     
+                 // Column scaling
+     
+                 for (j = 0; j < n; j++) {
+                     cj = c[j];
+                     for (i = 0; i < m; i++) {
+                         A[i][j][0] = cj*A[i][j][0];
+                         A[i][j][1] = cj*A[i][j][1];
+                     } // for (i = 0; i < m; i++)
+                 } // for (j = 0; j < n; j++)
+                 equed[0] = 'C';
+             } // else colcnd < thresh
+         } // if (rowcnd >= thresh && amax >= small && amax <= large)
+         else if (colcnd >= thresh) {
+     
+             // Row scaling, no column scaling
+     
+             for (j = 0; j < n; j++) {
+                 for (i = 0; i < m; i++) {
+                     A[i][j][0] = r[i]*A[i][j][0];
+                     A[i][j][1] = r[i]*A[i][j][1];
+                 } // for (i = 0; i < m; i++)
+             } // for (j = 0; j < n; j++)
+             equed[0] = 'R';
+         } // else if (colcnd >= thresh)
+         else {
+     
+             // Row and column scaling
+     
+             for (j = 0; j < n; j++) {
+                 cj = c[j];
+                 for (i = 0; i < m; i++) {
+                     A[i][j][0] = cj*r[i]*A[i][j][0];
+                     A[i][j][1] = cj*r[i]*A[i][j][1];
+                 } // for (i = 0; i < m; i++)
+             } // for (j = 0; j < n; j++)
+             equed[0] = 'B';
+         } // else
+     
+         return;
+
+     } // zlaqge
     
     /**
      * This is a port of LAPACK auxiliary routine ZLAGHE version 3.7.0.  Provided by the Univ. of Tennessee, Univ.
