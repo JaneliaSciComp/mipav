@@ -1047,8 +1047,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
-				if ( openImages( voiFile, null, fileName ) )
+				File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
+				if ( openImages( voiFile, voiFile2, fileName ) )
 				{
+					wormImage.setImageName( wormImage.getImageName().replace("_rgb", ""));
 					if ( potentialLattices != null )
 					{
 						for ( int i = 0; i < potentialLattices.length; i++ )
