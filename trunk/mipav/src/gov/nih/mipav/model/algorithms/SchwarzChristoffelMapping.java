@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.jama.ComplexLinearEquations;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.*;
@@ -67,11 +68,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	private double crparam_beta[] = null;
 	private double crparam_cr[] = null;
+	private double crparam_qdata[][] = null;
 	
 	private double craffine_aff[][][] = null;
 	private double craffine_wn[][] = null;
 	
 	private qlgraph crqgraph_Q = null;
+	
+	private int crfixwc_quadnum;
+	private double crfixwc_mt[][] = new double[4][2];
+	private double crfixwc[] = new double[2];
 	
 	public SchwarzChristoffelMapping() {
 		
@@ -1060,7 +1066,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Use crdiskmap instead of diskmap when the polygon has elongations, or 
 		// when diskmap fails to converge.
 		// Original MATLAB routine copyright 1998-2001 by Toby Driscoll
-		int i;
+		int i, j;
 		double wn[][];
 		double betan[];
 		
@@ -1107,8 +1113,38 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			// Return crparam_beta
 			// Return crsplit_orig
 			crparam(wn2, betan2, null, tolerance);
+			// Remake polygon to reflect change in w
+			double x[] = new double[crsplit_neww.length];
+			double y[] = new double[crsplit_neww.length];
+			double alpha[] = new double[crparam_beta.length];
+			for (i = 0; i < crsplit_neww.length; i++) {
+				x[i] = crsplit_neww[i][0];
+				y[i] = crsplit_neww[i][1];
+			}
+			for (i = 0; i < crparam_beta.length; i++) {
+				alpha[i] = crparam_beta[i] + 1.0;
+			}
+			poly = new polygon(x, y, alpha);
 		} // if ((cr == null) || (cr.length == 0))
 		scmap M = new scmap();
+		M.crossratio = crparam_cr;
+		M.affine = craffine_aff;
+		M.qgraph = crqgraph_Q;
+		M.qdata = crparam_qdata;
+		M.original = crsplit_orig;
+		
+		// Set conformal center as center of 1st triangle
+		int T[] = new int[3];
+		double sum[] = new double[2];
+		for (i = 0; i < 3; i++) {
+		    T[i] = Q.qlvert[i][0];
+		    sum[0] += crsplit_neww[T[i]][0];
+		    sum[1] += crsplit_neww[T[i]][1];
+		}
+		double wc[] = new double[2];
+		wc[0] = sum[0]/3.0;
+		wc[1] = sum[1]/3.0;
+		crfixwc(crsplit_neww, crparam_beta, crparam_cr, craffine_aff, crqgraph_Q, wc);
 		return M;
 	}
 	
@@ -1160,8 +1196,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    crqgraph(w);
 	    
 	    // Quadrature data
-	    double qdat[][] = new double[nqpts][2*beta.length+2];
-	    scqdata(qdat, beta, nqpts);
+	    crparam_qdata = new double[nqpts][2*beta.length+2];
+	    scqdata(crparam_qdata, beta, nqpts);
 	    
 	    // Find the crossratios to be sought
 	    double target[][] = crossrat(w);
@@ -1182,7 +1218,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    }
 	    
 	    // Solve nonlinear system of equations
-	    crpfun fm = new crpfun(z0, n, beta, target, crqgraph_Q, qdat);
+	    crpfun fm = new crpfun(z0, n, beta, target, crqgraph_Q, crparam_qdata);
 	    fm.driver();
 		fm.dumpResults();
 	    int exitStatus = fm.getExitStatus();
@@ -2212,6 +2248,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	   // Original MATLAB routine copyright 1998 by Toby Driscoll.
 	   
 	   int i, j, k;
+	   ComplexLinearEquations ce = new ComplexLinearEquations();
 	   double cre[] = new double[1];
 	   double cim[] = new double[1];
 	   double cre2[] = new double[1];
@@ -2471,10 +2508,133 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    		   newvref[i][j] = newv[ref[i]][j];
 	    	   }
 	       }
+	       double A[][][] = new double[3][2][2];
+	       for (i = 0; i < 3; i++) {
+	    	   for (j = 0; j < 2; j++) {
+	    		   A[i][0][j] = newvref[i][j];
+	    	   }
+	       }
+	       for (i = 0; i < 3; i++) {
+	    	   A[i][1][0] = 1.0;
+	    	   A[i][1][1] = 0.0;
+	       }
+	       double B[][][] = new double[3][1][2];
+	       for (i = 0; i < 3; i++) {
+	    	   for (j = 0; j < 2; j++) {
+	    		   B[i][0][j] = oldv[oldref[i]][j];
+	    	   }
+	       }
+	       int ipiv[] = new int[Math.min(3, 2)];
+	       int info[] = new int[1];
+	       ce.zgetrf(3, 2, A, 3, ipiv, info);
+	       if (info[0] > 0) {
+	    	   MipavUtil.displayError("zgetrf generated a singular factor U[" + (info[0]-1) + "][" + (info[0]-1) + "]");
+	    	   System.exit(-1);
+	       }
+	       ce.zgetrs('N', 2, 1, A, 3, ipiv, B, 3, info);
+	       zmlt(B[0][0][0], B[0][0][1], craffine_aff[oldq][0][0], craffine_aff[oldq][0][1], cre, cim);
+	       craffine_aff[q][0][0] = cre[0];
+	       craffine_aff[q][0][1] = cim[0];
+	       zmlt(B[1][0][0], B[1][0][1], craffine_aff[oldq][0][0], craffine_aff[oldq][0][1], cre, cim);
+	       craffine_aff[q][1][0] = cre[0] + craffine_aff[oldq][1][0];
+	       craffine_aff[q][1][1] = cim[0] + craffine_aff[oldq][1][1];
+	       for (i = 0; i < 4; i++) {
+	    	   if (!done[i]) {
+	    		   zmlt(newv[i][0], newv[i][1], craffine_aff[q][0][0], craffine_aff[q][0][1], cre, cim);
+	    		   craffine_wn[idx[i]][0] = cre[0] + craffine_aff[q][1][0];
+	    		   craffine_wn[idx[i]][1] = cim[0] + craffine_aff[q][1][1];
+	    	   }
+	       } // for (i = 0; i < 4; i++)
 	       
-	       // Need LAPACK ZGETRF to factorize complex matrices and LAPACK ZGETRS to use the factorization to 
-	       // solve AX = B by forward or backwards substitution.
+	       m = 0;
+		   for (i = 0; i < n-3; i++) {
+			   if (Q.adjacent[i][q] && (Double.isNaN(craffine_aff[i][0][0]) || Double.isNaN(craffine_aff[i][0][1]))) {
+				  m++;
+			   }
+		   }
+		   // Neighbors of quadnum
+		   newnbrs = new int[m];
+		   for (i = 0, j = 0; i < n-3; i++) {
+			   if (Q.adjacent[i][q] && (Double.isNaN(craffine_aff[i][0][0]) || Double.isNaN(craffine_aff[i][0][1]))) {
+				   newnbrs[j++] = i;
+			   }
+		   }
+		   for (i = 0; i < m; i++) {
+			   stack[stackptr + i + 1] = newnbrs[i];
+			   origin[stackptr + i + 1] = q;
+		   }
+		   stackptr = stackptr + m;
 	   } // while (stackptr >= 0)
+   }
+   
+   private void crfixwc(double w[][], double beta[], double cr[], double aff[][][], qlgraph Q, double wc[]) {
+       // Fix conformal center in crossratio formulation.
+	   // The conformal center is defined as the image of zero from the disk.  The parameter problem solution
+	   // obtained from crparam deliberately leaves this unspecified.  Before one can compute forward or 
+	   // inverse maps, then, one must fix the conformal center.
+	   
+	   // crfixwc returns a vector containing the information that crmap and crinvmap need in order to place
+	   // the conformal center at wc.  You must first run craffine to find aff.
+	   
+	   // If wc is null, you will be prompted for it graphically and it will be put in crfixwc_wc.
+	   
+	   // Original crfixwc MATLAB code copyright 1998 by Toby Driscoll.
+	   
+	   int i;
+	   int n;
+	   int quadnum;
+	   
+	   n = cr.length + 3;
+	   
+	   if ((wc == null) || (wc.length == 0)) {
+		   MipavUtil.displayInfo("Click to set conformal center");
+	   }
+	   
+	   // Find a quadrilateral containing wc
+	   boolean indexout[] = new boolean[1];
+	   boolean onvtx[][] = new boolean[4][1];
+	   double wcin[][] = new double[1][2];
+	   wcin[0][0] = wc[0];
+	   wcin[0][1] = wc[1];
+	   double win[][] = new double[4][2];
+	   for (quadnum = 0; quadnum < n-3; quadnum++) {
+		    for (i = 0; i < 4; i++) {
+		    	win[i][0] = w[Q.qlvert[i][quadnum]][0];
+		    	win[i][1] = w[Q.qlvert[i][quadnum]][1];
+		    }
+		    isinpoly(indexout, onvtx, wcin, win, null, 1.0E-4);
+		    if (indexout[0]) {
+		    	break;
+		    }
+	   } // for (quadnum = 0; quadnum < n-3; quadnum++)
+	   
+	   // Invert for that embedding
+	   double z[][] = crembed(cr, Q, quadnum);
+	   double subaff[][] = new double[2][2];
+	   for (i = 0; i < 2; i++) {
+		   subaff[i][0] = aff[quadnum][i][0];
+		   subaff[i][1] = aff[quadnum][i][1];
+	   }
+	   double zc[][] = crimap0(wcin, z, beta, subaff, null);
+   }
+   
+   private double[][] crimap0(double wp[][], double z[][], double beta[], double aff[][], double qdat[][]) {
+	   // Single-embedding inverse map in crossratio formulation.
+	   // crimap0 computes the inverse of wp under the map defined by the prevertex embedding z and the
+	   // affine transformation aff[0:1].
+	   
+	   // For more information on the algorithm, see dinvmap.  However, there is no issue with starting
+	   // points; the origin is always used as the starting point.
+	   
+	   // Original crimap0 MATLAB routine copyright 1998 by Toby Driscoll.
+	   int n;
+	   int lenwp;
+	   
+	   n = beta.length;
+	   lenwp = wp.length;
+	   double zp[][] = new double[lenwp][2];
+	   
+	   return zp;
    }
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
@@ -6926,7 +7086,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    String className = "rectmap";
 	    qlgraph qgraph;
 	    double crossratio[];
-	    double affine[][];
+	    double affine[][][];
 	    boolean original[];
 	    scmap() {
 	    	
