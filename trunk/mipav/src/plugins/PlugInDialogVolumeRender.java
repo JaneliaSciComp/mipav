@@ -975,7 +975,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
                 // Make algorithm
 				ModelImage blank = new ModelImage(ModelImage.SHORT, wormImage.getExtents(), JDialogBase.makeImageName(wormImage.getImageName(), ""));
-				AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(wormImage, secondImage, blank, displayImage, true, false, 255, true, true);
+				AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(secondImage, wormImage, blank, displayImage, true, false, 255, true, true);
 				mathAlgo.run();
 				
 				ModelImage.saveImage(displayImage, displayImage.getImageName(), imageFile.getParent() + File.separator);
