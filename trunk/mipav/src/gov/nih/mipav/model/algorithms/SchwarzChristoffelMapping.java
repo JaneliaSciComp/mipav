@@ -132,6 +132,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         //testDiskmap3();
         //testDiskmap4();
         //testDiskmap5();
+       // boolean testme = true;
+       // if (testme) {
+       //     testCRDiskmap1();
+       //     return;
+       // }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
 			runPolygonToRectangle();
 		}
@@ -1058,6 +1063,28 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		diskplot(M, R, theta, 200, 140, null, Integer.MIN_VALUE);
 	}
 	
+	public void testCRDiskmap1() {
+		int i;
+		int j;
+		double w[][] = new double[4][2];
+		w[0][0] = 1;
+		w[0][1] = 1;
+		w[1][0] = -1;
+		w[1][1] = 1;
+		w[2][0] = -1;
+		w[2][1] = -1;
+		w[3][0] = 1;
+		w[3][1] = -1;
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, null);
+		scmap M = crdiskmap(poly, tolerance, null, null);
+	}
+	
 	public scmap crdiskmap(polygon poly, double tolerance, double cr[][], qlgraph Q) {
 		// crdiskmap constructs a cross-ratio disk map object for the polygon p. The
 		// parameter problem is solved using default options for the crossratios of
@@ -1433,7 +1460,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    beta = scangle(w2);
 	    
 	    // Triangulate polygon.  This is done to allow the use of geodesic distance.
-	    crtriang(w);
+	    crtriang(w2);
+	    crcdt(w2);
 	}
 	
 	private void crtriang(double w[][]) {
@@ -1448,7 +1476,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// Uses a stack-based approach.  The recursive version is simpler but prone to cause
 		// memory errors.
-        int i, j, k;
+		
+        int i, j, k, m;
         int enumb;
         double segment[][] = new double[2][2];
         double s[] = new double[2];
@@ -1532,7 +1561,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		// Base case: polygon is a triangle
         		
         		// Assign the triangle a new number
-        		boolean any[] = new boolean[N-2];
         		int tnum = -1;
         		for (j = 0; j < N-2; j++) {
         			if ((crtriang_triedge[0][j] == -1) || (crtriang_triedge[1][j] == -1) || (crtriang_triedge[2][j] == -1)) {
@@ -1572,7 +1600,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         			else {
         				// Find the edge number among the first N-3
         				enumb = -1;
-        				for (i = 0; i < n-3 && (enumb == -1); i++) {
+        				for (i = 0; i < N-3 && (enumb == -1); i++) {
         					if ((crtriang_edge[0][i] == e[0][j]) && (crtriang_edge[1][i] == e[1][j])) {
         						enumb = i;
         					}
@@ -1580,12 +1608,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         			} // else
         			// Assign edge # to triangle and triangle # to edge
         			crtriang_triedge[j][tnum] = enumb;
-        			if (crtriang_edgetri[0][enumb] == -1) {
-        				crtriang_edgetri[0][enumb] = tnum;
-        			}
-        			else if (crtriang_edgetri[1][enumb] == -1) {
-        				crtriang_edgetri[1][enumb] = tnum;
-        			}
+        			if (enumb != -1) {
+	        			if (crtriang_edgetri[0][enumb] == -1) {
+	        				crtriang_edgetri[0][enumb] = tnum;
+	        			}
+	        			else if (crtriang_edgetri[1][enumb] == -1) {
+	        				crtriang_edgetri[1][enumb] = tnum;
+	        			}
+        			} // if (enumb != -1)
         		} // for (j = 0; j < 3; j++)
         	} // if (n == 3)
         	else { // n > 3
@@ -1619,20 +1649,20 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		triangle[2][1] = w2[jp1][1];
         		boolean inside[] = new boolean[n];
         		double w2nott[][] = new double[n-3][2];
-        		for (i = 0, j = 0; i < n; i++) {
+        		for (i = 0, m = 0; i < n; i++) {
         		    if (!t[i]) {
-        		    	w2nott[j][0] = w2[i][0];
-        		    	w2nott[j++][1] = w2[i][1];
+        		    	w2nott[m][0] = w2[i][0];
+        		    	w2nott[m++][1] = w2[i][1];
         		    }
         		}
         		boolean insidenott[] = new boolean[n-3];
         		onvtx = new boolean[3][n-3];
         		isinpoly(insidenott, onvtx, w2nott, triangle, null, eps);
-        		for (i = 0, j = 0; i < n; i++) {
+        		for (i = 0, m = 0; i < n; i++) {
         		    if (!t[i]) {
-        		    	inside[i] = insidenott[j++];
+        		    	inside[i] = insidenott[m++];
         		    }
-        		} // for (i = 0, j = 0; i < n; i++)
+        		} // for (i = 0, m = 0; i < n; i++)
         		// Borderline cases: on a triangle edge.
         		for (k = 1; k <= 3; k++) {
         			double d[] = new double[n];
@@ -1644,11 +1674,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		    segment[1][0] = triangle[(k+1)%3][0];
         		    segment[1][1] = triangle[(k+1)%3][1];
         		    double dnott[] = crpsdist(segment, w2nott);
-        		    for (i = 0, j = 0; i < n; i++) {
+        		    for (i = 0, m = 0; i < n; i++) {
         		    	if (!t[i]) {
-        		    		d[i] = dnott[j++];
+        		    		d[i] = dnott[m++];
         		    	}
-        		    } // for (i = 0, j = 0; i < n; i++)
+        		    } // for (i = 0, m = 0; i < n; i++)
         		    int nump = 0;
         		    for (i = 0; i < n; i++) {
         		    	if (d[i] < eps) {
@@ -1656,11 +1686,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		    	}
         		    } // for (i = 0; i < n; i++)
         		    int p[] = new int[nump];
-        		    for (i = 0, j = 0; i < n; i++) {
+        		    for (i = 0, m = 0; i < n; i++) {
         		    	if (d[i] < eps) {
-        		    	    p[j++] = i;	
+        		    	    p[m++] = i;	
         		    	}
-        		    } // for (i = 0, j = 0; i < n; i++)
+        		    } // for (i = 0, m = 0; i < n; i++)
         		    for (i = 0; i < nump; i++) {
         		    	int pi = p[i];
         		    	inside[pi] = false;
@@ -1694,9 +1724,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         			}
         		}
         		int inside2[] = new int[numinside];
-        		for (i = 0, j = 0; i < n; i++) {
+        		for (i = 0, m = 0; i < n; i++) {
         			if (inside[i]) {
-        				inside2[j++] = i;
+        				inside2[m++] = i;
         			}
         		}
         		if (numinside == 0) {
@@ -1732,8 +1762,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         							w2[jp1][1] - w2[j][1], cr, ci);
         					ang2[i] = Math.atan2(ci[0], cr[0])/Math.PI + 2.0;
         					ang2[i] = ang2[i] - 2.0*Math.floor(ang2[i]/2.0);
-        					// Detect visibility by requiring ang to be less than interior angle
         				} // for (i = 0; i < numinside; i++)
+        				// Detect visibility by requiring ang to be less than interior angle
         				int numvis = 0;
         				for (i = 0; i < numinside; i++) {
         					if ((ang1[i] < beta[inside2[i]] + 1) && (ang2[i] < beta[j] + 1)) {
@@ -1741,11 +1771,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         					}
         				} // for (i = 0; i < numinside; i++)
         				vis = new int[numvis];
-        				for (i = 0, j = 0; i < numinside; i++) {
+        				for (i = 0, m = 0; i < numinside; i++) {
         					if ((ang1[i] < beta[inside2[i]] + 1) && (ang2[i] < beta[j] + 1)) {
-        						vis[j++] = i;
+        						vis[m++] = i;
         					}
-        				} // for (i = 0, j = 0; i < numinside; i++)
+        				} // for (i = 0, m = 0; i < numinside; i++)
         				
         				// Find a line through w[j] outisde the polygon
         				dw[0][0] = w2[jp1][0] - w2[j][0];
@@ -1765,7 +1795,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         				double minD = Double.MAX_VALUE;
         				for (i = 0; i < numvis; i++) {
         					zmlt(wvis[i][0], wvis[i][1], Math.cos(theta), -Math.sin(theta), cr, ci);
-        					D[i] = zabs(wvis[i][0] - cr[0]*Math.cos(theta), wvis[i][1] + cr[0]*Math.sin(theta));
+        					D[i] = zabs(wvis[i][0] - cr[0]*Math.cos(theta), wvis[i][1] - cr[0]*Math.sin(theta));
         					if (D[i] < minD) {
         						minD= D[i];
         						k = i;
@@ -1797,9 +1827,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		crtriang_edge[1][enumb] = idx[e2[1]];
         		
         		// Indices of subdivided pieces
-        		int i1[] = new int[2];
-        		i1[0] = e2[0];
-        		i1[1] = e2[1];
+        		int i1[] = new int[e2[1]-e2[0]+1];
+        		for (i = 0; i < e2[1]-e2[0]+1; i++) {
+        			i1[i] = i + e2[0];
+        		}
         	    int i2[] = new int[n-e2[1]+e2[0]+1];
         	    for (i = 0; i < n-e2[1]; i++) {
         	    	i2[i] = e2[1] + i;
