@@ -969,6 +969,23 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			}
 			if ( secondImage != null )
 			{
+				if ( thresholdImageCheck.isSelected() )
+				{
+					for ( int i = 0; i < wormImage.getDataSize(); i++ )
+					{
+						if ( wormImage.getFloat(i) > threshold )
+						{
+							wormImage.set(i, threshold);
+						}
+						if ( secondImage.getFloat(i) > threshold )
+						{
+							secondImage.set(i, threshold);
+						}
+					}
+					wormImage.calcMinMax();     
+					secondImage.calcMinMax();     
+				}
+				
 				ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, wormImage.getExtents(),
 						JDialogBase.makeImageName(wormImage.getImageName(), "_rgb"));
 				JDialogBase.updateFileInfo(wormImage, displayImage);
