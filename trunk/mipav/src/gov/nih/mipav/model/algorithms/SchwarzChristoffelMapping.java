@@ -1364,7 +1364,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Original MATLAB routine copyright 1998 by Toby Driscoll.
 		
 		// First, isolate sharp corners.
-		int i, j;
+		int i, j, k;
 		double cr[] = new double[1];
 		double ci[] = new double[1];
 		int n = w.length;
@@ -1418,11 +1418,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        	neww[2][j][1] = w[j][1] + 0.5*mindist*result[1];
 	        } // if (sharp[j])
 	    } // for (j = 0; j < n; j++)
-	    double w2[][] = new double[3*n][2];
+	    double wa[][] = new double[3*n][2];
 	    for (j = 0; j < n; j++) {
 	    	for (i = 0; i < 3; i++) {
-	    		w2[i+3*j][0] = neww[i][j][0];
-	    		w2[i+3*j][1] = neww[i][j][1];
+	    		wa[i+3*j][0] = neww[i][j][0];
+	    		wa[i+3*j][1] = neww[i][j][1];
 	    	}
 	    } // for (j = 0; j < n; j++)
 	    boolean sharp2[][] = new boolean[3][n];
@@ -1436,7 +1436,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	}
 	    }
 	    for (i = 0; i < 3*n; i++) {
-	    	if (Double.isNaN(w2[i][0]) || Double.isNaN(w2[i][1])) {
+	    	if (Double.isNaN(wa[i][0]) || Double.isNaN(wa[i][1])) {
 	    		sharp3[i] = false;
 	    	}
 	    } // for (i = 0; i < 3*n; i++)
@@ -1451,18 +1451,264 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	}
 	    } // for (j = 0; j < n; j++)
 	    for (i = 0; i < 3*n; i++) {
-	    	if (Double.isNaN(w2[i][0]) || Double.isNaN(w2[i][1])) {
+	    	if (Double.isNaN(wa[i][0]) || Double.isNaN(wa[i][1])) {
 	    		orig2[i] = false;
-	    		w2[i][0] = 0.0;
-	    		w2[i][1] = 0.0;
+	    		wa[i][0] = 0.0;
+	    		wa[i][1] = 0.0;
 	    	}
 	    } // for (i = 0; i < 3*n; i++)
-	    beta = scangle(w2);
+	    beta = scangle(wa);
 	    
 	    // Triangulate polygon.  This is done to allow the use of geodesic distance.
-	    crtriang(w2);
-	    crcdt(w2);
-	}
+	    crtriang(wa);
+	    crcdt(wa);
+	    // Build an adjacency matrix for the vertices in the triangulation
+	    int maxEdgeValue = 0;
+	    for (i = 0; i < 2; i++) {
+	    	for (j = 0; j < crtriang_edge[0].length; j++) {
+	    		if (crtriang_edge[i][j] > maxEdgeValue) {
+	    			maxEdgeValue = crtriang_edge[i][j];
+	    		}
+	    	}
+	    }
+	    boolean V[][] = new boolean[maxEdgeValue+1][maxEdgeValue+1];
+	    for (j = 0; j < crtriang_edge[0].length; j++) {
+	    	V[crtriang_edge[0][j]][crtriang_edge[1][j]] = true;
+	    	V[crtriang_edge[1][j]][crtriang_edge[0][j]] = true;
+	    }
+	    
+	    // Begin iterative phase
+	    boolean done = false;
+	    while (!done) {
+	        done = true;
+	        n = wa.length;
+	        neww = new double[3][n][2];
+			for (i = 0; i < 3; i++) {
+				for (j = 0; j < n; j++) {
+					neww[i][j][0] = Double.NaN;
+				}
+			}
+			for (i = 0; i < n; i++) {
+				neww[1][i][0] = wa[i][0];
+				neww[1][i][1] = wa[i][1];
+			}
+			for (j = 0; j < n; j++) {
+			    if (((j == n-1) && (!sharp[n-1]) && (!sharp[0])) || ((j != n-1)	&& (!sharp[j]) && (!sharp[j+1]))) {
+			        // Vertices in sequence, mode n
+			    	int jp1 = (j+1)%n;
+			    	int jm1 = (j-1+n)%n;
+			    	int jp2 = (jp1+1)%n;
+			    	
+			    	// All points other than j and jp1
+			    	boolean mask[] = new boolean[n];
+			    	for (i = 0; i < n; i++) {
+			    		mask[i] = true;
+			    	}
+			    	mask[j] = false;
+			    	mask[jp1] = false;
+			    	// Points adjacent to j in triangulation
+			    	boolean mask1[] = new boolean[n];
+			    	for (i = 0; i < n; i++) {
+			    		mask1[i] = V[i][j] & mask[i];
+			    	}
+			    	// Exclusion in the case of a slit (would appear as zero distance)
+			    	if (Math.abs(beta[j]-1.0) < eps) {
+			    		mask[jm1] = false;
+			    	}
+			    	int nummask1 = 0;
+			    	for (i = 0; i < n; i++) {
+			    		if (mask1[i]) {
+			    			nummask1++;
+			    		}
+			    	}
+			    	double w1[][] = new double[nummask1][2];
+			    	for (i = 0, k = 0; i < n; i++) {
+			    		if (mask1[i]) {
+			    			w1[k][0] = wa[i][0];
+			    			w1[k][1] = wa[i][1];
+			    			k++;
+			    		}
+			    	}
+			    	// Points adjacent to jp1, with slit exclusion
+			    	boolean mask2[] = new boolean[n];
+			    	for (i = 0; i < n; i++) {
+			    		mask2[i] = V[i][jp1] & mask[i];
+			    	}
+			    	if (Math.abs(beta[jp1]-1) < eps) {
+			    		mask2[jp2] = false;
+			    	}
+			    	int nummask2 = 0;
+			    	for (i = 0; i < n; i++) {
+			    		if (mask2[i]) {
+			    			nummask2++;
+			    		}
+			    	}
+			    	double w2[][] = new double[nummask2][2];
+			    	for (i = 0, k = 0; i < n; i++) {
+			    		if (mask2[i]) {
+			    			w2[k][0] = wa[i][0];
+			    			w2[k][1] = wa[i][1];
+			    			k++;
+			    		}
+			    	}
+			    	// Geodesic distance from adjacent points to segment [w[j], w[jp1]]
+			    	double dist1[] = new double[w1.length];
+			    	double dist2[] = new double[w2.length];
+			    	double segment[][] = new double[2][2];
+			    	segment[0][0] = wa[j][0];
+			    	segment[0][1] = wa[j][1];
+			    	segment[1][0] = wa[jp1][0];
+			    	segment[1][1] = wa[jp1][1];
+			    	crpsgd(dist1, dist2, segment, w1, w2);
+			    	double dist[] = new double[dist1.length + dist2.length];
+			    	double minDist = Double.MAX_VALUE;
+			    	for (i = 0; i < dist1.length; i++) {
+			    		dist[i] = dist1[i];
+			    		if (dist[i] < minDist) {
+			    			minDist = dist[i];
+			    		}
+			    	}
+			    	for (i = 0; i < dist2.length; i++) {
+			    		dist[i + dist1.length] = dist2[i];
+			    		if (dist[i] < minDist) {
+			    			minDist = dist[i];
+			    		}
+			    	}
+			    	// If distance is too small, subdivide
+			    	if (minDist/zabs(wa[jp1][0] - wa[j][0], wa[jp1][1] - wa[j][1]) < 1.0/(Math.sqrt(2.0) * 3.0)) {
+			    		done = false;
+			    		neww[1][j][0] = wa[j][0] + (1.0/3.0)*(wa[jp1][0] - wa[j][0]);
+			    		neww[1][j][1] = wa[j][1] + (1.0/3.0)*(wa[jp1][1] - wa[j][1]);
+			    		neww[2][j][0] = wa[j][0] + (2.0/3.0)*(wa[jp1][0] - wa[j][0]);
+			    		neww[2][j][1] = wa[j][1] + (2.0/3.0)*(wa[jp1][1] - wa[j][1]);
+			    	}
+			    } //  if (((j == n-1) && (!sharp[n-1]) && (!sharp[0])) || ((j != n-1)	&& (!sharp[j]) && (!sharp[j+1])))
+			} // for (j = 0; j < n; j++)
+			
+			// Update triangulation
+			// First, update edge vertex numbers
+			double renum[][][] = new double[3][n][2];
+			for (i = 0; i < 3; i++) {
+				for (j = 0; j < n; j++) {
+					renum[i][j][0] = neww[i][j][0];
+					renum[i][j][1] = neww[i][j][1];
+				}
+			}
+			int numnumber = 0;
+			for (j = 0; j < n; j++) {
+				for (i = 0; i < 3; i++) {
+					if ((!Double.isNaN(neww[i][j][0])) && (!Double.isNaN(neww[i][j][1]))) {
+						renum[i][j][0] = numnumber++;
+						renum[i][j][1] = 0.0;
+					}
+				}
+			}
+	    } // while (!done)
+	} // crsplit
+	
+	private void crpsgd(double d1[], double d2[], double[][] segment, double pts1[][], double pts2[][]) {
+	    // Geodesic distance from points to a line segment
+		// crpsgd computes geodesic distance from two sets of points, pts1 and pts2, to a directed
+		// segment.  "Geodesic distance" here means that the segment describes an "inside" (to the left
+		// along the directed segment) and an "outside".  For points "inside", the distance is the usual
+		// point-segment distance.  For points "outside", the distance for a point in {pts[j]} is the
+		// distance to segment[j].  Typically the points in pts{j} are vertices of a polygon adjacent to
+		// segment[j] in a constrained Delaunay triangulation, and one needs to know the polygon-interior
+		// distance from each vertex to the polygon side segment.
+		
+		int i, j;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		for (i = 0; i < d1.length; i++) {
+			d1[i] = Double.POSITIVE_INFINITY;
+		}
+		for (i = 0; i < d2.length; i++) {
+			d2[i] = Double.POSITIVE_INFINITY;
+		}
+		
+		double diffseg[] = new double[2];
+		diffseg[0] = segment[1][0] - segment[0][0];
+		diffseg[1] = segment[1][1] - segment[0][1];
+		double signdiff[] = sign(diffseg[0], diffseg[1]);
+		zdiv(1.0, 0.0, signdiff[0], signdiff[1], cr, ci);
+		double rot[] = new double[2];
+		rot[0] = cr[0];
+		rot[1] = ci[0];
+		
+		// For points to the left of the segment, use normal pt-seg distance.  For others,
+		// use distance to the vertex it "belongs" to.
+		double pts[][] = new double[pts1.length][2];
+		for (i = 0; i < pts1.length; i++) {
+			zmlt(pts1[i][0] - segment[0][0], pts1[i][1] - segment[0][1], rot[0], rot[1], cr, ci);
+			pts[i][0] = cr[0];
+			pts[i][1] = ci[0];
+		}
+		boolean mask[] = new boolean[pts1.length];
+		int summask = 0;
+		for (i = 0; i < pts1.length; i++) {
+			if (pts[i][1] > eps) {
+				mask[i] = true;
+				summask++;
+			}
+		}
+		if (summask > 0) {
+		    double pts1mask[][] = new double[summask][2];
+		    for (i = 0, j = 0; i < pts1.length; i++) {
+		    	if (mask[i]) {
+		    		pts1mask[j][0] = pts1[i][0];
+		    		pts1mask[j][1] = pts1[i][1];
+		    		j++;
+		    	}
+		    } //  for (i = 0, j = 0; i < pts1.length; i++)
+		    double d1mask[] = crpsdist(segment, pts1mask);
+		    for (i = 0, j = 0; i < pts1.length; i++) {
+		    	if (mask[i]) {
+		    		d1[i] = d1mask[j++];
+		    	}
+		    } // for (i = 0, j = 0; i < pts1.length; i++) 
+		} // if (summask > 0)
+		for (i = 0; i < pts1.length; i++) {
+			if (!mask[i]) {
+				d1[i] = zabs(pts1[i][0] - segment[0][0], pts1[i][1] - segment[0][1]);
+			}
+		} // for (i = 0; i < pts1.length; i++)
+		
+		pts = new double[pts2.length][2];
+		for (i = 0; i < pts2.length; i++) {
+			zmlt(pts2[i][0] - segment[0][0], pts2[i][1] - segment[0][1], rot[0], rot[1], cr, ci);
+			pts[i][0] = cr[0];
+			pts[i][1] = ci[0];
+		}
+		mask = new boolean[pts2.length];
+		summask = 0;
+		for (i = 0; i < pts2.length; i++) {
+			if (pts[i][1] > eps) {
+				mask[i] = true;
+				summask++;
+			}
+		}
+		if (summask > 0) {
+		    double pts2mask[][] = new double[summask][2];
+		    for (i = 0, j = 0; i < pts2.length; i++) {
+		    	if (mask[i]) {
+		    		pts2mask[j][0] = pts2[i][0];
+		    		pts2mask[j][1] = pts2[i][1];
+		    		j++;
+		    	}
+		    } //  for (i = 0, j = 0; i < pts2.length; i++)
+		    double d2mask[] = crpsdist(segment, pts2mask);
+		    for (i = 0, j = 0; i < pts2.length; i++) {
+		    	if (mask[i]) {
+		    		d2[i] = d2mask[j++];
+		    	}
+		    } // for (i = 0, j = 0; i < pts2.length; i++) 
+		} // if (summask > 0)
+		for (i = 0; i < pts2.length; i++) {
+			if (!mask[i]) {
+				d2[i] = zabs(pts2[i][0] - segment[1][0], pts2[i][1] - segment[1][1]);
+			}
+		} // for (i = 0; i < pts2.length; i++)
+	} // crpsgd
 	
 	private void crtriang(double w[][]) {
 	    // Triangulate a polygon.
@@ -1949,7 +2195,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	   double cr[] = new double[1];
 	   double ci[] = new double[1];
 	   double alpha[] = new double[4];
-	    // crtriang_edge[0].length = 2*n-3 ande crtriang_edgetri[i].length = 2n-3
+	    // crtriang_edge[0].length = 2*n-3 and crtriang_edgetri[i].length = 2n-3
 	   int numedge = crtriang_edge[0].length;
 	   boolean interior[] = new boolean[numedge];
 	   for (i = 0; i < interior.length; i++) {
