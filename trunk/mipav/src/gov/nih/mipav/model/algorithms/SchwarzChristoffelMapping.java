@@ -1435,11 +1435,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    		sharp3[i+3*j] = sharp2[i][j];
 	    	}
 	    }
+	    int sharpkeep = 0;
 	    for (i = 0; i < 3*n; i++) {
-	    	if (Double.isNaN(wa[i][0]) || Double.isNaN(wa[i][1])) {
-	    		sharp3[i] = false;
+	    	if ((!Double.isNaN(wa[i][0])) && (!Double.isNaN(wa[i][1]))) { 
+	    		sharpkeep++;
 	    	}
 	    } // for (i = 0; i < 3*n; i++)
+	    boolean sharp4[] = new boolean[sharpkeep];
+	    for (i = 0, j = 0; i < 3*n; i++) {
+	        if ((!Double.isNaN(wa[i][0])) && (!Double.isNaN(wa[i][1]))) {
+	        	sharp4[j++] = sharp3[i];
+	        }
+	    }
 	    boolean orig[][] = new boolean[3][n];
 	    for (i = 0; i < n; i++) {
 	    	orig[1][i] = true;
@@ -1450,18 +1457,24 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    		orig2[i+3*j] = orig[i][j];
 	    	}
 	    } // for (j = 0; j < n; j++)
-	    for (i = 0; i < 3*n; i++) {
-	    	if (Double.isNaN(wa[i][0]) || Double.isNaN(wa[i][1])) {
-	    		orig2[i] = false;
-	    		wa[i][0] = 0.0;
-	    		wa[i][1] = 0.0;
-	    	}
+	    boolean orig3[] = new boolean[sharpkeep];
+	    for (i = 0, j = 0; i < 3*n; i++) {
+	    	if ((!Double.isNaN(wa[i][0])) && (!Double.isNaN(wa[i][1]))) {
+	        	orig3[j++] = orig2[i];
+	        }	
 	    } // for (i = 0; i < 3*n; i++)
-	    beta = scangle(wa);
+	    double wa2[][] = new double[sharpkeep][2];
+	    for (i = 0, j = 0; i < 3*n; i++) {
+	    	if ((!Double.isNaN(wa[i][0])) && (!Double.isNaN(wa[i][1]))) {
+	    		wa2[j][0] = wa[i][0];
+	    		wa2[j++][1] = wa[i][1];
+	    	}
+	    }
+	    beta = scangle(wa2);
 	    
 	    // Triangulate polygon.  This is done to allow the use of geodesic distance.
-	    crtriang(wa);
-	    crcdt(wa);
+	    crtriang(wa2);
+	    crcdt(wa2);
 	    // Build an adjacency matrix for the vertices in the triangulation
 	    int maxEdgeValue = 0;
 	    for (i = 0; i < 2; i++) {
@@ -1481,7 +1494,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    boolean done = false;
 	    while (!done) {
 	        done = true;
-	        n = wa.length;
+	        n = wa2.length;
 	        neww = new double[3][n][2];
 			for (i = 0; i < 3; i++) {
 				for (j = 0; j < n; j++) {
@@ -1489,11 +1502,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				}
 			}
 			for (i = 0; i < n; i++) {
-				neww[1][i][0] = wa[i][0];
-				neww[1][i][1] = wa[i][1];
+				neww[1][i][0] = wa2[i][0];
+				neww[1][i][1] = wa2[i][1];
 			}
 			for (j = 0; j < n; j++) {
-			    if (((j == n-1) && (!sharp[n-1]) && (!sharp[0])) || ((j != n-1)	&& (!sharp[j]) && (!sharp[j+1]))) {
+			    if (((j == n-1) && (!sharp4[n-1]) && (!sharp4[0])) || ((j != n-1)	&& (!sharp4[j]) && (!sharp4[j+1]))) {
 			        // Vertices in sequence, mode n
 			    	int jp1 = (j+1)%n;
 			    	int jm1 = (j-1+n)%n;
@@ -1524,8 +1537,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    	double w1[][] = new double[nummask1][2];
 			    	for (i = 0, k = 0; i < n; i++) {
 			    		if (mask1[i]) {
-			    			w1[k][0] = wa[i][0];
-			    			w1[k][1] = wa[i][1];
+			    			w1[k][0] = wa2[i][0];
+			    			w1[k][1] = wa2[i][1];
 			    			k++;
 			    		}
 			    	}
@@ -1546,8 +1559,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    	double w2[][] = new double[nummask2][2];
 			    	for (i = 0, k = 0; i < n; i++) {
 			    		if (mask2[i]) {
-			    			w2[k][0] = wa[i][0];
-			    			w2[k][1] = wa[i][1];
+			    			w2[k][0] = wa2[i][0];
+			    			w2[k][1] = wa2[i][1];
 			    			k++;
 			    		}
 			    	}
@@ -1555,10 +1568,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    	double dist1[] = new double[w1.length];
 			    	double dist2[] = new double[w2.length];
 			    	double segment[][] = new double[2][2];
-			    	segment[0][0] = wa[j][0];
-			    	segment[0][1] = wa[j][1];
-			    	segment[1][0] = wa[jp1][0];
-			    	segment[1][1] = wa[jp1][1];
+			    	segment[0][0] = wa2[j][0];
+			    	segment[0][1] = wa2[j][1];
+			    	segment[1][0] = wa2[jp1][0];
+			    	segment[1][1] = wa2[jp1][1];
 			    	crpsgd(dist1, dist2, segment, w1, w2);
 			    	double dist[] = new double[dist1.length + dist2.length];
 			    	double minDist = Double.MAX_VALUE;
@@ -1575,35 +1588,206 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    		}
 			    	}
 			    	// If distance is too small, subdivide
-			    	if (minDist/zabs(wa[jp1][0] - wa[j][0], wa[jp1][1] - wa[j][1]) < 1.0/(Math.sqrt(2.0) * 3.0)) {
+			    	if (minDist/zabs(wa2[jp1][0] - wa2[j][0], wa2[jp1][1] - wa2[j][1]) < 1.0/(Math.sqrt(2.0) * 3.0)) {
 			    		done = false;
-			    		neww[1][j][0] = wa[j][0] + (1.0/3.0)*(wa[jp1][0] - wa[j][0]);
-			    		neww[1][j][1] = wa[j][1] + (1.0/3.0)*(wa[jp1][1] - wa[j][1]);
-			    		neww[2][j][0] = wa[j][0] + (2.0/3.0)*(wa[jp1][0] - wa[j][0]);
-			    		neww[2][j][1] = wa[j][1] + (2.0/3.0)*(wa[jp1][1] - wa[j][1]);
+			    		neww[1][j][0] = wa2[j][0] + (1.0/3.0)*(wa2[jp1][0] - wa2[j][0]);
+			    		neww[1][j][1] = wa2[j][1] + (1.0/3.0)*(wa2[jp1][1] - wa2[j][1]);
+			    		neww[2][j][0] = wa2[j][0] + (2.0/3.0)*(wa2[jp1][0] - wa2[j][0]);
+			    		neww[2][j][1] = wa2[j][1] + (2.0/3.0)*(wa2[jp1][1] - wa2[j][1]);
 			    	}
-			    } //  if (((j == n-1) && (!sharp[n-1]) && (!sharp[0])) || ((j != n-1)	&& (!sharp[j]) && (!sharp[j+1])))
+			    } //  if (((j == n-1) && (!sharp4[n-1]) && (!sharp4[0])) || ((j != n-1)	&& (!sharp4[j]) && (!sharp4[j+1])))
 			} // for (j = 0; j < n; j++)
 			
 			// Update triangulation
 			// First, update edge vertex numbers
-			double renum[][][] = new double[3][n][2];
-			for (i = 0; i < 3; i++) {
-				for (j = 0; j < n; j++) {
-					renum[i][j][0] = neww[i][j][0];
-					renum[i][j][1] = neww[i][j][1];
-				}
-			}
+			int renum[][] = new int[3][n];
 			int numnumber = 0;
 			for (j = 0; j < n; j++) {
 				for (i = 0; i < 3; i++) {
 					if ((!Double.isNaN(neww[i][j][0])) && (!Double.isNaN(neww[i][j][1]))) {
-						renum[i][j][0] = numnumber++;
-						renum[i][j][1] = 0.0;
+						renum[i][j] = numnumber++;
+					}
+					else {
+						renum[i][j] = -1;
 					}
 				}
 			}
+			for (j = 0; j < crtriang_edge[0].length; j++) {
+				for (i = 0; i < 2; i++) {
+					crtriang_edge[i][j] = renum[0][crtriang_edge[i][j]];
+				}
+			} // for (j = 0; j < crtriang_edge[0].length; j++)
+			// Now update triangles and edges
+			int numnew = 0;
+			for (i = 0; i < n; i++) {
+				if ((!Double.isNaN(neww[1][i][0])) && (!Double.isNaN(neww[1][i][1]))) {
+					numnew++;
+				}
+			}
+			int newv[] = new int[numnew];
+			for (i = 0, j = 0; i < n; i++) {
+				if ((!Double.isNaN(neww[1][i][0])) && (!Double.isNaN(neww[1][i][1]))) {
+					newv[j++] = i;
+				}	
+			}
+			int newn = 0;
+			for (i = 0; i < 3; i++) {
+				for (j = 0; j < n; j++) {
+					if ((!Double.isNaN(neww[i][j][0])) && (!Double.isNaN(neww[i][j][1]))) {
+						newn++;
+					}		
+				}
+			}
+			
+			for (i = 0; i < newv.length; i++) {
+				j = newv[i];
+				// Endpoints of newly split edge
+				int idx[] = new int[2];
+				idx[0] = renum[0][j];
+				idx[1] = renum[0][(j+1)%n];
+				// Find split edge
+				int e = -1;
+				for (k = 0; k < crtriang_edge[0].length && (e == -1); k++) {
+				    if ((crtriang_edge[0][k] >= 0) && (crtriang_edge[0][k] == idx[1]) &&
+				    	(crtriang_edge[1][k] >= 0) && (crtriang_edge[1][k] == idx[0])) {
+				    	e = k;
+				    }
+				}
+				if (e == -1) {
+					for (k = 0; k < crtriang_edge[0].length && (e == -1); k++) {
+					    if ((crtriang_edge[0][k] >= 0) && (crtriang_edge[0][k] == idx[0]) &&
+					    	(crtriang_edge[1][k] >= 0) && (crtriang_edge[1][k] == idx[1])) {
+					    	e = k;
+					    }
+					}	
+				}
+				// Triangle that edge e was in
+				int t = crtriang_triedge[0][e];
+				// Replace e by new edge
+				crtriang_edge[0][e] = idx[0];
+				crtriang_edge[1][e] = idx[0] + 1;
+				// Edges of t
+				int te[] = new int[3];
+				for (k = 0; k < 3; k++) {
+					te[k] = crtriang_triedge[k][t];
+				}
+				// e's place among t's edges
+				int m = -1;
+				for (k = 0; (k < 3) & (m == -1); k++) {
+					if (te[k] == e) {
+						m = k;
+					}
+				}
+				int ntri = crtriang_triedge[0].length;
+				int nedge = crtriang_edge[0].length;
+				// Find the edge in triangle t that is ccw from e
+				int i2 = (m+1)%3;
+				int e2 = te[i2];
+				if ((crtriang_edge[0][e2] != idx[1]) && (crtriang_edge[1][e2] != idx[1])) {
+					i2 = (m+2)%3;
+					e2 = te[i2];
+				}
+				// 3rd vertex of t
+				int vtx = -1;
+				for (k = 0; (k < 2) && (vtx == -1); k++) {
+				    if (crtriang_edge[k][e2] != idx[1]) {
+				    	vtx = crtriang_edge[k][e2];
+				    }
+				}
+				// New interior edges
+				crtriang_edge[0][nedge+1] = idx[0] + 1;
+				crtriang_edge[0][nedge+2] = idx[0] + 2;
+				crtriang_edge[1][nedge+1] = vtx;
+				crtriang_edge[1][nedge+2] = vtx;
+				// New boundary edges
+				crtriang_edge[0][nedge+3] = (idx[0]+1)%newn;
+				crtriang_edge[0][nedge+4] = (idx[0]+2)%newn;
+				crtriang_edge[1][nedge+3] = (idx[0]+2)%newn;
+				crtriang_edge[1][nedge+4] = (idx[0]+3)%newn;
+				// 2 new triangles and an old one replaced
+				crtriang_triedge[0][ntri+1] = nedge + 3;
+				crtriang_triedge[0][ntri+2] = nedge + 2;
+				crtriang_triedge[1][ntri+1] = nedge + 2;
+				crtriang_triedge[1][ntri+2] = nedge + 4;
+			    crtriang_triedge[2][ntri+1] = nedge + 1;
+			    crtriang_triedge[2][ntri+2] = e2;
+			    crtriang_triedge[i2][t] = nedge + 1;
+			    // New triangle memberships for new edges and e2
+			    crtriang_edgetri[0][nedge+1] = t;
+			    crtriang_edgetri[0][nedge+2] = ntri+1;
+			    crtriang_edgetri[1][nedge+1] = ntri+1;
+			    crtriang_edgetri[1][nedge+2] = ntri+2;
+			    crtriang_edgetri[0][nedge+3] = ntri+1;
+			    crtriang_edgetri[0][nedge+4] = ntri+2;
+			    crtriang_edgetri[1][nedge+3] = 0;
+			    crtriang_edgetri[1][nedge+4] = 0;
+			    e2 = -1;
+			    for (k = 0; (k < 2); k++) {
+			        if (crtriang_edgetri[k][e2] == t) {
+			        	crtriang_edgetri[k][e2] = ntri+2;
+			        }
+			    }
+			} // for (i = 0; i < newv.length; i++)
+			
+			for (j = 0; j < n; j++) {
+		    	for (i = 0; i < 3; i++) {
+		    		wa2[i+3*j][0] = neww[i][j][0];
+		    		wa2[i+3*j][1] = neww[i][j][1];
+		    	}
+		    } // for (j = 0; j < n; j++)
+			boolean sharp5[][] = new boolean[3][n];
+			for (i = 0; i < n; i++) {
+				sharp5[0][i] = sharp4[i];
+			}
+			boolean sharp6[] = new boolean[3*n];
+			for (j = 0; j < n; j++) {
+				for (i = 0; i < 3; i++) {
+					sharp6[i+3*j] = sharp5[i][j];
+				}
+			}
+			sharpkeep = 0;
+		    for (i = 0; i < 3*n; i++) {
+		    	if ((!Double.isNaN(wa2[i][0])) && (!Double.isNaN(wa2[i][1]))) { 
+		    		sharpkeep++;
+		    	}
+		    } // for (i = 0; i < 3*n; i++)
+		    sharp4 = new boolean[sharpkeep];
+		    for (i = 0, j = 0; i < 3*n; i++) {
+		        if ((!Double.isNaN(wa2[i][0])) && (!Double.isNaN(wa2[i][1]))) {
+		        	sharp4[j++] = sharp6[i];
+		        }
+		    }
+		    boolean orig4[][] = new boolean[3][n];
+		    for (i = 0; i < n; i++) {
+		    	orig4[0][i] = orig3[i];
+		    }
+		    boolean orig5[] = new boolean[3*n];
+		    for (j = 0; j < n; j++) {
+				for (i = 0; i < 3; i++) {
+					orig5[i+3*j] = orig4[i][j];
+				}
+			}
+		    orig3 = new boolean[sharpkeep];
+		    for (i = 0, j = 0; i < 3*n; i++) {
+		        if ((!Double.isNaN(wa2[i][0])) && (!Double.isNaN(wa2[i][1]))) {
+		        	orig3[j++] = orig5[i];
+		        }
+		    }
+		    double wa3[][] = new double[sharpkeep][2];
+		    for (i = 0, j = 0; i < 3*n; i++) {
+		        if ((!Double.isNaN(wa2[i][0])) && (!Double.isNaN(wa2[i][1]))) {
+		        	wa3[j][0] = wa2[i][0];
+		        	wa3[j++][1] = wa2[i][1];
+		        }
+		    }
+		    wa2 = new double[sharpkeep][2];
+		    for (i = 0; i < sharpkeep; i++) {
+		    	wa2[i][0] = wa3[i][0];
+		    	wa2[i][1] = wa3[i][1];
+		    }
+		    beta = scangle(wa2);
 	    } // while (!done)
+	    
 	} // crsplit
 	
 	private void crpsgd(double d1[], double d2[], double[][] segment, double pts1[][], double pts2[][]) {
