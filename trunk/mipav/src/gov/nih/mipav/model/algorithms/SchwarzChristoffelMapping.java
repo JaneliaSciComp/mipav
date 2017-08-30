@@ -73,7 +73,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private double craffine_aff[][][] = null;
 	private double craffine_wn[][] = null;
 	
-	private qlgraph crqgraph_Q = null;
+	private qlgraph crqgraph_Q = new qlgraph();
 	
 	private int crfixwc_quadnum;
 	private double crfixwc_mt[][] = new double[4][2];
@@ -132,11 +132,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         //testDiskmap3();
         //testDiskmap4();
         //testDiskmap5();
-       // boolean testme = true;
-       // if (testme) {
-       //     testCRDiskmap1();
-       //     return;
-       // }
+        //boolean testme = true;
+        //if (testme) {
+            //testCRDiskmap1();
+            //return;
+        //}
 		if (algorithm == POLYGON_TO_RECTANGLE) {
 			runPolygonToRectangle();
 		}
@@ -1165,7 +1165,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		int T[] = new int[3];
 		double sum[] = new double[2];
 		for (i = 0; i < 3; i++) {
-		    T[i] = Q.qlvert[i][0];
+		    T[i] = crqgraph_Q.qlvert[i][0];
 		    sum[0] += crsplit_neww[T[i]][0];
 		    sum[1] += crsplit_neww[T[i]][1];
 		}
@@ -1246,13 +1246,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// Compare them
 		for (i = 0; i < n-3; i++) {
+			//System.out.println("crimage["+i+"]["+0+"] = " + crimage[i][0]);
+			//System.out.println("crtarget["+i+"]["+0+"] = " + crtarget[i][0]);
+			//System.out.println("crimage["+i+"]["+1+"] = " + crimage[i][1]);
+			//System.out.println("crtarget["+i+"]["+1+"] = " + crtarget[i][1]);
 		    presentAcc = zabs(crimage[i][0] - crtarget[i][0], crimage[i][1] - crtarget[i][1]);
 		    if (presentAcc > acc) {
 		    	acc = presentAcc;
 		    }
 		}
 		
-		System.out.println("Accuracy for cross-ratio disk map - " + acc);
+		System.out.println("Accuracy for cross-ratio disk map = " + acc);
 		
 		return acc;
 	}
@@ -1457,10 +1461,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    		orig2[i+3*j] = orig[i][j];
 	    	}
 	    } // for (j = 0; j < n; j++)
-	    boolean orig3[] = new boolean[sharpkeep];
+	    crsplit_orig = new boolean[sharpkeep];
 	    for (i = 0, j = 0; i < 3*n; i++) {
 	    	if ((!Double.isNaN(wa[i][0])) && (!Double.isNaN(wa[i][1]))) {
-	        	orig3[j++] = orig2[i];
+	        	crsplit_orig[j++] = orig2[i];
 	        }	
 	    } // for (i = 0; i < 3*n; i++)
 	    double wa2[][] = new double[sharpkeep][2];
@@ -1502,8 +1506,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				}
 			}
 			for (i = 0; i < n; i++) {
-				neww[1][i][0] = wa2[i][0];
-				neww[1][i][1] = wa2[i][1];
+				neww[0][i][0] = wa2[i][0];
+				neww[0][i][1] = wa2[i][1];
 			}
 			for (j = 0; j < n; j++) {
 			    if (((j == n-1) && (!sharp4[n-1]) && (!sharp4[0])) || ((j != n-1)	&& (!sharp4[j]) && (!sharp4[j+1]))) {
@@ -1583,8 +1587,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    	}
 			    	for (i = 0; i < dist2.length; i++) {
 			    		dist[i + dist1.length] = dist2[i];
-			    		if (dist[i] < minDist) {
-			    			minDist = dist[i];
+			    		if (dist[i + dist1.length] < minDist) {
+			    			minDist = dist[i + dist1.length];
 			    		}
 			    	}
 			    	// If distance is too small, subdivide
@@ -1648,15 +1652,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				// Find split edge
 				int e = -1;
 				for (k = 0; k < crtriang_edge[0].length && (e == -1); k++) {
-				    if ((crtriang_edge[0][k] >= 0) && (crtriang_edge[0][k] == idx[1]) &&
-				    	(crtriang_edge[1][k] >= 0) && (crtriang_edge[1][k] == idx[0])) {
+				    if ((crtriang_edge[0][k] >= 0) && (crtriang_edge[0][k] == idx[0]) &&
+				    	(crtriang_edge[1][k] >= 0) && (crtriang_edge[1][k] == idx[1])) {
 				    	e = k;
 				    }
 				}
 				if (e == -1) {
 					for (k = 0; k < crtriang_edge[0].length && (e == -1); k++) {
-					    if ((crtriang_edge[0][k] >= 0) && (crtriang_edge[0][k] == idx[0]) &&
-					    	(crtriang_edge[1][k] >= 0) && (crtriang_edge[1][k] == idx[1])) {
+					    if ((crtriang_edge[0][k] >= 0) && (crtriang_edge[0][k] == idx[1]) &&
+					    	(crtriang_edge[1][k] >= 0) && (crtriang_edge[1][k] == idx[0])) {
 					    	e = k;
 					    }
 					}	
@@ -1729,6 +1733,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    }
 			} // for (i = 0; i < newv.length; i++)
 			
+			wa2 = new double[3*n][2];
 			for (j = 0; j < n; j++) {
 		    	for (i = 0; i < 3; i++) {
 		    		wa2[i+3*j][0] = neww[i][j][0];
@@ -1759,7 +1764,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    }
 		    boolean orig4[][] = new boolean[3][n];
 		    for (i = 0; i < n; i++) {
-		    	orig4[0][i] = orig3[i];
+		    	orig4[0][i] = crsplit_orig[i];
 		    }
 		    boolean orig5[] = new boolean[3*n];
 		    for (j = 0; j < n; j++) {
@@ -1767,10 +1772,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					orig5[i+3*j] = orig4[i][j];
 				}
 			}
-		    orig3 = new boolean[sharpkeep];
+		    crsplit_orig = new boolean[sharpkeep];
 		    for (i = 0, j = 0; i < 3*n; i++) {
 		        if ((!Double.isNaN(wa2[i][0])) && (!Double.isNaN(wa2[i][1]))) {
-		        	orig3[j++] = orig5[i];
+		        	crsplit_orig[j++] = orig5[i];
 		        }
 		    }
 		    double wa3[][] = new double[sharpkeep][2];
@@ -1786,7 +1791,32 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	wa2[i][1] = wa3[i][1];
 		    }
 		    beta = scangle(wa2);
+		    
+		    // Recompute CDT for geodesic distance
+		    crcdt(wa2);
+		    // Build an adjacency matrix for the vertices in the triangulation
+		    maxEdgeValue = 0;
+		    for (i = 0; i < 2; i++) {
+		    	for (j = 0; j < crtriang_edge[0].length; j++) {
+		    		if (crtriang_edge[i][j] > maxEdgeValue) {
+		    			maxEdgeValue = crtriang_edge[i][j];
+		    		}
+		    	}
+		    }
+		    V = new boolean[maxEdgeValue+1][maxEdgeValue+1];
+		    for (j = 0; j < crtriang_edge[0].length; j++) {
+		    	V[crtriang_edge[0][j]][crtriang_edge[1][j]] = true;
+		    	V[crtriang_edge[1][j]][crtriang_edge[0][j]] = true;
+		    }
 	    } // while (!done)
+	    
+	    crsplit_neww = new double[wa2.length][2];
+	    for (i = 0; i < wa2.length; i++) {
+	    	crsplit_neww[i][0] = wa2[i][0];
+	    	crsplit_neww[i][1] = wa2[i][1];
+	    }
+	    
+	    return;
 	    
 	} // crsplit
 	
@@ -2426,7 +2456,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   }
 		   Arrays.sort(e1);
 		   e13[0] = e1[0];
-		   e13[1] = e1[1];
+		   e13[1] = e1[2];
 		   e13[2] = e1[4];
 		   for (i = 0; i < 2; i++) {
 			   for (j = 0; j < 3; j++) {
@@ -2435,7 +2465,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   }
 		   Arrays.sort(e2);
 		   e23[0] = e2[0];
-		   e23[1] = e2[1];
+		   e23[1] = e2[2];
 		   e23[2] = e2[4];
 		   for (i = 0; i < 3; i++) {
 			   if ((e13[i] != quadvtx[0]) && (e13[i] != quadvtx[2])) {
@@ -2528,6 +2558,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			   }
 		   }
 	   } // while (numnotdone > 0)
+	   return;
 	   
    }
    
@@ -2691,7 +2722,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   }
 		   Arrays.sort(e1);
 		   e13[0] = e1[0];
-		   e13[1] = e1[1];
+		   e13[1] = e1[2];
 		   e13[2] = e1[4];
 		   for (i = 0; i < 2; i++) {
 			   for (j = 0; j < 3; j++) {
@@ -2700,7 +2731,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   }
 		   Arrays.sort(e2);
 		   e23[0] = e2[0];
-		   e23[1] = e2[1];
+		   e23[1] = e2[2];
 		   e23[2] = e2[4];
 		   for (i = 0; i < 3; i++) {
 			   if ((e13[i] != qlvert[0][e]) && (e13[i] != qlvert[2][e])) {
@@ -2710,7 +2741,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				   qlvert[3][e] = e23[i];
 			   }
 		   } // for (i = 0; i < 3; i++)
-		   // Reverse ordering if necesary to clockwise
+		   // Reverse ordering if necessary to clockwise
 		   for (i = 0; i < 4; i++) {
 			   win[i][0] = w[qlvert[i][e]][0];
 			   win[i][1] = w[qlvert[i][e]][1];
@@ -2765,7 +2796,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	       zmlt(wql[2][i][0]-wql[1][i][0], wql[2][i][1]- wql[1][i][1], wql[0][i][0]-wql[3][i][0],
 	    		   wql[0][i][1]-wql[3][i][1], cre, cim);
 	       denom[0] = cre[0];
-	       denom[1] = cre[1];
+	       denom[1] = cim[0];
 	       zdiv(num[0], num[1], denom[0], denom[1], cre, cim);
 	       cr[i][0] = cre[0];
 	       cr[i][1] = cim[0];
@@ -2855,22 +2886,23 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	   
 	   // Which edge # is it?
 	   int edgenum = -1;
-	   for (i = 0; i < 2*n-3 && (edgenum == -1); i++) {
+	   for (i = 0; i < Q.edge[0].length && (edgenum == -1); i++) {
 		   if ((Q.edge[0][i] == s[0]) && (Q.edge[1][i] == s[1])) {
 			   edgenum = i;
 		   }
 	   }
-	   for (i = 0; i < 2*n-3 && (edgenum == -1); i++) {
+	   for (i = 0; i < Q.edge[0].length && (edgenum == -1); i++) {
 		   if ((Q.edge[1][i] == s[0]) && (Q.edge[0][i] == s[1])) {
 			   edgenum = i;
 		   }
 	   }
 	   // Which quadrilateral?
+	   // Minimum column number which contains quadnum
 	   int quadnum = -1;
-	   for (j = 0; j < n-3 && (quadnum == -1); j++) {
+	   for (j = 0; j < Q.qledge[0].length && (quadnum == -1); j++) {
 		   for (i = 0; i < 4 && (quadnum == -1); i++) {
 			   if (Q.qledge[i][j] == edgenum) {
-				   quadnum = i + 4*j;
+				   quadnum = j;
 			   }
 		   }
 	   } // for (j = 0; j < n-3 && (quadnum == -1); j++)
