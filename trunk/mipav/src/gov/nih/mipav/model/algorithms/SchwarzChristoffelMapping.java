@@ -11112,6 +11112,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			// since there is no guarantee that the prevertices nt in qnum will be separated.
 			diff[0] = z[idx[1]][0] - z[idx[0]][0];
 			diff[1] = z[idx[1]][1] - z[idx[0]][1];
+			
+			                                                                                                   
 			if (zabs(diff[0], diff[1]) < 5.0*eps) {
 				z[idx[3]][0] = z[idx[1]][0];
 				z[idx[3]][1] = z[idx[1]][1];
@@ -11228,9 +11230,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			}
 		}
 		for (k = 0; k < numnontriv; k++) {
-		    za[0] = z1[k][0];
-		    za[1] = z1[k][1];
-		    sng = sing1[k];
+		    za[0] = z1[nontriv[k]][0];
+		    za[1] = z1[nontriv[k]][1];
+		    sng = sing1[nontriv[k]];
 		    for (i = 0; i < n; i++) {
 		        mask[i] = !ignore[i];	
 		    }
@@ -11293,8 +11295,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        	za[1] = zb[1];
 		        	qcol = n;
 		        }
-		        zb[0] = z1[k][0]*(1-h);
-		        zb[1] = z1[k][1]*(1-h);
+		        zb[0] = z1[nontriv[k]][0]*(1-h);
+		        zb[1] = z1[nontriv[k]][1]*(1-h);
 		        
 		        // Adjust Gauss-Jacobi nodes and weights to interval
 		        diff[0] = zb[0] - za[0];
@@ -11331,8 +11333,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        // Check for coincident values indicating crowding (Should never happen!)
 		        if ((numdiffndzero > 0) || (numtermszero > 0)) {
 		        	MipavUtil.displayWarning("Prevertices are too crowded");
-		        	I[k][0] = 0;
-		        	I[k][1] = 0;
+		        	I[nontriv[k]][0] = 0;
+		        	I[nontriv[k]][1] = 0;
 		        }
 		        else {
 		        	// Use Guass-Jacobi on first subinterval, if necessary.
@@ -11364,12 +11366,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        	double realexp[] = new double[nqpts];
 		        	double imagexp[] = new double[nqpts];
 		        	for (m = 0; m < nqpts; m++) {
-		        		double expterm = Math.exp(realexp[m]);
-		        		realexp[m] = expterm*Math.cos(imagexp[m]);
-		        		imagexp[m] = expterm*Math.sin(imagexp[m]);
+		        		double expterm = Math.exp(realsum[m]);
+		        		realexp[m] = expterm*Math.cos(imagsum[m]);
+		        		imagexp[m] = expterm*Math.sin(imagsum[m]);
 		        		zmlt(realexp[m],imagexp[m], wt[m][0], wt[m][1], cr, ci);
-		        		I[k][0] += cr[0];
-		        		I[k][1] += ci[0];
+		        		I[nontriv[k]][0] += cr[0];
+		        		I[nontriv[k]][1] += ci[0];
 		        	}
 		        }
 		    } // for (j = 1; j <= panels; j++)
