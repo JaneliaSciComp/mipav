@@ -1389,18 +1389,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    crsplit(w);
 	    n = crsplit_neww.length;
 	    crparam_beta = scangle(crsplit_neww);
-	    crtriang(w);
-	    crcdt(w);
+	    crtriang(crsplit_neww);
+	    crcdt(crsplit_neww);
 	    
 	    // Quadrilateral graph'
-	    crqgraph(w);
+	    crqgraph(crsplit_neww);
 	    
 	    // Quadrature data
-	    crparam_qdata = new double[nqpts][2*beta.length+2];
-	    scqdata(crparam_qdata, beta, nqpts);
+	    crparam_qdata = new double[nqpts][2*crparam_beta.length+2];
+	    scqdata(crparam_qdata, crparam_beta, nqpts);
 	    
 	    // Find the crossratios to be sought
-	    double target[][] = crossrat(w, crqgraph_Q);
+	    double target[][] = crossrat(crsplit_neww, crqgraph_Q);
 	    
 	    double z0[];
 	    // Set up starting guess
@@ -1418,7 +1418,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    }
 	    
 	    // Solve nonlinear system of equations
-	    crpfun fm = new crpfun(z0, n, beta, target, crqgraph_Q, crparam_qdata);
+	    crpfun fm = new crpfun(z0, n, crparam_beta, target, crqgraph_Q, crparam_qdata);
 	    fm.driver();
 		fm.dumpResults();
 	    int exitStatus = fm.getExitStatus();
@@ -1435,7 +1435,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			crparam_cr[i] = Math.exp(z[i]);
 		}
 		
-		craffine(w, crparam_beta, crparam_cr, crqgraph_Q, tol);
+		craffine(crsplit_neww, crparam_beta, crparam_cr, crqgraph_Q, tol);
 	}
 	
 	private void crsplit(double w[][]) {
@@ -3583,7 +3583,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   } // if ((F != null))
 		   if (maxresid > tol) {
 			   MipavUtil.displayWarning("Warning in crimap0: Solution may be inaccurate");
-			   System.out.println("Maximum residula in crimap0 = " + maxresid);
+			   System.out.println("Maximum residual in crimap0 = " + maxresid);
 		   }
 		   for (i = 0; i < lenwp; i++) {
 			   zp[i][0] = zn[i][0];
