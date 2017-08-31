@@ -3407,7 +3407,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		   w0[i][1] = aff[1][1];
 	   }
 	   
-	   double z0[][] = new double[lenwp][2];
 	   boolean done[] = new boolean[lenwp];
 	   
 	   if (ode) {
@@ -3496,7 +3495,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			}
 			double abszp[] = new double[lenwp];
 			for (i = 0; i < lenwp; i++) {
-				abszp[i] = Math.sqrt(zp[i][0]*zp[i][0] + zp[i][1]*zp[i][1]);
+				abszp[i] = zabs(zp[i][0],zp[i][1]);
 			}
 			for (i = 0; i < lenwp; i++) {
 				if (abszp[i] > 1) {
