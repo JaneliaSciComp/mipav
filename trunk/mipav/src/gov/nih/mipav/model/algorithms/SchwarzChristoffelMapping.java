@@ -132,11 +132,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         //testDiskmap3();
         //testDiskmap4();
         //testDiskmap5();
-        //boolean testme = true;
-        //if (testme) {
+        boolean testme = false;
+        if (testme) {
             //testCRDiskmap1();
-            //return;
-        //}
+        	//testCRDiskmap2();
+        	//testCRDiskmap3();
+        	testCRDiskmap5();
+            return;
+        }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
 			runPolygonToRectangle();
 		}
@@ -860,7 +863,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	public void testDiskmap4() {
 		int i, k;
-		// Without z0 supplied to cneter MIPAV and MATLAB end when center calls dinvmap which calls scimapz0 which returns the
+		// Without z0 supplied to center MIPAV and MATLAB end when center calls dinvmap which calls scimapz0 which returns the
 	    // error can't seem to choose starting points.  Supply them manually.
 		// This example does not seem to make sense.  Each h(1) to h(6) contains about 235 or so complex values.
 		// If abs(w(1) > w(2)), we interchange the first two and reduce the size of w to 2, so diffw has only 1 value.
@@ -1065,7 +1068,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	public void testCRDiskmap1() {
 		int i;
-		int j;
 		double w[][] = new double[4][2];
 		w[0][0] = 1;
 		w[0][1] = 1;
@@ -1075,6 +1077,92 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		w[2][1] = -1;
 		w[3][0] = 1;
 		w[3][1] = -1;
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, null);
+		scmap M = crdiskmap(poly, tolerance, null, null);
+	}
+	
+	public void testCRDiskmap2() {
+		int i;
+		double w[][] = new double[4][2];
+		w[0][0] = -4;
+		w[0][1] = -1;
+		w[1][0] = 4;
+		w[1][1] = -1;
+		w[2][0] = 4;
+		w[2][1] = 1;
+		w[3][0] = -4;
+		w[3][1] = 1;
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, null);
+		scmap M = crdiskmap(poly, tolerance, null, null);
+	}
+	
+	public void testCRDiskmap3() {
+		int i;
+		double w[][] = new double[6][2];
+		w[0][0] = 0.0;
+		w[0][1] = 1.0;
+		w[1][0] = -1.0;
+		w[1][1] = 1.0;
+		w[2][0] = -1.0;
+		w[2][1] = -1.0;
+		w[3][0] = 1.0;
+		w[3][1] = -1.0;
+		w[4][0] = 1.0;
+		w[4][1] = 0.0;
+		w[5][0] = 0.0;
+		w[5][1] = 0.0;
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, null);
+		scmap M = crdiskmap(poly, tolerance, null, null);
+	}
+	
+	public void testCRDiskmap5() {
+		// From Table 1. in Algorithm 756: A MATLAB Toolbox for Schwarz-Christoffel Mapping
+		
+		// (arg zk)?PI
+	    // k = 1              0.00800451739
+		// k = 2              0.606337224
+		// k = 3              1.49999746
+		// k = 4              1.49999860
+		// k = 5              1.49999865
+		// k = 6              1.5
+		// k = 7              1.75
+		// k = 8              2
+		int i;
+		double w[][] = new double[8][2];
+		w[0][0] = 3.2;
+		w[0][1] = 2.4;
+		w[1][0] = 0.8;
+		w[1][1] = -0.4;
+		w[2][0] = -0.8;
+		w[2][1] = -0.4;
+		w[3][0] = -2.8;
+		w[3][1] = 2.0;
+		w[4][0] = -2.8;
+		w[4][1] = -2.0;
+		w[5][0] = -0.8;
+		w[5][1] = -0.8;
+		w[6][0] = 0.8;
+		w[6][1]= -0.8;
+		w[7][0] = 3.2;
+		w[7][1] = -2.0;
 		double x[] = new double[w.length];
 		double y[] = new double[w.length];
 		for (i = 0; i < w.length; i++) {
@@ -1391,7 +1479,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
     	boolean vis[] = new boolean[n];
 	    for (j = 0; j < n; j++) {
 	        if (sharp[j]) {
-	        	// Find disance to nearest "visible" vertex
+	        	// Find distance to nearest "visible" vertex
 	        	int jm1 = (j-1+n)%n;
 	        	int jp1 = (j+1)%n;
 	        	for (i = 0; i < n; i++) {
@@ -1666,7 +1754,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					}	
 				}
 				// Triangle that edge e was in
-				int t = crtriang_triedge[0][e];
+				int t = crtriang_edgetri[0][e];
 				// Replace e by new edge
 				crtriang_edge[0][e] = idx[0];
 				crtriang_edge[1][e] = idx[0] + 1;
@@ -1699,36 +1787,74 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    }
 				}
 				// New interior edges
-				crtriang_edge[0][nedge+1] = idx[0] + 1;
-				crtriang_edge[0][nedge+2] = idx[0] + 2;
+				// Must grow number of columns of crtriang_edge by 4
+			    int edge_temp[][] = new int[2][nedge];
+			    for (i = 0; i < 2; i++) {
+			    	for (j = 0; j < nedge; j++) {
+			    		edge_temp[i][j] = crtriang_edge[i][j];
+			    	}
+			    }
+			    crtriang_edge = new int[2][nedge+4];
+			    for (i = 0; i < 2; i++) {
+			    	for (j = 0; j < nedge; j++) {
+			    		crtriang_edge[i][j] = edge_temp[i][j];
+			    	}
+			    }
+				crtriang_edge[0][nedge] = idx[0] + 1;
+				crtriang_edge[0][nedge+1] = idx[0] + 2;
+				crtriang_edge[1][nedge] = vtx;
 				crtriang_edge[1][nedge+1] = vtx;
-				crtriang_edge[1][nedge+2] = vtx;
 				// New boundary edges
-				crtriang_edge[0][nedge+3] = (idx[0]+1)%newn;
-				crtriang_edge[0][nedge+4] = (idx[0]+2)%newn;
-				crtriang_edge[1][nedge+3] = (idx[0]+2)%newn;
-				crtriang_edge[1][nedge+4] = (idx[0]+3)%newn;
+				crtriang_edge[0][nedge+2] = (idx[0]+1)%newn;
+				crtriang_edge[0][nedge+3] = (idx[0]+2)%newn;
+				crtriang_edge[1][nedge+2] = (idx[0]+2)%newn;
+				crtriang_edge[1][nedge+3] = (idx[0]+3)%newn;
 				// 2 new triangles and an old one replaced
-				crtriang_triedge[0][ntri+1] = nedge + 3;
-				crtriang_triedge[0][ntri+2] = nedge + 2;
-				crtriang_triedge[1][ntri+1] = nedge + 2;
-				crtriang_triedge[1][ntri+2] = nedge + 4;
-			    crtriang_triedge[2][ntri+1] = nedge + 1;
-			    crtriang_triedge[2][ntri+2] = e2;
-			    crtriang_triedge[i2][t] = nedge + 1;
+				// Must grow number of columns of crtriang_triedge by 2
+				int triedge_temp[][] = new int[3][ntri];
+			    for (i = 0; i < 3; i++) {
+			    	for (j = 0; j < ntri; j++) {
+			    		triedge_temp[i][j] = crtriang_triedge[i][j];
+			    	}
+			    }
+			    crtriang_triedge = new int[3][ntri+2];
+			    for (i = 0; i < 3; i++) {
+			    	for (j = 0; j < ntri; j++) {
+			    		crtriang_triedge[i][j] = triedge_temp[i][j];
+			    	}
+			    }
+				crtriang_triedge[0][ntri] = nedge + 2;
+				crtriang_triedge[0][ntri+1] = nedge + 1;
+				crtriang_triedge[1][ntri] = nedge + 1;
+				crtriang_triedge[1][ntri+1] = nedge + 3;
+			    crtriang_triedge[2][ntri] = nedge;
+			    crtriang_triedge[2][ntri+1] = e2;
+			    crtriang_triedge[i2][t] = nedge;
 			    // New triangle memberships for new edges and e2
-			    crtriang_edgetri[0][nedge+1] = t;
-			    crtriang_edgetri[0][nedge+2] = ntri+1;
+			    // Must grow number of columns of crtriang_edgetri by 4
+			    int edgetri_temp[][] = new int[2][nedge];
+			    for (i = 0; i < 2; i++) {
+			    	for (j = 0; j < nedge; j++) {
+			    		edgetri_temp[i][j] = crtriang_edgetri[i][j];
+			    	}
+			    }
+			    crtriang_edgetri = new int[2][nedge+4];
+			    for (i = 0; i < 2; i++) {
+			    	for (j = 0; j < nedge; j++) {
+			    		crtriang_edgetri[i][j] = edgetri_temp[i][j];
+			    	}
+			    }
+			    crtriang_edgetri[0][nedge] = t;
+			    crtriang_edgetri[0][nedge+1] = ntri;
+			    crtriang_edgetri[1][nedge] = ntri;
 			    crtriang_edgetri[1][nedge+1] = ntri+1;
-			    crtriang_edgetri[1][nedge+2] = ntri+2;
+			    crtriang_edgetri[0][nedge+2] = ntri;
 			    crtriang_edgetri[0][nedge+3] = ntri+1;
-			    crtriang_edgetri[0][nedge+4] = ntri+2;
-			    crtriang_edgetri[1][nedge+3] = 0;
-			    crtriang_edgetri[1][nedge+4] = 0;
-			    e2 = -1;
+			    crtriang_edgetri[1][nedge+2] = -1;
+			    crtriang_edgetri[1][nedge+3] = -1;
 			    for (k = 0; (k < 2); k++) {
 			        if (crtriang_edgetri[k][e2] == t) {
-			        	crtriang_edgetri[k][e2] = ntri+2;
+			        	crtriang_edgetri[k][e2] = ntri+1;
 			        }
 			    }
 			} // for (i = 0; i < newv.length; i++)
