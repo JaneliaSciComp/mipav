@@ -1423,7 +1423,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		fm.dumpResults();
 	    int exitStatus = fm.getExitStatus();
 	    if (exitStatus < 0 ) {
-	    	System.out.println("Error in NLConstrainedEngine during crpparam call to crppfun");
+	    	System.out.println("Error in NLConstrainedEngine during crparam call to crpfun");
 	    	printExitStatus(exitStatus);
 	    	System.exit(-1);
 	    }
