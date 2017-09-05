@@ -135,9 +135,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         boolean testme = false;
         if (testme) {
             //testCRDiskmap1();
-        	//testCRDiskmap2();
+        	//testDiskmap2();
+        	testCRDiskmap2();
         	//testCRDiskmap3();
-        	testCRDiskmap5();
+        	//testCRDiskmap5();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -1112,11 +1113,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		for (i = 0; i < 4; i++) {
 			R[i] = 0.2*(i+1);
 		}
-		double prevertex[][] = M.prevertex;
 		double theta[] = new double[4];
-		for (i = 0; i < 4; i++) {
-			theta[i] = Math.atan2(prevertex[i][1], prevertex[i][0]);
-		}
+		// Use theta values from testDiskmap2
+		theta[0] = 0.014939472942825261;
+		theta[1] = -3.141592618638339;
+		theta[2] = -3.1266531461319778;
+		theta[3] = 0.0;
+		
 		crdiskplot(M, R, theta, 200, 140, null, Integer.MIN_VALUE);
 	}
 	
@@ -6661,7 +6664,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    for (i = 0, j = 0; i < p; i++) {
 		    	if (mask[i]) {
 		    		zl2in[j][0] = zl2[qa[q]][i][0];
-		    		zl2in[j++][1] = zl2[qa[q]][i][0];
+		    		zl2in[j++][1] = zl2[qa[q]][i][1];
 		    	}
 		    }
 		    for (i = 0; i < aff[0].length; i++) {
@@ -6693,7 +6696,319 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// See also crparam, crgather, moebius.
 		
 		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		int i, j, k;
+		double cre[] = new double[1];
+		double cim[] = new double[1];
+		double cre2[] = new double[1];
+		double cim2[] = new double[1];
+		double num[] = new double[2];
+		double denom[] = new double[2];
 		int n3 = cr.length;
+		
+		for (i = 0; i < u.length; i++) {
+			ul[quadnum][i][0] = u[i][0];
+			ul[quadnum][i][1] = u[i][1];
+		}
+		
+		if (dl != null) {
+			for (i = 0; i < u.length; i++) {
+				dl[quadnum][0][0] = 1.0;
+				dl[quadnum][0][1] = 0.0;
+			}
+		} // if (dl != null)
+		
+		// Place the quadrilateral prevertices in a rectangle around the origin.
+		// We will store each rectangle so as to stably find the map between any
+		// neighboring pair of embeddings.
+		int idx[] = new int[4];
+		for (i = 0; i < 4; i++) {
+			idx[i] = Q.qlvert[i][quadnum];
+		}
+		double r = cr[quadnum];
+		double f1 = Math.sqrt(1.0/(r + 1.0));
+		double f2 = Math.sqrt(r/(r + 1.0));
+		double zr[][][] = new double[4][n3][2];
+		zr[0][quadnum][0] = -f1;
+		zr[0][quadnum][1] = -f2;
+		zr[1][quadnum][0] = -f1;
+		zr[1][quadnum][1] = f2;
+		zr[2][quadnum][0] = f1;
+		zr[2][quadnum][1] = f2;
+		zr[3][quadnum][0] = f1;
+		zr[3][quadnum][1] = -f2;
+		
+		boolean done[] = new boolean[n3];
+		done[quadnum] = true;
+		int numnotdone = n3-1;
+		// Neighbors of quadnum are available
+		//  Q.adjacent is an (n-3) by (n-3) logical matrix; it indicates which 
+		// quadrilaterals share a common triangle.
+		boolean todo[] = new boolean[n3];
+		for (i = 0; i < n3; i++) {
+			todo[i] = Q.adjacent[i][quadnum];
+		}
+		
+		double zin[][] = new double[3][2];
+		double win[][] = new double[2][2];
+		int i1[] = new int[3];
+		int i2[] = new int[3];
+		double ulq[][] = new double[u.length][2];
+		double mtfac[] = null;
+		double dlq[][] = null;
+		if (dl != null) {
+		    mtfac = new double[2];
+		    dlq = new double[u.length][2];
+	    }
+		while (numnotdone > 0) {
+		    // Pick an embedding
+			int q = -1;
+			for (i = 0; i < n3; i++) {
+				if (todo[i]) {
+					q = i;
+					break;
+				}
+			} // for (i = 0; i < n3; i++)
+			r = cr[q];
+			// Quadrilateral prevertices for q
+			f1 = Math.sqrt(1.0/(r+1.0));
+			f2 = Math.sqrt(r/(r + 1.0));
+			zr[0][q][0] = -f1;
+			zr[0][q][1] = -f2;
+			zr[1][q][0] = -f1;
+			zr[1][q][1] = f2;
+			zr[2][q][0] = f1;
+			zr[2][q][1] = f2;
+			zr[3][q][0] = f1;
+			zr[3][q][1] = -f2;
+			// Find a neighbor to quadrilateral q
+			int qn = -1;
+			for (i = 0; i < n3; i++) {
+			    if (done[i] && Q.adjacent[i][q]) {
+			    	qn = i;
+			    	break;
+			    }
+			} // for (i = 0; i < n3; i++)
+			// Find the 3 points in common between q and qn
+			int numcommon = 0;
+			for (i = 0; i < 4; i++) {
+			    for (j = 0; j < 4; j++) {
+			    	if (Q.qlvert[i][q] == Q.qlvert[j][qn]) {
+			    	    numcommon = 3;	
+			    	}
+			    }
+			} // for (i = 0; i < 4; i++)
+			if (numcommon != 3) {
+			    MipavUtil.displayError("In crspread number of points in common between q and qn =  " + numcommon + 
+			    		" instead of the expected 4");
+			    System.exit(-1);
+			}
+			k = 0;
+			for (i = 0; i < 4; i++) {
+			    for (j = 0; j < 4; j++) {
+			    	if (Q.qlvert[i][q] == Q.qlvert[j][qn]) {
+			    	    i1[k] = i;
+			    	    i2[k++] = j;
+			    	}
+			    }
+			} // for (i = 0; i < 4; i++)
+			for (i = 0; i < 3; i++) {
+				for (j = 0; j < 2; j++) {
+					zin[i][j] = zr[i2[i]][qn][j];
+					win[i][j] = zr[i1[i]][q][j];
+				}
+			} // for (i = 0; i < 3; i++)
+			double mt[][] = moebius(zin, win);
+			for (i = 0; i < u.length; i++) {
+			    zmlt(mt[1][0], mt[1][1], ul[qn][i][0], ul[qn][i][1], cre, cim);	
+			    num[0] = cre[0] + mt[0][0];
+			    num[1] = cim[0] + mt[0][1];
+			    zmlt(mt[3][0], mt[3][1], ul[qn][i][0], ul[qn][i][1], cre, cim);
+			    denom[0] = cre[0] + mt[2][0];
+			    denom[1] = cim[0] + mt[2][1];
+			    zdiv(num[0], num[1], denom[0], denom[1], cre, cim);
+			    ulq[i][0] = cre[0];
+			    ulq[i][1] = cim[0];
+			} // for (i = 0; i < u.length; i++)
+			for (i = 0; i < u.length; i++) {
+				ul[q][i][0] = ulq[i][0];
+				ul[q][i][1] = ulq[i][1];
+			}
+			if (dl != null) {
+			    zmlt(mt[1][0], mt[1][1], mt[2][0], mt[2][1], cre, cim);
+			    zmlt(mt[0][0], mt[0][1], mt[3][0], mt[3][1], cre2, cim2);
+			    mtfac[0] = cre[0] - cre2[0];
+			    mtfac[1] = cim[0] - cim2[0];
+			    for (i = 0; i < u.length; i++) {
+			    	zmlt(dl[qn][i][0], dl[qn][i][1], mtfac[0], mtfac[1], cre, cim);
+			    	num[0] = cre[0];
+				    num[1] = cim[0];
+				    zmlt(mt[3][0], mt[3][1], ul[qn][i][0], ul[qn][i][1], cre, cim);
+				    denom[0] = cre[0] + mt[2][0];
+				    denom[1] = cim[0] + mt[2][1];
+				    zmlt(denom[0], denom[1], denom[0], denom[1], cre, cim);
+				    denom[0] = cre[0];
+				    denom[1] = cim[0];
+				    zdiv(num[0], num[1], denom[0], denom[1], cre, cim);
+				    dlq[i][0] = cre[0];
+				    dlq[i][1] = cim[0];
+			    } // for (i = 0; i < u.length; i++)
+			    for (i = 0; i < u.length; i++) {
+			    	dl[q][i][0] = dlq[i][0];
+			    	dl[q][i][1] = dlq[i][1];
+			    }
+			} // if (dl != null)
+			done[q] = true;
+		    todo[1] = false;
+		    numnotdone--;
+		    // Neighbors of q can be done now
+		    for (i = 0; i < n3; i++) {
+		        todo[i] = todo[i] || (Q.adjacent[i][q] && !done[i]);	
+		    }
+		} // while (numnotdone > 0)
+	} // crspread
+	
+	private double[][] moebius(double z[][], double w[][]) {
+		// Moebius transformation parameters
+		// moebius computes the coefficients of the Moebius transformation, taking
+		// the 3-vector z to w, so that
+		// w = (a[0]*z + a[1])./(a[2]*z + a[3]).
+		// Infinities are allowed
+		// Original MATLAB moebius routine copyright 1998 by Toby Driscoll.
+		
+		int i, j;
+		double temp;
+		double A[][] = new double[4][2];
+		for (i = 0; i < 4; i++) {
+			A[i][0] = Double.NaN;
+		}
+		
+		boolean haveInfiniteW = false;
+		boolean haveInfiniteZ = false;
+		int infiniteW = -1;
+		int infiniteZ = -1;
+		int renum[] = new int[3];
+		double z2[][] = new double[3][2];
+		double w2[][] = new double[3][2];
+		double t1[] = new double[2];
+		double t2[] = new double[2];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double cr2[] = new double[1];
+		double ci2[] = new double[1];
+		for (i = 0; i < 3; i++) {
+			if (Double.isInfinite(w[i][0]) || (Double.isInfinite(w[i][1]))) {
+				haveInfiniteW = true;
+				infiniteW = i;
+			}
+			if (Double.isInfinite(z[i][0]) || (Double.isInfinite(z[i][1]))) {
+				haveInfiniteZ = true;
+				infiniteZ = i;
+			}
+		} // for (i = 0; i < 3; i++)
+		
+		if (haveInfiniteW) {
+			// Make w[1] = Inf
+			for (i = 0; i < 3; i++) {
+				renum[i] = (infiniteW + 2 + i) % 3;
+			}
+			for (i = 0; i < 3; i++) {
+			    for (j = 0; j < 2; j++) {
+			    	z2[i][j] = z[renum[i]][j];
+			    	if (Double.isInfinite(z2[i][j])) {
+			    		infiniteZ = i;
+			    	}
+			    	w2[i][j] = w[renum[i]][j];
+			    }
+			} // for (i = 0; i < 3; i++) 
+			if (!haveInfiniteZ) {
+			    t1[0] = z2[1][0] - z2[0][0];
+			    t1[1] = z2[1][1] - z2[0][1];
+			    t2[0] = z2[1][0] - z2[2][0];
+			    t2[1] = z2[1][1] - z2[2][1];
+			}
+			else if (infiniteZ == 1) {
+				t1[0] = 1;
+				t2[0] = 1;
+			}
+			else {
+				// Will have to deal separately wiht w[1] = Inf and z[0] = Inf
+				if (infiniteZ != 0) {
+				    for (i = 0; i < 2; i++) {
+				    	temp = z2[2][i];
+				    	z2[2][i] = z2[0][i];
+				    	z2[0][i] = temp;
+				    	temp = w2[2][i];
+				    	w2[2][i] = w2[0][i];
+				    	w2[0][i] = temp;
+				    }
+				} // if (infiniteZ != 0)
+				A[0][0] = w2[0][0];
+				A[0][1] = w2[0][1];
+				zmlt(w2[2][0], w2[2][1], z2[2][0] - z2[1][0], z2[2][1] - z2[1][1], cr, ci);
+				zmlt(w2[0][0], w2[0][1], z2[2][0], z2[2][1], cr2, ci2);
+				A[1][0] = cr[0] - cr2[0];
+				A[1][1] = ci[0] - ci2[0];
+				A[2][0] = 1.0;
+				A[2][1] = 0.0;
+				A[3][0] = -z2[1][0];
+				A[3][1] = -z2[1][1];
+			} // else 
+		} // if (haveInfiniteW)
+		
+		else if (haveInfiniteZ) {
+			// We already know no w is infinite
+			// Make z[1] = Inf
+			for (i = 0; i < 3; i++) {
+				renum[i] = (infiniteZ + 2 + i) % 3;
+			}
+			for (i = 0; i < 3; i++) {
+			    for (j = 0; j < 2; j++) {
+			    	z2[i][j] = z[renum[i]][j];
+			    	w2[i][j] = w[renum[i]][j];
+			    }
+			} // for (i = 0; i < 3; i++) 
+			t1[0] = w2[1][0] - w2[2][0];
+			t1[1] = w2[1][1] - w2[2][1];
+			t2[0] = w2[1][0] - w2[0][0];
+			t2[1] = w2[1][1] - w2[0][1];
+		} // else if (haveInfiniteZ)
+		
+		else {
+			// Everything finite
+			zmlt(z[0][0] - z[1][0], z[0][1] - z[1][1], w[1][0] - w[2][0], w[1][1] - w[2][1], cr, ci);
+			t1[0] = cr[0];
+			t1[1] = ci[0];
+			zmlt(z[1][0] - z[2][0], z[1][1] - z[2][1], w[1][0] - w[0][0], w[1][1] - w[0][1], cr, ci);
+			t2[0] = cr[0];
+			t2[1] = ci[0];
+			for (i = 0; i < 3; i++) {
+				for (j = 0; j < 2; j++) {
+					w2[i][j] = w[i][j];
+					z2[i][j] = z[i][j];
+				}
+			}
+		} // else
+		
+		if (Double.isNaN(A[0][0])) {
+		    zmlt(w2[0][0], w2[0][1], t1[0], t1[1], cr, ci);
+		    zmlt(w2[2][0], w2[2][1], t2[0], t2[1], cr2, ci2);
+		    A[0][0] = cr[0] - cr2[0];
+		    A[0][1] = ci[0] - ci2[0];
+		    zmlt(w2[2][0], w2[2][1], z2[0][0], z2[0][1], cr, ci);
+		    zmlt(cr[0], ci[0], t2[0], t2[1], cr, ci);
+		    zmlt(w2[0][0], w2[0][1], z2[2][0], z2[2][1], cr2, ci2);
+		    zmlt(cr2[0], ci2[0], t1[0], t1[1], cr2, ci2);
+		    A[1][0] = cr[0] - cr2[0];
+		    A[1][1] = ci[0] - ci2[0];
+		    A[2][0] = t1[0] - t2[0];
+		    A[2][1] = t1[0] - t2[1];
+		    zmlt(z2[0][0], z2[0][1], t2[0], t2[1], cr, ci);
+		    zmlt(z2[2][0], z2[2][1], t1[0], t1[1], cr2, ci2);
+		    A[3][0] = cr[0] - cr2[0];
+		    A[3][1] = ci[0] - ci2[0];
+		} // if (Double.isNaN(A[0][0]))
+		
+		return A;
 	}
 	
 	private void dplot(double w[][], double beta[], double z[][], double c[],
