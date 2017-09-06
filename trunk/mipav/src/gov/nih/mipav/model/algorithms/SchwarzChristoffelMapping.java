@@ -136,9 +136,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         if (testme) {
             //testCRDiskmap1();
         	//testDiskmap2();
-        	testCRDiskmap2();
+        	//testCRDiskmap2();
+        	//testDiskmap3();
         	//testCRDiskmap3();
-        	//testCRDiskmap5();
+        	testCRDiskmap5();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -1146,6 +1147,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		polygon poly = new polygon(x, y, null);
 		scmap M = crdiskmap(poly, tolerance, null, null);
+		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
+		//double wc[] = new double[2];
+		//wc[0] = 0.49547015438539876;
+		//wc[1] = -0.5829124688920886;
+		//M = crdiskCenter(M, wc);
+		crdiskplot(M, null, null, 200, 140, null, Integer.MIN_VALUE);
+		//double wc[] = new double[2];
+		//wc[0] = -0.5;
+		//wc[1] = -0.5;
+		//M = crdiskCenter(M, wc);
+		//System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
+		//crdiskplot(M, null, null, 200, 140, null, Integer.MIN_VALUE);
 	}
 	
 	public void testCRDiskmap5() {
@@ -1186,6 +1199,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		polygon poly = new polygon(x, y, null);
 		scmap M = crdiskmap(poly, tolerance, null, null);
+		crdiskplot(M, null, null, 200, 140, null, Integer.MIN_VALUE);
 	}
 	
 	public scmap crdiskmap(polygon poly, double tolerance, double cr[][], qlgraph Q) {
@@ -1307,7 +1321,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			beta[i] = p.angle[i] - 1.0;
 		}
 		crfixwc(w, beta, cr, M.affine, M.qgraph, wc);
-		M.center = wc;
+		M.center[0] = wc[0];
+		M.center[1] = wc[1];
 		M.center_fix_quadnum = crfixwc_quadnum;
 		for (i = 0; i < 4; i++) {
 			for (j = 0; j < 2; j++) {
@@ -1833,15 +1848,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				// New interior edges
 				// Must grow number of columns of crtriang_edge by 4
 			    int edge_temp[][] = new int[2][nedge];
-			    for (i = 0; i < 2; i++) {
-			    	for (j = 0; j < nedge; j++) {
-			    		edge_temp[i][j] = crtriang_edge[i][j];
+			    for (k = 0; k < 2; k++) {
+			    	for (m = 0; m < nedge; m++) {
+			    		edge_temp[k][m] = crtriang_edge[k][m];
 			    	}
 			    }
 			    crtriang_edge = new int[2][nedge+4];
-			    for (i = 0; i < 2; i++) {
-			    	for (j = 0; j < nedge; j++) {
-			    		crtriang_edge[i][j] = edge_temp[i][j];
+			    for (k = 0; k < 2; k++) {
+			    	for (m = 0; m < nedge; m++) {
+			    		crtriang_edge[k][m] = edge_temp[k][m];
 			    	}
 			    }
 				crtriang_edge[0][nedge] = idx[0] + 1;
@@ -1856,15 +1871,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				// 2 new triangles and an old one replaced
 				// Must grow number of columns of crtriang_triedge by 2
 				int triedge_temp[][] = new int[3][ntri];
-			    for (i = 0; i < 3; i++) {
-			    	for (j = 0; j < ntri; j++) {
-			    		triedge_temp[i][j] = crtriang_triedge[i][j];
+			    for (k = 0; k < 3; k++) {
+			    	for (m = 0; m < ntri; m++) {
+			    		triedge_temp[k][m] = crtriang_triedge[k][m];
 			    	}
 			    }
 			    crtriang_triedge = new int[3][ntri+2];
-			    for (i = 0; i < 3; i++) {
-			    	for (j = 0; j < ntri; j++) {
-			    		crtriang_triedge[i][j] = triedge_temp[i][j];
+			    for (k = 0; k < 3; k++) {
+			    	for (m = 0; m < ntri; m++) {
+			    		crtriang_triedge[k][m] = triedge_temp[k][m];
 			    	}
 			    }
 				crtriang_triedge[0][ntri] = nedge + 2;
@@ -1877,15 +1892,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    // New triangle memberships for new edges and e2
 			    // Must grow number of columns of crtriang_edgetri by 4
 			    int edgetri_temp[][] = new int[2][nedge];
-			    for (i = 0; i < 2; i++) {
-			    	for (j = 0; j < nedge; j++) {
-			    		edgetri_temp[i][j] = crtriang_edgetri[i][j];
+			    for (k = 0; k < 2; k++) {
+			    	for (m = 0; m < nedge; m++) {
+			    		edgetri_temp[k][m] = crtriang_edgetri[k][m];
 			    	}
 			    }
 			    crtriang_edgetri = new int[2][nedge+4];
-			    for (i = 0; i < 2; i++) {
-			    	for (j = 0; j < nedge; j++) {
-			    		crtriang_edgetri[i][j] = edgetri_temp[i][j];
+			    for (k = 0; k < 2; k++) {
+			    	for (m = 0; m < nedge; m++) {
+			    		crtriang_edgetri[k][m] = edgetri_temp[k][m];
 			    	}
 			    }
 			    crtriang_edgetri[0][nedge] = t;
@@ -2124,7 +2139,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
             W[i][0] = w[i][0];
             W[i][1] = w[i][1];
         }
-        int N = w.length;
+        int N = W.length;
         // Initialize outputs
         crtriang_edge = new int[2][2*N-3];
         crtriang_triedge = new int[3][N-2];
@@ -6686,7 +6701,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private void crspread(double ul[][][], double dl[][][], double u[][], int quadnum, double cr[], qlgraph Q) {
 	    // Transform points to every embedding in CR formulation.
 		// Each quadrilateral has an associated embedding of the prevertices.  These embeddings
-		// are linked by Moebiuds transformations, each of which is well-conditioned.
+		// are linked by Moebius transformations, each of which is well-conditioned.
 		
 		// crspread assumes that the points of u are given in a single embedding, for quadrilateral quadnum.
 		// The Moebius transformations are applied recursively so that ul(:,k) represents u[k] in all the 
