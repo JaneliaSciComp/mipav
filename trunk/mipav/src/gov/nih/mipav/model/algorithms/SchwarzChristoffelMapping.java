@@ -6690,7 +6690,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// crspread assumes that the points of u are given in a single embedding, for quadrilateral quadnum.
 		// The Moebius transformations are applied recursively so that ul(:,k) represents u[k] in all the 
-		// embeddings.  Equivalently, ul(qn,:) is the repsentation of U transpose in embedding number qn.
+		// embeddings.  Equivalently, us(qn,:) is the representation of U transpose in embedding number qn.
 		
 		// dl when present returns the derivatives of the composite transformations to the embeddings.
 		// See also crparam, crgather, moebius.
@@ -6705,12 +6705,25 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double denom[] = new double[2];
 		int n3 = cr.length;
 		
+		for (i = 0; i < n3; i++) {
+			for (j = 0; j < u.length; j++) {
+				ul[i][j][0] = 0.0;
+				ul[i][j][1] = 0.0;
+			}
+		}
+		
 		for (i = 0; i < u.length; i++) {
 			ul[quadnum][i][0] = u[i][0];
 			ul[quadnum][i][1] = u[i][1];
 		}
 		
 		if (dl != null) {
+			for (i = 0; i < n3; i++) {
+				for (j = 0; j < u.length; j++) {
+					dl[i][j][0] = 0.0;
+					dl[i][j][1] = 0.0;
+				}
+			}
 			for (i = 0; i < u.length; i++) {
 				dl[quadnum][0][0] = 1.0;
 				dl[quadnum][0][1] = 0.0;
@@ -6749,7 +6762,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		
 		double zin[][] = new double[3][2];
-		double win[][] = new double[2][2];
+		double win[][] = new double[3][2];
 		int i1[] = new int[3];
 		int i2[] = new int[3];
 		double ulq[][] = new double[u.length][2];
@@ -6793,13 +6806,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			for (i = 0; i < 4; i++) {
 			    for (j = 0; j < 4; j++) {
 			    	if (Q.qlvert[i][q] == Q.qlvert[j][qn]) {
-			    	    numcommon = 3;	
+			    	    numcommon++;	
 			    	}
 			    }
 			} // for (i = 0; i < 4; i++)
 			if (numcommon != 3) {
 			    MipavUtil.displayError("In crspread number of points in common between q and qn =  " + numcommon + 
-			    		" instead of the expected 4");
+			    		" instead of the expected 3");
 			    System.exit(-1);
 			}
 			k = 0;
@@ -6975,7 +6988,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		else {
 			// Everything finite
-			zmlt(z[0][0] - z[1][0], z[0][1] - z[1][1], w[1][0] - w[2][0], w[1][1] - w[2][1], cr, ci);
+			zmlt(z[0][0] - z[1][0], z[0][1] - z[1][1], w[2][0] - w[1][0], w[2][1] - w[1][1], cr, ci);
 			t1[0] = cr[0];
 			t1[1] = ci[0];
 			zmlt(z[1][0] - z[2][0], z[1][1] - z[2][1], w[1][0] - w[0][0], w[1][1] - w[0][1], cr, ci);
@@ -7001,7 +7014,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    A[1][0] = cr[0] - cr2[0];
 		    A[1][1] = ci[0] - ci2[0];
 		    A[2][0] = t1[0] - t2[0];
-		    A[2][1] = t1[0] - t2[1];
+		    A[2][1] = t1[1] - t2[1];
 		    zmlt(z2[0][0], z2[0][1], t2[0], t2[1], cr, ci);
 		    zmlt(z2[2][0], z2[2][1], t1[0], t1[1], cr2, ci2);
 		    A[3][0] = cr[0] - cr2[0];
