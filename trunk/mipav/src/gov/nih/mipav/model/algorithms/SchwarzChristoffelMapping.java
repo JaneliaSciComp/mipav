@@ -2488,13 +2488,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	    if (stackptr > maxstack - 2) {
         	    	int addlen = Math.min(maxstack, N-maxstack);
         	    	int origLength = stack.length;
-        	    	double tempstack[][] = new double[stack.length + addlen][N];
+        	    	double tempstack[][] = new double[stack.length][N];
         	    	for (i = 0; i < stack.length; i++) {
         	    		for (j = 0; j < N; j++) {
         	    			tempstack[i][j] = stack[i][j];
         	    		}
         	    	}
-        	    	stack = new double[tempstack.length][N];
+        	    	stack = new double[origLength + addlen][N];
         	    	for (i = 0; i < origLength; i++) {
         	    		for (j = 0; j < N; j++) {
         	    			stack[i][j] = tempstack[i][j];
