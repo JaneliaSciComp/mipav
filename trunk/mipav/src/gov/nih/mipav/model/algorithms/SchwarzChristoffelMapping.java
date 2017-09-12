@@ -138,8 +138,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testDiskmap2();
         	//testCRDiskmap2();
         	//testDiskmap3();
-        	//testCRDiskmap3();
-        	testCRDiskmap5();
+        	testCRDiskmap3();
+        	//testCRDiskmap5();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -1370,8 +1370,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double crimage[][] = new double[n-3][2]; // image vertex crossratios
 		
 		// Compute crossratio for each image quadrilateral
-		double z1[][] = new double[4][2]
-;		int sing1[] = new int[4];
+		double z1[][] = new double[4][2];
+		int sing1[] = new int[4];
 		for (k = 0; k < n-3; k++) {
 		    double prever[][] = crembed(cr, Q, k);
 		    for (i = 0; i < 4; i++) {
@@ -6423,7 +6423,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    	zp[m++][1] = R2[j]*Math.sin(tpReal.get(i));
 				    }
 				} // for (i = 0, m = 0; i < newlog.length; i++)
-				neww = new double[numnewlog][2];
 				neww = crmap(zp,w,beta,cr,aff,quadnum, mt, Q, qdat);
 				for (i = 0, m = 0; i < newlog.size(); i++) {
 					if (newlog.get(i)) {
