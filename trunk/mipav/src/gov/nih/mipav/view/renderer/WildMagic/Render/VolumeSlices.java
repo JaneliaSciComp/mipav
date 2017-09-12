@@ -1,7 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.VOIBase;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -55,6 +57,8 @@ public class VolumeSlices extends VolumeObject
     private ColorRGB[] m_akColors = { new ColorRGB(1, 0, 0), new ColorRGB(0, 1, 0), new ColorRGB(1, 1, 0) };
 
     private boolean[] m_abSolid = new boolean[]{true, true, true};
+    
+    private int[] sliceIDs;
     
     
     /** Create a new VolumeObject with the VolumeImage parameter.
@@ -118,6 +122,8 @@ public class VolumeSlices extends VolumeObject
             m_akPlanes[i].DetachAllEffects();
         }
         kRenderer.LoadAllResources( m_kScene );
+        
+        sliceIDs = new int[] {VOIBase.XPLANE, VOIBase.YPLANE, VOIBase.ZPLANE};
     }
 
     /** Delete local memory. */
@@ -482,6 +488,7 @@ public class VolumeSlices extends VolumeObject
 
 
         //Bounding Boxes:
+        // red square
         m_akBoundingBox[0].VBuffer.SetPosition3( 0, fX, 0, 0 ) ;
         m_akBoundingBox[0].VBuffer.SetPosition3( 1, fX, 0, m_fZ ) ;
         m_akBoundingBox[0].VBuffer.SetPosition3( 2, fX, m_fY, m_fZ ) ;
@@ -491,6 +498,7 @@ public class VolumeSlices extends VolumeObject
         m_akBoundingBox[0].VBuffer.SetTCoord3( 0, 2, fTCX, 1.0f, 1.0f ) ;
         m_akBoundingBox[0].VBuffer.SetTCoord3( 0, 3, fTCX, 1.0f, 0 ) ;
 
+        // green square
         m_akBoundingBox[1].VBuffer.SetPosition3( 0, m_fX, fY, m_fZ ) ;
         m_akBoundingBox[1].VBuffer.SetPosition3( 1, 0, fY, m_fZ ) ;
         m_akBoundingBox[1].VBuffer.SetPosition3( 2, 0, fY, 0 ) ;
@@ -500,6 +508,7 @@ public class VolumeSlices extends VolumeObject
         m_akBoundingBox[1].VBuffer.SetTCoord3( 0, 2, 0, fTCY, 0 ) ;
         m_akBoundingBox[1].VBuffer.SetTCoord3( 0, 3, 1.0f, fTCY, 0 ) ;
 
+        // yellow square
         m_akBoundingBox[2].VBuffer.SetPosition3( 0, m_fX, 0, fZ ) ;
         m_akBoundingBox[2].VBuffer.SetPosition3( 1, 0, 0, fZ ) ;
         m_akBoundingBox[2].VBuffer.SetPosition3( 2, 0, m_fY, fZ ) ;
@@ -593,6 +602,16 @@ public class VolumeSlices extends VolumeObject
             m_akPlanes[i].Local.SetTranslate(m_kTranslate);
         }    	
     }
+    
+    public int whichPlane(TriMesh kMesh) {
+    	for ( int i = 0; i < m_akPlanes.length; i++ )
+    	{
+    		if ( kMesh == m_akPlanes[i] ) {
+    			return sliceIDs[i];
+    		}
+    	}
+    	return -1;
+    }
 
     /** Creates the bounding frames for the planes. */
     private void CreateBoundingBox ( )
@@ -616,16 +635,19 @@ public class VolumeSlices extends VolumeObject
             }
         }
 
+        //red
         akOutlineSquare[0].SetPosition3( 0, fX, 0, 0 ) ;
         akOutlineSquare[0].SetPosition3( 1, fX, 0, m_fZ ) ;
         akOutlineSquare[0].SetPosition3( 2, fX, m_fY, m_fZ ) ;
         akOutlineSquare[0].SetPosition3( 3, fX, m_fY, 0 ) ;
 
+        // green
         akOutlineSquare[1].SetPosition3( 0, m_fX, fY, m_fZ ) ;
         akOutlineSquare[1].SetPosition3( 1, 0, fY, m_fZ ) ;
         akOutlineSquare[1].SetPosition3( 2, 0, fY, 0 ) ;
         akOutlineSquare[1].SetPosition3( 3, m_fX, fY, 0 ) ;
 
+        // yellow
         akOutlineSquare[2].SetPosition3( 0, m_fX, 0, fZ ) ;
         akOutlineSquare[2].SetPosition3( 1, 0, 0, fZ ) ;
         akOutlineSquare[2].SetPosition3( 2, 0, m_fY, fZ ) ;

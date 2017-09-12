@@ -393,6 +393,11 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
     public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB) 
     {
+    	this(_imageA, _imageB, true);
+    }
+    
+    public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB, boolean cloneImage) 
+    {
         userInterface = ViewUserInterface.getReference();
         getContentPane().setLayout(new BorderLayout());
         addWindowListener(this);
@@ -415,10 +420,10 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         progressBar.updateValueImmed(0);
 
         final int iProgress = (_imageB == null) ? 10 : 5;
-        m_kVolumeImageA = new VolumeImage( true, _imageA, "A", progressBar, iProgress);
+        m_kVolumeImageA = new VolumeImage( cloneImage, _imageA, "A", progressBar, iProgress);
         progressBar.updateValueImmed(progressBar.getValue() + iProgress);
         if (_imageB != null) {
-            m_kVolumeImageB = new VolumeImage( true, _imageB, "B", progressBar,
+            m_kVolumeImageB = new VolumeImage( cloneImage, _imageB, "B", progressBar,
                     iProgress);
             progressBar.updateValueImmed(progressBar.getValue() + iProgress);
         } else {
@@ -721,6 +726,17 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 		        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
 		        setModified();
 		        mainPane.revalidate();
+			}
+			else
+			{
+				for ( int i = 0; i < m_akPlaneRender.length; i++ )
+				{
+					m_akPlaneRender[i].setImage(m_kVolumeImageA);
+					if ( m_kVOIInterface != null )
+					{
+						m_kVOIInterface.updateManager(i, m_akPlaneRender[i].getOrientation() );
+					}
+				}				
 			}
     	}
     }
@@ -1165,6 +1181,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         return m_kVolumeImageA.GetRGB();
     }
 
+    public JPanel getLUTPanel() {
+    	return frameHistogram.getContainingPanel();
+    }
+    
+    public JPanel getOpacityPanel() {
+    	return m_kVolOpacityPanel;
+    }
+    
     /**
      * Get the imageA and imageB blending value from the PlaneRender.
      * 
@@ -1401,6 +1425,11 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
      */
     public VolumeTriPlanarRender getVolumeGPU() {
         return raycastRenderWM;
+    }
+    
+    public void hideMenus() {
+    	menuBar.setVisible(false);
+    	panelToolbar.setVisible(false);
     }
 
     /**
@@ -1803,6 +1832,45 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.setGradientMagnitude(bShow);
     }
 
+    public void setImage(ModelImage kImage, boolean updateRenderer) {
+		if ( m_kVOIInterface != null )
+		{
+			m_kVOIInterface.setImage(kImage);
+		}
+		
+		m_kVolumeImageA.UpdateData(kImage, updateRenderer);
+		positionsPanel.setImage(kImage);
+		
+		updateHistoLUTPanels();
+
+		if ( updateRenderer )
+		{
+			raycastRenderWM.resetAxis();
+			raycastRenderWM.reCreateScene(m_kVolumeImageA);
+		}
+		if ( !raycastRenderWM.isVisible() )
+		{
+			raycastRenderWM.setVisible(true);
+		}
+		mainPane.revalidate();
+    }
+    
+    /**
+	 * Creates or updates the histogram / LUT panel and opacity panels when a new image is loaded.
+	 */
+	private void updateHistoLUTPanels()
+	{
+        m_kVolOpacityPanel.removePropertyChangeListener(this);
+		m_kVolOpacityPanel.setImages( m_kVolumeImageA.GetImage(), null, null, null, true );
+        m_kVolOpacityPanel.addPropertyChangeListener(this);
+
+		frameHistogram.setImages(m_kVolumeImageA.GetImage(), null, m_kVolumeImageA.getLUT(), null);
+		frameHistogram.histogramLUT(true, false, true);
+		frameHistogram.redrawFrames();
+
+		m_kVolumeImageA.GetImage().addImageDisplayListener(this);
+	}
+    
     /**
      * Sets the ModelImage to use as an alternative to the volume ModelImage for surface texturing.
      * 
@@ -3470,6 +3538,10 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         prevHeight = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height
                 - panelToolbar.getHeight();
         //System.err.println( prevHeight );
+    }
+    
+    public JSplitPane getVolumeSlicesPanel() {
+    	return rightPane;
     }
 
     /**

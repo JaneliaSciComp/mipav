@@ -307,15 +307,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         toolbarBuilder.getVOIUndoButton().setEnabled(false);
         toolbarBuilder.getVOIRedoButton().setEnabled(false);
         m_kPointerButton = toolbarBuilder.getPointerButton();
-        m_kVOIManagers = new Vector<VOIManager>();
         Color kColor = toolbarBuilder.getVOIColorButton().getBackground();
         new ColorRGB( kColor.getRed()/255.0f,
                 kColor.getGreen()/255.0f,
                 kColor.getBlue()/255.0f );
-        for ( int i = 0; i < iNViews; i++ )
-        {
-            m_kVOIManagers.add(new VOIManager(this));
-        }
         m_bGPURenderer = bGPU;
 
 
@@ -335,11 +330,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             popupPt.setEnabledProp(false);
         }
 
-        for ( int i = 0; i < iNViews; i++ )
-        {
-            m_kVOIManagers.elementAt(i).setPopupVOI(popup);
-            m_kVOIManagers.elementAt(i).setPopupPt(popupPt);
-        }
         if ( m_kImageA != null && m_kImageA.getVOIs() != null )
         {
             m_kImageA.getVOIs().addVectorListener(this);
@@ -358,6 +348,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 kVOIs.elementAt(i).addVOIListener(this);
             }
         }
+       
+        initVOIManagers(iNViews);
     }
 
     /* 
@@ -6153,6 +6145,21 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         if (m_kVOIDialog != null) {
             m_kVOIDialog.setVisible(true);
             m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, getActiveImage() );
+        }
+    }
+    
+    protected void initVOIManagers(int iNViews) {
+        m_kVOIManagers = new Vector<VOIManager>();
+        for ( int i = 0; i < iNViews; i++ )
+        {
+            m_kVOIManagers.add(new VOIManager(this));
+        }
+        if ( (popup != null) && (popupPt != null) ) {
+        	for ( int i = 0; i < iNViews; i++ )
+        	{
+        		m_kVOIManagers.elementAt(i).setPopupVOI(popup);
+        		m_kVOIManagers.elementAt(i).setPopupPt(popupPt);
+        	}
         }
     }
     

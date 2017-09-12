@@ -1001,6 +1001,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		if ( m_kVOIInterface != null )
     	{
     		m_kVOIInterface.deleteSelectedPoint( );
+			m_kVOIInterface.updateDisplay();
     	}    	    	
     }
     
@@ -1009,6 +1010,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		if ( m_kVOIInterface != null )
     	{
     		m_kVOIInterface.moveSelectedPoint( direction );
+			m_kVOIInterface.updateDisplay();
     	}    	    	
     }
 	
@@ -1064,7 +1066,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				{
 					m_kVOIInterface.updateSelectedPoint( Color.blue );
 				}
-				
+				if ( e.getKeyChar() == 'v' || e.getKeyChar() == 'V' )
+				{
+					displayVolumeRaycast(!m_kVolumeRayCast.GetDisplay());
+					displayVolumeSlices( !m_kVolumeRayCast.GetDisplay());
+					setVolumeBlend(1.0f);
+					setVolumeSamplesMouseReleased(.7f);
+					setVolumeSamplesMouseDragged(.7f);
+				}
 			}
 
 	        String command = null;
@@ -1305,6 +1314,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_kParent.addSlices(m_kSlices);
 		}
 	}
+	
+	public void reCreateScene(VolumeImage image) 
+	{
+		super.reCreateScene(image);
+
+		if ( m_kParent != null )
+		{
+			m_kParent.addSlices(m_kSlices);
+		}
+	}
 
 
 	/**
@@ -1323,6 +1342,76 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 				m_bPickPending = false;
 				if ( is3DMouseEnabled() || is3DSelectionEnabled() )
 				{
+					Vector3f maxPt = new Vector3f();
+					if ( m_kSlices.GetDisplay() )
+					{
+						m_kPicker.Execute(m_kSlices.GetScene(),kPos,kDir,0.0f,
+								Float.MAX_VALUE);
+						if (m_kPicker.Records.size() > 0)
+						{ 
+							PickRecord kPickPoint = m_kPicker.GetClosestNonnegative();
+							TriMesh kMesh = (TriMesh)kPickPoint.Intersected;
+							int iPlane = m_kSlices.whichPlane(kMesh);
+
+							Vector3f kP0 = kMesh.VBuffer.GetPosition3( kPickPoint.iV0 );
+							kP0.scale(kPickPoint.B0);
+							Vector3f kP1 = kMesh.VBuffer.GetPosition3( kPickPoint.iV1 );
+							kP1.scale( kPickPoint.B1);
+							Vector3f kP2 = kMesh.VBuffer.GetPosition3( kPickPoint.iV2 );
+							kP2.scale( kPickPoint.B2 );
+							Vector3f kPoint = Vector3f.add( kP0, kP1 );
+							kPoint.add( kP2 );
+							m_kVolumeRayCast.localToVolumeCoords( kPoint );
+							maxPt.copy(kPoint);
+
+							boolean picked = false;
+							if ( is3DSelectionEnabled() )
+							{
+								picked = modify3DMarker( null, null, maxPt, rightMousePressed );
+								if ( picked && (m_kVOIInterface != null) )
+								{
+									VOIText text = m_kVOIInterface.getPickedAnnotation();
+									text.setPlane( iPlane );
+								}
+							}
+							if ( !picked )
+							{
+
+								short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+								int colorID = 0;
+								VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+								VOIText textVOI = new VOIText( );
+								textVOI.add( maxPt );
+								textVOI.add( maxPt );
+								textVOI.setText(""+id);
+								if ( m_kVOIInterface != null )
+								{
+									if ( doAutomaticLabels() )
+									{
+										textVOI.setText("" + m_kVOIInterface.getCurrentIndex() );
+									}
+									else
+									{
+										textVOI.setText("A"+ m_kVOIInterface.getCurrentIndex() );	
+									}
+								}
+								else if ( doAutomaticLabels() )
+								{
+									textVOI.setText(""+id);										
+								}
+								else if ( !doAutomaticLabels() )
+								{
+									textVOI.setText("A"+id);	
+								}
+								newTextVOI.getCurves().add(textVOI);
+								textVOI.setPlane( iPlane );
+								add3DMarker( newTextVOI, doAutomaticLabels() );
+							}
+							m_kVOIInterface.updateDisplay();
+							return;
+						}
+					}
+						
 					m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
 							Float.MAX_VALUE);
 
@@ -1357,7 +1446,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							secondIntersectionPoint.copy(pickedPoints[1]);
 							
 							float maxValue = -Float.MAX_VALUE;
-							Vector3f maxPt = new Vector3f();
 							
 							Vector3f p0 = new Vector3f(firstIntersectionPoint);
 							Vector3f p1 = new Vector3f(secondIntersectionPoint);
@@ -1444,6 +1532,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 									newTextVOI.getCurves().add(textVOI);
 									add3DMarker( newTextVOI, doAutomaticLabels() );
 								}
+								m_kVOIInterface.updateDisplay();
 							}
 						}
 					}
