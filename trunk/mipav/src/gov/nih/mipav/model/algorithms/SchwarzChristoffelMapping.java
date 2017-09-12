@@ -1153,6 +1153,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		//wc[1] = -0.5829124688920886;
 		//M = crdiskCenter(M, wc);
 		crdiskplot(M, null, null, 200, 140, null, Integer.MIN_VALUE);
+		//crdiskplot(M, null, null, 20, 12, null, Integer.MIN_VALUE);
 		//double wc[] = new double[2];
 		//wc[0] = -0.5;
 		//wc[1] = -0.5;
@@ -6603,17 +6604,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		int q;
 		int n = w.length;
 		if (qdat == null) {
-			   qdat2 = new double[8][2*beta.length+2];
-			   scqdata(qdat2, beta, 8);	   
-		   }
-		   else if (qdat.length == 1) {
-			    int nqpts = (int)Math.max(Math.ceil(-Math.log10(qdat[0][0])), 4);
-				qdat2 = new double[nqpts][2*beta.length+2];
-				scqdata(qdat2, beta, nqpts);	   
-		   }
-		   else {
-			   qdat2 = qdat;
-		   }
+		   qdat2 = new double[8][2*beta.length+2];
+		   scqdata(qdat2, beta, 8);	   
+	    }
+	    else if (qdat.length == 1) {
+		    int nqpts = (int)Math.max(Math.ceil(-Math.log10(qdat[0][0])), 4);
+			qdat2 = new double[nqpts][2*beta.length+2];
+			scqdata(qdat2, beta, nqpts);	   
+	    }
+	    else {
+		   qdat2 = qdat;
+	    }
 		int p = zp.length;
 		double wp[][] = new double[p][2];
 		
@@ -6739,8 +6740,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				}
 			}
 			for (i = 0; i < u.length; i++) {
-				dl[quadnum][0][0] = 1.0;
-				dl[quadnum][0][1] = 0.0;
+				dl[quadnum][i][0] = 1.0;
+				dl[quadnum][i][1] = 0.0;
 			}
 		} // if (dl != null)
 		
@@ -6885,7 +6886,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    }
 			} // if (dl != null)
 			done[q] = true;
-		    todo[1] = false;
+		    todo[q] = false;
 		    numnotdone--;
 		    // Neighbors of q can be done now
 		    for (i = 0; i < n3; i++) {
@@ -7665,7 +7666,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// at the new points, and newlog is a 0-1 vector flagging the newly added 
 		// points.
 		
-		// The algorithm is basically stolen form fplot.  If extrapolation of the
+		// The algorithm is basically stolen from fplot.  If extrapolation of the
 		// linear interpolation that the graphics will use results in an estimate
 		// too far from reality, refinement is called for.
 		
@@ -7691,7 +7692,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			dwp[i][1] = wpImag.get(i+1) - wpImag.get(i);
 		}
 		
-		// Infinities at the ends of zp mean that we go out forever.  However,
+		// Infinities at the ends of zp mean that we could go out forever.  However,
 		// we will pick a finite bound.
 		boolean linf = (Double.isInfinite(zpReal.get(0)) || Double.isInfinite(zpImag.get(0)));
 		if (linf) {
@@ -7917,7 +7918,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				if ((!Double.isNaN(zp2[i][j][0])) && (!Double.isNaN(zp2[i][j][1]))) {
 				    zpReal.add(zp2[i][j][0]);
 				    zpImag.add(zp2[i][j][1]);
-				    if (new2[i][j] != 0) {
+				    if (new2[i][j] == 1) {
 				        newlog.add(true);
 				    }
 				    else {
