@@ -382,7 +382,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			textVOI.setActive(automaticLabel);
 			if ( !automaticLabel )
 			{
+				textVOI.setActive(false);
 				new JDialogAnnotation(m_kImageA, textVOI, 0, true, true);
+				if ( !textVOI.isActive() )
+				{
+					return;
+				}
 			}
 			addAnnotation(textVOI);
 		}
@@ -433,6 +438,14 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			}
 		}		
 	}
+	
+	public VOIText getPickedAnnotation() {
+		if ( latticeModel != null )
+		{
+			return latticeModel.getPickedAnnotation();
+		}
+		return null;
+	}
 
 	public void moveSelectedPoint( Vector3f direction )
 	{
@@ -452,6 +465,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		if ( latticeModel != null )
 		{
 			latticeModel.updateSelectedPoint(color);
+			updateDisplay();
 		}
 	}
 	
@@ -463,6 +477,28 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			latticeModel.setImage(image);
 		}
 	}
+	
+	public void updateManager( int index, int orientation )
+	{
+		m_kVOIManagers.elementAt(index).setImage(m_kImageA, orientation);
+	}
+    
+    protected void initVOIManagers(int iNViews) {
+        m_kVOIManagers = new Vector<VOIManager>();
+        for ( int i = 0; i < iNViews; i++ )
+        {
+            m_kVOIManagers.add(new VOILatticeManager(this));
+            ((VOILatticeManager)m_kVOIManagers.lastElement()).setInterface(this);
+        }
+        if ( (popup != null) && (popupPt != null) ) {
+        	for ( int i = 0; i < iNViews; i++ )
+        	{
+        		m_kVOIManagers.elementAt(i).setPopupVOI(popup);
+        		m_kVOIManagers.elementAt(i).setPopupPt(popupPt);
+        	}
+        }
+    }
+    
 
 	protected void redoVOIs()
 	{
@@ -510,7 +546,28 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		updateDisplay();
 	}
 
-	private void addAnnotation( VOI textVOI )
+	public void deleteAnnotations() {
+		if ( latticeModel != null )
+		{
+			latticeModel.deleteAnnotations();
+		}
+	}
+	
+	public void saveAnnotations( final String voiDir ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.saveAnnotations(voiDir);
+		}
+	}
+	
+	public void saveAnnotationsAsCSV( final String dir, final String fileName ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.saveAnnotationsAsCSV(dir, fileName);
+		}
+	}
+	
+	public void addAnnotation( VOI textVOI )
 	{       
 		if ( latticeModel == null )
 		{
@@ -606,6 +663,14 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			return latticeModel.modifyAnnotation(startPt, endPt, pt, rightMouse);
 		}
 		return false;
+	}
+
+	public void updateAnnotation( VOIText annotation )
+	{
+		if ( latticeModel != null )
+		{
+			latticeModel.updateAnnotation(annotation);
+		}
 	}
 
 	private void setVoxelSize()

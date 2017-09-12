@@ -267,6 +267,11 @@ public class JPanelPositions extends JInterfaceBase {
         return panelLabels;
     }  
     
+    public void setImage(ModelImage kImage)
+    {
+    	imageA = kImage;
+    }
+    
     public void setRadiological( boolean bOn )
     {
         radiologicalView.setSelected(bOn);

@@ -377,7 +377,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/** Set to true when the user is actively drawing or modifying a VOI contour. */
 	private boolean m_bDrawVOI = false;
 	/** Set to true when the user has selected a VOI contour. */
-	private boolean m_bSelected = false;
+	protected boolean m_bSelected = false;
 
 
 	/** used in the popup menu when the user right-clicks over a voi intensity line. */
@@ -410,7 +410,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	private int m_iDrawType;
 
 	/** Current active voi contour. */
-	private VOIBase m_kCurrentVOI = null;
+	protected VOIBase m_kCurrentVOI = null;
 	/** The contour to copy. */
 	private VOIBase m_kCopyVOI = null;
 	/** ScreenCoordinateListener translates between the current image dimensions, canvas size, and mouse
@@ -426,16 +426,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	private boolean m_bLeftMousePressed;
 
 	/** Change the mouse cursor with the first mouseDrag event */
-	private boolean m_bFirstDrag = true;
+	protected boolean m_bFirstDrag = true;
 	/** Last/current mouse position. */
-	private float m_fMouseX, m_fMouseY;
+	protected float m_fMouseX;
+	protected float m_fMouseY;
 	/** Local orientation of the displayed image, used in the volume renderer and tri-planar views. */
 	private int[] m_aiAxisOrder;
 	private boolean[] m_abAxisFlip;
 	/** ImageA and ImageB */
 	private ModelImage[] m_akImages = new ModelImage[2];
 	/** Current active image. */
-	private ModelImage m_kImageActive;
+	protected ModelImage m_kImageActive;
 	/** A re-oriented version of the active image, re-oriented so it matches the currently
 	 * displayed image orientations in either the tri-planar or volume render views. This
 	 * is used for level-set and livewire in the tri-planar view. */
@@ -443,7 +444,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/** The image extents in the local orientation. */
 	private int[] m_aiLocalImageExtents;
 	/** A reference to the VOIManagerInterface */
-	private VOIManagerInterface m_kParent;
+	protected VOIManagerInterface m_kParent;
 	/** Calculations for the oval voi are calculated one time: */
 	private boolean m_bFirstVOI = true;
 	private int m_iCirclePts = 32;
@@ -451,14 +452,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	private double[] m_adSin = new double[m_iCirclePts];
 
 	/** VOI contour near status: */
-	private static final int NearNone = -1;
-	private static final int NearPoint = 0;
-	private static final int NearLine = 1;
-	private static final int NearBoundPoint = 2;
+	protected static final int NearNone = -1;
+	protected static final int NearPoint = 0;
+	protected static final int NearLine = 1;
+	protected static final int NearBoundPoint = 2;
 	/** The near status of the mouse, used to set the mouse cursor. */
-	private int m_iNearStatus = NearNone;
+	protected int m_iNearStatus = NearNone;
 	/** The canvas */
-	private Component m_kComponent = null;
+	protected Component m_kComponent = null;
 	/** Type of livewire cost function, gradient magnitude, laplace, intensity. */
 	private int m_iLiveWireSelection = 0;
 	/** Livewire calculations: */
@@ -486,14 +487,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/** Popup Menu for VOIPoints. */
 	protected ViewJPopupPt m_kPopupPt = null;
 	/** Set to XPLANE, YPLANE, or ZPLANE, depending on the image orientation. */
-	private int m_iPlane = -1;
+	protected int m_iPlane = -1;
 
 	/**
 	 * <code>m_kMouseOffset</code> is used to determine movements. <code>mousePressed()</code> establishes the coordinates
 	 * of <code>m_kMouseOffset</code>. <code>mouseDragged()</code> calculates distance from the <code>m_kMouseOffset</code>
 	 * to the present location and uses this distance to move an object. 
 	 */
-	private Vector3f m_kMouseOffset = new Vector3f();
+	protected Vector3f m_kMouseOffset = new Vector3f();
 	/** Set to true if the left mouse is pressed during drag. */
 	private boolean m_bMouseDrag = false;
 
@@ -958,39 +959,39 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param kContext ScreenCoordinateListener for converting between screen coordinates and image file coordinates.
 	 * @param iOrientation orientation of the ViewJComponentEditImage.
 	 */
-	public void init( JFrame kFrame, ModelImage kImageA, ModelImage kImageB, Component kComponent, 
-			ScreenCoordinateListener kContext, int[] aiAxisOrder, boolean[] abAxisFlip )
-	{
-		if ( kFrame != null )
-		{
-			kFrame.addKeyListener(this);
-		}
-		m_akImages[0] = kImageA;
-		m_akImages[1] = kImageB;
-		if ( kImageA != null )
-		{
-			m_kImageActive = kImageA;
-		}
-		else
-		{
-			m_kImageActive = kImageB;
-		}
-		setCanvas(kComponent);
-		setDrawingContext(kContext);
-
-		m_aiAxisOrder = aiAxisOrder;
-		m_abAxisFlip = abAxisFlip;
-		m_aiLocalImageExtents = m_kImageActive.getExtents( m_aiAxisOrder );
-		map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
-		
-		int iPlane = m_aiAxisOrder[2];
-		switch ( iPlane )
-		{
-		case 0: m_iPlane = VOIBase.XPLANE; break;
-		case 1: m_iPlane = VOIBase.YPLANE; break;
-		case 2: m_iPlane = VOIBase.ZPLANE; break;
-		}
-	}
+//	public void init( JFrame kFrame, ModelImage kImageA, ModelImage kImageB, Component kComponent, 
+//			ScreenCoordinateListener kContext, int[] aiAxisOrder, boolean[] abAxisFlip )
+//	{
+//		if ( kFrame != null )
+//		{
+//			kFrame.addKeyListener(this);
+//		}
+//		m_akImages[0] = kImageA;
+//		m_akImages[1] = kImageB;
+//		if ( kImageA != null )
+//		{
+//			m_kImageActive = kImageA;
+//		}
+//		else
+//		{
+//			m_kImageActive = kImageB;
+//		}
+//		setCanvas(kComponent);
+//		setDrawingContext(kContext);
+//
+//		m_aiAxisOrder = aiAxisOrder;
+//		m_abAxisFlip = abAxisFlip;
+//		m_aiLocalImageExtents = m_kImageActive.getExtents( m_aiAxisOrder );
+//		map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
+//		
+//		int iPlane = m_aiAxisOrder[2];
+//		switch ( iPlane )
+//		{
+//		case 0: m_iPlane = VOIBase.XPLANE; break;
+//		case 1: m_iPlane = VOIBase.YPLANE; break;
+//		case 2: m_iPlane = VOIBase.ZPLANE; break;
+//		}
+//	}
 
 	/**
 	 * Returns true if the VOIManager is currently drawing a VOI, or if the defaultPointer button in the
@@ -1831,6 +1832,21 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+	public void setImage(ModelImage image, int iOrientation)
+	{
+		m_kImageActive = image;
+		m_akImages[0] = image;
+		
+		setOrientation(iOrientation);
+		int iPlane = MipavCoordinateSystems.getAxisOrder( m_kImageActive, iOrientation)[2];
+		switch ( iPlane )
+		{
+		case 0: m_iPlane = VOIBase.XPLANE; break;
+		case 1: m_iPlane = VOIBase.YPLANE; break;
+		case 2: m_iPlane = VOIBase.ZPLANE; break;
+		}
+	}
+	
 	/**
 	 * Sets a new imageB.
 	 * @param imageB new ModelImage imageB.
@@ -2405,7 +2421,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param iZ z value in screen coordinates.
 	 * @return true if inside the contour, or true if near the VOILine or near the VOIPoint.
 	 */
-	private boolean contains( VOIBase kVOI, int iX, int iY, int iZ ) {
+	protected boolean contains( VOIBase kVOI, int iX, int iY, int iZ ) {
 
 		Vector3f kLocalPt = new Vector3f(iX, iY, iZ);
 		Vector3f kVolumePt = new Vector3f();
@@ -4776,7 +4792,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param kVOI input VOI.
 	 * @return the slice that the VOI is on in local patient coordinates.
 	 */
-	private int getSlice( VOIBase kVOI )
+	protected int getSlice( VOIBase kVOI )
 	{
 		if ( kVOI.getType() == VOI.PROTRACTOR && ((VOIProtractor)kVOI).getAllSlices() )
 		{
@@ -5076,7 +5092,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param iZ
 	 * @return
 	 */
-	private boolean nearBoundPoint( VOIBase kVOI, int iX, int iY, int iZ )
+	protected boolean nearBoundPoint( VOIBase kVOI, int iX, int iY, int iZ )
 	{
 		if ( kVOI.getGroup() == null )
 		{
@@ -5158,7 +5174,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @return true if the mouse is near enough to the input VOI contour for adding a point to the line or
 	 * showing that the voi can be selected.
 	 */
-	private boolean nearLine( VOIBase kVOI, int iX, int iY, int iZ) {
+	protected boolean nearLine( VOIBase kVOI, int iX, int iY, int iZ) {
 		Vector<Vector3f> backUpPts = new Vector<Vector3f>();
 		for ( int i = 0; i < kVOI.size(); i++ )
 		{
@@ -5185,7 +5201,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param iZ current slice.
 	 * @return true if the mouse is near a point on the contour of the input VOI.
 	 */
-	private boolean nearPoint( VOIBase kVOI, int iX, int iY, int iZ) {
+	protected boolean nearPoint( VOIBase kVOI, int iX, int iY, int iZ) {
 		Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
 		kVOI.setNearPoint(-1);
 		for ( int i = 0; i < kVOI.size(); i++ )
@@ -5282,7 +5298,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/**
 	 * @param  kEvent  the mouse event generated by a mouse drag
 	 */
-	private void processLeftMouseDrag(MouseEvent kEvent) {
+	protected void processLeftMouseDrag(MouseEvent kEvent) {
 		if ( m_bDrawVOI && !(((m_iDrawType == POINT) || (m_iDrawType == POLYPOINT) ||
 				(m_iDrawType == LIVEWIRE) || (m_iDrawType == LEVELSET) || (m_iDrawType == TEXT) ||
 				(m_iDrawType == RETRACE))) )
@@ -5875,7 +5891,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 
 	}
-	private VOIBase selectVOI( MouseEvent kEvent )
+	protected VOIBase selectVOI( MouseEvent kEvent )
 	{
 		int iX = kEvent.getX();
 		int iY = kEvent.getY();
@@ -6062,7 +6078,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 	}
 
-	private void showSelectedVOI( MouseEvent kEvent )
+	protected void showSelectedVOI( MouseEvent kEvent )
 	{
 		int iX = kEvent.getX();
 		int iY = kEvent.getY(); 

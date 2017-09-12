@@ -206,6 +206,8 @@ implements GLEventListener, ScreenCoordinateListener
 	protected boolean isAnnotationEnabled = false;
 	protected boolean isMouseFlythru = true;
 	protected boolean isPathFlythru = false;
+	
+	private boolean m_bCleanup = false;
 
 	/**
 	 * @param kParent
@@ -309,6 +311,10 @@ implements GLEventListener, ScreenCoordinateListener
 		if ( m_pkRenderer != null )
 		{
 			((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+		}
+		if ( m_bCleanup )
+		{
+			cleanup();
 		}
 		if ( !m_bInit )
 		{
@@ -448,7 +454,7 @@ implements GLEventListener, ScreenCoordinateListener
 		m_abAxisFlip = null;
 
 		// Shared context will delete the slices:
-			m_kDisplayList.clear();
+		m_kDisplayList.clear();
 		m_kParent = null;
 		super.dispose(arg0);
 	}
@@ -714,7 +720,7 @@ implements GLEventListener, ScreenCoordinateListener
 		 kMouseWorld.scale( 1.0f/kMouseWorld.W );
 		 //System.err.println( kMouseVec.ToString() + " " + kMouseWorld.ToString() );
 
-		 if ( !m_bIsMouseActive )
+		 if ( !m_bIsMouseActive || kEvent.isControlDown() )
 		 {
 			 return;
 		 }
@@ -754,7 +760,7 @@ implements GLEventListener, ScreenCoordinateListener
 	 public void mousePressed(MouseEvent kEvent) {
 		 super.mousePressed(kEvent);
 		 m_fMouseY = kEvent.getY();
-		 if ( !m_bIsMouseActive )
+		 if ( !m_bIsMouseActive || kEvent.isControlDown() )
 		 {
 			 return;
 		 }
@@ -785,8 +791,8 @@ implements GLEventListener, ScreenCoordinateListener
 	 @Override
 	 public void mouseReleased(MouseEvent kEvent) {
 
-		 super.mousePressed(kEvent); 
-		 if ( !m_bIsMouseActive )
+		 super.mouseReleased(kEvent); 
+		 if ( !m_bIsMouseActive || kEvent.isControlDown() )
 		 {
 			 return;
 		 }
@@ -1040,6 +1046,12 @@ implements GLEventListener, ScreenCoordinateListener
 		 GetCanvas().display();
 	 }
 
+	 public void setImage( VolumeImage kImage )
+	 {
+		 m_bModified = true;
+		 m_bCleanup = true;
+		 m_kVolumeImageA = kImage;
+	 }
 
 	 public void setMouseActive( boolean bActive )
 	 {
@@ -1167,7 +1179,56 @@ implements GLEventListener, ScreenCoordinateListener
 		 }
 		 return null;
 	 }
+	 
+	 private void cleanup() {
+		m_bCleanup = false;
 
+
+		 setOrientation();
+
+
+		 Vector3f kCLoc = new Vector3f(m_akCLoc[m_aiAxisOrder[2]]);
+		 Vector3f kCDir = new Vector3f(m_akCoords[m_aiAxisOrder[2]]);
+		 Vector3f kCUp = new Vector3f(m_akCoords[m_aiAxisOrder[1]]);
+		 Vector3f kCRight = new Vector3f(m_akCoords[m_aiAxisOrder[0]]);
+		 if ( m_abAxisFlip[2] )
+		 {
+			 kCLoc.scale(-1);
+			 kCDir.scale(-1);
+		 }
+		 if ( m_abAxisFlip[1] )
+		 {
+			 kCUp.scale(-1);
+		 }
+		 if ( m_abAxisFlip[0] )
+		 {
+			 kCRight.scale(-1);
+		 }
+		 //invert y-axis
+		 kCUp.scale(-1);
+		 m_spkCamera.SetFrame( kCLoc, kCDir, kCUp, kCRight );
+
+		 m_fX0 = -m_fXBox / m_fMaxBox;
+		 m_fX1 = m_fXBox / m_fMaxBox;
+		 m_fY0 = -m_fYBox / m_fMaxBox;
+		 m_fY1 = m_fYBox / m_fMaxBox;
+
+		 m_fXRange = m_fX1 - m_fX0;
+		 m_fYRange = m_fY1 - m_fY0;
+
+		 m_iSlice = (m_aiLocalImageExtents[2]) / 2;
+		 m_kPatientPt.X = (m_aiLocalImageExtents[0]) / 2;
+		 m_kPatientPt.Y = (m_aiLocalImageExtents[1]) / 2;
+		 m_kPatientPt.Z = m_iSlice;
+
+		 reCreateLabels();
+
+		 //m_kAnimator.add( GetCanvas() );
+		 m_kParent.setSliceFromPlane( new Vector3f( (m_kVolumeImageA.GetImage().getExtents()[0] - 1)/2.0f,
+				 (m_kVolumeImageA.GetImage().getExtents()[1] - 1)/2.0f,
+				 (m_kVolumeImageA.GetImage().getExtents()[2] - 1)/2.0f ) );
+
+	 }
 
 	 /**
 	  * Creates the TriMesh data structures for the axis arrows.
@@ -1323,6 +1384,88 @@ implements GLEventListener, ScreenCoordinateListener
 		 }
 	 }
 
+	 private void reCreateLabels()
+	 {
+		 // XArrow
+		 m_kXArrow[0].VBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][0] );
+		 m_kXArrow[0].VBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][0] );
+		 m_kXArrow[0].VBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][0] );
+		 m_kXArrow[0].VBuffer.SetColor3(0,3,m_aakColors[m_iPlaneOrientation][0] );
+		 m_kXArrow[0].Reload(true);
+		 m_kXArrow[1].VBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][0] );
+		 m_kXArrow[1].VBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][0] );
+		 m_kXArrow[1].VBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][0] );
+		 m_kXArrow[1].Reload(true);
+
+
+		 // YArrow:
+		 m_kYArrow[0].VBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][1] );
+		 m_kYArrow[0].VBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][1] );
+		 m_kYArrow[0].VBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][1] );
+		 m_kYArrow[0].VBuffer.SetColor3(0,3,m_aakColors[m_iPlaneOrientation][1] );
+		 m_kYArrow[0].Reload(true);
+		 m_kYArrow[1].VBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][1] );
+		 m_kYArrow[1].VBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][1] );
+		 m_kYArrow[1].VBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][1] );
+		 m_kYArrow[1].Reload(true);
+
+		 if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+		 {
+			 Vector3f kPosition = new Vector3f();
+			 Vector3f kDiff = new Vector3f( 0f, 0.9f, 0f );
+			 for ( int j = 0; j < 4; j++ )
+			 {
+				 m_kXArrow[0].VBuffer.GetPosition3(j, kPosition);
+				 kPosition.add(kDiff);
+				 m_kXArrow[0].VBuffer.SetPosition3(j, kPosition );
+			 }
+			 for ( int j = 0; j < 3; j++ )
+			 {
+				 m_kXArrow[1].VBuffer.GetPosition3(j, kPosition);
+				 kPosition.add(kDiff);
+				 m_kXArrow[1].VBuffer.SetPosition3(j, kPosition );
+			 }
+			 for ( int i = 0; i < 2; i++ )
+			 {
+				 m_kXArrow[i].Reload(true);
+				 m_kXArrow[i].UpdateGS();
+				 m_kXArrow[i].UpdateRS();
+				 m_pkRenderer.LoadResources(m_kXArrow[i]);
+			 }
+
+			 VertexBuffer pkVBuffer = m_kYArrow[0].VBuffer;
+			 pkVBuffer.SetPosition3(0, 0.05f,0.85f,0.5f);
+			 pkVBuffer.SetPosition3(1, 0.06f,0.85f,0.5f);
+			 pkVBuffer.SetPosition3(2, 0.06f,0.95f,0.5f);
+			 pkVBuffer.SetPosition3(3, 0.05f,0.95f,0.5f);
+			 m_kYArrow[0].Reload(true);
+			 m_kYArrow[0].UpdateGS();
+			 m_kYArrow[0].UpdateRS();
+			 m_pkRenderer.LoadResources(m_kYArrow[0]);
+
+			 pkVBuffer = m_kYArrow[1].VBuffer;
+			 pkVBuffer.SetPosition3(0, 0.04f,0.85f,0.5f);
+			 pkVBuffer.SetPosition3(1, 0.055f,0.82f,0.5f);
+			 pkVBuffer.SetPosition3(2, 0.07f,0.85f,0.5f);
+			 m_kYArrow[1].Reload(true);
+			 m_kYArrow[1].UpdateGS();
+			 m_kYArrow[1].UpdateRS();
+			 m_pkRenderer.LoadResources(m_kYArrow[1]);
+		 }
+
+
+		 m_iLabelX_SpacingX = (int) (m_kXArrow[1].VBuffer.GetPosition3fX(1) * m_iWidth + 2);
+		 m_iLabelX_SpacingY = (int) (m_kXArrow[1].VBuffer.GetPosition3fY(1) * m_iHeight) - 5;
+		 m_iLabelY_SpacingX = (int) (m_kYArrow[1].VBuffer.GetPosition3fX(2) * m_iWidth - 5);
+		 m_iLabelY_SpacingY = (int) (m_kYArrow[1].VBuffer.GetPosition3fY(2) * m_iHeight);
+		 if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+		 {
+			 m_iLabelX_SpacingY = m_iHeight - m_iLabelX_SpacingY;
+			 m_iLabelY_SpacingY = m_iHeight - m_iLabelY_SpacingY + 20;
+		 }
+	 }
+
+	 
 	 /**
 	  * Initializes the display parameters.
 	  */
@@ -2314,6 +2457,7 @@ implements GLEventListener, ScreenCoordinateListener
 				 m_kVolumeImageA.GetScaleZ()/(kImageA.getExtents()[2] - 1)  );
 		 m_kVolumeScaleInv.copy( m_kVolumeScale ).invert();
 
+//		 System.err.println( "setOrientation " + m_kCenter );
 		 m_kCenter.mult( m_kVolumeScale );
 
 	 }

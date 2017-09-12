@@ -99,6 +99,11 @@ public class LatticeModel {
 
 	} // end saveAllVOIsTo()
 
+	public void saveAnnotationsAsCSV(final String dir, final String fileName)
+	{
+		saveAnnotationsAsCSV(dir, fileName, annotationVOIs);
+	}
+	
 
 	/**
 	 */
@@ -305,6 +310,8 @@ public class LatticeModel {
 			imageA.registerVOI(annotationVOIs);
 		}
 		VOIText text = (VOIText) textVOI.getCurves().firstElement().clone();
+		text.firstElement().X = Math.round( text.firstElement().X );		text.firstElement().Y = Math.round( text.firstElement().Y );		text.firstElement().Z = Math.round( text.firstElement().Z );
+		text.lastElement().X  = Math.round( text.lastElement().X );		    text.lastElement().Y  = Math.round( text.lastElement().Y );		    text.lastElement().Z  = Math.round( text.lastElement().Z );
 		Color c = text.getColor();
 		text.update(new ColorRGBA(c.getRed() / 255.0f, c.getGreen() / 255.0f, c.getBlue() / 255.0f, 1f));
 		text.setUseMarker(false);
@@ -628,7 +635,21 @@ public class LatticeModel {
 		return pickedPoint;
 	}
 
-
+	public VOIText getPickedAnnotation() {
+		if ( pickedAnnotation == -1 ) {
+			return null;
+		}
+		if (annotationVOIs == null) {
+			return null;
+		}
+		if (annotationVOIs.getCurves() == null) {
+			return null;
+		}
+		if ( (pickedAnnotation < 0) || (pickedAnnotation > annotationVOIs.getCurves().size()) ) {
+			return null;
+		}
+		return (VOIText) annotationVOIs.getCurves().elementAt(pickedAnnotation);
+	}
 
 	/**
 	 * Finds the closest point to the input point and sets it as the currently selected lattice or annotation point.
@@ -850,7 +871,7 @@ public class LatticeModel {
 					}
 				}
 			}
-			if ( pickedAnnotation == -1 )
+			if ( (pickedAnnotation == -1) && (startPt != null) && (endPt != null) )
 			{
 				minDist = Float.MAX_VALUE;
 				// look at the vector under the mouse and see which lattice point is closest...
@@ -894,6 +915,40 @@ public class LatticeModel {
 			}
 		}
 		return (pickedPoint != null);
+	}
+	
+	public void updateAnnotation( VOIText annotation )
+	{
+		pickedAnnotation = -1;
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+		{
+			if ( annotationVOIs.getCurves().elementAt(i) == annotation )
+			{
+				pickedAnnotation = i;
+				break;
+			}
+		}
+		if (pickedAnnotation != -1)
+		{
+			annotationVOIs.getCurves().elementAt(pickedAnnotation).update();
+			final VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(pickedAnnotation);
+			pickedPoint = annotationVOIs.getCurves().elementAt(pickedAnnotation).elementAt(0);
+			updateSelected();
+
+			if ( text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin") )
+			{
+				if ( wormOrigin == null )
+				{
+					wormOrigin = new Vector3f(pickedPoint);
+				}
+				wormOrigin.copy(pickedPoint);
+				// updateLattice(false);
+			}
+		}
+		else
+		{
+			System.err.println("No matching VOI");
+		}		
 	}
 
 	/**
@@ -1054,27 +1109,31 @@ public class LatticeModel {
 
 		if (fileName != null) {
 			voiDir = new String(directory + fileName + File.separator);
-
-			clear3DSelection();
-
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(annotationVOIs);
-			saveAllVOIsTo(voiDir, imageA);
-
-			imageA.unregisterAllVOIs();
-			imageA.registerVOI(annotationVOIs);
-			if (leftMarker != null) {
-				imageA.registerVOI(leftMarker);
-			}
-			if (rightMarker != null) {
-				imageA.registerVOI(rightMarker);
-			}
-			if (lattice != null) {
-				imageA.registerVOI(lattice);
-			}
+			saveAnnotations(voiDir);
 			updateLattice(true);
 		}
+	}
+	
+	public void saveAnnotations( String voiDir )
+	{
+		clear3DSelection();
 
+		imageA.unregisterAllVOIs();
+		imageA.registerVOI(annotationVOIs);
+		saveAllVOIsTo(voiDir, imageA);
+
+		imageA.unregisterAllVOIs();
+		imageA.registerVOI(annotationVOIs);
+		if (leftMarker != null) {
+			imageA.registerVOI(leftMarker);
+		}
+		if (rightMarker != null) {
+			imageA.registerVOI(rightMarker);
+		}
+		if (lattice != null) {
+			imageA.registerVOI(lattice);
+		}
+		updateLattice(true);
 	}
 
 	/**
@@ -1237,6 +1296,15 @@ public class LatticeModel {
 		}
 	}
 
+	public void deleteAnnotations() {
+		if (annotationVOIs != null) {
+			imageA.unregisterVOI(annotationVOIs);
+		}
+		annotationVOIs = null;
+		highestIndex = 1;
+		clear3DSelection();
+	}
+	
 	/**
 	 * Called when new annotations are loaded from file, replaces current annotations.
 	 * 
@@ -1377,6 +1445,9 @@ public class LatticeModel {
 		if (pickedPoint == null) {
 			return;
 		}
+		
+		pt.X = Math.round( pt.X );		pt.Y = Math.round( pt.Y );		pt.Z = Math.round( pt.Z );
+		
 
 		if (doAnnotation && (pickedAnnotation != -1)) {
 			final Vector3f diff = Vector3f.sub(pt, pickedPoint);

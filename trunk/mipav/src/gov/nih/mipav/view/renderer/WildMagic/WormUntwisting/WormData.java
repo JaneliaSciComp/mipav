@@ -364,10 +364,12 @@ public class WormData
 		wormImage.unregisterAllVOIs();
 		wormImage.registerVOI(markerAnnotations);
 		markerAnnotations.setName("markers");
+		System.err.println( outputDirectory + File.separator + editAnnotationOutput + File.separator );
 		LatticeModel.saveAllVOIsTo(outputDirectory + File.separator + editAnnotationOutput + File.separator, wormImage);
 		LatticeModel.saveAnnotationsAsCSV(outputDirectory + File.separator + editAnnotationOutput + File.separator, "markerInfo.csv", markerAnnotations);
 		wormImage.unregisterAllVOIs();
 	}
+
 	
 	public boolean checkSeamCells()
 	{
