@@ -125,20 +125,19 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
             }
         } // while(true)
         
-        //testRectmap1();
-        //testRectmap2();
-        //testDiskmap1();
-        //testDiskmap2();
-        //testDiskmap3();
-        //testDiskmap4();
-        //testDiskmap5();
+        
         boolean testme = false;
         if (testme) {
+        	//testRectmap1();
+        	//testRectmap2();
+        	//testDiskmap1();
             //testCRDiskmap1();
         	//testDiskmap2();
         	//testCRDiskmap2();
         	//testDiskmap3();
         	testCRDiskmap3();
+        	//testDiskmap4();
+        	//testDiskmap5();
         	//testCRDiskmap5();
             return;
         }
@@ -726,7 +725,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		Graphics g = graph.getGraphics();
 		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
         double yScale = graphBounds.height / (axlim[3] - axlim[2]);
-		double len = Math.max(graphBounds.width, graphBounds.height);
+		double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
 		minlen = len * minlen;
 		maxlen = len * maxlen;
 		
@@ -6371,7 +6370,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		Graphics g = graph.getGraphics();
 		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
         double yScale = graphBounds.height / (axlim[3] - axlim[2]);
-		double len = Math.max(graphBounds.width, graphBounds.height);
+        double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
 		minlen = len * minlen;
 		maxlen = len * maxlen;
 		
@@ -7149,7 +7148,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		Graphics g = graph.getGraphics();
 		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
         double yScale = graphBounds.height / (axlim[3] - axlim[2]);
-		double len = Math.max(graphBounds.width, graphBounds.height);
+        double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
 		minlen = len * minlen;
 		maxlen = len * maxlen;
 		
@@ -7447,7 +7446,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		Graphics g = graph.getGraphics();
 		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
         double yScale = graphBounds.height / (axlim[3] - axlim[2]);
-		double len = Math.max(graphBounds.width, graphBounds.height);
+        double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
 		minlen = len * minlen;
 		maxlen = len * maxlen;
 		
