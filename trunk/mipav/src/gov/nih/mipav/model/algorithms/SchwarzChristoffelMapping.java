@@ -6649,18 +6649,22 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// Compute maps via embeddings
 		int sameVal = 0;
-		Arrays.sort(idx);
+		int idx2[] = new int[idx.length];
+		for (i = 0; i < idx.length; i++) {
+			idx2[i] = idx[i];
+		}
+		Arrays.sort(idx2);
 		for (i = 0; i < p-1; i++) {
-		    if (idx[i] == idx[i+1]) {
+		    if (idx2[i] == idx2[i+1]) {
 		        sameVal++;	
 		    }
 		}
 		int unique = p - sameVal;
 		int qa[] = new int[unique];
-		qa[0] = idx[0];
+		qa[0] = idx2[0];
 		for (i = 1, j = 1; i < p; i++) {
-			if (idx[i] != idx[i-1]) {
-				qa[j++] = idx[i];
+			if (idx2[i] != idx2[i-1]) {
+				qa[j++] = idx2[i];
 			}
 		}
 		for (q = 0; q < qa.length; q++) {
