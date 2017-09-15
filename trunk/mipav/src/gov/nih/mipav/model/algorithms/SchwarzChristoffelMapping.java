@@ -1,11 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.ComplexLinearEquations;
-import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
-import gov.nih.mipav.model.structures.jama.LinearEquations2;
-import gov.nih.mipav.view.*;
-
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
@@ -22,6 +16,15 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.jama.ComplexLinearEquations;
+import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJComponentBase;
+import gov.nih.mipav.view.ViewJComponentGraph;
+import gov.nih.mipav.view.ViewJFrameGraph;
 
 public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseListener {
 	
@@ -135,9 +138,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testDiskmap2();
         	//testCRDiskmap2();
         	//testDiskmap3();
-        	testCRDiskmap3();
+        	//testCRDiskmap3();
         	//testDiskmap4();
-        	//testDiskmap5();
+        	// No testCRDiskmap4() before CRDisk cannot handle infinities in example.
+        	testDiskmap5();
         	//testCRDiskmap5();
             return;
         }
@@ -1119,8 +1123,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		theta[1] = -3.141592618638339;
 		theta[2] = -3.1266531461319778;
 		theta[3] = 0.0;
-		
-		crdiskplot(M, R, theta, 200, 140, null, Integer.MIN_VALUE);
+		boolean drawThetaToRadiusOne = true;
+		crdiskplot(M, R, theta, 200, 140, drawThetaToRadiusOne, null, Integer.MIN_VALUE);
 	}
 	
 	public void testCRDiskmap3() {
@@ -1147,13 +1151,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		polygon poly = new polygon(x, y, null);
 		scmap M = crdiskmap(poly, tolerance, null, null);
 		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
-		crdiskplot(M, null, null, 20, 12, null, Integer.MIN_VALUE);
+		boolean drawThetaToRadiusOne = true;
+		crdiskplot(M, null, null, 20, 12, drawThetaToRadiusOne, null, Integer.MIN_VALUE);
 		double wc[] = new double[2];
 		wc[0] = -0.5;
 		wc[1] = -0.5;
 		M = crdiskCenter(M, wc);
 		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
-		crdiskplot(M, null, null, 20, 12, null, Integer.MIN_VALUE);
+		drawThetaToRadiusOne = false;
+		crdiskplot(M, null, null, 20, 12, drawThetaToRadiusOne, null, Integer.MIN_VALUE);
 	}
 	
 	public void testCRDiskmap5() {
@@ -1194,7 +1200,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		polygon poly = new polygon(x, y, null);
 		scmap M = crdiskmap(poly, tolerance, null, null);
-		crdiskplot(M, null, null, 200, 140, null, Integer.MIN_VALUE);
+		boolean drawThetaToRadiusOne = false;
+		crdiskplot(M, null, null, 200, 140, drawThetaToRadiusOne, null, Integer.MIN_VALUE);
 	}
 	
 	public scmap crdiskmap(polygon poly, double tolerance, double cr[][], qlgraph Q) {
@@ -6173,7 +6180,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return M;
 	}
 	
-	public void crdiskplot(scmap M, double R[], double theta[], int num1draw, int num2draw, double error[], int yInvert) {
+	public void crdiskplot(scmap M, double R[], double theta[], int num1draw, int num2draw, 
+			boolean drawThetaToRadiusOne, double error[], int yInvert) {
 	    // Visualize a Schwarz-Christoffel crossratio disk map.
 		// crdiskplot plots the polygon associated with the Schwarz-Christoffel crossratio
 		// disk map M and the images of circles and radii under the S-C
@@ -6213,13 +6221,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		else {
 			nqpts = 5;
 		}
-		crplot(w, beta, cr, aff, quadnum, mt, Q, R, theta, nqpts, num1draw, num2draw, yInvert);
+		crplot(w, beta, cr, aff, quadnum, mt, Q, R, theta, nqpts, num1draw, num2draw, drawThetaToRadiusOne, yInvert);
 		return;
 	}
 	
 	
 	
-	public void diskplot(scmap M, double R[], double theta[], int num1draw, int num2draw, double error[], int yInvert) {
+	public void diskplot(scmap M, double R[], double theta[], int num1draw, int num2draw, 
+		double error[], int yInvert) {
 	    // Visualize a Schwarz-Christoffel disk map.
 		// diskplot plots the polygon associated with the Schwarz-Christoffel
 		// disk map and the images of circles and radii under the S-C
@@ -6261,7 +6270,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	private void crplot(double w[][], double beta[], double cr[], double aff[][][], int quadnum,
-			double mt[][], qlgraph Q, double R[], double theta[], int nqpts, int num1draw, int num2draw, int yInvert) {
+			double mt[][], qlgraph Q, double R[], double theta[], int nqpts, int num1draw, int num2draw, 
+			boolean drawThetaToRadiusOne, int yInvert) {
 		// Image of polar grid under disk map in crossratio form.
 		// crplot will adaptively plot the images under the Schwarz-Christoffel crossratio
 		// disk map of circles and rays in the unit disk. 
@@ -6484,7 +6494,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				zpReal.clear();
 				zpImag.clear();
 				for (i = 0; i < num2draw; i++) {
-					RpReal.add(i/(num2draw-1.0));
+					if (drawThetaToRadiusOne) {
+					    RpReal.add((double)i/(double)(num2draw-1.0));
+					}
+					else {
+						 RpReal.add((double)i/(double)(num2draw));	
+					}
 					RpImag.add(0.0);
 					zpReal.add(RpReal.get(i)*Math.cos(theta2[j]));
 					zpImag.add(RpReal.get(i)*Math.sin(theta2[j]));
