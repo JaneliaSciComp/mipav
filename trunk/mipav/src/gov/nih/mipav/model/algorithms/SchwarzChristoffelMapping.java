@@ -1147,18 +1147,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		polygon poly = new polygon(x, y, null);
 		scmap M = crdiskmap(poly, tolerance, null, null);
 		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
-		//double wc[] = new double[2];
-		//wc[0] = 0.49547015438539876;
-		//wc[1] = -0.5829124688920886;
-		//M = crdiskCenter(M, wc);
-		crdiskplot(M, null, null, 200, 140, null, Integer.MIN_VALUE);
-		//crdiskplot(M, null, null, 20, 12, null, Integer.MIN_VALUE);
-		//double wc[] = new double[2];
-		//wc[0] = -0.5;
-		//wc[1] = -0.5;
-		//M = crdiskCenter(M, wc);
-		//System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
-		//crdiskplot(M, null, null, 200, 140, null, Integer.MIN_VALUE);
+		crdiskplot(M, null, null, 20, 12, null, Integer.MIN_VALUE);
+		double wc[] = new double[2];
+		wc[0] = -0.5;
+		wc[1] = -0.5;
+		M = crdiskCenter(M, wc);
+		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
+		crdiskplot(M, null, null, 20, 12, null, Integer.MIN_VALUE);
 	}
 	
 	public void testCRDiskmap5() {
@@ -6635,12 +6630,22 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		crspread(zl2, null, zl, quadnum, cr, Q);
 		
 		// Choose best embeddings based on proximity to origin
+		// In testCrDiskmap3() saw in MIPAV
+		// i = 0 val = 0.9999999999999996
+	    // i = 1 val = 0.9999999999999994
+		// i = 2 val = 0.9999999999999998
+		// Saw in MATLAB:
+		// 1.000000000000000
+		// 1.000000000000000
+		// 1.000000000000000
+		// epsilon = 2.2204460e-16
+		// So to select first actual row minimum require that the value + (10.0 * eps) be less than the minVal
 		idx = new int[p];
 		for (j = 0; j < p; j++) {
 			minVal = Double.MAX_VALUE;
 			for (i = 0; i < cr.length; i++) {
 		        val = zabs(zl2[i][j][0], zl2[i][j][1]);
-		        if (val < minVal) {
+		        if (val + (10.0 * eps) < minVal) {
 		    	    minVal = val;
 		    	    idx[j] = i;
 		        }
