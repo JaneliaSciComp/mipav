@@ -134,14 +134,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testRectmap1();
         	//testRectmap2();
         	//testDiskmap1();
-            //testCRDiskmap1();
+            testCRDiskmap1();
         	//testDiskmap2();
         	//testCRDiskmap2();
         	//testDiskmap3();
         	//testCRDiskmap3();
         	//testDiskmap4();
         	// No testCRDiskmap4() before CRDisk cannot handle infinities in example.
-        	testDiskmap5();
+        	//testDiskmap5();
         	//testCRDiskmap5();
             return;
         }
@@ -1072,7 +1072,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	public void testCRDiskmap1() {
-		int i;
+		int i, j;
 		double w[][] = new double[4][2];
 		w[0][0] = 1;
 		w[0][1] = 1;
@@ -1090,6 +1090,113 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		polygon poly = new polygon(x, y, null);
 		scmap M = crdiskmap(poly, tolerance, null, null);
+		double wc[] = new double[2];
+		M = crdiskCenter(M, wc);
+		// Points for unit circle
+		int n = 180;
+		double wcir[][] = new double[n][2];
+		double xcir[] = new double[n];
+		double ycir[] = new double[n];
+		for (i = 0; i < n; i++) {
+			wcir[i][0] = Math.cos(i*2.0*Math.PI/(n+1.0));
+			wcir[i][1] = Math.sin(i*2.0*Math.PI/(n+1.0));
+			xcir[i] = wcir[i][0];
+			ycir[i] = wcir[i][1];
+		}
+		poly = new polygon(xcir, ycir, null);
+		double beta[] = new double[poly.angle.length];
+		for (i = 0; i < poly.angle.length; i++) {
+			beta[i] = poly.angle[i] - 1.0;
+		}
+		float xPointArray[] = new float[n+1];
+		float yPointArray[] = new float[n+1];
+		int nqpts = 5;
+		double axlim[] = new double[4];
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, wcir, beta, false, axlim, Integer.MIN_VALUE);
+		double qdat[][] = new double[nqpts][2*beta.length+2];
+		scqdata(qdat, beta, nqpts);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		Graphics g = graph.getGraphics();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+		double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		
+		double X[][] = new double[201][9];
+		double Y[][] = new double[201][9];
+		double wp[][] = new double[201*9][2];
+		double zp[][] = new double[201*9][2];
+		for (i = 0; i < 201; i++) {
+			for (j = 0; j < 9; j++) {
+			    X[i][j] = -0.8 + 0.2*j;
+			    Y[i][j] = -1.0 + 0.01*i;
+			    wp[201*j + i][0] = X[i][j];
+			    wp[201*j + i][1] = Y[i][j];
+			}
+		}
+		zp = crdiskevalinv(M, wp, 1.0E-8);
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
+		for (i = 0; i < 9; i++) {
+			for (j = 0; j < 200; j++) {
+				double posx1 = zp[201*i + j][0];
+	    		double posy1 = zp[201*i + j][1];
+	    		double posx2 = zp[201*i + j + 1][0];
+	    		double posy2 = zp[201*i + j + 1][1];
+	    		x1Vector.add(posx1);
+	    		y1Vector.add(posy1);
+	    		x2Vector.add(posx2);
+	    		y2Vector.add(posy2);
+	    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+			    graph.drawLine(g, x1, y1, x2, y2);	
+			}
+		}
+		for (i = 0; i < 201; i++) {
+			for (j = 0; j < 9; j++) {
+			    wp[201*j + i][0] = Y[i][j];
+			    wp[201*j + i][1] = X[i][j];
+			}
+		}
+		zp = crdiskevalinv(M, wp, 1.0E-8);
+		for (i = 0; i < 9; i++) {
+			for (j = 0; j < 200; j++) {
+				double posx1 = zp[201*i + j][0];
+	    		double posy1 = zp[201*i + j][1];
+	    		double posx2 = zp[201*i + j + 1][0];
+	    		double posy2 = zp[201*i + j + 1][1];
+	    		x1Vector.add(posx1);
+	    		y1Vector.add(posy1);
+	    		x2Vector.add(posx2);
+	    		y2Vector.add(posy2);
+	    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+			    graph.drawLine(g, x1, y1, x2, y2);	
+			}
+		}
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
 	}
 	
 	public void testCRDiskmap2() {
@@ -4235,6 +4342,312 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		flag = dinvmap(zp, wp, vertex, beta, M.prevertex, M.constant, qdata, z02, true,  true, tolerance, maxiter);
 		return flag;
+	}
+	
+	private double[][] crdiskevalinv(scmap M, double wp[][], double tol) {
+		// Invert Schwarz-Christoffel crossratio disk map at points.
+		// crdiskevalinv evaluates the inverse of the Schwarz-Christoffel map M
+		// at the points wp in the polygon.  The routine attempts to give an
+		// answer accurate to tol.  If tol is smaller than the accuracy of M,
+		// this is unlikely to be met.
+		
+		// Original MATLAB evalinv routine copyright 1998 by Toby Driscoll.
+		
+		int i, j;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] = 1.0;
+		}
+		double cr[] = M.crossratio;
+		double aff[][][] = M.affine;
+		int quadnum = M.center_fix_quadnum;
+		double mt[][] = M.center_fix_mt;
+		qlgraph Q = M.qgraph;
+		double qdata[][] = M.qdata;
+		
+		double zp[][] = new double[wp.length][2];
+		for (i = 0; i < wp.length; i++) {
+			zp[i][0] = Double.NaN;
+		}
+		boolean idx[] = new boolean[wp.length];
+		boolean onvtx[][] = new boolean[w.length][wp.length];
+		isinpoly(idx, onvtx, wp, w, null, eps);
+		int numidx = 0;
+		for (i = 0; i < wp.length; i++) {
+			if (idx[i]) {
+				numidx++;
+			}
+		}
+		double wpin[][] = new double[numidx][2];
+		for (i = 0, j = 0; i < wp.length; i++) {
+			if (idx[i]) {
+				wpin[j][0] = wp[i][0];
+				wpin[j++][1] = wp[i][1];
+			}
+		}
+		boolean ode = true;
+		boolean newton = true;
+		int maxiter = 10;
+		double zpout[][] = crinvmap(wpin, w, beta, cr, aff, quadnum, mt, Q, qdata, ode, newton, tol, maxiter);
+		for (i = 0, j = 0; i < wp.length; i++) {
+			if (idx[i]) {
+				zp[i][0] = zpout[j][0];
+				zp[i][1] = zpout[j++][1];
+			}
+		}
+		return zp;
+}
+	
+	private double[][] crinvmap(double wp[][], double w[][], double beta[], double cr[], double aff[][][],
+			int quadnum, double mt[][], qlgraph Q, double qdat[][], boolean ode, boolean newton, double tol,
+			int maxiter) {
+		// S-C disk inverse map in crossratio formulation.
+		// crinvmap computes the inverse of the disk map with the given conformal center.
+		// You must first run crparam and crfixwc.
+		
+		// Original MATLAB crinvmap routine copyright 1998 by Toby Driscoll.
+		
+		int i, j;
+		int n = w.length;
+		int lenwp = wp.length;
+		double zp[][] = new double[lenwp][2];
+		double qdat2[][] = null;
+		int q;
+		double cre[] = new double[1];
+		double cim[] = new double[1];
+		double num[] = new double[2];
+		double denom[] = new double[2];
+		
+		if ((qdat == null) || (qdat.length == 0)) {
+			qdat2 = new double[8][2*beta.length+2];
+			scqdata(qdat2, beta, 8);
+		}
+		else if (qdat.length == 1) {
+			int nqpts = (int)Math.max(Math.ceil(-Math.log10(qdat[0][0])), 2);
+			qdat2 = new double[nqpts][2*beta.length+2];
+			scqdata(qdat2, beta, nqpts);	
+		}
+		else {
+			qdat2 = qdat;
+		}
+		
+		// For each embedding, perform inverse maps for appropriate points
+		int localQuadnum[] = new int[lenwp]; // keep track of embeddings
+		for (i = 0; i < lenwp ;i++) {
+		    localQuadnum[i] = -1;	
+		}
+		double win[][] = new double[4][2];
+		double polytol = Math.pow(10.0, -qdat2.length);
+		double affin[][] = new double[aff[0].length][2];
+		for (q = 0; q < n-3; q++) {
+		    int emptyQuadnum = 0;
+		    for (i = 0; i < lenwp; i++) {
+		    	if (localQuadnum[i] == -1) {
+		    		emptyQuadnum++;
+		    	}
+ 		    } // for (i = 0; i < lenwp; i++)
+		    int idx[] = new int[emptyQuadnum];
+		    for (i = 0, j = 0; i < lenwp; i++) {
+		    	if (localQuadnum[i] == -1) {
+		    	    idx[j++] = i;	
+		    	}
+		    } // for (i = 0, j = 0; i < lenwp; i++) 
+		    double wpin[][] = new double[emptyQuadnum][2];
+		    for (i = 0; i < emptyQuadnum; i++) {
+		    	wpin[i][0] = wp[idx[i]][0];
+		    	wpin[i][1] = wp[idx[i]][1];
+		    }
+		    for (i = 0; i < 4; i++) {
+		    	win[i][0] = w[Q.qlvert[i][q]][0];
+		    	win[i][1] = w[Q.qlvert[i][q]][1];
+		    }
+		    boolean mask[] = new boolean[emptyQuadnum];
+			boolean onvtx[][] = new boolean[4][emptyQuadnum];
+			isinpoly(mask, onvtx, wpin, win, null, polytol);
+			int nummask = 0;
+			for (i = 0; i < emptyQuadnum; i++) {
+				if (mask[i]) {
+					nummask++;
+				}
+			}
+			if (nummask > 0) {
+				int idx2[] = new int[nummask];
+				for (i = 0, j = 0; i < emptyQuadnum; i++) {
+					if (mask[i]) {
+						idx2[j++] = idx[i];
+					}
+				}
+				double z[][] = crembed(cr, Q, q);
+				wpin = new double[nummask][2];
+				for (i = 0; i < nummask; i++) {
+					wpin[i][0] = wp[idx2[i]][0];
+					wpin[i][1] = wp[idx2[i]][1];
+				}
+				for (i = 0; i < aff[0].length; i++) {
+					affin[i][0] = aff[q][i][0];
+					affin[i][1] = aff[q][i][1];
+				}
+				double zpout[][] = crimap0(wpin, z, beta, affin, qdat, ode, newton, tol, maxiter);
+				for (i = 0; i < nummask; i++) {
+				    zp[idx2[i]][0] = zpout[i][0];
+				    zp[idx2[i]][1] = zpout[i][1];
+				    localQuadnum[idx2[i]] = q;
+				}
+			} // if (nummask > 0)
+			int fullQuadnum = 0;
+			for (i = 0; i < lenwp; i++) {
+				if (localQuadnum[i] >= 0) {
+					fullQuadnum++;
+				}
+			}
+			if (fullQuadnum == lenwp) {
+				break;
+			}
+		} // for (q = 0; q < n-3; q++)
+		
+		// Convert from local embeddings to global one
+		double zr[][][] = null;
+		crgather(zp, localQuadnum, quadnum, cr, Q, zr);
+		for (i = 0; i < zp.length; i++) {
+		    zmlt(-mt[3][0], -mt[3][1], zp[i][0], zp[i][1], cre, cim);
+		    num[0] = cre[0] + mt[1][0];
+		    num[1] = cim[0] + mt[1][1];
+		    zmlt(mt[2][0], mt[2][1], zp[i][0], zp[i][1], cre, cim);
+		    denom[0] = cre[0] - mt[0][0];
+		    denom[1] = cim[0] - mt[0][1];
+		    zdiv(num[0], num[1], denom[0], denom[1], cre, cim);
+		    zp[i][0] = cre[0];
+		    zp[i][1] = cim[0];
+		}
+		
+		return zp;
+	}
+	
+	private void crgather(double u[][], int uquad[], int quadnum, double cr[], qlgraph Q, double zr[][][]) {
+		// Convert points into a single embedding in CR formulation.
+		// Each quadrilateral (crossratio) has an associated embedding of the prevertices.
+		// These embeddings are linked by Moebius transformations, each of which is well-conditioned.
+		// crgather assumes that the points of u are given in the embeddings described by uquad.
+		// The Moebius transformations are applied recursively to map the points to their
+		// representation in the single embedding quadnum.
+		
+		// Original MATLAB crgather routine copyright 1998 by Toby Driscoll.
+		
+		int i, ii, j, k;
+		int qa;
+		double cre[] = new double[1];
+		double cim[] = new double[1];
+		double num[] = new double[2];
+		double denom[] = new double[2];
+		int n3 = cr.length;
+		if ((zr == null) || (zr.length == 0)) {
+			// Initial call (nonrecursive)
+			zr = new double[4][n3][2];
+			for (i = 0; i < 4; i++) {
+				for (j = 0; j < n3; j++) {
+					zr[i][j][0] = Double.NaN;
+				}
+			}
+		} // if ((zr == null) || (zr.length == 0))
+		
+		// Place the quadrilateral prevertices in a rectangle around the origin.
+		int idx[] = new int[4];
+		for (i = 0; i < 4; i++) {
+			idx[i] = Q.qlvert[i][quadnum];
+		}
+		double r = cr[quadnum];
+		double f1 = Math.sqrt(1.0/(r+1.0));
+		double f2 = Math.sqrt(r/(r+1.0));
+		zr[0][quadnum][0] = -f1;
+		zr[0][quadnum][1] = -f2;
+		zr[1][quadnum][0] = -f1;
+		zr[1][quadnum][1] = f2;
+		zr[2][quadnum][0] = f1;
+		zr[2][quadnum][1] = f2;
+		zr[3][quadnum][0] = f1;
+		zr[3][quadnum][1] = -f2;
+		
+		// Recurse on neighbors to map into embedding quadnum
+		boolean nbr[] = new boolean[n3];
+		int numnbr = 0;
+		for (i = 0; i < n3; i++) {
+			nbr[i] = Q.adjacent[quadnum][i] && Double.isNaN(zr[0][i][0]);
+			if (nbr[i]) {
+				numnbr++;
+			}
+		}
+		int q[] = new int[numnbr];
+		for (i = 0, j = 0; i < n3; i++) {
+			nbr[i] = Q.adjacent[quadnum][i] && Double.isNaN(zr[0][i][0]);
+			if (nbr[i]) {
+				q[j++] = i;
+			}
+		}
+		int i1[] = new int[3];
+		int i2[] = new int[3]; 
+		double z[][] = new double[3][2];
+		double w[][] = new double[3][2];
+		boolean mask[] = new boolean[uquad.length];
+		for (i = 0; i < q.length; i++) {
+		    qa = q[i];
+		    // First map into embedding qa
+		    crgather(u, uquad, qa, cr, Q, zr);
+		    // Find the 3 points in common with qa
+		    int numcommon = 0;
+		    for (ii = 0; ii < 4; ii++) {
+		    	for (j = 0; j < 4; j++) {
+		    		if (Q.qlvert[ii][quadnum] == Q.qlvert[j][qa]) {
+		    			numcommon++;
+		    		}
+		    	}
+		    }
+		    if (numcommon != 3) {
+		    	MipavUtil.displayError("Number of points in common with qa = " + qa + " was " + numcommon + " instead of the required 3");
+		    	System.exit(-1);
+		    }
+		    k = 0;
+		    for (ii = 0; ii < 4; ii++) {
+		    	for (j = 0; j < 4; j++) {
+		    		if (Q.qlvert[ii][quadnum] == Q.qlvert[j][qa]) {
+		    			i1[k] = ii;
+		    			i2[k++] = j;
+		    		}
+		    	}
+		    }
+		    // Map from qa to quadnum
+		    for (ii = 0; ii < 3; ii++) {
+		    	for (j = 0; j < 2; j++) {
+		    	    z[ii][j] = zr[i2[ii]][qa][j];
+		    	    w[ii][j] = zr[i1[ii]][quadnum][j];
+		    	}
+		    }
+		    double mt[][] = moebius(z, w);
+		    int nummask = 0;
+		    for (ii = 0; ii < uquad.length; ii++) {
+		    	mask[ii] = (uquad[ii] == qa);
+		    	if (mask[ii]) {
+		    		nummask++;
+		    	}
+		    }
+		    if (nummask > 0) {
+			    for (ii = 0; ii < mask.length; ii++) {
+			    	if (mask[ii]) {
+			    		zmlt(mt[1][0], mt[1][1], u[ii][0], u[ii][1], cre, cim);
+			    		num[0] = cre[0] + mt[0][0];
+			    		num[1] = cim[0] + mt[0][1];
+			    		zmlt(mt[3][0], mt[3][1], u[ii][0], u[ii][1], cre, cim);
+			    		denom[0] = cre[0] + mt[2][0];
+			    		denom[1] = cim[0] + mt[2][1];
+			    		zdiv(num[0], num[1], denom[0], denom[1], cre, cim);
+			    		u[ii][0] = cre[0];
+			    		u[ii][1] = cim[0];
+			    		uquad[ii] = quadnum;
+			    	} // if (mask[ii])
+			    } // for (ii = 0; ii < mask.length; ii++)
+		    } // if (nummask > 0)
+		} // for (i = 0; i < q.length; i++)
 	}
 	
 	private double[][] rinvmap(double wp[][], double w[][], double beta[], double z[][],
