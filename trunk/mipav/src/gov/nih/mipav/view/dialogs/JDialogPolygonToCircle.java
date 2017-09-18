@@ -28,6 +28,10 @@ public class JDialogPolygonToCircle extends JDialogBase
     private static final long serialVersionUID = 0L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    
+    private final int POLYGON_TO_CIRCLE = 2;
+	private final int CROSSRATIO_POLYGON_TO_CIRCLE = 3;
+	private int algorithm = POLYGON_TO_CIRCLE;
 
     /** DOCUMENT ME! */
     int[] extents = new int[2];
@@ -52,6 +56,8 @@ public class JDialogPolygonToCircle extends JDialogBase
 
     /** DOCUMENT ME! */
     private double ySource[];
+    
+    private JCheckBox crossRatioCheckBox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -189,7 +195,7 @@ public class JDialogPolygonToCircle extends JDialogBase
             resultImage.setImageName(name);
 
             // Make algorithm
-            sAlgo = new SchwarzChristoffelMapping(resultImage, image, xSource, ySource);
+            sAlgo = new SchwarzChristoffelMapping(resultImage, image, xSource, ySource, algorithm);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -278,6 +284,15 @@ public class JDialogPolygonToCircle extends JDialogBase
         xText.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(xText, gbc6);
+        
+        crossRatioCheckBox = new JCheckBox("Use cross-ratio representation");
+        crossRatioCheckBox.setFont(serif12);
+        crossRatioCheckBox.setForeground(Color.black);
+        crossRatioCheckBox.setSelected(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 1;
+        paramPanel.add(crossRatioCheckBox, gbc6);
+
 
         getContentPane().add(pointPanel, BorderLayout.NORTH);
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -327,6 +342,13 @@ public class JDialogPolygonToCircle extends JDialogBase
         for (i = 0; i < pts.length; i++) {
             xSource[i] = pts[i].X;
             ySource[i] = pts[i].Y;
+        }
+        
+        if (crossRatioCheckBox.isSelected()) {
+        	algorithm = CROSSRATIO_POLYGON_TO_CIRCLE;
+        }
+        else {
+        	algorithm = POLYGON_TO_CIRCLE;
         }
         
         return true;
