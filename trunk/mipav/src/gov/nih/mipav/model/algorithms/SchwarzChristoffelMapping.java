@@ -62,6 +62,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private final int POLYGON_TO_CIRCLE = 2;
 	private final int CROSSRATIO_POLYGON_TO_CIRCLE = 3;
 	private int algorithm = POLYGON_TO_RECTANGLE;
+	private boolean setCenter;
+	private double xCenter;
+	private double yCenter;
 	
 	private double crsplit_neww[][] = null;
 	private boolean crsplit_orig[] = null;
@@ -92,11 +95,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		this.w = w;
 	}
 	
-	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double xSource[], double ySource[], int algorithm) {
+	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double xSource[], double ySource[], int algorithm, boolean setCenter, double xCenter, double yCenter) {
 		super(destImg, srcImg);
 		this.xSource = xSource;
 		this.ySource = ySource;
 		this.algorithm = algorithm;
+		this.setCenter = setCenter;
+		this.xCenter = xCenter;
+		this.yCenter = yCenter;
 	}
 	
 	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double xSource[], double ySource[], int corners[]) {
@@ -250,23 +256,29 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	w[i][1] = yDimSource-1-ySource[i];
         }
         scmap M = diskmap(w, null, tolerance, null, null);
+        if (setCenter) {
+        	double wc[] = new double[2];
+        	wc[0] = xCenter;
+        	wc[1] = yDimSource - 1 - yCenter;
+        	M = center(M, wc, null);
+        }
 		for (i = 0; i < M.prevertex.length; i++) {
 			System.out.println("prevertex["+i+"] = " + M.prevertex[i][0] + " " + M.prevertex[i][1]+"i");
 		}
-		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
+		System.out.println("center = " + M.center[0] + " " + (yDimSource - 1 - M.center[1])+"i");
 		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
 		diskplot(M, null, null, 200, 140, null, yDimSource-1);
-		double xcenter = (xDimDest-1.0)/2.0;
-		double ycenter = (yDimDest-1.0)/2.0;
-		double maxDistance = Math.min(xcenter,ycenter);
+		double xcenterDest = (xDimDest-1.0)/2.0;
+		double ycenterDest = (yDimDest-1.0)/2.0;
+		double maxDistance = Math.min(xcenterDest,ycenterDest);
 		zp = new double[destSlice][2];
 		boolean idx[] = new boolean[destSlice];
 		j = 0;
         for (y = 0; y < yDimDest; y++) {
         	for (x = 0; x < xDimDest; x++) {
         		index = x + xDimDest*y;
-        		double distX = (x-xcenter)/maxDistance;
-        		double distY = (y-ycenter)/maxDistance;
+        		double distX = (x-xcenterDest)/maxDistance;
+        		double distY = (y-ycenterDest)/maxDistance;
         		if ((distX*distX + distY*distY) < 1.0) {
         			idx[index] = true;
         			zp[j][0] = distX;
@@ -471,20 +483,26 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		polygon poly = new polygon(xa, ya, null);
         scmap M = crdiskmap(poly, tolerance, null, null);
-		System.out.println("center = " + M.center[0] + " " + M.center[1]+"i");
+        if (setCenter) {
+        	double wc[] = new double[2];
+        	wc[0] = xCenter;
+        	wc[1] = yDimSource - 1 - yCenter;
+        	M = crdiskCenter(M, wc);
+        }
+		System.out.println("center = " + M.center[0] + " " + (yDimSource - 1 - M.center[1])+"i");
 		boolean drawThetaToRadiusOne = true;
 		crdiskplot(M, null, null, 200, 140, drawThetaToRadiusOne, null, yDimSource-1);
-		double xcenter = (xDimDest-1.0)/2.0;
-		double ycenter = (yDimDest-1.0)/2.0;
-		double maxDistance = Math.min(xcenter,ycenter);
+		double xcenterDest = (xDimDest-1.0)/2.0;
+		double ycenterDest = (yDimDest-1.0)/2.0;
+		double maxDistance = Math.min(xcenterDest,ycenterDest);
 		zp = new double[destSlice][2];
 		boolean idx[] = new boolean[destSlice];
 		j = 0;
         for (y = 0; y < yDimDest; y++) {
         	for (x = 0; x < xDimDest; x++) {
         		index = x + xDimDest*y;
-        		double distX = (x-xcenter)/maxDistance;
-        		double distY = (y-ycenter)/maxDistance;
+        		double distX = (x-xcenterDest)/maxDistance;
+        		double distY = (y-ycenterDest)/maxDistance;
         		if ((distX*distX + distY*distY) < 1.0) {
         			idx[index] = true;
         			zp[j][0] = distX;
