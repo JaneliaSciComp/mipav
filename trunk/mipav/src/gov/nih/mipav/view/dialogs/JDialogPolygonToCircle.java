@@ -58,6 +58,22 @@ public class JDialogPolygonToCircle extends JDialogBase
     private double ySource[];
     
     private JCheckBox crossRatioCheckBox;
+    
+    private JCheckBox setCenterCheckBox;
+    
+    private boolean setCenter = false;
+    
+    private double xCenter;
+    
+    private double yCenter;
+    
+    private JLabel xCenterLabel;
+    
+    private JLabel yCenterLabel;
+    
+    private JTextField xCenterText;
+    
+    private JTextField yCenterText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -93,12 +109,18 @@ public class JDialogPolygonToCircle extends JDialogBase
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
             if (setVariables()) {
                 callAlgorithm();
             }
+        } else if (source == setCenterCheckBox) {
+        	xCenterLabel.setEnabled(setCenterCheckBox.isSelected());
+        	yCenterLabel.setEnabled(setCenterCheckBox.isSelected());
+        	xCenterText.setEnabled(setCenterCheckBox.isSelected());
+        	yCenterText.setEnabled(setCenterCheckBox.isSelected());
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
@@ -195,7 +217,7 @@ public class JDialogPolygonToCircle extends JDialogBase
             resultImage.setImageName(name);
 
             // Make algorithm
-            sAlgo = new SchwarzChristoffelMapping(resultImage, image, xSource, ySource, algorithm);
+            sAlgo = new SchwarzChristoffelMapping(resultImage, image, xSource, ySource, algorithm, setCenter, xCenter, yCenter);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -292,7 +314,43 @@ public class JDialogPolygonToCircle extends JDialogBase
         gbc6.gridx = 0;
         gbc6.gridy = 1;
         paramPanel.add(crossRatioCheckBox, gbc6);
-
+        
+        setCenterCheckBox = new JCheckBox("Set conformal map center at:");
+        setCenterCheckBox.setFont(serif12);
+        setCenterCheckBox.setForeground(Color.black);
+        setCenterCheckBox.setSelected(false);
+        setCenterCheckBox.addActionListener(this);
+        gbc6.gridy = 2;
+        paramPanel.add(setCenterCheckBox, gbc6);
+        
+        xCenterLabel = new JLabel("X center");
+        xCenterLabel.setForeground(Color.black);
+        xCenterLabel.setFont(serif12);
+        xCenterLabel.setEnabled(false);
+        gbc6.gridy = 3;
+        paramPanel.add(xCenterLabel, gbc6);
+        
+        xCenterText = new JTextField(10);
+        xCenterText.setText("");
+        xCenterText.setFont(serif12);
+        xCenterText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(xCenterText, gbc6);
+        
+        yCenterLabel = new JLabel("Y center");
+        yCenterLabel.setForeground(Color.black);
+        yCenterLabel.setFont(serif12);
+        yCenterLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 4;
+        paramPanel.add(yCenterLabel, gbc6);
+        
+        yCenterText = new JTextField(10);
+        yCenterText.setText("");
+        yCenterText.setFont(serif12);
+        yCenterText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(yCenterText, gbc6);
 
         getContentPane().add(pointPanel, BorderLayout.NORTH);
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -312,6 +370,7 @@ public class JDialogPolygonToCircle extends JDialogBase
         Vector<VOIBase> curves;
         int nPts;
         Vector3f[] pts = null;
+        String tmpStr;
 
         if (!testParameter(xText.getText(), 5, 1000000)) {
             xText.requestFocus();
@@ -323,7 +382,7 @@ public class JDialogPolygonToCircle extends JDialogBase
         }
 
         if ((image.getVOIs() == null) || (image.getVOIs().size() == 0)) {
-            MipavUtil.displayError("At least points must be entered");
+            MipavUtil.displayError("At least 3 points must be entered");
             return false;
         }
         curves = image.getVOIs().VOIAt(0).getCurves();
@@ -350,6 +409,33 @@ public class JDialogPolygonToCircle extends JDialogBase
         else {
         	algorithm = POLYGON_TO_CIRCLE;
         }
+        
+        setCenter = setCenterCheckBox.isSelected();
+        if (setCenter) {
+        	tmpStr = xCenterText.getText();
+        	try {
+                xCenter = Double.parseDouble(tmpStr);
+        	}
+        	catch (NumberFormatException e) {
+        		MipavUtil.displayError("xCenterText gives number format exception");
+                xCenterText.requestFocus();
+                xCenterText.selectAll();
+
+                return false;
+        	}
+            
+            tmpStr = yCenterText.getText();
+            try {
+                yCenter = Double.parseDouble(tmpStr);
+            }
+            catch (NumberFormatException e) {
+        		MipavUtil.displayError("yCenterText gives number format exception");
+                yCenterText.requestFocus();
+                yCenterText.selectAll();
+
+                return false;
+        	}
+        } // if (setCenter)
         
         return true;
     }
