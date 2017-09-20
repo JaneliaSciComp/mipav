@@ -4135,6 +4135,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	   
 	   return wp;
    }
+   
+   public scmap extermap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
+	   // Schwarz-Christoffel exterior map object.
+	   scmap map = new scmap();
+	   return map;
+   }
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
 		// Schwarz-Christoffel disk map object
@@ -12210,6 +12216,237 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
     		
     	}
     }
+	
+	private double[][] dequad(double z1[][], double z2[][], int sing1[], double z[][],
+			double beta[], double qdat[][]) {
+		// Numerical quadrature for the exterior map.
+		// z1, z2 are vectors of left and right endpoints.  sing1 is a vector of
+		// integer indices which label singularities in z1.  So if sking1[5] = 3,
+		// then z1[5] = z[3].  A -1 means no singularity.  z is the vector of
+		// prevertices (all singularities except the origin); beta is the vector
+		// of associated turning angles.  qdat is quadrature data from scqdata.
+		
+		// dequad integrates from a possible singularity at the left end to a
+		// regular point at the right.  If both endpoints are singularities, you
+		// must break the integral into two pieces and make two calls.
+		
+		// The intergal is subdivided, if necessary, so that no singularity lies
+		// closer to the left endpoint than 1/2 the length of the integration
+		// (sub)interval.  But the singularity at the origin is NOT accounted
+		// for in this decision.
+		
+		// Original MATLAB dequad routine copyright 1998 by Toby Driscoll.
+		
+		int i,j,k,p;
+		double num;
+		double za[] = new double[2];
+		double zb[] = new double[2];
+		double zr[] = new double[2];
+		double zl[] = new double[2];
+		int ind;
+		double denom;
+		int nqpts = qdat.length;
+		int n = z.length;
+		double nd[][] = new double[nqpts][2];
+		double wt[][] = new double[nqpts][2];
+		double bigz[][][] = new double[n][nqpts][2];
+		double terms[][][] = new double[n][nqpts][2];
+		double terms2[][][] = new double[n+1][nqpts][2];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		for (i = 0; i < n; i++) {
+			for (j = 0; j < nqpts; j++) {
+			    bigz[i][j][0] = z[i][0];
+			    bigz[i][j][1] = z[i][1];
+			}
+		}
+		double beta2[] = new double[beta.length+1];
+		for (i = 0; i < beta.length; i++) {
+			beta2[i] = beta[i];
+		}
+		beta2[beta.length] = -2.0;
+		double bigbeta[][] = new double[beta2.length][nqpts];
+		for (i = 0; i < beta2.length; i++) {
+			for (j = 0; j < nqpts; j++) {
+				bigbeta[i][j] = beta2[i];
+			}
+		}
+		if ((sing1 == null) || (sing1.length == 0)) {
+			sing1 = new int[z1.length];
+			for (i = 0; i < z1.length; i++) {
+				sing1[i] = -1;
+			}
+		}
+		
+		double I[][] = new double[z1.length][2];
+		int numnontriv = 0;
+		for (i = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				numnontriv++;
+			}
+		}
+		int nontriv[] = new int[numnontriv];
+		for (i = 0, j = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				nontriv[j++] = i;
+			}
+		}
+		for (p = 0; p < numnontriv; p++) {
+		    k = nontriv[p];
+		    za[0] = z1[k][0];
+		    za[1] = z1[k][1];
+		    zb[0] = z2[k][0];
+		    zb[1] = z2[k][1];
+		    int sng = sing1[k];
+		    // Allowable integration step, based on nearest singularity.
+		    double minNum = Double.MAX_VALUE;
+		    for (i = 0; i <= sng-1; i++) {
+		    	num = zabs(z[i][0] - za[0], z[i][1] - za[1]);
+		    	if (num < minNum) {
+		    		minNum = num;
+		    	}
+		    }
+		    for (i = sng+1; i < n; i++) {
+		    	num = zabs(z[i][0] - za[0], z[i][1] - za[1]);
+		    	if (num < minNum) {
+		    		minNum = num;
+		    	}	
+		    }
+		    double dist = Math.min(1.0, 2.0*minNum/zabs(zb[0]-za[0], zb[1]-za[1]));
+		    zr[0] = za[0] + dist * (zb[0] - za[0]);
+		    zr[1] = za[1] + dist * (zb[1] - za[1]);
+		    // Adjust Gauss-Jacobi nodes and weights to interval.
+		    if (sng == -1) {
+		        ind = n;	
+		    }
+		    else {
+		    	ind = sng;
+		    }
+		    for (i = 0; i < nqpts; i++) {
+		    	nd[i][0] = ((zr[0]-za[0])*qdat[i][ind] + zr[0] + za[0])/2.0; // nodes
+		    	nd[i][1] = ((zr[1] - za[1])*qdat[i][ind] + zr[1] + za[1])/2.0;
+		    	wt[i][0] = ((zr[0]-za[0])/2.0)*qdat[i][ind+n+1]; // weights
+		    	wt[i][1] = ((zr[1]-za[1])/2.0)*qdat[i][ind+n+1];
+		    }
+		    int numtermszero = 0;
+		    for (i = 0; i < n; i++) {
+		    	for (j = 0; j < nqpts; j++) {
+		    		zdiv(nd[j][0], nd[j][1], bigz[i][j][0], bigz[i][j][1], cr, ci);
+		    		terms[i][j][0] = 1.0 - cr[0];
+		    		terms[i][j][1] = -ci[0];
+		    		if ((terms[i][j][0] == 0.0) && (terms[i][j][1] == 0.0)) {
+		    			numtermszero++;
+		    		}
+		    	}
+		    } // for (i = 0; i < n; i++)
+		    if (numtermszero > 0) {
+		    	// Endpoints are practically coincident
+		    	I[k][0] = 0.0;
+		    	I[k][1] = 0.0;
+		    }
+		    else {
+		    	for (i = 0; i < n; i++) {
+		    		for (j = 0; j < nqpts; j++) {
+		    			terms2[i][j][0] = terms[i][j][0];
+		    			terms2[i][j][1] = terms[i][j][1];
+		    		}
+		    	}
+		    	for (j = 0; j < nqpts; j++) {
+		    		terms2[n][j][0] = nd[j][0];
+		    		terms2[n][j][1] = nd[j][1];
+		    	}
+		    	// Use Gauss-Jacobi on first subinterval, if necessary.
+		    	if (sng >= 0) {
+		    		for (i = 0; i < nqpts; i++) {
+		    		    denom = zabs(terms2[sng][i][0], terms2[sng][i][1]);
+		    		    terms2[sng][i][0] = terms2[sng][i][0]/denom;
+		    		    terms2[sng][i][1] = terms2[sng][i][1]/denom;
+		    		}
+		    		double base = zabs(zr[0]-za[0],zr[1]-za[1])/2.0;
+		    		double val = Math.pow(base, beta2[sng]);
+		    		for (i = 0; i < nqpts; i++) {
+		    			wt[i][0] = wt[i][0] * val;
+		    			wt[i][1] = wt[i][1] * val;
+		    		}
+		    	} // if (sng >= 0)
+		    	for (j = 0; j < nqpts; j++) {
+		    		double sumr = 0.0;
+		    		double sumi = 0.0;
+		    	    for (i = 0; i < n+1; i++) {
+		    	    	double logr = Math.log(zabs(terms2[i][j][0],terms2[i][j][1]));
+		    	    	double logi = Math.atan2(terms2[i][j][1], terms2[i][j][0]);
+		    	    	double prodr = logr * bigbeta[i][j];
+		    	    	double prodi = logi * bigbeta[i][j];
+		    	    	sumr += prodr;
+		    	    	sumi += prodi;
+		    	    }
+		    	    double expterm = Math.exp(sumr);
+		    	    double realexp = expterm * Math.cos(sumi);
+		    	    double imagexp = expterm * Math.sin(sumi);
+		    	    zmlt(realexp, imagexp, wt[j][0], wt[j][1], cr, ci);
+		    	    I[k][0] += cr[0];
+		    	    I[k][1] += ci[0];
+		    	}
+		    	while (dist < 1) {
+		    		// Do regular Gaussian quad on other subintervals
+		    		zl[0] = zr[0];
+		    		zl[1] = zr[1];
+		    		minNum = Double.MAX_VALUE;
+		    		for (i = 0; i < n; i++) {
+		    			num = zabs(z[i][0] - zl[0], z[i][1] - zl[1]);
+		    			if (num < minNum) {
+		    				minNum = num;
+		    			}
+		    		}
+		    		dist = Math.min(1.0, 2.0*minNum/zabs(zl[0]-zb[0],zl[1]-zb[1]));
+		    		zr[0] = zl[0] + dist * (zb[0] - zl[0]);
+		    		zr[1] = zl[1] + dist * (zb[1] - zl[1]);
+		    		for (i = 0; i < nqpts; i++) {
+				    	nd[i][0] = ((zr[0]-zl[0])*qdat[i][n] + zr[0] + zl[0])/2.0; // nodes
+				    	nd[i][1] = ((zr[1] - zl[1])*qdat[i][n] + zr[1] + zl[1])/2.0;
+				    	wt[i][0] = ((zr[0]-zl[0])/2.0)*qdat[i][2*n+1]; // weights
+				    	wt[i][1] = ((zr[1]-zl[1])/2.0)*qdat[i][2*n+1];
+				    }
+		    		for (i = 0; i < n; i++) {
+				    	for (j = 0; j < nqpts; j++) {
+				    		zdiv(nd[j][0], nd[j][1], bigz[i][j][0], bigz[i][j][1], cr, ci);
+				    		terms[i][j][0] = 1.0 - cr[0];
+				    		terms[i][j][1] = -ci[0];
+				    	}
+				    } // for (i = 0; i < n; i++)
+		    		for (i = 0; i < n; i++) {
+			    		for (j = 0; j < nqpts; j++) {
+			    			terms2[i][j][0] = terms[i][j][0];
+			    			terms2[i][j][1] = terms[i][j][1];
+			    		}
+			    	}
+			    	for (j = 0; j < nqpts; j++) {
+			    		terms2[n][j][0] = nd[j][0];
+			    		terms2[n][j][1] = nd[j][1];
+			    	}
+			    	for (j = 0; j < nqpts; j++) {
+			    		double sumr = 0.0;
+			    		double sumi = 0.0;
+			    	    for (i = 0; i < n+1; i++) {
+			    	    	double logr = Math.log(zabs(terms2[i][j][0],terms2[i][j][1]));
+			    	    	double logi = Math.atan2(terms2[i][j][1], terms2[i][j][0]);
+			    	    	double prodr = logr * bigbeta[i][j];
+			    	    	double prodi = logi * bigbeta[i][j];
+			    	    	sumr += prodr;
+			    	    	sumi += prodi;
+			    	    }
+			    	    double expterm = Math.exp(sumr);
+			    	    double realexp = expterm * Math.cos(sumi);
+			    	    double imagexp = expterm * Math.sin(sumi);
+			    	    zmlt(realexp, imagexp, wt[j][0], wt[j][1], cr, ci);
+			    	    I[k][0] += cr[0];
+			    	    I[k][1] += ci[0];
+			    	}
+		    	} // while (dist < 1)
+		    } // else
+		} // for (p = 0; p < numnontriv; p++)
+        return I;				
+	}
 	
 	private double[][] dquad(double z1[][], double z2[][], int sing1[], double z[][],
 			double beta[], double qdat[][]) {
