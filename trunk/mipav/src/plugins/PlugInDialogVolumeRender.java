@@ -1020,7 +1020,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				if ( voiManager != null )
 				{
-					voiManager.setImage(wormImage);
+					voiManager.setImage(wormImage, null);
 				}
 
 				boolean updateRenderer = (wormImage.getExtents()[0] != previousExtents[0]) || 

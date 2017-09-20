@@ -377,6 +377,16 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.DRRMode();
     }
+    
+    public float getABBlend()
+    {
+    	if ( m_kVolumeShaderEffect != null )
+    	{
+    		return m_kVolumeShaderEffect.getABBlend();
+    	}
+        return 1;
+    }
+    
 	/**
      * Return current clipping state.
      * @return current clipping state.

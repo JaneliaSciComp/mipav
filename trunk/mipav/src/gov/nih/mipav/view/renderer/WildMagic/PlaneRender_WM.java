@@ -1046,11 +1046,12 @@ implements GLEventListener, ScreenCoordinateListener
 		 GetCanvas().display();
 	 }
 
-	 public void setImage( VolumeImage kImage )
+	 public void setImage( VolumeImage kImageA, VolumeImage kImageB )
 	 {
 		 m_bModified = true;
 		 m_bCleanup = true;
-		 m_kVolumeImageA = kImage;
+		 m_kVolumeImageA = kImageA;
+		 m_kVolumeImageB = kImageB;
 	 }
 
 	 public void setMouseActive( boolean bActive )

@@ -425,6 +425,15 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         //    m_afSelfShadow[0] = 1;
         //}
     }
+    
+    public float getABBlend()
+    {
+    	if ( m_afABBlendParam != null )
+    	{
+    		return m_afABBlendParam[0];
+    	}
+    	return 1;
+    }
 
     /**
      * Sets the blend factor shader parameter between imageA and imageB.

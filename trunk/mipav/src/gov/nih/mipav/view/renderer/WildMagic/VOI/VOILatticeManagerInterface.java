@@ -469,12 +469,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 	
-	public void setImage( ModelImage image )
+	public void setImage( ModelImage imageA, ModelImage imageB )
 	{
-		m_kImageA = image;
+		m_kImageA = imageA;
+		m_kImageB = imageB;
 		if ( latticeModel != null )
 		{
-			latticeModel.setImage(image);
+			latticeModel.setImage(imageA);
 		}
 	}
 	
