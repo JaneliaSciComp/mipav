@@ -125,6 +125,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 	private JPanel volumePanel;
 	private ModelImage wormImage;
+	private ModelImage secondImage;
 	private WormData wormData;
 	private VolumeTriPlanarInterface triVolume;
 	private VOIVector savedAnnotations = null;
@@ -254,7 +255,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		{
 			wormImage.disposeLocal();
 			wormImage = null;
-		}		
+		}
+		if ( secondImage != null )
+		{
+			secondImage.disposeLocal();
+			secondImage = null;
+		}
 	}
 	
 	/**
@@ -288,6 +294,11 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		{
 			wormData.dispose();
 			wormData = null;
+		}
+		if ( secondImage != null )
+		{
+			secondImage.disposeLocal();
+			secondImage = null;
 		}
 		imageIndex = 0;
 //		volumePanel.setVisible(false);
@@ -340,28 +351,19 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		if ( imageFile.exists() )
 		{
 			int[] previousExtents = null;
-			//					System.err.println( fileName );
-//			gpuPanel.setBorder(JDialogBase.buildTitledBorder(fileName));
 			FileIO fileIO = new FileIO();
 			if ( wormImage != null ) {
 				previousExtents = new int[]{wormImage.getExtents()[0], wormImage.getExtents()[1], wormImage.getExtents()[2]};
 				wormImage.disposeLocal();
 				wormImage = null;
 			}
+			if ( secondImage != null )
+			{
+				secondImage.disposeLocal();
+				secondImage = null;
+			}
 			wormImage = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
 			wormImage.calcMinMax();     
-			
-//			if ( thresholdImageCheck.isSelected() && (imageFile2 == null) )
-//			{
-//				for ( int i = 0; i < wormImage.getDataSize(); i++ )
-//				{
-//					if ( wormImage.getFloat(i) > threshold )
-//					{
-//						wormImage.set(i, threshold);
-//					}
-//				}
-//				wormImage.calcMinMax();     
-//			}
 			
 			float[] res = wormImage.getResolutions(0);
 			res[0] = res[2]; 
@@ -375,7 +377,6 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				fileInfo[i].setResolutions(res);
 	            fileInfo[0].setUnitsOfMeasure(units);
 			}
-			ModelImage secondImage = null;
 			if ( (imageFile2 != null) && imageFile2.exists() )
 			{
 				secondImage = fileIO.readImage(fileName, imageFile2.getParent() + File.separator, false, null); 
@@ -393,45 +394,28 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		            fileInfo[0].setUnitsOfMeasure(units);
 				}
 			}
-			if ( secondImage != null )
-			{
-//				if ( thresholdImageCheck.isSelected() )
-//				{
-//					for ( int i = 0; i < wormImage.getDataSize(); i++ )
-//					{
-//						if ( wormImage.getFloat(i) > threshold )
-//						{
-//							wormImage.set(i, threshold);
-//						}
-//						if ( secondImage.getFloat(i) > threshold )
-//						{
-//							secondImage.set(i, threshold);
-//						}
-//					}
-//					wormImage.calcMinMax();     
-//					secondImage.calcMinMax();     
-//				}
-				
-				ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, wormImage.getExtents(),
-						JDialogBase.makeImageName(wormImage.getImageName(), "_rgb"));
-				JDialogBase.updateFileInfo(wormImage, displayImage);
-
-                // Make algorithm
-				ModelImage blank = new ModelImage(ModelImage.SHORT, wormImage.getExtents(), JDialogBase.makeImageName(wormImage.getImageName(), ""));
-				AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(secondImage, wormImage, blank, displayImage, true, false, 255, true, true);
-				mathAlgo.run();
-				
-				ModelImage.saveImage(displayImage, displayImage.getImageName(), imageFile.getParent() + File.separator);
-				wormImage.disposeLocal(false);
-				secondImage.disposeLocal(false);
-				blank.disposeLocal(false);
-				wormImage = displayImage;
-			}
+//			if ( secondImage != null )
+//			{				
+//				ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, wormImage.getExtents(),
+//						JDialogBase.makeImageName(wormImage.getImageName(), "_rgb"));
+//				JDialogBase.updateFileInfo(wormImage, displayImage);
+//
+//                // Make algorithm
+//				ModelImage blank = new ModelImage(ModelImage.SHORT, wormImage.getExtents(), JDialogBase.makeImageName(wormImage.getImageName(), ""));
+//				AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(secondImage, wormImage, blank, displayImage, true, false, 255, true, true);
+//				mathAlgo.run();
+//				
+//				ModelImage.saveImage(displayImage, displayImage.getImageName(), imageFile.getParent() + File.separator);
+//				wormImage.disposeLocal(false);
+//				secondImage.disposeLocal(false);
+//				blank.disposeLocal(false);
+//				wormImage = displayImage;
+//			}
 			
 			
 			if ( triVolume == null )
 			{
-				triVolume = new VolumeTriPlanarInterface(wormImage, null, false);
+				triVolume = new VolumeTriPlanarInterface(wormImage, secondImage, false);
 				triVolume.addConfiguredListener(this);
 				triVolume.setTitle("Annotation Tracking " + wormImage.getImageName() );
 				setVisible(false);
@@ -442,7 +426,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 						(wormImage.getExtents()[1] != previousExtents[1]) ||
 						(wormImage.getExtents()[2] != previousExtents[2]);
 				
-				triVolume.setImage(wormImage, updateRenderer);
+				triVolume.setImage(wormImage, secondImage, updateRenderer);
 				triVolume.getVolumeGPU().resetAxisX();
 				triVolume.setTitle("Annotation Tracking " + wormImage.getImageName() );
 			}
@@ -766,6 +750,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 		triVolume.actionPerformed( new ActionEvent(this, 0, "HistoLUT") );
 		triVolume.actionPerformed( new ActionEvent(this, 0, "Opacity") );
+		triVolume.actionPerformed( new ActionEvent(this, 0, "Slices") );
 		triVolume.actionPerformed( new ActionEvent(this, 0, "VolumeRayCast") );
 		triVolume.actionPerformed( new ActionEvent(this, 0, "VOIToolbar") );
 		triVolume.insertTab( "Tracking", volumePanel );
@@ -776,7 +761,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		triVolume.getVolumeGPU().displayVolumeRaycast(true);
 		triVolume.getVolumeGPU().displayVOIs(true);
 		triVolume.getVolumeGPU().setVolumeBlend(.8f);
-		triVolume.getVolumeGPU().setABBlend(.8f);
+		triVolume.getVolumeGPU().setABBlend(.5f);
 
 		triVolume.getVolumeSlicesPanel().setDividerLocation( 0.75 );
 		

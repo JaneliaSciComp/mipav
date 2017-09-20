@@ -731,7 +731,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 			{
 				for ( int i = 0; i < m_akPlaneRender.length; i++ )
 				{
-					m_akPlaneRender[i].setImage(m_kVolumeImageA);
+					m_akPlaneRender[i].setImage(m_kVolumeImageA, m_kVolumeImageB);
 					if ( m_kVOIInterface != null )
 					{
 						m_kVOIInterface.updateManager(i, m_akPlaneRender[i].getOrientation() );
@@ -1832,16 +1832,19 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.setGradientMagnitude(bShow);
     }
 
-    public void setImage(ModelImage kImage, boolean updateRenderer) {
+    public void setImage(ModelImage kImageA, ModelImage kImageB, boolean updateRenderer) {
 		if ( m_kVOIInterface != null )
 		{
-			m_kVOIInterface.setImage(kImage);
+			m_kVOIInterface.setImage(kImageA, kImageB);
 		}
 		
-		m_kVolumeImageA.UpdateData(kImage, updateRenderer);
-		positionsPanel.setImage(kImage);
-		
-		updateHistoLUTPanels();
+		m_kVolumeImageA.UpdateData(kImageA, updateRenderer);
+		positionsPanel.setImage(kImageA);
+		if ( (m_kVolumeImageB != null) && (kImageB != null) )
+		{
+			m_kVolumeImageB.UpdateData(kImageB, updateRenderer);
+		}
+		updateHistoLUTPanels((m_kVolumeImageB != null) && (kImageB != null));
 
 		if ( updateRenderer )
 		{
@@ -1858,17 +1861,35 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     /**
 	 * Creates or updates the histogram / LUT panel and opacity panels when a new image is loaded.
 	 */
-	private void updateHistoLUTPanels()
+	private void updateHistoLUTPanels(boolean updateImageB)
 	{
         m_kVolOpacityPanel.removePropertyChangeListener(this);
-		m_kVolOpacityPanel.setImages( m_kVolumeImageA.GetImage(), null, null, null, true );
+        if ( updateImageB )
+        {
+        	m_kVolOpacityPanel.setImages( m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), null, null, false );
+        }
+        else
+        {
+        	m_kVolOpacityPanel.setImages( m_kVolumeImageA.GetImage(), null, null, null, true );
+        }
         m_kVolOpacityPanel.addPropertyChangeListener(this);
 
-		frameHistogram.setImages(m_kVolumeImageA.GetImage(), null, m_kVolumeImageA.getLUT(), null);
+        if ( updateImageB )
+        {
+        	frameHistogram.setImages(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), m_kVolumeImageA.getLUT(), m_kVolumeImageB.getLUT());        	
+        }
+        else
+        {
+        	frameHistogram.setImages(m_kVolumeImageA.GetImage(), null, m_kVolumeImageA.getLUT(), null);
+        }
 		frameHistogram.histogramLUT(true, false, true);
 		frameHistogram.redrawFrames();
 
 		m_kVolumeImageA.GetImage().addImageDisplayListener(this);
+		if ( updateImageB )
+		{
+			m_kVolumeImageB.GetImage().addImageDisplayListener(this);
+		}
 	}
     
     /**

@@ -1105,6 +1105,13 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	public void extractMeshFromVolume() {
 		m_bExtract = true;
 	}
+	
+	public float getABBlend() {
+		if (m_kVolumeRayCast != null) {
+			return m_kVolumeRayCast.getABBlend();
+		}
+		return 1;
+	}
 
 	public Matrix3f getArbitratyClip() {
 		return new Matrix3f(m_kVolumeClip.ArbRotate().Local.GetRotate());
