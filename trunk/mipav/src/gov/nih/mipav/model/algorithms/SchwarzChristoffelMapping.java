@@ -139,7 +139,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         boolean testme = false;
         if (testme) {
         	//testRectmap1();
-        	//testRectmap2();
+        	testRectmap2();
         	//testDiskmap1();
             //testCRDiskmap1();
         	//testDiskmap2();
@@ -150,7 +150,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	// No testCRDiskmap4() before CRDisk cannot handle infinities in example.
         	//testDiskmap5();
         	//testCRDiskmap5();
-            testDiskmap6();
+            // testDiskmap6();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -890,6 +890,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	public void testRectmap2() {
 		// Example from Algorithm 843: Scwarz-Christoffel Toolbox for MATLAB
+		//ans =
+	    // 1.5708
+		// 1.5708 +11.1798i
+	    // -1.5708 +11.1798i
+		// -1.5708
 		int i;
 		double w[][] = new double[6][2];
         w[0][0] = -1;
@@ -921,7 +926,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	}
         }
 	}
-
 	
 	public void testDiskmap1() {
 		int i;
@@ -1341,6 +1345,22 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		w[7][0] = 0.0;
 		w[7][1] = -1.0;
 		scmap M = diskmap(w, null, tolerance, null, null);
+		double wc[] = new double[2];
+		M = center(M, wc, null);
+		double R[] = new double[]{10.0};
+		double theta[] = new double[]{10.0};
+		diskplot(M, R, theta, 20, 14, null, Integer.MIN_VALUE);
+		double wp[][] = new double[2][2];
+		wp[0][0] = 0.0;
+		wp[0][1] = 0.0;
+		wp[1][0] = 0.1;
+		wp[1][1] = 0.0;
+		double zp[][] = diskeval(M, wp, tolerance);
+		System.out.println("zp[0] = " + zp[0][0] + " " + zp[0][1]+"i");
+		System.out.println("zp[1] = " + zp[1][0] + " " + zp[1][1]+"i");
+		double zin[][] = new double[1][2];
+		double fp[][] = diskevaldiff(M, zin);
+		System.out.println("fp = " + fp[0][0] + " " + fp[0][1] + "i");
 	}
 	
 	public void testCRDiskmap1() {
@@ -5956,6 +5976,22 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 	}*/
 	
+	private double[][] diskevaldiff(scmap M, double zp[][]) {
+		// Derivative of the Schwarz-Christoffel disk map at points zp.
+		
+		// Original evaldiff MATLAB routne copyright 1998 by Toby Driscoll.
+		int i;
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		polygon p = M.poly;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+		    beta[i] = p.angle[i] - 1.0;
+		}
+		double fp[][] = dderiv(zp, z, beta, c);
+		return fp;
+	}
+	
 	private double[][] dderiv(double zp[][], double z[][], double beta[], double c[]) {
 		// Derivative of the disk map.
 		// dderiv returns the derivative at the points of zp of the 
@@ -6576,6 +6612,49 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			factor = randomGen.genUniformRandomNum(0.0, 1.0);
 		} // while (m > 0)
  	}
+	
+	private double[][] diskeval(scmap M, double zp[][], double tol) {
+		// Evaluate the Schwarz-Christoffel disk map at points
+		// diskeval evaulates the Schwarz-Christoffel map M at the points zp
+		// in the unit disk.  diskeval atempts to five an answer accurate to 
+		// tol.  If tol is less than the accuracy of M, this is unlikely
+		// to be met.
+		// Original MATLAB eval routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1.0;
+		}
+		double wp[][] = new double[zp.length][2];
+		for (i = 0; i < zp.length; i++) {
+			wp[i][0] = Double.NaN;
+		}
+		boolean idx[] = new boolean[zp.length];
+		int numidx = 0;
+		for (i = 0; i < zp.length; i++) {
+			if (zabs(zp[i][0], zp[i][1]) <= 1.0 + eps) {
+				idx[i] = true;
+				numidx++;
+			}
+		}
+		double zpin[][] = new double[numidx][2];
+		for (i = 0, j = 0; i < zp.length; i++) {
+			if (idx[i]) {
+				zpin[j][0] = zp[i][0];
+				zpin[j++][1] = zp[i][1];
+			}
+		}
+		double wpidx[][] = dmap(zpin, w, beta, M.prevertex, M.constant, M.qdata);
+		for (i = 0, j = 0; i < zp.length; i++) {
+			if (idx[i]) {
+				wp[i][0] = wpidx[j][0];
+				wp[i][1] = wpidx[j++][1];
+			}
+		}
+		return wp;
+	}
 	
 	private double[][] dmap(double zp[][], double w[][], double beta[],
 			double z[][], double c[], double qdat[][]) {
