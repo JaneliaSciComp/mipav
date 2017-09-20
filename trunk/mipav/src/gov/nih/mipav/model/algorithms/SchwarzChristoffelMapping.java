@@ -141,7 +141,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testRectmap1();
         	//testRectmap2();
         	//testDiskmap1();
-            testCRDiskmap1();
+            //testCRDiskmap1();
         	//testDiskmap2();
         	//testCRDiskmap2();
         	//testDiskmap3();
@@ -150,6 +150,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	// No testCRDiskmap4() before CRDisk cannot handle infinities in example.
         	//testDiskmap5();
         	//testCRDiskmap5();
+            testDiskmap6();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -1309,6 +1310,37 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double R[] = new double[]{10.0};
 		double theta[] = new double[]{10.0};
 		diskplot(M, R, theta, 200, 140, null, Integer.MIN_VALUE);
+	}
+	
+	public void testDiskmap6() {
+		// Example with 2 slits
+		//p = polygon([1 0.6 1 1i -1 -1i -0.4i -1i]);
+		//f = center( diskmap(p), 0 );
+		//plot(f)
+		//eval(f,[0 0.1])
+		//ans =
+		//-0.0000 + 0.0000i 0.0377 - 0.0547i
+		//eval( diff(f), 0)
+		//ans =
+		//0.3896 - 0.5526i
+		double w[][] = new double[8][2];
+		w[0][0] = 1.0;
+		w[0][1] = 0.0;
+		w[1][0] = 0.6;
+		w[1][1] = 0.0;
+		w[2][0] = 1.0;
+		w[2][1] = 0.0;
+		w[3][0] = 0.0;
+		w[3][1] = 1.0;
+		w[4][0] = -1.0;
+		w[4][1] = 0.0;
+		w[5][0] = 0.0;
+		w[5][1] = -1.0;
+		w[6][0] = 0.0;
+		w[6][1] = -0.4;
+		w[7][0] = 0.0;
+		w[7][1] = -1.0;
+		scmap M = diskmap(w, null, tolerance, null, null);
 	}
 	
 	public void testCRDiskmap1() {
@@ -9982,10 +10014,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        int numnotmask = n - nummask;
 	        double wmask[][] = new double[nummask][2];
 	        double wnotmask[][] = new double[numnotmask][2];
+	        int fmask[] = new int[nummask];
 	        for (i = 0, j = 0, k = 0; i < n; i++) {
 	            if (mask[i]) {
 	            	wmask[j][0] = w[i][0];
-	            	wmask[j++][1] = w[i][1];
+	            	wmask[j][1] = w[i][1];
+	            	fmask[j++] = i;
 	            }
 	            else {
 	            	wnotmask[k][0] = w[i][0];
@@ -9995,16 +10029,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	        boolean slit[] = new boolean[wmask.length];
 	        boolean onvtx[][] = new boolean[wnotmask.length][wmask.length];
 	        isinpoly(slit, onvtx, wmask, wnotmask, null, eps);
-	        for (i = 0; i < alpha.length; i++) {
-	        	if (mask[i]) {
-	        		if (slit[i]) {
-	        			alpha[i] = 2.0;
-	        		}
-	        		else {
-	        			alpha[i] = 0.0;
-	        		}
-	        	} // if (mask[i])
-	        } // for (i = 0; i < alpha.length; i++)
+	        for (i = 0; i < nummask; i++) {
+	            if (slit[i]) {
+	            	alpha[fmask[i]] = 2.0;
+	            }
+	            else {
+	            	alpha[fmask[i]] = 0.0;
+	            }
+	        } // for (i = 0; i < nummask; i++)
 	    } // else
 	    
 	    // Now test--if incorrect, assume the orientation is clockwise
