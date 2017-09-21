@@ -4138,8 +4138,140 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
    
    public scmap extermap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
 	   // Schwarz-Christoffel exterior map object.
-	   scmap map = new scmap();
-	   return map;
+	   // expermap constructs a Schwarz-Christoffel exterior map object for the polygon whose
+	   // vertices are given by w.  The parameter problem is solved by using default options
+	   // for the prevertices and multiplicative constant.  If z is supplied, extermap creates
+	   // a extermap object having the given prevertices Z (the multiplicative constant is 
+	   // found automatically).  If z and alpha are supplied, extermap creates a map using the
+	   // given prevertices and the interior polygonangles described by alpha.  The image polygon
+	   // is deduced by computing S-C integrals assuming a multiplicative constant of 1 if c is
+	   // not supplied.  Note that not every pairing of prevertices and angles produces a single-valued
+	   // map;  you must have SUM((alpha-1)./z) equal to zero.  Also, z is given counterclockwise
+	   // around the unit circle, but alpha should be clockwise with respect to the interior of the
+	   // polygon
+	   
+	   // Original MATLAB extermap routine copyright 1998-2001 by Toby Driscoll.
+	   int i;
+		int nqpts;
+		double qdata[][] = null;
+		double wn[][] = null;
+		double betan[] = null;
+		double z0[][] = null;
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		double alpha2[] = null;
+		double wflip[][] = null;
+		double betaflip[] = null;
+		double alphaflip[] = null;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, alpha);
+		double beta[] = new double[poly.angle.length];
+		for (i = 0; i < poly.angle.length; i++) {
+			beta[i] = poly.angle[i] - 1.0;
+		}
+		if ((z == null) || (z.length == 0)) {
+			// Find prevertices
+			// Apply scfix to enforce solver rules
+			wflip = new double[w.length][2];
+			for (i = 0; i < w.length; i++) {
+				wflip[i][0] = w[w.length-1-i][0];
+				wflip[i][1] = w[w.length-1-i][1];
+			}
+			betaflip = new double[beta.length];
+			for (i = 0; i < beta.length; i++) {
+				betaflip[i] = beta[beta.length-1-i];
+			}
+			wn = new double[w.length][2];
+			betan = new double[w.length];
+			// Number of vertices added by scfix
+			for (i = 0; i < w.length; i++) {
+				wn[i][0] = w[i][0];
+				wn[i][1] = w[i][1];
+				betan[i] = beta[i];
+			}
+			// No verticesw added
+			scfix(wn, betan, null, null, "de", wflip, betaflip, null);
+			for (i = 0; i < w.length; i++) {
+				x[i] = wn[w.length-1-i][0];
+				y[i] = wn[w.length-1-i][1];
+			}
+			alphaflip = new double[beta.length];
+			for (i = 0; i < beta.length; i++) {
+				alphaflip[i] = 1.0 - betan[beta.length-i-i];
+			}
+			poly = new polygon(x, y, alphaflip);
+			c = new double[2];
+			z = new double[wn.length][2];
+			nqpts = Math.max((int)Math.ceil(-Math.log10(tolerance)), 2);
+			qdata = new double[nqpts][2*betan.length+2];
+			deparam(z, c, qdata, wn, betan, z0, tolerance);
+		} // if ((z == null) || (z.length == 0))
+		
+		if ((qdata == null) || (qdata.length == 0)) {
+		    // Base accuracy of quadrature on given options	
+			nqpts = (int)Math.ceil(-Math.log10(tolerance));
+			betan = new double[poly.angle.length];
+			for (i = 0; i < poly.angle.length; i++) {
+				betan[i] = 1.0 - poly.angle[poly.angle.length-1-i];
+			}
+			qdata = new double[nqpts][2*betan.length+2];
+			scqdata(qdata, betan, nqpts);
+		} // if ((qdata == null) || (qdata.length == 0))
+		
+		if ((c == null) || (c.length == 0)) {
+		    // Find constant
+			wn = new double[poly.vertex.length][2];
+			for (i = 0; i < poly.vertex.length; i++) {
+				wn[i][0] = poly.vertex[poly.vertex.length-1-i][0];
+				wn[i][1] = poly.vertex[poly.vertex.length-1-i][1];
+			}
+			betan = new double[poly.angle.length];
+			for (i = 0; i < poly.angle.length; i++) {
+				betan[i] = 1.0 - poly.angle[poly.angle.length-1-i];
+			}
+			zdiv(z[1][0], z[1][1], z[0][1], z[0][0], cr, ci);
+			double ang = Math.atan2(ci[0], cr[0])/2.0;
+			zmlt(z[0][0], z[0][1], Math.cos(ang), Math.sin(ang), cr, ci);
+			double mid[][] = new double[1][2];
+			mid[0][0] = cr[0];
+			mid[0][1] = ci[0];
+			double z0in[][] = new double[1][2];
+			z0in[0][0] = z[0][0];
+			z0in[0][1] = z[0][1];
+			int sing0[] = new int[1];
+			sing0[0] = 0;
+			double I1[][] = dequad(z0in, mid, sing0, z, betan, qdata);
+			double z1in[][] = new double[1][2];
+			z1in[0][0] = z[1][0];
+			z1in[0][1] = z[1][1];
+			int sing1[] = new int[1];
+			sing1[0] = 1;
+			double I2[][] = dequad(z1in, mid, sing1, z,  betan, qdata);
+			double I[] = new double[2];
+			I[0] = I1[0][0] - I2[0][0];
+			I[1] = I1[0][1] - I2[0][1];
+			double diffw[] = new double[2];
+			diffw[0] = wn[1][0] - wn[0][0];
+			diffw[1] = wn[1][1] - wn[0][1];
+			zdiv(diffw[0], diffw[1], I[0], I[1], cr, ci);
+			c = new double[2];
+			c[0] = cr[0];
+			c[1] = ci[0];
+		} // if ((c == null) || (c.length == 0))
+	    scmap map = new scmap();
+	    map.prevertex = z;
+		map.constant[0] = c[0];
+		map.constant[1]= c[1];
+		map.qdata = qdata;
+		map.poly = poly;
+		
+		// Now fill in apparent accuracy
+	    return map;
    }
 	
 	public scmap diskmap(double w[][], double alpha[], double tolerance, double z[][], double c[]) {
@@ -10482,6 +10614,53 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			}
 		}
 		return beta;
+	}
+	
+	private void deparam(double z[][], double c[], double qdat[][], 
+			double w[][], double beta[], double z0[][], double tol) {
+		// Schwarz- Christoffel exterior parameter problem
+		// deparam solves the Schwarz-Christoffel mapping problem with a disk as 
+		// fundamental domain and the exterior of the polygon specified by w
+		// as the target.  w must be a vector of vertices of the polygon, 
+		// specified in clockwise order, and beta should be a vector of 
+		// turning angles of the polygon.  If successful, deparam will return
+		// z, a vector of pre-images of w; c, the multiplicative constant of the
+		// conformal map; and qdat, an optional matrix of quadrature data used
+		// by some of the other S-C routines.
+		
+		// Original MATLAB deparam routine copyright 1998 by Toby Driscoll.
+		
+		int i;
+		int n = w.length; // Number of vertices
+		
+		int err = sccheck("de", w, beta, null);
+	    if (err == -1) {
+	    	return;
+	    }
+	    if (err == 1) {
+	    	MipavUtil.displayError("Use scfix to make polygon obey requirements");
+	    	return;
+	    }
+	    
+	    int nqpts = (int)Math.max(Math.ceil(-Math.log10(tol)),2);
+	    scqdata(qdat, beta, nqpts);  // quadrature data
+	    
+	    if (n == 2) {
+	    	// it's a slit
+	    	z[0][0] = -1;
+	    	z[0][1] = 0;
+	    	z[1][0] = 1;
+	    	z[1][1] = 0;
+	    }
+	    else { // n != 2
+	    	// Set up normalized lengths for nonlinear equations
+	    	double len[] = new double[n];
+	    	len[0] = zabs(w[0][0] - w[n-1][0], w[0][1] - w[n-1][1]);
+	    	for (i = 0; i < n-1; i++) {
+	    		len[i]= zabs(w[i+1][0] - w[i][0], w[i+1][1] - w[i][1]);
+	    	}
+	    } // else n != 2
+	
 	}
 	
 	// Schwarz-Crhistoffel disk parameter problem.
