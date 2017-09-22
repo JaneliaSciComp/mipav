@@ -136,10 +136,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         } // while(true)
         
         
-        boolean testme = false;
+        boolean testme = true;
         if (testme) {
         	//testRectmap1();
-        	testRectmap2();
+        	//testRectmap2();
         	//testDiskmap1();
             //testCRDiskmap1();
         	//testDiskmap2();
@@ -151,6 +151,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testDiskmap5();
         	//testCRDiskmap5();
             // testDiskmap6();
+        	testExtermap1();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -1601,6 +1602,32 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		scmap M = crdiskmap(poly, tolerance, null, null);
 		boolean drawThetaToRadiusOne = false;
 		crdiskplot(M, null, null, 200, 140, drawThetaToRadiusOne, null, Integer.MIN_VALUE);
+	}
+	
+	private void testExtermap1() {
+		//p = polygon([-0.5,1-1.5i,-0.5,0.5+2i]);
+		//f = extermap(p);
+		//axis([-3.05 2.8 -2.3 2.5]), hold on
+		//plot(f,(4:9)/10,0)
+		int i;
+		double w[][] = new double[4][2];
+		w[0][0] = -0.5;
+		w[0][1] = 0.0;
+		w[1][0] = 1.0;
+		w[1][1] = -1.5;
+		w[2][0] = -0.5;
+		w[2][1] = 0.0;
+		w[3][0] = 0.5;
+		w[3][1] = 2.0;
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, null);
+		double alpha[] = poly.angle;
+		extermap(w, alpha, tolerance, null, null);
 	}
 	
 	public scmap crdiskmap(polygon poly, double tolerance, double cr[][], qlgraph Q) {
@@ -4159,7 +4186,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double z0[][] = null;
 		double x[] = new double[w.length];
 		double y[] = new double[w.length];
-		double alpha2[] = null;
 		double wflip[][] = null;
 		double betaflip[] = null;
 		double alphaflip[] = null;
@@ -4170,10 +4196,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			y[i] = w[i][1];
 		}
 		polygon poly = new polygon(x, y, alpha);
-		double beta[] = new double[poly.angle.length];
-		for (i = 0; i < poly.angle.length; i++) {
-			beta[i] = poly.angle[i] - 1.0;
-		}
+		
 		if ((z == null) || (z.length == 0)) {
 			// Find prevertices
 			// Apply scfix to enforce solver rules
@@ -4182,17 +4205,17 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				wflip[i][0] = w[w.length-1-i][0];
 				wflip[i][1] = w[w.length-1-i][1];
 			}
-			betaflip = new double[beta.length];
-			for (i = 0; i < beta.length; i++) {
-				betaflip[i] = beta[beta.length-1-i];
+			betaflip = new double[poly.angle.length];
+			for (i = 0; i < poly.angle.length; i++) {
+				betaflip[i] = 1.0 - poly.angle[poly.angle.length-1-i];
 			}
 			wn = new double[w.length][2];
 			betan = new double[w.length];
 			// Number of vertices added by scfix
 			for (i = 0; i < w.length; i++) {
-				wn[i][0] = w[i][0];
-				wn[i][1] = w[i][1];
-				betan[i] = beta[i];
+				wn[i][0] = wflip[i][0];
+				wn[i][1] = wflip[i][1];
+				betan[i] = betaflip[i];
 			}
 			// No verticesw added
 			scfix(wn, betan, null, null, "de", wflip, betaflip, null);
@@ -4200,9 +4223,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				x[i] = wn[w.length-1-i][0];
 				y[i] = wn[w.length-1-i][1];
 			}
-			alphaflip = new double[beta.length];
-			for (i = 0; i < beta.length; i++) {
-				alphaflip[i] = 1.0 - betan[beta.length-i-i];
+			alphaflip = new double[betan.length];
+			for (i = 0; i < betan.length; i++) {
+				alphaflip[i] = 1.0 - betan[betan.length-1-i];
 			}
 			poly = new polygon(x, y, alphaflip);
 			c = new double[2];
@@ -4271,6 +4294,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		map.poly = poly;
 		
 		// Now fill in apparent accuracy
+		map.accuracy = exterAccuracy(map);
 	    return map;
    }
 	
@@ -4422,6 +4446,127 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Fill in apparent accuracy
 		map.accuracy = diskAccuracy(map);
 		return map;
+	}
+	
+	private double exterAccuracy(scmap M) {
+		// Apparent accuracy of Schwarz-Christoffel disk exterior map.
+		// diskAccuracy estimates the accuracy of the Schwarz-Christoffel exterior
+		// map M.  The technique used is to compare the differences between
+		// successive finite vertices to the integral between the corresponding
+		// prevertices, and return the maximum.
+		
+		// See also extermap.
+		
+		// Original MATLAB accuracy routine copyright 1998 by Toby Driscoll.
+		
+		// If an accuracy has been assigned, don't question it.
+		int i, j;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double acc;
+		if (!Double.isNaN(M.accuracy)) {
+			acc =  M.accuracy;
+			return acc;
+		}
+		
+		// Get data for low-level funcions
+		polygon p = M.poly;
+		double w[][] = new double[p.vertex.length][2];
+		for (i = 0; i < p.vertex.length; i++) {
+			w[i][0] = p.vertex[p.vertex.length - 1 - i][0];
+			w[i][1] = p.vertex[p.vertex.length - 1 - i][1];
+		}
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = 1.0 - p.angle[p.angle.length - 1 - i];
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		double qdata[][] = M.qdata;
+		int n = w.length;
+		
+		// Test accuracy by integrating between consecutive finite prevertices, and
+		// comparing to differences of vertices.
+		int numidx = 0;
+		for (i = 0; i < n; i++) {
+			if ((!Double.isInfinite(w[i][0])) && (!Double.isInfinite(w[i][1]))) {
+				numidx++;
+			}
+		} // for (i = 0; i < n; i++)
+		int idx[] = new int[numidx];
+		double wf[][] = new double[numidx][2]; // finite vertices
+		for (i = 0, j = 0; i < n; i++) {
+			if ((!Double.isInfinite(w[i][0])) && (!Double.isInfinite(w[i][1]))) {
+				idx[j] = i;
+				wf[j][0] = w[i][0];
+				wf[j++][1] = w[i][1];
+			}
+		} // for (i = 0, j = 0; i < n; i++)
+		
+		// Two columns hold endpoint indices for integrations
+		int idx2[][] = new int[idx.length][2];
+		for (i = 0; i < idx.length; i++) {
+			idx2[i][0] = idx[i];
+			if (i < idx.length-1) {
+				idx2[i][1] = idx[i+1];
+			}
+			else {
+				idx2[i][1] = idx[0];
+			}
+		} // for (i = 0; i < idx.length; i++)
+		
+		double mid[][] = new double[numidx][2];
+		for (i = 0; i < numidx; i++) {
+			zdiv(z[idx2[i][1]][0], z[idx2[i][1]][1], z[idx2[i][0]][0], z[idx2[i][0]][1], cr, ci);
+			double ang = Math.atan2(ci[0], cr[0]);
+			double dtheta = ang - 2.0*Math.PI*Math.floor(ang/(2.0*Math.PI));
+			zmlt(z[idx2[i][0]][0], z[idx2[i][0]][1], Math.cos(dtheta/2.0), Math.sin(dtheta/2.0), cr, ci);
+			mid[i][0] = cr[0];
+			mid[i][1] = ci[0];
+		}
+		
+		// Do the integrations
+		double zin[][] = new double[numidx][2];
+		int sing[] = new int[numidx];
+		for (i = 0; i < numidx; i++) {
+			zin[i][0] = z[idx2[i][0]][0];
+			zin[i][1] = z[idx2[i][0]][1];
+			sing[i] = idx2[i][0];
+		}
+		double I1[][] = dequad(zin, mid, sing, z, beta, qdata);
+		for (i = 0; i < numidx; i++) {
+			zin[i][0] = z[idx2[i][1]][0];
+			zin[i][1] = z[idx2[i][1]][1];
+			sing[i] = idx2[i][1];
+		}
+		double I2[][] = dequad(zin, mid, sing, z, beta, qdata);
+		double I[][] = new double[numidx][2];
+		for (i = 0; i < numidx; i++) {
+			I[i][0] = I1[i][0] - I2[i][0];
+			I[i][1] = I1[i][1] - I2[i][1];
+		}
+		double diffwf[][] = new double[numidx][2];
+		for (i = 0; i < numidx-1; i++) {
+			diffwf[i][0] = wf[i+1][0] - wf[i][0];
+			diffwf[i][1] = wf[i+1][1] - wf[i][1];
+		}
+		diffwf[numidx-1][0] = wf[0][0] - wf[numidx-1][0];
+		diffwf[numidx-1][1] = wf[0][1] - wf[numidx-1][1];
+		double cI[][] = new double[numidx][2];
+		for (i = 0; i < numidx; i++) {
+			zmlt(c[0],c[1],I[i][0],I[i][1],cr,ci);
+			cI[i][0] = cr[0];
+			cI[i][1] = ci[0];
+		}
+		acc = 0.0;
+		for (i = 0; i < numidx; i++) {
+			double currentAcc = zabs(cI[i][0] - diffwf[i][0],cI[i][1] - diffwf[i][1]);
+			if (currentAcc > acc) {
+				acc = currentAcc;
+			}
+		} // for (i = 0; i < numidx; i++)
+		System.out.println("Accuracy = " + acc);
+		return acc;
 	}
 	
 	private double diskAccuracy(scmap M) {
@@ -10631,6 +10776,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Original MATLAB deparam routine copyright 1998 by Toby Driscoll.
 		
 		int i;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
 		int n = w.length; // Number of vertices
 		
 		int err = sccheck("de", w, beta, null);
@@ -10659,8 +10806,115 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	for (i = 0; i < n-1; i++) {
 	    		len[i]= zabs(w[i+1][0] - w[i][0], w[i+1][1] - w[i][1]);
 	    	}
+	    	double nmlen[] = new double[n-3];
+	    	for (i = 0; i < n-3; i++) {
+	    		nmlen[i] = len[i+2]/len[1];
+	    	}
+	    	
+	    	// Set up initial guess
+	    	double y0[] = null;
+	    	if ((z0 == null) || (z0.length == 0)) {
+	    	    y0 = new double[n-1];	
+	    	}
+	    	else {
+	    		// Must have z0 with increasing angle so log is real
+	    		// A negative number would give the log of the absolute value + i*PI.
+	    		// Fix z0[n-1] = 1
+	    		for (i = 0; i < n; i++) {
+	    			zdiv(z0[i][0], z0[i][1], z0[n-1][0], z0[n-1][1], cr, ci);
+	    		}
+	    		double th[] = new double[n];
+	    		for (i = 0; i < n; i++) {
+	    			th[i] = Math.atan2(z0[i][1], z0[i][0]);
+	    			if (th[i] <= 0) {
+	    				th[i] = th[i] + 2.0*Math.PI;
+	    			}
+	    		} // for (i = 0; i < n; i++) 
+	    		double dt[] = new double[n];
+	    		dt[0] = th[0];
+	    		if (dt[0] <= 0) {
+	    			System.err.println("dt[0] <= 0 in deparam");
+	    			System.exit(-1);
+	    		}
+	    		for (i = 1; i < n-2; i++) {
+	    			dt[i] = th[i+1] - th[i];
+	    			if (dt[i] <= 0) {
+	    				System.err.println("dt["+i+"] <= 0 in deparam");
+		    			System.exit(-1);	
+	    			}
+	    		}
+	    		dt[n-1] = 2.0*Math.PI - th[n-2];
+	    		if (dt[n-1] <= 0) {
+	    			System.err.println("dt[n-1] <= 0 in deparam");
+	    			System.exit(-1);
+	    		}
+	    		for (i = 0; i < n-1; i++) {
+	    		    y0[i] = Math.log(dt[i]/dt[i+1]);	
+	    		}
+	    	}
+	    	
+	    	// Solve nonlinear system of equations
+	    	depfun fm = new depfun(y0, n, beta, nmlen, qdat);
+		    fm.driver();
+			fm.dumpResults();
+		    int exitStatus = fm.getExitStatus();
+		    if (exitStatus < 0 ) {
+		    	System.out.println("Error in NLConstrainedEngine during dparam call to depfun");
+		    	printExitStatus(exitStatus);
+		    	System.exit(-1);
+		    }
+			double y[] = fm.getParameters();
+			// Convert y values to z
+			double cumprod[] = new double[y.length+1];
+			cumprod[0] = 1.0;
+			for (i = 1; i <= y.length; i++) {
+				cumprod[i] = cumprod[i-1] * Math.exp(-y[i-1]);
+			}
+			double cs[] = new double[y.length+1];
+			cs[0] = cumprod[0];
+			for (i = 1; i <= y.length; i++) {
+				cs[i] = cs[i-1] + cumprod[i];
+			}
+			double theta[] = new double[n-1];
+			for (i = 0; i < n-1; i++) {
+				theta[i] = 2.0 * Math.PI * cs[i]/cs[n-1];
+			}
+			for (i = 0; i < n-1; i++) {
+				z[i][0] = Math.cos(theta[i]);
+				z[i][1] = Math.sin(theta[i]);
+			}
+			
+			z[n-1][0] = 1.0;
+			z[n-1][1] = 0.0;
 	    } // else n != 2
-	
+	    
+	    // Determine scaling constant
+	    zdiv(z[1][0], z[1][1], z[0][0], z[0][1], cr, ci);
+	    double ang = Math.atan2(ci[0], cr[0])/2.0;
+	    zmlt(z[0][0], z[0][1], Math.cos(ang), Math.sin(ang), cr, ci);
+	    double mid[][] = new double[1][2];
+	    mid[0][0] = cr[0];
+	    mid[0][1] = ci[0];
+	    double wdiff[] = new double[2];
+	    wdiff[0] = w[1][0] - w[0][0];
+	    wdiff[1] = w[1][1] - w[0][1];
+	    double zin[][] = new double[1][2];
+	    zin[0][0] = z[0][0];
+	    zin[0][1] = z[0][1];
+	    int sing[] = new int[1];
+	    sing[0] = 0;
+	    double I1[][] = dequad(zin, mid, sing, z, beta, qdat);
+	    zin[0][0] = z[1][0];
+	    zin[0][1] = z[1][1];
+	    sing[0] = 1;
+	    double I2[][] = dequad(zin, mid, sing, z, beta, qdat);
+	    double denom[] = new double[2];
+	    denom[0] = I1[0][0] - I2[0][0];
+	    denom[1] = I1[0][1] - I2[0][1];
+	    zdiv(wdiff[0], wdiff[1], denom[0], denom[1], cr, ci);
+	    c[0] = cr[0];
+	    c[1] = ci[0];
+	    return;
 	}
 	
 	// Schwarz-Crhistoffel disk parameter problem.
@@ -12105,6 +12359,182 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         else {
         	System.err.println("Exit status = " + exitStatus);
         }
+	}
+	
+	class depfun extends NLConstrainedEngine {
+		int n;
+		double beta[];
+		double nmlen[];
+		double qdat[][];
+		
+		public depfun (double y0[], int n, double beta[], double nmlen[], double qdat[][]) {
+    		// nPoints, params
+    		super(y0.length, y0.length);
+    		this.n = n;
+    		this.beta = beta;
+    		this.nmlen = nmlen;
+    		this.qdat = qdat;
+    		
+    		bounds = 0; // bounds = 0 means unconstrained
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < y0.length; i++) {
+				gues[i] = y0[i];
+			}
+    	}
+    	
+    	/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		/**
+		 * Display results of displaying exponential fitting parameters.
+		 */
+		public void dumpResults() {
+			Preferences
+					.debug(" ******* Fit Elsunc Schwarz-Christoffel deparam ********* \n\n",
+							Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters)
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared())
+					+ "\n", Preferences.DEBUG_ALGORITHM);
+			for (int i = 0; i < a.length; i++) {
+			Preferences.debug("a"+i+" " + String.valueOf(a[i]) + "\n",
+					Preferences.DEBUG_ALGORITHM);
+			}
+		}
+    	
+    	public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+    		int ctrl;
+    		int i, j;
+    		double z[][];
+    		double I1[][];
+    		double I2[][];
+    		double ints[][];
+    		double F[] = null;
+    		double cr[] = new double[1];
+    		double ci[] = new double[1];
+    		try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+                    // Returns residual for solution of nonlinear equations
+					
+					// Convert a (unconstrained variables) to z (prevertices)
+					double cumprod[] = new double[a.length+1];
+					cumprod[0] = 1;
+					for (i = 1; i <= a.length; i++) {
+						cumprod[i] = cumprod[i-1]*Math.exp(-a[i-1]);
+					}
+					double cs[] = new double[a.length+1];
+					cs[0] = cumprod[0];
+					for (i = 1; i <= a.length; i++) {
+						cs[i] = cs[i-1] + cumprod[i];
+					}
+					double theta[] = new double[n-1];
+					for (i = 0; i < n-1; i++) {
+						theta[i] = 2.0*Math.PI*cs[i]/cs[n-1];
+					}
+					z = new double[n][2];
+					for (i = 0; i < n-1; i++) {
+						z[i][0] = Math.cos(theta[i]);
+						z[i][1] = Math.sin(theta[i]);
+					}
+						
+					z[n-1][0] = 1;
+					z[n-1][1] = 0;
+					
+					// Compute the integrals
+					double mid[][] = new double[n-2][2];
+					for (i = 0; i < n-2; i++) {
+						double ang = (theta[i] + theta[i+1])/2.0;
+						mid[i][0] = Math.cos(ang);
+						mid[i][1] = Math.sin(ang);
+					}
+					
+					// We an use the same quadrature as for the interior map, because the
+					// absolute value of the integrand on the unit circle is not affected
+					// by the z^{-2} term.
+					double z1[][] = new double[n-2][2];
+					int sing1[] = new int[n-2];
+					for (i = 0; i < n-2; i++) {
+						z1[i][0] = z[i][0];
+						z1[i][1] = z[i][1];
+						sing1[i] = i;
+					}
+					I1 = dabsquad(z1, mid, sing1, z, beta, qdat);
+					for (i = 0; i < n-2; i++) {
+						z1[i][0] = z[i+1][0];
+						z1[i][1] = z[i+1][1];
+						sing1[i] = i+1;
+					}
+					I2 = dabsquad(z1, mid, sing1, z, beta, qdat);
+					ints = new double[n-2][2];
+					int numintszero = 0;
+					for (i = 0; i < n-2; i++) {
+						ints[i][0] = I1[i][0] + I2[i][0];
+						ints[i][1] = I1[i][1] + I2[i][1];
+						if ((ints[i][0] == 0) && (ints[i][1] == 0)) {
+							numintszero++;
+						}
+					}
+					
+					if (numintszero > 0) {
+						MipavUtil.displayWarning("Singularities were too crowded in practice.  Severe crowding.");
+					}
+					
+					// Compute equation residual values.
+					if (n > 3) {
+					    F = new double[n-3];
+					    for (i = 0; i < n-3; i++) {
+					    	F[i] = zabs(ints[i+1][0], ints[i+1][1])/zabs(ints[0][0], ints[0][1]) - nmlen[i];
+					    }
+					} // if (n > 3)
+					
+					// Compute residue
+					double sumr = 0.0;
+					double sumi = 0.0;
+					for (i = 0; i < n; i++) {
+						zdiv(beta[i], 0, z[i][0], z[i][1], cr, ci);
+						sumr += cr[0];
+						sumi += ci[0];
+					}
+					zdiv(-sumr, -sumi, ints[0][0], ints[0][1], cr, ci);
+					j = 0;
+					if (F != null) {
+						for (i = 0; i < F.length; i++) {
+							residuals[j++] = F[i];
+						}
+					}
+					residuals[j++] = cr[0];
+					residuals[j] = ci[0];
+				} // if ((ctrl == -1) || (ctrl == 1))
+
+				// Calculate the Jacobian numerically
+				else if (ctrl == 2) {
+					ctrlMat[0] = 0;
+				}
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+    		
+    	}
 	}
 	
 	class dpfun extends NLConstrainedEngine {
