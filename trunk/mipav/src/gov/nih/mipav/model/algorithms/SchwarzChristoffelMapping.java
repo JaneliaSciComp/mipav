@@ -86,6 +86,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private double crfixwc_mt[][] = new double[4][2];
 	private double crfixwc[] = new double[2];
 	
+	private boolean testRoutine = false;
+	private boolean exterRoutine = false;
+	
 	public SchwarzChristoffelMapping() {
 		
 	}
@@ -136,8 +139,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         } // while(true)
         
         
-        boolean testme = false;
-        if (testme) {
+        if (testRoutine) {
         	//testRectmap1();
         	//testRectmap2();
         	//testDiskmap1();
@@ -1627,7 +1629,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		polygon poly = new polygon(x, y, null);
 		double alpha[] = poly.angle;
-		extermap(w, alpha, tolerance, null, null);
+		scmap M = extermap(w, alpha, tolerance, null, null);
+		double R[] = new double[]{4.0/10.0, 5.0/10.0, 6.0/10.0, 7.0/10.0, 8.0/10.0, 9.0/10.0};
+		double theta[] =new double[1];
+		exterplot(M, R, theta, 20, 14, null, Integer.MIN_VALUE);
 	}
 	
 	public scmap crdiskmap(polygon poly, double tolerance, double cr[][], qlgraph Q) {
@@ -4191,6 +4196,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double alphaflip[] = null;
 		double cr[] = new double[1];
 		double ci[] = new double[1];
+		exterRoutine = true;
 		for (i = 0; i < w.length; i++) {
 			x[i] = w[i][0];
 			y[i] = w[i][1];
@@ -6939,14 +6945,174 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return wp;
 	}
 	
+	private double[][] demap(double zp[][], double w[][], double beta[],
+			double z[][], double c[], double qdat[][]) {
+		// Schwarz-Christoffel disk map.
+		// demap computes the values of the Schwarz-Christoffel exterior map at the
+		// points in the vector zp.  The arguments w, beta, z, c, and qdat are
+		// as in deparam.  demap returns a vector wp the same size as zp.
+		
+		// Original MATLAB demap routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double tol;
+		if ((zp == null) || (zp.length == 0)) {
+			return null;
+		}
+		
+		int n = w.length;
+		
+		// Quadrature data and error tolerance
+		if ((qdat == null) || (qdat.length == 0)) {
+		    tol =- 1.0e-8;  
+		    qdat = new double[8][2*beta.length+2];
+			scqdata(qdat, beta, 8);
+		}
+		else {
+			tol = Math.pow(10.0, -qdat.length);
+		}
+		//int shape = zp.length;
+		int p = zp.length;
+		double wp[][] = new double[p][2];
+		
+		// For each point in zp, find the nearest prevertex
+		double dist[] = new double[p];
+		int sing[] = new int[p]; // Indices of prevertices
+		for (i = 0; i < p; i++) {
+			dist[i] = Double.MAX_VALUE;
+			sing[i] = -1;
+			for (j = 0; j < n; j++) {
+				double currentDist = zabs(zp[i][0] - z[j][0],zp[i][1] - z[j][1]);
+				if (currentDist < dist[i]) {
+					dist[i] = currentDist;
+					sing[i] = j;
+				}
+			}
+		} // for (i = 0; i < p; i++)
+		
+		// Screen out images of prevertices
+		boolean vertex[] = new boolean[p];
+		boolean zero[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			if (dist[i] < tol) {
+				vertex[i] = true;
+				wp[i][0] = w[sing[i]][0];
+				wp[i][1] = w[sing[i]][1];
+			}
+			if (zabs(zp[i][0],zp[i][1]) < tol) {
+			    zero[i] = true;
+			    wp[i][0] = Double.POSITIVE_INFINITY;
+			    wp[i][1] = 0.0;
+			}
+			vertex[i] = vertex[i] || zero[i];
+		} // for (i  = 0; i < p; i++)
+		
+		// zs = the starting singularities
+		double zs[][] = new double[p][2];
+		for (i = 0; i < p; i++) {
+			zs[i][0] = z[sing[i]][0];
+			zs[i][1] = z[sing[i]][1];
+			if (!vertex[i]) {
+				wp[i][0] = w[sing[i]][0];
+				wp[i][1] = w[sing[i]][1];
+			}
+		}
+		
+		// Must be careful about the singularity at the origin, since the
+		// quadrature routine doesn't pay attention to the right endpoint.
+		
+		// dist to sing at zero
+		double abszp[] = new double[p];
+		for (i = 0; i < p; i++) {
+			abszp[i] = zabs(zp[i][0], zp[i][1]);
+		}
+		
+		// Integrate for the rest, using vectorization with masking.
+		// Unfinished cases
+		boolean unf[] = new boolean[p];
+		int numunf = 0;
+		for (i = 0; i < p; i++) {
+			unf[i] = !vertex[i];
+			if (unf[i]) {
+				numunf++;
+			}
+		}
+		// Integration starting points
+		double zold[][] = new double[p][2];
+		for (i = 0; i < p; i++) {
+			zold[i][0] = zs[i][0];
+			zold[i][1] = zs[i][1];
+		}
+		// Initial conditions
+		double znew[][] = new double[p][2];
+        for (i = 0; i < p; i++) {
+        	znew[i][0] = zold[i][0];
+        	znew[i][1] = zold[i][1];
+        }
+        dist = new double[p];
+        for (i = 0; i < p; i++) {
+        	dist[i] = 1.0;
+        }
+        
+        while (numunf > 0) {
+        	double znewunf[][] = new double[numunf][2];
+    		double zoldunf[][] = new double[numunf][2];
+    		double wpunf[][] = new double[numunf][2];
+    		int singunf[] = new int[numunf];
+        	// How far can the integration go?
+        	for (i = 0, j = 0; i < p; i++) {
+        		
+        		if (unf[i]) {
+        			double denom = zabs(zp[i][0] - zold[i][0], zp[i][1] - zold[i][1]);
+        			dist[i] = Math.min(1.0, 2.0*abszp[i]/denom);
+        			// New integration endpoints
+        			znew[i][0] = zold[i][0] + dist[i] * (zp[i][0] - zold[i][0]);
+        			znew[i][1] = zold[i][1] + dist[i] * (zp[i][1] - zold[i][1]);
+        			znewunf[j][0] = znew[i][0];
+        			znewunf[j][1] = znew[i][1];
+        			zoldunf[j][0] = zold[i][0];
+        			zoldunf[j][1] = zold[i][1];
+        			wpunf[j][0] = wp[i][0];
+        			wpunf[j][1] = wp[i][1];
+        			singunf[j++] = sing[i];
+        		}
+        	} // for (i = 0, j = 0; i < p; i++)
+        	double ans[][] = dequad(zoldunf, znewunf, singunf, z, beta, qdat);
+        	for (i = 0, j = 0; i < p; i++) {
+        		if (unf[i]) {
+        			zmlt(c[0], c[1], ans[j][0], ans[j][1], cr, ci);
+        			j++;
+        			wp[i][0] = wp[i][0] + cr[0];
+        			wp[i][1] = wp[i][1] + ci[0];
+        		}
+        	} // for (i = 0, j = 0; i < p; i++)
+        	numunf = 0;
+        	for (i = 0; i < p; i++) {
+        	    unf[i] = (dist[i] < 1);
+        	    if (unf[i]) {
+        	    	numunf++;
+        	    	zold[i][0] = znew[i][0];
+        	    	zold[i][1] = znew[i][1];
+        	    }
+        	}
+        	// Only first step can have endpoint singularity
+        	for (i = 0; i < p; i++) {
+        		sing[i] = -1;
+        	}
+        } // while (numunf > 0)
+		
+		return wp;
+	}
+	
 	private double[][] dmap(double zp[][], double w[][], double beta[],
 			double z[][], double c[], double qdat[][]) {
-		// Schwarz-christoffel disk map.
+		// Schwarz-Christoffel disk map.
 		// dmap computes the values of the Schwarz-Christoffel disk map at the
 		// points in the vector zp.  The arguments w, beta, z, c, and qdat are
 		// as in dparam.  dmap returns a vector wp the same size as zp.
 		
-		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		// Original MATLAB dmap routine copyright 1998 by Toby Driscoll.
 		int i, j;
 		double cr[] = new double[1];
 		double ci[] = new double[1];
@@ -7271,6 +7437,52 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		crplot(w, beta, cr, aff, quadnum, mt, Q, R, theta, nqpts, num1draw, num2draw, drawThetaToRadiusOne, yInvert);
 		return;
 	}
+	
+	public void exterplot(scmap M, double R[], double theta[], int num1draw, int num2draw, 
+			double error[], int yInvert) {
+		    // Visualize a Schwarz-Christoffel exterior map.
+			// exterplot plots the polygon associated with the Schwarz-Christoffel
+			// exterior map and the images of circles and radii under the S-C
+			// transformation.  If R.length == 1 and theta.length == 1, R[0] is the
+			// number of evenly spaced circles and theta[0] is the number of
+			// evenly spaced rays.  If R.length > 1 and theta.length > 1, then the
+			// circles are plotted at radii given by the entries of R and rays at
+			// the angles specified in theta.
+			
+			// tolerance normally defaults to max(1.0E-4, M.accuracy)
+			
+			// From original MATLAB plot routine copyright 1998 by Toby Driscoll
+			int i;
+			int nqpts;
+			polygon p = M.poly;
+			double w[][] = new double[p.vertex.length][2];
+			for (i = 0; i < p.vertex.length; i++) {
+				w[i][0] = p.vertex[p.vertex.length - 1 - i][0];
+				w[i][1] = p.vertex[p.vertex.length - 1 - i][1];
+			}
+			double beta[] = new double[p.angle.length];
+			for (i = 0; i < beta.length; i++) {
+				beta[i] = 1.0 - p.angle[p.angle.length - 1 - i];
+			}
+			double z[][] = M.prevertex;
+			double c[] = M.constant;
+			if (R == null) {
+				R = new double[1];
+				R[0] = 10;
+			}
+			if (theta == null) {
+				theta = new double[1];
+				theta[0] = 10;
+			}
+			if (error != null) {
+				nqpts = (int)Math.ceil(-Math.log10(error[0]));
+			}
+			else {
+				nqpts = 5;
+			}
+			deplot(w, beta, z, c, R, theta, nqpts, num1draw, num2draw, yInvert);
+			return;
+		}
 	
 	
 	
@@ -8107,6 +8319,323 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		} // if (Double.isNaN(A[0][0]))
 		
 		return A;
+	}
+	
+	private void deplot(double w[][], double beta[], double z[][], double c[],
+			double R[], double theta[], int nqpts, int num1draw, int num2draw, int yInvert) {
+		// Image of polar grid under Schwarz-Christoffel exterior map.
+		// deplot will adaptively plot the images under the Schwarz-Christoffel 
+		// exterior map of circles and rays in the unit disk. 
+		// If R.length == 1 and theta.length == 1, R[0] is the
+		// number of evenly spaced circles and theta[0] is the number of
+		// evenly spaced rays.  If R.length > 1 and theta.length > 1, then the
+		// circles are plotted at radii given by the entries of R and rays at
+		// the angles specified in theta.
+		
+		// nqpts Number of quadrature points per integration.
+		// Approximately equals -log10(error).  Increase if plot
+	    // has false little zigzags in curves. 
+		
+		// Original MATLAB deplot routine copyright 1998 by Toby Driscoll.
+		
+		// In original code num1draw = 20 and num2draw = 14
+		int i;
+		int j;
+		int m;
+		int Rlength;
+		int thetalength;
+		double spacing;
+		double R2[];
+		double theta2[] = null;
+		boolean drawTheta = true;
+		int n = w.length;
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+        // Max allowed number of adaptive refinements made to meet other requirements 
+        int maxrefn = 16;
+		double axlim[] = new double[4];
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
+		Vector<Double>tpReal = new Vector<Double>();
+		Vector<Double>tpImag = new Vector<Double>();
+		Vector<Double>RpReal = new Vector<Double>();
+		Vector<Double>RpImag = new Vector<Double>();
+		Vector<Double>zpReal = new Vector<Double>();
+		Vector<Double>zpImag = new Vector<Double>();
+		Vector<Double>wpReal = new Vector<Double>();
+		Vector<Double>wpImag = new Vector<Double>();
+		Vector<Boolean>newlog = new Vector<Boolean>();
+		double zp[][];
+		double neww[][];
+		// Empty arguments default to 10.
+		if ((R == null) || (R.length == 0)) {
+			R = new double[1];
+			R[0] = 10;
+		}
+		if ((theta == null) || (theta.length == 0)) {
+			theta = new double[1];
+			theta[0] = 10;
+		}
+		
+		// Integer arguments must be converted to specific values
+		if ((R.length == 1) && (R[0] == Math.round(R[0]))) {
+			Rlength = (int)R[0];
+			R2 = new double[Rlength];
+		    spacing = (0.75/(R[0] + 1.0));
+		    for (i = 1; i <= Rlength; i++) {
+		        R2[i-1] = .25 + i*spacing;	
+		    }
+		} // if ((R.length == 1) && (R[0] == Math.round(R[0])))
+		else {
+			R2 = new double[R.length];
+			for (i = 0; i < R.length; i++) {
+				R2[i] = R[i];
+			}
+		}
+		if ((theta.length == 1) && (theta[0] == 0.0)) {
+			drawTheta = false;
+		}
+		else if ((theta.length == 1) && (theta[0] == Math.round(theta[0]))) {
+			thetalength = (int)theta[0];
+			theta2 = new double[thetalength];
+		    spacing = ((2.0*Math.PI)/theta[0]);
+		    for (i = 0; i < thetalength; i++) {
+		        theta2[i] = i*spacing;	
+		    }
+		} // if ((theta.length == 1) && (theta[0] == Math.round(theta[0])))
+		else {
+			theta2 = new double[theta.length];
+			for (i = 0; i < theta.length; i++) {
+				theta2[i] = theta[i];
+			}
+		}
+		
+		float xPointArray[] = new float[n+1];
+		float yPointArray[] = new float[n+1];
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
+		double qdat[][] = new double[nqpts][2*beta.length+2];
+		scqdata(qdat, beta, nqpts);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		Graphics g = graph.getGraphics();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+        double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		
+		// Plot circles...
+	    linhx = new Vector[R2.length][2];
+		linhy = new Vector[R2.length][2];
+		for (i = 0; i < R2.length; i++) {
+			for (j = 0; j < 2; j++) {
+				linhx[i][j] = new Vector<Double>();
+				linhy[i][j] = new Vector<Double>();
+			}
+		}
+		for (j = 0; j < R2.length; j++) {
+		    // Start with evenly spaced theta
+			tpReal.clear();
+			tpImag.clear();
+			for (i = 0; i < num1draw; i++) {
+				tpReal.add(i*(2.0*Math.PI)/(num1draw-1.0));
+				tpImag.add(0.0);
+			}
+			newlog.clear();
+			for (i = 0; i < num1draw; i++) {
+				newlog.add(true);
+			}
+			wpReal.clear();
+			wpImag.clear();
+			for (i = 0; i < num1draw; i++) {
+				wpReal.add(Double.NaN);
+				wpImag.add(0.0);
+			}
+			
+			// The individual points will be shown as they are found.
+			
+			// Adaptive refinement to make curve smooth
+			int iter = 0;
+			while (iter < maxrefn) {
+				int numnewlog = 0;
+				for (i = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	numnewlog++;
+				    }
+				} // for (i = 0; i < newlog.size(); i++)
+				if (numnewlog == 0) {
+					break;
+				}
+				zp = new double[numnewlog][2];
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	zp[m][0] = R2[j]*Math.cos(tpReal.get(i));
+				    	zp[m++][1] = R2[j]*Math.sin(tpReal.get(i));
+				    }
+				} // for (i = 0, m = 0; i < newlog.length; i++)
+				neww = new double[numnewlog][2];
+				neww = demap(zp,w,beta,z,c,qdat);
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+					if (newlog.get(i)) {
+					    wpReal.set(i, neww[m][0]);
+					    wpImag.set(i, neww[m++][1]);
+					} 
+				} // for (i = 0, m = 0; i < newlog.size(); i++)
+				iter = iter + 1;
+				
+				linhx[j][0].clear();
+				linhy[j][0].clear();
+				linhx[j][1].clear();
+				linhy[j][1].clear();
+				// Update the points to show progress
+				for (i = 0; i < wpReal.size(); i++) {
+				    linhx[j][0].add(wpReal.get(i));
+				    linhy[j][0].add(wpImag.get(i));
+				}
+				for (i = 0; i < zp.length; i++) {
+					linhx[j][1].add(zp[i][0]);
+				    linhy[j][1].add(zp[i][1]);	
+				}
+				
+				// Add points to tp where necessary
+				scpadapt(tpReal, tpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+			} // while (iter < maxrefn)
+		} // for (j = 0; j < R2.length; j++)
+		
+		for (i = 0; i < R2.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		double posx1 = linhx[i][0].get(j);
+		    		double posy1 = linhy[i][0].get(j);
+		    		double posx2 = linhx[i][0].get(j+1);
+		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		} // for (i = 0; i < R2.length; i++)
+		
+		// Plot radii
+		if (drawTheta) {
+			linhx = new Vector[theta2.length][2];
+			linhy = new Vector[theta2.length][2];
+			for (i = 0; i < theta2.length; i++) {
+				for (j = 0; j < 2; j++) {
+					linhx[i][j] = new Vector<Double>();
+					linhy[i][j] = new Vector<Double>();
+				}
+			}
+			for (j = 0; j < theta2.length; j++) {
+				RpReal.clear();
+				RpImag.clear();
+				zpReal.clear();
+				zpImag.clear();
+				for (i = 0; i < num2draw; i++) {
+					RpReal.add(i/(num2draw-1.0));
+					RpImag.add(0.0);
+					zpReal.add(RpReal.get(i)*Math.cos(theta2[j]));
+					zpImag.add(RpReal.get(i)*Math.sin(theta2[j]));
+				}
+				newlog.clear();
+				for (i = 0; i < num2draw; i++) {
+					newlog.add(true);
+				}
+				wpReal.clear();
+				wpImag.clear();
+				for (i = 0; i < num2draw; i++) {
+					wpReal.add(Double.NaN);
+					wpImag.add(0.0);
+				}
+				
+				// The individual points will be shown as they are found.
+				
+				// Adaptive refinement to make curve smooth
+				int iter = 0;
+				while (iter < maxrefn) {
+					int numnewlog = 0;
+					for (i = 0; i < newlog.size(); i++) {
+					    if (newlog.get(i)) {
+					    	numnewlog++;
+					    }
+					} // for (i = 0; i < newlog.size(); i++)
+					if (numnewlog == 0) {
+						break;
+					}
+					double zpnew[][] = new double[numnewlog][2];
+					for (i = 0, m = 0; i < newlog.size(); i++) {
+					    if (newlog.get(i)) {
+					    	zpnew[m][0] = zpReal.get(i);
+					    	zpnew[m++][1] = zpImag.get(i);
+					    }
+					} // for (i = 0, m = 0; i < newlog.length; i++)
+					neww = demap(zpnew, w, beta, z, c, qdat);
+					for (i = 0, m = 0; i < newlog.size(); i++) {
+						if (newlog.get(i)) {
+						    wpReal.set(i, neww[m][0]);
+						    wpImag.set(i, neww[m++][1]);
+						} 
+					} // for (i = 0, m = 0; i < newlog.size(); i++)
+					iter = iter + 1;
+					
+					linhx[j][0].clear();
+					linhy[j][0].clear();
+					linhx[j][1].clear();
+					linhy[j][1].clear();
+					// Update the points to show progress
+					for (i = 0; i < wpReal.size(); i++) {
+					    linhx[j][0].add(wpReal.get(i));
+					    linhy[j][0].add(wpImag.get(i));
+					    linhx[j][1].add(zpReal.get(i));
+					    linhy[j][1].add(zpImag.get(i));
+					}
+					
+					scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+				} // while (iter < maxrefn)
+			} // for (j = 0; j < theta2.length; j++)
+			
+			for (i = 0; i < theta2.length; i++) {
+			    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+			    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+			    		double posx1 = linhx[i][0].get(j);	
+			    		double posy1 = linhy[i][0].get(j);
+			    		double posx2 = linhx[i][0].get(j+1);
+			    		double posy2 = linhy[i][0].get(j+1);
+			    		x1Vector.add(posx1);
+			    		y1Vector.add(posy1);
+			    		x2Vector.add(posx2);
+			    		y2Vector.add(posy2);
+			    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+	    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+	    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+	    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+	    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+	    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+	    			    graph.drawLine(g, x1, y1, x2, y2);
+			    	}
+			    }
+			} // for (i = 0; i < theta2.length; i++)
+		} // if (drawTheta)
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
+		return;
 	}
 	
 	private void dplot(double w[][], double beta[], double z[][], double c[],
@@ -9756,6 +10285,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			axlim[2] = minimagwf;
 			axlim[3] = maximagwf;	
 		} // if (numinfinite > 0)
+		else if (exterRoutine && testRoutine) {
+			axlim[0] = -3.05;
+			axlim[1] = 2.8;
+			axlim[2] = -2.3;
+			axlim[3] = 2.5;
+		}
+		else if (exterRoutine) {
+			axlim[0] = 0;
+			axlim[1] = destImage.getExtents()[0] - 1;
+			axlim[2] = 0;
+			axlim[1] = destImage.getExtents()[1] - 1;
+		}
 		
 		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray,
 				"title", "lablelX", "labelY", Color.BLUE);
