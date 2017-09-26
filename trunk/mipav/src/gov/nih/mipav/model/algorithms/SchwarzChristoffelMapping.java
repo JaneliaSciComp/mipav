@@ -136,7 +136,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         } // while(true)
         
         
-        boolean testme = true;
+        boolean testme = false;
         if (testme) {
         	//testRectmap1();
         	//testRectmap2();
@@ -10804,7 +10804,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	double len[] = new double[n];
 	    	len[0] = zabs(w[0][0] - w[n-1][0], w[0][1] - w[n-1][1]);
 	    	for (i = 0; i < n-1; i++) {
-	    		len[i]= zabs(w[i+1][0] - w[i][0], w[i+1][1] - w[i][1]);
+	    		len[i+1]= zabs(w[i+1][0] - w[i][0], w[i+1][1] - w[i][1]);
 	    	}
 	    	double nmlen[] = new double[n-3];
 	    	for (i = 0; i < n-3; i++) {
