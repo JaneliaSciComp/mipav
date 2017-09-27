@@ -31,6 +31,7 @@ public class JDialogPolygonToCircle extends JDialogBase
     
     private final int POLYGON_TO_CIRCLE = 2;
 	private final int CROSSRATIO_POLYGON_TO_CIRCLE = 3;
+	private final int POLYGON_EXTERIOR_TO_CIRCLE = 4;
 	private int algorithm = POLYGON_TO_CIRCLE;
 
     /** DOCUMENT ME! */
@@ -56,6 +57,8 @@ public class JDialogPolygonToCircle extends JDialogBase
 
     /** DOCUMENT ME! */
     private double ySource[];
+    
+    private JCheckBox exteriorCheckBox;
     
     private JCheckBox crossRatioCheckBox;
     
@@ -115,6 +118,21 @@ public class JDialogPolygonToCircle extends JDialogBase
 
             if (setVariables()) {
                 callAlgorithm();
+            }
+        } else if (source == exteriorCheckBox) {
+            if (exteriorCheckBox.isSelected()) {
+                crossRatioCheckBox.setSelected(false);
+                crossRatioCheckBox.setEnabled(false);
+                setCenterCheckBox.setSelected(false);
+                setCenterCheckBox.setEnabled(false);
+                xCenterLabel.setEnabled(false);
+                yCenterLabel.setEnabled(false);
+                xCenterText.setEnabled(false);
+                yCenterText.setEnabled(false);
+            }
+            else {
+                crossRatioCheckBox.setEnabled(true);
+                setCenterCheckBox.setEnabled(true);	
             }
         } else if (source == setCenterCheckBox) {
         	xCenterLabel.setEnabled(setCenterCheckBox.isSelected());
@@ -307,12 +325,21 @@ public class JDialogPolygonToCircle extends JDialogBase
         gbc6.gridx = 1;
         paramPanel.add(xText, gbc6);
         
+        exteriorCheckBox = new JCheckBox("Polygon exterior to circle");
+        exteriorCheckBox.setFont(serif12);
+        exteriorCheckBox.setForeground(Color.black);
+        exteriorCheckBox.setSelected(false);
+        exteriorCheckBox.addActionListener(this);
+        gbc6.gridx = 0;
+        gbc6.gridy = 1;
+        paramPanel.add(exteriorCheckBox, gbc6);
+        
         crossRatioCheckBox = new JCheckBox("Use cross-ratio representation");
         crossRatioCheckBox.setFont(serif12);
         crossRatioCheckBox.setForeground(Color.black);
         crossRatioCheckBox.setSelected(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 1;
+        gbc6.gridy = 2;
         paramPanel.add(crossRatioCheckBox, gbc6);
         
         setCenterCheckBox = new JCheckBox("Set conformal map center at:");
@@ -320,14 +347,14 @@ public class JDialogPolygonToCircle extends JDialogBase
         setCenterCheckBox.setForeground(Color.black);
         setCenterCheckBox.setSelected(false);
         setCenterCheckBox.addActionListener(this);
-        gbc6.gridy = 2;
+        gbc6.gridy = 3;
         paramPanel.add(setCenterCheckBox, gbc6);
         
         xCenterLabel = new JLabel("X center");
         xCenterLabel.setForeground(Color.black);
         xCenterLabel.setFont(serif12);
         xCenterLabel.setEnabled(false);
-        gbc6.gridy = 3;
+        gbc6.gridy = 4;
         paramPanel.add(xCenterLabel, gbc6);
         
         xCenterText = new JTextField(10);
@@ -342,7 +369,7 @@ public class JDialogPolygonToCircle extends JDialogBase
         yCenterLabel.setFont(serif12);
         yCenterLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 4;
+        gbc6.gridy = 5;
         paramPanel.add(yCenterLabel, gbc6);
         
         yCenterText = new JTextField(10);
@@ -403,7 +430,10 @@ public class JDialogPolygonToCircle extends JDialogBase
             ySource[i] = pts[i].Y;
         }
         
-        if (crossRatioCheckBox.isSelected()) {
+        if (exteriorCheckBox.isSelected()) {
+        	algorithm = POLYGON_EXTERIOR_TO_CIRCLE;
+        }
+        else if (crossRatioCheckBox.isSelected()) {
         	algorithm = CROSSRATIO_POLYGON_TO_CIRCLE;
         }
         else {
