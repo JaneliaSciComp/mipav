@@ -484,6 +484,39 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 //						wormData.openStraightAnnotations(voiFile2.getParentFile().getParent());
 //					}
 				}
+				else
+				{
+					imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight_masked.tif";
+					voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+					voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+					if ( openImages( voiFile, voiFile2, imageName ) )
+					{			
+						wormData = new WormData(wormImage);
+						wormData.openStraightLattice();
+						if ( triVolume != null && triVolume.getVOIManager() != null )
+						{
+							((VOILatticeManagerInterface)triVolume.getVOIManager()).deleteAnnotations();
+							if ( savedAnnotations != null ) {
+								if ( savedAnnotations.size() > 0 ) {
+									for ( int i = 0; i < savedAnnotations.size(); i++ ) {
+										VOI annotations = savedAnnotations.elementAt(i);
+										for ( int j = 0; j < annotations.getCurves().size(); j++ )
+										{
+											if ( annotations.getCurves().elementAt(j).getType() == VOI.ANNOTATION ) {
+												short id = (short) wormImage.getVOIs().getUniqueID();
+												int colorID = 0;
+												VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+												newTextVOI.getCurves().add(annotations.getCurves().elementAt(j));
+//												System.err.println( "add annotation " + ((VOIText)annotations.getCurves().elementAt(j)).getText() );
+												((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
