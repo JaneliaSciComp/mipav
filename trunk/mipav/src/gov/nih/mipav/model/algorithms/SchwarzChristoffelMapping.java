@@ -1607,20 +1607,20 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	private void testExtermap1() {
-		//p = polygon([-0.5,1-1.5i,-0.5,0.5+2i]);
+		//p = i*polygon([-0.5,1-1.5i,-0.5,0.5+2i]);
 		//f = extermap(p);
 		//axis([-3.05 2.8 -2.3 2.5]), hold on
 		//plot(f,(4:9)/10,0)
 		int i;
 		double w[][] = new double[4][2];
-		w[0][0] = -0.5;
-		w[0][1] = 0.0;
-		w[1][0] = 1.0;
-		w[1][1] = -1.5;
-		w[2][0] = -0.5;
-		w[2][1] = 0.0;
-		w[3][0] = 0.5;
-		w[3][1] = 2.0;
+		w[0][0] = 0.0;
+		w[0][1] = -0.5;
+		w[1][0] = 1.5;
+		w[1][1] = 1.0;
+		w[2][0] = 0.0;
+		w[2][1] = -0.5;
+		w[3][0] = -2.0;
+		w[3][1] = 0.5;
 		double x[] = new double[w.length];
 		double y[] = new double[w.length];
 		for (i = 0; i < w.length; i++) {
@@ -10285,7 +10285,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			axlim[2] = minimagwf;
 			axlim[3] = maximagwf;	
 		} // if (numinfinite > 0)
-		else if (exterRoutine && testRoutine) {
+		if (exterRoutine && testRoutine) {
 			axlim[0] = -3.05;
 			axlim[1] = 2.8;
 			axlim[2] = -2.3;
@@ -10302,6 +10302,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				"title", "lablelX", "labelY", Color.BLUE);
 		pointGraph.setVisible(true);
 		ViewJComponentGraph graph = pointGraph.getGraph();
+		if (exterRoutine) {
+		    graph.setDomain((float)axlim[0], (float)axlim[1]);	
+		    graph.setRange((float)axlim[2], (float)axlim[3]);
+		}
 		if (yInvert != Integer.MIN_VALUE) {
 			graph.setYInvert(yInvert);
 		}
@@ -10314,13 +10318,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		Graphics g = pointGraph.getFrameGraphics();
 		graph.paintComponent(g);
 		Rectangle graphBounds = graph.getGraphBounds();
-		double xScale = graphBounds.width / (maxrealwf - minrealwf);
-        double yScale = graphBounds.height / (maximagwf - minimagwf);
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
         for (i = 0; i < xPointArray.length-1; i++) {
         	for (j = 0; j < 2; j++) {
         		if (lblhString[i][j] != null) {
-        			int posX =  (int)Math.round(graphBounds.x + xScale*(lblhx[i][j] - minrealwf));
-        			int posY =  (int)Math.round(graphBounds.y + yScale*(lblhy[i][j] - minimagwf));
+        			int posX =  (int)Math.round(graphBounds.x + xScale*(lblhx[i][j] - axlim[0]));
+        			int posY =  (int)Math.round(graphBounds.y + yScale*(lblhy[i][j] - axlim[2]));
         			posY = -posY + 2*graphBounds.y + graphBounds.height;
         			graph.drawString(g, lblhString[i][j], posX, posY);
         		}
