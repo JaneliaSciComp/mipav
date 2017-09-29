@@ -7612,6 +7612,65 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return wp;
 	}
 	
+	public scmap crrectmap(double w[][], int corner[], double tolerance) {
+	    // Schwarz-Christoffel cross ratio-disk map object.
+		// crrectmap constructs a Schwarz-Christoffel crossratio rectified map object
+		// for the polygon  p.  The parameter problem is solved, using default options,
+		// for the crossratios of the prevertices on the disk.  Then you are required
+		// to graphically assign angles of the rectified polygon.  These angles determine
+		// the rectilinear polygon that is considered the canonical domain.
+		// In this MIPAV application the rectilinear polygon will always be taken as
+		// a rectangle with alphar having 0.5 at the 4 corners and alphar = 1 elsewhere.
+		// Here alphhar is a vector having the same length as P.  Each element is an
+		// interior angle of the rectified polygon, normalized by pi.  The only valid 
+		// entries are {.5, 1, 1.5. 2}.  Use crrectmap instead of rectmap when the polygon
+		// has multiple elongations, or when rectmap fails to converge.
+		
+		// Original crrectmap routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		// New alphar
+		double alphar[] = new double[w.length];
+		for (i = 0; i < alphar.length; i++) {
+			alphar[i] = 1.0;
+		}
+		for (i = 0; i < 4; i++) {
+			alphar[corner[i]] = 0.5;
+		}
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, null);
+		double beta[] = new double[poly.angle.length];
+		for (i = 0; i < poly.angle.length; i++) {
+			beta[i] = poly.angle[i] - 1;
+		}
+		
+		// Find prevertex crossratios
+		scmap M = crdiskmap(poly, tolerance, null, null);
+		boolean orig[] = M.original;
+		poly = M.poly;
+		double wcr[][] = poly.vertex;
+	    beta = new double[poly.angle.length];
+	    for (i = 0; i < poly.angle.length; i++) {
+	    	beta[i] = poly.angle[i] - 1.0;
+	    }
+	    double cr[] = M.crossratio;
+	    double aff[][][] = M.affine;
+	    qlgraph Q = M.qgraph;
+	    // Convert alphas to betas, ecpanding if polygon was split
+	    double betar[] = new double[wcr.length];
+	    for (i = 0, j = 0; i < betar.length; i++) {
+	    	if (orig[i]) {
+	    	    betar[i] = alphar[j++] - 1.0;	
+	    	}
+	    }
+	    
+		return M;
+	}
+	
 	public scmap rectmap(double w[][], int corner[], double tolerance,
 			double z[][], double c[], double L[]) {
 		// Schwarz-Christoffel rectangle map object
