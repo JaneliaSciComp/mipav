@@ -150,7 +150,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testDiskmap3();
         	//testCRDiskmap3();
         	testDiskmap4();
-        	// No testCRDiskmap4() before CRDisk cannot handle infinities in example.
+        	// No testCRDiskmap4() because CRDisk cannot handle infinities in example.
         	//testDiskmap5();
         	//testCRDiskmap5();
             // testDiskmap6();
