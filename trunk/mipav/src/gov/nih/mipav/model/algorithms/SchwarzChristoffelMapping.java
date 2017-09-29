@@ -149,12 +149,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testCRDiskmap2();
         	//testDiskmap3();
         	//testCRDiskmap3();
-        	//testDiskmap4();
+        	testDiskmap4();
         	// No testCRDiskmap4() before CRDisk cannot handle infinities in example.
         	//testDiskmap5();
         	//testCRDiskmap5();
             // testDiskmap6();
-        	testExtermap1();
+        	//testExtermap1();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -1347,10 +1347,114 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	public void testDiskmap4() {
 		int i, k;
 		// Without z0 supplied to center MIPAV and MATLAB end when center calls dinvmap which calls scimapz0 which returns the
-	    // error can't seem to choose starting points.  Supply them manually.
-		// This example does not seem to make sense.  Each h(1) to h(6) contains about 235 or so complex values.
+	    // error can't seem to choose starting points.  Add in z0 = 0.4 - 0.9i.
+		// 2 accuracies from before setting center to zero and after setting center to zero in MATLAB and MIPAV agree.
+		// MATLAB gives:
+		// accuracy1 = 3.6940e-07
+        // accuracy2 = 5.6571e-07
+		// MIPAV gives:
+		// Accuracy = 3.69396579067019E-7
+	    // Accuracy = 5.657124293818956E-7
+        // The center of MIPAV's diskplot looks like MATLAB's h = plot(f, 0.7:0.05:0.95, 0);.
+		// This example does not seem to make sense after the diskmap is plotted in 
+		// h = plot(f, 0.7:0.05:0.95, 0);
+		// MATLAB gives:
+	    // w = (get(h(n),’xd’) + i*get(h(n),’yd’));
+		// Error: The input character 'xd' is not valid in MATLAB statements or expressions.
+		// Each h(1) to h(6) contains about 235 or so complex values.
 		// If abs(w(1) > w(2)), we interchange the first two and reduce the size of w to 2, so diffw has only 1 value.
 		// Otherwise diff(w) has 235-1 or 234 values which we multiply by 100 in linspace.
+		// The MATLAB code is used:
+		/* w = [1+i, 1 + 2i, Inf, -.705 + .971i, Inf, -1-i, Inf, .705 - .971i, Inf];
+		alpha = [2,1, -.3, 2, -.7, 2. -.3, 2, -.7];
+		poly = polygon(w, alpha);
+		z = [];
+		c = [];
+		qdata = [];
+		[w,beta] = scfix('d', w, alpha-1);
+		  poly = polygon(w,beta+1);             % in case polygon was altered
+		 
+		  [z,c,qdata] = dparam(w,beta);
+		map.prevertex = z;
+		map.constant = c;
+		map.qdata = qdata;
+		 
+
+		% Find conformal center
+		map.center = dmap(0,w,beta,map.prevertex,map.constant,map.qdata);
+
+		 
+		% Fill in apparent accuracy
+		idx = find(~isinf(w));
+		wf = w(idx);                % finite vertices
+		 
+		% Two columns hold endpoint indices for integrations
+		idx = [idx(1:end) idx([2:end 1])];
+		 
+		% Always use center as the integration midpoint
+		mid = zeros(length(idx),1);
+		 
+		% Do the integrations
+		I = dquad(z(idx(:,1)),mid,idx(:,1),z,beta,qdata) - ...
+		    dquad(z(idx(:,2)),mid,idx(:,2),z,beta,qdata);
+		 
+		map.accuracy = max(abs( c*I - diff(wf([1:end 1])) ));
+		accuracy1 = map.accuracy
+
+		wc = 0;
+		% Find inverse image of wc under current map
+		  z0 = [0.4-0.9i];
+		  zc = dinvmap(wc,w,beta,z,map.constant,qdata, z0);
+		 
+		  % Use Moebius transform to reset prevertices
+		  y = ((1-zc')/(1-zc))*(z-zc)./(1-zc'*z);
+		  y(length(y)) = 1;         % force it to be exact
+		  y = y./abs(y);
+		  
+		  % Recalculate constant
+		  mid = mean(y(1:2));
+		  I = dquad(y(1),mid,1,y,beta,qdata) - dquad(y(2),mid,2,y,beta,qdata);
+		  c = diff(w(1:2))/I;
+		  
+		  % Assign new values
+		  map.prevertex = y;
+		  map.constant = c;
+		  map.center = wc;
+		  map.accuracy = []; 
+		% Fill in apparent accuracy
+		z = map.prevertex;
+		idx = find(~isinf(w));
+		wf = w(idx);                % finite vertices
+		 
+		% Two columns hold endpoint indices for integrations
+		idx = [idx(1:end) idx([2:end 1])];
+		 
+		% Always use center as the integration midpoint
+		mid = zeros(length(idx),1);
+		 
+		% Do the integrations
+		I = dquad(z(idx(:,1)),mid,idx(:,1),z,beta,qdata) - ...
+		    dquad(z(idx(:,2)),mid,idx(:,2),z,beta,qdata);
+		 
+		map.accuracy = max(abs( c*I - diff(wf([1:end 1])) ));
+		accuracy2 = map.accuracy
+		axis(5.5*[-1 1 -1 1]), hold on
+		[h,r,theta] = dplot(w,beta,z,c, 0.7:0.05:0.95, 0);
+		for n=1:length(h)
+		w = (get(h(n),’xd’) + i*get(h(n),’yd’));
+		set(h(n),’xd’,real(1./w),’yd’,imag(1./w))
+		end
+		h = findobj(gca,’color’,[0 0 1]);
+		for n=1:length(h)
+		w = get(h(n),’xd’) + i*get(h(n),’yd’);
+		if abs(w(1)) > abs(w(2)), w=w([2 1]); end
+		u1 = w(1) + linspace(0,2*diff(w),100);
+		u2 = w(1) + linspace(2*diff(w),100*diff(w),100);
+		plot(1./[u1 u2]);
+		end
+		delete(h)
+		axis auto */
+
 		double x[] = new double[]{1.0, 1.0, Double.POSITIVE_INFINITY, -.705, Double.POSITIVE_INFINITY, -1.0, Double.POSITIVE_INFINITY,
 				.705, Double.POSITIVE_INFINITY};
 		double y[] = new double[]{1.0, 2.0,0.0,.971,0,-1.0,0.0,-.971,0.0};
@@ -1365,7 +1469,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double z0[][] = new double[1][2];
 		z0[0][0] = 0.4;
 		z0[0][1] = -0.9;
-		scmap f = center(diskmap(w, alpha, tolerance, null, null), wc, z0);
+		scmap f = center(diskmap(w, alpha, tolerance, null, null), wc, z0);                                                                                                            
 		double R[] = new double[6];
 		for (i = 0; i < 6; i++) {
 			R[i] = 0.70  + 0.05*i;
@@ -4686,7 +4790,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	
 	private double exterAccuracy(scmap M) {
 		// Apparent accuracy of Schwarz-Christoffel disk exterior map.
-		// diskAccuracy estimates the accuracy of the Schwarz-Christoffel exterior
+		// exterAccuracy estimates the accuracy of the Schwarz-Christoffel exterior
 		// map M.  The technique used is to compare the differences between
 		// successive finite vertices to the integral between the corresponding
 		// prevertices, and return the maximum.
