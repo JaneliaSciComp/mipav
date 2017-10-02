@@ -1359,7 +1359,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// This example does not seem to make sense after the diskmap is plotted in 
 		// h = plot(f, 0.7:0.05:0.95, 0);
 		// MATLAB gives:
-	    // w = (get(h(n),’xd’) + i*get(h(n),’yd’));
+	    // w = (get(h(n),'xd') + i*get(h(n),'yd'));
 		// Error: The input character 'xd' is not valid in MATLAB statements or expressions.
 		// Each h(1) to h(6) contains about 235 or so complex values.
 		// If abs(w(1) > w(2)), we interchange the first two and reduce the size of w to 2, so diffw has only 1 value.
@@ -1441,12 +1441,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		axis(5.5*[-1 1 -1 1]), hold on
 		[h,r,theta] = dplot(w,beta,z,c, 0.7:0.05:0.95, 0);
 		for n=1:length(h)
-		w = (get(h(n),’xd’) + i*get(h(n),’yd’));
-		set(h(n),’xd’,real(1./w),’yd’,imag(1./w))
+		w = (get(h(n),'xd') + i*get(h(n),'yd'));
+		set(h(n),'xd',real(1./w),'yd',imag(1./w))
 		end
-		h = findobj(gca,’color’,[0 0 1]);
+		h = findobj(gca,'color',[0 0 1]);
 		for n=1:length(h)
-		w = get(h(n),’xd’) + i*get(h(n),’yd’);
+		w = get(h(n),'xd') + i*get(h(n),'yd');
 		if abs(w(1)) > abs(w(2)), w=w([2 1]); end
 		u1 = w(1) + linspace(0,2*diff(w),100);
 		u2 = w(1) + linspace(2*diff(w),100*diff(w),100);
