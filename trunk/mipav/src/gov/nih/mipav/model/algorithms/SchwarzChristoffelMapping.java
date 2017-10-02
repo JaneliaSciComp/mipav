@@ -7627,7 +7627,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// has multiple elongations, or when rectmap fails to converge.
 		
 		// Original crrectmap routine copyright 1998 by Toby Driscoll.
-		int i, j;
+		int i, j, k;
 		// New alphar
 		double alphar[] = new double[w.length];
 		for (i = 0; i < alphar.length; i++) {
@@ -7658,7 +7658,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	beta[i] = poly.angle[i] - 1.0;
 	    }
 	    double cr[] = M.crossratio;
-	    double aff[][][] = M.affine;
+	    double aff[][][] = new double[M.affine.length][M.affine[0].length][2];
+	    for (i = 0; i < M.affine.length; i++) {
+	    	for (j = 0; j < M.affine[0].length; i++) {
+	    	    for (k = 0; k < 2; k++) {
+	    	    	aff[i][j][k] = M.affine[i][j][k];
+	    	    }
+	    	}
+	    }
 	    qlgraph Q = M.qgraph;
 	    // Convert alphas to betas, ecpanding if polygon was split
 	    double betar[] = new double[wcr.length];
@@ -7667,8 +7674,81 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	    betar[i] = alphar[j++] - 1.0;	
 	    	}
 	    }
+	    double affr[][][] = new double[betar.length-3][2][2];
+	    double wr[][] = new double[wcr.length][2];
+	    // Here betar is just an input
+	    crrect(wr, affr, wcr, beta, cr, aff, Q, betar, tolerance);
+	    
+	    alphar = new double[betar.length];
+	    for (i = 0; i < betar.length; i++) {
+	    	alphar[i] = betar[i] + 1.0;
+	    }
+	    double xr[] = new double[wr.length];
+	    double yr[] = new double[wr.length];
+	    for (i = 0; i < wr.length; i++) {
+	    	xr[i] = wr[i][0];
+	    	yr[i] = wr[i][1];
+	    }
+	    polygon polyr = new polygon(xr, yr, alphar);
+	    M.rectpolygon = polyr;
+	    M.rectaffine = affr;
+	    int nqpts = (int)Math.ceil(-Math.log10(1.0E-8));
+	    M.rectqdata = new double[nqpts][2*crparam_beta.length+2];
+	    scqdata(M.rectqdata, betar, nqpts);
 	    
 		return M;
+	}
+	
+	public void crrect(double wr[][], double affr[][][], double w[][],
+			double beta[], double cr[], double aff[][][], qlgraph Q, double betar[], double tol) {
+		// Here betar is just an input
+		// Create a rectified map.
+		// In this subset betar is already specified so no graphical
+		// procedure takes place.
+		// A rectified map is one between a generic polygon and a polygon having
+		// all angles as multiples of pi/2.  Once the CR parameter problem is solved,
+		// you can define a rectified polygon to map to by specifying the rectified
+		// angles.  (Side lengths are not free variables; they are a consequence of
+		// the original polygon and the rectified angles.)  There is no unique correct
+		// choice of angles.  No automatic selection of the rectfied angles is 
+		// currently available.
+		// 
+		// Important note: The rectified polygon may not be embeddable in the plane.
+		// That is, it may overlap itself. This may be difficult to see graphically,,
+		// but it does not affect crrect in any way.
+		
+		// This is a subset of the original MATLAB crrect 1998 routine copyright by Toby Driscoll.
+		
+		// betar was supplied just do computation
+		int i, j, m;
+		int n = w.length;
+		//craffine(w, beta, cr, Q, tol) returns aff which is not used
+		int k = -1;
+		for (i = 0; i < betar.length && k == -1; i++) {
+			if (betar[i] < 0) {
+				k = i;
+			}
+		}
+		for (i = 0; i < wr.length; i++) {
+			wr[i][0] = Double.NaN;
+			wr[i][1] = 0.0;
+		}
+		wr[k][0] = 0;
+		wr[(k+1)%n][0] = 1;
+		craffine(wr, betar, cr, Q, tol);
+		for (i = 0; i < craffine_aff.length; i++) {
+			for (j = 0; j < 2; j++) {
+				for (m = 0; m < 2; m++) {
+					affr[i][j][m] = craffine_aff[i][j][m];
+				}
+			}
+		}
+		for (i = 0; i < craffine_wn.length; i++) {
+			for (j = 0; j < 2; j++) {
+				wr[i][j] = craffine_wn[i][j];
+			}
+		}
+		return;
 	}
 	
 	public scmap rectmap(double w[][], int corner[], double tolerance,
@@ -11006,7 +11086,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    double constant[] = new double[]{Double.NaN, Double.NaN};
 	    double stripL[];
 	    double qdata[][];
+	    double rectqdata[][];
 	    polygon poly;
+	    polygon rectpolygon;
 	    double center[] = new double[]{Double.NaN, Double.NaN};
 	    int center_fix_quadnum;
 	    double center_fix_mt[][] = new double[4][2];
@@ -11015,6 +11097,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    qlgraph qgraph;
 	    double crossratio[];
 	    double affine[][][];
+	    double rectaffine[][][];
 	    boolean original[];
 	    scmap() {
 	    	
