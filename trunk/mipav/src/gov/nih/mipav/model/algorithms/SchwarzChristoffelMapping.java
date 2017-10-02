@@ -9435,6 +9435,32 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return;
 	}
 	
+	public void crrectplot(scmap M, double nre[], double nim[], int yInvert) {
+		// Image of the cartesian grid under Schwarz-Christoffel rectified map.
+		// crrplot will adaptively plot the images under the Schwarz-Christoffel
+		// rectified map of nre evenly spaced vertical and nim evenly spaced
+		// horizontal line segments.
+		// From 1998 MATLAB plot routine copyright by Toby Driscoll.
+		int i;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		polygon pr = M.rectpolygon;
+		double wr[][] = pr.vertex;
+		double betar[] = new double[pr.angle.length];
+		for (i = 0; i < pr.angle.length; i++) {
+			betar[i] = pr.angle[i] - 1;
+		}
+		double cr[] = M.crossratio;
+		double aff[][][] = M.affine;
+		double affr[][][] = M.rectaffine;
+		qlgraph Q = M.qgraph;
+		crrplot(w, beta, wr, betar, cr, aff, affr, Q, nre, nim, yInvert);
+	}
+	
 	public void rectplot(scmap M, int nre, int nim, int yInvert) {
 	    // plot plots the polygon associated with the Schwarz-Christoffel
 		// rectangle map M and the images of nre evenly spaced vertical 
@@ -9452,6 +9478,117 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double c[] = M.constant;
 		double L[] = M.stripL;
 		rplot(w, beta, z, c, L, nre, nim, yInvert);
+	}
+	
+	public void crrplot(double w[][], double beta[], double wr[][], double betar[], double cr[],
+			double aff[][][], double affr[][][], qlgraph Q, double re[], double im[], int yInvert) {
+	    // Image of cartesian grid under Schwarz-Christoffel rectified map.	
+		// crrplot will adaptively plot the images under the Schwarz-Christoffel rectified
+		// map of re evenly spaced vertical and im evenly spaced
+		// horizontal lines.
+		// Extracted from original routine by Toby Driscoll copyright 1998.
+		int n = w.length;
+		// Number of quadrature points per integration.
+		// Approximately equals -log10(error).  Increase if plot
+		// has false little zigzags in curves. 
+		int nqpts = 5; 
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+        // Max allowed number of adaptive refinements made to meet other requirements 
+        int maxrefn = 16;
+		double axlim[] = new double[4];
+		double tol;
+		double minrealwr = Double.MAX_VALUE;
+		double maxrealwr = -Double.MAX_VALUE;
+		double minimagwr = Double.MAX_VALUE;
+		double maximagwr = -Double.MAX_VALUE;
+		int i;
+		int m;
+		for (i = 0; i < wr.length; i++) {
+			if (wr[i][0] < minrealwr) {
+				minrealwr = wr[i][0];
+			}
+			if (wr[i][0] > maxrealwr) {
+				maxrealwr = wr[i][0];
+			}
+			if (wr[i][1] < minimagwr) {
+				minimagwr = wr[i][1];
+			}
+			if (wr[i][1] > maximagwr) {
+				maximagwr = wr[i][1];
+			}
+		} // for (i = 0; i < wr.length; i++)
+		double xlim[] = new double[]{minrealwr, maxrealwr};
+		double ylim[] = new double[]{minimagwr, maximagwr};
+		// Fnd the size of the rectified domain
+		double siz = Math.max(maxrealwr - minrealwr, maximagwr - minimagwr);
+		
+		// Zero arguments default to 10
+		if (((re == null) || (re.length == 0)) && ((im == null) || (im.length == 0))) {
+		    re = new double[]{10.0};
+		    im = new double[]{10.0};
+		}
+		
+		// Integer argumentw must be converted to specific values
+		if ((re.length == 1) && (re[0] == Math.round(re[0]))) {
+			if (re[0] < 1) {
+			    re = null;
+			}
+			else {
+			    m = (int)re[0];	
+			    double spacing = (xlim[1] - xlim[0])/(m + 1.0);
+			    re = new double[m];
+			    for (i = 0; i < m; i++) {
+			    	re[i] = (i+1)* spacing;
+			    }
+			} // else 
+		} // if ((re.length == 1) && (re[0] == Math.round(re[0])))
+		if ((im.length == 1) & (im[0] == Math.round(im[0]))) {
+			if (im[0] < 1) {
+				im = null;
+			}
+			else {
+				m = (int)im[0];
+				double spacing = (ylim[1] - ylim[0])/(m + 1.0);
+				im = new double[m];
+				for (i = 0; i < m; i++) {
+					im[i] = (i+1)*spacing;
+				}
+			}
+		} // if ((im.length == 1) & (im[0] == Math.round(im[0])))
+		float xPointArray[] = new float[n+1];
+		float yPointArray[] = new float[n+1];
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
+		double qdat[][] = new double[nqpts][2*beta.length+2];
+		scqdata(qdat, beta, nqpts);
+		double qdatr[][] = new double[nqpts][2*betar.length+2];
+		scqdata(qdatr, betar, nqpts);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		Graphics g = graph.getGraphics();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+        double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		tol = Math.pow(10.0, -nqpts);
+		
+		crrplot0("ver", re, minlen, maxlen, maxrefn, tol, w, beta, wr,
+				betar, cr, aff, affr, Q, qdat, qdatr, axlim, siz);
+		crrplot0("hor", im, minlen, maxlen, maxrefn, tol, w, beta, wr,
+				betar, cr, aff, affr, Q, qdat, qdatr, axlim, siz);
+	}
+	
+	private void crrplot0(String direcn, double val[], double minlen, double maxlen, int maxrefn, double tol,
+			double w[][], double beta[], double wr[][], double betar[], double cr[], double aff[][][],
+			double affr[][][], qlgraph Q, double qdat[][], double qdatr[][], double axlim[], double siz) {
+	    // This is the routine that actually draws the curves corresponding to either vertical
+		// or horizontal lines
+		int n = w.length;
+		
+		
 	}
 	
 	private void rplot(double w[][], double beta[], double z[][], double c[],
