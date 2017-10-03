@@ -1482,7 +1482,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 								else 
 								{
 									value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
-									if ( m_kVolumeImageB != null )
+									if ( (m_kVolumeImageB != null) &&  (m_kVolumeImageB.GetImage() != null))
 									{
 										float valueB = m_kVolumeImageB.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
 										float blend = getABBlend();

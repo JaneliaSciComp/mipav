@@ -228,7 +228,6 @@ public class LatticeModel {
 	protected VOI growContours;
 
 	protected VOI annotationVOIs;
-	private int highestIndex = 1;
 
 	protected Vector3f wormOrigin = null;
 	protected Vector3f transformedOrigin = new Vector3f();
@@ -246,6 +245,8 @@ public class LatticeModel {
 	private boolean latticeShifted = false;
 	private int[][] seamCellIDs = null;
 	private int[][] allSeamCellIDs = null;
+	
+	private boolean colorAnnotations = false;
 
 	/**
 	 * Creates a new LatticeModel
@@ -325,9 +326,24 @@ public class LatticeModel {
 				wormOrigin.copy(text.elementAt(0));
 			}
 		}
-
-		highestIndex++;
 		colorAnnotations();
+	}
+	
+	public void displayAnnotation( String name, boolean display ) {
+		if ( annotationVOIs == null ) {
+			return;
+		}
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
+			if ( text.getText().equals(name) ) {
+				text.display(display);
+			}
+		}
+	}
+	
+	public VOI getAnnotations() {
+		return annotationVOIs;
 	}
 
 	/**
@@ -623,7 +639,34 @@ public class LatticeModel {
 
 	public int getCurrentIndex()
 	{
-		return highestIndex;
+
+		if ( annotationVOIs == null )
+		{
+			return 0;
+		}
+		int highestIndex = 0;
+		for ( int i = 0; i < annotationVOIs.getCurves().size(); i++ )
+		{
+			VOIText text = (VOIText) annotationVOIs.getCurves().elementAt(i);
+
+			if ( !(text.getText().contains("nose") || text.getText().contains("Nose")) && !text.getText().equalsIgnoreCase("origin"))
+			{
+				int value = 0;
+				String name = new String(text.getText());
+				for ( int j = 0; j < name.length(); j++ )
+				{
+					if ( Character.isDigit(name.charAt(j)) )
+					{
+						value *= 10;
+						value += Integer.valueOf(name.substring(j,j+1));
+						//						System.err.println( name + " " + value + " " + name.substring(j,j+1) + " " + Integer.valueOf(name.substring(j,j+1)));
+					}
+				}
+				highestIndex = Math.max( highestIndex, value );
+			}
+		}
+
+		return (highestIndex + 1);
 	}
 
 	/**
@@ -1301,7 +1344,6 @@ public class LatticeModel {
 			imageA.unregisterVOI(annotationVOIs);
 		}
 		annotationVOIs = null;
-		highestIndex = 1;
 		clear3DSelection();
 	}
 	
@@ -1326,7 +1368,6 @@ public class LatticeModel {
 		}
 		showSelectedVOI = null;
 		clearAddLeftRightMarkers();		
-		highestIndex = 1;
 
 		if ( annotationVOIs == null )
 		{
@@ -1350,21 +1391,6 @@ public class LatticeModel {
 					wormOrigin.copy(text.elementAt(0));
 					// updateLattice(false);
 				}
-			}
-			else
-			{
-				int value = 0;
-				String name = new String(text.getText());
-				for ( int j = 0; j < name.length(); j++ )
-				{
-					if ( Character.isDigit(name.charAt(j)) )
-					{
-						value *= 10;
-						value += Integer.valueOf(name.substring(j,j+1));
-						//						System.err.println( name + " " + value + " " + name.substring(j,j+1) + " " + Integer.valueOf(name.substring(j,j+1)));
-					}
-				}
-				highestIndex = Math.max( highestIndex, value ) + 1;
 			}
 		}
 		colorAnnotations();
@@ -2230,6 +2256,11 @@ public class LatticeModel {
 		}
 	}
 
+	public void colorAnnotations( boolean setColor )
+	{
+		colorAnnotations = setColor;
+	}
+	
 	private void colorAnnotations()
 	{
 		// count markers (not nose or origin)
@@ -2254,6 +2285,10 @@ public class LatticeModel {
 		if ( (count % 2) == 0 )
 		{
 			c = Color.blue;
+		}
+		if ( !colorAnnotations )
+		{
+			c = Color.white;
 		}
 
 

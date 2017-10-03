@@ -488,11 +488,12 @@ implements GLEventListener, ScreenCoordinateListener
 		//if ( iOrientation == m_iOrientation )
 		{
 			//if ( slice() == iSlice )
+			if ( kVolumeVOI.GetDisplay() )
 			{
-				boolean bDisplaySave = kVolumeVOI.GetDisplay();
+//				boolean bDisplaySave = kVolumeVOI.GetDisplay();
 				Matrix3f kSave = new Matrix3f(kVolumeVOI.GetScene().Local.GetRotate());
 				kVolumeVOI.GetScene().Local.SetRotateCopy(Matrix3f.IDENTITY);
-				kVolumeVOI.SetDisplay(true);                
+//				kVolumeVOI.SetDisplay(true);                
 				kVolumeVOI.showTextBox(false);
 				kVolumeVOI.setZCompare(false);
 				boolean bUpdateSave = kVolumeVOI.needsUpdate();
@@ -518,7 +519,7 @@ implements GLEventListener, ScreenCoordinateListener
 				kVolumeVOI.setZCompare(true);
 				kVolumeVOI.showTextBox(true);
 				kVolumeVOI.GetScene().Local.SetRotateCopy(kSave);
-				kVolumeVOI.SetDisplay(bDisplaySave);
+//				kVolumeVOI.SetDisplay(bDisplaySave);
 				kVolumeVOI.setSlice(false, 0, -1);
 
 				switch ( kVOI.getType() )

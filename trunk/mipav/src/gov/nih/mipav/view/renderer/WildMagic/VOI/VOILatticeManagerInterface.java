@@ -285,6 +285,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 		return 0;
 	}
+	
+	public void colorAnnotations( boolean setColor )
+	{
+		if ( latticeModel != null ) {
+			latticeModel.colorAnnotations(setColor);
+		}
+	}
 
 	public void editAnnotations( boolean automaticLabels )
 	{
@@ -589,6 +596,24 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			saveVOIs("addAnnotation");
 			latticeModel.addAnnotation(textVOI);
 		}
+	}
+	
+	public void displayAnnotation( String name, boolean display )
+	{
+		if ( latticeModel == null )
+		{
+			return;
+		}
+		latticeModel.displayAnnotation(name, display);
+	}
+	
+	public VOI getAnnotations()
+	{
+		if ( latticeModel == null )
+		{
+			return null;
+		}
+		return latticeModel.getAnnotations();		
 	}
 
 	private void addLeftRightMarker( VOI textVOI )
