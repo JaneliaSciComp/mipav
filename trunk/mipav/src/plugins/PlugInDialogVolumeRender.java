@@ -1143,6 +1143,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					{
 						voiManager.setAnnotations(annotations);
 						voiManager.editAnnotations(true);
+						voiManager.colorAnnotations(true);
 					}
 				}
 			}

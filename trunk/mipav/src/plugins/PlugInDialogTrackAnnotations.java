@@ -106,6 +106,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	private String baseFileName;
 	private JTextField  baseFileNameText;
 	private JPanel buttonPanel;
+	private JPanel annotationPanel;
 	private JButton closeButton;
 	private JButton doneButton;
 //	private JPanel gpuPanel;
@@ -141,6 +142,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	public void actionPerformed(ActionEvent event)
 	{
 		String command = event.getActionCommand();
+		Object source = event.getSource();
 		if (command.equals("start"))
 		{
 			setVariables();
@@ -152,10 +154,11 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			startButton.setEnabled(false);
 			openStraightened();
 		}
-		if ( command.equals("next") )
+		else if ( command.equals("next") )
 		{
 //			voiManager.clear3DSelection();
 			save();
+			initDisplayAnnotationsPanel();
 			imageIndex++;
 
 			openStraightened();
@@ -192,6 +195,27 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
             } else {
                 dispose();
             }
+		}
+		else if ( source instanceof JCheckBox )
+		{	
+			if ( triVolume != null && triVolume.getVOIManager() != null )
+			{
+				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+
+				if ( annotations != null ) {
+					if ( annotations.getCurves().size() > 0 ) {
+						for ( int i = 0; i < annotations.getCurves().size(); i++ )
+						{
+							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+							if ( text.getText().equals(command) ) {
+//								System.err.println( command + " " + ((JCheckBox)source).isSelected() );		
+								text.display(((JCheckBox)source).isSelected());
+								break;
+							}
+						}
+					}
+				}
+			}
 		}
 
 
@@ -478,6 +502,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 							}
 						}
 					}
+
+					else {
+						// first time try opening any existing annotations from file
+						savedAnnotations = new VOIVector();
+						LatticeModel.loadAllVOIsFrom(wormImage, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, savedAnnotations, false);	
+					}
 //					wormData.openStraightAnnotations();
 //					if ( voiFile2 != null )
 //					{
@@ -646,6 +676,47 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 		return buttonPanel;
 	}
+	
+	private void initDisplayAnnotationsPanel( )
+	{
+		JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
+		GuiBuilder gui = new GuiBuilder(dialogGUI);
+		
+		if ( annotationPanel == null )
+		{
+			annotationPanel = new JPanel( new GridLayout() );
+
+			annotationPanel.setBorder(JDialogBase.buildTitledBorder("Annotations List"));
+			triVolume.insertTab( "Annotations", annotationPanel );
+		}
+		else 
+		{
+			annotationPanel.removeAll();
+		}
+//		GridBagConstraints gbc = new GridBagConstraints();
+//		gbc.gridx = 0;
+//		gbc.gridy = 0;
+
+		if ( savedAnnotations != null ) {
+			if ( savedAnnotations.size() > 0 ) {
+				for ( int i = 0; i < savedAnnotations.size(); i++ ) {
+					VOI annotations = savedAnnotations.elementAt(i);
+					for ( int j = 0; j < annotations.getCurves().size(); j++ )
+					{
+						if ( annotations.getCurves().elementAt(j).getType() == VOI.ANNOTATION ) {
+							VOIText text = (VOIText) annotations.getCurves().elementAt(j);
+							JCheckBox box = gui.buildCheckBox(text.getText(), true);
+							box.addActionListener(this);
+							box.setActionCommand(text.getText());
+							annotationPanel.add( box );
+//							annotationPanel.add( box, gbc );
+//							gbc.gridy++;
+						}
+					}
+				}
+			}
+		}
+	}
 
 	
 	private JPanel makeOptionsPanel(GuiBuilder gui)
@@ -683,9 +754,31 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	 * Saves seam cells, lattice, or annotations based on the current edit mode.
 	 */
 	private void save()
-	{
-		savedAnnotations = wormImage.getVOIsCopy();
-		saveAnnotations();
+	{		
+		savedAnnotations = wormImage.getVOIs();
+
+		if ( savedAnnotations != null ) {
+			if ( savedAnnotations.size() > 0 ) {
+				for ( int i = 0; i < savedAnnotations.size(); i++ ) {
+					VOI annotations = savedAnnotations.elementAt(i);
+					for ( int j = annotations.getCurves().size() - 1; j >= 0; j-- )
+					{
+						if ( annotations.getCurves().elementAt(j).getType() == VOI.ANNOTATION ) {
+
+							VOIText text = (VOIText) annotations.getCurves().elementAt(j);
+							if ( !text.getVolumeVOI().GetDisplay() )
+							{
+								annotations.getCurves().remove(j);
+							}
+						}
+					}
+				}
+			}
+			
+			savedAnnotations = wormImage.getVOIsCopy();
+			saveAnnotations();
+		}
+		
 	}
 
 	/**
@@ -799,6 +892,29 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		triVolume.getVolumeSlicesPanel().setDividerLocation( 0.75 );
 		
 		((VOILatticeManagerInterface)triVolume.getVOIManager()).editAnnotations(false);
+		
+		if ( (savedAnnotations != null) && (savedAnnotations.size() > 0) ) {
+			int count = 0;
+			for ( int i = 0; i < savedAnnotations.size(); i++ ) {
+				VOI annotations = savedAnnotations.elementAt(i);
+				for ( int j = 0; j < annotations.getCurves().size(); j++ )
+				{
+					if ( annotations.getCurves().elementAt(j).getType() == VOI.ANNOTATION ) {
+						short id = (short) wormImage.getVOIs().getUniqueID();
+						int colorID = 0;
+						VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+						newTextVOI.getCurves().add(annotations.getCurves().elementAt(j));
+//						System.err.println( "add annotation " + ((VOIText)annotations.getCurves().elementAt(j)).getText() );
+						((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
+						count++;
+					}
+				}
+			}
+			if ( count > 0 )
+			{
+				initDisplayAnnotationsPanel();
+			}
+		}
 	}
 
 
