@@ -9531,7 +9531,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    im = new double[]{10.0};
 		}
 		
-		// Integer argumentw must be converted to specific values
+		// Integer arguments must be converted to specific values
 		if ((re.length == 1) && (re[0] == Math.round(re[0]))) {
 			if (re[0] < 1) {
 			    re = null;
@@ -9586,9 +9586,327 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			double affr[][][], qlgraph Q, double qdat[][], double qdatr[][], double axlim[], double siz) {
 	    // This is the routine that actually draws the curves corresponding to either vertical
 		// or horizontal lines
+		int i, j, k, m, p;
+		int numcross;
+		int cross[];
+		int cross2[];
+		int cross3[];
 		int n = w.length;
+		int numidentical;
+		int identical[];
+		int numnotidentical;
+		int notidentical[];
+		Vector<Double> linhx[][] = new Vector[val.length][2];
+		Vector<Double> linhy[][] = new Vector[val.length][2];
+		Vector<Double>newwx[];
+		Vector<Double>newwy[];
+		Vector<Integer>newqn[];
+		Vector<Boolean>newlog = new Vector<Boolean>();
+		for (i = 0; i < val.length; i++) {
+			for (j = 0; j < 2; j++) {
+				linhx[i][j] = new Vector<Double>();
+				linhy[i][j] = new Vector<Double>();
+			}
+		}
+		double d[] = new double[wr.length];
+		double signd[] = new double[d.length+1];
+		double diffd[] = new double[d.length];
+		double absd[] = new double[d.length];
+		double srtcross[];
+		double srtcross2[];
+		double interval[][];
+		int idx[];
+		double testint[][];
+		double testedge[][];
+		int index[];
+		boolean onvtx[][];
+		int index2[];
+		boolean onvtx2[][];
+		int maxindex;
+		int maxindex2;
+		int numcurves;
+		double delta[];
+		int n0[];
+		int n0sum;
+		double zp[];
+		double zp2[][];
+		int lenzp;
+		boolean neww[];
+		double wp[][][];
+		int qn[][];
+		int iter;
+		int numnew;
+		double zpnew[][];
+
+		for (j = 0; j < val.length; j++) {
+		    // Find intersections with rectified polygon sides
+			if (direcn.equals("ver")) {
+				for (i =  0; i < wr.length; i++) {
+					d[i] = wr[i][0] - val[j];
+					if (Double.isNaN(d[i])) {
+						signd[i] = Double.NaN;
+					}
+					else if (d[i] > 0) {
+						signd[i] = 1.0;
+					}
+					else if (d[i] == 0.0) {
+						signd[i] = 0.0;
+					}
+					else {
+						signd[i] = -1.0;
+					}
+				} // for (i =  0; i < wr.length; i++)
+			    signd[signd.length-1] = signd[0];
+			    numcross = 0;
+			    for (i = 0; i < n; i++) {
+			    	diffd[i] = signd[i+1] - signd[i];
+			    	absd[i] = Math.abs(d[i]);
+			    	if ((diffd[i] != 0) || (absd[i] < tol)) {
+			    		numcross++;
+			    	}
+			    }
+			    cross = new int[numcross];
+			    for (i = 0, m = 0; i < n; i++) {
+			    	if ((diffd[i] != 0) || (absd[i] < tol)) {
+			    		cross[m++] = i;
+			    	}	
+			    }
+			    ArrayList<indexValueItem> valueList = new ArrayList<indexValueItem>();
+			    for (i = 0; i < numcross; i++) {
+			    	valueList.add(new indexValueItem(i, wr[cross[i]][1]));
+			    }
+			    Collections.sort(valueList, new indexValueComparator());
+			    srtcross = new double[numcross];
+			    idx = new int[numcross];
+			    for (i = 0; i < numcross; i++) {
+			    	srtcross[i] = valueList.get(i).getValue();
+			    	idx[i] = valueList.get(i).getIndex();
+			    }
+			} // if (direcn.equals("ver"))
+			else { // direcn.equals("hor"))
+				for (i =  0; i < wr.length; i++) {
+					d[i] = wr[i][1] - val[j];
+					if (Double.isNaN(d[i])) {
+						signd[i] = Double.NaN;
+					}
+					else if (d[i] > 0) {
+						signd[i] = 1.0;
+					}
+					else if (d[i] == 0.0) {
+						signd[i] = 0.0;
+					}
+					else {
+						signd[i] = -1.0;
+					}
+				} // for (i =  0; i < wr.length; i++)
+			    signd[signd.length-1] = signd[0];
+			    numcross = 0;
+			    for (i = 0; i < n; i++) {
+			    	diffd[i] = signd[i+1] - signd[i];
+			    	absd[i] = Math.abs(d[i]);
+			    	if ((diffd[i] != 0) || (absd[i] < tol)) {
+			    		numcross++;
+			    	}
+			    }
+			    cross = new int[numcross];
+			    for (i = 0, m = 0; i < n; i++) {
+			    	if ((diffd[i] != 0) || (absd[i] < tol)) {
+			    		cross[m++] = i;
+			    	}	
+			    }
+			    ArrayList<indexValueItem> valueList = new ArrayList<indexValueItem>();
+			    for (i = 0; i < numcross; i++) {
+			    	valueList.add(new indexValueItem(i, wr[cross[i]][0]));
+			    }
+			    Collections.sort(valueList, new indexValueComparator());
+			    srtcross = new double[numcross];
+			    idx = new int[numcross];
+			    for (i = 0; i < numcross; i++) {
+			    	srtcross[i] = valueList.get(i).getValue();
+			    	idx[i] = valueList.get(i).getIndex();
+			    }	
+			} // else direnc.equals("hor"))
+			cross2 = new int[numcross];
+			for (i = 0; i < numcross; i++) {
+				cross2[i] = cross[idx[i]];
+			}
+			
+			// Remove (near-) duplicates
+			numidentical = 0;
+			numnotidentical = 0;
+			for (i = 0; i < numcross-1; i++) {
+			    if (Math.abs(srtcross[i+1] - srtcross[i]) < tol) {
+			    	numidentical++;
+			    }
+			    else {
+			    	numnotidentical++;
+			    }
+			}
+			identical = new int[numidentical];
+			notidentical = new int[numnotidentical];
+			for (i = 0, m = 0, p = 0; i < numcross-1; i++) {
+				if (Math.abs(srtcross[i+1] - srtcross[i]) < tol) {
+			    	identical[m++] = i;
+			    }
+				else {
+					notidentical[p++] = i;
+				}
+			}
+			srtcross2 = new double[numnotidentical];
+			cross3 = new int[numnotidentical];
+			for (i = 0; i < numnotidentical; i++) {
+				srtcross2[i] = srtcross[notidentical[i]];
+				cross3[i] = cross2[notidentical[i]];
+			}
+			numcross = numnotidentical;
+			
+			// Set up intervals between crossings
+			interval = new double[numcross-1][2];
+			for (i = 0; i < numcross-1; i++) {
+				interval[i][0] = srtcross2[i];
+				interval[i][1] = srtcross2[i+1];
+			}
+			
+			// Test points at ends and midpoints of intervals
+			testint = new double[numcross-1][2];
+			testedge = new double[numcross][2];
+			if (direcn.equals("ver")) {
+			    for (i = 0; i < numcross-1; i++) {
+			    	testint[i][0] = val[j];
+			    	testint[i][1] = (interval[i][0] + interval[i][1])/2.0;
+			    }
+			    for (i = 0; i < numcross; i++) {
+			    	testedge[i][0] = val[j];
+			    	testedge[i][1] = srtcross2[i];
+			    }
+			} // if (direcn.equals("ver"))
+			else { // (direcn.equals("hor"))
+				for (i = 0; i < numcross-1; i++) {
+			    	testint[i][0] = (interval[i][0] + interval[i][1])/2.0;
+			    	testint[i][1] = val[j];
+			    }
+			    for (i = 0; i < numcross; i++) {
+			    	testedge[i][0] = srtcross2[i];
+			    	testedge[i][1] = val[j];
+			    }       	
+			} // else (direcn.equals("hor"))
+			
+			// Use test points to determine number of curves
+			index = new int[testint.length];
+			onvtx = new boolean[wr.length][testint.length];
+			isinpoly2(index, onvtx, testint, wr, betar, tol);
+			maxindex = -1;
+			for (i = 0; i < index.length; i++) {
+				if (index[i] > maxindex) {
+					maxindex = index[i];
+				}
+			}
+			index2 = new int[testedge.length];
+			onvtx2 = new boolean[wr.length][testedge.length];
+			isinpoly2(index2, onvtx2, testedge, wr, betar, tol);
+			maxindex2 = -1;
+			for (i = 0; i < index2.length; i++) {
+				if (index2[i] > maxindex2) {
+					maxindex2 = index2[i];
+				}
+			}
+			numcurves = Math.max(maxindex, maxindex2);
+			
+			// Put initial points in zp (string together intervals).
+			delta = new double[numcross-1];
+			for (i = 0; i < numcross-1; i++) {
+				delta[i] = interval[i][1] - interval[i][0];
+			}
+			n0 = new int[numcross-1];
+			n0sum = 0;
+			for (i = 0; i < numcross-1; i++) {
+				n0[i] = Math.max(5, (int)Math.ceil(16*delta[i]/siz));
+				n0sum = n0sum + n0[i];
+			}
+			zp = new double[1 + n0sum];
+			m = 0;
+			zp[m++] = interval[0][0];
+			for (k = 0; k < numcross-1; k++) {
+				for (p = 1; p <= n0[k]; p++) {
+				    zp[m++] = interval[0][k] + p * delta[k]/n0[k];
+				}
+			} // for (k = 0; k < numcross-1; k++)
+			
+			
+			lenzp = zp.length;
+			zp2 = new double[lenzp][2];
+			if (direcn.equals("ver")) {
+			    for (i = 0; i < lenzp; i++) {
+			    	zp2[i][0] = val[j];
+			    	zp2[i][1] = zp[i];
+			    }
+			} // if (direcn.equals("ver"))
+			else { // (direcn.equals("hor"))
+				for (i = 0; i < lenzp; i++) {
+			    	zp2[i][0] = zp[i];
+			    	zp2[i][1] = val[j];
+			    }	
+			} // else (direcn.equals("hor"))
+			
+			// Prepare for iterative mapping
+		    newlog.clear();
+		    for (i = 0; i < lenzp; i++) {
+		        newlog.add(true);
+		    }
+		    numnew = lenzp;
+		    wp = new double[lenzp][numcurves][2];
+		    qn = new int[lenzp][numcurves];
+		    for (i = 0; i < lenzp; i++) {
+		    	for (m = 0; m < numcurves; m++) {
+		    		wp[i][m][0] = Double.NaN;
+		    		qn[i][m] = -1;
+		    	}
+		    }
+		    iter = 0;
+		    
+		    // Do the mapping and the plotting
+		    while ((numnew > 0) && (iter < maxrefn)) {
+		        newwx = new Vector[numnew];	
+		        newwy = new Vector[numnew];
+		        newqn = new Vector[numnew];
+		        for (i = 0; i < numnew; i++) {
+		        	newwx[i] = new Vector<Double>();
+		        	newwy[i] = new Vector<Double>();
+		        	newqn[i] = new Vector<Integer>();
+		        }
+		        zpnew = new double[numnew][2];
+		        for (i = 0, m = 0; i < lenzp; i++) {
+		        	if (newlog.get(i)) {
+		        		zpnew[m][0] = zp2[i][0];
+		        		zpnew[m++][1] = zp2[i][1];
+		        	}
+		        }
+		        crrmap(newwx, newwy, newqn, zpnew, w, beta, wr, betar, cr, aff, affr,
+		        		Q, qdat, qdatr);
+		    } // while ((numnew > 0) && (iter < maxrefn))
+		} // for (j = 0; j < val.length; j++)
 		
+	}
+	
+	public void crrmap(Vector<Double>[] wpx, Vector<Double>[] wpy, Vector<Integer>[]qnum, double zp[][],
+			double w[][], double beta[], double wr[][], double betar[], double cr[], double aff[][][],
+			double affr[][][], qlgraph Q, double qdat[][], double qdatr[][]) {
+	    // Schwarz-Christoffel rectified map in crossratio formulation.
+		// crrmap computes the values of the rectified map from wr to w at the points in vector zp.
+		// The arguments are returned from crparam, crrect, and scqdata.
 		
+		// It is possible that the rectified polygon lies on multiple Riemann sheets; i.e., 
+		// overlaps itself.  If at least one point of zp lies in more than one covering,
+		// then each row of output will contain all possible values for the map at the
+		// corresponding point of z.  Unused entries will be assigned NaN.
+		
+		// crrmap also returns the indices of the quadrilaterals used to compute the maps,
+		// and the intermediate points found in the disk, in those embeddings.
+		
+		// Note that by switching the roles of w, beta, and aff with wr, betar, and affr,
+		// one inverts the map.
+		
+		// Original crrmap MATLAB routine copyright 1998 by Toby Driscoll.
 	}
 	
 	private void rplot(double w[][], double beta[], double z[][], double c[],
@@ -11837,6 +12155,252 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	}
 	    }
 	}
+	
+	// isinpoly identifies points inside a polygon
+		// isinpoly returns a vector the size of z such that each nonzero corresponds to a point inside
+		// the polygon defined by w and beta.
+		// ontvx = new boolean[w.length][z.length]
+		// More precisely, the value returned for a point is the winding number of the polygon about
+		// that point.
+		// The problem becomes ill-defined for points very near an edge or vertex.  isinpoly considers
+		// points within roughly tol of the boundary to be "inside", and computes winding number for such points
+		// as the number of conformal images the point ought to have
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		// Uses the argument principle, with some gymnastics for boundary points.
+		private void isinpoly2(int indexout[], boolean onvtx[][], double z[][], double w[][], double beta[], double tol) {
+			int i, j, k, p;
+			double cr[] = new double[1];
+			double ci[] = new double[1];
+		    if (beta == null) {
+		    	beta = scangle(w);
+		    }
+		    int n = w.length;
+		    double index[] = new double[z.length];
+		    double zcopy[][] = new double[z.length][2];
+		    for (i = 0; i < z.length; i++) {
+		    	zcopy[i][0] = z[i][0];
+		    	zcopy[i][1] = z[i][1];
+		    }
+		    double wcopy[][] = new double[w.length][2];
+		    for (i = 0; i < w.length; i++) {
+		    	wcopy[i][0] = w[i][0];
+		    	wcopy[i][1] = w[i][1];
+		    }
+		    
+		    
+		    // Rescale to make differences relative
+		    double diffw[][] = new double[n][2];
+		    for (i = 0; i < n-1; i++) {
+		        diffw[i][0] = w[i+1][0] - w[i][0];
+		        diffw[i][1] = w[i+1][1] - w[i][1];
+		    }
+		    diffw[n-1][0] = w[0][0] - w[n-1][0];
+		    diffw[n-1][1] = w[0][1] - w[n-1][1];
+		    double absdiffw[] = new double[n];
+		    double sum = 0.0;
+		    boolean anygt = false;
+		    for (i = 0; i < n; i++) {
+		    	absdiffw[i] = zabs(diffw[i][0], diffw[i][1]);
+		    	if (absdiffw[i] > eps) {
+		    		anygt = true;
+		    	}
+		    	sum += absdiffw[i];
+		    }
+		    double scale = sum/n;
+		    // Trivial case (e.g., a single or repeated point)
+		    if (!anygt) {
+		    	return;
+		    }
+		    
+		    for (i = 0; i < n; i++) {
+		    	wcopy[i][0] = w[i][0]/scale;
+		    	wcopy[i][1] = w[i][1]/scale;
+		    }
+		    
+		    for (i = 0; i < z.length; i++) {
+		    	zcopy[i][0] = z[i][0]/scale;
+		    	zcopy[i][1] = z[i][1]/scale;
+		    }
+		    
+		    // Array of differences between each z and each w
+		    int np = z.length;
+		    double d[][][] = new double[n][np][2];
+		    for (i = 0; i < n; i++) {
+		    	for (j = 0; j < np; j++) {
+		    	    d[i][j][0] = wcopy[i][0] - zcopy[j][0];
+		    	    d[i][j][1] = wcopy[i][1] - zcopy[j][1];
+		    	}
+		    } // for (i = 0; i < n; i++)
+		    
+		    // Avoid divides by zero
+		    for (i = 0; i < n; i++) {
+		    	for (j = 0; j < np; j++) {
+		    		if (zabs(d[i][j][0], d[i][j][1]) < eps) {
+		    			d[i][j][0] = eps;
+		    			d[i][j][1] = 0.0;
+		    		}
+		    	}
+		    } // for (i = 0; i < n; i++)
+		    
+		    // Diffs of imag(log(w-z)) around the polygon
+		    double ang[][] = new double[n][np];
+		    for (i = 0; i < n-1; i++) {
+		    	for (j = 0; j < np; j++) {
+		    		zdiv(d[i+1][j][0], d[i+1][j][1], d[i][j][0], d[i][j][1], cr, ci);
+		    		ang[i][j] = Math.atan2(ci[0], cr[0])/Math.PI;
+		    	}	
+		    } // for (i = 0; i < n-1; i++)
+		    for (j = 0; j < np; j++) {
+		    	zdiv(d[0][j][0], d[0][j][1], d[n-1][j][0], d[n-1][j][1], cr, ci);
+		    	ang[i][j] = Math.atan2(ci[0], cr[0])/Math.PI;
+		    }
+		    
+		    // Find boundary points (edge and vertex)
+		    double wdiff[][] = new double[n][2];
+		    for (i = 0; i < n-1; i++) {
+		    	wdiff[i][0] = wcopy[i+1][0] - wcopy[i][0];
+		    	wdiff[i][1] = wcopy[i+1][1] - wcopy[i][1];
+		    }
+		    wdiff[n-1][0] = wcopy[0][0] - wcopy[n-1][0];
+		    wdiff[n-1][1] = wcopy[0][1] - wcopy[n-1][1];
+		    double tangents[][] = new double[n][2];
+		    for (i = 0; i < n; i++) {
+		    	zdiv(wdiff[i][0], wdiff[i][1], zabs(wdiff[i][0], wdiff[i][1]), 0, cr, ci);
+		    	tangents[i][0] = cr[0];
+		    	tangents[i][1] = ci[0];
+		    } // for (i = 0; i < n; i++)
+		    
+		    // If points are repeated (e.g. crowding), skip to new point
+		    for (p = 0; p < n; p++) {
+		    	if ((tangents[p][0] == 0) && (tangents[p][1] == 0)) {
+		    		double v[][] = new double[2*n-p-1][2];
+		    		for (i = p+1; i < n; i++) {
+		    		    v[i-p-1][0] = wcopy[i][0];
+		    		    v[i-p-1][1] = wcopy[i][1];
+		    		}
+		    		for (i = 0; i < n; i++) {
+		    		    v[n-p-1+i][0] = wcopy[i][0];
+		    		    v[n-p-1+i][1] = wcopy[i][1];
+		    		}
+		    		boolean found = false;
+		    		for (i = 0; i < v.length && (!found); i++) {
+		    			if ((v[i][0] != wcopy[p][0]) || (v[i][1] != wcopy[p][1])) {
+		    			    found = true;
+		    			    double vdiffreal = v[i][0] - wcopy[p][0];
+		    			    double vdiffimag = v[i][1] - wcopy[p][1];
+		    			    zdiv(vdiffreal, vdiffimag, zabs(vdiffreal, vdiffimag), 0, cr, ci);
+		    			    tangents[p][0] = cr[0];
+		    			    tangents[p][1] = ci[0];
+		    			}
+		    		}
+		    	} // if ((tangents[p][0] == 0) && (tangents[p][1] == 0))
+		    } // for (p = 0; p < n; p++)
+		    
+		    // Points which are close to an edge
+		    boolean onbdy[][] = new boolean[n][np];
+		    for (i = 0; i < n; i++) {
+		    	for (j = 0; j < np; j++) {
+		    		zdiv(d[i][j][0], d[i][j][1],tangents[i][0], tangents[i][1], cr, ci);
+		    		if (Math.abs(ci[0]) < 10.0 * tol) {
+		    			onbdy[i][j] = true;
+		    		}
+		    	}
+		    } // for (i = 0; i < n; i++)
+		    // Points which are essentially vertices
+		    for (i = 0; i < n; i++) {
+		    	for (j = 0; j < np; j++) {
+		    		if (zabs(d[i][j][0], d[i][j][1]) < tol) {
+		    			onvtx[i][j] = true;
+		    		}
+		    	}
+		    } // for (i = 0; i < n; i++)
+		    // Correction: points must be closed, finite edge segment
+		    boolean onvtxshift[][] = new boolean[n][np];
+		    for (i = 0; i < n-1; i++) {
+		    	for (j = 0; j < np; j++) {
+		    		onvtxshift[i][j] = onvtx[i+1][j];
+		    	}
+		    }
+		    for (j = 0; j < np; j++) {
+		    	onvtxshift[n-1][j] = onvtx[0][j];
+		    }
+		    for (i = 0; i < n; i++) {
+		    	for (j = 0; j < np; j++) {
+		    		onbdy[i][j] = onbdy[i][j] && ((Math.abs(ang[i][j]) > 0.9)  || onvtx[i][j] || onvtxshift[i][j]);
+		    	}
+		    }
+		    
+		    // Truly interior points are easy: add up the args
+		    boolean interior[] = new boolean[np];
+		    boolean anyinterior = false;
+		    for (j = 0; j < np; j++) {
+		    	boolean found = false;
+		    	for (i = 0; i < n && (!found); i++) {
+		    		if (!onbdy[i][j]) {
+		    			found = true;
+		    			interior[j] = true;
+		    			anyinterior = true;
+		    		}
+		    	}
+		    } //  for (j = 0; j < np; j++)
+		    
+		    if (anyinterior) {
+		        for (j = 0; j < np; j++) {
+		        	if (interior[j]) {
+			        	sum = 0.0;
+			        	for (i = 0; i < n; i++) {
+			        		sum += ang[i][j];
+			        	}
+			        	sum = sum/2.0;
+			        	index[j] = (int)Math.round(sum);
+		        	}
+		        }
+		    } // if (anyinterior) 
+		    
+		    // Boundary points are tricky
+		    for (k = 0; k < np; k++) {
+		        if (!interior[k]) {
+		            // Index wrt other parts of polygon
+		            double S = 0.0;
+		        	for (i = 0; i < n; i++) {
+		        		if (!onbdy[i][k]) {
+		        			S += ang[i][k];
+		        		}
+		        	}
+		        	// We pretend a vertex point is on either adjacent side
+		        	int numb = 0;
+		        	for (i = 0; i < n; i++) {
+		        		if (onvtx[i][k]) {
+		        			numb++;
+		        		}
+		        	}
+		        	double b[] = new double[numb];
+		        	for (i = 0, j = 0; i < n; i++) {
+		        	    if (onvtx[i][k]) {
+		        	    	b[j++] = beta[i];
+		        	    }
+		        	}
+		        	// Each edge membership counts as 1/2 winding number (either side)
+		        	double augment = 0.0;
+		        	for (i = 0; i < n; i++) {
+		        		if (onbdy[i][k]) {
+		        			augment += 1.0;
+		        		}
+		        		if (onvtx[i][k]) {
+		        			augment -= 1.0;
+		        		}
+		        	}
+		        	for (i = 0; i < b.length; i++) {
+		        		augment -= b[i];
+		        	}
+		        	index[k] = Math.round(augment*sign(S) + S)/2.0;
+		        } // if (!interior[k])
+		    } // for (k = 0; k < np; k++)
+		    
+		    for (i = 0; i < index.length; i++) {
+		        indexout[i] = (int)index[i];
+		    }
+		}
 	
 	// scangle computes the turning angles of the polygon whose vertices are specified in the vector w.
 	// The turning angle of a vertex measures how much the heading changes at that vertex from the
