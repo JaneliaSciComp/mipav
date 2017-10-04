@@ -9598,9 +9598,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		int notidentical[];
 		Vector<Double> linhx[][] = new Vector[val.length][2];
 		Vector<Double> linhy[][] = new Vector[val.length][2];
-		Vector<Double>newwx[];
-		Vector<Double>newwy[];
-		Vector<Integer>newqn[];
+		double neww[][][];
+		int newqn[][];
 		Vector<Boolean>newlog = new Vector<Boolean>();
 		for (i = 0; i < val.length; i++) {
 			for (j = 0; j < 2; j++) {
@@ -9631,12 +9630,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double zp[];
 		double zp2[][];
 		int lenzp;
-		boolean neww[];
 		double wp[][][];
 		int qn[][];
+		int qnold[][];
 		int iter;
 		int numnew;
 		double zpnew[][];
+		double tolmap;
+		int zpindex[];
 
 		for (j = 0; j < val.length; j++) {
 		    // Find intersections with rectified polygon sides
@@ -9866,14 +9867,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    
 		    // Do the mapping and the plotting
 		    while ((numnew > 0) && (iter < maxrefn)) {
-		        newwx = new Vector[numnew];	
-		        newwy = new Vector[numnew];
-		        newqn = new Vector[numnew];
-		        for (i = 0; i < numnew; i++) {
-		        	newwx[i] = new Vector<Double>();
-		        	newwy[i] = new Vector<Double>();
-		        	newqn[i] = new Vector<Integer>();
-		        }
+		    	
 		        zpnew = new double[numnew][2];
 		        for (i = 0, m = 0; i < lenzp; i++) {
 		        	if (newlog.get(i)) {
@@ -9881,14 +9875,62 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        		zpnew[m++][1] = zp2[i][1];
 		        	}
 		        }
-		        crrmap(newwx, newwy, newqn, zpnew, w, beta, wr, betar, cr, aff, affr,
+		        tolmap = Math.pow(10.0, -qdat.length);
+		        zpindex = new int[numnew];
+				onvtx = new boolean[wr.length][numnew];
+				isinpoly2(zpindex, onvtx, zpnew, wr, betar, tol);
+				maxindex = -1;
+				for (i = 0; i < numnew; i++) {
+					if (zpindex[i] > maxindex) {
+						maxindex = zpindex[i];
+					}
+				} // for (i = 0; i < numnew; i++)
+				if (maxindex > numcurves) {
+					MipavUtil.displayError("Too many values found at some points");
+					System.exit(-1);
+				}
+				neww = new double[numnew][Math.max(1, maxindex)][2];
+				newqn = new int[numnew][Math.max(1, maxindex)];
+		        crrmap(neww, newqn, zpnew, w, beta, wr, betar, cr, aff, affr,
 		        		Q, qdat, qdatr);
+		        // Incorporate new points
+		        for (i = 0, k = 0; i < wp.length; i++) {
+		        	if (newlog.get(i)) {
+			        	for (m = 0; m < Math.max(1, maxindex); m++) {
+			        	    wp[i][m][0] = neww[k][m][0];
+			        	    wp[i][m][1] = neww[k][m][1];
+			        	} 
+			        	k++;
+		        	} // if (newlog.get(i)
+		        } // for (i = 0, k = 0; i < wp.length; i++)
+		        if (numnew < newlog.size()) {
+		            qnold = new int[qn.length][qn[0].length];
+		            for (i = 0; i < qn.length; i++) {
+		            	for (k = 0; k < qn[0].length; k++) {
+		            		qnold[i][k] = qn[i][k];
+		            	}
+		            }
+		            qn = new int[wp.length][wp[0].length];
+		            for (i = 0, m = 0; i < wp.length; i++) {
+		            	if (newlog.get(i)) {
+			            	for (k = 0; k < wp[0].length; k++) {
+			            		qn[i][k] = -1;
+			            	}
+		            	}
+		            	else {
+		            		for (k = 0; k < wp[0].length; k++) {
+			            		qn[i][k] = qnold[m][k];
+			            	}
+		            		m++;
+		            	}
+		            }
+		        } //  if (numnew < newlog.size())
 		    } // while ((numnew > 0) && (iter < maxrefn))
 		} // for (j = 0; j < val.length; j++)
 		
 	}
 	
-	public void crrmap(Vector<Double>[] wpx, Vector<Double>[] wpy, Vector<Integer>[]qnum, double zp[][],
+	public void crrmap(double wp[][][], int qnum[][], double zp[][],
 			double w[][], double beta[], double wr[][], double betar[], double cr[], double aff[][][],
 			double affr[][][], qlgraph Q, double qdat[][], double qdatr[][]) {
 	    // Schwarz-Christoffel rectified map in crossratio formulation.
@@ -9907,7 +9949,324 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// one inverts the map.
 		
 		// Original crrmap MATLAB routine copyright 1998 by Toby Driscoll.
-	}
+		int i, j, k, kk, m, q;
+		int n = w.length;
+		int p = zp.length;
+		double qdat2[][] = null;
+		double qdatr2[][] = null;
+		double tol;
+		int nqpts;
+		int zpindex[];
+		boolean onvtx[][];
+		int maxindex;
+		//int shape[] = null;
+		int numcopies[] = null;
+	    double up[][][] = null;
+		boolean onvtxcolumn[];
+		int numcol;
+		int colfind[];
+		int nv;
+		int vtxnum[];
+		int minfind = -1;
+		int qn[][];
+		boolean allSame;
+		int idxnum;
+		int idx[];
+		double zpidx[][];
+		double wr4[][];
+		boolean mask[];
+		boolean onvtx2[][];
+		int nummask;
+		int idx2[];
+		double z[][];
+		double affrq[][];
+		double affq[][];
+		double up1[][];
+		double wp1[][];
+		double dif[][];
+		boolean unique[];
+		int numunique;
+		int idx3[];
+		double wp2[][];
+		double up2[][];
+		
+		if ((qdat == null) || (qdat.length == 0)) {
+			tol = 1.0E-8;
+			qdat2 = new double[8][2*beta.length+2];
+			scqdata(qdat2, beta, 8);
+			qdatr2 = new double[8][2*betar.length+2];
+			scqdata(qdatr2, betar, 8);
+		}
+		else if (qdat.length == 1) {
+		    tol = qdat[0][0];
+		    nqpts = (int)Math.max(Math.ceil(-Math.log10(tol)), 3);
+		    qdat2 = new double[nqpts][2*beta.length+2];
+			scqdata(qdat2, beta, nqpts);
+			qdatr2 = new double[nqpts][2*betar.length+2];
+			scqdata(qdatr2, betar, nqpts);
+		}
+		else {
+			qdat2 = qdat;
+			qdatr2 = qdatr;
+			tol = Math.pow(10.0, -qdat.length);
+		}
+		
+		// Look for multiple-sheet case
+		zpindex = new int[p];
+		onvtx = new boolean[wr.length][p];
+		isinpoly2(zpindex, onvtx, zp, wr, betar, tol);
+		maxindex = -1;
+		for (i = 0; i < p; i++) {
+			if (zpindex[i] > maxindex) {
+				maxindex = zpindex[i];
+			}
+		} // for (i = 0; i < p; i++)
+		if (maxindex == 0) {
+		    // zp consists only of points outside the domain
+			for (i = 0; i < p; i++) {
+		        wp[i][0][0] = Double.NaN;
+				wp[i][0][1] = 0;
+			}
+			return;
+		} // if (maxindex == 0)
+		//else if (maxindex == 1) {
+	         //shape = new int[]{p};
+		//}
+		//else {
+			//shape = new int[]{p, maxindex};
+		//}
+		numcopies = new int[p]; // # of copies found so far per point
+		up = new double[p][Math.max(1, maxindex)][2];
+		for (i = 0; i < p; i++) {
+			for (j = 0; j < Math.max(1, maxindex); j++) {
+				wp[i][j][0] = Double.NaN;
+				wp[i][j][1] = 0.0;
+				up[i][j][0] = Double.NaN;
+				up[i][j][1] = 0.0;
+				qnum[i][j] = -1; // where each point was mapped from
+			}
+		} // for (i = 0; i < p; i++)
+		
+		// First, deal with points coincident with vertices
+		onvtxcolumn = new boolean[onvtx[0].length];
+		numcol = 0;
+		for (j = 0; j < onvtx[0].length; j++) {
+			for (i = 0; i < onvtx.length; i++) {
+				if (onvtx[i][j]) {
+					onvtxcolumn[j] = true;
+				}
+			}
+			if (onvtxcolumn[j]) {
+				numcol++;
+			}
+		} // for (j = 0; j < onvtx[0].length; j++)
+		colfind = new int[numcol];
+		for (i = 0, j = 0; j < onvtx[0].length; j++) {
+			if (onvtxcolumn[j]) {
+			    colfind[i++] = j;	
+			}
+		}
+		qn = new int[onvtx[0].length][onvtx.length];
+		for (i = 0; i < onvtx[0].length; i++) {
+			for (j = 0; j < onvtx.length; j++) {
+				qn[i][j] = -1;
+			}
+		}
+		for (kk = 0; kk < numcol; kk++) {
+			k = colfind[kk];
+			nv = 0;
+			for (i = 0; i < onvtx.length; i++) {
+				if (onvtx[i][k]) {
+					 nv++;
+				}
+			}
+			vtxnum = new int[nv];
+			for (i = 0, m = 0; i < onvtx.length; i++) {
+				if (onvtx[i][k]) {
+					 vtxnum[m++] = i;
+				}
+			}
+			for (i = 0; i < nv; i++) {
+				wp[k][i][0] = w[vtxnum[i]][0];
+				wp[k][i][1] = w[vtxnum[i]][1];
+			} // for (i = 0; i < nv; i++)
+			for (j = 0; j < nv; j++) {
+			    minfind = -1;
+			    for (m = 0; m < Q.qlvert[0].length && (minfind == -1); m++) {
+			    	for (i = 0; i < 4 && (minfind == -1); i++) {
+			    		if (vtxnum[j] == Q.qlvert[i][m]) {
+			    			minfind = m;
+			    		}
+			    	}
+			    } // for (m = 0; m < Q.qlvert[0].length && (minfind == -1); m++)
+			    qn[k][j] = minfind;
+			} // for (j = 0; j < nv; j++)
+			numcopies[k] = nv;
+		} // for (kk = 0; kk < numcol; kk++)
+		
+		// For each embedding, compose inverse rectified & forwrward original maps
+		// for points of zp in the quadrilateral
+		for (q = 0; q < n-3; q++) {
+		    // Short-circuit if all is done	
+			allSame = true;
+			for (i = 0; i < p && allSame; i++) {
+				if (numcopies[i] != zpindex[i]) {
+					allSame = false;
+				}
+			} // for (i = 0; i < p && allSame; i++) 
+			if (allSame) {
+				break;
+			}
+			
+			// Still need to be mapped
+			idxnum = 0;
+			for (i = 0; i < p; i++) {
+				if (numcopies[i] < zpindex[i]) {
+					idxnum++;
+				}
+			}
+			idx = new int[idxnum];
+			for (i = 0, j = 0; i < p; i++) {
+				if (numcopies[i] < zpindex[i]) {
+					idx[j++] = i;
+				}
+			}
+			
+			// Those that are inside quadrilateral q
+			mask = new boolean[idxnum];
+			onvtx2 = new boolean[4][idxnum];
+			zpidx = new double[idxnum][2];
+			for (i = 0; i < idxnum; i++) {
+				zpidx[i][0] = zp[idx[i]][0];
+				zpidx[i][1] = zp[idx[i]][1];
+			}
+			wr4 = new double[4][2];
+			for (i = 0; i < 4; i++) {
+				wr4[i][0] = wr[Q.qlvert[i][q]][0]; 
+				wr4[i][1] = wr[Q.qlvert[i][q]][1];
+			}
+			isinpoly(mask, onvtx2, zpidx, wr4, null, tol);
+			
+			// If a point was mapped from a neighboring quadrilateral, exclude it,
+			// since it would be a repeat
+			if (maxindex > 1) {
+				for (i = 0; i < onvtx[0].length; i++) {
+					for (j = 0; j < onvtx.length; j++) {
+						qn[i][j] = -1;
+					}
+				}
+			     for (i = 0; i < idxnum; i++) {
+			    	 for (j = 0; j < Math.max(1, maxindex); j++) {
+			    	    qn[j][i] = qnum[idx[i]][j];	 
+			    	 }
+			     }
+			     for (i = 0; i < onvtx[0].length; i++) {
+			    	 for (j = 0; j < onvtx.length; j++) {
+			    		 if (qn[i][j] != -1) {
+			    			 if (Q.adjacent[q][qn[i][j]]) {
+			    				 qn[i][j] = 0;
+			    			 }
+			    		 }
+			    	 }
+			     }
+			     for (j = 0; j < idxnum; j++) {
+			    	 for (i = 0; i < onvtx[0].length; i++) {
+			    		 if (qn[i][j] == 0) {
+			    			 mask[j] = false;
+			    		 }
+			    	 }
+			     }
+			} // if (maxindex > 1)
+			
+			nummask = 0;
+			for (i = 0; i < idxnum; i++) {
+				if (mask[i]) {
+					nummask++;
+				}
+			}
+			
+			if (nummask > 0) {
+				// Proceed
+				idx2 = new int[nummask];
+				for (i = 0, j = 0; i < nummask; i++) {
+					if (mask[i]) {
+					    idx2[j++] = idx[i];
+					}
+				}
+				z = crembed(cr, Q, q);
+				zpidx = new double[nummask][2];
+				for (i = 0; i < nummask; i++) {
+					zpidx[i][0] = zp[idx2[i]][0];
+					zpidx[i][1] = zp[idx2[i]][1];
+				}
+				affrq = new double[affr[0].length][2];
+				for (i = 0; i < affr[0].length; i++) {
+					affrq[i][0] = affr[q][i][0];
+					affrq[i][1] = affr[q][i][1];
+				}
+				boolean ode = true;
+				boolean newton = true;
+				int maxiter = 10;
+				up1 = crimap0(zpidx, z, betar, affrq, qdatr, ode, newton, tol, maxiter);
+				affq = new double[aff[0].length][2];
+				for (i = 0; i < aff[0].length; i++) {
+					affq[i][0] = aff[q][i][0];
+					affq[i][1] = aff[q][i][1];
+				}
+				wp1 = crmap0(up1, z, beta, affq, qdat);
+				// As a further check on repeats, compare values to previous ones
+				// (Points may lie on diagonals and appear to be in non-neighboring
+				// quadrilaterals)
+				if (maxindex > 1) {
+				    dif = new double[nummask][maxindex];
+				    for (i = 0; i < nummask; i++) {
+				    	for (j = 0; j < maxindex; j++) {
+				    		dif[i][j] = zabs(wp1[i][0] - wp[idx2[i]][j][0], wp1[i][1] - wp[idx2[i]][j][1]);
+				    	}
+				    }
+				    unique = new boolean[nummask];
+				    numunique = 0;
+				    for (i = 0; i < nummask; i++) {
+				    	unique[i] = true;
+				    	for (j = 0; j < maxindex; j++) {
+				    	    if (dif[i][j] < 10.0*tol) {
+				    	    	unique[i] = false;
+				    	    }
+				    	}
+				    	if (unique[i]) {
+				    		numunique++;
+				    	}
+				    } // for (i = 0; i < nummask; i++)
+				    wp2 = new double[numunique][2];
+				    up2 = new double[numunique][2];
+				    idx3 = new int[numunique];
+				    for (i = 0, j = 0; i < nummask; i++) {
+				        if (unique[i]) {
+				        	wp2[j][0] = wp1[i][0];
+				        	wp2[j][1] = wp1[i][1];
+				        	up2[j][0] = up1[i][0];
+				        	up2[j][1] = up1[i][1];
+				        	idx3[j++] = idx2[i];
+				        }
+				    }
+				} // if (maxindex > 1)
+				else {
+					wp2 = wp1;
+					up2 = up1;
+					idx3 = idx2;
+				}
+				// Fill in new values
+				for (i = 0; i < idx3.length; i++) {
+					wp[idx3[i]][numcopies[idx3[i]]][0] = wp2[i][0];
+					wp[idx3[i]][numcopies[idx3[i]]][1] = wp2[i][1];
+					up[idx3[i]][numcopies[idx3[i]]][0] = up2[i][0];
+					up[idx3[i]][numcopies[idx3[i]]][1] = up2[i][1];
+					qnum[idx3[i]][numcopies[idx3[i]]] = q;
+					numcopies[idx3[i]] = numcopies[idx3[i]] + 1;
+				}
+			} // if (nummask > 0)
+		} // for (q = 0; q < n-3; q++)
+	} // crrmap
 	
 	private void rplot(double w[][], double beta[], double z[][], double c[],
 			double L[], int re, int im, int yInvert) {
