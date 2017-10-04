@@ -13,6 +13,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
@@ -293,6 +294,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 
+	public void addAnnotationListener( AnnotationListener listener ) {
+
+		if ( latticeModel == null )
+		{
+			latticeModel = new LatticeModel( m_kImageA );
+		}
+		latticeModel.addAnnotationListener(listener);
+	}
+	
 	public void editAnnotations( boolean automaticLabels )
 	{
 		mouse3D = false;

@@ -247,6 +247,8 @@ public class LatticeModel {
 	private int[][] allSeamCellIDs = null;
 	
 	private boolean colorAnnotations = false;
+	
+	private Vector<AnnotationListener> annotationListeners;
 
 	/**
 	 * Creates a new LatticeModel
@@ -298,6 +300,21 @@ public class LatticeModel {
 		updateLattice(true);
 	}
 
+	public void addAnnotationListener( AnnotationListener listener )
+	{
+		if ( annotationListeners == null ) {
+			annotationListeners = new Vector<AnnotationListener>();
+		}
+		annotationListeners.add(listener);
+	}
+	
+	private void updateAnnotationListeners() {
+		if ( annotationListeners != null ) {
+			for ( int i = 0; i < annotationListeners.size(); i++ ) {
+				annotationListeners.elementAt(i).annotationChanged();
+			}
+		}
+	}
 
 	/**
 	 * Add an annotation to the worm image.
@@ -327,7 +344,9 @@ public class LatticeModel {
 			}
 		}
 		colorAnnotations();
+		updateAnnotationListeners();
 	}
+	
 	
 	public void displayAnnotation( String name, boolean display ) {
 		if ( annotationVOIs == null ) {
@@ -340,6 +359,7 @@ public class LatticeModel {
 				text.display(display);
 			}
 		}
+		updateAnnotationListeners();
 	}
 	
 	public VOI getAnnotations() {
@@ -563,6 +583,7 @@ public class LatticeModel {
 		}
 		pickedPoint = null;
 		pickedAnnotation = -1;
+		updateAnnotationListeners();
 	}
 
 	/**
@@ -691,6 +712,7 @@ public class LatticeModel {
 		if ( (pickedAnnotation < 0) || (pickedAnnotation > annotationVOIs.getCurves().size()) ) {
 			return null;
 		}
+		updateAnnotationListeners();
 		return (VOIText) annotationVOIs.getCurves().elementAt(pickedAnnotation);
 	}
 
@@ -776,6 +798,7 @@ public class LatticeModel {
 				updateLattice(false);
 			}
 		}
+		updateAnnotationListeners();
 		return pickedPoint;
 	}
 
@@ -957,6 +980,7 @@ public class LatticeModel {
 				// updateLattice(false);
 			}
 		}
+		updateAnnotationListeners();
 		return (pickedPoint != null);
 	}
 	
@@ -992,6 +1016,7 @@ public class LatticeModel {
 		{
 			System.err.println("No matching VOI");
 		}		
+		updateAnnotationListeners();
 	}
 
 	/**
@@ -1099,6 +1124,7 @@ public class LatticeModel {
 				updateLattice(false);
 			}
 		}
+		updateAnnotationListeners();
 	}
 	
 
@@ -1118,6 +1144,7 @@ public class LatticeModel {
 			text.updateText();
 			colorAnnotations();
 		}
+		updateAnnotationListeners();
 	}
 
 	/**
@@ -1345,6 +1372,7 @@ public class LatticeModel {
 		}
 		annotationVOIs = null;
 		clear3DSelection();
+		updateAnnotationListeners();
 	}
 	
 	/**
@@ -1394,6 +1422,7 @@ public class LatticeModel {
 			}
 		}
 		colorAnnotations();
+		updateAnnotationListeners();
 	}
 
 	public void setImage(ModelImage image)
@@ -1493,6 +1522,7 @@ public class LatticeModel {
 			pickedPoint.copy(pt);
 			updateLattice(false);
 		}
+		updateAnnotationListeners();
 	}
 
 	/**
@@ -2305,6 +2335,7 @@ public class LatticeModel {
 				}
 			}
 		}
+		updateAnnotationListeners();
 	}
 	
 	static public boolean match( Color c1, Color c2 )
