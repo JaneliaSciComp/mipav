@@ -9923,12 +9923,180 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			            	}
 		            		m++;
 		            	}
-		            }
+		            } // for (i = 0, m = 0; i < wp.length; i++)
 		        } //  if (numnew < newlog.size())
+		        for (i = 0, m = 0; i < wp.length; i++) {
+	            	if (newlog.get(i)) {
+		            	for (k = 0; k < wp[0].length; k++) {
+		            		qn[i][k] = newqn[m][k];
+		            	}
+		            	m++;
+	            	}
+	            } // for (i = 0, m = 0; i < wp.length; i++)
+		        
+		        // Sort the columns so as to make continuous curves
+		        crrsort(wp, qn, Q);
+		        
+		        linhx[j][0].clear();
+				linhy[j][0].clear();
+				linhx[j][1].clear();
+				linhy[j][1].clear();
+				// Update the points to show progress
+				for (k = 0; k < wp[0].length; k++) {
+					for (i = 0; i < wp.length; i++) {
+						linhx[j][0].add(wp[i][k][0]);
+						linhy[j][0].add(wp[i][k][1]);
+					}
+				}
+				for (i = 0; i < zp2.length; i++) {
+					linhx[j][1].add(zp2[i][0]);
+					linhy[j][1].add(zp2[i][1]);
+				}
+				
+				iter = iter + 1;
+				// Add points to zp2 where necessary
+				//scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
 		    } // while ((numnew > 0) && (iter < maxrefn))
 		} // for (j = 0; j < val.length; j++)
 		
-	}
+	} // crrplot0
+	
+	private void crrsort(double wp[][][], int qnum[][], qlgraph Q) {
+		// For multiple-valued maps (self-overlapping source polygons), the
+		// crrmap function returns columns for all images of each source
+		// point.  This function sorts those columns for crrplot0 so that 
+		// each represents a continuous curve.
+		int i,j, k;
+		boolean mask[][];
+		int diffqnum[];
+		int nump;
+		int p[];
+		int p0;
+		boolean toggle;
+		int numcol;
+		int col[];
+		double wptemp;
+		int qnumtemp;
+		int len = wp.length;
+		int m = wp[0].length;
+		// Q.adjacent is an (n-3) by (n-3) logical matrix; it indicates which 
+		// quadrilaterals share a common triangle.
+		int n3 = Q.adjacent[0].length;
+		// adj is a matrix of quadrilateral adjacencies.  A dummy row and column of 
+		// zeros are added to simulate the "null quadrilateral."  The diagonal is set
+		// to ones to the quads self-adjacent.
+		boolean adj[][] = new boolean[n3+1][n3+1];
+		for (i = 0; i < n3; i++) {
+			for (j = 0; j < n3; j++) {
+			    adj[i][j] = Q.adjacent[i][j];	
+			}
+		}
+		for (i = 0; i < n3; i++) {
+			adj[i][i] = true;
+		}
+		
+		// Make the unused positions come from the null quadrilateral
+		mask = new boolean[qnum.length][qnum[0].length];
+		for (i = 0; i < qnum.length; i++) {
+			for (j = 0; j < qnum[0].length; j++) {
+				if (qnum[i][j] == -1) {
+					mask[i][j] = true;
+					qnum[i][j] = n3;
+				}
+			}
+		} // for (i = 0; i < qnum.length; i++)
+		
+		if (m > 1) {
+		    // For each potential curve
+			for (k = 0; k < m; k++) {
+			    // Indices of changes in source quadrilateral
+				diffqnum = new int[len-1];
+				nump = 0;
+				for (i = 0; i < len-1; i++) {
+					diffqnum[i] = qnum[i+1][k] - qnum[i][k];
+					if (diffqnum[i] != 0) {
+						nump++;
+					}
+				} // for (i = 0; i < len-1; i++)
+				p = new int[nump];
+				for (i = 0, j = 0; i < len-1; i++) {
+					if (diffqnum[i] != 0) {
+					    p[j++] = i;	
+					}
+				} // for (i = 0, j = 0; i < len-1; i++)
+				toggle = !Double.isNaN(wp[0][k][0]);
+				while ((p != null) && (p.length > 0)) {
+				    p0 = p[0];
+				    // If the change is not to a neighbor, swap columns
+				    if (!adj[qnum[p0][k]][qnum[p0+1][k]]) {
+				        // Look for a column that does use a neighbor
+				    	numcol = 0;
+				    	for (i = 0; i < qnum[0].length; i++) {
+				    	    if (adj[qnum[p0][k]][qnum[p0+1][i]]) {
+				    	        numcol++;	
+				    	    }
+				    	} // for (i = 0; i < qnum[0].length; i++)
+				    	if (numcol > 0) {
+				    		col = new int[numcol];
+				    		for (i = 0, j = 0; i < qnum[0].length; i++) {
+					    	    if (adj[qnum[p0][k]][qnum[p0+1][i]]) {
+					    	        col[j++] = i;	
+					    	    }
+					    	} // for (i = 0, j = 0; i < qnum[0].length; i++)
+				    		// Swap
+				    		for (i = p[0]+1; i < len; i++) {
+				    		    wptemp = wp[i][col[0]][0];
+				    		    wp[i][col[0]][0] = wp[i][k][0];
+				    		    wp[i][k][0] = wptemp;
+				    		    wptemp = wp[i][col[0]][1];
+				    		    wp[i][col[0]][1] = wp[i][k][1];
+				    		    wp[i][k][1] = wptemp;
+				    		    qnumtemp = qnum[i][col[0]];
+				    		    qnum[i][col[0]] = qnum[i][k];
+				    		    qnum[i][k] = qnumtemp;
+				    		} // for (i = p[0]+1; i < len; i++)
+				    	} // if (numcol > 0)
+				    } // if (!adj[qnum[p0][k]][qnum[p0+1][k]])
+				    if (toggle) {
+				    	if (Double.isNaN(wp[p0+1][k][0])) {
+				    		break;
+				    	}
+				    } // if (toggle)
+				    else {
+				    	if (!Double.isNaN(wp[p0+1][k][0])) {	
+				    		toggle = true;
+				    	}
+				    }
+				    // Move to next change in quads (must recompute)
+				    diffqnum = new int[len-p0-1];
+				    nump = 0;
+				    for (i = 0; i < len-p0-1; i++) {
+				        diffqnum[i] = qnum[i+p0+2][k] - qnum[i+p0+1][k];
+				        if (diffqnum[i] != 0) {
+							nump++;
+						}
+				    }
+				    p = new int[nump];
+				    for (i = 0, j = 0; i < len-p0-1; i++) {
+				        diffqnum[i] = qnum[i+p0+2][k] - qnum[i+p0+1][k];
+				        if (diffqnum[i] != 0) {
+							p[j++] = p0 + i + 1;
+						}
+				    }
+				} // while ((p != null) && (p.length > 0))
+			} // for (k = 0; k < m; k++)
+		} // if (m > 1)
+		
+		// Change null quads back to NaNs
+		for (i = 0; i < qnum.length; i++) {
+			for (j = 0; j < qnum[0].length; j++) {
+				mask[i][j] = (qnum[i][j] == n3);
+				if (mask[i][j]) {
+					qnum[i][j] = -1;
+				}
+			}
+		}
+	} // crrsort
 	
 	public void crrmap(double wp[][][], int qnum[][], double zp[][],
 			double w[][], double beta[], double wr[][], double betar[], double cr[], double aff[][][],
