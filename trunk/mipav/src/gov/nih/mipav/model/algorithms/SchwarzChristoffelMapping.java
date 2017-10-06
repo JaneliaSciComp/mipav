@@ -149,12 +149,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testCRDiskmap2();
         	//testDiskmap3();
         	//testCRDiskmap3();
-        	testDiskmap4();
+        	//testDiskmap4();
         	// No testCRDiskmap4() because CRDisk cannot handle infinities in example.
         	//testDiskmap5();
         	//testCRDiskmap5();
             // testDiskmap6();
         	//testExtermap1();
+        	testCRRectmap1();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -1967,6 +1968,35 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double R[] = new double[]{4.0/10.0, 5.0/10.0, 6.0/10.0, 7.0/10.0, 8.0/10.0, 9.0/10.0};
 		double theta[] =new double[1];
 		exterplot(M, R, theta, 20, 14, null, Integer.MIN_VALUE);
+	}
+	
+	public void testCRRectmap1() {
+		// Example from users guide
+		// Test with
+		// SchwarzChristoffelMapping sc = new SchwarzChristoffelMapping();
+    	// sc.runAlgorithm();
+		double w[][] = new double[6][2];
+        w[0][0] = -5;
+        w[0][1] = -1;
+        w[1][0] = -5;
+        w[1][1] = -3;
+        w[2][0] = 5;
+        w[2][1] = -3;
+        w[3][0] = 5;
+        w[3][1] = 1;
+        w[4][0] = 5;
+        w[4][1] = 3;
+        w[5][0] = -5;
+        w[5][1] = 3;
+        int corner[] = new int[4];
+        corner[0] = 0;
+        corner[1] = 1;
+        corner[2] = 3;
+        corner[3] = 4;
+        scmap M = crrectmap(w, corner, tolerance);
+        double nre[] = new double[]{10.0};
+        double nim[] = new double[]{10.0};
+        crrectplot(M, nre, nim, Integer.MIN_VALUE);
 	}
 	
 	public scmap crdiskmap(polygon poly, double tolerance, double cr[][], qlgraph Q) {
@@ -7615,13 +7645,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	public scmap crrectmap(double w[][], int corner[], double tolerance) {
 	    // Schwarz-Christoffel cross ratio-disk map object.
 		// crrectmap constructs a Schwarz-Christoffel crossratio rectified map object
-		// for the polygon  p.  The parameter problem is solved, using default options,
+		// for the polygon p.  The parameter problem is solved, using default options,
 		// for the crossratios of the prevertices on the disk.  Then you are required
 		// to graphically assign angles of the rectified polygon.  These angles determine
 		// the rectilinear polygon that is considered the canonical domain.
 		// In this MIPAV application the rectilinear polygon will always be taken as
 		// a rectangle with alphar having 0.5 at the 4 corners and alphar = 1 elsewhere.
-		// Here alphhar is a vector having the same length as P.  Each element is an
+		// Here alphhar is a vector having the same length as p.  Each element is an
 		// interior angle of the rectified polygon, normalized by pi.  The only valid 
 		// entries are {.5, 1, 1.5. 2}.  Use crrectmap instead of rectmap when the polygon
 		// has multiple elongations, or when rectmap fails to converge.
@@ -7660,7 +7690,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    double cr[] = M.crossratio;
 	    double aff[][][] = new double[M.affine.length][M.affine[0].length][2];
 	    for (i = 0; i < M.affine.length; i++) {
-	    	for (j = 0; j < M.affine[0].length; i++) {
+	    	for (j = 0; j < M.affine[0].length; j++) {
 	    	    for (k = 0; k < 2; k++) {
 	    	    	aff[i][j][k] = M.affine[i][j][k];
 	    	    }
@@ -7693,7 +7723,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    M.rectpolygon = polyr;
 	    M.rectaffine = affr;
 	    int nqpts = (int)Math.ceil(-Math.log10(1.0E-8));
-	    M.rectqdata = new double[nqpts][2*crparam_beta.length+2];
+	    M.rectqdata = new double[nqpts][2*betar.length+2];
 	    scqdata(M.rectqdata, betar, nqpts);
 	    
 		return M;
@@ -7710,11 +7740,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// you can define a rectified polygon to map to by specifying the rectified
 		// angles.  (Side lengths are not free variables; they are a consequence of
 		// the original polygon and the rectified angles.)  There is no unique correct
-		// choice of angles.  No automatic selection of the rectfied angles is 
+		// choice of angles.  No automatic selection of the rectified angles is 
 		// currently available.
 		// 
 		// Important note: The rectified polygon may not be embeddable in the plane.
-		// That is, it may overlap itself. This may be difficult to see graphically,,
+		// That is, it may overlap itself. This may be difficult to see graphically,
 		// but it does not affect crrect in any way.
 		
 		// This is a subset of the original MATLAB crrect 1998 routine copyright by Toby Driscoll.
@@ -9505,6 +9535,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double minimagwr = Double.MAX_VALUE;
 		double maximagwr = -Double.MAX_VALUE;
 		int i;
+		int j;
 		int m;
 		for (i = 0; i < wr.length; i++) {
 			if (wr[i][0] < minrealwr) {
@@ -9574,16 +9605,75 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		minlen = len * minlen;
 		maxlen = len * maxlen;
 		tol = Math.pow(10.0, -nqpts);
-		
+		Vector<Double> linhx[][] = new Vector[re.length][2];
+		Vector<Double> linhy[][] = new Vector[re.length][2];
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
 		crrplot0("ver", re, minlen, maxlen, maxrefn, tol, w, beta, wr,
-				betar, cr, aff, affr, Q, qdat, qdatr, axlim, siz);
+				betar, cr, aff, affr, Q, qdat, qdatr, axlim, siz, linhx, linhy);
+		for (i = 0; i < re.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		double posx1 = linhx[i][0].get(j);
+		    		double posy1 = linhy[i][0].get(j);
+		    		double posx2 = linhx[i][0].get(j+1);
+		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		}
+		linhx = new Vector[im.length][2];
+		linhy = new Vector[im.length][2];
+		
 		crrplot0("hor", im, minlen, maxlen, maxrefn, tol, w, beta, wr,
-				betar, cr, aff, affr, Q, qdat, qdatr, axlim, siz);
+				betar, cr, aff, affr, Q, qdat, qdatr, axlim, siz, linhx, linhy);
+		for (i = 0; i < im.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		double posx1 = linhx[i][0].get(j);
+		    		double posy1 = linhy[i][0].get(j);
+		    		double posx2 = linhx[i][0].get(j+1);
+		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		}
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
+
 	}
 	
 	private void crrplot0(String direcn, double val[], double minlen, double maxlen, int maxrefn, double tol,
 			double w[][], double beta[], double wr[][], double betar[], double cr[], double aff[][][],
-			double affr[][][], qlgraph Q, double qdat[][], double qdatr[][], double axlim[], double siz) {
+			double affr[][][], qlgraph Q, double qdat[][], double qdatr[][], double axlim[], double siz,
+			Vector<Double>linhx[][], Vector<Double>linhy[][]) {
 	    // This is the routine that actually draws the curves corresponding to either vertical
 		// or horizontal lines
 		int i, j, k, m, p;
@@ -9596,8 +9686,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		int identical[];
 		int numnotidentical;
 		int notidentical[];
-		Vector<Double> linhx[][] = new Vector[val.length][2];
-		Vector<Double> linhy[][] = new Vector[val.length][2];
+		
+		Vector<Double>zpReal = new Vector<Double>();
+		Vector<Double>zpImag = new Vector<Double>();
+		Vector<Double>wpReal[];
+		Vector<Double>wpImag[];;
 		double neww[][][];
 		int newqn[][];
 		Vector<Boolean>newlog = new Vector<Boolean>();
@@ -9628,7 +9721,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		int n0[];
 		int n0sum;
 		double zp[];
-		double zp2[][];
 		int lenzp;
 		double wp[][][];
 		int qn[][];
@@ -9835,17 +9927,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			
 			
 			lenzp = zp.length;
-			zp2 = new double[lenzp][2];
+			zpReal.clear();
+			zpImag.clear();
 			if (direcn.equals("ver")) {
 			    for (i = 0; i < lenzp; i++) {
-			    	zp2[i][0] = val[j];
-			    	zp2[i][1] = zp[i];
+			    	zpReal.add(val[j]);
+			    	zpImag.add(zp[i]);
 			    }
 			} // if (direcn.equals("ver"))
 			else { // (direcn.equals("hor"))
 				for (i = 0; i < lenzp; i++) {
-			    	zp2[i][0] = zp[i];
-			    	zp2[i][1] = val[j];
+					zpReal.add(zp[i]);
+					zpImag.add(val[j]);
 			    }	
 			} // else (direcn.equals("hor"))
 			
@@ -9855,11 +9948,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        newlog.add(true);
 		    }
 		    numnew = lenzp;
-		    wp = new double[lenzp][numcurves][2];
+		    wpReal = new Vector[lenzp];
+		    wpImag = new Vector[lenzp];
 		    qn = new int[lenzp][numcurves];
 		    for (i = 0; i < lenzp; i++) {
+		    	wpReal[i] = new Vector<Double>();
+		    	wpImag[i] = new Vector<Double>();
 		    	for (m = 0; m < numcurves; m++) {
-		    		wp[i][m][0] = Double.NaN;
+		    		wpReal[i].add(Double.NaN);
+		    		wpImag[i].add(Double.NaN);
 		    		qn[i][m] = -1;
 		    	}
 		    }
@@ -9869,16 +9966,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    while ((numnew > 0) && (iter < maxrefn)) {
 		    	
 		        zpnew = new double[numnew][2];
-		        for (i = 0, m = 0; i < lenzp; i++) {
+		        for (i = 0, m = 0; i < newlog.size(); i++) {
 		        	if (newlog.get(i)) {
-		        		zpnew[m][0] = zp2[i][0];
-		        		zpnew[m++][1] = zp2[i][1];
+		        		zpnew[m][0] = zpReal.get(i);
+		        		zpnew[m++][1] = zpImag.get(i);
 		        	}
 		        }
 		        tolmap = Math.pow(10.0, -qdat.length);
 		        zpindex = new int[numnew];
 				onvtx = new boolean[wr.length][numnew];
-				isinpoly2(zpindex, onvtx, zpnew, wr, betar, tol);
+				isinpoly2(zpindex, onvtx, zpnew, wr, betar, tolmap);
 				maxindex = -1;
 				for (i = 0; i < numnew; i++) {
 					if (zpindex[i] > maxindex) {
@@ -9894,11 +9991,11 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        crrmap(neww, newqn, zpnew, w, beta, wr, betar, cr, aff, affr,
 		        		Q, qdat, qdatr);
 		        // Incorporate new points
-		        for (i = 0, k = 0; i < wp.length; i++) {
+		        for (i = 0, k = 0; i < wpReal.length; i++) {
 		        	if (newlog.get(i)) {
 			        	for (m = 0; m < Math.max(1, maxindex); m++) {
-			        	    wp[i][m][0] = neww[k][m][0];
-			        	    wp[i][m][1] = neww[k][m][1];
+			        		wpReal[i].set(m, neww[k][m][0]);
+			        		wpImag[i].set(m, neww[k][m][1]);
 			        	} 
 			        	k++;
 		        	} // if (newlog.get(i)
@@ -9910,24 +10007,24 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		            		qnold[i][k] = qn[i][k];
 		            	}
 		            }
-		            qn = new int[wp.length][wp[0].length];
-		            for (i = 0, m = 0; i < wp.length; i++) {
+		            qn = new int[wpReal.length][wpReal[0].size()];
+		            for (i = 0, m = 0; i < wpReal.length; i++) {
 		            	if (newlog.get(i)) {
-			            	for (k = 0; k < wp[0].length; k++) {
+			            	for (k = 0; k < wpReal[0].size(); k++) {
 			            		qn[i][k] = -1;
 			            	}
 		            	}
 		            	else {
-		            		for (k = 0; k < wp[0].length; k++) {
+		            		for (k = 0; k < wpReal[0].size(); k++) {
 			            		qn[i][k] = qnold[m][k];
 			            	}
 		            		m++;
 		            	}
 		            } // for (i = 0, m = 0; i < wp.length; i++)
 		        } //  if (numnew < newlog.size())
-		        for (i = 0, m = 0; i < wp.length; i++) {
+		        for (i = 0, m = 0; i < wpReal.length; i++) {
 	            	if (newlog.get(i)) {
-		            	for (k = 0; k < wp[0].length; k++) {
+		            	for (k = 0; k < wpReal[0].size(); k++) {
 		            		qn[i][k] = newqn[m][k];
 		            	}
 		            	m++;
@@ -9935,33 +10032,49 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	            } // for (i = 0, m = 0; i < wp.length; i++)
 		        
 		        // Sort the columns so as to make continuous curves
-		        crrsort(wp, qn, Q);
+		        crrsort(wpReal, wpImag, qn, Q);
 		        
 		        linhx[j][0].clear();
 				linhy[j][0].clear();
 				linhx[j][1].clear();
 				linhy[j][1].clear();
 				// Update the points to show progress
-				for (k = 0; k < wp[0].length; k++) {
-					for (i = 0; i < wp.length; i++) {
-						linhx[j][0].add(wp[i][k][0]);
-						linhy[j][0].add(wp[i][k][1]);
+				for (k = 0; k < wpReal[0].size(); k++) {
+					for (i = 0; i < wpReal.length; i++) {
+						linhx[j][0].add(wpReal[i].get(k));
+						linhy[j][0].add(wpImag[i].get(k));
 					}
 				}
-				for (i = 0; i < zp2.length; i++) {
-					linhx[j][1].add(zp2[i][0]);
-					linhy[j][1].add(zp2[i][1]);
+				for (i = 0; i < zpReal.get(i); i++) {
+					linhx[j][1].add(zpReal.get(i));
+					linhy[j][1].add(zpImag.get(i));
 				}
 				
 				iter = iter + 1;
 				// Add points to zp2 where necessary
-				//scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+				wp = scpadapt2(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+				wpReal = new Vector[wp.length];
+				wpImag = new Vector[wp.length];
+				for (i = 0; i < wp.length; i++) {
+					wpReal[i] = new Vector<Double>();
+					wpImag[i] = new Vector<Double>();
+					for (m = 0; m < wp[0].length; m++) {
+						wpReal[i].add(wp[i][m][0]);
+						wpImag[i].add(wp[i][m][1]);
+					}
+				}
+				numnew = 0;
+				for (i = 0; i < newlog.size(); i++) {
+					if (newlog.get(i)) {
+						numnew++;
+					}
+				}
 		    } // while ((numnew > 0) && (iter < maxrefn))
 		} // for (j = 0; j < val.length; j++)
 		
 	} // crrplot0
 	
-	private void crrsort(double wp[][][], int qnum[][], qlgraph Q) {
+	private void crrsort(Vector<Double>wpReal[], Vector<Double>wpImag[], int qnum[][], qlgraph Q) {
 		// For multiple-valued maps (self-overlapping source polygons), the
 		// crrmap function returns columns for all images of each source
 		// point.  This function sorts those columns for crrplot0 so that 
@@ -9977,8 +10090,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		int col[];
 		double wptemp;
 		int qnumtemp;
-		int len = wp.length;
-		int m = wp[0].length;
+		int len = wpReal.length;
+		int m = wpReal[0].size();
 		// Q.adjacent is an (n-3) by (n-3) logical matrix; it indicates which 
 		// quadrilaterals share a common triangle.
 		int n3 = Q.adjacent[0].length;
@@ -10024,7 +10137,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					    p[j++] = i;	
 					}
 				} // for (i = 0, j = 0; i < len-1; i++)
-				toggle = !Double.isNaN(wp[0][k][0]);
+				toggle = !Double.isNaN(wpReal[0].get(k));
 				while ((p != null) && (p.length > 0)) {
 				    p0 = p[0];
 				    // If the change is not to a neighbor, swap columns
@@ -10044,26 +10157,26 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					    	    }
 					    	} // for (i = 0, j = 0; i < qnum[0].length; i++)
 				    		// Swap
-				    		for (i = p[0]+1; i < len; i++) {
-				    		    wptemp = wp[i][col[0]][0];
-				    		    wp[i][col[0]][0] = wp[i][k][0];
-				    		    wp[i][k][0] = wptemp;
-				    		    wptemp = wp[i][col[0]][1];
-				    		    wp[i][col[0]][1] = wp[i][k][1];
-				    		    wp[i][k][1] = wptemp;
+				    		for (i = p0+1; i < len; i++) {
+				    		    wptemp = wpReal[i].get(col[0]);
+				    		    wpReal[i].set(col[0],wpReal[i].get(k));
+				    		    wpReal[i].set(k,wptemp);
+				    		    wptemp = wpImag[i].get(col[0]);
+				    		    wpImag[i].set(col[0],wpImag[i].get(k));
+				    		    wpImag[i].set(k,wptemp);
 				    		    qnumtemp = qnum[i][col[0]];
 				    		    qnum[i][col[0]] = qnum[i][k];
 				    		    qnum[i][k] = qnumtemp;
-				    		} // for (i = p[0]+1; i < len; i++)
+				    		} // for (i = p0+1; i < len; i++)
 				    	} // if (numcol > 0)
 				    } // if (!adj[qnum[p0][k]][qnum[p0+1][k]])
 				    if (toggle) {
-				    	if (Double.isNaN(wp[p0+1][k][0])) {
+				    	if (Double.isNaN(wpReal[p0+1].get(k))) {
 				    		break;
 				    	}
 				    } // if (toggle)
 				    else {
-				    	if (!Double.isNaN(wp[p0+1][k][0])) {	
+				    	if (!Double.isNaN(wpReal[p0+1].get(k))) {	
 				    		toggle = true;
 				    	}
 				    }
@@ -10078,7 +10191,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    }
 				    p = new int[nump];
 				    for (i = 0, j = 0; i < len-p0-1; i++) {
-				        diffqnum[i] = qnum[i+p0+2][k] - qnum[i+p0+1][k];
 				        if (diffqnum[i] != 0) {
 							p[j++] = p0 + i + 1;
 						}
@@ -11001,6 +11113,335 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			}
 		}
 	}
+	
+	private double[][][] scpadapt2(Vector<Double> zpReal, Vector<Double> zpImag,
+			Vector<Double> wpReal[], Vector<Double> wpImag[], Vector<Boolean> newlog,
+				double minlen, double maxlen, double clip[]) {
+			// This function looks for unacceptable nonsmoothness in the curve(s)
+			// represented by wp.  At such points it adds in-between points to zp.
+			// On return zp is the combined vector of points in order, wp has NaN's 
+			// at the new points, and newlog is a 0-1 vector flagging the newly added 
+			// points.
+			
+			// The algorithm is basically stolen from fplot.  If extrapolation of the
+			// linear interpolation that the graphics will use results in an estimate
+			// too far from reality, refinement is called for.
+			
+			// When the clip argument is used, the criteria do not apply for points
+			// outside the clip region.  Why refine for invisible points?
+			
+			// wp can have multiple columns (curves).  Any curve needing refinement
+			// causes it for all of them.
+			
+			// This should become the adaptive routine for all SC plotting.  Allowances
+			// must be made for cases when the ends of zp need not be bounded (as with
+			// the half-plane and strip).  Perhaps the newly added points should be
+			// spaced exponentially rather than added algebraically.
+			
+			// Original MATLAB routine copyright 1997-2003 by Toby Driscoll.
+			int i, j, k;
+			double cr[] = new double[1];
+			double ci[] = new double[1];
+			int m = wpReal.length;
+			double dwp[][][] = new double[m-1][wpReal[0].size()][2];
+			for (i = 0; i < m-1; i++) {
+				for (j = 0; j < wpReal[0].size(); j++) {
+					dwp[i][j][0] = wpReal[i+1].get(j) - wpReal[i].get(j);
+					dwp[i][j][1] = wpImag[i+1].get(j) - wpImag[i].get(j);
+				}
+			}
+			
+			// Infinities at the ends of zp mean that we could go out forever.  However,
+			// we will pick a finite bound.
+			boolean linf = (Double.isInfinite(zpReal.get(0)) || Double.isInfinite(zpImag.get(0)));
+			if (linf) {
+				double absVal = zabs(zpReal.get(2) - zpReal.get(1), zpImag.get(2) - zpImag.get(1));
+				double maxVal = Math.max(3, absVal * absVal);
+				double signVal[] = sign(zpReal.get(1) - zpReal.get(2),
+						                zpImag.get(1) - zpImag.get(2));
+				zpReal.set(0, zpReal.get(1) + maxVal*signVal[0]);
+				zpImag.set(0, zpImag.get(1) + maxVal*signVal[1]);
+			} // if (linf)
+			boolean rinf = (Double.isInfinite(zpReal.get(m-1)) || Double.isInfinite(zpImag.get(m-1)));
+			if (rinf) {
+				double absVal = zabs(zpReal.get(m-2) - zpReal.get(m-3), 
+						zpImag.get(m-2) - zpImag.get(m-3));	
+				double maxVal = Math.max(3, absVal * absVal);
+				double signVal[] = sign(zpReal.get(m-2) - zpReal.get(m-3),
+		                zpImag.get(m-2) - zpImag.get(m-3));
+				zpReal.set(m-1, zpReal.get(m-2) + maxVal*signVal[0]);
+				zpImag.set(m-1, zpImag.get(m-2) + maxVal*signVal[1]);
+			} // if (rinf)
+			
+			// Sines of the turning angles at interior points
+			double sines[][] = new double[m-2][wpReal[0].size()];
+			for (i = 0; i < m-2; i++) {
+				for (j = 0; j < wpReal[0].size(); j++) {
+				    zmlt(dwp[i][j][0], dwp[i][j][1], dwp[i+1][j][0], -dwp[i+1][j][1], cr, ci);
+				    double ang = Math.atan2(ci[0], cr[0]);
+				    double sinang = Math.sin(ang);
+				    sines[i][j] = Math.abs(sinang);
+				} // for (j = 0; j < wpReal[0].size(); j++)
+			} // for (i = 0; i < m-2; i++)
+			
+			// Distances from linear extrapolation to actual value.  Each interior
+			// point has a column, with two rows being errors to either side.
+			double absdwp[][] = new double[m-1][wpReal[0].size()];
+			for (i = 0; i < m-1; i++) {
+				for (j = 0; j < wpReal[0].size(); j++) {
+				    absdwp[i][j] = zabs(dwp[i][j][0], dwp[i][j][1]);
+				}
+			}
+			double err[][] = new double[m-2][2];
+			for (i = 0; i < m-2; i++) {
+				err[i][0] = -Double.MAX_VALUE;
+				err[i][1] = -Double.MAX_VALUE;
+				for (j = 0; j < wpReal[0].size(); j++) {
+					double val0 = absdwp[i][j]*sines[i][j];
+					if (val0 > err[i][0]) {
+						err[i][0] = val0;
+					}
+					double val1 = absdwp[i+1][j]*sines[i][j];
+					if (val1 > err[i][1]) {
+						err[i][1] = val1;
+					}
+				   
+				}
+			}
+			
+			
+			// Forget about NaNs
+			for (i = 0; i < m-2; i++) {
+				for (j = 0; j < 2; j++) {
+					if (Double.isNaN(err[i][j])) {
+						err[i][j] = 0.0;
+					}
+				}
+			}
+			
+			for (i = 0; i < absdwp.length; i++) {
+				for (j = 0; j < absdwp[0].length; j++) {
+					if (Double.isNaN(absdwp[i][j])) {
+						absdwp[i][j] = 0;
+					}
+				}
+			}
+			
+			// Flag large errors
+			boolean bad[][] = new boolean[m][2];
+			for (i = 1; i < m-1; i++) {
+				for (j = 0; j < 2; j++) {
+					if (err[i-1][j] > maxlen/12.0) {
+						bad[i][j] = true;
+					}
+				}
+			}
+			
+			// Also flag if the segments themselves are too long.
+			// However, exclude where segments are very short.
+			boolean longv[] = new boolean[m-1];
+			boolean shortv[] = new boolean[m-1];
+			for (i = 0; i < m-1; i++) {
+				shortv[i] = true;
+				for (j = 0; j < wpReal[0].size(); j++) {
+					if (absdwp[i][j] > maxlen) {
+						longv[i] = true;
+					}
+					if (absdwp[i][j] >= minlen) {
+						shortv[i] = false;
+					}
+				} // for (j = 0; j < wpReal[0].size(); j++)
+			} //  for (i = 0; i < m-1; i++)
+			bad[0][0] = false;
+			for (i = 1; i < m; i++) {
+				bad[i][0] = (bad[i][0] || longv[i-1]) && (!shortv[i-1]);
+			}
+			for (i = 0; i < m-1; i++) {
+				bad[i][1] = (bad[i][1] || longv[i]) && (!shortv[i]);
+			}
+			bad[m-1][1] = false;
+			
+			// Find clipped points
+			double xp[][] = new double[m][wpReal[0].size()];
+			for (i = 0; i < m; i++) {
+				for (j = 0; j < wpReal[0].size(); j++) {
+				    xp[i][j] = wpReal[i].get(j);
+				}
+			}
+			double yp[][] = new double[m][wpReal[0].size()];
+			for (i = 0; i < m; i++) {
+				for (j = 0; j < wpReal[0].size(); j++) {
+				    yp[i][j] = wpImag[i].get(j);
+				}
+			}
+			boolean lohi[][] = new boolean[m][wpReal[0].size()];
+			boolean lfrt[][] = new boolean[m][wpReal[0].size()];
+			for (i = 0; i < m; i++) {
+				for (j = 0; j < wpReal[0].size(); j++) {
+					lohi[i][j] = (yp[i][j] < clip[2]) || (yp[i][j] > clip[3]) || Double.isInfinite(xp[i][j]) ||
+							   Double.isInfinite(yp[i][j]);
+					lfrt[i][j] = (xp[i][j] < clip[0]) || (xp[i][j] > clip[1]) || Double.isInfinite(xp[i][j]) ||
+							   Double.isInfinite(yp[i][j]);
+				}
+			}
+			
+			// To be refined, you or a neighbor must be inside
+			boolean inside[] = new boolean[m];
+			for (i = 0; i < m; i++) {
+				inside[i] = true;
+				for (j = 0; j < wpReal[0].size(); j++) {
+				    if (lohi[i][j] || lfrt[i][j]) {
+				    	inside[i] = false;
+				    }
+				}
+			}
+			
+			for (i = 1; i < m; i++) {
+				bad[i][0] = bad[i][0] && (inside[i] || inside[i-1]);
+			}
+			for (i = 0; i < m-1; i++) {
+				bad[i][1] = bad[i][1] && (inside[i] || inside[i+1]);
+			}
+			
+			// Exception: Extend the lines that bound the axes box.  If you cross one
+			// horizontal and one vertical among those lines between adjacent points,
+			// you must refine in-between.  Otherwise, you could miss valid inside
+			// points, or get a line that crosses back into the axes box.
+			boolean lh[][] = new boolean[m][wpReal[0].size()];
+			boolean lr[][] = new boolean[m][wpReal[0].size()];
+			for (i = 0; i < m; i++) {
+				for (j = 0; j < wpReal[0].size(); j++) {
+				    lh[i][j] = lohi[i][j] && (!lfrt[i][j]);
+				    lr[i][j] = lfrt[i][j] && (!lohi[i][j]);
+				}
+			}
+			boolean flaginit[][] = new boolean[m-1][wpReal[0].size()];
+			boolean flag[] = new boolean[m-1];
+			int numflag = 0;
+			for (i = 0; i < m-1; i++) {
+				for (j = 0; j < wpReal[0].size(); j++) {
+				    flaginit[i][j] = (lh[i][j] && lr[i+1][j]) || (lr[i][j] && lh[i+1][j]);
+				    if (flaginit[i][j]) {
+				    	flag[i] = true;
+				    	numflag++;
+				    }
+				}
+			} // for (i = 0; i < m-1; i++)
+			if (numflag > 0) {
+			    for (i = 0; i < m-1; i++) {
+			    	if (flag[i]) {
+			    		bad[i+1][0] = true;
+			    		bad[i][1] = true;
+			    	}
+			    }
+			} // if (numflag > 0)
+			
+			// Refinement
+			double nans[][] = new double[m][2];
+			for (i = 0; i < m; i++) {
+				nans[i][0] = Double.NaN;
+			}
+			double zp2[][][] = new double[3][m][2];
+			for (i = 0; i < m; i++) {
+				zp2[0][i][0] = Double.NaN;
+				zp2[1][i][0] = zpReal.get(i);
+				zp2[1][i][1] = zpImag.get(i);
+				zp2[2][i][0] = Double.NaN;
+			}
+			double new2[][] = new double[3][m];
+			for (i = 0; i < m; i++) {
+				new2[0][i] = Double.NaN;
+				new2[2][i] = Double.NaN;
+			}
+			
+			// Add new source points.  Always go one-third of the distance toward
+			// the offending party.
+			int numback = 0;
+			for (i = 0; i < m; i++) {
+				if (bad[i][0]) {
+					numback++;
+				}
+			} // for (i = 0; i < m; i++)
+			if (numback > 0) {
+			    int back[] = new int[numback];
+			    for (i = 0, j = 0; i < m; i++) {
+			    	if (bad[i][0]) {
+			    		back[j++] = i;
+			    	}
+			    } // for (i = 0, j = 0; i < m; i++)
+			    for (i = 0; i < numback; i++) {
+			    	j = back[i];
+			    	zp2[0][j][0] = (zp2[1][j-1][0] + 2.0*zp2[1][j][0])/3.0;
+			    	zp2[0][j][1] = (zp2[1][j-1][1] + 2.0*zp2[1][j][1])/3.0;
+			    	new2[0][j] = 1;
+			    }
+			} // if (numback > 0)
+			int numforw = 0;
+			for (i = 0; i < m; i++) {
+				if (bad[i][1]) {
+					numforw++;
+				}
+			} // for (i = 0; i < m; i++)
+			if (numforw > 0) {
+			    int forw[] = new int[numforw];
+			    for (i = 0, j = 0; i < m; i++) {
+			    	if (bad[i][1]) {
+			    		forw[j++] = i;
+			    	}
+			    } // for (i = 0, j = 0; i < m; i++)
+			    for (i = 0; i < numforw; i++) {
+			    	j = forw[i];
+			    	zp2[2][j][0] = (zp2[1][j+1][0] + 2.0*zp2[1][j][0])/3.0;
+			    	zp2[2][j][1] = (zp2[1][j+1][1] + 2.0*zp2[1][j][1])/3.0;
+			    	new2[2][j] = 1;
+			    }
+			} // if (numforw > 0)
+			
+			// If we had infinities at the ends, put them back
+			if (linf) {
+				zp2[1][0][0] = Double.POSITIVE_INFINITY;
+			}
+			if (rinf) {
+				zp2[1][m-1][0] = Double.POSITIVE_INFINITY;
+			}
+			
+			// Restack zp into a vector, deleting NaNs
+			zpReal.clear();
+			zpImag.clear();
+			newlog.clear();
+			for (j = 0; j < m; j++) {
+				for (i = 0; i < 3; i++) {
+					if ((!Double.isNaN(zp2[i][j][0])) && (!Double.isNaN(zp2[i][j][1]))) {
+					    zpReal.add(zp2[i][j][0]);
+					    zpImag.add(zp2[i][j][1]);
+					    if (new2[i][j] == 1) {
+					        newlog.add(true);
+					    }
+					    else {
+					    	newlog.add(false);
+					    }
+					}
+				}
+			} // for (j = 0; j < m; j++)
+			
+			// Update wp
+			double wp[][][] = new double[zpReal.size()][wpReal[0].size()][2];
+			for (i = 0; i < zpReal.size(); i++) {
+				for (j = 0; j < wpReal[0].size(); j++) {
+					wp[i][j][0] = Double.NaN;
+				}
+			}
+			for (i = 0, k = 0; i < zpReal.size(); i++) {
+				if (!newlog.get(i)) {
+					for (j = 0; j < wpReal[0].size(); j++) {
+					    wp[i][j][0] = wpReal[k].get(j);
+					    wp[i][j][1] = wpImag[k].get(j);
+					}
+					k++;
+				}
+			}
+			return wp;
+		}
 	
 	private void rmap(double wp[][], double zp[][], double w[][], double beta[],
 			double z[][], double c[], double L[], double qdat[][]) {
