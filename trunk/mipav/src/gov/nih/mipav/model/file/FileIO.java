@@ -450,6 +450,8 @@ public class FileIO {
         String studyIDMaster;
         String seriesNoMaster;
         String acqNoMaster;
+        boolean computedResAlongPerpendicularLine = false;
+        float distanceAlongPerpendicularLine[] = null;
 
         FileDicomTagTable[] childrenTagTables;
 
@@ -652,6 +654,82 @@ public class FileIO {
             int[] zInst = new int[nListImages]; // sorted image instance values
             final float[] zOrients = new float[nListImages]; // image orientation values as read in.
             final float[] instanceNums = new float[nListImages]; // image instance numbers as read in.
+            // The distance along a line that passes through the parallel slices perpendicularly.
+            
+            // If 0020, 0032 Image Position and 0020,0037 Image Orientation are present,
+            // use them to determine z resolution rather than 0018,0088 Spacing Between Slices
+            // or 0018,0050 Slice Thickness in accordance with David Clunie's instructions.
+            
+            // I agree that (0018,0088) Spacing Between Slices, used in the MR & NM
+            // images (but not in CT images, unless one is extending the SOP
+            // Class) is the distance between the centers of the slices (and
+            // most definitely not between the edges of the slices, i.e. it is
+            // // not the gap as some buggy implementations have sent in the past).
+            // However I do not agree that (0018,0050) Slice Thickness, which
+            // occurs in the image plane module and is used in both CT and MR,
+            // is necessarily related to collimation. It is defined only as
+            // "nominal slice thickness".
+            // In the case of helical CT for example, the reconstructed slice
+            // thickness is not necessarily directly related to the collimation
+            // of the X-ray beam. Same applies to multi-planar reconstructions.
+            // It is clearly more appropriate to send the reconstructed thickness
+            // of the slice in these cases than the collimator aperture. They may
+            // be the same, but not always.
+            // The same attribute used in MR also obviously needs to be the
+            // reconstructed thickness, since there is no other thickness to
+            // send.
+            // Finally, depending on (0018,0088) Spacing Between Slices is not
+            // a good idea, since it isn't sent for CT normally, and it isn't
+            // always right in MR images, and it is always wrong when one is
+            // changing spacing on the fly, e.g. going from 10 to 5mm spacing
+            // and back again, what spacing to use for the boundary slices ?
+            // It is always better to compute the distance between a pair of
+            // slices along a normal to the plane of the image specified by
+            // the Image Orientation (Patient) attribute, by projecting the
+            // top left hand corner position specified by the Image Position
+            // (Patient) attribute onto that normal. These attributes are
+            // always sent and much more often "right" than is (0018,0088).
+            // Also, never use Slice Location (0020,1041) for this purpose ...
+            // it is purely descriptive and often empty, wrong or useless
+            // for anything other than trying to reproduce a manufacturer's
+            // native annotation on the display or film.
+            // What you describe sounds like doing an MPR, in which case you
+            // should recompute the two parameters based on whatever the
+            // thickness and spacing of your reconstructions are, and not
+            // just reuse the original parameters.
+            // david
+            // - show quoted text -
+            // -- 
+            // David A. Clunie                              mailto:dcl...@comview.com
+            // Development Director, Medical Imaging Products  http://www.comview.com/
+            // ComView Corporation                      Work 914-332-4800 Fax 206-3566
+            // 220 White Plains Road, 5th Floor         Home 570-897-7123 Fax 897-5117
+            // Tarrytown NY 10591                             http://idt.net/~dclunie/
+
+            
+            // Given two slices, compute the distance from the origin (0,0,0) of
+            // the top left hand corner of each along the normal to the slice
+            // orientation, and subtract one distance from the other to give the
+            // distance between the center plane of each slice, i.e., the
+            // reconstruction interval.
+            // For each slice, the normal to the slice orientation is the cross
+            // product of the row and column unit vectors (first three and second
+            // three values of Image Orientation (Patient), respectively).
+            // For each slice, the distance from the origin (0,0,0) of the top
+            // left hand corner is the dot product of the Image Position (Patient)
+            // (i.e., a vector from the origin to the top left hand corner of the
+            // image) and the normal to the slice orientation (i.e., the dot
+            // product is the magnitude of the origin to the top left hand corner
+            // vector component along the direction of the normal).
+            // For multiple slices, you may want to first sort them by distance
+            // from the origin along the normal in case they are not already in
+            // ascending order, and you may want to check that the reconstruction
+            // interval is the same between successive sorted slices (i.e., they
+            // are evenly spaced), and you may want to check that they are all
+            // parallel (i.e., that they have the same values for Image Orientation
+            // (Patient)).
+
+            distanceAlongPerpendicularLine = new float[nListImages];
 
             // progressBar.setTitle("Reading headers");
 
@@ -748,6 +826,20 @@ public class FileIO {
                                 // tPt[2] is MIPAV's z-axis. It is the position of the patient
                                 // along the axis that the image was sliced on.
                                 zOrients[nImages] = tPt[2];
+                                computedResAlongPerpendicularLine = true;
+                                float dircos0 = matrix.get(2, 0);
+                                float dircos1 = matrix.get(2, 1);
+                                float dircos2 = matrix.get(2, 2);
+                                distanceAlongPerpendicularLine[nImages] = savedFileInfos[nImages].xLocation*dircos0 + 
+                                		savedFileInfos[nImages].yLocation*dircos1 + savedFileInfos[nImages].zLocation*dircos2;
+                                if (nImages > 0) {
+                                	float zRes = Math.abs(distanceAlongPerpendicularLine[nImages] - distanceAlongPerpendicularLine[nImages-1]);
+                                	savedFileInfos[nImages-1].setResolutions(zRes,2);
+                                	if (nImages == nListImages - 1) {
+                                    	savedFileInfos[nImages].setResolutions(zRes,2);	
+                                    }
+                                }
+                                
                             } else {
                                 zOrients[nImages] = 1;
                             }
@@ -776,6 +868,19 @@ public class FileIO {
 
                         if (matrix != null) {
                             matrix.transform(savedFileInfos[nImages].xLocation, savedFileInfos[nImages].yLocation, savedFileInfos[nImages].zLocation, tPt);
+                            computedResAlongPerpendicularLine = true;
+                            float dircos0 = matrix.get(2, 0);
+                            float dircos1 = matrix.get(2, 1);
+                            float dircos2 = matrix.get(2, 2);
+                            distanceAlongPerpendicularLine[nImages] = savedFileInfos[nImages].xLocation*dircos0 + 
+                            		savedFileInfos[nImages].yLocation*dircos1 + savedFileInfos[nImages].zLocation*dircos2;
+                            if (nImages > 0) {
+                            	float zRes = Math.abs(distanceAlongPerpendicularLine[nImages] - distanceAlongPerpendicularLine[nImages-1]);
+                            	savedFileInfos[nImages-1].setResolutions(zRes,2);
+                            	if (nImages == nListImages - 1) {
+                                	savedFileInfos[nImages].setResolutions(zRes,2);	
+                                }
+                            }
                             zOrients[nImages] = tPt[2];
                         } else {
                             zOrients[nImages] = 1;
@@ -1512,7 +1617,7 @@ public class FileIO {
 
             boolean getValidZRes = false;
             // First check slice spacing tag for getting validzRes:
-            if ( (firstSliceTagTable.get("0018,0050") != null) || (firstSliceTagTable.get("0018,0088") != null)) {
+            if ( (firstSliceTagTable.get("0018,0050") != null) || (firstSliceTagTable.get("0018,0088") != null) || computedResAlongPerpendicularLine) {
 
                 if ((String) firstSliceTagTable.getValue("0018,0050") != null) {
                     try {
@@ -1524,11 +1629,29 @@ public class FileIO {
 
                 // 0018,0088 = Spacing Between Slices
                 // 0018,0050 = Slice Thickness
+                
+                if (computedResAlongPerpendicularLine) {
+                	// Uses 0020,0032 Image Position and 0020,0037 Image Orientation
+                	float zRes;
+                	for (int m = 0; m < nImages; m++) {
+                		if (m < nImages - 1) {
+                		    zRes = Math.abs(distanceAlongPerpendicularLine[m+1] - distanceAlongPerpendicularLine[m]);
+                		}
+                		else {
+                			zRes = Math.abs(distanceAlongPerpendicularLine[m] - distanceAlongPerpendicularLine[m-1]);	
+                		}
+                        image.getFileInfo(m).setResolutions(zRes, 2);
+                    }
+                    getValidZRes = true;
+                }
+
                 if ((String) firstSliceTagTable.getValue("0018,0088") != null) {
                     try {
                         sliceSpacing = Float.parseFloat((String) firstSliceTagTable.getValue("0018,0088"));
-                        for (int m = 0; m < nImages; m++) {
-                            image.getFileInfo(m).setResolutions(sliceSpacing, 2);
+                        if (!getValidZRes) {
+	                        for (int m = 0; m < nImages; m++) {
+	                            image.getFileInfo(m).setResolutions(sliceSpacing, 2);
+	                        }
                         }
                         getValidZRes = true;
                     } catch (final NumberFormatException nfe) {
