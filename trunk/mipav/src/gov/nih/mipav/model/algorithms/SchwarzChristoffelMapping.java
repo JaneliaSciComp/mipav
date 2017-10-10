@@ -9826,7 +9826,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			
 			// Remove (near-) duplicates
 			numidentical = 0;
-			numnotidentical = 0;
+			numnotidentical = 1;
 			for (i = 0; i < numcross-1; i++) {
 			    if (Math.abs(srtcross[i+1] - srtcross[i]) < tol) {
 			    	numidentical++;
@@ -9845,6 +9845,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					notidentical[p++] = i;
 				}
 			}
+			notidentical[p] = numcross-1;
 			srtcross2 = new double[numnotidentical];
 			cross3 = new int[numnotidentical];
 			for (i = 0; i < numnotidentical; i++) {
