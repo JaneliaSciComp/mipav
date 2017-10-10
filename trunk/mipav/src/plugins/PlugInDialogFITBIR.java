@@ -272,6 +272,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         "University of California San Diego",
         "University of Florida (Gainesville)",
         "University of Michigan",
+        "University of North Carolina",
         "University of Pennsylvania",
         "University of Pittsburgh",
         "University of Washington",
@@ -4371,15 +4372,15 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         gbc.gridx = 0;
         buttonPanel1.add(loadCSVButton, gbc);
-        gbc.gridx = 1;
+        gbc.gridx++;
         buttonPanel1.add(selectBIDSButton, gbc);
-        gbc.gridx = 2;
+        gbc.gridx++;
         buttonPanel1.add(addStructButton, gbc);
-        gbc.gridx = 3;
+        gbc.gridx++;
         buttonPanel1.add(removeStructButton, gbc);
-        gbc.gridx = 4;
+        gbc.gridx++;
         buttonPanel1.add(editDataElementsButton, gbc);
-        gbc.gridx = 5;
+        gbc.gridx++;
         buttonPanel1.add(finishButton, gbc);
 
         return buttonPanel1;
