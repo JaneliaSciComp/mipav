@@ -1080,20 +1080,39 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						potentialLattices = null;
 					}	
 					wormData = new WormData(wormImage);
-					potentialLattices = wormData.readAutoLattice();
 					latticeSelectionPanel.removeAll();
 					latticeSelectionPanel.setVisible(false);
+
 					int latticeIndex = -1;
-					for ( int i = 0; i < potentialLattices.length; i++ )
+					VOI finalLattice = wormData.readFinalLattice();
+					if ( finalLattice != null )
 					{
-						if ( potentialLattices[i] != null )
+						if ( potentialLattices == null )
 						{
-							if ( potentialLattices[i].size() != 0 )
+							potentialLattices = new VOIVector[1];
+						}
+						if ( potentialLattices[0] == null )
+						{
+							potentialLattices[0] = new VOIVector();
+						}
+						potentialLattices[0].add(finalLattice);
+						latticeSelectionPanel.add(latticeChoices[0]);
+						latticeIndex = 0;
+					}
+					if ( latticeIndex == -1 )
+					{
+						potentialLattices = wormData.readAutoLattice();
+						for ( int i = 0; i < potentialLattices.length; i++ )
+						{
+							if ( potentialLattices[i] != null )
 							{
-								latticeSelectionPanel.add(latticeChoices[i]);
-								if ( latticeIndex == -1 )
+								if ( potentialLattices[i].size() != 0 )
 								{
-									latticeIndex = i;
+									latticeSelectionPanel.add(latticeChoices[i]);
+									if ( latticeIndex == -1 )
+									{
+										latticeIndex = i;
+									}
 								}
 							}
 						}
