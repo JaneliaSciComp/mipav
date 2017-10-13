@@ -705,6 +705,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 	{
 		if ( latticeModel != null )
 		{
+			saveVOIs("updateAnnotation");
 			latticeModel.updateAnnotation(annotation);
 		}
 	}
