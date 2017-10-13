@@ -10248,7 +10248,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		int colfind[];
 		int nv;
 		int vtxnum[];
-		int minfind = -1;
+		//int minfind = -1;
 		int qn[][];
 		boolean allSame;
 		int idxnum;
@@ -10371,17 +10371,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				wp[k][i][0] = w[vtxnum[i]][0];
 				wp[k][i][1] = w[vtxnum[i]][1];
 			} // for (i = 0; i < nv; i++)
-			for (j = 0; j < nv; j++) {
-			    minfind = -1;
-			    for (m = 0; m < Q.qlvert[0].length && (minfind == -1); m++) {
-			    	for (i = 0; i < 4 && (minfind == -1); i++) {
-			    		if (vtxnum[j] == Q.qlvert[i][m]) {
-			    			minfind = m;
-			    		}
-			    	}
-			    } // for (m = 0; m < Q.qlvert[0].length && (minfind == -1); m++)
-			    qn[k][j] = minfind;
-			} // for (j = 0; j < nv; j++)
+			// qn created here is never used
+			//for (j = 0; j < nv; j++) {
+			    //minfind = -1;
+			    //for (m = 0; m < Q.qlvert[0].length && (minfind == -1); m++) {
+			    	//for (i = 0; i < 4 && (minfind == -1); i++) {
+			    		//if (vtxnum[j] == Q.qlvert[i][m]) {
+			    			//minfind = m;
+			    		//}
+			    	//}
+			    //} // for (m = 0; m < Q.qlvert[0].length && (minfind == -1); m++)
+			    //qn[k][j] = minfind;
+			//} // for (j = 0; j < nv; j++)
 			numcopies[k] = nv;
 		} // for (kk = 0; kk < numcol; kk++)
 		
@@ -10431,18 +10432,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			// If a point was mapped from a neighboring quadrilateral, exclude it,
 			// since it would be a repeat
 			if (maxindex > 1) {
-				for (i = 0; i < onvtx[0].length; i++) {
-					for (j = 0; j < onvtx.length; j++) {
-						qn[i][j] = -1;
-					}
-				}
+				qn = new int[maxindex][idxnum];
+				
 			     for (i = 0; i < idxnum; i++) {
-			    	 for (j = 0; j < Math.max(1, maxindex); j++) {
+			    	 for (j = 0; j < maxindex; j++) {
 			    	    qn[j][i] = qnum[idx[i]][j];	 
 			    	 }
 			     }
-			     for (i = 0; i < onvtx[0].length; i++) {
-			    	 for (j = 0; j < onvtx.length; j++) {
+			     for (i = 0; i < maxindex; i++) {
+			    	 for (j = 0; j < idxnum; j++) {
 			    		 if (qn[i][j] != -1) {
 			    			 if (Q.adjacent[q][qn[i][j]]) {
 			    				 qn[i][j] = 0;
@@ -10451,7 +10449,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    	 }
 			     }
 			     for (j = 0; j < idxnum; j++) {
-			    	 for (i = 0; i < onvtx[0].length; i++) {
+			    	 for (i = 0; i < maxindex; i++) {
 			    		 if (qn[i][j] == 0) {
 			    			 mask[j] = false;
 			    		 }
@@ -13056,12 +13054,16 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    boolean anyinterior = false;
 	    for (j = 0; j < np; j++) {
 	    	boolean found = false;
+	    	interior[j] = true;
 	    	for (i = 0; i < n && (!found); i++) {
-	    		if (!onbdy[i][j]) {
+	    		if (onbdy[i][j]) {
 	    			found = true;
-	    			interior[j] = true;
-	    			anyinterior = true;
+	    			interior[j] = false;
+	    			
 	    		}
+	    	}
+	    	if (interior[j]) {
+	    		anyinterior = true;
 	    	}
 	    } //  for (j = 0; j < np; j++)
 	    
@@ -13304,12 +13306,15 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    boolean anyinterior = false;
 		    for (j = 0; j < np; j++) {
 		    	boolean found = false;
+		    	interior[j] = true;
 		    	for (i = 0; i < n && (!found); i++) {
-		    		if (!onbdy[i][j]) {
+		    		if (onbdy[i][j]) {
 		    			found = true;
-		    			interior[j] = true;
-		    			anyinterior = true;
+		    			interior[j] = false;
 		    		}
+		    	}
+		    	if (interior[j]) {
+		    		anyinterior = true;
 		    	}
 		    } //  for (j = 0; j < np; j++)
 		    
