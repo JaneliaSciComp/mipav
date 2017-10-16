@@ -10467,7 +10467,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			if (nummask > 0) {
 				// Proceed
 				idx2 = new int[nummask];
-				for (i = 0, j = 0; i < nummask; i++) {
+				for (i = 0, j = 0; i < idxnum; i++) {
 					if (mask[i]) {
 					    idx2[j++] = idx[i];
 					}
