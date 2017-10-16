@@ -30,6 +30,9 @@ public class JDialogPolygonToRectangle extends JDialogBase
     private static final long serialVersionUID = 0L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    private final int POLYGON_TO_RECTANGLE = 1;
+    private final int CROSSRATIO_POLYGON_TO_RECTANGLE = 5;
+    private int algorithm = POLYGON_TO_RECTANGLE;
 
     /** DOCUMENT ME! */
     int[] extents = new int[2];
@@ -67,6 +70,8 @@ public class JDialogPolygonToRectangle extends JDialogBase
     private JTextField v1Text;
     private JTextField v2Text;
     private JTextField v3Text;
+    
+    private JCheckBox crossRatioCheckBox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -204,7 +209,7 @@ public class JDialogPolygonToRectangle extends JDialogBase
             resultImage.setImageName(name);
 
             // Make algorithm
-            sAlgo = new SchwarzChristoffelMapping(resultImage, image, xSource, ySource, corners);
+            sAlgo = new SchwarzChristoffelMapping(resultImage, image, xSource, ySource, corners, algorithm);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -349,11 +354,18 @@ public class JDialogPolygonToRectangle extends JDialogBase
         gbc6.fill = GridBagConstraints.HORIZONTAL;
         gbc6.gridx = 0;
         gbc6.gridy = 0;
+        
+        crossRatioCheckBox = new JCheckBox("Use cross-ratio representation");
+        crossRatioCheckBox.setFont(serif12);
+        crossRatioCheckBox.setForeground(Color.black);
+        crossRatioCheckBox.setSelected(false);
+        paramPanel.add(crossRatioCheckBox, gbc6);
 
         xLabel = new JLabel("X dimension of output image ");
         xLabel.setForeground(Color.black);
         xLabel.setFont(serif12);
         xLabel.setEnabled(true);
+        gbc6.gridy = 1;
         paramPanel.add(xLabel, gbc6);
 
         xText = new JTextField(10);
@@ -368,7 +380,7 @@ public class JDialogPolygonToRectangle extends JDialogBase
         yLabel.setFont(serif12);
         yLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 1;
+        gbc6.gridy = 2;
         paramPanel.add(yLabel, gbc6);
 
         yText = new JTextField(10);
@@ -396,6 +408,13 @@ public class JDialogPolygonToRectangle extends JDialogBase
         Vector<VOIBase> curves;
         int nPts;
         Vector3f[] pts = null;
+        
+        if (crossRatioCheckBox.isSelected()) {
+        	algorithm = CROSSRATIO_POLYGON_TO_RECTANGLE;
+        }
+        else {
+        	algorithm = POLYGON_TO_RECTANGLE;
+        }
 
         if (!testParameter(xText.getText(), 5, 1000000)) {
             xText.requestFocus();
