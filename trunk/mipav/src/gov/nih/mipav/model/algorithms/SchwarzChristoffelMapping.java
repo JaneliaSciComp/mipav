@@ -155,7 +155,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testCRDiskmap5();
             // testDiskmap6();
         	//testExtermap1();
-        	testCRRectmap1();
+        	//testCRRectmap1();
+        	testCRRectmap2();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -1996,6 +1997,38 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         scmap M = crrectmap(w, corner, tolerance);
         double nre[] = new double[]{10.0};
         double nim[] = new double[]{10.0};
+        crrectplot(M, nre, nim, Integer.MIN_VALUE);
+	}
+	
+	public void testCRRectmap2() {
+		// Example from Algorithm 843: Scwarz-Christoffel Toolbox for MATLAB
+		//ans =
+	    // 1.5708
+		// 1.5708 +11.1798i
+	    // -1.5708 +11.1798i
+		// -1.5708
+		int i;
+		double w[][] = new double[6][2];
+        w[0][0] = -1;
+        w[0][1] = 1;
+        w[1][0] = -1;
+        w[1][1] = -1;
+        w[2][0] = 2;
+        w[2][1] = -1;
+        w[3][0] = 2;
+        w[3][1] = 0;
+        w[4][0] = 0;
+        w[4][1] = 0;
+        w[5][0] = 0;
+        w[5][1] = 1;
+        int corner[] = new int[4];
+        corner[0] = 0;
+        corner[1] = 2;
+        corner[2] = 3;
+        corner[3] = 5;
+        scmap M = crrectmap(w, corner, tolerance);
+        double nre[] = new double[]{8};
+        double nim[] = new double[]{4};
         crrectplot(M, nre, nim, Integer.MIN_VALUE);
 	}
 	
