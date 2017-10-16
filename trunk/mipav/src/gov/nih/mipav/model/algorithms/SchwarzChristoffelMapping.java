@@ -62,6 +62,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private final int POLYGON_TO_CIRCLE = 2;
 	private final int CROSSRATIO_POLYGON_TO_CIRCLE = 3;
 	private final int POLYGON_EXTERIOR_TO_CIRCLE = 4;
+	private final int CROSSRATIO_POLYGON_TO_RECTANGLE = 5;
 	private int algorithm = POLYGON_TO_RECTANGLE;
 	private boolean setCenter;
 	private double xCenter;
@@ -109,12 +110,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		this.yCenter = yCenter;
 	}
 	
-	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double xSource[], double ySource[], int corners[]) {
+	public SchwarzChristoffelMapping(ModelImage destImg, ModelImage srcImg, double xSource[], double ySource[], int corners[], int algorithm) {
 		super(destImg, srcImg);
 		this.xSource = xSource;
 		this.ySource = ySource;
 		this.corners = corners;
-		algorithm = POLYGON_TO_RECTANGLE;
+		this.algorithm = algorithm;
 	}
 	
 	public void runAlgorithm() {
@@ -161,6 +162,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
 			runPolygonToRectangle();
+		}
+		else if (algorithm == CROSSRATIO_POLYGON_TO_RECTANGLE) {
+			runCrossRatioPolygonToRectangle();
 		}
 		else if (algorithm == POLYGON_TO_CIRCLE) {
 			runPolygonToCircle();
@@ -1014,6 +1018,289 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		if (indexout[index]) {
         			xp = wpinpoly[j][0];
         			yp = wpinpoly[j][1];
+        			j++;
+        			if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
+         	    	   if (xp <= 0) {
+                            x0 = 0;
+                            dx = 0;
+                            deltaX = 0;
+                        } else if (xp >= (xDimSource - 1)) {
+                            x0 = xDimSource - 1;
+                            dx = 0;
+                            deltaX = 0;
+                        } else {
+                            x0 = (int) xp;
+                            dx = xp - x0;
+                            deltaX = 1;
+                        }
+
+                        if (yp <= 0) {
+                            y0 = 0;
+                            dy = 0;
+                            deltaY = 0;
+                        } else if (yp >= (yDimSource - 1)) {
+                            y0 = yDimSource - 1;
+                            dy = 0;
+                            deltaY = 0;
+                        } else {
+                            y0 = (int) yp;
+                            dy = yp - y0;
+                            deltaY = xDimSource;
+                        }
+
+                        dx1 = 1 - dx;
+                        dy1 = 1 - dy;
+
+                        position = (y0 * xDimSource) + x0;
+
+                        if (cf == 1) {
+                            destBuffer[index] = (dy1 * ( (dx1 * srcBuffer2[position]) + (dx * srcBuffer2[position + deltaX])))
+                                + (dy * ( (dx1 * srcBuffer2[position + deltaY]) + (dx * srcBuffer2[position + deltaY + deltaX])));   
+                        }
+                        else {
+                        	 for (c = 0; c < 4; c++) {
+                                 destBuffer[4*index+c] = (dy1 * ( (dx1 * srcBuffer2[4*position]+c) + (dx * srcBuffer2[4*(position + deltaX) + c])))
+                                         + (dy * ( (dx1 * srcBuffer2[4*(position + deltaY) + c]) + (dx * srcBuffer2[4*(position + deltaY + deltaX) + c])));
+                             } // for (c = 0; c < 4; c++)	
+                        }
+         	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))
+        		}
+        	}
+		}
+		
+	// Undo y axis inversion
+    double destBuffer2[] = new double[cf * destSlice];
+	for (y = 0; y < yDimDest; y++) {
+    	for (x = 0; x < xDimDest; x++) {
+    		if (cf == 1) {
+    	        destBuffer2[x + (yDimDest - 1 - y)*xDimDest]	= destBuffer[ x + y*xDimDest];
+    		}
+    		else {
+    		    for (c = 0; c < 4; c++) {
+    		    	destBuffer2[4*(x + (yDimDest - 1 - y)*xDimDest) + c]	= destBuffer[4*(x + y*xDimDest) + c];
+    		    }
+    		}
+    	}
+    }
+    
+
+       
+       try {
+           destImage.importData(0, destBuffer2, true);
+       } catch (IOException e) {
+           MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+           setCompleted(false);
+
+           return;
+       }
+
+       setCompleted(true);
+
+       return;
+	}
+	
+	public void runCrossRatioPolygonToRectangle() {
+		int i, j;
+		int index;
+		int cf;
+		int xDimSource;
+		int yDimSource;
+		int sourceSlice;
+		int xDimDest;
+		int yDimDest;
+		int destSlice;
+		double srcBuffer[];
+		double destBuffer[];
+		double imageMin;
+		int y;
+		int x;
+		double z[][];
+	    int MCorners[];
+	    double zr[][];
+	    double wpinpoly[][][];
+		double zp[][];
+		double xp;
+		double yp;
+		int x0;
+		int y0;
+		int deltaX;
+		int deltaY;
+		double dx;
+		double dy;
+		double dx1;
+		double dy1;
+		int position;
+		int c;
+		
+        if (srcImage == null) {
+            displayError("Source Image is null");
+            finalize();
+
+            return;
+        }
+
+        fireProgressStateChanged(srcImage.getImageName(), "Cross-ratio polygon to rectangle ...");
+
+        if (srcImage.isColorImage()) {
+            cf = 4;
+        } else {
+            cf = 1;
+        }
+        xDimSource = srcImage.getExtents()[0];
+        yDimSource = srcImage.getExtents()[1];
+        sourceSlice = xDimSource * yDimSource;
+
+        xDimDest = destImage.getExtents()[0];
+        yDimDest = destImage.getExtents()[1];
+        destSlice = xDimDest * yDimDest;
+        srcBuffer = new double[cf * sourceSlice];
+
+        try {
+            srcImage.exportData(0, cf * sourceSlice, srcBuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+
+            setCompleted(false);
+
+            return;
+        }
+        // Invert so y axis increases going up so can use ccw ordering
+        double srcBuffer2[] = new double[cf *sourceSlice];
+        for (y = 0; y < yDimSource; y++) {
+        	for (x = 0; x < xDimSource; x++) {
+        		if (cf == 1) {
+        	        srcBuffer2[x + (yDimSource - 1 - y)*xDimSource]	= srcBuffer[ x + y*xDimSource];
+        		}
+        		else {
+        		    for (c = 0; c < 4; c++) {
+        		    	srcBuffer2[4*(x + (yDimSource - 1 - y)*xDimSource) + c]	= srcBuffer[4*(x + y*xDimSource) + c];	
+        		    }
+        		}
+        	}
+        }
+
+        destBuffer = new double[cf * destSlice];
+
+        if (!srcImage.isColorImage()) {
+            imageMin = srcImage.getMin();
+
+            for (i = 0; i < destSlice; i++) {
+                destBuffer[i] = imageMin;
+            }
+        } // if (!srcImage.isColorImage())
+        double w[][] = new double[xSource.length][2];
+        for (i = 0; i < xSource.length; i++) {
+        	w[i][0] = xSource[i];
+        	// Invert so y axis increases going up so can use ccw ordering
+        	w[i][1] = yDimSource-1-ySource[i];
+        }
+        scmap M = crrectmap(w, corners, tolerance);
+        double nre[] = new double[]{10.0};
+        double nim[] = new double[]{10.0};
+        crrectplot(M, nre, nim, yDimSource-1);
+        double xMin = Double.MAX_VALUE;
+        double xMax = -Double.MAX_VALUE;
+        double yMin = Double.MAX_VALUE;
+        double yMax = -Double.MAX_VALUE;
+        zr = new double[corners.length][2];
+        double xr[] = new double[corners.length];
+        double yr[] = new double[corners.length];
+        double wr[][] = M.rectpolygon.vertex;
+        for (i = 0; i < corners.length; i++) {
+            zr[i][0] = wr[corners[i]][0];
+            xr[i] = zr[i][0];
+            zr[i][1] = wr[corners[i]][1];
+            yr[i] = zr[i][1];
+            System.out.println("zr["+i+"] = " + zr[i][0] + " " + zr[i][1] + "i");
+            if (zr[i][0] < xMin) {
+            	xMin = zr[i][0];
+            }
+            if (zr[i][0] > xMax) {
+            	xMax = zr[i][0];
+            }
+            if (zr[i][1] < yMin) {
+            	yMin = zr[i][1];
+            }
+            if (zr[i][1] > yMax) {
+            	yMax = zr[i][1];
+            }
+        }
+        polygon pr = M.rectpolygon;
+        double betar[] = new double[pr.angle.length];
+        for (i = 0; i < pr.angle.length; i++) {
+        	betar[i] = pr.angle[i] - 1.0;
+        }
+        double xSlope = (xMax - xMin)/(xDimDest - 1.0);
+        double ySlope = (yMax - yMin)/(yDimDest - 1.0);
+        zp = new double[destSlice][2];
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		zp[index][0] = x*xSlope + xMin;
+        		zp[index][1] = y*ySlope + yMin;
+        	}
+        } // for (y = 0; y < yDimDest; y++)
+        boolean indexout[] = new boolean[destSlice];
+		boolean onvtx[][] = new boolean[w.length][destSlice];
+		polygon p = M.poly;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		isinpoly(indexout, onvtx, zp, zr, betar, eps);
+		int numinpoly = 0;
+		for (i = 0; i < destSlice; i++) {
+		    if (indexout[i]) {
+		    	numinpoly++;
+		    }
+		} // for (i = 0; i < destSlice; i++)
+		double zpinpoly[][] = new double[numinpoly][2];
+		for (i = 0, j = 0; i < destSlice; i++) {
+			if (indexout[i]) {
+				zpinpoly[j][0] = zp[i][0];
+				zpinpoly[j][1] = zp[i][1];
+				j++;
+			}
+		} // for (i = 0, j = 0; i < destSlice; i++)
+		wpinpoly = new double[numinpoly][1][2];
+		//rmap(wpinpoly, zpinpoly, w, beta, z, M.constant, M.stripL, M.qdata);
+		// Number of quadrature points per integration.
+		// Approximately equals -log10(error).  Increase if plot
+		// has false little zigzags in curves. 
+		int nqpts = 5; 
+		double qdat[][] = new double[nqpts][2*beta.length+2];
+		scqdata(qdat, beta, nqpts);
+		double qdatr[][] = new double[nqpts][2*betar.length+2];
+		scqdata(qdatr, betar, nqpts);
+		double tolmap = Math.pow(10.0, -qdat.length);
+        int zpindex[] = new int[numinpoly];
+		onvtx = new boolean[wr.length][numinpoly];
+		isinpoly2(zpindex, onvtx, zpinpoly, wr, betar, tolmap);
+		int maxindex = -1;
+		for (i = 0; i < numinpoly; i++) {
+			if (zpindex[i] > maxindex) {
+				maxindex = zpindex[i];
+			}
+		} // for (i = 0; i < numnew; i++)
+		if (maxindex > 1) {
+			MipavUtil.displayError("Too many values found at some points");
+			System.exit(-1);
+		}
+		int wpqn[][] = new int[numinpoly][Math.max(1, maxindex)];
+		double cr[] = M.crossratio;
+		double aff[][][] = M.affine;
+		double affr[][][] = M.rectaffine;
+		qlgraph Q = M.qgraph;
+        crrmap(wpinpoly, wpqn, zpinpoly, w, beta, wr, betar, cr, aff, affr,
+        		Q, qdat, qdatr);
+		j = 0;
+		for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		if (indexout[index]) {
+        			xp = wpinpoly[j][0][0];
+        			yp = wpinpoly[j][0][1];
         			j++;
         			if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
          	    	   if (xp <= 0) {
