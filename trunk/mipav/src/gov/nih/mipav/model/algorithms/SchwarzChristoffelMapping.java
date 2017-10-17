@@ -177,6 +177,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 	}
 	
+	public void setEps(double eps) {
+		this.eps = eps;
+	}
+	
 	public void runPolygonToCircle() {
 		int i, j;
 		int index;
@@ -12893,7 +12897,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    }
 	}
 	
-	private class qlgraph {
+	public class qlgraph {
 		int edge[][];
 		int qledge[][];
 		int qlvert[][];
@@ -13034,7 +13038,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// polygon accepts unbounded polygons (vertices at infinity).  However, you must
 	// supply alpha, and the vertices must be in counterclockwise order about the interior.
 	// Ported from original MATLAB routine copyright 1998 by Toby Driscoll.
-	private class polygon {
+	public class polygon {
 		double vertex[][];
 		double angle[];
 		//String className = "polygon";
@@ -13114,7 +13118,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// impossible to compute angles for an unbounded polygon; they must be supplied to the
 	// polygon constructor to be well-defined.
 	// Original MATLAB routine copyright 1998 by Toby Driscoll
-	private void angle(double alpha[], boolean[] isccw, int index[], double w[][], double angle[]) {
+	public void angle(double alpha[], boolean[] isccw, int index[], double w[][], double angle[]) {
 		int i, j, k;
 		double cr[] = new double[1];
 		double ci[] = new double[1];
@@ -15391,7 +15395,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    }
  	}
 	
-	private void printExitStatus(int exitStatus) {
+	public void printExitStatus(int exitStatus) {
 		if (exitStatus == -1) {
             System.err.println("Abnormal termination because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or");
             System.err.println("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry");
@@ -17444,7 +17448,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
      * @param cr double[]
      * @param ci double[]
      */
-    private void zdiv(final double ar, final double ai, final double br, final double bi, final double[] cr,
+    public void zdiv(final double ar, final double ai, final double br, final double bi, final double[] cr,
             final double[] ci) {
         double bm, cc, cd, ca, cb;
 
@@ -17467,7 +17471,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
      * 
      * @return double
      */
-    private double zabs(final double zr, final double zi) {
+    public double zabs(final double zr, final double zi) {
         double u, v, q, s;
         u = Math.abs(zr);
         v = Math.abs(zi);
@@ -17500,7 +17504,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
      * @param cr double[]
      * @param ci double[]
      */
-    private void zmlt(final double ar, final double ai, final double br, final double bi, final double[] cr,
+    public void zmlt(final double ar, final double ai, final double br, final double bi, final double[] cr,
             final double[] ci) {
         double ca, cb;
 
@@ -18235,7 +18239,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// All the SC routines call this routine as needed, and the work required is small, so you will
 	// probably never have to call this routine directly.
 	// Original MATLAB code copyright 1998 by Toby Driscoll.
-	private void scqdata(double qdat[][], double beta[], int nqpts) {
+	public void scqdata(double qdat[][], double beta[], int nqpts) {
 		int i, j;
 	    int n = beta.length;
 	    double qnode[][] = new double[nqpts][n+1];
@@ -18349,7 +18353,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// perhaps adding vertices.  sccheck output is 1 if the problem is rectifiable
 	// by scfix, 2 if warning status only.
 	// Original MATLAB code copyright 1998 by Toby Driscoll.
-	private int sccheck(String type, double w[][], double beta[], int aux[]) {
+	public int sccheck(String type, double w[][], double beta[], int aux[]) {
 		int i;
 	    int err;
 	    int sumb;
@@ -18584,7 +18588,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    return err;
 	}
 	
-	private void scfix(double wn[][], double betan[], int verticesAdded[], int auxn[], String type, double w[][], double beta[], int aux[]) {
+	public void scfix(double wn[][], double betan[], int verticesAdded[], int auxn[], String type, double w[][], double beta[], int aux[]) {
 		// wn,betan, and auxn are output
 		// w, beta, and type are input
 		// aux is input
