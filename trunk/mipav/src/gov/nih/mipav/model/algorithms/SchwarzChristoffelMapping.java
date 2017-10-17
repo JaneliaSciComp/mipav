@@ -144,20 +144,20 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         if (testRoutine) {
         	//testRectmap1();
         	//testRectmap2();
-        	//testDiskmap1();
+            //testDiskmap1();
             //testCRDiskmap1();
         	//testDiskmap2();
         	//testCRDiskmap2();
         	//testDiskmap3();
-        	//testCRDiskmap3();
+        	testCRDiskmap3();
         	//testDiskmap4();
         	// No testCRDiskmap4() because CRDisk cannot handle infinities in example.
         	//testDiskmap5();
         	//testCRDiskmap5();
-            // testDiskmap6();
+            //testDiskmap6();
         	//testExtermap1();
         	//testCRRectmap1();
-        	testCRRectmap2();
+        	//testCRRectmap2();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -2153,6 +2153,53 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	public void testCRDiskmap3() {
+		// MATLAB AND MIPAV both show same kinks in drawing recentered at -0.5-0.5i
+		//w = [0.0 + 1.0i; -1.0  + 1.0i; -1.0 - 1.0i; 1.0 - 1.0i; 1.0 + 0.0i; 0.0 + 0.0i];
+		//beta = [-0.5; -0.5; -0.5; -0.5; -0.5; 0.5];
+
+		//x = [0.0; -1.0; -1.0; 1.0; 1.0; 0.0];
+		//y = [1.0; 1.0; -1.0; -1.0; 0.0; 0.0];
+		//poly = polygon(x, y);
+		//w = vertex(poly);
+		//beta = angle(poly)-1;
+		//[w, beta, cr, aff, Q, orig, qdata] = crparam(w, beta);
+		//poly = polygon(w,beta+1);
+		//M.crossratio = cr;
+		//M.affine = aff;
+		//M.qlgraph = Q;
+		//M.qdata = qdata;
+		//M.original = orig;
+
+		//% Set conformal center as center of 1st triangle
+		//T = Q.qlvert(1:3,1);
+		//wc = mean(w(T));
+		//wcfix = crfixwc(w,beta,cr,aff,Q,wc);
+		//M.center = {wc,wcfix};
+		//n = length(w);
+		 
+		//% Crossratios of target polygon
+		//crtarget = crossrat(w,Q);
+		 
+		//% Actual crossratios
+		//crimage = zeros(n-3,1);         % image vertex crossratios
+		 
+		//% Compute crossratio for each image quadrilateral
+		//for k = 1:n-3
+		  //prever = crembed(cr,Q,k);
+		  //wq = -crquad(prever(Q.qlvert(:,k)),Q.qlvert(:,k),prever,beta,qdata);
+		  //crimage(k) = (wq(2)-wq(1))*(wq(4)-wq(3))/((wq(3)-wq(2))*(wq(1)-wq(4)));
+		//end
+		 
+		//% Compare them
+		//acc = max(abs(crimage-crtarget));
+		////R = 10;
+		//theta = 10;
+		//[H,R2,THETA] = crplot(w,beta,cr,aff,wcfix,Q,R,theta);
+		//wc = -0.5-0.5i;
+		//wcfix = crfixwc(w,beta,cr,M.affine,M.qlgraph,wc);
+		//M.center = {wc,wcfix};
+		//[H,R2,THETA] = crplot(w,beta,cr,aff,wcfix,Q,R,theta);
+
 		int i;
 		double w[][] = new double[6][2];
 		w[0][0] = 0.0;
