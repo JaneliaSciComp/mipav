@@ -110,6 +110,167 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		polygon p = scm.new polygon(x, y, null);
 		scmap f1 = hplmap(p);
 	}
+	
+	public void hplot(scmap M, double re[], double im[], int yInvert) {
+		// Visualize a Schwarz-Christoffel half-plane map.
+		// hplot plots the polygon associated with the Schwarz-Christoffel
+		// half-plane map M and the images of vertical lines whose real
+		// parts are given in re and horizontal lines whose imaginary
+		// parts are given in im under the S-C transformation.
+		// From 1998 MATLAB plot routine copyright by Toby Driscoll.
+		int i;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		hpplot(w, beta, z, c, re, im, yInvert);
+	}
+	
+	public void hpplot(double w[][], double beta[], double z[][], double c[],
+			double re[], double im[], int yInvert) {
+	    // Image of cartesian grid under Schwarz-Christoffel half-plane map.
+		// hpplot will adaptively plot the images under the Schwarz-Christoffel
+		// exterior map of vertical lines whose real parrts are given in re and
+		// horizontal lines whose imaginary parts are given in im.
+		// From 1998 MATLAB hpplot routine copyright by Toby Driscoll.
+		int i, j, m;
+		double tol;
+		boolean haveInfiniteZ = false;
+		double betan[];
+		int n = w.length;
+		double qdat[][] = null;
+		double axlim[] = new double[4];
+		// Number of quadrature points per integration.
+		// Approximately equals -log10(error).  Increase if plot
+		// has false little zigzags in curves. 
+		int nqpts = 5; 
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+        // Max allowed number of adaptive refinements made to meet other requirements 
+        int maxrefn = 16;
+        Vector<Double>zpReal = new Vector<Double>();
+		Vector<Double>zpImag = new Vector<Double>();
+		Vector<Double>wpReal = new Vector<Double>();
+		Vector<Double>wpImag = new Vector<Double>();
+		Vector<Boolean>newlog = new Vector<Boolean>();
+        
+		// Zero arguments default to 10
+		if (((re == null) || (re.length == 0)) && ((im == null) || (im.length == 0))) {
+		    re = new double[]{10.0};
+		    im = new double[]{10.0};
+		}
+		
+		// Integer arguments must be converted to specific values
+		if ((re.length == 1) && (re[0] == Math.round(re[0]))) {
+			if (re[0] < 1) {
+			    re = null;
+			}
+			else if (re[0] < 2) {
+				// Real parts are given in re.
+				re[0] = (z[0][0] + z[n-2][0])/2.0;
+			}
+			else {
+			    m = (int)re[0];	
+			    double dre = (z[n-2][0] - z[0][0])/(m - 1.0);
+			    double spacing = (z[n-2][0] - z[0][0] + 2*dre)/(m - 1.0);
+			    re = new double[m];
+			    for (i = 0; i < m; i++) {
+			    	re[i] = z[0][0] - dre + i*spacing;
+			    }
+			} // else 
+		} // if ((re.length == 1) && (re[0] == Math.round(re[0])))
+		if ((im.length == 1) & (im[0] == Math.round(im[0]))) {
+			if (re.length < 2) {
+				double spacing = 4/im[0];
+				int numlines = (int)im[0];
+				im = new double[numlines];
+				for (i = 0; i < numlines; i++) {
+					im[i] = (i+1)*spacing;
+				}
+			} // if (re.length < 2)
+			else {
+				int numlines = (int)im[0];
+				double diffre;
+				double sumdiff = 0.0;
+				for (i = 0; i < re.length-1; i++) {
+					diffre = re[i+1] - re[i];
+					sumdiff = sumdiff + diffre;
+				}
+				double meandiff = sumdiff/(re.length-1);
+				im = new double[numlines];
+				for (i = 1; i <= numlines; i++) {
+					im[i-1] = i*meandiff;
+				}
+			} // else
+		} // if ((im.length == 1) & (im[0] == Math.round(im[0])))
+		
+		float xPointArray[] = new float[n+1];
+		float yPointArray[] = new float[n+1];
+		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		Graphics g = graph.getGraphics();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+        double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		tol = Math.pow(10.0, -nqpts);
+		for (i = 0; i < z.length; i++) {
+			if (Double.isInfinite(z[i][0]) || Double.isInfinite(z[i][1])) {
+				haveInfiniteZ = true;
+			}
+		}
+		if (haveInfiniteZ) {
+		    betan = new double[n-1];
+		    for (i = 0; i < n-1; i++) {
+		    	betan[i] = beta[i];
+		    }
+		    qdat = new double[nqpts][2*betan.length+2];
+			scm.scqdata(qdat, betan, nqpts);
+		} // if (haveInfiniteZ)
+		else {
+			qdat = new double[nqpts][2*beta.length+2];
+			scm.scqdata(qdat, beta, nqpts);	
+		}
+		
+		// Plot vertical lines
+		double y2 = Math.max(z[n-2][0], 10.0);
+		Vector<Double> linhx[][] = new Vector[re.length][2];
+		Vector<Double> linhy[][] = new Vector[re.length][2];
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
+		for (i = 0; i < re.length; i++) {
+			for (j = 0; j < 2; j++) {
+				linhx[i][j] = new Vector<Double>();
+				linhy[i][j] = new Vector<Double>();
+			}
+		}
+		for (j = 0; j < re.length; j++) {
+		    zpReal.clear();
+		    zpImag.clear();
+		    double spacing = y2/14.0;
+		    for (i = 0; i < 15; i++) {
+		    	zpReal.add(re[j]);
+		    	zpImag.add(i*spacing);
+		    }
+		    zpReal.add(re[j]);
+		    zpImag.add(Double.POSITIVE_INFINITY);
+		    newlog.clear();
+		    for (i = 0; i < 15; i++) {
+		    	newlog.add(true);
+		    }
+		    newlog.add(false);
+		} // for (j = 0; j < re.length; j++)
+	}
 
 	public scmap hplmap(polygon poly) {
 		// hplmap constructs a Schwarz-Christoffel half-plane object for the
