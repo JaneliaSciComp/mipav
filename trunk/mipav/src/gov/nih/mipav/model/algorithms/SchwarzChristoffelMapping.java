@@ -12246,7 +12246,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		} // if (numbad > 0)
 	}
 	
-	private ViewJFrameGraph plotpoly(float xPointArray[], float yPointArray[],
+	public ViewJFrameGraph plotpoly(float xPointArray[], float yPointArray[],
 			double w[][], double beta[], boolean addMarkerLabel, double axlim[], int yInvert) {
 		// plotpoly plots the polygon whose vertices are in vector w
 		// and whose turning angles are in beta.  Vertices at infinity
