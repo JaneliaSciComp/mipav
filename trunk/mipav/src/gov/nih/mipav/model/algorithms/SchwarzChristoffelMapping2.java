@@ -89,10 +89,26 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		scm.setEps(eps);
 
 		if (testRoutine) {
-
+            //testHplmap1();
+			testHplmap2();
 			return;
 		}
 
+	}
+	
+	private void testHplmap1() {
+		double x[] = new double[]{0.0,0.0,Double.POSITIVE_INFINITY};
+		double y[] = new double[]{1.0, -1.0, 0.0};
+		double alpha[] = new double[]{1.5, 0.5, -1.0};
+		polygon p = scm.new polygon(x, y, alpha);
+		scmap f = hplmap(p);
+	}
+	
+	private void testHplmap2() {
+		double x[] = new double[]{0, 0, 2, 2};
+		double y[] = new double[]{1, 0, 0, 1};
+		polygon p = scm.new polygon(x, y, null);
+		scmap f1 = hplmap(p);
 	}
 
 	public scmap hplmap(polygon poly) {
@@ -101,7 +117,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		// The parameter problem is solved using default options for the
 		// prevertices and
 		// the multiplicative constant.
-		// Dervied from original hlpmap MATLAB rotuine copyright 1998-2001 by
+		// Derived from original hlpmap MATLAB routine copyright 1998-2001 by
 		// Toby Driscoll.
 		double z[][] = null;
 		int i, j;
@@ -162,15 +178,149 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			c = new double[2];
 			z = new double[wn2.length][2];
 			nqpts = Math.max((int) Math.ceil(-Math.log10(tolerance)), 4);
-			qdata = new double[nqpts][2 * betan2.length + 2];
+			// last beta not used in this qdata
+			qdata = new double[nqpts][2 * (wn2.length-1) + 2];
 			hpparam(z, c, qdata, wn2, betan2, z0, tolerance);
 		} // if ((z == null) || (z.length == 0))
+		map.poly = poly;
 		map.prevertex = z;
 		map.constant = c;
 		map.qdata = qdata;
 
 		// Now fill in apparent accuracy
+		map.accuracy = hpaccuracy(map);
 		return map;
+	}
+	
+	private double hpaccuracy(scmap M) {
+		// Apparent accuracy of the Schwarz-Christoffel half-plane map.
+		// hpaccuracy estimates the accuracy of the Schwarz-CZhristoffel half-plane
+		// map M.  The technique used is to compare the differences between successive
+		// finite vertices to the integral between the corresponding prevertices, and
+		// return the maximum.
+		
+		// Original MATLAB accuracy routine copyright 1998 by Toby Driscoll.
+		
+		// If an accuracy has been assigned, don't question it.
+		int i, j;
+		double cre[] = new double[1];
+		double cim[] = new double[1];
+		double acc;
+		if (!Double.isNaN(M.accuracy)) {
+		    acc = M.accuracy;
+		    return acc;
+		}
+		
+		// Get data for low-level functions
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		int n = w.length;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		double qdata[][] = M.qdata;
+		
+		// Test accuracy by integrating between consecutive finite prevertices, and
+		// comparing to differences of vertices.
+		// Exclude last prevertex at infinity.
+		int numidx = 0;
+		for(i = 0; i < n-1; i++) {
+			if ((!Double.isInfinite(w[i][0]))  && (!Double.isInfinite(w[i][1]))) {
+				numidx++;
+			}
+		}
+		int idx[] = new int[numidx];
+		for(i = 0, j = 0; i < n-1; i++) {
+			if ((!Double.isInfinite(w[i][0]))  && (!Double.isInfinite(w[i][1]))) {
+			    idx[j++] = i;
+			}
+		}
+		
+		// Two columns hold endpoint indices for integrations
+		int idx2[][] = new int[numidx-1][2];
+		for (i = 0; i < numidx-1; i++) {
+			idx2[i][0] = idx[i];
+			idx2[i][1] = idx[i+1];
+		}
+		
+		// Find midpoints.  Go into upper half-plane to avoid integrating through
+		// skipped prevertices.
+		double zz[][][] = new double[2][numidx-1][2];
+		for (i = 0; i < numidx-1; i++) {
+			for (j = 0; j < 2; j++) {
+				zz[j][i][0] = z[idx2[i][j]][0];
+				zz[j][i][1] = z[idx2[i][j]][1];
+			}
+		}
+		double mid[][] = new double[numidx-1][2];
+		for (i = 0; i < numidx-1; i++) {
+			mid[i][0] = (zz[0][i][0] + zz[1][i][0])/2.0;
+			mid[i][1] = (zz[0][i][1] + zz[1][i][1])/2.0;
+		}
+		for (i = 0; i < numidx-1; i++) {
+			mid[i][1] = mid[i][1] + scm.zabs(zz[1][i][0] - zz[0][i][0], zz[1][i][1] - zz[0][i][1])/2.0;
+		}
+		
+		// Do the integrations
+		double z0[][] = new double[numidx-1][2];
+		double z1[][] = new double[numidx-1][2];
+		for (i = 0; i < numidx-1; i++) {
+			z0[i][0] = z[idx2[i][0]][0];
+			z0[i][1] = z[idx2[i][0]][1];
+			z1[i][0] = z[idx2[i][1]][0];
+			z1[i][1] = z[idx2[i][1]][1];
+		}
+		int idx20[] = new int[numidx-1];
+		int idx21[] = new int[numidx-1];
+		for (i = 0; i < numidx-1; i++) {
+			idx20[i] = idx2[i][0];
+			idx21[i] = idx2[i][1];
+		}
+		double zn[][] = new double[n-1][2];
+		double betan[] = new double[n-1];
+		for (i = 0; i < n-1; i++) {
+			zn[i][0] = z[i][0];
+			zn[i][1] = z[i][1];
+			betan[i] = beta[i];
+		}
+		double I1[][] = hpquad(z0, mid, idx20, zn, betan, qdata);
+		double I2[][] = hpquad(z1, mid, idx21, zn, betan, qdata);
+		double I[][] = new double[numidx-1][2];
+		for (i = 0; i < numidx-1; i++) {
+			I[i][0] = I1[i][0] - I2[i][0];
+			I[i][1] = I1[i][1] - I2[i][1];
+		}
+		double cI[][] = new double[numidx-1][2];
+		for (i = 0; i < numidx-1; i++) {
+		    scm.zmlt(c[0], c[1], I[i][0], I[i][1], cre, cim);
+		    cI[i][0] = cre[0];
+		    cI[i][1] = cim[0];
+		}
+		double diffW[][] = new double[numidx-1][2];
+		for (i = 0; i < numidx-1; i++) {
+			diffW[i][0] = w[idx2[i][1]][0] - w[idx2[i][0]][0];
+			diffW[i][1] = w[idx2[i][1]][1] - w[idx2[i][0]][1];
+		}
+		double val[][] = new double[numidx-1][2];
+		for (i = 0; i < numidx-1; i++) {
+			val[i][0] = cI[i][0] - diffW[i][0];
+			val[i][1] = cI[i][1] - diffW[i][1];
+		}
+		double absVal[] = new double[numidx-1];
+		for (i = 0; i < numidx-1; i++) {
+			absVal[i] = scm.zabs(val[i][0], val[i][1]);
+		}
+		acc = 0.0;
+		for (i = 0; i < numidx-1; i++) {
+			if (absVal[i] > acc) {
+				acc = absVal[i];
+			}
+		}
+		System.out.println("Accuracy = " + acc);
+		return acc;
 	}
 
 	private void hpparam(double z[][], double c[], double qdat[][], double w[][], double beta[], double z0[],
@@ -205,9 +355,13 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			MipavUtil.displayError("Use scfix to make polygon obey requirements");
 			return;
 		}
+		double betan[] = new double[n - 1];
+		for (i = 0; i < n - 1; i++) {
+			betan[i] = beta[i];
+		}
 
 		int nqpts = (int) Math.max(Math.ceil(-Math.log10(tol)), 4);
-		scm.scqdata(qdat, beta, nqpts); // quadrature data
+		scm.scqdata(qdat, betan, nqpts); // quadrature data
 
 		boolean atinf[] = new boolean[beta.length];
 		for (i = 0; i < beta.length; i++) {
@@ -293,7 +447,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 				z0[0] = -1;
 				z0[n - 2] = 1;
 				for (i = 1; i < n - 2; i++) {
-					z0[i] = i * 2.0 / (n - 2.0);
+					z0[i] = -1 + i * 2.0 / (n - 2.0);
 				}
 			} // if ((z0 == null) || (z0.length == 0))
 			else {
@@ -305,16 +459,13 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					z0[i] = z0[i] - z0[0] - 1.0;
 				}
 			}
-			double y0[] = new double[n - 2];
-			for (i = 0; i < n - 2; i++) {
+			double y0[] = new double[n - 3];
+			for (i = 0; i < n - 3; i++) {
 				y0[i] = Math.log((z0[i + 1] - z0[i]) / (z0[i + 2] - z0[i + 1]));
 			}
 
 			// Solve nonlinear system of equations
-			double betan[] = new double[n - 1];
-			for (i = 0; i < n - 1; i++) {
-				betan[i] = beta[i];
-			}
+			
 			hppfun fm = new hppfun(y0, n, betan, nmlen3, left, right, cmplx, qdat);
 			fm.driver();
 			fm.dumpResults();
@@ -346,7 +497,6 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			for (i = 0; i <= n-3; i++) {
 				flipflipcs[i] = flipcs[n-3-i];
 			}
-			z = new double[n][2];
 			z[0][0] = -flipflipcs[0];
 			for (i = 1; i <= n-3; i++) {
 				z[i][0] = cs[i-1] - flipflipcs[i];
@@ -357,6 +507,32 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			}
 			z[n-1][0] = Double.POSITIVE_INFINITY;
 		} // else n != 3
+		
+		// Determine multiplicative constant
+		double mid[][] = new double[1][2];
+		mid[0][0] = (z[0][0] + z[1][0])/2.0;
+		mid[0][1] = (z[0][1] + z[1][1])/2.0;
+		double zn[][] = new double[n-1][2];
+		for (i = 0; i < n-1; i++) {
+			zn[i][0] = z[i][0];
+			zn[i][1] = z[i][1];
+		}
+		double z1[][] = new double[1][2];
+		z1[0][0] = z[1][0];
+		z1[0][1] = z[1][1];
+		double z00[][] = new double[1][2];
+		z00[0][0] = z[0][0];
+		z00[0][1] = z[0][1];
+		int sing1[] = new int[]{1};
+		int sing0[] = new int[]{0};
+		double I1[][] = hpquad(z1, mid, sing1, zn, betan, qdat);
+		double I2[][] = hpquad(z00, mid, sing0, zn, betan, qdat);
+		double g[] = new double[2];
+		g[0] = I1[0][0] - I2[0][0];
+		g[1] = I1[0][1] - I2[0][1];
+		scm.zdiv(w[0][0] - w[1][0], w[0][1] - w[1][1], g[0], g[1], cr, ci);
+		c[0] = cr[0];
+		c[1] = ci[0];
 	}
 
 	class hppfun extends NLConstrainedEngine {
