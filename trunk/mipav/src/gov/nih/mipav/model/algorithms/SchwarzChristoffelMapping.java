@@ -1492,7 +1492,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         double minlen = 0.005;
         // Maximum line segment length, as a proportion of the axes box
         double maxlen = 0.02;
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, wcir, beta, false, axlim, Integer.MIN_VALUE);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, wcir, beta, false, axlim, Integer.MIN_VALUE, true);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -2038,7 +2038,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         double minlen = 0.005;
         // Maximum line segment length, as a proportion of the axes box
         double maxlen = 0.02;
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, wcir, beta, false, axlim, Integer.MIN_VALUE);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, wcir, beta, false, axlim, Integer.MIN_VALUE, true);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -8500,7 +8500,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
  		
  		float xPointArray[] = new float[n+1];
 		float yPointArray[] = new float[n+1];
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, true);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -9290,7 +9290,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		float xPointArray[] = new float[n+1];
 		float yPointArray[] = new float[n+1];
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, true);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -9614,7 +9614,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		float xPointArray[] = new float[n+1+numinfinite];
 		float yPointArray[] = new float[n+1+numinfinite];
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, true);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -9962,7 +9962,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		} // if ((im.length == 1) & (im[0] == Math.round(im[0])))
 		float xPointArray[] = new float[n+1];
 		float yPointArray[] = new float[n+1];
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, true);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		double qdatr[][] = new double[nqpts][2*betar.length+2];
@@ -10975,7 +10975,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		float xPointArray[] = new float[n+1];
 		float yPointArray[] = new float[n+1];
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, true);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -11193,7 +11193,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		graph.paintComponent(g);
 	}
 	
-	private void scpadapt(Vector<Double> zpReal, Vector<Double> zpImag,
+	public void scpadapt(Vector<Double> zpReal, Vector<Double> zpImag,
 		Vector<Double> wpReal, Vector<Double> wpImag, Vector<Boolean> newlog,
 			double minlen, double maxlen, double clip[]) {
 		// This function looks for unacceptable nonsmoothness in the curve(s)
@@ -12247,7 +12247,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	public ViewJFrameGraph plotpoly(float xPointArray[], float yPointArray[],
-			double w[][], double beta[], boolean addMarkerLabel, double axlim[], int yInvert) {
+			double w[][], double beta[], boolean addMarkerLabel, double axlim[], int yInvert,
+			boolean closed) {
 		// plotpoly plots the polygon whose vertices are in vector w
 		// and whose turning angles are in beta.  Vertices at infinity
 		// permitted, but there must be at least two consecutive finite
@@ -12354,21 +12355,30 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		// First edge
 		//double edgeh[] = new double[n];
-		double lblh[][] = new double[xPointArray.length-1][2];
-		for (i = 0; i < xPointArray.length-1; i++) {
+		int numberOfStrings;
+		if (closed) {
+			numberOfStrings = xPointArray.length-1;
+		}
+		else {
+			numberOfStrings = xPointArray.length;
+		}
+		double lblh[][] = new double[numberOfStrings][2];
+		for (i = 0; i < numberOfStrings; i++) {
 			for (j = 0; j < 2; j++) {
 				lblh[i][j] = Double.NaN;
 			}
 		}
-		String lblhString[][] = new String[xPointArray.length-1][2];
-		double lblhx[][] = new double[xPointArray.length-1][2];
-		double lblhy[][] = new double[xPointArray.length-1][2];
+		String lblhString[][] = new String[numberOfStrings][2];
+		double lblhx[][] = new double[numberOfStrings][2];
+		double lblhy[][] = new double[numberOfStrings][2];
 		xPointArray[0] = (float)wrenum[0][0];
 		yPointArray[0] = (float)wrenum[0][1];
 		xPointArray[1] = (float)wrenum[1][0];
 		yPointArray[1] = (float)wrenum[1][1];
-		xPointArray[xPointArray.length-1] = xPointArray[0];
-		yPointArray[xPointArray.length-1] = yPointArray[0];
+		if (closed) {
+		    xPointArray[xPointArray.length-1] = xPointArray[0];
+		    yPointArray[xPointArray.length-1] = yPointArray[0];
+		}
 		
 		double ang = Math.atan2(wrenum[1][1] - wrenum[0][1], wrenum[1][0] - wrenum[0][0]);
 		
