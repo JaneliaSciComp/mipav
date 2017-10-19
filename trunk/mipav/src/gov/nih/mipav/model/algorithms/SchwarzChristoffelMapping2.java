@@ -111,7 +111,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		scmap f1 = hplmap(p);
 	}
 	
-	public void hplot(scmap M, double re[], double im[], int yInvert) {
+	public void hplot(scmap M, double re[], double im[], int yInvert, boolean closed) {
 		// Visualize a Schwarz-Christoffel half-plane map.
 		// hplot plots the polygon associated with the Schwarz-Christoffel
 		// half-plane map M and the images of vertical lines whose real
@@ -127,11 +127,11 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		}
 		double z[][] = M.prevertex;
 		double c[] = M.constant;
-		hpplot(w, beta, z, c, re, im, yInvert);
+		hpplot(w, beta, z, c, re, im, yInvert, closed);
 	}
 	
 	public void hpplot(double w[][], double beta[], double z[][], double c[],
-			double re[], double im[], int yInvert) {
+			double re[], double im[], int yInvert, boolean closed) {
 	    // Image of cartesian grid under Schwarz-Christoffel half-plane map.
 		// hpplot will adaptively plot the images under the Schwarz-Christoffel
 		// exterior map of vertical lines whose real parrts are given in re and
@@ -209,10 +209,17 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 				}
 			} // else
 		} // if ((im.length == 1) & (im[0] == Math.round(im[0])))
-		
-		float xPointArray[] = new float[n+1];
-		float yPointArray[] = new float[n+1];
-		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert);
+		float xPointArray[];
+		float yPointArray[];
+		if (closed) {
+		    xPointArray = new float[n+1];
+		    yPointArray = new float[n+1];
+		}
+		else {
+			xPointArray = new float[n];
+			yPointArray = new float[n];
+		}
+		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, closed);
 		ViewJComponentGraph graph = pointGraph.getGraph();
 		Rectangle graphBounds = graph.getGraphBounds();
 		Graphics g = graph.getGraphics();
@@ -241,7 +248,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		}
 		
 		// Plot vertical lines
-		double y2 = Math.max(z[n-2][0], 10.0);
+		double y2d = Math.max(z[n-2][0], 10.0);
 		Vector<Double> linhx[][] = new Vector[re.length][2];
 		Vector<Double> linhy[][] = new Vector[re.length][2];
 		Vector<Double>x1Vector = new Vector<Double>();
@@ -257,7 +264,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		for (j = 0; j < re.length; j++) {
 		    zpReal.clear();
 		    zpImag.clear();
-		    double spacing = y2/14.0;
+		    double spacing = y2d/14.0;
 		    for (i = 0; i < 15; i++) {
 		    	zpReal.add(re[j]);
 		    	zpImag.add(i*spacing);
@@ -269,7 +276,208 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    	newlog.add(true);
 		    }
 		    newlog.add(false);
+		    wpReal.clear();
+		    wpImag.clear();
+		    for (i = 0; i < 15; i++) {
+		    	wpReal.add(Double.NaN);
+		    
+		    	wpImag.add(0.0);
+		    }
+		    wpReal.add(w[n-1][0]);
+		    wpImag.add(w[n-1][1]);
+		    
+			// The individual points will be shown as they are found.
+				
+			// Adaptive refinement to make curve smooth
+			int iter = 0;
+			while (iter < maxrefn) {
+				int numnewlog = 0;
+				for (i = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	numnewlog++;
+				    }
+				} // for (i = 0; i < newlog.size(); i++)
+				if (numnewlog == 0) {
+					break;
+				}
+				double zpnew[][] = new double[numnewlog][2];
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	zpnew[m][0] = zpReal.get(i);
+				    	zpnew[m++][1] = zpImag.get(i);
+				    }
+				} // for (i = 0, m = 0; i < newlog.length; i++)
+				double neww[][] = new double[numnewlog][2];
+				hpmap(neww, zpnew, w, beta, z, c, qdat);
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+					if (newlog.get(i)) {
+					    wpReal.set(i, neww[m][0]);
+					    wpImag.set(i, neww[m++][1]);
+					} 
+				} // for (i = 0, m = 0; i < newlog.size(); i++)
+				iter = iter + 1;
+				
+				linhx[j][0].clear();
+				linhy[j][0].clear();
+				linhx[j][1].clear();
+				linhy[j][1].clear();
+				// Update the points to show progress
+				for (i = 0; i < wpReal.size(); i++) {
+				    linhx[j][0].add(wpReal.get(i));
+				    linhy[j][0].add(wpImag.get(i));
+				    linhx[j][1].add(zpReal.get(i));
+				    linhy[j][1].add(zpImag.get(i));
+				}
+				
+				// Add points to zp where necessary
+				scm.scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+		    } // while (iter < maxrefn)
 		} // for (j = 0; j < re.length; j++)
+		
+		for (i = 0; i < re.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		double posx1 = linhx[i][0].get(j);
+		    		double posy1 = linhy[i][0].get(j);
+		    		double posx2 = linhx[i][0].get(j+1);
+		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		}
+		
+		// Plot horizontal lines
+		linhx = new Vector[im.length][2];
+		linhy = new Vector[im.length][2];
+		for (i = 0; i < im.length; i++) {
+			for (j = 0; j < 2; j++) {
+				linhx[i][j] = new Vector<Double>();
+				linhy[i][j] = new Vector<Double>();
+			}
+		}
+		
+		double z1 = Math.min(-10, z[0][0]);
+		double z2 = Math.max(40.0, z[n-2][0]);
+		for (j = 0; j < im.length; j++) {
+		    // Start evenly spaced
+			zpReal.clear();
+			zpImag.clear();
+			zpReal.add(Double.NEGATIVE_INFINITY);
+			zpImag.add(im[j]);
+			for (i = 0; i < 15; i++) {
+				zpReal.add(z1 + i*(z2-z1)/14.0);
+				zpImag.add(im[j]);
+			}
+			zpReal.add(Double.POSITIVE_INFINITY);
+			zpImag.add(im[j]);
+			newlog.clear();
+			newlog.add(false);
+		    for (i = 0; i < 15; i++) {
+		    	newlog.add(true);
+		    }
+		    newlog.add(false);
+		    wpReal.clear();
+		    wpImag.clear();
+		    wpReal.add(w[n-1][0]);
+		    wpImag.add(w[n-1][1]);
+		    for (i = 0; i < 15; i++) {
+		    	wpReal.add(Double.NaN);
+		    	wpImag.add(0.0);
+		    }
+		    wpReal.add(w[n-1][0]);
+		    wpImag.add(w[n-1][1]);
+		    
+		    // The individual points will be shown as they are found.
+			
+ 			// Adaptive refinement to make curve smooth
+ 			int iter = 0;
+ 			while (iter < maxrefn) {
+ 				int numnewlog = 0;
+ 				for (i = 0; i < newlog.size(); i++) {
+ 				    if (newlog.get(i)) {
+ 				    	numnewlog++;
+ 				    }
+ 				} // for (i = 0; i < newlog.size(); i++)
+ 				if (numnewlog == 0) {
+ 					break;
+ 				}
+ 				double zpnew[][] = new double[numnewlog][2];
+ 				for (i = 0, m = 0; i < newlog.size(); i++) {
+ 				    if (newlog.get(i)) {
+ 				    	zpnew[m][0] = zpReal.get(i);
+ 				    	zpnew[m++][1] = zpImag.get(i);
+ 				    }
+ 				} // for (i = 0, m = 0; i < newlog.length; i++)
+ 				double neww[][] = new double[numnewlog][2];
+ 				hpmap(neww, zpnew, w, beta, z, c, qdat);
+ 				for (i = 0, m = 0; i < newlog.size(); i++) {
+ 					if (newlog.get(i)) {
+ 					    wpReal.set(i, neww[m][0]);
+ 					    wpImag.set(i, neww[m++][1]);
+ 					} 
+ 				} // for (i = 0, m = 0; i < newlog.size(); i++)
+ 				iter = iter + 1;
+ 				
+ 				linhx[j][0].clear();
+ 				linhy[j][0].clear();
+ 				linhx[j][1].clear();
+ 				linhy[j][1].clear();
+ 				// Update the points to show progress
+ 				for (i = 0; i < wpReal.size(); i++) {
+ 				    linhx[j][0].add(wpReal.get(i));
+ 				    linhy[j][0].add(wpImag.get(i));
+ 				    linhx[j][1].add(zpReal.get(i));
+ 				    linhy[j][1].add(zpImag.get(i));
+ 				}
+ 				
+ 				// Add points to zp where necessary
+ 				scm.scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+ 		    } // while (iter < maxrefn)
+		} // for (j = 0; j < im.length; j++)
+		
+		for (i = 0; i < im.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		double posx1 = linhx[i][0].get(j);
+		    		double posy1 = linhy[i][0].get(j);
+		    		double posx2 = linhx[i][0].get(j+1);
+		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		}
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
+	}
+	
+	private void hpmap(double wp[][], double zp[][], double w[][], double beta[], double z[][], 
+			double c[], double qudat[][]) {
+		
 	}
 
 	public scmap hplmap(polygon poly) {
