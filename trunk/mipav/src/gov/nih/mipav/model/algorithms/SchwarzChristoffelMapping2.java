@@ -89,19 +89,32 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		scm.setEps(eps);
 
 		if (testRoutine) {
-            //testHplmap1();
-			testHplmap2();
+            testHplmap1();
+			//testHplmap2();
 			return;
 		}
 
 	}
 	
 	private void testHplmap1() {
+		int i;
+		double re[];
+		double im[];
 		double x[] = new double[]{0.0,0.0,Double.POSITIVE_INFINITY};
 		double y[] = new double[]{1.0, -1.0, 0.0};
 		double alpha[] = new double[]{1.5, 0.5, -1.0};
 		polygon p = scm.new polygon(x, y, alpha);
 		scmap f = hplmap(p);
+		re = new double[17];
+		for (i = 0; i < 17; i++) {
+			re[i] = (i-6)*0.7;
+		}
+		im = new double[12];
+		for (i = 0; i < 12; i++) {
+			im[i] = (i+1)*0.7;
+		}
+		double axis[] = new double[]{-3, 3, -1.5, 4.5};
+		hplot(f, re, im, Integer.MIN_VALUE, true, axis);
 	}
 	
 	private void testHplmap2() {
@@ -111,7 +124,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		scmap f1 = hplmap(p);
 	}
 	
-	public void hplot(scmap M, double re[], double im[], int yInvert, boolean closed) {
+	public void hplot(scmap M, double re[], double im[], int yInvert, boolean closed, double axis[]) {
 		// Visualize a Schwarz-Christoffel half-plane map.
 		// hplot plots the polygon associated with the Schwarz-Christoffel
 		// half-plane map M and the images of vertical lines whose real
@@ -127,11 +140,11 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		}
 		double z[][] = M.prevertex;
 		double c[] = M.constant;
-		hpplot(w, beta, z, c, re, im, yInvert, closed);
+		hpplot(w, beta, z, c, re, im, yInvert, closed, axis);
 	}
 	
 	public void hpplot(double w[][], double beta[], double z[][], double c[],
-			double re[], double im[], int yInvert, boolean closed) {
+			double re[], double im[], int yInvert, boolean closed, double axis[]) {
 	    // Image of cartesian grid under Schwarz-Christoffel half-plane map.
 		// hpplot will adaptively plot the images under the Schwarz-Christoffel
 		// exterior map of vertical lines whose real parrts are given in re and
@@ -211,15 +224,22 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		} // if ((im.length == 1) & (im[0] == Math.round(im[0])))
 		float xPointArray[];
 		float yPointArray[];
+		int numinfinite = 0;
+		// Put 2 finite points at every infinity in plotpoly
+		for (i = 0; i < w.length; i++) {
+		    if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1]))	{
+		        numinfinite++;	
+		    }
+		}
 		if (closed) {
-		    xPointArray = new float[n+1];
-		    yPointArray = new float[n+1];
+		    xPointArray = new float[n+1+numinfinite];
+		    yPointArray = new float[n+1+numinfinite];
 		}
 		else {
-			xPointArray = new float[n];
-			yPointArray = new float[n];
+			xPointArray = new float[n+numinfinite];
+			yPointArray = new float[n+numinfinite];
 		}
-		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, closed);
+		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, closed, axis);
 		ViewJComponentGraph graph = pointGraph.getGraph();
 		Rectangle graphBounds = graph.getGraphBounds();
 		Graphics g = graph.getGraphics();
@@ -269,13 +289,13 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    	zpReal.add(re[j]);
 		    	zpImag.add(i*spacing);
 		    }
-		    zpReal.add(re[j]);
-		    zpImag.add(Double.POSITIVE_INFINITY);
+		    //zpReal.add(re[j]);
+		    //zpImag.add(Double.POSITIVE_INFINITY);
 		    newlog.clear();
 		    for (i = 0; i < 15; i++) {
 		    	newlog.add(true);
 		    }
-		    newlog.add(false);
+		    //newlog.add(false);
 		    wpReal.clear();
 		    wpImag.clear();
 		    for (i = 0; i < 15; i++) {
@@ -283,8 +303,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    
 		    	wpImag.add(0.0);
 		    }
-		    wpReal.add(w[n-1][0]);
-		    wpImag.add(w[n-1][1]);
+		    //wpReal.add(w[n-1][0]);
+		   // wpImag.add(w[n-1][1]);
 		    
 			// The individual points will be shown as they are found.
 				
@@ -372,30 +392,30 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    // Start evenly spaced
 			zpReal.clear();
 			zpImag.clear();
-			zpReal.add(Double.NEGATIVE_INFINITY);
-			zpImag.add(im[j]);
+			//zpReal.add(Double.NEGATIVE_INFINITY);
+			//zpImag.add(im[j]);
 			for (i = 0; i < 15; i++) {
 				zpReal.add(z1 + i*(z2-z1)/14.0);
 				zpImag.add(im[j]);
 			}
-			zpReal.add(Double.POSITIVE_INFINITY);
-			zpImag.add(im[j]);
+			//zpReal.add(Double.POSITIVE_INFINITY);
+			//zpImag.add(im[j]);
 			newlog.clear();
-			newlog.add(false);
+			//newlog.add(false);
 		    for (i = 0; i < 15; i++) {
 		    	newlog.add(true);
 		    }
-		    newlog.add(false);
+		    //newlog.add(false);
 		    wpReal.clear();
 		    wpImag.clear();
-		    wpReal.add(w[n-1][0]);
-		    wpImag.add(w[n-1][1]);
+		    //wpReal.add(w[n-1][0]);
+		    //wpImag.add(w[n-1][1]);
 		    for (i = 0; i < 15; i++) {
 		    	wpReal.add(Double.NaN);
 		    	wpImag.add(0.0);
 		    }
-		    wpReal.add(w[n-1][0]);
-		    wpImag.add(w[n-1][1]);
+		    //wpReal.add(w[n-1][0]);
+		    //wpImag.add(w[n-1][1]);
 		    
 		    // The individual points will be shown as they are found.
 			
@@ -476,8 +496,237 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	}
 	
 	private void hpmap(double wp[][], double zp[][], double w[][], double beta[], double z[][], 
-			double c[], double qudat[][]) {
+			double c[], double qdat[][]) {
+		// Schwarz-Christoffel half-plane map
+		// hpmap computes the values of the Schwarz-Christoffel half-plane map at the points in
+		// vector zp.  The polygon's vertices should be given in w and the arguments z, c, and
+		// qdat should be computed by hpparam.  hpmap returns a vector wp the same size as zp.
+		// Original MATLAB hpmap routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		double betan[];
+		double zn[][];
+		int nqpts;
+		double tol;
+		double qdat2[][] = null;
+		int p;
+		double mid[][] = null;
+		double cre[] = new double[1];
+		double cim[] = new double[1];
 		
+		if ((zp == null) || (zp.length == 0)) {
+			wp = null;
+			return;
+		}
+		int n = w.length;
+		betan = new double[n-1];
+		zn = new double[n-1][2];
+	    for (i = 0; i < n-1; i++) {
+	    	betan[i] = beta[i];
+	    	zn[i][0] = z[i][0];
+	    	zn[i][1] = z[i][1];
+	    }
+		
+		// Quadrature data and error tolerance
+		if ((qdat == null) || (qdat.length == 0)) {
+		    tol = 1.0E-8;
+		    nqpts = 8;
+		    qdat2 = new double[nqpts][2*betan.length+2];
+			scm.scqdata(qdat2, betan, nqpts);	
+		}
+		else if (qdat.length == 1) {
+			tol = qdat[0][0];
+			nqpts = Math.max((int)Math.ceil(-Math.log10(tol)), 8);
+			qdat2 = new double[nqpts][2*betan.length+2];
+			scm.scqdata(qdat2, betan, nqpts);
+		}
+		else {
+			tol = Math.pow(10.0, -qdat.length);
+			qdat2 = qdat;
+		}
+		
+		p = zp.length;
+		for (i = 0; i < p; i++) {
+			wp[i][0] = 0.0;
+			wp[i][1] = 0.0;
+		}
+		
+		// For each point in zp, find nearest prevertex.
+		double dist[] = new double[p];
+		for (i = 0; i < p; i++) {
+			dist[i] = Double.MAX_VALUE;
+		}
+		int sing[] = new int[p];  // indices of prevertices
+		for (j = 0; j < p; j++) {
+			for (i = 0; i < n; i++) {
+				double currentDist = scm.zabs(zp[j][0]-z[i][0],zp[j][1]-z[i][1]);
+				if (currentDist < dist[j]) {
+				    dist[j] = currentDist;
+				    sing[j] = i;
+				}
+			}
+		}
+		
+		// Screen out images of prevertices
+		boolean vertex[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			vertex[i] = (dist[i] < tol);
+		}
+		for (i = 0; i < p; i++) {
+			if (vertex[i]) {
+				wp[i][0] = w[sing[i]][0];
+				wp[i][1] = w[sing[i]][1];
+			}
+		}
+		boolean zpinf[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			zpinf[i] = (Double.isInfinite(zp[i][0]) || Double.isInfinite(zp[i][1]));
+		}
+		for (i = 0; i < p; i++) {
+			if (zpinf[i]) {
+				wp[i][0] = w[n-1][0];
+				wp[i][1] = w[n-1][1];
+			}
+		}
+		for (i = 0; i < p; i++) {
+			vertex[i] = vertex[i] || zpinf[i];
+		}
+		
+		// "Bad" points are closest to a prevertex of infinity.
+		int numinf = 0;
+		for (i = 0; i < w.length; i++) {
+			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				numinf++;
+			}
+		}
+		int atinf[] = new int[numinf];
+		for (i = 0, j = 0; i < w.length; i++) {
+			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				atinf[j++] = i;
+			}
+		}
+		boolean member[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			for (j = 0; j < numinf; j++) {
+				if (sing[i] == atinf[j]) {
+					member[i] = true;
+				}
+			}
+		}
+		boolean bad[] = new boolean[p];
+		int numbad = 0;
+		for (i = 0; i < p; i++) {
+		    bad[i] = member[i] && (!vertex[i]);
+		    if (bad[i]) {
+		    	numbad++;
+		    }
+		}
+		
+		if (numbad > 0) {
+			// Can't integrate starting at pre-infinity: which neighboring
+			// prevertex to use;
+			double direcn;
+			mid = new double[numbad][2];
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					direcn = zp[i][0] - z[sing[i]][0];
+					if (direcn >= 0) {
+						sing[i] = sing[i] + 1;
+					}
+					else {
+						sing[i] = sing[i] - 1;
+					}
+					// Midpoints of these integrations
+					mid[j][0] = (z[sing[i]][0] + zp[i][0])/2;
+					mid[j++][1] = (z[sing[i]][1] + zp[i][1])/2;
+				}
+			}
+		} // if (numbad > 0)
+		
+		// za = the starting singularities
+		double zs[][] = new double[p][2];
+		double ws[][] = new double[p][2];
+		for (i = 0; i < p; i++) {
+			j = sing[i];
+			zs[i][0] = z[j][0];
+			zs[i][1] = z[j][1];
+			ws[i][0] = w[j][0];
+			ws[i][1] = w[j][1];
+		}
+		
+		// Compute the map directly at "normal" ppoints
+		boolean normal[] = new boolean[p];
+		int numnormal = 0;
+		for (i = 0; i < p; i++) {
+			normal[i] = (!bad[i]) && (!vertex[i]);
+			if (normal[i]) {
+				numnormal++;
+			}
+		}
+		if (numnormal > 0) {
+			double zsnormal[][] = new double[numnormal][2];
+			double zpnormal[][] = new double[numnormal][2];
+			int singnormal[] = new int[numnormal];
+			for (i = 0, j = 0; i < p; i++) {
+				if (normal[i]) {
+					zsnormal[j][0] = zs[i][0];
+					zsnormal[j][1] = zs[i][1];
+					zpnormal[j][0] = zp[i][0];
+					zpnormal[j][1] = zp[i][1];
+					singnormal[j++] = sing[i];
+				}
+			}
+			double I[][] = hpquad(zsnormal, zpnormal, singnormal, zn, betan, qdat);
+			double cI[][] = new double[numnormal][2];
+			for (i = 0; i < numnormal; i++) {
+				scm.zmlt(c[0], c[1], I[i][0], I[i][1], cre, cim);
+				cI[i][0] = cre[0];
+				cI[i][1] = cim[0];
+			}
+			for (i = 0, j = 0; i < p; i++) {
+				if (normal[i]) {
+					wp[i][0] = ws[i][0] + cI[j][0];
+					wp[i][1] = ws[i][1] + cI[j++][1];
+				}
+			}
+		} // if (numnormal > 0)
+		
+		// Compute map at "bad" points, in stages.  Stop at midpoint to avoid
+		// integration where right endpoint is close to a singularity.
+		if (numbad > 0) {
+			double zsbad[][] = new double[numbad][2];
+			int singbad[] = new int[numbad];
+			double zpbad[][] = new double[numbad][2];
+			int singnone[] = new int[numbad];
+			for (i = 0; i < p; i++) {
+				if (bad[i]) {
+					zsbad[j][0] = zs[i][0];
+					zsbad[j][1] = zs[i][1];
+					singbad[j] = sing[i];
+					zpbad[j][0] = zp[i][0];
+					zpbad[j][1] = zp[i][1];
+					singnone[j++] = -1;
+				}
+			}
+			double I1[][] = hpquad(zsbad, mid, singbad, zn, betan, qdat);
+			double I2[][] = hpquad(zpbad, mid, singnone, zn, betan, qdat);
+			double I[][] = new double[numbad][2];
+			for (i = 0; i < numbad; i++) {
+				I[i][0] = I1[i][0] - I2[i][0];
+				I[i][1] = I1[i][1] - I2[i][1];
+			}
+			double cI[][] = new double[numbad][2];
+			for (i = 0; i < numbad; i++) {
+				scm.zmlt(c[0], c[1], I[i][0], I[i][1], cre, cim);
+				cI[i][0] = cre[0];
+				cI[i][1] = cim[0];
+			}
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					wp[i][0] = ws[i][0] + cI[j][0];
+					wp[i][1] = ws[i][1] + cI[j++][1];
+				}
+			}
+		} // if (numbad > 0)
 	}
 
 	public scmap hplmap(polygon poly) {
