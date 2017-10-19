@@ -5611,6 +5611,21 @@ public class LatticeModel {
 			if (imageA.isRegistered(showSelectedVOI) == -1) {
 				imageA.registerVOI(showSelectedVOI);
 			}
+			
+			if ( pickedPoint == left.lastElement() ) {
+				if ( leftMarker != null )
+				{
+					leftMarker.getCurves().elementAt(0).elementAt(0).copy(pickedPoint);
+					leftMarker.update();
+				}
+			}
+			else if ( pickedPoint == right.lastElement() ) {
+				if ( rightMarker != null )
+				{
+					rightMarker.getCurves().elementAt(0).elementAt(0).copy(pickedPoint);
+					rightMarker.update();
+				}
+			}
 		}
 	}
 
