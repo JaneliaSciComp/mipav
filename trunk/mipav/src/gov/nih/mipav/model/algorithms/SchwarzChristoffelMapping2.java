@@ -89,14 +89,21 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		scm.setEps(eps);
 
 		if (testRoutine) {
-            testHplmap1();
-			//testHplmap2();
+            //testHplmap1();
+			testHplmap2();
 			return;
 		}
 
 	}
 	
 	private void testHplmap1() {
+		// Extra line is due to plotpoly going from +infinity on one side to
+		// -infinity or the other side or more specifically going from:
+		// xPointArray[jext] = (float)(wrenum[j-1][0] + R*Math.cos(ang));
+    	// yPointArray[jext] = (float)(wrenum[j-1][1] + R*Math.sin(ang));
+		// to:
+		// xPointArray[jext+1] = (float)(wrenum[(j+1)%n][0] - R*Math.cos(ang));
+    	// yPointArray[jext+1] = (float)(wrenum[(j+1)%n][1] - R*Math.sin(ang));
 		int i;
 		double re[];
 		double im[];
@@ -104,24 +111,75 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		double y[] = new double[]{1.0, -1.0, 0.0};
 		double alpha[] = new double[]{1.5, 0.5, -1.0};
 		polygon p = scm.new polygon(x, y, alpha);
-		scmap f = hplmap(p);
-		re = new double[17];
+		scmap f = hplmap(p, null, null, null);
+        re = new double[17];
 		for (i = 0; i < 17; i++) {
-			re[i] = (i-6)*0.7;
+			re[i] = (i-10)*0.7;
 		}
 		im = new double[12];
 		for (i = 0; i < 12; i++) {
 			im[i] = (i+1)*0.7;
 		}
 		double axis[] = new double[]{-3, 3, -1.5, 4.5};
-		hplot(f, re, im, Integer.MIN_VALUE, true, axis);
+		hplot(f, re, im, Integer.MIN_VALUE, false, axis);
 	}
 	
 	private void testHplmap2() {
+		int i;
 		double x[] = new double[]{0, 0, 2, 2};
 		double y[] = new double[]{1, 0, 0, 1};
 		polygon p = scm.new polygon(x, y, null);
-		scmap f1 = hplmap(p);
+		scmap f1 = hplmap(p, null, null, null);
+		double theta[] = new double[]{0.5, 1.0/6.0, 0.5, 1.0/6.0};
+		double thetas[] = new double[]{1.0/6.0, 0.5, 1.0/6.0, 0.5};
+		// mod(a, m) = a - m*floor(a/m)
+		double diff[] = new double[4];
+		for (i = 0; i < 4; i++) {
+			diff[i] = theta[i] - thetas[i];
+		}
+		double alf[] = new double[4];
+		for (i = 0; i < 4; i++) {
+			alf[i] = Math.floor(diff[i]) - diff[i] + 1;
+		}
+		double z[][] = f1.prevertex;
+		double c[] = new double[]{0.0,1.0};
+		scmap f2 = hplmap(null, z, alf, c);
+		polygon Q = f2.poly;
+		double w[][] = Q.vertex;
+		double m = Double.MAX_VALUE;
+		for (i = 0; i < w.length; i++) {
+			if (w[i][1] < m) {
+				m = w[i][1];
+			}
+		}
+		double M = -Double.MAX_VALUE;
+		for (i = 0; i < w.length; i++) {
+			if (w[i][1] > M) {
+				M = w[i][1];
+			}
+		}
+		double a = -Double.MAX_VALUE;
+		for (i = 0; i < w.length; i++) {
+			if (w[i][0] > a) {
+				a = w[i][0];
+			}
+		}
+		double t[] = new double[101];
+		t[0] = .01/100.0;
+		for (i = 1; i <= 99; i++) {
+			t[i] = (double)i/100.0;
+		}
+		t[100] = 99.99/100.0;
+		double wp[][] = new double[4][2];
+		for (i = 0; i < 4; i++) {
+			wp[i][0] = x[i];
+			wp[i][1] = y[i];
+		}
+		float xPointArray[] = new float[wp.length+1];
+		float yPointArray[] = new float[wp.length+1];
+		double beta[] = new double[]{-0.5, -0.5, -0.5, -0.5};
+		double axlim[] = new double[4];
+		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, wp, beta, false, axlim, Integer.MIN_VALUE, true, null);
 	}
 	
 	public void hplot(scmap M, double re[], double im[], int yInvert, boolean closed, double axis[]) {
@@ -226,9 +284,15 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		float yPointArray[];
 		int numinfinite = 0;
 		// Put 2 finite points at every infinity in plotpoly
+		// Unless last one is infinite in which case add 3
 		for (i = 0; i < w.length; i++) {
 		    if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1]))	{
-		        numinfinite++;	
+		    	if (i == w.length-1) {
+		    		numinfinite = numinfinite + 2;
+		    	}
+		    	else {
+		            numinfinite++;	
+		    	}
 		    }
 		}
 		if (closed) {
@@ -281,6 +345,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 				linhy[i][j] = new Vector<Double>();
 			}
 		}
+		
 		for (j = 0; j < re.length; j++) {
 		    zpReal.clear();
 		    zpImag.clear();
@@ -729,7 +794,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		} // if (numbad > 0)
 	}
 
-	public scmap hplmap(polygon poly) {
+	public scmap hplmap(polygon poly, double zin[][], double alphain[], double c[]) {
 		// hplmap constructs a Schwarz-Christoffel half-plane object for the
 		// polygon poly.
 		// The parameter problem is solved using default options for the
@@ -737,26 +802,81 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		// the multiplicative constant.
 		// Derived from original hlpmap MATLAB routine copyright 1998-2001 by
 		// Toby Driscoll.
-		double z[][] = null;
 		int i, j;
 		double wn[][];
 		double betan[];
 		double alpha2[];
 		int nqpts;
 		double qdata[][] = null;
-		double c[] = null;
 		double z0[] = null;
+		double z[][] = null;
+		double alpha[] = null;
+		double beta[] = null;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		if (zin != null) {
+			z = new double[zin.length][2];
+			for (i = 0; i < zin.length; i++) {
+				z[i][0] = zin[i][0];
+				z[i][1] = zin[i][1];
+			}
+		} // if (zin != null)
+		if (alphain != null) {
+			alpha = new double[alphain.length];
+			for (i = 0; i < alphain.length; i++) {
+				alpha[i] = alphain[i];
+			}
+		} // if (alphain != null)
 
 		// Get data for the low-level functions
-		double w[][] = poly.vertex;
-		double beta[] = new double[poly.angle.length];
-		for (i = 0; i < poly.angle.length; i++) {
-			beta[i] = poly.angle[i] - 1.0;
-		}
 
 		scmap map = scm.new scmap();
+		
+		if ((z != null) && (z.length != 0) && (alpha != null) && (alpha.length != 0)) {
+		    if ((!Double.isInfinite(z[z.length-1][0])) && (!Double.isInfinite(z[z.length-1][1]))) {
+		    	double ztemp[][] = new double[z.length][2];
+		    	for (i = 0; i < z.length; i++) {
+		    		ztemp[i][0] = z[i][0];
+		    		ztemp[i][1] = z[i][1];
+		    	}
+		    	z = null;
+		    	z = new double[ztemp.length+1][2];
+		    	for (i = 0; i < ztemp.length; i++) {
+		    		z[i][0] = ztemp[i][0];
+		    		z[i][1] = ztemp[i][1];
+		    	}
+		    	z[z.length-1][0] = Double.POSITIVE_INFINITY;
+		    	z[z.length-1][1] = 0;
+		    	double alphatemp[] = new double[alpha.length];
+		    	for (i = 0; i < alpha.length; i++) {
+		    		alphatemp[i] = alpha[i];
+		    	}
+		    	alpha = new double[alphatemp.length+1];
+		    	for (i = 0; i < alphatemp.length; i++) {
+		    		alpha[i] = alphatemp[i];
+		    	}
+		    	alpha[alpha.length-1] = 1;
+		    } // if ((!Double.isInfinite(z[z.length-1][0])) && (!Double.isInfinite(z[z.length-1][1])))
+		    // Nonsense vertices
+		    double x[] = new double[alpha.length];
+		    double y[] = new double[alpha.length];
+		    for (i = 0; i < alpha.length; i++) {
+		    	y[i] = Double.NaN;
+		    }
+		    poly = scm.new polygon(x, y, alpha);
+		    if ((c == null) || (c.length == 0)) {
+		    	c = new double[2];
+		    	c[0] = 1;
+		    	c[1] = 0;
+		    }
+		} // if ((z != null) && (z.length != 0) && (alpha != null) && (alpha.length != 0))
 
 		if ((z == null) || (z.length == 0)) {
+			double w[][] = poly.vertex;
+			beta = new double[poly.angle.length];
+			for (i = 0; i < poly.angle.length; i++) {
+				beta[i] = poly.angle[i] - 1.0;
+			}
 			wn = new double[w.length + 2][2];
 			betan = new double[w.length + 2];
 			// Number of vertices added by scfix
@@ -800,14 +920,271 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			qdata = new double[nqpts][2 * (wn2.length-1) + 2];
 			hpparam(z, c, qdata, wn2, betan2, z0, tolerance);
 		} // if ((z == null) || (z.length == 0))
+		
+		if ((qdata == null) || (qdata.length == 0)) {
+		    nqpts = (int) Math.ceil(-Math.log10(tolerance));
+		    alpha = poly.angle;
+		    betan = new double[alpha.length-1];
+		    for (i = 0; i < alpha.length-1; i++) {
+		    	betan[i] = alpha[i] - 1;
+		    }
+		    qdata = new double[nqpts][2 * betan.length + 2];
+		    scm.scqdata(qdata, betan, nqpts);
+		} // if ((qdata == null) || (qdata.length == 0))
+		
+		if ((c == null) || (c.length == 0)) {
+		    w = poly.vertex;
+		    beta = new double[poly.angle.length];
+		    for (i = 0; i < poly.angle.length; i++) {
+		        beta[i] = poly.angle[i] - 1.0;
+		    }
+		    int idx = 0;
+		    for (i = 1; (i < z.length) && (idx == 0); i++) {
+		        if ((!Double.isInfinite(z[i][0])) && (!Double.isInfinite(z[i][1])))	{
+		        	idx = i;
+		        }
+		    }
+		    double mid[][] = new double[1][2];
+		    mid[0][0] = (z[0][0] + z[idx][0])/2.0;
+		    mid[0][1] = (z[idx][0] - z[0][0])/2.0;
+		    double zn[][] = new double[z.length-1][2];
+		    for (i = 0; i < z.length-1; i++) {
+		    	zn[i][0] = z[i][0];
+		    	zn[i][1] = z[i][1];
+		    }
+		    betan = new double[beta.length-1];
+		    for (i = 0; i < beta.length-1; i++) {
+		    	betan[i] = beta[i];
+		    }
+		    double z00[][] = new double[1][2];
+		    z00[0][0] = z[0][0];
+		    z00[0][1] = z[0][1];
+		    int sing0[] = new int[]{0};
+		    double zidx[][] = new double[1][2];
+		    zidx[0][0] = z[idx][0];
+		    zidx[0][1] = z[idx][1];
+		    int singidx[] = new int[]{idx};
+		    double I1[][] = hpquad(z00, mid, sing0, zn, betan, qdata);
+		    double I2[][] = hpquad(zidx, mid, singidx, zn, betan, qdata);
+		    double I[] = new double[2];
+		    I[0] = I1[0][0] - I2[0][0];
+		    I[1] = I1[0][1] - I2[0][1];
+		    double diff[] = new double[2];
+		    diff[0] = w[idx][0] - w[0][0];
+		    diff[1] = w[idx][1] - w[0][1];
+		    scm.zdiv(diff[0], diff[1], I[0], I[1], cr, ci);
+		    c = new double[2];
+		    c[0] = cr[0];
+		    c[1] = ci[0];
+		} // if ((c == null) || (c.length == 0))
+		boolean unknownpoly = false;
+		w = poly.vertex;
+		for (i = 0; i < w.length; i++) {
+		    if (Double.isNaN(w[i][0]) || Double.isNaN(w[i][1])) {
+		    	unknownpoly = true;
+		    }
+		}
+		
 		map.poly = poly;
 		map.prevertex = z;
 		map.constant = c;
 		map.qdata = qdata;
+		if (unknownpoly) {
+			// If the polygon was not known, find it from the map
+			map.poly = forwardpoly(map);
+		}
 
 		// Now fill in apparent accuracy
 		map.accuracy = hpaccuracy(map);
 		return map;
+	}
+	
+	private polygon forwardpoly(scmap map) {
+		// Given a hplmap map, forwardpoly returns the polygon thet is 
+		// formed using the prevertices, angles, and quadrature data of that
+		// map.  If the prevertices were found from the solution of a
+		// parameter problem, then the result should agree closely with the
+		// original polygon that was supplied.
+		// Original MATLAB forwardpoly routine copyright 1998 by Toby Driscoll.
+		int i, j, k;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		polygon p = null;
+		double qdata[][] = null;
+		double z[][] = map.prevertex;
+		double alpha[] = map.poly.angle;
+		double c[] = map.constant;
+		
+		int n = z.length;
+		
+		// Since there is no parameter problem, use high accuracy in quadrature.
+		double betan[] = new double[n-1];
+		for (i = 0; i < n-1; i++) {
+			betan[i] = alpha[i] - 1.0;
+		}
+		int nqpts = 16;
+		qdata = new double[nqpts][2 * betan.length + 2];
+		scm.scqdata(qdata, betan, nqpts);
+		
+		double w[][] = new double[n][2];
+		boolean atinf[] = new boolean[n];
+		int numinf = 0;
+		for (i = 0; i < n; i++) {
+			atinf[i] = (alpha[i] < eps);
+			if (atinf[i] ) {
+				w[i][0] = Double.POSITIVE_INFINITY;
+				numinf++;
+			}
+		} // for (i = 0; i < n; i++)
+		int numnotinf = n - numinf;
+		
+		// Endpoints of integrations.  Because the last preverrtes is at infinity, we
+		// shouldn't try to integrate there.
+		int idx[] = new int[numnotinf];
+		for (i = 0, j = 0; i < n; i++) {
+			if (!atinf[i]) {
+			    idx[j++] = i;	
+			}
+		}
+		if (idx[idx.length-1] == n-1) {
+		    int idxtemp[] = new int[idx.length-1];
+		    for (i = 0; i < idx.length-1; i++) {
+		    	idxtemp[i] = idx[i];
+		    }
+		    idx = new int[idxtemp.length];
+		    for (i = 0; i < idxtemp.length; i++) {
+		    	idx[i] = idxtemp[i];
+		    }
+		} // if (idx[idx.length-1] == n-1)
+		int endpt[][] = new int[idx.length-1][2];
+		for (i = 0; i < idx.length-1; i++) {
+			endpt[i][0] = idx[i];
+			endpt[i][1] = idx[i+1];
+		}
+		
+		// Edge endpoint prevertices.  z(endpt) will not work if endpt has just one
+		// row, since shape will not be preserved.
+		double ze[][][] = new double[endpt.length][2][2];
+		for (i = 0; i < endpt.length; i++) {
+			for (j = 0; j < 2; j++) {
+			 for (k = 0; k < 2; k++) {
+				 ze[i][j][k] = z[endpt[i][j]][k];
+			 }
+			}
+		}
+		
+		// Midpoints are in upper half-plane.  Always make 45 degrees with 
+		// real line.
+		double mid[][] = new double[endpt.length][2];
+		for (i = 0; i < endpt.length; i++) {
+			mid[i][0] = (ze[i][0][0] + ze[i][1][0])/2.0;
+			mid[i][1] = (ze[i][1][1] - ze[i][0][1])/2.0;
+		}
+		
+		// Integrations
+		double ze0[][] = new double[ze.length][2];
+		double ze1[][] = new double[ze.length][2];
+		for (i = 0; i < ze.length; i++) {
+			for (j = 0; j < 2; j++) {
+				ze0[i][j] = ze[i][0][j];
+				ze1[i][j] = ze[i][1][j];
+			}
+		}
+		int endpt0[] = new int[endpt.length];
+		int endpt1[] = new int[endpt.length];
+		for (i = 0; i < endpt.length; i++) {
+			endpt0[i] = endpt[i][0];
+			endpt1[i] = endpt[i][1];
+		}
+		double zn[][] = new double[n-1][2];
+		for (i = 0; i < n-1; i++) {
+		    zn[i][0] = z[i][0];
+		    zn[i][1] = z[i][1];
+		}
+		double I1[][] = hpquad(ze0, mid, endpt0, zn, betan, qdata);
+		double I2[][] = hpquad(ze1, mid, endpt1, zn, betan, qdata);
+		double I[][] = new double[ze.length][2];
+		for (i = 0; i < ze.length; i++) {
+			I[i][0] = I1[i][0] - I2[i][0];
+			I[i][1] = I1[i][1] - I2[i][1];
+		}
+		
+		// Deduce vertices
+		double cs[][] = new double[idx.length][2];
+		cs[0][0] = 0;
+		cs[0][1] = 0;
+		for (i = 0; i < idx.length-1; i++) {
+			cs[i+1][0] = cs[i][0] + I[i][0];
+			cs[i+1][1] = cs[i][1] + I[i][1];
+		}
+		double ccs[][] = new double[idx.length][2];
+		for (i = 0; i < idx.length; i++) {
+			scm.zmlt(c[0], c[1], cs[i][0], cs[i][1], cr, ci);
+			ccs[i][0] = cr[0];
+			ccs[i][1] = ci[0];
+		}
+		for (i = 0; i < idx.length; i++) {
+			w[idx[i]][0] = ccs[i][0];
+			w[idx[i]][1] = ccs[i][1];
+		}
+		
+		// Get the last vertex via intersection
+		if (alpha[n-1] > 0) {
+		    if ((Math.abs(alpha[n-1]-1) < 5.0*eps) || (Math.abs(alpha[n-1]-2) < 5.0*eps)) {
+		    	MipavUtil.displayError("Cannot deduce last vertex when its adjacent sides are collinear");
+		    	System.exit(-1);
+		    }
+		    else if (atinf[0] || atinf[1] || atinf[n-2]) {
+		    	MipavUtil.displayError("Vertices 1, 2, and end-1 must be finite.");
+		    	System.exit(-1);
+		    }
+		    else {
+		    	// Here's the direction from w[0]
+		    	double diff[] = new double[2];
+		    	diff[0] = w[1][0] - w[0][0];
+		    	diff[1] = w[1][1] - w[0][1];
+		    	double evar[] = new double[2];
+		    	evar[0] = Math.cos(Math.PI*alpha[0]);
+		    	evar[1] = Math.sin(Math.PI*alpha[0]);
+		    	double d1[] = new double[2];
+		    	scm.zmlt(diff[0], diff[1], evar[0], evar[1], cr, ci);
+		    	d1[0] = cr[0];
+		    	d1[1] = ci[0];
+		    	// Get the direction from w[n-2]
+		    	double sum = 0.0;
+		    	for (i = 1; i < n-1; i++) {
+		    		sum += Math.PI*(1.0 - alpha[i]);
+		    	}
+		    	double d2[] = new double[2];
+		    	d2[0] = Math.atan2(diff[1], diff[0]) + sum;
+		    	d2[1] = Math.sin(d2[0]);
+		    	d2[0] = Math.cos(d2[0]);
+		    	double b[] = new double[2];
+		    	b[0] = w[n-2][0] - w[0][0];
+		    	b[1] = w[n-2][1] - w[0][1];
+		    	// 2 x 2 matrix is:
+		    	// d1[0]    -d2[0]
+		    	// d1[1]    -d2[1]
+		    	double det = -d1[0]*d2[1] + d1[1]*d2[0];
+		    	// Inverse is:
+		    	double a00 = -d2[1]/det;
+		    	double a01 = d2[0]/det;
+		    	//double a10 = -d1[1]/det;
+		    	//double a11 = d1[0]/det;
+		    	double s[] = new double[2];
+		    	s[0] = a00*b[0] + a01*b[1];
+		    	w[n-1][0] = w[0][0] + s[0]*d1[0];
+		    	w[n-1][1] = w[0][1] + s[0]*d1[1];
+		    }
+		} // if (alpha[n-1] > 0)
+		double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		p = scm.new polygon(x, y, alpha);
+		return p;
 	}
 	
 	private double hpaccuracy(scmap M) {
