@@ -149,13 +149,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testDiskmap2();
         	//testCRDiskmap2();
         	//testDiskmap3();
-        	testCRDiskmap3();
+        	//testCRDiskmap3();
         	//testDiskmap4();
         	// No testCRDiskmap4() because CRDisk cannot handle infinities in example.
         	//testDiskmap5();
         	//testCRDiskmap5();
             //testDiskmap6();
-        	//testExtermap1();
+        	testExtermap1();
         	//testCRRectmap1();
         	//testCRRectmap2();
             return;
@@ -731,7 +731,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		}
 		System.out.println("c = " + M.constant[0] + " " + M.constant[1]+"i");
 		double theta[] = new double[1];
-		exterplot(M, null, theta, 200, 140, null, yDimSource-1);
+		exterplot(M, null, theta, 200, 140, null, yDimSource-1, null);
 		double xcenterDest = (xDimDest-1.0)/2.0;
 		double ycenterDest = (yDimDest-1.0)/2.0;
 		double maxDistance = Math.min(xcenterDest,ycenterDest);
@@ -2306,7 +2306,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		scmap M = extermap(w, alpha, tolerance, null, null);
 		double R[] = new double[]{4.0/10.0, 5.0/10.0, 6.0/10.0, 7.0/10.0, 8.0/10.0, 9.0/10.0};
 		double theta[] =new double[1];
-		exterplot(M, R, theta, 20, 14, null, Integer.MIN_VALUE);
+		double axis[] = new double[]{-3.05, 2.8, -2.3, 2.5};
+		exterplot(M, R, theta, 20, 14, null, Integer.MIN_VALUE, axis);
 	}
 	
 	public void testCRRectmap1() {
@@ -8313,7 +8314,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	public void exterplot(scmap M, double R[], double theta[], int num1draw, int num2draw, 
-			double error[], int yInvert) {
+			double error[], int yInvert, double axis[]) {
 		    // Visualize a Schwarz-Christoffel exterior map.
 			// exterplot plots the polygon associated with the Schwarz-Christoffel
 			// exterior map and the images of circles and radii under the S-C
@@ -8354,7 +8355,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			else {
 				nqpts = 5;
 			}
-			deplot(w, beta, z, c, R, theta, nqpts, num1draw, num2draw, yInvert);
+			deplot(w, beta, z, c, R, theta, nqpts, num1draw, num2draw, yInvert, axis);
 			return;
 		}
 	
@@ -9196,7 +9197,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	}
 	
 	private void deplot(double w[][], double beta[], double z[][], double c[],
-			double R[], double theta[], int nqpts, int num1draw, int num2draw, int yInvert) {
+			double R[], double theta[], int nqpts, int num1draw, int num2draw, int yInvert,
+			double axis[]) {
 		// Image of polar grid under Schwarz-Christoffel exterior map.
 		// deplot will adaptively plot the images under the Schwarz-Christoffel 
 		// exterior map of circles and rays in the unit disk. 
@@ -9290,7 +9292,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		
 		float xPointArray[] = new float[n+1];
 		float yPointArray[] = new float[n+1];
-		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, true, null);
+		ViewJFrameGraph pointGraph = plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, true, axis);
 		double qdat[][] = new double[nqpts][2*beta.length+2];
 		scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
@@ -12574,12 +12576,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			axlim[1] = axis[1];
 			axlim[2] = axis[2];
 			axlim[3] = axis[3];
-		}
-		else if (exterRoutine && testRoutine) {
-			axlim[0] = -3.05;
-			axlim[1] = 2.8;
-			axlim[2] = -2.3;
-			axlim[3] = 2.5;
 		}
 		else if (exterRoutine) {
 			axlim[0] = 0;
