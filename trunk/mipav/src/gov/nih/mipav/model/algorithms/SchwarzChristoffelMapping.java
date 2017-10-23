@@ -91,6 +91,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private boolean testRoutine = false;
 	private boolean exterRoutine = false;
 	
+	private SchwarzChristoffelMapping2 scm2 = new SchwarzChristoffelMapping2();
+	
 	public SchwarzChristoffelMapping() {
 		
 	}
@@ -7453,7 +7455,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					wbase[j][1] = neww[0][1];
 				} // else if (from_disk)
 				else if (from_hp) {
-				  // Fill in hpmap	
+					double neww[][] = new double[1][2];
+					double zpnew[][] = new double[1][2];
+					zpnew[0][0] = zbase[j][0];
+					zpnew[0][1] = zbase[j][1];
+					scm2.hpmap(neww, zpnew, w2 , beta2, z2, c, qdat2);
+					wbase[j][0] = neww[0][0];
+					wbase[j][1] = neww[0][1];
 				} // else if (from_hp)
 				else if (from_strip) {
 				  // Fill in stmap	
