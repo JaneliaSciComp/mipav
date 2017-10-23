@@ -7141,7 +7141,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		return corner;
 	}
 	
-	private void scimapz0(double z0[][], double w0[][], String prefix, double wp[][],
+	public void scimapz0(double z0[][], double w0[][], String prefix, double wp[][],
 			double w[][], double beta[], double z[][], double c[], double qdat[][],
 			double aux[][]) {
 	    // scimapz0 returns starting points for computing inverses of 
