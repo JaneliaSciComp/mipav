@@ -125,7 +125,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	}
 	
 	private void testHplmap2() {
-		int i;
+		int i, j;
 		double x[] = new double[]{0, 0, 2, 2};
 		double y[] = new double[]{1, 0, 0, 1};
 		polygon p = scm.new polygon(x, y, null);
@@ -170,16 +170,193 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			t[i] = (double)i/100.0;
 		}
 		t[100] = 99.99/100.0;
-		double wp[][] = new double[4][2];
+		double wt[][] = new double[4][2];
 		for (i = 0; i < 4; i++) {
-			wp[i][0] = x[i];
-			wp[i][1] = y[i];
+			wt[i][0] = x[i];
+			wt[i][1] = y[i];
 		}
-		float xPointArray[] = new float[wp.length+1];
-		float yPointArray[] = new float[wp.length+1];
+		float xPointArray[] = new float[wt.length+1];
+		float yPointArray[] = new float[wt.length+1];
 		double beta[] = new double[]{-0.5, -0.5, -0.5, -0.5};
 		double axlim[] = new double[4];
-		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, wp, beta, false, axlim, Integer.MIN_VALUE, true, null);
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, wt, beta, false, axlim, Integer.MIN_VALUE, true, null);
+		int nqpts = 5;
+		double qdat[][] = new double[nqpts][2*beta.length+2];
+		scm.scqdata(qdat, beta, nqpts);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		Graphics g = graph.getGraphics();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+		double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		
+		double X[][] = new double[101][15];
+		double Y[][] = new double[101][15];
+		double wp[][] = new double[101*15][2];
+		double zp[][] = new double[101*15][2];
+		for (i = 0; i < 101; i++) {
+			for (j = 0; j < 15; j++) {
+			    X[i][j] = (j+1)*a/16.0;
+			    Y[i][j] = m*t[i];
+			    wp[101*j + i][0] = X[i][j];
+			    wp[101*j + i][1] = Y[i][j] + M * X[i][j]/a;
+			}
+		}
+		hpevalinv(zp, f2, wp);
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
+		for (i = 0; i < 15; i++) {
+			for (j = 0; j < 100; j++) {
+				double posx1 = zp[101*i + j][0];
+	    		double posy1 = zp[101*i + j][1];
+	    		double posx2 = zp[101*i + j + 1][0];
+	    		double posy2 = zp[101*i + j + 1][1];
+	    		x1Vector.add(posx1);
+	    		y1Vector.add(posy1);
+	    		x2Vector.add(posx2);
+	    		y2Vector.add(posy2);
+	    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+			    graph.drawLine(g, x1, y1, x2, y2);	
+			}
+		}
+		for (i = 0; i < 101; i++) {
+			for (j = 0; j < 15; j++) {
+			    wp[101*j + i][0] = Y[i][j] + M * X[i][j]/a;
+			    wp[101*j + i][1] = X[i][j];
+			}
+		}
+		hpevalinv(zp, f2, wp);
+		for (i = 0; i < 9; i++) {
+			for (j = 0; j < 100; j++) {
+				double posx1 = zp[101*i + j][0];
+	    		double posy1 = zp[101*i + j][1];
+	    		double posx2 = zp[101*i + j + 1][0];
+	    		double posy2 = zp[101*i + j + 1][1];
+	    		x1Vector.add(posx1);
+	    		y1Vector.add(posy1);
+	    		x2Vector.add(posx2);
+	    		y2Vector.add(posy2);
+	    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+			    graph.drawLine(g, x1, y1, x2, y2);	
+			}
+		}
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
+	}
+	
+	private void hpevalinv(double zp[][], scmap M, double wp[][]) {
+		// Invert Schwarz-Christoffel half-plane at points.
+		// hpevalinv evaluates the inverse of the Schwarz-Christoffel map M
+		// at the points wp inthe polygon.  The default tolerance of M is used.
+		// Form original MATLAB evalinv routine copyright 1998 by Toby Driscoll.
+		int i;
+		double qdata[][] = M.qdata;
+		double tol = M.accuracy;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		int n = w.length;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1.0;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		for (i = 0; i < wp.length; i++) {
+			zp[i][0] = Double.NaN;
+		}
+		boolean ode = true;
+		boolean newton = true;
+		int maxiter = 200;
+		double z0[][] = null;
+		hpinvmap(zp, wp, w, beta, z, c, qdata, z0, ode, newton, tol, maxiter);
+	}
+	
+	private void hpinvmap(double zp[][], double wp[][], double w[][], double beta[], double z[][],
+			double c[], double qdat[][], double z0[][], boolean ode, boolean newton, double tol,
+			int maxiter) {
+		// Schwarz-Christoffel half-plane inverse map.
+		// hpivnmap computes the inverse of the upper half-plane map( i.e., from the polygon to the
+		// upper half-plane) at the points fiven in the vector wp.  The arguments are as in hpparam.
+		// tol is a scalar tolerance and qdat is a quadrature-data matrix as returned by scqdata.
+		
+		// The default algorithm is to solve an ode in order to obtain a fair approximation for zp,
+		// and then improve zp with Newton iterations.  The ode solution at po requires a vector z0
+		// whose forsward image w0 is such that for each j, the line segment connecting wp[j] and
+		// w0[j] lies inside the polygon.  By default z0 is chosen by a fairly robust automatic
+		// process.  You can choose to use either an ODE solutionor Newton iterations exclusively.
+		
+		// hpinvmap has two interpretations.  If the ode solution is being used, z0 overrides the 
+		// automatic selection of initial points.  (This can be handy in convex polygons, where the
+		// choice of z0 is trivial.)  Otherwise, z0 is taken as an initial guess to zp.  In either 
+		// case, if length((z0) == 1, the value z0 is used for all elements of wp; otherwise,
+		// length(z0) should equal length(wp).
+		
+		// Original MATLAB hpinvmap routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		int nfin;
+		int n = w.length;
+		for (i = 0; i < wp.length; i++) {
+			zp[i][0] = 0;
+			zp[i][1] = 0;
+		}
+		int lenwp = wp.length;
+		if (Double.isInfinite(z[n-1][0]) || Double.isInfinite(z[n-1][1])) {
+		    nfin = n-1;	
+		}
+		else {
+			nfin = n;
+		}
+		
+		boolean done[] = new boolean[lenwp];
+		// First, trap all points indistinguishable from vertices, or they will cause trouble.
+		// Modified 05/14/2007 to work around bug in matlab 2007a.
+		for (j = 0; j < n; j++) {
+		    for (i = 0; i < lenwp; i++) {
+		    	if (scm.zabs(wp[i][0] - w[j][0], wp[i][1] - w[j][1]) < 3.0*eps) {
+		    		zp[i][0] = z[j][0];
+		    		zp[i][1] = z[j][1];
+		    		done[i] = true;
+		    	}
+		    }
+		} // for (j = 0; j < n; j++)
+		int sumdone = 0;
+		for (i = 0; i < lenwp; i++) {
+			if (done[i]) {
+				sumdone++;
+			}
+		}
+		lenwp = lenwp - sumdone;
+		if (lenwp == 0) {
+			return;
+		}
+		
+		// ODE
+		if (ode) {
+			
+		} // if (ode)
 	}
 	
 	public void hplot(scmap M, double re[], double im[], int yInvert, boolean closed, double axis[]) {
@@ -560,7 +737,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		graph.paintComponent(g);
 	}
 	
-	private void hpmap(double wp[][], double zp[][], double w[][], double beta[], double z[][], 
+	public void hpmap(double wp[][], double zp[][], double w[][], double beta[], double z[][], 
 			double c[], double qdat[][]) {
 		// Schwarz-Christoffel half-plane map
 		// hpmap computes the values of the Schwarz-Christoffel half-plane map at the points in
