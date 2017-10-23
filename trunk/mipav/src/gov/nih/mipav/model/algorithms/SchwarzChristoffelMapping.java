@@ -91,8 +91,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private boolean testRoutine = false;
 	private boolean exterRoutine = false;
 	
-	private SchwarzChristoffelMapping2 scm2 = new SchwarzChristoffelMapping2();
-	
 	public SchwarzChristoffelMapping() {
 		
 	}
@@ -7459,7 +7457,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					double zpnew[][] = new double[1][2];
 					zpnew[0][0] = zbase[j][0];
 					zpnew[0][1] = zbase[j][1];
-					scm2.hpmap(neww, zpnew, w2 , beta2, z2, c, qdat2);
+					hpmap(neww, zpnew, w2 , beta2, z2, c, qdat2);
 					wbase[j][0] = neww[0][0];
 					wbase[j][1] = neww[0][1];
 				} // else if (from_hp)
@@ -7645,6 +7643,452 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			factor = randomGen.genUniformRandomNum(0.0, 1.0);
 		} // while (m > 0)
  	}
+	
+	public void hpmap(double wp[][], double zp[][], double w[][], double beta[], double z[][], 
+			double c[], double qdat[][]) {
+		// Schwarz-Christoffel half-plane map
+		// hpmap computes the values of the Schwarz-Christoffel half-plane map at the points in
+		// vector zp.  The polygon's vertices should be given in w and the arguments z, c, and
+		// qdat should be computed by hpparam.  hpmap returns a vector wp the same size as zp.
+		// Original MATLAB hpmap routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		double betan[];
+		double zn[][];
+		int nqpts;
+		double tol;
+		double qdat2[][] = null;
+		int p;
+		double mid[][] = null;
+		double cre[] = new double[1];
+		double cim[] = new double[1];
+		
+		if ((zp == null) || (zp.length == 0)) {
+			wp = null;
+			return;
+		}
+		int n = w.length;
+		betan = new double[n-1];
+		zn = new double[n-1][2];
+	    for (i = 0; i < n-1; i++) {
+	    	betan[i] = beta[i];
+	    	zn[i][0] = z[i][0];
+	    	zn[i][1] = z[i][1];
+	    }
+		
+		// Quadrature data and error tolerance
+		if ((qdat == null) || (qdat.length == 0)) {
+		    tol = 1.0E-8;
+		    nqpts = 8;
+		    qdat2 = new double[nqpts][2*betan.length+2];
+			scqdata(qdat2, betan, nqpts);	
+		}
+		else if (qdat.length == 1) {
+			tol = qdat[0][0];
+			nqpts = Math.max((int)Math.ceil(-Math.log10(tol)), 8);
+			qdat2 = new double[nqpts][2*betan.length+2];
+		    scqdata(qdat2, betan, nqpts);
+		}
+		else {
+			tol = Math.pow(10.0, -qdat.length);
+			qdat2 = qdat;
+		}
+		
+		p = zp.length;
+		for (i = 0; i < p; i++) {
+			wp[i][0] = 0.0;
+			wp[i][1] = 0.0;
+		}
+		
+		// For each point in zp, find nearest prevertex.
+		double dist[] = new double[p];
+		for (i = 0; i < p; i++) {
+			dist[i] = Double.MAX_VALUE;
+		}
+		int sing[] = new int[p];  // indices of prevertices
+		for (j = 0; j < p; j++) {
+			for (i = 0; i < n; i++) {
+				double currentDist = zabs(zp[j][0]-z[i][0],zp[j][1]-z[i][1]);
+				if (currentDist < dist[j]) {
+				    dist[j] = currentDist;
+				    sing[j] = i;
+				}
+			}
+		}
+		
+		// Screen out images of prevertices
+		boolean vertex[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			vertex[i] = (dist[i] < tol);
+		}
+		for (i = 0; i < p; i++) {
+			if (vertex[i]) {
+				wp[i][0] = w[sing[i]][0];
+				wp[i][1] = w[sing[i]][1];
+			}
+		}
+		boolean zpinf[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			zpinf[i] = (Double.isInfinite(zp[i][0]) || Double.isInfinite(zp[i][1]));
+		}
+		for (i = 0; i < p; i++) {
+			if (zpinf[i]) {
+				wp[i][0] = w[n-1][0];
+				wp[i][1] = w[n-1][1];
+			}
+		}
+		for (i = 0; i < p; i++) {
+			vertex[i] = vertex[i] || zpinf[i];
+		}
+		
+		// "Bad" points are closest to a prevertex of infinity.
+		int numinf = 0;
+		for (i = 0; i < w.length; i++) {
+			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				numinf++;
+			}
+		}
+		int atinf[] = new int[numinf];
+		for (i = 0, j = 0; i < w.length; i++) {
+			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				atinf[j++] = i;
+			}
+		}
+		boolean member[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			for (j = 0; j < numinf; j++) {
+				if (sing[i] == atinf[j]) {
+					member[i] = true;
+				}
+			}
+		}
+		boolean bad[] = new boolean[p];
+		int numbad = 0;
+		for (i = 0; i < p; i++) {
+		    bad[i] = member[i] && (!vertex[i]);
+		    if (bad[i]) {
+		    	numbad++;
+		    }
+		}
+		
+		if (numbad > 0) {
+			// Can't integrate starting at pre-infinity: which neighboring
+			// prevertex to use;
+			double direcn;
+			mid = new double[numbad][2];
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					direcn = zp[i][0] - z[sing[i]][0];
+					if (direcn >= 0) {
+						sing[i] = sing[i] + 1;
+					}
+					else {
+						sing[i] = sing[i] - 1;
+					}
+					// Midpoints of these integrations
+					mid[j][0] = (z[sing[i]][0] + zp[i][0])/2;
+					mid[j++][1] = (z[sing[i]][1] + zp[i][1])/2;
+				}
+			}
+		} // if (numbad > 0)
+		
+		// za = the starting singularities
+		double zs[][] = new double[p][2];
+		double ws[][] = new double[p][2];
+		for (i = 0; i < p; i++) {
+			j = sing[i];
+			zs[i][0] = z[j][0];
+			zs[i][1] = z[j][1];
+			ws[i][0] = w[j][0];
+			ws[i][1] = w[j][1];
+		}
+		
+		// Compute the map directly at "normal" ppoints
+		boolean normal[] = new boolean[p];
+		int numnormal = 0;
+		for (i = 0; i < p; i++) {
+			normal[i] = (!bad[i]) && (!vertex[i]);
+			if (normal[i]) {
+				numnormal++;
+			}
+		}
+		if (numnormal > 0) {
+			double zsnormal[][] = new double[numnormal][2];
+			double zpnormal[][] = new double[numnormal][2];
+			int singnormal[] = new int[numnormal];
+			for (i = 0, j = 0; i < p; i++) {
+				if (normal[i]) {
+					zsnormal[j][0] = zs[i][0];
+					zsnormal[j][1] = zs[i][1];
+					zpnormal[j][0] = zp[i][0];
+					zpnormal[j][1] = zp[i][1];
+					singnormal[j++] = sing[i];
+				}
+			}
+			double I[][] = hpquad(zsnormal, zpnormal, singnormal, zn, betan, qdat);
+			double cI[][] = new double[numnormal][2];
+			for (i = 0; i < numnormal; i++) {
+				zmlt(c[0], c[1], I[i][0], I[i][1], cre, cim);
+				cI[i][0] = cre[0];
+				cI[i][1] = cim[0];
+			}
+			for (i = 0, j = 0; i < p; i++) {
+				if (normal[i]) {
+					wp[i][0] = ws[i][0] + cI[j][0];
+					wp[i][1] = ws[i][1] + cI[j++][1];
+				}
+			}
+		} // if (numnormal > 0)
+		
+		// Compute map at "bad" points, in stages.  Stop at midpoint to avoid
+		// integration where right endpoint is close to a singularity.
+		if (numbad > 0) {
+			double zsbad[][] = new double[numbad][2];
+			int singbad[] = new int[numbad];
+			double zpbad[][] = new double[numbad][2];
+			int singnone[] = new int[numbad];
+			for (i = 0; i < p; i++) {
+				if (bad[i]) {
+					zsbad[j][0] = zs[i][0];
+					zsbad[j][1] = zs[i][1];
+					singbad[j] = sing[i];
+					zpbad[j][0] = zp[i][0];
+					zpbad[j][1] = zp[i][1];
+					singnone[j++] = -1;
+				}
+			}
+			double I1[][] = hpquad(zsbad, mid, singbad, zn, betan, qdat);
+			double I2[][] = hpquad(zpbad, mid, singnone, zn, betan, qdat);
+			double I[][] = new double[numbad][2];
+			for (i = 0; i < numbad; i++) {
+				I[i][0] = I1[i][0] - I2[i][0];
+				I[i][1] = I1[i][1] - I2[i][1];
+			}
+			double cI[][] = new double[numbad][2];
+			for (i = 0; i < numbad; i++) {
+				zmlt(c[0], c[1], I[i][0], I[i][1], cre, cim);
+				cI[i][0] = cre[0];
+				cI[i][1] = cim[0];
+			}
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					wp[i][0] = ws[i][0] + cI[j][0];
+					wp[i][1] = ws[i][1] + cI[j++][1];
+				}
+			}
+		} // if (numbad > 0)
+	}
+	
+	private double[][] hpquad(double z1[][], double z2[][], int sing1[], double z[][], double beta[], double qdat[][]) {
+		// Numerical quadrature for the half-plane map.
+		// z1, z2 are vectors of left and right endpoints. sing1 is a vector of
+		// integer indices which label the singularities in z1. So if sing1[5] =
+		// 3,
+		// then z1[]5 = z[3],. A -1 means no singularity. A is the vector of
+		// finite
+		// singularities; beta is the vector of associated turning angles. qdata
+		// is
+		// quadrature data from scqdata.
+
+		// hpquad integrates from a possible singularity at the left end to a
+		// regular point at the right. If both endpoints are singularities,
+		// you must break the integral into two pieces and make two calls, or
+		// call hpquad(z1,z2,sing1,sing2,z,beta,qdat) and accept an automatic
+		// choice.
+
+		// The integral is subdivided, if necessary, so that no singularity
+		// lies closer to the left endpoint than 1/2 the length of the
+		// integration (sub)interval.
+
+		// Original MATLAB routine copyright 1998 by Toby Driscoll.
+		int i, j, k, m;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		int nqpts = qdat.length;
+		// Note: Here n is the total number of *finite* singularities; i.e., the
+		// number of terms in the product appearing in the integrand.
+		int n = z.length;
+		double bigz[][][] = new double[n][nqpts][2];
+		for (i = 0; i < n; i++) {
+			for (j = 0; j < nqpts; j++) {
+				bigz[i][j][0] = z[i][0];
+				bigz[i][j][1] = z[i][1];
+			}
+		}
+		double bigbeta[][] = new double[beta.length][nqpts];
+		for (i = 0; i < beta.length; i++) {
+			for (j = 0; j < nqpts; j++) {
+				bigbeta[i][j] = beta[i];
+			}
+		} // for (i = 0; i < beta.length; i++)
+		if ((sing1 == null) || (sing1.length == 0)) {
+			sing1 = new int[z1.length];
+			for (i = 0; i < z1.length; i++) {
+				sing1[i] = -1;
+			}
+		} // if ((sing1 == null) || (sing1.length == 0))
+		double I[][] = new double[z1.length][2];
+		int numnontriv = 0;
+		for (i = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				numnontriv++;
+			}
+		} // for (i = 0; i < z1.length; i++)
+		int nontriv[] = new int[numnontriv];
+		for (i = 0, j = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				nontriv[j++] = i;
+			}
+		} // for (i = 0, j = 0; i < z1.length; i++)
+
+		double za[] = new double[2];
+		double zb[] = new double[2];
+		double nd[][] = new double[nqpts][2];
+		double wt[][] = new double[nqpts][2];
+		double terms[][][] = new double[n][nqpts][2];
+		double zr[] = new double[2];
+		double zl[] = new double[2];
+		double logterms[] = new double[2];
+		double prod[] = new double[2];
+		double expSum[] = new double[2];
+		double expTerm;
+		double termsr;
+		double termsi;
+
+		for (i = 0; i < nontriv.length; i++) {
+			k = nontriv[i];
+			za[0] = z1[k][0];
+			za[1] = z1[k][1];
+			zb[0] = z2[k][0];
+			zb[1] = z2[k][1];
+			int sng = sing1[k];
+
+			// Allowable integration step, based on nearest singularity.
+			double dist = 1.0;
+			double denom = zabs(zb[0] - za[0], zb[1] - za[1]);
+			double minVal = Double.MAX_VALUE;
+			double absDiff;
+			for (j = 0; j <= sng - 1; j++) {
+				absDiff = zabs(z[j][0] - za[0], z[j][1] - za[1]);
+				if (absDiff < minVal) {
+					minVal = absDiff;
+				}
+			} // for (j = 0; j <=sng-1; j++)
+			for (j = sng + 1; j <= n - 1; j++) {
+				absDiff = zabs(z[j][0] - za[0], z[j][1] - za[1]);
+				if (absDiff < minVal) {
+					minVal = absDiff;
+				}
+			} // for (j = sng+1; j <= n-1; j++)
+			minVal = 2.0 * minVal / denom;
+			if (minVal < dist) {
+				dist = minVal;
+			}
+			zr[0] = za[0] + dist * (zb[0] - za[0]);
+			zr[1] = za[1] + dist * (zb[1] - za[1]);
+			// Adjust Gauss-Jacobi nodes and weights to interval.
+			int ind = (sng + n + 1) % (n + 1);
+			for (j = 0; j < nqpts; j++) {
+				nd[j][0] = ((zr[0] - za[0]) * qdat[j][ind] + zr[0] + za[0]) / 2.0; // G-J
+																					// nodes
+				nd[j][1] = ((zr[1] - za[1]) * qdat[j][ind] + zr[1] + za[1]) / 2.0;
+				wt[j][0] = ((zr[0] - za[0]) / 2.0) * qdat[j][ind + n + 1];
+				wt[j][1] = ((zr[1] - za[1]) / 2.0) * qdat[j][ind + n + 1];// G-J
+																			// weights
+			} // for (j = 0; j < nqpts; j++)
+			int zeroterms = 0;
+			for (j = 0; j < n; j++) {
+				for (m = 0; m < nqpts; m++) {
+					terms[j][m][0] = nd[m][0] - bigz[j][m][0];
+					terms[j][m][1] = nd[m][1] - bigz[j][m][1];
+					if ((terms[j][m][0] == 0) && (terms[j][m][1] == 0)) {
+						zeroterms++;
+					}
+				}
+			} // for (j = 0; j < n; j++)
+			if (zeroterms > 0) {
+				// Endpoints are practically coincident
+				I[k][0] = 0;
+				I[k][1] = 0;
+			} else {
+				// Use Gauss-Jacobi on first subinterval, if necessary.
+				if (sng >= 0) {
+					double fac = zabs(zr[0] - za[0], zr[1] - za[1]) / 2.0;
+					double fac2 = Math.pow(fac, beta[sng]);
+					for (m = 0; m < nqpts; m++) {
+						denom = zabs(terms[sng][m][0], terms[sng][m][1]);
+						terms[sng][m][0] = terms[sng][m][0] / denom;
+						terms[sng][m][1] = terms[sng][m][1] / denom;
+						wt[m][0] = wt[m][0] * fac2;
+						wt[m][1] = wt[m][1] * fac2;
+					}
+				} // if (sng >= 0)
+				I[k][0] = 0;
+				I[k][1] = 0;
+				for (m = 0; m < nqpts; m++) {
+					expSum[0] = 0;
+					expSum[1] = 0;
+					for (j = 0; j < n; j++) {
+						logterms[0] = Math.log(zabs(terms[j][m][0], terms[j][m][1]));
+						logterms[1] = Math.atan2(terms[j][m][1], terms[j][m][0]);
+						prod[0] = logterms[0] * bigbeta[j][m];
+						prod[1] = logterms[1] * bigbeta[j][m];
+						expSum[0] += prod[0];
+						expSum[1] += prod[1];
+					} // for (j = 0; j < n; j++)
+					expTerm = Math.exp(expSum[0]);
+					zmlt(expTerm * Math.cos(expSum[1]), expTerm * Math.sin(expSum[1]), wt[m][0], wt[m][1], cr, ci);
+					I[k][0] += cr[0];
+					I[k][1] += ci[0];
+				} // for (m = 0; m < nqpts; m++)
+				while (dist < 1) {
+					// Do regular Gaussian quad on other subintervals.
+					zl[0] = zr[0];
+					zl[1] = zr[1];
+					dist = 1.0;
+					minVal = Double.MAX_VALUE;
+					denom = zabs(zl[0] - zb[0], zl[1] - zb[1]);
+					for (j = 0; j < n; j++) {
+						double num = zabs(z[j][0] - zl[0], z[j][1] - zl[1]);
+						if (num < minVal) {
+							minVal = num;
+						}
+					} // (j = 0; j < n; j++)
+					minVal = 2.0 * minVal / denom;
+					if (minVal < dist) {
+						dist = minVal;
+					}
+					zr[0] = zl[0] + dist * (zb[0] - zl[0]);
+					zr[1] = zl[1] + dist * (zb[1] - zl[1]);
+					for (j = 0; j < nqpts; j++) {
+						nd[j][0] = ((zr[0] - zl[0]) * qdat[j][n] + zr[0] + zl[0]) / 2.0;
+						nd[j][1] = ((zr[1] - zl[1]) * qdat[j][n] + zr[1] + zl[1]) / 2.0;
+						wt[j][0] = ((zr[0] - zl[0]) / 2.0) * qdat[j][2 * n + 1];
+						wt[j][1] = ((zr[1] - zl[1]) / 2.0) * qdat[j][2 * n + 1];
+					} // for (j = 0; j < nqpts; j++)
+					for (m = 0; m < nqpts; m++) {
+						expSum[0] = 0;
+						expSum[1] = 0;
+						for (j = 0; j < n; j++) {
+							termsr = nd[m][0] - bigz[j][m][0];
+							termsi = nd[m][1] - bigz[j][m][1];
+							logterms[0] = Math.log(zabs(termsr, termsi));
+							logterms[1] = Math.atan2(termsi, termsr);
+							prod[0] = logterms[0] * bigbeta[j][m];
+							prod[1] = logterms[1] * bigbeta[j][m];
+							expSum[0] += prod[0];
+							expSum[1] += prod[1];
+						}
+						expTerm = Math.exp(expSum[0]);
+						zmlt(expTerm * Math.cos(expSum[1]), expTerm * Math.sin(expSum[1]), wt[m][0], wt[m][1], cr,
+								ci);
+						I[k][0] += cr[0];
+						I[k][1] += ci[0];
+					} // for (m = 0; m < nqpts; m++)
+				} // while (dist < 1)
+			} // else
+		} // for (i = 0; i < nontriv.length; i++)
+		return I;
+	}
 	
 	private double[][] diskeval(scmap M, double zp[][], double tol) {
 		// Evaluate the Schwarz-Christoffel disk map at points
