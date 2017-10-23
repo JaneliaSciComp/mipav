@@ -16,6 +16,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+import gov.nih.mipav.model.algorithms.SchwarzChristoffelMapping.ODEModel;
 import gov.nih.mipav.model.algorithms.SchwarzChristoffelMapping.dpfun;
 import gov.nih.mipav.model.algorithms.SchwarzChristoffelMapping.polygon;
 import gov.nih.mipav.model.algorithms.SchwarzChristoffelMapping.qlgraph;
@@ -239,7 +240,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			}
 		}
 		hpevalinv(zp, f2, wp);
-		for (i = 0; i < 9; i++) {
+		for (i = 0; i < 15; i++) {
 			for (j = 0; j < 100; j++) {
 				double posx1 = zp[101*i + j][0];
 	    		double posy1 = zp[101*i + j][1];
@@ -270,8 +271,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	private void hpevalinv(double zp[][], scmap M, double wp[][]) {
 		// Invert Schwarz-Christoffel half-plane at points.
 		// hpevalinv evaluates the inverse of the Schwarz-Christoffel map M
-		// at the points wp inthe polygon.  The default tolerance of M is used.
-		// Form original MATLAB evalinv routine copyright 1998 by Toby Driscoll.
+		// at the points wp in the polygon.  The default tolerance of M is used.
+		// From original MATLAB evalinv routine copyright 1998 by Toby Driscoll.
 		int i;
 		double qdata[][] = M.qdata;
 		double tol = M.accuracy;
@@ -299,14 +300,14 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			int maxiter) {
 		// Schwarz-Christoffel half-plane inverse map.
 		// hpivnmap computes the inverse of the upper half-plane map( i.e., from the polygon to the
-		// upper half-plane) at the points fiven in the vector wp.  The arguments are as in hpparam.
+		// upper half-plane) at the points given in the vector wp.  The arguments are as in hpparam.
 		// tol is a scalar tolerance and qdat is a quadrature-data matrix as returned by scqdata.
 		
 		// The default algorithm is to solve an ode in order to obtain a fair approximation for zp,
-		// and then improve zp with Newton iterations.  The ode solution at po requires a vector z0
-		// whose forsward image w0 is such that for each j, the line segment connecting wp[j] and
+		// and then improve zp with Newton iterations.  The ode solution at wp requires a vector z0
+		// whose forward image w0 is such that for each j, the line segment connecting wp[j] and
 		// w0[j] lies inside the polygon.  By default z0 is chosen by a fairly robust automatic
-		// process.  You can choose to use either an ODE solutionor Newton iterations exclusively.
+		// process.  You can choose to use either an ODE solution or Newton iterations exclusively.
 		
 		// hpinvmap has two interpretations.  If the ode solution is being used, z0 overrides the 
 		// automatic selection of initial points.  (This can be handy in convex polygons, where the
@@ -315,20 +316,23 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		// length(z0) should equal length(wp).
 		
 		// Original MATLAB hpinvmap routine copyright 1998 by Toby Driscoll.
-		int i, j;
-		int nfin;
+		int i, j, k, m;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		//int nfin;
+		double F[][] = null;
 		int n = w.length;
 		for (i = 0; i < wp.length; i++) {
 			zp[i][0] = 0;
 			zp[i][1] = 0;
 		}
 		int lenwp = wp.length;
-		if (Double.isInfinite(z[n-1][0]) || Double.isInfinite(z[n-1][1])) {
-		    nfin = n-1;	
-		}
-		else {
-			nfin = n;
-		}
+		//if (Double.isInfinite(z[n-1][0]) || Double.isInfinite(z[n-1][1])) {
+		    //nfin = n-1;	
+		//}
+		//else {
+			//nfin = n;
+		//}
 		
 		boolean done[] = new boolean[lenwp];
 		// First, trap all points indistinguishable from vertices, or they will cause trouble.
@@ -343,9 +347,13 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    }
 		} // for (j = 0; j < n; j++)
 		int sumdone = 0;
+		int numnotdone = 0;
 		for (i = 0; i < lenwp; i++) {
 			if (done[i]) {
 				sumdone++;
+			}
+			else {
+				numnotdone++;
 			}
 		}
 		lenwp = lenwp - sumdone;
@@ -355,8 +363,349 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		
 		// ODE
 		if (ode) {
-			
+			double wpnotdone[][] = new double[numnotdone][2];
+			for (i = 0, j = 0; i < done.length; i++) {
+	    		if (!done[i]) {
+	    			wpnotdone[j][0] = wp[i][0];
+	    			wpnotdone[j++][1] = wp[i][1];
+	    		}
+	    	}
+			double w0[][] = null;
+		    if ((z0 == null) || (z0.length == 0)) {
+		        // Pick a value z0 (not a singularity) and compute the map there.	
+		    	z0 = new double[numnotdone][2];
+		    	w0 = new double[numnotdone][2];
+		    	scm.scimapz0(z0, w0, "hp", wpnotdone, w, beta, z, c, qdat, null);
+		    } // if ((z0 == null) || (z0.length == 0))
+		    else {
+		    	w0 = new double[z0.length][2];
+		    	hpmap(w0, z0, w, beta, z, c, qdat);
+		    	if ((z0.length == 1) && (lenwp > 1)) {
+		    		double temp0 = z0[0][0];
+		    		double temp1 = zp[0][1];
+		    		z0 = new double[lenwp][2];
+		    	    for (i = 0; i < lenwp; i++) {
+		    	    	z0[i][0] = temp0;
+		    	    	z0[i][1] = temp1;
+		    	    }
+		    	    temp0 = w0[0][0];
+		    	    temp1 = w0[0][1];
+		    	    w0 = new double[lenwp][2];
+		    	    for (i = 0; i < lenwp; i++) {
+		    	    	w0[i][0] = temp0;
+		    	    	w0[i][1] = temp1;
+		    	    }
+		    	} // if ((z0.length == 1) && (lenwp > 1))
+		    } // else
+		    
+		    // Use relaxed OD tol if improving with Newton.
+		    double odetol = tol;
+		    if (newton) {
+		        odetol = Math.max(tol, 1.0E-3);	
+		    }
+		    double abstol = odetol;
+			double reltol = odetol;
+		    
+		    // Rescale dependent coordinate.
+		    double scale[][] = new double[numnotdone][2];
+		    for (i = 0; i < numnotdone; i++) {
+		    	scale[i][0] = wpnotdone[i][0] - w0[i][0];
+		    	scale[i][1] = wpnotdone[i][1] - w0[i][1];
+		    }
+		    
+		    // Solve ODE
+		    double z02[] = new double[2*z0.length];
+		    for (i = 0; i < z0.length; i++) {
+		    	z02[i] = z0[i][0];
+		    	z02[z0.length + i] = z0[i][1];
+		    }
+		    double yarr[][] = new double[3][z02.length];
+			for (i = 0; i < z02.length; i++) {
+				yarr[0][i] = z02[i];
+			}
+			double coef = 0.1;
+			double t[] = new double[1];
+			double relerr[] = new double[1];
+			double abserr[] = new double[1];
+			int iflag[] = new int[1];
+			ODEHPModel modODE;
+			double tout;
+			while (true) {
+				t[0] = 0;
+				tout = 0.5;
+				relerr[0] = coef*reltol;
+				abserr[0] = coef*abstol;
+				iflag[0] = 1;
+				for (i = 0; i < z02.length; i++) {
+				    z02[i] = yarr[0][i];
+				}
+				modODE = new ODEHPModel(z02.length, z02, t, tout, relerr,
+						abserr, iflag, scale, z, beta, c);
+				modODE.driver();
+				System.out.println(modODE.getErrorMessage());
+				if ((iflag[0] >= 3) && (iflag[0] <= 5)) {
+					System.out.println("Final time reached = " + t[0]);
+				}
+				if ((iflag[0] != 3) || (coef >= 1024.0)) {
+					break;
+				}
+				coef = 2.0 * coef;
+			} // while (true)
+			for (i = 0; i < z02.length; i++) {
+				yarr[1][i] = z02[i];
+			}
+			coef = 0.1;
+			while (true) {
+				t[0] = 0.5;
+				tout = 1.0;
+				relerr[0] = coef*reltol;
+				abserr[0] = coef*abstol;
+				iflag[0] = 1;
+				for (i = 0; i < z02.length; i++) {
+				    z02[i] = yarr[1][i];	
+				}
+				modODE = new ODEHPModel(z02.length, z02, t, tout, relerr,
+						abserr, iflag, scale, z, beta, c);
+				modODE.driver();
+				System.out.println(modODE.getErrorMessage());
+				if ((iflag[0] >= 3) && (iflag[0] <= 5)) {
+					System.out.println("Final time reached = " + t[0]);
+				}
+				if ((iflag[0] != 3) || (coef >= 1024.0)) {
+					break;
+				}
+				coef = 2.0 * coef;
+			} // while (true)
+			for (i = 0; i < z02.length; i++) {
+				yarr[2][i] = z02[i];
+			}
+			m = yarr.length;
+			int leny = yarr[0].length;
+			for (i = 0, j = 0; i < done.length; i++) {
+			    if (!done[i]) {
+			    	zp[i][0] = yarr[m-1][j];
+			    	zp[i][1] = yarr[m-1][j + lenwp];
+			    	j++;
+			    }
+			} // for (i = 0, j = 0; i < done.length; i++)
+			for (i = 0; i < zp.length; i++) {
+				if (zp[i][1] < 0.0) {
+					zp[i][1] = 0.0;
+				}
+			}
 		} // if (ode)
+		
+		// Newton iterations
+		if (newton) {
+			double zn[][];
+		    if (!ode) {
+		    	if ((z0.length == 1)&& (lenwp > 1)) {
+		    		zn = new double[lenwp][2];
+		    		for (i = 0; i < lenwp; i++) {
+		    		    zn[i][0] = z0[0][0];
+		    		    zn[i][1] = z0[0][1];
+		    		}
+		    	} // if ((z0.length == 1)&& (lenwp > 1))
+		    	else {
+		    		zn = new double[z0.length][2];
+		    		for (i = 0; i < z0.length; i++) {
+		    			zn[i][0] = z0[i][0];
+		    			zn[i][1] = z0[i][1];
+		    		}
+		    	}
+		    	for (i = 0; i < done.length; i++) {
+	    			if (done[i]) {
+	    				zn[i][0] = zp[i][0];
+	    				zn[i][1] = zp[i][1];
+	    			}
+		    	}	
+		    } // if (!ode)
+		    else {
+		    	zn = new double[zp.length][2];
+			    for (i = 0; i < zp.length; i++) {
+			        zn[i][0] = zp[i][0];
+			        zn[i][1] = zp[i][1];
+			    }	
+		    } // else
+		    
+		    k = 0;
+		    while ((numnotdone > 0) && (k < maxiter)) {
+			    double wpnotdone[][] = new double[numnotdone][2];
+			    double wpnotdone2[][] = new double[numnotdone][2];
+			    double znnotdone[][] = new double[numnotdone][2];
+			    for (i = 0, j = 0; i < done.length; i++) {
+			    	if (!done[i]) {
+			    		wpnotdone[j][0] = wp[i][0];
+			    		wpnotdone[j][1] = wp[i][1];
+			    		znnotdone[j][0] = zn[i][0];
+			    		znnotdone[j++][1] = zn[i][1];
+			    	}
+			    }
+			    hpmap(wpnotdone2, znnotdone, w, beta, z, c, qdat);
+			    F = new double[numnotdone][2];
+			    for (i = 0; i < numnotdone; i++) {
+			    	F[i][0] = wpnotdone[i][0] - wpnotdone2[i][0];
+			    	F[i][1] = wpnotdone[i][1] - wpnotdone2[i][1];
+			    }
+			    double dF[][] = hpderiv(znnotdone, z, beta, c);
+			    double Fdiv[][] = new double[numnotdone][2];
+			    for (i = 0; i < numnotdone; i++) {
+			    	scm.zdiv(F[i][0], F[i][1], dF[i][0], dF[i][1], cr, ci);
+			    	Fdiv[i][0] = cr[0];
+			    	Fdiv[i][1] = ci[0];
+			    }
+			    double znew[][] = new double[numnotdone][2];
+			    for (i = 0; i < numnotdone; i++) {
+			    	znew[i][0] = znnotdone[i][0] + Fdiv[i][0];
+			    	znew[i][1] = znnotdone[i][1] + Fdiv[i][1];
+			    }
+			    for (i = 0, j = 0; i < done.length; i++) {
+			    	if (!done[i]) {
+			    		zn[i][0] = znew[j][0];
+			    		zn[i][1] = Math.max(0.0, znew[j][1]);
+			    		j++;
+			    	}
+			    } // for (i = 0, j = 0; i < done.length; i++)
+			    for (i = 0, j = 0; i < done.length; i++) {
+			    	if (!done[i]) {
+			    		done[i] = (scm.zabs(F[j][0], F[j][1]) < tol);
+			    		j++;
+			    	}
+			    }
+			    numnotdone = 0;
+			    for (i = 0; i < done.length; i++) {
+			        if (!done[i]) {
+			        	numnotdone++;
+			        }
+			    }
+			    k = k + 1;
+		    } // while ((numnotdone > 0) && (k < maxiter))
+		    double maxabsF = 0.0;
+		    for (i = 0; i < F.length; i++) {
+		    	double resid = scm.zabs(F[i][0], F[i][1]);
+		    	Preferences.debug("resid = " + resid + "\n", Preferences.DEBUG_ALGORITHM);
+		    	if (resid > maxabsF) {
+		    		maxabsF = resid;
+		    	}
+		    }
+		    if (maxabsF > tol ) {
+		    	MipavUtil.displayWarning("Check solution: maximum residual in hpinvamp = " + maxabsF);
+		    }
+		    for (i = 0; i < zn.length; i++) {
+		    	zp[i][0] = zn[i][0];
+		    	zp[i][1] = zn[i][1];
+		    }
+		} // if (newton)
+	}
+	
+	class ODEHPModel extends ODE {
+		double scale[][];
+		double z[][];
+		double beta[];
+		double c[];
+		public ODEHPModel(int neqn, double y[], double t[], double tout, double relerr[],
+				double abserr[], int iflag[], double scale[][], double z[][], 
+				double beta[], double c[]) {
+			super(neqn, y, t, tout, relerr, abserr, iflag);
+			this.scale = scale;
+			this.z = z;
+			this.beta = beta;
+			this.c = c;
+			
+		}
+		
+		/**
+		 * DOCUMENT ME!
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		public void f(double x, double yy[], double yp[]) {
+			int i;
+			double cr[] = new double[1];
+			double ci[] = new double[1];
+			int lenyy = yy.length;
+			int lenzp = lenyy/2;
+			// Don't allow points in the lower half-plane.  This really messes up the
+			// derivative calculation;
+			double zp[][] = new double[lenzp][2];
+			for (i = 0; i < lenzp; i++) {
+				zp[i][0] = yy[i];
+			}
+			for (i = lenzp; i < lenyy; i++) {
+				zp[i-lenzp][1] = Math.max(0.0, yy[i]);;
+			}
+			
+			double fprime[][] = hpderiv(zp, z, beta, c);
+			double f[][] = new double[scale.length][2];
+			for (i = 0; i < scale.length; i++) {
+				scm.zdiv(scale[i][0], scale[i][1], fprime[i][0], fprime[i][1], cr, ci);
+				f[i][0] = cr[0];
+				f[i][1] = ci[0];
+			}
+			
+			for (i = 0; i < f.length; i++) {
+				yp[i] = f[i][0];
+				yp[f.length + i] = f[i][1];
+			}	
+		}
+	}
+	
+	private double[][] hpderiv(double zp[][], double z[][], double beta[], double c[]) {
+		// Derivative of the half-plane map
+		// hpderiv returns the derivative at the points of zp of the Schwarz-Christoffel
+		// half-plane map defined by z, bet, and c
+		
+		// Original MATLAB hpderiv routine copyright 1998 by Toby Driscoll
+		
+		int i, j;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		int numnotinfz = 0;
+		for (i = 0; i < z.length; i++) {
+			if ((!Double.isInfinite(z[i][0])) && (!Double.isInfinite(z[i][1]))) {
+				numnotinfz++;
+			}
+		}
+		double zf[][] = new double[numnotinfz][2];
+		double betaf[] = new double[numnotinfz];
+		for (i = 0, j = 0; i < z.length; i++) {
+			if ((!Double.isInfinite(z[i][0])) && (!Double.isInfinite(z[i][1]))) {
+				zf[j][0] = z[i][0];
+				zf[j][1] = z[i][1];
+				betaf[j++] = beta[i];
+			}
+		}
+		int npts = zp.length;
+		double fprime[][] = new double[npts][2];
+		double terms[][][] = new double[numnotinfz][npts][2];
+		for (i = 0; i < numnotinfz; i++) {
+			for (j = 0; j < npts; j++) {
+				terms[i][j][0] = zp[j][0] - zf[i][0];
+				terms[i][j][1] = zp[j][1] - zf[i][1];
+			}
+		}
+		for (j = 0; j < npts; j++) {
+			double sumr = 0.0;
+			double sumi = 0.0;
+			for (i = 0; i < numnotinfz; i++) {
+				double logr = Math.log(scm.zabs(terms[i][j][0], terms[i][j][1]));
+				double logi = Math.atan2(terms[i][j][1], terms[i][j][0]);
+				double prodr = logr * betaf[i];
+				double prodi = logi * betaf[i];
+				sumr += prodr;
+				sumi += prodi;
+			} // for (i = 0; i < numnotinfz; i++)
+			double expb = Math.exp(sumr);
+			double expr = expb * Math.cos(sumi);
+			double expi = expb * Math.sin(sumi);
+			scm.zmlt(c[0], c[1], expr, expi, cr, ci);
+			fprime[j][0] = cr[0];
+			fprime[j][1] = ci[0];
+		} // for (j = 0; j < npts; j++)
+		
+		return fprime;
 	}
 	
 	public void hplot(scmap M, double re[], double im[], int yInvert, boolean closed, double axis[]) {
