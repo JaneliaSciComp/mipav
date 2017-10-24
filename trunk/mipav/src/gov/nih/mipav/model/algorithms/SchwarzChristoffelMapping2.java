@@ -138,6 +138,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		// generates NaNs and infinities at k = 21 in the loop in if (newton) in hpinvmap.  At k = 21 the F/dF division has
 		//  dF values like dF = 0 + 0i or dF = 0 + 3.95E-311i which generate NaNs and infinities in Fdiv.
 		// If you try to use only the ODE and specify newton = false, the ODE finds the equation too stiff to succeed.
+		// In any event passing the evalinv points to f1 in hplmap does not seem to make sense.
 		int i, j;
 		double x[] = new double[]{0, 0, 2, 2};
 		double y[] = new double[]{1, 0, 0, 1};
@@ -299,7 +300,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		}
 		boolean ode = true;
 		boolean newton = true;
-		int maxiter = 200;
+		int maxiter = 500;
 		double z0[][] = null;
 		hpinvmap(zp, wp, w, beta, z, c, qdata, z0, ode, newton, tol, maxiter);
 	}
