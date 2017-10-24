@@ -126,6 +126,18 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	}
 	
 	private void testHplmap2() {
+		// Map accuracies and ODE integrations are okay.
+        // Accuracy = 4.7671978322256E-10
+        // Accuracy = 1.4031304414909808E-9
+        // In ODE normal return.  Integration reached tout
+        // In ODE normal return.  Integration reached tout
+        // In ODE normal return.  Integration reached tout
+        // In ODE normal return.  Integration reached tout
+
+		// First hpevalinv works okay and only goes to k = 3 in the loop in if (newton) in hpinvmap.  The second hpevalinv
+		// generates NaNs and infinities at k = 21 in the loop in if (newton) in hpinvmap.  At k = 21 the F/dF division has
+		//  dF values like dF = 0 + 0i or dF = 0 + 3.95E-311i which generate NaNs and infinities in Fdiv.
+		// If you try to use only the ODE and specify newton = false, the ODE finds the equation too stiff to succeed.
 		int i, j;
 		double x[] = new double[]{0, 0, 2, 2};
 		double y[] = new double[]{1, 0, 0, 1};
@@ -185,9 +197,6 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
         // Maximum line segment length, as a proportion of the axes box
         double maxlen = 0.02;
 		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, wt, beta, false, axlim, Integer.MIN_VALUE, true, null);
-		int nqpts = 5;
-		double qdat[][] = new double[nqpts][2*beta.length+2];
-		scm.scqdata(qdat, beta, nqpts);
 		ViewJComponentGraph graph = pointGraph.getGraph();
 		Rectangle graphBounds = graph.getGraphBounds();
 		Graphics g = graph.getGraphics();
@@ -382,7 +391,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    	hpmap(w0, z0, w, beta, z, c, qdat);
 		    	if ((z0.length == 1) && (lenwp > 1)) {
 		    		double temp0 = z0[0][0];
-		    		double temp1 = zp[0][1];
+		    		double temp1 = z0[0][1];
 		    		z0 = new double[lenwp][2];
 		    	    for (i = 0; i < lenwp; i++) {
 		    	    	z0[i][0] = temp0;
@@ -583,7 +592,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    double maxabsF = 0.0;
 		    for (i = 0; i < F.length; i++) {
 		    	double resid = scm.zabs(F[i][0], F[i][1]);
-		    	Preferences.debug("resid = " + resid + "\n", Preferences.DEBUG_ALGORITHM);
+		    	//Preferences.debug("resid = " + resid + "\n", Preferences.DEBUG_ALGORITHM);
 		    	if (resid > maxabsF) {
 		    		maxabsF = resid;
 		    	}
