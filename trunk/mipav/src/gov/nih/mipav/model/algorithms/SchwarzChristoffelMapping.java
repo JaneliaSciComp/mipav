@@ -18507,7 +18507,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    return fprime;
 	}
 	
-	private double sign(double d) {
+	public double sign(double d) {
 		if (d > 0.0) {
 			return 1.0;
 		}
