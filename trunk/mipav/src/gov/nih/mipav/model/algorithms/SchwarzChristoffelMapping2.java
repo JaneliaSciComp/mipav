@@ -91,7 +91,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 
 		if (testRoutine) {
             //testHplmap1();
-			testHplmap2();
+			//testHplmap2();
+			testStripmap1();
 			return;
 		}
 
@@ -276,6 +277,411 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		graph.setY2Vector(y2Vector);
 		graph.setAddSchwarzChristoffelLines(true);
 		graph.paintComponent(g);
+	}
+	
+	private void testStripmap1() {
+		 double x[] = new double[]{Double.POSITIVE_INFINITY, -1, -2.5, Double.POSITIVE_INFINITY, 2.4,
+				                   Double.POSITIVE_INFINITY, 2.4, Double.POSITIVE_INFINITY, -1, -2.5};
+		 double y[] = new double[]{0, -1, -1, 0, -3.3, 0, -1.3, 0, 1, 1};
+		 double alf[] = new double[]{0,2,1,-.85, 2, 0,2,-1.15,2,1};
+		 polygon p = scm.new polygon(x, y, alf);
+		 int endidx[] = new int[]{5, 7};
+		 scmap f1 = stripmap(p, endidx);
+		 int endidx2[] = new int[]{3,7};
+		 scmap f2 = stripmap(p, endidx2);
+	}
+	
+	private scmap stripmap(polygon poly, int endidx[]) {
+		// Schwarz-Christoffel strip map object.
+		// stripmap constructs a Schwarz-Christoffel strip map object for the polygon poly.
+		// endidx is a two-vector containing the indices of the vertices that are the 
+		// images of the left and right ends of the strip.  The parameter problem is 
+		// solved using default options for the prevertices and the multiplicative
+		// constant.
+		
+		// Extracted from original MATLAB stripmap routine copyright 1998 by Toby Driscoll.
+		int i;
+		double z[][] = null;
+		double z0[][] = null;
+		double c[] = null;
+		double qdata[][] = null;
+		double wn[][] = null;
+		double betan[] = null;
+		polygon poly2 = null;
+		
+		// Get data for the low-level functions
+		double w[][] = poly.vertex;
+		int n = w.length;
+		double beta[] = new double[poly.angle.length];
+		for (i = 0; i < poly.angle.length; i++) {
+			beta[i] = poly.angle[i] - 1.0;
+		}
+		
+		// Find prevertices if necessary
+		if ((z == null) || (z.length == 0)) {
+			// Apply scfix to enforce solver rules
+			// Solve parameter problem
+			// Apply scfix to enforce solver rules
+			wn = new double[w.length+2][2];
+			betan = new double[w.length+2];
+			// Number of vertices added by scfix
+			int verticesAdded[] = new int[1];
+			int initialVertices = w.length;
+			for (i = 0; i < w.length; i++) {
+				wn[i][0] = w[i][0];
+				wn[i][1] = w[i][1];
+				betan[i] = beta[i];
+			}
+			int endidxn[] = new int[2];
+			scm.scfix(wn, betan, verticesAdded, endidxn, "st", w, beta, endidx);
+			double wn2[][];
+			double betan2[];
+			if ((verticesAdded[0] == 0) ||(verticesAdded[0] == 1)) {
+			    wn2 = new double[initialVertices + verticesAdded[0]][2];
+				betan2 = new double[initialVertices + verticesAdded[0]];
+				for (i = 0; i < initialVertices + verticesAdded[0]; i++) {
+					wn2[i][0] = wn[i][0];
+					wn2[i][1] = wn[i][1];
+					betan2[i] = betan[i];
+				}
+			}
+			else {
+				wn2 = wn;
+				betan2 = betan;
+			}	
+			double x[] = new double[wn2.length];
+			double y[] = new double[wn2.length];
+			for (i = 0; i < wn2.length; i++) {
+				x[i] = wn2[i][0];
+				y[i] = wn2[i][1];
+			}
+			double alpha[] = new double[betan2.length];
+			for (i = 0; i < betan2.length; i++) {
+				alpha[i] = betan2[i] + 1.0;
+			}
+			poly2 = scm.new polygon(x, y, alpha);
+			z = new double[wn2.length][2];
+			c = new double[2];
+			int nqpts = (int)Math.max(Math.ceil(-Math.log10(tolerance)), 4);
+			qdata = new double[nqpts][2*beta.length+2];
+			stparam(z, c, qdata, wn2, betan2, endidxn, z0, tolerance);
+		} // if ((z == null) || (z.length == 0))
+	    scmap M = scm.new scmap();
+	    return M;
+	}
+	
+	private void stparam(double z[][], double c[], double qdat[][], double w[][],
+			double beta[], int ends[], double z0[][], double tol) {
+	    // Schwarz-Christoffel strip parameter problem.
+		// stparam solves the Schwarz-Christoffel parameter problem with the infinite
+		// strip as fundamental domain and interior of the specified polygon as target.
+		// w must be a vector of the vertices of the polygon, specified in counterclockwise
+		// order.  beta is a vector of turning angles; see scangles. ends is a 2-vector
+		// whose entries are indices of the vertices which are the images of the left and
+		// right ends of the strip.  If ends is omitted, the user is requested to select
+		// these vertices using the mouse.
+		
+		// If successful, stparam will return z, a vector of the preimages of w; c, the 
+		// multiplicative constant of the conformal map; and qdat, an optional matrix
+		// of quadrature data required by some of the other sc routines. If z0 is supplied,
+		// it will be used an initial guess for z.
+		
+		// Original MATLAB stparam routine copyright 1998 by Toby Driscoll.
+		int i, j, k;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double z03[][];
+		
+		if ((ends == null) || (ends.length == 0)) {
+			String msg[] = new String[1];
+			msg[0] = "Select the vertices that map to the ends of the strip.";
+			ends = scm.scselect(w, beta, 2, "Select ends", msg);
+		}
+		
+		int N = w.length; // Number of vertices
+		// Renumber vertices so that the ends of the strip map to w([0, k])
+		int renum[] = new int[N];
+		for (i = ends[0]; i < N; i++) {
+			renum[i-ends[0]] = ends[0] + i;
+		}
+		for (i = 0 ; i <= ends[0]-1; i++) {
+			renum[N-ends[0]+i] = i;
+		}
+		double w2[][] = new double[w.length][2];
+		double beta2[] = new double[beta.length];
+		for (i = 0; i < N; i++) {
+			w2[i][0] = w[renum[i]][0];
+			w2[i][1] = w[renum[i]][1];
+			beta2[i] = beta[renum[i]];
+		}
+		for (k = 0; k < N; k++) {
+			if (renum[k] == ends[1]) {
+				break;
+			}
+		}
+		// n: number of finite prevertices
+		int n = N-2;
+		// nb: number of prevertices on bottom edge of strip
+		int nb = k-1;
+		
+		// Check input data
+		int err = scm.sccheck("st", w, beta, ends);
+	    if (err == -1) {
+	    	return;
+	    }
+	    if (err == 1) {
+	    	MipavUtil.displayError("Use scfix to make polygon obey requirements");
+	    	return;
+	    }
+	    
+	    int nqpts = (int)Math.max(Math.ceil(-Math.log10(tol)), 4);
+	    scm.scqdata(qdat, beta, nqpts);  // quadrature data
+	    boolean atinf[] = new boolean[beta2.length];
+	    for (i = 0; i < beta2.length; i++) {
+	    	atinf[i] = (beta2[i] <= -1);
+	    }
+	    
+	    // Ignore images of ends of strip.
+	    double w3[][] = new double[w2.length-2][2];
+	    for (i = 0, j = 0; i < w2.length; i++) {
+	    	if ((i != 0) && (i != k)) {
+	    		w3[j][0] = w2[i][0];
+	    		w3[j++][1] = w2[i][1];
+	    	}
+	    }
+	    boolean atinf2[] = new boolean[atinf.length];
+	    int numinf = 0;
+	    for (i = 0, j = 0; i < atinf.length; i++) {
+	    	if ((i != 0) && (i != k)) {
+	    		atinf2[j++] = atinf[i];
+	    		if (atinf[i]) {
+	    			numinf++;
+	    		}
+	    	}
+	    } // for (i = 0, j = 0; i < atinf.length; i++)
+	    
+	    if ((z0 == null) || (z0.length == 0)) {
+	        // Make initial guess based on polygon.
+	    	z0 = new double[n][2];
+	    	if (numinf > 0) {
+	    		// Can't base it on relative side lengths.
+	    		double abs1 = scm.zabs(w3[nb-1][0] - w3[0][0], w3[nb-1][1] - w3[0][1]);
+	    		double abs2 = scm.zabs(w3[n-1][0] - w3[nb][0], w3[n-1][1] - w3[nb][1]);
+	    		double scale = (abs1 + abs2)/2.0;
+	    		double space = scale/(nb - 1.0);
+	    		for (i = 0; i < nb; i++) {
+	    			z0[i][0] = i * space;
+	    			z0[i][1] = 0.0;
+	    		}
+	    		space = scale/(n-nb-1);
+	    		double spacearr[] = new double[n-nb];
+	    		for (i = 0; i < n-nb; i++) {
+	    			spacearr[i] = i * space;
+	    		}
+	    		double spacearrflip[] = new double[n-nb];
+	    		for (i = 0; i < n-nb; i++) {
+	    		    spacearrflip[i] = spacearr[n-nb-1-i];	
+	    		}
+	    		for (i = nb; i < n; i++) {
+	    			z0[i][0] = spacearrflip[i-nb];
+	    			z0[i][1] = 1.0;
+	    		}
+	    	} // if (numinf > 0)
+	    	else {
+	    		// This is from Louis Howell's code.
+	    		double abs1 = scm.zabs(w3[n-1][0]-w3[0][0], w3[n-1][1] - w3[0][1]);
+	    		double abs2 = scm.zabs(w3[nb-1][0] - w3[nb][0], w3[nb-1][1] - w3[nb][1]);
+	    		double scale = (abs1 + abs2)/2.0;
+	    		z0[0][0] = 0;
+	    		z0[0][1] = 0;
+	    		for (i = 1; i <= nb-1; i++) {
+	    			z0[i][0] = z0[i-1][0] + (scm.zabs(w3[i][0] - w3[i-1][0], w3[i][1] - w3[i-1][1]))/scale;
+	    		}
+	    		if ((nb+1) == n) {
+	    			z0[n-1][0] = (z0[0][0] + z0[nb-1][0])/2.0;
+	    			z0[n-1][1] = (z0[0][1] + z0[nb-1][1])/2.0;
+	    		}
+	    		else {
+	    			z0[n-1][0] = 0.0;
+	    			z0[n-1][1] = 0.0;
+	    			for (i = n-2; i >= nb; i--) {
+	    				z0[i][0] = z0[i+1][0] + scm.zabs(w3[n-1-i][0] - w3[n-2-i][0], w3[n-1-i][1] - w3[n-2-i][1])/scale;
+	    			}
+	    		} // else
+	    		scale = Math.sqrt(z0[nb-1][0]/z0[nb][0]);
+	    		for (i = 0; i < nb; i++) {
+	    			z0[i][0] = z0[i][0]/scale;
+	    		}
+	    		for (i = nb; i < n; i++) {
+	    			z0[i][0] = z0[i][0] * scale;
+	    			z0[i][1] = 1.0;
+	    		}
+	    	}
+	    	z03 = z0;
+	    } // if ((z0 == null) || (z0.length == 0))
+	    else { // z0.length > 0
+	    	double z02[][] = new double[z0.length][2];
+	    	for (i = 0; i < z0.length; i++) {
+	    		z02[i][0] = z0[renum[i]][0];
+	    		z02[i][1] = z0[renum[i]][1];
+	    	}
+	    	if (z02.length == N) {
+	    		if (((!Double.isInfinite(z02[0][0])) && (!Double.isInfinite(z02[0][1]))) || ((!Double.isInfinite(z02[k][0])) && (!Double.isInfinite(z02[k][1])))) {
+	    			MipavUtil.displayError("Starting guess does not match ends of strip");
+	    			System.exit(-1);
+	    		}
+	    		z03 = new double[z02.length-2][2];
+	    		for (i = 0, j = 0; i < z02.length; i++) {
+	    		    if ((i != 0) && (i != k)) {
+	    		    	z03[j][0] = z02[i][0];
+	    		    	z03[j++][1] = z02[i][1];
+	    		    }
+	    		}
+	    	} // if (z02.length == N)
+	    	else if (z02.length == n-1) {
+	    		z03 = new double[z02.length+1][2];
+	    		z03[0][0] = 0;
+	    		z03[0][1] = 0;
+	    		for (i = 0; i < z02.length; i++) {
+	    			z03[i+1][0] = z02[i][0];
+	    			z03[i+1][1] = z02[i][1];
+	    		}
+	    	} // else if (z02.length == n-1)
+	    	else {
+	    		z03 = z02;
+	    	}
+	    } // else z0.length > 0
+	    
+	    double y0[] = new double[n-1];
+	    for (i = 0; i < nb-1; i++) {
+	    	y0[i] = Math.log(z0[i+1][0] - z0[i][0]);
+	    }
+	    y0[nb-1] = z0[nb][0];
+	    for (i = nb; i < n-1; i++) {
+	    	y0[i] = Math.log(z0[i][0] - z0[i+1][0]);
+	    }
+	    
+	    // FInd prevertices  (solve param problem)
+	    
+	    // Set up normalized lengths for nonlinear equations:
+	    // indices of left and right integration endpoints
+	    int left[] = new int[n];
+	    left[0] = 0;
+	    for (i = 1; i < n; i++) {
+	    	left[i] = i-1; 
+	    }
+	    int right[] = new int[n];
+	    right[0] = n-1;
+	    for (i = 1; i < n; i++) {
+	    	right[i] = i;
+	    }
+	    // Delete indices corresponding to vertices at Infinity
+	    int findinf[] = new int[numinf];
+	    int numleftdelete = 0;
+	   
+	    boolean doleft;
+	    for (i = 0; i < n; i++) {
+	    	doleft = true;
+	    	for (j = 0; j < numinf  && doleft; j++) {
+	    		if ((findinf[j] + 1) == i) {
+	    			doleft = false;
+	    		}
+	    	} // for (j = 0; j < numinf  && doleft; j++)
+	    	if (i == nb) {
+	    		doleft = false;
+	    	}
+	    	if (!doleft) {
+	    	    numleftdelete++;	
+	    	}
+	    } // for (i = 0; i < n; i++)
+	    int left2[] = new int[n-numleftdelete];
+	    for (i = 0, k = 0; i < n; i++) {
+	    	doleft = true;
+	    	for (j = 0; j < numinf  && doleft; j++) {
+	    		if ((findinf[j] + 1) == i) {
+	    			doleft = false;
+	    		}
+	    	} // for (j = 0; j < numinf  && doleft; j++)
+	    	if (i == nb) {
+	    		doleft = false;
+	    	}
+	    	if (doleft) {
+	    	    left2[k++] = left[i];	
+	    	}
+	    } // for (i = 0, k = 0; i < n; i++)
+	    int numrightdelete = 0;
+	    boolean doright;
+	    for (i = 0; i < n; i++) {
+	    	doright = true;
+	    	for (j = 0; j < numinf  && doright; j++) {
+	    		if (findinf[j] == i) {
+	    			doright = false;
+	    		}
+	    	} // for (j = 0; j < numinf  && doright; j++)
+	    	if (i == nb) {
+	    		doright = false;
+	    	}
+	    	if (!doright) {
+	    	    numrightdelete++;	
+	    	}
+	    } // for (i = 0; i < n; i++)
+	    int right2[] = new int[n-numrightdelete];
+	    for (i = 0, k = 0; i < n; i++) {
+	    	doright= true;
+	    	for (j = 0; j < numinf  && doright; j++) {
+	    		if (findinf[j] == i) {
+	    			doright = false;
+	    		}
+	    	} // for (j = 0; j < numinf  && doright; j++)
+	    	if (i == nb) {
+	    		doright = false;
+	    	}
+	    	if (doright) {
+	    	    right2[k++] = right[i];	
+	    	}
+	    } // for (i = 0, k = 0; i < n; i++)
+	    boolean cmplx[] = new boolean[n-numleftdelete];
+	    for (i = 0; i < left2.length; i++) {
+	    	cmplx[i] = ((right2[i] - left2[i]) == 2);
+	    }
+	    cmplx[0] = false;
+	    cmplx[1] = true;
+	    // Normalize lengths
+	    double nmlen[][] = new double[left2.length][2];
+	    double denom[] = new double[2];
+	    denom[0] = w3[n-1][0] - w3[0][0];
+	    denom[1] = w3[n-1][1] - w3[0][1];
+	    for (i = 0; i < left2.length; i++) {
+	    	scm.zdiv(w3[right2[i]][0] - w3[left2[i]][0], w3[right2[i]][1] - w3[left2[i]][1], denom[0], denom[1], cr, ci);
+	    	nmlen[i][0] = cr[0];
+	    	nmlen[i][1] = ci[0];
+	    }
+	    // absolute value for finite ones
+	    for (i = 0; i < cmplx.length; i++) {
+	    	if (!cmplx[i]) {
+	    		double abs1 = scm.zabs(nmlen[i][0], nmlen[i][1]);
+	    		nmlen[i][0] = abs1;
+	    		nmlen[i][1] = 0.0;
+	    	}
+	    } // for (i = 0; i < cmplx.length; i++)
+	    // First entry is useless (=1)
+	    double nmlen2[][] = new double[nmlen.length-1][0];
+	    for (i = 1; i < nmlen.length; i++) {
+	    	nmlen2[i-1][0] = nmlen[i][0];
+	    	nmlen2[i-1][1] = nmlen[i][1];
+	    }
+	    
+	    // Solve nonlinear system of equations
+	    stpfun fm = new stpfun(y0, n, nb, beta2, nmlen2, left2, right2, cmplx, qdat);
+		fm.driver();
+		fm.dumpResults();
+		int exitStatus = fm.getExitStatus();
+		if (exitStatus < 0) {
+			System.out.println("Error in NLConstrainedEngine during stpparam call to hppfun");
+			scm.printExitStatus(exitStatus);
+			System.exit(-1);
+		}
+		double y[] = fm.getParameters();
 	}
 	
 	private void hpevalinv(double zp[][], scmap M, double wp[][]) {
@@ -2467,6 +2873,269 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 				} // while (dist < 1)
 			} // else
 		} // for (i = 0; i < nontriv.length; i++)
+		return I;
+	}
+	
+	class stpfun extends NLConstrainedEngine {
+		int n;
+		int nb;
+		double beta[];
+		double nmlen[][];
+		int left[];
+		int right[];
+		boolean cmplx[];
+		double qdat[][];
+
+		public stpfun(double y0[], int n, int nb, double beta[], double nmlen[][], int left[], int right[], boolean cmplx[],
+				double qdat[][]) {
+			// nPoints, params
+			super(y0.length, y0.length);
+			this.n = n;
+			this.nb = nb;
+			this.beta = beta;
+			this.nmlen = nmlen;
+			this.left = left;
+			this.right = right;
+			this.cmplx = cmplx;
+			this.qdat = qdat;
+
+			bounds = 0; // bounds = 0 means unconstrained
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < y0.length; i++) {
+				gues[i] = y0[i];
+			}
+		}
+
+		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+
+		/**
+		 * Display results of displaying exponential fitting parameters.
+		 */
+		public void dumpResults() {
+			Preferences.debug(" ******* Fit Elsunc Schwarz-Christoffel stparam ********* \n\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+			for (int i = 0; i < a.length; i++) {
+				Preferences.debug("a" + i + " " + String.valueOf(a[i]) + "\n", Preferences.DEBUG_ALGORITHM);
+			}
+		}
+
+		public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+    		int ctrl;
+    		int i, j;
+    		double z[][];
+    		double I1[][];
+    		double I2[][];
+    		double cr[] = new double[1];
+    		double ci[] = new double[1];
+    		try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+                    // Returns residual for solution of nonlinear equations
+					
+					// In this function, n refers to the number of finite prevertices.
+					
+					// Transform a (unconstrained variables) to z (actual parameters)
+					z  = new double[n][2];
+					for (i = 1; i < nb; i++) {
+						z[i][0] = z[i-1][0] + Math.exp(a[i-1]);
+					}
+					z[nb][0] = a[nb-1];
+					z[nb][1] = 1.0;
+					for (i = nb+1; i < n; i++) {
+						z[i][0] = z[i-1][0] -Math.exp(a[i-1]);
+						z[i][1] = 1.0;
+					}
+					
+					// Compute the integrals
+					double zleft[][] = new double[left.length][2];
+					for (i = 0; i < left.length; i++) {
+						zleft[i][0] = z[left[i]][0];
+						zleft[i][1] = z[left[i]][1];
+					}
+					double zright[][] = new double[right.length][2];
+					for (i = 0; i < right.length; i++) {
+						zright[i][0] = z[right[i]][0];
+						zright[i][1] = z[right[i]][1];
+					}
+					double mid[][] = new double[left.length][2];
+					for (i = 0; i < left.length; i++) {
+						mid[i][0] = (zleft[i][0] + zright[i][0])/2.0;
+						mid[i][1] = (zleft[i][1] + zright[i][1])/2.0;
+					}
+					boolean c2[] = new boolean[cmplx.length];
+					for (i = 0; i < cmplx.length; i++) {
+						c2[i] = cmplx[i];
+					}
+					c2[1] = false;
+					for (i = 0; i < c2.length; i++) {
+						if (c2[i]) {
+						    double sgn = scm.sign(left[i] - (nb-1));
+						    mid[i][1] = mid[i][1] - sgn/2.0;
+						}
+					} // for (i = 0; i < c2.length; i++)
+					
+					// Add ends of strip to z, and modify singularity indices
+					double zs[][] = new double[n+2][2];
+					zs[0][0] = Double.NEGATIVE_INFINITY;
+					for (i = 0; i < nb; i++) {
+						zs[i+1][0] = z[i][0];
+						zs[i+1][1] = z[i][1];
+					}
+					zs[nb+1][0] = Double.POSITIVE_INFINITY;
+					for (i = nb; i < n; i++) {
+						zs[i+2][0] = z[i][0];
+						zs[i+2][1] = z[i][1];
+					}
+					int left2[] = new int[left.length];
+					for (i = 0; i < left.length; i++) {
+						left2[i] = left[i] + i;
+						if (left[i] > (nb-1)) {
+							left2[i]++;
+						}
+					}
+					int right2[] = new int[right.length];
+					for (i = 0; i < right.length; i++) {
+						right2[i] = right[i] + 1;
+						if (right[i] > (nb-1)) {
+							right2[i]++;
+						}
+					}
+					
+					// Do those staying on a side
+					double ints[][] = new double[n-1][2];
+					c2[0] = true;
+					boolean id[] = new boolean[c2.length];
+					int numid = 0;
+					for (i = 0; i < c2.length; i++) {
+						id[i] = !c2[i];
+						if (id[i]) {
+							numid++;
+						}
+					}
+					double zleftid[][] = new double[numid][2];
+					double midid[][] = new double[numid][2];
+					int leftid[] = new int[numid];
+					double zrightid[][] = new double[numid][2];
+					int rightid[] = new int[numid];
+					for (i = 0, j = 0; i < id.length; i++) {
+					    if (id[i]) {
+					    	zleftid[j][0] = zleft[i][0];
+					    	zleftid[j][1] = zleft[i][1];
+					    	midid[j][0] = mid[i][0];
+					    	midid[j][1] = mid[i][1];
+					    	leftid[j] = left[i];
+					    	zrightid[j][0] = zright[i][0];
+					    	zrightid[j][1] = zright[i][1];
+					    	rightid[j++] = right[i];
+					    }
+					}
+				} // if ((ctrl == -1) || (ctrl == 1))
+
+				// Calculate the Jacobian numerically
+				else if (ctrl == 2) {
+					ctrlMat[0] = 0;
+				}
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
+
+			return;
+    		
+    	}
+	}
+	
+	private double[][] stquad(double z1[][], double z2[][], int sing1[], double z[][],
+			double beta[], double qdat[][]) {
+		// z1, z2, are vectors of left and right endpoints.  sing1 is a vector of integer
+		// indices which label the singularities in z1.  So if sing1[5] = 3, then z1[5] = 3.
+		// A -1 means no singularity.  z is the vector of *all* singularities, including the
+		// "ends" of the strip at +- Infinity.  beta is the vector of associated turning angles.
+		// qdat is quadrature data from scqdata.  It should include all the beta values, even
+		// though the ends are never used in this manner.
+		
+		// stquad integrates form a possible singularity at the left end to a regular point
+		// at the right.  If both endpoints are singularities, you must break the integral into
+		// two pieces and make two calls.
+		
+		// The integral is subdivided, if necessary, so that no singularity lies closer to the
+		// left endpoint than 1/2 the length of the integration (sub)interval.
+		
+		// Original MATLAB stquad routine copyright 1998 by Toby Driscoll.
+		
+		int i, j, k, kk;
+		double za[] = new double[2];
+		double zb[] = new double[2];
+		int sng;
+		double zr[] = new double[2];
+		int ind;
+		int n = z.length;
+		if ((sing1 == null) || (sing1.length == 0)) {
+			sing1 = new int[z1.length];
+			for (i = 0; i < z1.length; i++) {
+				sing1[i] = -1;
+			}
+		}
+		double I[][] = new double[z1.length][2];
+		
+		int numnontriv = 0;
+		for (i = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				numnontriv++;
+			}
+		}
+		int nontriv[] = new int[numnontriv];
+		for (i = 0, j = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				nontriv[j++] = i;
+			}	
+		}
+		
+		
+		for (kk = 0; kk < numnontriv; kk++) {
+			k = nontriv[kk];
+			za[0] = z1[k][0];
+			za[1] = z1[k][1];
+			zb[0] = z2[k][0];
+			zb[1] = z2[k][1];
+			sng = sing1[k];
+			
+			// Allowable integration step, based on nearest singularity.
+			double dist;
+			double denom = scm.zabs(zb[0] - za[0], zb[1] - za[1]);
+			double minVal = Double.MAX_VALUE;
+			for (j = 0; j < n; j++) {
+				if (j != sng) {
+					double val = scm.zabs(z[j][0] - za[0], z[j][1] - za[1]);
+					if (val < minVal) {
+						minVal = val;
+					}
+				}
+			}
+			dist = Math.min(1.0, 2.0*minVal/denom);
+			zr[0] = za[0] + dist * (zb[0] - za[0]);
+			zr[1] = za[1] + dist * (zb[1] - za[1]);
+			ind = (sng+n+1)%(n+1);
+		}
 		return I;
 	}
 
