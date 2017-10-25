@@ -15429,7 +15429,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// The user selects m vertices using the mouse. If m <= 0, m defaults to 1.
 	// On exit K is a vector of indices into W.
 	// scselect provides an instructional message
-	private int[] scselect(double w[][], double beta[], int m,  String titl, String msg[]) {
+	public int[] scselect(double w[][], double beta[], int m,  String titl, String msg[]) {
 		int i, j;
 		int nearestIndex;
 		double nearestDistance;
