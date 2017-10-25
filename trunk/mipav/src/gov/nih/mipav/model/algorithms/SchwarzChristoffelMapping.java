@@ -19418,10 +19418,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			     }
 			     System.out.println("Warning: A vertex has been added.");	
 			} // else if (Double.isInfinite(w[2][0]) || Double.isInfinite(w[2][1]))
-			
-			for (i = 0; i <= k; i++) {
-				auxn[i] = i;
-			}
+			auxn[0] = 0;
+			auxn[1] = k;
 		} // else if (type.equalsIgnoreCase("st"))
 		else if (type.equalsIgnoreCase("r")) {
 		    int corner[] = new int[aux.length];
