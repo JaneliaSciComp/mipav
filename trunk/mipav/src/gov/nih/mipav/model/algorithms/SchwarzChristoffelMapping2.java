@@ -3064,6 +3064,69 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
     	}
 	}
 	
+	private double[][] stquadh(double z1[][], double z2[][], int sing1[], double z[][],
+			double beta[], double qdat[][]) {
+		// Original MATLAB stquadh routine copyright 1998 by Toby Driscoll.
+		
+		// stquadh applies the "1/2 rule" by assuming that the distance from the
+		// integration interval to the nearest singularity is equal to the 
+		// distance from the left endpoint to the nearest singularity.  This is
+		// certainly true e.g. if one begins integration at the nearest
+		// singularity to the target point.  However, it may be violated in
+		// important circumstances, such as when one integrates from the 
+		// next-nearest singularity (because the nearest maps to infinity), or when
+		// one is integrating between adjacent prevertices (as in the param
+		// problem).  The main difficulty is the possibility of singularities
+		// from the "other side" of the strip intruding.
+		
+		// Here we assume the integration intervals are horizontal.  This
+		// function recursively subdivides the interval until the "1/2 rule" is
+		// satisfied for singularities "between" the endpoints.  Actually, we
+		// use a more stringent "alpha rule", for alpha > 1/2, as this seems to
+		// be necessary sometimes.
+		
+		// There must be no singularities *inside* the interval, of course.
+		int i, j, k, kk;
+		double za[] = new double[2];
+		double zb[] = new double[2];
+		int sng;
+		double alf;
+		int n = z.length;
+		if ((sing1 == null) || (sing1.length == 0)) {
+			sing1 = new int[z1.length];
+			for (i = 0; i < z1.length; i++) {
+				sing1[i] = -1;
+			}
+		}
+		double I[][] = new double[z1.length][2];
+		int numnontriv = 0;
+		for (i = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				numnontriv++;
+			}
+		}
+		int nontriv[] = new int[numnontriv];
+		for (i = 0, j = 0; i < z1.length; i++) {
+			if ((z1[i][0] != z2[i][0]) || (z1[i][1] != z2[i][1])) {
+				nontriv[j++] = i;
+			}	
+		}
+		
+		
+		for (kk = 0; kk < numnontriv; kk++) {
+			k = nontriv[kk];
+			za[0] = z1[k][0];
+			za[1] = z1[k][1];
+			zb[0] = z2[k][0];
+			zb[1] = z2[k][1];
+			sng = sing1[k];
+			
+			// alf == 1/2 means the "1/2 rule."  Better to be more strict.
+			alf = .75;
+		} // for (kk = 0; kk < numnontriv; kk++) 
+		return I;
+	}
+	
 	private double[][] stquad(double z1[][], double z2[][], int sing1[], double z[][],
 			double beta[], double qdat[][]) {
 		// z1, z2, are vectors of left and right endpoints.  sing1 is a vector of integer
@@ -3088,6 +3151,12 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		int sng;
 		double zr[] = new double[2];
 		int ind;
+		double nd[][] = new double[qdat.length][2];
+		double wt[][] = new double[qdat.length][2];
+		double c[] = new double[]{1,0};
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double zl[] = new double[2];
 		int n = z.length;
 		if ((sing1 == null) || (sing1.length == 0)) {
 			sing1 = new int[z1.length];
@@ -3135,8 +3204,246 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			zr[0] = za[0] + dist * (zb[0] - za[0]);
 			zr[1] = za[1] + dist * (zb[1] - za[1]);
 			ind = (sng+n+1)%(n+1);
-		}
+			// Adjust Gauss-Jacobi nodes and weights to interval.
+			for (i = 0; i < qdat.length; i++) {
+				for (j = 0; j < 2; j++) {
+			        nd[i][j] = ((zr[j] - za[j])*qdat[i][ind] + zr[j] + za[j])/2.0;  // G-J nodes
+			        wt[i][j] = ((zr[j] - za[j])/2.0) * qdat[i][ind+n+1];  // G-J weights
+				}
+			} // for (i = 0; i < qdat.length; i++)
+			boolean anydiffzero = false;
+			if ((nd[0][0] == za[0]) && (nd[0][1] == za[1])) {
+				anydiffzero = true;
+			}
+			for (i = 0; i < qdat.length-1 && (!anydiffzero); i++) {
+				if ((nd[i+1][0] == nd[i][0]) && (nd[i+1][1] == nd[i][1])) {
+					anydiffzero = true;
+				}
+			}
+			if ((zr[0] == nd[qdat.length-1][0]) && (zr[1] == nd[qdat.length-1][1])) {
+				anydiffzero = true;
+			}
+			if (anydiffzero) {
+				// Endpoints are practically coincident
+				I[k][0] = 0;
+				I[k][1] = 0;
+			}
+			else {
+				// Use Gauss-Jacobi on first subinterval, if necessary.
+				if (sng >= 0) {
+					double base = scm.zabs(zr[0] - za[0], zr[1] - za[1])/2.0;
+					double val = Math.pow(base, beta[sng]);
+					for (i = 0; i < qdat.length; i++) {
+						wt[i][0] = wt[i][0] * val;
+						wt[i][1] = wt[i][1] * val;
+					}
+				} // if (sng >= 0)
+				double sde[][] = stderiv(nd, z, beta, c, sng);
+				I[k][0] = 0;
+				I[k][1] = 0;
+				for (i = 0; i < qdat.length; i++) {
+					scm.zmlt(sde[i][0], sde[i][1], wt[i][0], wt[i][1], cr, ci);
+					I[k][0] += cr[0];
+					I[k][1] += ci[0];
+				}
+				while ((dist < 1) && (!Double.isNaN(I[k][0])) && (!Double.isNaN(I[k][1]))) {
+				    // Do regular Gaussian quad on other subintervals.
+					zl[0] = zr[0];
+					zl[1] = zr[1];
+					denom = scm.zabs(zl[0] - zb[0], zl[1] - zb[1]);
+					minVal = Double.MAX_VALUE;
+					for (i = 0; i < n; i++) {
+						double val = scm.zabs(z[i][0] - zl[0], z[i][1] - zl[1]);
+						if (val < minVal) {
+							minVal = val;
+						}
+					} // for (i = 0; i < n; i++)
+					dist = Math.min(1.0, 2.0*minVal/denom);
+					zr[0] = zl[0] + dist * (zb[0] - zl[0]);
+					zr[1] = zl[1] + dist * (zb[1] - zl[1]);
+					for (i = 0; i < qdat.length; i++) {
+						for (j = 0; j < 2; j++) {
+					        nd[i][j] = ((zr[j] - zl[j])*qdat[i][n] + zr[j] + zl[j])/2.0;  // G-J nodes
+					        wt[i][j] = ((zr[j] - zl[j])/2.0) * qdat[i][2*n+1];  // G-J weights
+						}
+					} // for (i = 0; i < qdat.length; i++)
+					sde = stderiv(nd, z, beta, c, -1);
+					for (i = 0; i < qdat.length; i++) {
+						scm.zmlt(sde[i][0], sde[i][1], wt[i][0], wt[i][1], cr, ci);
+						I[k][0] += cr[0];
+						I[k][1] += ci[0];
+					}
+				} // while ((dist < 1) && (!Double.isNaN(I[k][0])) && (!Double.isNaN(I[k][1])))
+			} // else
+		} // for (kk = 0; kk < numnontriv; kk++)
 		return I;
+	}
+	
+	private double[][] stderiv(double zp[][], double z[][], double beta[], double c[], int j) {
+		// Derivative of the strip map
+		// stderiv returns the derivative at the points of zp of the Schwarz-Christoffel
+		// strip map defined byh z, beta, and c.
+		
+		// Original MATLAB stderiv routine copyright 1998 by Toby Driscoll.
+		
+		// If the fifth argument j >= 0, the terms corresponding to z[j] are normalized
+		// by abs(zp-z[j]).  This is for Gauss-Jacobi quadrature.
+		int i, k, m;
+		double theta[] = null;
+		double z2[][] = null;
+		double beta2[] = null;
+		int n;
+		double terms[][][];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		
+		double log2 = 0.69314718055994531;
+		int npts = zp.length;
+		double fprime[][] = new double[npts][2];
+		
+		// Strip out infinite prevertices
+		if (z.length == beta.length) {
+		    int numinf = 0;
+		    for (i  = 0; i < z.length; i++) {
+		    	if (Double.isInfinite(z[i][0]) || Double.isInfinite(z[i][1])) {
+		    		numinf++;
+		    	}
+		    }
+		    int ends[] = new int[numinf];
+		    for (i  = 0, k = 0; i < z.length; i++) {
+		    	if (Double.isInfinite(z[i][0]) || Double.isInfinite(z[i][1])) {
+		    		ends[k++] = i;
+		    	}
+		    }
+		    theta = new double[numinf-1];
+		    for (i = 0; i < numinf-1; i++) {
+		    	theta[i] = beta[ends[i+1]] - beta[ends[i]];
+		    }
+		    if (z[ends[0]][0] < 0) {
+		    	for (i = 0; i < numinf-1; i++) {
+		    		theta[i] = -theta[i];
+		    	}
+		    }
+		    z2 = new double[z.length - numinf][2];
+		    beta2 = new double[beta.length - numinf];
+		    for (i = 0, k = 0; i < z.length; i++) {
+		    	boolean keep = true;
+		    	for (m = 0; m < numinf  && keep; m++) {
+		    	    if (ends[m] == i) {
+		    	    	keep = false;
+		    	    }
+		    	} // for (m = 0; m < numinf  && keep; m++)
+		    	if (keep) {
+		    		z2[k][0] = z[i][0];
+		    		z2[k][1] = z[i][1];
+		    		beta2[k++] = beta[i];
+		    	}
+		    } // for (i = 0, k = 0; i < z.length; i++)
+		    // Adjust singularity index if given 
+		    int decrementj = 0;
+		    if (j > ends[0]) {
+		    	decrementj++;
+		    }
+		    if (j > ends[1]) {
+		    	decrementj++;
+		    }
+		    j = j - decrementj;
+		} // if (z.length == beta.length)
+		else {
+			MipavUtil.displayError("Vector of prevertices must include +/- Infinity entries in stderiv");
+			System.exit(-1);
+		}
+		n = z2.length;
+		
+		terms = new double[n][npts][2];
+		for (i = 0; i < n; i++) {
+			for (k = 0; k < npts; k++) {
+				terms[i][k][0] = (-Math.PI/2.0)*(zp[k][0] - z2[i][0]);
+				terms[i][k][1] = (-Math.PI/2.0)*(zp[k][1] - z2[i][1]);
+			}
+		}
+		boolean lower[] = new boolean[n];
+		for (i = 0; i < n; i++) {
+			lower[i] = (z2[i][1] == 0);
+		}
+		for (i = 0; i < n; i++) {
+			if (lower[i]) {
+				for (k = 0; k < npts; k++) {
+					terms[i][k][0] = -terms[i][k][0];
+					terms[i][k][1] = -terms[i][k][1];
+				}
+			}
+		} // for (i = 0; i < n; i++)
+		double rt[][] = new double[n][npts];
+		for (i = 0; i < n; i++) {
+			for (k = 0; k < npts; k++) {
+				rt[i][k] = terms[i][k][0];			
+			}
+		}
+		int numbig = 0;
+		int numnotbig = 0;
+		boolean big[][] = new boolean[n][npts];
+		for (i = 0; i < n; i++) {
+			for (k = 0; k < npts; k++) {
+				big[i][k] = (Math.abs(rt[i][k]) > 40.0);
+				if (big[i][k]) {
+					numbig++;
+				}
+				else {
+					numnotbig++;
+				}
+			}
+		} // for (i = 0; i < n; i++)
+		if (numnotbig > 0) {
+		    for (i = 0; i < n; i++) {
+		    	for (k = 0; k < npts; k++) {
+		    		if (!big[i][k]) {
+		    			// sinh(x + iy) = (sinhx cosy) + i(coshx siny)
+		    			double logargr = Math.cosh(terms[i][k][0])*Math.sin(terms[i][k][1]);
+		    			double logargi = -Math.sinh(terms[i][k][0])*Math.cos(terms[i][k][1]);
+		    			terms[i][k][0] = Math.log(scm.zabs(logargr, logargi));
+		    			terms[i][k][1] = Math.atan2(logargi, logargr);
+		    		}
+		    	}
+		    }
+		} // if (numnotbig > 0)
+		
+		for (i = 0; i < n; i++) {
+			for (k = 0; k < npts; k++) {
+				if (big[i][k]) {
+					double sgn = scm.sign(rt[i][k]);
+					terms[i][k][0] = sgn * terms[i][k][0] - log2;
+					terms[i][k][1] = sgn * (terms[i][k][1] - Math.PI/2.0);
+				}
+			}
+		} // for (i = 0; i < n; i++)
+		if (j >= 0) {
+			for (k = 0; k < npts; k++) {
+				terms[j][k][0] = terms[j][k][0] - Math.log(scm.zabs(zp[k][0]-z2[j][0], zp[k][1] - z2[j][1]));
+			}
+		} // if (j >= 0)
+		double sum[][] = new double[npts][2];
+		for (k = 0; k < npts; k++) {
+			for (i = 0; i < n; i++) {
+				sum[k][0] += (terms[i][k][0] * beta2[i]);
+				sum[k][1] += (terms[i][k][1] * beta2[i]);
+			}
+		}
+		double argr[] = new double[npts];
+		double argi[] = new double[npts];
+		for (i = 0; i < npts; i++) {
+			argr[i] = (Math.PI/2.0)*theta[i]*zp[i][0] + sum[i][0];
+			argi[i] = (Math.PI/2.0)*theta[i]*zp[i][1] + sum[i][1];
+		}
+		for (i = 0; i < npts; i++) {
+			double expb = Math.exp(argr[i]);
+			double expr = expb * Math.cos(argi[i]);
+			double expi = expb * Math.sin(argi[i]);
+			scm.zmlt(c[0], c[1], expr, expi, cr, ci);
+			fprime[i][0] = cr[0];
+			fprime[i][1] = ci[0];
+		}
+		return fprime;
 	}
 
 }
