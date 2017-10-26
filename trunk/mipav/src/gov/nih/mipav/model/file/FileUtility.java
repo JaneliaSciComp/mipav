@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.file;
 
-
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
@@ -694,10 +693,74 @@ public class FileUtility {
         }
 
         // sort to ensure that files are in correct (lexicographical) order
-        Arrays.sort(fileList2, new FilenameSorter());
+        try {
+            Arrays.sort(fileList2, new FilenameSorter());
+        }
+        catch (IllegalArgumentException e) {
+        	// Sort by final slice number following underline
+        	int sliceNum[] = new int[nImages];
+        	for (i = 0; i < nImages; i++) {
+        		int index = fileList2[i].lastIndexOf("_");
+        		int index2 = fileList2[i].lastIndexOf(".");
+        		sliceNum[i] = Integer.valueOf(fileList2[i].substring(index+1,index2)).intValue();
+        	}
+        	ArrayList<nameSliceItem> valueList = new ArrayList<nameSliceItem>();
+		    for (i = 0; i < nImages; i++) {
+		    	valueList.add(new nameSliceItem(fileList2[i], sliceNum[i]));
+		    }
+		    Collections.sort(valueList, new nameSliceComparator());
+		    for (i = 0; i < nImages; i++) {
+		    	fileList2[i] = valueList.get(i).getName();
+		    }
+        }
         
         return fileList2;
     }
+    
+    private static class nameSliceComparator implements Comparator<nameSliceItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(final nameSliceItem o1, final nameSliceItem o2) {
+            final int a = o1.getSlice();
+            final int b = o2.getSlice();
+            
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } 
+            else {
+            	return 0;
+            }
+        }
+
+    }
+    
+    private static class nameSliceItem {
+		private String name;
+		private int slice;
+		
+		public nameSliceItem(String name, int slice) {
+			this.name = name;
+			this.slice = slice;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		
+		public int getSlice() {
+			return slice;
+		}
+	}
 
     /**
      * Returns the file name without path information from file name with the path information.
