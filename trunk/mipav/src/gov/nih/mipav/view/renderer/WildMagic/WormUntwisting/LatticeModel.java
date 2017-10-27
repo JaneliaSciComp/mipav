@@ -6030,7 +6030,7 @@ public class LatticeModel {
 			z = z0;
 
 			for (int i = 0; i < iBound; i++) {
-
+				// twisted space:
 				final int iIndex = Math.round(x);
 				final int jIndex = Math.round(y);
 				final int kIndex = Math.round(z);
@@ -6049,6 +6049,7 @@ public class LatticeModel {
 						if ( distanceStart != null )
 						{
 							int isSet = (int)distanceStart.getFloatC(iIndex, jIndex, kIndex, 0);
+							// distanceStart is the first sampled point inside the straightened contour.
 							if ( isSet == 0 )
 							{
 								distanceStart.setC(iIndex, jIndex, kIndex, 0, 1);
@@ -6056,6 +6057,7 @@ public class LatticeModel {
 								distanceStart.setC(iIndex, jIndex, kIndex, 2, j);
 								distanceStart.setC(iIndex, jIndex, kIndex, 3, slice);
 							}
+							// distanceEnd is the last sampled point inside the straightened contour.
 							distanceEnd.setC(iIndex, jIndex, kIndex, 0, 1);
 							distanceEnd.setC(iIndex, jIndex, kIndex, 1, i);
 							distanceEnd.setC(iIndex, jIndex, kIndex, 2, j);
@@ -6089,6 +6091,130 @@ public class LatticeModel {
 	}
 
 
+	protected void writeDiagonal(final ModelImage image, ModelImage distanceStart, ModelImage distanceEnd, final int slice,
+			final int[] extents, final Vector3f[] verts, ModelImage contourImage) {
+		final int iBound = extents[0];
+		final int jBound = extents[1];
+		final int[] dimExtents = image.getExtents();
+
+		/*
+		 * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+		 * coordinate-systems: transformation:
+		 */
+		final int iFactor = 1;
+		final int jFactor = dimExtents[0];
+		final int kFactor = dimExtents[0] * dimExtents[1];
+
+		int buffFactor = 1;
+
+		if ( (image.getType() == ModelStorageBase.ARGB) || (image.getType() == ModelStorageBase.ARGB_USHORT)
+				|| (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
+			buffFactor = 4;
+		}
+
+		final Vector3f center = new Vector3f();
+		for (int i = 0; i < verts.length; i++) {
+			center.add(verts[i]);
+		}
+		center.scale(1f / verts.length);
+
+		/* Calculate the slopes for traversing the data in x,y,z: */
+		float xSlopeX = verts[1].X - verts[0].X;
+		float ySlopeX = verts[1].Y - verts[0].Y;
+		float zSlopeX = verts[1].Z - verts[0].Z;
+
+		float xSlopeY = verts[3].X - verts[0].X;
+		float ySlopeY = verts[3].Y - verts[0].Y;
+		float zSlopeY = verts[3].Z - verts[0].Z;
+
+		float x0 = verts[0].X;
+		float y0 = verts[0].Y;
+		float z0 = verts[0].Z;
+
+		xSlopeX /= (iBound);
+		ySlopeX /= (iBound);
+		zSlopeX /= (iBound);
+
+		xSlopeY /= (jBound);
+		ySlopeY /= (jBound);
+		zSlopeY /= (jBound);
+
+		/* loop over the 2D image (values) we're writing into */
+		float x = x0;
+		float y = y0;
+		float z = z0;
+
+		for (int j = 0; j < jBound; j++) {
+
+			/* Initialize the first diagonal point(x,y,z): */
+			x = x0;
+			y = y0;
+			z = z0;
+
+			for (int i = 0; i < iBound; i++) {
+				// twisted space:
+				final int iIndex = Math.round(x);
+				final int jIndex = Math.round(y);
+				final int kIndex = Math.round(z);
+
+				/* calculate the ModelImage space index: */
+				final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor));
+
+				// Bounds checking:
+				if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+						|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > image.getSize()))) {
+
+					// do nothing
+				} else {		
+					if ( contourImage.getFloat(i,j,slice) > 1 )
+					{
+						if ( distanceStart != null )
+						{
+							int isSet = (int)distanceStart.getFloatC(iIndex, jIndex, kIndex, 0);
+							// distanceStart is the first sampled point inside the straightened contour.
+							if ( isSet == 0 )
+							{
+								distanceStart.setC(iIndex, jIndex, kIndex, 0, 1);
+								distanceStart.setC(iIndex, jIndex, kIndex, 1, i);
+								distanceStart.setC(iIndex, jIndex, kIndex, 2, j);
+								distanceStart.setC(iIndex, jIndex, kIndex, 3, slice);
+							}
+							// distanceEnd is the last sampled point inside the straightened contour.
+							distanceEnd.setC(iIndex, jIndex, kIndex, 0, 1);
+							distanceEnd.setC(iIndex, jIndex, kIndex, 1, i);
+							distanceEnd.setC(iIndex, jIndex, kIndex, 2, j);
+							distanceEnd.setC(iIndex, jIndex, kIndex, 3, slice);
+						}
+					}
+				}
+
+				/*
+				 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+				 * ySlopeX and zSlopeX values:
+				 */
+				x = x + xSlopeX;
+				y = y + ySlopeX;
+				z = z + zSlopeX;
+			}
+
+			/*
+			 * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+			 * ySlopeY and zSlopeY values:
+			 */
+			x0 = x0 + xSlopeY;
+			y0 = y0 + ySlopeY;
+			z0 = z0 + zSlopeY;
+		}
+
+		//		if ( (xSlopeX > 1) || (ySlopeX > 1) || (zSlopeX > 1) || (xSlopeY > 1) || (ySlopeY > 1) || (zSlopeY > 1)) {
+		//			System.err.println("writeDiagonal " + xSlopeX + " " + ySlopeX + " " + zSlopeX);
+		//			System.err.println("writeDiagonal " + xSlopeY + " " + ySlopeY + " " + zSlopeY);
+		//		}
+	}
+
+
+	
+	
 	public void removeDiagonal( ModelImage image, ModelImage model, VOI samplingPlanes, int[] extents, int index )
 	{
 		VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(index);
@@ -7179,6 +7305,7 @@ public class LatticeModel {
 
 		// Optional VOI interpolation & smoothing:
 		ModelImage contourImageBlur = WormSegmentation.blur(contourImage, 3);
+		
 		contourImage.disposeLocal(false);
 		contourImage = null;
 
@@ -7234,6 +7361,8 @@ public class LatticeModel {
 		sourceImage.disposeLocal(false);
 		sourceImage = null;
 
+		contourImageBlur.setImageName( imageName + "_contours.xml" );
+		saveImage(imageName, contourImageBlur, true);
 		return contourImageBlur;
 	}
 
@@ -7414,6 +7543,8 @@ public class LatticeModel {
 		sourceImage.disposeLocal(false);
 		sourceImage = null;
 
+		contourImageBlur.setImageName( imageName + "_contours.xml" );
+		saveImage(imageName, contourImageBlur, true);
 		contourImageBlur.disposeLocal(false);
 		contourImageBlur = null;
 	}
@@ -7515,18 +7646,21 @@ public class LatticeModel {
 		int dimX = sourceImage.getExtents()[0];
 		int dimY = sourceImage.getExtents()[1];
 		int dimZ = sourceImage.getExtents()[2];
+		
+		ModelImage contourImage = fileIO.readImage( outputDirectory + File.separator + "output_images" + File.separator + imageName + "_contours.xml" );
+		
 
-		String voiDir = outputDirectory + File.separator + "contours" + File.separator;
-		VOIVector contourVector = new VOIVector();
-		loadAllVOIsFrom(sourceImage, voiDir, true, contourVector, false);
-		VOIContour[] contours = new VOIContour[size];
-		for ( int i = 0; i < contourVector.elementAt(0).getCurves().size(); i++ )
-		{	
-			VOIContour contour = (VOIContour)contourVector.elementAt(0).getCurves().elementAt(i);
-			int index = (int) contour.elementAt(0).Z;
-			contours[index] =  contour;
-			contours[index].update();
-		}
+//		String voiDir = outputDirectory + File.separator + "contours" + File.separator;
+//		VOIVector contourVector = new VOIVector();
+//		loadAllVOIsFrom(sourceImage, voiDir, true, contourVector, false);
+//		VOIContour[] contours = new VOIContour[size];
+//		for ( int i = 0; i < contourVector.elementAt(0).getCurves().size(); i++ )
+//		{	
+//			VOIContour contour = (VOIContour)contourVector.elementAt(0).getCurves().elementAt(i);
+//			int index = (int) contour.elementAt(0).Z;
+//			contours[index] =  contour;
+//			contours[index].update();
+//		}
 		final Vector3f[] corners = new Vector3f[4];
 
 		ModelImage distanceStart = new ModelImage( ModelStorageBase.ARGB_FLOAT, image.getExtents(), imageName + "_startPt" );
@@ -7542,23 +7676,23 @@ public class LatticeModel {
 		int[] resultExtents = new int[]{dimX,dimY,size};
 		for (int i = 0; i < size; i++)
 		{			
-			VOIContour contour = contours[i];
-			if ( contour == null )
-			{
-				float diameter = leftPositions.elementAt(i).distance(rightPositions.elementAt(i));
-				float minDist = (diameter * 1.05f)/2f;
-				float maxDist = (diameter * 1.5f)/2f;
-				float targetRadius = (minDist + maxDist)/2f;
-				contour = new VOIContour(true);
-				makeEllipse2DSkin(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, targetRadius, .75f * targetRadius, contour, 360);	
-			}
+//			VOIContour contour = contours[i];
+//			if ( contour == null )
+//			{
+//				float diameter = leftPositions.elementAt(i).distance(rightPositions.elementAt(i));
+//				float minDist = (diameter * 1.05f)/2f;
+//				float maxDist = (diameter * 1.5f)/2f;
+//				float targetRadius = (minDist + maxDist)/2f;
+//				contour = new VOIContour(true);
+//				makeEllipse2DSkin(Vector3f.UNIT_X, Vector3f.UNIT_Y, center, targetRadius, .75f * targetRadius, contour, 360);	
+//			}
 
 			VOIContour kBox = (VOIContour) samplingPlanes.getCurves().elementAt(i);
 			for (int j = 0; j < 4; j++) {
 				corners[j] = kBox.elementAt(j);
 			}
 
-			writeDiagonal(image, distanceStart, distanceEnd, i, resultExtents, corners, contour);
+			writeDiagonal(image, distanceStart, distanceEnd, i, resultExtents, corners, contourImage);
 		}		
 
 		if ( distanceStart != null )
