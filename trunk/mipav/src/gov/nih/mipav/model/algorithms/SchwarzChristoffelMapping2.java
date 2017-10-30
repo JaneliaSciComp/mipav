@@ -287,8 +287,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		 polygon p = scm.new polygon(x, y, alf);
 		 int endidx[] = new int[]{5, 7};
 		 scmap f1 = stripmap(p, endidx);
-		 int endidx2[] = new int[]{3,7};
-		 scmap f2 = stripmap(p, endidx2);
+		 //int endidx2[] = new int[]{3,7};
+		 //scmap f2 = stripmap(p, endidx2);
 	}
 	
 	private scmap stripmap(polygon poly, int endidx[]) {
@@ -310,7 +310,12 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		polygon poly2 = null;
 		
 		// Get data for the low-level functions
-		double w[][] = poly.vertex;
+		double worig[][] = poly.vertex;
+		double w[][] = new double[worig.length][2];
+		for (i = 0; i < worig.length; i++) {
+			w[i][0] = worig[i][0];
+			w[i][1] = worig[i][1];
+		}
 		int n = w.length;
 		double beta[] = new double[poly.angle.length];
 		for (i = 0; i < poly.angle.length; i++) {
@@ -363,7 +368,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			z = new double[wn2.length][2];
 			c = new double[2];
 			int nqpts = (int)Math.max(Math.ceil(-Math.log10(tolerance)), 4);
-			qdata = new double[nqpts][2*beta.length+2];
+			qdata = new double[nqpts][2*betan2.length+2];
 			stparam(z, c, qdata, wn2, betan2, endidxn, z0, tolerance);
 		} // if ((z == null) || (z.length == 0))
 		else {
@@ -597,6 +602,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 				acc = absVal[i];
 			}
 		}
+		System.out.println("Strip accuracy = " + acc);
 		return acc;
 	}
 	
@@ -632,7 +638,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		// Renumber vertices so that the ends of the strip map to w([0, k])
 		int renum[] = new int[N];
 		for (i = ends[0]; i < N; i++) {
-			renum[i-ends[0]] = ends[0] + i;
+			renum[i-ends[0]] = i;
 		}
 		for (i = 0 ; i <= ends[0]-1; i++) {
 			renum[N-ends[0]+i] = i;
@@ -655,7 +661,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		int nb = k-1;
 		
 		// Check input data
-		int err = scm.sccheck("st", w, beta, ends);
+		int err = scm.sccheck("st", w2, beta2, ends);
 	    if (err == -1) {
 	    	return;
 	    }
@@ -665,7 +671,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    }
 	    
 	    int nqpts = (int)Math.max(Math.ceil(-Math.log10(tol)), 4);
-	    scm.scqdata(qdat, beta, nqpts);  // quadrature data
+	    scm.scqdata(qdat, beta2, nqpts);  // quadrature data
 	    boolean atinf[] = new boolean[beta2.length];
 	    for (i = 0; i < beta2.length; i++) {
 	    	atinf[i] = (beta2[i] <= -1);
@@ -679,7 +685,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    		w3[j++][1] = w2[i][1];
 	    	}
 	    }
-	    boolean atinf2[] = new boolean[atinf.length];
+	    boolean atinf2[] = new boolean[atinf.length-2];
 	    int numinf = 0;
 	    for (i = 0, j = 0; i < atinf.length; i++) {
 	    	if ((i != 0) && (i != k)) {
@@ -741,7 +747,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    			z0[n-1][0] = 0.0;
 	    			z0[n-1][1] = 0.0;
 	    			for (i = n-2; i >= nb; i--) {
-	    				z0[i][0] = z0[i+1][0] + scm.zabs(w3[n-1-i][0] - w3[n-2-i][0], w3[n-1-i][1] - w3[n-2-i][1])/scale;
+	    				z0[i][0] = z0[i+1][0] + scm.zabs(w3[i+1][0] - w3[i][0], w3[i+1][1] - w3[i][1])/scale;
 	    			}
 	    		} // else
 	    		scale = Math.sqrt(z0[nb-1][0]/z0[nb][0]);
@@ -797,7 +803,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    	y0[i] = Math.log(z03[i][0] - z03[i+1][0]);
 	    }
 	    
-	    // FInd prevertices  (solve param problem)
+	    // Find prevertices  (solve param problem)
 	    
 	    // Set up normalized lengths for nonlinear equations:
 	    // indices of left and right integration endpoints
@@ -813,6 +819,11 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    }
 	    // Delete indices corresponding to vertices at Infinity
 	    int findinf[] = new int[numinf];
+	    for (i = 0, j = 0; i < atinf2.length; i++) {
+	    	if (atinf2[i]) {
+	    		findinf[j++] = i;
+	    	}
+	    }
 	    int numleftdelete = 0;
 	   
 	    boolean doleft;
@@ -913,7 +924,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		fm.dumpResults();
 		int exitStatus = fm.getExitStatus();
 		if (exitStatus < 0) {
-			System.out.println("Error in NLConstrainedEngine during stpparam call to hppfun");
+			System.out.println("Error in NLConstrainedEngine during stpparam call to stpfun");
 			scm.printExitStatus(exitStatus);
 			System.exit(-1);
 		}
@@ -945,6 +956,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			z2[i+2][1] = z1[i][1];
 		}
 		
+		// Determine multiplicative constant
 		double mid[][] = new double[1][2];
 		mid[0][0] = (z2[1][0] + z2[2][0])/2.0;
 		mid[0][1] = (z2[1][1] + z2[2][1])/2.0;
@@ -3313,7 +3325,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					}
 					int left2[] = new int[left.length];
 					for (i = 0; i < left.length; i++) {
-						left2[i] = left[i] + i;
+						left2[i] = left[i] + 1;
 						if (left[i] > (nb-1)) {
 							left2[i]++;
 						}
@@ -3358,8 +3370,9 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					I2 = stquadh(zrightid, midid, rightid, zs, beta, qdat);
 					for (i = 0, j = 0; i < n-1; i++) {
 					    if (id[i]) {
-					    	ints[i][0] = I1[j][0];
-					    	ints[i][1] = I2[j++][1];
+					    	ints[i][0] = I1[j][0] - I2[j][0];
+					    	ints[i][1] = I1[j][1] - I2[j][1];
+					    	j++;
 					    }
 					}
 					
@@ -3490,7 +3503,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 							}
 						}
 					}
-					if ((numrat1Zero > 2) || (numrat2Zero > 0) || (numrat1NaN > 0) || (numrat2NaN > 0) ||
+					if ((numrat1Zero > 0) || (numrat2Zero > 0) || (numrat1NaN > 0) || (numrat2NaN > 0) ||
 							(numrat1Inf > 0) || (numrat2Inf > 0)) {
 						// Singularities were too crowded.
 						MipavUtil.displayWarning("Severe crowding");
@@ -3889,7 +3902,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    		ends[k++] = i;
 		    	}
 		    }
-		    theta = beta[ends[1]] = beta[ends[0]];
+		    theta = beta[ends[1]] - beta[ends[0]];
 		    if (z[ends[0]][0] < 0) {
 		    	theta = -theta;
 		    }
