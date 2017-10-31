@@ -280,6 +280,26 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	}
 	
 	private void testStripmap1() {
+		// The original y0 starting point for both MATLAB and MIPAV for f1 is:
+		// -0.7835
+		// -0.7835
+		// -0.7835
+		// -0.7835
+		// -0.7835
+		// -0.7835
+		// 2.7409
+		 // For f1 on the first iteration stpfun in MATLAB and MIPAV give the same residuals:
+		//-2.1765
+		// -0.3686
+		// 0.1689
+		// -2.5176
+		// 1.8125
+		// 0.5062
+		// 0.6075
+		// but MATLAB converges on further iterations while MIPAV eventually produces NaNs.
+		// If MIPAV stepfun is given the below MATLAB obtained starting point for testStripmap1 for the first scmap f1,
+	    // the Strip accuracy = 1.957E-9 results.
+	    //y0 = new double[]{-1.8235,-4.6115,-1.8205,-1.7072,-2.2467,-1.1568,0.4353};
 		 double x[] = new double[]{Double.POSITIVE_INFINITY, -1, -2.5, Double.POSITIVE_INFINITY, 2.4,
 				                   Double.POSITIVE_INFINITY, 2.4, Double.POSITIVE_INFINITY, -1, -2.5};
 		 double y[] = new double[]{0, -1, -1, 0, -3.3, 0, -1.3, 0, 1, 1};
@@ -287,8 +307,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		 polygon p = scm.new polygon(x, y, alf);
 		 int endidx[] = new int[]{5, 7};
 		 scmap f1 = stripmap(p, endidx);
-		 //int endidx2[] = new int[]{3,7};
-		 //scmap f2 = stripmap(p, endidx2);
+		 int endidx2[] = new int[]{3,7};
+		 scmap f2 = stripmap(p, endidx2);
 	}
 	
 	private scmap stripmap(polygon poly, int endidx[]) {
@@ -802,6 +822,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    for (i = nb; i < n-1; i++) {
 	    	y0[i] = Math.log(z03[i][0] - z03[i+1][0]);
 	    }
+	    
 	    
 	    // Find prevertices  (solve param problem)
 	    
@@ -3263,6 +3284,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
     		double F2[][] = null;
     		double cr[] = new double[1];
     		double ci[] = new double[1];
+    		double ints[][] = null;
     		try {
 				ctrl = ctrlMat[0];
 
@@ -3339,7 +3361,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					}
 					
 					// Do those staying on a side
-					double ints[][] = new double[n-1][2];
+					ints = new double[n-1][2];
 					c2[0] = true;
 					boolean id[] = new boolean[c2.length];
 					int numid = 0;
@@ -3368,24 +3390,24 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					}
 					I1 = stquadh(zleftid, midid, leftid, zs, beta, qdat);
 					I2 = stquadh(zrightid, midid, rightid, zs, beta, qdat);
-					for (i = 0, j = 0; i < n-1; i++) {
-					    if (id[i]) {
-					    	ints[i][0] = I1[j][0] - I2[j][0];
-					    	ints[i][1] = I1[j][1] - I2[j][1];
-					    	j++;
-					    }
+					for (i = 0, j = 0; i < id.length; i++) {
+						if (id[i]) {
+							ints[i][0] = I1[j][0] - I2[j][0];
+							ints[i][1] = I1[j][1] - I2[j][1];
+							j++;
+						}
 					}
 					
 					// For the rest, go to the strip middle, across, and back to the side
 					int numc2 = 0;
-					for (i = 0; i < n-1; i++) {
+					for (i = 0; i < c2.length; i++) {
 						if (c2[i]) {
 							numc2++;
 						}
 					}
 					double z1[][] = new double[numc2][2];
 					double z2[][] = new double[numc2][2];
-					for (i = 0, j = 0; i < n-1; i++) {
+					for (i = 0, j = 0; i < c2.length; i++) {
 						if (c2[i]) {
 							z1[j][0] = zleft[i][0];
 							z1[j][1] = 0.5;
@@ -3394,7 +3416,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 						}
 					}
 					numid = 0;
-					for (i = 0; i < n-1; i++) {
+					for (i = 0; i < id.length; i++) {
 						id[i] = !id[i];
 						if (id[i]) {
 							numid++;
@@ -3404,7 +3426,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					leftid = new int[numid];
 					zrightid = new double[numid][2];
 					rightid = new int[numid];
-					for (i = 0, j = 0; i < n-1; i++) {
+					for (i = 0, j = 0; i < id.length; i++) {
 						if (id[i]) {
 							zleftid[j][0] = zleft[i][0];
 							zleftid[j][1] = zleft[i][1];
@@ -3415,7 +3437,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 						}
 					}
 					double I3[][]= stquad(zleftid, z1, leftid, zs, beta, qdat);
-					for (i = 0, j = 0; i < n-1; i++) {
+					for (i = 0, j = 0; i < id.length; i++) {
 						if (id[i]) {
 							ints[i][0] = I3[j][0];
 							ints[i][1] = I3[j++][1];
@@ -3426,14 +3448,14 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 						sing1[i] = -1;
 					}
 					double I4[][] = stquadh(z1, z2, sing1, zs, beta, qdat);
-					for (i = 0, j = 0; i < n-1; i++) {
+					for (i = 0, j = 0; i < id.length; i++) {
 						if (id[i]) {
 							ints[i][0] = ints[i][0] + I4[j][0];
 							ints[i][1] = ints[i][1] + I4[j++][1];
 						}
 					}
 					double I5[][] = stquad(zrightid, z2, rightid, zs, beta, qdat);
-					for (i = 0, j = 0; i < n-1; i++) {
+					for (i = 0, j = 0; i < id.length; i++) {
 						if (id[i]) {
 							ints[i][0] = ints[i][0] - I5[j][0];
 							ints[i][1] = ints[i][1] - I5[j++][1];
@@ -3442,7 +3464,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					
 					int numcmplx = 0;
 					int numnotcmplx = 0;
-					for (i = 0; i < n-1; i++) {
+					for (i = 0; i < cmplx.length; i++) {
 						if (cmplx[i]) {
 							numcmplx++;
 						}
@@ -3451,7 +3473,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 						}
 					}
 					double absval[] = new double[numnotcmplx];  // absval[0] = abs(ints[0])
-					for (i = 0, j = 0; i < n-1; i++) {
+					for (i = 0, j = 0; i < cmplx.length; i++) {
 						if (!cmplx[i]) {
 							absval[j++] = scm.zabs(ints[i][0], ints[i][1]);
 						}
@@ -3486,7 +3508,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 							}
 						}
 						rat2 = new double[numcmplx][2];
-						for (i = 0; i < n-1; i++) {
+						for (i = 0, j = 0; i < cmplx.length; i++) {
 							if (cmplx[i]) {
 								scm.zdiv(ints[i][0], ints[i][1], ints[0][0], ints[0][1], cr, ci);
 								rat2[j][0] = cr[0];
@@ -3528,8 +3550,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 						for (i = 0, j = 0; i < cmplx2.length; i++) {
 						    if (cmplx2[i]) {
 						    	scm.zdiv(rat2[j][0], rat2[j][1], nmlen[i][0], nmlen[i][1], cr, ci);
-						    	F2[j][0] = cr[0];
-						    	F2[j++][1] = ci[0];
+						    	F2[j][0] = Math.log(scm.zabs(cr[0], ci[0]));
+						    	F2[j++][1] = Math.atan2(ci[0], cr[0]);
 						    }
 						}
 					}
