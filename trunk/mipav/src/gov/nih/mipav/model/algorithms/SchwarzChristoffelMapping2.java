@@ -16,6 +16,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+import gov.nih.mipav.model.algorithms.AlgorithmFRAP.FitWholeNL2solInt2;
 import gov.nih.mipav.model.algorithms.SchwarzChristoffelMapping.ODEModel;
 import gov.nih.mipav.model.algorithms.SchwarzChristoffelMapping.dpfun;
 import gov.nih.mipav.model.algorithms.SchwarzChristoffelMapping.polygon;
@@ -296,10 +297,13 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		// 1.8125
 		// 0.5062
 		// 0.6075
-		// but MATLAB converges on further iterations while MIPAV eventually produces NaNs.
-		// If MIPAV stepfun is given the below MATLAB obtained starting point for testStripmap1 for the first scmap f1,
-	    // the Strip accuracy = 1.957E-9 results.
+		// but MATLAB converges on further iterations while MIPAV eventually produces NaNs and exits with an error.
+		// If MIPAV stepfun with NLConstrainedEngine is given the below MATLAB obtained starting point for testStripmap1 
+		// for the first scmap f1, the Strip accuracy = 1.957E-9 results.
 	    //y0 = new double[]{-1.8235,-4.6115,-1.8205,-1.7072,-2.2467,-1.1568,0.4353};
+		// With NL2sol Strip accuracy = 2.0224410492934113 for scmap f1.
+        // Using the MATLAB obtained starting point with NL2sol gives:
+		// Strip accuracy = 6.167204870770673E-5
 		 double x[] = new double[]{Double.POSITIVE_INFINITY, -1, -2.5, Double.POSITIVE_INFINITY, 2.4,
 				                   Double.POSITIVE_INFINITY, 2.4, Double.POSITIVE_INFINITY, -1, -2.5};
 		 double y[] = new double[]{0, -1, -1, 0, -3.3, 0, -1.3, 0, 1, 1};
@@ -647,6 +651,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		double cr[] = new double[1];
 		double ci[] = new double[1];
 		double z03[][];
+		double y[] = null;
 		
 		if ((ends == null) || (ends.length == 0)) {
 			String msg[] = new String[1];
@@ -940,16 +945,39 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    }
 	    
 	    // Solve nonlinear system of equations
-	    stpfun fm = new stpfun(y0, n, nb, beta2, nmlen2, left2, right2, cmplx, qdat);
-		fm.driver();
-		fm.dumpResults();
-		int exitStatus = fm.getExitStatus();
-		if (exitStatus < 0) {
-			System.out.println("Error in NLConstrainedEngine during stpparam call to stpfun");
-			scm.printExitStatus(exitStatus);
-			System.exit(-1);
-		}
-		double y[] = fm.getParameters();
+	    boolean useNLConstrainedEngine = true;
+	    if (useNLConstrainedEngine) {
+		    stpfun fm = new stpfun(y0, n, nb, beta2, nmlen2, left2, right2, cmplx, qdat);
+			fm.driver();
+			fm.dumpResults();
+			int exitStatus = fm.getExitStatus();
+			if (exitStatus < 0) {
+				System.out.println("Error in NLConstrainedEngine during stpparam call to stpfun");
+				scm.printExitStatus(exitStatus);
+				System.exit(-1);
+			}
+			y = fm.getParameters();
+	    }
+	    else { // Use NL2sol
+	    	double x[] = new double[y0.length+1];
+	    	for (i = 0; i < y0.length; i++) {
+	    		x[i+1] = y0[i];
+	    	}
+			
+			int iv[] = new int[61 + y0.length]; // 61 + number of parameters
+			//int vLength = 94 + tValues.length * 2 + 3 * tValues.length + 2
+					//* (3 * 2 + 33) / 2;
+			int vLength = 1000;
+			double v[] = new double[vLength];
+			boolean useAnalyticJacobian = false;
+			stpfun2 solModel = new stpfun2(x, n, iv, v, useAnalyticJacobian, nb, beta2, nmlen2, left2, right2, cmplx, qdat);
+			solModel.driver();
+			solModel.dumpResults();
+			y = new double[y0.length];
+			for (i = 0; i < y0.length; i++) {
+				y[i] = x[i+1];
+			}
+	    }
 		
 		// Convert y values to z
 		double z1[][] = new double[n][2];
@@ -3577,6 +3605,370 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 				Preferences.debug("function error: " + e.getMessage() + "\n",
 						Preferences.DEBUG_ALGORITHM);
 			}
+
+			return;
+    		
+    	}
+	}
+	
+	class stpfun2 extends NL2sol {
+		int iv[];
+		double v[];
+		double x[];
+		int n;
+		int nb;
+		double beta[];
+		double nmlen[][];
+		int left[];
+		int right[];
+		boolean cmplx[];
+		double qdat[][];
+
+		public stpfun2(double x[], int n, int iv[], double v[],
+				boolean useAnalyticJacobian, int nb, double beta[], double nmlen[][], int left[], int right[], boolean cmplx[],
+				double qdat[][]) {
+			
+			
+			// nPoints data points
+			// nPoints coefficients
+			// x[] is a length 3 initial guess at input and best estimate at
+			// output
+			// data starts at x[1]
+			// iv[] has length 61 + number of coefficients = 63
+			// v[] has length at least 94 + n*p + 3*n + p*(3*p+33)/2
+			// uiparm, integer parameter array = null
+			// urparm, double parameter array = null
+			super(x.length-1, x.length-1, x, iv, v, useAnalyticJacobian, null, null);
+			this.n = n;
+			this.x = x;
+			this.iv = iv;
+			this.v = v;
+			this.nb = nb;
+			this.beta = beta;
+			this.nmlen = nmlen;
+			this.left = left;
+			this.right = right;
+			this.cmplx = cmplx;
+			this.qdat = qdat;
+		}
+
+		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+
+		/**
+		 * Display results of displaying exponential fitting parameters.
+		 */
+		public void dumpResults() {
+			Preferences.debug(" ******* Fit Nl2sol Schwarz-Christoffel stparam ********* \n\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+		}
+		
+		public void calcj(final int meqn, final int nvar, final double x[],
+				final int nf, final double jac[][], final int uiparm[],
+				final double urparm[]) {
+
+		}
+
+		public void calcr(final int meqn, final int nvar, final double x[],
+				int nf[], final double r[], final int uiparm[],
+				final double urparm[]) {
+    		int i, j;
+    		double z[][];
+    		double I1[][];
+    		double I2[][];
+    		double rat1[] = null;
+    		double rat2[][] = null;
+    		double F1[] = null;
+    		double F2[][] = null;
+    		double cr[] = new double[1];
+    		double ci[] = new double[1];
+    		double ints[][] = null;
+    		
+            // Returns residual for solution of nonlinear equations
+			
+			// In this function, n refers to the number of finite prevertices.
+			
+			// Transform a (unconstrained variables) to z (actual parameters)
+			z  = new double[n][2];
+			for (i = 1; i < nb; i++) {
+				z[i][0] = z[i-1][0] + Math.exp(x[i]);
+			}
+			z[nb][0] = x[nb];
+			z[nb][1] = 1.0;
+			for (i = nb+1; i < n; i++) {
+				z[i][0] = z[i-1][0] -Math.exp(x[i]);
+				z[i][1] = 1.0;
+			}
+			
+			// Compute the integrals
+			double zleft[][] = new double[left.length][2];
+			for (i = 0; i < left.length; i++) {
+				zleft[i][0] = z[left[i]][0];
+				zleft[i][1] = z[left[i]][1];
+			}
+			double zright[][] = new double[right.length][2];
+			for (i = 0; i < right.length; i++) {
+				zright[i][0] = z[right[i]][0];
+				zright[i][1] = z[right[i]][1];
+			}
+			double mid[][] = new double[left.length][2];
+			for (i = 0; i < left.length; i++) {
+				mid[i][0] = (zleft[i][0] + zright[i][0])/2.0;
+				mid[i][1] = (zleft[i][1] + zright[i][1])/2.0;
+			}
+			boolean c2[] = new boolean[cmplx.length];
+			for (i = 0; i < cmplx.length; i++) {
+				c2[i] = cmplx[i];
+			}
+			c2[1] = false;
+			for (i = 0; i < c2.length; i++) {
+				if (c2[i]) {
+				    double sgn = scm.sign(left[i] - (nb-1));
+				    mid[i][1] = mid[i][1] - sgn/2.0;
+				}
+			} // for (i = 0; i < c2.length; i++)
+			
+			// Add ends of strip to z, and modify singularity indices
+			double zs[][] = new double[n+2][2];
+			zs[0][0] = Double.NEGATIVE_INFINITY;
+			for (i = 0; i < nb; i++) {
+				zs[i+1][0] = z[i][0];
+				zs[i+1][1] = z[i][1];
+			}
+			zs[nb+1][0] = Double.POSITIVE_INFINITY;
+			for (i = nb; i < n; i++) {
+				zs[i+2][0] = z[i][0];
+				zs[i+2][1] = z[i][1];
+			}
+			int left2[] = new int[left.length];
+			for (i = 0; i < left.length; i++) {
+				left2[i] = left[i] + 1;
+				if (left[i] > (nb-1)) {
+					left2[i]++;
+				}
+			}
+			int right2[] = new int[right.length];
+			for (i = 0; i < right.length; i++) {
+				right2[i] = right[i] + 1;
+				if (right[i] > (nb-1)) {
+					right2[i]++;
+				}
+			}
+			
+			// Do those staying on a side
+			ints = new double[n-1][2];
+			c2[0] = true;
+			boolean id[] = new boolean[c2.length];
+			int numid = 0;
+			for (i = 0; i < c2.length; i++) {
+				id[i] = !c2[i];
+				if (id[i]) {
+					numid++;
+				}
+			}
+			double zleftid[][] = new double[numid][2];
+			double midid[][] = new double[numid][2];
+			int leftid[] = new int[numid];
+			double zrightid[][] = new double[numid][2];
+			int rightid[] = new int[numid];
+			for (i = 0, j = 0; i < id.length; i++) {
+			    if (id[i]) {
+			    	zleftid[j][0] = zleft[i][0];
+			    	zleftid[j][1] = zleft[i][1];
+			    	midid[j][0] = mid[i][0];
+			    	midid[j][1] = mid[i][1];
+			    	leftid[j] = left2[i];
+			    	zrightid[j][0] = zright[i][0];
+			    	zrightid[j][1] = zright[i][1];
+			    	rightid[j++] = right2[i];
+			    }
+			}
+			I1 = stquadh(zleftid, midid, leftid, zs, beta, qdat);
+			I2 = stquadh(zrightid, midid, rightid, zs, beta, qdat);
+			for (i = 0, j = 0; i < id.length; i++) {
+				if (id[i]) {
+					ints[i][0] = I1[j][0] - I2[j][0];
+					ints[i][1] = I1[j][1] - I2[j][1];
+					j++;
+				}
+			}
+			
+			// For the rest, go to the strip middle, across, and back to the side
+			int numc2 = 0;
+			for (i = 0; i < c2.length; i++) {
+				if (c2[i]) {
+					numc2++;
+				}
+			}
+			double z1[][] = new double[numc2][2];
+			double z2[][] = new double[numc2][2];
+			for (i = 0, j = 0; i < c2.length; i++) {
+				if (c2[i]) {
+					z1[j][0] = zleft[i][0];
+					z1[j][1] = 0.5;
+					z2[j][0] = zright[i][0];
+					z2[j++][1] = 0.5;
+				}
+			}
+			numid = 0;
+			for (i = 0; i < id.length; i++) {
+				id[i] = !id[i];
+				if (id[i]) {
+					numid++;
+				}
+			}
+			zleftid = new double[numid][2];
+			leftid = new int[numid];
+			zrightid = new double[numid][2];
+			rightid = new int[numid];
+			for (i = 0, j = 0; i < id.length; i++) {
+				if (id[i]) {
+					zleftid[j][0] = zleft[i][0];
+					zleftid[j][1] = zleft[i][1];
+					leftid[j] = left2[i];
+					zrightid[j][0] = zright[i][0];
+					zrightid[j][1] = zright[i][1];
+					rightid[j++] = right2[i]; 
+				}
+			}
+			double I3[][]= stquad(zleftid, z1, leftid, zs, beta, qdat);
+			for (i = 0, j = 0; i < id.length; i++) {
+				if (id[i]) {
+					ints[i][0] = I3[j][0];
+					ints[i][1] = I3[j++][1];
+				}
+			}
+			int sing1[] = new int[z1.length];
+			for (i = 0; i < z1.length; i++) {
+				sing1[i] = -1;
+			}
+			double I4[][] = stquadh(z1, z2, sing1, zs, beta, qdat);
+			for (i = 0, j = 0; i < id.length; i++) {
+				if (id[i]) {
+					ints[i][0] = ints[i][0] + I4[j][0];
+					ints[i][1] = ints[i][1] + I4[j++][1];
+				}
+			}
+			double I5[][] = stquad(zrightid, z2, rightid, zs, beta, qdat);
+			for (i = 0, j = 0; i < id.length; i++) {
+				if (id[i]) {
+					ints[i][0] = ints[i][0] - I5[j][0];
+					ints[i][1] = ints[i][1] - I5[j++][1];
+				}
+			}
+			
+			int numcmplx = 0;
+			int numnotcmplx = 0;
+			for (i = 0; i < cmplx.length; i++) {
+				if (cmplx[i]) {
+					numcmplx++;
+				}
+				else {
+					numnotcmplx++;
+				}
+			}
+			double absval[] = new double[numnotcmplx];  // absval[0] = abs(ints[0])
+			for (i = 0, j = 0; i < cmplx.length; i++) {
+				if (!cmplx[i]) {
+					absval[j++] = scm.zabs(ints[i][0], ints[i][1]);
+				}
+			}
+			int numrat1Zero = 0;
+			int numrat2Zero = 0;
+			int numrat1NaN = 0;
+			int numrat2NaN = 0;
+			int numrat1Inf = 0;
+			int numrat2Inf = 0;
+			if (absval[0] == 0) {
+				rat1 = new double[1];
+				rat1[0] = 0;
+				rat2 = new double[1][2];
+				rat2[0][0] = 0;
+				rat2[0][1] = 0;
+				numrat1Zero = 1;
+				numrat2Zero = 1;
+			}
+			else {
+				rat1 = new double[numnotcmplx-1];
+				for (i = 1; i < absval.length; i++) {
+					rat1[i-1] = absval[i]/absval[0];
+					if (rat1[i-1] == 0) {
+						numrat1Zero++;
+					}
+					else if (Double.isNaN(rat1[i-1])) {
+					    numrat1NaN++;   	
+					}
+					else if (Double.isInfinite(rat1[i-1])) {
+						numrat1Inf++;
+					}
+				}
+				rat2 = new double[numcmplx][2];
+				for (i = 0, j = 0; i < cmplx.length; i++) {
+					if (cmplx[i]) {
+						scm.zdiv(ints[i][0], ints[i][1], ints[0][0], ints[0][1], cr, ci);
+						rat2[j][0] = cr[0];
+						rat2[j++][1] = ci[0];
+						if ((cr[0] == 0) && (ci[0] == 0)) {
+							numrat2Zero++;
+						}
+						else if (Double.isNaN(cr[0]) || Double.isNaN(ci[0])) {
+							numrat2NaN++;
+						}
+						else if (Double.isInfinite(cr[0]) || Double.isInfinite(ci[0])) {
+							numrat2Inf++;
+						}
+					}
+				}
+			}
+			if ((numrat1Zero > 0) || (numrat2Zero > 0) || (numrat1NaN > 0) || (numrat2NaN > 0) ||
+					(numrat1Inf > 0) || (numrat2Inf > 0)) {
+				// Singularities were too crowded.
+				MipavUtil.displayWarning("Severe crowding");
+			}
+			
+			// Compute nonlinear equation residual values.
+			boolean cmplx2[] = new boolean[cmplx.length-1];
+			for (i = 1; i < cmplx.length; i++) {
+				cmplx2[i-1] = cmplx[i];
+			}
+			if ((rat1 != null) && (rat1.length > 0)) {
+				F1 = new double[rat1.length];
+				for (i = 0, j = 0; i < cmplx2.length; i++) {
+				    if (!cmplx2[i]) {
+				    	F1[j] = Math.log(rat1[j]/nmlen[i][0]);
+				    	j++;
+				    }
+				}
+			}
+			if ((rat2 != null) && (rat2.length > 0)) {
+				F2 = new double[rat2.length][2];
+				for (i = 0, j = 0; i < cmplx2.length; i++) {
+				    if (cmplx2[i]) {
+				    	scm.zdiv(rat2[j][0], rat2[j][1], nmlen[i][0], nmlen[i][1], cr, ci);
+				    	F2[j][0] = Math.log(scm.zabs(cr[0], ci[0]));
+				    	F2[j++][1] = Math.atan2(ci[0], cr[0]);
+				    }
+				}
+			}
+			int rindex = 0;
+			if (F1 != null) {
+			    for (rindex = 0; rindex < F1.length; rindex++)	{
+			        r[rindex+1] = F1[rindex];	
+			    }
+			}
+			if (F2 != null) {
+				for (i = 0; i < F2.length; i++) {
+					r[rindex + i + 1] = F2[i][0];
+					r[rindex + F2.length + i + 1] = F2[i][1];
+				}
+			}
+				
 
 			return;
     		
