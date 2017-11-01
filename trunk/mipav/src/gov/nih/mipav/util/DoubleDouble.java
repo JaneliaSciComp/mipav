@@ -1011,6 +1011,63 @@ public strictfp class DoubleDouble
 	}
 	
 	/**
+	 * The atan of this(the imaginary y component) divided by the real component x
+	 * Value will range from -PI to PI.
+	 * Strays a bit from actual atan2 definition which recognizes positive zero
+	 * and negative zero.  Here both positive zero and negative zero are combined as zero.
+	 * @param x
+	 * @return
+	 */
+	public DoubleDouble atan2(DoubleDouble x) {
+	   if (isNaN() || x.isNaN()) {
+		   return NaN;
+	   }
+	   else if ((this.isZero() && x.isPositive()) || (this.isPositiveFinite() && x.isPositiveInfinity()) ||
+			   (this.isNegativeFinite() && x.isPositiveInfinity())) {
+		   return DoubleDouble.valueOf(0.0); 
+	   }
+	   else if ((this.isZero() && x.isNegative()) || (this.isPositiveFinite() && x.isNegativeInfinity())) {
+		   return PI;
+	   }
+	   else if (this.isNegativeFinite() && x.isNegativeInfinity()) {
+		   return PI.negate();
+	   }
+	   else if ((this.isPositive() && x.isZero()) || (this.isPositiveInfinity() && (!x.isInfinite()))) {
+		   return PI_2;   
+	   }
+	   else if ((this.isNegative() && x.isZero()) || (this.isNegativeInfinity() && (!x.isInfinite()))) {
+	       return PI_2.negate();   
+	   }
+	   else if (this.isPositiveInfinity() && x.isPositiveInfinity()) {
+		   return PI_2.divide(DoubleDouble.valueOf(2.0));
+	   }
+	   else if (this.isPositiveInfinity() && x.isNegativeInfinity()) {
+		   return PI.multiply(DoubleDouble.valueOf(0.75));
+	   }
+	   else if (this.isNegativeInfinity() && x.isPositiveInfinity()) {
+		   return PI_2.divide(DoubleDouble.valueOf(-2.0));
+	   }
+	   else if (this.isNegativeInfinity() && x.isNegativeInfinity()) {
+		   return PI.multiply(DoubleDouble.valueOf(-0.75));
+	   }
+	   DoubleDouble val = this.divide(x);
+	   DoubleDouble valatan = val.atan();
+	   if (x.isPositive()) {
+		   return valatan;
+	   }
+	   else if (x.isNegative() && (this.isZero() || this.isPositive())) {
+		   return valatan.add(PI);
+	   }
+	   else if (x.isNegative() && this.isNegative()) {
+		   return valatan.subtract(PI);
+	   }
+	   else {
+		   // This should never happen
+		   return NaN;
+	   }
+	}
+	
+	/**
 	 * For -1 < x < 1, arctan(x) = x - x**3/3 + x**5/5 - x**7/7 + ...
 	 * For x > 1, arctan(x) = PI/2 - 1/x + 1/(3*x**3) - 1/(5*x**5) +1/(7*x**7) - ...
 	 * * For x < -1, arctan(x) = -PI/2 - 1/x + 1/(3*x**3) - 1/(5*x**5) +1/(7*x**7) - ...
@@ -1551,6 +1608,22 @@ so for M even the value of BJ(M+1) will be used, but the value of BJ(M+1) has no
 	 *   Predicates
 	 *------------------------------------------------------------
 	 */
+	
+	public boolean isPositiveFinite() {
+		return isPositive() && (!isInfinite());
+	}
+	
+	public boolean isNegativeFinite() {
+		return isNegative() && (!isInfinite());
+	}
+	
+	public boolean isPositiveInfinity() {
+		return isInfinite() && isPositive();
+	}
+	
+	public boolean isNegativeInfinity() {
+		return isInfinite() && isNegative();
+	}
 	
 	/**
 	 * Tests whether this value is equal to 0.
