@@ -26,6 +26,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.jama.ComplexLinearEquations;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
+import gov.nih.mipav.util.DoubleDouble;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentBase;
@@ -289,21 +290,28 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		// -0.7835
 		// -0.7835
 		// 2.7409
-		 // For f1 on the first iteration stpfun in MATLAB and MIPAV give the same residuals:
-		//-2.1765
-		// -0.3686
-		// 0.1689
-		// -2.5176
-		// 1.8125
-		// 0.5062
-		// 0.6075
+		 // For f1 on the first iteration stpfun in MATLAB and MIPAV give the same residuals except for the very
+		// slight difference noted in the last digit of the third residual:
+		// -2.176543644114260
+		 // -0.368561805865795
+		 //  0.168863543435622 for MATLAB  0.16886354343562116 for MIPAV
+		 // -2.517552412381805
+		  // 1.812523444545268
+		  // 0.506225190810810
+		  // 0.607521602388267
 		// but MATLAB converges on further iterations while MIPAV eventually produces NaNs and exits with an error.
 		// If MIPAV stepfun with NLConstrainedEngine is given the below MATLAB obtained starting point for testStripmap1 
-		// for the first scmap f1, the Strip accuracy = 1.957E-9 results.
-	    //y0 = new double[]{-1.8235,-4.6115,-1.8205,-1.7072,-2.2467,-1.1568,0.4353};
+		// for the first scmap f1, the Strip accuracy = 7.025829885365253E-9 results.
+		//y0 = new double[]{-1.823535227017398,
+		  //-4.611501935066753,
+		 // -1.820471417950493,
+		 // -1.707228618063551,
+		 // -2.246709384132198,
+		 // -1.156842767690130,
+		 //  0.435318806817726};
 		// With NL2sol Strip accuracy = 2.0224410492934113 for scmap f1.
         // Using the MATLAB obtained starting point with NL2sol gives:
-		// Strip accuracy = 6.167204870770673E-5
+		// Strip accuracy = 6.167204870094844E-5
 		 double x[] = new double[]{Double.POSITIVE_INFINITY, -1, -2.5, Double.POSITIVE_INFINITY, 2.4,
 				                   Double.POSITIVE_INFINITY, 2.4, Double.POSITIVE_INFINITY, -1, -2.5};
 		 double y[] = new double[]{0, -1, -1, 0, -3.3, 0, -1.3, 0, 1, 1};
@@ -311,8 +319,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		 polygon p = scm.new polygon(x, y, alf);
 		 int endidx[] = new int[]{5, 7};
 		 scmap f1 = stripmap(p, endidx);
-		 int endidx2[] = new int[]{3,7};
-		 scmap f2 = stripmap(p, endidx2);
+		 //int endidx2[] = new int[]{3,7};
+		 //scmap f2 = stripmap(p, endidx2);
 	}
 	
 	private scmap stripmap(polygon poly, int endidx[]) {
@@ -945,7 +953,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    }
 	    
 	    // Solve nonlinear system of equations
-	    boolean useNLConstrainedEngine = true;
+	    boolean useNLConstrainedEngine = false;
+	    boolean useNLConstrainedEngineEP = true;
 	    if (useNLConstrainedEngine) {
 		    stpfun fm = new stpfun(y0, n, nb, beta2, nmlen2, left2, right2, cmplx, qdat);
 			fm.driver();
@@ -958,6 +967,37 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			}
 			y = fm.getParameters();
 	    }
+	    else if (useNLConstrainedEngineEP) {
+	    	DoubleDouble y0EP[] = new DoubleDouble[y0.length];
+	    	for (i = 0; i < y0.length; i++) {
+	    		y0EP[i] = DoubleDouble.valueOf(y0[i]);
+	    	}
+	    	DoubleDouble beta2EP[] = new DoubleDouble[beta2.length];
+	    	for (i = 0; i < beta2.length; i++) {
+	    		beta2EP[i] = DoubleDouble.valueOf(beta2[i]);
+	    	}
+	    	DoubleDouble nmlen2EP[][] = new DoubleDouble[nmlen2.length][2];
+	    	for (i = 0; i < nmlen2.length; i++) {
+	    		nmlen2EP[i][0] = DoubleDouble.valueOf(nmlen2[i][0]);
+	    		nmlen2EP[i][1] = DoubleDouble.valueOf(nmlen2[i][1]);
+	    	}
+	    	DoubleDouble qdatEP[][] = new DoubleDouble[qdat.length][qdat[0].length];
+	    	for (i = 0; i < qdat.length; i++) {
+	    		for (j = 0; j < qdat[0].length; j++) {
+	    			qdatEP[i][j] = DoubleDouble.valueOf(qdat[i][j]);
+	    		}
+	    	}
+		    stpfunEP fm = new stpfunEP(y0EP, n, nb, beta2EP, nmlen2EP, left2, right2, cmplx, qdatEP);
+			fm.driver();
+			fm.dumpResults();
+			int exitStatus = fm.getExitStatus();
+			if (exitStatus < 0) {
+				System.out.println("Error in NLConstrainedEngineEP during stpparam call to stpfunEP");
+				scm.printExitStatus(exitStatus);
+				System.exit(-1);
+			}
+			y = fm.getParameters();
+	    } 
 	    else { // Use NL2sol
 	    	double x[] = new double[y0.length+1];
 	    	for (i = 0; i < y0.length; i++) {
@@ -3611,6 +3651,385 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
     	}
 	}
 	
+	class stpfunEP extends NLConstrainedEngineEP {
+		int n;
+		int nb;
+		DoubleDouble beta[];
+		DoubleDouble nmlen[][];
+		int left[];
+		int right[];
+		boolean cmplx[];
+		DoubleDouble qdat[][];
+
+		public stpfunEP(DoubleDouble y0[], int n, int nb, DoubleDouble beta[], DoubleDouble nmlen[][], int left[], int right[], 
+				boolean cmplx[], DoubleDouble qdat[][]) {
+			// nPoints, params
+			super(y0.length, y0.length);
+			this.n = n;
+			this.nb = nb;
+			this.beta = beta;
+			this.nmlen = nmlen;
+			this.left = left;
+			this.right = right;
+			this.cmplx = cmplx;
+			this.qdat = qdat;
+
+			bounds = 0; // bounds = 0 means unconstrained
+
+			// bounds = 1 means same lower and upper bounds for
+			// all parameters
+			// bounds = 2 means different lower and upper bounds
+			// for all parameters
+
+			// The default is internalScaling = false
+			// To make internalScaling = true and have the columns of the
+			// Jacobian scaled to have unit length include the following line.
+			// internalScaling = true;
+			// Suppress diagnostic messages
+			outputMes = false;
+			for (int i = 0; i < y0.length; i++) {
+				gues[i] = y0[i];
+			}
+		}
+
+		/**
+		 * Starts the analysis.
+		 */
+		public void driver() {
+			super.driver();
+		}
+
+		/**
+		 * Display results of displaying exponential fitting parameters.
+		 */
+		public void dumpResults() {
+			Preferences.debug(" ******* Fit Elsunc Schwarz-Christoffel stparam ********* \n\n",
+					Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+			for (int i = 0; i < a.length; i++) {
+				Preferences.debug("a" + i + " " + String.valueOf(a[i]) + "\n", Preferences.DEBUG_ALGORITHM);
+			}
+		}
+
+		public void fitToFunction(DoubleDouble[] a, DoubleDouble[] residuals, DoubleDouble[][] covarMat) {
+    		int ctrl;
+    		int i, j;
+    		DoubleDouble z[][];
+    		DoubleDouble I1[][];
+    		DoubleDouble I2[][];
+    		DoubleDouble rat1[] = null;
+    		DoubleDouble rat2[][] = null;
+    		DoubleDouble F1[] = null;
+    		DoubleDouble F2[][] = null;
+    		DoubleDouble cr[] = new DoubleDouble[1];
+    		DoubleDouble ci[] = new DoubleDouble[1];
+    		DoubleDouble ints[][] = null;
+    		//try {
+				ctrl = ctrlMat[0];
+
+				if ((ctrl == -1) || (ctrl == 1)) {
+                    // Returns residual for solution of nonlinear equations
+					
+					// In this function, n refers to the number of finite prevertices.
+					
+					// Transform a (unconstrained variables) to z (actual parameters)
+					z  = new DoubleDouble[n][2];
+					z[0][0] = DoubleDouble.valueOf(0.0);
+					z[0][1] = DoubleDouble.valueOf(0.0);
+					for (i = 1; i < nb; i++) {
+						z[i][0] = z[i-1][0].add((a[i-1]).exp());
+						z[i][1] = DoubleDouble.valueOf(0.0);
+					}
+					z[nb][0] = a[nb-1];
+					z[nb][1] = DoubleDouble.valueOf(1.0);
+					for (i = nb+1; i < n; i++) {
+						z[i][0] = z[i-1][0].subtract((a[i-1]).exp());
+						z[i][1] = DoubleDouble.valueOf(1.0);
+					}
+					
+					// Compute the integrals
+					DoubleDouble zleft[][] = new DoubleDouble[left.length][2];
+					for (i = 0; i < left.length; i++) {
+						zleft[i][0] = z[left[i]][0];
+						zleft[i][1] = z[left[i]][1];
+					}
+					DoubleDouble zright[][] = new DoubleDouble[right.length][2];
+					for (i = 0; i < right.length; i++) {
+						zright[i][0] = z[right[i]][0];
+						zright[i][1] = z[right[i]][1];
+					}
+					DoubleDouble mid[][] = new DoubleDouble[left.length][2];
+					for (i = 0; i < left.length; i++) {
+						mid[i][0] = (zleft[i][0].add(zright[i][0])).divide(DoubleDouble.valueOf(2.0));
+						mid[i][1] = (zleft[i][1].add(zright[i][1])).divide(DoubleDouble.valueOf(2.0));
+					}
+					boolean c2[] = new boolean[cmplx.length];
+					for (i = 0; i < cmplx.length; i++) {
+						c2[i] = cmplx[i];
+					}
+					c2[1] = false;
+					for (i = 0; i < c2.length; i++) {
+						if (c2[i]) {
+						    DoubleDouble sgn = sign(DoubleDouble.valueOf(left[i] - (nb-1)));
+						    mid[i][1] = mid[i][1].subtract(sgn.divide(DoubleDouble.valueOf(2.0)));
+						}
+					} // for (i = 0; i < c2.length; i++)
+					
+					// Add ends of strip to z, and modify singularity indices
+					DoubleDouble zs[][] = new DoubleDouble[n+2][2];
+					zs[0][0] = DoubleDouble.NEGATIVE_INFINITY;
+					for (i = 0; i < nb; i++) {
+						zs[i+1][0] = z[i][0];
+						zs[i+1][1] = z[i][1];
+					}
+					zs[nb+1][0] = DoubleDouble.POSITIVE_INFINITY;
+					for (i = nb; i < n; i++) {
+						zs[i+2][0] = z[i][0];
+						zs[i+2][1] = z[i][1];
+					}
+					int left2[] = new int[left.length];
+					for (i = 0; i < left.length; i++) {
+						left2[i] = left[i] + 1;
+						if (left[i] > (nb-1)) {
+							left2[i]++;
+						}
+					}
+					int right2[] = new int[right.length];
+					for (i = 0; i < right.length; i++) {
+						right2[i] = right[i] + 1;
+						if (right[i] > (nb-1)) {
+							right2[i]++;
+						}
+					}
+					
+					// Do those staying on a side
+					ints = new DoubleDouble[n-1][2];
+					c2[0] = true;
+					boolean id[] = new boolean[c2.length];
+					int numid = 0;
+					for (i = 0; i < c2.length; i++) {
+						id[i] = !c2[i];
+						if (id[i]) {
+							numid++;
+						}
+					}
+					DoubleDouble zleftid[][] = new DoubleDouble[numid][2];
+					DoubleDouble midid[][] = new DoubleDouble[numid][2];
+					int leftid[] = new int[numid];
+					DoubleDouble zrightid[][] = new DoubleDouble[numid][2];
+					int rightid[] = new int[numid];
+					for (i = 0, j = 0; i < id.length; i++) {
+					    if (id[i]) {
+					    	zleftid[j][0] = zleft[i][0];
+					    	zleftid[j][1] = zleft[i][1];
+					    	midid[j][0] = mid[i][0];
+					    	midid[j][1] = mid[i][1];
+					    	leftid[j] = left2[i];
+					    	zrightid[j][0] = zright[i][0];
+					    	zrightid[j][1] = zright[i][1];
+					    	rightid[j++] = right2[i];
+					    }
+					}
+					System.out.println("About to do I1");
+					I1 = stquadhEP(zleftid, midid, leftid, zs, beta, qdat);
+					I2 = stquadhEP(zrightid, midid, rightid, zs, beta, qdat);
+					for (i = 0, j = 0; i < id.length; i++) {
+						if (id[i]) {
+							ints[i][0] = I1[j][0].subtract(I2[j][0]);
+							ints[i][1] = I1[j][1].subtract(I2[j][1]);
+							j++;
+						}
+					}
+					
+					// For the rest, go to the strip middle, across, and back to the side
+					int numc2 = 0;
+					for (i = 0; i < c2.length; i++) {
+						if (c2[i]) {
+							numc2++;
+						}
+					}
+					DoubleDouble z1[][] = new DoubleDouble[numc2][2];
+					DoubleDouble z2[][] = new DoubleDouble[numc2][2];
+					for (i = 0, j = 0; i < c2.length; i++) {
+						if (c2[i]) {
+							z1[j][0] = zleft[i][0];
+							z1[j][1] = DoubleDouble.valueOf(0.5);
+							z2[j][0] = zright[i][0];
+							z2[j++][1] = DoubleDouble.valueOf(0.5);
+						}
+					}
+					numid = 0;
+					for (i = 0; i < id.length; i++) {
+						id[i] = !id[i];
+						if (id[i]) {
+							numid++;
+						}
+					}
+					zleftid = new DoubleDouble[numid][2];
+					leftid = new int[numid];
+					zrightid = new DoubleDouble[numid][2];
+					rightid = new int[numid];
+					for (i = 0, j = 0; i < id.length; i++) {
+						if (id[i]) {
+							zleftid[j][0] = zleft[i][0];
+							zleftid[j][1] = zleft[i][1];
+							leftid[j] = left2[i];
+							zrightid[j][0] = zright[i][0];
+							zrightid[j][1] = zright[i][1];
+							rightid[j++] = right2[i]; 
+						}
+					}
+					DoubleDouble I3[][]= stquadEP(zleftid, z1, leftid, zs, beta, qdat);
+					for (i = 0, j = 0; i < id.length; i++) {
+						if (id[i]) {
+							ints[i][0] = I3[j][0];
+							ints[i][1] = I3[j++][1];
+						}
+					}
+					int sing1[] = new int[z1.length];
+					for (i = 0; i < z1.length; i++) {
+						sing1[i] = -1;
+					}
+					DoubleDouble I4[][] = stquadhEP(z1, z2, sing1, zs, beta, qdat);
+					for (i = 0, j = 0; i < id.length; i++) {
+						if (id[i]) {
+							ints[i][0] = ints[i][0].add(I4[j][0]);
+							ints[i][1] = ints[i][1].add(I4[j++][1]);
+						}
+					}
+					DoubleDouble I5[][] = stquadEP(zrightid, z2, rightid, zs, beta, qdat);
+					for (i = 0, j = 0; i < id.length; i++) {
+						if (id[i]) {
+							ints[i][0] = ints[i][0].subtract(I5[j][0]);
+							ints[i][1] = ints[i][1].subtract(I5[j++][1]);
+						}
+					}
+					
+					int numcmplx = 0;
+					int numnotcmplx = 0;
+					for (i = 0; i < cmplx.length; i++) {
+						if (cmplx[i]) {
+							numcmplx++;
+						}
+						else {
+							numnotcmplx++;
+						}
+					}
+					DoubleDouble absval[] = new DoubleDouble[numnotcmplx];  // absval[0] = abs(ints[0])
+					for (i = 0, j = 0; i < cmplx.length; i++) {
+						if (!cmplx[i]) {
+							absval[j++] = zabs(ints[i][0], ints[i][1]);
+						}
+					}
+					int numrat1Zero = 0;
+					int numrat2Zero = 0;
+					int numrat1NaN = 0;
+					int numrat2NaN = 0;
+					int numrat1Inf = 0;
+					int numrat2Inf = 0;
+					if (absval[0].isZero()) {
+						rat1 = new DoubleDouble[1];
+						rat1[0] = DoubleDouble.valueOf(0);
+						rat2 = new DoubleDouble[1][2];
+						rat2[0][0] = DoubleDouble.valueOf(0);
+						rat2[0][1] = DoubleDouble.valueOf(0);
+						numrat1Zero = 1;
+						numrat2Zero = 1;
+					}
+					else {
+						rat1 = new DoubleDouble[numnotcmplx-1];
+						for (i = 1; i < absval.length; i++) {
+							rat1[i-1] = absval[i].divide(absval[0]);
+							if (rat1[i-1].isZero()) {
+								numrat1Zero++;
+							}
+							else if (rat1[i-1].isNaN()) {
+							    numrat1NaN++;   	
+							}
+							else if (rat1[i-1].isInfinite()) {
+								numrat1Inf++;
+							}
+						}
+						rat2 = new DoubleDouble[numcmplx][2];
+						for (i = 0, j = 0; i < cmplx.length; i++) {
+							if (cmplx[i]) {
+								zdiv(ints[i][0], ints[i][1], ints[0][0], ints[0][1], cr, ci);
+								rat2[j][0] = cr[0];
+								rat2[j++][1] = ci[0];
+								if ((cr[0].isZero()) && (ci[0].isZero())) {
+									numrat2Zero++;
+								}
+								else if ((cr[0].isNaN()) || (ci[0].isNaN())) {
+									numrat2NaN++;
+								}
+								else if ((cr[0].isInfinite()) || (ci[0].isInfinite())) {
+									numrat2Inf++;
+								}
+							}
+						}
+					}
+					if ((numrat1Zero > 0) || (numrat2Zero > 0) || (numrat1NaN > 0) || (numrat2NaN > 0) ||
+							(numrat1Inf > 0) || (numrat2Inf > 0)) {
+						// Singularities were too crowded.
+						MipavUtil.displayWarning("Severe crowding");
+					}
+					
+					// Compute nonlinear equation residual values.
+					boolean cmplx2[] = new boolean[cmplx.length-1];
+					for (i = 1; i < cmplx.length; i++) {
+						cmplx2[i-1] = cmplx[i];
+					}
+					if ((rat1 != null) && (rat1.length > 0)) {
+						F1 = new DoubleDouble[rat1.length];
+						for (i = 0, j = 0; i < cmplx2.length; i++) {
+						    if (!cmplx2[i]) {
+						    	F1[j] = (rat1[j].divide(nmlen[i][0])).log();
+						    	j++;
+						    }
+						}
+					}
+					if ((rat2 != null) && (rat2.length > 0)) {
+						F2 = new DoubleDouble[rat2.length][2];
+						for (i = 0, j = 0; i < cmplx2.length; i++) {
+						    if (cmplx2[i]) {
+						    	zdiv(rat2[j][0], rat2[j][1], nmlen[i][0], nmlen[i][1], cr, ci);
+						    	F2[j][0] = (zabs(cr[0], ci[0])).log();
+						    	F2[j++][1] = ci[0].atan2(cr[0]);
+						    }
+						}
+					}
+					int rindex = 0;
+					if (F1 != null) {
+					    for (rindex = 0; rindex < F1.length; rindex++)	{
+					        residuals[rindex] = F1[rindex];	
+					    }
+					}
+					if (F2 != null) {
+						for (i = 0; i < F2.length; i++) {
+							residuals[rindex + i] = F2[i][0];
+							residuals[rindex + F2.length + i] = F2[i][1];
+						}
+					}
+					for (i = 0; i < residuals.length; i++) {
+						System.out.println("residuals["+i+"] = " + residuals[i]);
+					}
+				} // if ((ctrl == -1) || (ctrl == 1))
+
+				// Calculate the Jacobian numerically
+				else if (ctrl == 2) {
+					ctrlMat[0] = 0;
+				}
+			//} catch (Exception e) {
+				//Preferences.debug("function error: " + e.getMessage() + "\n",
+						//Preferences.DEBUG_ALGORITHM);
+			//}
+
+			return;
+    		
+    	}
+	}
+	
 	class stpfun2 extends NL2sol {
 		int iv[];
 		double v[];
@@ -4436,6 +4855,564 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			double expr = expb * Math.cos(argi[i]);
 			double expi = expb * Math.sin(argi[i]);
 			scm.zmlt(c[0], c[1], expr, expi, cr, ci);
+			fprime[i][0] = cr[0];
+			fprime[i][1] = ci[0];
+		}
+		return fprime;
+	}
+	
+	public DoubleDouble sign(DoubleDouble d) {
+		if (d.isPositive()) {
+			return DoubleDouble.valueOf(1.0);
+		}
+		else if (d.isZero()) {
+			return DoubleDouble.valueOf(0.0);
+		}
+		else {
+			return DoubleDouble.valueOf(-1.0);
+		}
+	}
+	
+	/**
+     * zabs computes the absolute value or magnitude of a DoubleDouble precision complex variable zr + j*zi.
+     * 
+     * @param zr DoubleDouble
+     * @param zi DoubleDouble
+     * 
+     * @return DoubleDouble
+     */
+    private DoubleDouble zabs(final DoubleDouble zr, final DoubleDouble zi) {
+        DoubleDouble u, v, q, s;
+        u = zr.abs();
+        v = zi.abs();
+        s = u.add(v);
+
+        // s * 1.0 makes an unnormalized underflow on CDC machines into a true
+        // floating zero
+        //s = s * 1.0;
+
+        if (s.equals(DoubleDouble.valueOf(0.0))) {
+            return DoubleDouble.valueOf(0.0);
+        } else if (u.gt(v)) {
+        	q = v.divide(u);
+            return (u.multiply(((DoubleDouble.valueOf(1.0)).add(q.multiply(q))).sqrt()));
+        } else {
+        	q = u.divide(v);
+            return (v.multiply(((DoubleDouble.valueOf(1.0)).add(q.multiply(q))).sqrt()));
+        }
+    }
+    
+    /**
+     * complex multiply c = a * b.
+     * 
+     * @param ar DoubleDouble
+     * @param ai DoubleDouble
+     * @param br DoubleDouble
+     * @param bi DoubleDouble
+     * @param cr DoubleDouble[]
+     * @param ci DoubleDouble[]
+     */
+    private void zmlt(final DoubleDouble ar, final DoubleDouble ai, final DoubleDouble br, final DoubleDouble bi, final DoubleDouble[] cr,
+            final DoubleDouble[] ci) {
+        DoubleDouble ca, cb;
+
+        ca = (ar.multiply(br)).subtract(ai.multiply(bi));
+        cb = (ar.multiply(bi)).add(ai.multiply(br));
+        cr[0] = (DoubleDouble)ca.clone();
+        ci[0] = (DoubleDouble)cb.clone();
+
+        return;
+    }
+    
+    /**
+     * complex divide c = a/b.
+     * 
+     * @param ar DoubleDouble
+     * @param ai DoubleDouble
+     * @param br DoubleDouble
+     * @param bi DoubleDouble
+     * @param cr DoubleDouble[]
+     * @param ci DoubleDouble[]
+     */
+    private void zdiv(final DoubleDouble ar, final DoubleDouble ai, final DoubleDouble br, final DoubleDouble bi, final DoubleDouble[] cr,
+            final DoubleDouble[] ci) {
+        DoubleDouble bm, cc, cd, ca, cb;
+
+        bm = (zabs(br, bi)).reciprocal();
+        cc = br.multiply(bm);
+        cd = bi.multiply(bm);
+        ca = ( (ar.multiply(cc)).add(ai.multiply(cd))).multiply(bm);
+        cb = ( (ai.multiply(cc)).subtract(ar.multiply(cd))).multiply(bm);
+        cr[0] = (DoubleDouble)ca.clone();
+        ci[0] = (DoubleDouble)cb.clone();
+
+        return;
+    }
+	
+	private DoubleDouble[][] stquadhEP(DoubleDouble z1[][], DoubleDouble z2[][], int sing1[], DoubleDouble z[][],
+			DoubleDouble beta[], DoubleDouble qdat[][]) {
+		// Original MATLAB stquadh routine copyright 1998 by Toby Driscoll.
+		
+		// stquadh applies the "1/2 rule" by assuming that the distance from the
+		// integration interval to the nearest singularity is equal to the 
+		// distance from the left endpoint to the nearest singularity.  This is
+		// certainly true e.g. if one begins integration at the nearest
+		// singularity to the target point.  However, it may be violated in
+		// important circumstances, such as when one integrates from the 
+		// next-nearest singularity (because the nearest maps to infinity), or when
+		// one is integrating between adjacent prevertices (as in the param
+		// problem).  The main difficulty is the possibility of singularities
+		// from the "other side" of the strip intruding.
+		
+		// Here we assume the integration intervals are horizontal.  This
+		// function recursively subdivides the interval until the "1/2 rule" is
+		// satisfied for singularities "between" the endpoints.  Actually, we
+		// use a more stringent "alpha rule", for alpha > 1/2, as this seems to
+		// be necessary sometimes.
+		
+		// There must be no singularities *inside* the interval, of course.
+		int i, j, k, kk;
+		DoubleDouble za[][] = new DoubleDouble[1][2];
+		DoubleDouble zb[][] = new DoubleDouble[1][2];
+		int sng;
+		DoubleDouble alf;
+		DoubleDouble zmid[][] = new DoubleDouble[1][2];
+		int n = z.length;
+		if ((sing1 == null) || (sing1.length == 0)) {
+			sing1 = new int[z1.length];
+			for (i = 0; i < z1.length; i++) {
+				sing1[i] = -1;
+			}
+		}
+		DoubleDouble I[][] = new DoubleDouble[z1.length][2];
+		int numnontriv = 0;
+		for (i = 0; i < z1.length; i++) {
+			if ((z1[i][0].ne(z2[i][0])) || (z1[i][1].ne(z2[i][1]))) {
+				numnontriv++;
+			}
+		}
+		int nontriv[] = new int[numnontriv];
+		for (i = 0, j = 0; i < z1.length; i++) {
+			if ((z1[i][0].ne(z2[i][0])) || (z1[i][1].ne(z2[i][1]))) {
+				nontriv[j++] = i;
+			}	
+		}
+		
+		
+		for (kk = 0; kk < numnontriv; kk++) {
+			k = nontriv[kk];
+			za[0][0] = z1[k][0];
+			za[0][1] = z1[k][1];
+			zb[0][0] = z2[k][0];
+			zb[0][1] = z2[k][1];
+			sng = sing1[k];
+			
+			// alf == 1/2 means the "1/2 rule."  Better to be more strict.
+			alf = DoubleDouble.valueOf(.75);
+			// Given integration length
+			DoubleDouble d = zb[0][0].subtract(za[0][0]);
+			
+			// Compute horizontal position (signed) and vertical distance (positive)
+			// from the singularities to the left endpoint.  If we are going from right,
+			// to left, reverse the sense of horizontal.
+			DoubleDouble sgnd = sign(d);
+			DoubleDouble dx[] = new DoubleDouble[n];
+			DoubleDouble dy[] = new DoubleDouble[n];
+			for (i = 0; i < n; i++) {
+				dx[i] = (z[i][0].subtract(za[0][0])).multiply(sgnd);
+				dy[i] = (z[i][1].subtract(za[0][1])).abs();
+			}
+			
+			// We have to be concerned with singularities lying to the right (left if
+			// d < 0) of the left integration endpoint.
+			boolean toright[] = new boolean[n];
+			for (i = 0; i < n; i++) {
+				toright[i] = (dx[i].isPositive()) && (!(z[i][0].isInfinite())) && (!(z[i][1].isInfinite()));
+			}
+			// For points with small enough dx, the limitation is purely due to dy.  For
+			// others it must be calculated.
+			boolean active[] = new boolean[n];
+			int numactive = 0;
+			for (i = 0; i < n; i++) {
+				active[i] = (dx[i].gt(dy[i].divide(alf))) && toright[i];
+				if (active[i]) {
+					numactive++;
+				}
+			}
+			// Make sure that the left endpoint won't be included
+			if (sng >= 0) {
+				active[sng] = false;
+			}
+			
+			// For those active, find the integration length constraint.  This comes
+			// from making the sing/right-endpoint distance equal to alf*L.
+			DoubleDouble x[] = new DoubleDouble[numactive];
+			DoubleDouble y[] = new DoubleDouble[numactive];
+			for (i = 0, j = 0; i < n; i++) {
+				if (active[i]) {
+					x[j] = dx[i];
+					y[j++] = dy[i];
+				}
+			}
+			DoubleDouble L[] = new DoubleDouble[numactive];
+			DoubleDouble alfSquared = alf.multiply(alf);
+			DoubleDouble denom = (DoubleDouble.valueOf(1.0)).subtract(alfSquared);
+			for (i = 0; i < numactive; i++) {
+				DoubleDouble num1 = (alfSquared.multiply(x[i])).multiply(x[i]);
+				DoubleDouble num2 = (denom.multiply(y[i])).multiply(y[i]);
+				L[i] = (x[i].subtract((num1.subtract(num2)).sqrt())).divide(denom);	
+			}
+			
+			// What if the maximum allowable integration length?
+			DoubleDouble Lmin = DoubleDouble.valueOf(Double.MAX_VALUE);
+			for (i = 0; i < numactive; i++) {
+				if (L[i].lt(Lmin)) {
+					Lmin = L[i];
+				}
+			}
+			for (i = 0; i < n; i++) {
+				if (toright[i] && (!active[i])) {
+					DoubleDouble div = dy[i].divide(alf);
+					if (div.lt(Lmin)) {
+						Lmin = div;
+					}
+				}
+			}
+			
+			if (Lmin.lt(d.abs())) {
+			    // Apply stquad on the safe part and recurse on the rest
+			    sgnd = sign(d);
+				zmid[0][0] = za[0][0].add(Lmin.multiply(sgnd));
+				zmid[0][1] = za[0][1];
+				int sng1[] = new int[]{sng};
+				DoubleDouble I1[][] = stquadEP(za, zmid, sng1, z, beta, qdat);
+				I[k][0] = I1[0][0];
+				I[k][1] = I1[0][1];
+				int sngm1[] = new int[]{-1};
+				DoubleDouble I2[][] = stquadhEP(zmid, zb, sngm1, z, beta, qdat);
+				I[k][0] = I[k][0].add(I2[0][0]);
+				I[k][1] = I[k][1].add(I2[0][1]);
+			} // if (Lmin < Math.abs(d))
+			else {
+				// No restriction
+				int sng1[] = new int[]{sng};
+				DoubleDouble I3[][] = stquadEP(za, zb, sng1, z, beta, qdat);
+				I[k][0] = I3[0][0];
+				I[k][1] = I3[0][1];
+			}
+		} // for (kk = 0; kk < numnontriv; kk++) 
+		return I;
+	}
+	
+	private DoubleDouble[][] stquadEP(DoubleDouble z1[][], DoubleDouble z2[][], int sing1[], DoubleDouble z[][],
+			DoubleDouble beta[], DoubleDouble qdat[][]) {
+		// z1, z2, are vectors of left and right endpoints.  sing1 is a vector of integer
+		// indices which label the singularities in z1.  So if sing1[5] = 3, then z1[5] = 3.
+		// A -1 means no singularity.  z is the vector of *all* singularities, including the
+		// "ends" of the strip at +- Infinity.  beta is the vector of associated turning angles.
+		// qdat is quadrature data from scqdata.  It should include all the beta values, even
+		// though the ends are never used in this manner.
+		
+		// stquad integrates form a possible singularity at the left end to a regular point
+		// at the right.  If both endpoints are singularities, you must break the integral into
+		// two pieces and make two calls.
+		
+		// The integral is subdivided, if necessary, so that no singularity lies closer to the
+		// left endpoint than 1/2 the length of the integration (sub)interval.
+		
+		// Original MATLAB stquad routine copyright 1998 by Toby Driscoll.
+		
+		int i, j, k, kk;
+		DoubleDouble za[] = new DoubleDouble[2];
+		DoubleDouble zb[] = new DoubleDouble[2];
+		int sng;
+		DoubleDouble zr[] = new DoubleDouble[2];
+		int ind;
+		DoubleDouble nd[][] = new DoubleDouble[qdat.length][2];
+		DoubleDouble wt[][] = new DoubleDouble[qdat.length][2];
+		DoubleDouble c[] = new DoubleDouble[]{DoubleDouble.valueOf(1),DoubleDouble.valueOf(0)};
+		DoubleDouble cr[] = new DoubleDouble[1];
+		DoubleDouble ci[] = new DoubleDouble[1];
+		DoubleDouble zl[] = new DoubleDouble[2];
+		int n = z.length;
+		if ((sing1 == null) || (sing1.length == 0)) {
+			sing1 = new int[z1.length];
+			for (i = 0; i < z1.length; i++) {
+				sing1[i] = -1;
+			}
+		}
+		DoubleDouble I[][] = new DoubleDouble[z1.length][2];
+		
+		int numnontriv = 0;
+		for (i = 0; i < z1.length; i++) {
+			if ((z1[i][0].ne(z2[i][0])) || (z1[i][1].ne(z2[i][1]))) {
+				numnontriv++;
+			}
+		}
+		int nontriv[] = new int[numnontriv];
+		for (i = 0, j = 0; i < z1.length; i++) {
+			if ((z1[i][0].ne(z2[i][0])) || (z1[i][1].ne(z2[i][1]))) {
+				nontriv[j++] = i;
+			}	
+		}
+		
+		
+		for (kk = 0; kk < numnontriv; kk++) {
+			k = nontriv[kk];
+			za[0] = z1[k][0];
+			za[1] = z1[k][1];
+			zb[0] = z2[k][0];
+			zb[1] = z2[k][1];
+			sng = sing1[k];
+			
+			// Allowable integration step, based on nearest singularity.
+			DoubleDouble dist;
+			DoubleDouble denom = zabs(zb[0].subtract(za[0]), zb[1].subtract(za[1]));
+			DoubleDouble minVal = DoubleDouble.valueOf(Double.MAX_VALUE);
+			for (j = 0; j < n; j++) {
+				if (j != sng) {
+					DoubleDouble val = zabs(z[j][0].subtract(za[0]), z[j][1].subtract(za[1]));
+					if (val.lt(minVal)) {
+						minVal = val;
+					}
+				}
+			}
+			dist = (DoubleDouble.valueOf(1.0)).min(((DoubleDouble.valueOf(2.0)).multiply(minVal)).divide(denom));
+			zr[0] = za[0].add(dist.multiply(zb[0].subtract(za[0])));
+			zr[1] = za[1].add(dist.multiply(zb[1].subtract(za[1])));
+			ind = (sng+n+1)%(n+1);
+			// Adjust Gauss-Jacobi nodes and weights to interval.
+			for (i = 0; i < qdat.length; i++) {
+				for (j = 0; j < 2; j++) {
+					DoubleDouble diff = zr[j].subtract(za[j]);
+			        nd[i][j] = (((diff.multiply(qdat[i][ind])).add(zr[j])).add(za[j])).divide(DoubleDouble.valueOf(2.0));  // G-J nodes
+			        wt[i][j] = (diff.divide(DoubleDouble.valueOf(2.0))).multiply(qdat[i][ind+n+1]);  // G-J weights
+				}
+			} // for (i = 0; i < qdat.length; i++)
+			boolean anydiffzero = false;
+			if ((nd[0][0].equals(za[0])) && (nd[0][1].equals(za[1]))) {
+				anydiffzero = true;
+			}
+			for (i = 0; i < qdat.length-1 && (!anydiffzero); i++) {
+				if ((nd[i+1][0].equals(nd[i][0])) && (nd[i+1][1].equals(nd[i][1]))) {
+					anydiffzero = true;
+				}
+			}
+			if ((zr[0].equals(nd[qdat.length-1][0])) && (zr[1].equals(nd[qdat.length-1][1]))) {
+				anydiffzero = true;
+			}
+			if (anydiffzero) {
+				// Endpoints are practically coincident
+				I[k][0] = DoubleDouble.valueOf(0);
+				I[k][1] = DoubleDouble.valueOf(0);
+			}
+			else {
+				// Use Gauss-Jacobi on first subinterval, if necessary.
+				if (sng >= 0) {
+					DoubleDouble base = zabs(zr[0].subtract(za[0]), zr[1].subtract(za[1])).divide(DoubleDouble.valueOf(2.0));
+					DoubleDouble val = base.pow(beta[sng]);
+					for (i = 0; i < qdat.length; i++) {
+						wt[i][0] = wt[i][0].multiply(val);
+						wt[i][1] = wt[i][1].multiply(val);
+					}
+				} // if (sng >= 0)
+				DoubleDouble sde[][] = stderivEP(nd, z, beta, c, sng);
+				I[k][0] = DoubleDouble.valueOf(0);
+				I[k][1] = DoubleDouble.valueOf(0);
+				for (i = 0; i < qdat.length; i++) {
+					zmlt(sde[i][0], sde[i][1], wt[i][0], wt[i][1], cr, ci);
+					I[k][0] = I[k][0].add(cr[0]);
+					I[k][1] = I[k][1].add(ci[0]);
+				}
+				while ((dist.lt(DoubleDouble.valueOf(1))) && (!(I[k][0].isNaN())) && (!(I[k][1].isNaN()))) {
+					zl[0] = zr[0];
+					zl[1] = zr[1];
+					denom = zabs(zl[0].subtract(zb[0]), zl[1].subtract(zb[1]));
+					minVal = DoubleDouble.valueOf(Double.MAX_VALUE);
+					for (i = 0; i < n; i++) {
+						DoubleDouble val = zabs(z[i][0].subtract(zl[0]), z[i][1].subtract(zl[1]));
+						if (val.lt(minVal)) {
+							minVal = val;
+						}
+					} // for (i = 0; i < n; i++)
+					dist = (DoubleDouble.valueOf(1.0)).min(((DoubleDouble.valueOf(2.0)).multiply(minVal)).divide(denom));
+					zr[0] = zl[0].add(dist.multiply(zb[0].subtract(zl[0])));
+					zr[1] = zl[1].add(dist.multiply(zb[1].subtract(zl[1])));
+					for (i = 0; i < qdat.length; i++) {
+						for (j = 0; j < 2; j++) {
+							DoubleDouble diff = zr[j].subtract(zl[j]);
+					        nd[i][j] = (((diff.multiply(qdat[i][n])).add(zr[j])).add(zl[j])).divide(DoubleDouble.valueOf(2.0));  // G-J nodes
+					        wt[i][j] = (diff.divide(DoubleDouble.valueOf(2.0))).multiply(qdat[i][2*n+1]);  // G-J weights
+						}
+					} // for (i = 0; i < qdat.length; i++)
+					sde = stderivEP(nd, z, beta, c, -1);
+					for (i = 0; i < qdat.length; i++) {
+						zmlt(sde[i][0], sde[i][1], wt[i][0], wt[i][1], cr, ci);
+						I[k][0] = I[k][0].add(cr[0]);
+						I[k][1] = I[k][1].add(ci[0]);
+					}
+				} // while ((dist < 1) && (!Double.isNaN(I[k][0])) && (!Double.isNaN(I[k][1])))
+			} // else
+		} // for (kk = 0; kk < numnontriv; kk++)
+		return I;
+	}
+	
+	private DoubleDouble[][] stderivEP(DoubleDouble zp[][], DoubleDouble z[][], DoubleDouble beta[], DoubleDouble c[], int j) {
+		// Derivative of the strip map
+		// stderiv returns the derivative at the points of zp of the Schwarz-Christoffel
+		// strip map defined by z, beta, and c.
+		
+		// Original MATLAB stderiv routine copyright 1998 by Toby Driscoll.
+		
+		// If the fifth argument j >= 0, the terms corresponding to z[j] are normalized
+		// by abs(zp-z[j]).  This is for Gauss-Jacobi quadrature.
+		int i, k, m;
+		DoubleDouble theta = DoubleDouble.valueOf(0.0);
+		DoubleDouble z2[][] = null;
+		DoubleDouble beta2[] = null;
+		int n;
+		DoubleDouble terms[][][];
+		DoubleDouble cr[] = new DoubleDouble[1];
+		DoubleDouble ci[] = new DoubleDouble[1];
+		
+		DoubleDouble log2 = (DoubleDouble.valueOf(2.0)).log();
+		int npts = zp.length;
+		DoubleDouble fprime[][] = new DoubleDouble[npts][2];
+		
+		// Strip out infinite prevertices
+		if (z.length == beta.length) {
+		    int numinf = 0;
+		    for (i  = 0; i < z.length; i++) {
+		    	if ((z[i][0].isInfinite()) || (z[i][1].isInfinite())) {
+		    		numinf++;
+		    	}
+		    }
+		    int ends[] = new int[numinf];
+		    for (i  = 0, k = 0; i < z.length; i++) {
+		    	if ((z[i][0].isInfinite()) || (z[i][1].isInfinite())) {
+		    		ends[k++] = i;
+		    	}
+		    }
+		    theta = beta[ends[1]].subtract(beta[ends[0]]);
+		    if (z[ends[0]][0].isNegative()) {
+		    	theta = theta.negate();
+		    }
+		    z2 = new DoubleDouble[z.length - numinf][2];
+		    beta2 = new DoubleDouble[beta.length - numinf];
+		    for (i = 0, k = 0; i < z.length; i++) {
+		    	boolean keep = true;
+		    	for (m = 0; m < numinf  && keep; m++) {
+		    	    if (ends[m] == i) {
+		    	    	keep = false;
+		    	    }
+		    	} // for (m = 0; m < numinf  && keep; m++)
+		    	if (keep) {
+		    		z2[k][0] = z[i][0];
+		    		z2[k][1] = z[i][1];
+		    		beta2[k++] = beta[i];
+		    	}
+		    } // for (i = 0, k = 0; i < z.length; i++)
+		    // Adjust singularity index if given 
+		    int decrementj = 0;
+		    if (j > ends[0]) {
+		    	decrementj++;
+		    }
+		    if (j > ends[1]) {
+		    	decrementj++;
+		    }
+		    j = j - decrementj;
+		} // if (z.length == beta.length)
+		else {
+			MipavUtil.displayError("Vector of prevertices must include +/- Infinity entries in stderiv");
+			System.exit(-1);
+		}
+		n = z2.length;
+		
+		terms = new DoubleDouble[n][npts][2];
+		for (i = 0; i < n; i++) {
+			for (k = 0; k < npts; k++) {
+				terms[i][k][0] = (DoubleDouble.PI_2.negate()).multiply(zp[k][0].subtract(z2[i][0]));
+				terms[i][k][1] = (DoubleDouble.PI_2.negate()).multiply(zp[k][1].subtract(z2[i][1]));
+			}
+		}
+		boolean lower[] = new boolean[n];
+		for (i = 0; i < n; i++) {
+			lower[i] = (z2[i][1].isZero());
+		}
+		for (i = 0; i < n; i++) {
+			if (lower[i]) {
+				for (k = 0; k < npts; k++) {
+					terms[i][k][0] = terms[i][k][0].negate();
+					terms[i][k][1] = terms[i][k][1].negate();
+				}
+			}
+		} // for (i = 0; i < n; i++)
+		DoubleDouble rt[][] = new DoubleDouble[n][npts];
+		for (i = 0; i < n; i++) {
+			for (k = 0; k < npts; k++) {
+				rt[i][k] = terms[i][k][0];			
+			}
+		}
+		int numbig = 0;
+		int numnotbig = 0;
+		boolean big[][] = new boolean[n][npts];
+		for (i = 0; i < n; i++) {
+			for (k = 0; k < npts; k++) {
+				big[i][k] = ((rt[i][k].abs()).gt(DoubleDouble.valueOf(40.0)));
+				if (big[i][k]) {
+					numbig++;
+				}
+				else {
+					numnotbig++;
+				}
+			}
+		} // for (i = 0; i < n; i++)
+		if (numnotbig > 0) {
+		    for (i = 0; i < n; i++) {
+		    	for (k = 0; k < npts; k++) {
+		    		if (!big[i][k]) {
+		    			// sinh(x + iy) = (sinhx cosy) + i(coshx siny)
+		    			DoubleDouble logargr = (terms[i][k][0].cosh()).multiply(terms[i][k][1].sin());
+		    			DoubleDouble logargi = ((terms[i][k][0].sinh()).multiply(terms[i][k][1].cos())).negate();
+		    			terms[i][k][0] = (zabs(logargr, logargi)).log();
+		    			terms[i][k][1] = logargi.atan2(logargr);
+		    		}
+		    	}
+		    }
+		} // if (numnotbig > 0)
+		
+		for (i = 0; i < n; i++) {
+			for (k = 0; k < npts; k++) {
+				if (big[i][k]) {
+					DoubleDouble sgn = sign(rt[i][k]);
+					terms[i][k][0] = (sgn.multiply(terms[i][k][0])).subtract(log2);
+					terms[i][k][1] = sgn.multiply(terms[i][k][1].subtract(DoubleDouble.PI_2));
+				}
+			}
+		} // for (i = 0; i < n; i++)
+		if (j >= 0) {
+			for (k = 0; k < npts; k++) {
+				terms[j][k][0] = terms[j][k][0].subtract((zabs(zp[k][0].subtract(z2[j][0]), zp[k][1].subtract(z2[j][1]))).log());
+			}
+		} // if (j >= 0)
+		DoubleDouble sum[][] = new DoubleDouble[npts][2];
+		for (k = 0; k < npts; k++) {
+			for (i = 0; i < n; i++) {
+				sum[k][0] = sum[k][0].add(terms[i][k][0].multiply(beta2[i]));
+				sum[k][1] = sum[k][1].add(terms[i][k][1].multiply(beta2[i]));
+			}
+		}
+		DoubleDouble argr[] = new DoubleDouble[npts];
+		DoubleDouble argi[] = new DoubleDouble[npts];
+		for (i = 0; i < npts; i++) {
+			argr[i] = ((DoubleDouble.PI_2.multiply(theta)).multiply(zp[i][0])).add(sum[i][0]);
+			argi[i] = ((DoubleDouble.PI_2.multiply(theta)).multiply(zp[i][1])).add(sum[i][1]);
+		}
+		for (i = 0; i < npts; i++) {
+			DoubleDouble expb = argr[i].exp();
+			DoubleDouble expr = expb.multiply(argi[i].cos());
+			DoubleDouble expi = expb.multiply(argi[i].sin());
+			zmlt(c[0], c[1], expr, expi, cr, ci);
 			fprime[i][0] = cr[0];
 			fprime[i][1] = ci[0];
 		}
