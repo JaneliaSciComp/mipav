@@ -1865,7 +1865,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		createAnimation = gui.buildRadioButton("create annotation animation", false );
 		createAnimation.addActionListener(this);
 		createAnimation.setActionCommand("createAnimation");
-//		panel.add(createAnimation.getParent(), gbc);
+		panel.add(createAnimation.getParent(), gbc);
 		gbc.gridy++;
 
 		group.add(editSeamCells);
