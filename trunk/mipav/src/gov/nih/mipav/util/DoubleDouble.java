@@ -1051,6 +1051,7 @@ public strictfp class DoubleDouble
 		   return PI.multiply(DoubleDouble.valueOf(-0.75));
 	   }
 	   DoubleDouble val = this.divide(x);
+	   System.out.println("val = " + val);
 	   DoubleDouble valatan = val.atan();
 	   if (x.isPositive()) {
 		   return valatan;
@@ -1082,7 +1083,7 @@ public strictfp class DoubleDouble
 		if (this.equals(DoubleDouble.valueOf(1.0))) {
 		    s = PI_2.divide(DoubleDouble.valueOf(2.0));	
 		}
-		else if (this.equals(DoubleDouble.valueOf(-1.0))) {
+		else if ((this.subtract(DoubleDouble.valueOf(-1.0))).abs().lt(DoubleDouble.valueOf(1.0E-7))) {
 			s = PI_2.divide(DoubleDouble.valueOf(-2.0));
 		}
 		else if (this.abs().lt(DoubleDouble.valueOf(1.0))) {
@@ -1098,7 +1099,7 @@ public strictfp class DoubleDouble
 				w = t.divide(DoubleDouble.valueOf(n));
 				sOld = s;
 				s = s.add(w);
-			} while (s.ne(sOld));
+		    } while (s.ne(sOld));
 		}
 		else {
 			DoubleDouble msquare = (this.multiply(this)).negate();
