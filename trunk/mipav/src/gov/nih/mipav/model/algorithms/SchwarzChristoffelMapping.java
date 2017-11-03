@@ -155,7 +155,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testDiskmap5();
         	//testCRDiskmap5();
             //testDiskmap6();
-        	testExtermap1();
+        	testDiskmap7();
+        	//testExtermap1();
         	//testCRRectmap1();
         	//testCRRectmap2();
             return;
@@ -1991,6 +1992,70 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double zin[][] = new double[1][2];
 		double fp[][] = diskevaldiff(M, zin);
 		System.out.println("fp = " + fp[0][0] + " " + fp[0][1] + "i");
+	}
+	
+	public void testDiskmap7() {
+		int i;
+	    double w[][] = new double[6][2];
+	    w[0][0] = 4.0;
+	    w[0][1] = 0.0;
+	    w[1][0] = 0.0;
+	    w[1][1] = 2.0;
+	    w[2][0] = -2.0;
+	    w[2][1] = 4.0;
+	    w[3][0] = -3.0;
+	    w[3][1] = 0.0;
+	    w[4][0] = -3.0;
+	    w[4][1] = -1.0;
+	    w[5][0] = 2.0;
+	    w[5][1] = -2.0;
+	    scmap M = diskmap(w, null, tolerance, null, null);	
+	    double sqrt2 = Math.sqrt(2.0);
+	    double wp[][] = new double[4][2];
+	    wp[0][0] = 0.5;
+	    wp[0][1] = 0.5;
+	    wp[1][0] = -0.9;
+	    wp[1][1] = 0.0;
+	    wp[2][0] = -0.8;
+	    wp[2][1] = 0.3;
+	    wp[3][0] = 1.0/sqrt2;
+	    wp[3][1] = 1.0/sqrt2;
+	    double zp[][] = diskeval(M, wp, tolerance);
+	    for (i = 0; i < 4; i++) {
+	    	if (i == 0) {
+	    		System.out.println("Expected result: -2.30147929138453 + 0.891455618349974i");
+	    	}
+	    	else if (i == 1) {
+	    	    System.out.println("Expected result: -2.959017053517382 - 0.004724964608807i");	
+	    	}
+	    	else if (i == 2) {
+	    		System.out.println("Expected result: -2.920229222824237 + 0.110570172682907i");
+	    	}
+	    	else {
+	    		System.out.println("Expected result: -2.699042997340806 + 1.203828010636846i");
+	    	}
+	    	System.out.println("Actual result = " + zp[i][0] + " " + zp[i][1] + "i");
+	    }
+	    double zpinverse[][] = new double[4][2];
+	    int flag[] = null;
+		int maxiter = 200;
+		flag = diskevalinv(zpinverse, M, zp, M.qdata, null, maxiter);
+		for (i = 0; i < 4; i++) {
+			if (i == 0) {
+				System.out.println("Expected result: 0.5 + 0.5i");
+			}
+			else if (i == 1) {
+				System.out.println("Expected result: -0.9");
+			}
+			else if (i == 2) {
+				System.out.println("Expected result: -0.8 + 0.3i");
+			}
+			else if (i == 3) {
+				double recipsqrt2 = 1.0/sqrt2;
+				System.out.println("Expected result = " + recipsqrt2 + " " + recipsqrt2 + "i");
+			}
+			System.out.println("Actual result = " + zpinverse[i][0] + " " + zpinverse[i][1] + "i");
+		}
 	}
 	
 	public void testCRDiskmap1() {
