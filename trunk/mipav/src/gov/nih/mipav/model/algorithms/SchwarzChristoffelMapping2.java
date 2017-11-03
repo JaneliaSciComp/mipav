@@ -312,6 +312,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		// With NL2sol Strip accuracy = 2.0224410492934113 for scmap f1.
         // Using the MATLAB obtained starting point with NL2sol gives:
 		// Strip accuracy = 6.167204870094844E-5
+		// NLConstrainedEngineEP gave many severe crowding warnings in stpfunEP fitToFunction.
 		 double x[] = new double[]{Double.POSITIVE_INFINITY, -1, -2.5, Double.POSITIVE_INFINITY, 2.4,
 				                   Double.POSITIVE_INFINITY, 2.4, Double.POSITIVE_INFINITY, -1, -2.5};
 		 double y[] = new double[]{0, -1, -1, 0, -3.3, 0, -1.3, 0, 1, 1};
@@ -319,8 +320,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		 polygon p = scm.new polygon(x, y, alf);
 		 int endidx[] = new int[]{5, 7};
 		 scmap f1 = stripmap(p, endidx);
-		 //int endidx2[] = new int[]{3,7};
-		 //scmap f2 = stripmap(p, endidx2);
+		 int endidx2[] = new int[]{3,7};
+		 scmap f2 = stripmap(p, endidx2);
 	}
 	
 	private scmap stripmap(polygon poly, int endidx[]) {
@@ -3725,7 +3726,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
     		DoubleDouble cr[] = new DoubleDouble[1];
     		DoubleDouble ci[] = new DoubleDouble[1];
     		DoubleDouble ints[][] = null;
-    		//try {
+    		try {
 				ctrl = ctrlMat[0];
 
 				if ((ctrl == -1) || (ctrl == 1)) {
@@ -3779,11 +3780,13 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					// Add ends of strip to z, and modify singularity indices
 					DoubleDouble zs[][] = new DoubleDouble[n+2][2];
 					zs[0][0] = DoubleDouble.NEGATIVE_INFINITY;
+					zs[0][1] = DoubleDouble.valueOf(0.0);
 					for (i = 0; i < nb; i++) {
 						zs[i+1][0] = z[i][0];
 						zs[i+1][1] = z[i][1];
 					}
 					zs[nb+1][0] = DoubleDouble.POSITIVE_INFINITY;
+					zs[nb+1][1] = DoubleDouble.valueOf(0.0);
 					for (i = nb; i < n; i++) {
 						zs[i+2][0] = z[i][0];
 						zs[i+2][1] = z[i][1];
@@ -3831,7 +3834,6 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					    	rightid[j++] = right2[i];
 					    }
 					}
-					System.out.println("About to do I1");
 					I1 = stquadhEP(zleftid, midid, leftid, zs, beta, qdat);
 					I2 = stquadhEP(zrightid, midid, rightid, zs, beta, qdat);
 					for (i = 0, j = 0; i < id.length; i++) {
@@ -3972,7 +3974,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					if ((numrat1Zero > 0) || (numrat2Zero > 0) || (numrat1NaN > 0) || (numrat2NaN > 0) ||
 							(numrat1Inf > 0) || (numrat2Inf > 0)) {
 						// Singularities were too crowded.
-						MipavUtil.displayWarning("Severe crowding");
+					    System.err.println("Severe crowding");
 					}
 					
 					// Compute nonlinear equation residual values.
@@ -4011,19 +4013,16 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 							residuals[rindex + F2.length + i] = F2[i][1];
 						}
 					}
-					for (i = 0; i < residuals.length; i++) {
-						System.out.println("residuals["+i+"] = " + residuals[i]);
-					}
 				} // if ((ctrl == -1) || (ctrl == 1))
 
 				// Calculate the Jacobian numerically
 				else if (ctrl == 2) {
 					ctrlMat[0] = 0;
 				}
-			//} catch (Exception e) {
-				//Preferences.debug("function error: " + e.getMessage() + "\n",
-						//Preferences.DEBUG_ALGORITHM);
-			//}
+			} catch (Exception e) {
+				Preferences.debug("function error: " + e.getMessage() + "\n",
+						Preferences.DEBUG_ALGORITHM);
+			}
 
 			return;
     		
@@ -5374,7 +5373,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    			// sinh(x + iy) = (sinhx cosy) + i(coshx siny)
 		    			DoubleDouble logargr = (terms[i][k][0].cosh()).multiply(terms[i][k][1].sin());
 		    			DoubleDouble logargi = ((terms[i][k][0].sinh()).multiply(terms[i][k][1].cos())).negate();
-		    			terms[i][k][0] = (zabs(logargr, logargi)).log();
+		    			terms[i][k][0] = (zabs(logargr, logargi)).log();		    			
 		    			terms[i][k][1] = logargi.atan2(logargr);
 		    		}
 		    	}
@@ -5396,6 +5395,10 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			}
 		} // if (j >= 0)
 		DoubleDouble sum[][] = new DoubleDouble[npts][2];
+		for (i = 0; i < npts; i++) {
+			sum[i][0] = DoubleDouble.valueOf(0.0);
+			sum[i][1] = DoubleDouble.valueOf(0.0);
+		}
 		for (k = 0; k < npts; k++) {
 			for (i = 0; i < n; i++) {
 				sum[k][0] = sum[k][0].add(terms[i][k][0].multiply(beta2[i]));
