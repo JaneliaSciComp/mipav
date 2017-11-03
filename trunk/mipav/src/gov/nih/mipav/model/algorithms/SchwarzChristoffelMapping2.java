@@ -954,8 +954,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    }
 	    
 	    // Solve nonlinear system of equations
-	    boolean useNLConstrainedEngine = false;
-	    boolean useNLConstrainedEngineEP = true;
+	    boolean useNLConstrainedEngine = true;
+	    boolean useNLConstrainedEngineEP = false;
 	    if (useNLConstrainedEngine) {
 		    stpfun fm = new stpfun(y0, n, nb, beta2, nmlen2, left2, right2, cmplx, qdat);
 			fm.driver();
@@ -3597,7 +3597,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 					if ((numrat1Zero > 0) || (numrat2Zero > 0) || (numrat1NaN > 0) || (numrat2NaN > 0) ||
 							(numrat1Inf > 0) || (numrat2Inf > 0)) {
 						// Singularities were too crowded.
-						MipavUtil.displayWarning("Severe crowding");
+						System.err.println("Severe crowding");
 					}
 					
 					// Compute nonlinear equation residual values.
@@ -4347,7 +4347,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			if ((numrat1Zero > 0) || (numrat2Zero > 0) || (numrat1NaN > 0) || (numrat2NaN > 0) ||
 					(numrat1Inf > 0) || (numrat2Inf > 0)) {
 				// Singularities were too crowded.
-				MipavUtil.displayWarning("Severe crowding");
+				System.err.println("Severe crowding");
 			}
 			
 			// Compute nonlinear equation residual values.
