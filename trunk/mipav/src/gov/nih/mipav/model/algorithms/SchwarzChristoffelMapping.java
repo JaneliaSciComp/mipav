@@ -2023,7 +2023,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    double zp[][] = diskeval(M, wp, tolerance);
 	    for (i = 0; i < 4; i++) {
 	    	if (i == 0) {
-	    		System.out.println("Expected result: -2.30147929138453 + 0.891455618349974i");
+	    		System.out.println("Expected result: -2.301479291389453 + 0.891455618349974i");
 	    	}
 	    	else if (i == 1) {
 	    	    System.out.println("Expected result: -2.959017053517382 - 0.004724964608807i");	
