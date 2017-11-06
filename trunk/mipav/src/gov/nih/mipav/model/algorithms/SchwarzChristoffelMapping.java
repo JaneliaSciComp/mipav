@@ -144,7 +144,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         if (testRoutine) {
         	//testRectmap1();
         	//testRectmap2();
-        	testRectmap3();
+        	//testRectmap3();
             //testDiskmap1();
             //testCRDiskmap1();
         	//testDiskmap2();
@@ -158,6 +158,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
             //testDiskmap6();
         	//testDiskmap7();
         	//testExtermap1();
+        	testExtermap2();
         	//testCRRectmap1();
         	//testCRRectmap2();
             return;
@@ -2454,6 +2455,67 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double theta[] =new double[1];
 		double axis[] = new double[]{-3.05, 2.8, -2.3, 2.5};
 		exterplot(M, R, theta, 20, 14, null, Integer.MIN_VALUE, axis);
+	}
+	
+	private void testExtermap2() {
+		int i;
+	    double w[][] = new double[6][2];
+	    w[0][0] = 4.0;
+	    w[0][1] = 0.0;
+	    w[1][0] = 0.0;
+	    w[1][1] = 2.0;
+	    w[2][0] = -2.0;
+	    w[2][1] = 4.0;
+	    w[3][0] = -3.0;
+	    w[3][1] = 0.0;
+	    w[4][0] = -3.0;
+	    w[4][1] = -1.0;
+	    w[5][0] = 2.0;
+	    w[5][1] = -2.0;
+	    double x[] = new double[w.length];
+		double y[] = new double[w.length];
+		for (i = 0; i < w.length; i++) {
+			x[i] = w[i][0];
+			y[i] = w[i][1];
+		}
+		polygon poly = new polygon(x, y, null);
+		double alpha[] = poly.angle;
+		scmap M = extermap(w, alpha, tolerance, null, null);
+	    double sqrt2 = Math.sqrt(2.0);
+	    double zp[][] = new double[4][2];
+	    zp[0][0] = 0.5;
+	    zp[0][1] = 0.5;
+	    zp[1][0] = -0.9;
+	    zp[1][1] = 0.0;
+	    zp[2][0] = -0.8;
+	    zp[2][1] = 0.3;
+	    zp[3][0] = 1.0/sqrt2;
+	    zp[3][1] = 1.0/sqrt2;	
+	    double wi[][] = new double[poly.vertex.length][2];
+		for (i = 0; i < poly.vertex.length; i++) {
+			wi[i][0] = poly.vertex[poly.vertex.length - 1 - i][0];
+			wi[i][1] = poly.vertex[poly.vertex.length - 1 - i][1];
+		}
+		double beta[] = new double[poly.angle.length];
+		for (i = 0; i < beta.length; i++) {
+			beta[i] = 1.0 - poly.angle[poly.angle.length - 1 - i];
+		}
+        double wp[][] = demap(zp, wi, beta, M.prevertex, M.constant, M.qdata);
+        for (i = 0; i < wp.length; i++) {
+        	if (i == 0) {
+        		System.out.println("Expected result: 3.383320944105799 - 2.338017988574543i");
+        	}
+        	else if (i == 1) {
+        		System.out.println("Expected result: -3.257095120413423 + 0.536117032603197i");
+        	}
+        	else if (i == 2) {
+        		System.out.println("Expected result: -3.428512520416633 - 0.641446812228358i");
+        	}
+        	else if (i == 3) {
+        		System.out.println("Expected result: 2.571844815094428 - 1.428155184905573i");
+        	}
+        	System.out.println("Actual result: " + wp[i][0] + " " + wp[i][1] + "i");
+        }
 	}
 	
 	public void testCRRectmap1() {
