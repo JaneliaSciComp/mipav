@@ -144,6 +144,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         if (testRoutine) {
         	//testRectmap1();
         	//testRectmap2();
+        	testRectmap3();
             //testDiskmap1();
             //testCRDiskmap1();
         	//testDiskmap2();
@@ -155,7 +156,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testDiskmap5();
         	//testCRDiskmap5();
             //testDiskmap6();
-        	testDiskmap7();
+        	//testDiskmap7();
         	//testExtermap1();
         	//testCRRectmap1();
         	//testCRRectmap2();
@@ -1452,6 +1453,86 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		System.out.println("Corner " + i + " in the fundmemtal domain = " + zr[i][0] + " " + zr[i][1]+"i");		
         	}
         }
+	}
+	
+	public void testRectmap3() {
+		int i;
+	    double w[][] = new double[6][2];
+	    w[0][0] = 4.0;
+	    w[0][1] = 0.0;
+	    w[1][0] = 0.0;
+	    w[1][1] = 2.0;
+	    w[2][0] = -2.0;
+	    w[2][1] = 4.0;
+	    w[3][0] = -3.0;
+	    w[3][1] = 0.0;
+	    w[4][0] = -3.0;
+	    w[4][1] = -1.0;
+	    w[5][0] = 2.0;
+	    w[5][1] = -2.0;
+	    double x[] = new double[6];
+	    double y[] = new double[6];
+	    for (i = 0; i < 6; i++) {
+	    	x[i] = w[i][0];
+	    	y[i] = w[i][1];
+	    }
+	    polygon poly = new polygon(x, y, null);
+	    double beta[] = new double[poly.angle.length];
+	    for (i = 0; i < poly.angle.length; i++) {
+	    	beta[i] = poly.angle[i] - 1.0;
+	    }
+	    int corner[] = new int[4];
+	    corner[0] = 0;
+	    corner[1] = 1;
+	    corner[2] = 2;
+	    corner[3] = 3;
+	    scmap M = rectmap(w, corner, tolerance, null, null, null);
+	    double zp[][] = new double[4][2];
+	    zp[0][0] = 1.5;
+	    zp[0][1] = 0.0;
+	    zp[1][0] = 1.4;
+	    zp[1][1] = 3.0;
+	    zp[2][0] = -0.6;
+	    zp[2][1] = 1.0;
+	    zp[3][0] = 1.0;
+	    zp[3][1] = 0.0;
+	    double wp[][] = new double[4][2];
+	    
+	    rmap(wp, zp, w, beta, M.prevertex, M.constant, M.stripL, M.qdata);
+	    for (i = 0; i < 4; i++) {
+	    	if (i == 0) {
+	    		System.out.println("Expected result: 3.641550444027862 - 0.358449555972138i");
+	    	}
+	    	else if (i == 1) {
+	    		System.out.println("Expected result: -0.005336970451055 + 1.9881355984422i");
+	    	}
+	    	else if (i == 2) {
+	    		System.out.println("Expected result: -1.643459212104280 + 0.42859757726735i");
+	    	}
+	    	else if (i == 3) {
+	    		System.out.println("Expected result: 1.646072527976422 - 1.929214505595285i");
+	    	}
+	    	System.out.println("Actual result: " + wp[i][0] + " " + wp[i][1] + "i");
+	    }
+	    double tol[][] = null;
+	    double z0[][] = null;
+	    int maxiter = 500;
+	    double wpinverse[][] = rectevalinv(M, wp, tol, z0, maxiter);
+	    for (i = 0; i < 4; i++) {
+	    	if (i == 0) {
+	    	    System.out.println("Expected result: 1.5");
+	    	}
+	    	else if (i == 1) {
+	    		System.out.println("Expected result: 1.4 + 3i");
+	    	}
+	    	else if (i == 2) {
+	    		System.out.println("Expected result: -0.6 + 1.0i");
+	    	}
+	    	else if (i == 3) {
+	    		System.out.println("Expected result: 1.0");
+	    	}
+	    	System.out.println("Actual result: " + wpinverse[i][0] + " " + wpinverse[i][1] + "i");
+	    }
 	}
 	
 	public void testDiskmap1() {
@@ -6392,6 +6473,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		        	znnotdone[i][1] = znnotdone[i][1] + ci[0];
 		        }
 		        znnotdone = rectproject(znnotdone, rect);
+		        for (i = 0, j = 0; i < done.length; i++) {
+		        	if (!done[i]) {
+		        		zn[i][0] = znnotdone[j][0];
+		        		zn[i][1] = znnotdone[j++][1];
+		        	}
+		        }
 		        for (i = 0, j = 0; i < done.length; i++) {
 		        	if (!done[i]) {
 		        		if (zabs(F[j][0], F[j][1]) < tol) {
