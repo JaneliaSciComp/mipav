@@ -88,7 +88,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private double crfixwc_mt[][] = new double[4][2];
 	private double crfixwc[] = new double[2];
 	
-	private boolean testRoutine = false;
+	private boolean testRoutine = true;
 	private boolean exterRoutine = false;
 	
 	public SchwarzChristoffelMapping() {
@@ -157,10 +157,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testCRDiskmap5();
             //testDiskmap6();
         	//testDiskmap7();
+            testCRDiskmap7();
         	//testExtermap1();
-        	testExtermap2();
+        	//testExtermap2();
         	//testCRRectmap1();
         	//testCRRectmap2();
+        	//testCRRectmap3();
             return;
         }
 		if (algorithm == POLYGON_TO_RECTANGLE) {
@@ -1502,18 +1504,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    rmap(wp, zp, w, beta, M.prevertex, M.constant, M.stripL, M.qdata);
 	    for (i = 0; i < 4; i++) {
 	    	if (i == 0) {
-	    		System.out.println("Expected result: 3.641550444027862 - 0.358449555972138i");
+	    		System.out.println("Expected forward result: 3.641550444027862 - 0.358449555972138i");
 	    	}
 	    	else if (i == 1) {
-	    		System.out.println("Expected result: -0.005336970451055 + 1.9881355984422i");
+	    		System.out.println("Expected forward result: -0.005336970451055 + 1.9881355984422i");
 	    	}
 	    	else if (i == 2) {
-	    		System.out.println("Expected result: -1.643459212104280 + 0.42859757726735i");
+	    		System.out.println("Expected forward result: -1.643459212104280 + 0.42859757726735i");
 	    	}
 	    	else if (i == 3) {
-	    		System.out.println("Expected result: 1.646072527976422 - 1.929214505595285i");
+	    		System.out.println("Expected forward result: 1.646072527976422 - 1.929214505595285i");
 	    	}
-	    	System.out.println("Actual result: " + wp[i][0] + " " + wp[i][1] + "i");
+	    	System.out.println("Actual forward result: " + wp[i][0] + " " + wp[i][1] + "i");
 	    }
 	    double tol[][] = null;
 	    double z0[][] = null;
@@ -1521,18 +1523,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    double wpinverse[][] = rectevalinv(M, wp, tol, z0, maxiter);
 	    for (i = 0; i < 4; i++) {
 	    	if (i == 0) {
-	    	    System.out.println("Expected result: 1.5");
+	    	    System.out.println("Expected inverse result: 1.5");
 	    	}
 	    	else if (i == 1) {
-	    		System.out.println("Expected result: 1.4 + 3i");
+	    		System.out.println("Expected inverse result: 1.4 + 3i");
 	    	}
 	    	else if (i == 2) {
-	    		System.out.println("Expected result: -0.6 + 1.0i");
+	    		System.out.println("Expected inverse result: -0.6 + 1.0i");
 	    	}
 	    	else if (i == 3) {
-	    		System.out.println("Expected result: 1.0");
+	    		System.out.println("Expected inverse result: 1.0");
 	    	}
-	    	System.out.println("Actual result: " + wpinverse[i][0] + " " + wpinverse[i][1] + "i");
+	    	System.out.println("Actual inverse result: " + wpinverse[i][0] + " " + wpinverse[i][1] + "i");
 	    }
 	}
 	
@@ -2105,18 +2107,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    double zp[][] = diskeval(M, wp, tolerance);
 	    for (i = 0; i < 4; i++) {
 	    	if (i == 0) {
-	    		System.out.println("Expected result: -2.301479291389453 + 0.891455618349974i");
+	    		System.out.println("Expected forward result: -2.301479291389453 + 0.891455618349974i");
 	    	}
 	    	else if (i == 1) {
-	    	    System.out.println("Expected result: -2.959017053517382 - 0.004724964608807i");	
+	    	    System.out.println("Expected forward result: -2.959017053517382 - 0.004724964608807i");	
 	    	}
 	    	else if (i == 2) {
-	    		System.out.println("Expected result: -2.920229222824237 + 0.110570172682907i");
+	    		System.out.println("Expected forward result: -2.920229222824237 + 0.110570172682907i");
 	    	}
 	    	else {
-	    		System.out.println("Expected result: -2.699042997340806 + 1.203828010636846i");
+	    		System.out.println("Expected forward result: -2.699042997340806 + 1.203828010636846i");
 	    	}
-	    	System.out.println("Actual result = " + zp[i][0] + " " + zp[i][1] + "i");
+	    	System.out.println("Actual forward result = " + zp[i][0] + " " + zp[i][1] + "i");
 	    }
 	    double zpinverse[][] = new double[4][2];
 	    int flag[] = null;
@@ -2124,24 +2126,24 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		flag = diskevalinv(zpinverse, M, zp, M.qdata, null, maxiter);
 		for (i = 0; i < 4; i++) {
 			if (i == 0) {
-				System.out.println("Expected result: 0.5 + 0.5i");
+				System.out.println("Expected inverse result: 0.5 + 0.5i");
 			}
 			else if (i == 1) {
-				System.out.println("Expected result: -0.9");
+				System.out.println("Expected inverse result: -0.9");
 			}
 			else if (i == 2) {
-				System.out.println("Expected result: -0.8 + 0.3i");
+				System.out.println("Expected inverse result: -0.8 + 0.3i");
 			}
 			else if (i == 3) {
 				double recipsqrt2 = 1.0/sqrt2;
-				System.out.println("Expected result = " + recipsqrt2 + " " + recipsqrt2 + "i");
+				System.out.println("Expected inverse result = " + recipsqrt2 + " " + recipsqrt2 + "i");
 			}
-			System.out.println("Actual result = " + zpinverse[i][0] + " " + zpinverse[i][1] + "i");
+			System.out.println("Actual inverse result = " + zpinverse[i][0] + " " + zpinverse[i][1] + "i");
 		}
 	}
 	
 	public void testCRDiskmap1() {
-		int i, j;
+		int i, j, k;
 		double w[][] = new double[4][2];
 		w[0][0] = 1;
 		w[0][1] = 1;
@@ -2209,28 +2211,52 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    wp[201*j + i][1] = Y[i][j];
 			}
 		}
-		zp = crdiskevalinv(M, wp, 1.0E-8);
+		boolean indexout[] = new boolean[wp.length];
+		boolean onvtx[][] = new boolean[w.length][wp.length];
+		isinpoly(indexout, onvtx, wp, w, beta, eps);
+		int numinpoly = 0;
+		for (i = 0; i < wp.length; i++) {
+		    if (indexout[i]) {
+		    	numinpoly++;
+		    }
+		}
+		System.out.println(numinpoly + " of 1809 points in polygon");
+		double wpinpoly[][] = new double[numinpoly][2];
+		for (i = 0, j = 0; i < wp.length; i++) {
+		    if (indexout[i]) {
+		    	wpinpoly[j][0] = wp[i][0];
+		    	wpinpoly[j++][1] = wp[i][1];
+		    }
+		}
+		zp = crdiskevalinv(M, wpinpoly, 1.0E-8);
 		Vector<Double>x1Vector = new Vector<Double>();
 		Vector<Double>y1Vector = new Vector<Double>();
 		Vector<Double>x2Vector = new Vector<Double>();
 		Vector<Double>y2Vector = new Vector<Double>();
+		k = 0;
 		for (i = 0; i < 9; i++) {
-			for (j = 0; j < 200; j++) {
-				double posx1 = zp[201*i + j][0];
-	    		double posy1 = zp[201*i + j][1];
-	    		double posx2 = zp[201*i + j + 1][0];
-	    		double posy2 = zp[201*i + j + 1][1];
-	    		x1Vector.add(posx1);
-	    		y1Vector.add(posy1);
-	    		x2Vector.add(posx2);
-	    		y2Vector.add(posy2);
-	    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
-			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
-			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
-			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
-			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
-			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
-			    graph.drawLine(g, x1, y1, x2, y2);	
+			for (j = 0; j < 201; j++) {
+				int index = 201*i + j;
+				if ((j < 200) && indexout[index] && indexout[index+1]) {
+					double posx1 = zp[k][0];
+		    		double posy1 = zp[k][1];
+		    		double posx2 = zp[k + 1][0];
+		    		double posy2 = zp[k + 1][1];
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+				    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+				    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+				    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+				    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+				    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+				    graph.drawLine(g, x1, y1, x2, y2);
+				}
+				if (indexout[index]) {
+					k++;
+				}
 			}
 		}
 		for (i = 0; i < 201; i++) {
@@ -2239,24 +2265,48 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			    wp[201*j + i][1] = X[i][j];
 			}
 		}
-		zp = crdiskevalinv(M, wp, 1.0E-8);
+		indexout = new boolean[wp.length];
+	    onvtx = new boolean[w.length][wp.length];
+		isinpoly(indexout, onvtx, wp, w, beta, eps);
+		numinpoly = 0;
+		for (i = 0; i < wp.length; i++) {
+		    if (indexout[i]) {
+		    	numinpoly++;
+		    }
+		}
+		System.out.println(numinpoly + " of 1809 points in polygon");
+		wpinpoly = new double[numinpoly][2];
+		for (i = 0, j = 0; i < wp.length; i++) {
+		    if (indexout[i]) {
+		    	wpinpoly[j][0] = wp[i][0];
+		    	wpinpoly[j++][1] = wp[i][1];
+		    }
+		}
+		zp = crdiskevalinv(M, wpinpoly, 1.0E-8);
+		k = 0;
 		for (i = 0; i < 9; i++) {
-			for (j = 0; j < 200; j++) {
-				double posx1 = zp[201*i + j][0];
-	    		double posy1 = zp[201*i + j][1];
-	    		double posx2 = zp[201*i + j + 1][0];
-	    		double posy2 = zp[201*i + j + 1][1];
-	    		x1Vector.add(posx1);
-	    		y1Vector.add(posy1);
-	    		x2Vector.add(posx2);
-	    		y2Vector.add(posy2);
-	    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
-			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
-			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
-			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
-			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
-			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
-			    graph.drawLine(g, x1, y1, x2, y2);	
+			for (j = 0; j < 201; j++) {
+				int index = 201*i + j;
+				if ((j < 200) && indexout[index] && indexout[index+1]) {
+					double posx1 = zp[k][0];
+		    		double posy1 = zp[k][1];
+		    		double posx2 = zp[k + 1][0];
+		    		double posy2 = zp[k + 1][1];
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+				    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+				    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+				    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+				    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+				    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+				    graph.drawLine(g, x1, y1, x2, y2);
+				}
+				if (indexout[index]) {
+					k++;
+				}
 			}
 		}
 		
@@ -2427,6 +2477,95 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		crdiskplot(M, null, null, 200, 140, drawThetaToRadiusOne, null, Integer.MIN_VALUE);
 	}
 	
+	public void testCRDiskmap7() {
+		int i, j;
+	    double w[][] = new double[6][2];
+	    w[0][0] = 4.0;
+	    w[0][1] = 0.0;
+	    w[1][0] = 0.0;
+	    w[1][1] = 2.0;
+	    w[2][0] = -2.0;
+	    w[2][1] = 4.0;
+	    w[3][0] = -3.0;
+	    w[3][1] = 0.0;
+	    w[4][0] = -3.0;
+	    w[4][1] = -1.0;
+	    w[5][0] = 2.0;
+	    w[5][1] = -2.0;
+	    double x[] = new double[6];
+	    double y[] = new double[6];
+	    for (i = 0; i < 6; i++) {
+	    	x[i] = w[i][0];
+	    	y[i] = w[i][1];
+	    }
+	    polygon poly = new polygon(x, y, null);
+	    double beta[] = new double[poly.angle.length];
+	    for (i = 0; i < poly.angle.length; i++) {
+	    	beta[i] = poly.angle[i] - 1.0;
+	    }
+	    scmap M = crdiskmap(poly, tolerance, null, null);	
+	    double sqrt2 = Math.sqrt(2.0);
+	    double wp[][] = new double[4][2];
+	    wp[0][0] = 0.5;
+	    wp[0][1] = 0.5;
+	    wp[1][0] = -0.9;
+	    wp[1][1] = 0.0;
+	    wp[2][0] = -0.8;
+	    wp[2][1] = 0.3;
+	    wp[3][0] = 1.0/sqrt2;
+	    wp[3][1] = 1.0/sqrt2;
+	    poly = M.poly;
+	    beta = new double[poly.angle.length];
+	    for (i = 0; i < poly.angle.length; i++) {
+	    	beta[i] = poly.angle[i] - 1.0;
+	    }
+	    w = new double[poly.vertex.length][2];
+	    for (i = 0; i < poly.vertex.length; i++) {
+	    	w[i][0] = poly.vertex[i][0];
+	    	w[i][1] = poly.vertex[i][1];
+	    }
+	    double zp[][] = crmap(wp,w,beta,M.crossratio,M.affine,M.center_fix_quadnum, M.center_fix_mt, M.qgraph, M.qdata);
+	    for (i = 0; i < 4; i++) {
+	    	System.out.println("Actual forward result = " + zp[i][0] + " " + zp[i][1] + "i");
+	    }
+	    boolean indexout[] = new boolean[zp.length];
+		boolean onvtx[][] = new boolean[w.length][zp.length];
+		isinpoly(indexout, onvtx, zp, w, beta, eps);
+		int numinpoly = 0;
+		for (i = 0; i < zp.length; i++) {
+		    if (indexout[i]) {
+		    	numinpoly++;
+		    }
+		}
+		System.out.println(numinpoly + " of 4 points in polygon");
+		double zpinpoly[][] = new double[numinpoly][2];
+		int polyindex[] = new int[numinpoly];
+		for (i = 0, j = 0; i < wp.length; i++) {
+		    if (indexout[i]) {
+		    	polyindex[j] = i;
+		    	zpinpoly[j][0] = wp[i][0];
+		    	zpinpoly[j++][1] = wp[i][1];
+		    }
+		}
+		double zpinverse[][] = crdiskevalinv(M, zpinpoly, 1.0E-8);
+		for (i = 0; i < numinpoly; i++) {
+			if (polyindex[i] == 0) {
+				System.out.println("Expected inverse result: 0.5 + 0.5i");
+			}
+			else if (polyindex[i] == 1) {
+				System.out.println("Expected inverse result: -0.9");
+			}
+			else if (polyindex[i] == 2) {
+				System.out.println("Expected inverse result: -0.8 + 0.3i");
+			}
+			else if (polyindex[i] == 3) {
+				double recipsqrt2 = 1.0/sqrt2;
+				System.out.println("Expected inverse result = " + recipsqrt2 + " " + recipsqrt2 + "i");
+			}
+			System.out.println("Actual inverse result = " + zpinverse[i][0] + " " + zpinverse[i][1] + "i");
+		}
+	}
+	
 	private void testExtermap1() {
 		//p = i*polygon([-0.5,1-1.5i,-0.5,0.5+2i]);
 		//f = extermap(p);
@@ -2503,18 +2642,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         double wp[][] = demap(zp, wi, beta, M.prevertex, M.constant, M.qdata);
         for (i = 0; i < wp.length; i++) {
         	if (i == 0) {
-        		System.out.println("Expected result: 3.383320944105799 - 2.338017988574543i");
+        		System.out.println("Expected forward result: 3.383320944105799 - 2.338017988574543i");
         	}
         	else if (i == 1) {
-        		System.out.println("Expected result: -3.257095120413423 + 0.536117032603197i");
+        		System.out.println("Expected forward result: -3.257095120413423 + 0.536117032603197i");
         	}
         	else if (i == 2) {
-        		System.out.println("Expected result: -3.428512520416633 - 0.641446812228358i");
+        		System.out.println("Expected forward result: -3.428512520416633 - 0.641446812228358i");
         	}
         	else if (i == 3) {
-        		System.out.println("Expected result: 2.571844815094428 - 1.428155184905573i");
+        		System.out.println("Expected forward result: 2.571844815094428 - 1.428155184905573i");
         	}
-        	System.out.println("Actual result: " + wp[i][0] + " " + wp[i][1] + "i");
+        	System.out.println("Actual forward result: " + wp[i][0] + " " + wp[i][1] + "i");
         }
 	}
 	
@@ -2577,6 +2716,143 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         double nre[] = new double[]{8};
         double nim[] = new double[]{4};
         crrectplot(M, nre, nim, Integer.MIN_VALUE);
+	}
+	
+	public void testCRRectmap3() {
+		int i, j;
+	    double w[][] = new double[6][2];
+	    w[0][0] = 4.0;
+	    w[0][1] = 0.0;
+	    w[1][0] = 0.0;
+	    w[1][1] = 2.0;
+	    w[2][0] = -2.0;
+	    w[2][1] = 4.0;
+	    w[3][0] = -3.0;
+	    w[3][1] = 0.0;
+	    w[4][0] = -3.0;
+	    w[4][1] = -1.0;
+	    w[5][0] = 2.0;
+	    w[5][1] = -2.0;
+	    double x[] = new double[6];
+	    double y[] = new double[6];
+	    for (i = 0; i < 6; i++) {
+	    	x[i] = w[i][0];
+	    	y[i] = w[i][1];
+	    }
+	    polygon poly = new polygon(x, y, null);
+	    double beta[] = new double[poly.angle.length];
+	    for (i = 0; i < poly.angle.length; i++) {
+	    	beta[i] = poly.angle[i] - 1.0;
+	    }
+	    int corner[] = new int[4];
+	    corner[0] = 0;
+	    corner[1] = 1;
+	    corner[2] = 2;
+	    corner[3] = 3;
+	    scmap M = crrectmap(w, corner, tolerance);
+	    double zp[][] = new double[4][2];
+	    zp[0][0] = 1.5;
+	    zp[0][1] = 0.0;
+	    zp[1][0] = 1.4;
+	    zp[1][1] = 3.0;
+	    zp[2][0] = -0.6;
+	    zp[2][1] = 1.0;
+	    zp[3][0] = 1.0;
+	    zp[3][1] = 0.0;
+	    boolean indexout[] = new boolean[4];
+		boolean onvtx[][] = new boolean[w.length][4];
+		polygon pr = M.rectpolygon;
+		double wr[][] = pr.vertex;
+		double betar[] = new double[pr.angle.length];
+		for (i = 0; i < pr.angle.length; i++) {
+			betar[i] = pr.angle[i] - 1;
+		}
+		double zr[][] = new double[corner.length][2];
+        for (i = 0; i < corner.length; i++) {
+            zr[i][0] = wr[corner[i]][0];
+            zr[i][1] = wr[corner[i]][1];
+        }
+	    isinpoly(indexout, onvtx, zp, zr, betar, eps);
+		int numinpoly = 0;
+		for (i = 0; i < 4; i++) {
+		    if (indexout[i]) {
+		    	numinpoly++;
+		    }
+		} // for (i = 0; i < 4; i++)
+		System.out.println("numinpoly = " + numinpoly);
+		double zpinpoly[][] = new double[numinpoly][2];
+		int polyindex[] = new int[numinpoly];
+		for (i = 0, j = 0; i < 4; i++) {
+			if (indexout[i]) {
+				zpinpoly[j][0] = zp[i][0];
+				zpinpoly[j][1] = zp[i][1];
+				polyindex[j] = i;
+				j++;
+			}
+		} // for (i = 0, j = 0; i < destSlice; i++)
+		for (i = 0; i < numinpoly; i++) {
+			System.out.println("zpinpoly["+i+"] = " + zpinpoly[i][0] + " " + zpinpoly[i][1]);
+		}
+		double wpinpoly[][][] = new double[numinpoly][1][2];
+		//rmap(wpinpoly, zpinpoly, w, beta, z, M.constant, M.stripL, M.qdata);
+		// Number of quadrature points per integration.
+		// Approximately equals -log10(error).  Increase if plot
+		// has false little zigzags in curves. 
+		int nqpts = 5; 
+		double qdat[][] = new double[nqpts][2*beta.length+2];
+		scqdata(qdat, beta, nqpts);
+		double qdatr[][] = new double[nqpts][2*betar.length+2];
+		scqdata(qdatr, betar, nqpts);
+		double tolmap = Math.pow(10.0, -qdat.length);
+        int zpindex[] = new int[numinpoly];
+		onvtx = new boolean[wr.length][numinpoly];
+		isinpoly2(zpindex, onvtx, zpinpoly, wr, betar, tolmap);
+		int maxindex = -1;
+		for (i = 0; i < numinpoly; i++) {
+			if (zpindex[i] > maxindex) {
+				maxindex = zpindex[i];
+			}
+		} // for (i = 0; i < numnew; i++)
+		if (maxindex > 1) {
+			MipavUtil.displayError("Too many values found at some points");
+			System.exit(-1);
+		}
+		int wpqn[][] = new int[numinpoly][Math.max(1, maxindex)];
+		double cr[] = M.crossratio;
+		double aff[][][] = M.affine;
+		double affr[][][] = M.rectaffine;
+		qlgraph Q = M.qgraph;
+	    crrmap(wpinpoly, wpqn, zpinpoly, w, beta, wr, betar, cr, aff, affr,
+        		Q, qdat, qdatr);
+	    
+	    for (i = 0; i < numinpoly; i++) {
+	    	System.out.println("Actual forward result: " + wpinpoly[i][0][0] + " " + wpinpoly[i][0][1] + "i");
+	    }
+	    double wp2[][] = new double[numinpoly][2];
+	    for (i = 0; i < numinpoly; i++) {
+	    	wp2[i][0] = wpinpoly[i][0][0];
+	    	wp2[i][1] = wpinpoly[i][0][1];
+	    }
+	    // Note that by switching the roles of w, beta, and aff with wr, betar, and affr,
+	    // one inverts the map.
+	    double wpinverse[][][] = new double[numinpoly][1][2];
+	    crrmap(wpinverse, wpqn, wp2, wr, betar, w, beta, cr, affr, aff,
+        		Q, qdat, qdatr);
+	    for (i = 0; i < numinpoly; i++) {
+	    	if (polyindex[i] == 0) {
+	    	    System.out.println("Expected inverse result: 1.5");
+	    	}
+	    	else if (polyindex[i] == 1) {
+	    		System.out.println("Expected inverse result: 1.4 + 3i");
+	    	}
+	    	else if (polyindex[i] == 2) {
+	    		System.out.println("Expected inverse result: -0.6 + 1.0i");
+	    	}
+	    	else if (polyindex[i] == 3) {
+	    		System.out.println("Expected inverse result: 1.0");
+	    	}
+	    	System.out.println("Actual inverse result: " + wpinverse[i][0][0] + " " + wpinverse[i][0][1] + "i");
+	    }
 	}
 	
 	public scmap crdiskmap(polygon poly, double tolerance, double cr[][], qlgraph Q) {
@@ -5004,7 +5280,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    		   }
 		    		   j++;
 		    	   }
-		       } // for (i = 0, j = 0; i < lenwp; i++)
+		       } //  for (i = 0, j = 0; (i < lenwp) && (j < numnotdone); i++)
 		       k = k+1;
 		   } // while ((numdone < lenwp) && (k < 16))
 		   maxresid = 0.0;
