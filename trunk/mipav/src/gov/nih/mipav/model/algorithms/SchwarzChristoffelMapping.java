@@ -151,13 +151,13 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         	//testCRDiskmap2();
         	//testDiskmap3();
         	//testCRDiskmap3();
-        	//testDiskmap4();
+        	testDiskmap4();
         	// No testCRDiskmap4() because CRDisk cannot handle infinities in example.
         	//testDiskmap5();
         	//testCRDiskmap5();
             //testDiskmap6();
         	//testDiskmap7();
-            testCRDiskmap7();
+            //testCRDiskmap7();
         	//testExtermap1();
         	//testExtermap2();
         	//testCRRectmap1();
@@ -1723,7 +1723,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
     }
 	
 	public void testDiskmap4() {
-		int i, k;
+		int i, j, k;
 		// Without z0 supplied to center MIPAV and MATLAB end when center calls dinvmap which calls scimapz0 which returns the
 	    // error can't seem to choose starting points.  Add in z0 = 0.4 - 0.9i.
 		// 2 accuracies from before setting center to zero and after setting center to zero in MATLAB and MIPAV agree.
@@ -1734,15 +1734,10 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		// Accuracy = 3.69396579067019E-7
 	    // Accuracy = 5.657124293818956E-7
         // The center of MIPAV's diskplot looks like MATLAB's h = plot(f, 0.7:0.05:0.95, 0);.
-		// This example does not seem to make sense after the diskmap is plotted in 
-		// h = plot(f, 0.7:0.05:0.95, 0);
-		// MATLAB gives:
-	    // w = (get(h(n),'xd') + i*get(h(n),'yd'));
-		// Error: The input character 'xd' is not valid in MATLAB statements or expressions.
-		// Each h(1) to h(6) contains about 235 or so complex values.
-		// If abs(w(1) > w(2)), we interchange the first two and reduce the size of w to 2, so diffw has only 1 value.
-		// Otherwise diff(w) has 235-1 or 234 values which we multiply by 100 in linspace.
-		// The MATLAB code is used:
+		// In MATLAB the first length(h) = 6.
+		// In MATLAB the 6 complex w lengths are 236, 265, 273, 259, 285, and 274;
+		
+		// The MATLAB code used is:
 		/* w = [1+i, 1 + 2i, Inf, -.705 + .971i, Inf, -1-i, Inf, .705 - .971i, Inf];
 		alpha = [2,1, -.3, 2, -.7, 2. -.3, 2, -.7];
 		poly = polygon(w, alpha);
@@ -1818,8 +1813,9 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		accuracy2 = map.accuracy
 		axis(5.5*[-1 1 -1 1]), hold on
 		[h,r,theta] = dplot(w,beta,z,c, 0.7:0.05:0.95, 0);
+		lengthh = length(h)
 		for n=1:length(h)
-		w = (get(h(n),'xd') + i*get(h(n),'yd'));
+		w = (get(h(n),'xd') + i*get(h(n),'yd'))
 		set(h(n),'xd',real(1./w),'yd',imag(1./w))
 		end
 		h = findobj(gca,'color',[0 0 1]);
@@ -1872,6 +1868,37 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		axlim[1] = -Double.MAX_VALUE;
 		axlim[2] = Double.MAX_VALUE;
 		axlim[3] = -Double.MAX_VALUE;
+		
+		for (i = 0; i < linhx.length; i++) {
+			uxr[i] = new Vector<Double>();
+	    	uyr[i] = new Vector<Double>();
+			for (j = 0; j < linhx[i][0].size(); j++) {
+			    x2[0] = linhx[i][0].get(j);
+			    y2[0] = linhy[i][0].get(j);
+			    if (j < linhx[i][0].size() - 1) {
+			    	x2[1] = linhx[i][0].get(j+1);
+			    	y2[1] = linhy[i][0].get(j+1);
+			    }
+			    else {
+			    	x2[1] = linhx[i][0].get(0);
+			    	y2[1] = linhy[i][0].get(0);
+			    }
+			    denom[0] = x2[0]*x2[0] + y2[0]*y2[0];
+		    	denom[1] = x2[1]*x2[1] + y2[1]*y2[1];
+		    	wr[0] = x2[0]/denom[0];
+		    	wi[0] = -y2[0]/denom[0];
+		    	wr[1] = x2[1]/denom[1];
+		    	wi[1] = -y2[1]/denom[1];
+		    	if (zabs(wr[0], wi[0]) > zabs(wr[1],wi[1])) {
+		    	    double temp = wr[0];
+		    	    wr[0] = wr[1];
+		    	    wr[1] = temp;
+		    	    temp = wi[0];
+		    	    wi[0] = wi[1];
+		    	    wi[1] = temp;
+		    	}
+			} // for (j = 0; j < linhx[i][0].size(); j++)
+		} // for (i = 0; i < linhx.length; i++)
 		
 		for (i = 0; i < linhx.length; i++) {
 		    	uxr[i] = new Vector<Double>();
