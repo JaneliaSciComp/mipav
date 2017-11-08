@@ -88,7 +88,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	private double crfixwc_mt[][] = new double[4][2];
 	private double crfixwc[] = new double[2];
 	
-	private boolean testRoutine = true;
+	private boolean testRoutine = false;
 	private boolean exterRoutine = false;
 	
 	public SchwarzChristoffelMapping() {
@@ -2220,7 +2220,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	numinpoly++;
 		    }
 		}
-		System.out.println(numinpoly + " of 1809 points in polygon");
+		System.out.println(numinpoly + " of 1809 points in wp used");
 		double wpinpoly[][] = new double[numinpoly][2];
 		for (i = 0, j = 0; i < wp.length; i++) {
 		    if (indexout[i]) {
@@ -2274,7 +2274,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	numinpoly++;
 		    }
 		}
-		System.out.println(numinpoly + " of 1809 points in polygon");
+		System.out.println(numinpoly + " of 1809 points in wp used");
 		wpinpoly = new double[numinpoly][2];
 		for (i = 0, j = 0; i < wp.length; i++) {
 		    if (indexout[i]) {
@@ -2530,6 +2530,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    }
 	    boolean indexout[] = new boolean[zp.length];
 		boolean onvtx[][] = new boolean[w.length][zp.length];
+		System.out.println("About to do isinpoly");
 		isinpoly(indexout, onvtx, zp, w, beta, eps);
 		int numinpoly = 0;
 		for (i = 0; i < zp.length; i++) {
@@ -2537,14 +2538,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		    	numinpoly++;
 		    }
 		}
-		System.out.println(numinpoly + " of 4 points in polygon");
+		System.out.println(numinpoly + " of 4 points in zp used");
 		double zpinpoly[][] = new double[numinpoly][2];
 		int polyindex[] = new int[numinpoly];
 		for (i = 0, j = 0; i < wp.length; i++) {
 		    if (indexout[i]) {
 		    	polyindex[j] = i;
-		    	zpinpoly[j][0] = wp[i][0];
-		    	zpinpoly[j++][1] = wp[i][1];
+		    	zpinpoly[j][0] = zp[i][0];
+		    	zpinpoly[j++][1] = zp[i][1];
 		    }
 		}
 		double zpinverse[][] = crdiskevalinv(M, zpinpoly, 1.0E-8);
@@ -2750,7 +2751,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    corner[2] = 2;
 	    corner[3] = 3;
 	    scmap M = crrectmap(w, corner, tolerance);
-	    double zp[][] = new double[4][2];
+	    // Note that poly is changed by crrectmap
+	    double zp[][] = new double[6][2];
 	    zp[0][0] = 1.5;
 	    zp[0][1] = 0.0;
 	    zp[1][0] = 1.4;
@@ -2759,8 +2761,22 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    zp[2][1] = 1.0;
 	    zp[3][0] = 1.0;
 	    zp[3][1] = 0.0;
-	    boolean indexout[] = new boolean[4];
-		boolean onvtx[][] = new boolean[w.length][4];
+	    zp[4][0] = 0.5;
+	    zp[4][1] = 0.5;
+	    zp[5][0] = 0.2;
+	    zp[5][1] = 0.8;
+	    boolean indexout[] = new boolean[zp.length];
+		boolean onvtx[][] = new boolean[w.length][zp.length];
+		poly = M.poly;
+		w = new double[poly.vertex.length][2];
+		for (i = 0; i < poly.vertex.length; i++) {
+			w[i][0] = poly.vertex[i][0];
+			w[i][1] = poly.vertex[i][1];
+		}
+		beta = new double[poly.angle.length];
+	    for (i = 0; i < poly.angle.length; i++) {
+	    	beta[i] = poly.angle[i] - 1.0;
+	    }
 		polygon pr = M.rectpolygon;
 		double wr[][] = pr.vertex;
 		double betar[] = new double[pr.angle.length];
@@ -2771,25 +2787,31 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         for (i = 0; i < corner.length; i++) {
             zr[i][0] = wr[corner[i]][0];
             zr[i][1] = wr[corner[i]][1];
+            System.out.println("zr["+i+"] = " + zr[i][0] + " " + zr[i][1]);
         }
+        // zp points must be inside polygon pr to be transformed
+        // zr[0] = 0.0 0.0
+        // zr[1] = 0.9999999999999999 1.6653345369377348E-16
+        // zr[2] = 0.9999999955356558 0.9826996089194511
+        // zr[3] = -2.8639270038821607E-8 0.9826996041381473
 	    isinpoly(indexout, onvtx, zp, zr, betar, eps);
 		int numinpoly = 0;
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < zp.length; i++) {
 		    if (indexout[i]) {
 		    	numinpoly++;
 		    }
-		} // for (i = 0; i < 4; i++)
+		} // for (i = 0; i < zp.length; i++)
 		System.out.println("numinpoly = " + numinpoly);
 		double zpinpoly[][] = new double[numinpoly][2];
 		int polyindex[] = new int[numinpoly];
-		for (i = 0, j = 0; i < 4; i++) {
+		for (i = 0, j = 0; i < zp.length; i++) {
 			if (indexout[i]) {
 				zpinpoly[j][0] = zp[i][0];
 				zpinpoly[j][1] = zp[i][1];
 				polyindex[j] = i;
 				j++;
 			}
-		} // for (i = 0, j = 0; i < destSlice; i++)
+		} // for (i = 0, j = 0; i < zp.length; i++)
 		for (i = 0; i < numinpoly; i++) {
 			System.out.println("zpinpoly["+i+"] = " + zpinpoly[i][0] + " " + zpinpoly[i][1]);
 		}
@@ -2850,6 +2872,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	}
 	    	else if (polyindex[i] == 3) {
 	    		System.out.println("Expected inverse result: 1.0");
+	    	}
+	    	else if (polyindex[i] == 4) {
+	    		System.out.println("Expected inverse 0.5 + 0.5i");
+	    	}
+	    	else if (polyindex[i] == 5) {
+	    		System.out.println("Expected inverse 0.2 + 0.8i");
 	    	}
 	    	System.out.println("Actual inverse result: " + wpinverse[i][0][0] + " " + wpinverse[i][0][1] + "i");
 	    }
@@ -6159,7 +6187,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double w[][] = p.vertex;
 		double beta[] = new double[p.angle.length];
 		for (i = 0; i < p.angle.length; i++) {
-			beta[i] = p.angle[i] = 1.0;
+			beta[i] = p.angle[i] - 1.0;
 		}
 		double cr[] = M.crossratio;
 		double aff[][][] = M.affine;
@@ -14306,6 +14334,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    	zdiv(d[0][j][0], d[0][j][1], d[n-1][j][0], d[n-1][j][1], cr, ci);
 	    	ang[i][j] = Math.atan2(ci[0], cr[0])/Math.PI;
 	    }
+
+
 	    
 	    // Find boundary points (edge and vertex)
 	    double wdiff[][] = new double[n][2];
@@ -14358,6 +14388,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    		}
 	    	}
 	    } // for (i = 0; i < n; i++)
+	    
 	    // Points which are essentially vertices
 	    for (i = 0; i < n; i++) {
 	    	for (j = 0; j < np; j++) {
@@ -14366,6 +14397,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	    		}
 	    	}
 	    } // for (i = 0; i < n; i++)
+	   
 	    // Correction: points must be closed, finite edge segment
 	    boolean onvtxshift[][] = new boolean[n][np];
 	    for (i = 0; i < n-1; i++) {
