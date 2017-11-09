@@ -94,7 +94,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		if (testRoutine) {
             //testHplmap1();
 			//testHplmap2();
-			testStripmap1();
+			testHplmap3();
+			//testStripmap1();
 			return;
 		}
 
@@ -279,6 +280,87 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		graph.setY2Vector(y2Vector);
 		graph.setAddSchwarzChristoffelLines(true);
 		graph.paintComponent(g);
+	}
+	
+	private void testHplmap3() {
+		int i;
+	    double w[][] = new double[6][2];
+	    w[0][0] = 4.0;
+	    w[0][1] = 0.0;
+	    w[1][0] = 0.0;
+	    w[1][1] = 2.0;
+	    w[2][0] = -2.0;
+	    w[2][1] = 4.0;
+	    w[3][0] = -3.0;
+	    w[3][1] = 0.0;
+	    w[4][0] = -3.0;
+	    w[4][1] = -1.0;
+	    w[5][0] = 2.0;
+	    w[5][1] = -2.0;
+	    double x[] = new double[w.length];
+	    double y[] = new double[w.length];
+	    for (i = 0; i < w.length; i++) {
+	    	x[i] = w[i][0];
+	    	y[i] = w[i][1];
+	    }
+	    polygon p = scm.new polygon(x, y, null);
+	    scmap f = hplmap(p, null, null, null);
+	    double qdata[][] = f.qdata;
+		double tol = f.accuracy;
+		p = f.poly;
+		w = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1.0;
+		}
+		double z[][] = f.prevertex;
+		double c[] = f.constant;
+		double zp[][] = new double[4][2];
+		zp[0][0] = -1.0;
+		zp[0][1] = 0.01;
+		zp[1][0] = 0.0;
+		zp[1][1] = 2.0;
+		zp[2][0] = 4.0;
+		zp[2][1] = 0.5;
+		zp[3][0] = Double.POSITIVE_INFINITY;
+		zp[3][1] = 0.0;
+		double wp[][] = new double[zp.length][2];
+		for (i = 0; i < wp.length; i++) {
+			wp[i][0] = Double.NaN;
+		}
+		hpmap(wp, zp, w, beta, z, c, qdata);
+		for (i = 0; i < wp.length; i++) {
+			if (i == 0) {
+				System.out.println("Expected forward result: 3.718839996085665 - 0.046084791699413i");
+			}
+			else if (i == 1) {
+				System.out.println("Expected forward result: 1.734612962216089 - 0.777136490010106i");
+			}
+			else if (i == 2) {
+				System.out.println("Expected forward result: 1.179285609480821 - 1.753573737693204i");
+			}
+			else if (i == 3) {
+				System.out.println("Expected forward result: 2.0 - 2.0i");
+			}
+			System.out.println("Actual forward result: " + wp[i][0] + " " + wp[i][1] + "i");
+		}
+		double wpinverse[][] = new double[wp.length][2];
+		hpevalinv(wpinverse, f, wp);
+		for (i = 0; i < wpinverse.length; i++) {
+			if (i == 0) {
+				System.out.println("Expected inverse result: -1 + 0.01i");
+			}
+			else if (i == 1) {
+				System.out.println("Expected inverse result: 2.0i");
+			}
+			else if (i == 2) {
+				System.out.println("Expected inverse result: 4.0 + 0.5i");	
+			}
+			else if (i == 3) {
+				System.out.println("Expected inverse result: Infinity + 0.0i");
+			}
+			System.out.println("Actual inverse result: " + wpinverse[i][0] + " " + wpinverse[i][1] + "i");
+		}
 	}
 	
 	private void testStripmap1() {
