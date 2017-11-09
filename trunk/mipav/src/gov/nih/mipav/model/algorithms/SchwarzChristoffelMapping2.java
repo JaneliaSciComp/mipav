@@ -93,8 +93,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 
 		if (testRoutine) {
             //testHplmap1();
-			//testHplmap2();
-			testHplmap3();
+			testHplmap2();
+			//testHplmap3();
 			//testStripmap1();
 			return;
 		}
@@ -138,10 +138,6 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
         // In ODE normal return.  Integration reached tout
         // In ODE normal return.  Integration reached tout
 
-		// First hpevalinv works okay and only goes to k = 3 in the loop in if (newton) in hpinvmap.  The second hpevalinv
-		// generates NaNs and infinities at k = 21 in the loop in if (newton) in hpinvmap.  At k = 21 the F/dF division has
-		//  dF values like dF = 0 + 0i or dF = 0 + 3.95E-311i which generate NaNs and infinities in Fdiv.
-		// If you try to use only the ODE and specify newton = false, the ODE finds the equation too stiff to succeed.
 		// In any event passing the evalinv points to f1 in hplmap does not seem to make sense.
 		int i, j;
 		double x[] = new double[]{0, 0, 2, 2};
@@ -219,8 +215,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			for (j = 0; j < 15; j++) {
 			    X[i][j] = (j+1)*a/16.0;
 			    Y[i][j] = m*t[i];
-			    wp[101*j + i][0] = X[i][j];
-			    wp[101*j + i][1] = Y[i][j] + M * X[i][j]/a;
+			    wp[15*i + j][0] = X[i][j];
+			    wp[15*i + j][1] = Y[i][j] + M * X[i][j]/a;
 			}
 		}
 		hpevalinv(zp, f2, wp);
@@ -247,10 +243,14 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			    graph.drawLine(g, x1, y1, x2, y2);	
 			}
 		}
-		for (i = 0; i < 101; i++) {
-			for (j = 0; j < 15; j++) {
-			    wp[101*j + i][0] = Y[i][j] + M * X[i][j]/a;
-			    wp[101*j + i][1] = X[i][j];
+		X = new double[15][101];
+		Y = new double[15][101];
+		for (i = 0; i < 15; i++) {
+			for (j = 0; j < 101; j++) {
+				X[i][j] = t[j] * a;
+				Y[i][j] = (i+1)*m/16;
+			    wp[15*j + i][0] = X[i][j];
+			    wp[15*j + i][1] = Y[i][j] + M * X[i][j]/a;
 			}
 		}
 		hpevalinv(zp, f2, wp);
