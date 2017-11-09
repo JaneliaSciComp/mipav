@@ -1736,6 +1736,14 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         // The center of MIPAV's diskplot looks like MATLAB's h = plot(f, 0.7:0.05:0.95, 0);.
 		// In MATLAB the first length(h) = 6.
 		// In MATLAB the 6 complex w lengths are 236, 265, 273, 259, 285, and 274;
+		// By using the real(1/w) and the imag(1/w) in a plot a figure looking
+		// like Figure 4.16 in Schwarz-Christoffel mapping results.
+		// In MATLAB h = findobh(gca, 'colof', [001]) has a length(h) = 0 so
+		// the bottom for loop never executes.  If the bottom for loop were to execute,
+		// when (abs(w(1)) > abs(w(2)), w is to set w[2 1] and diff(w) is of length 1.
+		// If abs(w1) <= abs(w(2)), then the length of w is unchanged and the number
+		// of entries in diff(w) is equal to the number of entries in w - 1.
+		// This would make linspace(0,2*diff(w),100) an illegal line.
 		
 		// The MATLAB code used is:
 		/* w = [1+i, 1 + 2i, Inf, -.705 + .971i, Inf, -1-i, Inf, .705 - .971i, Inf];
@@ -1813,9 +1821,8 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		accuracy2 = map.accuracy
 		axis(5.5*[-1 1 -1 1]), hold on
 		[h,r,theta] = dplot(w,beta,z,c, 0.7:0.05:0.95, 0);
-		lengthh = length(h)
 		for n=1:length(h)
-		w = (get(h(n),'xd') + i*get(h(n),'yd'))
+		w = (get(h(n),'xd') + i*get(h(n),'yd'));
 		set(h(n),'xd',real(1./w),'yd',imag(1./w))
 		end
 		h = findobj(gca,'color',[0 0 1]);
@@ -1858,11 +1865,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double wi[] = new double[2];
 		Vector<Double>uxr[] = new Vector[linhx.length];
 		Vector<Double>uyr[] = new Vector[linhx.length];
-		double ux;
-		double uy;
-		double uxi;
-		double uyi;
-		double den;
 		double axlim[] = new double[4];
 		axlim[0] = Double.MAX_VALUE;
 		axlim[1] = -Double.MAX_VALUE;
@@ -1875,99 +1877,27 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			for (j = 0; j < linhx[i][0].size(); j++) {
 			    x2[0] = linhx[i][0].get(j);
 			    y2[0] = linhy[i][0].get(j);
-			    if (j < linhx[i][0].size() - 1) {
-			    	x2[1] = linhx[i][0].get(j+1);
-			    	y2[1] = linhy[i][0].get(j+1);
-			    }
-			    else {
-			    	x2[1] = linhx[i][0].get(0);
-			    	y2[1] = linhy[i][0].get(0);
-			    }
 			    denom[0] = x2[0]*x2[0] + y2[0]*y2[0];
-		    	denom[1] = x2[1]*x2[1] + y2[1]*y2[1];
 		    	wr[0] = x2[0]/denom[0];
 		    	wi[0] = -y2[0]/denom[0];
-		    	wr[1] = x2[1]/denom[1];
-		    	wi[1] = -y2[1]/denom[1];
-		    	if (zabs(wr[0], wi[0]) > zabs(wr[1],wi[1])) {
-		    	    double temp = wr[0];
-		    	    wr[0] = wr[1];
-		    	    wr[1] = temp;
-		    	    temp = wi[0];
-		    	    wi[0] = wi[1];
-		    	    wi[1] = temp;
-		    	}
+		    	uxr[i].add(wr[0]);
+		    	uyr[i].add(wi[0]);
+	    	    if (wr[0] < axlim[0]) {
+	    	    	axlim[0] = wr[0];
+	    	    }
+	    	    if (wr[0] > axlim[1]) {
+	    	    	axlim[1] = wr[0];
+	    	    }
+	    	    if (wi[0] < axlim[2]) {
+	    	    	axlim[2] = wi[0];
+	    	    }
+	    	    if (wi[0] > axlim[3]) {
+	    	    	axlim[3] = wi[0];
+	    	    }
 			} // for (j = 0; j < linhx[i][0].size(); j++)
 		} // for (i = 0; i < linhx.length; i++)
 		
-		for (i = 0; i < linhx.length; i++) {
-		    	uxr[i] = new Vector<Double>();
-		    	uyr[i] = new Vector<Double>();
-		    	x2[0] = linhx[i][0].get(0);
-		    	y2[0] = linhy[i][0].get(0);
-		    	x2[1] = linhx[i][0].get(1);
-		    	y2[1] = linhy[i][0].get(1);
-		    	denom[0] = x2[0]*x2[0] + y2[0]*y2[0];
-		    	denom[1] = x2[1]*x2[1] + y2[1]*y2[1];
-		    	wr[0] = x2[0]/denom[0];
-		    	wi[0] = -y2[0]/denom[0];
-		    	wr[1] = x2[1]/denom[1];
-		    	wi[1] = -y2[1]/denom[1];
-		    	if (zabs(wr[0], wi[0]) > zabs(wr[1],wi[1])) {
-		    	    double temp = wr[0];
-		    	    wr[0] = wr[1];
-		    	    wr[1] = temp;
-		    	    temp = wi[0];
-		    	    wi[0] = wi[1];
-		    	    wi[1] = temp;
-		    	}
-		    	double twodiffwr = 2.0*(wr[1] - wr[0]);
-		    	double twodiffwi = 2.0*(wi[1] - wi[0]);
-		    	double hundreddiffwr = 100.0*(wr[1] - wr[0]);
-		    	double hundreddiffwi = 100*(wi[1] - wi[0]);
-		    	for (k = 0; k < 100; k++) {
-		    		ux = wr[0] + k*twodiffwr/99.0;
-		    		uy = wi[0] + k*twodiffwi/99.0;
-		    		den = ux*ux + uy*uy;
-		    		uxi = ux/den;
-		    		uyi = -uy/den;
-		    	    uxr[i].add(uxi);
-		    	    uyr[i].add(uyi);
-		    	    if (uxi < axlim[0]) {
-		    	    	axlim[0] = uxi;
-		    	    }
-		    	    if (uxi > axlim[1]) {
-		    	    	axlim[1] = uxi;
-		    	    }
-		    	    if (uyi < axlim[2]) {
-		    	    	axlim[2] = uyi;
-		    	    }
-		    	    if (uyi > axlim[3]) {
-		    	    	axlim[3] = uyi;
-		    	    }
-		    	}
-		    	for (k = 0; k < 100; k++) {
-		    		ux = wr[0] + k*(hundreddiffwr - twodiffwr)/99.0;
-		    		uy = wi[0] + k*(hundreddiffwi - twodiffwi)/99.0;
-		    		den = ux*ux + uy*uy;
-		    		uxi = ux/den;
-		    		uyi = -uy/den;
-		    	    uxr[i].add(uxi);
-		    	    uyr[i].add(uyi);
-		    	    if (uxi < axlim[0]) {
-		    	    	axlim[0] = uxi;
-		    	    }
-		    	    if (uxi > axlim[1]) {
-		    	    	axlim[1] = uxi;
-		    	    }
-		    	    if (uyi < axlim[2]) {
-		    	    	axlim[2] = uyi;
-		    	    }
-		    	    if (uyi > axlim[3]) {
-		    	    	axlim[3] = uyi;
-		    	    }
-		    	}
-		} // for (i = 0; i < linhx.length; i++)
+		
 		float xPointArray[] = new float[]{(float)axlim[0], (float)axlim[1], (float)axlim[1], (float)axlim[0], (float)axlim[0]};
 		float yPointArray[] = new float[]{(float)axlim[2], (float)axlim[2], (float)axlim[3], (float)axlim[3], (float)axlim[2]};
 		ViewJFrameGraph pointGraph = new ViewJFrameGraph(xPointArray, yPointArray, "title", "lablelX", "labelY", Color.BLUE);
