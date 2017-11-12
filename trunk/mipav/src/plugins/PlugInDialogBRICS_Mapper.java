@@ -41,16 +41,15 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private JPanel dsMainPanel;
     private JScrollPane listPane;
 
-    private JTable structTable;
-    private ViewTableModel structTableModel; 
-    private List<FormStructure> dataStructureList;
+    private JTable deTable;
+    private ViewTableModel deTableModel; 
+    private List<FormStructure> formStructureList;
+    private FormStructureData fsInfo = null;
 
     private JButton selectStructButton, loadCSVButton, finishButton, saveMapButton, editDataElementsButton, outputDirButton;
 
     private JTextField outputDirTextField;
     private String outputDirBase;
-    
-    private FormStructureData fsData = null;
     
     private String csvFileDir;
     private File csvFile;
@@ -252,7 +251,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 return;
             }
         }
-
+        
+        // Gets full list of form structures from the BRICS data dictionary
         final Thread thread = new FormListRESTThread(this);
         thread.start();
     }
@@ -265,8 +265,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             new ChooseFormStructDialog(this);
 
-            saveMapButton.setEnabled(structTableModel.getRowCount() > 0);
-            editDataElementsButton.setEnabled(structTableModel.getRowCount() > 0);
+            saveMapButton.setEnabled(deTableModel.getRowCount() > 0);
+            //editDataElementsButton.setEnabled(deTableModel.getRowCount() > 0);
 
         } else if (command.equalsIgnoreCase("LoadCSV")) {
             final JFileChooser chooser = new JFileChooser();
@@ -281,7 +281,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
             }
-            listPane.setBorder(JDialogBase.buildTitledBorder(structTableModel.getRowCount() + " Form Structure(s) "));
+            listPane.setBorder(JDialogBase.buildTitledBorder(deTableModel.getRowCount() + " Form Structure(s) "));
         } else if (command.equalsIgnoreCase("SaveMapFile")) {
         	
         	
@@ -323,8 +323,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
         } else if (command.equalsIgnoreCase("EditDataElements")) {
 
-            final String dsName = (String) structTableModel.getValueAt(structTable.getSelectedRow(), 0);
-            new InfoDialogNew(this, dsName, true, true, null);
+            final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
+            new populateBRICSStructureTable(this, dsName);
 
         } else if (command.equalsIgnoreCase("OutputDirBrowse")) {
             final JFileChooser chooser = new JFileChooser(outputDirBase);
@@ -451,13 +451,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
 
         if (launchedFromInProcessState) {
-            final int selectedRow = structTable.getSelectedRow();
+            final int selectedRow = deTable.getSelectedRow();
 
-            structTableModel.setValueAt(name, selectedRow, 0);
+            deTableModel.setValueAt(name, selectedRow, 0);
             if (isComplete) {
-                structTableModel.setValueAt("Yes", selectedRow, 1);
+            	deTableModel.setValueAt("Yes", selectedRow, 1);
             } else {
-                structTableModel.setValueAt("No", selectedRow, 1);
+            	deTableModel.setValueAt("No", selectedRow, 1);
             }
 
             fsDataList.set(selectedRow, fsData);
@@ -474,8 +474,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             } else {
                 rowData.add("No");
             }
-            structTableModel.addRow(rowData);
-            structTable.setRowSelectionInterval(structTableModel.getRowCount() - 1, structTableModel.getRowCount() - 1);
+            deTableModel.addRow(rowData);
+            deTable.setRowSelectionInterval(deTableModel.getRowCount() - 1, deTableModel.getRowCount() - 1);
 
             allOtherFilesAL.set(allOtherFilesAL.size() - 1, allOtherFiles);
         }
@@ -692,7 +692,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     public ArrayList<String> validateFields() {
         final ArrayList<String> errs = new ArrayList<String>();
 
-        parseFormStructForValidation(fsData, errs);
+        parseFormStructForValidation(fsInfo, errs);
 
         return errs;
     }
@@ -786,7 +786,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         gbc.gridy = 0;
         gbc.insets = new Insets(2, 5, 2, 5);
 
-        for (final RepeatableGroup g : fsData.getStructInfo().getRepeatableGroups()) {
+        for (final RepeatableGroup g : fsInfo.getStructInfo().getRepeatableGroups()) {
             final JPanel groupPanel = new JPanel(new GridBagLayout());
 
             final GridBagConstraints egbc = new GridBagConstraints();
@@ -797,7 +797,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             egbc.anchor = GridBagConstraints.WEST;
             egbc.gridy = 0;
 
-            for (final GroupRepeat repeat : fsData.getAllGroupRepeats(g.getName())) {
+            for (final GroupRepeat repeat : fsInfo.getAllGroupRepeats(g.getName())) {
                 final JPanel repeatPanel = buildGroupRepeatPanel(repeat);
                 repeatPanel.setBorder(JDialogBase.buildTitledBorder("Repeat number " + (repeat.getRepeatNumber() + 1)));
 
@@ -918,13 +918,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             switch (group.getType()) {
                 case MORETHAN:
                     repeatLabel = new JLabel("At least " + group.getThreshold() + " repeat(s) required");
-                    if (fsData.getNumGroupRepeats(group.getName()) == 1) {
+                    if (fsInfo.getNumGroupRepeats(group.getName()) == 1) {
                         removeRepeatButton.setEnabled(false);
                     }
                     break;
                 case LESSTHAN:
                     repeatLabel = new JLabel("Less than " + group.getThreshold() + " repeat(s) allowed");
-                    if (fsData.getNumGroupRepeats(group.getName()) == 1) {
+                    if (fsInfo.getNumGroupRepeats(group.getName()) == 1) {
                         removeRepeatButton.setEnabled(false);
                     }
                     break;
@@ -1065,7 +1065,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             Vector<String> csvProblemFileNameList = new Vector<String>(recordList.size());
             for (final ArrayList<ArrayList<String>> record : recordList) {
                 progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
-                InfoDialogNew csvDialog = new InfoDialogNew(this, dsName, false, false, record);
+                InfoDialog csvDialog = new InfoDialog(this, dsName, false, false, record);
                 if (progressInc > 0) {
                     progressBar.updateValue(progressBar.getValue() + progressInc);
                 } else if ( (i % rowsPerInc) == 0) {
@@ -1245,28 +1245,29 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * @return JScrollPane of the table...
      */
     private JScrollPane buildStructurePanel() {
-        structTableModel = new ViewTableModel();
-        structTableModel.addColumn("Group");
-        structTableModel.addColumn("Element Name");
-        structTableModel.addColumn("Title");
-        structTableModel.addColumn("PVs");
+    	deTableModel = new ViewTableModel();
+    	deTableModel.addColumn("Group");
+    	deTableModel.addColumn("Element Name");
+    	deTableModel.addColumn("Title");
+    	deTableModel.addColumn("PVs");
         
-        structTable = new JTable(structTableModel);
-        structTable.addMouseListener(this);
-        structTable.setPreferredScrollableViewportSize(new Dimension(650, 300));
-        structTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        deTable = new JTable(deTableModel);
+        deTable.addMouseListener(this);
+        deTable.setPreferredScrollableViewportSize(new Dimension(850, 300));
+        deTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        structTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        structTable.getColumn("Group").setMinWidth(100);
-        structTable.getColumn("Group").setMaxWidth(100);
-        structTable.getColumn("Element Name").setMinWidth(100);
-        structTable.getColumn("Element Name").setMaxWidth(100);
+        deTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        deTable.getColumn("Group").setMinWidth(100);
+        deTable.getColumn("Group").setMaxWidth(175);
+        deTable.getColumn("Element Name").setMinWidth(185);
+        deTable.getColumn("Element Name").setMaxWidth(200);
 
         /* MATT What is this doing?*/
-        structTable.getColumn("Group").setCellRenderer(new MyRightCellRenderer());
+        deTable.getColumn("Group").setCellRenderer(new MyRightCellRenderer());
+        //deTable.getColumn("Element Name").setCellRenderer(new MyRightCellRenderer());
         
-        listPane = WidgetFactory.buildScrollPane(structTable);
-        listPane.setBorder(JDialogBase.buildTitledBorder(" BRICS  "));
+        listPane = WidgetFactory.buildScrollPane(deTable);
+        listPane.setBorder(JDialogBase.buildTitledBorder(" Reference Form Structure:   "));
    
         return listPane;
     }
@@ -1413,7 +1414,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     public void mouseClicked(final MouseEvent e) {
         final Component c = e.getComponent();
         if (c instanceof JTable) {
-            if (structTable.getSelectedRow() == -1) {
+            if (deTable.getSelectedRow() == -1) {
                 editDataElementsButton.setEnabled(false);
                 saveMapButton.setEnabled(false);
                 return;
@@ -1428,8 +1429,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             if (e.getClickCount() == 2) {
                 if ( !isFinished) {
-                    final String dsName = (String) structTableModel.getValueAt(structTable.getSelectedRow(), 0);
-                    new InfoDialogNew(this, dsName, true, true, null);
+                    final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
+                    new InfoDialog(this, dsName, true, true, null);
                 }
             }
         }
@@ -1450,8 +1451,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     public boolean contains(final File f) {
         boolean contains = false;
 
-        for (int i = 0; i < structTableModel.getRowCount(); i++) {
-            final File f1 = (File) structTableModel.getValueAt(i, 0);
+        for (int i = 0; i < deTableModel.getRowCount(); i++) {
+            final File f1 = (File) deTableModel.getValueAt(i, 0);
             if (f1.getAbsolutePath().equalsIgnoreCase(f.getAbsolutePath())) {
                 contains = true;
                 break;
@@ -1471,7 +1472,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         // }
         // }
 
-        if (structTableModel.getRowCount() == 0) {
+        if (deTableModel.getRowCount() == 0) {
             finishButton.setEnabled(false);
         } else {
             // changed to always enabled if some data added
@@ -1685,7 +1686,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row,
                 final int column) {
             final Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            setHorizontalAlignment(SwingConstants.CENTER);
+            setHorizontalAlignment(SwingConstants.LEFT);
 
             if (column == 1 && ((String) value).equalsIgnoreCase("No")) {
                 setForeground(Color.red);
@@ -1763,16 +1764,16 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             structsTable.getColumn("Status").setPreferredWidth(40);
 
             // new way of doing web service
-            for (final FormStructure ds : dataStructureList) {
-                if (ds.getShortName().equals("")) {
+            for (final FormStructure fs : formStructureList) {
+                if (fs.getShortName().equals("")) {
                     // something is wrong. a shortname is required. this is to work around an apparent stage DDT problem
                     continue;
                 }
-                final String desc 		= ds.getDescription();
-                final String shortname 	= ds.getShortName();
-                final String version 	= ds.getVersion().toString();
-                final String status 	= ds.getStatus().toString();
-                final String disease 	= ds.getDiseaseStructureString();
+                final String desc 		= fs.getDescription();
+                final String shortname 	= fs.getShortName();
+                final String version 	= fs.getVersion().toString();
+                final String status 	= fs.getStatus().toString();
+                final String disease 	= fs.getDiseaseStructureString();
 
                 descAL.add(desc);
                 shortNameAL.add(shortname);
@@ -1879,7 +1880,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 if (selectedRow != -1) {
                     this.dispose();
                     final String fsName = (String) structsModel.getValueAt(selectedRow, 0);
-                    new InfoDialogNew(owner, fsName, false, true, null);
+                    new populateBRICSStructureTable(owner, fsName);
                 }
             }
         }
@@ -1898,1043 +1899,78 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     
     /**
-     * launches the dialog to add info
-     * 
-     * @author pandyan
+     * Gets data elements for the selected form and copies them to the BRICS reference data element table
      * 
      */
-    private class InfoDialogNew extends JDialog implements ActionListener, WindowListener, ItemListener, FocusListener {
+    private class populateBRICSStructureTable {
         private static final long serialVersionUID = 859201819000159789L;
-
-        private final PlugInDialogBRICS_Mapper owner;
-
-        private JPanel fsMainPanel;
-        private JLabel requiredLabel;
-        
-        private final Hashtable<RepeatableGroup, JPanel>  groupPanelTable 		 = new Hashtable<RepeatableGroup, JPanel>();
-        private final Hashtable<RepeatableGroup, JButton> groupRemoveButtonTable = new Hashtable<RepeatableGroup, JButton>();
-
-        private String guid = "";
-
-        private boolean launchedFromInProcessState = false;
-
-        
-        private String formStructureName;
-
-        private FormStructureData fsData;
-
-        private Vector<FileDicomTag> problemTags = null;
-
-        private String problemTagsFileDir;
-
-        private String problemTagsFileName;
-
-        private final ArrayList<File> allOtherFiles = new ArrayList<File>();
-
+ 
         private FormStructure formStructure;
-
-        private final boolean setInitialVisible;
-
-        private final ArrayList<ArrayList<String>> record;
-
-        private String currFile;
-
+           
 		/**
-		 * 
-		 * @param owner
-		 * @param fsName
-		 * @param launchedFromInProcessState
-		 * @param setInitialVisible
-		 * @param record
+		 * Gets data elements for the selected form and copies them to the BRICS reference data element table
+		 * @param owner	- main GUI
+		 * @param fsName - Form structure name for the selected form structure.
 		 */
-        public InfoDialogNew(final PlugInDialogBRICS_Mapper owner, final String fsName, final boolean launchedFromInProcessState, final boolean setInitialVisible,
-                final ArrayList<ArrayList<String>> record) {
-            super(owner, false);
-
-            this.owner = owner;
-            this.launchedFromInProcessState = launchedFromInProcessState;
-            this.setInitialVisible = setInitialVisible;
-            this.record = record;
-
-            if (launchedFromInProcessState) {
-               /** if (containsGuid(name)) {
-                    this.formStructureName = getStructFromString(name);
-                } else {
-                    this.formStructureName = name.substring(0, name.lastIndexOf(STRUCT_GUID_SEPERATOR));
-                }*/
-            } else {
-                //structRowImgFileInfoList.add(null);
-                fsDataList.add(null);
-                allOtherFilesAL.add(null);
-                this.formStructureName = fsName;
-            }
-
-            for (final FormStructure fs : dataStructureList) {
-                if (fs.getShortName().equalsIgnoreCase(formStructureName)) {
-                    if (fs.getDataElements().size() == 0) {
-                        final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(owner, fs.getShortName(), true);
-                        thread.run();
-
-                        formStructure = thread.getFullFormStructure();
-                    } else {
-                        formStructure = fs;
-                    }
-                }
-            }
-
+        public populateBRICSStructureTable(final PlugInDialogBRICS_Mapper owner, final String fsName) {
+            
+            // Goes and gets the selected form structure
+        	final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(owner, fsName, true);
+            thread.run();
+            formStructure = thread.getFullFormStructure();
+ 
             if (formStructure == null) {
-                MipavUtil.displayError("Form structure not found in Data Dictionary: " + formStructureName);
+                MipavUtil.displayError("Form structure not found in Data Dictionary: " + fsName);
                 dispose();
                 return;
             }
 
-            init();
-        }
-        
-        private void init() {
-        	// Matt!!!!!
-        
-        }
-
-        private void initOld() {
-            setTitle("Edit Data Elements - " + formStructureName);
-            addWindowListener(this);
-            final JPanel mainPanel = new JPanel(new GridBagLayout());
-
-            dsMainPanel = new JPanel(new GridBagLayout());
-            final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-            final GridBagConstraints gbc = new GridBagConstraints();
-
-            try {
-                setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-            } catch (final Exception e) {
-                // setIconImage() is not part of the Java 1.5 API - catch any
-                // runtime error on those systems
-            }
-
-            try {
-                if (launchedFromInProcessState) {
-                    final int selectedRow = structTable.getSelectedRow();
-
-                    fsData = fsDataList.get(selectedRow);
-
-                    parseForInitLabelsAndComponents(fsData);
-                } else {
-                    fsData = new FormStructureData(formStructure);
-
-                    parseDataStructure(formStructure, fsData, record);
-
-                    parseForInitLabelsAndComponents(fsData);
-
-                    if ( !setInitialVisible) {
-                        // convert any dates found into proper ISO format
-                        for (int i = 0; i < csvFieldNames.size(); i++) {
-                            final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i));
-
-                            StructuralDataElement de = null;
-                            for (final GroupRepeat repeat : fsData.getAllGroupRepeats(deGroupAndName[0])) {
-                                for (final DataElementValue deVal : repeat.getDataElements()) {
-                                    if (deVal.getName().equalsIgnoreCase(deGroupAndName[1])) {
-                                        de = deVal.getDataElementInfo();
-                                        break;
-                                    }
-                                }
-                            }
-
-                            /**for (final ArrayList<String> values : record) {
-                                // check value not empty and check type of field for date
-                                if ( !values.get(i).trim().equals("") && de.getType().equals(DataType.DATE)) {
-                                    values.set(i, convertDateToISOFormat(values.get(i)));
-                                }
-                            }*/
-                        }
-
-                        // this means it was launched via the csv file
-                        // populateFieldsFromCSV(fsData, record);
-                    }
-                }
-            } catch (final Exception e) {
-                e.printStackTrace();
-            }
-
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            gbc.insets = new Insets(10, 5, 10, 25);
-            gbc.gridwidth = 1;
-
-            final JPanel OKPanel = new JPanel();
-
-            final JButton OKButton = new JButton("Save");
-            OKButton.setActionCommand("StructDialogOK");
-            OKButton.addActionListener(this);
-            OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
-            OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
-            OKButton.setFont(serif12B);
-
-            final JButton cancelButton = new JButton("Cancel");
-            cancelButton.setActionCommand("StructDialogCancel");
-            cancelButton.addActionListener(this);
-            cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
-            cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
-            cancelButton.setFont(serif12B);
-
-            OKPanel.add(OKButton);
-            OKPanel.add(cancelButton);
-
-            requiredLabel = new JLabel(
-                    "<html>Mouse over data element name for a description.<br/>Mouse over the data element fields for more information on filling them in.<br/>* Required data elements are in <font color=\"red\">red</font></html>");
-
-            gbc.fill = GridBagConstraints.BOTH;
-            gbc.anchor = GridBagConstraints.EAST;
-            gbc.weightx = 0;
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            mainPanel.add(requiredLabel, gbc);
-
-            gbc.gridy = 2;
-            gbc.weightx = 1;
-            gbc.weighty = 1;
-            mainPanel.add(tabScrollPane, gbc);
-            gbc.weightx = 0;
-            gbc.weighty = 0;
-            gbc.gridy = 3;
-            mainPanel.add(OKPanel, gbc);
-
-            getContentPane().add(mainPanel);
-
-            final Dimension dim = getContentPane().getPreferredSize();
-            if (dim.height > 500) {
-                dim.height = 500;
-            }
-            tabScrollPane.setPreferredSize(dim);
-
-            pack();
-            MipavUtil.centerInWindow(owner, this);
-            if (setInitialVisible) {
-                setVisible(true);
-            }
-        }
-
-
-        public Vector<FileDicomTag> getProblemTags() {
-            return problemTags;
-        }
-
-        public String getProblemFileDir() {
-            return problemTagsFileDir;
-        }
-
-        public String getProblemFileName() {
-            return problemTagsFileName;
-        }
-
-        private void parseForInitLabelsAndComponents(final FormStructureData fsData) {
-            final GridBagConstraints gbc = new GridBagConstraints();
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            gbc.insets = new Insets(2, 5, 2, 5);
-
-            for (final RepeatableGroup g : fsData.getStructInfo().getRepeatableGroups()) {
-                final JPanel groupPanel = new JPanel(new GridBagLayout());
-
-                final GridBagConstraints egbc = new GridBagConstraints();
-                egbc.insets = new Insets(2, 5, 2, 5);
-                egbc.fill = GridBagConstraints.HORIZONTAL;
-                egbc.weightx = 1;
-                egbc.gridx = 0;
-                egbc.anchor = GridBagConstraints.WEST;
-                egbc.gridy = 0;
-
-                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(g.getName())) {
-                    final JPanel repeatPanel = buildGroupRepeatPanel(repeat);
-                    repeatPanel.setBorder(JDialogBase.buildTitledBorder("Repeat number " + (repeat.getRepeatNumber() + 1)));
-
-                    if (repeatPanel.getComponentCount() > 0) {
-                        groupPanel.add(repeatPanel, egbc);
-                        egbc.gridy++;
-                    }
-                }
-
-                final JPanel groupPanelWithControls = new JPanel(new BorderLayout());
-                groupPanelWithControls.setBorder(JDialogBase.buildTitledBorder(g.getName()));
-                groupPanelWithControls.add(groupPanel, BorderLayout.NORTH);
-                groupPanelWithControls.add(buildRepeatControlPanel(g), BorderLayout.SOUTH);
-
-                if (groupPanel.getComponentCount() > 0) {
-                    gbc.gridy = g.getPosition(); // group position is 0-based (unlike data element position)
-                    dsMainPanel.add(groupPanelWithControls, gbc);
-                    groupPanelTable.put(g, groupPanel);
-                }
-            }
-        }
-
-        private JPanel buildRepeatControlPanel(final RepeatableGroup group) {
-            final JPanel repeatControlPanel = new JPanel(new GridBagLayout());
-            final GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(2, 5, 2, 5);
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.weightx = 1;
-            gbc.gridx = 0;
-            gbc.anchor = GridBagConstraints.WEST;
-            gbc.gridy = 0;
-
-            JLabel repeatLabel;
-            final JButton addRepeatButton = new JButton("Add repeat");
-            addRepeatButton.setActionCommand("AddRepeat_-_" + group.getName());
-            addRepeatButton.addActionListener(this);
-            final JButton removeRepeatButton = new JButton("Remove repeat");
-            removeRepeatButton.setActionCommand("RemoveRepeat_-_" + group.getName());
-            removeRepeatButton.addActionListener(this);
-            groupRemoveButtonTable.put(group, removeRepeatButton);
-            if (group.getThreshold() == 0) {
-                repeatLabel = new JLabel("Optional group");
-            } else {
-                switch (group.getType()) {
-                    case MORETHAN:
-                        repeatLabel = new JLabel("At least " + group.getThreshold() + " repeat(s) required");
-                        if (fsData.getNumGroupRepeats(group.getName()) == 1) {
-                            removeRepeatButton.setEnabled(false);
-                        }
-                        break;
-                    case LESSTHAN:
-                        repeatLabel = new JLabel("Less than " + group.getThreshold() + " repeat(s) allowed");
-                        if (fsData.getNumGroupRepeats(group.getName()) == 1) {
-                            removeRepeatButton.setEnabled(false);
-                        }
-                        break;
-                    case EXACTLY:
-                        repeatLabel = new JLabel("Exactly " + group.getThreshold() + " repeat(s) allowed");
-                        addRepeatButton.setEnabled(false);
-                        removeRepeatButton.setEnabled(false);
-                        break;
-                    default:
-                        repeatLabel = new JLabel(group.getType() + " " + group.getThreshold());
-                }
-            }
-            repeatLabel.setFont(serif12);
-            repeatControlPanel.add(repeatLabel, gbc);
-
-            gbc.gridx++;
-            repeatControlPanel.add(addRepeatButton, gbc);
-
-            gbc.gridx++;
-            repeatControlPanel.add(removeRepeatButton, gbc);
-
-            return repeatControlPanel;
+            copyFormStructureToTable();
+            listPane.setBorder(JDialogBase.buildTitledBorder("  Reference Form Structure:  " + fsName));
+            loadCSVButton.setEnabled(true);
         }
         
         /**
-         * 
-         * @param repeat
-         * @return
+         * Copies the selected form structure data elements into the BRICS reference data element table
          */
-        private JPanel buildGroupRepeatPanel(final GroupRepeat repeat) {
-            final JPanel repeatPanel = new JPanel(new GridBagLayout());
+        private void copyFormStructureToTable() {
+        	
+        	deTableModel.setRowCount(formStructure.getDataElements().size());
+        	
+        	// Since repeatable groups doesn't provide the groups in order that they are presented in the actual form
+        	// we calculate the group position to properly display in the correct order in the table
+        	// rowPos will contain indexes to the starting rows in the table for each group
+        	int[] rowPos = new int[formStructure.getRepeatableGroups().size()]; 
+        	for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {	
+	        	rowPos[group.getPosition()]= group.getSize();
+        	}
+        	
+        	for (int j = rowPos.length-1; j >= 0; j--) {
+        		int sum = 0;
+        		for (int i =0; i < j; i++) {
+        			sum = sum + rowPos[i];
+        		}
+        		rowPos[j]=sum;
+        	}
+        	// TODO: add tool tips  and possibly direct connection to URL in DDT.
+        	// TODO: need to parse PVs (Value Range)
 
-            final GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(2, 5, 2, 5);
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.weightx = 1;
-            gbc.gridx = 0;
-            gbc.anchor = GridBagConstraints.WEST;
+        	FormStructureData fsInfo = new FormStructureData(formStructure);
+        	for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {
+        		int i=0;
+	        	for (final MapElement mapde : group.getDataElements()) {
+	        		DataElement de = fsInfo.getDataElement(mapde.getStructuralDataElement());
 
-            for (final DataElementValue deVal : repeat.getDataElements()) {
-                if ( (fixErrors == FIX_ERRORS_NOW && errors.contains(deVal)) || fixErrors == FIX_ERRORS_LATER || fixErrors == FIX_ERRORS_CANCEL) {
-                    final JPanel elementPanel = new JPanel(new GridBagLayout());
-                    final GridBagConstraints egbc = new GridBagConstraints();
-                    egbc.insets = new Insets(2, 5, 2, 5);
-                    egbc.fill = GridBagConstraints.HORIZONTAL;
-                    egbc.anchor = GridBagConstraints.EAST;
-                    egbc.weightx = 0;
-                    // elementPanel.add(l, egbc);
-
-                    egbc.weightx = 1;
-                    egbc.gridy = 0;
-                    egbc.gridx = 0;
-                    egbc.anchor = GridBagConstraints.WEST;
-
-                    final StructuralDataElement deInfo = deVal.getDataElementInfo();
-
-                    if (deInfo.getType().equals(DataType.FILE) || deInfo.getType().equals(DataType.TRIPLANAR)) {
-                        elementPanel.add(deVal.getComp(), egbc);
-                        egbc.gridx++;
-                        final JButton browseButton = new JButton("Browse");
-                        browseButton.addActionListener(this);
-                        browseButton.setActionCommand("browse_-_" + repeat.getGroupInfo().getName() + "_-_" + repeat.getRepeatNumber() + "_-_"
-                                + deInfo.getName());
-                        elementPanel.add(browseButton, egbc);
-                    } else {
-                        egbc.gridwidth = 2;
-                        if (deInfo.getRestrictions() == InputRestrictions.MULTIPLE) {
-                            // the stored component is the JList of option. instead, add the scrollpane containing it (a
-                            // viewport is in between)
-                            elementPanel.add(deVal.getComp().getParent().getParent(), egbc);
-                        } else {
-                            elementPanel.add(deVal.getComp(), egbc);
-                        }
-
-                        if (isLegacyOtherSpecifyField(deVal)) {
-                            egbc.gridy++;
-                            elementPanel.add(deVal.getOtherSpecifyField(), egbc);
-                        }
-                    }
-
-                    // gbc.gridy++;
-                    gbc.insets = new Insets(2, 5, 2, 5);
-                    gbc.fill = GridBagConstraints.HORIZONTAL;
-                    gbc.anchor = GridBagConstraints.NORTHWEST;
-                    gbc.weightx = 0;
-                    gbc.gridx = 0;
-                    gbc.gridy = deVal.getPosition() - 1; // data element position is 1-based
-                    // gbc.gridy++;
-                    repeatPanel.add(deVal.getLabel(), gbc);
-                    gbc.gridx = 1;
-                    gbc.anchor = GridBagConstraints.NORTHEAST;
-                    gbc.weightx = 1;
-                    repeatPanel.add(elementPanel, gbc);
-
-                    // gridYCounter = gridYCounter + 1;
-                    // gbc.gridy = gridYCounter;
-                    gbc.gridx = 0;
-                    gbc.gridwidth = 1;
-                }
-            }
-
-            return repeatPanel;
+	        		deTableModel.setValueAt(group.getName(), rowPos[group.getPosition()]+i, 0);	
+	        		deTableModel.setValueAt(mapde.getStructuralDataElement().getName(), rowPos[group.getPosition()]+i, 1);
+	        		deTableModel.setValueAt(de.getTitle(), rowPos[group.getPosition()]+i, 2);
+	        		deTableModel.setValueAt(mapde.getStructuralDataElement().getValueRangeList(), rowPos[group.getPosition()]+i, 3);       
+	        		i++;
+	        	}
+        	}
         }
 
-        /**
-         * 
-         * @param dataStructure
-         * @param fsData
-         * @param record
-         */
-        private void parseDataStructure(final FormStructure dataStructure, final FormStructureData fsData, final ArrayList<ArrayList<String>> record) {
-            // setup the group bins in the form data
-            for (final RepeatableGroup g : dataStructure.getRepeatableGroups()) {
-                // if the group repeats an exact number of times, create them now
-                // otherwise, start with just one (threshold of 0 ==> optional)
-                int numRepeats = 0;
-                if (g.getType().equals(RepeatableType.EXACTLY) && g.getThreshold() > 0) {
-                    numRepeats = g.getThreshold();
-                } else if (record != null) {
-                    // check the row values to see how many repeats
-                    for (final ArrayList<String> row : record) {
-                        boolean foundValue = false;
-                        for (int i = 0; i < row.size(); i++) {
-                            if (getFieldGroup(csvFieldNames.get(i)).equalsIgnoreCase(g.getName())) {
-                                if ( !row.get(i).equals("")) {
-                                    foundValue = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        // found something in this row for this group
-                        if (foundValue) {
-                            numRepeats++;
-                        }
-                    }
-                }
-
-                // if no values or threshold of 0, build at least one repeat
-                if (numRepeats == 0) {
-                    numRepeats = 1;
-                }
-
-                fsData.addGroup(g.getName());
-                for (int i = 0; i < numRepeats; i++) {
-                    final GroupRepeat repeat = parseGroupRepeat(fsData, g, i);
-
-                    fsData.addGroupRepeat(g.getName(), repeat);
-                }
-            }
-        }
-
-        
-        /**
-         * 
-         * @param fsData
-         * @param group
-         * @param repeatNum
-         * @return
-         */
-        private GroupRepeat parseGroupRepeat(final FormStructureData fsData, final RepeatableGroup group, final int repeatNum) {
-            final GroupRepeat repeat = new GroupRepeat(group, fsData, repeatNum);
-
-            for (final MapElement de : group.getDataElements()) {
-                final DataElementValue newDeVal = new DataElementValue(repeat, de);
-                final DataElement deFullInfo = fsData.getDataElement(de.getStructuralDataElement());
-
-                JLabel l;
-
-                l = new JLabel(deFullInfo.getTitle());
-                // l = new JLabel(de.getStructuralDataElement().getName());
-
-                l.setFont(MipavUtil.font12);
-                l.setName(de.getStructuralDataElement().getName());
-
-                String tooltip = "<html><p><b>Name:</b> " + de.getStructuralDataElement().getName() + "<br/>";
-                tooltip += "<b>Required?:</b> " + de.getRequiredType().getValue() + "<br/>";
-                tooltip += "<b>Description:</b><br/>" + WordUtils.wrap(deFullInfo.getDescription(), 80, "<br/>", false);
-                tooltip += "</p></html>";
-                l.setToolTipText(tooltip);
-
-                for (final Alias a : de.getStructuralDataElement().getAliasList()) {
-                    System.out.println(a);
-                }
-
-                // if valuerange is enumeration, create a combo box...otherwise create a textfield
-
-                if (de.getStructuralDataElement().getValueRangeList() != null && de.getStructuralDataElement().getValueRangeList().size() > 0
-                        && de.getStructuralDataElement().getType() != null && !de.getStructuralDataElement().getType().equals(DataType.DATE)) {
-                    if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.SINGLE
-                            || de.getStructuralDataElement().getRestrictions() == InputRestrictions.FREE_FORM) {
-                        final JComboBox cb = new JComboBox();
-                        cb.setName(de.getStructuralDataElement().getName());
-                        cb.setFont(MipavUtil.font12);
-
-                        cb.addItem("");
-                        final List<ValueRange> valuesList = new ArrayList<ValueRange>();
-                        valuesList.addAll(de.getStructuralDataElement().getValueRangeList());
-                        Collections.sort(valuesList);
-                        for (final ValueRange val : valuesList) {
-                            cb.addItem(val.getValueRange());
-                        }
-                        cb.addItemListener(this);
-
-                        if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
-                            l.setForeground(Color.red);
-                        }
-
-                        tooltip = "<html>";
-                        if (de.getStructuralDataElement().getMeasuringUnit() != null) {
-                            tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
-                        }
-
-                        if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                        }
-                        if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                            tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                    + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
-                        }
-                        if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
-                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
-                        }
-                        tooltip += "</html>";
-                        if ( !tooltip.equals("<html></html>")) {
-                            cb.setToolTipText(tooltip);
-                        }
-
-                        newDeVal.setLabel(l);
-                        newDeVal.setComp(cb);
-                    } else if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.MULTIPLE) {
-                        final List<ValueRange> valuesList = new ArrayList<ValueRange>();
-                        valuesList.addAll(de.getStructuralDataElement().getValueRangeList());
-                        Collections.sort(valuesList);
-                        final String[] valStrList = new String[valuesList.size()];
-                        int i = 0;
-                        for (final ValueRange val : valuesList) {
-                            valStrList[i] = val.getValueRange();
-                            i++;
-                        }
-
-                        final JList list = new JList(valStrList);
-                        list.setName(de.getStructuralDataElement().getName());
-                        list.setFont(MipavUtil.font12);
-                        list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-                        list.setLayoutOrientation(JList.VERTICAL);
-                        list.setVisibleRowCount(MULTI_SELECT_VISIBLE_ROWS);
-
-                        final JScrollPane listScroller = new JScrollPane(list);
-                        listScroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-                        // listScroller.setPreferredSize(new Dimension(250, 80));
-
-                        if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
-                            l.setForeground(Color.red);
-                        }
-
-                        tooltip = "<html>";
-                        if (de.getStructuralDataElement().getMeasuringUnit() != null) {
-                            tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
-                        }
-
-                        if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                            tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                        }
-                        if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                            tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                    + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
-                        }
-                        if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
-                            tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
-                        }
-                        tooltip += "</html>";
-                        if ( !tooltip.equals("<html></html>")) {
-                            list.setToolTipText(tooltip);
-                        }
-
-                        newDeVal.setLabel(l);
-                        newDeVal.setComp(list);
-                    }
-                } else {
-                    final JTextField tf = new JTextField(20);
-                    tf.setName(de.getStructuralDataElement().getName());
-                    tf.setFont(MipavUtil.font12);
-
-                    tf.addMouseListener(new ContextMenuMouseListener());
-
-                    tooltip = "<html><p><b>Type:</b> " + de.getStructuralDataElement().getType().getValue();
-                    if (de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC) && de.getStructuralDataElement().getSize() != null) {
-                        tooltip += " (" + de.getStructuralDataElement().getSize() + ")";
-                    }
-                    tooltip += "</p>";
-
-                    if (de.getStructuralDataElement().getType().equals(DataType.NUMERIC)
-                            || de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC)) {
-                        if (de.getStructuralDataElement().getMinimumValue() != null || de.getStructuralDataElement().getMaximumValue() != null) {
-                            tooltip += "<p>";
-                            if (de.getStructuralDataElement().getMinimumValue() != null) {
-                                tooltip += "<b>Min:</b> " + de.getStructuralDataElement().getMinimumValue() + " ";
-                            }
-                            if (de.getStructuralDataElement().getMaximumValue() != null) {
-                                tooltip += "<b>Max:</b> " + de.getStructuralDataElement().getMaximumValue();
-                            }
-                            tooltip += "</p>";
-                        }
-                    }
-
-                    if (de.getStructuralDataElement().getMeasuringUnit() != null) {
-                        tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
-                    }
-
-                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                    }
-                    if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                        tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
-                    }
-                    if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
-                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
-                    }
-                    tooltip += "</html>";
-                    tf.setToolTipText(tooltip);
-                    tf.addFocusListener(this);
-
-                    if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
-                        l.setForeground(Color.red);
-                    }
-
-                    newDeVal.setLabel(l);
-                    newDeVal.setComp(tf);
-                }
-
-                repeat.addDataElement(newDeVal);
-            }
-
-            // now that all DEs are added, find sister elements
-            DataElementValue bigSister = null;
-            for (final DataElementValue deVal : repeat.getDataElements()) {
-                if (isNewOtherSpecifyField(deVal)) {
-                    bigSister = deVal;
-                } else if (bigSister != null && isSisterField(deVal)) {
-                    // assume that they need to be next to each other and the specify field comp is a text field
-                    if (deVal.getPosition() == bigSister.getPosition() + 1 && deVal.getComp() instanceof JTextField) {
-                        bigSister.setOtherSpecifyField((JTextField) deVal.getComp());
-                    }
-                } else {
-                    // didn't find a sister, so reset the saved big sister
-                    bigSister = null;
-                }
-            }
-
-            return repeat;
-        }       
-
-        /**
-         * action performed
-         */
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-            final String command = e.getActionCommand();
-            ArrayList<String> errs;
-            final StringBuffer errors = new StringBuffer();
-            if (command.equalsIgnoreCase("StructDialogOK")) {
-                errs = validateFields();
-                boolean isComplete = true;
-                if (errs.size() != 0) {
-                    for (int i = 0; i < errs.size(); i++) {
-                        errors.append(" - " + errs.get(i) + "\n");
-                    }
-                    final Object[] options = {"Fix now", "Fix later"};
-                    fixErrors = JOptionPane.showOptionDialog(null, errors.toString(), "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
-                            options, options[0]);
-                    isComplete = false;
-                }
-
-                complete(fsData, isComplete);
-                enableDisableFinishButton();
-                dispose();
-
-                if (fixErrors == FIX_ERRORS_NOW && errs.size() != 0) {
-                    fixErrors();
-                }
-
-            } else if (command.equalsIgnoreCase("StructDialogCancel")) {
-                if ( !launchedFromInProcessState) {
-                    //structRowImgFileInfoList.remove(structRowImgFileInfoList.size() - 1);
-                    fsDataList.remove(fsDataList.size() - 1);
-                    allOtherFilesAL.remove(allOtherFilesAL.size() - 1);
-                }
-                enableDisableFinishButton();
-                dispose();
-            } else if (command.startsWith("browse_-_")) {
-                // changed format of command to browse_-_GROUPNAME_-_REPNUM_-_DENAME from browse_DENAME
-                if (currFile == null) {
-                    currFile = "";
-                }
-
-                final String[] commandSplit = command.split("_-_");
-                final String groupName = commandSplit[1];
-                final int repeatNum = Integer.parseInt(commandSplit[2]);
-                final String deName = commandSplit[3];
-
-                boolean isMultiFile = false;
-                // System.out.println(dataStructureName);
-                int junk = 0;
-				if ( junk == 0 ) { /** Matt isMainImagingFileElement(groupName, deName)) { */
-                    
-                } else {
-                    final JFileChooser chooser = new JFileChooser();
-                    chooser.setDialogTitle("Choose file");
-                    chooser.setMultiSelectionEnabled(true);
-                    chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-                    final int returnValue = chooser.showOpenDialog(this);
-                    if (returnValue == JFileChooser.APPROVE_OPTION) {
-                        final File[] files = chooser.getSelectedFiles();
-
-                        String allFilePaths = files[0].getAbsolutePath();
-                        for (int i = 1; i < files.length; i++) {
-                            allFilePaths += BROWSE_NONIMG_DELIM + files[i].getAbsolutePath();
-                        }
-
-                        for (final DataElementValue deVal : fsData.getGroupRepeat(groupName, repeatNum).getDataElements()) {
-                            if (deVal.getName().equalsIgnoreCase(deName)) {
-                                final JTextField tf = (JTextField) deVal.getComp();
-                                tf.setText(allFilePaths);
-                                tf.setEnabled(false);
-                                break;
-                            }
-                        }
-                    }
-                }
-            } else if (command.startsWith("AddRepeat_-_")) {
-                final String[] commandSplit = command.split("_-_");
-                final String groupName = commandSplit[1];
-
-                final GroupRepeat lastRepeat = fsData.getCurrentGroupRepeat(groupName);
-
-                final GroupRepeat newRepeat = parseGroupRepeat(fsData, lastRepeat.getGroupInfo(), lastRepeat.getRepeatNumber() + 1);
-                fsData.addGroupRepeat(groupName, newRepeat);
-
-                final GridBagConstraints egbc = new GridBagConstraints();
-                egbc.insets = new Insets(2, 5, 2, 5);
-                egbc.fill = GridBagConstraints.HORIZONTAL;
-                egbc.weightx = 1;
-                egbc.gridx = 0;
-                egbc.anchor = GridBagConstraints.WEST;
-                egbc.gridy = newRepeat.getRepeatNumber();
-
-                final JPanel groupPanel = groupPanelTable.get(lastRepeat.getGroupInfo());
-                final JPanel repeatPanel = buildGroupRepeatPanel(newRepeat);
-                repeatPanel.setBorder(JDialogBase.buildTitledBorder("Repeat number " + (newRepeat.getRepeatNumber() + 1)));
-                groupPanel.add(repeatPanel, egbc);
-
-                final Window parentWindow = SwingUtilities.getWindowAncestor(groupPanel);
-                // don't force the re-packing if the window hasn't been shown/created yet
-                if (parentWindow != null) {
-                    parentWindow.pack();
-                    parentWindow.validate();
-                    parentWindow.repaint();
-                }
-
-                // if more than one repeat, enable removal
-                if (fsData.getNumGroupRepeats(groupName) > 1) {
-                    // TODO: also check against repeat type/threshold
-                    groupRemoveButtonTable.get(lastRepeat.getGroupInfo()).setEnabled(true);
-                }
-            } else if (command.startsWith("RemoveRepeat_-_")) {
-                final String[] commandSplit = command.split("_-_");
-                final String groupName = commandSplit[1];
-
-                final int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove the last repeat?", "Remove repeat?",
-                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-
-                if (response == JOptionPane.YES_OPTION) {
-                    final GroupRepeat lastRepeat = fsData.getCurrentGroupRepeat(groupName);
-
-                    final JPanel groupPanel = groupPanelTable.get(lastRepeat.getGroupInfo());
-
-                    groupPanel.remove(lastRepeat.getRepeatNumber());
-
-                    fsData.removeLastGroupRepeat(groupName);
-
-                    final Window parentWindow = SwingUtilities.getWindowAncestor(groupPanel);
-                    // don't force the re-packing if the window hasn't been shown/created yet
-                    if (parentWindow != null) {
-                        parentWindow.pack();
-                        parentWindow.validate();
-                        parentWindow.repaint();
-                    }
-                }
-
-                // don't allow removal of the last repeat
-                if (fsData.getNumGroupRepeats(groupName) == 1) {
-                    // TODO: also check against repeat type/threshold
-                    ((JButton) e.getSource()).setEnabled(false);
-                }
-            }
-        }
-
-        /**
-         * Creates new dialog containing only fields that contained errors
-         */
-        private void fixErrors() {
-            final String dsName = (String) structTableModel.getValueAt(structTable.getSelectedRow(), 0);
-            new InfoDialog(owner, dsName, true, true, null);
-            fixErrors = FIX_ERRORS_LATER;
-        }
-
-        /**
-         * DELETE - validates fields
-         * 
-         * @return
-         */
-        public ArrayList<String> validateFields() {
-            final ArrayList<String> errs = new ArrayList<String>();
-
-            parseDataStructForValidation(fsData, errs);
-
-            return errs;
-        }
-
-        /**
-         * DELETE - validates fields
-         */
-        public void parseDataStructForValidation(final FormStructureData fsData, final ArrayList<String> errs) {
-            errors = new ArrayList<DataElementValue>();
-            String value = "";
-            final String key = "";
-            RequiredType required = null;
-            DataType type = null;
-            String title = "";
-
-            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
-                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
-                    for (final DataElementValue deVal : repeat.getDataElements()) {
-                        final StructuralDataElement deInfo = deVal.getDataElementInfo();
-
-                        final JComponent deComp = deVal.getComp();
-                        if (deComp instanceof JTextField) {
-                            value = ((JTextField) deComp).getText().trim();
-                        } else if (deComp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox) deComp).getSelectedItem());
-                        } else if (deComp instanceof JList) {
-                            value = "";
-                            final int[] selectedIndicies = ((JList) deComp).getSelectedIndices();
-                            for (final int index : selectedIndicies) {
-                                if (value == "") {
-                                    value = (String) ((JList) deComp).getModel().getElementAt(index);
-                                } else {
-                                    value += MULTI_SELECT_VALUE_DELIM + (String) ((JList) deComp).getModel().getElementAt(index);
-                                }
-                            }
-                        }
-
-                        // now we need to validate
-                        required = deVal.getRequiredType();
-                        type = deInfo.getType();
-                        title = fsData.getDataElement(deInfo).getTitle();
-
-                        if (required.equals(RequiredType.REQUIRED)) {
-                            if (value.trim().equalsIgnoreCase("")) {
-                                errs.add(title + " is a required field");
-                                errors.add(deVal);
-                            } else {
-                                if (key.equalsIgnoreCase(GUID_ELEMENT_NAME)) {
-                                   /** if ( !isGuid(value.trim())) {
-                                        errs.add(title + " must begin with a valid GUID prefix");
-                                        errors.add(deVal);
-                                    }*/
-                                }
-                            }
-                        }
-
-                        if (type.equals(DataType.NUMERIC)) {
-                            if ( !value.trim().equalsIgnoreCase("")) {
-                                try {
-                                    final float floatValue = Float.valueOf(value.trim()).floatValue();
-                                    if (deInfo.getMinimumValue() != null && floatValue < deInfo.getMinimumValue().floatValue()) {
-                                        errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
-                                                + deInfo.getMaximumValue().floatValue());
-                                        errors.add(deVal);
-                                    } else if (deInfo.getMaximumValue() != null && floatValue > deInfo.getMaximumValue().floatValue()) {
-                                        errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
-                                                + deInfo.getMaximumValue().floatValue());
-                                        errors.add(deVal);
-                                    }
-                                } catch (final NumberFormatException e) {
-                                    errs.add(title + " must be a number");
-                                    errors.add(deVal);
-                                }
-                            }
-                        }
-                        if (type.equals(DataType.ALPHANUMERIC)) {
-                            if (deInfo.getSize() != null && deInfo.getSize() > 0 && value.length() > deInfo.getSize()) {
-                                errs.add(title + " must not exceed " + deInfo.getSize() + " in length");
-                                errors.add(deVal);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /**
-         * called after validation is done
-         */
-        public void complete(final FormStructureData fsData, final boolean isComplete) {
-            String value = "";
-
-            for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
-                for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
-                    for (final DataElementValue deVal : repeat.getDataElements()) {
-                        final JLabel label = deVal.getLabel();
-                        final JComponent comp = deVal.getComp();
-
-                        if (label.getName().equalsIgnoreCase(GUID_ELEMENT_NAME)) {
-                            guid = ((JTextField) comp).getText().trim();
-                        }
-
-                        if (comp instanceof JTextField) {
-                            value = ((JTextField) comp).getText().trim();
-                            // ok...all files will go into the allOtherFiles AL
-
-                            final File f = new File(value);
-                            if (f.isFile()) {
-                                allOtherFiles.add(f);
-                            }
-
-                        } else if (comp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox) comp).getSelectedItem());
-                            if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY) || value.equalsIgnoreCase(VALUE_YES_SPECIFY)) {
-                                // value = deVal.getOtherSpecifyField().getText().trim();
-                            }
-                        } else if (comp instanceof JList) {
-                            value = "";
-                            final int[] selectedIndicies = ((JList) comp).getSelectedIndices();
-                            for (final int index : selectedIndicies) {
-                                if (value == "") {
-                                    value = (String) ((JList) comp).getModel().getElementAt(index);
-                                } else {
-                                    value += MULTI_SELECT_VALUE_DELIM + (String) ((JList) comp).getModel().getElementAt(index);
-                                }
-                            }
-                        }
-
-                        /*
-                         * if(!value.equals("")) { System.out.println("the key is " + key);
-                         * System.out.println("the value is " + value); }
-                         */
-
-                        deVal.setValue(value);
-                    }
-                }
-            }
-
-            // boolean guidKnown = true;
-            // if (guid != null && !guid.trim().equalsIgnoreCase("")) {
-            // guidKnown = false;
-            // }
-
-            String name = "";
-
-            if (guid != null && !guid.trim().equalsIgnoreCase("")) {
-                name = fsData.getStructInfo().getShortName() + STRUCT_GUID_SEPERATOR + guid;
-            } else {
-                name = fsData.getStructInfo().getShortName() + STRUCT_GUID_SEPERATOR + "UNKNOWNGUID";
-            }
-
-            if (launchedFromInProcessState) {
-                final int selectedRow = structTable.getSelectedRow();
-
-                structTableModel.setValueAt(name, selectedRow, 0);
-                if (isComplete) {
-                    structTableModel.setValueAt("Yesttt", selectedRow, 1);
-                } else {
-                    structTableModel.setValueAt("Nottt", selectedRow, 1);
-                }
-
-                fsDataList.set(selectedRow, fsData);
-
-                allOtherFilesAL.set(selectedRow, allOtherFiles);
-
-            } else {
-                fsDataList.set(fsDataList.size() - 1, fsData);
-                final Vector<String> rowData = new Vector<String>();
-                rowData.add(name);
-                if (isComplete) {
-                    rowData.add("Yesssss");
-                } else {
-                    rowData.add("Noooo");
-                }
-                structTableModel.addRow(rowData);
-                structTable.setRowSelectionInterval(structTableModel.getRowCount() - 1, structTableModel.getRowCount() - 1);
-
-                allOtherFilesAL.set(allOtherFilesAL.size() - 1, allOtherFiles);
-            }
-        }
-
-        @Override
-        public void windowActivated(final WindowEvent e) {}
-
-        @Override
-        public void windowClosed(final WindowEvent e) {}
-
-        @Override
-        public void windowClosing(final WindowEvent e) {
-            enableDisableFinishButton();
-        }
-
-        @Override
-        public void windowDeactivated(final WindowEvent e) {}
-
-        @Override
-        public void windowDeiconified(final WindowEvent e) {}
-
-        @Override
-        public void windowIconified(final WindowEvent e) {}
-
-        @Override
-        public void windowOpened(final WindowEvent e) {}
-
-        @Override
-        public void itemStateChanged(final ItemEvent e) {
-            validateFields();
-        }
-
-        @Override
-        public void focusGained(final FocusEvent e) {}
-
-        @Override
-        public void focusLost(final FocusEvent e) {
-            validateFields();
-        }
+       
     }
 
     /**
@@ -3002,7 +2038,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 this.dataStructureName = name;
             }
 
-            for (final FormStructure ds : dataStructureList) {
+            for (final FormStructure ds : formStructureList) {
                 if (ds.getShortName().equalsIgnoreCase(dataStructureName)) {
                     if (ds.getDataElements().size() == 0) {
                         final FormDataElementsRESTThread thread = new FormDataElementsRESTThread(owner, ds.getShortName(), true);
@@ -3044,7 +2080,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             try {
                 if (launchedFromInProcessState) {
-                    final int selectedRow = structTable.getSelectedRow();
+                    final int selectedRow = deTable.getSelectedRow();
 
                     fsData = fsDataList.get(selectedRow);
 
@@ -3733,7 +2769,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
          * Creates new dialog containing only fields that contained errors
          */
         private void fixErrors() {
-            final String dsName = (String) structTableModel.getValueAt(structTable.getSelectedRow(), 0);
+            final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
             new InfoDialog(owner, dsName, true, true, null);
             fixErrors = FIX_ERRORS_LATER;
         }
@@ -3899,13 +2935,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
 
             if (launchedFromInProcessState) {
-                final int selectedRow = structTable.getSelectedRow();
+                final int selectedRow = deTable.getSelectedRow();
 
-                structTableModel.setValueAt(name, selectedRow, 0);
+                deTableModel.setValueAt(name, selectedRow, 0);
                 if (isComplete) {
-                    structTableModel.setValueAt("Yes", selectedRow, 1);
+                	deTableModel.setValueAt("Yes", selectedRow, 1);
                 } else {
-                    structTableModel.setValueAt("No", selectedRow, 1);
+                	deTableModel.setValueAt("No", selectedRow, 1);
                 }
 
                 fsDataList.set(selectedRow, fsData);
@@ -3921,8 +2957,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 } else {
                     rowData.add("No");
                 }
-                structTableModel.addRow(rowData);
-                structTable.setRowSelectionInterval(structTableModel.getRowCount() - 1, structTableModel.getRowCount() - 1);
+                deTableModel.addRow(rowData);
+                deTable.setRowSelectionInterval(deTableModel.getRowCount() - 1, deTableModel.getRowCount() - 1);
 
                 allOtherFilesAL.set(allOtherFilesAL.size() - 1, allOtherFiles);
             }
@@ -3967,7 +3003,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     
     /**
-     * 
+     * Filter out Imaging and Archived form structures leaving only CLINCICAL form structures
      * @param fullList
      * @return
      */
@@ -3980,7 +3016,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 continue;
             }
 
-            if (!ds.getFileType().equals(SubmissionType.IMAGING)) {
+            if (ds.getFileType().equals(SubmissionType.IMAGING)) {
                 // only include non-archived structures
                 if ( !ds.getStatus().equals(StatusType.ARCHIVED)) {
                     filteredList.add(ds);
@@ -3988,6 +3024,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
         }
 
+        // Returning clinical form structures
         return filteredList;
     }
 
@@ -4003,7 +3040,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
         // private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL";
-        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
+        //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
+        private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
 
         private JButton progressCancelButton;
 
@@ -4054,7 +3092,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 System.out.println("Webservice request (sec):\t" + ( (endTime - startTime) / 1000));
 
-                dataStructureList = filterDataStructures(fullList);
+                formStructureList = filterDataStructures(fullList);
 
                 // for (final FormStructure ds : dataStructureList) {
                 // System.out.println("FS title:\t" + ds.getTitle() + "\tversion:\t" + ds.getVersion() + "\tpub:\t" +
@@ -4067,7 +3105,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 printlnToLog("Successful retrieval of form structures.");
 
                 selectStructButton.setEnabled(true);
-                loadCSVButton.setEnabled(true);
             } catch (final Exception e) {
                 e.printStackTrace();
                 if (progressBar != null) {
@@ -4112,7 +3149,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private FormStructure fullFormStructure;
 
         private final boolean addProgressBar;
-
+        
+        /**
+         * 
+         * @param parent
+         * @param formStructName
+         * @param addProgressBar
+         */
         public FormDataElementsRESTThread(final PlugInDialogBRICS_Mapper parent, final String formStructName, final boolean addProgressBar) {
             super();
             this.parent = parent;
@@ -4147,10 +3190,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 System.out.println("Webservice request (sec):\t" + ( (endTime - startTime) / 1000));
 
-                for (int i = 0; i < dataStructureList.size(); i++) {
-                    final FormStructure curFS = dataStructureList.get(i);
+                for (int i = 0; i < formStructureList.size(); i++) {
+                    final FormStructure curFS = formStructureList.get(i);
                     if (curFS.getShortName().equals(fullFormStructure.getShortName())) {
-                        dataStructureList.set(i, fullFormStructure);
+                    	formStructureList.set(i, fullFormStructure);
                         break;
                     }
                 }
@@ -4388,14 +3431,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private class FormStructureData {
         
     	private FormStructure structInfo;
+    	private final Hashtable<String, Vector<GroupRepeat>> groupTable;
 
-        private final Hashtable<String, Vector<GroupRepeat>> groupTable;
-
+    	
         public FormStructureData(final FormStructure structInfo) {
             this.structInfo = structInfo;
             groupTable = new Hashtable<String, Vector<GroupRepeat>>();
         }
 
+        
+        
+        
         public void addGroup(final String groupName) {
             groupTable.put(groupName, new Vector<GroupRepeat>());
         }
