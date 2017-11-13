@@ -20610,20 +20610,24 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			ang[base] = Math.atan2(wimag, wreal);
 			
 			// Determine the absolute angle of side pos->pos1.
+			boolean doloop = true;
 			for (j = base+1; j < n; j++) {
 			    jrem =( j-1 + n) % n;
 			    ang[j] = ang[jrem] - Math.PI * beta[j];
 			    if (j == pos) {
+			    	doloop = false;
 			    	break;
 			    }
 			} // for (j = base+1; j < n; j++)
-			for (j = 0; j <= base-1; j++) {
-				jrem =( j-1 + n) % n;
-			    ang[j] = ang[jrem] - Math.PI * beta[j];
-			    if (j == pos) {
-			    	break;	
-			    }
-			} // for (j = 0; j <= base-1; j++) 
+			if (doloop) {
+				for (j = 0; j <= base-1; j++) {
+					jrem =( j-1 + n) % n;
+				    ang[j] = ang[jrem] - Math.PI * beta[j];
+				    if (j == pos) {
+				    	break;	
+				    }
+				} // for (j = 0; j <= base-1; j++) 
+			} // if (doloop)
 			
 			// Find a nice side length
 			double len[] = new double[n];
