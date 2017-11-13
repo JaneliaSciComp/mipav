@@ -15730,7 +15730,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 	// rparam attempts to find an answer within the tolerance tol.  (Also see scparopt.)
 	// rparam uses a vector of control parameters.  See scparopt.
 	// Original MATLAB code copyright 1998 by Toby Driscoll.
-	// NESolve has been replaced the the MIAPV implementation of ELSUNC
+	// NESolve has been replaced the the MIPAV implementation of ELSUNC
 	private void rparam(double z[][], double c[], double L[], double qdat[][], 
 			double w[][], double beta[], int cnr[], double z0[][], double tol) {
 		int i, j, k, m, p;
