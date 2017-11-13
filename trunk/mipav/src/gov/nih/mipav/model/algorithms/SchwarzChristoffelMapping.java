@@ -20567,6 +20567,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double wreal;
 		double wimag;
 		int jrem;
+		
 		if (window == null) {
 			window = new double[]{Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
 					Double.POSITIVE_INFINITY};
@@ -20603,22 +20604,27 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    base = n-1;
 				}
 			} // if (!found)
+			System.out.println("base = " + base);
 			rbase = (base+1) % n;
 			wreal = w[rbase][0] - w[base][0];
 			wimag = w[rbase][1] - w[base][1];
 			ang[base] = Math.atan2(wimag, wreal);
 			
 			// Determine the absolute angle of side pos->pos1.
-			for (j = 0; j < n; j++) {
-				ang2[j] = ang[j];
-			}
 			for (j = base+1; j < n; j++) {
 			    jrem =( j-1 + n) % n;
-			    ang[j] = ang2[jrem] - Math.PI * beta[j];
+			    ang[j] = ang[jrem] - Math.PI * beta[j];
 			    if (j == pos) {
 			    	break;
 			    }
 			} // for (j = base+1; j < n; j++)
+			for (j = 0; j <= base-1; j++) {
+				jrem =( j-1 + n) % n;
+			    ang[j] = ang[jrem] - Math.PI * beta[j];
+			    if (j == pos) {
+			    	break;	
+			    }
+			} // for (j = 0; j <= base-1; j++) 
 			
 			// Find a nice side length
 			double len[] = new double[n];
