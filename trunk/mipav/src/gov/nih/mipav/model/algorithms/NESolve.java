@@ -863,6 +863,54 @@ public domain).
     		Preferences.debug("chiSquared = " + chiSquared + "\n", Preferences.DEBUG_ALGORITHM);
     	}
     	
+    	public double[] getParameters() {
+    		return xf;
+    	}
+    	
+    	public int getExitStatus() {
+    		return termcode[0];
+    	}
+    	
+    	public void printExitStatus(int exitStatus) {
+    		switch(exitStatus) {
+    		case -1:
+    			System.err.println("termcode[0] = -1 indicating x0.length < 1");
+    			break;
+    		case 0:
+    			System.err.println("termcode[0] = 0 indicating no termination criterion satisfied");
+    			break;
+    		case 1:
+    			System.err.println("termcode[0] = 1 indicating normal termination.");
+    			break;
+    		case 2:
+    			System.err.println("termcode[0] = 2 indicating scaled distance between last two steps less than steptol.");
+    			System.err.println("xp may be an approximate root of F(x), but it is also possible that the algorithm");
+    			System.err.println("is making very slow progress and is not near a root, or that steptol is too large.");
+    	        break;
+    		case 3:
+    			System.err.println("termcode[0] = 3 indicating last global step failed to decrease ||F(x)||2 sufficiently;");
+    			System.err.println("either xc is close to a root of F(x) and no more accuracy is possible, or an incorrectly");
+    			System.err.println("coded analytic Jacobian is being used, or the secant approximation to the Jacobian is");
+    			System.err.println("inaccuate, or steptol is too large.");
+    			break;
+    		case 4:
+    			System.err.println("termcode[0] = 4 indicating maximum iteration count reached.");
+    			break;
+    		case 5:
+    			System.err.println("termcode[0] = 5 indicating five consecutive steps of length maxstep have been taken:");
+    			System.err.println("either ||F(x)||2 asymptotes from above to a finite value in some direction, or");
+    			System.err.println("maxstep is too small.");
+    		    break;
+    		case 6:
+    			System.err.println("termcode[0] = 6 indicating xc seems to be an approximate local minimizer of ||F(x)||2");
+    			System.err.println("that is not a root of F(x) (or mintol is too large); to find a root of F(x),");
+    			System.err.println("the algorithm must be restarted from a different region.");
+    			break;
+    		default:
+    			System.err.println("termcode[0] = " + termcode[0] + " indicating illegal termination");
+    		}	
+    	}
+    	
 	    public NESolve(boolean initialJacobianIdentity, double x0[], double fparam[], 
 	    		boolean analyticJacobian, double scale[][], Vector<Double> path,
 	    		double btrack[], int trace, int method, int maxIterations, double fvectol, 
