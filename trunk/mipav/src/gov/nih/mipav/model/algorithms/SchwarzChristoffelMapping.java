@@ -20604,7 +20604,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 				    base = n-1;
 				}
 			} // if (!found)
-			System.out.println("base = " + base);
 			rbase = (base+1) % n;
 			wreal = w[rbase][0] - w[base][0];
 			wimag = w[rbase][1] - w[base][1];
