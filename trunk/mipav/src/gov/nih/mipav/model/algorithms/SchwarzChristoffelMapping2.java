@@ -367,6 +367,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	private void testStripmap1() {
 		// NLConstrainedEngine and NLConstrainedEP do not work.  Nl2sol does not work for f1, but it 
 		// works for f2.  NESolve works for both f1 and f2.
+		// Plots are identical to Figure 4.6 except for 2 extra lines from plotpoly
 		 double x[] = new double[]{Double.POSITIVE_INFINITY, -1, -2.5, Double.POSITIVE_INFINITY, 2.4,
 				                   Double.POSITIVE_INFINITY, 2.4, Double.POSITIVE_INFINITY, -1, -2.5};
 		 double y[] = new double[]{0, -1, -1, 0, -3.3, 0, -1.3, 0, 1, 1};
@@ -376,6 +377,11 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		 scmap f1 = stripmap(p, endidx);
 		 int endidx2[] = new int[]{3,7};
 		 scmap f2 = stripmap(p, endidx2);
+		 double re[] = new double[]{0};
+		 double im[] = new double[]{8};
+		 double axis[] = new double[]{-4.3, 5.7, -6.15, 3.85};
+		 stripplot(f1, re, im, Integer.MIN_VALUE, false, axis);
+		 stripplot(f2, re, im, Integer.MIN_VALUE, false, axis);
 	}
 	
 	private void testStripmap2() {
@@ -2127,6 +2133,427 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		return fprime;
 	}
 	
+	public void stripplot(scmap M, double re[], double im[], int yInvert, boolean closed, double axis[]) {
+		// Visualize a Schwarz-Christoffel strip map.
+		// stripplot plots the polygon associated with the Schwarz-Christoffel
+		// half-plane map M and the images of vertical lines whose real
+		// parts are given in re and horizontal lines whose imaginary
+		// parts are given in im under the S-C transformation.
+		// From 1998 MATLAB plot routine copyright by Toby Driscoll.
+		int i;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		stplot(w, beta, z, c, re, im, yInvert, closed, axis);
+	}
+	
+	public void stplot(double w[][], double beta[], double z[][], double c[],
+			double re[], double im[], int yInvert, boolean closed, double axis[]) {
+	    // Image of cartesian grid under Schwarz-Christoffel strip map.
+		// stplot will adaptively plot the images under the Schwarz-Christoffel
+		// exterior map of vertical lines whose real parts are given in re and
+		// horizontal lines whose imaginary parts are given in im in the upper half-plane.
+		//The abscissae of the vertical lines will bracket the finite extremes of real(Z).
+		// From 1998 MATLAB stplot routine copyright by Toby Driscoll.
+		int i, j, m;
+		double tol;
+		boolean haveInfiniteZ = false;
+		double betan[];
+		int n = w.length;
+		double qdat[][] = null;
+		double axlim[] = new double[4];
+		// Number of quadrature points per integration.
+		// Approximately equals -log10(error).  Increase if plot
+		// has false little zigzags in curves. 
+		int nqpts = 5; 
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+        // Max allowed number of adaptive refinements made to meet other requirements 
+        int maxrefn = 16;
+        Vector<Double>zpReal = new Vector<Double>();
+		Vector<Double>zpImag = new Vector<Double>();
+		Vector<Double>wpReal = new Vector<Double>();
+		Vector<Double>wpImag = new Vector<Double>();
+		Vector<Boolean>newlog = new Vector<Boolean>();
+		Vector<Double> linhx[][] = null;
+		Vector<Double> linhy[][] = null;
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
+        
+		// Zero arguments default to 10
+		if (((re == null) || (re.length == 0)) && ((im == null) || (im.length == 0))) {
+		    re = new double[]{10.0};
+		    im = new double[]{10.0};
+		}
+		
+		// Integer arguments must be converted to specific values
+		double minre = Double.MAX_VALUE;
+		double maxre = -Double.MAX_VALUE;
+		for (i = 0; i < z.length; i++) {
+			if (!Double.isInfinite(z[i][0])) {
+				if (z[i][0] < minre) {
+					minre = z[i][0];
+				}
+				if (z[i][0] > maxre) {
+					maxre = z[i][0];
+				}
+			}
+		}
+		if ((re.length == 1) && (re[0] == Math.round(re[0]))) {
+			if (re[0] < 1) {
+			    re = null;
+			}
+			else if (re[0] < 2) {
+				// Real parts are given in re.
+				re[0] = (minre + maxre)/2.0;
+			}
+			else {
+			    m = (int)re[0];	
+			    double dre = (maxre - minre)/(m - 1.0);
+			    double spacing = (maxre - minre + 2*dre)/(m - 1.0);
+			    re = new double[m];
+			    for (i = 0; i < m; i++) {
+			    	re[i] = minre - dre + i*spacing;
+			    }
+			} // else 
+		} // if ((re.length == 1) && (re[0] == Math.round(re[0])))
+		if ((im.length == 1) & (im[0] == Math.round(im[0]))) {
+			if (im[0] < 1) {
+				im = null;
+			}
+			else {
+				m = (int)im[0];
+				double spacing = 1.0/(m + 1.0);
+				im = new double[m];
+				for (i = 1; i < m+1; i++) {
+					im[i-1] = i*spacing;
+				}
+			}
+		} // if ((im.length == 1) & (im[0] == Math.round(im[0])))
+		boolean atinf[] = new boolean[w.length];
+		int numinfinite = 0;
+		int numfinite = 0;
+		for (i = 0; i < w.length; i++) {
+			if ((!Double.isInfinite(w[i][0])) && (!Double.isInfinite(w[i][1]))) {
+				numfinite++;
+			}
+			else {
+				numinfinite++;
+				atinf[i] = true;
+			}
+		}
+		int first = -1;
+		for (i = 0; i < n-1 && (first == -1); i++) {
+			if ((!atinf[i]) && (!atinf[i+1])) {
+			    first = i;	
+			}
+		}
+		if ((first == -1) && (!atinf[n-1]) && (!atinf[0])) {
+			first = n-1;
+		}
+		if (first == -1) {
+			MipavUtil.displayError("There must be two consecutive finite vertices.");
+			return;
+		}
+		int renum[] = new int[n];
+		for (i = 0; i < n - first; i++) {
+			renum[i] = first +i;
+		}
+		for (i = 0; i < first; i++) {
+			renum[n-first+i] = i;
+		}
+		double wrenum[][] = new double[n][2];
+		for (i = 0; i < n; i++) {
+			wrenum[i][0] = w[renum[i]][0];
+			wrenum[i][1] = w[renum[i]][1];
+		}
+		float xPointArray[];
+		float yPointArray[];
+		
+		// Put 2 finite points at every infinity in plotpoly
+		// Unless last one in wrenum is infinite in which case add 3
+		numinfinite = 0;
+		for (i = 0; i < w.length; i++) {
+		    if (Double.isInfinite(wrenum[i][0]) || Double.isInfinite(wrenum[i][1]))	{
+		    	if (i == w.length-1) {
+		    		numinfinite = numinfinite + 2;
+		    	}
+		    	else {
+		            numinfinite++;	
+		    	}
+		    }
+		}
+		if (closed) {
+		    xPointArray = new float[n+1+numinfinite];
+		    yPointArray = new float[n+1+numinfinite];
+		}
+		else {
+			xPointArray = new float[n+numinfinite];
+			yPointArray = new float[n+numinfinite];
+		}
+		ViewJFrameGraph pointGraph = scm.plotpoly(xPointArray, yPointArray, w, beta, false, axlim, yInvert, closed, axis);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		Graphics g = graph.getGraphics();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+        double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		tol = Math.pow(10.0, -nqpts);
+		for (i = 0; i < z.length; i++) {
+			if (Double.isInfinite(z[i][0]) || Double.isInfinite(z[i][1])) {
+				haveInfiniteZ = true;
+			}
+		}
+		qdat = new double[nqpts][2*beta.length+2];
+		scm.scqdata(qdat, beta, nqpts);	
+		
+		
+		// Plot vertical lines
+		if (re != null) {
+		linhx = new Vector[re.length][2];
+		linhy = new Vector[re.length][2];
+		for (i = 0; i < re.length; i++) {
+			for (j = 0; j < 2; j++) {
+				linhx[i][j] = new Vector<Double>();
+				linhy[i][j] = new Vector<Double>();
+			}
+		}
+		
+		for (j = 0; j < re.length; j++) {
+		    zpReal.clear();
+		    zpImag.clear();
+		    double spacing = 1.0/14.0;
+		    for (i = 0; i < 15; i++) {
+		    	zpReal.add(re[j]);
+		    	zpImag.add(i*spacing);
+		    }
+		    newlog.clear();
+		    for (i = 0; i < 15; i++) {
+		    	newlog.add(true);
+		    }
+		    wpReal.clear();
+		    wpImag.clear();
+		    for (i = 0; i < 15; i++) {
+		    	wpReal.add(Double.NaN);
+		    
+		    	wpImag.add(0.0);
+		    }
+		    
+			// The individual points will be shown as they are found.
+				
+			// Adaptive refinement to make curve smooth
+			int iter = 0;
+			while (iter < maxrefn) {
+				int numnewlog = 0;
+				for (i = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	numnewlog++;
+				    }
+				} // for (i = 0; i < newlog.size(); i++)
+				if (numnewlog == 0) {
+					break;
+				}
+				double zpnew[][] = new double[numnewlog][2];
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	zpnew[m][0] = zpReal.get(i);
+				    	zpnew[m++][1] = zpImag.get(i);
+				    }
+				} // for (i = 0, m = 0; i < newlog.length; i++)
+				double neww[][] = scm.stmap(zpnew, w, beta, z, c, qdat);
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+					if (newlog.get(i)) {
+					    wpReal.set(i, neww[m][0]);
+					    wpImag.set(i, neww[m++][1]);
+					} 
+				} // for (i = 0, m = 0; i < newlog.size(); i++)
+				iter = iter + 1;
+				
+				linhx[j][0].clear();
+				linhy[j][0].clear();
+				linhx[j][1].clear();
+				linhy[j][1].clear();
+				// Update the points to show progress
+				for (i = 0; i < wpReal.size(); i++) {
+				    linhx[j][0].add(wpReal.get(i));
+				    linhy[j][0].add(wpImag.get(i));
+				    linhx[j][1].add(zpReal.get(i));
+				    linhy[j][1].add(zpImag.get(i));
+				}
+				
+				// Add points to zp where necessary
+				scm.scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+		    } // while (iter < maxrefn)
+		} // for (j = 0; j < re.length; j++)
+		
+		for (i = 0; i < re.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		double posx1 = linhx[i][0].get(j);
+		    		double posy1 = linhy[i][0].get(j);
+		    		double posx2 = linhx[i][0].get(j+1);
+		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		}
+		} // if (re != null)
+		
+		// Plot horizontal lines
+		if (im != null) {
+		linhx = new Vector[im.length][2];
+		linhy = new Vector[im.length][2];
+		for (i = 0; i < im.length; i++) {
+			for (j = 0; j < 2; j++) {
+				linhx[i][j] = new Vector<Double>();
+				linhy[i][j] = new Vector<Double>();
+			}
+		}
+		
+		double x1h = Math.min(-5, minre);
+		double x2h = Math.max(5, maxre);
+		double wl[] = new double[2]; // image of left end
+		double wr[] = new double[2]; // image of right end
+		for (i = 0; i < z.length; i++) {
+			if (Double.isInfinite(z[i][0])) {
+				if (z[i][0] < 0) {
+					wl[0] = w[i][0];
+					wl[1] = w[i][1];
+				}
+				else if (z[i][0] > 0) {
+					wr[0] = w[i][0];
+					wr[1] = w[i][1];
+				}
+			}
+		}
+		for (j = 0; j < im.length; j++) {
+		    // Start evenly spaced
+			zpReal.clear();
+			zpImag.clear();
+			//zpReal.add(Double.NEGATIVE_INFINITY);
+			//zpImag.add(im[j]);
+			for (i = 0; i < 15; i++) {
+				zpReal.add(x1h + i*(x2h-x1h)/14.0);
+				zpImag.add(im[j]);
+			}
+			//zpReal.add(Double.POSITIVE_INFINITY);
+			//zpImag.add(im[j]);
+			newlog.clear();
+			//newlog.add(false);
+		    for (i = 0; i < 15; i++) {
+		    	newlog.add(true);
+		    }
+		    //newlog.add(false);
+		    wpReal.clear();
+		    wpImag.clear();
+		    //wpReal.add(wl[0]);
+		    //wpImag.add(wl[1]);
+		    for (i = 0; i < 15; i++) {
+		    	wpReal.add(Double.NaN);
+		    	wpImag.add(0.0);
+		    }
+		    //wpReal.add(wr[0]);
+		    //wpImag.add(wr[1]);
+		    
+		    // The individual points will be shown as they are found.
+			
+ 			// Adaptive refinement to make curve smooth
+ 			int iter = 0;
+ 			while (iter < maxrefn) {
+ 				int numnewlog = 0;
+ 				for (i = 0; i < newlog.size(); i++) {
+ 				    if (newlog.get(i)) {
+ 				    	numnewlog++;
+ 				    }
+ 				} // for (i = 0; i < newlog.size(); i++)
+ 				if (numnewlog == 0) {
+ 					break;
+ 				}
+ 				double zpnew[][] = new double[numnewlog][2];
+ 				for (i = 0, m = 0; i < newlog.size(); i++) {
+ 				    if (newlog.get(i)) {
+ 				    	zpnew[m][0] = zpReal.get(i);
+ 				    	zpnew[m++][1] = zpImag.get(i);
+ 				    }
+ 				} // for (i = 0, m = 0; i < newlog.length; i++)
+ 				double neww[][] = scm.stmap(zpnew, w, beta, z, c, qdat);
+ 				for (i = 0, m = 0; i < newlog.size(); i++) {
+ 					if (newlog.get(i)) {
+ 					    wpReal.set(i, neww[m][0]);
+ 					    wpImag.set(i, neww[m++][1]);
+ 					} 
+ 				} // for (i = 0, m = 0; i < newlog.size(); i++)
+ 				iter = iter + 1;
+ 				
+ 				linhx[j][0].clear();
+ 				linhy[j][0].clear();
+ 				linhx[j][1].clear();
+ 				linhy[j][1].clear();
+ 				// Update the points to show progress
+ 				for (i = 0; i < wpReal.size(); i++) {
+ 				    linhx[j][0].add(wpReal.get(i));
+ 				    linhy[j][0].add(wpImag.get(i));
+ 				    linhx[j][1].add(zpReal.get(i));
+ 				    linhy[j][1].add(zpImag.get(i));
+ 				}
+ 				
+ 				// Add points to zp where necessary
+ 				scm.scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+ 		    } // while (iter < maxrefn)
+		} // for (j = 0; j < im.length; j++)
+		
+		for (i = 0; i < im.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		double posx1 = linhx[i][0].get(j);
+		    		double posy1 = linhy[i][0].get(j);
+		    		double posx2 = linhx[i][0].get(j+1);
+		    		double posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    int x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    int y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    int x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    int y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		}
+		} // if (im != null)
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
+	}
+	
 	public void hplot(scmap M, double re[], double im[], int yInvert, boolean closed, double axis[]) {
 		// Visualize a Schwarz-Christoffel half-plane map.
 		// hplot plots the polygon associated with the Schwarz-Christoffel
@@ -2150,7 +2577,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			double re[], double im[], int yInvert, boolean closed, double axis[]) {
 	    // Image of cartesian grid under Schwarz-Christoffel half-plane map.
 		// hpplot will adaptively plot the images under the Schwarz-Christoffel
-		// exterior map of vertical lines whose real parrts are given in re and
+		// exterior map of vertical lines whose real parts are given in re and
 		// horizontal lines whose imaginary parts are given in im.
 		// From 1998 MATLAB hpplot routine copyright by Toby Driscoll.
 		int i, j, m;
