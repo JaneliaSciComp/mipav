@@ -8508,7 +8508,12 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					wbase[j][1] = neww[0][1];
 				} // else if (from_hp)
 				else if (from_strip) {
-				  // Fill in stmap	
+					double zpnew[][] = new double[1][2];
+					zpnew[0][0] = zbase[j][0];
+					zpnew[0][1] = zbase[j][1];
+					double neww[][] = stmap(zpnew, w2 , beta2, z2, c, qdat2);
+					wbase[j][0] = neww[0][0];
+					wbase[j][1] = neww[0][1];
 				} // else if (from_strip)
 				
 				// Project each base point exactly to the nearest polygon side.
@@ -8538,6 +8543,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 					for (j = 0; j < n; j++) {
 						double currentDist = zabs(wpnotdone[i][0] - wbase[j][0],
 								wpnotdone[i][1] - wbase[j][1]);
+					    
 						if (currentDist < dist[i]) {
 							dist[i] = currentDist;
 							idx[i] = j;
@@ -9134,6 +9140,282 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 			} // else
 		} // for (i = 0; i < nontriv.length; i++)
 		return I;
+	}
+	
+	public double[][] stmap(double zp[][], double w[][], double beta[], double z[][],
+			double c[], double qdat[][]) {
+		// Schwarz-Christoffel strip map.
+		// stmap computes the values of the Schwarz-Christoffel strip map at the points
+		// in vector zp.  The arguments w, beta, z, c, and qdat are as in vector zp.  stmap
+		// returns a vector the same size as zp.
+		// Original MATLAB stmap routine copyright 1998 by Toby Driscoll.
+		double qdat2[][] = null;
+		int i, j, k;
+		double tol;
+		int nqpts;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double mid1[][] = null;
+		double mid2[][] = null;
+		
+		if ((zp == null) || (zp.length == 0)) {
+			return null;
+		}
+		
+		int n = w.length;
+		
+		// Quadrature data
+		if ((qdat == null) || (qdat.length == 0)) {
+		    nqpts = 8;
+		    qdat2 = new double[nqpts][2*beta.length+2];
+			scqdata(qdat2, beta, nqpts);	
+		}
+		else if (qdat.length == 1) {
+			nqpts = Math.max((int)Math.ceil(-Math.log10(qdat[0][0])), 8);
+			qdat2 = new double[nqpts][2*beta.length+2];
+			scqdata(qdat2, beta, nqpts);
+		}
+		else {
+			qdat2 = qdat;
+		}
+		tol = Math.pow(10.0,-qdat2.length);
+		
+		int p = zp.length;
+		double wp[][] = new double[p][2];
+		
+		// For each point in zp, find nearest prevertex.
+		double dist[] = new double[p];
+		for (i = 0; i < p; i++) {
+			dist[i] = Double.MAX_VALUE;
+		}
+		int sing[] = new int[p];  // indices of prevertices
+		for (j = 0; j < p; j++) {
+			for (i = 0; i < n; i++) {
+				double currentDist = zabs(zp[j][0]-z[i][0],zp[j][1]-z[i][1]);
+				if (currentDist < dist[j]) {
+				    dist[j] = currentDist;
+				    sing[j] = i;
+				}
+			}
+		}
+		
+		// Screen out images of prevertices
+		boolean vertex[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			vertex[i] = (dist[i] < tol);
+		}
+		for (i = 0; i < p; i++) {
+			if (vertex[i]) {
+				wp[i][0] = w[sing[i]][0];
+				wp[i][1] = w[sing[i]][1];
+			}
+		}
+		int numleftend = 0;
+		for (i = 0; i < p; i++) {
+			if (Double.isInfinite(zp[i][0]) && (zp[i][0] < 0.0)) {
+				numleftend++;
+			}
+		}
+		int leftend[] = new int[numleftend];
+		for (i = 0, j = 0; i < p; i++) {
+			if (Double.isInfinite(zp[i][0]) && (zp[i][0] < 0.0)) {
+				leftend[j++] = i;
+			}
+		}
+		for (i = 0, j = 0; i < n; i++) {
+		    if (Double.isInfinite(z[i][0]) && (z[i][0] < 0.0) && (numleftend > j)) {
+		    	wp[leftend[j]][0] = w[i][0];
+		    	wp[leftend[j++]][1] = w[i][1];
+		    }
+		}
+		int numrightend = 0;
+		for (i = 0; i < p; i++) {
+			if (Double.isInfinite(zp[i][0]) && (zp[i][0] > 0.0)) {
+				numrightend++;
+			}
+		}
+		int rightend[] = new int[numrightend];
+		for (i = 0, j = 0; i < p; i++) {
+			if (Double.isInfinite(zp[i][0]) && (zp[i][0] > 0.0)) {
+				rightend[j++] = i;
+			}
+		}
+		for (i = 0, j = 0; i < n; i++) {
+		    if (Double.isInfinite(z[i][0]) && (z[i][0] > 0.0) && (numrightend > j)) {
+		    	wp[rightend[j]][0] = w[i][0];
+		    	wp[rightend[j++]][1] = w[i][1];
+		    }
+		}
+		for (i = 0; i < numleftend; i++) {
+			vertex[leftend[i]] = true;
+		}
+		for (i = 0; i < numrightend; i++) {
+			vertex[rightend[i]] = true;
+		}
+		
+		// "Bad" points are closest to a prevertex of inifinty
+		int numatinf = 0;
+		for (i = 0; i < n; i++) {
+			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				numatinf++;
+			}
+		}
+		int atinf[] = new int[numatinf];
+		for (i = 0, j = 0; i < n; i++) {
+			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+				atinf[j++] = i;
+			}
+		}
+		boolean member[] = new boolean[p];
+		for (i = 0; i < p; i++) {
+			for (j = 0; j < numatinf; j++) {
+				if (sing[i] == atinf[j]) {
+					member[i] = true;
+				}
+			}
+		}
+		boolean bad[] = new boolean[p];
+		int numbad = 0;
+		for (i = 0; i < p; i++) {
+		    bad[i] = member[i] && (!vertex[i]);
+		    if (bad[i]) {
+		    	numbad++;
+		    }
+		}
+		
+		if (numbad > 0) {
+			// We can't begin integrations at a preimage of infinity.  We will pick the
+			// next-closest qualified prevertex.
+			double zf[][] = new double[z.length][2];
+			for (i = 0; i < z.length; i++) {
+				zf[i][0] = z[i][0];
+				zf[i][1] = z[i][1];
+			}
+			for (i = 0; i < n; i++) {
+				if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
+					zf[i][0] = Double.POSITIVE_INFINITY;
+					zf[i][1] = 0.0;
+				}
+			}
+			double tmp[] = new double[numbad];
+			for (i = 0; i < numbad; i++) {
+				tmp[i] = Double.MAX_VALUE;
+			}
+			int s[] = new int[numbad];  // indices of prevertices
+			k = 0;
+			for (j = 0; j < p; j++) {
+				if (bad[j]) {
+					for (i = 0; i < n; i++) {
+						double currentTmp = zabs(zp[j][0]-zf[i][0],zp[j][1]-zf[i][1]);
+						if (currentTmp < tmp[k]) {
+						    tmp[k] = currentTmp;
+						    s[k] = i;
+						}
+					}
+					k++;
+				} // if (bad[j])
+			} // for (j = 0; j < p; j++)
+			
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					sing[i] = s[j++];
+				}
+			}
+			
+			// Because we no longer integrate form the closest prevertex, we must go in
+			// stages to maintain accuracy.
+			mid1 = new double[numbad][2];
+			for (i = 0; i <  numbad; i++) {
+				mid1[i][0] = z[s[i]][0];
+				mid1[i][1] = 0.5;
+			}
+			mid2 = new double[numbad][2];
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					mid2[j][0] = zp[i][0];
+					mid2[j++][1] = 0.5;
+				}
+			}
+		} // if (numbad > 0)
+		else {
+			bad = new boolean[p]; // all clear
+		}
+		
+		// zs = the starting singularities
+		double zs[][] = new double[p][2];
+		double ws[][] = new double[p][2];
+		for (i = 0; i < p; i++) {
+			zs[i][0] = z[sing[i]][0];
+			zs[i][1] = z[sing[i]][1];
+			// ws = map(zs)
+			ws[i][0] = w[sing[i]][0];
+			ws[i][1] = w[sing[i]][1];
+		}
+		
+		// Compute the map directly at "normal" points
+		boolean normal[] = new boolean[p];
+		int numnormal = 0;
+		for (i = 0; i < p; i++) {
+			normal[i] = (!bad[i]) && (!vertex[i]);
+			if (normal[i]) {
+				numnormal++;
+			}
+		}
+		if (numnormal > 0) {
+			double zsnormal[][] = new double[numnormal][2];
+			double zpnormal[][] = new double[numnormal][2];
+			int singnormal[] = new int[numnormal];
+			for (i = 0, j = 0; i < p; i++) {
+			    if (normal[i]) {
+			        zsnormal[j][0] = zs[i][0];
+			        zsnormal[j][1] = zs[i][1];
+			        zpnormal[j][0] = zp[i][0];
+			        zpnormal[j][1] = zp[i][1];
+			        singnormal[j++] = sing[i];
+			    }
+			}
+			double I[][] = stquad(zsnormal, zpnormal, singnormal, z, beta, qdat2);
+			for (i = 0, j = 0; i < p; i++) {
+				if (normal[i]) {
+				    zmlt(c[0], c[1], I[j][0], I[j][1], cr, ci);
+				    j++;
+				    wp[i][0] = ws[i][0] + cr[0];
+				    wp[i][1] = ws[i][1] + ci[0];
+				}
+			}
+		} // if (numnormal > 0)
+		
+		// Compute map at "bad" points in stages.
+		if (numbad > 0) {
+			double zsbad[][] = new double[numbad][2];
+			int singbad[] = new int[numbad];
+			int neg1bad[] = new int[numbad];
+			for (i = 0; i < numbad; i++) {
+				neg1bad[i] = -1;
+			}
+			double zpbad[][] = new double[numbad][2];
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					zsbad[j][0] = zs[i][0];
+					zsbad[j][1] = zs[i][1];
+					singbad[j] = sing[i];
+					zpbad[j][0] = zp[i][0];
+					zpbad[j++][1] = zp[i][1];
+				}
+			}
+			double I1[][] = stquad(zsbad, mid1, singbad, z, beta, qdat2);
+			double I2[][] = stquadh(mid1, mid2, neg1bad, z, beta, qdat2);
+			double I3[][] = stquad(zpbad, mid2, neg1bad, z, beta, qdat2);
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+			        zmlt(c[0], c[1], I1[j][0] + I2[j][0] - I3[j][0], I1[j][1] + I2[j][1] - I3[j][1], cr, ci);
+			        j++;
+			        wp[i][0] = ws[i][0] + cr[0];
+			        wp[i][1] = ws[i][1] + ci[0];
+				}
+			}
+		} // if (numbad > 0)
+		return wp;
 	}
 	
 	private double[][] diskeval(scmap M, double zp[][], double tol) {
