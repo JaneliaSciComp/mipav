@@ -95,7 +95,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
             //testHplmap1();
 			//testHplmap2();
 			//testHplmap3();
-			testStripmap1();
+			//testStripmap1();
+			testStripmap2();
 			return;
 		}
 
@@ -375,6 +376,57 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		 scmap f1 = stripmap(p, endidx);
 		 int endidx2[] = new int[]{3,7};
 		 scmap f2 = stripmap(p, endidx2);
+	}
+	
+	private void testStripmap2() {
+		int i;
+	    double w[][] = new double[6][2];
+	    w[0][0] = 4.0;
+	    w[0][1] = 0.0;
+	    w[1][0] = 0.0;
+	    w[1][1] = 2.0;
+	    w[2][0] = -2.0;
+	    w[2][1] = 4.0;
+	    w[3][0] = -3.0;
+	    w[3][1] = 0.0;
+	    w[4][0] = -3.0;
+	    w[4][1] = -1.0;
+	    w[5][0] = 2.0;
+	    w[5][1] = -2.0;
+	    double x[] = new double[w.length];
+	    double y[] = new double[w.length];
+	    for (i = 0; i < w.length; i++) {
+	    	x[i] = w[i][0];
+	    	y[i] = w[i][1];
+	    }
+	    polygon p = scm.new polygon(x, y, null);
+	    int endidx[] = new int[]{0,3};
+	    scmap M = stripmap(p, endidx);
+	    double zp[][] = new double[4][2];
+	    zp[0][0] = 1.0;
+	    zp[0][1] = 1.0;
+	    zp[1][0] = Double.POSITIVE_INFINITY;
+	    zp[1][1] = 0.0;
+	    zp[2][0] = -2.0;
+	    zp[2][1] = 0.5;
+	    zp[3][0] = 0.0;
+	    zp[3][1] = 0.0;
+	    double wp[][] = stripeval(M, zp);
+	    for (i = 0; i < zp.length; i++) {
+	    	if (i == 0) {
+	    		System.out.println("Expected forward result: -3.0 - 0.312856946533931i");
+	    	}
+	    	else if (i == 1) {
+	    		System.out.println("Expected forward result: -3.0 + 0.0i");
+	    	}
+	    	else if (i == 2) {
+	    		System.out.println("Expected forward result: 3.534971699300866 - 0.074755569347609i");
+	    	}
+	    	else if (i == 3) {
+	    		System.out.println("Expected forward result: 0.0 + 2.0i");
+	    	}
+	    	System.out.println("Actual forward result: " + wp[i][0] + " " + wp[i][1] + "i");
+	    }
 	}
 	
 	private scmap stripmap(polygon poly, int endidx[]) {
@@ -1172,6 +1224,50 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		}
 	}
 	
+	private double[][] stripeval(scmap M, double zp[][]) {
+		// Evaluate Schwarz-Christoffel strip map at points.
+		// stripeval evaluates the Schwarz-Christoffel map M at the points zp
+		// in the strip 0 <= Im z <= 1.  
+		// Original MATLAB eval routine copyright 1998 by Toby Driscoll.
+		int i, j;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1.0;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		double qdata[][] = M.qdata;
+		double wp[][] = new double[zp.length][2];
+		for (i = 0; i < zp.length; i++) {
+			wp[i][0] = Double.NaN;
+		}
+		boolean idx[] = new boolean[zp.length];
+		int numidx = 0;
+		for (i = 0; i < zp.length; i++) {
+			idx[i] = (zp[i][1] > -eps) && (zp[i][1] < 1.0 + eps);
+			if (idx[i]) {
+			    numidx++;	
+			}
+		}
+		double zpidx[][] = new double[numidx][2];
+		for (i = 0, j = 0; i < zp.length; i++) {
+		    if (idx[i]) {
+		    	zpidx[j][0] = zp[i][0];
+		    	zpidx[j++][1] = zp[i][1];
+		    }
+		}
+		double wpidx[][] = stmap(zpidx, w, beta, z, c, qdata);
+		for (i = 0, j = 0; i < zp.length; i++) {
+			if (idx[i]) {
+				wp[i][0] = wpidx[j][0];
+				wp[i][1] = wpidx[j++][1];
+			}
+		}
+		return wp;
+	}
+	
 	private double[][] stmap(double zp[][], double w[][], double beta[], double z[][],
 			double c[], double qdat[][]) {
 		// Schwarz-Christoffel strip map.
@@ -1183,6 +1279,10 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		int i, j, k;
 		double tol;
 		int nqpts;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double mid1[][] = null;
+		double mid2[][] = null;
 		
 		if ((zp == null) || (zp.length == 0)) {
 			return null;
@@ -1249,7 +1349,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			}
 		}
 		for (i = 0, j = 0; i < n; i++) {
-		    if (Double.isInfinite(z[i][0]) && (z[i][0] < 0.0)) {
+		    if (Double.isInfinite(z[i][0]) && (z[i][0] < 0.0) && (numleftend > j)) {
 		    	wp[leftend[j]][0] = w[i][0];
 		    	wp[leftend[j++]][1] = w[i][1];
 		    }
@@ -1267,7 +1367,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			}
 		}
 		for (i = 0, j = 0; i < n; i++) {
-		    if (Double.isInfinite(z[i][0]) && (z[i][0] > 0.0)) {
+		    if (Double.isInfinite(z[i][0]) && (z[i][0] > 0.0) && (numrightend > j)) {
 		    	wp[rightend[j]][0] = w[i][0];
 		    	wp[rightend[j++]][1] = w[i][1];
 		    }
@@ -1350,12 +1450,12 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 			
 			// Because we no longer integrate form the closest prevertex, we must go in
 			// stages to maintain accuracy.
-			double mid1[][] = new double[numbad][2];
+			mid1 = new double[numbad][2];
 			for (i = 0; i <  numbad; i++) {
 				mid1[i][0] = z[s[i]][0];
 				mid1[i][1] = 0.5;
 			}
-			double mid2[][] = new double[numbad][2];
+			mid2 = new double[numbad][2];
 			for (i = 0, j = 0; i < p; i++) {
 				if (bad[i]) {
 					mid2[j][0] = zp[i][0];
@@ -1390,13 +1490,57 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		if (numnormal > 0) {
 			double zsnormal[][] = new double[numnormal][2];
 			double zpnormal[][] = new double[numnormal][2];
-			int singbad[] = new int[numnormal];
+			int singnormal[] = new int[numnormal];
 			for (i = 0, j = 0; i < p; i++) {
 			    if (normal[i]) {
-			    	
+			        zsnormal[j][0] = zs[i][0];
+			        zsnormal[j][1] = zs[i][1];
+			        zpnormal[j][0] = zp[i][0];
+			        zpnormal[j][1] = zp[i][1];
+			        singnormal[j++] = sing[i];
 			    }
 			}
+			double I[][] = stquad(zsnormal, zpnormal, singnormal, z, beta, qdat2);
+			for (i = 0, j = 0; i < p; i++) {
+				if (normal[i]) {
+				    scm.zmlt(c[0], c[1], I[j][0], I[j][1], cr, ci);
+				    j++;
+				    wp[i][0] = ws[i][0] + cr[0];
+				    wp[i][1] = ws[i][1] + ci[0];
+				}
+			}
 		} // if (numnormal > 0)
+		
+		// Compute map at "bad" points in stages.
+		if (numbad > 0) {
+			double zsbad[][] = new double[numbad][2];
+			int singbad[] = new int[numbad];
+			int neg1bad[] = new int[numbad];
+			for (i = 0; i < numbad; i++) {
+				neg1bad[i] = -1;
+			}
+			double zpbad[][] = new double[numbad][2];
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+					zsbad[j][0] = zs[i][0];
+					zsbad[j][1] = zs[i][1];
+					singbad[j] = sing[i];
+					zpbad[j][0] = zp[i][0];
+					zpbad[j++][1] = zp[i][1];
+				}
+			}
+			double I1[][] = stquad(zsbad, mid1, singbad, z, beta, qdat2);
+			double I2[][] = stquadh(mid1, mid2, neg1bad, z, beta, qdat2);
+			double I3[][] = stquad(zpbad, mid2, neg1bad, z, beta, qdat2);
+			for (i = 0, j = 0; i < p; i++) {
+				if (bad[i]) {
+			        scm.zmlt(c[0], c[1], I1[j][0] + I2[j][0] - I3[j][0], I1[j][1] + I2[j][1] - I3[j][1], cr, ci);
+			        j++;
+			        wp[i][0] = ws[i][0] + cr[0];
+			        wp[i][1] = ws[i][1] + ci[0];
+				}
+			}
+		} // if (numbad > 0)
 		return wp;
 	}
 	
