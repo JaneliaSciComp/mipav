@@ -95,8 +95,8 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
             //testHplmap1();
 			//testHplmap2();
 			//testHplmap3();
-			//testStripmap1();
-			testStripmap2();
+			testStripmap1();
+			//testStripmap2();
 			return;
 		}
 
@@ -426,6 +426,28 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 	    		System.out.println("Expected forward result: 0.0 + 2.0i");
 	    	}
 	    	System.out.println("Actual forward result: " + wp[i][0] + " " + wp[i][1] + "i");
+	    }
+	    zp = new double[3][2];
+	    zp[0][0] = 4.0;
+	    zp[0][1] = 0.0;
+	    zp[1][0] = -2.0;
+	    zp[1][1] = 0.5;
+	    zp[2][0] = 1.0;
+	    zp[2][1] = 0.5;
+	    wp = stripeval(M, zp);
+	    double z0[][] = null;
+	    double wpinverse[][] = stripevalinv(M, wp, z0);
+	    for (i = 0; i < zp.length; i++) {
+	    	if (i == 0) {
+	    		System.out.println("Expected inverse result: 4 + 0i");
+	    	}
+	    	else if (i == 1) {
+	    		System.out.println("Expected inverse result: -2 + 0.5i");
+	    	}
+	    	else if (i == 2) {
+	    		System.out.println("Expected inverse result: 1 + 0.5i");
+	    	}
+	    	System.out.println("Actual inverse result: " + wpinverse[i][0] + " " + wpinverse[i][1] + "i");
 	    }
 	}
 	
@@ -1258,7 +1280,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		    	zpidx[j++][1] = zp[i][1];
 		    }
 		}
-		double wpidx[][] = stmap(zpidx, w, beta, z, c, qdata);
+		double wpidx[][] = scm.stmap(zpidx, w, beta, z, c, qdata);
 		for (i = 0, j = 0; i < zp.length; i++) {
 			if (idx[i]) {
 				wp[i][0] = wpidx[j][0];
@@ -1268,280 +1290,348 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		return wp;
 	}
 	
-	private double[][] stmap(double zp[][], double w[][], double beta[], double z[][],
-			double c[], double qdat[][]) {
-		// Schwarz-Christoffel strip map.
-		// stmap computes the values of the Schwarz-Christoffel strip map at the points
-		// in vector zp.  The arguments w, beta, z, c, and qdat are as in vector zp.  stmap
-		// returns a vector the same size as zp.
-		// Original MATLAB stmap routine copyright 1998 by Toby Driscoll.
-		double qdat2[][] = null;
+	
+	
+	private double[][] stripevalinv(scmap M, double wp[][], double z0[][]) {
+		// Invert Schwarz-Christoffel strip map at points.
+		// stripevalinv evaluates the inverse of the Schwarz-Christoffel map M
+		// at the points wp in the polygon.  The default tolerance of M is used.
+		// From original MATLAB evalinv routine copyright 1998 by Toby Driscoll.
+		int i;
+		double qdata[][] = M.qdata;
+		double tol = M.accuracy;
+		polygon p = M.poly;
+		double w[][] = p.vertex;
+		int n = w.length;
+		double beta[] = new double[p.angle.length];
+		for (i = 0; i < p.angle.length; i++) {
+			beta[i] = p.angle[i] - 1.0;
+		}
+		double z[][] = M.prevertex;
+		double c[] = M.constant;
+		boolean ode = true;
+		boolean newton = true;
+		int maxiter = 500;
+		double z02[][] = null;
+		
+		if ((z0 != null) && (z0.length != 0)) {
+		    if (z0.length == 1) {
+		    	z02 = new double[wp.length][2];
+		    	for (i = 0; i < wp.length; i++) {
+		    		z02[i][0] = z0[0][0];
+		    		z02[i][1] = z0[0][1];
+		    	}
+		    } // if (z0.length == 1)
+		    else if (z0.length != wp.length) {
+		    	MipavUtil.displayError("Argument z0 must be a complex scalar or the same size as wp");
+		    	return null;
+		    }
+		    else {
+		    	z02 = z0;
+		    }
+		} // if ((z0 != null) && (z0.length != 0))
+		double zp[][] = stinvmap(wp, w, beta, z, c, qdata, z02, ode, newton, tol, maxiter);
+		return zp;
+	}
+	
+	private double[][] stinvmap(double wp[][], double w[][], double beta[], double z[][],
+			double c[], double qdat[][], double z0[][], boolean ode, boolean newton, double tol,
+			int maxiter) {
+		// Schwarz-Christoffel strip inverse map.
+		// stinvmap computes the inverse of the Schwarz-Christoffel strip map (i.e., from the poloygon
+		// to the strip) at the points fiven in the vector wp.  The other arguments are as in stparam.
+		
+		// The default algorithm is to solve an ODE in order to obtain a fair approximation for zp,
+		// and then improve zp with Newton iterations.  The ODE solution at wp requires a vector z0
+		// whose forward image w0 is such that for each j, the line segment connecting wp[j] and w0[j]
+		// lies inside the polygon.  By default z0 is chosen by a fairly robust automatic process.
+		// You can choose to use either an ODE solution or Newton iterations exclusively.
+		
+		// stinvmap has two interpretations.  If the ODE solution is being used,z0 overrides the
+		// automatic selection of initial points.  (This can be handy in convex polygons, where the
+		// choice of z0 is trivial.) Otherwise,z0 is taken as an initial guess to zp.  In either case,
+		// if length(z0) == 1, the value z0 is used for all elements of wp;  otherwise, length(z0) 
+		// should equal length(wp).
+		
+		// Original MATLAB stinvmap routine copyright 1998 by Toby Driscoll.
+		
 		int i, j, k;
-		double tol;
+		int m;
+		int n = w.length;
+		double zp[][] = new double[wp.length][2];
+		int lenwp = wp.length;
 		int nqpts;
+		double qdat2[][] = null;
+		double F[][] = null;
 		double cr[] = new double[1];
 		double ci[] = new double[1];
-		double mid1[][] = null;
-		double mid2[][] = null;
 		
-		if ((zp == null) || (zp.length == 0)) {
-			return null;
-		}
-		
-		int n = w.length;
-		
-		// Quadrature data
-		if ((qdat == null) || (qdat.length == 0)) {
-		    nqpts = 8;
-		    qdat2 = new double[nqpts][2*beta.length+2];
-			scm.scqdata(qdat2, beta, nqpts);	
-		}
-		else if (qdat.length == 1) {
-			nqpts = Math.max((int)Math.ceil(-Math.log10(qdat[0][0])), 8);
+		if (qdat.length == 1) {
+			nqpts = Math.max((int)Math.ceil(-Math.log10(qdat[0][0])), 2);
 			qdat2 = new double[nqpts][2*beta.length+2];
 			scm.scqdata(qdat2, beta, nqpts);
 		}
 		else {
 			qdat2 = qdat;
 		}
-		tol = Math.pow(10.0,-qdat2.length);
-		
-		int p = zp.length;
-		double wp[][] = new double[p][2];
-		
-		// For each point in zp, find nearest prevertex.
-		double dist[] = new double[p];
-		for (i = 0; i < p; i++) {
-			dist[i] = Double.MAX_VALUE;
-		}
-		int sing[] = new int[p];  // indices of prevertices
-		for (j = 0; j < p; j++) {
-			for (i = 0; i < n; i++) {
-				double currentDist = scm.zabs(zp[j][0]-z[i][0],zp[j][1]-z[i][1]);
-				if (currentDist < dist[j]) {
-				    dist[j] = currentDist;
-				    sing[j] = i;
-				}
-			}
-		}
-		
-		// Screen out images of prevertices
-		boolean vertex[] = new boolean[p];
-		for (i = 0; i < p; i++) {
-			vertex[i] = (dist[i] < tol);
-		}
-		for (i = 0; i < p; i++) {
-			if (vertex[i]) {
-				wp[i][0] = w[sing[i]][0];
-				wp[i][1] = w[sing[i]][1];
-			}
-		}
-		int numleftend = 0;
-		for (i = 0; i < p; i++) {
-			if (Double.isInfinite(zp[i][0]) && (zp[i][0] < 0.0)) {
-				numleftend++;
-			}
-		}
-		int leftend[] = new int[numleftend];
-		for (i = 0, j = 0; i < p; i++) {
-			if (Double.isInfinite(zp[i][0]) && (zp[i][0] < 0.0)) {
-				leftend[j++] = i;
-			}
-		}
-		for (i = 0, j = 0; i < n; i++) {
-		    if (Double.isInfinite(z[i][0]) && (z[i][0] < 0.0) && (numleftend > j)) {
-		    	wp[leftend[j]][0] = w[i][0];
-		    	wp[leftend[j++]][1] = w[i][1];
+		boolean done[] = new boolean[lenwp];
+		// First, trap all points indistinguishable from vertices, or they will cause trouble.
+		// Modified 05/14/2007 to work around bug in matlab 2007a.
+		for (j = 0; j < n; j++) {
+		    for (i = 0; i < lenwp; i++) {
+		    	if (scm.zabs(wp[i][0] - w[j][0], wp[i][1] - w[j][1]) < 3.0*eps) {
+		    		zp[i][0] = z[j][0];
+		    		zp[i][1] = z[j][1];
+		    		done[i] = true;
+		    	}
 		    }
-		}
-		int numrightend = 0;
-		for (i = 0; i < p; i++) {
-			if (Double.isInfinite(zp[i][0]) && (zp[i][0] > 0.0)) {
-				numrightend++;
+		} // for (j = 0; j < n; j++)
+		int sumdone = 0;
+		int numnotdone = 0;
+		for (i = 0; i < lenwp; i++) {
+			if (done[i]) {
+				sumdone++;
+			}
+			else {
+				numnotdone++;
 			}
 		}
-		int rightend[] = new int[numrightend];
-		for (i = 0, j = 0; i < p; i++) {
-			if (Double.isInfinite(zp[i][0]) && (zp[i][0] > 0.0)) {
-				rightend[j++] = i;
-			}
+		lenwp = lenwp - sumdone;
+		if (lenwp == 0) {
+			return null;
 		}
-		for (i = 0, j = 0; i < n; i++) {
-		    if (Double.isInfinite(z[i][0]) && (z[i][0] > 0.0) && (numrightend > j)) {
-		    	wp[rightend[j]][0] = w[i][0];
-		    	wp[rightend[j++]][1] = w[i][1];
+		
+		// ODE
+		if (ode) {
+			double wpnotdone[][] = new double[numnotdone][2];
+			for (i = 0, j = 0; i < done.length; i++) {
+	    		if (!done[i]) {
+	    			wpnotdone[j][0] = wp[i][0];
+	    			wpnotdone[j++][1] = wp[i][1];
+	    		}
+	    	}
+			double w0[][] = null;
+		    if ((z0 == null) || (z0.length == 0)) {
+		        // Pick a value z0 (not a singularity) and compute the map there.	
+		    	z0 = new double[numnotdone][2];
+		    	w0 = new double[numnotdone][2];
+		    	scm.scimapz0(z0, w0, "st", wpnotdone, w, beta, z, c, qdat2, null);
+		    } // if ((z0 == null) || (z0.length == 0))
+		    else {
+		    	w0 = scm.stmap(z0, w, beta, z, c, qdat2);
+		    	if ((z0.length == 1) && (lenwp > 1)) {
+		    		double temp0 = z0[0][0];
+		    		double temp1 = z0[0][1];
+		    		z0 = new double[lenwp][2];
+		    	    for (i = 0; i < lenwp; i++) {
+		    	    	z0[i][0] = temp0;
+		    	    	z0[i][1] = temp1;
+		    	    }
+		    	    temp0 = w0[0][0];
+		    	    temp1 = w0[0][1];
+		    	    w0 = new double[lenwp][2];
+		    	    for (i = 0; i < lenwp; i++) {
+		    	    	w0[i][0] = temp0;
+		    	    	w0[i][1] = temp1;
+		    	    }
+		    	} // if ((z0.length == 1) && (lenwp > 1))
+		    } // else
+		    
+		    // Use relaxed OD tol if improving with Newton.
+		    double odetol = tol;
+		    if (newton) {
+		        odetol = Math.max(tol, 1.0E-2);	
 		    }
-		}
-		for (i = 0; i < numleftend; i++) {
-			vertex[leftend[i]] = true;
-		}
-		for (i = 0; i < numrightend; i++) {
-			vertex[rightend[i]] = true;
-		}
-		
-		// "Bad" points are closest to a prevertex of inifinty
-		int numatinf = 0;
-		for (i = 0; i < n; i++) {
-			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
-				numatinf++;
-			}
-		}
-		int atinf[] = new int[numatinf];
-		for (i = 0, j = 0; i < n; i++) {
-			if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
-				atinf[j++] = i;
-			}
-		}
-		boolean member[] = new boolean[p];
-		for (i = 0; i < p; i++) {
-			for (j = 0; j < numatinf; j++) {
-				if (sing[i] == atinf[j]) {
-					member[i] = true;
-				}
-			}
-		}
-		boolean bad[] = new boolean[p];
-		int numbad = 0;
-		for (i = 0; i < p; i++) {
-		    bad[i] = member[i] && (!vertex[i]);
-		    if (bad[i]) {
-		    	numbad++;
+		    double abstol = odetol;
+			double reltol = odetol;
+		    
+		    // Rescale dependent coordinate.
+		    double scale[][] = new double[numnotdone][2];
+		    for (i = 0; i < numnotdone; i++) {
+		    	scale[i][0] = wpnotdone[i][0] - w0[i][0];
+		    	scale[i][1] = wpnotdone[i][1] - w0[i][1];
 		    }
-		}
-		
-		if (numbad > 0) {
-			// We can't begin integrations at a preimage of infinity.  We will pick the
-			// next-closest qualified prevertex.
-			double zf[][] = new double[z.length][2];
-			for (i = 0; i < z.length; i++) {
-				zf[i][0] = z[i][0];
-				zf[i][1] = z[i][1];
+		    
+		    // Solve ODE
+		    double z02[] = new double[2*z0.length];
+		    for (i = 0; i < z0.length; i++) {
+		    	z02[i] = z0[i][0];
+		    	z02[z0.length + i] = z0[i][1];
+		    }
+		    double yarr[][] = new double[3][z02.length];
+			for (i = 0; i < z02.length; i++) {
+				yarr[0][i] = z02[i];
 			}
-			for (i = 0; i < n; i++) {
-				if (Double.isInfinite(w[i][0]) || Double.isInfinite(w[i][1])) {
-					zf[i][0] = Double.POSITIVE_INFINITY;
-					zf[i][1] = 0.0;
+			double coef = 0.1;
+			double t[] = new double[1];
+			double relerr[] = new double[1];
+			double abserr[] = new double[1];
+			int iflag[] = new int[1];
+			ODESTModel modODE;
+			double tout;
+			while (true) {
+				t[0] = 0;
+				tout = 0.5;
+				relerr[0] = coef*reltol;
+				abserr[0] = coef*abstol;
+				iflag[0] = 1;
+				for (i = 0; i < z02.length; i++) {
+				    z02[i] = yarr[0][i];
 				}
-			}
-			double tmp[] = new double[numbad];
-			for (i = 0; i < numbad; i++) {
-				tmp[i] = Double.MAX_VALUE;
-			}
-			int s[] = new int[numbad];  // indices of prevertices
-			k = 0;
-			for (j = 0; j < p; j++) {
-				if (bad[j]) {
-					for (i = 0; i < n; i++) {
-						double currentTmp = scm.zabs(zp[j][0]-zf[i][0],zp[j][1]-zf[i][1]);
-						if (currentTmp < tmp[k]) {
-						    tmp[k] = currentTmp;
-						    s[k] = i;
-						}
-					}
-					k++;
-				} // if (bad[j])
-			} // for (j = 0; j < p; j++)
-			
-			for (i = 0, j = 0; i < p; i++) {
-				if (bad[i]) {
-					sing[i] = s[j++];
+				modODE = new ODESTModel(z02.length, z02, t, tout, relerr,
+						abserr, iflag, scale, z, beta, c);
+				modODE.driver();
+				System.out.println(modODE.getErrorMessage());
+				if ((iflag[0] >= 3) && (iflag[0] <= 5)) {
+					System.out.println("Final time reached = " + t[0]);
 				}
-			}
-			
-			// Because we no longer integrate form the closest prevertex, we must go in
-			// stages to maintain accuracy.
-			mid1 = new double[numbad][2];
-			for (i = 0; i <  numbad; i++) {
-				mid1[i][0] = z[s[i]][0];
-				mid1[i][1] = 0.5;
-			}
-			mid2 = new double[numbad][2];
-			for (i = 0, j = 0; i < p; i++) {
-				if (bad[i]) {
-					mid2[j][0] = zp[i][0];
-					mid2[j++][1] = 0.5;
+				if ((iflag[0] != 3) || (coef >= 1024.0)) {
+					break;
 				}
+				coef = 2.0 * coef;
+			} // while (true)
+			for (i = 0; i < z02.length; i++) {
+				yarr[1][i] = z02[i];
 			}
-		} // if (numbad > 0)
-		else {
-			bad = new boolean[p]; // all clear
-		}
-		
-		// zs = the starting singularities
-		double zs[][] = new double[p][2];
-		double ws[][] = new double[p][2];
-		for (i = 0; i < p; i++) {
-			zs[i][0] = z[sing[i]][0];
-			zs[i][1] = z[sing[i]][1];
-			// ws = map(zs)
-			ws[i][0] = w[sing[i]][0];
-			ws[i][1] = w[sing[i]][1];
-		}
-		
-		// Compute the map directly at "normal" points
-		boolean normal[] = new boolean[p];
-		int numnormal = 0;
-		for (i = 0; i < p; i++) {
-			normal[i] = (!bad[i]) && (!vertex[i]);
-			if (normal[i]) {
-				numnormal++;
+			coef = 0.1;
+			while (true) {
+				t[0] = 0.5;
+				tout = 1.0;
+				relerr[0] = coef*reltol;
+				abserr[0] = coef*abstol;
+				iflag[0] = 1;
+				for (i = 0; i < z02.length; i++) {
+				    z02[i] = yarr[1][i];	
+				}
+				modODE = new ODESTModel(z02.length, z02, t, tout, relerr,
+						abserr, iflag, scale, z, beta, c);
+				modODE.driver();
+				System.out.println(modODE.getErrorMessage());
+				if ((iflag[0] >= 3) && (iflag[0] <= 5)) {
+					System.out.println("Final time reached = " + t[0]);
+				}
+				if ((iflag[0] != 3) || (coef >= 1024.0)) {
+					break;
+				}
+				coef = 2.0 * coef;
+			} // while (true)
+			for (i = 0; i < z02.length; i++) {
+				yarr[2][i] = z02[i];
 			}
-		}
-		if (numnormal > 0) {
-			double zsnormal[][] = new double[numnormal][2];
-			double zpnormal[][] = new double[numnormal][2];
-			int singnormal[] = new int[numnormal];
-			for (i = 0, j = 0; i < p; i++) {
-			    if (normal[i]) {
-			        zsnormal[j][0] = zs[i][0];
-			        zsnormal[j][1] = zs[i][1];
-			        zpnormal[j][0] = zp[i][0];
-			        zpnormal[j][1] = zp[i][1];
-			        singnormal[j++] = sing[i];
+			m = yarr.length;
+			int leny = yarr[0].length;
+			for (i = 0, j = 0; i < done.length; i++) {
+			    if (!done[i]) {
+			    	zp[i][0] = yarr[m-1][j];
+			    	zp[i][1] = yarr[m-1][j + lenwp];
+			    	j++;
 			    }
-			}
-			double I[][] = stquad(zsnormal, zpnormal, singnormal, z, beta, qdat2);
-			for (i = 0, j = 0; i < p; i++) {
-				if (normal[i]) {
-				    scm.zmlt(c[0], c[1], I[j][0], I[j][1], cr, ci);
-				    j++;
-				    wp[i][0] = ws[i][0] + cr[0];
-				    wp[i][1] = ws[i][1] + ci[0];
-				}
-			}
-		} // if (numnormal > 0)
+			} // for (i = 0, j = 0; i < done.length; i++)
+		} // if (ode)
 		
-		// Compute map at "bad" points in stages.
-		if (numbad > 0) {
-			double zsbad[][] = new double[numbad][2];
-			int singbad[] = new int[numbad];
-			int neg1bad[] = new int[numbad];
-			for (i = 0; i < numbad; i++) {
-				neg1bad[i] = -1;
-			}
-			double zpbad[][] = new double[numbad][2];
-			for (i = 0, j = 0; i < p; i++) {
-				if (bad[i]) {
-					zsbad[j][0] = zs[i][0];
-					zsbad[j][1] = zs[i][1];
-					singbad[j] = sing[i];
-					zpbad[j][0] = zp[i][0];
-					zpbad[j++][1] = zp[i][1];
-				}
-			}
-			double I1[][] = stquad(zsbad, mid1, singbad, z, beta, qdat2);
-			double I2[][] = stquadh(mid1, mid2, neg1bad, z, beta, qdat2);
-			double I3[][] = stquad(zpbad, mid2, neg1bad, z, beta, qdat2);
-			for (i = 0, j = 0; i < p; i++) {
-				if (bad[i]) {
-			        scm.zmlt(c[0], c[1], I1[j][0] + I2[j][0] - I3[j][0], I1[j][1] + I2[j][1] - I3[j][1], cr, ci);
-			        j++;
-			        wp[i][0] = ws[i][0] + cr[0];
-			        wp[i][1] = ws[i][1] + ci[0];
-				}
-			}
-		} // if (numbad > 0)
-		return wp;
+		// Newton iterations
+		if (newton) {
+			double zn[][];
+		    if (!ode) {
+		    	if ((z0.length == 1)&& (lenwp > 1)) {
+		    		zn = new double[lenwp][2];
+		    		for (i = 0; i < lenwp; i++) {
+		    		    zn[i][0] = z0[0][0];
+		    		    zn[i][1] = z0[0][1];
+		    		}
+		    	} // if ((z0.length == 1)&& (lenwp > 1))
+		    	else {
+		    		zn = new double[z0.length][2];
+		    		for (i = 0; i < z0.length; i++) {
+		    			zn[i][0] = z0[i][0];
+		    			zn[i][1] = z0[i][1];
+		    		}
+		    	}
+		    	for (i = 0; i < done.length; i++) {
+	    			if (done[i]) {
+	    				zn[i][0] = zp[i][0];
+	    				zn[i][1] = zp[i][1];
+	    			}
+		    	}	
+		    } // if (!ode)
+		    else {
+		    	zn = new double[zp.length][2];
+			    for (i = 0; i < zp.length; i++) {
+			        zn[i][0] = zp[i][0];
+			        zn[i][1] = zp[i][1];
+			    }	
+		    } // else
+		    
+		    k = 0;
+		    while ((numnotdone > 0) && (k < maxiter)) {
+			    double wpnotdone[][] = new double[numnotdone][2];
+			    double znnotdone[][] = new double[numnotdone][2];
+			    for (i = 0, j = 0; i < done.length; i++) {
+			    	if (!done[i]) {
+			    		wpnotdone[j][0] = wp[i][0];
+			    		wpnotdone[j][1] = wp[i][1];
+			    		znnotdone[j][0] = zn[i][0];
+			    		znnotdone[j++][1] = zn[i][1];
+			    	}
+			    }
+			    double wpnotdone2[][] = scm.stmap(znnotdone, w, beta, z, c, qdat2);
+			    F = new double[numnotdone][2];
+			    for (i = 0; i < numnotdone; i++) {
+			    	F[i][0] = wpnotdone[i][0] - wpnotdone2[i][0];
+			    	F[i][1] = wpnotdone[i][1] - wpnotdone2[i][1];
+			    }
+			    double prec[] = new double[]{1.0,0.0};
+			    double ds[][] = stderiv(znnotdone, z, beta,prec, -1);
+			    double dF[][] = new double[numnotdone][2];
+			    for (i = 0; i < numnotdone; i++) {
+			        scm.zmlt(c[0], c[1], ds[i][0], ds[i][1], cr, ci);
+			        dF[i][0] = cr[0];
+			        dF[i][1] = ci[0];
+			    }
+			    double Fdiv[][] = new double[numnotdone][2];
+			    for (i = 0; i < numnotdone; i++) {
+			    	scm.zdiv(F[i][0], F[i][1], dF[i][0], dF[i][1], cr, ci);
+			    	Fdiv[i][0] = cr[0];
+			    	Fdiv[i][1] = ci[0];
+			    }
+			    for (i = 0, j = 0; i < lenwp; i ++) {
+			    	if (!done[i]) {
+			    		zn[i][0] = zn[i][0] + Fdiv[j][0];
+			    		zn[i][1] = zn[i][1] + Fdiv[j++][1];
+			    	}
+			    }
+			    for (i = 0, j = 0; i < done.length; i++) {
+			    	if (!done[i]) {
+			    		done[i] = (scm.zabs(F[j][0], F[j][1]) < tol);
+			    		j++;
+			    	}
+			    }
+			    numnotdone = 0;
+			    for (i = 0; i < done.length; i++) {
+			        if (!done[i]) {
+			        	numnotdone++;
+			        }
+			    }
+			    k = k + 1;
+		    } // while ((numnotdone > 0) && (k < maxiter))
+		    double maxabsF = 0.0;
+		    for (i = 0; i < F.length; i++) {
+		    	double resid = scm.zabs(F[i][0], F[i][1]);
+		    	//Preferences.debug("resid = " + resid + "\n", Preferences.DEBUG_ALGORITHM);
+		    	if (resid > maxabsF) {
+		    		maxabsF = resid;
+		    	}
+		    }
+		    if (maxabsF > tol ) {
+		    	MipavUtil.displayWarning("Check solution: maximum residual in stinvamp = " + maxabsF);
+		    }
+		    for (i = 0; i < zn.length; i++) {
+		    	zp[i][0] = zn[i][0];
+		    	zp[i][1] = zn[i][1];
+		    }
+		} // if (newton)
+		
+		return zp;
 	}
 	
 	private void hpevalinv(double zp[][], scmap M, double wp[][]) {
@@ -1874,6 +1964,59 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		} // if (newton)
 	}
 	
+	class ODESTModel extends ODE {
+		// Used by stinvmap for solution of an ODE.
+		double scale[][];
+		double z[][];
+		double beta[];
+		double c[];
+		public ODESTModel(int neqn, double y[], double t[], double tout, double relerr[],
+				double abserr[], int iflag[], double scale[][], double z[][], 
+				double beta[], double c[]) {
+			super(neqn, y, t, tout, relerr, abserr, iflag);
+			this.scale = scale;
+			this.z = z;
+			this.beta = beta;
+			this.c = c;
+			
+		}
+		
+		/**
+		 * DOCUMENT ME!
+		 */
+		public void driver() {
+			super.driver();
+		}
+		
+		public void f(double x, double yy[], double yp[]) {
+			int i;
+			double cr[] = new double[1];
+			double ci[] = new double[1];
+			int lenyy = yy.length;
+			int lenzp = lenyy/2;
+			double zp[][] = new double[lenzp][2];
+			for (i = 0; i < lenzp; i++) {
+				zp[i][0] = yy[i];
+			}
+			for (i = lenzp; i < lenyy; i++) {
+				zp[i-lenzp][1] = yy[i];
+			}
+			
+			double fprime[][] = stderiv(zp, z, beta, c, -1);
+			double f[][] = new double[scale.length][2];
+			for (i = 0; i < scale.length; i++) {
+				scm.zdiv(scale[i][0], scale[i][1], fprime[i][0], fprime[i][1], cr, ci);
+				f[i][0] = cr[0];
+				f[i][1] = ci[0];
+			}
+			
+			for (i = 0; i < f.length; i++) {
+				yp[i] = f[i][0];
+				yp[f.length + i] = f[i][1];
+			}	
+		}
+	}
+	
 	class ODEHPModel extends ODE {
 		double scale[][];
 		double z[][];
@@ -1910,7 +2053,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 				zp[i][0] = yy[i];
 			}
 			for (i = lenzp; i < lenyy; i++) {
-				zp[i-lenzp][1] = Math.max(0.0, yy[i]);;
+				zp[i-lenzp][1] = Math.max(0.0, yy[i]);
 			}
 			
 			double fprime[][] = hpderiv(zp, z, beta, c);
@@ -5491,6 +5634,7 @@ public class SchwarzChristoffelMapping2 extends AlgorithmBase {
 		} // for (kk = 0; kk < numnontriv; kk++)
 		return I;
 	}
+
 	
 	private double[][] stderiv(double zp[][], double z[][], double beta[], double c[], int j) {
 		// Derivative of the strip map
