@@ -43,6 +43,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     private JTable deTable;
     private ViewTableModel deTableModel; 
+    private FormStructure formStructure;
     private List<FormStructure> formStructureList;
     private FormStructureData fsInfo = null;
 
@@ -59,9 +60,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private final Hashtable<RepeatableGroup, JPanel> groupPanelTable = new Hashtable<RepeatableGroup, JPanel>();
     private final Hashtable<RepeatableGroup, JButton> groupRemoveButtonTable = new Hashtable<RepeatableGroup, JButton>();
 
-    private static final String STRUCT_GUID_SEPERATOR = "_-_";
-    private static final String CSV_OUTPUT_DELIM = ",";
-    private static final String BROWSE_NONIMG_DELIM = ";;;;";
+    private static final String STRUCT_GUID_SEPERATOR 	= "_-_";
+    private static final String CSV_OUTPUT_DELIM 		= ",";
+    private static final String BROWSE_NONIMG_DELIM 	= ";;;;";
     private static final String MULTI_SELECT_VALUE_DELIM = ";";
     
     private static final int MULTI_SELECT_VISIBLE_ROWS = 5;
@@ -155,18 +156,18 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private static final int RESOLVE_CONFLICT_CSV = 1;
     private static final int RESOLVE_CONFLICT_IMG = 2;
 
-    private static final String svnVersion = "$Rev: 15178 $";
-    private static final String svnLastUpdate = "$Date: 2017-10-10 14:17:11 -0400 (Tue, 10 Oct 2017) $";
+    private static final String svnVersion 		= "$Rev: 15178 $";
+    private static final String svnLastUpdate 	= "$Date: 2017-10-10 14:17:11 -0400 (Tue, 10 Oct 2017) $";
     //private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
-    private static final String pluginVersion = "Beta version 0.1";
+    private static final String pluginVersion 	= "Beta version 0.1";
 
-    private static final String VALUE_OTHER_SPECIFY = "Other, specify";
-    private static final String VALUE_YES_SPECIFY = "Yes, specify";
-    private static final String ELEM_OTHER_SPECIFY_SUFFIX = "OTH";
-    private static final String ELEM_YES_SPECIFY_SUFFIX = "ST";
-    private static final String GUID_ELEMENT_NAME = "GUID";
-    static final String recordIndicatorColumn = "record";
-    private static final String recordIndicatorValue = "x";
+    private static final String VALUE_OTHER_SPECIFY 		= "Other, specify";
+    private static final String VALUE_YES_SPECIFY 			= "Yes, specify";
+    private static final String ELEM_OTHER_SPECIFY_SUFFIX 	= "OTH";
+    private static final String ELEM_YES_SPECIFY_SUFFIX 	= "ST";
+    private static final String GUID_ELEMENT_NAME 			= "GUID";
+    static final String recordIndicatorColumn 				= "record";
+    private static final String recordIndicatorValue 		= "x";
 
     private javax.swing.SwingWorker<Object, Object> fileWriterWorkerThread;
 
@@ -288,7 +289,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             
         } else if (command.equalsIgnoreCase("HelpWeb")) {
 
-            //MipavUtil.showWebHelp("Image_submission_plug-in");
+            MipavUtil.showWebHelp("Image_submission_plug-in");
 
         } else if (command.equalsIgnoreCase("Finish")) {
 
@@ -481,473 +482,16 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
     }
 
-   
-
-   
-
-    private GroupRepeat parseGroupRepeat(final FormStructure dataStructure, final FormStructureData fsData, final RepeatableGroup group, final int repeatNum) {
-        final GroupRepeat repeat = new GroupRepeat(group, fsData, repeatNum);
-
-        for (final MapElement de : group.getDataElements()) {
-            final DataElementValue newDeVal = new DataElementValue(repeat, de);
-            final DataElement deFullInfo = fsData.getDataElement(de.getStructuralDataElement());
-
-            JLabel l;
-
-            l = new JLabel(deFullInfo.getTitle());
-            // l = new JLabel(de.getStructuralDataElement().getName());
-
-            l.setFont(MipavUtil.font12);
-            l.setName(de.getStructuralDataElement().getName());
-
-            String tooltip = "<html><p><b>Name:</b> " + de.getStructuralDataElement().getName() + "<br/>";
-            tooltip += "<b>Required?:</b> " + de.getRequiredType().getValue() + "<br/>";
-            tooltip += "<b>Description:</b><br/>" + WordUtils.wrap(deFullInfo.getDescription(), 80, "<br/>", false);
-            tooltip += "</p></html>";
-            l.setToolTipText(tooltip);
-
-            for (final Alias a : de.getStructuralDataElement().getAliasList()) {
-                System.out.println(a);
-            }
-
-            if (de.getStructuralDataElement().getValueRangeList() != null && de.getStructuralDataElement().getValueRangeList().size() > 0
-                    && de.getStructuralDataElement().getType() != null && !de.getStructuralDataElement().getType().equals(DataType.DATE)) {
-                if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.SINGLE
-                        || de.getStructuralDataElement().getRestrictions() == InputRestrictions.FREE_FORM) {
-                    final JComboBox cb = new JComboBox();
-                    cb.setName(de.getStructuralDataElement().getName());
-                    cb.setFont(MipavUtil.font12);
-
-                    cb.addItem("");
-                    final List<ValueRange> valuesList = new ArrayList<ValueRange>();
-                    valuesList.addAll(de.getStructuralDataElement().getValueRangeList());
-                    Collections.sort(valuesList);
-                    for (final ValueRange val : valuesList) {
-                        cb.addItem(val.getValueRange());
-                    }
-                    cb.addItemListener(this);
-
-                    if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
-                        l.setForeground(Color.red);
-                    }
-
-                    tooltip = "<html>";
-                    if (de.getStructuralDataElement().getMeasuringUnit() != null) {
-                        tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
-                    }
-
-                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                    }
-                    if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                        tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
-                    }
-                    if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
-                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
-                    }
-                    tooltip += "</html>";
-                    if ( !tooltip.equals("<html></html>")) {
-                        cb.setToolTipText(tooltip);
-                    }
-
-                    newDeVal.setLabel(l);
-                    newDeVal.setComp(cb);
-                } else if (de.getStructuralDataElement().getRestrictions() == InputRestrictions.MULTIPLE) {
-                    final List<ValueRange> valuesList = new ArrayList<ValueRange>();
-                    valuesList.addAll(de.getStructuralDataElement().getValueRangeList());
-                    Collections.sort(valuesList);
-                    final String[] valStrList = new String[valuesList.size()];
-                    int i = 0;
-                    for (final ValueRange val : valuesList) {
-                        valStrList[i] = val.getValueRange();
-                        i++;
-                    }
-
-                    final JList list = new JList(valStrList);
-                    list.setName(de.getStructuralDataElement().getName());
-                    list.setFont(MipavUtil.font12);
-                    list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-                    list.setLayoutOrientation(JList.VERTICAL);
-                    list.setVisibleRowCount(MULTI_SELECT_VISIBLE_ROWS);
-
-                    final JScrollPane listScroller = new JScrollPane(list);
-                    listScroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-                    // listScroller.setPreferredSize(new Dimension(250, 80));
-
-                    if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
-                        l.setForeground(Color.red);
-                    }
-
-                    tooltip = "<html>";
-                    if (de.getStructuralDataElement().getMeasuringUnit() != null) {
-                        tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
-                    }
-
-                    if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                        tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                    }
-                    if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                        tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                                + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
-                    }
-                    if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
-                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
-                    }
-                    tooltip += "</html>";
-                    if ( !tooltip.equals("<html></html>")) {
-                        list.setToolTipText(tooltip);
-                    }
-
-                    newDeVal.setLabel(l);
-                    newDeVal.setComp(list);
-                }
-            } else {
-                final JTextField tf = new JTextField(20);
-                tf.setName(de.getStructuralDataElement().getName());
-                tf.setFont(MipavUtil.font12);
-
-                tf.addMouseListener(new ContextMenuMouseListener());
-
-                tooltip = "<html><p><b>Type:</b> " + de.getStructuralDataElement().getType().getValue();
-                if (de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC) && de.getStructuralDataElement().getSize() != null) {
-                    tooltip += " (" + de.getStructuralDataElement().getSize() + ")";
-                }
-                tooltip += "</p>";
-
-                if (de.getStructuralDataElement().getType().equals(DataType.NUMERIC) || de.getStructuralDataElement().getType().equals(DataType.ALPHANUMERIC)) {
-                    if (de.getStructuralDataElement().getMinimumValue() != null || de.getStructuralDataElement().getMaximumValue() != null) {
-                        tooltip += "<p>";
-                        if (de.getStructuralDataElement().getMinimumValue() != null) {
-                            tooltip += "<b>Min:</b> " + de.getStructuralDataElement().getMinimumValue() + " ";
-                        }
-                        if (de.getStructuralDataElement().getMaximumValue() != null) {
-                            tooltip += "<b>Max:</b> " + de.getStructuralDataElement().getMaximumValue();
-                        }
-                        tooltip += "</p>";
-                    }
-                }
-
-                if (de.getStructuralDataElement().getMeasuringUnit() != null) {
-                    tooltip += "<p><b>Unit of measure:</b> " + de.getStructuralDataElement().getMeasuringUnit() + "</p>";
-                }
-
-                if (deFullInfo.getNinds() != null && !deFullInfo.getNinds().getValue().equals("")) {
-                    tooltip += "<p><b>NINDS CDE ID:</b> " + deFullInfo.getNinds().getValue() + "</p>";
-                }
-                if (deFullInfo.getGuidelines() != null && !deFullInfo.getGuidelines().trim().equals("")) {
-                    tooltip += "<p><b>Guidelines & Instructions:</b></br>"
-                            + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getGuidelines()), 80, "<br/>", false) + "</p>";
-                }
-                if (deFullInfo.getNotes() != null && !deFullInfo.getNotes().trim().equals("")) {
-                    tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(deFullInfo.getNotes()), 80, "<br/>", false) + "</p>";
-                }
-                tooltip += "</html>";
-                tf.setToolTipText(tooltip);
-                tf.addFocusListener(this);
-
-                if (de.getRequiredType().equals(RequiredType.REQUIRED)) {
-                    l.setForeground(Color.red);
-                }
-
-                newDeVal.setLabel(l);
-                newDeVal.setComp(tf);
-            }
-
-            repeat.addDataElement(newDeVal);
-        }
-
-        // now that all DEs are added, find sister elements
-        DataElementValue bigSister = null;
-        for (final DataElementValue deVal : repeat.getDataElements()) {
-            if (isNewOtherSpecifyField(deVal)) {
-                bigSister = deVal;
-            } else if (bigSister != null && isSisterField(deVal)) {
-                // assume that they need to be next to each other and the specify field comp is a text field
-                if (deVal.getPosition() == bigSister.getPosition() + 1 && deVal.getComp() instanceof JTextField) {
-                    bigSister.setOtherSpecifyField((JTextField) deVal.getComp());
-                }
-            } else {
-                // didn't find a sister, so reset the saved big sister
-                bigSister = null;
-            }
-        }
-
-        return repeat;
-    }
 
     @Override
     public void focusGained(final FocusEvent e) {}
 
     @Override
     public void focusLost(final FocusEvent e) {
-        validateFields();
+        //validateFields();
     }
 
-    /**
-     * validates fields
-     * 
-     * @return
-     */
-    public ArrayList<String> validateFields() {
-        final ArrayList<String> errs = new ArrayList<String>();
-
-        parseFormStructForValidation(fsInfo, errs);
-
-        return errs;
-    }
-
-    /**
-     * validates fields
-     */
-    public void parseFormStructForValidation(final FormStructureData fsData, final ArrayList<String> errs) {
-        errors = new ArrayList<DataElementValue>();
-        String value = "";
-        final String key = "";
-        RequiredType required = null;
-        DataType type = null;
-        String title = "";
-
-        for (final RepeatableGroup group : fsData.getStructInfo().getRepeatableGroups()) {
-            for (final GroupRepeat repeat : fsData.getAllGroupRepeats(group.getName())) {
-                for (final DataElementValue deVal : repeat.getDataElements()) {
-                    final StructuralDataElement deInfo = deVal.getDataElementInfo();
-
-                    final JComponent deComp = deVal.getComp();
-                    if (deComp instanceof JTextField) {
-                        value = ((JTextField) deComp).getText().trim();
-                    } else if (deComp instanceof JComboBox) {
-                        value = (String) ( ((JComboBox) deComp).getSelectedItem());
-                    } else if (deComp instanceof JList) {
-                        value = "";
-                        final int[] selectedIndicies = ((JList) deComp).getSelectedIndices();
-                        for (final int index : selectedIndicies) {
-                            if (value == "") {
-                                value = (String) ((JList) deComp).getModel().getElementAt(index);
-                            } else {
-                                value += MULTI_SELECT_VALUE_DELIM + (String) ((JList) deComp).getModel().getElementAt(index);
-                            }
-                        }
-                    }
-
-                    // now we need to validate
-                    required = deVal.getRequiredType();
-                    type = deInfo.getType();
-                    title = fsData.getDataElement(deInfo).getTitle();
-
-                    if (required.equals(RequiredType.REQUIRED)) {
-                        if (value.trim().equalsIgnoreCase("")) {
-                            errs.add(title + " is a required field");
-                            errors.add(deVal);
-                        } /**else {
-                            if (key.equalsIgnoreCase(GUID_ELEMENT_NAME)) {
-                                if ( !isGuid(value.trim())) {
-                                    errs.add(title + " must begin with a valid GUID prefix");
-                                    errors.add(deVal);
-                                }
-                            }
-                        }*/
-                    }
-
-                    if (type.equals(DataType.NUMERIC)) {
-                        if ( !value.trim().equalsIgnoreCase("")) {
-                            try {
-                                final float floatValue = Float.valueOf(value.trim()).floatValue();
-                                if (deInfo.getMinimumValue() != null && floatValue < deInfo.getMinimumValue().floatValue()) {
-                                    errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
-                                            + deInfo.getMaximumValue().floatValue());
-                                    errors.add(deVal);
-                                } else if (deInfo.getMaximumValue() != null && floatValue > deInfo.getMaximumValue().floatValue()) {
-                                    errs.add(title + " must be in the range of " + deInfo.getMinimumValue().floatValue() + " to "
-                                            + deInfo.getMaximumValue().floatValue());
-                                    errors.add(deVal);
-                                }
-                            } catch (final NumberFormatException e) {
-                                errs.add(title + " must be a number");
-                                errors.add(deVal);
-                            }
-                        }
-                    }
-                    if (type.equals(DataType.ALPHANUMERIC)) {
-                        if (deInfo.getSize() != null && deInfo.getSize() > 0 && value.length() > deInfo.getSize()) {
-                            errs.add(title + " must not exceed " + deInfo.getSize() + " in length");
-                            errors.add(deVal);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void parseForInitLabelsAndComponents() {
-        final GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(2, 5, 2, 5);
-
-        for (final RepeatableGroup g : fsInfo.getStructInfo().getRepeatableGroups()) {
-            final JPanel groupPanel = new JPanel(new GridBagLayout());
-
-            final GridBagConstraints egbc = new GridBagConstraints();
-            egbc.insets = new Insets(2, 5, 2, 5);
-            egbc.fill = GridBagConstraints.HORIZONTAL;
-            egbc.weightx = 1;
-            egbc.gridx = 0;
-            egbc.anchor = GridBagConstraints.WEST;
-            egbc.gridy = 0;
-
-            for (final GroupRepeat repeat : fsInfo.getAllGroupRepeats(g.getName())) {
-                final JPanel repeatPanel = buildGroupRepeatPanel(repeat);
-                repeatPanel.setBorder(JDialogBase.buildTitledBorder("Repeat number " + (repeat.getRepeatNumber() + 1)));
-
-                if (repeatPanel.getComponentCount() > 0) {
-                    groupPanel.add(repeatPanel, egbc);
-                    egbc.gridy++;
-                }
-            }
-
-            final JPanel groupPanelWithControls = new JPanel(new BorderLayout());
-            groupPanelWithControls.setBorder(JDialogBase.buildTitledBorder(g.getName()));
-            groupPanelWithControls.add(groupPanel, BorderLayout.NORTH);
-            groupPanelWithControls.add(buildRepeatControlPanel(g), BorderLayout.SOUTH);
-
-            if (groupPanel.getComponentCount() > 0) {
-                gbc.gridy = g.getPosition(); // group position is 0-based (unlike data element position)
-                dsMainPanel.add(groupPanelWithControls, gbc);
-                groupPanelTable.put(g, groupPanel);
-            }
-        }
-    }
-
-    private JPanel buildGroupRepeatPanel(final GroupRepeat repeat) {
-        final JPanel repeatPanel = new JPanel(new GridBagLayout());
-
-        final GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(2, 5, 2, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1;
-        gbc.gridx = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-
-        for (final DataElementValue deVal : repeat.getDataElements()) {
-            if ( (fixErrors == FIX_ERRORS_NOW && errors.contains(deVal)) || fixErrors == FIX_ERRORS_LATER || fixErrors == FIX_ERRORS_CANCEL) {
-                final JPanel elementPanel = new JPanel(new GridBagLayout());
-                final GridBagConstraints egbc = new GridBagConstraints();
-                egbc.insets = new Insets(2, 5, 2, 5);
-                egbc.fill = GridBagConstraints.HORIZONTAL;
-                egbc.anchor = GridBagConstraints.EAST;
-                egbc.weightx = 0;
-                // elementPanel.add(l, egbc);
-
-                egbc.weightx = 1;
-                egbc.gridy = 0;
-                egbc.gridx = 0;
-                egbc.anchor = GridBagConstraints.WEST;
-
-                final StructuralDataElement deInfo = deVal.getDataElementInfo();
-
-                if (deInfo.getType().equals(DataType.FILE) || deInfo.getType().equals(DataType.TRIPLANAR)) {
-                    elementPanel.add(deVal.getComp(), egbc);
-                    egbc.gridx++;
-                    final JButton browseButton = new JButton("Browse");
-                    browseButton.addActionListener(this);
-                    browseButton.setActionCommand("browse_-_" + repeat.getGroupInfo().getName() + "_-_" + repeat.getRepeatNumber() + "_-_" + deInfo.getName());
-                    elementPanel.add(browseButton, egbc);
-                } else {
-                    egbc.gridwidth = 2;
-                    if (deInfo.getRestrictions() == InputRestrictions.MULTIPLE) {
-                        // the stored component is the JList of option. instead, add the scrollpane containing it (a
-                        // viewport is in between)
-                        elementPanel.add(deVal.getComp().getParent().getParent(), egbc);
-                    } else {
-                        elementPanel.add(deVal.getComp(), egbc);
-                    }
-
-                    if (isLegacyOtherSpecifyField(deVal)) {
-                        egbc.gridy++;
-                        elementPanel.add(deVal.getOtherSpecifyField(), egbc);
-                    }
-                }
-
-                // gbc.gridy++;
-                gbc.insets = new Insets(2, 5, 2, 5);
-                gbc.fill = GridBagConstraints.HORIZONTAL;
-                gbc.anchor = GridBagConstraints.NORTHWEST;
-                gbc.weightx = 0;
-                gbc.gridx = 0;
-                gbc.gridy = deVal.getPosition() - 1; // data element position is 1-based
-                // gbc.gridy++;
-                repeatPanel.add(deVal.getLabel(), gbc);
-                gbc.gridx = 1;
-                gbc.anchor = GridBagConstraints.NORTHEAST;
-                gbc.weightx = 1;
-                repeatPanel.add(elementPanel, gbc);
-
-                // gridYCounter = gridYCounter + 1;
-                // gbc.gridy = gridYCounter;
-                gbc.gridx = 0;
-                gbc.gridwidth = 1;
-            }
-        }
-
-        return repeatPanel;
-    }
-
-    private JPanel buildRepeatControlPanel(final RepeatableGroup group) {
-        final JPanel repeatControlPanel = new JPanel(new GridBagLayout());
-        final GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(2, 5, 2, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1;
-        gbc.gridx = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridy = 0;
-
-        JLabel repeatLabel;
-        final JButton addRepeatButton = new JButton("Add repeat");
-        addRepeatButton.setActionCommand("AddRepeat_-_" + group.getName());
-        addRepeatButton.addActionListener(this);
-        final JButton removeRepeatButton = new JButton("Remove repeat");
-        removeRepeatButton.setActionCommand("RemoveRepeat_-_" + group.getName());
-        removeRepeatButton.addActionListener(this);
-        groupRemoveButtonTable.put(group, removeRepeatButton);
-        if (group.getThreshold() == 0) {
-            repeatLabel = new JLabel("Optional group");
-        } else {
-            switch (group.getType()) {
-                case MORETHAN:
-                    repeatLabel = new JLabel("At least " + group.getThreshold() + " repeat(s) required");
-                    if (fsInfo.getNumGroupRepeats(group.getName()) == 1) {
-                        removeRepeatButton.setEnabled(false);
-                    }
-                    break;
-                case LESSTHAN:
-                    repeatLabel = new JLabel("Less than " + group.getThreshold() + " repeat(s) allowed");
-                    if (fsInfo.getNumGroupRepeats(group.getName()) == 1) {
-                        removeRepeatButton.setEnabled(false);
-                    }
-                    break;
-                case EXACTLY:
-                    repeatLabel = new JLabel("Exactly " + group.getThreshold() + " repeat(s) allowed");
-                    addRepeatButton.setEnabled(false);
-                    removeRepeatButton.setEnabled(false);
-                    break;
-                default:
-                    repeatLabel = new JLabel(group.getType() + " " + group.getThreshold());
-            }
-        }
-        repeatLabel.setFont(serif12);
-        repeatControlPanel.add(repeatLabel, gbc);
-
-        gbc.gridx++;
-        repeatControlPanel.add(addRepeatButton, gbc);
-
-        gbc.gridx++;
-        repeatControlPanel.add(removeRepeatButton, gbc);
-
-        return repeatControlPanel;
-    }
+  
 
     private boolean readCSVFile() {
         BufferedReader br = null;
@@ -1065,7 +609,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             Vector<String> csvProblemFileNameList = new Vector<String>(recordList.size());
             for (final ArrayList<ArrayList<String>> record : recordList) {
                 progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
-                InfoDialog csvDialog = new InfoDialog(this, dsName, false, false, record);
+                //InfoDialog csvDialog = new InfoDialog(this, dsName, false, false, record);
                 if (progressInc > 0) {
                     progressBar.updateValue(progressBar.getValue() + progressInc);
                 } else if ( (i % rowsPerInc) == 0) {
@@ -1073,9 +617,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 }
 
                 // change i counter to 0-based for problem lists
-                csvProblemTagList.add(i - 1, csvDialog.getProblemTags());
-                csvProblemFileDirList.add(i - 1, csvDialog.getProblemFileDir());
-                csvProblemFileNameList.add(i - 1, csvDialog.getProblemFileName());
+                //csvProblemTagList.add(i - 1, csvDialog.getProblemTags());
+                //csvProblemFileDirList.add(i - 1, csvDialog.getProblemFileDir());
+                //csvProblemFileNameList.add(i - 1, csvDialog.getProblemFileName());
 
                 i++;
             }
@@ -1249,21 +793,66 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	deTableModel.addColumn("Group");
     	deTableModel.addColumn("Element Name");
     	deTableModel.addColumn("Title");
-    	deTableModel.addColumn("PVs");
+    	deTableModel.addColumn("Referece PVs");
+    	deTableModel.addColumn("Source Name");
+    	deTableModel.addColumn("Source PVs");
+    	deTableModel.addColumn("MAP");
+    
         
-        deTable = new JTable(deTableModel);
+        deTable = new JTable(deTableModel) {
+            private static final long serialVersionUID = 3053232611901005303L;
+
+            @Override
+            public String getToolTipText(final MouseEvent e) {
+                String tooltip = "";
+
+                final java.awt.Point p = e.getPoint();
+                final int rowIndex = rowAtPoint(p);
+                final int colIndex = columnAtPoint(p);
+
+                if(colIndex < 4) {
+	                //tip = (String) deTableModel.getValueAt(rowIndex, colIndex);
+	                DataElement de = formStructure.getSortedDataElementList().get(rowIndex);
+	                
+	                tooltip = "<html><p><b> Name: </b> " + de.getName() + "<br/>";
+	                tooltip += "<b> CDE Description: </b><br/>" + WordUtils.wrap(de.getDescription(), 100, "<br/>", false) + "<br/>";
+	                tooltip += "<b> Type: </b> " + de.getType() + "<br/>";
+	                tooltip += "<b> PV - PV Description: </b> " + WordUtils.wrap(de.getValueRangeList().toString().trim(), 100, "<br/>", false) + "<br/>";
+	
+	                if (de.getMeasuringUnit() != null) {
+	                    tooltip += "<p><b> Unit of measure: </b> " + de.getMeasuringUnit().getDisplayName() + "</p>";
+	                }
+	
+	                if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
+	                    tooltip += "<p><b> NINDS CDE ID: </b> " + de.getNinds().getValue() + "<br/>";
+	                }
+	                if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
+	                    tooltip += "<p><b> Guidelines & Instructions: </b></br>"
+	                            + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 100, "<br/>", false) + "</p>";
+	                }
+	                if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
+	                    tooltip += "<p><b> Notes: </b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 100, "<br/>", false) + "</p>";
+	                }
+	                ToolTipManager.sharedInstance().setDismissDelay(12000);
+
+	                return tooltip;
+                }
+                else return null;
+            }
+        };
+        
         deTable.addMouseListener(this);
         deTable.setPreferredScrollableViewportSize(new Dimension(850, 300));
         deTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         deTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        deTable.getColumn("Group").setMinWidth(100);
-        deTable.getColumn("Group").setMaxWidth(175);
+        deTable.getColumn("Group").setMinWidth(175);
+        deTable.getColumn("Group").setMaxWidth(200);
         deTable.getColumn("Element Name").setMinWidth(185);
         deTable.getColumn("Element Name").setMaxWidth(200);
 
         /* MATT What is this doing?*/
-        deTable.getColumn("Group").setCellRenderer(new MyRightCellRenderer());
+        //deTable.getColumn("Group").setCellRenderer(new MyRightCellRenderer());
         //deTable.getColumn("Element Name").setCellRenderer(new MyRightCellRenderer());
         
         listPane = WidgetFactory.buildScrollPane(deTable);
@@ -1273,9 +862,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
     
     
-    
     /**
-     * Build a panel  log.
+     * Build a panel log.
      */
     private JPanel buildLogPanel() {
         final JPanel destPanel = new JPanel(new GridBagLayout());
@@ -1430,7 +1018,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             if (e.getClickCount() == 2) {
                 if ( !isFinished) {
                     final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
-                    new InfoDialog(this, dsName, true, true, null);
+                    //new InfoDialog(this, dsName, true, true, null);
                 }
             }
         }
@@ -1515,75 +1103,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             ddUseAuthService = Boolean.parseBoolean(prop.getProperty(ddUseAuthServiceProp, "" + ddUseAuthService));
             System.out.println("ddUseAuthService:\t" + ddUseAuthService);
         }
-    }
-
-
-
-    /**
-     * Returns whether this field is a legacy other specify field, where the specified value is put in as free form
-     * instead of being a separate DE.
-     */
-    private static final boolean isLegacyOtherSpecifyField(final DataElementValue deVal) {
-        if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.FREE_FORM && deVal.getComp() instanceof JComboBox) {
-            final JComboBox combo = (JComboBox) deVal.getComp();
-            for (int i = 0; i < combo.getItemCount(); i++) {
-                if ( ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
-                        || ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns whether this field is a new other specify field.
-     */
-    private static final boolean isNewOtherSpecifyField(final DataElementValue deVal) {
-        if (deVal.getDataElementInfo().getRestrictions() == InputRestrictions.SINGLE
-                || deVal.getDataElementInfo().getRestrictions() == InputRestrictions.MULTIPLE) {
-            if (deVal.getComp() instanceof JComboBox) {
-                final JComboBox combo = (JComboBox) deVal.getComp();
-                for (int i = 0; i < combo.getItemCount(); i++) {
-                    if ( ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY)
-                            || ((String) combo.getItemAt(i)).trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
-                        return true;
-                    }
-                }
-            } else if (deVal.getComp() instanceof JList) {
-                final ListModel listModel = ((JList) deVal.getComp()).getModel();
-                for (int k = 0; k < listModel.getSize(); k++) {
-                    final String item = (String) listModel.getElementAt(k);
-                    if (item.trim().equalsIgnoreCase(VALUE_OTHER_SPECIFY) || item.trim().equalsIgnoreCase(VALUE_YES_SPECIFY)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns whether this field is an Other, specify or Yes, specify value entry field (sister field).
-     */
-    private static final boolean isSisterField(final DataElementValue deVal) {
-        if (deVal.getName().endsWith(ELEM_OTHER_SPECIFY_SUFFIX) || deVal.getName().endsWith(ELEM_YES_SPECIFY_SUFFIX)) {
-            return true;
-        }
-
-        return false;
-    }
-    
-
-
-    private static final String[] splitFieldString(final String deNameAndGroup) {
-        return deNameAndGroup.split("\\.");
-    }
-
-    private static final String getFieldGroup(final String deNameAndGroup) {
-        return splitFieldString(deNameAndGroup)[0];
     }
 
 
@@ -1693,6 +1212,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             } else {
                 setForeground(Color.black);
             }
+            
 
             return comp;
         }
@@ -1747,8 +1267,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     final int colIndex = columnAtPoint(p);
 
                     tip = (String) structsModel.getValueAt(rowIndex, colIndex);
+                    //ToolTipManager.sharedInstance().setDismissDelay(120000);
 
                     return tip;
+
                 }
             };
 
@@ -1816,9 +1338,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 sortedNamesSet.add(shortNameAL.get(i));
             }
 
-
             final Object[] rowData = new Object[numColumns];
-
             final Iterator<String> iter = sortedNamesSet.iterator();
 
             while (iter.hasNext()) {
@@ -1905,7 +1425,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private class populateBRICSStructureTable {
         private static final long serialVersionUID = 859201819000159789L;
  
-        private FormStructure formStructure;
+        //private FormStructure formStructure;
            
 		/**
 		 * Gets data elements for the selected form and copies them to the BRICS reference data element table
@@ -1952,34 +1472,44 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		}
         		rowPos[j]=sum;
         	}
-        	// TODO: add tool tips  and possibly direct connection to URL in DDT.
-        	// TODO: need to parse PVs (Value Range)
-
+            
+        	// TODO:  to URL in DDT.
+        	
         	FormStructureData fsInfo = new FormStructureData(formStructure);
         	for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {
         		int i=0;
 	        	for (final MapElement mapde : group.getDataElements()) {
 	        		DataElement de = fsInfo.getDataElement(mapde.getStructuralDataElement());
+	        		int row = rowPos[group.getPosition()]+i;
 
-	        		deTableModel.setValueAt(group.getName(), rowPos[group.getPosition()]+i, 0);	
-	        		deTableModel.setValueAt(mapde.getStructuralDataElement().getName(), rowPos[group.getPosition()]+i, 1);
-	        		deTableModel.setValueAt(de.getTitle(), rowPos[group.getPosition()]+i, 2);
-	        		deTableModel.setValueAt(mapde.getStructuralDataElement().getValueRangeList(), rowPos[group.getPosition()]+i, 3);       
+	        		deTableModel.setValueAt(group.getName(), row, 0);										// Group
+	        		deTableModel.setValueAt(mapde.getStructuralDataElement().getName(), row, 1);			// CDE Variable name
+	        		deTableModel.setValueAt(de.getTitle(), row, 2);											// CDE title
+	        	
+	        		String strPVs = new String();
+	                for (ValueRange vr : de.getValueRangeList() ) {
+	                	strPVs += vr.getValueRange() + "; ";
+	                }
+	        		deTableModel.setValueAt(strPVs, row, 3);  // PV list
+	        		
+	        		if (i % 2 == 1) {
+	        			// hightlight odd rows .....
+	        		}
+	        		
 	        		i++;
 	        	}
-        	}
+        	}    	     	
         }
-
-       
     }
 
+    
     /**
      *  MATT   To be deleted.
      * 
      * @author pandyan
      * 
      */
-    private class InfoDialog extends JDialog implements ActionListener, WindowListener, ItemListener, FocusListener {
+    private class InfoDialogx extends JDialog implements ActionListener, WindowListener, ItemListener, FocusListener {
         private static final long serialVersionUID = 859201819000159789L;
 
         private final PlugInDialogBRICS_Mapper owner;
@@ -2016,7 +1546,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private String currFile;
 
 
-        public InfoDialog(final PlugInDialogBRICS_Mapper owner, final String name, final boolean launchedFromInProcessState, final boolean setInitialVisible,
+        public InfoDialogx(final PlugInDialogBRICS_Mapper owner, final String name, final boolean launchedFromInProcessState, final boolean setInitialVisible,
                 final ArrayList<ArrayList<String>> record) {
             super(owner, false);
 
@@ -2052,7 +1582,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
 
             if (dataStructure == null) {
-                MipavUtil.displayError("Form structure not found in Data Dictionary: " + dataStructureName);
+                MipavUtil.displayError("Form structure not found in Data Dictionary: aaaaa" + dataStructureName);
                 dispose();
                 return;
             }
@@ -2095,7 +1625,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     if ( !setInitialVisible) {
                         // convert any dates found into proper ISO format
                         for (int i = 0; i < csvFieldNames.size(); i++) {
-                            final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i));
+                            /*final String[] deGroupAndName = splitFieldString(csvFieldNames.get(i));
 
                             StructuralDataElement de = null;
                             for (final GroupRepeat repeat : fsData.getAllGroupRepeats(deGroupAndName[0])) {
@@ -2340,10 +1870,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                             elementPanel.add(deVal.getComp(), egbc);
                         }
 
-                        if (isLegacyOtherSpecifyField(deVal)) {
-                            egbc.gridy++;
-                            elementPanel.add(deVal.getOtherSpecifyField(), egbc);
-                        }
+                        //if (isLegacyOtherSpecifyField(deVal)) {
+                        //    egbc.gridy++;
+                        //    elementPanel.add(deVal.getOtherSpecifyField(), egbc);
+                        //}
                     }
 
                     // gbc.gridy++;
@@ -2389,12 +1919,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     for (final ArrayList<String> row : record) {
                         boolean foundValue = false;
                         for (int i = 0; i < row.size(); i++) {
-                            if (getFieldGroup(csvFieldNames.get(i)).equalsIgnoreCase(g.getName())) {
-                                if ( !row.get(i).equals("")) {
-                                    foundValue = true;
-                                    break;
-                                }
-                            }
+                            //if (getFieldGroup(csvFieldNames.get(i)).equalsIgnoreCase(g.getName())) {
+                            //    if ( !row.get(i).equals("")) {
+                            //        foundValue = true;
+                             //       break;
+                             //   }
+                            //}
                         }
 
                         // found something in this row for this group
@@ -2604,7 +2134,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             // now that all DEs are added, find sister elements
             DataElementValue bigSister = null;
             for (final DataElementValue deVal : repeat.getDataElements()) {
-                if (isNewOtherSpecifyField(deVal)) {
+               /** if (isNewOtherSpecifyField(deVal)) {
                     bigSister = deVal;
                 } else if (bigSister != null && isSisterField(deVal)) {
                     // assume that they need to be next to each other and the specify field comp is a text field
@@ -2614,7 +2144,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 } else {
                     // didn't find a sister, so reset the saved big sister
                     bigSister = null;
-                }
+                }*/
             }
 
             return repeat;
@@ -2770,7 +2300,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
          */
         private void fixErrors() {
             final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
-            new InfoDialog(owner, dsName, true, true, null);
+            //new InfoDialog(owner, dsName, true, true, null);
             fixErrors = FIX_ERRORS_LATER;
         }
 
@@ -3031,7 +2561,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     
     /**
-     * Class that connects to BRICS data dictionary web service (via RESTful API) to retrieve the list of form
+     * Connects to BRICS data dictionary web service (via RESTful API) to retrieve the list of form
      * structures (without their attached data elements).
      */
     public class FormListRESTThread extends Thread implements ActionListener {
@@ -3304,11 +2834,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         public void setComp(final JComponent deComp) {
             this.deComp = deComp;
 
-            if (isLegacyOtherSpecifyField(this)) {
+           /** if (isLegacyOtherSpecifyField(this)) {
                 otherSpecifyField = new JTextField();
                 otherSpecifyField.setVisible(false);
                 ((JComboBox) deComp).addActionListener(new OtherSpecifyListener(otherSpecifyField));
-            }
+            }*/
         }
 
         public JTextField getOtherSpecifyField() {
@@ -3439,9 +2969,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             groupTable = new Hashtable<String, Vector<GroupRepeat>>();
         }
 
-        
-        
-        
         public void addGroup(final String groupName) {
             groupTable.put(groupName, new Vector<GroupRepeat>());
         }
@@ -3497,35 +3024,5 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
 
     
-    /**
-     * 
-     * @author mcmatt
-     *
-     */
-    private class OtherSpecifyListener implements ActionListener {
-        private final JTextField otherSpecifyField;
-
-        public OtherSpecifyListener(final JTextField otherSpecifyField) {
-            this.otherSpecifyField = otherSpecifyField;
-        }
-
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-            final Object source = e.getSource();
-
-            // sanity check before casts
-            if (source instanceof JComboBox) {
-                otherSpecifyField.setVisible( ((JComboBox) source).getSelectedItem().equals(VALUE_OTHER_SPECIFY)
-                        || ((JComboBox) source).getSelectedItem().equals(VALUE_YES_SPECIFY));
-                final Window parentWindow = SwingUtilities.getWindowAncestor(otherSpecifyField);
-                // don't force the re-packing if the window hasn't been shown/created yet (as in CSV read)
-                if (parentWindow != null) {
-                    parentWindow.pack();
-                    parentWindow.validate();
-                    parentWindow.repaint();
-                }
-            }
-        }
-    }
 
 }
