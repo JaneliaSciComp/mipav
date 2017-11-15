@@ -339,9 +339,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					}
 					timesList.add( timesArray );
 				} catch (FileNotFoundException e) {
+					MipavUtil.displayError("Error reading file: " + inputDirName + " " + e.getCause() );
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
+					MipavUtil.displayError("Error reading file: " + inputDirName + " " + e.getCause() );
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}

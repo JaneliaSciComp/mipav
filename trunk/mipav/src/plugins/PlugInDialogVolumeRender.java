@@ -1326,9 +1326,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					}
 					timesList.add( timesArray );
 				} catch (FileNotFoundException e) {
+					MipavUtil.displayError("Error reading file: " + inputDirName + " " + e.getCause() );
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
+					MipavUtil.displayError("Error reading file: " + inputDirName + " " + e.getCause() );
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}

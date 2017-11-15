@@ -529,6 +529,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     		updateBoundingCube = true;
     	}
     }
+    
+    public void resetAxisXInv()
+    {
+    	if ( m_bInit )
+    	{
+    		m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
+    		m_spkScene.Local.GetRotate().fromAxisAngle( Vector3f.UNIT_X_NEG, (float)Math.PI/2.0f );
+    		UpdateSceneRotation();
+    		updateBoundingCube = true;
+    	}
+    }
 
 
     /**
