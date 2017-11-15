@@ -812,7 +812,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 //        raycastRenderWM.displaySurface(true);
 //        raycastRenderWM.displayVOIs(false);        
         
-        resetAxisX();
+        resetAxisXInv();
     }
     
     public void addVOIS( VOIVector vois, Vector<String> annotationNames )
@@ -1637,6 +1637,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
      */
     public void resetAxisX() {
         raycastRenderWM.resetAxisX();
+    }
+    
+    
+    /**
+     * Reset image volume orientation along X axis.
+     */
+    public void resetAxisXInv() {
+        raycastRenderWM.resetAxisXInv();
     }
 
     /*
