@@ -2,9 +2,11 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.plugins.JarClassLoader;
+
 import gov.nih.mipav.plugins.PlugInFile;
 import gov.nih.mipav.plugins.PlugInFileTransfer;
 import gov.nih.mipav.plugins.PlugInGeneric;
+import gov.nih.mipav.util.NativeLibraryLoader;
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
@@ -65,6 +67,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     // ~ Static fields/initializers ------------------------------------------------------------------
 
+    static {
+        NativeLibraryLoader.loadNativeLibraries();
+    }
+    
     /**
      * A reference to the only ViewUserInterface object in MIPAV.
      * 
