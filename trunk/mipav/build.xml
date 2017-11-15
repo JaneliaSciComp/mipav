@@ -61,7 +61,7 @@
     <property name="listfiles" value="no" />
     <property name="version.target" value="1.6" />
     <property name="version.source" value="1.6" />
-    <property name="java.boot.classpath.dir" value="${user.home}/lib/jdk1.6.0_29/jre/lib/" />
+    <property name="java.boot.classpath.dir" value="${user.home}/lib64/jdk-current/jre/lib/" />
     <property name="sysAssert" value="yes" />
 
     <!--
