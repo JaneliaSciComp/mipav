@@ -5,7 +5,6 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-
 import gov.nih.tbi.commons.model.*;
 import gov.nih.tbi.dictionary.model.DictionaryRestServiceModel.DataStructureList;
 import gov.nih.tbi.dictionary.model.hibernate.*;
@@ -14,7 +13,8 @@ import gov.nih.tbi.repository.model.SubmissionType;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -30,7 +30,7 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 
-public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener,
+public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, ChangeListener, TreeSelectionListener, MouseListener,
         PreviewImageContainer, WindowListener, FocusListener {
     private static final long serialVersionUID = -5516621806537554154L;
 
@@ -266,7 +266,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             new ChooseFormStructDialog(this);
 
-            saveMapButton.setEnabled(deTableModel.getRowCount() > 0);
+            //saveMapButton.setEnabled(deTableModel.getRowCount() > 0);
             //editDataElementsButton.setEnabled(deTableModel.getRowCount() > 0);
 
         } else if (command.equalsIgnoreCase("LoadCSV")) {
@@ -281,15 +281,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
+                saveMapButton.setEnabled(deTableModel.getRowCount() > 0);
             }
             listPane.setBorder(JDialogBase.buildTitledBorder(deTableModel.getRowCount() + " Form Structure(s) "));
         } else if (command.equalsIgnoreCase("SaveMapFile")) {
         	
-        	
             
         } else if (command.equalsIgnoreCase("HelpWeb")) {
-
-            MipavUtil.showWebHelp("Image_submission_plug-in");
+            showCDE(null);
 
         } else if (command.equalsIgnoreCase("Finish")) {
 
@@ -663,11 +662,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }*/
     }
 
-    @Override
-    public void itemStateChanged(final ItemEvent e) {
-
-    }
-
     
     /**  Setup Mapping tool layout */
     private void init() {
@@ -690,7 +684,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
 
         addWindowListener(this);
-        // dataStructures = new ArrayList<DataStruct>();
 
         final JMenuBar menuBar = new JMenuBar();
         final JMenu menu = new JMenu("Help");
@@ -793,10 +786,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	deTableModel.addColumn("Group");
     	deTableModel.addColumn("Element Name");
     	deTableModel.addColumn("Title");
-    	deTableModel.addColumn("Referece PVs");
+    	deTableModel.addColumn("Reference PVs");
     	deTableModel.addColumn("Source Name");
     	deTableModel.addColumn("Source PVs");
-    	deTableModel.addColumn("MAP");
+    	deTableModel.addColumn("PV Mappings");
     
         
         deTable = new JTable(deTableModel) {
@@ -815,7 +808,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                DataElement de = formStructure.getSortedDataElementList().get(rowIndex);
 	                
 	                tooltip = "<html><p><b> Name: </b> " + de.getName() + "<br/>";
-	                tooltip += "<b> CDE Description: </b><br/>" + WordUtils.wrap(de.getDescription(), 100, "<br/>", false) + "<br/>";
+	                tooltip += "<b> CDE Description: </b>" + WordUtils.wrap(de.getDescription(), 100, "<br/>", false) + "<br/>";
 	                tooltip += "<b> Type: </b> " + de.getType() + "<br/>";
 	                tooltip += "<b> PV - PV Description: </b> " + WordUtils.wrap(de.getValueRangeList().toString().trim(), 100, "<br/>", false) + "<br/>";
 	
@@ -823,16 +816,16 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                    tooltip += "<p><b> Unit of measure: </b> " + de.getMeasuringUnit().getDisplayName() + "</p>";
 	                }
 	
-	                if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
-	                    tooltip += "<p><b> NINDS CDE ID: </b> " + de.getNinds().getValue() + "<br/>";
-	                }
-	                if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
-	                    tooltip += "<p><b> Guidelines & Instructions: </b></br>"
-	                            + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 100, "<br/>", false) + "</p>";
-	                }
-	                if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
-	                    tooltip += "<p><b> Notes: </b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 100, "<br/>", false) + "</p>";
-	                }
+	                //if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
+	                //    tooltip += "<p><b> NINDS CDE ID: </b> " + de.getNinds().getValue() + "<br/>";
+	                //}
+	                //if (de.getGuidelines() != null && !de.getGuidelines().trim().equals("")) {
+	                //    tooltip += "<p><b> Guidelines & Instructions: </b></br>"
+	                 //           + WordUtils.wrap(removeRedundantDiseaseInfo(de.getGuidelines()), 100, "<br/>", false) + "</p>";
+	                //}
+	                //if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
+	                //    tooltip += "<p><b> Notes: </b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 100, "<br/>", false) + "</p>";
+	                //}
 	                ToolTipManager.sharedInstance().setDismissDelay(12000);
 
 	                return tooltip;
@@ -848,17 +841,39 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         deTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         deTable.getColumn("Group").setMinWidth(175);
         deTable.getColumn("Group").setMaxWidth(200);
+        //deTable.getColumn("Group").setCellRenderer(new CellRenderer());
         deTable.getColumn("Element Name").setMinWidth(185);
         deTable.getColumn("Element Name").setMaxWidth(200);
-
-        /* MATT What is this doing?*/
-        //deTable.getColumn("Group").setCellRenderer(new MyRightCellRenderer());
-        //deTable.getColumn("Element Name").setCellRenderer(new MyRightCellRenderer());
+        //deTable.getColumn("Element Name").setCellRenderer(new CellRenderer());
         
         listPane = WidgetFactory.buildScrollPane(deTable);
         listPane.setBorder(JDialogBase.buildTitledBorder(" Reference Form Structure:   "));
    
         return listPane;
+    }
+    
+    
+    private class CellRenderer extends DefaultTableCellRenderer {
+
+    	@Override
+        public Component getTableCellRendererComponent(final JTable table, final Object value,
+                final boolean isSelected, final boolean hasFocus, final int row, final int column) {
+    		
+    		final Color gray = new Color (225,225,225);
+            final Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            //cell.setBackground(Color.GREEN);
+            TableCellRenderer refRenderer = table.getCellRenderer(row, column);
+            if (refRenderer instanceof CellRenderer) { 
+	            if (row % 2 ==  1 ) {
+	                //cell.setBackground(gray);
+	                cell.setBackground(Color.WHITE);
+	            }   
+	            else {
+	            	cell.setBackground(Color.WHITE);
+	            }
+            }
+            return cell;
+    	}
     }
     
     
@@ -888,7 +903,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         saveMapButton.addActionListener(this);
         saveMapButton.setActionCommand("SaveMapFile");
         saveMapButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        //saveMapButton.setEnabled(false);
+        saveMapButton.setEnabled(false);
 
         outputDirPanel.add(outputDirLabel);
         outputDirPanel.add(outputDirTextField);
@@ -1193,32 +1208,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
     }
 
-    /**
-     * Inner class Right Renderer
-     * 
-     * @author pandyan
-     */
-    private class MyRightCellRenderer extends DefaultTableCellRenderer {
-        private static final long serialVersionUID = -7905716122046419275L;
-
-        @Override
-        public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected, final boolean hasFocus, final int row,
-                final int column) {
-            final Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            setHorizontalAlignment(SwingConstants.LEFT);
-
-            if (column == 1 && ((String) value).equalsIgnoreCase("No")) {
-                setForeground(Color.red);
-            } else {
-                setForeground(Color.black);
-            }
-            
-
-            return comp;
-        }
-
-    }
-
     
     
     /**
@@ -1267,8 +1256,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     final int colIndex = columnAtPoint(p);
 
                     tip = (String) structsModel.getValueAt(rowIndex, colIndex);
-                    //ToolTipManager.sharedInstance().setDismissDelay(120000);
-
                     return tip;
 
                 }
@@ -1492,9 +1479,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                }
 	        		deTableModel.setValueAt(strPVs, row, 3);  // PV list
 	        		
-	        		if (i % 2 == 1) {
-	        			// hightlight odd rows .....
-	        		}
+	        		//System.out.println(" URI " + de.getUri());  URI seems problematic. - maybe because on staging or demo
+
 	        		
 	        		i++;
 	        	}
@@ -2768,6 +2754,34 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         public FormStructure getFullFormStructure() {
             return fullFormStructure;
+        }
+    }
+
+    
+    /**
+     * Pops up the Data dictionary page. If cdePage is null go to default DDT page: "https://fitbir.nih.gov/content/data-dictionary".
+     * 
+     * @param cdePage The name of the CDE page.
+     */
+    private static void showCDE(final String cdePage) {
+    	final URI ddtURI;
+        final String ddtPage = "https://fitbir.nih.gov/content/data-dictionary";
+        try {
+            if (cdePage == null) {
+            	ddtURI = new URI(ddtPage);
+            } else {
+            	ddtURI = new URI(cdePage);
+            }
+            
+            Desktop.getDesktop().browse(ddtURI);
+        } catch (final URISyntaxException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Unable to display Data Dictionary page : " + ddtPage);
+            return;
+        } catch (final IOException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Unable to display Data Dictionary page : " + ddtPage);
+            return;
         }
     }
 
