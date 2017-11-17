@@ -10,6 +10,23 @@ public class DoublyConnectedSC extends AlgorithmBase {
 	// his article "A Software Package for Computing Schwarz-Christoffel Conformal
 	// Transformation for Doubly Connected Polyhgonal Regions."
 	
+	//************* DSCPACK *************************************************
+	// THIS IS A COLLECTION OF SUBROUTINES TO SOLVE PARAMETER PROBLEM OF   *
+	// THE SCHWARZ-CHRISTOFFEL TRANSFORMATION FOR DOUBLY CONNECTED REGIONS *
+    // A DRIVER IS NEEDED FOR A/AN PARTICULAR PROBLEM OR APPLICATION.      *
+	// AUTHOR:                                                             *
+	// CHENGLIE HU   APRIL,1994 (REVISED JULY,1995) AT WICHITA STATE UNIV. *
+	//               A FURTHER REVISION WAS DONE AT FHSU (JULY, 1997)      *
+	// REFERENCES:1. H.DAEPPEN, DIE SCHWARZ-CRISTOFFEL ABBILDUNG FUER      *
+	//               ZWEIFACH ZUSAMMENHAENGENDE GEBIETE MIT ANWENDUNGEN.   *
+	//               PH.D. DISSERTATION, ETH ZUERICH.                      *
+	//            2. L.N.TREFETHEN, SCPACK USER'S GUIDE(MIT REPORT 1989)   *
+	//            3. HENRICI,APPLIED & COMPUTATIONAL COMPLEX ANALYSIS,VOL.3*
+	//            4. C.HU, APPLICATION OF COMPUTATIONAL COMPLEX ANALYSIS TO*
+	//               SOME FREE BOUNDARY AND VORTEX FLOWS.PH.D. DISS. 1995  *
+	//**********************************************************************
+
+	
 	// geometries of the polygon region in the 7 test routines
 	private final int SQUARE_SYMMETRIC_REGION = 1;
 	private final int MILDLY_CROWDED_INFINITE_REGION = 2;
@@ -32,6 +49,8 @@ public class DoublyConnectedSC extends AlgorithmBase {
 	// The number of Gauss-Jacobi points
 	// Recommended values for NPTQ are 2-8.
 	private int NPTQ;
+	// 1 for solving the nonlinear system, 2 for not solving the nonlinear system
+	private int ISOLV;
 	private boolean testRoutine = false;
 	private double MACHEP = 2.2204460E-16;
 	
@@ -39,9 +58,10 @@ public class DoublyConnectedSC extends AlgorithmBase {
 		
 	}
 	
-	public DoublyConnectedSC(int IPOLY, int NPTQ) {
+	public DoublyConnectedSC(int IPOLY, int NPTQ, int ISOLV) {
 		this.IPOLY = IPOLY;
 		this.NPTQ = NPTQ;
+		this.ISOLV = ISOLV;
 		testRoutine = true;
 	}
 	
@@ -54,6 +74,15 @@ public class DoublyConnectedSC extends AlgorithmBase {
 		double ALFA1[] = new double[30];
 		double QWORK[] = new double[1660];
 		int ISHAPE;
+		int IGUESS;
+		int LINEARC;
+		double TOL;
+		double U[] = new double[1];
+		double C[] = new double[2];
+		double W0[][] = new double[30][2];
+		double W1[][] = new double[30][2];
+		double PHI0[] = new double[30];
+		double PHI1[] = new double[30];
 		
 double neweps;
 		
@@ -92,6 +121,17 @@ double neweps;
 				ISHAPE = 1;
 			}
 			CHECK(ALFA0, ALFA1, M[0], N[0], ISHAPE);
+			
+			// Specify some parameters of the calling sequence of DSCSOLV:
+			IGUESS = 1;
+			LINEARC = 1;
+			TOL = 1.0E-10;
+			
+			// Solve the accessory parameter problem
+			if (ISOLV == 1) {
+				DSCSOLV(TOL, IGUESS, M[0], N[0], U, C, W0, W1, PHI0, PHI1,
+						Z0, Z1, ALFA0, ALFA1, NPTQ, QWORK, ISHAPE, LINEARC);
+			}
 		} // if (testRoutine)
 		
 		
@@ -365,6 +405,583 @@ double neweps;
 		} // else		
 	}
 	
+	private void THDATA(double U[]) {
+	    //    ----------------------
+	    //    GENERATES DATA RELATED ONLY TO INNER RADIUS
+	    //    U AND USED IN COMPUTING THE THETA-FUNCTION.
+
+		// .. Local Scalars ..
+	    double PI;
+	    int  K,N;
+	
+	    //    .. Common blocks ..
+	    // COMMON /PARAM4/UARY,VARY,DLAM,IU
+	
+	    PI = Math.PI;
+	    if (U[0] >= 0.63) {
+	    	VARY[0] = Math.exp(PI*PI/Math.log(U[0]));
+	    	DLAM = -Math.log(U[0])/PI;
+	    	return;
+	    }
+	    if (U[0] < 0.06) {
+	        IU = 3;
+	    }
+	    else if (U[0] < 0.19) {
+	        IU = 4;
+	    }
+	    else if (U[0] < 0.33) {
+	        IU = 5;
+	    }
+	    else if (U[0] < 0.45) {
+	        IU = 6;
+	    }
+	    else if (U[0] < 0.55) {
+	        IU = 7;
+	    }
+	    else {
+	        IU = 8;
+	    }
+
+	    for (K = 1; K <= IU; K++) {
+	          N = K*K;
+	          UARY[K-1] = Math.pow(U[0], N);
+	    } // for (K = 1; K <= IU; K++)
+	    return;
+
+	}
+	
+	private double[] WQSUM(double WA[], double PHIA,int KWA, int IC, double WB[],
+			double PHIB, double RADIUS,int M,int N, double U, double W0[][], double W1[][],
+			double ALFA0[], double ALFA1[], int NPTQ,double QWORK[], int LINEARC) {
+		//   ------------------------------------------------------------
+		//   CALCULATES THE  COMPLEX  INTEGRAL  FROM WA TO WB ALONG  A
+		//   LINE SEGMENT (LINEARC=0)OR A CIRCULAR ARC (LINEARC=1)WITH
+		//   POSSIBLE SINGULARITY AT WA, WHERE  KWA IS THE INDEX OF WA
+		//   IN W0 (IC=0) OR IN W1 (IC=1). KWA=0 AND IC=2 ( NO OTHER
+		//   VALUES PERMITTED ) IF WA IS NOT A PREVERTEX, WHICH THEN
+		//   INDICATES THAT ONLY PURE GAUSSIAN QUARATURE IS NEEDED.
+		//   PHIA & PHIB  ARE  ARGUMENTS OF  WA & WB  RESPECTIVELY. IF
+		//   INTEGRATING ALONG A CIRCULAR ARC,RADIUS SHOULD BE ASSIGNED
+		//   TO BE EITHER 1 OR U. ANY VALUE,HOWEVER,CAN BE ASSIGNED TO
+		//   RADIUS IF INTEGRATING ALONG A LINE SEGMENT.SEE DOCUMENTATIONS
+		//   OF WPROD AND QINIT FOR THE REST OF CALLING SEQUENCE.
+		
+		//     .. Scalar Arguments ..
+		//    DOUBLE COMPLEX WA,WB
+		
+		//     .. Array Arguments ..
+		//      DOUBLE COMPLEX W0(M),W1(N)
+		//      DOUBLE PRECISION ALFA0(M),ALFA1(N),QWORK(NPTQ* (2* (M+N)+3))
+		
+		//     .. Local Scalars ..
+		double result[] = new double[2];
+		/*      DOUBLE COMPLEX W,WC,WH,ZI
+		      DOUBLE PRECISION PWC,PWH
+		      INTEGER I,IOFFST,IWT1,IWT2
+		C     ..
+		C     .. External Functions ..
+		      DOUBLE COMPLEX WPROD
+		      EXTERNAL WPROD
+		C     ..
+		C     .. Intrinsic Functions ..
+		      INTRINSIC EXP
+		C     ..
+		//     .. Common blocks ..
+		//      COMMON /PARAM4/UARY,VARY,DLAM,IU
+		C     ..
+		      WQSUM = (0.D0,0.D0)
+		C
+		C   INDEX ARRANGEMENT:
+		      IWT1 = NPTQ* (IC*M+KWA-1) + 1
+		      IF (KWA.EQ.0) IWT1 = NPTQ* (M+N) + 1
+		      IWT2 = IWT1 + NPTQ - 1
+		      IOFFST = NPTQ* (M+N+1)
+		C
+		C   COMPUTE GAUSS-JACOBI SUM(W(J)*PROD(X(J))):
+		      IF (LINEARC.EQ.1) GO TO 20
+		C
+		C   INTEGRATE ALONG A LINE SEGMENT:
+		      WH = (WB-WA)/2.D0
+		      WC = (WA+WB)/2.D0
+		      DO 10 I = IWT1,IWT2
+		          W = WC + WH*QWORK(I)
+		          WQSUM = WQSUM + QWORK(IOFFST+I)*
+		     +            WPROD(W,M,N,U,W0,W1,ALFA0,ALFA1)
+		   10 CONTINUE
+		      WQSUM = WQSUM*WH
+		      RETURN
+		C
+		C   INTEGRATE ALONG A CIRCULAR ARC:
+		   20 ZI = (0.D0,1.D0)
+		      PWH = (PHIB-PHIA)/2.D0
+		      PWC = (PHIB+PHIA)/2.D0
+		      DO 30 I = IWT1,IWT2
+		          W = RADIUS*EXP(ZI* (PWC+PWH*QWORK(I)))
+		          WQSUM = WQSUM + QWORK(IOFFST+I)*W*
+		     +            WPROD(W,M,N,U,W0,W1,ALFA0,ALFA1)
+		   30 CONTINUE
+		      WQSUM = WQSUM*PWH*ZI*/
+		   return result;
+	}
+
+	
+	private double[] WQUAD1(double WA[], double PHIA, int KWA,int IC, double WB[],
+			double PHIB, double RADIUS,int M,int N, double U, double W0[][], double W1[][],
+			double ALFA0[], double ALFA1[], int NPTQ, double QWORK[], int LINEARC) {
+		//   -------------------------------------------------------------
+		//   CALCULATES THE COMPLEX INTEGRAL OF WPROD FROM WA TO WB ALONG
+		//   EITHER A CIRCULAR ARC OR A LINE-EGMENT.  COMPOUND ONE-SIDED
+		//   GAUSS-JACOBI QUDRATURE IS USED.SEE SUBROUTINE WQSUM FOR THE
+		//   CALLING SEQUENCE.
+		
+		//   CHECK FOR ZERO-LENGTH INTEGRAL:
+		//     .. Scalar Arguments ..
+		// DOUBLE COMPLEX WA,WB
+		     
+		//     .. Array Arguments ..
+		//      DOUBLE COMPLEX W0(M),W1(N)
+		//      DOUBLE PRECISION ALFA0(M),ALFA1(N),QWORK(NPTQ* (2* (N+M)+3))
+		
+		//     .. Local Scalars ..
+		double WAA[] = new double[2];
+		double WBB[] = new double[2];
+		double ZI[] = new double[2];
+		//    DOUBLE COMPLEX WAA,WBB,ZI
+		double PHAA,PHBB,R;
+		double result[] = new double[2];
+		double result2[] = new double[2];
+		double expb;
+		double arg;
+		     
+		//     .. External Functions ..
+		//      DOUBLE COMPLEX WQSUM
+		//      DOUBLE PRECISION DIST
+		//      EXTERNAL WQSUM,DIST
+		
+		//     .. Common blocks ..
+		//      COMMON /PARAM4/UARY,VARY,DLAM,IU
+	
+	    if (scm.zabs(WA[0]-WB[0], WA[1]-WB[1]) <= 0.0) {
+	        result[0] = 0.0;
+	    	result[1] = 0.0;
+	        return result;
+	    }
+	    
+	    ZI[0] = 0.0;
+	    ZI[1] = 1.0;
+	    if (LINEARC != 1) {
+		
+		    //   LINE SEGMENT INTEGRATION PATH IS CONCERNED BELOW:
+		    // STEP1:ONE-SIDED G-J QUADRATURE FOR LEFT ENDPT WA:
+		    R = Math.min(1.0,DIST(M,N,W0,W1,WA,KWA,IC)/scm.zabs(WB[0]-WA[0],WB[1]-WA[1]));
+		    WAA[0] = WA[0] + R* (WB[0]-WA[0]);
+		    WAA[1] = WA[1] + R* (WB[1]-WA[1]); 
+		    result = WQSUM(WA,0.0,KWA,IC,WAA,0.0,0.0,M,N,U,W0,W1,ALFA0,
+		              ALFA1,NPTQ,QWORK,LINEARC);
+		
+		    //   STEP2:ADJOIN INTERVALS OF PURE GAUSS QUADRATURE IF NECESSARY:
+		   while (R != 1.0) {
+		      R = Math.min(1.0,DIST(M,N,W0,W1,WAA,0,IC)/scm.zabs(WAA[0]-WB[0], WAA[1] - WB[1]));
+		      WBB[0] = WAA[0] + R* (WB[0]-WAA[0]);
+		      WBB[1] = WAA[1] + R* (WB[1]-WAA[1]);
+		      result2 = WQSUM(WAA,0.0,0,2,WBB,0.0,0.0,M,N,U,W0,W1,
+		              ALFA0,ALFA1,NPTQ,QWORK,LINEARC);
+		      result[0] = result[0] + result2[0];
+		      result[1] = result[1] + result2[1];
+		      WAA[0] = WBB[0];
+		      WAA[1] = WBB[1];
+		   }
+		   return result;
+	    } // if (LINEARC != 1)
+		
+		//   CIRCULAR ARC INTEGRATION PATH IS CONCERNED BELOW:
+		//   STEP1:ONE-SIDED G-J QUADRATURE FOR LEFT ENDPT WA:
+		R = Math.min(1.0,DIST(M,N,W0,W1,WA,KWA,IC)/scm.zabs(WB[0]-WA[0],WB[1]-WA[1]));
+		PHAA = PHIA + R* (PHIB-PHIA);
+		expb = RADIUS * Math.exp(ZI[0]*PHAA);
+		arg = ZI[1] * PHAA;
+		WAA[0] = expb * Math.cos(arg);
+		WAA[1] = expb * Math.sin(arg);
+		result = WQSUM(WA,PHIA,KWA,IC,WAA,PHAA,RADIUS,M,N,U,W0,W1,ALFA0,
+		              ALFA1,NPTQ,QWORK,LINEARC);
+		
+		//   STEP2:ADJOIN INTERVALS OF PURE GAUSS QUADRATURE IF NECESSARY:
+		while (R != 1.0) {
+		      R = Math.min(1.0,DIST(M,N,W0,W1,WAA,0,IC)/scm.zabs(WAA[0]-WB[0],WAA[1]-WB[1]));
+		      PHBB = PHAA + R* (PHIB-PHAA);
+		      expb = RADIUS * Math.exp(ZI[0]*PHBB);
+		      arg = ZI[1] * PHBB;
+		      WBB[0] = expb * Math.cos(arg);
+		      WBB[1] = expb * Math.sin(arg);
+		      result2 = WQSUM(WAA,PHAA,0,2,WBB,PHBB,RADIUS,M,N,U,W0,W1,
+		             ALFA0,ALFA1,NPTQ,QWORK,LINEARC);
+		      result[0] = result[0] + result2[0];
+		      result[1] = result[1] + result2[1];
+		      PHAA = PHBB;
+		      WAA[0] = WBB[0];
+		      WAA[1] = WBB[1];
+		} //while (R != 1.0)
+		return result;
+	}
+
+	
+	private double[] WQUAD(double WA[], double PHIA,int KWA,int ICA, double WB[],
+			double PHIB, int KWB,int ICB,double RADIUS,int M,int N, double U, double W0[][],
+		    double W1[][], double ALFA0[], double ALFA1[], int NPTQ, double QWORK[],
+		    int LINEARC,int IEVL) {
+		//   ---------------------------------------------------------------
+		//   CALCULATES THE COMPLEX INTEGRAL OF WPROD FROM WA TO WB
+		//   ALONG A CIRCULAR ARC OR A LINE-SEGMENT.FUNCTION WQUAD1
+		//   IS CALLED FOUR TIMES,ONE FOR EACH 1/4 OF THE INTERVAL.
+		//   NOTE:  WQUAD1 ALLOWS  ONLY THE LEFT ENDPOINT  TO  BE A
+		//   POSSIBLE SINGULARITY. SEE ROUTINE WQSUM FOR THE CALLING
+	    //   SEQUENCE.
+		
+		//     .. Scalar Arguments ..
+		//    DOUBLE COMPLEX WA,WB
+		     
+		//     .. Array Arguments ..
+		//     DOUBLE COMPLEX W0(M),W1(N)
+		//     DOUBLE PRECISION ALFA0(M),ALFA1(N),QWORK(NPTQ* (2* (M+N)+3))
+	
+		//     .. Local Scalars 
+		double WMID[] = new double[2];
+		double WMIDA[] = new double[2];
+		double WMIDB[] = new double[2];
+		double WQA[] = new double[2];
+		double WQA1[] = new double[2];
+		double WQA2[] = new double[2];
+		double WQB[] = new double[2];
+		double WQB1[] = new double[2];
+		double WQB2[] = new double[2];
+		double ZI[] = new double[2];
+		// DOUBLE COMPLEX WMID,WMIDA,WMIDB,WQA,WQB,ZI
+		double PHMID,PHMIDA,PHMIDB,PI;
+		double expb;
+		double arg;
+		double result[] = new double[2];
+		//     .. Common blocks ..
+		//     COMMON /PARAM4/UARY,VARY,DLAM,IU
+		
+		PI = Math.PI;
+		ZI[0] = 0.0;
+		ZI[1] = 1.0;
+		
+		//   DETERMINE MIDPTS ON A LINE SEGMENT OR ON A CIRCULAR ARC:
+		if (LINEARC == 0) {
+			WMID[0] = (WA[0] + WB[0])/2.0;
+			WMID[1] = (WA[1] + WB[1])/2.0;
+		    WMIDA[0] = (WA[0] + WMID[0])/2.0;
+		    WMIDA[1] = (WA[1] + WMID[1])/2.0;
+		    WMIDB[0] = (WB[0] + WMID[0])/2.0;
+		    WMIDB[1] = (WB[1] + WMID[1])/2.0;
+		    PHMID = 0.0;
+		    PHMIDA = 0.0;
+		    PHMIDB = 0.0;
+		}
+		else {
+	        if (IEVL != 1) {
+		        if (PHIB < PHIA) {
+		            PHIA = PHIA - 2.0*PI;
+		        }
+	        } // if (IEVL != 1)
+		   PHMID = (PHIA+PHIB)/2.0;
+		   expb = RADIUS * Math.exp(ZI[0] * PHMID);
+		   arg = ZI[1] * PHMID;
+		   WMID[0] = expb * Math.cos(arg);
+		   WMID[1] = expb * Math.sin(arg);
+		   PHMIDA = (PHIA+PHMID)/2.0;
+		   expb = RADIUS * Math.exp(ZI[0] * PHMIDA);
+		   arg = ZI[1] * PHMIDA;
+		   WMIDA[0] = expb * Math.cos(arg);
+		   WMIDA[1] = expb * Math.sin(arg);
+		   PHMIDB = (PHIB+PHMID)/2.0;
+		   expb = RADIUS * Math.exp(ZI[0]*PHMIDB);
+		   arg = ZI[1] * PHMIDB;
+		   WMIDB[0] = expb * Math.cos(arg);
+		   WMIDB[1] = expb * Math.sin(arg);
+		}
+		
+		//   COMPOUND GAUSS-JACOBI PROCESS ACCORDING TO ONE-QUATER RULE:
+        WQA1 = WQUAD1(WA,PHIA,KWA,ICA,WMIDA,PHMIDA,RADIUS,M,N,U,W0,W1,
+           ALFA0,ALFA1,NPTQ,QWORK,LINEARC);
+        WQA2 = WQUAD1(WMID,PHMID,0,2,WMIDA,PHMIDA,RADIUS,M,N,U,W0,W1,ALFA0,
+           ALFA1,NPTQ,QWORK,LINEARC);
+        WQA[0] = WQA1[0] - WQA2[0];
+        WQA[1] = WQA1[1] - WQA2[1];
+        WQB1 = WQUAD1(WB,PHIB,KWB,ICB,WMIDB,PHMIDB,RADIUS,M,N,U,W0,W1,
+           ALFA0,ALFA1,NPTQ,QWORK,LINEARC);
+        WQB2 = WQUAD1(WMID,PHMID,0,2,WMIDB,PHMIDB,RADIUS,M,N,U,W0,W1,ALFA0,
+           ALFA1,NPTQ,QWORK,LINEARC);
+        WQB[0] = WQB1[0] - WQB2[0];
+        WQB[1] = WQB1[1] - WQB2[1];
+        result[0] = WQA[0] - WQB[0];
+        result[1] = WQA[1] - WQB[1];
+		return result;
+	}
+
+
+	
+	private void XWTRAN(int M,int N, double X[], double U[],
+			double C[], double W0[][], double W1[][], double PHI0[],
+			double PHI1[]) {
+		//   -----------------------------------------------
+		//  TRANSFORMS X[K-1](UNCONSTRAINED PARAMETERS) TO ACTUAL
+		//  D-SC PARAMETERS:U,C,W0,W1.PHI0 & PHI1 ARE ARGUMENTS
+		//  OF THE PREVERTICES CONTAINED IN W0 & W1.
+		
+		//     .. Scalar Arguments ..
+		//      DOUBLE COMPLEX C
+		      
+		//     .. Array Arguments ..
+		//      DOUBLE COMPLEX W0(M),W1(N)
+		//      DOUBLE PRECISION PHI0(M),PHI1(N),X(M+N+2)
+	
+		//     .. Local Scalars ..
+	      double DPH, PH, PHSUM, PI;
+	      int  I;
+	
+	      PI = Math.PI;
+	      if (Math.abs(X[0]) <= 1.0E-14) {
+	          U[0] = 0.5;
+	      }
+	      else {
+	          U[0] = (X[0]-2.0-Math.sqrt(0.9216*X[0]*X[0]+4.0))/ (2.0*X[0]);
+	          U[0] = (0.0196*X[0]-1.0)/ (U[0]*X[0]);
+	      }
+
+	      C[0] = X[1];
+	      C[1] = X[2];
+	      if (Math.abs(X[N+2]) <= 1.0E-14) {
+	          PHI1[N-1] = 0.0;
+	      }
+	      else {
+	          PH = (1.0+Math.sqrt(1.0+PI*PI*X[N+2]*X[N+2]))/X[N+2];
+	          PHI1[N-1] = PI*PI/PH;
+	      }
+
+	      DPH = 1.0;
+	      PHSUM = DPH;
+	      
+	      for (I = 1; I <= N - 1; I++) {
+	          DPH = DPH/Math.exp(X[2+I]);
+	          PHSUM = PHSUM + DPH;
+	      } // for (I = 1; I <= N - 1; I++)
+	      DPH = 2.0*PI/PHSUM;
+	      PHI1[0] = PHI1[N-1] + DPH;
+	      W1[0][0] = U[0] * Math.cos(PHI1[0]);
+	      W1[0][1] = U[0] * Math.sin(PHI1[0]);
+	      W1[N-1][0] = U[0] * Math.cos(PHI1[N-1]);
+	      W1[N-1][1] = U[0] * Math.sin(PHI1[N-1]);
+	      PHSUM = PHI1[0];
+	      for (I = 1; I <= N - 2; I++) {
+	          DPH = DPH/Math.exp(X[2+I]);
+	          PHSUM = PHSUM + DPH;
+	          PHI1[I] = PHSUM;
+	          W1[I][0] = U[0] * Math.cos(PHSUM);
+	          W1[I][1] = U[0] * Math.sin(PHSUM);
+	      } // for (I = 1; I <= N - 2; I++)
+	      DPH = 1.0;
+	      PHSUM = DPH;
+	      for (I = 1; I <= M - 1; I++) {
+	          DPH = DPH/Math.exp(X[N+2+I]);
+	          PHSUM = PHSUM + DPH;
+	      } // for (I = 1; I <= M - 1; I++)
+	      DPH = 2.0*PI/PHSUM;
+	      PHSUM = DPH;
+	      PHI0[0] = DPH;
+	      W0[0][0] = Math.cos(DPH);
+	      W0[0][1] = Math.sin(DPH);
+	      for (I = 1; I <= M - 2; I++) {
+	          DPH = DPH/Math.exp(X[N+2+I]);
+	          PHSUM = PHSUM + DPH;
+	          PHI0[I] = PHSUM;
+	          W0[I][0] = Math.cos(PHSUM);
+	          W0[I][1] = Math.sin(PHSUM);
+	      } // for (I = 1; I <= M - 2; I++)
+		  return;
+	}
+
+	
+	private void DSCSOLV(double TOL,int IGUESS,int M,int N, double U[],
+			double C[], double W0[][], double W1[][], double PHI0[],
+			double PHI1[], double Z0[][],  double Z1[][], double ALFA0[],
+		   double ALFA1[], int NPTQ, double QWORK[], int ISHAPE, int LINEARC) {
+	//  -----------------------------------------------------------------
+	//  SOLVES THE NONLINEAR SYSTEM FOR D-SC PARAMETERS.
+	//  CALLING SEQUENCE:
+	//  TOL       A TOLERANCE TO CONTROL THE CONVERGENCE IN HYBRD
+	//  IGUESS    (=0 )A NON-EQUALLY SPACED INITIAL GUESS OR(=1)THE
+	//            OTHER  EQUALLY-SPACED  INITIAL GUESS PROVIDED, OR
+	//            (=2)USER-SUPPLIED INITIAL GUESS WHICH IS REQUIRED
+	//            TO BE THE ARGUMENTS OF THE INITIAL PREVERTICES.
+	//            ROUTINE ARGUM MAY BE USED FOR COMPUTING ARGUMENTS
+	//            IF NEEDED. NOTE: C WILL BE COMPUTED IN THE ROUTINE
+	//            (NOT SUPPLIED!)
+	//  M,N,U,C,W0,W1,PHI0,PHI1,ALFA0,ALFA1,Z0,Z1
+	//            CONSTITUTE THE GEOMETRY OF THE POLYGONAL REGION
+	//            AND THE MAPPING FUNCTION. ON RETURN U,C,W0,& W1
+	//            WILL  CONTAIN COMPUTED PARAMETERS. (PHI0 & PHI1
+	//            WILL CONTAIN THE ARGUMENTS OF THE PREVERTICES.)
+	//  QWORK     SEE CALLING SEQUENCE DOCUMENTATION IN QINIT.THE ARRAY
+	//            MUST HAVE BEEN FILLED BY QINIT BEFORE CALLING DSCSOLV.
+	//  NPTQ      THE NUMBER OF GAUSS-JACOBI POINTS USED
+	//  ISHAPE    INDICATES  THAT  OUTER POLYGON  CONTAINS NO INFINITE
+	//            VERTICES (ISHAPE=0) OR IT HAS SOME INFINITE VERTICES
+	//            (ISHAPE=1).
+	//  LINEARC   INTEGER VARIABLE TO CONTROL INTEGRATION PATH.IN PATICULAR:
+	//            LINEARC=0:INTEGRATING ALONG LINE SEGMENT WHENEVER POSSIBLE
+	//            LINEARC=1:INTEGRATING ALONG CIRCULAR ARC WHENEVER POSSIBLE
+	//  THE DISCRIPTION OF ARRAY IND & VARIABLE NSHAPE NEEDED IN DSCFUN:
+	//  IND       CONTAINS INDICES  CORRESPONDING TO  THOSE INFINITE
+	//            VERTICES,BUT THE FIRST & THE LAST ENTRIS MUST BE -1
+	//           & M-2(M IS THE # OF VERTICES ON THE OUTER POLYGON).
+	//  NSHAPE    THE DIMENSION OF THE INTERGE ARRAY IND(NSHAPE)
+	
+	
+	//     .. Scalar Arguments ..
+	//      DOUBLE COMPLEX C
+	      
+	//     .. Array Arguments ..
+	//      DOUBLE COMPLEX W0(M),W1(N),Z0(M),Z1(N)
+	//      DOUBLE PRECISION ALFA0(M),ALFA1(N),PHI0(M),PHI1(N),
+	//                      QWORK(NPTQ* (2* (N+M)+3))
+		
+		// Scalars in Common
+		double C2[] = new double[2];
+		double U2;
+		int ICOUNT, ISHAPE2, ISPRT, LINEARC2, M2, N2, NPTQ2, NSHAPE;
+		
+		// Arrays in Common
+		double W02[][] = new double[30][2];
+		double W12[][] = new double[30][2];
+		double Z02[][] = new double[30][2];
+		double Z12[][] = new double[30][2];
+		double ALFA02[] = new double[30];
+		double ALFA12[] = new double[30];
+		double PHI02[] = new double[30];
+		double PHI12[] = new double[30];
+		double QWORK2[] = new double[1660];
+		int IND[] = new int[20];
+		
+		// Local scalars
+		double C1[] = new double[2];
+		double WINT[] = new double[2];
+		double ZI[] = new double[2];
+		double AVE, BOTM, DSTEP, FACTOR, PI, TOP;
+		int I, INFO, K, KM, KN, MAXFUN, NFEV, NM, NWDIM;
+		
+		// Local arrays
+		double DIAG[] = new double[42];
+		double FJAC[][] = new double[42][42];
+		double FVAL[] = new double[42];
+		double QW[] = new double[1114];
+		double X[] = new double[42];
+		
+	    // Common blocks ..
+	    // COMMON /PARAM1/W02,W12,Z02,Z12,C2
+	    // COMMON /PARAM2/U2,PHI02,PHI12,ALFA02,ALFA12,QWORK2
+	    // COMMON /PARAM3/M2,N2,NPTQ2,ISHAPE2,LINEARC2,NSHAPE,IND
+	    // COMMON /PARAM4/UARY,VARY,DLAM,IU
+	    // COMMON /PARAM5/ISPRT,ICOUNT
+
+		ZI[0] = 0.0;
+		ZI[1] = 1.0;
+		PI = Math.PI;
+		ICOUNT = 0;
+		if (ISHAPE != 0) {
+			NSHAPE = 1;
+			for (I = 2; I <= M-1; I++) {
+			    if (ALFA0[I-1] >= 0.0) {
+			    	continue;
+			    }
+			    NSHAPE = NSHAPE + 1;
+			    IND[NSHAPE-1] = I-1;
+			} // for (I = 2; I <= M-1; I++)
+			IND[0] = -1;
+			NSHAPE = NSHAPE + 1;
+			IND[NSHAPE-1] = M-2;
+		} // if (ISHAPE != 0)
+		
+		// Fix one prevertex
+		W0[M-1][0] = 1.0;
+		W0[M-1][1] = 0.0;
+		PHI0[M-1] = 0.0;
+		
+		// Following two value assignments are to satisfy the compiler WATFOR77:
+		X[1] = 0.0;
+		X[2] = 0.0;
+		// Initial guess (IGUESS = 0):
+		if (IGUESS == 0) {
+		    X[0] = 1.0/0.5 - 1.0/0.46;
+		    AVE = 2.0 * PI/(double)N;
+		    for (I = 1; I <= N-2; I++) {
+		    	X[2 + I] = Math.log((AVE + 0.0001*I)/(AVE + 0.0001*(I+1)));
+		    } // for (I = 1; I <= N-2; I++)
+		    X[N+1] = Math.log((AVE+0.0001*(N-1))/(2.0*PI-(N-1)* (AVE+N*0.00005)));
+		    X[N+2] = 1.0/ (4.0-0.1) - 1.0/ (4.0+0.1);
+		    AVE = 2.0*PI/M;
+		    for (I = 1; I <= M - 2; I++) {
+		        X[N+2+I] = Math.log((AVE+0.0001*(I-1))/(AVE+0.0001*I));
+		    } // for (I = 1; I <= M - 2; I++)
+		    X[M+N+1] = Math.log((AVE+0.0001*(M-2))/(2.0*PI-(M-1)* (AVE+(M-2)*0.00005)));
+		} // if (IGUESS == 0)
+		else if (IGUESS == 1) {
+			//  INITIAL GUESS (IGUESS=1):
+		    X[0] = 1.0/0.53 - 1.0/0.43;
+		    for (I = 1; I <= N - 1; I++) {
+		        X[2+I] = 0.0;
+		    } // for (I = 1; I <= N - 1; I++)
+		    X[N+2] = 1.0/ (4.0-0.1) - 1.0/ (4.0+0.1);
+		    for (I = 1; I <= M - 1; I++) {
+		        X[N+2+I] = 0.0;
+		    } // for (I = 1; I <= M - 1; I++)
+		} // else if (IGUESS == 1)
+		else {
+			X[0] = 1.0/ (0.98-U[0]) - 1.0/ (U[0]-0.02);
+			for (K = 1; K <= N - 1; K++) {
+			    KN = K - 1;
+			    if (KN == 0) {
+			    	KN = N;
+			    }
+			    TOP = PHI1[K-1] - PHI1[KN-1];
+			    if (TOP < 0.0) {
+			    	TOP = TOP + 2.0*PI;
+			    }
+			    BOTM = PHI1[K] - PHI1[K-1];
+			    if (BOTM < 0.0) {
+			    	BOTM = BOTM + 2.0*PI;
+			    }
+			    X[2+K] = Math.log(TOP) - Math.log(BOTM);
+			} // for (K = 1; K <= N - 1; K++)
+			X[N+2] = 1.0/ (PI-PHI1[N-1]) - 1.0/ (PI+PHI1[N-1]);
+			for (K = 1; K <= M - 1; K++) {
+			    KM = K - 1;
+			    if (KM == 0) {
+			    	KM = M;
+			    }
+			    TOP = PHI0[K-1] - PHI0[KM-1];
+			    if (TOP < 0.0) {
+			    	TOP = TOP + 2.0*PI;
+			    }
+			    BOTM = PHI0[K] - PHI0[K-1];
+			    if (BOTM < 0.0) {
+			    	BOTM = BOTM + 2.0*PI;
+			    }
+			    X[N+2+K] = Math.log(TOP) - Math.log(BOTM);
+			} // for (K = 1; K <= M - 1; K++)
+		} // else
+		
+		// CALCULATE THE INITIAL GUESS X[1] & X[2] TO MATCH
+		// THE CHOICE FOR X[0],X[3],...,X[M+N+1]:
+		XWTRAN(M,N,X,U,C,W0,W1,PHI0,PHI1);
+        THDATA(U);
+        WINT = WQUAD(W0[M-1],0.0,M,0,W1[N-1],0.0,N,1,0.0,M,N,U[0],W0,W1,ALFA0,
+        	            ALFA1,NPTQ,QWORK,0,2);
+
+	}
+
+	
 	private void ANGLES(int MN, double Z01[][], double ALFA01[], int I01) {
 	    // Computes the interior angles of a doubly
 		// connected and bounded polygonal region.
@@ -397,6 +1014,45 @@ double neweps;
 		return;
 	}
 	
+	private double DIST(int M,int N, double W0[][], double W1[][],
+			double W[], int KWA, int IC) {
+	//   -----------------------------------
+	//    DETERMINES THE DISTANCE FROM W TO THE NEAREST SINGULARITY
+	//    OTHER THAN W ITSELF.( W COULD BE ONE OF THE PREVERTICES.)
+	//    KWA IS THE INDEX OF W IN W0 (IF IC=0) OR W1 (IF IC=1), OR
+	//    WK COULD BE 0 (IF ONE CHOOSES) WHEN W IS NOT A PREVERTEX.
+    //
+	//     .. Scalar Arguments ..
+	//     DOUBLE COMPLEX W
+	
+	//     .. Array Arguments ..
+	//      DOUBLE COMPLEX W0(M),W1(N)
+		
+	//     .. Local Scalars ..
+	      double D;
+	      int I;
+	      double result;
+	
+	      result = 2.0;
+	      for (I = 1; I <= M; I++) {
+	          D = scm.zabs(W[0]-W0[I-1][0],W[1]-W0[I-1][1]);
+	          if (I == KWA && IC == 0) {
+	        	  continue;
+	          }
+	          result = Math.min(result,D);
+	      } // for (I = 1; I <= M; I++)
+	      for (I = 1; I <= N; I++) {
+	          D = scm.zabs(W[0]-W1[I-1][0], W[1]-W1[I-1][1]);
+	          if (I == KWA && IC == 1) {
+	        	  continue;
+	          }
+	          result = Math.min(result,D);
+	      } // for (I = 1; I <= N; I++)
+	      return result;
+
+	}
+
+	
 	private void CHECK(double ALFA0[], double ALFA1[], int M, int N, int ISHAPE) {
 		//   CHECKS IF THE INPUT DATA AND PARAMETERS ARE CORRECT.
 		//   NOTE1:    ANGLE-CHECKING MAKES SENSE ONLY IF ANGLES
@@ -409,6 +1065,8 @@ double neweps;
 		//   3. COUNTERCLOCKWISE ORIENTATION OF THE VERTICES.
 		
 		// ALFA0(M), ALFA1(N)
+		double EPS, SUM;
+		int K, MK;
 		
 		if (!((M >= 3) && (M <= 30) && (N <= 30) && (M+N <= 40))) {
 			System.err.println("M must be no less than 3");
@@ -417,6 +1075,62 @@ double neweps;
 			System.exit(-1);
 		}
 	
+		EPS = 0.00001;
+		SUM = 0.0;
+		MK = 0;
+		for (K = 0; K <= M; K++) {
+			if (ALFA0[K] > 0.0) {
+				MK = MK + 1;
+			}
+			SUM = SUM + ALFA0[K];
+		} // for (K = 0; K <= M; K++)
+		if (!((MK < M && ISHAPE == 1) || (MK == M && ISHAPE == 0))) {
+			System.err.println("For finite regions ISHAPE must be 0");
+			System.err.println("and for infinite regions ISHAPE must be 1");
+			System.exit(-1);
+		}
+		
+		if (Math.abs(SUM - (M-2)) >= EPS) {
+			System.err.println("Some angles for outer polygon are wrong");
+			System.exit(-1);
+		}
+		
+		SUM = 0.0;
+		for (K = 0; K < N; K++) {
+			SUM = SUM + ALFA1[K];
+		}
+		if (Math.abs(SUM - (N+2)) >= EPS) {
+			System.err.println("Some angles for inner polygon are wrong");
+			System.exit(-1);
+		}
+		
+		if (ALFA0[0] <= 0.0) {
+			System.err.println("Z0[0] must be finite");
+			System.exit(-1);
+		}
+		
+		if (ALFA0[M-1] <= 0.0) {
+			System.err.println("Z0[M-1] must be finite");
+			System.exit(-1);
+		}
+		
+		if (ALFA0[M-3] <= 0.0) {
+			System.err.println("Z0[M-3] must be finite");
+			System.exit(-1);
+		}
+		
+		if (ALFA0[M-2] >= 2.0-EPS) {
+			System.err.println("Z0[M-2] must no be a re-entrant corner");
+			System.exit(-1);
+		}
+		
+		if ((ALFA0[M-2] >= 1.0-EPS) && (ALFA0[M-2] <= 1.0+EPS)) {
+			System.err.println("Z0[M-2] must not be an artificial corner");
+			System.exit(-1);
+		}
+		
+		System.out.println("Inputs have been checked with no error being found");
+		return;
 	}
 	
 	private void QINIT(int M, int N, double ALFA0[], double ALFA1[], int NPTQ, double QWORK[]) {
