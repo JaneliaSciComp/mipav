@@ -802,19 +802,29 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 final java.awt.Point p = e.getPoint();
                 final int rowIndex = rowAtPoint(p);
                 final int colIndex = columnAtPoint(p);
+                ToolTipManager.sharedInstance().setDismissDelay(12000);
+                FormStructureData fsInfo = new FormStructureData(formStructure);
 
-                if(colIndex < 4) {
-	                //tip = (String) deTableModel.getValueAt(rowIndex, colIndex);
+                if(colIndex == 0) {                      	
+                        	
+                	for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {    
+                		
+                		//If group name == table name at rowIndex, column index then add to tool tip.
+                		if (group.getName().equals ((String) (deTable.getValueAt(rowIndex, colIndex)))) {      			
+                			tooltip = "<html><p><b> Repeatability: </b>" + group.getType().getValue(); //+ "  <br/>";
+                			tooltip += "  <b>:  </b>" + WordUtils.wrap(fsInfo.getStructInfo().getRepeatableGroupByName(group.getName()).getThreshold().toString(), 80, "<br/>", false) + "   <br/>";
+                			tooltip += "</p></html>";
+                		}
+                	}
+	                return tooltip;
+                }
+                if(colIndex == 2 || colIndex == 1) {
 	                DataElement de = formStructure.getSortedDataElementList().get(rowIndex);
 	                
 	                tooltip = "<html><p><b> Name: </b> " + de.getName() + "<br/>";
-	                tooltip += "<b> CDE Description: </b>" + WordUtils.wrap(de.getDescription(), 100, "<br/>", false) + "<br/>";
-	                tooltip += "<b> Type: </b> " + de.getType() + "<br/>";
-	                tooltip += "<b> PV - PV Description: </b> " + WordUtils.wrap(de.getValueRangeList().toString().trim(), 100, "<br/>", false) + "<br/>";
-	
-	                if (de.getMeasuringUnit() != null) {
-	                    tooltip += "<p><b> Unit of measure: </b> " + de.getMeasuringUnit().getDisplayName() + "</p>";
-	                }
+	                tooltip += "<b> CDE Description: </b>" + WordUtils.wrap(de.getDescription(), 100, "<br/>", false) + "   <br/>";
+	                //tooltip += "<b> Type: </b> " + de.getType() + "<br/>";
+	                //tooltip += "<b> PV - PV Description: </b> " + WordUtils.wrap(de.getValueRangeList().toString().trim(), 100, "<br/>", false) + "<br/>";
 	
 	                //if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
 	                //    tooltip += "<p><b> NINDS CDE ID: </b> " + de.getNinds().getValue() + "<br/>";
@@ -826,8 +836,23 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                //if (de.getNotes() != null && !de.getNotes().trim().equals("")) {
 	                //    tooltip += "<p><b> Notes: </b><br/>" + WordUtils.wrap(removeRedundantDiseaseInfo(de.getNotes()), 100, "<br/>", false) + "</p>";
 	                //}
-	                ToolTipManager.sharedInstance().setDismissDelay(12000);
-
+	                tooltip += "</p></html>";
+	                return tooltip;
+                } 
+                if(colIndex == 3) {
+	                DataElement de = formStructure.getSortedDataElementList().get(rowIndex);
+	                
+	                tooltip += "<html> <p> <b> Type: </b> " + de.getType() + "   <br/>";
+	                if (de.getMinimumValue() != null) {
+	                	tooltip += "<b> Min: </b> " + de.getMinimumValue() + "<b>    Max:  </b>" + de.getMaximumValue() + "   <br/>";
+	                }
+	                if (de.getMeasuringUnit() != null) {
+	                    tooltip += "<p><b> Unit of measure: </b> " + de.getMeasuringUnit().getDisplayName() + "</p>";
+	                }
+	                if (de.getValueRangeList().size() != 0) {
+	                	tooltip += "<b> PV - PV Description: </b> " + WordUtils.wrap(de.getValueRangeList().toString().trim(), 80, "<br/>", false) + "<br/>";
+	                }
+	                tooltip += "</p></html>";
 	                return tooltip;
                 }
                 else return null;
@@ -859,14 +884,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         public Component getTableCellRendererComponent(final JTable table, final Object value,
                 final boolean isSelected, final boolean hasFocus, final int row, final int column) {
     		
-    		final Color gray = new Color (225,225,225);
+    		final Color gray = new Color (235,235,235);
             final Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             //cell.setBackground(Color.GREEN);
             TableCellRenderer refRenderer = table.getCellRenderer(row, column);
             if (refRenderer instanceof CellRenderer) { 
 	            if (row % 2 ==  1 ) {
-	                //cell.setBackground(gray);
-	                cell.setBackground(Color.WHITE);
+	                cell.setBackground(gray);
 	            }   
 	            else {
 	            	cell.setBackground(Color.WHITE);
@@ -1017,7 +1041,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     public void mouseClicked(final MouseEvent e) {
         final Component c = e.getComponent();
         if (c instanceof JTable) {
-            if (deTable.getSelectedRow() == -1) {
+           /** if (deTable.getSelectedRow() == -1) {
                 editDataElementsButton.setEnabled(false);
                 saveMapButton.setEnabled(false);
                 return;
@@ -1026,7 +1050,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     editDataElementsButton.setEnabled(true);
                     saveMapButton.setEnabled(true);
                 }
-            }
+            }*/
 
             
 
@@ -1034,6 +1058,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 if ( !isFinished) {
                     final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
                     //new InfoDialog(this, dsName, true, true, null);
+                    showCDE(null);
                 }
             }
         }
@@ -1459,27 +1484,28 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		}
         		rowPos[j]=sum;
         	}
-            
-        	// TODO:  to URL in DDT.
+        	
         	
         	FormStructureData fsInfo = new FormStructureData(formStructure);
         	for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {
         		int i=0;
 	        	for (final MapElement mapde : group.getDataElements()) {
 	        		DataElement de = fsInfo.getDataElement(mapde.getStructuralDataElement());
+	        		
 	        		int row = rowPos[group.getPosition()]+i;
 
 	        		deTableModel.setValueAt(group.getName(), row, 0);										// Group
 	        		deTableModel.setValueAt(mapde.getStructuralDataElement().getName(), row, 1);			// CDE Variable name
 	        		deTableModel.setValueAt(de.getTitle(), row, 2);											// CDE title
-	        	
+	        		
 	        		String strPVs = new String();
 	                for (ValueRange vr : de.getValueRangeList() ) {
 	                	strPVs += vr.getValueRange() + "; ";
 	                }
 	        		deTableModel.setValueAt(strPVs, row, 3);  // PV list
 	        		
-	        		//System.out.println(" URI " + de.getUri());  URI seems problematic. - maybe because on staging or demo
+	        		//System.out.println(" DE URI " + de.getUri());  //URI seems problematic. - maybe because on staging or demo
+	        		//System.out.println(" FS URI " + formStructure.getUri());  //URI seems problematic. - maybe because on staging or demo
 
 	        		
 	        		i++;
