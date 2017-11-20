@@ -283,7 +283,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
                 saveMapButton.setEnabled(deTableModel.getRowCount() > 0);
             }
-            listPane.setBorder(JDialogBase.buildTitledBorder(deTableModel.getRowCount() + " Form Structure(s) "));
         } else if (command.equalsIgnoreCase("SaveMapFile")) {
         	
             
@@ -491,7 +490,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
 
   
-
+    /**
+     * 
+     * @return
+     */
     private boolean readCSVFile() {
         BufferedReader br = null;
 
@@ -500,132 +502,51 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             final FileInputStream fis = new FileInputStream(csvFile);
             br = new BufferedReader(new InputStreamReader(fis));
 
-            // first line is data structure name and version
+            // first line is data element attributes Name, PVs, PV Descriptions, Type, Title - on the first two are required.
             str = br.readLine();
-            String[] arr = str.split(CSV_OUTPUT_DELIM);
-            final String dsName = arr[0].trim();
-            // final String version = arr[1].trim();
-
-            // second line are the field names
-            str = br.readLine().trim();
-            final String[] csvFieldNamesWithRecord = str.split(CSV_OUTPUT_DELIM);
-
-            // List of records, each record consisting of 1+ lines, split into field values
-            final ArrayList<ArrayList<ArrayList<String>>> recordList = new ArrayList<ArrayList<ArrayList<String>>>();
-
-            csvFieldNames = new ArrayList<String>(csvFieldNamesWithRecord.length - 1);
-            int recordFieldIndex = -1;
-            for (int i = 0; i < csvFieldNamesWithRecord.length; i++) {
-                if (csvFieldNamesWithRecord[i].equalsIgnoreCase(recordIndicatorColumn)
-                        || csvFieldNamesWithRecord[i].equalsIgnoreCase("\"" + recordIndicatorColumn + "\"")) {
-                    recordFieldIndex = i;
-                } else {
-                    // don't add fields without a name (error in the middle of the CSV, ignore at the end)
-                    if ( !csvFieldNamesWithRecord[i].trim().equals("")) {
-                        // if the names are surrounded by quotes, remove them before adding.
-                        csvFieldNames.add(csvFieldNamesWithRecord[i].trim().replaceAll("^\"|\"$", ""));
-                    } else {
-                        // TODO: ignore if no more real field names (and no data values for the column). otherwise show
-                        // error
-                        boolean allEmpty = true;
-                        for (int j = i; j < csvFieldNamesWithRecord.length; j++) {
-                            if ( !csvFieldNamesWithRecord[j].trim().equals("")) {
-                                allEmpty = false;
-                            }
-                        }
-
-                        // show error if the blank field is not at the end
-                        if ( !allEmpty) {
-                            MipavUtil.displayError("Empty CSV header field found in the middle of the row.  Check your CSV file.");
-                            return false;
-                        }
-                    }
-                }
+            String[] DEHeaders = str.split(CSV_OUTPUT_DELIM);
+            
+            final String deName = DEHeaders[0].trim();
+            final String dePVs  = DEHeaders[1].trim();
+            if ( !deName.toLowerCase().equals("name") || !dePVs.toLowerCase().equals("pvs")) {
+            	printlnToLog("Source data elements are not in proper format - Header row: Name, PVs, PV Descriptions, Type, Title where only Name and PVs are required.");
+            	return false;
             }
 
-            final String otherThanQuote = " [^\"] ";
-            final String quotedString = String.format(" \" %s* \" ", otherThanQuote);
-            final String csvRegex = String.format("(?x) " + // enable comments, ignore white spaces
-                    CSV_OUTPUT_DELIM + "                         " + // match a comma
-                    "(?=                       " + // start positive look ahead
-                    "  (                       " + // start group 1
-                    "    %s*                   " + // match 'otherThanQuote' zero or more times
-                    "    %s                    " + // match 'quotedString'
-                    "  )*                      " + // end group 1 and repeat it zero or more times
-                    "  %s*                     " + // match 'otherThanQuote'
-                    "  $                       " + // match the end of the string
-                    ")                         ", // stop positive look ahead
-                    otherThanQuote, quotedString, otherThanQuote);
-
-            ArrayList<String> csvParams;
+            Vector<String[]> dataElements = new Vector<String[]>(10);
             while ( (str = br.readLine()) != null) {
                 str = str.trim();
-                arr = str.split(csvRegex, -1);
-
-                csvParams = new ArrayList<String>(csvFieldNamesWithRecord.length);
-                for (int i = 0; i < arr.length; i++) {
-                    // if the value was surrounded by quotes because of a comma inside, remove the quotes
-                    if (arr[i].matches("^\".*\"$")) {
-                        csvParams.add(arr[i].substring(1, arr[i].length() - 1));
-                    } else {
-                        csvParams.add(arr[i]);
-                    }
-                }
-
-                // if not enough values, fill out with blanks until we hit the number of fields
-                for (int i = arr.length; i < csvFieldNamesWithRecord.length; i++) {
-                    csvParams.add("");
-                }
-
-                if (recordFieldIndex != -1 && csvParams.get(recordFieldIndex).equalsIgnoreCase(recordIndicatorValue)) {
-                    // new record
-                    final ArrayList<ArrayList<String>> record = new ArrayList<ArrayList<String>>();
-                    csvParams.remove(recordFieldIndex);
-                    record.add(csvParams);
-                    recordList.add(record);
-                } else if (recordFieldIndex == -1) {
-                    // no record field, assume always new record
-                    final ArrayList<ArrayList<String>> record = new ArrayList<ArrayList<String>>();
-                    record.add(csvParams);
-                    recordList.add(record);
-                } else {
-                    // no record indicator value found but the column is there, so this is a group repeat of the last
-                    // record
-                    csvParams.remove(recordFieldIndex);
-                    recordList.get(recordList.size() - 1).add(csvParams);
-                }
+                String[] deDef = str.split(CSV_OUTPUT_DELIM);
+                dataElements.add(deDef);
+                System.out.println(" hey " + deDef[0]);
             }
+            
+            //Open dialog with and populate with source DEs
+            InfoDialog csvDialog = new InfoDialog(this, dataElements);
 
-            final ViewJProgressBar progressBar = new ViewJProgressBar("Reading CSV file", "Reading CSV file...", 0, 100, false);
-            progressBar.setVisible(true);
-            progressBar.updateValue(5);
-            final long csvReadStartTime = System.currentTimeMillis();
-            final int progressInc = 95 / recordList.size();
-            final int rowsPerInc = (recordList.size() / 95) + 1;
-            int i = 1;
-            Vector<Vector<FileDicomTag>> csvProblemTagList = new Vector<Vector<FileDicomTag>>(recordList.size());
-            Vector<String> csvProblemFileDirList = new Vector<String>(recordList.size());
-            Vector<String> csvProblemFileNameList = new Vector<String>(recordList.size());
-            for (final ArrayList<ArrayList<String>> record : recordList) {
-                progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
+            //final ViewJProgressBar progressBar = new ViewJProgressBar("Reading source data element CSV file", "Reading CSV file...", 0, 100, false);
+            //progressBar.setVisible(true);
+            //progressBar.updateValue(5);
+            //final long csvReadStartTime = System.currentTimeMillis();
+            //final int progressInc = 95 / recordList.size();
+            //final int rowsPerInc = (recordList.size() / 95) + 1;
+            //int i = 1;
+            
+            //for (final ArrayList<ArrayList<String>> record : recordList) {
+            //    progressBar.setMessage("Reading CSV row " + i + " of " + recordList.size());
                 //InfoDialog csvDialog = new InfoDialog(this, dsName, false, false, record);
-                if (progressInc > 0) {
-                    progressBar.updateValue(progressBar.getValue() + progressInc);
-                } else if ( (i % rowsPerInc) == 0) {
-                    progressBar.updateValue(progressBar.getValue() + 1);
-                }
+                //if (progressInc > 0) {
+                //    progressBar.updateValue(progressBar.getValue() + progressInc);
+                //} else if ( (i % rowsPerInc) == 0) {
+                //    progressBar.updateValue(progressBar.getValue() + 1);
+                //}
 
-                // change i counter to 0-based for problem lists
-                //csvProblemTagList.add(i - 1, csvDialog.getProblemTags());
-                //csvProblemFileDirList.add(i - 1, csvDialog.getProblemFileDir());
-                //csvProblemFileNameList.add(i - 1, csvDialog.getProblemFileName());
+             //   i++;
+            //}
+            //final long csvReadEndTime = System.currentTimeMillis();
+            //System.out.println("CSV input read took " + ( (csvReadEndTime - csvReadStartTime) / 1000) + " seconds (" + recordList.size() + " records)");
 
-                i++;
-            }
-            final long csvReadEndTime = System.currentTimeMillis();
-            System.out.println("CSV input read took " + ( (csvReadEndTime - csvReadStartTime) / 1000) + " seconds (" + recordList.size() + " records)");
-
-            progressBar.dispose();
+            //progressBar.dispose();
 
             fis.close();
         } catch (final Exception e) {
@@ -641,9 +562,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 }
             }
         }
-
-        return true;
-
+            
+        return true;    
+            
     }
 
     /**
@@ -823,9 +744,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                
 	                tooltip = "<html><p><b> Name: </b> " + de.getName() + "<br/>";
 	                tooltip += "<b> CDE Description: </b>" + WordUtils.wrap(de.getDescription(), 100, "<br/>", false) + "   <br/>";
-	                //tooltip += "<b> Type: </b> " + de.getType() + "<br/>";
-	                //tooltip += "<b> PV - PV Description: </b> " + WordUtils.wrap(de.getValueRangeList().toString().trim(), 100, "<br/>", false) + "<br/>";
-	
+
 	                //if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
 	                //    tooltip += "<p><b> NINDS CDE ID: </b> " + de.getNinds().getValue() + "<br/>";
 	                //}
@@ -877,7 +796,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         return listPane;
     }
     
-    
+    /**
+     * Not used a the moment
+     * @author McAuliffe
+     *
+     */
     private class CellRenderer extends DefaultTableCellRenderer {
 
     	@Override
@@ -1514,6 +1437,179 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
     }
 
+    
+    /**
+     *  MATT   To be deleted.
+     * 
+     * 
+     */
+    private class InfoDialog extends JDialog implements ActionListener, WindowListener, ItemListener, FocusListener {
+        private static final long serialVersionUID = 859201819000159789L;
+
+        private final PlugInDialogBRICS_Mapper owner;
+
+        private JPanel dsMainPanel;
+        Vector<String[]> dataElements;
+       
+
+
+        public InfoDialog(final PlugInDialogBRICS_Mapper owner, final Vector<String[]> dataElements) {
+            super(owner, false);
+
+            this.owner = owner;
+            this.dataElements = dataElements;
+            //if (dataStructure == null) {
+            //    MipavUtil.displayError("Form structure not found in Data Dictionary: aaaaa" + dataStructureName);
+            //    dispose();
+            //    return;
+            //}
+
+            init();
+        }
+
+        private void init() {
+        	setTitle("Source Data Elements");
+            addWindowListener(this);
+            final JPanel mainPanel = new JPanel(new GridBagLayout());
+
+            dsMainPanel = new JPanel(new GridBagLayout());
+            final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+            final GridBagConstraints gbc = new GridBagConstraints();
+
+            try {
+                setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+            } catch (final Exception e) {
+                // setIconImage() is not part of the Java 1.5 API - catch any
+                // runtime error on those systems
+            }
+
+    
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.insets = new Insets(10, 5, 10, 25);
+            gbc.gridwidth = 1;
+
+            final JPanel OKPanel = new JPanel();
+
+            final JButton OKButton = new JButton("Save");
+            OKButton.setActionCommand("StructDialogOK");
+            OKButton.addActionListener(this);
+            OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+            OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            OKButton.setFont(serif12B);
+
+            final JButton cancelButton = new JButton("Cancel");
+            cancelButton.setActionCommand("StructDialogCancel");
+            cancelButton.addActionListener(this);
+            cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
+            cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            cancelButton.setFont(serif12B);
+
+            OKPanel.add(OKButton);
+            OKPanel.add(cancelButton);
+
+            JLabel requiredLabel = new JLabel( "<html>Mouse over data element name for a description.<br/>Mouse over the data element fields for more information on filling them in.<br/>* Required data elements are in <font color=\"red\">red</font></html>");
+
+            gbc.fill = GridBagConstraints.BOTH;
+            gbc.anchor = GridBagConstraints.EAST;
+            gbc.weightx = 0;
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            mainPanel.add(requiredLabel, gbc);
+
+            gbc.gridy = 2;
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            mainPanel.add(tabScrollPane, gbc);
+            gbc.weightx = 0;
+            gbc.weighty = 0;
+            gbc.gridy = 3;
+            mainPanel.add(OKPanel, gbc);
+
+            getContentPane().add(mainPanel);
+
+            final Dimension dim = getContentPane().getPreferredSize();
+            if (dim.height > 500) {
+                dim.height = 500;
+            }
+            tabScrollPane.setPreferredSize(dim);
+
+            pack();
+            MipavUtil.centerInWindow(owner, this);
+           
+            setVisible(true);
+
+        }
+        /**
+         * action performed
+         */
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+            final String command = e.getActionCommand();
+            ArrayList<String> errs;
+            final StringBuffer errors = new StringBuffer();
+            /**if (command.equalsIgnoreCase("StructDialogOK")) {
+                errs = validateFields();
+                boolean isComplete = true;
+                if (errs.size() != 0) {
+                    for (int i = 0; i < errs.size(); i++) {
+                        errors.append(" - " + errs.get(i) + "\n");
+                    }
+                    final Object[] options = {"Fix now", "Fix later"};
+                    fixErrors = JOptionPane.showOptionDialog(null, errors.toString(), "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+                            options, options[0]);
+                    isComplete = false;
+                }
+
+                complete(fsData, isComplete);
+                enableDisableFinishButton();
+                dispose();
+
+                if (fixErrors == FIX_ERRORS_NOW && errs.size() != 0) {
+                    fixErrors();
+                }
+
+            } */
+        }
+        
+        @Override
+        public void windowActivated(final WindowEvent e) {}
+
+        @Override
+        public void windowClosed(final WindowEvent e) {}
+
+        @Override
+        public void windowClosing(final WindowEvent e) {
+            enableDisableFinishButton();
+        }
+
+        @Override
+        public void windowDeactivated(final WindowEvent e) {}
+
+        @Override
+        public void windowDeiconified(final WindowEvent e) {}
+
+        @Override
+        public void windowIconified(final WindowEvent e) {}
+
+        @Override
+        public void windowOpened(final WindowEvent e) {}
+
+        @Override
+        public void itemStateChanged(final ItemEvent e) {
+            
+        }
+
+        @Override
+        public void focusGained(final FocusEvent e) {}
+
+        @Override
+        public void focusLost(final FocusEvent e) {
+
+        }
+    }
     
     /**
      *  MATT   To be deleted.
