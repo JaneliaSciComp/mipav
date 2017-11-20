@@ -1315,6 +1315,33 @@ public class VolumeImage implements Serializable {
 		}
 		InitScale();
 	}
+	
+	
+	public void UpdateData(final ModelImage kImage, ModelLUT kLUT, boolean reload) {
+		if ( kLUT == null )
+		{
+			UpdateData(kImage, reload);
+			return;
+		}
+		m_kImage = kImage;
+		m_kLUT = kLUT;
+		if ( reload )
+		{			
+			if ( m_kVolume[m_iTimeSlice] != null )
+			{
+				m_kVolume[m_iTimeSlice].dispose();
+			}
+			m_kVolumeTarget.Remove();
+			m_kVolume[m_iTimeSlice] = initVolumeData(m_kImage, m_iTimeSlice, m_kVolumeTarget, m_kImage.getImageName(), true, false);
+			m_kVolumeTarget.SetImage(m_kVolume[m_iTimeSlice]);
+		}
+		else
+		{
+			m_kVolume[m_iTimeSlice] = resetVolumeData(m_kImage, m_iTimeSlice, m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kImage
+					.getImageName(), true, false);
+		}
+		InitScale();
+	}
 
 	/**
 	 * Update the LUT for the ModelImage.
@@ -2228,6 +2255,8 @@ public class VolumeImage implements Serializable {
 	 * Updates the Textures and causes them to be reloaded onto the GPU.
 	 */
 	private void update4D() {
+		if ( m_kImage == null ) return;
+		
 		m_kVolumeTarget.SetImage(m_kVolume[m_iTimeSlice]);
 		m_kVolumeTarget.Reload(true);
 		if ( m_bGMInit )

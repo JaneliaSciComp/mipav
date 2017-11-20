@@ -339,11 +339,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 					}
 					timesList.add( timesArray );
 				} catch (FileNotFoundException e) {
-					MipavUtil.displayError("Error reading file: " + inputDirName + " " + e.getCause() );
+					MipavUtil.displayError("Error reading file: " + inputFileDir + File.separator + list[i] + " " + e.getCause() );
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
-					MipavUtil.displayError("Error reading file: " + inputDirName + " " + e.getCause() );
+					MipavUtil.displayError("Error reading file: " + inputFileDir + File.separator + list[i] + " " + e.getCause() );
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
@@ -360,7 +360,11 @@ public class PlugInDialogWormLatticeStraighten extends JDialogStandalonePlugin i
 				fileIndex++;
 			}
 		}
-
+		if ( maxIndex == -1 )
+		{
+			MipavUtil.displayError("Error reading files from: " + inputDirName + " no .csv files found." );
+			return;
+		}
 		//        System.err.println( minTimeCount + " " + maxTimeCount + " " + (minTimeCount == maxTimeCount ) );
 
 		//        System.err.println( timesList.size() + " " + tempList.size() );

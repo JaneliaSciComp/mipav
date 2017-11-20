@@ -25,6 +25,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcatMult3Dto4D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -43,6 +44,7 @@ import gov.nih.mipav.view.JPanelVolumeOpacity;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
@@ -127,11 +129,16 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	private JButton nextButton;
 
 	private JTextField rangeFusionText;
-
+	private JCheckBox useHyperstack;
 	private JButton startButton;
 
-	private ModelImage wormImage;
-	private ModelImage secondImage;
+	private ModelImage imageA;
+	private ModelImage imageB;
+	private ModelImage[] imageStackA = null;
+	private ModelImage[] imageStackB = null;
+	private ModelLUT[] lutStackA;
+	private ModelLUT[] lutStackB;
+	private int maxRangeIndex = -1;
 	private WormData wormData;
 	private VolumeTriPlanarInterface triVolume;
 	private VOI savedAnnotations = null;
@@ -157,7 +164,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				return;
 			}
 			startButton.setEnabled(false);
-			openStraightened();
+			openStraightened(true);
 		}
 		else if ( command.equals("next") )
 		{
@@ -166,14 +173,14 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			initDisplayAnnotationsPanel();
 			imageIndex++;
 
-			openStraightened();
+			openStraightened(true);
 		}
 		else if ( command.equals("back") )
 		{
 			//			voiManager.clear3DSelection();
 			save();
 			imageIndex--;
-			openStraightened();
+			openStraightened(true);
 		}
 		else if ( command.equals("displayAll") )
 		{
@@ -266,8 +273,11 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			imageIndex = Math.max( 0, imageIndex );
 			if ( nextButton != null )
 			{
-//				backButton.setEnabled( imageIndex > 0 );
 				nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
+			}
+			if ( backButton != null )
+			{
+				backButton.setEnabled( imageIndex > 0 );
 			}
 		}
 
@@ -312,60 +322,33 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		//			voiManager.disposeLocal(false);
 		//			voiManager = null;
 		//		}
-		if ( wormImage != null )
+		
+		if ( imageStackA != null )
 		{
-			wormImage.disposeLocal();
-			wormImage = null;
+			for ( int i = 0; i < imageStackA.length; i++ )
+			{
+				if ( imageStackA[i] != null )
+				{
+					imageStackA[i].disposeLocal();
+					imageStackA[i] = null;
+				}
+				if ( imageStackB[i] != null )
+				{
+					imageStackB[i].disposeLocal();
+					imageStackB[i] = null;
+				}
+			}
 		}
-		if ( secondImage != null )
+		if ( imageA != null )
 		{
-			secondImage.disposeLocal();
-			secondImage = null;
+			imageA.disposeLocal();
+			imageA = null;
 		}
-	}
-
-	/**
-	 * Called when the user is done viewing the volumes and editing the seam cells, lattice, or annotations.
-	 * The next step in the straightening process is automatically enabled and selected.
-	 * @param mode
-	 */
-	public void enableNext( int mode )
-	{
-		//		if ( volumeRenderer != null )
-		//		{
-		//			volumeRenderer.dispose();
-		//			volumeRenderer = null;
-		//		}
-		//		if ( voiManager != null )
-		//		{
-		//			voiManager = null;
-		//		}
-		//		gpuPanel.removeAll();
-		//		if ( volumeImage != null )
-		//		{
-		//			volumeImage.dispose();
-		//			volumeImage = null;
-		//		}
-		if ( wormImage != null )
+		if ( imageB != null )
 		{
-			wormImage.disposeLocal();
-			wormImage = null;
+			imageB.disposeLocal();
+			imageB = null;
 		}
-		if ( wormData != null )
-		{
-			wormData.dispose();
-			wormData = null;
-		}
-		if ( secondImage != null )
-		{
-			secondImage.disposeLocal();
-			secondImage = null;
-		}
-		imageIndex = 0;
-		//		volumePanel.setVisible(false);
-		//		tabbedPane.setVisible(false);
-		startButton.setEnabled(true);
-		pack();
 	}
 
 
@@ -398,7 +381,27 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	@Override
 	public void windowOpened(WindowEvent e) {}
 
+	protected ModelImage openImage( File imageFile, String fileName )
+	{
+		FileIO fileIO = new FileIO();
+		ModelImage image = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
+		image.calcMinMax();     
 
+		float[] res = image.getResolutions(0);
+		res[0] = res[2]; 
+		res[1] = res[2]; 
+		int[] units = image.getUnitsOfMeasure();
+		units[0] = units[2];
+		units[1] = units[2];
+		FileInfoBase[] fileInfo = image.getFileInfo();
+		for ( int i = 0; i < fileInfo.length; i++ )
+		{
+			fileInfo[i].setResolutions(res);
+			fileInfo[0].setUnitsOfMeasure(units);
+		}
+		
+		return image;
+	}
 
 	/**
 	 * Opens the current image for viewing. If this is the fist image the volume renderer is created and initialized.
@@ -407,32 +410,32 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	 * @param fileName file name
 	 * @return true if the file exists.
 	 */
-	protected boolean openImages( File imageFile, File imageFile2, String fileName )
+	protected boolean openImages( File imageFile, File imageFile2, String fileName, boolean startViewer )
 	{
 		if ( imageFile.exists() )
 		{
 			int[] previousExtents = null;
 			FileIO fileIO = new FileIO();
-			if ( wormImage != null ) {
-				previousExtents = new int[]{wormImage.getExtents()[0], wormImage.getExtents()[1], wormImage.getExtents()[2]};
-				wormImage.disposeLocal();
-				wormImage = null;
+			if ( imageA != null ) {
+				previousExtents = new int[]{imageA.getExtents()[0], imageA.getExtents()[1], imageA.getExtents()[2]};
+				imageA.disposeLocal();
+				imageA = null;
 			}
-			if ( secondImage != null )
+			if ( imageB != null )
 			{
-				secondImage.disposeLocal();
-				secondImage = null;
+				imageB.disposeLocal();
+				imageB = null;
 			}
-			wormImage = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
-			wormImage.calcMinMax();     
+			imageA = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
+			imageA.calcMinMax();     
 
-			float[] res = wormImage.getResolutions(0);
+			float[] res = imageA.getResolutions(0);
 			res[0] = res[2]; 
 			res[1] = res[2]; 
-			int[] units = wormImage.getUnitsOfMeasure();
+			int[] units = imageA.getUnitsOfMeasure();
 			units[0] = units[2];
 			units[1] = units[2];
-			FileInfoBase[] fileInfo = wormImage.getFileInfo();
+			FileInfoBase[] fileInfo = imageA.getFileInfo();
 			for ( int i = 0; i < fileInfo.length; i++ )
 			{
 				fileInfo[i].setResolutions(res);
@@ -440,58 +443,41 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			}
 			if ( (imageFile2 != null) && imageFile2.exists() )
 			{
-				secondImage = fileIO.readImage(fileName, imageFile2.getParent() + File.separator, false, null); 
-				secondImage.calcMinMax();     
-				res = secondImage.getResolutions(0);
+				imageB = fileIO.readImage(fileName, imageFile2.getParent() + File.separator, false, null); 
+				imageB.calcMinMax();     
+				res = imageB.getResolutions(0);
 				res[0] = res[2]; 
 				res[1] = res[2]; 
-				units = secondImage.getUnitsOfMeasure();
+				units = imageB.getUnitsOfMeasure();
 				units[0] = units[2];
 				units[1] = units[2];
-				fileInfo = secondImage.getFileInfo();
+				fileInfo = imageB.getFileInfo();
 				for ( int i = 0; i < fileInfo.length; i++ )
 				{
 					fileInfo[i].setResolutions(res);
 					fileInfo[0].setUnitsOfMeasure(units);
 				}
 			}
-			//			if ( secondImage != null )
-			//			{				
-			//				ModelImage displayImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, wormImage.getExtents(),
-			//						JDialogBase.makeImageName(wormImage.getImageName(), "_rgb"));
-			//				JDialogBase.updateFileInfo(wormImage, displayImage);
-			//
-			//                // Make algorithm
-			//				ModelImage blank = new ModelImage(ModelImage.SHORT, wormImage.getExtents(), JDialogBase.makeImageName(wormImage.getImageName(), ""));
-			//				AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(secondImage, wormImage, blank, displayImage, true, false, 255, true, true);
-			//				mathAlgo.run();
-			//				
-			//				ModelImage.saveImage(displayImage, displayImage.getImageName(), imageFile.getParent() + File.separator);
-			//				wormImage.disposeLocal(false);
-			//				secondImage.disposeLocal(false);
-			//				blank.disposeLocal(false);
-			//				wormImage = displayImage;
-			//			}
+			if ( startViewer ) {
+				if ( triVolume == null )
+				{
+					triVolume = new VolumeTriPlanarInterface(imageA, imageB, false);
+					triVolume.addConfiguredListener(this);
+					triVolume.addWindowListener(this);
+					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );
+					setVisible(false);
+				}
+				else {
 
+					boolean updateRenderer = (imageA.getExtents()[0] != previousExtents[0]) || 
+							(imageA.getExtents()[1] != previousExtents[1]) ||
+							(imageA.getExtents()[2] != previousExtents[2]);
 
-			if ( triVolume == null )
-			{
-				triVolume = new VolumeTriPlanarInterface(wormImage, secondImage, false);
-				triVolume.addConfiguredListener(this);
-				triVolume.setTitle("Annotation Tracking " + wormImage.getImageName() );
-				setVisible(false);
+					triVolume.setImage(imageA, imageB, null, null, updateRenderer);
+					triVolume.getVolumeGPU().resetAxisX();
+					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );
+				}
 			}
-			else {
-
-				boolean updateRenderer = (wormImage.getExtents()[0] != previousExtents[0]) || 
-						(wormImage.getExtents()[1] != previousExtents[1]) ||
-						(wormImage.getExtents()[2] != previousExtents[2]);
-
-				triVolume.setImage(wormImage, secondImage, updateRenderer);
-				triVolume.getVolumeGPU().resetAxisX();
-				triVolume.setTitle("Annotation Tracking " + wormImage.getImageName() );
-			}
-
 			return true;
 		}
 		return false;
@@ -502,86 +488,157 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	/**
 	 * Opens the current volume for viewing including the straightened annotations and lattice.
 	 */
-	protected void openStraightened()
+	protected void openStraightened(boolean readAnnotations)
 	{
 		if ( includeRange != null )
-		{			
-			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
+		{
+			if ( useHyperstack.isSelected() )
+			{
+				if ( imageStackA == null )
+				{
+					imageStackA = new ModelImage[includeRange.size()];
+					imageStackB = new ModelImage[includeRange.size()];
+					lutStackA = new ModelLUT[includeRange.size()];
+					lutStackB = new ModelLUT[includeRange.size()];
+					double maxRange = -1;
+					
+					ViewJProgressBar progressBar = new ViewJProgressBar("Opening HyperStack...",
+			                "Opening HyperStack...", 0, includeRange.size(), false, null, null);
+			        MipavUtil.centerOnScreen(progressBar);
+			        progressBar.setVisible(true);
+			        progressBar.updateValueImmed(0);
+			        
+					for ( int i = 0; i < includeRange.size(); i++ )
+					{		
+						String imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
+						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
+						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
+						File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+						File voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+
+						if ( voiFile.exists() )
+						{
+							imageStackA[i] = openImage(voiFile, imageName);
+						}
+						else {
+							imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight_masked.tif";
+							voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);				
+							if ( voiFile.exists() )
+							{
+								imageStackA[i] = openImage(voiFile, imageName);
+							}
+						}
+
+						if ( voiFile2.exists() )
+						{
+							imageStackB[i] = openImage(voiFile2, imageName);
+						}
+						else {
+							imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight_masked.tif";
+							voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+							if ( voiFile2.exists() )
+							{
+								imageStackB[i] = openImage(voiFile2, imageName);
+							}
+						}
+						
+						if ( imageStackA[i] != null ) {
+							double range = imageStackA[i].getMax() - imageStackA[i].getMin();
+							System.err.println("histo range: " + i + " " + range );
+							if ( range > maxRange ) {
+								maxRange = range;
+								maxRangeIndex = i;
+							}
+						}
+				        progressBar.updateValueImmed(i);
+					}
+
+			        progressBar.setVisible(false);
+			        progressBar.dispose();
+			        progressBar = null;
+
+					imageA = imageStackA[imageIndex];
+					imageB = imageStackB[imageIndex];		
+
+
+					triVolume = new VolumeTriPlanarInterface(imageA, imageB, false);
+					triVolume.addConfiguredListener(this);
+					triVolume.addWindowListener(this);
+					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );
+					setVisible(false);								
+				}
+				else {					
+					int[] previousExtents = new int[]{imageA.getExtents()[0], imageA.getExtents()[1], imageA.getExtents()[2]};
+
+					imageA = imageStackA[imageIndex];
+					imageB = imageStackB[imageIndex];
+					
+					
+					boolean updateRenderer = (imageA.getExtents()[0] != previousExtents[0]) || 
+							(imageA.getExtents()[1] != previousExtents[1]) ||
+							(imageA.getExtents()[2] != previousExtents[2]);
+
+					triVolume.setImage(imageA, imageB, lutStackA[imageIndex], lutStackB[imageIndex], updateRenderer);
+					triVolume.getVolumeGPU().resetAxisX();
+					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );
+					
+
+					lutStackA[imageIndex] = triVolume.getVolumeImageA().GetLUT();
+					lutStackB[imageIndex] = triVolume.getVolumeImageB().GetLUT();
+				}
+			}			
+			else if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
 			{
 				String imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
 				String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
 				String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
 				File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				File voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
-				if ( openImages( voiFile, voiFile2, imageName ) )
-				{			
-					wormData = new WormData(wormImage);
-					wormData.openStraightLattice();
-					if ( triVolume != null && triVolume.getVOIManager() != null )
-					{
-						((VOILatticeManagerInterface)triVolume.getVOIManager()).deleteAnnotations();
-						if ( savedAnnotations != null ) {
-							if ( savedAnnotations.getCurves().size() > 0 ) {
-								for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
-									short id = (short) wormImage.getVOIs().getUniqueID();
-									int colorID = 0;
-									VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-									newTextVOI.getCurves().add(savedAnnotations.getCurves().elementAt(i));
-									//											System.err.println( "add annotation " + ((VOIText)annotations.getCurves().elementAt(j)).getText() );
-									((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
-								}
-							}
-						}
-					}
-
-					else {
-						// first time try opening any existing annotations from file
-						VOIVector annotationList = new VOIVector();
-						LatticeModel.loadAllVOIsFrom(wormImage, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, annotationList, false);
-						if ( annotationList.size() > 0 ) {
-							savedAnnotations = annotationList.elementAt(0);
-						}
-					}
-				}
-				else
-				{
+				if ( !openImages( voiFile, voiFile2, imageName, true ) )
+				{	
 					imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight_masked.tif";
 					voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 					voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
-					if ( openImages( voiFile, voiFile2, imageName ) )
-					{			
-						wormData = new WormData(wormImage);
-						wormData.openStraightLattice();
+					openImages( voiFile, voiFile2, imageName, true );
+				}
+			}
+		}
+		if ( imageA != null )
+		{
+			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
+			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+	
+			wormData = new WormData(imageA);
+			wormData.openStraightLattice();
 
-						if ( triVolume != null && triVolume.getVOIManager() != null )
-						{
-							((VOILatticeManagerInterface)triVolume.getVOIManager()).deleteAnnotations();
-							if ( savedAnnotations != null ) {
-								if ( savedAnnotations.getCurves().size() > 0 ) {
-									for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
-										short id = (short) wormImage.getVOIs().getUniqueID();
-										int colorID = 0;
-										VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-										newTextVOI.getCurves().add(savedAnnotations.getCurves().elementAt(i));
-										//											System.err.println( "add annotation " + ((VOIText)annotations.getCurves().elementAt(j)).getText() );
-										((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
-									}
-								}
-							}
-						}
 
-						else {
-							// first time try opening any existing annotations from file
-							VOIVector annotationList = new VOIVector();
-							LatticeModel.loadAllVOIsFrom(wormImage, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, annotationList, false);
-							if ( annotationList.size() > 0 ) {
-								savedAnnotations = annotationList.elementAt(0);
-							}
+			if ( readAnnotations ) {
+				// first time try opening any existing annotations from file
+				VOIVector annotationList = new VOIVector();
+				LatticeModel.loadAllVOIsFrom(imageA, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, annotationList, false);
+				if ( annotationList.size() > 0 ) {
+					savedAnnotations = annotationList.elementAt(0);
+					System.err.println("using annotation file " + baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator);
+				}
+			}			
+			
+			if ( triVolume != null && triVolume.getVOIManager() != null )
+			{
+				((VOILatticeManagerInterface)triVolume.getVOIManager()).deleteAnnotations();
+				if ( savedAnnotations != null ) {
+					if ( savedAnnotations.getCurves().size() > 0 ) {
+						for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
+							short id = (short) imageA.getVOIs().getUniqueID();
+							int colorID = 0;
+							VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+							newTextVOI.getCurves().add(savedAnnotations.getCurves().elementAt(i));
+							//											System.err.println( "add annotation " + ((VOIText)annotations.getCurves().elementAt(j)).getText() );
+							((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
 						}
 					}
 				}
 			}
-		}
+		}		
 	}
 
 
@@ -637,6 +694,10 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		rangeFusionText = gui.buildField("Range of images (ex. 3-7, 12, 18-21, etc.): ", " ");
 		inputsPanel.add(rangeFusionText.getParent(), gbc);
 		gbc.gridy++;
+
+		useHyperstack = gui.buildCheckBox( "Load images as hyperstack", true);
+		inputsPanel.add(useHyperstack.getParent(), gbc);
+		gbc.gridx++;
 
 		buttonPanel = new JPanel();
 		startButton = gui.buildButton("start");
@@ -733,7 +794,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			backButton.setActionCommand("back");
 			backButton.setVisible(true);
 			backButton.setEnabled(false);
-			//		buttonPanel.add( backButton );
+			buttonPanel.add( backButton );
 
 			nextButton = gui.buildButton("next");
 			nextButton.addActionListener(this);
@@ -781,7 +842,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	 * Saves seam cells, lattice, or annotations based on the current edit mode.
 	 */
 	private void save()
-	{		
+	{				
 		savedAnnotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
 
 		if ( savedAnnotations != null ) {
@@ -805,7 +866,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	private void saveAnnotations()
 	{
 		//		System.err.println("Saving annotations " );
-		if ( wormImage == null )
+		if ( imageA == null )
 		{
 			return;
 		}
@@ -830,9 +891,10 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			if ( savedAnnotations.getCurves().size() > 0 )
 			{
 				VOIVector annotationList = new VOIVector();
-				LatticeModel.loadAllVOIsFrom(wormImage, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, annotationList, false);
+				LatticeModel.loadAllVOIsFrom(imageA, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, annotationList, false);
 				if ( annotationList.size() > 0 ) {
-					savedAnnotations = annotationList.elementAt(0);
+					savedAnnotations = annotationList.elementAt(0);		
+					System.err.println("using annotation file " + baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator);
 				}
 				else
 				{
@@ -933,7 +995,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
 				annotationNames.add( new String(text.getText()) );
 
-				short id = (short) wormImage.getVOIs().getUniqueID();
+				short id = (short) imageA.getVOIs().getUniqueID();
 				int colorID = 0;
 				VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
 				newTextVOI.getCurves().add(text);
@@ -945,6 +1007,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 		((VOILatticeManagerInterface)triVolume.getVOIManager()).editAnnotations(false);
 		((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotationListener(this);
+		
+		if ( useHyperstack.isSelected() )
+		{
+			lutStackA[imageIndex] = triVolume.getVolumeImageA().GetLUT();
+			lutStackB[imageIndex] = triVolume.getVolumeImageB().GetLUT();
+		}
 	}
 
 
