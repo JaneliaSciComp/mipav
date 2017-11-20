@@ -36,11 +36,44 @@ public class DoublyConnectedSC extends AlgorithmBase {
 	private final int EXAMPLE_GIVEN_FOR_CHECKING_INVERSE_MAP = 6;
 	private final int UPPER_HALF_PLANE_WITH_HORIZONTAL_SLIT = 7;
 	
+	private final int dscfun = 1;
+	
+	// Below are the 5 variables in the common block PARAM1
+	private double W02[][] = new double[30][2];
+	private double W12[][] = new double[30][2];
+	private double Z02[][] = new double[30][2];
+	private double Z12[][] = new double[30][2];
+	private double C2[] = new double[2];
+	
+	// Below are the 6 variables in the common block PARAM2
+	private double U2[] = new double[1];
+	private double PHI02[] = new double[30];
+	private double PHI12[] = new double[30];
+	private double ALFA02[] = new double[30];
+	private double ALFA12[] = new double[30];
+	private double QWORK2[] = new double[1660];
+	
+	// Below are the 7 variables in the common block PARAM3
+	private int M2, N2, NPTQ2, ISHAPE2, LINEARC2,  NSHAPE;
+	private int IND[] = new int[20];
+	
 	// Below are the 4 variables in the common block PARAM4
-	private double DLAM;
-	private int IU;
 	private double UARY[] = new double[8];
 	private double VARY[] = new double[3];
+	private double DLAM;
+	private int IU;
+	
+	// Below are the 2 variables in the common block PARAM5:
+	// Screen display of the residual of the system as the iteration goes on, 1 for "YES", 2 for "NO"
+	private int ISPRT;
+	private int ICOUNT;
+	
+	// Common blocks ..
+    // COMMON /PARAM1/W02,W12,Z02,Z12,C2
+    // COMMON /PARAM2/U2,PHI02,PHI12,ALFA02,ALFA12,QWORK2
+    // COMMON /PARAM3/M2,N2,NPTQ2,ISHAPE2,LINEARC2,NSHAPE,IND
+    // COMMON /PARAM4/UARY,VARY,DLAM,IU
+    // COMMON /PARAM5/ISPRT,ICOUNT
 	
 	private SchwarzChristoffelMapping scm = new SchwarzChristoffelMapping();
 	
@@ -58,10 +91,11 @@ public class DoublyConnectedSC extends AlgorithmBase {
 		
 	}
 	
-	public DoublyConnectedSC(int IPOLY, int NPTQ, int ISOLV) {
+	public DoublyConnectedSC(int IPOLY, int NPTQ, int ISOLV, int ISPRT) {
 		this.IPOLY = IPOLY;
 		this.NPTQ = NPTQ;
 		this.ISOLV = ISOLV;
+		this.ISPRT = ISPRT;
 		testRoutine = true;
 	}
 	
@@ -450,6 +484,168 @@ double neweps;
 
 	}
 	
+	private double[] WTHETA(double U, double W[]) {
+	    //  -------------------------
+	    //    EVALUATES THETA-FUNCTION AT W,WHERE U IS THE
+	    //    INNER RADIUS OF THE ANNULUS.THE DEFINITION OF
+	    //    THETA-FUNCTION CAN BE FOUND IN REFERENCE 3.
+	
+	    //     .. Scalar Arguments ..
+	    //  DOUBLE COMPLEX W
+
+	    //     .. Scalars in Common ..
+	    // DOUBLE PRECISION DLAM
+	    // INTEGER IU
+
+	    //    .. Arrays in Common ..
+	    // DOUBLE PRECISION UARY(8),VARY(3)
+
+	    //     .. Local Scalars ..
+		double result[] = new double[2];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double WT[] = new double[2];
+		double WWN[] = new double[2];
+		double WWN0[] = new double[2];
+		double WWP[] = new double[2];
+		double WWP0[] = new double[2];
+		double ZI[] = new double[2];
+	    // DOUBLE COMPLEX WT,WWN,WWN0,WWP,WWP0,ZI
+	    double PI;
+	    int K;
+	
+	    //     .. Common blocks ..
+	    // COMMON /PARAM4/UARY,VARY,DLAM,IU
+	
+	    WWP[0] = 1.0;
+	    WWP[1] = 0.0;
+	    WWN[0] = 1.0;
+	    WWN[1] = 0.0;
+	    result[0] = 1.0;
+	    result[1] = 0.0;
+	    if (U < 0.63) {
+	        WWP0[0] = -W[0];
+	        WWP0[1] = -W[1];
+	        scm.zdiv(-1.0, 0.0, W[0], W[1], cr, ci);
+	        WWN0[0] = cr[0];
+	        WWN0[1] = ci[0];
+	        for (K = 1; K <= IU; K++) {
+	        	scm.zmlt(WWP[0], WWP[1], WWP0[0], WWP0[1], cr, ci);
+	        	WWP[0] = cr[0];
+	        	WWP[1] = ci[0];
+	            scm.zmlt(WWN[0], WWN[1], WWN0[0], WWN0[1], cr, ci);
+	            WWN[0] = cr[0];
+	            WWN[1] = ci[0];
+	            result[0] = result[0] + UARY[K-1]* (WWP[0]+WWN[0]);
+	            result[1] = result[1] + UARY[K-1]* (WWP[1]+WWN[1]);
+	        } // for (K = 1; K <= IU; K++)
+	        return result;
+	   } // if (U < 0.63)
+
+	   PI = Math.PI;
+	   ZI[0] = 0.0;
+	   ZI[1] = 1.0;
+	   double logr = Math.log(scm.zabs(-W[0], -W[1]));
+	   double logi = Math.atan2(-W[1], -W[0]);
+	   scm.zmlt(-ZI[0], -ZI[1], logr, logi, cr, ci);
+	   WT[0] = cr[0];
+	   WT[1] = ci[0];
+	   if (U < 0.94) {
+		  double base = Math.exp(WT[0]/DLAM);
+		  double arg = WT[1]/DLAM;
+		  WWP[0] = base * Math.cos(arg);
+		  WWP[1] = base * Math.sin(arg);
+		  scm.zdiv(1.0, 0.0, WWP[0], WWP[1], cr, ci);
+	      WWN[0] = cr[0];
+	      WWN[1] = ci[0];
+	      result[0] = result[0] + VARY[0]* (WWP[0]+WWN[0]); 
+	      result[1] = result[1] + VARY[0]* (WWP[1]+WWN[1]);   
+	   } // if (U < 0.94)
+	   scm.zmlt(WT[0], WT[1], WT[0], WT[1], cr, ci);
+	   double argr = -cr[0]/(4.0 * PI * DLAM);
+	   double argi = -ci[0]/(4.0 * PI * DLAM);
+	   double base = Math.exp(argr);
+	   double expr = base * Math.cos(argi);
+	   double expi = base * Math.sin(argi);
+	   scm.zmlt(expr, expi, result[0], result[1], cr, ci);
+	   result[0] = cr[0]/Math.sqrt(DLAM);
+	   result[1] = ci[0]/Math.sqrt(DLAM);
+	   return result;
+	}
+
+
+	
+	private double[] WPROD(double W[], int M, int N, double U,
+			double W0[][], double W1[][], double ALFA0[], double ALFA1[]) {
+	//   --------------------------------------------
+	//    COMPUTES THE PRODUCT (D-SC INTEGRAND):
+	// M                                   N
+	//PROD THETA(W/U*W0(K))**(ALFA0(K)-1)*PROD THETA(U*W/W1(K))**(ALFA1(K)-1)
+	// K=1                                 K=1
+	//    THE CALLING SEQUENCE IS EXPLAINED IN THE ABOVE FORMULA.
+	
+	//     .. Scalar Arguments ..
+	//      DOUBLE COMPLEX W
+	     
+	//     .. Array Arguments ..
+	//      DOUBLE COMPLEX W0(M),W1(N)
+	//      DOUBLE PRECISION ALFA0(M),ALFA1(N)
+	
+	//     .. Scalars in Common ..
+	//      DOUBLE PRECISION DLAM
+	//      INTEGER IU
+	
+	//     .. Arrays in Common ..
+	//      DOUBLE PRECISION UARY(8),VARY(3)
+	
+	//     .. Local Scalars ..
+		double result[] = new double[2];
+		double WSUM[] = new double[2];
+		double WTH[] = new double[2];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double win[] = new double[2];
+		double wout[];
+		double base;
+	//      DOUBLE COMPLEX WSUM,WTH
+	      int K;
+
+	//     .. External Functions ..
+	//      DOUBLE COMPLEX WTHETA
+	//      EXTERNAL WTHETA
+	
+	//     .. Common blocks ..
+	//      COMMON /PARAM4/UARY,VARY,DLAM,IU
+	      WSUM[0] = 0.0;
+	      WSUM[1] = 0.0;
+	      for (K = 1; K <= M; K++) {
+	    	  scm.zdiv(W[0], W[1], U*W0[K][0], U*W0[K][1], cr, ci);
+	    	  win[0] = cr[0];
+	    	  win[1] = ci[0];
+	    	  wout = WTHETA(U, win);
+	    	  WTH[0] = Math.log(scm.zabs(wout[0], wout[1]));
+	    	  WTH[1] = Math.atan2(wout[1], wout[0]);
+	          WSUM[0] = WSUM[0] + (ALFA0[K-1]-1.0)*WTH[0];
+	          WSUM[1] = WSUM[1] + (ALFA0[K-1]-1.0)*WTH[1];
+	      } // for (K = 1; K <= M; K++)
+	      for (K = 1; K <= N; K++) {
+	    	  scm.zdiv(U*W[0], U*W[1], W1[K][0], W1[K][1], cr, ci);
+	    	  win[0] = cr[0];
+	    	  win[1] = ci[0];
+	    	  wout = WTHETA(U, win);
+	    	  WTH[0] = Math.log(scm.zabs(wout[0], wout[1]));
+	    	  WTH[1] = Math.atan2(wout[1], wout[0]);
+	          WSUM[0] = WSUM[0] + (ALFA1[K-1]-1.0)*WTH[0];
+	          WSUM[1] = WSUM[1] + (ALFA1[K-1]-1.0)*WTH[1];
+	      } // for (K = 1; K <= N; K++)
+	      base = Math.exp(WSUM[0]);
+	      result[0] = base * Math.cos(WSUM[1]);
+	      result[1] = base * Math.sin(WSUM[1]);
+	      return result;
+	}
+
+
+	
 	private double[] WQSUM(double WA[], double PHIA,int KWA, int IC, double WB[],
 			double PHIB, double RADIUS,int M,int N, double U, double W0[][], double W1[][],
 			double ALFA0[], double ALFA1[], int NPTQ,double QWORK[], int LINEARC) {
@@ -475,53 +671,76 @@ double neweps;
 		
 		//     .. Local Scalars ..
 		double result[] = new double[2];
-		/*      DOUBLE COMPLEX W,WC,WH,ZI
-		      DOUBLE PRECISION PWC,PWH
-		      INTEGER I,IOFFST,IWT1,IWT2
-		C     ..
-		C     .. External Functions ..
-		      DOUBLE COMPLEX WPROD
-		      EXTERNAL WPROD
-		C     ..
-		C     .. Intrinsic Functions ..
-		      INTRINSIC EXP
-		C     ..
+		double W[] = new double[2];
+		double WC[] = new double[2];
+		double WH[] = new double[2];
+		double ZI[] = new double[2];
+		//     DOUBLE COMPLEX W,WC,WH,ZI
+		double PWC,PWH;
+		int I,IOFFST,IWT1,IWT2;
+		double prod[] = null;
+		double base;
+		double arg;
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+
+		//     .. External Functions ..
+		//      DOUBLE COMPLEX WPROD
+		//      EXTERNAL WPROD
+		
 		//     .. Common blocks ..
 		//      COMMON /PARAM4/UARY,VARY,DLAM,IU
-		C     ..
-		      WQSUM = (0.D0,0.D0)
-		C
-		C   INDEX ARRANGEMENT:
-		      IWT1 = NPTQ* (IC*M+KWA-1) + 1
-		      IF (KWA.EQ.0) IWT1 = NPTQ* (M+N) + 1
-		      IWT2 = IWT1 + NPTQ - 1
-		      IOFFST = NPTQ* (M+N+1)
-		C
-		C   COMPUTE GAUSS-JACOBI SUM(W(J)*PROD(X(J))):
-		      IF (LINEARC.EQ.1) GO TO 20
-		C
-		C   INTEGRATE ALONG A LINE SEGMENT:
-		      WH = (WB-WA)/2.D0
-		      WC = (WA+WB)/2.D0
-		      DO 10 I = IWT1,IWT2
-		          W = WC + WH*QWORK(I)
-		          WQSUM = WQSUM + QWORK(IOFFST+I)*
-		     +            WPROD(W,M,N,U,W0,W1,ALFA0,ALFA1)
-		   10 CONTINUE
-		      WQSUM = WQSUM*WH
-		      RETURN
-		C
-		C   INTEGRATE ALONG A CIRCULAR ARC:
-		   20 ZI = (0.D0,1.D0)
-		      PWH = (PHIB-PHIA)/2.D0
-		      PWC = (PHIB+PHIA)/2.D0
-		      DO 30 I = IWT1,IWT2
-		          W = RADIUS*EXP(ZI* (PWC+PWH*QWORK(I)))
-		          WQSUM = WQSUM + QWORK(IOFFST+I)*W*
-		     +            WPROD(W,M,N,U,W0,W1,ALFA0,ALFA1)
-		   30 CONTINUE
-		      WQSUM = WQSUM*PWH*ZI*/
-		   return result;
+	    result[0] = 0.0;
+		result[1] = 0.0;
+		
+		//   INDEX ARRANGEMENT:
+		IWT1 = NPTQ* (IC*M+KWA-1) + 1;
+		if (KWA == 0) {
+		    IWT1 = NPTQ* (M+N) + 1;
+		}
+	    IWT2 = IWT1 + NPTQ - 1;
+		IOFFST = NPTQ* (M+N+1);
+		
+		//   COMPUTE GAUSS-JACOBI SUM(W(J)*PROD(X(J))):
+		if (LINEARC != 1) {
+		
+		    //   INTEGRATE ALONG A LINE SEGMENT:
+		    WH[0] = (WB[0]-WA[0])/2.0;
+		    WH[1] = (WB[1]-WA[1])/2.0;
+		    WC[0] = (WA[0]+WB[0])/2.0;
+		    WC[1] = (WA[1]+WB[1])/2.0;
+		    for (I = IWT1; I <= IWT2; I++) {
+		          W[0] = WC[0] + WH[0]*QWORK[I-1];
+		          W[1] = WC[1] + WH[1]*QWORK[I-1];
+		          prod = WPROD(W,M,N,U,W0,W1,ALFA0,ALFA1);
+		          result[0] = result[0] + QWORK[IOFFST + I-1]*prod[0];
+		          result[1] = result[1] + QWORK[IOFFST + I-1]*prod[1];
+		    } // for (I = IWT1; I <= IWT2; I++)
+		    scm.zmlt(result[0], result[1], WH[0], WH[1], cr, ci);
+		    result[0] = cr[0];
+		    result[1] = ci[0];
+		    return result;
+	    } if (LINEARC != 1)
+		
+		//   INTEGRATE ALONG A CIRCULAR ARC:
+	    ZI[0] = 0.0;
+	    ZI[1] = 1.0;
+		PWH = (PHIB-PHIA)/2.0;
+		PWC = (PHIB+PHIA)/2.0;
+		for (I = IWT1; I <= IWT2; I++) {
+			base = RADIUS*Math.exp(ZI[0]* (PWC+PWH*QWORK[I-1]));
+			arg = ZI[1]* (PWC+PWH*QWORK[I-1]);
+			W[0] = base * Math.cos(arg);
+			W[1] = base * Math.sin(arg);
+		    prod = WPROD(W,M,N,U,W0,W1,ALFA0,ALFA1);
+		    scm.zmlt(W[0], W[1], prod[0], prod[1], cr, ci);
+		    result[0] = result[0] + QWORK[IOFFST+I-1] * cr[0];
+		    result[1] = result[1] + QWORK[IOFFST+I-1] * ci[0];
+		} // for (I = IWT1; I <= IWT2; I++)
+		scm.zmlt(result[0], result[1], PWH*ZI[0], PWH*ZI[1], cr, ci);
+		result[0] = cr[0];
+		result[1] = ci[0];
+		return result;
 	}
 
 	
@@ -801,6 +1020,204 @@ double neweps;
 	      } // for (I = 1; I <= M - 2; I++)
 		  return;
 	}
+	
+	private void DSCFUN(int NDIM, double X[], double FVAL[],int IFLAG[]) {
+	    //    --------------------------------------
+	    //  FORMS THE NONLINEAR SYSTEM SATISFIED BY D-SC PARAMETERS.THE
+	    //  SUBROUTINE WILL BE CALLED BY NONLINEAR SYSTEM SOLVER HYBRD.
+	    //  SEE ROUTINE DSCSOLV FOR THE VARIABLES IN THE COMMON BLOCKS.
+	    //  NDIM: THE DIMENSION OF THE SYSTEM.
+	    //  X:    UNKNOWNS
+	    //  FVAL: THE VECTOR DEFINED BY THE SYSTEM.
+	    //  IFLAG:(ON OUTPUT)=1,THE ITERATION WAS SUCCESSFULLY COMPLETED.
+	    //         =2,3,OR 4, UNSUCCESSFUL TERMINATION OF THE ITERATION.
+	    //         =5 MAY INDICATE THE TOLERANCE GIVEN IN THE CALLING
+	    //         SEQUENCE OF HYBRD IS TOO SMALL.
+	
+	
+	    //  TRANSFORM UNCONSTRAINED X(K) TO ACTUAL D-SC PARAMETERS
+	    //  AND COMPUTE DATA TO BE USED IN WTHETA:
+	
+	    //     .. Scalar Arguments ..
+	    //  INTEGER IFLAG,NDIM
+	    //     ..
+	    //     .. Array Arguments ..
+	    //  DOUBLE PRECISION FVAL(NDIM),X(NDIM)
+	
+	    
+	     //.. Local Scalars ..
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double WA[] = new double[2];
+		double WAI[] = new double[2];
+		double WARC[] = new double[2];
+		double WB[] = new double[2];
+		double WBI[] = new double[2];
+		double WCIRCLE[] = new double[2];
+		double WIN1[] = new double[2];
+		double WIN2[] = new double[2];
+		double WIN3[] = new double[2];
+		double WIN4[] = new double[2];
+		double WINT1[] = new double[2];
+		double WINT2[] = new double[2];
+		double WINT3[] = new double[2];
+		double WLINE[] = new double[2];
+		double WLINE1[] = new double[2];
+		double WLINE2[] = new double[2];
+		double WX[] = new double[2];
+		double ZI[] = new double[2];
+	    //  DOUBLE COMPLEX WA,WAI,WARC,WB,WBI,WCIRCLE,WIN1,WIN2,WIN3,WIN4,
+	    //               WINT1,WINT2,WINT3,WLINE,WLINE1,WLINE2,WX,ZI
+	    double FMAXN,PHIA,PHIB,RADIUS,TEST1;
+	    int I,J,K;
+	
+	    //     .. External Functions ..
+	    // DOUBLE COMPLEX WQUAD
+	    // DOUBLE PRECISION FMAX
+	    // EXTERNAL WQUAD,FMAX
+	
+	    //     .. External Subroutines ..
+	    // EXTERNAL THDATA,XWTRAN
+	
+	    //     .. Common blocks ..
+	    // COMMON /PARAM1/W02,W12,Z02,Z12,C2
+	    // COMMON /PARAM2/U2,PHI02,PHI12,ALFA02,ALFA12,QWORK2
+	    // COMMON /PARAM3/M2,N2,NPTQ2,ISHAPE2,LINEARC2,NSHAPE,IND
+	    // COMMON /PARAM4/UARY,VARY,DLAM,IU
+	    // COMMON /PARAM5/ISPRT,ICOUNT
+
+	      XWTRAN(M2,N2,X,U2,C2,W02,W12,PHI02,PHI12);
+	      THDATA(U2);
+	      ZI[0] = 0.0;
+	      ZI[1] = 1.0;
+	      ICOUNT = ICOUNT + 1;
+	
+	      //  TWO EQUATIONS TO ELIMINATE POSSIBLE ROTATION OF THE INNER POLYGON:
+	      double wout[] = WQUAD(W12[N2-1],PHI12[N2-1],N2,1,W12[0],PHI12[0],1,
+	    		     1,U2[0],M2,N2,U2[0],W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2);
+	      scm.zmlt(C2[0], C2[1], wout[0], wout[1], cr, ci);
+	      WIN1[0] = Z12[0][0] - Z12[N2-1][0] - cr[0];
+	      WIN1[1] = Z12[0][1] - Z12[N2-1][1] - ci[0];
+	      scm.zmlt(ZI[0], ZI[1], WIN1[0], WIN1[1], cr, ci);
+	      FVAL[0] = ci[0];
+	      FVAL[1] = WIN1[1];
+	
+	      //  N-1 SIDE LENGTH CONDITIONS FOR THE INNER POLYGON:
+	      for (I = 1; I <= N2 - 1; I++) {
+	          WINT1 = WQUAD(W12[I-1],PHI12[I-1],I,1,W12[I],PHI12[I],I+1,1,U2[0],M2,N2,
+	                 U2[0],W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2);
+	          scm.zmlt(C2[0], C2[1], WINT1[0], WINT1[1], cr, ci);
+	          FVAL[I+1] = scm.zabs(Z12[I][0]-Z12[I-1][0],Z12[I][1]-Z12[I-1][1]) - scm.zabs(cr[0], ci[0]);
+	      } // for (I = 1; I <= N2 - 1; I++)
+	
+	      //  TWO EQUATIONS TO FIX THE RELATIVE POSITION OF THE INNER POLYGON:
+	      TEST1 = Math.cos(PHI12[N2-1]);
+	     /* if (TEST1 < U2[0]) {
+	
+	          // IF THE LINE PATH FROM W02[M2-1] TO W12[N2-1] IS OUT OF DOMAIN,THE
+              //  COMBINATION OF TWO DIFFERENT PATHS WILL BE USED INSTEAD:
+	      WX = DCMPLX(U2,0.D0)
+	      WLINE = WQUAD(W02(M2),0.D0,M2,0,WX,0.D0,0,2,0.D0,M2,N2,U2,W02,W12,ALFA02,
+	     +        ALFA12,NPTQ2,QWORK2,0,2)
+	      IF (PHI12(N2).LE.0.D0) THEN
+	          WARC = WQUAD(W12(N2),PHI12(N2),N2,1,WX,0.D0,0,2,U2,M2,N2,U2,W02,W12,
+	     +           ALFA02,ALFA12,NPTQ2,QWORK2,1,2)
+	          WIN2 = WLINE - WARC
+
+	      ELSE
+	          WARC = WQUAD(WX,0.D0,0,2,W12(N2),PHI12(N2),N2,1,U2,M2,N2,U2,W02,W12,
+	     +           ALFA02,ALFA12,NPTQ2,QWORK2,1,2)
+	          WIN2 = WLINE + WARC
+	      END IF
+
+	      GO TO 30
+	      } // if (TEST1 < U2[0])
+	      else {
+
+	          WIN2 = WQUAD(W02(M2),0.D0,M2,0,W12(N2),0.D0,N2,1,0.D0,M2,N2,U2,W02,W12,ALFA02,
+	     +       ALFA12,NPTQ2,QWORK2,0,2)
+	      }
+	      FVAL(N2+2) = DIMAG(ZI* (Z12(N2)-Z02(M2)-C2*WIN2))
+	      FVAL(N2+3) = DIMAG(Z12(N2)-Z02(M2)-C2*WIN2)
+	C
+	C  TWO EQUATIONS TO ELIMINATE POSSIBLE ROTATION OF THE OUTER POLYGON:
+	      WIN3 = Z02(1) - Z02(M2) - C2*WQUAD(W02(M2),PHI02(M2),M2,0,W02(1),PHI02(1),1,
+	     +       0,1.D0,M2,N2,U2,W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2)
+	      FVAL(N2+4) = DIMAG(ZI*WIN3)
+	      FVAL(N2+5) = DIMAG(WIN3)
+	C
+	      IF (M2.EQ.3) THEN
+	C
+	C  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
+	          IF (ISPRT.NE.1) GO TO 40
+	          FMAXN = FMAX(NDIM,FVAL)
+	          WRITE (6,FMT=9000) ICOUNT,FMAXN
+	   40     CONTINUE
+	          RETURN
+
+	      END IF
+
+	      IF (ISHAPE2.EQ.1) GO TO 70
+	C
+	C  M-3 SIDE LENGTH CONDITIONS OF THE OUTER POLYGON:
+	      DO 50 J = 1,M2 - 3
+	          WINT2 = WQUAD(W02(J),PHI02(J),J,0,W02(J+1),PHI02(J+1),J+1,0,1.D0,
+	     +            M2,N2,U2,W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2)
+	          FVAL(N2+5+J) = ABS(Z02(J+1)-Z02(J)) - ABS(C2*WINT2)
+	   50 CONTINUE
+	C
+	C  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
+	      IF (ISPRT.NE.1) GO TO 60
+	      FMAXN = FMAX(NDIM,FVAL)
+	      WRITE (6,FMT=9010) ICOUNT,FMAXN
+	   60 CONTINUE
+	      RETURN
+	C
+	C  OUTER POLYGON CONTAINS SOME INFINITE VERTICES & FOR EACH OF THEM
+	C  TWO LENGTH CONDITIONS WILL BE REPLACED BY A COMPLEX INTEGRAL:
+	   70 DO 100 K = 1,NSHAPE - 1
+	          IF (IND(K+1).EQ.2 .OR. IND(K).GE.IND(K+1)-2) GO TO 90
+	          DO 80 J = IND(K) + 1,IND(K+1) - 2
+	              WINT3 = WQUAD(W02(J),PHI02(J),J,0,W02(J+1),PHI02(J+1),J+1,0,
+	     +                1.D0,M2,N2,U2,W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2)
+	              FVAL(N+5+J) = ABS(Z02(J+1)-Z02(J)) - ABS(C2*WINT3)
+	   80     CONTINUE
+	   90     IF (K.EQ.NSHAPE-1 .OR. IND(K+1).EQ.M2-1) GO TO 100
+	C
+	C  THE COMBINATION  OF THREE DIFFERENT PATHS  IS USED TO INTEGRATE
+	C  FROM WA TO WB TO AVOID DOMAIN PROBLEM.THE BY-PRODUCT OF THIS IS
+	C  THAT IT IS NUMERICALLY  MORE EFFICIENT THAN A SINGLE LINE PATH:
+	          WA = W02(IND(K+1)-1)
+	          WB = W02(IND(K+1)+1)
+	          PHIA = PHI02(IND(K+1)-1)
+	          PHIB = PHI02(IND(K+1)+1)
+	          RADIUS = (1.D0+U2)/2.D0
+	          WAI = RADIUS*EXP(ZI*PHIA)
+	          WBI = RADIUS*EXP(ZI*PHIB)
+	          WLINE1 = WQUAD(WA,0.D0,IND(K+1)-1,0,WAI,0.D0,0,2,0.D0,M2,N2,U2,
+	     +             W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,0,2)
+	          WLINE2 = WQUAD(WB,0.D0,IND(K+1)+1,0,WBI,0.D0,0,2,0.D0,M2,N2,U2,
+	     +             W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,0,2)
+	          WCIRCLE = WQUAD(WAI,PHIA,0,2,WBI,PHIB,0,2,RADIUS,M2,N2,U2,W02,W12,
+	     +              ALFA02,ALFA12,NPTQ2,QWORK2,1,2)
+	          WIN4 = C2* (WLINE1+WCIRCLE-WLINE2)
+	          FVAL(N2+5+IND(K+1)-1) = DIMAG(ZI*
+	     +                           (Z02(IND(K+1)+1)-Z02(IND(K+1)-1)-WIN4))
+	          FVAL(N2+5+IND(K+1)) = DIMAG(Z02(IND(K+1)+1)-Z02(IND(K+1)-1)-WIN4)
+	  100 CONTINUE
+	C
+	C  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
+	      IF (ISPRT.NE.1) GO TO 110
+	      FMAXN = FMAX(NDIM,FVAL)
+	      WRITE (6,FMT=9020) ICOUNT,FMAXN
+	  110 CONTINUE
+	      RETURN
+
+	 9000 FORMAT (2X,I5,6X,E10.4)
+	 9010 FORMAT (2X,I5,6X,E10.4)
+	 9020 FORMAT (2X,I5,6X,E10.4)*/
+	}
+
 
 	
 	private void DSCSOLV(double TOL,int IGUESS,int M,int N, double U[],
@@ -847,29 +1264,16 @@ double neweps;
 	//      DOUBLE PRECISION ALFA0(M),ALFA1(N),PHI0(M),PHI1(N),
 	//                      QWORK(NPTQ* (2* (N+M)+3))
 		
-		// Scalars in Common
-		double C2[] = new double[2];
-		double U2;
-		int ICOUNT, ISHAPE2, ISPRT, LINEARC2, M2, N2, NPTQ2, NSHAPE;
-		
-		// Arrays in Common
-		double W02[][] = new double[30][2];
-		double W12[][] = new double[30][2];
-		double Z02[][] = new double[30][2];
-		double Z12[][] = new double[30][2];
-		double ALFA02[] = new double[30];
-		double ALFA12[] = new double[30];
-		double PHI02[] = new double[30];
-		double PHI12[] = new double[30];
-		double QWORK2[] = new double[1660];
-		int IND[] = new int[20];
-		
 		// Local scalars
+		double cr[] = new double[1];
+		double ci[] = new double[1];
 		double C1[] = new double[2];
-		double WINT[] = new double[2];
+		double WINT[];
 		double ZI[] = new double[2];
 		double AVE, BOTM, DSTEP, FACTOR, PI, TOP;
-		int I, INFO, K, KM, KN, MAXFUN, NFEV, NM, NWDIM;
+		int INFO[] = new int[1];
+		int NFEV[] = new int[1];
+		int I, K, KM, KN, MAXFUN, NM, NWDIM;
 		
 		// Local arrays
 		double DIAG[] = new double[42];
@@ -978,7 +1382,65 @@ double neweps;
         THDATA(U);
         WINT = WQUAD(W0[M-1],0.0,M,0,W1[N-1],0.0,N,1,0.0,M,N,U[0],W0,W1,ALFA0,
         	            ALFA1,NPTQ,QWORK,0,2);
-
+        scm.zdiv(Z1[N-1][0] - Z0[M-1][0], Z1[N-1][1] - Z0[M-1][1], WINT[0], WINT[1], cr, ci);
+        C1[0] = cr[0];
+        C1[1] = ci[0];
+        scm.zmlt(ZI[0], ZI[1], C1[0], C1[1], cr, ci);
+        X[1] = ci[0];
+        X[2] = C1[1];
+        
+        //  HYBRD CONTROL PARAMETERS:
+        DSTEP = 1.0E-7;
+        MAXFUN = 200* (M+N);
+        FACTOR = 2.0;
+        NM = M + N + 2;
+      
+        //  COPY RELEVANT DATA TO THE COMMON BLOCK IN DSCFUN:
+        M2 = M;
+        N2 = N;
+        ISHAPE2 = ISHAPE;
+        LINEARC2 = LINEARC;
+        NPTQ2 = NPTQ;
+        for (K = 0; K < M; K++) {
+            W02[K][0] = W0[K][0];
+            W02[K][1] = W0[K][1];
+            PHI02[K] = PHI0[K];
+            Z02[K][0] = Z0[K][0];
+            Z02[K][1] = Z0[K][1];
+            ALFA02[K] = ALFA0[K];
+        } // for (K = 0; K < M; K++) 
+        for (K = 0; K < N; K++) {
+            W12[K][0] = W1[K][0];
+            W12[K][1] = W1[K][1];
+            PHI12[K] = PHI1[K];
+            Z12[K][0] = Z1[K][0];
+            Z12[K][1] = Z1[K][1];
+            ALFA12[K] = ALFA1[K];
+        } // for (K = 0; K < N; K++)
+        NWDIM = NPTQ* (2* (M+N)+3);
+        for (I = 0; I < NWDIM; I++) {
+            QWORK2[I] = QWORK[I];
+        } // for (I = 0; I < NWDIM; I++)
+        
+        if (ISPRT != 1) {
+            System.out.println("Time for obtaining a converged result may range");
+            System.out.println("from several seconds to several minutes or longer");
+            System.out.println("depending on the complexity of the geometry of the");
+            System.out.println("region and the local computing system");
+            System.out.println("so be patient");
+        }
+        
+        // Solve nonlinear system with hybrid
+        double QTF[] = new double[NM];
+        double WA1[] = new double[NM];
+        double WA2[] = new double[NM];
+        double WA3[] = new double[NM];
+        double WA4[] = new double[NM];
+        HYBRD(dscfun, NM, X, FVAL, TOL, MAXFUN, NM, NM, DSTEP, DIAG, 1, FACTOR,
+        	  -1, INFO, NFEV, FJAC, 42, QW, 903, QTF, WA1, WA2, WA3, WA4);
+        for (I = 0; I < NM; I++) {
+        	QW[I+903] = QTF[I];
+        }
 	}
 
 	
@@ -1132,6 +1594,520 @@ double neweps;
 		System.out.println("Inputs have been checked with no error being found");
 		return;
 	}
+	
+	private void HYBRD(int FCN,int N, double X[], double FVEC[], double XTOL, int MAXFEV,
+			int ML, int MU, double EPSFCN, double DIAG[], int MODE,
+		    double FACTOR, int NPRINT,int INFO[], int NFEV[], double FJAC[][],
+		    int LDFJAC, double R[],int LR, double QTF[], double WA1[],
+		    double WA2[], double WA3[], double WA4[]) {
+		//     ***********
+		//
+		//     SUBROUTINE HYBRD
+		//
+		//     THE PURPOSE OF HYBRD IS TO FIND A ZERO OF A SYSTEM OF
+		//     N NONLINEAR FUNCTIONS IN N VARIABLES BY A MODIFICATION
+		//     OF THE POWELL HYBRID METHOD. THE USER MUST PROVIDE A
+		//     SUBROUTINE WHICH CALCULATES THE FUNCTIONS. THE JACOBIAN IS
+		//     THEN CALCULATED BY A FORWARD-DIFFERENCE APPROXIMATION.
+		//
+		//     THE SUBROUTINE STATEMENT IS
+		//
+		//       SUBROUTINE HYBRD(FCN,N,X,FVEC,XTOL,MAXFEV,ML,MU,EPSFCN,
+		//                        DIAG,MODE,FACTOR,NPRINT,INFO,NFEV,FJAC,
+		//                        LDFJAC,R,LR,QTF,WA1,WA2,WA3,WA4)
+		//
+		//     WHERE
+	    //      dscfun = 1 for DSCFUN
+		//       FCN IS THE NAME OF THE USER-SUPPLIED SUBROUTINE WHICH
+		//         CALCULATES THE FUNCTIONS. FCN MUST BE DECLARED
+		//         IN AN EXTERNAL STATEMENT IN THE USER CALLING
+		//         PROGRAM, AND SHOULD BE WRITTEN AS FOLLOWS.
+		//
+		//         SUBROUTINE FCN(N,X,FVEC,IFLAG)
+		//         INTEGER N,IFLAG
+		//         DOUBLE PRECISION X(N),FVEC(N)
+		//         ----------
+		//         CALCULATE THE FUNCTIONS AT X AND
+		//         RETURN THIS VECTOR IN FVEC.
+		//         ---------
+		//         RETURN
+		//         END
+		//
+		//         THE VALUE OF IFLAG SHOULD NOT BE CHANGED BY FCN UNLESS
+		//         THE USER WANTS TO TERMINATE EXECUTION OF HYBRD.
+		//         IN THIS CASE SET IFLAG TO A NEGATIVE INTEGER.
+		//
+		//       N IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+		//         OF FUNCTIONS AND VARIABLES.
+		//
+		//       X IS AN ARRAY OF LENGTH N. ON INPUT X MUST CONTAIN
+		//         AN INITIAL ESTIMATE OF THE SOLUTION VECTOR. ON OUTPUT X
+		//         CONTAINS THE FINAL ESTIMATE OF THE SOLUTION VECTOR.
+		//
+		//       FVEC IS AN OUTPUT ARRAY OF LENGTH N WHICH CONTAINS
+		//         THE FUNCTIONS EVALUATED AT THE OUTPUT X.
+		//
+		//       XTOL IS A NONNEGATIVE INPUT VARIABLE. TERMINATION
+		//         OCCURS WHEN THE RELATIVE ERROR BETWEEN TWO CONSECUTIVE
+		//         ITERATES IS AT MOST XTOL.
+		//
+		//       MAXFEV IS A POSITIVE INTEGER INPUT VARIABLE. TERMINATION
+		//         OCCURS WHEN THE NUMBER OF CALLS TO FCN IS AT LEAST MAXFEV
+		//         BY THE END OF AN ITERATION.
+		//
+		//       ML IS A NONNEGATIVE INTEGER INPUT VARIABLE WHICH SPECIFIES
+		//         THE NUMBER OF SUBDIAGONALS WITHIN THE BAND OF THE
+		//         JACOBIAN MATRIX. IF THE JACOBIAN IS NOT BANDED, SET
+		//         ML TO AT LEAST N - 1.
+		//
+		//       MU IS A NONNEGATIVE INTEGER INPUT VARIABLE WHICH SPECIFIES
+		//         THE NUMBER OF SUPERDIAGONALS WITHIN THE BAND OF THE
+		//         JACOBIAN MATRIX. IF THE JACOBIAN IS NOT BANDED, SET
+		//         MU TO AT LEAST N - 1.
+		//
+		//       EPSFCN IS AN INPUT VARIABLE USED IN DETERMINING A SUITABLE
+		//         STEP LENGTH FOR THE FORWARD-DIFFERENCE APPROXIMATION. THIS
+		//         APPROXIMATION ASSUMES THAT THE RELATIVE ERRORS IN THE
+		//         FUNCTIONS ARE OF THE ORDER OF EPSFCN. IF EPSFCN IS LESS
+		//         THAN THE MACHINE PRECISION, IT IS ASSUMED THAT THE RELATIVE
+		//         ERRORS IN THE FUNCTIONS ARE OF THE ORDER OF THE MACHINE
+		//         PRECISION.
+		//
+		//       DIAG IS AN ARRAY OF LENGTH N. IF MODE = 1 (SEE
+		//         BELOW), DIAG IS INTERNALLY SET. IF MODE = 2, DIAG
+		//         MUST CONTAIN POSITIVE ENTRIES THAT SERVE AS
+		//         MULTIPLICATIVE SCALE FACTORS FOR THE VARIABLES.
+		//
+		//       MODE IS AN INTEGER INPUT VARIABLE. IF MODE = 1, THE
+		//         VARIABLES WILL BE SCALED INTERNALLY. IF MODE = 2,
+		//         THE SCALING IS SPECIFIED BY THE INPUT DIAG. OTHER
+		//         VALUES OF MODE ARE EQUIVALENT TO MODE = 1.
+		//
+		//       FACTOR IS A POSITIVE INPUT VARIABLE USED IN DETERMINING THE
+		//         INITIAL STEP BOUND. THIS BOUND IS SET TO THE PRODUCT OF
+		//         FACTOR AND THE EUCLIDEAN NORM OF DIAG*X IF NONZERO, OR ELSE
+		//         TO FACTOR ITSELF. IN MOST CASES FACTOR SHOULD LIE IN THE
+		//         INTERVAL (.1,100.). 100. IS A GENERALLY RECOMMENDED VALUE.
+		//
+		//       NPRINT IS AN INTEGER INPUT VARIABLE THAT ENABLES CONTROLLED
+		//         PRINTING OF ITERATES IF IT IS POSITIVE. IN THIS CASE,
+		//         FCN IS CALLED WITH IFLAG = 0 AT THE BEGINNING OF THE FIRST
+		//         ITERATION AND EVERY NPRINT ITERATIONS THEREAFTER AND
+		//         IMMEDIATELY PRIOR TO RETURN, WITH X AND FVEC AVAILABLE
+		//         FOR PRINTING. IF NPRINT IS NOT POSITIVE, NO SPECIAL CALLS
+		//         OF FCN WITH IFLAG = 0 ARE MADE.
+		//
+		//       INFO IS AN INTEGER OUTPUT VARIABLE. IF THE USER HAS
+		//         TERMINATED EXECUTION, INFO IS SET TO THE (NEGATIVE)
+		//         VALUE OF IFLAG. SEE DESCRIPTION OF FCN. OTHERWISE,
+		//         INFO IS SET AS FOLLOWS.
+		//
+		//         INFO = 0   IMPROPER INPUT PARAMETERS.
+		//
+		//         INFO = 1   RELATIVE ERROR BETWEEN TWO CONSECUTIVE ITERATES
+		//                    IS AT MOST XTOL.
+		//
+		//         INFO = 2   NUMBER OF CALLS TO FCN HAS REACHED OR EXCEEDED
+		//                    MAXFEV.
+		//
+		//         INFO = 3   XTOL IS TOO SMALL. NO FURTHER IMPROVEMENT IN
+		//                    THE APPROXIMATE SOLUTION X IS POSSIBLE.
+		//
+		//         INFO = 4   ITERATION IS NOT MAKING GOOD PROGRESS, AS
+		//                    MEASURED BY THE IMPROVEMENT FROM THE LAST
+		//                    FIVE JACOBIAN EVALUATIONS.
+		//
+		//         INFO = 5   ITERATION IS NOT MAKING GOOD PROGRESS, AS
+		//                    MEASURED BY THE IMPROVEMENT FROM THE LAST
+		//                    TEN ITERATIONS.
+		//
+		//       NFEV IS AN INTEGER OUTPUT VARIABLE SET TO THE NUMBER OF
+		//         CALLS TO FCN.
+		//
+		//       FJAC IS AN OUTPUT N BY N ARRAY WHICH CONTAINS THE
+		//         ORTHOGONAL MATRIX Q PRODUCED BY THE QR FACTORIZATION
+		//         OF THE FINAL APPROXIMATE JACOBIAN.
+		//
+		//       LDFJAC IS A POSITIVE INTEGER INPUT VARIABLE NOT LESS THAN N
+		//         WHICH SPECIFIES THE LEADING DIMENSION OF THE ARRAY FJAC.
+		//
+		//       R IS AN OUTPUT ARRAY OF LENGTH LR WHICH CONTAINS THE
+		//         UPPER TRIANGULAR MATRIX PRODUCED BY THE QR FACTORIZATION
+		//         OF THE FINAL APPROXIMATE JACOBIAN, STORED ROWWISE.
+		//
+		//       LR IS A POSITIVE INTEGER INPUT VARIABLE NOT LESS THAN
+		//         (N*(N+1))/2.
+		//
+		//       QTF IS AN OUTPUT ARRAY OF LENGTH N WHICH CONTAINS
+		//         THE VECTOR (Q TRANSPOSE)*FVEC.
+		//
+		//       WA1, WA2, WA3, AND WA4 ARE WORK ARRAYS OF LENGTH N.
+		//
+		//     SUBPROGRAMS CALLED
+		//
+		//       USER-SUPPLIED ...... FCN
+		//
+		//       MINPACK-SUPPLIED ... DOGLEG,DPMPAR,ENORM,FDJAC1,
+		//                            QFORM,QRFAC,R1MPYQ,R1UPDT
+		//
+		//       FORTRAN-SUPPLIED ... DABS,DMAX1,DMIN1,MIN0,MOD
+		//
+		//     ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
+		//     BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE
+		//
+		//     **********
+		//     .. Scalar Arguments ..
+		//      DOUBLE PRECISION EPSFCN,FACTOR,XTOL
+		//      INTEGER INFO,LDFJAC,LR,MAXFEV,ML,MODE,MU,N,NFEV,NPRINT
+		//     ..
+		//     .. Array Arguments ..
+		//      DOUBLE PRECISION DIAG(N),FJAC(LDFJAC,N),FVEC(N),QTF(N),R(LR),
+		//                      WA1(N),WA2(N),WA3(N),WA4(N),X(N)
+		//     ..
+		//     .. Subroutine Arguments ..
+		//      EXTERNAL FCN
+		//     ..
+		//     .. Local Scalars ..
+		      double ACTRED,DELTA,EPSMCH,FNORM,FNORM1,ONE,P0001,P001,
+		                      P1,P5,PNORM,PRERED,RATIO,SUM,TEMP,XNORM,ZERO;
+		      int IFLAG[] = new int[1];
+		      int I,ITER,J,JM1,L,MSUM,NCFAIL,NCSUC,NSLOW1,NSLOW2;
+		      boolean JEVAL,SING;
+		//     ..
+	    //     .. Local Arrays ..
+		      int IWA[] = new int[1];
+		//     ..
+		//     .. External Functions ..
+		//      DOUBLE PRECISION DPMPAR,ENORM
+		//      EXTERNAL DPMPAR,ENORM
+		//     ..
+		//     .. External Subroutines ..
+		//      EXTERNAL DOGLEG,FDJAC1,QFORM,QRFAC,R1MPYQ,R1UPDT
+		//     ..
+		//     .. Intrinsic Functions ..
+		//      INTRINSIC DABS,DMAX1,DMIN1,MIN0,MOD
+		//     ..
+	    //     .. Data statements ..
+		//
+		ONE = 1.0;
+		P1 = 1.0E-1;
+		P5 = 5.0E-1;
+		P001 = 1.0E-3;
+		P0001 = 1.0E-4;
+		ZERO = 0.0;
+		//
+		//     ..
+		//
+		//     EPSMCH IS THE MACHINE PRECISION.
+		//
+		EPSMCH = MACHEP;
+		//
+		INFO[0] = 0;
+		IFLAG[0] = 0;
+		NFEV[0] = 0;
+		//
+		//     CHECK THE INPUT PARAMETERS FOR ERRORS.
+		//
+		if (N <= 0 || XTOL < ZERO || MAXFEV <= 0 || ML < 0 ||
+		         MU < 0 || FACTOR <= ZERO || LDFJAC < N ||
+		         LR < (N* (N+1))/2) {
+			if (NPRINT > 0) {
+				if (FCN == dscfun) {
+					DSCFUN(N, X, FVEC, IFLAG);
+				}
+				return;
+			} // if (NPRINT > 0)
+			return;
+		}
+		if (MODE == 2) {
+		    for (J = 0; J < N; J++) {
+		        if (DIAG[J] <= ZERO) {
+		        	if (NPRINT > 0) {
+						if (FCN == dscfun) {
+							DSCFUN(N, X, FVEC, IFLAG);
+						}
+					} // if (NPRINT > 0)
+		        	return;
+		        } // if (DIAG[J] <= ZERO)
+		    } // for (J = 0; J < N; J++)
+		} // if (mode == 2)  
+		//
+		//     EVALUATE THE FUNCTION AT THE STARTING POINT
+		//     AND CALCULATE ITS NORM.
+		//
+		IFLAG[0] = 1;
+		if (FCN == dscfun) {
+		    DSCFUN(N,X,FVEC,IFLAG);
+		}
+		NFEV[0] = 1;
+		if (IFLAG[0] < 0) {
+		    INFO[0] = IFLAG[0];
+		    IFLAG[0] = 0;
+		    if (NPRINT > 0) {
+				if (FCN == dscfun) {
+					DSCFUN(N, X, FVEC, IFLAG);
+				}
+			} // if (NPRINT > 0)
+        	return;
+		} // if (IFLAG[0] < 0)
+		/*      FNORM = ENORM(N,FVEC)
+		C
+		C     DETERMINE THE NUMBER OF CALLS TO FCN NEEDED TO COMPUTE
+		C     THE JACOBIAN MATRIX.
+		C
+		      MSUM = MIN0(ML+MU+1,N)
+		C
+		C     INITIALIZE ITERATION COUNTER AND MONITORS.
+		C
+		      ITER = 1
+		      NCSUC = 0
+		      NCFAIL = 0
+		      NSLOW1 = 0
+		      NSLOW2 = 0
+		C
+		C     BEGINNING OF THE OUTER LOOP.
+		C
+		   30 CONTINUE
+		      JEVAL = .TRUE.
+		C
+		C        CALCULATE THE JACOBIAN MATRIX.
+		C
+		      IFLAG = 2
+		      CALL FDJAC1(FCN,N,X,FVEC,FJAC,LDFJAC,IFLAG,ML,MU,EPSFCN,WA1,WA2)
+		      NFEV = NFEV + MSUM
+		      IF (IFLAG.LT.0) GO TO 300
+		C
+		C        COMPUTE THE QR FACTORIZATION OF THE JACOBIAN.
+		C
+		      CALL QRFAC(N,N,FJAC,LDFJAC,.FALSE.,IWA,1,WA1,WA2,WA3)
+		C
+		C        ON THE FIRST ITERATION AND IF MODE IS 1, SCALE ACCORDING
+		C        TO THE NORMS OF THE COLUMNS OF THE INITIAL JACOBIAN.
+		C
+		      IF (ITER.NE.1) GO TO 70
+		      IF (MODE.EQ.2) GO TO 50
+		      DO 40 J = 1,N
+		          DIAG(J) = WA2(J)
+		          IF (WA2(J).EQ.ZERO) DIAG(J) = ONE
+		   40 CONTINUE
+		   50 CONTINUE
+		C
+		C        ON THE FIRST ITERATION, CALCULATE THE NORM OF THE SCALED X
+		C        AND INITIALIZE THE STEP BOUND DELTA.
+		C
+		      DO 60 J = 1,N
+		          WA3(J) = DIAG(J)*X(J)
+		   60 CONTINUE
+		      XNORM = ENORM(N,WA3)
+		      DELTA = FACTOR*XNORM
+		      IF (DELTA.EQ.ZERO) DELTA = FACTOR
+		   70 CONTINUE
+		C
+		C        FORM (Q TRANSPOSE)*FVEC AND STORE IN QTF.
+		C
+		      DO 80 I = 1,N
+		          QTF(I) = FVEC(I)
+		   80 CONTINUE
+		      DO 120 J = 1,N
+		          IF (FJAC(J,J).EQ.ZERO) GO TO 110
+		          SUM = ZERO
+		          DO 90 I = J,N
+		              SUM = SUM + FJAC(I,J)*QTF(I)
+		   90     CONTINUE
+		          TEMP = -SUM/FJAC(J,J)
+		          DO 100 I = J,N
+		              QTF(I) = QTF(I) + FJAC(I,J)*TEMP
+		  100     CONTINUE
+		  110     CONTINUE
+		  120 CONTINUE
+		C
+		C        COPY THE TRIANGULAR FACTOR OF THE QR FACTORIZATION INTO R.
+		C
+		      SING = .FALSE.
+		      DO 150 J = 1,N
+		          L = J
+		          JM1 = J - 1
+		          IF (JM1.LT.1) GO TO 140
+		          DO 130 I = 1,JM1
+		              R(L) = FJAC(I,J)
+		              L = L + N - I
+		  130     CONTINUE
+		  140     CONTINUE
+		          R(L) = WA1(J)
+		          IF (WA1(J).EQ.ZERO) SING = .TRUE.
+		  150 CONTINUE
+		C
+		C        ACCUMULATE THE ORTHOGONAL FACTOR IN FJAC.
+		C
+		      CALL QFORM(N,N,FJAC,LDFJAC,WA1)
+		C
+		C        RESCALE IF NECESSARY.
+		C
+		      IF (MODE.EQ.2) GO TO 170
+		      DO 160 J = 1,N
+		          DIAG(J) = DMAX1(DIAG(J),WA2(J))
+		  160 CONTINUE
+		  170 CONTINUE
+		C
+		C        BEGINNING OF THE INNER LOOP.
+		C
+		  180 CONTINUE
+		C
+		C           IF REQUESTED, CALL FCN TO ENABLE PRINTING OF ITERATES.
+		C
+		      IF (NPRINT.LE.0) GO TO 190
+		      IFLAG = 0
+		      IF (MOD(ITER-1,NPRINT).EQ.0) CALL FCN(N,X,FVEC,IFLAG)
+		      IF (IFLAG.LT.0) GO TO 300
+		  190 CONTINUE
+		C
+		C           DETERMINE THE DIRECTION P.
+		C
+		      CALL DOGLEG(N,R,LR,DIAG,QTF,DELTA,WA1,WA2,WA3)
+		C
+		C           STORE THE DIRECTION P AND X + P. CALCULATE THE NORM OF P.
+		C
+		      DO 200 J = 1,N
+		          WA1(J) = -WA1(J)
+		          WA2(J) = X(J) + WA1(J)
+		          WA3(J) = DIAG(J)*WA1(J)
+		  200 CONTINUE
+		      PNORM = ENORM(N,WA3)
+		C
+		C           ON THE FIRST ITERATION, ADJUST THE INITIAL STEP BOUND.
+		C
+		      IF (ITER.EQ.1) DELTA = DMIN1(DELTA,PNORM)
+		C
+		C           EVALUATE THE FUNCTION AT X + P AND CALCULATE ITS NORM.
+		C
+		      IFLAG = 1
+		      CALL FCN(N,WA2,WA4,IFLAG)
+		      NFEV = NFEV + 1
+		      IF (IFLAG.LT.0) GO TO 300
+		      FNORM1 = ENORM(N,WA4)
+		C
+		C           COMPUTE THE SCALED ACTUAL REDUCTION.
+		C
+		      ACTRED = -ONE
+		      IF (FNORM1.LT.FNORM) ACTRED = ONE - (FNORM1/FNORM)**2
+		C
+		C           COMPUTE THE SCALED PREDICTED REDUCTION.
+		C
+		      L = 1
+		      DO 220 I = 1,N
+		          SUM = ZERO
+		          DO 210 J = I,N
+		              SUM = SUM + R(L)*WA1(J)
+		              L = L + 1
+		  210     CONTINUE
+		          WA3(I) = QTF(I) + SUM
+		  220 CONTINUE
+		      TEMP = ENORM(N,WA3)
+		      PRERED = ZERO
+		      IF (TEMP.LT.FNORM) PRERED = ONE - (TEMP/FNORM)**2
+		C
+		C           COMPUTE THE RATIO OF THE ACTUAL TO THE PREDICTED
+		C           REDUCTION.
+		C
+		      RATIO = ZERO
+		      IF (PRERED.GT.ZERO) RATIO = ACTRED/PRERED
+		C
+		C           UPDATE THE STEP BOUND.
+		C
+		      IF (RATIO.GE.P1) GO TO 230
+		      NCSUC = 0
+		      NCFAIL = NCFAIL + 1
+		      DELTA = P5*DELTA
+		      GO TO 240
+
+		  230 CONTINUE
+		      NCFAIL = 0
+		      NCSUC = NCSUC + 1
+		      IF (RATIO.GE.P5 .OR. NCSUC.GT.1) DELTA = DMAX1(DELTA,PNORM/P5)
+		      IF (DABS(RATIO-ONE).LE.P1) DELTA = PNORM/P5
+		  240 CONTINUE
+		C
+		C           TEST FOR SUCCESSFUL ITERATION.
+		C
+		      IF (RATIO.LT.P0001) GO TO 260
+		C
+		C           SUCCESSFUL ITERATION. UPDATE X, FVEC, AND THEIR NORMS.
+		C
+		      DO 250 J = 1,N
+		          X(J) = WA2(J)
+		          WA2(J) = DIAG(J)*X(J)
+		          FVEC(J) = WA4(J)
+		  250 CONTINUE
+		      XNORM = ENORM(N,WA2)
+		      FNORM = FNORM1
+		      ITER = ITER + 1
+		  260 CONTINUE
+		C
+		C           DETERMINE THE PROGRESS OF THE ITERATION.
+		C
+		      NSLOW1 = NSLOW1 + 1
+		      IF (ACTRED.GE.P001) NSLOW1 = 0
+		      IF (JEVAL) NSLOW2 = NSLOW2 + 1
+		      IF (ACTRED.GE.P1) NSLOW2 = 0
+		C
+		C           TEST FOR CONVERGENCE.
+		C
+		      IF (DELTA.LE.XTOL*XNORM .OR. FNORM.EQ.ZERO) INFO = 1
+		      IF (INFO.NE.0) GO TO 300
+		C
+		C           TESTS FOR TERMINATION AND STRINGENT TOLERANCES.
+		C
+		      IF (NFEV.GE.MAXFEV) INFO = 2
+		      IF (P1*DMAX1(P1*DELTA,PNORM).LE.EPSMCH*XNORM) INFO = 3
+		      IF (NSLOW2.EQ.5) INFO = 4
+		      IF (NSLOW1.EQ.10) INFO = 5
+		      IF (INFO.NE.0) GO TO 300
+		C
+		C           CRITERION FOR RECALCULATING JACOBIAN APPROXIMATION
+		C           BY FORWARD DIFFERENCES.
+		C
+		      IF (NCFAIL.EQ.2) GO TO 290
+		C
+		C           CALCULATE THE RANK ONE MODIFICATION TO THE JACOBIAN
+		C           AND UPDATE QTF IF NECESSARY.
+		C
+		      DO 280 J = 1,N
+		          SUM = ZERO
+		          DO 270 I = 1,N
+		              SUM = SUM + FJAC(I,J)*WA4(I)
+		  270     CONTINUE
+		          WA2(J) = (SUM-WA3(J))/PNORM
+		          WA1(J) = DIAG(J)* ((DIAG(J)*WA1(J))/PNORM)
+		          IF (RATIO.GE.P0001) QTF(J) = SUM
+		  280 CONTINUE
+		C
+		C           COMPUTE THE QR FACTORIZATION OF THE UPDATED JACOBIAN.
+		C
+		      CALL R1UPDT(N,N,R,LR,WA1,WA2,WA3,SING)
+		      CALL R1MPYQ(N,N,FJAC,LDFJAC,WA2,WA3)
+		      CALL R1MPYQ(1,N,QTF,1,WA2,WA3)
+		C
+		C           END OF THE INNER LOOP.
+		C
+		      JEVAL = .FALSE.
+		      GO TO 180
+
+		  290 CONTINUE
+		C
+		C        END OF THE OUTER LOOP.
+		C
+		      GO TO 30
+
+		  300 CONTINUE
+		C
+		C     TERMINATION, EITHER NORMAL OR USER IMPOSED.
+		C
+		      IF (IFLAG.LT.0) INFO = IFLAG
+		      IFLAG = 0
+		      IF (NPRINT.GT.0) CALL FCN(N,X,FVEC,IFLAG)
+		return;*/
+      }
+
 	
 	private void QINIT(int M, int N, double ALFA0[], double ALFA1[], int NPTQ, double QWORK[]) {
 	    // Computes the Gauss-Jacobi nodes & weights for Gauss-Jacobi quadrature.  Work array
