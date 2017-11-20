@@ -1281,6 +1281,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     public ModelImage getImageB() {
         return m_kVolumeImageB.GetImage();
     }
+    
+    public VolumeImage getVolumeImageA() {
+    	return m_kVolumeImageA;
+    }
+    
+    public VolumeImage getVolumeImageB() {
+    	return m_kVolumeImageB;
+    }
 
     /**
      * Return the Light[] used in the volume/surface display.
@@ -1840,17 +1848,17 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.setGradientMagnitude(bShow);
     }
 
-    public void setImage(ModelImage kImageA, ModelImage kImageB, boolean updateRenderer) {
+    public void setImage(ModelImage kImageA, ModelImage kImageB, ModelLUT kLUTA, ModelLUT kLUTB, boolean updateRenderer) {
 		if ( m_kVOIInterface != null )
 		{
 			m_kVOIInterface.setImage(kImageA, kImageB);
 		}
 		
-		m_kVolumeImageA.UpdateData(kImageA, updateRenderer);
+		m_kVolumeImageA.UpdateData(kImageA, kLUTA, updateRenderer);
 		positionsPanel.setImage(kImageA);
 		if ( (m_kVolumeImageB != null) && (kImageB != null) )
 		{
-			m_kVolumeImageB.UpdateData(kImageB, updateRenderer);
+			m_kVolumeImageB.UpdateData(kImageB, kLUTB, updateRenderer);
 		}
 		updateHistoLUTPanels((m_kVolumeImageB != null) && (kImageB != null));
 
@@ -1871,6 +1879,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 	 */
 	private void updateHistoLUTPanels(boolean updateImageB)
 	{
+		// update opacity panel
         m_kVolOpacityPanel.removePropertyChangeListener(this);
         if ( updateImageB )
         {
@@ -1878,10 +1887,11 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         }
         else
         {
-        	m_kVolOpacityPanel.setImages( m_kVolumeImageA.GetImage(), null, null, null, true );
+        	m_kVolOpacityPanel.setImages( m_kVolumeImageA.GetImage(), null, null, null, false );
         }
         m_kVolOpacityPanel.addPropertyChangeListener(this);
 
+        // update histoLUT panel
         if ( updateImageB )
         {
         	frameHistogram.setImages(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), m_kVolumeImageA.getLUT(), m_kVolumeImageB.getLUT());        	
@@ -2186,6 +2196,10 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     public void setTimeSlice(final int slice) {
         m_kVolume4DGUI.setTimeSlice(slice);
         m_kVolumeImageA.SetTimeSlice(slice);
+        if ( m_kVolumeImageB != null )
+        {
+            m_kVolumeImageB.SetTimeSlice(slice);
+        }
         setModified();
     }
 

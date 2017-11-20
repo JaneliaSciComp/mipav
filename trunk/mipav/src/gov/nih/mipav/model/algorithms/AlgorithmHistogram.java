@@ -652,7 +652,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         
         setCompleted(true);
         imgBuffer = null;
-        System.gc();
+//        System.gc();
     }
 
     /**

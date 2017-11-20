@@ -1595,6 +1595,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	protected void update4D( boolean bForward )
 	{
 		m_kVolumeImageA.update4D(bForward);
+		if ( m_kVolumeImageB != null )
+		{
+			m_kVolumeImageB.update4D(bForward);			
+		}
 		m_kParent.setModified();
 	}
 
