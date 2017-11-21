@@ -10,6 +10,7 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -24,6 +25,7 @@ import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -149,6 +151,77 @@ public class LatticeModel {
 		}
 
 	}
+	
+	public static VOI readAnnotationsCSV( String fileName )
+	{
+		File file = new File(fileName);
+		if ( file.exists() )
+		{		
+            short sID = 0;
+			//        	System.err.println( fileName );
+			FileReader fr;
+			try {
+				fr = new FileReader(file);
+				BufferedReader br = new BufferedReader(fr);
+				String line = br.readLine();
+				line = br.readLine();
+
+				VOI annotationVOIs = new VOI( (short)sID, fileName, VOI.ANNOTATION, 0 );
+				int count = 1;
+				while ( line != null )
+				{
+					String[] parsed = line.split( "," );
+					if ( parsed.length != 0 )
+					{
+						VOIText text = new VOIText();
+						float x, y, z, r;
+						if ( parsed.length > 3 )
+						{
+							int parsedIndex = 0;
+							String name = String.valueOf( parsed[parsedIndex++] );
+							text.setText(name);
+							x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
+							y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
+							z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
+							r    = (parsed.length > parsedIndex+3) ? (parsed[parsedIndex+3].length() > 0) ? Float.valueOf( parsed[parsedIndex+3] ) : 1 : 1;
+//							System.err.println( name + " " + x + " " + y + " " + z + " " + r );
+							text.add( new Vector3f( x, y, z ) );
+							text.add( new Vector3f( x+r, y, z ) );
+							annotationVOIs.getCurves().add(text);
+						}
+						else if ( parsed.length == 3 )
+						{
+							z    = (parsed.length > 0) ? (parsed[0].length() > 0) ? Float.valueOf( parsed[0] ) : 0 : 0; 
+							x    = (parsed.length > 1) ? (parsed[1].length() > 0) ? Float.valueOf( parsed[1] ) : 0 : 0; 
+							y    = (parsed.length > 2) ? (parsed[2].length() > 0) ? Float.valueOf( parsed[2] ) : 0 : 0; 
+							text.setText( "" );
+							text.add( new Vector3f( x, y, z ) );
+							text.add( new Vector3f( x+1, y, z ) );
+							annotationVOIs.getCurves().add(text);
+						}
+						count++;
+					}
+					line = br.readLine();
+				}
+				fr.close();
+				if ( count > 1 )
+				{
+					return annotationVOIs;
+				}
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		return null;
+	}
+
+	
+	
 
 	protected ModelImage imageA;
 	protected ModelImage seamCellImage;

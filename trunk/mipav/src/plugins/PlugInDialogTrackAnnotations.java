@@ -46,7 +46,9 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewTableModel;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
@@ -69,6 +71,8 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
@@ -98,15 +102,20 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableModel;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
-public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, AlgorithmInterface, WindowListener, ListSelectionListener, AnnotationListener {
+public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, AlgorithmInterface, WindowListener, AnnotationListener, TableModelListener, ListSelectionListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
@@ -215,26 +224,14 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			if ( triVolume != null && triVolume.getVOIManager() != null )
 			{
 				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-				String name = null;
-		        int[] selected = surfaceList.getSelectedIndices();
-		        if ( selected != null )
-		        {
-		        	if ( selected.length > 0 )
-		        	{
-		                DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-		                name = (String)kList.elementAt( selected[0] );
-		        	}
-		        }
-				if ( (annotations != null) && (name != null) ) {
-					if ( annotations.getCurves().size() > 0 ) {
-						for ( int i = 0; i < annotations.getCurves().size(); i++ )
-						{
-							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-							if ( text.getText().equals(name) ) {
-								text.display(((JCheckBox)source).isSelected());
-								break;
-							}
-						}
+				
+				int row = annotationTable.getSelectedRow();
+				System.err.println( "selected row = " + row );
+		        
+				if ( (annotations != null) && (row >= 0) ) {
+					if ( row < annotations.getCurves().size() ) {
+						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+						text.display(((JCheckBox)source).isSelected());
 					}
 				}
 			}
@@ -613,12 +610,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 
 			if ( readAnnotations ) {
-				// first time try opening any existing annotations from file
-				VOIVector annotationList = new VOIVector();
-				LatticeModel.loadAllVOIsFrom(imageA, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, annotationList, false);
-				if ( annotationList.size() > 0 ) {
-					savedAnnotations = annotationList.elementAt(0);
-					System.err.println("using annotation file " + baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator);
+				// try opening any existing annotations from file				
+				VOI annotations = LatticeModel.readAnnotationsCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator +
+						"tracked_annotations.csv");
+				if ( annotations != null )
+				{
+					savedAnnotations = annotations;
 				}
 			}			
 			
@@ -739,7 +736,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	}
 
 	private JCheckBox displayLabel;
-	private JList surfaceList;
+//	private JList surfaceList;
 	private void initDisplayAnnotationsPanel( )
 	{
 		
@@ -778,10 +775,11 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			displayOptions.add( labelPanel, BorderLayout.NORTH );
 
 			// list panel for surface filenames
-			surfaceList = new JList(new DefaultListModel());
-			surfaceList.addListSelectionListener(this);
-
-			JScrollPane kScrollPane = new JScrollPane(surfaceList);
+			buildAnnotationTable();
+			JScrollPane kScrollPane = new JScrollPane(annotationTable);
+//			surfaceList = new JList(new DefaultListModel());
+//			surfaceList.addListSelectionListener(this);
+//			JScrollPane kScrollPane = new JScrollPane(surfaceList);
 			JPanel scrollPanel = new JPanel();
 
 			scrollPanel.setLayout(new BorderLayout());
@@ -800,7 +798,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			nextButton.addActionListener(this);
 			nextButton.setActionCommand("next");
 			nextButton.setVisible(true);
-			nextButton.setEnabled(true);
+			nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
 			buttonPanel.add( nextButton );
 
 			doneButton = gui.buildButton("done");
@@ -824,19 +822,47 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			triVolume.insertTab( "Track Annotation", annotationPanel );
 		}
 
-		DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-		kList.removeAllElements();
+		annotationTableModel.removeTableModelListener(this);
+		int numRows = annotationTableModel.getRowCount();
+		for ( int i = numRows -1; i >= 0; i-- ) {
+			annotationTableModel.removeRow(i);
+		}		
 		int index = 0;
 		if ( savedAnnotations != null ) {
 			if ( savedAnnotations.getCurves().size() > 0 ) {
 				for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
 					VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
-					kList.add(index++, text.getText());
+					annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
 				}
 			}
 		}
+		annotationTableModel.addTableModelListener(this);
 	}
 
+	
+	private ListSelectionModel annotationList;
+	private DefaultTableModel annotationTableModel;
+	private JTable annotationTable;
+	private void buildAnnotationTable() {
+		if ( annotationTable == null )
+		{
+			annotationTableModel = new DefaultTableModel();
+			annotationTableModel.addColumn("Name");
+			annotationTableModel.addColumn("x");
+			annotationTableModel.addColumn("y");
+			annotationTableModel.addColumn("z");
+			annotationTableModel.addTableModelListener(this);
+
+			annotationTable = new JTable(annotationTableModel);
+			annotationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+			annotationTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+			annotationTable.getColumn("Name").setMinWidth(100);
+			annotationTable.getColumn("Name").setMaxWidth(100);
+			annotationList = annotationTable.getSelectionModel();
+			annotationList.addListSelectionListener(this);
+		}
+	}
 
 	/**
 	 * Saves seam cells, lattice, or annotations based on the current edit mode.
@@ -883,28 +909,28 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
 			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
 
-			((VOILatticeManagerInterface)triVolume.getVOIManager()).saveAnnotations(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator);
+//			((VOILatticeManagerInterface)triVolume.getVOIManager()).saveAnnotations(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator);
 			((VOILatticeManagerInterface)triVolume.getVOIManager()).saveAnnotationsAsCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator,
 					"tracked_annotations.csv");
 
 			// first time try opening any existing annotations from file
-			if ( savedAnnotations.getCurves().size() > 0 )
-			{
-				VOIVector annotationList = new VOIVector();
-				LatticeModel.loadAllVOIsFrom(imageA, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, annotationList, false);
-				if ( annotationList.size() > 0 ) {
-					savedAnnotations = annotationList.elementAt(0);		
-					System.err.println("using annotation file " + baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator);
-				}
-				else
-				{
-					savedAnnotations = new VOI((short) 0, "annotationVOIs", VOI.ANNOTATION, -1.0f);
-				}
-			}
-			else
-			{
-				savedAnnotations = new VOI((short) 0, "annotationVOIs", VOI.ANNOTATION, -1.0f);
-			}
+//			if ( savedAnnotations.getCurves().size() > 0 )
+//			{
+//				VOIVector annotationList = new VOIVector();
+//				LatticeModel.loadAllVOIsFrom(imageA, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, annotationList, false);
+//				if ( annotationList.size() > 0 ) {
+//					savedAnnotations = annotationList.elementAt(0);		
+//					System.err.println("using annotation file " + baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator);
+//				}
+//				else
+//				{
+//					savedAnnotations = new VOI((short) 0, "annotationVOIs", VOI.ANNOTATION, -1.0f);
+//				}
+//			}
+//			else
+//			{
+//				savedAnnotations = new VOI((short) 0, "annotationVOIs", VOI.ANNOTATION, -1.0f);
+//			}
 		}
 
 		wormData.dispose();
@@ -1016,41 +1042,41 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	}
 
 
-	public void valueChanged(ListSelectionEvent e) {
-		if ( e.getSource() == surfaceList )
-		{
-	        int[] selected = surfaceList.getSelectedIndices();
-	        if ( selected != null )
-	        {
-	        	if ( selected.length > 0 )
-	        	{
-	                DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-	                String name = (String)kList.elementAt( selected[0] );
-
-	                boolean isChecked = false;
-	    			if ( triVolume != null && triVolume.getVOIManager() != null )
-	    			{
-	    				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-
-	    				if ( annotations != null ) {
-	    					if ( annotations.getCurves().size() > 0 ) {
-	    						for ( int i = 0; i < annotations.getCurves().size(); i++ )
-	    						{
-	    							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-	    							if ( text.getText().equals(name) ) {
-	    								isChecked = text.getVolumeVOI().GetDisplay();
-	    								break;
-	    							}
-	    						}
-	    					}
-	    				}
-	    			}
-	    			
-	        		displayLabel.setSelected(isChecked);
-	        	}
-	        }
-		}
-	}
+//	public void valueChanged(ListSelectionEvent e) {
+//		if ( e.getSource() == surfaceList )
+//		{
+//	        int[] selected = surfaceList.getSelectedIndices();
+//	        if ( selected != null )
+//	        {
+//	        	if ( selected.length > 0 )
+//	        	{
+//	                DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+//	                String name = (String)kList.elementAt( selected[0] );
+//
+//	                boolean isChecked = false;
+//	    			if ( triVolume != null && triVolume.getVOIManager() != null )
+//	    			{
+//	    				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+//
+//	    				if ( annotations != null ) {
+//	    					if ( annotations.getCurves().size() > 0 ) {
+//	    						for ( int i = 0; i < annotations.getCurves().size(); i++ )
+//	    						{
+//	    							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+//	    							if ( text.getText().equals(name) ) {
+//	    								isChecked = text.getVolumeVOI().GetDisplay();
+//	    								break;
+//	    							}
+//	    						}
+//	    					}
+//	    				}
+//	    			}
+//	    			
+//	        		displayLabel.setSelected(isChecked);
+//	        	}
+//	        }
+//		}
+//	}
 
 
 	public void annotationChanged() {
@@ -1058,23 +1084,84 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		if ( triVolume != null && triVolume.getVOIManager() != null )
 		{
 			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-
-			DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-			kList.removeAllElements();
-			if ( annotations != null )
-			{
-				if ( annotations.getCurves().size() != kList.size() ) {
-					int index = 0;
-					for ( int i = 0; i < annotations.getCurves().size(); i++ )
-					{
-						if ( annotations.getCurves().elementAt(i).getType() == VOI.ANNOTATION ) {
-							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-							kList.add(index++, text.getText());
-						}
+			annotationTableModel.removeTableModelListener(this);
+			int numRows = annotationTableModel.getRowCount();
+			for ( int i = numRows -1; i >= 0; i-- ) {
+				annotationTableModel.removeRow(i);
+			}		
+			if ( annotations != null ) {
+				if ( annotations.getCurves().size() > 0 ) {
+					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+						annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
 					}
 				}
 			}
+			annotationTableModel.addTableModelListener(this);
 		}		
+	}
+
+
+	public void tableChanged(TableModelEvent e) {
+//		System.err.println( e.getColumn() + " " + e.getFirstRow() + " " + e.getLastRow() );
+		
+		int column = e.getColumn();
+		boolean isChecked = false;
+		if ( triVolume != null && triVolume.getVOIManager() != null )
+		{
+			int row = e.getFirstRow();
+			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+			if ( (row >= 0) && (row < annotations.getCurves().size()) )
+			{
+				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+				if ( column == 0 )
+				{
+					text.setText( annotationTableModel.getValueAt(row, column).toString() );
+					text.updateText();
+				}
+				else
+				{
+					float value = Float.valueOf(annotationTableModel.getValueAt(row, column).toString());
+					if ( value >= 0 ) {
+						if ( column == 1 ) {
+							text.elementAt(0).X = value;
+							text.elementAt(1).X = value;
+						}
+						else if ( column == 2 ) {
+							text.elementAt(0).Y = value;
+							text.elementAt(1).Y = value;
+						}
+						else if ( column == 3 ) {
+							text.elementAt(0).Z = value;
+							text.elementAt(1).Z = value;
+						}
+					}
+//					System.err.println( text.getText() + " " + text.elementAt(0) + "  " + value);
+				}
+//				System.err.println( text.getText() + " " + text.elementAt(0));
+				text.update();
+				isChecked = text.getVolumeVOI().GetDisplay();
+			}
+		}
+		displayLabel.setSelected(isChecked);
+	}
+
+
+	public void valueChanged(ListSelectionEvent e) {
+		if ( e.getSource() == annotationList && e.getValueIsAdjusting() )
+			return;
+		
+		VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+
+		int row = annotationTable.getSelectedRow();
+		boolean isChecked = false;
+		if ( (annotations != null) && (row >= 0) ) {
+			if ( row < annotations.getCurves().size() ) {
+				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+				isChecked = text.getVolumeVOI().GetDisplay();
+			}
+		}
+		displayLabel.setSelected(isChecked);
 	}
 
 
