@@ -1021,6 +1021,29 @@ double neweps;
 		  return;
 	}
 	
+	private double FMAX(int MN, double FVAL[]) {
+	    //   -------------------------
+	    //    DETERMINES THE MAXIMUM-NORM OF THE VECTOR FVAL.
+	
+	    //     .. Array Arguments ..
+	    // DOUBLE PRECISION FVAL(MN)
+		
+	    //      .. Local Scalars ..
+		double maxVal;
+	    double FV;
+	    int K;
+	
+	    maxVal = 0.0;
+	    for (K = 0; K < MN; K++) {
+	        FV = Math.abs(FVAL[K]);
+	        if (FV > maxVal) {
+	        	maxVal = FV;
+	        }
+	    } // for (K = 0; K < MN; K++)
+	    return maxVal;
+	}
+
+	
 	private void DSCFUN(int NDIM, double X[], double FVAL[],int IFLAG[]) {
 	    //    --------------------------------------
 	    //  FORMS THE NONLINEAR SYSTEM SATISFIED BY D-SC PARAMETERS.THE
@@ -1048,6 +1071,10 @@ double neweps;
 	     //.. Local Scalars ..
 		double cr[] = new double[1];
 		double ci[] = new double[1];
+	    double wout[];
+	    double base;
+	    double diffR;
+	    double diffI;
 		double WA[] = new double[2];
 		double WAI[] = new double[2];
 		double WARC[] = new double[2];
@@ -1093,7 +1120,7 @@ double neweps;
 	      ICOUNT = ICOUNT + 1;
 	
 	      //  TWO EQUATIONS TO ELIMINATE POSSIBLE ROTATION OF THE INNER POLYGON:
-	      double wout[] = WQUAD(W12[N2-1],PHI12[N2-1],N2,1,W12[0],PHI12[0],1,
+	      wout = WQUAD(W12[N2-1],PHI12[N2-1],N2,1,W12[0],PHI12[0],1,
 	    		     1,U2[0],M2,N2,U2[0],W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2);
 	      scm.zmlt(C2[0], C2[1], wout[0], wout[1], cr, ci);
 	      WIN1[0] = Z12[0][0] - Z12[N2-1][0] - cr[0];
@@ -1112,110 +1139,137 @@ double neweps;
 	
 	      //  TWO EQUATIONS TO FIX THE RELATIVE POSITION OF THE INNER POLYGON:
 	      TEST1 = Math.cos(PHI12[N2-1]);
-	     /* if (TEST1 < U2[0]) {
+	      if (TEST1 < U2[0]) {
 	
 	          // IF THE LINE PATH FROM W02[M2-1] TO W12[N2-1] IS OUT OF DOMAIN,THE
               //  COMBINATION OF TWO DIFFERENT PATHS WILL BE USED INSTEAD:
-	      WX = DCMPLX(U2,0.D0)
-	      WLINE = WQUAD(W02(M2),0.D0,M2,0,WX,0.D0,0,2,0.D0,M2,N2,U2,W02,W12,ALFA02,
-	     +        ALFA12,NPTQ2,QWORK2,0,2)
-	      IF (PHI12(N2).LE.0.D0) THEN
-	          WARC = WQUAD(W12(N2),PHI12(N2),N2,1,WX,0.D0,0,2,U2,M2,N2,U2,W02,W12,
-	     +           ALFA02,ALFA12,NPTQ2,QWORK2,1,2)
-	          WIN2 = WLINE - WARC
-
-	      ELSE
-	          WARC = WQUAD(WX,0.D0,0,2,W12(N2),PHI12(N2),N2,1,U2,M2,N2,U2,W02,W12,
-	     +           ALFA02,ALFA12,NPTQ2,QWORK2,1,2)
-	          WIN2 = WLINE + WARC
-	      END IF
-
-	      GO TO 30
+	    	  WX[0] = U2[0];
+	    	  WX[1] = 0.0;
+	          WLINE = WQUAD(W02[M2-1],0.0,M2,0,WX,0.0,0,2,0.0,M2,N2,U2[0],W02,W12,ALFA02,
+	             ALFA12,NPTQ2,QWORK2,0,2);
+	          if (PHI12[N2-1] <= 0.0) {
+	              WARC = WQUAD(W12[N2-1],PHI12[N2-1],N2,1,WX,0.0,0,2,U2[0],M2,N2,U2[0],W02,W12,
+	                ALFA02,ALFA12,NPTQ2,QWORK2,1,2);
+	              WIN2[0] = WLINE[0] - WARC[0];
+	              WIN2[1] = WLINE[1] - WARC[1];
+	          }
+	          else {
+	              WARC = WQUAD(WX,0.0,0,2,W12[N2-1],PHI12[N2-1],N2,1,U2[0],M2,N2,U2[0],W02,W12,
+	                ALFA02,ALFA12,NPTQ2,QWORK2,1,2);
+	              WIN2[0] = WLINE[0] + WARC[0];
+	              WIN2[1] = WLINE[1] + WARC[1];
+	          }
 	      } // if (TEST1 < U2[0])
 	      else {
 
-	          WIN2 = WQUAD(W02(M2),0.D0,M2,0,W12(N2),0.D0,N2,1,0.D0,M2,N2,U2,W02,W12,ALFA02,
-	     +       ALFA12,NPTQ2,QWORK2,0,2)
+	          WIN2 = WQUAD(W02[M2-1],0.0,M2,0,W12[N2-1],0.0,N2,1,0.0,M2,N2,U2[0],W02,W12,ALFA02,
+	            ALFA12,NPTQ2,QWORK2,0,2);
 	      }
-	      FVAL(N2+2) = DIMAG(ZI* (Z12(N2)-Z02(M2)-C2*WIN2))
-	      FVAL(N2+3) = DIMAG(Z12(N2)-Z02(M2)-C2*WIN2)
-	C
-	C  TWO EQUATIONS TO ELIMINATE POSSIBLE ROTATION OF THE OUTER POLYGON:
-	      WIN3 = Z02(1) - Z02(M2) - C2*WQUAD(W02(M2),PHI02(M2),M2,0,W02(1),PHI02(1),1,
-	     +       0,1.D0,M2,N2,U2,W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2)
-	      FVAL(N2+4) = DIMAG(ZI*WIN3)
-	      FVAL(N2+5) = DIMAG(WIN3)
-	C
-	      IF (M2.EQ.3) THEN
-	C
-	C  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
-	          IF (ISPRT.NE.1) GO TO 40
-	          FMAXN = FMAX(NDIM,FVAL)
-	          WRITE (6,FMT=9000) ICOUNT,FMAXN
-	   40     CONTINUE
-	          RETURN
+	      scm.zmlt(C2[0], C2[1], WIN2[0], WIN2[1], cr, ci);
+	      diffR = Z12[N2-1][0] - Z02[M2-1][0] - cr[0];
+	      diffI = Z12[N2-1][1] - Z02[M2-1][1] - ci[0];
+	      scm.zmlt(ZI[0], ZI[1], diffR, diffI, cr, ci);
+	      FVAL[N2+1] = ci[0];
+	      FVAL[N2+2] = diffI;
+	
+	      //  TWO EQUATIONS TO ELIMINATE POSSIBLE ROTATION OF THE OUTER POLYGON:
+	      wout = WQUAD(W02[M2-1],PHI02[M2-1],M2,0,W02[0],PHI02[0],1,
+	    		            0,1.0,M2,N2,U2[0],W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2);
+	      scm.zmlt(C2[0], C2[1], wout[0], wout[1], cr, ci);
+	      WIN3[0] = Z02[0][0] - Z02[M2-1][0] - cr[0];
+	      WIN3[1] = Z02[0][1] - Z02[M2-1][1] - ci[0];
+	      scm.zmlt(ZI[0],ZI[1], WIN3[0], WIN3[1], cr, ci);
+	      FVAL[N2+3] = ci[0];
+	      FVAL[N2+4] = WIN3[1];
+	
+	      if (M2 == 3) {
+	
+	          // CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
+	          if (ISPRT == 1) {
+	              FMAXN = FMAX(NDIM,FVAL);
+	              System.out.println("# of iterations = " + ICOUNT);
+	              System.out.println("Maximum norm of the residuals = " + FMAXN);
+	          } // if (ISPRT == 1)
+	          return;
 
-	      END IF
+	      } // if (M2 == 3)
 
-	      IF (ISHAPE2.EQ.1) GO TO 70
-	C
-	C  M-3 SIDE LENGTH CONDITIONS OF THE OUTER POLYGON:
-	      DO 50 J = 1,M2 - 3
-	          WINT2 = WQUAD(W02(J),PHI02(J),J,0,W02(J+1),PHI02(J+1),J+1,0,1.D0,
-	     +            M2,N2,U2,W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2)
-	          FVAL(N2+5+J) = ABS(Z02(J+1)-Z02(J)) - ABS(C2*WINT2)
-	   50 CONTINUE
-	C
-	C  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
-	      IF (ISPRT.NE.1) GO TO 60
-	      FMAXN = FMAX(NDIM,FVAL)
-	      WRITE (6,FMT=9010) ICOUNT,FMAXN
-	   60 CONTINUE
-	      RETURN
-	C
-	C  OUTER POLYGON CONTAINS SOME INFINITE VERTICES & FOR EACH OF THEM
-	C  TWO LENGTH CONDITIONS WILL BE REPLACED BY A COMPLEX INTEGRAL:
-	   70 DO 100 K = 1,NSHAPE - 1
-	          IF (IND(K+1).EQ.2 .OR. IND(K).GE.IND(K+1)-2) GO TO 90
-	          DO 80 J = IND(K) + 1,IND(K+1) - 2
-	              WINT3 = WQUAD(W02(J),PHI02(J),J,0,W02(J+1),PHI02(J+1),J+1,0,
-	     +                1.D0,M2,N2,U2,W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2)
-	              FVAL(N+5+J) = ABS(Z02(J+1)-Z02(J)) - ABS(C2*WINT3)
-	   80     CONTINUE
-	   90     IF (K.EQ.NSHAPE-1 .OR. IND(K+1).EQ.M2-1) GO TO 100
-	C
-	C  THE COMBINATION  OF THREE DIFFERENT PATHS  IS USED TO INTEGRATE
-	C  FROM WA TO WB TO AVOID DOMAIN PROBLEM.THE BY-PRODUCT OF THIS IS
-	C  THAT IT IS NUMERICALLY  MORE EFFICIENT THAN A SINGLE LINE PATH:
-	          WA = W02(IND(K+1)-1)
-	          WB = W02(IND(K+1)+1)
-	          PHIA = PHI02(IND(K+1)-1)
-	          PHIB = PHI02(IND(K+1)+1)
-	          RADIUS = (1.D0+U2)/2.D0
-	          WAI = RADIUS*EXP(ZI*PHIA)
-	          WBI = RADIUS*EXP(ZI*PHIB)
-	          WLINE1 = WQUAD(WA,0.D0,IND(K+1)-1,0,WAI,0.D0,0,2,0.D0,M2,N2,U2,
-	     +             W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,0,2)
-	          WLINE2 = WQUAD(WB,0.D0,IND(K+1)+1,0,WBI,0.D0,0,2,0.D0,M2,N2,U2,
-	     +             W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,0,2)
-	          WCIRCLE = WQUAD(WAI,PHIA,0,2,WBI,PHIB,0,2,RADIUS,M2,N2,U2,W02,W12,
-	     +              ALFA02,ALFA12,NPTQ2,QWORK2,1,2)
-	          WIN4 = C2* (WLINE1+WCIRCLE-WLINE2)
-	          FVAL(N2+5+IND(K+1)-1) = DIMAG(ZI*
-	     +                           (Z02(IND(K+1)+1)-Z02(IND(K+1)-1)-WIN4))
-	          FVAL(N2+5+IND(K+1)) = DIMAG(Z02(IND(K+1)+1)-Z02(IND(K+1)-1)-WIN4)
-	  100 CONTINUE
-	C
-	C  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
-	      IF (ISPRT.NE.1) GO TO 110
-	      FMAXN = FMAX(NDIM,FVAL)
-	      WRITE (6,FMT=9020) ICOUNT,FMAXN
-	  110 CONTINUE
-	      RETURN
-
-	 9000 FORMAT (2X,I5,6X,E10.4)
-	 9010 FORMAT (2X,I5,6X,E10.4)
-	 9020 FORMAT (2X,I5,6X,E10.4)*/
+	      if (ISHAPE2 != 1) {
+	
+	          //  M2-3 SIDE LENGTH CONDITIONS OF THE OUTER POLYGON:
+	          for (J = 1; J <= M2 - 3; J++) {
+	              WINT2 = WQUAD(W02[J-1],PHI02[J-1],J,0,W02[J],PHI02[J],J+1,0,1.0,
+	                  M2,N2,U2[0],W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2);
+	              scm.zmlt(C2[0], C2[1], WINT2[0], WINT2[1], cr, ci);
+	              FVAL[N2+4+J] = scm.zabs(Z02[J][0]-Z02[J-1][0], Z02[J][1]-Z02[J-1][1]) - scm.zabs(cr[0], ci[0]);
+	          } // for (J = 1; J <= M2 - 3; J++)
+	
+	          //  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
+	          if (ISPRT == 1) {
+	              FMAXN = FMAX(NDIM,FVAL);
+	              System.out.println("# of iterations = " + ICOUNT);
+	              System.out.println("Maximum norm of the residuals = " + FMAXN);
+	          } // if (ISPRT == 1)
+	          return;
+	      } // if (ISHAPE2 != 1)
+	
+	      //  OUTER POLYGON CONTAINS SOME INFINITE VERTICES & FOR EACH OF THEM
+	      //  TWO LENGTH CONDITIONS WILL BE REPLACED BY A COMPLEX INTEGRAL:
+	      for (K = 1; K <= NSHAPE - 1; K++) {
+	          if (IND[K] != 1 && IND[K-1] < IND[K]-2) {
+	              for (J = IND[K-1] + 2; J <= IND[K] - 1; J++) {
+	                  WINT3 = WQUAD(W02[J-1],PHI02[J-1],J,0,W02[J],PHI02[J],J+1,0,
+	                     1.0,M2,N2,U2[0],W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2);
+	                  scm.zmlt(C2[0], C2[1], WINT3[0], WINT3[1], cr, ci);
+	                  FVAL[N2+4+J] = scm.zabs(Z02[J][0]-Z02[J-1][0], Z02[J][1]-Z02[J-1][1]) - scm.zabs(cr[0], ci[0]);
+	              } // for (J = IND[K-1] + 2; J <= IND[K] - 1; J++) 
+	          } // if (IND[K] != 1 && IND[K-1] < IND[K]-2)
+	          if (K == NSHAPE-1 || IND[K] == M2-2) {
+	        	  continue;
+	          }
+	
+	          //  THE COMBINATION  OF THREE DIFFERENT PATHS  IS USED TO INTEGRATE
+	          //  FROM WA TO WB TO AVOID DOMAIN PROBLEM.THE BY-PRODUCT OF THIS IS
+	          //  THAT IT IS NUMERICALLY  MORE EFFICIENT THAN A SINGLE LINE PATH:
+	          WA[0] = W02[IND[K]-1][0];
+	          WA[1] = W02[IND[K]-1][1];
+	          WB[0] = W02[IND[K]+1][0];
+	          WB[1] = W02[IND[K]+1][1];
+	          PHIA = PHI02[IND[K]-1];
+	          PHIB = PHI02[IND[K]+1];
+	          RADIUS = (1.0+U2[0])/2.0;
+	          scm.zmlt(ZI[0], ZI[1], PHIA, 0.0, cr, ci);
+	          base = RADIUS * Math.exp(cr[0]);
+	          WAI[0] = base * Math.cos(ci[0]);
+	          WAI[1] = base * Math.sin(ci[0]);
+	          scm.zmlt(ZI[0], ZI[1], PHIB, 0.0, cr, ci);
+	          base = RADIUS * Math.exp(cr[0]);
+	          WBI[0] = base * Math.cos(ci[0]);
+	          WBI[1] = base * Math.sin(ci[0]);
+	          WLINE1 = WQUAD(WA,0.0,IND[K]-1,0,WAI,0.0,0,2,0.0,M2,N2,U2[0],
+	                     W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,0,2);
+	          WLINE2 = WQUAD(WB,0.0,IND[K]+1,0,WBI,0.0,0,2,0.0,M2,N2,U2[0],
+	                     W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,0,2);
+	          WCIRCLE = WQUAD(WAI,PHIA,0,2,WBI,PHIB,0,2,RADIUS,M2,N2,U2[0],W02,W12,
+	                   ALFA02,ALFA12,NPTQ2,QWORK2,1,2);
+	          scm.zmlt(C2[0], C2[1], (WLINE1[0]+WCIRCLE[0]-WLINE2[0]),
+	        		  (WLINE1[1]+WCIRCLE[1]-WLINE2[1]), cr, ci);
+	          WIN4[0] = cr[0];
+	          WIN4[1] = ci[0];
+	          diffR = Z02[IND[K]+1][0]-Z02[IND[K]-1][0]-WIN4[0];
+	          diffI = Z02[IND[K]+1][1]-Z02[IND[K]-1][1]-WIN4[1];
+	          scm.zmlt(ZI[0], ZI[1], diffR, diffI, cr, ci);
+	          FVAL[N2+5+IND[K]-1] = ci[0];
+	          FVAL[N2+5+IND[K]] = diffI;
+	      } // for (K = 1; K <= NSHAPE - 1; K++)
+	
+	      //  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
+	      if (ISPRT == 1) {
+              FMAXN = FMAX(NDIM,FVAL);
+              System.out.println("# of iterations = " + ICOUNT);
+              System.out.println("Maximum norm of the residuals = " + FMAXN);
+          } // if (ISPRT == 1)
+          return;
 	}
 
 
@@ -1789,7 +1843,7 @@ double neweps;
 		//     ..
 	    //     .. Data statements ..
 		//
-		ONE = 1.0;
+		/*ONE = 1.0;
 		P1 = 1.0E-1;
 		P5 = 5.0E-1;
 		P001 = 1.0E-3;
@@ -1850,30 +1904,30 @@ double neweps;
 			} // if (NPRINT > 0)
         	return;
 		} // if (IFLAG[0] < 0)
-		/*      FNORM = ENORM(N,FVEC)
-		C
-		C     DETERMINE THE NUMBER OF CALLS TO FCN NEEDED TO COMPUTE
-		C     THE JACOBIAN MATRIX.
-		C
-		      MSUM = MIN0(ML+MU+1,N)
-		C
-		C     INITIALIZE ITERATION COUNTER AND MONITORS.
-		C
-		      ITER = 1
-		      NCSUC = 0
-		      NCFAIL = 0
-		      NSLOW1 = 0
-		      NSLOW2 = 0
-		C
-		C     BEGINNING OF THE OUTER LOOP.
-		C
-		   30 CONTINUE
-		      JEVAL = .TRUE.
-		C
-		C        CALCULATE THE JACOBIAN MATRIX.
-		C
-		      IFLAG = 2
-		      CALL FDJAC1(FCN,N,X,FVEC,FJAC,LDFJAC,IFLAG,ML,MU,EPSFCN,WA1,WA2)
+		FNORM = ENORM(N,FVEC);
+		
+		// DETERMINE THE NUMBER OF CALLS TO FCN NEEDED TO COMPUTE
+		// THE JACOBIAN MATRIX.
+		
+		MSUM = Math.min(ML+MU+1,N);
+		
+	    // INITIALIZE ITERATION COUNTER AND MONITORS.
+		
+		ITER = 1;
+		NCSUC = 0;
+		NCFAIL = 0;
+		NSLOW1 = 0;
+		NSLOW2 = 0;
+		
+		// BEGINNING OF THE OUTER LOOP.
+		
+		while (true) {
+		    JEVAL = true;
+		
+            // CALCULATE THE JACOBIAN MATRIX.
+		
+		    IFLAG[0] = 2;
+		    FDJAC1(FCN,N,X,FVEC,FJAC,LDFJAC,IFLAG,ML,MU,EPSFCN,WA1,WA2);
 		      NFEV = NFEV + MSUM
 		      IF (IFLAG.LT.0) GO TO 300
 		C
@@ -2096,7 +2150,7 @@ double neweps;
 		C
 		C        END OF THE OUTER LOOP.
 		C
-		      GO TO 30
+		} // while (true)
 
 		  300 CONTINUE
 		C
@@ -2445,4 +2499,288 @@ double neweps;
          result = FAC/G;
          return result;
 	}
+	
+	private double ENORM(int N, double X[]) {
+	    //     **********
+	    //
+	    //     FUNCTION ENORM
+	
+	    // GIVEN AN N-VECTOR X, THIS FUNCTION CALCULATES THE
+	    // EUCLIDEAN NORM OF X.
+	
+	    // THE EUCLIDEAN NORM IS COMPUTED BY ACCUMULATING THE SUM OF
+	    // SQUARES IN THREE DIFFERENT SUMS. THE SUMS OF SQUARES FOR THE
+	    // SMALL AND LARGE COMPONENTS ARE SCALED SO THAT NO OVERFLOWS
+	    // OCCUR. NON-DESTRUCTIVE UNDERFLOWS ARE PERMITTED. UNDERFLOWS
+	    // AND OVERFLOWS DO NOT OCCUR IN THE COMPUTATION OF THE UNSCALED
+	    // SUM OF SQUARES FOR THE INTERMEDIATE COMPONENTS.
+	    // THE DEFINITIONS OF SMALL, INTERMEDIATE AND LARGE COMPONENTS
+	    // DEPEND ON TWO CONSTANTS, RDWARF AND RGIANT. THE MAIN
+	    // RESTRICTIONS ON THESE CONSTANTS ARE THAT RDWARF**2 NOT
+	    // UNDERFLOW AND RGIANT**2 NOT OVERFLOW. THE CONSTANTS
+	    // GIVEN HERE ARE SUITABLE FOR EVERY KNOWN COMPUTER.
+	
+	    // THE FUNCTION STATEMENT IS
+	
+	    // DOUBLE PRECISION FUNCTION ENORM(N,X)
+	
+        // WHERE
+	
+	    // N IS A POSITIVE INTEGER INPUT VARIABLE.
+	
+	    // X IS AN INPUT ARRAY OF LENGTH N.
+	
+	    // SUBPROGRAMS CALLED
+	
+	    // FORTRAN-SUPPLIED ... DABS,DSQRT
+	
+	    // ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
+	    // BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE
+	
+	    // **********
+	    // Scalar Arguments ..
+	    // INTEGER N
+
+	    // .. Array Arguments ..
+	    // DOUBLE PRECISION X(N)
+
+	    // .. Local Scalars ..
+		double result = 0.0;
+	    double AGIANT,FLOATN,S1,S2,S3,X1MAX,
+	                      X3MAX,XABS,ratio;
+	    int I;
+	
+	      // .. Data statements ..
+	    double ONE = 1.0;
+	    double ZERO = 0.0;
+	    double RDWARF = 3.834E-20;
+	    double RGIANT = 1.304E19;
+
+	    S1 = ZERO;
+	    S2 = ZERO;
+	    S3 = ZERO;
+	    X1MAX = ZERO;
+	    X3MAX = ZERO;
+	    FLOATN = N;
+	    AGIANT = RGIANT/FLOATN;
+	    for (I = 0; I < N; I++) {
+	        XABS = Math.abs(X[I]);
+	          if (XABS <= RDWARF || XABS >= AGIANT) {
+	              if (XABS > RDWARF) {
+	
+	                  // SUM FOR LARGE COMPONENTS.
+	
+	                  if  (XABS > X1MAX) {
+	                	  ratio = X1MAX/XABS;
+	                      S1 = ONE + S1* ratio * ratio;
+	                      X1MAX = XABS;
+	                  }
+	                  else {
+	                	  ratio = XABS/X1MAX;
+	                      S1 = S1 + ratio * ratio;
+	                  }
+	                  continue;
+
+	              } //  if (XABS > RDWARF) 
+	
+	              // SUM FOR SMALL COMPONENTS.
+	
+	              if (XABS > X3MAX) {
+	            	  ratio = X3MAX/XABS;
+	                  S3 = ONE + S3* ratio * ratio;
+	                  X3MAX = XABS;
+	          }
+	          else {
+	              if (XABS != ZERO) {
+	            	  ratio = XABS/X3MAX;
+	            	  S3 = S3 + ratio * ratio;
+	              }
+	          }
+	          continue;
+
+	          } // if (XABS <= RDWARF || XABS >= AGIANT)
+	
+	          // SUM FOR INTERMEDIATE COMPONENTS.
+	
+	          S2 = S2 + XABS * XABS;
+	    } // for (I = 0; I < N; I++)
+	
+        // CALCULATION OF NORM.
+	
+	      if (S1 != ZERO) {
+	          result = X1MAX*Math.sqrt(S1+ (S2/X1MAX)/X1MAX);
+	      }
+	      else {
+	          if (S2 != ZERO) {
+	              if (S2 >= X3MAX) result = Math.sqrt(S2* (ONE+ (X3MAX/S2)* (X3MAX*S3)));
+	              if (S2 < X3MAX) result = Math.sqrt(X3MAX* ((S2/X3MAX)+ (X3MAX*S3)));
+	          }
+	          else {
+	              result = X3MAX*Math.sqrt(S3);
+	          } // else
+	      } // else
+	      return result;
+	}
+	
+	private void FDJAC1(int FCN,int N, double X[], double FVEC[], double FJAC[][], int LDFJAC,
+			int IFLAG[] ,int ML,int MU,double EPSFCN, double WA1[], double WA2[]) {
+        // **********
+		
+		//     SUBROUTINE FDJAC1
+		
+		//     THIS SUBROUTINE COMPUTES A FORWARD-DIFFERENCE APPROXIMATION
+		//     TO THE N BY N JACOBIAN MATRIX ASSOCIATED WITH A SPECIFIED
+		//     PROBLEM OF N FUNCTIONS IN N VARIABLES. IF THE JACOBIAN HAS
+		//     A BANDED FORM, THEN FUNCTION EVALUATIONS ARE SAVED BY ONLY
+		//     APPROXIMATING THE NONZERO TERMS.
+		
+		//     THE SUBROUTINE STATEMENT IS
+		
+		//       SUBROUTINE FDJAC1(FCN,N,X,FVEC,FJAC,LDFJAC,IFLAG,ML,MU,EPSFCN,
+		//                         WA1,WA2)
+		
+		//     WHERE
+        //         dscfun = 1 for DSCFUN
+		//         FCN IS THE NAME OF THE USER-SUPPLIED SUBROUTINE WHICH
+		//         CALCULATES THE FUNCTIONS. FCN MUST BE DECLARED
+		//         IN AN EXTERNAL STATEMENT IN THE USER CALLING
+		//         PROGRAM, AND SHOULD BE WRITTEN AS FOLLOWS.
+		
+		//         SUBROUTINE FCN(N,X,FVEC,IFLAG)
+		//         INTEGER N,IFLAG
+		//         DOUBLE PRECISION X(N),FVEC(N)
+		//         ----------
+		//         CALCULATE THE FUNCTIONS AT X AND
+		//         RETURN THIS VECTOR IN FVEC.
+		//         ----------
+		//         RETURN
+		//         END
+		
+		//         THE VALUE OF IFLAG SHOULD NOT BE CHANGED BY FCN UNLESS
+		//         THE USER WANTS TO TERMINATE EXECUTION OF FDJAC1.
+		//         IN THIS CASE SET IFLAG TO A NEGATIVE INTEGER.
+		
+		//       N IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+		//         OF FUNCTIONS AND VARIABLES.
+		
+		//       X IS AN INPUT ARRAY OF LENGTH N.
+		
+		//       FVEC IS AN INPUT ARRAY OF LENGTH N WHICH MUST CONTAIN THE
+		//         FUNCTIONS EVALUATED AT X.
+		
+		//       FJAC IS AN OUTPUT N BY N ARRAY WHICH CONTAINS THE
+		//         APPROXIMATION TO THE JACOBIAN MATRIX EVALUATED AT X.
+		
+		//       LDFJAC IS A POSITIVE INTEGER INPUT VARIABLE NOT LESS THAN N
+		//         WHICH SPECIFIES THE LEADING DIMENSION OF THE ARRAY FJAC.
+		
+		//       IFLAG IS AN INTEGER VARIABLE WHICH CAN BE USED TO TERMINATE
+		//         THE EXECUTION OF FDJAC1. SEE DESCRIPTION OF FCN.
+		
+		//       ML IS A NONNEGATIVE INTEGER INPUT VARIABLE WHICH SPECIFIES
+		//         THE NUMBER OF SUBDIAGONALS WITHIN THE BAND OF THE
+		//         JACOBIAN MATRIX. IF THE JACOBIAN IS NOT BANDED, SET
+		//         ML TO AT LEAST N - 1.
+		
+		//       EPSFCN IS AN INPUT VARIABLE USED IN DETERMINING A SUITABLE
+		//         STEP LENGTH FOR THE FORWARD-DIFFERENCE APPROXIMATION. THIS
+		//         APPROXIMATION ASSUMES THAT THE RELATIVE ERRORS IN THE
+		//         FUNCTIONS ARE OF THE ORDER OF EPSFCN. IF EPSFCN IS LESS
+		//         THAN THE MACHINE PRECISION, IT IS ASSUMED THAT THE RELATIVE
+		//         ERRORS IN THE FUNCTIONS ARE OF THE ORDER OF THE MACHINE
+		//         PRECISION.
+		
+		//       MU IS A NONNEGATIVE INTEGER INPUT VARIABLE WHICH SPECIFIES
+		//         THE NUMBER OF SUPERDIAGONALS WITHIN THE BAND OF THE
+		//         JACOBIAN MATRIX. IF THE JACOBIAN IS NOT BANDED, SET
+		//         MU TO AT LEAST N - 1.
+		
+		//       WA1 AND WA2 ARE WORK ARRAYS OF LENGTH N. IF ML + MU + 1 IS AT
+		//         LEAST N, THEN THE JACOBIAN IS CONSIDERED DENSE, AND WA2 IS
+		//         NOT REFERENCED.
+		
+		//     SUBPROGRAMS CALLED
+		//
+		//       MINPACK-SUPPLIED ... DPMPAR
+		
+		//     ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
+		//     BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE
+		
+		//     **********
+		//     .. Scalar Arguments ..
+		//      DOUBLE PRECISION EPSFCN
+		//      INTEGER IFLAG,LDFJAC,ML,MU,N
+		
+		//     .. Array Arguments ..
+		//      DOUBLE PRECISION FJAC(LDFJAC,N),FVEC(N),WA1(N),WA2(N),X(N)
+		
+		//     .. Subroutine Arguments ..
+		//      EXTERNAL FCN
+		
+		//     .. Local Scalars ..
+		double EPS,EPSMCH,H,TEMP,ZERO;
+		int I,J,K,MSUM;
+		
+		ZERO = 0.0;
+		
+		//     EPSMCH IS THE MACHINE PRECISION.
+		
+		EPSMCH = MACHEP;
+		
+		EPS = Math.sqrt(Math.max(EPSFCN,EPSMCH));
+		MSUM = ML + MU + 1;
+		if (MSUM >= N) {
+		
+		    // COMPUTATION OF DENSE APPROXIMATE JACOBIAN.
+		
+		    for (J = 0; J < N; J++) {
+		        TEMP = X[J];
+		        H = EPS*Math.abs(TEMP);
+		        if (H == ZERO) H = EPS;
+		        X[J] = TEMP + H;
+		        if (FCN == dscfun) {
+		            DSCFUN(N,X,WA1,IFLAG);
+		        }
+		        if (IFLAG[0] < 0) {
+		        	return;
+		        }
+		        X[J] = TEMP;
+		        for (I = 0; I < N; I++) {
+		              FJAC[I][J] = (WA1[I]-FVEC[I])/H;
+		        } // for (I = 0; I < N; I++)
+		    } // for (J = 0; J < N; J++)
+		    return;
+
+		} // if (MSUM >= N)
+		
+		// COMPUTATION OF BANDED APPROXIMATE JACOBIAN.
+		
+		/*for (K = 1; K <= MSUM; K++) {
+		    for (J = K; J <= N; J += MSUM) {
+		        WA2[J-1] = X[J-1];
+		        H = EPS*Math.abs(WA2[J-1]);
+		        IF (H == ZERO) {
+		        	H = EPS;
+		        }
+		        X[J-1] = WA2[J-1] + H
+		    } // for (J = K; J <= N; J += MSUM)
+		          CALL FCN(N,X,WA1,IFLAG)
+		          IF (IFLAG.LT.0) GO TO 90
+		          DO 70 J = K,N,MSUM
+		              X(J) = WA2(J)
+		              H = EPS*DABS(WA2(J))
+		              IF (H.EQ.ZERO) H = EPS
+		              DO 60 I = 1,N
+		                  FJAC(I,J) = ZERO
+		                  IF (I.GE.J-MU .AND. I.LE.J+ML) FJAC(I,
+		     +                J) = (WA1(I)-FVEC(I))/H
+		   60         CONTINUE
+		   70     CONTINUE
+		} // for (K = 1; K <= MSUM; K++)
+		   90 CONTINUE
+		  100 CONTINUE*/
+		      return;
+	}
+
+
 }
