@@ -585,6 +585,7 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 	
+	
 	public void addAnnotation( VOI textVOI )
 	{       
 		if ( latticeModel == null )
