@@ -1822,8 +1822,9 @@ double neweps;
 		//      EXTERNAL FCN
 		//     ..
 		//     .. Local Scalars ..
-		      double ACTRED,DELTA,EPSMCH,FNORM,FNORM1,ONE,P0001,P001,
+		      double ACTRED,EPSMCH,FNORM,FNORM1,ONE,P0001,P001,
 		                      P1,P5,PNORM,PRERED,RATIO,SUM,TEMP,XNORM,ZERO;
+		      double DELTA = 0.0;
 		      int IFLAG[] = new int[1];
 		      int I,ITER,J,JM1,L,MSUM,NCFAIL,NCSUC,NSLOW1,NSLOW2;
 		      boolean JEVAL,SING;
@@ -1843,7 +1844,7 @@ double neweps;
 		//     ..
 	    //     .. Data statements ..
 		//
-		/*ONE = 1.0;
+		ONE = 1.0;
 		P1 = 1.0E-1;
 		P5 = 5.0E-1;
 		P001 = 1.0E-3;
@@ -1921,129 +1922,150 @@ double neweps;
 		
 		// BEGINNING OF THE OUTER LOOP.
 		
-		while (true) {
+		outer: while (true) {
 		    JEVAL = true;
 		
             // CALCULATE THE JACOBIAN MATRIX.
 		
 		    IFLAG[0] = 2;
 		    FDJAC1(FCN,N,X,FVEC,FJAC,LDFJAC,IFLAG,ML,MU,EPSFCN,WA1,WA2);
-		      NFEV = NFEV + MSUM
-		      IF (IFLAG.LT.0) GO TO 300
-		C
-		C        COMPUTE THE QR FACTORIZATION OF THE JACOBIAN.
-		C
-		      CALL QRFAC(N,N,FJAC,LDFJAC,.FALSE.,IWA,1,WA1,WA2,WA3)
-		C
-		C        ON THE FIRST ITERATION AND IF MODE IS 1, SCALE ACCORDING
-		C        TO THE NORMS OF THE COLUMNS OF THE INITIAL JACOBIAN.
-		C
-		      IF (ITER.NE.1) GO TO 70
-		      IF (MODE.EQ.2) GO TO 50
-		      DO 40 J = 1,N
-		          DIAG(J) = WA2(J)
-		          IF (WA2(J).EQ.ZERO) DIAG(J) = ONE
-		   40 CONTINUE
-		   50 CONTINUE
-		C
-		C        ON THE FIRST ITERATION, CALCULATE THE NORM OF THE SCALED X
-		C        AND INITIALIZE THE STEP BOUND DELTA.
-		C
-		      DO 60 J = 1,N
-		          WA3(J) = DIAG(J)*X(J)
-		   60 CONTINUE
-		      XNORM = ENORM(N,WA3)
-		      DELTA = FACTOR*XNORM
-		      IF (DELTA.EQ.ZERO) DELTA = FACTOR
-		   70 CONTINUE
-		C
-		C        FORM (Q TRANSPOSE)*FVEC AND STORE IN QTF.
-		C
-		      DO 80 I = 1,N
-		          QTF(I) = FVEC(I)
-		   80 CONTINUE
-		      DO 120 J = 1,N
-		          IF (FJAC(J,J).EQ.ZERO) GO TO 110
-		          SUM = ZERO
-		          DO 90 I = J,N
-		              SUM = SUM + FJAC(I,J)*QTF(I)
-		   90     CONTINUE
-		          TEMP = -SUM/FJAC(J,J)
-		          DO 100 I = J,N
-		              QTF(I) = QTF(I) + FJAC(I,J)*TEMP
-		  100     CONTINUE
-		  110     CONTINUE
-		  120 CONTINUE
-		C
-		C        COPY THE TRIANGULAR FACTOR OF THE QR FACTORIZATION INTO R.
-		C
-		      SING = .FALSE.
-		      DO 150 J = 1,N
-		          L = J
-		          JM1 = J - 1
-		          IF (JM1.LT.1) GO TO 140
-		          DO 130 I = 1,JM1
-		              R(L) = FJAC(I,J)
-		              L = L + N - I
-		  130     CONTINUE
-		  140     CONTINUE
-		          R(L) = WA1(J)
-		          IF (WA1(J).EQ.ZERO) SING = .TRUE.
-		  150 CONTINUE
-		C
-		C        ACCUMULATE THE ORTHOGONAL FACTOR IN FJAC.
-		C
-		      CALL QFORM(N,N,FJAC,LDFJAC,WA1)
-		C
-		C        RESCALE IF NECESSARY.
-		C
-		      IF (MODE.EQ.2) GO TO 170
-		      DO 160 J = 1,N
-		          DIAG(J) = DMAX1(DIAG(J),WA2(J))
-		  160 CONTINUE
-		  170 CONTINUE
-		C
-		C        BEGINNING OF THE INNER LOOP.
-		C
-		  180 CONTINUE
-		C
-		C           IF REQUESTED, CALL FCN TO ENABLE PRINTING OF ITERATES.
-		C
-		      IF (NPRINT.LE.0) GO TO 190
-		      IFLAG = 0
-		      IF (MOD(ITER-1,NPRINT).EQ.0) CALL FCN(N,X,FVEC,IFLAG)
-		      IF (IFLAG.LT.0) GO TO 300
-		  190 CONTINUE
-		C
-		C           DETERMINE THE DIRECTION P.
-		C
-		      CALL DOGLEG(N,R,LR,DIAG,QTF,DELTA,WA1,WA2,WA3)
-		C
-		C           STORE THE DIRECTION P AND X + P. CALCULATE THE NORM OF P.
-		C
-		      DO 200 J = 1,N
-		          WA1(J) = -WA1(J)
-		          WA2(J) = X(J) + WA1(J)
-		          WA3(J) = DIAG(J)*WA1(J)
-		  200 CONTINUE
-		      PNORM = ENORM(N,WA3)
-		C
-		C           ON THE FIRST ITERATION, ADJUST THE INITIAL STEP BOUND.
-		C
-		      IF (ITER.EQ.1) DELTA = DMIN1(DELTA,PNORM)
-		C
-		C           EVALUATE THE FUNCTION AT X + P AND CALCULATE ITS NORM.
-		C
-		      IFLAG = 1
-		      CALL FCN(N,WA2,WA4,IFLAG)
-		      NFEV = NFEV + 1
-		      IF (IFLAG.LT.0) GO TO 300
-		      FNORM1 = ENORM(N,WA4)
-		C
-		C           COMPUTE THE SCALED ACTUAL REDUCTION.
-		C
-		      ACTRED = -ONE
-		      IF (FNORM1.LT.FNORM) ACTRED = ONE - (FNORM1/FNORM)**2
+		    NFEV[0] = NFEV[0] + MSUM;
+		    if (IFLAG[0] < 0) {
+		    	break;
+		    }
+		
+		    // COMPUTE THE QR FACTORIZATION OF THE JACOBIAN.
+		
+		    QRFAC(N,N,FJAC,LDFJAC,false,IWA,1,WA1,WA2,WA3);
+		
+		    // ON THE FIRST ITERATION AND IF MODE IS 1, SCALE ACCORDING
+		    // TO THE NORMS OF THE COLUMNS OF THE INITIAL JACOBIAN.
+		
+		    if (ITER == 1) {
+		        if (MODE != 2) {
+		            for (J = 0; J < N; J++) {
+		                DIAG[J] = WA2[J];
+		                if (WA2[J] == ZERO){ 
+		                	DIAG[J] = ONE;	
+		                }
+		            } // for (J = 0; J < N; J++)
+		        } // if (MODE != 2)
+		
+		        // ON THE FIRST ITERATION, CALCULATE THE NORM OF THE SCALED X
+		        // AND INITIALIZE THE STEP BOUND DELTA.
+		
+		        for (J = 0; J < N; J++) {
+		            WA3[J] = DIAG[J]*X[J];
+		        } // for (J = 0; J < N; J++)
+		        XNORM = ENORM(N,WA3);
+		        DELTA = FACTOR*XNORM;
+		        if (DELTA == ZERO) {
+		        	DELTA = FACTOR;
+		        }
+		    } // if (ITER == 1)
+		
+		    // FORM (Q TRANSPOSE)*FVEC AND STORE IN QTF.
+		
+		    for (I = 0; I < N; I++) {
+		          QTF[I] = FVEC[I];
+		    } // for (I = 0; I < N; I++)
+		    for (J = 0; J < N; J++) {
+		        if (FJAC[J][J] == ZERO) {
+		        	continue;
+		        }
+		        SUM = ZERO;
+		        for (I = J; I < N; I++) {
+		            SUM = SUM + FJAC[I][J]*QTF[I];
+		        } // for (I = J; I < N; I++)
+		        TEMP = -SUM/FJAC[J][J];
+		        for (I = J; I < N; I++) {
+		            QTF[I] = QTF[I] + FJAC[I][J]*TEMP;
+		        } // for (I = J; I < N; I++)
+		    } // for (J = 0; J < N; J++)
+		
+		    // COPY THE TRIANGULAR FACTOR OF THE QR FACTORIZATION INTO R.
+		
+		      SING = false;
+		      for (J = 1; J <= N; J++) {
+		          L = J;
+		          JM1 = J - 1;
+		          if (JM1 >= 1) {
+		              for (I = 1; I <= JM1; I++) {
+		                  R[L-1] = FJAC[I-1][J-1];
+		                  L = L + N - I;
+		              } // for (I = 1; I <= JM1; I++)
+		          } // if (JM1 >= 1) 
+		          R[L-1] = WA1[J-1];
+		          if (WA1[J-1] == ZERO) {
+		        	  SING = true;
+		          }
+		      } // for (J = 1; J <= N; J++)
+		
+	          // ACCUMULATE THE ORTHOGONAL FACTOR IN FJAC.
+		
+		      QFORM(N,N,FJAC,LDFJAC,WA1);
+		
+		      // RESCALE IF NECESSARY.
+		
+		     if (MODE != 2) {
+		         for (J = 0; J < N; J++) {
+		              DIAG[J] = Math.max(DIAG[J],WA2[J]);
+		         } // for (J = 0; J < N; J++)
+		     } // if (MODE != 2)
+		
+		     // BEGINNING OF THE INNER LOOP.
+		
+		     while (true) {
+		
+		         // IF REQUESTED, CALL FCN TO ENABLE PRINTING OF ITERATES.
+		
+		         if  (NPRINT > 0) {
+		             IFLAG[0] = 0;
+		             if ((ITER-1%NPRINT) == 0) {
+		            	 if (FCN == dscfun) {
+		            	     DSCFUN(N,X,FVEC,IFLAG);
+		            	 }
+		             }
+		             if (IFLAG[0] < 0) {
+		            	 break outer;
+		             }
+		         } // if (NPRINT > 0)
+		
+		         // DETERMINE THE DIRECTION P.
+		
+		         DOGLEG(N,R,LR,DIAG,QTF,DELTA,WA1,WA2,WA3);
+		
+		         // STORE THE DIRECTION P AND X + P. CALCULATE THE NORM OF P.
+		
+		         for (J = 0; J < N; J++) {
+		             WA1[J] = -WA1[J];
+		             WA2[J] = X[J] + WA1[J];
+		             WA3[J] = DIAG[J]*WA1[J];
+		         } // for (J = 0; J < N; J++)
+		         PNORM = ENORM(N,WA3);
+		
+		         // ON THE FIRST ITERATION, ADJUST THE INITIAL STEP BOUND.
+		
+		         if (ITER == 1) {
+		        	 DELTA = Math.min(DELTA,PNORM);
+		         }
+		
+		         // EVALUATE THE FUNCTION AT X + P AND CALCULATE ITS NORM.
+		
+		         IFLAG[0] = 1;
+		         if (FCN == dscfun) {
+		             DSCFUN(N,WA2,WA4,IFLAG);
+		         }
+		         NFEV[0] = NFEV[0] + 1;
+		         if (IFLAG[0] < 0) {
+		        	 break outer;
+		         }
+		         FNORM1 = ENORM(N,WA4);
+		
+		         // COMPUTE THE SCALED ACTUAL REDUCTION.
+		
+		         ACTRED = -ONE;
+		      /*IF (FNORM1.LT.FNORM) ACTRED = ONE - (FNORM1/FNORM)**2
 		C
 		C           COMPUTE THE SCALED PREDICTED REDUCTION.
 		C
@@ -2139,28 +2161,221 @@ double neweps;
 		C
 		      CALL R1UPDT(N,N,R,LR,WA1,WA2,WA3,SING)
 		      CALL R1MPYQ(N,N,FJAC,LDFJAC,WA2,WA3)
-		      CALL R1MPYQ(1,N,QTF,1,WA2,WA3)
-		C
-		C           END OF THE INNER LOOP.
-		C
-		      JEVAL = .FALSE.
-		      GO TO 180
-
-		  290 CONTINUE
-		C
-		C        END OF THE OUTER LOOP.
-		C
+		      CALL R1MPYQ(1,N,QTF,1,WA2,WA3)*/
+		
+		         // END OF THE INNER LOOP.
+		
+		          JEVAL = false;
+		     } // while (true)
+		
+		    // END OF THE OUTER LOOP.
+		
 		} // while (true)
 
-		  300 CONTINUE
-		C
-		C     TERMINATION, EITHER NORMAL OR USER IMPOSED.
-		C
-		      IF (IFLAG.LT.0) INFO = IFLAG
-		      IFLAG = 0
-		      IF (NPRINT.GT.0) CALL FCN(N,X,FVEC,IFLAG)
-		return;*/
+		//     TERMINATION, EITHER NORMAL OR USER IMPOSED.
+		
+		if (IFLAG[0] < 0) {
+			INFO[0] = IFLAG[0];
+		}
+		IFLAG[0] = 0;
+		if (NPRINT > 0) {
+			if (FCN == dscfun) {
+			    DSCFUN(N,X,FVEC,IFLAG);
+			}
+		}
+		return;
       }
+	
+	private void DOGLEG(int N, double R[], int LR, double DIAG[], double QTB[],
+			double DELTA, double X[], double WA1[], double WA2[]) {
+	    //     **********
+	
+	    // SUBROUTINE DOGLEG
+	
+	    // GIVEN AN M BY N MATRIX A, AN N BY N NONSINGULAR DIAGONAL
+	    // MATRIX D, AN M-VECTOR B, AND A POSITIVE NUMBER DELTA, THE
+	    // PROBLEM IS TO DETERMINE THE CONVEX COMBINATION X OF THE
+	    // GAUSS-NEWTON AND SCALED GRADIENT DIRECTIONS THAT MINIMIZES
+	    // (A*X - B) IN THE LEAST SQUARES SENSE, SUBJECT TO THE
+        // RESTRICTION THAT THE EUCLIDEAN NORM OF D*X BE AT MOST DELTA.
+	
+        // THIS SUBROUTINE COMPLETES THE SOLUTION OF THE PROBLEM
+	    // IF IT IS PROVIDED WITH THE NECESSARY INFORMATION FROM THE
+	    // QR FACTORIZATION OF A. THAT IS, IF A = Q*R, WHERE Q HAS
+	    // ORTHOGONAL COLUMNS AND R IS AN UPPER TRIANGULAR MATRIX,
+	    // THEN DOGLEG EXPECTS THE FULL UPPER TRIANGLE OF R AND
+	    // THE FIRST N COMPONENTS OF (Q TRANSPOSE)*B.
+	
+	    // THE SUBROUTINE STATEMENT IS
+	
+	    // SUBROUTINE DOGLEG(N,R,LR,DIAG,QTB,DELTA,X,WA1,WA2)
+	
+	    // WHERE
+	
+	    // N IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE ORDER OF R.
+	
+	    // R IS AN INPUT ARRAY OF LENGTH LR WHICH MUST CONTAIN THE UPPER
+	    //   TRIANGULAR MATRIX R STORED BY ROWS.
+	
+	    // LR IS A POSITIVE INTEGER INPUT VARIABLE NOT LESS THAN
+	    //    (N*(N+1))/2.
+	
+	    // DIAG IS AN INPUT ARRAY OF LENGTH N WHICH MUST CONTAIN THE
+	    //   DIAGONAL ELEMENTS OF THE MATRIX D.
+	
+	    // QTB IS AN INPUT ARRAY OF LENGTH N WHICH MUST CONTAIN THE FIRST
+	    //   N ELEMENTS OF THE VECTOR (Q TRANSPOSE)*B.
+	
+	    // DELTA IS A POSITIVE INPUT VARIABLE WHICH SPECIFIES AN UPPER
+	    //   BOUND ON THE EUCLIDEAN NORM OF D*X.
+	
+	    // X IS AN OUTPUT ARRAY OF LENGTH N WHICH CONTAINS THE DESIRED
+	    //   CONVEX COMBINATION OF THE GAUSS-NEWTON DIRECTION AND THE
+	    //   SCALED GRADIENT DIRECTION.
+	
+	    // WA1 AND WA2 ARE WORK ARRAYS OF LENGTH N.
+	
+	    // SUBPROGRAMS CALLED
+	
+	    // MINPACK-SUPPLIED ... DPMPAR,ENORM
+	
+	    // ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
+	    // BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE
+	
+	    //     **********
+	    // .. Scalar Arguments ..
+	    // DOUBLE PRECISION DELTA
+	    // INTEGER LR,N
+	
+	    //.. Array Arguments ..
+	    // DOUBLE PRECISION DIAG(N),QTB(N),R(LR),WA1(N),WA2(N),X(N)
+	
+	    // .. Local Scalars ..
+	    double ALPHA,BNORM,EPSMCH,GNORM,ONE,QNORM,SGNORM,SUM,TEMP,ZERO;
+	    double ratio, ratio2, ratio3;
+	    int I,J,JJ,JP1,K,L;
+
+	    // .. External Functions ..
+	    // DOUBLE PRECISION DPMPAR,ENORM
+	    // EXTERNAL DPMPAR,ENORM
+	
+	    // .. Data statements ..
+	    ONE = 1.0;
+	    ZERO = 0.0;
+	
+	    // EPSMCH IS THE MACHINE PRECISION.
+	
+	      EPSMCH = MACHEP;
+	
+	      // FIRST, CALCULATE THE GAUSS-NEWTON DIRECTION.
+	
+	      JJ = (N* (N+1))/2 + 1;
+	      for (K = 1; K <= N; K++) {
+	          J = N - K + 1;
+	          JP1 = J + 1;
+	          JJ = JJ - K;
+	          L = JJ + 1;
+	          SUM = ZERO;
+	          if (N >= JP1) {
+	              for (I = JP1; I <= N; I++) {
+	                  SUM = SUM + R[L-1]*X[I-1];
+	                  L = L + 1;
+	              } // for (I = JP1; I <= N; I++)
+	          } // if (N >= JP1)
+	          TEMP = R[JJ-1];
+	          if (TEMP == ZERO) {
+	              L = J;
+	              for (I = 1; I <= J; I++) {
+	                  TEMP = Math.max(TEMP,Math.abs(R[L-1]));
+	                  L = L + N - I;
+	              } // for (I = 1; I <= J; I++)
+	              TEMP = EPSMCH*TEMP;
+	              if (TEMP == ZERO) {
+	            	  TEMP = EPSMCH;
+	              }
+	          } // if (TEMP == ZERO)
+	          X[J-1] = (QTB[J-1]-SUM)/TEMP;
+	      } // for (K = 1; K <= N; K++)
+	
+	      // TEST WHETHER THE GAUSS-NEWTON DIRECTION IS ACCEPTABLE.
+	
+	      for (J = 0; J < N; J++) {
+	          WA1[J] = ZERO;
+	          WA2[J] = DIAG[J]*X[J];
+	      } // for (J = 0; J < N; J++)
+	      QNORM = ENORM(N,WA2);
+	      if (QNORM <= DELTA) {
+	    	  return;
+	      }
+	
+	      // THE GAUSS-NEWTON DIRECTION IS NOT ACCEPTABLE.
+	      // NEXT, CALCULATE THE SCALED GRADIENT DIRECTION.
+	
+	      L = 0;
+	      for (J = 0; J < N; J++) {
+	          TEMP = QTB[J];
+	          for (I = J; I < N; I++) {
+	              WA1[I] = WA1[I] + R[L]*TEMP;
+	              L = L + 1;
+	          } // for (I = J; I < N; I++)
+	          WA1[J] = WA1[J]/DIAG[J];
+	      } // for (J = 0; J < N; J++)
+	
+	      // CALCULATE THE NORM OF THE SCALED GRADIENT AND TEST FOR
+	      // THE SPECIAL CASE IN WHICH THE SCALED GRADIENT IS ZERO.
+	
+	      GNORM = ENORM(N,WA1);
+	      SGNORM = ZERO;
+	      ALPHA = DELTA/QNORM;
+	      if (GNORM != ZERO) {
+	
+	          // CALCULATE THE POINT ALONG THE SCALED GRADIENT
+	          // AT WHICH THE QUADRATIC IS MINIMIZED.
+	
+	          for (J = 0; J < N; J++) {
+	              WA1[J] = (WA1[J]/GNORM)/DIAG[J];
+	          } // for (J = 0; J < N; J++)
+	          L = 0;
+	          for (J = 0; J < N; J++) {
+	              SUM = ZERO;
+	              for (I = J; I < N; I++) {
+	                  SUM = SUM + R[L]*WA1[I];
+	                  L = L + 1;
+	              } // for (I = J; I < N; I++)
+	              WA2[J] = SUM;
+	          } // for (J = 0; J < N; J++)
+	          TEMP = ENORM(N,WA2);
+	          SGNORM = (GNORM/TEMP)/TEMP;
+	
+	          // TEST WHETHER THE SCALED GRADIENT DIRECTION IS ACCEPTABLE.
+	
+	          ALPHA = ZERO;
+	          if  (SGNORM < DELTA) {
+	
+	              // THE SCALED GRADIENT DIRECTION IS NOT ACCEPTABLE.
+	              // FINALLY, CALCULATE THE POINT ALONG THE DOGLEG
+	              // AT WHICH THE QUADRATIC IS MINIMIZED.
+	
+	              BNORM = ENORM(N,QTB);
+	              TEMP = (BNORM/GNORM)* (BNORM/QNORM)* (SGNORM/DELTA);
+	              ratio = SGNORM/DELTA;
+	              ratio2 = TEMP - (DELTA/QNORM);
+	              ratio3 = DELTA/QNORM;
+	              TEMP = TEMP - (DELTA/QNORM)* ratio*ratio +
+	                  Math.sqrt(ratio2*ratio2+(ONE- ratio3*ratio3)* (ONE- ratio*ratio));
+	              ALPHA = ((DELTA/QNORM)* (ONE- ratio*ratio))/TEMP;
+	          } // if  (SGNORM < DELTA)
+	      } // if (GNORM != ZERO)
+	
+	      // FORM APPROPRIATE CONVEX COMBINATION OF THE GAUSS-NEWTON
+	      // DIRECTION AND THE SCALED GRADIENT DIRECTION.
+	
+	      TEMP = (ONE-ALPHA)*Math.min(SGNORM,DELTA);
+	      for (J = 0; J < N; J++) {
+	          X[J] = TEMP*WA1[J] + ALPHA*X[J];
+	      } // for (J = 0; J < N; J++)
+	      return;
+    }
 
 	
 	private void QINIT(int M, int N, double ALFA0[], double ALFA1[], int NPTQ, double QWORK[]) {
@@ -2755,32 +2970,336 @@ double neweps;
 		
 		// COMPUTATION OF BANDED APPROXIMATE JACOBIAN.
 		
-		/*for (K = 1; K <= MSUM; K++) {
+		for (K = 1; K <= MSUM; K++) {
 		    for (J = K; J <= N; J += MSUM) {
 		        WA2[J-1] = X[J-1];
 		        H = EPS*Math.abs(WA2[J-1]);
-		        IF (H == ZERO) {
+		        if (H == ZERO) {
 		        	H = EPS;
 		        }
-		        X[J-1] = WA2[J-1] + H
+		        X[J-1] = WA2[J-1] + H;
 		    } // for (J = K; J <= N; J += MSUM)
-		          CALL FCN(N,X,WA1,IFLAG)
-		          IF (IFLAG.LT.0) GO TO 90
-		          DO 70 J = K,N,MSUM
-		              X(J) = WA2(J)
-		              H = EPS*DABS(WA2(J))
-		              IF (H.EQ.ZERO) H = EPS
-		              DO 60 I = 1,N
-		                  FJAC(I,J) = ZERO
-		                  IF (I.GE.J-MU .AND. I.LE.J+ML) FJAC(I,
-		     +                J) = (WA1(I)-FVEC(I))/H
-		   60         CONTINUE
-		   70     CONTINUE
+		    if (FCN == dscfun) {
+		        DSCFUN(N,X,WA1,IFLAG);
+		    }
+		    if (IFLAG[0] < 0) {
+		    	return;
+		    }
+		    for (J = K; J <= N; J += MSUM) {
+		        X[J-1] = WA2[J-1];
+		        H = EPS*Math.abs(WA2[J-1]);
+		        if (H == ZERO) {
+		        	H = EPS;
+		        }
+		        for (I = 1; I <= N; I++) {
+		            FJAC[I-1][J-1] = ZERO;
+		            if (I >= J-MU && I <= J+ML) {
+		            	FJAC[I-1][J-1] = (WA1[I-1] - FVEC[I-1])/H;
+		            }
+		        } // for (I = 1; I <= N; I++)
+		    } // for (J = K; J <= N; J += MSUM)
 		} // for (K = 1; K <= MSUM; K++)
-		   90 CONTINUE
-		  100 CONTINUE*/
-		      return;
+		return;
 	}
+	
+	private void QFORM(int M,int N, double Q[][], int LDQ, double WA[]) {
+	    //     **********
+	
+	    // SUBROUTINE QFORM
+	
+	    // THIS SUBROUTINE PROCEEDS FROM THE COMPUTED QR FACTORIZATION OF
+	    // AN M BY N MATRIX A TO ACCUMULATE THE M BY M ORTHOGONAL MATRIX
+	    // Q FROM ITS FACTORED FORM.
+	
+	    // THE SUBROUTINE STATEMENT IS
+	
+	    // SUBROUTINE QFORM(M,N,Q,LDQ,WA)
+	
+	    // WHERE
+	
+	    // M IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+	    //   OF ROWS OF A AND THE ORDER OF Q.
+	
+	    // N IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+	    //   OF COLUMNS OF A.
+	
+	    // Q IS AN M BY M ARRAY. ON INPUT THE FULL LOWER TRAPEZOID IN
+        //   THE FIRST MIN(M,N) COLUMNS OF Q CONTAINS THE FACTORED FORM.
+	    //   ON OUTPUT Q HAS BEEN ACCUMULATED INTO A SQUARE MATRIX.
+	
+	    // LDQ IS A POSITIVE INTEGER INPUT VARIABLE NOT LESS THAN M
+	    //   WHICH SPECIFIES THE LEADING DIMENSION OF THE ARRAY Q.
+	
+	    // WA IS A WORK ARRAY OF LENGTH M.
+	
+	    // SUBPROGRAMS CALLED
+	
+	    // ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
+	    // BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE
+	
+	    //      **********
+        // .. Scalar Arguments ..
+	    // INTEGER LDQ,M,N
+	
+	    // .. Array Arguments ..
+	    // DOUBLE PRECISION Q(LDQ,M),WA(M)
+
+	    //      .. Local Scalars ..
+	    double ONE,SUM,TEMP,ZERO;
+	    int I,J,JM1,K,L,MINMN,NP1;
+	
+	    //     .. Data statements ..
+	    ONE = 1.0;
+	    ZERO = 0.0;
+	
+	    // ZERO OUT UPPER TRIANGLE OF Q IN THE FIRST MIN(M,N) COLUMNS.
+	
+	    MINMN = Math.min(M,N);
+	    if (MINMN >= 2) {
+	        for (J = 2; J <= MINMN; J++) {
+	          JM1 = J - 1;
+	          for (I = 1; I <= JM1; I++) {
+	              Q[I-1][J-1] = ZERO;
+	          } // for (I = 1; I <= JM1; I++)
+	        } // for (J = 2; J <= MINMN; J++)
+	    } // if (MINMN >= 2) 
+	
+        // INITIALIZE REMAINING COLUMNS TO THOSE OF THE IDENTITY MATRIX.
+	
+	    NP1 = N + 1;
+	    if (M >= NP1) {
+	        for (J = NP1; J <= M; J++) {
+	            for (I = 1; I <= M; I++) {
+	              Q[I-1][J-1] = ZERO;
+	            } // for (I = 1; I <= M; I++)
+	            Q[J-1][J-1] = ONE;
+	        } // for (J = NP1; J <= M; J++)
+	    } // if (M >= NP1)
+	
+	    // ACCUMULATE Q FROM ITS FACTORED FORM.
+	
+	    for (L = 1; L <= MINMN; L++) {
+	        K = MINMN - L + 1;
+	        for (I = K; I <= M; I++) {
+	            WA[I-1] = Q[I-1][K-1];
+	            Q[I-1][K-1] = ZERO;
+	        } // for (I = K; I <= M; I++)
+	        Q[K-1][K-1] = ONE;
+	        if (WA[K-1] == ZERO) {
+	        	continue;
+	        }
+	        for (J = K; J <= M; J++) {
+	            SUM = ZERO;
+	            for (I = K; I <= M; I++) {
+	                SUM = SUM + Q[I-1][J-1]*WA[I-1];
+	            } // for (I = K; I <= M; I++)
+	            TEMP = SUM/WA[K-1];
+	            for (I = K; I <= M; I++) {
+	                Q[I-1][J-1] = Q[I-1][J-1] - TEMP*WA[I-1];
+	            } // for (I = K; I <= M; I++)
+	        } // for (J = K; J <= M; J++)
+	    } // for (L = 1; L <= MINMN; L++)
+	      return;
+	}
+
+	
+	private void QRFAC(int M,int N, double A[][], int LDA, boolean PIVOT,
+			int IPVT[], int LIPVT, double RDIAG[], double ACNORM[], double WA[]) {
+	    //     **********
+	
+	    // SUBROUTINE QRFAC
+	
+	    // THIS SUBROUTINE USES HOUSEHOLDER TRANSFORMATIONS WITH COLUMN
+	    // PIVOTING (OPTIONAL) TO COMPUTE A QR FACTORIZATION OF THE
+	    // M BY N MATRIX A. THAT IS, QRFAC DETERMINES AN ORTHOGONAL
+	    // MATRIX Q, A PERMUTATION MATRIX P, AND AN UPPER TRAPEZOIDAL
+	    // MATRIX R WITH DIAGONAL ELEMENTS OF NONINCREASING MAGNITUDE,
+	    // SUCH THAT A*P = Q*R. THE HOUSEHOLDER TRANSFORMATION FOR
+	    // COLUMN K, K = 1,2,...,MIN(M,N), IS OF THE FORM
+	
+	    //                           T
+	    //           I - (1/U(K))*U*U
+	
+        // WHERE U HAS ZEROS IN THE FIRST K-1 POSITIONS. THE FORM OF
+	    // THIS TRANSFORMATION AND THE METHOD OF PIVOTING FIRST
+	    // APPEARED IN THE CORRESPONDING LINPACK SUBROUTINE.
+	
+	    // THE SUBROUTINE STATEMENT IS
+	
+	    // SUBROUTINE QRFAC(M,N,A,LDA,PIVOT,IPVT,LIPVT,RDIAG,ACNORM,WA)
+	
+	    // WHERE
+	
+	    // M IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+	    //   OF ROWS OF A.
+	
+	    // N IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+	    //   OF COLUMNS OF A.
+	
+	    // A IS AN M BY N ARRAY. ON INPUT A CONTAINS THE MATRIX FOR
+	    //   WHICH THE QR FACTORIZATION IS TO BE COMPUTED. ON OUTPUT
+	    // THE STRICT UPPER TRAPEZOIDAL PART OF A CONTAINS THE STRICT
+	    // UPPER TRAPEZOIDAL PART OF R, AND THE LOWER TRAPEZOIDAL
+	    // PART OF A CONTAINS A FACTORED FORM OF Q (THE NON-TRIVIAL
+	    // ELEMENTS OF THE U VECTORS DESCRIBED ABOVE).
+	
+	    // LDA IS A POSITIVE INTEGER INPUT VARIABLE NOT LESS THAN M
+	    //     WHICH SPECIFIES THE LEADING DIMENSION OF THE ARRAY A.
+	
+	    // PIVOT IS A LOGICAL INPUT VARIABLE. IF PIVOT IS SET TRUE,
+	    //   THEN COLUMN PIVOTING IS ENFORCED. IF PIVOT IS SET FALSE,
+	    //   THEN NO COLUMN PIVOTING IS DONE.
+	
+	    // IPVT IS AN INTEGER OUTPUT ARRAY OF LENGTH LIPVT. IPVT
+	    //   DEFINES THE PERMUTATION MATRIX P SUCH THAT A*P = Q*R.
+	    //   COLUMN J OF P IS COLUMN IPVT(J) OF THE IDENTITY MATRIX.
+	    //   IF PIVOT IS FALSE, IPVT IS NOT REFERENCED.
+	
+	    // LIPVT IS A POSITIVE INTEGER INPUT VARIABLE. IF PIVOT IS FALSE,
+	    //   THEN LIPVT MAY BE AS SMALL AS 1. IF PIVOT IS TRUE, THEN
+	    //   LIPVT MUST BE AT LEAST N.
+	
+	    // RDIAG IS AN OUTPUT ARRAY OF LENGTH N WHICH CONTAINS THE
+	    //   DIAGONAL ELEMENTS OF R.
+	
+        // ACNORM IS AN OUTPUT ARRAY OF LENGTH N WHICH CONTAINS THE
+	    //   NORMS OF THE CORRESPONDING COLUMNS OF THE INPUT MATRIX A.
+	    //   IF THIS INFORMATION IS NOT NEEDED, THEN ACNORM CAN COINCIDE
+	    //   WITH RDIAG.
+	
+	    // WA IS A WORK ARRAY OF LENGTH N. IF PIVOT IS FALSE, THEN WA
+	    //   CAN COINCIDE WITH RDIAG.
+	
+	    // SUBPROGRAMS CALLED
+	
+	    // MINPACK-SUPPLIED ... DPMPAR,ENORM
+	
+	    // ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
+	    // BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE
+	
+	    //     **********
+	    //      .. Scalar Arguments ..
+	    // INTEGER LDA,LIPVT,M,N
+	    // LOGICAL PIVOT
+	
+	    // .. Array Arguments ..
+	    // DOUBLE PRECISION A(LDA,N),ACNORM(N),RDIAG(N),WA(N)
+	    // INTEGER IPVT(LIPVT)
+	
+	    //      .. Local Scalars ..
+		double ratio;
+	    double AJNORM,EPSMCH,ONE,P05,SUM,TEMP,ZERO;
+	    double vec[];
+	    int I,J,JP1,K,KMAX,MINMN;
+	
+	    //     .. External Functions ..
+	    //      DOUBLE PRECISION DPMPAR,ENORM
+	    //      EXTERNAL DPMPAR,ENORM
+	
+	    //     .. Data statements ..
+	    ONE = 1.0;
+	    P05 = 5.0E-2;
+	    ZERO = 0.0;
+	
+        // EPSMCH IS THE MACHINE PRECISION.
+	
+	    EPSMCH = MACHEP;
+	
+	    // COMPUTE THE INITIAL COLUMN NORMS AND INITIALIZE SEVERAL ARRAYS.
+	
+	    for (J = 1; J <= N; J++) {
+	    	vec = new double[M];
+	    	for (I = 0; I < M; I++) {
+	    		vec[I] = A[I][J-1];
+	    	}
+	        ACNORM[J-1] = ENORM(M,vec);
+	        RDIAG[J-1] = ACNORM[J-1];
+	        WA[J-1] = RDIAG[J-1];
+	        if (PIVOT) {
+	        	IPVT[J-1] = J;
+	        }
+	    } // for (J = 1; J <= N; J++)
+	
+	    // REDUCE A TO R WITH HOUSEHOLDER TRANSFORMATIONS.
+	
+	    MINMN = Math.min(M,N);
+	    for (J = 1; J <= MINMN; J++) {
+	        if (PIVOT) {
+	
+	            // BRING THE COLUMN OF LARGEST NORM INTO THE PIVOT POSITION.
+	
+	            KMAX = J;
+	            for (K = J; K <= N; K++) {
+	                if (RDIAG[K-1] > RDIAG[KMAX-1]) {
+	                	KMAX = K;
+	                }
+	            } // for (K = J; K <= N; K++)
+	            if  (KMAX != J) {
+	                for (I = 1; I <= M; I++) {
+	                    TEMP = A[I-1][J-1];
+	                    A[I-1][J-1] = A[I-1][KMAX-1];
+	                    A[I-1][KMAX-1] = TEMP;
+	                } // for (I = 1; I <= M; I++)
+	                RDIAG[KMAX-1] = RDIAG[J-1];
+	                WA[KMAX-1] = WA[J-1];
+	                K = IPVT[J-1];
+	                IPVT[J-1] = IPVT[KMAX-1];
+	                IPVT[KMAX-1] = K;
+	            } // if (KMAX != J)
+	        } // if (PIVOT)
+	
+	        // COMPUTE THE HOUSEHOLDER TRANSFORMATION TO REDUCE THE
+	        // J-TH COLUMN OF A TO A MULTIPLE OF THE J-TH UNIT VECTOR.
+	
+	        vec = new double[M-J+1];
+	        for (I = 0; I < M-J+1; I++) {
+	        	vec[I] = A[J-1+I][J-1];
+	        }
+	        AJNORM = ENORM(M-J+1,vec);
+	        if (AJNORM != 0) {
+	            if (A[J-1][J-1] < ZERO) {
+	            	AJNORM = -AJNORM;
+	            }
+	            for (I = J; I <= M; I++) {
+	              A[I-1][J-1] = A[I-1][J-1]/AJNORM;
+	            } // for (I = J; I <= M; I++)
+	            A[J-1][J-1] = A[J-1][J-1] + ONE;
+	
+	            // APPLY THE TRANSFORMATION TO THE REMAINING COLUMNS
+	            // AND UPDATE THE NORMS.
+	
+	            JP1 = J + 1;
+	            if (N >= JP1) {
+	                for (K = JP1; K <= N; K++) {
+	                    SUM = ZERO;
+	                    for (I = J; I <= M; I++) {
+	                        SUM = SUM + A[I-1][J-1]*A[I-1][K-1];
+	                    } // for (I = J; I <= M; I++)
+	                    TEMP = SUM/A[J-1][J-1];
+	                    for (I = J; I <= M; I++) {
+	                        A[I-1][K-1] = A[I-1][K-1] - TEMP*A[I-1][J-1];
+	                    } // for (I = J; I <= M; I++)
+	                    if (PIVOT && RDIAG[K-1] != ZERO) {
+	                        TEMP = A[J-1][K-1]/RDIAG[K-1];
+	                        RDIAG[K-1] = RDIAG[K-1]*Math.sqrt(Math.max(ZERO,ONE-TEMP*TEMP));
+	                        ratio = RDIAG[K-1]/WA[K-1];
+	                        if (P05*ratio*ratio <= EPSMCH) {
+	                        	vec = new double[M-J];
+	                        	for (I = 0; I < M-J; I++) {
+	                        		vec[I] = A[JP1-1+I][K-1];
+	                        	}
+	                            RDIAG[K-1] = ENORM(M-J,vec);
+	                            WA[K-1] = RDIAG[K-1];
+	                        } // if (P05*ratio*ratio <= EPSMCH)
+	                    } // if (PIVOT && RDIAG[K-1] != ZERO)
+	                } // for (K = JP1; K <= N; K++)
+	            } // if (N >= JP1)
+	        } // if (AJNORM != 0)
+	        RDIAG[J-1] = -AJNORM;
+	    } // for (J = 1; J <= MINMN; J++)
+	      return;
+	}
+
 
 
 }
