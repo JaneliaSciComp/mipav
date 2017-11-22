@@ -25,83 +25,47 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcatMult3Dto4D;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.ModelRGB;
-import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIText;
-import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.util.MipavInitGPU;
-import gov.nih.mipav.view.JFrameHistogram;
-import gov.nih.mipav.view.JPanelVolumeOpacity;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewImageUpdateInterface;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.view.ViewTableModel;
 import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
-import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.AnnotationListener;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.LatticeModel;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
-import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
-import gov.nih.mipav.view.renderer.WildMagic.VOI.VOILatticeManagerInterface;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -112,54 +76,78 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
-
 
 public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, AlgorithmInterface, WindowListener, AnnotationListener, TableModelListener, ListSelectionListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
-	private Vector<String> annotationNames;
-	private JButton backButton;
+	// User-Interface inputs:
+	// two image base directories:
 	private String baseFileDir;
 	private String baseFileDir2;
 	private JTextField  baseFileLocText;
 	private JTextField  baseFileLocText2;
+	// One base name:
 	private String baseFileName;
 	private JTextField  baseFileNameText;
+	
+	// UI Buttons:
 	private JPanel buttonPanel;
-	private JPanel annotationPanel;
+	private JButton backButton;
 	private JButton closeButton;
 	private JButton doneButton;
+	private JButton startButton;
+	private JButton nextButton;
+	// range of images
 	private int imageIndex = 0;
 	private Vector<Integer> includeRange;
-	private JPanel inputsPanel;	
-
-	private JButton nextButton;
-
 	private JTextField rangeFusionText;
+	private JPanel inputsPanel;	
+	// loads all images at once into a hyper stack for faster switching between images:
 	private JCheckBox useHyperstack;
-	private JButton startButton;
 
+	// on 'start' the images are loaded and the VolumeTriPlanarInterface is created:
+	private VolumeTriPlanarInterface triVolume;
+	// annotation panel displayed in the VolumeTriPlanarInterface:
+	private JPanel annotationPanel;
+	// turns on/off displaying individual annotations
+	private JCheckBox displayLabel;
+	// table user-interface for editing the positions of the annotations:
+	private ListSelectionModel annotationList;
+	private JTable annotationTable;
+	private DefaultTableModel annotationTableModel;
+	
+	// Images
 	private ModelImage imageA;
 	private ModelImage imageB;
+	// hyperstack arrays:
 	private ModelImage[] imageStackA = null;
 	private ModelImage[] imageStackB = null;
+	// luts saved between back/next buttons for hyperstacks:
 	private ModelLUT[] lutStackA;
 	private ModelLUT[] lutStackB;
-	private int maxRangeIndex = -1;
+	// wormdata keeps track of the image locations, etc.
 	private WormData wormData;
-	private VolumeTriPlanarInterface triVolume;
+	// saved annotations to initialize the next image in the sequence:
 	private VOI savedAnnotations = null;
-
+	
+	
+	/**
+	 * Creates the plugin for labeling annotations for a series of straightened images.
+	 * Reads positions from a csv file and saves any changes. The user can modify the positions
+	 * by direct manipulation with the mouse in the 3D or 2D windows, or by changing positions in
+	 * the table listing the annotations.
+	 */
 	public PlugInDialogTrackAnnotations()
 	{
-		init(true);
+		init();
 		setVisible(true);
 		addWindowListener(this);
 	}
 
-
+	/* (non-Javadoc)
+	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+	 */
 	public void actionPerformed(ActionEvent event)
 	{
 		String command = event.getActionCommand();
@@ -177,22 +165,21 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 		else if ( command.equals("next") )
 		{
-			//			voiManager.clear3DSelection();
+			// save current annotations and open the next image:
 			save();
-			initDisplayAnnotationsPanel();
 			imageIndex++;
-
 			openStraightened(true);
 		}
 		else if ( command.equals("back") )
 		{
-			//			voiManager.clear3DSelection();
+			// save current annotations and open the previous image:
 			save();
 			imageIndex--;
 			openStraightened(true);
 		}
 		else if ( command.equals("displayAll") )
 		{
+			// display all annotations in the list:
 			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
 			if ( (annotations != null) ) {
 				if ( annotations.getCurves().size() > 0 ) {
@@ -207,6 +194,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 		else if ( command.equals("displayNone") )
 		{
+			// display none of the annotations in the list:
 			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
 			if ( (annotations != null) ) {
 				if ( annotations.getCurves().size() > 0 ) {
@@ -221,13 +209,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 		else if ( source == displayLabel )
 		{	
+			// find the selected annotation and turn it's display on/off:
 			if ( triVolume != null && triVolume.getVOIManager() != null )
 			{
 				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-				
-				int row = annotationTable.getSelectedRow();
-				System.err.println( "selected row = " + row );
-		        
+				// selected row:
+				int row = annotationTable.getSelectedRow();		        
 				if ( (annotations != null) && (row >= 0) ) {
 					if ( row < annotations.getCurves().size() ) {
 						VOIText text = (VOIText) annotations.getCurves().elementAt(row);
@@ -236,17 +223,14 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				}
 			}
 		}
-		// Closes the editing:
 		else if (command.equals("done"))
 		{			
-			//			if ( voiManager != null )
-			//			{
-			//				voiManager.clear3DSelection();
-			//			}
+			// save
 			save();
 		}
 		if (command.equals("close") || command.equals("done"))
 		{			
+			// close volume display:
 			if ( triVolume != null )
 			{
 				triVolume.close();
@@ -263,7 +247,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			}
 		}
 
-
+		// check range of images and enable or disable the next and back buttons:
 		if ( includeRange != null )
 		{
 			imageIndex = Math.min( includeRange.size() - 1, imageIndex );
@@ -277,7 +261,8 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				backButton.setEnabled( imageIndex > 0 );
 			}
 		}
-
+		
+		// close the plugin display:
 		if (command.equals("close"))
 		{			
 			setVisible(false);
@@ -291,34 +276,94 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 	}
 
+	/* (non-Javadoc)
+	 * Called when the volume renderer is initialized and visible.
+	 */
+	public void algorithmPerformed(AlgorithmBase algorithm) {
+		// Add user-interface panels
+		triVolume.actionPerformed( new ActionEvent(this, 0, "HistoLUT") );
+		triVolume.actionPerformed( new ActionEvent(this, 0, "Opacity") );
+		triVolume.actionPerformed( new ActionEvent(this, 0, "Slices") );
+		triVolume.actionPerformed( new ActionEvent(this, 0, "VolumeRayCast") );
+		triVolume.actionPerformed( new ActionEvent(this, 0, "VOIToolbar") );
+		// hide unused menus
+		triVolume.hideMenus();
 
+		// setup the display:
+		triVolume.getVolumeGPU().resetAxisX();
+		triVolume.getVolumeGPU().displayVolumeSlices(false);
+		triVolume.getVolumeGPU().displayVolumeRaycast(true);
+		triVolume.getVolumeGPU().displayVOIs(true);
+		triVolume.getVolumeGPU().setVolumeBlend(.8f);
+		triVolume.getVolumeGPU().setABBlend(.5f);
+		triVolume.getVolumeSlicesPanel().setDividerLocation( 0.75 );
+
+		// load saved annotations
+		if ( (savedAnnotations != null) && (savedAnnotations.getCurves().size() > 0) ) {
+			for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
+				VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
+
+				short id = (short) imageA.getVOIs().getUniqueID();
+				int colorID = 0;
+				VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+				newTextVOI.getCurves().add(text);
+				//						System.err.println( "add annotation " + ((VOIText)annotations.getCurves().elementAt(j)).getText() );
+				((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
+			}
+		}
+		// initialize the display panel for editing / displaying annotations:
+		initDisplayAnnotationsPanel();
+		((VOILatticeManagerInterface)triVolume.getVOIManager()).editAnnotations(false);
+		((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotationListener(this);
+		
+		// save the luts for hyperstacks:
+		if ( useHyperstack.isSelected() )
+		{
+			lutStackA[imageIndex] = triVolume.getVolumeImageA().GetLUT();
+			lutStackB[imageIndex] = triVolume.getVolumeImageB().GetLUT();
+		}
+	}
+
+	/* (non-Javadoc)
+	 * Called from the LatticeModel when any annotations are changed.
+	 * Updates the annotation table with the current annotations.
+	 */
+	public void annotationChanged() {
+
+		if ( triVolume != null && triVolume.getVOIManager() != null )
+		{
+			// get current annotations and update table:
+			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+			// remove table listener durning updates:
+			annotationTableModel.removeTableModelListener(this);
+			int numRows = annotationTableModel.getRowCount();
+			for ( int i = numRows -1; i >= 0; i-- ) {
+				annotationTableModel.removeRow(i);
+			}		
+			if ( annotations != null ) {
+				if ( annotations.getCurves().size() > 0 ) {
+					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
+						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
+						annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+					}
+				}
+			}
+			// restore table listener:
+			annotationTableModel.addTableModelListener(this);
+		}		
+	}
+
+	/* (non-Javadoc)
+	 * @see java.awt.Window#dispose()
+	 */
 	public void dispose()
 	{
 		super.dispose();
-		if ( annotationNames != null )
-		{
-			annotationNames.clear();
-		}
 		if ( includeRange != null )
 		{
 			includeRange.clear();
 			includeRange = null;
 		}
-		//		if ( triVolume != null )
-		//		{
-		//			triVolume.disposeLocal(false);
-		//			triVolume = null;
-		//		}
-		//		if ( volumeImage != null )
-		//		{
-		//			volumeImage.dispose();
-		//			volumeImage = null;
-		//		}
-		//		if ( voiManager != null )
-		//		{
-		//			voiManager.disposeLocal(false);
-		//			voiManager = null;
-		//		}
 		
 		if ( imageStackA != null )
 		{
@@ -348,15 +393,85 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
+	 */
+	public void tableChanged(TableModelEvent e) {
+		// Track updates to the table and update the corresponding annotation.
+		// The user can change the annotation name and position (x,y,z) with table edits.
+		// Does not currently check type.
+		int column = e.getColumn();
+		boolean isChecked = false;
+		if ( triVolume != null && triVolume.getVOIManager() != null )
+		{
+			int row = e.getFirstRow();
+			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+			if ( (row >= 0) && (row < annotations.getCurves().size()) )
+			{
+				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+				if ( column == 0 )
+				{
+					text.setText( annotationTableModel.getValueAt(row, column).toString() );
+					text.updateText();
+				}
+				else
+				{
+					float value = Float.valueOf(annotationTableModel.getValueAt(row, column).toString());
+					if ( value >= 0 ) {
+						if ( column == 1 ) {
+							text.elementAt(0).X = value;
+							text.elementAt(1).X = value;
+						}
+						else if ( column == 2 ) {
+							text.elementAt(0).Y = value;
+							text.elementAt(1).Y = value;
+						}
+						else if ( column == 3 ) {
+							text.elementAt(0).Z = value;
+							text.elementAt(1).Z = value;
+						}
+					}
+				}
+				text.update();
+				isChecked = text.getVolumeVOI().GetDisplay();
+			}
+		}
+		displayLabel.setSelected(isChecked);
+	}
+
+	/* (non-Javadoc)
+	 * @see javax.swing.event.ListSelectionListener#valueChanged(javax.swing.event.ListSelectionEvent)
+	 */
+	public void valueChanged(ListSelectionEvent e) {
+		if ( e.getSource() == annotationList && e.getValueIsAdjusting() )
+			return;
+		
+		// Updates the displayLabel checkbox based on which row of the table is current:
+		VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+
+		int row = annotationTable.getSelectedRow();
+		boolean isChecked = false;
+		if ( (annotations != null) && (row >= 0) ) {
+			if ( row < annotations.getCurves().size() ) {
+				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
+				isChecked = text.getVolumeVOI().GetDisplay();
+			}
+		}
+		displayLabel.setSelected(isChecked);
+	}
 
 	@Override
 	public void windowActivated(WindowEvent e) {}
-
 	@Override
 	public void windowClosed(WindowEvent e) {}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
+	 */
 	public void windowClosing(final WindowEvent event)
 	{
+		// Catch the windowClosing event when the VolumeTriPlanarInterface is closed
+		// so all images in the hyperstack can be disposed and memory freed.
 		if ( ViewUserInterface.getReference() != null && !ViewUserInterface.getReference().isAppFrameVisible()
 				&& ViewUserInterface.getReference().isPlugInFrameVisible() )
 		{
@@ -368,17 +483,241 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 	@Override
 	public void windowDeactivated(WindowEvent e) {}
-
 	@Override
-	public void windowDeiconified(WindowEvent e) {}
-
+	public void windowDeiconified(WindowEvent e) {}	
 	@Override
 	public void windowIconified(WindowEvent e) {}
-
 	@Override
 	public void windowOpened(WindowEvent e) {}
+	
+	/**
+	 * Creates the table that displays the annotation information.
+	 * The user can edit the annotations directly in the table.
+	 */
+	private void buildAnnotationTable() {
+		if ( annotationTable == null )
+		{
+			annotationTableModel = new DefaultTableModel();
+			annotationTableModel.addColumn("Name");
+			annotationTableModel.addColumn("x");
+			annotationTableModel.addColumn("y");
+			annotationTableModel.addColumn("z");
+			annotationTableModel.addTableModelListener(this);
 
-	protected ModelImage openImage( File imageFile, String fileName )
+			annotationTable = new JTable(annotationTableModel);
+			annotationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+			annotationTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+			annotationTable.getColumn("Name").setMinWidth(100);
+			annotationTable.getColumn("Name").setMaxWidth(100);
+			annotationList = annotationTable.getSelectionModel();
+			annotationList.addListSelectionListener(this);
+		}
+	}
+	
+	/**
+	 * User-interface initialization.
+	 */
+	private void init()	{
+
+		MipavInitGPU.InitGPU();
+
+		setResizable(true);
+		setForeground(Color.black);
+		setTitle("Annotation Tracking");
+		try {
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
+		}
+
+		JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
+		GuiBuilder gui = new GuiBuilder(dialogGUI);
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.weightx = 1;
+		gbc.insets = new Insets(3, 3, 3, 3);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+
+		// Data directories:
+		inputsPanel = new JPanel(new GridBagLayout());
+		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
+		inputsPanel.setForeground(Color.black);
+
+		baseFileLocText = gui.buildFileField("Data directory (marker 1): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(baseFileLocText.getParent(), gbc);
+		gbc.gridy++;
+
+		baseFileLocText2 = gui.buildFileField("Data directory (marker 2): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(baseFileLocText2.getParent(), gbc);
+		gbc.gridy++;
+
+		// base file name:
+		baseFileNameText = gui.buildField("Base images name: ", "Decon");
+		inputsPanel.add(baseFileNameText.getParent(), gbc);
+		gbc.gridy++;
+
+		// range of images to load:
+		rangeFusionText = gui.buildField("Range of images (ex. 3-7, 12, 18-21, etc.): ", " ");
+		inputsPanel.add(rangeFusionText.getParent(), gbc);
+		gbc.gridy++;
+
+		// loads all images at once if selected:
+		useHyperstack = gui.buildCheckBox( "Load images as hyperstack", true);
+		inputsPanel.add(useHyperstack.getParent(), gbc);
+		gbc.gridx++;
+
+		// button panels:
+		buttonPanel = new JPanel();
+		startButton = gui.buildButton("start");
+		startButton.addActionListener(this);
+		buttonPanel.add( startButton );
+		closeButton = gui.buildButton("close");
+		closeButton.addActionListener(this);
+		buttonPanel.add( closeButton );
+		buttonPanel.add(new JPanel());
+
+
+		JPanel panel1 = new JPanel(new BorderLayout());
+		panel1.add(inputsPanel, BorderLayout.NORTH);
+
+		JPanel panel2 = new JPanel(new BorderLayout());
+		panel2.add(buttonPanel, BorderLayout.SOUTH);
+
+		dialogGUI.getContentPane().add(panel1, BorderLayout.NORTH);
+		dialogGUI.getContentPane().add(panel2, BorderLayout.SOUTH);
+
+		JPanel leftPanel = new JPanel(new BorderLayout());
+		leftPanel.add( dialogGUI.getContentPane(), BorderLayout.NORTH );
+
+		JPanel integratedPanel = new JPanel( new BorderLayout() );
+		integratedPanel.add( leftPanel, BorderLayout.WEST );
+		getContentPane().add(integratedPanel, BorderLayout.CENTER);
+
+		setLocation(0, 0);
+		pack();
+		setResizable(true);
+	}
+
+	/**
+	 * The annotations panel is added to the VolumeTriPlanarInterface for display.
+	 */
+	private void initDisplayAnnotationsPanel( )
+	{		
+		if ( annotationPanel == null )
+		{
+			JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
+			GuiBuilder gui = new GuiBuilder(dialogGUI);
+			
+			annotationPanel = new JPanel();
+			annotationPanel.setLayout(new BorderLayout());
+
+			// Scroll panel that hold the control panel layout in order to use JScrollPane
+			JScrollPane scroller = new JScrollPane(annotationPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+			JPanel mainPanel = new JPanel(new BorderLayout());
+			JPanel labelPanel = new JPanel();
+			// Display checkbox for displaying individual annotations:
+			displayLabel = new JCheckBox("display", true);
+			displayLabel.addActionListener(this);
+			displayLabel.setActionCommand("displayLabel");
+
+			labelPanel.add( new JLabel("Annotation: " ) );
+			labelPanel.add(displayLabel);
+			
+			// Display all button:
+			JButton displayAll = new JButton("Display all" );
+			displayAll.addActionListener(this);
+			displayAll.setActionCommand("displayAll");
+			labelPanel.add( displayAll );
+			
+			// Display none button:
+			JButton displayNone = new JButton("Display none" );
+			displayNone.addActionListener(this);
+			displayNone.setActionCommand("displayNone");
+			labelPanel.add( displayNone );
+
+			JPanel displayOptions = new JPanel(new BorderLayout());
+			displayOptions.add( labelPanel, BorderLayout.NORTH );
+
+			// build the annotation table for the list of annotations:
+			buildAnnotationTable();
+			// add annotation table to a scroll pane:
+			JScrollPane kScrollPane = new JScrollPane(annotationTable);
+			JPanel scrollPanel = new JPanel();
+			scrollPanel.setLayout(new BorderLayout());
+			scrollPanel.add(kScrollPane);
+			scrollPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+			// back button:
+			buttonPanel = new JPanel();
+			backButton = gui.buildButton("back");
+			backButton.addActionListener(this);
+			backButton.setActionCommand("back");
+			backButton.setVisible(true);
+			backButton.setEnabled(false);
+			buttonPanel.add( backButton );
+
+			// next button:
+			nextButton = gui.buildButton("next");
+			nextButton.addActionListener(this);
+			nextButton.setActionCommand("next");
+			nextButton.setVisible(true);
+			nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
+			buttonPanel.add( nextButton );
+
+			// done button:
+			doneButton = gui.buildButton("done");
+			doneButton.addActionListener(this);
+			doneButton.setActionCommand("done");
+			doneButton.setVisible(true);
+			doneButton.setEnabled(true);
+			buttonPanel.add( doneButton );
+
+
+			JPanel listPanel = new JPanel();
+			listPanel.setLayout(new BorderLayout());
+			listPanel.add(scrollPanel, BorderLayout.NORTH);
+			listPanel.add(displayOptions, BorderLayout.CENTER);
+			listPanel.add(buttonPanel, BorderLayout.SOUTH);
+			listPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
+
+			annotationPanel.add(listPanel, BorderLayout.NORTH);
+			mainPanel.add(scroller, BorderLayout.CENTER);
+			
+			triVolume.insertTab( "Track Annotation", annotationPanel );
+		}
+
+		// Add the list of annotations to the table:
+		annotationTableModel.removeTableModelListener(this);
+		int numRows = annotationTableModel.getRowCount();
+		for ( int i = numRows -1; i >= 0; i-- ) {
+			annotationTableModel.removeRow(i);
+		}		
+		if ( savedAnnotations != null ) {
+			if ( savedAnnotations.getCurves().size() > 0 ) {
+				for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
+					VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
+					annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
+				}
+			}
+		}
+		annotationTableModel.addTableModelListener(this);
+	}
+
+	/**
+	 * Opens an image (.tif) and resets the units of measure to the correct values:
+	 * @param imageFile
+	 * @param fileName
+	 * @return
+	 */
+	private ModelImage openImage( File imageFile, String fileName )
 	{
 		FileIO fileIO = new FileIO();
 		ModelImage image = fileIO.readImage(fileName, imageFile.getParent() + File.separator, false, null); 
@@ -407,7 +746,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	 * @param fileName file name
 	 * @return true if the file exists.
 	 */
-	protected boolean openImages( File imageFile, File imageFile2, String fileName, boolean startViewer )
+	private boolean openImages( File imageFile, File imageFile2, String fileName, boolean startViewer )
 	{
 		if ( imageFile.exists() )
 		{
@@ -481,23 +820,22 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	}
 
 
-
 	/**
 	 * Opens the current volume for viewing including the straightened annotations and lattice.
 	 */
-	protected void openStraightened(boolean readAnnotations)
+	private void openStraightened(boolean readAnnotations)
 	{
 		if ( includeRange != null )
 		{
 			if ( useHyperstack.isSelected() )
 			{
+				// If images are opened as a hyperstack, open all images and save in an array:
 				if ( imageStackA == null )
 				{
 					imageStackA = new ModelImage[includeRange.size()];
 					imageStackB = new ModelImage[includeRange.size()];
 					lutStackA = new ModelLUT[includeRange.size()];
 					lutStackB = new ModelLUT[includeRange.size()];
-					double maxRange = -1;
 					
 					ViewJProgressBar progressBar = new ViewJProgressBar("Opening HyperStack...",
 			                "Opening HyperStack...", 0, includeRange.size(), false, null, null);
@@ -539,14 +877,6 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 							}
 						}
 						
-						if ( imageStackA[i] != null ) {
-							double range = imageStackA[i].getMax() - imageStackA[i].getMin();
-							System.err.println("histo range: " + i + " " + range );
-							if ( range > maxRange ) {
-								maxRange = range;
-								maxRangeIndex = i;
-							}
-						}
 				        progressBar.updateValueImmed(i);
 					}
 
@@ -557,35 +887,41 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 					imageA = imageStackA[imageIndex];
 					imageB = imageStackB[imageIndex];		
 
-
+					// create volume renderer and initialize:
 					triVolume = new VolumeTriPlanarInterface(imageA, imageB, false);
 					triVolume.addConfiguredListener(this);
 					triVolume.addWindowListener(this);
 					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );
 					setVisible(false);								
 				}
-				else {					
+				else {			
+					// hyperstack already loaded, move to the next image:
+					// check for changes in image dimensions:
 					int[] previousExtents = new int[]{imageA.getExtents()[0], imageA.getExtents()[1], imageA.getExtents()[2]};
 
 					imageA = imageStackA[imageIndex];
 					imageB = imageStackB[imageIndex];
 					
-					
+					// recreate image on the GPU if the image dimensions change, if no change just reload with
+					// the new image data:
 					boolean updateRenderer = (imageA.getExtents()[0] != previousExtents[0]) || 
 							(imageA.getExtents()[1] != previousExtents[1]) ||
 							(imageA.getExtents()[2] != previousExtents[2]);
 
+					// set the new image and LUTs:
 					triVolume.setImage(imageA, imageB, lutStackA[imageIndex], lutStackB[imageIndex], updateRenderer);
 					triVolume.getVolumeGPU().resetAxisX();
-					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );
-					
+					// set the title to match the new image name:
+					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );					
 
+					// save LUTs:
 					lutStackA[imageIndex] = triVolume.getVolumeImageA().GetLUT();
 					lutStackB[imageIndex] = triVolume.getVolumeImageB().GetLUT();
 				}
 			}			
 			else if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
 			{
+				// load the new image directly from disk, no hyperstacks:
 				String imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
 				String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
 				String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
@@ -602,13 +938,18 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 		if ( imageA != null )
 		{
+			// new image loaded:
 			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
 			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
 	
+			// remove all vois:
+			imageA.unregisterAllVOIs();
+			
+			// create new worm data and load the straightened lattice:
 			wormData = new WormData(imageA);
 			wormData.openStraightLattice();
 
-
+			// load any existing annotations from the csv file:
 			if ( readAnnotations ) {
 				// try opening any existing annotations from file				
 				VOI annotations = LatticeModel.readAnnotationsCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator +
@@ -619,6 +960,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				}
 			}			
 			
+			// load the annotations into the viewer:
 			if ( triVolume != null && triVolume.getVOIManager() != null )
 			{
 				((VOILatticeManagerInterface)triVolume.getVOIManager()).deleteAnnotations();
@@ -639,233 +981,8 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	}
 
 
-
 	/**
-	 * User-interface initialization. If the UI is integrated all panels are displayed in one window.
-	 * Otherwise the UI is divided into volume display and separate UI panels.
-	 * @param integrated
-	 */
-	private void init(boolean integrated)
-	{
-
-		MipavInitGPU.InitGPU();
-
-		setResizable(true);
-		setForeground(Color.black);
-		setTitle("Annotation Tracking");
-		try {
-			setIconImage(MipavUtil.getIconImage("divinci.gif"));
-		} catch (FileNotFoundException e) {
-			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
-		}
-
-		JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
-		GuiBuilder gui = new GuiBuilder(dialogGUI);
-
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		gbc.anchor = GridBagConstraints.WEST;
-		gbc.weightx = 1;
-		gbc.insets = new Insets(3, 3, 3, 3);
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-
-		inputsPanel = new JPanel(new GridBagLayout());
-		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
-		inputsPanel.setForeground(Color.black);
-
-		baseFileLocText = gui.buildFileField("Data directory (marker 1): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
-		inputsPanel.add(baseFileLocText.getParent(), gbc);
-		gbc.gridy++;
-
-		baseFileLocText2 = gui.buildFileField("Data directory (marker 2): ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
-		inputsPanel.add(baseFileLocText2.getParent(), gbc);
-		gbc.gridy++;
-
-		baseFileNameText = gui.buildField("Base images name: ", "Decon");
-		inputsPanel.add(baseFileNameText.getParent(), gbc);
-		gbc.gridy++;
-
-		rangeFusionText = gui.buildField("Range of images (ex. 3-7, 12, 18-21, etc.): ", " ");
-		inputsPanel.add(rangeFusionText.getParent(), gbc);
-		gbc.gridy++;
-
-		useHyperstack = gui.buildCheckBox( "Load images as hyperstack", true);
-		inputsPanel.add(useHyperstack.getParent(), gbc);
-		gbc.gridx++;
-
-		buttonPanel = new JPanel();
-		startButton = gui.buildButton("start");
-		startButton.addActionListener(this);
-		buttonPanel.add( startButton );
-		closeButton = gui.buildButton("close");
-		closeButton.addActionListener(this);
-		buttonPanel.add( closeButton );
-		buttonPanel.add(new JPanel());
-
-		//		JPanel optionsPanel = makeOptionsPanel(gui);
-
-
-		JPanel panel1 = new JPanel(new BorderLayout());
-		panel1.add(inputsPanel, BorderLayout.NORTH);
-		//		panel1.add(optionsPanel, BorderLayout.SOUTH);
-
-		JPanel panel2 = new JPanel(new BorderLayout());
-		panel2.add(buttonPanel, BorderLayout.SOUTH);
-
-		dialogGUI.getContentPane().add(panel1, BorderLayout.NORTH);
-		dialogGUI.getContentPane().add(panel2, BorderLayout.SOUTH);
-
-		//		tabbedPane = new JTabbedPane();
-		//		tabbedPane.setVisible(false);
-
-		JPanel leftPanel = new JPanel(new BorderLayout());
-		leftPanel.add( dialogGUI.getContentPane(), BorderLayout.NORTH );
-		//		leftPanel.add( tabbedPane, BorderLayout.SOUTH );
-
-		//		volumePanel.setVisible(false);
-		JPanel integratedPanel = new JPanel( new BorderLayout() );
-		integratedPanel.add( leftPanel, BorderLayout.WEST );
-		getContentPane().add(integratedPanel, BorderLayout.CENTER);
-
-		setLocation(0, 0);
-		pack();
-		setResizable(true);
-	}
-
-	private JCheckBox displayLabel;
-//	private JList surfaceList;
-	private void initDisplayAnnotationsPanel( )
-	{
-		
-		if ( annotationPanel == null )
-		{
-			JDialogStandalonePlugin dialogGUI = new JDialogStandalonePlugin();
-			GuiBuilder gui = new GuiBuilder(dialogGUI);
-			
-			// Scroll panel that hold the control panel layout in order to use JScrollPane
-			annotationPanel = new JPanel();
-			annotationPanel.setLayout(new BorderLayout());
-
-			JScrollPane scroller = new JScrollPane(annotationPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-			JPanel mainPanel = new JPanel(new BorderLayout());
-			JPanel labelPanel = new JPanel();
-			displayLabel = new JCheckBox("display", true);
-			displayLabel.addActionListener(this);
-			displayLabel.setActionCommand("displayLabel");
-
-			labelPanel.add( new JLabel("Annotation: " ) );
-			labelPanel.add(displayLabel);
-			
-			JButton displayAll = new JButton("Display all" );
-			displayAll.addActionListener(this);
-			displayAll.setActionCommand("displayAll");
-			labelPanel.add( displayAll );
-			
-			JButton displayNone = new JButton("Display none" );
-			displayNone.addActionListener(this);
-			displayNone.setActionCommand("displayNone");
-			labelPanel.add( displayNone );
-
-			JPanel displayOptions = new JPanel(new BorderLayout());
-			displayOptions.add( labelPanel, BorderLayout.NORTH );
-
-			// list panel for surface filenames
-			buildAnnotationTable();
-			JScrollPane kScrollPane = new JScrollPane(annotationTable);
-//			surfaceList = new JList(new DefaultListModel());
-//			surfaceList.addListSelectionListener(this);
-//			JScrollPane kScrollPane = new JScrollPane(surfaceList);
-			JPanel scrollPanel = new JPanel();
-
-			scrollPanel.setLayout(new BorderLayout());
-			scrollPanel.add(kScrollPane);
-			scrollPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-			buttonPanel = new JPanel();
-			backButton = gui.buildButton("back");
-			backButton.addActionListener(this);
-			backButton.setActionCommand("back");
-			backButton.setVisible(true);
-			backButton.setEnabled(false);
-			buttonPanel.add( backButton );
-
-			nextButton = gui.buildButton("next");
-			nextButton.addActionListener(this);
-			nextButton.setActionCommand("next");
-			nextButton.setVisible(true);
-			nextButton.setEnabled( imageIndex < (includeRange.size() - 1));
-			buttonPanel.add( nextButton );
-
-			doneButton = gui.buildButton("done");
-			doneButton.addActionListener(this);
-			doneButton.setActionCommand("done");
-			doneButton.setVisible(true);
-			doneButton.setEnabled(true);
-			buttonPanel.add( doneButton );
-
-
-			JPanel listPanel = new JPanel();
-			listPanel.setLayout(new BorderLayout());
-			listPanel.add(scrollPanel, BorderLayout.NORTH);
-			listPanel.add(displayOptions, BorderLayout.CENTER);
-			listPanel.add(buttonPanel, BorderLayout.SOUTH);
-			listPanel.setBorder(JDialogBase.buildTitledBorder("Annotation list"));
-
-			annotationPanel.add(listPanel, BorderLayout.NORTH);
-			mainPanel.add(scroller, BorderLayout.CENTER);
-			
-			triVolume.insertTab( "Track Annotation", annotationPanel );
-		}
-
-		annotationTableModel.removeTableModelListener(this);
-		int numRows = annotationTableModel.getRowCount();
-		for ( int i = numRows -1; i >= 0; i-- ) {
-			annotationTableModel.removeRow(i);
-		}		
-		int index = 0;
-		if ( savedAnnotations != null ) {
-			if ( savedAnnotations.getCurves().size() > 0 ) {
-				for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
-					VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
-					annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
-				}
-			}
-		}
-		annotationTableModel.addTableModelListener(this);
-	}
-
-	
-	private ListSelectionModel annotationList;
-	private DefaultTableModel annotationTableModel;
-	private JTable annotationTable;
-	private void buildAnnotationTable() {
-		if ( annotationTable == null )
-		{
-			annotationTableModel = new DefaultTableModel();
-			annotationTableModel.addColumn("Name");
-			annotationTableModel.addColumn("x");
-			annotationTableModel.addColumn("y");
-			annotationTableModel.addColumn("z");
-			annotationTableModel.addTableModelListener(this);
-
-			annotationTable = new JTable(annotationTableModel);
-			annotationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-			annotationTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-			annotationTable.getColumn("Name").setMinWidth(100);
-			annotationTable.getColumn("Name").setMaxWidth(100);
-			annotationList = annotationTable.getSelectionModel();
-			annotationList.addListSelectionListener(this);
-		}
-	}
-
-	/**
-	 * Saves seam cells, lattice, or annotations based on the current edit mode.
+	 * Saves annotations. Stores the annotations locally to load into the next image.
 	 */
 	private void save()
 	{				
@@ -877,6 +994,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 					VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
 					if ( !text.getVolumeVOI().GetDisplay() )
 					{
+						// If the annotation display is turned off do not save it or load into next image:
 						savedAnnotations.getCurves().remove(i);
 					}
 				}
@@ -886,12 +1004,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 	}
 
+
 	/**
-	 * Saves the annotations to the default edited file for the current image.
+	 * Saves the annotations to the default file for the current image in CSV format.
 	 */
 	private void saveAnnotations()
 	{
-		//		System.err.println("Saving annotations " );
 		if ( imageA == null )
 		{
 			return;
@@ -908,50 +1026,20 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		{
 			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
 			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
-
-//			((VOILatticeManagerInterface)triVolume.getVOIManager()).saveAnnotations(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator);
 			((VOILatticeManagerInterface)triVolume.getVOIManager()).saveAnnotationsAsCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator,
 					"tracked_annotations.csv");
-
-			// first time try opening any existing annotations from file
-//			if ( savedAnnotations.getCurves().size() > 0 )
-//			{
-//				VOIVector annotationList = new VOIVector();
-//				LatticeModel.loadAllVOIsFrom(imageA, baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator, true, annotationList, false);
-//				if ( annotationList.size() > 0 ) {
-//					savedAnnotations = annotationList.elementAt(0);		
-//					System.err.println("using annotation file " + baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator);
-//				}
-//				else
-//				{
-//					savedAnnotations = new VOI((short) 0, "annotationVOIs", VOI.ANNOTATION, -1.0f);
-//				}
-//			}
-//			else
-//			{
-//				savedAnnotations = new VOI((short) 0, "annotationVOIs", VOI.ANNOTATION, -1.0f);
-//			}
 		}
-
+		// close the worm data:
 		wormData.dispose();
 	}
+
 
 	/**
 	 * Sets the include range list of file IDs when the user presses 'start'.
 	 * @return true if there are files in the list to process.
 	 */
 	private boolean setVariables()
-	{	    
-		//		try {
-		//			threshold = -1;
-		//			if ( thresholdImageCheck.isSelected() )
-		//			{
-		//				threshold = Integer.valueOf(thresholdValue.getText().trim());
-		//			}
-		//		} catch(NumberFormatException e) {
-		//			threshold = 75;
-		//		}
-
+	{	   
 		baseFileName = baseFileNameText.getText();
 		baseFileDir = baseFileLocText.getText();
 		baseFileDir2 = baseFileLocText2.getText();
@@ -994,175 +1082,4 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 		return (includeRange != null);
 	}
-
-
-	public void algorithmPerformed(AlgorithmBase algorithm) {
-
-		triVolume.actionPerformed( new ActionEvent(this, 0, "HistoLUT") );
-		triVolume.actionPerformed( new ActionEvent(this, 0, "Opacity") );
-		triVolume.actionPerformed( new ActionEvent(this, 0, "Slices") );
-		triVolume.actionPerformed( new ActionEvent(this, 0, "VolumeRayCast") );
-		triVolume.actionPerformed( new ActionEvent(this, 0, "VOIToolbar") );
-		triVolume.hideMenus();
-
-		triVolume.getVolumeGPU().resetAxisX();
-		triVolume.getVolumeGPU().displayVolumeSlices(false);
-		triVolume.getVolumeGPU().displayVolumeRaycast(true);
-		triVolume.getVolumeGPU().displayVOIs(true);
-		triVolume.getVolumeGPU().setVolumeBlend(.8f);
-		triVolume.getVolumeGPU().setABBlend(.5f);
-
-		triVolume.getVolumeSlicesPanel().setDividerLocation( 0.75 );
-
-		annotationNames = new Vector<String>();
-
-		if ( (savedAnnotations != null) && (savedAnnotations.getCurves().size() > 0) ) {
-			for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
-				VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
-				annotationNames.add( new String(text.getText()) );
-
-				short id = (short) imageA.getVOIs().getUniqueID();
-				int colorID = 0;
-				VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
-				newTextVOI.getCurves().add(text);
-				//						System.err.println( "add annotation " + ((VOIText)annotations.getCurves().elementAt(j)).getText() );
-				((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
-			}
-		}
-		initDisplayAnnotationsPanel();
-
-		((VOILatticeManagerInterface)triVolume.getVOIManager()).editAnnotations(false);
-		((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotationListener(this);
-		
-		if ( useHyperstack.isSelected() )
-		{
-			lutStackA[imageIndex] = triVolume.getVolumeImageA().GetLUT();
-			lutStackB[imageIndex] = triVolume.getVolumeImageB().GetLUT();
-		}
-	}
-
-
-//	public void valueChanged(ListSelectionEvent e) {
-//		if ( e.getSource() == surfaceList )
-//		{
-//	        int[] selected = surfaceList.getSelectedIndices();
-//	        if ( selected != null )
-//	        {
-//	        	if ( selected.length > 0 )
-//	        	{
-//	                DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-//	                String name = (String)kList.elementAt( selected[0] );
-//
-//	                boolean isChecked = false;
-//	    			if ( triVolume != null && triVolume.getVOIManager() != null )
-//	    			{
-//	    				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-//
-//	    				if ( annotations != null ) {
-//	    					if ( annotations.getCurves().size() > 0 ) {
-//	    						for ( int i = 0; i < annotations.getCurves().size(); i++ )
-//	    						{
-//	    							VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-//	    							if ( text.getText().equals(name) ) {
-//	    								isChecked = text.getVolumeVOI().GetDisplay();
-//	    								break;
-//	    							}
-//	    						}
-//	    					}
-//	    				}
-//	    			}
-//	    			
-//	        		displayLabel.setSelected(isChecked);
-//	        	}
-//	        }
-//		}
-//	}
-
-
-	public void annotationChanged() {
-
-		if ( triVolume != null && triVolume.getVOIManager() != null )
-		{
-			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-			annotationTableModel.removeTableModelListener(this);
-			int numRows = annotationTableModel.getRowCount();
-			for ( int i = numRows -1; i >= 0; i-- ) {
-				annotationTableModel.removeRow(i);
-			}		
-			if ( annotations != null ) {
-				if ( annotations.getCurves().size() > 0 ) {
-					for ( int i = 0; i < annotations.getCurves().size(); i++ ) {
-						VOIText text = (VOIText) annotations.getCurves().elementAt(i);
-						annotationTableModel.addRow( new Object[]{text.getText(), text.elementAt(0).X, text.elementAt(0).Y, text.elementAt(0).Z } );
-					}
-				}
-			}
-			annotationTableModel.addTableModelListener(this);
-		}		
-	}
-
-
-	public void tableChanged(TableModelEvent e) {
-//		System.err.println( e.getColumn() + " " + e.getFirstRow() + " " + e.getLastRow() );
-		
-		int column = e.getColumn();
-		boolean isChecked = false;
-		if ( triVolume != null && triVolume.getVOIManager() != null )
-		{
-			int row = e.getFirstRow();
-			VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-			if ( (row >= 0) && (row < annotations.getCurves().size()) )
-			{
-				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
-				if ( column == 0 )
-				{
-					text.setText( annotationTableModel.getValueAt(row, column).toString() );
-					text.updateText();
-				}
-				else
-				{
-					float value = Float.valueOf(annotationTableModel.getValueAt(row, column).toString());
-					if ( value >= 0 ) {
-						if ( column == 1 ) {
-							text.elementAt(0).X = value;
-							text.elementAt(1).X = value;
-						}
-						else if ( column == 2 ) {
-							text.elementAt(0).Y = value;
-							text.elementAt(1).Y = value;
-						}
-						else if ( column == 3 ) {
-							text.elementAt(0).Z = value;
-							text.elementAt(1).Z = value;
-						}
-					}
-//					System.err.println( text.getText() + " " + text.elementAt(0) + "  " + value);
-				}
-//				System.err.println( text.getText() + " " + text.elementAt(0));
-				text.update();
-				isChecked = text.getVolumeVOI().GetDisplay();
-			}
-		}
-		displayLabel.setSelected(isChecked);
-	}
-
-
-	public void valueChanged(ListSelectionEvent e) {
-		if ( e.getSource() == annotationList && e.getValueIsAdjusting() )
-			return;
-		
-		VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
-
-		int row = annotationTable.getSelectedRow();
-		boolean isChecked = false;
-		if ( (annotations != null) && (row >= 0) ) {
-			if ( row < annotations.getCurves().size() ) {
-				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
-				isChecked = text.getVolumeVOI().GetDisplay();
-			}
-		}
-		displayLabel.setSelected(isChecked);
-	}
-
-
 }
