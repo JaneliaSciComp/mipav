@@ -1,7 +1,5 @@
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 
-import gov.nih.mipav.model.file.*;
-
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.dialogs.JDialogBase;
@@ -31,10 +29,11 @@ import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 
 public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, ChangeListener, TreeSelectionListener, MouseListener,
-        PreviewImageContainer, WindowListener, FocusListener {
+        WindowListener, FocusListener {
     private static final long serialVersionUID = -5516621806537554154L;
 
-    private final Font serif12 = MipavUtil.font12, serif12B = MipavUtil.font12B;
+    private final Font serif12  = new Font("Serif", Font.PLAIN, 12);
+    private final Font serif12B = new Font("Serif", Font.BOLD, 12);
 
     private WidgetFactory.ScrollTextArea logOutputArea;
 
@@ -127,7 +126,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     private final ArrayList<String> tempDirs = new ArrayList<String>();
 
-    private boolean isFinished = false;
+    //private boolean isFinished = false;
 
     private static final String svnVersion 		= "$Rev: 15178 $";
     private static final String svnLastUpdate 	= "$Date: 2017-10-10 14:17:11 -0400 (Tue, 10 Oct 2017) $";
@@ -202,10 +201,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         readConfig();
 
         init();
-        
         setVisible(true);
+        
         validate();
-
+        
         final int response = JOptionPane.showConfirmDialog(this, PlugInDialogBRICS_Mapper .PRIVACY_NOTICE, "Data Mapping Tool",
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
@@ -225,6 +224,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     @Override
     public void actionPerformed(final ActionEvent e) {
+    	
         final String command = e.getActionCommand();
 
         if (command.equalsIgnoreCase("SelectStruct")) {
@@ -256,7 +256,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         } else if (command.equalsIgnoreCase("Finish")) {
 
-            if (isFinished && fileWriterWorkerThread != null && fileWriterWorkerThread.isDone()) {
+            if (fileWriterWorkerThread != null && fileWriterWorkerThread.isDone()) {
                 dispose();
                 if (JDialogStandalonePlugin.isExitRequired()) {
                     System.gc();
@@ -278,10 +278,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                     @Override
                     public void done() {
-                        if (isFinished) {
+                        //if (isFinished) {
                             finishButton.setText("Close");
                             finishButton.setEnabled(true);
-                        }
+                        //}
                     }
                 };
             }
@@ -350,7 +350,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * called after validation is done
      */
     public void complete(final FormStructureData fsData, final boolean isComplete) {
-        String value = "";
+        String value = "true";
         
     }
 
@@ -435,7 +435,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         validate();
         this.setMinimumSize(this.getSize());
         this.setResizable(true);
-        MipavUtil.centerOnScreen(this);
+        centerOnScreen(this);
     }
 
     
@@ -470,9 +470,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         editDataElementsButton.addActionListener(this);
         editDataElementsButton.setActionCommand("EditDataElements");
 
-        //selectStructButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        finishButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        editDataElementsButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        //selectStructButton.setPreferredSize(defaultButtonSize);
+        finishButton.setPreferredSize(defaultButtonSize);
+        editDataElementsButton.setPreferredSize(defaultButtonSize);
 
         selectStructButton.setEnabled(false);
         loadCSVButton.setEnabled(false);
@@ -637,13 +637,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         outputDirTextField.setToolTipText(outputDirBase);
         outputDirTextField.setText(outputDirBase);
         outputDirButton = WidgetFactory.buildTextButton("Browse", "Choose Output Directory for mapping result files", "OutputDirBrowse", this);
-        outputDirButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        outputDirButton.setPreferredSize(defaultButtonSize);
         
         saveMapButton = new JButton("Save");
         saveMapButton.setToolTipText("Save Mapping File (Source DEs to BRICS DEs");
         saveMapButton.addActionListener(this);
         saveMapButton.setActionCommand("SaveMapFile");
-        saveMapButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        saveMapButton.setPreferredSize(defaultButtonSize);
         saveMapButton.setEnabled(false);
 
         outputDirPanel.add(outputDirLabel);
@@ -743,11 +743,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         logOutputArea.getTextArea().append(line + "\n");
     }
 
-
-    @Override
-    public Dimension getPanelSize() {
-        return null;
-    }
     
     @Override
     public void valueChanged(final TreeSelectionEvent e) {
@@ -772,11 +767,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             
 
             if (e.getClickCount() == 2) {
-                if ( !isFinished) {
+                //if ( !isFinished) {
                     final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
                     //new InfoDialog(this, dsName, true, true, null);
                     showCDE(null);
-                }
+                //}
             }
         }
     }
@@ -1035,7 +1030,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             // make sure we found a structure for imaging
             if (shortNameAL.size() == 0) {
-                MipavUtil.displayWarning("No structures were found in the data dictionary.");
+                displayWarning("No structures were found in the data dictionary.");
                 return;
             }
 
@@ -1100,8 +1095,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             final JButton OKButton = new JButton("Select");
             OKButton.setActionCommand("ChooseStructOK");
             OKButton.addActionListener(this);
-            OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
-            OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            OKButton.setMinimumSize(defaultButtonSize);
+            OKButton.setPreferredSize(defaultButtonSize);
             OKButton.setFont(serif12B);
             OKPanel.add(OKButton);
 
@@ -1112,10 +1107,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             this.setMinimumSize(this.getSize());
             this.setSize(new Dimension(owner.getSize().width, this.getSize().height));
-            MipavUtil.centerInWindow(owner, this);
+            centerInWindow(owner, this);
 
             setVisible(true);
-
         }
 
         /**
@@ -1169,7 +1163,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             formStructure = thread.getFullFormStructure();
  
             if (formStructure == null) {
-                MipavUtil.displayError("Form structure not found in Data Dictionary: " + fsName);
+                displayError("Form structure not found in Data Dictionary: " + fsName);
                 dispose();
                 return;
             }
@@ -1311,7 +1305,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             this.owner = owner;
             this.dataElements = dataElements;
             if (dataElements == null) {
-                MipavUtil.displayError("Source data elements vector is empty");
+                displayError("Source data elements vector is empty");
                 dispose();
                 return;
             }
@@ -1346,8 +1340,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             final JButton cancelButton = new JButton("Cancel");
             cancelButton.setActionCommand("srcDECancel");
             cancelButton.addActionListener(this);
-            cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
-            cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+            cancelButton.setMinimumSize(defaultButtonSize);
+            cancelButton.setPreferredSize(defaultButtonSize);
             cancelButton.setFont(serif12B);
 
             OKPanel.add(cancelButton);
@@ -1375,7 +1369,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             buildCSVPanel().setPreferredSize(dim);
 
             pack();
-            MipavUtil.centerInWindow(owner, this);
+            centerInWindow(owner, this);
            
             setVisible(true);
 
@@ -1626,7 +1620,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 if (progressBar != null) {
                     progressBar.setVisible(false);
                     progressBar.dispose();
-                    MipavUtil.displayError("Error in connecting to web service");
+                    displayError("Error in connecting to web service");
                     parent.dispose();
                     if (JDialogStandalonePlugin.isExitRequired()) {
                         System.gc();
@@ -1731,7 +1725,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 if (progressBar != null) {
                     progressBar.setVisible(false);
                     progressBar.dispose();
-                    MipavUtil.displayError("Error in connecting to web service");
+                    displayError("Error in connecting to web service");
                     parent.dispose();
                     if (JDialogStandalonePlugin.isExitRequired()) {
                         System.gc();
@@ -1776,11 +1770,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             Desktop.getDesktop().browse(ddtURI);
         } catch (final URISyntaxException e) {
             e.printStackTrace();
-            MipavUtil.displayError("Unable to display Data Dictionary page : " + ddtPage);
+            displayError("Unable to display Data Dictionary page : " + ddtPage);
             return;
         } catch (final IOException e) {
             e.printStackTrace();
-            MipavUtil.displayError("Unable to display Data Dictionary page : " + ddtPage);
+            displayError("Unable to display Data Dictionary page : " + ddtPage);
             return;
         }
     }
@@ -2037,6 +2031,99 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
     }
 
+    
+    /** The default size that all buttons should be. */
+    private static final Dimension defaultButtonSize = new Dimension(90, 30);
+    
+    /**
+     * Sets the location of the window to the center of the screen.
+     * 
+     * @param window Window that is to be displayed
+     */
+    private static void centerOnScreen(final Window window) {
+        final Toolkit toolkit = Toolkit.getDefaultToolkit();
+
+        final Dimension screenSize = toolkit.getScreenSize();
+
+        int x_location = 0;
+        int y_location = 0;
+
+        if (screenSize.getSize().width > window.getSize().width) {
+            x_location = (screenSize.width / 2) - (window.getSize().width / 2);
+        }
+
+        if (screenSize.getSize().height > window.getSize().height) {
+            y_location = (screenSize.height / 2) - (window.getSize().height / 2);
+        }
+
+        window.setLocation(x_location, y_location);
+    }
+    
+    
+    /**
+     * Sets the location of the window to the center of the parent window.
+     * 
+     * @param parentWindow the window where the child will be centered on.
+     * @param childWindow the window that is to be displayed centered on the parent window
+     */
+    private static void centerInWindow(final Window parentWindow, final Window childWindow) {
+        final Point parentTopLeftPoint = parentWindow.getLocationOnScreen();
+        final Dimension parentSize = parentWindow.getSize();
+
+        childWindow.setLocation( (parentTopLeftPoint.x + (parentSize.width / 2)) - (childWindow.getSize().width / 2),
+                (parentTopLeftPoint.y + (parentSize.height / 2)) - (childWindow.getSize().height / 2));
+    }
+    
+    /**
+     * Pops up a message dialog to display an error.
+     * 
+     * <p>
+     * Use when an operation has failed, preventing some operation critical for the Mapper to continue running normally or an
+     * operation can neither be completed nor its errors accommodated.
+     * </p>
+     * 
+     * @param error the message text of the error
+     * 
+     */
+    private static void displayError(final String error) {
+        if ( !GraphicsEnvironment.isHeadless()) {
+    
+            try {
+                JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (final Exception ex) {
+                System.err.println("Exception ocurred: <" + ex.getMessage() + ">.  \n");
+            }
+            
+        } else {
+            System.err.println("Error: " + error);
+            System.exit(1);
+        }
+        
+    }
+    
+    /**
+     * Pops up a message dialog to display a warning.
+     * 
+     * <p>
+     * Use when an operation has failed, but the can be completed but the output may display inaccurately; i.e., errors
+     * can be accommodated.
+     * </p>
+     * 
+     * @param warning the message text of the warning.
+     */
+    private static void displayWarning(final String warning) {
+        if ( !GraphicsEnvironment.isHeadless()) {
+            
+                try {
+                    JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
+                } catch (final Exception ex) {
+                    System.err.println("Exception ocurred: <" + ex.getMessage() + ">.  \n");
+                }
+            
+        } else {
+            System.err.println("Warning: " + warning);
+        }
+    }
     
 
 }
