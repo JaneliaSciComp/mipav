@@ -84,6 +84,8 @@ public class DoublyConnectedSC extends AlgorithmBase {
 	private int NPTQ;
 	// 1 for solving the nonlinear system, 2 for not solving the nonlinear system
 	private int ISOLV;
+	// Inverse points
+	private double INVERSE_POINTS[][] = null; ;
 	private boolean testRoutine = false;
 	private double MACHEP = 2.2204460E-16;
 	
@@ -91,15 +93,17 @@ public class DoublyConnectedSC extends AlgorithmBase {
 		
 	}
 	
-	public DoublyConnectedSC(int IPOLY, int NPTQ, int ISOLV, int ISPRT) {
+	public DoublyConnectedSC(int IPOLY, int NPTQ, int ISOLV, int ISPRT, double INVERSE_POINTS[][]) {
 		this.IPOLY = IPOLY;
 		this.NPTQ = NPTQ;
 		this.ISOLV = ISOLV;
 		this.ISPRT = ISPRT;
+		this.INVERSE_POINTS = INVERSE_POINTS;
 		testRoutine = true;
 	}
 	
 	public void runAlgorithm() {
+		int I;
 		int M[] = new int[1];
 		int N[] = new int[1];
 		double Z0[][] = new double[30][2];
@@ -117,6 +121,9 @@ public class DoublyConnectedSC extends AlgorithmBase {
 		double W1[][] = new double[30][2];
 		double PHI0[] = new double[30];
 		double PHI1[] = new double[30];
+		double ZZ[] = new double[2];
+		double EPS;
+		double WW[];
 		
 double neweps;
 		
@@ -166,6 +173,24 @@ double neweps;
 				DSCSOLV(TOL, IGUESS, M[0], N[0], U, C, W0, W1, PHI0, PHI1,
 						Z0, Z1, ALFA0, ALFA1, NPTQ, QWORK, ISHAPE, LINEARC);
 			}
+			
+			// Output will be arranged in DSCSOLV
+			
+			// Compute data for theta-function and test the accuracy
+			THDATA(U);
+		    DSCTEST(M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,NPTQ,QWORK);
+		    
+            // Test inverse evaluations
+		    if ((INVERSE_POINTS != null) && (INVERSE_POINTS.length != 0)) {
+		        for (I = 0; I < INVERSE_POINTS.length; I++) {
+		            ZZ[0] = INVERSE_POINTS[I][0];	
+		            ZZ[1] = INVERSE_POINTS[I][1];
+		            EPS = 1.0E-6;
+		            WW = WDSC(ZZ,M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,
+		            	                  NPTQ,QWORK,EPS,1);
+
+		        } // for (I = 0; I < INVERSE_POINTS.length; I++)
+		    } // if ((INVERSE_POINTS != null) && (INVERSE_POINTS.length != 0))
 		} // if (testRoutine)
 		
 		
@@ -247,6 +272,11 @@ double neweps;
             ALFA0[9] = 1.39199980651013222;
             ALFA0[10] = 0.819604487273064009;
             ALFA0[11] = 0.295854728586457991;
+            INVERSE_POINTS = new double[1][2];
+            INVERSE_POINTS[0][0] = 0.5;
+            INVERSE_POINTS[0][1] = 0.5;
+            // Gives:
+            // THE PREIMAGE OF ZZ=          (-0.623005768209842,0.782172159414472)
 		} // else if (IPOLY == 2)
 		else if (IPOLY == 3) {
 			M[0] = 11;
@@ -1495,7 +1525,189 @@ double neweps;
         for (I = 0; I < NM; I++) {
         	QW[I+903] = QTF[I];
         }
+        
+        //  CHECK ERROR INFORMATION. THE DESCRIPTION OF INFO CAN BE
+        //  FOUND IN THE DOCUMENTATION OF HYBRD.(INFO=1: SUCCESSFUL EXIT)
+        if (INFO[0] == 0) {
+        	System.out.println("INFO[0] == 0, IMPROPER INPUT PARAMETERS.");
+        }
+        else if (INFO[0] == 1) {
+        	System.out.println("INFO[0] == 1, SUCESSFUL EXIT");
+        	System.out.println("RELATIVE ERROR BETWEEN TWO CONSECUTIVE ITERATES IS AT MOST XTOL.");
+        }
+        else if (INFO[0] == 2) {
+        	System.out.println("INFO[0] == 2, UNSUCESSFUL EXIT");
+        	System.out.println("NUMBER OF CALLS TO FCN HAS REACHED OR EXCEEDED MAXFEV");
+        }
+        else if (INFO[0] == 3) {
+        	System.out.println("INFO[0] == 3, UNSUCESSFUL EXIT");
+        	System.out.println("XTOL IS TOO SMALL. NO FURTHER IMPROVEMENT IN THE APPROXIMATE SOLUTION X IS POSSIBLE.");
+        }
+        else if (INFO[0] == 4) {
+        	System.out.println("INFO[0] == 4, UNSUCESSFUL EXIT");
+        	System.out.println("ITERATION IS NOT MAKING GOOD PROGRESS, ");
+        	System.out.println("AS MEASURED BY THE IMPROVEMENT FROM THE LAST FIVE JACOBIAN EVALUATIONS.");
+        }
+        else if (INFO[0] == 5) {
+        	System.out.println("INFO[0] == 5, UNSUCESSFUL EXIT");
+        	System.out.println("ITERATION IS NOT MAKING GOOD PROGRESS, ");
+            System.out.println("AS MEASURED BY THE IMPROVEMENT FROM THE LAST TEN ITERATIONS.");
+        }
+        	
+        // COPY OUTPUT DATA FROM COMMON BLOCK AND PRINT THE RESULTS:
+        XWTRAN(M,N,X,U,C,W0,W1,PHI0,PHI1);
+        DSCPRINT(M,N,C,U[0],W0,W1,PHI0,PHI1,TOL,NPTQ);
+        return;
+
 	}
+	
+	private double[] WDSC(double ZZ[], int M,int N, double U, double C[], double W0[][], double W1[][],
+			double Z0[][], double Z1[][], double ALFA0[], double ALFA1[], double PHI0[], double PHI1[],
+			int NPTQ, double QWORK[], double EPS,int IOPT) {
+        //    ----------------------------------------------------
+		// COMPUTES THE INVERSE MAP AFTER  ALL ACCESSARY PARAMETERS HAVE
+		// BEEN DETERMINED.EULER'S SCHEME FOR SOLVING ODE IS USED TO GIVE
+	    // THE INITIAL GUESS WHICH IS THEN REFINED BY NEWTON'S ITERATION.
+		// ZZ IS THE POINT AT WHICH INVERSE MAP IS EVALUATED. EPS IS THE
+		// REQUIRED ACCURACY SUPPLIED BY THE USER.
+		// NOTE: ZZ IS NOT ALLOWED TO BE A VERTEX!
+		
+		
+		// IF THE INVERSE EVALUATION IS NOT SUCCESSFUL, THE NAME OF THE
+		// FUNCTION, WDSC, WILL BE ASSIGNED WITH:
+		//      .. Scalar Arguments ..
+		// DOUBLE COMPLEX C,ZZ
+		// DOUBLE PRECISION EPS,U
+		// INTEGER IOPT,M,N,NPTQ
+	
+		// .. Array Arguments ..
+		// DOUBLE COMPLEX W0(M),W1(N),Z0(M),Z1(N)
+		// DOUBLE PRECISION ALFA0(M),ALFA1(N),PHI0(M),PHI1(N),
+		//                  QWORK(NPTQ* (2* (M+N)+3))
+		
+		// .. Scalars in Common ..
+		// DOUBLE PRECISION DLAM
+		// INTEGER IU
+		
+		// .. Arrays in Common ..
+		// DOUBLE PRECISION UARY(8),VARY(3)
+	
+		// .. Local Scalars ..
+		double result[] = new double[2];
+		double WFN[] = new double[2];
+		double WI[] = new double[2];
+		double ZS[] = new double[2];
+		double ZZ1[] = new double[2];
+		// DOUBLE COMPLEX WFN,WI,ZS,ZZ1
+		int INZ[] = new int[1];
+		int KNZ[] = new int[1];
+		int I,IT,K;
+	
+		// .. Local Arrays ..
+		double ZS0[][] = new double[50][2];
+		double ZS1[][] = new double[50][2];
+		// DOUBLE COMPLEX ZS0(50),ZS1(50)
+		
+		//     .. External Functions ..
+		//      DOUBLE COMPLEX WPROD,ZDSC
+		//      EXTERNAL WPROD,ZDSC
+	
+		//     .. External Subroutines ..
+		//      EXTERNAL NEARZ
+		
+		//     .. Common blocks ..
+		//      COMMON /PARAM4/UARY,VARY,DLAM,IU
+		
+		result[0] = 0.0;
+		result[1] = 0.0;
+		
+		//  1.FORM WORK ARRAYS:
+		/*for (I = 0; I < M; I++) {
+		    ZS0[I][0] = Z0[I][0];
+		    ZS0[I][1] = Z0[I][1];
+		} // for (I = 0; I < M; I++)
+		for (I = 0; I < N; I++) {
+		    ZS1[I][0] = Z1[I][0];
+		    ZS1[I][1] = Z1[I][1];
+		} // for (I = 0; I < N; I++)
+		
+		// 2.GENERATE THE INITIAL VALUE FOR SOLVING ODE:
+		while (true) {
+		    NEARZ(M,N,ZS0,ZS1,ALFA0,ZZ,KNZ,INZ);
+		    if (INZ[0] == 2) {
+		        System.err.println("THE INVERSE EVALUATION FAILED");	
+		        System.err.println("AT POINT Z = (" + ZZ[0] + ", " + ZZ[1] + ")");
+		        System.err.println("THE DESIGNED INVERSION PROCEDURE EXPERIENCED");
+		        System.err.println("SOME ESSENTIAL DIFFICULATIES");
+		        return result;
+		    } // if (INZ[0] == 2)
+		    if (INZ[0] == 0) {
+		        if (KNZ[0] >= 2) {
+		            WI[0] = (W0[KNZ[0]-1][0]+W0[KNZ[0]-2][0])/2.0;
+		            WI[1] = (W0[KNZ[0]-1][1]+W0[KNZ[0]-2][1])/2.0;
+		        }
+		        else {
+		              WI[0] = (W0[KNZ[0]-1][0]+W0[M-1][0]))/2.0
+                      WI[1] = (W0[KNZ[0]-1][1]+W0[M-1][1]))/2.0
+		        }
+
+		    } // if (INZ[0] == 0)
+		    else {
+		          IF (KNZ.GE.2) THEN
+		              WI = (W1(KNZ)+W1(KNZ-1))/2.D0
+
+		          ELSE
+		              WI = (W0(KNZ)+W1(N))/2.D0
+		          END IF
+
+		          WI = U*WI/ABS(WI)
+		    } //else
+
+		      ZS = ZDSC(WI,0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,NPTQ,
+		     +     QWORK,1)
+		C
+		C  3.SOLVE ODE INITIAL VALUE PROBLEM (ALONG LINE SEGMENT FROM
+		C    ZS TO ZZ) BY EULER'S SCHEME TO GENERATE THE INITIAL GUESS:
+		      DO 40 K = 1,20
+		          WI = WI + (ZZ-ZS)/ (20.D0*C*WPROD(WI,M,N,U,W0,W1,ALFA0,ALFA1))
+		   40 CONTINUE
+		      IF (ABS(WI).GT.1.D0) WI = WI/ (ABS(WI)+ABS(1.D0-ABS(WI)))
+		      IF (ABS(WI).LT.U) WI = U*WI* (ABS(WI)+ABS(U-ABS(WI)))/ABS(WI)
+		C
+		C  4.REFINE THE SOLUTION BY NEWTON'S ITERATION:
+		      DO 50 IT = 1,15
+		          WFN = ZZ - ZDSC(WI,0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+		     +          PHI1,NPTQ,QWORK,IOPT)
+		          WI = WI + WFN/ (C*WPROD(WI,M,N,U,W0,W1,ALFA0,ALFA1))
+		          IF (ABS(WI).GT.1.D0) WI = WI/ (ABS(WI)+ABS(1.D0-ABS(WI)))
+		          IF (ABS(WI).LT.U) WI = U*WI* (ABS(WI)+ABS(U-ABS(WI)))/ABS(WI)
+		          IF (ABS(WFN).LT.EPS) GO TO 60
+		   50 CONTINUE
+		C
+		C  THE ITERATION FAILED TO MEET THE TOLERANCE IN 15 ITERATIONS.
+		C  TRY A DIFFERENT VERTEX AS A REFERENCE POINT:
+		      ZZ1 = (1.D0,1.D0) + ZZ
+		      GO TO 70
+
+		   60 WDSC = WI
+		C
+		C  5.VERIFICATION:
+		      ZZ1 = ZDSC(WI,0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,NPTQ,
+		     +      QWORK,1)
+		   70 IF (ABS(WI).GE.U .AND. ABS(WI).LE.1.D0 .AND.
+		     +    ABS(ZZ-ZZ1).LE.1.D-3) GO TO 90
+		      IF (INZ.EQ.0) THEN
+		          ZS0(KNZ) = ZZ
+
+		      ELSE
+		          ZS1(KNZ) = ZZ
+		      END IF
+
+		} // while (true)*/
+
+		return result;
+	}
+
 
 	
 	private void ANGLES(int MN, double Z01[][], double ALFA01[], int I01) {
@@ -1529,6 +1741,57 @@ double neweps;
 		} // if (I01 == 1)
 		return;
 	}
+	
+	private void NEARZ(int M,int N, double Z0[][], double Z1[][],
+			double ALFA0[], double Z[], int KNZ[],int INZ[]) {
+	    //   --------------------------------------------------
+	    // GIVEN PT Z, THIS ROUTINE DETERMINES THE NEAREST VERTEX TO
+	    // THE PT Z.ON RETURN INTEGER'INZ'INDICATES THAT THE NEAREST
+	    // PT IS FOUND  EITHER IN Z0 (INZ=0 ) OR IN Z1 ( INZ=1). KNZ
+	    // CONTAINS THE CORRESPONDING INDEX IN Z0 OR 1N Z1.
+	    // (IF ON RETURN INZ=2, THAT MEANS NO APPROPRIATE VERTEX IS
+	    // FOUND, WHICH IS A DEVICE USED FOR INVERSE MAPPING ROUTINE.
+	    // NOTE: THE VERTICES CORRESPONDING TO INFINITE VERTICES
+        //       WILL BE SKIPPED (OUTER POLYGON ONLY).
+	    // SEE ROUTINE DSCSOLV FOR THE REST OF CALLING SEQUENCE.
+	
+	
+	    // .. Scalar Arguments ..
+	    // DOUBLE COMPLEX Z
+	    // INTEGER INZ,KNZ,M,N
+	
+	    // .. Array Arguments ..
+	    // DOUBLE COMPLEX Z0(M),Z1(N)
+	    // DOUBLE PRECISION ALFA0(M)
+	
+	    // .. Local Scalars ..
+	    double D,DIST;
+	    int I;
+	
+	    INZ[0] = 2;
+	    DIST = 99.0;
+	    for (I = 1; I <= M; I++) {
+	        D = scm.zabs(Z[0]-Z0[I-1][0],Z[1]-Z0[I-1][1]);
+	        if (D <= 1.0E-11 || D >= DIST ||
+	             ALFA0[I-1] <= 0.0) {
+	        	continue;
+	        }
+	        KNZ[0] = I;
+	        DIST = D;
+	        INZ[0] = 0;
+	    } // for (I = 1; I <= M; I++)
+	    for (I = 1; I <= N; I++) {
+	          D = scm.zabs(Z[0]-Z1[I-1][0],Z[1]-Z1[I-1][1]);
+	          if (D <= 1.0E-11 || D >= DIST) {
+	        	  continue;
+	          }
+	          DIST = D;
+	          KNZ[0] = I;
+	          INZ[0] = 1;
+	    } // for (I = 1; I <= N; I++)
+	    return;
+	}
+
 	
 	private double DIST(int M,int N, double W0[][], double W1[][],
 			double W[], int KWA, int IC) {
@@ -1648,6 +1911,131 @@ double neweps;
 		System.out.println("Inputs have been checked with no error being found");
 		return;
 	}
+	
+	private void DSCPRINT(int M,int N, double C[], double U, double W0[][], double W1[][],
+			double PHI0[], double PHI1[], double TOL, int NPTQ) {
+	    // ---------------------------------------------------------
+	    // PRINTS THE COMPUTED SC-PARAMETERS AND SOME
+        // OTHER CONTROLING PARAMETERS FOR REFERENCE:
+	
+	
+	  // OPEN FILE DSCPACK FOR OUTPUT:
+	  //     .. Scalar Arguments ..
+	  // DOUBLE COMPLEX C
+	  // DOUBLE PRECISION TOL,U
+	  // INTEGER M,N,NPTQ
+	
+	  // .. Array Arguments ..
+	  // DOUBLE COMPLEX W0(M),W1(N)
+	  // DOUBLE PRECISION PHI0(M),PHI1(N)
+	
+	  //.. Local Scalars ..
+	  int K;
+	
+	 System.out.println(" PARAMETERS DEFINING MAP:   (M = "+M+")   (N = "+N+")   (NPTQ = "+NPTQ+")   (TOL = "+TOL+")");
+	 System.out.println(" U = " + U);
+	 System.out.println(" C = (" + C[0] + ", " + C[1] + ")");
+     for (K = 0; K < M; K++) {
+    	 System.out.println("W0["+K+"] = (" + W0[K][0] + ", " + W0[K][1] + "   PHI0["+K+"] = " + PHI0[K]);
+     }
+     for (K = 0; K < N; K++) {
+    	 System.out.println("W1["+K+"] = (" + W1[K][0] + ", " + W1[K][1] + "   PHI1["+K+"] = " + PHI1[K]);
+     }
+	     
+	 return;
+	
+	}
+	
+	private void DSCTEST(int M,int N, double U, double C[], double W0[][], double W1[][],
+			double Z0[][], double Z1[][], double ALFA0[], double ALFA1[], int NPTQ, double QWORK[]) {
+	    //   ----------------------------------------------------------------
+	    // TESTS THE COMPUTED PARAMETERS FOR ACCURACY BY COMPUTING VERTICES
+	    // Z0(K) NUMERICALLY AND COMPARING WITH THE EXACT ONES. ON OUTPUT,
+	    // THE MAXIMUM AND MINIMUM ERRORS ACHIEVED WILL BE GIVEN TOGETHER
+	    // WITH THE CORRESPONDING INDICES KMAX AND KMIN RESPECTIVELY. SEE
+	    // ROUTINE DSCSOLV FOR THE CALLING SEQUENCE.
+	
+	
+	    // .. Scalar Arguments ..
+	    // DOUBLE COMPLEX C
+	    // DOUBLE PRECISION U
+	    // INTEGER M,N,NPTQ
+	
+	    // .. Array Arguments ..
+	    // DOUBLE COMPLEX W0(M),W1(N),Z0(M),Z1(N)
+	    // DOUBLE PRECISION ALFA0(M),ALFA1(N),QWORK(NPTQ* (2* (M+N)+3))
+	
+	    // .. Scalars in Common ..
+	    // DOUBLE PRECISION DLAM
+	    // INTEGER IU
+	
+	    // .. Arrays in Common ..
+	    // DOUBLE PRECISION UARY(8),VARY(3)
+	
+	    // .. Local Scalars ..
+		double WA[] = new double[2];
+		double ZC[] = new double[2];
+		double ZTEST[] = new double[2];
+		double wout[];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+	    // DOUBLE COMPLEX WA,ZC,ZTEST
+	    double D,D1,DIST,ERRMAX,ERRMIN;
+	    int I,K;
+	    int KMAX = -1;
+	    int KMIN = -1;
+	    int KWA = 0;
+	
+	    // .. External Functions ..
+	    // DOUBLE COMPLEX WQUAD
+	    // EXTERNAL WQUAD
+	
+	    // .. Common blocks ..
+	    // COMMON /PARAM4/UARY,VARY,DLAM,IU
+	
+	    ERRMAX = 0.0;
+	    ERRMIN = 99.0;
+	    for (K = 0; K < M - 1; K++) {
+	        if (ALFA0[K] <= 0.0) {
+	        	continue;
+	        }
+	        DIST = 2.0;
+	        for (I = 0; I < N; I++) {
+	            D = scm.zabs(W0[K][0]-W1[I][0], W0[K][1]-W1[I][1]);
+	            if (D >= DIST) {
+	            	continue;
+	            }
+	            DIST = D;
+	            WA[0] = W1[I][0];
+	            WA[1] = W1[I][1];
+	            KWA = I;
+	            ZC[0] = Z1[I][0];
+	            ZC[1] = Z1[I][1];
+	        } // for (I = 0; I < N; I++)
+	        wout = WQUAD(WA,0.0,KWA,1,W0[K],0.0,K,0,0.0,M,N,U,
+	       	                 W0,W1,ALFA0,ALFA1,NPTQ,QWORK,0,1);
+	        scm.zmlt(C[0], C[1], wout[0], wout[1], cr, ci);
+	        ZTEST[0] = ZC[0] + cr[0];
+	        ZTEST[1] = ZC[1] + ci[0];
+	        D1 = scm.zabs(Z0[K][0]-ZTEST[0],Z0[K][1]-ZTEST[1]);
+	        if (D1 > ERRMAX) {
+	            ERRMAX = D1;
+	            KMAX = K;
+	        } // if (D1 > ERRMAX)
+
+	        if (D1 < ERRMIN) {
+	            ERRMIN = D1;
+	            KMIN = K;
+	        } // if (D1 < ERRMIN)
+
+	    } // for (K = 0; K < M - 1; K++)
+	    System.out.println("ACCURACY TEST: ");
+	    System.out.println("MAXIMUM ERROR = " + ERRMAX + " ACHIEVED AT KMAX = " + KMAX);
+	    System.out.println("MINIMUM ERROR = " + ERRMIN + " ACHIEVED AT KMIN = " + KMIN);
+	    return;
+    }
+
+
 	
 	private void HYBRD(int FCN,int N, double X[], double FVEC[], double XTOL, int MAXFEV,
 			int ML, int MU, double EPSFCN, double DIAG[], int MODE,
@@ -1823,11 +2211,15 @@ double neweps;
 		//     ..
 		//     .. Local Scalars ..
 		      double ACTRED,EPSMCH,FNORM,FNORM1,ONE,P0001,P001,
-		                      P1,P5,PNORM,PRERED,RATIO,SUM,TEMP,XNORM,ZERO;
+		                      P1,P5,PNORM,PRERED,RATIO,SUM,TEMP,ZERO;
 		      double DELTA = 0.0;
+		      double XNORM = 0.0;
+		      double ratio;
+		      double A[][];
 		      int IFLAG[] = new int[1];
 		      int I,ITER,J,JM1,L,MSUM,NCFAIL,NCSUC,NSLOW1,NSLOW2;
-		      boolean JEVAL,SING;
+		      boolean JEVAL;
+		      boolean SING[] = new boolean[1];
 		//     ..
 	    //     .. Local Arrays ..
 		      int IWA[] = new int[1];
@@ -1985,7 +2377,7 @@ double neweps;
 		
 		    // COPY THE TRIANGULAR FACTOR OF THE QR FACTORIZATION INTO R.
 		
-		      SING = false;
+		      SING[0] = false;
 		      for (J = 1; J <= N; J++) {
 		          L = J;
 		          JM1 = J - 1;
@@ -1997,7 +2389,7 @@ double neweps;
 		          } // if (JM1 >= 1) 
 		          R[L-1] = WA1[J-1];
 		          if (WA1[J-1] == ZERO) {
-		        	  SING = true;
+		        	  SING[0] = true;
 		          }
 		      } // for (J = 1; J <= N; J++)
 		
@@ -2065,107 +2457,149 @@ double neweps;
 		         // COMPUTE THE SCALED ACTUAL REDUCTION.
 		
 		         ACTRED = -ONE;
-		      /*IF (FNORM1.LT.FNORM) ACTRED = ONE - (FNORM1/FNORM)**2
-		C
-		C           COMPUTE THE SCALED PREDICTED REDUCTION.
-		C
-		      L = 1
-		      DO 220 I = 1,N
-		          SUM = ZERO
-		          DO 210 J = I,N
-		              SUM = SUM + R(L)*WA1(J)
-		              L = L + 1
-		  210     CONTINUE
-		          WA3(I) = QTF(I) + SUM
-		  220 CONTINUE
-		      TEMP = ENORM(N,WA3)
-		      PRERED = ZERO
-		      IF (TEMP.LT.FNORM) PRERED = ONE - (TEMP/FNORM)**2
-		C
-		C           COMPUTE THE RATIO OF THE ACTUAL TO THE PREDICTED
-		C           REDUCTION.
-		C
-		      RATIO = ZERO
-		      IF (PRERED.GT.ZERO) RATIO = ACTRED/PRERED
-		C
-		C           UPDATE THE STEP BOUND.
-		C
-		      IF (RATIO.GE.P1) GO TO 230
-		      NCSUC = 0
-		      NCFAIL = NCFAIL + 1
-		      DELTA = P5*DELTA
-		      GO TO 240
+		        if (FNORM1 < FNORM) {
+		        	ratio = FNORM1/FNORM;
+		        	ACTRED = ONE - ratio * ratio;
+		        }
+		
+                // COMPUTE THE SCALED PREDICTED REDUCTION.
 
-		  230 CONTINUE
-		      NCFAIL = 0
-		      NCSUC = NCSUC + 1
-		      IF (RATIO.GE.P5 .OR. NCSUC.GT.1) DELTA = DMAX1(DELTA,PNORM/P5)
-		      IF (DABS(RATIO-ONE).LE.P1) DELTA = PNORM/P5
-		  240 CONTINUE
-		C
-		C           TEST FOR SUCCESSFUL ITERATION.
-		C
-		      IF (RATIO.LT.P0001) GO TO 260
-		C
-		C           SUCCESSFUL ITERATION. UPDATE X, FVEC, AND THEIR NORMS.
-		C
-		      DO 250 J = 1,N
-		          X(J) = WA2(J)
-		          WA2(J) = DIAG(J)*X(J)
-		          FVEC(J) = WA4(J)
-		  250 CONTINUE
-		      XNORM = ENORM(N,WA2)
-		      FNORM = FNORM1
-		      ITER = ITER + 1
-		  260 CONTINUE
-		C
-		C           DETERMINE THE PROGRESS OF THE ITERATION.
-		C
-		      NSLOW1 = NSLOW1 + 1
-		      IF (ACTRED.GE.P001) NSLOW1 = 0
-		      IF (JEVAL) NSLOW2 = NSLOW2 + 1
-		      IF (ACTRED.GE.P1) NSLOW2 = 0
-		C
-		C           TEST FOR CONVERGENCE.
-		C
-		      IF (DELTA.LE.XTOL*XNORM .OR. FNORM.EQ.ZERO) INFO = 1
-		      IF (INFO.NE.0) GO TO 300
-		C
-		C           TESTS FOR TERMINATION AND STRINGENT TOLERANCES.
-		C
-		      IF (NFEV.GE.MAXFEV) INFO = 2
-		      IF (P1*DMAX1(P1*DELTA,PNORM).LE.EPSMCH*XNORM) INFO = 3
-		      IF (NSLOW2.EQ.5) INFO = 4
-		      IF (NSLOW1.EQ.10) INFO = 5
-		      IF (INFO.NE.0) GO TO 300
-		C
-		C           CRITERION FOR RECALCULATING JACOBIAN APPROXIMATION
-		C           BY FORWARD DIFFERENCES.
-		C
-		      IF (NCFAIL.EQ.2) GO TO 290
-		C
-		C           CALCULATE THE RANK ONE MODIFICATION TO THE JACOBIAN
-		C           AND UPDATE QTF IF NECESSARY.
-		C
-		      DO 280 J = 1,N
-		          SUM = ZERO
-		          DO 270 I = 1,N
-		              SUM = SUM + FJAC(I,J)*WA4(I)
-		  270     CONTINUE
-		          WA2(J) = (SUM-WA3(J))/PNORM
-		          WA1(J) = DIAG(J)* ((DIAG(J)*WA1(J))/PNORM)
-		          IF (RATIO.GE.P0001) QTF(J) = SUM
-		  280 CONTINUE
-		C
-		C           COMPUTE THE QR FACTORIZATION OF THE UPDATED JACOBIAN.
-		C
-		      CALL R1UPDT(N,N,R,LR,WA1,WA2,WA3,SING)
-		      CALL R1MPYQ(N,N,FJAC,LDFJAC,WA2,WA3)
-		      CALL R1MPYQ(1,N,QTF,1,WA2,WA3)*/
+		        L = 0;
+		        for (I = 0; I < N; I++) {
+		            SUM = ZERO;
+		            for (J = I; J < N; J++) {
+		                SUM = SUM + R[L]*WA1[J];
+		                L = L + 1;
+		            } // for (J = I; J < N; J++)
+		            WA3[I] = QTF[I] + SUM;
+		        } // for (I = 0; I < N; I++)
+		        TEMP = ENORM(N,WA3);
+		        PRERED = ZERO;
+		        if (TEMP< FNORM) {
+		        	ratio = TEMP/FNORM;
+		        	PRERED = ONE - ratio * ratio;
+		        }
+		
+		        // COMPUTE THE RATIO OF THE ACTUAL TO THE PREDICTED
+		        // REDUCTION.
+		
+		        RATIO = ZERO;
+		        if (PRERED > ZERO) {
+		        	RATIO = ACTRED/PRERED;
+		        }
+		
+		        // UPDATE THE STEP BOUND.
+		
+		        if (RATIO < P1) {
+		            NCSUC = 0;
+		            NCFAIL = NCFAIL + 1;
+		            DELTA = P5*DELTA;
+		      }
+		      else {
+		            NCFAIL = 0;
+		            NCSUC = NCSUC + 1;
+		            if (RATIO >= P5 || NCSUC > 1) {
+		            	DELTA = Math.max(DELTA,PNORM/P5);
+		            }
+		            if (Math.abs(RATIO-ONE) <= P1) {
+		            	DELTA = PNORM/P5;
+		            }
+		      }
+		
+		      // TEST FOR SUCCESSFUL ITERATION.
+		
+		      if (RATIO >= P0001) {
+		
+		          // SUCCESSFUL ITERATION. UPDATE X, FVEC, AND THEIR NORMS.
+		
+		          for (J = 0; J < N; J++) {
+		              X[J] = WA2[J];
+		              WA2[J] = DIAG[J]*X[J];
+		              FVEC[J] = WA4[J];
+		          } // for (J = 0; J < N; J++)
+		          XNORM = ENORM(N,WA2);
+		          FNORM = FNORM1;
+		          ITER = ITER + 1;
+		      } // if (RATIO >= P0001)
+		
+              // DETERMINE THE PROGRESS OF THE ITERATION.
+		
+		      NSLOW1 = NSLOW1 + 1;
+		      if (ACTRED >= P001) {
+		    	  NSLOW1 = 0;
+		      }
+		      if (JEVAL) {
+		    	  NSLOW2 = NSLOW2 + 1;
+		      }
+		      if (ACTRED >= P1) {
+		    	  NSLOW2 = 0;
+		      }
+		
+		      // TEST FOR CONVERGENCE.
+		
+		      if (DELTA <= XTOL*XNORM || FNORM == ZERO) {
+		    	  INFO[0] = 1;
+		      }
+		      if (INFO[0] != 0) {
+		    	  break outer;
+		      }
+		
+		      // TESTS FOR TERMINATION AND STRINGENT TOLERANCES.
+		
+		      if (NFEV[0] >= MAXFEV) {
+		    	  INFO[0] = 2;
+		      }
+		      if (P1*Math.max(P1*DELTA,PNORM) <= EPSMCH*XNORM) {
+		    	  INFO[0] = 3;
+		      }
+		      if (NSLOW2 == 5) {
+		    	  INFO[0] = 4;
+		      }
+		      if (NSLOW1 == 10) {
+		    	  INFO[0] = 5;
+		      }
+		      if (INFO[0] != 0) {
+		    	  break outer;
+		      }
+		
+		      // CRITERION FOR RECALCULATING JACOBIAN APPROXIMATION
+		      // BY FORWARD DIFFERENCES.
+		
+		      if (NCFAIL == 2) {
+		    	  continue outer;
+		      }
+		
+		      // CALCULATE THE RANK ONE MODIFICATION TO THE JACOBIAN
+		      // AND UPDATE QTF IF NECESSARY.
+		
+		      for (J = 0; J < N; J++) {
+		          SUM = ZERO;
+		          for (I = 0; I < N; I++) {
+		              SUM = SUM + FJAC[I][J]*WA4[I];
+		          } // for (I = 0; I < N; I++)
+		          WA2[J] = (SUM-WA3[J])/PNORM;
+		          WA1[J] = DIAG[J]* ((DIAG[J]*WA1[J])/PNORM);
+		          if (RATIO >= P0001) {
+		        	  QTF[J] = SUM;
+		          }
+		      } // for (J = 0; J < N; J++)
+		
+		      // COMPUTE THE QR FACTORIZATION OF THE UPDATED JACOBIAN.
+		
+		      R1UPDT(N,N,R,LR,WA1,WA2,WA3,SING);
+		      R1MPYQ(N,N,FJAC,LDFJAC,WA2,WA3);
+		      A = new double[1][N];
+		      for (I = 0; I < N; I++) {
+		    	  A[0][I] = QTF[I];
+		      }
+		      R1MPYQ(1,N,A,1,WA2,WA3);
+		      for (I = 0; I < N; I++) {
+		    	  QTF[I] = A[0][I];
+		      }
 		
 		         // END OF THE INNER LOOP.
 		
-		          JEVAL = false;
+		        JEVAL = false;
 		     } // while (true)
 		
 		    // END OF THE OUTER LOOP.
@@ -2444,6 +2878,338 @@ double neweps;
 	    }
 		return;
 	}
+	
+	private void R1MPYQ(int M,int N, double A[][], int LDA,
+			double V[], double W[]) {
+	    //     **********
+	
+	    // SUBROUTINE R1MPYQ
+	
+	    // GIVEN AN M BY N MATRIX A, THIS SUBROUTINE COMPUTES A*Q WHERE
+	    // Q IS THE PRODUCT OF 2*(N - 1) TRANSFORMATIONS
+	
+        // GV(N-1)*...*GV(1)*GW(1)*...*GW(N-1)
+	
+	    // AND GV(I), GW(I) ARE GIVENS ROTATIONS IN THE (I,N) PLANE WHICH
+	    // ELIMINATE ELEMENTS IN THE I-TH AND N-TH PLANES, RESPECTIVELY.
+	    // Q ITSELF IS NOT GIVEN, RATHER THE INFORMATION TO RECOVER THE
+	    // GV, GW ROTATIONS IS SUPPLIED.
+	
+	    // THE SUBROUTINE STATEMENT IS
+	
+	    // SUBROUTINE R1MPYQ(M,N,A,LDA,V,W)
+	
+	    // WHERE
+	
+	    //   M IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+	    //     OF ROWS OF A.
+	
+	    //   N IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+	    //     OF COLUMNS OF A.
+	
+	    //   A IS AN M BY N ARRAY. ON INPUT A MUST CONTAIN THE MATRIX
+	    //     TO BE POSTMULTIPLIED BY THE ORTHOGONAL MATRIX Q
+	    //     DESCRIBED ABOVE. ON OUTPUT A*Q HAS REPLACED A.
+	
+	    //   LDA IS A POSITIVE INTEGER INPUT VARIABLE NOT LESS THAN M
+	    //     WHICH SPECIFIES THE LEADING DIMENSION OF THE ARRAY A.
+	
+	    //   V IS AN INPUT ARRAY OF LENGTH N. V(I) MUST CONTAIN THE
+	    //     INFORMATION NECESSARY TO RECOVER THE GIVENS ROTATION GV(I)
+	    //     DESCRIBED ABOVE.
+	
+	    //  W IS AN INPUT ARRAY OF LENGTH N. W(I) MUST CONTAIN THE
+	    //    INFORMATION NECESSARY TO RECOVER THE GIVENS ROTATION GW(I)
+	    //    DESCRIBED ABOVE.
+	
+	    // ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
+	    // BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE
+	
+	    // **********
+        // .. Scalar Arguments ..
+	    // INTEGER LDA,M,N
+	
+	    // .. Array Arguments ..
+	    // DOUBLE PRECISION A(LDA,N),V(N),W(N)
+	
+	    // .. Local Scalars ..
+	    double ONE,TEMP;
+	    double COS = 0.0;
+	    double SIN = 0.0;
+	    int I,J,NM1,NMJ;
+	
+	    // .. Data statements ..
+	    ONE = 1.0;
+	
+	    // APPLY THE FIRST SET OF GIVENS ROTATIONS TO A.
+	
+	    NM1 = N - 1;
+	    if (NM1 < 1) {
+	    	return;
+	    }
+	    for (NMJ = 1; NMJ <= NM1; NMJ++) {
+	        J = N - NMJ;
+	        if (Math.abs(V[J-1]) > ONE) {
+	        	COS = ONE/V[J-1];
+	        }
+	        if (Math.abs(V[J-1]) > ONE) {
+	        	SIN = Math.sqrt(ONE-COS*COS);
+	        }
+	        if (Math.abs(V[J-1]) <= ONE) {
+	        	SIN = V[J-1];
+	        }
+	        if (Math.abs(V[J-1]) <= ONE) {
+	        	COS = Math.sqrt(ONE-SIN*SIN);
+	        }
+	        for (I = 1; I <= M; I++) {
+	            TEMP = COS*A[I-1][J-1] - SIN*A[I-1][N-1];
+	            A[I-1][N-1] = SIN*A[I-1][J-1] + COS*A[I-1][N-1];
+	            A[I-1][J-1] = TEMP;
+	        } // for (I = 1; I <= M; I++)
+	    } // for (NMJ = 1; NMJ <= NM1; NMJ++) 
+	
+	    // APPLY THE SECOND SET OF GIVENS ROTATIONS TO A.
+	
+	    for (J = 1; J <= NM1; J++) {
+	        if (Math.abs(W[J-1]) > ONE) {
+	        	COS = ONE/W[J-1];
+	        }
+	        if (Math.abs(W[J-1]) > ONE) {
+	        	SIN = Math.sqrt(ONE-COS*COS);
+	        }
+	        if (Math.abs(W[J-1]) <= ONE) {
+	        	SIN = W[J-1];
+	        }
+	        if (Math.abs(W[J-1]) <= ONE) {
+	        	COS = Math.sqrt(ONE-SIN*SIN);
+	        }
+	        for (I = 1; I <= M; I++) {
+	            TEMP = COS*A[I-1][J-1] + SIN*A[I-1][N-1];
+	            A[I-1][N-1] = -SIN*A[I-1][J-1] + COS*A[I-1][N-1];
+	            A[I-1][J-1] = TEMP;
+	        } // for (I = 1; I <= M; I++)
+	    } // for (J = 1; J <= NM1; J++)
+	    return;
+	}
+
+	
+	private void R1UPDT(int M,int N, double S[], int LS, double U[],
+			double V[], double W[], boolean SING[]) {
+	    //     **********
+	
+	    // SUBROUTINE R1UPDT
+	
+	    // GIVEN AN M BY N LOWER TRAPEZOIDAL MATRIX S, AN M-VECTOR U,
+	    // AND AN N-VECTOR V, THE PROBLEM IS TO DETERMINE AN
+	    // ORTHOGONAL MATRIX Q SUCH THAT
+	
+	    //                   T
+	    //           (S + U*V )*Q
+	
+	    //     IS AGAIN LOWER TRAPEZOIDAL.
+	
+	    // THIS SUBROUTINE DETERMINES Q AS THE PRODUCT OF 2*(N - 1)
+	    // TRANSFORMATIONS
+	
+	    // GV(N-1)*...*GV(1)*GW(1)*...*GW(N-1)
+	
+	    // WHERE GV(I), GW(I) ARE GIVENS ROTATIONS IN THE (I,N) PLANE
+	    // WHICH ELIMINATE ELEMENTS IN THE I-TH AND N-TH PLANES,
+	    // RESPECTIVELY. Q ITSELF IS NOT ACCUMULATED, RATHER THE
+	    // INFORMATION TO RECOVER THE GV, GW ROTATIONS IS RETURNED.
+	
+	    // THE SUBROUTINE STATEMENT IS
+	
+	    // SUBROUTINE R1UPDT(M,N,S,LS,U,V,W,SING)
+	
+	    // WHERE
+	
+	    //   M IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+	    //     OF ROWS OF S.
+	
+	    //   N IS A POSITIVE INTEGER INPUT VARIABLE SET TO THE NUMBER
+	    //     OF COLUMNS OF S. N MUST NOT EXCEED M.
+	
+	    //   S IS AN ARRAY OF LENGTH LS. ON INPUT S MUST CONTAIN THE LOWER
+	    //     TRAPEZOIDAL MATRIX S STORED BY COLUMNS. ON OUTPUT S CONTAINS
+	    //     THE LOWER TRAPEZOIDAL MATRIX PRODUCED AS DESCRIBED ABOVE.
+	
+	    //   LS IS A POSITIVE INTEGER INPUT VARIABLE NOT LESS THAN
+	    //     (N*(2*M-N+1))/2.
+	
+	    //   U IS AN INPUT ARRAY OF LENGTH M WHICH MUST CONTAIN THE
+	    //     VECTOR U.
+	
+	    //   V IS AN ARRAY OF LENGTH N. ON INPUT V MUST CONTAIN THE VECTOR
+	    //     V. ON OUTPUT V(I) CONTAINS THE INFORMATION NECESSARY TO
+	    //     RECOVER THE GIVENS ROTATION GV(I) DESCRIBED ABOVE.
+	
+	    //   W IS AN OUTPUT ARRAY OF LENGTH M. W(I) CONTAINS INFORMATION
+	    //     NECESSARY TO RECOVER THE GIVENS ROTATION GW(I) DESCRIBED
+	    //     ABOVE.
+	
+	    //   SING IS A LOGICAL OUTPUT VARIABLE. SING IS SET TRUE IF ANY
+	    //     OF THE DIAGONAL ELEMENTS OF THE OUTPUT S ARE ZERO. OTHERWISE
+	    //     SING IS SET FALSE.
+	
+	    // ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
+	    // BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE,
+	    // JOHN L. NAZARETH
+	
+	    //     **********
+	    // .. Scalar Arguments ..
+	    // INTEGER LS,M,N
+	
+	    // .. Array Arguments ..
+	    // DOUBLE PRECISION S(LS),U(M),V(N),W(M)
+	    // LOGICAL SING[]
+	
+	    // .. Local Scalars ..
+	    double COS,COTAN,GIANT,ONE,P25,P5,SIN,TAN,TAU,TEMP,ZERO;
+	    int I,J,JJ,L,NM1,NMJ;
+	
+	    // Data statements ..
+	    ONE = 1.0;
+	    P5 = 5.0E-1;
+	    P25 = 2.5E-1;
+	    ZERO = 0.0;
+	
+	    // GIANT IS THE LARGEST MAGNITUDE.
+	
+	    GIANT = Double.MAX_VALUE;
+	
+	    // INITIALIZE THE DIAGONAL ELEMENT POINTER.
+	
+	    JJ = (N* (2*M-N+1))/2 - (M-N);
+	
+	    // MOVE THE NONTRIVIAL PART OF THE LAST COLUMN OF S INTO W.
+	
+	    L = JJ;
+	    for (I = N; I <= M; I++) {
+	        W[I-1] = S[L-1];
+	        L = L + 1;
+	    } // for (I = N; I <= M; I++)
+	
+	    // ROTATE THE VECTOR V INTO A MULTIPLE OF THE N-TH UNIT VECTOR
+	    // IN SUCH A WAY THAT A SPIKE IS INTRODUCED INTO W.
+	
+	    NM1 = N - 1;
+	    if (NM1 >= 1) {
+	        for (NMJ = 1; NMJ <= NM1; NMJ++) {
+	            J = N - NMJ;
+	            JJ = JJ - (M-J+1);
+	            W[J-1] = ZERO;
+	            if (V[J-1] == ZERO) {
+	            	continue;
+	            }
+	
+	            // DETERMINE A GIVENS ROTATION WHICH ELIMINATES THE
+	            // J-TH ELEMENT OF V.
+	
+	          if (Math.abs(V[N-1]) < Math.abs(V[J-1])) {
+	              COTAN = V[N-1]/V[J-1];
+	              SIN = P5/Math.sqrt(P25+P25*COTAN*COTAN);
+	              COS = SIN*COTAN;
+	              TAU = ONE;
+	              if (Math.abs(COS)*GIANT > ONE) {
+	            	  TAU = ONE/COS;
+	              }
+	          } // if (Math.abs(V[N-1]) < Math.abs(V[J-1]))
+	          else {
+	              TAN = V[J-1]/V[N-1];
+	              COS = P5/Math.sqrt(P25+P25*TAN*TAN);
+	              SIN = COS*TAN;
+	              TAU = SIN;
+	          } // else
+	
+	          // APPLY THE TRANSFORMATION TO V AND STORE THE INFORMATION
+	          // NECESSARY TO RECOVER THE GIVENS ROTATION.
+	
+	          V[N-1] = SIN*V[J-1] + COS*V[N-1];
+	          V[J-1] = TAU;
+	
+	          // APPLY THE TRANSFORMATION TO S AND EXTEND THE SPIKE IN W.
+	
+	          L = JJ;
+	          for (I = J; I <= M; I++) {
+	              TEMP = COS*S[L-1] - SIN*W[I-1];
+	              W[I-1] = SIN*S[L-1] + COS*W[I-1];
+	              S[L-1] = TEMP;
+	              L = L + 1;
+	          } // for (I = J; I <= M; I++)
+	        } // for (NMJ = 1; NMJ <= NM1; NMJ++)
+	    } // if (NM1 >= 1)
+	
+	    // ADD THE SPIKE FROM THE RANK 1 UPDATE TO W.
+	
+	    for (I = 1; I <= M; I++) {
+	        W[I-1] = W[I-1] + V[N-1]*U[I-1];
+	    } // for (I = 1; I <= M; I++)
+	
+	    // ELIMINATE THE SPIKE.
+	
+	    SING[0] = false;
+	    if (NM1 >= 1) {
+	        for (J = 1; J <= NM1; J++) {
+	            if (W[J-1] != ZERO) {
+	
+	                // DETERMINE A GIVENS ROTATION WHICH ELIMINATES THE
+	                // J-TH ELEMENT OF THE SPIKE.
+	
+	                if (Math.abs(S[JJ-1]) < Math.abs(W[J-1])) {
+	                    COTAN = S[JJ-1]/W[J-1];
+	                    SIN = P5/Math.sqrt(P25+P25*COTAN*COTAN);
+	                    COS = SIN*COTAN;
+	                    TAU = ONE;
+	                    if (Math.abs(COS)*GIANT > ONE) {
+	                    	TAU = ONE/COS;
+	                    }
+	                } // if (Math.abs(S[JJ-1]) < Math.abs(W[J-1]))
+	                else {
+	                    TAN = W[J-1]/S[JJ-1];
+	                    COS = P5/Math.sqrt(P25+P25*TAN*TAN);
+	                    SIN = COS*TAN;
+	                    TAU = SIN;
+	                } // else
+	
+                    // APPLY THE TRANSFORMATION TO S AND REDUCE THE SPIKE IN W.
+	
+	                L = JJ;
+	                for (I = J; I <= M; I++) {
+	                    TEMP = COS*S[L-1] + SIN*W[I-1];
+	                    W[I-1] = -SIN*S[L-1] + COS*W[I-1];
+	                    S[L-1] = TEMP;
+	                    L = L + 1;
+	                } // for (I = J; I <= M; I++)
+	
+	                // STORE THE INFORMATION NECESSARY TO RECOVER THE
+                    // GIVENS ROTATION.
+	
+	                W[J-1] = TAU;
+	            } // if (W[J-1] != ZERO)
+	
+	            // TEST FOR ZERO DIAGONAL ELEMENTS IN THE OUTPUT S.
+	
+	            if (S[JJ-1] == ZERO) {
+	            	SING[0] = true;
+	            }
+	            JJ = JJ + (M-J+1);
+	        } // for (J = 1; J <= NM1; J++)
+	    } // if (NM1 >= 1)
+	
+	    // MOVE W BACK INTO THE LAST COLUMN OF THE OUTPUT S.
+	
+	    L = JJ;
+	    for (I = N; I <= M; I++) {
+	        S[L-1] = W[I-1];
+	        L = L + 1;
+	    } // for (I = N; I <= M; I++) 
+	    if (S[JJ-1] == ZERO) {
+	    	SING[0] = true;
+	    }
+	    return;
+	} 
+
 	
 	private void GAUSSJ(int N, double ALPHA, double BETA, double B[], double T[], double W[]) {
 	    // B(N), T(N), W(N)
