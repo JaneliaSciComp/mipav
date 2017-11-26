@@ -49,6 +49,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     private JTextField outputDirTextField;
     private String outputDirBase;
+    private JTabbedPane tabbedPane;
     
     private String csvFileDir;
     private File csvFile;
@@ -381,6 +382,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     /**  Setup Mapping tool layout */
     private void init() {
         setTitle("Data Mapping Tool - " + pluginVersion + " (" + ddEnvName + ")");
+        // Should be adding a tabbed pane - mapping config tab  + data mapping tab
         //dsMainPanel = new JPanel(new GridBagLayout());
         //final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
         //        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -391,14 +393,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             // setIconImage() is not part of the Java 1.5 API - catch any
             // runtime error on those systems
         }
-
-        if (JDialogStandalonePlugin.isExitRequired()) {
-            setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        } else {
-            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        }
-
-        addWindowListener(this);
 
         final JMenuBar menuBar = new JMenuBar();
         final JMenu menu = new JMenu("Help");
@@ -416,26 +410,37 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         this.setJMenuBar(menuBar);
         
-        final JPanel topPanel = new JPanel(new GridBagLayout());
+        final JPanel mapperConfig 	= new JPanel(new BorderLayout());
+        final JPanel dataXForm 		= new JPanel(new BorderLayout());
+        
+        final JPanel fsDETablePanel = new JPanel(new GridBagLayout());
+        
         final GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.NORTHWEST;
-
         gbc2.gridy = 0;
         gbc2.gridx = 1;
         gbc2.weightx = 1;
         gbc2.weighty = 1;
         gbc2.fill = GridBagConstraints.BOTH;
-        topPanel.add(buildStructurePanel(), gbc2);
+        fsDETablePanel.add(buildStructurePanel(), gbc2);
     
-        getContentPane().add(buildButtonPanel(), BorderLayout.NORTH);
-        getContentPane().add(topPanel, BorderLayout.CENTER);
-        getContentPane().add(buildLogPanel(), BorderLayout.SOUTH);
+        mapperConfig.add(buildButtonPanel(), BorderLayout.NORTH);
+        mapperConfig.add(fsDETablePanel, BorderLayout.CENTER);
+        mapperConfig.add(buildLogPanel(), BorderLayout.SOUTH);
+        
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(serif12B);
+        tabbedPane.addTab("Mapping Configuration", null, mapperConfig);
+        tabbedPane.addTab("Data Transform", null, dataXForm);  // Nothing at the moment.
 
+        getContentPane().add(tabbedPane, BorderLayout.CENTER);
         pack();
         validate();
         this.setMinimumSize(this.getSize());
         this.setResizable(true);
         centerOnScreen(this);
+        
+        addWindowListener(this);
     }
 
     
@@ -502,6 +507,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	deTableModel.addColumn("Element Name");
     	deTableModel.addColumn("Title");
     	deTableModel.addColumn("Reference PVs");
+    	deTableModel.addColumn("Required");
     	deTableModel.addColumn("Source Name");
     	deTableModel.addColumn("Source PVs");
     	deTableModel.addColumn("PV Mappings");
@@ -533,11 +539,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 	}
 	                return tooltip;
                 }
-                if(colIndex == 2 || colIndex == 1) {
+                else if(colIndex == 1 || colIndex == 2) {
 	                DataElement de = formStructure.getSortedDataElementList().get(rowIndex);
 	                
 	                tooltip = "<html><p><b> Name: </b> " + de.getName() + "<br/>";
 	                tooltip += "<b> CDE Description: </b>" + WordUtils.wrap(de.getDescription(), 100, "<br/>", false) + "   <br/>";
+
 
 	                //if (de.getNinds() != null && !de.getNinds().getValue().equals("")) {
 	                //    tooltip += "<p><b> NINDS CDE ID: </b> " + de.getNinds().getValue() + "<br/>";
@@ -552,7 +559,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                tooltip += "</p></html>";
 	                return tooltip;
                 } 
-                if(colIndex == 3) {
+                else if(colIndex == 3) {
 	                DataElement de = formStructure.getSortedDataElementList().get(rowIndex);
 	                
 	                tooltip += "<html> <p> <b> Type: </b> " + de.getType() + "   <br/>";
@@ -568,21 +575,40 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                tooltip += "</p></html>";
 	                return tooltip;
                 }
+                else if(colIndex > 4) {
+	                
+	                tooltip += "<html> <p> <b> Single click: </b> " + " selects the DE to be mapped.  <br/>";
+	                tooltip += " <b> Double click: </b> " + " for manual editting of the DE.  <br/>";
+	              
+	                tooltip += "</p></html>";
+	                return tooltip;
+                }
                 else return null;
             }
         };
         
         deTable.addMouseListener(this);
-        deTable.setPreferredScrollableViewportSize(new Dimension(850, 300));
+        deTable.setPreferredScrollableViewportSize(new Dimension(1250, 300));
         deTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         deTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        deTable.getColumn("Group").setMinWidth(175);
+        deTable.getColumn("Group").setMinWidth(100);
         deTable.getColumn("Group").setMaxWidth(200);
+        deTable.getColumn("Group").setPreferredWidth(125);
         //deTable.getColumn("Group").setCellRenderer(new CellRenderer());
-        deTable.getColumn("Element Name").setMinWidth(185);
+        deTable.getColumn("Element Name").setMinWidth(100);
         deTable.getColumn("Element Name").setMaxWidth(200);
+        deTable.getColumn("Element Name").setPreferredWidth(125);
         //deTable.getColumn("Element Name").setCellRenderer(new CellRenderer());
+        
+        deTable.getColumn("Title").setMinWidth(175);
+        deTable.getColumn("Title").setMaxWidth(400);
+        deTable.getColumn("Title").setPreferredWidth(225);
+        
+        deTable.getColumn("Required").setMinWidth(115);
+        deTable.getColumn("Required").setMaxWidth(115);
+        deTable.getColumn("Required").setPreferredWidth(115);
+        deTable.getColumn("Required").setCellRenderer(new CellRenderer());
         
         listPane = WidgetFactory.buildScrollPane(deTable);
         listPane.setBorder(JDialogBase.buildTitledBorder(" Reference Form Structure:   "));
@@ -604,13 +630,19 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     		final Color gray = new Color (235,235,235);
             final Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             //cell.setBackground(Color.GREEN);
+            
             TableCellRenderer refRenderer = table.getCellRenderer(row, column);
             if (refRenderer instanceof CellRenderer) { 
-	            if (row % 2 ==  1 ) {
-	                cell.setBackground(gray);
-	            }   
-	            else {
-	            	cell.setBackground(Color.WHITE);
+	            //if (row % 2 ==  1 ) {
+	            //    cell.setBackground(gray);
+	            //}   
+	            //else {
+	            //	cell.setBackground(Color.WHITE);
+	            //}
+	            if (column == 4 && ((String) value).equalsIgnoreCase("REQUIRED")) {
+	                setForeground(Color.red);
+	            } else {
+	                setForeground(Color.black);
 	            }
             }
             return cell;
@@ -1006,8 +1038,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             structsTable.getColumn("Name").setMinWidth(150);
             structsTable.getColumn("Description").setMinWidth(300);
-            structsTable.getColumn("Version").setPreferredWidth(20);
-            structsTable.getColumn("Status").setPreferredWidth(40);
+            
+            structsTable.getColumn("Version").setMinWidth(35);
+            structsTable.getColumn("Version").setMaxWidth(55);
+            structsTable.getColumn("Version").setPreferredWidth(50);
+            
+            structsTable.getColumn("Status").setMinWidth(35);
+            structsTable.getColumn("Status").setMaxWidth(85);
+            structsTable.getColumn("Status").setPreferredWidth(110);
 
             // new way of doing web service
             for (final FormStructure fs : formStructureList) {
@@ -1089,7 +1127,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             structsScrollPane = new JScrollPane(structsTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-            structsScrollPane.setPreferredSize(new Dimension(600, 300));
+            structsScrollPane.setPreferredSize(new Dimension(800, 300));
 
             final JPanel OKPanel = new JPanel();
             final JButton OKButton = new JButton("Select");
@@ -1105,8 +1143,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             pack();
 
-            this.setMinimumSize(this.getSize());
-            this.setSize(new Dimension(owner.getSize().width, this.getSize().height));
+            //this.setMinimumSize(this.getSize());
+            //this.setSize(new Dimension(owner.getSize().width, this.getSize().height));
             centerInWindow(owner, this);
 
             setVisible(true);
@@ -1202,7 +1240,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		int i=0;
 	        	for (final MapElement mapde : group.getDataElements()) {
 	        		DataElement de = fsInfo.getDataElement(mapde.getStructuralDataElement());
-	        		
+	     		
 	        		int row = rowPos[group.getPosition()]+i;
 
 	        		deTableModel.setValueAt(group.getName(), row, 0);										// Group
@@ -1215,9 +1253,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                }
 	        		deTableModel.setValueAt(strPVs, row, 3);  // PV list
 	        		
+	        		JLabel l = new JLabel(mapde.getRequiredType().toString());
+	                l.setFont(serif12);
+
+	        		deTableModel.setValueAt(mapde.getRequiredType().toString(), row, 4);  // Required de or not
+	        		
 	        		//System.out.println(" DE URI " + de.getUri());  //URI seems problematic. - maybe because on staging or demo
 	        		//System.out.println(" FS URI " + formStructure.getUri());  //URI seems problematic. - maybe because on staging or demo
-
 	        		
 	        		i++;
 	        	}
@@ -1386,6 +1428,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	for (int i = 0; i < dataElements.get(0).length; i++) {
         		srcDETableModel.addColumn(dataElements.get(0)[i].trim());
         	}
+        	
             
         	srcDETable = new JTable(srcDETableModel) {
                 private static final long serialVersionUID = 3053232611901005303L;
