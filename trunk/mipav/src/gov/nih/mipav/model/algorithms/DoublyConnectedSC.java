@@ -124,6 +124,7 @@ public class DoublyConnectedSC extends AlgorithmBase {
 		double ZZ[] = new double[2];
 		double EPS;
 		double WW[];
+		double ZZ0[];
 		
 double neweps;
 		
@@ -188,6 +189,14 @@ double neweps;
 		            EPS = 1.0E-6;
 		            WW = WDSC(ZZ,M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,
 		            	                  NPTQ,QWORK,EPS,1);
+                    System.out.println("THE PREIMAGE OF ZZ = (" + WW[0] + ", " + WW[1] + ")");
+                    if (scm.zabs(WW[0], WW[1]) <= 1.0E-12) {
+                    	continue;
+                    }
+                    System.out.println("CHECK BY MAPPING THE PREIMAGE BACK");
+                    ZZ0 = ZDSC(WW,0,2,M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+                         PHI1,NPTQ,QWORK,1);
+                    System.out.println("THE POINT ENTERED = (" + ZZ0[0] + ", " + ZZ0[1] + ")");
 
 		        } // for (I = 0; I < INVERSE_POINTS.length; I++)
 		    } // if ((INVERSE_POINTS != null) && (INVERSE_POINTS.length != 0))
@@ -1143,7 +1152,7 @@ double neweps;
 	    // COMMON /PARAM4/UARY,VARY,DLAM,IU
 	    // COMMON /PARAM5/ISPRT,ICOUNT
 
-	      XWTRAN(M2,N2,X,U2,C2,W02,W12,PHI02,PHI12);
+	    XWTRAN(M2,N2,X,U2,C2,W02,W12,PHI02,PHI12);
 	      THDATA(U2);
 	      ZI[0] = 0.0;
 	      ZI[1] = 1.0;
@@ -1246,27 +1255,27 @@ double neweps;
 	      //  OUTER POLYGON CONTAINS SOME INFINITE VERTICES & FOR EACH OF THEM
 	      //  TWO LENGTH CONDITIONS WILL BE REPLACED BY A COMPLEX INTEGRAL:
 	      for (K = 1; K <= NSHAPE - 1; K++) {
-	          if (IND[K] != 1 && IND[K-1] < IND[K]-2) {
-	              for (J = IND[K-1] + 2; J <= IND[K] - 1; J++) {
+	          if (IND[K] != 2 && IND[K-1] < IND[K]-2) {
+	              for (J = IND[K-1] + 1; J <= IND[K] - 2; J++) {
 	                  WINT3 = WQUAD(W02[J-1],PHI02[J-1],J,0,W02[J],PHI02[J],J+1,0,
 	                     1.0,M2,N2,U2[0],W02,W12,ALFA02,ALFA12,NPTQ2,QWORK2,LINEARC2,2);
 	                  scm.zmlt(C2[0], C2[1], WINT3[0], WINT3[1], cr, ci);
 	                  FVAL[N2+4+J] = scm.zabs(Z02[J][0]-Z02[J-1][0], Z02[J][1]-Z02[J-1][1]) - scm.zabs(cr[0], ci[0]);
 	              } // for (J = IND[K-1] + 2; J <= IND[K] - 1; J++) 
 	          } // if (IND[K] != 1 && IND[K-1] < IND[K]-2)
-	          if (K == NSHAPE-1 || IND[K] == M2-2) {
+	          if (K == NSHAPE-1 || IND[K] == M2-1) {
 	        	  continue;
 	          }
 	
 	          //  THE COMBINATION  OF THREE DIFFERENT PATHS  IS USED TO INTEGRATE
 	          //  FROM WA TO WB TO AVOID DOMAIN PROBLEM.THE BY-PRODUCT OF THIS IS
 	          //  THAT IT IS NUMERICALLY  MORE EFFICIENT THAN A SINGLE LINE PATH:
-	          WA[0] = W02[IND[K]-1][0];
-	          WA[1] = W02[IND[K]-1][1];
-	          WB[0] = W02[IND[K]+1][0];
-	          WB[1] = W02[IND[K]+1][1];
-	          PHIA = PHI02[IND[K]-1];
-	          PHIB = PHI02[IND[K]+1];
+	          WA[0] = W02[IND[K]-2][0];
+	          WA[1] = W02[IND[K]-2][1];
+	          WB[0] = W02[IND[K]][0];
+	          WB[1] = W02[IND[K]][1];
+	          PHIA = PHI02[IND[K]-2];
+	          PHIB = PHI02[IND[K]];
 	          RADIUS = (1.0+U2[0])/2.0;
 	          scm.zmlt(ZI[0], ZI[1], PHIA, 0.0, cr, ci);
 	          base = RADIUS * Math.exp(cr[0]);
@@ -1286,11 +1295,11 @@ double neweps;
 	        		  (WLINE1[1]+WCIRCLE[1]-WLINE2[1]), cr, ci);
 	          WIN4[0] = cr[0];
 	          WIN4[1] = ci[0];
-	          diffR = Z02[IND[K]+1][0]-Z02[IND[K]-1][0]-WIN4[0];
-	          diffI = Z02[IND[K]+1][1]-Z02[IND[K]-1][1]-WIN4[1];
+	          diffR = Z02[IND[K]][0]-Z02[IND[K]-2][0]-WIN4[0];
+	          diffI = Z02[IND[K]][1]-Z02[IND[K]-2][1]-WIN4[1];
 	          scm.zmlt(ZI[0], ZI[1], diffR, diffI, cr, ci);
-	          FVAL[N2+5+IND[K]-1] = ci[0];
-	          FVAL[N2+5+IND[K]] = diffI;
+	          FVAL[N2+5+IND[K]-2] = ci[0];
+	          FVAL[N2+5+IND[K]-1] = diffI;
 	      } // for (K = 1; K <= NSHAPE - 1; K++)
 	
 	      //  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
@@ -1384,11 +1393,11 @@ double neweps;
 			    	continue;
 			    }
 			    NSHAPE = NSHAPE + 1;
-			    IND[NSHAPE-1] = I-1;
+			    IND[NSHAPE-1] = I;
 			} // for (I = 2; I <= M-1; I++)
-			IND[0] = -1;
+			IND[0] = 0;
 			NSHAPE = NSHAPE + 1;
-			IND[NSHAPE-1] = M-2;
+			IND[NSHAPE-1] = M-1;
 		} // if (ISHAPE != 0)
 		
 		// Fix one prevertex
@@ -1561,6 +1570,171 @@ double neweps;
 
 	}
 	
+	private double[] ZDSC(double WW[],int KWW,int IC,int M,int N, double U,
+			double C[], double W0[][], double W1[][], double Z0[][], double Z1[][],
+			double ALFA0[], double ALFA1[], double PHI0[], double PHI1[], int NPTQ,
+			double QWORK[], int IOPT) {
+        //   ----------------------------------------------------------
+		//   COMPUTES THE FORWORD MAP Z(WW) BY INTEGRATING FROM WA TO
+		//   WW WHERE WA IS THE NEAREST PREVERTEX TO WW.KWW=K,IC=0 IF
+		//   WW=W0(K), OR KWW=K, IC=1 IF WW=W1(K),OR KWW=0 AND IC=2
+		//   OTHERWISE.
+		//   IOPT: =1 IS NORMALLY ASSUMED FOR ANY GEOMETRY.
+		//         =# OTHER THAN 1 ASSUMES THAT ONLY LINE SEGMENT PATH
+		//          IS USED.
+		//   SEE ROUTINE DSCSOLV FOR THE REST OF THE CALLING SEQUENCE.
+		
+		
+		//     .. Scalar Arguments ..
+		//    DOUBLE COMPLEX C,WW
+		//    DOUBLE PRECISION U
+		//    INTEGER IC,IOPT,KWW,M,N,NPTQ
+		
+		//     .. Array Arguments ..
+		//    DOUBLE COMPLEX W0(M),W1(N),Z0(M),Z1(N)
+		//    DOUBLE PRECISION ALFA0(M),ALFA1(N),PHI0(M),PHI1(N),
+		//                     QWORK(NPTQ* (2* (M+N)+3))
+	
+		//     .. Scalars in Common ..
+		//    DOUBLE PRECISION DLAM
+		//    INTEGER IU
+		
+		//     .. Arrays in Common ..
+		//    DOUBLE PRECISION UARY(8),VARY(3)
+		
+		//     .. Local Scalars ..
+		double WA[] = new double[2];
+		double WB[] = new double[2];
+		double WINT1[] = new double[2];
+		double WINT2[] = new double[2];
+		double WW0[] = new double[2];
+		double ZA[] = new double[2];
+		double ZI[] = new double[2];
+		double wout[];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double result[] = new double[2];
+		double base;
+		// DOUBLE COMPLEX WA,WB,WINT1,WINT2,WW0,ZA,ZI
+		double DWW0,PHIWB,PHIWW0,PI;
+		double factor;
+		int INEAR[] = new int[1];
+		int KNEAR[] = new int[1];
+		int IBD;
+
+		//     .. External Functions ..
+		//    DOUBLE COMPLEX WQUAD
+		//    DOUBLE PRECISION ARGUM
+		//    EXTERNAL WQUAD,ARGUM
+	
+		//     .. External Subroutines ..
+		//    EXTERNAL NEARW
+
+		//     .. Common blocks ..
+		//    COMMON /PARAM4/UARY,VARY,DLAM,IU
+		
+		ZI[0] = 0.0;
+		ZI[1] = 1.0;
+		PI = Math.PI;
+		IBD = 1;
+		WW0[0] = WW[0];
+		WW0[1] = WW[1];
+		
+		if (IOPT == 1) {
+		    if (Math.abs(scm.zabs(WW0[0],WW0[1])-1.0) <= 1.0E-11) {
+		    	factor = (1.0 + U)/2.0;
+		    	WW0[0] = factor * WW0[0];
+		    	WW0[1] = factor * WW0[1];
+		        IBD = 2;
+		    } // if (Math.abs(scm.zabs(WW0[0],WW0[1])-1.0) <= 1.0E-11)
+		} // if (IOPT == 1)
+		
+		// FIND THE NEAREST PREVERTEX TO THE PT WW0:
+		NEARW(M,N,W0,W1,ALFA0,WW0,KNEAR,INEAR);
+		if (INEAR[0] == 0) {
+		    ZA[0] = Z0[KNEAR[0]-1][0];
+		    ZA[1] = Z0[KNEAR[0]-1][1];
+		    WA[0] = W0[KNEAR[0]-1][0];
+		    WA[1] = W0[KNEAR[0]-1][1];
+		}
+		else {
+		    ZA[0] = Z1[KNEAR[0]-1][0];
+		    ZA[1] = Z1[KNEAR[0]-1][1];
+		    WA[0] = W1[KNEAR[0]-1][0];
+		    WA[1] = W1[KNEAR[0]-1][1];
+		}
+
+		if (IOPT != 1) {
+		    wout = WQUAD(WA,0.0,KNEAR[0],INEAR[0],WW,0.0,KWW,IC,0.0,M,N,U,
+				           W0,W1,ALFA0,ALFA1,NPTQ,QWORK,0,1);
+		    scm.zmlt(C[0], C[1], wout[0], wout[1], cr, ci);
+		    result[0] = ZA[0] + cr[0];
+		    result[1] = ZA[1] + ci[0];
+		    return result;
+		} // if (IOPT != 1)
+		
+		// DETERMINE THE POINT CLOSEST TO WA ON THE
+		// SAME CONCENTRIC CIRCLE AS WW0 IS ON:
+		PHIWW0 = ARGUM(scm.zabs(WW0[0], WW0[1]),WW0);
+		DWW0 = scm.zabs(WW0[0],WW0[1]);
+		if (INEAR[0] == 0) {
+		    PHIWB = PHI0[KNEAR[0]-1];
+		}
+		else {
+		    PHIWB = PHI1[KNEAR[0]-1];
+		}
+
+		scm.zmlt(ZI[0], ZI[1], PHIWB, 0.0, cr, ci);
+		base = DWW0 * Math.exp(cr[0]);
+		WB[0] = base * Math.cos(ci[0]);
+		WB[1] = base * Math.sin(ci[0]);
+		//
+	    //   INTEGRATION FROM WA TO WB ON A LINE SEGMENT:
+		if (scm.zabs(WB[0]-WA[0],WB[1]-WA[1]) <= 1.0E-11) {
+			WINT1[0] = 0.0;
+			WINT1[1] = 0.0;
+		}
+		else {
+		      WINT1 = WQUAD(WA,0.0,KNEAR[0],INEAR[0],WB,0.0,0,2,0.0,M,N,U,W0,W1,
+		            ALFA0,ALFA1,NPTQ,QWORK,0,1);
+		}
+		
+		//   INTEGRATION FROM WB TO WW ON A CIRCULAR ARC:
+		if (scm.zabs(WB[0]-WW0[0],WB[1]-WW0[1]) <= 1.0E-11) {
+			WINT2[0] = 0.0;
+			WINT2[1] = 0.0;
+	    }
+		else {
+		    if (Math.abs(PHIWB-2.0*PI-PHIWW0) < 
+		         Math.abs(PHIWB-PHIWW0)) PHIWB = PHIWB - 2.0*PI;
+		    if (Math.abs(PHIWW0-2.0*PI-PHIWB) <
+		         Math.abs(PHIWB-PHIWW0)) PHIWW0 = PHIWW0 - 2.0*PI;
+		    if (scm.zabs(WB[0]-WA[0],WB[1]-WA[1]) <= 1.0E-11) {
+		          WINT2 = WQUAD(WB,PHIWB,KNEAR[0],INEAR[0],WW0,PHIWW0,KWW,IC,DWW0,M,N,
+		                 U,W0,W1,ALFA0,ALFA1,NPTQ,QWORK,1,1);
+		    }
+		    else {
+		      WINT2 = WQUAD(WB,PHIWB,0,2,WW0,PHIWW0,0,2,DWW0,M,N,U,W0,W1,ALFA0,
+		                    ALFA1,NPTQ,QWORK,1,1);
+		    }
+		} // else
+		
+		// EVALUATE THE MAPPING FUNCTION. THE INTEGRATION PATH IS
+		// A COMBINATION OF A CIRCULAR ARC AND LINE SEGMENT(S):
+		scm.zmlt(C[0], C[1], WINT1[0] + WINT2[0], WINT1[1] + WINT2[1], cr, ci);
+		result[0] = ZA[0] + cr[0];
+		result[1] = ZA[1] + ci[0];
+		if (IBD == 2) {
+			wout = WQUAD(WW0,0.0,0,2,WW,0.0,KWW,IC,0.0,M,N,U,
+				                W0,W1,ALFA0,ALFA1,NPTQ,QWORK,0,1);
+			scm.zmlt(C[0], C[1], wout[0], wout[1], cr, ci);
+			result[0] = result[0] + cr[0];
+			result[1] = result[1] + ci[0];
+		} // if (IBD == 2)
+
+		return result;	  
+    }
+	
 	private double[] WDSC(double ZZ[], int M,int N, double U, double C[], double W0[][], double W1[][],
 			double Z0[][], double Z1[][], double ALFA0[], double ALFA1[], double PHI0[], double PHI1[],
 			int NPTQ, double QWORK[], double EPS,int IOPT) {
@@ -1598,6 +1772,7 @@ double neweps;
 		double WI[] = new double[2];
 		double ZS[] = new double[2];
 		double ZZ1[] = new double[2];
+		double denom;
 		// DOUBLE COMPLEX WFN,WI,ZS,ZZ1
 		int INZ[] = new int[1];
 		int KNZ[] = new int[1];
@@ -1606,6 +1781,15 @@ double neweps;
 		// .. Local Arrays ..
 		double ZS0[][] = new double[50][2];
 		double ZS1[][] = new double[50][2];
+		double wout[];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double cr2[] = new double[1];
+		double ci2[] = new double[1];
+		double abswi;
+		double factor;
+		double zout[];
+		double absz;
 		// DOUBLE COMPLEX ZS0(50),ZS1(50)
 		
 		//     .. External Functions ..
@@ -1622,7 +1806,7 @@ double neweps;
 		result[1] = 0.0;
 		
 		//  1.FORM WORK ARRAYS:
-		/*for (I = 0; I < M; I++) {
+		for (I = 0; I < M; I++) {
 		    ZS0[I][0] = Z0[I][0];
 		    ZS0[I][1] = Z0[I][1];
 		} // for (I = 0; I < M; I++)
@@ -1647,65 +1831,100 @@ double neweps;
 		            WI[1] = (W0[KNZ[0]-1][1]+W0[KNZ[0]-2][1])/2.0;
 		        }
 		        else {
-		              WI[0] = (W0[KNZ[0]-1][0]+W0[M-1][0]))/2.0
-                      WI[1] = (W0[KNZ[0]-1][1]+W0[M-1][1]))/2.0
+		            WI[0] = (W0[KNZ[0]-1][0]+W0[M-1][0])/2.0;
+                    WI[1] = (W0[KNZ[0]-1][1]+W0[M-1][1])/2.0;
 		        }
 
 		    } // if (INZ[0] == 0)
 		    else {
-		          IF (KNZ.GE.2) THEN
-		              WI = (W1(KNZ)+W1(KNZ-1))/2.D0
+		        if (KNZ[0] >= 2) {
+		              WI[0] = (W1[KNZ[0]-1][0]+W1[KNZ[0]-2][0])/2.0;
+		              WI[1] = (W1[KNZ[0]-1][1]+W1[KNZ[0]-2][1])/2.0;
+		        }
+		        else {
+		              WI[0] = (W0[KNZ[0]-1][0]+W1[N-1][0])/2.0;
+		              WI[1] = (W0[KNZ[0]-1][1]+W1[N-1][1])/2.0;
+		        }
 
-		          ELSE
-		              WI = (W0(KNZ)+W1(N))/2.D0
-		          END IF
-
-		          WI = U*WI/ABS(WI)
+		        denom = scm.zabs(WI[0], WI[1]);
+		        WI[0] = U*WI[0]/denom;
+		        WI[1] = U*WI[1]/denom;
 		    } //else
 
-		      ZS = ZDSC(WI,0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,NPTQ,
-		     +     QWORK,1)
-		C
-		C  3.SOLVE ODE INITIAL VALUE PROBLEM (ALONG LINE SEGMENT FROM
-		C    ZS TO ZZ) BY EULER'S SCHEME TO GENERATE THE INITIAL GUESS:
-		      DO 40 K = 1,20
-		          WI = WI + (ZZ-ZS)/ (20.D0*C*WPROD(WI,M,N,U,W0,W1,ALFA0,ALFA1))
-		   40 CONTINUE
-		      IF (ABS(WI).GT.1.D0) WI = WI/ (ABS(WI)+ABS(1.D0-ABS(WI)))
-		      IF (ABS(WI).LT.U) WI = U*WI* (ABS(WI)+ABS(U-ABS(WI)))/ABS(WI)
-		C
-		C  4.REFINE THE SOLUTION BY NEWTON'S ITERATION:
-		      DO 50 IT = 1,15
-		          WFN = ZZ - ZDSC(WI,0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
-		     +          PHI1,NPTQ,QWORK,IOPT)
-		          WI = WI + WFN/ (C*WPROD(WI,M,N,U,W0,W1,ALFA0,ALFA1))
-		          IF (ABS(WI).GT.1.D0) WI = WI/ (ABS(WI)+ABS(1.D0-ABS(WI)))
-		          IF (ABS(WI).LT.U) WI = U*WI* (ABS(WI)+ABS(U-ABS(WI)))/ABS(WI)
-		          IF (ABS(WFN).LT.EPS) GO TO 60
-		   50 CONTINUE
-		C
-		C  THE ITERATION FAILED TO MEET THE TOLERANCE IN 15 ITERATIONS.
-		C  TRY A DIFFERENT VERTEX AS A REFERENCE POINT:
-		      ZZ1 = (1.D0,1.D0) + ZZ
-		      GO TO 70
+		    ZS = ZDSC(WI,0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,NPTQ,QWORK,1);
+		
+		    // 3.SOLVE ODE INITIAL VALUE PROBLEM (ALONG LINE SEGMENT FROM
+		    //   ZS TO ZZ) BY EULER'S SCHEME TO GENERATE THE INITIAL GUESS:
+		    for (K = 1; K <= 20; K++) {
+		    	  wout = WPROD(WI,M,N,U,W0,W1,ALFA0,ALFA1);
+		    	  scm.zmlt(20.0*C[0], 20.0*C[1], wout[0], wout[1], cr, ci);
+		    	  scm.zdiv(ZZ[0]-ZS[0], ZZ[1]-ZS[1], cr[0], ci[0], cr2, ci2);
+		    	  WI[0] = WI[0] + cr2[0];
+		    	  WI[1] = WI[1] + ci2[0];
+		    } // for (K = 1; K <= 20; K++)
+		    abswi = scm.zabs(WI[0], WI[1]);
+		    if (abswi > 1.0) {
+		    	denom = abswi + Math.abs(1.0 - abswi);
+		    	WI[0] = WI[0]/denom;
+		    	WI[1] = WI[1]/denom;
+		    }
+		    if (abswi < U) {
+		        factor = U*(abswi + Math.abs(U - abswi))/abswi;
+		        WI[0] = factor * WI[0];
+		        WI[1] = factor * WI[1];
+		    }
+		
+		    //  4.REFINE THE SOLUTION BY NEWTON'S ITERATION:
+		    for (IT = 1; IT <= 15; IT++) {
+		        zout = ZDSC(WI,0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+		   		             PHI1,NPTQ,QWORK,IOPT);
+		        WFN[0] = ZZ[0] - zout[0];
+		        WFN[1] = ZZ[1] - zout[1];
+		        wout = WPROD(WI,M,N,U,W0,W1,ALFA0,ALFA1);
+		        scm.zmlt(C[0], C[1], wout[0], wout[1], cr, ci);
+		        scm.zdiv(WFN[0], WFN[1], cr[0], ci[0], cr2, ci2);
+		        WI[0] = WI[0] + cr2[0];
+		        WI[1] = WI[1] + ci2[0];
+		        abswi = scm.zabs(WI[0], WI[1]);
+		        if (abswi > 1.0) {
+			    	denom = abswi + Math.abs(1.0 - abswi);
+			    	WI[0] = WI[0]/denom;
+			    	WI[1] = WI[1]/denom;
+			    }
+			    if (abswi < U) {
+			        factor = U*(abswi + Math.abs(U - abswi))/abswi;
+			        WI[0] = factor * WI[0];
+			        WI[1] = factor * WI[1];
+			    }
+		        if (scm.zabs(WFN[0],WFN[1]) < EPS) {
+		        	result[0] = WI[0];
+		        	result[1] = WI[1];
+		        	ZZ1 = ZDSC(WI,0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,NPTQ, QWORK,1);
+		        	break;
+		        }
+		        if (IT == 15) {
+		        	// THE ITERATION FAILED TO MEET THE TOLERANCE IN 15 ITERATIONS.
+		    		// TRY A DIFFERENT VERTEX AS A REFERENCE POINT:
+		        	ZZ1[0] = 1.0 + ZZ[0];
+		        	ZZ1[1] = 1.0 + ZZ[1];	
+		        }
+		    } // for (IT = 1; IT <= 15; IT++)
+		    abswi = scm.zabs(WI[0], WI[1]);
+		    absz = scm.zabs(ZZ[0]-ZZ1[0], ZZ[1]-ZZ1[1]);
+		    if (abswi >= U && abswi <= 1.0 && absz <= 1.0E-3) {
+		        return result;	
+		    }
+		    if (INZ[0] == 0) {
+		        ZS0[KNZ[0]-1][0] = ZZ[0];
+                ZS0[KNZ[0]-1][1] = ZZ[1];
+		    }
+		    else {
+		        ZS1[KNZ[0]-1][0] = ZZ[0];
+		        ZS1[KNZ[0]-1][1] = ZZ[1];
+		    }
 
-		   60 WDSC = WI
-		C
-		C  5.VERIFICATION:
-		      ZZ1 = ZDSC(WI,0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,NPTQ,
-		     +      QWORK,1)
-		   70 IF (ABS(WI).GE.U .AND. ABS(WI).LE.1.D0 .AND.
-		     +    ABS(ZZ-ZZ1).LE.1.D-3) GO TO 90
-		      IF (INZ.EQ.0) THEN
-		          ZS0(KNZ) = ZZ
+		} // while (true)
 
-		      ELSE
-		          ZS1(KNZ) = ZZ
-		      END IF
-
-		} // while (true)*/
-
-		return result;
 	}
 
 
@@ -1741,6 +1960,82 @@ double neweps;
 		} // if (I01 == 1)
 		return;
 	}
+	
+	private double ARGUM(double U1, double W01K[]) {
+	    // ----------------------------
+	    // COMPUTES THE ARGUMENT OF VECTOR W01K (I.E.,A COMPLEX NUMBER)
+	    // WHOSE LENGTH IS U1.
+	    // NOTE: BE SURE THAT THE SPECIFIED VALUE FOR
+	    // U1 MUST BE DOUBLE PRECISION.
+	
+	
+	    // .. Scalar Arguments ..
+	    // DOUBLE COMPLEX W01K
+	    // DOUBLE PRECISION U1
+
+	    // .. Local Scalars ..
+	    double PI,REW;
+	    double result;
+	
+	    PI = Math.PI;
+	    REW = W01K[0];
+	    if (W01K[1] >= 0.0) {
+	    	result = Math.acos(REW/U1);
+	    }
+	    else {
+	    	result = Math.acos(-REW/U1) + PI;
+	    }
+	    return result;
+	}
+
+	
+	private void NEARW(int M,int N, double W0[][], double W1[][],
+			double ALFA0[], double W[],int KNEAR[],int INEAR[]) {
+	    //   --------------------------------------------------
+	    // GIVEN PT W,THIS ROUTINE DETERMINES THE NEAREST PREVERTEX TO
+        // THE PT W.ON RETURN INTEGER'INEAR'INDICATES THAT THE NEAREST
+	    // PT IS FOUND EITHER IN W0(INEAR=0) OR IN W1(INEAR=1).  KNEAR
+	    // CONTAINS THE CORRESPONDING INDEX IN W0 OR 1N W1.
+	    // NOTE: THE PREVERTICES CORRESPONDING TO INFINITE VERTICES
+	    //     WILL BE SKIPPED (OUTER CIRCLE ONLY).
+	    // SEE ROUTINE DSCSOLV FOR THE REST OF THE CALLING SEQUENCE.
+	
+	
+	    // .. Scalar Arguments ..
+	    // DOUBLE COMPLEX W
+	    // INTEGER INEAR,KNEAR,M,N
+
+	    // .. Array Arguments ..
+	    // DOUBLE COMPLEX W0(M),W1(N)
+	    // DOUBLE PRECISION ALFA0(M)
+	
+	    // .. Local Scalars ..
+	    double D,DIST;
+	    int I;
+	
+	    DIST = 2.0;
+	    for (I = 1; I <= M; I++) {
+	        D = scm.zabs(W[0]-W0[I-1][0], W[1]-W0[I-1][1]);
+	        if (D <= 1.0E-11 || D >= DIST ||
+	            ALFA0[I-1] <= 0.0) {
+	        	continue;
+	        }
+	        KNEAR[0] = I;
+	        DIST = D;
+	    } // for (I = 1; I <= M; I++)
+	    INEAR[0] = 0;
+	    for (I = 1; I <= N; I++) {
+	        D = scm.zabs(W[0]-W1[I-1][0], W[1]-W1[I-1][1]);
+	        if (D <= 1.0E-6 || D >= DIST) {
+	        	continue;
+	        }
+	        DIST = D;
+	        KNEAR[0] = I;
+	        INEAR[0] = 1;
+	    } // for (I = 1; I <= N; I++) 
+	    return;
+	}
+
 	
 	private void NEARZ(int M,int N, double Z0[][], double Z1[][],
 			double ALFA0[], double Z[], int KNZ[],int INZ[]) {
