@@ -2231,10 +2231,10 @@ double neweps;
 	 System.out.println(" U = " + U);
 	 System.out.println(" C = (" + C[0] + ", " + C[1] + ")");
      for (K = 0; K < M; K++) {
-    	 System.out.println("W0["+K+"] = (" + W0[K][0] + ", " + W0[K][1] + "   PHI0["+K+"] = " + PHI0[K]);
+    	 System.out.println("W0["+K+"] = (" + W0[K][0] + ", " + W0[K][1] + ")   PHI0["+K+"] = " + PHI0[K]);
      }
      for (K = 0; K < N; K++) {
-    	 System.out.println("W1["+K+"] = (" + W1[K][0] + ", " + W1[K][1] + "   PHI1["+K+"] = " + PHI1[K]);
+    	 System.out.println("W1["+K+"] = (" + W1[K][0] + ", " + W1[K][1] + ")   PHI1["+K+"] = " + PHI1[K]);
      }
 	     
 	 return;
