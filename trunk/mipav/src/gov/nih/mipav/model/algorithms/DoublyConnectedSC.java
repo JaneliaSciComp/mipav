@@ -2290,13 +2290,13 @@ double neweps;
 	    
 	    ERRMAX = 0.0;
 	    ERRMIN = 99.0;
-	    for (K = 0; K < M - 1; K++) {
-	        if (ALFA0[K] <= 0.0) {
+	    for (K = 1; K <= M - 1; K++) {
+	        if (ALFA0[K-1] <= 0.0) {
 	        	continue;
 	        }
 	        DIST = 2.0;
 	        for (I = 1; I <= N; I++) {
-	            D = scm.zabs(W0[K][0]-W1[I-1][0], W0[K][1]-W1[I-1][1]);
+	            D = scm.zabs(W0[K-1][0]-W1[I-1][0], W0[K-1][1]-W1[I-1][1]);
 	            if (D >= DIST) {
 	            	continue;
 	            }
@@ -2307,12 +2307,12 @@ double neweps;
 	            ZC[0] = Z1[I-1][0];
 	            ZC[1] = Z1[I-1][1];
 	        } // for (I = 1; I <= N; I++)
-	        wout = WQUAD(WA,0.0,KWA,1,W0[K],0.0,K,0,0.0,M,N,U,
+	        wout = WQUAD(WA,0.0,KWA,1,W0[K-1],0.0,K,0,0.0,M,N,U,
 	       	                 W0,W1,ALFA0,ALFA1,NPTQ,QWORK,0,1);
 	        scm.zmlt(C[0], C[1], wout[0], wout[1], cr, ci);
 	        ZTEST[0] = ZC[0] + cr[0];
 	        ZTEST[1] = ZC[1] + ci[0];
-	        D1 = scm.zabs(Z0[K][0]-ZTEST[0],Z0[K][1]-ZTEST[1]);
+	        D1 = scm.zabs(Z0[K-1][0]-ZTEST[0],Z0[K-1][1]-ZTEST[1]);
 	        if (D1 > ERRMAX) {
 	            ERRMAX = D1;
 	            KMAX = K;
@@ -2323,7 +2323,7 @@ double neweps;
 	            KMIN = K;
 	        } // if (D1 < ERRMIN)
 
-	    } // for (K = 0; K < M - 1; K++)
+	    } // for (K = 1; K <= M - 1; K++)
 	    System.out.println("ACCURACY TEST: ");
 	    System.out.println("MAXIMUM ERROR = " + ERRMAX + " ACHIEVED AT KMAX = " + KMAX);
 	    System.out.println("MINIMUM ERROR = " + ERRMIN + " ACHIEVED AT KMIN = " + KMIN);
