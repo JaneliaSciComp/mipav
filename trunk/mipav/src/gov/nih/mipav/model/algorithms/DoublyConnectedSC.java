@@ -658,7 +658,7 @@ double neweps;
 	      WSUM[0] = 0.0;
 	      WSUM[1] = 0.0;
 	      for (K = 1; K <= M; K++) {
-	    	  scm.zdiv(W[0], W[1], U*W0[K][0], U*W0[K][1], cr, ci);
+	    	  scm.zdiv(W[0], W[1], U*W0[K-1][0], U*W0[K-1][1], cr, ci);
 	    	  win[0] = cr[0];
 	    	  win[1] = ci[0];
 	    	  wout = WTHETA(U, win);
@@ -668,7 +668,7 @@ double neweps;
 	          WSUM[1] = WSUM[1] + (ALFA0[K-1]-1.0)*WTH[1];
 	      } // for (K = 1; K <= M; K++)
 	      for (K = 1; K <= N; K++) {
-	    	  scm.zdiv(U*W[0], U*W[1], W1[K][0], W1[K][1], cr, ci);
+	    	  scm.zdiv(U*W[0], U*W[1], W1[K-1][0], W1[K-1][1], cr, ci);
 	    	  win[0] = cr[0];
 	    	  win[1] = ci[0];
 	    	  wout = WTHETA(U, win);
