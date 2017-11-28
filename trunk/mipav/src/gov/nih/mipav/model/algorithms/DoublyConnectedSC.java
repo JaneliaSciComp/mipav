@@ -960,7 +960,7 @@ double neweps;
 		   WMIDB[1] = expb * Math.sin(arg);
 		}
 		
-		//   COMPOUND GAUSS-JACOBI PROCESS ACCORDING TO ONE-QUATER RULE:
+		//   COMPOUND GAUSS-JACOBI PROCESS ACCORDING TO ONE-QUARTER RULE:
         WQA1 = WQUAD1(WA,PHIA,KWA,ICA,WMIDA,PHMIDA,RADIUS,M,N,U,W0,W1,
            ALFA0,ALFA1,NPTQ,QWORK,LINEARC);
         WQA2 = WQUAD1(WMID,PHMID,0,2,WMIDA,PHMIDA,RADIUS,M,N,U,W0,W1,ALFA0,
@@ -2287,7 +2287,7 @@ double neweps;
 	
 	    // .. Common blocks ..
 	    // COMMON /PARAM4/UARY,VARY,DLAM,IU
-	
+	    
 	    ERRMAX = 0.0;
 	    ERRMIN = 99.0;
 	    for (K = 0; K < M - 1; K++) {
@@ -2295,18 +2295,18 @@ double neweps;
 	        	continue;
 	        }
 	        DIST = 2.0;
-	        for (I = 0; I < N; I++) {
-	            D = scm.zabs(W0[K][0]-W1[I][0], W0[K][1]-W1[I][1]);
+	        for (I = 1; I <= N; I++) {
+	            D = scm.zabs(W0[K][0]-W1[I-1][0], W0[K][1]-W1[I-1][1]);
 	            if (D >= DIST) {
 	            	continue;
 	            }
 	            DIST = D;
-	            WA[0] = W1[I][0];
-	            WA[1] = W1[I][1];
+	            WA[0] = W1[I-1][0];
+	            WA[1] = W1[I-1][1];
 	            KWA = I;
-	            ZC[0] = Z1[I][0];
-	            ZC[1] = Z1[I][1];
-	        } // for (I = 0; I < N; I++)
+	            ZC[0] = Z1[I-1][0];
+	            ZC[1] = Z1[I-1][1];
+	        } // for (I = 1; I <= N; I++)
 	        wout = WQUAD(WA,0.0,KWA,1,W0[K],0.0,K,0,0.0,M,N,U,
 	       	                 W0,W1,ALFA0,ALFA1,NPTQ,QWORK,0,1);
 	        scm.zmlt(C[0], C[1], wout[0], wout[1], cr, ci);
