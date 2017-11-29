@@ -862,7 +862,6 @@ double neweps;
 		WAA[1] = expb * Math.sin(arg);
 		result = WQSUM(WA,PHIA,KWA,IC,WAA,PHAA,RADIUS,M,N,U,W0,W1,ALFA0,
 		              ALFA1,NPTQ,QWORK,LINEARC);
-		
 		//   STEP2:ADJOIN INTERVALS OF PURE GAUSS QUADRATURE IF NECESSARY:
 		while (R != 1.0) {
 		      R = Math.min(1.0,DIST(M,N,W0,W1,WAA,0,IC)/scm.zabs(WAA[0]-WB[0],WAA[1]-WB[1]));
@@ -2194,7 +2193,7 @@ double neweps;
 		}
 		
 		if (ALFA0[M-2] >= 2.0-EPS) {
-			System.err.println("Z0[M-2] must no be a re-entrant corner");
+			System.err.println("Z0[M-2] must not be a re-entrant corner");
 			System.exit(-1);
 		}
 		
