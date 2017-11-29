@@ -1315,6 +1315,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRenderBase#reCreateScene(gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage)
+	 */
 	public void reCreateScene(VolumeImage image) 
 	{
 		super.reCreateScene(image);

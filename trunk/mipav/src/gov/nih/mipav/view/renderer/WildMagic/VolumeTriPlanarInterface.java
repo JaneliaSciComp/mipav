@@ -1408,6 +1408,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         return raycastRenderWM.getTranslateSurface(kSurfaceName);
     }
     
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#getVOIManager()
+     */
     public VOIManagerInterface getVOIManager()
     {
         return m_kVOIInterface;
@@ -1848,22 +1851,34 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.setGradientMagnitude(bShow);
     }
 
+    /**
+     * Changes the underlying images displayed in the VolumeTriPlanarInteface.
+     * @param kImageA new imageA
+     * @param kImageB new imageB
+     * @param kLUTA new lut for imageA.
+     * @param kLUTB new lut for imageB
+     * @param updateRenderer flag indicating if the image dimensions have changed size. If so recreate the image on the GPU, otherwise just reload the data.
+     */
     public void setImage(ModelImage kImageA, ModelImage kImageB, ModelLUT kLUTA, ModelLUT kLUTB, boolean updateRenderer) {
 		if ( m_kVOIInterface != null )
 		{
+			// update the image with the VOI manager:
 			m_kVOIInterface.setImage(kImageA, kImageB);
 		}
-		
+		// update the image data on the GPU:
 		m_kVolumeImageA.UpdateData(kImageA, kLUTA, updateRenderer);
+		// update positions panel image:
 		positionsPanel.setImage(kImageA);
 		if ( (m_kVolumeImageB != null) && (kImageB != null) )
 		{
 			m_kVolumeImageB.UpdateData(kImageB, kLUTB, updateRenderer);
 		}
+		// update the LUT panel:
 		updateHistoLUTPanels((m_kVolumeImageB != null) && (kImageB != null));
 
 		if ( updateRenderer )
 		{
+			// if the image has different dimensions recreate the GPU scene:
 			raycastRenderWM.resetAxis();
 			raycastRenderWM.reCreateScene(m_kVolumeImageA);
 		}

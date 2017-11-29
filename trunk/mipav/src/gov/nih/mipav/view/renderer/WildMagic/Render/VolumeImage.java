@@ -1317,6 +1317,14 @@ public class VolumeImage implements Serializable {
 	}
 	
 	
+	/**
+	 * Changes the underlying image data and LUT. If the new image data is a different size than
+	 * then previous one, recreate the volume image on the GPU, otherwise just overwrite it with
+	 * the new data.
+	 * @param kImage
+	 * @param kLUT
+	 * @param reload
+	 */
 	public void UpdateData(final ModelImage kImage, ModelLUT kLUT, boolean reload) {
 		if ( kLUT == null )
 		{

@@ -340,4 +340,61 @@ public class OpenCLInfo {
             sb.append("<td colspan=\"").append(span).append("\">").append(value).append("</td>");
         }
     }
+    
+    public static void getMaxMemSize(long inputDeviceType, long[] memSizeArray) {
+        // Obtain the number of platforms
+        int numPlatforms[] = new int[1];
+        clGetPlatformIDs(0, null, numPlatforms);
+
+        System.out.println("Number of platforms: "+numPlatforms[0]);
+
+        // Obtain the platform IDs
+        cl_platform_id platforms[] = new cl_platform_id[numPlatforms[0]];
+        clGetPlatformIDs(platforms.length, platforms, null);
+
+        // platforms
+        for (int i=0; i<platforms.length; i++)
+        {
+            String platformName = OpenCLAlgorithmBase.getString(platforms[i], CL_PLATFORM_NAME);
+
+            // Obtain the number of devices for the current platform
+            int numDevices[] = new int[1];
+            clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 0, null, numDevices);
+
+            System.out.println("Number of devices in platform "+platformName+": "+numDevices[0]);
+
+            cl_device_id devicesArray[] = new cl_device_id[numDevices[0]];
+            clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, numDevices[0], devicesArray, null);
+        }
+    	
+        // devices
+        for (int i=0; i<platforms.length; i++)
+        {
+            String platformName = OpenCLAlgorithmBase.getString(platforms[i], CL_PLATFORM_NAME);
+
+            // Obtain the number of devices for the current platform
+            int numDevices[] = new int[1];
+            clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 0, null, numDevices);
+
+            System.out.println("Number of devices in platform "+platformName+": "+numDevices[0]);
+
+            cl_device_id devicesArray[] = new cl_device_id[numDevices[0]];
+            clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, numDevices[0], devicesArray, null);
+            
+            for ( int d = 0; d < devicesArray.length; d++ )
+            {
+            	cl_device_id device = devicesArray[d];
+            	// CL_DEVICE_TYPE
+            	long deviceType = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_TYPE);
+            	if ( deviceType == inputDeviceType)            		
+            	{            	
+            		// CL_DEVICE_MAX_MEM_ALLOC_SIZE
+                	memSizeArray[0] = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
+
+                	// CL_DEVICE_GLOBAL_MEM_SIZE
+                	memSizeArray[1] = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_GLOBAL_MEM_SIZE);
+            	}
+            }
+        }
+    }
 }

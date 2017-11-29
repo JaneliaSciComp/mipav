@@ -22,9 +22,12 @@ This software may NOT be used for diagnostic purposes.
 
  ******************************************************************
  ******************************************************************/
+import static org.jocl.CL.*;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
+import gov.nih.mipav.model.algorithms.OpenCLInfo;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -75,6 +78,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+
+import org.jocl.Sizeof;
 
 
 public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, AlgorithmInterface, WindowListener, AnnotationListener, TableModelListener, ListSelectionListener {
@@ -832,6 +837,26 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				// If images are opened as a hyperstack, open all images and save in an array:
 				if ( imageStackA == null )
 				{
+					// count images to make sure all exist:
+					for ( int i = includeRange.size() - 1; i >= 0; i-- )
+					{	
+						String imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
+						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
+						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
+						File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+
+						if ( !voiFile.exists() )
+						{
+							includeRange.remove(i);
+						}
+					}
+					if ( includeRange.size() == 0 )
+					{
+						MipavUtil.displayError("No images available, check file path");
+						return;
+					}
+					
+					
 					imageStackA = new ModelImage[includeRange.size()];
 					imageStackB = new ModelImage[includeRange.size()];
 					lutStackA = new ModelLUT[includeRange.size()];
@@ -851,6 +876,14 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 						File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 						File voiFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 
+						long memoryInUse = 0;
+						if ( i == 0 )
+						{
+							// check memory usage:
+							System.gc();
+							memoryInUse = MipavUtil.getUsedHeapMemory();
+						}
+						
 						if ( voiFile.exists() )
 						{
 							imageStackA[i] = openImage(voiFile, imageName);
@@ -876,7 +909,62 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 								imageStackB[i] = openImage(voiFile2, imageName);
 							}
 						}
-						
+						// Add memory check here:
+						if ( i == 0 )
+						{
+							int sizeA = 0;
+							int sizeB = 0;
+							if ( imageStackA[i] != null ) {
+								sizeA = imageStackA[i].getDataSize();
+							}
+							if ( imageStackB[i] != null ) {
+								sizeB = imageStackB[i].getDataSize();
+							}
+							if ( !checkGPUMemory(sizeA, sizeB, includeRange.size()) )
+							{
+								MipavUtil.displayError("Image size too big to load on GPU.");
+						        progressBar.setVisible(false);
+						        progressBar.dispose();
+						        progressBar = null;
+								if ( imageA != null )
+								{
+									imageA.disposeLocal();
+									imageA = null;
+								}
+								if ( imageB != null )
+								{
+									imageB.disposeLocal();
+									imageB = null;
+								}
+								return;
+							}
+
+							System.gc();
+							long memoryInUse2 = MipavUtil.getUsedHeapMemory();
+							long imagesMemory = memoryInUse2 - memoryInUse;
+
+					        final long totalMemory = MipavUtil.getMaxHeapMemory();
+					        final long memoryFree = totalMemory-memoryInUse2;
+					        System.err.println( "image memory use: " + (imagesMemory / 1048576) + "M" );
+							if ( (imagesMemory * includeRange.size()) > memoryFree )
+							{
+								MipavUtil.displayError("Too many images, please load shorter sequence");
+						        progressBar.setVisible(false);
+						        progressBar.dispose();
+						        progressBar = null;
+								if ( imageA != null )
+								{
+									imageA.disposeLocal();
+									imageA = null;
+								}
+								if ( imageB != null )
+								{
+									imageB.disposeLocal();
+									imageB = null;
+								}
+								return;
+							}
+						}
 				        progressBar.updateValueImmed(i);
 					}
 
@@ -1022,13 +1110,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		{
 			return;
 		}
-		if ( (triVolume != null) && (triVolume.getVOIManager() != null)  )
-		{
-			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
-			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
-			((VOILatticeManagerInterface)triVolume.getVOIManager()).saveAnnotationsAsCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator,
-					"tracked_annotations.csv");
-		}
+		String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
+		String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+		LatticeModel.saveAnnotationsAsCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator,
+				"tracked_annotations.csv", savedAnnotations);
+
+
 		// close the worm data:
 		wormData.dispose();
 	}
@@ -1081,5 +1168,19 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		imageIndex = 0;
 
 		return (includeRange != null);
+	}
+	
+	private boolean checkGPUMemory(int sizeA, int sizeB, int numImages) {	
+		long[] maxMemSizeArray = new long[2];
+		
+		OpenCLInfo.getMaxMemSize(CL_DEVICE_TYPE_GPU, maxMemSizeArray);
+		long memoryUsed = sizeA * 4 + sizeB * 4;	
+		long maxAllocSize = maxMemSizeArray[0];
+		long totalMemSize = maxMemSizeArray[1];
+		if ( (sizeA > (maxAllocSize / (Sizeof.cl_float))) || (sizeB > (maxAllocSize / (Sizeof.cl_float))) || (memoryUsed >= (totalMemSize / Sizeof.cl_float)) )
+		{
+			return false;
+		}
+		return true;
 	}
 }
