@@ -3118,14 +3118,15 @@ double neweps;
 		
 		// ALFA0(M), ALFA1(N), QWORK(1660)
 		double ALPHA;
-		int INODES, ISCR, IWTS, J, K;
+		int INODES, IWTS, J, K;
+		// int ISCR;
 		int i;
 		// B is used for input scratch array, T  for nodes output and W for weights output
 		double B[] = new double[NPTQ];
 		double T[] = new double[NPTQ];
 		double W[] = new double[NPTQ];
 		
-		ISCR = NPTQ * (2 * (M+N) + 2) + 1;
+		//ISCR = NPTQ * (2 * (M+N) + 2) + 1;
 		for (K = 1; K <= M + N; K++) {
 		    INODES = NPTQ * (K-1) + 1;
 		    IWTS = NPTQ * (M+N+K) + 1;
