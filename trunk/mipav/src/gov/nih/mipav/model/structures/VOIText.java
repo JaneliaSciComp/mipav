@@ -355,6 +355,11 @@ public class VOIText extends VOIBase {
     	this.useMarker = mark;
     }
     
+    /**
+     * Turns the display setting on/off for the 
+     * VolumeVOI displayed in the volume renderer.
+     * @param show
+     */
     public void display( boolean show ) {
     	this.display = show;
     	if ( m_kVolumeVOI != null )

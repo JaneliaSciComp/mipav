@@ -294,6 +294,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 
+	/**
+	 * Adds an annotation listener to the latticeModel.
+	 * @param listener
+	 */
 	public void addAnnotationListener( AnnotationListener listener ) {
 
 		if ( latticeModel == null )
@@ -303,6 +307,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		latticeModel.addAnnotationListener(listener);
 	}
 	
+	/**
+	 * Enable editing annotations in either 3D or 2D windows with the mouse.
+	 * @param automaticLabels if true the labels are created with numbers only (no leading 'A' for annotation).
+	 */
 	public void editAnnotations( boolean automaticLabels )
 	{
 		mouse3D = false;
@@ -311,6 +319,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		doAutomaticLabels = automaticLabels;
 	}
 	
+	/**
+	 * Returns the automatic labels flag.
+	 * @return
+	 */
 	public boolean doAutomaticLabels()
 	{
 		return doAutomaticLabels;
@@ -486,6 +498,11 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 	
+	/**
+	 * Set the new imageA and imageB for creating VOIs.
+	 * @param imageA
+	 * @param imageB
+	 */
 	public void setImage( ModelImage imageA, ModelImage imageB )
 	{
 		m_kImageA = imageA;
@@ -578,14 +595,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}
 	}
 	
-	public void saveAnnotationsAsCSV( final String dir, final String fileName ) {
-		if ( latticeModel != null )
-		{
-			latticeModel.saveAnnotationsAsCSV(dir, fileName);
-		}
-	}
-	
-	
+	/**
+	 * Add an annotation to the latticeModel.
+	 * @param textVOI new annotation.
+	 */
 	public void addAnnotation( VOI textVOI )
 	{       
 		if ( latticeModel == null )
@@ -618,6 +631,10 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		latticeModel.displayAnnotation(name, display);
 	}
 	
+	/**
+	 * Returns list of annotations from lattice model.
+	 * @return latticeModel annotations.
+	 */
 	public VOI getAnnotations()
 	{
 		if ( latticeModel == null )

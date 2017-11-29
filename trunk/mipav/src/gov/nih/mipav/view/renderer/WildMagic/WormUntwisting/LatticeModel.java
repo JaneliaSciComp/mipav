@@ -101,6 +101,11 @@ public class LatticeModel {
 
 	} // end saveAllVOIsTo()
 
+	/**
+	 * Saves the current annotations.
+	 * @param dir
+	 * @param fileName
+	 */
 	public void saveAnnotationsAsCSV(final String dir, final String fileName)
 	{
 		saveAnnotationsAsCSV(dir, fileName, annotationVOIs);
@@ -108,29 +113,33 @@ public class LatticeModel {
 	
 
 	/**
+	 * Saves the input annotations to the CSV file in the following format:
+	 * name,x,y,z
+	 * @param dir
+	 * @param fileName
+	 * @param annotations
 	 */
 	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations)
 	{
-		if ( annotations == null )
-			return;
-		if ( annotations.getCurves().size() == 0 )
-			return;
-		
+		// check files, create new directories and delete any existing files:
 		final File fileDir = new File(dir);
 
 		if (fileDir.exists() && fileDir.isDirectory()) {} 
 		else if (fileDir.exists() && !fileDir.isDirectory()) { // voiFileDir.delete();
 		} else { // voiFileDir does not exist
-//			System.err.println( "saveAnnotationsAsCSV " + dir);
 			fileDir.mkdir();
 		}
-
-
 		File file = new File(fileDir + File.separator + fileName);
 		if (file.exists()) {
 			file.delete();
 			file = new File(fileDir + File.separator + fileName);
 		}
+		
+		
+		if ( annotations == null )
+			return;
+		if ( annotations.getCurves().size() == 0 )
+			return;
 
 		try {
 
@@ -152,6 +161,11 @@ public class LatticeModel {
 
 	}
 	
+	/**
+	 * Read a list of annotations from a CSV file: name,x,y,z,radius (optional)
+	 * @param fileName
+	 * @return VOI containing list of annotations.
+	 */
 	public static VOI readAnnotationsCSV( String fileName )
 	{
 		File file = new File(fileName);
@@ -373,6 +387,11 @@ public class LatticeModel {
 		updateLattice(true);
 	}
 
+	/**
+	 * Adds an annotation listener. The annotation listeners are updated when
+	 * the annotations change in any way.
+	 * @param listener
+	 */
 	public void addAnnotationListener( AnnotationListener listener )
 	{
 		if ( annotationListeners == null ) {
@@ -381,6 +400,11 @@ public class LatticeModel {
 		annotationListeners.add(listener);
 	}
 	
+	/**
+	 * Updates the list of listeners that the annotations have
+	 * changed. This is how the latticeModel communicates changes
+	 * to the different plugins that display lists of annotations, etc.
+	 */
 	private void updateAnnotationListeners() {
 		if ( annotationListeners != null ) {
 			for ( int i = 0; i < annotationListeners.size(); i++ ) {
@@ -390,7 +414,7 @@ public class LatticeModel {
 	}
 
 	/**
-	 * Add an annotation to the worm image.
+	 * Add an annotation to the annotation list.
 	 * 
 	 * @param textVOI
 	 */
@@ -409,6 +433,7 @@ public class LatticeModel {
 		annotationVOIs.getCurves().add(text);
 		annotationVOIs.setColor(c);
 
+		// checks if the annotation is the worm nose or the origin position:
 		if (text.getText().equalsIgnoreCase("nose") || text.getText().equalsIgnoreCase("origin")) {
 			if (wormOrigin == null) {
 				wormOrigin = new Vector3f(text.elementAt(0));
@@ -416,7 +441,9 @@ public class LatticeModel {
 				wormOrigin.copy(text.elementAt(0));
 			}
 		}
+		// set the annotation colors, if necessary
 		colorAnnotations();
+		// update the annotation listeners to changes:
 		updateAnnotationListeners();
 	}
 	
@@ -764,8 +791,8 @@ public class LatticeModel {
 	}
 
 	/**
-	 * Returns the currently selected lattice point.
-	 * 
+	 * Returns the currently selected point, either on the lattice or from the
+	 * annotation list. 
 	 * @return
 	 */
 	public Vector3f getPicked() {
@@ -1498,6 +1525,10 @@ public class LatticeModel {
 		updateAnnotationListeners();
 	}
 
+	/**
+	 * Change the underlying image for the latticeModel. Update the output directories.
+	 * @param image
+	 */
 	public void setImage(ModelImage image)
 	{
 		imageA = image;
@@ -2364,6 +2395,12 @@ public class LatticeModel {
 		colorAnnotations = setColor;
 	}
 	
+	/**
+	 * Counts the annotations and colors them
+	 * based on the number of annotations. This is only used
+	 * when the user is labeling seam-cells as an aid in determining if 20
+	 * pairs of seam cells have been found.
+	 */
 	private void colorAnnotations()
 	{
 		// count markers (not nose or origin)
@@ -7819,6 +7856,11 @@ public class LatticeModel {
 			distanceImage = null;
 		}
 
+		if ( contourImage != null ) {
+			contourImage.disposeLocal(false);
+			contourImage = null;
+		}
+		
 		sourceImage.disposeLocal(false);
 		sourceImage = null;
 	}
