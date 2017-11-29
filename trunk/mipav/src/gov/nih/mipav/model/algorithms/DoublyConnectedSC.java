@@ -2556,7 +2556,6 @@ double neweps;
 				if (FCN == dscfun) {
 					DSCFUN(N, X, FVEC, IFLAG);
 				}
-				return;
 			} // if (NPRINT > 0)
 			return;
 		}
@@ -2590,7 +2589,7 @@ double neweps;
 				}
 			} // if (NPRINT > 0)
         	return;
-		} // if (IFLAG[0] < 0)
+		} // if (IFLAG[0] < 0
 		FNORM = ENORM(N,FVEC);
 		
 		// DETERMINE THE NUMBER OF CALLS TO FCN NEEDED TO COMPUTE
@@ -3089,9 +3088,9 @@ double neweps;
 	              ratio = SGNORM/DELTA;
 	              ratio2 = TEMP - (DELTA/QNORM);
 	              ratio3 = DELTA/QNORM;
-	              TEMP = TEMP - (DELTA/QNORM)* ratio*ratio +
+	              TEMP = TEMP - ratio3* ratio*ratio +
 	                  Math.sqrt(ratio2*ratio2+(ONE- ratio3*ratio3)* (ONE- ratio*ratio));
-	              ALPHA = ((DELTA/QNORM)* (ONE- ratio*ratio))/TEMP;
+	              ALPHA = (ratio3 * (ONE- ratio*ratio))/TEMP;
 	          } // if  (SGNORM < DELTA)
 	      } // if (GNORM != ZERO)
 	
