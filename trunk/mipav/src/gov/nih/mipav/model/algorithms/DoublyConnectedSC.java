@@ -1388,7 +1388,7 @@ double neweps;
 		if (ISHAPE != 0) {
 			NSHAPE = 1;
 			for (I = 2; I <= M-1; I++) {
-			    if (ALFA0[I-1] >= 0.0) {
+			    if (ALFA0[I-1] > 0.0) {
 			    	continue;
 			    }
 			    NSHAPE = NSHAPE + 1;
@@ -3864,14 +3864,14 @@ double neweps;
 	            	  ratio = X3MAX/XABS;
 	                  S3 = ONE + S3* ratio * ratio;
 	                  X3MAX = XABS;
-	          }
-	          else {
-	              if (XABS != ZERO) {
-	            	  ratio = XABS/X3MAX;
-	            	  S3 = S3 + ratio * ratio;
-	              }
-	          }
-	          continue;
+		          }
+		          else {
+		              if (XABS != ZERO) {
+		            	  ratio = XABS/X3MAX;
+		            	  S3 = S3 + ratio * ratio;
+		              }
+		          }
+	              continue;
 
 	          } // if (XABS <= RDWARF || XABS >= AGIANT)
 	
@@ -4357,7 +4357,7 @@ double neweps;
 	        } // if (AJNORM != 0)
 	        RDIAG[J-1] = -AJNORM;
 	    } // for (J = 1; J <= MINMN; J++)
-	      return;
+	    return;
 	}
 
 
