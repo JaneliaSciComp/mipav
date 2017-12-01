@@ -2706,7 +2706,7 @@ double neweps;
 		
 		         if  (NPRINT > 0) {
 		             IFLAG[0] = 0;
-		             if ((ITER-1%NPRINT) == 0) {
+		             if (((ITER-1)%NPRINT) == 0) {
 		            	 if (FCN == dscfun) {
 		            	     DSCFUN(N,X,FVEC,IFLAG);
 		            	 }
