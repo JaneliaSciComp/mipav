@@ -6,18 +6,15 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
-
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-
-
 import java.util.*;
+
 import javax.swing.*;
 
 public class JDialogGenerateEndingSlices extends JDialogBase implements
@@ -157,7 +154,7 @@ public class JDialogGenerateEndingSlices extends JDialogBase implements
 			// MipavUtil.showHelp("Haral1001");
 		} else if (command.equals("ChooseKeyImageDir")) {	
 			readKeyImageDir();
-			sortKeyImage();
+			// sortKeyImage();
 		} else if (command.equals("ChooseSaveImageDir")) {
             recordSaveImageDir();
 		}
@@ -188,6 +185,7 @@ public class JDialogGenerateEndingSlices extends JDialogBase implements
 			
 		
 	private void readKeyImageDir() {
+		/*
 		String keyImageName;
 		keyImageChooser.setDialogTitle("Open Key Images Directory");
 		keyImageChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -211,7 +209,92 @@ public class JDialogGenerateEndingSlices extends JDialogBase implements
 		} else {
 			return;
 		}
+		*/
+		File fileDir_80 = new File("/scratch/ProstateNewData/");
+		traverse_80(fileDir_80);
+		File fileDir_100 = new File("/scratch/LFF100backup/");
+		traverse_100(fileDir_100);
+		File fileDir_50 = new File("/scratch/50_test_cases");
+		traverse_100(fileDir_50);
+	    File fileDir_60 = new File("/scratch/60_prostate_sets");
+		traverse_100(fileDir_60);
 	}
+	
+	private void traverse_80(File dir) {
+		processDir_80(dir);
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			for (int i = 0; i < children.length; i++) {
+				traverse_80(new File(dir, children[i]));
+			}
+		}
+
+	}
+
+	private void processDir_80(File dir) {
+		String dirName = dir.toString();
+		// System.err.println("dirName = " + dirName);
+		int begin = dirName.lastIndexOf(File.separator) + 1;
+		int end = dirName.length();
+		
+		if (dirName.substring(begin, end).startsWith("image")
+				&& dirName.substring(begin, end).endsWith(".xml")) {
+			System.err.println(dir.toString());
+			keyImageVector.add(dir.toString());
+
+		}
+
+		if (dirName.substring(begin, end).startsWith("voi")
+				&& dirName.substring(begin, end).endsWith(".xml")) {
+			System.err.println(dir.toString());
+			keyImageVOIVector.add(dir.toString());
+		}
+
+	}
+
+	private void traverse_100(File dir) {
+		processDir_100(dir);
+
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			for (int i = 0; i < children.length; i++) {
+				traverse_100(new File(dir, children[i]));
+			}
+		}
+
+	}
+
+	private void processDir_100(File dir) {
+		String dirName = dir.toString();
+		int begin = dirName.lastIndexOf(File.separator) + 1;
+		int end = dirName.length();
+		
+		String axisString = "";
+		if ( axis == Axial ) {
+			axisString = "ax";
+		} else if ( axis == Saggital ) {
+			axisString = "sag";
+		} else if ( axis == Coronal ) {
+			axisString = "cor";
+		}
+		
+		if (dirName.substring(begin, end).startsWith("img")
+				&& dirName.substring(begin, end).endsWith(".xml")
+				&& dirName.contains(axisString)) {
+			System.err.println(dir.toString());
+			keyImageVector.add(dir.toString());
+
+		}
+
+		if (dirName.substring(begin, end).startsWith("voi")
+				&& dirName.substring(begin, end).endsWith(".xml")
+				&& dirName.contains(axisString)) {
+			System.err.println(dir.toString());
+			keyImageVOIVector.add(dir.toString());
+		}
+
+	}
+
 	
 	public void sortKeyImage() {
 		// keyImageVector;
@@ -225,7 +308,7 @@ public class JDialogGenerateEndingSlices extends JDialogBase implements
 		Hashtable<Integer, String> imageVOITable = new Hashtable<Integer, String>();
 	    int index;
 		
-		for ( i = 0; i < len; i++) {
+		for ( i = 0; i < 288; i++) {
 			imageName = keyImageVector.get(i);
 			voiName = keyImageVOIVector.get(i);
 			start = imageName.lastIndexOf("_");
@@ -237,7 +320,7 @@ public class JDialogGenerateEndingSlices extends JDialogBase implements
 	
 		keyImageVector.clear();
 		keyImageVOIVector.clear();
-		for ( i = 0; i <= 100; i++ ) {
+		for ( i = 0; i < 288; i++ ) {
 			imageName = imageNameTable.get(i+1);
 			voiName = imageVOITable.get(i+1);
 			if ( imageName != null ) {
@@ -377,7 +460,7 @@ public class JDialogGenerateEndingSlices extends JDialogBase implements
 					newExtents[1] = yDim;
 					
 					VOIVector targetImageVOI = cropKeyImage.getVOIs();
-					new ViewJFrameImage(cropKeyImage);
+					// new ViewJFrameImage(cropKeyImage);
 					
 					int j = 12;
 					int startSlice, endSlice;

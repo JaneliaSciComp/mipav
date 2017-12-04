@@ -169,12 +169,16 @@ public class JDialogAAMClassification extends JDialogBase implements
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("ChooseModel")) {
+			try {
 			System.err.println("start read image dir");
 			readKeyImageDir();
 			readEndingSlicesDir();
 			System.err.println("start read images");
 			readSampleImages();
 			readEndingSlice();
+			} catch ( Exception e ) {
+				e.printStackTrace();
+			}
 			System.err.println("finish read sample images");
 		} else if (command.equals("ChooseTargetImage")) {
 			readTargetImage();
@@ -402,7 +406,7 @@ public class JDialogAAMClassification extends JDialogBase implements
 
 		long startTime = System.currentTimeMillis();
 		cropTargetImage();
-		checkEndSlices();
+		// checkEndSlices();
 
 		segmentationAuto();
 		evaluateShapeDescriptor();
@@ -1054,13 +1058,16 @@ public class JDialogAAMClassification extends JDialogBase implements
 		int size = extents[0] * extents[1];
 		float[] buffer = new float[size];
 
+	
 		if (startSlice <= 3)
 			startSlice = 3;
 		if (endSlice >= 20)
 			endSlice = 20;
-
-		// startSlice = 12;
-		// endSlice = 12;
+        
+		if ( endSlice >= extents[2]-1 ) {
+			endSlice = extents[2]-1;
+		}
+		
 		
 		for (int i = startSlice; i <= endSlice; i++) {
 
@@ -1567,7 +1574,7 @@ public class JDialogAAMClassification extends JDialogBase implements
 	 * base.
 	 */
 	private void readEndingSlicesDir() {
-		String endSliceModelDir = "C:/endSlices/Slice12" + File.separator;
+		String endSliceModelDir = "/scratch/endSlices/slice12" + File.separator;
 		processingEndSliceData(endSliceModelDir);
 	}
 

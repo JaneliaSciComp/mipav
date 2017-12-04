@@ -1,4 +1,4 @@
-package gov.nih.mipav.view.renderer.WildMagic.ProstateFramework;
+package gov.nih.mipav.view.renderer.WildMagic.Knees;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
@@ -15,20 +15,29 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
+
 /**
- * This class convert the 3D images to 2D slices based atlas. Users specify the
- * 3D prostate images dir, and output 2D slices based dir, the algorithm auto
- * convert each 3D image to 2D slices with corresponding VOIs. Each saved VOIs
- * is 2-contour based VOI, which is used to build the Active Appearance Model
- * (AAM).
+ * 
+ * Generate the 2D 32x32 patches for both training and testing cased.  
+ * 
+ *  1) AAM generates the initial contours. 
+ *  2) Alone each normal line of the contour point, extract 32x32 patches for both training and testing cases 
+ * 
+ * --------------------------------------------------------
+ * No longer need it.  Just for backup purpose now. 
+ * --------------------------------------------------------
  * 
  * @author Ruida Cheng
  * 
+ * 
  */
-public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
+public class JDialogLearnFromFailure64Knees extends JDialogBase
 		implements AlgorithmInterface {
 
 	private static final long serialVersionUID = -7360089445417194259L;
@@ -76,7 +85,7 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 	private static int Axial = 0;
 	private static int Saggital = 1;
 	private static int Coronal = 2;
-	private int axis = Axial;
+	private int axis = Saggital;
 
 	/** image vector to hold the image names. */
 	private Vector<String> keyImageVector = new Vector<String>();
@@ -86,6 +95,8 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 
 	/** voi vector to hold the VOI names. */
 	private Vector<String> keyImageVOIVector = new Vector<String>();
+	
+	private Vector<String> keyImageVOIVectorAAM = new Vector<String>();
 
 	/** voi vector to hold the actual vois. */
 	private Vector<VOI[]> keyImageVOIs = new Vector<VOI[]>();
@@ -100,12 +111,14 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 	private JFileChooser saveImageChooser = new JFileChooser();
 	private String saveImageDirectory;
 
+
+	
 	/**
 	 * Constructor.
 	 * 
 	 * @param theParentFrame
 	 */
-	public JDialogProstate2DSlicesAtlasConverter(Frame theParentFrame) {
+	public JDialogLearnFromFailure64Knees(Frame theParentFrame) {
 		super(theParentFrame, false);
 		UI = ViewUserInterface.getReference();
 		init();
@@ -161,11 +174,10 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("Help")) {
-			// MipavUtil.showHelp("Haral1001");
+	
 		} else if (command.equals("ChooseKeyImageDir")) {
 			readKeyImageDir();
-			// printImages();
-			// sortKeyImage();
+			printImages();
 		} else if (command.equals("ChooseSaveImageDir")) {
 			recordSaveImageDir();
 		}
@@ -190,6 +202,7 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 					+ File.separatorChar
 					+ saveImageName + File.separatorChar;
 			textFieldSaveImage.setText(saveImageDirectory);
+			System.err.println("saveImageDirectory = " + saveImageDirectory);
 
 		} else {
 			return;
@@ -200,7 +213,6 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 	 * Read 3D images atlas directory.
 	 */
 	private void readKeyImageDir() {
-		/*
 		String keyImageName;
 		keyImageChooser.setDialogTitle("Open Key Images Directory");
 		keyImageChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -219,24 +231,32 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 			textFieldKeyImage.setText(keyImageDirectory);
 
 			File fileDir = new File(keyImageDirectory);
-			System.err.println("check = " + keyImageDirectory);
 			traverse(fileDir);
+			
 		} else {
 			return;
 		}
-        */
-	
-		File fileDir_80 = new File("/scratch/ProstateNewData/");
-		traverse_80(fileDir_80);
-		File fileDir_100 = new File("/scratch/LFF100backup/");
-		traverse_100(fileDir_100);
-		File fileDir_50 = new File("/scratch/50_test_cases");
-		traverse_100(fileDir_50);
-	    File fileDir_60 = new File("/scratch/60_prostate_sets");
-		traverse_100(fileDir_60);
-		
+
 	}
 
+	/**
+	 * Recursively traverse the image directory.
+	 * 
+	 * @param dir
+	 *            image dir.
+	 */
+	private void traverse(File dir) {
+		processDir(dir);
+
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			for (int i = 0; i < children.length; i++) {
+				traverse(new File(dir, children[i]));
+			}
+		}
+
+	}
+	
 	/**
 	 * Debugger for test the image and VOis reading.
 	 */
@@ -248,135 +268,27 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 		}
 	}
 
-	public void sortKeyImage() {
-		int i;
-		int len = keyImageVector.size();
-		String imageName;
-		String voiName;
-		int start, end;
-		Hashtable<Integer, String> imageNameTable = new Hashtable<Integer, String>();
-		Hashtable<Integer, String> imageVOITable = new Hashtable<Integer, String>();
-		int index;
-
-		for (i = 0; i < len; i++) {
-			imageName = keyImageVector.get(i);
-			voiName = keyImageVOIVector.get(i);
-			start = imageName.lastIndexOf("_");
-			end = imageName.lastIndexOf(".");
-			index = Integer.valueOf(imageName.substring(start + 1, end));
-			imageNameTable.put(index, imageName);
-			imageVOITable.put(index, voiName);
-		}
-
-		keyImageVector.clear();
-		keyImageVOIVector.clear();
-		for (i = 0; i <= 80; i++) {
-			imageName = imageNameTable.get(i + 1);
-			voiName = imageVOITable.get(i + 1);
-			if (imageName != null) {
-				keyImageVector.add(imageName);
-				keyImageVOIVector.add(voiName);
-			}
-		}
-
-		// test for printing
-		i = 0;
-		for (String entry : keyImageVector) {
-			System.err.println(i + " = " + entry);
-			i++;
-		}
-		System.err.println("VOI:");
-		i = 0;
-		for (String entry : keyImageVOIVector) {
-			System.err.println(i + " = " + entry);
-			i++;
-		}
-
-	}
-
 	/**
-	 * Recursively traverse the image directory.
+	 * Process the dir, read image and corresponding VOI file names.
 	 * 
 	 * @param dir
-	 *            image dir.
+	 *            3D atlas image dir.
 	 */
-	
-	private void traverse_80(File dir) {
-		processDir_80(dir);
-		if (dir.isDirectory()) {
-			String[] children = dir.list();
-			for (int i = 0; i < children.length; i++) {
-				traverse_80(new File(dir, children[i]));
-			}
-		}
-
-	}
-
-	private void processDir_80(File dir) {
+	private void processDir(File dir) {
 		String dirName = dir.toString();
-		// System.err.println("dirName = " + dirName);
 		int begin = dirName.lastIndexOf(File.separator) + 1;
 		int end = dirName.length();
 		
-		if (dirName.substring(begin, end).startsWith("image")
-				&& dirName.substring(begin, end).endsWith(".xml")) {
-			System.err.println(dir.toString());
+		if ( dirName.contains("GRE") && dirName.substring(begin, end).endsWith(".xml") ) {
 			keyImageVector.add(dir.toString());
-
 		}
 
-		if (dirName.substring(begin, end).startsWith("voi")
-				&& dirName.substring(begin, end).endsWith(".xml")) {
-			System.err.println(dir.toString());
+		if ( dirName.contains("fem_static")  && dirName.substring(begin, end).endsWith(".xml") ) {
 			keyImageVOIVector.add(dir.toString());
 		}
 
 	}
 
-	private void traverse_100(File dir) {
-		processDir_100(dir);
-
-		if (dir.isDirectory()) {
-			String[] children = dir.list();
-			for (int i = 0; i < children.length; i++) {
-				traverse_100(new File(dir, children[i]));
-			}
-		}
-
-	}
-
-	private void processDir_100(File dir) {
-		String dirName = dir.toString();
-		int begin = dirName.lastIndexOf(File.separator) + 1;
-		int end = dirName.length();
-		
-		String axisString = "";
-		if ( axis == Axial ) {
-			axisString = "ax";
-		} else if ( axis == Saggital ) {
-			axisString = "sag";
-		} else if ( axis == Coronal ) {
-			axisString = "cor";
-		}
-		
-		if (dirName.substring(begin, end).startsWith("img")
-				&& dirName.substring(begin, end).endsWith(".xml")
-				&& dirName.contains(axisString)) {
-			System.err.println(dir.toString());
-			keyImageVector.add(dir.toString());
-
-		}
-
-		if (dirName.substring(begin, end).startsWith("voi")
-				&& dirName.substring(begin, end).endsWith(".xml")
-				&& dirName.contains(axisString)) {
-			System.err.println(dir.toString());
-			keyImageVOIVector.add(dir.toString());
-		}
-
-	}
-
-	
 	/**
 	 * This method is required if the AlgorithmPerformed interface is
 	 * implemented. It is called by the algorithms when it has completed or
@@ -388,22 +300,6 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 
-		if (algorithm instanceof AlgorithmAddMargins) {
-
-			if ((cropAlgo.isCompleted() == true) && (cropImage != null)) {
-				/*
-				 * try { new ViewJFrameImage(cropImage, null, new Dimension(610,
-				 * 200)); } catch (OutOfMemoryError error) { MipavUtil
-				 * .displayError("Out of memory: unable to open new frame"); }
-				 */
-				// cropAlgo.finalize();
-				// cropAlgo = null;
-
-			}
-		}
-
-		dispose();
-		System.gc();
 	}
 
 	/**
@@ -415,14 +311,14 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 
 		loadFiles();
 
-		//cropKeyImages();
+	    createTrainingPatches();
+		
+		createTestingPatches();
+		
+		// disposeLocal();
 
-		System.err.println("saveImage");
-		// saveImages();
-
-		saveTestedImages();
-		disposeLocal();
-
+		setVisible(false);
+		
 		long endTime = System.currentTimeMillis();
 		int min = (int) ((endTime - startTime) / 1000f / 60f);
 		int sec = (int) ((endTime - startTime) / 1000f % 60f);
@@ -432,188 +328,472 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 
 	}
 
-	public void saveTestedImages() {
-		int index;
-
-		System.err.println("keyImageVector.size() = " + keyImageVector.size());
+	
+	public void createTestingPatches() {
+		
+		String imgName = "patchCoordinate.txt";
 		
 		try {
-			// read key images and VOIs
-			// for (int i = 0; i < keyImageVector.size(); i++) {
-			// int start = 233;
-			// int end = keyImageVector.size();
 			
-			int start = 151;
-			int end = 200;
-			
-			// end = 200;
-			int currentIndex = 0;
-			for (int imageIndex = start; imageIndex < end; imageIndex++) {
-				// read key image
-				
-				ModelImage targetImageSlice = keyImages.get(imageIndex);
-				VOI voiNew = targetImageSlice.getVOIs().elementAt(0);
-				// 1) save image
-				String sliceDir = saveImageDirectory;
-				File sliceDirFile = new File(sliceDir);
-				if (!sliceDirFile.isDirectory())
-					sliceDirFile.mkdir();
-				sliceDir += File.separator;
-				File dir = new File(sliceDir);
-				if (!dir.isDirectory()) {
-					dir.mkdir();
-				}
-				String imgName = "image" + currentIndex + ".xml";
-				// String imageFileToSave = sliceDir +
-				// File.separator + imgName;
-				// targetImageSlice.saveImage(directory,
-				// fileName,
-				// fileType, isActive, bDisplayProgress)
-				targetImageSlice.saveImage(sliceDir, imgName, FileUtility.XML, false);
-				
-				// 2) save VOI
-				FileVOI fileVOI = new FileVOI("voi" + currentIndex + ".xml", sliceDir, targetImageSlice);
-				fileVOI.writeVOI(voiNew, true);
-
-				currentIndex++;
+			File dir = new File(saveImageDirectory);
+			if (!dir.isDirectory()) {
+				dir.mkdir();
 			}
-		
-		} catch (IOException e ) {
+			File file = new File(saveImageDirectory + File.separator + imgName);
+			System.err.println("test = " + file.toString());
+		    if ( !file.exists() ) file.createNewFile();
+			BufferedWriter outStream = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
+
+			for (int i = 0; i < keyImages.size(); i++) {
+				try {
+					// single threading
+					ModelImage keyImage = keyImages.get(i);
+					
+					int[] extents = keyImage.getExtents();
+					int size = extents[0] * extents[1] * extents[2];
+					
+					outStream.write(extents[2] + "\n");
+					
+					float[] imageBuffer = new float[size];
+					
+					try {
+						keyImage.exportData(0, imageBuffer.length, imageBuffer);
+					} catch (final Exception e) {
+						e.printStackTrace();
+					}
+					
+					// set 10% to enhanced the contrast
+					float percentile = 0.10f;
+					int minIndex = (int) (size * percentile);
+					int maxIndex = (int) (size * (1.0f - percentile));
+
+					Arrays.sort(imageBuffer);
+
+					float min = imageBuffer[minIndex];
+					float max = imageBuffer[maxIndex];
+					
+					for (int k = 3; k <= 20; k++) {
+						testingPatches(keyImage, i, k, k, min, max, false, outStream);
+					}
+					
+					imageBuffer = null;
+					extents = null;
+					
+				} catch (OutOfMemoryError x) {
+					MipavUtil
+							.displayError("Dialog GaborFilter: unable to allocate enough memory");
+				}
+			}
+			outStream.close();
+			
+		} catch ( IOException e ) {
 			e.printStackTrace();
 		}
+		System.err.println("done finish test case patches generation");
 	}
+	
+
+	public void createTrainingPatches() {
+
+		// trick
+		for (int i = 0; i < keyImages.size();  i++) {
+
+			try {
+				// single threading 
+				ModelImage keyImage = keyImages.get(i);
+
+				int[] extents = keyImage.getExtents();
+				int size = extents[0] * extents[1] * extents[2];
+				int zDim = extents[2];
+				float[] imageBuffer = new float[size];
+				
+				try {
+					keyImage.exportData(0, imageBuffer.length, imageBuffer);
+				} catch (final Exception e) {
+					e.printStackTrace();
+				}
+				
+				// set 10% to enhance the contrast
+				float percentile_left = 0.10f;
+				float percentile_right = 0.10f;
+				int minIndex = (int) (size * percentile_left);
+				int maxIndex = (int) (size * (1.0f - percentile_right));
+
+				Arrays.sort(imageBuffer);
+
+				float min = imageBuffer[minIndex];
+				float max = imageBuffer[maxIndex];
+				
+				for ( int k = 0; k < zDim; k++ ) {
+				// int k = 48;
+				// int k = 64; 
+					trainingPatches(keyImage, i, k, k, min, max, true);
+				}
+				
+				imageBuffer = null;
+				extents = null;
+				
+			    /*  // multi-core approach, failed. 
+				int numberCore = (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime.getRuntime().availableProcessors() - 2 : 1;
+				System.err.println("numCore = " + numberCore);
+
+				ModelImage keyImage = keyImages.get(0);
+
+				ExecutorService exec = Executors.newFixedThreadPool(numberCore);
+				// 3 to 20
+				exec.execute(createTask((ModelImage)keyImage.clone(), 5, 3, 5));
+				exec.execute(createTask((ModelImage)keyImage.clone(), 5, 6, 8));
+				exec.execute(createTask((ModelImage)keyImage.clone(), 5, 9, 11));
+				exec.execute(createTask((ModelImage)keyImage.clone(), 5, 12, 14));
+				exec.execute(createTask((ModelImage)keyImage.clone(), 5, 15, 17));
+				exec.execute(createTask((ModelImage)keyImage.clone(), 5, 18, 20));
+				
+				exec.shutdown();
+
+				// System.err.println("shut down");
+				// setup the upper limit waiting time.
+				// try {
+				// 	exec.awaitTermination(30, TimeUnit.MINUTES);
+				// } catch (InterruptedException e) {
+				// 	MipavUtil.displayError("Program did not execute correctly");
+				// 	e.printStackTrace();
+				// }
+               
+				while ( !exec.isTerminated() ) {};
+				
+				System.err.println("Finished all thread");
+                 */
+				
+			} catch (OutOfMemoryError x) {
+				MipavUtil.displayError("Dialog GaborFilter: unable to allocate enough memory");
+			}
+		}
+		System.err.println("done finish run");
+		
+	}
+	
+	public void testingPatches(final ModelImage keyImage, final int i,
+			final int startSliceIndex, final int endSliceIndex, float minIntensity, float maxIntensity, boolean train, BufferedWriter  outStream) {
+		int xDim = keyImage.getExtents()[0];
+		int yDim = keyImage.getExtents()[1];
+		int zDim = keyImage.getExtents()[2];
+		int size = xDim * yDim;
+
+		int[] newExtents = new int[2];
+		newExtents[0] = xDim;
+		newExtents[1] = yDim;
+
+		VOIVector targetImageVOI = keyImage.getVOIs();
+
+		// 3 to 20
+		// Vector<ModelImage> ceImageVector = new Vector<ModelImage>();
+		for (int j = startSliceIndex; j <= endSliceIndex; j++) {
+
+			try {
+
+				System.err.println(" image number = " + (0 + i) + "   slice number = " + j);
+
+				ModelImage targetImageSlice = new ModelImage(
+						keyImage.getDataType(), newExtents, "target" + j);
+				float[] targetBuffer = new float[size];
+				keyImage.exportData(j * size, size, targetBuffer);
+				targetImageSlice.importData(0, targetBuffer, true);
+				
+				// new ViewJFrameImage(targetImageSlice);
+                
+				// find the intersection of the lower bound with the VOI.
+				Vector<VOIBase>[] vArray = targetImageVOI.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
+
+				if (vArray[j].size() > 0) {
+					VOIBase v = vArray[j].get(0);
+					VOIBase vTemp = (VOIBase) v.clone();
+					int nPts = vTemp.size();
+
+					// zero out the z dimension VOI
+					float[] xPts = new float[nPts];
+					float[] yPts = new float[nPts];
+					float[] zPts = new float[nPts];
+					float[] zPtsZero = new float[nPts];
+
+					vTemp.exportArrays(xPts, yPts, zPts);
+
+					// rotate to the starting point
+					// rotateToStartingPoint_yMid(xPts, yPts,
+					// newExtents[0], newExtents[1]);
+					rotateToStartingPoint_yMid(xPts, yPts, newExtents[0], newExtents[1]);
+					vTemp.importArrays(xPts, yPts, zPtsZero, nPts);
+
+					// VOIVector voiVectorNew = new VOIVector();
+					VOI voiNew = new VOI((short) 0, "blank");
+					voiNew.importCurve(vTemp);
+					// voiVectorNew.add(voiNew);
+					
+					// vTemp = null;
+					// xPts = null;
+					// zPts = null;
+					// zPtsZero = null;
+
+					// convert the one contour to two contours
+					targetImageSlice.registerVOI(voiNew);
+					smoothVOI128(targetImageSlice, targetImageSlice);
+					
+					AlgorithmLearnFromFailure64Knees algo = new AlgorithmLearnFromFailure64Knees(targetImageSlice, i, j, minIntensity, 
+							maxIntensity, train, outStream, saveImageDirectory);
+					algo.run();
+					
+					// algo.disposeLocal();
+					// algo = null;
+					
+				}
+				
+			
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}  // end for loop
+
+	}
+	
+	
+	
+	public void trainingPatches(final ModelImage keyImage, final int i,
+			final int startSliceIndex, final int endSliceIndex, float minIntensity, float maxIntensity, boolean train) {
+
+		int xDim = keyImage.getExtents()[0];
+		int yDim = keyImage.getExtents()[1];
+		int zDim = keyImage.getExtents()[2];
+		int size = xDim * yDim;
+
+		int[] newExtents = new int[2];
+		newExtents[0] = xDim;
+		newExtents[1] = yDim;
+
+		VOIVector targetImageVOI = keyImage.getVOIs();
+		System.err.println("targe vOI size = " + targetImageVOI.size());
+		// if the image slice doesn't contain both the GT VOI and AAM VOI, do nothing. 
+		ModelImage targetImageSlice = null;
+        if ( targetImageVOI.size() < 1 ) return;
+		
+		// 3 to 20
+		// Vector<ModelImage> ceImageVector = new Vector<ModelImage>();
+		for (int j = startSliceIndex; j <= endSliceIndex; j++) {
+
+			try {
+
+				System.err.println(" image number = " + (0 + i) + "   slice number = " + j);
+
+				targetImageSlice = new ModelImage(keyImage.getDataType(), newExtents, "target" + j);
+				float[] targetBuffer = new float[size];
+				keyImage.exportData(j * size, size, targetBuffer);
+				targetImageSlice.importData(0, targetBuffer, true);
+				
+			} catch (Exception e) {
+				System.err.println("image dir = " + keyImage.getImageDirectory());
+				System.err.println("image name = " + keyImage.getImageFileName());
+				System.err.println("Training case file I/O errors, continue");
+				System.exit(1);
+			}	
+				// new ViewJFrameImage(targetImageSlice);
+                
+				// Due to the ground truth VOI vs the Wrong VOI, load two 
+				// VOI contours into the target image slice. 
+				for (int k = 0; k < 1; k++) {
+					
+					Vector<VOIBase>[] vArray = targetImageVOI.VOIAt(k).getSortedCurves(VOIBase.ZPLANE, zDim);
+
+					if (vArray[j].size() > 0) {
+						VOIBase v = vArray[j].get(0);
+						VOIBase vTemp = (VOIBase) v.clone();
+						int nPts = vTemp.size();
+
+						// zero out the z dimension VOI
+						float[] xPts = new float[nPts];
+						float[] yPts = new float[nPts];
+						float[] zPts = new float[nPts];
+						float[] zPtsZero = new float[nPts];
+
+						vTemp.exportArrays(xPts, yPts, zPts);
+
+						// rotate to the starting point
+						// rotateToStartingPoint_yMid(xPts, yPts,
+						// newExtents[0], newExtents[1]);
+						// rotateToStartingPoint_yMid(xPts, yPts, newExtents[0], newExtents[1]);
+						vTemp.importArrays(xPts, yPts, zPtsZero, nPts);
+
+						// VOIVector voiVectorNew = new VOIVector();
+						VOI voiNew = new VOI((short) 0, "blank");
+						voiNew.importCurve(vTemp);
+						
+						if ( k == 0 ) {
+							voiNew.setColor(Color.yellow);
+						} else {
+							voiNew.setColor(Color.cyan);
+						}
+						
+						// voiVectorNew.add(voiNew);
+
+						// vTemp = null;
+						// xPts = null;
+						// zPts = null;
+						// zPtsZero = null;
+
+						// convert the one contour to two contours
+						targetImageSlice.registerVOI(voiNew);
+
+					}
+					
+
+				} // end k loop
+				
+				if ( targetImageSlice.getVOIs().size() < 1 ) return;
+				
+				// smoothVOI32(targetImageSlice, targetImageSlice);
+				
+				AlgorithmLearnFromFailure64Knees algo = new AlgorithmLearnFromFailure64Knees(targetImageSlice, i, j, minIntensity, maxIntensity, train, saveImageDirectory); 
+				algo.run();
+				 
+				algo.disposeLocal();
+				algo = null;
+				
+				/*
+				if ( targetImageSlice != null ) {
+				   targetImageSlice.disposeLocal();
+				   targetImageSlice = null;
+				}
+				
+				if ( targetBuffer != null ) {
+					targetBuffer = null;
+				}
+				*/
+				
+				// System.gc();
+		
+		}  // end for loop
+
+	}
+	
+	
+	 
 	
 	/**
 	 * Save the 2D slices and VOIs to user specified dir.
 	 */
 	public void saveImages() {
 
-		
-			for (int i = 0; i < keyImages.size(); i++) {
-				try {
-					
-					
-					// if ( i == count ) continue;
-					
-					ModelImage cropKeyImage = keyImages.get(i);
+		for (int i = 0; i < cropKeyImages.size(); i++) {
+			try {
+				ModelImage cropKeyImage = cropKeyImages.get(i);
 
-					int xDim = cropKeyImage.getExtents()[0];
-					int yDim = cropKeyImage.getExtents()[1];
-					int zDim = cropKeyImage.getExtents()[2];
-					int size = xDim * yDim;
+				int xDim = cropKeyImage.getExtents()[0];
+				int yDim = cropKeyImage.getExtents()[1];
+				int zDim = cropKeyImage.getExtents()[2];
+				int size = xDim * yDim;
 
-					int[] newExtents = new int[2];
-					newExtents[0] = xDim;
-					newExtents[1] = yDim;
+				int[] newExtents = new int[2];
+				newExtents[0] = xDim;
+				newExtents[1] = yDim;
 
-					VOIVector targetImageVOI = cropKeyImage.getVOIs();
+				VOIVector targetImageVOI = cropKeyImage.getVOIs();
 
-					// Vector<ModelImage> ceImageVector = new
-					// Vector<ModelImage>();
-					for (int j = 3; j <= 20; j++) {
+				// Vector<ModelImage> ceImageVector = new Vector<ModelImage>();
+				for (int j = 3; j <= 20; j++) {
 
-						try {
+					try {
 
-							System.err.println(" image number = " + (0 + i)
-									+ "   slice number = " + j);
+						System.err.println(" image number = " + (0 + i)
+								+ "   slice number = " + j);
 
-							ModelImage targetImageSlice = new ModelImage(
-									ModelStorageBase.FLOAT, newExtents,
-									"target" + j);
-							float[] targetBuffer = new float[size];
-							cropKeyImage.exportData(j * size, size,
-									targetBuffer);
-							targetImageSlice.importData(0, targetBuffer, true);
+						ModelImage targetImageSlice = new ModelImage(
+								ModelStorageBase.FLOAT, newExtents, "target"
+										+ j);
+						float[] targetBuffer = new float[size];
+						cropKeyImage.exportData(j * size, size, targetBuffer);
+						targetImageSlice.importData(0, targetBuffer, true);
 
-							// find the intersection of the lower bound with the
-							// VOI.
-							Vector<VOIBase>[] vArray = targetImageVOI.VOIAt(0)
-									.getSortedCurves(VOIBase.ZPLANE, zDim);
+						// find the intersection of the lower bound with the
+						// VOI.
+						Vector<VOIBase>[] vArray = targetImageVOI.VOIAt(0)
+								.getSortedCurves(VOIBase.ZPLANE, zDim);
 
-							if (vArray[j].size() > 0) {
-								VOIBase v = vArray[j].get(0);
-								VOIBase vTemp = (VOIBase) v.clone();
-								int nPts = vTemp.size();
+						if (vArray[j].size() > 0) {
+							VOIBase v = vArray[j].get(0);
+							VOIBase vTemp = (VOIBase) v.clone();
+							int nPts = vTemp.size();
 
-								// zero out the z dimension VOI
-								float[] xPts = new float[nPts];
-								float[] yPts = new float[nPts];
-								float[] zPts = new float[nPts];
-								float[] zPtsZero = new float[nPts];
+							// zero out the z dimension VOI
+							float[] xPts = new float[nPts];
+							float[] yPts = new float[nPts];
+							float[] zPts = new float[nPts];
+							float[] zPtsZero = new float[nPts];
 
-								vTemp.exportArrays(xPts, yPts, zPts);
+							vTemp.exportArrays(xPts, yPts, zPts);
 
-								// rotate to the starting point
-								// rotateToStartingPoint_yMid(xPts, yPts,
-								// newExtents[0], newExtents[1]);
-								rotateToStartingPoint_yMid(xPts, yPts,
-										newExtents[0], newExtents[1]);
-								vTemp.importArrays(xPts, yPts, zPtsZero, nPts);
+							// rotate to the starting point
+							// rotateToStartingPoint_yMid(xPts, yPts,
+							// newExtents[0], newExtents[1]);
+							rotateToStartingPoint_yMid(xPts, yPts,
+									newExtents[0], newExtents[1]);
+							vTemp.importArrays(xPts, yPts, zPtsZero, nPts);
 
-								// VOIVector voiVectorNew = new VOIVector();
-								VOI voiNew = new VOI((short) 0, "blank");
-								voiNew.importCurve(vTemp);
-								// voiVectorNew.add(voiNew);
-								vTemp = null;
-								xPts = null;
-								zPts = null;
-								zPtsZero = null;
+							// VOIVector voiVectorNew = new VOIVector();
+							VOI voiNew = new VOI((short) 0, "blank");
+							voiNew.importCurve(vTemp);
+							// voiVectorNew.add(voiNew);
+							vTemp = null;
+							xPts = null;
+							zPts = null;
+							zPtsZero = null;
 
-								// convert the one contour to two contours
-								targetImageSlice.registerVOI(voiNew);
-								smoothVOI60(targetImageSlice, targetImageSlice);
-								voiNew = targetImageSlice.getVOIs()
-										.elementAt(0);
+							// convert the one contour to two contours
+							targetImageSlice.registerVOI(voiNew);
+							smoothVOI60(targetImageSlice, targetImageSlice);
+							voiNew = targetImageSlice.getVOIs().elementAt(0);
 
-								VOIBaseVector curves = voiNew.getCurves();
-								VOIBase srcContour = null;
-								for (int index = 0; index < curves.size(); index++) {
-									srcContour = curves.elementAt(index);
-									generateBoundaryContours(srcContour,
-											targetImageSlice);
-
-								}
-
-								// new ViewJFrameImage(targetImageSlice);
-								voiNew = targetImageSlice.getVOIs()
-										.elementAt(0);
-								// 1) save image
-								String sliceDir = saveImageDirectory;
-								File sliceDirFile = new File(sliceDir);
-								if ( !sliceDirFile.isDirectory()) sliceDirFile.mkdir();
-								sliceDir += "slice" + j + File.separator;
-								File dir = new File(sliceDir);
-								if (!dir.isDirectory()) {
-									dir.mkdir();
-								}
-								String imgName = "image" + i + ".xml";
-								// String imageFileToSave = sliceDir +
-								// File.separator + imgName;
-								// targetImageSlice.saveImage(directory,
-								// fileName,
-								// fileType, isActive, bDisplayProgress)
-								targetImageSlice.saveImage(sliceDir, imgName,
-										FileUtility.XML, false);
-								// 2) save VOI
-								FileVOI fileVOI = new FileVOI("voi" + i
-										+ ".xml", sliceDir, targetImageSlice);
-								fileVOI.writeVOI(voiNew, true);
+							VOIBaseVector curves = voiNew.getCurves();
+							VOIBase srcContour = null;
+							for (int index = 0; index < curves.size(); index++) {
+								srcContour = curves.elementAt(index);
+								generateBoundaryContours(srcContour,
+										targetImageSlice);
 
 							}
-						} catch (IOException e) {
+
+							// new ViewJFrameImage(targetImageSlice);
+							voiNew = targetImageSlice.getVOIs().elementAt(0);
+							// 1) save image
+							String sliceDir = saveImageDirectory + "slice" + j
+									+ File.separator;
+							File dir = new File(sliceDir);
+							if (!dir.isDirectory()) {
+								dir.mkdir();
+							}
+							String imgName = "image" + (0 + i) + ".xml";
+							// String imageFileToSave = sliceDir +
+							// File.separator + imgName;
+							// targetImageSlice.saveImage(directory, fileName,
+							// fileType, isActive, bDisplayProgress)
+							targetImageSlice.saveImage(sliceDir, imgName,
+									FileUtility.XML, false);
+							// 2) save VOI
+							FileVOI fileVOI = new FileVOI("voi" + (0 + i)
+									+ ".xml", sliceDir, targetImageSlice);
+							fileVOI.writeVOI(voiNew, true);
 
 						}
+					} catch (IOException e) {
+
 					}
-
-					// cropKeyImagesCE.add(ceImageVector);
-					// new ViewJFrameImage(coherenceEnhancingDiffusionImage);
-
-				} catch (OutOfMemoryError x) {
-					MipavUtil
-							.displayError("Dialog GaborFilter: unable to allocate enough memory");
 				}
+
+				// cropKeyImagesCE.add(ceImageVector);
+				// new ViewJFrameImage(coherenceEnhancingDiffusionImage);
+
+			} catch (OutOfMemoryError x) {
+				MipavUtil
+						.displayError("Dialog GaborFilter: unable to allocate enough memory");
 			}
-		
+		}
 	}
 
 	/**
@@ -712,13 +892,8 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 
 	}
 
-	/**
-	 * Smooth VOIs to 60 points.
-	 * 
-	 * @param maskImage
-	 * @param resultImage
-	 */
-	public void smoothVOI60(ModelImage maskImage, ModelImage resultImage) {
+	
+	public void smoothVOI30(ModelImage maskImage, ModelImage resultImage) {
 
 		VOIVector v = maskImage.getVOIs();
 		if (v.size() == 0)
@@ -726,11 +901,9 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 		v.VOIAt(0).setActive(true);
 		v.VOIAt(0).setAllActive(true);
 
-		// new ViewJFrameImage(maskImage);
 		try {
 			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage,
-					v.VOIAt(0), 60, false);
-			smoothAlgo.addListener(this);
+					v.VOIAt(0), 30, false);
 			smoothAlgo.run();
 
 			VOIVector resultVOIs = resultImage.getVOIs();
@@ -750,6 +923,146 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 		}
 	}
 
+	
+	/**
+	 * Smooth VOIs to 60 points.
+	 * 
+	 * @param maskImage
+	 * @param resultImage
+	 */
+	public void smoothVOI60(ModelImage maskImage, ModelImage resultImage) {
+
+		VOIVector v = maskImage.getVOIs();
+		if (v.size() == 0)
+			return;
+		v.VOIAt(0).setActive(true);
+		v.VOIAt(0).setAllActive(true);
+
+		// new ViewJFrameImage(maskImage);
+		try {
+			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage,
+					v.VOIAt(0), 60, false);
+			
+			smoothAlgo.run();
+
+			VOIVector resultVOIs = resultImage.getVOIs();
+			VOI resultVOI = smoothAlgo.getResultVOI();
+			resultVOIs.VOIAt(0).removeCurves();
+			resultVOIs.VOIAt(0).setCurves(resultVOI.getCurves());
+			resultImage.notifyImageDisplayListeners(null, true);
+			// new ViewJFrameImage(resultImage);
+			smoothAlgo.setCompleted(true);
+			smoothAlgo.finalize();
+			smoothAlgo = null;
+		} catch (OutOfMemoryError x) {
+			MipavUtil
+					.displayError("Dialog Smooth: unable to allocate enough memory");
+
+			return;
+		}
+	}
+	
+	public void smoothVOI128(ModelImage maskImage, ModelImage resultImage) {
+
+		VOIVector v = maskImage.getVOIs();
+		// System.err.println("check voi size = " + v.size());
+		if (v.size() == 0)
+			return;
+		v.VOIAt(0).setActive(true);
+		v.VOIAt(0).setAllActive(true);
+		
+		// v.VOIAt(1).setActive(true);
+		// v.VOIAt(1).setAllActive(true);
+
+		// new ViewJFrameImage(maskImage);
+		try {
+			
+			// first VOI ground truth
+			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(0), 128, false);
+			smoothAlgo.run();
+			VOIVector resultVOIs = resultImage.getVOIs();
+			VOI resultVOI = smoothAlgo.getResultVOI();
+			resultVOIs.VOIAt(0).removeCurves();
+			resultVOIs.VOIAt(0).setCurves(resultVOI.getCurves());
+			resultImage.notifyImageDisplayListeners(null, true);
+			// new ViewJFrameImage(resultImage);
+			smoothAlgo.setCompleted(true);
+			smoothAlgo.finalize();
+			smoothAlgo = null;
+			
+			/*
+			// second VOI AAM contour
+			smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(1), 128, false);
+			smoothAlgo.run();
+			resultVOIs = resultImage.getVOIs();
+			resultVOI = smoothAlgo.getResultVOI();
+			resultVOIs.VOIAt(1).removeCurves();
+			resultVOIs.VOIAt(1).setCurves(resultVOI.getCurves());
+			resultImage.notifyImageDisplayListeners(null, true);
+			// new ViewJFrameImage(resultImage);
+			smoothAlgo.setCompleted(true);
+			smoothAlgo.finalize();
+			smoothAlgo = null;
+			*/
+			
+		} catch (OutOfMemoryError x) {
+			MipavUtil
+					.displayError("Dialog Smooth: unable to allocate enough memory");
+
+			return;
+		}
+	}
+
+	public void smoothVOI32(ModelImage maskImage, ModelImage resultImage) {
+
+		VOIVector v = maskImage.getVOIs();
+		// System.err.println("check voi size = " + v.size());
+		if (v.size() == 0)
+			return;
+		v.VOIAt(0).setActive(true);
+		v.VOIAt(0).setAllActive(true);
+		
+		v.VOIAt(1).setActive(true);
+	    v.VOIAt(1).setAllActive(true);
+
+		// new ViewJFrameImage(maskImage);
+		try {
+			
+			// first VOI ground truth
+			AlgorithmBSmooth smoothAlgo1 = new AlgorithmBSmooth(maskImage, v.VOIAt(0), 32, false);
+			smoothAlgo1.run();
+			VOIVector resultVOIs = resultImage.getVOIs();
+			VOI resultVOI = smoothAlgo1.getResultVOI();
+			resultVOIs.VOIAt(0).removeCurves();
+			resultVOIs.VOIAt(0).setCurves(resultVOI.getCurves());
+			resultImage.notifyImageDisplayListeners(null, true);
+			// new ViewJFrameImage(resultImage);
+			smoothAlgo1.setCompleted(true);
+			smoothAlgo1.finalize();
+			smoothAlgo1 = null;
+			
+		
+			// second VOI AAM contour
+			AlgorithmBSmooth smoothAlgo2 = new AlgorithmBSmooth(maskImage, v.VOIAt(1), 32, false);
+			smoothAlgo2.run();
+			resultVOIs = resultImage.getVOIs();
+			resultVOI = smoothAlgo2.getResultVOI();
+			resultVOIs.VOIAt(1).removeCurves();
+			resultVOIs.VOIAt(1).setCurves(resultVOI.getCurves());
+			resultImage.notifyImageDisplayListeners(null, true);
+			// new ViewJFrameImage(resultImage);
+			smoothAlgo2.setCompleted(true);
+			smoothAlgo2.finalize();
+			smoothAlgo2 = null;
+			
+		} catch (OutOfMemoryError x) {
+			MipavUtil
+					.displayError("Dialog Smooth: unable to allocate enough memory");
+
+			return;
+		}
+	}
+	
 	/**
 	 * Convert VOI from one contour to two contours
 	 * 
@@ -1093,7 +1406,6 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 				cropAlgo = new AlgorithmAddMargins(image, cropKeyImages.get(i),
 						xCrop, yCrop, zCrop);
 
-				cropAlgo.addListener(this);
 
 				// Hide the dialog since the algorithm is about to run.
 				setVisible(false);
@@ -1116,8 +1428,7 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 	 * load image files and voi files
 	 */
 	public void loadFiles() {
-		// readFiles();
-		readFile();
+		readFiles();
 		System.err.println("finish image I/O");
 
 	}
@@ -1148,8 +1459,10 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 
 		int index;
 
-		System.err.println("keyImageVector.size() = " + keyImageVector.size());
+		System.err.println("debug: keyImageVector.size() = " + keyImageVector.size());
 		
+		int minDim = 512;
+		int min = 0, max = 512;
 		try {
 			// read key images and VOIs
 			for (int i = 0; i < keyImageVector.size(); i++) {
@@ -1175,8 +1488,7 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 						voiDir.length()));
 
 				FileVOI fileVOI = null;
-				fileVOI = new FileVOI(voiFileName, voiDirectory,
-						keyImages.get(i));
+				fileVOI = new FileVOI(voiFileName, voiDirectory, keyImages.get(i));
 				System.err.println("fileDirectory = " + directory
 						+ " fileName = " + fileName);
 				System.err.println("voiDirectory = " + voiDirectory
@@ -1184,96 +1496,36 @@ public class JDialogProstate2DSlicesAtlasConverter extends JDialogBase
 				keyImageVOIs.add(i, fileVOI.readVOI(false));
 
 				keyImages.get(i).registerVOI(keyImageVOIs.get(i)[0]);
+				
+				// new ViewJFrameImage(keyImages.get(i));
+				
+				/*
+				int[] minMax = new int[2];
+				int[] imageDim = new int[1];
+				configVOIsNumbers(keyImages.get(i), minMax, imageDim);
+
+				if ( imageDim[0] < minDim ) {
+					minDim = imageDim[0];
+				}
+				
+				if ( minMax[0] > min ) {
+					min = minMax[0];
+				}
+				
+				if ( minMax[1] < max ) {
+					max = minMax[1];
+				}
+				*/ 
 			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void readFile() {
-
-		int index;
-
-		System.err.println("keyImageVector.size() = " + keyImageVector.size());
-		
-		try {
-			// read key images and VOIs
-			// for (int i = 0; i < keyImageVector.size(); i++) {
-			int start = 0;
-			int end = keyImageVector.size();
-			// end = 50; 
+			System.err.println("smallest image dimension = " + minDim);
+			System.err.println("largeest VOI start contour = " + min);
+			System.err.println("smallest VOI end contour = " + max);
 			
-			int currentIndex = 0;
-			for (int imageIndex = start; imageIndex < end; imageIndex++) {
-				// read key image
-				String dir = keyImageVector.get(imageIndex);
-				index = dir.lastIndexOf(File.separator);
-				String directory = new String(dir.substring(0, index + 1));
-				String fileName = new String(dir.substring(index + 1, dir.length()));
-
-				System.err.println("Key Image: fileName = " + fileName + "  directory = " + directory);
-				FileIO keyImageIO = new FileIO();
-				keyImages.add(currentIndex, keyImageIO.readImage(fileName, directory));
-
-				// read corresponding VOI
-				String voiDir = keyImageVOIVector.get(imageIndex);
-				System.err.println("voiDir = " + voiDir);
-				index = voiDir.lastIndexOf(File.separator);
-				String voiDirectory = new String(voiDir.substring(0, index + 1));
-				String voiFileName = new String(voiDir.substring(index + 1, voiDir.length()));
-
-				FileVOI fileVOI = null;
-				fileVOI = new FileVOI(voiFileName, voiDirectory, keyImages.get(currentIndex));
-				System.err.println("fileDirectory = " + directory + " fileName = " + fileName);
-				System.err.println("voiDirectory = " + voiDirectory + "  voiFileName = " + voiFileName);
-				keyImageVOIs.add(currentIndex, fileVOI.readVOI(false));
-
-				keyImages.get(currentIndex).registerVOI(keyImageVOIs.get(currentIndex)[0]);
-				
-				// new ViewJFrameImage(keyImages.get(currentIndex));
-				
-				currentIndex++;
-			}
-			/*
-			start = 201;
-			end = keyImageVector.size();
-			for (int imageIndex = start; imageIndex < end; imageIndex++) {
-				// read key image
-				String dir = keyImageVector.get(imageIndex);
-				index = dir.lastIndexOf(File.separator);
-				String directory = new String(dir.substring(0, index + 1));
-				String fileName = new String(dir.substring(index + 1, dir.length()));
-
-				System.err.println("Key Image: fileName = " + fileName + "  directory = " + directory);
-				FileIO keyImageIO = new FileIO();
-				keyImages.add(currentIndex, keyImageIO.readImage(fileName, directory));
-
-				// read corresponding VOI
-				String voiDir = keyImageVOIVector.get(imageIndex);
-				System.err.println("voiDir = " + voiDir);
-				index = voiDir.lastIndexOf(File.separator);
-				String voiDirectory = new String(voiDir.substring(0, index + 1));
-				String voiFileName = new String(voiDir.substring(index + 1, voiDir.length()));
-
-				FileVOI fileVOI = null;
-				fileVOI = new FileVOI(voiFileName, voiDirectory, keyImages.get(currentIndex));
-				System.err.println("fileDirectory = " + directory + " fileName = " + fileName);
-				System.err.println("voiDirectory = " + voiDirectory + "  voiFileName = " + voiFileName);
-				keyImageVOIs.add(currentIndex, fileVOI.readVOI(false));
-
-				keyImages.get(currentIndex).registerVOI(keyImageVOIs.get(currentIndex)[0]);
-				
-				// new ViewJFrameImage(keyImages.get(currentIndex));
-				
-				currentIndex++;
-			}
-            */
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-
 
 	/**
 	 * Initial panel

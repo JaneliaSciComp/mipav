@@ -95,6 +95,22 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
         PlyInstance = new InstanceVOI(".ply", textFieldPlyFile);
 
     }
+    
+    public JDialogSaveMergedVOIs(final Frame theParentFrame, 
+    		final String axialName, final String sagittalName, final String coronalName, 
+    		final String plyName) {
+        super(theParentFrame, false);
+
+        AxialVOIs = new InstanceVOI(".xml", axialName);
+        SagittalVOIs = new InstanceVOI(".xml", sagittalName);
+        CoronalVOIs = new InstanceVOI(".xml", coronalName);
+        PlyInstance = new InstanceVOI(".ply", plyName);
+        
+        AxialVOIs.setFileName();
+        SagittalVOIs.setFileName();
+        CoronalVOIs.setFileName();
+        PlyInstance.setFileName();
+    }
 
     /**
      * Constructor that sets the parent frame of the dialog and whether or not the dialog is modal. Also adds this as a
@@ -136,6 +152,13 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
         }
 
     }
+    
+    public void saveFile() {
+    	AxialVOIs.readXML();
+        SagittalVOIs.readXML();
+        CoronalVOIs.readXML();
+        writePlyFile();
+    }
 
     /**
      * Write the cloud points from the 3 VOIs into one .ply file. The .ply file is readable for MeshLab.
@@ -150,7 +173,8 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
 
         try {
             filePly = new File(PlyInstance.directory + PlyInstance.fileName);
-
+            System.err.println("filePly = " + filePly.toString());
+            
             fwp = new FileWriter(filePly);
             plyFileWriter = new PrintWriter(fwp);
             // write header
@@ -431,6 +455,8 @@ class InstanceVOI {
 
     // xml, ply file directory
     String directory;
+    
+    String imageFullName;
 
     // .xml or .ply filtering in file chooser
     String file_suffix;
@@ -460,6 +486,12 @@ class InstanceVOI {
 
         file_suffix = _suffix;
         textField = _textField;
+        UI = ViewUserInterface.getReference();
+    }
+    
+    public InstanceVOI(final String _suffix, final String fileNameFullPath) {
+        file_suffix = _suffix;
+        imageFullName = fileNameFullPath;
         UI = ViewUserInterface.getReference();
     }
 
@@ -494,6 +526,15 @@ class InstanceVOI {
             return;
         }
 
+    }
+    
+    public void setFileName() {
+		
+		int index = imageFullName.lastIndexOf(File.separator);
+		fileName = imageFullName.substring(index + 1, imageFullName.length());
+		directory = imageFullName.substring(0, index + 1);
+		// System.err.println("filename = " + fileName);
+		// System.err.println("directory = " + directory);
     }
 
     /**
