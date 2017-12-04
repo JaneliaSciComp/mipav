@@ -287,6 +287,7 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 	private void processDir(File dir) {
 		String[] children = dir.list();
 
+		try {
 		for (int i = 0; i < children.length; i++) {
 
 			File file = new File(dir, children[i]);
@@ -305,15 +306,20 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 				// System.err.println(file.toString());
 			}
 		}
+		} catch (Exception  e ) {
+			e.printStackTrace();
+		}
 
+		System.err.println("imageVector.size() = " + imageVector.size());
+		
 		System.err.println("Test");
 		sortImageVectorString(imageVector);
 		sortVOIVectorString(voiVector);
 
-		// for (int i = 0; i < imageVector.size(); i++) {
-		// System.err.println(imageVector.get(i));
-		// System.err.println(voiVector.get(i));
-		// }
+		for (int i = 0; i < imageVector.size(); i++) {
+		   System.err.println(imageVector.get(i));
+		   System.err.println(voiVector.get(i));
+		 }
 		// System.err.println();
 
 	}
@@ -339,7 +345,7 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 
 		imageVector.clear();
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 288; i++) {
 			String name = (String) table.get(i);
 			if (name != null) {
 				imageVector.add(name);
@@ -369,7 +375,7 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 
 		voiVector.clear();
 
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 288; i++) {
 			String name = (String) table.get(i);
 			if (name != null) {
 				voiVector.add(name);
@@ -409,6 +415,7 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 		readImagesAndVOIs();
 		categorizeByShape();
 
+		
 		sliceImages.clear();
 		imageVOIs.clear();
 		readImagesAndVOIsInReverse();
@@ -580,6 +587,8 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 				costVector = new Vector<perShapeCost>();
 				areaVector = new Vector<perShapeCost>();
 
+				// if ( currentImage.getVOIs().size() == 0 ) continue;
+				
 				Vector<VOIBase>[] vArray = currentImage.getVOIs().VOIAt(0).getSortedCurves(VOIBase.ZPLANE, 1);
 				currentImageShape.ReadASFfromVOI(currentImage);
 
@@ -612,8 +621,9 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 
 						ModelImage comparedImage = sliceImages.get(j);
 
-						comparedImageShape.ReadASFfromVOI(comparedImage);
-
+					    comparedImageShape.ReadASFfromVOI(comparedImage);
+					    
+						System.err.println("comparedImage name = " + comparedImage.getImageFileName());
 						vArray = comparedImage.getVOIs().VOIAt(0).getSortedCurves(VOIBase.ZPLANE, 1);
 						v = vArray[0].get(0);
 						vTemp = (VOIBase) v.clone();
@@ -940,12 +950,14 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 	private void readImagesAndVOIs() {
 
 		int len = imageVector.size();
+		System.err.println("f len = " + len);
 		int index;
+		int i = 0;
 		try {
-			for (int j = 0; j < len; j++) {
+			for (i = 0; i < len; i++) {
 
 				// read key image
-				String dir = imageVector.get(j);
+				String dir = imageVector.get(i);
 				index = dir.lastIndexOf(File.separator);
 				String directory = new String(dir.substring(0, index + 1));
 				String fileName = new String(dir.substring(index + 1,
@@ -954,10 +966,10 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 				// System.err.println("Key Image: fileName = " + fileName +
 				// "  directory = " + directory);
 				FileIO keyImageIO = new FileIO();
-				sliceImages.add(j, keyImageIO.readImage(fileName, directory));
+				sliceImages.add(i, keyImageIO.readImage(fileName, directory));
 
 				// read corresponding VOI
-				String voiDir = voiVector.get(j);
+				String voiDir = voiVector.get(i);
 				index = voiDir.lastIndexOf(File.separator);
 				String voiDirectory = new String(voiDir.substring(0, index + 1));
 				String voiFileName = new String(voiDir.substring(index + 1,
@@ -968,14 +980,17 @@ public class JDialogProstateImageCategorize extends JDialogBase implements
 
 				FileVOI fileVOI = null;
 				fileVOI = new FileVOI(voiFileName, voiDirectory,
-						sliceImages.get(j));
-				imageVOIs.add(j, fileVOI.readVOI(false));
-				sliceImages.get(j).registerVOI(imageVOIs.get(j)[0]);
-
-				// new ViewJFrameImage(sliceImages.get(j));
+						sliceImages.get(i));
+				System.err.println("sliceImages.get(i) = " + sliceImages.get(i).getImageName());
+				imageVOIs.add(i, fileVOI.readVOI(false));
+				sliceImages.get(i).registerVOI(imageVOIs.get(i)[0]);
+                System.err.println("i = " + i);
+				//new ViewJFrameImage(sliceImages.get(j));
 			} // end for j loop
 		} catch (Exception e) {
-
+			    System.err.println("error i = " + i);
+			    System.err.println("sliceImages.get(i) = " + sliceImages.get(i).getImageName());
+                e.printStackTrace();
 		}
 	}
 

@@ -2823,6 +2823,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             aamClassification();
         } else if (command.equals("aamMLClassification")) {
             aamMLClassification();
+        } else if (command.equals("deepCNNTrain")) {
+            deepCNNTrain();
+        } else if ( command.equals("deepCNNTest")) {
+        	deepCNNTest();
+        } else if ( command.equals("deepCNNConvert")) {
+        	deepCNNConvert();
+        } else if ( command.equals("deepCNNMap")) {
+        	deepCNNMap();
+        } else if ( command.equals("hedCNNMap")) {
+        	hedCNNMap();
         } else if ( command.equals("extractCEFeature")) {
         	extractCEFeature();
         } else if (command.equals("ProstateFeaturesSave2D")) {
@@ -2839,6 +2849,32 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	generateAtlasImage();
         } else if ( command.equals("generateEndingSlices")) {
         	generateEndingSlices();
+        } else if ( command.equals("KneesDPTrain")) {      
+        	// JDialogLearnFromFailure64Knees dpTrainKnees = new JDialogLearnFromFailure64Knees(this);
+        	// dpTrainKnees.validate();
+        	
+        	// JDialogKnees_90_data_train_extraction_clean dpTrainClean = new JDialogKnees_90_data_train_extraction_clean(this);
+           // dpTrainClean.validate();
+        	
+        	// JDialogCreateHEDpngFiles crateHEDfiles = new JDialogCreateHEDpngFiles(this);
+        	// crateHEDfiles.validate();
+        	
+        	// JDialogCreateHEDpngFilesTest createTestFile = new JDialogCreateHEDpngFilesTest(this);
+        	// createTestFile.validate();
+        	
+        	JDialogKneesMapFromMRIandCED kneesMapfiles = new JDialogKneesMapFromMRIandCED(this);
+        	kneesMapfiles.validate();
+                	
+        	
+        } else if ( command.equals("KneesDPTest")) {      
+        	JDialogKneesLearnFromFailure64TestCase dpTestKnees = new JDialogKneesLearnFromFailure64TestCase(this);
+        	dpTestKnees.validate();
+        } else if ( command.equals("KneesDPMap")) {
+        	deepKneesMap();
+        } else if ( command.equals("KneesAtlas")) {
+        	deepKneesAtlas();
+        }
+        /*
         } else if ( command.equals("PatellaNIH")) {       
         	patellaNIH();
         } else if ( command.equals("PatellaNetherland")) {       
@@ -2847,7 +2883,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             femurNIH();
         } else if ( command.equals("FemurNetherland")) {       
         	femurNetherland();
-        } 
+        }*/
     }
 
     /**
@@ -6018,8 +6054,245 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * save the final 2D slice and corresponding VOIs to specified atlas directory. 
      */
     private void generateAtlasImage() {
-    	final JDialogProstate2DSlicesAtlasConverter atlas = new JDialogProstate2DSlicesAtlasConverter(this);
-    	atlas.validate();
+    	//final JDialogProstate2DSlicesAtlasConverter atlas = new JDialogProstate2DSlicesAtlasConverter(this);
+    	//atlas.validate();
+    	
+    	/****************************     SPIE 2017 Feb paper done  ********************************/ 
+    	// HED png converter training
+    	// final JDialogProstate2DSlicesAtlasPngConverterTrain atlas = new JDialogProstate2DSlicesAtlasPngConverterTrain(this);
+        // atlas.validate();
+    	// HED png converter testing
+    	// final JDialogProstate2DSlicesAtlasPngConverterTest atlas = new JDialogProstate2DSlicesAtlasPngConverterTest(this);
+        // atlas.validate();
+    	// HED png text file list generation, training
+    	// final JDialogProstate2DSlicesPngTextFileConverter atlas = new JDialogProstate2DSlicesPngTextFileConverter(this);
+    	// atlas.validate();
+    	// HED png text file list generation, tesing
+    	// final JDialogProstate2DSlicesPngTextFileConverterTest atlas = new JDialogProstate2DSlicesPngTextFileConverterTest(this);
+    	// atlas.validate(); 
+    	// final JDialogProstate2DHEDmapSPIE_2017 atlas = new JDialogProstate2DHEDmapSPIE_2017(this);
+        // atlas.validate();
+    	
+    	
+    	/***********************************   JMI 2017 done ****************************************/
+    	// final JDialogProstate2DSlicesAtlasPngConverterTrain_JMI atlas = new JDialogProstate2DSlicesAtlasPngConverterTrain_JMI(this);
+        // atlas.validate();
+    	// final JDialogProstate2DSlicesAtlasPngConverterTest_JMI atlas = new JDialogProstate2DSlicesAtlasPngConverterTest_JMI(this);
+        // atlas.validate();
+    	// trained text converter
+        // final JDialogProstate2DSlicesPngTextFileConverter atlas = new JDialogProstate2DSlicesPngTextFileConverter(this);
+    	// atlas.validate();
+    	// test text converter
+    	// final JDialogProstate2DSlicesPngTextFileConverterTest atlas = new JDialogProstate2DSlicesPngTextFileConverterTest(this);
+    	// atlas.validate();
+    	// final JDialogProstateJMI_2017_HEDmap a = new JDialogProstateJMI_2017_HEDmap(this);
+        // a.validate();
+        // final JDialogProstateJMI_2017_VOI_converter t = new JDialogProstateJMI_2017_VOI_converter(this);
+        // t.validate();
+        // JDialogProstateEvaluationSegmentation_jmi atlas = new JDialogProstateEvaluationSegmentation_jmi(this);
+        // atlas.validate();
+        
+    	
+        
+        /*******************************  test-and-trial approach for Wp and Cg segmentation done *********************/
+    	// HED png converter training central gland 
+    	// final JDialogProstate2DSlicesAtlasPngConverterCentralGland atlas = new JDialogProstate2DSlicesAtlasPngConverterCentralGland(this);
+    	// atlas.validate();
+    	
+    	// final JDialogProstate2DSlicesAtlasPngConverterCentralGland_CED_scale_train atlas = new JDialogProstate2DSlicesAtlasPngConverterCentralGland_CED_scale_train(this);
+    	// atlas.validate();
+    	
+    	// final JDialogProstate2DSlicesAtlasPngConverterCentralGland_CED_scale_test atlas = new JDialogProstate2DSlicesAtlasPngConverterCentralGland_CED_scale_test(this);
+        // atlas.validate();
+    	
+    	// final JDialogProstate2DSlicesAtlasPngConverterCentralGland_CED_scale_boundary_train atlas = new JDialogProstate2DSlicesAtlasPngConverterCentralGland_CED_scale_boundary_train(this);
+    	// atlas.validate();
+    	
+    	// final JDialogProstate2DSlicesAtlasPngConverterCentralGland_CED_scale_boundary_test atlas = new JDialogProstate2DSlicesAtlasPngConverterCentralGland_CED_scale_boundary_test(this);
+    	// atlas.validate();
+    	
+    	
+    	
+    	/*********************   SPIE 2017 prostate cancer challenge (MICCAI ProstateX challenge) done *************************/ 
+    	// This file is important for MICCAI ProstateX challenge "test case"!!!
+    	// final JDialogProstateSPIEcancerChallenge atlas = new JDialogProstateSPIEcancerChallenge(this);
+        // atlas.validate();
+        
+        // final JDialogProstateSPIEcancerChallenge_noCED atlas = new JDialogProstateSPIEcancerChallenge_noCED(this);
+        // atlas.validate();
+    	
+    	// NIH data cg and wp mask 
+        // final JDialogProstateSPIEcancerChallengeNIH_train atlas = new JDialogProstateSPIEcancerChallengeNIH_train(this);
+    	// atlas.validate();
+    	
+        // final JDialogProstateSPIEcancerChallengeNIH_train_ced atlas = new JDialogProstateSPIEcancerChallengeNIH_train_ced(this);
+    	// atlas.validate();
+        
+    	// This file is important for miccai ProstateX challenge cg segmentation, training case.  
+    	// final JDialogProstateSPIEcancerChallengeNIH_train_ced_ext atlas = new JDialogProstateSPIEcancerChallengeNIH_train_ced_ext(this);
+    	// atlas.validate();
+    	
+    	// This file is important for miccai ProstateX challenge wp segmentation, training case.  
+    	// final JDialogProstateSPIEcancerChallengeNIH_train_ced_ext_wp atlas = new JDialogProstateSPIEcancerChallengeNIH_train_ced_ext_wp(this);
+    	// atlas.validate();
+        
+    	
+    	// NIH data cg and wp boundary mask 
+    	// final JDialogProstateSPIEcancerChallengeNIH_boundary_train b = new JDialogProstateSPIEcancerChallengeNIH_boundary_train(this);
+    	// b.validate();
+    	
+    	// final JDialogProstateSPIEcancerChallenge_HEDmap_image_alone a = new JDialogProstateSPIEcancerChallenge_HEDmap_image_alone(this);
+        // a.validate();
+        
+    	// This file is important.  It generates the VOI from HED predicted CED and MRI energy maps.   
+        // final JDialogProstateSPIEcancerChallenge_HEDmap_mri_ced a = new JDialogProstateSPIEcancerChallenge_HEDmap_mri_ced(this);
+        // a.validate();
+    	
+    	
+        /***************************  Promise 12 3D done **************************************/ 
+        // final JDialogPromise12ConvertMask convertMask = new JDialogPromise12ConvertMask(this);
+        // convertMask.validate();
+         
+        // final JDialogPromise12ConvertRestoOnePointFiveTrain convertMask = new JDialogPromise12ConvertRestoOnePointFiveTrain(this);
+        // convertMask.validate();
+    	
+    	// final JDialogPromise12ConvertRestoOnePointFiveTest convertMask = new JDialogPromise12ConvertRestoOnePointFiveTest(this);
+        // convertMask.validate();
+       
+    	// final JDialogPromise12CropAndNormalizeTrain cropNormal = new JDialogPromise12CropAndNormalizeTrain(this);
+    	// cropNormal.validate();
+    	
+    	// final JDialogPromise12CropAndNormalizeTest cropNormal = new JDialogPromise12CropAndNormalizeTest(this);
+    	// cropNormal.validate();
+    	
+        // final JDialogPromise12Train3DCnns train3DCnns = new JDialogPromise12Train3DCnns(this);
+    	// train3DCnns.validate();
+    	
+    	// final JDialogPromise12Train3DCnnsSmall train3DCnns = new JDialogPromise12Train3DCnnsSmall(this);
+    	// train3DCnns.validate();
+    	
+    	// JDialogProstateXReRunWholeProstate train = new JDialogProstateXReRunWholeProstate(this);
+    	// train.validate();
+    	
+    	// JDialogProstateXReRunWholeProstateTrainPatches train = new JDialogProstateXReRunWholeProstateTrainPatches(this);
+    	// train.validate();
+    	
+    	JDialogProstateXReRunWholeProstateTestPatches train = new JDialogProstateXReRunWholeProstateTestPatches(this);
+    	train.validate();
+    	
+    	// final JDialogShuffleList shuffle = new JDialogShuffleList(this);
+    	// shuffle.validate();
+        
+    	
+        // final JDialogPromise12_2DVolumetrieHED hed = new JDialogPromise12_2DVolumetrieHED(this);
+        // hed.validate();
+    	
+    	// promise 12 data png list converter, need to change the file name. 
+        // final JDialogProstate2DVolumetricHEDMiccaiProstate12 atlas = new JDialogProstate2DVolumetricHEDMiccaiProstate12(this);
+        // atlas.validate();
+    	
+    	
+    	// final JDialogProstate3DReconstruction reconstruct = new JDialogProstate3DReconstruction(this);
+    	// reconstruct.validate();
+    	
+    	// current text converter
+    	// HED png converter text file list generation, central gland, train
+        // final JDialogProstate2DSlicesPngTextFileConverterCentralGland atlas = new JDialogProstate2DSlicesPngTextFileConverterCentralGland(this);
+        // atlas.validate();
+    	
+    	
+        /********************************************* Promise 12, first try done ********************************/
+        
+        // HED png converter training MICCAI whole prostate
+    	// The following files are the first attempt to apply HED segmentation to MICCAI promise 12 segmentation. 
+    	// Latest approach is 2D-volumetric approach.  The following methods are old methods.   
+    	// 1. Promise 12 data alone, no N4 correction. 
+    	// 2. Only consider axial image alone, not 2D-Volumetric ( axial, coronal, sagittal ) approach. 
+    	
+        // final JDialogProstate2DSlicesAtlasPngConverterMICCAI atlas = new JDialogProstate2DSlicesAtlasPngConverterMICCAI(this);
+        // atlas.validate();
+        // final JDialogProstate2DSlicesAtlasPngConverterMICCAI_conversion atlas = new JDialogProstate2DSlicesAtlasPngConverterMICCAI_conversion(this);
+        // atlas.validate();
+        // final JDialogProstate2DSlicesAtlasPngConverterMICCAI_ced_scale atlas = new JDialogProstate2DSlicesAtlasPngConverterMICCAI_ced_scale(this);
+        // atlas.validate();
+    	
+    	// Following 4 files replicate the above file -- JDialogProstate2DSlicesAtlasPngConverterMICCAI_ced_scale.java
+    	// Miccai whole prostate train
+    	
+    	// final JDialogProstate2DSlicesAtlasPngConverterMICCAI_ced_scale_train atlas = new JDialogProstate2DSlicesAtlasPngConverterMICCAI_ced_scale_train(this);
+        // atlas.validate();
+    	
+    	// Miccai whole prostate test
+    	// final JDialogProstate2DSlicesAtlasPngConverterMICCAI_ced_scale_test atlas = new JDialogProstate2DSlicesAtlasPngConverterMICCAI_ced_scale_test(this);
+        // atlas.validate();
+    	
+    	// Miccai whole prostate boundary train
+        // final JDialogProstate2DSlicesAtlasPngConverterMICCAI_boundary_ced_scale atlas = new JDialogProstate2DSlicesAtlasPngConverterMICCAI_boundary_ced_scale(this);
+        // atlas.validate();
+        
+    	// Miccai whole prostate boundary test
+        // final JDialogProstate2DSlicesAtlasPngConverterMICCAI_boundary_ced_scale_test atlas = new JDialogProstate2DSlicesAtlasPngConverterMICCAI_boundary_ced_scale_test(this);
+        // atlas.validate();
+        
+    	
+        // HED png text file converter, MICCAI
+        // JDialogProstate2DSlicesPngTextFileConverterMICCAI atlas= new JDialogProstate2DSlicesPngTextFileConverterMICCAI(this);
+        // atlas.validate();
+        
+        // HED engergy map
+        // final JDialogProstate2DHEDmapMICCAI atlas = new JDialogProstate2DHEDmapMICCAI(this);
+        // atlas.validate();
+    	// final JDialogProstate2DHEDmapMICCAI_conversion atlas = new JDialogProstate2DHEDmapMICCAI_conversion(this);
+        // atlas.validate();
+    	// HED ced transform energy map
+        // final JDialogProstate2DHEDmapMICCAI_ced_scale atlas = new JDialogProstate2DHEDmapMICCAI_ced_scale(this);
+        // atlas.validate();
+    	
+    	// HED png text file list generation, central gland, tesing
+    	// final JDialogProstate2DSlicesPngTextFileConverterTestCentralGland atlas = new JDialogProstate2DSlicesPngTextFileConverterTestCentralGland(this);
+    	// atlas.validate();
+    	
+    	/********************************************    ISBI 2017 done ******************************************/
+        // New 3D data from Dr. Choyke's group.  STL 3D surface only, no ground truth VOIs given. 
+    	
+    	// JDialogProstateISBIfinalSurfaceCompare atlas = new JDialogProstateISBIfinalSurfaceCompare(this);
+        // atlas.validate();
+    	
+        // JDialogProstateISBIfinalSurfaceConvertNII atlas = new JDialogProstateISBIfinalSurfaceConvertNII(this);
+        // atlas.validate();
+    	
+        JDialogProstateISBIfinalSurfaceEvalSeg atlas = new JDialogProstateISBIfinalSurfaceEvalSeg(this);
+        atlas.validate();
+        
+    	// JDialogProstate2DSlicesAtlasPngConverter3DSurface atlas = new JDialogProstate2DSlicesAtlasPngConverter3DSurface(this);
+        // atlas.validate();
+        
+        // JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTrainAndTest atlas = new JDialogProstate2DSlicesAtlasPngConverter3DSurfaceTrainAndTest(this);
+        // atlas.validate();
+        
+        // JDialogProstate2DSlicesAtlasPngConverter3DSurfaceEdgeMap atlas = new JDialogProstate2DSlicesAtlasPngConverter3DSurfaceEdgeMap(this);
+        // atlas.validate();
+        
+    	// redundant file, need to remove
+        // JDialogProstate2DSlicesAtlasPngConverter3DSurfaceEdgeMapGT atlas = new JDialogProstate2DSlicesAtlasPngConverter3DSurfaceEdgeMapGT(this);
+        // atlas.validate();
+        
+    	// important. 
+    	// JDialogProstate2DSlicesAtlasPngConverter3DSurfaceEnergyMap atlas = new JDialogProstate2DSlicesAtlasPngConverter3DSurfaceEnergyMap(this);
+        // atlas.validate();
+        
+        // JDialogProstate2DSlicesReconstrucion atlas = new JDialogProstate2DSlicesReconstrucion(this);
+        // atlas.validate();
+        
+        // JDialogProstateEvaluationSegmentation atlas = new JDialogProstateEvaluationSegmentation(this);
+        // atlas.validate();
+        
+        // JDialogProstate2DSlicesAtlasCopyGTstl atlas = new JDialogProstate2DSlicesAtlasCopyGTstl(this);
+        // atlas.validate();
+        
+    	// Central gland for MICCAI, requested from Dr. Summers group. Failed test
+    	// JDialogProstate2DSlicesAtlasPngConverterCentralGland_miccai atlas = new JDialogProstate2DSlicesAtlasPngConverterCentralGland_miccai(this);
+    	// atlas.validate();
     }
     
     private void generateEndingSlices() {
@@ -6032,6 +6305,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         prostateGroups.validate();    
     }
     
+    /*
     private void patellaNIH() {
     	JDialogPatellaTraceSectionsNIH patella = new JDialogPatellaTraceSectionsNIH(this, getActiveImage());
     	patella.validate();
@@ -6051,12 +6325,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     	JDialogFemurTraceSectionsNetherland femur = new JDialogFemurTraceSectionsNetherland(this, getActiveImage());
     	femur.validate();
     }
+    */
     
     private void aamGroupRename() {
     	JDialogRenameDirs rename = new JDialogRenameDirs(this); 
     }
     
     private void aamClassification() {
+    	/*
     	if ( prostateAAMClassification == null ) {
     		prostateAAMClassification = new JDialogAAMClassification(this);
     		prostateAAMClassification.validate();
@@ -6064,6 +6340,61 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     		prostateAAMClassification.createTargetDialog();
     		prostateAAMClassification.validate();
     	}
+    	*/
+    	
+    	JDialogAAMClassificationExt prostateAAMClassification = new JDialogAAMClassificationExt(this);
+		prostateAAMClassification.validate();
+    }
+    
+    private void deepCNNTrain() {
+    	JDialogProstateLearnFromFailure64TrainingCase trainDiag = new JDialogProstateLearnFromFailure64TrainingCase(this);
+    	trainDiag.validate();
+    	
+    	// JDialogProstateCheckPngFile pngCheck = new JDialogProstateCheckPngFile(this);
+    	// pngCheck.validate();
+    	
+    }
+    
+    private void deepCNNTest() {
+    	JDialogProstateLearnFromFailure64TestCase  testDiag = new JDialogProstateLearnFromFailure64TestCase(this);
+    	testDiag.validate();
+    }
+    
+    private void deepCNNConvert() {
+    	JDialogCreateProbMapConvert convertDialog = new JDialogCreateProbMapConvert(this, getActiveImage());
+    	convertDialog.validate();
+    	System.err.println("ruida test");
+    	
+    	for (int i = 0; i <=9; i++  ) {
+    	   System.err.println(" i = " + i );
+    	   convertDialog.test(i);
+    	}
+    }
+    
+    private void deepKneesAtlas() {
+    	JDialogKnees2DSlicesAtlasPngConverter testDiag = new JDialogKnees2DSlicesAtlasPngConverter(this);
+    	testDiag.validate();
+    	// testDiag.generateVOI();
+    }
+    
+    
+    private void deepKneesMap() {
+    	JDialogCreateProbMap testDiag = new JDialogCreateProbMap(this, getActiveImage());
+    	testDiag.validate();
+    	testDiag.generateVOI();
+    }
+    
+    private void deepCNNMap() {
+    	JDialogCreateProbMap64 testDiag = new JDialogCreateProbMap64(this, getActiveImage());
+    	testDiag.validate();
+    	testDiag.generateVOI();
+    }
+    
+    private void hedCNNMap() {
+    	JDialogProstate2DHEDmap testDiag = new JDialogProstate2DHEDmap(this);
+    	testDiag.validate();
+    	// JDialogProstate2DHEDmapCg testDiag = new JDialogProstate2DHEDmapCg(this);
+    	// testDiag.validate();
     }
     
     private void aamMLClassification() {

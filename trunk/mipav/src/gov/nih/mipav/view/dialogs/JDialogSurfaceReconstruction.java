@@ -90,6 +90,7 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
     
     public JDialogSurfaceReconstruction(Frame theParentFrame, boolean modal) {
         super(theParentFrame, false);
+        init();
     }
 
     /**
@@ -230,6 +231,15 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
 
     }
 
+	public void setFileInput(String dirName, String fileName) {
+		fileNameInput = fileName;
+		directoryInput = dirName + File.separatorChar;
+	}
+
+	public void setFileOutput(String dirName, String fileName) {
+		fileNameOutput = fileName;
+		directoryOutput = dirName + File.separatorChar;
+	}
     
     /**
      * Write the cloud points from the 3 VOIs into one .ply file. The .ply file is readable for MeshLab.
