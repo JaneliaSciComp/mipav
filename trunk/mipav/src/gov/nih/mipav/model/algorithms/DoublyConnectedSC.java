@@ -1821,7 +1821,7 @@ double neweps;
 		        System.err.println("THE INVERSE EVALUATION FAILED");	
 		        System.err.println("AT POINT Z = (" + ZZ[0] + ", " + ZZ[1] + ")");
 		        System.err.println("THE DESIGNED INVERSION PROCEDURE EXPERIENCED");
-		        System.err.println("SOME ESSENTIAL DIFFICULATIES");
+		        System.err.println("SOME ESSENTIAL DIFFICULTIES");
 		        return result;
 		    } // if (INZ[0] == 2)
 		    if (INZ[0] == 0) {
@@ -1841,8 +1841,10 @@ double neweps;
 		              WI[1] = (W1[KNZ[0]-1][1]+W1[KNZ[0]-2][1])/2.0;
 		        }
 		        else {
-		              WI[0] = (W0[KNZ[0]-1][0]+W1[N-1][0])/2.0;
-		              WI[1] = (W0[KNZ[0]-1][1]+W1[N-1][1])/2.0;
+		              //WI[0] = (W0[KNZ[0]-1][0]+W1[N-1][0])/2.0;
+		              //WI[1] = (W0[KNZ[0]-1][1]+W1[N-1][1])/2.0;
+		              WI[0] = (W1[KNZ[0]-1][0]+W1[N-1][0])/2.0;
+		              WI[1] = (W1[KNZ[0]-1][1]+W1[N-1][1])/2.0;
 		        }
 
 		        denom = scm.zabs(WI[0], WI[1]);
