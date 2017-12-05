@@ -1,8 +1,7 @@
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.WidgetFactory;
-import gov.nih.mipav.view.dialogs.JDialogBase;
+
 import gov.nih.tbi.commons.model.*;
 import gov.nih.tbi.dictionary.model.DictionaryRestServiceModel.DataStructureList;
 import gov.nih.tbi.dictionary.model.hibernate.*;
@@ -19,6 +18,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.*;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
@@ -35,17 +36,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private final Font serif12  = new Font("Serif", Font.PLAIN, 12);
     private final Font serif12B = new Font("Serif", Font.BOLD, 12);
 
-    private WidgetFactory.ScrollTextArea logOutputArea;
+    private ScrollTextArea logOutputArea;
 
     private JScrollPane listPane;
 
     private JTable deTable;
-    private ViewTableModel deTableModel; 
+    private LocalFSTableModel deTableModel; 
     private FormStructure formStructure;
-    private List<FormStructure> formStructureList;
+    private List<FormStructure> formStructureList = null;
 
 
-    private JButton selectStructButton, loadCSVButton, finishButton, saveMapButton, editDataElementsButton, outputDirButton;
+    private JButton getStructsButton, selectStructButton, loadCSVButton, finishButton, saveMapButton, editDataElementsButton, outputDirButton;
 
     private JTextField outputDirTextField;
     private String outputDirBase;
@@ -217,10 +218,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 return;
             }
         }
+       
         
         // Gets full list of form structures from the BRICS data dictionary
-        final Thread thread = new FormListRESTThread(this);
-        thread.start();
+        //final Thread thread = new FormListRESTThread(this);
+        //thread.start();
     }
 
     @Override
@@ -228,14 +230,16 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	
         final String command = e.getActionCommand();
 
-        if (command.equalsIgnoreCase("SelectStruct")) {
+        if (command.equalsIgnoreCase("GetStructs")) {
 
-            new ChooseFormStructDialog(this);
+        	final Thread thread = new FormListRESTThread(this);
+            thread.start();
 
-            //saveMapButton.setEnabled(deTableModel.getRowCount() > 0);
-            //editDataElementsButton.setEnabled(deTableModel.getRowCount() > 0);
+        } else if (command.equalsIgnoreCase("SelectStruct")) {
+        	new ChooseFormStructDialog(this);  
+        	
+    	} else if (command.equalsIgnoreCase("LoadCSV")) {
 
-        } else if (command.equalsIgnoreCase("LoadCSV")) {
             final JFileChooser chooser = new JFileChooser();
             chooser.setCurrentDirectory(new File(csvFileDir));
             chooser.setDialogTitle("Choose CSV file");
@@ -247,7 +251,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
-                saveMapButton.setEnabled(deTableModel.getRowCount() > 0);
+                //saveMapButton.setEnabled(deTableModel.getRowCount() > 0);
             }
         } else if (command.equalsIgnoreCase("SaveMapFile")) {
         	
@@ -382,10 +386,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     /**  Setup Mapping tool layout */
     private void init() {
         setTitle("Data Mapping Tool - " + pluginVersion + " (" + ddEnvName + ")");
-        // Should be adding a tabbed pane - mapping config tab  + data mapping tab
-        //dsMainPanel = new JPanel(new GridBagLayout());
-        //final JScrollPane tabScrollPane = new JScrollPane(dsMainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-        //        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
@@ -455,6 +455,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
 
+        
+        getStructsButton = new JButton("Get Form Structures");
+        getStructsButton.setToolTipText("Gets BRICS Form Structures from server. ");
+        getStructsButton.addActionListener(this);
+        getStructsButton.setActionCommand("GetStructs");
+        
         selectStructButton = new JButton("Select Form Structure");
         selectStructButton.setToolTipText("Select BRICS Form Structure ");
         selectStructButton.addActionListener(this);
@@ -485,6 +491,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         finishButton.setEnabled(false);
 
         gbc.gridx = 0;
+        buttonPanel.add(getStructsButton, gbc);
+        gbc.gridx++;
         buttonPanel.add(selectStructButton, gbc);
         gbc.gridx++;
         buttonPanel.add(loadCSVButton, gbc);
@@ -502,7 +510,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * @return JScrollPane of the table...
      */
     private JScrollPane buildStructurePanel() {
-    	deTableModel = new ViewTableModel();
+    	deTableModel = new LocalFSTableModel();
     	deTableModel.addColumn("Group");
     	deTableModel.addColumn("Element Name");
     	deTableModel.addColumn("Title");
@@ -513,6 +521,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	deTableModel.addColumn("Type");
     	deTableModel.addColumn("Source PVs");
     	deTableModel.addColumn("PV Mappings");
+
     
         
         deTable = new JTable(deTableModel) {
@@ -577,6 +586,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                tooltip += "</p></html>";
 	                return tooltip;
                 }
+                else if(colIndex == 5) {
+                	tooltip += "<html> <p> <b> All REQUIRED elements must be mapped before saving mapping file. </b>";
+                	tooltip += "</p></html>";
+                	return tooltip;
+                }
                 else if(colIndex > 5) {
 	                
 	                tooltip += "<html> <p> <b> Single click: </b> " + " selects the DE to be mapped.  <br/>";
@@ -612,8 +626,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         deTable.getColumn("Required").setPreferredWidth(115);
         deTable.getColumn("Required").setCellRenderer(new CellRenderer());
         
-        listPane = WidgetFactory.buildScrollPane(deTable);
-        listPane.setBorder(JDialogBase.buildTitledBorder(" Reference Form Structure:   "));
+        listPane = buildScrollPane(deTable);
+        listPane.setBorder(buildTitledBorder(" Reference Form Structure:   "));
    
         return listPane;
     }
@@ -670,7 +684,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         outputDirTextField.setEditable(false);
         outputDirTextField.setToolTipText(outputDirBase);
         outputDirTextField.setText(outputDirBase);
-        outputDirButton = WidgetFactory.buildTextButton("Browse", "Choose Output Directory for mapping result files", "OutputDirBrowse", this);
+        outputDirButton = buildTextButton("Browse", "Choose Output Directory for mapping result files", "OutputDirBrowse", this);
         outputDirButton.setPreferredSize(defaultButtonSize);
         
         saveMapButton = new JButton("Save");
@@ -686,8 +700,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         outputDirPanel.add(saveMapButton);
         destPanel.add(outputDirPanel, gbc2);
 
-        logOutputArea = WidgetFactory.buildScrollTextArea(Color.white);
-        logOutputArea.setBorder(JDialogBase.buildTitledBorder("Output log"));
+        logOutputArea = buildScrollTextArea(Color.white);
+        logOutputArea.setBorder(buildTitledBorder("Output log"));
         logOutputArea.getTextArea().setEditable(false);
         logOutputArea.getTextArea().setRows(5);
         
@@ -702,7 +716,23 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
 
   
-   
+    /**
+     * Pops up the
+     * 
+     */
+    private boolean validateRequired() {
+    	
+    	int numRows = deTableModel.getRowCount();
+    	for (int i=0; i< numRows; i++) {
+    		if ( deTableModel.getValueAt(i, 5).equals("REQUIRED") && deTableModel.getValueAt(i, 6) == null ) {
+    			saveMapButton.setEnabled(false);
+    			return false;
+    			
+    		}
+    	}
+    	saveMapButton.setEnabled(true);
+    	return true;
+    }
    
     /**
      * writes out csv file
@@ -786,6 +816,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     @Override
     public void mouseClicked(final MouseEvent e) {
         final Component c = e.getComponent();
+        
         if (c instanceof JTable) {
            /** if (deTable.getSelectedRow() == -1) {
                 editDataElementsButton.setEnabled(false);
@@ -798,17 +829,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 }
             }*/
 
-            
 
             if (e.getClickCount() == 2 && deTable.getSelectedColumn() < 6 ) {
                 //if ( !isFinished) {
-                    final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
+                    //final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
                     //new InfoDialog(this, dsName, true, true, null);
                     showCDE(null);
                 //}
             }
             else if (e.getClickCount() == 2 && deTable.getSelectedColumn() >= 6) {
-            	ManualEditDEDialog man = new ManualEditDEDialog(this, deTable.getSelectedRow());
+            	
+
             }
         }
     }
@@ -825,20 +856,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     @Override
     public void mouseReleased(final MouseEvent e) {}
 
-    public boolean contains(final File f) {
-        boolean contains = false;
-
-        for (int i = 0; i < deTableModel.getRowCount(); i++) {
-            final File f1 = (File) deTableModel.getValueAt(i, 0);
-            if (f1.getAbsolutePath().equalsIgnoreCase(f.getAbsolutePath())) {
-                contains = true;
-                break;
-            }
-        }
-        return contains;
-    }
-
-    public void enableDisableFinishButton() {
+    //public void ennableDisableFinishButton() {
         // boolean allCompleted = true;
 
         // for (int i = 0; i < sourceTableModel.getRowCount(); i++) {
@@ -849,19 +867,19 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         // }
         // }
 
-        if (deTableModel.getRowCount() == 0) {
-            finishButton.setEnabled(false);
-        } else {
+  //      if (deTableModel.getRowCount() == 0) {
+  //          finishButton.setEnabled(false);
+    //    } else {
             // changed to always enabled if some data added
-            finishButton.setEnabled(true);
+  //          finishButton.setEnabled(true);
             // if (allCompleted) {
             // finishButton.setEnabled(true);
             // } else {
             // finishButton.setEnabled(false);
             // }
-        }
+ //       }
 
-    }
+   // }
 
    
 
@@ -875,7 +893,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             try {
                 prop.load(in);
             } catch (final IOException e) {
-                Preferences.debug("Unable to load BRICS preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
+                //Preferences.debug("Unable to load BRICS preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
                 e.printStackTrace();
             }
             // use pre-set, hardcoded values as defaults if properties are not found
@@ -994,7 +1012,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         private final PlugInDialogBRICS_Mapper owner;
 
-        private ViewTableModel structsModel;
+        private LocalTableModel structsModel;
 
         private JTable structsTable;
 
@@ -1017,7 +1035,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             setTitle("Choose Form Structure");
             final int numColumns = 5;
             final String[] columnNames = {"Name", "Description", "Version", "Status", "Disease"};
-            structsModel = new ViewTableModel();
+            structsModel = new LocalTableModel();
             structsTable = new JTable(structsModel) {
                 private static final long serialVersionUID = 3053232611901005303L;
 
@@ -1212,7 +1230,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
 
             copyFormStructureToTable();
-            listPane.setBorder(JDialogBase.buildTitledBorder("  Reference Form Structure:  " + fsName));
+            listPane.setBorder(buildTitledBorder("  Reference Form Structure:  " + fsName));
             loadCSVButton.setEnabled(true);
         }
         
@@ -1337,14 +1355,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * 
      * 
      */
-    private class SourceDEsDialog extends JDialog implements ActionListener, WindowListener, ItemListener, FocusListener {
+    private class SourceDEsDialog extends JDialog implements ActionListener {
         private static final long serialVersionUID = 859201819000159789L;
 
         private final PlugInDialogBRICS_Mapper owner;
 
         Vector<String[]> dataElements;
         JTable 			 srcDETable;
-        ViewTableModel	 srcDETableModel;
+        LocalTableModel	 srcDETableModel;
         JScrollPane		 srcDEPane;
 
 
@@ -1367,7 +1385,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
          */
         private void init() {
         	setTitle("Source Data Elements");
-            addWindowListener(this);
             final JPanel mainPanel = new JPanel(new GridBagLayout());
 
             final GridBagConstraints gbc = new GridBagConstraints();
@@ -1434,7 +1451,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
          * @return
          */
         private JScrollPane buildCSVPanel() {
-        	srcDETableModel = new ViewTableModel();
+        	srcDETableModel = new LocalTableModel();
         	
         	//Columns defined by first row in CSV file
         	for (int i = 0; i < dataElements.get(0).length; i++) {
@@ -1450,7 +1467,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             
             srcDEPane = new JScrollPane(srcDETable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            srcDEPane.setBorder(JDialogBase.buildTitledBorder(" Source Data Elements"));
+            srcDEPane.setBorder(buildTitledBorder(" Source Data Elements"));
        
             populateSrcTable();
             return srcDEPane;
@@ -1462,6 +1479,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private void populateSrcTable() {
         	
         	if (dataElements == null) return;
+        	
         	srcDETableModel.setRowCount(dataElements.size()-1);
         	   	
         	for (int i = 1; i < dataElements.size(); i++) {
@@ -1502,249 +1520,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), 1), row, 7);
 	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), 2), row, 8);
             	}
+        		validateRequired();
             } 
-        }
-        
-        @Override
-        public void windowActivated(final WindowEvent e) {}
-
-        @Override
-        public void windowClosed(final WindowEvent e) {}
-
-        @Override
-        public void windowClosing(final WindowEvent e) {
-            //enableDisableFinishButton();
-        }
-
-        @Override
-        public void windowDeactivated(final WindowEvent e) {}
-
-        @Override
-        public void windowDeiconified(final WindowEvent e) {}
-
-        @Override
-        public void windowIconified(final WindowEvent e) {}
-
-        @Override
-        public void windowOpened(final WindowEvent e) {}
-
-        @Override
-        public void itemStateChanged(final ItemEvent e) {
-            
-        }
-
-        @Override
-        public void focusGained(final FocusEvent e) {}
-
-        @Override
-        public void focusLost(final FocusEvent e) {
-
-        }
-    }
-    
-    
-    /**
-     *  M
-     * 
-     * 
-     */
-    private class ManualEditDEDialog extends JDialog implements ActionListener, ItemListener, FocusListener {
-        private static final long serialVersionUID = 859201819000159789L;
-
-        private final PlugInDialogBRICS_Mapper owner;
-
-        private final int row;
-        private final JTextField srcNameTF = new JTextField();
-        private final JTextField srcTypeTF = new JTextField();  // Likely should be a drop down?
-        private final JTextField srcPVsTF = new JTextField();
-        private final JTextField mappedPVsTF = new JTextField();
-
-        public ManualEditDEDialog(final PlugInDialogBRICS_Mapper owner, final int r) {
-            super(owner, false);
-
-            this.owner = owner;
-            row = r;
-
-            init();
-        }
-
-        /**
-         * 
-         */
-        private void init() {
-        	setTitle("Manual Edit Source Data Elements");
-            
-            final JPanel mainPanel = new JPanel(new GridBagLayout());
-            
-            final GridBagConstraints gbc = new GridBagConstraints();
-
-            try {
-                setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-            } catch (final Exception e) {
-                // setIconImage() is not part of the Java 1.5 API - catch any
-                // runtime error on those systems
-            }
-
-            
-            JLabel srcNameLab = new JLabel("  Source Name  ");
-            gbc.weightx = 0;
-            gbc.weighty = 0;
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            gbc.insets = new Insets(10, 5, 10, 5);
-            mainPanel.add(srcNameLab, gbc);
-            
-            srcNameTF.setMinimumSize(defaultTextFieldSize);
-            srcNameTF.setPreferredSize(defaultTextFieldSize);
-            gbc.weightx = 1;
-            gbc.weighty = 1;
-            gbc.gridx = 1;
-            gbc.gridy = 0;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            mainPanel.add(srcNameTF, gbc);    
-            
-            JLabel srcTypeLab = new JLabel("  Type  ");
-            gbc.weightx = 0;
-            gbc.weighty = 0;
-            gbc.gridx = 0;
-            gbc.gridy = 1;
-            gbc.insets = new Insets(10, 5, 10, 5);
-            mainPanel.add(srcTypeLab, gbc);
-            
-            srcTypeTF.setMinimumSize(defaultTextFieldSize);
-            srcTypeTF.setPreferredSize(defaultTextFieldSize);
-            gbc.weightx = 1;
-            gbc.weighty = 1;
-            gbc.gridx = 1;
-            gbc.gridy = 1;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            mainPanel.add(srcTypeTF, gbc);    
-            
-            JLabel srcPVs= new JLabel("  Source PVs  ");
-            gbc.weightx = 0;
-            gbc.weighty = 1;
-            gbc.gridx = 0;
-            gbc.gridy = 2;
-            gbc.fill = GridBagConstraints.NONE;
-            mainPanel.add(srcPVs, gbc);
-            
-            srcPVsTF.setMinimumSize(defaultTextFieldSize);
-            srcPVsTF.setPreferredSize(defaultTextFieldSize);
-            gbc.weightx = 1;
-            gbc.weighty = 1;
-            gbc.gridx = 1;
-            gbc.gridy = 2;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            mainPanel.add(srcPVsTF, gbc);        
-            
-            JLabel mappedPVsLab = new JLabel("  PV Mappings  ");
-            gbc.weightx = 0;
-            gbc.weighty = 0;
-            gbc.gridx = 0;
-            gbc.gridy = 3;
-            gbc.fill = GridBagConstraints.NONE;
-            mainPanel.add(mappedPVsLab, gbc);
-            
-            mappedPVsTF.setMinimumSize(defaultTextFieldSize);
-            mappedPVsTF.setPreferredSize(defaultTextFieldSize);
-            gbc.weightx = 1;
-            gbc.weighty = 1;
-            gbc.gridx = 1;
-            gbc.gridy = 3;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-
-            mainPanel.add(mappedPVsTF, gbc);        
-            
-            
-            final JPanel OKPanel = new JPanel();
-
-            final JButton cancelButton = new JButton("Cancel");
-            cancelButton.setActionCommand("manualDECancel");
-            cancelButton.addActionListener(this);
-            cancelButton.setMinimumSize(defaultButtonSize);
-            cancelButton.setPreferredSize(defaultButtonSize);
-            cancelButton.setFont(serif12B);
-            
-            final JButton saveButton = new JButton("Save");
-            saveButton.setActionCommand("manualDESave");
-            saveButton.addActionListener(this);
-            saveButton.setMinimumSize(defaultButtonSize);
-            saveButton.setPreferredSize(defaultButtonSize);
-            saveButton.setFont(serif12B);
-            
-            OKPanel.add(saveButton);
-            OKPanel.add(cancelButton);
-            getContentPane().add(OKPanel, BorderLayout.SOUTH);
-            
-            getContentPane().add(mainPanel, BorderLayout.CENTER);
-
-            final Dimension dim = getContentPane().getPreferredSize();
-            if (dim.height > 500) {
-                dim.height = 500;
-            }
-            
-            if (deTable.getValueAt(row, 6) != null)
-            	srcNameTF.setText((String)deTable.getValueAt(row, 6));
-            if (deTable.getValueAt(row, 7) != null)
-            	srcTypeTF.setText((String)deTable.getValueAt(row, 7));
-            if (deTable.getValueAt(row, 8) != null)
-            	srcPVsTF.setText((String)deTable.getValueAt(row, 8));
-            if (deTable.getValueAt(row, 9) != null)
-            	mappedPVsTF.setText((String)deTable.getValueAt(row, 9));
-            
-            pack();
-            centerInWindow(owner, this);
-           
-            setVisible(true);
-
-        }
-        
-       
-        
-        /**
-         * 
-         */
-        private void populateSrcTable() {
-        	
-        	deTable.setValueAt(srcNameTF.getText(), row, 6);
-        	deTable.setValueAt(srcTypeTF.getText(), row, 7);
-        	deTable.setValueAt(srcPVsTF.getText(), row, 8);
-        	deTable.setValueAt(mappedPVsTF.getText(), row, 9);
-        		
-        }
-        
-        
-        /**
-         * action performed
-         */
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-            final String command = e.getActionCommand();
-
-            if (command.equalsIgnoreCase("manualDECancel")) {
-                dispose();
-            } 
-            if (command.equalsIgnoreCase("manualDESave")) {
-            	populateSrcTable();
-            	dispose();
-            } 
-        }
-        
-
-        @Override
-        public void itemStateChanged(final ItemEvent e) {          
-        }
-
-        @Override
-        public void focusGained(final FocusEvent e) {}
-
-        @Override
-        public void focusLost(final FocusEvent e) {
         }
     }
 
-
-    
+ 
     /**
      * Filter out Imaging and Archived form structures leaving only CLINCICAL form structures
      * @param fullList
@@ -2361,5 +2142,269 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
     }
     
+    /**
+     * Helper method to build a text button.
+     *
+     * @param   text      Text for button.
+     * @param   toolTip   Tool tip to be associated with button.
+     * @param   action    Action command for button.
+     * @param   listener  the listener for this button's actions
+     *
+     * @return  a new text button
+     */
+    private static final JButton buildTextButton(String text, String toolTip, String action, ActionListener listener) {
+        JButton button = new JButton(text);
+        button.addActionListener(listener);
+        button.setToolTipText(toolTip);
+        button.setFont(new Font("Serif", Font.BOLD, 12));
+        button.setMinimumSize(new Dimension(20, 20));
+        button.setPreferredSize(new Dimension(90, 20));
+        button.setMargin(new Insets(2, 7, 2, 7));
+        button.setActionCommand(action);
+
+        return button;
+    }
+    
+    /**
+     * Builds a titled border with the given title, an etched border, and the proper font and color.
+     *
+     * @param   title  Title of the border
+     *
+     * @return  The titled border.
+     */
+    private static TitledBorder buildTitledBorder(String title) {
+        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, new Font("Serif", Font.BOLD, 12),
+                                Color.black);
+    }
+    
+    /**
+     * Create a new scroll pane, containing a component.
+     *
+     * @param   component        the component to put inside the scroll pane
+     *
+     * @return  the new scroll pane
+     */
+    private static final JScrollPane buildScrollPane(JComponent component) {
+        JScrollPane scrollPane = new JScrollPane(component, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+        return scrollPane;
+    }
+    
+    private static final ScrollTextArea buildScrollTextArea(Color bg) {
+    	ScrollTextArea tArea = new ScrollTextArea(bg);
+    	return tArea;
+    }
+    
+    /**
+     * ScrollPane with an accessible JTextArea
+     *
+     */
+    public static final class ScrollTextArea extends JScrollPane {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 3869765356771292936L;
+
+        /** accessible JTextArea */
+        private JTextArea tArea = null;
+
+        /**
+         * Creates a new ScrollTextArea object.
+         */
+        public ScrollTextArea(Color text_background) {
+            super(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            //getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
+            tArea = new JTextArea();
+            tArea.setBackground(text_background);
+            tArea.setEditable(true);
+            tArea.setFont(new Font("Serif", Font.PLAIN, 12));
+            tArea.setMargin(new Insets(3, 3, 3, 3));
+            setViewportView(tArea);
+        }
+
+        /**
+         * JTextArea accessor
+         *
+         * @return contained JTextArea
+         */
+        public JTextArea getTextArea() {
+            return tArea;
+        }
+    }
+    
+    
+    /**
+     * This is a simple class that creates a DefaultTableModel with uneditable cells. With the cells uneditable, the table
+     * may react to mouse events, such as double clicking on a row.
+     *
+     */
+
+    public class LocalTableModel extends DefaultTableModel implements Serializable {
+
+        //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 487484434950231158L;
+
+        //~ Constructors ---------------------------------------------------------------------------------------------------
+
+        /**
+         * Calls super constructor.
+         */
+        public LocalTableModel() {
+            super();
+        }
+
+        /**
+         * Constructs a new table model with the given column names and row count.
+         *
+         * @param  columnNames  Names of columns.
+         * @param  rowCount     Number of rows.
+         */
+        public LocalTableModel(Object[] columnNames, int rowCount) {
+            super(columnNames, rowCount);
+        }
+
+        //~ Methods --------------------------------------------------------------------------------------------------------
+
+        /**
+         * Returns the class of the item in the column.
+         *
+         * @param   col  Column index.
+         *
+         * @return  Class of column.
+         */
+        public Class<? extends Object> getColumnClass(int col) {
+
+            try {
+                Vector v = (Vector) dataVector.elementAt(0);
+
+                return v.elementAt(col).getClass();
+            } catch (NullPointerException e) {
+                return super.getColumnClass(col);
+            }
+        }
+
+        /**
+         * Gets the index of the given column name.
+         *
+         * @param   name  Name of column.
+         *
+         * @return  Index of column when created, or -1 if none.
+         */
+        public int getColumnIndex(String name) {
+
+            for (int i = 0; i < columnIdentifiers.size(); i++) {
+
+                if (name.equals(columnIdentifiers.elementAt(i))) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /**
+         * Gets the index of a column name that starts with the given string
+         * @param name String name of column
+         * @return int Index of column, or -1 if none
+         */
+        public int getColumnStartsWithIndex(String name) {
+
+            for (int i = 0; i < columnIdentifiers.size(); i++) {
+
+                if (((String)columnIdentifiers.elementAt(i)).startsWith(name)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        /**
+         * Gets the index of the given column name.
+         *
+         * @param   name  Name of column.
+         *
+         * @return  Index of column when created, or -1 if none.
+         */
+        public int getColumnBaseIndex(String name) {
+            int strLength;
+            for (int i = 0; i < columnIdentifiers.size(); i++) {
+                strLength = ((String)columnIdentifiers.elementAt(i)).length();
+                if ((strLength >= name.length()) &&
+                    (name.equals(((String)columnIdentifiers.elementAt(i)).substring(0,name.length())))) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /**
+         * Returns false for all cells, so none can be edited.
+         *
+         * @param   x  x value of cell
+         * @param   y  y value of cell
+         *
+         * @return  false, always
+         */
+        public boolean isCellEditable(int x, int y) {
+            return false;
+        }
+
+        /**
+         * Sets the value at the given row and column of the table.
+         *
+         * @param  value  Value to set.
+         * @param  row    Row to set value at.
+         * @param  col    Column to set value at.
+         */
+        public void setValueAt(Object value, int row, int col) {
+            super.setValueAt(value, row, col);
+            fireTableCellUpdated(row, col);
+        }
+
+    }
+    
+    
+    
+    /**
+     * This is a simple class that creates a DefaultTableModel with uneditable cells. With the cells uneditable, the table
+     * may react to mouse events, such as double clicking on a row.
+     *
+     */
+
+    public class LocalFSTableModel extends DefaultTableModel  {
+
+        //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 487484434950231158L;
+
+        //~ Constructors ---------------------------------------------------------------------------------------------------
+
+        /**
+         * Calls super constructor.
+         */
+        public LocalFSTableModel() {
+            super();
+        }
+
+        /**
+         * Returns false for all cells, so none can be edited.
+         *
+         * @param   x  x value of cell
+         * @param   y  y value of cell
+         *
+         * @return  false, always
+         */
+        public boolean isCellEditable(int x, int y) {
+            if (y > 5 ) return true;
+            else return false;
+        }
+
+       
+    }
+
 
 }
