@@ -19,11 +19,6 @@ public class CustomHashtable<V> extends Hashtable<String, V> {
     private static final long serialVersionUID = -8592617112282655416L;
 
     /**
-     * MAX_APPENDED_KEYS is the maximum number of keys that will* appended to a "keyname" in order to make a key unique.
-     */
-    public static final int MAX_APPENDED_KEYS = 2000;
-
-    /**
      * Constructs a new, empty hashtable with a default capacity and load factor, which is 0.75.
      */
     public CustomHashtable() {
@@ -78,8 +73,7 @@ public class CustomHashtable<V> extends Hashtable<String, V> {
     }
 
     /**
-     * Starts with a key that already exists in the hashtable and appends integers to its toString() value until
-     * reaching MAX_APPENDED_KEYS. Throws a NullPointer Exception if a unique key can't be found after appending all the
+     * Starts with a key that already exists in the hashtable and appends integers to its toString(). Throws a NullPointer Exception if a unique key can't be found after appending all the
      * integer values.
      * 
      * @param key DOCUMENT ME!
@@ -91,7 +85,7 @@ public class CustomHashtable<V> extends Hashtable<String, V> {
     protected String appendKey(String key) throws NullPointerException {
         String keyname = key.toString();
 
-        for (int i = 1; i <= MAX_APPENDED_KEYS; i++) {
+        for (int i = 1; i <= Integer.MAX_VALUE; i++) {
 
             if ( !this.containsKey(new String(keyname + i))) {
 
@@ -104,7 +98,6 @@ public class CustomHashtable<V> extends Hashtable<String, V> {
 
         // if we get here, then we failed to find a unique key
         System.gc();
-        throw new NullPointerException("Failed to create new key for " + keyname + " after " + MAX_APPENDED_KEYS
-                + " iterations.");
+        throw new NullPointerException("Failed to create new key for " + keyname);
     }
 }
