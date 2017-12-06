@@ -188,6 +188,7 @@ public class LatticeModel {
 					if ( parsed.length != 0 )
 					{
 						VOIText text = new VOIText();
+						text.setNote(fileName);
 						float x, y, z, r;
 						if ( parsed.length > 3 )
 						{
