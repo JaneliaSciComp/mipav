@@ -55,6 +55,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -81,8 +83,10 @@ import javax.swing.table.DefaultTableModel;
 
 import org.jocl.Sizeof;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, AlgorithmInterface, WindowListener, AnnotationListener, TableModelListener, ListSelectionListener {
+
+public class PlugInDialogTrackAnnotations extends JFrame implements ActionListener, AlgorithmInterface, WindowListener, AnnotationListener, TableModelListener, ListSelectionListener, KeyListener {
 
 	private static final long serialVersionUID = -9056581285643263551L;
 
@@ -402,6 +406,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	 * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
 	 */
 	public void tableChanged(TableModelEvent e) {
+		System.err.println("tableChanged");
 		// Track updates to the table and update the corresponding annotation.
 		// The user can change the annotation name and position (x,y,z) with table edits.
 		// Does not currently check type.
@@ -455,11 +460,14 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
 
 		int row = annotationTable.getSelectedRow();
-		boolean isChecked = false;
+		boolean isChecked = true;
 		if ( (annotations != null) && (row >= 0) ) {
 			if ( row < annotations.getCurves().size() ) {
 				VOIText text = (VOIText) annotations.getCurves().elementAt(row);
-				isChecked = text.getVolumeVOI().GetDisplay();
+				if ( text.getVolumeVOI() != null )
+				{
+					isChecked = text.getVolumeVOI().GetDisplay();
+				}
 			}
 		}
 		displayLabel.setSelected(isChecked);
@@ -511,6 +519,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 			annotationTable = new JTable(annotationTableModel);
 			annotationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			annotationTable.addKeyListener(this);
 
 			annotationTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 			annotationTable.getColumn("Name").setMinWidth(100);
@@ -920,7 +929,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 							if ( imageStackB[i] != null ) {
 								sizeB = imageStackB[i].getDataSize();
 							}
-							if ( !checkGPUMemory(sizeA, sizeB, includeRange.size()) )
+							if ( !checkGPUMemory(sizeA, sizeB) )
 							{
 								MipavUtil.displayError("Image size too big to load on GPU.");
 						        progressBar.setVisible(false);
@@ -1046,6 +1055,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				{
 					savedAnnotations = annotations;
 				}
+				annotations = LatticeModel.readAnnotationsCSV(baseFileDir2 + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator +
+						"tracked_annotations.csv");		
+				if ( annotations != null )
+				{
+					savedAnnotations.getCurves().addAll(annotations.getCurves());
+				}
 			}			
 			
 			// load the annotations into the viewer:
@@ -1110,10 +1125,71 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		{
 			return;
 		}
-		String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
-		String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
-		LatticeModel.saveAnnotationsAsCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator,
-				"tracked_annotations.csv", savedAnnotations);
+		VOI annotations1 = new VOI((short) 0, "tracked_annotations", VOI.ANNOTATION, -1.0f);
+		VOI annotations2 = new VOI((short) 0, "tracked_annotations", VOI.ANNOTATION, -1.0f);
+		String dir1 = "";
+		String dir2 = "";
+		String empty = new String();
+		for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
+			if ( i == 0 )
+			{
+				VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
+				if ( !text.getNote().equals(empty) )
+				{
+					dir1 = text.getNote();
+				}
+				annotations1.getCurves().add(savedAnnotations.getCurves().elementAt(i));
+			}
+			else
+			{
+				VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
+				if ( text.getNote().equals( dir1 ) || text.getNote().equals(empty) )
+				{
+					annotations1.getCurves().add(text);
+				}
+				else
+				{
+					if ( !text.getNote().equals(empty) )
+					{
+						dir2 = text.getNote();
+					}
+					annotations2.getCurves().add(text);
+				}
+			}
+		}
+//		System.err.println( dir1 );
+//		System.err.println( dir2 );
+
+		dir1 = dir1.substring(0, dir1.lastIndexOf(File.separator, dir1.length()) );
+		dir2 = dir2.substring(0, dir2.lastIndexOf(File.separator, dir2.length()) );
+//		System.err.println( dir1 );
+//		System.err.println( dir2 );
+		
+		// Save first set of annotations:
+		if ( annotations1.getCurves().size() > 0 )
+		{
+			// create default directory name if needed:
+			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
+			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+			if ( dir1.equals("") )
+			{
+				dir1 = baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations";
+			}
+			LatticeModel.saveAnnotationsAsCSV(dir1 + File.separator, "tracked_annotations.csv", annotations1);
+		}
+		
+		// Save second set of annotations:
+		if ( annotations2.getCurves().size() > 0 )
+		{
+			// create default directory name if needed:
+			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
+			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+			if ( dir2.equals("") )
+			{
+				dir2 = baseFileDir2 + File.separator + subDirName + subDirNameResults + "tracked_annotations";
+			}
+			LatticeModel.saveAnnotationsAsCSV(dir2 + File.separator, "tracked_annotations.csv", annotations2);
+		}
 
 
 		// close the worm data:
@@ -1170,7 +1246,13 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		return (includeRange != null);
 	}
 	
-	private boolean checkGPUMemory(int sizeA, int sizeB, int numImages) {	
+	/**
+	 * Checks image size and the available memory on the GPU.
+	 * @param sizeA
+	 * @param sizeB
+	 * @return
+	 */
+	private boolean checkGPUMemory(int sizeA, int sizeB) {	
 		long[] maxMemSizeArray = new long[2];
 		
 		OpenCLInfo.getMaxMemSize(CL_DEVICE_TYPE_GPU, maxMemSizeArray);
@@ -1183,4 +1265,49 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 		return true;
 	}
+
+	public void keyTyped(KeyEvent e) {
+		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
+			int row = annotationTable.getSelectedRow();
+			int col = annotationTable.getSelectedColumn();
+			if ( triVolume != null && triVolume.getVOIManager() != null )
+			{
+				if ( (row == 0)  && (col == 0) ) {
+					
+					VOIText text = new VOIText();
+					text.setText("A"+ ((VOILatticeManagerInterface)triVolume.getVOIManager()).getCurrentIndex() );
+					int dimX = imageA.getExtents()[0];
+					int dimY = imageA.getExtents()[1];
+					int dimZ = imageA.getExtents()[2];
+					text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
+					text.add( new Vector3f( dimX/2, dimY/2, dimZ/2 ) );
+					
+					short id = (short) imageA.getVOIs().getUniqueID();
+					int colorID = 0;
+					VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+					newTextVOI.getCurves().add(text);
+					
+					((VOILatticeManagerInterface)triVolume.getVOIManager()).clear3DSelection();
+					((VOILatticeManagerInterface)triVolume.getVOIManager()).addAnnotation( newTextVOI );
+					((VOILatticeManagerInterface)triVolume.getVOIManager()).clear3DSelection();
+					int nRows = annotationTable.getRowCount();
+					annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+				}
+			}
+		}
+//		if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
+//			int[] rows = annotationTable.getSelectedRows();
+//			int[] cols = annotationTable.getSelectedColumns();
+//			for ( int i = 0; i < cols.length; i++ ) {
+//				System.err.println( "selected " + cols[i] );
+//			}
+//		}
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {}
 }
