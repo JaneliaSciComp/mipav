@@ -1571,8 +1571,15 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 		if (!getSculptEnabled()) {
 			if (!e.isControlDown() && ((e.getModifiers() & InputEvent.BUTTON3_MASK) == 0)) {
+				// left-mouse rotate; middle mouse zoom:
 				super.mouseDragged(e);
-			} else if (e.isControlDown() && (m_kVolumeClip != null)
+			}  
+			else if (e.isControlDown() && ((e.getModifiers() & InputEvent.BUTTON3_MASK) != 0)) {
+				// right-mouse translate:
+				super.mouseDragged(e);
+			}  
+				
+			else if (e.isControlDown() && (m_kVolumeClip != null)
 					&& (m_kVolumeClip.DisplayArb())) {
 				InitializeObjectMotion(m_kVolumeClip.ArbRotate());
 				super.mouseDragged(e);
@@ -1607,6 +1614,8 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			InitializeObjectMotion(m_kVolumeClip.ArbRotate());
 			super.mousePressed(e);
 			InitializeObjectMotion(m_spkScene);
+		} else {
+			super.mousePressed(e);
 		}
 		if (e.isControlDown() && m_bPaintEnabled) {
 			m_iXPick = e.getX();

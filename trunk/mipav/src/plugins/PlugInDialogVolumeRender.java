@@ -157,6 +157,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JPanel lutPanel;
 
 	private JButton newLatticeButton; 
+	private JCheckBox displayModel;
 
 	private JButton nextButton;
 	
@@ -454,6 +455,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			// Closes the editing:
 			else if (command.equals("done"))
 			{			
+				buttonPanel.remove(displayModel);
 				if ( editMode == EditSeamCells )
 				{
 					if ( (wormData != null) && !wormData.checkSeamCells() )
@@ -500,6 +502,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				latticeSelectionPanel.removeAll();
 				latticeSelectionPanel.add(newLatticeButton);
 				this.validate();
+			}
+			else if ( command.equals("displayModel") )
+			{
+				if ( voiManager != null )
+				{
+					voiManager.showModel( displayModel.isSelected() );
+					volumeRenderer.updateVOIs();
+				}
 			}
 			if ( includeRange != null )
 			{
@@ -830,6 +840,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		{			
 			if ( (imageIndex >= 0) && (imageIndex < includeRange.size()) )
 			{
+				buttonPanel.remove(displayModel);
+				buttonPanel.add(displayModel);
+				displayModel.setSelected(false);
+				
 				String fileName = baseFileName + "_" + includeRange.elementAt(imageIndex) + ".tif";
 				File voiFile = new File(baseFileDir + File.separator + fileName);
 				File voiFile2 = new File(baseFileDir2 + File.separator + fileName);
@@ -1118,6 +1132,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						}
 					}
 					latticeSelectionPanel.add(newLatticeButton);
+					latticeSelectionPanel.add(displayModel);
+					displayModel.setSelected(false);
 					latticeSelectionPanel.setVisible(true);
 					if ( voiManager != null )
 					{
@@ -1725,6 +1741,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		newLatticeButton.setEnabled(true);
 
 		latticeSelectionPanel.add(newLatticeButton);
+				
+		displayModel = gui.buildCheckBox("Show Model", false);
+		displayModel.addActionListener(this);
+		displayModel.setActionCommand("displayModel");
+		displayModel.setVisible(true);
+		displayModel.setEnabled(true);
+		latticeSelectionPanel.add(displayModel);
+		
 		buttonPanel.add( latticeSelectionPanel );
 		latticeSelectionPanel.setVisible(false);
 

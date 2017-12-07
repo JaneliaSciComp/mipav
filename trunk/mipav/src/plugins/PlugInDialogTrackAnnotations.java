@@ -80,6 +80,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
 
 import org.jocl.Sizeof;
 
@@ -1127,8 +1128,8 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 		VOI annotations1 = new VOI((short) 0, "tracked_annotations", VOI.ANNOTATION, -1.0f);
 		VOI annotations2 = new VOI((short) 0, "tracked_annotations", VOI.ANNOTATION, -1.0f);
-		String dir1 = "";
-		String dir2 = "";
+		String dir1 = new String();
+		String dir2 = new String();
 		String empty = new String();
 		for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
 			if ( i == 0 )
@@ -1160,8 +1161,14 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 //		System.err.println( dir1 );
 //		System.err.println( dir2 );
 
-		dir1 = dir1.substring(0, dir1.lastIndexOf(File.separator, dir1.length()) );
-		dir2 = dir2.substring(0, dir2.lastIndexOf(File.separator, dir2.length()) );
+		if ( !dir1.equals(empty) )
+		{
+			dir1 = dir1.substring(0, dir1.lastIndexOf(File.separator, dir1.length()) );
+		}
+		if ( !dir2.equals(empty) )
+		{
+			dir2 = dir2.substring(0, dir2.lastIndexOf(File.separator, dir2.length()) );
+		}
 //		System.err.println( dir1 );
 //		System.err.println( dir2 );
 		
@@ -1275,7 +1282,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				if ( (row == 0)  && (col == 0) ) {
 					
 					VOIText text = new VOIText();
-					text.setText("A"+ ((VOILatticeManagerInterface)triVolume.getVOIManager()).getCurrentIndex() );
+					text.setText("center" );
 					int dimX = imageA.getExtents()[0];
 					int dimY = imageA.getExtents()[1];
 					int dimZ = imageA.getExtents()[2];
@@ -1295,13 +1302,26 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				}
 			}
 		}
-//		if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
-//			int[] rows = annotationTable.getSelectedRows();
-//			int[] cols = annotationTable.getSelectedColumns();
-//			for ( int i = 0; i < cols.length; i++ ) {
-//				System.err.println( "selected " + cols[i] );
-//			}
-//		}
+		if ( e.getKeyChar() == KeyEvent.VK_DELETE ) {
+			int row = annotationTable.getSelectedRow();
+			int col = annotationTable.getSelectedColumn();
+			if ( col == 0 && row >= 0 )
+			{
+				TableCellEditor editor = annotationTable.getCellEditor();
+				if ( editor != null )
+					editor.stopCellEditing();
+				VOI annotations = ((VOILatticeManagerInterface)triVolume.getVOIManager()).getAnnotations();
+				annotations.getCurves().remove(row);
+				annotationChanged();
+				int nRows = annotationTable.getRowCount();
+				if ( row < nRows ) {
+					annotationTable.setRowSelectionInterval(row, row);
+				}
+				else {
+					annotationTable.setRowSelectionInterval(nRows-1, nRows-1);
+				}
+			}
+		}
 	}
 
 	@Override
