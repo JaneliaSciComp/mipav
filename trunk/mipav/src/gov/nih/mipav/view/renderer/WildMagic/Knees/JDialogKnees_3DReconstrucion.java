@@ -112,7 +112,10 @@ public class JDialogKnees_3DReconstrucion extends JDialogBase implements Algorit
 	 */
 	private void readKeyImageDir() {
 
-		File fileDir = new File("/scratch/knees/result_VOI/");
+		// File fileDir = new File("/scratch/knees/result_VOI/");
+		// File fileDir = new File("/home/ruida/temp/smooth_VOI/");
+		// File fileDir = new File("/home/ruida/temp/result_VOI/");
+		File fileDir = new File("/home/ruida/temp/try_voi/");
 		traverse_folder(fileDir);
 		
 	}
@@ -200,7 +203,7 @@ public class JDialogKnees_3DReconstrucion extends JDialogBase implements Algorit
 		System.err.println("saveImage");
 		
 		reconstructSurface();
-		smoothVOI();
+		// smoothVOI();
 
 		long endTime = System.currentTimeMillis();
 		int min = (int) ((endTime - startTime) / 1000f / 60f);
@@ -257,6 +260,7 @@ public class JDialogKnees_3DReconstrucion extends JDialogBase implements Algorit
 					String fileName = imgFile1.substring(index + 1, imgFile1.length());
 					String directory = imgFile1.substring(0, index+1);
 					FileIO keyImageIO = new FileIO();
+					keyImageIO.setQuiet(true);
 				    ModelImage imageAxial = keyImageIO.readImage(fileName, directory);
 					
 				    // get axial VOI 
@@ -276,8 +280,8 @@ public class JDialogKnees_3DReconstrucion extends JDialogBase implements Algorit
 						sliceDirFile.mkdir();
 				    fileVOI = new FileVOI(voiFileName, directory, imageAxial);  
 				    fileVOI.writeVOI(imageAxial.getVOIs().VOIAt(0), true);
-				    imageAxial.saveImage(directory, fileName, FileUtility.XML, false);
-				    
+				    // imageAxial.saveImage(directory, fileName, FileUtility.XML, false);
+				    imageAxial.saveImage(directory, fileName, FileUtility.XML, false, false, false);
 				 
 				    
 				    // 2) read coronal orientation
@@ -286,6 +290,7 @@ public class JDialogKnees_3DReconstrucion extends JDialogBase implements Algorit
 					fileName = imgFile2.substring(index + 1, imgFile2.length());
 					directory = imgFile2.substring(0, index+1);
 					keyImageIO = new FileIO();
+					keyImageIO.setQuiet(true);
 				    ModelImage imageCoronal = keyImageIO.readImage(fileName, directory);
 					
 				    // get coronal VOI 
@@ -305,8 +310,8 @@ public class JDialogKnees_3DReconstrucion extends JDialogBase implements Algorit
 						sliceDirFile.mkdir();
 				    fileVOI = new FileVOI(voiFileName, directory, imageCoronal);  
 				    fileVOI.writeVOI(imageCoronal.getVOIs().VOIAt(0), true);
-				    imageCoronal.saveImage(directory, fileName, FileUtility.XML, false);
-				    
+				    // imageCoronal.saveImage(directory, fileName, FileUtility.XML, false);
+				    imageCoronal.saveImage(directory, fileName, FileUtility.XML, false, false, false);
 				    
 				    // 3) read sagittal orientation
 			    	// get sagittal image 
@@ -314,6 +319,7 @@ public class JDialogKnees_3DReconstrucion extends JDialogBase implements Algorit
 					fileName = imgFile3.substring(index + 1, imgFile3.length());
 					directory = imgFile3.substring(0, index+1);
 					keyImageIO = new FileIO();
+					keyImageIO.setQuiet(true);
 				    ModelImage imageSagittal = keyImageIO.readImage(fileName, directory);
 					
 				    // get sagittal VOI 
@@ -334,8 +340,8 @@ public class JDialogKnees_3DReconstrucion extends JDialogBase implements Algorit
 						sliceDirFile.mkdir();
 				    fileVOI = new FileVOI(voiFileName, directory, imageSagittal);  
 				    fileVOI.writeVOI(imageSagittal.getVOIs().VOIAt(0), true);
-				    imageSagittal.saveImage(directory, fileName, FileUtility.XML, false);
-				   
+				    // imageSagittal.saveImage(directory, fileName, FileUtility.XML, false);
+				    imageSagittal.saveImage(directory, fileName, FileUtility.XML, false, false, false);
 				    
 				    // new ViewJFrameImage(imageAxial);
 				    // new ViewJFrameImage(imageCoronal);
@@ -426,12 +432,12 @@ public class JDialogKnees_3DReconstrucion extends JDialogBase implements Algorit
 		    	
 		    	JDialogSaveMergedVOIs merge = new JDialogSaveMergedVOIs(parentFrame, xmlFile1, xmlFile2, xmlFile3, plyFile);
 		    	merge.saveFile();
-		    	
+		    	/*
 		    	JDialogSurfaceReconstruction rec = new JDialogSurfaceReconstruction(parentFrame, false);
 		    	rec.setFileInput(directory, "input.ply");
 		    	rec.setFileOutput(directory, "output.ply");
 		    	rec.processAlgorithm();
-		    	
+		    	*/ 
 		    	// break;
 		}
 	
