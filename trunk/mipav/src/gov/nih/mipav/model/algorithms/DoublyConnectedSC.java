@@ -3551,7 +3551,6 @@ double neweps;
 		double MUZERO[] = new double[1];
 		int I;
 		int IERR[] = new int[1];
-		
 		CLASS(N, ALPHA, BETA, B, T, MUZERO);
         W[0] = 1.0;
         for (I = 1; I < N; I++) {
@@ -3620,87 +3619,82 @@ double neweps;
 		double B, C, F, G, P, R, S;
 		int I, II, K, L, M, MML;
 		int J = 0;
-		boolean zeroJ = true;
 		IERR[0] = 0;
 		if (N == 1) {
 			return;
 		}
 		
 		E[N-1] = 0.0;
-		for (L = 1; L <= N; L++) {
-			if (zeroJ) {
-		        J = 0;
-			}
-			else {
-				zeroJ = true;
-			}
+		outer: for (L = 1; L <= N; L++) {
+		    J = 0;
 		    // Look for small sub-diagonal element
-		    for (M = L; M <= N; M++) {
-		        if (M == N) {
-		        	break;
-		        }
-		        if (Math.abs(E[M-1]) <= MACHEP * (Math.abs(D[M-1] + Math.abs(D[M])))) {
-		        	break;
-		        }
-		    } // for (M = L; M <= N; M++)
-		    
-		    P = D[L-1];
-		    if (M == L) {
-		    	continue;
-		    }
-		    if (J == 30) {
-		    	// Set error -- no convergence to an eigenvalue after 30 iterations.
-		    	IERR[0] = L;
-		    	return;
-		    }
-		    J = J+1;
-		    // Form shift
-		    G = (D[L] - P)/(2.0*E[L-1]);
-		    R = Math.sqrt(G*G + 1.0);
-		    if (G >= 0) {
-		    	G = D[M-1] - P + E[L-1]/(G + Math.abs(R));
-		    }
-		    else {
-		    	G = D[M-1] - P + E[L-1]/(G - Math.abs(R));	
-		    }
-		    S = 1.0;
-		    C = 1.0;
-		    P = 0.0;
-		    MML = M - L;
-		    // For I=M-1 step -1 until L do
-		    for (II = 1; II <= MML; II++) {
-		        I = M - II;
-		        F = S * E[I-1];
-		        B = C * E[I-1];
-		        if (Math.abs(F) >= Math.abs(G)) {
-		            C = G/F;
-		            R = Math.sqrt(C*C + 1.0);
-		            E[I] = F*R;
-		            S = 1.0/R;
-		            C = C*S;
-		        }
-		        else {
-		            S= F/G;
-		            R = Math.sqrt(S*S + 1.0);
-		            E[I] = G*R;
-		            C = 1.0/R;
-		            S = S * C;
-		        }
-		        G = D[I] - P;
-		        R = (D[I-1] - G)*S + 2.0*C*B;
-		        P = S*R;
-		        D[I] = G + P;
-		        G = C*R - B;
-		        // Form first component of vector
-		        F = Z[I];
-		        Z[I] = S * Z[I-1] + C * F;
-		        Z[I-1] = C * Z[I-1] - S * F;
-		    } // for (II = 1; II <= MML; II++)
-		    
-		    D[L-1] = D[L-1] - P;
-		    E[L-1] = G;
-		    E[M-1] = 0.0;
-		    zeroJ = false;
+		    while (true) {
+			    for (M = L; M <= N; M++) {
+			        if (M == N) {
+			        	break;
+			        }
+			        if (Math.abs(E[M-1]) <= MACHEP * (Math.abs(D[M-1] + Math.abs(D[M])))) {
+			        	break;
+			        }
+			    } // for (M = L; M <= N; M++)
+			    
+			    P = D[L-1];
+			    if (M == L) {
+			    	continue outer;
+			    }
+			    if (J == 30) {
+			    	// Set error -- no convergence to an eigenvalue after 30 iterations.
+			    	IERR[0] = L;
+			    	return;
+			    }
+			    J = J+1;
+			    // Form shift
+			    G = (D[L] - P)/(2.0*E[L-1]);
+			    R = Math.sqrt(G*G + 1.0);
+			    if (G >= 0) {
+			    	G = D[M-1] - P + E[L-1]/(G + Math.abs(R));
+			    }
+			    else {
+			    	G = D[M-1] - P + E[L-1]/(G - Math.abs(R));	
+			    }
+			    S = 1.0;
+			    C = 1.0;
+			    P = 0.0;
+			    MML = M - L;
+			    // For I=M-1 step -1 until L do
+			    for (II = 1; II <= MML; II++) {
+			        I = M - II;
+			        F = S * E[I-1];
+			        B = C * E[I-1];
+			        if (Math.abs(F) >= Math.abs(G)) {
+			            C = G/F;
+			            R = Math.sqrt(C*C + 1.0);
+			            E[I] = F*R;
+			            S = 1.0/R;
+			            C = C*S;
+			        }
+			        else {
+			            S= F/G;
+			            R = Math.sqrt(S*S + 1.0);
+			            E[I] = G*R;
+			            C = 1.0/R;
+			            S = S * C;
+			        }
+			        G = D[I] - P;
+			        R = (D[I-1] - G)*S + 2.0*C*B;
+			        P = S*R;
+			        D[I] = G + P;
+			        G = C*R - B;
+			        // Form first component of vector
+			        F = Z[I];
+			        Z[I] = S * Z[I-1] + C * F;
+			        Z[I-1] = C * Z[I-1] - S * F;
+			    } // for (II = 1; II <= MML; II++)
+			    
+			    D[L-1] = D[L-1] - P;
+			    E[L-1] = G;
+			    E[M-1] = 0.0;
+		    } // while (true)
 		} // for (L = 1; L <= N; L++)
 		
 		// Order eigenvalues and eigenvectors
