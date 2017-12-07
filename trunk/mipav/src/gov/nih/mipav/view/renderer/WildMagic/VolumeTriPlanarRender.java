@@ -1013,6 +1013,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_kVOIInterface.updateDisplay();
     	}    	    	
     }
+    
+    public Vector3f getSelectedPoint()
+    {
+		if ( m_kVOIInterface != null )
+    	{
+			return m_kVOIInterface.getSelectedPoint();
+    	}    	    	
+		return null;
+    }
 	
 	/**
 	 * Part of the KeyListener interface. Pressing 'b' toggles displaying the
@@ -1027,20 +1036,40 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			switch( e.getKeyCode() )
 			{
 			case KeyEvent.VK_UP:
-				m_kVolumeRayCast.GetScene().UpdateGS();
-				moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()) );
+				if ( getSelectedPoint() != null ) {
+					m_kVolumeRayCast.GetScene().UpdateGS();
+					moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()) );
+				}
+				else {
+					MoveDown();
+				}
 				break;
 			case KeyEvent.VK_DOWN:
-				m_kVolumeRayCast.GetScene().UpdateGS();
-				moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()).neg() );
+				if ( getSelectedPoint() != null ) {
+					m_kVolumeRayCast.GetScene().UpdateGS();
+					moveSelectedPoint( world.InvertVector(m_spkCamera.GetUVector()).neg() );
+				}
+				else {
+					MoveUp();
+				}
 				break;
 			case KeyEvent.VK_RIGHT:
-				m_kVolumeRayCast.GetScene().UpdateGS();
-				moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()) );
+				if ( getSelectedPoint() != null ) {
+					m_kVolumeRayCast.GetScene().UpdateGS();
+					moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()) );
+				}
+				else {
+					MoveLeft();
+				}
 				break;
 			case KeyEvent.VK_LEFT:
-				m_kVolumeRayCast.GetScene().UpdateGS();
-				moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()).neg() );
+				if ( getSelectedPoint() != null ) {
+					m_kVolumeRayCast.GetScene().UpdateGS();
+					moveSelectedPoint( world.InvertVector(m_spkCamera.GetRVector()).neg() );
+				}
+				else {
+					MoveRight();
+				}
 				break;
 			case KeyEvent.VK_DELETE:
 				deleteSelectedPoint( );

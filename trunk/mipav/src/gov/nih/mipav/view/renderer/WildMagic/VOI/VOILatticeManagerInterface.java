@@ -468,6 +468,15 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		}		
 	}
 	
+	public Vector3f getSelectedPoint()
+	{
+		if ( latticeModel != null )
+		{
+			return latticeModel.getPicked();
+		}		
+		return null;
+	}
+	
 	public VOIText getPickedAnnotation() {
 		if ( latticeModel != null )
 		{
@@ -593,6 +602,13 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 		{
 			latticeModel.saveAnnotations(voiDir);
 		}
+	}
+	
+	public void showModel( boolean display ) {
+		if ( latticeModel != null )
+		{
+			latticeModel.showModel(display);
+		}		
 	}
 	
 	/**

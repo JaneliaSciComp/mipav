@@ -84,14 +84,15 @@ public class LatticeModel {
 			}
 
 			final int nVOI = VOIs.size();
-
 			for (int i = 0; i < nVOI; i++) {
-				if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
-					final FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, image);
-					fileVOI.writeXML(VOIs.VOIAt(i), true, true);
-				} else {
-					final FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, image);
-					fileVOI.writeAnnotationInVoiAsXML(VOIs.VOIAt(i).getName(), true);
+				if ( VOIs.VOIAt(i).getCurves().size() > 0 ) {
+					if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+						final FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, image);
+						fileVOI.writeXML(VOIs.VOIAt(i), true, true);
+					} else {
+						final FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, image);
+						fileVOI.writeAnnotationInVoiAsXML(VOIs.VOIAt(i).getName(), true);
+					}
 				}
 			}
 
@@ -1658,6 +1659,20 @@ public class LatticeModel {
 			imageA.registerVOI(displayContours);
 			imageA.notifyImageDisplayListeners();
 		} else if ( (imageA.isRegistered(displayContours) != -1)) {
+			imageA.unregisterVOI(displayContours);
+			imageA.notifyImageDisplayListeners();
+		}
+	}
+
+	/**
+	 * Enables the user to visualize the simple ellipse-based model of the worm during lattice construction.
+	 */
+	public void showModel(boolean display) {
+		if ( display && (imageA.isRegistered(displayContours) == -1) ) {
+			imageA.registerVOI(displayContours);
+			imageA.notifyImageDisplayListeners();
+		}
+		if ( !display && (imageA.isRegistered(displayContours) != -1) ) {
 			imageA.unregisterVOI(displayContours);
 			imageA.notifyImageDisplayListeners();
 		}
@@ -3334,7 +3349,7 @@ public class LatticeModel {
 		// The next step of the algorithm attempts to solve this problem.
 		short sID = (short) 1;
 		displayContours = new VOI(sID, "wormContours");
-		for (int i = 0; i < centerPositions.size(); i += 30) {
+		for (int i = 0; i < centerPositions.size(); i += 10) {
 			final Vector3f rkEye = centerPositions.elementAt(i);
 			final Vector3f rkRVector = rightVectors.elementAt(i);
 			final Vector3f rkUVector = upVectors.elementAt(i);
