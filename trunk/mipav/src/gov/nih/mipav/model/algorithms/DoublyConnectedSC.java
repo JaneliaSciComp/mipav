@@ -219,7 +219,7 @@ double neweps;
 		            System.out.println("The original point  = (" + ZZ[0] + ", " + ZZ[1] + ")");
 		            ZZ0 = ZDSC(ZZ,0,2,M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
 	                         PHI1,NPTQ,QWORK,1);
-	                System.out.println("MAPPING FORRWARD YIELDS = (" + ZZ0[0] + ", " + ZZ0[1] + ")");
+	                System.out.println("MAPPING FORWARD YIELDS = (" + ZZ0[0] + ", " + ZZ0[1] + ")");
 		            if (IPOLY == 8) {
 		            	if (I == 0) {
 		            		System.out.println("THE MATLAB CALCULATED FORWARD MAP OF ZZ = 0.701045278132939 + 1.857617315721354i");	
