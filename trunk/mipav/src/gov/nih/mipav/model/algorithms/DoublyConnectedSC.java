@@ -1,5 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.io.IOException;
+
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
 
 public class DoublyConnectedSC extends AlgorithmBase {
 	// This is a port of the FORTRAN ACM TOMS Algorithm 785, collected
@@ -77,48 +81,80 @@ public class DoublyConnectedSC extends AlgorithmBase {
     // COMMON /PARAM5/ISPRT,ICOUNT
 	
 	private SchwarzChristoffelMapping scm = new SchwarzChristoffelMapping();
-	
+	// NOTE2:    USERS ARE RESPONSIBLE FOR CHECKING THE FOLLOWING:
+    //   1. EACH COMPONENT OF THE OUTER POLYGON CONTAINS AT LEAST ONE
+	//      FINITE VERTEX.
+	//   2. Z1[N-1] IS THE CLOSEST (OR ALMOST CLOSEST)
+	//      INNER VERTEX TO Z0[M-1].
+    //   3. COUNTERCLOCKWISE ORIENTATION OF THE VERTICES.
+
+	// M[0] points of outer polygon
+	private double Z0[][] = null;
+	// N[0] points of inner polygon
+	private double Z1[][] = null;
 	// Specifies the geometry of the polygon region for 7 test examples
-	private int IPOLY;
+	private int IPOLY = -1;
 	// The number of Gauss-Jacobi points
 	// Recommended values for NPTQ are 2-8.
-	private int NPTQ;
+	private int NPTQ = 8;
 	// 1 for solving the nonlinear system, 2 for not solving the nonlinear system
-	private int ISOLV;
+	private int ISOLV = 1;
+	//IGUESS    (=0 )A NON-EQUALLY SPACED INITIAL GUESS OR(=1)THE
+	//C            OTHER  EQUALLY-SPACED  INITIAL GUESS PROVIDED, OR
+	//C            (=2)USER-SUPPLIED INITIAL GUESS WHICH IS REQUIRED
+	//C            TO BE THE ARGUMENTS OF THE INITIAL PREVERTICES.
+	//C            ROUTINE ARGUM MAY BE USED FOR COMPUTING ARGUMENTS
+	//C            IF NEEDED. NOTE: C WILL BE COMPUTED IN THE ROUTINE
+	//C            (NOT SUPPLIED!)
+    private int IGUESS = 1;
+    // LINEARC   INTEGER VARIABLE TO CONTROL INTEGRATION PATH.IN PATICULAR:
+    //C            LINEARC=0:INTEGRATING ALONG LINE SEGMENT WHENEVER POSSIBLE
+    //C            LINEARC=1:INTEGRATING ALONG CIRCULAR ARC WHENEVER POSSIBLE
+    private int LINEARC = 1;
+    // TOL       A TOLERANCE TO CONTROL THE CONVERGENCE IN HYBRD
+    private double TOL = 1.0E-10;
 	// Inverse points
 	private double INVERSE_POINTS[][] = null;
 	private double FORWARD_POINTS[][] = null;
 	private boolean testRoutine = false;
 	private double MACHEP = 2.2204460E-16;
+	private int M[] = new int[1];
+	private int N[] = new int[1];
+	// ISHAPE = 0 outer polygon has no infinite vertices
+    // ISHAPE = 1 outer polygon has some infinite vertices
+	int ISHAPE = 0;
 	
 	public DoublyConnectedSC() {
 		
 	}
 	
-	public DoublyConnectedSC(int IPOLY, int NPTQ, int ISOLV, int ISPRT, double INVERSE_POINTS[][]) {
+	public DoublyConnectedSC(int IPOLY, int NPTQ, int ISOLV, int ISPRT) {
 		this.IPOLY = IPOLY;
 		this.NPTQ = NPTQ;
 		this.ISOLV = ISOLV;
 		this.ISPRT = ISPRT;
-		this.INVERSE_POINTS = INVERSE_POINTS;
 		testRoutine = true;
+	}
+	
+	public DoublyConnectedSC(ModelImage destImg, ModelImage srcImg, double Z0[][], double Z1[][], int NPTQ, int ISPRT,
+			int IGUESS, int LINEARC, double TOL) {
+		super(destImg, srcImg);	
+		this.Z0 = Z0;
+		this.Z1 = Z1;
+		this.NPTQ = NPTQ;
+		this.ISPRT = ISPRT;
+		this.IGUESS = IGUESS;
+		this.LINEARC = LINEARC;
+		this.TOL = TOL;
+		M[0] = Z0.length;
+		N[0] = Z1.length;
 	}
 	
 	public void runAlgorithm() {
 		int I;
-		int M[] = new int[1];
-		int N[] = new int[1];
-		double Z0[][] = new double[30][2];
-		double Z1[][] = new double[30][2];
 		double ALFA0[] = new double[30];
 		double ALFA1[] = new double[30];
 		double QWORK[] = new double[1660];
-		// ISHAPE = 0 outer polygon has no infinite vertices
-		// ISHAPE = 1 outer polygon has some infinite vertices
-		int ISHAPE;
-		int IGUESS;
-		int LINEARC;
-		double TOL;
 		double U[] = new double[1];
 		double C[] = new double[2];
 		double W0[][] = new double[30][2];
@@ -130,7 +166,37 @@ public class DoublyConnectedSC extends AlgorithmBase {
 		double WW[];
 		double ZZ0[];
 		
-double neweps;
+		int i;
+		int cf;
+		int xDimSource;
+		int yDimSource;
+		int sourceSlice;
+		int xDimDest;
+		int yDimDest;
+		int destSlice;
+		double srcBuffer[];
+		double destBuffer[];
+		double imageMin;
+		int x;
+		int y; 
+		int c;
+		double zp[];
+		int j;
+		int index;
+		double wp[][];
+		double xp;
+		double yp;
+		int x0;
+		int y0;
+		int deltaX;
+		int deltaY;
+		double dx;
+		double dy;
+		double dx1;
+		double dy1;
+		int position;
+		
+        double neweps;
 		
 		// MACHEP is a machine dependent parameter specifying the relative precision of
 		// floating point arithmetic.
@@ -154,6 +220,8 @@ double neweps;
         } // while(true)
 		
 		if (testRoutine) {
+			Z0 = new double[30][2];
+			Z1 = new double[30][2];
 			DSCDATA(IPOLY, M, N, Z0, Z1, ALFA0, ALFA1);
 			ANGLES(N[0], Z1, ALFA1, 1);
 			if ((IPOLY == 1) || (IPOLY == 3) || (IPOLY == 4) || (IPOLY == 6) || (IPOLY == 8) || (IPOLY == 9)) {
@@ -239,9 +307,209 @@ double neweps;
 		            System.out.println("INVERSE MAPPING YIELDS = (" + WW[0] + ", " + WW[1] + ")");
 		        } // for (I = 0; I < FORWARD_POINTS.length; I++)
 		    } // if ((FORWARD_POINTS != null) && (FORWARD_POINTS.length != 0))
+		    return;
 		} // if (testRoutine)
 		
+		if (srcImage == null) {
+            displayError("Source Image is null");
+            finalize();
+
+            return;
+        }
+
+        fireProgressStateChanged(srcImage.getImageName(), "Between 2 polygons to annulus ...");
+
+        if (srcImage.isColorImage()) {
+            cf = 4;
+        } else {
+            cf = 1;
+        }
+        xDimSource = srcImage.getExtents()[0];
+        yDimSource = srcImage.getExtents()[1];
+        sourceSlice = xDimSource * yDimSource;
+
+        xDimDest = destImage.getExtents()[0];
+        yDimDest = destImage.getExtents()[1];
+        destSlice = xDimDest * yDimDest;
+        srcBuffer = new double[cf * sourceSlice];
+
+        try {
+            srcImage.exportData(0, cf * sourceSlice, srcBuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+
+            setCompleted(false);
+
+            return;
+        }
+        
+     // Invert so y axis increases going up so can use ccw ordering
+        double srcBuffer2[] = new double[cf *sourceSlice];
+        for (y = 0; y < yDimSource; y++) {
+        	for (x = 0; x < xDimSource; x++) {
+        		if (cf == 1) {
+        	        srcBuffer2[x + (yDimSource - 1 - y)*xDimSource]	= srcBuffer[ x + y*xDimSource];
+        		}
+        		else {
+        		    for (c = 0; c < 4; c++) {
+        		    	srcBuffer2[4*(x + (yDimSource - 1 - y)*xDimSource) + c]	= srcBuffer[4*(x + y*xDimSource) + c];	
+        		    }
+        		}
+        	}
+        }
+
+        destBuffer = new double[cf * destSlice];
+
+        if (!srcImage.isColorImage()) {
+            imageMin = srcImage.getMin();
+
+            for (i = 0; i < destSlice; i++) {
+                destBuffer[i] = imageMin;
+            }
+        } // if (!srcImage.isColorImage())
+        //double w[][] = new double[xSource.length][2];
+        //for (i = 0; i < xSource.length; i++) {
+        //w[i][0] = xSource[i];
+        // Invert so y axis increases going up so can use ccw ordering
+        //w[i][1] = yDimSource-1-ySource[i];
+        //}
+        ANGLES(N[0], Z1, ALFA1, 1);
+        ANGLES(M[0], Z0, ALFA0, 0);
+        // Generate the Gauss-Jacobi weights & nodes and check the input
+     	QINIT(M[0],N[0],ALFA0, ALFA1, NPTQ, QWORK);
+     	CHECK(ALFA0, ALFA1, M[0], N[0], ISHAPE);
+     	DSCSOLV(TOL, IGUESS, M[0], N[0], U, C, W0, W1, PHI0, PHI1,
+				Z0, Z1, ALFA0, ALFA1, NPTQ, QWORK, ISHAPE, LINEARC);
+        // Output will be arranged in DSCSOLV
 		
+     	// Compute data for theta-function and test the accuracy
+     	THDATA(U);
+        DSCTEST(M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,NPTQ,QWORK);
+        double xcenterDest = (xDimDest-1.0)/2.0;
+		double ycenterDest = (yDimDest-1.0)/2.0;
+		double maxDistance = Math.min(xcenterDest,ycenterDest);
+		boolean idx[] = new boolean[destSlice];
+		j = 0;
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		double distX = (x-xcenterDest)/maxDistance;
+        		double distY = (y-ycenterDest)/maxDistance;
+        		double distSquared = distX*distX + distY*distY;
+        		double dist = Math.sqrt(distSquared);
+        		if ((dist >= U[0]) && (dist < 1.0)) {
+        			idx[index] = true;
+        			j++;
+        		}
+        	}
+        } // for (y = 0; y < yDimDest; y++)
+        zp = new double[2];
+        wp = new double[j][2];
+        j = 0;
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		double distX = (x-xcenterDest)/maxDistance;
+        		double distY = (y-ycenterDest)/maxDistance;
+        		if (idx[index]) {
+        			zp[0] = distX;
+        			zp[1] = distY;
+        			ZZ0 = ZDSC(zp,0,2,M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+        	                PHI1,NPTQ,QWORK,1);
+        			wp[j][0] = ZZ0[0];
+        			wp[j][1] = ZZ0[1];
+        			j++;
+        		}
+        	}
+        } // for (y = 0; y < yDimDest; y++)
+        
+        j = 0;
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		if (idx[index]) {
+        			xp = wp[j][0];
+        			yp = wp[j][1];
+        			j++;
+					if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5)) {
+		 	    	   if (xp <= 0) {
+		                    x0 = 0;
+		                    dx = 0;
+		                    deltaX = 0;
+		                } else if (xp >= (xDimSource - 1)) {
+		                    x0 = xDimSource - 1;
+		                    dx = 0;
+		                    deltaX = 0;
+		                } else {
+		                    x0 = (int) xp;
+		                    dx = xp - x0;
+		                    deltaX = 1;
+		                }
+		
+		                if (yp <= 0) {
+		                    y0 = 0;
+		                    dy = 0;
+		                    deltaY = 0;
+		                } else if (yp >= (yDimSource - 1)) {
+		                    y0 = yDimSource - 1;
+		                    dy = 0;
+		                    deltaY = 0;
+		                } else {
+		                    y0 = (int) yp;
+		                    dy = yp - y0;
+		                    deltaY = xDimSource;
+		                }
+		
+		                dx1 = 1 - dx;
+		                dy1 = 1 - dy;
+		
+		                position = (y0 * xDimSource) + x0;
+		
+		                if (cf == 1) {
+		                    destBuffer[index] = (dy1 * ( (dx1 * srcBuffer2[position]) + (dx * srcBuffer2[position + deltaX])))
+		                        + (dy * ( (dx1 * srcBuffer2[position + deltaY]) + (dx * srcBuffer2[position + deltaY + deltaX])));   
+		                }
+		                else {
+		                	 for (c = 0; c < 4; c++) {
+		                         destBuffer[4*index+c] = (dy1 * ( (dx1 * srcBuffer2[4*position]+c) + (dx * srcBuffer2[4*(position + deltaX) + c])))
+		                                 + (dy * ( (dx1 * srcBuffer2[4*(position + deltaY) + c]) + (dx * srcBuffer2[4*(position + deltaY + deltaX) + c])));
+		                     } // for (c = 0; c < 4; c++)	
+		                }
+		 	       } // if ((xp > -0.5) && (xp < xDimSource - 0.5) && (yp > -0.5) && (yp < yDimSource - 0.5))
+        		}
+        	}
+		} // for (y = 0; y < yDimDest; y++)
+		
+	// Undo y axis inversion
+    double destBuffer2[] = new double[cf * destSlice];
+	for (y = 0; y < yDimDest; y++) {
+    	for (x = 0; x < xDimDest; x++) {
+    		if (cf == 1) {
+    	        destBuffer2[x + (yDimDest - 1 - y)*xDimDest]	= destBuffer[ x + y*xDimDest];
+    		}
+    		else {
+    		    for (c = 0; c < 4; c++) {
+    		    	destBuffer2[4*(x + (yDimDest - 1 - y)*xDimDest) + c]	= destBuffer[4*(x + y*xDimDest) + c];
+    		    }
+    		}
+    	}
+    }
+    
+
+       
+       try {
+           destImage.importData(0, destBuffer2, true);
+       } catch (IOException e) {
+           MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+           setCompleted(false);
+
+           return;
+       }
+
+       setCompleted(true);
+
+       return;
 	}
 	
 	private void DSCDATA(int IPOLY, int M[], int N[], double Z0[][], double Z1[][], double ALFA0[], double ALFA1[]) {
