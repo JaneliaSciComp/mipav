@@ -294,7 +294,7 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double xcenterDest = (xDimDest-1.0)/2.0;
 		double ycenterDest = (yDimDest-1.0)/2.0;
 		double maxDistance = Math.min(xcenterDest,ycenterDest);
-		zp = new double[destSlice][2];
+		//zp = new double[destSlice][2];
 		boolean idx[] = new boolean[destSlice];
 		j = 0;
         for (y = 0; y < yDimDest; y++) {
@@ -304,6 +304,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		double distY = (y-ycenterDest)/maxDistance;
         		if ((distX*distX + distY*distY) < 1.0) {
         			idx[index] = true;
+        			j++;
+        		}
+        	}
+        } // for (y = 0; y < yDimDest; y++)
+        zp = new double[j][2];
+        j = 0;
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		double distX = (x-xcenterDest)/maxDistance;
+        		double distY = (y-ycenterDest)/maxDistance;
+        		if ((distX*distX + distY*distY) < 1.0) {
         			zp[j][0] = distX;
         			zp[j][1] = distY;
         			j++;
@@ -518,7 +530,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double xcenterDest = (xDimDest-1.0)/2.0;
 		double ycenterDest = (yDimDest-1.0)/2.0;
 		double maxDistance = Math.min(xcenterDest,ycenterDest);
-		zp = new double[destSlice][2];
 		boolean idx[] = new boolean[destSlice];
 		j = 0;
         for (y = 0; y < yDimDest; y++) {
@@ -528,6 +539,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		double distY = (y-ycenterDest)/maxDistance;
         		if ((distX*distX + distY*distY) < 1.0) {
         			idx[index] = true;
+        			j++;
+        		}
+        	}
+        } // for (y = 0; y < yDimDest; y++)
+        zp = new double[j][2];
+        j = 0;
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		double distX = (x-xcenterDest)/maxDistance;
+        		double distY = (y-ycenterDest)/maxDistance;
+        		if ((distX*distX + distY*distY) < 1.0) {
         			zp[j][0] = distX;
         			zp[j][1] = distY;
         			j++;
@@ -740,7 +763,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double xcenterDest = (xDimDest-1.0)/2.0;
 		double ycenterDest = (yDimDest-1.0)/2.0;
 		double maxDistance = Math.min(xcenterDest,ycenterDest);
-		zp = new double[destSlice][2];
 		boolean idx[] = new boolean[destSlice];
 		j = 0;
         for (y = 0; y < yDimDest; y++) {
@@ -750,6 +772,18 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
         		double distY = (y-ycenterDest)/maxDistance;
         		if ((distX*distX + distY*distY) < 1.0) {
         			idx[index] = true;
+        			j++;
+        		}
+        	}
+        } // for (y = 0; y < yDimDest; y++)
+        zp = new double[j][2];
+        j = 0;
+        for (y = 0; y < yDimDest; y++) {
+        	for (x = 0; x < xDimDest; x++) {
+        		index = x + xDimDest*y;
+        		double distX = (x-xcenterDest)/maxDistance;
+        		double distY = (y-ycenterDest)/maxDistance;
+        		if ((distX*distX + distY*distY) < 1.0) {
         			zp[j][0] = distX;
         			zp[j][1] = distY;
         			j++;
@@ -1124,8 +1158,6 @@ public class SchwarzChristoffelMapping extends AlgorithmBase implements MouseLis
 		double imageMin;
 		int y;
 		int x;
-		double z[][];
-	    int MCorners[];
 	    double zr[][];
 	    double wpinpoly[][][];
 		double zp[][];
