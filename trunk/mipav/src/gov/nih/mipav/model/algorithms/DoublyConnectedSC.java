@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import gov.nih.mipav.view.MipavUtil;
 
 public class DoublyConnectedSC extends AlgorithmBase {
 	// This is a port of the FORTRAN ACM TOMS Algorithm 785, collected
@@ -27,14 +26,15 @@ public class DoublyConnectedSC extends AlgorithmBase {
 	//**********************************************************************
 
 	
-	// geometries of the polygon region in the 7 test routines
-	private final int SQUARE_SYMMETRIC_REGION = 1;
-	private final int MILDLY_CROWDED_INFINITE_REGION = 2;
-	private final int HEAVILY_CROWDED_REGION = 3;
-	private final int CHINESE_CHARACTER_STRUCTURED_REGION = 4;
-	private final int FOUR_DIRECTION_INFINITE_REGION = 5;
-	private final int EXAMPLE_GIVEN_FOR_CHECKING_INVERSE_MAP = 6;
-	private final int UPPER_HALF_PLANE_WITH_HORIZONTAL_SLIT = 7;
+	// geometries of the polygon region in the 7 original test routines
+	//private final int SQUARE_SYMMETRIC_REGION = 1;
+	//private final int MILDLY_CROWDED_INFINITE_REGION = 2;
+	//private final int HEAVILY_CROWDED_REGION = 3;
+	//private final int CHINESE_CHARACTER_STRUCTURED_REGION = 4;
+	//private final int FOUR_DIRECTION_INFINITE_REGION = 5;
+	//private final int EXAMPLE_GIVEN_FOR_CHECKING_INVERSE_MAP = 6;
+	//private final int UPPER_HALF_PLANE_WITH_HORIZONTAL_SLIT = 7;
+	//private final int EXAMPLE_8 = 8;
 	
 	private final int dscfun = 1;
 	
@@ -85,7 +85,8 @@ public class DoublyConnectedSC extends AlgorithmBase {
 	// 1 for solving the nonlinear system, 2 for not solving the nonlinear system
 	private int ISOLV;
 	// Inverse points
-	private double INVERSE_POINTS[][] = null; ;
+	private double INVERSE_POINTS[][] = null;
+	private double FORWARD_POINTS[][] = null;
 	private boolean testRoutine = false;
 	private double MACHEP = 2.2204460E-16;
 	
@@ -111,6 +112,8 @@ public class DoublyConnectedSC extends AlgorithmBase {
 		double ALFA0[] = new double[30];
 		double ALFA1[] = new double[30];
 		double QWORK[] = new double[1660];
+		// ISHAPE = 0 outer polygon has no infinite vertices
+		// ISHAPE = 1 outer polygon has some infinite vertices
 		int ISHAPE;
 		int IGUESS;
 		int LINEARC;
@@ -152,7 +155,7 @@ double neweps;
 		if (testRoutine) {
 			DSCDATA(IPOLY, M, N, Z0, Z1, ALFA0, ALFA1);
 			ANGLES(N[0], Z1, ALFA1, 1);
-			if ((IPOLY == 1) || (IPOLY == 3) || (IPOLY == 4) || (IPOLY == 6)) {
+			if ((IPOLY == 1) || (IPOLY == 3) || (IPOLY == 4) || (IPOLY == 6) || (IPOLY == 8)) {
 				ANGLES(M[0], Z0, ALFA0, 0);
 			}
 			
@@ -186,20 +189,55 @@ double neweps;
 		        for (I = 0; I < INVERSE_POINTS.length; I++) {
 		            ZZ[0] = INVERSE_POINTS[I][0];	
 		            ZZ[1] = INVERSE_POINTS[I][1];
+		            System.out.println("The original point ZZ = (" + ZZ[0] + ", " + ZZ[1] + ")");
 		            EPS = 1.0E-6;
+		            // INVERSE MAP
 		            WW = WDSC(ZZ,M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,
 		            	                  NPTQ,QWORK,EPS,1);
                     System.out.println("THE PREIMAGE OF ZZ = (" + WW[0] + ", " + WW[1] + ")");
+                    if (IPOLY == 2) {
+                    	if (I == 0) {
+                    		System.out.println("THE FORTRAN CALCULATED PREIMAGE OF ZZ = -0.623005768209842, 0.782172159414472");
+                    	}
+                    } // if (IPOLY == 2)
                     if (scm.zabs(WW[0], WW[1]) <= 1.0E-12) {
                     	continue;
                     }
                     System.out.println("CHECK BY MAPPING THE PREIMAGE BACK");
+                    // FORWARD MAP
                     ZZ0 = ZDSC(WW,0,2,M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
                          PHI1,NPTQ,QWORK,1);
-                    System.out.println("THE POINT ENTERED = (" + ZZ0[0] + ", " + ZZ0[1] + ")");
+                    System.out.println("MAPPING BACK YIELDS = (" + ZZ0[0] + ", " + ZZ0[1] + ")");
 
 		        } // for (I = 0; I < INVERSE_POINTS.length; I++)
 		    } // if ((INVERSE_POINTS != null) && (INVERSE_POINTS.length != 0))
+		  
+		    if ((FORWARD_POINTS != null) && (FORWARD_POINTS.length != 0)) {
+		        for (I = 0; I < FORWARD_POINTS.length; I++) {
+		            ZZ[0] = FORWARD_POINTS[I][0];	
+		            ZZ[1] = FORWARD_POINTS[I][1];
+		            System.out.println("The original point  = (" + ZZ[0] + ", " + ZZ[1] + ")");
+		            ZZ0 = ZDSC(ZZ,0,2,M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+	                         PHI1,NPTQ,QWORK,1);
+	                System.out.println("MAPPING FORRWARD YIELDS = (" + ZZ0[0] + ", " + ZZ0[1] + ")");
+		            if (IPOLY == 8) {
+		            	if (I == 0) {
+		            		System.out.println("THE MATLAB CALCULATED FORWARD MAP OF ZZ = 0.701045278132939 + 1.857617315721354i");	
+		            	}
+		            	else if (I == 1) {
+		            		System.out.println("THE MATLAB CALCULATED FORWARD MAP OF ZZ = -1.950884613357281 + 1.858444064736838i");	
+		            	}
+		            	else if (I == 2) {
+		            		System.out.println("THE MATLAB CALCULATED FORWARD MAP OF ZZ = -2.520096092184397 - 2.260713861045573i");	
+		            	}
+                    } // if (IPOLY == 8)
+		            System.out.println("CHECK BY INVERSE MAPPING BACK");
+		            EPS = 1.0E-6;
+		            WW = WDSC(ZZ0,M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,
+      	                  NPTQ,QWORK,EPS,1);
+		            System.out.println("INVERSE MAPPING YIELDS = (" + WW[0] + ", " + WW[1] + ")");
+		        } // for (I = 0; I < FORWARD_POINTS.length; I++)
+		    } // if ((FORWARD_POINTS != null) && (FORWARD_POINTS.length != 0))
 		} // if (testRoutine)
 		
 		
@@ -459,7 +497,7 @@ double neweps;
 		    Z1[1][0] = -1.0;
 		    Z1[1][1] = 0.0;
 		} // else if (IPOLY == 6)
-		else {
+		else if (IPOLY == 7) {
 			M[0] = 3;
 			N[0] = 2;
 			Z0[0][0] = 1.01;
@@ -475,7 +513,40 @@ double neweps;
 			ALFA0[0] = 1.0;
 			ALFA0[1] = -1.0;
 			ALFA0[2] = 1.0;
-		} // else		
+		} // else if (IPOLY == 7)	
+		else if (IPOLY == 8) {
+		    M[0] = 7;
+		    N[0] = 4;
+		    Z0[0][0] = -2.0335;
+		    Z0[0][1] = 3.0056;
+		    Z0[1][0] = -3.3743;
+		    Z0[1][1] = -0.4358;
+		    Z0[2][0] = -2.3911;
+		    Z0[2][1] = -2.5363;
+		    Z0[3][0] = 0.3799;
+		    Z0[3][1] = -3.2737;
+		    Z0[4][0] = 2.6816;
+		    Z0[4][1] = -1.3073;
+		    Z0[5][0] = 3.2402;
+		    Z0[5][1] = 2.6704;
+		    Z0[6][0] = 1.1844;
+		    Z0[6][1] = 3.3855;
+		    Z1[0][0] = -0.5363;
+		    Z1[0][1] = 0.8603;
+		    Z1[1][0] = -0.6034;
+		    Z1[1][1] = 0.2570;
+		    Z1[2][0] = 0.2682;
+		    Z1[2][1] = -0.0559;
+		    Z1[3][0] = 0.2682;
+		    Z1[3][1] = 1.0838;
+		    FORWARD_POINTS = new double[3][2];
+		    FORWARD_POINTS[0][0] = 0.5;
+		    FORWARD_POINTS[0][1] = 0.0;
+		    FORWARD_POINTS[1][0] = 0.0;
+		    FORWARD_POINTS[1][1] = 0.8;
+		    FORWARD_POINTS[2][0] = -1.0;
+		    FORWARD_POINTS[2][1] = 0.0;
+		} // else if (IPOLY == 8)
 	}
 	
 	private void THDATA(double U[]) {
@@ -2228,6 +2299,7 @@ double neweps;
 	  //.. Local Scalars ..
 	  int K;
 	
+	 System.out.println("MIPAV results:");
 	 System.out.println(" PARAMETERS DEFINING MAP:   (M = "+M+")   (N = "+N+")   (NPTQ = "+NPTQ+")   (TOL = "+TOL+")");
 	 System.out.println(" U = " + U);
 	 System.out.println(" C = (" + C[0] + ", " + C[1] + ")");
@@ -2237,7 +2309,166 @@ double neweps;
      for (K = 0; K < N; K++) {
     	 System.out.println("W1["+K+"] = (" + W1[K][0] + ", " + W1[K][1] + ")   PHI1["+K+"] = " + PHI1[K]);
      }
-	     
+     if ((IPOLY >= 1) && (IPOLY <= 7)) {
+         System.out.println("ORIGINAL FORTRAN RESULTS:");
+     }
+     if (IPOLY == 1) {
+         System.out.println(" PARAMETERS DEFINING MAP:   (M= 4)   (N= 4)   (NPTQ= 7)   (TOL= 0.1E-09)");
+    	 System.out.println( "U= 0.4559381277686");
+         System.out.println(" C=( 1.8134230823216,-1.8134230823303)");
+         System.out.println(" K                    W0(K)                    PHI0(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    ( 0.0000000000069, 1.0000000000000)    1.570796326788");
+    	 System.out.println(" 2    (-1.0000000000000,-0.0000000000048)    3.141592653595");
+         System.out.println(" 3    ( 0.0000000000118,-1.0000000000000)    4.712388980396");
+    	 System.out.println(" 4    ( 1.0000000000000, 0.0000000000000)    0.000000000000");
+    	 System.out.println(" K                    W1(K)                    PHI1(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    ( 0.3223969419470, 0.3223969419463)    0.7853981633963");
+    	 System.out.println(" 2    (-0.3223969419468, 0.3223969419466)    2.3561944901927");
+         System.out.println(" 3    (-0.3223969419448,-0.3223969419486)    3.9269908169932");
+    	 System.out.println(" 4    ( 0.3223969419481,-0.3223969419452)   -0.7853981633930\n");
+     } // if (IPOLY == 1)
+     else if (IPOLY == 2) {
+    	 System.out.println(" PARAMETERS DEFINING MAP:   (M=12)   (N= 6)   (NPTQ= 8)   (TOL= 0.1E-09)");
+    	 System.out.println(" U= 0.4280124243898");
+    	 System.out.println(" C=(-0.5933837786172, 0.3918657659855)");
+    	 System.out.println(" K                    W0(K)                    PHI0(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    (-0.6190110814085, 0.7853822515779)    2.238279248468");
+    	 System.out.println(" 2    (-0.6230675595641, 0.7821680230097)    2.243454800623");
+    	 System.out.println(" 3    (-0.6230993754454, 0.7821426777255)    2.243495477812");
+    	 System.out.println(" 4    (-0.6282872591546, 0.7779814393570)    2.250146057123");
+    	 System.out.println(" 5    (-0.9786505288556, 0.2055313659046)    2.934586019489");
+    	 System.out.println(" 6    (-0.9335712511816,-0.3583918511451)    3.508137398713");
+    	 System.out.println(" 7    (-0.7302223494245,-0.6832095728259)    3.893741637986");
+    	 System.out.println(" 8    (-0.5577586554076,-0.8300031821131)    4.120706043113");
+    	 System.out.println(" 9    (-0.5576885122132,-0.8300503137433)    4.120790550263");
+    	 System.out.println("10    (-0.5543694995197,-0.8322706639083)    4.124783772183");
+    	 System.out.println("11    (-0.3265970215046,-0.9451636818797)    4.379688067292");
+    	 System.out.println("12    ( 1.0000000000000, 0.0000000000000)    0.000000000000");
+    	 System.out.println(" K                    W1(K)                    PHI1(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    ( 0.2101301204192, 0.3728806349553)    1.0576233605451");
+    	 System.out.println(" 2    ( 0.0717410804160, 0.4219571694056)    1.4023869100452");
+    	 System.out.println(" 3    (-0.4122660002761, 0.1150277377349)    2.8694990601434");
+    	 System.out.println(" 4    (-0.0812736520819,-0.4202252121295)    4.5213427457428");
+    	 System.out.println(" 5    ( 0.2800464274801,-0.3236798323771)    5.4256390982226");
+         System.out.println(" 6    ( 0.4239071523763, 0.0591384950455)    0.1386134964013\n");
+     } // else if (IPOLY == 2)
+     else if (IPOLY == 3) {
+    	 System.out.println(" PARAMETERS DEFINING MAP:   (M=11)   (N= 6)   (NPTQ= 8)   (TOL= 0.1E-09)");
+    	 System.out.println(" U= 0.5022139028275");
+    	 System.out.println(" C=( 0.4495485170805, 0.9332530061513)");
+    	 System.out.println(" K                    W0(K)                    PHI0(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    ( 0.4783020485418, 0.8781953941810)    1.072076089882");
+    	 System.out.println(" 2    (-0.6571395336034, 0.7537689522496)    2.287813895260");
+    	 System.out.println(" 3    (-0.6674256911660, 0.7446764040652)    2.301542785614");
+    	 System.out.println(" 4    (-0.7988453306875, 0.6015364807215)    2.496169557448");
+    	 System.out.println(" 5    (-0.9813485723828,-0.1922367797332)    3.335033585256");
+    	 System.out.println(" 6    (-0.9593804934419,-0.2821153466284)    3.427590959182");
+    	 System.out.println(" 7    (-0.9591213109369,-0.2829952489118)    3.428508239760");
+    	 System.out.println(" 8    (-0.9591213094392,-0.2829952539878)    3.428508245053");
+    	 System.out.println(" 9    (-0.9588639952683,-0.2838658813208)    3.429416101094");
+    	 System.out.println("10    (-0.7355651877502,-0.6774539501472)    3.885888394658");
+    	 System.out.println("11    ( 1.0000000000000, 0.0000000000000)    0.000000000000");
+    	 System.out.println(" K                    W1(K)                    PHI1(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    ( 0.2403845885364, 0.4409467697890)    1.0716800530526");
+    	 System.out.println(" 2    (-0.2756891411992, 0.4197788722864)    2.1519010344455");
+    	 System.out.println(" 3    (-0.3527528425814, 0.3574692102041)    2.3495538933856");
+    	 System.out.println(" 4    (-0.3576966667014, 0.3525221962145)    2.3634801019986");
+    	 System.out.println(" 5    (-0.4241878817812,-0.2688558073450)    3.7065043429625");
+    	 System.out.println(" 6    ( 0.5022111128429, 0.0016740162215)    0.0033332795289");
+     } // else if (IPOLY == 3)
+     else if (IPOLY == 4) {
+    	 System.out.println(" PARAMETERS DEFINING MAP:   (M= 4)   (N=17)   (NPTQ= 4)   (TOL= 0.1E-09)");
+    	 System.out.println(" U= 0.5080637834205");
+    	 System.out.println(" C=(-0.8252185030582, 0.7346741621724)");
+    	 System.out.println(" K                    W0(K)                    PHI0(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    ( 0.1160105274551, 0.9932479838991)    1.454523990458");
+    	 System.out.println(" 2    (-0.9999980060311, 0.0019969811680)    3.139595671095");
+    	 System.out.println(" 3    (-0.1134068924428,-0.9935486282747)    4.598737580188");
+    	 System.out.println(" 4    ( 1.0000000000000, 0.0000000000000)    0.000000000000");
+    	 System.out.println(" K                    W1(K)                    PHI1(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    ( 0.4647382191519, 0.2052978219151)    0.4159715655058");
+    	 System.out.println(" 2    ( 0.4576198779787, 0.2207098894528)    0.4493872929813");
+    	 System.out.println(" 3    ( 0.3795224218977, 0.3377743911259)    0.7272618582239");
+    	 System.out.println(" 4    ( 0.2723085014565, 0.4289252709483)    1.0051364053220");
+    	 System.out.println(" 5    ( 0.2578263039247, 0.4377835138834)    1.0385521273709");
+    	 System.out.println(" 6    ( 0.1081199397957, 0.4964261139809)    1.3563486311691");
+    	 System.out.println(" 7    (-0.5058226132834,-0.0476685631704)    3.2355548301266");
+    	 System.out.println(" 8    (-0.4763529344161,-0.1766824549772)    3.4967697831037");
+    	 System.out.println(" 9    (-0.4567900505999,-0.2224222509023)    3.5947252240323");
+    	 System.out.println("10    (-0.4533269400240,-0.2293981113088)    3.6100545143865");
+    	 System.out.println("11    (-0.4531551749891,-0.2297372312103)    3.6108027252558");
+    	 System.out.println("12    (-0.4511594952261,-0.2336320138400)    3.6194164493863");
+    	 System.out.println("13    (-0.3780577924477,-0.3394128954432)    3.8731801310193");
+    	 System.out.println("14    (-0.2710041136013,-0.4297506002727)    4.1497671944776");
+    	 System.out.println("15    (-0.2565200110852,-0.4385502159803)    4.1831260467214");
+    	 System.out.println("16    (-0.1067624140812,-0.4967198354839)    4.5006750720130");
+    	 System.out.println("17    ( 0.5056173096609, 0.0497990380914)    0.0981749265419");
+     } // else if (IPOLY == 4)
+     else if (IPOLY == 5) {
+    	 System.out.println(" PARAMETERS DEFINING MAP:   (M=12)   (N= 4)   (NPTQ= 3)   (TOL= 0.1E-09)");
+    	 System.out.println(" U= 0.3732593282942");
+    	 System.out.println(" C=(-0.4884261138328,-0.8609207012823)");
+    	 System.out.println(" K                    W0(K)                    PHI0(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    ( 0.6542535856529, 0.7562752446433)    0.857601089415");
+    	 System.out.println(" 2    ( 0.2115395646982, 0.9773694350486)    1.357646422167");
+    	 System.out.println(" 3    ( 0.0984674961776, 0.9951402675987)    1.472169011342");
+    	 System.out.println(" 4    (-0.5708551758343, 0.8210507707951)    2.178343368006");
+    	 System.out.println(" 5    (-0.9227803940901, 0.3853262828863)    2.746031270415");
+    	 System.out.println(" 6    (-0.9510906909506, 0.3089117958044)    2.827543998566");
+    	 System.out.println(" 7    (-0.9984302522853,-0.0560092074704)    3.197631186249");
+    	 System.out.println(" 8    ( 0.2649022418819,-0.9642752730657)    4.980491521406");
+    	 System.out.println(" 9    ( 0.5034874374818,-0.8640025464650)    5.240019405018");
+    	 System.out.println("10    ( 0.7670211252277,-0.6416218461481)    5.586574432807");
+    	 System.out.println("11    ( 0.9554686968802,-0.2950924758139)    5.983633004144");
+    	 System.out.println("12    ( 1.0000000000000, 0.0000000000000)    0.000000000000");
+    	 System.out.println(" K                    W1(K)                    PHI1(K)");
+    	 System.out.println(" ---                   -----                    -------");
+    	 System.out.println(" 1    (-0.2579461752072, 0.2697893564518)    2.3337567482261");
+    	 System.out.println(" 2    (-0.2889380091518,-0.2362992869775)    3.8271054023731");
+    	 System.out.println(" 3    ( 0.2825040966070,-0.2439548350801)    5.5708803774311");
+    	 System.out.println(" 4    ( 0.2195123405734, 0.3018888181014)    0.9420935621688");
+     } // else if (IPOLY == 5)
+     else if (IPOLY == 6) {
+    	 System.out.println(" PARAMETERS DEFINING MAP:   (M= 7)   (N= 2)   (NPTQ= 5)   (TOL= 0.1E-09)");
+    	 System.out.println(" U= 0.1772675790003");
+    	 System.out.println(" C=(-0.7515041412364, 1.2077109426813)");
+    	 System.out.println(" K                    W0(K)                    PHI0(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    ( 0.2067927722779, 0.9783847654852)    1.362500593615");
+    	 System.out.println(" 2    (-0.5854410170147,-0.8107150026962)    4.086965044137");
+    	 System.out.println(" 3    (-0.4545201624786,-0.8907364491815)    4.240555537868");
+    	 System.out.println(" 4    (-0.4484706340671,-0.8937975667786)    4.247335464934");
+    	 System.out.println(" 5    (-0.3868897862706,-0.9221259638897)    4.315132656973");
+    	 System.out.println(" 6    ( 0.9923283906938,-0.1236299519657)    6.159238234974");
+    	 System.out.println(" 7    ( 1.0000000000000, 0.0000000000000)    0.000000000000");
+    	 System.out.println(" K                    W1(K)                    PHI1(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    (-0.0842113609299,-0.1559879522750)    4.2173655802602");
+    	 System.out.println(" 2    ( 0.1027420798612, 0.1444571202482)    0.9525738702698");
+     } // else if (IPOLY == 6)
+     else if (IPOLY == 7) {
+    	 System.out.println(" PARAMETERS DEFINING MAP:   (M= 3)   (N= 2)   (NPTQ= 7)   (TOL= 0.1E-09)");
+    	 System.out.println(" U= 0.0857957283188");
+    	 System.out.println(" C=(-2.7231050437514,-0.9071249391856)");
+    	 System.out.println(" K                    W0(K)                    PHI0(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    (-0.8002287256225, 0.5996949113413)    2.498472851106");
+    	 System.out.println(" 2    (-0.3160469144053,-0.9487435627686)    4.390829054270");
+    	 System.out.println(" 3    ( 1.0000000000000, 0.0000000000000)    0.000000000000");
+    	 System.out.println(" K                    W1(K)                    PHI1(K)");
+    	 System.out.println("---                   -----                    -------");
+    	 System.out.println(" 1    (-0.0271154752043,-0.0813981449555)    4.3908290542696");
+    	 System.out.println(" 2    ( 0.0271154752043, 0.0813981449555)    1.2492364006799");
+     } // else if (IPOLY == 7)
 	 return;
 	
 	}
@@ -2325,9 +2556,40 @@ double neweps;
 	        } // if (D1 < ERRMIN)
 
 	    } // for (K = 1; K <= M - 1; K++)
-	    System.out.println("ACCURACY TEST: ");
-	    System.out.println("MAXIMUM ERROR = " + ERRMAX + " ACHIEVED AT KMAX = " + KMAX);
-	    System.out.println("MINIMUM ERROR = " + ERRMIN + " ACHIEVED AT KMIN = " + KMIN);
+	    System.out.println(" MIPAV ACCURACY TEST: ");
+	    System.out.println(" MAXIMUM ERROR = " + ERRMAX + " ACHIEVED AT KMAX = " + KMAX);
+	    System.out.println(" MINIMUM ERROR = " + ERRMIN + " ACHIEVED AT KMIN = " + KMIN);
+	    if ((IPOLY >= 1) && (IPOLY <= 7)) {
+	        System.out.println(" ORIGINAL FORTRAN ACCURACY TEST: ");
+	    }
+	    if (IPOLY == 1) {
+	    	System.out.println(" MAXIMUM ERROR= 0.191E-10  ACHIEVED AT KMAX= 2");
+	        System.out.println(" MINIMUM ERROR= 0.100E-10  ACHIEVED AT KMIN= 3");
+	    } // if (IPOLY == 1) 
+	    else if (IPOLY == 2) {
+	    	System.out.println(" MAXIMUM ERROR= 0.811E-09  ACHIEVED AT KMAX= 2");
+	    	System.out.println(" MINIMUM ERROR= 0.223E-10  ACHIEVED AT KMIN= 1");
+	    } // else if (IPOLY == 2)
+	    else if (IPOLY == 3) {
+	    	System.out.println(" MAXIMUM ERROR= 0.948E-06  ACHIEVED AT KMAX= 8");
+	    	System.out.println(" MINIMUM ERROR= 0.130E-10  ACHIEVED AT KMIN= 2");
+	    } // else if (IPOLY == 3)
+	    else if (IPOLY == 4) {
+	    	System.out.println(" MAXIMUM ERROR= 0.172E-06  ACHIEVED AT KMAX= 3");
+	    	System.out.println(" MINIMUM ERROR= 0.539E-07  ACHIEVED AT KMIN= 1");
+	    } // else if (IPOLY == 4)
+	    else if (IPOLY == 5) {
+	    	System.out.println(" MAXIMUM ERROR= 0.110E-03  ACHIEVED AT KMAX= 6");
+	    	System.out.println(" MINIMUM ERROR= 0.510E-05  ACHIEVED AT KMIN= 1");
+	    } // else if (IPOLY == 5)
+	    else if (IPOLY == 6) {
+	    	System.out.println(" MAXIMUM ERROR= 0.550E-06  ACHIEVED AT KMAX= 6");
+	    	System.out.println(" MINIMUM ERROR= 0.330E-06  ACHIEVED AT KMIN= 1");
+	    } // else if (IPOLY == 6)
+	    else if (IPOLY == 7) {
+	    	System.out.println(" MAXIMUM ERROR= 0.544E-07  ACHIEVED AT KMAX= 1");
+	    	System.out.println(" MINIMUM ERROR= 0.544E-07  ACHIEVED AT KMIN= 1");
+	    } // else if (IPOLY == 7)
 	    return;
     }
 
