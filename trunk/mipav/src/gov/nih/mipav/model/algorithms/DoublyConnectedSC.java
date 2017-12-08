@@ -35,6 +35,7 @@ public class DoublyConnectedSC extends AlgorithmBase {
 	//private final int EXAMPLE_GIVEN_FOR_CHECKING_INVERSE_MAP = 6;
 	//private final int UPPER_HALF_PLANE_WITH_HORIZONTAL_SLIT = 7;
 	//private final int EXAMPLE_8 = 8;
+	//private final int EXAMPLE_9 = 9;
 	
 	private final int dscfun = 1;
 	
@@ -155,7 +156,7 @@ double neweps;
 		if (testRoutine) {
 			DSCDATA(IPOLY, M, N, Z0, Z1, ALFA0, ALFA1);
 			ANGLES(N[0], Z1, ALFA1, 1);
-			if ((IPOLY == 1) || (IPOLY == 3) || (IPOLY == 4) || (IPOLY == 6) || (IPOLY == 8)) {
+			if ((IPOLY == 1) || (IPOLY == 3) || (IPOLY == 4) || (IPOLY == 6) || (IPOLY == 8) || (IPOLY == 9)) {
 				ANGLES(M[0], Z0, ALFA0, 0);
 			}
 			
@@ -547,6 +548,24 @@ double neweps;
 		    FORWARD_POINTS[2][0] = -1.0;
 		    FORWARD_POINTS[2][1] = 0.0;
 		} // else if (IPOLY == 8)
+		else if (IPOLY == 9) {
+			M[0] = 4;
+			N[0] = 3;
+			Z0[0][0] = 1.0;
+			Z0[0][1] = 1.0;
+			Z0[1][0] = 4.0;
+			Z0[1][1] = 1.0;
+			Z0[2][0] = 4.0;
+			Z0[2][1] = 4.0;
+			Z0[3][0] = 1.0;
+			Z0[3][1] = 4.0;
+			Z1[0][0] = 2.75;
+			Z1[0][1] = 1.5;
+			Z1[1][0] = 3.25;
+			Z1[1][1] = 3.25;
+			Z1[2][0] = 1.5;
+			Z1[2][1] = 3.0;
+		} // else if (IPOLY == 9)
 	}
 	
 	private void THDATA(double U[]) {
