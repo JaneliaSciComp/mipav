@@ -559,6 +559,7 @@ public class ViewMenuBar {
 										new JMenuItem[] {
 												menuBuilder.buildMenuItem("Barrel distortion correction", "Barrel", 0,
 														null, false),
+									    menuBuilder.buildMenuItem("Between 2 polygons to annulus", "PolygonsToAnnulus", 0, null, false),
 										menuBuilder.buildMenuItem("Circle to rectangle", "CircleToRec", 0, null, false),
 										menuBuilder.buildMenuItem("Circular sector to rectangle", "CirToRec", 0, null,
 												false),
@@ -1537,6 +1538,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Polygon to circle", false);
+			menuBuilder.setMenuItemEnabled("Between 2 polygons to annulus", false);
 			menuBuilder.setMenuItemEnabled("Polygon to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to rectangle", false);
@@ -1575,6 +1577,7 @@ public class ViewMenuBar {
 			menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Polygon to circle", false);
+			menuBuilder.setMenuItemEnabled("Between 2 polygons to annulus", false);
 			menuBuilder.setMenuItemEnabled("Polygon to rectangle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
 			menuBuilder.setMenuItemEnabled("Ellipse to rectangle", false);
@@ -1861,6 +1864,7 @@ public class ViewMenuBar {
 		menuBuilder.setMenuItemEnabled("Circular sector to rectangle", true);
 		menuBuilder.setMenuItemEnabled("Circle to rectangle", true);
 		menuBuilder.setMenuItemEnabled("Polygon to circle", true);
+		menuBuilder.setMenuItemEnabled("Between 2 polygons to annulus", true);
 		menuBuilder.setMenuItemEnabled("Polygon to rectangle", true);
 		menuBuilder.setMenuItemEnabled("Ellipse to circle", true);
 		menuBuilder.setMenuItemEnabled("Ellipse to rectangle", true);
