@@ -1879,6 +1879,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogPolygonToRectangle(this, getActiveImage());
         } else if (command.equals("PolygonToCircle")) {
             new JDialogPolygonToCircle(this, getActiveImage());
+        } else if (command.equals("PolygonsToAnnulus")) {
+        	new JDialogDoublyConnectedSC(this, getActiveImage());
         } else if (command.equals("ColorSaturation")) {
             new JDialogColorSaturation(this, getActiveImage());
         } else if (command.equals("EllipseToCircle")) {
