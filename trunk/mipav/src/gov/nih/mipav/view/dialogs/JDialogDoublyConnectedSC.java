@@ -262,7 +262,7 @@ public class JDialogDoublyConnectedSC extends JDialogBase implements AlgorithmIn
         requireLabel.setFont(serif12);
         VOIPanel.add(requireLabel, gbc);
         
-        JLabel requireLabel2 = new JLabel("The last inner vertex is the closest inner vertex to the last outer vertex");
+        JLabel requireLabel2 = new JLabel("The last inner vertex must be the closest (or almost closest) inner vertex to the last outer vertex");
         requireLabel2.setForeground(Color.black);
         requireLabel2.setFont(serif12);
         gbc.gridy++;
@@ -376,6 +376,7 @@ public class JDialogDoublyConnectedSC extends JDialogBase implements AlgorithmIn
         JLabel tolLabel = new JLabel("A tolerance to control the convergence in HYBRD:");
         tolLabel.setForeground(Color.black);
         tolLabel.setFont(serif12);
+        gbc2.gridy++;
         paramPanel.add(tolLabel, gbc2);
         
         tolText = new JTextField("1.0E-10");
