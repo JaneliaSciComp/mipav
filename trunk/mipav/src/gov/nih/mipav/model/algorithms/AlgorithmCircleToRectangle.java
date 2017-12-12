@@ -33,12 +33,12 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * AlgorithmCircularSectorToRectangle - default constructor.
+     * AlgorithmCircleToRectangle - default constructor.
      */
     public AlgorithmCircleToRectangle() { }
 
     /**
-     * AlgorithmCircularSectorToRectangle.
+     * AlgorithmCircleToRectangle.
      *
      * @param  destImg  DOCUMENT ME!
      * @param  srcImg   DOCUMENT ME!
