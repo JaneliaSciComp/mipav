@@ -225,12 +225,14 @@ public class JDialogKnees_90_data_train_extraction extends JDialogBase implement
 	 */
 	private void readKeyImageDir() {
 
-		File fileDir = new File("/home/ruida/kneesBackup/DP_clean");
-		traverse_folder(fileDir, null);
+		// File fileDir = new File("/home/ruida/kneesBackup/DP_clean");
+		File fileDir = new File("/home/ruida/kneesBackup/patella");
+		// traverse_folder_femur(fileDir, null);
+		traverse_folder_patella(fileDir, null);
 		
 	}
 
-	private void traverse_folder(File dir, String hashID) {
+	private void traverse_folder_femur(File dir, String hashID) {
 
 		if (dir.isDirectory()) {
 			String[] children = dir.list();
@@ -262,20 +264,72 @@ public class JDialogKnees_90_data_train_extraction extends JDialogBase implement
 
 		// read GRE image file
 		if (fileName.startsWith("image") && fileName.endsWith("xml")) {
-			// System.err.println(hashID + " => " + dirName);
+			System.err.println(hashID + " => " + dirName);
 			nameTable.put(hashID, dirName);
 		}
 
 		// read fem VOI
 		if (fileName.startsWith("voi") && fileName.endsWith("xml")) {
-			// System.err.println(hashID + " => " + dirName);
+			System.err.println(hashID + " => " + dirName);
 			nameVOITable.put(hashID, dirName);
 		}
 
 	}
 
+	private void traverse_folder_patella(File dir, String hashID) {
+
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			for (int i = 0; i < children.length; i++) {
+				read_name_patella(new File(dir, children[i]));
+
+			}
+		}
+
+	}
 	
-	
+	private void read_name_patella(File dir) {
+
+		String dirName = dir.toString();
+
+		String lowerCaseName;
+		String fileName;
+		String hashID;
+		String subString;
+
+		int begin = dirName.lastIndexOf(File.separator) + 1;
+		int end = dirName.length();
+
+		lowerCaseName = dirName.toLowerCase();
+		fileName = lowerCaseName.substring(begin, end);
+
+		// read GRE image file
+		if (fileName.startsWith("image") && fileName.endsWith("xml")) {
+			
+			end = fileName.lastIndexOf("_");
+			subString = fileName.substring(0, end);
+			
+			begin = subString.lastIndexOf("_") + 1;
+			end = subString.length();
+			hashID = fileName.substring(begin, end);
+			
+			System.err.println(hashID + " => " + dirName);
+			nameTable.put(hashID, dirName);
+		}
+
+		// read fem VOI
+		if (fileName.startsWith("voi") && fileName.endsWith("xml")) {
+			
+			begin = fileName.lastIndexOf("_") + 1;
+			end = fileName.lastIndexOf(".");
+			hashID = fileName.substring(begin, end);
+			
+			System.err.println(hashID + " => " + dirName);
+			nameVOITable.put(hashID, dirName);
+		}
+
+	}
+
 
 
 	/**
@@ -311,8 +365,7 @@ public class JDialogKnees_90_data_train_extraction extends JDialogBase implement
 
 		runCED();
 
-		saveOrthogonalCEDImage();
-       
+		saveOrthogonalCEDImage(); 
 
 		long endTime = System.currentTimeMillis();
 		int min = (int) ((endTime - startTime) / 1000f / 60f);
@@ -360,8 +413,8 @@ public class JDialogKnees_90_data_train_extraction extends JDialogBase implement
 		
 		System.err.println("convertVOItoMask");
 		
-		int startIndex = 11;
-		int endIndex = 20;
+		int startIndex = 0;
+		int endIndex = 10;
 		
 		for (String key : keys) {
 
@@ -371,13 +424,15 @@ public class JDialogKnees_90_data_train_extraction extends JDialogBase implement
 
 				System.err.println("key = " + key);
 
+				new ViewJFrameImage(targetImageSlice);
+				/*
 				ModelImage maskImage = null;
 				maskImage = targetImageSlice.generateBinaryImage();
 				maskImage.getMatrixHolder().replaceMatrices(targetImageSlice.getMatrixHolder().getMatrices());
 				maskImage.getFileInfo(0).setOrigin(targetImageSlice.getFileInfo(0).getOrigin());
 				
 				maskImages.put(key, maskImage);
-				
+				*/ 
 			}
 			
 			count++;
@@ -706,7 +761,7 @@ public class JDialogKnees_90_data_train_extraction extends JDialogBase implement
 			
 				ImageReorientation axial_orient_mask = new ImageReorientation(keyImageMask, ImageReorientation.AXIAL_INDEX);
 				axial_orient_mask.preformOrientation();
-				axialList.put(key, axial_orient_mask.getResultImage());
+				axialMaskList.put(key, axial_orient_mask.getResultImage());
 				
 //              JDialogReorient axial_orient_mask = new JDialogReorient(keyImageMask);
 //				axial_orient_mask.setVisible(false);
@@ -731,7 +786,7 @@ public class JDialogKnees_90_data_train_extraction extends JDialogBase implement
 				
 				ImageReorientation coronal_orient_mask = new ImageReorientation(keyImageMask, ImageReorientation.CORONAL_INDEX);
 				coronal_orient_mask.preformOrientation();
-				coronalList.put(key, coronal_orient_mask.getResultImage());
+				coronalMaskList.put(key, coronal_orient_mask.getResultImage());
 			
 //				JDialogReorient coronal_orient_mask = new JDialogReorient(keyImageMask);
 //				coronal_orient_mask.setVisible(false);
