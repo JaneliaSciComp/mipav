@@ -1,9 +1,15 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.io.IOException;
+import java.util.Vector;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJComponentGraph;
+import gov.nih.mipav.view.ViewJFrameGraph;
 
 public class DoublyConnectedSC extends AlgorithmBase {
 	// This is a port of the FORTRAN ACM TOMS Algorithm 785, collected
@@ -122,7 +128,11 @@ public class DoublyConnectedSC extends AlgorithmBase {
 	private int N[] = new int[1];
 	// ISHAPE = 0 outer polygon has no infinite vertices
     // ISHAPE = 1 outer polygon has some infinite vertices
-	int ISHAPE = 0;
+	private int ISHAPE = 0;
+	
+	private Vector<Double> linhx[][] = null;
+	private Vector<Double> linhy[][] = null;
+
 	
 	public DoublyConnectedSC() {
 		
@@ -385,6 +395,8 @@ public class DoublyConnectedSC extends AlgorithmBase {
      	// Compute data for theta-function and test the accuracy
      	THDATA(U);
         DSCTEST(M[0],N[0],U[0],C,W0,W1,Z0,Z1,ALFA0,ALFA1,NPTQ,QWORK);
+        plot(U[0], null, null, 200, 140, yDimSource-1, W0, W1, Z0, Z1,
+        		ALFA0, ALFA1, QWORK, C);
         double xcenterDest = (xDimDest-1.0)/2.0;
 		double ycenterDest = (yDimDest-1.0)/2.0;
 		double maxDistance = Math.min(xcenterDest,ycenterDest);
@@ -511,6 +523,423 @@ public class DoublyConnectedSC extends AlgorithmBase {
 
        return;
 	}
+	
+	private void plot(double U,
+			double R[], double theta[], int num1draw, int num2draw, int yInvert,
+			double W0[][], double W1[][], double Z0[][], double Z1[][], double ALFA0[], double ALFA1[],
+			double QWORK[], double C[]) {
+		// Image of polar grid under Schwarz-Christoffel disk map.
+		// dplot will adaptively plot the images under the Schwarz-Christoffel 
+		// disk map of circles and rays in the unit disk. 
+		// If R.length == 1 and theta.length == 1, R[0] is the
+		// number of evenly spaced circles and theta[0] is the number of
+		// evenly spaced rays.  If R.length > 1 and theta.length > 1, then the
+		// circles are plotted at radii given by the entries of R and rays at
+		// the angles specified in theta.
+		
+		// nqpts Number of quadrature points per integration.
+		// Approximately equals -log10(error).  Increase if plot
+	    // has false little zigzags in curves. 
+		
+		// Original MATLAB dplot routine copyright 1998 by Toby Driscoll.
+		
+		// In original code num1draw = 20 and num2draw = 14
+		
+		int i;
+		int j;
+		int k;
+		int m;
+		int Rlength;
+		int thetalength;
+		double spacing;
+		double R2[];
+		double theta2[] = null;
+		int INEAR[] = new int[1];
+		int KNEAR[] = new int[1];
+		double zc[] = new double[2];
+		double wa[] = new double[2];
+		double wout[];
+		double cr[] = new double[1];
+		double ci[] = new double[1];
+		double posx1;
+		double posy1;
+		double posx2;
+		double posy2;
+		int x1;
+		int y1;
+		int x2;
+		int y2;
+		boolean drawTheta = true;
+		int n = Z0.length;
+		// Minimum line segment length, as a proportion of the axes box
+        double minlen = 0.005;
+        // Maximum line segment length, as a proportion of the axes box
+        double maxlen = 0.02;
+        // Max allowed number of adaptive refinements made to meet other requirements 
+        int maxrefn = 2;
+		double axlim[] = new double[4];
+		Vector<Double>x1Vector = new Vector<Double>();
+		Vector<Double>y1Vector = new Vector<Double>();
+		Vector<Double>x2Vector = new Vector<Double>();
+		Vector<Double>y2Vector = new Vector<Double>();
+		Vector<Double>tpReal = new Vector<Double>();
+		Vector<Double>tpImag = new Vector<Double>();
+		Vector<Double>RpReal = new Vector<Double>();
+		Vector<Double>RpImag = new Vector<Double>();
+		Vector<Double>zpReal = new Vector<Double>();
+		Vector<Double>zpImag = new Vector<Double>();
+		Vector<Double>wpReal = new Vector<Double>();
+		Vector<Double>wpImag = new Vector<Double>();
+		Vector<Boolean>newlog = new Vector<Boolean>();
+		double zp[][];
+		double neww[][];
+		// Empty arguments default to 10.
+		if ((R == null) || (R.length == 0)) {
+			R = new double[1];
+			R[0] = 10;
+		}
+		if ((theta == null) || (theta.length == 0)) {
+			theta = new double[1];
+			theta[0] = 10;
+		}
+		
+		// Integer arguments must be converted to specific values
+		if ((R.length == 1) && (R[0] == Math.round(R[0]))) {
+			Rlength = (int)R[0];
+			R2 = new double[Rlength];
+		    spacing = (1.0-U)/(R[0] + 1.0);
+		    for (i = 1; i <= Rlength; i++) {
+		        R2[i-1] = U + i*spacing;	
+		    }
+		} // if ((R.length == 1) && (R[0] == Math.round(R[0])))
+		else {
+			R2 = new double[R.length];
+			for (i = 0; i < R.length; i++) {
+				R2[i] = R[i];
+			}
+		}
+		if ((theta.length == 1) && (theta[0] == 0.0)) {
+			drawTheta = false;
+		}
+		else if ((theta.length == 1) && (theta[0] == Math.round(theta[0]))) {
+			thetalength = (int)theta[0];
+			theta2 = new double[thetalength];
+		    spacing = ((2.0*Math.PI)/theta[0]);
+		    for (i = 0; i < thetalength; i++) {
+		        theta2[i] = i*spacing;	
+		    }
+		} // if ((theta.length == 1) && (theta[0] == Math.round(theta[0])))
+		else {
+			theta2 = new double[theta.length];
+			for (i = 0; i < theta.length; i++) {
+				theta2[i] = theta[i];
+			}
+		}
+		int numinfinite = 0;
+		// Put 2 finite points at every infinity in plotpoly
+		for (i = 0; i < Z0.length; i++) {
+		    if (Double.isInfinite(Z0[i][0]) || Double.isInfinite(Z0[i][1]))	{
+		        numinfinite++;	
+		    }
+		}
+		float xPointArray[] = new float[n+1+numinfinite];
+		float yPointArray[] = new float[n+1+numinfinite];
+		double beta[] = new double[ALFA0.length];
+		for (i = 0; i < ALFA0.length; i++) {
+			beta[i] = ALFA0[i] - 1.0;
+		}
+		ViewJFrameGraph pointGraph =scm. plotpoly(xPointArray, yPointArray, Z0, beta, 
+				false, axlim, yInvert, true, null);
+		ViewJComponentGraph graph = pointGraph.getGraph();
+		Rectangle graphBounds = graph.getGraphBounds();
+		Graphics g = graph.getGraphics();
+		double xScale = graphBounds.width / (axlim[1] - axlim[0]);
+        double yScale = graphBounds.height / (axlim[3] - axlim[2]);
+        double len = Math.max(axlim[1] - axlim[0], axlim[3] - axlim[2]);
+		minlen = len * minlen;
+		maxlen = len * maxlen;
+		
+		// Plot circles...
+	    linhx = new Vector[R2.length][2];
+		linhy = new Vector[R2.length][2];
+		for (i = 0; i < R2.length; i++) {
+			for (j = 0; j < 2; j++) {
+				linhx[i][j] = new Vector<Double>();
+				linhy[i][j] = new Vector<Double>();
+			}
+		}
+		for (j = 0; j < R2.length; j++) {
+		    // Start with evenly spaced theta
+			tpReal.clear();
+			tpImag.clear();
+			for (i = 0; i < num1draw; i++) {
+				tpReal.add(i*(2.0*Math.PI)/(num1draw-1.0));
+				tpImag.add(0.0);
+			}
+			newlog.clear();
+			for (i = 0; i < num1draw; i++) {
+				newlog.add(true);
+			}
+			wpReal.clear();
+			wpImag.clear();
+			for (i = 0; i < num1draw; i++) {
+				wpReal.add(Double.NaN);
+				wpImag.add(0.0);
+			}
+			
+			// The individual points will be shown as they are found.
+			
+			// Adaptive refinement to make curve smooth
+			int iter = 0;
+			while (iter < maxrefn) {
+				int numnewlog = 0;
+				for (i = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	numnewlog++;
+				    }
+				} // for (i = 0; i < newlog.size(); i++)
+				if (numnewlog == 0) {
+					break;
+				}
+				zp = new double[numnewlog][2];
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+				    if (newlog.get(i)) {
+				    	zp[m][0] = R2[j]*Math.cos(tpReal.get(i));
+				    	zp[m++][1] = R2[j]*Math.sin(tpReal.get(i));
+				    }
+				} // for (i = 0, m = 0; i < newlog.length; i++)
+				neww = new double[numnewlog][2];
+				for (k = 0; k < numnewlog; k++) {
+					NEARW(M[0],N[0],W0,W1,ALFA0,zp[k],KNEAR,INEAR);	
+					if (INEAR[0] == 0) {
+						zc[0] = Z0[KNEAR[0]-1][0];
+						zc[1] = Z0[KNEAR[0]-1][1];
+						wa[0] = W0[KNEAR[0]-1][0];
+						wa[1] = W0[KNEAR[0]-1][1];
+					}
+					else {
+						zc[0] = Z1[KNEAR[0]-1][0];
+						zc[1] = Z1[KNEAR[0]-1][1];
+						wa[0] = W1[KNEAR[0]-1][0];
+						wa[1] = W1[KNEAR[0]-1][1];	
+					}
+					wout = WQUAD1(wa, 0, KNEAR[0], INEAR[0], zp[k], 0, 0, M[0], N[0], U, W0, W1,ALFA0, ALFA1, NPTQ, QWORK, 0);
+					scm.zmlt(C[0], C[1], wout[0], wout[1], cr, ci);
+					neww[k][0] = zc[0] + cr[0];
+					neww[k][1] = zc[1] + ci[0];
+				} // for (k = 0; k < numnewlog; k++)
+				for (i = 0, m = 0; i < newlog.size(); i++) {
+					if (newlog.get(i)) {
+					    wpReal.set(i, neww[m][0]);
+					    wpImag.set(i, neww[m++][1]);
+					} 
+				} // for (i = 0, m = 0; i < newlog.size(); i++)
+				iter = iter + 1;
+				
+				linhx[j][0].clear();
+				linhy[j][0].clear();
+				linhx[j][1].clear();
+				linhy[j][1].clear();
+				// Update the points to show progress
+				for (i = 0; i < wpReal.size(); i++) {
+				    linhx[j][0].add(wpReal.get(i));
+				    linhy[j][0].add(wpImag.get(i));
+				}
+				for (i = 0; i < zp.length; i++) {
+					linhx[j][1].add(zp[i][0]);
+				    linhy[j][1].add(zp[i][1]);	
+				}
+				
+				// Add points to tp where necessary
+				scm.scpadapt(tpReal, tpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+			} // while (iter < maxrefn)
+		} // for (j = 0; j < R2.length; j++)
+		
+		for (i = 0; i < Z1.length-1; i++) {
+		    posx1 = Z1[i][0];
+		    posy1 = Z1[i][1];
+		    posx2 = Z1[i+1][0];
+		    posy2 = Z1[i+1][1];
+		    x1Vector.add(posx1);
+    		y1Vector.add(posy1);
+    		x2Vector.add(posx2);
+    		y2Vector.add(posy2);
+    	    x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+		    y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+		    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+		    x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+		    y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+		    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+		    graph.drawLine(g, x1, y1, x2, y2);
+		}
+		posx1 = Z1[Z1.length-1][0];
+	    posy1 = Z1[Z1.length-1][1];
+	    posx2 = Z1[0][0];
+	    posy2 = Z1[0][1];
+	    x1Vector.add(posx1);
+		y1Vector.add(posy1);
+		x2Vector.add(posx2);
+		y2Vector.add(posy2);
+	    x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+	    y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+	    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+	    x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+	    y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+	    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+	    graph.drawLine(g, x1, y1, x2, y2);
+		
+		for (i = 0; i < R2.length; i++) {
+		    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+		    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+		    		posx1 = linhx[i][0].get(j);
+		    		posy1 = linhy[i][0].get(j);
+		    		posx2 = linhx[i][0].get(j+1);
+		    		posy2 = linhy[i][0].get(j+1);
+		    		x1Vector.add(posx1);
+		    		y1Vector.add(posy1);
+		    		x2Vector.add(posx2);
+		    		y2Vector.add(posy2);
+		    	    x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+    			    y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+    			    x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+    			    y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+    			    graph.drawLine(g, x1, y1, x2, y2);
+		    	}
+		    }
+		} // for (i = 0; i < R2.length; i++)
+		
+		// Plot radii
+		if (drawTheta) {
+			linhx = new Vector[theta2.length][2];
+			linhy = new Vector[theta2.length][2];
+			for (i = 0; i < theta2.length; i++) {
+				for (j = 0; j < 2; j++) {
+					linhx[i][j] = new Vector<Double>();
+					linhy[i][j] = new Vector<Double>();
+				}
+			}
+			for (j = 0; j < theta2.length; j++) {
+				RpReal.clear();
+				RpImag.clear();
+				zpReal.clear();
+				zpImag.clear();
+				for (i = 0; i < num2draw; i++) {
+					RpReal.add(U + (1-U)*i/(num2draw-1.0));
+					RpImag.add(0.0);
+					zpReal.add(RpReal.get(i)*Math.cos(theta2[j]));
+					zpImag.add(RpReal.get(i)*Math.sin(theta2[j]));
+				}
+				newlog.clear();
+				for (i = 0; i < num2draw; i++) {
+					newlog.add(true);
+				}
+				wpReal.clear();
+				wpImag.clear();
+				for (i = 0; i < num2draw; i++) {
+					wpReal.add(Double.NaN);
+					wpImag.add(0.0);
+				}
+				
+				// The individual points will be shown as they are found.
+				
+				// Adaptive refinement to make curve smooth
+				int iter = 0;
+				while (iter < maxrefn) {
+					int numnewlog = 0;
+					for (i = 0; i < newlog.size(); i++) {
+					    if (newlog.get(i)) {
+					    	numnewlog++;
+					    }
+					} // for (i = 0; i < newlog.size(); i++)
+					if (numnewlog == 0) {
+						break;
+					}
+					double zpnew[][] = new double[numnewlog][2];
+					for (i = 0, m = 0; i < newlog.size(); i++) {
+					    if (newlog.get(i)) {
+					    	zpnew[m][0] = zpReal.get(i);
+					    	zpnew[m++][1] = zpImag.get(i);
+					    }
+					} // for (i = 0, m = 0; i < newlog.length; i++)
+					neww = new double[numnewlog][2];
+					for (k = 0; k < numnewlog; k++) {
+						NEARW(M[0],N[0],W0,W1,ALFA0,zpnew[k],KNEAR,INEAR);	
+						if (INEAR[0] == 0) {
+							zc[0] = Z0[KNEAR[0]-1][0];
+							zc[1] = Z0[KNEAR[0]-1][1];
+							wa[0] = W0[KNEAR[0]-1][0];
+							wa[1] = W0[KNEAR[0]-1][1];
+						}
+						else {
+							zc[0] = Z1[KNEAR[0]-1][0];
+							zc[1] = Z1[KNEAR[0]-1][1];
+							wa[0] = W1[KNEAR[0]-1][0];
+							wa[1] = W1[KNEAR[0]-1][1];	
+						}
+						wout = WQUAD1(wa, 0, KNEAR[0], INEAR[0], zpnew[k], 0, 0, M[0], N[0], U, W0, W1,ALFA0, ALFA1, NPTQ, QWORK, 0);
+						scm.zmlt(C[0], C[1], wout[0], wout[1], cr, ci);
+						neww[k][0] = zc[0] + cr[0];
+						neww[k][1] = zc[1] + ci[0];
+					} // for (k = 0; k < numnewlog; k++)
+					for (i = 0, m = 0; i < newlog.size(); i++) {
+						if (newlog.get(i)) {
+						    wpReal.set(i, neww[m][0]);
+						    wpImag.set(i, neww[m++][1]);
+						} 
+					} // for (i = 0, m = 0; i < newlog.size(); i++)
+					iter = iter + 1;
+					
+					linhx[j][0].clear();
+					linhy[j][0].clear();
+					linhx[j][1].clear();
+					linhy[j][1].clear();
+					// Update the points to show progress
+					for (i = 0; i < wpReal.size(); i++) {
+					    linhx[j][0].add(wpReal.get(i));
+					    linhy[j][0].add(wpImag.get(i));
+					    linhx[j][1].add(zpReal.get(i));
+					    linhy[j][1].add(zpImag.get(i));
+					}
+					
+					scm.scpadapt(zpReal, zpImag, wpReal, wpImag, newlog, minlen, maxlen, axlim);
+				} // while (iter < maxrefn)
+			} // for (j = 0; j < theta2.length; j++)
+			
+			for (i = 0; i < theta2.length; i++) {
+			    if ((linhx[i][0] != null)&& (linhy[i][0] != null)) {
+			    	for (j = 0; j < linhx[i][0].size()-1; j++) {
+			    		posx1 = linhx[i][0].get(j);	
+			    		posy1 = linhy[i][0].get(j);
+			    		posx2 = linhx[i][0].get(j+1);
+			    		posy2 = linhy[i][0].get(j+1);
+			    		x1Vector.add(posx1);
+			    		y1Vector.add(posy1);
+			    		x2Vector.add(posx2);
+			    		y2Vector.add(posy2);
+			    	    x1 =  (int)Math.round(graphBounds.x + xScale*(posx1 - axlim[0]));
+	    			    y1 =  (int)Math.round(graphBounds.y + yScale*(posy1 - axlim[2]));
+	    			    y1 = -y1 + 2*graphBounds.y + graphBounds.height;
+	    			    x2 =  (int)Math.round(graphBounds.x + xScale*(posx2 - axlim[0]));
+	    			    y2 =  (int)Math.round(graphBounds.y + yScale*(posy2 - axlim[2]));
+	    			    y2 = -y2 + 2*graphBounds.y + graphBounds.height;
+	    			    graph.drawLine(g, x1, y1, x2, y2);
+			    	}
+			    }
+			} // for (i = 0; i < theta2.length; i++)
+		} // if (drawTheta)
+		
+		graph.setX1Vector(x1Vector);
+		graph.setY1Vector(y1Vector);
+		graph.setX2Vector(x2Vector);
+		graph.setY2Vector(y2Vector);
+		graph.setAddSchwarzChristoffelLines(true);
+		graph.paintComponent(g);
+		return;
+	}
+	
+	
 	
 	private void DSCDATA(int IPOLY, int M[], int N[], double Z0[][], double Z1[][], double ALFA0[], double ALFA1[]) {
 		// DSCDATA generates data.
