@@ -606,7 +606,7 @@ public class JDialogProstateXReRunWholeProstate extends JDialogBase
 	 			
 	 			ImageReorientation sagittal_orient_mask = new ImageReorientation(keyImageMask, ImageReorientation.SAGITTAL_INDEX);
 	 			sagittal_orient_mask.preformOrientation();
-	 			sagittalList.put(key, sagittal_orient_mask.getResultImage());
+	 			sagittalMaskList.put(key, sagittal_orient_mask.getResultImage());
 	 		
 	 			// coronal orientation
 	 			ImageReorientation coronal_orient = new ImageReorientation(keyImage, ImageReorientation.CORONAL_INDEX);
@@ -615,7 +615,7 @@ public class JDialogProstateXReRunWholeProstate extends JDialogBase
 	 			
 	 			ImageReorientation coronal_orient_mask = new ImageReorientation(keyImageMask, ImageReorientation.CORONAL_INDEX);
 	 			coronal_orient_mask.preformOrientation();
-	 			coronalList.put(key, coronal_orient_mask.getResultImage());
+	 			coronalMaskList.put(key, coronal_orient_mask.getResultImage());
 				
 		        
 //				// sagittal orientation 

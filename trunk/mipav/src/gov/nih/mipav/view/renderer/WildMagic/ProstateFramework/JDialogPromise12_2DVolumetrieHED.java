@@ -625,7 +625,7 @@ public class JDialogPromise12_2DVolumetrieHED extends JDialogBase implements
  			
  			ImageReorientation sagittal_orient_mask = new ImageReorientation(keyImageMask, ImageReorientation.SAGITTAL_INDEX);
  			sagittal_orient_mask.preformOrientation();
- 			sagittalList.add(imageIndex, sagittal_orient_mask.getResultImage());
+ 			sagittalMaskList.add(imageIndex, sagittal_orient_mask.getResultImage());
  		
  			// coronal orientation
  			ImageReorientation coronal_orient = new ImageReorientation(keyImage, ImageReorientation.CORONAL_INDEX);
@@ -634,7 +634,7 @@ public class JDialogPromise12_2DVolumetrieHED extends JDialogBase implements
  			
  			ImageReorientation coronal_orient_mask = new ImageReorientation(keyImageMask, ImageReorientation.CORONAL_INDEX);
  			coronal_orient_mask.preformOrientation();
- 			coronalList.add(imageIndex, coronal_orient_mask.getResultImage());
+ 			coronalMaskList.add(imageIndex, coronal_orient_mask.getResultImage());
 			
 //			// sagittal orientation 
 //			JDialogReorient sag_orient = new JDialogReorient(keyImage);
