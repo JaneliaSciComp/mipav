@@ -12,12 +12,87 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	
 	// EPS returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
     private double EPS;
+    // Filename to receive FORTRAN output code
+    private String FORTFL;
+    // Does the domain have any symmetry?
+    private boolean SYMTY;
+    // If SYMTY is true, are there any reflectional symmetries?
+    private boolean REFLN;
+    // If SYMTY is true, what are the coordinates of the center of symmetry?
+    private double CENSY[] = new double[2];
+    // If SYMTY is true, number of arcs on the fundamental boundary section
+    // If SYMTY is false, number of arcs on the boundary
+    // NARCS <= MNARC-1 = 99
+    private int NARCS;
+    // NUMDER is of length MNARC
+    // NUMDER is initially false
+    private boolean NUMDER[];
+    // ARCTY is of length MNARC
+    // Type of arc, 1 = LINE SEGMENT, 2 = CIRCULAR ARC SEGMENT, 3 = CARTESIAN PARAMETRIC FUNCTION
+    // 4 = POLAR FUNCTION
+    private int ARCTY[];
+    // STAPT is of length MNARC,2
+    // Initial point on line, initial point on circle, or initial point on curve
+    // IF (SYMTY) THEN
+    // WRITE(*,*) 'COORDINATES OF FINAL POINT ON THIS ARC?'
+    //STAPT[NARCS]=CMPLX(FINAL X point, FINAL Y point)
+    //ELSE
+    // STAPT[NARCS]=STAPT[1]
+    //ENDIF
+    private double STAPT[][];
+    // Start with GMCO = 0
+    // For types 2, 3, and 4 increment GMCO and put
+    //GMCO=GMCO+1
+	//PGM[IA-1]=GMCO where IA is the number of the curve from 1 to NARCS
+    // For type 2 circular arc:
+    // RGM[GMCO-1]= X center of circle
+	// GMCO=GMCO+1
+	// RGM[GMCO-1]= Y center of circle
+	//GMCO=GMCO+1
+	//RGM[GMCO-1]=ALPHA*PI where alpha is the signed angle subtended at center in units of PI
+    // ALPHA is positive for CCW and negative for CW.
+    // For type 3 CARTESIAN PARAMETRIC FUNCTION:
+    // RGM[GMCO-1]= initial parameter value
+    // GMCO=GMCO+1
+    // RGM[GMCO-1]= final parameter value
+    // For type 4 polar function:
+    // RGM[GMCO-1]= (initial polar angle in units of PI) *PI
+    // GMCO=GMCO+1
+    // RGM[GMCO-1]= (final polar angle in units of PI) *PI
+    // PGM is of length MNARC
+    private int PGM[];
+    // RGM is of length 3*MNARC
+    private double RGM[];
+    // Start with TXCO = 0
+    // For types 3 and 4
+    // For each IA = 1 to NARCS do J = 1,2
+    //TXCO=TXCO+1
+    //PTX[IA-1+(J-1)*MNARC]=TXCO
+    // DEFN[TXCO-1]= TXT  
+    // where TXT =
+    // for J = 1 and TYPE = 3 JAVA EXPRESSION FOR PARFUN
+    // for J = 2 and TYPE = 3 JAVA EXPRESSION FOR DPARFN
+    // for J = 1 and TYPE = 4 JAVA EXPRESSION FOR RADIUS
+    // for J = 2 and TYPE = 4 JAVA EXPRESSION FOR RADIUS DERIVATIVE
+    // PTX is of length 2*MNARC
+    private int PTX[];
+    
 	public SymmsIntegralMapping() {
 		
 	}
 	
-	public SymmsIntegralMapping(ModelImage destImg, ModelImage srcImg) {
-	    super(destImg, srcImg);	
+	public SymmsIntegralMapping(ModelImage destImg, ModelImage srcImg, String FORTFL, boolean SYMTY,
+			boolean REFLN, double CENSY[], int NARCS, boolean NUMDER[], double STAPT[][],
+			int PGM[]) {
+	    super(destImg, srcImg);
+	    this.FORTFL = FORTFL;
+	    this.SYMTY = SYMTY;
+	    this.REFLN = REFLN;
+	    this.CENSY = CENSY;
+	    this.NARCS = NARCS;
+	    this.NUMDER = NUMDER;
+	    this.STAPT = STAPT;
+	    this.PGM = PGM;
 	}
 	
 	public void runAlgorithm() {
@@ -126,14 +201,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	//
 	//     LOCAL VARIABLES
 	//
-	      int GMCO,IA,I,IER,J,L,NARCS,ORDRG,ORDSG,SW,
+	      int GMCO,IA,I,IER,J,L,ORDRG,ORDSG,SW,
 	          TXCO,TYPE;
 	      double ALPHA,PI,R1MACH,X,Y;
 	      //COMPLEX CENSY,RTUNI,U2
-	      double CENSY[] = new double[2];
 	      double RTUNI[] = new double[2];
 	      double U2[] = new double[2];
-	      boolean CHRIN,REFLN,SYMTY,CHCK;
+	      boolean CHRIN,CHCK;
 	     // CHARACTER TXT*72,TABC*6,FORTFL*72,CH*2,SIG(10)*2,WID(10)*2,REDD*6,
 	     //+FMT1*8,FMT2*9
 	      String TXT;
@@ -150,14 +224,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	      final String TABC = "     +";
 	      final int CHNL = 20;
 	      final int CHIN = 21;
-	      int ARCTY[] = new int[MNARC];
-	      int PGM[] = new int[MNARC];
 	      int PTX[] = new int[2*MNARC];
 	      int NTX[] = new int[2*MNARC];
-	      double RGM[] = new double[3*MNARC];
-	      //COMPLEX STAPT(MNARC)
-	      double STAPT[][] = new double[MNARC][2];
-	      boolean NUMDER[] = new boolean[MNARC];
 	      //CHARACTER DEFN(MNARC*2)*72
 	      String DEFN[] = new String[2*MNARC];
 	      File file;
@@ -169,217 +237,23 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	      WRHEAD(6,0, null);
 	
 	      PI= Math.PI;
-	      file = new File(fileDir + "pgenin");
-	      try {
-	          raFile = new RandomAccessFile(file, "rw");
-	      }
-	      catch (IOException e) {
-	    	  MipavUtil.displayError("IOException " + e + " on raFile = new RandomAccessFile(file, rw)");
-	    	  System.exit(-1);
-	      }
-	      // Necessary so that if this is an overwritten file there isn't any
-	      // junk at the end
-	      try {
-	          raFile.setLength(0);
-	      }
-	      catch (IOException e) {
-	    	  MipavUtil.displayError("IOException " + e + " on raFile.setLength(0)");
-	    	  System.exit(-1);  
-	      }
-	      //OPEN(CHIN,FILE='pgenin')
-	
+	      
 	      //**** DETERMINE NUMBER OF SIGNIFICANT FIGURES REQUIRED TO MATCH MACHINE 
           //**** PRECISION AND SET UP POINTER SW TO SIG AND WID
 	
 	      SW=(int)(-Math.log10(EPS))+2;
-	      /*IF (SW.LE.7) THEN
-	        SW=1
-	      ELSE IF (SW.GE.16) THEN
-	        SW=10
-	      ELSE
-	        SW=SW-6
-	      ENDIF
-	C
-	C**** SET UP THE EDIT DESCRIPTOR AND FORMAT SPECIFICATION FOR FLOATING 
-	C**** POINT OUTPUT
-	C
-	      REDD='E'//WID(SW)//'.'//SIG(SW) 
-	      FMT1='('//REDD//')'
-	      FMT2='(2'//REDD//')'   
-	C
-	      WRITE(*,*) 'FILENAME TO RECEIVE OUTPUT FORTRAN CODE?'
-	      READ(*,'(A)') FORTFL
-	      WRITE(CHIN,'(A)') FORTFL
-	C
-	      WRITE(*,*) 'DOES THE DOMAIN HAVE ANY SYMMETRY?'
-	      SYMTY=CHRIN('Y','y')
-	      IF (SYMTY) THEN
-	        WRITE(CHIN,*) 'Y','      ..SYMMETRY'
-	      ELSE
-	        WRITE(CHIN,*) 'N','      ..SYMMETRY'
-	      ENDIF
-	      IF (SYMTY) THEN
-	        WRITE(*,*) 'ARE THERE ANY REFLECTIONAL SYMMETRIES?'
-	        REFLN=CHRIN('Y','y')
-	        IF (REFLN) THEN
-	          WRITE(CHIN,*) 'Y','      ..REFLECTIONAL SYMMETRY'
-	        ELSE
-	          WRITE(CHIN,*) 'N','      ..REFLECTIONAL SYMMETRY'
-	        ENDIF
-	        WRITE(*,*) 'WHAT ARE THE COORDINATES OF THE CENTRE OF SYMMETRY?'
-	        READ(*,*) X,Y
-	        WRITE(CHIN,FMT2) X,Y
-	        CENSY=CMPLX(X,Y)
-	        WRITE(*,*) 'HOW MANY ARCS ARE THERE ON THE FUNDAMENTAL BOUNDARY
-	     +SECTION?'
-	        READ(*,*) NARCS
-	        WRITE(CHIN,*) NARCS,'      ..NUMBER OF ARCS ON FBS'
-	      ELSE
-	        WRITE(*,*) 'HOW MANY ARCS ARE THERE ON THE BOUNDARY?'
-	        READ(*,*) NARCS
-	        WRITE(CHIN,*) NARCS,'      ..NUMBER OF ARCS ON BOUNDARY'
-	      ENDIF
-	C
-	      IF (NARCS.GT.MNARC-1) THEN
-	        IER=58
-	        GOTO 999 
-	      ENDIF 
-	C
-	      GMCO=0
-	      TXCO=0
-	C
-	      DO 100 IA=1,NARCS
-	        NUMDER(IA)=.FALSE.
-	5       CONTINUE
-	        WRITE(*,'(//A,I2,A)') 'TYPE OF ARC ',IA,'?'
-	        READ(*,*) TYPE
-	        WRITE(CHIN,*) TYPE,'      ..TYPE FOR ARC',IA
-	        IF (TYPE.EQ.1) THEN
-	          ARCTY(IA)=TYPE
-	          WRITE(*,*) 'COORDINATES OF INITIAL POINT ON LINE?'
-	          READ(*,*) X,Y
-	          WRITE(CHIN,FMT2) X,Y
-	          STAPT(IA)=CMPLX(X,Y)
-	        ELSE IF (TYPE.EQ.2) THEN
-	          ARCTY(IA)=TYPE
-	          WRITE(*,*) 'COORDINATES OF INITIAL POINT ON CIRCLE?'
-	          READ(*,*) X,Y
-	          WRITE(CHIN,FMT2) X,Y
-	          STAPT(IA)=CMPLX(X,Y)
-	          WRITE(*,*) 'COORDINATES OF CENTRE OF CIRCLE?'
-	          READ(*,*) X,Y
-	          WRITE(CHIN,FMT2) X,Y
-	          WRITE(*,*)'SIGNED ANGLE SUBTENDED AT CENTRE (IN UNITS OF PI)?'
-	          READ(*,*) ALPHA
-	          WRITE(CHIN,FMT1) ALPHA
-	          GMCO=GMCO+1
-	          PGM(IA)=GMCO
-	          RGM(GMCO)=X
-	          GMCO=GMCO+1
-	          RGM(GMCO)=Y
-	          GMCO=GMCO+1
-	          RGM(GMCO)=ALPHA*PI
-	        ELSE IF (TYPE.EQ.3 .OR. TYPE.EQ.4) THEN
-	          ARCTY(IA)=TYPE
-	          WRITE(*,*) 'COORDINATES OF INITIAL POINT ON CURVE?'
-	          READ(*,*) X,Y
-	          WRITE(CHIN,FMT2) X,Y
-	          STAPT(IA)=CMPLX(X,Y)
-	          IF (TYPE.EQ.3) THEN
-	            WRITE(*,*) 'INITIAL AND FINAL PARAMETER VALUES?'
-	          ELSE
-	            WRITE(*,*)'INITIAL AND FINAL POLAR ANGLES (IN UNITS OF PI)?'
-	          ENDIF
-	          READ(*,*) X,Y
-	          WRITE(CHIN,FMT2) X,Y
-	          GMCO=GMCO+1
-	          PGM(IA)=GMCO
-	          IF (TYPE.EQ.4) THEN
-	            RGM(GMCO)=X*PI
-	            GMCO=GMCO+1
-	            RGM(GMCO)=Y*PI
-	          ELSE
-	            RGM(GMCO)=X
-	            GMCO=GMCO+1
-	            RGM(GMCO)=Y
-	          ENDIF
-	          DO 50 J=1,2
-	            IF (J.EQ.1 .AND. TYPE.EQ.3) THEN
-	              WRITE(*,*) 'FORTRAN EXPRESSION FOR PARFUN?'
-	            ELSE IF (J.EQ.2 .AND. TYPE.EQ.3) THEN          
-	              WRITE(*,*) 'FORTRAN EXPRESSION FOR DPARFN?'
-	            ELSE IF (J.EQ.1 .AND. TYPE.EQ.4) THEN
-	              WRITE(*,*) 'FORTRAN EXPRESSION FOR RADIUS?'
-	            ELSE
-	              WRITE(*,*) 'FORTRAN EXPRESSION FOR RADIUS DERIVATIVE?'
-	            ENDIF
-	C
-	            TXCO=TXCO+1
-	            PTX(IA+(J-1)*MNARC)=TXCO
-	            I=1
-	C
-	10          CONTINUE
-	            READ(*,'(A72)') TXT
-	            WRITE(CHIN,'(A72)') TXT
-	            L=INDEX(TXT,'//')
-	            IF (L.EQ.0) THEN
-	              IF (TXT(67:72) .NE. '      ') THEN
-	                WRITE(*,*) 'THIS LINE IS MORE THAN 66CH LONG.'
-	                WRITE(*,*) 'PLEASE SPLIT AND ENTER AS SEPERATE LINES.'
-	                GOTO 10
-	              ENDIF
-	              DEFN(TXCO)=TABC//TXT
-	              I=I+1
-	              TXCO=TXCO+1
-	              GOTO 10
-	            ELSE
-	              IF (L.GT.67) THEN
-	                WRITE(*,*) 'THIS LINE IS MORE THAN 66CH LONG.'
-	                WRITE(*,*) 'PLEASE SPLIT AND ENTER AS SEPERATE LINES.'
-	                GOTO 10
-	              ENDIF
-	              NTX(IA+(J-1)*MNARC)=I
-	              IF (L.EQ.1) THEN
-	                DEFN(TXCO)=TABC
-	                NUMDER(IA)=.TRUE.
-	              ELSE 
-	                DEFN(TXCO)=TABC//TXT(1:L-1)
-	              ENDIF
-	            ENDIF
-	            IF (J.EQ.1 .AND. TYPE.EQ.4) THEN
-	              WRITE(*,*) '(... = ZRAD)'
-	            ENDIF
-	50        CONTINUE
-	        ELSE
-	          WRITE(*,*) 'TYPE MUST BE EITHER 1,2,3 OR 4'
-	          GOTO 5
-	        ENDIF
-	100   CONTINUE  
-	C
-	      IF (SYMTY) THEN
-	        WRITE(*,*) 'COORDINATES OF FINAL POINT ON THIS ARC?'
-	        READ(*,*) X,Y
-	        WRITE(CHIN,FMT2) X,Y
-	        STAPT(NARCS+1)=CMPLX(X,Y)
-	      ELSE
-	        STAPT(NARCS+1)=STAPT(1)
-	      ENDIF
-	C
-	C**** CHECK WITH THE USER THAT THE INPUT DATA IS OK
-	C
-	      IER=0
-	      WRITE(*,*)
-	      WRITE(*,*) 'END OF INPUT PHASE; CONTINUE WITH PROCESSING?'
-	      CHCK=CHRIN('Y','y')
-	      IF (.NOT.CHCK) THEN
-	        WRITE(CHIN,*) 'N','      ..CONTINUE PROCESSING'
-	        GOTO 999
-	      ELSE
-	        WRITE(CHIN,*) 'Y','      ..CONTINUE PROCESSING'
-	      ENDIF
-	      CLOSE(CHIN) 
-	C
-	C**** WRITE THE SOURCE CODE FOR PARFUN
+	      if (SW <= 7) {
+	        SW=1;
+	      }
+	      else if (SW >= 16) {
+	        SW=10;
+	      }
+	      else {
+	        SW=SW-6;
+	      }
+	
+	      
+	/*C**** WRITE THE SOURCE CODE FOR PARFUN
 	C
 	      OPEN(CHNL,FILE=FORTFL)
 	      CALL HEADER('PARFUN',REDD,CHNL)
