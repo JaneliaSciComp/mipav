@@ -83,7 +83,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	
 	public SymmsIntegralMapping(ModelImage destImg, ModelImage srcImg, String FORTFL, boolean SYMTY,
 			boolean REFLN, double CENSY[], int NARCS, boolean NUMDER[], double STAPT[][],
-			int PGM[]) {
+			int PGM[], double RGM[], int PTX[]) {
 	    super(destImg, srcImg);
 	    this.FORTFL = FORTFL;
 	    this.SYMTY = SYMTY;
@@ -93,6 +93,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	    this.NUMDER = NUMDER;
 	    this.STAPT = STAPT;
 	    this.PGM = PGM;
+	    this.RGM = RGM;
+	    this.PTX = PTX;
 	}
 	
 	public void runAlgorithm() {
@@ -201,8 +203,11 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	//
 	//     LOCAL VARIABLES
 	//
-	      int GMCO,IA,I,IER,J,L,ORDRG,ORDSG,SW,
+	      int GMCO,IA,I,J,L,SW,
 	          TXCO,TYPE;
+	      int IER[] = new int[1];
+	      int ORDRG[] = new int[1];
+	      int ORDSG[] = new int[1];
 	      double ALPHA,PI,R1MACH,X,Y;
 	      //COMPLEX CENSY,RTUNI,U2
 	      double RTUNI[] = new double[2];
@@ -224,7 +229,6 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	      final String TABC = "     +";
 	      final int CHNL = 20;
 	      final int CHIN = 21;
-	      int PTX[] = new int[2*MNARC];
 	      int NTX[] = new int[2*MNARC];
 	      //CHARACTER DEFN(MNARC*2)*72
 	      String DEFN[] = new String[2*MNARC];
@@ -251,25 +255,50 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	      else {
 	        SW=SW-6;
 	      }
-	
 	      
-	/*C**** WRITE THE SOURCE CODE FOR PARFUN
-	C
-	      OPEN(CHNL,FILE=FORTFL)
-	      CALL HEADER('PARFUN',REDD,CHNL)
-	      IF (SYMTY) THEN
-	        CALL SYINF1(ORDRG,ORDSG,RTUNI,U2,REFLN,CENSY,STAPT(1),
-	     +              STAPT(NARCS+1),IER)
-	        IF (IER.GT.0) GOTO 999
-	        WRITE(*,'(/A,I3)') 'N O T E : THE ORDER OF THE SYMMETRY GROUP IS
-	     +',ORDSG
-	        IF (REFLN) THEN
-	           WRITE(*,*) '          ISYGP = ',-ORDSG
-	        ELSE
-	           WRITE(*,*) '          ISYGP = ',ORDSG
-	        ENDIF
-	        CALL WRSYM1(NARCS,ORDRG,ORDSG,RTUNI,U2,CENSY,REFLN,.TRUE.,REDD,
-	     +              CHNL)
+	  	  //**** SET UP THE EDIT DESCRIPTOR AND FORMAT SPECIFICATION FOR FLOATING 
+	  	  //**** POINT OUTPUT
+	  	
+	  	  REDD="E"+WID[SW-1]+"."+SIG[SW-1]; 
+	  	  FMT1="("+REDD+")";
+	  	  FMT2="(2"+REDD+")"; 
+	      
+	      //**** WRITE THE SOURCE CODE FOR PARFUN
+	      file = new File(fileDir + "FORTFL");
+	      try {
+	          raFile = new RandomAccessFile(file, "rw");
+	      }
+	      catch (IOException e) {
+	    	  MipavUtil.displayError("IOException " + e + " on raFile = new RandomAccessFile(file, rw)");
+	    	  System.exit(-1);
+	      }
+	      // Necessary so that if this is an overwritten file there isn't any
+	      // junk at the end
+	      try {
+	          raFile.setLength(0);
+	      }
+	      catch (IOException e) {
+	    	  MipavUtil.displayError("IOException " + e + " on raFile.setLength(0)");
+	    	  System.exit(-1);  
+	      }
+
+	      //OPEN(CHNL,FILE=FORTFL)
+	      HEADER("PARFUN",REDD,raFile);
+	      /*if (SYMTY) {
+	        SYINF1(ORDRG,ORDSG,RTUNI,U2,REFLN,CENSY,STAPT[0],
+	                   STAPT[NARCS],IER);
+	        if (IER[0] > 0) {
+	        	WRTAIL(6,0,IER[0],null);
+	        	return;
+	        }
+	        System.out.println("\nN O T E : THE ORDER OF THE SYMMETRY GROUP IS " + ORDSG);
+	        if (REFLN) {
+	            System.out.println("          ISYGP = " + (-ORDSG[0]));	
+	        }
+	        else {
+	        	System.out.println("          ISYGP = " + (ORDSG[0]));		
+	        }
+	        WRSYM1(NARCS,ORDRG[0],ORDSG[0],RTUNI,U2,CENSY,REFLN,true,REDD,CHNL,raFile);
 	        IF (REFLN) THEN
 	          CH='TS'
 	        ELSE
@@ -278,10 +307,11 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	        CALL WRFUN1(NARCS,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,CHNL,
 	     +             'IB',CH,'ZETA  ',REDD)
 	        CALL WRSYM2(NARCS,ORDRG,CENSY,REFLN,CHNL)
-	      ELSE
+	      }
+	      else {
 	        CALL WRFUN1(NARCS,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,CHNL,
 	     +             'IA','TT','PARFUN',REDD)
-	      ENDIF
+	      }
 	C
 	      WRITE(CHNL,'(A1)') 'C'
 	      WRITE(CHNL,'(A9)') '      END'
@@ -314,6 +344,100 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	      CALL WRTAIL(6,0,IER)
 	C*/
 	} // public void PARGEN
+    private void HEADER(String TXT, String REDD, RandomAccessFile raFile) {
+
+    String TAB6="      ";
+
+    String LINE=TAB6+"COMPLEX FUNCTION "+TXT+"(IA,TT)";
+    try {
+    raFile.writeBytes(LINE);
+
+    LINE=TAB6+"IMPLICIT REAL(A-H,O-S),INTEGER(I-N),COMPLEX(T-Z)";
+    raFile.writeBytes(LINE);
+
+    raFile.writeBytes("      PARAMETER (PI="+Math.PI+",UI=(0.0,1.0))");
+    raFile.writeBytes("C");
+    }
+    catch (IOException e) {
+    	MipavUtil.displayError("IOException " + e + " in HEADER");
+    	System.exit(-1);
+    }
+
+    } // private void HEADER
+    
+    private void SYINF1(int ORDRG[],int ORDSG[],double RTUNI[], double U2[],boolean REFLN,
+    		double Z0[], double Z1[], double Z2[], int IER[]) {
+    //COMPLEX RTUNI,U2,Z0,Z1,Z2
+
+//**** GIVEN Z0,THE CENTRE OF SYMMETRY, Z1 AND Z2, THE INITIAL AND FINAL
+//**** POINTS ON THE FUNDAMENTAL BOUNDARY SECTION, REFLN, WHICH IS TRUE
+//**** IF THE SYMMETRY GROUP HAS IMPROPER  ROTATIONAL ELEMENTS
+//**** (I.E. REFLECTIONAL SYMMETRIES), THIS ROUTINE COMPUTES 
+//**** ORDRG - THE ORDER OF THE SUBGROUP OF PROPER ROTATIONS (THIS IS THE
+//****         ORDER OF THE SYMMETRY GROUP IF REFLN=.FALSE.)
+//**** ORDSG - THE ORDER OF THE FULL SYMMETRY GROUP,  EITHER ORDRG OR 
+//****         2*ORDRG DEPENDING ON WHETHER REFLN IS .FALSE. OR .TRUE.
+//**** RTUNI - THE ROOT OF UNITY FROM WHICH THE PROPER ROTATIONAL SUBROUP
+//****         IS GENERATED
+//**** U2    - THE ADDITIONAL IN-PLANE ROTATION WHICH, WHEN COMBINED WITH
+//****         CONJUGATION, DEFINES THE IMPROPER ROTATION FOR THE CASE
+//****         REFLN=.TRUE.
+
+//     LOCAL VARIABLES
+
+    double ALPHA, PI,SQRTEPS;
+    //COMPLEX CT,U
+    double CT[] = new double[2];
+    double U[] = new double[2];
+    double cr[] = new double[1];
+    double ci[] = new double[1];
+
+    PI=Math.PI;
+    SQRTEPS=Math.sqrt(EPS);
+    CT[0]=Z2[0]-Z0[0];
+    CT[1] = Z2[1] - Z0[1];
+    double ABSCT = zabs(CT[0], CT[1]);
+    if (ABSCT < SQRTEPS) {
+      IER[0]=56;
+      return;
+    }
+    U[0]=CT[0]/ABSCT;
+    U[1]= CT[1]/ABSCT;
+    zmlt(U[0],U[1],U[0],U[1], cr, ci);
+    U2[0] = cr[0];
+    U2[1] = ci[0];
+
+    zmlt(Z1[0]-Z0[0],Z1[1]-Z0[1],U[0],-U[1],cr,ci);
+    CT[0] = cr[0];
+    CT[1] = ci[0];
+    ABSCT = zabs(CT[0],CT[1]);
+    if (ABSCT < SQRTEPS) {
+      IER[0]=57;
+      return;
+    }
+    ALPHA=Math.atan2(CT[1],CT[0]);
+    ALPHA=Math.abs(ALPHA);
+
+    if (REFLN) {
+      ORDRG[0]=(int)Math.round(PI/ALPHA);
+      ORDSG[0]=2*ORDRG[0];
+    }
+    else {
+      ORDRG[0]=2*(int)Math.round(PI/ALPHA);
+      ORDSG[0]=ORDRG[0];
+    }
+
+    ALPHA=2.0*PI/(double)(ORDRG[0]);
+    RTUNI[0] = Math.cos(ALPHA);
+    RTUNI[1] = Math.sin(ALPHA);
+
+    // NORMAL EXIT
+
+    IER[0]=0;
+    return;
+    } // private void SYINF1
+
+
 	
       //COMPLEX FUNCTION PARFUN(I,T)
       //INTEGER I
@@ -362,7 +486,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	  String TXT = CPHEAD + MOD[I-1];
             
           if (CHNL == 0 || CHNL == 6) {
-        	  System.out.println("\n\n      "+DOTS+"\n      "+TXT+"\n      "+DOTS+"\n");
+        	  System.out.println("\n\n      "+DOTS+"\n      "+TXT+"\n      "+DOTS);
           }
           else {
         	  try {
@@ -375,5 +499,443 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
           }
           return;
       } // private void WRHEAD
+      
+      private void WRTAIL(int I, int CHNL, int IER, RandomAccessFile raFile) {
+     
+//
+//**** WRITE A CLOSING MESSAGE FOR THE MAIN CONFPACK MODULES JAPHYC (I=1)
+//**** GQPHYC (I=2), JACANP (I=3), GQCANP (I=4), CNDPLT (I=5), THE PARA-
+//**** METRIC FUNCTION GENERATOR PARGEN (I=6), THE PARAMETRIC FUNCTION 
+//**** TESTER TSTPLT (I=7) AND THE LEVEL CURVE ROUTINE LEVCUR (I=8).  IF 
+//**** CHNL=0 THEN WRITE ON THE STANDARD OUTPUT CHANNEL, OTHERWISE WRITE 
+//**** ON THE CHANNEL SPECIFIED BY CHNL.  THE TEXT OF THE MESSAGE IS 
+//**** DETERMINED BY THE ERROR NUMBER IER VIA THE SUBROUTINE IERTXT.
+
+//     LOCAL VARIABLES
+     
+      String MOD[] = new String[]{"J A P H Y C :",	  
+                      "G Q P H Y C :","J A C A N P :",
+                "G Q C A N P :","C N D P L T :","P A R G E N :",
+                "T S T P L T :","L E V C U R :"};
+     String GOOD = "  NORMAL EXIT";
+     String BAD= "  ABNORMAL EXIT";
+     String LINE = "__________________________________________________________________&";
+
+     String TXT, TXT2;
+     if (IER == 0) {
+        TXT=MOD[I-1]+GOOD;
+     }
+     else{
+        TXT=MOD[I-1]+BAD;
+     }
+     TXT2=IERTXT(IER);
+
+      if ((CHNL == 0) || (CHNL == 6)) {
+    	System.out.println("\n\n      "+TXT);
+    	System.out.println("      "+TXT2);
+        System.out.println(LINE);
+     }
+     else {
+    	try {
+            raFile.writeBytes("\n\n      "+TXT+"\n");
+            raFile.writeBytes("      "+TXT2+"\n");
+            raFile.writeBytes(LINE+"\n");
+    	}
+    	catch(IOException e) {
+    		MipavUtil.displayError("IOException " + e + " in WRTAIL");
+    		System.exit(-1);
+    	}
+     }
+     return;
+      }
+      
+      private String IERTXT(int IER) {
+    	  
+//**** SUPPLY ERROR MESSAGE TEXT FOR ERROR NUMBER IER
+      String result = null;
+      if (IER == 0) {
+          result = " ";
+      }
+      else if (IER == 1) {
+          result="PARAMETER IBNDS[0] IS TOO SMALL AT START OF JAPHYC";
+      }
+      else if (IER == 2) {
+          result = "PARAMETER IBNDS[1] IS TOO SMALL AT START OF JAPHYC";
+      }
+      else if (IER == 3) {
+          result = "NQPTS < 1 AT START OF JAPHYC";
+      }
+      else if (IER == 4) {
+          result="FAILURE TO CONVERGE IN EIGSYS; CAN''T SET UP BASIC QUADRATURE RULES";
+      }
+      else if (IER == 5) {
+          result="PARAMETER MNQPT IN IGNLVL MUST BE INCREASED TO AT LEAST NQPTS";
+      }
+      else if (IER == 6) {
+          result="FAILURE TO CONVERGE IN IMTQLH; CAN''T SET UP IGNORE LEVELS";
+      }
+      else if (IER == 7) {
+          result="FAILURE TO CONVERGE IN IMTQLH; CAN''T SET UP COLLOCATION POINTS";
+      }
+      else if (IER == 8) {
+          result="ARGUMENT MNEQN IS TOO SMALL AT START OF JAPHYC";
+      }
+      else if (IER == 9) {
+          result="PARAMETER IBNDS[3] IS TOO SMALL AT START OF JAPHYC";
+      }
+      else if (IER == 10) {
+          result="PARAMETER NMAX IN SUBIN7 MUST BE INCREASED TO AT LEAST 2*NQPTS";
+      }
+      else if (IER == 11) {
+          result="PARAMETER IBNDS[2] IS TOO SMALL AT START OF JAPHYC";
+      }
+      else if (IER == 12) {
+          result="PARAMETER NC IN DEJAC7 AND DELEG7 MUST BE INCREASED";
+      }
+      else if (IER == 13) {
+          result="PARAMETER NR IN DEJAC7 AND DELEG7 MUST BE >= (NQPTS -1)";
+      }
+      else if (IER == 14) {
+          result="A CORNER ANGLE IS TOO SMALL; MAY CAUSE OVERFLOW IN GAMMA FUNCTION";
+      }
+      else if (IER == 15) {
+          result="SINGULAR COLLOCATION MATRIX";
+      }
+      else if (IER == 16) {
+          result="COLLOCATION MATRIX IS EFFECTIVELY SINGULAR";
+      }
+      else if (IER == 17) {
+          result="NUMBER OF SUBARCS EXCEEDS IBNDS[0] DURING REFINEMENT";
+      }
+      else if (IER == 18) {
+          result="NUMBER OF EQUATIONS EXCEEDS MNEQN DURING REFINEMENT";
+      }
+      else if (IER == 19) {
+          result="TOTAL NUMBER OF QUADRATURE PTS EXCEEDS IBNDS[3] DURING REFINEMENT";
+      }
+      else if (IER == 20) {
+          result="NUMBER OF QUADRATURE PANELS EXCEEDS IBNDS[2] DURING REFINEMENT";
+      }
+      else if (IER == 21) {
+          result="FAILURE TO CONVERGE IN IMTQLH; CAN''T SET UP TEST POINTS";
+      }
+      else if (IER == 22) {
+          result="ARGUMENT MQUPH OF GQPHYC MUST BE INCREASED";
+      }
+      else if (IER == 23) {
+          result="PARAMETER MNCOF IN POPQF1 MUST BE >= NQPTS";
+      }
+      else if (IER == 24) {
+          result="NUMBER OF QUADRATURE PANELS EXCEEDS MQIN1 IN GQPHYC";
+      }
+      else if (IER == 25) {
+          result="PARAMETER MNXI IN DEPPJ8 AND DEPPL8 MUST BE INCREASED";
+      }
+      else if (IER == 26) {
+          result="PARAMETER MAXNZ IN DEPPJ9 AND DEPPL9 MUST BE INCREASED";
+      }
+      else if (IER == 27) {
+          result="PARAMETER MXNQD IN PHTCA1 MUST BE INCREASED";
+      }
+      else if (IER == 28) {
+          result="PARAMETER MXCOF IN PHTCA1 MUST BE INCREASED";
+      }
+      else if (IER == 29) {
+          result="PARAMETER MQIN1 IN PHTCA1 MUST BE INCREASED";
+      }
+      else if (IER == 30) {
+          result="PARAMETER MNDG IN JCFIM5 MUST BE INCREASED";
+      }
+      else if (IER == 31) {
+          result="PARAMETER MNQD IN JCFIM5 MUST BE INCREASED";
+      }
+      else if (IER == 32) {
+          result="ARGUMENT IBNDS[1] SUPPLIED TO JACANP MUST BE INCREASED";
+      }
+      else if (IER == 33) {
+          result="ARGUMENT IBNDS[0] SUPPLIED TO JACANP MUST BE INCREASED";
+      }
+      else if (IER == 34) {
+          result="FN HAS SAME SIGN AT INTERVAL ENDS IN BISNEW; CAN''T SOLVE BCF EQN";
+      }
+      else if (IER == 35) {
+          result="DERIVATIVE OF BCF IS ZERO IN BISNEW; CAN''T SOLVE BCF EQN";
+      }
+      else if (IER == 36) {
+          result="ELEMENT OF ARGUMENT ARRAY SVAL IN RHOFN IS +-1; CAN''T CONTINUE";
+      }
+      else if (IER == 37) {
+          result="PARAMETER MXNQD IN CINRAD MUST BE INCREASED";
+      }
+      else if (IER == 38) {
+          result="PARAMETER MXCOF IN CINRAD MUST BE INCREASED";
+      }
+      else if (IER == 39) {
+          result="CENTRE POINT IS PATHOLOGICALLY CLOSE TO BOUNDARY;CAN''T CONTINUE";
+      }
+      else if (IER == 40) {
+          result="PARAMETER MQIN1 IN CINRAD MUST BE INCREASED";
+      }
+      else if (IER == 41) {
+          result="ARGUMENT MQUCA OF GQCANP MUST BE INCREASED";
+      }
+      else if (IER == 42) {
+          result="PARAMETER MNCOF IN POPQG1 MUST BE >= NQPTS";
+      }
+      else if (IER == 43) {
+          result="NUMBER OF QUADRATURE PANELS EXCEEDS MQIN1 IN GQCANP";
+      }
+      else if (IER == 44) {
+          result="PARAMETER MNCOF IN BMPHC1 MUST BE >= NQPTS";
+      }
+      else if (IER == 45) {
+          result="ARGUMENTS IARC, PHYPT OF BMPHYC DON''T DEFINE A BOUNDARY POINT";
+      }
+      else if (IER == 46) {
+          result="PARAMETER MNCOF IN BMCAP1 MUST BE >= NQPTS";
+      }
+      else if (IER == 47) {
+          result="PARAMETER MXNQD IN CATPH4 MUST BE INCREASED";
+      }
+      else if (IER == 48) {
+          result="PARAMETER MNCOF IN CATPH4 MUST BE >= NQPTS";
+      }
+      else if (IER == 49) {
+          result="PARAMETER MQIN1 IN CATPH4 MUST BE INCREASED";
+      }
+      else if (IER == 50) {
+          result="PARAMETER MXCOF IN DIAGN3 MUST BE >= NQPTS";
+      }
+      else if (IER == 51) {
+          result="NON-ANALYTIC ARC DETECTED IN DIAGN3";
+      }
+      else if (IER == 52) {
+          result="PARAMETER MAXSA IN CNDPLT MUST BE INCREASED";
+      }
+      else if (IER == 53) {
+          result="OVERFLOW EXPECTED IN IGNLVL; A CORNER ANGLE IS TOO SMALL";
+      }
+      else if (IER == 54) {
+          result="PARAMETER MXCO IN AXION1 MUST BE INCREASED";
+      }
+      else if (IER == 55) {
+          result="NARCS ISN''T AN INTEGER MULTIPLE OF THE ORDER OF THE SYMMETRY GROUP";
+      }
+      else if (IER == 56) {
+          result="CENTRE OF SYMMETRY IS PATHOLOGICALLY CLOSE TO LAST POINT ON FBS";
+      }
+      else if (IER == 57) {
+          result="CENTRE OF SYMMETRY IS PATHOLOGICALLY CLOSE TO FIRST POINT ON FBS";
+      }
+      else if (IER == 58) {
+          result="NUMBER OF ARCS IS TOO BIG; INCREASE PARAMETER MNARC IN PARGEN";
+      }
+      else if (IER == 59) {
+          result="NUMBER OF ARCS IS TOO BIG; INCREASE PARAMETER MNARC IN TSTPLT";
+      }
+      else if (IER == 60) {
+          result="NON-ANALYTIC ARC (DPARFN=(0.,0.)) DETECTED IN TSTPLT";
+      }
+      else {
+          result="UNRECOGNIZED ERROR NUMBER IN IERTXT ROUTINE !!";
+      }
+      return result;
+}
+      
+      private void WRSYM1(int NARCS,int ORDRG,int ORDSG,double[] RTUNI,double[] U2,double[] CENSY,boolean REFLN,boolean PARFUN,
+    		     String REDD,int CHNL, RandomAccessFile raFile) {
+    		      //COMPLEX RTUNI,U2,CENSY
+    		
+    		//**** TO WRITE THE DIMENSION AND PARAMETER STATEMENTS AND THE CODE TO
+    		//**** TO REDUCE A GIVEN ARC NUMBER TO ITS SYMMETRIC COUNTERPART ON THE
+    		//**** FUNDAMENTAL BOUNDARY SECTION.
+    		
+    		//.......................................................................
+    		//     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    		//     LAST UPDATE: 4 AUG 1990
+    		//.......................................................................C
+    		//     LOCAL VARIABLES
+    		
+    		int I;
+    		double R,A;
+    		//COMPLEX ZT
+    		double ZT[] = new double[2];
+    		boolean NEEDC;
+    		String FMT;
+    		double cr[] = new double[1];
+    		double ci[] = new double[1];
+    		
+    		FMT="(A12,"+REDD+",A1,"+REDD+",A2)";
+    		
+    		/*if (PARFUN) {
+    			NEEDC = ((CENSY[0] != 0.0) && (CENSY[1] != 0.0));
+    		    if (NEEDC || REFLN) {
+    		    	raFile.writeBytes("      PARAMETER (\n");
+    		        if (NEEDC && REFLN) {
+    		            R=U2[0];
+    		            A=U2[1];
+    		            raFile.writeBytes("U2[0] = " + R + ";\n");
+    		            raFile.writeBytes("U2[1] = " + A + ";\n");
+    		            R=CENSY[0];
+    		            A=CENSY[1];
+    		            raFile.writeBytes("ZCEN[0] = " + R +";\n");
+    		            raFile.writeBytes("ZCEN[1] = " + A + ";)\n");
+    		        } // if (NEEDC && REFLN)
+    		        else if (NEEDC && (!REFLN)) {
+    		            R=CENSY[0];
+    		            A=CENSY[1];
+    		            raFile.writeBytes("ZCEN[0] = " + R + ";\n");
+    		            raFile.writeBytes("ZCEN[1] = " + A + ";)\n");
+    		        } // else if (NEEDC && (!REFLN)) 
+    		        else {
+    		            R=U2[0];
+    		            A=U2[1];
+    		            raFile.writeBytes("U2[0] = " + R + ";\n");
+    		            raFile.writeBytes("U2[1] = " + A + ";)\n");
+    		        } // else
+    		        raFile.writeBytes("//\n");
+    		    } // if (NEEDC || REFLN)
+    		}
+    		else if (REFLN) {
+    		    R=U2[0];
+    		    A=U2[1];
+    		    raFile.writeBytes("      PARAMETER (\n");
+    		    raFile.writeBytes("U2[0] = " + R + ";\n");
+    		    raFile.writeBytes("U2[1] = " + A + ";)\n");
+    		    raFile.writeBytes("//\n");
+    		}
+    		
+    		FMT="(A7,"+REDD+",A1,"+REDD+",A2)";
+    		
+    	    if (ORDRG >= 2) {
+    	    	raFile.writeBytes("double WW[] = new double["+(ORDRG-1)+"];");
+    	    	ZT[0] = 1.0;
+    	    	ZT[1] = 0.0;
+    		    for (I=0; I < ORDRG-2; I++) {
+    		    	zmlt(ZT[0],ZT[1],RTUNI[0],RTUNI[1],cr,ci);
+    		    	ZT[0] = cr[0];
+    		    	ZT[1] = ci[0];
+    		    	raFile.writeBytes("WW["+I+"][0] = " + ZT[0] + "\n");
+    		    	raFile.writeBytes("WW["+I+"][1] = " + ZT[1] + "\n");
+    		    }
+    		    zmlt(ZT[0],ZT[1],RTUNI[0],RTUNI[1],cr,ci);
+		    	ZT[0] = cr[0];
+		    	ZT[1] = ci[0];
+		    	raFile.writeBytes("WW["+I+"][0] = " + ZT[0] + "\n");
+		    	raFile.writeBytes("WW["+I+"][1] = " + ZT[1] + ")\n");
+		    	raFile.writeBytes("//\n");
+    	    } // if (ORDRG >= 2)
+    	    
+    		if (ORDRG > 19) {
+    		    System.out.println("\n");
+    		    System.out.println("             ****WARNING****");
+    		    System.out.println("MORE THAN 19 CONTINUTATION LINES HAVE BEEN WRITTEN");
+    		}
+    		
+    		if (REFLN) {
+    		          IF (ORDRG.GT.1) THEN
+    		              IF (NARCS.GT.1) THEN
+    		                  I=2*NARCS
+    		                  WRITE(CHNL,'(A16,I3,A1)') '      IB=MOD(IA,',I,')'
+    		                  WRITE(CHNL,'(A22,I3)') '      IF (IB.EQ.0) IB=',I
+    		                  I=I+1
+    		                  WRITE(CHNL,'(A16,I3,A6)') '      IF (IB.GT.',NARCS,')
+    		     +THEN'
+    		                  WRITE(CHNL,'(A13,I3,A3)') '          IB=',I,'-IB'
+    		                  WRITE(CHNL,'(A23)') '          TS=-CONJG(TT)'
+    		                  WRITE(CHNL,'(A10)') '      ELSE'
+    		                  WRITE(CHNL,'(A15)') '          TS=TT'
+    		                  WRITE(CHNL,'(A11)') '      ENDIF'
+    		              ELSE
+    		                  WRITE(CHNL,'(A30)') '      IF (MOD(IA,2).EQ.0) THEN'
+    		                  WRITE(CHNL,'(A23)') '          TS=-CONJG(TT)'
+    		                  WRITE(CHNL,'(A10)') '      ELSE'
+    		                  WRITE(CHNL,'(A15)') '          TS=TT'
+    		                  WRITE(CHNL,'(A11)') '      ENDIF'
+    		              ENDIF
+    		          ELSE
+    		              IF (NARCS.GT.1) THEN
+    		                  I=2*NARCS+1
+    		                  WRITE(CHNL,'(A16,I3,A6)') '      IF (IA.GT.',NARCS,') 
+    		     +THEN'
+    		                  WRITE(CHNL,'(A13,I3,A3)') '          IB=',I,'-IA'
+    		                  WRITE(CHNL,'(A23)') '          TS=-CONJG(TT)'
+    		                  WRITE(CHNL,'(A10)') '      ELSE'
+    		                  WRITE(CHNL,'(A15)') '          IB=IA'
+    		                  WRITE(CHNL,'(A15)') '          TS=TT'
+    		                  WRITE(CHNL,'(A11)') '      ENDIF'
+    		              ELSE
+    		                  WRITE(CHNL,'(A23)') '      IF (IA.EQ.2) THEN'
+    		                  WRITE(CHNL,'(A23)') '          TS=-CONJG(TT)'
+    		                  WRITE(CHNL,'(A10)') '      ELSE'
+    		                  WRITE(CHNL,'(A15)') '          TS=TT'
+    		                  WRITE(CHNL,'(A11)') '      ENDIF'
+    		              ENDIF
+    		          ENDIF
+    		} // if (REFLN)
+    		else if (NARCS > 1) {
+    		          WRITE(CHNL,'(A16,I3,A1)') '      IB=MOD(IA,',NARCS,')'
+    		          WRITE(CHNL,'(A22,I3)') '      IF (IB.EQ.0) IB=',NARCS
+    		}
+    		C
+    		      WRITE(CHNL,'(A1)') 'C'
+    		C*/
+      }
+
+
+
+      
+      /**
+       * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
+       * 
+       * @param zr double
+       * @param zi double
+       * 
+       * @return double
+       */
+      public double zabs(final double zr, final double zi) {
+          double u, v, q, s;
+          u = Math.abs(zr);
+          v = Math.abs(zi);
+          s = u + v;
+
+          // s * 1.0 makes an unnormalized underflow on CDC machines into a true
+          // floating zero
+          s = s * 1.0;
+
+          if (s == 0.0) {
+              return 0.0;
+          } else if (u > v) {
+              q = v / u;
+
+              return (u * Math.sqrt(1.0 + (q * q)));
+          } else {
+              q = u / v;
+
+              return (v * Math.sqrt(1.0 + (q * q)));
+          }
+      }
+      
+      /**
+       * complex multiply c = a * b.
+       * 
+       * @param ar double
+       * @param ai double
+       * @param br double
+       * @param bi double
+       * @param cr double[]
+       * @param ci double[]
+       */
+      public void zmlt(final double ar, final double ai, final double br, final double bi, final double[] cr,
+              final double[] ci) {
+          double ca, cb;
+
+          ca = (ar * br) - (ai * bi);
+          cb = (ar * bi) + (ai * br);
+          cr[0] = ca;
+          ci[0] = cb;
+
+          return;
+      }
 
 }
