@@ -299,13 +299,14 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	        	System.out.println("          ISYGP = " + (ORDSG[0]));		
 	        }
 	        WRSYM1(NARCS,ORDRG[0],ORDSG[0],RTUNI,U2,CENSY,REFLN,true,REDD,CHNL,raFile);
-	        IF (REFLN) THEN
-	          CH='TS'
-	        ELSE
-	          CH='TT'
-	        ENDIF
-	        CALL WRFUN1(NARCS,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,CHNL,
-	     +             'IB',CH,'ZETA  ',REDD)
+	        if (REFLN) {
+	          CH = "TS";
+	        }
+	        else {
+	          CH = "TT";
+	        }
+	        WRFUN1(NARCS,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,CHNL,
+	                 "IB",CH,"ZETA  ",REDD, raFile);
 	        CALL WRSYM2(NARCS,ORDRG,CENSY,REFLN,CHNL)
 	      }
 	      else {
@@ -767,122 +768,283 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     		
     		FMT="(A12,"+REDD+",A1,"+REDD+",A2)";
     		
-    		/*if (PARFUN) {
-    			NEEDC = ((CENSY[0] != 0.0) && (CENSY[1] != 0.0));
-    		    if (NEEDC || REFLN) {
-    		    	raFile.writeBytes("      PARAMETER (\n");
-    		        if (NEEDC && REFLN) {
-    		            R=U2[0];
-    		            A=U2[1];
-    		            raFile.writeBytes("U2[0] = " + R + ";\n");
-    		            raFile.writeBytes("U2[1] = " + A + ";\n");
-    		            R=CENSY[0];
-    		            A=CENSY[1];
-    		            raFile.writeBytes("ZCEN[0] = " + R +";\n");
-    		            raFile.writeBytes("ZCEN[1] = " + A + ";)\n");
-    		        } // if (NEEDC && REFLN)
-    		        else if (NEEDC && (!REFLN)) {
-    		            R=CENSY[0];
-    		            A=CENSY[1];
-    		            raFile.writeBytes("ZCEN[0] = " + R + ";\n");
-    		            raFile.writeBytes("ZCEN[1] = " + A + ";)\n");
-    		        } // else if (NEEDC && (!REFLN)) 
-    		        else {
-    		            R=U2[0];
-    		            A=U2[1];
-    		            raFile.writeBytes("U2[0] = " + R + ";\n");
-    		            raFile.writeBytes("U2[1] = " + A + ";)\n");
-    		        } // else
-    		        raFile.writeBytes("//\n");
-    		    } // if (NEEDC || REFLN)
-    		}
-    		else if (REFLN) {
-    		    R=U2[0];
-    		    A=U2[1];
-    		    raFile.writeBytes("      PARAMETER (\n");
-    		    raFile.writeBytes("U2[0] = " + R + ";\n");
-    		    raFile.writeBytes("U2[1] = " + A + ";)\n");
-    		    raFile.writeBytes("//\n");
+    		try {
+	    		if (PARFUN) {
+	    			NEEDC = ((CENSY[0] != 0.0) && (CENSY[1] != 0.0));
+	    		    if (NEEDC || REFLN) {
+	    		    	raFile.writeBytes("      PARAMETER (\n");
+	    		        if (NEEDC && REFLN) {
+	    		            R=U2[0];
+	    		            A=U2[1];
+	    		            raFile.writeBytes("U2[0] = " + R + ";\n");
+	    		            raFile.writeBytes("U2[1] = " + A + ";\n");
+	    		            R=CENSY[0];
+	    		            A=CENSY[1];
+	    		            raFile.writeBytes("ZCEN[0] = " + R +";\n");
+	    		            raFile.writeBytes("ZCEN[1] = " + A + ";)\n");
+	    		        } // if (NEEDC && REFLN)
+	    		        else if (NEEDC && (!REFLN)) {
+	    		            R=CENSY[0];
+	    		            A=CENSY[1];
+	    		            raFile.writeBytes("ZCEN[0] = " + R + ";\n");
+	    		            raFile.writeBytes("ZCEN[1] = " + A + ";)\n");
+	    		        } // else if (NEEDC && (!REFLN)) 
+	    		        else {
+	    		            R=U2[0];
+	    		            A=U2[1];
+	    		            raFile.writeBytes("U2[0] = " + R + ";\n");
+	    		            raFile.writeBytes("U2[1] = " + A + ";)\n");
+	    		        } // else
+	    		        raFile.writeBytes("//\n");
+	    		    } // if (NEEDC || REFLN)
+	    		}
+	    		else if (REFLN) {
+	    		    R=U2[0];
+	    		    A=U2[1];
+	    		    raFile.writeBytes("      PARAMETER (\n");
+	    		    raFile.writeBytes("U2[0] = " + R + ";\n");
+	    		    raFile.writeBytes("U2[1] = " + A + ";)\n");
+	    		    raFile.writeBytes("//\n");
+	    		}
+	    		
+	    		FMT="(A7,"+REDD+",A1,"+REDD+",A2)";
+	    		
+	    	    if (ORDRG >= 2) {
+	    	    	raFile.writeBytes("double WW[] = new double["+(ORDRG-1)+"];\n");
+	    	    	ZT[0] = 1.0;
+	    	    	ZT[1] = 0.0;
+	    		    for (I=0; I < ORDRG-2; I++) {
+	    		    	zmlt(ZT[0],ZT[1],RTUNI[0],RTUNI[1],cr,ci);
+	    		    	ZT[0] = cr[0];
+	    		    	ZT[1] = ci[0];
+	    		    	raFile.writeBytes("WW["+I+"][0] = " + ZT[0] + ";\n");
+	    		    	raFile.writeBytes("WW["+I+"][1] = " + ZT[1] + ";\n");
+	    		    }
+	    		    zmlt(ZT[0],ZT[1],RTUNI[0],RTUNI[1],cr,ci);
+			    	ZT[0] = cr[0];
+			    	ZT[1] = ci[0];
+			    	raFile.writeBytes("WW["+I+"][0] = " + ZT[0] + ";\n");
+			    	raFile.writeBytes("WW["+I+"][1] = " + ZT[1] + ";)\n");
+			    	raFile.writeBytes("//\n");
+	    	    } // if (ORDRG >= 2)
+	    	    
+	    		if (ORDRG > 19) {
+	    		    System.out.println("\n");
+	    		    System.out.println("             ****WARNING****");
+	    		    System.out.println("MORE THAN 19 CONTINUTATION LINES HAVE BEEN WRITTEN");
+	    		}
+	    		
+	    		if (REFLN) {
+	    	        if (ORDRG > 1) {
+	    		        if (NARCS > 1) {
+	    		            I=2*NARCS;
+	    		            raFile.writeBytes("IB = IA%"+I+";\n");
+	    		            raFile.writeBytes("if (IB == 0) IB = " + I + ";\n");
+	    		            I=I+1;
+	    		            raFile.writeBytes("if (IB > " + NARCS + ") {\n");
+	    		            raFile.writeBytes("    IB = " + I + " - IB;\n");
+	    		            raFile.writeBytes("    TS[0] = -TT[0];\n");
+	    		            raFile.writeBytes("    TS[1] = TT[1]);\n");
+	    		            raFile.writeBytes("}\n");
+	    		            raFile.writeBytes("else {\n");
+	    		            raFile.writeBytes("    TS[0] = TT[0];\n");
+	    		            raFile.writeBytes("    TS[1] = TT[1];\n");
+	    		            raFile.writeBytes("}\n");
+	    		        } // if (NARCS > 1)
+	    		        else {
+	    		        	raFile.writeBytes("if ((IA%2) == 0) {\n");
+	    		            raFile.writeBytes("    TS[0] = -TT[0];\n");
+	    		            raFile.writeBytes("    TS[1] = TT[1];\n");
+	    		            raFile.writeBytes("}\n");
+	    		            raFile.writeBytes("else {\n");
+	    		            raFile.writeBytes("    TS[0] = TT[0];\n");
+	    		            raFile.writeBytes("    TS[1] = TT[1];\n");
+	    		            raFile.writeBytes("}\n");
+	    		        } // else
+	    	        } // if (ORDRG > 1)
+	    	        else {
+	    		        if (NARCS > 1) {
+	    		            I=2*NARCS+1;
+	    		            raFile.writeBytes("if (IA > " + NARCS + "){\n");
+	    		            raFile.writeBytes("    IB = " + I + " -IA;\n");
+	    		            raFile.writeBytes("    TS[0] = -TT[0];\n");
+	    		            raFile.writeBytes("    TS[1] = TT[1]);\n");
+	    		            raFile.writeBytes("}\n");
+	    		            raFile.writeBytes("else {\n");
+	    		            raFile.writeBytes("    IB = IA;\n");
+	    		            raFile.writeBytes("    TS[0] = TT[0];\n");
+	    		            raFile.writeBytes("    TS[1] = TT[1];\n");
+	    		            raFile.writeBytes("}\n");
+	    		        } // if (NARCS)
+	    		        else {
+	    		        	raFile.writeBytes("if (IA == 2) {\n");
+	    		        	raFile.writeBytes("    TS[0] = -TT[0];\n");
+	    		            raFile.writeBytes("    TS[1] = TT[1]);\n");
+	    		            raFile.writeBytes("}\n");
+	    		            raFile.writeBytes("else {\n");
+	    		            raFile.writeBytes("    TS[0] = TT[0];\n");
+	    		            raFile.writeBytes("    TS[1] = TT[1];\n");
+	    		            raFile.writeBytes("}\n");     
+	    		        } // else
+	    	        } // else
+	    		} // if (REFLN)
+	    		else if (NARCS > 1) {
+	    			raFile.writeBytes("IB = IA%" + NARCS + ";\n");
+	    		    raFile.writeBytes("if (IB == 0) IB = " + NARCS + ";\n");
+	    		} // else if (NARCS > 1)
+	    		
+	    		raFile.writeBytes("//\n");
+    		} // try
+    		catch (IOException e) {
+    			MipavUtil.displayError("IOException " + e + " in WRSYM1");
+    			System.exit(-1);
     		}
     		
-    		FMT="(A7,"+REDD+",A1,"+REDD+",A2)";
-    		
-    	    if (ORDRG >= 2) {
-    	    	raFile.writeBytes("double WW[] = new double["+(ORDRG-1)+"];");
-    	    	ZT[0] = 1.0;
-    	    	ZT[1] = 0.0;
-    		    for (I=0; I < ORDRG-2; I++) {
-    		    	zmlt(ZT[0],ZT[1],RTUNI[0],RTUNI[1],cr,ci);
-    		    	ZT[0] = cr[0];
-    		    	ZT[1] = ci[0];
-    		    	raFile.writeBytes("WW["+I+"][0] = " + ZT[0] + "\n");
-    		    	raFile.writeBytes("WW["+I+"][1] = " + ZT[1] + "\n");
-    		    }
-    		    zmlt(ZT[0],ZT[1],RTUNI[0],RTUNI[1],cr,ci);
-		    	ZT[0] = cr[0];
-		    	ZT[1] = ci[0];
-		    	raFile.writeBytes("WW["+I+"][0] = " + ZT[0] + "\n");
-		    	raFile.writeBytes("WW["+I+"][1] = " + ZT[1] + ")\n");
-		    	raFile.writeBytes("//\n");
-    	    } // if (ORDRG >= 2)
-    	    
-    		if (ORDRG > 19) {
-    		    System.out.println("\n");
-    		    System.out.println("             ****WARNING****");
-    		    System.out.println("MORE THAN 19 CONTINUTATION LINES HAVE BEEN WRITTEN");
-    		}
-    		
-    		if (REFLN) {
-    		          IF (ORDRG.GT.1) THEN
-    		              IF (NARCS.GT.1) THEN
-    		                  I=2*NARCS
-    		                  WRITE(CHNL,'(A16,I3,A1)') '      IB=MOD(IA,',I,')'
-    		                  WRITE(CHNL,'(A22,I3)') '      IF (IB.EQ.0) IB=',I
-    		                  I=I+1
-    		                  WRITE(CHNL,'(A16,I3,A6)') '      IF (IB.GT.',NARCS,')
-    		     +THEN'
-    		                  WRITE(CHNL,'(A13,I3,A3)') '          IB=',I,'-IB'
-    		                  WRITE(CHNL,'(A23)') '          TS=-CONJG(TT)'
-    		                  WRITE(CHNL,'(A10)') '      ELSE'
-    		                  WRITE(CHNL,'(A15)') '          TS=TT'
-    		                  WRITE(CHNL,'(A11)') '      ENDIF'
-    		              ELSE
-    		                  WRITE(CHNL,'(A30)') '      IF (MOD(IA,2).EQ.0) THEN'
-    		                  WRITE(CHNL,'(A23)') '          TS=-CONJG(TT)'
-    		                  WRITE(CHNL,'(A10)') '      ELSE'
-    		                  WRITE(CHNL,'(A15)') '          TS=TT'
-    		                  WRITE(CHNL,'(A11)') '      ENDIF'
-    		              ENDIF
-    		          ELSE
-    		              IF (NARCS.GT.1) THEN
-    		                  I=2*NARCS+1
-    		                  WRITE(CHNL,'(A16,I3,A6)') '      IF (IA.GT.',NARCS,') 
-    		     +THEN'
-    		                  WRITE(CHNL,'(A13,I3,A3)') '          IB=',I,'-IA'
-    		                  WRITE(CHNL,'(A23)') '          TS=-CONJG(TT)'
-    		                  WRITE(CHNL,'(A10)') '      ELSE'
-    		                  WRITE(CHNL,'(A15)') '          IB=IA'
-    		                  WRITE(CHNL,'(A15)') '          TS=TT'
-    		                  WRITE(CHNL,'(A11)') '      ENDIF'
-    		              ELSE
-    		                  WRITE(CHNL,'(A23)') '      IF (IA.EQ.2) THEN'
-    		                  WRITE(CHNL,'(A23)') '          TS=-CONJG(TT)'
-    		                  WRITE(CHNL,'(A10)') '      ELSE'
-    		                  WRITE(CHNL,'(A15)') '          TS=TT'
-    		                  WRITE(CHNL,'(A11)') '      ENDIF'
-    		              ENDIF
-    		          ENDIF
-    		} // if (REFLN)
-    		else if (NARCS > 1) {
-    		          WRITE(CHNL,'(A16,I3,A1)') '      IB=MOD(IA,',NARCS,')'
-    		          WRITE(CHNL,'(A22,I3)') '      IF (IB.EQ.0) IB=',NARCS
-    		}
-    		C
-    		      WRITE(CHNL,'(A1)') 'C'
-    		C*/
       }
 
+      private void WRFUN1(int NARCS,double STAPT[][],int ARCTY[],int PGM[], 
+    		  int RGM[], int PTX[], int NTX[], String DEFN[],
+    		  int CHNL, String CHIA, String CHTT, String VAR, String REDD, RandomAccessFile raFile) {
+          //COMPLEX STAPT(*)
+          //CHARACTER DEFN(*)*72,CHIA*2,CHTT*2,VAR*6,REDD*6
+    		
+          //**** TO WRITE THE SOURCE CODE FOR PARFUN IN THE CASE WHERE NO
+    	  //**** SYMMETRY IS INVOLVED.
+    		
+    	  //.......................................................................
+    	  //     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    	  //     LAST UPDATE: 4 AUG 1990
+    	  //.......................................................................
+    	
+    	  //     LOCAL VARIABLES
+    	
+          int IA,I,J;
+    	  //CHARACTER TX1*16,TX2*21,FMT1*11,FMT2*11
+          String TX1,TX2,FMT1,FMT2;
+    	  // EXTERNAL PTFUN1
+    	  TX1 = "     if("+CHIA+ " == ";
+    	  TX2 = "     else if("+CHIA+ " == ";
+          FMT1="(A16,I3,A6)";
+          FMT2="(A21,I3,A6)";
+    		
+    	 /* try {
+	          for (IA=1; IA <= NARCS; IA++) {
+	              I=PGM[IA-1];
+	    		  J=PTX[IA-1];
+	    		  if (NARCS == 1) {
+	    		      PTFUN1(ARCTY[IA-1],STAPT[IA-1],RGM[I-1],NTX[IA-1],DEFN[J-1],
+	    		                 CHNL,CHTT,VAR,REDD, raFile);
+	    		  }
+	    		  else {
+		    		  if (IA == 1) {
+		    			  raFile.writeBytes(TX1 + IA + ") {\n");
+		    		  }
+		    		  else if (IA == NARCS) {
+		    			  raFile.writeBytes("      else {\n");
+		    		  }
+		    		  else {
+		    			  raFile.writeBytes(TX2 + IA + ") {\n");
+		    		  }
+		    		  PTFUN1(ARCTY[IA-1],STAPT[IA-1],RGM[I-1],NTX[IA-1],DEFN[J-1],
+		    		         CHNL,CHTT,VAR,REDD, raFile);
+		    		  if (IA == NARCS) raFile.writeBytes("      }\n");
+	    		  } // else
+	    	  } // for (IA=1; IA <= NARCS; IA++)
+    	  } // try
+    	  catch (IOException e) {
+    	      MipavUtil.displayError("IOException " + e + " in WRFUN1");
+    	      System.exit(-1);
+    	  }*/
+    		
+      } // private void WRFUN1
 
+      private void PTFUN1(int TYPE, double STAPT[], double RGM[],int NTX,
+    		  String TXT[],int CHNL, String CHTT,String VAR, String REDD,
+    		  RandomAccessFile raFile) {
+      
+          //COMPLEX STAPT(*)
+          //CHARACTER TXT(*)*72,CHTT*2,VAR*6,REDD*6
+
+          //.......................................................................
+          // AUTHOR: DAVID HOUGH, ETH, ZUERICH
+          // LAST UPDATE: 8 AUG 1990
+          // .......................................................................C
+          //**** LOCAL VARIABLES
+
+      int I;
+      double HA,MD,RAD,A,R;
+      double C1[] = new double[2];
+      double C2[] = new double[2];
+      double CENTR[] = new double[2];
+      //COMPLEX C1,C2,CENTR
+      String TX1, TX1B, TX2, TX2B, CTX1B, FMT1, FMT2, FMT3, FMT4, FMT5;
+      //CHARACTER TX1*4,TX1B*5,TX2*13,TX2B*14,CTX1B*10,
+      //+FMT1*25,FMT2*25,FMT3*14,FMT4*25,FMT5*24
+
+      TX1 = "+"+CHTT+"*";
+      TX1B = TX1 + "(";
+      CTX1B="     " + TX1B;
+      TX2="      "+VAR+" = ";
+      TX2B=TX2+"(";
+
+      //FMT1='(A14,'//REDD//',A1,'//REDD//',A2)'
+      //FMT2='(A10,'//REDD//',A1,'//REDD//',A1)'
+      //FMT3='(A6,'//REDD//',A1)'
+      //FMT4='(A14,'//REDD//',A5,'//REDD//',A3)'
+      //FMT5='(A8,'//REDD//',A5,'//REDD//',A1)'
+
+      /*if (TYPE == 1) {
+    	C1[0] = 0.5*(STAPT[1][0] + STAPT[0][0]);
+    	C1[1] = 0.5*(STAPT[1][1] + STAPT[0][1]);
+        C2[0] = 0.5*(STAPT[1][0] - STAPT[0][0]);
+        C2[1] = 0.5*(STAPT[1][1] - STAPT[0][1]);
+        raFile.writeBytes("//\n");
+        raFile.writeBytes(VAR+"[0] = " + C1[0] + "+" + CHTT+"[0]*"+C2[0]+" - "+CHTT+"[1]*"+C2[1]+";\n");
+        raFile.writeBytes(VAR+"[1] = " + C1[1] + "+" + CHTT+"[0]*"+C2[1]+" + "+CHTT+"[1]*"+C2[0]+";\n");
+        raFile.writeBytes("//\n");
+      } // if (TYPE == 1)
+      else if (TYPE == 2) {
+    	CENTR[0] = RGM[0];
+    	CENTR[1] = RGN[1];
+        C1[0] = STAPT[0][0] - CENTR[0];
+        C1[1] = STAPT[0][1] - CENTR[1];
+        HA=0.5*RGM[2];
+        MD = Math.atan2(C1[1], C1[0]) + HA;
+        RAD=zabs(C1[0],C1[1]);
+        raFile.writeBytes("//\n");
+        raFile.writeBytes(VAR+"[0] = " + CENTR[0] + "+" + RAD + " * " + "Math.exp(-"+CHTT+"[1]*"+HA+")*"
+        +"Math.cos("+MD+CHTT+"[0]*"+HA+");\n");
+        raFile.writeBytes(VAR+"[1] = " + CENTR[1] + "+" + RAD + " * " + "Math.exp(-"+CHTT+"[1]*"+HA+")*"
+                +"Math.sin("+MD+CHTT+"[0]*"+HA+");\n");
+        raFile.writeBytes("//\n");
+      } // else if (TYPE == 2)
+      else if (TYPE == 3) {
+        MD=0.5*(RGM[1]+RGM[0]);
+        HA=0.5*(RGM[1]-RGM[0]);
+        raFile.writeBytes("//\n");
+        raFile.writeBytes("T[0] = " + MD + "+" CHTT + "[0] * " + HA + ";\n");
+        raFile.writeBytes("T[1] = " + MD + "+" CHTT + "[1] * " + HA + ";\n");
+        
+        WRITE(CHNL,'(A13)') TX2
+        DO 10 I=1,NTX
+          WRITE(CHNL,'(A72)') TXT(I)
+10      CONTINUE
+        WRITE(CHNL,'(A1)') 'C'
+      } // else if (TYPE == 3)
+      ELSE
+        MD=5E-1*(RGM(2)+RGM(1))
+        HA=5E-1*(RGM(2)-RGM(1))
+        WRITE(CHNL,'(A1)') 'C'
+        WRITE(CHNL,FMT5) '      T=',MD,TX1B,HA,')'
+        WRITE(CHNL,'(A11)') '      ZRAD='
+        DO 20 I=1,NTX
+          WRITE(CHNL,'(A72)') TXT(I)
+20      CONTINUE
+        WRITE(CHNL,'(A13,A14)') TX2,'ZRAD*EXP(UI*T)'
+        WRITE(CHNL,'(A1)') 'C'
+      ENDIF
+C*/
+      }
 
       
       /**
