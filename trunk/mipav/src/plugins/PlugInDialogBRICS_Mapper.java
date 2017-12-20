@@ -41,7 +41,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private JScrollPane listPane;
 
     private JTable deTable;
-    private LocalFSTableModel deTableModel; 
+    private LocalMappingTableModel deTableModel; 
     private FormStructure formStructure;
     private List<FormStructure> formStructureList = null;
 
@@ -251,7 +251,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
-                //saveMapButton.setEnabled(deTableModel.getRowCount() > 0);
             }
         } else if (command.equalsIgnoreCase("SaveMapFile")) {
         	
@@ -361,11 +360,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
 
     @Override
-    public void focusGained(final FocusEvent e) {}
+    public void focusGained(final FocusEvent e) {
+    	//System.out.println("Focus Gained");
+    }
 
     @Override
     public void focusLost(final FocusEvent e) {
-        //validateFields();
+    	//System.out.println("Focus lost");
     }
 
   
@@ -510,7 +511,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * @return JScrollPane of the table...
      */
     private JScrollPane buildStructurePanel() {
-    	deTableModel = new LocalFSTableModel();
+    	deTableModel = new LocalMappingTableModel();
     	deTableModel.addColumn("Group");
     	deTableModel.addColumn("Element Name");
     	deTableModel.addColumn("Title");
@@ -518,7 +519,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	deTableModel.addColumn("Reference PVs");
     	deTableModel.addColumn("Required");
     	deTableModel.addColumn("Source Name");
-    	deTableModel.addColumn("Type");
+    	deTableModel.addColumn("Source Type");
     	deTableModel.addColumn("Source PVs");
     	deTableModel.addColumn("PV Mappings");
 
@@ -537,7 +538,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 ToolTipManager.sharedInstance().setDismissDelay(12000);
                 FormStructureData fsInfo = new FormStructureData(formStructure);
 
-                if(colIndex == 0) {                      	
+                if(colIndex == deTableModel.getColumnIndex("Group")) {                      	
                         	
                 	for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {    
                 		
@@ -550,7 +551,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 	}
 	                return tooltip;
                 }
-                else if(colIndex == 1 || colIndex == 2) {
+                else if(colIndex == deTableModel.getColumnIndex("Element Name") || colIndex == deTableModel.getColumnIndex("Title")) {
 	                DataElement de = formStructure.getSortedDataElementList().get(rowIndex);
 	                
 	                tooltip = "<html><p><b> Name: </b> " + de.getName() + "<br/>";
@@ -570,7 +571,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                tooltip += "</p></html>";
 	                return tooltip;
                 } 
-                else if(colIndex == 4) {
+                else if(colIndex == deTableModel.getColumnIndex("Reference PVs")) {
 	                DataElement de = formStructure.getSortedDataElementList().get(rowIndex);
 	                
 	                tooltip += "<html> <p> <b> Type: </b> " + de.getType() + "   <br/>";
@@ -586,24 +587,40 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                tooltip += "</p></html>";
 	                return tooltip;
                 }
-                else if(colIndex == 5) {
+                else if(colIndex == deTableModel.getColumnIndex("Required")) {
                 	tooltip += "<html> <p> <b> All REQUIRED elements must be mapped before saving mapping file. </b>";
                 	tooltip += "</p></html>";
                 	return tooltip;
                 }
-                else if(colIndex > 5) {
+                else if(colIndex > deTableModel.getColumnIndex("Required") && colIndex < deTableModel.getColumnIndex("PV Mappings")) {
 	                
 	                tooltip += "<html> <p> <b> Single click: </b> " + " selects the DE to be mapped.  <br/>";
-	                tooltip += " <b> Double click: </b> " + " for manual editting of the DE.  <br/>";
-	              
+	                tooltip += " <b> Double click: </b> " + " for manual editting of the DE.  <br/>";	              
 	                tooltip += "</p></html>";
 	                return tooltip;
                 }
+                else if(colIndex == deTableModel.getColumnIndex("Source PVs")) {
+	                
+	                tooltip += "<html> <p> <b> Single click: </b> " + " selects the DE to be mapped.  <br/>";
+	                tooltip += " <b> Double click: </b> " + " for manual editting of the DE.  <br/>";
+	                tooltip += " <b>PVs can only contain a-z, A-Z and 0-9 separated by semicolons.</b>  <br/>";              
+	                tooltip += "</p></html>";
+	                return tooltip;
+                }
+                else if(colIndex == deTableModel.getColumnIndex("PV Mappings")) {
+	                
+	                tooltip += "<html> <p> <b> Single click: </b> " + " selects the DE to be mapped.  <br/>";
+	                tooltip += " <b> Double click: </b> " + " for editting of the DE.  <br/>";              
+	                tooltip += "</p></html>";
+	                return tooltip;
+                }
+                
                 else return null;
             }
         };
         
         deTable.addMouseListener(this);
+        //deTable.addFocusListener(this);
         deTable.setPreferredScrollableViewportSize(new Dimension(1250, 300));
         deTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -626,6 +643,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         deTable.getColumn("Required").setPreferredWidth(115);
         deTable.getColumn("Required").setCellRenderer(new CellRenderer());
         
+        deTable.getColumn("Source PVs").setCellRenderer(new CellRenderer());
+        //deTable.getColumn("Source PVs").setCellEditor(cellEditor);
+        //deTable.getColumn("Source PVs").set
         listPane = buildScrollPane(deTable);
         listPane.setBorder(buildTitledBorder(" Reference Form Structure:   "));
    
@@ -633,7 +653,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
     
     /**
-     * Not used a the moment
+     * N
      * @author McAuliffe
      *
      */
@@ -641,25 +661,34 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     	@Override
         public Component getTableCellRendererComponent(final JTable table, final Object value,
-                final boolean isSelected, final boolean hasFocus, final int row, final int column) {
+                final boolean isSelected, final boolean hasFocus, final int row, final int col) {
     		
-    		final Color gray = new Color (235,235,235);
-            final Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            //cell.setBackground(Color.GREEN);
+            final Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
             
-            TableCellRenderer refRenderer = table.getCellRenderer(row, column);
+            TableCellRenderer refRenderer = table.getCellRenderer(row, col);
             if (refRenderer instanceof CellRenderer) { 
-	            //if (row % 2 ==  1 ) {
-	            //    cell.setBackground(gray);
-	            //}   
-	            //else {
-	            //	cell.setBackground(Color.WHITE);
-	            //}
-	            if (column == 5 && ((String) value).equalsIgnoreCase("REQUIRED")) {
+	
+	            if (col == deTableModel.getColumnIndex("Required") && ((String) value).equalsIgnoreCase("REQUIRED")) { 
 	                setForeground(Color.red);
-	            } else {
+	            } 
+	            else {
 	                setForeground(Color.black);
 	            }
+	            
+	            if (col == 8 && hasFocus ) {
+	            	//System.out.println(" Focus ==== " + hasFocus + " row = " + row);
+	            	//System.out.println(" Selected ==== " + isSelected + " row = " + row);
+	            } 
+	            //else if (col == 8) {
+	            	//System.out.println(" 2Focus ==== " + hasFocus + " row = " + row);
+	            	//System.out.println(" 2Selected ==== " + isSelected + " row = " + row);
+	                // validate format for row, col
+	            	//if ( !deDef[2].matches("^[a-zA-Z0-9;]*$") ) {
+               		// displayError("PVs can only contain a-z, A-Z and 0-9 separated by semicolons." + "  Row: " + row );
+               		// fis.close();
+               		// throw new Exception("Error reading file.");
+                    //	}
+	            //}
             }
             return cell;
     	}
@@ -724,7 +753,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	
     	int numRows = deTableModel.getRowCount();
     	for (int i=0; i< numRows; i++) {
-    		if ( deTableModel.getValueAt(i, 5).equals("REQUIRED") && deTableModel.getValueAt(i, 6) == null ) {
+    		if ( deTableModel.getValueAt(i, deTableModel.getColumnIndex("Required")).equals("REQUIRED") && 
+    				(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Name")) == null || 
+    				((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Name")))).trim().equals(""))) {
     			saveMapButton.setEnabled(false);
     			return false;
     			
@@ -830,16 +861,32 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }*/
 
 
-            if (e.getClickCount() == 2 && deTable.getSelectedColumn() < 6 ) {
-                //if ( !isFinished) {
-                    //final String dsName = (String) deTableModel.getValueAt(deTable.getSelectedRow(), 0);
-                    //new InfoDialog(this, dsName, true, true, null);
+            if (e.getClickCount() == 2 && deTable.getSelectedColumn() < deTableModel.getColumnIndex("Source Name") ) {
                     showCDE(null);
-                //}
             }
-            else if (e.getClickCount() == 2 && deTable.getSelectedColumn() >= 6) {
+            else if (e.getClickCount() == 2 && deTable.getSelectedColumn() == deTableModel.getColumnIndex("Source PVs")) {
+            	if (deTable.getSelectedRow() != -1 ){
+	            	if ( deTable.getValueAt(deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Name")) == null ||
+	            	     deTable.getValueAt(deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Name")).equals("") ) {
+	            		displayWarning("Source Name cell is empty.");
+	            		return;
+	            	} else {
+	            		new srcPVDialog (this);
+	            	}
+            	}
+            }
+            else if (e.getClickCount() == 2 && deTable.getSelectedColumn() == deTableModel.getColumnIndex("PV Mappings")) {
             	
-
+            	// Check Source PVs are not empty
+            	if (deTable.getSelectedRow() != -1 ){
+	            	if ( deTable.getValueAt(deTable.getSelectedRow(), deTableModel.getColumnIndex("Source PVs")) == null ||
+	            	     deTable.getValueAt(deTable.getSelectedRow(), deTableModel.getColumnIndex("Source PVs")).equals("") ) {
+	            		displayWarning("Source PVs cell is empty.");
+	            		return;
+	            	} else {
+	            		new PVMappingDialog (this);
+	            	}
+            	}
             }
         }
     }
@@ -1266,22 +1313,22 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	     		
 	        		int row = rowPos[group.getPosition()]+i;
 
-	        		deTableModel.setValueAt(group.getName(), row, 0);										// Group
-	        		deTableModel.setValueAt(mapde.getStructuralDataElement().getName(), row, 1);			// CDE Variable name
-	        		deTableModel.setValueAt(de.getTitle(), row, 2);											// CDE title
+	        		deTableModel.setValueAt(group.getName(), row, deTableModel.getColumnIndex("Group"));	
+	        		deTableModel.setValueAt(mapde.getStructuralDataElement().getName(), row, deTableModel.getColumnIndex("Element Name"));			
+	        		deTableModel.setValueAt(de.getTitle(), row, deTableModel.getColumnIndex("Title"));											
 	        		
-	        		deTableModel.setValueAt(de.getType(), row, 3);	
+	        		deTableModel.setValueAt(de.getType(), row, deTableModel.getColumnIndex("Type"));	
 	        		
 	        		String strPVs = new String();
 	                for (ValueRange vr : de.getValueRangeList() ) {
 	                	strPVs += vr.getValueRange() + "; ";
 	                }
-	        		deTableModel.setValueAt(strPVs, row, 4);  // PV list
+	        		deTableModel.setValueAt(strPVs, row, deTableModel.getColumnIndex("Reference PVs"));  // PV list
 	        		
 	        		JLabel l = new JLabel(mapde.getRequiredType().toString());
 	                l.setFont(serif12);
 
-	        		deTableModel.setValueAt(mapde.getRequiredType().toString(), row, 5);  // Required DE or not
+	        		deTableModel.setValueAt(mapde.getRequiredType().toString(), row, deTableModel.getColumnIndex("Required"));  // Required DE or not
 	        		
 	        		//System.out.println(" DE URI " + de.getUri());  //URI seems problematic. - maybe because on staging or demo
 	        		//System.out.println(" FS URI " + formStructure.getUri());  //URI seems problematic. - maybe because on staging or demo
@@ -1315,27 +1362,36 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             final String deType  = DEHeaders[1].trim();
             final String dePVs   = DEHeaders[2].trim();
             if ( !deName.toLowerCase().equals("name") || !dePVs.toLowerCase().equals("pvs") ||  !deType.toLowerCase().equals("type")) {
-            	printlnToLog("Source data elements are not in proper format - Header row: Name, Type, PVs, PV Descriptions, Title where only Name, Type, and PVs are required.");
+            	printlnToLog("Source data elements are not in proper format - Header row: Name, Type, PVs, PV Descriptions, and Title where only Name, Type, and PVs are required.");
             	return false;
             }
 
             Vector<String[]> dataElements = new Vector<String[]>(40);
             dataElements.add(DEHeaders);
+            int row = 1;
             while ( (str = br.readLine()) != null) {
                 str = str.trim();
                 String[] deDef = str.split(CSV_OUTPUT_DELIM);
                 for(int i =0; i < deDef.length; i++) {
                 	deDef[i] = deDef[i].trim();
                 }
+                if (!deDef[2].isEmpty()) { 			// PVs not empty
+                	if ( !deDef[2].matches("^[a-zA-Z0-9;]*$") ) {
+                		 displayError("PVs can only contain a-z, A-Z and 0-9 separated by semicolons." + "  Row: " + row + " Element: " + deDef[0]);
+                		 fis.close();
+                	}
+                	else if (deDef[2].endsWith(";")) {
+                		deDef[2] = deDef[2].substring(0, deDef[2].length()-1);
+                	}
+                }
                 dataElements.add(deDef);
-                //System.out.println(" hey " + deDef[0]);
+                row++;
             }
             fis.close();
             //Open dialog with and populate with source DEs
             SourceDEsDialog csvDEDialog = new SourceDEsDialog(this, dataElements);
         } catch (final Exception e) {
-            e.printStackTrace();
-            return false;
+        	//e.printStackTrace();
         } finally {
             if (br != null) {
                 try {
@@ -1344,9 +1400,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                     System.err.println("Problem closing CSV file handle.");
                     e.printStackTrace();
                 }
+                return false;
             }
         }
-            
+         
+        
         return true;      
     }
     
@@ -1398,22 +1456,40 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             final JPanel OKPanel = new JPanel();
 
-            final JButton cancelButton = new JButton("Cancel");
-            cancelButton.setActionCommand("srcDECancel");
-            cancelButton.addActionListener(this);
-            cancelButton.setMinimumSize(defaultButtonSize);
-            cancelButton.setPreferredSize(defaultButtonSize);
-            cancelButton.setFont(serif12B);
+            final JButton closeButton = new JButton("Close");
+            closeButton.setActionCommand("srcDEClose");
+            closeButton.addActionListener(this);
+            closeButton.setMinimumSize(defaultButtonSize);
+            closeButton.setPreferredSize(defaultButtonSize);
+            closeButton.setFont(serif12B);
             
-            final JButton pairButton = new JButton("Pair");
-            pairButton.setActionCommand("srcDEPair");
-            pairButton.addActionListener(this);
-            pairButton.setMinimumSize(defaultButtonSize);
-            pairButton.setPreferredSize(defaultButtonSize);
-            pairButton.setFont(serif12B);
-            pairButton.setToolTipText("Copies source data element to reference data element");
-            OKPanel.add(pairButton);
-            OKPanel.add(cancelButton);
+            final JButton clearButton = new JButton("Clear");
+            clearButton.setActionCommand("srcDEClear");
+            clearButton.addActionListener(this);
+            clearButton.setMinimumSize(defaultButtonSize);
+            clearButton.setPreferredSize(defaultButtonSize);
+            clearButton.setFont(serif12B);
+            
+            final JButton pairRButton = new JButton(" Pair ");
+            pairRButton.setActionCommand("srcDEPairR");
+            pairRButton.addActionListener(this);
+            pairRButton.setMinimumSize(new Dimension(130, 30));
+            pairRButton.setPreferredSize(new Dimension(130, 30));
+            pairRButton.setFont(serif12B);
+            pairRButton.setToolTipText("Copies source data element to reference data element");
+            
+            final JButton pairAButton = new JButton("Pair: Append");
+            pairAButton.setActionCommand("srcDEPairA");
+            pairAButton.addActionListener(this);
+            pairAButton.setMinimumSize(new Dimension(130, 30));
+            pairAButton.setPreferredSize(new Dimension(130, 30));
+            pairAButton.setFont(serif12B);
+            pairAButton.setToolTipText("Appends source data element to reference data element");
+            
+            OKPanel.add(pairRButton);
+            OKPanel.add(pairAButton);
+            OKPanel.add(clearButton);
+            OKPanel.add(closeButton);
 
             gbc.weightx = 0;
             gbc.weighty = 0;
@@ -1423,15 +1499,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             gbc.gridwidth = 1;
             mainPanel.add(OKPanel, gbc);
 
-            //JLabel requiredLabel = new JLabel( "<html>Mouse over the data element fields for more information on filling them in.<br/>* Required data elements are in <font color=\"red\">red</font></html>");
-
             gbc.gridy = 2;
             gbc.weightx = 1;
             gbc.weighty = 1;
             gbc.fill = GridBagConstraints.BOTH;
             JScrollPane sPane = buildCSVPanel();
             mainPanel.add(sPane, gbc);
-
             getContentPane().add(mainPanel, BorderLayout.CENTER);
 
             final Dimension dim = getContentPane().getPreferredSize();
@@ -1439,7 +1512,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 dim.height = 500;
             }
             sPane.setPreferredSize(dim);
-
+  
             pack();
             centerInWindow(owner, this);
            
@@ -1454,23 +1527,48 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	srcDETableModel = new LocalTableModel();
         	
         	//Columns defined by first row in CSV file
+        	srcDETableModel.addColumn("Mapped");
         	for (int i = 0; i < dataElements.get(0).length; i++) {
         		srcDETableModel.addColumn(dataElements.get(0)[i].trim());
         	}
+
         	
         	srcDETable = new JTable(srcDETableModel);
             srcDETable.setPreferredScrollableViewportSize(new Dimension(850, 300));
             srcDETable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             srcDETable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             srcDETable.setAutoCreateRowSorter(true);
-            //deTable.getColumn("Group").setCellRenderer(new CellRenderer());
+            //srcDETable.getColumn("Name").setCellRenderer(new CellRenderer());
             
             srcDEPane = new JScrollPane(srcDETable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            srcDEPane.setBorder(buildTitledBorder(" Source Data Elements"));
-       
+            srcDEPane.setBorder(buildTitledBorder(" Source Data Elements"));  
             populateSrcTable();
+            updateMappedColumn();
             return srcDEPane;
+        }
+        
+        private class CellRenderer extends DefaultTableCellRenderer {
+
+        	@Override
+            public Component getTableCellRendererComponent(final JTable table, final Object value,
+                    final boolean isSelected, final boolean hasFocus, final int row, final int col) {
+        		
+                final Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                
+                TableCellRenderer refRenderer = table.getCellRenderer(row, col);
+                if (refRenderer instanceof CellRenderer) { 
+    	
+ 
+    	            if (col == 0  ) {
+    	            	setBackground(Color.yellow);
+    	            } 
+    	            else {
+    	                setBackground(Color.white);
+    	            }
+                }
+                return cell;
+        	}
         }
         
         /**
@@ -1481,24 +1579,267 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	if (dataElements == null) return;
         	
         	srcDETableModel.setRowCount(dataElements.size()-1);
+            //System.out.println("Hey3" + " row = " + dataElements);  	
+        	
+            for (int i = 1; i < dataElements.size(); i++) {
+	        	if (dataElements.get(i).length > 0) {
+	        		srcDETableModel.setValueAt(dataElements.get(i)[0], i-1, srcDETableModel.getColumnIndex("Name"));				
+	        	}
+	        	if (dataElements.get(i).length > 1) {
+	        		srcDETableModel.setValueAt(dataElements.get(i)[1], i-1, srcDETableModel.getColumnIndex("Type"));
+	        	}
+	        	if (dataElements.get(i).length > 2) {
+	        		srcDETableModel.setValueAt(dataElements.get(i)[2], i-1, srcDETableModel.getColumnIndex("PVs"));
+	        	}
+	        	if (dataElements.get(i).length > 3) {
+	        		srcDETableModel.setValueAt(dataElements.get(i)[3], i-1, srcDETableModel.getColumnIndex("PV Descriptions"));
+	        	}
+	        	if (dataElements.get(i).length > 4) {
+	        		srcDETableModel.setValueAt(dataElements.get(i)[4], i-1, srcDETableModel.getColumnIndex("Title"));
+	        	}
+        	}
+        }
+        
+        
+        /**
+         * 
+         */
+        private void updateMappedColumn() {
+        	
+        	// Clear out 
+        	for(int i = 0; i < srcDETable.getRowCount(); i++) {
+        		srcDETableModel.setValueAt("", i, srcDETableModel.getColumnIndex("Mapped"));
+        	}
+        	
+            for(int i = 0; i < srcDETable.getRowCount(); i++) {
+            	String srcName = (String)srcDETable.getValueAt(i, srcDETableModel.getColumnIndex("Name"));
+
+            	for (int j=0; j < deTable.getRowCount();  j++) {
+            		
+            		String names = (String)deTable.getValueAt(j, deTableModel.getColumnIndex("Source Name"));
+            		if (names != null) {
+	            		String[] nameDef = names.split(";");
+	            		
+	            		for(int k = 0; k < nameDef.length; k++) {
+			            	nameDef[k] = nameDef[k].trim();
+			            	if ( nameDef[k].equals(srcName) ) {
+		            			srcDETableModel.setValueAt(" Yes", i, srcDETableModel.getColumnIndex("Mapped"));
+		            			break;
+		            		}
+			            	
+	            		}
+            		}
+                }
+            }
+
+	    }
+        
+        
+        /**
+         * action performed
+         */
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+            final String command = e.getActionCommand();
+
+            if (command.equalsIgnoreCase("srcDEClose")) {
+                dispose();
+            } 
+            if (command.equalsIgnoreCase("srcDEClear")) {
+            	if (deTable.getSelectedRow() != -1) {
+	            	deTable.setValueAt("", deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Name"));
+	                deTable.setValueAt("", deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Type"));
+	                deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("Source PVs"));
+            	}
+            } 
+            if (command.equalsIgnoreCase("srcDEPairR")) {
+
+            	if (deTable.getSelectedRow() != -1 && srcDETable.getSelectedRow() != -1) {
+            		final int rowRef = deTable.getSelectedRow();
+
+            		if (  !((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs")))).isEmpty() &&
+            			   ((String)(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")))).isEmpty() ) {
+       	            		displayWarning("Source PVs cell is empty.");
+       	            		return;
+                   	}
+
+	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
+	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Type")), rowRef, deTableModel.getColumnIndex("Source Type"));
+	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")),  rowRef, deTableModel.getColumnIndex("Source PVs"));
+            	}
+            	else {
+            		displayWarning("Please select both reference and source data elements.");
+            	}
+            }
+            if (command.equalsIgnoreCase("srcDEPairA")) {
+            	if (deTable.getSelectedRow() != -1 && srcDETable.getSelectedRow() != -1) {
+	                final int rowRef = deTable.getSelectedRow();
+	                  
+	                if (  !((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs")))).isEmpty() &&
+	            			   ((String)(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")))).isEmpty() ) {
+	       	            		displayWarning("Source PVs cell is empty.");
+	       	            		return;
+	                }
+	                
+	                String refPVStr = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs")); 							// Get mapping source PVs
+	                String scrPVStr = (String)srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs"));
+	                //System.out.println("refPVStr = " + refPVStr + " scrPVStr = " + scrPVStr);
+	                if (scrPVStr != null ) 
+	                	scrPVStr.trim();
+
+	                if ( refPVStr != null) {
+	                	refPVStr.trim(); 
+	                	if (refPVStr.equals(scrPVStr)) {
+	                		// do nothing;
+	                	}
+	                	else if (refPVStr.isEmpty()) {
+	                		deTable.setValueAt(scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs
+	                		deTable.setValueAt("", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
+	                	}
+	                	else {
+	                		deTable.setValueAt(refPVStr +";" + scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs
+	                		deTable.setValueAt("", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
+	                	}
+	                }
+	                else {
+	                	deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
+	                	deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Type")), rowRef, deTableModel.getColumnIndex("Source Type"));
+	                	deTable.setValueAt(scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs")); 
+	                }
+	                
+	                if (deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source Name")) != null && 
+	                		srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")) != null) {
+	                	if (((String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source Name"))).isEmpty()) {
+		                	
+		                	deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name")); 
+	                	}
+	                	else if (!((String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source Name"))).equals(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")))) {
+		                		deTable.setValueAt(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source Name")) + ";" + 
+		                				srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
+	                	}
+	                	deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Type")), rowRef, deTableModel.getColumnIndex("Source Type")); 
+	                }
+            	}
+            	else {
+            		displayWarning("Please select both reference and source data elements.");
+            	}        		
+            }
+            if (deTable.getSelectedRow() != -1) {
+            	deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
+            }
+            updateMappedColumn();
+            validateRequired();
+        }
+    }
+    
+    
+    /**
+     *  
+     * 
+     */
+    private class PVMappingDialog extends JDialog implements ActionListener {
+        private static final long serialVersionUID = 859201819000159789L;
+
+        private final PlugInDialogBRICS_Mapper owner;
+
+        LocalTableModel	 srcDETableModel;
+        JScrollPane		 srcDEPane;
+
+
+        public PVMappingDialog(final PlugInDialogBRICS_Mapper owner) {
+            super(owner, false);
+
+            this.owner = owner;
+            init();
+        }
+
+        /**
+         * 
+         */
+        private void init() {
+        	setTitle("Map Permissible Values");
+            final JPanel mainPanel = new JPanel(new GridBagLayout());
+
+            final GridBagConstraints gbc = new GridBagConstraints();
+
+            try {
+                setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+            } catch (final Exception e) {
+                // setIconImage() is not part of the Java 1.5 API - catch any
+                // runtime error on those systems
+            }
+
+            final JPanel OKPanel = new JPanel();
+
+            final JButton cancelButton = new JButton("Cancel");
+            cancelButton.setActionCommand("Cancel");
+            cancelButton.addActionListener(this);
+            cancelButton.setMinimumSize(defaultButtonSize);
+            cancelButton.setPreferredSize(defaultButtonSize);
+            cancelButton.setFont(serif12B);
+            
+            final JButton pairButton = new JButton("Done");
+            pairButton.setActionCommand("Done");
+            pairButton.addActionListener(this);
+            pairButton.setMinimumSize(defaultButtonSize);
+            pairButton.setPreferredSize(defaultButtonSize);
+            pairButton.setFont(serif12B);
+            pairButton.setToolTipText("Done");
+            
+            OKPanel.add(pairButton);
+            OKPanel.add(cancelButton);
+
+            gbc.weightx = 0;
+            gbc.weighty = 0;
+            gbc.gridx = 0;
+            gbc.gridy = 3;
+            gbc.insets = new Insets(10, 5, 10, 5);
+            gbc.gridwidth = 1;
+            mainPanel.add(OKPanel, gbc);
+
+         
+            gbc.gridy = 2;
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            gbc.fill = GridBagConstraints.BOTH;
+            //JScrollPane sPane = buildPVPanel();
+            //mainPanel.add(sPane, gbc);
+
+            getContentPane().add(mainPanel, BorderLayout.CENTER);
+
+            final Dimension dim = getContentPane().getPreferredSize();
+            if (dim.height > 500) {
+                dim.height = 500;
+            }
+            //sPane.setPreferredSize(dim);
+
+            pack();
+            centerInWindow(owner, this);
+           
+            setVisible(true);
+        }
+        
+        private void buildPVPanel() {
+        	
+        	
+        	
+        	
+        }
+        
+        /**
+         * 
+         */
+        private void populateSrcTable() {
+        	
+        	//if (dataElements == null) return;
+        	
+        	//srcDETableModel.setRowCount(dataElements.size()-1);
         	   	
-        	for (int i = 1; i < dataElements.size(); i++) {
+        	/**for (int i = 1; i < dataElements.size(); i++) {
 	        	if (dataElements.get(i).length > 0) {
 	        		srcDETableModel.setValueAt(dataElements.get(i)[0], i-1, 0);				
 	        	}
-	        	if (dataElements.get(i).length > 1) {
-	        		srcDETableModel.setValueAt(dataElements.get(i)[1], i-1, 1);
-	        	}
-	        	if (dataElements.get(i).length > 2) {
-	        		srcDETableModel.setValueAt(dataElements.get(i)[2], i-1, 2);
-	        	}
-	        	if (dataElements.get(i).length > 3) {
-	        		srcDETableModel.setValueAt(dataElements.get(i)[3], i-1, 3);
-	        	}
-	        	if (dataElements.get(i).length > 4) {
-	        		srcDETableModel.setValueAt(dataElements.get(i)[4], i-1, 4);
-	        	}
-        	}
+        	}*/
         	
         }
         
@@ -1510,17 +1851,119 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         public void actionPerformed(final ActionEvent e) {
             final String command = e.getActionCommand();
 
-            if (command.equalsIgnoreCase("srcDECancel")) {
+            if (command.equalsIgnoreCase("Cancel")) {
                 dispose();
             } 
-            if (command.equalsIgnoreCase("srcDEPair")) {
-            	if (deTable.getSelectedRow() != -1 && srcDETable.getSelectedRow() != -1) {
-	                final int row = deTable.getSelectedRow();
-	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), 0), row, 6);
-	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), 1), row, 7);
-	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), 2), row, 8);
-            	}
-        		validateRequired();
+            if (command.equalsIgnoreCase("Done")) {
+            	
+            } 
+        }
+    }
+    
+    
+    /**
+     *  Editor for Source PV.
+     * 
+     */
+    private class srcPVDialog extends JDialog implements ActionListener {
+        private static final long serialVersionUID = 859201819000159789L;
+
+        private final PlugInDialogBRICS_Mapper owner;
+        private JTextField pvsTF = null;
+
+
+        public srcPVDialog(final PlugInDialogBRICS_Mapper owner) {
+            super(owner, false);
+
+            this.owner = owner;
+            init();
+        }
+
+        /**
+         * 
+         */
+        private void init() {
+        	setTitle("Edit Source DE Permissible Values");
+            final JPanel mainPanel = new JPanel(new GridBagLayout());
+
+            final GridBagConstraints gbc = new GridBagConstraints();
+
+            try {
+                setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+            } catch (final Exception e) {
+
+            }
+
+            final JPanel OKPanel = new JPanel();
+
+            final JButton cancelButton = new JButton("Cancel");
+            cancelButton.setActionCommand("Cancel");
+            cancelButton.addActionListener(this);
+            cancelButton.setMinimumSize(defaultButtonSize);
+            cancelButton.setPreferredSize(defaultButtonSize);
+            cancelButton.setFont(serif12B);
+            
+            final JButton pairButton = new JButton("Done");
+            pairButton.setActionCommand("Done");
+            pairButton.addActionListener(this);
+            pairButton.setMinimumSize(defaultButtonSize);
+            pairButton.setPreferredSize(defaultButtonSize);
+            pairButton.setFont(serif12B);
+            pairButton.setToolTipText("Done");
+            
+            OKPanel.add(pairButton);
+            OKPanel.add(cancelButton);
+
+            gbc.weightx = 0;
+            gbc.weighty = 0;
+            gbc.gridx = 0;
+            gbc.gridy = 3;
+            gbc.insets = new Insets(10, 5, 10, 5);
+            gbc.gridwidth = 1;
+            mainPanel.add(OKPanel, gbc);
+
+            pvsTF = new JTextField((String)deTableModel.getValueAt(deTable.getSelectedRow(), 8));
+            pvsTF.setMinimumSize(new Dimension(300, 30));
+            pvsTF.setPreferredSize(new Dimension(300, 30));
+            gbc.gridy = 2;
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            gbc.fill = GridBagConstraints.BOTH;
+            mainPanel.add(pvsTF, gbc);
+
+            getContentPane().add(mainPanel, BorderLayout.CENTER);
+
+            pack();
+            centerInWindow(owner, this);
+           
+            setVisible(true);
+        }
+             
+        
+        /**
+         * action performed
+         */
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+            final String command = e.getActionCommand();
+
+            if (command.equalsIgnoreCase("Cancel")) {
+                dispose();
+            } 
+            if (command.equalsIgnoreCase("Done")) {
+            	String str = pvsTF.getText();
+            	 if (str.matches("^[a-zA-Z0-9;]*$") ) {
+            		 str = pvsTF.getText();
+            		 if (str.endsWith(";")) {
+            			 str = str.substring(0, str.length()-1);
+                 	 }
+            		 deTableModel.setValueAt(str, deTable.getSelectedRow(), 8);
+            		 dispose();
+            	 }
+            	 else {
+            		 displayError("PVs can only contain a-z, A-Z and 0-9 separated by semicolons.");
+            	 }
+            	
             } 
         }
     }
@@ -2369,12 +2812,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     
     /**
-     * This is a simple class that creates a DefaultTableModel with uneditable cells. With the cells uneditable, the table
+     * This is a simple class that creates a DefaultTableModel with editable cells. With the cells editable, the table
      * may react to mouse events, such as double clicking on a row.
      *
      */
 
-    public class LocalFSTableModel extends DefaultTableModel  {
+    public class LocalMappingTableModel extends DefaultTableModel  {
 
         //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -2386,21 +2829,41 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         /**
          * Calls super constructor.
          */
-        public LocalFSTableModel() {
+        public LocalMappingTableModel() {
             super();
+        }
+        
+        /**
+         * Gets the index of the given column name.
+         *
+         * @param   name  Name of column.
+         *
+         * @return  Index of column when created, or -1 if none.
+         */
+        public int getColumnIndex(String name) {
+
+            for (int i = 0; i < columnIdentifiers.size(); i++) {
+
+                if (name.equals(columnIdentifiers.elementAt(i))) {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         /**
-         * Returns false for all cells, so none can be edited.
+         * Some cells can be edited
          *
          * @param   x  x value of cell
          * @param   y  y value of cell
          *
-         * @return  false, always
+         * @return  
          */
         public boolean isCellEditable(int x, int y) {
-            if (y > 5 ) return true;
-            else return false;
+            //if (y > deTableModel.getColumnIndex("Required") && y < deTableModel.getColumnIndex("Source PVs")) return true;
+            //else return false;
+        	return false;
         }
 
        
