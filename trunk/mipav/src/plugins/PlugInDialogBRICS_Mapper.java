@@ -1742,10 +1742,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         private final PlugInDialogBRICS_Mapper owner;
 
-        LocalTableModel	 srcDETableModel;
-        JScrollPane		 srcDEPane;
-
-
         public PVMappingDialog(final PlugInDialogBRICS_Mapper owner) {
             super(owner, false);
 
@@ -1792,18 +1788,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             gbc.weightx = 0;
             gbc.weighty = 0;
             gbc.gridx = 0;
-            gbc.gridy = 3;
+            gbc.gridy = 2;
             gbc.insets = new Insets(10, 5, 10, 5);
             gbc.gridwidth = 1;
             mainPanel.add(OKPanel, gbc);
 
          
-            gbc.gridy = 2;
+            gbc.gridy = 1;
             gbc.weightx = 1;
             gbc.weighty = 1;
             gbc.fill = GridBagConstraints.BOTH;
-            //JScrollPane sPane = buildPVPanel();
-            //mainPanel.add(sPane, gbc);
+            mainPanel.add(buildPVPanel(), gbc);
 
             getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -1819,30 +1814,52 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             setVisible(true);
         }
         
-        private void buildPVPanel() {
+        private JScrollPane buildPVPanel() {
+        	
+        	final GridBagConstraints gbc = new GridBagConstraints();
+        	final JPanel pvPanel = new JPanel(new GridBagLayout());
+        	
+        	final int rowRef = deTable.getSelectedRow();
+        	String srcPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs"));
+        	String[] srcPVStrs = srcPVs.split(";");
         	
         	
+        	gbc.weightx = 1;
+        	gbc.weighty = 1;
+            gbc.gridx = 0;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+        	for (int i = 0; i < srcPVStrs.length; i++) {
+                 gbc.gridy = i;
+                 JButton button = new JButton(srcPVStrs[i]); 
+                 button.setMinimumSize(new Dimension(180, 30));
+                 button.setPreferredSize(new Dimension(180, 30));
+                 button.setFont(serif12B);
+                 pvPanel.add( button , gbc);
+        	}
         	
+        	int length = srcPVStrs.length;
+        	srcPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
+        	srcPVStrs = srcPVs.split(";");
         	
+        	gbc.weightx = 1;
+        	gbc.weightx = 1;
+        	gbc.gridx = 1;
+        	gbc.fill = GridBagConstraints.HORIZONTAL;
+        	for (int i = 0; i < length; i++) {
+                gbc.gridy = i;
+                JComboBox<String> cb = new JComboBox<String>(srcPVStrs);
+                cb.setFont(serif12);
+                cb.setSelectedIndex(i);
+                cb.setMinimumSize(new Dimension(180, 30));
+                cb.setPreferredSize(new Dimension(180, 30));
+                pvPanel.add( cb , gbc);    
+        	}
+            
+        	JScrollPane  sPane = new JScrollPane(pvPanel);
+        	sPane.setBorder(buildTitledBorder(" Map Source PVs to Reference PVs"));
+        	return sPane;
         }
-        
-        /**
-         * 
-         */
-        private void populateSrcTable() {
-        	
-        	//if (dataElements == null) return;
-        	
-        	//srcDETableModel.setRowCount(dataElements.size()-1);
-        	   	
-        	/**for (int i = 1; i < dataElements.size(); i++) {
-	        	if (dataElements.get(i).length > 0) {
-	        		srcDETableModel.setValueAt(dataElements.get(i)[0], i-1, 0);				
-	        	}
-        	}*/
-        	
-        }
-        
+          
         
         /**
          * action performed
@@ -1855,7 +1872,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 dispose();
             } 
             if (command.equalsIgnoreCase("Done")) {
-            	
+            	// Copy mappings to deTable....
             } 
         }
     }
