@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Scanner;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
@@ -13,12 +14,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	// EPS returns the distance from 1.0 to the next larger double-precision number, that is, eps = 2^-52.
     private double EPS;
     // Filename to receive FORTRAN output code
-    private String FORTFL;
+    private String FORTFL = null;
     // Does the domain have any symmetry?
     private boolean SYMTY;
     // If SYMTY is true, are there any reflectional symmetries?
     private boolean REFLN;
     // If SYMTY is true, what are the coordinates of the center of symmetry?
+    private final int MNARC = 100;
     private double CENSY[] = new double[2];
     // If SYMTY is true, number of arcs on the fundamental boundary section
     // If SYMTY is false, number of arcs on the boundary
@@ -26,11 +28,11 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     private int NARCS;
     // NUMDER is of length MNARC
     // NUMDER is initially false
-    private boolean NUMDER[];
+    private boolean NUMDER[] = new boolean[MNARC];
     // ARCTY is of length MNARC
     // Type of arc, 1 = LINE SEGMENT, 2 = CIRCULAR ARC SEGMENT, 3 = CARTESIAN PARAMETRIC FUNCTION
     // 4 = POLAR FUNCTION
-    private int ARCTY[];
+    private int ARCTY[] = new int[MNARC];
     // STAPT is of length MNARC,2
     // Initial point on line, initial point on circle, or initial point on curve
     // IF (SYMTY) THEN
@@ -39,7 +41,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     //ELSE
     // STAPT[NARCS]=STAPT[1]
     //ENDIF
-    private double STAPT[][];
+    private double STAPT[][] = new double[MNARC][2];
     // Start with GMCO = 0
     // For types 2, 3, and 4 increment GMCO and put
     //GMCO=GMCO+1
@@ -60,9 +62,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     // GMCO=GMCO+1
     // RGM[GMCO-1]= (final polar angle in units of PI) *PI
     // PGM is of length MNARC
-    private int PGM[];
+    private int PGM[] = new int[MNARC];
     // RGM is of length 3*MNARC
-    private double RGM[];
+    private double RGM[] = new double[3*MNARC];
     // Start with TXCO = 0
     // For types 3 and 4
     // For each IA = 1 to NARCS do J = 1,2
@@ -70,21 +72,28 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     //PTX[IA-1+(J-1)*MNARC]=TXCO
     // DEFN[TXCO-1][0]= TXT for real part
     // DEFN[TXCO-1][1] = TXT for imaginary part
-    // where TXT = A COMPLEX EXPRESSION
+    // where TXT = A COMPLEX EXPRESSION for TYPE 3 and a REAL EXPRESSION FOR TYPE 4
     // for J = 1 and TYPE = 3 JAVA EXPRESSION FOR PARFUN
     // for J = 2 and TYPE = 3 JAVA EXPRESSION FOR DPARFN
     // for J = 1 and TYPE = 4 JAVA EXPRESSION FOR RADIUS
     // for J = 2 and TYPE = 4 JAVA EXPRESSION FOR RADIUS DERIVATIVE
     // PTX is of length 2*MNARC
-    private int PTX[];
+    private int PTX[] = new int[2*MNARC];
+    private int NTX[]= new int[2*MNARC];
+    //CHARACTER DEFN(MNARC*2)*72
+    // Holds text for real for types 3 and 4 and imaginary parts for type 3
+    // Start imaginary text with ui.  All text following ui is imaginary.
+    String DEFN[]= new String[2*MNARC];
+    private boolean traditionalInput = false;
+    Scanner input = new Scanner(System.in);
     
 	public SymmsIntegralMapping() {
 		
 	}
 	
 	public SymmsIntegralMapping(ModelImage destImg, ModelImage srcImg, String FORTFL, boolean SYMTY,
-			boolean REFLN, double CENSY[], int NARCS, boolean NUMDER[], double STAPT[][],
-			int PGM[], double RGM[], int PTX[]) {
+			boolean REFLN, double CENSY[], int NARCS, boolean NUMDER[], int ARCTY[], double STAPT[][],
+			int PGM[], double RGM[], int PTX[], int NTX[], String DEFN[]) {
 	    super(destImg, srcImg);
 	    this.FORTFL = FORTFL;
 	    this.SYMTY = SYMTY;
@@ -92,10 +101,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	    this.CENSY = CENSY;
 	    this.NARCS = NARCS;
 	    this.NUMDER = NUMDER;
+	    this.ARCTY = ARCTY;
 	    this.STAPT = STAPT;
 	    this.PGM = PGM;
 	    this.RGM = RGM;
 	    this.PTX = PTX;
+	    this.NTX = NTX;
+	    this.DEFN = DEFN;
 	}
 	
 	public void runAlgorithm() {
@@ -205,7 +217,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	//     LOCAL VARIABLES
 	//
 	      int GMCO,IA,I,J,L,SW,
-	          TXCO,TYPE;
+	          TXCO;
+	      int TYPE = 1;
 	      int IER[] = new int[1];
 	      int ORDRG[] = new int[1];
 	      int ORDSG[] = new int[1];
@@ -217,7 +230,6 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	     // CHARACTER TXT*72,TABC*6,FORTFL*72,CH*2,SIG(10)*2,WID(10)*2,REDD*6,
 	     //+FMT1*8,FMT2*9
 	      String TXT;
-	      String FORTFL;
 	      String CH;
 	      String SIG[] = new String[]{"7","8","9","10","11","12","13","14","15","16"};
 	      String WID[] = new String[]{"15","16","17","18","19","20","21","22","23","24"};
@@ -226,16 +238,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	      String FMT2;
 	
 	      //PARAMETER (MNARC=100,TABC='     +',CHNL=20,CHIN=21)
-	      final int MNARC = 100;
 	      final String TABC = "     +";
 	      final int CHNL = 20;
 	      final int CHIN = 21;
-	      int NTX[] = new int[2*MNARC];
-	      //CHARACTER DEFN(MNARC*2)*72
-	      // Holds text for real and imaginary parts
-	      String DEFN[][]= new String[2*MNARC][2];
+	      
 	      File file;
 	      RandomAccessFile raFile = null;
+	      boolean validInput;
 	
 	      //EXTERNAL CHRIN,HEADER,R1MACH,SYINF1,WRFUN1,WRFUN2,WRHEAD,WRSYM1,
 	      //+WRSYM2,WRSYM3,WRTAIL
@@ -263,10 +272,15 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	  	
 	  	  REDD="E"+WID[SW-1]+"."+SIG[SW-1]; 
 	  	  FMT1="("+REDD+")";
-	  	  FMT2="(2"+REDD+")"; 
+	  	  FMT2="(2"+REDD+")";
+	  	  
+	  	  if (traditionalInput) {
+	  	      System.out.println("ENTER FILENAME TO RECEIVE OUTPUT JAVA CODE");  
+	  	      FORTFL = input.next();
+	  	  } // if (traditionalInput)
 	      
 	      //**** WRITE THE SOURCE CODE FOR PARFUN
-	      file = new File(fileDir + "FORTFL");
+	      file = new File(fileDir + FORTFL);
 	      try {
 	          raFile = new RandomAccessFile(file, "rw");
 	      }
@@ -285,8 +299,214 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	      }
 
 	      //OPEN(CHNL,FILE=FORTFL)
+	      
+	      if (traditionalInput) {
+	    	  validInput = false;
+	    	  while (!validInput) {
+	    	      System.out.println("DOES THE DOMAIN HAVE ANY SYMMETRY (Y/N)?");
+	    	      String sym = input.next();
+	    	      String firstSym = sym.substring(0,1);
+	    	      if (firstSym.equalsIgnoreCase("Y")) {
+	    	    	  SYMTY = true;
+	    	    	  validInput = true;
+	    	      }
+	    	      else if (firstSym.equalsIgnoreCase("N")) {
+	    	    	  SYMTY = false;
+	    	    	  validInput = true;
+	    	      }
+	    	      else {
+	    	    	  System.out.println(sym + " is not a valid response");
+	    	      }
+	    	  } // while (!validInput)
+	    	  
+	    	  if (SYMTY) {
+	    		  validInput = false;
+		    	  while (!validInput) {
+		    	      System.out.println("ARE THERE ANY REFLECTIONAL SYMMETRIES (Y/N)?");
+		    	      String ref = input.next();
+		    	      String firstRef = ref.substring(0,1);
+		    	      if (firstRef.equalsIgnoreCase("Y")) {
+		    	    	  REFLN = true;
+		    	    	  validInput = true;
+		    	      }
+		    	      else if (firstRef.equalsIgnoreCase("N")) {
+		    	    	  REFLN = false;
+		    	    	  validInput = true;
+		    	      }
+		    	      else {
+		    	    	  System.out.println(ref + " is not a valid response");
+		    	      }
+		    	  } // while (!validInput)	
+		    	  
+		    	  System.out.println("What are the coordinates of the center of symmetry (X Y)?");
+		    	  CENSY[0] = input.nextDouble();
+		    	  CENSY[1] = input.nextDouble();
+		    	  validInput = false;
+		    	  while (!validInput) {
+		    	      System.out.println("How many arcs are there on the fundamental boundary section?");
+		    	      NARCS = input.nextInt();
+		    	      if (NARCS <= MNARC-1) {
+		    	    	  validInput = true;
+		    	      }
+		    	      else {
+		    	    	  System.out.println("NARCS must be <= " + (MNARC-1));
+		    	      }
+		    	  } // while (!validInput)
+	    	  } // if (SYMTY)
+	    	  else { // !SYMTY
+	    		  validInput = false;
+		    	  while (!validInput) {
+		    		  System.out.println("How many arcs are there on the boundary?");
+		    		  NARCS = input.nextInt();
+		    		  if (NARCS <= MNARC-1) {
+		    	    	  validInput = true;
+		    	      }
+		    	      else {
+		    	    	  System.out.println("NARCS must be <= " + (MNARC-1));
+		    	      }
+		    	  } // while (!validInput)
+	    	  } // else !SYMTY
+	    	  
+	    	  GMCO = 0;
+	    	  TXCO = 0;
+	    	  
+	    	  for (IA = 1; IA <= NARCS; IA++) {
+	    		    NUMDER[IA-1] = false; 
+	    		    validInput = false;
+	    		    while (!validInput) {
+	    		        System.out.println("ENTER THE TYPE OF ARC(1-4) for ARC NUMBER " + IA);
+	    		        TYPE = input.nextInt();
+	    		        if ((TYPE >= 1) && (TYPE <= 4)) {
+	    		        	validInput = true;
+	    		        }
+	    		        else {
+	    		        	System.out.println("TYPE MUST BE BETWEEN 1 and 4");
+	    		        }
+	    		    } // while (!validInput)
+	    		    if (TYPE == 1) {
+	    		        ARCTY[IA-1] = TYPE;	
+	    		        System.out.println("What are the coordinates of the initial point on the line (X Y)?");
+	    		        STAPT[IA-1][0] = input.nextDouble();
+	    		        STAPT[IA-1][1] = input.nextDouble();
+	    		    } // if (TYPE == 1)
+	    		    else if (TYPE == 2) {
+	    		    	ARCTY[IA-1] = TYPE;	
+	    		        System.out.println("What are the coordinates of the initial point on the circle (X Y)?");
+	    		        STAPT[IA-1][0] = input.nextDouble();
+	    		        STAPT[IA-1][1] = input.nextDouble();
+	    		        System.out.println("What are the coordinates of the center of the circle (X Y)?");
+	    		        X = input.nextDouble();
+	    		        Y = input.nextDouble();	
+	    		        System.out.println("What is the signed angle subtended at center (in units of PI)?");
+	    		        ALPHA = input.nextDouble();
+	    		        GMCO=GMCO+1;
+		                PGM[IA-1]=GMCO;
+		                RGM[GMCO-1]=X;
+		                GMCO=GMCO+1;
+		                RGM[GMCO-1]=Y;
+		                GMCO=GMCO+1;
+		                RGM[GMCO-1]=ALPHA*PI;
+	    		    } // else if (TYPE == 2)
+	    		    else if ((TYPE == 3) || (TYPE == 4)) {
+	    		    	ARCTY[IA-1] = TYPE;	
+	    		        System.out.println("What are the coordinates of the initial point on the curve (X Y)?");
+	    		        STAPT[IA-1][0] = input.nextDouble();
+	    		        STAPT[IA-1][1] = input.nextDouble();
+	    		        if (TYPE == 3) {
+	    		        	System.out.println("Enter the initial and final parameter values (X Y)");
+	    		        }
+	    		        else {
+	    		        	System.out.println("Enter the initial and final polar values (in angles of PI) (X Y)");
+	    		        }
+	    		        X = input.nextDouble();
+	    		        Y = input.nextDouble();
+	    		        GMCO=GMCO+1;
+		                PGM[IA-1]=GMCO;
+		                if (TYPE == 4) {
+		                  RGM[GMCO-1]=X*PI;
+		                  GMCO=GMCO+1;
+		                  RGM[GMCO-1]=Y*PI;
+		                }
+		                else {
+		                  RGM[GMCO-1]=X;
+		                  GMCO=GMCO+1;
+		                  RGM[GMCO-1]=Y;
+		                }
+		                for (J = 1; J <= 2; J++) {
+		                	if (J == 1 && TYPE == 3) {
+		                        System.out.println("ENTER JAVA EXPRESSION ENDING IN // FOR PARFUN");
+		                        System.out.println("PUT REAL PART ui IMAGINARY PART");
+		                	}
+		                	else if (J == 2 && TYPE == 3) {          
+		                        System.out.println("ENTER JAVA EXPRESSION ENDING IN // FOR DPARFN");
+		                        System.out.println("PUT REAL PART ui IMAGINARY PART");
+		                	}
+		                	else if (J == 1 && TYPE == 4) {
+		                        System.out.println("ENTER JAVA EXPRESSION ENDING IN // FOR RADIUS");
+		                	}
+		                	else {
+		                        System.out.println("ENTER JAVA EXPRESSION ENDING IN // FOR RADIUS DERIVATIVE");
+		                	}
+		      
+		                    TXCO=TXCO+1;
+		                    PTX[IA-1+(J-1)*MNARC]=TXCO;
+		                    I=1;
+	
+		                    TXT = input.next();
+		                    L = -1;
+		                    while (L == -1) {
+			                    L = TXT.indexOf("//");
+			                    if (L == -1) {
+			                    	DEFN[TXCO-1]=TABC+TXT;
+			                        I=I+1;
+			                        TXCO=TXCO+1;
+			                    } // if (L == -1)
+		                    } // while (L == -1)
+		                    NTX[IA-1+(J-1)*MNARC]=I;
+		                    if (L == 0) {
+		                        DEFN[TXCO-1]=TABC;
+		                        NUMDER[IA-1] = true;
+		                    }
+		                    else {
+		                        DEFN[TXCO-1]=TABC+TXT.substring(0,L);
+		                    }
+                            if ((J == 1) && (TYPE == 4)) {
+                            	System.out.println("(... = ZRAD)");
+                            }
+		                } // for (J = 1; J <= 2; J++)
+	    		    } // else if ((TYPE == 3) || (TYPE == 4))
+	    	  } // for (IA = 1; IA <= NARCS; IA++)
+	    	  
+	    	  if (SYMTY) {
+	              System.out.println("ENTER THE COORDINATES OF FINAL POINT ON THIS LAST ARC (X Y)");
+	              STAPT[NARCS][0] = input.nextDouble();
+	              STAPT[NARCS][1] = input.nextDouble();
+	    	  }
+	    	  else {
+	              STAPT[NARCS][0]=STAPT[0][0];
+	              STAPT[NARCS][1]=STAPT[0][1];
+	    	  }
+              
+	    	  validInput = false;
+  		      while (!validInput) {
+	    	      System.out.println("END OF INPUT PHASE; CONTINUE WITH PROCESSING (Y/N)?");
+	    	      String term = input.next();
+	    	      String firstTerm = term.substring(0,1);
+	    	      if (firstTerm.equalsIgnoreCase("Y")) {
+	    	    	  validInput = true;
+	    	      }
+	    	      else if (firstTerm.equalsIgnoreCase("N")) {
+	    	    	  validInput = true;
+	    	    	  setCompleted(false);
+	    	    	  return;
+	    	      }
+	    	      else {
+	    	    	  System.out.println(term + " is not a valid response");
+	    	      }
+	    	  } // while (!validInput)
+	      } // if (traditionalInput)
 	      HEADER("PARFUN",REDD,raFile);
-	      /*if (SYMTY) {
+	      if (SYMTY) {
 	        SYINF1(ORDRG,ORDSG,RTUNI,U2,REFLN,CENSY,STAPT[0],
 	                   STAPT[NARCS],IER);
 	        if (IER[0] > 0) {
@@ -312,32 +532,40 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	        WRSYM2(NARCS,ORDRG[0],CENSY,REFLN,CHNL, raFile);
 	      }
 	      else {
-	        CALL WRFUN1(NARCS,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,CHNL,
-	     +             'IA','TT','PARFUN',REDD)
+	        WRFUN1(NARCS,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,CHNL,
+	               "IA","TT","PARFUN",REDD,raFile);
 	      }
-	C
-	      WRITE(CHNL,'(A1)') 'C'
-	      WRITE(CHNL,'(A9)') '      END'
-	C
-	C**** WRITE THE SOURCE CODE FOR DPARFN
-	C
-	      WRITE(CHNL,'(A40)') 'C...........................................'
-	      CALL HEADER('DPARFN',REDD,CHNL)
-	      IF (SYMTY) THEN
-	        CALL WRSYM1(NARCS,ORDRG,ORDSG,RTUNI,U2,CENSY,REFLN,.FALSE.,REDD,
-	     +              CHNL)
-	        IF (REFLN) THEN
-	          CH='TS'
-	        ELSE
-	          CH='TT'
-	        ENDIF
-	        CALL WRFUN2(NARCS,MNARC,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,
-	     +              CHNL,'IB',CH,'ZETA  ',NUMDER,REDD)
+	
+	      try {
+	          raFile.writeBytes("//\n");
+	          raFile.writeBytes("}\n");
+	  
+	         // **** WRITE THE SOURCE CODE FOR DPARFN
+	     
+	         raFile.writeBytes("//...........................................\n");
+	      }
+	      catch (IOException e) {
+	    	  MipavUtil.displayError("IOException " + e + " in PARGEN");
+	    	  System.exit(-1);
+	      }
+	      HEADER("DPARFN",REDD,raFile);
+	      /*if (SYMTY) {
+	        WRSYM1(NARCS,ORDRG[0],ORDSG[0],RTUNI,U2,CENSY,REFLN,false,REDD,
+	               CHNL, raFile);
+	        if (REFLN) {
+	          CH="TS";
+	        }
+	        else {
+	          CH="TT";
+	        }
+	        WRFUN2(NARCS,MNARC,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,
+	                   CHNL,"IB",CH,"ZETA  ",NUMDER,REDD, raFile);
 	        CALL WRSYM3(NARCS,ORDRG,REFLN,CHNL)
-	      ELSE
+	      } // if (SYMTY)
+	      else {
 	        CALL WRFUN2(NARCS,MNARC,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,
 	     +              CHNL,'IA','TT','DPARFN',NUMDER,REDD)
-	      ENDIF
+	      }
 	C
 	      WRITE(CHNL,'(A1)') 'C'
 	      WRITE(CHNL,'(A9)') '      END'
@@ -906,7 +1134,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
       }
 
       private void WRFUN1(int NARCS,double STAPT[][],int ARCTY[],int PGM[], 
-    		  double RGM[], int PTX[], int NTX[], String DEFN[][],
+    		  double RGM[], int PTX[], int NTX[], String DEFN[],
     		  int CHNL, String CHIA, String CHTT, String VAR, String REDD, RandomAccessFile raFile) {
           //COMPLEX STAPT(*)
           //CHARACTER DEFN(*)*72,CHIA*2,CHTT*2,VAR*6,REDD*6
@@ -931,7 +1159,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
           FMT2="(A21,I3,A6)";
           double STAPT2[][];
           double RGM2[];
-          String DEFN2[][];
+          String DEFN2[];
     		
     	  try {
 	          for (IA=1; IA <= NARCS; IA++) {
@@ -945,10 +1173,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	    		  for (K = I; K <= RGM.length; K++) {
 	    			  RGM2[K-I] = RGM[K-1];
 	    		  }
-	    		  DEFN2 = new String[DEFN.length-J+1][2];
+	    		  DEFN2 = new String[DEFN.length-J+1];
 	    		  for (K = J; K <= DEFN.length; K++) {
-	    			  DEFN2[K-J][0] = DEFN[K-1][0];
-	    			  DEFN2[K-J][1] = DEFN[K-1][1];
+	    			  DEFN2[K-J] = DEFN[K-1];
 	    		  }
 	    		  if (NARCS == 1) {
 	    		      PTFUN1(ARCTY[IA-1],STAPT2,RGM2,NTX[IA-1],DEFN2,
@@ -978,7 +1205,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
       } // private void WRFUN1
 
       private void PTFUN1(int TYPE, double STAPT[][], double RGM[],int NTX,
-    		  String TXT[][],int CHNL, String CHTT,String VAR, String REDD,
+    		  String TXT[],int CHNL, String CHTT,String VAR, String REDD,
     		  RandomAccessFile raFile) {
       
           //COMPLEX STAPT(*)
@@ -1048,12 +1275,33 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         raFile.writeBytes(VAR + "[0] = ");
         // NTX = 1 if statements are entered without newlines for multiple lines
         for (I  = 1; I <= NTX; I++) {
-        	raFile.writeBytes(TXT[I-1][0]);
+        	int index = TXT[I-1].indexOf("ui");
+        	String realString = null;
+        	if (index == -1) {
+        		realString = TXT[I-1];
+        	}
+        	else {
+        		realString = TXT[I-1].substring(0, index);
+        	}
+        	if ((index == -1) || (index > 0)) {
+        	    raFile.writeBytes(realString);
+        	}
+        	if (I == NTX) {
+        		raFile.writeBytes(";\n");
+        	}
         }
         raFile.writeBytes(VAR + "[1] = ");
         // NTX = 1 if statements are entered without newlines for multiple lines
         for (I  = 1; I <= NTX; I++) {
-        	raFile.writeBytes(TXT[I-1][1]);
+        	int index = TXT[I-1].indexOf("ui");
+        	String imagString = null;
+        	if ((index >= 0) && (index+2 < TXT[I-1].length())) {
+        		imagString = TXT[I-1].substring(index+2);
+        		raFile.writeBytes(imagString);
+        	}
+        	if (I == NTX) {
+        		raFile.writeBytes(";\n");
+        	}
         }
         raFile.writeBytes("//\n");
       } // else if (TYPE == 3)
@@ -1063,18 +1311,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         raFile.writeBytes("//\n");
         raFile.writeBytes("T[0] = " + MD + "+" + CHTT + "[0] * " + HA + ";\n");
         raFile.writeBytes("T[1] = " + MD + "+" + CHTT + "[1] * " + HA + ";\n");
-        raFile.writeBytes("     ZRAD[0] = ");
+        raFile.writeBytes("     ZRAD = ");
         // NTX = 1 if statements are entered without newlines for multiple lines
         for (I  = 1; I <= NTX; I++) {
-        	raFile.writeBytes(TXT[I-1][0]);
+        	raFile.writeBytes(TXT[I-1]);
         }
-        raFile.writeBytes("     ZRAD[1] = ");
-        // NTX = 1 if statements are entered without newlines for multiple lines
-        for (I  = 1; I <= NTX; I++) {
-        	raFile.writeBytes(TXT[I-1][1]);
-        }
-        raFile.writeBytes(VAR + "[0] = Math.exp(-T[1])*(ZRAD[0] * Math.cos(T[0]) - ZRAD[1] * Math.sin(T[0]));\n");
-        raFile.writeBytes(VAR + "[1] = Math.exp(-T[1])*(ZRAD[0] * Math.sin(T[0]) + ZRAD[1] * Math.cos(T[0]));\n");
+        raFile.writeBytes(VAR + "[0] = Math.exp(-T[1])*(ZRAD * Math.cos(T[0]));\n");
+        raFile.writeBytes(VAR + "[1] = Math.exp(-T[1])*(ZRAD * Math.sin(T[0]));\n");
         raFile.writeBytes("//\n");
       }
       } // try 
@@ -1220,6 +1463,172 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
           }
 
       } // private void WRSYM2
+
+      private void WRFUN2(int NARCS,int MNARC, double STAPT[][], int ARCTY[], int PGM[],double RGM[],
+    		  int PTX[],int NTX[],String DEFN[],int CHNL,String CHIA,String CHTT, String VAR,
+    		  boolean NUMDER[], String REDD, RandomAccessFile raFile) {
+  
+          // COMPLEX STAPT(*)
+    	  // CHARACTER DEFN(*)*72,CHIA*2,CHTT*2,VAR*6,REDD*6
+    		
+          //**** TO WRITE THE SOURCE CODE FOR DPARFN IN THE CASE WHERE NO
+    	  //**** SYMMETRY IS INVOLVED.
+    		
+    	  //.......................................................................
+    	  //     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    	  //     LAST UPDATE: 4 AUG 1990
+    	  //.......................................................................
+    		
+    	  //     LOCAL VARIABLES
+    		
+    	  int IA,I,J1,J2,N1,N2;
+    	  String TX1, TX2, FMT1, FMT2;
+    	  //CHARACTER TX1*16,TX2*21,FMT1*11,FMT2*11
+    	  //EXTERNAL PTFUN2
+    	  double STAPT2[][];
+    	  double RGM2[];
+    	  String DEFN2[];
+    	  String DEFN3[];
+    	  int K;
+    		
+          TX1="      if ("+CHIA+" == ";
+    	  TX2="      else if ("+CHIA+" == ";
+    	  FMT1="(A16,I3,A6)";
+    	  FMT2="(A21,I3,A6)";
+    		
+    	  try {
+    	  for (IA=1; IA <= NARCS; IA++) {
+    		        I=PGM[IA-1];
+    		        J1=PTX[IA-1];
+    		        J2=PTX[IA+MNARC-1];
+    		        N1=NTX[IA-1];
+    		        N2=NTX[IA+MNARC-1];
+    		        STAPT2 = new double[STAPT.length-IA+1][2];
+    		        for (K = IA; K <= STAPT.length; K++) {
+    		        	STAPT2[K-IA][0] = STAPT[K-1][0];
+    		        	STAPT2[K-IA][1] = STAPT[K-1][1];
+    		        }
+    		        RGM2 = new double[RGM.length-I+1];
+    		        for (K = I; K <= RGM.length; K++) {
+    		        	RGM2[K-I] = RGM[K-1];
+    		        }
+    		        DEFN2 = new String[DEFN.length-J1+1];
+    		        for (K = J1; K <= DEFN.length; K++) {
+    		        	DEFN2[K-J1] = DEFN[K-1];
+    		        }
+    		        DEFN3 = new String[DEFN.length-J2+1];
+    		        for (K = J2; K <= DEFN.length; K++) {
+    		        	DEFN3[K-J2] = DEFN[K-1];
+    		        }
+    		        if (NARCS == 1) {
+    		          PTFUN2(ARCTY[IA-1],STAPT2,RGM2,N1,DEFN2,
+    		                    N2,DEFN3,CHNL,CHTT,VAR," 1",NUMDER[IA-1],REDD,raFile);
+    		        }
+    		        else { 
+    		          if (IA == 1) {
+    		        	raFile.writeBytes(TX1 + IA + ") {\n");
+    		          }
+    		          else if (IA == NARCS) {
+    		        	raFile.writeBytes("      else {\n");
+    		          }
+    		          else {
+    		        	raFile.writeBytes(TX2 + IA + ") {\n");
+    		          }
+    		          PTFUN2(ARCTY[IA-1],STAPT2,RGM2,N1,DEFN2,
+    		                 N2,DEFN3,CHNL,CHTT,VAR,CHIA,NUMDER[IA-1],REDD,raFile);
+    		          if (IA == NARCS) {
+    		        	  raFile.writeBytes("      }\n");
+    		          }
+    		        } // else
+    	  } // for (IA=1; IA <= NARCS; IA++)
+    	  } // try 
+    	  catch (IOException e) {
+    		  MipavUtil.displayError("IOException " + e + " in WRFUN2");
+    		  System.exit(-1);
+    	  }
+    		
+      } // private void WRFUN2
+      
+      private void PTFUN2(int TYPE,double STAPT[][], double RGM[],int NTX1, String TXT1[],int NTX2,
+          String TXT2[],int CHNL, String CHTT, String VAR, String CHIA, boolean NUMDER, String REDD,
+          RandomAccessFile raFile) {
+          //COMPLEX STAPT(*)
+          //CHARACTER TXT1(*)*72,TXT2(*)*72,CHTT*2,VAR*6,CHIA*2,REDD*6
+    		/*C
+    		C.......................................................................
+    		C     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    		C     LAST UPDATE: 8 AUG 1990
+    		C.......................................................................C
+    		C**** LOCAL VARIABLES
+    		C
+    		      INTEGER I
+    		      REAL HA,MD,RAD,A,R
+    		      COMPLEX C1,CENTR
+    		      CHARACTER TX1*4,TX1B*5,TX2*13,TX2B*14,TX3*39,
+    		     +FMT1*25,FMT2*15,FMT3*15,FMT4*25,FMT5*24
+    		C
+    		      TX1='+'//CHTT//'*'
+    		      TX1B=TX1//'('
+    		      TX2='      '//VAR//'='
+    		      TX2B=TX2//'('
+    		      TX3=TX2//'(ZDER+UI*ZRAD)*EXP(UI*T)*('
+    		C
+    		      FMT1='(A14,'//REDD//',A1,'//REDD//',A2)'
+    		      FMT2='(A39,'//REDD//',A1)'
+    		      FMT3='(A13,'//REDD//',A2)'
+    		      FMT4='(A14,'//REDD//',A5,'//REDD//',A3)'
+    		      FMT5='(A8,'//REDD//',A5,'//REDD//',A1)'
+    		C
+    		      IF (TYPE.EQ.1) THEN
+    		        C1=5E-1*(STAPT(2)-STAPT(1))
+    		        WRITE(CHNL,'(A1)') 'C'
+    		        R=REAL(C1)
+    		        A=AIMAG(C1)
+    		        WRITE(CHNL,FMT1) TX2B,R,',',A,') '
+    		        WRITE(CHNL,'(A1)') 'C'
+    		      ELSE IF (TYPE.EQ.2) THEN
+    		        CENTR=CMPLX(RGM(1),RGM(2))
+    		        C1=STAPT(1)-CENTR
+    		        HA=5E-1*RGM(3)
+    		        MD=ATAN2(AIMAG(C1),REAL(C1))+HA
+    		        RAD=ABS(C1)
+    		        WRITE(CHNL,'(A1)') 'C' 
+    		        WRITE(CHNL,FMT4) TX2,RAD,'*UI*(',HA,') *'
+    		        WRITE(CHNL,FMT4) '     +EXP(UI*(',MD,TX1B,HA,')))'
+    		        WRITE(CHNL,'(A1)') 'C'  
+    		      ELSE IF (NUMDER) THEN
+    		        WRITE(CHNL,'(A1)') 'C'
+    		        WRITE(CHNL,'(A26)') TX2,'ZDPARF(',CHIA,',',CHTT,')'     
+    		        WRITE(CHNL,'(A1)') 'C'
+    		      ELSE IF (TYPE.EQ.3) THEN
+    		        MD=5E-1*(RGM(2)+RGM(1))
+    		        HA=5E-1*(RGM(2)-RGM(1))
+    		        WRITE(CHNL,'(A1)') 'C'
+    		        WRITE(CHNL,FMT5) '      T=',MD,TX1B,HA,')'
+    		        WRITE(CHNL,FMT3) TX2,HA,'*('
+    		        DO 10 I=1,NTX2
+    		          WRITE(CHNL,'(A72)') TXT2(I)
+    		10      CONTINUE
+    		        WRITE(CHNL,'(A7)') '     +)'
+    		        WRITE(CHNL,'(A1)') 'C'
+    		      ELSE
+    		        MD=5E-1*(RGM(2)+RGM(1))
+    		        HA=5E-1*(RGM(2)-RGM(1))
+    		        WRITE(CHNL,'(A1)') 'C'
+    		        WRITE(CHNL,FMT5) '      T=',MD,TX1B,HA,')'
+    		        WRITE(CHNL,'(A11)') '      ZRAD='
+    		        DO 20 I=1,NTX1
+    		          WRITE(CHNL,'(A72)') TXT1(I)
+    		20      CONTINUE
+    		        WRITE(CHNL,'(A11)') '      ZDER='
+    		        DO 30 I=1,NTX2
+    		          WRITE(CHNL,'(A72)') TXT2(I)
+    		30      CONTINUE
+    		        WRITE(CHNL,FMT2) TX3,HA,')'
+    		        WRITE(CHNL,'(A1)') 'C'
+    		      ENDIF
+    		C*/
+    		}
 
 
       
