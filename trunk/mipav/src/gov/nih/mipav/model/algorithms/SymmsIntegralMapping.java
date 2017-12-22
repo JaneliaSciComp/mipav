@@ -86,6 +86,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     String DEFN[]= new String[2*MNARC];
     private boolean traditionalInput = false;
     Scanner input = new Scanner(System.in);
+    private double zzset[][] = new double[400][2];
     
 	public SymmsIntegralMapping() {
 		
@@ -222,11 +223,10 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	      int IER[] = new int[1];
 	      int ORDRG[] = new int[1];
 	      int ORDSG[] = new int[1];
-	      double ALPHA,PI,R1MACH,X,Y;
+	      double ALPHA,PI,X,Y;
 	      //COMPLEX CENSY,RTUNI,U2
 	      double RTUNI[] = new double[2];
 	      double U2[] = new double[2];
-	      boolean CHRIN,CHCK;
 	     // CHARACTER TXT*72,TABC*6,FORTFL*72,CH*2,SIG(10)*2,WID(10)*2,REDD*6,
 	     //+FMT1*8,FMT2*9
 	      String TXT;
@@ -234,13 +234,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	      String SIG[] = new String[]{"7","8","9","10","11","12","13","14","15","16"};
 	      String WID[] = new String[]{"15","16","17","18","19","20","21","22","23","24"};
 	      String REDD;
-	      String FMT1;
-	      String FMT2;
+	      //String FMT1;
+	      //String FMT2;
 	
 	      //PARAMETER (MNARC=100,TABC='     +',CHNL=20,CHIN=21)
 	      final String TABC = "     +";
 	      final int CHNL = 20;
-	      final int CHIN = 21;
+	      //final int CHIN = 21;
 	      
 	      File file;
 	      RandomAccessFile raFile = null;
@@ -271,8 +271,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	  	  //**** POINT OUTPUT
 	  	
 	  	  REDD="E"+WID[SW-1]+"."+SIG[SW-1]; 
-	  	  FMT1="("+REDD+")";
-	  	  FMT2="(2"+REDD+")";
+	  	  //FMT1="("+REDD+")";
+	  	  //FMT2="(2"+REDD+")";
 	  	  
 	  	  if (traditionalInput) {
 	  	      System.out.println("ENTER FILENAME TO RECEIVE OUTPUT JAVA CODE");  
@@ -549,7 +549,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	    	  System.exit(-1);
 	      }
 	      HEADER("DPARFN",REDD,raFile);
-	      /*if (SYMTY) {
+	      if (SYMTY) {
 	        WRSYM1(NARCS,ORDRG[0],ORDSG[0],RTUNI,U2,CENSY,REFLN,false,REDD,
 	               CHNL, raFile);
 	        if (REFLN) {
@@ -560,20 +560,24 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	        }
 	        WRFUN2(NARCS,MNARC,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,
 	                   CHNL,"IB",CH,"ZETA  ",NUMDER,REDD, raFile);
-	        CALL WRSYM3(NARCS,ORDRG,REFLN,CHNL)
+	        WRSYM3(NARCS,ORDRG[0],REFLN,CHNL, raFile);
 	      } // if (SYMTY)
 	      else {
-	        CALL WRFUN2(NARCS,MNARC,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,
-	     +              CHNL,'IA','TT','DPARFN',NUMDER,REDD)
+	          WRFUN2(NARCS,MNARC,STAPT,ARCTY,PGM,RGM,PTX,NTX,DEFN,
+	                 CHNL,"IA","TT","DPARFN",NUMDER,REDD, raFile);
 	      }
-	C
-	      WRITE(CHNL,'(A1)') 'C'
-	      WRITE(CHNL,'(A9)') '      END'
-	      CLOSE(CHNL)
-	C
-	999   CONTINUE
-	      CALL WRTAIL(6,0,IER)
-	C*/
+	
+	      try {
+		      raFile.writeBytes("//\n");
+		      raFile.writeBytes("}\n");
+		      raFile.close();
+	      }
+	      catch (IOException e) {
+	    	  MipavUtil.displayError("IOException " + e + " in PARGEN");
+	    	  System.exit(-1);
+	      }
+	      WRTAIL(6,0,IER[0], null);
+	
 	} // public void PARGEN
     private void HEADER(String TXT, String REDD, RandomAccessFile raFile) {
 
@@ -993,11 +997,11 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     		//COMPLEX ZT
     		double ZT[] = new double[2];
     		boolean NEEDC;
-    		String FMT;
+    		//String FMT;
     		double cr[] = new double[1];
     		double ci[] = new double[1];
     		
-    		FMT="(A12,"+REDD+",A1,"+REDD+",A2)";
+    		//FMT="(A12,"+REDD+",A1,"+REDD+",A2)";
     		
     		try {
 	    		if (PARFUN) {
@@ -1038,7 +1042,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	    		    raFile.writeBytes("//\n");
 	    		}
 	    		
-	    		FMT="(A7,"+REDD+",A1,"+REDD+",A2)";
+	    		//FMT="(A7,"+REDD+",A1,"+REDD+",A2)";
 	    		
 	    	    if (ORDRG >= 2) {
 	    	    	raFile.writeBytes("double WW[] = new double["+(ORDRG-1)+"];\n");
@@ -1151,12 +1155,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	
           int IA,I,J,K;
     	  //CHARACTER TX1*16,TX2*21,FMT1*11,FMT2*11
-          String TX1,TX2,FMT1,FMT2;
+          String TX1,TX2;
+          //String FMT1,FMT2;
     	  // EXTERNAL PTFUN1
     	  TX1 = "     if("+CHIA+ " == ";
     	  TX2 = "     else if("+CHIA+ " == ";
-          FMT1="(A16,I3,A6)";
-          FMT2="(A21,I3,A6)";
+          //FMT1="(A16,I3,A6)";
+          //FMT2="(A21,I3,A6)";
           double STAPT2[][];
           double RGM2[];
           String DEFN2[];
@@ -1218,20 +1223,21 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
           //**** LOCAL VARIABLES
 
       int I;
-      double HA,MD,RAD,A,R;
+      double HA,MD,RAD;
       double C1[] = new double[2];
       double C2[] = new double[2];
       double CENTR[] = new double[2];
       //COMPLEX C1,C2,CENTR
-      String TX1, TX1B, TX2, TX2B, CTX1B, FMT1, FMT2, FMT3, FMT4, FMT5;
+      //String TX1, TX1B, TX2;
+      //String TX2B, CTX1B, FMT1, FMT2, FMT3, FMT4, FMT5;
       //CHARACTER TX1*4,TX1B*5,TX2*13,TX2B*14,CTX1B*10,
       //+FMT1*25,FMT2*25,FMT3*14,FMT4*25,FMT5*24
 
-      TX1 = "+"+CHTT+"*";
-      TX1B = TX1 + "(";
-      CTX1B="     " + TX1B;
-      TX2="      "+VAR+" = ";
-      TX2B=TX2+"(";
+      //TX1 = "+"+CHTT+"*";
+      //TX1B = TX1 + "(";
+      //CTX1B="     " + TX1B;
+      //TX2="      "+VAR+" = ";
+      //TX2B=TX2+"(";
 
       //FMT1='(A14,'//REDD//',A1,'//REDD//',A2)'
       //FMT2='(A10,'//REDD//',A1,'//REDD//',A1)'
@@ -1482,7 +1488,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	  //     LOCAL VARIABLES
     		
     	  int IA,I,J1,J2,N1,N2;
-    	  String TX1, TX2, FMT1, FMT2;
+    	  String TX1, TX2;
+    	  //String FMT1, FMT2;
     	  //CHARACTER TX1*16,TX2*21,FMT1*11,FMT2*11
     	  //EXTERNAL PTFUN2
     	  double STAPT2[][];
@@ -1493,8 +1500,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     		
           TX1="      if ("+CHIA+" == ";
     	  TX2="      else if ("+CHIA+" == ";
-    	  FMT1="(A16,I3,A6)";
-    	  FMT2="(A21,I3,A6)";
+    	  //FMT1="(A16,I3,A6)";
+    	  //FMT2="(A21,I3,A6)";
     		
     	  try {
     	  for (IA=1; IA <= NARCS; IA++) {
@@ -1554,81 +1561,624 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
           RandomAccessFile raFile) {
           //COMPLEX STAPT(*)
           //CHARACTER TXT1(*)*72,TXT2(*)*72,CHTT*2,VAR*6,CHIA*2,REDD*6
-    		/*C
-    		C.......................................................................
-    		C     AUTHOR: DAVID HOUGH, ETH, ZUERICH
-    		C     LAST UPDATE: 8 AUG 1990
-    		C.......................................................................C
-    		C**** LOCAL VARIABLES
-    		C
-    		      INTEGER I
-    		      REAL HA,MD,RAD,A,R
-    		      COMPLEX C1,CENTR
-    		      CHARACTER TX1*4,TX1B*5,TX2*13,TX2B*14,TX3*39,
-    		     +FMT1*25,FMT2*15,FMT3*15,FMT4*25,FMT5*24
-    		C
-    		      TX1='+'//CHTT//'*'
-    		      TX1B=TX1//'('
-    		      TX2='      '//VAR//'='
-    		      TX2B=TX2//'('
-    		      TX3=TX2//'(ZDER+UI*ZRAD)*EXP(UI*T)*('
-    		C
-    		      FMT1='(A14,'//REDD//',A1,'//REDD//',A2)'
-    		      FMT2='(A39,'//REDD//',A1)'
-    		      FMT3='(A13,'//REDD//',A2)'
-    		      FMT4='(A14,'//REDD//',A5,'//REDD//',A3)'
-    		      FMT5='(A8,'//REDD//',A5,'//REDD//',A1)'
-    		C
-    		      IF (TYPE.EQ.1) THEN
-    		        C1=5E-1*(STAPT(2)-STAPT(1))
-    		        WRITE(CHNL,'(A1)') 'C'
-    		        R=REAL(C1)
-    		        A=AIMAG(C1)
-    		        WRITE(CHNL,FMT1) TX2B,R,',',A,') '
-    		        WRITE(CHNL,'(A1)') 'C'
-    		      ELSE IF (TYPE.EQ.2) THEN
-    		        CENTR=CMPLX(RGM(1),RGM(2))
-    		        C1=STAPT(1)-CENTR
-    		        HA=5E-1*RGM(3)
-    		        MD=ATAN2(AIMAG(C1),REAL(C1))+HA
-    		        RAD=ABS(C1)
-    		        WRITE(CHNL,'(A1)') 'C' 
-    		        WRITE(CHNL,FMT4) TX2,RAD,'*UI*(',HA,') *'
-    		        WRITE(CHNL,FMT4) '     +EXP(UI*(',MD,TX1B,HA,')))'
-    		        WRITE(CHNL,'(A1)') 'C'  
-    		      ELSE IF (NUMDER) THEN
-    		        WRITE(CHNL,'(A1)') 'C'
-    		        WRITE(CHNL,'(A26)') TX2,'ZDPARF(',CHIA,',',CHTT,')'     
-    		        WRITE(CHNL,'(A1)') 'C'
-    		      ELSE IF (TYPE.EQ.3) THEN
-    		        MD=5E-1*(RGM(2)+RGM(1))
-    		        HA=5E-1*(RGM(2)-RGM(1))
-    		        WRITE(CHNL,'(A1)') 'C'
-    		        WRITE(CHNL,FMT5) '      T=',MD,TX1B,HA,')'
-    		        WRITE(CHNL,FMT3) TX2,HA,'*('
-    		        DO 10 I=1,NTX2
-    		          WRITE(CHNL,'(A72)') TXT2(I)
-    		10      CONTINUE
-    		        WRITE(CHNL,'(A7)') '     +)'
-    		        WRITE(CHNL,'(A1)') 'C'
-    		      ELSE
-    		        MD=5E-1*(RGM(2)+RGM(1))
-    		        HA=5E-1*(RGM(2)-RGM(1))
-    		        WRITE(CHNL,'(A1)') 'C'
-    		        WRITE(CHNL,FMT5) '      T=',MD,TX1B,HA,')'
-    		        WRITE(CHNL,'(A11)') '      ZRAD='
-    		        DO 20 I=1,NTX1
-    		          WRITE(CHNL,'(A72)') TXT1(I)
-    		20      CONTINUE
-    		        WRITE(CHNL,'(A11)') '      ZDER='
-    		        DO 30 I=1,NTX2
-    		          WRITE(CHNL,'(A72)') TXT2(I)
-    		30      CONTINUE
-    		        WRITE(CHNL,FMT2) TX3,HA,')'
-    		        WRITE(CHNL,'(A1)') 'C'
-    		      ENDIF
-    		C*/
-    		}
+    		
+    	  //.......................................................................
+    	  //     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    	  //     LAST UPDATE: 8 AUG 1990
+    	  //.......................................................................C
+    	  // **** LOCAL VARIABLES
+    		
+    	  int I;
+    	  double HA,MD,RAD,A,R;
+    	  double C1[] = new double[2];
+    	  double CENTR[] = new double[2];
+    	  //COMPLEX C1,CENTR
+    	  //String TX1, TX1B, TX2, TX2B, TX3, FMT1, FMT2, FMT3, FMT4, FMT5;
+    	  //CHARACTER TX1*4,TX1B*5,TX2*13,TX2B*14,TX3*39,
+          //FMT1*25,FMT2*15,FMT3*15,FMT4*25,FMT5*24
+    	  //String TX3R, TX3I;
+    		
+    	  //TX1 = "+"+CHTT+"*";
+    	  //TX1B = TX1 + "(";
+    	  //TX2 = "      "+VAR+" = ";
+    	  //TX2B = TX2 + "(";
+    	  //TX3R = "      "+VAR+"[0] = (ZDER * Math.cos(T) - ZRAD * Math.sin(T))*(";
+    	  //TX3I = "      "+VAR+"[1] = (ZDER * Math.sin(T) + ZRAD * Math.cos(T))*(";
+          //TX3=TX2//'(ZDER+UI*ZRAD)*EXP(UI*T)*('
+    	 
+    	  //FMT1='(A14,'//REDD//',A1,'//REDD//',A2)'
+    	  //FMT2='(A39,'//REDD//',A1)'
+    	  //FMT3='(A13,'//REDD//',A2)'
+    	  //FMT4='(A14,'//REDD//',A5,'//REDD//',A3)'
+    	  //FMT5='(A8,'//REDD//',A5,'//REDD//',A1)'
+    		
+	     try {
+    	    if (TYPE == 1) {
+	    		 C1[0] = 0.5*(STAPT[1][0] - STAPT[0][0]);
+	    		 C1[1] = 0.5*(STAPT[1][1] - STAPT[0][1]);
+	    		 raFile.writeBytes("//\n");
+	    		 R=C1[0];
+	    		 A=C1[1];
+	    		 raFile.writeBytes("      "+VAR+"[0] = " + R + ";\n");
+	    		 raFile.writeBytes("      "+VAR+"[1] = " + A + ";\n");
+	    		 raFile.writeBytes("//\n");
+	    	 } // if (TYPE == 1)
+	    	 else if (TYPE == 2) {
+	    		 CENTR[0] = RGM[0];
+	    		 CENTR[1] = RGM[1];
+	    		 C1[0] = STAPT[0][0] - CENTR[0];
+	    		 C1[1] = STAPT[0][1] - CENTR[1];
+	    		 HA = 0.5 * RGM[2];
+	    		 MD = Math.atan2(C1[1], C1[0]) + HA;
+	    		 RAD = zabs(C1[0],C1[1]);
+	    		 raFile.writeBytes("//\n");
+	    		 raFile.writeBytes(VAR+"[0] = -" + RAD+"*"+HA+"*Math.sin("+MD+"+"+CHTT+"*"+HA+");\n");
+	    		 raFile.writeBytes(VAR+"[1] = " + RAD+"*"+HA+"*Math.cos("+MD+"+"+CHTT+"*"+HA+");\n");
+	    		 raFile.writeBytes("//\n");
+	    	 } // else if (TYPE == 2)
+	    	 else if (NUMDER) {
+	    		 raFile.writeBytes("//\n");
+	    		 raFile.writeBytes("      "+VAR+" = ZDPARF("+CHIA+","+CHTT+");\n");
+	    		 raFile.writeBytes("//\n");  
+	    	 } // else if (NUMDER)
+	    	 else if (TYPE == 3) {
+	    		 MD = 0.5*(RGM[1] + RGM[0]);
+	    		 HA = 0.5*(RGM[1] - RGM[0]);
+	    		 raFile.writeBytes("//\n");  
+	    		 raFile.writeBytes("      T = " + MD+"+"+CHTT+"*"+"("+HA+");\n");
+	    		 raFile.writeBytes("      "+VAR+" = " +HA + "*(");
+	    		 for (I = 1; I <= NTX2; I++) {
+	    			 raFile.writeBytes(TXT2[I-1]);
+	    		 }
+	    		 raFile.writeBytes(");\n");
+	    		 raFile.writeBytes("//\n");      
+	    	 } // else if (TYPE == 3)
+	    	 else {
+	    		 MD = 0.5*(RGM[1] + RGM[0]);
+	    		 HA = 0.5*(RGM[1] - RGM[0]);
+	    		 raFile.writeBytes("//\n");  
+	    		 raFile.writeBytes("      T = " + MD+"+"+CHTT+"*"+"("+HA+");\n");
+	    		 raFile.writeBytes("      ZRAD = ");
+	    		 for (I = 1; I <= NTX1; I++) {
+	    			 raFile.writeBytes(TXT1[I-1]);
+	    		 }
+	    		 raFile.writeBytes(";\n");
+	    		 raFile.writeBytes("      ZDEr = ");
+	    		 for (I = 1; I <= NTX2; I++) {
+	    			 raFile.writeBytes(TXT2[I-1]);
+	    		 }
+	    		 raFile.writeBytes(";\n");      
+	    		 raFile.writeBytes("      "+VAR+"[0] = (ZDER * Math.cos(T) - ZRAD * Math.sin(T))*("+HA+");\n");  
+	    		 raFile.writeBytes("      "+VAR+"[1] = (ZDER * Math.sin(T) + ZRAD * Math.cos(T))*("+HA+");\n");
+	    		 raFile.writeBytes("//\n");      
+	    	 } // else
+	     } // try
+	     catch(IOException e) {
+	    	 MipavUtil.displayError("IOException " + e + " in PTFUN2");
+	    	 System.exit(-1);
+	     }
+    		
+    }
+      
+   private void WRSYM3(int NARCS,int ORDRG, boolean REFLN, int CHN, RandomAccessFile raFile) {
+
+    //**** TO WRITE THE CODE TO RECOVER THE DERIVATIVE FROM ITS SYMMETRIC
+    //**** COUNTERPART ON THE FUNDAMENTAL BOUNDARY SECTION.
+
+    //.......................................................................
+    // AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    // LAST UPDATE: 4 AUG 1990
+    //.......................................................................C
+    //     LOCAL VARIABLES
+
+    int I;
+
+
+    try {
+	    raFile.writeBytes("//\n"); 
+	
+	    if (REFLN) {
+	        if (ORDRG > 1) {
+	            I=2*NARCS;
+	            if (NARCS > 1) {
+	                raFile.writeBytes("      IS = (IA-IB)%"+I+";\n");
+	                raFile.writeBytes("      IR=(IA-IB-IS)/"+I+";\n");
+	            }
+	            else {
+	                raFile.writeBytes("      IS=(IA-1)%2;\n");
+	                raFile.writeBytes("      IR=(IA-1-IS)/2;\n");
+	            }
+	            raFile.writeBytes("      if ((IR == 0) && (IS == 0)) {\n");
+	            raFile.writeBytes("          DPARFN[0] =ZETA[0];\n");
+	            raFile.writeBytes("          DPARFN[1] =ZETA[1];\n");
+	            raFile.writeBytes("      }\n");
+	            raFile.writeBytes("      else if ((IR > 0) && (IS == 0)) {\n");
+	            raFile.writeBytes("          DPARFN[0] = WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
+	            raFile.writeBytes("          DPARFN[1] = WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];\n");
+	            raFile.writeBytes("      }\n");
+	            raFile.writeBytes("       else if ((IR == 0 && (IS > 0)) {\n");
+	            raFile.writeBytes("           DPARFN[0] = -U2[0]*ZETA[0] -U2[1]*ZETA[1];\n");
+	            raFile.writeBytes("           DPARFN[1] = U2[0]*ZETA[1] -U2[1]*ZETA[0];\n");
+	            raFile.writeBytes("       }\n");
+	            raFile.writeBytes("       else {\n");
+	            raFile.writeBytes("           double realPart = -U2[0]*WW[IR-1][0] + U2[1]*WW[IR-1][1]);\n");
+	            raFile.writeBytes("           double imagPart = -U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0]);\n");
+	            raFile.writeBytes("           DPARFN[0] = realPart*ZETA[0] + imagPart*ZETA[1]);\n");
+	            raFile.writeBytes("           DPARFN[1] = imagPart*ZETA[0] - realPart*ZETA[1]);\n"); 
+	            raFile.writeBytes("       }\n");
+	        } // if (ORDRG > 1)
+	        else {
+	            if (NARCS > 1) {
+	                raFile.writeBytes("      IS=IA-IB;\n");
+	            }
+	            else {
+	                raFile.writeBytes("      IS=IA-1;\n");
+	            }
+	            raFile.writeBytes("      if (IS == 0) {\n");
+	            raFile.writeBytes("          DPARFN[0] = ZETA[0]\n");
+	            raFile.writeBytes("          DPARFN[0] = ZETA[0]\n");
+	            raFile.writeBytes("      }\n");
+	            raFile.writeBytes("         else {\n");
+	            raFile.writeBytes("             DPARFN[0] = -U2[0]*ZETA[0] + U2[1]*ZETA[1]);\n");
+	            raFile.writeBytes("             DPARFN[1] = U2[0]*ZETA[1] - U2[1]*ZETA[0]);\n");
+	            raFile.writeBytes("         }\n");
+	        } // else
+	    } // if (REFLN)
+	    else {
+	        if (NARCS > 1) {
+	            raFile.writeBytes("      IR=(IA-IB)/"+NARCS+";\n");
+	        }
+	        else {
+	            raFile.writeBytes("      IR=IA-1;\n");
+	        }
+	        raFile.writeBytes("      if (IR == 0) {\n");
+	        raFile.writeBytes("          DPARFN[0] = ZETA[0];\n");
+	        raFile.writeBytes("          DPARFN[1] = ZETA[1];\n");
+	        raFile.writeBytes("      }\n");
+	        raFile.writeBytes("      else {\n");
+	        raFile.writeBytes("          DPARFN[0]= WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
+	        raFile.writeBytes("          DPARFN[1]= WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];\n");
+	        raFile.writeBytes("      }\n");
+	    }
+    } // try
+    catch(IOException e) {
+    	MipavUtil.displayError("IOException " + e + " in WRSYM3");
+    	System.exit(-1);
+    }
+
+    } // private void WRSYM3
+   
+   private void TSTPLT(String JBNM, double MXMIS, double MXDIF, int NARCS, double PSD,
+		   double MINPD, double MAXPD, int CHNL, int IER[]) {
+   //CHARACTER*4 JBNM
+
+    //......................................................................
+
+    // 1.     TSTPLT
+    //           TESTS THE PARAMETRIC FUNCTION ROUTINES PARFUN AND DPARFN
+    //           FOR CONSISTENCY AND OUTPUTS BOUNDARY POINTS FOR PLOTTING.
+           
+
+    // 2.     PURPOSE
+    //           THE ROUTINE FIRST CHECKS THAT THE PARAMETRIC FUNCTION
+    //           ROUTINE PARFUN IS CONSISTENT WITH RESPECT TO ITS DEFINITION
+    //           OF ANY CORNERS ON THE BOUNDARY.  THIS IS DONE BY CHECKING 
+    //           THAT THE COMPUTED POINT AT THE END OF EACH ARC MATCHES THE 
+    //           COMPUTED POINT AT THE START OF THE NEXT ONE.  IF ALL THE
+    //           RELATIVE MISFIT ERRORS AT CORNERS ARE LESS THAN
+    //           10*(UNIT ROUNDOFF) THEN ALL CORNERS ARE CONSIDERED TO FIT
+    //           SATISFACTORILY, OTHERWISE THE MAXIMUM RELATIVE MISFIT
+    //           ERROR IS REPORTED.
+
+    //           THE SECOND PURPOSE OF THE ROUTINE IS TO OUTPUT TO A DATA 
+    //           FILE THE COORDINATES OF A NUMBER OF POINTS ON THE BOUNDARY. 
+    //           THE BOUNDARY POINTS ARE SELECTED ADAPTIVELY TO MEET THE 
+    //           PLOTTING RESOLUTION SPECIFICATIONS DEFINED BY THE ARGUMENTS 
+    //           PSD,MINPD,MAXPD (SEE BELOW).  THE HOPE IS THAT THE USER MAY 
+    //           EASILY FEED THESE DATA POINTS TO HIS LOCAL GRAPH PLOTTING  
+    //           ROUTINES SO AS TO CONSTRUCT A PLOT OF THE BOUNDARY.  THIS   
+    //           WILL PROVIDE AN ESSENTIAL VISUAL CHECK ON THE VALIDITY OF 
+    //           THE ROUTINE PARFUN.  THE OUTPUT DATA FILE IS AUTOMATICALLY 
+    //           NAMED <JBNM>zz.
+ 
+    //           THE THIRD PURPOSE OF THE ROUTINE IS TO CHECK PARFUN AND 
+    //           DPARFN FOR MUTUAL CONSISTECY.  THIS IS DONE BY COMPUTING 
+    //           TWO POINT FINITE DIFFERENCE APPROXIMATIONS TO DPARFN.  
+    //           THESE DIFFERENCE APPROXIMATIONS ARE COMPUTED AT EACH BOUND- 
+    //           ARY POINT THAT IS OUTPUT FOR PLOTTING AND ALSO AT NEARBY 
+    //           POINTS WHICH LIE JUST O F F THE BOUNDARY.  THIS LATTER 
+    //           COMPARISON ALSO TESTS PARFUN AND DPARFN FOR CORRECTNESS IN 
+    //           ACCEPTING COMPLEX PARAMETER VALUES.   A RELATIVE ERROR IN 
+    //           THE FINITE DIFFERENCE APPROXIMATION GREATER THAN 0.1 IS 
+    //           REPORTED AS A POSSIBLE LOGICAL INCONSISTENCY BETWEEN PARFUN 
+    //           AND DPARFN.  (THE CRITICAL RELATIVE ERROR VALUE OF 0.1 CAN 
+    //           BE ALTERED BY ADJUSTING THE LOCAL PARAMETER DTOL).
+
+    // 3.     CALLING SEQUENCE
+    //           CALL TSTPLT(JBNM,MXMIS,MXDIF,NARCS,PSD,MINPD,MAXPD,CHNL,IER)
+
+    //        PARAMETERS
+    //         ON ENTRY
+    //            JBNM   - CHARACTER*4
+    //                     THE JOB NAME.  THIS IS USED TO CREATE THE OUTPUT 
+    //                     FILE WITH FILENAME
+
+    //                                <JBNM>zz ,
+
+    //                     WHERE <JBNM> DENOTES THE VALUE OF VARIABLE JBNM
+    //                     WITH ANY TRAILING SPACES DELETED.
+
+    //            NARCS  - INTEGER
+    //                     THE NUMBER OF ANALYTIC ARCS THAT MAKE UP THE 
+    //                     W H O L E BOUNDARY OF THE PHYSICAL DOMAIN.
+
+    //            PSD    - REAL
+    //                     THE PLOTTING SIZE FOR THE DOMAIN IN ANY APPROPR-
+    //                     IATE UNITS.  IF PSD .LE. 0.0 THEN IT IS ASSIGNED
+    //                     THE DEFAULT VALUE OF 160.0 (A REASONBLE WIDTH IN
+    //                     MM FOR PLOTTING ON A4 PAPER).
+
+    //            MINPD  - REAL
+    //                     THE MINIMUM SIGNIFICANT PLOTTING DISTANCE, IN THE
+    //                     SAME UNITS AS PSD.  IF PSD .LE. 0.0 THEN IT IS
+    //                     ASSIGNED THE DEFAULT VALUE OF 2.0.
+
+    //            MAXPD  - REAL
+    //                     THE MAXIMUM ALLOWED PLOTTING DISTANCE, IN THE
+    //                     SAME UNITS AS PSD.  IF PSD .LE. 0.0 THEN IT IS
+    //                     ASSIGNED THE DEFAULT VALUE OF 5.0.  THE LARGER
+    //                     MAXPD, THE COARSER WILL BE THE RESOLUTION OF THE
+    //                     BOUNDARY POINTS OUTPUT TO <JBNM>zz, BUT THE
+    //                     QUICKER THEY WILL BE COMPUTED. 
+
+    //            CHNL   - INTEGER
+    //                     DEFINES AN OUTPUT CHANNEL THAT MAY BE USED FOR
+    //                     WRITING THE FILE <JBNM>zz.
+    //         ON EXIT
+    //            MXMIS  - REAL
+    //                     THE MAXIMUM RELATIVE MISFIT ERROR OVER ALL
+    //                     CORNER POINTS
+
+    //            MXDIF  - REAL
+    //                     THE MAXIMUM RELATIVE ERROR IN FINITE DIFFERENCE
+    //                     APPROXIMATIONS TO DPARFN OVER ALL BOUNDARY 
+    //                     POINTS OUTPUT TO <JBNM>zz AND NEARBY POINTS OFF
+    //                     THE BOUNDARY.
+
+    //            PSD    - REAL
+    //                     IF PSD .LE. 0.0 ON ENTRY THEN IT WILL HAVE
+    //                     THE DEFAULT VALUE OF 160.0 ON  EXIT.
+
+    //            MINPD  - REAL
+    //                     IF PSD .LE. 0.0 ON ENTRY THEN MINPD WILL HAVE
+    //                     THE DEFAULT VALUE OF 2.0 ON EXIT
+
+    //            MAXPD  - REAL
+    //                     IF PSD .LE. 0.0 ON ENTRY THEN MAXPD WILL HAVE
+    //                     THE DEFAULT VALUE OF 5.0 ON EXIT
+
+    //            IER    - INTEGER
+    //                     IF IER > 0 THEN AN ABNORMAL EXIT HAS OCCURRED;
+    //                     A MESSAGE TO DESCRIBE THE ERROR IS AUTOMATICALLY
+    //                     WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+    //                     IER=0 - NORMAL EXIT.
+    //                     IER>0 - ABNORMAL EXIT; THE ERROR MESSAGE SHOULD
+    //                             BE SELF EXPLANATORY.
+
+
+    // 4.     SUBROUTINES OR FUNCTIONS NEEDED
+    //              - THE CONFPACK LIBRARY.
+    //              - THE REAL FUNCTION R1MACH.
+    //              - THE USER SUPPLIED COMPLEX FUNCTIONS PARFUN AND DPARFN.
+
+
+    // 5.     FURTHER COMMENTS
+    //              - A SUMMARY LISTING IS AUTOMATICALLY WRITTEN ON THE 
+    //                STANDARD OUTPUT CHANNEL.
+    //              - THE OUTPUT FILE <JBNM>zz CONTAINS COORDINATE PAIRS
+
+    //                                 X Y
+
+    //                FOR POINTS ON THE PHYSICAL BOUNDARY, WITH ONE PAIR
+    //                PER LINE.
+
+    // ......................................................................
+    //     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    //     LAST UPDATE: 6 JULY 1990
+    // ......................................................................C
+    //     LOCAL VARIABLES
+
+    int I,IA,L;
+    int IMX = 0;
+    double A1,DIFF,ERR,HH,MINC,R1MACH,RMAX,RMEAN,RMIN,T,TINC,TOL1,TMX,TSD;
+    double TT[] = new double[2];
+    //REAL TT(2)
+    double C1[] = new double[2];
+    double C2[] = new double[2];
+    double CENTR[] = new double[2];
+    double ZZ0[] = new double[2];
+    double DZZ[] = new double[2];
+    double NDZZ[] = new double[2];
+    //COMPLEX C1,C2,CENTR,ZZ0,DZZ,NDZZ;
+    double ZZ[][] = new double[2][2];
+    //COMPLEX ZZ(2)
+    String OFL;
+    //CHARACTER OFL*6
+    final int MNARC = 200;
+    final double DTOL = 1.0E-1;
+    final int NH = 4;
+    boolean ATEND,FIRST,WARND;
+    boolean LNSEG[] = new boolean[MNARC];
+    double PIN[] = new double[2];
+    double PAROUT[];
+    int zzindex;
+    //EXTERNAL DPARFN,LINSEG,PARFUN,R1MACH,WRHEAD,WRTAIL,ZDPARF
+    //COMPLEX PARFUN,DPARFN,ZDPARF
+
+    //**** WRITE CONFPACK HEADING
+
+    WRHEAD(7,0,null);
+
+    if (NARCS > MNARC) {
+        IER[0]=59;
+        WRTAIL(7,0,IER[0], null);
+    }
+
+    //1     FORMAT(A45)
+    //2     FORMAT(A45,I4)
+    //3     FORMAT(A45,E10.3)
+    //4     FORMAT(//,T17,A)
+
+    TOL1= 10.0*EPS;
+
+    //**** CHECK THAT ALL ARCS MEET AT CORNER POINTS
+
+    IER[0]=0;
+    CENTR[0] = 0.0;
+    CENTR[1] = 0.0;
+    MXMIS=0.0;
+    for (IA=1; IA <= NARCS; IA++) {
+        if (IA == 1) {
+            I=NARCS;
+        }
+        else {
+            I=IA-1;
+        }
+        PIN[0] = -1.0;
+        PIN[1] = 0.0;
+        C1 = PARFUN(IA, PIN);
+        CENTR[0] = CENTR[0] + C1[0];
+        CENTR[1] = CENTR[1] + C1[1];
+        A1 = zabs(C1[0],C1[1]);
+        PIN[0] = 1.0;
+        PIN[1] = 0.0;
+        C2=PARFUN(I,PIN);
+        ERR = zabs(C1[0]-C2[0],C1[1]-C2[1]);
+        if (A1 >= 1.0) {
+            ERR=ERR/A1;
+        }
+        if (ERR > MXMIS) {
+            IMX=IA;
+            MXMIS=ERR;
+        }
+    } // for (IA=1; IA <= NARCS; IA++)
+	if (MXMIS >= TOL1) {
+        System.out.println("MAXIMUM CORNER MISFIT: " + MXMIS);
+        System.out.println("OCCURS AT CORNER: " + IMX);
+    }
+    else {
+        System.out.println("ALL ARCS FIT AT CORNERS:");
+    }	
+
+    // **** ESTIMATE THE DIAMETER (TSD) OF THE PHYSICAL DOMAIN
+
+    CENTR[0]=CENTR[0]/NARCS;
+    CENTR[1]=CENTR[1]/NARCS;
+    TSD=0.0;
+    HH=2.0/(double)(NH);
+    for (IA=1; IA <= NARCS; IA++) {
+        T=-1.0;
+        for (I=1; I <= NH; I++) {
+            T=T+HH;
+            PIN[0] = T;
+            PIN[1] = 0;
+            PAROUT = PARFUN(IA,PIN);
+            C1[0] = PAROUT[0] - CENTR[0];
+            C1[1] = PAROUT[1] - CENTR[1];
+            A1=zabs(C1[0],C1[1]);
+            TSD=Math.max(TSD,A1);
+        } // for (I=1; I <= NH; I++)
+    } // for (IA=1; IA <= NARCS; IA++)
+   TSD=2.0*TSD;
+
+   //**** DETERMINE WHICH ARCS (IF ANY) ARE LINE SEGMENTS
+
+   LINSEG(LNSEG,NARCS);
+
+   //**** OPEN FILE TO RECEIVE BOUNDARY DATA POINTS FOR PLOTTING
+
+   //L=INDEX(JBNM,' ')-1
+   //IF (L.EQ.-1) L=4
+   //OFL=JBNM(1:L)//'zz'
+   //OPEN(CHNL,FILE=OFL)
+   // Use global zzset instead
+
+   // **** SET DEFAULT PLOTTING DISTANCES, IF NECESSARY
+
+   if (PSD <= 0.0) {
+       PSD=1.6E+2;
+       MINPD=2.0;
+       MAXPD=5.0;
+   }
+   RMIN=MINPD*TSD/PSD;
+   RMAX=MAXPD*TSD/PSD;
+   RMEAN=0.5*(RMIN+RMAX);
+   MINC=Math.sqrt(EPS);
+   
+   // **** START EVALUATING BOUNDARY POINTS AND DERIVATIVES FOR PLOTTING AND
+   // **** TESTING
+
+   MXDIF=0.0;
+   zzindex = 0;
+   /*for (IA=1; IA <= NARCS; IA++) {
+       TT[0]=-1.0;
+       PIN[0] = TT[0];
+       PIN[1] = 0.0;
+       ZZ[0]=PARFUN(IA,PIN);
+       zzset[zzindex][0] = ZZ[0][0];
+       zzset[zzindex++][1] = ZZ[0][1];
+       if (IA == 1) {
+    	   ZZ0[0] = ZZ[0][0];
+    	   ZZ0[1] = ZZ[0][1];
+       }
+       FIRST = true;
+       WARND= false;
+20      CONTINUE
+C
+C****   TEST THE COMPATIBILTY OF PARFUN AND DPARFN BY ESTIMATING DPARFN
+C****   NUMERICALLY AT BOTH REAL AND COMPLEX PARAMETER VALUES.
+C
+     DO 30 I=1,2
+       IF (I.EQ.1) THEN
+         C1=CMPLX(TT(1))
+       ELSE
+         C1=CMPLX(TT(1),MINC)
+       ENDIF
+       DZZ=DPARFN(IA,C1)
+       NDZZ=ZDPARF(IA,C1)
+       A1=ABS(DZZ)
+C
+       IF (A1.EQ.0E+0) THEN
+         IER=60
+         WRITE(*,*)
+         WRITE(*,*) '              ***DPARFN=(0.,0.)***'
+         WRITE(*,*) '                             ARC:',IA 
+         WRITE(*,*) '    STANDARDISED PARAMETER VALUE:',TT(1) 
+         GOTO 999
+       ENDIF
+C
+       IF (A1.LE.TOL1 .AND. .NOT.WARND) THEN
+         WRITE(*,4) '*** W A R N I N G  ***'
+         WRITE(*,2) 'PATHOLOGICALLY SMALL DERIVATIVE ON ARC',IA
+         WARND=.TRUE.
+       ENDIF
+C
+       IF (FIRST) THEN
+         TINC=RMEAN/A1
+         TINC=MAX(TINC,MINC)
+         FIRST=.FALSE.
+       ENDIF
+C
+       ERR=ABS(1E+0-NDZZ/DZZ)
+       IF (ERR.GT.MXDIF) THEN
+         MXDIF=ERR
+         IMX=IA
+         TMX=TT(1)
+       ENDIF
+30      CONTINUE
+C
+     IF (.NOT.LNSEG(IA)) THEN
+C
+C****     DETERMINE THE NEXT BOUNDARY POINT TO BE PLOTTED
+C
+40        CONTINUE
+       TT(2)=TT(1)+TINC
+       IF (TT(2) .GE. 1E+0) THEN
+         TT(2)=1E+0
+         ATEND=.TRUE.
+       ELSE
+         ATEND=.FALSE.
+       ENDIF
+C
+       ZZ(2)=PARFUN(IA,CMPLX(TT(2)))
+       DIFF=ABS(ZZ(2)-ZZ(1))
+       IF (DIFF.EQ.0E+0 .AND. .NOT.ATEND) THEN
+         TINC=MAX(MINC,2*TINC)
+         GOTO 40
+       ENDIF
+C
+       IF (DIFF.GT.RMAX .OR. (DIFF.LT.RMIN .AND. .NOT.ATEND)) THEN
+         TINC=RMEAN*TINC/DIFF
+         TINC=MAX(TINC,MINC)
+         GOTO 40
+       ENDIF
+C
+       WRITE(CHNL,'(2E16.7)') ZZ(2)
+       IF (.NOT. ATEND) THEN
+         ZZ(1)=ZZ(2)
+         TT(1)=TT(2)
+         GOTO 20
+       ENDIF
+     ENDIF
+
+   } // for (IA=1; IA <= NARCS; IA++)
+   IF (LNSEG(NARCS)) WRITE(CHNL,'(2E16.7)') ZZ0
+   CLOSE(CHNL)   
+C
+   IF (MXDIF .GT. DTOL) THEN
+     WRITE(*,*)
+     WRITE(*,2) 'POSSIBLE PARFUN/DPARFN INCONSISTECY ON ARC:',IMX
+     WRITE(*,3) 'OCCURS AT STANDARDISED PARAMETER VALUE:',TMX
+     WRITE(*,3) 'RELATIVE FINITE DIFF ERROR:',MXDIF 
+   ELSE
+     WRITE(*,*)
+     WRITE(*,1) 'PARFUN AND DPARFN ARE CONSISTENT:'
+   ENDIF
+C
+999   CALL WRTAIL(7,0,IER)*/
+
+   } // private void TSTPLOT
+   
+   private void LINSEG(boolean LNSEG[], int NARCS) {
+
+       //**** TO DETERMINE THE ARRAY LNSEG, WHERE LNSEG(I) IS SET TO TRUE IF THE
+       //**** I'TH ARC IS A LINE SEGMENT, I=1,...,NARCS.
+
+       //**** LOCAL VARIABLES
+
+       final int NPTS = 9;
+	   int IA,J,NINTS;
+       double DIFF,HH,MXDIF,TOL,R1MACH;
+       double SUM[] = new double[2];
+       double TT[] = new double[2];
+       // COMPLEX SUM,TT
+       double DF[][] = new double[NPTS][2];
+       //COMPLEX DF(NPTS)
+       //EXTERNAL DPARFN,R1MACH
+       // COMPLEX DPARFN
+
+       NINTS=NPTS-1;
+       HH=2.0/NINTS;
+       TOL=10.0*EPS;
+
+       for (IA=1; IA <= NARCS; IA++) {
+    	   SUM[0] = 0.0;
+    	   SUM[1] = 0.0;
+           for (J=1; J <= NPTS; J++) {
+               TT[0]=-1.0+(J-1)*HH;
+               TT[1] = 0.0;
+               DF[J-1]=DPARFN(IA,TT);
+               SUM[0]=SUM[0]+DF[J-1][0];
+               SUM[1]=SUM[1]+DF[J-1][1];
+           } // for (J=1; J <= NPTS; J++)
+           SUM[0]=SUM[0]/NPTS;
+           SUM[1]=SUM[1]/NPTS;
+
+           MXDIF=0.0;
+           for (J=1; J <= NPTS; J++) {
+               DIFF=zabs(SUM[0]-DF[J-1][0],SUM[1]-DF[J-1][1]);
+               MXDIF = Math.max(MXDIF,DIFF);
+           } // for (J=1; J <= NPTS; J++)
+
+           if (MXDIF <= TOL) {
+               LNSEG[IA-1] = true;
+           }
+           else {
+               LNSEG[IA-1] = false;
+           }
+       } // for (IA=1; IA <= NARCS; IA++)
+
+   } // private void LINSEG
 
 
       
