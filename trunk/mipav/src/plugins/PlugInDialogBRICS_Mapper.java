@@ -32,7 +32,6 @@ import org.apache.cxf.transport.http.HTTPConduit;
 public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, ChangeListener, TreeSelectionListener, MouseListener,
         WindowListener, FocusListener {
     private static final long serialVersionUID = -5516621806537554154L;
-
     private final Font serif12  = new Font("Serif", Font.PLAIN, 12);
     private final Font serif12B = new Font("Serif", Font.BOLD, 12);
 
@@ -152,28 +151,28 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
             + "research purposes. Significant system update information may be posted on\n" + "the BRICS site as required.";
 
-    private static final Comparator dataElementCompare = new Comparator<DataElementValue>() {
+    private static final Comparator<DataElementValue> dataElementCompare = new Comparator<DataElementValue>() {
         @Override
         public int compare(final DataElementValue o1, final DataElementValue o2) {
             return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
         }
     };
 
-    private static final Comparator mapElementCompare = new Comparator<MapElement>() {
+    private static final Comparator<MapElement> mapElementCompare = new Comparator<MapElement>() {
         @Override
         public int compare(final MapElement o1, final MapElement o2) {
             return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
         }
     };
 
-    private static final Comparator groupCompare = new Comparator<RepeatableGroup>() {
+    private static final Comparator<RepeatableGroup> groupCompare = new Comparator<RepeatableGroup>() {
         @Override
         public int compare(final RepeatableGroup o1, final RepeatableGroup o2) {
             return new Integer(o1.getPosition()).compareTo(new Integer(o2.getPosition()));
         }
     };
 
-    private static final Comparator valueRangeCompare = new Comparator<ValueRange>() {
+    private static final Comparator<ValueRange> valueRangeCompare = new Comparator<ValueRange>() {
         @Override
         public int compare(final ValueRange o1, final ValueRange o2) {
             return o1.compareTo(o2);
@@ -386,7 +385,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     /**  Setup Mapping tool layout */
     private void init() {
-        setTitle("Data Mapping Tool - " + pluginVersion + " (" + ddEnvName + ")");
+        setTitle("Data Mapping and Transformation Tools - " + pluginVersion + " (" + ddEnvName + ")");
         
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
@@ -431,8 +430,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(serif12B);
-        tabbedPane.addTab("Mapping Configuration", null, mapperConfig);
-        tabbedPane.addTab("Data Transform", null, dataXForm);  // Nothing at the moment.
+        tabbedPane.addTab("Mapping Tool", null, mapperConfig);
+        tabbedPane.addTab("Transform Tool", null, dataXForm);  // Nothing at the moment.
 
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
         pack();
@@ -779,7 +778,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             return csvRow;
         }
 
-        final ArrayList<RepeatableGroup> orderedGroupList = new ArrayList(fsData.getStructInfo().getRepeatableGroups());
+        final ArrayList<RepeatableGroup> orderedGroupList = new ArrayList<RepeatableGroup>(fsData.getStructInfo().getRepeatableGroups());
         Collections.sort(orderedGroupList, groupCompare);
 
         for (final RepeatableGroup group : orderedGroupList) {
@@ -1741,6 +1740,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         private static final long serialVersionUID = 859201819000159789L;
 
         private final PlugInDialogBRICS_Mapper owner;
+        String[] srcPVStrs = null;
+        JComboBox[] cbArray = null;
+        
 
         public PVMappingDialog(final PlugInDialogBRICS_Mapper owner) {
             super(owner, false);
@@ -1798,7 +1800,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             gbc.weightx = 1;
             gbc.weighty = 1;
             gbc.fill = GridBagConstraints.BOTH;
-            mainPanel.add(buildPVPanel(), gbc);
+            JScrollPane sPane = buildPVPanel();
+            if (sPane == null) dispose();
+            
+            mainPanel.add(sPane, gbc);
 
             getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -1818,43 +1823,136 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	
         	final GridBagConstraints gbc = new GridBagConstraints();
         	final JPanel pvPanel = new JPanel(new GridBagLayout());
-        	
         	final int rowRef = deTable.getSelectedRow();
-        	String srcPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs"));
-        	String[] srcPVStrs = srcPVs.split(";");
-        	
-        	
         	gbc.weightx = 1;
         	gbc.weighty = 1;
             gbc.gridx = 0;
             gbc.fill = GridBagConstraints.HORIZONTAL;
-        	for (int i = 0; i < srcPVStrs.length; i++) {
-                 gbc.gridy = i;
-                 JButton button = new JButton(srcPVStrs[i]); 
-                 button.setMinimumSize(new Dimension(180, 30));
-                 button.setPreferredSize(new Dimension(180, 30));
-                 button.setFont(serif12B);
-                 pvPanel.add( button , gbc);
+        	
+        	
+        	// TODO: Matt 
+        	if ( ((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings")))).isEmpty() ){
+        		String srcPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs"));
+            	srcPVStrs = srcPVs.split(";");
+            	
+            	for (int i = 0; i < srcPVStrs.length; i++) {
+                    gbc.gridy = i;
+                    JButton button = new JButton(srcPVStrs[i]); 
+                    button.setMinimumSize(new Dimension(180, 30));
+                    button.setPreferredSize(new Dimension(180, 30));
+                    button.setFont(serif12B);
+                    pvPanel.add( button , gbc);
+            	}
+        	} 
+        	else {
+        		String mappedPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings"));
+        		srcPVStrs = mappedPVs.split(";");
+        		String[] pvMapStr = null;
+        		for (int i = 0; i < srcPVStrs.length; i++) {
+                    gbc.gridy = i;
+                    pvMapStr = srcPVStrs[i].split(":");
+                    srcPVStrs[i] = pvMapStr[0].trim();
+                    JButton button = new JButton(pvMapStr[0]); 
+                    button.setMinimumSize(new Dimension(180, 30));
+                    button.setPreferredSize(new Dimension(180, 30));
+                    button.setFont(serif12B);
+                    pvPanel.add( button , gbc);
+        		}
         	}
+       	
         	
         	int length = srcPVStrs.length;
-        	srcPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
-        	srcPVStrs = srcPVs.split(";");
-        	
         	gbc.weightx = 1;
         	gbc.weightx = 1;
         	gbc.gridx = 1;
         	gbc.fill = GridBagConstraints.HORIZONTAL;
-        	for (int i = 0; i < length; i++) {
-                gbc.gridy = i;
-                JComboBox<String> cb = new JComboBox<String>(srcPVStrs);
-                cb.setFont(serif12);
-                cb.setSelectedIndex(i);
-                cb.setMinimumSize(new Dimension(180, 30));
-                cb.setPreferredSize(new Dimension(180, 30));
-                pvPanel.add( cb , gbc);    
+        	
+        	if ( ((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings")))).isEmpty() ){
+        	
+	        	String refPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
+	        	if (refPVs.isEmpty()) {
+	        		//Not sure if this is the right answer.
+	        		displayWarning("Reference PVs are empty.");
+	        		return null;
+	        	}
+	        	refPVs.concat(" ;"); // Adds blank option.
+	        	String[] refPVStrs = refPVs.split(";");
+	        	for (int i = 0; i < refPVStrs.length; i++) {
+	        		if (!refPVStrs[i].isEmpty()) { 
+	        			refPVStrs[i]= refPVStrs[i].trim();
+	        		}
+	        		else {
+	        			refPVStrs[i] = new String("");
+	        		}
+	        	}
+
+	        	cbArray = new JComboBox[length];
+	        	for (int i = 0; i < length; i++) {
+	                gbc.gridy = i;
+	                JComboBox<String> cb = new JComboBox<String>(refPVStrs);
+	                cbArray[i] = cb;
+	                
+	                if (i < refPVStrs.length) {
+	                	cb.setSelectedIndex(i);
+	                }
+	                else {
+	                	cb.setSelectedIndex(0);
+	                }
+	                cb.setFont(serif12);
+	                cb.setMinimumSize(new Dimension(180, 30));
+	                cb.setPreferredSize(new Dimension(180, 30));
+	                pvPanel.add( cb , gbc);    
+	        	}
         	}
-            
+        	else {
+        		
+        		String refPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs"));
+	        	if (refPVs.isEmpty()) {
+	        		//Not sure if this is the right answer.
+	        		displayWarning("Reference PVs are empty.");
+	        		return null;
+	        	}
+	        	refPVs.concat(" ;"); // Adds blank option.
+	        	String[] refPVStrs = refPVs.split(";");
+	        	for (int j = 0; j < refPVStrs.length; j++) {
+	        		if (!refPVStrs[j].isEmpty()) {
+	        			refPVStrs[j]= refPVStrs[j].trim();
+	        		}
+	        		else {
+	        			refPVStrs[j] = new String("");
+	        		}
+	        	}
+	        	
+	        	String mappedPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings"));
+	        	String[] mappedPVStrs = mappedPVs.split(";");
+
+	        	
+	        	cbArray = new JComboBox[refPVStrs.length];
+	        	for (int i = 0; i < mappedPVStrs.length; i++) {
+	                gbc.gridy = i;
+	                JComboBox<String> cb = new JComboBox<String>(refPVStrs);
+	                cbArray[i] = cb;
+	                
+	                String[] splitMappedPV = mappedPVStrs[i].split(":");
+	                if (i < refPVStrs.length) {
+	                	if (splitMappedPV.length == 2) {
+	                		cb.setSelectedItem(splitMappedPV[1].trim());
+	                	}
+	                	else {
+	                		cb.setSelectedItem("");
+	                	}
+	                }
+	                else {
+	                	cb.setSelectedIndex(0);
+	                }
+	                
+	                cb.setFont(serif12);
+	                cb.setMinimumSize(new Dimension(180, 30));
+	                cb.setPreferredSize(new Dimension(180, 30));
+	                pvPanel.add( cb , gbc);    
+	        	}	
+        	}
+                    
         	JScrollPane  sPane = new JScrollPane(pvPanel);
         	sPane.setBorder(buildTitledBorder(" Map Source PVs to Reference PVs"));
         	return sPane;
@@ -1872,7 +1970,17 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 dispose();
             } 
             if (command.equalsIgnoreCase("Done")) {
-            	// Copy mappings to deTable....
+                int numMappings = srcPVStrs.length;
+
+                String pvMappinigsStr = new String();
+                for (int i = 0; i < numMappings; i++) {
+                	pvMappinigsStr = pvMappinigsStr.concat(srcPVStrs[i].trim() + ":" + ((String)cbArray[i].getSelectedItem()).trim() + ";");
+                }
+                if (pvMappinigsStr.endsWith(";")) {
+                	pvMappinigsStr = pvMappinigsStr.substring(0, pvMappinigsStr.length()-1);
+            	 }
+                deTable.setValueAt(pvMappinigsStr, deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
+                dispose();
             } 
         }
     }
