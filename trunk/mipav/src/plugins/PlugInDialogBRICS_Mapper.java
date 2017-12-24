@@ -642,9 +642,15 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         deTable.getColumn("Required").setPreferredWidth(115);
         deTable.getColumn("Required").setCellRenderer(new CellRenderer());
         
+        deTable.getColumn("Source Type").setMinWidth(115);
+        deTable.getColumn("Source Type").setMaxWidth(115);
+        deTable.getColumn("Source Type").setPreferredWidth(115);
+        
+        deTable.getColumn("PV Mappings").setMinWidth(175);
+        deTable.getColumn("PV Mappings").setPreferredWidth(175);
+        
         deTable.getColumn("Source PVs").setCellRenderer(new CellRenderer());
         //deTable.getColumn("Source PVs").setCellEditor(cellEditor);
-        //deTable.getColumn("Source PVs").set
         listPane = buildScrollPane(deTable);
         listPane.setBorder(buildTitledBorder(" Reference Form Structure:   "));
    
