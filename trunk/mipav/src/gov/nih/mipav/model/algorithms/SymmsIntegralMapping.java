@@ -1888,9 +1888,11 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     // ......................................................................C
     //     LOCAL VARIABLES
 
-    int I,IA,L;
+    int I,IA;
     int IMX = 0;
-    double A1,DIFF,ERR,HH,MINC,R1MACH,RMAX,RMEAN,RMIN,T,TINC,TOL1,TMX,TSD;
+    double TINC = 0.0;
+    double TMX = 0.0;
+    double A1,DIFF,ERR,HH,MINC,RMAX,RMEAN,RMIN,T,TOL1,TSD;
     double TT[] = new double[2];
     //REAL TT(2)
     double C1[] = new double[2];
@@ -1902,7 +1904,6 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     //COMPLEX C1,C2,CENTR,ZZ0,DZZ,NDZZ;
     double ZZ[][] = new double[2][2];
     //COMPLEX ZZ(2)
-    String OFL;
     //CHARACTER OFL*6
     final int MNARC = 200;
     final double DTOL = 1.0E-1;
@@ -1912,6 +1913,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     double PIN[] = new double[2];
     double PAROUT[];
     int zzindex;
+    double cr[] = new double[1];
+    double ci[] = new double[1];
     //EXTERNAL DPARFN,LINSEG,PARFUN,R1MACH,WRHEAD,WRTAIL,ZDPARF
     //COMPLEX PARFUN,DPARFN,ZDPARF
 
@@ -2020,7 +2023,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 
    MXDIF=0.0;
    zzindex = 0;
-   /*for (IA=1; IA <= NARCS; IA++) {
+   for (IA=1; IA <= NARCS; IA++) {
        TT[0]=-1.0;
        PIN[0] = TT[0];
        PIN[1] = 0.0;
@@ -2033,99 +2036,119 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
        }
        FIRST = true;
        WARND= false;
-20      CONTINUE
-C
-C****   TEST THE COMPATIBILTY OF PARFUN AND DPARFN BY ESTIMATING DPARFN
-C****   NUMERICALLY AT BOTH REAL AND COMPLEX PARAMETER VALUES.
-C
-     DO 30 I=1,2
-       IF (I.EQ.1) THEN
-         C1=CMPLX(TT(1))
-       ELSE
-         C1=CMPLX(TT(1),MINC)
-       ENDIF
-       DZZ=DPARFN(IA,C1)
-       NDZZ=ZDPARF(IA,C1)
-       A1=ABS(DZZ)
-C
-       IF (A1.EQ.0E+0) THEN
-         IER=60
-         WRITE(*,*)
-         WRITE(*,*) '              ***DPARFN=(0.,0.)***'
-         WRITE(*,*) '                             ARC:',IA 
-         WRITE(*,*) '    STANDARDISED PARAMETER VALUE:',TT(1) 
-         GOTO 999
-       ENDIF
-C
-       IF (A1.LE.TOL1 .AND. .NOT.WARND) THEN
-         WRITE(*,4) '*** W A R N I N G  ***'
-         WRITE(*,2) 'PATHOLOGICALLY SMALL DERIVATIVE ON ARC',IA
-         WARND=.TRUE.
-       ENDIF
-C
-       IF (FIRST) THEN
-         TINC=RMEAN/A1
-         TINC=MAX(TINC,MINC)
-         FIRST=.FALSE.
-       ENDIF
-C
-       ERR=ABS(1E+0-NDZZ/DZZ)
-       IF (ERR.GT.MXDIF) THEN
-         MXDIF=ERR
-         IMX=IA
-         TMX=TT(1)
-       ENDIF
-30      CONTINUE
-C
-     IF (.NOT.LNSEG(IA)) THEN
-C
-C****     DETERMINE THE NEXT BOUNDARY POINT TO BE PLOTTED
-C
-40        CONTINUE
-       TT(2)=TT(1)+TINC
-       IF (TT(2) .GE. 1E+0) THEN
-         TT(2)=1E+0
-         ATEND=.TRUE.
-       ELSE
-         ATEND=.FALSE.
-       ENDIF
-C
-       ZZ(2)=PARFUN(IA,CMPLX(TT(2)))
-       DIFF=ABS(ZZ(2)-ZZ(1))
-       IF (DIFF.EQ.0E+0 .AND. .NOT.ATEND) THEN
-         TINC=MAX(MINC,2*TINC)
-         GOTO 40
-       ENDIF
-C
-       IF (DIFF.GT.RMAX .OR. (DIFF.LT.RMIN .AND. .NOT.ATEND)) THEN
-         TINC=RMEAN*TINC/DIFF
-         TINC=MAX(TINC,MINC)
-         GOTO 40
-       ENDIF
-C
-       WRITE(CHNL,'(2E16.7)') ZZ(2)
-       IF (.NOT. ATEND) THEN
-         ZZ(1)=ZZ(2)
-         TT(1)=TT(2)
-         GOTO 20
-       ENDIF
-     ENDIF
+       while (true) {
+	   
+           //****   TEST THE COMPATIBILTY OF PARFUN AND DPARFN BY ESTIMATING DPARFN
+           //****   NUMERICALLY AT BOTH REAL AND COMPLEX PARAMETER VALUES.
+
+	         for (I=1; I <= 2; I++) {
+	             if (I == 1) {
+	                 C1[0]=TT[0];
+	                 C1[1] = 0.0;
+	             }
+	             else {
+	                 C1[0]=TT[0];
+                     C1[1] = MINC;
+	             }
+	             DZZ=DPARFN(IA,C1);
+	             NDZZ=ZDPARF(IA,C1);
+	             A1=zabs(DZZ[0],DZZ[1]);
+	
+	             if (A1 == 0.0) {
+	                 IER[0]=60;
+	                 System.out.println();
+	                 System.out.println("              ***DPARFN=(0.,0.)***");
+	                 System.out.println("                             ARC: " + IA); 
+	                 System.out.println(" STANDARDISED PARAMETER VALUE: " + TT[0]);
+	                 WRTAIL(7,0,IER[0],null);
+	                 return;
+	             } // if (A1 == 0.0)
+	
+	             if (A1 <=TOL1 && !WARND) {
+	                 System.out.println("*** W A R N I N G  ***");
+	                 System.out.println("PATHOLOGICALLY SMALL DERIVATIVE ON ARC" + IA);
+	                 WARND=true;
+	             } // if (A1 <=TOL1 && !WARND)
+	
+	             if (FIRST) {
+	                 TINC=RMEAN/A1;
+	                 TINC=Math.max(TINC,MINC);
+	                 FIRST=false;
+	             } // if (FIRST)
+	
+	             zdiv(1.0-NDZZ[0],-NDZZ[1],DZZ[0],DZZ[1],cr,ci);
+	             ERR = zabs(cr[0],ci[0]);
+	             if (ERR > MXDIF) {
+	                 MXDIF=ERR;
+	                 IMX=IA;
+	                 TMX=TT[0];
+	             } // if (ERR > MXDIF)
+	         } // for (I=1; I <= 2; I++)
+	
+	     if (!LNSEG[IA-1]) {
+	
+	    	 //DETERMINE THE NEXT BOUNDARY POINT TO BE PLOTTED
+	         while (true) {
+	             TT[1]=TT[0]+TINC;
+	             if (TT[1] >= 1.0) {
+	                 TT[1]=1.0;
+	                 ATEND=true;
+	             }
+	             else {
+	                 ATEND=false;
+	             }
+	       
+	             PIN[0] = TT[1];
+	             PIN[1] = 0.0;
+	             ZZ[1] = PARFUN(IA,PIN);
+	             DIFF=zabs(ZZ[1][0]-ZZ[0][0],ZZ[1][1]-ZZ[0][1]);
+	             if (DIFF == 0.0 && !ATEND) {
+	                 TINC=Math.max(MINC,2*TINC);
+	                 continue;
+	             } // if (DIFF == 0.0 && !ATEND)
+	
+	             if (DIFF > RMAX || (DIFF < RMIN && !ATEND)) {
+	                 TINC=RMEAN*TINC/DIFF;
+	                 TINC=Math.max(TINC,MINC);
+	                 continue;
+	             } // if (DIFF > RMAX || (DIFF < RMIN && !ATEND))
+	             break;
+	         } // while (true)
+	
+	         zzset[zzindex][0] = ZZ[1][0];
+	         zzset[zzindex++][1] = ZZ[1][1];
+	         if (!ATEND) {
+	             ZZ[0][0]=ZZ[1][0];
+	             ZZ[0][1] = ZZ[1][1];
+	             TT[0]=TT[1];
+	       }
+	       else {
+	    	   break;
+	       }
+	     } // if (!LNSEG[IA-1])
+	     else {
+	    	 break;
+	     }
+       } // while (true)
 
    } // for (IA=1; IA <= NARCS; IA++)
-   IF (LNSEG(NARCS)) WRITE(CHNL,'(2E16.7)') ZZ0
-   CLOSE(CHNL)   
-C
-   IF (MXDIF .GT. DTOL) THEN
-     WRITE(*,*)
-     WRITE(*,2) 'POSSIBLE PARFUN/DPARFN INCONSISTECY ON ARC:',IMX
-     WRITE(*,3) 'OCCURS AT STANDARDISED PARAMETER VALUE:',TMX
-     WRITE(*,3) 'RELATIVE FINITE DIFF ERROR:',MXDIF 
-   ELSE
-     WRITE(*,*)
-     WRITE(*,1) 'PARFUN AND DPARFN ARE CONSISTENT:'
-   ENDIF
-C
-999   CALL WRTAIL(7,0,IER)*/
+   if (LNSEG[NARCS-1]) {
+	   zzset[zzindex][0] = ZZ0[0];
+       zzset[zzindex++][1] = ZZ0[1];
+   }   
+
+   if (MXDIF > DTOL) {
+       System.out.println();
+       System.out.println("POSSIBLE PARFUN/DPARFN INCONSISTECY ON ARC: " + IMX);
+       System.out.println("OCCURS AT STANDARDISED PARAMETER VALUE: " + TMX);
+       System.out.println("RELATIVE FINITE DIFF ERROR: " + MXDIF);
+   }
+   else {
+       System.out.println();
+       System.out.println("PARFUN AND DPARFN ARE CONSISTENT:");
+   }
+
+   WRTAIL(7,0,IER[0],null);
 
    } // private void TSTPLOT
    
@@ -2138,7 +2161,7 @@ C
 
        final int NPTS = 9;
 	   int IA,J,NINTS;
-       double DIFF,HH,MXDIF,TOL,R1MACH;
+       double DIFF,HH,MXDIF,TOL;
        double SUM[] = new double[2];
        double TT[] = new double[2];
        // COMPLEX SUM,TT
@@ -2179,9 +2202,1077 @@ C
        } // for (IA=1; IA <= NARCS; IA++)
 
    } // private void LINSEG
+   
 
+   //COMPLEX FUNCTION ZDPARF(I,T)
+   private double[] ZDPARF(int I, double T[]) {
+       //COMPLEX T
 
-      
+       //**** NUMERICAL ESTIMATION OF THE DERIVATIVE OF THE PARAMETRIC FUNCTION
+       //**** USING 2- OR 4-POINT TRAPEZOIDAL RULE ESTIMATES IN CAUCHY'S
+       //**** FORMULA.  THE 2-POINT ESTIMATE IS THE STANDARD CENTRAL DIFFERENCE
+       //**** IN THE REAL AXIS DIRECTION.
+
+       double EPSZ;
+       //final double IM[] = new double[]{0.0,1.0};
+       final boolean FOUR = false;
+       double SUM[] = new double[2];
+       //COMPLEX IM,SUM
+       double POUT1[];
+       double POUT2[];
+       double result[] = new double[2];
+       double PIN[] = new double[2];
+
+       //EXTERNAL PARFUN
+       // COMPLEX PARFUN
+
+       EPSZ = Math.pow(EPS, 0.3333);
+       PIN[0] = T[0] + EPSZ;
+       PIN[1] = T[1];
+       POUT1 = PARFUN(I,PIN);
+       PIN[0] = T[0] - EPSZ;
+       PIN[1] = T[1];
+       POUT2 = PARFUN(I,PIN);
+       SUM[0] = (POUT1[0] - POUT2[0])/2.0/EPSZ;
+       SUM[1] = (POUT1[1] - POUT2[1])/2.0/EPSZ;
+
+       if (FOUR) {
+    	    PIN[0] = T[0];
+    	    PIN[1] = T[1]+EPSZ;
+    	    POUT1 = PARFUN(I,PIN);
+    	    PIN[0] = T[0];
+    	    PIN[1] = T[1]-EPSZ;
+    	    POUT2 = PARFUN(I,PIN);
+            result[0] = SUM[0]/2.0 + (POUT1[1] - POUT2[1])/4.0/EPSZ;
+            result[1] = SUM[1]/2.0 - (POUT1[0] - POUT2[0])/4.0/EPSZ;
+       }
+       else {
+            result[0]=SUM[0];
+            result[1] = SUM[1];
+       }
+       return result;
+   }
+
+   private void JAPHYC(String JBNM, String HEAD, double MAXER,boolean INTER, int NARCS,
+		      int ISYGP, int NQPTS, boolean INCST,
+		      int RFARC, double RFARG[], double CENTR[], int TSTNG,int OULVL, int IBNDS[],
+		      int MNEQN, double MATRX[][][], int IWORK[], double RWORK[],
+		      double ZWORK[][], boolean LWORK[], int OCH, int IGEOM[], double RGEOM[],
+		      int ISNPH[], double RSNPH[], int IER[]) {
+		
+		      //INTEGER IBNDS(*),IGEOM(*),ISNPH(*),IWORK(*)
+		      //REAL RGEOM(*),MATRX(MNEQN,MNEQN,2),RSNPH(*),RWORK(*)
+		      //COMPLEX CENTR
+		      //COMPLEX ZWORK(*)
+		      //LOGICAL LWORK(*)
+		      //CHARACTER JBNM*4,HEAD*72
+		
+		// ......................................................................
+		
+		// 1.     JAPHYC
+		//           COMPUTATION OF PIECEWISE ORTHOGONAL JACOBI POLYNOMIAL 
+		//           APPROXIMATIONS TO THE BOUNDARY CORRESPONDENCE DERIVATIVE FOR
+		//           THE MAP:PHYSICAL --> CANONICAL.
+		
+		// 2.     PURPOSE
+		//           THE MAIN PURPOSE IS TO CALCULATE THE COEFFICIENTS IN THE
+		//           PIECEWISE ORTHOGONAL JACOBI POLYNOMIAL APPROXIMATIONS TO THE
+		//           BOUNDARY CORRESPONDENCE DERIVATIVE FOR THE CONFORMAL MAP OF
+		//           A GIVEN SIMPLY CONNECTED PHYSICAL DOMAIN (WITH PIECEWISE
+		//           ANALYTIC BOUNDARY) ONTO A CANONICAL DOMAIN (WITH UNIT CIRCLE
+		//           AS BOUNDARY).  AN INTERIOR PHYSICAL DOMAIN IS MAPPED TO THE 
+		//           UNIT DISC, AN EXTERIOR PHYSICAL DOMAIN TO THE COMPLEMENT OF
+		//           THE CLOSED UNIT DISC.
+		//           THE METHOD USED IS AN ADAPTIVE COLLOCATION SOLUTION OF
+		//           SYMM'S INTEGRAL EQUATION.  
+		//           A NUMBER OF DATA ARRAYS ASSOCIATED WITH THE POLYNOMIAL
+		//           APPROXIMATIONS ARE ALSO COMPUTED AND MAY BE USED FOR SUBSE-
+		//           QUENT PROCESSING.  IN ADDITION TO BEING RETURNED AS 
+		//           PARAMETERS OF THE SUBROUTINE THESE ARE ALSO AUTOMATICALLY
+		//           OUTPUT TO DATA FILES.
+		
+		// 3.     CALLING SEQUENCE
+		//           CALL JAPHYC(JBNM,HEAD,MAXER,INTER,NARCS,ISYGP,NQPTS,INCST,
+		//                       RFARC,RFARG,CENTR,TSTNG,OULVL,IBNDS,MATRX,IWORK,
+		//                       RWORK,ZWORK,LWORK,OCH,IGEOM,RGEOM,ISNPH,RSNPH,
+		//                       IER)
+		
+		//        PARAMETERS
+		//         ON ENTRY
+		//            JBNM   - CHARACTER*4
+		//                     THE JOB NAME.  THIS IS USED TO CREATE THREE OUT-
+		//                     PUT FILES WITH FILENAMES
+		
+		//                         <JBNM>pl, <JBNM>gm, <JBNM>ph,
+		
+		//                     WHERE <JBNM> DENOTES THE VALUE OF VARIABLE JBNM
+		//                     WITH ANY TRAILING SPACES DELETED.  THE FIRST OF
+		//                     THESE IS A LISTING FILE RECORDING THE PROGRESS
+		//                     AND RESULTS OF THE CALCULATION FOR LATER READING
+		//                     BY THE USER.  THE TWO FILES <JBNM>gm AND <JBNM>ph
+		//                     ARE DATA FILES, NOT REALLY INTENDED TO BE READ
+		//                     BY THE USER.
+		//                     THE VALUE OF JBNM IS ALSO THE ONLY ITEM IN A
+		//                     FOURTH OUTPUT FILE NAMED (LITERALLY) jbnm.
+		
+		//            HEAD   - CHARACTER*72
+		//                     A HEADING FOR THE PROBLEM, TO APPEAR ON THE
+		//                     LISTING FILE <JBNM>pl.
+		
+		//            MAXER  - REAL
+		//                     RELATIVE ACCURACY REQUESTED FOR THE CONFORMAL MAP;
+		//                     THIS IS THE SAME AS THE ABSOLUTE ACCURACY ON THE
+		//                     BOUNDARY OF THE PHYSICAL DOMAIN.
+		
+		//            INTER  - LOGICAL
+		//                     TRUE IF THE PHYSICAL DOMAIN IS INTERIOR, FALSE 
+		//                     OTHERWISE.
+		
+		//            NARCS  - INTEGER
+		//                     THE NUMBER OF ANALYTIC ARCS THAT MAKE UP THE 
+		//                     W H O L E BOUNDARY OF THE PHYSICAL DOMAIN.
+		
+		//            ISYGP  - INTEGER
+		//                     THE MAGNITUDE OF ISYGP IS THE ORDER OF THE
+		//                     SYMMETRY GROUP OF THE PHYSICAL DOMAIN.
+		//                     ISYGP.EQ.1  -THE SYMMETRY GROUP HAS ONLY ONE ELE-
+		//                                  MENT,THE IDENTITY TRANSFORMATION;  IN
+		//                                  OTHER WORDS, THE DOMAIN HAS 'NO 
+		//                                  SYMMETRY'.
+		//                     ISYGP.GT.1  -THE SYMMETRY GROUP CONTAINS ONLY
+		//                                  PROPER (IN-PLANE) ROTATIONS; IN OTHER
+		//                                  WORDS, THE DOMAIN HAS ONLY ROTATIONAL
+		//                                  SYMMETRIES.
+		//                     ISYGP.LT.-1 -THE SYMMETRY GROUP CONTAINS IMPROPER
+		//                                  (OUT-OF-PLANE) ROATIONS; IN OTHER
+		//                                  WORDS, THE DOMAIN HAS REFLECTIONAL
+		//                                  SYMMETRY AND MAY ALSO HAVE ROTATIONAL
+		//                                  SYMMETRIES.
+		//                     AN INPUT VALUE OF -1 OR 0 IS TREATED AS IF IT WERE
+		//                     1.
+		
+		//            NQPTS  - INTEGER
+		//                     PLAYS TWO ROLES.
+		//                     1. THE NUMBER OF QUADRATURE POINTS TO BE USED IN 
+		//                        AN ELEMENTARY GAUSS-JACOBI RULE;  COMPOSITE 
+		//                        RULES ARE CONSTRUCTED FROM PANELS OF NQPTS-
+		//                        POINT RULES.
+		//                     2. THE MAXIMUM DEGREE OF POLYNOMIAL APPROXIMATION
+		//                        IS FIXED AT NQPTS-1.
+		//                     NQPTS SHOULD BE REASONABLY LARGE; A PRACTICAL RULE
+		//                     OF THUMB IS THAT IF MACHINE PRECISION IS X*1E-N,
+		//                    1<X<10, THEN NQPTS=N+1.
+		
+		//            INCST  - LOGICAL
+		//                     IF INCST IS TRUE THEN AN INCREMENTAL STRATEGY IS
+		//                     USED TO TRY TO ACHIEVE THE ACCURACY SPECIFIED BY
+		//                     MAXER; VERY ROUGHLY SPEAKING, THIS MEANS THAT THE 
+		//                     METHOD SUCCESSIVELY ACHIEVES THE TARGET ACCURACIES
+		//                     1E-1,1E-2,...UNTIL MAXER HAS BEEN ACHIEVED.  IF 
+		//                     THE PROBLEM IS THOUGHT TO BE EITHER PARTICULARLY
+		//                     DIFFICULT OR PARTICULARLY SIMPLE, THEN INCST 
+		//                     SHOULD BE SET TO .TRUE.  FOR PROBLEMS OF 'AVERAGE'
+		//                     DIFFICULTY, SETTING INCST TO .FALSE. IS USUALLY 
+		//                     MORE EFFICIENT.
+		
+		//            RFARC  - INTEGER
+		//                     THE REFERENCE ARC USED TO DEFINE THE ORIENTATION 
+		//                     THAT IS GIVEN TO THE MAP.  THE CONVENTION IS THAT 
+		//                     THE POINT AT THE START OF ANALYTIC ARC NUMBER 
+		//                     RFARC IS MAPPED TO THE POINT WITH ARGUMENT 
+		//                     RFARG*PI ON THE UNIT DISC.
+		
+		//            RFARG  - REAL
+		//                     THE REFERENCE ARGUMENT/PI USED TO DEFINE THE 
+		//                     ORIENTATION THAT IS GIVEN TO THE MAP.  SEE RFARC 
+		//                     ABOVE.
+		
+		//            CENTR  - COMPLEX
+		//                     THE POINT IN THE PHYSICAL PLANE THAT IS TO BE
+		//                     MAPPED TO THE CENTRE OF THE UNIT DISC.  FOR
+		//                     EXTERIOR DOMAINS CENTR MUST BE SOME POINT IN THE
+		//                     COMPLEMENTARY INTERIOR  PHYSICAL DOMAIN.
+		//                     IN CASE ABS(ISYGP).GT.1 THEN CENTR MUST ALSO BE
+		//                     A CENTRE OF SYMMETRY FOR THE PHYSICAL DOMAIN.
+		
+		//            TSTNG  - INTEGER
+		//                     EITHER 0 OR 1.
+		//                     ON SUCCESSFUL COMPLETION OF THE NUMERICAL SOLUTION
+		//                     OF SYMM'S EQUATION, A MODULE IS PROVIDED FOR
+		//                     TESTING THE ERROR IN THE MODULUS OF THE COMPUTED
+		//                     MAP ON THE BOUNDARY OF THE DOMAIN.
+		//                     TSTNG=0 - TEST ONLY AT SUB-ARC END POINTS
+		//                     TSTNG=1 - IN ADDITION TO TESTING AT SUB-ARC END
+		//                               POINTS TEST ALSO AT INTERIOR POINTS
+		//                               ON EACH SUB-ARC.
+		
+		//            OULVL  - INTEGER
+		//                     EITHER 0,1,2,3,4 OR 5.
+		//                     CONTROLS THE AMOUNT OF OUTPUT IN THE LISTING FILE
+		//                     <JBNM>pl.
+		//                     OULVL=0 - OUTPUT A SOLUTION SUMMARY AT EACH STAGE
+		//                               IN THE ADAPTIVE PROCESS AND A SHORT
+		//                               SUMMARY OF THE ERRORS IN MODULUS.
+		//                     OULVL=1 - AS 0, BUT ALSO OUTPUT A DETAILED LIST OF
+		//                               THE ERRORS IN MODULUS.
+		//                     OULVL=2 - AS 0, BUT ALSO OUTPUT FULL DETAILS OF 
+		//                               THE FINAL COMPUTED JACOBI COEFFICIENTS 
+		//                               ON SUCCESSFUL COMPLETION.
+		//                     OULVL=3 - AS 2, BUT ALSO OUTPUT A DETAILED LIST OF
+		//                               THE ERRORS IN MODULUS.
+		//                     OULVL=4 - OUTPUT FULL DETAILS OF THE OF THE COMPU-
+		//                               TED JACOBI COEFFICIENTS AT EVERY STAGE
+		//                               IN THE ADAPTIVE PROCESS AND A SHORT
+		//                               SUMMARY OF THE ERRORS IN MODULUS.
+		//                     OULVL=5 - AS 4, BUT ALSO OUTPUT A DETAILED LIST OF
+		//                               THE ERRORS IN MODULUS.
+		
+		//            IBNDS  - INTEGER ARRAY
+		//                     INTEGER VECTOR OF SIZE AT LEAST 5.
+		//                     IBNDS(K), K=1,2,3,4,5, DEFINE VARIOUS UPPER LIMITS
+		//                     THAT HAVE BEEN SET IN THE CALLING PROGRAM AND 
+		//                     WHICH CONTROL THE SIZES OF THE ARRAYS IGEOM,RGEOM,
+		//                     MATRX,ISNPH,RSNPH,IWORK,RWORK,ZWORK,LWORK. 
+		//                     THEIR MEANINGS ARE AS FOLLOWS:
+		//                     IBNDS(1) - THE MAXIMUM NUMBER OF SUB-ARCS ALLOWED.
+		//                     IBNDS(2) - THE MAXIMUM NUMBER OF JACOBI INDECES
+		//                                ALLOWED (WHICH IS ALSO THE 1 + THE
+		//                                MAXIMUM NUMBER OF CORNERS ALLOWED ON 
+		//                                PHYSICAL BOUNDARY).
+		//                     IBNDS(3) - 1 + THE MAXIMUM NUMBER OF PANELS
+		//                                ALLOWED IN A SINGLE COMPOSITE GAUSSIAN
+		//                                RULE.
+		//                     IBNDS(4) - THE MAXIMUM TOTAL NUMBER OF QUADRATURE 
+		//                                POINTS ALLOWED OVER ALL COMPOSITE 
+		//                                GAUSSIAN RULES.
+		//                                (IBNDS(4)<=(IBNDS(3)-1)*IBNDS(2)*NQPTS)
+		
+		//            MNEQN  - INTEGER
+		//                     THE MAXIMUM NUMBER OF EQUATIONS ALLOWED IN THE 
+		//                     LINEAR ALGEBRAIC SYSTEM RESULTING FROM THE 
+		//                     COLLOCATION METHOD. (MNEQN <= 1+IBNDS(1)*NQPTS)
+		
+		//            MATRX  - REAL ARRAY
+		//                     A 3-DIMENSIONAL MATRIX OF SIZE 
+		//                          MNEQN X MNEQN X 2 .
+		//                     (IN THE ADAPTIVE PROCESS, MATRX(*,*,2) WILL STORE 
+		//                     THE COEFFICIENT MATRIX OF THE CURRENT COLLOCATION 
+		//                     SYSTEM AND MATRX(*,*,1) WILL STORE THE COEFFICIENT
+		//                     MATRIX OF THE PREVIOUS SYSTEM)
+		
+		//            IWORK  - INTEGER ARRAY
+		//                     A WORKING VECTOR OF SIZE AT LEAST
+		//                        8*IBNDS(1)+MNEQN+2*IBNDS(2) .
+		
+		//            RWORK  - REAL ARRAY
+		//                     A WORKING VECTOR OF SIZE AT LEAST
+		//                       (4 + 3*NQPTS + 5*IBNDS(2))*NQPTS + 2*IBNDS(1) +
+		//                       2*MNEQN + IBNDS(3) + 5*IBNDS(2) + 2*IBNDS(4)
+		
+		//            ZWORK  - COMPLEX ARRAY
+		//                     A WORKING VECTOR OF SIZE AT LEAST
+		//                         MNEQN + 2*IBNDS(2)
+		
+		//            LWORK  - LOGICAL ARRAY
+		//                     A WORKING VECTOR OF SIZE AT LEAST
+		//                         3*IBNDS(1) + IBNDS(2)
+		
+		//            OCH    - INTEGER
+		//                     DEFINES AN OUTPUT CHANNEL THAT MAY BE USED FOR
+		//                     WRITING THE FILES <JBNM>pl, <JBNM>gm, <JBNM>ph.
+		
+		//         ON EXIT
+		//            RFARG  - REAL
+		//                     EXIT VALUE IS PI*(ENTRY VALUE)
+		
+		//            IGEOM  - INTEGER ARRAY
+		//                     A VECTOR OF SIZE AT LEAST 
+		//                          IBNDS(1) + 4;
+		//                     STORES DATA RELATING TO THE ARC SUBDIVISIONS THAT
+		//                     HAVE TAKEN PLACE.
+		
+		//            RGEOM  - REAL ARRAY
+		//                     A VECTOR OF SIZE AT LEAST 
+		//                          3*IBNDS(1)+2;
+		//                     STORES DATA RELATING TO THE ARC SUBDIVISIONS THAT
+		//                     HAVE TAKEN PLACE AND THE ARGUMENTS OF SUB-ARC END
+		//                     POINTS ON THE UNIT DISC.
+		
+		//            ISNPH  - INTEGER ARRAY
+		//                     A SOLUTION VECTOR OF SIZE AT LEAST 
+		//                          3*IBNDS(1)+6;
+		//                     STORES DATA DEFINING THE FINAL POLYNOMIAL DEGREES
+		//                     ON THE SUB-ARCS, THE JACOBI INDEX FOR EACH SUB-ARC
+		//                     AND POINTERS TO THE SOLUTIONS STORED IN RSNPH.
+		
+		//            RSNPH  - REAL ARRAY
+		//                     A SOLUTION VECTOR OF SIZE AT LEAST
+		//                         IBNDS(1)+2*MNEQN+3*IBNDS(2)*(1+2*NQPTS);
+		//                     STORES DATA DEFINING THREE-TERM RECURRENCE
+		//                     SCHEMES, ELEMENTARY GAUSS-JACOBI QUADRATURE RULES,
+		//                     THE JACOBI COEFFICIENTS FOR THE BOUNDARY
+		//                     CORRESPONDENCE FUNCTION AND ITS DERIVATIVE AND
+		//                     THE ERRORS IN MODULUS ON EACH SUB-ARC.
+		
+		//            IER    - INTEGER
+		//                     IF IER > 0 THEN AN ABNORMAL EXIT HAS OCCURRED;
+		//                     A MESSAGE TO DESCRIBE THE ERROR IS AUTOMATICALLY
+		//                     WRITTEN ON THE STANDARD OUTPUT CHANNEL AND THE
+		//                     LISTING FILE <JBNM>pl.
+		//                     IER=0 - NORMAL EXIT.
+		//                     IER>0 - ABNORMAL EXIT; THE ERROR MESSAGE SHOULD
+		//                             BE SELF EXPLANATORY.
+		                                  
+		
+		// 4.     SUBROUTINES OR FUNCTIONS NEEDED
+		//              - THE CONFPACK LIBRARY.
+		//              - THE REAL FUNCTION R1MACH, WHICH IS A MACHINE CONSTANTS 
+		//                ROUTINE OBTAINED FROM THE PORT LIBRARY.   
+		//                IT MUST BE ADJUSTED TO SUIT EACH PARTICULAR MACHINE.  
+		//                IF YOUR MACHINE ISN'T LISTED IN R1MACH THEN YOU'LL  
+		//                HAVE TO WRITE YOUR OWN VERSION, BUT NOTE THAT CONFPACK 
+		//                ONLY USES R1MACH(1), R1MACH(2) AND R1MACH(4).
+		//              - THE FOLLOWING LINPACK ROUTINES:
+		//                    ISAMAX   SASUM    SAXPY   SDOT    SGECO
+		//                    SGEFA    SGEDI    SGESL   SSCAL   SSWAP
+		//              - THE FOLLOWING QUADPACK ROUTINES:
+		//                    QAWS     QAWSE    QC25S   QCHEB   QK15W
+		//                    QMAC     QMOMO    QSORT   QWGTS
+		//              - THE USER SUPPLIED COMPLEX FUNCTIONS PARFUN AND DPARFN
+		//                WHICH DEFINE THE PARAMETRIC FUNCTION FOR THE PHYSICAL
+		//                BOUNDARY AND THE DERIVATIVE OF THE PARAMETRIC FUNCTION.
+		//                THE PARAMETRIC FUNCTION DEFINING THE K'TH ANALYTIC ARC
+		//                SHOULD HAVE THE SUBROUTINE HEADING
+		
+		//                    COMPLEX FUNCTION PARFUN(K,T)
+		//                    INTEGER K
+		//                    COMPLEX T
+		
+		//                WITH THE REAL PARAMETER INTERVAL -1 < REAL(T) < +1
+		//                BEING MAPPED TO THE PHYSICAL ARC.  A SIMILAR HEADING
+		//                SHOULD BE GIVEN FOR THE DERIVATIVE DPARFN.  THE PRE-
+		//                PROCESSING PROGRAM PARGEN IS AVAILABLE TO HELP WITH
+		//                THE CREATION OF PARFUN AND DPARFN.
+		
+		
+		// 5.     FURTHER COMMENTS
+		//             A SUMMARY LISTING OF ACTIONS TAKEN IS AUTOMATICALLY
+		//             WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+		
+		// ......................................................................
+		//     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+		//     LAST UPDATE: 15 JULY 1990
+		// ......................................................................
+		     
+		//     LOCAL VARAIBLES
+		
+		//**** POINTERS FOR IGEOM,RGEOM,ISNPH,RSNPH
+		
+		int ACOEF,AICOF,BCFSN,BCOEF,BICOF,DGPOL,ERARC,H0VAL,HALEN,
+		     HIVAL,JACIN,JATYP,LOSUB,MIDPT,PARNT,QUPTS,QUWTS,SOLUN,VTARG;
+		
+		//**** POINTERS FOR IWORK,RWORK,ZWORK,LWORK
+		
+		int A1COF,AQCOF,AXION,B1COF,BQCOF,COLPR,COLSC,CQCOF,DIAG,
+		     HIOLD,HISUB,HITES,ICOPY,IPIVT,LCOPY,LNSEG,LOOLD,LOQSB,LOTES,NEWDG,
+		     NEWHL,NEWQU,NQUAD,PNEWQ,QCOMW,QCOMX,RCOPY,RIGLL,SDIAG,TOLOU,WORK2,
+		     WORKQ,WORK,WORKT,XENPT,XIDST,XIVAL,ZCOLL;
+		
+		//**** OTHER LOCAL VARIABLES
+		
+		int I,IMXER,INDEG,J,L,MDGPO,MNJXS,MNQUA,MNSUA,MQIN1,NCOLL,
+		     NEFF,NEQNS,NJIND,NROWS,NTEST,
+		     TNSUA,TNGQP,ORDSG;
+		int SOLCO = 0;
+		int QIERC[] = new int[7];
+		int QIERR[] = new int[7];
+		//int QIERC(0:6),QIERR(0:6)
+		//DATA QIERC/7*0E+0/
+		
+		final double SFACT = 0.8;
+		final double QFACT = 0.1;
+		double AQTOL,CONST,GAQTL,GLGTL,GRQTL,GSUPE,GTGTE,LGTOL,ESTOL,
+		     MCHEP,MCQER,MQERR,MXERM,PI,R1MACH,RCOND,RQTOL,SSUPE,
+		     TGTER,TOLNR;
+		
+		double ZMXER[] = new double[2];
+		//COMPLEX ZMXER
+		
+		final boolean INIBT = true;
+		boolean ACCPT,GACPT,NUQTL,REFLN;
+		
+		String OFL;
+		//CHARACTER OFL*6
+	
+		//EXTERNAL AXION1,ANGLE7,ASQUC7,BCFVTF,CPJAC3,CSCAL3,ICOQR1,IGNLVL,
+		//         LINSEG,LNSY11,OPQUD1,OUPTGM,OUPTPH,R1MACH,RECON,RESCAL,RSLT80,
+		//         RSLT71,RSLT72,RSLT83,RSLT84,SETIGL,SGECO,SGEDI,SGESL,TESMD9,
+		//         TSJAC3,UPCOQ1,UPJAC1,WRHEAD,WRTAIL
+		
+		//C**** DEFINE SOME OUTPUT FORMATS
+		
+		//1     FORMAT(A45)
+		//3     FORMAT(A45,2X,E9.2)
+		
+		//**** NAME AND OPEN THE MAIN LISTING FILE AND OUTPUT THE JOBNAME TO FILE
+		//**** jbnm.
+		
+		//OPEN(OCH,FILE='jbnm')
+		//WRITE(OCH,'(A4)') JBNM
+		//CLOSE(OCH)
+		//L=INDEX(JBNM,' ')-1
+		//IF (L.EQ.-1) L=4
+		//OFL=JBNM(1:L)//'pl'
+		//OPEN(OCH,FILE=OFL)
+		
+		//**** OUTPUT CONFPACK HEADING
+		
+		WRHEAD(1,0,null);
+		//WRHEAD(1,OCH)
+		
+		if (NQPTS < 1) {
+		    IER[0]=3;
+		    WRTAIL(1,0,IER[0],null);
+		    return;
+		} 
+		
+		//**** INITIALISE SOME VARIABLES
+		
+		if (ISYGP == 0 || ISYGP == -1) {
+		    ORDSG=1;
+		    REFLN=false;
+		}
+		else {
+		    ORDSG=Math.abs(ISYGP);
+		    REFLN=(ISYGP < -1);
+		}
+		
+		if ((NARCS % ORDSG) != 0) {
+		    IER[0]=55;
+		    WRTAIL(1,0,IER[0],null);
+		    return;
+		}
+		
+		SOLCO=0;
+		NEFF=0;
+		MCHEP=EPS;
+		TOLNR=Math.sqrt(MCHEP);
+		NJIND=NARCS+1;
+		TNGQP=NQPTS*NJIND;
+		MDGPO=NQPTS-1;
+		MNSUA=IBNDS[0];
+		MNJXS=IBNDS[1];
+		MQIN1=IBNDS[2];
+		MNQUA=IBNDS[3];
+		if (2*NARCS > MNSUA) {
+		    IER[0]=1;
+		    WRTAIL(1,0,IER[0],null);
+		    return;
+		}
+		if (NARCS+1 > MNJXS) {
+		    IER[0]=2;
+		    WRTAIL(1,0,IER[0],null);
+		    return;            
+		}
+		if (TSTNG != 1) {
+		    TSTNG=0;
+		}
+		GSUPE=MAXER;
+		GTGTE=GSUPE*SFACT;
+		GAQTL=QFACT*GTGTE;
+		if (GAQTL < 5*MCHEP) {
+		    GAQTL=5*MCHEP;
+		    GTGTE=GAQTL/QFACT;
+		    GSUPE=GTGTE/SFACT;
+		}
+		GLGTL=Math.log(1+GTGTE);
+		GRQTL=GAQTL;
+		IGEOM[0]=NARCS;
+		IGEOM[1]=NQPTS;
+		IGEOM[3]=MNSUA;
+		ISNPH[0]=NARCS;
+		ISNPH[1]=NQPTS;
+		ISNPH[4]=MNSUA;
+		ISNPH[5]=MNEQN;
+		RGEOM[0]=GSUPE;
+		RGEOM[1]=GLGTL;
+		
+		//**** SET UP THE POINTERS TO ELEMENTS IN ARRAYS IGEOM AND RGEOM
+		
+		PARNT=5;
+		HALEN=3;
+		MIDPT=MNSUA+3;
+		VTARG=2*MNSUA+3; 
+		
+		//**** SET UP THE POINTERS TO ELEMENTS IN ARRAYS ISNPH AND RSNPH
+		
+		DGPOL=7;
+		JATYP=MNSUA+7;
+		LOSUB=2*MNSUA+7;
+		ACOEF=1;
+		BCOEF=TNGQP+1;
+		AICOF=2*TNGQP+1;
+		BICOF=3*TNGQP+1;
+		QUPTS=4*TNGQP+1;
+		QUWTS=5*TNGQP+1;
+		H0VAL=6*TNGQP+1;
+		HIVAL=NJIND+6*TNGQP+1;
+		JACIN=2*NJIND+6*TNGQP+1;
+		ERARC=3*NJIND+6*TNGQP+1;
+		BCFSN=MNSUA+3*NJIND+6*TNGQP+1;
+		SOLUN=MNEQN+MNSUA+3*NJIND+6*TNGQP+1;
+		
+		//**** SET UP THE POINTERS TO ELEMENTS IN ARRAYS IWORK,RWORK,ZWORK AND 
+		//**** LWORK
+		
+		IPIVT=1;
+		LOQSB=MNEQN+1;
+		NQUAD=MNJXS+MNEQN+1;
+		HISUB=2*MNJXS+MNEQN+1;
+		LOTES=MNSUA+2*MNJXS+MNEQN+1;
+		HITES=2*MNSUA+2*MNJXS+MNEQN+1;
+		AXION=3*MNSUA+2*MNJXS+MNEQN+1;
+		NEWDG=4*MNSUA+2*MNJXS+MNEQN+1;
+		ICOPY=5*MNSUA+2*MNJXS+MNEQN+1;
+		LOOLD=6*MNSUA+2*MNJXS+MNEQN+1;
+		HIOLD=7*MNSUA+2*MNJXS+MNEQN+1;
+		WORK2=1;
+		COLPR=MNEQN+1;
+		A1COF=2*MNEQN+1;
+		B1COF=MNJXS+2*MNEQN+1;
+		TOLOU=2*MNJXS+2*MNEQN+1;
+		XIDST=3*MNJXS+2*MNEQN+1;
+		XENPT=5*MNJXS+2*MNEQN+1;
+		QCOMX=MQIN1+5*MNJXS+2*MNEQN+1;
+		QCOMW=MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		RCOPY=2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		NEWHL=MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		AQCOF=2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		BQCOF=TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		CQCOF=2*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		COLSC=3*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		RIGLL=4*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		WORK=5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		DIAG=2*NQPTS+5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		SDIAG=3*NQPTS+5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		WORKT=4*NQPTS+5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
+		WORKQ=2*NQPTS*NQPTS+4*NQPTS+5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+
+		      2*MNEQN+1;
+		ZCOLL=1;
+		XIVAL=MNEQN+1;
+		NEWQU=1;
+		LCOPY=MNJXS+1;
+		PNEWQ=MNSUA+MNJXS+1;
+		LNSEG=2*MNSUA+MNJXS+1;
+		
+		//**** ASSIGN THE JACOBI INDECES FOR EACH ARC.
+		
+		//ANGLE7(RSNPH(JACIN),NARCS,INTER);
+		double BE[] = new double[NARCS];
+		ANGLE7(BE, NARCS, INTER);
+		for (I = 0; I < NARCS; I++) {
+			RSNPH[JACIN + I - 1] = BE[I];
+		}
+		RSNPH[JACIN+NJIND-2]=0.0;
+		
+		//**** SET SUB-TOLERANCES AND INDEG
+		
+		if (INCST && GSUPE <= 3.16E-2) {
+		
+		    //****   FOLLOW INCREMENTAL STRATEGY
+		
+		    SSUPE=0.1;
+		    TGTER=SSUPE*SFACT;
+		    AQTOL=TGTER*QFACT;
+		    LGTOL=Math.log(1.0+TGTER);
+		    RQTOL=AQTOL;
+		    INDEG=Math.min(3,NQPTS-1);
+		}
+		else {
+		
+		    //****   SUB-TOLERANCES SAME AS GLOBAL TOLERANCES, INDEG DETERMINED
+		    // ****   ACCORDING TO ACCURACY REQUESTED
+		
+		    SSUPE=GSUPE;
+		    TGTER=GTGTE;
+		    AQTOL=GAQTL;
+		    LGTOL=GLGTL;
+		    RQTOL=GRQTL;
+		    INDEG=(int)Math.round((-Math.log10(TGTER)))+2;
+		    INDEG=Math.min(INDEG,NQPTS-1);
+		}
+		
+		//**** ASSIGN THE LOGICAL LINE SEGMENT TYPE TO EACH ARC.
+		
+		/*      CALL LINSEG(LWORK(LNSEG),NARCS)
+		C
+		C**** LIST THE INPUT ARGUMENTS AND ASSOCIATED QUANTITIES
+		C
+		      CALL RSLT80(JBNM,HEAD,GSUPE,MAXER,GAQTL,INTER,NARCS,ORDSG,NQPTS,
+		     +INCST,INDEG,RFARC,RFARG,CENTR,RSNPH(JACIN),LWORK(LNSEG),
+		     +TSTNG,OULVL,IBNDS,MNEQN,OCH)
+		      PI=4E+0*ATAN(1E+0)
+		      RFARG=RFARG*PI
+		C
+		C**** SET UP THE GAUSS-JACOBI AND GAUSS-LEGENDRE QUADRATURE DATA AND 
+		C**** STORE IN ARRAYS QUPTS AND QUWTS.  SET UP THREE TERM RECURRENCE
+		C**** COEFFICIENTS AND STORE IN ACOEF, BCOEF.  DETERMINE ZEROTH
+		C**** MOMENTS OF JACOBI DISTRIBUTIONS AND STORE IN H0VAL. 
+		C**** ALSO SET UP THREE TERM RECURRENCE COEFFICIENTS AND ZEROTH MOMENTS
+		C**** FOR THE INTEGRATED POLYNOMIALS, STORING RESULTS IN AICOF,BICOF
+		C**** AND HIVAL.
+		C      
+		      CALL OPQUD1(NJIND,NQPTS,RSNPH(JACIN),RSNPH(ACOEF),RSNPH(BCOEF),
+		     +RSNPH(H0VAL),RSNPH(AICOF),RSNPH(BICOF),RSNPH(HIVAL),RSNPH(QUPTS),
+		     +RSNPH(QUWTS),RWORK(WORK),IER)
+		      IF (IER .GT. 0) THEN
+		        GOTO 999
+		      ENDIF
+		      J=1-NQPTS
+		      DO 10 I=1,NJIND
+		        J=J+NQPTS
+		        RWORK(A1COF+I-1)=RSNPH(ACOEF+J-1)
+		        RWORK(B1COF+I-1)=RSNPH(BCOEF+J-1)
+		10    CONTINUE  
+		      WRITE(*,1) 'BASIC GAUSS QUADRATURE DATA DONE:'
+		C
+		C**** SET UP THE COEFFICIENTS IN THE THREE TERM RECURRENCE FORMULAE
+		C**** FOR THE PRINCIPAL SINGULAR INTEGRALS ASSOCIATED WITH THE VARIOUS
+		C**** JACOBI WEIGHT FUNCTIONS AND THEIR ORTHONORMAL POLYNOMIALS; STORE
+		C**** THESE COEFFICIENTS IN AQCOF, BQCOF AND CQCOF
+		C
+		      CALL ASQUC7(RWORK(AQCOF),RWORK(BQCOF),RWORK(CQCOF),RSNPH(JACIN),
+		     +NJIND,NQPTS)
+		      WRITE(*,1) 'DATA FOR SINGULAR INTEGRALS DONE:'
+		C
+		C**** SET UP THE A PRIORI COLUMN SCALE FACTORS, STORED IN COLSC.
+		C
+		      CALL CSCAL3(RWORK(COLSC),NQPTS,NJIND,RSNPH(ACOEF),RSNPH(BCOEF),
+		     +RSNPH(H0VAL),RSNPH(QUPTS),RSNPH(QUWTS),RSNPH(JACIN),RWORK(WORK),
+		     +RWORK(WORKT),RWORK(WORKQ))
+		C
+		C**** SET UP THE ARRAY RIGLL OF REFERENCE IGNORE LEVELS.
+		C
+		      CALL IGNLVL(RWORK(RIGLL),RWORK(COLSC),RSNPH(ACOEF),RSNPH(BCOEF),
+		     +RSNPH(H0VAL),RSNPH(JACIN),NJIND,NQPTS,IER)
+		      IF (IER .GT. 0) THEN
+		        GOTO 999
+		      ENDIF
+		C
+		C**** SET UP THE ARRAY OF COLLOCATION POINTS PARAMETER VALUES, COLPR,
+		C**** THE ARRAY OF COLLOCATION POINTS ZCOLL AND THE ARRAYS LOSUB AND 
+		C**** HISUB NEEDED TO ACCESS COLPR AND ZCOLL CORRECTLY.  INITIALISE
+		C**** DGPOL AND UPDATE LNSEG FOR ARC HALVING. 
+		C
+		      CALL CPJAC3(NARCS,NQPTS,INDEG,ISNPH(DGPOL),RSNPH(JACIN),
+		     +RSNPH(ACOEF),RSNPH(BCOEF),RWORK(DIAG),RWORK(SDIAG),TNSUA,
+		     +ISNPH(LOSUB),IWORK(HISUB),ISNPH(JATYP),IGEOM(PARNT),RGEOM(MIDPT),
+		     +RGEOM(HALEN),RWORK(COLPR),ZWORK(ZCOLL),LWORK(LNSEG),IWORK(LOOLD),
+		     +IWORK(HIOLD),EPS,IER,INIBT)
+		      IF (IER .GT. 0) THEN
+		        GOTO 999
+		      ENDIF
+		      NCOLL=IWORK(HISUB+TNSUA-1)
+		      NEQNS=NCOLL+1
+		      NROWS=NCOLL/ORDSG+1
+		      IF (NEQNS .GT. MNEQN) THEN
+		        IER=8
+		        GOTO 999
+		      ENDIF
+		      WRITE(*,1) 'COLLOCATION POINT CHOICE DONE:'
+		C
+		C**** SET UP THE COMPOSITE GAUSSIAN QUADRATURE RULES, STORING ABSCISSAE
+		C**** AND WEIGHTS IN QCOMX AND QCOMW.  SET UP ARRAYS NQUAD,LOQSB
+		C**** NEEDED TO ACCESS THESE DATA.  RECORD MAXIMUM QUADRATURE ERRORS
+		C**** FOR COLUMN SCALED INTEGRALS IN ARRAY TOLOU.
+		C
+		      CALL ICOQR1(NARCS,NJIND,NQPTS,MDGPO,MQIN1,AQTOL,RSNPH(QUPTS),
+		     +RSNPH(QUWTS),RSNPH(JACIN),RGEOM(MIDPT),RGEOM(HALEN),RSNPH(ACOEF),
+		     +RSNPH(BCOEF),RSNPH(H0VAL),RWORK(COLSC),IWORK(NQUAD),IWORK(LOQSB),
+		     +RWORK(QCOMX),RWORK(QCOMW),MNQUA,RWORK(TOLOU),MCQER,RWORK(XENPT),
+		     +ZWORK(XIVAL),RWORK(XIDST),IER)
+		      NUQTL=.FALSE.
+		      IF (IER .GT. 0) THEN
+		        GOTO 999
+		      ENDIF
+		      WRITE(*,1) 'COMPOSITE GAUSSIAN RULES DONE:'
+		C
+		C**** SET UP LINEAR ALGEBRAIC SYSTEM.
+		C
+		23    CONTINUE
+		      SOLCO=SOLCO+1
+		      WRITE(*,24) '********SOLUTION',SOLCO,'********',NROWS,'EQUATIONS'
+		24    FORMAT(/,T18,A,1X,I2,1X,A,/,T25,I3,1X,A)
+		C
+		      CALL LNSY11(MATRX,RSNPH(SOLUN),MNEQN,NCOLL,ORDSG,REFLN,NQPTS,
+		     +TNSUA,ISNPH(JATYP),IGEOM(PARNT),ISNPH(DGPOL),ISNPH(LOSUB),
+		     +IWORK(HISUB),IWORK(NQUAD),IWORK(LOQSB),TOLNR,RGEOM(MIDPT),
+		     +RGEOM(HALEN),RSNPH(H0VAL),RWORK(COLSC),RSNPH(ACOEF),RSNPH(BCOEF),
+		     +RWORK(COLPR),RWORK(QCOMX),RWORK(QCOMW),CENTR,ZWORK(ZCOLL),INTER,
+		     +LWORK(LNSEG),RWORK(WORK),QIERR,MQERR,RSNPH(JACIN),RWORK(A1COF),
+		     +RWORK(B1COF),AQTOL,RQTOL,RWORK(AQCOF),RWORK(BQCOF),RWORK(CQCOF),
+		     +IWORK(LOOLD),IWORK(HIOLD))
+		C
+		      DO 25 I=0,6
+		        QIERC(I)=QIERC(I)+QIERR(I)
+		25    CONTINUE
+		      WRITE(*,1) 'LINEAR SYSTEM SET UP DONE:'
+		C
+		C**** SOLVE LINEAR SYSTEM BY GAUSSIAN ELIMINATION USING LINPACK
+		C
+		      CALL SGECO(MATRX(1,1,2),MNEQN,NROWS,IWORK(IPIVT),RCOND,
+		     +RWORK(WORK2))
+		      IF (RCOND .EQ. 0E+0) THEN
+		        IER=15
+		        SOLCO=SOLCO-1
+		        GOTO 999
+		      ENDIF    
+		      CALL SGESL(MATRX(1,1,2),MNEQN,NROWS,IWORK(IPIVT),RSNPH(SOLUN),0)
+		      NEFF=NEFF+NROWS**3
+		      WRITE(*,1) 'LINEAR SYSTEM SOLUTION DONE:'
+		C
+		C**** RECONSTITUTE FULL SOLUTION VECTOR
+		C
+		      IF (ORDSG.GT.1) THEN
+		        CALL RECON(ORDSG,REFLN,NCOLL,TNSUA,ISNPH(LOSUB),IWORK(HISUB),
+		     +  RSNPH(SOLUN))
+		      ENDIF
+		      CONST=RSNPH(SOLUN+NEQNS-1)
+		C
+		C**** SET UP THE ARRAY WORK2 OF ACTUAL COEFFICIENT IGNORE LEVELS
+		C
+		      CALL SETIGL(RWORK(WORK2),IWORK(HISUB),ISNPH(JATYP),ISNPH(LOSUB),
+		     +NQPTS,RWORK(RIGLL),TNSUA)
+		C
+		C**** DETERMINE THE ACTIONS THAT HAVE TO BE TAKEN ON EACH ARC
+		C
+		      CALL AXION1(IWORK(AXION),IWORK(NEWDG),RSNPH(SOLUN),MDGPO,TNSUA,
+		     +ISNPH(DGPOL),ISNPH(LOSUB),IWORK(HISUB),RWORK(RIGLL),LGTOL,ACCPT,
+		     +RSNPH(JACIN),ISNPH(JATYP),NJIND,RWORK(NEWHL),ESTOL,IER)
+		      ESTOL=ESTOL/SFACT
+		      IF (IER.GT.0) THEN
+		        GOTO 999
+		      ENDIF
+		      WRITE(*,1) 'DECISIONS FOR EACH ARC DONE:'
+		      WRITE(*,3) 'EFFECTIVE STOPPING TOLERANCE:',ESTOL
+		      IF (ACCPT .AND. ESTOL.LE.GSUPE) THEN
+		        GACPT=.TRUE.
+		      ELSE
+		        GACPT=.FALSE.
+		      ENDIF
+		C
+		      IF (GACPT) THEN
+		C
+		C****   OUTPUT RESULTS
+		C
+		        IF (OULVL .LT. 4) THEN
+		          CALL RSLT72(QIERC,RCOND,CONST,NROWS,ISNPH(DGPOL),ISNPH(JATYP),
+		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,IWORK(AXION),
+		     +                IWORK(NEWDG),NJIND,IWORK(NQUAD),RWORK(TOLOU),
+		     +                LGTOL,SOLCO,OCH)
+		        ELSE 
+		          CALL RSLT71(QIERC,RCOND,RSNPH(SOLUN),NEQNS,ISNPH(LOSUB),
+		     +                IWORK(HISUB),RWORK(COLSC),NQPTS,ISNPH(JATYP),
+		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,RWORK(WORK2),
+		     +                IWORK(AXION),IWORK(NEWDG),NJIND,RSNPH(JACIN),
+		     +                IWORK(NQUAD),RWORK(TOLOU),LGTOL,SOLCO,OCH)
+		        ENDIF
+		        WRITE(OCH,*) 'EFFECTIVE STOPPING TOLERANCE :',ESTOL
+		        NEFF=NINT(REAL(NEFF)**3.3333333E-1)
+		        WRITE(*,54) '****THE SOLUTION IS ACCEPTED****'
+		        WRITE(*,55) 'EFFECTIVE SIZE OF ALL SYSTEMS:',NEFF
+		        IF (INTER) THEN
+		          WRITE(*,3) 'ZERO:',CONST
+		        ELSE
+		          WRITE(*,56) 'CAPACITY:',EXP(-CONST)
+		        ENDIF
+		54      FORMAT(/,T17,A)
+		55      FORMAT(/,A45,I4)
+		56      FORMAT(A45,E16.8)
+
+		        WRITE(OCH,*)
+		        WRITE(OCH,*) '****THE SOLUTION IS ACCEPTED****'
+		        WRITE(OCH,*) 'EFFECTIVE SIZE OF ALL SYSTEMS : ',NEFF
+		        WRITE(OCH,*) 
+		      ELSE
+		        IF (ACCPT .OR. ESTOL.LE.SSUPE) THEN
+		C
+		C****     SOLUTION AT INTERMEDIATE ACCURACY IS ACCEPTED; SET TOLERANCES
+		C****     FOR GREATER ACCURACY AND RE-ASSESS UPDATING ACTIONS BEFORE 
+		C****     CONTINUING
+		C
+		          SSUPE=1E-1*MIN(SSUPE,ESTOL)
+		          TGTER=SFACT*SSUPE
+		          IF (TGTER .LE. 2E+0*GTGTE) THEN
+		            TGTER=GTGTE
+		          ENDIF
+		          AQTOL=TGTER*QFACT
+		          NUQTL=.TRUE.
+		          LGTOL=LOG(1E+0+TGTER)
+		          RQTOL=AQTOL
+		          I=NINT(-LOG10(TGTER))+2
+		          INDEG=MIN(I,MDGPO)
+		C
+		C****     DETERMINE THE ACTIONS THAT HAVE TO BE TAKEN ON EACH ARC
+		C
+		          CALL AXION1(IWORK(AXION),IWORK(NEWDG),RSNPH(SOLUN),MDGPO,
+		     +                TNSUA,ISNPH(DGPOL),ISNPH(LOSUB),IWORK(HISUB),
+		     +                RWORK(RIGLL),LGTOL,ACCPT,RSNPH(JACIN),
+		     +                ISNPH(JATYP),NJIND,RWORK(NEWHL),ESTOL,IER)
+		          ESTOL=ESTOL/SFACT
+		          IF (IER.GT.0) THEN
+		            GOTO 999
+		          ENDIF
+		          WRITE(*,1) 'DECISIONS FOR EACH ARC RE-DONE:'
+		        ENDIF
+		C
+		C****   OUTPUT RESULTS
+		C
+		        IF (OULVL .LT. 4) THEN
+		          CALL RSLT72(QIERC,RCOND,CONST,NROWS,ISNPH(DGPOL),ISNPH(JATYP),
+		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,IWORK(AXION),
+		     +                IWORK(NEWDG),NJIND,IWORK(NQUAD),RWORK(TOLOU),
+		     +                LGTOL,SOLCO,OCH)
+		        ELSE 
+		          CALL RSLT71(QIERC,RCOND,RSNPH(SOLUN),NEQNS,ISNPH(LOSUB),
+		     +                IWORK(HISUB),RWORK(COLSC),NQPTS,ISNPH(JATYP),
+		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,RWORK(WORK2),
+		     +                IWORK(AXION),IWORK(NEWDG),NJIND,RSNPH(JACIN),
+		     +                IWORK(NQUAD),RWORK(TOLOU),LGTOL,SOLCO,OCH)
+		        ENDIF
+		        WRITE(OCH,*) 'EFFECTIVE STOPPING TOLERANCE :',ESTOL
+		        IF (RCOND .LT. 5E+0*MCHEP) THEN
+		          IER=16
+		          GOTO 999
+		        ELSE IF (RCOND .LT. AQTOL) THEN
+		          NUQTL=.TRUE.
+		          AQTOL=1E-1*RCOND
+		          IF (AQTOL .LT. 5E+0*MCHEP) AQTOL=5E+0*MCHEP
+		        ENDIF
+		C
+		C****   IMPLEMENT UPDATING PROCEDURES.
+		C****   FIRST UPDATE THE COLLOCATION PARAMETERS AND OTHER DATA
+		C****   RELATING TO SUB-ARC DEFINITIONS.
+		C
+		        CALL UPJAC1(NQPTS,NJIND,INDEG,IWORK(AXION),ISNPH(DGPOL),
+		     +  IWORK(NEWDG),RSNPH(ACOEF),RSNPH(BCOEF),RWORK(DIAG),
+		     +  RWORK(SDIAG),TNSUA,MNSUA,ISNPH(LOSUB),IWORK(HISUB),
+		     +  ISNPH(JATYP),IGEOM(PARNT),RGEOM(MIDPT),RGEOM(HALEN),
+		     +  RWORK(COLPR),ZWORK(ZCOLL),LWORK(LNSEG),LWORK(PNEWQ),EPS,IER,
+		     +  RWORK(WORK),RWORK(NEWHL),RWORK(RCOPY),IWORK(ICOPY),
+		     +  LWORK(LCOPY),IWORK(LOOLD),IWORK(HIOLD))
+		        IF (IER .GT. 0) THEN
+		          GOTO 999
+		        ENDIF
+		        WRITE(*,1) 'ARC REFINEMENTS DONE:'
+		        NCOLL=IWORK(HISUB+TNSUA-1)
+		        NEQNS=NCOLL+1
+		        NROWS=NCOLL/ORDSG+1
+		        IF (NEQNS .GT. MNEQN) THEN
+		          IER=18
+		          GOTO 999
+		        ENDIF
+		C
+		C****   NEXT UPDATE THE COMPOSITE QUADRATURE RULES
+		C
+		        CALL UPCOQ1(NARCS,NJIND,NQPTS,MDGPO,MQIN1,AQTOL,RSNPH(QUPTS),
+		     +  RSNPH(QUWTS),RSNPH(JACIN),RGEOM(MIDPT),RGEOM(HALEN),
+		     +  RSNPH(ACOEF),RSNPH(BCOEF),RSNPH(H0VAL),RWORK(COLSC),
+		     +  IWORK(NQUAD),IWORK(LOQSB),RWORK(QCOMX),RWORK(QCOMW),
+		     +  MNQUA,RWORK(TOLOU),MCQER,RWORK(XENPT),ZWORK(XIVAL),
+		     +  RWORK(XIDST),TNSUA,LWORK(PNEWQ),LWORK(NEWQU),ISNPH(JATYP),
+		     +  IGEOM(PARNT),NUQTL,IER)
+		        IF (IER .GT. 0) THEN
+		          GOTO 999
+		        ENDIF
+		        WRITE(*,1) 'QUADRATURE UPDATES DONE:'
+		        GOTO 23
+		      ENDIF 
+		C
+		      IF (OULVL.EQ.2 .OR. OULVL.EQ.3) THEN
+		        CALL RSLT71(QIERC,RCOND,RSNPH(SOLUN),NEQNS,ISNPH(LOSUB),
+		     +  IWORK(HISUB),RWORK(COLSC),NQPTS,ISNPH(JATYP),IGEOM(PARNT),TNSUA,
+		     +  INTER,MQERR,MCQER,RWORK(WORK2),IWORK(AXION),IWORK(NEWDG),NJIND,
+		     +  RSNPH(JACIN),IWORK(NQUAD),RWORK(TOLOU),LGTOL,SOLCO,OCH)
+		      ENDIF
+		C
+		C**** ESTIMATE MAXIMUM ERROR IN MODULUS.
+		C
+		        WRITE(*,*)
+		        WRITE(*,1) 'ERRORS IN MODULUS STARTED:'
+		C
+		      CALL TSJAC3(IWORK(LOTES),IWORK(HITES),RWORK(COLPR),ZWORK(ZCOLL),
+		     +NQPTS,NTEST,ORDSG,TNSUA,TSTNG,ISNPH(DGPOL),ISNPH(JATYP),
+		     +IGEOM(PARNT),RSNPH(AICOF),RSNPH(BICOF),RWORK(DIAG),RGEOM(HALEN),
+		     +RSNPH(JACIN),RGEOM(MIDPT),RWORK(SDIAG),IER)
+		      IF (IER .GT. 0) THEN
+		        GOTO 999
+		      ENDIF
+		C
+		      CALL TESMD9(RWORK(WORK2),MATRX(1,1,2),RSNPH(SOLUN),MNEQN,NCOLL,
+		     +NTEST,NQPTS,TNSUA,ISNPH(JATYP),IGEOM(PARNT),ISNPH(DGPOL),
+		     +ISNPH(LOSUB),IWORK(HISUB),IWORK(LOTES),IWORK(HITES),IWORK(NQUAD),
+		     +IWORK(LOQSB),TOLNR,RGEOM(MIDPT),RGEOM(HALEN),RSNPH(H0VAL),
+		     +RWORK(COLSC),RSNPH(ACOEF),RSNPH(BCOEF),RWORK(COLPR),RWORK(QCOMX),
+		     +RWORK(QCOMW),CENTR,ZWORK(ZCOLL),INTER,LWORK(LNSEG),RWORK(WORK),
+		     +QIERR,MQERR,RSNPH(JACIN),RWORK(A1COF),RWORK(B1COF),AQTOL,RQTOL,
+		     +RWORK(AQCOF),RWORK(BQCOF),RWORK(CQCOF),MXERM,IMXER,ZMXER,
+		     +RSNPH(ERARC),ORDSG,REFLN)
+		C
+		      WRITE(*,1) 'ERRORS IN MODULUS DONE:'
+		      WRITE(*,3) 'MAXIMUM ERROR AT TEST POINTS:',MXERM
+		      DO 60 I=0,6
+		        QIERC(I)=QIERC(I)+QIERR(I)
+		60    CONTINUE
+		      IF (MOD(OULVL,2) .EQ. 1) THEN
+		        CALL RSLT84(RWORK(WORK2),TNSUA,MXERM,ZMXER,IMXER,IWORK(LOTES),
+		     +  IWORK(HITES),QIERC,IGEOM(PARNT),ORDSG,OCH)
+		      ELSE
+		        CALL RSLT83(RSNPH(ERARC),TNSUA,MXERM,ZMXER,IMXER,QIERC,
+		     +  IGEOM(PARNT),ORDSG,OCH)
+		      ENDIF
+		C
+		C**** RESCALE SOLUTIONS TO OBTAIN STANDARD JACOBI COEFFICIENTS
+		      CALL RESCAL(NQPTS,TNSUA,ISNPH(LOSUB),IWORK(HISUB),ISNPH(JATYP),
+		     +RSNPH(SOLUN),RWORK(COLSC))
+
+		999   CONTINUE
+		C
+		      CALL WRTAIL(1,OCH,IER)
+		      CLOSE(OCH)
+		C
+		      IF (SOLCO .GE. 1) THEN
+		C
+		C****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
+		C****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
+		C****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
+		C
+		        CALL BCFVTF(RSNPH(BCFSN),RGEOM(VTARG),ISNPH(DGPOL),ISNPH(JATYP),
+		     +  ISNPH(LOSUB),IGEOM(PARNT),RFARC,TNSUA,RSNPH(H0VAL),RSNPH(JACIN),
+		     +  RFARG,RSNPH(SOLUN))
+		C
+		C****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
+		C
+		        IGEOM(3)=TNSUA
+		        ISNPH(3)=TNSUA
+		        ISNPH(4)=NEQNS
+		C
+		        OFL=JBNM(1:L)//'gm'
+		        OPEN(OCH,FILE=OFL)
+		        CALL OUPTGM(IGEOM,RGEOM,CENTR,INTER,OCH)
+		        CLOSE(OCH)
+		C
+		        OFL=JBNM(1:L)//'ph'
+		        OPEN(OCH,FILE=OFL)
+		        CALL OUPTPH(ISNPH,RSNPH,OCH)
+		        CLOSE(OCH)
+		      ENDIF
+		C  
+		      CALL WRTAIL(1,0,IER)
+		C */
+    } // private void JAPHYC
+
+    private void ANGLE7(double BE[], int NA, boolean IN) {
+        // REAL BE(*)
+
+        // **** BE=JACIN,NA=NARCS,IN=INTER
+
+        // **** TO COMPUTE THE ARRAY OF JACOBI INDECES CORRESPONDING TO THE
+        // **** CORNER ANGLES ON THE BOUNDARY
+
+        // **** LOCAL VARIABLES
+        int K,B0,B1,B2;
+        double X,Y,ANG,PI,R1MACH,EPSA,XI,APP;
+        double U[] = new double[2];
+        double V[] = new double[2];
+        double DIN[] = new double[2];
+        double absu;
+        double absv;
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+        //COMPLEX U,V,DPARFN
+        //EXTERNAL DPARFN
+
+        PI=Math.PI;
+        EPSA=Math.sqrt(EPS);
+        for (K=1; K <= NA; K++) {
+        	DIN[0] = 1.0;
+        	DIN[1] = 0.0;
+            U=DPARFN(K,DIN);
+            absu = zabs(U[0],U[1]);
+            U[0] = -U[0]/absu;
+            U[1] = -U[1]/absu;
+            DIN[0] = -1.0;
+        	DIN[1] = 0.0;
+            if (K == NA) {
+                V=DPARFN(1,DIN);
+            }
+            else {
+                V=DPARFN(K+1,DIN);
+            }
+            absv = zabs(V[0],V[1]);
+            V[0] = V[0]/absv;
+            V[1] = V[1]/absv;
+            zdiv(U[0],U[1],V[0],V[1],cr,ci);
+            V[0]= cr[0];
+            V[1] = ci[0];
+            X = V[0];
+            Y = V[1];
+            ANG=Math.atan2(Y,X);
+            if (ANG < 0) {
+                ANG=ANG+2.0*PI;
+            }
+            ANG=ANG/PI;
+            if (!IN) {
+                ANG=2.0-ANG;
+            }
+            ANG=-1.0+1.0/ANG;
+
+            // ****   TRY TO DETECT SIMPLE RATIONAL INDECES AND FORCE BEST REAL
+            // ****   APPROXIMATIONS
+
+            if (Math.abs(ANG) < EPSA) {
+                ANG=0.0;
+            }
+            else {
+                XI=Math.abs(ANG);
+                B0=(int)(XI);
+                XI=XI-(double)(B0);
+                if (Math.abs(XI) < EPSA) {
+                    APP=(double)(B0);
+                }
+                else {
+                    XI=1.0/XI;
+                    B1=(int)(XI);
+                    XI=XI-(double)(B1);
+                    if (Math.abs(XI) < EPSA) {
+                        APP=(double)(1+B0*B1)/(double)(B1);
+                    }
+                    else {
+                        XI=1.0/XI;
+                        B2=(int)(XI);
+                        APP=(double)(B0*(1+B1*B2)+B2)/(double)(1+B1*B2);   
+                    } // else
+                } // else
+                if (ANG < 0.0) {
+                	APP = -APP;
+                }
+                if (Math.abs(ANG-APP) < EPSA) {
+                	ANG=APP;
+                }
+            } // else
+
+            if (K == NA) {
+                BE[0]=ANG;
+            }
+            else {
+                BE[K]=ANG;
+            }
+  
+        } // for (K=1; K <= NA; K++)
+
+    } // private void ANGLE7
+ 
       /**
        * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
        * 
@@ -2229,6 +3320,31 @@ C
 
           ca = (ar * br) - (ai * bi);
           cb = (ar * bi) + (ai * br);
+          cr[0] = ca;
+          ci[0] = cb;
+
+          return;
+      }
+      
+      /**
+       * complex divide c = a/b.
+       * 
+       * @param ar double
+       * @param ai double
+       * @param br double
+       * @param bi double
+       * @param cr double[]
+       * @param ci double[]
+       */
+      public void zdiv(final double ar, final double ai, final double br, final double bi, final double[] cr,
+              final double[] ci) {
+          double bm, cc, cd, ca, cb;
+
+          bm = 1.0 / zabs(br, bi);
+          cc = br * bm;
+          cd = bi * bm;
+          ca = ( (ar * cc) + (ai * cd)) * bm;
+          cb = ( (ai * cc) - (ar * cd)) * bm;
           cr[0] = ca;
           ci[0] = cb;
 
