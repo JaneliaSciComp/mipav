@@ -262,7 +262,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 csvFile = chooser.getSelectedFile();
-                readCSVFile();
+                readSourceDEsCSVFile();
 
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
@@ -1227,10 +1227,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
 
     /**
-     * TODO:
-     * @return
+     * Reads the CSV file that contains source (user's) data elements.
+     * Format - Header row: Name, Type, PVs, PV Descriptions, and Title where only Name, Type, and PVs are required.
+     * Permissible Values (PVs) can only contain a-z, A-Z and 0-9 separated by semicolons.
+     * Puts the DEs into it's own dialog.
+     * 
+     * @return True if file is successfully opened
      */
-    private boolean readCSVFile() {
+    private boolean readSourceDEsCSVFile() {
         BufferedReader br = null;
 
         try {
@@ -1250,10 +1254,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             final String dePVs   = DEHeaders[2].trim();
             if ( !deName.toLowerCase().equals("name") || !dePVs.toLowerCase().equals("pvs") ||  !deType.toLowerCase().equals("type")) {
             	printlnToLog("Source data elements are not in proper format - Header row: Name, Type, PVs, PV Descriptions, and Title where only Name, Type, and PVs are required.");
+            	fis.close();
             	return false;
             }
 
-            Vector<String[]> dataElements = new Vector<String[]>(40);
+            Vector<String[]> dataElements = new Vector<String[]>(100);
             dataElements.add(DEHeaders);
             int row = 1;
             while ( (str = br.readLine()) != null) {
@@ -1291,14 +1296,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             }
         }
          
-        
         return true;      
     }
     
     /**
-     *  MATT   - Working!!!!
-     * 
-     * 
+     * Dialog used to store and display in a table the source (user) data elements where Name, Type, PVs, PV Descriptions, and Title where only Name, Type, and PVs are required.
+     * This dialog provides the GUI that allows pairing (mapping) to the BRICS reference data elements associated with a specific form structure.
      */
     private class SourceDEsDialog extends JDialog implements ActionListener {
         private static final long serialVersionUID = 859201819000159789L;
@@ -1310,7 +1313,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         LocalTableModel	 srcDETableModel;
         JScrollPane		 srcDEPane;
 
-
+		/**
+		 * Dialog used to store and display in a table the source (user) data elements
+		 * @param owner - main data element mapping dialog
+		 * @param dataElements - each entry in the vector contains a row of data element information
+		 */
         public SourceDEsDialog(final PlugInDialogBRICS_Mapper owner, final Vector<String[]> dataElements) {
             super(owner, false);
 
@@ -1326,7 +1333,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
 
         /**
-         * 
+         * Builds the dialog and with the source (user) data elements table 
          */
         private void init() {
         	setTitle("Source Data Elements");
@@ -1390,6 +1397,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             gbc.weightx = 1;
             gbc.weighty = 1;
             gbc.fill = GridBagConstraints.BOTH;
+            
+            //Builds main panel 
             JScrollPane sPane = buildCSVPanel();
             mainPanel.add(sPane, gbc);
             getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -1408,18 +1417,18 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         
         /**
          * 
-         * @return
+         * @return Scroll pane that contains the table that contains the source data elements read from the CSV file
          */
         private JScrollPane buildCSVPanel() {
         	srcDETableModel = new LocalTableModel();
         	
-        	//Columns defined by first row in CSV file
+        	//Add column used to indicated if a source data element has been mapped
         	srcDETableModel.addColumn("Mapped");
+        	//Columns defined by first row in CSV file
         	for (int i = 0; i < dataElements.get(0).length; i++) {
         		srcDETableModel.addColumn(dataElements.get(0)[i].trim());
         	}
 
-        	
         	srcDETable = new JTable(srcDETableModel);
             srcDETable.setPreferredScrollableViewportSize(new Dimension(850, 300));
             srcDETable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -1430,11 +1439,19 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             srcDEPane = new JScrollPane(srcDETable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             srcDEPane.setBorder(buildTitledBorder(" Source Data Elements"));  
+            // Populates the table with source data elements
             populateSrcTable();
+            
+            // Updates the mapped columns to show if a data element has been mapped.
             updateMappedColumn();
+            
             return srcDEPane;
         }
         
+        /**
+         * Not used at this time. Could be used to affect the source data element table as needed.
+         *
+         */
         private class CellRenderer extends DefaultTableCellRenderer {
 
         	@Override
@@ -1459,14 +1476,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
         
         /**
-         * 
+         * Populates source data element table with source data elements.
          */
         private void populateSrcTable() {
         	
         	if (dataElements == null) return;
         	
-        	srcDETableModel.setRowCount(dataElements.size()-1);
-            //System.out.println("Hey3" + " row = " + dataElements);  	
+        	srcDETableModel.setRowCount(dataElements.size()-1);  	
         	
             for (int i = 1; i < dataElements.size(); i++) {
 	        	if (dataElements.get(i).length > 0) {
@@ -1489,11 +1505,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         
         
         /**
-         * 
+         * Updates the mapped column of the source data element table.
+         * 		Yes - if the data element is mapped. (Nothing stops the user from mapping the same source data element to many reference data elements)
+         * 		blank if not.
          */
         private void updateMappedColumn() {
         	
-        	// Clear out 
+        	// Clear out mapped column
         	for(int i = 0; i < srcDETable.getRowCount(); i++) {
         		srcDETableModel.setValueAt("", i, srcDETableModel.getColumnIndex("Mapped"));
         	}
@@ -1503,6 +1521,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             	for (int j=0; j < deTable.getRowCount();  j++) {
             		
+            		// Source name(s) in the main mapping table. Could be multiple source data elements mapped to the same reference data element.
             		String names = (String)deTable.getValueAt(j, deTableModel.getColumnIndex("Source Name"));
             		if (names != null) {
 	            		String[] nameDef = names.split(";");
@@ -1523,7 +1542,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         
         
         /**
-         * action performed
+         * When a button is selected the event processing happens here. 
+         * Lots of business logic here.
          */
         @Override
         public void actionPerformed(final ActionEvent e) {
@@ -1533,62 +1553,71 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 dispose();
             } 
             if (command.equalsIgnoreCase("srcDEClear")) {
+            	//Clears the Source Name, Source Type, and Source PVs columns in the main mapping table
             	if (deTable.getSelectedRow() != -1) {
 	            	deTable.setValueAt("", deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Name"));
 	                deTable.setValueAt("", deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Type"));
 	                deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("Source PVs"));
+	                deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
             	}
             } 
             if (command.equalsIgnoreCase("srcDEPairR")) {
-
-            	if (deTable.getSelectedRow() != -1 && srcDETable.getSelectedRow() != -1) {
+            	// Pair/Map that replaces the source to reference mapping with a new mapping.
+            	
+            	if (deTable.getSelectedRow() != -1 && srcDETable.getSelectedRow() != -1) {  // rows selected in both source and main mapping table
             		final int rowRef = deTable.getSelectedRow();
 
+            		// If source PVs is empty and reference PVs are not empty then show error message and return
             		if (  !((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs")))).isEmpty() &&
             			   ((String)(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")))).isEmpty() ) {
        	            		displayWarning("Source PVs cell is empty.");
        	            		return;
                    	}
 
-	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
+	                // Sets or replaces main mapping table  DE with the source DE
+            		deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
 	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Type")), rowRef, deTableModel.getColumnIndex("Source Type"));
 	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")),  rowRef, deTableModel.getColumnIndex("Source PVs"));
+	                deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
             	}
             	else {
             		displayWarning("Please select both reference and source data elements.");
             	}
             }
             if (command.equalsIgnoreCase("srcDEPairA")) {
-            	if (deTable.getSelectedRow() != -1 && srcDETable.getSelectedRow() != -1) {
+            	//Appends mapping data element with an additional source data element 
+            	if (deTable.getSelectedRow() != -1 && srcDETable.getSelectedRow() != -1) {  // rows selected in both source and main mapping table
 	                final int rowRef = deTable.getSelectedRow();
 	                  
+	                // If source PVs is empty and reference PVs are not empty then show error message and return
 	                if (  !((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs")))).isEmpty() &&
 	            			   ((String)(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")))).isEmpty() ) {
 	       	            		displayWarning("Source PVs cell is empty.");
 	       	            		return;
 	                }
 	                
-	                String refPVStr = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs")); 							// Get mapping source PVs
+	                String refPVStr = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs")); 					 // Get mapping source PVs
 	                String scrPVStr = (String)srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs"));
 	                //System.out.println("refPVStr = " + refPVStr + " scrPVStr = " + scrPVStr);
-	                if (scrPVStr != null ) 
+	                if (scrPVStr != null ) {
 	                	scrPVStr.trim();
-
+	                }
 	                if ( refPVStr != null) {
 	                	refPVStr.trim(); 
 	                	if (refPVStr.equals(scrPVStr)) {
 	                		// do nothing;
 	                	}
 	                	else if (refPVStr.isEmpty()) {
-	                		deTable.setValueAt(scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs
+	                		deTable.setValueAt(scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs - works for appending to empty reference PV string 
 	                		deTable.setValueAt("", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
 	                	}
 	                	else {
-	                		deTable.setValueAt(refPVStr +";" + scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs
+	                		deTable.setValueAt(refPVStr +";" + scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs"));	// Append PVs - reference PV is NOT empty - delimit using ";"
 	                		deTable.setValueAt("", rowRef, deTableModel.getColumnIndex("PV Mappings"));  // Clear out the mapped PVs since source PVs changed
 	                	}
 	                }
 	                else {
+	                	// Since Source PVs from main mapping table is null - this acts like a replace 
 	                	deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
 	                	deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Type")), rowRef, deTableModel.getColumnIndex("Source Type"));
 	                	deTable.setValueAt(scrPVStr, rowRef, deTableModel.getColumnIndex("Source PVs")); 
@@ -1597,32 +1626,39 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                if (deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source Name")) != null && 
 	                		srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")) != null) {
 	                	if (((String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source Name"))).isEmpty()) {
-		                	
+		                	//Replace mode
 		                	deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name")); 
 	                	}
 	                	else if (!((String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source Name"))).equals(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")))) {
-		                		deTable.setValueAt(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source Name")) + ";" + 
-		                				srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
+		                	// Append mode 
+	                		deTable.setValueAt(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source Name")) + ";" + 
+		                			srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
 	                	}
 	                	deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Type")), rowRef, deTableModel.getColumnIndex("Source Type")); 
+	                	deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
 	                }
             	}
             	else {
             		displayWarning("Please select both reference and source data elements.");
             	}        		
             }
-            if (deTable.getSelectedRow() != -1) {
-            	deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
-            }
+            
+            // Update mapping column is source data elements dialog.
             updateMappedColumn();
+            
+            // Check to see if all Required reference data elements have been mapped - if so then enable the Save button.
             validateRequired();
         }
     }
     
     
     /**
+     *  Builds the permissible value mapping dialog. 
+     *  	Left column are the source (user) permissible values for a specific data element displayed as buttons.
+     *  	Right column are the reference permissible values displayed as drop down. This allows multiple source PVs to be mapped to the same reference PV if required.
      *  
-     * 
+     *  	Handles initial mappings if the cell is blank
+     * 		If cell is not blank - loads the mappings and builds the dialog appropriately
      */
     private class PVMappingDialog extends JDialog implements ActionListener {
         private static final long serialVersionUID = 859201819000159789L;
@@ -1640,7 +1676,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
 
         /**
-         * 
+         *  Builds mapping tool
          */
         private void init() {
         	setTitle("Map Permissible Values");
@@ -1707,6 +1743,16 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             setVisible(true);
         }
         
+        
+        /**
+         *  Left column are the source (user) permissible values for a specific data element displayed as buttons.
+         *  Right column are the reference permissible values displayed as drop down. This allows multiple source PVs to be mapped to the same reference PV if required.
+         *  
+         *  Handles initial mappings if the cell is blank
+         * 	If cell is not blank - loads the mappings and builds the dialog appropriately
+         * 
+         * @return Scroll pane with the mappings
+         */
         private JScrollPane buildPVPanel() {
         	
         	final GridBagConstraints gbc = new GridBagConstraints();
@@ -1717,12 +1763,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             gbc.gridx = 0;
             gbc.fill = GridBagConstraints.HORIZONTAL;
         	
-        	
-        	// TODO: Matt 
         	if ( ((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings")))).isEmpty() ){
+        		// Cell is blank
         		String srcPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Source PVs"));
             	srcPVStrs = srcPVs.split(";");
             	
+            	// Build buttons from source PVs from main mapping dialog
             	for (int i = 0; i < srcPVStrs.length; i++) {
                     gbc.gridy = i;
                     JButton button = new JButton(srcPVStrs[i]); 
@@ -1733,9 +1779,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             	}
         	} 
         	else {
+        		// Cell is NOT blank
         		String mappedPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings"));
         		srcPVStrs = mappedPVs.split(";");
         		String[] pvMapStr = null;
+        		
+        		// Build button from mapping cell - parsing form   srcPV1:refPV1;srcPV2:refPV2;.....
         		for (int i = 0; i < srcPVStrs.length; i++) {
                     gbc.gridy = i;
                     pvMapStr = srcPVStrs[i].split(":");
@@ -1749,6 +1798,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         	}
        	
         	
+        	// Build drop downs for reference PVs
         	int length = srcPVStrs.length;
         	gbc.weightx = 1;
         	gbc.weightx = 1;
@@ -1763,7 +1813,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        		displayWarning("Reference PVs are empty.");
 	        		return null;
 	        	}
-	        	refPVs.concat(" ;"); // Adds blank option.
+	        	refPVs.concat(" ;"); // Adds blank option to the drop down.
 	        	String[] refPVStrs = refPVs.split(";");
 	        	for (int i = 0; i < refPVStrs.length; i++) {
 	        		if (!refPVStrs[i].isEmpty()) { 
@@ -1800,7 +1850,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        		displayWarning("Reference PVs are empty.");
 	        		return null;
 	        	}
-	        	refPVs.concat(" ;"); // Adds blank option.
+	        	refPVs.concat(" ;"); // Adds blank option to drop down
 	        	String[] refPVStrs = refPVs.split(";");
 	        	for (int j = 0; j < refPVStrs.length; j++) {
 	        		if (!refPVStrs[j].isEmpty()) {
@@ -1813,7 +1863,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        	
 	        	String mappedPVs = (String)deTable.getValueAt(rowRef, deTableModel.getColumnIndex("PV Mappings"));
 	        	String[] mappedPVStrs = mappedPVs.split(";");
-
 	        	
 	        	cbArray = new JComboBox[srcPVStrs.length];
 	        	for (int i = 0; i < mappedPVStrs.length; i++) {
@@ -1858,6 +1907,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 dispose();
             } 
             if (command.equalsIgnoreCase("Done")) {
+            	
+            	// Copies PV mappings from dialog to the  PV mapping cell in the main dialog.
                 int numMappings = srcPVStrs.length;
 
                 String pvMappinigsStr = new String();
@@ -1875,7 +1926,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     
     /**
-     *  Editor for Source PV.
+     *  Editor for Source PV - NOT sure we need this 
      * 
      */
     private class srcPVDialog extends JDialog implements ActionListener {
@@ -1978,7 +2029,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             	 else {
             		 displayError("PVs can only contain a-z, A-Z and 0-9 separated by semicolons.");
             	 }
-            	
             } 
         }
     }
@@ -1998,7 +2048,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 continue;
             }
 
-            if (ds.getFileType().equals(SubmissionType.IMAGING)) {
+            if (ds.getFileType().equals(SubmissionType.IMAGING)) { // For test purposes since it only 7 secs when clinical takes 20 secs
+            //if (ds.getFileType().equals(SubmissionType.CLINICAL)) {
                 // only include non-archived structures
                 if ( !ds.getStatus().equals(StatusType.ARCHIVED)) {
                     filteredList.add(ds);
@@ -2021,7 +2072,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
-        // private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL";
+        // private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL"; ?????
         //private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=CLINICAL&incDEs=false";
         private static final String ddStructListRequest = ddRequestBase + "/Published/list?type=IMAGING&incDEs=false";
 
