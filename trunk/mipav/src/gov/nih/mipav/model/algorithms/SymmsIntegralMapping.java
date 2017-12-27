@@ -7,6 +7,7 @@ import java.util.Scanner;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 public class SymmsIntegralMapping extends AlgorithmBase  {
 	String fileDir;
@@ -2804,44 +2805,90 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		//**** ASSIGN THE LOGICAL LINE SEGMENT TYPE TO EACH ARC.
 		
-		/*      CALL LINSEG(LWORK(LNSEG),NARCS)
-		C
-		C**** LIST THE INPUT ARGUMENTS AND ASSOCIATED QUANTITIES
-		C
-		      CALL RSLT80(JBNM,HEAD,GSUPE,MAXER,GAQTL,INTER,NARCS,ORDSG,NQPTS,
-		     +INCST,INDEG,RFARC,RFARG,CENTR,RSNPH(JACIN),LWORK(LNSEG),
-		     +TSTNG,OULVL,IBNDS,MNEQN,OCH)
-		      PI=4E+0*ATAN(1E+0)
-		      RFARG=RFARG*PI
-		C
-		C**** SET UP THE GAUSS-JACOBI AND GAUSS-LEGENDRE QUADRATURE DATA AND 
-		C**** STORE IN ARRAYS QUPTS AND QUWTS.  SET UP THREE TERM RECURRENCE
-		C**** COEFFICIENTS AND STORE IN ACOEF, BCOEF.  DETERMINE ZEROTH
-		C**** MOMENTS OF JACOBI DISTRIBUTIONS AND STORE IN H0VAL. 
-		C**** ALSO SET UP THREE TERM RECURRENCE COEFFICIENTS AND ZEROTH MOMENTS
-		C**** FOR THE INTEGRATED POLYNOMIALS, STORING RESULTS IN AICOF,BICOF
-		C**** AND HIVAL.
-		C      
-		      CALL OPQUD1(NJIND,NQPTS,RSNPH(JACIN),RSNPH(ACOEF),RSNPH(BCOEF),
-		     +RSNPH(H0VAL),RSNPH(AICOF),RSNPH(BICOF),RSNPH(HIVAL),RSNPH(QUPTS),
-		     +RSNPH(QUWTS),RWORK(WORK),IER)
-		      IF (IER .GT. 0) THEN
-		        GOTO 999
-		      ENDIF
-		      J=1-NQPTS
-		      DO 10 I=1,NJIND
-		        J=J+NQPTS
-		        RWORK(A1COF+I-1)=RSNPH(ACOEF+J-1)
-		        RWORK(B1COF+I-1)=RSNPH(BCOEF+J-1)
-		10    CONTINUE  
-		      WRITE(*,1) 'BASIC GAUSS QUADRATURE DATA DONE:'
-		C
-		C**** SET UP THE COEFFICIENTS IN THE THREE TERM RECURRENCE FORMULAE
-		C**** FOR THE PRINCIPAL SINGULAR INTEGRALS ASSOCIATED WITH THE VARIOUS
-		C**** JACOBI WEIGHT FUNCTIONS AND THEIR ORTHONORMAL POLYNOMIALS; STORE
-		C**** THESE COEFFICIENTS IN AQCOF, BQCOF AND CQCOF
-		C
-		      CALL ASQUC7(RWORK(AQCOF),RWORK(BQCOF),RWORK(CQCOF),RSNPH(JACIN),
+		boolean linout[] = new boolean[NARCS];
+		LINSEG(linout, NARCS);
+		for (I = 0; I < NARCS; I++) {
+			LWORK[LNSEG-1+I]= linout[I];
+		}
+		//LINSEG(LWORK(LNSEG),NARCS);
+		
+		//**** LIST THE INPUT ARGUMENTS AND ASSOCIATED QUANTITIES
+		
+		double beta[] = new double[NARCS];
+		boolean linear[] = new boolean[NARCS];
+		for (I = 0; I < NARCS; I++) {
+			beta[I] = RSNPH[JACIN-1+I];
+			linear[I] = LWORK[LNSEG-1+I];
+		}
+		RSLT80(JBNM,HEAD,GSUPE,MAXER,GAQTL,INTER,NARCS,ORDSG,NQPTS,
+		     INCST,INDEG,RFARC,RFARG[0],CENTR,beta,linear,
+		     TSTNG,OULVL,IBNDS,MNEQN,OCH);
+		PI=Math.PI;
+		RFARG[0]=RFARG[0]*PI;
+		
+		//**** SET UP THE GAUSS-JACOBI AND GAUSS-LEGENDRE QUADRATURE DATA AND 
+		//**** STORE IN ARRAYS QUPTS AND QUWTS.  SET UP THREE TERM RECURRENCE
+		//**** COEFFICIENTS AND STORE IN ACOEF, BCOEF.  DETERMINE ZEROTH
+		//**** MOMENTS OF JACOBI DISTRIBUTIONS AND STORE IN H0VAL. 
+		//**** ALSO SET UP THREE TERM RECURRENCE COEFFICIENTS AND ZEROTH MOMENTS
+		//**** FOR THE INTEGRATED POLYNOMIALS, STORING RESULTS IN AICOF,BICOF
+		//**** AND HIVAL.
+		      
+		double JAC[] = new double[NJIND];
+		for (I = 0; I < NJIND; I++) {
+			JAC[I] = RSNPH[JACIN+I-1];
+		}
+		double ACO[] = new double[NJIND*NQPTS];
+		double BCO[] = new double[NJIND*NQPTS];
+		double H0V[] = new double[NJIND];
+		double AIC[] = new double[NJIND*NQPTS+1];
+		double BIC[] = new double[NJIND*NQPTS+1];
+		double HIV[] = new double[NJIND];
+		double QUP[] = new double[NJIND*NQPTS];
+		double QUW[] = new double[NJIND*NQPTS];
+		double WOR[] = new double[NQPTS];
+		OPQUD1(NJIND,NQPTS,JAC,ACO,BCO,
+		     H0V,AIC,BIC,HIV,QUP,
+		     QUW,WOR,IER);
+		for (I = 0; I < NJIND*NQPTS; I++) {
+			RSNPH[ACOEF+I-1] = ACO[I];
+			RSNPH[BCOEF+I-1] = BCO[I];
+		}
+		for (I = 0; I < NJIND; I++) {
+			RSNPH[H0VAL+I-1] = H0V[I];
+		}
+		for (I = 0; I < NJIND*NQPTS+1; I++) {
+			RSNPH[AICOF+I-1] = AIC[I];
+			RSNPH[BICOF+I-1] = BIC[I];
+		}
+		for (I = 0; I < NJIND; I++) {
+			RSNPH[HIVAL+I-1] = HIV[I];
+		}
+		for (I = 0; I < NJIND*NQPTS; I++) {
+			RSNPH[QUPTS+I-1] = QUP[I];
+			RSNPH[QUWTS+I-1] = QUW[I];
+		}
+		for (I = 0; I < NQPTS; I++) {
+			RWORK[WORK+I-1] = WOR[I];
+		}
+		if (IER[0] > 0) {
+			WRTAIL(1,0,IER[0],null);
+		    return;            
+		}
+		J=1-NQPTS;
+		for (I=1; I <= NJIND; I++) {
+		    J=J+NQPTS;
+		    RWORK[A1COF+I-2]=RSNPH[ACOEF+J-2];
+		    RWORK[B1COF+I-2]=RSNPH[BCOEF+J-2];
+		} // for (I=1; I <= NJIND; I++)
+		System.out.println("BASIC GAUSS QUADRATURE DATA DONE:");
+		
+		//**** SET UP THE COEFFICIENTS IN THE THREE TERM RECURRENCE FORMULAE
+		//**** FOR THE PRINCIPAL SINGULAR INTEGRALS ASSOCIATED WITH THE VARIOUS
+		//**** JACOBI WEIGHT FUNCTIONS AND THEIR ORTHONORMAL POLYNOMIALS; STORE
+		//**** THESE COEFFICIENTS IN AQCOF, BQCOF AND CQCOF
+		
+/*		      CALL ASQUC7(RWORK(AQCOF),RWORK(BQCOF),RWORK(CQCOF),RSNPH(JACIN),
 		     +NJIND,NQPTS)
 		      WRITE(*,1) 'DATA FOR SINGULAR INTEGRALS DONE:'
 		C
@@ -3167,9 +3214,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		        CALL OUPTPH(ISNPH,RSNPH,OCH)
 		        CLOSE(OCH)
 		      ENDIF
-		C  
-		      CALL WRTAIL(1,0,IER)
-		C */
+		  
+		      CALL WRTAIL(1,0,IER)*/
+		
     } // private void JAPHYC
 
     private void ANGLE7(double BE[], int NA, boolean IN) {
@@ -3272,6 +3319,518 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         } // for (K=1; K <= NA; K++)
 
     } // private void ANGLE7
+    
+    private void RSLT80(String JBNM, String HEAD, double SUPER, double MAXER, double AQTOL, boolean INTER, int NARCS, int ORDSG,
+        int NQPTS, boolean INCST, int INDEG, int RFARC, double RFARG,double CENTR[], double BETA[], boolean LINEAR[],
+        int TSTNG, int OULVL, int IBNDS[], int MNEQN,int OCH) {
+    	
+    	//INTEGER IBNDS(*)
+    	//REAL BETA(*)
+    	//COMPLEX CENTR
+    	//LOGICAL LINEAR(*)
+    	//CHARACTER JBNM*4,HEAD*72
+    	
+    	//**** WRITE THE MAIN ARGUMENTS OF JAPHYC AND ASSOCIATED QUANTITIES ON  
+    	//**** THE LISTING FILE.
+    	
+    	// LOCAL VARIABLES
+    	
+    	int I;
+    	final String TXT1 = "REQUESTED ACCURACY UNREALISTIC";
+
+
+    	Preferences.debug("HEAD\n",Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("JOB NAME : " + JBNM + "\n",Preferences.DEBUG_ALGORITHM);
+    	
+    	if (INTER) {
+    	    Preferences.debug("INTERIOR DOMAIN WITH " + NARCS + " ARCS\n",Preferences.DEBUG_ALGORITHM);
+    	}
+    	else {
+    	    Preferences.debug("EXTERIOR DOMAIN WITH " + NARCS + " ARCS\n",Preferences.DEBUG_ALGORITHM);
+    	}
+    	if (ORDSG > 1) {
+    	    Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	    Preferences.debug("ORDER OF SYMMETRY GROUP IS : " + ORDSG + "\n",Preferences.DEBUG_ALGORITHM);
+    	    Preferences.debug("NUMBER OF ARCS ON FBS IS   : " + (NARCS/ORDSG)  + "\n",Preferences.DEBUG_ALGORITHM);
+    	}
+    	
+    	Preferences.debug("ACCURACY REQUESTED            : " + MAXER  + "\n",Preferences.DEBUG_ALGORITHM);
+    	if (MAXER < SUPER) {
+    	    Preferences.debug("WORKING ACCURACY              : " + SUPER + "  " + TXT1 + "\n",Preferences.DEBUG_ALGORITHM);
+    	}
+    	Preferences.debug("ABSOLUTE QUADRATURE TOLERENCE : " + AQTOL + "\n",Preferences.DEBUG_ALGORITHM);
+    	
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("MAXIMUM NUMBER OF SUBARCS           : " + IBNDS[0] + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("MAXIMUM NUMBER OF EQUATIONS         : " + MNEQN + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("MAXIMUM NUMBER OF QUADRATURE PANELS : " + (IBNDS[2]-1) + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("MAXIMUM TOTAL  OF QUADRATURE POINTS : " + IBNDS[3] + "\n",Preferences.DEBUG_ALGORITHM);
+    	
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("MINIMUM NUMBER OF QUADRATURE POINTS : " + NQPTS + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("MAXIMUM DEGREE OF POLYNOMIAL        : " + (NQPTS-1) + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("INITIAL DEGREE OF POLYNOMIAL        : " + INDEG + (NQPTS-1) + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("INCREMENTAL STRATEGY                : " + INCST + "\n",Preferences.DEBUG_ALGORITHM);
+    	
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("REFERENCE ARC         : " + RFARC + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("REFERENCE ARGUMENT/PI : " + RFARG + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("CENTRE POINT          : " + CENTR[0] + ", " + CENTR[1] + "\n",Preferences.DEBUG_ALGORITHM);
+    	
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("CORNER        ANGLE/PI          JACOBI INDEX      LINEAR\n",Preferences.DEBUG_ALGORITHM);
+    	for (I = 1; I <= NARCS; I++) {
+    		Preferences.debug("  " + I + "     " + (1.0/(1.0 + BETA[I-1])) + "    " + BETA[I-1] + "      " + LINEAR[I-1] + "\n",Preferences.DEBUG_ALGORITHM);
+    	}
+    	
+    	
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("TESTING LEVEL : " + TSTNG + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("OUTPUT  LEVEL : " + OULVL + "\n",Preferences.DEBUG_ALGORITHM);
+    } // private void RSLT80
+    
+    private void OPQUD1(int NJIND, int NQPTS,double JACIN[], double ACOEF[], double BCOEF[],
+        double H0VAL[], double AICOF[], double BICOF[], double HIVAL[], double QUPTS[], 
+        double QUWTS[], double WORK[], int IER[]) {
+    	//REAL JACIN(*),ACOEF(*),BCOEF(*),H0VAL(*),QUPTS(*),QUWTS(*),
+    	//+WORK(*),AICOF(*),BICOF(*),HIVAL(*)
+    	
+    	//**** TO SET UP THE THREE TERM RECURRENCE COEFFICIENTS (ACOEF AND BCOEF)
+    	//**** FOR THE ON JACOBI POLYNOMIALS (UP TO DEGREE NQPTS) ASSOCIATED WITH
+    	//**** THE JACOBI INDECES GIVEN IN JACIN AND TO STORE THE ZEROTH MOMENTS
+    	//**** OF THE JACOBI DISTRIBUTIONS IN H0VAL.  ALSO TO REPEAT THESE
+    	//**** CALCULATIONS FOR THE INCREMENTED JACOBI INDECES ARISING IN THE
+    	//**** EXPRESSIONS FOR THE BOUNDARY CORRESPONDENCE FUNCTION, STORING
+    	//**** RESULTS IN AICOF, BICOF AND HIVAL.
+    	
+    	//**** ALSO TO SET UP THE NQPT POINT GAUSS JACOBI QUADRATURE RULES,
+    	//**** STORING THE ABSCISSAE IN QUPTS AND THE WEIGHTS IN QUWTS.
+    	
+    	//**** IER=0 - NORMAL EXIT
+    	//**** IER=4 - FAILURE TO CONVERGE IN EIGSYS; CAN'T SET UP BASIC
+    	//****         QUADRATURE RULES 
+    	
+    	//     LOCAL VARIABLES
+    	
+    	int I,J,K,LOSUB,M;
+    	int IFAIL[] = new int[1];
+    	double BETA,BETA1,C,PROD,S,T;
+    	//EXTERNAL ASONJ7,EIGSYS
+    	
+    	for (I=1; I <= NJIND; I++) {
+    	    BETA=JACIN[I-1];
+    	    BETA1=BETA+1.0;
+    	    PROD=BETA*BETA;
+    	
+    	    // CALCULATE THE ZEROTH MOMENT FOR THIS BETA
+    	
+    	    H0VAL[I-1]=Math.pow(2.0,BETA1)/BETA1;
+    	
+    	    // START ON THE 3-TERM ORTHONORMAL RECURRENCE COEFFICIENTS ACOEF
+    	    // AND BCOEF FOR THIS BETA
+    	
+    	    T=2.0+BETA;
+    	    S=T*T;
+    	    C=4.0*BETA1/S/(T+1.0);
+    	    LOSUB=(I-1)*NQPTS+1;
+    	    ACOEF[LOSUB-1]=Math.sqrt(C);
+    	    BCOEF[LOSUB-1]=BETA/T;
+    	
+    	    for (K=2; K <= NQPTS; K++) {
+    	        J=LOSUB+K-1;
+    	        BCOEF[J-1]=PROD/T/(T+2.0);
+    	        T=2.0*K+BETA;
+    	        S=T*T;
+    	        C=4.0*K*K*(BETA+K)*(BETA+K)/S/(S-1.0);
+    	        ACOEF[J-1]=Math.sqrt(C);
+    	    } // for (K=2; K <= NQPTS; K++)
+    	
+    	    // START ON THE QUADRATURE POINTS AND WEIGHTS FOR THIS BETA
+    	
+    	    for (K=1; K <= NQPTS; K++) {
+    	        J=LOSUB+K-1;
+    	        QUPTS[J-1]=BCOEF[J-1];
+    	        QUWTS[J-1]=ACOEF[J-1];
+    	        WORK[K-1]=0.0;
+    	    } // for (K=1; K <= NQPTS; K++)
+    	    WORK[0]=1.0;
+    	
+    	    // AT THIS POINT THE LOCAL SEGMENTS OF QUPTS AND QUWTS ARE THE 
+    	    // DIAGONAL AND SUBDIAGONAL OF A SYMMETRIC TRIDIAGONAL MATRIX 
+    	    // WHOSE EIGENVALUES ARE THE QUADRATURE POINTS AND WHOSE 
+    	    // EIGENVECTORS GIVE THE QUADRATURE WEIGHTS.
+    	
+    	    double D[] = new double[NQPTS];
+    	    double E[] = new double[NQPTS];
+    	    for (M = 0; M < NQPTS; M++) {
+    	    	D[M] = QUPTS[LOSUB+M-1];
+    	        E[M] = QUWTS[LOSUB+M-1];
+    	    }
+    	    EIGSYS(NQPTS,EPS,D,E,WORK,IFAIL);
+    	    for (M = 0; M < NQPTS; M++) {
+    	    	QUPTS[LOSUB+M-1] = D[M];
+    	        QUWTS[LOSUB+M-1] = E[M];
+    	    }
+    	    if (IFAIL[0] > 0) {
+    	        IER[0]=4;
+    	        return;
+    	    }
+    	
+    	    for (K=1; K <= NQPTS; K++) {
+    	        QUWTS[LOSUB+K-2]=WORK[K-1]*WORK[K-1]*H0VAL[I-1];
+    	    } // for (K=1; K <= NQPTS; K++)
+    	
+    	    // SET UP THE THREE TERM RECURRENCE COEFFICIENTS AIVAL,BIVAL AND
+    	    // THE ZEROTH MOMENT HIVAL FOR THE INTEGRATED POLYNOMIALS.
+    	
+    	    double A[] = new double[NQPTS];
+    	    double B[] = new double[NQPTS];
+    	    double H[] = new double[1];
+    	    ASONJ7(1.0,BETA1,A,B,H,NQPTS);
+    	    for (M = 0; M < NQPTS; M++) {
+    	    	AICOF[LOSUB+M-1] = A[M];
+    	    	BICOF[LOSUB+M-1] = B[M];
+    	    }
+    	    HIVAL[I-1] = H[0];
+    	
+    	} // for (I=1; I <= NJIND; I++)
+    	
+    	//     NORMAL TERMINATION
+    	
+    	IER[0]=0;
+    	
+    } // private void OPQUD1
+    
+    private void EIGSYS(int N, double EPS, double D[], double E[],
+    		double Z[],int IER[]) { 
+        // REAL D(N),E(N),Z(N)      
+      
+        // THIS IS A MODIFIED VERSION OF THE EISPACK ROUTINE IMTQL2.     
+        // IT FINDS THE EIGENVALUES AND FIRST COMPONENTS OF THE
+        // EIGENVECTORS OF A SYMMETRIC TRIDIAGONAL MATRIX BY THE IMPLICIT QL
+        // METHOD.     
+
+        // **** LOCAL VARIABLES
+
+        int L,J,M ,MML,II,K,I;
+        double P,G,R,S,C,F,B;  
+  
+        IER[0] = 0;    
+
+        if (N == 1) {
+        	return;
+        }
+
+        E[N-1] = 0.0;  
+        loopL: for (L = 1; L <= N; L++) {       
+            J = 0;    
+
+            //****    LOOK FOR SMALL SUB-DIAGONAL ELEMENT     
+
+            while (true) {
+		        for (M = L; M <= N; M++) {    
+		            if (M == N) break;   
+		            if (Math.abs(E[M-1]) <= EPS * (Math.abs(D[M-1]) + Math.abs(D[M])))  break;
+		        } // for (M = L; M <= N; M++) 
+		
+		       P = D[L-1]; 
+		       if (M == L) continue loopL;      
+		       if (J == 30) {
+		    	   // **** SET ERROR -- NO CONVERGENCE TO AN EIGENVALUE AFTER 30 ITERATIONS
+		    	   IER[0] = L;
+		    	   return;
+		       }
+		       J = J + 1;
+		
+		       // ****    FORM SHIFT
+		
+		       G = (D[L] - P) / (2. * E[L-1]);
+		       R = Math.sqrt(G*G+1.0);
+		       double sig;
+		       if (G >= 0) {
+		    	   sig = Math.abs(R);
+		       }
+		       else {
+		    	   sig = -Math.abs(R);
+		       }
+		       G = D[M-1] - P + E[L-1] / (G + sig); 
+		       S = 1.0;  
+		       C = 1.0 ;  
+		       P = 0.0;  
+		       MML = M - L;
+		       
+		       for (II = 1; II <= MML; II++) { 
+		           I = M - II;      
+		           F = S * E[I-1];    
+		           B = C * E[I-1];    
+		           if (Math.abs(F) >= Math.abs(G)) {   
+		               C = G / F;       
+		               R = Math.sqrt(C*C+1.0);
+		               E[I] = F * R;  
+		               S = 1.0 / R;     
+		               C = C * S;       
+		           } // if (Math.abs(F) >= Math.abs(G))
+		           else {
+		               S = F / G;       
+		               R = Math.sqrt(S*S+1.0);
+		               E[I] = G * R;  
+		               C = 1.0 / R;      
+		               S = S * C; 
+		           } // else
+		           G = D[I] - P;  
+		           R = (D[I-1] - G) * S + 2. * C * B;     
+		           P = S * R;       
+		           D[I] = G + P;  
+		           G = C * R - B;  
+		 
+		           //****       FORM FIRST COMPONENT OF VECTOR
+		
+		           F = Z[I];      
+		           Z[I] = S * Z[I-1] + C * F; 
+		           Z[I-1] = C * Z[I-1] - S * F;  
+		       } // for (II = 1; II <= MML; II++)
+		
+		       D[L-1] = D[L-1] - P;    
+		       E[L-1] = G; 
+		       E[M-1] = 0.0;
+            } // while (true)
+        } // loopL: for (L = 1; L <= N; L++)   
+       
+        // **** ORDER EIGENVALUES AND EIGENVECTORS      
+
+        for (II = 2; II <= N; II++) {      
+            I = II - 1; 
+            K = I;    
+            P = D[I-1]; 
+            for (J = II; J <= N; J++) {   
+                if (D[J-1] >= P) continue;
+                K = J; 
+                P = D[J-1];
+            } // for (J = II; J <= N; J++)
+       
+            if (K == I) continue;      
+            D[K-1] = D[I-1];
+            D[I-1] = P; 
+            P = Z[I-1]; 
+            Z[I-1] = Z[K-1];
+            Z[K-1] = P; 
+        } // for (II = 2; II <= N; II++) 
+        return;
+
+    } // private void EIGSYS
+
+    private void ASONJ7(double ALFA,double BETA, double A[], double B[],
+    		double H[], int N) {
+        //REAL A(*),B(*),H,ALFA,BETA
+
+        // ..TO ASSIGN THE COEFFICIENTS A(K) AND B(K) , K=1(1)N, IN THE
+        // ..3-TERM RECURRENCE FORMULA FOR THE ORTHONORMAL JACOBI POLYNOMIALS
+        // ..WHERE
+        // ..
+        // ..     A(K)P (X) = (X - B(K))P   (X) - A(K-1)P   (X) , K=1,2,..,N,
+        // ..          K                 K-1             K-2
+        // ..
+        // ..         P  (X) = 0 , P (X) = 1/SQRT(H)
+        // ..          -1           0 
+        // .. 
+        // ..AND H IS THE ZEROTH MOMENT OF THE JACOBI WEIGHT FUNCTION
+        // ..(1-X)**ALFA*(1+X)**BETA ON [-1,1].
+
+        // **** AUTHOR: DAVID HOUGH
+        // **** LAST UPDATE: 15.09.89
+
+        // **** ..LOCAL VARIABLES..
+        double SUM,DIFF,PROD,TC,T,SC,S,C;
+        int K;
+        // EXTERNAL GAMMA
+        // double GAMMA;
+
+        SUM=ALFA+BETA;
+        DIFF=BETA-ALFA;
+        PROD=SUM*DIFF;
+
+        // ..CALCULATE H.
+        TC=SUM+1.0;
+        SC=Math.pow(2.0,TC);
+        S=GAMMA(ALFA+1.0);
+        T=GAMMA(BETA+1.0);
+        C=GAMMA(TC+1.0);
+        H[0]=SC*S*T/C;
+
+        // ..START ON A,B ARRAYS.
+        if (N > 0) {
+            T=2.0+SUM;
+            S=T*T;
+            C=4.0*(ALFA+1.0)*(BETA+1.0)/S/(T+1.0);
+            A[0]=Math.sqrt(C);
+            B[0]=DIFF/T;
+
+            for (K=2; K<= N; K++) {
+                B[K-1]=PROD/T/(T+2.0);
+                T=2.0*K+SUM;
+                S=T*T;
+                C=4.0*K*(ALFA+K)*(BETA+K)*(SUM+K)/S/(S-1.0);
+                A[K-1]=Math.sqrt(C);
+            } // for (K=2; K<= N; K++) 
+        } // if (N > 0)
+
+    } // private void ASONJ7
+    
+    private double GAMMA( double U) {
+
+        // TO COMPUTE THE GAMMA FUNCTION FOR REAL ARGUMENT U BY USING
+        // THE CHEBYSHEV EXPANSION GIVEN IN TABLE 1.3 OF "MATHEMATICAL
+        // FUNCTIONS AND THEIR APPROXIMATION" BY Y.L. LUKE ,ACADEMIC PRESS,
+        // NEW YORK, 1975.
+        // SINCE GAMMA HAS POLES AT U=0,-1,-2,-3,... DIVISION BY ZERO WILL
+        // OCCUR FOR THESE ARGUMENT VALUES.
+
+        // LOCAL VARIABLES
+
+        int N;
+        double UWORK,FACTOR;
+        double B0 = 0.0;
+        double X,B1,B2;
+        double A[] = new double[]{3.65738772508338243850,
+                              1.95754345666126826928,
+                              0.33829711382616038916,0.4208951276557549199E-1,
+                              0.42876504821290877E-2,0.36521216929461767E-3,
+                              0.27400642226422E-4,0.181240233365124E-5,
+                              0.10965775865997E-6,0.598718404552E-8,
+                              0.30769080535E-9,0.143179303E-10,
+                              0.65108773E-12,0.259585E-13,0.110789E-14,
+                              0.3547E-16,0.169E-17,0.3E-19};  
+        double result;
+
+        UWORK=U;
+        FACTOR=1.0;
+
+	    while (true) {
+	        if (UWORK > 4.0) {
+	            UWORK=UWORK-1.0;
+	            FACTOR=FACTOR*UWORK;
+	            continue;
+	        }
+	        else if (UWORK < 3.0) {
+	            FACTOR=FACTOR/UWORK;
+	            UWORK=UWORK+1.0;
+	            continue;
+	        }
+	        else {
+	        	break;
+	        }
+	    } // while (true)
+	
+	    X=UWORK-3.0;      
+	    X=4.0*X-2.0;
+	    B2=0.0;
+	    B1=0.0;
+	    for (N=17; N >= 0; N--) {
+	        B0=X*B1-B2+A[N];
+	        if (N > 0) {
+	            B2=B1;
+	            B1=B0;
+	        }
+	    } // for (N=17; N >= 0; N--)
+	
+	    result=5E-1*(B0+A[0]-B2)*FACTOR;
+	    return result;
+    } // private double GAMMA
+
+
+    	     /* SUBROUTINE RSLT71(QIERC,RCOND,SOLUN,NEQNS,LOSUB,HISUB,COLSC,
+    	     +NQPTS,JATYP,PARNT,TNSUA,INTER,MQERR,MCQER,CINFN,ACTIN,
+    	     +NEWDG,NJIND,JACIN,NQUAD,TOLOU,LGTOL,SOLCO,OUCH1)
+    	      INTEGER NEQNS,TNSUA,OUCH1,NQPTS,NJIND,NEWDG(*),NQUAD(*),LOSUB(*),
+    	     +HISUB(*),QIERC(0:6),JATYP(*),PARNT(*),ACTIN(*),SOLCO
+    	      REAL SOLUN(*),RCOND,COLSC(*),MQERR,MCQER,LGTOL,
+    	     +CINFN(*),JACIN(*),TOLOU(*)
+    	      LOGICAL INTER
+    	      CHARACTER QTEXT(0:6)*22,LINE*72
+    	      PARAMETER (LINE='_________________________________________________
+    	     +________________')
+    	C 
+    	C     LOCAL VARIABLES
+    	C
+    	      INTEGER I,J,JI,K,L,LOD,N,H
+    	      REAL S,CAP
+    	C
+    	      QTEXT(0)='...........NORMAL EXIT'
+    	      QTEXT(1)='.....MAX. SUBDIVISIONS'
+    	      QTEXT(2)='....ROUNDOFF DETECTION'
+    	      QTEXT(3)='.........BAD INTEGRAND'
+    	      QTEXT(6)='.........INVALID INPUT'
+    	C
+    	      WRITE(OUCH1,*) LINE
+    	      WRITE(OUCH1,*) '             SOLUTION NUMBER =',SOLCO
+    	      WRITE(OUCH1,*) '                       NEQNS =',NEQNS 
+    	      WRITE(OUCH1,*) 'RECIPROCAL COND NO. ESTIMATE =',RCOND
+    	      WRITE(OUCH1,*) '   CONDITION NO. LOWER BOUND =',1E+0/RCOND
+    	C
+    	      WRITE(OUCH1,*) 
+    	      WRITE(OUCH1,997) 'JACOBI INDEX','POINTS','TOLERANCE ACHIEVED'
+    	      DO 10 I=1,NJIND
+    	        WRITE(OUCH1,998) I,NQUAD(I),TOLOU(I)
+    	10    CONTINUE
+    	C
+    	      WRITE(OUCH1,*) 
+    	      WRITE(OUCH1,*) 'QAWS TERMINATIONS WITH......' 
+    	      DO 20 I=0,6
+    	        IF (QIERC(I) .GT. 0) THEN
+    	          WRITE(OUCH1,1000) QTEXT(I),QIERC(I)
+    	        ENDIF
+    	20    CONTINUE
+    	C
+    	      WRITE(OUCH1,*) 
+    	      WRITE(OUCH1,999) '              MAXIMUM QAWS ERROR =',MQERR
+    	      WRITE(OUCH1,999) 'MAXIMUM COMPOSITE GAUSSIAN ERROR =',MCQER
+    	      WRITE(OUCH1,*) 
+    	      DO 40 I=1,TNSUA
+    	          WRITE(OUCH1,*)
+    	          WRITE(OUCH1,*) 'SUB ARC =',I,' ON PARENT ARC',PARNT(I)
+    	          WRITE(OUCH1,990) 'N','SCALED SOLUN','UNSCALED SOLUN','IGNORE L
+    	     +EVEL'
+    	          L=LOSUB(I)
+    	          H=HISUB(I)
+    	          JI=ABS(JATYP(I))
+    	          LOD=(JI-1)*NQPTS+1
+    	          DO 30 J=L,H
+    	              N=J-L
+    	              K=LOD+N
+    	              S=SOLUN(J)
+    	              WRITE(OUCH1,991) N,S,S*COLSC(K),LGTOL/CINFN(J)
+    	30        CONTINUE
+    	          IF (ACTIN(I) .EQ. -1) THEN
+    	              WRITE(OUCH1,*)'ACTION: REDUCE DEGREE TO ',NEWDG(I),' ***'
+    	          ELSE IF (ACTIN(I) .EQ. 0) THEN
+    	              WRITE(OUCH1,*)'ACTION: NONE            ***'
+    	          ELSE IF (ACTIN(I) .EQ. 1) THEN
+    	              WRITE(OUCH1,*)'ACTION: INCREASE DEGREE TO ',NEWDG(I)
+    	          ELSE
+    	              WRITE(OUCH1,*)'ACTION: SUBDIVIDE THIS ARC'
+    	          ENDIF
+    	40    CONTINUE
+    	C
+    	      WRITE(OUCH1,*) 'KAPPA =',SOLUN(NEQNS)
+    	      IF (.NOT.INTER) THEN
+    	          CAP=EXP(-SOLUN(NEQNS))
+    	          WRITE(OUCH1,*) 'CAPACITY = ',CAP
+    	      ENDIF
+    	C
+    	990   FORMAT(A,T7,A,T26,A,T44,A)
+    	991   FORMAT(I3,T6,E15.8,T25,E15.8,T44,E10.3)
+    	992   FORMAT(E15.8)
+    	993   FORMAT(I3,T8,E15.8,'  (',E14.7,',',E14.7,')')
+    	994   FORMAT(A,T8,A,T34,A)
+    	995   FORMAT(A,T6,A,T23,A,T36,A)
+    	996   FORMAT(I2,T6,E14.7,T23,F10.5,T36,E14.7)
+    	997   FORMAT(A,T24,A,T40,A)
+    	998   FORMAT(T5,I3,T26,I3,T45,E9.2)
+    	999   FORMAT(A,E10.2)
+    	1000  FORMAT(A,1X,I5)
+    	C
+    }*/
+
  
       /**
        * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
