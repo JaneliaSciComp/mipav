@@ -88,6 +88,76 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     private boolean traditionalInput = false;
     Scanner input = new Scanner(System.in);
     private double zzset[][] = new double[400][2];
+    private int IBNDS[] = new int[5];
+    private int IGEOM[] = new int[4];
+    private int PARNT[] = new int[IBNDS[0]];
+    private double RGEOM[] = new double[2];
+    private double HALEN[]= new double[IBNDS[0]];
+	private double MIDPT[] = new double[IBNDS[0]];
+	private double VTARG[] = new double[IBNDS[0]]; 
+    private int ISNPH[] = new int[6];
+    private int DGPOL[] = new int[IBNDS[0]];
+	private int JATYP[] = new int[IBNDS[0]];
+	private int LOSUB[] = new int[IBNDS[0]];
+	// Parts of RSNPH
+	private int NQPTS;
+	private int NJIND = NARCS + 1;
+	private int TNGQP = NQPTS * NJIND;
+	private int MNEQN;
+	private double ACOEF[] = new double[TNGQP];
+	private double BCOEF[] = new double[TNGQP];
+	private double AICOF[] = new double[TNGQP];
+	private double BICOF[] = new double[TNGQP];
+	private double QUPTS[] = new double[TNGQP];
+	private double QUWTS[] = new double[TNGQP];
+	private double H0VAL[] = new double[NJIND];
+	private double HIVAL[] = new double[NJIND];
+	private double JACIN[] = new double[NJIND];
+	private double ERARC[] = new double[IBNDS[0]];
+	private double BCFSN[] = new double[MNEQN];
+	private double SOLUN[] = new double[MNEQN];
+	// Parts of IWORK
+	private int IPIVT[] = new int[MNEQN];
+	private int LOQSB[] = new int[IBNDS[1]];
+	private int NQUAD[] = new int[IBNDS[1]];
+	private int HISUB[] = new int[IBNDS[0]];
+	private int LOTES[] = new int[IBNDS[0]];
+	private int HITES[] = new int[IBNDS[0]];
+	private int AXION[] = new int[IBNDS[0]];
+	private int NEWDG[] = new int[IBNDS[0]];
+	private int ICOPY[] = new int[IBNDS[0]];
+	private int LOOLD[] = new int[IBNDS[0]];
+	private int HIOLD[] = new int[IBNDS[0]];
+	// Parts of RWORK
+	private double WORK2[] = new double[MNEQN];
+	private double COLPR[] = new double[MNEQN];
+	private double A1COF[] = new double[IBNDS[1]];
+	private double B1COF[] = new double[IBNDS[1]];
+	private double TOLOU[] = new double[IBNDS[1]];
+	private double XIDST[] = new double[2*IBNDS[1]];
+	private double XENPT[] = new double[IBNDS[2]];
+	private double QCOMX[] = new double[IBNDS[3]];
+	private double QCOMW[] = new double[IBNDS[3]];
+	private double RCOPY[] = new double[IBNDS[0]];
+	private double NEWHL[] = new double[IBNDS[0]];
+	private double AQCOF[] = new double[TNGQP];
+	private double BQCOF[] = new double[TNGQP];
+	private double CQCOF[] = new double[TNGQP];
+	private double COLSC[] = new double[TNGQP];
+	private double RIGLL[] = new double[TNGQP];
+	private double WORK[] = new double[2*NQPTS];
+	private double DIAG[] = new double[NQPTS];
+	private double SDIAG[] = new double[NQPTS];
+	private double WORKT[] = new double[2*NQPTS*NQPTS];
+	private double WORKQ[] = new double[NQPTS*NQPTS];
+	// Parts of ZWORK
+	private double ZCOLL[][] = new double[MNEQN][2];
+	private double XIVAL[][] = new double[2*IBNDS[1]][2];
+	// Parts of LWORK
+	private boolean NEWQU[] = new boolean[IBNDS[1]];
+	private boolean LCOPY[] = new boolean[IBNDS[0]];
+	private boolean PNEWQ[] = new boolean[IBNDS[0]];
+	private boolean LNSEG[] = new boolean[IBNDS[0]];
     
 	public SymmsIntegralMapping() {
 		
@@ -2254,12 +2324,12 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
        return result;
    }
 
-   private void JAPHYC(String JBNM, String HEAD, double MAXER,boolean INTER, int NARCS,
-		      int ISYGP, int NQPTS, boolean INCST,
-		      int RFARC, double RFARG[], double CENTR[], int TSTNG,int OULVL, int IBNDS[],
-		      int MNEQN, double MATRX[][][], int IWORK[], double RWORK[],
-		      double ZWORK[][], boolean LWORK[], int OCH, int IGEOM[], double RGEOM[],
-		      int ISNPH[], double RSNPH[], int IER[]) {
+   private void JAPHYC(String JBNM, String HEAD, double MAXER,boolean INTER,
+		      int ISYGP, boolean INCST,
+		      int RFARC, double RFARG[], double CENTR[], int TSTNG,int OULVL,
+		      double MATRX[][][],
+		      int OCH,
+		      int IER[]) {
 		
 		      //INTEGER IBNDS(*),IGEOM(*),ISNPH(*),IWORK(*)
 		      //REAL RGEOM(*),MATRX(MNEQN,MNEQN,2),RSNPH(*),RWORK(*)
@@ -2567,23 +2637,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		     
 		//     LOCAL VARAIBLES
 		
-		//**** POINTERS FOR IGEOM,RGEOM,ISNPH,RSNPH
-		
-		int ACOEF,AICOF,BCFSN,BCOEF,BICOF,DGPOL,ERARC,H0VAL,HALEN,
-		     HIVAL,JACIN,JATYP,LOSUB,MIDPT,PARNT,QUPTS,QUWTS,SOLUN,VTARG;
-		
-		//**** POINTERS FOR IWORK,RWORK,ZWORK,LWORK
-		
-		int A1COF,AQCOF,AXION,B1COF,BQCOF,COLPR,COLSC,CQCOF,DIAG,
-		     HIOLD,HISUB,HITES,ICOPY,IPIVT,LCOPY,LNSEG,LOOLD,LOQSB,LOTES,NEWDG,
-		     NEWHL,NEWQU,NQUAD,PNEWQ,QCOMW,QCOMX,RCOPY,RIGLL,SDIAG,TOLOU,WORK2,
-		     WORKQ,WORK,WORKT,XENPT,XIDST,XIVAL,ZCOLL;
-		
-		//**** OTHER LOCAL VARIABLES
-		
 		int I,IMXER,INDEG,J,L,MDGPO,MNJXS,MNQUA,MNSUA,MQIN1,NCOLL,
-		     NEFF,NEQNS,NJIND,NROWS,NTEST,
-		     TNSUA,TNGQP,ORDSG;
+		     NEFF,NEQNS,NROWS,NTEST,
+		     TNSUA,ORDSG;
 		int SOLCO = 0;
 		int QIERC[] = new int[7];
 		int QIERR[] = new int[7];
@@ -2698,83 +2754,10 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		RGEOM[0]=GSUPE;
 		RGEOM[1]=GLGTL;
 		
-		//**** SET UP THE POINTERS TO ELEMENTS IN ARRAYS IGEOM AND RGEOM
-		
-		PARNT=5;
-		HALEN=3;
-		MIDPT=MNSUA+3;
-		VTARG=2*MNSUA+3; 
-		
-		//**** SET UP THE POINTERS TO ELEMENTS IN ARRAYS ISNPH AND RSNPH
-		
-		DGPOL=7;
-		JATYP=MNSUA+7;
-		LOSUB=2*MNSUA+7;
-		ACOEF=1;
-		BCOEF=TNGQP+1;
-		AICOF=2*TNGQP+1;
-		BICOF=3*TNGQP+1;
-		QUPTS=4*TNGQP+1;
-		QUWTS=5*TNGQP+1;
-		H0VAL=6*TNGQP+1;
-		HIVAL=NJIND+6*TNGQP+1;
-		JACIN=2*NJIND+6*TNGQP+1;
-		ERARC=3*NJIND+6*TNGQP+1;
-		BCFSN=MNSUA+3*NJIND+6*TNGQP+1;
-		SOLUN=MNEQN+MNSUA+3*NJIND+6*TNGQP+1;
-		
-		//**** SET UP THE POINTERS TO ELEMENTS IN ARRAYS IWORK,RWORK,ZWORK AND 
-		//**** LWORK
-		
-		IPIVT=1;
-		LOQSB=MNEQN+1;
-		NQUAD=MNJXS+MNEQN+1;
-		HISUB=2*MNJXS+MNEQN+1;
-		LOTES=MNSUA+2*MNJXS+MNEQN+1;
-		HITES=2*MNSUA+2*MNJXS+MNEQN+1;
-		AXION=3*MNSUA+2*MNJXS+MNEQN+1;
-		NEWDG=4*MNSUA+2*MNJXS+MNEQN+1;
-		ICOPY=5*MNSUA+2*MNJXS+MNEQN+1;
-		LOOLD=6*MNSUA+2*MNJXS+MNEQN+1;
-		HIOLD=7*MNSUA+2*MNJXS+MNEQN+1;
-		WORK2=1;
-		COLPR=MNEQN+1;
-		A1COF=2*MNEQN+1;
-		B1COF=MNJXS+2*MNEQN+1;
-		TOLOU=2*MNJXS+2*MNEQN+1;
-		XIDST=3*MNJXS+2*MNEQN+1;
-		XENPT=5*MNJXS+2*MNEQN+1;
-		QCOMX=MQIN1+5*MNJXS+2*MNEQN+1;
-		QCOMW=MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		RCOPY=2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		NEWHL=MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		AQCOF=2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		BQCOF=TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		CQCOF=2*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		COLSC=3*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		RIGLL=4*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		WORK=5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		DIAG=2*NQPTS+5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		SDIAG=3*NQPTS+5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		WORKT=4*NQPTS+5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+2*MNEQN+1;
-		WORKQ=2*NQPTS*NQPTS+4*NQPTS+5*TNGQP+2*MNSUA+2*MNQUA+MQIN1+5*MNJXS+
-		      2*MNEQN+1;
-		ZCOLL=1;
-		XIVAL=MNEQN+1;
-		NEWQU=1;
-		LCOPY=MNJXS+1;
-		PNEWQ=MNSUA+MNJXS+1;
-		LNSEG=2*MNSUA+MNJXS+1;
-		
 		//**** ASSIGN THE JACOBI INDECES FOR EACH ARC.
 		
-		//ANGLE7(RSNPH(JACIN),NARCS,INTER);
-		double BE[] = new double[NARCS];
-		ANGLE7(BE, NARCS, INTER);
-		for (I = 0; I < NARCS; I++) {
-			RSNPH[JACIN + I - 1] = BE[I];
-		}
-		RSNPH[JACIN+NJIND-2]=0.0;
+		ANGLE7(JACIN,NARCS,INTER);
+		JACIN[NJIND-1]=0.0;
 		
 		//**** SET SUB-TOLERANCES AND INDEG
 		
@@ -2805,23 +2788,12 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		//**** ASSIGN THE LOGICAL LINE SEGMENT TYPE TO EACH ARC.
 		
-		boolean linout[] = new boolean[NARCS];
-		LINSEG(linout, NARCS);
-		for (I = 0; I < NARCS; I++) {
-			LWORK[LNSEG-1+I]= linout[I];
-		}
-		//LINSEG(LWORK(LNSEG),NARCS);
+		LINSEG(LNSEG,NARCS);
 		
 		//**** LIST THE INPUT ARGUMENTS AND ASSOCIATED QUANTITIES
 		
-		double beta[] = new double[NARCS];
-		boolean linear[] = new boolean[NARCS];
-		for (I = 0; I < NARCS; I++) {
-			beta[I] = RSNPH[JACIN-1+I];
-			linear[I] = LWORK[LNSEG-1+I];
-		}
 		RSLT80(JBNM,HEAD,GSUPE,MAXER,GAQTL,INTER,NARCS,ORDSG,NQPTS,
-		     INCST,INDEG,RFARC,RFARG[0],CENTR,beta,linear,
+		     INCST,INDEG,RFARC,RFARG[0],CENTR,JACIN,LNSEG,
 		     TSTNG,OULVL,IBNDS,MNEQN,OCH);
 		PI=Math.PI;
 		RFARG[0]=RFARG[0]*PI;
@@ -2834,43 +2806,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		//**** FOR THE INTEGRATED POLYNOMIALS, STORING RESULTS IN AICOF,BICOF
 		//**** AND HIVAL.
 		      
-		double JAC[] = new double[NJIND];
-		for (I = 0; I < NJIND; I++) {
-			JAC[I] = RSNPH[JACIN+I-1];
-		}
-		double ACO[] = new double[NJIND*NQPTS];
-		double BCO[] = new double[NJIND*NQPTS];
-		double H0V[] = new double[NJIND];
-		double AIC[] = new double[NJIND*NQPTS+1];
-		double BIC[] = new double[NJIND*NQPTS+1];
-		double HIV[] = new double[NJIND];
-		double QUP[] = new double[NJIND*NQPTS];
-		double QUW[] = new double[NJIND*NQPTS];
-		double WOR[] = new double[NQPTS];
-		OPQUD1(NJIND,NQPTS,JAC,ACO,BCO,
-		     H0V,AIC,BIC,HIV,QUP,
-		     QUW,WOR,IER);
-		for (I = 0; I < NJIND*NQPTS; I++) {
-			RSNPH[ACOEF+I-1] = ACO[I];
-			RSNPH[BCOEF+I-1] = BCO[I];
-		}
-		for (I = 0; I < NJIND; I++) {
-			RSNPH[H0VAL+I-1] = H0V[I];
-		}
-		for (I = 0; I < NJIND*NQPTS+1; I++) {
-			RSNPH[AICOF+I-1] = AIC[I];
-			RSNPH[BICOF+I-1] = BIC[I];
-		}
-		for (I = 0; I < NJIND; I++) {
-			RSNPH[HIVAL+I-1] = HIV[I];
-		}
-		for (I = 0; I < NJIND*NQPTS; I++) {
-			RSNPH[QUPTS+I-1] = QUP[I];
-			RSNPH[QUWTS+I-1] = QUW[I];
-		}
-		for (I = 0; I < NQPTS; I++) {
-			RWORK[WORK+I-1] = WOR[I];
-		}
+		OPQUD1(NJIND,NQPTS,JACIN,ACOEF,BCOEF,
+		     H0VAL,AICOF,BICOF,HIVAL,QUPTS,
+		     QUWTS,WORK,IER);
 		if (IER[0] > 0) {
 			WRTAIL(1,0,IER[0],null);
 		    return;            
@@ -2878,8 +2816,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		J=1-NQPTS;
 		for (I=1; I <= NJIND; I++) {
 		    J=J+NQPTS;
-		    RWORK[A1COF+I-2]=RSNPH[ACOEF+J-2];
-		    RWORK[B1COF+I-2]=RSNPH[BCOEF+J-2];
+		    A1COF[I-1]=ACOEF[J-1];
+		    B1COF[I-1]=BCOEF[J-1];
 		} // for (I=1; I <= NJIND; I++)
 		System.out.println("BASIC GAUSS QUADRATURE DATA DONE:");
 		
@@ -2888,21 +2826,19 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		//**** JACOBI WEIGHT FUNCTIONS AND THEIR ORTHONORMAL POLYNOMIALS; STORE
 		//**** THESE COEFFICIENTS IN AQCOF, BQCOF AND CQCOF
 		
-/*		      CALL ASQUC7(RWORK(AQCOF),RWORK(BQCOF),RWORK(CQCOF),RSNPH(JACIN),
-		     +NJIND,NQPTS)
-		      WRITE(*,1) 'DATA FOR SINGULAR INTEGRALS DONE:'
-		C
-		C**** SET UP THE A PRIORI COLUMN SCALE FACTORS, STORED IN COLSC.
-		C
-		      CALL CSCAL3(RWORK(COLSC),NQPTS,NJIND,RSNPH(ACOEF),RSNPH(BCOEF),
-		     +RSNPH(H0VAL),RSNPH(QUPTS),RSNPH(QUWTS),RSNPH(JACIN),RWORK(WORK),
-		     +RWORK(WORKT),RWORK(WORKQ))
-		C
-		C**** SET UP THE ARRAY RIGLL OF REFERENCE IGNORE LEVELS.
-		C
-		      CALL IGNLVL(RWORK(RIGLL),RWORK(COLSC),RSNPH(ACOEF),RSNPH(BCOEF),
-		     +RSNPH(H0VAL),RSNPH(JACIN),NJIND,NQPTS,IER)
-		      IF (IER .GT. 0) THEN
+		ASQUC7(AQCOF,BQCOF,CQCOF,JACIN,NJIND,NQPTS);
+		System.out.println("DATA FOR SINGULAR INTEGRALS DONE:");
+		
+		//**** SET UP THE A PRIORI COLUMN SCALE FACTORS, STORED IN COLSC.
+		
+		CSCAL3(COLSC,NQPTS,NJIND,ACOEF,BCOEF,
+		     H0VAL,QUPTS,QUWTS,JACIN,WORK,
+		     WORKT,WORKQ);
+		
+		// **** SET UP THE ARRAY RIGLL OF REFERENCE IGNORE LEVELS.
+		
+		IGNLVL(RIGLL,COLSC,ACOEF,BCOEF,H0VAL,JACIN,NJIND,NQPTS,IER);
+		/*      IF (IER .GT. 0) THEN
 		        GOTO 999
 		      ENDIF
 		C
@@ -3736,6 +3672,463 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	    result=5E-1*(B0+A[0]-B2)*FACTOR;
 	    return result;
     } // private double GAMMA
+    
+    private void ASQUC7(double AQCOF[], double BQCOF[], double CQCOF[],
+    		double JACIN[], int NJIND, int NQPTS) {
+        //REAL AQCOF(*),BQCOF(*),CQCOF(*),JACIN(*)
+
+        // ..TO ASSIGN THE COEFFICIENTS A(J), B(J) AND C(J) ,J=1,MN IN THE
+        // ..3-TERM RECURRENCE FORMULA 
+        // ..
+        // ..  Q   (Z) = (A(J)Z - B(J))Q (Z) - C(J)Q   (Z) , J=2,...,MN
+        // ..   J+1                     J           J-1
+        // ..
+        // ..    Q (Z) = (A(1)Z - B(1))Q (Z) - C(1)
+        // ..     2                     1 
+        // ..
+        // ..WHERE Q (Z):=<P ,LOG(Z-.)>, P  IS THE ORTHONORMAL JACOBI POLY
+        // ..       J       J             J
+        // ..OF DEGREE J AND THE INNER PRODUCT IS WITH RESPECT TO THE JACOBI
+        // ..DISTRIBUTION OVER (-1,1).  HERE A(J,I) STORES "A(J)" FOR THE ITH
+        // ..ARC ON THE BOUNDARY (WITH SIMILAR ROLE FOR ARRAYS B AND C) AND
+        // ..THE JACOBI WEIGHT FUNCTION FOR THE ITH ARC IS 
+        // ..(1-X)**AB(I,1)*(1+X)**AB(I,2), J=1,MN, I=1,NA.  
+
+        // **** AUTHOR: DAVID HOUGH
+        // **** LAST UPDATE: 15.09.89
+
+        // **** LOCAL VARIABLES        
+        int I,J,K,LOSUB;
+        double BE,D,N,N1,N2,F;
+        double H[] = new double[1];
+        // EXTERNAL ASONJ7
+
+      for (I=1; I <= NJIND; I++) {
+          LOSUB=(I-1)*NQPTS+1;
+          BE=JACIN[I-1];
+          double A[] = new double[NQPTS];
+          double B[] = new double[NQPTS];
+          ASONJ7(1.0,BE+1.0,A,B,H,NQPTS);
+          for (K = 0; K < NQPTS; K++) {
+        	  AQCOF[LOSUB+K-1] = A[K];
+        	  BQCOF[LOSUB+K-1] = B[K];
+          }
+          for (K=1; K <= NQPTS; K++) {
+              J=LOSUB+K-1;
+              N=(double)(K);
+              D=(N+1.0)*(N+BE+2.0);
+              N1=N*(N+BE+1.0);
+              N2=(N-1.0)*(N+BE);
+              F=Math.sqrt(N1/D);
+              AQCOF[J-1]=F/AQCOF[J-1];
+              BQCOF[J-1]=BQCOF[J-1]*AQCOF[J-1];
+              if (K > 1) {
+                  CQCOF[J-1]=AQCOF[J-1]*N2/AQCOF[J-2]/N1;
+              }
+              else {
+                  CQCOF[J-1]=-AQCOF[J-1]*Math.sqrt(H[0]/N1);
+              }
+          } // for (K=1; K <= NQPTS; K++)
+      } // for (I=1; I <= NJIND; I++)
+
+    } // private void ASQUC7
+    
+    private void CSCAL3(double COLSC[], int NQPTS,int NJIND, double ACOEF[], double BCOEF[],
+    		double H0VAL[], double QUPTS[], double QUWTS[], double JACIN[], double MU[],
+    		double TT[], double QQ[]) {
+        // REAL COLSC(*),ACOEF(*),BCOEF(*),H0VAL(*),QUPTS(*),QUWTS(*),
+    	// +JACIN(*),MU(*),TT(*),QQ(*)
+    	
+    	// TO SET UP THE A PRIORI COLUMN SCALE FACTORS USING TRUNCATED
+    	// CHEBYSHEV EXAPANSIONS FOR THE LOGARITHMIC KERNEL, GAUSS-JACOBI
+    	// QUADRATURE AND GAUSS-JACOBI TEST POINTS.
+    	
+    	// LOCAL VARIABLES
+    	
+        int I,J,J1,JI,K,K1,KMAX,LO,LO1,M,N;
+    	double BETA,ROOTH,P0SCL,X,MAXVL,SUM1,SUM2;
+    	// EXTERNAL JAPAR7
+    	
+    	K1=0;
+    	MU[0]=-Math.log(2.0);
+    	for (I=2; I <= 2*NQPTS; I++) {
+    	    MU[I-1]=-2.0/(double)(I-1);
+    	}
+    	
+    	for (JI=1; JI <= NJIND; JI++) {
+    	    BETA=JACIN[JI-1];
+    	    ROOTH=Math.sqrt(H0VAL[JI-1]);
+    	    P0SCL=1.0/ROOTH;
+    	    LO=(JI-1)*NQPTS;
+    	    LO1=LO+1;
+    	
+    	    for (J=1; J <= NQPTS; J++) {
+    	        X=QUPTS[LO+J-1];
+    	        QQ[(J-1)*NQPTS]=P0SCL;
+    	        double PP[] = new double[NQPTS-1];
+    	        double AA[] = new double[NQPTS-1];
+    	        double BB[] = new double[NQPTS-1];
+    	        for (N = 0; N < NQPTS-1; N++) {
+    	        	PP[N] = QQ[(J-1)*NQPTS+N];
+    	        	AA[N] = ACOEF[LO1+N-1];
+    	        	BB[N] = BCOEF[LO1+N-1];
+    	        }
+    	        JAPAR7(PP,X,AA,BB,NQPTS-1);
+    	        for (N = 0; N < NQPTS-1; N++) {
+    	        	QQ[(J-1)*NQPTS+N] = PP[N];
+    	        }
+    	        TT[J-1]=1.0;
+    	        TT[J+NQPTS-1]=X;
+    	        for (K=3; K <= 2*NQPTS; K++) {
+    	            TT[J+(K-1)*NQPTS-1]=2.0*X*TT[J+(K-2)*NQPTS-1]-TT[J+(K-3)*NQPTS-1];
+    	        }
+    	    } // for (J=1; J <= NQPTS; J++)
+    	
+    	    for (K=1; K <= NQPTS; K++) {
+    	        MAXVL=0.0;
+    	        for (I=1; I <= NQPTS; I++) {
+    	            SUM2=0.0;
+    	            KMAX=2*NQPTS+1-K;
+    	            for (M=K; M <= KMAX; M++) {
+    	                SUM1=0.0;
+    	                for (J=1; J <= NQPTS; J++) {
+    	                    J1=LO+J;
+    	                    SUM1=SUM1+QUWTS[J1-1]*QQ[K+(J-1)*NQPTS-1]*TT[J+(M-1)*NQPTS-1];
+    	                } // for (J=1; J <= NQPTS; J++)
+    	                SUM2=SUM2+MU[M-1]*TT[I+(M-1)*NQPTS-1]*SUM1;
+    	            } // for (M=K; M <= KMAX; M++)
+    	            MAXVL=Math.max(MAXVL,Math.abs(SUM2));
+    	        } // for (I=1; I <= NQPTS; I++)
+    	        K1=K1+1;
+    	        COLSC[K1-1]=1.0/MAXVL;
+    	    } // for (K=1; K <= NQPTS; K++)
+    	
+    	} // for (JI=1; JI <= NJIND; JI++)
+    	
+    }
+
+    private void JAPAR7(double PP[] ,double X, double AA[], double BB[], int N) {
+        // REAL X,PP(*),AA(*),BB(*)
+
+        // ..................................................................
+
+        // 1.  JAPAR7
+        //     EVALUATES ORTHONORMAL JACOBI POLYNOMIALS.
+
+
+       // 2.  PURPOSE
+       //     TO COMPUTE PP(I), I=1,..,N+1, GIVEN PP(1) ON ENTRY, WHERE PP(I)
+       //     STORES THE VALUE OF THE ORTHONORMAL JACOBI POLYNOMIAL OF DEGREE
+       //     I-1 AT THE GIVEN PARAMETER VALUE X. 
+
+
+       // 3.  CALLING SEQUENCE
+       //     CALL JAPAR7(PP,X,AA,BB,N)
+
+       // PARAMETERS (SEE DECLARATIONS ABOVE FOR TYPES)
+       //  ON ENTRY:
+       //  PP(1)  - THE VALUE OF THE POLYNOMIAL OF DEGREE ZERO.
+
+       //  X      - THE REAL NUMBER AT WHICH THE POLYNOMIALS ARE TO BE
+       //           EVALUATED.
+
+       //  AA     - ARRAY OF COEFFICIENTS IN THE 3-TERM RECURRENCE
+       //           AA(I)*PP(I+1)=(X-BB(I))*PP(I)-AA(I-1)*PP(I-1),
+       //           I=1,..,N, WITH "PP(0)" = 0.
+
+       //  BB     - ARRAY OF COEFFICIENTS  IN THE 3-TERM RECURRENCE ABOVE.
+
+       //  N      - THE LARGEST DEGREE OF POLYNOMIAL REQUIRING EVALUATION.
+
+       //  ON EXIT:
+       //  PP     - PP(I) IS THE VALUE OF THE POLYNOMIAL OF DEGREE I-1 AT
+       //           X, I=1,..,N+1.
+
+
+       // 4.  NO SUBROUTINES OR FUNCTIONS NEEDED
+        
+       // ..................................................................
+   
+       int I;
+
+       if (N > 0) {
+           PP[1]=(X-BB[0])*PP[0]/AA[0];
+           for (I=2; I <= N; I++) {
+               PP[I]=((X-BB[I-1])*PP[I-1]-AA[I-2]*PP[I-2])/AA[I-1];
+           }
+       }
+
+    } // private void JAPAR7
+
+    private void IGNLVL(double RIGLL[], double COLSC[], double ACOEF[], double BCOEF[],
+    		double H0VAL[], double JACIN[], int NJIND, int NQPTS, int IER[]) {
+        // REAL ACOEF(*),BCOEF(*),H0VAL(*),JACIN(*),RIGLL(*),COLSC(*)
+    	
+    	// TO SET UP THE A PRIORI COLUMN SCALE FACTORS USING THE COEFFICIENT
+    	// IGNORE LEVELS OBTAINED FROM BOUNDARY CORRESPONDENCE FUNCTION 
+    	// REPRESENTATION FOR THE BOUNDARY MAP; SEE RB #50 P141 ET SEQ.
+    	// COMBINE WITH A PRIORI COLUMN SCALE FACTORS COLSC IN THE CASE OF
+    	// SOLVING SYMM'S EQUATION.
+    	
+    	// IER=0 - NORMAL EXIT
+    	// IER=5 - LOCAL PARAMETER MNQPT MUST BE INCREASED TO AT LEAST THE 
+    	//         VALUE OF NQPTS
+    	// IER=6 - FAILURE OF IMTQLH EIGENVALUE ROUTINE
+    	// IER=53- A CORNER ANGLE IS SO SMALL THAT IT MAY CAUSE OVERFLOW
+    	
+    	// LOCAL VARIABLES
+    	
+    	final int MNQPT = 20;
+    	int JT,K,K1,LO,N;
+    	double B1,B2,BETA,EXPON,H1VAL,LGTWO,OFLOW,PI,RH,RH1,SUP,T;
+    	boolean SYMM;
+    	double A1COF[] = new double[MNQPT];
+    	double B1COF[] = new double[MNQPT];
+    	double DIAG[] = new double[MNQPT];
+    	double PP[] = new double[MNQPT];
+    	double SDIAG[] = new double[MNQPT];
+    	// EXTERNAL ASONJ7,IMTQLH,JAPAR7
+    	
+    	if (NQPTS > MNQPT) {
+    	    IER[0]=5;
+    	    return;
+    	}
+    	
+    	if (COLSC[0] <= 0.0) {
+    	    SYMM= false;
+    	}
+    	else {
+    	    SYMM= true;
+    	}
+    	
+    	K1=0;
+    	PI= Math.PI;
+    	LGTWO=Math.log(2.0);
+    	OFLOW=Math.log(Double.MAX_VALUE);
+    	/*for (JT=1; JT <= NJIND; JT++) {
+    	    BETA=JACIN[JT-1];
+    	    B1=BETA+1.0;
+    	    B2=BETA+2.0;
+    	    RH=Math.sqrt(H0VAL[JT-1]);
+    	    ASONJ7(1.0,B1,A1COF,B1COF,H1VAL,NQPTS);
+    	    LO=(JT-1)*NQPTS;
+    	    K1=K1+1;
+    	
+    	    // ****   COMPUTE THE QUANTITY
+    	    // ****       PI*2E+0**B2/B1/RH
+    	    // ****   BUT CHECK FOR POSSIBLE OVERFLOW
+    	
+    	    EXPON=B2*LGTWO+Math.log(PI/B1/RH);
+    	    if (EXPON >= OFLOW) {
+    	        IER[0]=53;
+    	        return;
+    	    }
+    	    else {
+    	        if (SYMM) {
+    	            RIGLL[K1-1]=Math.exp(EXPON)*COLSC[K1-1];
+    	        }
+    	        else {
+    	            RIGLL[K1-1]=Math.exp(EXPON);
+    	        }
+    	    }
+    	
+    	    if (NQPTS == 1) {
+    	        continue;
+    	    }
+    	
+    	    RH1=Math.sqrt(H1VAL);
+    	    K1=K1+1;
+    	
+    	    // ****   COMPUTE THE QUANTITY
+    	    // ****       PI*2E+0**(B2+1E+0)*B1**B1/RH1/B2**(B2+5E-1)
+    	    // ****   BUT CHECK FOR POSSIBLE OVERFLOW
+    	
+    	    EXPON=(B2+1.0)*LGTWO+B1*Math.log(B1)-(B2+0.5)*Math.log(B2)+Math.log(PI/RH1);
+    	    if (EXPON >= OFLOW) {
+    	        IER[0]=53;
+    	        return;
+    	    }
+    	    else {
+    	        if (SYMM) {
+    	            RIGLL[K1-1]=Math.exp(EXPON)*COLSC[K1-1];
+    	        }
+    	        else {
+    	            RIGLL[K1-1]=Math.exp(EXPON);
+    	        }
+    	    }
+    	
+    	    for (N=2; N <= NQPTS-1; N++) {
+    	
+    	        // FIND THE ZEROES OF THE JACOBI POLYNOMIAL OF DEGREE N FOR
+    	        // WEIGHT (1+X)**BETA
+    	
+    	        for (K=1; K <= N; K++) {
+    	            DIAG[K-1]=BCOEF[LO+K-1];
+    	            if (K == 1) {
+    	                SDIAG[K-1]=0.0;
+    	            }
+    	            else {
+    	                SDIAG[K-1]=ACOEF[LO+K-2];
+    	            }
+    	        } // for (K=1; K <= N; K++)
+    	
+    	        IMTQLH(N,DIAG,SDIAG,IER);
+    	          IF (IER.GT.0) THEN
+    	            IER=6
+    	            RETURN
+    	          ENDIF
+    	C
+    	          SUP=0E+0
+    	          DO 20 K=1,N
+    	            T=DIAG(K)
+    	            PP(1)=1E+0/RH1
+    	            CALL JAPAR7(PP,T,A1COF,B1COF,N)
+    	            T=(1E+0-T)*(1E+0+T)**B1*PP(N)
+    	            SUP=MAX(SUP,ABS(T))
+    	20        CONTINUE
+    	C
+    	          K1=K1+1
+    	          IF (SYMM) THEN
+    	            RIGLL(K1)=2E+0*PI*SUP*COLSC(K1)/SQRT(N*(N+B1))
+    	          ELSE
+    	            RIGLL(K1)=2E+0*PI*SUP/SQRT(N*(N+B1))
+    	          ENDIF
+    	    } // for (N=2; N <= NQPTS-1; N++)
+    	} // for (JT=1; JT <= NJIND; JT++)
+    	
+    	// NORMAL EXIT
+    	
+    	IER[0]=0;*/
+    	
+    } // private void IGNLVL
+    
+    private void IMTQLH(int N, double D[], double E[], int IERR[]) {
+    
+        int I,J,L,M,II,MML;
+        //REAL D(N),E(N)
+        double B,C,F,G,P,R,S,TST1,TST2,PYTHAG;
+    
+        // THIS SUBROUTINE IS A TRANSLATION OF THE ALGOL PROCEDURE IMTQL1,
+        // NUM. MATH. 12, 377-383(1968) BY MARTIN AND WILKINSON,
+        // AS MODIFIED IN NUM. MATH. 15, 450(1970) BY DUBRULLE.
+        // HANDBOOK FOR AUTO. COMP., VOL.II-LINEAR ALGEBRA, 241-248(1971).
+    
+        // THIS SUBROUTINE FINDS THE EIGENVALUES OF A SYMMETRIC
+        // TRIDIAGONAL MATRIX BY THE IMPLICIT QL METHOD.
+    
+        // ON INPUT
+    
+        //     N IS THE ORDER OF THE MATRIX.
+    
+        //     D CONTAINS THE DIAGONAL ELEMENTS OF THE INPUT MATRIX.
+    
+        //     E CONTAINS THE SUBDIAGONAL ELEMENTS OF THE INPUT MATRIX
+        //       IN ITS LAST N-1 POSITIONS.  E(1) IS ARBITRARY.
+    
+        // ON OUTPUT
+    
+        //     D CONTAINS THE EIGENVALUES IN ASCENDING ORDER.  IF AN
+        //       ERROR EXIT IS MADE, THE EIGENVALUES ARE CORRECT AND
+        //       ORDERED FOR INDICES 1,2,...IERR-1, BUT MAY NOT BE
+        //       THE SMALLEST EIGENVALUES.
+    
+        //    E HAS BEEN DESTROYED.
+    
+        //    IERR IS SET TO
+        //           ZERO       FOR NORMAL RETURN,
+        //           J          IF THE J-TH EIGENVALUE HAS NOT BEEN
+        //                      DETERMINED AFTER 30 ITERATIONS.
+    
+        // CALLS PYTHAG FOR  SQRT(A*A + B*B) .
+    
+        // QUESTIONS AND COMMENTS SHOULD BE DIRECTED TO BURTON S. GARBOW,
+        // MATHEMATICS AND COMPUTER SCIENCE DIV, ARGONNE NATIONAL LABORATORY
+    
+        // THIS VERSION ORIGINALLY DATED AUGUST 1983; RENDERED INACCURATE 
+        // AND TRANSLATED INTO SINGLE PRECISION BY DAVID HOUGH, ETH, ZUERICH
+        // OCTOBER, 1989.
+    
+        // ------------------------------------------------------------------
+    
+        IERR[0] = 0;
+        if (N == 1) {
+            return;	
+        }
+    
+        for (I = 1; I <= N-1; I++) {
+            E[I-1] = E[I];
+        }
+        E[N-1] = 0.0;
+    
+        /*for (L = 1; L <= N; L++) {
+            J = 0;
+            // .......... LOOK FOR SMALL SUB-DIAGONAL ELEMENT ..........
+            while (true) {
+                for (M = L; M <= N; M++) {
+                IF (M .EQ. N) GO TO 120
+                TST1 = ABS(D(M)) + ABS(D(M+1))
+                TST2 = TST1 + ABS(E(M))
+                IF (TST2 .EQ. TST1) GO TO 120
+                } // for (M = L; M <= N; M++)
+    C
+      120    P = D(L)
+             IF (M .EQ. L) GO TO 215
+             IF (J .EQ. 30) GO TO 1000
+             J = J + 1
+    C     .......... FORM SHIFT ..........
+             G = (D(L+1) - P) / (2.0E0 * E(L))
+             R = PYTHAG(G,1.0E0)
+             G = D(M) - P + E(L) / (G + SIGN(R,G))
+             S = 1.0E0
+             C = 1.0E0
+             P = 0.0E0
+             MML = M - L
+    C     .......... FOR I=M-1 STEP -1 UNTIL L DO -- ..........
+             DO 200 II = 1, MML
+                I = M - II
+                F = S * E(I)
+                B = C * E(I)
+                R = PYTHAG(F,G)
+                E(I+1) = R
+                IF (R .EQ. 0.0E0) GO TO 210
+                S = F / R
+                C = G / R
+                G = D(I+1) - P
+                R = (D(I) - G) * S + 2.0E0 * C * B
+                P = S * R
+                D(I+1) = G + P
+                G = C * R - B
+      200    CONTINUE
+    C
+             D(L) = D(L) - P
+             E(L) = G
+             E(M) = 0.0E0
+             GO TO 105
+    C     .......... RECOVER FROM UNDERFLOW ..........
+      210    D(I+1) = D(I+1) - P
+             E(M) = 0.0E0
+             GO TO 105
+    C     .......... ORDER EIGENVALUES ..........
+      215    IF (L .EQ. 1) GO TO 250
+    C     .......... FOR I=L STEP -1 UNTIL 2 DO -- ..........
+             DO 230 II = 2, L
+                I = L + 2 - II
+                IF (P .GE. D(I-1)) GO TO 270
+                D(I) = D(I-1)
+      230    CONTINUE
+    C
+      250    I = 1
+      270    D(I) = P
+            } // while (true)
+        } // for (L = 1; L <= N; L++)
+    C
+          GO TO 1001
+    C     .......... SET ERROR -- NO CONVERGENCE TO AN
+    C                EIGENVALUE AFTER 30 ITERATIONS ..........
+     1000 IERR = L
+     1001 RETURN*/
+    }
+
 
 
     	     /* SUBROUTINE RSLT71(QIERC,RCOND,SOLUN,NEQNS,LOSUB,HISUB,COLSC,
