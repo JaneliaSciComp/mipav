@@ -77,8 +77,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     /** Used to store the location of the source data elements file (stored as a CSV)  */
     private String csvFileDir;
-    private File csvFile;
-
 
     /** Dev data dictionary server. */
     @SuppressWarnings("unused")
@@ -257,25 +255,41 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
             final JFileChooser chooser = new JFileChooser();
             chooser.setCurrentDirectory(new File(csvFileDir));
-            chooser.setDialogTitle("Choose CSV file");
+            chooser.setDialogTitle("Choose Source Data Elements CSV file");
             chooser.setFileFilter(new FileNameExtensionFilter("Comma separated value files (.csv)", "csv"));
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
-                csvFile = chooser.getSelectedFile();
-                readSourceDEsCSVFile();
+                readSourceDEsCSVFile(chooser.getSelectedFile());
 
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
             }
         } else if (command.equalsIgnoreCase("SaveMapFile")) {
         	
+        	//validate mapping table.
+        	if (validateMappingTable()) {
+	        	final JFileChooser saveChooser = new JFileChooser();
+	        	saveChooser.setCurrentDirectory(new File(csvFileDir));
+	        	saveChooser.setDialogTitle("Save Mapping CSV file");
+	        	saveChooser.setFileFilter(new FileNameExtensionFilter("Comma separated value files (.csv)", "csv"));
+	            final int returnValue = saveChooser.showSaveDialog(this);
+	            if (returnValue == JFileChooser.APPROVE_OPTION) {
+	                //SaveMethod(saveChooser.getSelectedFile()
+	
+	                outputDirBase = saveChooser.getSelectedFile().getAbsolutePath() + File.separator;
+	                Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
+	            }
+        	}
+        	else {
+        		//
+        	}
             
         } else if (command.equalsIgnoreCase("HelpWeb")) {
         	// Brings up new BRICS Data Dictionary webpage for the selected data element
             showCDE(null);
 
         } else if (command.equalsIgnoreCase("Finish")) {
-        	// TODO:
+        	// TODO: Remove ??
             if (fileWriterWorkerThread != null && fileWriterWorkerThread.isDone()) {
                 dispose();
                 if (JDialogStandalonePlugin.isExitRequired()) {
@@ -308,7 +322,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         } else if (command.equalsIgnoreCase("OutputDirBrowse")) {
         	
         	// Have not begun work yet 
-            final JFileChooser chooser = new JFileChooser(outputDirBase);
+            /*final JFileChooser chooser = new JFileChooser(outputDirBase);
 
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             chooser.setDialogTitle("Choose output directory for mapping result files");
@@ -318,7 +332,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
                 outputDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
-            }
+            }*/
         } 
     }
 
@@ -722,7 +736,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         saveMapButton.addActionListener(this);
         saveMapButton.setActionCommand("SaveMapFile");
         saveMapButton.setPreferredSize(defaultButtonSize);
-        saveMapButton.setEnabled(false);
+        saveMapButton.setEnabled(true); // for testing
 
         outputDirPanel.add(outputDirLabel);
         outputDirPanel.add(outputDirTextField);
@@ -746,26 +760,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
 
   
-    /**
-     * This method checks to see if all REQUIRED reference data elements have been mapped. 
-     * 
-     * @return True if all REQUIRED data elements have be mapped
-     */
-    private boolean validateRequired() {
-    	
-    	int numRows = deTableModel.getRowCount();
-    	for (int i=0; i< numRows; i++) {
-    		if ( deTableModel.getValueAt(i, deTableModel.getColumnIndex("Required")).equals("REQUIRED") && 
-    				(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Name")) == null || 
-    				((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Name")))).trim().equals(""))) {
-    			saveMapButton.setEnabled(false);
-    			return false;
-    			
-    		}
-    	}
-    	saveMapButton.setEnabled(true);
-    	return true;
-    }
    
     /**
      * TODO: Needs to right out mapping tool
@@ -1234,7 +1228,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * 
      * @return True if file is successfully opened
      */
-    private boolean readSourceDEsCSVFile() {
+    private boolean readSourceDEsCSVFile(File csvFile) {
         BufferedReader br = null;
 
         try {
@@ -1297,6 +1291,62 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
          
         return true;      
+    }
+    
+    /**
+     * 	Validates mapping table to ensure that the mapping table is complete. Should be used before saving.
+     * 
+     * 
+     * @return True is validation passes.
+     */
+    private boolean validateMappingTable() {
+    	
+    	boolean errFlag = false;
+    	
+    	// if Source PVs != empty and PV mappings == empty then printlnToLog and return false.
+    	int numRows = deTableModel.getRowCount();
+    	for (int i=0; i< numRows; i++) {
+   		
+    		if (   deTableModel.getValueAt(i, deTableModel.getColumnIndex("PV Mappings")) == null || 
+    				((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("PV Mappings")))).isEmpty() ) {
+	    		if (  (  !(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source PVs")) == null) && 
+	    				 !((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Reference PVs")))).isEmpty() )  ) {
+	    			printlnToLog("PV mapping cell is empty for AAA:  " + deTableModel.getValueAt(i, deTableModel.getColumnIndex("Element Name"))); 
+	    			errFlag = true;
+	    		}
+	    		//else if (   !((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source PVs")))).isEmpty() && 
+	    		//		    !((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("ReferencePVs")))).isEmpty()   ) {
+	      		//	printlnToLog("PV mapping cell is empty for BBB:  " + deTableModel.getValueAt(i, deTableModel.getColumnIndex("Element Name"))); 
+	      		//	errFlag = true;
+	      		//}
+    		}
+    	}
+    	if (errFlag) {
+    		return false;
+    	}
+    	
+    	return true;
+    }
+    
+    
+    /**
+     * This method checks to see if all REQUIRED reference data elements have been mapped. 
+     * 
+     * @return True if all REQUIRED data elements have be mapped
+     */
+    private boolean validateRequired() {
+    	
+    	int numRows = deTableModel.getRowCount();
+    	for (int i=0; i< numRows; i++) {
+    		if ( deTableModel.getValueAt(i, deTableModel.getColumnIndex("Required")).equals("REQUIRED") && 
+    				(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Name")) == null || 
+    				((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Name")))).isEmpty() )) {
+    			//return false;  // This is correct temp for testing TODO
+    			return true;
+    			
+    		}
+    	}
+    	return true;
     }
     
     /**
@@ -1647,7 +1697,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             updateMappedColumn();
             
             // Check to see if all Required reference data elements have been mapped - if so then enable the Save button.
-            validateRequired();
+            
+            if ( validateRequired() ) {
+            	saveMapButton.setEnabled(true);
+            }else {
+            	saveMapButton.setEnabled(false);
+            }
         }
     }
     
@@ -1725,7 +1780,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             gbc.weighty = 1;
             gbc.fill = GridBagConstraints.BOTH;
             JScrollPane sPane = buildPVPanel();
-            if (sPane == null) dispose();
+            if (sPane == null) {
+            	dispose();
+            	return;
+            }
             
             mainPanel.add(sPane, gbc);
 
@@ -1865,23 +1923,23 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        	String[] mappedPVStrs = mappedPVs.split(";");
 	        	
 	        	cbArray = new JComboBox[srcPVStrs.length];
-	        	for (int i = 0; i < mappedPVStrs.length; i++) {
+	        	for (int i = 0; i < srcPVStrs.length; i++) {
 	                gbc.gridy = i;
 	                JComboBox<String> cb = new JComboBox<String>(refPVStrs);
 	                cbArray[i] = cb;
 	                
 	                String[] splitMappedPV = mappedPVStrs[i].split(":");
-	                if (i < refPVStrs.length) {
+	               // if (i < refPVStrs.length) {
 	                	if (splitMappedPV.length == 2) {
 	                		cb.setSelectedItem(splitMappedPV[1].trim());
 	                	}
 	                	else {
 	                		cb.setSelectedItem("");
 	                	}
-	                }
-	                else {
-	                	cb.setSelectedIndex(0);
-	                }
+	              //  }
+	              //  else {
+	               // 	cb.setSelectedIndex(0);
+	              //  }
 	                
 	                cb.setFont(serif12);
 	                cb.setMinimumSize(new Dimension(180, 30));
@@ -1926,25 +1984,26 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     
     /**
-     *  Editor for Source PV - NOT sure we need this 
+     *  Editor for Source PV - NOT sure we need this. 
+     *  Simple text field editor for the Source PV cell. It checks to ensure the proper character set is used: PVs can only contain a-z, A-Z and 0-9 separated by semicolons
      * 
      */
     private class srcPVDialog extends JDialog implements ActionListener {
         private static final long serialVersionUID = 859201819000159789L;
 
-        private final PlugInDialogBRICS_Mapper owner;
+        private final PlugInDialogBRICS_Mapper parent;
         private JTextField pvsTF = null;
 
 
-        public srcPVDialog(final PlugInDialogBRICS_Mapper owner) {
-            super(owner, false);
+        public srcPVDialog(final PlugInDialogBRICS_Mapper parent) {
+            super(parent, false);
 
-            this.owner = owner;
+            this.parent = parent;
             init();
         }
 
         /**
-         * 
+         * Builds the GUI for the dialog
          */
         private void init() {
         	setTitle("Edit Source DE Permissible Values");
@@ -1998,7 +2057,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             getContentPane().add(mainPanel, BorderLayout.CENTER);
 
             pack();
-            centerInWindow(owner, this);
+            centerInWindow(parent, this);
            
             setVisible(true);
         }
@@ -2048,7 +2107,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 continue;
             }
 
-            if (ds.getFileType().equals(SubmissionType.IMAGING)) { // For test purposes since it only 7 secs when clinical takes 20 secs
+            if (ds.getFileType().equals(SubmissionType.IMAGING)) { // For test purposes since it only 7 secs when clinical takes 30 secs
             //if (ds.getFileType().equals(SubmissionType.CLINICAL)) {
                 // only include non-archived structures
                 if ( !ds.getStatus().equals(StatusType.ARCHIVED)) {
@@ -2283,6 +2342,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private static void showCDE(final String cdePage) {
     	final URI ddtURI;
         final String ddtPage = "https://fitbir.nih.gov/content/data-dictionary";
+        
         try {
             if (cdePage == null) {
             	ddtURI = new URI(ddtPage);
@@ -2305,8 +2365,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     
     
     /**
+     * Class to support storage and display of a data elements
      * 
-     * @author mcmatt
      *
      */
     public class DataElementValue {
@@ -2418,8 +2478,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
     
     /**
-     * 
-     * @author mcmatt
+	 *  Class to support storage and display of repeatable groups of a form structure
      *
      */
 
@@ -2486,7 +2545,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     /**
      * 
-     * @author mcmatt
+     *  Class to support storage and display of form structures
      *
      */
     private class FormStructureData {
@@ -2919,7 +2978,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
 
         /**
-         * Some cells can be edited
+         * Some cells can be edited - maybe ...
          *
          * @param   x  x value of cell
          * @param   y  y value of cell
