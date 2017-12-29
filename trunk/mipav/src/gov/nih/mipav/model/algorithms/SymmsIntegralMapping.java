@@ -2838,42 +2838,45 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		// **** SET UP THE ARRAY RIGLL OF REFERENCE IGNORE LEVELS.
 		
 		IGNLVL(RIGLL,COLSC,ACOEF,BCOEF,H0VAL,JACIN,NJIND,NQPTS,IER);
-		/*      IF (IER .GT. 0) THEN
-		        GOTO 999
-		      ENDIF
-		C
-		C**** SET UP THE ARRAY OF COLLOCATION POINTS PARAMETER VALUES, COLPR,
-		C**** THE ARRAY OF COLLOCATION POINTS ZCOLL AND THE ARRAYS LOSUB AND 
-		C**** HISUB NEEDED TO ACCESS COLPR AND ZCOLL CORRECTLY.  INITIALISE
-		C**** DGPOL AND UPDATE LNSEG FOR ARC HALVING. 
-		C
-		      CALL CPJAC3(NARCS,NQPTS,INDEG,ISNPH(DGPOL),RSNPH(JACIN),
-		     +RSNPH(ACOEF),RSNPH(BCOEF),RWORK(DIAG),RWORK(SDIAG),TNSUA,
-		     +ISNPH(LOSUB),IWORK(HISUB),ISNPH(JATYP),IGEOM(PARNT),RGEOM(MIDPT),
-		     +RGEOM(HALEN),RWORK(COLPR),ZWORK(ZCOLL),LWORK(LNSEG),IWORK(LOOLD),
-		     +IWORK(HIOLD),EPS,IER,INIBT)
-		      IF (IER .GT. 0) THEN
-		        GOTO 999
-		      ENDIF
-		      NCOLL=IWORK(HISUB+TNSUA-1)
-		      NEQNS=NCOLL+1
-		      NROWS=NCOLL/ORDSG+1
-		      IF (NEQNS .GT. MNEQN) THEN
-		        IER=8
-		        GOTO 999
-		      ENDIF
-		      WRITE(*,1) 'COLLOCATION POINT CHOICE DONE:'
-		C
-		C**** SET UP THE COMPOSITE GAUSSIAN QUADRATURE RULES, STORING ABSCISSAE
-		C**** AND WEIGHTS IN QCOMX AND QCOMW.  SET UP ARRAYS NQUAD,LOQSB
-		C**** NEEDED TO ACCESS THESE DATA.  RECORD MAXIMUM QUADRATURE ERRORS
-		C**** FOR COLUMN SCALED INTEGRALS IN ARRAY TOLOU.
-		C
-		      CALL ICOQR1(NARCS,NJIND,NQPTS,MDGPO,MQIN1,AQTOL,RSNPH(QUPTS),
-		     +RSNPH(QUWTS),RSNPH(JACIN),RGEOM(MIDPT),RGEOM(HALEN),RSNPH(ACOEF),
-		     +RSNPH(BCOEF),RSNPH(H0VAL),RWORK(COLSC),IWORK(NQUAD),IWORK(LOQSB),
-		     +RWORK(QCOMX),RWORK(QCOMW),MNQUA,RWORK(TOLOU),MCQER,RWORK(XENPT),
-		     +ZWORK(XIVAL),RWORK(XIDST),IER)
+		if (IER[0] > 0) {
+			WRTAIL(1,0,IER[0],null);
+		    return; 
+		}
+		
+		// **** SET UP THE ARRAY OF COLLOCATION POINTS PARAMETER VALUES, COLPR,
+		// **** THE ARRAY OF COLLOCATION POINTS ZCOLL AND THE ARRAYS LOSUB AND 
+		//**** HISUB NEEDED TO ACCESS COLPR AND ZCOLL CORRECTLY.  INITIALISE
+		//**** DGPOL AND UPDATE LNSEG FOR ARC HALVING. 
+		
+		/*CPJAC3(NARCS,NQPTS,INDEG,DGPOL,JACIN,
+		     ACOEF,BCOEF,DIAG,SDIAG,TNSUA,
+		     LOSUB,HISUB,JATYP,PARNT,MIDPT,
+		     HALEN,COLPR,ZCOLL,LNSEG,LOOLD,
+		     HIOLD,EPS,IER,INIBT);
+		if (IER[0] > 0) {
+			WRTAIL(1,0,IER[0],null);
+		    return; 
+		}
+		NCOLL=HISUB[TNSUA-1];
+		NEQNS=NCOLL+1;
+		NROWS=NCOLL/ORDSG+1;
+		if (NEQNS > MNEQN) {
+		    IER[0]=8;
+		    WRTAIL(1,0,IER[0],null);
+		    return;     
+		}
+		System.out.println("COLLOCATION POINT CHOICE DONE:");
+		
+		//**** SET UP THE COMPOSITE GAUSSIAN QUADRATURE RULES, STORING ABSCISSAE
+		//**** AND WEIGHTS IN QCOMX AND QCOMW.  SET UP ARRAYS NQUAD,LOQSB
+		//**** NEEDED TO ACCESS THESE DATA.  RECORD MAXIMUM QUADRATURE ERRORS
+		//**** FOR COLUMN SCALED INTEGRALS IN ARRAY TOLOU.
+		
+		ICOQR1(NARCS,NJIND,NQPTS,MDGPO,MQIN1,AQTOL,QUPTS,
+		     QUWTS,JACIN,MIDPT,HALEN,ACOEF,
+		     BCOEF,H0VAL,COLSC,NQUAD,LOQSB,
+		     QCOMX,QCOMW,MNQUA,TOLOU,MCQER,XENPT,
+		     XIVAL,XIDST,IER);
 		      NUQTL=.FALSE.
 		      IF (IER .GT. 0) THEN
 		        GOTO 999
@@ -3165,7 +3168,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 
         // **** LOCAL VARIABLES
         int K,B0,B1,B2;
-        double X,Y,ANG,PI,R1MACH,EPSA,XI,APP;
+        double X,Y,ANG,PI,EPSA,XI,APP;
         double U[] = new double[2];
         double V[] = new double[2];
         double DIN[] = new double[2];
@@ -3746,7 +3749,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	// LOCAL VARIABLES
     	
         int I,J,J1,JI,K,K1,KMAX,LO,LO1,M,N;
-    	double BETA,ROOTH,P0SCL,X,MAXVL,SUM1,SUM2;
+    	double ROOTH,P0SCL,X,MAXVL,SUM1,SUM2;
     	// EXTERNAL JAPAR7
     	
     	K1=0;
@@ -3756,7 +3759,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	}
     	
     	for (JI=1; JI <= NJIND; JI++) {
-    	    BETA=JACIN[JI-1];
+    	    //BETA=JACIN[JI-1];
     	    ROOTH=Math.sqrt(H0VAL[JI-1]);
     	    P0SCL=1.0/ROOTH;
     	    LO=(JI-1)*NQPTS;
@@ -3880,7 +3883,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	
     	final int MNQPT = 20;
     	int JT,K,K1,LO,N;
-    	double B1,B2,BETA,EXPON,H1VAL,LGTWO,OFLOW,PI,RH,RH1,SUP,T;
+    	double H1VAL[] = new double[1];
+    	double B1,B2,BETA,EXPON,LGTWO,OFLOW,PI,RH,RH1,SUP,T;
     	boolean SYMM;
     	double A1COF[] = new double[MNQPT];
     	double B1COF[] = new double[MNQPT];
@@ -3905,7 +3909,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	PI= Math.PI;
     	LGTWO=Math.log(2.0);
     	OFLOW=Math.log(Double.MAX_VALUE);
-    	/*for (JT=1; JT <= NJIND; JT++) {
+    	for (JT=1; JT <= NJIND; JT++) {
     	    BETA=JACIN[JT-1];
     	    B1=BETA+1.0;
     	    B2=BETA+2.0;
@@ -3936,7 +3940,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	        continue;
     	    }
     	
-    	    RH1=Math.sqrt(H1VAL);
+    	    RH1=Math.sqrt(H1VAL[0]);
     	    K1=K1+1;
     	
     	    // ****   COMPUTE THE QUANTITY
@@ -3973,32 +3977,33 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	        } // for (K=1; K <= N; K++)
     	
     	        IMTQLH(N,DIAG,SDIAG,IER);
-    	          IF (IER.GT.0) THEN
-    	            IER=6
-    	            RETURN
-    	          ENDIF
-    	C
-    	          SUP=0E+0
-    	          DO 20 K=1,N
-    	            T=DIAG(K)
-    	            PP(1)=1E+0/RH1
-    	            CALL JAPAR7(PP,T,A1COF,B1COF,N)
-    	            T=(1E+0-T)*(1E+0+T)**B1*PP(N)
-    	            SUP=MAX(SUP,ABS(T))
-    	20        CONTINUE
-    	C
-    	          K1=K1+1
-    	          IF (SYMM) THEN
-    	            RIGLL(K1)=2E+0*PI*SUP*COLSC(K1)/SQRT(N*(N+B1))
-    	          ELSE
-    	            RIGLL(K1)=2E+0*PI*SUP/SQRT(N*(N+B1))
-    	          ENDIF
+    	        if (IER[0] > 0) {
+    	            IER[0]=6;
+    	            return;
+    	        }
+    	
+    	        SUP=0.0;
+    	        for (K=1; K <= N; K++) {
+    	            T=DIAG[K-1];
+    	            PP[0]=1.0/RH1;
+    	            JAPAR7(PP,T,A1COF,B1COF,N);
+    	            T=(1.0-T)*Math.pow((1.0+T),B1)*PP[N-1];
+    	            SUP=Math.max(SUP,Math.abs(T));
+    	        } // for (K=1; K <= N; K++)
+    	
+    	        K1=K1+1;
+    	        if (SYMM) {
+    	            RIGLL[K1-1]=2.0*PI*SUP*COLSC[K1-1]/Math.sqrt(N*(N+B1));
+    	        }
+    	        else {
+    	            RIGLL[K1-1]=2.0*PI*SUP/Math.sqrt(N*(N+B1));
+    	        }
     	    } // for (N=2; N <= NQPTS-1; N++)
     	} // for (JT=1; JT <= NJIND; JT++)
     	
     	// NORMAL EXIT
     	
-    	IER[0]=0;*/
+    	IER[0]=0;
     	
     } // private void IGNLVL
     
@@ -4006,7 +4011,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     
         int I,J,L,M,II,MML;
         //REAL D(N),E(N)
-        double B,C,F,G,P,R,S,TST1,TST2,PYTHAG;
+        double B,C,F,G,P,R,S,TST1,TST2;
     
         // THIS SUBROUTINE IS A TRANSLATION OF THE ALGOL PROCEDURE IMTQL1,
         // NUM. MATH. 12, 377-383(1968) BY MARTIN AND WILKINSON,
@@ -4060,74 +4065,964 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         }
         E[N-1] = 0.0;
     
-        /*for (L = 1; L <= N; L++) {
+        for (L = 1; L <= N; L++) {
             J = 0;
             // .......... LOOK FOR SMALL SUB-DIAGONAL ELEMENT ..........
-            while (true) {
+            loopW: while (true) {
                 for (M = L; M <= N; M++) {
-                IF (M .EQ. N) GO TO 120
-                TST1 = ABS(D(M)) + ABS(D(M+1))
-                TST2 = TST1 + ABS(E(M))
-                IF (TST2 .EQ. TST1) GO TO 120
+                    if (M == N) break;
+                    TST1 = Math.abs(D[M-1]) + Math.abs(D[M]);
+                    TST2 = TST1 + Math.abs(E[M-1]);
+                    if (TST2 == TST1) break;
                 } // for (M = L; M <= N; M++)
-    C
-      120    P = D(L)
-             IF (M .EQ. L) GO TO 215
-             IF (J .EQ. 30) GO TO 1000
-             J = J + 1
-    C     .......... FORM SHIFT ..........
-             G = (D(L+1) - P) / (2.0E0 * E(L))
-             R = PYTHAG(G,1.0E0)
-             G = D(M) - P + E(L) / (G + SIGN(R,G))
-             S = 1.0E0
-             C = 1.0E0
-             P = 0.0E0
-             MML = M - L
-    C     .......... FOR I=M-1 STEP -1 UNTIL L DO -- ..........
-             DO 200 II = 1, MML
-                I = M - II
-                F = S * E(I)
-                B = C * E(I)
-                R = PYTHAG(F,G)
-                E(I+1) = R
-                IF (R .EQ. 0.0E0) GO TO 210
-                S = F / R
-                C = G / R
-                G = D(I+1) - P
-                R = (D(I) - G) * S + 2.0E0 * C * B
-                P = S * R
-                D(I+1) = G + P
-                G = C * R - B
-      200    CONTINUE
-    C
-             D(L) = D(L) - P
-             E(L) = G
-             E(M) = 0.0E0
-             GO TO 105
-    C     .......... RECOVER FROM UNDERFLOW ..........
-      210    D(I+1) = D(I+1) - P
-             E(M) = 0.0E0
-             GO TO 105
-    C     .......... ORDER EIGENVALUES ..........
-      215    IF (L .EQ. 1) GO TO 250
-    C     .......... FOR I=L STEP -1 UNTIL 2 DO -- ..........
-             DO 230 II = 2, L
-                I = L + 2 - II
-                IF (P .GE. D(I-1)) GO TO 270
-                D(I) = D(I-1)
-      230    CONTINUE
-    C
-      250    I = 1
-      270    D(I) = P
-            } // while (true)
+    
+             P = D[L-1];
+             if (M != L) {
+                 if (J == 30) {
+                     // .......... SET ERROR -- NO CONVERGENCE TO AN
+                	 //                EIGENVALUE AFTER 30 ITERATIONS ..........
+                	 IERR[0] = L;
+                	 return;
+                 } // if (J == 30)
+                 J = J + 1;
+                 // .......... FORM SHIFT ..........
+                 G = (D[L] - P) / (2.0 * E[L-1]);
+                 R = PYTHAG(G,1.0);
+                 double sigR;
+                 if (G >= 0) {
+                	 sigR = Math.abs(R);
+                 }
+                 else {
+                	 sigR = -Math.abs(R);
+                 }
+                 G = D[M-1] - P + E[L-1] / (G + sigR);
+                 S = 1.0;
+                 C = 1.0;
+                 P = 0.0;
+                 MML = M - L;
+                 sect: {
+                     // .......... FOR I=M-1 STEP -1 UNTIL L DO -- ..........
+                     for (II = 1; II <= MML; II++) {
+                         I = M - II;
+                         F = S * E[I-1];
+                         B = C * E[I-1];
+                         R = PYTHAG(F,G);
+                         E[I] = R;
+                         if (R == 0.0) break sect;
+                         S = F / R;
+                         C = G / R;
+                         G = D[I] - P;
+                         R = (D[I-1] - G) * S + 2.0 * C * B;
+                         P = S * R;
+                         D[I] = G + P;
+                         G = C * R - B;
+                     } // for (II = 1; II <= MML; II++)
+    
+                     D[L-1] = D[L-1] - P;
+                     E[L-1] = G;
+                     E[M-1] = 0.0;
+                     continue loopW;
+                 } // sect
+                 //.......... RECOVER FROM UNDERFLOW ..........
+                 D[I] = D[I] - P;
+                 E[M-1] = 0.0;
+                 continue loopW;
+             } // if (M != L)
+             else { // if (M == L)
+             // .......... ORDER EIGENVALUES ..........
+             secb: {
+             if (L != 1) {
+                 // .......... FOR I=L STEP -1 UNTIL 2 DO -- ..........
+                 for (II = 2; II <= L; II++) {
+                     I = L + 2 - II;
+                     if (P >= D[I-2]) break secb;
+                     D[I-1] = D[I-2];
+                 } // for (II = 2; II <= L; II++)
+             } // if (L != 1)
+    
+             I = 1;
+             } // secb:
+             D[I-1] = P;
+             break loopW;
+             } // else if (M == L)
+            } // loopW: while (true)
         } // for (L = 1; L <= N; L++)
-    C
-          GO TO 1001
-    C     .......... SET ERROR -- NO CONVERGENCE TO AN
-    C                EIGENVALUE AFTER 30 ITERATIONS ..........
-     1000 IERR = L
-     1001 RETURN*/
+        return;
+   
+    } // private void IMTQLH
+    
+    private double PYTHAG(double A, double B) {
+
+        // FINDS SQRT(A**2+B**2) WITHOUT OVERFLOW OR DESTRUCTIVE UNDERFLOW
+
+        double P,R,S,T,U;
+        P = Math.max(Math.abs(A),Math.abs(B));
+        if (P == 0.0E0) {
+            return P;	
+        }
+        R = (Math.min(Math.abs(A),Math.abs(B))/P);
+        R = R*R;
+        while (true) {
+           T = 4.0 + R;
+           if (T == 4.0) {
+        	   return P;
+           }
+           S = R/T;
+           U = 1.0 + 2.0*S;
+           P = U*P;
+           double div = (S/U);
+           R = div*div * R;
+        } // while (true)
+    } // private double PYTHAG
+
+    private void CPJAC3(int NARCS,int NQPTS,int INDEG, int DGPOL[], double JACIN[],
+    		double ACOEF[], double BCOEF[], double DIAG[],
+            double SDIAG[],int TNSUA, int LOSUB[], int HISUB[], int JATYP[], int PARNT[],
+            double MIDPT[], double HALEN[], double COLPR[], double ZCOLL[][], boolean LNSEG[],
+            int LOOLD[], int HIOLD[], double EPS,int IER[], boolean INIBT) {
+        // INTEGER NARCS,NQPTS,INDEG,TNSUA,IER
+        // INTEGER DGPOL(*),LOSUB(*),HISUB(*),JATYP(*),PARNT(*)
+        // REAL EPS,JACIN(*),ACOEF(*),BCOEF(*),DIAG(*),SDIAG(*),
+        // +MIDPT(*),HALEN(*),COLPR(*),LOOLD(*),HIOLD(*)
+    	// JAPHYC call has INT LOOLD(*) and HIOLD(*).
+        // COMPLEX ZCOLL(*)
+        // LOGICAL LNSEG(*),INIBT
+
+        // **** TO MAKE THE INITIAL ASSIGNMENT OF THE COLLOCATION PARAMETERS 
+        // **** (STORED IN COLPR), THE COLLOCATION POINTS ON THE PHYSICAL 
+        // **** BOUNDARY (STORED IN ZCOLL) AND THE ARRAYS LOSUB AND HISUB
+        // **** NEEDED TO ACCESS THIS DATA CORRECTLY.  ALSO TO SET UP THE
+        // **** ARRAYS
+        // **** 	JATYP - THE JACOBI INDEX TYPE OF EACH SUBARC
+        // ****	PARNT - THE ORIGINAL PARENT ARC OF EACH SUBARC
+        // ****	MIDPT - THE GLOBAL PARAMETRIC MIDPOINT OF EACH SUBARC
+        // ****	HALEN - THE GLOBAL PARAMETRIC HALF-LENGTH OF EACH SUBARC
+        // ****   DGPOL - THE INITIAL POLYNOMIAL DEGREE ON EACH SUBARC
+        // ****   LNSEG - THE INITIAL LINE SEGMENT TYPE OF EACH SUBARC.
+
+        // **** IER=0 - NORMAL EXIT
+        // **** IER=7 - FAILURE TO CONVERGE IN EIGENVALUE ROUTINE IMTQLH
+
+        // LOCAL VARIABLES
+
+        int IFAIL[] = new int[1];
+    	int D,D1,FIRST,I,J,K,K1,K2,P,PREV;
+        double S,TC,ALFA,BETA,MED,MDNBT;
+        double PIN[] = new double[2];
+        // COMPLEX PARFUN
+        // EXTERNAL PARFUN,IMTQLH,MDNBT
+ 
+        TNSUA=2*NARCS;
+        for (I=1; I <= NARCS; I++) {
+            BETA=JACIN[I-1];
+            if (I == NARCS) {
+                ALFA=JACIN[0];
+            }
+            else {
+                ALFA=JACIN[I];
+            }
+            if (INIBT) {
+                MED=MDNBT(ALFA,BETA);
+            }
+            else {
+                MED=0.0;
+            }
+            J=2*I-1;
+            MIDPT[J-1]=0.5*(MED-1.0);
+            HALEN[J-1]=0.5*(MED+1.0);
+            PARNT[J-1]=I;
+            JATYP[J-1]=I;
+            J=J+1;
+            MIDPT[J-1]=0.5*(MED+1.0);
+            HALEN[J-1]=0.5*(1.0-MED);
+            PARNT[J-1]=I;
+            if (I == NARCS) {
+                JATYP[J-1]=-1;
+            }
+            else {
+                JATYP[J-1]=-I-1;
+            }
+        } // for (I=1; I <= NARCS; I++)
+
+        for (I=NARCS; I >= 1; I--) {
+            J=2*I;
+            LNSEG[J-1]=LNSEG[I-1];
+            LNSEG[J-2]=LNSEG[I-1];
+        } // for (I=NARCS; I >= 1; I--)
+
+        for (I=1; I <= TNSUA; I++) {
+            DGPOL[I-1]=INDEG;
+        }
+
+        LOSUB[0]=1;
+        HISUB[0]=1+DGPOL[0];
+        for (I=2; I <= TNSUA; I++) {
+            LOSUB[I-1]=HISUB[I-2]+1;
+            HISUB[I-1]=LOSUB[I-1]+DGPOL[I-1];
+        } // for (I=2; I <= TNSUA; I++)
+
+        for (I=1; I <= TNSUA; I++) {
+            LOOLD[I-1]=0;
+            HIOLD[I-1]=-1;
+        } // for (I=1; I <= TNSUA; I++)
+
+        for (I=1; I <= TNSUA; I++) {
+            J=JATYP[I-1];
+            P=PARNT[I-1];
+            D=DGPOL[I-1];
+            D1=D+1;
+            if (J > 0) {
+                S=1.0;
+            }
+            else {
+                S=-1.0;
+                J=-J;
+            }
+            PREV=(J-1)*NQPTS;
+            FIRST=LOSUB[I-1];
+            for (K=1; K <= D1; K++) {
+                K1=PREV+K;
+                DIAG[K-1]=BCOEF[K1-1];
+                if (K == 1) {
+                    SDIAG[K-1]=0.0;
+                }
+                else {
+                    SDIAG[K-1]=ACOEF[K1-2];
+                }
+            } // for (K=1; K <= D1; K++)
+            IMTQLH(D1,DIAG,SDIAG,IFAIL);
+            if (IFAIL[0] > 0) {
+                IER[0]=7;
+                return;
+            }
+            for (K=1; K <= D1; K++) {
+                TC=S*DIAG[K-1];
+                K2=FIRST+K-1;
+                COLPR[K2-1]=TC;
+                TC=MIDPT[I-1]+HALEN[I-1]*TC;
+                PIN[0] = TC;
+                PIN[1] = 0.0;
+                ZCOLL[K2-1]=PARFUN(P,PIN);
+            } // for (K=1; K <= D1; K++)
+        } // for (I=1; I <= TNSUA; I++)
+
+        // NORMAL EXIT
+
+        IER[0]=0;
+
+    } // private void CPJAC3
+
+    private double MDNBT(double ALFA, double BETA) {
+
+        // MDNBT IS THE MEDIAN OF THE BETA DISTRIBUTION DEFINED BY THE
+        // DENSITY (1-X)**ALFA * (1+X)**BETA ON (-1,1).
+
+        // LOCAL VARIABLES..
+
+        int N;
+        double TOL,CC,CONST,SOLD,SNEW,SMNAB,GAMMA,FF,AA,BB,SS;
+        // EXTERNAL SMNAB,GAMMA
+
+        TOL=100.0*EPS;
+
+        if (Math.abs(ALFA-BETA) <= TOL) {
+            return 0.0;
+        }
+
+        if (ALFA > BETA) {
+            CC=BETA+1.0;
+        }
+        else {
+            CC=ALFA+1.0;
+        }
+
+        FF=1.0;
+        AA=ALFA+1.0;
+        BB=BETA+1.0;
+        SS=ALFA+BETA+2.0;
+
+    while (AA > 30.0) {
+        FF=(AA-1.0)*FF/(SS-1.0);
+        AA=AA-1.0;
+        SS=SS-1.0;
     }
+
+    while (BB > 30.0) {
+        FF=(BB-1.0)*FF/(SS-1.0);
+        BB=BB-1.0;
+        SS=SS-1.0;
+    }
+
+    CONST=0.5*FF*GAMMA(AA)/GAMMA(SS);
+    CONST=CONST*GAMMA(BB);
+
+    N=0;
+    SOLD=Math.pow((CC*CONST),(1.0/CC));
+
+    while (true) {
+        N=N+1;
+        if (ALFA > BETA) {
+            SNEW=Math.pow((CONST/SMNAB(N,ALFA,BETA,SOLD)),(1.0/CC));
+        }
+        else {
+            SNEW=Math.pow((CONST/SMNAB(N,BETA,ALFA,SOLD)),(1.0/CC));
+        }
+
+        if (Math.abs(1.0-SOLD/SNEW) >= TOL) {
+            SOLD=SNEW;
+            continue;
+        }
+        else {
+        	break;
+        }
+    } // while (true)
+
+    double result;
+    if (ALFA > BETA) {
+        result=2.0*SNEW-1.0;
+    }
+    else {
+        result=1.0-2.0*SNEW;
+    }
+    return result;
+    } // private double MDNBT
+    
+    private double SMNAB(int N, double AL, double BE, double X) {
+
+        // EVALUATES A SUM NEEDED TO DETERMINE THE MEDIAN OF THE BETA
+        // DISTRIBUTION.
+
+        // LOCAL VARIABLES..
+
+        int I;
+        double SUM,TERM;
+
+        TERM=1.0/(1.0+BE);
+        SUM=TERM;
+        for (I=1; I <= N; I++) {
+            TERM=-X*TERM*(AL-I+1)*(I+BE)/I/(I+BE+1);
+            SUM=SUM+TERM;
+        } // for (I=1; I <= N; I++)
+
+        return SUM;
+
+    } // private double SMNAB
+    
+    private void ICOQR1(int NARCS,int NJIND,int NQPTS,int MDGPO,int MQIN1, double AQTOL, double QUPTS[], double QUWTS[],
+        double JACIN[], double MIDPT[], double HALEN[], double ACOEF[], double BCOEF[], double H0VAL[], double COLSC[],
+        int NQUAD[], int LOQSB[], double QCOMX[], double QCOMW[], int MNQUA, double TOLOU[], double MCQER, double XENPT[],
+        double XIVAL[][], double XIDST[], int IER[]) {
+        //INTEGER NARCS,NJIND,NQPTS,MDGPO,MQIN1,IER,NQUAD(*),LOQSB(*),
+    	//+MNQUA
+    	//REAL AQTOL,QUPTS(*),QUWTS(*),JACIN(*),MIDPT(*),HALEN(*),ACOEF(*),
+    	//+BCOEF(*),H0VAL(*),COLSC(*),QCOMX(*),QCOMW(*),TOLOU(*),XENPT(*),
+    	//+XIDST(*),MCQER
+    	//COMPLEX XIVAL(*)
+    	
+    	// THE MAIN PURPOSE OF THIS ROUTINE IS TO SET UP THE ABSCISSAE 
+    	// (QCOMX) AND WEIGHTS (QCOMW) FOR THE COMPOSITE GAUSSIAN RULES 
+    	//  FOR THE ESTIMATION OF
+    	
+    	//      INTEGRAL  [(1+X)**BETA*P(X,I)*LOG|ZZ-X|*dX], I=0,1,...,MDGPO.
+    	//     -1<=X<=1                                      J=1,NZZ
+    	
+    	//     HERE P(.,I) IS THE ORTHONORMAL JACOBI POLYNOMIAL OF DEGREE I
+    	//     ASSOCIATED WITH THE WEIGHT (1+X)**BETA AND ZZ IS ANY COLLOCATION
+    	//     POINT PREIMAGE NOT ON [-1,1].  BETA TAKES ON THE VARIOUS VALUES
+    	//     DEFINED BY ARRAY JACIN.  THE ROUTINE ALSO COMPUTES
+    	
+    	//     NQUAD - NQUAD(I) IS THE NUMBER OF QUADRATURE POINTS IN THE
+    	//             COMPOSITE RULE FOR BETA=JACIN(I).
+    	//     LOQSB - THE ABSCISSAE AND WEIGHTS OF THE COMPOSITE RULE FOR
+    	//             BETA=JACIN(I) ARE STORED IN ARRAYS QCOMX AND QCOMW IN
+    	//             THE POSITIONS LOQSB(I) TO LOQSB(I)+NQUAD(I)-1 INCLUSIVE.
+    	//     XIDST,
+    	//     XIVAL - XIVAL(2*I-1) STORES THE COLLOCATION PREIMAGE THOUGHT
+    	//             TO BE NEAREST TO -1 AND XIDST(2*I-1) STORES ITS DISTANCE
+    	//             FROM -1; SIMILARLY, XIVAL(2*I) STORES THE PREIMAGE
+    	//             THOUGHT TO BE NEAREST TO +1 AND XIDST(2*I) ITS DISTANCE
+    	//             FROM +1. THE PREIMAGES ARE WITH RESPECT TO
+    	//             THE PARAMETRIC FUNCTIONS DEFINING THE SUBARCS WHICH
+    	//             MEET AT THE PHYSICAL CORNER WHERE BETA=JACIN(I).
+    	//     TOLOU - TOLOU(I) IS THE ESTIMATED MAXIMUM ERROR OVER ALL
+    	//             COLLOCATION POINTS IN USING THE COMPOSITE RULE
+    	//             FOR BETA=JACIN(I).
+    	//     MCQRE - THE INFINITY NORM OF TOLOU.
+    	//     IER   - IER=0 FOR NORMAL TERMINATION.
+    	//             IER=9 THE REQUIRED TOTAL NUMBER OF COMPOSITE QUADRATURE
+    	//                   POINTS EXCEEDS THE LIMIT MNQUA.
+    	
+    	
+    	//     LOCAL VARIABLES
+    	
+    	int QINTS[] = new int[1];
+    	int I,J,K,J0,J1,J2,J3,JI,JI0,JI1,HI,LO;
+    	double DST[] = new double[4];
+    	double BETA,H1,H2,T0,T1,T2,T3,SUM1,RR,RRB,MEAN,RXI,IXI;
+    	final double ONE[] = new double[]{1.0,0.0};
+    	double Z0[] = new double[2];
+    	double Z1[] = new double[2];
+    	double Z2[] = new double[2];
+    	double Z3[] = new double[2];
+    	double XI[][] = new double[4][2];
+    	double GT[] = new double[2];
+    	//COMPLEX ONE,Z0,Z1,Z2,Z3,XI(4),PARFUN,DPARFN,GT
+    	//PARAMETER (ONE=(1E+0,0E+0))
+    	//EXTERNAL DPARFN,PARFUN,SUBIN7
+    	double PIN[] = new double[2];
+    	double POUT[];
+    	double DOUT[];
+    	double cr[] = new double[1];
+    	double ci[] = new double[1];
+    	
+    	HI=0;
+    	/*for (JI=1; JI <= NARCS; JI++) {
+    	
+    	    // AT THE JI'TH CORNER, THE ANALYTIC ARC IN THE BACKWARDS DIRECTION
+    	    // IS THE JI0'TH, IN THE FORWARDS DIRECTION IT IS THE JI'TH AND THE
+    	    // ONE BEYOND THAT IS THE JI1'TH.  THE FOUR SUBARCS ON THE JI0'TH
+    	    // AND JI'TH ANALYTIC ARCS ARE THE J0'TH, J1'TH, J2'TH AND J3'TH,
+    	    // STARTING AT THE BEGINING OF ARC JI0 AND ENDING AT THE END OF ARC
+    	    // JI.
+    	
+    	    BETA=JACIN[JI-1];
+    	    LO=(JI-1)*NQPTS+1;
+    	    J2=2*JI-1;
+    	    J3=J2+1;
+    	    if (JI == 1) {
+    	        JI0=NARCS;
+    	        J1=2*NARCS;
+    	    }
+    	    else {
+    	        JI0=JI-1;
+    	        J1=J2-1;
+    	    }
+    	    J0=J1-1;
+    	    if (JI == NARCS) {
+    	        JI1=1;
+    	    }
+    	    else {
+    	        JI1=JI+1;
+    	    }
+    	
+    	    // NEXT WE FIX THE LOCAL PARAMETER VALUES OF THE COLLOCATION
+    	    // POINTS NEAREST TO SUBARCS J1 AND J2.  FOR SUBARC J1 THE NEAR 
+    	    // POINTS HAVE LOCAL PARAMETER VALUES T0 ON J0 AND T2 ON J2.  FOR
+    	    // SUBARC J2 THE NEAR POINTS HAVE LOCAL PARAMETER VALUES T1 ON J1
+    	    // AND T3 ON J3.
+    	
+    	    T0=QUPTS[JI0*NQPTS-1];
+    	    T2=QUPTS[LO-1];
+    	    T1=-T2;
+    	    T3=-QUPTS[JI1*NQPTS-1];
+    	
+    	    // NOW CONVERT THESE LOCAL PARAMETER VALUES FOR THE SUBARCS TO
+    	    // GLOBAL PARMETER VALUES FOR THE MAIN ARCS JI0 AND JI.
+    	
+    	    T0=MIDPT[J0-1]+HALEN[J0-1]*T0;
+    	    H1=HALEN[J1-1];
+    	    T1=MIDPT[J1-1]+H1*T1;
+    	    H2=HALEN[J2-1];
+    	    T2=MIDPT[J2-1]+H2*T2;
+    	    T3=MIDPT[J3-1]+HALEN[J3-1]*T3;
+    	
+    	    // NOW COMPUTE THE POSITIONS OF THE FOUR NEAR POINTS ON THE
+    	    // PHYSICAL BOUNDARY.
+    	    PIN[0] = T0;
+    	    PIN[1] = 0;
+    	    Z0=PARFUN(JI0,PIN);
+    	    PIN[0] = T1;
+    	    PIN[1] = 0;
+    	    Z1=PARFUN(JI0,PIN);
+    	    PIN[0] = T2;
+    	    PIN[1] = 0;
+    	    Z2=PARFUN(JI,PIN);
+    	    PIN[0] = T3;
+    	    PIN[1] = 0;
+    	    Z3=PARFUN(JI,PIN);
+    	
+            // FIND THE APPROXIMATE PARAMETRIC PREIMAGE OF Z0 WRT SUBARC J1.
+    	    GT[0] = MIDPT[J1-1]-H1;
+    	    GT[1] = 0.0;
+    	    POUT = PARFUN(JI0,GT);
+    	    DOUT = DPARFN(JI0,GT);
+    	    zdiv(Z0[0] - POUT[0],Z0[1] - POUT[1],DOUT[0],DOUT[1],cr,ci);
+    	    XI[0][0] = -1.0 + cr[0]/H1;
+    	    XI[0][1] = ci[0]/H1;
+    	
+    	    // CONVERT TO  PARAMETRIC PREIMAGE WRT SUBARC J2.
+    	
+    	    XI[0][0]=-XI[0][0]; 
+    	    XI[0][1]=-XI[0][1];
+    	
+    	    // FIND THE APPROXIMATE PARAMETRIC PREIMAGE OF Z1 WRT SUBARC J2.
+    	
+    	    PIN[0] = -1.0;
+    	    PIN[1] = 0.0;
+    	    POUT = PARFUN(JI,PIN);
+    	    DOUT = DPARFN(JI,PIN);
+    	    zdiv(Z1[0] - POUT[0],Z1[1] - POUT[1], DOUT[0], DOUT[1], cr, ci);
+    	    XI[1][0] = -1.0 + cr[0]/H2;
+    	    XI[1][1] = ci[0]/H2;
+    	
+    	    // FIND THE APPROXIMATE PARAMETRIC PREIMAGE OF Z2 WRT SUBARC J1.
+    	    POUT = PARFUN(JI0,ONE);
+    	    DOUT = DPARFN(JI0,ONE);
+    	    zdiv(Z2[0] - POUT[0],Z2[1] - POUT[1],DOUT[0],DOUT[1],cr,ci);
+    	    XI[2][0] = 1.0 + cr[0]/H1;
+    	    XI[2][1]= ci[0]/H1; 
+    	
+    	    // CONVERT TO  PARAMETRIC PREIMAGE WRT SUBARC J2.
+    	
+    	    XI[2][0]=-XI[2][0]; 
+    	    XI[2][1]=-XI[2][1]; 
+    	
+    	    // FIND THE APPROXIMATE PARAMETRIC PREIMAGE OF Z3 WRT SUBARC J2.
+    	
+    	        GT[0]=MIDPT[J2-1]+H2;
+    	        GT[1] = 0.0;
+    	        POUT = PARFUN(JI,GT);
+    	        DOUT = DPARFN(JI,GT);
+    	        zdiv(Z3[0]-POUT[0],Z3[1]-POUT[1],DOUT[0],DOUT[1],cr,ci);
+    	        XI[3][0] = 1.0 + cr[0]/H2;
+    	        XI[3][1] = ci[0]/H2;
+    	
+    	        // SELECT THE PREIMAGE NEAREST -1 AND THE ONE NEAREST +1.
+    	
+    	        for (J=1; J <= 4; J++) {
+    	            RXI=XI[J-1][0];
+    	            IXI=XI[J-1][1];
+    	            if (-1.0 <= RXI && RXI <= 1.0) {
+    	                DST[J-1]=Math.abs(IXI);
+    	            }
+    	            else if (RXI < -1.0) {
+    	                DST[J-1]=zabs(XI[J-1][0]+1.0,XI[J-1][1]);
+    	            }
+    	            else {
+    	                DST[J-1]=zabs(XI[J-1][0]-1.0,XI[J-1][1]);
+    	            }
+    	        } // for (J=1; J <= 4; J++)
+    	
+    	        if (DST[1] < DST[2]) {
+    	            XIVAL[J2-1][0]=XI[1][0];
+    	            XIVAL[J2-1][1]=XI[1][1];
+    	            XIDST[J2-1]=DST[1];
+    	        }
+    	        else {
+    	            XIVAL[J2-1][0]=XI[2][0];
+    	            XIVAL[J2-1][1]=XI[2][1];
+    	            XIDST[J2-1]=DST[2];
+    	        }
+    	
+    	        if (DST[0] < DST[3]) {
+    	            XIVAL[J3-1][0]=XI[0][0];
+    	            XIVAL[J3-1][1]=XI[0][1];
+    	            XIDST[J3-1]=DST[0];
+    	        }
+    	        else {
+    	            XIVAL[J3-1][0]=XI[3][0];
+    	            XIVAL[J3-1][1]=XI[3][1];
+    	            XIDST[J3-1]=DST[3];
+    	        }
+    	
+    	        // NOW DETERMINE THE NUMBER AND LOCATION OF THE  QUADRATURE 
+    	        // SUBINTERVALS NEEDED TO MEET THE TOLERANCE AT XIVAL(J2) AND 
+                // XIVAL(J3).
+    	
+    	        double ZZ[][] = new double[2][2];
+    	        for (I = 0; I < 2; I++) {
+    	        	ZZ[I][0] = XIVAL[J2-1+I][0];
+    	        	ZZ[I][1] = XIVAL[J2-1+I][1];
+    	        }
+    	        SUBIN7(ZZ,2,BETA,MDGPO,NQPTS,ACOEF(LO),BCOEF(LO),
+    	            H0VAL(JI),COLSC(LO),AQTOL,TOLOU(JI),XENPT,QINTS,MQIN1,IER);
+    	        IF (IER .GT. 0) THEN
+    	          RETURN
+    	        ENDIF
+    	C
+    	C       SET UP THE COMPOSITE RULE ABSCISSAE AND WEIGHTS FOR THIS
+    	C       JACOBI INDEX.
+    	C
+    	        NQUAD(JI)=QINTS*NQPTS
+    	        LOQSB(JI)=HI+1
+    	        IF (HI+NQUAD(JI) .GT. MNQUA) THEN
+    	            IER=9
+    	            RETURN
+    	        ENDIF
+    	        SUM1=BETA+1E+0
+    	        K=HI
+    	        DO 40 I=1,QINTS
+    	          RR=(XENPT(I+1)-XENPT(I))*5E-1
+    	          MEAN=(XENPT(I+1)+XENPT(I))*5E-1 
+    	          IF (I .EQ. 1) THEN
+    	            RRB=RR**SUM1
+    	            LO=LO-1
+    	            DO 20 J=1,NQPTS
+    	              K=K+1
+    	              QCOMX(K)=MEAN+RR*QUPTS(LO+J)
+    	              QCOMW(K)=RRB*QUWTS(LO+J)
+    	20          CONTINUE
+    	          ELSE
+    	            LO=NARCS*NQPTS
+    	            DO 30 J=1,NQPTS
+    	              K=K+1
+    	              QCOMX(K)=MEAN+RR*QUPTS(LO+J)
+    	              QCOMW(K)=RR*QUWTS(LO+J)*(1E+0+QCOMX(K))**BETA
+    	30          CONTINUE
+    	          ENDIF
+    	40      CONTINUE
+    	        HI=HI+NQUAD(JI)
+    	} // for (JI=1; JI <= NARCS; JI++)
+    	C
+    	C     ASSIGN INITIAL DATA FOR LEGENDRE ARCS 
+    	C
+    	      I=2*NJIND
+    	      RR=R1MACH(2)
+    	      XIDST(I)=RR
+    	      XIDST(I-1)=RR
+    	      XIVAL(I)=CMPLX(RR)
+    	      XIVAL(I-1)=CMPLX(RR)
+    	      LOQSB(NJIND)=HI+1
+    	      NQUAD(NJIND)=0
+    	C
+    	C     FIND THE MAXIMUM OF THE TOLOU ELEMENTS
+    	C
+    	      MCQER=0E+0
+    	      DO 60 I=1,NARCS
+    	        MCQER=MAX(MCQER,TOLOU(I))
+    	60    CONTINUE 
+    	C
+    	C     NORMAL TERMINATION
+    	C
+    	      IER=0
+    	C*/
+    } // private void ICOQR1
+
+
+    private void SUBIN7(double ZZ[][], int NZZ, double BETA, int MAXDG, int NQUAD, double AJAC[], double BJAC[],
+        double H0JAC, double CSCAL[], double TOLIN, double TOLOU, double XENPT[], int QINTS[], int MQIN1,int IER[]) {
+    	//INTEGER MAXDG,NQUAD,QINTS,NZZ,IER,MQIN1
+    	//REAL BETA,AJAC(*),BJAC(*),H0JAC,CSCAL(*),TOLIN,TOLOU,XENPT(*)
+    	//COMPLEX ZZ(*)
+    	
+    	//     CALCULATES THE NUMBER OF QUADRATURE INTERVALS (QINTS) REQUIRED
+    	//     FOR THE COMPOSITE GAUSS-JACOBI/GAUSS-LEGENDRE ESTIMATION OF
+    	
+    	//       INTEGRAL  [(1+X)**BETA*P(X,I)*LOG|ZZ(J)-X|*dX], I=0,1,...,MAXDG
+    	//      -1<=X<=1                                         J=1,NZZ
+    	
+    	//     WHERE P(.,I) IS THE ORTHONORMAL JACOBI POLYNOMIAL OF DEGREE I
+    	//     ASSOCIATED WITH THE WEIGHT (1+X)**BETA AND ZZ(J),J=1,..,NZZ, ARE 
+    	//     GIVEN POINTS CLOSE TO [-1,1].  
+    	
+    	//     THE ENDPOINTS OF THESE INTERVALS ARE RETURNED IN VECTOR XENPT, 
+    	//     WITH XENPT(1)=-1<XENPT(2)<...<1=XENPT(QINTS+1).
+    	
+    	//     IF Q(I,J) DENOTES THE ABSOLUTE QUADRATURE ERROR FOR THE INTEGRAL
+    	//     ASSOCIATED WITH P(.,I) AND ZZ(J) THEN WE REQUIRE THAT
+    	
+    	//                 MAX       Q(I,J)*CSCAL(I) < TOLIN,
+    	//              I=0,MAXDG
+    	//               J=1,NZZ
+    	
+    	//     WITH THE MAXIMUM ON THE LEFT BEING REASONABLY CLOSE TO TOLIN.
+    	//     TOLOU RETURNS THE COMPUTED VALUE OF THE ABOVE MAXIMUM.
+    	 
+    	//     IER=0 - NORMAL EXIT
+    	//     IER=10- PARAMETER NMAX LOCAL TO THIS ROUTINE NEEDS INCREASING TO
+    	//             BE AT LEAST NZZ*(MAXDG+1)
+    	//     IER=11- REQUESTED NUMBER OF QUADRATURE PANELS EXCEEDS THAT DEFINED
+    	//             BY MQIN1   
+    	
+    	//     LOCAL VARIABLES
+    	
+    	final int NMAX = 100;
+    	double TAU[] = new double[1];
+    	double MAXRM[] = new double[1];
+    	double TOL,RIGHT;
+    	boolean T1FXD;
+    	
+    	double REMND[][] = new double[NMAX][2];
+    	//COMPLEX REMND(NMAX)
+    	
+    	// EXTERNAL DEJAC7,DELEG7
+    	
+    	if (NZZ*(MAXDG+1) > NMAX) {
+    	    IER[0]=10;
+    	    return;
+    	}
+    	
+    	QINTS[0]=1;
+    	XENPT[0]=-1.0;
+    	TOL=TOLIN;
+    	DEJAC7(ZZ,NZZ,BETA,TAU,MAXDG,NQUAD,AJAC,BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER);
+    	/*      IF (IER .GT. 0) THEN
+    	        RETURN
+    	      ENDIF
+    	      TOLOU=MAXRM
+    	      XENPT(2)=TAU
+    	C
+    	      IF (XENPT(2) .LT. 1E+0) THEN
+    	        QINTS=2
+    	        T1FXD=.FALSE.
+    	        TAU=1E+0
+    	        RIGHT=-1E+0
+    	        CALL DELEG7(ZZ,NZZ,BETA,RIGHT,TAU,T1FXD,MAXDG,NQUAD,AJAC,
+    	     +              BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER)
+    	        IF (IER .GT. 0) THEN
+    	          RETURN
+    	        ENDIF
+    	        TOLOU=TOLOU+MAXRM
+    	        T1FXD=.TRUE.
+    	C
+    	100     CONTINUE
+    	C
+    	        IF (XENPT(QINTS) .GT. RIGHT) THEN
+    	          XENPT(QINTS)=5E-1*(XENPT(QINTS)+RIGHT)
+    	          XENPT(QINTS+1)=1E+0
+    	        ELSE
+    	          TAU=1E+0
+    	          CALL DELEG7(ZZ,NZZ,BETA,XENPT(QINTS),TAU,T1FXD,MAXDG,
+    	     +                NQUAD,AJAC,BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER)
+    	          IF (IER .GT. 0) THEN
+    	            RETURN
+    	          ENDIF
+    	          TOLOU=TOLOU+MAXRM
+    	          QINTS=QINTS+1
+    	          IF (QINTS .GE. MQIN1) THEN
+    	            IER=11
+    	            RETURN
+    	          ENDIF
+    	          XENPT(QINTS)=TAU
+    	          GOTO 100
+    	        ENDIF
+    	      ENDIF
+    	C
+    	C     NORMAL TERMINATION
+    	C
+    	      IER=0
+    	C*/
+    } // private void SUBIN7
+    
+    private void DEJAC7(double ZZ[][], int NZZ, double BETA, double TAU[], int MAXDG, int NQUAD,
+        double ACOEF[], double BCOEF[], double H0VAL,
+    	double REMND[][], double CSCAL[], double TOL, double MAXRM[],int IER[]) {
+    	//INTEGER MAXDG,NQUAD,NZZ,IER
+    	//REAL BETA,TAU,H0VAL,TOL,MAXRM
+    	//REAL ACOEF(*),BCOEF(*),CSCAL(*)
+    	//COMPLEX ZZ(*),REMND(*)
+    	
+    	//     WE COMPUTE THE DONALDSON-ELLIOTT ESTIMATES FOR THE REMAINDERS IN
+    	//     USING AN NQUAD-POINT GAUSS-JACOBI RULE TO ESTIMATE THE INTEGRALS
+    	
+    	//       INTEGRAL  [(1+X)**BETA*P(X,I)*LOG(ZZ(J)-X)*dX], I=0,MAXDG
+    	//      -1<=X<=TAU                                       J=1,NZZ
+    	
+    	//     WHERE P(.,I) IS THE ORTHONORMAL JACOBI POLYNOMIAL OF DEGREE I
+    	//     ASSOCIATED WITH THE WEIGHT (1+X)**BETA.  THE REMAINDER 
+    	//     CORRESPONDING TO P(.,I) AND ZZ(J) IS STORED IN 
+    	//     REMND(I+J+MAXDG*(J-1)), I=0,MAXDG, J=1,NZZ.  THIS ROUTINE USES
+    	//     THE SIMPLEST POSSIBLE ESTIMATES; I.E. THE LEADING TERM ONLY IN
+    	//     THE ASYMPTOTIC EXPANSION AND THE WATSON-DOETSCH ESTIMATE FOR ANY
+    	//     INTEGRALS.
+    	
+    	//     THE PURPOSE OF THIS ROUTINE IS THEN TO DETERMINE A VALUE FOR TAU
+    	//     SUCH THAT
+    	
+    	//         ABS( REAL(REMND(I)) )*CSCAL(I) < TOL , I=1,NZZ*(MAXDG+1)
+    	
+    	//     AND THAT, IF POSSIBLE, 
+    	
+    	//        0.5*TOL <= ABS( REAL(REMND(I)) )*CSCAL(I) < TOL
+    	
+    	//     FOR AT LEAST ONE VALUE OF I.
+    	
+    	//     IER=0 - NORMAL EXIT
+    	//     IER=12- LOCAL PARAMETER NC NEEDS INCREASING TO AT LEAST NZZ
+    	//             (THIS ERROR CAN'T ARISE IN THE PRESENT VERSION, SINCE
+    	//              NZZ IS FIXED AT 2)
+    	//     IER=13- LOCAL PARAMETER NR NEEDS INCREASING TO AT LEAST MAXDG
+    	//             (AT PRESENT MAXDG=NQPTS-1) 
+    	//     IER=14- A JACOBI INDEX MAY BE LARGE ENOUGH TO CAUSE OVERFLOW IN
+    	//             THE GAMMA FUNCTION (AN ANGLE ON THE PHYSICAL BOUNDARY
+    	//             MUST BE LESS THAN ABOUT 6 DEGREES)
+    	
+    	//     LOCAL VARIABLES..
+    	
+    	final int NC = 8;
+    	final int NR = 30;
+    	int I,J,K,LIM;
+    	double S,KK,SUM1,RI,TURI,RN,OFLOW,P0SCL,TUK,LOWER,UPPER,TERM,HTOL;
+    	double XI[] = new double[2];
+    	double Z1[] = new double[2];
+    	double XI1[] = new double[2];
+    	double FF[] = new double[2];
+    	double PRE[] = new double[2];
+    	double CUR[] = new double[2];
+    	double NXT[] = new double[2];
+    	//COMPLEX XI,Z1,XI1,FF,PRE,CUR,NXT
+    	double GG[][] = new double[NC][2];
+    	double CONST[][][] = new double[NR][NC][2];
+    	//COMPLEX GG(NC),CONST(NR,NC)
+    	//REAL GAMMA, LGGAM
+    	//EXTERNAL GAMMA,LGGAM
+    	double cr[] = new double[1];
+    	double ci[] = new double[1];
+    	
+    	if (NZZ > NC ) {
+    	    IER[0]=12;
+    	    return;
+    	}
+    	
+    	if (MAXDG >= NR) {
+    	    IER[0]=13;
+    	    return;
+    	}
+    	
+    	S=BETA+4.0;
+    	if (S > 20.0) {
+    	
+    	    // TEST FOR POSSIBLE OVERFLOW IN GAMMA FUNCTION
+    	
+    	    OFLOW=Math.log(Double.MAX_VALUE);
+    	    KK=LGGAM(S);
+    	    if (KK > OFLOW) {
+    	        IER[0]=14;
+    	        return;
+    	    }
+    	    else {
+    	        KK=Math.exp(-KK);
+    	    }
+    	} // if (S > 20.0)
+    	else {
+    	    KK=1.0/GAMMA(S);
+    	}
+    	
+    	// FIRST WE COMPUTE THE FACTORS WHICH ARE INDEPENDENT OF TAU
+    	
+    	S=S-1.0;
+    	KK=Math.pow(4.0,S)*KK*GAMMA(BETA+2.0)/(S-1.0);
+    	SUM1=BETA+1.0;
+    	for (I=2; I <= NQUAD; I++) {
+    	    RI=(double)(I);
+    	    TURI=2.0*RI;
+    	    KK=KK*16.0*(RI+BETA)/(TURI+SUM1);
+    	    KK=KK*RI/(TURI+BETA);
+    	    KK=KK*(RI+BETA)/(TURI+BETA);
+    	    KK=KK*RI/(TURI+BETA-1.0);
+    	} // for (I=2; I <= NQUAD; I++)
+    	RN=(double)(NQUAD);
+    	TUK=2.0*RN+SUM1;
+    	KK=-KK/TUK/2.0;
+    	
+    	/*for (I=1; I <= NZZ; I++) {
+    	    GG[I-1]=Math.pow((1.0+ZZ[I-1]),BETA)*KK;
+    	} // for (I=1; I <= NZZ; I++)
+    	
+    	// NOW GIVE THE JACOBI POLYNOMIALS THE SCALING CORRESPONDING TO
+        // [-1,1] AS STANDARD INTERVAL
+    	
+    	P0SCL=1.0/Math.sqrt(H0VAL);
+    	for (J=1; J <= NZZ; J++) {
+    	    PRE[0]=P0SCL;
+    	    PRE[1] = 0.0;
+    	    CUR[0] = PRE[0];
+    	    CUR[1] = PRE[1];
+    	    zmlt(CUR[0], CUR[1], GG[J-1][0],GG[J-1][1], cr, ci);
+    	    CONST[0][J-1][0] = cr[0] * CSCAL[0];
+    	    CONST[0][J-1][1] = ci[0] * CSCAL[0];
+    	    if (MAXDG >= 1) {
+    	          CUR=(ZZ(J)-BCOEF(1))*PRE/ACOEF(1)
+    	          CONST(2,J)=CUR*GG(J)*CSCAL(2)
+    	          DO 200 I=2,MAXDG
+    	            NXT=((ZZ(J)-BCOEF(I))*CUR-ACOEF(I-1)*PRE)/ACOEF(I)
+    	            PRE=CUR
+    	            CUR=NXT
+    	            CONST(I+1,J)=CUR*GG(J)*CSCAL(I+1)
+    	200       CONTINUE
+    	    } // if (MAXDG >= 1)
+    	} // for (J=1; J <= NZZ; J++)
+    	C
+    	C     NOW COME THE FACTORS DEPENDENT ON TAU
+    	C
+    	      TAU=1E+0
+    	      LOWER=-1E+0
+    	      UPPER=1E+0
+    	      LIM=NZZ*(MAXDG+1)
+    	C
+    	250   CONTINUE
+    	C
+    	      HTOL=5E-1*TOL
+    	      K=0
+    	      DO 325 J=1,NZZ
+    	        XI=(2E+0*ZZ(J)+1E+0-TAU)/(1E+0+TAU)
+    	        Z1=SQRT(XI*XI-1E+0)
+    	        XI1=XI+Z1
+    	        IF (ABS(XI1) .LT. 1E+0) THEN
+    	          XI1=XI-Z1
+    	        ENDIF
+    	        FF=XI1**(-TUK-1E+0)*(XI1*XI1-1E+0)*(1E+0+TAU)*5E-1
+    	        DO 300 I=0,MAXDG
+    	          K=K+1
+    	          REMND(K)=CONST(I+1,J)*FF
+    	300     CONTINUE
+    	325   CONTINUE
+    	C
+    	      MAXRM=0E+0
+    	      DO 600 I=1,LIM
+    	        TERM=ABS(REAL(REMND(I)))
+    	        MAXRM=MAX(MAXRM,TERM)
+    	600   CONTINUE
+    	C
+    	      IF (MAXRM .LT. TOL) THEN
+    	C
+    	C       ACCURACY IS ACHIEVED, BUT MAYBE TAU COULD BE INCREASED.
+    	C
+    	        IF (MAXRM .LT. HTOL) THEN
+    	C
+    	C         TAU NEEDS INCREASING, BUT THIS IS ONLY POSSIBLE IF TAU<1.
+    	C
+    	          IF (TAU .LT. 1E+0) THEN
+    	            LOWER=TAU
+    	            TAU=5E-1*(LOWER+UPPER)
+    	            GOTO 250
+    	          ENDIF
+    	        ENDIF
+    	      ELSE
+    	C
+    	C       ACCURACY NOT ACHIEVED AND TAU NEEDS DECREASING.
+    	C
+    	        IF (TAU .EQ. 1E+0) THEN
+    	          TOL=HTOL
+    	        ENDIF
+    	        UPPER=TAU
+    	        TAU=5E-1*(LOWER+UPPER)
+    	        GOTO 250
+    	      ENDIF
+    	C
+    	C     NORMAL TERMINATION
+    	C
+    	      IER=0
+    	C*/
+    } // private void DEJAC7
+    
+
+    private double LGGAM(double X) {
+
+        // **** TO ESTIMATE THE LOGARITHM OF THE GAMMA FUNCTION FOR  L A R G E
+        // **** POSITIVE VALUES OF X USING THE ASYMPTOTIC FORMULA FROM ABRAMOWITZ
+        // **** AND STEGUN, SECTION 6.1.41
+
+        double PI,W,result;
+
+        PI=Math.PI;
+        W=1.0/X/X;
+        result=
+                ((((W/9.9E+1-1E+0/1.4E+2)*W+1E+0/1.05E+2)*W-1E+0/3E+1)*W+1E+0)/
+                (1.2E+1*X) + 5E-1*Math.log(2E+0*PI) - X + (X-5E-1)*Math.log(X);
+        return result;
+    } // private double LGGAM
+
 
 
 
