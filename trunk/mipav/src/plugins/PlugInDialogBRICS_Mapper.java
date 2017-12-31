@@ -274,8 +274,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        	saveChooser.setFileFilter(new FileNameExtensionFilter("Comma separated value files (.csv)", "csv"));
 	            final int returnValue = saveChooser.showSaveDialog(this);
 	            if (returnValue == JFileChooser.APPROVE_OPTION) {
-	                //SaveMethod(saveChooser.getSelectedFile()
-	
+	            	saveMappingsCSVFile(saveChooser.getSelectedFile());
 	                outputDirBase = saveChooser.getSelectedFile().getAbsolutePath() + File.separator;
 	                Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
 	            }
@@ -641,9 +640,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         deTable.getColumn("Title").setMinWidth(175);
         deTable.getColumn("Title").setMaxWidth(400);
         deTable.getColumn("Title").setPreferredWidth(225);
+              
+        deTable.getColumn("Type").setMinWidth(110);
+        deTable.getColumn("Type").setMaxWidth(110);
+        deTable.getColumn("Type").setPreferredWidth(110);
         
         deTable.getColumn("Reference PVs").setMinWidth(130);
-        deTable.getColumn("Reference PVs").setMaxWidth(130);
+        deTable.getColumn("Reference PVs").setMaxWidth(330);
         deTable.getColumn("Reference PVs").setPreferredWidth(130);
         
         deTable.getColumn("Required").setMinWidth(115);
@@ -736,7 +739,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         saveMapButton.addActionListener(this);
         saveMapButton.setActionCommand("SaveMapFile");
         saveMapButton.setPreferredSize(defaultButtonSize);
-        saveMapButton.setEnabled(true); // for testing
+        saveMapButton.setEnabled(false);
 
         outputDirPanel.add(outputDirLabel);
         outputDirPanel.add(outputDirTextField);
@@ -1202,8 +1205,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        		
 	        		String strPVs = new String();
 	                for (ValueRange vr : de.getValueRangeList() ) {
-	                	strPVs += vr.getValueRange() + "; ";
+	                	strPVs += vr.getValueRange() + ";";
 	                }
+	                if (strPVs.length() > 0) strPVs = strPVs.substring(0, strPVs.length()-1); //Remove last ;
 	        		deTableModel.setValueAt(strPVs, row, deTableModel.getColumnIndex("Reference PVs"));  // PV list
 	        		
 	        		JLabel l = new JLabel(mapde.getRequiredType().toString());
@@ -1273,7 +1277,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                 dataElements.add(deDef);
                 row++;
             }
-            fis.close();
+            //fis.close();
             //Open dialog with and populate with source DEs
             SourceDEsDialog csvDEDialog = new SourceDEsDialog(this, dataElements);
         } catch (final Exception e) {
@@ -1282,6 +1286,71 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             if (br != null) {
                 try {
                     br.close();
+                } catch (IOException e) {
+                    System.err.println("Problem closing CSV file handle.");
+                    e.printStackTrace();
+                }
+                return false;
+            }
+        }
+         
+        return true;      
+    }
+    
+    /**
+     * Writes the CSV file that contains
+     * 
+     * @return True if file is successfully saved
+     */
+    private boolean saveMappingsCSVFile(File csvFile) {
+        BufferedWriter bw = null;
+
+        try {
+            String str;
+            final FileOutputStream fis = new FileOutputStream(csvFile);
+            bw = new BufferedWriter(new OutputStreamWriter(fis));
+            String repeatStr = null;
+            String refStr	 = null;
+            FormStructureData fsInfo = new FormStructureData(formStructure);
+            
+            bw.write("BRICS" + "\n"); // Make it known that this is a mapping file. Important when reading the file
+            
+            int numRows = deTableModel.getRowCount();
+        	for (int i=0; i< numRows; i++) {
+        		
+        		// Get repeatability
+        		for (final RepeatableGroup group : formStructure.getRepeatableGroups() ) {    
+        			
+	        		if (group.getName().equals ((String) (deTable.getValueAt(i, deTableModel.getColumnIndex("Group"))))) {      			
+	        			repeatStr = group.getType().getValue() + " " + fsInfo.getStructInfo().getRepeatableGroupByName(group.getName()).getThreshold().toString() ;
+	        			
+	        		}
+        		}
+        	
+        		str =    deTableModel.getValueAt(i, deTableModel.getColumnIndex("Group"))         + "," + 
+        				 repeatStr + "," +
+        				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("Element Name"))  + "," +
+        				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("Title"))         + "," +
+        				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("Type"))          + "," +
+        				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("Reference PVs")) + "," +   
+        				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("Required"))      + "," +
+        				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Name"))   + "," +
+        				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Type"))   + "," +
+        				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source PVs"))    + "," + 
+        				 deTableModel.getValueAt(i, deTableModel.getColumnIndex("PV Mappings"));	
+        		str = str.replace("null", "");
+
+        		bw.write(str+"\n");
+        		// I have an issue with saving PVs with a comma to a CSV, e.g. "other, specify"  - Need to have a plan.
+        		printlnToLog("Successful saving of Mapping file");
+        		//System.out.println(str);
+        	}	
+        } catch (final Exception e) {
+        	//e.printStackTrace();
+        } finally {
+            if (bw != null) {
+                try {
+                    bw.close();
                 } catch (IOException e) {
                     System.err.println("Problem closing CSV file handle.");
                     e.printStackTrace();
@@ -1311,14 +1380,9 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     				((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("PV Mappings")))).isEmpty() ) {
 	    		if (  (  !(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source PVs")) == null) && 
 	    				 !((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Reference PVs")))).isEmpty() )  ) {
-	    			printlnToLog("PV mapping cell is empty for AAA:  " + deTableModel.getValueAt(i, deTableModel.getColumnIndex("Element Name"))); 
+	    			printlnToLog("PV mapping cell is empty for:  " + deTableModel.getValueAt(i, deTableModel.getColumnIndex("Element Name"))); 
 	    			errFlag = true;
 	    		}
-	    		//else if (   !((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source PVs")))).isEmpty() && 
-	    		//		    !((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("ReferencePVs")))).isEmpty()   ) {
-	      		//	printlnToLog("PV mapping cell is empty for BBB:  " + deTableModel.getValueAt(i, deTableModel.getColumnIndex("Element Name"))); 
-	      		//	errFlag = true;
-	      		//}
     		}
     	}
     	if (errFlag) {
@@ -1334,16 +1398,14 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
      * 
      * @return True if all REQUIRED data elements have be mapped
      */
-    private boolean validateRequired() {
+    private boolean validateRequiredElements() {
     	
     	int numRows = deTableModel.getRowCount();
     	for (int i=0; i< numRows; i++) {
     		if ( deTableModel.getValueAt(i, deTableModel.getColumnIndex("Required")).equals("REQUIRED") && 
     				(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Name")) == null || 
     				((String)(deTableModel.getValueAt(i, deTableModel.getColumnIndex("Source Name")))).isEmpty() )) {
-    			//return false;  // This is correct temp for testing TODO
-    			return true;
-    			
+    			return false;  
     		}
     	}
     	return true;
@@ -1604,11 +1666,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             } 
             if (command.equalsIgnoreCase("srcDEClear")) {
             	//Clears the Source Name, Source Type, and Source PVs columns in the main mapping table
-            	if (deTable.getSelectedRow() != -1) {
+            	if (deTable.getSelectedRow() != -1) {	
+            		
 	            	deTable.setValueAt("", deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Name"));
 	                deTable.setValueAt("", deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Type"));
-	                deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("Source PVs"));
-	                deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
+	                deTable.setValueAt("", deTable.getSelectedRow(), deTableModel.getColumnIndex("Source PVs"));
+	                deTable.setValueAt("", deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
             	}
             } 
             if (command.equalsIgnoreCase("srcDEPairR")) {
@@ -1616,6 +1679,11 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             	
             	if (deTable.getSelectedRow() != -1 && srcDETable.getSelectedRow() != -1) {  // rows selected in both source and main mapping table
             		final int rowRef = deTable.getSelectedRow();
+            		if ( (((String)(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Mapped")))).trim().equals("Yes")) ) {
+            			if ( !continueMapping() )  {
+            				return;
+            			}
+            		}
 
             		// If source PVs is empty and reference PVs are not empty then show error message and return
             		if (  !((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs")))).isEmpty() &&
@@ -1625,10 +1693,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
                    	}
 
 	                // Sets or replaces main mapping table  DE with the source DE
-            		deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
+	        		deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Name")), rowRef, deTableModel.getColumnIndex("Source Name"));
 	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Type")), rowRef, deTableModel.getColumnIndex("Source Type"));
 	                deTable.setValueAt(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")),  rowRef, deTableModel.getColumnIndex("Source PVs"));
-	                deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));
+			        deTable.setValueAt("",  deTable.getSelectedRow(), deTableModel.getColumnIndex("PV Mappings"));	
             	}
             	else {
             		displayWarning("Please select both reference and source data elements.");
@@ -1638,7 +1706,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             	//Appends mapping data element with an additional source data element 
             	if (deTable.getSelectedRow() != -1 && srcDETable.getSelectedRow() != -1) {  // rows selected in both source and main mapping table
 	                final int rowRef = deTable.getSelectedRow();
-	                  
+	                if ( (((String)(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("Mapped")))).trim().equals("Yes")) ) {
+            			if ( !continueMapping() )  {
+            				return;
+            			}
+            		}
+	                
 	                // If source PVs is empty and reference PVs are not empty then show error message and return
 	                if (  !((String)(deTable.getValueAt(rowRef, deTableModel.getColumnIndex("Reference PVs")))).isEmpty() &&
 	            			   ((String)(srcDETable.getValueAt(srcDETable.getSelectedRow(), srcDETableModel.getColumnIndex("PVs")))).isEmpty() ) {
@@ -1698,7 +1771,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             
             // Check to see if all Required reference data elements have been mapped - if so then enable the Save button.
             
-            if ( validateRequired() ) {
+            if ( validateRequiredElements() ) {
             	saveMapButton.setEnabled(true);
             }else {
             	saveMapButton.setEnabled(false);
@@ -1706,6 +1779,23 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         }
     }
     
+    /**
+     * Displays a confirmDialog to ensure the user wants to continue mapping a data element that already has been mapped.
+     * returns true if the users want to map the data element to more than one reference data element
+     */
+    private boolean continueMapping() {
+	    final int response = JOptionPane.showConfirmDialog(this, "DE already mapped, continue?", "Continue mapping",
+	            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+	
+	    // if user chooses no to the 
+	    if (response == JOptionPane.NO_OPTION) {
+	    	return false;
+	    }
+	    else {
+	    	return true;
+	    }
+    }
+   
     
     /**
      *  Builds the permissible value mapping dialog. 
@@ -1871,7 +1961,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        		displayWarning("Reference PVs are empty.");
 	        		return null;
 	        	}
-	        	refPVs.concat(" ;"); // Adds blank option to the drop down.
+	        	refPVs = refPVs.concat("; "); // Adds blank option to the drop down.
 	        	String[] refPVStrs = refPVs.split(";");
 	        	for (int i = 0; i < refPVStrs.length; i++) {
 	        		if (!refPVStrs[i].isEmpty()) { 
@@ -1908,7 +1998,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	        		displayWarning("Reference PVs are empty.");
 	        		return null;
 	        	}
-	        	refPVs.concat(" ;"); // Adds blank option to drop down
+	        	refPVs = refPVs.concat("; "); // Adds blank option to drop down
 	        	String[] refPVStrs = refPVs.split(";");
 	        	for (int j = 0; j < refPVStrs.length; j++) {
 	        		if (!refPVStrs[j].isEmpty()) {
@@ -1929,17 +2019,12 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                cbArray[i] = cb;
 	                
 	                String[] splitMappedPV = mappedPVStrs[i].split(":");
-	               // if (i < refPVStrs.length) {
-	                	if (splitMappedPV.length == 2) {
-	                		cb.setSelectedItem(splitMappedPV[1].trim());
-	                	}
-	                	else {
-	                		cb.setSelectedItem("");
-	                	}
-	              //  }
-	              //  else {
-	               // 	cb.setSelectedIndex(0);
-	              //  }
+                	if (splitMappedPV.length == 2) {
+                		cb.setSelectedItem(splitMappedPV[1].trim());
+                	}
+                	else {
+                		cb.setSelectedItem("");
+                	}
 	                
 	                cb.setFont(serif12);
 	                cb.setMinimumSize(new Dimension(180, 30));
