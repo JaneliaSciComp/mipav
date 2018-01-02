@@ -4634,8 +4634,14 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	        	ZZ[I][0] = XIVAL[J2-1+I][0];
     	        	ZZ[I][1] = XIVAL[J2-1+I][1];
     	        }
-    	        SUBIN7(ZZ,2,BETA,MDGPO,NQPTS,ACOEF(LO),BCOEF(LO),
-    	            H0VAL(JI),COLSC(LO),AQTOL,TOLOU(JI),XENPT,QINTS,MQIN1,IER);
+    	        double AJAC[] = new double[MDGPO];
+    	        double BJAC[] = new double[MDGPO];
+    	        for (I = 0; I < MDGPO; I++) {
+    	        	AJAC[I] = ACOEF[LO-1+I];
+    	        	BJAC[I] = BCOEF[LO-1+I];
+    	        }
+    	        SUBIN7(ZZ,2,BETA,MDGPO,NQPTS,AJAC,BJAC,
+    	            H0VAL[JI-1],COLSC(LO),AQTOL,TOLOU(JI),XENPT,QINTS,MQIN1,IER);
     	        IF (IER .GT. 0) THEN
     	          RETURN
     	        ENDIF
@@ -4756,52 +4762,55 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	XENPT[0]=-1.0;
     	TOL=TOLIN;
     	DEJAC7(ZZ,NZZ,BETA,TAU,MAXDG,NQUAD,AJAC,BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER);
-    	/*      IF (IER .GT. 0) THEN
-    	        RETURN
-    	      ENDIF
-    	      TOLOU=MAXRM
-    	      XENPT(2)=TAU
-    	C
-    	      IF (XENPT(2) .LT. 1E+0) THEN
-    	        QINTS=2
-    	        T1FXD=.FALSE.
-    	        TAU=1E+0
-    	        RIGHT=-1E+0
-    	        CALL DELEG7(ZZ,NZZ,BETA,RIGHT,TAU,T1FXD,MAXDG,NQUAD,AJAC,
-    	     +              BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER)
-    	        IF (IER .GT. 0) THEN
-    	          RETURN
-    	        ENDIF
-    	        TOLOU=TOLOU+MAXRM
-    	        T1FXD=.TRUE.
-    	C
-    	100     CONTINUE
-    	C
-    	        IF (XENPT(QINTS) .GT. RIGHT) THEN
-    	          XENPT(QINTS)=5E-1*(XENPT(QINTS)+RIGHT)
-    	          XENPT(QINTS+1)=1E+0
-    	        ELSE
-    	          TAU=1E+0
-    	          CALL DELEG7(ZZ,NZZ,BETA,XENPT(QINTS),TAU,T1FXD,MAXDG,
-    	     +                NQUAD,AJAC,BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER)
-    	          IF (IER .GT. 0) THEN
-    	            RETURN
-    	          ENDIF
-    	          TOLOU=TOLOU+MAXRM
-    	          QINTS=QINTS+1
-    	          IF (QINTS .GE. MQIN1) THEN
-    	            IER=11
-    	            RETURN
-    	          ENDIF
-    	          XENPT(QINTS)=TAU
-    	          GOTO 100
-    	        ENDIF
-    	      ENDIF
-    	C
-    	C     NORMAL TERMINATION
-    	C
-    	      IER=0
-    	C*/
+    	if (IER[0] > 0) {
+    	    return;
+    	}
+    	TOLOU=MAXRM[0];
+    	XENPT[1]=TAU[0];
+    	
+    	if (XENPT[1] < 1.0) {
+    	    QINTS[0]=2;
+    	    T1FXD=false;
+    	    TAU[0]=1.0;
+    	    RIGHT=-1.0;
+    	    DELEG7(ZZ,NZZ,BETA,RIGHT,TAU[0],T1FXD,MAXDG,NQUAD,AJAC,
+                   BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER);
+    	    if (IER[0] > 0) {
+    	        return;
+    	    }
+    	    TOLOU=TOLOU+MAXRM[0];
+    	    T1FXD=true;
+    	
+    	    while (true) {
+    	
+    	        if (XENPT[QINTS[0]-1] > RIGHT) {
+    	            XENPT[QINTS[0]-1]=0.5*(XENPT[QINTS[0]-1]+RIGHT);
+    	            XENPT[QINTS[0]]=1.0;
+    	            break;
+    	        }
+    	        else {
+    	          TAU[0]=1.0;
+    	          DELEG7(ZZ,NZZ,BETA,XENPT[QINTS[0]-1],TAU[0],T1FXD,MAXDG,
+    	                   NQUAD,AJAC,BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER);
+    	          if (IER[0] > 0) {
+    	              return;
+    	          }
+    	          TOLOU=TOLOU+MAXRM[0];
+    	          QINTS[0]=QINTS[0]+1;
+    	          if (QINTS[0] >= MQIN1) {
+    	              IER[0]=11;
+    	              return;
+    	          }
+    	          XENPT[QINTS[0]-1]=TAU[0];
+    	          continue;
+    	        } // else
+    	} // while (true)
+    } // if (XENPT[1] < 1.0)
+    	
+    // NORMAL TERMINATION
+    	
+    IER[0]=0;
+    	
     } // private void SUBIN7
     
     private void DEJAC7(double ZZ[][], int NZZ, double BETA, double TAU[], int MAXDG, int NQUAD,
@@ -4868,6 +4877,14 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	//EXTERNAL GAMMA,LGGAM
     	double cr[] = new double[1];
     	double ci[] = new double[1];
+    	double r;
+    	double theta;
+    	double mag;
+    	double arg;
+    	double absXI1;
+    	double var[] = new double[2];
+    	double cr2[] = new double[1];
+    	double ci2[] = new double[1];
     	
     	if (NZZ > NC ) {
     	    IER[0]=12;
@@ -4915,8 +4932,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	TUK=2.0*RN+SUM1;
     	KK=-KK/TUK/2.0;
     	
-    	/*for (I=1; I <= NZZ; I++) {
-    	    GG[I-1]=Math.pow((1.0+ZZ[I-1]),BETA)*KK;
+    	for (I=1; I <= NZZ; I++) {
+    		r = zabs(1.0 + ZZ[I-1][0], ZZ[I-1][1]);
+    		theta = Math.atan2(ZZ[I-1][1],1.0+ZZ[I-1][0]);
+    		mag = Math.pow(r, BETA);
+    		arg = BETA * theta;
+    		GG[I-1][0] = mag * Math.cos(arg)*KK;
+    		GG[I-1][1] = mag * Math.sin(arg)*KK;
     	} // for (I=1; I <= NZZ; I++)
     	
     	// NOW GIVE THE JACOBI POLYNOMIALS THE SCALING CORRESPONDING TO
@@ -4932,78 +4954,117 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	    CONST[0][J-1][0] = cr[0] * CSCAL[0];
     	    CONST[0][J-1][1] = ci[0] * CSCAL[0];
     	    if (MAXDG >= 1) {
-    	          CUR=(ZZ(J)-BCOEF(1))*PRE/ACOEF(1)
-    	          CONST(2,J)=CUR*GG(J)*CSCAL(2)
-    	          DO 200 I=2,MAXDG
-    	            NXT=((ZZ(J)-BCOEF(I))*CUR-ACOEF(I-1)*PRE)/ACOEF(I)
-    	            PRE=CUR
-    	            CUR=NXT
-    	            CONST(I+1,J)=CUR*GG(J)*CSCAL(I+1)
-    	200       CONTINUE
+    	    	zmlt(ZZ[J-1][0] - BCOEF[0], ZZ[J-1][1], PRE[0]/ACOEF[0], PRE[1]/ACOEF[0], cr, ci);
+    	    	CUR[0] = cr[0];
+    	    	CUR[1] = ci[0];
+    	        zmlt(CUR[0], CUR[1], GG[J-1][0]*CSCAL[1], GG[J-1][1]*CSCAL[1], cr, ci);
+    	        CONST[1][J-1][0] = cr[0];
+    	        CONST[1][J-1][1] = ci[0];
+    	        for (I=2; I <= MAXDG; I++) {
+    	        	zmlt(ZZ[J-1][0] - BCOEF[I-1], ZZ[J-1][1], CUR[0], CUR[1], cr, ci);
+    	        	NXT[0] = (cr[0] - ACOEF[I-2]*PRE[0])/ACOEF[I-1];
+    	        	NXT[1] = (ci[0] - ACOEF[I-2]*PRE[1])/ACOEF[I-1];
+    	            PRE[0] = CUR[0];
+    	            PRE[1] = CUR[1];
+    	            CUR[0]=NXT[0];
+    	            CUR[1]=NXT[1];
+    	            zmlt(CUR[0],CUR[1],GG[J-1][0]*CSCAL[I],GG[J-1][1]*CSCAL[I], cr, ci);
+    	            CONST[I][J-1][0] = cr[0];
+    	            CONST[I][J-1][1] = ci[0];
+    	        } // for (I=2; I <= MAXDG; I++)
     	    } // if (MAXDG >= 1)
     	} // for (J=1; J <= NZZ; J++)
-    	C
-    	C     NOW COME THE FACTORS DEPENDENT ON TAU
-    	C
-    	      TAU=1E+0
-    	      LOWER=-1E+0
-    	      UPPER=1E+0
-    	      LIM=NZZ*(MAXDG+1)
-    	C
-    	250   CONTINUE
-    	C
-    	      HTOL=5E-1*TOL
-    	      K=0
-    	      DO 325 J=1,NZZ
-    	        XI=(2E+0*ZZ(J)+1E+0-TAU)/(1E+0+TAU)
-    	        Z1=SQRT(XI*XI-1E+0)
-    	        XI1=XI+Z1
-    	        IF (ABS(XI1) .LT. 1E+0) THEN
-    	          XI1=XI-Z1
-    	        ENDIF
-    	        FF=XI1**(-TUK-1E+0)*(XI1*XI1-1E+0)*(1E+0+TAU)*5E-1
-    	        DO 300 I=0,MAXDG
-    	          K=K+1
-    	          REMND(K)=CONST(I+1,J)*FF
-    	300     CONTINUE
-    	325   CONTINUE
-    	C
-    	      MAXRM=0E+0
-    	      DO 600 I=1,LIM
-    	        TERM=ABS(REAL(REMND(I)))
-    	        MAXRM=MAX(MAXRM,TERM)
-    	600   CONTINUE
-    	C
-    	      IF (MAXRM .LT. TOL) THEN
-    	C
-    	C       ACCURACY IS ACHIEVED, BUT MAYBE TAU COULD BE INCREASED.
-    	C
-    	        IF (MAXRM .LT. HTOL) THEN
-    	C
-    	C         TAU NEEDS INCREASING, BUT THIS IS ONLY POSSIBLE IF TAU<1.
-    	C
-    	          IF (TAU .LT. 1E+0) THEN
-    	            LOWER=TAU
-    	            TAU=5E-1*(LOWER+UPPER)
-    	            GOTO 250
-    	          ENDIF
-    	        ENDIF
-    	      ELSE
-    	C
-    	C       ACCURACY NOT ACHIEVED AND TAU NEEDS DECREASING.
-    	C
-    	        IF (TAU .EQ. 1E+0) THEN
-    	          TOL=HTOL
-    	        ENDIF
-    	        UPPER=TAU
-    	        TAU=5E-1*(LOWER+UPPER)
-    	        GOTO 250
-    	      ENDIF
-    	C
-    	C     NORMAL TERMINATION
-    	C
-    	      IER=0
-    	C*/
+    	
+    	// NOW COME THE FACTORS DEPENDENT ON TAU
+    	
+    	TAU[0]=1.0;
+    	LOWER=-1.0;
+    	UPPER=1.0;
+    	LIM=NZZ*(MAXDG+1);
+    	
+    	while (true) {
+    	
+    	    HTOL=0.5*TOL;
+    	    K=0;
+    	    for (J=1; J <= NZZ; J++) {
+    	        XI[0]=(2.0*ZZ[J-1][0]+1.0-TAU[0])/(1.0+TAU[0]);
+    	        XI[1]= (2.0*ZZ[J-1][1])/(1.0 + TAU[0]);
+    	        zmlt(XI[0],XI[1],XI[0],XI[1],cr,ci);
+    	        r = zabs(cr[0]-1.0,ci[0]);
+    	        theta = Math.atan2(ci[0],cr[0]-1.0);
+    	        mag = Math.sqrt(r);
+    	        arg = 0.5*theta;
+    	        Z1[0] = mag * Math.cos(arg);
+    	        Z1[1] = mag * Math.sin(arg);
+    	        XI1[0]=XI[0]+Z1[0];
+    	        XI1[1]=XI[1]+Z1[1];
+    	        absXI1 = zabs(XI1[0],XI1[1]);
+    	        if (absXI1 < 1.0) {
+    	            XI1[0]=XI[0]-Z1[0];
+    	            XI1[1]=XI[1]-Z1[1];
+    	        }
+    	        r = zabs(XI1[0],XI1[1]);
+    	        theta = Math.atan2(XI1[1], XI1[0]);
+    	        mag = Math.pow(r, -TUK-1.0);
+    	        arg = theta * (-TUK-1.0);
+    	        var[0] = mag * Math.cos(arg);
+    	        var[1] = mag * Math.sin(arg);
+    	        zmlt(XI1[0],XI1[1],XI1[0],XI1[1],cr,ci);
+    	        zmlt(var[0],var[1],cr[0]-1.0,ci[0],cr2,ci2);
+    	        FF[0] = cr2[0]*(1.0+TAU[0])*0.5;
+    	        FF[1] = ci2[0]*(1.0+TAU[0])*0.5;
+    	        for (I=0; I <= MAXDG; I++) {
+    	          K=K+1;
+    	          zmlt(CONST[I][J-1][0],CONST[I][J-1][1],FF[0],FF[1],cr,ci);
+    	          REMND[K-1][0]= cr[0];
+    	          REMND[K-1][1] = ci[0];
+    	        } // for (I=0; I <= MAXDG; I++)
+    	    } // for (J=1; J <= NZZ; J++)
+    	
+    	    MAXRM[0]=0.0;
+    	    for (I=1; I <= LIM; I++) {
+    	        TERM=Math.abs(REMND[I-1][0]);
+    	        MAXRM[0]=Math.max(MAXRM[0],TERM);
+    	    } // for (I=1; I <= LIM; I++)
+    	
+    	    if (MAXRM[0] < TOL) {
+    	
+    	        // ACCURACY IS ACHIEVED, BUT MAYBE TAU COULD BE INCREASED.
+    	
+    	        if (MAXRM[0] < HTOL) {
+    	
+    	            // TAU NEEDS INCREASING, BUT THIS IS ONLY POSSIBLE IF TAU<1.
+    	
+    	            if (TAU[0] < 1.0) {
+    	                LOWER=TAU[0];
+    	                TAU[0]=0.5*(LOWER+UPPER);
+    	                continue;
+    	            } // if (TAU[0 < 1.0)
+    	            else {
+    	            	break;
+    	            }
+    	        } // if (MAXRM[0] < HTOL)
+    	        else {
+    	        	break;
+    	        }
+    	    }
+    	    else { // MAXRM[0] >= TOL
+    	
+                // ACCURACY NOT ACHIEVED AND TAU NEEDS DECREASING.
+    	
+    	        if (TAU[0] == 1.0) {
+    	            TOL=HTOL;
+    	        }
+    	        UPPER=TAU[0];
+    	        TAU[0]=0.5*(LOWER+UPPER);
+    	        continue;
+    	    } // else MAXRM[0] >= TOL
+    	} // while (true)
+    	
+    	// NORMAL TERMINATION
+    	
+    	IER[0]=0;
+    	
     } // private void DEJAC7
     
 
@@ -5023,7 +5084,317 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         return result;
     } // private double LGGAM
 
-
+    private void DELEG7(double ZZ[][], int NZZ, double BETA, double TAU1, double TAU2, boolean T1FXD,
+        int MAXDG, int NQUAD, double ACOEF[], double BCOEF[], double H0VAL, double REMND[][], 
+        double CSCAL[], double TOL, double MAXRM[], int IER[]) {
+        //INTEGER MAXDG,NQUAD,IER,NZZ
+    	//REAL BETA,TAU1,TAU2,H0VAL,TOL,MAXRM
+    	//REAL ACOEF(*),BCOEF(*),CSCAL(*)
+    	//LOGICAL T1FXD
+    	//COMPLEX ZZ(*),REMND(*)
+    	
+    	// WE COMPUTE THE DONALDSON-ELLIOTT ESTIMATES FOR THE REMAINDERS IN
+    	// USING AN NQUAD-POINT GAUSS-LEGENDRE RULE TO ESTIMATE THE INTEGRALS
+    
+    	//   INTEGRAL  [(1+X)**BETA*P(X,I)*LOG(ZZ(J)-X)*dX], I=0,1,...,MAXDG
+    	// TAU1<=X<=TAU2                                     J=1,2
+    	
+    	//     WHERE P(.,I) IS THE ORTHONORMAL JACOBI POLYNOMIAL OF DEGREE I
+    	//     ASSOCIATED WITH THE WEIGHT (1+X)**BETA AND -1<TAU1<TAU2<=1.
+    	//     THE REMAINDER CORRESPONDING TO P(.,I) AND ZZ(J) IS STORED IN 
+    	//     REMND(I+J+MAXDG*(J-1)), I=0,1,...,MAXDG, J=1,2.  THIS ROUTINE USES
+    	//     THE SIMPLEST POSSIBLE ESTIMATES; I.E. THE LEADING TERM ONLY IN
+    	//     THE ASYMPTOTIC EXPANSION AND THE WATSON-DOETSCH ESTIMATE FOR ANY
+    	//     INTEGRALS.
+    	
+    	//     THE PURPOSE OF THIS ROUTINE IS TO DETERMINE A VALUE FOR EITHER
+    	//     TAU2 (TAU1 REMAINS FIXED IF T1FXD IS "TRUE") OR TAU1 (TAU2 REMAINS
+    	//     FIXED IF T1FXD IS "FALSE") SUCH THAT
+    	
+    	//         ABS( REAL(REMND(I)) )*CSCAL(I) < TOL , I=1,2*MAXDG+2
+    	
+    	//     AND THAT, IF POSSIBLE, 
+    	
+    	//        0.5*TOL <= ABS( REAL(REMND(I)) )*CSCAL(I) < TOL
+    	
+    	//     FOR AT LEAST ONE VALUE OF I.
+    	//     IER=0 - NORMAL EXIT
+    	//     IER=12- LOCAL PARAMETER NC NEEDS INCREASING TO AT LEAST NZZ
+    	//             (THIS ERROR CAN'T ARISE IN THE PRESENT VERSION, SINCE
+    	//              NZZ IS FIXED AT 2)
+    	//     IER=13- LOCAL PARAMETER NR NEEDS INCREASING TO AT LEAST MAXDG
+    	//             (AT PRESENT MAXDG=NQPTS-1) 
+    	//
+    	//     LOCAL VARIABLES..
+    	
+    	final int NC = 8;
+    	final int NR = 30;
+    	int I,J,K;
+    	double KK,RI,TURI,RN,P0SCL,TUK,LOWER,HTOL,UFLOW,EXPON,
+    	     UPPER,TERM,HCO,PI,FORK,SUM,FAC1,FAC2,PVAL,RR,MEAN,BB,BB1,BB2,FFH;
+    	double XI[] = new double[2];
+    	double Z1[] = new double[2];
+    	double XI1[] = new double[2];
+    	double FFG[] = new double[2];
+    	double PRE[] = new double[2];
+    	double CUR[] = new double[2];
+    	double NXT[] = new double[2];
+    	// COMPLEX XI,Z1,XI1,FFG,PRE,CUR,NXT
+    	boolean FIRST;
+    	double GG[][] = new double[NC][2];
+    	double HH[][] = new double[NC][2];
+    	double CONGG[][][] = new double[NR][NC][2];
+    	double CONHH[][][] = new double[NR][NC][2]; 
+    	// COMPLEX GG(NC),HH(NC),CONGG(NR,NC),CONHH(NR,NC)
+    	// EXTERNAL GAMMA,LGGAM
+    	double r;
+    	double mag;
+    	double theta;
+    	double ang;
+    	double cr[] = new double[1];
+    	double ci[] = new double[1];
+    	double absXI1;
+    	double var[] = new double[2];
+    	double cr2[] = new double[1];
+    	double ci2[] = new double[1];
+    	
+    	// FIRST WE COMPUTE THE FACTORS WHICH ARE INDEPENDENT OF TAU1,TAU2
+    	
+    	if (NZZ > NC ) {
+    	    IER[0]=12;
+    	    return;
+    	}
+    	
+    	if (MAXDG >= NR) {
+    	    IER[0]=13;
+    	    return;
+    	}
+    	
+    	// **** SET THE LOGARITHMIC UNDERFLOW LIMIT
+    	// B**(EMIN-1)
+    	// EMIN = -1022;
+    	UFLOW = Math.log(Math.pow(2.0, -1023.0));    
+    	
+    	PI=Math.PI;
+    	KK=32.0/6.0;
+    	for (I=2; I <= NQUAD; I++) {
+    	    RI=(double)(I);
+    	    TURI=2.0*RI;
+    	    KK=KK*4.0*RI/(TURI+1.0);
+    	    KK=KK*RI/(TURI-1.0);
+    	} // for (I=2; I <= NQUAD; I++)
+    	RN=(double)(NQUAD);
+    	TUK=2.0*RN+1.0;
+    	FORK=2.0*TUK;
+    	KK=KK/FORK;
+    	
+    	if (BETA >= 20.0) {
+    	    EXPON=LGGAM(BETA+1.0)-BETA*Math.log(FORK);
+    	    if (EXPON <= UFLOW) {
+    	        HCO=0.0;
+    	    }
+    	    else {
+    	        HCO=Math.sin(PI*BETA)*Math.exp(EXPON)/PI;
+    	    }
+    	} // if (BETA >= 20.0)
+    	else {
+    	    HCO=Math.sin(PI*BETA)*GAMMA(BETA+1.0)/PI/Math.pow(FORK,BETA);
+    	}
+    	for (I=1; I <= NZZ; I++) {
+    		r = zabs(1.0+ZZ[I-1][0],ZZ[I-1][1]);
+    		mag = Math.pow(r, BETA);
+    		theta = Math.atan2(ZZ[I-1][1], 1.0 + ZZ[I-1][0]);
+    		ang = BETA * theta;
+    		GG[I-1][0] = mag * Math.cos(ang) * KK;
+    		GG[I-1][1] = mag * Math.sin(ang) * KK;
+    		HH[I-1][0] = -Math.log(r)*HCO*KK;
+    		HH[I-1][1] = -theta * HCO * KK;
+    	} // for (I=1; I <= NZZ; I++)
+    	
+    	// NOW GIVE THE JACOBI POLYNOMIALS THE SCALING CORRESPONDING TO
+        // [-1,1] AS STANDARD INTERVAL
+    	
+    	P0SCL=1.0/Math.sqrt(H0VAL);
+    	for (J=1; J <= NZZ; J++) {
+    	    PRE[0]=P0SCL;
+    	    PRE[1] = 0.0;
+    	    CUR[0]=PRE[0];
+    	    CUR[1]=PRE[1];
+    	    zmlt(CUR[0],CUR[1],GG[J-1][0]*CSCAL[0],GG[J-1][1]*CSCAL[0],cr,ci);
+    	    CONGG[0][J-1][0] = cr[0];
+    	    CONGG[0][J-1][1] = ci[0];
+    	    zmlt(CUR[0],CUR[1],HH[J-1][0]*CSCAL[0],HH[J-1][1]*CSCAL[0],cr,ci);
+    	    CONHH[0][J-1][0] = cr[0];
+    	    CONHH[0][J-1][1] = ci[0];
+    	    if (MAXDG >= 1) {
+    	    	zmlt(ZZ[J-1][0] - BCOEF[0],ZZ[J-1][1],PRE[0]/ACOEF[0],PRE[1]/ACOEF[0],cr,ci);
+    	    	CUR[0] = cr[0];
+    	    	CUR[1] = ci[0];
+    	        zmlt(CUR[0],CUR[1],GG[J-1][0]*CSCAL[1],GG[J-1][1]*CSCAL[1],cr,ci);
+    	        CONGG[1][J-1][0] = cr[0];
+    	        CONGG[1][J-1][1] = ci[0];
+    	        for (I=2; I <= MAXDG; I++) {
+    	        	zmlt(ZZ[J-1][0]-BCOEF[I-1],ZZ[J-1][1],CUR[0],CUR[1],cr,ci);
+    	        	NXT[0] = (cr[0] - ACOEF[I-2]*PRE[0])/ACOEF[I-1];
+    	        	NXT[1] = (ci[0] - ACOEF[I-2]*PRE[1])/ACOEF[I-1];
+    	            PRE[0]=CUR[0];
+    	            PRE[1]=CUR[1];
+    	            CUR[0]=NXT[0];
+    	            CUR[1]=NXT[1];
+    	            zmlt(CUR[0],CUR[1],GG[J-1][0]*CSCAL[I],GG[J-1][1]*CSCAL[I],cr,ci);
+    	            CONGG[I][J-1][0] = cr[0];
+    	            CONGG[I][J-1][1] = ci[0];
+    	        } // for (I=2; I <= MAXDG; I++)
+    	    } // if (MAXDG >= 1)
+    	} // for (J=1; J <= NZZ; J++)
+    	
+    	// NOW COMPUTE THE POLYNOMIAL VALUES AT -1, SCALE AND ACCUMULATE INTO
+    	// CONHH
+    	
+    	SUM=BETA+1.0;
+    	FAC1=1.0/Math.sqrt(Math.pow(2.0,SUM));
+    	FAC2=1.0;
+    	for (I=1; I <= MAXDG; I++) {
+    	    SUM=SUM+2.0;
+    	    FAC1=-FAC1;
+    	    FAC2=(I+BETA)*FAC2/I;
+    	    PVAL=Math.sqrt(SUM)*FAC1*FAC2;
+    	    for (J=1; J <= 2; J++) {
+    	        CONHH[I][J-1][0]=PVAL*HH[J-1][0]*CSCAL[I];
+    	        CONHH[I][J-1][1]=PVAL*HH[J-1][1]*CSCAL[I];
+    	    } // for (J=1; J <= 2; J++)
+    	} // for (I=1; I <= MAXDG; I++)
+    	
+        // NOW COME THE FACTORS DEPENDENT ON TAU1 AND TAU2.
+    	
+    	LOWER=TAU1;
+    	UPPER=TAU2;
+    	FIRST= true;
+    	
+    	while (true) {
+    	
+    	    HTOL=0.5*TOL;
+    	    RR=(TAU2-TAU1)*0.5;
+    	    MEAN=(TAU1+TAU2)*0.5;
+    	    BB=(1.0+MEAN)/RR;
+    	    BB1=BB+Math.sqrt(BB*BB-1.0);
+    	
+    	    // **** NOW COMPUTE THE QUANTITY
+    	    // ****
+    	    //****      FFH=(RR*(BB1-1E+0/BB1))**(BETA+1E+0)/BB1**TUK
+    	    //****
+    	    // **** BUT CHECK FOR POSSIBLE UNDERFLOW
+    	
+    	    BB2=BB1-1.0/BB1;
+    	    if (BB2 <= 0.0) {
+    	        FFH=0.0;
+    	    }
+    	    else {
+    	        EXPON=(BETA+1.0)*Math.log(RR*BB2)-TUK*Math.log(BB1);
+    	        if (EXPON <= UFLOW) {
+    	            FFH=0.0;
+    	        }
+    	        else {
+    	            FFH=Math.exp(EXPON);
+    	        }
+    	    }
+    	    K=0;
+    	    for (J=1; J <= NZZ; J++) {
+    	        XI[0]=(ZZ[J-1][0]-MEAN)/RR;
+    	        XI[1] = ZZ[J-1][1]/RR;
+    	        zmlt(XI[0],XI[0],XI[1],XI[1],cr,ci);
+    	        r = zabs(cr[0]-1.0,ci[0]);
+    	        mag = Math.sqrt(r);
+    	        theta = Math.atan2(ci[0], cr[0]-1.0);
+    	        ang = 0.5 * theta;
+    	        Z1[0] = mag;
+    	        Z1[1] = ang;
+    	        XI1[0]=XI[0]+Z1[0];
+    	        XI1[1]=XI[1]+Z1[1];
+    	        absXI1 = zabs(XI1[0],XI1[1]);
+    	        if (absXI1 < 1.0) {
+    	          XI1[0]=XI[0]-Z1[0];
+    	          XI1[1]=XI[1]-Z1[1];
+    	        }
+    	        r = zabs(XI1[0],XI1[1]);
+    	        mag = Math.pow(r, -TUK-1.0);
+    	        theta = Math.atan2(XI1[1],XI1[0]);
+    	        ang = theta *(-TUK - 1.0);
+    	        var[0] = mag * Math.cos(ang);
+    	        var[1] = mag * Math.sin(ang);
+    	        zmlt(XI1[0],XI1[1],XI1[0],XI1[1],cr,ci);
+    	        zmlt(var[0],var[1],cr[0]-1.0,ci[0],cr2,ci2);
+    	        FFG[0] = cr2[0] * RR;
+    	        FFG[1] = ci2[0] * RR;
+    	        for (I=0; I <= MAXDG; I++) {
+    	            K=K+1;
+    	            zmlt(CONGG[I][J-1][0],CONGG[I][J-1][1],FFG[0],FFG[1],cr,ci);
+    	            REMND[K-1][0] = cr[0] + CONHH[I][J-1][0]*FFH;
+    	            REMND[K-1][1] = cr[0] + CONHH[I][J-1][1]*FFH;
+    	        } // for (I=0; I <= MAXDG; I++)
+    	    } // for (J=1; J <= NZZ; J++)
+    	
+    	      MAXRM[0]=0.0;
+    	      for (I=1; I <= 2*MAXDG+2; I++) {
+    	        TERM=Math.abs(REMND[I-1][0]);
+    	        MAXRM[0]=Math.max(MAXRM[0],TERM);
+    	      } // for (I=1; I <= 2*MAXDG+2; I++)
+    	
+    	      if (MAXRM[0] < TOL) {
+    	
+    	          // ACCURACY IS ACHIEVED, BUT MAYBE TAU2 COULD BE INCREASED OR
+    	          // TAU1 DECREASED
+    	
+    	          if (MAXRM[0] < HTOL) {
+    	
+    	              // TAU2 NEEDS INCREASING IF T1FXD (BUT THIS IS ONLY POSSIBLE IF 
+    	              // TAU2<1) OR TAU1 NEED INCREASING OTHERWISE (BUT THIS IS ONLY
+                      // POSSIBLE IF TAU1>-1)
+    	
+    	              if (T1FXD && TAU2 < 1.0) {
+    	                  LOWER=TAU2;
+    	                  TAU2=0.5*(LOWER+UPPER);
+    	                  continue;
+    	              }
+    	              else if (!T1FXD && TAU1 > -1.0) {
+    	                  UPPER=TAU1;
+    	                  TAU1=0.5*(LOWER+UPPER);
+    	                  continue;
+    	              }
+    	              else {
+    	            	  break;
+    	              }
+    	          } // if (MAXRM[0] < HTOL
+    	          else {
+    	        	  break;
+    	          }
+    	      } // if (MAXRM[0] < TOL)
+    	      else { // MAXRM[0] >= TOL
+    	
+    	          // ACCURACY NOT ACHIEVED AND TAU2 NEEDS DECREASING OR TAU1 NEEDS
+    	          // INCREASING.
+    	
+    	          if (FIRST) {
+    	              TOL=HTOL;
+    	              FIRST=false;
+    	          }
+    	          if (T1FXD) {
+    	              UPPER=TAU2;
+    	              TAU2=0.5*(LOWER+UPPER);
+    	          }
+    	          else {
+    	              LOWER=TAU1;
+    	              TAU1=0.5*(LOWER+UPPER);
+    	          }
+    	          continue;
+    	      } // else MAXRM[0] >= TOL
+    	} // while (true)
+    	
+    	// NORMAL TERMINATION
+    	
+    	IER[0]=0;
+    	
+    } // private void DELEG7
 
 
     	     /* SUBROUTINE RSLT71(QIERC,RCOND,SOLUN,NEQNS,LOSUB,HISUB,COLSC,
