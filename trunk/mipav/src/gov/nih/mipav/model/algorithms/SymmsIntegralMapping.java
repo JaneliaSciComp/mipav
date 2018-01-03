@@ -158,7 +158,14 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	private boolean LCOPY[] = new boolean[IBNDS[0]];
 	private boolean PNEWQ[] = new boolean[IBNDS[0]];
 	private boolean LNSEG[] = new boolean[IBNDS[0]];
-    
+	
+	//COMMON /FNDEF/
+	private double BETA;
+	private double A1;
+	private double B1;
+	private double P0VAL;
+	private double SCALE;
+	private int TYPE;
 	public SymmsIntegralMapping() {
 		
 	}
@@ -2637,9 +2644,10 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		     
 		//     LOCAL VARAIBLES
 		
-		int I,IMXER,INDEG,J,L,MDGPO,MNJXS,MNQUA,MNSUA,MQIN1,NCOLL,
+	   int TNSUA[] = new int[1];
+	   int I,IMXER,INDEG,J,L,MDGPO,MNJXS,MNQUA,MNSUA,MQIN1,NCOLL,
 		     NEFF,NEQNS,NROWS,NTEST,
-		     TNSUA,ORDSG;
+		     ORDSG;
 		int SOLCO = 0;
 		int QIERC[] = new int[7];
 		int QIERR[] = new int[7];
@@ -2648,8 +2656,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		final double SFACT = 0.8;
 		final double QFACT = 0.1;
+		double MCQER[] = new double[1];
 		double AQTOL,CONST,GAQTL,GLGTL,GRQTL,GSUPE,GTGTE,LGTOL,ESTOL,
-		     MCHEP,MCQER,MQERR,MXERM,PI,R1MACH,RCOND,RQTOL,SSUPE,
+		     MCHEP,MQERR,MXERM,PI,R1MACH,RCOND,RQTOL,SSUPE,
 		     TGTER,TOLNR;
 		
 		double ZMXER[] = new double[2];
@@ -2848,7 +2857,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		//**** HISUB NEEDED TO ACCESS COLPR AND ZCOLL CORRECTLY.  INITIALISE
 		//**** DGPOL AND UPDATE LNSEG FOR ARC HALVING. 
 		
-		/*CPJAC3(NARCS,NQPTS,INDEG,DGPOL,JACIN,
+		CPJAC3(NARCS,NQPTS,INDEG,DGPOL,JACIN,
 		     ACOEF,BCOEF,DIAG,SDIAG,TNSUA,
 		     LOSUB,HISUB,JATYP,PARNT,MIDPT,
 		     HALEN,COLPR,ZCOLL,LNSEG,LOOLD,
@@ -2857,7 +2866,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 			WRTAIL(1,0,IER[0],null);
 		    return; 
 		}
-		NCOLL=HISUB[TNSUA-1];
+		NCOLL=HISUB[TNSUA[0]-1];
 		NEQNS=NCOLL+1;
 		NROWS=NCOLL/ORDSG+1;
 		if (NEQNS > MNEQN) {
@@ -2877,37 +2886,37 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		     BCOEF,H0VAL,COLSC,NQUAD,LOQSB,
 		     QCOMX,QCOMW,MNQUA,TOLOU,MCQER,XENPT,
 		     XIVAL,XIDST,IER);
-		      NUQTL=.FALSE.
-		      IF (IER .GT. 0) THEN
-		        GOTO 999
-		      ENDIF
-		      WRITE(*,1) 'COMPOSITE GAUSSIAN RULES DONE:'
-		C
-		C**** SET UP LINEAR ALGEBRAIC SYSTEM.
-		C
-		23    CONTINUE
-		      SOLCO=SOLCO+1
-		      WRITE(*,24) '********SOLUTION',SOLCO,'********',NROWS,'EQUATIONS'
-		24    FORMAT(/,T18,A,1X,I2,1X,A,/,T25,I3,1X,A)
-		C
-		      CALL LNSY11(MATRX,RSNPH(SOLUN),MNEQN,NCOLL,ORDSG,REFLN,NQPTS,
-		     +TNSUA,ISNPH(JATYP),IGEOM(PARNT),ISNPH(DGPOL),ISNPH(LOSUB),
-		     +IWORK(HISUB),IWORK(NQUAD),IWORK(LOQSB),TOLNR,RGEOM(MIDPT),
-		     +RGEOM(HALEN),RSNPH(H0VAL),RWORK(COLSC),RSNPH(ACOEF),RSNPH(BCOEF),
-		     +RWORK(COLPR),RWORK(QCOMX),RWORK(QCOMW),CENTR,ZWORK(ZCOLL),INTER,
-		     +LWORK(LNSEG),RWORK(WORK),QIERR,MQERR,RSNPH(JACIN),RWORK(A1COF),
-		     +RWORK(B1COF),AQTOL,RQTOL,RWORK(AQCOF),RWORK(BQCOF),RWORK(CQCOF),
-		     +IWORK(LOOLD),IWORK(HIOLD))
-		C
-		      DO 25 I=0,6
-		        QIERC(I)=QIERC(I)+QIERR(I)
-		25    CONTINUE
-		      WRITE(*,1) 'LINEAR SYSTEM SET UP DONE:'
-		C
-		C**** SOLVE LINEAR SYSTEM BY GAUSSIAN ELIMINATION USING LINPACK
-		C
-		      CALL SGECO(MATRX(1,1,2),MNEQN,NROWS,IWORK(IPIVT),RCOND,
-		     +RWORK(WORK2))
+		NUQTL=false;
+		if (IER[0] > 0) {
+			WRTAIL(1,0,IER[0],null);
+		    return;    
+		}
+		System.out.println("COMPOSITE GAUSSIAN RULES DONE:");
+		
+		//**** SET UP LINEAR ALGEBRAIC SYSTEM.
+		
+	    /*while (true) {
+		    SOLCO=SOLCO+1;
+		    System.out.prinln("********SOLUTION "+ SOLCO+ " ******** " + NROWS + " EQUATIONS");
+		
+		    LNSY11(MATRX,SOLUN,MNEQN,NCOLL,ORDSG,REFLN,NQPTS,
+		     TNSUA[0],JATYP,PARNT,DGPOL,LOSUB,
+		     HISUB,NQUAD,LOQSB,TOLNR,MIDPT,
+		     HALEN,H0VAL,COLSC,ACOEF,BCOEF,
+		     COLPR,QCOMX,QCOMW,CENTR,ZCOLL,INTER,
+		     LNSEG,WORK,QIERR,MQERR,JACIN,A1COF,
+		     B1COF,AQTOL,RQTOL,AQCOF,BQCOF,CQCOF,
+		     LOOLD,HIOLD);
+		
+		    for (I=0; I <= 6; I++) {
+		        QIERC[I]=QIERC[I]+QIERR[I];
+		    }
+		    System.out.println("LINEAR SYSTEM SET UP DONE:");
+		
+		    //**** SOLVE LINEAR SYSTEM BY GAUSSIAN ELIMINATION USING LINPACK
+		    // LAPACK equivalent of LINPACK SGECO are DLANGE, DGETRF, and DGECON
+		    // LU factorization and condition estimation of a general matrix.
+		    SGECO(MATRX(1,1,2),MNEQN,NROWS,IWORK(IPIVT),RCOND,RWORK(WORK2));
 		      IF (RCOND .EQ. 0E+0) THEN
 		        IER=15
 		        SOLCO=SOLCO-1
@@ -2947,7 +2956,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		        GACPT=.FALSE.
 		      ENDIF
 		C
-		      IF (GACPT) THEN
+		      if (GACPT) {
 		C
 		C****   OUTPUT RESULTS
 		C
@@ -2980,7 +2989,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		        WRITE(OCH,*) '****THE SOLUTION IS ACCEPTED****'
 		        WRITE(OCH,*) 'EFFECTIVE SIZE OF ALL SYSTEMS : ',NEFF
 		        WRITE(OCH,*) 
-		      ELSE
+		        break;
+		      } // if (GACPT)
+		      else { // !GACPT
 		        IF (ACCPT .OR. ESTOL.LE.SSUPE) THEN
 		C
 		C****     SOLUTION AT INTERMEDIATE ACCURACY IS ACCEPTED; SET TOLERANCES
@@ -3072,8 +3083,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		          GOTO 999
 		        ENDIF
 		        WRITE(*,1) 'QUADRATURE UPDATES DONE:'
-		        GOTO 23
-		      ENDIF 
+		        continue;
+		      } // else !GACPT 
+	    } // while (true)
 		C
 		      IF (OULVL.EQ.2 .OR. OULVL.EQ.3) THEN
 		        CALL RSLT71(QIERC,RCOND,RSNPH(SOLUN),NEQNS,ISNPH(LOSUB),
@@ -4177,7 +4189,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 
     private void CPJAC3(int NARCS,int NQPTS,int INDEG, int DGPOL[], double JACIN[],
     		double ACOEF[], double BCOEF[], double DIAG[],
-            double SDIAG[],int TNSUA, int LOSUB[], int HISUB[], int JATYP[], int PARNT[],
+            double SDIAG[],int TNSUA[], int LOSUB[], int HISUB[], int JATYP[], int PARNT[],
             double MIDPT[], double HALEN[], double COLPR[], double ZCOLL[][], boolean LNSEG[],
             int LOOLD[], int HIOLD[], double EPS,int IER[], boolean INIBT) {
         // INTEGER NARCS,NQPTS,INDEG,TNSUA,IER
@@ -4212,7 +4224,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         // COMPLEX PARFUN
         // EXTERNAL PARFUN,IMTQLH,MDNBT
  
-        TNSUA=2*NARCS;
+        TNSUA[0]=2*NARCS;
         for (I=1; I <= NARCS; I++) {
             BETA=JACIN[I-1];
             if (I == NARCS) {
@@ -4250,23 +4262,23 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
             LNSEG[J-2]=LNSEG[I-1];
         } // for (I=NARCS; I >= 1; I--)
 
-        for (I=1; I <= TNSUA; I++) {
+        for (I=1; I <= TNSUA[0]; I++) {
             DGPOL[I-1]=INDEG;
         }
 
         LOSUB[0]=1;
         HISUB[0]=1+DGPOL[0];
-        for (I=2; I <= TNSUA; I++) {
+        for (I=2; I <= TNSUA[0]; I++) {
             LOSUB[I-1]=HISUB[I-2]+1;
             HISUB[I-1]=LOSUB[I-1]+DGPOL[I-1];
-        } // for (I=2; I <= TNSUA; I++)
+        } // for (I=2; I <= TNSUA[0]; I++)
 
-        for (I=1; I <= TNSUA; I++) {
+        for (I=1; I <= TNSUA[0]; I++) {
             LOOLD[I-1]=0;
             HIOLD[I-1]=-1;
-        } // for (I=1; I <= TNSUA; I++)
+        } // for (I=1; I <= TNSUA[0]; I++)
 
-        for (I=1; I <= TNSUA; I++) {
+        for (I=1; I <= TNSUA[0]; I++) {
             J=JATYP[I-1];
             P=PARNT[I-1];
             D=DGPOL[I-1];
@@ -4304,7 +4316,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
                 PIN[1] = 0.0;
                 ZCOLL[K2-1]=PARFUN(P,PIN);
             } // for (K=1; K <= D1; K++)
-        } // for (I=1; I <= TNSUA; I++)
+        } // for (I=1; I <= TNSUA[0]; I++)
 
         // NORMAL EXIT
 
@@ -4410,7 +4422,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     
     private void ICOQR1(int NARCS,int NJIND,int NQPTS,int MDGPO,int MQIN1, double AQTOL, double QUPTS[], double QUWTS[],
         double JACIN[], double MIDPT[], double HALEN[], double ACOEF[], double BCOEF[], double H0VAL[], double COLSC[],
-        int NQUAD[], int LOQSB[], double QCOMX[], double QCOMW[], int MNQUA, double TOLOU[], double MCQER, double XENPT[],
+        int NQUAD[], int LOQSB[], double QCOMX[], double QCOMW[], int MNQUA, double TOLOU[], double MCQER[], double XENPT[],
         double XIVAL[][], double XIDST[], int IER[]) {
         //INTEGER NARCS,NJIND,NQPTS,MDGPO,MQIN1,IER,NQUAD(*),LOQSB(*),
     	//+MNQUA
@@ -4476,7 +4488,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	double ci[] = new double[1];
     	
     	HI=0;
-    	/*for (JI=1; JI <= NARCS; JI++) {
+    	for (JI=1; JI <= NARCS; JI++) {
     	
     	    // AT THE JI'TH CORNER, THE ANALYTIC ARC IN THE BACKWARDS DIRECTION
     	    // IS THE JI0'TH, IN THE FORWARDS DIRECTION IT IS THE JI'TH AND THE
@@ -4640,73 +4652,83 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	        	AJAC[I] = ACOEF[LO-1+I];
     	        	BJAC[I] = BCOEF[LO-1+I];
     	        }
+    	        double CSCAL[] = new double[MDGPO+1];
+    	        for (I = 0; I < MDGPO+1; I++) {
+    	        	CSCAL[I] = COLSC[LO-1+I];
+    	        }
+    	        double TOLU[] =new double[1];
+    	        TOLU[0] = TOLOU[JI-1];
     	        SUBIN7(ZZ,2,BETA,MDGPO,NQPTS,AJAC,BJAC,
-    	            H0VAL[JI-1],COLSC(LO),AQTOL,TOLOU(JI),XENPT,QINTS,MQIN1,IER);
-    	        IF (IER .GT. 0) THEN
-    	          RETURN
-    	        ENDIF
-    	C
-    	C       SET UP THE COMPOSITE RULE ABSCISSAE AND WEIGHTS FOR THIS
-    	C       JACOBI INDEX.
-    	C
-    	        NQUAD(JI)=QINTS*NQPTS
-    	        LOQSB(JI)=HI+1
-    	        IF (HI+NQUAD(JI) .GT. MNQUA) THEN
-    	            IER=9
-    	            RETURN
-    	        ENDIF
-    	        SUM1=BETA+1E+0
-    	        K=HI
-    	        DO 40 I=1,QINTS
-    	          RR=(XENPT(I+1)-XENPT(I))*5E-1
-    	          MEAN=(XENPT(I+1)+XENPT(I))*5E-1 
-    	          IF (I .EQ. 1) THEN
-    	            RRB=RR**SUM1
-    	            LO=LO-1
-    	            DO 20 J=1,NQPTS
-    	              K=K+1
-    	              QCOMX(K)=MEAN+RR*QUPTS(LO+J)
-    	              QCOMW(K)=RRB*QUWTS(LO+J)
-    	20          CONTINUE
-    	          ELSE
-    	            LO=NARCS*NQPTS
-    	            DO 30 J=1,NQPTS
-    	              K=K+1
-    	              QCOMX(K)=MEAN+RR*QUPTS(LO+J)
-    	              QCOMW(K)=RR*QUWTS(LO+J)*(1E+0+QCOMX(K))**BETA
-    	30          CONTINUE
-    	          ENDIF
-    	40      CONTINUE
-    	        HI=HI+NQUAD(JI)
+    	            H0VAL[JI-1],CSCAL,AQTOL,TOLU,XENPT,QINTS,MQIN1,IER);
+    	        TOLOU[JI-1] = TOLU[0];
+    	        if (IER[0] > 0) {
+    	            return;
+    	        }
+    	
+                // SET UP THE COMPOSITE RULE ABSCISSAE AND WEIGHTS FOR THIS
+    	        // JACOBI INDEX.
+    	
+    	        NQUAD[JI-1]=QINTS[0]*NQPTS;
+    	        LOQSB[JI-1]=HI+1;
+    	        if (HI+NQUAD[JI-1] > MNQUA) {
+    	            IER[0]=9;
+    	            return;
+    	        }
+    	        SUM1=BETA+1.0;
+    	        K=HI;
+    	        for (I=1; I <= QINTS[0]; I++) {
+    	            RR=(XENPT[I]-XENPT[I-1])*0.5;
+    	            MEAN=(XENPT[I]+XENPT[I-1])*0.5; 
+    	            if (I == 1) {
+    	                RRB=Math.pow(RR,SUM1);
+    	                LO=LO-1;
+    	                for (J=1; J <= NQPTS; J++) {
+    	                    K=K+1;
+    	                    QCOMX[K-1]=MEAN+RR*QUPTS[LO+J-1];
+    	                    QCOMW[K-1]=RRB*QUWTS[LO+J-1];
+    	                } // for (J=1; J <= NQPTS; J++)
+    	            } // if (I == 1)
+    	            else {
+    	                LO=NARCS*NQPTS;
+    	                for (J=1; J <= NQPTS; J++) {
+    	                    K=K+1;
+    	                    QCOMX[K-1]=MEAN+RR*QUPTS[LO+J-1];
+    	                    QCOMW[K-1]=RR*QUWTS[LO+J-1]*Math.pow((1.0+QCOMX[K-1]),BETA);
+    	                } // for (J=1; J <= NQPTS; J++)
+    	            }
+    	        } // for (I=1; I <= QINTS[0]; I++)
+    	        HI=HI+NQUAD[JI-1];
     	} // for (JI=1; JI <= NARCS; JI++)
-    	C
-    	C     ASSIGN INITIAL DATA FOR LEGENDRE ARCS 
-    	C
-    	      I=2*NJIND
-    	      RR=R1MACH(2)
-    	      XIDST(I)=RR
-    	      XIDST(I-1)=RR
-    	      XIVAL(I)=CMPLX(RR)
-    	      XIVAL(I-1)=CMPLX(RR)
-    	      LOQSB(NJIND)=HI+1
-    	      NQUAD(NJIND)=0
-    	C
-    	C     FIND THE MAXIMUM OF THE TOLOU ELEMENTS
-    	C
-    	      MCQER=0E+0
-    	      DO 60 I=1,NARCS
-    	        MCQER=MAX(MCQER,TOLOU(I))
-    	60    CONTINUE 
-    	C
-    	C     NORMAL TERMINATION
-    	C
-    	      IER=0
-    	C*/
+    	
+    	// ASSIGN INITIAL DATA FOR LEGENDRE ARCS 
+    	
+    	I=2*NJIND;
+    	RR=Double.MAX_VALUE;
+    	XIDST[I-1]=RR;
+    	XIDST[I-2]=RR;
+    	XIVAL[I-1][0]=RR;
+    	XIVAL[I-1][1] = 0.0;
+    	XIVAL[I-2][0]=RR;
+    	XIVAL[I-2][1] = 0.0;
+    	LOQSB[NJIND-1]=HI+1;
+    	NQUAD[NJIND-1]=0;
+    	
+    	// FIND THE MAXIMUM OF THE TOLOU ELEMENTS
+    	
+    	MCQER[0]=0.0;
+        for (I=1; I <= NARCS; I++) {
+    	    MCQER[0]=Math.max(MCQER[0],TOLOU[I-1]);
+        } 
+    	
+    	// NORMAL TERMINATION
+    	
+    	IER[0]=0;
+    	
     } // private void ICOQR1
 
 
     private void SUBIN7(double ZZ[][], int NZZ, double BETA, int MAXDG, int NQUAD, double AJAC[], double BJAC[],
-        double H0JAC, double CSCAL[], double TOLIN, double TOLOU, double XENPT[], int QINTS[], int MQIN1,int IER[]) {
+        double H0JAC, double CSCAL[], double TOLIN, double TOLOU[], double XENPT[], int QINTS[], int MQIN1,int IER[]) {
     	//INTEGER MAXDG,NQUAD,QINTS,NZZ,IER,MQIN1
     	//REAL BETA,AJAC(*),BJAC(*),H0JAC,CSCAL(*),TOLIN,TOLOU,XENPT(*)
     	//COMPLEX ZZ(*)
@@ -4745,7 +4767,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	final int NMAX = 100;
     	double TAU[] = new double[1];
     	double MAXRM[] = new double[1];
-    	double TOL,RIGHT;
+    	double TOL;
+    	double RIGHT[] = new double[1];
     	boolean T1FXD;
     	
     	double REMND[][] = new double[NMAX][2];
@@ -4765,37 +4788,40 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	if (IER[0] > 0) {
     	    return;
     	}
-    	TOLOU=MAXRM[0];
+    	TOLOU[0]=MAXRM[0];
     	XENPT[1]=TAU[0];
     	
     	if (XENPT[1] < 1.0) {
     	    QINTS[0]=2;
     	    T1FXD=false;
     	    TAU[0]=1.0;
-    	    RIGHT=-1.0;
-    	    DELEG7(ZZ,NZZ,BETA,RIGHT,TAU[0],T1FXD,MAXDG,NQUAD,AJAC,
+    	    RIGHT[0]=-1.0;
+    	    DELEG7(ZZ,NZZ,BETA,RIGHT,TAU,T1FXD,MAXDG,NQUAD,AJAC,
                    BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER);
     	    if (IER[0] > 0) {
     	        return;
     	    }
-    	    TOLOU=TOLOU+MAXRM[0];
+    	    TOLOU[0]=TOLOU[0]+MAXRM[0];
     	    T1FXD=true;
     	
     	    while (true) {
     	
-    	        if (XENPT[QINTS[0]-1] > RIGHT) {
-    	            XENPT[QINTS[0]-1]=0.5*(XENPT[QINTS[0]-1]+RIGHT);
+    	        if (XENPT[QINTS[0]-1] > RIGHT[0]) {
+    	            XENPT[QINTS[0]-1]=0.5*(XENPT[QINTS[0]-1]+RIGHT[0]);
     	            XENPT[QINTS[0]]=1.0;
     	            break;
     	        }
     	        else {
     	          TAU[0]=1.0;
-    	          DELEG7(ZZ,NZZ,BETA,XENPT[QINTS[0]-1],TAU[0],T1FXD,MAXDG,
+    	          double TAU1[] = new double[1];
+    	          TAU1[0] = XENPT[QINTS[0]-1];
+    	          DELEG7(ZZ,NZZ,BETA,TAU1,TAU,T1FXD,MAXDG,
     	                   NQUAD,AJAC,BJAC,H0JAC,REMND,CSCAL,TOL,MAXRM,IER);
+    	          XENPT[QINTS[0]-1] = TAU1[0];
     	          if (IER[0] > 0) {
     	              return;
     	          }
-    	          TOLOU=TOLOU+MAXRM[0];
+    	          TOLOU[0]=TOLOU[0]+MAXRM[0];
     	          QINTS[0]=QINTS[0]+1;
     	          if (QINTS[0] >= MQIN1) {
     	              IER[0]=11;
@@ -5084,7 +5110,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         return result;
     } // private double LGGAM
 
-    private void DELEG7(double ZZ[][], int NZZ, double BETA, double TAU1, double TAU2, boolean T1FXD,
+    private void DELEG7(double ZZ[][], int NZZ, double BETA, double TAU1[], double TAU2[], boolean T1FXD,
         int MAXDG, int NQUAD, double ACOEF[], double BCOEF[], double H0VAL, double REMND[][], 
         double CSCAL[], double TOL, double MAXRM[], int IER[]) {
         //INTEGER MAXDG,NQUAD,IER,NZZ
@@ -5267,15 +5293,15 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	
         // NOW COME THE FACTORS DEPENDENT ON TAU1 AND TAU2.
     	
-    	LOWER=TAU1;
-    	UPPER=TAU2;
+    	LOWER=TAU1[0];
+    	UPPER=TAU2[0];
     	FIRST= true;
     	
     	while (true) {
     	
     	    HTOL=0.5*TOL;
-    	    RR=(TAU2-TAU1)*0.5;
-    	    MEAN=(TAU1+TAU2)*0.5;
+    	    RR=(TAU2[0]-TAU1[0])*0.5;
+    	    MEAN=(TAU1[0]+TAU2[0])*0.5;
     	    BB=(1.0+MEAN)/RR;
     	    BB1=BB+Math.sqrt(BB*BB-1.0);
     	
@@ -5351,14 +5377,14 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	              // TAU2<1) OR TAU1 NEED INCREASING OTHERWISE (BUT THIS IS ONLY
                       // POSSIBLE IF TAU1>-1)
     	
-    	              if (T1FXD && TAU2 < 1.0) {
-    	                  LOWER=TAU2;
-    	                  TAU2=0.5*(LOWER+UPPER);
+    	              if (T1FXD && TAU2[0] < 1.0) {
+    	                  LOWER=TAU2[0];
+    	                  TAU2[0]=0.5*(LOWER+UPPER);
     	                  continue;
     	              }
-    	              else if (!T1FXD && TAU1 > -1.0) {
-    	                  UPPER=TAU1;
-    	                  TAU1=0.5*(LOWER+UPPER);
+    	              else if (!T1FXD && TAU1[0] > -1.0) {
+    	                  UPPER=TAU1[0];
+    	                  TAU1[0]=0.5*(LOWER+UPPER);
     	                  continue;
     	              }
     	              else {
@@ -5379,12 +5405,12 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	              FIRST=false;
     	          }
     	          if (T1FXD) {
-    	              UPPER=TAU2;
-    	              TAU2=0.5*(LOWER+UPPER);
+    	              UPPER=TAU2[0];
+    	              TAU2[0]=0.5*(LOWER+UPPER);
     	          }
     	          else {
-    	              LOWER=TAU1;
-    	              TAU1=0.5*(LOWER+UPPER);
+    	              LOWER=TAU1[0];
+    	              TAU1[0]=0.5*(LOWER+UPPER);
     	          }
     	          continue;
     	      } // else MAXRM[0] >= TOL
@@ -5489,6 +5515,440 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	1000  FORMAT(A,1X,I5)
     	C
     }*/
+    
+    private void LNSY11(double MATRX[][][], double RGTSD[], int MNEQN, int NCOLL, int ORDSG, boolean REFLN,
+        int NQPTS, int TNSUA, int JATYP[], int PARNT[], int DGPOL[], int LOSUB[], int HISUB[], int NQUAD[],
+        int LOQSB[], double TOLNR, double MIDPT[], double HALEN[], double H0VAL[], double COLSC[], double ACOEF[],
+        double BCOEF[], double COLPR[], double QCOMX[], double QCOMW[], double CENTR[], double ZCOLL[][],
+        boolean INTER, boolean LNSEG[], double WORK[], int QIERR[], double MQERR[], double JACIN[], double A1COF[],
+        double B1COF[], double AQTOL, double RQTOL, double AQCOF[], double BQCOF[], double CQCOF[],
+        int LOOLD[], int HIOLD[]) {
+    	
+        // INTEGER MNEQN,NCOLL,ORDSG,NQPTS,TNSUA,JATYP(*),PARNT(*),
+    	//+DGPOL(*),LOSUB(*),HISUB(*),NQUAD(*),LOQSB(*),QIERR(0:6),LOOLD(*),
+    	//+HIOLD(*)
+    	
+    	//REAL MATRX(MNEQN,MNEQN,2),RGTSD(*),TOLNR,MIDPT(*),HALEN(*),
+    	//+H0VAL(*),COLSC(*),ACOEF(*),BCOEF(*),COLPR(*),QCOMX(*),QCOMW(*),
+    	//+MQERR,WORK(*),A1COF(*),B1COF(*),AQTOL,
+    	//+JACIN(*),RQTOL,AQCOF(*),BQCOF(*),CQCOF(*)
+    	
+    	//COMPLEX CENTR,ZCOLL(*)
+    	
+    	//LOGICAL INTER,LNSEG(*),REFLN
+    	
+    	// TO SET UP THE INITIAL COLLOCATION MATRIX (MATRX) AND THE RIGHT
+    	// HAND SIDE VECTOR (RGTSD).  WE ASSUME COLLOCATION DOES NOT TAKE 
+    	// PLACE AT END POINTS OF ARCS.
+    	
+    	//.......................................................................
+    	//     THIS ROUTINE IS ADAPTED FROM LNSY10 AND IS DESIGNED TO FORM ONLY
+    	//     THOSE LINEAR EQUATIONS THAT ARISE FROM COLLOCATING AT POINTS ON
+    	//     THE FUNDAMENTAL PART OF THE BOUNDARY
+    	//.......................................................................
+    	
+    	//     LOCAL VARIABLES
+    	
+        int IER[] = new int[1];
+    	int I,J,I1,J1,J2,J3,JO,IA,IQ,IS,JI,AJI,PT,DG,LOM,HIM,LOQ,LOD,
+    	    NQ,NCFBS,NROWS,NCOLS,ORDRG,ISAMAX,NVAL,IC,LOC,HIC,TSFBS;
+    	double MD,HL,RH,TQ,WQ,DD,LDD,SG,SJI,TC,C0,
+    	       FNVAL,U0,U1,CURR,PREV,NEXT,ABER0,ABER1;
+    	double GTQ[] = new double[2];
+    	double ZQ[] = new double[2];
+    	double ZC[] = new double[2];
+    	// COMPLEX GTQ,ZQ,ZC,PARFUN,DPARFN
+    	boolean OLDIA;
+    	//COMMON /FNDEF/BETA,A1,B1,P0VAL,SCALE,TYPE
+    	// EXTERNAL DPARFN,FNVAL,ISAMAX,JAPAR7,PARFUN,QAWS
+    	qaws qmod;
+    	int routine = Integration2.DQAWSE;
+    	double DOUT[];
+    	double DIN[] = new double[2];
+    	/**
+         * Gives an upper bound on the number of subintervals in the partition of lower, upper.
+         */
+        int limit = 100;
+    	
+    	NCFBS=NCOLL/ORDSG;
+    	TSFBS=TNSUA/ORDSG;
+    	NROWS=NCFBS+1;
+    	NCOLS=NCOLL+1;
+    	
+    	for (J=1; J <= NCOLS; J++) {
+    	    for (I=1; I <= NROWS; I++) {
+    	        MATRX[I-1][J-1][1]=0.0;
+    	    }
+    	} // for (J=1; J <= NCOLS; J++)
+    	for (I=0; I <= 6; I++) {
+    	    QIERR[I]=0;
+    	}
+    	MQERR[0]=0.0;
+    	
+    	// NOW SELECT THE INTEGRATION ARC
+    	
+    	for (IA=1; IA <= TNSUA; IA++) {
+
+    	
+    	    // INITIALISE DATA FOR THIS ARC
+    	
+    	    PT=PARNT[IA-1];
+    	    MD=MIDPT[IA-1];
+    	    HL=HALEN[IA-1];
+    	    DG=DGPOL[IA-1];
+    	    LOM=LOSUB[IA-1];
+    	    HIM=HISUB[IA-1];
+    	    JI=JATYP[IA-1];
+    	    if (JI < 0) {
+    	        SJI=-1.0;
+    	    }
+    	    else {
+    	        SJI=1.0;
+    	    }
+    	    AJI=Math.abs(JI);
+    	    LOD=(AJI-1)*NQPTS+1;
+    	    RH=Math.sqrt(H0VAL[AJI-1]);
+    	    BETA=JACIN[AJI-1];
+    	    A1=A1COF[AJI-1];
+    	    B1=B1COF[AJI-1];
+    	    P0VAL=1.0/RH;
+    	
+    	    // ASSIGN THE NON-ZERO ELEMENT FOR THE SIDE EQUATION FOR THIS ARC
+    	
+    	    MATRX[NROWS-1][LOM-1][1]=RH*COLSC[LOD-1];
+    	
+    	    // SET UP THE DIAGONAL BLOCK OF SCALED PRINCIPAL SINGULAR INTEGRALS
+    	    // IF THIS DOESN'T ALREADY EXIST.
+    	
+    	    JO=LOOLD[IA-1];
+    	    OLDIA=(JO > 0);
+    	    if (!OLDIA && HIM <= NCFBS) {
+    	        for (I1=LOM; I1 <= HIM; I1++) {
+    	            TC=SJI*COLPR[I1-1];
+    	            SCALE=COLSC[LOD-1];
+    	            TYPE=1;
+    	            // Use dqawse which is the same as (quadpack/dqaws) but provides more
+    	            // information and control
+    	            qmod = new qaws(-1.0,TC,routine,BETA,0.0,3,AQTOL,RQTOL,limit);
+    	            qmod.driver();
+    	            U0 = qmod.getIntegral();
+    	            ABER0 = qmod.getAbserr();
+    	            NVAL = qmod.getNeval();
+    	            IER[0] = qmod.getErrorStatus();
+    	            QIERR[IER[0]-1]=QIERR[IER[0]-1]+1;
+    	            TYPE=2;
+    	            qmod = new qaws(TC,1.0,routine,0.0,0.0,2,AQTOL,RQTOL,limit);
+    	            qmod.driver();
+    	            U1 = qmod.getIntegral();
+    	            ABER1 = qmod.getAbserr();
+    	            NVAL = qmod.getNeval();
+    	            IER[0] = qmod.getErrorStatus();
+    	            QIERR[IER[0]-1]=QIERR[IER[0]-1]+1;
+    	            WORK[0]=U0+U1;
+    	            MQERR[0]=Math.max(MQERR[0],ABER0+ABER1);
+    	            if (DG > 0) {
+    	                SCALE=COLSC[LOD];
+    	                TYPE=3;
+    	                qmod = new qaws(-1.0,TC,routine,BETA,0.0,3,AQTOL,RQTOL,limit);
+    	                qmod.driver();
+        	            U0 = qmod.getIntegral();
+        	            ABER0 = qmod.getAbserr();
+        	            NVAL = qmod.getNeval();
+        	            IER[0] = qmod.getErrorStatus();
+        	            QIERR[IER[0]-1]=QIERR[IER[0]-1]+1;
+    	                TYPE=4;
+    	                qmod = new qaws(TC,1.0,routine,0.0,0.0,2,AQTOL,RQTOL,limit);
+    	                qmod.driver();
+        	            U1 = qmod.getIntegral();
+        	            ABER1 = qmod.getAbserr();
+        	            NVAL = qmod.getNeval();
+        	            IER[0] = qmod.getErrorStatus();
+        	            QIERR[IER[0]-1]=QIERR[IER[0]-1]+1;
+    	                WORK[1]=U0+U1;
+    	                MQERR[0]=Math.max(MQERR[0],ABER0+ABER1);
+    	
+    	                // NOW USE THE (WEAKLY) STABLE FORWARD RECURRENCE SCHEME  
+    	                // FOR WORK(I),I=3,NQPTS (WITH SCALE FACTOR FOR WORK(2))
+    	
+    	                CURR=WORK[1];
+    	                PREV=SCALE;
+    	                for (I=1; I <= DG-1; I++) {
+    	                    J=LOD+I-1;
+    	                    NEXT=(AQCOF[J-1]*TC-BQCOF[J-1])*CURR-CQCOF[J-1]*PREV;
+    	                    WORK[I+1]=NEXT;
+    	                    PREV=CURR;
+    	                    CURR=NEXT;
+    	                } // for (I=1; I <= DG-1; I++)
+    	
+    	                // ASSIGN CORRECT SCALE FACTORS.
+    	
+    	                for (I=3; I <= DG+1; I++) {
+    	                    J=LOD+I-1;
+    	                    WORK[I-1]=WORK[I-1]*COLSC[J-1]/SCALE;
+    	                } // for (I=3; I <= DG+1; I++)
+    	            } // if (DG > 0)
+    	
+    	            SG=1.0;
+    	            for (J=LOM; J <= HIM; J++) {
+    	                MATRX[I1-1][J-1][1]=MATRX[I1-1][J-1][1]+SG*WORK[J-LOM];
+    	                SG=SG*SJI;
+    	            } // for (J=LOM; J <= HIM; J++)
+    	
+    	        } // for (I1=LOM; I1 <= HIM; I1++)
+    	    } // if (!OLDIA && HIM <= NCFBS)
+
+    	
+    	    // INITIALISE SOME DATA FOR THE NON-SINGULAR INTEGRALS
+    	
+    	    WORK[0]=1.0/RH;
+    	    NQ=NQUAD[AJI-1];
+    	    LOQ=LOQSB[AJI-1];
+    	
+    	    for (IQ=1; IQ <= NQ; IQ++) {
+    	        I=LOQ+IQ-1;
+    	        TQ=QCOMX[I-1];
+    	        WQ=QCOMW[I-1];
+    	        double AA[] = new double[DG];
+    	        double BB[] = new double[DG];
+    	        for (I = 0; I < DG; I++) {
+    	        	AA[I] = ACOEF[LOD-1+I];
+    	        	BB[I] = BCOEF[LOD-1+I];
+    	        }
+    	        JAPAR7(WORK,TQ,AA,BB,DG);
+    	        if (JI < 0) {
+    	            TQ=-TQ;
+    	        }
+    	        GTQ[0] = MD+HL*TQ;
+    	        GTQ[1] = 0.0;
+    	        ZQ=PARFUN(PT,GTQ);
+    	
+    	        // ACCUMULATE ALL NEW ELEMENTS NOT ON THE DIAGONAL BLOCK
+    	
+    	        for (IC=1; IC <= TSFBS; IC++) {
+    	            J2=LOOLD[IC-1];
+    	            if (IC != IA && (J2 == 0 || !OLDIA)) {
+    	                LOC=LOSUB[IC-1];
+    	                HIC=HISUB[IC-1];
+    	                for (I1=LOC; I1 <= HIC; I1++) {
+    	                    ZC[0]=ZCOLL[I1-1][0];
+    	                    ZC[1]=ZCOLL[I1-1][1];
+    	                    DD=zabs(ZC[0]-ZQ[0],ZC[1]-ZQ[1]);
+    	                    LDD=Math.log(DD)*WQ;
+    	                    SG=1.0;
+    	                    for (J1=LOM; J1 <= HIM; J1++) {
+    	                        J=J1-LOM+1;
+    	                        I=J1-LOM+LOD;
+    	                        MATRX[I1-1][J1-1][1]=MATRX[I1-1][J1-1][1]+SG*WORK[J-1]*LDD*COLSC[I-1];
+    	                        SG=SG*SJI;
+    	                    } // for (J1=LOM; J1 <= HIM; J1++)
+    	                } // for (I1=LOC; I1 <= HIC; I1++)
+    	            } // if (IC != IA && (J2 == 0 || !OLDIA))
+    	        } // for (IC=1; IC <= TSFBS; IC++)
+    	
+    	        // ACCUMULATE THE RESIDUAL NON-SINGULAR CONTRIBUTIONS INTO
+    	        // ANY NEW DIAGONAL BLOCK FOR THE NON-LINE-SEGMENT CASE.
+    	
+    	        if (!LNSEG[IA-1] && !OLDIA && HIM <= NCFBS) {
+    	            for (I1=LOM; I1 <= HIM; I1++) {
+    	                TC=COLPR[I1-1];
+    	                DD=Math.abs(TC-TQ);
+    	                if (DD <= TOLNR) {
+    	                	DOUT = DPARFN(PT,GTQ);
+    	                	DD = zabs(DOUT[0],DOUT[1])*HL;
+    	                }
+    	                else {
+    	                    ZC[0]=ZCOLL[I1-1][0];
+    	                    ZC[1]=ZCOLL[I1-1][1];
+    	                    DD=zabs(ZC[0]-ZQ[0],ZC[1]-ZQ[1])/DD;
+    	                    if (DD < TOLNR) {
+    	                    	DOUT = DPARFN(PT,GTQ);
+        	                	DD = zabs(DOUT[0],DOUT[1])*HL;
+    	                    }
+    	                }
+    	                LDD=Math.log(DD)*WQ;
+    	                SG=1.0;
+    	                for (J1=LOM; J1 <= HIM; J1++) {
+    	                    J=J1-LOM+1;
+    	                    I=J1-LOM+LOD;
+    	                    MATRX[I1-1][J1-1][1]=MATRX[I1-1][J1-1][1]+SG*WORK[J-1]*LDD*COLSC[I-1];
+    	                    SG=SG*SJI;
+    	                } // for (J1=LOM; J1 <= HIM; J1++)
+    	            } // for (I1=LOM; I1 <= HIM; I1++)
+    	        } // if (!LNSEG[IA-1] && !OLDIA && HIM <= NCFBS)
+    	    } // for (IQ=1; IQ <= NQ; IQ++)
+    	
+    	    // ACCUMULATE THE RESIDUAL NON-SINGULAR CONTRIBUTIONS INTO
+    	    // ANY NEW DIAGONAL BLOCK FOR THE LINE-SEGMENT CASE.
+    	
+    	    if (LNSEG[IA-1] && !OLDIA && HIM <= NCFBS) {
+    	    	  DIN[0] = MD;
+    	    	  DIN[1] = 0.0;
+    	    	  DOUT = DPARFN(PT,DIN);
+    	    	  ZC[0] = DOUT[0]*HL;
+    	    	  ZC[1] = DOUT[1]*HL;
+    	          C0=zabs(ZC[0],ZC[1]);
+    	          C0=RH*Math.log(C0)*COLSC[LOD-1];
+    	          for (I1=LOM; I1 <= HIM; I1++) {
+    	              MATRX[I1-1][LOM-1][1]=MATRX[I1-1][LOM-1][1]+C0;
+    	          }
+    	    } // if (LNSEG[IA-1] && !OLDIA && HIM <= NCFBS)
+    	
+    	    // NOW COPY OVER ANY RELEVANT ELEMENTS ALREADY AVAILABLE IN
+    	    // MATRX(*,*,1)
+    	
+    	    if (OLDIA) {
+    	        for (IC=1; IC <= TSFBS; IC++) {
+    	            J2=LOOLD[IC-1];
+    	            if (J2 > 0) {
+    	                LOC=LOSUB[IC-1];
+    	                HIC=HISUB[IC-1];
+    	                J2=J2-1;
+    	                for (I1=LOC; I1 <= HIC; I1++) {
+    	                    J2=J2+1;
+    	                    for (J1=LOM; J1 <= HIM; J1++) {
+    	                        J=J1+JO-LOM;
+    	                        MATRX[I1-1][J1-1][1]=MATRX[J2-1][J-1][0];
+    	                    } // for (J1=LOM; J1 <= HIM; J1++)
+    	                } // for (I1=LOC; I1 <= HIC; I1++)
+    	            } // if (J2 > 0)
+    	        } // for (IC=1; IC <= TSFBS; IC++)
+    	    } // if (OLDIA)
+    	
+    	} // for (IA=1; IA <= TNSUA; IA++)
+    	
+    	// SET UP THE LAST COLUMN
+    	
+    	for (I=1; I <= NCFBS; I++) {
+    	    MATRX[I-1][NCOLS-1][1]=1.0;
+    	}
+    	
+        // FINALLY SET UP THE RIGHT HAND SIDE VECTOR
+    	
+    	if (INTER) {
+    	    for (I=1; I <= NCFBS; I++) {
+    	        ZC[0]=ZCOLL[I-1][0]-CENTR[0];
+    	        ZC[1]=ZCOLL[I-1][1]-CENTR[1];
+    	        RGTSD[I-1]=Math.log(zabs(ZC[0],ZC[1]));
+    	    }
+    	}
+    	else {
+    	    for (I=1; I <= NCFBS; I++) {
+    	        RGTSD[I-1]=0.0;
+    	    }
+    	}
+    	RGTSD[NROWS-1]=1.0;
+    	
+    	// COPY MATRX(*,*,2) ONTO MATRX(*,*,1)
+    	
+    	for (J=1; J <= NCOLS; J++) {
+    	    for (I=1; I <= NROWS; I++) {
+    	        MATRX[I-1][J-1][0]=MATRX[I-1][J-1][1];
+    	    }
+    	} // for (J=1; J <= NCOLS; J++)
+    	
+    	// COMBINE COLUMNS OF MATRX(*,*,2) TOGETHER ACCORDING TO SYMMETRY
+    	// SPECIFICATIONS
+    	
+    	if (ORDSG > 1) {
+    	    if (REFLN) {
+    	        ORDRG=ORDSG/2;
+    	        for (IS=2; IS <= ORDRG; IS++) {
+    	            LOM=(IS-1)*NCFBS*2;
+    	            for (I=1; I <= NROWS; I++) {
+    	                for (J=1; J <= NCFBS*2; J++) {
+    	                    J1=LOM+J;
+    	                    MATRX[I-1][J-1][1]=MATRX[I-1][J-1][1]+MATRX[I-1][J1-1][1];
+    	                } // for (J=1; J <= NCFBS*2; J++)
+    	            } // for (I=1; I <= NROWS; I++)
+    	        } // for (IS=2; IS <= ORDRG; IS++)
+    	        for (IA=1; IA <= TSFBS; IA++) {
+    	            J1=LOSUB[IA-1];
+    	            J2=HISUB[IA-1];
+    	            LOM=LOSUB[2*TSFBS-IA]-J1;
+    	            SG=-1.0;
+    	            for (J=J1; J <= J2; J++) {
+    	                SG=-SG;
+    	                J3=LOM+J;
+    	                for (I=1; I <= NROWS; I++) {
+    	                    MATRX[I-1][J-1][1]=MATRX[I-1][J-1][1]+SG*MATRX[I-1][J3-1][1];
+    	                }
+    	            } // for (J=J1; J <= J2; J++)
+    	        } // for (IA=1; IA <= TSFBS; IA++)
+    	    } // if (REFLN)
+    	    else {
+    	        for (IS=2; IS <= ORDSG; IS++) {
+    	            LOM=(IS-1)*NCFBS;
+    	            for (I=1; I <= NROWS; I++) {
+    	                for (J=1; J <= NCFBS; J++) {
+    	                    J1=LOM+J;
+    	                    MATRX[I-1][J-1][1]=MATRX[I-1][J-1][1]+MATRX[I-1][J1-1][1];
+    	                } // for (J=1; J <= NCFBS; J++)
+    	            } // for (I=1; I <= NROWS; I++)
+    	        } // for (IS=2; IS <= ORDSG; IS++)
+    	    } // else
+    	
+    	    for (I=1; I <= NROWS; I++) {
+    	        MATRX[I-1][NROWS-1][1]=MATRX[I-1][NCOLS-1][1];
+    	    }
+    	} // if (ORDSG > 1)
+    	
+    } // private void LNSY11
+    
+    class qaws extends Integration2 {
+    	
+    	public qaws(double lower, double upper, int routine, double alfa,
+                double beta, int integr, double epsabs, double epsrel, int limit) {
+	        super(lower, upper, routine, alfa, beta, integr, epsabs, epsrel, limit);
+    	}
+    	
+    	public void driver() {
+			super.driver();
+		}
+    	
+    	public double intFunc(double X) {
+    		double result;
+
+            if (TYPE == 1) {
+                result=P0VAL*SCALE;
+            }
+            else if (TYPE == 2) {
+                result=Math.pow((1.0+X),BETA)*P0VAL*SCALE;
+            }
+            else if (TYPE == 3) {
+                result=(X-B1)*P0VAL*SCALE/A1;
+            }
+            else {
+                result=Math.pow((1.0+X),BETA)*(X-B1)*P0VAL*SCALE/A1;
+            }
+            return result; 	
+    	}
+    }
+
+    private double FNVAL(double X) {
+
+        // LOCAL VARIABLES.
+
+        // INTEGER TYPE
+        // REAL BETA,A1,B1,P0VAL,SCALE
+        // COMMON /FNDEF/BETA,A1,B1,P0VAL,SCALE,TYPE
+    	double result;
+
+        if (TYPE == 1) {
+            result=P0VAL*SCALE;
+        }
+        else if (TYPE == 2) {
+            result=Math.pow((1.0+X),BETA)*P0VAL*SCALE;
+        }
+        else if (TYPE == 3) {
+            result=(X-B1)*P0VAL*SCALE/A1;
+        }
+        else {
+            result=Math.pow((1.0+X),BETA)*(X-B1)*P0VAL*SCALE/A1;
+        }
+        return result;
+    } // private double FNVAL
+
+
 
  
       /**
