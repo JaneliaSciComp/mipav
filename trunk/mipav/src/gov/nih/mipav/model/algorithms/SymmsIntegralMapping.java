@@ -6,6 +6,8 @@ import java.io.RandomAccessFile;
 import java.util.Scanner;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -89,33 +91,33 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     Scanner input = new Scanner(System.in);
     private double zzset[][] = new double[400][2];
     private int IBNDS[] = new int[5];
-    private int IGEOM[] = new int[4];
-    private int PARNT[] = new int[IBNDS[0]];
-    private double RGEOM[] = new double[2];
-    private double HALEN[]= new double[IBNDS[0]];
-	private double MIDPT[] = new double[IBNDS[0]];
-	private double VTARG[] = new double[IBNDS[0]]; 
-    private int ISNPH[] = new int[6];
-    private int DGPOL[] = new int[IBNDS[0]];
-	private int JATYP[] = new int[IBNDS[0]];
-	private int LOSUB[] = new int[IBNDS[0]];
+    private int IGEOM[] = new int[4]; // Written in original JAPHYC
+    private int PARNT[] = new int[IBNDS[0]]; // Written in original JAPHYC
+    private double RGEOM[] = new double[2]; // Written in original JAPHYC
+    private double HALEN[]= new double[IBNDS[0]]; // Written in original JAPHYC
+	private double MIDPT[] = new double[IBNDS[0]]; // Written in original JAPHYC
+	private double VTARG[] = new double[IBNDS[0]]; // Written in original JPAHYC
+    private int ISNPH[] = new int[6]; // Written in original JAPHYC
+    private int DGPOL[] = new int[IBNDS[0]]; // Written in original JAPHYC
+	private int JATYP[] = new int[IBNDS[0]]; // Written in original JAPHYC
+	private int LOSUB[] = new int[IBNDS[0]]; // Written in original JAPHYC
 	// Parts of RSNPH
 	private int NQPTS;
 	private int NJIND = NARCS + 1;
 	private int TNGQP = NQPTS * NJIND;
 	private int MNEQN;
-	private double ACOEF[] = new double[TNGQP];
-	private double BCOEF[] = new double[TNGQP];
-	private double AICOF[] = new double[TNGQP];
-	private double BICOF[] = new double[TNGQP];
-	private double QUPTS[] = new double[TNGQP];
-	private double QUWTS[] = new double[TNGQP];
-	private double H0VAL[] = new double[NJIND];
-	private double HIVAL[] = new double[NJIND];
-	private double JACIN[] = new double[NJIND];
-	private double ERARC[] = new double[IBNDS[0]];
-	private double BCFSN[] = new double[MNEQN];
-	private double SOLUN[] = new double[MNEQN];
+	private double ACOEF[] = new double[TNGQP]; // Written in original JAPHYC
+	private double BCOEF[] = new double[TNGQP]; // Written in original JAPHYC
+	private double AICOF[] = new double[TNGQP]; // Written in original JAPHYC
+	private double BICOF[] = new double[TNGQP]; // Written in original JAPHYC
+	private double QUPTS[] = new double[TNGQP]; // Written in original JAPHYC
+	private double QUWTS[] = new double[TNGQP]; // Written in original JAPHYC
+	private double H0VAL[] = new double[NJIND]; // Written in original JAPHYC
+	private double HIVAL[] = new double[NJIND]; // Written in original JAPHYC
+	private double JACIN[] = new double[NJIND]; // Written in original JAPHYC
+	private double ERARC[] = new double[IBNDS[0]]; // Written in original JAPHYC
+	private double BCFSN[] = new double[MNEQN]; // Written in original JAPHYC
+	private double SOLUN[] = new double[MNEQN]; // Written in original JAPHYC
 	// Parts of IWORK
 	private int IPIVT[] = new int[MNEQN];
 	private int LOQSB[] = new int[IBNDS[1]];
@@ -158,6 +160,19 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	private boolean LCOPY[] = new boolean[IBNDS[0]];
 	private boolean PNEWQ[] = new boolean[IBNDS[0]];
 	private boolean LNSEG[] = new boolean[IBNDS[0]];
+	
+//  CENTR  - COMPLEX
+//                     THE POINT IN THE PHYSICAL PLANE THAT IS TO BE
+//                     MAPPED TO THE CENTRE OF THE UNIT DISC.  FOR
+//                     EXTERIOR DOMAINS CENTR MUST BE SOME POINT IN THE
+//                     COMPLEMENTARY INTERIOR  PHYSICAL DOMAIN.
+//                     IN CASE ABS(ISYGP).GT.1 THEN CENTR MUST ALSO BE
+//                     A CENTRE OF SYMMETRY FOR THE PHYSICAL DOMAIN.
+	private double CENTR[] = new double[2]; // Written in original JAPHYC
+//  INTER  - LOGICAL
+//                     TRUE IF THE PHYSICAL DOMAIN IS INTERIOR, FALSE 
+//                     OTHERWISE.
+	private boolean INTER; // Written in in original JAPHYC
 	
 	//COMMON /FNDEF/
 	private double BETA;
@@ -2331,9 +2346,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
        return result;
    }
 
-   private void JAPHYC(String JBNM, String HEAD, double MAXER,boolean INTER,
+   private void JAPHYC(String JBNM, String HEAD, double MAXER,
 		      int ISYGP, boolean INCST,
-		      int RFARC, double RFARG[], double CENTR[], int TSTNG,int OULVL,
+		      int RFARC, double RFARG[], int TSTNG,int OULVL,
 		      double MATRX[][][],
 		      int OCH,
 		      int IER[]) {
@@ -2657,15 +2672,18 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		final double SFACT = 0.8;
 		final double QFACT = 0.1;
 		double MCQER[] = new double[1];
-		double AQTOL,CONST,GAQTL,GLGTL,GRQTL,GSUPE,GTGTE,LGTOL,ESTOL,
-		     MCHEP,MQERR,MXERM,PI,R1MACH,RCOND,RQTOL,SSUPE,
+		double RCOOND[] = new double[1];
+		double ESTOL[] = new double[1];
+		double AQTOL,CONST,GAQTL,GLGTL,GRQTL,GSUPE,GTGTE,LGTOL,
+		     MCHEP,MQERR,MXERM,PI,RQTOL,SSUPE,
 		     TGTER,TOLNR;
 		
 		double ZMXER[] = new double[2];
 		//COMPLEX ZMXER
 		
 		final boolean INIBT = true;
-		boolean ACCPT,GACPT,NUQTL,REFLN;
+		boolean ACCPT[] = new boolean[1];
+		boolean GACPT,NUQTL,REFLN;
 		
 		String OFL;
 		//CHARACTER OFL*6
@@ -2895,7 +2913,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		//**** SET UP LINEAR ALGEBRAIC SYSTEM.
 		
-	    /*while (true) {
+/*	    while (true) {
 		    SOLCO=SOLCO+1;
 		    System.out.prinln("********SOLUTION "+ SOLCO+ " ******** " + NROWS + " EQUATIONS");
 		
@@ -2916,63 +2934,126 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		    //**** SOLVE LINEAR SYSTEM BY GAUSSIAN ELIMINATION USING LINPACK
 		    // LAPACK equivalent of LINPACK SGECO are DLANGE, DGETRF, and DGECON
 		    // LU factorization and condition estimation of a general matrix.
-		    SGECO(MATRX(1,1,2),MNEQN,NROWS,IWORK(IPIVT),RCOND,RWORK(WORK2));
-		      IF (RCOND .EQ. 0E+0) THEN
-		        IER=15
-		        SOLCO=SOLCO-1
-		        GOTO 999
-		      ENDIF    
-		      CALL SGESL(MATRX(1,1,2),MNEQN,NROWS,IWORK(IPIVT),RSNPH(SOLUN),0)
-		      NEFF=NEFF+NROWS**3
-		      WRITE(*,1) 'LINEAR SYSTEM SOLUTION DONE:'
-		C
-		C**** RECONSTITUTE FULL SOLUTION VECTOR
-		C
-		      IF (ORDSG.GT.1) THEN
-		        CALL RECON(ORDSG,REFLN,NCOLL,TNSUA,ISNPH(LOSUB),IWORK(HISUB),
-		     +  RSNPH(SOLUN))
-		      ENDIF
-		      CONST=RSNPH(SOLUN+NEQNS-1)
-		C
-		C**** SET UP THE ARRAY WORK2 OF ACTUAL COEFFICIENT IGNORE LEVELS
-		C
-		      CALL SETIGL(RWORK(WORK2),IWORK(HISUB),ISNPH(JATYP),ISNPH(LOSUB),
-		     +NQPTS,RWORK(RIGLL),TNSUA)
-		C
-		C**** DETERMINE THE ACTIONS THAT HAVE TO BE TAKEN ON EACH ARC
-		C
-		      CALL AXION1(IWORK(AXION),IWORK(NEWDG),RSNPH(SOLUN),MDGPO,TNSUA,
-		     +ISNPH(DGPOL),ISNPH(LOSUB),IWORK(HISUB),RWORK(RIGLL),LGTOL,ACCPT,
-		     +RSNPH(JACIN),ISNPH(JATYP),NJIND,RWORK(NEWHL),ESTOL,IER)
-		      ESTOL=ESTOL/SFACT
-		      IF (IER.GT.0) THEN
-		        GOTO 999
-		      ENDIF
-		      WRITE(*,1) 'DECISIONS FOR EACH ARC DONE:'
-		      WRITE(*,3) 'EFFECTIVE STOPPING TOLERANCE:',ESTOL
-		      IF (ACCPT .AND. ESTOL.LE.GSUPE) THEN
-		        GACPT=.TRUE.
-		      ELSE
-		        GACPT=.FALSE.
-		      ENDIF
-		C
+		    double A[][] = new double[MNEQN][MNEQN];
+		    for (I = 0; I < MNEQN; I++) {
+		    	for (J = 0; J < MNEQN; J++) {
+		    		A[I][J] = MATRX[I][J][1];
+		    	}
+		    }
+		    LinearEquations2 le2 = new LinearEquations2();
+    	    GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    	    double anorm;
+    	    int iwork[] = new int[NROWS];
+    	    int info[] = new int[1];
+    	    anorm = ge.dlange('1', MNEQN, MNEQN, A, MNEQN, WORK2);
+    	    le2.dgetrf(MNEQN, MNEQN, A, MNEQN, IPIVT, info);
+    	    if (info[0] > 0) {
+    	    	MipavUtil.displayError("In dgetrf factor U is exactly singular");
+    	    }
+    	    le2.dgecon('1', NROWS, A, MNEQN, anorm, RCOND, WORK2, iwork, info);
+    	    // Reciprocal condition number of A in 1-norm.
+		    //SGECO(MATRX(1,1,2),MNEQN,NROWS,IPIVT,RCOND,WORK2);
+		    if (RCOND[0] == 0.0) {
+		        IER[0]=15;
+		        SOLCO=SOLCO-1;
+		        if (SOLCO >= 1) {
+				
+				    // ****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
+				    // ****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
+				    // ****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
+				
+				    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
+				        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
+				        RFARG,SOLUN);
+				
+				    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
+				
+				    IGEOM[2]=TNSUA[0];
+				    ISNPH[2]=TNSUA[0];
+				    ISNPH[3]=NEQNS;
+		        } // if (SOLCO >= 1)
+				  
+		        WRTAIL(1,0,IER[0],null);
+			    return;     
+		    } // if (RCOND[0] == 0.0) 
+		    // LINPACK SGESL is equivalent to LAPACK DGETRS
+		    // Solves a general system of linear equations, after factorization by SGECO or SGEFA
+		    // SOLUN has the solution vector on exit.
+		    le2.dgetrs('N', NROWS, 1, A, MNEQN, IPIVT, SOLUN, MNEQN, info);
+		    //SGESL(MATRX(1,1,2),MNEQN,NROWS,IPIVT,SOLUN,0)
+		    for (I = 0; I < MNEQN; I++) {
+		    	for (J = 0; J < MNEQN; J++) {
+		    		MATRX[I][J][1] = A[I][J];
+		    	}
+		    }
+		    NEFF=NEFF+NROWS*NROWS*NROWS;
+		    System.out.println("LINEAR SYSTEM SOLUTION DONE:");
+		
+		    // **** RECONSTITUTE FULL SOLUTION VECTOR
+		
+		    if (ORDSG > 1) {
+		        RECON(ORDSG,REFLN,NCOLL,TNSUA[0],LOSUB,HISUB,SOLUN);
+		    } // if (ORDSG > 1)
+		    CONST=SOLUN[NEQNS-1];
+		
+		    // **** SET UP THE ARRAY WORK2 OF ACTUAL COEFFICIENT IGNORE LEVELS
+		
+		    SETIGL(WORK2,HISUB,JATYP,LOSUB,
+		     NQPTS,RIGLL,TNSUA[0]);
+		
+		     // **** DETERMINE THE ACTIONS THAT HAVE TO BE TAKEN ON EACH ARC
+		
+		     AXION1(AXION,NEWDG,SOLUN,MDGPO,TNSUA[0],
+		     DGPOL,LOSUB,HISUB,RIGLL,LGTOL,ACCPT,
+		     JACIN,JATYP,NJIND,NEWHL,ESTOL,IER);
+		     ESTOL[0]=ESTOL[0]/SFACT;
+		     if (IER[0] > 0) {
+		    	 if (SOLCO >= 1) {
+						
+					    // ****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
+					    // ****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
+					    // ****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
+					
+					    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
+					        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
+					        RFARG,SOLUN);
+					
+					    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
+					
+					    IGEOM[2]=TNSUA[0];
+					    ISNPH[2]=TNSUA[0];
+					    ISNPH[3]=NEQNS;
+			        } // if (SOLCO >= 1)
+					  
+			        WRTAIL(1,0,IER[0],null);
+				    return;     
+		     } // if (IER[0] > 1)
+		     System.out.println("DECISIONS FOR EACH ARC DONE:");
+		     System.out.println("EFFECTIVE STOPPING TOLERANCE: " + ESTOL[0]);
+		     if (ACCPT[0] && ESTOL <= GSUPE) {
+		         GACPT=true;
+		     }
+		     else {
+		         GACPT=false;
+		     }
+		
 		      if (GACPT) {
-		C
-		C****   OUTPUT RESULTS
-		C
-		        IF (OULVL .LT. 4) THEN
+		
+		          // OUTPUT RESULTS
+		
+		          if (OULVL < 4) {
 		          CALL RSLT72(QIERC,RCOND,CONST,NROWS,ISNPH(DGPOL),ISNPH(JATYP),
 		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,IWORK(AXION),
 		     +                IWORK(NEWDG),NJIND,IWORK(NQUAD),RWORK(TOLOU),
 		     +                LGTOL,SOLCO,OCH)
-		        ELSE 
+		          }
+		          else {
 		          CALL RSLT71(QIERC,RCOND,RSNPH(SOLUN),NEQNS,ISNPH(LOSUB),
 		     +                IWORK(HISUB),RWORK(COLSC),NQPTS,ISNPH(JATYP),
 		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,RWORK(WORK2),
 		     +                IWORK(AXION),IWORK(NEWDG),NJIND,RSNPH(JACIN),
 		     +                IWORK(NQUAD),RWORK(TOLOU),LGTOL,SOLCO,OCH)
-		        ENDIF
-		        WRITE(OCH,*) 'EFFECTIVE STOPPING TOLERANCE :',ESTOL
+		          }
 		        NEFF=NINT(REAL(NEFF)**3.3333333E-1)
 		        WRITE(*,54) '****THE SOLUTION IS ACCEPTED****'
 		        WRITE(*,55) 'EFFECTIVE SIZE OF ALL SYSTEMS:',NEFF
@@ -3166,8 +3247,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		        CLOSE(OCH)
 		      ENDIF
 		  
-		      CALL WRTAIL(1,0,IER)*/
-		
+		      CALL WRTAIL(1,0,IER)
+		*/
     } // private void JAPHYC
 
     private void ANGLE7(double BE[], int NA, boolean IN) {
@@ -5516,6 +5597,88 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	C
     }*/
     
+    private void RSLT72(int QIERC[], double RCOND, double GAMMA, int NEQNS, int DGPOL[],
+        int JATYP[], int PARNT[], int TNSUA, boolean INTER, double MQERR, double MCQER,
+        int ACTIN[], int NEWDG[], int NJIND, int NQUAD[], double TOLOU[], double LGTOL,
+    	int SOLCO, int OUCH1) {
+    	// INTEGER NEQNS,TNSUA,OUCH1,NJIND,NEWDG(*),NQUAD(*),QIERC(0:6),
+    	// PARNT(*),ACTIN(*),DGPOL(*),JATYP(*),SOLCO
+    	// REAL GAMMA,RCOND,MQERR,MCQER,LGTOL,TOLOU(*)
+    	// LOGICAL INTER
+    	 
+    	// LOCAL VARIABLES
+    	
+    	int I;
+    	double CAP;
+    	// CHARACTER QTEXT(0:6)*22,LINE*72
+    	String QTEXT[] = new String[7];
+    	final String LINE="_________________________________________________________________";
+    	
+    	QTEXT[0]="...........NORMAL EXIT";
+    	QTEXT[1]=".....MAX. SUBDIVISIONS";
+    	QTEXT[2]="....ROUNDOFF DETECTION";
+    	QTEXT[3]=".........BAD INTEGRAND";
+    	QTEXT[6]=".........INVALID INPUT";
+    	
+    	Preferences.debug(LINE+"\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("             SOLUTION NUMBER = " + SOLCO + "\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("                       NEQNS = " + NEQNS + "\n", Preferences.DEBUG_ALGORITHM); 
+    	Preferences.debug("RECIPROCAL COND NO. ESTIMATE = " + RCOND + "\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("   CONDITION NO. LOWER BOUND = " + (1.0/RCOND) + "\n", Preferences.DEBUG_ALGORITHM);
+    	
+    	/*      WRITE(OUCH1,*) 
+    	      WRITE(OUCH1,997) 'JACOBI INDEX','POINTS','TOLERANCE ACHIEVED'
+    	      DO 10 I=1,NJIND
+    	        WRITE(OUCH1,998) I,NQUAD(I),TOLOU(I)
+    	10    CONTINUE
+    	C
+    	      WRITE(OUCH1,*) 
+    	      WRITE(OUCH1,*) 'QAWS TERMINATIONS WITH......' 
+    	      DO 20 I=0,6
+    	        IF (QIERC(I) .GT. 0) THEN
+    	          WRITE(OUCH1,1000) QTEXT(I),QIERC(I)
+    	        ENDIF
+    	20    CONTINUE
+    	C
+    	      WRITE(OUCH1,*) 
+    	      WRITE(OUCH1,999) '              MAXIMUM QAWS ERROR =',MQERR
+    	      WRITE(OUCH1,999) 'MAXIMUM COMPOSITE GAUSSIAN ERROR =',MCQER
+    	      WRITE(OUCH1,*) 
+    	      WRITE(OUCH1,992) 'SUB ARC','PARENT ARC','TYPE','CURRENT DEGREE','
+    	     +ACTION'
+    	      DO 40 I=1,TNSUA
+    	        IF (ACTIN(I) .EQ. -1) THEN
+    	          WRITE(OUCH1,993) I,PARNT(I),JATYP(I),DGPOL(I),'REDUCE TO ',NEW
+    	     +                     DG(I)
+    	        ELSE IF (ACTIN(I) .EQ. 0) THEN
+    	          WRITE(OUCH1,994) I,PARNT(I),JATYP(I),DGPOL(I),'NONE'
+    	        ELSE IF (ACTIN(I) .EQ. 1) THEN
+    	          WRITE(OUCH1,993) I,PARNT(I),JATYP(I),DGPOL(I),'INCREASE TO ',N
+    	     +                     EWDG(I)
+    	        ELSE
+    	          WRITE(OUCH1,994) I,PARNT(I),JATYP(I),DGPOL(I),'SUBDIVIDE'
+    	        ENDIF
+    	40    CONTINUE
+    	C
+    	      WRITE(OUCH1,*) 'KAPPA =',GAMMA
+    	      IF (.NOT.INTER) THEN
+    	          CAP=EXP(-GAMMA)
+    	          WRITE(OUCH1,*) 'CAPACITY = ',CAP
+    	      ENDIF
+    	C
+    	990   FORMAT(A,T7,A,T26,A,T44,A)
+    	991   FORMAT(I3,T6,E15.8,T25,E15.8,T44,E10.3)
+    	992   FORMAT(A,T10,A,T24,A,T34,A,T53,A)
+    	993   FORMAT(T2,I2,T14,I3,T25,I3,T40,I2,T53,A,1X,I2)
+    	994   FORMAT(T2,I2,T14,I3,T25,I3,T40,I2,T53,A)
+    	997   FORMAT(A,T24,A,T40,A)
+    	998   FORMAT(T5,I3,T26,I3,T45,E9.2)
+    	999   FORMAT(A,E10.2)
+    	1000  FORMAT(A,1X,I5)
+    	*/
+    } // private void RSLT72
+
+    
     private void LNSY11(double MATRX[][][], double RGTSD[], int MNEQN, int NCOLL, int ORDSG, boolean REFLN,
         int NQPTS, int TNSUA, int JATYP[], int PARNT[], int DGPOL[], int LOSUB[], int HISUB[], int NQUAD[],
         int LOQSB[], double TOLNR, double MIDPT[], double HALEN[], double H0VAL[], double COLSC[], double ACOEF[],
@@ -5948,9 +6111,489 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         return result;
     } // private double FNVAL
 
+    private void BCFVTF(double BCFSN[], double VTARG[], int DGPOL[], int JATYP[], int LOSUB[], int PARNT[],
+        int RFARC, int TNSUA, double H0VAL[], double JACIN[], double RFARG, double SOLUN[]) {
+    	// INTEGER RFARC,TNSUA
+    	// INTEGER DGPOL(*),JATYP(*),LOSUB(*),PARNT(*)
+    	// REAL RFARG
+    	// REAL BCFSN(*),H0VAL(*),JACIN(*),SOLUN(*),VTARG(*)
+    	
+    	//     PERFORMS VARIOUS PRELIMINARY TASKS TO PREPARE FOR THE POST-
+    	//     PROCESSING QUADRATURE CALCULATIONS.
+    	
+    	//     SETS UP THE ARRAY OF COEFFICIENTS BCFSN NEEDED FOR THE 
+    	//     CALCULATION OF THE BOUNDARY CORRESPONDENCE FUNCTIONS FOR THE MAP
+    	//     PHYSICAL --> CANONICAL; THESE ARE SIMPLY RELATED TO THE SOLUTION 
+    	//     COEFFICIENT ARRAY SOLUN.
+    	
+    	//     CALCULATES THE ARGUMENTS VTARG OF THE IMAGES ON THE UNIT CIRCLE
+    	//     OF THE END POINTS OF ALL SUBARCS, ENFORCING THE USER'S ROTATION
+    	//     CONDITION THAT PARFUN(RFARC,(-1.0,0.0)) BE MAPPED TO THE POINT
+    	//     WITH ARGUMENT RFARG.
+    	
+    	//     LOCAL VARIABLES
+    	
+    	int AJT,DEG,I,J,J1,JT,LO;
+    	double B1,RTH0,THET0,TUPI;
+    	
+        TUPI=2.0*Math.PI;
+    	VTARG[0]=0.0;
+    	
+    	for (I=1; I <= TNSUA; I++) {
+    	    JT=JATYP[I-1];
+    	    AJT=Math.abs(JT);
+    	    RTH0=Math.sqrt(H0VAL[AJT-1]);
+    	    B1=JACIN[AJT-1]+1.0;
+    	    DEG=DGPOL[I-1];
+    	    LO=LOSUB[I-1];
+    	    VTARG[I]=VTARG[I-1]+SOLUN[LO-1]*TUPI*RTH0;
+    	
+    	    BCFSN[LO-1]=TUPI*SOLUN[LO-1]/(B1*RTH0);
+    	    for (J=1; J <= DEG; J++) {
+    	        J1=LO+J;
+    	        BCFSN[J1-1]=TUPI*SOLUN[J1-1]/Math.sqrt(J*(J+B1));
+    	    } // for (J=1; J <= DEG; J++)
+    	
+    	    if (JT < 0) {
+    	        for (J=1; J <= DEG; J += 2) {
+    	            J1=LO+J;
+    	            BCFSN[J1-1]=-BCFSN[J1-1];
+    	        } // for (J=1; J <= DEG; J += 2)
+    	    } // if (JT < 0)
+    	
+    	} // for (I=1; I <= TNSUA; I++)
+    	
+    	I=1;
+    	while (PARNT[I-1] != RFARC) {
+    		I = I+1;
+    	}
+    	THET0=RFARG-VTARG[I-1];
+    	
+    	for (I = 1; I <= TNSUA; I++) {
+    	    VTARG[I-1]=VTARG[I-1]+THET0;
+    	}
+    	VTARG[TNSUA]=VTARG[0]+TUPI;
+    	
+    } // private void BCFVTF
 
+    private void RECON(int ORDSG, boolean REFLN, int NCOLL,int TNSUA, int LOSUB[],
+    		int HISUB[], double SOLUN[]) {
+        // INTEGER ORDSG,NCOLL,TNSUA
+        // INTEGER LOSUB(*),HISUB(*)
+        // REAL SOLUN(*)
+        // LOGICAL REFLN
 
- 
+        // TO RECONSTITUTE THE FULL SOLUTION VECTOR FOR THE WHOLE BOUNDARY
+        // FROM THE SOLUTION ON THE FUNDAMENTAL BOUNDARY SECTION.
+
+        // LOCAL VARIABLES
+
+        int IA,IS,J,J1,J2,J3,LOM,NCFBS,ORDRG,TSFBS;
+        double SG;
+
+        if (ORDSG == 1) return;
+
+        TSFBS=TNSUA/ORDSG;
+        NCFBS=NCOLL/ORDSG;
+
+        SOLUN[NCOLL]=SOLUN[NCFBS];
+
+        if (REFLN) {
+            for (IA=1; IA <= TSFBS; IA++) {
+                J1=LOSUB[IA-1];
+                J2=HISUB[IA-1];
+                LOM=LOSUB[2*TSFBS-IA]-J1;
+                SG=-1.0;
+                for (J=J1; J <= J2; J++) {
+                    SG=-SG;
+                    J3=LOM+J;
+                    SOLUN[J3-1]=SG*SOLUN[J-1];
+                } // for (J=J1; J <= J2; J++)
+            } // for (IA=1; IA <= TSFBS; IA++)
+            ORDRG=ORDSG/2;
+            for (IS=2; IS <= ORDRG; IS++) {
+                LOM=(IS-1)*NCFBS*2;
+                for (J=1; J <= NCFBS*2; J++) {
+                    J1=LOM+J;
+                    SOLUN[J1-1]=SOLUN[J-1];
+                } // for (J=1; J <= NCFBS*2; J++)
+            } // for (IS=2; IS <= ORDRG; IS++)
+        } // if (REFLN)
+        else {
+            for (IS=2; IS <= ORDSG; IS++) {
+                LOM=(IS-1)*NCFBS;
+                for (J=1; J <= NCFBS; J++) {
+                    J1=LOM+J;
+                    SOLUN[J1-1]=SOLUN[J-1];
+                } // for (J=1; J <= NCFBS; J++)
+            } // for (IS=2; IS <= ORDSG; IS++)
+        } // else
+
+    } // private void RECON
+
+    private void SETIGL(double AIGLL[], int HISUB[], int JATYP[], int LOSUB[],
+    		int NQPTS, double RIGLL[], int TNSUA) {
+        // INTEGER NQPTS,TNSUA
+        // INTEGER HISUB(*),JATYP(*),LOSUB(*)
+        // REAL AIGLL(*),RIGLL(*)
+
+        // **** COPY THE REFERENCE IGNORE LEVELS *RIGLL* INTO THE ACTUAL IGNORE
+        // **** IGNORE LEVEL ARRAY *AIGLL*
+
+        // LOCAL VARIABLES
+
+        int AJT,HIM,I,IA,LOD,LOM;
+
+        for (IA=1; IA <= TNSUA; IA++) {
+            AJT=Math.abs(JATYP[IA-1]);
+            LOD=(AJT-1)*NQPTS+1;
+            LOM=LOSUB[IA-1];
+            HIM=HISUB[IA-1];
+            for (I=LOM; I <= HIM; I++) {
+                AIGLL[I-1]=RIGLL[LOD+I-LOM-1];
+            } // for (I=LOM; I <= HIM; I++)
+        } // for (IA=1; IA <= TNSUA; IA++)
+
+    } // private void SETIGL
+
+    private void AXION1(int AXION[], int NEWDG[], double SOLUN[], int MDGPO,int TNSUA,
+        int DGPOL[], int LOSUB[], int HISUB[], double RIGLL[], double LGTOL, boolean ACCPT[],
+        double JACIN[], int JATYP[], int NJIND, double NEWHL[], double ESTOL[], int IER[]) {
+    	// INTEGER AXION(*),NEWDG(*),MDGPO,TNSUA,DGPOL(*),LOSUB(*),HISUB(*),
+    	//+JATYP(*),NJIND,IER
+    	//REAL SOLUN(*),RIGLL(*),LGTOL,JACIN(*),NEWHL(*),ESTOL
+    	//LOGICAL ACCPT
+    	
+    	//     TO DETERMINE THE ARRAY "AXION" WHICH SPECIFIES THE ACTIONS THAT 
+    	//     ARE TO TAKEN ON EACH SUBARC, AS FOLLOWS:
+    	//        AXION(I)=-1 - REDUCE THE DEGREE ON ARC I
+    	//        AXION(I)=0  - LEAVE THE DEGREE ON ARC I UNCHANGED
+    	//        AXION(I)=1  - INCREASE THE DEGREE ON ARC I
+    	//        AXION(I)=2  - SUBDIVIDE ARC I.
+    	
+    	//     IN CASE ABS(AXION(I))=1, NEWDG(I) RECORDS THE NEW DEGREE TO BE
+    	//     USED ON ARC I.
+    	
+    	//     IN CASE AXION(I)<=0 FOR ALL I=1,TNSUA, THE SOLUTION IS DEEMED TO
+    	//     BE ACCEPTABLE TO THE REQUIRED ACCURACY AND WE SET ACCPT=.TRUE.;
+    	//     ACCPT=.FALSE. OTHERWISE.
+    	
+    	//     ALSO TO DETERMINE THE EFFECTIVE STOPPING TOLERANCE ESTOL; IF THE
+    	//     USER HAD INPUT ESTOL AS THE VALUE FOR THE ARGUMENT MAXER IN
+    	//     JAPHYC, THEN THE CURRENT SOLUTION WOULD BE ACCEPTED.  
+    	    
+    	//     IER=0  - NORMAL EXIT
+    	//     IER=54 - LOCAL PARAMETER MXCO MUST BE INCREASED
+    	
+    	//     LOCAL VARIABLES
+    	
+    	final int MINDG = 0;
+    	final int MXCO = 32;
+    	int IFL[] = new int[1];
+    	int AJT,CI,DG,I,IA,J,LOD,LOM,PNDG;
+    	final double SAFEF = 5.0;
+    	double AA[] = new double[1];
+    	double POW[] = new double[1];
+    	double EXA[] = new double[1];
+    	double CONF[] = new double[1];
+    	double BETA,LAM,TERM,THSLN,XX,VAR;
+    	double COVAR[][] = new double[2][2];
+    	final boolean CONSV = false;
+    	// INTEGER CRITCO
+    	// EXTERNAL CRITCO,STATS1
+    	double POSCO[] = new double[MXCO];
+    	
+    	ESTOL[0]=0.0;
+    	for (IA=1; IA <= TNSUA; IA++) {
+    	    DG=DGPOL[IA-1];
+    	    if (DG+1 > MXCO) {
+    	        IER[0]=54; 
+    	        return;
+    	    }
+    	    LOM=LOSUB[IA-1];
+    	    AJT=Math.abs(JATYP[IA-1]);
+    	    LOD=(AJT-1)*(MDGPO+1)+1;
+    	    for (I=0; I <= DG; I++) {
+    	        J=LOM+I;
+    	        POSCO[I]=Math.abs(SOLUN[J-1])*RIGLL[LOD+I-1]/LGTOL;
+    	    } // for (I= 0; I <= DG; I++)   
+    	    CI=CRITCO(DG+1,POSCO)-1;  
+    	    PNDG=CI+1+MINDG;
+    	    if (CI == -1) {
+    	
+    	        // ALL COEFFICIENTS ARE ACCEPTABLE.
+    	
+    	        if (DG == MINDG) {
+    	            AXION[IA-1]=0;
+    	            NEWDG[IA-1]=DG;
+    	        } // if (DG == MINDG)
+    	        else {
+    	
+    	            // PROBABLY DECREASE THE DEGREE, BUT ONLY IGNORE THOSE
+    	            // COEFFICIENTS WHICH ARE 'SAFELY' BELOW THE TOLERANCE
+    	            // LIMIT.
+    	
+    	            for (I=0; I <= DG; I++) {
+    	                POSCO[I]=POSCO[I]*SAFEF;
+    	            } // for (I=0; I <= DG; I++)
+    	            PNDG=CRITCO(DG+1,POSCO)+MINDG;
+    	            if (PNDG >= DG) {
+    	                AXION[IA-1]=0;
+    	                NEWDG[IA-1]=DG;
+    	            }
+    	            else if (PNDG <= MINDG) {
+    	                AXION[IA-1]=-1;
+    	                NEWDG[IA-1]=MINDG;
+    	            }
+    	            else {
+    	                AXION[IA-1]=-1;
+    	                NEWDG[IA-1]=PNDG;
+    	            }
+    	        } // else
+    	    } // if (CI == -1)
+    	    else if (PNDG == DG) {
+    	        AXION[IA-1]=0;
+    	        NEWDG[IA-1]=DG;
+    	    } // else if (PNDG == DG)
+    	    else if (PNDG < DG) {
+    	
+    	        // PROBABLY DECREASE THE DEGREE, BUT ONLY IGNORE THOSE
+    	        // COEFFICIENTS WHICH ARE 'SAFELY' BELOW THE TOLERANCE
+    	        // LIMIT.
+    	        for (I=0; I <= DG; I++) {
+    	            POSCO[I]=POSCO[I]*SAFEF;
+    	        }
+    	        PNDG=CRITCO(DG+1,POSCO)+MINDG;
+    	        if (PNDG >= DG) {
+    	            AXION[IA-1]=0;
+    	            NEWDG[IA-1]=DG;
+    	        }
+    	        else if (PNDG <= MINDG) {
+    	            AXION[IA-1]=-1;
+    	            NEWDG[IA-1]=MINDG;
+    	        }
+    	        else {
+    	            AXION[IA-1]=-1;
+    	            NEWDG[IA-1]=PNDG;
+    	        }
+    	    } // else if (PNDG < DG)
+    	    else if (DG == MDGPO) {
+    	
+    	        // ARC SUBDIVISION IS REQUIRED AND ASSIGN NEW HALF-LENGTH.
+    	
+    	        AXION[IA-1]=2;
+    	        BETA=JACIN[AJT-1];
+    	        LAM=Math.min(1.0,1.0+BETA);
+    	        if (AJT != NJIND) {
+    	            NEWHL[IA-1]=Math.pow((1.0/POSCO[CI]),(1.0/(1.0+LAM+BETA)));
+    	        }
+    	        else {
+    	            NEWHL[IA-1]=0.5;
+    	        }
+    	    } // else if (DG == MDGPO)
+    	    else {
+    	
+    	        // MUST DECIDE BETWEEN ARC SUBDIVISION ARC DEGREE INCREASE.
+    	        // FIRST MAKE CONSERVATIVE ESTIMATES FOR THE COEFFICIENTS
+    	        // FOR DEGREES DG+1 TO MDGPO. 
+    	
+    	        double SN[] = new double[Math.min(32,DG+1)];
+    	        for (I = 0; I < Math.min(32, DG+1); I++) {
+    	        	SN[I] = SOLUN[LOM+I-1];
+    	        }
+    	    	STATS1(SN,DG+1,AA,POW,EXA,COVAR,CONF,IFL);
+    	        if (IFL[0] == 1) {
+    	
+                    // NOT ENOUGH DATA TO MAKE ESTIMATES, WHICH PRESUMES DG
+    	            // IS RATHER SMALL; THEREFORE INCREASE THE DEGREE.
+    	
+    	            AXION[IA-1]=1;
+    	            NEWDG[IA-1]=Math.min(DG+2,MDGPO);
+    	        } // if (IFL == 1)
+    	        else {
+    	            for (I=DG+1; I <= MDGPO; I++) {
+    	                if (CONSV) {
+    	                    XX=Math.log(1.0+I);
+    	                    VAR=COVAR[0][0]+XX*XX*COVAR[1][1]+2.0*XX*COVAR[0][1];
+    	                    THSLN=EXA[0]*Math.pow((I+1),POW[0])*Math.exp(CONF[0]*Math.sqrt(VAR));
+    	                } // if (CONSV)
+    	                else {
+    	                    THSLN=EXA[0]*Math.pow((I+1),POW[0]);
+    	                }
+    	                POSCO[I]=Math.abs(THSLN)*RIGLL[LOD+I-1]/LGTOL;
+    	            } // for (I=DG+1; I <= MDGPO; I++)
+    	            PNDG=CRITCO(MDGPO+1,POSCO)+MINDG;
+    	            if (PNDG <= MDGPO) {
+    	
+    	                // INCREASE DEGREE
+    	
+    	                AXION[IA-1]=1;
+    	                NEWDG[IA-1]=PNDG;
+    	            }
+    	            else {
+    	
+    	                // SUBDIVIDE ARC AND ASSIGN NEW HALF-LENGTH.
+    	
+    	                AXION[IA-1]=2;
+    	                BETA=JACIN[AJT-1];
+    	                LAM=Math.min(1.0,1.0+BETA);
+    	                if (AJT != NJIND) {
+    	                    NEWHL[IA-1]=Math.pow((1.0/POSCO[CI]),(1.0/(1.0+LAM+BETA)));
+    	                }
+    	                else {
+    	                    NEWHL[IA-1]= 0.5;
+    	                }
+    	            }
+    	        }
+    	    } // else 
+    	
+    	    // NOW UPDATE THE EFFECTIVE STOPPING TOLERANCE
+    	
+    	    J=HISUB[IA-1]-MINDG;
+    	    for (I=J; I <= HISUB[IA-1]; I++) {
+    	        TERM=Math.abs(SOLUN[I-1])*RIGLL[LOD+I-LOM-1];
+    	        ESTOL[0]=Math.max(ESTOL[0],Math.exp(TERM)-1.0);
+    	    } // for (I=J; I <= HISUB[IA-1]; I++)
+    	} // for (IA=1; IA <= TNSUA; IA++)
+    	
+    	ACCPT[0]=true;
+    	for (I=1; I <= TNSUA; I++) {
+    	    if (AXION[I-1] > 0) {
+    	        ACCPT[0]=false;
+    	        IER[0] = 0;
+    	        return;
+    	    }
+    	} // for (I=1; I <= TNSUA; I++)
+    	
+        IER[0]=0;
+    	
+    } // private void AXION1
+    
+    private int CRITCO(int N, double POSCO[]) {
+        // INTEGER N
+        // REAL POSCO(*)
+
+        // GIVEN THE NON-NEGATIVE NUMBERS POSCO(I), I=1,...,N,  TO FIND THE
+        // INDEX CRITCO SUCH THAT POSCO(CRITCO) > 1 AND POSCO(I) <=1 FOR
+        // I=CRITCO+1,...,N.  IN CASE POSCO(I) <=1 FOR ALL I=1,...,N THEN
+        // POSCO=0.
+
+        // **** LOCAL VARIABLE
+      
+        int I;
+
+        I=N;
+        while (true) {
+            if (I == 0) {
+                return 0;
+            }
+            else if (POSCO[I-1] > 1.0) {
+            	return I;
+            }
+            else {
+                I=I-1;
+                continue;
+            }
+        } // while true
+
+    } // private int CRITCO
+
+    private void STATS1(double SN[], int M, double A[], double B[], double EA[], double COV[][],
+    		double CONF[], int IER[]) {
+        // INTEGER M,IER
+        // REAL A,B,CONF,EA
+        // REAL SN(*),COV(2,2)
+
+        // TO FIND THE LEAST SQUARES ESTIMATES A, B IN THE RELATIONSHIP
+
+        // LOG(SN(I)) = A + B*LOG(I) + ERROR, I=1,..,M, (M<=NDAT)
+
+        // AND ALSO TO GIVE EA=EXP(A) AND THE COVARIANCE MATRIX COV FOR
+        // ESTIMATES A,B.
+
+        // IER IS SET TO 1 IF LESS THAN 3 DATA PAIRS ARE COMPATIBLE WITH THE
+        // ABOVE MODEL AND NOTHING IS DONE.
+
+        // LOCAL VARIABLES..
+
+        final int NDAT = 32;
+    	int I,N,N1;
+        double SX1,SX2,SY1,SXY,SE2,DET,DIFF,VAR;
+        double X[] = new double[NDAT];
+        double Y[] = new double[NDAT];
+        double par;
+
+        if (M < 3) {
+            IER[0]=1;
+            return;
+        }
+
+        N1=Math.min(M,NDAT);
+        N=N1;
+
+        for (I=1; I <= N1; I++) {
+            SY1=Math.abs(SN[I-1]);
+            if (SY1 > 0.0) {
+                Y[I-1]=Math.log(SY1);
+                X[I-1]=Math.log((double)(I));
+            }
+            else {
+                N=N-1;
+            }
+        } // for (I=1; I <= N1; I++)
+
+        if (N < 3) {
+            IER[0]=1;
+            return;
+        }
+
+        SX1=0.0;
+        SX2=0.0;
+        SY1=0.0;
+        SXY=0.0;
+        SE2=0.0;
+
+        for (I=1; I <= N; I++) {
+            SX1=SX1+X[I-1];
+            SX2=SX2+X[I-1]*X[I-1];
+            SY1=SY1+Y[I-1];
+            SXY=SXY+X[I-1]*Y[I-1];
+        } // for (I=1; I <= N; I++)
+
+        DET=N*SX2-SX1*SX1;
+        A[0]=(SX2*SY1-SX1*SXY)/DET;
+        EA[0]=Math.exp(A[0]);
+        B[0]=(N*SXY-SX1*SY1)/DET;
+
+        for (I=1; I <= N; I++) {
+        	par = (Y[I-1]-A[0]-B[0]*X[I-1]);
+            SE2=SE2+par*par;
+        } // for (I=1; I <= N; I++)
+
+        SE2=SE2/(N-2)/DET;
+        COV[0][0]=SX2*SE2;
+        COV[0][1]=-SX1*SE2;
+        COV[1][0]=COV[0][1];
+        COV[1][1]=N*SE2;
+
+        CONF[0]=0.0;
+        I=N;
+	    while (true) {
+	        DIFF=Y[I-1]-A[0]-B[0]*X[I-1];
+	        if (DIFF > 0.0) {
+	            VAR=COV[0][0]+X[I-1]*X[I-1]*COV[1][1]+2.0*X[I-1]*COV[0][1];
+	            CONF[0]=DIFF/Math.sqrt(VAR);
+	            break;
+	        }
+	        else {
+	            I=I-1;
+	            continue;
+	        }
+	    } // while (true)
+        IER[0]=0;
+
+    } // private void STATS1
+
       /**
        * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
        * 
