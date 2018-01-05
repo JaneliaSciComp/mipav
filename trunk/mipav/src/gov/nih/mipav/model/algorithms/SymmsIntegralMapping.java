@@ -2672,18 +2672,21 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		final double SFACT = 0.8;
 		final double QFACT = 0.1;
 		double MCQER[] = new double[1];
-		double RCOOND[] = new double[1];
+		double MQERR[] = new double[1];
+		double RCOND[] = new double[1];
 		double ESTOL[] = new double[1];
 		double AQTOL,CONST,GAQTL,GLGTL,GRQTL,GSUPE,GTGTE,LGTOL,
-		     MCHEP,MQERR,MXERM,PI,RQTOL,SSUPE,
+		     MCHEP,MXERM,PI,RQTOL,SSUPE,
 		     TGTER,TOLNR;
+		double SOLUNB[][] = new double[MNEQN][1];
 		
 		double ZMXER[] = new double[2];
 		//COMPLEX ZMXER
 		
 		final boolean INIBT = true;
 		boolean ACCPT[] = new boolean[1];
-		boolean GACPT,NUQTL,REFLN;
+		boolean NUQTL[] = new boolean[1];
+		boolean GACPT,REFLN;
 		
 		String OFL;
 		//CHARACTER OFL*6
@@ -2821,7 +2824,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		RSLT80(JBNM,HEAD,GSUPE,MAXER,GAQTL,INTER,NARCS,ORDSG,NQPTS,
 		     INCST,INDEG,RFARC,RFARG[0],CENTR,JACIN,LNSEG,
-		     TSTNG,OULVL,IBNDS,MNEQN,OCH);
+		     TSTNG,OULVL,IBNDS,MNEQN);
 		PI=Math.PI;
 		RFARG[0]=RFARG[0]*PI;
 		
@@ -2904,7 +2907,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		     BCOEF,H0VAL,COLSC,NQUAD,LOQSB,
 		     QCOMX,QCOMW,MNQUA,TOLOU,MCQER,XENPT,
 		     XIVAL,XIDST,IER);
-		NUQTL=false;
+		NUQTL[0]=false;
 		if (IER[0] > 0) {
 			WRTAIL(1,0,IER[0],null);
 		    return;    
@@ -2913,9 +2916,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		//**** SET UP LINEAR ALGEBRAIC SYSTEM.
 		
-/*	    while (true) {
+	    while (true) {
 		    SOLCO=SOLCO+1;
-		    System.out.prinln("********SOLUTION "+ SOLCO+ " ******** " + NROWS + " EQUATIONS");
+		    System.out.println("********SOLUTION "+ SOLCO+ " ******** " + NROWS + " EQUATIONS");
 		
 		    LNSY11(MATRX,SOLUN,MNEQN,NCOLL,ORDSG,REFLN,NQPTS,
 		     TNSUA[0],JATYP,PARNT,DGPOL,LOSUB,
@@ -2964,7 +2967,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 				
 				    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
 				        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
-				        RFARG,SOLUN);
+				        RFARG[0],SOLUN);
 				
 				    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
 				
@@ -2979,7 +2982,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		    // LINPACK SGESL is equivalent to LAPACK DGETRS
 		    // Solves a general system of linear equations, after factorization by SGECO or SGEFA
 		    // SOLUN has the solution vector on exit.
-		    le2.dgetrs('N', NROWS, 1, A, MNEQN, IPIVT, SOLUN, MNEQN, info);
+		    for (I = 0; I < MNEQN; I++) {
+		    	SOLUNB[I][0] = SOLUN[I];
+		    }
+		    le2.dgetrs('N', NROWS, 1, A, MNEQN, IPIVT, SOLUNB, MNEQN, info);
+		    for (I = 0; I < MNEQN; I++) {
+		    	SOLUN[I] = SOLUNB[I][0];
+		    }
 		    //SGESL(MATRX(1,1,2),MNEQN,NROWS,IPIVT,SOLUN,0)
 		    for (I = 0; I < MNEQN; I++) {
 		    	for (J = 0; J < MNEQN; J++) {
@@ -3016,7 +3025,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 					
 					    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
 					        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
-					        RFARG,SOLUN);
+					        RFARG[0],SOLUN);
 					
 					    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
 					
@@ -3030,7 +3039,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		     } // if (IER[0] > 1)
 		     System.out.println("DECISIONS FOR EACH ARC DONE:");
 		     System.out.println("EFFECTIVE STOPPING TOLERANCE: " + ESTOL[0]);
-		     if (ACCPT[0] && ESTOL <= GSUPE) {
+		     if (ACCPT[0] && ESTOL[0] <= GSUPE) {
 		         GACPT=true;
 		     }
 		     else {
@@ -3042,133 +3051,221 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		          // OUTPUT RESULTS
 		
 		          if (OULVL < 4) {
-		          CALL RSLT72(QIERC,RCOND,CONST,NROWS,ISNPH(DGPOL),ISNPH(JATYP),
-		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,IWORK(AXION),
-		     +                IWORK(NEWDG),NJIND,IWORK(NQUAD),RWORK(TOLOU),
-		     +                LGTOL,SOLCO,OCH)
+		              RSLT72(QIERC,RCOND[0],CONST,NROWS,DGPOL,JATYP,
+		                     PARNT,TNSUA[0],INTER,MQERR[0],MCQER[0],AXION,
+		                     NEWDG,NJIND,NQUAD,TOLOU,LGTOL,SOLCO);
 		          }
 		          else {
-		          CALL RSLT71(QIERC,RCOND,RSNPH(SOLUN),NEQNS,ISNPH(LOSUB),
-		     +                IWORK(HISUB),RWORK(COLSC),NQPTS,ISNPH(JATYP),
-		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,RWORK(WORK2),
-		     +                IWORK(AXION),IWORK(NEWDG),NJIND,RSNPH(JACIN),
-		     +                IWORK(NQUAD),RWORK(TOLOU),LGTOL,SOLCO,OCH)
+		              RSLT71(QIERC,RCOND[0],SOLUN,NEQNS,LOSUB,
+		                     HISUB,COLSC,NQPTS,JATYP,
+		                     PARNT,TNSUA[0],INTER,MQERR[0],MCQER[0],WORK2,
+		                     AXION,NEWDG,NJIND,JACIN,
+		                     NQUAD,TOLOU,LGTOL,SOLCO);
 		          }
-		        NEFF=NINT(REAL(NEFF)**3.3333333E-1)
-		        WRITE(*,54) '****THE SOLUTION IS ACCEPTED****'
-		        WRITE(*,55) 'EFFECTIVE SIZE OF ALL SYSTEMS:',NEFF
-		        IF (INTER) THEN
-		          WRITE(*,3) 'ZERO:',CONST
-		        ELSE
-		          WRITE(*,56) 'CAPACITY:',EXP(-CONST)
-		        ENDIF
-		54      FORMAT(/,T17,A)
-		55      FORMAT(/,A45,I4)
-		56      FORMAT(A45,E16.8)
-
-		        WRITE(OCH,*)
-		        WRITE(OCH,*) '****THE SOLUTION IS ACCEPTED****'
-		        WRITE(OCH,*) 'EFFECTIVE SIZE OF ALL SYSTEMS : ',NEFF
-		        WRITE(OCH,*) 
-		        break;
+		          NEFF=(int)Math.round(Math.pow((double)(NEFF),3.3333333E-1));
+		          System.out.println("\n****THE SOLUTION IS ACCEPTED****");
+		          System.out.println("\nEFFECTIVE SIZE OF ALL SYSTEMS: " + NEFF);
+		          if (INTER) {
+		              System.out.println("ZERO " + CONST);
+		          }
+		          else {
+		              System.out.println("CAPACITY: " + (Math.exp(-CONST)));
+		          }
+		
+                  Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+                  Preferences.debug("****THE SOLUTION IS ACCEPTED****\n",Preferences.DEBUG_ALGORITHM);
+		          Preferences.debug("EFFECTIVE SIZE OF ALL SYSTEMS: " + NEFF + "\n\n");
+		          break;
 		      } // if (GACPT)
 		      else { // !GACPT
-		        IF (ACCPT .OR. ESTOL.LE.SSUPE) THEN
-		C
-		C****     SOLUTION AT INTERMEDIATE ACCURACY IS ACCEPTED; SET TOLERANCES
-		C****     FOR GREATER ACCURACY AND RE-ASSESS UPDATING ACTIONS BEFORE 
-		C****     CONTINUING
-		C
-		          SSUPE=1E-1*MIN(SSUPE,ESTOL)
-		          TGTER=SFACT*SSUPE
-		          IF (TGTER .LE. 2E+0*GTGTE) THEN
-		            TGTER=GTGTE
-		          ENDIF
-		          AQTOL=TGTER*QFACT
-		          NUQTL=.TRUE.
-		          LGTOL=LOG(1E+0+TGTER)
-		          RQTOL=AQTOL
-		          I=NINT(-LOG10(TGTER))+2
-		          INDEG=MIN(I,MDGPO)
-		C
-		C****     DETERMINE THE ACTIONS THAT HAVE TO BE TAKEN ON EACH ARC
-		C
-		          CALL AXION1(IWORK(AXION),IWORK(NEWDG),RSNPH(SOLUN),MDGPO,
-		     +                TNSUA,ISNPH(DGPOL),ISNPH(LOSUB),IWORK(HISUB),
-		     +                RWORK(RIGLL),LGTOL,ACCPT,RSNPH(JACIN),
-		     +                ISNPH(JATYP),NJIND,RWORK(NEWHL),ESTOL,IER)
-		          ESTOL=ESTOL/SFACT
-		          IF (IER.GT.0) THEN
-		            GOTO 999
-		          ENDIF
-		          WRITE(*,1) 'DECISIONS FOR EACH ARC RE-DONE:'
-		        ENDIF
-		C
-		C****   OUTPUT RESULTS
-		C
-		        IF (OULVL .LT. 4) THEN
-		          CALL RSLT72(QIERC,RCOND,CONST,NROWS,ISNPH(DGPOL),ISNPH(JATYP),
-		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,IWORK(AXION),
-		     +                IWORK(NEWDG),NJIND,IWORK(NQUAD),RWORK(TOLOU),
-		     +                LGTOL,SOLCO,OCH)
-		        ELSE 
-		          CALL RSLT71(QIERC,RCOND,RSNPH(SOLUN),NEQNS,ISNPH(LOSUB),
-		     +                IWORK(HISUB),RWORK(COLSC),NQPTS,ISNPH(JATYP),
-		     +                IGEOM(PARNT),TNSUA,INTER,MQERR,MCQER,RWORK(WORK2),
-		     +                IWORK(AXION),IWORK(NEWDG),NJIND,RSNPH(JACIN),
-		     +                IWORK(NQUAD),RWORK(TOLOU),LGTOL,SOLCO,OCH)
-		        ENDIF
-		        WRITE(OCH,*) 'EFFECTIVE STOPPING TOLERANCE :',ESTOL
-		        IF (RCOND .LT. 5E+0*MCHEP) THEN
-		          IER=16
-		          GOTO 999
-		        ELSE IF (RCOND .LT. AQTOL) THEN
-		          NUQTL=.TRUE.
-		          AQTOL=1E-1*RCOND
-		          IF (AQTOL .LT. 5E+0*MCHEP) AQTOL=5E+0*MCHEP
-		        ENDIF
-		C
-		C****   IMPLEMENT UPDATING PROCEDURES.
-		C****   FIRST UPDATE THE COLLOCATION PARAMETERS AND OTHER DATA
-		C****   RELATING TO SUB-ARC DEFINITIONS.
-		C
-		        CALL UPJAC1(NQPTS,NJIND,INDEG,IWORK(AXION),ISNPH(DGPOL),
-		     +  IWORK(NEWDG),RSNPH(ACOEF),RSNPH(BCOEF),RWORK(DIAG),
-		     +  RWORK(SDIAG),TNSUA,MNSUA,ISNPH(LOSUB),IWORK(HISUB),
-		     +  ISNPH(JATYP),IGEOM(PARNT),RGEOM(MIDPT),RGEOM(HALEN),
-		     +  RWORK(COLPR),ZWORK(ZCOLL),LWORK(LNSEG),LWORK(PNEWQ),EPS,IER,
-		     +  RWORK(WORK),RWORK(NEWHL),RWORK(RCOPY),IWORK(ICOPY),
-		     +  LWORK(LCOPY),IWORK(LOOLD),IWORK(HIOLD))
-		        IF (IER .GT. 0) THEN
-		          GOTO 999
-		        ENDIF
-		        WRITE(*,1) 'ARC REFINEMENTS DONE:'
-		        NCOLL=IWORK(HISUB+TNSUA-1)
-		        NEQNS=NCOLL+1
-		        NROWS=NCOLL/ORDSG+1
-		        IF (NEQNS .GT. MNEQN) THEN
-		          IER=18
-		          GOTO 999
-		        ENDIF
-		C
-		C****   NEXT UPDATE THE COMPOSITE QUADRATURE RULES
-		C
-		        CALL UPCOQ1(NARCS,NJIND,NQPTS,MDGPO,MQIN1,AQTOL,RSNPH(QUPTS),
-		     +  RSNPH(QUWTS),RSNPH(JACIN),RGEOM(MIDPT),RGEOM(HALEN),
-		     +  RSNPH(ACOEF),RSNPH(BCOEF),RSNPH(H0VAL),RWORK(COLSC),
-		     +  IWORK(NQUAD),IWORK(LOQSB),RWORK(QCOMX),RWORK(QCOMW),
-		     +  MNQUA,RWORK(TOLOU),MCQER,RWORK(XENPT),ZWORK(XIVAL),
-		     +  RWORK(XIDST),TNSUA,LWORK(PNEWQ),LWORK(NEWQU),ISNPH(JATYP),
-		     +  IGEOM(PARNT),NUQTL,IER)
-		        IF (IER .GT. 0) THEN
-		          GOTO 999
-		        ENDIF
-		        WRITE(*,1) 'QUADRATURE UPDATES DONE:'
-		        continue;
+		          if (ACCPT[0] || ESTOL[0] <= SSUPE) {
+		
+		              // SOLUTION AT INTERMEDIATE ACCURACY IS ACCEPTED; SET TOLERANCES
+		              // FOR GREATER ACCURACY AND RE-ASSESS UPDATING ACTIONS BEFORE 
+		              // CONTINUING
+		
+		              SSUPE=0.1*Math.min(SSUPE,ESTOL[0]);
+		              TGTER=SFACT*SSUPE;
+		              if (TGTER <= 2.0*GTGTE) {
+		                  TGTER=GTGTE;
+		              }
+		              AQTOL=TGTER*QFACT;
+		              NUQTL[0]=true;
+		              LGTOL=Math.log(1.0+TGTER);
+		              RQTOL=AQTOL;
+		              I=(int)Math.round(-Math.log10(TGTER))+2;
+		              INDEG=Math.min(I,MDGPO);
+		
+		              // DETERMINE THE ACTIONS THAT HAVE TO BE TAKEN ON EACH ARC
+		
+		              AXION1(AXION,NEWDG,SOLUN,MDGPO,
+		                     TNSUA[0],DGPOL,LOSUB,HISUB,
+		                     RIGLL,LGTOL,ACCPT,JACIN,
+		                     JATYP,NJIND,NEWHL,ESTOL,IER);
+		              ESTOL[0]=ESTOL[0]/SFACT;
+		              if (IER[0] > 0) {
+		 		    	 if (SOLCO >= 1) {
+		 						
+		 					    // ****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
+		 					    // ****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
+		 					    // ****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
+		 					
+		 					    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
+		 					        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
+		 					        RFARG[0],SOLUN);
+		 					
+		 					    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
+		 					
+		 					    IGEOM[2]=TNSUA[0];
+		 					    ISNPH[2]=TNSUA[0];
+		 					    ISNPH[3]=NEQNS;
+		 			        } // if (SOLCO >= 1)
+		 					  
+		 			        WRTAIL(1,0,IER[0],null);
+		 				    return;     
+		 		     } // if (IER[0] > 1)
+		             System.out.println("DECISIONS FOR EACH ARC RE-DONE:");
+		          } //  if (ACCPT[0] || ESTOL[0] <= SSUPE)
+		
+		          // OUTPUT RESULTS
+		
+		          if (OULVL < 4) {
+		              RSLT72(QIERC,RCOND[0],CONST,NROWS,DGPOL,JATYP,
+		                     PARNT,TNSUA[0],INTER,MQERR[0],MCQER[0],AXION,
+		                     NEWDG,NJIND,NQUAD,TOLOU,
+		                     LGTOL,SOLCO);
+		          }
+		          else {
+		              RSLT71(QIERC,RCOND[0],SOLUN,NEQNS,LOSUB,
+		                     HISUB,COLSC,NQPTS,JATYP,
+		                     PARNT,TNSUA[0],INTER,MQERR[0],MCQER[0],WORK2,
+		                     AXION,NEWDG,NJIND,JACIN,
+		                     NQUAD,TOLOU,LGTOL,SOLCO);
+		          }
+		          System.out.println("EFFECTIVE STOPPING TOLERANCE : " + ESTOL[0]);
+		          if (RCOND[0] < 5.0*MCHEP) {
+		              IER[0]=16;
+		              if (SOLCO >= 1) {
+	 						
+	 					    // ****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
+	 					    // ****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
+	 					    // ****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
+	 					
+	 					    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
+	 					        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
+	 					        RFARG[0],SOLUN);
+	 					
+	 					    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
+	 					
+	 					    IGEOM[2]=TNSUA[0];
+	 					    ISNPH[2]=TNSUA[0];
+	 					    ISNPH[3]=NEQNS;
+	 			        } // if (SOLCO >= 1)
+	 					  
+	 			        WRTAIL(1,0,IER[0],null);
+	 				    return;     
+		          } // if (RCOND[0] < 5.0*MCHEP)
+		          else if (RCOND[0] < AQTOL) {
+		              NUQTL[0]=true;
+		              AQTOL=0.1*RCOND[0];
+		              if (AQTOL < 5.0*MCHEP) AQTOL=5.0*MCHEP;
+		          }
+		
+		          // IMPLEMENT UPDATING PROCEDURES.
+		          // FIRST UPDATE THE COLLOCATION PARAMETERS AND OTHER DATA
+		          // RELATING TO SUB-ARC DEFINITIONS.
+		
+		          UPJAC1(NQPTS,NJIND,INDEG,AXION,DGPOL,
+		          NEWDG,ACOEF,BCOEF,DIAG,
+		          SDIAG,TNSUA[0],MNSUA,LOSUB,HISUB,
+		          JATYP,PARNT,MIDPT,HALEN,
+		          COLPR,ZCOLL,LNSEG,PNEWQ,EPS,IER,
+		          WORK,NEWHL,RCOPY,ICOPY,
+		          LCOPY,LOOLD,HIOLD);
+		          if (IER[0] > 0) {
+		        	  if (SOLCO >= 1) {
+	 						
+	 					    // ****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
+	 					    // ****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
+	 					    // ****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
+	 					
+	 					    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
+	 					        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
+	 					        RFARG[0],SOLUN);
+	 					
+	 					    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
+	 					
+	 					    IGEOM[2]=TNSUA[0];
+	 					    ISNPH[2]=TNSUA[0];
+	 					    ISNPH[3]=NEQNS;
+	 			        } // if (SOLCO >= 1)
+	 					  
+	 			        WRTAIL(1,0,IER[0],null);
+	 				    return;     
+		          } // if (IER[0] > 0)
+		          System.out.println("ARC REFINEMENTS DONE:");
+		          NCOLL=HISUB[TNSUA[0]-1];
+		          NEQNS=NCOLL+1;
+		          NROWS=NCOLL/ORDSG+1;
+		          if (NEQNS > MNEQN) {
+		              IER[0]=18;
+		              if (SOLCO >= 1) {
+	 						
+	 					    // ****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
+	 					    // ****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
+	 					    // ****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
+	 					
+	 					    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
+	 					        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
+	 					        RFARG[0],SOLUN);
+	 					
+	 					    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
+	 					
+	 					    IGEOM[2]=TNSUA[0];
+	 					    ISNPH[2]=TNSUA[0];
+	 					    ISNPH[3]=NEQNS;
+	 			        } // if (SOLCO >= 1)
+	 					  
+	 			        WRTAIL(1,0,IER[0],null);
+	 				    return;     
+		          } // if (NEQNS > MNEQN)
+		
+		          // NEXT UPDATE THE COMPOSITE QUADRATURE RULES
+		
+		          UPCOQ1(NARCS,NJIND,NQPTS,MDGPO,MQIN1,AQTOL,QUPTS,
+		          QUWTS,JACIN,MIDPT,HALEN,
+		          ACOEF,BCOEF,H0VAL,COLSC,
+		          NQUAD,LOQSB,QCOMX,QCOMW,
+		          MNQUA,TOLOU,MCQER,XENPT,XIVAL,
+		          XIDST,TNSUA[0],PNEWQ,NEWQU,JATYP,
+		          PARNT,NUQTL,IER);
+		          if (IER[0] > 0) {
+		        	  if (SOLCO >= 1) {
+	 						
+	 					    // ****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
+	 					    // ****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
+	 					    // ****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
+	 					
+	 					    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
+	 					        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
+	 					        RFARG[0],SOLUN);
+	 					
+	 					    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
+	 					
+	 					    IGEOM[2]=TNSUA[0];
+	 					    ISNPH[2]=TNSUA[0];
+	 					    ISNPH[3]=NEQNS;
+	 			        } // if (SOLCO >= 1)
+	 					  
+	 			        WRTAIL(1,0,IER[0],null);
+	 				    return;     
+		          } // if (IER[0] > 0)
+		          System.out.println("QUADRATURE UPDATES DONE:");
+		          continue;
 		      } // else !GACPT 
 	    } // while (true)
-		C
-		      IF (OULVL.EQ.2 .OR. OULVL.EQ.3) THEN
+		
+		/*      IF (OULVL.EQ.2 .OR. OULVL.EQ.3) THEN
 		        CALL RSLT71(QIERC,RCOND,RSNPH(SOLUN),NEQNS,ISNPH(LOSUB),
 		     +  IWORK(HISUB),RWORK(COLSC),NQPTS,ISNPH(JATYP),IGEOM(PARNT),TNSUA,
 		     +  INTER,MQERR,MCQER,RWORK(WORK2),IWORK(AXION),IWORK(NEWDG),NJIND,
@@ -3354,7 +3451,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     
     private void RSLT80(String JBNM, String HEAD, double SUPER, double MAXER, double AQTOL, boolean INTER, int NARCS, int ORDSG,
         int NQPTS, boolean INCST, int INDEG, int RFARC, double RFARG,double CENTR[], double BETA[], boolean LINEAR[],
-        int TSTNG, int OULVL, int IBNDS[], int MNEQN,int OCH) {
+        int TSTNG, int OULVL, int IBNDS[], int MNEQN) {
     	
     	//INTEGER IBNDS(*)
     	//REAL BETA(*)
@@ -5504,103 +5601,96 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     } // private void DELEG7
 
 
-    	     /* SUBROUTINE RSLT71(QIERC,RCOND,SOLUN,NEQNS,LOSUB,HISUB,COLSC,
-    	     +NQPTS,JATYP,PARNT,TNSUA,INTER,MQERR,MCQER,CINFN,ACTIN,
-    	     +NEWDG,NJIND,JACIN,NQUAD,TOLOU,LGTOL,SOLCO,OUCH1)
-    	      INTEGER NEQNS,TNSUA,OUCH1,NQPTS,NJIND,NEWDG(*),NQUAD(*),LOSUB(*),
-    	     +HISUB(*),QIERC(0:6),JATYP(*),PARNT(*),ACTIN(*),SOLCO
-    	      REAL SOLUN(*),RCOND,COLSC(*),MQERR,MCQER,LGTOL,
-    	     +CINFN(*),JACIN(*),TOLOU(*)
-    	      LOGICAL INTER
-    	      CHARACTER QTEXT(0:6)*22,LINE*72
-    	      PARAMETER (LINE='_________________________________________________
-    	     +________________')
-    	C 
-    	C     LOCAL VARIABLES
-    	C
-    	      INTEGER I,J,JI,K,L,LOD,N,H
-    	      REAL S,CAP
-    	C
-    	      QTEXT(0)='...........NORMAL EXIT'
-    	      QTEXT(1)='.....MAX. SUBDIVISIONS'
-    	      QTEXT(2)='....ROUNDOFF DETECTION'
-    	      QTEXT(3)='.........BAD INTEGRAND'
-    	      QTEXT(6)='.........INVALID INPUT'
-    	C
-    	      WRITE(OUCH1,*) LINE
-    	      WRITE(OUCH1,*) '             SOLUTION NUMBER =',SOLCO
-    	      WRITE(OUCH1,*) '                       NEQNS =',NEQNS 
-    	      WRITE(OUCH1,*) 'RECIPROCAL COND NO. ESTIMATE =',RCOND
-    	      WRITE(OUCH1,*) '   CONDITION NO. LOWER BOUND =',1E+0/RCOND
-    	C
-    	      WRITE(OUCH1,*) 
-    	      WRITE(OUCH1,997) 'JACOBI INDEX','POINTS','TOLERANCE ACHIEVED'
-    	      DO 10 I=1,NJIND
-    	        WRITE(OUCH1,998) I,NQUAD(I),TOLOU(I)
-    	10    CONTINUE
-    	C
-    	      WRITE(OUCH1,*) 
-    	      WRITE(OUCH1,*) 'QAWS TERMINATIONS WITH......' 
-    	      DO 20 I=0,6
-    	        IF (QIERC(I) .GT. 0) THEN
-    	          WRITE(OUCH1,1000) QTEXT(I),QIERC(I)
-    	        ENDIF
-    	20    CONTINUE
-    	C
-    	      WRITE(OUCH1,*) 
-    	      WRITE(OUCH1,999) '              MAXIMUM QAWS ERROR =',MQERR
-    	      WRITE(OUCH1,999) 'MAXIMUM COMPOSITE GAUSSIAN ERROR =',MCQER
-    	      WRITE(OUCH1,*) 
-    	      DO 40 I=1,TNSUA
-    	          WRITE(OUCH1,*)
-    	          WRITE(OUCH1,*) 'SUB ARC =',I,' ON PARENT ARC',PARNT(I)
-    	          WRITE(OUCH1,990) 'N','SCALED SOLUN','UNSCALED SOLUN','IGNORE L
-    	     +EVEL'
-    	          L=LOSUB(I)
-    	          H=HISUB(I)
-    	          JI=ABS(JATYP(I))
-    	          LOD=(JI-1)*NQPTS+1
-    	          DO 30 J=L,H
-    	              N=J-L
-    	              K=LOD+N
-    	              S=SOLUN(J)
-    	              WRITE(OUCH1,991) N,S,S*COLSC(K),LGTOL/CINFN(J)
-    	30        CONTINUE
-    	          IF (ACTIN(I) .EQ. -1) THEN
-    	              WRITE(OUCH1,*)'ACTION: REDUCE DEGREE TO ',NEWDG(I),' ***'
-    	          ELSE IF (ACTIN(I) .EQ. 0) THEN
-    	              WRITE(OUCH1,*)'ACTION: NONE            ***'
-    	          ELSE IF (ACTIN(I) .EQ. 1) THEN
-    	              WRITE(OUCH1,*)'ACTION: INCREASE DEGREE TO ',NEWDG(I)
-    	          ELSE
-    	              WRITE(OUCH1,*)'ACTION: SUBDIVIDE THIS ARC'
-    	          ENDIF
-    	40    CONTINUE
-    	C
-    	      WRITE(OUCH1,*) 'KAPPA =',SOLUN(NEQNS)
-    	      IF (.NOT.INTER) THEN
-    	          CAP=EXP(-SOLUN(NEQNS))
-    	          WRITE(OUCH1,*) 'CAPACITY = ',CAP
-    	      ENDIF
-    	C
-    	990   FORMAT(A,T7,A,T26,A,T44,A)
-    	991   FORMAT(I3,T6,E15.8,T25,E15.8,T44,E10.3)
-    	992   FORMAT(E15.8)
-    	993   FORMAT(I3,T8,E15.8,'  (',E14.7,',',E14.7,')')
-    	994   FORMAT(A,T8,A,T34,A)
-    	995   FORMAT(A,T6,A,T23,A,T36,A)
-    	996   FORMAT(I2,T6,E14.7,T23,F10.5,T36,E14.7)
-    	997   FORMAT(A,T24,A,T40,A)
-    	998   FORMAT(T5,I3,T26,I3,T45,E9.2)
-    	999   FORMAT(A,E10.2)
-    	1000  FORMAT(A,1X,I5)
-    	C
-    }*/
+    private void RSLT71(int QIERC[], double RCOND,double SOLUN[], int NEQNS, int LOSUB[],
+        int HISUB[], double COLSC[], int NQPTS, int JATYP[], int PARNT[], int TNSUA, boolean INTER,
+        double MQERR, double MCQER, double CINFN[], int ACTIN[], int NEWDG[], int NJIND,
+        double JACIN[], int NQUAD[], double TOLOU[], double LGTOL, int SOLCO) {
+    	//INTEGER NEQNS,TNSUA,OUCH1,NQPTS,NJIND,NEWDG(*),NQUAD(*),LOSUB(*),
+    	//+HISUB(*),QIERC(0:6),JATYP(*),PARNT(*),ACTIN(*),SOLCO
+    	//REAL SOLUN(*),RCOND,COLSC(*),MQERR,MCQER,LGTOL,
+    	//+CINFN(*),JACIN(*),TOLOU(*)
+    	//LOGICAL INTER
+    	String QTEXT[] = new String[7];
+    	final String LINE = "_________________________________________________________________";
+    	//CHARACTER QTEXT(0:6)*22,LINE*72
+    	      
+    	// LOCAL VARIABLES
+    	
+    	int I,J,JI,K,L,LOD,N,H;
+    	double S,CAP;
+    	
+    	QTEXT[0]="...........NORMAL EXIT";
+    	QTEXT[1]=".....MAX. SUBDIVISIONS";
+    	QTEXT[2]="....ROUNDOFF DETECTION";
+    	QTEXT[3]=".........BAD INTEGRAND";
+    	QTEXT[6]=".........INVALID INPUT";
+
+    	Preferences.debug(LINE+"\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("             SOLUTION NUMBER = " + SOLCO + "\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("                       NEQNS = " + NEQNS + "\n", Preferences.DEBUG_ALGORITHM); 
+    	Preferences.debug("RECIPROCAL COND NO. ESTIMATE = " + RCOND + "\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("   CONDITION NO. LOWER BOUND = " + (1.0/RCOND) + "\n", Preferences.DEBUG_ALGORITHM);
+    	
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("JACOBI INDEX           POINTS          TOLERANCE ACHIEVED\n", Preferences.DEBUG_ALGORITHM);
+    	for (I=1; I <= NJIND; I++) {
+    	    Preferences.debug("     "+I+"                 "+NQUAD[I-1]+"           "+TOLOU[I-1]+"\n", Preferences.DEBUG_ALGORITHM);
+    	} // for (I=1; I <= NJIND; I++)+
+    	
+    	
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("QAWS TERMINATIONS WITH......\n", Preferences.DEBUG_ALGORITHM);
+    	for (I=0; I <= 6; I++) {
+    	    if (QIERC[I] > 0) {
+    	        Preferences.debug(QTEXT[I] + " " + QIERC[I] + "\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	}      
+    	
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("              MAXIMUM QAWS ERROR = " + MQERR + "\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("MAXIMUM COMPOSITE GAUSSIAN ERROR = " + MCQER + "\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	      
+    	for (I=1; I <= TNSUA; I++) {
+    		Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	    Preferences.debug("SUB ARC = " + I + " ON PARENT ARC " + PARNT[I-1] + "\n", Preferences.DEBUG_ALGORITHM);
+    	    Preferences.debug("N     SCALED SOLUN       UNSCALED SOLUN    IGNORE LEVEL\n", Preferences.DEBUG_ALGORITHM);
+    	    L=LOSUB[I-1];
+    	    H=HISUB[I-1];
+    	    JI=Math.abs(JATYP[I-1]);
+    	    LOD=(JI-1)*NQPTS+1;
+    	    for (J=L; J <= H; J++) {
+    	        N=J-L;
+    	        K=LOD+N;
+    	        S=SOLUN[J-1];
+    	        Preferences.debug(N+"  "+S+"    "+(S*COLSC[K-1])+"    "+(LGTOL/CINFN[J-1])+ "\n", Preferences.DEBUG_ALGORITHM);
+    	    } // for (J=L; J <= H; J++)
+    	    if (ACTIN[I-1] == -1) {
+    	        Preferences.debug("ACTION: REDUCE DEGREE TO " + NEWDG[I-1] + " ***\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	    else if (ACTIN[I-1] == 0) {
+    	        Preferences.debug("ACTION: NONE            ***\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	    else if (ACTIN[I-1] == 1) {
+    	        Preferences.debug("ACTION: INCREASE DEGREE TO " + NEWDG[I-1]+ "\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	    else {
+    	        Preferences.debug("ACTION: SUBDIVIDE THIS ARC\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	} // for (I=1; I <= TNSUA; I++)
+    	
+    	Preferences.debug("KAPPA = " + SOLUN[NEQNS-1] + "\n", Preferences.DEBUG_ALGORITHM);
+    	if (!INTER) {
+    	    CAP=Math.exp(-SOLUN[NEQNS-1]);
+    	    Preferences.debug("CAPACITY = " + CAP + "\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	
+    } // private void RSLT71
     
     private void RSLT72(int QIERC[], double RCOND, double GAMMA, int NEQNS, int DGPOL[],
         int JATYP[], int PARNT[], int TNSUA, boolean INTER, double MQERR, double MCQER,
         int ACTIN[], int NEWDG[], int NJIND, int NQUAD[], double TOLOU[], double LGTOL,
-    	int SOLCO, int OUCH1) {
+    	int SOLCO) {
     	// INTEGER NEQNS,TNSUA,OUCH1,NJIND,NEWDG(*),NQUAD(*),QIERC(0:6),
     	// PARNT(*),ACTIN(*),DGPOL(*),JATYP(*),SOLCO
     	// REAL GAMMA,RCOND,MQERR,MCQER,LGTOL,TOLOU(*)
@@ -5626,56 +5716,50 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	Preferences.debug("RECIPROCAL COND NO. ESTIMATE = " + RCOND + "\n", Preferences.DEBUG_ALGORITHM);
     	Preferences.debug("   CONDITION NO. LOWER BOUND = " + (1.0/RCOND) + "\n", Preferences.DEBUG_ALGORITHM);
     	
-    	/*      WRITE(OUCH1,*) 
-    	      WRITE(OUCH1,997) 'JACOBI INDEX','POINTS','TOLERANCE ACHIEVED'
-    	      DO 10 I=1,NJIND
-    	        WRITE(OUCH1,998) I,NQUAD(I),TOLOU(I)
-    	10    CONTINUE
-    	C
-    	      WRITE(OUCH1,*) 
-    	      WRITE(OUCH1,*) 'QAWS TERMINATIONS WITH......' 
-    	      DO 20 I=0,6
-    	        IF (QIERC(I) .GT. 0) THEN
-    	          WRITE(OUCH1,1000) QTEXT(I),QIERC(I)
-    	        ENDIF
-    	20    CONTINUE
-    	C
-    	      WRITE(OUCH1,*) 
-    	      WRITE(OUCH1,999) '              MAXIMUM QAWS ERROR =',MQERR
-    	      WRITE(OUCH1,999) 'MAXIMUM COMPOSITE GAUSSIAN ERROR =',MCQER
-    	      WRITE(OUCH1,*) 
-    	      WRITE(OUCH1,992) 'SUB ARC','PARENT ARC','TYPE','CURRENT DEGREE','
-    	     +ACTION'
-    	      DO 40 I=1,TNSUA
-    	        IF (ACTIN(I) .EQ. -1) THEN
-    	          WRITE(OUCH1,993) I,PARNT(I),JATYP(I),DGPOL(I),'REDUCE TO ',NEW
-    	     +                     DG(I)
-    	        ELSE IF (ACTIN(I) .EQ. 0) THEN
-    	          WRITE(OUCH1,994) I,PARNT(I),JATYP(I),DGPOL(I),'NONE'
-    	        ELSE IF (ACTIN(I) .EQ. 1) THEN
-    	          WRITE(OUCH1,993) I,PARNT(I),JATYP(I),DGPOL(I),'INCREASE TO ',N
-    	     +                     EWDG(I)
-    	        ELSE
-    	          WRITE(OUCH1,994) I,PARNT(I),JATYP(I),DGPOL(I),'SUBDIVIDE'
-    	        ENDIF
-    	40    CONTINUE
-    	C
-    	      WRITE(OUCH1,*) 'KAPPA =',GAMMA
-    	      IF (.NOT.INTER) THEN
-    	          CAP=EXP(-GAMMA)
-    	          WRITE(OUCH1,*) 'CAPACITY = ',CAP
-    	      ENDIF
-    	C
-    	990   FORMAT(A,T7,A,T26,A,T44,A)
-    	991   FORMAT(I3,T6,E15.8,T25,E15.8,T44,E10.3)
-    	992   FORMAT(A,T10,A,T24,A,T34,A,T53,A)
-    	993   FORMAT(T2,I2,T14,I3,T25,I3,T40,I2,T53,A,1X,I2)
-    	994   FORMAT(T2,I2,T14,I3,T25,I3,T40,I2,T53,A)
-    	997   FORMAT(A,T24,A,T40,A)
-    	998   FORMAT(T5,I3,T26,I3,T45,E9.2)
-    	999   FORMAT(A,E10.2)
-    	1000  FORMAT(A,1X,I5)
-    	*/
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("JACOBI INDEX           POINTS          TOLERANCE ACHIEVED\n", Preferences.DEBUG_ALGORITHM);
+    	for (I=1; I <= NJIND; I++) {
+    	    Preferences.debug("     "+I+"                 "+NQUAD[I-1]+"           "+TOLOU[I-1]+"\n", Preferences.DEBUG_ALGORITHM);
+    	} // for (I=1; I <= NJIND; I++)+
+    	
+    	
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("QAWS TERMINATIONS WITH......\n", Preferences.DEBUG_ALGORITHM);
+    	for (I=0; I <= 6; I++) {
+    	    if (QIERC[I] > 0) {
+    	        Preferences.debug(QTEXT[I] + " " + QIERC[I] + "\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	}
+    	
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("              MAXIMUM QAWS ERROR = " + MQERR + "\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("MAXIMUM COMPOSITE GAUSSIAN ERROR = " + MCQER + "\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("SUB ARC   PARENT ARC   TYPE     CURRENT DEGREE     ACTION\n", Preferences.DEBUG_ALGORITHM);
+    	for (I=1; I <= TNSUA; I++) {
+    	    if (ACTIN[I-1] == -1) {
+    	          Preferences.debug("  "+I+"         "+PARNT[I-1]+"        "+JATYP[I-1]+"            "+
+    	                            DGPOL[I-1]+" REDUCE TO " + NEWDG[I-1] + "\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	    else if (ACTIN[I-1] == 0) {
+    	    	Preferences.debug("  "+I+"         "+PARNT[I-1]+"        "+JATYP[I-1]+"            "+
+                        DGPOL[I-1]+" NONE " + "\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	    else if (ACTIN[I-1] == 1) {
+    	    	Preferences.debug("  "+I+"         "+PARNT[I-1]+"        "+JATYP[I-1]+"            "+
+                        DGPOL[I-1]+" INCREASE TO " + NEWDG[I-1] + "\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	    else {
+    	    	Preferences.debug("  "+I+"         "+PARNT[I-1]+"        "+JATYP[I-1]+"            "+
+                        DGPOL[I-1]+" SUBDIVIDE " + "\n", Preferences.DEBUG_ALGORITHM);
+    	    }
+    	} // for (I=1; I <= TNSUA; I++)
+    	
+    	Preferences.debug("KAPPA = " + GAMMA + "\n", Preferences.DEBUG_ALGORITHM);
+    	if (!INTER) {
+    	    CAP=Math.exp(-GAMMA);
+    	    Preferences.debug("CAPACITY = " + CAP + "\n", Preferences.DEBUG_ALGORITHM);
+    	}
     } // private void RSLT72
 
     
@@ -6593,6 +6677,632 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         IER[0]=0;
 
     } // private void STATS1
+    
+    private void UPJAC1(int NQPTS,int NJIND,int INDEG,int AXION[],int DGPOL[],
+        int NEWDG[],double ACOEF[],double BCOEF[],double DIAG[],double SDIAG[],
+        int TNSUA,int MNSUA,int LOSUB[],int HISUB[],int JATYP[],int PARNT[],
+        double MIDPT[],double HALEN[],double COLPR[], double ZCOLL[][],
+        boolean LNSEG[],boolean PNEWQ[],double EPS,int IER[],double WORK[],
+        double NEWHL[],double RCOPY[],int ICOPY[],boolean LCOPY[], int LOOLD[],
+    	int HIOLD[]) {
+    	//INTEGER NQPTS,INDEG,TNSUA,MNSUA,IER,NJIND
+    	//INTEGER DGPOL(*),LOSUB(*),HISUB(*),JATYP(*),PARNT(*),ICOPY(*),
+    	//+AXION(*),NEWDG(*),LOOLD(*),HIOLD(*)
+    	//REAL EPS,ACOEF(*),BCOEF(*),DIAG(*),SDIAG(*),WORK(*),MIDPT(*),
+    	//+HALEN(*),COLPR(*),RCOPY(*),NEWHL(*)
+    	//COMPLEX ZCOLL(*)
+    	//LOGICAL LNSEG(*),LCOPY(*),PNEWQ(*)
+    	
+    	// TO UPDATE THE COLLOCATION PARAMETERS (STORED IN COLPR), THE 
+    	// COLLOCATION POINTS ON THE PHYSICAL BOUNDARY (STORED IN ZCOLL) 
+    	// AND THE ARRAYS LOSUB AND HISUB NEEDED TO ACCESS THIS DATA 
+    	// CORRECTLY.  
+    	// ALSO TO UPDATE/DETERMINE THE ARRAYS
+    	//   JATYP - THE JACOBI INDEX TYPE OF EACH SUBARC
+    	//   PARNT - THE PARENT ARC OF EACH SUBARC
+    	//   MIDPT - THE GLOBAL PARAMETRIC MIDPOINT OF EACH SUBARC
+    	//   HALEN - THE GLOBAL PARAMETRIC HALF-LENGTH OF EACH SUBARC
+    	//   DGPOL - THE POLYNOMIAL DEGREE ON EACH SUBARC
+    	//   LNSEG - THE LINE SEGMENT BOOLEAN FOR EACH SUBARC
+    	//   PNEWQ - BOOLEAN INDICATING POSSIBLE NEW QUADRATURE FOR SUBARC
+    	//   IER=0 - NORMAL TERMINATION
+    	//   IER=7 - FAILURE IN IMTQLH
+    	//   IER=17- NUMBER OF SUBARCS REQUIRED EXCEEDS MNSUA
+    	
+    	// LOCAL VARIABLES
+    	
+    	int IFAIL[] = new int[1];
+    	int D,D1,FIRST,I,J,K,K1,K2,P,PREV,JT,NTNSA,J1,J2;
+    	double S,TC,MD,HH,F1,F2;
+    	double PIN[] = new double[2];
+    	double POUT[];
+    	//COMPLEX PARFUN
+    	final boolean USEIN = true;
+    	boolean LS;
+    	// EXTERNAL PARFUN,IMTQLH
+    	
+    	J=0;
+    	for (I=1; I <= TNSUA; I++) {
+    	    MD=MIDPT[I-1];
+    	    if (AXION[I-1] < 2) {
+    	        J=J+1;
+    	        if (J > MNSUA) {
+    	            IER[0]=17;
+    	            return;
+    	        }
+    	        RCOPY[J-1]=MD;
+    	    } // if (AXION[I-1] < 2)
+    	    else { // AXION[I-1] >= 2
+    	        JT=JATYP[I-1];
+    	        if (JT > 0) {
+    	            F1=1.0-NEWHL[I-1];
+    	        }
+    	        else {
+    	            F1=NEWHL[I-1];
+    	        }
+    	        F2=1.0-F1;
+    	        HH=HALEN[I-1];
+    	        J=J+1;
+    	        if (J > MNSUA) {
+    	            IER[0]=17;
+    	            return;
+    	        }
+    	        RCOPY[J-1]=MD-F1*HH;
+    	        J=J+1;
+    	        if (J > MNSUA) {
+    	            IER[0]=17;
+    	            return;
+    	        }
+    	        RCOPY[J-1]=MD+F2*HH;
+    	    } // else AXION[I-1] >= 2
+    	} // for (I=1; I <= TNSUA; I++)
+    	NTNSA=J;
+    	for (I=1; I <= NTNSA; I++) {
+    	    MIDPT[I-1]=RCOPY[I-1];
+    	}
+    	     
+    	J=0;
+    	for (I=1; I <= TNSUA; I++) {
+    	    HH=HALEN[I-1];      
+    	    if (AXION[I-1] < 2) {
+    	        J=J+1;
+    	        RCOPY[J-1]=HH;
+    	    }
+    	    else {
+    	        JT=JATYP[I-1];
+    	        if (JT > 0) {
+    	            F1=NEWHL[I-1];
+    	        }
+    	        else {
+    	            F1=1.0-NEWHL[I-1];
+    	        }
+    	        F2=1.0-F1;
+    	        J=J+1;
+    	        RCOPY[J-1]=F1*HH;
+    	        J=J+1;
+    	        RCOPY[J-1]=F2*HH;
+    	    }
+    	} // for (I=1; I <= TNSUA; I++)
+    	for (I=1; I <= NTNSA; I++) {
+    	    HALEN[I-1]=RCOPY[I-1];
+    	} // for (I=1; I <= NTNSA; I++)
+    	      
+    	J=0;
+    	for (I=1; I <= TNSUA; I++) {
+    	    JT=JATYP[I-1];
+    	    if (AXION[I-1] < 2) {
+    	        J=J+1;
+    	        ICOPY[J-1]=JT;
+    	    }
+    	    else { 
+    	        if (JT < NJIND) {
+    	            if (JT > 0) {
+    	                J1=JT;
+    	                J2=NJIND;
+    	            }
+    	            else {
+    	                J1=NJIND;
+    	                J2=JT;
+    	            }
+    	        }
+    	        else {
+    	            J1=NJIND;
+    	            J2=J1;
+    	        }
+    	        J=J+1;
+    	        ICOPY[J-1]=J1;
+    	        J=J+1;
+    	        ICOPY[J-1]=J2;
+    	    }
+    	} // for (I=1; I <= TNSUA; I++)
+    	for (I=1; I <= NTNSA; I++) {
+    	    JATYP[I-1]=ICOPY[I-1];
+    	}
+    	
+    	J=0;
+    	for (I=1; I <= TNSUA; I++) {
+    	    if (AXION[I-1] < 2) {
+    	        J=J+1;
+    	        ICOPY[J-1]=PARNT[I-1];
+    	    }
+    	    else {
+    	        J=J+1;
+    	        ICOPY[J-1]=PARNT[I-1];
+    	        J=J+1;
+    	        ICOPY[J-1]=PARNT[I-1];
+    	    }
+    	} // for (I=1; I <= TNSUA; I++)
+    	for (I=1; I <= NTNSA; I++) {
+    	    PARNT[I-1]=ICOPY[I-1];
+    	}
+    	      
+    	J=0;
+    	for (I=1; I <= TNSUA; I++) {
+    	    LS=LNSEG[I-1];       
+    	    if (AXION[I-1] < 2) {
+    	        J=J+1;
+    	        LCOPY[J-1]=LS;
+    	    }
+    	    else {
+    	        J=J+1;
+    	        LCOPY[J-1]=LS;
+    	        J=J+1;
+    	        LCOPY[J-1]=LS;
+    	    }
+    	} // for (I=1; I <= TNSUA; I++)
+    	for (I=1; I <= NTNSA; I++) {
+    	    LNSEG[I-1]=LCOPY[I-1];
+    	}
+    	  
+    	if (USEIN) { 
+    	
+    	    // USE INDEG ON SUBDIVIDED ARCS
+    	   
+    	    J=0;
+    	    for (I=1; I <= TNSUA; I++) {
+    	        if (AXION[I-1] < 2) {
+    	            J=J+1;
+    	            DGPOL[J-1]=NEWDG[I-1];
+    	        }
+    	        else {
+    	            J=J+1;
+    	            DGPOL[J-1]=INDEG;
+    	            J=J+1;
+    	            DGPOL[J-1]=INDEG;
+    	        }
+    	    } // for (I=1; I <= TNSUA; I++)
+    	} // if (USEIN)
+    	else {
+    	
+    	    // USE CURRENT DEGREE ON SUBDIVIDED ARCS
+    	
+    	    J=0;
+    	    for (I=1; I <= TNSUA; I++) {
+    	        if (AXION[I-1] < 2) {
+    	            J=J+1;
+    	            ICOPY[J-1]=NEWDG[I-1];
+    	        }
+    	        else {
+    	            J=J+1;
+    	            ICOPY[J-1]=DGPOL[I-1];
+    	            J=J+1;
+    	            ICOPY[J-1]=DGPOL[I-1];
+    	        }
+    	    } // for (I=1; I <= TNSUA; I++) 
+    	    for (I=1; I <= NTNSA; I++) {
+    	        DGPOL[I-1]=ICOPY[I-1];
+    	    }
+    	} // else !USEIN
+    	
+    	J=0;
+    	for (I=1; I <= TNSUA; I++) {
+    	    if (AXION[I-1] == 2) {
+    	        J=J+1;
+    	        LOOLD[J-1]=0;
+    	        HIOLD[J-1]=-1;     
+    	        J=J+1;
+    	        LOOLD[J-1]=0;
+    	        HIOLD[J-1]=-1;
+    	    }
+    	    else if (AXION[I-1] == 0) {
+    	        J=J+1;
+    	        LOOLD[J-1]=LOSUB[I-1];
+    	        HIOLD[J-1]=HISUB[I-1];
+    	    }
+    	    else {     
+    	        J=J+1;
+    	        LOOLD[J-1]=0;
+    	        HIOLD[J-1]=-1;
+    	    }
+    	} // for (I=1; I <= TNSUA; I++)
+    	
+    	J=0;
+    	for (I=1; I <= TNSUA; I++) {
+    	    if (AXION[I-1] < 2) {
+    	        J=J+1;
+    	        LCOPY[J-1]=true;
+    	    }
+    	    else {
+    	        J=J+1;
+    	        LCOPY[J-1]=false;
+    	        J=J+1;
+    	        LCOPY[J-1]=false;
+    	    }
+    	} // for (I=1; I <= TNSUA; I++)
+    	
+    	if (LCOPY[0] && LCOPY[NTNSA-1]) {
+    	    if (LCOPY[1]) {
+    	        PNEWQ[0]=false;
+    	    }
+    	    else {
+    	        PNEWQ[0]=true;
+    	    }
+    	    if (LCOPY[NTNSA-2]) {
+    	        PNEWQ[NTNSA-1]=false;
+    	    }
+    	    else {
+    	        PNEWQ[NTNSA-1]=true;
+    	    }
+    	}
+    	else {
+    	    PNEWQ[0]=true;
+    	    PNEWQ[NTNSA-1]=true;
+    	}
+    	
+    	J=NTNSA-1;
+    	for (I=2; I <= J; I++) {
+    	    if (LCOPY[I-2] && LCOPY[I-1] && LCOPY[I]) {
+    	        PNEWQ[I-1]=false;
+    	    }
+    	    else {
+    	        PNEWQ[I-1]=true;
+    	    }
+    	} // for (I=2; I <= J; I++)
+    	
+    	TNSUA=NTNSA;
+    	LOSUB[0]=1;
+    	HISUB[0]=1+DGPOL[0];
+    	for (I=2; I <= TNSUA; I++) {
+    	    LOSUB[I-1]=HISUB[I-2]+1;
+    	    HISUB[I-1]=LOSUB[I-1]+DGPOL[I-1];
+    	} // for (I=2; I <= TNSUA; I++)
+    	
+    	for (I=1; I <= TNSUA; I++) {
+    	    J=JATYP[I-1];
+    	    P=PARNT[I-1];
+    	    D=DGPOL[I-1];
+    	    D1=D+1;
+    	    if (J > 0) {
+    	        S=1.0;
+    	    }
+    	    else {
+    	        S=-1.0;
+    	        J=-J;
+    	    }
+    	    PREV=(J-1)*NQPTS;
+    	    FIRST=LOSUB[I-1];
+    	    for (K=1; K <= D1; K++) {
+    	        WORK[K-1]=0.0;
+    	        K1=PREV+K;
+    	        DIAG[K-1]=BCOEF[K1-1];
+    	        if (K == 1) {
+    	            SDIAG[K-1]=0.0;
+    	        }
+    	        else {
+    	            SDIAG[K-1]=ACOEF[K1-2];
+    	        }
+    	    } // for (K=1; K <= D1; K++) 
+    	    WORK[0]=1.0;
+    	    IMTQLH(D1,DIAG,SDIAG,IFAIL);
+    	    if (IFAIL[0] > 0) {
+    	        IER[0]=7;
+    	        return;
+    	    }
+    	    for (K=1; K <= D1; K++) {
+    	        TC=S*DIAG[K-1];
+    	        K2=FIRST+K-1;
+    	        COLPR[K2-1]=TC;
+    	        TC=MIDPT[I-1]+HALEN[I-1]*TC;
+    	        PIN[0] = TC;
+    	        PIN[1] = 0.0;
+    	        POUT = PARFUN(P,PIN);
+    	        ZCOLL[K2-1][0] = POUT[0];
+    	        ZCOLL[K2-1][1] = POUT[1];
+    	    } // for (K=1; K <= D1; K++)
+    	} // for (I=1; I <= TNSUA; I++)
+    	
+    	// NORMAL EXIT
+    	
+        IER[0]=0;
+    	
+    } // private void UPJAC1
+    
+    private void UPCOQ1(int NARCS,int NJIND,int NQPTS,int MDGPO,int MQIN1,double AQTOL,
+        double QUPTS[], double QUWTS[],double JACIN[],double MIDPT[],double HALEN[],
+        double ACOEF[],double BCOEF[],double H0VAL[],double COLSC[],int NQUAD[],
+        int LOQSB[],double QCOMX[],double QCOMW[],int MNQUA,double TOLOU[], double MCQER[],
+        double XENPT[], double XIVAL[][], double XIDST[],int TNSUA, boolean PNEWQ[],
+        boolean NEWQU[],int JATYP[],int PARNT[],boolean NUQTL[],int IER[]) {
+    	//INTEGER NARCS,NQPTS,MDGPO,MQIN1,TNSUA,IER,NQUAD(*),LOQSB(*),
+    	//+NJIND,JATYP(*),PARNT(*),MNQUA
+    	//REAL AQTOL,QUPTS(*),QUWTS(*),JACIN(*),MIDPT(*),HALEN(*),ACOEF(*),
+    	//+BCOEF(*),H0VAL(*),COLSC(*),QCOMX(*),QCOMW(*),TOLOU(*),XENPT(*),
+    	//+XIDST(*),MCQER
+    	//LOGICAL NUQTL
+    	//LOGICAL PNEWQ(*),NEWQU(*)
+    	//COMPLEX XIVAL(*)
+    	
+    	//     THE PURPOSE OF THIS ROUTINE IS TO UPDATE THE ABSCISSAE 
+    	//     (QCOMX) AND WEIGHTS (QCOMW) FOR THE COMPOSITE GAUSSIAN RULES 
+    	//     FOR THE ESTIMATION OF
+    	
+    	//       INTEGRAL  [(1+X)**BETA*P(X,I)*LOG|ZZ-X|*dX], I=0,1,...,MDGPO.
+    	//      -1<=X<=1                                      J=1,NZZ
+    	
+    	//     HERE P(.,I) IS THE ORTHONORMAL JACOBI POLYNOMIAL OF DEGREE I
+    	//     ASSOCIATED WITH THE WEIGHT (1+X)**BETA AND ZZ IS ANY COLLOCATION
+    	//     POINT PREIMAGE NOT ON [-1,1].  BETA TAKES ON THE VARIOUS VALUES
+    	//     DEFINED BY ARRAY JACIN.  THE ROUTINE ALSO COMPUTES
+    	
+    	//     NQUAD - NQUAD(I) IS THE NUMBER OF QUADRATURE POINTS IN THE
+    	//             COMPOSITE RULE FOR BETA=JACIN(I).
+    	//     LOQSB - THE ABSCISSAE AND WEIGHTS OF THE COMPOSITE RULE FOR
+    	//             BETA=JACIN(I) ARE STORED IN ARRAYS QCOMX AND QCOMW IN
+    	//             THE POSITIONS LOQSB(I) TO LOQSB(I)+NQUAD(I)-1 INCLUSIVE.
+    	//     XIDST,
+    	//     XIVAL - XIVAL(2*I-1) STORES THE COLLOCATION PREIMAGE THOUGHT
+    	//             TO BE NEAREST TO -1 AND XIDST(2*I-1) STORES ITS DISTANCE
+    	//             FROM -1; SIMILARLY, XIVAL(2*I) STORES THE PREIMAGE
+    	//             THOUGHT TO BE NEAREST TO +1 AND XIDST(2*I) ITS DISTANCE
+    	//             FROM +1. THE PREIMAGES ARE WITH RESPECT TO
+    	//             THE PARAMETRIC FUNCTIONS DEFINING THE SUBARCS WHICH
+    	//             MEET AT THE PHYSICAL CORNER WHERE BETA=JACIN(I).
+    	//     TOLOU - TOLOU(I) IS THE ESTIMATED MAXIMUM ERROR OVER ALL
+    	//             COLLOCATION POINTS IN USING THE COMPOSITE RULE
+    	//             FOR BETA=JACIN(I).
+    	//     IER  - IER=0 FOR NORMAL TERMINATION.
+    	//            IER=19 THE REQUIRED TOTAL NUMBER OF COMPOSITE QUADRATURE
+    	//                   POINTS EXCEEDS THE LIMIT MNQUA.
+    	//            IER=20 THE PARAMETER MQIN1 NEEDS INCREASING; MQIN1-1 IS 
+    	//                   THE MAXIMUM ALLOWED NUMBER OF SUBINTERVALS IN OUR
+    	//                   COMPOSITE GAUSSIAN RULE. (SAME AS IER=11, BUT 20
+    	//                   IDICATES DURING REFINEMENT PROCESS)
+    	
+    	//     ALL THE ABOVE (APART FROM IER) SHOULD HAVE EXISTING VALUES ON 
+    	//     INPUT WHICH ARE UPDATED BY THE NEW VERSIONS ON OUTPUT.
+    	
+    	//     LOCAL VARIABLES
+    	
+    	int I,I0,I1,I2,J,K,JI,JI0,JI1,JI2,P0,P1,P2,HI,LO,QINTS,NQ,DIFF,TNCQP;
+    	double DST[] = new double[2];
+    	double BETA,H1,M1,T0,T2,SUM1,RR,RRB,MEAN,RXI,IXI;
+    	final double ONE[] = new double[]{1.0,0.0};
+    	double ZZ[] = new double[2];
+    	double Z0[] = new double[2];
+    	double Z2[] = new double[2];
+    	double XI[][] = new double[2][2];
+    	//COMPLEX ONE,ZZ,Z0,Z2,XI(2),PARFUN,DPARFN
+    	//PARAMETER (ONE=(1E+0,0E+0))
+        //EXTERNAL PARFUN,DPARFN,SUBIN7
+    	double PIN[] = new double[2];
+    	double POUT[];
+    	double DOUT[];
+    	double cr[] = new double[1];
+    	double ci[] = new double[1];
+    	
+    	//**** NEWQU(J) IS TRUE IF THE QUADRATURE RULE FOR THE J'TH JACOBI INDEX
+    	//**** NEEDS UPDATING.  FIRST SET NEWQU FOR THE CASE WHERE A NEW
+    	//**** QUADRATURE TOLERANCE HAS BEEN FIXED; THIS IS INDEPENDENT OF ANY
+    	//**** POSSIBLE ARC SUBDIVISIONS.  IF THE PURE LEGENDRE RULE DOESN'T
+    	//**** ALREADY EXIST THEN IT DOESN'T HAVE TO BE UPDATED.
+    	
+    	for (J=1; J <= NARCS; J++) {
+    	    NEWQU[J-1]=NUQTL[0];
+    	}
+    	NEWQU[NJIND-1]=(NUQTL[0] && (NQUAD[NJIND-1] > 0));
+    	
+    	//**** NEXT OVERWRITE NEWQU TO PICK UP THOSE CASES WHERE A BOUNDARY
+    	//**** SUBDIVISION HAS OCCURRED AND UPDATE THE NEAR POINT VECTOR XIVAL.
+    	
+    	for (I1=1; I1 <= TNSUA; I1++) {
+    	    if (PNEWQ[I1-1]) {
+    	        if (I1 == 1) {
+    	            I0=TNSUA;
+    	        }
+    	        else { 
+    	            I0=I1-1;
+    	        }
+    	
+    	        if (I1 == TNSUA) {
+    	            I2=1;
+    	        }
+    	        else {
+    	            I2=I1+1;
+    	        }
+    	
+    	        JI0=JATYP[I0-1];
+    	        JI1=JATYP[I1-1];
+    	        JI2=JATYP[I2-1];
+    	
+    	        if (JI0 > 0) {
+    	            T0=QUPTS[JI0*NQPTS-1];
+    	        }
+    	        else {
+    	            JI0=-JI0;
+    	            T0=-QUPTS[(JI0-1)*NQPTS];
+    	        }
+    	
+    	        if (JI2 > 0) {
+    	            T2=QUPTS[(JI2-1)*NQPTS];
+    	        }
+    	        else {
+    	            JI2=-JI2;
+    	            T2=-QUPTS[JI2*NQPTS-1];
+    	        }
+    	
+    	        T0=MIDPT[I0-1]+T0*HALEN[I0-1];
+    	        T2=MIDPT[I2-1]+T2*HALEN[I2-1];
+    	        P0=PARNT[I0-1];
+    	        P1=PARNT[I1-1];
+    	        P2=PARNT[I2-1];
+    	        PIN[0] = T0;
+    	        PIN[1] = 0.0;
+    	        Z0=PARFUN(P0,PIN);
+    	        PIN[0] = T2;
+    	        PIN[1] = 0.0;
+    	        Z2=PARFUN(P2,PIN);
+    	        H1=HALEN[I1-1];
+    	        M1=MIDPT[I1-1];
+    	        ZZ[0]=M1-H1;
+    	        ZZ[1] = 0.0;
+    	        POUT = PARFUN(P1,ZZ);
+    	        DOUT = DPARFN(P1,ZZ);
+    	        zdiv(POUT[0] - Z0[0], POUT[1] - Z0[1],DOUT[0],DOUT[1],cr,ci);
+    	        XI[0][0] = -1.0 - cr[0]/H1;
+    	        XI[0][1] = -ci[0]/H1;
+    	        ZZ[0] = M1+H1;
+    	        ZZ[1] = 0.0;
+    	        POUT = PARFUN(P1,ZZ);
+    	        DOUT = DPARFN(P1,ZZ);
+    	        zdiv(POUT[0]-Z2[0], POUT[1]-Z2[1],DOUT[0],DOUT[1],cr,ci);
+    	        XI[1][0] = 1.0 - cr[0]/H1;
+    	        XI[1][1] = -ci[0]/H1;
+    	
+    	        if (JI1 < 0) {
+    	            Z0[0]=XI[0][0];
+    	            Z0[1]=XI[0][1];
+    	            XI[0][0]=-XI[1][0];
+    	            XI[0][1]=-XI[1][1];
+    	            XI[1][0]=-Z0[0];
+    	            XI[1][1]=-Z0[1];
+    	            JI1=-JI1;
+    	        } // if (JI1 < 0)
+    	
+    	        for (J=1; J <= 2; J++) {
+    	            RXI=XI[J-1][0];
+    	            IXI=XI[J-1][1];
+    	            if (-1.0 <= RXI && RXI <= 1.0) {
+    	                DST[J-1]=Math.abs(IXI);
+    	            }
+    	            else if (RXI < -1.0) {
+    	                DST[J-1]=zabs(XI[J-1][0]+1.0,XI[J-1][1]);
+    	            }
+    	            else {
+    	                DST[J-1]=zabs(XI[J-1][0]-1.0,XI[J-1][1]);
+    	            }
+    	        } // for (J=1; J <= 2; J++)
+    	
+    	        J=2*JI1-2;
+    	        for (I=1; I <= 2; I++) {
+    	            J=J+1;
+    	            if (DST[I-1] < XIDST[J-1]) {
+    	                NEWQU[JI1-1]=true;
+    	                XIVAL[J-1][0]=XI[I-1][0];
+    	                XIVAL[J-1][1]=XI[I-1][1];
+    	                XIDST[J-1]=DST[I-1];
+    	            }
+    	        } // for (I=1; I <= 2; I++) 
+    	    } // if (PNEWQ[I1-1])
+    	} // for (I1=1; I1 <= TNSUA; I1++)
+    	
+    	//     FOR THOSE INDECES FOR WHICH NEWQU IS TRUE WE NOW SET UP THE NEW
+    	//     COMPOSITE GAUSSIAN QUADRATURE DATA.
+    	
+    	TNCQP=LOQSB[NJIND-1]+NQUAD[NJIND-1]-1;
+    	HI=0;
+    	/*for (JI=1; JI <= NJIND; JI++) {
+    	    NQ=NQUAD[JI-1];
+    	    if (NEWQU[JI-1]) {
+    	        LO=(JI-1)*NQPTS+1;
+    	        BETA=JACIN[JI-1];
+    	        I2=2*JI-1;
+    	        SUBIN7(XIVAL(I2),2,BETA,MDGPO,NQPTS,ACOEF(LO),BCOEF(LO),
+    	              H0VAL(JI),COLSC(LO),AQTOL,TOLOU(JI),XENPT,QINTS,MQIN1,
+    	              IER);
+    	          IF (IER .GT. 0) THEN
+    	            IF (IER .EQ. 11) THEN
+    	              IER=20
+    	            ENDIF
+    	            RETURN
+    	          ENDIF
+    	C
+    	          DIFF=QINTS*NQPTS-NQ
+    	          IF (TNCQP+DIFF .GT. MNQUA) THEN
+    	            IER=19
+    	            RETURN
+    	          ENDIF
+    	          I1=HI+NQ+1
+    	C 
+    	C         IF DIFF IS NON-ZERO WE MUST MAKE SPACE IN ARRAYS QCOMX AND
+    	C         QCOMW TO RECEIVE THE NEW DATA.
+    	C
+    	          IF (DIFF .GT. 0) THEN
+    	            DO 40 I=TNCQP,I1,-1
+    	              J=I+DIFF
+    	              QCOMX(J)=QCOMX(I)
+    	              QCOMW(J)=QCOMW(I)
+    	40          CONTINUE
+    	          ELSE IF (DIFF .LT. 0) THEN
+    	            DO 50 I=I1,TNCQP
+    	              J=I+DIFF
+    	              QCOMX(J)=QCOMX(I)
+    	              QCOMW(J)=QCOMW(I)
+    	50          CONTINUE
+    	          ENDIF
+    	C
+    	C         NOW SET UP THE NEW RULE AND STORE DATA IN QCOMX, QCOMW
+    	C
+    	          TNCQP=TNCQP+DIFF
+    	          NQUAD(JI)=NQ+DIFF
+    	          LOQSB(JI)=HI+1
+    	          SUM1=BETA+1E+0
+    	          K=HI
+    	          DO 80 I=1,QINTS
+    	            RR=(XENPT(I+1)-XENPT(I))*5E-1
+    	            MEAN=(XENPT(I+1)+XENPT(I))*5E-1 
+    	            IF (I .EQ. 1) THEN
+    	              RRB=RR**SUM1
+    	              LO=LO-1
+    	              DO 60 J=1,NQPTS
+    	                K=K+1
+    	                QCOMX(K)=MEAN+RR*QUPTS(LO+J)
+    	                QCOMW(K)=RRB*QUWTS(LO+J)
+    	60            CONTINUE
+    	            ELSE
+    	              LO=NARCS*NQPTS
+    	              DO 70 J=1,NQPTS
+    	                K=K+1
+    	                QCOMX(K)=MEAN+RR*QUPTS(LO+J)
+    	                QCOMW(K)=RR*QUWTS(LO+J)*(1E+0+QCOMX(K))**BETA
+    	70            CONTINUE
+    	            ENDIF
+    	80        CONTINUE
+    	          HI=HI+NQUAD(JI)
+    	    } // if (NEWQU[JI-1])
+    	    else {
+    	C
+    	C         HERE WE DO NOTHING OTHER THAN UPDATE SOME SUBSCRIPTS.
+    	C
+    	          LOQSB(JI)=HI+1
+    	          HI=HI+NQ
+    	    }
+    	C
+    	} // for (JI=1; JI <= NJIND; JI++)
+    	C
+    	      MCQER=0E+0
+    	      DO 100 I=1,NJIND
+    	        MCQER=MAX(MCQER,TOLOU(I))
+    	100   CONTINUE
+    	C
+    	      NUQTL=.FALSE.
+    	C
+    	C     NORMAL TERMINATION
+    	C
+    	      IER=0
+    	C */
+    } // private void UPOCOQ1
+
+
 
       /**
        * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
