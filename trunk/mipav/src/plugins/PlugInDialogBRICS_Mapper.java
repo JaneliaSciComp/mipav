@@ -14,8 +14,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -24,7 +22,6 @@ import javax.swing.event.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
@@ -54,12 +51,20 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
     /** Scroll pane used to hold the list the BRICS data elements for a specific form structure. */
     private JScrollPane listPane;
+    
+    private JTabbedPane tabbedPane;
 
     /** Holds the list the BRICS data elements for a specific form structure. */
     private JTable deTable;
+    
+    /** Holds the list of data files and mapping files for transform. */
+    private JTable fileXFormTable;
    
     /** Table model for the BRICS data elements for a specific form structure. */
     private LocalMappingTableModel deTableModel; 
+    
+    /** Table model for the data files and mapping files for transform. */
+    private LocalMappingTableModel fileXFormTableModel; 
     
     /** Form Structure read from BRICS data dictionary tool */
     private FormStructure formStructure;
@@ -68,12 +73,22 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     private List<FormStructure> formStructureList = null;
 
     /** Buttons used to control the work flow */
-    private JButton getStructsButton, selectStructButton, loadCSVButton, finishButton, saveMapButton,  outputDirButton;
+    private JButton getStructsButton, selectStructButton, loadCSVButton, removeRowButton, saveMapButton,  outputDirButton, xFormButton, outputXFormDirButton;
 
     
     /** Used to store the output file of the mapping tool */
     private String outputDirBase;
     private JTextField outputDirTextField;
+    
+    /** Used to store the output file of the transform tool */
+    private String outputXFormDirBase;
+    private JTextField outputXFormDirTextField;
+    
+    /** Used to store the output file of the transform tool */
+    private String outputDataDirBase;
+    
+    /** Used to store the output file of the transform tool */
+    private String outputMapDirBase;
     
     /** Used to store the location of the source data elements file (stored as a CSV)  */
     private String csvFileDir;
@@ -275,8 +290,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	            final int returnValue = saveChooser.showSaveDialog(this);
 	            if (returnValue == JFileChooser.APPROVE_OPTION) {
 	            	saveMappingsCSVFile(saveChooser.getSelectedFile());
-	                outputDirBase = saveChooser.getSelectedFile().getAbsolutePath() + File.separator;
-	                Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
 	            }
         	}
         	else {
@@ -288,51 +301,42 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             showCDE(null);
 
         } else if (command.equalsIgnoreCase("Finish")) {
-        	// TODO: Remove ??
-            if (fileWriterWorkerThread != null && fileWriterWorkerThread.isDone()) {
-                dispose();
-                if (JDialogStandalonePlugin.isExitRequired()) {
-                    System.gc();
-                    System.exit(0);
-                }
-            } else {
-
-                fileWriterWorkerThread = new javax.swing.SwingWorker<Object, Object>() {
-                    @Override
-                    public Object doInBackground() {
-                        try {
-                            //createSubmissionFiles();
-                        } catch (final Throwable e) {
-                            e.printStackTrace();
-                        }
-
-                        return null;
-                    }
-
-                    @Override
-                    public void done() {
-                        //if (isFinished) {
-                            finishButton.setText("Close");
-                            finishButton.setEnabled(true);
-                        //}
-                    }
-                };
-            }
+        	
         } else if (command.equalsIgnoreCase("OutputDirBrowse")) {
         	
-        	// Have not begun work yet 
-            /*final JFileChooser chooser = new JFileChooser(outputDirBase);
+            final JFileChooser chooser = new JFileChooser(outputDirBase);
 
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             chooser.setDialogTitle("Choose output directory for mapping result files");
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 outputDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
-
                 outputDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
-            }*/
-        } 
+            }
+        } else if (command.equalsIgnoreCase("OutputXFormDirBrowse")) {
+    	
+	        final JFileChooser chooser = new JFileChooser(outputDirBase);
+	
+	        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+	        chooser.setDialogTitle("Choose output directory for transform result files");
+	        final int returnValue = chooser.showOpenDialog(this);
+	        if (returnValue == JFileChooser.APPROVE_OPTION) {
+	            outputXFormDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
+	            outputXFormDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
+	            //Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
+	        }
+	    } else if (command.equalsIgnoreCase("RemoveRow")) { 
+	    	//Remove row from transform tabbed pane
+	    	if (fileXFormTable.getSelectedRow() != 1) {
+	    		fileXFormTableModel.removeRow(fileXFormTable.getSelectedRow());
+	    	}
+	    } else if (command.equalsIgnoreCase("XFormFiles")) { 
+	    	//Actual transform code
+	    	
+	    }
+        
+	    	
     }
 
     @Override
@@ -421,13 +425,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 
         this.setJMenuBar(menuBar);
         
-        final JPanel mapperConfig 	= new JPanel(new BorderLayout());
-        final JPanel dataXForm 		= new JPanel(new BorderLayout());
+        final JPanel mapperConfigPanel 	= new JPanel(new BorderLayout());
+        final JPanel dataXFormPanel 	= new JPanel(new BorderLayout());
         
         final JPanel fsDETablePanel = new JPanel(new GridBagLayout());
         
         // Builds button panel that controls workflow
-        mapperConfig.add(buildButtonPanel(), BorderLayout.NORTH);
+        mapperConfigPanel.add(buildButtonPanel(), BorderLayout.NORTH);
         
         final GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.NORTHWEST;
@@ -439,17 +443,21 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         
         // Builds main mapping panel for display of data elements for a specific form structure
         fsDETablePanel.add(buildStructurePanel(), gbc2);
-        mapperConfig.add(fsDETablePanel, BorderLayout.CENTER);
+        mapperConfigPanel.add(fsDETablePanel, BorderLayout.CENTER);
+        mapperConfigPanel.add(buildOutputPanel(), BorderLayout.SOUTH);
         
-        // Log panel to display status
-        mapperConfig.add(buildLogPanel(), BorderLayout.SOUTH);
+        dataXFormPanel.add(buildButtonXFormPanel(), BorderLayout.NORTH);
+        dataXFormPanel.add(buildXFormFileTable(), BorderLayout.CENTER);
+        dataXFormPanel.add(buildXFormOutputFilePanel(), BorderLayout.SOUTH);
         
-        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
         tabbedPane.setFont(serif12B);
-        tabbedPane.addTab("Mapping Tool", null, mapperConfig);
-        tabbedPane.addTab("Transform Tool", null, dataXForm); 
+        tabbedPane.addTab("Mapping Tool", null, mapperConfigPanel);
+        tabbedPane.addTab("Transform Tool", null, dataXFormPanel); 
 
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
+        // Log panel to display status
+        getContentPane().add(buildLogPanel(), BorderLayout.SOUTH);
         pack();
         validate();
      
@@ -488,15 +496,15 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         loadCSVButton.addActionListener(this);
         loadCSVButton.setActionCommand("LoadSourceElementsAsCSV");
 
-        finishButton = new JButton("Generate Files");
-        finishButton.setToolTipText("Generate Files");
-        finishButton.addActionListener(this);
-        finishButton.setActionCommand("Finish");
-        finishButton.setPreferredSize(defaultButtonSize);
+        //finishButton = new JButton("Generate Files");
+        //finishButton.setToolTipText("Generate Files");
+        //finishButton.addActionListener(this);
+        //finishButton.setActionCommand("Finish");
+        //finishButton.setPreferredSize(defaultButtonSize);
 
         selectStructButton.setEnabled(false);
         loadCSVButton.setEnabled(false);
-        finishButton.setEnabled(false);
+        //finishButton.setEnabled(false);
 
         gbc.gridx = 0;
         buttonPanel.add(getStructsButton, gbc);
@@ -504,8 +512,8 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         buttonPanel.add(selectStructButton, gbc);
         gbc.gridx++;
         buttonPanel.add(loadCSVButton, gbc);
-        gbc.gridx++;
-        buttonPanel.add(finishButton, gbc);
+        //gbc.gridx++;
+        //buttonPanel.add(finishButton, gbc);
 
         return buttonPanel;
     }
@@ -711,11 +719,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     	}
     }
     
-    
     /**
      * Build a status panel that can be used to show status and other information that the user might need.
      */
-    private JPanel buildLogPanel() {
+    private JPanel buildOutputPanel() {
         final JPanel destPanel = new JPanel(new GridBagLayout());
 
         final GridBagConstraints gbc2 = new GridBagConstraints();
@@ -747,6 +754,21 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         outputDirPanel.add(saveMapButton);
         destPanel.add(outputDirPanel, gbc2);
 
+        return destPanel;
+    }
+    
+    /**
+     * Build a status panel that can be used to show status and other information that the user might need.
+     */
+    private JPanel buildLogPanel() {
+        final JPanel destPanel = new JPanel(new GridBagLayout());
+
+        final GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.CENTER;
+
+        gbc2.gridy = 0;
+        gbc2.gridx = 0;       
+
         logOutputArea = buildScrollTextArea(Color.white);
         logOutputArea.setBorder(buildTitledBorder("Output log"));
         logOutputArea.getTextArea().setEditable(false);
@@ -760,71 +782,6 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         destPanel.add(logOutputArea, gbc2);
 
         return destPanel;
-    }
-
-  
-   
-    /**
-     * TODO: Needs to right out mapping tool
-     * 
-     * @param outputDirBase
-     * @param outputFileNameBase
-     * @param 
-     */
-    private final String getCSVDataRow(final String outputDirBase, final String outputFileNameBase, final FormStructureData fsData, final int repeatNum) {
-        String csvRow = new String();
-
-        if (fsData == null) {
-            return csvRow;
-        }
-
-        final ArrayList<RepeatableGroup> orderedGroupList = new ArrayList<RepeatableGroup>(fsData.getStructInfo().getRepeatableGroups());
-        Collections.sort(orderedGroupList, groupCompare);
-
-        for (final RepeatableGroup group : orderedGroupList) {
-            if (fsData.isGroupRepeatSet(group.getName(), repeatNum)) {
-                final GroupRepeat repeat = fsData.getGroupRepeat(group.getName(), repeatNum);
-                final Vector<DataElementValue> deList = repeat.getDataElements();
-                Collections.sort(deList, dataElementCompare);
-
-                for (final DataElementValue deVal : deList) {
-                    final String deName = deVal.getName();
-                    String value = deVal.getValue();
-
-                    // final File f = new File(value);
-                    // if (f.isFile() || value.endsWith("_collision")) {
-                    // if (value.endsWith("_collision")) {
-                    // value = value.substring(0, value.indexOf("_collision"));
-                    // final String filename = value.substring(value.lastIndexOf(File.separator) + 1, value.length());
-                    // value = outputFileNameBase + File.separator + filename;
-                    // } else {
-                    // final String filename = f.getName();
-                    // value = outputFileNameBase + File.separator + filename;
-                    // }
-                    // }
-
-                    // escape commas in values - if there's a comma, put quotes
-                    // around the value and double up any existing quotes
-                    if (value.contains(CSV_OUTPUT_DELIM)) {
-                        value = "\"" + value.replaceAll("\"", "\"\"") + "\"";
-                    }
-
-                    if (csvRow.length() == 0) {
-                        csvRow = value;
-                    } else {
-                        csvRow += CSV_OUTPUT_DELIM + value;
-                    }
-                }
-            } else {
-                for (int i = 0; i < group.getSize(); i++) {
-                    if (group.getPosition() != 0 || i != 0) {
-                        csvRow += CSV_OUTPUT_DELIM;
-                    }
-                }
-            }
-        }
-
-        return csvRow;
     }
 
 
@@ -848,22 +805,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         final Component c = e.getComponent();
         
         if (c instanceof JTable) {
-           /** if (deTable.getSelectedRow() == -1) {
-                saveMapButton.setEnabled(false);
-                return;
-            } else {
-                if ( !isFinished) {
-                    saveMapButton.setEnabled(true);
-                }
-            }*/
-
-
-            if (e.getClickCount() == 2 && deTable.getSelectedColumn() < deTableModel.getColumnIndex("Source Name") ) {
+          
+            if (e.getClickCount() == 2 && (deTable.getSelectedColumn() >= deTableModel.getColumnIndex("Group") && deTable.getSelectedColumn() < deTableModel.getColumnIndex("Source Name")) ) {
             		//if double click in data element table and column is in one of the reference data elements
             		// Bring up a new webpage and show BRICS data dictionary
                     showCDE(null);
             }
-            else if (e.getClickCount() == 2 && deTable.getSelectedColumn() == deTableModel.getColumnIndex("Source PVs")) {
+            else if (e.getClickCount() == 2 && deTable.getSelectedColumn() == deTableModel.getColumnIndex("Source PVs") && tabbedPane.getSelectedIndex() ==0 ) {
             	if (deTable.getSelectedRow() != -1 ){
 	            	if ( deTable.getValueAt(deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Name")) == null ||
 	            	     deTable.getValueAt(deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Name")).equals("") ) {
@@ -875,7 +823,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	            	}
             	}
             }
-            else if (e.getClickCount() == 2 && deTable.getSelectedColumn() == deTableModel.getColumnIndex("PV Mappings")) {
+            else if (e.getClickCount() == 2 && deTable.getSelectedColumn() == deTableModel.getColumnIndex("PV Mappings") && tabbedPane.getSelectedIndex() == 0) {
             	
             	// Check Source PVs are not empty
             	if (deTable.getSelectedRow() != -1 ){
@@ -888,6 +836,41 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	            		new PVMappingDialog (this);
 	            	}
             	}
+            }
+            else if (e.getClickCount() == 2 && fileXFormTable.getSelectedColumn() == fileXFormTableModel.getColumnIndex("Source Data Files") && tabbedPane.getSelectedIndex() == 1) {
+            	
+            	final JFileChooser chooser = new JFileChooser(outputDataDirBase);
+
+                chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                chooser.setDialogTitle("Choose data file(s) to be transformed.");
+                chooser.setFileFilter(new FileNameExtensionFilter("Comma separated value files (.csv)", "csv"));
+                final int returnValue = chooser.showOpenDialog(this);
+                if (returnValue == JFileChooser.APPROVE_OPTION) {
+                    // Set table ... with just file name(s) 
+                	fileXFormTable.setValueAt(chooser.getSelectedFile(), fileXFormTable.getSelectedRow(), 0);
+                	 
+                    outputDataDirBase = chooser.getSelectedFile().getAbsolutePath();
+                    //System.out.println("chooser path " + outputDataDirBase);
+                    // Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
+                }
+            }
+            else if (e.getClickCount() == 2 && fileXFormTable.getSelectedColumn() == fileXFormTableModel.getColumnIndex("Mapping Files") && tabbedPane.getSelectedIndex() == 1) {
+            	
+            	final JFileChooser chooser = new JFileChooser(outputDirBase);
+
+                chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                chooser.setDialogTitle("Choose mapping file.");
+                chooser.setFileFilter(new FileNameExtensionFilter("Comma separated value files (.csv)", "csv"));
+                final int returnValue = chooser.showOpenDialog(this);
+                if (returnValue == JFileChooser.APPROVE_OPTION) {
+                    // Set table ... with just file name(s) 
+                	fileXFormTable.setValueAt(chooser.getSelectedFile(), fileXFormTable.getSelectedRow(), 1);
+                	outputDirBase = chooser.getSelectedFile().getAbsolutePath();
+                }
+            }
+            else if (e.getClickCount() == 2 && fileXFormTable.getSelectedColumn() == fileXFormTableModel.getColumnIndex("Output Files") && tabbedPane.getSelectedIndex() == 1) {
+            	
+            	new transformFileNameEditorDialog(this);
             }
         }
     }
@@ -1298,7 +1281,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     }
     
     /**
-     * Writes the CSV file that contains
+     * Writes the CSV file that contains the mapping table data. It will be used by the mapping tools to transform the data.
      * 
      * @return True if file is successfully saved
      */
@@ -1310,10 +1293,10 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             final FileOutputStream fis = new FileOutputStream(csvFile);
             bw = new BufferedWriter(new OutputStreamWriter(fis));
             String repeatStr = null;
-            String refStr	 = null;
+            
             FormStructureData fsInfo = new FormStructureData(formStructure);
             
-            bw.write("BRICS" + "\n"); // Make it known that this is a mapping file. Important when reading the file
+            bw.write("BRICS: " + fsInfo.getStructInfo().getShortName()  + "\n"); // Make it known that this is a mapping file. Important when reading the file
             
             int numRows = deTableModel.getRowCount();
         	for (int i=0; i< numRows; i++) {
@@ -1341,7 +1324,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         		str = str.replace("null", "");
 
         		bw.write(str+"\n");
-        		// I have an issue with saving PVs with a comma to a CSV, e.g. "other, specify"  - Need to have a plan.
+        		// TODO I have an issue with saving PVs with a comma to a CSV, e.g. "other, specify"  - Need to have a plan.
         		printlnToLog("Successful saving of Mapping file");
         		//System.out.println(str);
         	}	
@@ -3075,8 +3058,253 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
             //else return false;
         	return false;
         }
+    }
+    
 
-       
+    /***************************************** Transform Code ********************************************/
+    /***************************************** Transform Code ********************************************/
+    /***************************************** Transform Code ********************************************/
+
+    
+    /**
+     * Builds the main panel that supports the mapping of source (user) data elements to the reference (BRICS) data elements
+     * @return JScrollPane of the mapping table
+     */
+    private JScrollPane buildXFormFileTable() {
+    	
+    	fileXFormTableModel = new LocalMappingTableModel();
+    	fileXFormTableModel.addColumn("Source Data Files");
+    	fileXFormTableModel.addColumn("Mapping Files");
+    	fileXFormTableModel.addColumn("Output Files");
+        
+    	fileXFormTable = new JTable(fileXFormTableModel) {
+            private static final long serialVersionUID = 3053232611901005303L;
+
+            @Override
+            public String getToolTipText(final MouseEvent e) {
+                String tooltip = "";
+
+                final java.awt.Point p = e.getPoint();
+                final int rowIndex = rowAtPoint(p);
+                final int colIndex = columnAtPoint(p);
+                ToolTipManager.sharedInstance().setDismissDelay(1000);
+                
+                if (colIndex == fileXFormTableModel.getColumnIndex("Source Data Files") ) {
+	                
+	                tooltip = "<html> <p>  <b> Double click: </b> " + " to select the data file to be transformed.  <br/>";              
+	                tooltip += "</p></html>";
+	                return tooltip;
+                }
+                else if(colIndex == fileXFormTableModel.getColumnIndex("Mapping Files")) {
+	                
+	                tooltip = "<html> <p>  <b> Double click: </b> " + " to select the mapping file.  <br/>";              
+	                tooltip += "</p></html>";
+	                return tooltip;
+                }
+                else if(colIndex == fileXFormTableModel.getColumnIndex("Output Files")) {
+	                
+	                tooltip += "<html> <p> <b>  Double click: </b> " + " for editting of the output file name.  <br/>";              
+	                tooltip += "</p></html>";
+	                return tooltip;
+                }
+                
+                else return null;
+            }
+        };
+        
+        fileXFormTable.addMouseListener(this);
+        //fileXFormTable.addFocusListener(this);
+        fileXFormTable.setPreferredScrollableViewportSize(new Dimension(1250, 300));
+        fileXFormTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        fileXFormTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        
+        fileXFormTable.getColumn("Source Data Files").setMinWidth(300);
+        //fileXFormTable.getColumn("Group").setMaxWidth(300);
+        fileXFormTable.getColumn("Source Data Files").setPreferredWidth(325);
+    
+        fileXFormTable.getColumn("Mapping Files").setMinWidth(300);
+        fileXFormTable.getColumn("Mapping Files").setPreferredWidth(300);
+        //fileXFormTable.getColumn("Element Name").setCellRenderer(new CellRenderer());
+        
+        fileXFormTable.getColumn("Output Files").setMinWidth(300);
+        fileXFormTable.getColumn("Output Files").setPreferredWidth(300);
+             
+        fileXFormTableModel.setRowCount(100);
+        JScrollPane listPaneX = buildScrollPane(fileXFormTable);
+        listPaneX.setBorder(buildTitledBorder(" Transform file mapping table  "));
+   
+        return listPaneX;
+    }
+    
+    /**
+     * Build a status panel that can be used to show status and other information that the user might need.
+     */
+    private JPanel buildXFormOutputFilePanel() {
+        final JPanel destPanel = new JPanel(new GridBagLayout());
+
+        final GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.CENTER;
+
+        gbc2.gridy = 0;
+        gbc2.gridx = 0;
+        
+        final JPanel outputDirPanel = new JPanel();
+        final JLabel outputDirLabel = new JLabel("Output directory for transformed result files: ");
+        
+        outputXFormDirTextField = new JTextField(20);
+        outputXFormDirTextField.setEditable(false);
+        outputXFormDirTextField.setToolTipText(outputXFormDirBase);
+        outputXFormDirTextField.setText(outputXFormDirBase);
+        outputXFormDirButton = buildTextButton("Browse", "Choose Output Directory for transformed result files", "OutputXFormDirBrowse", this);
+        outputXFormDirButton.setPreferredSize(defaultButtonSize);
+        
+        xFormButton = new JButton("Transform");
+        xFormButton.setToolTipText("Transformed files");
+        xFormButton.addActionListener(this);
+        xFormButton.setActionCommand("XFormFiles");
+        xFormButton.setPreferredSize(new Dimension(120, 30));
+        xFormButton.setEnabled(false);
+
+        outputDirPanel.add(outputDirLabel);
+        outputDirPanel.add(outputXFormDirTextField);
+        outputDirPanel.add(outputXFormDirButton);
+        outputDirPanel.add(xFormButton);
+        destPanel.add(outputDirPanel, gbc2);
+
+        return destPanel;
+    }
+    
+    /**
+     *  Editor for Source PV - NOT sure we need this. 
+     *  Simple text field editor for the Source PV cell. It checks to ensure the proper character set is used: PVs can only contain a-z, A-Z and 0-9 separated by semicolons
+     * 
+     */
+    private class transformFileNameEditorDialog extends JDialog implements ActionListener {
+        private static final long serialVersionUID = 859201819000159789L;
+
+        private final PlugInDialogBRICS_Mapper parent;
+        private JTextField outputFileName = null;
+
+
+        public transformFileNameEditorDialog(final PlugInDialogBRICS_Mapper parent) {
+            super(parent, false);
+
+            this.parent = parent;
+            init();
+        }
+
+        /**
+         * Builds the GUI for the dialog
+         */
+        private void init() {
+        	setTitle("Edit transform output file name.");
+            final JPanel mainPanel = new JPanel(new GridBagLayout());
+
+            final GridBagConstraints gbc = new GridBagConstraints();
+
+            try {
+                setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+            } catch (final Exception e) {
+
+            }
+
+            final JPanel OKPanel = new JPanel();
+
+            final JButton cancelButton = new JButton("Cancel");
+            cancelButton.setActionCommand("Cancel");
+            cancelButton.addActionListener(this);
+            cancelButton.setMinimumSize(defaultButtonSize);
+            cancelButton.setPreferredSize(defaultButtonSize);
+            cancelButton.setFont(serif12B);
+            
+            final JButton pairButton = new JButton("Done");
+            pairButton.setActionCommand("Done");
+            pairButton.addActionListener(this);
+            pairButton.setMinimumSize(defaultButtonSize);
+            pairButton.setPreferredSize(defaultButtonSize);
+            pairButton.setFont(serif12B);
+            pairButton.setToolTipText("Done");
+            
+            OKPanel.add(pairButton);
+            OKPanel.add(cancelButton);
+
+            gbc.weightx = 0;
+            gbc.weighty = 0;
+            gbc.gridx = 0;
+            gbc.gridy = 3;
+            gbc.insets = new Insets(10, 5, 10, 5);
+            gbc.gridwidth = 1;
+            mainPanel.add(OKPanel, gbc);
+
+            outputFileName = new JTextField((String)fileXFormTableModel.getValueAt(fileXFormTable.getSelectedRow(), fileXFormTableModel.getColumnIndex("Output Files")));
+            outputFileName.setMinimumSize(new Dimension(300, 30));
+            outputFileName.setPreferredSize(new Dimension(300, 30));
+            gbc.gridy = 2;
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            gbc.fill = GridBagConstraints.BOTH;
+            mainPanel.add(outputFileName, gbc);
+
+            getContentPane().add(mainPanel, BorderLayout.CENTER);
+
+            pack();
+            centerInWindow(parent, this);
+           
+            setVisible(true);
+        }
+             
+        
+        /**
+         * action performed
+         */
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+            final String command = e.getActionCommand();
+
+            if (command.equalsIgnoreCase("Cancel")) {
+                dispose();
+            } 
+            if (command.equalsIgnoreCase("Done")) {
+            	String str = outputFileName.getText();
+            	if (str.endsWith(".csv") ) {
+            		fileXFormTable.setValueAt(str, fileXFormTable.getSelectedRow(), 2);
+            	}
+            	else {
+            		str = str.concat(".csv");
+            		fileXFormTable.setValueAt(str, fileXFormTable.getSelectedRow(), 2);
+            	}
+            	dispose();
+            
+            } 
+        }
+    }
+    
+    /**
+     * Builds the panel containing the buttons used to control the mapping workflow
+     * @return Panel containing the buttons 
+     */
+    private JPanel buildButtonXFormPanel() {
+
+        final JPanel buttonPanel = new JPanel(new GridBagLayout());
+
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        //gbc.fill = GridBagConstraints.;
+        
+        removeRowButton = new JButton("Remove Row");
+        removeRowButton.setToolTipText("Remove row entry in transform process.");
+        removeRowButton.addActionListener(this);
+        removeRowButton.setActionCommand("RemoveRow");
+
+        removeRowButton.setEnabled(true);
+
+        buttonPanel.add(removeRowButton, gbc);
+
+        return buttonPanel;
     }
 
 
