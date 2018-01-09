@@ -181,6 +181,36 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	private double P0VAL;
 	private double SCALE;
 	private int TYPE;
+	
+	// From GQPHYC:
+	// IQUPH  - INTEGER ARRAY
+	//                     AN INTEGER VECTOR OF SIZE AT LEAST 2*IBNDS(1) + 4,
+	//                     WHERE IBNDS(1) (=IGEOM(4)) IS THE VALUE PREVIOUSLY
+	//                     SUPPLIED TO JAPHYC; IQUPH STORES POINTERS TO 
+	//                     ACCESS RQUPH AND ZQUPH.
+	private int IQUPH[] = new int[4];
+	private int LQSBF[] = new int[IBNDS[0]];
+  	private int NPPQF[] = new int[IBNDS[0]];
+//  MQUPH  - INTEGER
+//                     THE MAXIMUM NUMBER OF QUADRATURE POINTS ALLOWED
+//                     IN THE FINAL GLOBAL RULE.  (THE VALUE OF THIS
+//                     ARGUMENT IS LINKED TO THOSE OF ARGUMENTS NQPTS
+//                     AND IBNDS(1) PREVIOUSLY SUPPLIED TO JAPHYC VIA
+//                     MQUPH <= (MQIN1-1)*NQPTS*IBNDS(1))
+  	private int MQUPH;
+  	// RQUPH  - REAL ARRAY
+	//                     A REAL VECTOR OF SIZE AT LEAST 3*MQUPH + 1; STORES
+	//                     THE REAL QUADRATURE DATA.
+  	private double RQUPH[] = new double[1];
+  	private double TPPQF[] = new double[MQUPH];
+   	private double TRRAD[] = new double[MQUPH];
+   	private double WPPQF[] = new double[MQUPH];
+//  ZQUPH  - COMPLEX ARRAY
+//                     A COMPLEX VECTOR OF SIZE AT LEAST MQUPH + 1; 
+//                     STORES THE QUADRATURE POINTS ON THE PHYSICAL 
+//                     BOUNDARY.
+   	private double FACTR[] = new double[2]; // At first location of ZQUPH
+  	private double ZPPQF[][] = new double[MQUPH][2];
 	public SymmsIntegralMapping() {
 		
 	}
@@ -2346,11 +2376,10 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
        return result;
    }
 
-   private void JAPHYC(String JBNM, String HEAD, double MAXER,
+   private void JAPHYC(double MAXER,
 		      int ISYGP, boolean INCST,
 		      int RFARC, double RFARG[], int TSTNG,int OULVL,
 		      double MATRX[][][],
-		      int OCH,
 		      int IER[]) {
 		
 		      //INTEGER IBNDS(*),IGEOM(*),ISNPH(*),IWORK(*)
@@ -2660,9 +2689,10 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		//     LOCAL VARAIBLES
 		
 	   int TNSUA[] = new int[1];
-	   int I,IMXER,INDEG,J,L,MDGPO,MNJXS,MNQUA,MNSUA,MQIN1,NCOLL,
-		     NEFF,NEQNS,NROWS,NTEST,
-		     ORDSG;
+	   int NTEST[] = new int[1];
+	   int IMXER[] = new int[1];
+	   int I,INDEG,J,MDGPO,MNJXS,MNQUA,MNSUA,MQIN1,NCOLL,
+		     NEFF,NEQNS,NROWS,ORDSG;
 		int SOLCO = 0;
 		int QIERC[] = new int[7];
 		int QIERR[] = new int[7];
@@ -2675,8 +2705,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		double MQERR[] = new double[1];
 		double RCOND[] = new double[1];
 		double ESTOL[] = new double[1];
+		double MXERM[] = new double[1];
 		double AQTOL,CONST,GAQTL,GLGTL,GRQTL,GSUPE,GTGTE,LGTOL,
-		     MCHEP,MXERM,PI,RQTOL,SSUPE,
+		     MCHEP,PI,RQTOL,SSUPE,
 		     TGTER,TOLNR;
 		double SOLUNB[][] = new double[MNEQN][1];
 		double A[][] = new double[MNEQN][MNEQN];
@@ -2688,30 +2719,11 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		boolean ACCPT[] = new boolean[1];
 		boolean NUQTL[] = new boolean[1];
 		boolean GACPT,REFLN;
-		
-		String OFL;
-		//CHARACTER OFL*6
 	
 		//EXTERNAL AXION1,ANGLE7,ASQUC7,BCFVTF,CPJAC3,CSCAL3,ICOQR1,IGNLVL,
 		//         LINSEG,LNSY11,OPQUD1,OUPTGM,OUPTPH,R1MACH,RECON,RESCAL,RSLT80,
 		//         RSLT71,RSLT72,RSLT83,RSLT84,SETIGL,SGECO,SGEDI,SGESL,TESMD9,
 		//         TSJAC3,UPCOQ1,UPJAC1,WRHEAD,WRTAIL
-		
-		//C**** DEFINE SOME OUTPUT FORMATS
-		
-		//1     FORMAT(A45)
-		//3     FORMAT(A45,2X,E9.2)
-		
-		//**** NAME AND OPEN THE MAIN LISTING FILE AND OUTPUT THE JOBNAME TO FILE
-		//**** jbnm.
-		
-		//OPEN(OCH,FILE='jbnm')
-		//WRITE(OCH,'(A4)') JBNM
-		//CLOSE(OCH)
-		//L=INDEX(JBNM,' ')-1
-		//IF (L.EQ.-1) L=4
-		//OFL=JBNM(1:L)//'pl'
-		//OPEN(OCH,FILE=OFL)
 		
 		//**** OUTPUT CONFPACK HEADING
 		
@@ -2823,7 +2835,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		//**** LIST THE INPUT ARGUMENTS AND ASSOCIATED QUANTITIES
 		
-		RSLT80(JBNM,HEAD,GSUPE,MAXER,GAQTL,INTER,NARCS,ORDSG,NQPTS,
+		RSLT80(GSUPE,MAXER,GAQTL,INTER,NARCS,ORDSG,NQPTS,
 		     INCST,INDEG,RFARC,RFARG[0],CENTR,JACIN,LNSEG,
 		     TSTNG,OULVL,IBNDS,MNEQN);
 		PI=Math.PI;
@@ -3277,11 +3289,11 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		System.out.println();
 		System.out.println("ERRORS IN MODULUS STARTED:");
 		
-		/*TSJAC3(LOTES,HITES,COLPR,ZCOLL,
+		TSJAC3(LOTES,HITES,COLPR,ZCOLL,
 		  NQPTS,NTEST,ORDSG,TNSUA[0],TSTNG,DGPOL,JATYP,
 		  PARNT,AICOF,BICOF,DIAG,HALEN,
 		  JACIN,MIDPT,SDIAG,IER);
-		  if (IER[0] > 0) {
+	    if (IER[0] > 0) {
 			  if (SOLCO >= 1) {
 					
 				    // ****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
@@ -3309,7 +3321,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 			  }
 		  }
 		  TESMD9(WORK2,A,SOLUN,MNEQN,NCOLL,
-		     NTEST,NQPTS,TNSUA[0],JATYP,PARNT,DGPOL,
+		     NTEST[0],NQPTS,TNSUA[0],JATYP,PARNT,DGPOL,
 		     LOSUB,HISUB,LOTES,HITES,NQUAD,
 		     LOQSB,TOLNR,MIDPT,HALEN,H0VAL,
 		     COLSC,ACOEF,BCOEF,COLPR,QCOMX,
@@ -3317,57 +3329,48 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		     QIERR,MQERR,JACIN,A1COF,B1COF,AQTOL,RQTOL,
 		     AQCOF,BQCOF,CQCOF,MXERM,IMXER,ZMXER,
 		     ERARC,ORDSG,REFLN);
+		  for (I = 0; I < MNEQN; I++) {
+			  for (J = 0; J < MNEQN; J++) {
+				  MATRX[I][J][1] = A[I][J];
+			  }
+		  }
 		
-		      WRITE(*,1) 'ERRORS IN MODULUS DONE:'
-		      WRITE(*,3) 'MAXIMUM ERROR AT TEST POINTS:',MXERM
-		      DO 60 I=0,6
-		        QIERC(I)=QIERC(I)+QIERR(I)
-		60    CONTINUE
-		      IF (MOD(OULVL,2) .EQ. 1) THEN
-		        CALL RSLT84(RWORK(WORK2),TNSUA,MXERM,ZMXER,IMXER,IWORK(LOTES),
-		     +  IWORK(HITES),QIERC,IGEOM(PARNT),ORDSG,OCH)
-		      ELSE
-		        CALL RSLT83(RSNPH(ERARC),TNSUA,MXERM,ZMXER,IMXER,QIERC,
-		     +  IGEOM(PARNT),ORDSG,OCH)
-		      ENDIF
-		C
-		C**** RESCALE SOLUTIONS TO OBTAIN STANDARD JACOBI COEFFICIENTS
-		      CALL RESCAL(NQPTS,TNSUA,ISNPH(LOSUB),IWORK(HISUB),ISNPH(JATYP),
-		     +RSNPH(SOLUN),RWORK(COLSC))
-
-		999   CONTINUE
-		C
-		      CALL WRTAIL(1,OCH,IER)
-		      CLOSE(OCH)
-		C
-		      IF (SOLCO .GE. 1) THEN
-		C
-		C****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
-		C****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
-		C****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
-		C
-		        CALL BCFVTF(RSNPH(BCFSN),RGEOM(VTARG),ISNPH(DGPOL),ISNPH(JATYP),
-		     +  ISNPH(LOSUB),IGEOM(PARNT),RFARC,TNSUA,RSNPH(H0VAL),RSNPH(JACIN),
-		     +  RFARG,RSNPH(SOLUN))
-		C
-		C****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
-		C
-		        IGEOM(3)=TNSUA
-		        ISNPH(3)=TNSUA
-		        ISNPH(4)=NEQNS
-		C
-		        OFL=JBNM(1:L)//'gm'
-		        OPEN(OCH,FILE=OFL)
-		        CALL OUPTGM(IGEOM,RGEOM,CENTR,INTER,OCH)
-		        CLOSE(OCH)
-		C
-		        OFL=JBNM(1:L)//'ph'
-		        OPEN(OCH,FILE=OFL)
-		        CALL OUPTPH(ISNPH,RSNPH,OCH)
-		        CLOSE(OCH)
-		      ENDIF
+		  System.out.println("ERRORS IN MODULUS DONE:");
+		  System.out.println("MAXIMUM ERROR AT TEST POINTS: " + MXERM[0]);
+		  for (I=0; I <= 6; I++) {
+		      QIERC[I]=QIERC[I]+QIERR[I];
+		  }
+		  if ((OULVL%2) == 1) {
+		      RSLT84(WORK2,TNSUA[0],MXERM[0],ZMXER,IMXER[0],LOTES,
+		      HITES,QIERC,PARNT,ORDSG);
+		  }
+		  else {
+		      RSLT83(ERARC,TNSUA[0],MXERM[0],ZMXER,IMXER[0],QIERC,
+		      PARNT,ORDSG);
+		  }
+		
+		  // RESCALE SOLUTIONS TO OBTAIN STANDARD JACOBI COEFFICIENTS
+		  RESCAL(NQPTS,TNSUA[0],LOSUB,HISUB,JATYP,SOLUN,COLSC);
 		  
-		      CALL WRTAIL(1,0,IER)*/
+		  if (SOLCO >= 1) {
+				
+			    // ****   COMPUTE THE BOUNDARY CORRESPONDENCE COEFFICIENTS BCFSN AND THE
+			    // ****   ARGUMENTS OF ALL SUBARC END POINTS ON THE UNIT DISC,
+			    // ****   AS REQUIRED BY SUBSEQUENT PROCESSING ROUTINES.
+			
+			    BCFVTF(BCFSN,VTARG,DGPOL,JATYP,
+			        LOSUB,PARNT,RFARC,TNSUA[0],H0VAL,JACIN,
+			        RFARG[0],SOLUN);
+			
+			    // ****   OUTPUT DATA REQUIRED FOR POST-PROCESSING.
+			
+			    IGEOM[2]=TNSUA[0];
+			    ISNPH[2]=TNSUA[0];
+			    ISNPH[3]=NEQNS;
+	        } // if (SOLCO >= 1)
+			  
+	        WRTAIL(1,0,IER[0],null);
+		    return;     
 		
     } // private void JAPHYC
 
@@ -3472,7 +3475,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 
     } // private void ANGLE7
     
-    private void RSLT80(String JBNM, String HEAD, double SUPER, double MAXER, double AQTOL, boolean INTER, int NARCS, int ORDSG,
+    private void RSLT80(double SUPER, double MAXER, double AQTOL, boolean INTER, int NARCS, int ORDSG,
         int NQPTS, boolean INCST, int INDEG, int RFARC, double RFARG,double CENTR[], double BETA[], boolean LINEAR[],
         int TSTNG, int OULVL, int IBNDS[], int MNEQN) {
     	
@@ -3489,10 +3492,6 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	
     	int I;
     	final String TXT1 = "REQUESTED ACCURACY UNREALISTIC";
-
-
-    	Preferences.debug("HEAD\n",Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("JOB NAME : " + JBNM + "\n",Preferences.DEBUG_ALGORITHM);
     	
     	if (INTER) {
     	    Preferences.debug("INTERIOR DOMAIN WITH " + NARCS + " ARCS\n",Preferences.DEBUG_ALGORITHM);
@@ -7329,7 +7328,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 
 
     private void TSJAC3(int LOTES[], int HITES[], double TESPR[], double ZTEST[][], int NQPTS,
-        int NTEST, int ORDSG, int TNSUA, int TSTNG, int DGPOL[], int JATYP[], int PARNT[],
+        int NTEST[], int ORDSG, int TNSUA, int TSTNG, int DGPOL[], int JATYP[], int PARNT[],
         double AICOF[], double BICOF[], double DIAG[], double HALEN[], double JACIN[],
         double MIDPT[], double SDIAG[], int IER[]) {
     	
@@ -7429,18 +7428,18 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	        } // if (D > 0)
     	    } // for (I=1; I <= TSFBS; I++) 
         } // else TSTNG == 1
-    	NTEST=HITES[TSFBS-1];
+    	NTEST[0]=HITES[TSFBS-1];
     	if (ORDSG > 1) {
-    	    NTEST=NTEST+1;
-    	    LOTES[TSFBS]=NTEST;
-    	    HITES[TSFBS]=NTEST;
-    	    TESPR[NTEST-1]=-1.0;
+    	    NTEST[0]=NTEST[0]+1;
+    	    LOTES[TSFBS]=NTEST[0];
+    	    HITES[TSFBS]=NTEST[0];
+    	    TESPR[NTEST[0]-1]=-1.0;
     	    P=PARNT[TSFBS];
     	    PIN[0] = -1.0;
     	    PIN[1] = 0.0;
     	    POUT = PARFUN(P,PIN);
-    	    ZTEST[NTEST-1][0] = POUT[0];
-    	    ZTEST[NTEST-1][1] = POUT[1];
+    	    ZTEST[NTEST[0]-1][0] = POUT[0];
+    	    ZTEST[NTEST[0]-1][1] = POUT[1];
     	}
     	
     	IER[0]=0;
@@ -7454,8 +7453,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         double BCOEF[], double TESPR[], double QCOMX[], double QCOMW[], double CENTR[], 
         double ZTEST[][], boolean INTER, boolean LNSEG[], double WORK[], int QIERR[],
         double MQERR[], double JACIN[], double A1COF[], double B1COF[], double AQTOL,
-        double RQTOL, double AQCOF[], double BQCOF[], double CQCOF[], double MXERM,
-        int IMXER, double ZMXER[], double ERARC[], int ORDSG, boolean REFLN) {
+        double RQTOL, double AQCOF[], double BQCOF[], double CQCOF[], double MXERM[],
+        int IMXER[], double ZMXER[], double ERARC[], int ORDSG, boolean REFLN) {
     	
     	//INTEGER MNEQN,NCOLL,NTEST,NQPTS,TNSUA,JATYP(*),PARNT(*),DGPOL(*),
     	//+LOSUB(*),HISUB(*),LOTES(*),HITES(*),NQUAD(*),LOQSB(*),QIERR(0:6),
@@ -7486,6 +7485,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	// COMPLEX GTQ,ZQ,ZT,PARFUN,DPARFN
     	// COMMON /FNDEF/BETA,A1,B1,P0VAL,SCALE,TYPE
     	// EXTERNAL DPARFN,FNVAL,JAPAR7,PARFUN,QAWS,R1MACH
+    	double PIN[] = new double[2];
+    	double POUT[];
     	qaws qmod;
     	int routine = Integration2.DQAWSE;
     	/**
@@ -7509,7 +7510,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	
     	// NOW SELECT THE INTEGRATION ARC
     	
-    	/*for (IA=1; IA <= TNSUA; IA++) {
+    	for (IA=1; IA <= TNSUA; IA++) {
 
     	
     	    // INITIALISE DATA FOR THIS ARC
@@ -7657,247 +7658,1064 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         	            IER[0] = qmod.getErrorStatus();
         	            QIERR[IER[0]]=QIERR[IER[0]]+1;
     	            }
-    	              WORK(2)=U0+U1
-    	              MQERR=MAX(MQERR,ABER0+ABER1)
-    	C
-    	C             NOW USE THE (WEAKLY) STABLE FORWARD RECURRENCE SCHEME FOR 
-    	C             WORK(I),I=3,NQPTS (WITH SCALE FACTOR FOR WORK(2))
-    	C
-    	              CURR=WORK(2)
-    	              PREV=SCALE
-    	              DO 10 I=1,DG-1
-    	                  J=LOD+I-1
-    	                  NEXT=(AQCOF(J)*TT-BQCOF(J))*CURR-CQCOF(J)*PREV
-    	                  WORK(I+2)=NEXT
-    	                  PREV=CURR
-    	                  CURR=NEXT
-    	10            CONTINUE
-    	C
-    	C             ASSIGN CORRECT SCALE FACTORS.
-    	C
-    	              DO 20 I=3,DG+1
-    	                  J=LOD+I-1
-    	                  WORK(I)=WORK(I)*COLSC(J)/SCALE
-    	20            CONTINUE
+    	            WORK[1]=U0+U1;
+    	            MQERR[0]=Math.max(MQERR[0],ABER0+ABER1);
+    	
+    	            // NOW USE THE (WEAKLY) STABLE FORWARD RECURRENCE SCHEME FOR 
+    	            // WORK(I),I=3,NQPTS (WITH SCALE FACTOR FOR WORK(2))
+    	
+    	            CURR=WORK[1];
+    	            PREV=SCALE;
+    	            for (I=1; I <= DG-1; I++) {
+    	                J=LOD+I-1;
+    	                NEXT=(AQCOF[J-1]*TT-BQCOF[J-1])*CURR-CQCOF[J-1]*PREV;
+    	                WORK[I+1]=NEXT;
+    	                PREV=CURR;
+    	                CURR=NEXT;
+    	            } // for (I=1; I <= DG-1; I++)
+    	
+    	            // ASSIGN CORRECT SCALE FACTORS.
+    	
+    	            for (I=3; I <= DG+1; I++) {
+    	                J=LOD+I-1;
+    	                WORK[I-1]=WORK[I-1]*COLSC[J-1]/SCALE;
+    	            } // for (I=3; I <= DG+1; I++)
     	        } // if (DG > 0)
-    	C
-    	          SG=1E+0
-    	          DO 30 J=LOCLM,HICLM
-    	            MATRX(ROW,J)=MATRX(ROW,J)+SG*WORK(J-LOCLM+1)
-    	            SG=SG*SJI
-    	30        CONTINUE
-    	C
+    	
+    	        SG=1.0;
+    	        for (J=LOCLM; J <= HICLM; J++) {
+    	            MATRX[ROW-1][J-1]=MATRX[ROW-1][J-1]+SG*WORK[J-LOCLM];
+    	            SG=SG*SJI;
+    	        } // for (J=LOCLM; J <= HICLM; J++)
+    	
     	    } // for (IT=FIRST; IT <= LAST; IT++)
+    	
+    	    // INITIALISE SOME DATA FOR THE NON-SINGULAR INTEGRALS
+    	
+    	    WORK[0]=1.0/RH;
+    	    NQ=NQUAD[AJI-1];
+    	    LOQ=LOQSB[AJI-1];
+    	    if (IA == TNSUA) {
+    	        I1=2;
+    	    }
+    	    else {
+    	        I1=1;
+    	    }
+    	
+    	    for (IQ=1; IQ <= NQ; IQ++) {
+    	        I=LOQ+IQ-1;
+    	        TQ=QCOMX[I-1];
+    	        WQ=QCOMW[I-1];
+    	        double AA[] = new double[DG];
+    	        double BB[] = new double[DG];
+    	        for (I = 0; I < DG; I++) {
+    	        	AA[I] = ACOEF[LOD+I-1];
+    	        	BB[I] = BCOEF[LOD+I-1];
+    	        }
+    	        JAPAR7(WORK,TQ,AA,BB,DG);
+    	        if (JI < 0) {
+    	            TQ=-TQ;
+    	        }
+    	        GTQ[0] = MD+HL*TQ;
+    	        GTQ[1] = 0.0;
+    	        ZQ=PARFUN(PT,GTQ);
+    	
+    	        // ACCUMULATE THE ELEMENTS ABOVE THE DIAGONAL BLOCK
+    	
+    	
+    	        for (IT=I1; IT <= FIRST-1; IT++) {
+    	            ZT[0]=ZTEST[IT-1][0];
+    	            ZT[1]=ZTEST[IT-1][1];
+    	            DD=zabs(ZT[0]-ZQ[0],ZT[1]-ZQ[1]);
+    	            LDD=Math.log(DD)*WQ;
+    	            SG=1.0;
+    	            for (J1=LOCLM; J1 <= HICLM; J1++) {
+    	                J=J1-LOCLM+1;
+    	                I=J1-LOCLM+LOD;
+    	                MATRX[IT-1][J1-1]=MATRX[IT-1][J1-1]+SG*WORK[J-1]*LDD*COLSC[I-1];
+    	                SG=SG*SJI;
+    	            } // for (J1=LOCLM; J1 <= HICLM; J1++)
+    	        } // for (IT=I1; IT <= FIRST-1; IT++)
+    	
+    	        // ACCUMULATE THE ELEMENTS BELOW THE DIAGONAL BLOCK
+    	
+    	        for (IT=LAST+1; IT <= NTEST; IT++) {
+    	            ZT[0]=ZTEST[IT-1][0];
+    	            ZT[1]=ZTEST[IT-1][1];
+    	            DD=zabs(ZT[0]-ZQ[0],ZT[1]-ZQ[1]);
+    	            LDD=Math.log(DD)*WQ;
+    	            SG=1.0;
+    	            for (J1=LOCLM; J1 <= HICLM; J1++) {
+    	                J=J1-LOCLM+1;
+    	                I=J1-LOCLM+LOD;
+    	                MATRX[IT-1][J1-1]=MATRX[IT-1][J1-1]+SG*WORK[J-1]*LDD*COLSC[I-1];
+    	                SG=SG*SJI;
+    	            } // for (J1=LOCLM; J1 <= HICLM; J1++)
+    	        } // for (IT=LAST+1; IT <= NTEST; IT++)
+    	
+                // ACCUMULATE THE RESIDUAL NON-SINGULAR CONTRIBUTIONS INTO
+    	        // THE DIAGONAL BLOCK FOR THE NON-LINE-SEGMENT CASE.
+    	
+    	        if (!LNSEG[IA-1]) {
+    	            for (IT=FIRST; IT <= LAST; IT++) {
+    	                if (ORDSG > 1 && IA == (TSFBS+1) && IT == LAST) { 
+    	                    continue;
+    	                }
+    	                if (IT == LAST) {
+    	                    TT=1.0;
+    	                }
+    	                else {
+    	                    TT=TESPR[IT-1];
+    	                }
+    	
+    	                if (IT > NTEST) {
+    	                    ROW=1;
+    	                }
+    	                else {
+    	                    ROW=IT;
+    	                }
+    	
+    	                DD=Math.abs(TT-TQ);
+    	                if (DD <= TOLNR) {
+    	                	POUT = DPARFN(PT,GTQ);
+    	                    DD=zabs(POUT[0],POUT[1])*HL;
+    	                }
+    	                else {
+    	                    if (IT > NTEST) {
+    	                        ZT[0]=ZTEST[0][0];
+    	                        ZT[1]=ZTEST[0][1];
+    	                    }
+    	                    else {
+    	                        ZT[0]=ZTEST[IT-1][0];
+    	                        ZT[1]=ZTEST[IT-1][1];
+    	                    }
+    	                    DD=zabs(ZT[0]-ZQ[0],ZT[1]-ZQ[1])/DD;
+    	                    if (DD < TOLNR) {
+    	                    	POUT = DPARFN(PT,GTQ);
+    	                    	DD=zabs(POUT[0],POUT[1])*HL;
+    	                    }
+    	                }
+    	                LDD=Math.log(DD)*WQ;
+    	                SG=1.0;
+    	                for (J1=LOCLM; J1 <= HICLM; J1++) {
+    	                    J=J1-LOCLM+1;
+    	                    I=J1-LOCLM+LOD;
+    	                    MATRX[ROW-1][J1-1]=MATRX[ROW-1][J1-1]+SG*WORK[J-1]*LDD*COLSC[I-1];
+    	                    SG=SG*SJI;
+    	                } // for (J1=LOCLM; J1 <= HICLM; J1++)
+    	            } // for (IT=FIRST; IT <= LAST; IT++)
+    	        } // if (!LNSEG[IA-1])
+    	    } // for (IQ=1; IQ <= NQ; IQ++)
+    	
+    	    // ACCUMULATE THE RESIDUAL NON-SINGULAR CONTRIBUTIONS INTO
+    	    // THE DIAGONAL BLOCK FOR THE LINE-SEGMENT CASE.
+    	
+    	    if (LNSEG[IA-1]) {
+    	    	PIN[0] = MD;
+    	    	PIN[1] = 0.0;
+    	    	POUT = DPARFN(PT,PIN);
+    	    	ZT[0] = POUT[0]*HL;
+    	    	ZT[1] = POUT[1]*HL;
+    	        C0=zabs(ZT[0],ZT[1]);
+    	        C0=RH*Math.log(C0)*COLSC[LOD-1];
+    	        for (IT=FIRST; IT <= LAST; IT++) {
+    	            if (ORDSG > 1 && IA == (TSFBS+1) && IT == LAST) {
+    	                continue;
+    	            }
+    	            if (IT > NTEST) {
+    	                ROW=1;
+    	            }
+    	            else {
+    	                ROW=IT;
+    	            }
+    	            MATRX[ROW-1][LOCLM-1]=MATRX[ROW-1][LOCLM-1]+C0;
+    	        } // for (IT=FIRST; IT <= LAST; IT++)
+    	    } // if (LNSEG[IA-1])
+    	} // for (IA=1; IA <= TNSUA; IA++)
+    	
+    	// SET UP THE LAST COLUMN
+    	
+    	for (I=1; I <= NTEST; I++) {
+    	    MATRX[I-1][NEQNS-1]=1.0;
+    	}
+    	
+    	// COMPUTE MATRIX-VECTOR PRODUCT
+    	
+    	for (I=1; I <= NTEST; I++) {
+    	    SUM=0.0;
+    	    for (J=1; J <= NEQNS; J++) {
+    	          SUM=SUM+MATRX[I-1][J-1]*SOLUN[J-1];
+    	    }
+    	    ERMOD[I-1]=SUM;
+    	} // for (I=1; I <= NTEST; I++)
+    	
+    	// FORM THE ERROR IN MODULUS
+    	
+    	if (INTER) {
+    	    for (I=1; I <= NTEST; I++) {
+    	        SUM=Math.exp(ERMOD[I-1]);
+    	        ERMOD[I-1]=Math.abs(1.0-zabs(ZTEST[I-1][0]-CENTR[0],ZTEST[I-1][1]-CENTR[1])/SUM);
+    	    }
+    	}
+    	else {
+    	    for (I=1; I <= NTEST; I++) {
+    	        SUM=Math.exp(ERMOD[I-1]);
+    	        ERMOD[I-1]=Math.abs(1.0-SUM);
+    	    }
+    	}
+    	
+    	// FIND MAXIMUM ERROR IN MODULUS AND THE POINT AND THE ARC AT WHICH 
+    	// IT OCCURS
+    	
+    	MXERM[0]=0.0;
+    	    for (IA=1; IA <= TSFBS; IA++) {
+    	        FIRST=LOTES[IA-1];
+    	        LAST=HITES[IA-1];
+    	        MD=0.0;
+    	        for (IT=FIRST; IT <= LAST; IT++) {
+    	            if (ERMOD[IT-1] > MD) {
+    	                MD=ERMOD[IT-1];
+    	            }
+    	            if (MD > MXERM[0]) {
+    	                MXERM[0]=MD;
+    	                IMXER[0]=IA;
+    	                ZMXER[0]=ZTEST[IT-1][0];
+    	                ZMXER[1]=ZTEST[IT-1][1];
+    	            }
+    	        } // for (IT=FIRST; IT <= LAST; IT++)
+    	        if (IA == TSFBS && ORDSG == 1) {
+    	            IT=1;
+    	        }
+    	        else {
+    	            IT=LAST+1;
+    	        }
+    	        if (ERMOD[IT-1] > MD) {
+    	            MD=ERMOD[IT-1];
+    	        }
+    	        if (MD > MXERM[0]) {
+    	            MXERM[0]=MD;
+    	            IMXER[0]=IA;
+    	            ZMXER[0]=ZTEST[IT-1][0];
+    	            ZMXER[1]=ZTEST[IT-1][1];
+    	        } // if (MD > MXERM[0])
+    	        ERARC[IA-1]=MD;
+    	    } // for (IA=1; IA <= TSFBS; IA++)
+    	
+    	    // IF REGION IS SYMMETRIC, FILL UP THE WHOLE ERARC VECTOR USING
+    	    // SYMMETRY
+    	
+    	    if (ORDSG > 1) {
+    	        if (REFLN) {
+    	            for (IA=1; IA <= TSFBS; IA++) {
+    	                IB=2*TSFBS+1-IA;
+    	                ERARC[IB-1]=ERARC[IA-1];
+    	            } // for (IA=1; IA <= TSFBS; IA++)
+    	            ORDRG=ORDSG/2;
+    	            for (I=2; I <= ORDRG; I++) {
+    	                I1=(I-1)*TSFBS*2;
+    	                for (IA=1; IA <= TSFBS*2; IA++) {
+    	                    IB=I1+IA;
+    	                    ERARC[IB-1]=ERARC[IA-1];
+    	                } // for (IA=1; IA <= TSFBS*2; IA++)
+    	            } //  for (I=2; I <= ORDRG; I++)
+    	        } // if (REFLN)
+    	        else {
+    	            for (I=2; I <= ORDSG; I++) {
+    	                I1=(I-1)*TSFBS;
+    	                for (IA=1; IA <= TSFBS; IA++) {
+    	                    IB=I1+IA;
+    	                    ERARC[IB-1]=ERARC[IA-1];
+    	                } // for (IA=1; IA <= TSFBS; IA++)
+    	            } // for (I=2; I <= ORDSG; I++)
+    	        } // else
+    	    } // if (ORDSG > 1)
+
+    } // private void TESMD9
+    
+    private void RSLT83(double ERARC[], int TNSUA, double MXERM, double ZMXER[], int IMXER,
+        int QIERC[], int PARNT[], int ORDSG) {
+    	// INTEGER TNSUA,IMXER,ORDSG,OC
+    	// INTEGER PARNT(*),QIERC(0:6)
+    	// REAL MXERM,ERARC(*)
+    	// COMPLEX ZMXER
+    	
+    	// LOCAL VARIABLES
+    	
+    	int I,TSFBS;
+    	String QTEXT[] = new String[7];
+        //CHARACTER QTEXT(0:6)*22,LINE*72
+    	final String LINE="_________________________________________________________________";
+    	
+    	QTEXT[0]="...........NORMAL EXIT";
+    	QTEXT[1]=".....MAX. SUBDIVISIONS";
+    	QTEXT[2]="....ROUNDOFF DETECTION";
+    	QTEXT[3]=".........BAD INTEGRAND";
+    	QTEXT[6]=".........INVALID INPUT";
+    	
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug(LINE+"\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("RESULTS FROM ERROR IN MODULUS TESTS",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("QAWS TERMINATIONS WITH......\n",Preferences.DEBUG_ALGORITHM); 
+    	for (I=0; I <= 6; I++) {
+    	    if (QIERC[I] > 0) {
+    	        Preferences.debug(QTEXT[I]+ " " + QIERC[I] + "\n",Preferences.DEBUG_ALGORITHM); 
+    	    }
+    	} // for (I=0; I <= 6; I++)
+    	
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("SUB ARC  PARENT ARC     MAX ERROR IN MODULUS\n",Preferences.DEBUG_ALGORITHM); 
+    	TSFBS=TNSUA/ORDSG;
+    	for (I=1; I <= TSFBS; I++) {
+    		Preferences.debug(" " + I + "       " + PARNT[I-1] + "          " + ERARC[I-1] + "\n",Preferences.DEBUG_ALGORITHM);
+    	}
+    	
+    	Preferences.debug("MAXIMUM ERROR IN MODULUS IS " + MXERM + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("THIS OCCURS AT ("+ZMXER[0]+","+ZMXER[1]+") ON ARC " + IMXER + "\n",Preferences.DEBUG_ALGORITHM);
+    	
+    } // private void RSLT83
+
+
+    private void RSLT84(double ERMOD[], int TNSUA, double MXERM, double ZMXER[], int IMXER,
+        int LOTES[], int HITES[], int QIERC[], int PARNT[], int ORDSG) {
+    	// INTEGER TNSUA,IMXER,ORDSG,OC
+    	// INTEGER LOTES(*),HITES(*),PARNT(*),QIERC(0:6)
+    	// REAL MXERM,ERMOD(*)
+    	// COMPLEX ZMXER
+    	
+    	// LOCAL VARIABLES
+    	 
+    	int I,J,L,H,TSFBS;
+    	double S;
+        String QTEXT[] = new String[7];
+        //CHARACTER QTEXT(0:6)*22,LINE*72
+    	final String LINE="_________________________________________________________________";
+    	
+    	QTEXT[0]="...........NORMAL EXIT";
+    	QTEXT[1]=".....MAX. SUBDIVISIONS";
+    	QTEXT[2]="....ROUNDOFF DETECTION";
+    	QTEXT[3]=".........BAD INTEGRAND";
+    	QTEXT[6]=".........INVALID INPUT";
+    	
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug(LINE+"\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("RESULTS FROM ERROR IN MODULUS TESTS",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("QAWS TERMINATIONS WITH......\n",Preferences.DEBUG_ALGORITHM); 
+    	for (I=0; I <= 6; I++) {
+    	    if (QIERC[I] > 0) {
+    	        Preferences.debug(QTEXT[I]+ " " + QIERC[I] + "\n",Preferences.DEBUG_ALGORITHM); 
+    	    }
+    	} // for (I=0; I <= 6; I++)
+    	
+    	Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("ERROR IN MODULI AT TEST POINTS\n",Preferences.DEBUG_ALGORITHM);
+    	TSFBS=TNSUA/ORDSG;
+    	for (I=1; I <= TSFBS; I++) {
+    	    Preferences.debug("SUB ARC = " + I + " ON PARENT ARC " + PARNT[I-1] + "\n",Preferences.DEBUG_ALGORITHM);
+    	    Preferences.debug("N         ERROR IN MOD\n",Preferences.DEBUG_ALGORITHM);
+    	    L=LOTES[I-1];
+    	    H=HITES[I-1];
+    	    for (J=L; J <= H; J++) {
+    	        S=ERMOD[J-1];
+    	        Preferences.debug(J + "   " + S + "\n",Preferences.DEBUG_ALGORITHM);
+    	    } // for (J=L; J <= H; J++)
+    	    if (I == TSFBS && ORDSG == 1) {
+    	        J=1;
+    	    }
+    	    else {
+    	        J=H+1;
+    	    }
+    	    S=ERMOD[J-1];
+    	    Preferences.debug(J + "   " + S + "\n",Preferences.DEBUG_ALGORITHM);
+    	} // for (I=1; I <= TSFBS; I++)
+    	
+    	Preferences.debug("MAXIMUM ERROR IN MODULUS IS " + MXERM + "\n",Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("THIS OCCURS AT ("+ZMXER[0]+","+ZMXER[1]+") ON ARC " + IMXER + "\n",Preferences.DEBUG_ALGORITHM);
+    	
+    } // private void RSLT84
+    
+    private void RESCAL(int NQPTS,int TNSUA, int LOSUB[], int HISUB[], int JATYP[],
+    		double SOLUN[], double COLSC[]) {
+        // INTEGER NQPTS,TNSUA
+        // INTEGER LOSUB(*),HISUB(*),JATYP(*)
+        // REAL SOLUN(*),COLSC(*)
+
+        // TO RESCALE THE SOLUTION VECTOR SOLUN SO AS TO OBTAIN THE 
+        // STANDARD JACOBI COEFFICIENTS.
+
+        // LOCAL VARIABLES
+
+        int H,I,J,J1,JT,L,LOD;
+
+        for (I=1; I <= TNSUA; I++) {
+            L=LOSUB[I-1];
+            H=HISUB[I-1];
+            JT=Math.abs(JATYP[I-1]);
+            LOD=(JT-1)*NQPTS+1;
+            for (J=L; J <= H; J++) {
+                J1=LOD+J-L;
+                SOLUN[J-1]=SOLUN[J-1]*COLSC[J1-1];
+            } // for (J=L; J <= H; J++)
+        } // for (I=1; I <= TNSUA; I++)
+
+    } // private void RESCAL
+
+    private void GQPHYC(int MQIN1, int IER[]) {
+    	
+    	// INTEGER MQIN1,MQUPH,CHNL,IER
+    	// INTEGER IQUPH(*),IGEOM(*),ISNPH(*)
+    	// REAL RQUPH(*),RGEOM(*),RSNPH(*),RWORK(*)
+    	// COMPLEX CENTR
+    	// COMPLEX ZQUPH(*)
+    	// LOGICAL INTER
+    	
+    	// ......................................................................
+    	//
+    	// 1.     GQPHYC
+    	//           COMPUTES A GLOBAL QUADRATURE RULE FOR APPROXIMATING THE
+    	//           BOUNDARY INTEGRAL REPRESENTATION OF THE MAP : PHYSICAL -->
+    	//           CANONICAL.
+    	
+    	
+    	// 2.     PURPOSE
+    	//           THE ROUTINE SETS UP THE BOUNDARY QUADRATURE POINTS AND
+    	//           CORRESPONDING WEIGHTS FOR A COMPOSITE GAUSS-JACOBI/GAUSS-
+    	//           LEGENDRE RULE FOR ESTIMATING THE BOUNDARY INTEGRAL THAT
+    	//           APPEARS IN THE RESPRESENTATION FOR THE CONFORMAL MAP OF THE
+    	//           PHYSICAL DOMAIN ONTO THE CANONICAL DOMAIN.  THIS QUADRATURE
+    	//           RULE IS USED IN THE STANDARD NON-SINGULAR CASE WHEN THE
+    	//           FIELD POINT IN THE PHYSICAL DOMAIN DOES NOT LIE CLOSE TO THE
+    	//           BOUNDARY. 
+    	           
+    	
+    	// 3.     CALLING SEQUENCE
+    	//           CALL GQPHYC(MQIN1,MQUPH,INTER,CENTR,IGEOM,RGEOM,ISNPH,RSNPH,
+    	//                       RWORK,CHNL,IQUPH,RQUPH,ZQUPH,IER)
+    	
+    	//        PARAMETERS
+    	//         ON ENTRY
+    	//            MQIN1  - INTEGER
+    	//                     DEFINES THE NUMBER OF PANELS ALLOWED IN A 
+    	//                     COMPOSITE RULE.  SPECIFICALLY, MQIN1 = 1 + (THE
+    	//                     MAXIMUM NUMBER OF PANELS IN A COMPOSITE RULE FOR
+    	//                     A SINGLE SUB-ARC ON THE BOUNDARY)
+    	
+    	//            MQUPH  - INTEGER
+    	//                     THE MAXIMUM NUMBER OF QUADRATURE POINTS ALLOWED
+    	//                     IN THE FINAL GLOBAL RULE.  (THE VALUE OF THIS
+    	//                     ARGUMENT IS LINKED TO THOSE OF ARGUMENTS NQPTS
+    	//                     AND IBNDS(1) PREVIOUSLY SUPPLIED TO JAPHYC VIA
+    	//                     MQUPH <= (MQIN1-1)*NQPTS*IBNDS(1))
+    	
+    	//            INTER  - LOGICAL
+    	//                     TRUE IF THE PHYSICAL DOMAIN IS INTERIOR, FALSE 
+    	//                     OTHERWISE.
+    	
+    	//            CENTR  - COMPLEX
+    	//                     THE POINT IN THE PHYSICAL PLANE THAT IS TO BE
+    	//                     MAPPED TO THE CENTRE OF THE UNIT DISC.  FOR
+    	//                     EXTERIOR DOMAINS CENTR MUST BE SOME POINT IN THE
+    	//                     COMPLEMENTARY INTERIOR  PHYSICAL DOMAIN.
+    	
+    	//            IGEOM  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR IGEOM PREVIOUSLY SET UP BY 
+    	//                     JAPHYC.
+    	
+    	//            RGEOM  - REAL ARRAY
+    	//                     THE REAL VECTOR RGEOM PREVIOUSLY SET UP BY JAPHYC.
+    	
+    	//            ISNPH  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR ISNPH PREVIOUSLY SET UP BY 
+    	//                     JAPHYC.
+    	
+    	//            RSNPH  - REAL ARRAY
+    	//                     THE REAL VECTOR RSNPH PREVIOUSLY SET UP BY JAPHYC.
+    	
+    	//            RWORK  - REAL ARRAY
+    	//                     A WORKING VECTOR OF SIZE AT LEAST MQIN1.
+    	
+    	//             CHNL  - INTEGER
+    	//                     DEFINES AN OUTPUT CHANNEL THAT MAY BE USED FOR
+    	//                     WRITING THE FILE <JBNM>pq.
+    	
+    	//         ON EXIT
+    	//            IQUPH  - INTEGER ARRAY
+    	//                     AN INTEGER VECTOR OF SIZE AT LEAST 2*IBNDS(1) + 4,
+    	//                     WHERE IBNDS(1) (=IGEOM(4)) IS THE VALUE PREVIOUSLY
+    	//                     SUPPLIED TO JAPHYC; IQUPH STORES POINTERS TO 
+    	//                     ACCESS RQUPH AND ZQUPH.
+    	
+    	//            RQUPH  - REAL ARRAY
+    	//                     A REAL VECTOR OF SIZE AT LEAST 3*MQUPH + 1; STORES
+    	//                     THE REAL QUADRATURE DATA.
+    	
+    	//            ZQUPH  - COMPLEX ARRAY
+    	//                     A COMPLEX VECTOR OF SIZE AT LEAST MQUPH + 1; 
+    	//                     STORES THE QUADRATURE POINTS ON THE PHYSICAL 
+    	//                     BOUNDARY.
+    	                     
+    	//            IER    - INTEGER
+    	//                     IF IER > 0 THEN AN ABNORMAL EXIT HAS OCCURRED;
+    	//                     A MESSAGE TO DESCRIBE THE ERROR IS AUTOMATICALLY
+    	//                     WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+    	//                     IER=0 - NORMAL EXIT.
+    	//                     IER>0 - ABNORMAL EXIT; THE ERROR MESSAGE SHOULD
+    	//                             BE SELF EXPLANATORY.
+    	
+    	                    
+    	// 4.     SUBROUTINES OR FUNCTIONS NEEDED
+    	//              - THE CONFPACK LIBRARY.
+    	//              - THE REAL FUNCTION R1MACH.
+    	//              - THE USER SUPPLIED COMPLEX FUNCTIONS PARFUN AND DPARFN.
+    	
+    	
+    	// 5.     FURTHER COMMENTS
+    	//           - NOTE THAT THIS ROUTINE CAN ONLY BE USED  A F T E R  THE  
+    	//             ROUTINE JAPHYC HAS SUCCESSFULLY EXECUTED, AND THAT SOME  
+    	//             INPUT ARGUMENTS FOR GQPHYC ARE OUTPUT VALUES FROM JAPHYC.
+    	//           - THE GLOBAL QUADRATURE DATA ARE AUTOMATICALLY OUTPUT ON THE
+    	//             FILE <JBNM>pq, WHERE <JBNM> IS COLLECTED FROM THE FILE 
+    	//             jbnm PREVIOUSLY CREATED BY JAPHYC.
+    	//           - A SUMMARY LISTING OF ACTIONS TAKEN IS AUTOMATICALLY
+    	//             WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+    	
+    	// ......................................................................
+    	//     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    	//     LAST UPDATE: 3 JULY 1990
+    	// ......................................................................
+    	     
+    	//     LOCAL VARAIBLES
+    	
+    	final int NINTS = 5;
+    	int ACOEF,BCOEF,DGPOL,FACTR,H0VAL,HALEN,JACIN,JATYP,LOSUB,
+    	     LQSBF,MIDPT,NPPQF,PARNT,QUPTS,QUWTS,SOLUN,TPPQF,TRRAD,VTARG,WPPQF,
+    	     ZPPQF;
+    	int MNEQN,MNSUA,NARCS,NEQNS,NJIND,NQPTS,TNGQP,TNPQP,
+    	     TNSUA;
+    	final double DLETA = 0.2;
+    	double LGTOL,SUPER,THET0,TOLOU;
+    	double CT[] = new double[2];
+    	//COMPLEX CT
+    	
+        // EXTERNAL POPQF1,OUPTPQ,WRHEAD,WRTAIL
+    	
+    	// WRITE HEADING TO STANDARD OUTPUT CHANNEL
+    	
+    	WRHEAD(2,0,null);
+    	
+    	NARCS=ISNPH[0];
+    	NQPTS=ISNPH[1];
+    	TNSUA=ISNPH[2];
+    	NEQNS=ISNPH[3];
+    	MNSUA=ISNPH[4];
+    	MNEQN=ISNPH[5];
+    	NJIND=NARCS+1;
+    	TNGQP=NJIND*NQPTS;
+    	SUPER=RGEOM[0];
+    	LGTOL=RGEOM[1];
+    	
+    	IQUPH[1]=TNSUA;
+    	IQUPH[2]=MNSUA;
+    	IQUPH[3]=MQUPH;
+    	
+    	// COPY POINTERS FROM JAPHYC
+    	
+    	// SET UP POINTERS FOR QUADRATURE DATA.
+    	
+    	
+    	/*RQUPH[0]=SOLUN[NEQNS-1];
+    	
+    	System.out.println("QUADRATURE RULES STARTED:");
+    	POPQF1(NPPQF,LQSBF,TNPQP,TOLOU,TPPQF,
+    	     TRRAD,WPPQF,ZPPQF,MQUPH,MQIN1,NARCS,NINTS,
+    	     NQPTS,TNSUA,DGPOL,JATYP,LOSUB,PARNT,
+    	     DELTA,LGTOL,ACOEF,BCOEF,H0VAL,HALEN,
+    	     JACIN,MIDPT,QUPTS,QUWTS,SOLUN,
+    	     RWORK,IER);
+    	      WRITE(*,10) 'QUADRATURE RULES DONE:'
     	C
-    	C       INITIALISE SOME DATA FOR THE NON-SINGULAR INTEGRALS
+    	      IF (IER .GT. 0) THEN
+    	        GOTO 999
+    	      ENDIF
     	C
-    	        WORK(1)=1E+0/RH
-    	        NQ=NQUAD(AJI)
-    	        LOQ=LOQSB(AJI)
-    	        IF (IA.EQ.TNSUA) THEN
-    	            I1=2
-    	        ELSE
-    	            I1=1
+    	      IQUPH(1)=TNPQP
+    	C
+    	C**** SET UP THE CONSTANT FACTOR FOR THE MAPPING FORMULA
+    	C
+    	      THET0=RGEOM(VTARG)
+    	      IF (INTER) THEN
+    	        ZQUPH(FACTR)=CMPLX(COS(THET0),SIN(THET0))
+    	      ELSE
+    	        ZQUPH(FACTR)=(1E+0,0E+0)
+    	        CALL DMPHYC(1,CENTR,CT,INTER,CENTR,IGEOM,RGEOM,ISNPH,RSNPH,
+    	     +              IQUPH,RQUPH,ZQUPH,.TRUE.,IER)
+    	        IF (IER .GT. 0) THEN
+    	          GOTO 999
+    	        ENDIF
+    	        CT=CMPLX(RQUPH(1),THET0-AIMAG(LOG(CT)))
+    	        ZQUPH(FACTR)=CEXP(CT)
+    	      ENDIF
+    	C
+    	      CALL OUPTPQ(IQUPH,RQUPH,ZQUPH,CHNL)
+    	999   CONTINUE
+    	C
+    	C**** WRITE CLOSING MESSAGE TO STANDARD OUTPUT CHANNEL
+    	C
+    	      CALL WRTAIL(2,0,IER)
+    	C*/
+    } // private void GQPHYC
+
+    private void POPQF1(int NPPQF[], int LPQSB[], int TNPQP[], double TOLOU, double TPPQF[],
+        double TRRAD[], double WPPQF[], double ZPPQF[][], int MNQUA, int MQIN1, int NARCS,
+        int NINTS, int NQPTS,int TNSUA, int DGPOL[], int JATYP[], int LOSUB[], int PARNT[],
+    	double DELTA, double LGTOL, double ACOEF[], double BCOEF[], double H0VAL[], double HALEN[],
+    	double JACIN[], double MIDPT[], double QUPTS[], double QUWTS[], double SOLUN[],
+        double XENPT[], int IER[]) {
+    	// INTEGER IER,MQIN1,MNQUA,NARCS,NINTS,NQPTS,TNPQP,TNSUA
+    	// INTEGER DGPOL(*),JATYP(*),LOSUB(*),LPQSB(*),NPPQF(*),
+    	// +PARNT(*)
+    	// REAL DELTA,LGTOL,TOLOU
+    	// REAL ACOEF(*),BCOEF(*),HALEN(*),H0VAL(*),JACIN(*),MIDPT(*),
+    	// +QUPTS(*),QUWTS(*),SOLUN(*),TPPQF(*),TRRAD(*),WPPQF(*),XENPT(*)
+    	// COMPLEX ZPPQF(*)
+    	
+    	//     THE MAIN PURPOSE OF THIS ROUTINE IS TO SET UP THE REAL ARRAY
+    	//     WPPQF OF QUADRATURE WEIGHTS, THE COMPLEX ARRAY ZPPQF OF
+    	//     QUADRATURE POINTS ON THE PHYSICAL BOUNDARY AND THE REAL ARRAY
+    	//     TPPQF OF LOCAL PARAMETER VALUES CORRESPONDING TO ZPPQF; ALL THESE
+    	//     DATA DEFINE THE POST-PROCESSING COMPOSITE GAUSSIAN
+    	//     QUADRATURE RULES FOR THE ESTIMATE OF THE MAP F (PHYSICAL ONTO
+    	//     CANONICAL) WHEN Z IS NOT TOO CLOSE TO THE BOUNDARY.
+    	
+    	//     THIS ROUTINE ALSO RETURNS THE ARRAY TRRAD OF SO-CALLED TRANSITION
+    	//     RADII;  THE IDEA IS THAT IF A PHYSICAL FIELD POINT Z SATISFIES
+    	
+    	//                 ABS(Z-ZPPQF(I)) < TRRAD(I)
+    	
+    	//     THEN THE QUADRATURE RULE PRODUCED BY THIS ROUTINE IS PROBABLY
+    	//     NOT SUFFICIENTLY ACCURATE ON THE PARTICULAR ARC ON WHICH
+    	//     ZPPQF(I) LIES.  THIS ROUTINE ALSO ASSIGNS FICTICIOUS QUADRATURE 
+    	//     POINTS WITH WEIGHTS SET TO ZERO.  THESE POINTS ARE INSERTED TO 
+    	//     ENSURE THAT IF A FIELD POINT Z IS CLOSE TO THE PHYSICAL BOUNDARY
+    	//     THEN THE ABOVE INEQUALITY SHOULD BE SATISFIED FOR AT LEAST ONE
+    	//     "GENERALISED" QUADRATURE POINT.
+    	
+    	//     THE ARRAY ELEMENT NPPQF(I) RECORDS THE NUMBER OF QUADRATURE
+    	//     POINTS FOR THE SUBARC NUMBER I, I=1,...,TNSUA.  THE WEIGHTS,
+    	//     QUADRATURE POINTS AND LOCAL QUADRATURE POINT PARAMETERS FOR ARC 
+    	//     NUMBER I ARE STORED IN WPPQF, ZPPQF AND TPPQF STARTING AT THE 
+    	//     ELEMENT WITH INDEX LPQSB(I).
+    	
+    	//     IER=0 - NORMAL EXIT 
+    	//     IER=22- THE TOTAL NUMBER OF QUADRATURE POINTS REQUESTED FOR 
+    	//             THE WHOLE BOUNDARY EXCEEDS THE LIMIT DEFINED BY THE
+    	//             INPUT PARAMETER MNQUA; MNQUA MUST BE INCREASED IN A
+    	//             HIGHER LEVEL ROUTINE.
+    	//     IER=23- THE LOCAL PARAMETER MNCOF SHOULD BE INCREASED
+    	
+    	//     LOCAL VARIABLES
+    	
+    	final int MNCOF = 32;
+    	int AJT,DEG,HI,HI1,I,I1,J,J1,J2,JT,K,LIM,LOD,LOL,LOM,PT,QINTS;
+    	final double RHO = 0.13;
+    	double BETA,DIST,HL,JACSUM,MD,MEAN,MXDIS,RR,RRB,SS,SUM1,TT,SCO;
+    	double CTT[] = new double[2];
+    	// COMPLEX CTT,DPARFN,PARFUN
+    	double JACOF[] = new double[MNCOF];
+    	double JCOFC[][] = new double[MNCOF][2];
+    	// COMPLEX JCOFC(MNCOF)
+    	// EXTERNAL DPARFN,JACSUM,PARFUN,PPSBI7
+    	
+    	MXDIS=DELTA;
+    	HI=0;
+    	LOL=NARCS*NQPTS;
+    	/*for (I1=1; I1 <= TNSUA; I1++) {
+    	    JT=JATYP[I1-1];
+    	    if (JT > 0) {
+    	        SS=1.0;
+    	    }
+    	    else {
+    	        SS=-1.0;
+    	    }
+    	    AJT=Math.abs(JT);
+    	    BETA=JACIN[AJT-1];
+    	    DEG=DGPOL[I1-1];
+    	    if (DEG+1 > MNCOF) {
+    	        IER[0]=23;
+    	        return;
+    	    }
+    	    LOM=LOSUB[I1-1];
+    	    LOD=(AJT-1)*NQPTS+1;
+    	    PT=PARNT[I1-1];
+    	    HL=HALEN[I1-1];
+    	    MD=MIDPT[I1-1];
+    	
+    	    SCO=SS;
+    	    for (J=1; J <= DEG+1; J++) {
+    	        J1=LOM+J-1;
+    	        SCO=SCO*SS;
+    	        JACOF[J-1]=SOLUN[J1-1]*SCO;
+    	        JCOFC[J-1][0]=SOLUN[J1-1]*SCO;
+    	        JCOFC[J-1][1] = 0.0;
+    	    } // for (J=1; J <= DEG+1; J++)
+    	
+    	    PPSBI7(DELTA,NINTS,BETA,NQPTS,DEG,ACOEF(LOD),
+    	     BCOEF(LOD),H0VAL(AJT),JCOFC,LGTOL,TOLOU,XENPT,
+    	     QINTS,MQIN1,IER);
+    	        IF (IER .GT. 0) THEN
+    	          RETURN
+    	        ENDIF
+    	        NPPQF(I1)=QINTS*NQPTS
+    	        LPQSB(I1)=HI+1
+    	        HI1=HI+NPPQF(I1)
+    	        IF (HI1 .GT. MNQUA) THEN
+    	          IER=22
+    	          RETURN
+    	        ENDIF
+    	        K=HI
+    	        SUM1=BETA+1E+0
+    	        DO 30 I=1,QINTS
+    	          RR=(XENPT(I+1)-XENPT(I))*5E-1
+    	          MEAN=(XENPT(I+1)+XENPT(I))*5E-1
+    	          IF (I .EQ. 1) THEN
+    	            RRB=RR**SUM1
+    	            DO 10 J=1,NQPTS
+    	              J1=LOD+J-1
+    	              K=K+1
+    	              TT=(MEAN+RR*QUPTS(J1))
+    	              WPPQF(K)=RRB*QUWTS(J1)*JACSUM(TT,DEG,ACOEF(LOD),
+    	     +                 BCOEF(LOD),H0VAL(AJT),JACOF)
+    	              TT=TT*SS
+    	              TPPQF(K)=TT
+    	              CTT=CMPLX(MD+TT*HL)
+    	              ZPPQF(K)=PARFUN(PT,CTT)
+    	              TRRAD(K)=HL*DELTA*ABS(DPARFN(PT,CTT))
+    	10          CONTINUE
+    	          ELSE
+    	            DO 20 J=1,NQPTS
+    	              J1=LOL+J
+    	              K=K+1
+    	              TT=(MEAN+RR*QUPTS(J1))
+    	              WPPQF(K)=RR*QUWTS(J1)*(1E+0+TT)**BETA*JACSUM(TT,DEG,
+    	     +                 ACOEF(LOD),BCOEF(LOD),H0VAL(AJT),JACOF)
+    	              TT=TT*SS
+    	              TPPQF(K)=TT
+    	              CTT=CMPLX(MD+TT*HL)
+    	              ZPPQF(K)=PARFUN(PT,CTT)
+    	              TRRAD(K)=HL*DELTA*ABS(DPARFN(PT,CTT))
+    	20          CONTINUE
+    	          ENDIF
+    	30      CONTINUE
+    	        IF (SS .LT. 0E+0) THEN
+    	          LIM=NPPQF(I1)
+    	          IF (MOD(LIM,2) .EQ. 0) THEN
+    	            LIM=LIM/2
+    	          ELSE
+    	            LIM=(LIM-1)/2
+    	          ENDIF
+    	          J1=LPQSB(I1)-1
+    	          J2=HI1+1
+    	          DO 40 J=1,LIM
+    	            J1=J1+1
+    	            J2=J2-1
+    	            TT=WPPQF(J1)
+    	            WPPQF(J1)=WPPQF(J2)
+    	            WPPQF(J2)=TT
+    	            TT=TRRAD(J1)
+    	            TRRAD(J1)=TRRAD(J2)
+    	            TRRAD(J2)=TT
+    	            TT=TPPQF(J1)
+    	            TPPQF(J1)=TPPQF(J2)
+    	            TPPQF(J2)=TT
+    	            CTT=ZPPQF(J1)
+    	            ZPPQF(J1)=ZPPQF(J2)
+    	            ZPPQF(J2)=CTT
+    	40        CONTINUE
     	        ENDIF
     	C
-    	        DO 100 IQ=1,NQ
-    	          I=LOQ+IQ-1
-    	          TQ=QCOMX(I)
-    	          WQ=QCOMW(I)
-    	          CALL JAPAR7(WORK,TQ,ACOEF(LOD),BCOEF(LOD),DG)
-    	          IF (JI .LT. 0) THEN
-    	            TQ=-TQ
-    	          ENDIF
-    	          GTQ=CMPLX(MD+HL*TQ)
-    	          ZQ=PARFUN(PT,GTQ)
+    	C       NEXT WE INSERT ANY NECESSARY FICTICIOUS QUADRATURE POINTS
     	C
-    	C         ACCUMULATE THE ELEMENTS ABOVE THE DIAGONAL BLOCK
-    	C
-    	C
-    	          DO 50 IT=I1,FIRST-1
-    	            ZT=ZTEST(IT)
-    	            DD=ABS(ZT-ZQ)
-    	            LDD=LOG(DD)*WQ
-    	            SG=1E+0
-    	            DO 40 J1=LOCLM,HICLM
-    	              J=J1-LOCLM+1
-    	              I=J1-LOCLM+LOD
-    	              MATRX(IT,J1)=MATRX(IT,J1)+SG*WORK(J)*LDD*COLSC(I)
-    	              SG=SG*SJI
-    	40          CONTINUE
+    	        J1=LPQSB(I1)
+    	        IF (TPPQF(J1)+1E+0 .GT. RHO*MXDIS) THEN
+    	          J2=HI1
+    	          DO 50 I=J2,J1,-1
+    	            WPPQF(I+1)=WPPQF(I)
+    	            TRRAD(I+1)=TRRAD(I)
+    	            TPPQF(I+1)=TPPQF(I)
+    	            ZPPQF(I+1)=ZPPQF(I)
     	50        CONTINUE
+    	          HI1=J2+1
+    	          NPPQF(I1)=NPPQF(I1)+1
+    	          WPPQF(J1)=0E+0
+    	          TPPQF(J1)=-1E+0
+    	          CTT=CMPLX(MD-HL)
+    	          ZPPQF(J1)=PARFUN(PT,CTT)
+    	          TRRAD(J1)=HL*DELTA*ABS(DPARFN(PT,CTT))
+    	        ENDIF
     	C
-    	C         ACCUMULATE THE ELEMENTS BELOW THE DIAGONAL BLOCK
-    	C
-    	          DO 70 IT=LAST+1,NTEST
-    	            ZT=ZTEST(IT)
-    	            DD=ABS(ZT-ZQ)
-    	            LDD=LOG(DD)*WQ
-    	            SG=1E+0
-    	            DO 60 J1=LOCLM,HICLM
-    	              J=J1-LOCLM+1
-    	              I=J1-LOCLM+LOD
-    	              MATRX(IT,J1)=MATRX(IT,J1)+SG*WORK(J)*LDD*COLSC(I)
-    	              SG=SG*SJI
-    	60          CONTINUE
-    	70        CONTINUE
-    	C
-    	C         ACCUMULATE THE RESIDUAL NON-SINGULAR CONTRIBUTIONS INTO
-    	C         THE DIAGONAL BLOCK FOR THE NON-LINE-SEGMENT CASE.
-    	C
-    	          IF (.NOT.LNSEG(IA)) THEN
-    	            DO 90 IT=FIRST,LAST
-    	              IF (ORDSG.GT.1 .AND. IA.EQ.(TSFBS+1) .AND. IT.EQ.LAST) 
-    	     +        GOTO 90
-    	              IF (IT .EQ. LAST) THEN
-    	                  TT=1E+0
-    	              ELSE
-    	                  TT=TESPR(IT)
-    	              ENDIF
-    	C
-    	              IF (IT .GT. NTEST) THEN
-    	                  ROW=1
-    	              ELSE
-    	                  ROW=IT
-    	              ENDIF
-    	C
-    	              DD=ABS(TT-TQ)
-    	              IF (DD .LE. TOLNR) THEN
-    	                  DD=ABS(DPARFN(PT,GTQ))*HL
-    	              ELSE
-    	                  IF (IT .GT. NTEST) THEN
-    	                      ZT=ZTEST(1)
-    	                  ELSE
-    	                      ZT=ZTEST(IT)
-    	                  ENDIF
-    	                  DD=ABS(ZT-ZQ)/DD
-    	                  IF (DD.LT.TOLNR) DD=ABS(DPARFN(PT,GTQ))*HL
-    	              ENDIF
-    	              LDD=LOG(DD)*WQ
-    	              SG=1E+0
-    	              DO 80 J1=LOCLM,HICLM
-    	                J=J1-LOCLM+1
-    	                I=J1-LOCLM+LOD
-    	                MATRX(ROW,J1)=MATRX(ROW,J1)+SG*WORK(J)*LDD*COLSC(I)
-    	                SG=SG*SJI
-    	80            CONTINUE
-    	90          CONTINUE
+    	60      CONTINUE
+    	        J1=J1+1
+    	        IF (J1 .LT. HI1) THEN
+    	          DIST=TPPQF(J1+1)-TPPQF(J1)
+    	          IF (DIST .GT. MXDIS) THEN
+    	            J2=HI1
+    	            DO 70 I=J2,J1+1,-1
+    	              WPPQF(I+1)=WPPQF(I)
+    	              TRRAD(I+1)=TRRAD(I)
+    	              TPPQF(I+1)=TPPQF(I)
+    	              ZPPQF(I+1)=ZPPQF(I)
+    	70          CONTINUE
+    	            HI1=J2+1
+    	            NPPQF(I1)=NPPQF(I1)+1
+    	            WPPQF(J1+1)=0E+0
+    	            TPPQF(J1+1)=(TPPQF(J1)+TPPQF(J1+2))*5E-1
+    	            CTT=CMPLX(MD+HL*TPPQF(J1+1))
+    	            ZPPQF(J1+1)=PARFUN(PT,CTT)
+    	            TRRAD(J1+1)=HL*DELTA*ABS(DPARFN(PT,CTT))
     	          ENDIF
+    	          GOTO 60
+    	        ELSE IF (1E+0-TPPQF(J1) .GT. RHO*MXDIS) THEN
+    	          J1=J1+1
+    	          HI1=J1
+    	          NPPQF(I1)=NPPQF(I1)+1
+    	          WPPQF(J1)=0E+0
+    	          TPPQF(J1)=1E+0
+    	          CTT=CMPLX(MD+HL)
+    	          ZPPQF(J1)=PARFUN(PT,CTT)
+    	          TRRAD(J1)=HL*DELTA*ABS(DPARFN(PT,CTT))
+    	        ENDIF
+    	        HI=HI1
+    	} // for (I1=1; I1 <= TNSUA; I1++)*/
+    	
+    	TNPQP[0]=HI;
+    	
+    	IER[0]=0;
+    	
+    } // private void POPQF1
+    
+    private void PPSBI7(double DELTA, int NINTS, double BETA, int NQUAD, int DGPOL, double ACOEF[],
+        double BCOEF[], double H0VAL, double SOLUN[][], double TOLIN, double TOLOU, double XENPT[],
+        int QINTS[], int MQIN1, int IER[]) {
+    	// INTEGER DGPOL,MQIN1,NQUAD,QINTS,IER,NINTS
+    	// REAL BETA,H0VAL,TOLIN,TOLOU,DELTA
+    	// REAL ACOEF(*),BCOEF(*),XENPT(*)
+    	// COMPLEX SOLUN(*)
+    	
+    	//     CALCULATES THE NUMBER OF QUADRATURE INTERVALS (QINTS) REQUIRED
+    	//     FOR THE COMPOSITE GAUSS-JACOBI/GAUSS-LEGENDRE ESTIMATION OF
+    	
+    	//          INTEGRAL  [(1+X)**BETA*FNPHI(X)*LOG(ZZ(J)-X)*dX], 
+    	//         -1<=X<=1                                         
+    	
+    	//     WHERE FNPHI IS A POLYNOMIAL APPROXIMATION TO THE BOUNDARY 
+    	//     CORRESPONDENCE DERIVATIVE / JACOBI WEIGHT QUOTIENT. 
+    	 
+    	//     ZZ IS ANY POINT ON A "DELTA-CONTOUR" IN THE UPPER HALF PLANE,
+    	//     THIS CONTOUR BEING DEFINED BY THE PARAMETER DELTA.  TEST VALUES 
+    	//     FOR ZZ ARE ASSIGNED IN THE SUBROUTINES DEPPJ8 AND DEPPL8.
+    	
+    	//     THE PARAMETERS DGPOL,ACOEF,BCOEF,H0VAL AND SOLUN ARE USED TO 
+    	//     DEFINE FNPHI AND ARE PASSED TO DEPPJ8 AND DEPPL8 FOR THIS PURPOSE.
+    	
+    	//     THE ENDPOINTS OF THE QUADRATURE INTERVALS ARE RETURNED IN VECTOR 
+    	//     XENPT, WITH XENPT(1)=-1<XENPT(2)<...<1=XENPT(QINTS+1).
+    	
+    	//     TOLOU RECORDS OUR ESTIMATE FOR THE MAXIMUM OF THE ABSOLUTE VALUES
+    	//     OF THE REMAINDER ESTIMATES ON THE DELTA-CONTOUR.  WE REQUIRE THAT
+    	
+    	//                  TOLOU <= TOLIN
+    	
+    	//     WITH THE TOLOU BEING REASONABLY CLOSE TO TOLIN.
+    	
+    	//     IER=0 - NORMAL EXIT
+    	//     IER=24- THE REQUIRED NUMBER OF QUADRATURE INTERVALS EXCEEDS THAT
+    	//             SPECIFIED BY THE GLOBAL PARAMETER MQIN1; MQIN1 MUST BE
+    	//             INCREASED (ERROR NUMBER 43 IF CALLED FROM POPQG1)
+    	   
+    	//     LOCAL VARIABLES
+    	
+    	int INTS;
+    	double TAU[] = new double[1];
+    	double MAXRM[] = new double[1];
+    	double TOL,RIGHT;
+    	boolean T1FXD;
+    	// EXTERNAL DEPPJ8,DEPPL8
+    	
+    	QINTS[0]=1;
+    	XENPT[0]=-1.0;
+    	TOL=TOLIN;
+    	INTS=NINTS;
+    	DEPPJ8(BETA,TAU,NQUAD,DGPOL,ACOEF,BCOEF,H0VAL,
+    	     SOLUN,TOL,MAXRM,INTS,DELTA,IER);
+    	/*      IF (IER .GT. 0) THEN
+    	        RETURN
+    	      ENDIF
+    	      TOLOU=MAXRM
+    	      XENPT(2)=TAU
+    	C
+    	      IF (XENPT(2) .LT. 1E+0) THEN
+    	        QINTS=2
+    	        T1FXD=.FALSE.
+    	        TAU=1E+0
+    	        RIGHT=-1E+0
+    	        INTS=NINTS
+    	        CALL DEPPL8(BETA,RIGHT,TAU,T1FXD,NQUAD,DGPOL,ACOEF,
+    	     +              BCOEF,H0VAL,SOLUN,TOL,MAXRM,INTS,DELTA,IER)
+    	        IF (IER .GT. 0) THEN
+    	          RETURN
+    	        ENDIF
+    	        TOLOU=TOLOU+MAXRM
+    	        T1FXD=.TRUE.
+    	C
     	100     CONTINUE
     	C
-    	C       ACCUMULATE THE RESIDUAL NON-SINGULAR CONTRIBUTIONS INTO
-    	C       THE DIAGONAL BLOCK FOR THE LINE-SEGMENT CASE.
-    	C
-    	        IF (LNSEG(IA)) THEN
-    	          ZT=DPARFN(PT,CMPLX(MD))*HL
-    	          C0=ABS(ZT)
-    	          C0=RH*LOG(C0)*COLSC(LOD)
-    	          DO 110 IT=FIRST,LAST
-    	            IF (ORDSG.GT.1 .AND. IA.EQ.(TSFBS+1) .AND. IT.EQ.LAST) 
-    	     +      GOTO 110
-    	            IF (IT .GT. NTEST) THEN
-    	                ROW=1
-    	            ELSE
-    	                ROW=IT
-    	            ENDIF
-    	            MATRX(ROW,LOCLM)=MATRX(ROW,LOCLM)+C0
-    	110       CONTINUE
-    	        ENDIF
-    	} // for (IA=1; IA <= TNSUA; IA++)
-    	C
-    	C     SET UP THE LAST COLUMN
-    	C
-    	      DO 130 I=1,NTEST
-    	        MATRX(I,NEQNS)=1E+0
-    	130   CONTINUE
-    	C
-    	C     COMPUTE MATRIX-VECTOR PRODUCT
-    	C
-    	      DO 150 I=1,NTEST
-    	        SUM=0E+0
-    	        DO 140 J=1,NEQNS
-    	          SUM=SUM+MATRX(I,J)*SOLUN(J)
-    	140     CONTINUE
-    	        ERMOD(I)=SUM
-    	150   CONTINUE
-    	C
-    	C     FORM THE ERROR IN MODULUS
-    	C
-    	      IF (INTER) THEN
-    	          DO 160 I=1,NTEST
-    	            SUM=EXP(ERMOD(I))
-    	            ERMOD(I)=ABS(1E+0-ABS(ZTEST(I)-CENTR)/SUM)
-    	160       CONTINUE
-    	      ELSE
-    	          DO 170 I=1,NTEST
-    	            SUM=EXP(ERMOD(I))
-    	            ERMOD(I)=ABS(1E+0-SUM)
-    	170       CONTINUE
-    	      ENDIF
-    	C
-    	C     FIND MAXIMUM ERROR IN MODULUS AND THE POINT AND THE ARC AT WHICH 
-    	C     IT OCCURS
-    	C
-    	      MXERM=0E+0
-    	      DO 190 IA=1,TSFBS
-    	        FIRST=LOTES(IA)
-    	        LAST=HITES(IA)
-    	        MD=0E+0
-    	        DO 180 IT=FIRST,LAST
-    	          IF (ERMOD(IT) .GT. MD) THEN
-    	              MD=ERMOD(IT)
-    	          ENDIF
-    	          IF (MD .GT. MXERM) THEN
-    	              MXERM=MD
-    	              IMXER=IA
-    	              ZMXER=ZTEST(IT)
-    	          ENDIF
-    	180     CONTINUE
-    	        IF (IA.EQ.TSFBS .AND. ORDSG.EQ.1) THEN
-    	          IT=1
+    	        IF (XENPT(QINTS) .GT. RIGHT) THEN
+    	          XENPT(QINTS)=5E-1*(XENPT(QINTS)+RIGHT)
+    	          XENPT(QINTS+1)=1E+0
     	        ELSE
-    	          IT=LAST+1
+    	          TAU=1E+0
+    	          INTS=NINTS
+    	          CALL DEPPL8(BETA,XENPT(QINTS),TAU,T1FXD,NQUAD,DGPOL,
+    	     +                ACOEF,BCOEF,H0VAL,SOLUN,TOL,MAXRM,INTS,DELTA,IER) 
+    	          IF (IER .GT. 0) THEN
+    	            RETURN
+    	          ENDIF
+    	          TOLOU=TOLOU+MAXRM
+    	          QINTS=QINTS+1
+    	          IF (QINTS .GE. MQIN1) THEN
+    	            IER=24
+    	            RETURN
+    	          ENDIF
+    	          XENPT(QINTS)=TAU
+    	          GOTO 100
     	        ENDIF
-    	        IF (ERMOD(IT) .GT. MD) THEN
-    	            MD=ERMOD(IT)
-    	        ENDIF
-    	        IF (MD .GT. MXERM) THEN
-    	            MXERM=MD
-    	            IMXER=IA
-    	            ZMXER=ZTEST(IT)
-    	        ENDIF
-    	        ERARC(IA)=MD
-    	190   CONTINUE
-    	C
-    	C     IF REGION IS SYMMETRIC, FILL UP THE WHOLE ERARC VECTOR USING
-    	C     SYMMETRY
-    	C
-    	      IF (ORDSG.GT.1) THEN
-    	      IF (REFLN) THEN
-    	        DO 200 IA=1,TSFBS
-    	          IB=2*TSFBS+1-IA
-    	          ERARC(IB)=ERARC(IA)
-    	200     CONTINUE
-    	        ORDRG=ORDSG/2
-    	        DO 220 I=2,ORDRG
-    	          I1=(I-1)*TSFBS*2
-    	          DO 210 IA=1,TSFBS*2
-    	            IB=I1+IA
-    	            ERARC(IB)=ERARC(IA)
-    	210       CONTINUE
-    	220     CONTINUE
-    	      ELSE
-    	        DO 240 I=2,ORDSG
-    	          I1=(I-1)*TSFBS
-    	          DO 230 IA=1,TSFBS
-    	            IB=I1+IA
-    	            ERARC(IB)=ERARC(IA)
-    	230       CONTINUE
-    	240     CONTINUE
     	      ENDIF
+    	C
+    	      IER=0
+    	C */
+    } // private void PPSBI7
+    
+    private void DEPPJ8(double BETA, double TAU[], int NQUAD, int DGPOL, double ACOEF[],
+        double BCOEF[], double H0VAL, double SOLUN[][], double TOL, double MAXRM[], int NINTS,
+        double DELTA,int IER[]) {
+        //INTEGER NQUAD,IER,DGPOL,NINTS
+    	//REAL BETA,TAU,TOL,MAXRM,ACOEF(*),BCOEF(*),H0VAL,DELTA
+    	//COMPLEX SOLUN(*)
+    	
+    	// WE COMPUTE THE DONALDSON-ELLIOTT ESTIMATES FOR THE REMAINDERS IN
+    	//     USING AN NQUAD-POINT GAUSS-JACOBI RULE TO ESTIMATE THE INTEGRALS
+    	
+    	//            INTEGRAL  [(1+X)**BETA*FNPHI(X)*LOG(ZZ-X)*dX]
+    	//           -1<=X<=TAU                                       
+    	
+    	//     WHERE FNPHI IS A POLYNOMIAL APPROXIMATION TO THE BOUNDARY 
+    	//     CORRESPONDENCE DERIVATIVE / JACOBI WEIGHT QUOTIENT. 
+    	 
+    	//     ZZ IS ANY POINT ON A "DELTA-CONTOUR" IN THE UPPER HALF PLANE,
+    	//     THIS CONTOUR BEING DEFINED BY THE PARAMETE DELTA.  TEST VALUES 
+    	//     FOR ZZ ARE ASSIGNED IN THE BODY OF THE ROUTINE AND THE LOCAL ARRAY
+    	//     XIVAL IS USED FOR STORING THESE TEST VALUES.
+    	
+    	//     THE PARAMETERS DGPOL,ACOEF,BCOEF,H0VAL AND SOLUN ARE USED TO 
+    	//     DEFINE FNPHI AND ARE PASSED TO DEPPJ9 FOR THIS PURPOSE.
+    	
+    	//     MAXRM RECORDS THE MAXIMUM OF THE ABSOLUTE VALUES OF THE REMAINDER
+    	//     ESTIMATES ASSOCIATED WITH THE DELTA-CONTOUR.
+    	
+    	//     ON ENTRY NINTS IS THE NUMBER OF INITIAL TEST INTERVALS TO BE USED
+    	//     ON THE UPPER HALF DELTA-CONTOUR; ON EXIT NINTS GIVES THE FINAL
+    	//     NUMBEROF INTERVALS REQUIRED FOR CONVERGENCE TO TAU.
+    	
+    	//     THE PURPOSE OF THIS ROUTINE IS TO DETERMINE A VALUE FOR TAU
+    	//     SUCH THAT
+    	
+    	//                         MAXRM < TOL 
+    	
+    	//     AND THAT, IF POSSIBLE, 
+    	
+    	//                   0.5*TOL <= MAXRM < TOL.
+    	
+    	//     IER=0 - NORMAL EXIT
+    	//     IER=25- THE LOCAL ARRAY BOUND PARAMETER MNXI NEEDS INCREASING.
+    	             
+    	
+    	//     LOCAL VARIABLES
+    	
+    	final int MNXI = 100;
+    	int NXI;
+    	double SS,PI,SS1,SS2,SS3,DP,LEN,TAUI,SINC,STAR,RXI,DT,HDP;
+    	double XI[] = new double[2];
+    	//COMPLEX XI
+    	double XIVAL[][] = new double[MNXI][2];
+    	// COMPLEX XIVAL(MNXI)
+    	// EXTERNAL DEPPJ9
+    	
+    	//     INITIALISATION
+    	
+    	PI=Math.PI;
+    	      /*TAUI=1E+0
+    	      DP=DELTA*PI
+    	      DT=DELTA*2E+0
+    	      HDP=5E-1*DP
+    	      LEN=2E+0+DP
+    	      SINC=LEN/NINTS
+    	      STAR=SINC
+    	C
+    	C     START OF LOOP FOR INTERVAL HALVING
+    	C
+    	10    CONTINUE
+    	      NXI=0
+    	      SS1=-STAR+SINC
+    	      SS2=LEN
+    	      DO 30 SS=SS1,SS2,SINC
+    	        IF (SS .LT. HDP) THEN
+    	            SS3=SS/DELTA
+    	            XI=1E+0+DELTA*CMPLX(COS(SS3),SIN(SS3))
+    	        ELSE IF (SS .GT. 2E+0+HDP) THEN
+    	            SS3=(SS-2E+0-HDP)/DELTA
+    	            XI=-1E+0+DELTA*(0E+0,1E+0)*CMPLX(COS(SS3),SIN(SS3))
+    	        ELSE
+    	            SS3=SS-HDP
+    	            XI=CMPLX(1E+0-SS3,DELTA)
+    	        ENDIF
+    	        RXI=REAL(XI)
+    	        IF (RXI .LT. (TAUI+DT)) THEN
+    	          NXI=NXI+1
+    	          IF (NXI .GT. MNXI) THEN
+    	            IER=25
+    	            RETURN
+    	          ENDIF
+    	          XIVAL(NXI)=XI
+    	        ENDIF
+    	30    CONTINUE
+    	C
+    	      IF (NXI .EQ. 0) THEN
+    	        SINC=STAR
+    	        STAR=5E-1*STAR
+    	        NINTS=NINTS*2
+    	        GOTO 10
     	      ENDIF
-    	C*/
-    } // private void TESMD9
+    	C      
+    	      TAU=TAUI
+    	      CALL DEPPJ9(XIVAL,NXI,BETA,TAU,NQUAD,DGPOL,ACOEF,BCOEF,H0VAL,
+    	     +            SOLUN(1),TOL,MAXRM,IER) 
+    	      IF (IER .GT. 0) THEN
+    	        RETURN
+    	      ENDIF
+    	C
+    	      IF (TAU .NE. TAUI) THEN
+    	        TAUI=TAU
+    	        SINC=STAR
+    	        STAR=5E-1*STAR
+    	        NINTS=NINTS*2
+    	        GOTO 10
+    	      ENDIF
+    	C
+    	      IER=0
+    	C
+    	      END*/
+    } // private void DEPPJ8
 
 
       /**
