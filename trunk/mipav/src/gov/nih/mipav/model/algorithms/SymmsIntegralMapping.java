@@ -8654,68 +8654,658 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	//     INITIALISATION
     	
     	PI=Math.PI;
-    	      /*TAUI=1E+0
-    	      DP=DELTA*PI
-    	      DT=DELTA*2E+0
-    	      HDP=5E-1*DP
-    	      LEN=2E+0+DP
-    	      SINC=LEN/NINTS
-    	      STAR=SINC
+    	TAUI=1.0;
+    	DP=DELTA*PI;
+    	DT=DELTA*2.0;
+    	HDP=0.5*DP;
+    	LEN=2.0+DP;
+    	SINC=LEN/NINTS;
+    	STAR=SINC;
+    	
+    	// START OF LOOP FOR INTERVAL HALVING
+    	
+    	while (true) {
+    	    NXI=0;
+    	    SS1=-STAR+SINC;
+    	    SS2=LEN;
+    	    for (SS=SS1; SS <= SS2; SS += SINC) {
+    	        if  (SS < HDP) {
+    	            SS3=SS/DELTA;
+    	            XI[0] = 1.0 + DELTA * Math.cos(SS3);
+    	            XI[1] = DELTA * Math.sin(SS3);
+    	        }
+    	        else if (SS > 2.0+HDP) {
+    	            SS3=(SS-2.0-HDP)/DELTA;
+    	            XI[0] = -1.0 - DELTA * Math.sin(SS3);
+    	            XI[1] = DELTA * Math.cos(SS3);
+    	        }
+    	        else {
+    	            SS3=SS-HDP;
+    	            XI[0] = 1.0-SS3;
+    	            XI[1] = DELTA;
+    	        }
+    	        RXI=XI[0];
+    	        if (RXI < (TAUI+DT)) {
+    	          NXI=NXI+1;
+    	          if (NXI > MNXI) {
+    	              IER[0]=25;
+    	              return;
+    	          }
+    	          XIVAL[NXI-1][0]=XI[0];
+    	          XIVAL[NXI-1][1]=XI[1];
+    	        } // 
+    	    } // for (SS=SS1; SS <= SS2; SS += SINC)
+    	
+    	    if (NXI == 0) {
+    	        SINC=STAR;
+    	        STAR=5E-1*STAR;
+    	        NINTS=NINTS*2;
+    	        continue;
+    	    } // if (NXI == 0)
+    	     
+    	    TAU[0]=TAUI;
+    	    DEPPJ9(XIVAL,NXI,BETA,TAU,NQUAD,DGPOL,ACOEF,BCOEF,H0VAL,SOLUN,TOL,MAXRM,IER);
+    	    if (IER[0] > 0) {
+    	        return;
+    	    }
+    	
+    	    if (TAU[0] != TAUI) {
+    	        TAUI=TAU[0];
+    	        SINC=STAR;
+    	        STAR=0.5*STAR;
+    	        NINTS=NINTS*2;
+    	        continue;
+    	    }
+    	    break;
+    	} // while (true)
+    	
+        IER[0]=0;
+         
+    } // private void DEPPJ8
+    
+    private void DEPPJ9(double ZZ[][], int NZZ, double BETA, double TAU[], int NQUAD,
+        int DGPOL, double ACOEF[], double BCOEF[], double H0VAL, double SOLUN[][],
+        double TOL, double MAXRM[], int IER[]) {
+        // INTEGER NQUAD,NZZ,IER,DGPOL
+        // REAL BETA,TAU,TOL,MAXRM,ACOEF(*),BCOEF(*),H0VAL
+        // COMPLEX SOLUN(*),ZZ(*)
+
+        // WE COMPUTE THE DONALDSON-ELLIOTT ESTIMATES FOR THE REMAINDERS IN
+        // USING AN NQUAD-POINT GAUSS-JACOBI RULE TO ESTIMATE THE INTEGRALS
+
+        // INTEGRAL  [(1+X)**BETA*FNPHI(X)*LOG(ZZ(I)-X)*dX], I=1,NZZ
+        //-1<=X<=TAU                                       
+
+        // WHERE FNPHI IS A POLYNOMIAL APPROXIMATION TO THE BOUNDARY 
+        // CORRESPONDENCE DERIVATIVE - JACOBI WEIGHT QUOTIENT AND ZZ IS
+        // A GIVEN ARRAY OF POINTS. 
+
+        // THE PARAMETERS DGPOL,ACOEF,BCOEF,H0VAL AND SOLUN ARE USED TO 
+        // DEFINE FNPHI.
+
+        // THE MAXIMUM ABSOLUTE VALUE OF ALL THE REMAINDERS CORRESPONDING TO 
+        // ZZ(I) , I=1,NZZ, IS STORED IN MAXRM.
+ 
+        // THIS ROUTINE USES THE SIMPLEST POSSIBLE ESTIMATES; I.E. THE   
+        // LEADING TERM ONLY IN THE ASYMPTOTIC  EXPANSION AND THE WATSON-
+        // DOETSCH ESTIMATE FOR ANY INTEGRALS.
+
+        // THE PURPOSE OF THIS ROUTINE IS THEN TO DETERMINE A VALUE FOR TAU
+        // SUCH THAT
+
+        //                    MAXRM < TOL 
+
+        // AND THAT, IF POSSIBLE, 
+
+        //               0.5*TOL <= MAXRM < TOL.
+
+        // IER=0 - NORMAL EXIT
+        // IER=26- TOO MANY TEST POINTS ON DELTA CONTOUR; INCREASE 
+        //         PARAMETER MAXNZ BELOW
+        // IER=14- BETA MAY CAUSE OVERFLOW IN GAMMA FUNCTION; AN ANGLE
+        //         ON THE BOUNDARY IS TOO SMALL
+
+        // LOCAL VARIABLES
+
+        final int MAXNZ = 200;
+    	int I;
+        double S,KK,SUM1,RI,TURI,RN,TUK,LOWER,UPPER,TERM,HTOL,TAUI,OFLOW;
+        double XI[] = new double[2];
+        double Z1[] = new double[2];
+        double XI1[] = new double[2];
+        double FF[] = new double[2];
+        double FNPHI[] = new double[2];
+        double REMND[] = new double[2];
+        // COMPLEX XI,Z1,XI1,FF,FNPHI,REMND
+        double GG[][] = new double[MAXNZ][2];
+        // COMPLEX GG(MAXNZ)
+        // REAL GAMMA, LGGAM
+        // COMPLEX CCJACS
+        // EXTERNAL GAMMA,CCJACS,LGGAM
+        double r;
+        double theta;
+        double mag;
+        double ang;
+        double realVar;
+        double imagVar;
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+        double cr2[] = new double[1];
+        double ci2[] = new double[1];
+
+        if (NZZ > MAXNZ ) {
+
+            // SOME LOCAL ARRAY BOUNDS MUST BE INCREASED
+
+            IER[0]=26;
+            return;
+        } // if (NZZ > MAXNZ )
+
+        S=BETA+4.0;
+        if (S > 20.0) {
+
+            // TEST FOR POSSIBLE OVERFLOW IN GAMMA FUNCTION
+
+            OFLOW=Math.log(Double.MAX_VALUE);
+            KK=LGGAM(S);
+            if (KK > OFLOW) {
+                IER[0]=14;
+                return;
+            }
+            else {
+                KK=Math.exp(-KK);
+            }
+        } // if (S > 20.0)
+        else {
+            KK=1.0/GAMMA(S);
+        }
+
+        // FIRST WE COMPUTE THE FACTORS WHICH ARE INDEPENDENT OF TAU
+
+        S=S-1.0;
+        KK=Math.pow(4.0,S)*KK*GAMMA(BETA+2.0)/(S-1.0);
+        SUM1=BETA+1.0;
+        for (I=2; I <= NQUAD; I++) {
+            RI=(double)(I);
+            TURI=2.0*RI;
+            KK=KK*16.0*(RI+BETA)/(TURI+SUM1);
+            KK=KK*RI/(TURI+BETA);
+            KK=KK*(RI+BETA)/(TURI+BETA);
+            KK=KK*RI/(TURI+BETA-1.0);
+        } // for (I=2; I <= NQUAD; I++)
+        RN=(double)(NQUAD);
+        TUK=2.0*RN+SUM1;
+        KK=-KK/TUK/2.0;
+
+        for (I=1; I <= NZZ; I++) {
+            FNPHI=CCJACS(ZZ[I-1],DGPOL,ACOEF,BCOEF,H0VAL,SOLUN);
+            r=zabs(1.0+ZZ[I-1][0],ZZ[I-1][1]);
+            theta=Math.atan2(ZZ[I-1][1],1.0+ZZ[I-1][0]);
+            mag = Math.pow(r, BETA);
+            ang = BETA *theta;
+            realVar = mag * Math.cos(ang);
+            imagVar = mag * Math.sin(ang);
+            zmlt(realVar,imagVar,KK*FNPHI[0],KK*FNPHI[1],cr,ci);
+            GG[I-1][0] = cr[0];
+            GG[I-1][1] = ci[0];
+        } // for (I=1; I <= NZZ; I++)
+
+
+        // NOW COME THE FACTORS DEPENDENT ON TAU
+
+        LOWER=-1.0;
+        UPPER=TAU[0];
+        TAUI=TAU[0];
+
+        while (true) {
+
+            MAXRM[0]=0.0;
+            HTOL=0.5*TOL;
+            for (I=1; I <= NZZ; I++) {
+            	XI[0] = (2.0*ZZ[I-1][0]+1.0-TAU[0])/(1.0+TAU[0]);
+            	XI[1] = (2.0*ZZ[I-1][1])/(1.0+TAU[0]);
+                zmlt(XI[0],XI[1],XI[0],XI[1],cr,ci);
+                r = zabs(cr[0]-1.0,ci[0]);
+                theta = Math.atan2(ci[0], cr[0]-1.0);
+                mag = Math.sqrt(r);
+                ang = 0.5 * theta;
+                Z1[0] = mag * Math.cos(ang);
+                Z1[1] = mag * Math.sin(ang);
+                XI1[0]=XI[0]+Z1[0];
+                XI1[1]=XI[1]+Z1[1];
+                if (zabs(XI1[0],XI1[1]) < 1.0) {
+                    XI1[0]=XI[0]-Z1[0];
+                    XI1[1]=XI[1]-Z1[1];
+                }
+                r = zabs(XI1[0],XI1[1]);
+                theta = Math.atan2(XI1[1],XI1[0]);
+                mag = Math.pow(r, -TUK-1.0);
+                ang = theta * (-TUK-1.0);
+                realVar = mag * Math.cos(ang);
+                imagVar = mag * Math.sin(ang);
+                zmlt(XI1[0],XI1[1],XI1[0],XI1[1],cr,ci);
+                zmlt(realVar,imagVar,cr[0]-1.0,ci[0],cr2,ci2);
+                FF[0] = cr2[0]*(1.0+TAU[0])*0.5;
+                FF[1] = ci2[0]*(1.0+TAU[0])*0.5;
+                zmlt(GG[I-1][0],GG[I-1][1],FF[0],FF[1],cr,ci);
+                REMND[0] = cr[0];
+                REMND[1] = ci[0];
+                TERM = zabs(REMND[0],REMND[1]);
+                MAXRM[0]=Math.max(MAXRM[0],TERM);
+            } // for (I=1; I <= NZZ; I++)
+
+            if (MAXRM[0] < TOL) {
+
+                // ACCURACY IS ACHIEVED, BUT MAYBE TAU COULD BE INCREASED.
+
+                if  (MAXRM[0] < HTOL) {
+
+                    // TAU NEEDS INCREASING, BUT THIS IS ONLY POSSIBLE IF TAU<TAUI.
+
+                   if (TAU[0] < TAUI) {
+                       LOWER=TAU[0];
+                       TAU[0]=0.5*(LOWER+UPPER);
+                       continue;
+                   } // if (TAU[0] < TAUI)
+                   
+                } // if (MAXRM[0] < HTOL)
+                break;
+            } // if (MAXRM[0] < TOL)
+            else {
+
+                // ACCURACY NOT ACHIEVED AND TAU NEEDS DECREASING.
+
+               if (TAU[0] == 1.0) {
+                   TOL=HTOL;
+               }
+               UPPER=TAU[0];
+               TAU[0]=0.5*(LOWER+UPPER);
+               continue;
+            } // else
+        } // while (true)
+
+        // NORMAL EXIT
+
+        IER[0]=0;
+
+    } // private void DEPPJ9 
+         
+    //COMPLEX FUNCTION CCJACS(X,N,A,B,H,CO)
+    private double[] CCJACS(double X[], int N, double A[], double B[],
+        double H, double CO[][]) {
+        // INTEGER N
+        // REAL A(*),B(*),H
+        // COMPLEX CO(*),X
+
+        // ..TO CALCULATE SUMMATION{CO(K+1)*P(K,X)},K=0(1)N, WHERE P(K,X)
+        // ..DENOTES THE ORTHONORMAL JACOBI POLYNOMIAL OF DEGREE K
+        // ..EVALUATED AT X, ARRAY CO STORES A GIVEN SET OF COEFFICIENTS,
+        // ..ARRAYS A,B STORE THE COEFFICIENTS IN THE THREE-TERM
+        // ..RECURRENCE FORMULA FOR THE JACOBI POLYNOMIALS (SEE ASONJ7)
+        // ..AND H IS THE SQUARED 2-NORM OF UNITY.
+
+        double PREV[] = new double[2];
+        double CURR[] = new double[2];
+        double NEXT[] = new double[2];
+        double result[] = new double[2];
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+    	// COMPLEX PREV,CURR,NEXT
+        int K;
+
+        if  (N == 0) {
+            result[0]=CO[0][0]/Math.sqrt(H);
+            result[1]=CO[0][1]/Math.sqrt(H);
+        }
+        else if (N > 0) {
+            PREV[0]=CO[N][0];
+            PREV[1]=CO[N][1];
+            zmlt(X[0]-B[N-1],X[1],PREV[0],PREV[1],cr,ci);
+            CURR[0] = CO[N-1][0] + cr[0]/A[N-1];
+            CURR[1] = CO[N-1][1] + ci[0]/A[N-1];
+            for (K=N-2; K >= 0; K--) {
+            	zmlt(X[0]-B[K],X[1],CURR[0],CURR[1],cr,ci);
+            	NEXT[0] = CO[K][0] + cr[0]/A[K] -A[K]*PREV[0]/A[K+1];
+            	NEXT[1] = CO[K][1] + ci[0]/A[K] -A[K]*PREV[1]/A[K+1];
+                PREV[0]=CURR[0];
+                PREV[1]=CURR[1];
+                CURR[0]=NEXT[0];
+                CURR[1]=NEXT[1];
+            } // for (K=N-2; K >= 0; K--)
+            result[0]=CURR[0]/Math.sqrt(H);
+            result[1]=CURR[1]/Math.sqrt(H);
+        } // else if (N > 0)
+        else {
+        	result[0] = 0.0;
+        	result[1] = 0.0;
+        }
+        return result;
+    } // private double[] CCJACS
+
+    private void DEPPL8(double BETA, double TAU1[], double TAU2[], boolean T1FXD, int NQUAD,
+        int DGPOL, double ACOEF[], double BCOEF[], double H0VAL, double SOLUN[][], double TOL,
+        double MAXRM[], int NINTS, double DELTA,int IER[]) {
+    	// INTEGER NQUAD,IER,DGPOL,NINTS
+    	// REAL BETA,TAU1,TAU2,TOL,MAXRM,H0VAL,DELTA
+    	// REAL ACOEF(*),BCOEF(*)
+    	// COMPLEX SOLUN(*)
+    	// LOGICAL T1FXD
+    	
+    	//     WE COMPUTE THE DONALDSON-ELLIOTT ESTIMATES FOR THE REMAINDERS IN
+    	//     USING AN NQUAD-POINT GAUSS-JACOBI RULE TO ESTIMATE THE INTEGRALS
+    	
+    	//            INTEGRAL  [(1+X)**BETA*FNPHI(X)*LOG(ZZ-X)*dX]
+    	//          TAU1<=X<=TAU2                                       
+    	
+    	//     WHERE FNPHI IS A POLYNOMIAL APPROXIMATION TO THE BOUNDARY 
+    	//     CORRESPONDENCE DERIVATIVE - JACOBI WEIGHT QUOTIENT. 
+    	 
+    	//     ZZ IS ANY POINT ON A "DELTA-CONTOUR" IN THE UPPER HALF PLANE,
+    	//     THIS CONTOUR BEING DEFINED BY THE PARAMETER DELTA.  TEST VALUES 
+    	//     FOR ZZ ARE ASSIGNED IN THE BODY OF THE ROUTINE AND THE LOCAL ARRAY
+    	//     XIVAL IS USED FOR STORING THESE TEST VALUES.
+    	
+    	//     THE PARAMETERS DGPOL,ACOEF,BCOEF,H0VAL AND SOLUN ARE USED TO 
+    	//     DEFINE FNPHI AND ARE PASSED TO DEPPL9 FOR THIS PURPOSE.
+    	
+    	//     MAXRM RECORDS THE MAXIMUM OF THE ABSOLUTE VALUES OF THE REMAINDER
+    	//     ESTIMATES ASSOCIATED WITH THE DELTA-CONTOUR.
+    	
+    	//     THE PURPOSE OF THIS ROUTINE IS TO DETERMINE A VALUE FOR EITHER
+    	//     TAU2 (TAU1 REMAINS FIXED IF T1FXD IS "TRUE") OR TAU1 (TAU2 REMAINS
+    	//     FIXED IF T1FXD IS "FALSE") SUCH THAT
+    	
+    	//                    MAXRM < TOL
+    	
+    	//     AND THAT, IF POSSIBLE, 
+    	
+    	//                   0.5*TOL <= MAXRM < TOL.
+    	
+    	//     ON ENTRY NINTS IS THE NUMBER OF INITIAL TEST INTERVALS TO BE USED
+    	//     ON THE UPPER HALF DELTA-CONTOUR; ON EXIT NINTS GIVES THE FINAL
+    	//     NUMBEROF INTERVALS REQUIRED FOR CONVERGENCE TO TAU1 OR TAU2.
+    	
+    	//     IER=0 - NORMAL EXIT
+    	//     IER=25- THE LOCAL ARRAY BOUND PARAMETER MNXI NEEDS INCREASING.
+    	
+    	//     LOCAL VARIABLES
+    	
+    	final int MNXI = 100;
+    	int NXI;
+    	double LOMAX[] = new double[1];
+    	double SS,PI,SS1,SS2,SS3,DP,LEN,TAU1I,TAU2I,SINC,STAR,RXI,DT,HDP;
+    	double XI[] = new double[2];
+    	// COMPLEX XI
+    	boolean FIRST;
+    	double XIVAL[][] = new double[MNXI][2];
+    	// COMPLEX XIVAL(MNXI)
+    	// EXTERNAL DEPPL9
+    	
+    	//     INITIALISATION
+    	
+    	PI=Math.PI;
+    	TAU1I=TAU1[0];
+    	TAU2I=TAU2[0];
+    	DP=DELTA*PI;
+    	DT=DELTA*2.0;
+    	HDP=0.5*DP;
+    	LEN=2.0+DP;
+    	SINC=LEN/NINTS;
+    	STAR=SINC;
+    	FIRST=true;
+    	MAXRM[0]=0.0;
+    	
+    	// START OF LOOP FOR INTERVAL HALVING
+    	
+    	while (true) {
+    	    NXI=0;
+    	    SS1=-STAR+SINC;
+    	    SS2=LEN;
+    	    for (SS = SS1; SS <= SS2; SS += SINC) {
+    	        if (SS < HDP) {
+    	            SS3=SS/DELTA;
+    	            XI[0] = 1.0 + DELTA*Math.cos(SS3);
+    	            XI[1] = DELTA*Math.sin(SS3);
+    	        }
+    	        else if (SS > 2.0+HDP) {
+    	            SS3=(SS-2.0-HDP)/DELTA;
+    	            XI[0]= -1.0-DELTA*Math.sin(SS3);
+    	            XI[1] = DELTA*Math.cos(SS3);
+    	        }
+    	        else {
+    	            SS3=SS-HDP;
+    	            XI[0] = 1.0-SS3;
+    	            XI[1] = DELTA;
+    	        }
+    	        RXI=XI[0];
+    	        if (RXI < (TAU2I+DT) && RXI > (TAU1I-DT)) {
+    	            NXI=NXI+1;
+    	            if (NXI > MNXI) {
+    	                IER[0]=25;
+    	                return;
+    	            }
+    	          XIVAL[NXI-1][0]=XI[0];
+    	          XIVAL[NXI-1][1]=XI[1];
+    	        } // if (RXI < (TAU2I+DT) && RXI > (TAU1I-DT))
+    	    } // for (SS = SS1; SS <= SS2; SS += SINC)
+    	
+    	    if (NXI == 0) {
+    	        SINC=STAR;
+    	        STAR=0.5*STAR;
+    	        NINTS=NINTS*2;
+    	        continue;
+    	    }
+    	      
+    	    TAU1[0]=TAU1I;
+    	    TAU2[0]=TAU2I;
+    	    DEPPL9(XIVAL,NXI,BETA,TAU1,TAU2,T1FXD,NQUAD,DGPOL,ACOEF,
+    	     BCOEF,H0VAL,SOLUN,TOL,LOMAX,FIRST,IER); 
+    	    if (IER[0] > 0) {
+    	        return;
+    	    }
+    	
+    	    MAXRM[0]=Math.max(MAXRM[0],LOMAX[0]);
+    	    if (T1FXD && TAU2[0] != TAU2I) {
+    	        TAU2I=TAU2[0];
+    	        SINC=STAR;
+    	        STAR=0.5*STAR;
+    	        NINTS=NINTS*2;
+    	        continue;
+    	    }
+    	    else if (!T1FXD && TAU1[0] != TAU1I) {
+    	        TAU1I=TAU1[0];
+    	        SINC=STAR;
+    	        STAR=0.5*STAR;
+    	        NINTS=NINTS*2;
+    	        continue;
+    	    }
+    	    break;
+    	} // while (true)
+    	IER[0]=0;
+    	
+    } // private void DEPPL8
+    
+    private void DEPPL9(double ZZ[][], int NZZ, double BETA, double TAU1[], double TAU2[], boolean T1FXD,
+        int NQUAD, int DGPOL, double ACOEF[], double BCOEF[], double H0VAL, double SOLUN[][], double TOL,
+        double MAXRM[], boolean FIRST, int IER[]) {
+    	// INTEGER NQUAD,DGPOL,IER,NZZ
+    	// REAL BETA,TAU1,TAU2,H0VAL,TOL,MAXRM
+    	// REAL ACOEF(*),BCOEF(*)
+    	// LOGICAL T1FXD,FIRST
+    	// COMPLEX SOLUN(*),ZZ(*)
+    	
+    	//     WE COMPUTE THE DONALDSON-ELLIOTT ESTIMATES FOR THE REMAINDERS IN
+    	//     USING AN NQUAD-POINT GAUSS-LEGENDRE RULE TO ESTIMATE THE INTEGRALS
+    	
+    	//       INTEGRAL  [(1+X)**BETA*FNPHI(X)*LOG(ZZ(I)-X)*dX], I=1,NZZ
+    	//     TAU1<=X<=TAU2                                     
+    	
+    	//     WHERE FNPHI IS A POLYNOMIAL APPROXIMATION TO THE BOUNDARY 
+    	//     CORRESPONDENCE DERIVATIVE - JACOBI WEIGHT QUOTIENT AND ZZ IS
+    	//     A GIVEN ARRAY OF POINTS.  
+    	
+    	//     THE PARAMETERS DGPOL,ACOEF,BCOEF,H0VAL AND SOLUN ARE USED TO 
+    	//     DEFINE FNPHI.
+    	
+    	//     THE MAXIMUM ABSOLUTE VALUE OF ALL THE REMAINDERS CORRESPONDING TO 
+    	//     ZZ(I) , I=1,NZZ, IS STORED IN MAXRM. 
+    	
+    	//     THIS ROUTINE USES THE SIMPLEST POSSIBLE ESTIMATES; I.E. THE  
+    	//     LEADING TERM ONLY IN THE ASYMPTOTIC EXPANSION AND THE WATSON- 
+    	//     DOETSCH ESTIMATE FOR ANY INTEGRALS.
+    	
+    	//     THE PURPOSE OF THIS ROUTINE IS TO DETERMINE A VALUE FOR EITHER
+    	//     TAU2 (TAU1 REMAINS FIXED IF T1FXD IS "TRUE") OR TAU1 (TAU2 REMAINS
+    	//     FIXED IF T1FXD IS "FALSE") SUCH THAT
+    	
+    	//                    MAXRM < TOL
+    	
+    	//     AND THAT, IF POSSIBLE, 
+    	
+    	//                   0.5*TOL <= MAXRM < TOL.
+    	
+    	//     IER=0 - NORMAL EXIT
+    	//     IER=26- TOO MANY TEST POINTS ON DELTA CONTOUR; INCREASE 
+    	//             PARAMETER MAXNZ BELOW
+    	//     IER=14- BETA MAY CAUSE OVERFLOW IN GAMMA FUNCTION; AN ANGLE
+    	//             ON THE BOUNDARY IS TOO SMALL
+    	
+    	//     LOCAL VARIABLES
+    	
+    	final int MAXNZ = 200;
+    	int I;
+    	double KK,RI,TURI,RN,TUK,LOWER,HTOL,UPPER,HCO,PI,FORK,RR,
+    	     MEAN,BB,BB1,FFH,TERM,TAU1I,TAU2I,OFLOW;
+    	double XI[] = new double[2];
+    	double Z1[] = new double[2];
+    	double XI1[] = new double[2];
+    	double FFG[] = new double[2];
+    	double FNPHI[] = new double[2];
+    	double FPHI1[] = new double[2];
+    	double REMND[] = new double[2];
+    	// COMPLEX XI,Z1,XI1,FFG,FNPHI,FPHI1,REMND
+    	// COMPLEX CCJACS
+    	double GG[][] = new double[MAXNZ][2];
+    	double HH[][] = new double[MAXNZ][2];
+    	// COMPLEX GG(MAXNZ),HH(MAXNZ)
+    	// EXTERNAL GAMMA,CCJACS,LGGAM
+    	
+    	if (NZZ > MAXNZ) {
+    	    IER[0]=26;
+    	    return;
+    	}
+    	
+    	if (BETA > 24.0) {
+    	
+    	    // TEST FOR POSSIBLE OVERFLOW IN GAMMA FUNCTION
+    	
+    	    OFLOW=Math.log(Double.MAX_VALUE);
+    	    KK=LGGAM(BETA+1.0);
+    	    if (KK > OFLOW) {
+    	        IER[0]=14;
+    	        return;
+    	    }
+    	} // if (BETA > 24.0)
+    	
+    	// FIRST WE COMPUTE THE FACTORS WHICH ARE INDEPENDENT OF TAU1,TAU2
+    	
+    	TAU1I=TAU1[0];
+    	TAU2I=TAU2[0];
+    	PI=Math.PI;
+    	KK=32.0/6.0;
+    	for (I=2; I <= NQUAD; I++) {
+    	    RI=(double)(I);
+    	    TURI=2.0*RI;
+    	    KK=KK*4.0*RI/(TURI+1.0);
+    	    KK=KK*RI/(TURI-1.0);
+    	} // for (I=2; I <= NQUAD; I++)
+    	RN=(double)(NQUAD);
+    	TUK=2.0*RN+1.0;
+    	FORK=2.0*TUK;
+    	KK=KK/FORK;
+    	
+    	HCO=Math.sin(PI*BETA)*GAMMA(BETA+1.0)/PI/Math.pow(FORK,BETA);
+    	/*      FPHI1=CCJACS((-1E+0,0E+0),DGPOL,ACOEF,BCOEF,H0VAL,SOLUN)
+    	      DO 125 I=1,NZZ
+    	        FNPHI=CCJACS(ZZ(I),DGPOL,ACOEF,BCOEF,H0VAL,SOLUN)
+    	        GG(I)=-(1E+0+ZZ(I))**BETA*KK*FNPHI
+    	        HH(I)=-CLOG(1E+0+ZZ(I))*HCO*KK*FPHI1
+    	125   CONTINUE
+    	       
     	C
-    	C     START OF LOOP FOR INTERVAL HALVING
+    	C     NOW COME THE FACTORS DEPENDENT ON TAU1 AND TAU2.
     	C
-    	10    CONTINUE
-    	      NXI=0
-    	      SS1=-STAR+SINC
-    	      SS2=LEN
-    	      DO 30 SS=SS1,SS2,SINC
-    	        IF (SS .LT. HDP) THEN
-    	            SS3=SS/DELTA
-    	            XI=1E+0+DELTA*CMPLX(COS(SS3),SIN(SS3))
-    	        ELSE IF (SS .GT. 2E+0+HDP) THEN
-    	            SS3=(SS-2E+0-HDP)/DELTA
-    	            XI=-1E+0+DELTA*(0E+0,1E+0)*CMPLX(COS(SS3),SIN(SS3))
-    	        ELSE
-    	            SS3=SS-HDP
-    	            XI=CMPLX(1E+0-SS3,DELTA)
+    	      LOWER=TAU1
+    	      UPPER=TAU2
+    	C
+    	250   CONTINUE
+    	C
+    	      HTOL=5E-1*TOL
+    	      RR=(TAU2-TAU1)*5E-1
+    	      MEAN=(TAU1+TAU2)*5E-1
+    	      BB=(1E+0+MEAN)/RR
+    	      BB1=BB+SQRT(BB*BB-1E+0)
+    	      FFH=(RR*(BB1-1E+0/BB1))**(BETA+1E+0)/BB1**TUK
+    	      MAXRM=0E+0
+    	      DO 325 I=1,NZZ
+    	        XI=(ZZ(I)-MEAN)/RR
+    	        Z1=SQRT(XI*XI-1E+0)
+    	        XI1=XI+Z1
+    	        IF (ABS(XI1) .LT. 1E+0) THEN
+    	          XI1=XI-Z1
     	        ENDIF
-    	        RXI=REAL(XI)
-    	        IF (RXI .LT. (TAUI+DT)) THEN
-    	          NXI=NXI+1
-    	          IF (NXI .GT. MNXI) THEN
-    	            IER=25
-    	            RETURN
+    	        FFG=XI1**(-TUK-1E+0)*(XI1*XI1-1E+0)*RR
+    	        REMND=GG(I)*FFG+HH(I)*FFH
+    	        TERM=ABS(REMND)
+    	        MAXRM=MAX(MAXRM,TERM)
+    	325   CONTINUE
+    	C
+    	      IF (MAXRM .LT. TOL) THEN
+    	C
+    	C       ACCURACY IS ACHIEVED, BUT MAYBE TAU2 COULD BE INCREASED OR
+    	C       TAU1 DECREASED
+    	C
+    	        IF (MAXRM .LT. HTOL) THEN
+    	C
+    	C         TAU2 NEEDS INCREASING IF T1FXD (BUT THIS IS ONLY POSSIBLE IF 
+    	C         TAU2<TAU2I) OR TAU1 NEED DECREASING OTHERWISE (BUT THIS IS 
+    	C         ONLY POSSIBLE IF TAU1>TAU1I)
+    	C
+    	          IF (T1FXD .AND. TAU2 .LT. TAU2I) THEN
+    	            LOWER=TAU2
+    	            TAU2=5E-1*(LOWER+UPPER)
+    	            GOTO 250
+    	          ELSE IF (.NOT.T1FXD .AND. TAU1 .GT. TAU1I) THEN
+    	            UPPER=TAU1
+    	            TAU1=5E-1*(LOWER+UPPER)
+    	            GOTO 250
     	          ENDIF
-    	          XIVAL(NXI)=XI
     	        ENDIF
-    	30    CONTINUE
+    	      ELSE
     	C
-    	      IF (NXI .EQ. 0) THEN
-    	        SINC=STAR
-    	        STAR=5E-1*STAR
-    	        NINTS=NINTS*2
-    	        GOTO 10
-    	      ENDIF
-    	C      
-    	      TAU=TAUI
-    	      CALL DEPPJ9(XIVAL,NXI,BETA,TAU,NQUAD,DGPOL,ACOEF,BCOEF,H0VAL,
-    	     +            SOLUN(1),TOL,MAXRM,IER) 
-    	      IF (IER .GT. 0) THEN
-    	        RETURN
+    	C       ACCURACY NOT ACHIEVED AND TAU2 NEEDS DECREASING OR TAU1 NEEDS
+    	C       INCREASING.
+    	C
+    	        IF (FIRST) THEN
+    	          TOL=HTOL
+    	          FIRST=.FALSE.
+    	        ENDIF
+    	        IF (T1FXD) THEN
+    	          UPPER=TAU2
+    	          TAU2=5E-1*(LOWER+UPPER)
+    	        ELSE
+    	          LOWER=TAU1
+    	          TAU1=5E-1*(LOWER+UPPER)
+    	        ENDIF
+    	        GOTO 250
     	      ENDIF
     	C
-    	      IF (TAU .NE. TAUI) THEN
-    	        TAUI=TAU
-    	        SINC=STAR
-    	        STAR=5E-1*STAR
-    	        NINTS=NINTS*2
-    	        GOTO 10
-    	      ENDIF
+    	C     NORMAL EXIT
     	C
     	      IER=0
-    	C
-    	      END*/
-    } // private void DEPPJ8
+    	C */
+    } // private void DEPPL9
+
 
 
       /**
