@@ -599,7 +599,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
 	                return tooltip;
                 }
                 else if(colIndex == deTableModel.getColumnIndex("Required")) {
-                	tooltip += "<html> <p> <b> All REQUIRED elements must be mapped before saving mapping file. </b>";
+                	tooltip += "<html> <p> All <b>REQUIRED </b> elements must be mapped before saving mapping file.";
                 	tooltip += "</p></html>";
                 	return tooltip;
                 }
@@ -806,12 +806,13 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
         
         if (c instanceof JTable) {
           
-            if (e.getClickCount() == 2 && (deTable.getSelectedColumn() >= deTableModel.getColumnIndex("Group") && deTable.getSelectedColumn() < deTableModel.getColumnIndex("Source Name")) ) {
+            if (e.getClickCount() == 2 && (deTable.getSelectedColumn() >= deTableModel.getColumnIndex("Group") && 
+            		deTable.getSelectedColumn() < deTableModel.getColumnIndex("Source Name")) && tabbedPane.getSelectedIndex() == 0) {
             		//if double click in data element table and column is in one of the reference data elements
             		// Bring up a new webpage and show BRICS data dictionary
                     showCDE(null);
             }
-            else if (e.getClickCount() == 2 && deTable.getSelectedColumn() == deTableModel.getColumnIndex("Source PVs") && tabbedPane.getSelectedIndex() ==0 ) {
+            else if (e.getClickCount() == 2 && deTable.getSelectedColumn() == deTableModel.getColumnIndex("Source PVs") && tabbedPane.getSelectedIndex() == 0 ) {
             	if (deTable.getSelectedRow() != -1 ){
 	            	if ( deTable.getValueAt(deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Name")) == null ||
 	            	     deTable.getValueAt(deTable.getSelectedRow(), deTableModel.getColumnIndex("Source Name")).equals("") ) {
@@ -1391,6 +1392,7 @@ public class PlugInDialogBRICS_Mapper extends JFrame implements ActionListener, 
     			return false;  
     		}
     	}
+    	printlnToLog("All required data elements have been mapped - mapping file can now be saved.");
     	return true;
     }
     
