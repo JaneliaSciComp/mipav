@@ -122,6 +122,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JRadioButton buildLattice;
 	private JPanel buttonPanel;
 	private JRadioButton calcMaxProjection;
+	private JRadioButton resliceRotate;
 	private JPanel choicePanel;
 	private JButton closeButton;
 	private JRadioButton createAnimation;
@@ -149,6 +150,13 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JTextField segmentationPaddingText;
 	private JCheckBox thresholdImageCheck;
 	private JTextField thresholdValue;
+	
+	private JCheckBox resliceImageCheck;
+	private JTextField resliceX, resliceY, resliceZ;
+	private int resliceXValue = 250, resliceYValue = 250, resliceZValue = 1500;
+	
+	private JCheckBox rotateImageCheck;
+	
 	private int paddingFactor;
 	private int minRadius;
 	private int maxRadius;
@@ -269,6 +277,19 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					PlugInAlgorithmWormUntwisting.createMaximumProjectionAVI( batchProgress, includeRange,  baseFileDir,  baseFileDir2, baseFileNameText.getText() );
 					} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish maximum-projection calculation." );
+						return;
+					}
+					startButton.setEnabled(true);
+				}
+				else if ( resliceRotate.isSelected() )
+				{
+					try {
+						if ( resliceImageCheck.isSelected() || rotateImageCheck.isSelected() )
+						{
+							PlugInAlgorithmWormUntwisting.reslice( batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileNameText.getText(), 
+									resliceImageCheck.isSelected(), resliceXValue, resliceYValue, resliceZValue, rotateImageCheck.isSelected() );
+						}					} catch ( java.lang.OutOfMemoryError e ) {
+						MipavUtil.displayError( "Error: Not enough memory. Unable to finish reslice calculation." );
 						return;
 					}
 					startButton.setEnabled(true);
@@ -1817,6 +1838,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		gbc.gridy++;
 
 		gbc.gridx = 0;
+		resliceRotate = gui.buildRadioButton("Reslice and rotate", false );
+		resliceRotate.addActionListener(this);
+		panel.add(resliceRotate.getParent(), gbc);
+		gbc.gridy++;
+
+		gbc.gridx = 0;
 		batchProgress = new JProgressBar(0,100);
 		panel.add(batchProgress, gbc);
 
@@ -1824,6 +1851,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		group.add(buildLattice);
 		group.add(latticeStraighten);
 		group.add(calcMaxProjection);
+		group.add(resliceRotate);
 		
 		return panel;
 	}
@@ -1944,6 +1972,29 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		
 		gbc.gridx = 0;
 		gbc.gridy++;
+
+		resliceImageCheck = gui.buildCheckBox( "Reslice straightened", true);
+		panel.add(resliceImageCheck.getParent(), gbc);
+		gbc.gridx++;
+		
+		resliceX = gui.buildField( "x:", String.valueOf(resliceXValue) );
+		panel.add(resliceX.getParent(), gbc);
+		gbc.gridx++; gbc.gridx++;
+		
+		resliceY = gui.buildField( "  y:", String.valueOf(resliceYValue) );
+		panel.add(resliceY.getParent(), gbc);
+		gbc.gridx++; gbc.gridx++;
+		
+		resliceZ = gui.buildField( "  z:", String.valueOf(resliceZValue) );
+		panel.add(resliceZ.getParent(), gbc);
+		gbc.gridx++;
+		
+		gbc.gridx = 0;
+		gbc.gridy++;
+
+		rotateImageCheck = gui.buildCheckBox( "Rotate image", true);
+		panel.add(rotateImageCheck.getParent(), gbc);
+		gbc.gridx++;
 		
 		return panel;
 	}
@@ -2054,6 +2105,21 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			maxRadius = Integer.valueOf(seamCellMaxRadiusText.getText().trim());
 		} catch(NumberFormatException e) {
 			maxRadius = 25;
+		}
+		try {
+			resliceXValue = Integer.valueOf(resliceX.getText().trim());
+		} catch(NumberFormatException e) {
+			resliceXValue = 250;
+		}
+		try {
+			resliceYValue = Integer.valueOf(resliceY.getText().trim());
+		} catch(NumberFormatException e) {
+			resliceYValue = 250;
+		}
+		try {
+			resliceZValue = Integer.valueOf(resliceZ.getText().trim());
+		} catch(NumberFormatException e) {
+			resliceZValue = 1500;
 		}
 		try {
 			threshold = -1;
