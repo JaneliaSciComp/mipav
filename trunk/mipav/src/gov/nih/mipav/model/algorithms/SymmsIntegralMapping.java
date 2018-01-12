@@ -9615,211 +9615,322 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	   final int MNCOF = 32;
 	   final int MQIN1 = 11;
 	   final int MXNQD = 80;
+	   int QINTS[] = new int[1];
 	   int AJT,DEG,I,IA,IP,K,J,J1,J2,JQ,JT,LIM,LOD,LOL,LOM,
-		    NQ,NQUAD,PT,QINTS;
-	    /*double AISUM,ANGLE,ARGBR,ARGIN1,ARSUM,BETA,CURARG,DIST,HL,ISUM,
-		     +JACSUM,LIMIT,MD,MEAN,MINDS,NEWTL,PI,PTHTL,R1MACH,RR,RRB,RSUM,RT1,
-		     +RT2,SCO,SS,STARG,STRT1,STTH1,SUM1,THET1,THET2,TOLOU,TT,TXI,TUPI,WT
-		      COMPLEX BCF,CJACSU,CT,DPARFN,PARFUN,PSI,XI,DIFF1,DIFF2,
-		     +STDF1,ZXI,ZTOB1,ZZ
-		      LOGICAL FIRST
-		      EXTERNAL ARGIN1,CJACSU,DPARFN,JACSUM,PARFUN,PPSBI1,R1MACH,ZTOB1
-		      PARAMETER (MNCOF=32,MQIN1=11,MXNQD=80,PTHTL=1E-3)
-		      PARAMETER (LIMIT=2.3562E+0)
-		      REAL JACOF(MNCOF),TSPEC(MXNQD),WSPEC(MXNQD),XENPT(MQIN1)
-		      COMPLEX JCOFC(MNCOF),ZSPEC(MXNQD)
-		C
-		      NEWTL=SQRT(R1MACH(4))
-		      PI=4E+0*ATAN(1E+0)
-		      TUPI=2E+0*PI
-		      LOL=NARCS*NQPTS
-		      DO 300 IP=1,NPTS
-		        ZZ=PHYPT(IP)
-		        RSUM=0E+0
-		        ISUM=0E+0
-		        FIRST=.TRUE.
-		        DO 200 IA=1,TNSUA
-		          PT=PARNT(IA)
-		          JT=JATYP(IA)
-		          NQ=NPPQF(IA)
-		          K=LPQSB(IA)-1
-		          HL=HALEN(IA)
-		          MD=MIDPT(IA)
-		          ARSUM=0E+0
-		          AISUM=0E+0
-		          DO 100 JQ=1,NQ
-		            K=K+1
-		            DIFF2=ZZ-ZPPQF(K)
-		            RT2=MD+HL*TPPQF(K)
-		            DIST=ABS(DIFF2)
-		            IF (DIST .GE. TRRAD(K)) THEN
-		                WT=WPPQF(K)
-		                IF (WT .NE. 0E+0) THEN
-		                    ARSUM=ARSUM+WT*LOG(DIST)
-		                    IF (FIRST) THEN
-		                        CURARG=ATAN2(AIMAG(DIFF2),REAL(DIFF2))
-		                        THET2=CURARG
-		                        FIRST=.FALSE.
-		                        STARG=CURARG
-		                    ELSE
-		C                        CT=DIFF2/DIFF1
-		C                        CT=DIFF2*CONJG(DIFF1)
-		C                        ANGLE=ATAN2(AIMAG(CT),REAL(CT))
-		                        THET2=ATAN2(AIMAG(DIFF2),REAL(DIFF2))
-		                        ANGLE=THET2-THET1
-		                        IF (ANGLE .LE. -PI .OR. ANGLE .GT. PI) THEN
-		                          ANGLE=ANGLE-SIGN(TUPI,ANGLE)
-		                        ENDIF
-		                        IF (ABS(ANGLE) .GE. LIMIT) THEN
-		                            ANGLE=ARGIN1(RT1,RT2,PT,-DIFF1,-DIFF2,ZZ,
-		     +                                   LIMIT)
-		                        ENDIF
-		                        CURARG=CURARG+ANGLE
-		                    ENDIF
-		                    AISUM=CURARG*WT+AISUM
-		                    RT1=RT2
-		                    DIFF1=DIFF2
-		                    THET1=THET2
-		                ENDIF
-		            ELSE
-		C
-		C             ZZ IS TOO CLOSE TO ARC IA TO USE THE STANDARD RULE.
-		C             FIND THE QUADRATURE POINT NEAREST TO ZZ.
-		C
-		              J1=JQ
-		              MINDS=DIST
-		              TXI=TPPQF(K)
-		              ZXI=ZPPQF(K)
-		40            CONTINUE
-		              J1=J1+1
-		              IF (J1 .LE. NQ) THEN
-		                K=K+1
-		                DIFF2=ZZ-ZPPQF(K)
-		                DIST=ABS(DIFF2)
-		                IF (DIST .LT. MINDS) THEN
-		                  MINDS=DIST
-		                  TXI=TPPQF(K)
-		                  ZXI=ZPPQF(K)
-		                  GOTO 40
-		                ENDIF
-		              ENDIF
-		C
-		C             PRELIMINARIES
-		C
-		              IF (JT .GT. 0) THEN
-		                SS=1E+0
-		              ELSE
-		                SS=-1E+0
-		              ENDIF
-		              AJT=ABS(JT)
-		              BETA=JACIN(AJT)
-		              DEG=DGPOL(IA)
-		              IF (DEG+1 .GT. MNCOF) THEN
-		                IER=28
-		                RETURN
-		              ENDIF
-		              LOM=LOSUB(IA)
-		              LOD=(AJT-1)*NQPTS+1
-		C
-		C             NOW USE NEWTON'S METHOD TO ESTIMATE THE PARAMETRIC
-		C             PRE-IMAGE XI OF ZZ.
-		C
-		              XI=CMPLX(TXI)
-		              CT=MD+HL*XI
-		              DIFF2=(ZXI-ZZ)/(DPARFN(PT,CT)*HL)
-		              XI=XI-DIFF2
-		50            CONTINUE
-		              IF (ABS(DIFF2) .GT. NEWTL) THEN
-		                CT=MD+HL*XI
-		                DIFF2=(PARFUN(PT,CT)-ZZ)/(DPARFN(PT,CT)*HL)
-		                XI=XI-DIFF2
-		                GOTO 50
-		              ELSE
-		C
-		C               LAST ITERATION
-		C
-		                CT=MD+HL*XI
-		                DIFF2=(PARFUN(PT,CT)-ZZ)/(DPARFN(PT,CT)*HL)
-		                XI=XI-DIFF2
-		              ENDIF
-		C
-		              XI=SS*XI
-		C
-		              IF (ABS(AIMAG(XI)).LT.PTHTL .AND. ABS(REAL(XI)).LT.1E+
-		     +        0+PTHTL) THEN
-		C
-		C               ZZ IS PATHOLOGICALLY CLOSE TO ARC IA AND WE USE THE  
-		C               CONTINUATION OF THE BOUNDARY CORRESPONDENCE FUNCTION TO 
-		C               ESTIMATE CANPT.
-		C
-		                PSI=CJACSU(XI,DEG-1,A1COF(LOD),B1COF(LOD),H1VAL(AJT),
-		     +                     BCFSN(LOM+1))
-		                PSI=ZTOB1(XI+1E+0,BETA+1E+0,JT,INTER)*
-		     +              (BCFSN(LOM)-(1E+0-XI)*PSI)
-		                IF (JT .GT. 0) THEN
-		                  BCF=VTARG(IA)
-		                ELSE
-		                  BCF=VTARG(IA+1)
-		                ENDIF
-		                BCF=BCF+SS*PSI
-		                CANPT(IP)=CEXP((0E+0,1E+0)*BCF)
-		                GOTO 300
-		              ELSE
-		C
-		C               SET UP A SPECIAL COMPOSITE GAUSSIAN RULE TO HANDLE THIS
-		C               PARTICULAR POINT ZZ.
-		C
-		                SCO=SS
-		                DO 55 J=1,DEG+1
-		                  J1=LOM+J-1
-		                  SCO=SCO*SS
-		                  JACOF(J)=SOLUN(J1)*SCO
-		                  JCOFC(J)=CMPLX(SOLUN(J1)*SCO)
-		55              CONTINUE
-		                CALL PPSBI1(XI,BETA,NQPTS,DEG,ACOEF(LOD),BCOEF(LOD),
-		     +                      H0VAL(AJT),JCOFC,LGTOL,TOLOU,XENPT,QINTS,
-		     +                      MQIN1,IER)
-		                IF (IER .GT. 0) THEN
-		                  RETURN
-		                ENDIF
-		                NQUAD=QINTS*NQPTS
-		                IF (NQUAD .GT. MXNQD) THEN
-		                  IER=27
-		                  RETURN
-		                ENDIF
-		                K=0
-		                SUM1=BETA+1E+0
-		                DO 70 I=1,QINTS
-		                  RR=(XENPT(I+1)-XENPT(I))*5E-1
-		                  MEAN=(XENPT(I+1)+XENPT(I))*5E-1
-		                  IF (I .EQ. 1) THEN
-		                    RRB=RR**SUM1
-		                    DO 60 J=1,NQPTS
-		                      J1=LOD+J-1
-		                      K=K+1
-		                      TT=(MEAN+RR*QUPTS(J1))
-		                      WSPEC(K)=RRB*QUWTS(J1)*JACSUM(TT,DEG,ACOEF(LOD),
-		     +                         BCOEF(LOD),H0VAL(AJT),JACOF)
-		                      TT=TT*SS
-		                      TSPEC(K)=MD+TT*HL
-		                      CT=CMPLX(TSPEC(K))
-		                      ZSPEC(K)=PARFUN(PT,CT)
-		60                  CONTINUE
-		                  ELSE
-		                    DO 65 J=1,NQPTS
-		                      J1=LOL+J
-		                      K=K+1
-		                      TT=(MEAN+RR*QUPTS(J1))
-		                      WSPEC(K)=RR*QUWTS(J1)*(1E+0+TT)**BETA*JACSUM(TT,
-		     +                         DEG,ACOEF(LOD),BCOEF(LOD),H0VAL(AJT),
-		     +                         JACOF)
-		                      TT=TT*SS
-		                      TSPEC(K)=MD+TT*HL
-		                      CT=CMPLX(TSPEC(K))
-		                      ZSPEC(K)=PARFUN(PT,CT)
-		65                  CONTINUE
-		                  ENDIF
-		70              CONTINUE
+		    NQ,NQUAD,PT;
+	   final double PTHTL = 1.0E-3;
+	   final double LIMIT = 2.3562;
+	   double TOLOU[] = new double[1];
+	   double AISUM,ANGLE,ARGBR,ARSUM,BETA,CURARG,DIST,HL,ISUM,
+		     MD,MEAN,MINDS,NEWTL,PI,RR,RRB,RSUM,RT1,
+		     RT2,SCO,SS,STARG,STRT1,STTH1,SUM1,THET1,THET2,TT,TXI,TUPI,WT;
+	   double BCF[] = new double[2];
+	   double CT[] = new double[2];
+	   double PSI[] = new double[2];
+	   double XI[] = new double[2];
+	   double DIFF1[] = new double[2];
+	   double DIFF2[] = new double[2];
+	   double STDF1[] = new double[2];
+	   double ZXI[] = new double[2];
+	   double ZZ[] = new double[2];
+       // COMPLEX BCF,CT,PSI,XI,DIFF1,DIFF2,STDF1,ZXI,ZZ
+	   boolean FIRST;
+	   // EXTERNAL ARGIN1,CJACSU,DPARFN,JACSUM,PARFUN,PPSBI1,ZTOB1
+	   double JACOF[] = new double[MNCOF];
+	   double TSPEC[] = new double[MXNQD];
+	   double WSPEC[] = new double[MXNQD];
+	   double XENPT[] = new double[MQIN1];
+	   double JCOFC[][] = new double[MNCOF][2];
+	   double ZSPEC[][] = new double[MXNQD][2];
+	   // COMPLEX JCOFC(MNCOF),ZSPEC(MXNQD)
+	   double mag;
+	   double cr[] = new double[1];
+	   double ci[] = new double[1];
+	   double cr2[] = new double[1];
+	   double ci2[] = new double[1];
+	   double DIFF1IN[] = new double[2];
+	   double DIFF2IN[] = new double[2];
+	   double POUT[];
+	   double DOUT[];
+	   double A[];
+	   double B[];
+	   double CO[];
+	   double X[] = new double[2];
+	   double ZOUT[];
+	   double AIN[];
+	   double BIN[];
+	   int I2;
+		
+	   NEWTL=Math.sqrt(EPS);
+	   PI=Math.PI;
+	   TUPI=2.0*PI;
+	   LOL=NARCS*NQPTS;
+	   /*iploop: for (IP=1; IP <= NPTS; IP++) {
+	       ZZ[0]=PHYPT[IP-1][0];
+	       ZZ[1]=PHYPT[IP-1][1];
+		   RSUM=0.0;
+		   ISUM=0.0;
+		   FIRST= true;
+		   for (IA=1; IA <= TNSUA; IA++) {
+		       PT=PARNT[IA-1];
+		       JT=JATYP[IA-1];
+		       NQ=NPPQF[IA-1];
+		       K=LPQSB[IA-1]-1;
+		       HL=HALEN[IA-1];
+		       MD=MIDPT[IA-1];
+		       ARSUM=0.0;
+		       AISUM=0.0;
+		       for (JQ=1; JQ <= NQ; JQ++) {
+		           K=K+1;
+		           DIFF2[0]=ZZ[0]-ZPPQF[K-1][0];
+		           DIFF2[1]=ZZ[1]-ZPPQF[K-1][1];
+		           RT2=MD+HL*TPPQF[K-1];
+		           DIST=zabs(DIFF2[0],DIFF2[1]);
+		           if (DIST >= TRRAD[K-1]) {
+		               WT=WPPQF[K-1];
+		               if (WT != 0.0) {
+		                   ARSUM=ARSUM+WT*Math.log(DIST);
+		                   if (FIRST) {
+		                       CURARG=Math.atan2(DIFF2[1],DIFF2[0]);
+		                       THET2=CURARG;
+		                       FIRST=false;
+		                       STARG=CURARG;
+		                   } // if (FIRST)
+		                   else { // !FIRST
+		                       // CT=DIFF2/DIFF1
+		                       // CT=DIFF2*CONJG(DIFF1)
+		                       // ANGLE=ATAN2(AIMAG(CT),REAL(CT))
+		                       THET2=Math.atan2(DIFF2[1],DIFF2[0]);
+		                       ANGLE=THET2-THET1;
+		                       if (ANGLE <= -PI || ANGLE > PI) {
+		                    	  if (ANGLE > PI) {
+		                    		  ANGLE = ANGLE - TUPI;
+		                    	  }
+		                    	  else {
+		                    		  ANGLE = ANGLE + TUPI;
+		                    	  }
+		                       }
+		                       if (Math.abs(ANGLE) >= LIMIT) {
+		                           DIFF1IN[0] = -DIFF1[0];
+		                           DIFF1IN[1] = -DIFF1[1];
+		                           DIFF2IN[0] = -DIFF2[0];
+		                           DIFF2IN[1] = -DIFF2[1];
+		                           ANGLE=ARGIN1(RT1,RT2,PT,DIFF1IN,DIFF2IN,ZZ,LIMIT);
+		                       }
+		                       CURARG=CURARG+ANGLE;
+		                   } // else !FIRST
+		                   AISUM=CURARG*WT+AISUM;
+		                   RT1=RT2;
+		                   DIFF1[0]=DIFF2[0];
+		                   DIFF1[1]=DIFF2[1];
+		                   THET1=THET2;
+		           } // if (WT != 0.0)
+		       } // if (DIST >= TRADD[K-1])
+		       else { // DIST < TRADD[K-1]
+		
+		           // ZZ IS TOO CLOSE TO ARC IA TO USE THE STANDARD RULE.
+		           // FIND THE QUADRATURE POINT NEAREST TO ZZ.
+		
+		           J1=JQ;
+		           MINDS=DIST;
+		           TXI=TPPQF[K-1];
+		           ZXI[0]=ZPPQF[K-1][0];
+		           ZXI[1]=ZPPQF[K-1][1];
+		           while (true) {
+		               J1=J1+1;
+		               if (J1 <= NQ) {
+		                   K=K+1;
+		                   DIFF2[0]=ZZ[0]-ZPPQF[K-1][0];
+		                   DIFF2[1]=ZZ[1]-ZPPQF[K-1][1];
+		                   DIST=zabs(DIFF2[0],DIFF2[1]);
+		                   if (DIST < MINDS) {
+		                       MINDS=DIST;
+		                       TXI=TPPQF[K-1];
+		                       ZXI[0]=ZPPQF[K-1][0];
+		                       ZXI[1]=ZPPQF[K-1][1];
+		                       continue;
+		                   } // if (DIST < MINDS)
+		               } //  if (J1 <= NQ)
+		               break;
+		           } // while (true)
+		
+		           // PRELIMINARIES
+	
+		           if (JT > 0) {
+		               SS=1.0;
+		           }
+		           else {
+		               SS=-1.0;
+		           }
+		           AJT=Math.abs(JT);
+		           BETA=JACIN[AJT-1];
+		           DEG=DGPOL[IA-1];
+		           if (DEG+1 > MNCOF) {
+		               IER[0]=28;
+		               return;
+		           }
+		           LOM=LOSUB[IA-1];
+		           LOD=(AJT-1)*NQPTS+1;
+		
+		           // NOW USE NEWTON'S METHOD TO ESTIMATE THE PARAMETRIC
+	               // PRE-IMAGE XI OF ZZ.
+		
+		           XI[0]=TXI;
+		           XI[1] = 0.0;
+		           CT[0]=MD+HL*XI[0];
+		           CT[1]=HL*XI[1];
+		           DOUT = DPARFN(PT,CT);
+		           zdiv(ZXI[0]-ZZ[0],ZXI[1]-ZZ[1],DOUT[0]*HL,DOUT[1]*HL,cr,ci);
+		           DIFF2[0] = cr[0];
+		           DIFF2[1] = ci[0];
+		           XI[0]=XI[0]-DIFF2[0];
+		           XI[1]=XI[1]-DIFF2[1];
+		           while (true) {
+		               if (zabs(DIFF2[0],DIFF2[1]) > NEWTL) {
+		                   CT[0]=MD+HL*XI[0];
+		                   CT[1] = HL*XI[1];
+		                   POUT = PARFUN(PT,CT);
+		                   DOUT = DPARFN(PT,CT);
+		                   zdiv(POUT[0]-ZZ[0],POUT[1]-ZZ[1],DOUT[0]*HL,DOUT[1]*HL,cr,ci);
+		                   DIFF2[0] = cr[0];
+		                   DIFF2[1] = ci[0];
+		                   XI[0]=XI[0]-DIFF2[0];
+		                   XI[1]=XI[1]-DIFF2[1];
+		                   continue;
+		               } // if (zabs(DIFF2[0],DIFF2[1]) > NEWTL)
+		               else {
+		
+		                   // LAST ITERATION
+		
+		                   CT[0]=MD+HL*XI[0];
+		                   CT[1]=HL*XI[1];
+		                   POUT = PARFUN(PT,CT);
+		                   DOUT = DPARFN(PT,CT);
+		                   zdiv(POUT[0]-ZZ[0],POUT[1]-ZZ[1],DOUT[0]*HL,DOUT[1]*HL,cr,ci);
+		                   DIFF2[0] = cr[0];
+		                   DIFF2[1] = ci[0];
+		                   XI[0]=XI[0]-DIFF2[0];
+		                   XI[1]=XI[1]-DIFF2[1];
+		               } // else
+		              break;
+		           } // while (true)
+		
+		           XI[0]=SS*XI[0];
+		           XI[1]=SS*XI[1];
+		
+		           if (Math.abs(XI[1]) < PTHTL && Math.abs(XI[0]) < 1.0+PTHTL) {
+		
+		               // ZZ IS PATHOLOGICALLY CLOSE TO ARC IA AND WE USE THE  
+		               // CONTINUATION OF THE BOUNDARY CORRESPONDENCE FUNCTION TO 
+		               // ESTIMATE CANPT.
+		
+		               A = new double[DEG-1];
+		               B = new double[DEG-1];
+		               CO = new double[DEG];
+		               for (I = 0; I < DEG-1; I++) {
+		            	   A[I] = A1COF[LOD+I-1];
+		            	   B[I] = B1COF[LOD+I-1];
+		               }
+		               for (I = 0; I < DEG; I++) {
+		            	   CO[I] = BCFSN[LOM+I];
+		               }
+		        	   PSI=CJACSU(XI,DEG-1,A,B,H1VAL[AJT-1],CO);
+		        	   X[0] = XI[0] + 1.0;
+		        	   X[1] = XI[1];
+		        	   ZOUT = ZTOB1(X,BETA+1.0,JT,INTER);
+		        	   zmlt(1.0-XI[0],-XI[1],PSI[0],PSI[1],cr,ci);
+		        	   zmlt(ZOUT[0],ZOUT[1],BCFSN[LOM-1]-cr[0],-ci[0],cr2,ci2);
+		        	   PSI[0] = cr2[0];
+		        	   PSI[1] = ci2[0];
+		               if (JT > 0) {
+		                   BCF[0]=VTARG[IA-1];
+		                   BCF[1]=0.0;
+		               }
+		               else {
+		                   BCF[0]=VTARG[IA];
+		               }
+		               BCF[0]=BCF[0]+SS*PSI[0];
+		               BCF[1]=BCF[1]+SS*PSI[1];
+		               mag = Math.exp(-BCF[1]);
+		               CANPT[IP-1][0] = mag * Math.cos(BCF[0]);
+		               CANPT[IP-1][1] = mag * Math.sin(BCF[0]);
+		               continue iploop;
+		           } // if (Math.abs(XI[1]) < PTHTL && Math.abs(XI[0]) < 1.0+PTHTL)
+		           else { // ! (Math.abs(XI[1]) < PTHTL && Math.abs(XI[0]) < 1.0+PTHTL)
+		
+		               // SET UP A SPECIAL COMPOSITE GAUSSIAN RULE TO HANDLE THIS
+		               // PARTICULAR POINT ZZ.
+		
+		               SCO=SS;
+		               for (J=1; J <= DEG+1; J++) {
+		                   J1=LOM+J-1;
+		                   SCO=SCO*SS;
+		                   JACOF[J-1]=SOLUN[J1-1]*SCO;
+		                   JCOFC[J-1][0]=SOLUN[J1-1]*SCO;
+		                   JCOFC[J-1][1]= 0.0;
+		               } // for (J=1; J <= DEG+1; J++)
+		               AIN = new double[DEG];
+		               BIN = new double[DEG];
+		               for (I = 0; I < DEG; I++) {
+		            	   AIN[I] = ACOEF[LOD+I-1];
+		            	   BIN[I] = BCOEF[LOD+I-1];
+		               }
+		               PPSBI1(XI,BETA,NQPTS,DEG,AIN,BIN,
+		                          H0VAL[AJT-1],JCOFC,LGTOL,TOLOU,XENPT,QINTS,MQIN1,IER);
+		               if (IER[0] > 0) {
+		                   return;
+		               }
+		               NQUAD=QINTS[0]*NQPTS;
+		               if (NQUAD > MXNQD) {
+		                   IER[0]=27;
+		                   return;
+		               }
+		               K=0;
+		               SUM1=BETA+1.0;
+		               for (I=1; I <= QINTS[0]; I++) {
+		                    RR=(XENPT[I]-XENPT[I-1])*0.5;
+		                    MEAN=(XENPT[I]+XENPT[I-1])*0.5;
+		                    if (I == 1) {
+		                        RRB=Math.pow(RR,SUM1);
+		                        for (J=1; J <= NQPTS; J++) {
+		                            J1=LOD+J-1;
+		                            K=K+1;
+		                            TT=(MEAN+RR*QUPTS[J1-1]);
+		                            AIN = new double[DEG];
+		                            BIN = new double[DEG];
+		                            for (I2 = 0; I2 < DEG; I2++) {
+		                            	AIN[I2] = ACOEF[LOD+I2-1];
+		                            	BIN[I2] = BCOEF[LOD+I2-1];
+		                            }
+		                            WSPEC[K-1]=RRB*QUWTS[J1-1]*JACSUM(TT,DEG,AIN,BIN,H0VAL[AJT-1],JACOF);
+		                            TT=TT*SS;
+		                            TSPEC[K-1]=MD+TT*HL;
+		                            CT[0]=TSPEC[K-1];
+		                            CT[1] = 0.0;
+		                            ZSPEC[K-1]=PARFUN(PT,CT);
+		                        } // for (J=1; J <= NQPTS; J++)
+		                    } // if (I == 1)
+		                    else { // I != 1
+		                        for (J=1; J <= NQPTS; J++) {
+		                            J1=LOL+J;
+		                             K=K+1;
+		                             TT=(MEAN+RR*QUPTS[J1-1]);
+		                             AIN = new double[DEG];
+		                             BIN = new double[DEG];
+		                             for (I2 = 0; I2 < DEG; I2++) {
+		                            	 AIN[I2] = ACOEF[LOD+I2-1];
+		                            	 BIN[I2] = BCOEF[LOD+I2-1];
+		                             }
+		                             WSPEC[K-1]=RR*QUWTS[J1-1]*Math.pow((1.0+TT),BETA)*JACSUM(TT,
+		                              DEG,AIN,BIN,H0VAL[AJT-1],JACOF);
+		                             TT=TT*SS;
+		                             TSPEC[K-1]=MD+TT*HL;
+		                             CT[0]=TSPEC[K-1];
+		                             CT[1] = 0.0;
+		                             ZSPEC[K-1]=PARFUN(PT,CT);
+		                        } // for (J=1; J <= NQPTS; J++)
+		                    } // else I != 1
+		               } // for (I=1; I <= QINTS[0]; I++)
 		                IF (SS .LT. 0E+0) THEN
 		                  LIM=NQUAD
 		                  IF (MOD(LIM,2) .EQ. 0) THEN
@@ -9888,12 +9999,12 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		                    THET1=THET2
 		80              CONTINUE
 		                GOTO 150
-		              ENDIF              
-		            ENDIF
-		C
-		C         END OF QUADRATURE SUM LOOP 
-		C
-		100       CONTINUE
+		           } // else ! (Math.abs(XI[1]) < PTHTL && Math.abs(XI[0]) < 1.0+PTHTL)              
+		         } //  else DIST < TRADD[K-1]
+		
+		         // END OF QUADRATURE SUM LOOP 
+		
+		       } // for (JQ=1; JQ <= NQ; JQ++)
 		C
 		150       CONTINUE
 		          RSUM=RSUM+ARSUM
@@ -9919,32 +10030,329 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		            ARGBR=ANINT((CURARG-THET2)/TUPI)
 		            CURARG=THET2+TUPI*ARGBR
 		            RT1=-1E+0
-		            DIFF1=DIFF2
+		            DIFF1[0]=DIFF2[0];
+		            DIFF1[1]=DIFF2[1];
 		            THET1=THET2
 		          ENDIF           
 		          STARG=CURARG
 		          STRT1=RT1
-		          STDF1=DIFF1
+		          STDF1[0]=DIFF1[0];
+		          STDF1[1]=DIFF1[1];
 		          STTH1=THET1
-		C
-		C       END OF LOOP FOR CONTRIBUTIONS FROM ARC NUMBER IA
-		C
-		200     CONTINUE
-		        CT=CMPLX(RSUM,ISUM)
-		        CT=CEXP(CT)
-		        IF (INTER) THEN
-		          CANPT(IP)=(ZZ-CENTR)*FACTR/CT
-		        ELSE
-		          CANPT(IP)=CT*FACTR
-		        ENDIF
-		C
-		C     END OF MAP CALCULATION FOR FIELD POINT NUMBER IP
-		C
-		300   CONTINUE */
+		
+		       // END OF LOOP FOR CONTRIBUTIONS FROM ARC NUMBER IA
+		
+		   } // for (IA=1; IA <= TNSUA; IA++)
+		   CT[0] = RSUM;
+		   CT[1] = ISUM;
+		   mag = Math.exp(CT[0]);
+		   CT[0] = mag * Math.cos(CT[1]);
+		   CT[1] = mag * Math.sin(CT[1]);
+		   if (INTER) {
+			   zmlt(ZZ[0]-CENTR[0],ZZ[1]-CENTR[1],FACTR[0],FACTR[1],cr,ci);
+			   zdiv(cr[0],ci[0],CT[0],CT[1],cr2,ci2);
+			   CANPT[IP-1][0] = cr2[0];
+			   CANPT[IP-1][1] = ci2[0];
+		   }
+		   else {
+			   zmlt(CT[0],CT[1],FACTR[0],FACTR[1],cr,ci);
+			   CANPT[IP-1][0] = cr[0];
+			   CANPT[IP-1][1] = ci[0];
+		   }
+		
+		// END OF MAP CALCULATION FOR FIELD POINT NUMBER IP
+		
+	    } // iploop: for (IP=1; IP <= NPTS; IP++)*/
 		
 		IER[0]=0;
         
     } // private void PHTCA1
+   
+   
+   private double ARGIN1(double RT1, double RT2, int PT, double DIFF1[], double DIFF2[],
+		   double ZZ[], double LIMIT) {
+       // INTEGER PT
+       // REAL RT1,RT2,LIMIT
+       // COMPLEX DIFF1,DIFF2,ZZ
+
+       // ZZ IS A GIVEN FIELD POINT AND DIFF1, DIFF2 ARE THE DIFFERENCES
+       // BETWEEN ZZ AND CONSECUTIVE POINTS ON THE BOUNDARY 
+       // (DIFF1=PARFUN(PT,RT1)-ZZ, ZET2=PARFUN(PT,RT2)-ZZ).  THE
+       // PURPOSE OF THIS ROUTINE IS TO CALCULATE THE INCREASE IN THE 
+       // ARGUMENT ARG(ZZ-Z) AS Z MOVES ALONG THE BOUNDARY FROM THE POINT
+       // WITH PARAMETER VALUE RT1 TO THE POINT WITH PARAMETER VALUE RT2.
+
+       // LOCAL VARIABLES
+
+       int NANGS,NINTS;
+       double ANGLE,T1,T2;
+       double D1[] = new double[2];
+       double D2[] = new double[2];
+       double V[] = new double[2];
+       // COMPLEX D1,D2,PARFUN,V
+       // EXTERNAL PARFUN
+       double PIN[] = new double[2];
+       double POUT[];
+       double result;
+       double cr[] = new double[1];
+       double ci[] = new double[1];
+       // LIMIT IS CURRENTLY SET TO 3*PI/4, APPROXIMATELY
+
+       T1=RT1;
+       T2=(RT1+RT2)*0.5;
+       D1[0]=DIFF1[0];
+       D1[1]=DIFF1[1];
+       PIN[0] = T2;
+       PIN[1] = 0.0;
+       POUT = PARFUN(PT,PIN);
+       D2[0] = POUT[0] - ZZ[0];
+       D2[1] = POUT[1] - ZZ[1];
+       NANGS=0;
+       NINTS=2;
+       result=0.0;
+
+       while (true) {
+    	   zmlt(D2[0],D2[1],D1[0],-D1[1],cr,ci);
+    	   V[0] = cr[0];
+    	   V[1] = ci[0];
+           ANGLE=Math.atan2(V[1],V[0]);
+           if (Math.abs(ANGLE) >= LIMIT) {
+               T2=(T1+T2)*0.5;
+               PIN[0] = T2;
+               PIN[1] = 0.0;
+               POUT = PARFUN(PT,PIN);
+               D2[0] = POUT[0] - ZZ[0];
+               D2[1] = POUT[1] - ZZ[1];
+               NINTS=NINTS+1;
+               continue;
+           } // if (Math.abs(ANGLE) >= LIMIT)
+           else {
+               result=result+ANGLE;
+               NANGS=NANGS+1;
+               if (NANGS != NINTS) {
+                   T1=T2;
+                   T2=RT2;
+                   D1[0]=D2[0];
+                   D1[1]=D2[1];
+                   D2[0]=DIFF2[0];
+                   D2[1]=DIFF2[1];
+                   continue;
+               } // if (NANGS != NINTS)
+               break;
+           } // else
+       } // while (true)
+       
+       return result;
+
+   } // private double ARGIN1
+
+   //COMPLEX FUNCTION CJACSU(X,N,A,B,H,CO)
+   private double[] CJACSU(double X[], int N, double A[], double B[], double H,
+		   double CO[]) {
+       // INTEGER N
+       // REAL A(*),B(*),H,CO(*)
+       // COMPLEX X
+
+       // ..TO CALCULATE SUMMATION{CO(K+1)*P(K,X)},K=0(1)N, WHERE P(K,X)
+       // ..DENOTES THE ORTHONORMAL JACOBI POLYNOMIAL OF DEGREE K
+       // ..EVALUATED AT X, ARRAY CO STORES A GIVEN SET OF COEFFICIENTS,
+       // ..ARRAYS A,B STORE THE COEFFICIENTS IN THE THREE-TERM
+       // ..RECURRENCE FORMULA FOR THE JACOBI POLYNOMIALS (SEE ASONJ7)
+       // ..AND H IS THE SQUARED 2-NORM OF UNITY.
+
+       double PREV[] = new double[2];
+       double CURR[] = new double[2];
+       double NEXT[] = new double[2];
+	   // COMPLEX PREV,CURR,NEXT
+       int K;
+       double result[] = new double[2];
+       double cr[] = new double[1];
+       double ci[] = new double[1];
+
+       if (N == 0) {
+           result[0]=CO[0]/Math.sqrt(H);
+           result[1]=0.0;
+       } // if (N == 0)
+       else if (N > 0) {
+           PREV[0]=CO[N];
+           PREV[1]=0.0;
+           zmlt(X[0]-B[N-1],X[1],PREV[0],PREV[1],cr,ci);
+           CURR[0] = CO[N-1] + cr[0]/A[N-1];
+           CURR[1] = ci[0]/A[N-1];
+           for (K=N-2; K >= 0; K--) {
+        	   zmlt(X[0]-B[K],X[1],CURR[0],CURR[1],cr,ci);
+        	   NEXT[0]=CO[K] + cr[0]/A[K] - A[K]*PREV[0]/A[K+1];
+        	   NEXT[1]=ci[0]/A[K] - A[K]*PREV[1]/A[K+1];
+               PREV[0]=CURR[0];
+               PREV[1]=CURR[1];
+               CURR[0]=NEXT[0];
+               CURR[1]=NEXT[1];
+           } // for (K=N-2; K >= 0; K--)
+           result[0]=CURR[0]/Math.sqrt(H);
+           result[1]=CURR[1]/Math.sqrt(H);
+       } // else if (N > 0)
+       else {
+           result[0] = 0.0;
+           result[1] = 0.0;
+       }
+       return result;
+
+   } // private double[] CJACSU
+   
+   //COMPLEX FUNCTION ZTOB1(Z,B1,JT,IN)
+   private double[] ZTOB1(double Z[], double B1, int JT, boolean IN) {
+       // INTEGER JT
+       // REAL B1
+       // COMPLEX Z
+       // LOGICAL IN
+
+       // TO COMPUTE Z**B1 BUT CHOOSING THE BRANCH CUT TO POINT ALONG THE
+       // RAY WITH POLAR ANGLE DEFINED BY THE VARIABLE *CUT* BELOW.
+
+       // THIS IS A SPECIAL PURPOSE ROUTINE IN THAT IT IS ASSUMED THAT
+       // B1=1/ALHPA, WHERE ALPHA*PI IS THE INTERIOR ANGLE AT THE BRANCH
+       // POINT OF THE MAP : PHYSICAL --> CANONICAL.  HENCE THE USE OF THIS
+       // ROUTINE IS EFFECTIVELY RESTRCITED TO COMPUTING ONLY THE BOUNDARY
+       // CORRESPONDENCE FUNCTION FOR COMPLEX PARAMETERS.
+
+       double CUT;
+       double W[] = new double[2];
+       // COMPLEX W
+       final double PI = Math.PI;
+       final double TUPI = 2.0*PI;
+       double result[] = new double[2];
+       double mag;
+       double ang;
+
+       if (zabs(Z[0],Z[1]) == 0.0) {
+           result[0] = 0.0;
+           result[1] = 0.0;
+           return result;
+       }
+       W[0] = Math.log(zabs(Z[0],Z[1]));
+       W[1] = Math.atan2(Z[1],Z[0]);
+       CUT=PI*(0.5-B1)/B1;
+       if ((JT < 0.0 && IN) || (JT > 0.0 && !IN)) {
+           CUT=-CUT;
+           if (W[1] > CUT) {
+        	   W[1] = W[1] - TUPI;
+           }
+       }
+       else if (W[1] < CUT) {
+    	   W[1] = W[1] + TUPI;
+       }
+       mag = Math.exp(W[0]*B1);
+       ang = W[1]*B1;
+       result[0] = mag * Math.cos(ang);
+       result[1] = mag * Math.sin(ang);
+       return result;
+
+   } // private double[] ZTOB1
+
+   private void PPSBI1(double ZZ[], double BETA, int NQUAD, int DGPOL, double ACOEF[], double BCOEF[],
+       double H0VAL, double SOLUN[][], double TOLIN, double TOLOU[], double XENPT[], int QINTS[],
+       int MQIN1, int IER[]) {
+	   // INTEGER DGPOL,MQIN1,NQUAD,QINTS,IER
+	   // REAL BETA,H0VAL,TOLIN,TOLOU
+	   // REAL ACOEF(*),BCOEF(*),XENPT(*)
+	   // COMPLEX SOLUN(*),ZZ
+		
+		//     CALCULATES THE NUMBER OF QUADRATURE INTERVALS (QINTS) REQUIRED
+		//     FOR THE COMPOSITE GAUSS-JACOBI/GAUSS-LEGENDRE ESTIMATION OF
+		
+		//          INTEGRAL  [(1+X)**BETA*FNPHI(X)*LOG(ZZ-X)*dX], 
+		//         -1<=X<=1                                         
+		
+		//     WHERE FNPHI IS A POLYNOMIAL APPROXIMATION TO THE BOUNDARY 
+		//     CORRESPONDENCE DERIVATIVE - JACOBI WEIGHT QUOTIENT. 
+		 
+		//     ZZ IS ANY POINT IN THE PLANE.
+		
+		//     THE PARAMETERS DGPOL,ACOEF,BCOEF,H0VAL,SOLUN ARE USED TO DEFINE
+		//     FNPHI AND ARE PASSED TO DEPPJ9 AND DEPPL9 FOR THIS PURPOSE.
+		
+		//     THE ENDPOINTS OF THE QUADRATURE INTERVALS ARE RETURNED IN VECTOR 
+		//     XENPT, WITH XENPT(1)=-1<XENPT(2)<...<1=XENPT(QINTS+1).
+		
+		//     TOLOU RECORDS OUR ESTIMATE FOR THE MAXIMUM OF THE ABSOLUTE VALUES
+		//     OF THE REMAINDER ESTIMATES ON THE DELTA-CONTOUR.  WE REQUIRE THAT
+		//
+		//                  TOLOU <= TOLIN
+		
+		//     WITH THE TOLOU BEING REASONABLY CLOSE TO TOLIN.
+		
+		//     IER=0  - NORMAL EXIT
+		//     IER=29 - MQIN1 SHOULD BE INCREASED IN PHTCA1 (CHANGED TO ERROR NO.
+		//              40 IF CALLED FROM CINRAD OR ERROR NO. 49 IF CALLED FROM
+		//              CATPH4)
+		   
+		//     LOCAL VARIABLES
+		
+		double TAU[] = new double[1];
+		double TOL[] = new double[1];
+		double MAXRM[] = new double[1];
+	    double RIGHT[] = new double[1];
+		boolean T1FXD,FIRST;
+		// EXTERNAL DEPPJ9,DEPPL9
+		double TAU1[] = new double[1];
+		double ZZIN[][] = new double[1][2];
+		
+		QINTS[0]=1;
+		XENPT[0]=-1.0;
+		TOL[0]=TOLIN;
+		TAU[0]=1.0;
+		ZZIN[0][0] = ZZ[0];
+		ZZIN[0][1] = ZZ[1];
+		DEPPJ9(ZZIN,1,BETA,TAU,NQUAD,DGPOL,ACOEF,BCOEF,H0VAL,SOLUN,TOL,MAXRM,IER);
+		if (IER[0] > 0) {
+		    return;
+		}
+		TOLOU[0]=MAXRM[0];
+		XENPT[1]=TAU[0];
+		
+		if (XENPT[1] < 1.0) {
+		    QINTS[0]=2;
+		    T1FXD=false;
+		    TAU[0]=1.0;
+		    RIGHT[0]=-1.0;
+		    FIRST=true;
+		    DEPPL9(ZZIN,1,BETA,RIGHT,TAU,T1FXD,NQUAD,DGPOL,ACOEF,
+                   BCOEF,H0VAL,SOLUN,TOL,MAXRM,FIRST,IER);
+		    if (IER[0] > 0) {
+		        return;
+		    }
+		    TOLOU[0]=TOLOU[0]+MAXRM[0];
+		    T1FXD=true;
+		
+		    while (true) {
+		
+		        if (XENPT[QINTS[0]-1] > RIGHT[0]) {
+		          XENPT[QINTS[0]-1]=0.5*(XENPT[QINTS[0]-1]+RIGHT[0]);
+		          XENPT[QINTS[0]]=1.0;
+		          break;
+		        }
+		        else {
+		          TAU[0]=1.0;
+		          FIRST=true;
+		          TAU1[0] = XENPT[QINTS[0]-1];
+		          DEPPL9(ZZIN,1,BETA,TAU1,TAU,T1FXD,NQUAD,DGPOL,
+		        		  ACOEF,BCOEF,H0VAL,SOLUN,TOL,MAXRM,FIRST,IER);
+		          XENPT[QINTS[0]-1] = TAU1[0];
+		          TOLOU[0]=TOLOU[0]+MAXRM[0];
+		          QINTS[0]=QINTS[0]+1;
+		          if (QINTS[0] >= MQIN1) {
+		            IER[0]=29;
+		            return;
+		          }
+		          XENPT[QINTS[0]-1]=TAU[0];
+		          continue;
+		        }
+		    } // while (true)
+		} // if (XENPT[1] < 1.0)
+		
+        IER[0]=0;
+		
+   } // private void PPSBI1
 
 
       /**
