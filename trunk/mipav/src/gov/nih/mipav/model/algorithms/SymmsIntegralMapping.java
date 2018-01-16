@@ -211,6 +211,47 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 //                     BOUNDARY.
    	private double FACTR[] = new double[2]; // At first location of ZQUPH
   	private double ZPPQF[][] = new double[MQUPH][2];
+  	// From JACANP:
+  	//            ISNCA  - INTEGER ARRAY
+	//                     AN INTEGER VECTOR OF SIZE AT LEAST
+	//                        4*IBNDS(1) + 6 ;
+	//                     ISNCA MAINLY STORES POINTERS TO ACCESS RSNCA AND
+	//                     ZSNCA.
+  	private int ISNCA[] = new int[6];
+  	private int DGPOC[] = new int[IBNDS[0]];
+    private int JTYPC[] = new int[IBNDS[0]];
+    private int LSUBC[] = new int[IBNDS[0]];
+    private int PRNSA[] = new int[IBNDS[0]];
+    //            RSNCA  - REAL ARRAY
+	//                     A REAL VECTOR OF SIZE AT LEAST
+	//                         2*IBNDS(1) + (4 + 6*NQPTS)*(NARCS + 1) + 2, 
+	//                     WHERE NARCS, NQPTS ARE INPUT ARGUMENTS TO JAPHYC.
+	//                     (NOTE: NARCS=IGEOM(1), NQPTS=IGEOM(2))
+	//                     STORES DATA RELATING TO THREE-TERM RECURRENCE
+	//                     SCHEMES, ELEMENTARY GAUSS-JACOBI QUADRATURE RULES,
+	//                     AND THE ARGUMENTS OF SUB-ARC ENDPOINTS ON THE UNIT
+	//                     DISC.
+    private double RSNCA[] = new double[1];
+    private double ACOFC[] = new double[TNGQP];
+    private double BCOFC[] = new double[TNGQP];
+    private double AICOC[] = new double[TNGQP];
+    private double BICOC[] = new double[TNGQP];
+    private double QUPTC[] = new double[TNGQP];
+    private double QUWTC[] = new double[TNGQP];
+    private double H0VLC[] = new double[NJIND];
+    private double HIVLC[] = new double[NJIND];
+    private double JAINC[] = new double[NJIND];
+    private double COARG[] = new double[NJIND];
+    private double PHPAS[] = new double[IBNDS[0]];
+    private double VARGC[] = new double[IBNDS[0]];
+	//            CSNCA  - COMPLEX ARRAY
+	//                     A COMPLEX VECTOR OF SIZE AT LEAST 2*IBNDS(2) + 1;
+	//                     STORES THE JACOBI COEFFICIENTS FOR THE COMPLEX
+	//                     (INVERSE) BOUNDARY CORRESPONDENCE FUNCTION AND
+	//                     ITS DERIVATIVE.
+    private double CSNCA[] = new double[2]; // At first location of CSNCA
+    private double BFSNC[][] = new double[IBNDS[1]][2];
+    private double SOLNC[][] = new double[IBNDS[1]][2];
 	public SymmsIntegralMapping() {
 		
 	}
@@ -9621,9 +9662,15 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	   final double PTHTL = 1.0E-3;
 	   final double LIMIT = 2.3562;
 	   double TOLOU[] = new double[1];
-	   double AISUM,ANGLE,ARGBR,ARSUM,BETA,CURARG,DIST,HL,ISUM,
-		     MD,MEAN,MINDS,NEWTL,PI,RR,RRB,RSUM,RT1,
-		     RT2,SCO,SS,STARG,STRT1,STTH1,SUM1,THET1,THET2,TT,TXI,TUPI,WT;
+	   double CURARG = 0.0;
+	   double RT1 = 0.0;
+	   double STARG = 0.0;
+	   double STRT1 = 0.0;
+	   double STTH1 = 0.0;
+	   double THET1 = 0.0;
+	   double AISUM,ANGLE,ARGBR,ARSUM,BETA,DIST,HL,ISUM,
+		     MD,MEAN,MINDS,NEWTL,PI,RR,RRB,RSUM,
+		     RT2,SCO,SS,SUM1,THET2,TT,TXI,TUPI,WT;
 	   double BCF[] = new double[2];
 	   double CT[] = new double[2];
 	   double PSI[] = new double[2];
@@ -9660,12 +9707,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	   double AIN[];
 	   double BIN[];
 	   int I2;
+	   double PIN[] = new double[2];
 		
 	   NEWTL=Math.sqrt(EPS);
 	   PI=Math.PI;
 	   TUPI=2.0*PI;
 	   LOL=NARCS*NQPTS;
-	   /*iploop: for (IP=1; IP <= NPTS; IP++) {
+	   iploop: for (IP=1; IP <= NPTS; IP++) {
 	       ZZ[0]=PHYPT[IP-1][0];
 	       ZZ[1]=PHYPT[IP-1][1];
 		   RSUM=0.0;
@@ -9680,7 +9728,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		       MD=MIDPT[IA-1];
 		       ARSUM=0.0;
 		       AISUM=0.0;
-		       for (JQ=1; JQ <= NQ; JQ++) {
+		       jqloop: for (JQ=1; JQ <= NQ; JQ++) {
 		           K=K+1;
 		           DIFF2[0]=ZZ[0]-ZPPQF[K-1][0];
 		           DIFF2[1]=ZZ[1]-ZPPQF[K-1][1];
@@ -9931,114 +9979,142 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		                        } // for (J=1; J <= NQPTS; J++)
 		                    } // else I != 1
 		               } // for (I=1; I <= QINTS[0]; I++)
-		                IF (SS .LT. 0E+0) THEN
-		                  LIM=NQUAD
-		                  IF (MOD(LIM,2) .EQ. 0) THEN
-		                    LIM=LIM/2
-		                  ELSE
-		                    LIM=(LIM-1)/2
-		                  ENDIF
-		                  J1=0
-		                  J2=NQUAD+1
-		                  DO 75 J=1,LIM
-		                    J1=J1+1
-		                    J2=J2-1
-		                    TT=WSPEC(J1)
-		                    WSPEC(J1)=WSPEC(J2)
-		                    WSPEC(J2)=TT
-		                    TT=TSPEC(J1)
-		                    TSPEC(J1)=TSPEC(J2)
-		                    TSPEC(J2)=TT
-		                    CT=ZSPEC(J1)
-		                    ZSPEC(J1)=ZSPEC(J2)
-		                    ZSPEC(J2)=CT
-		75                CONTINUE
-		                ENDIF
-		C
-		C               THIS COMPLETES THE SETTING UP OF THE SPECIAL WEIGHTS
-		C               AND POINTS WSPEC AND ZSPEC.  NOW ESTIMATE THE INTEGRAL.
-		C
-		                ARSUM=0E+0
-		                AISUM=0E+0
-		                IF (IA .EQ. 1) THEN
-		                  FIRST=.TRUE.
-		                ELSE
-		                  CURARG=STARG
-		                  RT1=STRT1
-		                  DIFF1=STDF1
-		                  THET1=STTH1
-		                ENDIF
-		                DO 80 K=1,NQUAD
-		                    WT=WSPEC(K)
-		                    DIFF2=ZZ-ZSPEC(K)
-		                    RT2=TSPEC(K)
-		                    DIST=ABS(DIFF2)
-		                    ARSUM=ARSUM+WT*LOG(DIST)
-		                    IF (FIRST) THEN
-		                      CURARG=ATAN2(AIMAG(DIFF2),REAL(DIFF2))
-		                      THET2=CURARG
-		                      FIRST=.FALSE.
-		                    ELSE
-		C                      CT=DIFF2/DIFF1
-		C                      CT=DIFF2*CONJG(DIFF1)
-		C                      ANGLE=ATAN2(AIMAG(CT),REAL(CT))
-		                      THET2=ATAN2(AIMAG(DIFF2),REAL(DIFF2))
-		                      ANGLE=THET2-THET1
-		                      IF (ANGLE .LE. -PI .OR. ANGLE .GT. PI) THEN
-		                          ANGLE=ANGLE-SIGN(TUPI,ANGLE)
-		                      ENDIF
-		                      IF (ABS(ANGLE) .GE. LIMIT) THEN
-		                          ANGLE=ARGIN1(RT1,RT2,PT,-DIFF1,-DIFF2,ZZ,
-		     +                                 LIMIT)
-		                      ENDIF
-		                      CURARG=CURARG+ANGLE
-		                    ENDIF
-		                    AISUM=CURARG*WT+AISUM
-		                    RT1=RT2
-		                    DIFF1=DIFF2
-		                    THET1=THET2
-		80              CONTINUE
-		                GOTO 150
+		               if (SS < 0.0) {
+		                   LIM=NQUAD;
+		                   if ((LIM%2) == 0) {
+		                       LIM=LIM/2;
+		                   }
+		                   else {
+		                       LIM=(LIM-1)/2;
+		                   }
+		                   J1=0;
+		                   J2=NQUAD+1;
+		                   for (J=1; J <= LIM; J++) {
+		                       J1=J1+1;
+		                       J2=J2-1;
+		                       TT=WSPEC[J1-1];
+		                       WSPEC[J1-1]=WSPEC[J2=1];
+		                       WSPEC[J2-1]=TT;
+		                       TT=TSPEC[J1-1];
+		                       TSPEC[J1-1]=TSPEC[J2-1];
+		                       TSPEC[J2-1]=TT;
+		                       CT[0]=ZSPEC[J1-1][0];
+		                       CT[1]=ZSPEC[J1-1][1];
+		                       ZSPEC[J1-1][0]=ZSPEC[J2-1][0];
+		                       ZSPEC[J1-1][1]=ZSPEC[J2-1][1];
+		                       ZSPEC[J2-1][0]=CT[0];
+		                       ZSPEC[J2-1][1]=CT[1];
+		                   } // for (J=1; J <= LIM; J++) 
+		               } // if (SS < 0.0)
+		
+		               // THIS COMPLETES THE SETTING UP OF THE SPECIAL WEIGHTS
+		               // AND POINTS WSPEC AND ZSPEC.  NOW ESTIMATE THE INTEGRAL.
+		
+		               ARSUM=0.0;
+		               AISUM=0.0;
+		               if (IA == 1) {
+		                   FIRST=true;
+		               }
+		               else {
+		                   CURARG=STARG;
+		                   RT1=STRT1;
+		                   DIFF1[0]=STDF1[0];
+		                   DIFF1[1]=STDF1[1];
+		                   THET1=STTH1;
+		               }
+		               for (K=1; K <= NQUAD; K++) {
+		                   WT=WSPEC[K-1];
+		                   DIFF2[0]=ZZ[0]-ZSPEC[K-1][0];
+		                   DIFF2[1]=ZZ[1]-ZSPEC[K-1][1];
+		                   RT2=TSPEC[K-1];
+		                   DIST=zabs(DIFF2[0],DIFF2[1]);
+		                   ARSUM=ARSUM+WT*Math.log(DIST);
+		                   if (FIRST) {
+		                       CURARG=Math.atan2(DIFF2[1],DIFF2[0]);
+		                       THET2=CURARG;
+		                       FIRST=false;
+		                   } // if (FIRST)
+		                   else {
+		                       //CT=DIFF2/DIFF1
+		                       //CT=DIFF2*CONJG(DIFF1)
+		                       //ANGLE=ATAN2(AIMAG(CT),REAL(CT))
+		                       THET2=Math.atan2(DIFF2[1],DIFF2[0]);
+		                       ANGLE=THET2-THET1;
+		                       if (ANGLE <= -PI || ANGLE > PI) {
+		                    	  if (ANGLE > PI) {
+		                              ANGLE=ANGLE-TUPI;
+		                    	  }
+		                    	  else {
+		                    		  ANGLE=ANGLE+TUPI;
+		                    	  }
+		                       } // if (ANGLE <= -PI || ANGLE > PI) 
+		                       if (Math.abs(ANGLE) >= LIMIT) {
+		                           DIFF1IN[0] = -DIFF1[0];
+		                           DIFF1IN[1] = -DIFF1[1];
+		                           DIFF2IN[0] = -DIFF2[0];
+		                           DIFF2IN[1] = -DIFF2[1];
+		                          ANGLE=ARGIN1(RT1,RT2,PT,DIFF1IN,DIFF2IN,ZZ,LIMIT);
+		                       }
+		                       CURARG=CURARG+ANGLE;
+		                   } // else !FIRST
+		                   AISUM=CURARG*WT+AISUM;
+		                   RT1=RT2;
+		                   DIFF1[0]=DIFF2[0];
+		                   DIFF1[1]=DIFF2[1];
+		                   THET1=THET2;
+		               } // for (K=1; K <= NQUAD; K++)
+		               break jqloop;
 		           } // else ! (Math.abs(XI[1]) < PTHTL && Math.abs(XI[0]) < 1.0+PTHTL)              
 		         } //  else DIST < TRADD[K-1]
 		
 		         // END OF QUADRATURE SUM LOOP 
 		
-		       } // for (JQ=1; JQ <= NQ; JQ++)
-		C
-		150       CONTINUE
-		          RSUM=RSUM+ARSUM
-		          ISUM=ISUM+AISUM
-		          IF (JT .LT. 0) THEN
-		C
-		C           BRING THE ARGUMENT FORWARD TO THE CORNER POINT AND REPLACE
-		C           THE INCREMENTED CURARG VALUE BY AN INVERSE TANGENT
-		C           EVALUATION
-		C
-		            DIFF2=ZZ-PARFUN(PT,(1E+0,0E+0))
-		            RT2=1E+0
-		            THET2=ATAN2(AIMAG(DIFF2),REAL(DIFF2))
-		            ANGLE=THET2-THET1
-		            IF (ANGLE .LE. -PI .OR. ANGLE .GT. PI) THEN
-		                ANGLE=ANGLE-SIGN(TUPI,ANGLE)
-		            ENDIF
-		            IF (ABS(ANGLE) .GE. LIMIT) THEN
-		                ANGLE=ARGIN1(RT1,RT2,PT,-DIFF1,-DIFF2,ZZ,
-		     +                       LIMIT)
-		            ENDIF
-		            CURARG=CURARG+ANGLE
-		            ARGBR=ANINT((CURARG-THET2)/TUPI)
-		            CURARG=THET2+TUPI*ARGBR
-		            RT1=-1E+0
-		            DIFF1[0]=DIFF2[0];
-		            DIFF1[1]=DIFF2[1];
-		            THET1=THET2
-		          ENDIF           
-		          STARG=CURARG
-		          STRT1=RT1
-		          STDF1[0]=DIFF1[0];
-		          STDF1[1]=DIFF1[1];
-		          STTH1=THET1
+		       } // jqloop: for (JQ=1; JQ <= NQ; JQ++)
+		
+		       RSUM=RSUM+ARSUM;
+		       ISUM=ISUM+AISUM;
+		       if (JT < 0) {
+		
+		           // BRING THE ARGUMENT FORWARD TO THE CORNER POINT AND REPLACE
+		           // THE INCREMENTED CURARG VALUE BY AN INVERSE TANGENT
+		           // EVALUATION
+		
+		    	   PIN[0] = 1.0;
+		    	   PIN[1] = 0.0;
+		    	   POUT = PARFUN(PT,PIN);
+		    	   DIFF2[0] = ZZ[0] - POUT[0];
+		    	   DIFF2[1] = ZZ[1] - POUT[1];
+		           RT2=1.0;
+		           THET2=Math.atan2(DIFF2[1],DIFF2[0]);
+		           ANGLE=THET2-THET1;
+		           if (ANGLE <= -PI || ANGLE > PI) {
+		               if (ANGLE > PI) {
+		            	   ANGLE = ANGLE - TUPI;
+		               }
+		               else {
+		            	   ANGLE = ANGLE + TUPI;   
+		               }
+		           } // if (ANGLE <= -PI || ANGLE > PI)
+		           if (Math.abs(ANGLE) >= LIMIT) {
+		        	   DIFF1IN[0] = -DIFF1[0];
+		        	   DIFF1IN[1] = -DIFF1[1];
+		        	   DIFF2IN[0] = -DIFF2[0];
+		        	   DIFF2IN[1] = -DIFF2[1];
+		               ANGLE=ARGIN1(RT1,RT2,PT,DIFF1IN,DIFF2IN,ZZ,LIMIT);
+		           }
+		           CURARG=CURARG+ANGLE;
+		           ARGBR=(int)Math.round((CURARG-THET2)/TUPI);
+		           CURARG=THET2+TUPI*ARGBR;
+		           RT1=-1.0;
+		           DIFF1[0]=DIFF2[0];
+		           DIFF1[1]=DIFF2[1];
+		           THET1=THET2;
+		       } // if (JT < 0)          
+		       STARG=CURARG;
+		       STRT1=RT1;
+		       STDF1[0]=DIFF1[0];
+		       STDF1[1]=DIFF1[1];
+		       STTH1=THET1;
 		
 		       // END OF LOOP FOR CONTRIBUTIONS FROM ARC NUMBER IA
 		
@@ -10353,7 +10429,669 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         IER[0]=0;
 		
    } // private void PPSBI1
+   
+   private void JACANP(double RWORK[], int IER[]) {
+		
+       // INTEGER CHNL,IER
+	   // INTEGER IBNDS(*),ISNCA(*),ISNPH(*),IGEOM(*),IQUPH(*)
+	   // REAL RSNCA(*),RSNPH(*),RGEOM(*),RQUPH(*),RWORK
+	   // COMPLEX CENTR
+	   // COMPLEX ZSNCA(*),ZQUPH(*)
+	   // LOGICAL INTER
+		
+		// ......................................................................
+		
+		// 1.     JACANP
+		//           COMPUTATION OF PIECEWISE ORTHOGONAL JACOBI POLYNOMIAL 
+		//           APPROXIMATIONS TO THE COMPLEX BOUNDARY CORRESPONDENCE DERIV-
+		//           ATIVE FOR THE MAP: CANONICAL--> PHYSICAL.
+		
+		// 2.     PURPOSE
+		//           THE MAIN PURPOSE IS TO CALCULATE THE COEFFICIENTS IN THE
+		//           PIECEWISE ORTHOGONAL JACOBI POLYNOMIAL APPROXIMATIONS TO THE
+		//           COMPLEX BOUNDARY CORRESPONDENCE DERIVATIVE FOR THE CONFORMAL
+		//           MAP OF THE CANONICAL DOMAIN ONTO THE SIMPLY-CONNECTED PHYS-
+		//           ICAL DOMAIN.  
+		//           THE METHOD ATTEMPTS TO COMPUTE TRUNCATED FOURIER-JACOBI APP-
+		//           ROXIMATIONS BY DIRECT QUADRATURE ESTIMATION OF THE FOURIER-
+		//           JACOBI COEFFICIENTS.  IF DECAY OF THESE COEFFICIENTS ISN'T
+		//           SUFFICIENTLY RAPID ON A GIVEN SUB-ARC OF THE DISC, THEN
+		//           THE SUB-ARC IS DIVIDED.
+		//           A NUMBER OF DATA ARRAYS ASSOCIATED WITH THE POLYNOMIAL
+		//           APPROXIMATIONS ARE ALSO COMPUTED AND MAY BE USED FOR SUBSE-
+		//           QUENT PROCESSING.  IN ADDITION TO BEING RETURNED AS 
+		//           PARAMETERS OF THE SUBROUTINE THESE ARE ALSO AUTOMATICALLY
+		//           OUTPUT TO DATA FILES.
 
+		
+		// 3.     CALLING SEQUENCE
+		//           CALL JACANP(IBNDS,INTER,CENTR,IGEOM,RGEOM,ISNPH,RSNPH,IQUPH,
+		//                       RQUPH,ZQUPH,RWORK,CHNL,ISNCA,RSNCA,ZSNCA,IER)
+		
+		//        PARAMETERS
+		//         ON ENTRY
+		//            IBNDS  - INTEGER ARRAY
+		//                     INTEGER VECTOR OF SIZE AT LEAST 2.
+		//                     IBNDS(K), K=1,2 DEFINE VARIOUS UPPER LIMITS
+		//                     THAT HAVE BEEN SET IN THE CALLING PROGRAM AND
+		//                     WHICH CONTROL THE SIZES OF THE ARRAYS ISNCA,RSNCA,
+		//                     ZSNCA.
+		//                     IBNDS(1) - THE MAXIMUM NUMBER OF SUB-ARCS ALLOWED
+		//                                ON THE UNIT DISC.
+		//                     IBNDS(2) - THE MAXIMUM TOTAL NUMBER OF JACOBI CO-
+		//                                EFFICIENTS ALLOWED.
+		//                                (IBNDS(2) <= IBNDS(1)*NQPTS WHERE
+		//                                 NQPTS = IGEOM(2))
+		
+		//            INTER  - LOGICAL
+		//                     TRUE IF THE PHYSICAL DOMAIN IS INTERIOR, FALSE 
+		//                     OTHERWISE. (AS PREVIOUSLY USED IN JAPHYC, GQPHYC)
+		                     
+		//            CENTR  - COMPLEX
+		//                     THE POINT IN THE PHYSICAL PLANE THAT IS TO BE
+		//                     MAPPED TO THE CENTRE OF THE UNIT DISC.  FOR
+		//                     EXTERIOR DOMAINS CENTR MUST BE SOME POINT IN THE
+		//                     COMPLEMENTARY INTERIOR  PHYSICAL DOMAIN. (AS PREV-
+		//                     IOUSLY USED IN JAPHYC, GQPHYC)
+		
+		//            IGEOM  - INTEGER ARRAY
+		//                     THE INTEGER VECTOR IGEOM PREVIOUSLY SET UP BY 
+		//                     JAPHYC.
+		
+		//            RGEOM  - REAL ARRAY
+		//                     THE REAL VECTOR RGEOM PREVIOUSLY SET UP BY JAPHYC.
+		
+		//            ISNPH  - INTEGER ARRAY
+		//                     THE INTEGER VECTOR ISNPH PREVIOUSLY SET UP BY 
+		//                     JAPHYC.
+		
+		//            RSNPH  - REAL ARRAY
+		//                     THE REAL VECTOR RSNPH PREVIOUSLY SET UP BY JAPHYC.
+		
+		//            IQUPH  - INTEGER ARRAY
+		//                     THE INTEGER VECTOR IQUPH PREVIOUSLY SET UP BY
+		//                     GQPHYC.
+		
+		//            RQUPH  - REAL ARRAY
+		//                     THE REAL ARRAY PREVIOUSLY SET UP BY GQPHYC.
+		
+		//            ZQUPH  - COMPLEX ARRAY
+		//                     THE COMPLEX ARRAY PREVIOUSLY SET UP BY GQPHYC.
+		
+		//            RWORK  - REAL ARRAY
+		//                     REAL WORKING VECTOR OF SIZE AT LEAST 
+		//                              (NARCS + 1)*NQPTS 
+		//                     WHERE NARCS, NQPTS ARE INPUT ARGUMENTS TO JAPHYC.
+		//                     (NOTE: NARCS=IGEOM(1), NQPTS=IGEOM(2))
+		
+		//             CHNL  - INTEGER
+		//                     DEFINES AN OUTPUT CHANNEL THAT MAY BE USED FOR
+		//                     WRITING THE FILES <JBNM>ca, <JBNM>cl.
+		
+		//         ON EXIT
+		//            ISNCA  - INTEGER ARRAY
+		//                     AN INTEGER VECTOR OF SIZE AT LEAST
+		//                        4*IBNDS(1) + 6 ;
+		//                     ISNCA MAINLY STORES POINTERS TO ACCESS RSNCA AND
+		//                     ZSNCA.
+		
+		//            RSNCA  - REAL ARRAY
+		//                     A REAL VECTOR OF SIZE AT LEAST
+		//                         2*IBNDS(1) + (4 + 6*NQPTS)*(NARCS + 1) + 2, 
+		//                     WHERE NARCS, NQPTS ARE INPUT ARGUMENTS TO JAPHYC.
+		//                     (NOTE: NARCS=IGEOM(1), NQPTS=IGEOM(2))
+		//                     STORES DATA RELATING TO THREE-TERM RECURRENCE
+		//                     SCHEMES, ELEMENTARY GAUSS-JACOBI QUADRATURE RULES,
+		//                     AND THE ARGUMENTS OF SUB-ARC ENDPOINTS ON THE UNIT
+		//                     DISC.
+		
+		//            CSNCA  - COMPLEX ARRAY
+		//                     A COMPLEX VECTOR OF SIZE AT LEAST 2*IBNDS(2) + 1;
+		//                     STORES THE JACOBI COEFFICIENTS FOR THE COMPLEX
+		//                     (INVERSE) BOUNDARY CORRESPONDENCE FUNCTION AND
+		//                     ITS DERIVATIVE.
+		
+		//            IER    - INTEGER
+		//                     IF IER > 0 THEN AN ABNORMAL EXIT HAS OCCURRED;
+		//                     A MESSAGE TO DESCRIBE THE ERROR IS AUTOMATICALLY
+		//                     WRITTEN ON THE STANDARD OUTPUT CHANNEL AND THE
+		//                     LISTING FILE <JBNM>cl.
+		//                     IER=0 - NORMAL EXIT.
+		//                     IER>0 - ABNORMAL EXIT; THE ERROR MESSAGE SHOULD
+		//                             BE SELF EXPLANATORY.
+		  
+		
+		
+		// 4.     SUBROUTINES OR FUNCTIONS NEEDED
+		//              - THE CONFPACK LIBRARY.
+		//              - THE REAL FUNCTION R1MACH.
+		//              - THE USER SUPPLIED COMPLEX FUNCTIONS PARFUN AND DPARFN.
+		
+		
+		// 5.     FURTHER COMMENTS
+		//           - NOTE THAT THIS ROUTINE CAN ONLY BE USED  A F T E R  THE  
+		//             ROUTINES JAPHYC AND GQPHYC HAVE SUCCESSFULLY EXECUTED, 
+		//             AND THAT SOME INPUT ARGUMENTS FOR JACANP ARE OUTPUT VALUES
+		//             FROM JAPHYC AND GQPHYC.
+		//           - THE DATA WHICH MAY BE REQUIRED FOR LATER PROCESSING BY
+		//             OTHER CONFPACK ROUTINES IS WRITTEN ON THE FIEL <JBNM>ca,
+		//             WHERE <JBNM> IS COLLECTED FROM THE FILE jbnm PREVIOUSLY 
+		//             CREATED BY JAPHYC.
+		//           - A SUMMARY LISTING OF ACTIONS TAKEN IS AUTOMATICALLY
+		//             WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+		
+		// ......................................................................
+		//     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+		//     LAST UPDATE: 3 JULY 1990
+		// ......................................................................
+		     
+		//     LOCAL VARAIBLES
+		//
+		
+		//**** POINTERS USED TO PROCESS ARRAYS
+		
+		// INTEGER ACOEF,ACOFC,AICOC,AICOF,BCFSN,BCOEF,BCOFC,BFSNC,BICOC,
+		// BICOF,COARG,DGPOC,DGPOL,ERARC,H0VAL,H0VLC,HALEN,HIVAL,HIVLC,JACIN,
+		// JAINC,JATYP,JTYPC,LOSUB,LQSBF,LSUBC,MIDPT,NPPQF,PARNT,PHPAS,PRNSA,
+		// QUPTC,QUPTS,QUWTC,QUWTS,SOLNC,SOLUN,TPPQF,TRRAD,VARGC,VTARG,WPPQF,
+		// ZPPQF
+		
+		// OTHER SCALAR VARIABLES
+		
+		int I,MNCOF,MNEQN,MNSUA,MNSUC,NEQNS,NJCOG,PT,TNSUA,TNSUC;
+		double COLSC[] = new double[]{-1.0};
+		double INNRAD,LGTOL,PI,SUPER,THET0,NEWTL;
+		double DCAP0[] = new double[2];
+		double FACTR[] = new double[2];
+		//COMPLEX DCAP0,FACTR,CINRAD
+		
+		// EXTERNAL BCFSNG,CINRAD,IGNLVL,JCFIM5,OPQUD1,R1MACH,OUPTCA,OUPTCL,
+		// WRHEAD,WRTAIL
+		
+		// OUTPUT CONFPACK HEADING
+		
+		WRHEAD(3,0,null);
+		
+		NEWTL=Math.sqrt(EPS);
+		PI=Math.PI;
+		
+		NARCS=IGEOM[0];
+		NQPTS=IGEOM[1];
+		MNSUA=IGEOM[3];
+		TNSUA=ISNPH[2];
+		NEQNS=ISNPH[3];
+		MNEQN=ISNPH[5];
+		SUPER=RGEOM[0];
+		LGTOL=RGEOM[1];
+		MNCOF=IBNDS[1];
+		MNSUC=IBNDS[0];
+		MQUPH=IQUPH[3];
+		NJIND=NARCS+1;
+		TNGQP=NQPTS*NJIND;
+		
+		// ASSIGN FIXED DATA TO ISNCA, RSNCA
+		
+		ISNCA[0]=NARCS;
+		ISNCA[1]=NQPTS;
+		ISNCA[4]=MNSUC;
+		ISNCA[5]=MNCOF;
+		RSNCA[0]=LGTOL;
+		
+		// SET UP POINTERS TO IGEOM AND RGEOM, AS IN JAPHYC
+		
+		// SET UP POINTERS TO ELEMENTS IN ISNPH AND RSNPH,AS IN JAPHYC
+		
+		// SET UP POINTERS TO ELEMENTS IN IQUPH AND RQUPH, AS IN GQPHYC
+		
+		// SET UP POINTERS TO ELEMENTS IN ISNCA, RSNCA AND ZSNCA
+		
+	    // INITIALISE JACOBI INDECES *JAINC* FOR THE INVERSE MAP
+		
+		for (I=1; I <= NARCS; I++) {
+		    JAINC[I-1]=-JACIN[I-1]/(1.0+JACIN[I-1]);
+		}
+		JAINC[NJIND-1]=0.0;
+		
+		//     SET UP GAUSS-JACOBI QUADRATURE DATA FOR INVERSE MAP AND STORE IN
+		//     ARRAYS *QUPTC* AND *QUWTC*.  SET THE CORRESPONDING THREE TERM
+		//     RECURRENCE COEFFICIENTS AND STORE IN *ACOFC*, *BCOFC*.  DETERMINE
+		//     THE ZEROTH MOMENTS OF THE JACOBI DISTRIBUTIONS AND STORE IN 
+		//     *H0VLC*. ALSO SET UP THE DATA *AICOC*,*BICOC* AND *HICOC* FOR THE
+		//     INTEGRATED POLYNOMIALS NEEDED FOR PROCESSING AFTER THIS MODULE.
+		
+		OPQUD1(NJIND,NQPTS,JAINC,ACOFC,BCOFC,
+		     H0VLC,AICOC,BICOC,HIVLC,QUPTC,
+		     QUWTC,RWORK,IER);
+		if (IER[0] > 0) {
+			WRTAIL(3,0,IER[0],null);
+			return;
+		}
+		System.out.println("BASIC GAUSS QUADRATURE DATA DONE:");
+		
+		// SET UP THE ARRAY *RWORK* OF REFERENCE IGNORE LEVELS.
+		
+		IGNLVL(RWORK,COLSC,ACOFC,BCOFC,H0VLC,
+		     JAINC,NJIND,NQPTS,IER);
+		if (IER[0] > 0) {
+			WRTAIL(3,0,IER[0],null);
+			return;
+		}
+		
+		//     INITIALISE THE DATA RELATING TO THE DESCRIPTION OF THE DISCRET-
+		//     ISATION AND SOLUTION HOUSEKEEPING ON THE UNIT CIRCLE
+		
+		TNSUC=TNSUA;
+		     
+		for (I=1; I <= TNSUA; I++) {
+		    DGPOC[I-1]=NQPTS-1;
+		    JTYPC[I-1]=JATYP[I-1];
+		    PHPAS[I-1]=-1.0;
+		    PRNSA[I-1]=I;
+		    VARGC[I-1]=VTARG[I-1];
+		} // for (I=1; I <= TNSUA; I++)
+		VARGC[TNSUA]=VTARG[TNSUA];
+		PHPAS[TNSUA]=-1.0;
+		COARG[0]=VARGC[0];
+		PT=1;
+		for (I=2; I <= TNSUA; I++) {
+		    if (PARNT[I-1] != PT) {
+		        PT=PARNT[I-1];
+		        COARG[PT-1]=VARGC[I-1];
+		    }
+		} // for (I=2; I <= TNSUA; I++)
+		COARG[NARCS]=COARG[0]+2.0*PI;
+		
+		// SET UP THE JACOBI COEFFICIENTS OF THE COMPLEX DENSITY FOR
+		// THE INVERSE MAP
+		
+		JCFIM5(DGPOC,IER,JTYPC,LSUBC,
+		     PHPAS,PRNSA,SOLNC,TNSUC,VARGC,
+		     AICOF,ACOEF,ACOFC,BICOF,BCFSN,
+		     BCOEF,BCOFC,CENTR,DGPOL,ERARC,
+		     H0VAL,H0VLC,HIVAL,HALEN,INTER,
+		     JACIN,JAINC,JATYP,LGTOL,LOSUB,
+		     MIDPT,MNCOF,MNSUC,NJIND,NQPTS,PARNT,QUPTC,
+		     QUWTC,RWORK,SOLUN,NEWTL,VTARG);
+		if (IER[0] > 0) {
+			WRTAIL(3,0,IER[0],null);
+			return;
+		}
+		NJCOG=LSUBC[TNSUC-1]+DGPOC[TNSUC-1];
+		ISNCA[2]=TNSUC;
+		ISNCA[3]=NJCOG;
+		System.out.println("JACOBI COEFFICIENTS DONE:");
+		
+		// COMPUTE THE COMPLEX INNER RADIUS FOR INTERIOR DOMAINS OR THE
+		// COMPLEX CAPACITY FOR EXTERIOR DOMAINS,  STORING RELEVANT VALUE
+		// IN *DCAP0*
+		
+		THET0=VTARG[0];
+		FACTR[0] = Math.cos(THET0);
+		FACTR[1] = Math.sin(THET0);
+		/*      DCAP0=CINRAD(NARCS,NQPTS,TNSUA,ISNPH(DGPOL),ISNPH(JATYP),
+		     +ISNPH(LOSUB),IQUPH(LQSBF),IQUPH(NPPQF),IGEOM(PARNT),RSNPH(ACOEF),
+		     +RSNPH(BCOEF),RSNPH(H0VAL),RGEOM(HALEN),RSNPH(JACIN),LGTOL,
+		     +RGEOM(MIDPT),RSNPH(QUPTS),RSNPH(QUWTS),RSNPH(SOLUN),RQUPH(TPPQF),
+		     +RQUPH(TRRAD),RQUPH(WPPQF),CENTR,FACTR,ZQUPH(ZPPQF),IER)
+		      IF (IER .GT. 0) THEN
+		        GOTO 999
+		      ENDIF
+		C
+		      IF (INTER) THEN
+		        INNRAD=ABS(DCAP0)
+		        WRITE(*,2) 'INNER RADIUS:',INNRAD
+		      ELSE
+		        DCAP0=EXP(-RSNPH(SOLUN+NEQNS-1))*DCAP0/ABS(DCAP0)
+		      ENDIF
+		      ZSNCA(1)=DCAP0
+		C
+		C     GET THE COEFFICIENTS BFSNC FOR THE COMPLEX BOUNDARY CORRESPONDENCE
+		C     FUNCTION FOR THE INVERSE MAP.
+		C
+		      CALL BCFSNG(TNSUC,ISNCA(DGPOC),ISNCA(JTYPC),ISNCA(LSUBC),
+		     +RSNCA(H0VLC),RSNCA(JAINC),ZSNCA(BFSNC),ZSNCA(SOLNC))
+		C
+		      CALL OUPTCL(ISNCA(DGPOC),ISNCA(JTYPC),LGTOL,ISNCA(LSUBC),NQPTS,
+		     +CHNL,IGEOM(PARNT),ISNCA(PRNSA),RWORK,ZSNCA(SOLNC),TNSUC,INTER,
+		     +INNRAD,IER)
+		C
+		C     OUTPUT ALL RESULTS REQUIRED FOR SUBSEQUENT PROCESSING
+		C
+		      CALL OUPTCA(ISNCA,RSNCA,ZSNCA,CHNL)
+		C
+		999   CONTINUE
+		C
+		      CALL WRTAIL(3,0,IER)
+		C */
+    } // private void JACANP
+
+
+   private void JCFIM5(int DGPOC[], int IER[], int JTYPC[], int LSUBC[], double PHPAS[],
+       int PRNSA[], double SOLNC[][], int TNSUC, double VARGC[], double AICOF[], double  ACOEF[],
+       double ACOFC[], double BICOF[], double BCFSN[], double BCOEF[], double BCOFC[],
+       double CENTR[], int DGPOL[], double ERARC[], double H0VAL[], double H0VLC[], double HIVAL[],
+       double HALEN[], boolean INTER, double JACIN[], double JAINC[], int JATYP[], double LGTOL,
+       int LOSUB[], double MIDPT[], int MNCOF, int MNSUC, int NJIND,int NQPTS, int PARNT[],
+       double QUPTC[], double QUWTC[], double RIGLL[], double SOLUN[], double NEWTL, 
+       double VTARG[]) {
+		
+       // INTEGER DGPOC(*),DGPOL(*),IER,JATYP(*),JTYPC(*),LOSUB(*),LSUBC(*),
+	   // +MNCOF,MNSUC,NJIND,NQPTS,PARNT(*),PRNSA(*),TNSUC
+	   // REAL AICOF(*),ACOEF(*),ACOFC(*),BICOF(*),BCFSN(*),BCOEF(*),
+	   // +BCOFC(*),ERARC(*),H0VAL(*),H0VLC(*),HIVAL(*),HALEN(*),JACIN(*),
+	   // +JAINC(*),LGTOL,MIDPT(*),QUPTC(*),QUWTC(*),PHPAS(*),RIGLL(*),
+	   // +SOLUN(*),NEWTL,VARGC(*),VTARG(*)
+	   // COMPLEX CENTR,SOLNC(*)
+	   // LOGICAL INTER
+		
+		//     TO CARRY OUT A DYNAMIC ESTIMATION OF THE JACOBI COEFFICIENTS OF
+		//     THE INVERSE COMPLEX DENSITY FUNCTIONS *RHO*; SEE #50 p115 et seq.
+		
+		//     IER=0  - NORMAL EXIT
+		//     IER=30 - LOCAL PARAMETER *MNDG* BELOW NEEDS INCREASING 
+		//     IER=31 - LOCAL PARAMETER *MNQD* BELOW NEEDS INCREASING 
+		//     IER=32 - THE SUBROUTINE PARAMETER *TNSUC* HAS REACHED ITS MAXIMUM
+		//              PERMITTED VALUE *MNSUC*; *MNSUC* SHOULD BE INCREASED IN 
+		//              CALLING PROGRAM
+		//     IER=33 - THE REQUIRED TOTAL NUMBER OF JACOBI COEFFICIENTS FOR THE
+		//              INVERSE BOUNDARY DENSITY EXCEEDS THE LIMIT *MNCOF*; 
+		//              *MNCOF* SHOULD BE INCREASED IN THE CALLING PROGRAM.
+		
+		//     LOCAL VARIABLES
+		
+       final int MNDG = 20;
+       final int MNQD = 128;
+	   int AJT,AJTC,DG,DGC,I,I1,IC,JT,JTC,K,K1,LOD,LODC,LOL,LOM,
+		    LOS,NQUAD,PSA,PT,QINTS;
+	   final double RFAC = 10.0;
+	   double AA,BB,BC1,BETA,BETAC,CONST,H0,H0C,H1,HA,HB1,HL,LL,MD,MXPT,
+		     QHLEN,RRHS,RSLN,SJT,SJTC,TERM,TOLIW,TT,UU,XX;
+	   double JACOF[] = new double[MNDG];
+	   double QAB[] = new double[MNQD];
+	   double QWT[] = new double[MNQD];
+	   double SVAL[] = new double[MNQD];
+	   double TVAL[] = new double[MNQD];
+	   double WORK[] = new double[MNDG];
+	   double NEW[][] = new double[MNDG][2];
+	   double OLD[][] = new double[MNDG][2];
+	   double RHOVL[][] = new double[MNQD][2];
+	   // COMPLEX NEW(MNDG),OLD(MNDG),RHOVL(MNQD)
+	   // EXTERNAL BISNEW,INVJCO,R1MACH
+		
+	   TOLIW=1.0*EPS;
+	   LOL=(NJIND-1)*NQPTS+1;
+	   IC=1;
+	   LOS=1;
+		
+	   /*while (true) {
+		
+	       if (IC > TNSUC) {
+		
+		       // NORMAL EXIT
+		
+		       IER[0]=0;
+		       return;
+	       } // if (IC > TNSUC)
+		
+		   // INITIALISATION FOR PARENT PHYSICAL SUBARC
+		
+		   PSA=PRNSA[IC-1];
+		   DG=DGPOL[PSA-1];
+		   JT=JATYP[PSA-1];
+		   AJT=Math.abs(JT);
+		   if (JT >= 0) {
+			   SJT = 1.0;
+		   }
+		   else {
+			   SJT = -1.0;
+		   }
+		   LOD=(AJT-1)*NQPTS+1;
+		   BETA=JACIN[AJT-1];
+		   H0=H0VAL[AJT-1];
+		   H1=HIVAL[AJT-1];
+		   LOM=LOSUB[PSA-1];
+		   HL=HALEN[PSA-1];
+		   MD=MIDPT[PSA-1];
+		   PT=PARNT[PSA-1];
+		      DO 20 I=1,DG+1
+		        JACOF(I)=SOLUN(I+LOM-1)
+		20    CONTINUE
+		      DO 30 I=2,DG+1,2
+		        JACOF(I)=SJT*JACOF(I)
+		30    CONTINUE
+		C
+		C     INITIALISATION FOR ARC NUMBER IC ON CIRCLE
+		C
+		40    CONTINUE
+		      DO 50 I=1,NQPTS
+		        OLD(I)=0E+0
+		50    CONTINUE
+		      QINTS=1
+		      QHLEN=1E+0
+		      NQUAD=NQPTS
+		      DGC=NQPTS-1
+		      IF (DGC+1 .GT. MNDG) THEN
+		        IER=30
+		        RETURN
+		      ENDIF
+		      JTC=JTYPC(IC)
+		      AJTC=ABS(JTC)
+		      SJTC=REAL(SIGN(1,JTC))
+		      LODC=(AJTC-1)*NQPTS+1
+		      BETAC=JAINC(AJTC)
+		      H0C=H0VLC(AJTC)
+		      HA=(VARGC(IC+1)-VARGC(IC))*5E-1
+		      RSLN=HA/ERARC(PSA)
+		      MXPT=RSLN/RFAC
+		      BC1=BETAC+1E+0
+		      HB1=1E+0
+		C
+		C     SET UP RIGHT HAND SIDE *CONST* FOR THE BOUNDARY CORRESPONDENCE
+		C     EQUATION THAT WILL BE USED TO COMPUTE PHYSICAL PARAMETERS 
+		C     CORRESPONDING TO GIVEN POINTS ON THE CIRCLE.
+		C
+		      IF (JT .LT. 0) THEN
+		        CONST=VTARG(PSA+1)-VARGC(IC+1)
+		      ELSE
+		        CONST=VARGC(IC)-VTARG(PSA)   
+		      ENDIF
+		C
+		C     SET UP AA,BB WHERE THE PHYSICAL ARC IS CORRESPONDS TO THE 
+		C     PARAMETER INTERVAL [AA,BB].
+		C
+		      IF (PHPAS(IC+1) .LE. PHPAS(IC)) THEN
+		        BB=1E+0
+		      ELSE
+		        BB=PHPAS(IC+1)
+		      ENDIF
+		      AA=PHPAS(IC)
+		60    CONTINUE
+		C
+		C     SET UP THE (POSSIBLY) COMPOSITE QUADRATURE RULE BASED ON *QINTS*
+		C     SUBINTERVALS
+		C
+		      IF (NQUAD .GT. MNQD) THEN
+		        IER=31
+		        RETURN
+		      ENDIF
+		      DO 70 K1=1,NQPTS
+		        I1=LODC+K1-1
+		        QWT(K1)=HB1*QUWTC(I1)
+		        QAB(K1)=-1E+0+QHLEN*(1E+0+QUPTC(I1))
+		70    CONTINUE
+		      K1=NQPTS
+		      DO 90 K=2,QINTS
+		        DO 80 I=1,NQPTS
+		          K1=K1+1
+		          I1=LOL+I-1
+		          XX=2E+0*K-1E+0+QUPTC(I1)
+		          QWT(K1)=HB1*XX**BETAC*QUWTC(I1)
+		          QAB(K1)=-1E+0+QHLEN*XX
+		80      CONTINUE
+		90    CONTINUE
+		C
+		C     ESTIMATE THE JACOBI COEFFICIENTS FOR THE INVERSE DENSITY FOR
+		C     ARC NUMBER IC ON THE CIRCLE.
+		C
+		      CALL INVJCO(NEW,AICOF(LOD),AA,ACOEF(LOD),ACOFC(LODC),
+		     +     BICOF(LOD),BB,BCFSN(LOM),BCOEF(LOD),BCOFC(LODC),BETA,BETAC,
+		     +     CENTR,CONST,DGC,DG,H0,H0C,H1,HA,HL,IER,INTER,JACOF,JTC,MD,
+		     +     NEWTL,NQUAD,PT,QAB,QWT,RHOVL,SJT,SJTC,SVAL,TOLIW,TVAL,WORK)
+		C
+		C     CHECK THAT THE SIZE OF THE HIGHEST DEGREE COEFFICIENT IS SMALL
+		C     ENOUGH.
+		C
+		      TERM=ABS(NEW(NQPTS))*RIGLL(LODC+NQPTS-1)/LGTOL
+		      IF (TERM .GT. 1E+0) THEN
+		C
+		C       COEFFICIENT IS TOO LARGE - SUBDIVIDE CIRCULAR ARC AND RESTART.
+		C   
+		C       FIRST FIND THE LOCAL PHYSICAL PARAMETER *TT* CORRESPONDING TO
+		C       THE MIDPOINT OF THE CURRENT CIRCULAR ARC NUMBER IC.
+		C
+		        RRHS=CONST+HA
+		        LL=AA
+		        UU=BB
+		        CALL BISNEW(IER,LL,TT,UU,AICOF(LOD),ACOEF(LOD),BICOF(LOD),
+		     +              BCFSN(LOM),BCOEF(LOD),BETA,DG,H0,H1,JACOF,NEWTL,SJT,
+		     +              RRHS,TOLIW)
+		        IF (IER.GT.0) THEN
+		          RETURN
+		        ENDIF
+		C
+		C       NEXT UPDATE VARIOUS DATA ITEMS TO DESCRIBE THE NEW SUBDIVISION
+		C       OF THE CIRCLE.
+		C
+		        DO 100 I=TNSUC+1,IC+1,-1
+		          PHPAS(I+1)=PHPAS(I)
+		          VARGC(I+1)=VARGC(I)
+		100     CONTINUE
+		        PHPAS(IC+1)=TT
+		        VARGC(IC+1)=(VARGC(IC+1)+VARGC(IC))*5E-1
+		        DO 110 I=TNSUC,IC,-1
+		          PRNSA(I+1)=PRNSA(I)
+		110     CONTINUE
+		        DO 120 I=TNSUC,IC+1,-1
+		          JTYPC(I+1)=JTYPC(I)
+		120     CONTINUE
+		        IF (JTC .GT. 0) THEN
+		          JTYPC(IC+1)=NJIND
+		        ELSE
+		          JTYPC(IC+1)=JTC
+		          JTYPC(IC)=NJIND
+		        ENDIF
+		        TNSUC=TNSUC+1
+		        IF (TNSUC .GE. MNSUC) THEN
+		          IER=32
+		          RETURN
+		        ENDIF
+		C
+		C       START AGAIN WITH THE NEW REFINED ARC NUMBER IC
+		C
+		        GOTO 40
+		      ENDIF
+		C
+		C     ARC REFINEMENT DOES NOT SEEM TO BE REQUIRED.  EXAMINE THE 
+		C     JACOBI COEFFICIENTS TO ESTIMATE THE DEGREE OF POLYNOMIAL
+		C     APPROXIMATION REQUIRED AND ALSO TEST FOR CONVERGENCE OF THE
+		C     SIGNIFICANT COEFFICIENTS.
+		C
+		130   CONTINUE
+		      DGC=DGC-1
+		      IF (DGC .LT. 0) THEN
+		C
+		C       ACCEPT THAT A POLYNOMIAL APPROXIMATION OF DEGREE ZERO WILL
+		C       DO FOR THIS ARC AND MOVE ON TO THE NEXT ARC.
+		C
+		        DGPOC(IC)=0
+		        LSUBC(IC)=LOS
+		        IF (LOS .GT. MNCOF) THEN
+		          IER=33
+		          RETURN
+		        ENDIF
+		        SOLNC(LOS)=NEW(1)
+		        LOS=LOS+1
+		        IC=IC+1
+		        GOTO 10
+		      ENDIF
+		C
+		      TERM=ABS(NEW(DGC+1))*RIGLL(LODC+DGC)/LGTOL
+		      IF (TERM .LE. 1E+0) THEN
+		C
+		C       THIS COEFFICIENT MAY BE IGNORED - CONSIDER THE COEFFICIENT FOR
+		C       NEXT LOWER DEGREE POLYNOMIAL.
+		C
+		        GOTO 130
+		      ENDIF
+		C
+		C     THE DEGREE IS POSSIBLY DGC+1; CHECK FOR CONVERGENCE OF THESE
+		C     COEFFICIENTS.
+		C
+		      I=DGC
+		140   CONTINUE
+		      TERM=ABS(NEW(I+1)-OLD(I+1))*RIGLL(LODC+I)/LGTOL
+		      IF (TERM .LE. 1E+0) THEN
+		C
+		C       CONVERGENCE FOR THIS TERM
+		C
+		        I=I-1
+		        IF (I .GT. 0) THEN
+		C
+		C         TAKE COEFFICIENT OF NEXT LOWER DEGREE.
+		C
+		          GOTO 140
+		        ELSE
+		C
+		C         ALL COEFFICIENTS HAVE CONVERGED.
+		C
+		          DGPOC(IC)=DGC+1
+		          LSUBC(IC)=LOS
+		          IF (LOS+DGC .GE. MNCOF) THEN
+		            IER=33
+		            RETURN
+		          ENDIF
+		          DO 150 I=1,DGC+2
+		            SOLNC(LOS+I-1)=NEW(I)
+		150       CONTINUE
+		          LOS=LOS+DGC+2
+		          IC=IC+1
+		          GOTO 10
+		        ENDIF
+		      ELSE
+		C
+		C       THIS TERM HASN'T CONVERGED - TRY AGAIN WITH REFINED QUADRATURE
+		C       RULE, IF RESOLUTION PERMITS.
+		C
+		        QINTS=QINTS*2
+		        NQUAD=QINTS*NQPTS
+		        IF (NQUAD .GE. MXPT) THEN
+		C
+		C         FURTHER REFINEMENT IS PRACTICALLY UNACCEPTABLE DUE TO LOCAL
+		C         CROWDING - ACCEPT CURRENT SOLUTION
+		C
+		          DGPOC(IC)=DGC+1
+		          LSUBC(IC)=LOS
+		          IF (LOS+DGC .GE. MNCOF) THEN
+		            IER=33
+		            RETURN
+		          ENDIF
+		          DO 160 I=1,DGC+2
+		            SOLNC(LOS+I-1)=NEW(I)
+		160       CONTINUE
+		          LOS=LOS+DGC+2
+		          IC=IC+1
+		          GOTO 10
+		        ENDIF
+		        QHLEN=QHLEN*5E-1
+		        HB1=QHLEN**BC1
+		        DGC=NQPTS-1
+		        DO 170 I=1,NQPTS
+		          OLD(I)=NEW(I)
+		170     CONTINUE
+		        GOTO 60
+		      ENDIF
+	   } // while (true) */
+    } // private void JCFIM5 
 
       /**
        * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
