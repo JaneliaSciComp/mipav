@@ -10801,11 +10801,38 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
        final int MNDG = 20;
        final int MNQD = 128;
-	   int AJT,AJTC,DG,DGC,I,I1,IC,JT,JTC,K,K1,LOD,LODC,LOL,LOM,
-		    LOS,NQUAD,PSA,PT,QINTS;
+       int PSA = 1;
+       int JT = 0;
+       int NQUAD = 0;
+       int LODC = 0;
+       int QINTS = 0;
+       int DG = 0;
+       int LOD = 0;
+       int DGC = 0;
+       int LOM = 0;
+       int JTC = 0;
+       int PT = 0;
+	   int AJT,AJTC,I,I1,IC,K,K1,LOL,LOS;
 	   final double RFAC = 10.0;
-	   double AA,BB,BC1,BETA,BETAC,CONST,H0,H0C,H1,HA,HB1,HL,LL,MD,MXPT,
-		     QHLEN,RRHS,RSLN,SJT,SJTC,TERM,TOLIW,TT,UU,XX;
+	   double HB1 = 0.0;
+	   double QHLEN = 0.0;
+	   double BETAC = 0.0;
+	   double AA = 0.0;
+	   double BB = 0;
+	   double CONST = 0.0;
+	   double H0 = 0.0;
+	   double H0C = 0.0;
+	   double H1 = 0.0;
+	   double HA = 0.0;
+	   double HL = 0.0;
+	   double BETA = 0.0;
+	   double SJT = 0.0;
+	   double SJTC = 0.0;
+	   double MD = 0.0;
+	   double TT = 0.0;
+	   double BC1 = 0.0;
+	   double MXPT = 0.0;
+	   double LL,RRHS,RSLN,TERM,TOLIW,UU,XX;
 	   double JACOF[] = new double[MNDG];
 	   double QAB[] = new double[MNQD];
 	   double QWT[] = new double[MNQD];
@@ -10815,6 +10842,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	   double NEW[][] = new double[MNDG][2];
 	   double OLD[][] = new double[MNDG][2];
 	   double RHOVL[][] = new double[MNQD][2];
+	   int i;
 	   // COMPLEX NEW(MNDG),OLD(MNDG),RHOVL(MNQD)
 	   // EXTERNAL BISNEW,INVJCO,R1MACH
 		
@@ -10822,10 +10850,13 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	   LOL=(NJIND-1)*NQPTS+1;
 	   IC=1;
 	   LOS=1;
+	   boolean do1 = true;
+	   boolean do2 = true;
 		
-	   /*while (true) {
+	   outer: while (true) {
 		
-	       if (IC > TNSUC) {
+	     if (do1) {
+		   if (IC > TNSUC) {
 		
 		       // NORMAL EXIT
 		
@@ -10853,245 +10884,611 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		   HL=HALEN[PSA-1];
 		   MD=MIDPT[PSA-1];
 		   PT=PARNT[PSA-1];
-		      DO 20 I=1,DG+1
-		        JACOF(I)=SOLUN(I+LOM-1)
-		20    CONTINUE
-		      DO 30 I=2,DG+1,2
-		        JACOF(I)=SJT*JACOF(I)
-		30    CONTINUE
-		C
-		C     INITIALISATION FOR ARC NUMBER IC ON CIRCLE
-		C
-		40    CONTINUE
-		      DO 50 I=1,NQPTS
-		        OLD(I)=0E+0
-		50    CONTINUE
-		      QINTS=1
-		      QHLEN=1E+0
-		      NQUAD=NQPTS
-		      DGC=NQPTS-1
-		      IF (DGC+1 .GT. MNDG) THEN
-		        IER=30
-		        RETURN
-		      ENDIF
-		      JTC=JTYPC(IC)
-		      AJTC=ABS(JTC)
-		      SJTC=REAL(SIGN(1,JTC))
-		      LODC=(AJTC-1)*NQPTS+1
-		      BETAC=JAINC(AJTC)
-		      H0C=H0VLC(AJTC)
-		      HA=(VARGC(IC+1)-VARGC(IC))*5E-1
-		      RSLN=HA/ERARC(PSA)
-		      MXPT=RSLN/RFAC
-		      BC1=BETAC+1E+0
-		      HB1=1E+0
-		C
-		C     SET UP RIGHT HAND SIDE *CONST* FOR THE BOUNDARY CORRESPONDENCE
-		C     EQUATION THAT WILL BE USED TO COMPUTE PHYSICAL PARAMETERS 
-		C     CORRESPONDING TO GIVEN POINTS ON THE CIRCLE.
-		C
-		      IF (JT .LT. 0) THEN
-		        CONST=VTARG(PSA+1)-VARGC(IC+1)
-		      ELSE
-		        CONST=VARGC(IC)-VTARG(PSA)   
-		      ENDIF
-		C
-		C     SET UP AA,BB WHERE THE PHYSICAL ARC IS CORRESPONDS TO THE 
-		C     PARAMETER INTERVAL [AA,BB].
-		C
-		      IF (PHPAS(IC+1) .LE. PHPAS(IC)) THEN
-		        BB=1E+0
-		      ELSE
-		        BB=PHPAS(IC+1)
-		      ENDIF
-		      AA=PHPAS(IC)
-		60    CONTINUE
-		C
-		C     SET UP THE (POSSIBLY) COMPOSITE QUADRATURE RULE BASED ON *QINTS*
-		C     SUBINTERVALS
-		C
-		      IF (NQUAD .GT. MNQD) THEN
-		        IER=31
-		        RETURN
-		      ENDIF
-		      DO 70 K1=1,NQPTS
-		        I1=LODC+K1-1
-		        QWT(K1)=HB1*QUWTC(I1)
-		        QAB(K1)=-1E+0+QHLEN*(1E+0+QUPTC(I1))
-		70    CONTINUE
-		      K1=NQPTS
-		      DO 90 K=2,QINTS
-		        DO 80 I=1,NQPTS
-		          K1=K1+1
-		          I1=LOL+I-1
-		          XX=2E+0*K-1E+0+QUPTC(I1)
-		          QWT(K1)=HB1*XX**BETAC*QUWTC(I1)
-		          QAB(K1)=-1E+0+QHLEN*XX
-		80      CONTINUE
-		90    CONTINUE
-		C
-		C     ESTIMATE THE JACOBI COEFFICIENTS FOR THE INVERSE DENSITY FOR
-		C     ARC NUMBER IC ON THE CIRCLE.
-		C
-		      CALL INVJCO(NEW,AICOF(LOD),AA,ACOEF(LOD),ACOFC(LODC),
-		     +     BICOF(LOD),BB,BCFSN(LOM),BCOEF(LOD),BCOFC(LODC),BETA,BETAC,
-		     +     CENTR,CONST,DGC,DG,H0,H0C,H1,HA,HL,IER,INTER,JACOF,JTC,MD,
-		     +     NEWTL,NQUAD,PT,QAB,QWT,RHOVL,SJT,SJTC,SVAL,TOLIW,TVAL,WORK)
-		C
-		C     CHECK THAT THE SIZE OF THE HIGHEST DEGREE COEFFICIENT IS SMALL
-		C     ENOUGH.
-		C
-		      TERM=ABS(NEW(NQPTS))*RIGLL(LODC+NQPTS-1)/LGTOL
-		      IF (TERM .GT. 1E+0) THEN
-		C
-		C       COEFFICIENT IS TOO LARGE - SUBDIVIDE CIRCULAR ARC AND RESTART.
-		C   
-		C       FIRST FIND THE LOCAL PHYSICAL PARAMETER *TT* CORRESPONDING TO
-		C       THE MIDPOINT OF THE CURRENT CIRCULAR ARC NUMBER IC.
-		C
-		        RRHS=CONST+HA
-		        LL=AA
-		        UU=BB
-		        CALL BISNEW(IER,LL,TT,UU,AICOF(LOD),ACOEF(LOD),BICOF(LOD),
-		     +              BCFSN(LOM),BCOEF(LOD),BETA,DG,H0,H1,JACOF,NEWTL,SJT,
-		     +              RRHS,TOLIW)
-		        IF (IER.GT.0) THEN
-		          RETURN
-		        ENDIF
-		C
-		C       NEXT UPDATE VARIOUS DATA ITEMS TO DESCRIBE THE NEW SUBDIVISION
-		C       OF THE CIRCLE.
-		C
-		        DO 100 I=TNSUC+1,IC+1,-1
-		          PHPAS(I+1)=PHPAS(I)
-		          VARGC(I+1)=VARGC(I)
-		100     CONTINUE
-		        PHPAS(IC+1)=TT
-		        VARGC(IC+1)=(VARGC(IC+1)+VARGC(IC))*5E-1
-		        DO 110 I=TNSUC,IC,-1
-		          PRNSA(I+1)=PRNSA(I)
-		110     CONTINUE
-		        DO 120 I=TNSUC,IC+1,-1
-		          JTYPC(I+1)=JTYPC(I)
-		120     CONTINUE
-		        IF (JTC .GT. 0) THEN
-		          JTYPC(IC+1)=NJIND
-		        ELSE
-		          JTYPC(IC+1)=JTC
-		          JTYPC(IC)=NJIND
-		        ENDIF
-		        TNSUC=TNSUC+1
-		        IF (TNSUC .GE. MNSUC) THEN
-		          IER=32
-		          RETURN
-		        ENDIF
-		C
-		C       START AGAIN WITH THE NEW REFINED ARC NUMBER IC
-		C
-		        GOTO 40
-		      ENDIF
-		C
-		C     ARC REFINEMENT DOES NOT SEEM TO BE REQUIRED.  EXAMINE THE 
-		C     JACOBI COEFFICIENTS TO ESTIMATE THE DEGREE OF POLYNOMIAL
-		C     APPROXIMATION REQUIRED AND ALSO TEST FOR CONVERGENCE OF THE
-		C     SIGNIFICANT COEFFICIENTS.
-		C
-		130   CONTINUE
-		      DGC=DGC-1
-		      IF (DGC .LT. 0) THEN
-		C
-		C       ACCEPT THAT A POLYNOMIAL APPROXIMATION OF DEGREE ZERO WILL
-		C       DO FOR THIS ARC AND MOVE ON TO THE NEXT ARC.
-		C
-		        DGPOC(IC)=0
-		        LSUBC(IC)=LOS
-		        IF (LOS .GT. MNCOF) THEN
-		          IER=33
-		          RETURN
-		        ENDIF
-		        SOLNC(LOS)=NEW(1)
-		        LOS=LOS+1
-		        IC=IC+1
-		        GOTO 10
-		      ENDIF
-		C
-		      TERM=ABS(NEW(DGC+1))*RIGLL(LODC+DGC)/LGTOL
-		      IF (TERM .LE. 1E+0) THEN
-		C
-		C       THIS COEFFICIENT MAY BE IGNORED - CONSIDER THE COEFFICIENT FOR
-		C       NEXT LOWER DEGREE POLYNOMIAL.
-		C
-		        GOTO 130
-		      ENDIF
-		C
-		C     THE DEGREE IS POSSIBLY DGC+1; CHECK FOR CONVERGENCE OF THESE
-		C     COEFFICIENTS.
-		C
-		      I=DGC
-		140   CONTINUE
-		      TERM=ABS(NEW(I+1)-OLD(I+1))*RIGLL(LODC+I)/LGTOL
-		      IF (TERM .LE. 1E+0) THEN
-		C
-		C       CONVERGENCE FOR THIS TERM
-		C
-		        I=I-1
-		        IF (I .GT. 0) THEN
-		C
-		C         TAKE COEFFICIENT OF NEXT LOWER DEGREE.
-		C
-		          GOTO 140
-		        ELSE
-		C
-		C         ALL COEFFICIENTS HAVE CONVERGED.
-		C
-		          DGPOC(IC)=DGC+1
-		          LSUBC(IC)=LOS
-		          IF (LOS+DGC .GE. MNCOF) THEN
-		            IER=33
-		            RETURN
-		          ENDIF
-		          DO 150 I=1,DGC+2
-		            SOLNC(LOS+I-1)=NEW(I)
-		150       CONTINUE
-		          LOS=LOS+DGC+2
-		          IC=IC+1
-		          GOTO 10
-		        ENDIF
-		      ELSE
-		C
-		C       THIS TERM HASN'T CONVERGED - TRY AGAIN WITH REFINED QUADRATURE
-		C       RULE, IF RESOLUTION PERMITS.
-		C
-		        QINTS=QINTS*2
-		        NQUAD=QINTS*NQPTS
-		        IF (NQUAD .GE. MXPT) THEN
-		C
-		C         FURTHER REFINEMENT IS PRACTICALLY UNACCEPTABLE DUE TO LOCAL
-		C         CROWDING - ACCEPT CURRENT SOLUTION
-		C
-		          DGPOC(IC)=DGC+1
-		          LSUBC(IC)=LOS
-		          IF (LOS+DGC .GE. MNCOF) THEN
-		            IER=33
-		            RETURN
-		          ENDIF
-		          DO 160 I=1,DGC+2
-		            SOLNC(LOS+I-1)=NEW(I)
-		160       CONTINUE
-		          LOS=LOS+DGC+2
-		          IC=IC+1
-		          GOTO 10
-		        ENDIF
-		        QHLEN=QHLEN*5E-1
-		        HB1=QHLEN**BC1
-		        DGC=NQPTS-1
-		        DO 170 I=1,NQPTS
-		          OLD(I)=NEW(I)
-		170     CONTINUE
-		        GOTO 60
-		      ENDIF
-	   } // while (true) */
-    } // private void JCFIM5 
+		   for (I=1; I <= DG+1; I++) {
+		       JACOF[I-1]=SOLUN[I+LOM-2];
+		   }
+		   for (I=2; I <= DG+1; I +=2) {
+		        JACOF[I-1]=SJT*JACOF[I-1];
+		   }
+	     } // if (do1)
+	     do1 = true;
+		
+		   // INITIALISATION FOR ARC NUMBER IC ON CIRCLE
+		
+		   while (true) {
+			   if (do2) {
+		       for (I=1; I <= NQPTS; I++) {
+		           OLD[I-1][0]=0.0;
+		           OLD[I-1][1] = 0.0;
+		       }
+		       QINTS=1;
+		       QHLEN=1.0;
+		       NQUAD=NQPTS;
+		       DGC=NQPTS-1;
+		       if (DGC+1 > MNDG) {
+		           IER[0]=30;
+		           return;
+		       }
+		       JTC=JTYPC[IC-1];
+		       AJTC=Math.abs(JTC);
+		       if (JTC >= 0.0) {
+		    	   SJTC = 1.0;
+		       }
+		       else {
+		    	   SJTC = -1.0;
+		       }
+		       LODC=(AJTC-1)*NQPTS+1;
+		       BETAC=JAINC[AJTC-1];
+		       H0C=H0VLC[AJTC-1];
+		       HA=(VARGC[IC]-VARGC[IC-1])*0.5;
+		       RSLN=HA/ERARC[PSA-1];
+		       MXPT=RSLN/RFAC;
+		       BC1=BETAC+1.0;
+		       HB1=1.0;
+		
+		       // SET UP RIGHT HAND SIDE *CONST* FOR THE BOUNDARY CORRESPONDENCE
+		       // EQUATION THAT WILL BE USED TO COMPUTE PHYSICAL PARAMETERS 
+		       // CORRESPONDING TO GIVEN POINTS ON THE CIRCLE.
+		
+		       if (JT < 0) {
+		           CONST=VTARG[PSA]-VARGC[IC];
+		       }
+		       else {
+		           CONST=VARGC[IC-1]-VTARG[PSA-1];   
+		       }
+		
+		       // SET UP AA,BB WHERE THE PHYSICAL ARC IS CORRESPONDS TO THE 
+		       // PARAMETER INTERVAL [AA,BB].
+		
+		       if (PHPAS[IC] <= PHPAS[IC-1]) {
+		           BB=1.0;
+		       }
+		       else {
+		           BB=PHPAS[IC];
+		       }
+		       AA=PHPAS[IC-1];
+			   } // if (do2)
+			   do2 = true;
+		
+		       // SET UP THE (POSSIBLY) COMPOSITE QUADRATURE RULE BASED ON *QINTS*
+		       // SUBINTERVALS
+		
+		       if (NQUAD > MNQD) {
+		           IER[0]=31;
+		           return;
+		       }
+		       for (K1=1; K1 <= NQPTS; K1++) {
+		           I1=LODC+K1-1;
+		           QWT[K1-1]=HB1*QUWTC[I1-1];
+		           QAB[K1-1]=-1.0+QHLEN*(1.0+QUPTC[I1-1]);
+		       } // for (K1=1; K1 <= NQPTS; K1++)
+		       K1=NQPTS;
+		       for (K=2; K <= QINTS; K++) {
+		           for (I=1; I <= NQPTS; I++) {
+		               K1=K1+1;
+		               I1=LOL+I-1;
+		               XX=2.0*K-1.0+QUPTC[I1-1];
+		               QWT[K1-1]=HB1*Math.pow(XX,BETAC)*QUWTC[I1-1];
+		               QAB[K1-1]=-1.0+QHLEN*XX;
+		           } // for (I=1; I <= NQPTS; I++)
+		       } // for (K=2; K <= QINTS; K++)
+		
+		       // ESTIMATE THE JACOBI COEFFICIENTS FOR THE INVERSE DENSITY FOR
+		       // ARC NUMBER IC ON THE CIRCLE.
+		       double A1COF[]= new double[DG-1];
+		       double B1COF[] = new double[DG-1];
+		       for (i = 0; i < DG-1; i++) {
+		    	   A1COF[i] = AICOF[LOD+i-1];
+		    	   B1COF[i] = BICOF[LOD+i-1];
+		       }
+		       double ACOEFIN[]= new double[DG];
+		       double BCOEFIN[] = new double[DG];
+		       for (i = 0; i < DG; i++) {
+		    	   ACOEFIN[i] = ACOEF[LOD+i-1];
+		    	   BCOEFIN[i] = BCOEF[LOD+i-1];
+		       }
+		       double ACOFCIN[] = new double[DGC];
+		       double BCOFCIN[] = new double[DGC];
+		       for (i = 0; i < DGC; i++) {
+		    	   ACOFCIN[i] = ACOFC[LODC+i-1];
+		    	   BCOFCIN[i] = BCOFC[LODC+i-1];
+		       }
+		       double BCFSNIN[] = new double[DG+1];
+		       for (i = 0; i < DG+1; i++) {
+		    	   BCFSNIN[i] = BCFSN[LOM+i-1];
+		       }
+		       INVJCO(NEW,A1COF,AA,ACOEFIN,ACOFCIN,
+		          B1COF,BB,BCFSNIN,BCOEFIN,BCOFCIN,BETA,BETAC,
+		          CENTR,CONST,DGC,DG,H0,H0C,H1,HA,HL,IER,INTER,JACOF,JTC,MD,
+		          NEWTL,NQUAD,PT,QAB,QWT,RHOVL,SJT,SJTC,SVAL,TOLIW,TVAL,WORK);
+		
+		       // CHECK THAT THE SIZE OF THE HIGHEST DEGREE COEFFICIENT IS SMALL
+		       // ENOUGH.
+		
+		       TERM=zabs(NEW[NQPTS-1][0],NEW[NQPTS-1][1])*RIGLL[LODC+NQPTS-2]/LGTOL;
+		       if (TERM > 1.0) {
+		
+		           // COEFFICIENT IS TOO LARGE - SUBDIVIDE CIRCULAR ARC AND RESTART.
+		   
+		           // FIRST FIND THE LOCAL PHYSICAL PARAMETER *TT* CORRESPONDING TO
+		           // THE MIDPOINT OF THE CURRENT CIRCULAR ARC NUMBER IC.
+		
+		           RRHS=CONST+HA;
+		           LL=AA;
+		           UU=BB;
+		           BISNEW(IER,LL,TT,UU,A1COF,ACOEFIN,B1COF,
+		                  BCFSNIN,BCOEFIN,BETA,DG,H0,H1,JACOF,NEWTL,SJT,RRHS,TOLIW);
+		           if (IER[0] > 0) {
+		               return;
+		           }
+		
+		           // NEXT UPDATE VARIOUS DATA ITEMS TO DESCRIBE THE NEW SUBDIVISION
+		           // OF THE CIRCLE.
+		
+		           for (I=TNSUC+1; I >= IC+1; I--) {
+		               PHPAS[I]=PHPAS[I-1];
+		               VARGC[I]=VARGC[I-1];
+		           } // for (I=TNSUC+1; I >= IC+1; I--)
+		           PHPAS[IC]=TT;
+		           VARGC[IC]=(VARGC[IC]+VARGC[IC-1])*0.5;
+		           for (I=TNSUC; I >= IC; I--) {
+		               PRNSA[I]=PRNSA[I-1];
+		           }
+		           for (I=TNSUC; I >= IC+1; I--) {
+		               JTYPC[I]=JTYPC[I-1];
+		           }
+		           if (JTC > 0) {
+		               JTYPC[IC]=NJIND;
+		           }
+		           else {
+		               JTYPC[IC]=JTC;
+		               JTYPC[IC-1]=NJIND;
+		           }
+		           TNSUC=TNSUC+1;
+		           if (TNSUC >= MNSUC) {
+		               IER[0]=32;
+		               return;
+		           }
+		
+		           // START AGAIN WITH THE NEW REFINED ARC NUMBER IC
+		
+		          continue;
+		      } // if (TERM > 1.0)
+		      else {
+		    	  break;
+		      }
+		   } // while (true)
+		
+		   // ARC REFINEMENT DOES NOT SEEM TO BE REQUIRED.  EXAMINE THE 
+		   // JACOBI COEFFICIENTS TO ESTIMATE THE DEGREE OF POLYNOMIAL
+		   // APPROXIMATION REQUIRED AND ALSO TEST FOR CONVERGENCE OF THE
+		   // SIGNIFICANT COEFFICIENTS.
+		
+		   while (true) {
+		       DGC=DGC-1;
+		       if (DGC < 0) {
+		
+		           // ACCEPT THAT A POLYNOMIAL APPROXIMATION OF DEGREE ZERO WILL
+		           // DO FOR THIS ARC AND MOVE ON TO THE NEXT ARC.
+		
+		           DGPOC[IC-1]=0;
+		           LSUBC[IC-1]=LOS;
+		           if (LOS > MNCOF) {
+		               IER[0]=33;
+		               return;
+		           } // if (LOS > MNCOF)
+		           SOLNC[LOS-1][0]=NEW[0][0];
+		           SOLNC[LOS-1][1]=NEW[0][1];
+		           LOS=LOS+1;
+		           IC=IC+1;
+		           continue outer;
+		       } // if (DGC < 0)
+		
+		       TERM=zabs(NEW[DGC][0],NEW[DGC][1])*RIGLL[LODC+DGC-1]/LGTOL;
+		       if (TERM <= 1.0) {
+		
+		           // THIS COEFFICIENT MAY BE IGNORED - CONSIDER THE COEFFICIENT FOR
+		           // NEXT LOWER DEGREE POLYNOMIAL.
+		
+		           continue;
+		       }
+		       else {
+		    	   break;
+		       }
+		   } // while (true)
+		
+		   // THE DEGREE IS POSSIBLY DGC+1; CHECK FOR CONVERGENCE OF THESE
+		   // COEFFICIENTS.
+		
+		   I=DGC;
+		   while (true) {
+		       TERM=zabs(NEW[I][0]-OLD[I][0],NEW[I][1]-OLD[I][1])*RIGLL[LODC+I-1]/LGTOL;
+		      if (TERM <= 1.0) {
+		
+		          // CONVERGENCE FOR THIS TERM
+		
+		          I=I-1;
+		          if (I > 0) {
+		
+		              // TAKE COEFFICIENT OF NEXT LOWER DEGREE.
+		
+		              continue;
+		          } // if (I > 0)
+		          else { // I <= 0
+		
+		              // ALL COEFFICIENTS HAVE CONVERGED.
+		
+		              DGPOC[IC-1]=DGC+1;
+		              LSUBC[IC-1]=LOS;
+		              if (LOS+DGC >= MNCOF) {
+		                  IER[0]=33;
+		                  return;
+		              }
+		              for (I=1; I <= DGC+2; I++) {
+		                  SOLNC[LOS+I-2][0]=NEW[I-1][0];
+		                  SOLNC[LOS+I-2][1]=NEW[I-1][1];
+		              } // for (I=1; I <= DGC+2; I++)
+		              LOS=LOS+DGC+2;
+		              IC=IC+1;
+		              continue outer;
+		          } // else I <= 0
+		      } // if (TERM <= 1.0)
+		      else { // TERM > 1.0
+		
+		          // THIS TERM HASN'T CONVERGED - TRY AGAIN WITH REFINED QUADRATURE
+		          // RULE, IF RESOLUTION PERMITS.
+		
+		          QINTS=QINTS*2;
+		          NQUAD=QINTS*NQPTS;
+		          if (NQUAD >= MXPT) {
+		
+		              // FURTHER REFINEMENT IS PRACTICALLY UNACCEPTABLE DUE TO LOCAL
+		              // CROWDING - ACCEPT CURRENT SOLUTION
+		
+		              DGPOC[IC-1]=DGC+1;
+		              LSUBC[IC-1]=LOS;
+		              if (LOS+DGC >= MNCOF) {
+		                  IER[0]=33;
+		                  return;
+		              }
+		              for (I=1; I <= DGC+2; I++) {
+		                  SOLNC[LOS+I-2][0]=NEW[I-1][0];
+		                  SOLNC[LOS+I-2][1]=NEW[I-1][1];
+		              }
+		              LOS=LOS+DGC+2;
+		              IC=IC+1;
+		              continue outer;
+		          } // if (NQUAD >= MXPT)
+		          QHLEN=QHLEN*0.5;
+		          HB1=Math.pow(QHLEN,BC1);
+		          DGC=NQPTS-1;
+		          for (I=1; I <= NQPTS; I++) {
+		              OLD[I-1][0]=NEW[I-1][0];
+		              OLD[I-1][1]=NEW[I-1][1];
+		          } // for (I=1; I <= NQPTS; I++
+		        do1 = false;
+		        do2 = false;
+		        continue outer;
+		        } // while (true)
+	       } // else TERM > 1.0
+	   } // outer: while (true)
+    } // private void JCFIM5
+   
+   private void INVJCO(double SOLNC[][], double A1COF[], double AA, double ACOEF[], double ACOFC[],
+       double B1COF[], double BB, double BCFSN[], double BCOEF[], double BCOFC[], double BETA, double BETAC,
+       double CENTR[], double CONST, int DGPOC, int DGPOL, double H0VAL, double H0VLC, double H1VAL,
+       double HAANG, double HALEN, int IER[], boolean INTER, double JACOF[], int JTYPC, double MIDPT,
+       double NEWTL, int NQUAD, int PARNT, double QUPTC[], double QUWTC[], double RHOVL[][], double SJT,
+       double SJTC, double SVAL[], double TOLIW, double TVAL[], double WORK[]) {
+	   // INTEGER DGPOC,DGPOL,IER,JTYPC,NQUAD,PARNT
+	   // REAL AA,BB,BETA,BETAC,CONST,H0VAL,H0VLC,H1VAL,HAANG,HALEN,MIDPT,
+	   // +NEWTL,SJT,SJTC,TOLIW
+	   // REAL A1COF(*),ACOEF(*),ACOFC(*),B1COF(*),BCFSN(*),BCOEF(*),
+	   // +BCOFC(*),JACOF(*),QUPTC(*),QUWTC(*),SVAL(*),TVAL(*),WORK(*)
+	   // COMPLEX CENTR
+	   // COMPLEX SOLNC(*),RHOVL(*)
+	   // LOGICAL INTER
+		
+	   // COMPUTES THE JACOBI COEFFICIENT VECTOR  *SOLNC* FOR THE INVERSE  
+	   // DENSITY FUNCTION FOR THE PARTICULAR ARC SPECIFIED BY THE OTHER
+	   // PARAMETERS AND USING THE *NQUAD* POINT RULE STORED IN *QUPTC* AND
+	   // *QUWTS*.
+		
+	   // IER=0 - NORMAL EXIT
+		
+	   // LOCAL VARIABLES
+		
+	   int I,K;
+	   double LL,RRHS,UU;
+	   // EXTERNAL BISNEW,RHOFN
+		
+	   for (I=1; I <= NQUAD; I++) {
+	       SVAL[I-1]=SJTC*QUPTC[I-1];
+	   }
+		
+	   // GET LOCAL PHYSICAL PARAMETER VALUES *TVAL* CORRESPONDING TO 
+	   // QUADRATURE PARAMETERS *SVAL* ON CIRCULAR ARC
+		
+	   for (I=1; I <= NQUAD; I++) {
+	       RRHS=CONST+HAANG*(1.0+SJT*SVAL[I-1]);
+		   LL=AA;
+		   UU=BB;
+		   BISNEW(IER,LL,TVAL[I-1],UU,A1COF,ACOEF,B1COF,BCFSN,BCOEF,
+		    BETA,DGPOL,H0VAL,H1VAL,JACOF,NEWTL,SJT,RRHS,TOLIW);
+		   if (IER[0] > 0) {
+		       return;
+		   }
+	   } // for (I=1; I <= NQUAD; I++)
+		
+	   // GET VALUES OF DENSITY *RHOVL* CORRESPONDING TO *SVAL* AND
+	   // *TVAL* 
+		
+	   RHOFN(IER,RHOVL,ACOEF,BCOEF,BETA,BETAC,CENTR,DGPOL,H0VAL,
+		     HAANG,HALEN,INTER,MIDPT,NQUAD,PARNT,SJT,JACOF,SVAL,TVAL);  
+		
+		if (IER[0] > 0) {
+		    return;
+		}
+		
+		for (I=1; I <= 1+DGPOC; I++) {
+		    SOLNC[I-1][0]=0.0;
+		    SOLNC[I-1][1] = 0.0;
+		} // for (I=1; I <= 1+DGPOC; I++)
+		
+		WORK[0]=1.0/Math.sqrt(H0VLC);
+		for (I=1; I <= NQUAD; I++) {
+		    JAPAR7(WORK,QUPTC[I-1],ACOFC,BCOFC,DGPOC);
+		    for (K=1; K <= 1+DGPOC; K++) {
+		        SOLNC[K-1][0]=SOLNC[K-1][0]+QUWTC[I-1]*RHOVL[I-1][0]*WORK[K-1];
+		        SOLNC[K-1][1]=SOLNC[K-1][1]+QUWTC[I-1]*RHOVL[I-1][1]*WORK[K-1];
+		    } // for (K=1; K <= 1+DGPOC; K++)
+		} // for (I=1; I <= NQUAD; I++)
+		
+		if (JTYPC < 0) {
+		    for (K=2; K <= 1+DGPOC; K +=2) {
+		          SOLNC[K-1][0]=-SOLNC[K-1][0];
+		          SOLNC[K-1][1]=-SOLNC[K-1][1];
+		    } // for (K=2; K <= 1+DGPOC; K +=2)
+		} // if (JTYPC < 0)
+		
+		// NORMAL EXIT
+		
+        IER[0]=0;
+		
+    } // private void INVJCO
+   
+   private void BISNEW(int IER[], double LL, double TT, double UU, double A1COF[], double ACOEF[],
+       double B1COF[], double BCFSN[], double BCOEF[], double BETA, int DEG, double H0VAL, double H1VAL,
+       double JACOF[], double NEWTL, double SJT, double RRHS, double TOLIW) {
+	   // INTEGER DEG,IER
+	   //  REAL A1COF(*),ACOEF(*),B1COF(*),BCFSN(*),BCOEF(*),BETA,H0VAL,
+	   // +H1VAL,JACOF,LL,NEWTL,TT,UU,SJT,RRHS,TOLIW
+	   // Should be JACOF(*)
+		     
+		//     A MIXTURE OF BISECTION AND NEWTON'S METHOD TO SOLVE THE NON-LINEAR
+		//     BOUNDARY CORRESPONDENCE EQUATION
+		
+		//                 THETA(TT) = CONST
+		
+		//     FOR REAL PARAMETER TT GIVEN REAL CONST; SEE RB#50 P134.  THE
+		//     INTERVAL (LL,UU) SHOULD BRACKET TT. 
+		
+		//     IER=0   -  NORMAL EXIT
+		//     IER=34  -  FUNCTION HAS SAME SIGN AT LL AND UU
+		//     IER=35  -  ZERO FUNCTION DERIVATIVE DETECTED
+		
+		//     LOCAL VARIABLES
+	   final int MNITS = 10;
+	   final int NBSCT = 3;
+	   int NITS,STEPS;
+	   double DFT,EPS,FL,FT,FU,JACSUM,RDIFF,TUPI;
+	   double CO[];
+	   // EXTERNAL JACSUM
+	   int i;
+		
+	   TUPI=2.0*Math.PI;
+	   CO = new double[DEG];
+	   for (i = 0; i < DEG; i++) {
+		   CO[i] = BCFSN[1+i];
+	   }
+	   FL=JACSUM(SJT*LL,DEG-1,A1COF,B1COF,H1VAL,CO);
+	   FL=BCFSN[0]-(1.0-SJT*LL)*FL;
+	   FL=Math.pow((1.0+SJT*LL),(1.0+BETA))*FL-RRHS;
+		
+	   for (i = 0; i < DEG; i++) {
+		   CO[i] = BCFSN[1+i];
+	   }
+	   FU=JACSUM(SJT*UU,DEG-1,A1COF,B1COF,H1VAL,CO);
+	   FU=BCFSN[0]-(1.0-SJT*UU)*FU;
+	   FU=Math.pow((1.0+SJT*UU),(1.0+BETA))*FU-RRHS;
+		
+	   if (FL*FU > 0.0) {
+	       IER[0]=34;
+		   return;
+	   }
+		
+	   //  ENTER NEWTON ITERATION MODE
+		
+	   outer: while (true) {
+	       TT=(UU+LL)*0.5;
+		   NITS=0;
+		   middle: while (true) {
+			   for (i = 0; i < DEG; i++) {
+				   CO[i] = BCFSN[1+i];
+			   }
+		       FT=JACSUM(SJT*TT,DEG-1,A1COF,B1COF,H1VAL,CO);
+		       FT=BCFSN[0]-(1.0-SJT*TT)*FT;
+		       FT=Math.pow((1.0+SJT*TT),(1.0+BETA))*FT-RRHS;
+		       DFT=JACSUM(SJT*TT,DEG,ACOEF,BCOEF,H0VAL,JACOF);
+		       DFT=TUPI*Math.pow((1.0+SJT*TT),BETA)*DFT*SJT;
+		       if (DFT == 0.0) {
+		           IER[0]=35;
+		           return;
+		       }
+		       RDIFF=FT/DFT;
+		       TT=TT-RDIFF;
+		       NITS=NITS+1;
+		       if (Math.abs(RDIFF) < NEWTL) {
+		
+		           // NEWTON ITERATIONS HAVE CONVERGED FOR TT
+		
+		           IER[0]=0;
+		           return;
+		       }
+		       else if (TT <= LL || TT >= UU || NITS == MNITS) {
+		
+		           // PERFORM NBSCT BISECTION STEPS
+		
+		           STEPS=0;
+		           inner: while (true) {
+		               EPS=(UU-LL)*0.5;
+		               if (EPS < TOLIW) {
+		
+		                   // BISECTION ITERATIONS HAVE CONVERGED FOR TT
+		
+		                   IER[0]=0;
+		                   return;
+		               } // if (EPS < TOLIW)
+		               TT=(UU+LL)*0.5;
+		               for (i = 0; i < DEG; i++) {
+						   CO[i] = BCFSN[1+i];
+					   }
+		               FT=JACSUM(SJT*TT,DEG-1,A1COF,B1COF,H1VAL,CO);
+		               FT=BCFSN[0]-(1.0-SJT*TT)*FT;
+		               FT=Math.pow((1.0+SJT*TT),(1.0+BETA))*FT-RRHS;
+		
+		               if (FT*FL < 0.0) {
+		                   UU=TT;
+		                   FU=FT;
+		               }
+		               else {
+		                   LL=TT;
+		                   FL=FT;
+		               }
+		               STEPS=STEPS+1;
+		               if (STEPS == NBSCT) {
+		
+		                   // RE-START NEWTON MODE
+		
+		                   continue outer;
+		               }
+		               else {
+		
+		                   // CONTINUE WITH BISECTION
+		
+		                   continue inner;
+		               }
+		           } // inner: while (true)
+		       } // else if (TT <= LL || TT >= UU || NITS == MNITS)
+		       else {
+		
+		           // CONTINUE WITH NEWTON MODE
+		
+		           continue middle;
+		       }
+		   } // middle: while (true);
+	   } // outer: while (true)
+    } // private void BISNEW
+   
+   private void RHOFN(int IER[], double RHOVL[][], double ACOEF[], double BCOEF[], double BETA,
+       double BETAC, double CENTR[], int DGPOL, double H0VAL, double HAANG, double HALEN, boolean INTER,
+       double MIDPT, int NVALS, int PARNT, double SJT, double JACOF[], double SVAL[], double TVAL[]) {
+	   // INTEGER IER,DGPOL,NVALS,PARNT
+	   // REAL ACOEF(*),BCOEF(*),BETA,BETAC,H0VAL,HAANG,HALEN,
+	   // +MIDPT,SJT,JACOF(*),SVAL(*),TVAL(*)
+	   // COMPLEX CENTR,RHOVL(*)
+	   //LOGICAL INTER
+		
+	   //     GIVEN THE ARRAY *SVAL* OF PARAMETER VALUES OF POINTS ON A 
+	   //     CIRCULAR ARC AND THE ARRAY *TVAL* OF LOCAL PARAMETERS OF THE
+	   //     CORRESPONDING POINTS ON THE PHYSICAL SUBARC, TO DETERMINE THE
+	   //     ARRAY *RHOVL* OF VALUES OF THE FUNCTION *RHO* (SEE #50, p115)
+	   //     AT THESE PARAMETER VALUES.
+		
+	   //     THE FIRST ELEMENT IN VECTOR *JACOF* MUST BE THE FIRST COMPUTED
+	   //     JACOBI COEFFICIENT FOR THE RELEVANT PHYSICAL ARC WITH SIGN CHANGES
+	   //     APPROPRIATE TO THE JACOBI TYPE OF THE ARC.
+		
+	   //     THE FIRST ELEMENTS IN VECTORS *ACOEF* AND *BCOEF* MUST BE THE 
+	   //     FIRST THREE-TERM RECURRENCE COEFFICIENTS FOR THE RELEVANT PHYSICAL
+	   //     ARC.
+		
+	   //     IER=0  - NORMAL EXIT
+	   //     IER=36 - AN ELEMENT OF ARRAY *SVAL* IS EITHER +1 OR -1, A
+	   //              POSSIBILITY NOT ALLOWED BY THE CURRENT CODE.
+		
+	   //     LOCAL VARIABLES
+		
+	   int I;
+	   double PHI,TT,TUPI;
+	   double C1[] = new double[2];
+	   double CT[] = new double[2];
+	   // COMPLEX C1,CT,DPARFN,PARFUN
+	   // EXTERNAL DPARFN,JACSUM,PARFUN
+	   double cr[] = new double[1];
+	   double ci[] = new double[1];
+	   double denom;
+	   double TTIN[] = new double[2];
+	   double DOUT[];
+	   double POUT[];
+		
+	   TUPI=2.0*Math.PI;
+		
+	   for (I=1; I <= NVALS; I++) {
+	       TT=SJT*TVAL[I-1];
+		   PHI=JACSUM(TT,DGPOL,ACOEF,BCOEF,H0VAL,JACOF);
+		   RHOVL[I-1][0]=TUPI*Math.pow((1.0+TT),BETA)*PHI;
+		   RHOVL[I-1][1] = 0.0;
+		   // AT THIS POINT RHOVL STORES THE BOUNDARY CORRESPONDENCE
+		   // DERIVATIVE.
+	   } // for (I=1; I <= NVALS; I++)
+		
+	   for (I=1; I <= NVALS; I++) {
+	       if (1.0+SJT*SVAL[I-1] == 0.0) {
+		       IER[0]=36;
+		       return;
+	       }
+	       else {
+	    	   zdiv(HAANG,0.0,RHOVL[I-1][0],RHOVL[I-1][1],cr,ci);
+	    	   denom = Math.pow((1.0+SJT*SVAL[I-1]), BETAC);
+	    	   RHOVL[I-1][0] = cr[0]/denom;
+	    	   RHOVL[I-1][1] = ci[0]/denom;
+	       }
+	   } // for (I=1; I <= NVALS; I++) 
+		
+	   C1[0] = 0.0;
+	   if (INTER) {
+		   C1[1] = 1.0/TUPI;
+	   }
+	   else {
+		   C1[1] = -1.0/TUPI;
+	   }
+		
+	   for (I=1; I <= NVALS; I++) {
+           TT=MIDPT+HALEN*TVAL[I-1];
+           TTIN[0] = TT;
+           TTIN[1] = 0.0;
+           DOUT = DPARFN(PARNT,TTIN);
+           zmlt(DOUT[0],DOUT[1],RHOVL[I-1][0]*HALEN,RHOVL[I-1][1]*HALEN,cr,ci);
+           CT[0] = cr[0];
+           CT[1] = ci[0];
+		   POUT = PARFUN(PARNT,TTIN);
+		   zdiv(CT[0],CT[1],POUT[0]-CENTR[0],POUT[1]-CENTR[1],cr,ci);
+		   CT[0] = cr[0];
+		   CT[1] = ci[0];
+		   zmlt(CT[0],CT[1],C1[0],C1[1],cr,ci);
+		   RHOVL[I-1][0] = cr[0];
+		   RHOVL[I-1][1] = ci[0];
+	   } // for (I=1; I <= NVALS; I++)
+	
+	   // NORMAL EXIT
+		
+	    IER[0]=0;
+		
+    } // private void RHOFN
+
+
+
 
       /**
        * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
