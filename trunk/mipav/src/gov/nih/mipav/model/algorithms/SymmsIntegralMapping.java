@@ -10600,9 +10600,11 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		int I,MNCOF,MNEQN,MNSUA,MNSUC,NEQNS,NJCOG,PT,TNSUA,TNSUC;
 		double COLSC[] = new double[]{-1.0};
-		double INNRAD,LGTOL,PI,SUPER,THET0,NEWTL;
+		double INNRAD = 0.0;
+		double LGTOL,PI,SUPER,THET0,NEWTL;
 		double DCAP0[] = new double[2];
 		double FACTR[] = new double[2];
+		double mult;
 		//COMPLEX DCAP0,FACTR,CINRAD
 		
 		// EXTERNAL BCFSNG,CINRAD,IGNLVL,JCFIM5,OPQUD1,R1MACH,OUPTCA,OUPTCL,
@@ -10644,6 +10646,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		// SET UP POINTERS TO ELEMENTS IN IQUPH AND RQUPH, AS IN GQPHYC
 		
 		// SET UP POINTERS TO ELEMENTS IN ISNCA, RSNCA AND ZSNCA
+		// ZSNCA called CSNCA elsewhere
 		
 	    // INITIALISE JACOBI INDECES *JAINC* FOR THE INVERSE MAP
 		
@@ -10728,41 +10731,45 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		THET0=VTARG[0];
 		FACTR[0] = Math.cos(THET0);
 		FACTR[1] = Math.sin(THET0);
-		/*      DCAP0=CINRAD(NARCS,NQPTS,TNSUA,ISNPH(DGPOL),ISNPH(JATYP),
-		     +ISNPH(LOSUB),IQUPH(LQSBF),IQUPH(NPPQF),IGEOM(PARNT),RSNPH(ACOEF),
-		     +RSNPH(BCOEF),RSNPH(H0VAL),RGEOM(HALEN),RSNPH(JACIN),LGTOL,
-		     +RGEOM(MIDPT),RSNPH(QUPTS),RSNPH(QUWTS),RSNPH(SOLUN),RQUPH(TPPQF),
-		     +RQUPH(TRRAD),RQUPH(WPPQF),CENTR,FACTR,ZQUPH(ZPPQF),IER)
-		      IF (IER .GT. 0) THEN
-		        GOTO 999
-		      ENDIF
-		C
-		      IF (INTER) THEN
-		        INNRAD=ABS(DCAP0)
-		        WRITE(*,2) 'INNER RADIUS:',INNRAD
-		      ELSE
-		        DCAP0=EXP(-RSNPH(SOLUN+NEQNS-1))*DCAP0/ABS(DCAP0)
-		      ENDIF
-		      ZSNCA(1)=DCAP0
-		C
-		C     GET THE COEFFICIENTS BFSNC FOR THE COMPLEX BOUNDARY CORRESPONDENCE
-		C     FUNCTION FOR THE INVERSE MAP.
-		C
-		      CALL BCFSNG(TNSUC,ISNCA(DGPOC),ISNCA(JTYPC),ISNCA(LSUBC),
-		     +RSNCA(H0VLC),RSNCA(JAINC),ZSNCA(BFSNC),ZSNCA(SOLNC))
-		C
-		      CALL OUPTCL(ISNCA(DGPOC),ISNCA(JTYPC),LGTOL,ISNCA(LSUBC),NQPTS,
-		     +CHNL,IGEOM(PARNT),ISNCA(PRNSA),RWORK,ZSNCA(SOLNC),TNSUC,INTER,
-		     +INNRAD,IER)
-		C
-		C     OUTPUT ALL RESULTS REQUIRED FOR SUBSEQUENT PROCESSING
-		C
-		      CALL OUPTCA(ISNCA,RSNCA,ZSNCA,CHNL)
-		C
-		999   CONTINUE
-		C
-		      CALL WRTAIL(3,0,IER)
-		C */
+		DCAP0=CINRAD(NARCS,NQPTS,TNSUA,DGPOL,JATYP,
+		     LOSUB,LQSBF,NPPQF,PARNT,ACOEF,
+		     BCOEF,H0VAL,HALEN,JACIN,LGTOL,
+		     MIDPT,QUPTS,QUWTS,SOLUN,TPPQF,
+		     TRRAD,WPPQF,CENTR,FACTR,ZPPQF,IER);
+		if (IER[0] > 0) {
+			WRTAIL(3,0,IER[0],null);
+			return;
+		}
+		
+		if (INTER) {
+		    INNRAD=zabs(DCAP0[0],DCAP0[1]);
+		    System.out.println("INNER RADIUS: " + INNRAD);
+		    Preferences.debug("INNER RADIUS: " + INNRAD + "\n", Preferences.DEBUG_ALGORITHM);
+		}
+		else {
+		    mult=Math.exp(-SOLUN[NEQNS-1])/zabs(DCAP0[0],DCAP0[1]);
+		    DCAP0[0] = DCAP0[0] * mult;
+		    DCAP0[1] = DCAP0[1] * mult;
+		}
+		CSNCA[0]=DCAP0[0];
+		CSNCA[1]=DCAP0[1];
+		
+		// GET THE COEFFICIENTS BFSNC FOR THE COMPLEX BOUNDARY CORRESPONDENCE
+		// FUNCTION FOR THE INVERSE MAP.
+		
+		BCFSNG(TNSUC,DGPOC,JTYPC,LSUBC,
+		     H0VLC,JAINC,BFSNC,SOLNC);
+		
+		OUPTCL(DGPOC,JTYPC,LGTOL,LSUBC,NQPTS,
+		     PARNT,PRNSA,RWORK,SOLNC,TNSUC,INTER,
+		     INNRAD,IER[0]);
+		
+		// OUTPUT ALL RESULTS REQUIRED FOR SUBSEQUENT PROCESSING
+		
+		// CALL OUPTCA(ISNCA,RSNCA,ZSNCA,CHNL)
+		
+		WRTAIL(3,0,IER[0],null);
+	    return;
     } // private void JACANP
 
 
@@ -11487,6 +11494,564 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
     } // private void RHOFN
 
+   // COMPLEX FUNCTION CINRAD
+   private double[] CINRAD(int NARCS, int NQPTS, int TNSUA, int DGPOL[], int JATYP[],
+       int LOSUB[], int LPQSB[], int NPPQF[], int PARNT[], double ACOEF[], double BCOEF[],
+       double H0VAL[], double HALEN[], double JACIN[], double LGTOL, double MIDPT[],
+       double QUPTS[], double QUWTS[], double SOLUN[], double TPPQF[], double TRRAD[],
+       double WPPQF[], double CENTR[], double FACTR[], double ZPPQF[][], int IER[]) {
+	   // INTEGER IER,NARCS,NQPTS,TNSUA
+	   // INTEGER DGPOL(*),JATYP(*),LOSUB(*),LPQSB(*),NPPQF(*),PARNT(*)
+	   // REAL LGTOL
+	   // REAL ACOEF(*),BCOEF(*),
+	   // +H0VAL(*),HALEN(*),JACIN(*),MIDPT(*),QUPTS(*),QUWTS(*),SOLUN(*),
+	   // +TPPQF(*),TRRAD(*),WPPQF(*)
+	   // COMPLEX CENTR,FACTR
+	   // COMPLEX ZPPQF(*)
+		
+	   //     TO COMPUTE THE COMPLEX INNER RADIUS (I.E. THE RECIPROCAL OF THE
+	   //     DERIVATIVE OF THE INTERIOR MAP AT THE CENTRE POINT OF THE PHYSICAL
+	   //     DOMAIN)
+		
+	   //      IER=0  - NORMAL EXIT
+	   //     IER=37 - LOCAL PARAMETER MXNQD NEEDS INCREASING
+	   //     IER=38 - LOCAL PARAMETER MNCOF NEEDS INCREASING
+	   //     IER=39 - THE CENTRE POINT IS PATHOLOGICALLY CLOSE TO THE
+	   //              BOUNDARY
+	   //     IER=40 - LOCAL PARAMETER MQIN1 MUST BE INCREASED    
+	
+	   // LOCAL VARIABLES
+		
+	   final int MNCOF = 32;
+	   final int MQIN1 = 11;
+	   final int MXNQD = 80;
+	   int QINTS[] = new int[1];
+	   int AJT,DEG,I,IA,K,J,J1,J2,JQ,JT,LIM,LOD,LOL,LOM,
+		     NQ,NQUAD,PT;
+	   final double PTHTL = 1.0E-3;
+	   final double LIMIT = 2.3562;
+	   double TOLOU[] = new double[1];
+	   double THET1 = 0.0;
+	   double RT1 = 0.0;
+	   double CURARG = 0.0;
+	   double STARG = 0.0;
+	   double STRT1 = 0.0;
+	   double STTH1 = 0.0;
+	   double AISUM,ANGLE,ARGBR,ARSUM,BETA,DIST,HL,ISUM,
+		     MD,MEAN,MINDS,NEWTL,PI,RR,RRB,RSUM,
+		     RT2,SCO,SS,SUM1,THET2,TT,TXI,TUPI,WT;
+	   double CT[] = new double[2];
+	   double XI[] = new double[2];
+	   double DIFF1[] = new double[2];
+	   double DIFF2[] = new double[2];
+	   double STDF1[] = new double[2];
+	   double ZXI[] = new double[2];
+	   double ZZ[] = new double[2];
+	   // COMPLEX CT,DPARFN,PARFUN,XI,DIFF1,DIFF2,
+	   // +STDF1,ZXI,ZZ
+	   boolean FIRST;
+	   // EXTERNAL ARGIN1,DPARFN,JACSUM,PARFUN,PPSBI1
+	   double JACOF[] = new double[MNCOF];
+	   double TSPEC[] = new double[MXNQD];
+	   double WSPEC[] = new double[MXNQD];
+	   double XENPT[] = new double[MQIN1];
+	   double JCOFC[][] = new double[MNCOF][2];
+	   double ZSPEC[][] = new double[MXNQD][2];
+	   // COMPLEX JCOFC(MNCOF),ZSPEC(MXNQD)
+	   double cr[] = new double[1];
+	   double ci[] = new double[1];
+	   double DIFF1IN[] = new double[2];
+	   double DIFF2IN[] = new double[2];
+	   double result[] = new double[2];
+	   double DOUT[];
+	   double POUT[];
+	   int I2;
+	   double PIN[] = new double[2];
+	   double expCT;
+	   
+	   NEWTL=Math.sqrt(EPS);
+	   PI=Math.PI;
+	   TUPI=2.0*PI;
+	   LOL=NARCS*NQPTS;
+	   ZZ[0]=CENTR[0];
+	   ZZ[1]=CENTR[1];
+	   RSUM=0.0;
+	   ISUM=0.0;
+	   FIRST=true;
+	   for (IA=1; IA <= TNSUA; IA++) {
+	       PT=PARNT[IA-1];
+		   JT=JATYP[IA-1];
+		   NQ=NPPQF[IA-1];
+		   K=LPQSB[IA-1]-1;
+		   HL=HALEN[IA-1];
+		   MD=MIDPT[IA-1];
+		   ARSUM=0.0;
+		   AISUM=0.0;
+		   for (JQ=1; JQ <= NQ; JQ++) {
+		       K=K+1;
+		       DIFF2[0]=ZZ[0]-ZPPQF[K-1][0];
+		       DIFF2[1]=ZZ[1]-ZPPQF[K-1][1];
+		       RT2=MD+HL*TPPQF[K-1];
+		       DIST=zabs(DIFF2[0],DIFF2[1]);
+		       if (DIST >= TRRAD[K-1]) {
+		           WT=WPPQF[K-1];
+		           if (WT != 0.0) {
+		               ARSUM=ARSUM+WT*Math.log(DIST);
+		               if (FIRST) {
+		                   CURARG=Math.atan2(DIFF2[1],DIFF2[0]);
+		                   THET2=CURARG;
+		                   FIRST=false;
+		                   STARG=CURARG;
+		               } // if (FIRST)
+		               else { // !FIRST
+		                   // CT=DIFF2/DIFF1
+		                   // CT=DIFF2*CONJG(DIFF1)
+		                   // ANGLE=ATAN2(AIMAG(CT),REAL(CT))
+		                   THET2=Math.atan2(DIFF2[1],DIFF2[0]);
+		                   ANGLE=THET2-THET1;
+		                   if (ANGLE <= -PI || ANGLE > PI) {
+		                       if (ANGLE > PI) {
+		                    	   ANGLE = ANGLE - TUPI;
+		                       }
+		                       else {
+		                    	   ANGLE = ANGLE + TUPI;
+		                       }
+		                   } // if (ANGLE <= -PI || ANGLE > PI)
+		                   if (Math.abs(ANGLE) >= LIMIT) {
+		                	   DIFF1IN[0] = -DIFF1[0];
+		                	   DIFF1IN[1] = -DIFF1[1];
+		                	   DIFF2IN[0] = -DIFF2[0];
+		                	   DIFF2IN[1] = -DIFF2[1];
+		                       ANGLE=ARGIN1(RT1,RT2,PT,DIFF1IN,DIFF2IN,ZZ,LIMIT);
+		                   }
+		                   CURARG=CURARG+ANGLE;
+		               } // else !FIRST
+		               AISUM=CURARG*WT+AISUM;
+		               RT1=RT2;
+		               DIFF1[0]=DIFF2[0];
+		               DIFF1[1]=DIFF2[1];
+		               THET1=THET2;
+		           } // if (WT != 0.0)
+		       } // if (DIST >= TRRAD[K-1])
+		       else { // DIST < TRRAD[K-1]
+		
+		           // ZZ IS TOO CLOSE TO ARC IA TO USE THE STANDARD RULE.
+		           // FIND THE QUADRATURE POINT NEAREST TO ZZ.
+		
+		           J1=JQ;
+		           MINDS=DIST;
+		           TXI=TPPQF[K-1];
+		           ZXI[0]=ZPPQF[K-1][0];
+		           ZXI[1]=ZPPQF[K-1][1];
+		           while (true) {
+		               J1=J1+1;
+		               if (J1 <= NQ) {
+		                   K=K+1;
+		                   DIFF2[0]=ZZ[0]-ZPPQF[K-1][0];
+		                   DIFF2[1]=ZZ[1]-ZPPQF[K-1][1];
+		                   DIST=zabs(DIFF2[0],DIFF2[1]);
+		                   if (DIST < MINDS) {
+		                       MINDS=DIST;
+		                       TXI=TPPQF[K-1];
+		                       ZXI[0]=ZPPQF[K-1][0];
+		                       ZXI[1]=ZPPQF[K-1][1];
+		                       continue;
+		                   } // if (DIST < MINDS)
+		               } // if (J1 <= NQ)
+		               break;
+		           } // while (true)
+		
+		           // PRELIMINARIES
+		
+		           if (JT > 0) {
+		               SS=1.0;
+		           }
+		           else {
+		               SS=-1.0;
+		           }
+		           AJT=Math.abs(JT);
+		           BETA=JACIN[AJT-1];
+		           DEG=DGPOL[IA-1];
+		           if (DEG+1 > MNCOF) {
+		               IER[0]=38;
+		               return result;
+		           }
+		           LOM=LOSUB[IA-1];
+		           LOD=(AJT-1)*NQPTS+1;
+		
+		           // NOW USE NEWTON'S METHOD TO ESTIMATE THE PARAMETRIC
+	               // PRE-IMAGE XI OF ZZ.
+		
+		           XI[0]=TXI;
+		           XI[1] = 0.0;
+		           CT[0]=MD+HL*XI[0];
+		           CT[1] = HL*XI[1];
+		           DOUT = DPARFN(PT,CT);
+		           zdiv(ZXI[0]-ZZ[0],ZXI[1]-ZZ[1],DOUT[0]*HL,DOUT[1]*HL,cr,ci);
+		           DIFF2[0] = cr[0];
+		           DIFF2[1] = ci[0];
+		           XI[0]=XI[0]-DIFF2[0];
+		           XI[1]=XI[1]-DIFF2[1];
+		           while (true) {
+		               if (zabs(DIFF2[0],DIFF2[1]) > NEWTL) {
+		                   CT[0]=MD+HL*XI[0];
+		                   CT[1] = HL*XI[1];
+		                   POUT = PARFUN(PT,CT);
+		                   DOUT = DPARFN(PT,CT);
+		                   zdiv(POUT[0]-ZZ[0],POUT[1]-ZZ[1],DOUT[0]*HL,DOUT[1]*HL,cr,ci);
+		                   DIFF2[0] = cr[0];
+		                   DIFF2[1] = ci[0];
+		                   XI[0]=XI[0]-DIFF2[0];
+		                   XI[1]=XI[1]-DIFF2[1];
+		                   continue;
+		               } // if (zabs(DIFF2[0],DIFF2[1]) > NEWTL)
+		               break;
+		           } // while (true)
+		           XI[0]=SS*XI[0];
+		           XI[1]=SS*XI[1];
+		
+		           if (Math.abs(XI[1]) < PTHTL && Math.abs(XI[0]) < 1.0+PTHTL) {
+		
+		               // THE CENTRE OF THE DOMAIN (I.E. ZZ) IS PATHOLOGICALLY 
+		               // CLOSE TO ARC IA AND WE DO NOT ALLOW THIS.
+		
+		               IER[0]=39;
+		               return result;
+		           }
+		           else {
+		
+		               // SET UP A SPECIAL COMPOSITE GAUSSIAN RULE TO HANDLE THIS
+		               // PARTICULAR POINT ZZ.
+		
+		               SCO=SS;
+		               for (J=1; J <= DEG+1; J++) {
+		                   J1=LOM+J-1;
+		                   SCO=SCO*SS;
+		                   JACOF[J-1]=SOLUN[J1-1]*SCO;
+		                   JCOFC[J-1][0]=SOLUN[J1-1]*SCO;
+		                   JCOFC[J-1][1] = 0.0;
+		               } // for (J=1; J <= DEG+1; J++)
+		               double ACOEFIN[] = new double[DEG];
+		               double BCOEFIN[] = new double[DEG];
+		               for (I = 0; I < DEG; I++) {
+		            	   ACOEFIN[I] = ACOEF[LOD+I-1];
+		            	   BCOEFIN[I] = BCOEF[LOD+I-1];
+		               }
+		               PPSBI1(XI,BETA,NQPTS,DEG,ACOEFIN,BCOEFIN,
+                              H0VAL[AJT-1],JCOFC,LGTOL,TOLOU,XENPT,QINTS,MQIN1,IER);
+		               if (IER[0] > 0) {
+		                   if (IER[0] == 29) {
+		                       IER[0]=40;
+		                   }
+		                   return result;
+		               } // if (IER[0] > 0)
+		               NQUAD=QINTS[0]*NQPTS;
+		               if (NQUAD > MXNQD) {
+		                   IER[0]=37;
+		                   return result;
+		               }
+		               K=0;
+		               SUM1=BETA+1.0;
+		               for (I=1; I <= QINTS[0]; I++) {
+		                   RR=(XENPT[I]-XENPT[I-1])*0.5;
+		                   MEAN=(XENPT[I]+XENPT[I-1])*0.5;
+		                   if (I == 1) {
+		                       RRB=Math.pow(RR,SUM1);
+		                       for (J=1; J <= NQPTS; J++) {
+		                           J1=LOD+J-1;
+		                           K=K+1;
+		                           TT=(MEAN+RR*QUPTS[J1-1]);
+		                           ACOEFIN = new double[DEG];
+		                           BCOEFIN = new double[DEG];
+		                           for (I2 = 0; I2 < DEG; I2++) {
+		                        	   ACOEFIN[I2] = ACOEF[LOD+I2-1];
+		                        	   BCOEFIN[I2] = BCOEF[LOD+I2-1];
+		                           }
+		                           WSPEC[K-1]=RRB*QUWTS[J1-1]*JACSUM(TT,DEG,ACOEFIN,
+		                              BCOEFIN,H0VAL[AJT-1],JACOF);
+		                           TT=TT*SS;
+		                           TSPEC[K-1]=MD+TT*HL;
+		                           CT[0]=TSPEC[K-1];
+		                           CT[1] = 0.0;
+		                           ZSPEC[K-1]=PARFUN(PT,CT);
+		                       } // for (J=1; J <= NQPTS; J++)
+		                   } // if (I == 1)
+		                   else { // I != 1
+		                       for (J=1; J <= NQPTS; J++) {
+		                           J1=LOL+J;
+		                           K=K+1;
+		                           TT=(MEAN+RR*QUPTS[J1-1]);
+		                           ACOEFIN = new double[DEG];
+		                           BCOEFIN = new double[DEG];
+		                           for (I2 = 0; I2 < DEG; I2++) {
+		                        	   ACOEFIN[I2] = ACOEF[LOD+I2-1];
+		                        	   BCOEFIN[I2] = BCOEF[LOD+I2-1];
+		                           }
+		                           WSPEC[K-1]=RR*QUWTS[J1-1]*Math.pow((1.0+TT),BETA)*JACSUM(TT,
+		                             DEG,ACOEFIN,BCOEFIN,H0VAL[AJT-1],JACOF);
+		                           TT=TT*SS;
+		                           TSPEC[K-1]=MD+TT*HL;
+		                           CT[0]=TSPEC[K-1];
+		                           CT[1] = 0.0;
+		                           ZSPEC[K-1]=PARFUN(PT,CT);
+		                       } // for (J=1; J <= NQPTS; J++)
+		                   } // else I != 1
+		               } // for (I=1; I <= QINTS[0]; I++)
+		               if (SS < 0.0) {
+		                   LIM=NQUAD;
+		                   if ((LIM%2) == 0) {
+		                       LIM=LIM/2;
+		                   }
+		                   else {
+		                       LIM=(LIM-1)/2;
+		                   }
+		                   J1=0;
+		                   J2=NQUAD+1;
+		                   for (J=1; J <= LIM; J++) {
+		                       J1=J1+1;
+		                       J2=J2-1;
+		                       TT=WSPEC[J1-1];
+		                       WSPEC[J1-1]=WSPEC[J2-1];
+		                       WSPEC[J2-1]=TT;
+		                       TT=TSPEC[J1-1];
+		                      TSPEC[J1-1]=TSPEC[J2-1];
+		                      TSPEC[J2-1]=TT;
+		                      CT[0]=ZSPEC[J1-1][0];
+		                      CT[1]=ZSPEC[J1-1][1];
+		                      ZSPEC[J1-1][0]=ZSPEC[J2-1][0];
+		                      ZSPEC[J1-1][1]=ZSPEC[J2-1][1];
+		                      ZSPEC[J2-1][0]=CT[0];
+		                      ZSPEC[J2-1][1]=CT[1];
+		                   } // for (J=1; J <= LIM; J++)
+		               } // if (SS < 0.0)
+		
+		               // THIS COMPLETES THE SETTING UP OF THE SPECIAL WEIGHTS
+		               // AND POINTS WSPEC AND ZSPEC.  NOW ESTIMATE THE INTEGRAL.
+		
+		               ARSUM=0.0;
+		               AISUM=0.0;
+		               if (IA == 1) {
+		                   FIRST=true;
+		               }
+		               else {
+		                   CURARG=STARG;
+		                   RT1=STRT1;
+		                   DIFF1[0]=STDF1[0];
+		                   DIFF1[1]=STDF1[1];
+		                   THET1=STTH1;
+		               }
+		               for (K=1; K <= NQUAD; K++) {
+		                   WT=WSPEC[K-1];
+		                   DIFF2[0]=ZZ[0]-ZSPEC[K-1][0];
+		                   DIFF2[1]=ZZ[1]-ZSPEC[K-1][1];
+		                   RT2=TSPEC[K-1];
+		                   DIST=zabs(DIFF2[0],DIFF2[1]);
+		                   ARSUM=ARSUM+WT*Math.log(DIST);
+		                   if (FIRST) {
+		                       CURARG=Math.atan2(DIFF2[1],DIFF2[0]);
+		                       THET2=CURARG;
+		                       FIRST=false;
+		                   } // if (FIRST)
+		                   else { // !FIRST
+		                       // CT=DIFF2/DIFF1
+		                       // CT=DIFF2*CONJG(DIFF1)
+		                       // ANGLE=ATAN2(AIMAG(CT),REAL(CT))
+		                       THET2=Math.atan2(DIFF2[1],DIFF2[0]);
+		                       ANGLE=THET2-THET1;
+		                       if (ANGLE <= -PI || ANGLE > PI) {
+		                    	   if (ANGLE > PI) {
+		                    		   ANGLE = ANGLE - TUPI;
+		                    	   }
+		                    	   else {
+		                    		   ANGLE = ANGLE + TUPI;
+		                    	   }
+		                       } // if (ANGLE <= -PI || ANGLE > PI)
+		                       if (Math.abs(ANGLE) >= LIMIT) {
+		                    	   DIFF1IN[0] = -DIFF1[0];
+		                    	   DIFF1IN[1] = -DIFF1[1];
+		                    	   DIFF2IN[0] = -DIFF2[0];
+		                    	   DIFF2IN[1] = -DIFF2[1];
+		                           ANGLE=ARGIN1(RT1,RT2,PT,DIFF1IN,DIFF2IN,ZZ,LIMIT);
+		                       } // if (Math.abs(ANGLE) >= LIMIT)
+		                       CURARG=CURARG+ANGLE;
+		                   } // else !FIRST
+		                   AISUM=CURARG*WT+AISUM;
+		                   RT1=RT2;
+		                   DIFF1[0]=DIFF2[0];
+		                   DIFF1[1]=DIFF2[1];
+		                   THET1=THET2;
+		               } // for (K=1; K <= NQUAD; K++)
+		               break;
+		           } // else !(Math.abs(XI[1]) < PTHTL && Math.abs(XI[0]) < 1.0+PTHTL)             
+		       } // else DIST < TRRAD[K-1]
+		
+		       // END OF QUADRATURE SUM LOOP 
+		
+		   } // for (JQ=1; JQ <= NQ; JQ++)
+		
+		   RSUM=RSUM+ARSUM;
+		   ISUM=ISUM+AISUM;
+		   if (JT < 0) {
+		
+		       // BRING THE ARGUMENT FORWARD TO THE CORNER POINT AND REPLACE
+		       // THE INCREMENTED CURARG VALUE BY AN INVERSE TANGENT
+		       // EVALUATION
+		       PIN[0] = 1.0;
+		       PIN[1] = 0.0;
+		       POUT = PARFUN(PT,PIN);
+		       DIFF2[0] = ZZ[0] - POUT[0];
+		       DIFF2[1] = ZZ[1] - POUT[1];
+		       RT2=1.0;
+		       THET2=Math.atan2(DIFF2[1],DIFF2[0]);
+		       ANGLE=THET2-THET1;
+		       if (ANGLE <= -PI || ANGLE > PI) {
+		    	   if (ANGLE > PI) {
+		    		   ANGLE = ANGLE - TUPI;
+		    	   }
+		    	   else {
+		    		   ANGLE = ANGLE + TUPI;
+		    	   }
+		       } // if (ANGLE <= -PI || ANGLE > PI)
+		       if (Math.abs(ANGLE) >= LIMIT) {
+		    	   DIFF1IN[0] = -DIFF1[0];
+            	   DIFF1IN[1] = -DIFF1[1];
+            	   DIFF2IN[0] = -DIFF2[0];
+            	   DIFF2IN[1] = -DIFF2[1];
+		           ANGLE=ARGIN1(RT1,RT2,PT,DIFF1IN,DIFF2IN,ZZ,LIMIT);
+		       } // if (Math.abs(ANGLE) >= LIMIT)
+		       CURARG=CURARG+ANGLE;
+		       ARGBR=(int)Math.round((CURARG-THET2)/TUPI);
+		       CURARG=THET2+TUPI*ARGBR;
+		       RT1=-1.0;
+		       DIFF1[0]=DIFF2[0];
+		       DIFF1[1]=DIFF2[1];
+		       THET1=THET2;
+		   } // if (JT < 0)          
+		   STARG=CURARG;
+		   STRT1=RT1;
+		   STDF1[0]=DIFF1[0];
+		   STDF1[1]=DIFF1[1];
+		   STTH1=THET1;
+		
+		   // END OF LOOP FOR CONTRIBUTIONS FROM ARC NUMBER IA
+		
+	   } // for (IA=1; IA <= TNSUA; IA++)
+	   CT[0] = RSUM;
+	   CT[1] = ISUM;
+	   expCT = Math.exp(CT[0]);
+	   CT[0] = expCT * Math.cos(CT[1]);
+	   CT[1] = expCT * Math.sin(CT[1]);
+	   zdiv(CT[0],CT[1],FACTR[0],FACTR[1],cr,ci);
+	   result[0] = cr[0];
+	   result[1] = ci[0];
+		
+	   IER[0]=0;
+	   return result;
+   } // private double[] CINRAD
+
+   private void BCFSNG(int TNSUC, int DGPOC[], int JTYPC[], int LSUBC[],
+       double H0VLC[], double JAINC[], double BFSNC[][], double SOLNC[][]) {
+       // INTEGER TNSUC
+       //  INTEGER DGPOC(*),JTYPC(*),LSUBC(*)
+       // REAL H0VLC(*),JAINC(*)
+       // COMPLEX BFSNC(*),SOLNC(*)
+
+       // PERFORMS VARIOUS PRELIMINARY TASKS TO PREPARE FOR THE POST-
+       // PROCESSING QUADRATURE CALCULATIONS.
+
+       // SETS UP THE ARRAY OF COEFFICIENTS BFSNC NEEDED FOR THE CALCULATION
+       // OF THE COMPLEX BOUNDARY CORRESPONDENCE FUNCTIONS FOR THE MAP
+       // CANONICAL --> PHYSICAL; THESE ARE SIMPLY RELATED TO THE SOLUTION 
+       // COEFFICIENT ARRAY SOLNC.
+
+       // LOCAL VARIABLES
+
+       int AJTC,DEG,I,J,J1,JTC,LO;
+       double B1,RTH0,TUPI;
+
+       TUPI=2.0*Math.PI;
+
+       for (I=1; I <= TNSUC; I++) {
+           JTC=JTYPC[I-1];
+           AJTC=Math.abs(JTC);
+           RTH0=Math.sqrt(H0VLC[AJTC-1]);
+           B1=JAINC[AJTC-1]+1.0;
+           DEG=DGPOC[I-1];
+           LO=LSUBC[I-1];
+
+           BFSNC[LO-1][0]=TUPI*SOLNC[LO-1][0]/(B1*RTH0);
+           BFSNC[LO-1][1]=TUPI*SOLNC[LO-1][1]/(B1*RTH0);
+           for (J=1; J <= DEG; J++) {
+               J1=LO+J;
+               BFSNC[J1-1][0]=TUPI*SOLNC[J1-1][0]/Math.sqrt(J*(J+B1));
+               BFSNC[J1-1][1]=TUPI*SOLNC[J1-1][1]/Math.sqrt(J*(J+B1));
+           } // for (J=1; J <= DEG; J++)
+
+           if (JTC < 0) {
+               for (J=1; J <= DEG; J += 2) {
+                   J1=LO+J;
+                   BFSNC[J1-1][0]=-BFSNC[J1-1][0];
+                   BFSNC[J1-1][1]=-BFSNC[J1-1][1];
+               } // for (J=1; J <= DEG; J += 2)
+           } // if (JTC < 0)
+
+       } // for (I=1; I <= TNSUC; I++)
+
+    } // private void BCFSNG
+   
+   private void OUPTCL(int DGPOC[], int JTYPC[], double LGTOL,int LSUBC[], int NQPTS,
+       int PARNT[], int PRNSA[], double RIGLL[], double SOLNC[][], int TNSUC,
+       boolean INTER, double INNRAD, int IER) {
+	   // INTEGER NQPTS,OC,TNSUC,IER
+	   // INTEGER DGPOC(*),JTYPC(*),LSUBC(*),PARNT(*),PRNSA(*)
+	   // REAL LGTOL,INNRAD
+	   // REAL RIGLL(*)
+	   // COMPLEX SOLNC(*)
+	   // LOGICAL INTER
+		
+	   // LOCAL VARIABLES
+		
+	   int AJT,DG,I,IC,L,LOM,LOD,PSA,PT;
+	   double MOD;
+	   double COF[] = new double[2];
+	   // COMPLEX COF
+	   // CHARACTER JBNM*4,OFL*6
+	   // EXTERNAL WRHEAD,WRTAIL
+		
+	   
+	   WRHEAD(3,0,null);
+		
+	   if (INTER) {
+		   Preferences.debug("INNER RADIUS = " + INNRAD + "\n", Preferences.DEBUG_ALGORITHM);
+	   }
+		        
+	/*	      WRITE(OC,'(/,A,/)') 'JACOBI COEFFICIENTS FOR INVERSE DENSITY FUNCT
+		     +IONS'
+		      DO 20 IC=1,TNSUC
+		        DG=DGPOC(IC)
+		        PSA=PRNSA(IC)
+		        PT=PARNT(PSA)
+		        WRITE(OC,*)
+		        WRITE(OC,101) IC,PSA,PT
+		        LOM=LSUBC(IC)
+		        AJT=ABS(JTYPC(IC))
+		        LOD=(AJT-1)*NQPTS+1
+		        DO 10 I=0,DG
+		          COF=SOLNC(LOM+I)
+		          MOD=ABS(COF)
+		          WRITE(OC,102) I,COF,MOD,LGTOL/RIGLL(LOD+I)
+		10      CONTINUE
+		20    CONTINUE
+		C
+		101   FORMAT('SUB ARC = ',I3,'; PHYSICAL PARENTAL SUB ARC = ',I3,' ON GL
+		     +OBAL ARC ',I2/,' N',T6,'REAL PART',T24,'IMAGINARY PART',T42,'MODUL
+		     +US',T56,'IGNORE LVL')
+		102   FORMAT(I2,T4,E16.8,T22,E16.8,T40,E11.3,T54,E11.3)
+		C
+		      CALL WRTAIL(3,OC,IER)
+		      CLOSE(OC)
+		C */
+   } // private void OUPTCL
 
 
 
