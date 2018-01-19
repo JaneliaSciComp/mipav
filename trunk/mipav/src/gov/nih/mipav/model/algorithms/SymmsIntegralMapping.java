@@ -244,14 +244,44 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     private double COARG[] = new double[NJIND];
     private double PHPAS[] = new double[IBNDS[0]];
     private double VARGC[] = new double[IBNDS[0]];
-	//            CSNCA  - COMPLEX ARRAY
+	//            ZSNCA  - COMPLEX ARRAY
+    //            Also called CSNCA elsewhere
 	//                     A COMPLEX VECTOR OF SIZE AT LEAST 2*IBNDS(2) + 1;
 	//                     STORES THE JACOBI COEFFICIENTS FOR THE COMPLEX
 	//                     (INVERSE) BOUNDARY CORRESPONDENCE FUNCTION AND
 	//                     ITS DERIVATIVE.
-    private double CSNCA[] = new double[2]; // At first location of CSNCA
+    private double ZSNCA[] = new double[2]; // At first location of ZSNCA
     private double BFSNC[][] = new double[IBNDS[1]][2];
     private double SOLNC[][] = new double[IBNDS[1]][2];
+    // From GQCANP:
+    //            MQIN1  - INTEGER
+	//                     DEFINES THE NUMBER OF PANELS ALLOWED IN A 
+	//                     COMPOSITE RULE.  SPECIFICALLY, MQIN1 = 1 + (THE
+	//                     MAXIMUM NUMBER OF PANELS IN A COMPOSITE RULE FOR
+	//                     A SINGLE SUB-ARC ON THE BOUNDARY)
+	private int MQIN1;
+	//            MQUCA  - INTEGER
+	//                     THE MAXIMUM NUMBER OF QUADRATURE POINTS ALLOWED
+	//                     IN THE FINAL GLOBAL RULE.  THE VALUE OF THIS
+	//                     ARGUMENT IS LINKED TO THOSE OF ARGUMENTS NQPTS
+	//                     AND IBNDS(1) PREVIOUSLY SUPPLIED TO JACANP VIA
+	//                     MQUCA <= (MQIN1-1)*NQPTS*IBNDS(1).  (NOTE THAT
+    //                     NQPTS = ISNCA(2) 'JACANP'IBNDS(1) =ISNCA(5) )
+	private int MQUCA = (MQIN1-1)*NQPTS*IBNDS[0];
+    //            IQUCA  - INTEGER ARRAY
+	//                     AN INTEGER VECTOR OF SIZE AT LEAST 2*IBNDS(1) + 4,
+	//                     WHERE IBNDS(1) (=ISNCA(5)) IS THE VALUE PREVIOUSLY
+	//                     SUPPLIED TO JACANP;  IQUCA MAINLY STORES POINTERS
+	//                     TO ACCESS ZQUCA.
+    private int IQUCA[] = new int[4];
+    private int LQSBG[] = new int[IBNDS[0]];
+    private int NPPQG[] = new int[IBNDS[0]];
+	//            ZQUCA  - COMPLEX ARRAY
+	//                     A COMPLEX VECTOR OF SIZE AT LEAST 2*MQUCA+1;
+	//                     STORES THE QUADRATURE POINTS AND WEIGHTS.
+    private double ZQUCA[] = new double[2]; // At first location of ZQUCA
+    private double WPPQG[][] = new double[MQUCA][2];
+    private double ZPPQG[][] = new double[MQUCA][2];
 	public SymmsIntegralMapping() {
 		
 	}
@@ -10545,7 +10575,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		//                     AND THE ARGUMENTS OF SUB-ARC ENDPOINTS ON THE UNIT
 		//                     DISC.
 		
-		//            CSNCA  - COMPLEX ARRAY
+		//            ZSNCA  - COMPLEX ARRAY
 		//                     A COMPLEX VECTOR OF SIZE AT LEAST 2*IBNDS(2) + 1;
 		//                     STORES THE JACOBI COEFFICIENTS FOR THE COMPLEX
 		//                     (INVERSE) BOUNDARY CORRESPONDENCE FUNCTION AND
@@ -10751,8 +10781,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		    DCAP0[0] = DCAP0[0] * mult;
 		    DCAP0[1] = DCAP0[1] * mult;
 		}
-		CSNCA[0]=DCAP0[0];
-		CSNCA[1]=DCAP0[1];
+		ZSNCA[0]=DCAP0[0];
+		ZSNCA[1]=DCAP0[1];
 		
 		// GET THE COEFFICIENTS BFSNC FOR THE COMPLEX BOUNDARY CORRESPONDENCE
 		// FUNCTION FOR THE INVERSE MAP.
@@ -10767,6 +10797,9 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		// OUTPUT ALL RESULTS REQUIRED FOR SUBSEQUENT PROCESSING
 		
 		// CALL OUPTCA(ISNCA,RSNCA,ZSNCA,CHNL)
+		NJIND=ISNCA[0]+1;
+	    TNGQP=ISNCA[1]*NJIND;
+
 		
 		WRTAIL(3,0,IER[0],null);
 	    return;
@@ -12025,34 +12058,871 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		   Preferences.debug("INNER RADIUS = " + INNRAD + "\n", Preferences.DEBUG_ALGORITHM);
 	   }
 		        
-	/*	      WRITE(OC,'(/,A,/)') 'JACOBI COEFFICIENTS FOR INVERSE DENSITY FUNCT
-		     +IONS'
-		      DO 20 IC=1,TNSUC
-		        DG=DGPOC(IC)
-		        PSA=PRNSA(IC)
-		        PT=PARNT(PSA)
-		        WRITE(OC,*)
-		        WRITE(OC,101) IC,PSA,PT
-		        LOM=LSUBC(IC)
-		        AJT=ABS(JTYPC(IC))
-		        LOD=(AJT-1)*NQPTS+1
-		        DO 10 I=0,DG
-		          COF=SOLNC(LOM+I)
-		          MOD=ABS(COF)
-		          WRITE(OC,102) I,COF,MOD,LGTOL/RIGLL(LOD+I)
-		10      CONTINUE
-		20    CONTINUE
-		C
-		101   FORMAT('SUB ARC = ',I3,'; PHYSICAL PARENTAL SUB ARC = ',I3,' ON GL
-		     +OBAL ARC ',I2/,' N',T6,'REAL PART',T24,'IMAGINARY PART',T42,'MODUL
-		     +US',T56,'IGNORE LVL')
-		102   FORMAT(I2,T4,E16.8,T22,E16.8,T40,E11.3,T54,E11.3)
-		C
-		      CALL WRTAIL(3,OC,IER)
-		      CLOSE(OC)
-		C */
+	   Preferences.debug("JACOBI COEFFICIENTS FOR INVERSE DENSITY FUNCTIONS\n", Preferences.DEBUG_ALGORITHM);
+	   for (IC=1; IC <= TNSUC; IC++) {
+	       DG=DGPOC[IC-1];
+		   PSA=PRNSA[IC-1];
+		   PT=PARNT[PSA-1];
+		   Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+		   Preferences.debug("SUB ARC = " + IC +"; PHYSICAL PARENTAL SUN ARC = " + PSA + " ON GLOBAL ARC " + PT + "\n",
+				   Preferences.DEBUG_ALGORITHM);
+		   Preferences.debug(" N   REAL PART         IMAGINARY PART    MODULUS       IGNORE LVL\n", Preferences.DEBUG_ALGORITHM);
+		   LOM=LSUBC[IC-1];
+		   AJT=Math.abs(JTYPC[IC-1]);
+		   LOD=(AJT-1)*NQPTS+1;
+		   for (I=0; I <= DG; I++) {
+		       COF[0]=SOLNC[LOM+I-1][0];
+		       COF[1]=SOLNC[LOM+I-1][1];
+		       MOD=zabs(COF[0],COF[1]);
+		       Preferences.debug(I + " " + COF[0] + " " + COF[1] + " " + MOD + " " + (LGTOL/RIGLL[LOD+I-1]) + "\n",
+		    		   Preferences.DEBUG_ALGORITHM);
+		   } // for (I=0; I <= DG; I++)
+	   } // for (IC=1; IC <= TNSUC; IC++)
+		
+		WRTAIL(3, 0,IER, null);
+		     
    } // private void OUPTCL
 
+   private void GQCANP(double RWORK[], int IER[]) {
+		
+       // INTEGER MQIN1,MQUCA,CHNL,IER
+	   // INTEGER IQUCA(*),ISNCA(*)
+	   // REAL RSNCA(*),RWORK(*)
+	   // COMPLEX ZQUCA(*),ZSNCA(*)
+		
+	   //  ......................................................................
+	
+	   // 1.     GQCANP
+	   //           COMPUTES A GLOBAL QUADRATURE RULE FOR APPROXIMATING THE
+	   //           BOUNDARY INTEGRAL REPRESENTATION OF THE MAP : CANONICAL -->
+	   //           PHYSICAL.
+		
+	   // 2.     PURPOSE
+	   //           THE ROUTINE SETS UP THE BOUNDARY QUADRATURE POINTS AND
+	   //           CORRESPONDING WEIGHTS FOR A COMPOSITE GAUSS-JACOBI/GAUSS-
+	   //           LEGENDRE RULE FOR ESTIMATING THE BOUNDARY INTEGRAL THAT
+	   //           APPEARS IN THE RESPRESENTATION FOR THE CONFORMAL MAP OF THE
+	   //           CANONICAL DOMAIN ONTO THE PHYSICAL DOMAIN.  THIS QUADRATURE
+	   //           RULE IS USED IN THE STANDARD NON-SINGULAR CASE WHEN THE
+	   //           FIELD POINT IN THE CANONICAL DOMAIN DOES NOT LIE CLOSE TO 
+	   //           THE UNIT CIRCLE.
+		
+	   // 3.     CALLING SEQUENCE
+	   //           CALL GQCANP(MQIN1,MQUCA,ISNCA,RSNCA,ZSNCA,RWORK,CHNL,IQUCA,
+	   //                       ZQUCA,IER)
+		
+	   //        PARAMETERS
+	   //         ON ENTRY
+	   //            MQIN1  - INTEGER
+	   //                     DEFINES THE NUMBER OF PANELS ALLOWED IN A 
+	   //                     COMPOSITE RULE.  SPECIFICALLY, MQIN1 = 1 + (THE
+	   //                     MAXIMUM NUMBER OF PANELS IN A COMPOSITE RULE FOR
+	   //                     A SINGLE SUB-ARC ON THE BOUNDARY)
+		
+	   //            MQUCA  - INTEGER
+	   //                     THE MAXIMUM NUMBER OF QUADRATURE POINTS ALLOWED
+	   //                     IN THE FINAL GLOBAL RULE.  THE VALUE OF THIS
+	   //                     ARGUMENT IS LINKED TO THOSE OF ARGUMENTS NQPTS
+	   //                     AND IBNDS(1) PREVIOUSLY SUPPLIED TO JACANP VIA
+	   //                     MQUCA <= (MQIN1-1)*NQPTS*IBNDS(1).  (NOTE THAT
+	   //                     NQPTS = ISNCA(2) 'JACANP'IBNDS(1) =ISNCA(5) )
+		
+	   //            ISNCA  - INTEGER ARRAY
+	   //                     THE INTEGER VECTOR PREVIOUSLY SET UP BY JACANP.
+		
+	   //            RSNCA  - REAL ARRAY
+	   //                     THE REAL VECTOR PREVIOUSLY SET UP BY JACANP.
+		
+	   //            ZSNCA  - COMPLEX ARRAY
+	   //                     THE COMPLEX VECTOR PREVIOUSLY SET UP BY JACANP.
+		
+	   //            RWORK  - REAL ARRAY
+	   //                     A WORKING VECTOR OF SIZE AT LEAST MQIN1.
+		
+	   //             CHNL  - INTEGER
+	   //                     DEFINES AN OUTPUT CHANNEL THAT MAY BE USED FOR
+	   //                     WRITING THE FILE <JBNM>cq.
+		
+	   //         ON EXIT
+	   //            IQUCA  - INTEGER ARRAY
+	   //                     AN INTEGER VECTOR OF SIZE AT LEAST 2*IBNDS(1) + 4,
+	   //                     WHERE IBNDS(1) (=ISNCA(5)) IS THE VALUE PREVIOUSLY
+	   //                     SUPPLIED TO JACANP;  IQUCA MAINLY STORES POINTERS
+	   //                     TO ACCESS ZQUCA.
+		
+	   //            ZQUCA  - COMPLEX ARRAY
+	   //                     A COMPLEX VECTOR OF SIZE AT LEAST 2*MQUCA+1;
+	   //                     STORES THE QUADRATURE POINTS AND WEIGHTS.
+		
+	   //            IER    - INTEGER
+	   //                     IF IER > 0 THEN AN ABNORMAL EXIT HAS OCCURRED;
+	   //                     A MESSAGE TO DESCRIBE THE ERROR IS AUTOMATICALLY
+	   //                     WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+	   //                     IER=0 - NORMAL EXIT.
+	   //                     IER>0 - ABNORMAL EXIT; THE ERROR MESSAGE SHOULD
+	   //                             BE SELF EXPLANATORY.
+		
+		
+	   // 4.     SUBROUTINES OR FUNCTIONS NEEDED
+	   //              - THE CONFPACK LIBRARY.
+	   //              - THE REAL FUNCTION R1MACH.
+	   //              - THE USER SUPPLIED COMPLEX FUNCTIONS PARFUN AND DPARFN.
+		
+		
+	   // 5.     FURTHER COMMENTS
+	   //           - NOTE THAT THIS ROUTINE CAN ONLY BE USED  A F T E R  THE  
+	   //             ROUTINE JACANP HAS SUCCESSFULLY EXECUTED, AND THAT SOME  
+	   //             INPUT ARGUMENTS FOR GQCANP ARE OUTPUT VALUES FROM JACANP.
+	   //           - THE GLOBAL QUADRATURE DATA ARE AUTOMATICALLY OUTPUT ON THE
+	   //             FILE <JBNM>cq, WHERE <JBNM> IS COLLECTED FROM THE FILE 
+	   //             jbnm PREVIOUSLY CREATED BY JAPHYC.
+	   //           - A SUMMARY LISTING OF ACTIONS TAKEN IS AUTOMATICALLY
+	   //             WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+		
+	   // ......................................................................
+	   //     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+	   //     LAST UPDATE: 3 JULY 1990
+	   // ......................................................................
+		     
+	   //     LOCAL VARIABLES
+		
+	   final int NINTS = 5;
+	   int TNPQP[] = new int[1];
+	   int MNCOF,MNSUC,TNSUC;
+	   final double DELTA = 0.2;
+	   double TOLOU[] = new double[1];
+	   double LGTOL;
+		
+	   // EXTERNAL POPQG1,OUPTCQ
+		
+	   // **** WRITE HEADING TO STANDARD OUTPUT CHANNEL
+		
+	   WRHEAD(4,0,null);
+		
+	   NARCS=ISNCA[0];
+	   NQPTS=ISNCA[1];
+	   TNSUC=ISNCA[2];
+	   MNSUC=ISNCA[4];
+	   MNCOF=ISNCA[5];
+	   LGTOL=RSNCA[0];
+	   ZQUCA[0]=ZSNCA[0];
+	   ZQUCA[1]=ZSNCA[1];
+		
+	   NJIND=NARCS+1;
+	   TNGQP=NJIND*NQPTS;
+		
+	   IQUCA[1]=TNSUC;
+	   IQUCA[2]=MNSUC;
+	   IQUCA[3]=MQUCA;
+		
+	   // COPY RELEVANT POINTERS TO ISNCA, RSNCA AND ZSNCA FROM JACANP
+		
+	   // SET UP POINTERS FOR QUADRATURE ARRAYS IQUCA AND ZQUCA
+		
+	   System.out.println("QUADRATURE RULES STARTED:");
+	   POPQG1(NPPQG,LQSBG,TNPQP,TOLOU,WPPQG,
+		     ZPPQG,MQUCA,MQIN1,NARCS,NINTS,NQPTS,TNSUC,DGPOC,
+		     JTYPC,LSUBC,DELTA,LGTOL,ACOFC,BCOFC,
+		     H0VLC,JAINC,QUPTC,QUWTC,SOLNC,
+		     VARGC,RWORK,IER);
+	   IQUCA[0]=TNPQP[0];
+	   System.out.println("QUADRATURE RULES DONE:");
+		
+	   // WRITE CLOSING MESSAGE TO STANDARD OUTPUT CHANNEL
+		
+	   WRTAIL(4,0,IER[0], null);
+		
+    } // private void GQCANP
+
+    private void POPQG1(int NPPQG[], int LPQSB[], int TNPQP[], double TOLOU[], double WPPQG[][],
+        double ZPPQG[][], int MNQUA, int MQIN1, int NARCS, int NINTS, int NQPTS, int TNSUC,
+        int DGPOC[], int JTYPC[], int LSUBC[], double DELTA, double LGTOL, double ACOFC[],
+		double BCOFC[], double H0VLC[], double JAINC[], double QUPTC[], double QUWTC[],
+		double SOLNC[][], double VARGC[], double XENPT[], int IER[]) {
+		// INTEGER IER,MQIN1,MNQUA,NARCS,NINTS,NQPTS,TNPQP,TNSUC
+		// INTEGER DGPOC(*),JTYPC(*),LSUBC(*),LPQSB(*),NPPQG(*)
+		// REAL DELTA,LGTOL,TOLOU
+		// REAL ACOFC(*),BCOFC(*),H0VLC(*),JAINC(*),QUPTC(*),QUWTC(*),
+		// +VARGC(*),XENPT(*)
+		// COMPLEX SOLNC(*),WPPQG(*),ZPPQG(*)
+		
+	    //      THE MAIN PURPOSE OF THIS ROUTINE IS TO SET UP THE COMPLEX ARRAY
+		//      WPPQG OF QUADRATURE WEIGHTS AND THE COMPLEX ARRAY ZPPQG OF
+		//      QUADRATURE POINTS ON THE PHYSICAL BOUNDARY; ALL THESE
+		//      DATA DEFINE THE POST-PROCESSING COMPOSITE GAUSSIAN
+		//      QUADRATURE RULES FOR THE ESTIMATE OF THE MAP G (CANONICAL ONTO
+		//      PHYSICAL) WHEN Z IS NOT TOO CLOSE TO THE BOUNDARY.
+		
+		//     THE ARRAY ELEMENT NPPQG(I) RECORDS THE NUMBER OF QUADRATURE
+		//     POINTS FOR THE SUBARC NUMBER I, I=1,...,TNSUC.  THE WEIGHTS AND
+		//     QUADRATURE POINTS FOR ARC NUMBER I ARE STORED IN WPPQG AND ZPPQG
+		//     STARTING AT THE ELEMENT WITH INDEX LPQSB(I).
+		
+		//     IER=0  - NORMAL EXIT 
+		//     IER=41 - THE TOTAL NUMBER OF QUADRATURE POINTS REQUESTED FOR 
+		//              THE WHOLE BOUNDARY EXCEEDS THE LIMIT DEFINED BY THE
+		//              INPUT PARAMETER MNQUA; MNQUA MUST BE INCREASED IN A
+		//              HIGHER LEVEL ROUTINE.
+		//     IER=42 - THE LOCAL PARAMETER MNCOF SHOULD BE INCREASED
+		//     IER=43 - THE REQUIRED NUMBER OF QUADRATURE INTERVALS EXCEEDS THAT
+		//              SPECIFIED BY THE GLOBAL PARAMETER MQIN1; MQIN1 MUST BE
+		//              INCREASED.
+		
+		//     LOCAL VARIABLES
+		
+		final int MNCOF = 32;
+		int QINTS[] = new int[1];
+    	int AJT,DEG,HI,HI1,I,I1,J,J1,J2,JT,K,LIM,LOD,LOL,LOM,M;
+    	final double RHO = 0.13;
+		double BETA,HA,MD,MEAN,RR,RRB,SS,SUM1,TT,SCO;
+		double CTT[] = new double[2];
+		// COMPLEX CTT,DPARFN,JACSUC,PARFUN
+		double JACOF[][] = new double[MNCOF][2];
+		// COMPLEX JACOF(MNCOF)
+		// EXTERNAL DPARFN,JACSUC,PARFUN,PPSBI7
+		double JOUT[];
+		
+		HI=0;
+		LOL=NARCS*NQPTS;
+		for (I1=1; I1 <= TNSUC; I1++) {
+		    JT=JTYPC[I1-1];
+		    if (JT > 0) {
+		        SS=1.0;
+		    }
+		    else {
+		        SS=-1.0;
+		    }
+		    AJT=Math.abs(JT);
+		    BETA=JAINC[AJT-1];
+		    DEG=DGPOC[I1-1];
+		    if (DEG+1 > MNCOF) {
+		        IER[0]=42;
+		        return;
+		    }
+		    LOM=LSUBC[I1-1];
+		    LOD=(AJT-1)*NQPTS+1;
+		    HA=(VARGC[I1]-VARGC[I1-1])*0.5;
+		    MD=(VARGC[I1]+VARGC[I1-1])*0.5;
+		
+		    SCO=SS;
+		    for (J=1; J <= DEG+1; J++) {
+		        J1=LOM+J-1;
+		        SCO=SCO*SS;
+		        JACOF[J-1][0]=SOLNC[J1-1][0]*SCO;
+		        JACOF[J-1][1]=SOLNC[J1-1][1]*SCO;
+		    } // for (J=1; J <= DEG+1; J++)
+		
+		    double ACOEF[] = new double[DEG];
+		    double BCOEF[] = new double[DEG];
+		    for (I = 0; I < DEG; I++) {
+		    	ACOEF[I] = ACOFC[LOD+I-1];
+		    	BCOEF[I] = BCOFC[LOD+I-1];
+		    }
+		    PPSBI7(DELTA,NINTS,BETA,NQPTS,DEG,ACOEF,
+                   BCOEF,H0VLC[AJT-1],JACOF,LGTOL,TOLOU,XENPT,
+	               QINTS,MQIN1,IER);
+		    if (IER[0] > 0) {
+		        if (IER[0] == 24) {
+		            IER[0]=43;
+		        }
+		        return;
+		    } // if (IER[0] > 0)
+		    NPPQG[I1-1]=QINTS[0]*NQPTS;
+		    LPQSB[I1-1]=HI+1;
+		    HI1=HI+NPPQG[I1-1];
+		    if (HI1 > MNQUA) {
+		        IER[0]=41;
+		        return;
+		    }
+		    K=HI;
+		    SUM1=BETA+1.0;
+		    for (I=1; I <= QINTS[0]; I++) {
+		        RR=(XENPT[I]-XENPT[I-1])*0.5;
+		        MEAN=(XENPT[I]+XENPT[I-1])*0.5;
+		        if (I == 1) {
+		            RRB=Math.pow(RR,SUM1);
+		            for (J=1; J <= NQPTS; J++) {
+		                J1=LOD+J-1;
+		                K=K+1;
+		                TT=(MEAN+RR*QUPTC[J1-1]);
+		                double A[] = new double[DEG];
+		                double B[] = new double[DEG];
+		                for (M = 0; M < DEG; M++) {
+		                	A[M] = ACOFC[LOD+M-1];
+		                	B[M] = BCOFC[LOD+M-1];
+		                }
+		                JOUT = JACSUC(TT,DEG,A,B,H0VLC[AJT-1],JACOF);
+		                WPPQG[K-1][0]=RRB*QUWTC[J1-1]*JOUT[0];
+		                WPPQG[K-1][1]=RRB*QUWTC[J1-1]*JOUT[1];
+		                TT=TT*SS;
+		                TT=MD+TT*HA;
+		                ZPPQG[K-1][0]=Math.cos(TT);
+		                ZPPQG[K-1][1]=Math.sin(TT);
+		            } // for (J=1; J <= NQPTS; J++)
+		        } // if (I == 1)
+		        else { // I != 1
+		        	for (J=1; J <= NQPTS; J++) {
+		                J1=LOL+J;
+		                K=K+1;
+		                TT=(MEAN+RR*QUPTC[J1-1]);
+		                double A[] = new double[DEG];
+		                double B[] = new double[DEG];
+		                for (M = 0; M < DEG; M++) {
+		                	A[M] = ACOFC[LOD+M-1];
+		                	B[M] = BCOFC[LOD+M-1];
+		                }
+		                JOUT = JACSUC(TT,DEG,A,B,H0VLC[AJT-1],JACOF);
+		                WPPQG[K-1][0]=RR*QUWTC[J1-1]*Math.pow((1.0+TT),BETA)*JOUT[0];
+		                WPPQG[K-1][1]=RR*QUWTC[J1-1]*Math.pow((1.0+TT),BETA)*JOUT[1];
+		                TT=TT*SS;
+		                TT=MD+TT*HA;
+		                ZPPQG[K-1][0]=Math.cos(TT);
+		                ZPPQG[K-1][1]=Math.sin(TT);
+		        	} // for (J=1; J <= NQPTS; J++)
+		        } // else I != 1
+		    } // for (I=1; I <= QINTS[0]; I++)
+		    if (SS < 0.0) {
+		        LIM=NPPQG[I1-1];
+		        if ((LIM%2) == 0) {
+		            LIM=LIM/2;
+		        }
+		        else {
+		            LIM=(LIM-1)/2;
+		        }
+		        J1=LPQSB[I1-1]-1;
+		        J2=HI1+1;
+		        for (J=1; J <= LIM; J++) {
+		            J1=J1+1;
+		            J2=J2-1;
+		            CTT[0]=WPPQG[J1-1][0];
+		            CTT[1]=WPPQG[J1-1][1];
+		            WPPQG[J1-1][0]=WPPQG[J2-1][0];
+		            WPPQG[J1-1][1]=WPPQG[J2-1][1];
+		            WPPQG[J2-1][0]=CTT[0];
+		            WPPQG[J2-1][1]=CTT[1];
+		            CTT[0]=ZPPQG[J1-1][0];
+		            CTT[1]=ZPPQG[J1-1][1];
+		            ZPPQG[J1-1][0]=ZPPQG[J2-1][0];
+		            ZPPQG[J1-1][1]=ZPPQG[J2-1][1];
+		            ZPPQG[J2-1][0]=CTT[0];
+		            ZPPQG[J2-1][1]=CTT[1];
+		        } // for (J=1; J <= LIM; J++)
+		    } // if (SS < 0.0)
+		    HI=HI1;
+		} // for (I1=1; I1 <= TNSUC; I1++)
+		
+		TNPQP[0]=HI;
+		
+		IER[0]=0;
+		
+    } // private void POPQG1
+    
+    // COMPLEX FUNCATION
+    private double[] JACSUC(double X, int N, double A[], double B[],
+        double H, double CO[][]) {
+        // INTEGER N
+        // REAL A(*),B(*),H,X
+        // COMPLEX CO(*)
+
+        // ..TO CALCULATE SUMMATION{CO(K+1)*P(K,X)},K=0(1)N, WHERE P(K,X)
+        // ..DENOTES THE ORTHONORMAL JACOBI POLYNOMIAL OF DEGREE K
+        // ..EVALUATED AT X, ARRAY CO STORES A GIVEN SET OF COEFFICIENTS,
+        // ..ARRAYS A,B STORE THE COEFFICIENTS IN THE THREE-TERM
+        // ..RECURRENCE FORMULA FOR THE JACOBI POLYNOMIALS (SEE ASONJ7)
+        // ..AND H IS THE SQUARED 2-NORM OF UNITY.
+
+        double PREV[] = new double[2];
+        double CURR[] = new double[2];
+        double NEXT[] = new double[2];
+    	// COMPLEX PREV,CURR,NEXT
+        int K;
+        double result[] = new double[2];
+
+        if (N == 0) {
+            result[0]=CO[0][0]/Math.sqrt(H);
+            result[1]=CO[0][1]/Math.sqrt(H);
+        }
+        else if (N > 0) {
+            PREV[0]=CO[N][0];
+            PREV[1]=CO[N][1];
+            CURR[0]=CO[N-1][0]+(X-B[N-1])*PREV[0]/A[N-1];
+            CURR[1]=CO[N-1][1]+(X-B[N-1])*PREV[1]/A[N-1];
+            for (K=N-2; K >= 0; K--) {
+                NEXT[0]=CO[K][0]+(X-B[K])*CURR[0]/A[K]-A[K]*PREV[0]/A[K+1];
+                NEXT[1]=CO[K][1]+(X-B[K])*CURR[1]/A[K]-A[K]*PREV[1]/A[K+1];
+                PREV[0]=CURR[0];
+                PREV[1]=CURR[1];
+                CURR[0]=NEXT[0];
+                CURR[1]=NEXT[1];
+            } //for (K=N-2; K >= 0; K--) 
+            result[0]=CURR[0]/Math.sqrt(H);
+            result[1]=CURR[1]/Math.sqrt(H);
+        } // else if (N > 0)
+        else {
+            result[0] = 0.0;
+            result[1] = 0.0;
+        }
+        return result; 
+    } // private double[] JACSUC
+
+    private void CNDPLT(boolean MAP11[], double RESMN[], double UPHYC[], double UCANP[], double CRRES,
+        String DASH[], String NEWD[], int IER[]) {
+    	
+    	// INTEGER CH0,CH1,IER
+    	// INTEGER IGEOM(*),ISNPH(*)
+    	// REAL RESMN,UPHYC,UCANP,CRRES
+    	// REAL RGEOM(*),RSNPH(*)
+    	// LOGICAL MAP11
+    	// CHARACTER DASH*(*),NEWD*(*)
+    	
+    	// ......................................................................
+    	
+    	// 1.     CNDPLT
+    	//           REPORTS ON THE CONDITION OF THE PROBLEM OF EVALUATING THE
+    	//           MAPPING FUNCTIONS AND ALSO OUTPUTS DATA FOR GRAPH PLOTTING.
+    	
+    	// 2.     PURPOSE
+    	//           THE ROUTINE COMPUTES CONDITION NUMBERS FOR THE PROBLEMS OF
+    	//           EVALUATING THE TWO MAPS PHYSICAL --> CANONICAL AND
+    	//           CANONICAL --> PHYSICAL AND COMPUTES THE ERROR THAT MAY BE
+    	//           EXPECTED (IN THE WORST CASE) IN THE RANGE OF EACH APPROX-
+    	//           IMATE MAP FROM A MACHINE PRECISION LEVEL ROUNDING ERROR IN 
+    	//           THE DOMAIN OF EACH MAP.
+    	//           THE ROUTINE ALSO COMPUTES THE LEAST RESOLUTION OF THE
+    	//           COMPUTED MAP : PHYSICAL --> CANONICAL OVER ALL SUB-ARCS ON
+    	//           THE PHYSICAL BOUNDARY.  THE RESOLUTION OF THE MAP FOR ANY
+    	//           PHYSICAL SUB-ARC IS DEFINED AS THE COMPUTED ANGULAR WIDTH OF
+    	//           THE IMAGE SUB-ARC ON THE UNIT DISC DIVIDED BY THE ESTIMATED
+    	//           MAXIMUM ERROR IN THE MODULUS OF THE MAP ON THE GIVEN SUB-
+    	//           ARC.  A LEAST RESOLUTION OF LESS THAN, SAY, 10 INDICATES
+    	//           THAT THERE ARE REGIONS OF SEVERE CROWDING AND THAT IT WILL
+    	//           BE PRACTICALLY IMPOSSIBLE TO COMPUTE THE INVERSE MAP
+    	//           EVERYWHERE ON THE CANONICAL DOMAIN.
+    	//           THE ROUTINE ALSO SEARCHES (NOT VERY EXHAUSTIVELY) FOR
+    	//           CHANGES OF SIGN IN THE COMPUTED BOUNDARY CORRESPONDENCE
+    	//           DERIVATIVE FOR THE MAP : PHYSICAL --> CANONICAL.  SUCH
+    	//           SIGN CHANGES MEAN THAT THE COMPUTED MAP IS NOT ONE-TO-ONE
+    	//           AND HENCE ONE SHOULD EXPECT DIFFICULTIES IN TRYING TO
+    	//           COMPUTE THE INVERSE MAP : CANONICAL --> PHYSICAL.
+    	//           FINALLY THREE OUTPUT FILES
+    	//                <JBNM>cn, <JBNM>p0, <JBNM>p1
+    	//           ARE WRITTEN.  THE FIRST OF THESE IS A SUMMARY OF THE ABOVE
+    	//           RESULTS INTENDED TO BE READ BY THE USER.   THE TWO FILES
+    	//           <JBNM>p0 AND <JBNM>p1 ARE NOT INTENDED TO BE READ BY THE 
+    	//           USER, BUT COULD BE USED TO CREATE PLOTS OF THE BOUNDARY 
+    	//           CORRESPONDENCE FUNCTION AND ITS DERIVATIVE; SEE FURTHER 
+    	//           COMMENTS BELOW.
+    	
+    	// 3.     CALLING SEQUENCE
+    	//           CALL CNDPLT(MAP11,RESMN,UPHYC,UCANP,CRRES,IGEOM,RGEOM,ISNPH,
+    	//                       RSNPH,CH0,CH1,DASH,NEWD,IER)
+    	
+    	//        PARAMETERS
+    	//         ON ENTRY
+    	//            CRRES  - REAL
+    	//                     THE CRITICAL RESOLUTION.  IF THE COMPUTED RESOL-
+    	//                     UTION OF THE PHYSICAL-->CANONICAL MAP ON ANY ARC
+    	//                     FALLS BELOW CRRES THAN A WARNING MESSAGE IS
+    	//                     OUTPUT.  
+    	
+    	//            IGEOM  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR IGEOM PREVIOUSLY SET UP BY 
+    	//                     JAPHYC.
+    	
+    	//            RGEOM  - REAL ARRAY
+    	//                     THE REAL VECTOR RGEOM PREVIOUSLY SET UP BY JAPHYC.
+    	
+    	//            ISNPH  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR ISNPH PREVIOUSLY SET UP BY 
+    	//                     JAPHYC.
+    	
+    	//            RSNPH  - REAL ARRAY
+    	//                     THE REAL VECTOR RSNPH PREVIOUSLY SET UP BY JAPHYC.
+    	
+    	//            CH0    - INTEGER
+    	//                     DEFINES AN OUTPUT CHANNEL THAT MAY BE USED FOR
+    	//                     WRITING THE FILES <JBNM>cn AND <JBNM>p0.
+    	
+    	//            CH1    - INTEGER
+    	//                     DEFINES AN OUTPUT CHANNEL THAT MAY BE USED FOR
+    	//                     WRITING THE FILE <JBNM>p1; MUST HAVE CH0.NE.CH1. 
+    	
+    	//            DASH   - CHARACTER
+    	//                     A CHARACTER VARIABLE OF USER-DEFINED LENGTH WHICH
+    	//                     DEFINES THE DASH-PATTERN THAT THE USER MAY REQUIRE
+    	//                     FOR GRAPH PLOTTING;  SEE FURTHER COMMENTS BELOW
+    	
+    	//            NEWD   - CHARACTER
+    	//                     A CHARACTER VARIABLE OF USER-DEFINED LENGTH WHICH
+    	//                     DENOTES THE START OF A NEW DATA GROUP THAT THE 
+    	//                     USER MAY REQUIRE FOR GRAPH PLOTTING;  SEE FURTHER 
+    	//                     COMMENTS BELOW
+    	//         ON EXIT 
+    	//            MAP11  - LOGICAL
+    	//                     IF BOUNDARY REVERSALS ARE DETECTED THEN MAP11 IS
+    	//                     SET TO .FALSE. (THE COMPUTED PHYSICAL-->CANONICAL
+    	//                     MAP ISN'T 1-1) OTHERWISE MAP11 IS SET TO .TRUE.
+    	
+    	//            RESMN  - REAL
+    	//                     THE MINIMUM COMPUTED RESOLUTION OF THE PHYSICAL-->
+    	//                     CANONICAL MAP OVER ALL SUBARCS ON THE PHYSICAL
+    	//                     BOUNDARY.  IF RESMN IS LESS THAN CRRES THEN
+    	//                     A WARNING MESSAGE IS OUTPUT.
+    	
+    	//            UPHYC  - REAL
+    	//                     ESTIMATED MAXIMUM POSSIBLE ERROR IN THE RANGE OF
+    	//                     THE PHYSICAL-->CANONICAL MAP DUE UNIT ROUNDOFF IN 
+    	//                     THE PHYSICAL DOMAIN.
+    	
+    	//            UCANP  - REAL
+    	//                     ESTIMATED MAXIMUM POSSIBLE ERROR IN THE RANGE OF
+    	//                     THE CANONICAL-->PHYSICAL MAP DUE UNIT ROUNDOFF IN 
+    	//                     THE CANONICAL DOMAIN.
+    	
+    	//            IER    - INTEGER
+    	//                     IF IER > 0 THEN AN ABNORMAL EXIT HAS OCCURRED;
+    	//                     A MESSAGE TO DESCRIBE THE ERROR IS AUTOMATICALLY
+    	//                     WRITTEN ON THE STANDARD OUTPUT CHANNEL AND THE
+    	//                     LISTING FILE <JBNM>cn.
+    	//                     IER=0 - NORMAL EXIT.
+    	//                     IER>0 - ABNORMAL EXIT; THE ERROR MESSAGE SHOULD
+    	//                             BE SELF EXPLANATORY.
+    	
+    	
+    	// 4.     SUBROUTINES OR FUNCTIONS NEEDED
+    	//              - THE CONFPACK LIBRARY.
+    	//              - THE REAL FUNCTION R1MACH.
+    	//              - THE USER SUPPLIED COMPLEX FUNCTIONS PARFUN AND DPARFN.
+    	
+    	
+    	// 5.     FURTHER COMMENTS
+    	//           - NOTE THAT THIS ROUTINE CAN ONLY BE USED  A F T E R  THE  
+    	//             ROUTINE JAPHYC HAS SUCCESSFULLY EXECUTED, AND THAT MOST  
+    	//             INPUT ARGUMENTS FOR CNDPLT ARE OUTPUT VALUES FROM JAPHYC.
+    	//           - A DETAILED LISTING OF RESULTS IS WRITTEN ON THE FILE
+    	//             <JBNM>cn.
+    	//           - DATA FOR PLOTTING A GRAPH OF THE DIMENSIONLESS BOUNDARY
+    	//             CORRESPONDENCE FUNCTION AGAINST DIMENSIONLESS ARC LENGTH
+    	//             ARE WRITTEN ON THE FILE <JBNM>p0.  THE CONTENTS OF THIS 
+    	//             FILE ARE AS FOLLOWS:
+    	//             1.  ABOUT 200 COORDINATE PAIRS X Y, ONE PAIR PER LINE,
+    	//                 WHERE X = DIMENSIONLESS ARC LENGTH (0 <= X <=1) AND
+    	//                 Y = DIMENSIONLESS BOUNDARY CORRESPONDENCE FUNCTION
+    	//                 (0 <= Y <=1);  THE NUMBER OF COORDINATE PAIRS IS 
+    	//                 CONTROLLED BY THE LOCAL PARAMETER NXINT.
+    	//             2.  THE SINGLE LINE
+    	//                   <DASH>
+    	//                 WHERE <DASH> DENOTES THE VALUE OF THE ARGUMENT DASH;
+    	//                 THIS CAN BE USED TO INDICATE A CHANGE OF DASH PATTERN
+    	//                 TO THE LOCAL GRAPH PLOTTER.
+    	//             3.  SEVERAL REPETITIONS OF THE FOLLOWING 3-LINE GROUP:
+    	//                   <NEWD>
+    	//                   X 0E+0
+    	//                   X 1E+0
+    	//                 HERE <NEWD> DENOTES THE VALUE OF THE ARGUMENT NEWD AND
+    	//                 X (WITH 0 < X < 1) IS THE DIMENSIONLESS ARC 
+    	//                 LENGTH OF A CORNER POINT.  THE ABOVE GROUP MAY THEN
+    	//                 BE USED TO CONSTRUCT A DASHED LINE FROM (X,0) TO 
+    	//                 (X,1).  THE NUMBER OF REPETITIONS IS EQUAL TO THE
+    	//                 NUMBER OF CORNERS WITH ARC LENGTH IN THE INTERVAL
+    	//                 0 < X < 1.
+    	//           - DATA FOR PLOTTING A GRAPH OF THE DERIVATIVE OF THE DIMEN-
+    	//             SIONLESS BOUNDARY CORRESPONDENCE FUNCTION WITH RESPECT TO
+    	//             DIMENSIONLESS ARC LENGTH ARE WRITTEN ON THE FILE <JBNM>p1.
+    	//             THE CONTENTS OF THIS FILE ARE AS FOLLOWS:
+    	//             1.  ABOUT 200 COORDINATE PAIRS X Y, ONE PAIR PER LINE,
+    	//                 WHERE X = DIMENSIONLESS ARC LENGTH (0 <= X <=1) AND
+    	//                 Y = DIMENSIONLESS BOUNDARY CORRESPONDENCE DERIVATIVE
+    	//                 (0 <= Y <=1);  THE NUMBER OF COORDINATE PAIRS IS 
+    	//                 CONTROLLED BY THE LOCAL PARAMETER NXINT.
+    	//             2.  THE SINGLE LINE
+    	//                   <DASH>
+    	//                 WHERE <DASH> DENOTES THE VALUE OF THE ARGUMENT DASH;
+    	//                 THIS CAN BE USED TO INDICATE A CHANGE OF DASH PATTERN
+    	//                 TO THE LOCAL GRAPH PLOTTER.
+    	//             3.  SEVERAL REPETITIONS OF THE FOLLOWING 3-LINE GROUP:
+    	//                   <NEWD>
+    	//                   X 0E+0
+    	//                   X 4.4E+0
+    	//                 HERE <NEWD> DENOTES THE VALUE OF THE ARGUMENT NEWD AND
+    	//                 X (WITH 0 < X < 1) IS THE DIMENSIONLESS ARC 
+    	//                 LENGTH OF A RE-ENTRANT CORNER POINT.  THE ABOVE GROUP 
+    	//                 MAY THEN BE USED TO CONSTRUCT A DASHED LINE FROM (X,0)
+    	//                 TO (X,4.4), TO INDICATE THE PRESENCE OF AN ASYMPTOTE.
+    	//                 SINCE THE AVERAGE VALUE OF THE DIMENSIONLESS BCF DERI-
+    	//                 VATIVE IS 1,  4.4 IS AN ARBITRARILY CHOSEN BUT RELATI-
+    	//                 VELY LARGE HEIGHT AT WHICH TO TERMINATE AN ASYMPTOTE; 
+    	//                 THIS HEIGHT IS CONTROLLED BY THE LOCAL PARAMETER BIG. 
+    	//                 THE NUMBER OF REPETITIONS OF THIS GROUP IS EQUAL TO 
+    	//                 THE NUMBER OF RE-ENTRANT CORNERS WITH DIMENSIONLESS 
+    	//                 ARC LENGTH IN THE INTERVAL 0 < X < 1.
+    	//           - A SUMMARY LISTING OF RESULTS IS AUTOMATICALLY
+    	//             WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+    	
+    	// ......................................................................
+    	//     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    	//     LAST UPDATE: 17 JULY 1990
+    	// ......................................................................
+    	     
+    	//     LOCAL VARAIBLES
+    	
+    	final int NIXINT = 200;
+    	final int MAXSA = 100;
+    	int I,IMNLA,J,L,LODP,LODW,MNEQN,MNSUA,NARCS,NASYM,NCRVS,
+    	     NINFD,NJIND,NPRVS,NQPTS,NZERD,TNGQP,TNSUA;
+    	final double BIG = 4.4;
+    	double ANGSP,CCAPH,COCAP,COPHC,CPHCA,CR,EXCAP,EXPHC,LA,
+    	     OFLOW,PI,R1MACH,TOTLN,MCHEP;
+    	//CHARACTER OFLC*6,OFP0*6,OFP1*6,JBNM*4,CHPC*2,CHCP*2
+    	
+    	
+    	//**** NXINT  = GLOBAL NUMBER OF INTERVALS ON [0,1] FOR SAMPLING THE
+    	//****          DIMENSIONLESS DERIVATE OF THE BOUNDARY CORRESPONDENCE
+    	//****          FUNCTION.
+    	//**** IER=52 - LOCAL PARAMETER MAXSA MUST BE INCEASED TO AT LEAST THE
+    	//****          VALUE OF ARGUMENT ISNPH(3)=TOTAL NUMBER OF SUBARCS ON
+    	//****          PHYSICAL BOUNDARY.
+    	
+    	int ICRVS[] = new int[MAXSA];
+    	int IPRVS[] = new int[MAXSA];
+    	double ARCLN[] = new double[MAXSA];
+    	double ASYMP[] = new double[MAXSA];
+    	double BCDMN[] = new double[MAXSA];
+    	double CORXX[] = new double[MAXSA];
+    	// EXTERNAL DIAGN4,R1MACH,WRHEAD,WRTAIL
+    	
+    	//**** WRITE HEADING TO STANDARD OUTPUT CHANNEL
+    	
+    	WRHEAD(5,0,null);
+    	
+    	// GET JOBNAME FROM FILE *jbnm*
+    	
+        // OPEN(CH0,FILE='jbnm')
+    	// READ(CH0,'(A4)') JBNM
+    	// CLOSE(CH0)
+    	// L=INDEX(JBNM,' ')-1
+    	// IF (L.EQ.-1) L=4
+    	
+    	// OFLC=JBNM(1:L)//'cn'
+    	// OFP1=JBNM(1:L)//'p1'
+    	// OFP0=JBNM(1:L)//'p0'
+    	
+    	NARCS=ISNPH[0];
+    	NQPTS=ISNPH[1];
+    	TNSUA=ISNPH[2];
+    	MNSUA=ISNPH[4];
+    	MNEQN=ISNPH[5];
+    	
+    	NJIND=NARCS+1;
+    	TNGQP=NJIND*NQPTS;
+    	
+    	if (TNSUA > MAXSA) {
+    	    IER[0]=52;
+    	    WRTAIL(5,0,IER[0],null);
+    	    return;
+    	}
+    	
+    	//**** COPY POINTERS FROM JAPHYC
+    	
+    	     
+    	/*
+    	      OPEN(CH0,FILE=OFP0)
+    	      OPEN(CH1,FILE=OFP1)
+    	      WRITE(*,5) 'EVALUATION OF BCF STARTED:'
+    	5     FORMAT(A45)
+    	      LODP=QUPTS+NARCS*NQPTS
+    	      LODW=QUWTS+NARCS*NQPTS
+    	      CALL DIAGN4(CCAPH,COCAP,COPHC,CPHCA,EXCAP,EXPHC,ICRVS,IER,
+    	     +IPRVS,NASYM,NCRVS,NINFD,NPRVS,NZERD,ARCLN,ASYMP,BCDMN,CORXX,
+    	     +TOTLN,RGEOM(VTARG),MAP11,ISNPH(DGPOL),ISNPH(JATYP),ISNPH(LOSUB),
+    	     +NARCS,NQPTS,NXINT,CH0,CH1,IGEOM(PARNT),TNSUA,RSNPH(AICOF),
+    	     +RSNPH(ACOEF),RSNPH(BICOF),RSNPH(BCFSN),RSNPH(BCOEF),RSNPH(H0VAL),
+    	     +RSNPH(HIVAL),RGEOM(HALEN),RSNPH(JACIN),RGEOM(MIDPT),RSNPH(SOLUN),
+    	     +RSNPH(LODP),RSNPH(LODW))
+    	      WRITE(*,5) 'EVALUATION OF BCF DONE:'
+    	C
+    	      IF (IER .GT. 0) THEN
+    	        GOTO 999
+    	      ENDIF
+    	C
+    	      IF (NASYM .GT. 0) THEN
+    	        WRITE(CH1,*) DASH
+    	        DO 10 I=1,NASYM
+    	          WRITE(CH1,*) NEWD
+    	          WRITE(CH1,20) ASYMP(I),0E+0
+    	          WRITE(CH1,20) ASYMP(I),BIG
+    	10      CONTINUE
+    	20      FORMAT(2E16.8)
+    	      ENDIF
+    	      CLOSE(CH1)
+    	C
+    	      WRITE(CH0,*) DASH
+    	      DO 30 I=2,NARCS
+    	        WRITE(CH0,*) NEWD
+    	        WRITE(CH0,20) CORXX(I),0E+0
+    	        WRITE(CH0,20) CORXX(I),1E+0
+    	30    CONTINUE
+    	      CLOSE(CH0)
+    	      WRITE(*,5) 'DATA FOR PLOTS DONE:'
+    	C
+    	      OFLOW=R1MACH(2)
+    	      MCHEP=R1MACH(4)
+    	      UPHYC=MCHEP*CPHCA
+    	      UCANP=MCHEP*CCAPH
+    	      WRITE(*,*)
+    	      WRITE(*,35) 'PHYSICAL ROUNDOFF MAGNIFIES TO:',UPHYC
+    	      WRITE(*,35) 'CANONICAL ROUNDOFF MAGNIFIES TO:',UCANP
+    	35    FORMAT(A45,2X,E9.2)
+    	C
+    	      OPEN(CH0,FILE=OFLC)
+    	C
+    	C**** WRITE CONFPACK HEADING ON LISTING FILE
+    	C
+    	      CALL WRHEAD(5,CH0)
+    	C
+    	      WRITE(CH0,*)
+    	      WRITE(CH0,40)
+    	40    FORMAT(T4,'MAP',T18,'ESTIMATED EVALUATION',T42,'ESTIMATED MAXIMUM'
+    	     +,/,T18,'CONDITION NUMBER',T42,'ROUNDOFF ERROR *',/)
+    	C
+    	      IF (NINFD .GT. 0) THEN
+    	        CHPC='**'
+    	      ELSE
+    	        CHPC='  '
+    	      ENDIF
+    	      IF (NZERD .GT. 0) THEN
+    	        CHCP='**'
+    	      ELSE
+    	        CHCP='  '
+    	      ENDIF
+    	C
+    	      WRITE(CH0,50) CPHCA,CHPC,UPHYC
+    	      WRITE(CH0,60) CCAPH,CHCP,UCANP
+    	50    FORMAT('PHY --> CAN',T20,E11.3,A2,T44,E11.3,/)
+    	60    FORMAT('CAN --> PHY',T20,E11.3,A2,T44,E11.3,/)
+    	      WRITE(CH0,*) '* BASED ON UNIT ROUNDOFF IN DOMAIN OF MAP'
+    	      IF (NINFD.GT.0 .OR. NZERD.GT.0) THEN
+    	        WRITE(CH0,*)'** CONDITION NUMBER DEPENDS ON UNIT ROUNDOFF,U:'
+    	        IF (NINFD .GT. 0) THEN
+    	          WRITE(CH0,70) COPHC,EXPHC
+    	        ENDIF
+    	        IF (NZERD .GT. 0) THEN
+    	          WRITE(CH0,80) COCAP,EXCAP
+    	        ENDIF
+    	      ENDIF
+    	70    FORMAT(T4,'PHY --> CAN : CONDTN NO = ',E11.3,'*U**',E11.3)
+    	80    FORMAT(T4,'CAN --> PHY : CONDTN NO = ',E11.3,'*U**',E11.3)
+    	C
+    	      PI=4E+0*ATAN(1E+0)
+    	      WRITE(CH0,90) 'END PT.','PARENT','ARGUMENT/PI'
+    	90    FORMAT(//,A,T10,A,T18,A)
+    	      DO 100 I=1,TNSUA
+    	        WRITE(CH0,110) I,IGEOM(PARNT+I-1),RGEOM(VTARG+I-1)/PI
+    	100   CONTINUE
+    	110   FORMAT(I3,T10,I3,T18,E16.8)
+    	C
+    	      WRITE(CH0,120) 'SUBARC','% PHYSICAL','% CIRCLE'
+    	120   FORMAT(/,A,T10,A,T29,A)
+    	      DO 130 I=1,TNSUA
+    	        ANGSP=RGEOM(VTARG+I)-RGEOM(VTARG+I-1)
+    	        WRITE(CH0,140) I,ARCLN(I)/TOTLN,ANGSP/2E+0/PI
+    	130   CONTINUE
+    	140   FORMAT(I4,T10,E14.7,T29,E14.7)
+    	C
+    	      WRITE(CH0,150) 'SUB','ACHIEVED','CROWDING','ARC','RESOLUTION',
+    	     +'FACTOR'
+    	150   FORMAT(/,A,T7,A,T19,A,/,A,T7,A,T19,A)
+    	      RESMN=OFLOW
+    	      DO 160 I=1,TNSUA
+    	        ANGSP=RGEOM(VTARG+I)-RGEOM(VTARG+I-1)
+    	        IF (ANGSP.EQ.0E+0) THEN
+    	          CR=OFLOW
+    	          LA=0E+0
+    	        ELSE
+    	          CR=2E+0*PI*ARCLN(I)/ABS(ANGSP)/TOTLN
+    	          IF (RSNPH(ERARC+I-1).EQ.0E+0) THEN
+    	            LA=OFLOW
+    	          ELSE
+    	            LA=ABS(ANGSP)/(2E+0*RSNPH(ERARC+I-1))
+    	          ENDIF
+    	        ENDIF
+    	        IF (LA .LT. RESMN) THEN
+    	          RESMN=LA
+    	          IMNLA=I
+    	        ENDIF
+    	        WRITE(CH0,170) I,LA,CR
+    	160   CONTINUE
+    	170   FORMAT(I2,T4,2E12.3)
+    	C
+    	      WRITE(CH0,180) RESMN,IMNLA
+    	180   FORMAT(/,'MINIMUM SUBARC RESOLUTION IS ',E11.3,' ON SUBARC ',I2) 
+    	      WRITE(*,*)
+    	      WRITE(*,35) 'MINIMUM SUBARC RESOLUTION:',RESMN
+    	C
+    	      WRITE(CH0,*)
+    	      IF (.NOT.MAP11 .OR. RESMN.LT.CRRES) THEN
+    	C
+    	C****   MESSAGE TO STANDARD OUTPUT
+    	C
+    	        WRITE(*,185) '*** W A R N I N G  ***'
+    	185     FORMAT(//,T20,A)
+    	        IF (RESMN.LT.CRRES) THEN
+    	          WRITE(*,5) 'THE ABOVE RESOLUTION IS TOO SMALL:'
+    	        ENDIF
+    	        IF (.NOT.MAP11) THEN
+    	          WRITE(*,5) 'BCF DERIVATIVE CHANGES SIGN:'
+    	        ENDIF
+    	C
+    	        WRITE(CH0,*) '        ***  W A R N I N G ***'
+    	        WRITE(CH0,*)
+    	        I=0
+    	C
+    	        IF (RESMN.LT.1) THEN
+    	          I=I+1
+    	          WRITE(CH0,190) I,'.  THE ABOVE SUBARC RESOLUTION MEANS THAT IT
+    	     + WILL BE PRACTICALLY'
+    	          WRITE(CH0,*) '    IMPOSSIBLE FOR THE INVERSE MAP TO DISCRIMINA
+    	     +TE CORRECTLY'
+    	          WRITE(CH0,200) '    BETWEEN NEIGHBOURING POINTS NEAR SUB ARC '
+    	     +,IMNLA 
+    	        ELSE IF (RESMN.LT.CRRES) THEN
+    	          I=I+1
+    	          WRITE(CH0,190) I,'. THE ABOVE SUBARC RESOLUTION MEANS THAT THE
+    	     + INVERSE MAP MAY NOT'
+    	          WRITE(CH0,*) '    BE ABLE TO RELIABLY DISCRIMINATE CORRECTLY B
+    	     +ETWEEN'
+    	          WRITE(CH0,200) '    NEIGHBOURING POINTS NEAR ARC ',IMNLA 
+    	        ENDIF
+    	190   FORMAT(/,I1,A)
+    	200   FORMAT(A,I3)
+    	C
+    	        IF (NCRVS .GT. 0) THEN
+    	          I=I+1
+    	          WRITE(CH0,190) I,'.  THERE IS A COMPLETE REVERSAL OF DIRECTION
+    	     + ON THE FOLLOWING SUB ARCS:'
+    	          WRITE(CH0,'(T10,I3)') (ICRVS(J),J=1,NCRVS)
+    	        ENDIF
+    	C
+    	        IF (NPRVS .GT. 0) THEN
+    	          I=I+1
+    	          WRITE(CH0,190) I,'.  THERE IS A REVERSAL OF DIRECTION WITHIN T
+    	     +HE FOLLOWING SUB ARCS:'
+    	          WRITE(CH0,'(T10,I3)') (IPRVS(J),J=1,NPRVS)
+    	          WRITE(CH0,*) '    THE CORRESPONDING MINIMUM VALUES OF THE BOUN
+    	     +DARY CORRESPONDENCE'
+    	          WRITE(CH0,*) '    DERIVATIVE ARE:'
+    	          WRITE(CH0,'(T10,E9.2)') (BCDMN(J),J=1,NPRVS)
+    	        ENDIF
+    	      ENDIF
+    	      CLOSE(CH0)
+    	999   CONTINUE
+    	C
+    	C**** WRITE CLOSING MESSAGE TO STANDARD OUTPUT CHANNEL AND LISTING FILE
+    	C
+    	      CALL WRTAIL(5,0,IER)
+    	      CALL WRTAIL(5,CH0,IER)
+    	C */
+    } // private void CNDPLT
 
 
       /**
