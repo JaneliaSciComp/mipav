@@ -12668,11 +12668,12 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	
     	final int NIXINT = 200;
     	final int MAXSA = 100;
-    	int I,IMNLA,J,L,LODP,LODW,MNEQN,MNSUA,NARCS,NASYM,NCRVS,
-    	     NINFD,NJIND,NPRVS,NQPTS,NZERD,TNGQP,TNSUA;
+    	int I,IMNLA,J,L,MNSUA,NASYM,NCRVS,
+    	     NINFD,NPRVS,NXINT,NZERD,TNSUA;
     	final double BIG = 4.4;
     	double ANGSP,CCAPH,COCAP,COPHC,CPHCA,CR,EXCAP,EXPHC,LA,
     	     OFLOW,PI,R1MACH,TOTLN,MCHEP;
+    	String CHPC, CHCP;
     	//CHARACTER OFLC*6,OFP0*6,OFP1*6,JBNM*4,CHPC*2,CHCP*2
     	
     	
@@ -12724,148 +12725,155 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	
     	//**** COPY POINTERS FROM JAPHYC
     	
-    	     
-    	/*
-    	      OPEN(CH0,FILE=OFP0)
-    	      OPEN(CH1,FILE=OFP1)
-    	      WRITE(*,5) 'EVALUATION OF BCF STARTED:'
-    	5     FORMAT(A45)
-    	      LODP=QUPTS+NARCS*NQPTS
-    	      LODW=QUWTS+NARCS*NQPTS
-    	      CALL DIAGN4(CCAPH,COCAP,COPHC,CPHCA,EXCAP,EXPHC,ICRVS,IER,
-    	     +IPRVS,NASYM,NCRVS,NINFD,NPRVS,NZERD,ARCLN,ASYMP,BCDMN,CORXX,
-    	     +TOTLN,RGEOM(VTARG),MAP11,ISNPH(DGPOL),ISNPH(JATYP),ISNPH(LOSUB),
-    	     +NARCS,NQPTS,NXINT,CH0,CH1,IGEOM(PARNT),TNSUA,RSNPH(AICOF),
-    	     +RSNPH(ACOEF),RSNPH(BICOF),RSNPH(BCFSN),RSNPH(BCOEF),RSNPH(H0VAL),
-    	     +RSNPH(HIVAL),RGEOM(HALEN),RSNPH(JACIN),RGEOM(MIDPT),RSNPH(SOLUN),
-    	     +RSNPH(LODP),RSNPH(LODW))
-    	      WRITE(*,5) 'EVALUATION OF BCF DONE:'
-    	C
-    	      IF (IER .GT. 0) THEN
-    	        GOTO 999
-    	      ENDIF
-    	C
-    	      IF (NASYM .GT. 0) THEN
-    	        WRITE(CH1,*) DASH
-    	        DO 10 I=1,NASYM
-    	          WRITE(CH1,*) NEWD
-    	          WRITE(CH1,20) ASYMP(I),0E+0
-    	          WRITE(CH1,20) ASYMP(I),BIG
-    	10      CONTINUE
-    	20      FORMAT(2E16.8)
-    	      ENDIF
-    	      CLOSE(CH1)
-    	C
-    	      WRITE(CH0,*) DASH
-    	      DO 30 I=2,NARCS
-    	        WRITE(CH0,*) NEWD
-    	        WRITE(CH0,20) CORXX(I),0E+0
-    	        WRITE(CH0,20) CORXX(I),1E+0
-    	30    CONTINUE
-    	      CLOSE(CH0)
-    	      WRITE(*,5) 'DATA FOR PLOTS DONE:'
-    	C
-    	      OFLOW=R1MACH(2)
-    	      MCHEP=R1MACH(4)
-    	      UPHYC=MCHEP*CPHCA
-    	      UCANP=MCHEP*CCAPH
-    	      WRITE(*,*)
-    	      WRITE(*,35) 'PHYSICAL ROUNDOFF MAGNIFIES TO:',UPHYC
-    	      WRITE(*,35) 'CANONICAL ROUNDOFF MAGNIFIES TO:',UCANP
-    	35    FORMAT(A45,2X,E9.2)
-    	C
-    	      OPEN(CH0,FILE=OFLC)
-    	C
-    	C**** WRITE CONFPACK HEADING ON LISTING FILE
-    	C
-    	      CALL WRHEAD(5,CH0)
-    	C
-    	      WRITE(CH0,*)
-    	      WRITE(CH0,40)
-    	40    FORMAT(T4,'MAP',T18,'ESTIMATED EVALUATION',T42,'ESTIMATED MAXIMUM'
-    	     +,/,T18,'CONDITION NUMBER',T42,'ROUNDOFF ERROR *',/)
-    	C
-    	      IF (NINFD .GT. 0) THEN
-    	        CHPC='**'
-    	      ELSE
-    	        CHPC='  '
-    	      ENDIF
-    	      IF (NZERD .GT. 0) THEN
-    	        CHCP='**'
-    	      ELSE
-    	        CHCP='  '
-    	      ENDIF
-    	C
-    	      WRITE(CH0,50) CPHCA,CHPC,UPHYC
-    	      WRITE(CH0,60) CCAPH,CHCP,UCANP
-    	50    FORMAT('PHY --> CAN',T20,E11.3,A2,T44,E11.3,/)
-    	60    FORMAT('CAN --> PHY',T20,E11.3,A2,T44,E11.3,/)
-    	      WRITE(CH0,*) '* BASED ON UNIT ROUNDOFF IN DOMAIN OF MAP'
-    	      IF (NINFD.GT.0 .OR. NZERD.GT.0) THEN
-    	        WRITE(CH0,*)'** CONDITION NUMBER DEPENDS ON UNIT ROUNDOFF,U:'
-    	        IF (NINFD .GT. 0) THEN
-    	          WRITE(CH0,70) COPHC,EXPHC
-    	        ENDIF
-    	        IF (NZERD .GT. 0) THEN
-    	          WRITE(CH0,80) COCAP,EXCAP
-    	        ENDIF
-    	      ENDIF
-    	70    FORMAT(T4,'PHY --> CAN : CONDTN NO = ',E11.3,'*U**',E11.3)
-    	80    FORMAT(T4,'CAN --> PHY : CONDTN NO = ',E11.3,'*U**',E11.3)
-    	C
-    	      PI=4E+0*ATAN(1E+0)
-    	      WRITE(CH0,90) 'END PT.','PARENT','ARGUMENT/PI'
-    	90    FORMAT(//,A,T10,A,T18,A)
-    	      DO 100 I=1,TNSUA
-    	        WRITE(CH0,110) I,IGEOM(PARNT+I-1),RGEOM(VTARG+I-1)/PI
-    	100   CONTINUE
-    	110   FORMAT(I3,T10,I3,T18,E16.8)
-    	C
-    	      WRITE(CH0,120) 'SUBARC','% PHYSICAL','% CIRCLE'
-    	120   FORMAT(/,A,T10,A,T29,A)
-    	      DO 130 I=1,TNSUA
-    	        ANGSP=RGEOM(VTARG+I)-RGEOM(VTARG+I-1)
-    	        WRITE(CH0,140) I,ARCLN(I)/TOTLN,ANGSP/2E+0/PI
-    	130   CONTINUE
-    	140   FORMAT(I4,T10,E14.7,T29,E14.7)
-    	C
-    	      WRITE(CH0,150) 'SUB','ACHIEVED','CROWDING','ARC','RESOLUTION',
-    	     +'FACTOR'
-    	150   FORMAT(/,A,T7,A,T19,A,/,A,T7,A,T19,A)
-    	      RESMN=OFLOW
-    	      DO 160 I=1,TNSUA
-    	        ANGSP=RGEOM(VTARG+I)-RGEOM(VTARG+I-1)
-    	        IF (ANGSP.EQ.0E+0) THEN
-    	          CR=OFLOW
-    	          LA=0E+0
-    	        ELSE
-    	          CR=2E+0*PI*ARCLN(I)/ABS(ANGSP)/TOTLN
-    	          IF (RSNPH(ERARC+I-1).EQ.0E+0) THEN
-    	            LA=OFLOW
-    	          ELSE
-    	            LA=ABS(ANGSP)/(2E+0*RSNPH(ERARC+I-1))
-    	          ENDIF
-    	        ENDIF
-    	        IF (LA .LT. RESMN) THEN
-    	          RESMN=LA
-    	          IMNLA=I
-    	        ENDIF
-    	        WRITE(CH0,170) I,LA,CR
-    	160   CONTINUE
-    	170   FORMAT(I2,T4,2E12.3)
-    	C
-    	      WRITE(CH0,180) RESMN,IMNLA
-    	180   FORMAT(/,'MINIMUM SUBARC RESOLUTION IS ',E11.3,' ON SUBARC ',I2) 
-    	      WRITE(*,*)
-    	      WRITE(*,35) 'MINIMUM SUBARC RESOLUTION:',RESMN
-    	C
-    	      WRITE(CH0,*)
-    	      IF (.NOT.MAP11 .OR. RESMN.LT.CRRES) THEN
-    	C
-    	C****   MESSAGE TO STANDARD OUTPUT
-    	C
-    	        WRITE(*,185) '*** W A R N I N G  ***'
-    	185     FORMAT(//,T20,A)
+    	System.out.println("EVALUATION OF BCF STARTED:");
+    	Preferences.debug("EVALUATION OF BCF STARTED/n",Preferences.DEBUG_ALGORITHM);
+    	//LODP=QUPTS+NARCS*NQPTS,
+    	//LODW=QUWTS+NARCS*NQPTS
+    	double LODP[] = new double[NQPTS];
+    	double LODW[] = new double[NQPTS];
+    	for (I = 0; I < NQPTS; I++) {
+    		LODP[I] = QUPTS[NARCS*NQPTS + I];
+    		LODW[I] = QUWTS[NARCS*NQPTS + I];
+    	}
+    	/*DIAGN4(CCAPH,COCAP,COPHC,CPHCA,EXCAP,EXPHC,ICRVS,IER,
+    	     IPRVS,NASYM,NCRVS,NINFD,NPRVS,NZERD,ARCLN,ASYMP,BCDMN,CORXX,
+    	     TOTLN,VTARG,MAP11,DGPOL,JATYP,LOSUB,
+    	     NARCS,NQPTS,NXINT,PARNT,TNSUA,AICOF,
+    	     ACOEF,BICOF,BCFSN,BCOEF,H0VAL,
+    	     HIVAL,HALEN,JACIN,MIDPT,SOLUN,
+    	     LODP,LODW);
+    	      for (I = 0; I < NQPTS; I++) {
+    	    		QUPTS[NARCS*NQPTS + I] = LODP[I];
+    	    		QUWTS[NARCS*NQPTS + I] = LODW[I];
+    	    	}
+        System.out.println("EVALUATION OF BCF DONE:");
+        Preferences.debug("EVALUATION OF BCF DONE\n",Preferences.DEBUG_ALGORITHM);
+    	
+    	if (IER[0] > 0) {
+    		WRTAIL(5,0,IER[0],null);
+    	    return;
+    	}
+    	
+    	// if (NASYM > 0) {
+    	// WRITE(CH1,*) DASH
+    	// DO 10 I=1,NASYM
+    	// WRITE(CH1,*) NEWD
+    	// WRITE(CH1,20) ASYMP(I),0E+0
+        // WRITE(CH1,20) ASYMP(I),BIG
+    	// 10      CONTINUE
+    	//  20      FORMAT(2E16.8)
+    	// } // if (NASYM > 0)
+    	// CLOSE(CH1)
+    	
+    	// WRITE(CH0,*) DASH
+    	// DO 30 I=2,NARCS
+    	// WRITE(CH0,*) NEWD
+    	// WRITE(CH0,20) CORXX(I),0E+0
+    	// WRITE(CH0,20) CORXX(I),1E+0
+    	// 30    CONTINUE
+    	// CLOSE(CH0)
+    	System.out.println("DATA FOR PLOTS DONE:");
+    	Preferences.debug("DATA FOR PLOTS DONE:\n", Preferences.DEBUG_ALGORITHM);
+    	
+    	OFLOW=Double.MAX_VALUE;
+    	MCHEP=EPS;
+    	UPHYC[0]=MCHEP*CPHCA;
+    	UCANP[0]=MCHEP*CCAPH;
+    	System.out.println();
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	System.out.println("PHYSICAL ROUNDOFF MAGNIFIES TO: " + UPHYC);
+    	Preferences.debug("PHYSICAL ROUNDOFF MAGNIFIES TO " + UPHYC + "\n", Preferences.DEBUG_ALGORITHM);
+    	System.out.println("CANONICAL ROUNDOFF MAGNIFIES TO: " + UCANP);
+    	Preferences.debug("CANONICAL ROUNDOFF MAGNFIES TO " + UCANP + "\n", Preferences.DEBUG_ALGORITHM);
+    	
+    	
+    	// OPEN(CH0,FILE=OFLC)
+    	
+    	// WRITE CONFPACK HEADING ON LISTING FILE
+    	
+    	WRHEAD(5,0, null);
+    	
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("   MAP           ESTIMATED EVALUATION   ESTIMATED MAXIMUM \n", Preferences.DEBUG_ALGORITHM);
+    	
+    	if (NINFD > 0) {
+    	    CHPC="**";
+    	}
+    	else {
+            CHPC="  ";
+    	}
+    	if (NZERD > 0) {
+    	    CHCP="**";
+    	}
+    	else {
+    	    CHCP="  ";
+    	}
+    	
+    	Preferences.debug("PHY --> CAN        " + CPHCA + CHPC +"          " + UPHYC + "\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("CAN --> PHY        " + CCAPH + CHCP + "          " + UCANP + "\n", Preferences.DEBUG_ALGORITHM);
+    	
+    	      
+    	Preferences.debug("* BASED ON UNIT ROUNDOFF IN DOMAIN OF MAP\n",Preferences.DEBUG_ALGORITHM);
+    	if (NINFD > 0 || NZERD > 0) {
+    	    Preferences.debug("** CONDITION NUMBER DEPENDS ON UNIT ROUNDOFF,U" + "\n", Preferences.DEBUG_ALGORITHM);
+    	    if (NINFD > 0) {
+    	    	Preferences.debug("   PHY --> CAN : CONDTN NO = " + COPHC + "*U**" + EXPHC + "\n",Preferences.DEBUG_ALGORITHM );
+    	    }
+    	    if (NZERD > 0) {
+    	    	Preferences.debug("   CAN --> PHY : CONDTN NO = " + COCAP + "*U**" + EXCAP + "\n", Preferences.DEBUG_ALGORITHM);
+    	    } // if (NZERD > 0)
+    	} // if (NINFD > 0 || NZERD > 0)
+    	
+    	
+    	PI=4E+0*Math.PI;
+    	Preferences.debug("END PT.   PARENT  ARGUMENT/PI\n");
+    	 for (I=1; I <= TNSUA; I++) {
+    		 Preferences.debug(I + "      " + PARNT[I-1] + "     " + (VTARG[I-1]/PI) + "\n", Preferences.DEBUG_ALGORITHM); 
+    	 }
+    	
+    	 Preferences.debug("SUBARC   % PHYSICAL        % CIRCLE\n",Preferences.DEBUG_ALGORITHM);
+    	 for (I=1; I <= TNSUA; I++) {
+    	     ANGSP=VTARG[I]-VTARG[I-1];
+    	     Preferences.debug(I + "     " + (ARCLN[I-1]/TOTLN) + "    " + (ANGSP/2.0/PI) + "\n", Preferences.DEBUG_ALGORITHM);
+    	 }
+   
+    	
+    	 Preferences.debug("SUB   ACHIEVED    CROWDING\n", Preferences.DEBUG_ALGORITHM);
+    	 Preferences.debug("ARC   RESOLUTION  FACTOR\n", Preferences.DEBUG_ALGORITHM);
+    	 RESMN[0]=OFLOW;
+    	 for (I=1; I <= TNSUA; I++) {
+    	     ANGSP=VTARG[I]-VTARG[I-1];
+    	     if (ANGSP == 0.0) {
+    	         CR=OFLOW;
+    	         LA=0.0;
+    	     }
+    	     else {
+    	         CR=2.0*PI*ARCLN[I-1]/Math.abs(ANGSP)/TOTLN;
+    	         if (ERARC[I-1] == 0.0) {
+    	             LA=OFLOW;
+    	         }
+    	         else {
+    	             LA=Math.abs(ANGSP)/(2.0*ERARC[I-1]);
+    	         }
+    	     }
+    	     if (LA < RESMN[0]) {
+    	         RESMN[0]=LA;
+    	         IMNLA=I;
+    	     }
+    	     Preferences.debug(I + " " + LA + " " + CR + "\n", Preferences.DEBUG_ALGORITHM);
+    	 } // for (I=1; I <= TNSUA; I++)
+    	
+    	Preferences.debug("MINIMUM SUBARC RESOLUTION IS " + RESMN + " ON SUBARC " + IMNLA + "\n",Preferences.DEBUG_ALGORITHM);
+    	System.out.println();
+    	System.out.println("MINIMUM SUBARC RESOLUTION: " + RESMN);
+    	
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    	if (!MAP11 || RESMN[0] < CRRES) {
+
+    	    // MESSAGE TO STANDARD OUTPUT
+    	
+    	    System.out.println("                   *** W A R N I N G  ***");
+    	    Preferences.debug("                   *** W A R N I N G  ***\n", Preferences.DEBUG_ALGORITHM);
     	        IF (RESMN.LT.CRRES) THEN
     	          WRITE(*,5) 'THE ABOVE RESOLUTION IS TOO SMALL:'
     	        ENDIF
@@ -12913,7 +12921,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	          WRITE(CH0,*) '    DERIVATIVE ARE:'
     	          WRITE(CH0,'(T10,E9.2)') (BCDMN(J),J=1,NPRVS)
     	        ENDIF
-    	      ENDIF
+    	} // if (!MAP11 || RESMN < CRRES)
     	      CLOSE(CH0)
     	999   CONTINUE
     	C
@@ -12924,6 +12932,365 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	C */
     } // private void CNDPLT
 
+    private void DIAGN4(double CCAPH, double COCAP, double COPHC, double CPHCA, double EXCAP,
+        double EXPHC, int ICRVS[], int IER[], int IPRVS[], int NASYM, int NCRVS, int NINFD,
+        int NPRVS, int NZERD, double ARCLN[], double ASYMP[], double BCDMN[], double CORXX[],
+    	double TOTLN, double VTARG[], boolean MAP11[], int DGPOL[], int JATYP[], int LOSUB[],
+    	int NARCS, int NQPTS, int NXINT, int PARNT[], int TNSUA, double A1COF[], double ACOEF[],
+    	double B1COF[], double BCFSN[], double BCOEF[], double H0VAL[], double H1VAL[],
+    	double HALEN[], double JACIN[], double MIDPT[], double SOLUN[], double QUPTS[],
+    	double QUWTS[]) {
+    	// INTEGER IER,NARCS,NASYM,NCRVS,NINFD,NPRVS,NQPTS,NXINT,NZERD,OUCH0,
+    	// +OUCH1,TNSUA
+    	// INTEGER DGPOL(*),ICRVS(*),IPRVS(*),JATYP(*),LOSUB(*),PARNT(*)
+    	// REAL CCAPH,COCAP,COPHC,CPHCA,EXCAP,EXPHC,TOTLN
+    	// REAL A1COF(*),ACOEF(*),ARCLN(*),ASYMP(*),B1COF(*),
+    	// +BCDMN(*),BCFSN(*),BCOEF(*),CORXX(*),JACIN(*),MIDPT(*),H0VAL(*),
+    	// +H1VAL(*),HALEN(*),SOLUN(*),VTARG(*),QUPTS(*),QUWTS(*)
+    	// LOGICAL MAP11
+    	/*C
+    	C     IER=0  - NORMAL EXIT
+    	C     IER=50 - LOCAL PARAMETER MXCOF MUST BE >= NQPTS.
+    	C     IER=51 - NON-ANALYTIC ARC DETECTED
+    	C
+    	C**** LOCAL VARIABLES
+    	C
+    	      INTEGER AJT,DG,I,I1,IA,JT,K,LOD,LOM,MININ,MXCOF,NINTS,PT,QP
+    	      REAL AL,ATOL,BT,CC,COF,D,DSDT,H0,HH,HL,JACSUM,MD,MCHEP,MPT,
+    	     +PHI,R1MACH,RTOL,SEND,SINC,SJT,SS,SUM,TERM,TINC,TT,TUPI,X,XX,YMAX,
+    	     +YMIN,YY
+    	      COMPLEX PARFUN,T1,T2
+    	      COMMON /DSDTDA/PT,MD,HL
+    	      PARAMETER (MININ=20,MXCOF=32,QP=4)
+    	      REAL JACOF(MXCOF)
+    	      EXTERNAL DSDT,JACSUM,PARFUN,R1MACH
+    	C
+    	C     INITIALISE SOME CONSTANTS
+    	C
+    	      TUPI=8E+0*ATAN(1E+0)
+    	      MCHEP=R1MACH(4)
+    	      RTOL=1E+1*MCHEP
+    	      ATOL=1E+2*MCHEP
+    	      NCRVS=0
+    	      NPRVS=0
+    	      CCAPH=0E+0
+    	      CPHCA=0E+0
+    	      MAP11=.TRUE.
+    	      YMAX=R1MACH(2)
+    	      NASYM=0
+    	C
+    	C     START TO COMPUTE THE ARC LENGTHS OF EACH SUBARC (ARCLN) AND THE  
+    	C     TOTAL LENGTH (TOTLN) OF THE BOUNDARY
+    	C
+    	      TOTLN=0E+0
+    	      DO 10 IA=1,TNSUA
+    	        PT=PARNT(IA)
+    	        MD=MIDPT(IA)
+    	        HL=HALEN(IA)
+    	        T1=CMPLX(MD+HL)
+    	        T2=CMPLX(MD-HL)
+    	C
+    	C****   COMPOSITE QP-PANEL GAUSS-LEGENDRE ESTIMATE FOR ARCLN(IA)
+    	C
+    	        HH=1E+0/QP
+    	        SUM=0E+0
+    	        DO 6 K=1,QP
+    	          MPT=-1E+0+(2E+0*K-1E+0)*HH
+    	          DO 3 I=1,NQPTS
+    	            X=MPT+HH*QUPTS(I)
+    	            SUM=SUM+QUWTS(I)*DSDT(X)
+    	3         CONTINUE
+    	6       CONTINUE
+    	        ARCLN(IA)=HH*SUM
+    	        TOTLN=TOTLN+ARCLN(IA)
+    	10    CONTINUE
+    	C
+    	C     TEST FOR COMPLETE REVERSAL OF DIRECTION OF A BOUNDARY SUBARC ON 
+    	C     THE UNIT DISC.
+    	C
+    	      DO 20 IA=1,TNSUA
+    	        IF (VTARG(IA+1) .LT. VTARG(IA)) THEN
+    	          NCRVS=NCRVS+1
+    	          ICRVS(NCRVS)=IA
+    	          MAP11=.FALSE.
+    	        ENDIF
+    	20    CONTINUE
+    	C
+    	C     COMPUTE THE NUMBERS *NINFD* (*NZERD*) OF POINTS WHERE THE 
+    	C     DERIVATIVE OF THE MAP PHYSICAL --> CANONICAL IS RESPECTIVELY
+    	C     INFINITE (ZERO).     
+    	C
+    	      NINFD=0
+    	      NZERD=0
+    	      DO 25 I=1,NARCS
+    	        IF (JACIN(I) .LT. 0E+0) THEN
+    	          NINFD=NINFD+1
+    	        ELSE IF (JACIN(I) .GT. 0E+0) THEN
+    	          NZERD=NZERD+1
+    	        ENDIF
+    	25    CONTINUE
+    	C
+    	C     NOW START TO EVALUATE THE DIMENSIONLESS BOUNDARY CORRESPONDENCE
+    	C     DERIVATIVE AT SELECTED VALUES OF DIMENSIONLESS ARC LENGTH;
+    	C     OUTPUT RESULTS FOR SUBSEQUENT GRAPH PLOTTING IF REQUIRED AND
+    	C     TEST FOR SIGN CHANGES IN THIS DERIVATIVE.
+    	C
+    	      SS=0E+0
+    	      SEND=0E+0
+    	      DO 60 IA=1,TNSUA
+    	        NINTS=MAX(MININ,NINT(ARCLN(IA)*NXINT/TOTLN))
+    	        TINC=2E+0/NINTS
+    	        DG=DGPOL(IA)
+    	        IF (DG+1 .GT. MXCOF) THEN
+    	          IER=50
+    	          RETURN
+    	        ENDIF
+    	        JT=JATYP(IA)
+    	        AJT=ABS(JT)
+    	        H0=H0VAL(AJT)
+    	        BT=JACIN(AJT)
+    	        AL=1E+0/(1E+0+BT)
+    	        PT=PARNT(IA)
+    	        MD=MIDPT(IA)
+    	        HL=HALEN(IA)
+    	        LOM=LOSUB(IA)
+    	        LOD=(AJT-1)*NQPTS+1 
+    	        IF (JT.GT.0) THEN
+    	          CC=VTARG(IA)-VTARG(1)
+    	        ELSE
+    	          CC=VTARG(IA+1)-VTARG(1)
+    	        ENDIF
+    	        DO 30 I=1,DG+1
+    	          I1=I+LOM-1
+    	          JACOF(I)=SOLUN(I1)
+    	30      CONTINUE
+    	        SJT=SIGN(1E+0,REAL(JT))
+    	        DO 40 I=2,DG+1,2
+    	          JACOF(I)=SJT*JACOF(I)
+    	40      CONTINUE
+    	        TT=-1E+0
+    	        D=DSDT(TT)
+    	        YMIN=YMAX
+    	        IF (IA .EQ. 1) THEN
+    	          XX=0E+0  
+    	          IF (BT .LT. 0E+0) THEN
+    	            YY=YMAX
+    	            NASYM=NASYM+1
+    	            ASYMP(NASYM)=XX
+    	          ELSE IF (BT .GT. 0E+0) THEN
+    	            YY=0E+0
+    	          ELSE
+    	            PHI=JACSUM(TT,DG,ACOEF(LOD),BCOEF(LOD),H0,JACOF)
+    	            IF (D .EQ. 0E+0) THEN
+    	              IER=51
+    	              RETURN 
+    	            ENDIF 
+    	            YY=TOTLN*PHI/D
+    	          ENDIF
+    	          IF (NINFD .EQ. 0E+0) THEN
+    	            CPHCA=TUPI*ABS(YY)/TOTLN
+    	          ENDIF
+    	          IF (NZERD .EQ. 0E+0) THEN
+    	            IF (YY .EQ. 0E+0) THEN
+    	              CCAPH=YMAX
+    	            ELSE
+    	              CCAPH=TOTLN/TUPI/ABS(YY)
+    	            ENDIF
+    	          ENDIF
+    	          WRITE(OUCH1,902) XX,YY
+    	          YY=0E+0
+    	          WRITE(OUCH0,902) XX,YY
+    	          CORXX(1)=0E+0
+    	        ENDIF
+    	C
+    	C       ESTIMATE FUNCTION EVALUATION CONDITION NUMBERS FOR INFINITE
+    	C       DERIVATIVE CASES.
+    	C
+    	        IF (BT .LT. 0E+0) THEN
+    	          PHI=JACSUM(-1E+0,DG-1,A1COF(LOD),B1COF(LOD),H1VAL(AJT),
+    	     +               BCFSN(LOM+1))
+    	          PHI=BCFSN(LOM)-2E+0*PHI
+    	          COF=ABS(PHI)/D**(BT+1E+0)
+    	          TERM=MCHEP**BT*COF
+    	          IF (TERM .GT. CPHCA) THEN
+    	            CPHCA=TERM
+    	            COPHC=COF
+    	            EXPHC=BT
+    	          ENDIF
+    	        ENDIF
+    	        IF (BT .GT. 0E+0) THEN
+    	          PHI=JACSUM(-1E+0,DG-1,A1COF(LOD),B1COF(LOD),H1VAL(AJT),
+    	     +               BCFSN(LOM+1))
+    	          PHI=BCFSN(LOM)-2E+0*PHI
+    	          IF (ABS(PHI) .EQ. 0E+0) THEN
+    	            CCAPH=YMAX
+    	            COCAP=YMAX
+    	            EXCAP=AL-1E+0
+    	          ELSE
+    	            COF=D/ABS(PHI)**AL
+    	            TERM=MCHEP**(AL-1E+0)*COF
+    	            IF (TERM .GT. CCAPH) THEN
+    	              CCAPH=TERM
+    	              COCAP=COF
+    	              EXCAP=AL-1E+0
+    	            ENDIF
+    	          ENDIF
+    	        ENDIF
+    	C
+    	C       "DO 50" LOOP FOR POINTS INTERIOR TO ARC NUMBER IA
+    	C
+    	        DO 50 I=1,NINTS-1
+    	          TT=TT+TINC
+    	C
+    	C****     ARC LENGTH INCREASE BY GAUSS-LEGENDRE
+    	C
+    	          SUM=0E+0
+    	          DO 45 K=1,NQPTS
+    	            X=TT+5E-1*TINC*(QUPTS(K)-1E+0)
+    	            SUM=SUM+QUWTS(K)*DSDT(X)
+    	45        CONTINUE
+    	          SINC=5E-1*TINC*SUM
+    	          SS=SS+SINC
+    	          XX=SS/TOTLN
+    	C
+    	C         EVALUATE DIMENSIONLESS BCF DERIVATIVE *YY*
+    	C
+    	          PHI=JACSUM(SJT*TT,DG,ACOEF(LOD),BCOEF(LOD),H0,JACOF)
+    	          D=DSDT(TT)
+    	          IF (D .EQ. 0E+0) THEN
+    	            IER=51
+    	            RETURN 
+    	          ENDIF 
+    	          YY=TOTLN*(1E+0+SJT*TT)**BT*PHI/D
+    	          WRITE(OUCH1,902) XX,YY
+    	          YMIN=MIN(YY,YMIN)
+    	C
+    	C         ESTIMATE FUNCTION EVALUATION CONDITION NUMBERS FOR FINITE
+    	C         DERIVATIVE CASES.
+    	C
+    	          IF (NINFD .EQ. 0E+0) THEN
+    	            CPHCA=MAX(CPHCA,TUPI*ABS(YY)/TOTLN)
+    	          ENDIF
+    	          IF (NZERD .EQ. 0E+0) THEN
+    	            IF (YY .EQ. 0E+0) THEN
+    	              CCAPH=YMAX
+    	            ELSE
+    	              CCAPH=MAX(CCAPH,TOTLN/TUPI/ABS(YY))
+    	            ENDIF
+    	          ENDIF
+    	C
+    	C         EVALUATE DIMENSIONLESS BCF *YY*
+    	C
+    	          PHI=JACSUM(SJT*TT,DG-1,A1COF(LOD),B1COF(LOD),H1VAL(AJT),
+    	     +               BCFSN(LOM+1))
+    	          PHI=BCFSN(LOM)-(1E+0-SJT*TT)*PHI
+    	          YY=(CC+SJT*(1E+0+SJT*TT)**(1E+0+BT)*PHI)/TUPI
+    	          WRITE(OUCH0,902) XX,YY
+    	50      CONTINUE
+    	C
+    	C       NEXT TAKE END POINT OF ARC NUMBER IA
+    	C
+    	        TT=1E+0
+    	        D=DSDT(TT)
+    	        SEND=SEND+ARCLN(IA)
+    	        SS=SEND
+    	        XX=SS/TOTLN
+    	C
+    	C       EVALUATE DIMENSIONLESS BCF DERIVATIVE *YY*
+    	C
+    	        IF (JT .LT. 0E+0) THEN
+    	            IF (BT .LT. 0E+0) THEN
+    	              YY=YMAX
+    	              NASYM=NASYM+1
+    	              ASYMP(NASYM)=XX
+    	            ELSE IF (BT .GT. 0E+0) THEN
+    	              YY=0E+0
+    	            ELSE
+    	              PHI=JACSUM(SJT*TT,DG,ACOEF(LOD),BCOEF(LOD),H0,JACOF)
+    	              IF (D .EQ. 0E+0) THEN
+    	                IER=51
+    	                RETURN 
+    	              ENDIF 
+    	              YY=TOTLN*PHI/D
+    	            ENDIF
+    	        ELSE
+    	            PHI=JACSUM(TT,DG,ACOEF(LOD),BCOEF(LOD),H0,JACOF)
+    	            IF (D .EQ. 0E+0) THEN
+    	              IER=51
+    	              RETURN 
+    	            ENDIF 
+    	            YY=TOTLN*2E+0**BT*PHI/D
+    	        ENDIF
+    	        WRITE(OUCH1,902) XX,YY
+    	        YMIN=MIN(YY,YMIN)
+    	        IF (YMIN.LT.0E+0 .AND. (VTARG(IA+1) .GE. VTARG(IA))) THEN
+    	          NPRVS=NPRVS+1
+    	          IPRVS(NPRVS)=IA
+    	          BCDMN(NPRVS)=YMIN
+    	          MAP11=.FALSE.
+    	        ENDIF
+    	C
+    	C       ESTIMATE FUNCTION EVALUATION CONDITION NUMBERS
+    	C
+    	        IF (NINFD .EQ. 0E+0) THEN
+    	          CPHCA=MAX(CPHCA,TUPI*ABS(YY)/TOTLN)
+    	        ENDIF
+    	        IF (NZERD .EQ. 0E+0) THEN
+    	          IF (YY .EQ. 0E+0) THEN
+    	            CCAPH=YMAX
+    	          ELSE
+    	            CCAPH=MAX(CCAPH,TOTLN/TUPI/ABS(YY))
+    	          ENDIF
+    	        ENDIF
+    	        IF (BT .LT. 0E+0) THEN
+    	          PHI=JACSUM(-1E+0,DG-1,A1COF(LOD),B1COF(LOD),H1VAL(AJT),
+    	     +               BCFSN(LOM+1))
+    	          PHI=BCFSN(LOM)-2E+0*PHI
+    	          COF=ABS(PHI)/D**(BT+1E+0)
+    	          TERM=MCHEP**BT*COF
+    	          IF (TERM .GT. CPHCA) THEN
+    	            CPHCA=TERM
+    	            COPHC=COF
+    	            EXPHC=BT
+    	          ENDIF
+    	        ENDIF
+    	        IF (BT .GT. 0E+0) THEN
+    	          PHI=JACSUM(-1E+0,DG-1,A1COF(LOD),B1COF(LOD),H1VAL(AJT),
+    	     +               BCFSN(LOM+1))
+    	          PHI=BCFSN(LOM)-2E+0*PHI
+    	          IF (ABS(PHI) .EQ. 0E+0) THEN
+    	            CCAPH=YMAX
+    	            COCAP=YMAX
+    	            EXCAP=AL-1E+0
+    	          ELSE
+    	            COF=D/ABS(PHI)**AL
+    	            TERM=MCHEP**(AL-1E+0)*COF
+    	            IF (TERM .GT. CCAPH) THEN
+    	              CCAPH=TERM
+    	              COCAP=COF
+    	              EXCAP=AL-1E+0
+    	            ENDIF
+    	          ENDIF
+    	        ENDIF
+    	C
+    	C       EVALUATE DIMENSIONLESS BCF *YY*
+    	C
+    	        YY=(VTARG(IA+1)-VTARG(1))/TUPI
+    	        WRITE(OUCH0,902) XX,YY
+    	        IF (JT.LT.0) THEN
+    	          CORXX(PT+1)=XX
+    	        ENDIF
+    	C
+    	60    CONTINUE
+    	C          
+    	901   FORMAT(2E16.8,1X,A3)
+    	902   FORMAT(2E16.8)
+    	C
+    	C     NORMAL EXIT
+    	C
+    	      IER=0
+    	C */
+    } // private void DIAGN4
 
       /**
        * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
