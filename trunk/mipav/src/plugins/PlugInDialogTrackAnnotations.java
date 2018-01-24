@@ -33,7 +33,9 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIText;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.MipavUtil;
@@ -115,6 +117,11 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	private JPanel inputsPanel;	
 	// loads all images at once into a hyper stack for faster switching between images:
 	private JCheckBox useHyperstack;
+	// load resliced and rotated images
+	private JCheckBox loadReslice;
+	private JCheckBox loadRotated;
+	// load any straightened annotations
+	private JCheckBox loadStraightenedAnnotations;
 
 	// on 'start' the images are loaded and the VolumeTriPlanarInterface is created:
 	private VolumeTriPlanarInterface triVolume;
@@ -132,12 +139,13 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	private ModelImage imageB;
 	// hyperstack arrays:
 	private ModelImage[] imageStackA = null;
+	private int[][] originalExtentsStack = null;
+	private int[] originalExtents = null;
 	private ModelImage[] imageStackB = null;
 	// luts saved between back/next buttons for hyperstacks:
 	private ModelLUT[] lutStackA;
 	private ModelLUT[] lutStackB;
-	// wormdata keeps track of the image locations, etc.
-	private WormData wormData;
+	private Vector<Boolean> straightLoaded;
 	// saved annotations to initialize the next image in the sequence:
 	private VOI savedAnnotations = null;
 	
@@ -300,7 +308,9 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		triVolume.hideMenus();
 
 		// setup the display:
-		triVolume.getVolumeGPU().resetAxisX();
+		if ( !loadRotated.isSelected() ) {
+			triVolume.getVolumeGPU().resetAxisX();
+		}
 		triVolume.getVolumeGPU().displayVolumeSlices(false);
 		triVolume.getVolumeGPU().displayVolumeRaycast(true);
 		triVolume.getVolumeGPU().displayVOIs(true);
@@ -585,7 +595,23 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		// loads all images at once if selected:
 		useHyperstack = gui.buildCheckBox( "Load images as hyperstack", true);
 		inputsPanel.add(useHyperstack.getParent(), gbc);
+		gbc.gridy++;
+
+		// resliced and rotated images:
+		loadReslice = gui.buildCheckBox( "Load resliced images", true);
+		inputsPanel.add(loadReslice.getParent(), gbc);
 		gbc.gridx++;
+
+		// resliced and rotated images:
+		loadRotated = gui.buildCheckBox( "Load rotated images", true);
+		inputsPanel.add(loadRotated.getParent(), gbc);		
+		gbc.gridx = 0;
+		gbc.gridy++;
+
+		// resliced and rotated images:
+//		loadStraightenedAnnotations = gui.buildCheckBox( "Load straightened annotations", true);
+//		inputsPanel.add(loadStraightenedAnnotations.getParent(), gbc);
+		
 
 		// button panels:
 		buttonPanel = new JPanel();
@@ -825,7 +851,9 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 							(imageA.getExtents()[2] != previousExtents[2]);
 
 					triVolume.setImage(imageA, imageB, null, null, updateRenderer);
-					triVolume.getVolumeGPU().resetAxisX();
+					if ( !loadRotated.isSelected() ) {
+						triVolume.getVolumeGPU().resetAxisX();
+					}
 					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );
 				}
 			}
@@ -851,6 +879,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 					for ( int i = includeRange.size() - 1; i >= 0; i-- )
 					{	
 						String imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
+						if ( loadReslice.isSelected() ) {
+							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice.tif";
+						}
+						if ( loadRotated.isSelected() ) {
+							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice_rotate.tif";
+						}
 						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
 						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
 						File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
@@ -868,6 +902,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 					
 					
 					imageStackA = new ModelImage[includeRange.size()];
+					originalExtentsStack = new int[includeRange.size()][];
 					imageStackB = new ModelImage[includeRange.size()];
 					lutStackA = new ModelLUT[includeRange.size()];
 					lutStackB = new ModelLUT[includeRange.size()];
@@ -881,6 +916,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 					for ( int i = 0; i < includeRange.size(); i++ )
 					{		
 						String imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
+						if ( loadReslice.isSelected() ) {
+							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice.tif";
+						}
+						if ( loadRotated.isSelected() ) {
+							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice_rotate.tif";
+						}
 						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
 						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
 						File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
@@ -917,6 +958,20 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 							if ( voiFile2.exists() )
 							{
 								imageStackB[i] = openImage(voiFile2, imageName);
+							}
+						}
+
+						if ( loadReslice.isSelected() || loadRotated.isSelected() ) {
+							// open original image and store original size:
+							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
+							voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
+							if ( voiFile.exists() )
+							{
+								ModelImage originalImage = openImage(voiFile, imageName);
+								if ( originalImage != null ) {
+									originalExtentsStack[i] = originalImage.getExtents().clone();
+									originalImage.disposeLocal(false);
+								}
 							}
 						}
 						// Add memory check here:
@@ -984,6 +1039,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 					imageA = imageStackA[imageIndex];
 					imageB = imageStackB[imageIndex];		
+					originalExtents = originalExtentsStack[imageIndex];
 
 					// create volume renderer and initialize:
 					triVolume = new VolumeTriPlanarInterface(imageA, imageB, false);
@@ -999,6 +1055,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 					imageA = imageStackA[imageIndex];
 					imageB = imageStackB[imageIndex];
+					originalExtents = originalExtentsStack[imageIndex];
 					
 					// recreate image on the GPU if the image dimensions change, if no change just reload with
 					// the new image data:
@@ -1008,7 +1065,9 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 					// set the new image and LUTs:
 					triVolume.setImage(imageA, imageB, lutStackA[imageIndex], lutStackB[imageIndex], updateRenderer);
-					triVolume.getVolumeGPU().resetAxisX();
+					if ( !loadRotated.isSelected() ) {
+						triVolume.getVolumeGPU().resetAxisX();
+					}
 					// set the title to match the new image name:
 					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );					
 
@@ -1021,6 +1080,12 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			{
 				// load the new image directly from disk, no hyperstacks:
 				String imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight.tif";
+				if ( loadReslice.isSelected() ) {
+					imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight_reslice.tif";
+				}
+				if ( loadRotated.isSelected() ) {
+					imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight_reslice_rotate.tif";
+				}
 				String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
 				String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
 				File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
@@ -1043,25 +1108,57 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 			// remove all vois:
 			imageA.unregisterAllVOIs();
 			
-			// create new worm data and load the straightened lattice:
-			wormData = new WormData(imageA);
-			wormData.openStraightLattice();
+			// load the straightened lattice:
+			VOIVector lattice = LatticeModel.readLatticeCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator +
+					"straightened_lattice.csv");
+			for ( int j = 0; j < lattice.size(); j++ )
+			{
+				imageA.registerVOI(convertToLocal(lattice.elementAt(j)));
+			}
 
 			// load any existing annotations from the csv file:
 			if ( readAnnotations ) {
+				if ( savedAnnotations == null )
+				{
+					savedAnnotations = new VOI((short) 0, "annotation3d_", VOI.ANNOTATION, -1.0f);
+				}
 				// try opening any existing annotations from file				
 				VOI annotations = LatticeModel.readAnnotationsCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator +
 						"tracked_annotations.csv");
 				if ( annotations != null )
 				{
-					savedAnnotations = annotations;
+//					savedAnnotations = annotations;
+					savedAnnotations = convertToLocal(annotations);
 				}
-				annotations = LatticeModel.readAnnotationsCSV(baseFileDir2 + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator +
-						"tracked_annotations.csv");		
-				if ( annotations != null )
-				{
-					savedAnnotations.getCurves().addAll(annotations.getCurves());
-				}
+//				annotations = LatticeModel.readAnnotationsCSV(baseFileDir2 + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator +
+//						"tracked_annotations.csv");		
+//				if ( annotations != null )
+//				{
+//					savedAnnotations.getCurves().addAll(annotations.getCurves());
+//				}
+//				if ( loadStraightenedAnnotations.isSelected() ) {
+//					boolean loadStraight = true;
+//					if ( straightLoaded.size() > imageIndex ) {
+//						loadStraight = !straightLoaded.get(imageIndex);
+//					}
+//					if ( loadStraight ) {
+//						if ( straightLoaded.size() == imageIndex ) {
+//							straightLoaded.add(true);
+//						}
+//						annotations = LatticeModel.readAnnotationsCSV(baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator +
+//								"straightened_annotations.csv");	
+//						if ( annotations != null )
+//						{
+//							savedAnnotations.getCurves().addAll(annotations.getCurves());
+//						}	
+//						annotations = LatticeModel.readAnnotationsCSV(baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator +
+//								"straightened_annotations.csv");	
+//						if ( annotations != null )
+//						{
+//							savedAnnotations.getCurves().addAll(annotations.getCurves());
+//						}
+//					}
+//				}
 			}			
 			
 			// load the annotations into the viewer:
@@ -1122,85 +1219,114 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		{
 			return;
 		}
-		if ( wormData == null )
-		{
-			return;
-		}
-		VOI annotations1 = new VOI((short) 0, "tracked_annotations", VOI.ANNOTATION, -1.0f);
-		VOI annotations2 = new VOI((short) 0, "tracked_annotations", VOI.ANNOTATION, -1.0f);
-		String dir1 = new String();
-		String dir2 = new String();
-		String empty = new String();
-		for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
-			if ( i == 0 )
-			{
-				VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
-				if ( !text.getNote().equals(empty) )
-				{
-					dir1 = text.getNote();
-				}
-				annotations1.getCurves().add(savedAnnotations.getCurves().elementAt(i));
-			}
-			else
-			{
-				VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
-				if ( text.getNote().equals( dir1 ) || text.getNote().equals(empty) )
-				{
-					annotations1.getCurves().add(text);
-				}
-				else
-				{
-					if ( !text.getNote().equals(empty) )
-					{
-						dir2 = text.getNote();
-					}
-					annotations2.getCurves().add(text);
-				}
-			}
-		}
-//		System.err.println( dir1 );
-//		System.err.println( dir2 );
-
-		if ( !dir1.equals(empty) )
-		{
-			dir1 = dir1.substring(0, dir1.lastIndexOf(File.separator, dir1.length()) );
-		}
-		if ( !dir2.equals(empty) )
-		{
-			dir2 = dir2.substring(0, dir2.lastIndexOf(File.separator, dir2.length()) );
-		}
+//		VOI annotations1 = new VOI((short) 0, "tracked_annotations", VOI.ANNOTATION, -1.0f);
+//		VOI annotations2 = new VOI((short) 0, "tracked_annotations", VOI.ANNOTATION, -1.0f);
+//		String dir1 = new String();
+//		String dir2 = new String();
+//		String empty = new String();
+//		for ( int i = 0; i < savedAnnotations.getCurves().size(); i++ ) {
+//			if ( i == 0 )
+//			{
+//				VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
+//				if ( !text.getNote().equals(empty) )
+//				{
+//					dir1 = text.getNote();
+//				}
+//				annotations1.getCurves().add(savedAnnotations.getCurves().elementAt(i));
+//			}
+//			else
+//			{
+//				VOIText text = (VOIText) savedAnnotations.getCurves().elementAt(i);
+//				if ( text.getNote().equals( dir1 ) || text.getNote().equals(empty) )
+//				{
+//					annotations1.getCurves().add(text);
+//				}
+//				else
+//				{
+//					if ( !text.getNote().equals(empty) )
+//					{
+//						dir2 = text.getNote();
+//					}
+//					annotations2.getCurves().add(text);
+//				}
+//			}
+//		}
+////		System.err.println( dir1 );
+////		System.err.println( dir2 );
+//
+//		if ( !dir1.equals(empty) )
+//		{
+//			dir1 = dir1.substring(0, dir1.lastIndexOf(File.separator, dir1.length()) );
+//		}
+//		if ( !dir2.equals(empty) )
+//		{
+//			dir2 = dir2.substring(0, dir2.lastIndexOf(File.separator, dir2.length()) );
+//		}
 //		System.err.println( dir1 );
 //		System.err.println( dir2 );
 		
 		// Save first set of annotations:
-		if ( annotations1.getCurves().size() > 0 )
-		{
-			// create default directory name if needed:
-			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
-			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
-			if ( dir1.equals("") )
-			{
-				dir1 = baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations";
-			}
-			LatticeModel.saveAnnotationsAsCSV(dir1 + File.separator, "tracked_annotations.csv", annotations1);
-		}
+//		if ( annotations1.getCurves().size() > 0 )
+//		{
+//			VOI annotations1Original = convertToOriginal(annotations1);
+//			// create default directory name if needed:
+//			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
+//			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+//			if ( dir1.equals("") )
+//			{
+//				dir1 = baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations";
+//			}
+//			LatticeModel.saveAnnotationsAsCSV(dir1 + File.separator, "tracked_annotations.csv", annotations1Original);
+//			if ( loadReslice.isSelected() )
+//			{
+//				String name = "tracked_annotations_reslice.csv";
+//				if ( loadRotated.isSelected() )
+//				{
+//					name = "tracked_annotations_reslice_rotate.csv";
+//				}
+//				LatticeModel.saveAnnotationsAsCSV(dir1 + File.separator, name, annotations1Original);
+//			}
+//		}
 		
 		// Save second set of annotations:
-		if ( annotations2.getCurves().size() > 0 )
+//		if ( annotations2.getCurves().size() > 0 )
+//		{
+//			VOI annotations2Original = convertToOriginal(annotations2);
+//			// create default directory name if needed:
+//			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
+//			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+//			if ( dir2.equals("") )
+//			{
+//				dir2 = baseFileDir2 + File.separator + subDirName + subDirNameResults + "tracked_annotations";
+//			}
+//			LatticeModel.saveAnnotationsAsCSV(dir2 + File.separator, "tracked_annotations.csv", annotations2Original);
+//			if ( loadReslice.isSelected() )
+//			{
+//				String name = "tracked_annotations_reslice.csv";
+//				if ( loadRotated.isSelected() )
+//				{
+//					name = "tracked_annotations_reslice_rotate.csv";
+//				}
+//				LatticeModel.saveAnnotationsAsCSV(dir2 + File.separator, name, annotations2Original);
+//			}
+//		}
+
+
+		VOI annotationsOriginal = convertToOriginal(savedAnnotations);
+		// create default directory name if needed:
+		String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
+		String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
+		String dir = baseFileDir + File.separator + subDirName + subDirNameResults + "tracked_annotations";
+		LatticeModel.saveAnnotationsAsCSV(dir + File.separator, "tracked_annotations.csv", annotationsOriginal);
+		if ( loadReslice.isSelected() )
 		{
-			// create default directory name if needed:
-			String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
-			String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
-			if ( dir2.equals("") )
+			String name = "tracked_annotations_reslice.csv";
+			if ( loadRotated.isSelected() )
 			{
-				dir2 = baseFileDir2 + File.separator + subDirName + subDirNameResults + "tracked_annotations";
+				name = "tracked_annotations_reslice_rotate.csv";
 			}
-			LatticeModel.saveAnnotationsAsCSV(dir2 + File.separator, "tracked_annotations.csv", annotations2);
+			LatticeModel.saveAnnotationsAsCSV(dir + File.separator, name, savedAnnotations);
 		}
-
-
-		// close the worm data:
-		wormData.dispose();
 	}
 
 
@@ -1210,6 +1336,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	 */
 	private boolean setVariables()
 	{	   
+		straightLoaded = new Vector<Boolean>();
 		baseFileName = baseFileNameText.getText();
 		baseFileDir = baseFileLocText.getText();
 		baseFileDir2 = baseFileLocText2.getText();
@@ -1251,6 +1378,90 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		imageIndex = 0;
 
 		return (includeRange != null);
+	}
+	
+	private VOI convertToLocal( VOI voi ) {
+		if ( !loadReslice.isSelected() && !loadRotated.isSelected() ) {
+			return voi;
+		}
+		int shiftX = originalExtents[0]/2;
+		int shiftY = originalExtents[1]/2;
+		int xOffset = (imageA.getExtents()[0] - originalExtents[0])/2;
+		int yOffset = (imageA.getExtents()[1] - originalExtents[1])/2;
+		if ( loadRotated.isSelected() )
+		{
+			yOffset = (imageA.getExtents()[2] - originalExtents[1])/2;
+		}
+		
+		VOI localVOI = new VOI(voi);
+		for ( int i = 0; i < localVOI.getCurves().size(); i++ ) {
+			VOIBase curveOrig = localVOI.getCurves().elementAt(i);
+			if ( loadReslice.isSelected() ) {
+				// add offset:
+				for ( int j = 0; j < curveOrig.size(); j++ ) {
+					curveOrig.elementAt(j).X -= shiftX;
+					curveOrig.elementAt(j).Y -= shiftY;
+					
+					curveOrig.elementAt(j).X += xOffset;
+					curveOrig.elementAt(j).Y += yOffset;
+					
+					curveOrig.elementAt(j).X += shiftX;
+					curveOrig.elementAt(j).Y += shiftY;
+				}
+			}
+			if ( loadRotated.isSelected() ) {
+				// swap y and z coordinates:
+				for ( int j = 0; j < curveOrig.size(); j++ ) {
+					float temp = curveOrig.elementAt(j).Y;
+					curveOrig.elementAt(j).Y = curveOrig.elementAt(j).Z;
+					curveOrig.elementAt(j).Z = temp;
+				}
+			}
+		}
+		return localVOI;
+	}
+	
+	private VOI convertToOriginal( VOI voi ) {
+		if ( !loadReslice.isSelected() && !loadRotated.isSelected() ) {
+			return voi;
+		}	
+
+		int shiftX = imageA.getExtents()[0]/2;
+		int shiftY = imageA.getExtents()[1]/2;
+		int xOffset = (imageA.getExtents()[0] - originalExtents[0])/2;
+		int yOffset = (imageA.getExtents()[1] - originalExtents[1])/2;
+		if ( loadRotated.isSelected() )
+		{
+			shiftY = imageA.getExtents()[2]/2;
+			yOffset = (imageA.getExtents()[2] - originalExtents[1])/2;
+		}
+		
+		VOI localVOI = new VOI(voi);
+		for ( int i = 0; i < localVOI.getCurves().size(); i++ ) {
+			VOIBase curveOrig = localVOI.getCurves().elementAt(i);
+			if ( loadRotated.isSelected() ) {
+				// swap y and z coordinates:
+				for ( int j = 0; j < curveOrig.size(); j++ ) {
+					float temp = curveOrig.elementAt(j).Y;
+					curveOrig.elementAt(j).Y = curveOrig.elementAt(j).Z;
+					curveOrig.elementAt(j).Z = temp;
+				}
+			}
+			if ( loadReslice.isSelected() ) {
+				// put back in original coordinates:
+				for ( int j = 0; j < curveOrig.size(); j++ ) {
+					curveOrig.elementAt(j).X -= shiftX;
+					curveOrig.elementAt(j).Y -= shiftY;
+					
+					curveOrig.elementAt(j).X -= xOffset;
+					curveOrig.elementAt(j).Y -= yOffset;
+					
+					curveOrig.elementAt(j).X += shiftX;
+					curveOrig.elementAt(j).Y += shiftY;
+				}
+			}
+		}
+		return localVOI;
 	}
 	
 	/**

@@ -243,74 +243,74 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
 					WormData wormData = new WormData(wormImage);
 
-					String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + "_positions.csv";
-					System.err.println( "   " + positionsFile );
-					File textFile = new File(baseFileDir + File.separator + "Positions" + File.separator + positionsFile);
-					if ( textFile.exists() )
-					{			
-						if ( twistedToUntwisted.isSelected() )
-						{
-							String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator +
-									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 									
-									PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
-							VOIVector latticeVector = new VOIVector();
-							PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
-							if ( latticeVector.size() != 0 )
-							{
-								VOIVector vois = readMarkerPositions(positionsFile, textFile, null);
-								VOI annotations = vois.elementAt(0);
-
-								if ( annotations != null )
-								{
-									if ( annotations.getCurves().size() > 0 )
-									{
-										LatticeModel model = new LatticeModel(wormImage);
-										model.setSeamCellImage( wormData.readSeamSegmentation() );
-										model.setLattice(latticeVector.elementAt(0));
-										model.setMarkers(annotations);
-
-										model.interpolateLattice( false, false, false, true );	
-
-										VOI annotationsStraight = model.getAnnotationsStraight();
-
-
-										String distanceName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-												baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
-												"output_images" + File.separator + 
-												baseFileName + "_" + includeRange.elementAt(i) + "_distanceMap.xml";
-										File distanceMapFile = new File(baseFileDir + File.separator + distanceName );
-//										System.err.println(distanceName + " " + distanceMapFile.exists() );											
-										ModelImage distanceMap = null;
-										if ( distanceMapFile.exists() )
-										{
-											distanceMap = fileIO.readImage(distanceName, baseFileDir + File.separator, false, null);
-										}
-										Vector<Integer> distance = null;
-										if ( distanceMap != null )
-										{
-											distance = new Vector<Integer>();
-											for ( int j = 0; j < annotationsStraight.getCurves().size(); j++ )
-											{
-												VOIText text = (VOIText) annotationsStraight.getCurves().elementAt(j);
-												Vector3f pos = text.elementAt(0);
-												int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
-												distance.add(d);
-											}
-											
-											distanceMap.disposeLocal(false);
-											distanceMap = null;
-										}
-
-										String fileBase = baseFileName + "_" + includeRange.elementAt(i) + "_positions_straight.csv";
-										saveMarkerPositions(baseFileDir + File.separator + "Positions" + File.separator + fileBase, annotationsStraight, distance);
-										model.dispose();
-										model = null;
-									}
-								}
-							}
-						}
-						else if ( untwistedToTwisted.isSelected() )
-						{
+//					String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + "_positions.csv";
+//					System.err.println( "   " + positionsFile );
+//					File textFile = new File(baseFileDir + File.separator + "Positions" + File.separator + positionsFile);
+//					if ( textFile.exists() )
+//					{			
+//						if ( twistedToUntwisted.isSelected() )
+//						{
+//							String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator +
+//									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 									
+//									PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
+//							VOIVector latticeVector = new VOIVector();
+//							PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
+//							if ( latticeVector.size() != 0 )
+//							{
+//								VOIVector vois = readMarkerPositions(positionsFile, textFile, null);
+//								VOI annotations = vois.elementAt(0);
+//
+//								if ( annotations != null )
+//								{
+//									if ( annotations.getCurves().size() > 0 )
+//									{
+//										LatticeModel model = new LatticeModel(wormImage);
+//										model.setSeamCellImage( wormData.readSeamSegmentation() );
+//										model.setLattice(latticeVector.elementAt(0));
+//										model.setMarkers(annotations);
+//
+//										model.interpolateLattice( false, false, false, true );	
+//
+//										VOI annotationsStraight = model.getAnnotationsStraight();
+//
+//
+//										String distanceName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+//												baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
+//												"output_images" + File.separator + 
+//												baseFileName + "_" + includeRange.elementAt(i) + "_distanceMap.xml";
+//										File distanceMapFile = new File(baseFileDir + File.separator + distanceName );
+////										System.err.println(distanceName + " " + distanceMapFile.exists() );											
+//										ModelImage distanceMap = null;
+//										if ( distanceMapFile.exists() )
+//										{
+//											distanceMap = fileIO.readImage(distanceName, baseFileDir + File.separator, false, null);
+//										}
+//										Vector<Integer> distance = null;
+//										if ( distanceMap != null )
+//										{
+//											distance = new Vector<Integer>();
+//											for ( int j = 0; j < annotationsStraight.getCurves().size(); j++ )
+//											{
+//												VOIText text = (VOIText) annotationsStraight.getCurves().elementAt(j);
+//												Vector3f pos = text.elementAt(0);
+//												int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
+//												distance.add(d);
+//											}
+//											
+//											distanceMap.disposeLocal(false);
+//											distanceMap = null;
+//										}
+//
+//										String fileBase = baseFileName + "_" + includeRange.elementAt(i) + "_positions_straight.csv";
+//										saveMarkerPositions(baseFileDir + File.separator + "Positions" + File.separator + fileBase, annotationsStraight, distance);
+//										model.dispose();
+//										model = null;
+//									}
+//								}
+//							}
+//						}
+//						else if ( untwistedToTwisted.isSelected() )
+//						{
 							String toTwistedName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
 									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
 									"output_images" + File.separator + 
@@ -335,6 +335,11 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 							}
 							if ( toTwisted != null )
 							{
+								String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+										baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator + 
+										"tracked_annotations.csv";
+								File textFile = new File(baseFileDir + File.separator + positionsFile);
+										
 								int[] imageExtents = new int[]{toTwisted.getExtents()[0], toTwisted.getExtents()[1]};
 								VOIVector vois = readMarkerPositions(positionsFile, textFile, imageExtents);
 								VOI annotations = vois.elementAt(0);
@@ -372,8 +377,11 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 											int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
 											distance.add(d);
 										}
-										String fileBase = baseFileName + "_" + includeRange.elementAt(i) + "_positions_twisted.csv";
-										saveMarkerPositions(baseFileDir + File.separator + "Positions" + File.separator + fileBase, annotationVOI, distance);
+										
+										String outputFile = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+												baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator + 
+												"tracked_annotations_twisted.csv";
+										saveMarkerPositions(baseFileDir + File.separator + outputFile, annotationVOI, distance);
 										
 										toTwisted.disposeLocal(false);
 										toTwisted = null;
@@ -385,8 +393,8 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 									}
 								}
 							}
-						}
-					}
+//						}
+//					}
 				}
 				else
 				{
@@ -410,7 +418,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 
 		setResizable(true);
 		setForeground(Color.black);
-		setTitle("Untwisting C.elegans - Twisted to Untwisted Conversion - 1.0");
+		setTitle("Untwisting C.elegans - Untwisted to Twisted Conversion");
 		try {
 			setIconImage(MipavUtil.getIconImage("divinci.gif"));
 		} catch (FileNotFoundException e) {
@@ -447,28 +455,28 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		inputsPanel.add(rangeFusionText.getParent(), gbc);
 		gbc.gridy++;
 
-		ButtonGroup group = new ButtonGroup();
-		untwistedToTwisted = gui.buildRadioButton( "untwisted->twisted", true);
-		untwistedToTwisted.addActionListener(this);
-		inputsPanel.add(untwistedToTwisted.getParent(), gbc);
-		group.add(untwistedToTwisted);
-		gbc.gridy++;
-		twistedToUntwisted = gui.buildRadioButton( "twisted->untwisted", false);
-		twistedToUntwisted.addActionListener(this);
-		inputsPanel.add(twistedToUntwisted.getParent(), gbc);
-		group.add(twistedToUntwisted);
-
-
-		gbc.gridy++;
-		group = new ButtonGroup();
-		defaultCoords = gui.buildRadioButton("default coordinates", true);
-		inputsPanel.add(defaultCoords.getParent(), gbc);
-		group.add(defaultCoords);
-		gbc.gridy++;
-		noseCentric = gui.buildRadioButton("nose centered", false);
-		inputsPanel.add(noseCentric.getParent(), gbc);
-		group.add(noseCentric);
-		gbc.gridy++;
+//		ButtonGroup group = new ButtonGroup();
+//		untwistedToTwisted = gui.buildRadioButton( "untwisted->twisted", true);
+//		untwistedToTwisted.addActionListener(this);
+//		inputsPanel.add(untwistedToTwisted.getParent(), gbc);
+//		group.add(untwistedToTwisted);
+//		gbc.gridy++;
+//		twistedToUntwisted = gui.buildRadioButton( "twisted->untwisted", false);
+//		twistedToUntwisted.addActionListener(this);
+//		inputsPanel.add(twistedToUntwisted.getParent(), gbc);
+//		group.add(twistedToUntwisted);
+//
+//
+//		gbc.gridy++;
+//		group = new ButtonGroup();
+//		defaultCoords = gui.buildRadioButton("default coordinates", true);
+//		inputsPanel.add(defaultCoords.getParent(), gbc);
+//		group.add(defaultCoords);
+//		gbc.gridy++;
+//		noseCentric = gui.buildRadioButton("nose centered", false);
+//		inputsPanel.add(noseCentric.getParent(), gbc);
+//		group.add(noseCentric);
+//		gbc.gridy++;
 
 		getContentPane().add(inputsPanel, BorderLayout.NORTH);
 
@@ -513,11 +521,11 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 				if (st.hasMoreTokens()) {
 					pos.Z = Float.valueOf(st.nextToken());
 					Vector3f out = new Vector3f();
-					if ( noseCentric.isSelected() && (imageExtents != null) )
-					{
-						pos.X += imageExtents[0]/2;
-						pos.Y += imageExtents[1]/2;
-					}
+//					if ( noseCentric.isSelected() && (imageExtents != null) )
+//					{
+//						pos.X += imageExtents[0]/2;
+//						pos.Y += imageExtents[1]/2;
+//					}
 					out.copy(pos);
 					text.add(out);
 

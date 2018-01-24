@@ -162,6 +162,95 @@ public class LatticeModel {
 
 	}
 	
+	public static VOIVector readLatticeCSV(String fileName) {
+		File file = new File(fileName);
+		if ( file.exists() )
+		{		
+			VOIVector latticePairs = new VOIVector();
+            short sID = 0;
+			//        	System.err.println( fileName );
+			FileReader fr;
+			try {
+				fr = new FileReader(file);
+				BufferedReader br = new BufferedReader(fr);
+				String line = br.readLine();
+//				System.err.println(line);
+				line = br.readLine();
+//				System.err.println(line);
+
+				VOI lattice = new VOI( (short)sID, fileName, VOI.ANNOTATION, 0 );
+				lattice.setColor(new Color(0, 0, 255));
+				VOIContour left = new VOIContour(false);
+				left.update(new ColorRGBA(0, 0, 1, 1));
+				VOIContour right = new VOIContour(false);
+				right.update(new ColorRGBA(0, 0, 1, 1));
+				lattice.getCurves().add(left);
+				lattice.getCurves().add(right);
+				int count = 1;
+				while ( line != null && (line.length() > 1) )
+				{
+					String[] parsed = line.split( "," );
+					if ( parsed.length != 0 )
+					{
+						int parsedIndex = 0;
+						String name = String.valueOf( parsed[parsedIndex++] );
+						float x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
+						float y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
+						float z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
+						left.add( new Vector3f(x,y,z));
+						count++;
+					}
+					line = br.readLine();
+//					System.err.println(line);
+					
+					parsed = line.split( "," );
+					if ( parsed.length != 0 )
+					{
+						int parsedIndex = 0;
+						String name = String.valueOf( parsed[parsedIndex++] );
+						float x    = (parsed.length > parsedIndex+0) ? (parsed[parsedIndex+0].length() > 0) ? Float.valueOf( parsed[parsedIndex+0] ) : 0 : 0; 
+						float y    = (parsed.length > parsedIndex+1) ? (parsed[parsedIndex+1].length() > 0) ? Float.valueOf( parsed[parsedIndex+1] ) : 0 : 0; 
+						float z    = (parsed.length > parsedIndex+2) ? (parsed[parsedIndex+2].length() > 0) ? Float.valueOf( parsed[parsedIndex+2] ) : 0 : 0;
+						right.add( new Vector3f(x,y,z));
+						count++;
+					}
+					line = br.readLine();
+//					System.err.println(line);
+				}
+				fr.close();
+				if ( count > 1 )
+				{
+					latticePairs.add(lattice);
+					for ( int i = 0; i < left.size(); i++ ) {
+						
+						final VOI marker = new VOI((short)(i+1), "pair_" + (i+1), VOI.POLYLINE, (float) Math.random());
+						final VOIContour mainAxis = new VOIContour(false);
+						mainAxis.add(left.elementAt(i));
+						mainAxis.add(right.elementAt(i));
+						marker.getCurves().add(mainAxis);
+						marker.setColor(new Color(255, 255, 0));
+						mainAxis.update(new ColorRGBA(1, 1, 0, 1));
+						if (i == 0) {
+							marker.setColor(new Color(0, 255, 0));
+							mainAxis.update(new ColorRGBA(0, 1, 0, 1));
+						}
+						latticePairs.add(marker);
+					}
+					return latticePairs;
+				}
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		return null;
+	}
+
+	
 	/**
 	 * Read a list of annotations from a CSV file: name,x,y,z,radius (optional)
 	 * @param fileName
@@ -183,7 +272,7 @@ public class LatticeModel {
 
 				VOI annotationVOIs = new VOI( (short)sID, fileName, VOI.ANNOTATION, 0 );
 				int count = 1;
-				while ( line != null )
+				while ( line != null && (line.length() > 1) )
 				{
 					String[] parsed = line.split( "," );
 					if ( parsed.length != 0 )
