@@ -8268,7 +8268,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	int MNSUA,NEQNS,
     	     TNSUA;
     	final double DELTA = 0.2;
-    	double LGTOL,SUPER,THET0;
+    	double LGTOL,THET0;
     	double CT[] = new double[2];
     	double theta;
     	double mag;
@@ -8288,7 +8288,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	MNEQN=ISNPH[5];
     	NJIND=NARCS+1;
     	TNGQP=NJIND*NQPTS;
-    	SUPER=RGEOM[0];
+    	//SUPER=RGEOM[0];
     	LGTOL=RGEOM[1];
     	
     	IQUPH[1]=TNSUA;
@@ -9623,7 +9623,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	     
     	//     LOCAL VARAIBLES
     	
-    	int MNSUA,TNSUA;
+    	int TNSUA;
     	// CHARACTER*6 IERTXT
     	
     	// EXTERNAL PHTCA1,IERTXT
@@ -9631,7 +9631,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	NARCS=ISNPH[0];
     	NQPTS=ISNPH[1];
     	TNSUA=ISNPH[2];
-    	MNSUA=ISNPH[4];
+    	//MNSUA=ISNPH[4];
     	MNEQN=ISNPH[5];
     	MQUPH=IQUPH[3];
     	
@@ -10632,10 +10632,10 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		// OTHER SCALAR VARIABLES
 		
-		int I,MNCOF,MNEQN,MNSUA,MNSUC,NEQNS,NJCOG,PT,TNSUA,TNSUC;
+		int I,MNCOF,MNSUC,NEQNS,NJCOG,PT,TNSUA,TNSUC;
 		double COLSC[] = new double[]{-1.0};
 		double INNRAD = 0.0;
-		double LGTOL,PI,SUPER,THET0,NEWTL;
+		double LGTOL,PI,THET0,NEWTL;
 		double DCAP0[] = new double[2];
 		double FACTR[] = new double[2];
 		double mult;
@@ -10653,11 +10653,11 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 		NARCS=IGEOM[0];
 		NQPTS=IGEOM[1];
-		MNSUA=IGEOM[3];
+		//MNSUA=IGEOM[3];
 		TNSUA=ISNPH[2];
 		NEQNS=ISNPH[3];
 		MNEQN=ISNPH[5];
-		SUPER=RGEOM[0];
+		//SUPER=RGEOM[0];
 		LGTOL=RGEOM[1];
 		MNCOF=IBNDS[1];
 		MNSUC=IBNDS[0];
@@ -11325,7 +11325,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	   final int MNITS = 10;
 	   final int NBSCT = 3;
 	   int NITS,STEPS;
-	   double DFT,EPS,FL,FT,FU,JACSUM,RDIFF,TUPI;
+	   double DFT,EPS,FL,FT,FU,RDIFF,TUPI;
 	   double CO[];
 	   // EXTERNAL JACSUM
 	   int i;
@@ -12048,7 +12048,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 	   // LOCAL VARIABLES
 		
-	   int AJT,DG,I,IC,L,LOM,LOD,PSA,PT;
+	   int AJT,DG,I,IC,LOM,LOD,PSA,PT;
 	   double MOD;
 	   double COF[] = new double[2];
 	   // COMPLEX COF
@@ -12192,7 +12192,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		
 	   final int NINTS = 5;
 	   int TNPQP[] = new int[1];
-	   int MNCOF,MNSUC,TNSUC;
+	   int MNSUC,TNSUC;
 	   final double DELTA = 0.2;
 	   double TOLOU[] = new double[1];
 	   double LGTOL;
@@ -12207,7 +12207,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 	   NQPTS=ISNCA[1];
 	   TNSUC=ISNCA[2];
 	   MNSUC=ISNCA[4];
-	   MNCOF=ISNCA[5];
+	   //MNCOF=ISNCA[5];
 	   LGTOL=RSNCA[0];
 	   ZQUCA[0]=ZSNCA[0];
 	   ZQUCA[1]=ZSNCA[1];
@@ -12277,7 +12277,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
 		final int MNCOF = 32;
 		int QINTS[] = new int[1];
     	int AJT,DEG,HI,HI1,I,I1,J,J1,J2,JT,K,LIM,LOD,LOL,LOM,M;
-    	final double RHO = 0.13;
+    	//final double RHO = 0.13;
 		double BETA,HA,MD,MEAN,RR,RRB,SS,SUM1,TT,SCO;
 		double CTT[] = new double[2];
 		// COMPLEX CTT,DPARFN,JACSUC,PARFUN
@@ -12678,8 +12678,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	int NPRVS[] = new int[1];
     	int NZERD[] = new int[1];
     	int IMNLA = 0;
-    	int I,J,L,MNSUA,TNSUA;
-    	final double BIG = 4.4;
+    	int I,J,TNSUA;
+    	//final double BIG = 4.4;
     	double CCAPH[] = new double[1];
     	double COCAP[] = new double[1];
     	double COPHC[] = new double[1];
@@ -12688,7 +12688,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	double EXPHC[] = new double[1];
     	double TOTLN[] = new double[1];
     	double ANGSP,CR,LA,
-    	     OFLOW,PI,R1MACH,MCHEP;
+    	     OFLOW,PI,MCHEP;
     	String CHPC, CHCP;
     	//CHARACTER OFLC*6,OFP0*6,OFP1*6,JBNM*4,CHPC*2,CHCP*2
     	
@@ -12727,7 +12727,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	NARCS=ISNPH[0];
     	NQPTS=ISNPH[1];
     	TNSUA=ISNPH[2];
-    	MNSUA=ISNPH[4];
+    	//MNSUA=ISNPH[4];
     	MNEQN=ISNPH[5];
     	
     	NJIND=NARCS+1;
@@ -12971,8 +12971,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	final int MXCOF = 32;
     	final int QP = 4;
     	int AJT,DG,I,I1,IA,JT,K,LOD,LOM,NINTS;
-    	double AL,ATOL,BT,CC,COF,D,DSDT,H0,HH,JACSUM,MCHEP,MPT,
-    	     PHI,R1MACH,RTOL,SEND,SINC,SJT,SS,SUM,TERM,TINC,TT,TUPI,X,XX,YMAX,
+    	double AL,BT,CC,COF,D,H0,HH,MCHEP,MPT,
+    	     PHI,SEND,SINC,SJT,SS,SUM,TERM,TINC,TT,TUPI,X,XX,YMAX,
     	     YMIN,YY;
     	double T1[] = new double[2];
     	double T2[] = new double[2];
@@ -12989,8 +12989,8 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	
     	TUPI=2.0*Math.PI;
     	MCHEP=EPS;
-    	RTOL=10.0*MCHEP;
-    	ATOL=100.0*MCHEP;
+    	//RTOL=10.0*MCHEP;
+    	//ATOL=100.0*MCHEP;
     	NCRVS[0]=0;
     	NPRVS[0]=0;
     	CCAPH[0]=0.0;
@@ -13003,7 +13003,7 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	//     TOTAL LENGTH (TOTLN) OF THE BOUNDARY
     	
     	TOTLN[0]=0.0;
-    	/*for (IA=1; IA <= TNSUA; IA++) {
+    	for (IA=1; IA <= TNSUA; IA++) {
     	    PT=PARNT[IA-1];
     	    MD=MIDPT[IA-1];
     	    HL=HALEN[IA-1];
@@ -13145,254 +13145,254 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	//       ESTIMATE FUNCTION EVALUATION CONDITION NUMBERS FOR INFINITE
     	//       DERIVATIVE CASES.
     	
-    	        if (BT < 0.0) {
-    	        	A = new double[DG-1];
-        	    	B = new double[DG-1];
-        	    	for (N = 0; N < DG-1; N++) {
-        	    		A[N] = A1COF[LOD+N-1];
-        	    		B[N] = B1COF[LOD+N-1];
-        	    	}
-        	    	CO = new double[DG];
-        	    	for (N = 0; N < DG; N++) {
-        	    		CO[N] = BCFSN[LOM+N];
-        	    	}
-    	            PHI=JACSUM(-1E+0,DG-1,A,B,H1VAL[AJT-1],CO);
-    	            PHI=BCFSN[LOM-1]-2.0*PHI;
-    	            COF=Math.abs(PHI)/Math.pow(D,(BT+1.0));
-    	            TERM=Math.pow(MCHEP,BT)*COF;
-    	            if (TERM > CPHCA[0]) {
-    	                CPHCA[0]=TERM;
-    	                COPHC[0]=COF;
-    	                EXPHC[0]=BT;
-    	            }
-    	        } // if (BT < 0.0)
-    	        if (BT > 0.0) {
-    	        	A = new double[DG-1];
-        	    	B = new double[DG-1];
-        	    	for (N = 0; N < DG-1; N++) {
-        	    		A[N] = A1COF[LOD+N-1];
-        	    		B[N] = B1COF[LOD+N-1];
-        	    	}
-        	    	CO = new double[DG];
-        	    	for (N = 0; N < DG; N++) {
-        	    		CO[N] = BCFSN[LOM+N];
-        	    	}
-    	            PHI=JACSUM(-1.0,DG-1,A,B,H1VAL[AJT-1],CO);
-    	            PHI=BCFSN[LOM-1]-2.0*PHI;
-    	            if (Math.abs(PHI) == 0.0) {
-    	                CCAPH[0]=YMAX;
-    	                COCAP[0]=YMAX;
+	        if (BT < 0.0) {
+                A = new double[DG-1];
+                B = new double[DG-1];
+    	    	for (N = 0; N < DG-1; N++) {
+    	    		A[N] = A1COF[LOD+N-1];
+    	    		B[N] = B1COF[LOD+N-1];
+    	    	}
+    	    	CO = new double[DG];
+    	    	for (N = 0; N < DG; N++) {
+    	    		CO[N] = BCFSN[LOM+N];
+    	    	}
+	            PHI=JACSUM(-1E+0,DG-1,A,B,H1VAL[AJT-1],CO);
+	            PHI=BCFSN[LOM-1]-2.0*PHI;
+	            COF=Math.abs(PHI)/Math.pow(D,(BT+1.0));
+	            TERM=Math.pow(MCHEP,BT)*COF;
+	            if (TERM > CPHCA[0]) {
+	                CPHCA[0]=TERM;
+	                COPHC[0]=COF;
+	                EXPHC[0]=BT;
+	            }
+	        } // if (BT < 0.0)
+	        if (BT > 0.0) {
+	        	A = new double[DG-1];
+    	    	B = new double[DG-1];
+    	    	for (N = 0; N < DG-1; N++) {
+    	    		A[N] = A1COF[LOD+N-1];
+    	    		B[N] = B1COF[LOD+N-1];
+    	    	}
+    	    	CO = new double[DG];
+    	    	for (N = 0; N < DG; N++) {
+    	    		CO[N] = BCFSN[LOM+N];
+    	    	}
+	            PHI=JACSUM(-1.0,DG-1,A,B,H1VAL[AJT-1],CO);
+	            PHI=BCFSN[LOM-1]-2.0*PHI;
+	            if (Math.abs(PHI) == 0.0) {
+	                CCAPH[0]=YMAX;
+	                COCAP[0]=YMAX;
+	                EXCAP[0]=AL-1.0;
+	            }
+	            else {
+    	            COF=D/Math.pow(Math.abs(PHI),AL);
+    	            TERM=Math.pow(MCHEP,(AL-1.0))*COF;
+    	            if (TERM > CCAPH[0]) {
+    	                CCAPH[0]=TERM;
+    	                COCAP[0]=COF;
     	                EXCAP[0]=AL-1.0;
-    	            }
-    	            else {
-	    	            COF=D/Math.pow(Math.abs(PHI),AL);
-	    	            TERM=Math.pow(MCHEP,(AL-1.0))*COF;
-	    	            if (TERM > CCAPH[0]) {
-	    	                CCAPH[0]=TERM;
-	    	                COCAP[0]=COF;
-	    	                EXCAP[0]=AL-1.0;
-	    	            } // if (TERM > CCAPH[0])
-    	            } // else
-    	        // if (BT > 0.0)
-    	
-                // "DO 50" LOOP FOR POINTS INTERIOR TO ARC NUMBER IA
-    	
-    	        for (I=1; I <= NINTS-1; I++) {
-    	            TT=TT+TINC;
-    	
-    	            // ARC LENGTH INCREASE BY GAUSS-LEGENDRE
-    	
-    	            SUM=0.0;
-    	            for (K=1; K <= NQPTS; K++) {
-    	                X=TT+0.5*TINC*(QUPTS[K-1]-1.0);
-    	                SUM=SUM+QUWTS[K-1]*DSDT(X);
-    	            } //  for (K=1; K <= NQPTS; K++)
-    	            SINC=0.5*TINC*SUM;
-    	            SS=SS+SINC;
-    	            XX=SS/TOTLN[0];
-    	
-    	            // EVALUATE DIMENSIONLESS BCF DERIVATIVE *YY*
-    	            A = new double[DG];
-        	    	B = new double[DG];
-        	    	for (N = 0; N < DG; N++) {
-        	    		A[N] = ACOEF[LOD+N-1];
-        	    		B[N] = BCOEF[LOD+N-1];
-        	    	}
-    	            PHI=JACSUM(SJT*TT,DG,A,B,H0,JACOF);
-    	            D=DSDT(TT);
-    	            if (D == 0.0) {
-    	                IER[0]=51;
-    	                return;
-    	            } // if (D == 0.0)
-    	            YY=TOTLN[0]*Math.pow((1.0+SJT*TT),BT)*PHI/D;
-    	            Preferences.debug("XX == " + XX + " YY = " + YY + "\n", Preferences.DEBUG_ALGORITHM);
-    	            YMIN=Math.min(YY,YMIN);
-    	
-    	            // ESTIMATE FUNCTION EVALUATION CONDITION NUMBERS FOR FINITE
-    	            // DERIVATIVE CASES.
-    	
-    	            if (NINFD[0] == 0.0) {
-    	                CPHCA[0]=Math.max(CPHCA[0],TUPI*Math.abs(YY)/TOTLN[0]);
-    	            }
-    	            if (NZERD[0] == 0.0) {
-    	                if (YY == 0.0) {
-    	                    CCAPH[0]=YMAX;
-    	                }
-    	                else {
-    	                    CCAPH[0]=Math.max(CCAPH[0],TOTLN[0]/TUPI/Math.abs(YY));
-    	                }
-    	            } // if (NZERD[0] == 0.0)
-    	
-    	            // EVALUATE DIMENSIONLESS BCF *YY*
-    	            A = new double[DG-1];
-        	    	B = new double[DG-1];
-        	    	for (N = 0; N < DG-1; N++) {
-        	    		A[N] = A1COF[LOD+N-1];
-        	    		B[N] = B1COF[LOD+N-1];
-        	    	}
-        	    	CO = new double[DG];
-        	    	for (N = 0; N < DG; N++) {
-        	    		CO[N] = BCFSN[LOM+N];
-        	    	}
-    	            PHI=JACSUM(SJT*TT,DG-1,A,B,H1VAL[AJT-1],CO);
-    	            PHI=BCFSN[LOM-1]-(1.0-SJT*TT)*PHI;
-    	            YY=(CC+SJT*Math.pow((1.0+SJT*TT),(1.0+BT))*PHI)/TUPI;
-    	            Preferences.debug("XX == " + XX + " YY = " + YY + "\n", Preferences.DEBUG_ALGORITHM);
-    	        } // for (I=1; I <= NINTS-1; I++)
-    	
-    	        // NEXT TAKE END POINT OF ARC NUMBER IA
-    	
-    	        TT=1.0;
-    	        D=DSDT(TT);
-    	        SEND=SEND+ARCLN[IA-1];
-    	        SS=SEND;
-    	        XX=SS/TOTLN[0];
-    	
-    	        // EVALUATE DIMENSIONLESS BCF DERIVATIVE *YY*
-    	
-    	        if (JT < 0.0) {
-    	            if (BT < 0.0) {
-    	                YY=YMAX;
-    	                NASYM[0]=NASYM[0]+1;
-    	                ASYMP[NASYM[0]-1]=XX;
-    	            } // if (BT < 0.)
-    	            else if (BT > 0.0) {
-    	                YY=0.0;
-    	            }
-    	            else {
-    	            	A = new double[DG];
-             	    	B = new double[DG];
-             	        for (N = 0; N < DG; N++) {
-             	    		 A[N] = ACOEF[LOD+N-1];
-             	    		 B[N] = BCOEF[LOD+N-1];
-             	    	}
-    	                PHI=JACSUM(SJT*TT,DG,A,B,H0,JACOF);
-    	                if (D == 0.0) {
-    	                    IER[0]=51;
-    	                    return;
-    	                }
-    	                YY=TOTLN[0]*PHI/D;
-    	            } // else
-    	        } // if (JT < 0.0)
-    	        else {
-    	        	A = new double[DG];
+    	            } // if (TERM > CCAPH[0])
+	            } // else
+	       } // if (BT > 0.0) 
+	
+            // "DO 50" LOOP FOR POINTS INTERIOR TO ARC NUMBER IA
+	
+	        for (I=1; I <= NINTS-1; I++) {
+	            TT=TT+TINC;
+	
+	            // ARC LENGTH INCREASE BY GAUSS-LEGENDRE
+	
+	            SUM=0.0;
+	            for (K=1; K <= NQPTS; K++) {
+	                X=TT+0.5*TINC*(QUPTS[K-1]-1.0);
+	                SUM=SUM+QUWTS[K-1]*DSDT(X);
+	            } //  for (K=1; K <= NQPTS; K++)
+	            SINC=0.5*TINC*SUM;
+	            SS=SS+SINC;
+	            XX=SS/TOTLN[0];
+	
+	            // EVALUATE DIMENSIONLESS BCF DERIVATIVE *YY*
+	            A = new double[DG];
+    	    	B = new double[DG];
+    	    	for (N = 0; N < DG; N++) {
+    	    		A[N] = ACOEF[LOD+N-1];
+    	    		B[N] = BCOEF[LOD+N-1];
+    	    	}
+	            PHI=JACSUM(SJT*TT,DG,A,B,H0,JACOF);
+	            D=DSDT(TT);
+	            if (D == 0.0) {
+	                IER[0]=51;
+	                return;
+	            } // if (D == 0.0)
+	            YY=TOTLN[0]*Math.pow((1.0+SJT*TT),BT)*PHI/D;
+	            Preferences.debug("XX == " + XX + " YY = " + YY + "\n", Preferences.DEBUG_ALGORITHM);
+	            YMIN=Math.min(YY,YMIN);
+	
+	            // ESTIMATE FUNCTION EVALUATION CONDITION NUMBERS FOR FINITE
+	            // DERIVATIVE CASES.
+	
+	            if (NINFD[0] == 0.0) {
+	                CPHCA[0]=Math.max(CPHCA[0],TUPI*Math.abs(YY)/TOTLN[0]);
+	            }
+	            if (NZERD[0] == 0.0) {
+	                if (YY == 0.0) {
+	                    CCAPH[0]=YMAX;
+	                }
+	                else {
+	                    CCAPH[0]=Math.max(CCAPH[0],TOTLN[0]/TUPI/Math.abs(YY));
+	                }
+	            } // if (NZERD[0] == 0.0)
+	
+	            // EVALUATE DIMENSIONLESS BCF *YY*
+	            A = new double[DG-1];
+    	    	B = new double[DG-1];
+    	    	for (N = 0; N < DG-1; N++) {
+    	    		A[N] = A1COF[LOD+N-1];
+    	    		B[N] = B1COF[LOD+N-1];
+    	    	}
+    	    	CO = new double[DG];
+    	    	for (N = 0; N < DG; N++) {
+    	    		CO[N] = BCFSN[LOM+N];
+    	    	}
+	            PHI=JACSUM(SJT*TT,DG-1,A,B,H1VAL[AJT-1],CO);
+	            PHI=BCFSN[LOM-1]-(1.0-SJT*TT)*PHI;
+	            YY=(CC+SJT*Math.pow((1.0+SJT*TT),(1.0+BT))*PHI)/TUPI;
+	            Preferences.debug("XX == " + XX + " YY = " + YY + "\n", Preferences.DEBUG_ALGORITHM);
+	        } // for (I=1; I <= NINTS-1; I++)
+	
+	        // NEXT TAKE END POINT OF ARC NUMBER IA
+	
+	        TT=1.0;
+	        D=DSDT(TT);
+	        SEND=SEND+ARCLN[IA-1];
+	        SS=SEND;
+	        XX=SS/TOTLN[0];
+	
+	        // EVALUATE DIMENSIONLESS BCF DERIVATIVE *YY*
+	
+	        if (JT < 0.0) {
+	            if (BT < 0.0) {
+	                YY=YMAX;
+	                NASYM[0]=NASYM[0]+1;
+	                ASYMP[NASYM[0]-1]=XX;
+	            } // if (BT < 0.)
+	            else if (BT > 0.0) {
+	                YY=0.0;
+	            }
+	            else {
+	            	A = new double[DG];
          	    	B = new double[DG];
          	        for (N = 0; N < DG; N++) {
          	    		 A[N] = ACOEF[LOD+N-1];
          	    		 B[N] = BCOEF[LOD+N-1];
          	    	}
-    	            PHI=JACSUM(TT,DG,A,B,H0,JACOF);
-    	            if (D == 0.0) {
-    	                IER[0]=51;
-    	                return;
-    	            }
-    	            YY=TOTLN[0]*Math.pow(2.0,BT)*PHI/D;
-    	        } // else
-    	        Preferences.debug("XX == " + XX + " YY = " + YY + "\n", Preferences.DEBUG_ALGORITHM);
-    	        YMIN=Math.min(YY,YMIN);
-    	        if (YMIN < 0.0 && (VTARG[IA] >= VTARG[IA-1])) {
-    	            NPRVS[0]=NPRVS[0]+1;
-    	            IPRVS[NPRVS[0]-1]=IA;
-    	            BCDMN[NPRVS[0]-1]=YMIN;
-    	            MAP11[0]= false;
-    	        } // if (YMIN < 0.0 && (VTARG[IA] >= VTARG[IA-1]))
-    	
-    	        // ESTIMATE FUNCTION EVALUATION CONDITION NUMBERS
-    	
-    	        if (NINFD[0] == 0.0) {
-    	            CPHCA[0]=Math.max(CPHCA[0],TUPI*Math.abs(YY)/TOTLN[0]);
-    	        }
-    	        if (NZERD[0] == 0.0) {
-    	            if (YY == 0.0) {
-    	                CCAPH[0]=YMAX;
-    	            }
-    	            else {
-    	                CCAPH[0]=Math.max(CCAPH[0],TOTLN[0]/TUPI/Math.abs(YY));
-    	            }
-    	        } // if (NZERD[0] == 0.0)
-    	        if (BT < 0.0) {
-    	        	A = new double[DG-1];
-        	    	B = new double[DG-1];
-        	    	for (N = 0; N < DG-1; N++) {
-        	    		A[N] = A1COF[LOD+N-1];
-        	    		B[N] = B1COF[LOD+N-1];
-        	    	}
-        	    	CO = new double[DG];
-        	    	for (N = 0; N < DG; N++) {
-        	    		CO[N] = BCFSN[LOM+N];
-        	    	}
-    	            PHI=JACSUM(-1.0,DG-1,A,B,H1VAL[AJT-1],CO);
-    	            PHI=BCFSN[LOM-1]-2.0*PHI;
-    	            COF=Math.abs(PHI)/Math.pow(D,(BT+1.0));
-    	            TERM=Math.pow(MCHEP,BT)*COF;
-    	            if (TERM > CPHCA[0]) {
-    	                CPHCA[0]=TERM;
-    	                COPHC[0]=COF;
-    	                EXPHC[0]=BT;
-    	            } // if (TERM > CPHCA[0])
-    	        } // if (BT < 0.0)
-    	        if (BT > 0.0) {
-    	        	A = new double[DG-1];
-        	    	B = new double[DG-1];
-        	    	for (N = 0; N < DG-1; N++) {
-        	    		A[N] = A1COF[LOD+N-1];
-        	    		B[N] = B1COF[LOD+N-1];
-        	    	}
-        	    	CO = new double[DG];
-        	    	for (N = 0; N < DG; N++) {
-        	    		CO[N] = BCFSN[LOM+N];
-        	    	}
-    	            PHI=JACSUM(-1.0,DG-1,A,B,H1VAL[AJT-1],CO);
-    	            PHI=BCFSN[LOM-1]-2.0*PHI;
-    	            if (Math.abs(PHI) == 0.0) {
-    	                CCAPH[0]=YMAX;
-    	                COCAP[0]=YMAX;
-    	                EXCAP[0]=AL-1.0;
-    	            }
-    	            else {
-    	                COF=D/Math.pow(Math.abs(PHI),AL);
-    	                TERM=Math.pow(MCHEP,(AL-1.0))*COF;
-    	                if (TERM > CCAPH[0]) {
-    	                    CCAPH[0]=TERM;
-    	                    COCAP[0]=COF;
-    	                    EXCAP[0]=AL-1.0;
-    	                } // if (TERM > CCAPH[0])
-    	            } // else
-    	        } // if (BT > 0.0)
-    	
-    	        // EVALUATE DIMENSIONLESS BCF *YY*
-    	
-    	        YY=(VTARG[IA]-VTARG[0])/TUPI;
-    	        Preferences.debug("XX == " + XX + " YY = " + YY + "\n", Preferences.DEBUG_ALGORITHM);
-    	        if (JT < 0) {
-    	            CORXX[PT]=XX;
-    	        }
+	                PHI=JACSUM(SJT*TT,DG,A,B,H0,JACOF);
+	                if (D == 0.0) {
+	                    IER[0]=51;
+	                    return;
+	                }
+	                YY=TOTLN[0]*PHI/D;
+	            } // else
+	        } // if (JT < 0.0)
+	        else {
+	        	A = new double[DG];
+     	    	B = new double[DG];
+     	        for (N = 0; N < DG; N++) {
+     	    		 A[N] = ACOEF[LOD+N-1];
+     	    		 B[N] = BCOEF[LOD+N-1];
+     	    	}
+	            PHI=JACSUM(TT,DG,A,B,H0,JACOF);
+	            if (D == 0.0) {
+	                IER[0]=51;
+	                return;
+	            }
+	            YY=TOTLN[0]*Math.pow(2.0,BT)*PHI/D;
+	        } // else
+	        Preferences.debug("XX == " + XX + " YY = " + YY + "\n", Preferences.DEBUG_ALGORITHM);
+	        YMIN=Math.min(YY,YMIN);
+	        if (YMIN < 0.0 && (VTARG[IA] >= VTARG[IA-1])) {
+	            NPRVS[0]=NPRVS[0]+1;
+	            IPRVS[NPRVS[0]-1]=IA;
+	            BCDMN[NPRVS[0]-1]=YMIN;
+	            MAP11[0]= false;
+	        } // if (YMIN < 0.0 && (VTARG[IA] >= VTARG[IA-1]))
+	
+	        // ESTIMATE FUNCTION EVALUATION CONDITION NUMBERS
+	
+	        if (NINFD[0] == 0.0) {
+	            CPHCA[0]=Math.max(CPHCA[0],TUPI*Math.abs(YY)/TOTLN[0]);
+	        }
+	        if (NZERD[0] == 0.0) {
+	            if (YY == 0.0) {
+	                CCAPH[0]=YMAX;
+	            }
+	            else {
+	                CCAPH[0]=Math.max(CCAPH[0],TOTLN[0]/TUPI/Math.abs(YY));
+	            }
+	        } // if (NZERD[0] == 0.0)
+	        if (BT < 0.0) {
+	        	A = new double[DG-1];
+    	    	B = new double[DG-1];
+    	    	for (N = 0; N < DG-1; N++) {
+    	    		A[N] = A1COF[LOD+N-1];
+    	    		B[N] = B1COF[LOD+N-1];
+    	    	}
+    	    	CO = new double[DG];
+    	    	for (N = 0; N < DG; N++) {
+    	    		CO[N] = BCFSN[LOM+N];
+    	    	}
+	            PHI=JACSUM(-1.0,DG-1,A,B,H1VAL[AJT-1],CO);
+	            PHI=BCFSN[LOM-1]-2.0*PHI;
+	            COF=Math.abs(PHI)/Math.pow(D,(BT+1.0));
+	            TERM=Math.pow(MCHEP,BT)*COF;
+	            if (TERM > CPHCA[0]) {
+	                CPHCA[0]=TERM;
+	                COPHC[0]=COF;
+	                EXPHC[0]=BT;
+	            } // if (TERM > CPHCA[0])
+	        } // if (BT < 0.0)
+	        if (BT > 0.0) {
+	        	A = new double[DG-1];
+    	    	B = new double[DG-1];
+    	    	for (N = 0; N < DG-1; N++) {
+    	    		A[N] = A1COF[LOD+N-1];
+    	    		B[N] = B1COF[LOD+N-1];
+    	    	}
+    	    	CO = new double[DG];
+    	    	for (N = 0; N < DG; N++) {
+    	    		CO[N] = BCFSN[LOM+N];
+    	    	}
+	            PHI=JACSUM(-1.0,DG-1,A,B,H1VAL[AJT-1],CO);
+	            PHI=BCFSN[LOM-1]-2.0*PHI;
+	            if (Math.abs(PHI) == 0.0) {
+	                CCAPH[0]=YMAX;
+	                COCAP[0]=YMAX;
+	                EXCAP[0]=AL-1.0;
+	            }
+	            else {
+	                COF=D/Math.pow(Math.abs(PHI),AL);
+	                TERM=Math.pow(MCHEP,(AL-1.0))*COF;
+	                if (TERM > CCAPH[0]) {
+	                    CCAPH[0]=TERM;
+	                    COCAP[0]=COF;
+	                    EXCAP[0]=AL-1.0;
+	                } // if (TERM > CCAPH[0])
+	            } // else
+	        } // if (BT > 0.0)
+	
+	        // EVALUATE DIMENSIONLESS BCF *YY*
+	
+	        YY=(VTARG[IA]-VTARG[0])/TUPI;
+	        Preferences.debug("XX == " + XX + " YY = " + YY + "\n", Preferences.DEBUG_ALGORITHM);
+	        if (JT < 0) {
+	            CORXX[PT]=XX;
+	        } 
     	
     	} // for (IA=1; IA <= TNSUA; IA++)
     	
     	//     NORMAL EXIT
     	
-    	IER[0]=0;*/
+    	IER[0]=0;
     	 
     } // private void DIAGN4
     
@@ -13416,6 +13416,499 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         return result;
 
     } // private double DSDT
+    
+    private void DMCANP(int NPTS, double PHYPT[][], double CANPT[][],
+        boolean WANTM, int IER[]) {
+    	
+        //INTEGER NPTS,IER
+    	//INTEGER IGEOM(*),ISNCA(*),IQUCA(*)
+    	//REAL RGEOM(*),RSNCA(*)
+    	//COMPLEX CENTR
+    	//COMPLEX PHYPT(*),CANPT(*),ZSNCA(*),ZQUCA(*)
+    	//LOGICAL INTER,WANTM
+    	
+    	// ......................................................................
+    	
+    	// 1.     DMCANP
+    	//           DOMAIN MAPPING FOR THE CANONICAL --> PHYSICAL MAP.
+    	
+    	// 2.     PURPOSE
+    	//           GIVEN A VECTOR OF ARBITRARY POINTS IN THE CANONICAL DOMAIN, 
+    	//           THIS ROUTINE COMPUTES THE VECTOR OF APPROXIMATE IMAGE POINTS
+    	//           IN THE PHYSICAL DOMAIN.
+    	
+    	// 3.     CALLING SEQUENCE
+    	//           CALL DMCANP(NPTS,PHYPT,CANPT,INTER,CENTR,IGEOM,RGEOM,ISNCA,
+    	//                       RSNCA,ZSNCA,IQUCA,ZQUCA,WANTM,IER)
+    	
+    	//        PARAMETERS
+    	//         ON ENTRY
+    	//            NPTS   - INTEGER
+    	//                     THE NUMBER OF POINTS TO BE MAPPED.
+    	
+    	//            CANPT  - COMPLEX ARRAY
+    	//                     A COMPLEX VECTOR OF SIZE AT LEAST NPTS.  THIS IS
+    	//                     THE VECTOR OF GIVEN POINTS IN THE CANONICAL 
+    	//                     DOMAIN.
+    	
+    	//            INTER  - LOGICAL
+    	//                     TRUE IF THE PHYSICAL DOMAIN IS INTERIOR, FALSE 
+    	//                     OTHERWISE. (AS PREVIOUSLY USED IN JAPHYC, GQPHYC)
+    	
+    	//            CENTR  - COMPLEX
+    	//                     THE POINT IN THE PHYSICAL PLANE THAT IS TO BE
+    	//                     MAPPED TO THE CENTRE OF THE UNIT DISC.  FOR
+    	//                     EXTERIOR DOMAINS CENTR MUST BE SOME POINT IN THE
+    	//                     COMPLEMENTARY INTERIOR  PHYSICAL DOMAIN. (AS PREV-
+    	//                     IOUSLY USED IN JAPHYC, GQPHYC)
+    	
+    	//            IGEOM  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR IGEOM PREVIOUSLY SET UP BY 
+    	//                     JAPHYC.
+    	
+    	//            RGEOM  - REAL ARRAY
+    	//                     THE REAL VECTOR RGEOM PREVIOUSLY SET UP BY JAPHYC.
+    	
+    	
+    	//            ISNCA  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR PREVIOUSLY SET UP BY JACANP.
+    	
+    	//            RSNCA  - REAL ARRAY
+    	//                     THE REAL VECTOR PREVIOUSLY SET UP BY JACANP.
+    	
+    	//            ZSNCA  - COMPLEX ARRAY
+    	//                     THE COMPLEX VECTOR PREVIOUSLY SET UP BY JACANP.
+    	
+    	//            IQUCA  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR PREVIOUSLY SET UP BY GQCANP.
+    	
+    	//            RQUCA  - REAL ARRAY
+    	//                     THE REAL VECTOR PREVIOUSLY SET UP BY GQCANP.
+    	
+    	//            ZQUCA  - COMPLEX ARRAY
+    	//                     THE COMPLEX VECTOR PREVIOUSLY SET UP BY GQCANP.
+    	
+    	//            WANTM  - LOGICAL
+    	//                     IF WANTM IS TRUE THEN, ON AN ABNORMAL EXIT, AN
+    	//                     ERROR MESSAGE IS WRITTEN ON THE STANDARD OUTPUT
+        //                     CHANNEL.  IF WANTM IS FALSE THEN NO MESSAGE IS
+    	//                     WRITTEN.
+    	//         ON EXIT
+    	//            PHYPT  - COMPLEX ARRAY
+    	//                     A COMPLEX VECTOR OF SIZE AT LEAST NPTS.  PHYPT(K)
+    	//                     IS THE COMPUTED IMAGE IN THE PHYSICAL DOMAIN OF 
+    	//                     THE GIVEN CANONICAL POINT CANPT(K), K=1,...,NPTS.
+    	
+    	//            IER    - INTEGER
+    	//                     IF IER > 0 THEN AN ABNORMAL EXIT HAS OCCURRED;
+    	//                     A MESSAGE TO DESCRIBE THE ERROR IS WRITTEN ON 
+    	//                     THE STANDARD OUTPUT CHANNEL IF WANTM IS TRUE.
+    	//                     IER=0 - NORMAL EXIT.
+    	//                     IER>0 - ABNORMAL EXIT; THE ERROR MESSAGE SHOULD
+    	//                             BE SELF EXPLANATORY.
+    	
+    	
+    	// 4.     SUBROUTINES OR FUNCTIONS NEEDED
+    	//              - THE CONFPACK LIBRARY.
+    	//              - THE REAL FUNCTION R1MACH.
+    	//              - THE USER SUPPLIED COMPLEX FUNCTIONS PARFUN AND DPARFN.
+    	
+    	
+    	// 5.     FURTHER COMMENTS
+    	//           - NOTE THAT THIS ROUTINE CAN ONLY BE USED  A F T E R  THE  
+    	//             ROUTINES JACANP AND GQCANP HAVE SUCCESSFULLY EXECUTED, 
+    	//             AND THAT MANY INPUT ARGUMENTS FOR DMCANP ARE OUTPUT VALUES
+    	//             FROM JACANP AND GQCANP.
+    	//           - THIS ROUTINE MAY BE USED FOR MAPPING POINTS ON THE UNIT
+    	//             CIRCLE, BUT THE ROUTINE BMCANP WILL BE SOMEWHAT MORE 
+    	//             EFFICIENT FOR THIS CASE.
+    	
+    	// ......................................................................
+    	//     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    	//     LAST UPDATE: 3 JULY 1990
+    	// ......................................................................
+    	     
+    	//     LOCAL VARAIBLES
+    	
+    	int MNCOF,MNSUA,MNSUC,TNSUC;
+    	//CHARACTER*6 IERTXT
+    	
+    	//EXTERNAL CATPH4,IERTXT
+    	
+    	NARCS=ISNCA[0];
+    	NQPTS=ISNCA[1];
+    	TNSUC=ISNCA[2];
+    	MNSUC=ISNCA[4];
+    	MNCOF=ISNCA[5];
+        MQUCA=IQUCA[3];
+    	MNSUA=IGEOM[3];
+    	
+    	NJIND=NARCS+1;
+    	TNGQP=NJIND*NQPTS;
+    	
+    	// SET UP POINTERS TO IGEOM AND RGEOM, AS IN JAPHYC
+    	
+    	// SET UP POINTERS TO ISNCA, RSNCA AND ZSNCA, AS IN JACANP
+    	
+    	// SET UP POINTERS TO IQUCA AND ZQUCA, AS IN GQCANP
+    	
+    	// GET THE REQUIRED PHYSICAL POINTS
+    	
+    	CATPH4(NPTS,PHYPT,CANPT,NARCS,NQPTS,TNSUC,DGPOC,
+    	     JTYPC,LSUBC,LQSBG,NPPQG,PARNT,
+    	     PRNSA,AICOC,ACOFC,BICOC,BCOFC,
+    	     H0VLC,HIVLC,HALEN,JAINC,RGEOM[1],
+    	     MIDPT,PHPAS,QUPTC,QUWTC,VTARG[0],
+    	     VARGC,BFSNC,CENTR,ZSNCA,SOLNC,
+    	     WPPQG,ZPPQG,INTER,IER);
+    	
+    	// SEND ERROR MESSAGE TO STANDARD OUTPUT OF NECESSARY
+    	
+    	if (IER[0] > 0 && WANTM) System.out.println(IERTXT(IER[0]));
+    	
+    } // private void DMCANP
+
+    private void CATPH4(int NPTS, double PHYPT[][], double CANPT[][], int NARCS, int NQPTS,
+        int TNSUC, int DGPOC[], int JTYPC[], int LSUBC[], int LQSBG[], int NPPQG[],
+        int PARNT[], int PRNSA[], double A1COC[], double ACOFC[], double B1COC[], double BCOFC[],
+        double H0VLC[], double H1VLC[], double HALEN[], double JAINC[], double LGTOL,
+        double MIDPT[], double PHPAS[], double QUPTC[], double QUWTC[], double THET0,
+    	double VARGC[], double BFSNC[][], double CENTR[], double FACTR[], double SOLNC[][],
+    	double WPPQG[][], double ZPPQG[][], boolean INTER, int IER[]) {
+    	//INTEGER IER,NPTS,NARCS,NQPTS,TNSUC
+    	//INTEGER DGPOC(*),JTYPC(*),LSUBC(*),LQSBG(*),NPPQG(*),PARNT(*),
+    	//+PRNSA(*)
+    	//REAL LGTOL,THET0
+    	//REAL A1COC(*),ACOFC(*),B1COC(*),BCOFC(*),H0VLC(*),H1VLC(*),
+    	//+HALEN(*),JAINC(*),MIDPT(*),PHPAS(*),QUPTC(*),QUWTC(*),VARGC(*)
+    	//COMPLEX CENTR,FACTR
+    	//COMPLEX BFSNC(*),CANPT(*),PHYPT(*),SOLNC(*),WPPQG(*),ZPPQG(*)
+    	//LOGICAL INTER
+    	
+    	//     GIVEN THE ARRAY CANPT OF NPTS POINTS IN THE CANONICAL PLANE, THIS
+    	//     ROUTINE COMPUTES THE ARRAY PHYPT OF IMAGES IN THE PHYSICAL
+    	//     PLANE.
+    	
+    	//     IER=0  - NORMAL EXIT
+    	//     IER=47 - LOCAL PARAMETER MXNQD NEEDS INCREASING
+    	//     IER=48 - LOCAL PARAMETER MNCOF NEEDS INCREASING
+    	//     IER=49 - LOCAL PARAMETER MQIN1 NEEDS INCREASING
+    	
+    	//.......................................................................
+    	//     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    	//     LAST UPDATE: 7 JULY 90
+    	//.......................................................................
+    	
+    	//     LOCAL VARIABLES
+    	
+    	final int MNCOF = 32;
+    	final int MQIN1 = 21;
+    	final int MXNQD = 144;
+    	final int NBSCT = 3;
+    	int AJTC,DGC,I,IA,IP,K,J,J1,JQ,JTC,LODC,LOL,
+    	     LOMC,NQ,NQUAD,PSA,QINTS;
+    	final double PTHTL = 1.0E-3;
+    	final double DELTA = 2.0E-1;
+    	double AA,ARG,ARGW,AWW,BB,BETAC,DIST,EFPTL,EPS_CATPH4,HA,ILW,IMXI,MD,
+    	     MEAN,PI,REXI,RLW,RR,RRB,S2C,SCO,SJTC,SUM1,TOLOU,TT,
+    	     TUPI,UPPER;
+    	double CT0[] = new double[2];
+    	double CT2[] = new double[2];
+    	double CTA[] = new double[2];
+    	double CTB[] = new double[2];
+    	double FP[] = new double[2];
+    	double CSUM[] = new double[2];
+    	double CT[] = new double[2];
+    	double PHI[] = new double[2];
+    	double TERM[] = new double[2];
+    	double XI[] = new double[2];
+    	double WW[] = new double[2];
+    	//COMPLEX CT0,CT2,CTA,CTB,FP,CCJACS,CSUM,CT,JACSUC,PARFUN,PHI,TERM,
+    	//+XI,WW
+        double XENPT[] = new double[MQIN1];
+        double JCOFC[][] = new double[MNCOF][2];
+        double WSPEC[][] = new double[MXNQD][2];
+        double ZSPEC[][] = new double[MXNQD][2];
+    	//COMPLEX JCOFC(MNCOF),WSPEC(MXNQD),ZSPEC(MXNQD)
+    	//EXTERNAL CCJACS,JACSUC,PARFUN,PPSBI1,R1MACH
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+        double cr2[] = new double[1];
+        double ci2[] = new double[1];
+    	
+    	EPS_CATPH4=10.0 * EPS;
+    	PI=Math.PI;
+    	TUPI=2.0*PI;
+    	LOL=NARCS*NQPTS;
+    	/*loopIP: for (IP=1; IP <= NPTS; IP++) {
+    	    WW[0]=CANPT[IP-1][0];
+    	    WW[1]=CANPT[IP-1][1];
+    	    AWW=zabs(WW[0],WW[1]);
+    	    if (AWW <= EPS_CATPH4) {
+    	        PHYPT[IP-1][0]=CENTR[0];
+    	        PHYPT[IP-1][1]=CENTR[1];
+    	        continue;
+    	    }
+    	    RLW=Math.log(AWW);
+    	    ILW=Math.atan2(WW[1],WW[0]);
+    	    while (ILW > THET0+TUPI) {
+    	        ILW=ILW-TUPI;
+    	    }
+    	    while (ILW < THET0) {
+    	        ILW=ILW+TUPI;
+    	    }
+    	    CSUM[0] = 0.0;
+    	    CSUM[1] = 0.0;
+    	    for (IA=1; IA <= TNSUC; IA++) {
+    	
+    	        // PRELIMINARIES FOR ARC IA
+    	
+    	        HA=(VARGC[IA]-VARGC[IA-1])*0.5;
+    	        MD=(VARGC[IA]+VARGC[IA-1])*0.5;
+    	        EFPTL=Math.max(PTHTL,EPS_CATPH4/HA);
+    	        IMXI=-RLW/HA;
+    	
+    	        if (ILW > (MD+PI)) {
+    	            ARGW=ILW-TUPI;
+    	        }
+    	        else if (ILW < (MD-PI)) {
+    	            ARGW=ILW+TUPI;
+    	        }
+    	        else {
+    	            ARGW=ILW;
+    	        }
+    	
+    	        REXI=(ARGW-MD)/HA; 
+    	        if (REXI > 1.0) {
+    	            DIST=Math.sqrt(IMXI*IMXI+(REXI-1.0)*(REXI-1.0));
+    	        }
+    	        else if (REXI < -1E+0) {
+    	            DIST=Math.sqrt(IMXI*IMXI+(REXI+1.0)*(REXI+1.0));
+    	        }
+    	        else {
+    	            DIST=Math.abs(IMXI);
+    	        }
+    	
+    	        if (DIST >= DELTA) {
+    	
+    	            // USE THE STANDARD PRECOMPUTED COMPOSITE GAUSSIAN RULE
+    	
+    	            NQ=NPPQG[IA-1];
+    	            K=LQSBG[IA-1]-1;
+    	            for (JQ=1;JQ <= NQ; JQ++) {
+    	                K=K+1;
+    	                zdiv(WW[0],WW[1],ZPPQG[K-1][0],ZPPQG[K-1][1],cr,ci);
+    	                CT[0] = cr[0];
+    	                CT[1] = ci[0];
+    	                if (! INTER) {
+    	                	zdiv(1.0,0.0,CT[0],CT[1],cr,ci);
+    	                	CT[0] = cr[0];
+    	                	CT[1] = ci[0];
+    	                }
+    	                double LOGR = Math.log(zabs(1.0-CT[0],-CT[1]));
+    	                double LOGI = Math.atan2(-CT[1], 1.0 - CT[0]);
+    	                zmlt(WPPQG[K-1][0],WPPQG[K-1][1],LOGR,LOGI,cr,ci);
+    	                CSUM[0] = CSUM[0] + cr[0];
+    	                CSUM[1] = CSUM[1] + ci[0];
+    	            } // for (JQ=1;JQ <= NQ; JQ++)
+    	        } // if (DIST >= DELTA)
+    	        else if (DIST < EFPTL) {
+    	
+    	            // WW IS PATHOLOGICALLY CLOSE TO ARC IA (OR MAYBE JUST CLOSE TO
+    	            // ARC IA AND APPARENTLY OUTSIDE THE CANONICAL DOMAIN) AND WE 
+    	            // USE THE CONTINUATION OF THE BOUNDARY CORRESPONDENCE FUNCTION
+    	            // TO ESTIMATE PHYPT.
+    	
+    	            // INITIALISE SOME DATA
+    	
+    	            XI[0] = REXI;
+    	            XI[1] = IMXI;
+    	            DGC=DGPOC[IA-1];
+    	            if (DGC+1 > MNCOF) {
+    	                IER[0]=48;
+    	                return;
+    	            }
+    	            JTC=JTYPC[IA-1];
+    	            AJTC=Math.abs(JTC);
+    	            BETAC=JAINC[AJTC-1];
+    	            LOMC=LSUBC[IA-1];
+    	            LODC=(AJTC-1)*NQPTS+1;
+    	            if (JTC >= 0) {
+    	            	SJTC = 1.0;
+    	            }
+    	            else {
+    	            	SJTC = -1.0;
+    	            }
+    	            PSA=PRNSA[IA-1];
+    	
+    	            if (PHPAS[IA] <= PHPAS[IA-1]) {
+    	                BB=1.0;
+    	            }
+    	            else {
+    	                BB=PHPAS[IA];
+    	            }
+    	            AA=PHPAS[IA-1];
+    	
+    	            if (INTER) {
+    	                S2C=SJTC;
+    	            }
+    	            else {
+    	                S2C=-SJTC;
+    	            }
+    	
+    	            CTA[0]=MIDPT[PSA-1]+AA*HALEN[PSA-1];
+    	            CTA[1] = 0.0;
+    	            CTB[0]=MIDPT[PSA-1]+BB*HALEN[PSA-1];
+    	            CTB[1] = 0.0;
+    	            if (SJTC > 0) {
+    	              CT0[0]=CTA[0];
+    	              CT0[1]=CTA[1];
+    	              CT2[0]=CTB[0];
+    	              CT2[1]=CTB[1];
+    	            }
+    	            else {
+    	              CT0[0]=CTB[0];
+    	              CT0[1]=CTB[1];
+    	              CT2[0]=CTA[0];
+    	              CT2[1]=CTA[1];
+    	            }
+    	
+    	            TERM[0]=1.+0+SJTC*XI[0];
+    	            TERM[1] = SJTC*XI[1];
+    	            if ((TERM[0] == 0.0) && (TERM[1] == 0.0)) {
+    	                PHYPT[IP-1]=PARFUN(PARNT[PSA-1],CT0);
+    	                continue IPloop;
+    	            }
+    
+    	            IF (TERM.EQ.(2E+0,0E+0)) THEN
+    	              PHYPT(IP)=PARFUN(PARNT(PSA),CT2)
+    	              GOTO 300
+    	            ENDIF
+    	C
+    	            ARG=ATAN2(AIMAG(TERM),REAL(TERM))
+    	            UPPER=(1E+0+S2C*5E-1)*PI
+    	            IF (ARG.GT.UPPER) THEN
+    	              ARG=ARG-TUPI
+    	            ELSE IF (ARG.LE.(UPPER-TUPI)) THEN
+    	              ARG=ARG+TUPI
+    	            ENDIF
+    	C
+    	            FP=ABS(TERM)**(BETAC+1E+0)*CMPLX(COS((BETAC+1E+0)*ARG),
+    	     +                                       SIN((BETAC+1E+0)*ARG))
+    	            IF (INTER) THEN
+    	              FP=-FP
+    	            ENDIF
+    	            PHI=CCJACS(SJTC*XI,DGC-1,A1COC(LODC),B1COC(LODC),
+    	     +                 H1VLC(AJTC),BFSNC(LOMC+1))
+    	            PHI=(BFSNC(LOMC)-(1E+0-SJTC*XI)*PHI)*SJTC*CMPLX(0E+0,1E+0)
+    	            PHYPT(IP)=CENTR+(PARFUN(PARNT(PSA),CT0)-CENTR)*EXP(FP*PHI)
+    	            GOTO 300
+    	        } // else if (DIST < EFPTL)
+    	        else {
+    	C
+    	C           SET UP A SPECIAL COMPOSITE GAUSSIAN RULE TO HANDLE THIS
+    	C           PARTICULAR POINT WW.
+    	C
+    	C           INITIALISE SOME DATA
+    	C
+    	            DGC=DGPOC(IA)
+    	            IF (DGC+1 .GT. MNCOF) THEN
+    	              IER=48
+    	              RETURN
+    	            ENDIF
+    	            JTC=JTYPC(IA)
+    	            AJTC=ABS(JTC)
+    	            BETAC=JAINC(AJTC)
+    	            LOMC=LSUBC(IA)
+    	            LODC=(AJTC-1)*NQPTS+1
+    	            SJTC=SIGN(1E+0,REAL(JTC))
+    	            SCO=SJTC
+    	C
+    	            DO 100 J=1,DGC+1
+    	              J1=LOMC+J-1
+    	              SCO=SCO*SJTC
+    	              JCOFC(J)=SOLNC(J1)*SCO
+    	100         CONTINUE
+    	C
+    	            XI=SJTC*CMPLX(REXI,IMXI)            
+    	            CALL PPSBI1(XI,BETAC,NQPTS,DGC,ACOFC(LODC),BCOFC(LODC),
+    	     +                  H0VLC(AJTC),JCOFC,LGTOL,TOLOU,XENPT,QINTS,
+    	     +                  MQIN1,IER)
+    	            IF (IER .GT. 0) THEN
+    	              IF (IER .EQ. 29) THEN
+    	                IER=49
+    	              ENDIF
+    	              RETURN
+    	            ENDIF
+    	            NQUAD=QINTS*NQPTS
+    	            IF (NQUAD .GT. MXNQD) THEN
+    	              IER=47
+    	              RETURN
+    	            ENDIF
+    	            K=0
+    	            SUM1=BETAC+1E+0
+    	            DO 130 I=1,QINTS
+    	              RR=(XENPT(I+1)-XENPT(I))*5E-1
+    	              MEAN=(XENPT(I+1)+XENPT(I))*5E-1
+    	              IF (I .EQ. 1) THEN
+    	                RRB=RR**SUM1
+    	                DO 110 J=1,NQPTS
+    	                  J1=LODC+J-1
+    	                  K=K+1
+    	                  TT=MEAN+RR*QUPTC(J1)
+    	                  WSPEC(K)=RRB*QUWTC(J1)*JACSUC(TT,DGC,ACOFC(LODC),
+    	     +                     BCOFC(LODC),H0VLC(AJTC),JCOFC)
+    	                  TT=MD+TT*SJTC*HA
+    	                  ZSPEC(K)=CMPLX(COS(TT),SIN(TT))
+    	110             CONTINUE
+    	              ELSE
+    	                DO 120 J=1,NQPTS
+    	                  J1=LOL+J
+    	                  K=K+1
+    	                  TT=MEAN+RR*QUPTC(J1)
+    	                  WSPEC(K)=RR*QUWTC(J1)*(1E+0+TT)**BETAC*JACSUC(TT,
+    	     +                     DGC,ACOFC(LODC),BCOFC(LODC),H0VLC(AJTC),
+    	     +                     JCOFC)
+    	                  TT=MD+TT*SJTC*HA
+    	                  ZSPEC(K)=CMPLX(COS(TT),SIN(TT))
+    	120             CONTINUE
+    	              ENDIF
+    	130         CONTINUE
+    	C
+    	C           THIS COMPLETES THE SETTING UP OF THE SPECIAL WEIGHTS
+    	C           AND POINTS WSPEC AND ZSPEC.  NOW ESTIMATE THE INTEGRAL.
+    	C
+    	            DO 140 K=1,NQUAD
+    	              CT=WW/ZSPEC(K)
+    	              IF (.NOT. INTER) THEN
+    	                CT=1E+0/CT
+    	              ENDIF
+    	              CSUM=CSUM+WSPEC(K)*CLOG(1E+0-CT)
+    	140         CONTINUE
+    	
+    	             // END OF ELSE BLOCK RELATING TO SPECIAL QUADRATURE RULE FOR
+    	             // WW NEAR ARC IA
+    	
+    	        } // else             
+    	
+                // END OF LOOP FOR CONTRIBUTIONS FROM ARC NUMBER IA
+    	
+    	    } // for (IA=1; IA <= TNSUC; IA++)
+    	    double EXPBASE = Math.exp(CSUM[0]);
+    	    double EXPR = EXPBASE * Math.cos(CSUM[1]);
+    	    double EXPI = EXPBASE * Math.sin(CSUM[1]);
+    	    zmlt(FACTR[0],FACTR[1],WW[0],WW[1],cr,ci);
+    	    zmlt(cr[0],ci[0],EXPR,EXPI,cr2,ci2);
+    	    PHYPT[IP-1][0] = CENTR[0] + cr2[0];
+    	    PHYPT[IP-1][1] = CENTR[1] + ci2[0];
+    	
+    	    // END OF MAP CALCULATION FOR FIELD POINT NUMBER IP
+    	
+    	} // loopIP: for (IP=1; IP <= NPTS; IP++) */
+    	
+    	IER[0]=0;
+    	
+    } // private void CATPH4
 
 
       /**
