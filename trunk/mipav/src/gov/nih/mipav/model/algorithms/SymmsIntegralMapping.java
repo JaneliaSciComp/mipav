@@ -13604,13 +13604,15 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	final int MNCOF = 32;
     	final int MQIN1 = 21;
     	final int MXNQD = 144;
-    	final int NBSCT = 3;
+    	//final int NBSCT = 3;
+    	int QINTS[] = new int[1];
     	int AJTC,DGC,I,IA,IP,K,J,J1,JQ,JTC,LODC,LOL,
-    	     LOMC,NQ,NQUAD,PSA,QINTS;
+    	     LOMC,NQ,NQUAD,PSA;
     	final double PTHTL = 1.0E-3;
     	final double DELTA = 2.0E-1;
+    	double TOLOU[] = new double[1];
     	double AA,ARG,ARGW,AWW,BB,BETAC,DIST,EFPTL,EPS_CATPH4,HA,ILW,IMXI,MD,
-    	     MEAN,PI,REXI,RLW,RR,RRB,S2C,SCO,SJTC,SUM1,TOLOU,TT,
+    	     MEAN,PI,REXI,RLW,RR,RRB,S2C,SCO,SJTC,SUM1,TT,
     	     TUPI,UPPER;
     	double CT0[] = new double[2];
     	double CT2[] = new double[2];
@@ -13635,12 +13637,27 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
         double ci[] = new double[1];
         double cr2[] = new double[1];
         double ci2[] = new double[1];
-    	
+        double var;
+        double ang;
+        double A[];
+        double B[];
+        double CO[][];
+        int N;
+        double CIN[] = new double[2];
+        double diff[] = new double[2];
+    	double POUT[];
+    	double ebase;
+    	double expr;
+    	double expi;
+    	double JOUT[];
+    	double logr;
+    	double logi;
+        
     	EPS_CATPH4=10.0 * EPS;
     	PI=Math.PI;
     	TUPI=2.0*PI;
     	LOL=NARCS*NQPTS;
-    	/*loopIP: for (IP=1; IP <= NPTS; IP++) {
+    	loopIP: for (IP=1; IP <= NPTS; IP++) {
     	    WW[0]=CANPT[IP-1][0];
     	    WW[1]=CANPT[IP-1][1];
     	    AWW=zabs(WW[0],WW[1]);
@@ -13777,114 +13794,182 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	            TERM[1] = SJTC*XI[1];
     	            if ((TERM[0] == 0.0) && (TERM[1] == 0.0)) {
     	                PHYPT[IP-1]=PARFUN(PARNT[PSA-1],CT0);
-    	                continue IPloop;
+    	                continue loopIP;
     	            }
     
-    	            IF (TERM.EQ.(2E+0,0E+0)) THEN
-    	              PHYPT(IP)=PARFUN(PARNT(PSA),CT2)
-    	              GOTO 300
-    	            ENDIF
-    	C
-    	            ARG=ATAN2(AIMAG(TERM),REAL(TERM))
-    	            UPPER=(1E+0+S2C*5E-1)*PI
-    	            IF (ARG.GT.UPPER) THEN
-    	              ARG=ARG-TUPI
-    	            ELSE IF (ARG.LE.(UPPER-TUPI)) THEN
-    	              ARG=ARG+TUPI
-    	            ENDIF
-    	C
-    	            FP=ABS(TERM)**(BETAC+1E+0)*CMPLX(COS((BETAC+1E+0)*ARG),
-    	     +                                       SIN((BETAC+1E+0)*ARG))
-    	            IF (INTER) THEN
-    	              FP=-FP
-    	            ENDIF
-    	            PHI=CCJACS(SJTC*XI,DGC-1,A1COC(LODC),B1COC(LODC),
-    	     +                 H1VLC(AJTC),BFSNC(LOMC+1))
-    	            PHI=(BFSNC(LOMC)-(1E+0-SJTC*XI)*PHI)*SJTC*CMPLX(0E+0,1E+0)
-    	            PHYPT(IP)=CENTR+(PARFUN(PARNT(PSA),CT0)-CENTR)*EXP(FP*PHI)
-    	            GOTO 300
+    	            if ((TERM[0] == 2.0) && (TERM[1] == 0.0)) {
+    	                PHYPT[IP-1]=PARFUN(PARNT[PSA-1],CT2);
+    	                continue loopIP;
+    	            }
+    	
+    	            ARG=Math.atan2(TERM[1],TERM[0]);
+    	            UPPER=(1.0+S2C*0.5)*PI;
+    	            if (ARG > UPPER) {
+    	                ARG=ARG-TUPI;
+    	            }
+    	            else if (ARG <= (UPPER-TUPI)) {
+    	                ARG=ARG+TUPI;
+    	            }
+    	
+    	            var = Math.pow(zabs(TERM[0],TERM[1]),(BETAC + 1.0));
+    	            ang = (BETAC + 1.0)*ARG;
+    	            FP[0] = var * Math.cos(ang);
+    	            FP[1] = var * Math.sin(ang);
+    	            if (INTER) {
+    	                FP[0]=-FP[0];
+    	                FP[1]=-FP[1];
+    	            }
+    	            CIN[0] = SJTC*XI[0];
+    	            CIN[1] = SJTC*XI[1];
+    	            A = new double[DGC-1];
+    	            B = new double[DGC-1];
+    	            for (N = 0; N < DGC-1; N++) {
+    	            	A[N] = A1COC[LODC-1+N];
+    	            	B[N] = B1COC[LODC-1+N];
+    	            }
+    	            CO = new double[DGC][2];
+    	            for (N = 0; N < DGC; N++) {
+    	            	CO[N][0] = BFSNC[LOMC+N][0];
+    	            	CO[N][1] = BFSNC[LOMC+N][1];
+    	            }
+    	            PHI=CCJACS(CIN,DGC-1,A,B,H1VLC[AJTC-1],CO);
+    	            zmlt(1.0 - SJTC*XI[0],-SJTC*XI[1], PHI[0],PHI[1],cr,ci);
+    	            diff[0] = BFSNC[LOMC-1][0] - cr[0];
+    	            diff[1] = BFSNC[LOMC-1][1] - ci[0];
+    	            zmlt(diff[0],diff[1],0.0,SJTC,cr,ci);
+    	            PHI[0] = cr[0];
+    	            PHI[1] = ci[0];
+    	            POUT = PARFUN(PARNT[PSA-1],CT0);
+    	            diff[0] = POUT[0]- CENTR[0];
+    	            diff[1] = POUT[1] - CENTR[1];
+    	            zmlt(FP[0],FP[1],PHI[0],PHI[1],cr,ci);
+    	            ebase = Math.exp(cr[0]);
+    	            expr = ebase * Math.cos(ci[0]);
+    	            expi = ebase * Math.sin(ci[0]);
+    	            zmlt(diff[0],diff[1],expr,expi,cr,ci);
+    	            PHYPT[IP-1][0] = CENTR[0] + cr[0];
+    	            PHYPT[IP-1][1] = CENTR[1] + ci[0];
+    	            continue loopIP;
     	        } // else if (DIST < EFPTL)
     	        else {
-    	C
-    	C           SET UP A SPECIAL COMPOSITE GAUSSIAN RULE TO HANDLE THIS
-    	C           PARTICULAR POINT WW.
-    	C
-    	C           INITIALISE SOME DATA
-    	C
-    	            DGC=DGPOC(IA)
-    	            IF (DGC+1 .GT. MNCOF) THEN
-    	              IER=48
-    	              RETURN
-    	            ENDIF
-    	            JTC=JTYPC(IA)
-    	            AJTC=ABS(JTC)
-    	            BETAC=JAINC(AJTC)
-    	            LOMC=LSUBC(IA)
-    	            LODC=(AJTC-1)*NQPTS+1
-    	            SJTC=SIGN(1E+0,REAL(JTC))
-    	            SCO=SJTC
-    	C
-    	            DO 100 J=1,DGC+1
-    	              J1=LOMC+J-1
-    	              SCO=SCO*SJTC
-    	              JCOFC(J)=SOLNC(J1)*SCO
-    	100         CONTINUE
-    	C
-    	            XI=SJTC*CMPLX(REXI,IMXI)            
-    	            CALL PPSBI1(XI,BETAC,NQPTS,DGC,ACOFC(LODC),BCOFC(LODC),
-    	     +                  H0VLC(AJTC),JCOFC,LGTOL,TOLOU,XENPT,QINTS,
-    	     +                  MQIN1,IER)
-    	            IF (IER .GT. 0) THEN
-    	              IF (IER .EQ. 29) THEN
-    	                IER=49
-    	              ENDIF
-    	              RETURN
-    	            ENDIF
-    	            NQUAD=QINTS*NQPTS
-    	            IF (NQUAD .GT. MXNQD) THEN
-    	              IER=47
-    	              RETURN
-    	            ENDIF
-    	            K=0
-    	            SUM1=BETAC+1E+0
-    	            DO 130 I=1,QINTS
-    	              RR=(XENPT(I+1)-XENPT(I))*5E-1
-    	              MEAN=(XENPT(I+1)+XENPT(I))*5E-1
-    	              IF (I .EQ. 1) THEN
-    	                RRB=RR**SUM1
-    	                DO 110 J=1,NQPTS
-    	                  J1=LODC+J-1
-    	                  K=K+1
-    	                  TT=MEAN+RR*QUPTC(J1)
-    	                  WSPEC(K)=RRB*QUWTC(J1)*JACSUC(TT,DGC,ACOFC(LODC),
-    	     +                     BCOFC(LODC),H0VLC(AJTC),JCOFC)
-    	                  TT=MD+TT*SJTC*HA
-    	                  ZSPEC(K)=CMPLX(COS(TT),SIN(TT))
-    	110             CONTINUE
-    	              ELSE
-    	                DO 120 J=1,NQPTS
-    	                  J1=LOL+J
-    	                  K=K+1
-    	                  TT=MEAN+RR*QUPTC(J1)
-    	                  WSPEC(K)=RR*QUWTC(J1)*(1E+0+TT)**BETAC*JACSUC(TT,
-    	     +                     DGC,ACOFC(LODC),BCOFC(LODC),H0VLC(AJTC),
-    	     +                     JCOFC)
-    	                  TT=MD+TT*SJTC*HA
-    	                  ZSPEC(K)=CMPLX(COS(TT),SIN(TT))
-    	120             CONTINUE
-    	              ENDIF
-    	130         CONTINUE
-    	C
-    	C           THIS COMPLETES THE SETTING UP OF THE SPECIAL WEIGHTS
-    	C           AND POINTS WSPEC AND ZSPEC.  NOW ESTIMATE THE INTEGRAL.
-    	C
-    	            DO 140 K=1,NQUAD
-    	              CT=WW/ZSPEC(K)
-    	              IF (.NOT. INTER) THEN
-    	                CT=1E+0/CT
-    	              ENDIF
-    	              CSUM=CSUM+WSPEC(K)*CLOG(1E+0-CT)
-    	140         CONTINUE
+    	
+    	            // SET UP A SPECIAL COMPOSITE GAUSSIAN RULE TO HANDLE THIS
+    	            // PARTICULAR POINT WW.
+    	
+    	            // INITIALISE SOME DATA
+    	
+    	            DGC=DGPOC[IA-1];
+    	            if (DGC+1 > MNCOF) {
+    	                IER[0]=48;
+    	                return;
+    	            }
+    	            JTC=JTYPC[IA-1];
+    	            AJTC=Math.abs(JTC);
+    	            BETAC=JAINC[AJTC-1];
+    	            LOMC=LSUBC[IA-1];
+    	            LODC=(AJTC-1)*NQPTS+1;
+    	            if (JTC >= 0) {
+    	            	SJTC = 1.0;
+    	            }
+    	            else {
+    	            	SJTC = -1.0;
+    	            }
+    	            SCO=SJTC;
+    	
+    	            for (J=1; J <=DGC+1; J++) {
+    	                J1=LOMC+J-1; 
+    	                SCO=SCO*SJTC;
+    	                JCOFC[J-1][0]=SOLNC[J1-1][0]*SCO;
+    	                JCOFC[J-1][1]=SOLNC[J1-1][1]*SCO;
+    	            }
+    	
+    	            XI[0]= SJTC * REXI;
+    	            XI[1] = SJTC * IMXI; 
+    	            A = new double[DGC];
+    	            B = new double[DGC];
+    	            for (N = 0; N < DGC; N++) {
+    	                A[N] = ACOFC[LODC-1+N];
+    	                B[N] = BCOFC[LODC-1+N];
+    	            }
+    	            PPSBI1(XI,BETAC,NQPTS,DGC,A,B,
+    	                   H0VLC[AJTC-1],JCOFC,LGTOL,TOLOU,XENPT,QINTS,
+    	                   MQIN1,IER);
+    	            if (IER[0] > 0) {
+    	                if (IER[0] == 29) {
+    	                    IER[0]=49;
+    	                }
+    	                return ;
+    	            } // if (IER[0] > 0)
+    	            NQUAD=QINTS[0]*NQPTS;
+    	            if (NQUAD > MXNQD) {
+    	                  IER[0]=47;
+    	                  return;
+    	            }
+    	            K=0;
+    	            SUM1=BETAC+1.0;
+    	            for (I=1; I <= QINTS[0]; I++) {
+    	                RR=(XENPT[I]-XENPT[I-1])*0.5;
+    	                MEAN=(XENPT[I]+XENPT[I-1])*0.5;
+    	                if (I == 1) {
+    	                    RRB=Math.pow(RR,SUM1);
+    	                    for (J=1; J <= NQPTS; J++) {
+    	                        J1=LODC+J-1;
+    	                        K=K+1;
+    	                        TT=MEAN+RR*QUPTC[J1-1];
+    	                        A = new double[DGC];
+    	                        B = new double[DGC];
+    	                        for (N = 0; N < DGC; N++) {
+    	                        	A[N] = ACOFC[LODC-1+N];
+    	                        	B[N] = BCOFC[LODC-1+N];
+    	                        }
+    	                        JOUT = JACSUC(TT,DGC,A,B,H0VLC[AJTC-1],JCOFC);
+    	                        WSPEC[K-1][0]=RRB*QUWTC[J1-1]*JOUT[0];
+    	                        WSPEC[K-1][1]=RRB*QUWTC[J1-1]*JOUT[1];
+    	                        TT=MD+TT*SJTC*HA;
+    	                        ZSPEC[K-1][0]=Math.cos(TT);
+    	                        ZSPEC[K-1][1]=Math.sin(TT);
+    	                    } // for (J=1; J <= NQPTS; J++)
+    	                } // if (I == 1)
+    	                else  { // I != 1
+    	                    for (J=1; J <= NQPTS; J++) {
+    	                        J1=LOL+J;
+    	                        K=K+1;
+    	                        TT=MEAN+RR*QUPTC[J1-1];
+    	                        A = new double[DGC];
+    	                        B = new double[DGC];
+    	                        for (N = 0; N < DGC; N++) {
+    	                        	A[N] = ACOFC[LODC-1+N];
+    	                        	B[N] = BCOFC[LODC-1+N];
+    	                        }
+    	                        JOUT = JACSUC(TT,DGC,A,B,H0VLC[AJTC-1],JCOFC);
+    	                        var = RR*QUWTC[J1-1]*Math.pow((1.0+TT), BETAC);
+    	                        WSPEC[K-1][0] = var * JOUT[0];
+    	                        WSPEC[K-1][1] = var * JOUT[1];
+    	                        TT=MD+TT*SJTC*HA;
+    	                        ZSPEC[K-1][0]=Math.cos(TT);
+    	                        ZSPEC[K-1][1]=Math.sin(TT);
+    	                    } // for (J=1; J <= NQPTS; J++)
+    	                } // else I != 1
+    	            } // for (I=1; I <= QINTS[0]; I++)
+    	
+    	            // THIS COMPLETES THE SETTING UP OF THE SPECIAL WEIGHTS
+    	            // AND POINTS WSPEC AND ZSPEC.  NOW ESTIMATE THE INTEGRAL.
+    	
+    	            for (K=1; K <= NQUAD; K++) {
+    	            	zdiv(WW[0],WW[1],ZSPEC[K-1][0],ZSPEC[K-1][1],cr,ci);
+    	            	CT[0] = cr[0];
+    	            	CT[1] = ci[0];
+    	                if (!INTER) {
+    	                	zdiv(1.0,0.0,CT[0],CT[1],cr,ci);
+    	                    CT[0] = cr[0];
+    	                    CT[1] = ci[0];
+    	                }
+    	                logr = Math.log(zabs(1.0-CT[0],-CT[1]));
+    	                logi = Math.atan2(-CT[1], 1.0-CT[0]);
+    	                zmlt(WSPEC[K-1][0],WSPEC[K-1][1],logr,logi,cr,ci);
+    	                CSUM[0] = CSUM[0] + cr[0];
+    	                CSUM[1] = CSUM[1] + ci[0];
+    	            } // for (K=1; K <= NQUAD; K++)
     	
     	             // END OF ELSE BLOCK RELATING TO SPECIAL QUADRATURE RULE FOR
     	             // WW NEAR ARC IA
@@ -13904,11 +13989,557 @@ public class SymmsIntegralMapping extends AlgorithmBase  {
     	
     	    // END OF MAP CALCULATION FOR FIELD POINT NUMBER IP
     	
-    	} // loopIP: for (IP=1; IP <= NPTS; IP++) */
+    	} // loopIP: for (IP=1; IP <= NPTS; IP++) 
     	
     	IER[0]=0;
     	
     } // private void CATPH4
+    
+    private void BMPHYC(int IARC, double PHYPT[], double CANPT[], double DERIV[], boolean WANTD,
+        boolean WANTM, int IER[]) {
+    	
+    	//INTEGER IARC,IER
+    	//INTEGER IGEOM(*),ISNPH(*),IQUPH(*)
+    	//REAL RGEOM(*),RSNPH(*),RQUPH(*)
+    	//COMPLEX PHYPT,CANPT,DERIV
+    	//COMPLEX ZQUPH(*)
+    	//LOGICAL WANTD,INTER,WANTM
+    	
+    	// ......................................................................
+    	
+    	// 1.     BMPHYC
+    	//           BOUNDARY MAPPING FOR THE PHYSICAL --> CANONICAL MAP.
+    	
+    	// 2.     PURPOSE
+    	//           GIVEN A POINT ON THE BOUNDARY OF THE PHYSICAL DOMAIN, THIS
+    	//           ROUTINE COMPUTES THE CORRESPONDING APPROXIMATE IMAGE POINT
+    	//           ON THE UNIT DISC AND, IF REQUESTED, ALSO COMPUTES THE 
+    	//           DERIVATIVE OF THE MAP : PHYSICAL --> CANONICAL AT THE GIVEN
+    	//           POINT ON THE PHYSICAL BOUNDARY.
+    	
+    	// 3.     CALLING SEQUENCE
+    	//           CALL BMPHYC(IARC,PHYPT,CANPT,DERIV,WANTD,INTER,IGEOM,RGEOM,
+    	//                       ISNPH,RSNPH,IQUPH,RQUPH,ZQUPH,WANTM,IER)
+    	
+    	//        PARAMETERS
+    	//         ON ENTRY
+    	//            IARC   - INTEGER
+    	//                     ALLOWS TWO MODES OF DEFINING THE POINT ON THE 
+    	//                     BOUNDARY OF THE PHYSICAL DOMAIN.  IF IARC > 0 THEN
+    	//                     THE PHYSICAL POINT LIES ON ANALYTIC ARC NUMBER 
+    	//                     IARC (AS DEFINED IN THE PARAMETRIC FUNCTION 
+    	//                     PARFUN).  IF IARC <= 0 THEN THE PARTICULAR ARC ON
+    	//                     WHICH THE PHYSICAL POINT LIES IS CONSIDERED TO BE
+    	//                     UNKNOWN ON ENTRY.
+    	
+    	//            PHYPT  - COMPLEX
+    	//                     IF IARC > 0 THEN PHYPT IS THE (COMPLEX) PARAMETER
+    	//                     VALUE WHICH DEFINES THE PHYSICAL POINT ON ANALYTIC
+    	//                     ARC NUMBER IARC.  IF IARC <= 0 THEN PHYPT IS THE
+    	//                     GIVEN PHYSICAL POINT.
+    	
+    	//            WANTD  - LOGICAL
+    	//                     IF WANTD IS TRUE THEN DERIV IS COMPUTED OTHERWISE
+    	//                     DERIV ISN'T COMPUTED.
+    	
+    	//            INTER  - LOGICAL
+    	//                     TRUE IF THE PHYSICAL DOMAIN IS INTERIOR, FALSE 
+    	//                     OTHERWISE. (AS PREVIOUSLY USED IN JAPHYC, GQPHYC)
+    	
+    	//            IGEOM  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR IGEOM PREVIOUSLY SET UP BY 
+    	//                     JAPHYC.
+    	
+    	//            RGEOM  - REAL ARRAY
+    	//                     THE REAL VECTOR RGEOM PREVIOUSLY SET UP BY JAPHYC.
+    	
+    	//            ISNPH  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR ISNPH PREVIOUSLY SET UP BY 
+    	//                     JAPHYC.
+    	
+    	//            RSNPH  - REAL ARRAY
+    	//                     THE REAL VECTOR RSNPH PREVIOUSLY SET UP BY JAPHYC.
+    	
+    	//            IQUPH  - INTEGER ARRAY
+    	//                     THE INTEGER VECTOR IQUPH PREVIOUSLY SET UP BY
+    	//                     GQPHYC.
+    	
+    	//            RQUPH  - REAL ARRAY
+    	//                     THE REAL ARRAY PREVIOUSLY SET UP BY GQPHYC.
+    	
+    	//            ZQUPH  - COMPLEX ARRAY
+    	//                     THE COMPLEX ARRAY PREVIOUSLY SET UP BY GQPHYC.
+    	
+    	//            WANTM  - LOGICAL
+    	//                     IF WANTM IS TRUE THEN, ON AN ABNORMAL EXIT, AN
+    	//                     ERROR MESSAGE IS WRITTEN ON THE STANDARD OUTPUT
+    	//                     CHANNEL.  IF WANTM IS FALSE THEN NO MESSAGE IS
+    	//                     WRITTEN.
+    	
+    	
+    	//         ON EXIT
+    	//            CANPT  - COMPLEX
+    	//                     THE POINT ON THE UNIT DISC CORRESPONDING TO THE
+    	//                     GIVEN PHYSICAL POINT UNDER THE MAP : PHYSICAL -->
+    	//                     CANONICAL.
+    	
+    	//            DERIV  - COMPLEX
+    	//                     THE COMPUTED DERIVATIVE OF THE MAP : PHYSICAL --> 
+    	//                     CANONICAL AT THE GIVEN POINT ON THE PHYSICAL BOUN-
+    	//                     DARY.  THIS IS COMPUTED ONLY IF WANTD IS TRUE.
+    	
+    	//            IER    - INTEGER
+    	//                     IF IER > 0 THEN AN ABNORMAL EXIT HAS OCCURRED;
+    	//                     A MESSAGE TO DESCRIBE THE ERROR IS AUTOMATICALLY
+    	//                     WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+    	//                     IER=0 - NORMAL EXIT.
+    	//                     IER>0 - ABNORMAL EXIT; THE ERROR MESSAGE SHOULD
+    	//                             BE SELF EXPLANATORY.
+    	
+    	
+    	// 4.     SUBROUTINES OR FUNCTIONS NEEDED
+    	//              - THE CONFPACK LIBRARY.
+    	//              - THE REAL FUNCTION R1MACH.
+    	//              - THE USER SUPPLIED COMPLEX FUNCTIONS PARFUN AND DPARFN.
+    	
+    	
+    	// 5.     FURTHER COMMENTS
+    	//           - NOTE THAT THIS ROUTINE CAN ONLY BE USED  A F T E R  THE  
+    	//             ROUTINES JAPHYC AND GQPHYC HAVE SUCCESSFULLY EXECUTED, 
+    	//             AND THAT MANY INPUT ARGUMENTS FOR BMPHYC ARE OUTPUT VALUES
+    	//             FROM JAPHYC AND GQPHYC.
+    	
+    	// ......................................................................
+    	//     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+    	//     LAST UPDATE: 3 JULY 1990
+    	// ......................................................................
+    	     
+    	//     LOCAL VARAIBLES
+    	
+    	int MNSUA,TNSUA;
+    	String IERTXT;
+    	//CHARACTER*6 IERTXT
+    	
+    	// EXTERNAL BMPHC1,IERTXT
+    	
+    	NARCS=ISNPH[0];
+    	NJIND=NARCS+1;
+    	NQPTS=ISNPH[1];
+    	TNSUA=ISNPH[2];
+    	MNSUA=ISNPH[4];
+    	MNEQN=ISNPH[5];
+    	MQUPH=IQUPH[3];
+    	TNGQP=NQPTS*NJIND;
+    	
+        // SET UP POINTERS TO IGEOM AND RGEOM, AS IN JAPHYC
+    	
+    	// SET UP THE POINTERS TO  ISNPH AND RSNPH, AS IN JAPHYC
+    	
+    	// SET UP POINTERS TO IQUPH AND RQUPH, AS IN GQPHYC
+    	
+    	// GET REQUIRED MAP AND DERIVATIVE
+    	
+        BMPHC1(IARC,PHYPT,CANPT,DERIV,NQPTS,TNSUA,DGPOL,
+    	     JATYP,LOSUB,LQSBF,NPPQF,PARNT,
+    	     AICOF,ACOEF,BICOF,BCFSN,BCOEF,
+    	     H0VAL,HIVAL,HALEN,JACIN,MIDPT,
+    	     SOLUN,TPPQF,TRRAD,VTARG,ZPPQF,
+    	     INTER,WANTD,IER);
+    	
+    	// SEND ERROR MESSAGE TO STANDARD OUTPUT OF NECESSARY
+    	
+    	if (IER[0] > 0 && WANTM) System.out.println(IERTXT(IER[0]));
+    	
+    } // private void BMPHYC
+    
+    private void BMPHC1(int IARC, double PHYPT[], double CANPT[], double DERIV[], int NQPTS,
+        int TNSUA, int DGPOL[], int JATYP[], int LOSUB[], int LPQSB[], int NPPQF[], int PARNT[],
+        double A1COF[], double ACOEF[], double B1COF[], double BCFSN[], double BCOEF[],
+        double H0VAL[], double H1VAL[], double HALEN[], double JACIN[], double MIDPT[], 
+        double SOLUN[], double TPPQF[], double TRRAD[], double VTARG[], double ZPPQF[][],
+        boolean INTER, boolean WANTD, int IER[]) {
+    	//INTEGER IARC,IER,NQPTS,TNSUA
+    	//INTEGER DGPOL(*),JATYP(*),LOSUB(*),LPQSB(*),NPPQF(*),PARNT(*)
+    	//REAL A1COF(*),ACOEF(*),B1COF(*),BCFSN(*),BCOEF(*),H0VAL(*),
+    	//+H1VAL(*),HALEN(*),JACIN(*),MIDPT(*),SOLUN(*),TPPQF(*),TRRAD(*),
+    	//+VTARG(*)
+    	//COMPLEX CANPT,DERIV,PHYPT,ZPPQF(*)
+    	//LOGICAL INTER,WANTD
+    	
+    	//     GIVEN A POINT (DEFINED BY IARC AND PHYPT AS EXPLAINED NEXT) ON
+    	//     THE BOUNDARY OF THE PHYSICAL DOMAIN, TO COMPUTE ITS IMAGE CANPT
+    	//     ON THE UNIT DISC.  IN CASE WANTD=.TRUE. THEN ALSO COMPUTE THE 
+    	//     DERIVATIVE DERIV OF THE MAP ONTO THE DISC AT THE GIVEN BOUNDARY 
+    	//     POINT.
+    	
+    	//     IF IARC > 0 THEN PHYPT IS THE PARAMETER VALUE OF THE 
+    	//     PHYSICAL POINT ON THE PARENT ANALYTIC ARC NUMBER IARC OTHERWISE
+    	//     PHYPT DEFINES THE COORDINATES OF A PHYSICAL POINT SOMEWHERE ON 
+    	//     THE BOUNDARY.
+    	
+    	//     IER=0  - NORMAL EXIT.
+    	//     IER=44 - LOCAL PARAMETER MNCOF NEEDS INCREASING.
+    	//     IER=45 - THE PHYSICAL POINT DEFINED BY PHYPT (WITH IARC<0) HAS NOT
+    	//              BEEN DETECTED AS LYING ON THE BOUNDARY; ACTUALLY, IT HAS
+    	//              NOT BEEN DETECTED AS LYING PATHOLOGICALY CLOSE TO THE
+    	//              BOUNDARY.  CHECK THAT PHYPT IS CORRECT AND IF IT IS THEN 
+    	//              CONSIDER INCREASING THE PATHOLOGICAL TOLERANCE PARAMETER 
+    	//              PTHTL IN THE FIRST LINE BELOW.
+    	
+    	//     LOCAL VARIABLES
+    	
+    	final int MNCOF = 32;
+    	int AJT,DEG,I,I1,IA,K,J1,JQ,JT,LOD,LOM,NQ,PT;
+    	double BETA,DIST,HL,JACSUM,MD,MINDS,NEWTL,PHI,PTHTL,R1MACH,RBCF,
+    	     SJT,SUM,TOLSM,TT,TUPI,TXI;
+    	double BCF[] = new double[2];
+    	double CT[] = new double[2];
+    	double DIFF2[] = new double[2];
+    	double PSI[] = new double[2];
+    	double WGHT[] = new double[2];
+    	double XI[] = new double[2];
+    	double ZXI[] = new double[2];
+    	double ZZ[] = new double[2];
+    	//COMPLEX BCF,CJACSU,CT,DIFF2,DPARFN,PARFUN,PSI,WGHT,XI,ZXI,
+    	//+ZTOB1,ZZ
+    	
+    	double JACOF[] = new double[MNCOF];
+    	double A[];
+    	double B[];
+    	double CO[];
+    	int N;
+    	double DOUT[];
+    	double POUT[];
+    	double base;
+    	double cr[] = new double[1];
+    	double ci[] = new double[1];
+    	double cr2[] = new double[1];
+    	double ci2[] = new double[1];
+    	double ZIN[] = new double[2];
+    	
+    	// EXTERNAL CJACSU,DPARFN,JACSUM,PARFUN,R1MACH,ZTOB1
+    	
+    	NEWTL=Math.sqrt(EPS);
+    	PTHTL=NEWTL;
+    	TOLSM=10.0*EPS;
+    	TUPI=2.0 * Math.PI;
+    	
+    	/*if (IARC > 0) {
+    	
+    	    // *PHYPT* IS THE PARAMETER VALUE OF THE PHYSICAL POINT ON THE
+    	    // PARENT ANALYTIC ARC NUMBER *IARC*.
+    	 
+    	    // FIRST FIND THE CORRESPONDING SUBARC NUMBER AND LOCAL PARAMETER.
+    	
+    	    TT=PHYPT[0];
+    	    if (TT < -1.0) {
+    	        TT=-1.0;
+    	    }
+    	    if (TT > 1.0) {
+    	        TT=1.0;
+    	    }
+    	    I=1;
+    	    while (true) {
+    	        PT=PARNT[I-1];
+    	        HL=HALEN[I-1];
+    	        MD=MIDPT[I-1];
+    	        SUM=MD+HL;
+    	
+    	        if (Math.abs(SUM-1.0) < TOLSM) {
+    	            SUM=1.0;
+    	        }
+    	
+    	        if (PT == IARC && TT <= SUM) {
+    	            IA=I;
+    	            TT=(TT-MD)/HL;
+    	            break;
+    	        }
+    	        else {
+    	            I=I+1;
+    	            continue;
+    	        }
+    	    } // while (true)
+    	
+    	    if (TT < -1.0) {
+    	        TT=-1.0;
+    	    }
+    	    if (TT > 1.0) {
+    	        TT=1.0;
+    	    }
+    	
+    	    JT=JATYP[IA-1];
+    	    if (JT >= 0) {
+    	    	SJT = 1.0;
+    	    }
+    	    else {
+    	    	SJT = -1.0;
+    	    }
+    	    AJT=Math.abs(JT);
+    	    BETA=JACIN[AJT-1];
+    	    DEG=DGPOL[IA-1];
+    	    if (DEG+1 > MNCOF) {
+    	        IER[0]=44;
+    	        return;
+    	    }
+    	    LOM=LOSUB[IA-1];
+    	    LOD=(AJT-1)*NQPTS+1;
+    	
+    	    TT=SJT*TT;
+    	    A = new double[DEG-1];
+    	    B = new double[DEG-1];
+    	    for (N = 0; N < DEG-1; N++) {
+    	    	A[N] = A1COF[LOD-1+N];
+    	    	B[N] = B1COF[LOD-1+N];
+    	    }
+    	    CO = new double[DEG];
+    	    for (N = 0; N < DEG; N++) {
+    	    	CO[N] = BCFSN[LOM+N];
+    	    }
+    	    PHI=JACSUM(TT,DEG-1,A,B,H1VAL[AJT-1],CO);   
+    	    PHI=Math.pow((1.0+TT),(BETA+1.0))*(BCFSN[LOM-1]-(1.0-TT)*PHI);
+    	   if (JT > 0) {
+    	       RBCF=VTARG[IA-1];
+    	   }
+    	   else {
+    	       RBCF=VTARG[IA];
+    	   }
+    	   RBCF=RBCF+SJT*PHI;
+    	   CANPT[0] = Math.cos(RBCF);
+    	   CANPT[1] = Math.sin(RBCF);
+    	   if (WANTD) {
+    	       if (BETA < 0.0 && (1E+0+TT) <= 0.0) {
+    	
+                   // WE ARE AT A CORNER WITH INFINITE DERIVATIVE.
+    	           DERIV[0] = Double.MAX_VALUE;
+    	           DERIV[1] = Double.MAX_VALUE:
+    	       }
+    	       else if (BETA > 0.0 && (1.0+TT) <= 0E+0) {
+    	
+                   // WE ARE AT A CORNER WITH ZERO DERIVATIVE
+    	
+    	           DERIV[0] = 0.0;
+    	           DERIV[1] = 0.0; 
+    	       }
+    	       else {
+    	           for (I=1; I <= DEG+1; I++) {
+    	               I1=I+LOM-1;
+    	               JACOF[I-1]=SOLUN[I1-1];
+    	           } // for (I=1; I <= DEG+1; I++)
+    	           for (I=2; I <= DEG+1; I +=2) {
+    	               JACOF[I-1]=SJT*JACOF[I-1];
+    	           } // for (I=2; I <= DEG+1; I +=2)
+    	           A = new double[DEG];
+    	    	   B = new double[DEG];
+    	    	   for (N = 0; N < DEG; N++) {
+    	    	    	A[N] = ACOEF[LOD-1+N];
+    	    	    	B[N] = BCOEF[LOD-1+N];
+    	    	    }
+    	            PHI=JACSUM(TT,DEG,A,B,H0VAL[AJT-1],JACOF);
+    	            DOUT = DPARFN(IAC,PHYPT);
+    	            base = TUPI * Math.pow((1.0+TT), BETA)*PHI;
+    	            zmlt(0.0,base,CANPT[0],CANPT[1],cr,ci);
+    	            zdiv(cr[0],ci[0],DOUT[0]/HL,DOUT[1]/HL,cr2,ci2);
+    	            DERIV[0] = cr2[0];
+    	            DERIV[1] = ci2[0];
+    	       } // else
+    	   } // if (WANTD)
+    	} // if (IARC > 0)
+    	else { // IARC <= 0
+    	
+    	    // *PHYPT* IS A POINT SOMEWHERE ON THE PHYSICAL BOUNDARY.
+    	
+    	    ZZ[0]=PHYPT[0];
+    	    ZZ[1]=PHYPT[1];
+    	    loopIA: for (IA=1; IA <= TNSUA; IA++) {
+    	        PT=PARNT[IA-1];
+    	        JT=JATYP[IA-1];
+    	        NQ=NPPQF[IA-1];
+    	        K=LPQSB[IA-1]-1;
+    	        HL=HALEN[IA-1];
+    	        MD=MIDPT[IA-1];
+    	        for (JQ=1; JQ <= NQ; JQ++) {
+    	            K=K+1;
+    	            DIFF2[0]=ZZ[0]-ZPPQF[K-1][0];
+    	            DIFF2[1]=ZZ[1]-ZPPQF[K-1][1];
+    	            DIST=zabs(DIFF2[0],DIFF2[1]);
+    	            if (DIST < TRRAD[K-1]) {
+    	
+    	                // ZZ IS CLOSE TO ARC IA.
+    	
+    	                J1=JQ;
+    	                MINDS=DIST;
+    	                TXI=TPPQF[K-1];
+    	                ZXI[0]=ZPPQF[K-1][0];
+    	                ZXI[1]=ZPPQF[K-1][1];
+    	                while (true) {
+    	                    J1=J1+1;
+    	                    if (J1 <= NQ) {
+    	                        K=K+1;
+    	                        DIFF2[0]=ZZ[0]-ZPPQF[K-1][0];
+    	                        DIFF2[1]=ZZ[1]-ZPPQF[K-1][1];
+    	                        DIST=zabs(DIFF2[0],DIFF2[1]);
+    	                        if (DIST < MINDS) {
+    	                            MINDS=DIST;
+    	                            TXI=TPPQF[K-1];
+    	                            ZXI[0]=ZPPQF[K-1][0];
+    	                            ZXI[1]=ZPPQF[K-1][1];
+    	                            continue;
+    	                        } // if (DIST < MINDS)
+    	                    } // if (J1 <= NQ)
+    	                    break;
+    	                } // while (true)
+    	
+    	                // PRELIMINARIES
+    	          
+    	                if (JT >= 0) {
+    	                    SJT = 1.0;	
+    	                }
+    	                else {
+    	                	SJT = -1.0;
+    	                }
+    	                AJT=Math.abs(JT);
+    	                BETA=JACIN[AJT-1];
+    	                DEG=DGPOL[IA-1];
+    	                if (DEG+1 > MNCOF) {
+    	                    IER[0]=44;
+    	                    return;
+    	                } // if (DEG+1 > MNCOF)
+    	                LOM=LOSUB[IA-1];
+    	                LOD=(AJT-1)*NQPTS+1;
+    	
+    	                // NOW USE NEWTON'S METHOD TO ESTIMATE THE PARAMETRIC
+    	                // PRE-IMAGE XI OF ZZ.
+    	
+    	                XI[0]=TXI;
+    	                XI[1] = 0.0;
+    	                CT[0]=MD+HL*XI[0];
+    	                CT[1]=HL*XI[1];
+    	                DOUT = DPARFN(PT,CT);
+    	                zdiv(ZXI[0]-ZZ[0],ZXI[1]-ZZ[1],DOUT[0]*HL,DOUT[1]*HL,cr,ci);
+    	                DIFF2[0] = cr[0];
+    	                DIFF2[1] = ci[0];
+    	                XI[0]=XI[0]-DIFF2[0];
+    	                XI[1]=XI[1]-DIFF2[1];
+    	                while (true) {
+    	                    if (zabs(DIFF2[0],DIFF2[1]) > NEWTL) {
+    	                        CT[0]=MD+HL*XI[0];
+    	                        CT[1] = HL*XI[1];
+    	                        POUT = PARFUN(PT,CT);
+    	                        DOUT = DPARFN(PT,CT);
+    	                        zdiv(POUT[0]-ZZ[0],POUT[1]-ZZ[1],DOUT[0]*HL,DOUT[1]*HL,cr,ci);
+    	                        DIFF2[0] = cr[0];
+    	                        DIFF2[1] = ci[0];
+    	                        XI[0]=XI[0]-DIFF2[0];
+    	                        XI[1]=XI[1]-DIFF2[1];
+    	                        continue;
+    	                    } // if (zabs(DIFF2[0],DIFF2[1]) > NEWTL)
+    	                    else {
+    	
+    	                        // LAST ITERATION
+    	                    	CT[0]=MD+HL*XI[0];
+    	                        CT[1] = HL*XI[1];
+    	                        POUT = PARFUN(PT,CT);
+    	                        DOUT = DPARFN(PT,CT);
+    	                        zdiv(POUT[0]-ZZ[0],POUT[1]-ZZ[1],DOUT[0]*HL,DOUT[1]*HL,cr,ci);
+    	                        DIFF2[0] = cr[0];
+    	                        DIFF2[1] = ci[0];
+    	                        XI[0]=XI[0]-DIFF2[0];
+    	                        XI[1]=XI[1]-DIFF2[1];
+    	                        break;
+    	                    }
+    	                } // while (true)
+    	                XI[0]=SJT*XI[0];
+    	                XI[1]=SJT*XI[1];
+    	
+    	                if (Math.abs(XI[1]) < PTHTL && Math.abs(XI[0]) < 1.0+PTHTL) {
+    	
+    	                    // ZZ IS PATHOLOGICALLY CLOSE TO ARC IA AND WE USE THE
+    	                    // CONTINUATION OF THE BOUNDARY CORRESPONDENCE FUNCTION
+    	                    // TO ESTIMATE CANPT AND THE DERIVATIVE
+    	                    A = new double[DEG-1];
+    	                    B = new double[DEG-1];
+    	                    for (N = 0; N < DEG-1; N++) {
+    	                    	A[N] = A1COF[LOD-1+N];
+    	                    	B[N] = B1COF[LOD-1+N];
+    	                    }
+    	                    CO = new double[DEG];
+    	                    for (N = 0; N < DEG; N++) {
+    	                    	CO[N] = BCFSN[LOM+N];
+    	                    }
+    	                    PSI=CJACSU(XI,DEG-1,A,B,H1VAL[AJT-1],CO);
+    	                    ZIN[0] = XI[0]+1.0;
+    	                    ZIN[1] = XI[1];
+    	                    WGHT=ZTOB1(ZIN,BETA+1.0,JT,INTER);
+    	                    zmlt(BCFSN[LOM-1]-(1.0-XI[0]),XI[1],PSI[0],PSI[1],cr,ci);
+    	                    zmlt(WGHT[0],WGHT[1],cr[0],ci[0],cr2,ci2);
+    	                    PSI[0] = cr2[0];
+    	                    PSI[1] = ci2[0];
+    	                    if (JT > 0) {
+    	                        BCF[0]=VTARG[IA-1];
+    	                        BCF[1]= 0.0;
+    	                    }
+    	                    else {
+    	                        BCF[0]=VTARG[IA];
+    	                        BCF[1] = 0.0;
+    	                    }
+    	                    BCF[0]=BCF[0]+SJT*PSI[0];
+    	                    BCF[1]=BCF[1]+SJT*PSI[1];
+    	                    base = Math.exp(-BCF[1]);
+    	                    CANPT[0] = base * Math.cos(BCF[0]);
+    	                    CANPT[1] = base * Math.sin(BCF[0]);
+    	                    if (WANTD) {
+    	                        if (((1.0+XI[0]) == 0.0) && (XI[1] == 0.0) && (BETA < 0.0)) { 
+    	
+    	                            // WE ARE AT A CORNER WITH INFINITE DERIVATIVE.
+    	
+    	                            DERIV[0]= Double.MAX_VALUE;
+    	                            DERIV[1] = Double.MAX_VALUE;
+    	                        }
+    	                  ELSE IF ((1E+0+XI).EQ.(0E+0,0E+0) .AND. BETA.GT.0E+0) 
+    	     +            THEN
+    	C
+    	C                   WE ARE AT A CORNER WITH ZERO DERIVATIVE.
+    	C
+    	                    DERIV=(0E+0,0E+0)
+    	                  ELSE
+    	                    DO 55 I=1,DEG+1
+    	                      I1=I+LOM-1
+    	                      JACOF(I)=SOLUN(I1)
+    	55                  CONTINUE
+    	                    DO 60 I=2,DEG+1,2
+    	                      JACOF(I)=SJT*JACOF(I)
+    	60                  CONTINUE
+    	                    PSI=CJACSU(XI,DEG,ACOEF(LOD),BCOEF(LOD),H0VAL(AJT),
+    	     +                         JACOF)
+    	                    CT=MD+HL*SJT*XI
+    	                    WGHT=WGHT/(1E+0+XI)
+    	                    DERIV=TUPI*WGHT*PSI*(0E+0,1E+0)*CANPT
+    	     +                    /DPARFN(PT,CT)/HL
+    	                  ENDIF
+    	                    } // if (WANTD)
+    	                // NORMAL EXIT
+    	                IER[0] = 0;
+    	                return;
+    	                
+    	                } // if (Math.abs(XI[1]) < PTHTL && Math.abs(XI[0]) < 1.0+PTHTL)
+    	
+    	            // END OF *IF (DIST .LT. TRRAD(K)) THEN* FOLLOWS
+    	
+    	            } // if (DIST < TRRAD[K-1])
+    	        } // for (JQ=1; JQ <= NQ; JQ++)
+    	    } // loopIA: for (IA=1; IA <= TNSUA; IA++)
+    	    IER[0]=45;
+    	    return;
+    	} // else IARC <= 0
+    	
+    	300   CONTINUE
+    	
+    	// NORMAL EXIT
+    	
+    	IER[0]=0; */
+    } // private void BMPHC1
+
+
 
 
       /**
