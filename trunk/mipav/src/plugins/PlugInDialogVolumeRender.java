@@ -155,8 +155,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JTextField resliceX, resliceY, resliceZ;
 	private int resliceXValue = 250, resliceYValue = 250, resliceZValue = 1500;
 	
-	private JCheckBox rotateImageCheck;
-	
 	private int paddingFactor;
 	private int minRadius;
 	private int maxRadius;
@@ -284,11 +282,12 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				else if ( resliceRotate.isSelected() )
 				{
 					try {
-						if ( resliceImageCheck.isSelected() || rotateImageCheck.isSelected() )
+						if ( resliceImageCheck.isSelected() )
 						{
 							PlugInAlgorithmWormUntwisting.reslice( batchProgress, includeRange, baseFileDir, baseFileDir2, baseFileNameText.getText(), 
-									resliceImageCheck.isSelected(), resliceXValue, resliceYValue, resliceZValue, rotateImageCheck.isSelected() );
-						}					} catch ( java.lang.OutOfMemoryError e ) {
+									resliceXValue, resliceYValue, resliceZValue );
+						}					
+						} catch ( java.lang.OutOfMemoryError e ) {
 						MipavUtil.displayError( "Error: Not enough memory. Unable to finish reslice calculation." );
 						return;
 					}
@@ -1991,10 +1990,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		
 		gbc.gridx = 0;
 		gbc.gridy++;
-
-		rotateImageCheck = gui.buildCheckBox( "Rotate image", true);
-		panel.add(rotateImageCheck.getParent(), gbc);
-		gbc.gridx++;
 		
 		return panel;
 	}
