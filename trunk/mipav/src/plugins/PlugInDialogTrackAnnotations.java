@@ -119,7 +119,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	private JCheckBox useHyperstack;
 	// load resliced and rotated images
 	private JCheckBox loadReslice;
-	private JCheckBox loadRotated;
+//	private JCheckBox loadRotated;
 	// load any straightened annotations
 	private JCheckBox loadStraightenedAnnotations;
 
@@ -245,6 +245,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		{			
 			// save
 			save();
+			reTwist();
 		}
 		if (command.equals("close") || command.equals("done"))
 		{			
@@ -308,7 +309,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		triVolume.hideMenus();
 
 		// setup the display:
-		if ( !loadRotated.isSelected() ) {
+		if ( !loadReslice.isSelected() ) {
 			triVolume.getVolumeGPU().resetAxisX();
 		}
 		triVolume.getVolumeGPU().displayVolumeSlices(false);
@@ -598,15 +599,15 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		gbc.gridy++;
 
 		// resliced and rotated images:
-		loadReslice = gui.buildCheckBox( "Load resliced images", true);
+		loadReslice = gui.buildCheckBox( "Load resliced/rotated images", true);
 		inputsPanel.add(loadReslice.getParent(), gbc);
 		gbc.gridx++;
 
 		// resliced and rotated images:
-		loadRotated = gui.buildCheckBox( "Load rotated images", true);
-		inputsPanel.add(loadRotated.getParent(), gbc);		
-		gbc.gridx = 0;
-		gbc.gridy++;
+//		loadRotated = gui.buildCheckBox( "Load rotated images", true);
+//		inputsPanel.add(loadRotated.getParent(), gbc);		
+//		gbc.gridx = 0;
+//		gbc.gridy++;
 
 		// resliced and rotated images:
 //		loadStraightenedAnnotations = gui.buildCheckBox( "Load straightened annotations", true);
@@ -851,7 +852,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 							(imageA.getExtents()[2] != previousExtents[2]);
 
 					triVolume.setImage(imageA, imageB, null, null, updateRenderer);
-					if ( !loadRotated.isSelected() ) {
+					if ( !loadReslice.isSelected() ) {
 						triVolume.getVolumeGPU().resetAxisX();
 					}
 					triVolume.setTitle("Annotation Tracking " + imageA.getImageName() );
@@ -882,9 +883,9 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 						if ( loadReslice.isSelected() ) {
 							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice.tif";
 						}
-						if ( loadRotated.isSelected() ) {
-							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice_rotate.tif";
-						}
+//						if ( loadRotated.isSelected() ) {
+//							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice_rotate.tif";
+//						}
 						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
 						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
 						File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
@@ -919,9 +920,9 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 						if ( loadReslice.isSelected() ) {
 							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice.tif";
 						}
-						if ( loadRotated.isSelected() ) {
-							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice_rotate.tif";
-						}
+//						if ( loadRotated.isSelected() ) {
+//							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight_reslice_rotate.tif";
+//						}
 						String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
 						String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
 						File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
@@ -961,7 +962,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 							}
 						}
 
-						if ( loadReslice.isSelected() || loadRotated.isSelected() ) {
+						if ( loadReslice.isSelected() /*|| loadRotated.isSelected() */ ) {
 							// open original image and store original size:
 							imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
 							voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
@@ -1065,7 +1066,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 					// set the new image and LUTs:
 					triVolume.setImage(imageA, imageB, lutStackA[imageIndex], lutStackB[imageIndex], updateRenderer);
-					if ( !loadRotated.isSelected() ) {
+					if ( !loadReslice.isSelected() ) {
 						triVolume.getVolumeGPU().resetAxisX();
 					}
 					// set the title to match the new image name:
@@ -1083,9 +1084,9 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				if ( loadReslice.isSelected() ) {
 					imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight_reslice.tif";
 				}
-				if ( loadRotated.isSelected() ) {
-					imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight_reslice_rotate.tif";
-				}
+//				if ( loadRotated.isSelected() ) {
+//					imageName = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_straight_reslice_rotate.tif";
+//				}
 				String subDirName = baseFileName + "_" + includeRange.elementAt(imageIndex) + File.separator;
 				String subDirNameResults = baseFileName + "_" + includeRange.elementAt(imageIndex) + "_results" + File.separator;
 				File voiFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
@@ -1321,10 +1322,10 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		if ( loadReslice.isSelected() )
 		{
 			String name = "tracked_annotations_reslice.csv";
-			if ( loadRotated.isSelected() )
-			{
-				name = "tracked_annotations_reslice_rotate.csv";
-			}
+//			if ( loadRotated.isSelected() )
+//			{
+//				name = "tracked_annotations_reslice_rotate.csv";
+//			}
 			LatticeModel.saveAnnotationsAsCSV(dir + File.separator, name, savedAnnotations);
 		}
 	}
@@ -1381,14 +1382,14 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	}
 	
 	private VOI convertToLocal( VOI voi ) {
-		if ( !loadReslice.isSelected() && !loadRotated.isSelected() ) {
+		if ( !loadReslice.isSelected() /* && !loadRotated.isSelected() */ ) {
 			return voi;
 		}
 		int shiftX = originalExtents[0]/2;
 		int shiftY = originalExtents[1]/2;
 		int xOffset = (imageA.getExtents()[0] - originalExtents[0])/2;
 		int yOffset = (imageA.getExtents()[1] - originalExtents[1])/2;
-		if ( loadRotated.isSelected() )
+//		if ( loadRotated.isSelected() )
 		{
 			yOffset = (imageA.getExtents()[2] - originalExtents[1])/2;
 		}
@@ -1409,7 +1410,8 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 					curveOrig.elementAt(j).Y += shiftY;
 				}
 			}
-			if ( loadRotated.isSelected() ) {
+//			if ( loadRotated.isSelected() )
+			{
 				// swap y and z coordinates:
 				for ( int j = 0; j < curveOrig.size(); j++ ) {
 					float temp = curveOrig.elementAt(j).Y;
@@ -1422,7 +1424,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 	}
 	
 	private VOI convertToOriginal( VOI voi ) {
-		if ( !loadReslice.isSelected() && !loadRotated.isSelected() ) {
+		if ( !loadReslice.isSelected() /*&& !loadRotated.isSelected() */ ) {
 			return voi;
 		}	
 
@@ -1430,7 +1432,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		int shiftY = imageA.getExtents()[1]/2;
 		int xOffset = (imageA.getExtents()[0] - originalExtents[0])/2;
 		int yOffset = (imageA.getExtents()[1] - originalExtents[1])/2;
-		if ( loadRotated.isSelected() )
+//		if ( loadRotated.isSelected() )
 		{
 			shiftY = imageA.getExtents()[2]/2;
 			yOffset = (imageA.getExtents()[2] - originalExtents[1])/2;
@@ -1439,7 +1441,8 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		VOI localVOI = new VOI(voi);
 		for ( int i = 0; i < localVOI.getCurves().size(); i++ ) {
 			VOIBase curveOrig = localVOI.getCurves().elementAt(i);
-			if ( loadRotated.isSelected() ) {
+//			if ( loadRotated.isSelected() )
+			{
 				// swap y and z coordinates:
 				for ( int j = 0; j < curveOrig.size(); j++ ) {
 					float temp = curveOrig.elementAt(j).Y;
@@ -1483,7 +1486,94 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		}
 		return true;
 	}
+	
+	private void reTwist() {
+		// count images to make sure all exist:
+		for ( int i = 0; i < includeRange.size(); i++ )
+		{	
+			String toTwistedName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+					baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
+					"output_images" + File.separator + 
+					baseFileName + "_" + includeRange.elementAt(i) + "_toTwisted.xml";
+			File toTwistedFile = new File(baseFileDir + File.separator + toTwistedName );
+			FileIO fileIO = new FileIO();
+			//		System.err.println(toTwistedName + " " + toTwistedFile.exists() );
+			ModelImage toTwisted = null;
+			if ( toTwistedFile.exists() )
+			{
+				toTwisted = fileIO.readImage(toTwistedName, baseFileDir + File.separator, false, null);  
+			}
+			String distanceName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+					baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
+					"output_images" + File.separator + 
+					baseFileName + "_" + includeRange.elementAt(i) + "_distanceMap.xml";
+			File distanceMapFile = new File(baseFileDir + File.separator + distanceName );
+			//		System.err.println(distanceName + " " + distanceMapFile.exists() );
+			ModelImage distanceMap = null;
+			if ( distanceMapFile.exists() )
+			{
+				distanceMap = fileIO.readImage(distanceName, baseFileDir + File.separator, false, null);  
+			}
+			if ( toTwisted != null )
+			{
+				String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+						baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator + 
+						"tracked_annotations.csv";				
+				VOI annotations = LatticeModel.readAnnotationsCSV(baseFileDir + File.separator + positionsFile);
 
+
+				if ( annotations != null )
+				{
+					if ( annotations.getCurves().size() > 0 )
+					{
+
+						VOI annotationVOI = new VOI( (short)0, "tracked_annotations_twisted", VOI.ANNOTATION, 0 );
+						Vector<Integer> distance = new Vector<Integer>();
+						for ( int j = 0; j < annotations.getCurves().size(); j++ )
+						{
+							VOIText text = (VOIText) annotations.getCurves().elementAt(j);
+							Vector3f pos = text.elementAt(0);
+							String name = text.getText();
+
+							float valid = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 0 );
+							//						if ( valid != 1 )
+							//						{
+							//							System.err.println( name + " invalid position" );
+							//						}
+							float x = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 1 );
+							float y = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 2 );
+							float z = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 3 );
+							Vector3f newPos = new Vector3f(x, y, z);
+
+							VOIText newText = new VOIText();
+							newText.setText(name);
+							newText.add(newPos);
+
+							annotationVOI.getCurves().add(newText);
+
+
+							int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
+							distance.add(d);
+						}
+
+						String outputDir = baseFileDir + File.separator + baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+								baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator;
+						
+						LatticeModel.saveAnnotationsAsCSV(outputDir, "tracked_annotations_twisted.csv", annotationVOI);
+
+						toTwisted.disposeLocal(false);
+						toTwisted = null;
+						if ( distanceMap != null )
+						{
+							distanceMap.disposeLocal(false);
+							distanceMap = null;
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	public void keyTyped(KeyEvent e) {
 		if ( e.getKeyChar() == KeyEvent.VK_TAB ) {
 			int row = annotationTable.getSelectedRow();

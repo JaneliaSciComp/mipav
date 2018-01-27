@@ -267,8 +267,8 @@ public class PlugInAlgorithmWormUntwisting
 	}
 	
 	public static void reslice( JProgressBar batchProgress, final Vector<Integer> includeRange, 
-			final String baseFileDir, final String baseFileDir2, final String baseFileName, 
-			final boolean reslice, final int xSize, final int ySize, final int zSize, final boolean rotate )
+			final String baseFileDir, final String baseFileDir2, final String baseFileName,
+			final int xSize, final int ySize, final int zSize )
 	{
 		if ( includeRange != null )
 		{			
@@ -281,21 +281,21 @@ public class PlugInAlgorithmWormUntwisting
 				File imageFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				
 				if ( imageFile.exists() ) {
-					resliceRotate(imageFile, imageName, reslice, xSize, ySize, zSize, rotate );
+					resliceRotate(imageFile, imageName, xSize, ySize, zSize );
 				}
 				if ( imageFile2.exists() ) {
-					resliceRotate(imageFile2, imageName, reslice, xSize, ySize, zSize, rotate );
+					resliceRotate(imageFile2, imageName, xSize, ySize, zSize );
 				}
 			}
 		}
 		MipavUtil.displayInfo( "Image reslicing complete." );
 	}
 	
-	private static void resliceRotate( File imageFile, String imageName, boolean reslice, int xSize, int ySize, int zSize, boolean rotate ) {
+	private static void resliceRotate( File imageFile, String imageName, int xSize, int ySize, int zSize ) {
 
 		FileIO fileIO = new FileIO();
-		ModelImage wormImage =fileIO.readImage(imageName, imageFile.getParent() + File.separator, false, null); 
-		if ( reslice && wormImage != null ) {
+		ModelImage wormImage = fileIO.readImage(imageName, imageFile.getParent() + File.separator, false, null); 
+		if ( wormImage != null ) {
 			wormImage.calcMinMax();
 			int dimX = wormImage.getExtents().length > 0 ? wormImage.getExtents()[0] : 1;
 			int dimY = wormImage.getExtents().length > 1 ? wormImage.getExtents()[1] : 1;
@@ -306,30 +306,23 @@ public class PlugInAlgorithmWormUntwisting
 									
 			int[] destExtents = new int[]{xSize,ySize,zSize};
 
-            ModelImage resultImage = new ModelImage(wormImage.getType(), destExtents, JDialogBase.makeImageName(wormImage.getImageName(), "_reslice.xml"));
-            AlgorithmAddMargins padSlicesAlgo = new AlgorithmAddMargins(wormImage, resultImage, marginX, marginY, marginZ);
+            ModelImage resliceImage = new ModelImage(wormImage.getType(), destExtents, JDialogBase.makeImageName(wormImage.getImageName(), "_temp.xml"));
+            AlgorithmAddMargins padSlicesAlgo = new AlgorithmAddMargins(wormImage, resliceImage, marginX, marginY, marginZ);
             padSlicesAlgo.run();
-    		ModelImage.saveImage(resultImage, resultImage.getImageName() + ".xml", imageFile.getParent() + File.separator, false);
-    		ModelImage.saveImage(resultImage, resultImage.getImageName() + ".tif", imageFile.getParent() + File.separator, false);
-    		wormImage.disposeLocal(false);
-    		wormImage = resultImage;
-//    		resultImage.calcMinMax();
-//    		new ViewJFrameImage((ModelImage)resultImage.clone());
-		}
-		if ( rotate && wormImage != null  ) {
-			int[] destExtents = new int[]{xSize,zSize,ySize};
+    		
+			destExtents = new int[]{xSize,zSize,ySize};
 
-            ModelImage resultImage = new ModelImage(wormImage.getType(), destExtents, JDialogBase.makeImageName(wormImage.getImageName(), "_rotate.xml"));
+            ModelImage resultImage = new ModelImage(wormImage.getType(), destExtents, JDialogBase.makeImageName(wormImage.getImageName(), "_reslice.xml"));
 
-			int dimX = wormImage.getExtents().length > 0 ? wormImage.getExtents()[0] : 1;
-			int dimY = wormImage.getExtents().length > 1 ? wormImage.getExtents()[1] : 1;
-			int dimZ = wormImage.getExtents().length > 2 ? wormImage.getExtents()[2] : 1;
+			dimX = resliceImage.getExtents().length > 0 ? resliceImage.getExtents()[0] : 1;
+			dimY = resliceImage.getExtents().length > 1 ? resliceImage.getExtents()[1] : 1;
+			dimZ = resliceImage.getExtents().length > 2 ? resliceImage.getExtents()[2] : 1;
 			for ( int z = 0; z < dimZ; z++ ) {
 				for ( int y = 0; y < dimY; y++ ) {
 					for ( int x = 0; x < dimX; x++ ) {
-						if ( wormImage.isColorImage() ) {}
+						if ( resliceImage.isColorImage() ) {}
 						else {
-							float value = wormImage.getFloat(x, y, z );
+							float value = resliceImage.getFloat(x, y, z );
 							resultImage.set(x, z, y, value );
 						}
 					}
@@ -337,9 +330,8 @@ public class PlugInAlgorithmWormUntwisting
 			}
 			ModelImage.saveImage(resultImage, resultImage.getImageName() + ".xml", imageFile.getParent() + File.separator, false);
     		ModelImage.saveImage(resultImage, resultImage.getImageName() + ".tif", imageFile.getParent() + File.separator, false);
-//    		resultImage.calcMinMax();
-//    		new ViewJFrameImage((ModelImage)resultImage.clone());
     		wormImage.disposeLocal(false);
+    		resliceImage.disposeLocal(false);
     		resultImage.disposeLocal(false);
 		}
 	}
