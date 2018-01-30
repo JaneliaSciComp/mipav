@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Scanner;
+import java.util.Vector;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
@@ -291,8 +292,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	private double MD;
 	private double HL;
 	//From LEVCUR:
-	String NEWD;
-	private double ZZ[][] = new double[2][2];
+	Vector<Double> Contour[];
+	Vector<Double>Ray[];
 
 	public SymmsIntegralMapping() {
 
@@ -14444,6 +14445,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
     	IER[0]=0;
     } // private void BMCAP1
 	
+	@SuppressWarnings("unchecked")
 	private void LEVCUR(int NCONT, double RADII[], int NARGS, double THETA[], double RAD1[],
         double RAD2[], double PSD[], double MINPD[], double MAXPD[], String NEWD[], int IER[]) {
 		
@@ -14657,14 +14659,17 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		//     LOCAL VARAIBLES
 		
 		final int MXTRY = 5;
-		int COARG,CLNO,IC,IR,L,MNSUA,NRAYS,PPNO,PT,TRY,VTARG;
-		double DIAPHY,DIFF,DPD,HS,HT,MXRAD,PI,R1MACH,RMAX,RMEAN,RMIN,SC1,
+		//int L, MNSUA;
+		int CLNO,IC,IR,NRAYS,PPNO,PT,TRY;
+		// double PI;
+		double DIFF,DPD,HS,HT,MXRAD,RMAX,RMEAN,RMIN,SC1,
 		     SC2,TH1,TH2,THET0,TMIN,TINC;
 		double WW[][] = new double[2][2];
 		double WEND[] = new double[2];
+		double ZZ[][] = new double[2][2];
 		//COMPLEX WW(2),WEND,ZZ(2)
 		boolean ATEND,NECES,WANTC,WANTR;
-		String OFL, JBNM;
+		//String OFL, JBNM;
 		//CHARACTER OFL*6,JBNM*4
 		double PHYPT[][] = new double[1][2];
 		double CANPT[][] = new double[1][2];
@@ -14678,12 +14683,12 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		
 		// INITIALISE SOME VARIABLES
 		
-		/*IER[0]=0;
+		IER[0]=0;
 		WANTC=(NCONT >= 1);
 		WANTR=(RAD2[0] > RAD1[0]);
-		PI=Math.PI;
+		//PI=Math.PI;
 		NARCS=ISNCA[0];
-		MNSUA=IGEOM[3];
+		//MNSUA=IGEOM[3];
 		NJIND=NARCS+1;
 		TNGQP=ISNCA[1]*NJIND;
 		THET0=VTARG[0];
@@ -14725,19 +14730,21 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		    MINPD[0]=2.0;
 		    MAXPD[0]=5.0;
 		} // if (PSD <= 0.0)
-		RMIN=MINPD*DPD/PSD[0];
-		RMAX=MAXPD*DPD/PSD[0];
+		RMIN=MINPD[0]*DPD/PSD[0];
+		RMAX=MAXPD[0]*DPD/PSD[0];
 		RMEAN=0.5*(RMIN+RMAX);
 		TMIN=Math.sqrt(EPS);
 		
 		// THE DO 50 LOOP DETERMINES THE IMAGE OF A CONTOUR
 		
 		if (WANTC) {
+			Contour = new Vector[NCONT];
 		    for (IC=1; IC <= NCONT; IC++) {
+		    	Contour[IC-1] = new Vector<Double>();
 		        PPNO=0;
 		        CLNO=0;
 		        SC1=RADII[IC-1];
-		        HT=SC1*(MINPD+MAXPD)/PSD[0];
+		        HT=SC1*(MINPD[0]+MAXPD[0])/PSD[0];
 		        //WRITE(CHNL,*) NEWD
 		        ATEND=false;
 		        PT=1;
@@ -14745,7 +14752,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		        WW[0][0] = SC1 * Math.cos(TH1);
 		        WW[0][1] = SC1 * Math.sin(TH1);
 		        CLNO=CLNO+1;
-		        DMCANP(1,ZZ,WW,INTER,false,IER);
+		        DMCANP(1,ZZ,WW,false,IER);
 		        if (IER[0] > 0) {
 		        	WRTAIL(8,0,IER[0],null);
 		        	return;
@@ -14753,6 +14760,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		        PPNO=PPNO+1;
 		        //WRITE(CHNL,20) ZZ(1)
 		//20      FORMAT(2E16.8)
+		        Contour[IC-1].add(ZZ[0][0]);
+		        Contour[IC-1].add(ZZ[0][1]);
 		        TINC=HT;
 		        TRY=0;
 		
@@ -14794,17 +14803,20 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		             } //if (TRY < MXTRY)
 		             PPNO=PPNO+1;
 		             //WRITE(CHNL,20) ZZ(2)
+		             Contour[IC-1].add(ZZ[1][0]);
+		             Contour[IC-1].add(ZZ[1][1]);
 		
 		            ATEND=(PT > NARCS);
 		            if (!ATEND) {
 		                ZZ[0][0]=ZZ[1][0];
 		                ZZ[0][1]=ZZ[1][1];
-		                WW[0[0]]=WW[1][0];
+		                WW[0][0]=WW[1][0];
 		                WW[0][1]=WW[1][1];
 		                TH1=TH2;
 		                TRY=0;
 		                continue;
 		            } // if (!ATEND)
+		            break;
 		        } // while (true)
 		
 		        System.out.println("CONTOUR " + IC + " DONE: " + PPNO + " PTS " + CLNO + " TRIES");
@@ -14814,72 +14826,95 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		
 		// THE DO 70 LOOP DETERMINES THE IMAGE OF A RAY
 		
-		      if (WANTR) {
-		          HS=(RAD2[0]-RAD1[0])*(MINPD[0]+MAXPD[0])/PSD;
-		          if (NARGS >= 1) {
-		        NRAYS=NARGS
-		      ELSE
-		        NRAYS=NARCS
-		      ENDIF
-		      DO 70 IR=1,NRAYS
-		        IF (NARGS.GE.1) THEN
-		          WEND=CMPLX(COS(THETA(IR)),SIN(THETA(IR)))
-		        ELSE
-		          WEND=CMPLX(COS(RSNCA(COARG-1+IR)),SIN(RSNCA(COARG-1+IR)))
-		        ENDIF
-		        CLNO=0
-		        PPNO=0
-		        WRITE(CHNL,*) NEWD
-		        SC1=RAD1
-		        WW(1)=WEND*SC1
-		        CLNO=CLNO+1
-		        CALL DMCANP(1,ZZ,WW,INTER,CENTR,IGEOM,RGEOM,ISNCA,RSNCA,ZSNCA,
-		     +              IQUCA,ZQUCA,.FALSE.,IER)
-		        IF (IER.GT.0) GOTO 999
-		        PPNO=PPNO+1
-		        WRITE(CHNL,20) ZZ(1)
-		        TINC=HS
-		        TRY=0
-		C
-		60      CONTINUE
-		        SC2=SC1+TINC
-		        IF (SC2 .GT. RAD2) THEN
-		          SC2=RAD2
-		          ATEND=.TRUE.
-		        ELSE
-		          ATEND=.FALSE.
-		        ENDIF
-		        WW(2)=WEND*SC2
-		        CLNO=CLNO+1
-		        TRY=TRY+1
-		        CALL DMCANP(1,ZZ(2),WW(2),INTER,CENTR,IGEOM,RGEOM,ISNCA,RSNCA,
-		     +              ZSNCA,IQUCA,ZQUCA,.FALSE.,IER)
-		        IF (IER.GT.0) GOTO 999
-		        IF (TRY.LT.MXTRY) THEN
-		          DIFF=ABS(ZZ(2)-ZZ(1))
-		          IF (DIFF.GT.RMAX .OR. (DIFF.LT.RMIN .AND. (.NOT.ATEND))) THEN
-		            TINC=RMEAN*TINC/DIFF
-		            GOTO 60
-		          ENDIF
-		        ENDIF
-		        PPNO=PPNO+1
-		        WRITE(CHNL,20) ZZ(2)
-		C
-		        IF (.NOT. ATEND) THEN
-		          ZZ(1)=ZZ(2)
-		          WW(1)=WW(2)
-		          SC1=SC2
-		          TRY=0
-		          GOTO 60
-		        ENDIF
-		C
-		        WRITE(*,2) 'RAY ',IR,' DONE:',PPNO,' PTS  ',CLNO,' TRIES'
-		70    CONTINUE
-		      } // if (WANTR)
-		C
-		999   CALL WRTAIL(8,0,IER)
-		      CLOSE(CHNL)
-		C*/
+		if (WANTR) {
+		    HS=(RAD2[0]-RAD1[0])*(MINPD[0]+MAXPD[0])/PSD[0];
+		    if (NARGS >= 1) {
+		        NRAYS=NARGS;
+		    }
+		    else {
+		        NRAYS=NARCS;
+		    }
+		    Ray = new Vector[NRAYS];
+		    for (IR=1; IR <= NRAYS; IR++) {
+		    	Ray[IR-1] = new Vector<Double>();
+		        if (NARGS >= 1) {
+		            WEND[0] = Math.cos(THETA[IR-1]);
+		            WEND[1] = Math.sin(THETA[IR-1]);
+		        }
+		        else {
+		        	WEND[0] = Math.cos(COARG[IR-1]);
+		        	WEND[1] = Math.sin(COARG[IR-1]);
+		        }
+		        CLNO=0;
+		        PPNO=0;
+		        //WRITE(CHNL,*) NEWD
+		        SC1=RAD1[0];
+		        WW[0][0]=WEND[0]*SC1;
+		        WW[0][1]=WEND[1]*SC1;
+		        CLNO=CLNO+1;
+		        DMCANP(1,ZZ,WW,false,IER);
+		        if (IER[0] > 0) {
+		        	WRTAIL(8,0,IER[0],null);
+		        	return;	
+		        }
+		        PPNO=PPNO+1;
+		        //WRITE(CHNL,20) ZZ(1)
+		        Ray[IR-1].add(ZZ[0][0]);
+		        Ray[IR-1].add(ZZ[0][1]);
+		        TINC=HS;
+		        TRY=0;
+		
+	            while (true) {
+		            SC2=SC1+TINC;
+		            if (SC2 > RAD2[0]) {
+		                SC2=RAD2[0];
+		                ATEND=true;
+		            }
+		            else {
+		                ATEND=false;
+		            }
+		           WW[1][0]=WEND[0]*SC2;
+		           WW[1][1]=WEND[1]*SC2;
+		           CLNO=CLNO+1;
+		           TRY=TRY+1;
+		           CANPT[0][0] = WW[1][0];
+		           CANPT[0][1] = WW[1][1];
+		           DMCANP(1,PHYPT,CANPT,false,IER);
+		           ZZ[1][0] = PHYPT[0][0];
+		           ZZ[1][1] = PHYPT[0][1];
+		           if (IER[0] > 0) {
+		        	   WRTAIL(8,0,IER[0],null);
+			           return;	   
+		           }
+		           if (TRY < MXTRY) {
+		               DIFF=zabs(ZZ[1][0]-ZZ[0][0],ZZ[1][1]-ZZ[0][1]);
+		               if (DIFF > RMAX || (DIFF < RMIN && (!ATEND))) {
+		                   TINC=RMEAN*TINC/DIFF;
+		                   continue;
+		               }
+		           } // if (TRY < MXTRY)
+		           PPNO=PPNO+1;
+		           //WRITE(CHNL,20) ZZ(2)
+		           Ray[IR-1].add(ZZ[1][0]);
+		           Ray[IR-1].add(ZZ[1][1]);
+		          if (!ATEND) {
+		              ZZ[0][0]=ZZ[1][0];
+		              ZZ[0][1]=ZZ[1][1];
+		              WW[0][0]=WW[1][0];
+		              WW[0][1]=WW[1][1];
+		              SC1=SC2;
+		              TRY=0;
+		              continue;
+		          } // if (!ATEND)
+		          break;
+	            } // while (true)
+		
+		        System.out.println("RAY "+ IR + " DONE: "+ PPNO +" PTS, " + CLNO + " TRIES");
+		        Preferences.debug("RAY "+ IR + " DONE: "+ PPNO +" PTS, " + CLNO + " TRIES\n", Preferences.DEBUG_ALGORITHM);
+		    } // for (IR=1; IR <= NRAYS; IR++)
+		} // if (WANTR)
+		
+		WRTAIL(8,0,IER[0],null);
     } // private void LEVCUR
 	
 	private double DIAPHY(int NARCS) {
@@ -14939,6 +14974,401 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	} // private double DIAPHY
 
 
+	private void TSTPLT(double MXMIS[], double MXDIF[],double PSD[], double MINPD[],
+        double MAXPD[],int IER[]) {
+        //INTEGER NARCS,CHNL,IER
+        //REAL MXMIS,MXDIF,PSD,MINPD,MAXPD
+        //CHARACTER*4 JBNM
+
+        // ......................................................................
+
+        // 1.     TSTPLT
+        //           TESTS THE PARAMETRIC FUNCTION ROUTINES PARFUN AND DPARFN
+        //           FOR CONSISTENCY AND OUTPUTS BOUNDARY POINTS FOR PLOTTING.
+           
+
+        // 2.     PURPOSE
+        //           THE ROUTINE FIRST CHECKS THAT THE PARAMETRIC FUNCTION
+        //           ROUTINE PARFUN IS CONSISTENT WITH RESPECT TO ITS DEFINITION
+        //           OF ANY CORNERS ON THE BOUNDARY.  THIS IS DONE BY CHECKING 
+        //           THAT THE COMPUTED POINT AT THE END OF EACH ARC MATCHES THE 
+        //           COMPUTED POINT AT THE START OF THE NEXT ONE.  IF ALL THE
+        //           RELATIVE MISFIT ERRORS AT CORNERS ARE LESS THAN
+        //           10*(UNIT ROUNDOFF) THEN ALL CORNERS ARE CONSIDERED TO FIT
+        //           SATISFACTORILY, OTHERWISE THE MAXIMUM RELATIVE MISFIT
+        //           ERROR IS REPORTED.
+
+        //           THE SECOND PURPOSE OF THE ROUTINE IS TO OUTPUT TO A DATA 
+        //           FILE THE COORDINATES OF A NUMBER OF POINTS ON THE BOUNDARY. 
+        //           THE BOUNDARY POINTS ARE SELECTED ADAPTIVELY TO MEET THE 
+        //           PLOTTING RESOLUTION SPECIFICATIONS DEFINED BY THE ARGUMENTS 
+        //           PSD,MINPD,MAXPD (SEE BELOW).  THE HOPE IS THAT THE USER MAY 
+        //           EASILY FEED THESE DATA POINTS TO HIS LOCAL GRAPH PLOTTING  
+        //           ROUTINES SO AS TO CONSTRUCT A PLOT OF THE BOUNDARY.  THIS   
+        //           WILL PROVIDE AN ESSENTIAL VISUAL CHECK ON THE VALIDITY OF 
+        //           THE ROUTINE PARFUN.  THE OUTPUT DATA FILE IS AUTOMATICALLY 
+        //           NAMED <JBNM>zz.
+ 
+        //           THE THIRD PURPOSE OF THE ROUTINE IS TO CHECK PARFUN AND 
+        //           DPARFN FOR MUTUAL CONSISTECY.  THIS IS DONE BY COMPUTING 
+        //           TWO POINT FINITE DIFFERENCE APPROXIMATIONS TO DPARFN.  
+        //           THESE DIFFERENCE APPROXIMATIONS ARE COMPUTED AT EACH BOUND- 
+        //           ARY POINT THAT IS OUTPUT FOR PLOTTING AND ALSO AT NEARBY 
+        //           POINTS WHICH LIE JUST O F F THE BOUNDARY.  THIS LATTER 
+        //           COMPARISON ALSO TESTS PARFUN AND DPARFN FOR CORRECTNESS IN 
+        //           ACCEPTING COMPLEX PARAMETER VALUES.   A RELATIVE ERROR IN 
+        //           THE FINITE DIFFERENCE APPROXIMATION GREATER THAN 0.1 IS 
+        //           REPORTED AS A POSSIBLE LOGICAL INCONSISTENCY BETWEEN PARFUN 
+        //           AND DPARFN.  (THE CRITICAL RELATIVE ERROR VALUE OF 0.1 CAN 
+        //           BE ALTERED BY ADJUSTING THE LOCAL PARAMETER DTOL).
+
+        // 3.     CALLING SEQUENCE
+        //           CALL TSTPLT(JBNM,MXMIS,MXDIF,NARCS,PSD,MINPD,MAXPD,CHNL,IER)
+
+        //        PARAMETERS
+        //         ON ENTRY
+        //            JBNM   - CHARACTER*4
+        //                     THE JOB NAME.  THIS IS USED TO CREATE THE OUTPUT 
+        //                     FILE WITH FILENAME
+
+        //                                <JBNM>zz ,
+
+        //                     WHERE <JBNM> DENOTES THE VALUE OF VARIABLE JBNM
+        //                     WITH ANY TRAILING SPACES DELETED.
+
+        //            NARCS  - INTEGER
+        //                     THE NUMBER OF ANALYTIC ARCS THAT MAKE UP THE 
+        //                     W H O L E BOUNDARY OF THE PHYSICAL DOMAIN.
+
+        //            PSD    - REAL
+        //                     THE PLOTTING SIZE FOR THE DOMAIN IN ANY APPROPR-
+        //                     IATE UNITS.  IF PSD .LE. 0.0 THEN IT IS ASSIGNED
+        //                     THE DEFAULT VALUE OF 160.0 (A REASONBLE WIDTH IN
+        //                     MM FOR PLOTTING ON A4 PAPER).
+
+        //            MINPD  - REAL
+        //                     THE MINIMUM SIGNIFICANT PLOTTING DISTANCE, IN THE
+        //                     SAME UNITS AS PSD.  IF PSD .LE. 0.0 THEN IT IS
+        //                     ASSIGNED THE DEFAULT VALUE OF 2.0.
+
+        //            MAXPD  - REAL
+        //                     THE MAXIMUM ALLOWED PLOTTING DISTANCE, IN THE
+        //                     SAME UNITS AS PSD.  IF PSD .LE. 0.0 THEN IT IS
+        //                     ASSIGNED THE DEFAULT VALUE OF 5.0.  THE LARGER
+        //                     MAXPD, THE COARSER WILL BE THE RESOLUTION OF THE
+        //                     BOUNDARY POINTS OUTPUT TO <JBNM>zz, BUT THE
+        //                     QUICKER THEY WILL BE COMPUTED. 
+
+        //            CHNL   - INTEGER
+        //                     DEFINES AN OUTPUT CHANNEL THAT MAY BE USED FOR
+        //                     WRITING THE FILE <JBNM>zz.
+        //         ON EXIT
+        //            MXMIS  - REAL
+        //                     THE MAXIMUM RELATIVE MISFIT ERROR OVER ALL
+        //                     CORNER POINTS
+
+        //            MXDIF  - REAL
+        //                     THE MAXIMUM RELATIVE ERROR IN FINITE DIFFERENCE
+        //                     APPROXIMATIONS TO DPARFN OVER ALL BOUNDARY 
+        //                     POINTS OUTPUT TO <JBNM>zz AND NEARBY POINTS OFF
+        //                     THE BOUNDARY.
+
+        //            PSD    - REAL
+        //                     IF PSD .LE. 0.0 ON ENTRY THEN IT WILL HAVE
+        //                     THE DEFAULT VALUE OF 160.0 ON  EXIT.
+
+        //            MINPD  - REAL
+        //                     IF PSD .LE. 0.0 ON ENTRY THEN MINPD WILL HAVE
+        //                     THE DEFAULT VALUE OF 2.0 ON EXIT
+
+        //            MAXPD  - REAL
+        //                     IF PSD .LE. 0.0 ON ENTRY THEN MAXPD WILL HAVE
+        //                     THE DEFAULT VALUE OF 5.0 ON EXIT
+
+        //            IER    - INTEGER
+        //                     IF IER > 0 THEN AN ABNORMAL EXIT HAS OCCURRED;
+        //                     A MESSAGE TO DESCRIBE THE ERROR IS AUTOMATICALLY
+        //                     WRITTEN ON THE STANDARD OUTPUT CHANNEL.
+        //                     IER=0 - NORMAL EXIT.
+        //                     IER>0 - ABNORMAL EXIT; THE ERROR MESSAGE SHOULD
+        //                             BE SELF EXPLANATORY.
+
+
+        // 4.     SUBROUTINES OR FUNCTIONS NEEDED
+        //              - THE CONFPACK LIBRARY.
+        //              - THE REAL FUNCTION R1MACH.
+        //              - THE USER SUPPLIED COMPLEX FUNCTIONS PARFUN AND DPARFN.
+
+
+        // 5.     FURTHER COMMENTS
+        //              - A SUMMARY LISTING IS AUTOMATICALLY WRITTEN ON THE 
+        //                STANDARD OUTPUT CHANNEL.
+        //              - THE OUTPUT FILE <JBNM>zz CONTAINS COORDINATE PAIRS
+
+        //                                 X Y
+
+        //                FOR POINTS ON THE PHYSICAL BOUNDARY, WITH ONE PAIR
+        //                PER LINE.
+
+        // ......................................................................
+        //     AUTHOR: DAVID HOUGH, ETH, ZUERICH
+        //     LAST UPDATE: 6 JULY 1990
+        // ......................................................................C
+        //     LOCAL VARIABLES
+
+        final int MNARC = 200;
+        final int NH = 4;
+        int IMX = 0;
+		int I,IA,L;
+		final double DTOL = 0.1;
+        double A1,DIFF,ERR,HH,MINC,R1MACH,RMAX,RMEAN,RMIN,T,TINC,
+            TOL1,TMX,TSD;
+        double TT[] = new double[2];
+        //REAL TT(2)
+        double C1[] = new double[2];
+        double C2[] = new double[2];
+        double CENTR[] = new double[2];
+        double ZZ0[] = new double[2];
+        double DZZ[] = new double[2];
+        double NDZZ[] = new double[2];
+        // COMPLEX C1,C2,CENTR,ZZ0,PARFUN,DZZ,DPARFN,ZDPARF,NDZZ
+        double ZZ[][] = new double[2][2];
+        //COMPLEX ZZ(2)
+        //CHARACTER OFL*6
+        boolean ATEND,FIRST,WARND;
+        boolean LNSEG[]  = new boolean[MNARC];
+        double PIN[] = new double[2];
+        double POUT[];
+        //EXTERNAL DPARFN,LINSEG,PARFUN,R1MACH,WRHEAD,WRTAIL,ZDPARF
+
+        // WRITE CONFPACK HEADING
+
+        WRHEAD(7,0,null);
+
+        if (NARCS > MNARC) {
+            IER[0]=59;
+            WRTAIL(7,0,IER[0],null);
+            return;
+        }
+
+        //1     FORMAT(A45)
+        //2     FORMAT(A45,I4)
+        //3     FORMAT(A45,E10.3)
+        //4     FORMAT(//,T17,A)
+
+        TOL1=10.0*EPS;
+
+        // CHECK THAT ALL ARCS MEET AT CORNER POINTS
+
+        IER[0]=0;
+        CENTR[0] = 0.0;
+        CENTR[1] = 0.0;
+        MXMIS[0]=0.0;
+        for (IA=1; IA <= NARCS; IA++) {
+            if (IA == 1) {
+                I=NARCS;
+            }
+            else {
+                I=IA-1;
+            }
+            PIN[0] = -1.0;
+            PIN[1] = 0.0;
+            C1=PARFUN(IA,PIN);
+            CENTR[0]=CENTR[0]+C1[0];
+            CENTR[1]=CENTR[1]+C1[1];
+            A1=zabs(C1[0],C1[1]);
+            PIN[0] = 1.0;
+            PIN[1] = 0.0;
+            C2=PARFUN(I,PIN);
+            ERR=zabs(C1[0]-C2[0],C1[1]-C2[1]);
+            if (A1 >= 1.0) {
+                ERR=ERR/A1;
+            }
+            if (ERR > MXMIS[0]) {
+                IMX=IA;
+                MXMIS[0]=ERR;
+            }
+        } // for (IA=1; IA <= NARCS; IA++)
+        if (MXMIS[0] >= TOL1) {
+            System.out.println("MAXIMUM CORNER MISFIT: " + MXMIS[0]);
+            Preferences.debug("MAXIMUM CORNER MISFIT: " + MXMIS[0] + "\n", Preferences.DEBUG_ALGORITHM);
+            System.out.println("OCCURS AT CORNER: " + IMX);
+            Preferences.debug("OCCURS AT CORNER: " + IMX + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        else {
+            System.out.println("ALL ARCS FIT AT CORNERS:");
+            Preferences.debug("ALL ARCS FIT AT CORNERS:\n",Preferences.DEBUG_ALGORITHM);
+        }
+
+        // ESTIMATE THE DIAMETER (TSD) OF THE PHYSICAL DOMAIN
+
+        CENTR[0]=CENTR[0]/NARCS;
+        CENTR[1]=CENTR[1]/NARCS;
+        TSD=0.0;
+        HH=2.0/(double)(NH);
+        for (IA=1; IA <= NARCS; IA++) {
+            T=-1.0;
+            for (I=1; I <= NH; I++) {
+                T=T+HH;
+                PIN[0] = T;
+                PIN[1] = 0.0;
+                POUT = PARFUN(IA,PIN);
+                C1[0]=POUT[0]-CENTR[0];
+                C1[1]=POUT[1]-CENTR[1];
+                A1=zabs(C1[0],C1[1]);
+                TSD=Math.max(TSD,A1);
+            } // for (I=1; I <= NH; I++)
+        } // for (IA=1; IA <= NARCS; IA++) 
+        TSD=2.0*TSD;
+
+        // DETERMINE WHICH ARCS (IF ANY) ARE LINE SEGMENTS
+
+        LINSEG(LNSEG,NARCS);
+
+        // OPEN FILE TO RECEIVE BOUNDARY DATA POINTS FOR PLOTTING
+
+        //L=INDEX(JBNM,' ')-1
+        //IF (L.EQ.-1) L=4
+        //OFL=JBNM(1:L)//'zz'
+        //OPEN(CHNL,FILE=OFL)
+
+        //SET DEFAULT PLOTTING DISTANCES, IF NECESSARY
+
+        if (PSD[0] <= 0.0) {
+            PSD[0]=160.0;
+            MINPD[0]=2.0;
+            MAXPD[0]=5.0;
+        }
+        RMIN=MINPD[0]*TSD/PSD[0];
+        RMAX=MAXPD[0]*TSD/PSD[0];
+        RMEAN=0.5*(RMIN+RMAX);
+        MINC=Math.sqrt(EPS);
+
+        // START EVALUATING BOUNDARY POINTS AND DERIVATIVES FOR PLOTTING AND
+        // TESTING
+
+        MXDIF[0]=0.0;
+        /*for (IA=1; IA <= NARCS; IA++) {
+            TT[0]=-1.0;
+            PIN[0] = TT[0];
+            PIN[1] = 0.0;
+            ZZ[0]=PARFUN(IA,PIN);
+            //WRITE(CHNL,'(2E16.7)') ZZ(1)
+            if (IA==1) {
+            	ZZ0[0]=ZZ[0][0];
+            	ZZ0[1]=ZZ[0][1];
+            }
+            FIRST=true;
+            WARND=false;
+            while (true) {
+
+                // TEST THE COMPATIBILTY OF PARFUN AND DPARFN BY ESTIMATING DPARFN
+                // NUMERICALLY AT BOTH REAL AND COMPLEX PARAMETER VALUES.
+
+                for (I=1; I <= 2; I++) {
+                    if (I == 1) {
+                    	C1[0] = TT[0];
+                    	C1[1] = TT[1];
+                    }
+                    else {
+                    	C1[0] = TT[0];
+                    	C1[1] = MINC;
+                    }
+                    DZZ=DPARFN(IA,C1);
+                    NDZZ=ZDPARF(IA,C1);
+                    A1=zabs(DZZ[0],DZZ[1]);
+
+                    if (A1 == 0.0) {
+                        IER[0]=60;
+                        System.out.println();
+                        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+                        System.out.println("              ***DPARFN=(0.,0.)***");
+                        Preferences.debug("              ***DPARFN=(0.,0.)***\n", Preferences.DEBUG_ALGORITHM);
+                        System.out.println("                             ARC: " + IA); 
+                        Preferences.debug("                             ARC: " + IA + "\n", Preferences.DEBUG_ALGORITHM);
+                        System.out.println("STANDARDISED PARAMETER VALUE: " + TT[0][0] + " , " + TT[0][1]);
+                        Preferences.debug("STANDARDISED PARAMETER VALUE: " + TT[0][0] + " , " + TT[0][1] + "\n", Preferences.DEBUG_ALGORITHM);
+                        WRTAIL(7,0,IER[0],null);
+                        return;
+                    } // if (A1 == 0.0)
+
+                    if (A1 <= TOL1 && !WARND) {
+                        System.out.println("*** W A R N I N G  ***");
+                        Preferences.debug("*** W A R N I N G  ***\n", Preferences.DEBUG_ALGORITHM);
+                        System.out.println("PATHOLOGICALLY SMALL DERIVATIVE ON ARC " + IA);
+                        Preferences.debug("PATHOLOGICALLY SMALL DERIVATIVE ON ARC " + IA + "\n", Preferences.DEBUG_ALGORITHM);
+                        WARND=true;
+                    } // if (A1 <= TOL1 && !WARND)
+C
+        IF (FIRST) THEN
+          TINC=RMEAN/A1
+          TINC=MAX(TINC,MINC)
+          FIRST=.FALSE.
+        ENDIF
+C
+        ERR=ABS(1E+0-NDZZ/DZZ)
+        IF (ERR.GT.MXDIF) THEN
+          MXDIF=ERR
+          IMX=IA
+          TMX=TT(1)
+        ENDIF
+                } // for (I=1; I <= 2; I++)
+C
+      IF (.NOT.LNSEG(IA)) THEN
+C
+C****     DETERMINE THE NEXT BOUNDARY POINT TO BE PLOTTED
+C
+40        CONTINUE
+        TT(2)=TT(1)+TINC
+        IF (TT(2) .GE. 1E+0) THEN
+          TT(2)=1E+0
+          ATEND=.TRUE.
+        ELSE
+          ATEND=.FALSE.
+        ENDIF
+C
+        ZZ(2)=PARFUN(IA,CMPLX(TT(2)))
+        DIFF=ABS(ZZ(2)-ZZ(1))
+        IF (DIFF.EQ.0E+0 .AND. .NOT.ATEND) THEN
+          TINC=MAX(MINC,2*TINC)
+          GOTO 40
+        ENDIF
+C
+        IF (DIFF.GT.RMAX .OR. (DIFF.LT.RMIN .AND. .NOT.ATEND)) THEN
+          TINC=RMEAN*TINC/DIFF
+          TINC=MAX(TINC,MINC)
+          GOTO 40
+        ENDIF
+C
+        WRITE(CHNL,'(2E16.7)') ZZ(2)
+        IF (.NOT. ATEND) THEN
+          ZZ(1)=ZZ(2)
+          TT(1)=TT(2)
+          continue;
+        ENDIF
+      ENDIF
+      break;
+            } // while(true)
+C
+        } // for (IA=1; IA <= NARCS; IA++)
+    IF (LNSEG(NARCS)) WRITE(CHNL,'(2E16.7)') ZZ0
+    CLOSE(CHNL)   
+C
+    IF (MXDIF .GT. DTOL) THEN
+      WRITE(*,*)
+      WRITE(*,2) 'POSSIBLE PARFUN/DPARFN INCONSISTECY ON ARC:',IMX
+      WRITE(*,3) 'OCCURS AT STANDARDISED PARAMETER VALUE:',TMX
+      WRITE(*,3) 'RELATIVE FINITE DIFF ERROR:',MXDIF 
+    ELSE
+      WRITE(*,*)
+      WRITE(*,1) 'PARFUN AND DPARFN ARE CONSISTENT:'
+    ENDIF
+C
+999   CALL WRTAIL(7,0,IER)
+C */
+    } // private void TSTPLT
+	
+	
 
 	/**
 	 * zabs computes the absolute value or magnitude of a double precision
