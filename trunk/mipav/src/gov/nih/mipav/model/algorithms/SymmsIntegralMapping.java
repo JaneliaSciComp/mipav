@@ -92,7 +92,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	// Holds text for real for types 3 and 4 and imaginary parts for type 3
 	// Start imaginary text with ui. All text following ui is imaginary.
 	String DEFN[] = new String[2 * MNARC];
-	private boolean traditionalInput = false;
+	private boolean traditionalInput = true;
 	Scanner input = new Scanner(System.in);
 	private double zzset[][] = new double[400][2];
 	private int IBNDS[] = new int[5];
@@ -292,8 +292,10 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	private double MD;
 	private double HL;
 	//From LEVCUR:
-	Vector<Double> Contour[];
-	Vector<Double>Ray[];
+	Vector<Double> Contour[]; // x y pairs
+	Vector<Double>Ray[]; // x y pairs
+	// From TSTPLT
+	Vector<Double>Boundary; // x y pairs
 
 	public SymmsIntegralMapping() {
 
@@ -429,7 +431,9 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		int IER[] = new int[1];
 		int ORDRG[] = new int[1];
 		int ORDSG[] = new int[1];
-		double ALPHA, PI, X, Y;
+		double X = 0.0;
+		double Y = 0.0;
+		double ALPHA, PI;
 		// COMPLEX CENSY,RTUNI,U2
 		double RTUNI[] = new double[2];
 		double U2[] = new double[2];
@@ -447,6 +451,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		final String TABC = "     +";
 		final int CHNL = 20;
 		// final int CHIN = 21;
+		String line;
+		String tokens[];
 
 		File file;
 		RandomAccessFile raFile = null;
@@ -485,7 +491,9 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		} // if (traditionalInput)
 
 		// **** WRITE THE SOURCE CODE FOR PARFUN
+		fileDir = "C:\\conformal mapping\\CONFPACK\\";
 		file = new File(fileDir + FORTFL);
+		
 		try {
 			raFile = new RandomAccessFile(file, "rw");
 		} catch (IOException e) {
@@ -537,17 +545,26 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					}
 				} // while (!validInput)
 
-				System.out.println("What are the coordinates of the center of symmetry (X Y)?");
-				CENSY[0] = input.nextDouble();
-				CENSY[1] = input.nextDouble();
 				validInput = false;
 				while (!validInput) {
-					System.out.println("How many arcs are there on the fundamental boundary section?");
+				    System.out.println("What are the coordinates of the center of symmetry (X,Y)?");
+				    try {
+				        line = input.next();
+				        tokens = line.split(",");
+				        CENSY[0] = Double.valueOf(tokens[0]);
+				        CENSY[1] = Double.valueOf(tokens[0]);
+				        validInput = true;
+				    }
+				    catch (Exception e) {};
+				}
+				validInput = false;
+				while (!validInput) {
+					System.out.print("How many arcs are there on the fundamental boundary section?");
 					NARCS = input.nextInt();
 					if (NARCS <= MNARC - 1) {
 						validInput = true;
 					} else {
-						System.out.println("NARCS must be <= " + (MNARC - 1));
+						System.out.print("NARCS must be <= " + (MNARC - 1));
 					}
 				} // while (!validInput)
 			} // if (SYMTY)
@@ -581,18 +598,45 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				} // while (!validInput)
 				if (TYPE == 1) {
 					ARCTY[IA - 1] = TYPE;
-					System.out.println("What are the coordinates of the initial point on the line (X Y)?");
-					STAPT[IA - 1][0] = input.nextDouble();
-					STAPT[IA - 1][1] = input.nextDouble();
+					validInput = false;
+					while (!validInput) {
+						try {
+							System.out.println("What are the coordinates of the initial point on the line (X,Y)?");
+					        line = input.next();
+					        tokens = line.split(",");
+					        STAPT[IA - 1][0] = Double.valueOf(tokens[0]);
+					        STAPT[IA - 1][1] = Double.valueOf(tokens[1]);
+					        validInput = true;
+						}
+						catch (Exception e) {};
+					}
 				} // if (TYPE == 1)
 				else if (TYPE == 2) {
 					ARCTY[IA - 1] = TYPE;
-					System.out.println("What are the coordinates of the initial point on the circle (X Y)?");
-					STAPT[IA - 1][0] = input.nextDouble();
-					STAPT[IA - 1][1] = input.nextDouble();
-					System.out.println("What are the coordinates of the center of the circle (X Y)?");
-					X = input.nextDouble();
-					Y = input.nextDouble();
+					validInput = false;
+					while (!validInput) {
+						try {
+							System.out.println("What are the coordinates of the initial point on the circle (X,Y)?");
+					        line = input.next();
+					        tokens = line.split(",");
+					        STAPT[IA - 1][0] = Double.valueOf(tokens[0]);
+					        STAPT[IA - 1][1] = Double.valueOf(tokens[1]);
+					        validInput = true;
+						}
+						catch (Exception e) {};
+					}
+					validInput = false;
+					while (!validInput) {
+						try {
+							System.out.println("What are the coordinates of the center of the circle (X,Y)?");
+					        line = input.next();
+					        tokens = line.split(",");
+					        X = Double.valueOf(tokens[0]);
+					        Y = Double.valueOf(tokens[1]);
+					        validInput = true;
+						}
+						catch (Exception e) {};
+					}
 					System.out.println("What is the signed angle subtended at center (in units of PI)?");
 					ALPHA = input.nextDouble();
 					GMCO = GMCO + 1;
@@ -605,16 +649,34 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				} // else if (TYPE == 2)
 				else if ((TYPE == 3) || (TYPE == 4)) {
 					ARCTY[IA - 1] = TYPE;
-					System.out.println("What are the coordinates of the initial point on the curve (X Y)?");
-					STAPT[IA - 1][0] = input.nextDouble();
-					STAPT[IA - 1][1] = input.nextDouble();
-					if (TYPE == 3) {
-						System.out.println("Enter the initial and final parameter values (X Y)");
-					} else {
-						System.out.println("Enter the initial and final polar values (in angles of PI) (X Y)");
+					validInput = false;
+					while (!validInput) {
+						try {
+							System.out.println("What are the coordinates of the initial point on the curve (X,Y)?");
+					        line = input.next();
+					        tokens = line.split(",");
+					        STAPT[IA - 1][0] = Double.valueOf(tokens[0]);
+					        STAPT[IA - 1][1] = Double.valueOf(tokens[1]);
+					        validInput = true;
+						}
+						catch (Exception e) {};
 					}
-					X = input.nextDouble();
-					Y = input.nextDouble();
+					validInput = false;
+					while (!validInput) {
+						try {
+							if (TYPE == 3) {
+								System.out.println("Enter the initial and final parameter values (X,Y)");
+							} else {
+								System.out.println("Enter the initial and final polar values (in angles of PI) (X,Y)");
+							}
+					        line = input.next();
+					        tokens = line.split(",");
+					        X = Double.valueOf(tokens[0]);
+					        Y = Double.valueOf(tokens[1]);
+					        validInput = true;
+						}
+						catch (Exception e) {};
+					}
 					GMCO = GMCO + 1;
 					PGM[IA - 1] = GMCO;
 					if (TYPE == 4) {
@@ -628,15 +690,15 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					}
 					for (J = 1; J <= 2; J++) {
 						if (J == 1 && TYPE == 3) {
-							System.out.println("ENTER JAVA EXPRESSION ENDING IN // FOR PARFUN");
+							System.out.println("ENTER JAVA EXPRESSION WITH NO SPACES ENDING IN // FOR PARFUN");
 							System.out.println("PUT REAL PART ui IMAGINARY PART");
 						} else if (J == 2 && TYPE == 3) {
-							System.out.println("ENTER JAVA EXPRESSION ENDING IN // FOR DPARFN");
+							System.out.println("ENTER JAVA EXPRESSION WITH NO SPACES ENDING IN // FOR DPARFN");
 							System.out.println("PUT REAL PART ui IMAGINARY PART");
 						} else if (J == 1 && TYPE == 4) {
-							System.out.println("ENTER JAVA EXPRESSION ENDING IN // FOR RADIUS");
+							System.out.println("ENTER JAVA EXPRESSION WITH NO SPACES ENDING IN // FOR RADIUS");
 						} else {
-							System.out.println("ENTER JAVA EXPRESSION ENDING IN // FOR RADIUS DERIVATIVE");
+							System.out.println("ENTER JAVA EXPRESSION WITH NO SPACES ENDING IN // FOR RADIUS DERIVATIVE");
 						}
 
 						TXCO = TXCO + 1;
@@ -668,9 +730,18 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			} // for (IA = 1; IA <= NARCS; IA++)
 
 			if (SYMTY) {
-				System.out.println("ENTER THE COORDINATES OF FINAL POINT ON THIS LAST ARC (X Y)");
-				STAPT[NARCS][0] = input.nextDouble();
-				STAPT[NARCS][1] = input.nextDouble();
+				validInput = false;
+				while (!validInput) {
+					try {
+						System.out.println("ENTER THE COORDINATES OF FINAL POINT ON THIS LAST ARC (X,Y)");
+				        line = input.next();
+				        tokens = line.split(",");
+				        STAPT[NARCS][0] = Double.valueOf(tokens[0]);
+				        STAPT[NARCS][1] = Double.valueOf(tokens[1]);
+				        validInput = true;
+					}
+					catch (Exception e) {};
+				}
 			} else {
 				STAPT[NARCS][0] = STAPT[0][0];
 				STAPT[NARCS][1] = STAPT[0][1];
@@ -1284,13 +1355,24 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				for (K = IA; K <= STAPT.length; K++) {
 					STAPT2[K - IA] = STAPT[K - 1];
 				}
-				RGM2 = new double[RGM.length - I + 1];
-				for (K = I; K <= RGM.length; K++) {
-					RGM2[K - I] = RGM[K - 1];
+				if (ARCTY[IA-1] != 1) {
+					RGM2 = new double[RGM.length - I + 1];
+					for (K = I; K <= RGM.length; K++) {
+						RGM2[K - I] = RGM[K - 1];
+					}
 				}
-				DEFN2 = new String[DEFN.length - J + 1];
-				for (K = J; K <= DEFN.length; K++) {
-					DEFN2[K - J] = DEFN[K - 1];
+				else {
+					RGM2 = null;
+				}
+				if ((ARCTY[IA-1] == 3) || (ARCTY[IA-1] == 4)) {
+					DEFN2 = new String[DEFN.length - J + 1];
+					for (K = J; K <= DEFN.length; K++) {
+						DEFN2[K - J] = DEFN[K - 1];
+					}
+				}
+				else {
+					// DEFN2 goes to TXT in PTFUN1 which is not used for TYPES 1 and 2
+					DEFN2 = null;
 				}
 				if (NARCS == 1) {
 					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile);
@@ -1617,17 +1699,32 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					STAPT2[K - IA][0] = STAPT[K - 1][0];
 					STAPT2[K - IA][1] = STAPT[K - 1][1];
 				}
-				RGM2 = new double[RGM.length - I + 1];
-				for (K = I; K <= RGM.length; K++) {
-					RGM2[K - I] = RGM[K - 1];
+				if ((ARCTY[IA-1] == 2) || ((!NUMDER[IA-1]) && ((ARCTY[IA-1] == 3) || (ARCTY[IA-1] == 4)))) {
+					RGM2 = new double[RGM.length - I + 1];
+					for (K = I; K <= RGM.length; K++) {
+						RGM2[K - I] = RGM[K - 1];
+					}
 				}
-				DEFN2 = new String[DEFN.length - J1 + 1];
-				for (K = J1; K <= DEFN.length; K++) {
-					DEFN2[K - J1] = DEFN[K - 1];
+				else {
+					RGM2 = null;
 				}
-				DEFN3 = new String[DEFN.length - J2 + 1];
-				for (K = J2; K <= DEFN.length; K++) {
-					DEFN3[K - J2] = DEFN[K - 1];
+				if ((!NUMDER[IA-1]) && (ARCTY[IA-1] == 4)) {
+					DEFN2 = new String[DEFN.length - J1 + 1];
+					for (K = J1; K <= DEFN.length; K++) {
+						DEFN2[K - J1] = DEFN[K - 1];
+					}
+				}
+				else {
+					DEFN2 = null;
+				}
+				if ((!NUMDER[IA-1]) && ((ARCTY[IA-1] == 3) || (ARCTY[IA-1] == 4))) {
+					DEFN3 = new String[DEFN.length - J2 + 1];
+					for (K = J2; K <= DEFN.length; K++) {
+						DEFN3[K - J2] = DEFN[K - 1];
+					}
+				}
+				else {
+					DEFN3 = null;
 				}
 				if (NARCS == 1) {
 					PTFUN2(ARCTY[IA - 1], STAPT2, RGM2, N1, DEFN2, N2, DEFN3, CHNL, CHTT, VAR, " 1", NUMDER[IA - 1],
@@ -1742,7 +1839,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					raFile.writeBytes(TXT1[I - 1]);
 				}
 				raFile.writeBytes(";\n");
-				raFile.writeBytes("      ZDEr = ");
+				raFile.writeBytes("      ZDER = ");
 				for (I = 1; I <= NTX2; I++) {
 					raFile.writeBytes(TXT2[I - 1]);
 				}
@@ -14445,7 +14542,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
     	IER[0]=0;
     } // private void BMCAP1
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "unchecked" })
 	private void LEVCUR(int NCONT, double RADII[], int NARGS, double THETA[], double RAD1[],
         double RAD2[], double PSD[], double MINPD[], double MAXPD[], String NEWD[], int IER[]) {
 		
@@ -15119,10 +15216,12 @@ public class SymmsIntegralMapping extends AlgorithmBase {
         final int MNARC = 200;
         final int NH = 4;
         int IMX = 0;
-		int I,IA,L;
+        // int L;
+		int I,IA;
 		final double DTOL = 0.1;
-        double A1,DIFF,ERR,HH,MINC,R1MACH,RMAX,RMEAN,RMIN,T,TINC,
-            TOL1,TMX,TSD;
+		double TINC = 0.0;
+		double TMX = 0.0;
+        double A1,DIFF,ERR,HH,MINC,RMAX,RMEAN,RMIN,T,TOL1,TSD;
         double TT[] = new double[2];
         //REAL TT(2)
         double C1[] = new double[2];
@@ -15139,6 +15238,9 @@ public class SymmsIntegralMapping extends AlgorithmBase {
         boolean LNSEG[]  = new boolean[MNARC];
         double PIN[] = new double[2];
         double POUT[];
+        double cr[] = new double[1];
+        double ci[] = new double[1];
+        Boundary = new Vector<Double>();
         //EXTERNAL DPARFN,LINSEG,PARFUN,R1MACH,WRHEAD,WRTAIL,ZDPARF
 
         // WRITE CONFPACK HEADING
@@ -15248,12 +15350,14 @@ public class SymmsIntegralMapping extends AlgorithmBase {
         // TESTING
 
         MXDIF[0]=0.0;
-        /*for (IA=1; IA <= NARCS; IA++) {
+        for (IA=1; IA <= NARCS; IA++) {
             TT[0]=-1.0;
             PIN[0] = TT[0];
             PIN[1] = 0.0;
             ZZ[0]=PARFUN(IA,PIN);
             //WRITE(CHNL,'(2E16.7)') ZZ(1)
+            Boundary.add(ZZ[0][0]);
+            Boundary.add(ZZ[0][1]);
             if (IA==1) {
             	ZZ0[0]=ZZ[0][0];
             	ZZ0[1]=ZZ[0][1];
@@ -15286,8 +15390,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
                         Preferences.debug("              ***DPARFN=(0.,0.)***\n", Preferences.DEBUG_ALGORITHM);
                         System.out.println("                             ARC: " + IA); 
                         Preferences.debug("                             ARC: " + IA + "\n", Preferences.DEBUG_ALGORITHM);
-                        System.out.println("STANDARDISED PARAMETER VALUE: " + TT[0][0] + " , " + TT[0][1]);
-                        Preferences.debug("STANDARDISED PARAMETER VALUE: " + TT[0][0] + " , " + TT[0][1] + "\n", Preferences.DEBUG_ALGORITHM);
+                        System.out.println("STANDARDISED PARAMETER VALUE: " + TT[0]);
+                        Preferences.debug("STANDARDISED PARAMETER VALUE: " + TT[0] + "\n", Preferences.DEBUG_ALGORITHM);
                         WRTAIL(7,0,IER[0],null);
                         return;
                     } // if (A1 == 0.0)
@@ -15299,73 +15403,93 @@ public class SymmsIntegralMapping extends AlgorithmBase {
                         Preferences.debug("PATHOLOGICALLY SMALL DERIVATIVE ON ARC " + IA + "\n", Preferences.DEBUG_ALGORITHM);
                         WARND=true;
                     } // if (A1 <= TOL1 && !WARND)
-C
-        IF (FIRST) THEN
-          TINC=RMEAN/A1
-          TINC=MAX(TINC,MINC)
-          FIRST=.FALSE.
-        ENDIF
-C
-        ERR=ABS(1E+0-NDZZ/DZZ)
-        IF (ERR.GT.MXDIF) THEN
-          MXDIF=ERR
-          IMX=IA
-          TMX=TT(1)
-        ENDIF
+
+                    if (FIRST) {
+                        TINC=RMEAN/A1;
+                        TINC=Math.max(TINC,MINC);
+                        FIRST=false;
+                    } // if (FIRST)
+
+                    zdiv(NDZZ[0],NDZZ[1],DZZ[0],DZZ[1],cr,ci);
+                    ERR = zabs(1.0 - cr[0], -ci[0]);
+                    if (ERR > MXDIF[0]) {
+                        MXDIF[0]=ERR;
+                        IMX=IA;
+                        TMX=TT[0];
+                    } // if (ERR > MXDIF[0])
                 } // for (I=1; I <= 2; I++)
-C
-      IF (.NOT.LNSEG(IA)) THEN
-C
-C****     DETERMINE THE NEXT BOUNDARY POINT TO BE PLOTTED
-C
-40        CONTINUE
-        TT(2)=TT(1)+TINC
-        IF (TT(2) .GE. 1E+0) THEN
-          TT(2)=1E+0
-          ATEND=.TRUE.
-        ELSE
-          ATEND=.FALSE.
-        ENDIF
-C
-        ZZ(2)=PARFUN(IA,CMPLX(TT(2)))
-        DIFF=ABS(ZZ(2)-ZZ(1))
-        IF (DIFF.EQ.0E+0 .AND. .NOT.ATEND) THEN
-          TINC=MAX(MINC,2*TINC)
-          GOTO 40
-        ENDIF
-C
-        IF (DIFF.GT.RMAX .OR. (DIFF.LT.RMIN .AND. .NOT.ATEND)) THEN
-          TINC=RMEAN*TINC/DIFF
-          TINC=MAX(TINC,MINC)
-          GOTO 40
-        ENDIF
-C
-        WRITE(CHNL,'(2E16.7)') ZZ(2)
-        IF (.NOT. ATEND) THEN
-          ZZ(1)=ZZ(2)
-          TT(1)=TT(2)
-          continue;
-        ENDIF
-      ENDIF
-      break;
+
+                if (!LNSEG[IA-1]) {
+
+                	// DETERMINE THE NEXT BOUNDARY POINT TO BE PLOTTED
+
+                	while (true) {
+                        TT[1]=TT[0]+TINC;
+                        if (TT[1] >= 1.0) {
+                            TT[1]=1.0;
+                            ATEND=true;
+                        }
+                        else {
+                            ATEND=false;
+                        }
+
+                        PIN[0] = TT[1];
+                        PIN[1] = 0.0;
+                        ZZ[1]=PARFUN(IA,PIN);
+                       DIFF=zabs(ZZ[1][0]-ZZ[0][0],ZZ[1][1]-ZZ[0][1]);
+                       if (DIFF == 0.0 && !ATEND) {
+                           TINC=Math.max(MINC,2*TINC);
+                           continue;
+                       } // if (DIFF == 0.0 && !ATEND) 
+
+                       if (DIFF > RMAX || (DIFF < RMIN && !ATEND)) {
+                           TINC=RMEAN*TINC/DIFF;
+                           TINC=Math.max(TINC,MINC);
+                           continue;
+                       } // if (DIFF > RMAX || (DIFF < RMIN && !ATEND))
+                       break;
+                	} // while (true)
+
+                    // WRITE(CHNL,'(2E16.7)') ZZ(2)
+                	Boundary.add(ZZ[1][0]);
+                	Boundary.add(ZZ[1][1]);
+                    if (!ATEND) {
+                    	ZZ[0][0] = ZZ[1][0];
+                    	ZZ[0][1] = ZZ[1][1];
+                    	TT[0]=TT[1];
+                        continue;
+                    } // if (!ATEND)
+                } // if (!LNSEG[IA-1])
+                break;
             } // while(true)
-C
+
         } // for (IA=1; IA <= NARCS; IA++)
-    IF (LNSEG(NARCS)) WRITE(CHNL,'(2E16.7)') ZZ0
-    CLOSE(CHNL)   
-C
-    IF (MXDIF .GT. DTOL) THEN
-      WRITE(*,*)
-      WRITE(*,2) 'POSSIBLE PARFUN/DPARFN INCONSISTECY ON ARC:',IMX
-      WRITE(*,3) 'OCCURS AT STANDARDISED PARAMETER VALUE:',TMX
-      WRITE(*,3) 'RELATIVE FINITE DIFF ERROR:',MXDIF 
-    ELSE
-      WRITE(*,*)
-      WRITE(*,1) 'PARFUN AND DPARFN ARE CONSISTENT:'
-    ENDIF
-C
-999   CALL WRTAIL(7,0,IER)
-C */
+        if (LNSEG[NARCS-1]) {
+        	//WRITE(CHNL,'(2E16.7)') ZZ0
+        	Boundary.add(ZZ0[0]);
+        	Boundary.add(ZZ0[1]);
+        }
+    
+
+        if (MXDIF[0] > DTOL) {
+            System.out.println();
+            Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+            System.out.println("POSSIBLE PARFUN/DPARFN INCONSISTECY ON ARC: " + IMX);
+            Preferences.debug("POSSIBLE PARFUN/DPARFN INCONSISTECY ON ARC: " + IMX + "\n",Preferences.DEBUG_ALGORITHM);
+            System.out.println("OCCURS AT STANDARDISED PARAMETER VALUE: " + TMX);
+            Preferences.debug("OCCURS AT STANDARDISED PARAMETER VALUE: " + TMX + "\n", Preferences.DEBUG_ALGORITHM);
+            System.out.println("RELATIVE FINITE DIFF ERROR: " + MXDIF[0]);
+            Preferences.debug("RELATIVE FINITE DIFF ERROR: " + MXDIF[0] + "\n", Preferences.DEBUG_ALGORITHM);
+        } // if (MXDIF[0] > DTOL)
+        else {
+            System.out.println();
+            Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+            System.out.println("PARFUN AND DPARFN ARE CONSISTENT:");
+            Preferences.debug("PARFUN AND DPARFN ARE CONSISTENT:\n", Preferences.DEBUG_ALGORITHM);
+        }
+
+        WRTAIL(7,0,IER[0],null);
+ 
     } // private void TSTPLT
 	
 	
