@@ -10,6 +10,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.BitSet;
 
 import javax.swing.*;
 
@@ -543,6 +544,184 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("segmentation_type", segmentation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("centroids", centroids));
+    }
+    
+    public static float[] getDefaultCentroids(ModelImage image, int nClasses, boolean regionFlag, BitSet regionMask, boolean cropBackground, float threshold) {
+        int i;
+        float minimum, maximum;
+        int xDim = image.getExtents()[0];
+        int yDim = image.getExtents()[1];
+        int zDim;
+
+        if (image.getNDims() > 2) {
+            zDim = image.getExtents()[2];
+        } else {
+            zDim = 1;
+        }
+
+        int sliceSize = xDim * yDim;
+        int volSize = xDim * yDim * zDim;
+        float[] buffer = null;
+        int yStepIn, yStepOut, zStepIn, zStepOut;
+        int x, y, z, index, newXDim, newYDim, newZDim, newSliceSize;
+
+        try {
+            buffer = new float[volSize];
+            image.exportData(0, volSize, buffer);
+
+            image.calcMinMax();
+            minimum = (float) image.getMin();
+            maximum = (float) image.getMax();
+
+            if (!regionFlag) {
+                maximum = -Float.MAX_VALUE;
+                minimum = Float.MAX_VALUE;
+
+                for (i = 0; i < volSize; i++) {
+                    if (regionMask.get(i)) {
+
+                        if (buffer[i] > maximum) {
+                            maximum = buffer[i];
+                        }
+
+                        if (buffer[i] < minimum) {
+                            minimum = buffer[i];
+                        }
+                    }
+                }
+            } // if (!wholeImage)
+
+            int xLow = 0;
+            int yLow = 0;
+            int zLow = 0;
+            int xHigh = xDim - 1;
+            int yHigh = yDim - 1;
+            int zHigh = zDim - 1;
+
+            if (cropBackground) {
+
+                // Find the smallest bounding box for the data
+                xLow = xDim - 1;
+                yLow = yDim - 1;
+                zLow = zDim - 1;
+                xHigh = 0;
+                yHigh = 0;
+                zHigh = 0;
+
+                for (z = 0; z < zDim; z++) {
+                    zStepIn = z * sliceSize;
+
+                    for (y = 0; y < yDim; y++) {
+                        yStepIn = (y * xDim) + zStepIn;
+
+                        for (x = 0; x < xDim; x++) {
+                            index = x + yStepIn;
+
+                            if (buffer[index] >= threshold) {
+
+                                if (x < xLow) {
+                                    xLow = x;
+                                }
+
+                                if (x > xHigh) {
+                                    xHigh = x;
+                                }
+
+                                if (y < yLow) {
+                                    yLow = y;
+                                }
+
+                                if (y > yHigh) {
+                                    yHigh = y;
+                                }
+
+                                if (z < zLow) {
+                                    zLow = z;
+                                }
+
+                                if (z > zHigh) {
+                                    zHigh = z;
+                                }
+                            } // if (buffer[index] > threshold)
+                        } // for (x = 0; x < xDim; x++)
+                    } // for (y = 0; y < yDim; y++)
+                } // for (z = 0; z < zDim; z++)
+
+                if ((xLow > 0) || (xHigh < (xDim - 1)) || (yLow > 0) || (yHigh < (yDim - 1)) || (zLow > 0) ||
+                        (zHigh < (zDim - 1))) {
+
+                    // A smaller bounding box has been found for the data
+                    // Recopy area to smaller data array to save space
+                    newXDim = xHigh - xLow + 1;
+                    newYDim = yHigh - yLow + 1;
+                    newZDim = zHigh - zLow + 1;
+
+                    float[] buffer2 = new float[newXDim * newYDim * newZDim];
+                    newSliceSize = newXDim * newYDim;
+
+                    for (z = zLow; z <= zHigh; z++) {
+                        zStepOut = z * sliceSize;
+                        zStepIn = ((z - zLow) * newSliceSize) - xLow - (yLow * newXDim);
+
+                        for (y = yLow; y <= yHigh; y++) {
+                            yStepIn = (y * newXDim) + zStepIn;
+                            yStepOut = (y * xDim) + zStepOut;
+
+                            for (x = xLow; x <= xHigh; x++) {
+                                buffer2[x + yStepIn] = buffer[x + yStepOut];
+                            } // for (x = xLow; x <= xHigh; x++)
+                        } // for (y = yLow; y <= yHigh; y++)
+                    } // for (z = zLow; z <= zHigh; z++)
+
+                    xDim = newXDim;
+                    yDim = newYDim;
+                    zDim = newZDim;
+                    sliceSize = xDim * yDim;
+                    volSize = sliceSize * zDim;
+                    buffer = new float[volSize];
+
+                    for (i = 0; i < sliceSize; i++) {
+                        buffer[i] = buffer2[i];
+                    }
+
+                    buffer2 = null;
+
+                    // Find the new minimum
+                    minimum = maximum;
+
+                    for (i = 0; i < volSize; i++) {
+
+                        if (buffer[i] < minimum) {
+                            minimum = buffer[i];
+                        } // if (buffer[i] < minimum)
+                    } // for (i = 0; i < sliceSize; i++)
+                } // if ((xLow > 0) || (xHigh < (xDim-1)) || (yLow > 0) || (yHigh < (yDim - 1)))
+            } // if (cropBackground)
+        } catch (java.io.IOException ioe) {
+            buffer = null;
+            System.gc();
+            MipavUtil.displayError("Error trying to get centroids.");
+
+            return null;
+        } catch (OutOfMemoryError error) {
+            buffer = null;
+            System.gc();
+            MipavUtil.displayError("Algorithm FuzzyCMeans reports:\n" + error.toString());
+
+            return null;
+        }
+
+        buffer = null;
+        System.gc();
+
+        // Autodetect initial centroids
+        float[] centroids = new float[nClasses];
+        
+        for (i = 0; i < nClasses; i++) {
+            centroids[i] = minimum + ((maximum - minimum) * (i + 1) / (nClasses + 1));
+        }
+        
+        return centroids;
     }
 
     /**
