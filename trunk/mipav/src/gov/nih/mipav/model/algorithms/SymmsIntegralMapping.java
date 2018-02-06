@@ -433,13 +433,14 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		int ORDSG[] = new int[1];
 		double X = 0.0;
 		double Y = 0.0;
-		double ALPHA, PI;
+		double ALPHA = 0.0;
+		double PI;
 		// COMPLEX CENSY,RTUNI,U2
 		double RTUNI[] = new double[2];
 		double U2[] = new double[2];
 		// CHARACTER TXT*72,TABC*6,FORTFL*72,CH*2,SIG(10)*2,WID(10)*2,REDD*6,
 		// +FMT1*8,FMT2*9
-		String TXT;
+		String TXT = null;
 		String CH;
 		String SIG[] = new String[] { "7", "8", "9", "10", "11", "12", "13", "14", "15", "16" };
 		String WID[] = new String[] { "15", "16", "17", "18", "19", "20", "21", "22", "23", "24" };
@@ -589,12 +590,15 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				validInput = false;
 				while (!validInput) {
 					System.out.println("ENTER THE TYPE OF ARC(1-4) for ARC NUMBER " + IA);
-					TYPE = input.nextInt();
-					if ((TYPE >= 1) && (TYPE <= 4)) {
-						validInput = true;
-					} else {
-						System.out.println("TYPE MUST BE BETWEEN 1 and 4");
+					try {
+					    TYPE = input.nextInt();
+						if ((TYPE >= 1) && (TYPE <= 4)) {
+							validInput = true;
+						} else {
+							System.out.println("TYPE MUST BE BETWEEN 1 and 4");
+						}
 					}
+					catch (Exception e) {};
 				} // while (!validInput)
 				if (TYPE == 1) {
 					ARCTY[IA - 1] = TYPE;
@@ -637,8 +641,15 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						}
 						catch (Exception e) {};
 					}
-					System.out.println("What is the signed angle subtended at center (in units of PI)?");
-					ALPHA = input.nextDouble();
+					validInput = false;
+					while (!validInput) {
+						try {
+						     System.out.println("What is the signed angle subtended at center (in units of PI)?");
+						     ALPHA = input.nextDouble();
+						     validInput = true;
+						}
+						catch (Exception e) {};
+					}
 					GMCO = GMCO + 1;
 					PGM[IA - 1] = GMCO;
 					RGM[GMCO - 1] = X;
@@ -695,10 +706,12 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						} else if (J == 2 && TYPE == 3) {
 							System.out.println("ENTER JAVA EXPRESSION WITH NO SPACES ENDING IN // FOR DPARFN");
 							System.out.println("PUT REAL PART ui IMAGINARY PART");
+							System.out.println("ALTERNATIVELY JUST ENTER // FOR NUMERICAL DERIVATIVE");
 						} else if (J == 1 && TYPE == 4) {
 							System.out.println("ENTER JAVA EXPRESSION WITH NO SPACES ENDING IN // FOR RADIUS");
 						} else {
 							System.out.println("ENTER JAVA EXPRESSION WITH NO SPACES ENDING IN // FOR RADIUS DERIVATIVE");
+							System.out.println("ALTERNATIVELY JUST ENTER // FOR NUMERICAL DERIVATIVE");
 						}
 						// Java does not allow operator overloading, so you can't do a cos(t)*sin(t) for complex t.
 						System.out.println("Expand cos(complex T[]) as Math.cos(T[0])*Math.cosh(T[1]) - i*Math.sin(T[0])*Math.sinh(T[1])");
@@ -708,20 +721,23 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						PTX[IA - 1 + (J - 1) * MNARC] = TXCO;
 						I = 1;
 
-						TXT = input.next();
 						L = -1;
 						while (L == -1) {
+							TXT = input.next();
 							L = TXT.indexOf("//");
 							if (L == -1) {
-								DEFN[TXCO - 1] = TABC + TXT;
+								DEFN[TXCO - 1] = TXT;
 								I = I + 1;
 								TXCO = TXCO + 1;
 							} // if (L == -1)
 						} // while (L == -1)
 						NTX[IA - 1 + (J - 1) * MNARC] = I;
-						if (L == 0) {
-							DEFN[TXCO - 1] = TABC;
+						if ((L == 0) && (I == 1)) {
+							// If just // on first line, use numerical derivative for DPARFN or RADIUS DERIVATIVE in PTFUN2
+							DEFN[TXCO - 1] = "";
 							NUMDER[IA - 1] = true;
+						} else if (L == 0) {
+							DEFN[TXCO-1] = "";
 						} else {
 							DEFN[TXCO - 1] = TXT.substring(0, L);
 						}
@@ -1480,7 +1496,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes(PAD + "T[0] = " + MD + "+" + CHTT + "[0] * (" + HA + ");\n");
 				raFile.writeBytes(PAD + "T[1] = " + CHTT + "[1] * (" + HA + ");\n");
 
-				if (TXT[0].indexOf("ui") == 0) {
+				if (TXT[0].toLowerCase().indexOf("ui") == 0) {
 				    raFile.writeBytes(PAD + VAR + "ANS[0] = 0.0;\n");
 				}
 				else {
@@ -1488,45 +1504,65 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					// multiple lines
 					raFile.writeBytes(PAD + VAR + "ANS[0] = ");
 					for (I = 1; I <= NTX; I++) {
-						int index = TXT[I - 1].indexOf("ui");
+						int index = TXT[I - 1].toLowerCase().indexOf("ui");
+						if (index == 0) {
+							raFile.writeBytes(";\n");
+							break;
+						}
 						String realString = null;
 						if (index == -1) {
-							realString = TXT[I - 1];
-						} else {
-							realString = TXT[I - 1].substring(0, index);
+							realString = TXT[I-1];
 						}
-						if ((index == -1) || (index > 0)) {
-							raFile.writeBytes(realString);
+						else {
+							realString = TXT[I - 1].substring(0, index);	
 						}
-						if (I == NTX) {
+						if ((I > 1) && (realString != null) && (realString.length() != 0)) {
+							raFile.writeBytes("\n" + PAD);
+						}
+						if ((realString != null) && (realString.length() != 0)) {
+						    raFile.writeBytes(realString);
+						}
+						if ((I == NTX) || (index > 0)) {
 							raFile.writeBytes(";\n");
+							break;
 						}
 					}
 				}
 				boolean uifound = false;
+				String imagString = null;
+				boolean firstImagStringWritten = false;
 				for (I = 1; I <= NTX; I++) {
-				    if (TXT[I-1].indexOf("ui") >= 0) {
-				    	uifound = true;
+					if (!uifound) {
+				        int index = TXT[I-1].toLowerCase().indexOf("ui");
+					    if (index >= 0) {
+					    	uifound = true;
+					    	raFile.writeBytes(PAD + VAR + "ANS[1] = ");
+					    	if (index + 2 < TXT[I-1].length()) {
+					    		imagString = TXT[I - 1].substring(index + 2);
+							    raFile.writeBytes(imagString);
+							    firstImagStringWritten = true;
+							    if (I == NTX) {
+							    	raFile.writeBytes(";\n");
+							    }
+					    	} // if (index + 2 < TXT[I-1].length())
+					    } // if (index >= 0)
+ 				    } // if (!uifound) {
+				    else {
+				    	imagString = TXT[I-1];
+				    	if (!firstImagStringWritten) {
+				    		raFile.writeBytes(imagString);
+				    	}
+				    	else if ((imagString != null) && (imagString.length() != 0)) {
+				    	    raFile.writeBytes(PAD + imagString);
+				    	}
+				    	firstImagStringWritten = true;
+					    if (I == NTX) {
+					    	raFile.writeBytes(";\n");
+					    }
 				    }
-				}
+				} // for (I = 1; I <= NTX; I++)
 				if (!uifound) {
 				    raFile.writeBytes(PAD + VAR + "ANS[1] = 0.0;\n");
-				}
-				else {
-				// NTX = 1 if statements are entered without newlines for
-				// multiple lines
-					raFile.writeBytes(PAD + VAR + "ANS[1] = ");
-					for (I = 1; I <= NTX; I++) {
-						int index = TXT[I - 1].indexOf("ui");
-						String imagString = null;
-						if ((index >= 0) && (index + 2 < TXT[I - 1].length())) {
-							imagString = TXT[I - 1].substring(index + 2);
-							raFile.writeBytes(imagString);
-						}
-						if (I == NTX) {
-							raFile.writeBytes(";\n");
-						}
-					}
 				}
 				raFile.writeBytes("//\n");
 			} // else if (TYPE == 3)
@@ -1536,7 +1572,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes("//\n");
 				raFile.writeBytes(PAD + "T[0] = " + MD + "+" + CHTT + "[0] * (" + HA + ");\n");
 				raFile.writeBytes(PAD + "T[1] = " + CHTT + "[1] * (" + HA + ");\n");
-				if (TXT[0].indexOf("ui") == 0) {
+				if (TXT[0].toLowerCase().indexOf("ui") == 0) {
 				    raFile.writeBytes(PAD + "ZRAD[0] = 0.0;\n");
 				}
 				else {
@@ -1544,45 +1580,65 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					// multiple lines
 					raFile.writeBytes(PAD + "ZRAD[0] = ");
 					for (I = 1; I <= NTX; I++) {
-						int index = TXT[I - 1].indexOf("ui");
+						int index = TXT[I - 1].toLowerCase().indexOf("ui");
+						if (index == 0) {
+							raFile.writeBytes(";\n");
+							break;
+						}
 						String realString = null;
 						if (index == -1) {
-							realString = TXT[I - 1];
-						} else {
-							realString = TXT[I - 1].substring(0, index);
+							realString = TXT[I-1];
 						}
-						if ((index == -1) || (index > 0)) {
-							raFile.writeBytes(realString);
+						else {
+							realString = TXT[I - 1].substring(0, index);	
 						}
-						if (I == NTX) {
+						if ((I > 1) && (realString != null) && (realString.length() != 0)) {
+							raFile.writeBytes("\n" + PAD);
+						}
+						if ((realString != null) && (realString.length() != 0)) {
+						    raFile.writeBytes(realString);
+						}
+						if ((I == NTX) || (index > 0)) {
 							raFile.writeBytes(";\n");
+							break;
 						}
 					}
 				}
 				boolean uifound = false;
+				String imagString = null;
+				boolean firstImagStringWritten = false;
 				for (I = 1; I <= NTX; I++) {
-				    if (TXT[I-1].indexOf("ui") >= 0) {
-				    	uifound = true;
+					if (!uifound) {
+				        int index = TXT[I-1].toLowerCase().indexOf("ui");
+					    if (index >= 0) {
+					    	uifound = true;
+					    	raFile.writeBytes(PAD + "ZRAD[1] = ");
+					    	if (index + 2 < TXT[I-1].length()) {
+					    		imagString = TXT[I - 1].substring(index + 2);
+							    raFile.writeBytes(imagString);
+							    firstImagStringWritten = true;
+							    if (I == NTX) {
+							    	raFile.writeBytes(";\n");
+							    }
+					    	} // if (index + 2 < TXT[I-1].length())
+					    } // if (index >= 0)
+ 				    } // if (!uifound) {
+				    else {
+				    	imagString = TXT[I-1];
+				    	if (!firstImagStringWritten) {
+				    		raFile.writeBytes(imagString);
+				    	}
+				    	else if ((imagString != null) && (imagString.length() != 0)) {
+				    	    raFile.writeBytes(PAD + imagString);
+				    	}
+				    	firstImagStringWritten = true;
+					    if (I == NTX) {
+					    	raFile.writeBytes(";\n");
+					    }
 				    }
-				}
+				} // for (I = 1; I <= NTX; I++)
 				if (!uifound) {
 				    raFile.writeBytes(PAD + "ZRAD[1] = 0.0;\n");
-				}
-				else {
-					// NTX = 1 if statements are entered without newlines for
-					// multiple lines
-					raFile.writeBytes(PAD + "ZRAD[1] = ");
-					for (I = 1; I <= NTX; I++) {
-						int index = TXT[I - 1].indexOf("ui");
-						String imagString = null;
-						if ((index >= 0) && (index + 2 < TXT[I - 1].length())) {
-							imagString = TXT[I - 1].substring(index + 2);
-							raFile.writeBytes(imagString);
-						}
-						if (I == NTX) {
-							raFile.writeBytes(";\n");
-						}
-					}
 				}
 				raFile.writeBytes(PAD + VAR + "ANS[0] = ZRAD[0]*Math.exp(-T[1])*Math.cos(T[0]) - ZRAD[1]*Math.exp(-T[1])*Math.sin(T[0]);\n");
 				raFile.writeBytes(PAD + VAR + "ANS[1] = ZRAD[0]*Math.exp(-T[1])*Math.sin(T[0]) + ZRAD[1]*Math.exp(-T[1])*Math.cos(T[0]);\n");
@@ -1886,8 +1942,9 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes("//\n");
 			} // else if (TYPE == 2)
 			else if (NUMDER) {
+				// Use numerical derivative if no analytical expression is supplied for TYPE == 3 or TYPE == 4.
 				raFile.writeBytes("//\n");
-				raFile.writeBytes("      " + VAR + "ANS = ZDPARF(" + CHIA + "," + CHTT + ");\n");
+				raFile.writeBytes(PAD + VAR + "ANS = ZDPARF(" + CHIA + "," + CHTT + ");\n");
 				raFile.writeBytes("//\n");
 			} // else if (NUMDER)
 			else if (TYPE == 3) {
@@ -1896,7 +1953,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes("//\n");
 				raFile.writeBytes(PAD + "T[0] = " + MD + "+" + CHTT + "[0]*(" + HA + ");\n");
 				raFile.writeBytes(PAD + "T[1] = " + CHTT + "[1]*(" + HA + ");\n");
-				if (TXT2[0].indexOf("ui") == 0) {
+				if (TXT2[0].toLowerCase().indexOf("ui") == 0) {
 				    raFile.writeBytes(PAD + VAR + "ANS[0] = 0.0;\n");
 				}
 				else {
@@ -1904,45 +1961,65 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					// multiple lines
 					raFile.writeBytes(PAD + VAR + "ANS[0] = " + HA + "*(");
 					for (I = 1; I <= NTX2; I++) {
-						int index = TXT2[I - 1].indexOf("ui");
+						int index = TXT2[I - 1].toLowerCase().indexOf("ui");
+						if (index == 0) {
+							raFile.writeBytes(");\n");
+							break;
+						}
 						String realString = null;
 						if (index == -1) {
-							realString = TXT2[I - 1];
-						} else {
-							realString = TXT2[I - 1].substring(0, index);
+							realString = TXT2[I-1];
 						}
-						if ((index == -1) || (index > 0)) {
-							raFile.writeBytes(realString);
+						else {
+							realString = TXT2[I - 1].substring(0, index);	
 						}
-						if (I == NTX2) {
-							raFile.writeBytes(");\n");
+						if ((I > 1) && (realString != null) && (realString.length() != 0)) {
+							raFile.writeBytes("\n" + PAD);
+						}
+						if ((realString != null) && (realString.length() != 0)) {
+						    raFile.writeBytes(realString);
+						}
+						if ((I == NTX2) || (index > 0)) {
+							raFile.writeBytes(";\n");
+							break;
 						}
 					}
 				}
 				boolean uifound = false;
+				String imagString = null;
+				boolean firstImagStringWritten = false;
 				for (I = 1; I <= NTX2; I++) {
-				    if (TXT2[I-1].indexOf("ui") >= 0) {
-				    	uifound = true;
+					if (!uifound) {
+				        int index = TXT2[I-1].toLowerCase().indexOf("ui");
+					    if (index >= 0) {
+					    	uifound = true;
+					    	raFile.writeBytes(PAD + VAR + "ANS[1] = " + HA + "*(");
+					    	if (index + 2 < TXT2[I-1].length()) {
+					    		imagString = TXT2[I - 1].substring(index + 2);
+							    raFile.writeBytes(imagString);
+							    firstImagStringWritten = true;
+							    if (I == NTX2) {
+							    	raFile.writeBytes(");\n");
+							    }
+					    	} // if (index + 2 < TXT2[I-1].length())
+					    } // if (index >= 0)
+ 				    } // if (!uifound) {
+				    else {
+				    	imagString = TXT2[I-1];
+				    	if (!firstImagStringWritten) {
+				    		raFile.writeBytes(imagString);
+				    	}
+				    	else if ((imagString != null) && (imagString.length() != 0)) {
+				    	    raFile.writeBytes(PAD + imagString);
+				    	}
+				    	firstImagStringWritten = true;
+					    if (I == NTX2) {
+					    	raFile.writeBytes(");\n");
+					    }
 				    }
-				}
+				} // for (I = 1; I <= NTX2; I++)
 				if (!uifound) {
 				    raFile.writeBytes(PAD + VAR + "ANS[1] = 0.0;\n");
-				}
-				else {
-				// NTX2 = 1 if statements are entered without newlines for
-				// multiple lines
-					raFile.writeBytes(PAD + VAR + "ANS[1] = " + HA + "*(");
-					for (I = 1; I <= NTX2; I++) {
-						int index = TXT2[I - 1].indexOf("ui");
-						String imagString = null;
-						if ((index >= 0) && (index + 2 < TXT2[I - 1].length())) {
-							imagString = TXT2[I - 1].substring(index + 2);
-							raFile.writeBytes(imagString);
-						}
-						if (I == NTX2) {
-							raFile.writeBytes(");\n");
-						}
-					}
 				}
 				raFile.writeBytes("//\n");
 			} // else if (TYPE == 3)
@@ -1952,55 +2029,76 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes("//\n");
 				raFile.writeBytes(PAD + "T[0] = " + MD + "+" + CHTT + "[0]*(" + HA + ");\n");
 				raFile.writeBytes(PAD + "T[1] = " + CHTT + "[1]*(" + HA + ");\n");
-				if (TXT1[0].indexOf("ui") == 0) {
+				if (TXT1[0].toLowerCase().indexOf("ui") == 0) {
 				    raFile.writeBytes(PAD + "ZRAD[0] = 0.0;\n");
 				}
 				else {
-					// NTX1 = 1 if statements are entered without newlines for
+					// NTX = 1 if statements are entered without newlines for
 					// multiple lines
 					raFile.writeBytes(PAD + "ZRAD[0] = ");
 					for (I = 1; I <= NTX1; I++) {
-						int index = TXT1[I - 1].indexOf("ui");
+						int index = TXT1[I - 1].toLowerCase().indexOf("ui");
+						if (index == 0) {
+							raFile.writeBytes(";\n");
+							break;
+						}
 						String realString = null;
 						if (index == -1) {
-							realString = TXT1[I - 1];
-						} else {
-							realString = TXT1[I - 1].substring(0, index);
+							realString = TXT1[I-1];
 						}
-						if ((index == -1) || (index > 0)) {
-							raFile.writeBytes(realString);
+						else {
+							realString = TXT1[I - 1].substring(0, index);	
 						}
-						if (I == NTX1) {
+						if ((I > 1) && (realString != null) && (realString.length() != 0)) {
+							raFile.writeBytes("\n" + PAD);
+						}
+						if ((realString != null) && (realString.length() != 0)) {
+						    raFile.writeBytes(realString);
+						}
+						if ((I == NTX1) || (index > 0)) {
 							raFile.writeBytes(";\n");
+							break;
 						}
 					}
 				}
 				boolean uifound = false;
+				String imagString = null;
+				boolean firstImagStringWritten = false;
 				for (I = 1; I <= NTX1; I++) {
-				    if (TXT1[I-1].indexOf("ui") >= 0) {
-				    	uifound = true;
+					if (!uifound) {
+				        int index = TXT1[I-1].toLowerCase().indexOf("ui");
+					    if (index >= 0) {
+					    	uifound = true;
+					    	raFile.writeBytes(PAD + "ZRAD[1] = ");
+					    	if (index + 2 < TXT1[I-1].length()) {
+					    		imagString = TXT1[I - 1].substring(index + 2);
+							    raFile.writeBytes(imagString);
+							    firstImagStringWritten = true;
+							    if (I == NTX1) {
+							    	raFile.writeBytes(";\n");
+							    }
+					    	} // if (index + 2 < TXT1[I-1].length())
+					    } // if (index >= 0)
+ 				    } // if (!uifound) {
+				    else {
+				    	imagString = TXT1[I-1];
+				    	if (!firstImagStringWritten) {
+				    		raFile.writeBytes(imagString);
+				    	}
+				    	else if ((imagString != null) && (imagString.length() != 0)) {
+				    	    raFile.writeBytes(PAD + imagString);
+				    	}
+				    	firstImagStringWritten = true;
+					    if (I == NTX1) {
+					    	raFile.writeBytes(";\n");
+					    }
 				    }
-				}
+				} // for (I = 1; I <= NTX1; I++)
 				if (!uifound) {
 				    raFile.writeBytes(PAD + "ZRAD[1] = 0.0;\n");
 				}
-				else {
-					// NTX1 = 1 if statements are entered without newlines for
-					// multiple lines
-					raFile.writeBytes(PAD + "ZRAD[1] = ");
-					for (I = 1; I <= NTX1; I++) {
-						int index = TXT1[I - 1].indexOf("ui");
-						String imagString = null;
-						if ((index >= 0) && (index + 2 < TXT1[I - 1].length())) {
-							imagString = TXT1[I - 1].substring(index + 2);
-							raFile.writeBytes(imagString);
-						}
-						if (I == NTX1) {
-							raFile.writeBytes(";\n");
-						}
-					}
-				}
-				if (TXT2[0].indexOf("ui") == 0) {
+				
+				if (TXT2[0].toLowerCase().indexOf("ui") == 0) {
 				    raFile.writeBytes(PAD + "ZDER[0] = 0.0;\n");
 				}
 				else {
@@ -2008,46 +2106,68 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					// multiple lines
 					raFile.writeBytes(PAD + "ZDER[0] = ");
 					for (I = 1; I <= NTX2; I++) {
-						int index = TXT2[I - 1].indexOf("ui");
+						int index = TXT2[I - 1].toLowerCase().indexOf("ui");
+						if (index == 0) {
+							raFile.writeBytes(";\n");
+							break;
+						}
 						String realString = null;
 						if (index == -1) {
-							realString = TXT2[I - 1];
-						} else {
-							realString = TXT2[I - 1].substring(0, index);
+							realString = TXT2[I-1];
 						}
-						if ((index == -1) || (index > 0)) {
-							raFile.writeBytes(realString);
+						else {
+							realString = TXT2[I - 1].substring(0, index);	
 						}
-						if (I == NTX2) {
+						if ((I > 1) && (realString != null) && (realString.length() != 0)) {
+							raFile.writeBytes("\n" + PAD);
+						}
+						if ((realString != null) && (realString.length() != 0)) {
+						    raFile.writeBytes(realString);
+						}
+						if ((I == NTX2) || (index > 0)) {
 							raFile.writeBytes(";\n");
+							break;
 						}
 					}
 				}
 				uifound = false;
+				imagString = null;
+				firstImagStringWritten = false;
 				for (I = 1; I <= NTX2; I++) {
-				    if (TXT2[I-1].indexOf("ui") >= 0) {
-				    	uifound = true;
+					if (!uifound) {
+				        int index = TXT2[I-1].toLowerCase().indexOf("ui");
+					    if (index >= 0) {
+					    	uifound = true;
+					    	raFile.writeBytes(PAD + "ZDER[1] = ");
+					    	if (index + 2 < TXT2[I-1].length()) {
+					    		imagString = TXT2[I - 1].substring(index + 2);
+							    raFile.writeBytes(imagString);
+							    firstImagStringWritten = true;
+							    if (I == NTX2) {
+							    	raFile.writeBytes(";\n");
+							    }
+					    	} // if (index + 2 < TXT2[I-1].length())
+					    } // if (index >= 0)
+ 				    } // if (!uifound) {
+				    else {
+				    	imagString = TXT2[I-1];
+				    	if (!firstImagStringWritten) {
+				    		raFile.writeBytes(imagString);
+				    	}
+				    	else if ((imagString != null) && (imagString.length() != 0)) {
+				    	    raFile.writeBytes(PAD + imagString);
+				    	}
+				    	firstImagStringWritten = true;
+					    if (I == NTX2) {
+					    	raFile.writeBytes(";\n");
+					    }
 				    }
-				}
+				} // for (I = 1; I <= NTX2; I++)
 				if (!uifound) {
 				    raFile.writeBytes(PAD + "ZDER[1] = 0.0;\n");
 				}
-				else {
-					// NTX2 = 1 if statements are entered without newlines for
-					// multiple lines
-					raFile.writeBytes(PAD + "ZDER[1] = ");
-					for (I = 1; I <= NTX2; I++) {
-						int index = TXT2[I - 1].indexOf("ui");
-						String imagString = null;
-						if ((index >= 0) && (index + 2 < TXT2[I - 1].length())) {
-							imagString = TXT2[I - 1].substring(index + 2);
-							raFile.writeBytes(imagString);
-						}
-						if (I == NTX2) {
-							raFile.writeBytes(";\n");
-						}
-					}
-				}
+				
+				
 				raFile.writeBytes(PAD + VAR + "ANS[0] = ((ZDER[0] - ZRAD[1])* Math.cos(T[0]) - (ZRAD[0] + ZDER[1])* Math.sin(T[0]))*Math.exp(-T[1])*(" + HA + ");\n");
 				raFile.writeBytes(PAD + VAR + "ANS[1] = ((ZDER[0] - ZRAD[1])* Math.sin(T[0]) + (ZRAD[0] + ZDER[1])* Math.cos(T[0]))*Math.exp(-T[1])*(" + HA + ");\n");
 				raFile.writeBytes("//\n");
