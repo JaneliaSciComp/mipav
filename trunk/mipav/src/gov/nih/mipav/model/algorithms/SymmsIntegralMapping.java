@@ -445,6 +445,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		String SIG[] = new String[] { "7", "8", "9", "10", "11", "12", "13", "14", "15", "16" };
 		String WID[] = new String[] { "15", "16", "17", "18", "19", "20", "21", "22", "23", "24" };
 		String REDD;
+		boolean writeReturn;
 		// String FMT1;
 		// String FMT2;
 
@@ -700,6 +701,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						RGM[GMCO - 1] = Y;
 					}
 					for (J = 1; J <= 2; J++) {
+						// With spaces the output is correct but put on multiple lines.
 						if (J == 1 && TYPE == 3) {
 							System.out.println("ENTER JAVA EXPRESSION WITH NO SPACES ENDING IN // FOR PARFUN");
 							System.out.println("PUT REAL PART ui IMAGINARY PART");
@@ -795,7 +797,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				WRTAIL(6, 0, IER[0], null);
 				return;
 			}
-			System.out.println("\nN O T E : THE ORDER OF THE SYMMETRY GROUP IS " + ORDSG);
+			System.out.println("\nN O T E : THE ORDER OF THE SYMMETRY GROUP IS " + ORDSG[0]);
 			if (REFLN) {
 				System.out.println("          ISYGP = " + (-ORDSG[0]));
 			} else {
@@ -807,10 +809,12 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			} else {
 				CH = "TT";
 			}
-			WRFUN1(NARCS, STAPT, ARCTY, PGM, RGM, PTX, NTX, DEFN, CHNL, "IB", CH, "ZETA  ", REDD, raFile);
+			writeReturn = false;
+			WRFUN1(NARCS, STAPT, ARCTY, PGM, RGM, PTX, NTX, DEFN, CHNL, "IB", CH, "ZETA", REDD, raFile, writeReturn);
 			WRSYM2(NARCS, ORDRG[0], CENSY, REFLN, CHNL, raFile);
 		} else {
-			WRFUN1(NARCS, STAPT, ARCTY, PGM, RGM, PTX, NTX, DEFN, CHNL, "IA", "TT", "PARFUN", REDD, raFile);
+			writeReturn = true;
+			WRFUN1(NARCS, STAPT, ARCTY, PGM, RGM, PTX, NTX, DEFN, CHNL, "IA", "TT", "PARFUNANS", REDD, raFile, writeReturn);
 		}
 
 		try {
@@ -832,13 +836,15 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			} else {
 				CH = "TT";
 			}
-			WRFUN2(NARCS, MNARC, STAPT, ARCTY, PGM, RGM, PTX, NTX, DEFN, CHNL, "IB", CH, "ZETA  ", NUMDER, REDD,
-					raFile);
+			writeReturn = false;
+			WRFUN2(NARCS, MNARC, STAPT, ARCTY, PGM, RGM, PTX, NTX, DEFN, CHNL, "IB", CH, "ZETA", NUMDER, REDD,
+					raFile, writeReturn);
 			WRSYM3(NARCS, ORDRG[0], REFLN, CHNL, raFile);
 		} // if (SYMTY)
 		else {
-			WRFUN2(NARCS, MNARC, STAPT, ARCTY, PGM, RGM, PTX, NTX, DEFN, CHNL, "IA", "TT", "DPARFN", NUMDER, REDD,
-					raFile);
+			writeReturn = true;
+			WRFUN2(NARCS, MNARC, STAPT, ARCTY, PGM, RGM, PTX, NTX, DEFN, CHNL, "IA", "TT", "DPARFNANS", NUMDER, REDD,
+					raFile, writeReturn);
 		}
 
 		try {
@@ -1255,21 +1261,21 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			// FMT="(A7,"+REDD+",A1,"+REDD+",A2)";
 
 			if (ORDRG >= 2) {
-				raFile.writeBytes("double WW[] = new double[" + (ORDRG - 1) + "];\n");
+				raFile.writeBytes("      double WW[][] = new double[" + (ORDRG - 1) + "][2];\n");
 				ZT[0] = 1.0;
 				ZT[1] = 0.0;
 				for (I = 0; I < ORDRG - 2; I++) {
 					zmlt(ZT[0], ZT[1], RTUNI[0], RTUNI[1], cr, ci);
 					ZT[0] = cr[0];
 					ZT[1] = ci[0];
-					raFile.writeBytes("WW[" + I + "][0] = " + ZT[0] + ";\n");
-					raFile.writeBytes("WW[" + I + "][1] = " + ZT[1] + ";\n");
+					raFile.writeBytes("      WW[" + I + "][0] = " + ZT[0] + ";\n");
+					raFile.writeBytes("      WW[" + I + "][1] = " + ZT[1] + ";\n");
 				}
 				zmlt(ZT[0], ZT[1], RTUNI[0], RTUNI[1], cr, ci);
 				ZT[0] = cr[0];
 				ZT[1] = ci[0];
-				raFile.writeBytes("WW[" + I + "][0] = " + ZT[0] + ";\n");
-				raFile.writeBytes("WW[" + I + "][1] = " + ZT[1] + ";)\n");
+				raFile.writeBytes("      WW[" + I + "][0] = " + ZT[0] + ";\n");
+				raFile.writeBytes("      WW[" + I + "][1] = " + ZT[1] + ";\n");
 				raFile.writeBytes("//\n");
 			} // if (ORDRG >= 2)
 
@@ -1283,59 +1289,59 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				if (ORDRG > 1) {
 					if (NARCS > 1) {
 						I = 2 * NARCS;
-						raFile.writeBytes("IB = IA%" + I + ";\n");
-						raFile.writeBytes("if (IB == 0) IB = " + I + ";\n");
+						raFile.writeBytes("      IB = IA%" + I + ";\n");
+						raFile.writeBytes("      if (IB == 0) IB = " + I + ";\n");
 						I = I + 1;
-						raFile.writeBytes("if (IB > " + NARCS + ") {\n");
-						raFile.writeBytes("    IB = " + I + " - IB;\n");
-						raFile.writeBytes("    TS[0] = -TT[0];\n");
-						raFile.writeBytes("    TS[1] = TT[1]);\n");
-						raFile.writeBytes("}\n");
-						raFile.writeBytes("else {\n");
-						raFile.writeBytes("    TS[0] = TT[0];\n");
-						raFile.writeBytes("    TS[1] = TT[1];\n");
-						raFile.writeBytes("}\n");
+						raFile.writeBytes("      if (IB > " + NARCS + ") {\n");
+						raFile.writeBytes("          IB = " + I + " - IB;\n");
+						raFile.writeBytes("          TS[0] = -TT[0];\n");
+						raFile.writeBytes("          TS[1] = TT[1]);\n");
+						raFile.writeBytes("      }\n");
+						raFile.writeBytes("      else {\n");
+						raFile.writeBytes("          TS[0] = TT[0];\n");
+						raFile.writeBytes("          TS[1] = TT[1];\n");
+						raFile.writeBytes("      }\n");
 					} // if (NARCS > 1)
 					else {
-						raFile.writeBytes("if ((IA%2) == 0) {\n");
-						raFile.writeBytes("    TS[0] = -TT[0];\n");
-						raFile.writeBytes("    TS[1] = TT[1];\n");
-						raFile.writeBytes("}\n");
-						raFile.writeBytes("else {\n");
-						raFile.writeBytes("    TS[0] = TT[0];\n");
-						raFile.writeBytes("    TS[1] = TT[1];\n");
-						raFile.writeBytes("}\n");
+						raFile.writeBytes("      if ((IA%2) == 0) {\n");
+						raFile.writeBytes("          TS[0] = -TT[0];\n");
+						raFile.writeBytes("          TS[1] = TT[1];\n");
+						raFile.writeBytes("      }\n");
+						raFile.writeBytes("      else {\n");
+						raFile.writeBytes("          TS[0] = TT[0];\n");
+						raFile.writeBytes("          TS[1] = TT[1];\n");
+						raFile.writeBytes("      }\n");
 					} // else
 				} // if (ORDRG > 1)
 				else {
 					if (NARCS > 1) {
 						I = 2 * NARCS + 1;
-						raFile.writeBytes("if (IA > " + NARCS + "){\n");
-						raFile.writeBytes("    IB = " + I + " -IA;\n");
-						raFile.writeBytes("    TS[0] = -TT[0];\n");
-						raFile.writeBytes("    TS[1] = TT[1]);\n");
-						raFile.writeBytes("}\n");
-						raFile.writeBytes("else {\n");
-						raFile.writeBytes("    IB = IA;\n");
-						raFile.writeBytes("    TS[0] = TT[0];\n");
-						raFile.writeBytes("    TS[1] = TT[1];\n");
-						raFile.writeBytes("}\n");
+						raFile.writeBytes("      if (IA > " + NARCS + "){\n");
+						raFile.writeBytes("          IB = " + I + " -IA;\n");
+						raFile.writeBytes("          TS[0] = -TT[0];\n");
+						raFile.writeBytes("          TS[1] = TT[1]);\n");
+						raFile.writeBytes("      }\n");
+						raFile.writeBytes("      else {\n");
+						raFile.writeBytes("          IB = IA;\n");
+						raFile.writeBytes("          TS[0] = TT[0];\n");
+						raFile.writeBytes("          TS[1] = TT[1];\n");
+						raFile.writeBytes("      }\n");
 					} // if (NARCS)
 					else {
-						raFile.writeBytes("if (IA == 2) {\n");
-						raFile.writeBytes("    TS[0] = -TT[0];\n");
-						raFile.writeBytes("    TS[1] = TT[1]);\n");
-						raFile.writeBytes("}\n");
-						raFile.writeBytes("else {\n");
-						raFile.writeBytes("    TS[0] = TT[0];\n");
-						raFile.writeBytes("    TS[1] = TT[1];\n");
-						raFile.writeBytes("}\n");
+						raFile.writeBytes("      if (IA == 2) {\n");
+						raFile.writeBytes("          TS[0] = -TT[0];\n");
+						raFile.writeBytes("          TS[1] = TT[1]);\n");
+						raFile.writeBytes("      }\n");
+						raFile.writeBytes("      else {\n");
+						raFile.writeBytes("          TS[0] = TT[0];\n");
+						raFile.writeBytes("          TS[1] = TT[1];\n");
+						raFile.writeBytes("      }\n");
 					} // else
 				} // else
 			} // if (REFLN)
 			else if (NARCS > 1) {
-				raFile.writeBytes("IB = IA%" + NARCS + ";\n");
-				raFile.writeBytes("if (IB == 0) IB = " + NARCS + ";\n");
+				raFile.writeBytes("      IB = IA%" + NARCS + ";\n");
+				raFile.writeBytes("      if (IB == 0) IB = " + NARCS + ";\n");
 			} // else if (NARCS > 1)
 
 			raFile.writeBytes("//\n");
@@ -1348,7 +1354,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	}
 
 	private void WRFUN1(int NARCS, double STAPT[][], int ARCTY[], int PGM[], double RGM[], int PTX[], int NTX[],
-			String DEFN[], int CHNL, String CHIA, String CHTT, String VAR, String REDD, RandomAccessFile raFile) {
+			String DEFN[], int CHNL, String CHIA, String CHTT, String VAR, String REDD, RandomAccessFile raFile,
+			boolean writeReturn) {
 		// COMPLEX STAPT(*)
 		// CHARACTER DEFN(*)*72,CHIA*2,CHTT*2,VAR*6,REDD*6
 
@@ -1403,7 +1410,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					DEFN2 = null;
 				}
 				if (NARCS == 1) {
-					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile);
+					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile, writeReturn);
 				} else {
 					if (IA == 1) {
 						raFile.writeBytes(TX1 + IA + ") {\n");
@@ -1412,7 +1419,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					} else {
 						raFile.writeBytes(TX2 + IA + ") {\n");
 					}
-					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile);
+					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile, writeReturn);
 					if (IA == NARCS)
 						raFile.writeBytes("      }\n");
 				} // else
@@ -1426,7 +1433,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	} // private void WRFUN1
 
 	private void PTFUN1(int TYPE, double STAPT[][], double RGM[], int NTX, String TXT[], int CHNL, String CHTT,
-			String VAR, String REDD, RandomAccessFile raFile) {
+			String VAR, String REDD, RandomAccessFile raFile, boolean writeReturn) {
         // When TT goes from -1,0 to 1,0 T[0] traces out the original parameterization of the curve
 		// COMPLEX STAPT(*)
 		// CHARACTER TXT(*)*72,CHTT*2,VAR*6,REDD*6
@@ -1469,9 +1476,9 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				C2[1] = 0.5 * (STAPT[1][1] - STAPT[0][1]);
 				raFile.writeBytes("//\n");
 				raFile.writeBytes(
-						PAD + VAR + "ANS[0] = " + C1[0] + "+" + CHTT + "[0]*(" + C2[0] + ") - " + CHTT + "[1]*(" + C2[1] + ");\n");
+						PAD + VAR + "[0] = " + C1[0] + "+" + CHTT + "[0]*(" + C2[0] + ") - " + CHTT + "[1]*(" + C2[1] + ");\n");
 				raFile.writeBytes(
-						PAD + VAR + "ANS[1] = " + C1[1] + "+" + CHTT + "[0]*(" + C2[1] + ") + " + CHTT + "[1]*(" + C2[0] + ");\n");
+						PAD + VAR + "[1] = " + C1[1] + "+" + CHTT + "[0]*(" + C2[1] + ") + " + CHTT + "[1]*(" + C2[0] + ");\n");
 				raFile.writeBytes("//\n");
 			} // if (TYPE == 1)
 			else if (TYPE == 2) {
@@ -1483,9 +1490,9 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				MD = Math.atan2(C1[1], C1[0]) + HA;
 				RAD = zabs(C1[0], C1[1]);
 				raFile.writeBytes("//\n");
-				raFile.writeBytes(PAD + VAR + "ANS[0] = " + CENTR[0] + "+" + RAD + " * " + "Math.exp(-" + CHTT + "[1]*(" + HA
+				raFile.writeBytes(PAD + VAR + "[0] = " + CENTR[0] + "+" + RAD + " * " + "Math.exp(-" + CHTT + "[1]*(" + HA
 						+ "))*" + "Math.cos(" + MD + "+" + CHTT + "[0]*(" + HA + "));\n");
-				raFile.writeBytes(PAD + VAR + "ANS[1] = " + CENTR[1] + "+" + RAD + " * " + "Math.exp(-" + CHTT + "[1]*(" + HA
+				raFile.writeBytes(PAD + VAR + "[1] = " + CENTR[1] + "+" + RAD + " * " + "Math.exp(-" + CHTT + "[1]*(" + HA
 						+ "))*" + "Math.sin(" + MD + "+" + CHTT + "[0]*(" + HA + "));\n");
 				raFile.writeBytes("//\n");
 			} // else if (TYPE == 2)
@@ -1497,12 +1504,12 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes(PAD + "T[1] = " + CHTT + "[1] * (" + HA + ");\n");
 
 				if (TXT[0].toLowerCase().indexOf("ui") == 0) {
-				    raFile.writeBytes(PAD + VAR + "ANS[0] = 0.0;\n");
+				    raFile.writeBytes(PAD + VAR + "[0] = 0.0;\n");
 				}
 				else {
 					// NTX = 1 if statements are entered without newlines for
 					// multiple lines
-					raFile.writeBytes(PAD + VAR + "ANS[0] = ");
+					raFile.writeBytes(PAD + VAR + "[0] = ");
 					for (I = 1; I <= NTX; I++) {
 						int index = TXT[I - 1].toLowerCase().indexOf("ui");
 						if (index == 0) {
@@ -1536,7 +1543,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				        int index = TXT[I-1].toLowerCase().indexOf("ui");
 					    if (index >= 0) {
 					    	uifound = true;
-					    	raFile.writeBytes(PAD + VAR + "ANS[1] = ");
+					    	raFile.writeBytes(PAD + VAR + "[1] = ");
 					    	if (index + 2 < TXT[I-1].length()) {
 					    		imagString = TXT[I - 1].substring(index + 2);
 							    raFile.writeBytes(imagString);
@@ -1562,7 +1569,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				    }
 				} // for (I = 1; I <= NTX; I++)
 				if (!uifound) {
-				    raFile.writeBytes(PAD + VAR + "ANS[1] = 0.0;\n");
+				    raFile.writeBytes(PAD + VAR + "[1] = 0.0;\n");
 				}
 				raFile.writeBytes("//\n");
 			} // else if (TYPE == 3)
@@ -1640,11 +1647,13 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				if (!uifound) {
 				    raFile.writeBytes(PAD + "ZRAD[1] = 0.0;\n");
 				}
-				raFile.writeBytes(PAD + VAR + "ANS[0] = ZRAD[0]*Math.exp(-T[1])*Math.cos(T[0]) - ZRAD[1]*Math.exp(-T[1])*Math.sin(T[0]);\n");
-				raFile.writeBytes(PAD + VAR + "ANS[1] = ZRAD[0]*Math.exp(-T[1])*Math.sin(T[0]) + ZRAD[1]*Math.exp(-T[1])*Math.cos(T[0]);\n");
+				raFile.writeBytes(PAD + VAR + "[0] = ZRAD[0]*Math.exp(-T[1])*Math.cos(T[0]) - ZRAD[1]*Math.exp(-T[1])*Math.sin(T[0]);\n");
+				raFile.writeBytes(PAD + VAR + "[1] = ZRAD[0]*Math.exp(-T[1])*Math.sin(T[0]) + ZRAD[1]*Math.exp(-T[1])*Math.cos(T[0]);\n");
 				raFile.writeBytes("//\n");
 			}
-			raFile.writeBytes(PAD + "return " + VAR + "ANS;\n");
+			if (writeReturn) {
+			    raFile.writeBytes(PAD + "return " + VAR + ";\n");
+			}
 		} // try
 		catch (IOException e) {
 			MipavUtil.displayError("IOException " + e + " in PTFUN1");
@@ -1678,102 +1687,103 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				if (ORDRG > 1) {
 					I = 2 * NARCS;
 					if (NARCS > 1) {
-						raFile.writeBytes("IS = (IA-IB)%" + I + ";\n");
-						raFile.writeBytes("IR = (IA-IB-IS)/" + I + ";\n");
+						raFile.writeBytes("      IS = (IA-IB)%" + I + ";\n");
+						raFile.writeBytes("      IR = (IA-IB-IS)/" + I + ";\n");
 					} // if (NARCS > 1)
 					else {
-						raFile.writeBytes("IS = (IA-1)%2;\n");
-						raFile.writeBytes("IR = (IA-1-IS)/2;\n");
+						raFile.writeBytes("      IS = (IA-1)%2;\n");
+						raFile.writeBytes("      IR = (IA-1-IS)/2;\n");
 					}
-					raFile.writeBytes("if ((IR == 0) && (IS == 0)) {\n");
-					raFile.writeBytes("    PARFUN[0] = ZETA[0];\n");
-					raFile.writeBytes("    PARFUN[1] = ZETA[1];\n");
-					raFile.writeBytes("}\n");
-					raFile.writeBytes("else if ((IR > 0) && (IS == 0)) {\n");
+					raFile.writeBytes("      if ((IR == 0) && (IS == 0)) {\n");
+					raFile.writeBytes("          PARFUNANS[0] = ZETA[0];\n");
+					raFile.writeBytes("          PARFUNANS[1] = ZETA[1];\n");
+					raFile.writeBytes("      }\n");
+					raFile.writeBytes("      else if ((IR > 0) && (IS == 0)) {\n");
 					if (NEEDC) {
-						raFile.writeBytes("    PARFUN[0] = ZCEN[0] + WW[IR-1][0]*(ZETA[0] - ZCEN[0]) - "
+						raFile.writeBytes("          PARFUNANS[0] = ZCEN[0] + WW[IR-1][0]*(ZETA[0] - ZCEN[0]) - "
 								+ "WW[IR-1][1]*(ZETA[1] - ZCEN[1]);\n");
-						raFile.writeBytes("    PARFUN[1] = ZCEN[1] + WW[IR-1][0]*(ZETA[1] - ZCEN[1]) + "
+						raFile.writeBytes("          PARFUNANS[1] = ZCEN[1] + WW[IR-1][0]*(ZETA[1] - ZCEN[1]) + "
 								+ "WW[IR-1][1]*(ZETA[0] - ZCEN[0]);\n");
 					} // if (NEEDC)
 					else {
-						raFile.writeBytes("PARFUN[0] = WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
+						raFile.writeBytes("      PARFUNANS[0] = WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
 					}
-					raFile.writeBytes("else if ((IR == 0) && (IS > 0)) {\n");
+					raFile.writeBytes("      else if ((IR == 0) && (IS > 0)) {\n");
 					if (NEEDC) {
 						raFile.writeBytes(
-								"    PARFUN[0] = ZCEN[0] + U2[0]*(ZETA[0]-ZCEN[0]) + " + "U2[1]*(ZETA[1]-ZCEN[1]);\n");
+								"          PARFUNANS[0] = ZCEN[0] + U2[0]*(ZETA[0]-ZCEN[0]) + " + "U2[1]*(ZETA[1]-ZCEN[1]);\n");
 						raFile.writeBytes(
-								"    PARFUN[1] = ZCEN[1] - U2[0]*(ZETA[1]-ZCEN[1]) + " + "U2[1]*(ZETA[0]-ZCEN[0]);\n");
+								"          PARFUNANS[1] = ZCEN[1] - U2[0]*(ZETA[1]-ZCEN[1]) + " + "U2[1]*(ZETA[0]-ZCEN[0]);\n");
 					} else {
-						raFile.writeBytes("    PARFUN[0] = U2[0]*ZETA[0] + U2[1]*ZETA[1];\n");
-						raFile.writeBytes("    PARFUN[1] = -U2[0]*ZETA[1] + U2[1]*ZETA[0];\n");
+						raFile.writeBytes("          PARFUNANS[0] = U2[0]*ZETA[0] + U2[1]*ZETA[1];\n");
+						raFile.writeBytes("          PARFUNANS[1] = -U2[0]*ZETA[1] + U2[1]*ZETA[0];\n");
 					}
-					raFile.writeBytes("}\n");
-					raFile.writeBytes("else {\n");
+					raFile.writeBytes("      }\n");
+					raFile.writeBytes("      else {\n");
 					if (NEEDC) {
-						raFile.writeBytes("double realPart = U2[0]*WW[IR-1][0] - U2[1]*WW[IR-1][1];\n");
-						raFile.writeBytes("double imagPart = U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];\n");
-						raFile.writeBytes("PARFUN[0] = ZCEN[0] + realPart*(ZETA[0]-ZCEN[0]) + "
+						raFile.writeBytes("      double realPart = U2[0]*WW[IR-1][0] - U2[1]*WW[IR-1][1];\n");
+						raFile.writeBytes("      double imagPart = U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];\n");
+						raFile.writeBytes("      PARFUNANS[0] = ZCEN[0] + realPart*(ZETA[0]-ZCEN[0]) + "
 								+ "imagPart*(ZETA[1]-ZCEN[1]);\n");
-						raFile.writeBytes("PARFUN[1] = ZCEN[1] - realPart*(ZETA[1]-ZCEN[1]) + "
+						raFile.writeBytes("      PARFUNANS[1] = ZCEN[1] - realPart*(ZETA[1]-ZCEN[1]) + "
 								+ "imagPart*(ZETA[0]-ZCEN[0]);\n");
 					} else {
-						raFile.writeBytes("double realPart = U2[0]*WW[IR-1][0] - U2[1]*WW[IR-1][1];\n");
-						raFile.writeBytes("double imagPart = U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];\n");
-						raFile.writeBytes("PARFUN[0] = realPart * ZETA[0] + imagPart * ZETA[1];\n");
-						raFile.writeBytes("PARFUN[1] = -realPart * ZETA[1] + imagPart * ZETA[0];\n");
+						raFile.writeBytes("      double realPart = U2[0]*WW[IR-1][0] - U2[1]*WW[IR-1][1];\n");
+						raFile.writeBytes("      double imagPart = U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];\n");
+						raFile.writeBytes("      PARFUNANS[0] = realPart * ZETA[0] + imagPart * ZETA[1];\n");
+						raFile.writeBytes("      PARFUNANS[1] = -realPart * ZETA[1] + imagPart * ZETA[0];\n");
 					}
 					raFile.writeBytes("}\n");
 				} // if (ORDRG > 1)
 				else { // ORDRG <= 1
 					if (NARCS > 1) {
-						raFile.writeBytes("IS = IA - IB;\n");
+						raFile.writeBytes("      IS = IA - IB;\n");
 					} else {
-						raFile.writeBytes("IS = IA - 1;\n");
+						raFile.writeBytes("      IS = IA - 1;\n");
 					}
-					raFile.writeBytes("if (IS == 0) {\n");
-					raFile.writeBytes("    PARFUN[0] = ZETA[0];\n");
-					raFile.writeBytes("    PARFUN[1] = ZETA[1];\n");
-					raFile.writeBytes("}\n");
-					raFile.writeBytes("else {\n");
+					raFile.writeBytes("      if (IS == 0) {\n");
+					raFile.writeBytes("          PARFUNANS[0] = ZETA[0];\n");
+					raFile.writeBytes("          PARFUNANS[1] = ZETA[1];\n");
+					raFile.writeBytes("      }\n");
+					raFile.writeBytes("      else {\n");
 					if (NEEDC) {
 						raFile.writeBytes(
-								"    PARFUN[0] = ZCEN[0] + U2[0]*(ZETA[0]-ZCEN[0]) + " + "U2[1]*(ZETA[1]-ZCEN[1]);\n");
+								"          PARFUNANS[0] = ZCEN[0] + U2[0]*(ZETA[0]-ZCEN[0]) + " + "U2[1]*(ZETA[1]-ZCEN[1]);\n");
 						raFile.writeBytes(
-								"    PARFUN[1] = ZCEN[1] - U2[0]*(ZETA[1]-ZCEN[1]) + " + "U2[1]*(ZETA[0]-ZCEN[0]);\n");
+								"          PARFUNANS[1] = ZCEN[1] - U2[0]*(ZETA[1]-ZCEN[1]) + " + "U2[1]*(ZETA[0]-ZCEN[0]);\n");
 					} else {
-						raFile.writeBytes("    PARFUN[0] = U2[0]*(ZETA[0]-ZCEN[0]) + " + "U2[1]*(ZETA[1]-ZCEN[1]);\n");
+						raFile.writeBytes("          PARFUNANS[0] = U2[0]*(ZETA[0]-ZCEN[0]) + " + "U2[1]*(ZETA[1]-ZCEN[1]);\n");
 						raFile.writeBytes(
-								"    PARFUN[1] =  -U2[0]*(ZETA[1]-ZCEN[1]) + " + "U2[1]*(ZETA[0]-ZCEN[0]);\n");
+								"          PARFUNANS[1] =  -U2[0]*(ZETA[1]-ZCEN[1]) + " + "U2[1]*(ZETA[0]-ZCEN[0]);\n");
 					}
-					raFile.writeBytes("}\n");
+					raFile.writeBytes("      }\n");
 				} // else ORDRG <= 1
 			} // if (REFLN)
 			else { // !REFLN
 				if (NARCS > 1) {
-					raFile.writeBytes("IR = (IA - IB)/" + NARCS + ";\n");
+					raFile.writeBytes("      IR = (IA - IB)/" + NARCS + ";\n");
 				} else {
-					raFile.writeBytes("IR = IA - 1;\n");
+					raFile.writeBytes("      IR = IA - 1;\n");
 				}
-				raFile.writeBytes("if (IR == 0) {\n");
-				raFile.writeBytes("PARFUN[0] = ZETA[0]);\n");
-				raFile.writeBytes("PARFUN[1] = ZETA[1]);\n");
-				raFile.writeBytes("}\n");
-				raFile.writeBytes("else {\n");
+				raFile.writeBytes("      if (IR == 0) {\n");
+				raFile.writeBytes("          PARFUNANS[0] = ZETA[0];\n");
+				raFile.writeBytes("          PARFUNANS[1] = ZETA[1];\n");
+				raFile.writeBytes("      }\n");
+				raFile.writeBytes("      else {\n");
 				if (NEEDC) {
-					raFile.writeBytes("    PARFUN[0] = ZCEN[0] + WW[IR-1][0]*(ZETA[0] - ZCEN[0]) - "
+					raFile.writeBytes("          PARFUNANS[0] = ZCEN[0] + WW[IR-1][0]*(ZETA[0] - ZCEN[0]) - "
 							+ "WW[IR-1][1]*(ZETA[1] - ZCEN[1]);\n");
-					raFile.writeBytes("    PARFUN[1] = ZCEN[1] + WW[IR-1][0]*(ZETA[1] - ZCEN[1]) + "
+					raFile.writeBytes("          PARFUNANS[1] = ZCEN[1] + WW[IR-1][0]*(ZETA[1] - ZCEN[1]) + "
 							+ "WW[IR-1][1]*(ZETA[0] - ZCEN[0]);\n");
 				} else {
-					raFile.writeBytes("    PARFUN[0] = WW[IR-1][0]*(ZETA[0] - ZCEN[0]) - "
-							+ "WW[IR-1][1]*(ZETA[1] - ZCEN[1]);\n");
-					raFile.writeBytes("    PARFUN[1] = WW[IR-1][0]*(ZETA[1] - ZCEN[1]) + "
-							+ "WW[IR-1][1]*(ZETA[0] - ZCEN[0]);\n");
+					raFile.writeBytes("          PARFUNANS[0] = WW[IR-1][0]*ZETA[0] - "
+							+ "WW[IR-1][1]*ZETA[1];\n");
+					raFile.writeBytes("          PARFUNANS[1] = WW[IR-1][0]*ZETA[1] + "
+							+ "WW[IR-1][1]*ZETA[0];\n");
 				}
-				raFile.writeBytes("}\n");
+				raFile.writeBytes("      }\n");
 			} // else !REFLN
+			raFile.writeBytes("      return PARFUNANS;\n");
 		} // try
 		catch (IOException e) {
 			MipavUtil.displayError("IOException " + e + " in WRSYM2");
@@ -1784,7 +1794,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 
 	private void WRFUN2(int NARCS, int MNARC, double STAPT[][], int ARCTY[], int PGM[], double RGM[], int PTX[],
 			int NTX[], String DEFN[], int CHNL, String CHIA, String CHTT, String VAR, boolean NUMDER[], String REDD,
-			RandomAccessFile raFile) {
+			RandomAccessFile raFile, boolean writeReturn) {
 
 		// COMPLEX STAPT(*)
 		// CHARACTER DEFN(*)*72,CHIA*2,CHTT*2,VAR*6,REDD*6
@@ -1856,7 +1866,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				}
 				if (NARCS == 1) {
 					PTFUN2(ARCTY[IA - 1], STAPT2, RGM2, N1, DEFN2, N2, DEFN3, CHNL, CHTT, VAR, " 1", NUMDER[IA - 1],
-							REDD, raFile);
+							REDD, raFile, writeReturn);
 				} else {
 					if (IA == 1) {
 						raFile.writeBytes(TX1 + IA + ") {\n");
@@ -1866,7 +1876,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						raFile.writeBytes(TX2 + IA + ") {\n");
 					}
 					PTFUN2(ARCTY[IA - 1], STAPT2, RGM2, N1, DEFN2, N2, DEFN3, CHNL, CHTT, VAR, CHIA, NUMDER[IA - 1],
-							REDD, raFile);
+							REDD, raFile, writeReturn);
 					if (IA == NARCS) {
 						raFile.writeBytes("      }\n");
 					}
@@ -1881,7 +1891,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	} // private void WRFUN2
 
 	private void PTFUN2(int TYPE, double STAPT[][], double RGM[], int NTX1, String TXT1[], int NTX2, String TXT2[],
-			int CHNL, String CHTT, String VAR, String CHIA, boolean NUMDER, String REDD, RandomAccessFile raFile) {
+			int CHNL, String CHTT, String VAR, String CHIA, boolean NUMDER, String REDD, RandomAccessFile raFile,
+			boolean writeReturn) {
 		// COMPLEX STAPT(*)
 		// CHARACTER TXT1(*)*72,TXT2(*)*72,CHTT*2,VAR*6,CHIA*2,REDD*6
 
@@ -1923,8 +1934,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes("//\n");
 				R = C1[0];
 				A = C1[1];
-				raFile.writeBytes(PAD + VAR + "ANS[0] = " + R + ";\n");
-				raFile.writeBytes(PAD + VAR + "ANS[1] = " + A + ";\n");
+				raFile.writeBytes(PAD + VAR + "[0] = " + R + ";\n");
+				raFile.writeBytes(PAD + VAR + "[1] = " + A + ";\n");
 				raFile.writeBytes("//\n");
 			} // if (TYPE == 1)
 			else if (TYPE == 2) {
@@ -1937,14 +1948,14 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				RAD = zabs(C1[0], C1[1]);
 				raFile.writeBytes("//\n");
 				raFile.writeBytes(
-						PAD + VAR + "ANS[0] = (-" + RAD + ")*(" + HA + ")*Math.exp((-"+CHTT + "[1])*(" + HA +"))*Math.sin(" + MD + "+" + CHTT + "[0]*(" + HA + "));\n");
-				raFile.writeBytes(PAD + VAR + "ANS[1] = (" + RAD + ")*(" + HA + ")*Math.exp((-"+CHTT + "[1])*Math.cos(" + MD + "+" + CHTT + "[0]*(" + HA + "));\n");
+						PAD + VAR + "[0] = (-" + RAD + ")*(" + HA + ")*Math.exp((-"+CHTT + "[1])*(" + HA +"))*Math.sin(" + MD + "+" + CHTT + "[0]*(" + HA + "));\n");
+				raFile.writeBytes(PAD + VAR + "[1] = (" + RAD + ")*(" + HA + ")*Math.exp((-"+CHTT + "[1])*Math.cos(" + MD + "+" + CHTT + "[0]*(" + HA + "));\n");
 				raFile.writeBytes("//\n");
 			} // else if (TYPE == 2)
 			else if (NUMDER) {
 				// Use numerical derivative if no analytical expression is supplied for TYPE == 3 or TYPE == 4.
 				raFile.writeBytes("//\n");
-				raFile.writeBytes(PAD + VAR + "ANS = ZDPARF(" + CHIA + "," + CHTT + ");\n");
+				raFile.writeBytes(PAD + VAR + " = ZDPARF(" + CHIA + "," + CHTT + ");\n");
 				raFile.writeBytes("//\n");
 			} // else if (NUMDER)
 			else if (TYPE == 3) {
@@ -1954,12 +1965,12 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes(PAD + "T[0] = " + MD + "+" + CHTT + "[0]*(" + HA + ");\n");
 				raFile.writeBytes(PAD + "T[1] = " + CHTT + "[1]*(" + HA + ");\n");
 				if (TXT2[0].toLowerCase().indexOf("ui") == 0) {
-				    raFile.writeBytes(PAD + VAR + "ANS[0] = 0.0;\n");
+				    raFile.writeBytes(PAD + VAR + "[0] = 0.0;\n");
 				}
 				else {
 					// NTX2 = 1 if statements are entered without newlines for
 					// multiple lines
-					raFile.writeBytes(PAD + VAR + "ANS[0] = " + HA + "*(");
+					raFile.writeBytes(PAD + VAR + "[0] = " + HA + "*(");
 					for (I = 1; I <= NTX2; I++) {
 						int index = TXT2[I - 1].toLowerCase().indexOf("ui");
 						if (index == 0) {
@@ -1993,7 +2004,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				        int index = TXT2[I-1].toLowerCase().indexOf("ui");
 					    if (index >= 0) {
 					    	uifound = true;
-					    	raFile.writeBytes(PAD + VAR + "ANS[1] = " + HA + "*(");
+					    	raFile.writeBytes(PAD + VAR + "[1] = " + HA + "*(");
 					    	if (index + 2 < TXT2[I-1].length()) {
 					    		imagString = TXT2[I - 1].substring(index + 2);
 							    raFile.writeBytes(imagString);
@@ -2019,7 +2030,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				    }
 				} // for (I = 1; I <= NTX2; I++)
 				if (!uifound) {
-				    raFile.writeBytes(PAD + VAR + "ANS[1] = 0.0;\n");
+				    raFile.writeBytes(PAD + VAR + "[1] = 0.0;\n");
 				}
 				raFile.writeBytes("//\n");
 			} // else if (TYPE == 3)
@@ -2168,11 +2179,13 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				}
 				
 				
-				raFile.writeBytes(PAD + VAR + "ANS[0] = ((ZDER[0] - ZRAD[1])* Math.cos(T[0]) - (ZRAD[0] + ZDER[1])* Math.sin(T[0]))*Math.exp(-T[1])*(" + HA + ");\n");
-				raFile.writeBytes(PAD + VAR + "ANS[1] = ((ZDER[0] - ZRAD[1])* Math.sin(T[0]) + (ZRAD[0] + ZDER[1])* Math.cos(T[0]))*Math.exp(-T[1])*(" + HA + ");\n");
+				raFile.writeBytes(PAD + VAR + "[0] = ((ZDER[0] - ZRAD[1])* Math.cos(T[0]) - (ZRAD[0] + ZDER[1])* Math.sin(T[0]))*Math.exp(-T[1])*(" + HA + ");\n");
+				raFile.writeBytes(PAD + VAR + "[1] = ((ZDER[0] - ZRAD[1])* Math.sin(T[0]) + (ZRAD[0] + ZDER[1])* Math.cos(T[0]))*Math.exp(-T[1])*(" + HA + ");\n");
 				raFile.writeBytes("//\n");
 			} // else
-			raFile.writeBytes(PAD + "return " + VAR + "ANS;\n");
+			if (writeReturn) {
+			    raFile.writeBytes(PAD + "return " + VAR + ";\n");
+			}
 		} // try
 		catch (IOException e) {
 			MipavUtil.displayError("IOException " + e + " in PTFUN2");
@@ -2208,22 +2221,22 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						raFile.writeBytes("      IR=(IA-1-IS)/2;\n");
 					}
 					raFile.writeBytes("      if ((IR == 0) && (IS == 0)) {\n");
-					raFile.writeBytes("          DPARFN[0] =ZETA[0];\n");
-					raFile.writeBytes("          DPARFN[1] =ZETA[1];\n");
+					raFile.writeBytes("          DPARFNANS[0] =ZETA[0];\n");
+					raFile.writeBytes("          DPARFNANS[1] =ZETA[1];\n");
 					raFile.writeBytes("      }\n");
 					raFile.writeBytes("      else if ((IR > 0) && (IS == 0)) {\n");
-					raFile.writeBytes("          DPARFN[0] = WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
-					raFile.writeBytes("          DPARFN[1] = WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];\n");
+					raFile.writeBytes("          DPARFNANS[0] = WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
+					raFile.writeBytes("          DPARFNANS[1] = WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];\n");
 					raFile.writeBytes("      }\n");
 					raFile.writeBytes("       else if ((IR == 0 && (IS > 0)) {\n");
-					raFile.writeBytes("           DPARFN[0] = -U2[0]*ZETA[0] -U2[1]*ZETA[1];\n");
-					raFile.writeBytes("           DPARFN[1] = U2[0]*ZETA[1] -U2[1]*ZETA[0];\n");
+					raFile.writeBytes("           DPARFNANS[0] = -U2[0]*ZETA[0] -U2[1]*ZETA[1];\n");
+					raFile.writeBytes("           DPARFNANS[1] = U2[0]*ZETA[1] -U2[1]*ZETA[0];\n");
 					raFile.writeBytes("       }\n");
 					raFile.writeBytes("       else {\n");
 					raFile.writeBytes("           double realPart = -U2[0]*WW[IR-1][0] + U2[1]*WW[IR-1][1]);\n");
 					raFile.writeBytes("           double imagPart = -U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0]);\n");
-					raFile.writeBytes("           DPARFN[0] = realPart*ZETA[0] + imagPart*ZETA[1]);\n");
-					raFile.writeBytes("           DPARFN[1] = imagPart*ZETA[0] - realPart*ZETA[1]);\n");
+					raFile.writeBytes("           DPARFNANS[0] = realPart*ZETA[0] + imagPart*ZETA[1]);\n");
+					raFile.writeBytes("           DPARFNANS[1] = imagPart*ZETA[0] - realPart*ZETA[1]);\n");
 					raFile.writeBytes("       }\n");
 				} // if (ORDRG > 1)
 				else {
@@ -2233,12 +2246,12 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						raFile.writeBytes("      IS=IA-1;\n");
 					}
 					raFile.writeBytes("      if (IS == 0) {\n");
-					raFile.writeBytes("          DPARFN[0] = ZETA[0]\n");
-					raFile.writeBytes("          DPARFN[0] = ZETA[0]\n");
+					raFile.writeBytes("          DPARFNANS[0] = ZETA[0]\n");
+					raFile.writeBytes("          DPARFNANS[0] = ZETA[0]\n");
 					raFile.writeBytes("      }\n");
 					raFile.writeBytes("         else {\n");
-					raFile.writeBytes("             DPARFN[0] = -U2[0]*ZETA[0] + U2[1]*ZETA[1]);\n");
-					raFile.writeBytes("             DPARFN[1] = U2[0]*ZETA[1] - U2[1]*ZETA[0]);\n");
+					raFile.writeBytes("             DPARFNANS[0] = -U2[0]*ZETA[0] + U2[1]*ZETA[1]);\n");
+					raFile.writeBytes("             DPARFNANS[1] = U2[0]*ZETA[1] - U2[1]*ZETA[0]);\n");
 					raFile.writeBytes("         }\n");
 				} // else
 			} // if (REFLN)
@@ -2249,14 +2262,15 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					raFile.writeBytes("      IR=IA-1;\n");
 				}
 				raFile.writeBytes("      if (IR == 0) {\n");
-				raFile.writeBytes("          DPARFN[0] = ZETA[0];\n");
-				raFile.writeBytes("          DPARFN[1] = ZETA[1];\n");
+				raFile.writeBytes("          DPARFNANS[0] = ZETA[0];\n");
+				raFile.writeBytes("          DPARFNANS[1] = ZETA[1];\n");
 				raFile.writeBytes("      }\n");
 				raFile.writeBytes("      else {\n");
-				raFile.writeBytes("          DPARFN[0]= WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
-				raFile.writeBytes("          DPARFN[1]= WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];\n");
+				raFile.writeBytes("          DPARFNANS[0]= WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
+				raFile.writeBytes("          DPARFNANS[1]= WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];\n");
 				raFile.writeBytes("      }\n");
 			}
+			raFile.writeBytes("      return DPARFNANS;\n");
 		} // try
 		catch (IOException e) {
 			MipavUtil.displayError("IOException " + e + " in WRSYM3");
