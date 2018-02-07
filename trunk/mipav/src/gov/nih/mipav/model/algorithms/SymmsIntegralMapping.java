@@ -296,6 +296,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	Vector<Double>Ray[]; // x y pairs
 	// From TSTPLT
 	Vector<Double>Boundary; // x y pairs
+	private int example = 1;
 
 	public SymmsIntegralMapping() {
 
@@ -858,6 +859,18 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		WRTAIL(6, 0, IER[0], null);
 
 	} // public void PARGEN
+	
+	public void DRIVE0() {
+        int IER[] = new int[1];
+        double MXMIS[] = new double[1];
+        double MXDIF[] = new double[1];
+        double PSD[] = new double[1];
+        double MINPD = 0.0;
+        double MAXPD = 0.0;
+
+       TSTPLT(MXMIS,MXDIF,NARCS,PSD,MINPD,MAXPD,IER);
+	}
+
 
 	private void HEADER(String TXT, String REDD, RandomAccessFile raFile) {
 
@@ -871,15 +884,11 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	        raFile.writeBytes(LINE);
 	        LINE = TAB6 + "double ZRAD[] = new double[2];\n";
 	        raFile.writeBytes(LINE);
-	        LINE = TAB6 + "int IA;\n";
-	        raFile.writeBytes(LINE);
 	        LINE = TAB6 + "double T[] = new double[2];\n";
 	        raFile.writeBytes(LINE);
-	        LINE = TAB6 + "double TT[] = new double[2];\n";
+	        LINE = TAB6 + "//double TT[] = new double[2];\n";
 	        raFile.writeBytes(LINE);
 
-			raFile.writeBytes("      double PI = " + Math.PI + ";\n");
-			raFile.writeBytes("//\n");
 		} catch (IOException e) {
 			MipavUtil.displayError("IOException " + e + " in HEADER");
 			System.exit(-1);
@@ -961,27 +970,156 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		return;
 	} // private void SYINF1
 
-	// COMPLEX FUNCTION PARFUN(I,T)
+	// COMPLEX FUNCTION PARFUN(I,TT)
 	// INTEGER I
-	// COMPLEX T
+	// COMPLEX TT
 	// 
-	double[] PARFUN(int I, double T[]) {
+	private double[] PARFUN(int IA, double TT[]) {
+        double PARFUNANS[] = new double[2];
+	    double ZRAD[] = new double[2];
+	    double T[] = new double[2];
+	    //double TT[] = new double[2];
+       if (example == 1) {
+    	   if(IA == 1) {
+    	       PARFUNANS[0] = 2.0+2.0 * Math.exp(-TT[1]*(-0.7853981633974483))*Math.cos(-2.356194490192345+TT[0]*(-0.7853981633974483));
+    		   PARFUNANS[1] = 2.0+2.0 * Math.exp(-TT[1]*(-0.7853981633974483))*Math.sin(-2.356194490192345+TT[0]*(-0.7853981633974483));
+    	   }
+    	   else if(IA == 2) {
+    		   T[0] = 2.3561945+TT[0] * (0.7853981999999999);
+    		   T[1] = TT[1] * (0.7853981999999999);
+    		   PARFUNANS[0] = Math.cos(T[0])*Math.cosh(T[1])-2.0*Math.cos(T[0])*Math.sinh(T[1]);
+    		   PARFUNANS[1] = -Math.sin(T[0])*Math.sinh(T[1])+2.0*Math.sin(T[0])*Math.cosh(T[1]);
+    	   }
+    	   else if(IA == 3) {
+    		   PARFUNANS[0] = -1.5+TT[0]*(-0.5) - TT[1]*(0.0);
+    		   PARFUNANS[1] = 0.0+TT[0]*(0.0) + TT[1]*(-0.5);
+    	   }
+    	   else if(IA == 4) {
+    		   PARFUNANS[0] = 0.0+2.0 * Math.exp(-TT[1]*(0.7853981633974483))*Math.cos(3.9269908169872414+TT[0]*(0.7853981633974483));
+    		   PARFUNANS[1] = 0.0+2.0 * Math.exp(-TT[1]*(0.7853981633974483))*Math.sin(3.9269908169872414+TT[0]*(0.7853981633974483));
+    	   }
+    	   else {
+    		   T[0] = 5.497787143782138+TT[0] * (0.7853981633974483);
+    		   T[1] = TT[1] * (0.7853981633974483);
+    		   ZRAD[0] = 2.0-0.5*Math.sin(4.0*T[0]-6.0*Math.PI)*Math.cosh(4.0*T[1]);
+    		   ZRAD[1] = -0.5*Math.cos(4.0*T[0]-6.0*Math.PI)*Math.sinh(4.0*T[1]);
+    		   PARFUNANS[0] = ZRAD[0]*Math.exp(-T[1])*Math.cos(T[0]) - ZRAD[1]*Math.exp(-T[1])*Math.sin(T[0]);
+    		   PARFUNANS[1] = ZRAD[0]*Math.exp(-T[1])*Math.sin(T[0]) + ZRAD[1]*Math.exp(-T[1])*Math.cos(T[0]);
+           }   
+       } // if (example == 1)
+       else if (example == 3) {
+    	   int IB, IR;
+    	   double ZETA[] = new double[2];
+           double WW[][] = new double[3][2];
+    	   WW[0][0] = 6.123233995736766E-17;
+    	   WW[0][1] = 1.0;
+    	   WW[1][0] = -1.0;
+    	   WW[1][1] = 1.2246467991473532E-16;
+    	   WW[2][0] = -1.8369701987210297E-16;
+    	   WW[2][1] = -1.0;
+    	   IB = IA%2;
+    	   if (IB == 0) IB = 2;
+    	   if(IB == 1) {
+    	       ZETA[0] = 1.5+TT[0]*(0.5) - TT[1]*(0.0);
+    	       ZETA[1] = 0.0+TT[0]*(0.0) + TT[1]*(0.5);
+    	   }
+    	   else {
+    	       T[0] = 0.7853981633974483+TT[0] * (0.7853981633974483);
+    	       T[1] = TT[1] * (0.7853981633974483);
+    	       ZRAD[0] = 2.0-2.0*T[0]/Math.PI;
+    	       ZRAD[1] = -2.0*T[1]/Math.PI;
+    	       ZETA[0] = ZRAD[0]*Math.exp(-T[1])*Math.cos(T[0]) - ZRAD[1]*Math.exp(-T[1])*Math.sin(T[0]);
+    	       ZETA[1] = ZRAD[0]*Math.exp(-T[1])*Math.sin(T[0]) + ZRAD[1]*Math.exp(-T[1])*Math.cos(T[0]);
+    	   }
+    	   IR = (IA - IB)/2;
+    	   if (IR == 0) {
+    	       PARFUNANS[0] = ZETA[0];
+    	       PARFUNANS[1] = ZETA[1];
+    	   }
+    	   else {
+    	       PARFUNANS[0] = WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];
+    	       PARFUNANS[1] = WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];
+    	   }   
+       } // else if (example == 3)
+       return PARFUNANS;
+	} // private double[] PARFUN
 
-		// DUMMY FUNCTION TO AID LINK-LOADING OF PARGEN
-
-		double result[] = new double[] { 1.0, 0.0 };
-		return result;
-	} // double[] PARFUN
-
-	// COMPLEX FUNCTION DPARFN(I,T)
-	// INTEGER I
-	// COMPLEX T
-	double[] DPARFN(int I, double T[]) {
-
-		// DUMMY FUNCTION TO AID LINK-LOADING OF PARGEN
-
-		double result[] = new double[] { 1.0, 0.0 };
-		return result;
+	// COMPLEX FUNCTION DPARFN(IA,TT)
+	// INTEGER IA
+	// COMPLEX TT
+	private double[] DPARFN(int IA, double TT[]) {
+        double DPARFNANS[] = new double[2];
+	    double ZRAD[] = new double[2];
+	    double ZDER[] = new double[2];
+	    double T[] = new double[2];
+	    //double TT[] = new double[2];	
+	    if (example == 1) {
+	    	if (IA == 1) {
+	            DPARFNANS[0] = (-2.0)*(-0.7853981633974483)*Math.exp((-TT[1])*(-0.7853981633974483))*Math.sin(-2.356194490192345+TT[0]*(-0.7853981633974483));
+	    		DPARFNANS[1] = (2.0)*(-0.7853981633974483)*Math.exp((-TT[1])*(-0.7853981633974483))*Math.cos(-2.356194490192345+TT[0]*(-0.7853981633974483));
+	    	}
+	        else if (IA == 2) {
+	            T[0] = 2.3561945+TT[0]*(0.7853981999999999);
+	    		T[1] = TT[1]*(0.7853981999999999);
+	    		DPARFNANS[0] = 0.7853981999999999*(-Math.sin(T[0])*Math.cosh(T[1])+2.0*Math.sin(T[0])*Math.sinh(T[1]));
+	    		DPARFNANS[1] = 0.7853981999999999*(2.0*Math.cos(T[0])*Math.cosh(T[1])-Math.cos(T[0])*Math.sinh(T[1]));
+	        }
+	        else if (IA == 3) {
+	            DPARFNANS[0] = -0.5;
+	    		DPARFNANS[1] = 0.0;
+	        }
+	        else if (IA == 4) {
+	            DPARFNANS[0] = (-2.0)*(0.7853981633974483)*Math.exp((-TT[1])*(0.7853981633974483))*Math.sin(3.9269908169872414+TT[0]*(0.7853981633974483));
+	    		DPARFNANS[1] = (2.0)*(0.7853981633974483)*Math.exp((-TT[1])*(0.7853981633974483))*Math.cos(3.9269908169872414+TT[0]*(0.7853981633974483));
+	        }
+	        else {
+	    		T[0] = 5.497787143782138+TT[0]*(0.7853981633974483);
+	    		T[1] = TT[1]*(0.7853981633974483);
+	    		ZRAD[0] = 2.0-0.5*Math.sin(4.0*T[0]-6.0*Math.PI)*Math.cosh(4.0*T[1]);
+	    		ZRAD[1] = -0.5*Math.cos(4.0*T[0]-6.0*Math.PI)*Math.sinh(4.0*T[1]);
+	    		ZDER[0] = -2.0*Math.cos(4.0*T[0]-6.0*Math.PI)*Math.cosh(4.0*T[1]);
+	    		ZDER[1] = 2.0*Math.sin(4.0*T[0]-6.0*Math.PI)*Math.sinh(4.0*T[1]);
+	    		DPARFNANS[0] = ((ZDER[0] - ZRAD[1])* Math.cos(T[0]) - (ZRAD[0] + ZDER[1])* Math.sin(T[0]))*Math.exp(-T[1])*(0.7853981633974483);
+	    		DPARFNANS[1] = ((ZDER[0] - ZRAD[1])* Math.sin(T[0]) + (ZRAD[0] + ZDER[1])* Math.cos(T[0]))*Math.exp(-T[1])*(0.7853981633974483);
+	         }	
+	    } // if (example == 1)
+	    else if (example == 3) {
+	    	int IB, IR;
+	    	double ZETA[] = new double[2];
+	    	double WW[][] = new double[3][2];
+	        WW[0][0] = 6.123233995736766E-17;
+	        WW[0][1] = 1.0;
+	        WW[1][0] = -1.0;
+	        WW[1][1] = 1.2246467991473532E-16;
+	        WW[2][0] = -1.8369701987210297E-16;
+	        WW[2][1] = -1.0;
+	        IB = IA%2;
+	        if (IB == 0) IB = 2;
+	        if (IB == 1) {
+	            ZETA[0] = 0.5;
+	            ZETA[1] = 0.0;
+	        }
+	        else {
+	            T[0] = 0.7853981633974483+TT[0]*(0.7853981633974483);
+	            T[1] = TT[1]*(0.7853981633974483);
+	            ZRAD[0] = 2.0-2.0*T[0]/Math.PI;
+	            ZRAD[1] = -2.0*T[1]/Math.PI;
+	            ZDER[0] = -2.0/Math.PI;
+	            ZDER[1] = 0.0;
+	            ZETA[0] = ((ZDER[0] - ZRAD[1])* Math.cos(T[0]) - (ZRAD[0] + ZDER[1])* Math.sin(T[0]))*Math.exp(-T[1])*(0.7853981633974483);
+	            ZETA[1] = ((ZDER[0] - ZRAD[1])* Math.sin(T[0]) + (ZRAD[0] + ZDER[1])* Math.cos(T[0]))*Math.exp(-T[1])*(0.7853981633974483);
+	        }
+	        IR=(IA-IB)/2;
+	        if (IR == 0) {
+	            DPARFNANS[0] = ZETA[0];
+	            DPARFNANS[1] = ZETA[1];
+	        }
+	        else {
+	            DPARFNANS[0]= WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];
+	            DPARFNANS[1]= WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];
+	        }
+	    } // else if (example == 3)
+	    return DPARFNANS;
 	} // double[] DPARFN
 
 	private void WRHEAD(int I, int CHNL, RandomAccessFile raFile) {
@@ -1420,8 +1558,9 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						raFile.writeBytes(TX2 + IA + ") {\n");
 					}
 					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile, writeReturn);
+					raFile.writeBytes("      }\n");
 					if (IA == NARCS)
-						raFile.writeBytes("      }\n");
+						raFile.writeBytes("    }\n");
 				} // else
 			} // for (IA=1; IA <= NARCS; IA++)
 		} // try
@@ -1877,8 +2016,9 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					}
 					PTFUN2(ARCTY[IA - 1], STAPT2, RGM2, N1, DEFN2, N2, DEFN3, CHNL, CHTT, VAR, CHIA, NUMDER[IA - 1],
 							REDD, raFile, writeReturn);
+					raFile.writeBytes("      }\n");
 					if (IA == NARCS) {
-						raFile.writeBytes("      }\n");
+						raFile.writeBytes("    }\n");
 					}
 				} // else
 			} // for (IA=1; IA <= NARCS; IA++)
@@ -1949,7 +2089,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes("//\n");
 				raFile.writeBytes(
 						PAD + VAR + "[0] = (-" + RAD + ")*(" + HA + ")*Math.exp((-"+CHTT + "[1])*(" + HA +"))*Math.sin(" + MD + "+" + CHTT + "[0]*(" + HA + "));\n");
-				raFile.writeBytes(PAD + VAR + "[1] = (" + RAD + ")*(" + HA + ")*Math.exp((-"+CHTT + "[1])*Math.cos(" + MD + "+" + CHTT + "[0]*(" + HA + "));\n");
+				raFile.writeBytes(PAD + VAR + "[1] = (" + RAD + ")*(" + HA + ")*Math.exp((-"+CHTT + "[1])*(" + HA + "))*Math.cos(" + MD + "+" + CHTT + "[0]*(" + HA + "));\n");
 				raFile.writeBytes("//\n");
 			} // else if (TYPE == 2)
 			else if (NUMDER) {
@@ -2279,8 +2419,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 
 	} // private void WRSYM3
 
-	private void TSTPLT(String JBNM, double MXMIS, double MXDIF, int NARCS, double PSD, double MINPD, double MAXPD,
-			int CHNL, int IER[]) {
+	private void TSTPLT(double MXMIS[], double MXDIF[], int NARCS, double PSD[], double MINPD, double MAXPD,
+			int IER[]) {
 		// CHARACTER*4 JBNM
 
 		// ......................................................................
@@ -2467,7 +2607,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		IER[0] = 0;
 		CENTR[0] = 0.0;
 		CENTR[1] = 0.0;
-		MXMIS = 0.0;
+		MXMIS[0] = 0.0;
 		for (IA = 1; IA <= NARCS; IA++) {
 			if (IA == 1) {
 				I = NARCS;
@@ -2487,12 +2627,12 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			if (A1 >= 1.0) {
 				ERR = ERR / A1;
 			}
-			if (ERR > MXMIS) {
+			if (ERR > MXMIS[0]) {
 				IMX = IA;
-				MXMIS = ERR;
+				MXMIS[0] = ERR;
 			}
 		} // for (IA=1; IA <= NARCS; IA++)
-		if (MXMIS >= TOL1) {
+		if (MXMIS[0] >= TOL1) {
 			System.out.println("MAXIMUM CORNER MISFIT: " + MXMIS);
 			System.out.println("OCCURS AT CORNER: " + IMX);
 		} else {
@@ -2534,13 +2674,13 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 
 		// **** SET DEFAULT PLOTTING DISTANCES, IF NECESSARY
 
-		if (PSD <= 0.0) {
-			PSD = 1.6E+2;
+		if (PSD[0] <= 0.0) {
+			PSD[0] = 1.6E+2;
 			MINPD = 2.0;
 			MAXPD = 5.0;
 		}
-		RMIN = MINPD * TSD / PSD;
-		RMAX = MAXPD * TSD / PSD;
+		RMIN = MINPD * TSD / PSD[0];
+		RMAX = MAXPD * TSD / PSD[0];
 		RMEAN = 0.5 * (RMIN + RMAX);
 		MINC = Math.sqrt(EPS);
 
@@ -2548,7 +2688,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		// AND
 		// **** TESTING
 
-		MXDIF = 0.0;
+		MXDIF[0] = 0.0;
 		zzindex = 0;
 		for (IA = 1; IA <= NARCS; IA++) {
 			TT[0] = -1.0;
@@ -2605,11 +2745,11 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 
 					zdiv(1.0 - NDZZ[0], -NDZZ[1], DZZ[0], DZZ[1], cr, ci);
 					ERR = zabs(cr[0], ci[0]);
-					if (ERR > MXDIF) {
-						MXDIF = ERR;
+					if (ERR > MXDIF[0]) {
+						MXDIF[0] = ERR;
 						IMX = IA;
 						TMX = TT[0];
-					} // if (ERR > MXDIF)
+					} // if (ERR > MXDIF[0)
 				} // for (I=1; I <= 2; I++)
 
 				if (!LNSEG[IA - 1]) {
@@ -2662,11 +2802,11 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			zzset[zzindex++][1] = ZZ0[1];
 		}
 
-		if (MXDIF > DTOL) {
+		if (MXDIF[0] > DTOL) {
 			System.out.println();
 			System.out.println("POSSIBLE PARFUN/DPARFN INCONSISTECY ON ARC: " + IMX);
 			System.out.println("OCCURS AT STANDARDISED PARAMETER VALUE: " + TMX);
-			System.out.println("RELATIVE FINITE DIFF ERROR: " + MXDIF);
+			System.out.println("RELATIVE FINITE DIFF ERROR: " + MXDIF[0]);
 		} else {
 			System.out.println();
 			System.out.println("PARFUN AND DPARFN ARE CONSISTENT:");
