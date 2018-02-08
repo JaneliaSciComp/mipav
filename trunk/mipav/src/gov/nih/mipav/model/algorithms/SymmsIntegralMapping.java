@@ -451,7 +451,6 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		// String FMT2;
 
 		// PARAMETER (MNARC=100,TABC=' +',CHNL=20,CHIN=21)
-		final String TABC = "     +";
 		final int CHNL = 20;
 		// final int CHIN = 21;
 		String line;
@@ -460,7 +459,6 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		File file;
 		RandomAccessFile raFile = null;
 		boolean validInput;
-		String junk;
 
 		// EXTERNAL CHRIN,HEADER,R1MACH,SYINF1,WRFUN1,WRFUN2,WRHEAD,WRSYM1,
 		// +WRSYM2,WRSYM3,WRTAIL
@@ -555,7 +553,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				        line = input.next();
 				        tokens = line.split(",");
 				        CENSY[0] = Double.valueOf(tokens[0]);
-				        CENSY[1] = Double.valueOf(tokens[0]);
+				        CENSY[1] = Double.valueOf(tokens[1]);
 				        validInput = true;
 				    }
 				    catch (Exception e) {};
@@ -1007,6 +1005,32 @@ public class SymmsIntegralMapping extends AlgorithmBase {
     		   PARFUNANS[1] = ZRAD[0]*Math.exp(-T[1])*Math.sin(T[0]) + ZRAD[1]*Math.exp(-T[1])*Math.cos(T[0]);
            }   
        } // if (example == 1)
+       else if (example == 2) {
+           if(IA == 1) {
+    	       PARFUNANS[0] = 1.0+TT[0]*(0.050000000000000044) - TT[1]*(0.0);
+    		   PARFUNANS[1] = 0.0+TT[0]*(0.0) + TT[1]*(0.050000000000000044);
+    	   }
+    	   else if(IA == 2) {
+    	       T[0] = 6.283185307179586+TT[0] * (6.283185307179586);
+    		   T[1] = TT[1] * (6.283185307179586);
+    		   ZRAD[0] = 1.05-0.2*T[0]/Math.PI;
+    		   ZRAD[1] = -2.0*T[1]/Math.PI;
+    		   PARFUNANS[0] = ZRAD[0]*Math.exp(-T[1])*Math.cos(T[0]) - ZRAD[1]*Math.exp(-T[1])*Math.sin(T[0]);
+    		   PARFUNANS[1] = ZRAD[0]*Math.exp(-T[1])*Math.sin(T[0]) + ZRAD[1]*Math.exp(-T[1])*Math.cos(T[0]);
+    	   }
+    	   else if(IA == 3) {
+    		   PARFUNANS[0] = 0.2+TT[0]*(-0.05) - TT[1]*(0.0);
+    		   PARFUNANS[1] = 0.0+TT[0]*(0.0) + TT[1]*(-0.05);
+    	   }
+    	   else {
+    		   T[0] = -6.283185307179586+TT[0] * (-6.283185307179586);
+    		   T[1] = TT[1] * (-6.283185307179586);
+    		   ZRAD[0] = 0.15-0.2*T[0]/Math.PI;
+    		   ZRAD[1] = -0.2*T[1]/Math.PI;
+    		   PARFUNANS[0] = ZRAD[0]*Math.exp(-T[1])*Math.cos(T[0]) - ZRAD[1]*Math.exp(-T[1])*Math.sin(T[0]);
+    		   PARFUNANS[1] = ZRAD[0]*Math.exp(-T[1])*Math.sin(T[0]) + ZRAD[1]*Math.exp(-T[1])*Math.cos(T[0]);
+    	   }
+       } // else if (example == 2)
        else if (example == 3) {
     	   int IB, IR;
     	   double ZETA[] = new double[2];
@@ -1041,6 +1065,71 @@ public class SymmsIntegralMapping extends AlgorithmBase {
     	       PARFUNANS[1] = WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];
     	   }   
        } // else if (example == 3)
+       else if (example == 4) {
+    	   int IB, IR, IS;
+    	   double TS[] = new double[2];
+    	   double ZETA[] = new double[2];
+    	   double U2[] = new double[]{-0.4999999967225801, 0.8660254056766582};
+    	   double ZCEN[] = new double[]{0.0, -5.1961524};
+    	   double WW[][] = new double[5][2];
+    	   WW[0][0] = 0.5000000000000001;
+    	   WW[0][1] = 0.8660254037844386;
+    	   WW[1][0] = -0.4999999999999998;
+    	   WW[1][1] = 0.8660254037844388;
+    	   WW[2][0] = -1.0;
+    	   WW[2][1] = 3.885780586188048E-16;
+    	   WW[3][0] = -0.5000000000000004;
+    	   WW[3][1] = -0.8660254037844384;
+    	   WW[4][0] = 0.4999999999999994;
+    	   WW[4][1] = -0.866025403784439;
+    	   IB = IA%8;
+    	   if (IB == 0) IB = 8;
+    	   if (IB > 4) {
+    	       IB = 9 - IB;
+    	       TS[0] = -TT[0];
+    	       TS[1] = TT[1];
+    	   }
+    	   else {
+    	       TS[0] = TT[0];
+    	       TS[1] = TT[1];
+    	   }
+    	   if(IB == 1) {
+    	       ZETA[0] = 8.0+TS[0]*(-1.0) - TS[1]*(0.0);
+    	       ZETA[1] = 0.0+TS[0]*(0.0) + TS[1]*(-1.0);
+    	   }
+    	   else if(IB == 2) {
+    	       ZETA[0] = 6.5+TS[0]*(-0.5) - TS[1]*(0.8660255);
+    	       ZETA[1] = 0.8660255+TS[0]*(0.8660255) + TS[1]*(-0.5);
+    	   }
+    	   else if(IB == 3) {
+    	       ZETA[0] = 5.5+TS[0]*(-0.5) - TS[1]*(-0.8660255);
+    	       ZETA[1] = 0.8660255+TS[0]*(-0.8660255) + TS[1]*(-0.5);
+    	   }
+    	   else {
+    	       ZETA[0] = 4.0+TS[0]*(-1.0) - TS[1]*(0.0);
+    	       ZETA[1] = 0.0+TS[0]*(0.0) + TS[1]*(-1.0);
+    	   }
+    	   IS = (IA-IB)%8;
+    	   IR = (IA-IB-IS)/8;
+    	   if ((IR == 0) && (IS == 0)) {
+    	       PARFUNANS[0] = ZETA[0];
+    	       PARFUNANS[1] = ZETA[1];
+    	   }
+    	   else if ((IR > 0) && (IS == 0)) {
+    	       PARFUNANS[0] = ZCEN[0] + WW[IR-1][0]*(ZETA[0] - ZCEN[0]) - WW[IR-1][1]*(ZETA[1] - ZCEN[1]);
+    	       PARFUNANS[1] = ZCEN[1] + WW[IR-1][0]*(ZETA[1] - ZCEN[1]) + WW[IR-1][1]*(ZETA[0] - ZCEN[0]);
+    	   }
+    	   else if ((IR == 0) && (IS > 0)) {
+    	       PARFUNANS[0] = ZCEN[0] + U2[0]*(ZETA[0]-ZCEN[0]) + U2[1]*(ZETA[1]-ZCEN[1]);
+    	       PARFUNANS[1] = ZCEN[1] - U2[0]*(ZETA[1]-ZCEN[1]) + U2[1]*(ZETA[0]-ZCEN[0]);
+    	   }
+    	   else {
+    	       double realPart = U2[0]*WW[IR-1][0] - U2[1]*WW[IR-1][1];
+    	       double imagPart = U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];
+    	       PARFUNANS[0] = ZCEN[0] + realPart*(ZETA[0]-ZCEN[0]) + imagPart*(ZETA[1]-ZCEN[1]);
+    	       PARFUNANS[1] = ZCEN[1] - realPart*(ZETA[1]-ZCEN[1]) + imagPart*(ZETA[0]-ZCEN[0]);
+    	   }
+       } // else if (example == 4)
        return PARFUNANS;
 	} // private double[] PARFUN
 
@@ -1083,6 +1172,36 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	    		DPARFNANS[1] = ((ZDER[0] - ZRAD[1])* Math.sin(T[0]) + (ZRAD[0] + ZDER[1])* Math.cos(T[0]))*Math.exp(-T[1])*(0.7853981633974483);
 	         }	
 	    } // if (example == 1)
+	    else if (example == 2) {
+	        if (IA == 1) {
+	            DPARFNANS[0] = 0.050000000000000044;
+	    		DPARFNANS[1] = 0.0;
+	        }
+	        else if (IA == 2) {
+	            T[0] = 6.283185307179586+TT[0]*(6.283185307179586);
+	    		T[1] = TT[1]*(6.283185307179586);
+	    		ZRAD[0] = 1.05-0.2*T[0]/Math.PI;
+	    		ZRAD[1] = -2.0*T[1]/Math.PI;
+	    		ZDER[0] = -2.0/Math.PI;
+	    		ZDER[1] = 0.0;
+	    		DPARFNANS[0] = ((ZDER[0] - ZRAD[1])* Math.cos(T[0]) - (ZRAD[0] + ZDER[1])* Math.sin(T[0]))*Math.exp(-T[1])*(6.283185307179586);
+	    		DPARFNANS[1] = ((ZDER[0] - ZRAD[1])* Math.sin(T[0]) + (ZRAD[0] + ZDER[1])* Math.cos(T[0]))*Math.exp(-T[1])*(6.283185307179586);
+	        }
+	        else if (IA == 3) {
+	    		DPARFNANS[0] = -0.05;
+	    		DPARFNANS[1] = 0.0;
+	        }
+	        else {
+	    		T[0] = -6.283185307179586+TT[0]*(-6.283185307179586);
+	    		T[1] = TT[1]*(-6.283185307179586);
+	    		ZRAD[0] = 0.15-0.2*T[0]/Math.PI;
+	    		ZRAD[1] = -0.2*T[1]/Math.PI;
+	    		ZDER[0] = -0.2/Math.PI;
+	    		ZDER[1] = 0.0;
+	    		DPARFNANS[0] = ((ZDER[0] - ZRAD[1])* Math.cos(T[0]) - (ZRAD[0] + ZDER[1])* Math.sin(T[0]))*Math.exp(-T[1])*(-6.283185307179586);
+	    		DPARFNANS[1] = ((ZDER[0] - ZRAD[1])* Math.sin(T[0]) + (ZRAD[0] + ZDER[1])* Math.cos(T[0]))*Math.exp(-T[1])*(-6.283185307179586);
+	        }
+	    } // else if (example == 2)
 	    else if (example == 3) {
 	    	int IB, IR;
 	    	double ZETA[] = new double[2];
@@ -1119,6 +1238,70 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	            DPARFNANS[1]= WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];
 	        }
 	    } // else if (example == 3)
+	    else if (example == 4) {
+	    	int IB, IR, IS;
+	    	double ZETA[] = new double[2];
+	    	double TS[] = new double[2];
+	    	double U2[] = new double[]{-0.4999999967225801, 0.8660254056766582};
+	    	double WW[][] = new double[5][2];
+	    	WW[0][0] = 0.5000000000000001;
+	    	WW[0][1] = 0.8660254037844386;
+	        WW[1][0] = -0.4999999999999998;
+	    	WW[1][1] = 0.8660254037844388;
+	    	WW[2][0] = -1.0;
+	    	WW[2][1] = 3.885780586188048E-16;
+	    	WW[3][0] = -0.5000000000000004;
+	    	WW[3][1] = -0.8660254037844384;
+	    	WW[4][0] = 0.4999999999999994;
+	    	WW[4][1] = -0.866025403784439;
+	    	IB = IA%8;
+	    	if (IB == 0) IB = 8;
+	    	if (IB > 4) {
+	    	    IB = 9 - IB;
+	    	    TS[0] = -TT[0];
+	    	    TS[1] = TT[1];
+	    	}
+	    	else {
+	    	    TS[0] = TT[0];
+	    	    TS[1] = TT[1];
+	    	}
+	    	if (IB == 1) {
+	    	    ZETA[0] = -1.0;
+	    	    ZETA[1] = 0.0;
+	    	}
+	    	else if (IB == 2) {
+	    	    ZETA[0] = -0.5;
+	    	    ZETA[1] = 0.8660255;
+	    	}
+	    	else if (IB == 3) {
+	    	    ZETA[0] = -0.5;
+	    	    ZETA[1] = -0.8660255;
+	    	}
+	    	else {
+	    	    ZETA[0] = -1.0;
+	    	    ZETA[1] = 0.0;
+	    	}
+	    	IS = (IA-IB)%8;
+	    	IR=(IA-IB-IS)/8;
+	    	if ((IR == 0) && (IS == 0)) {
+	    	    DPARFNANS[0] =ZETA[0];
+	    	    DPARFNANS[1] =ZETA[1];
+	    	}
+	    	else if ((IR > 0) && (IS == 0)) {
+	    	    DPARFNANS[0] = WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];
+	    	    DPARFNANS[1] = WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];
+	    	}
+	    	else if ((IR == 0) && (IS > 0)) {
+	    	    DPARFNANS[0] = -U2[0]*ZETA[0] -U2[1]*ZETA[1];
+	    	    DPARFNANS[1] = U2[0]*ZETA[1] -U2[1]*ZETA[0];
+	    	}
+	    	else {
+	    	    double realPart = -U2[0]*WW[IR-1][0] + U2[1]*WW[IR-1][1];
+	    	    double imagPart = -U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];
+	    	    DPARFNANS[0] = realPart*ZETA[0] + imagPart*ZETA[1];
+	    	    DPARFNANS[1] = imagPart*ZETA[0] - realPart*ZETA[1];
+	    	}
+	    } // else if (example == 4)
 	    return DPARFNANS;
 	} // double[] DPARFN
 
@@ -1362,37 +1545,30 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			if (PARFUN) {
 				NEEDC = ((CENSY[0] != 0.0) || (CENSY[1] != 0.0));
 				if (NEEDC || REFLN) {
-					raFile.writeBytes("      PARAMETER (\n");
 					if (NEEDC && REFLN) {
 						R = U2[0];
 						A = U2[1];
-						raFile.writeBytes("U2[0] = " + R + ";\n");
-						raFile.writeBytes("U2[1] = " + A + ";\n");
+						raFile.writeBytes("      double U2[] = new double[]{"+R+", " + A + "};\n");
 						R = CENSY[0];
 						A = CENSY[1];
-						raFile.writeBytes("ZCEN[0] = " + R + ";\n");
-						raFile.writeBytes("ZCEN[1] = " + A + ";)\n");
+						raFile.writeBytes("      double ZCEN[] = new double[]{"+R+", " + A + "};\n");
 					} // if (NEEDC && REFLN)
 					else if (NEEDC && (!REFLN)) {
 						R = CENSY[0];
 						A = CENSY[1];
-						raFile.writeBytes("ZCEN[0] = " + R + ";\n");
-						raFile.writeBytes("ZCEN[1] = " + A + ";)\n");
+						raFile.writeBytes("      double ZCEN[] = new double[]{"+R+", " + A + "};\n");
 					} // else if (NEEDC && (!REFLN))
 					else {
 						R = U2[0];
 						A = U2[1];
-						raFile.writeBytes("U2[0] = " + R + ";\n");
-						raFile.writeBytes("U2[1] = " + A + ";)\n");
+						raFile.writeBytes("      double U2[] = new double[]{"+R+", " + A + "};\n");
 					} // else
 					raFile.writeBytes("//\n");
 				} // if (NEEDC || REFLN)
 			} else if (REFLN) {
 				R = U2[0];
 				A = U2[1];
-				raFile.writeBytes("      PARAMETER (\n");
-				raFile.writeBytes("U2[0] = " + R + ";\n");
-				raFile.writeBytes("U2[1] = " + A + ";)\n");
+				raFile.writeBytes("      double U2[] = new double[]{"+R+", " + A + "};\n");
 				raFile.writeBytes("//\n");
 			}
 
@@ -1433,7 +1609,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						raFile.writeBytes("      if (IB > " + NARCS + ") {\n");
 						raFile.writeBytes("          IB = " + I + " - IB;\n");
 						raFile.writeBytes("          TS[0] = -TT[0];\n");
-						raFile.writeBytes("          TS[1] = TT[1]);\n");
+						raFile.writeBytes("          TS[1] = TT[1];\n");
 						raFile.writeBytes("      }\n");
 						raFile.writeBytes("      else {\n");
 						raFile.writeBytes("          TS[0] = TT[0];\n");
@@ -1457,7 +1633,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						raFile.writeBytes("      if (IA > " + NARCS + "){\n");
 						raFile.writeBytes("          IB = " + I + " -IA;\n");
 						raFile.writeBytes("          TS[0] = -TT[0];\n");
-						raFile.writeBytes("          TS[1] = TT[1]);\n");
+						raFile.writeBytes("          TS[1] = TT[1];\n");
 						raFile.writeBytes("      }\n");
 						raFile.writeBytes("      else {\n");
 						raFile.writeBytes("          IB = IA;\n");
@@ -1468,7 +1644,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					else {
 						raFile.writeBytes("      if (IA == 2) {\n");
 						raFile.writeBytes("          TS[0] = -TT[0];\n");
-						raFile.writeBytes("          TS[1] = TT[1]);\n");
+						raFile.writeBytes("          TS[1] = TT[1];\n");
 						raFile.writeBytes("      }\n");
 						raFile.writeBytes("      else {\n");
 						raFile.writeBytes("          TS[0] = TT[0];\n");
@@ -1548,7 +1724,11 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					DEFN2 = null;
 				}
 				if (NARCS == 1) {
-					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile, writeReturn);
+					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile);
+					if (writeReturn) {
+					    raFile.writeBytes("      return " + VAR + ";\n");
+					    raFile.writeBytes("    }\n");
+					}
 				} else {
 					if (IA == 1) {
 						raFile.writeBytes(TX1 + IA + ") {\n");
@@ -1557,10 +1737,14 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					} else {
 						raFile.writeBytes(TX2 + IA + ") {\n");
 					}
-					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile, writeReturn);
+					PTFUN1(ARCTY[IA - 1], STAPT2, RGM2, NTX[IA - 1], DEFN2, CHNL, CHTT, VAR, REDD, raFile);
 					raFile.writeBytes("      }\n");
-					if (IA == NARCS)
-						raFile.writeBytes("    }\n");
+					if (IA == NARCS) {
+						if (writeReturn) {
+						    raFile.writeBytes("      return " + VAR + ";\n");
+						    raFile.writeBytes("    }\n");
+						}
+					}
 				} // else
 			} // for (IA=1; IA <= NARCS; IA++)
 		} // try
@@ -1572,7 +1756,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	} // private void WRFUN1
 
 	private void PTFUN1(int TYPE, double STAPT[][], double RGM[], int NTX, String TXT[], int CHNL, String CHTT,
-			String VAR, String REDD, RandomAccessFile raFile, boolean writeReturn) {
+			String VAR, String REDD, RandomAccessFile raFile) {
         // When TT goes from -1,0 to 1,0 T[0] traces out the original parameterization of the curve
 		// COMPLEX STAPT(*)
 		// CHARACTER TXT(*)*72,CHTT*2,VAR*6,REDD*6
@@ -1790,9 +1974,6 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes(PAD + VAR + "[1] = ZRAD[0]*Math.exp(-T[1])*Math.sin(T[0]) + ZRAD[1]*Math.exp(-T[1])*Math.cos(T[0]);\n");
 				raFile.writeBytes("//\n");
 			}
-			if (writeReturn) {
-			    raFile.writeBytes(PAD + "return " + VAR + ";\n");
-			}
 		} // try
 		catch (IOException e) {
 			MipavUtil.displayError("IOException " + e + " in PTFUN1");
@@ -1847,6 +2028,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					else {
 						raFile.writeBytes("      PARFUNANS[0] = WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
 					}
+					raFile.writeBytes("      }\n");
 					raFile.writeBytes("      else if ((IR == 0) && (IS > 0)) {\n");
 					if (NEEDC) {
 						raFile.writeBytes(
@@ -1860,19 +2042,19 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					raFile.writeBytes("      }\n");
 					raFile.writeBytes("      else {\n");
 					if (NEEDC) {
-						raFile.writeBytes("      double realPart = U2[0]*WW[IR-1][0] - U2[1]*WW[IR-1][1];\n");
-						raFile.writeBytes("      double imagPart = U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];\n");
-						raFile.writeBytes("      PARFUNANS[0] = ZCEN[0] + realPart*(ZETA[0]-ZCEN[0]) + "
+						raFile.writeBytes("          double realPart = U2[0]*WW[IR-1][0] - U2[1]*WW[IR-1][1];\n");
+						raFile.writeBytes("          double imagPart = U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];\n");
+						raFile.writeBytes("          PARFUNANS[0] = ZCEN[0] + realPart*(ZETA[0]-ZCEN[0]) + "
 								+ "imagPart*(ZETA[1]-ZCEN[1]);\n");
-						raFile.writeBytes("      PARFUNANS[1] = ZCEN[1] - realPart*(ZETA[1]-ZCEN[1]) + "
+						raFile.writeBytes("          PARFUNANS[1] = ZCEN[1] - realPart*(ZETA[1]-ZCEN[1]) + "
 								+ "imagPart*(ZETA[0]-ZCEN[0]);\n");
 					} else {
-						raFile.writeBytes("      double realPart = U2[0]*WW[IR-1][0] - U2[1]*WW[IR-1][1];\n");
-						raFile.writeBytes("      double imagPart = U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];\n");
-						raFile.writeBytes("      PARFUNANS[0] = realPart * ZETA[0] + imagPart * ZETA[1];\n");
-						raFile.writeBytes("      PARFUNANS[1] = -realPart * ZETA[1] + imagPart * ZETA[0];\n");
+						raFile.writeBytes("          double realPart = U2[0]*WW[IR-1][0] - U2[1]*WW[IR-1][1];\n");
+						raFile.writeBytes("              double imagPart = U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];\n");
+						raFile.writeBytes("          PARFUNANS[0] = realPart * ZETA[0] + imagPart * ZETA[1];\n");
+						raFile.writeBytes("          PARFUNANS[1] = -realPart * ZETA[1] + imagPart * ZETA[0];\n");
 					}
-					raFile.writeBytes("}\n");
+					raFile.writeBytes("    }\n");
 				} // if (ORDRG > 1)
 				else { // ORDRG <= 1
 					if (NARCS > 1) {
@@ -2005,7 +2187,11 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				}
 				if (NARCS == 1) {
 					PTFUN2(ARCTY[IA - 1], STAPT2, RGM2, N1, DEFN2, N2, DEFN3, CHNL, CHTT, VAR, " 1", NUMDER[IA - 1],
-							REDD, raFile, writeReturn);
+							REDD, raFile);
+					if (writeReturn) {
+					    raFile.writeBytes("      return " + VAR + ";\n");
+					    raFile.writeBytes("    }\n");
+					}
 				} else {
 					if (IA == 1) {
 						raFile.writeBytes(TX1 + IA + ") {\n");
@@ -2015,10 +2201,13 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						raFile.writeBytes(TX2 + IA + ") {\n");
 					}
 					PTFUN2(ARCTY[IA - 1], STAPT2, RGM2, N1, DEFN2, N2, DEFN3, CHNL, CHTT, VAR, CHIA, NUMDER[IA - 1],
-							REDD, raFile, writeReturn);
+							REDD, raFile);
 					raFile.writeBytes("      }\n");
 					if (IA == NARCS) {
-						raFile.writeBytes("    }\n");
+						if (writeReturn) {
+						    raFile.writeBytes("      return " + VAR + ";\n");
+						    raFile.writeBytes("    }\n");
+						}
 					}
 				} // else
 			} // for (IA=1; IA <= NARCS; IA++)
@@ -2031,8 +2220,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	} // private void WRFUN2
 
 	private void PTFUN2(int TYPE, double STAPT[][], double RGM[], int NTX1, String TXT1[], int NTX2, String TXT2[],
-			int CHNL, String CHTT, String VAR, String CHIA, boolean NUMDER, String REDD, RandomAccessFile raFile,
-			boolean writeReturn) {
+			int CHNL, String CHTT, String VAR, String CHIA, boolean NUMDER, String REDD, RandomAccessFile raFile) {
 		// COMPLEX STAPT(*)
 		// CHARACTER TXT1(*)*72,TXT2(*)*72,CHTT*2,VAR*6,CHIA*2,REDD*6
 
@@ -2323,9 +2511,6 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				raFile.writeBytes(PAD + VAR + "[1] = ((ZDER[0] - ZRAD[1])* Math.sin(T[0]) + (ZRAD[0] + ZDER[1])* Math.cos(T[0]))*Math.exp(-T[1])*(" + HA + ");\n");
 				raFile.writeBytes("//\n");
 			} // else
-			if (writeReturn) {
-			    raFile.writeBytes(PAD + "return " + VAR + ";\n");
-			}
 		} // try
 		catch (IOException e) {
 			MipavUtil.displayError("IOException " + e + " in PTFUN2");
@@ -2368,16 +2553,16 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					raFile.writeBytes("          DPARFNANS[0] = WW[IR-1][0]*ZETA[0] - WW[IR-1][1]*ZETA[1];\n");
 					raFile.writeBytes("          DPARFNANS[1] = WW[IR-1][0]*ZETA[1] + WW[IR-1][1]*ZETA[0];\n");
 					raFile.writeBytes("      }\n");
-					raFile.writeBytes("       else if ((IR == 0 && (IS > 0)) {\n");
-					raFile.writeBytes("           DPARFNANS[0] = -U2[0]*ZETA[0] -U2[1]*ZETA[1];\n");
-					raFile.writeBytes("           DPARFNANS[1] = U2[0]*ZETA[1] -U2[1]*ZETA[0];\n");
-					raFile.writeBytes("       }\n");
-					raFile.writeBytes("       else {\n");
-					raFile.writeBytes("           double realPart = -U2[0]*WW[IR-1][0] + U2[1]*WW[IR-1][1]);\n");
-					raFile.writeBytes("           double imagPart = -U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0]);\n");
-					raFile.writeBytes("           DPARFNANS[0] = realPart*ZETA[0] + imagPart*ZETA[1]);\n");
-					raFile.writeBytes("           DPARFNANS[1] = imagPart*ZETA[0] - realPart*ZETA[1]);\n");
-					raFile.writeBytes("       }\n");
+					raFile.writeBytes("      else if ((IR == 0) && (IS > 0)) {\n");
+					raFile.writeBytes("          DPARFNANS[0] = -U2[0]*ZETA[0] -U2[1]*ZETA[1];\n");
+					raFile.writeBytes("          DPARFNANS[1] = U2[0]*ZETA[1] -U2[1]*ZETA[0];\n");
+					raFile.writeBytes("      }\n");
+					raFile.writeBytes("      else {\n");
+					raFile.writeBytes("          double realPart = -U2[0]*WW[IR-1][0] + U2[1]*WW[IR-1][1];\n");
+					raFile.writeBytes("          double imagPart = -U2[0]*WW[IR-1][1] + U2[1]*WW[IR-1][0];\n");
+					raFile.writeBytes("          DPARFNANS[0] = realPart*ZETA[0] + imagPart*ZETA[1];\n");
+					raFile.writeBytes("          DPARFNANS[1] = imagPart*ZETA[0] - realPart*ZETA[1];\n");
+					raFile.writeBytes("      }\n");
 				} // if (ORDRG > 1)
 				else {
 					if (NARCS > 1) {
@@ -2389,10 +2574,10 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					raFile.writeBytes("          DPARFNANS[0] = ZETA[0]\n");
 					raFile.writeBytes("          DPARFNANS[0] = ZETA[0]\n");
 					raFile.writeBytes("      }\n");
-					raFile.writeBytes("         else {\n");
-					raFile.writeBytes("             DPARFNANS[0] = -U2[0]*ZETA[0] + U2[1]*ZETA[1]);\n");
-					raFile.writeBytes("             DPARFNANS[1] = U2[0]*ZETA[1] - U2[1]*ZETA[0]);\n");
-					raFile.writeBytes("         }\n");
+					raFile.writeBytes("      else {\n");
+					raFile.writeBytes("          DPARFNANS[0] = -U2[0]*ZETA[0] + U2[1]*ZETA[1];\n");
+					raFile.writeBytes("          DPARFNANS[1] = U2[0]*ZETA[1] - U2[1]*ZETA[0];\n");
+					raFile.writeBytes("      }\n");
 				} // else
 			} // if (REFLN)
 			else {
