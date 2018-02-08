@@ -859,14 +859,33 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	} // public void PARGEN
 	
 	public void DRIVE0() {
+		// All examples have MAXIMUM CORNER MISFIT OCCURS AT CORNER 1
+		// PARFUN AND DPARFN ARE CONSISTENT
+		// TSTPLT: NORMAL EXIT
+		// MAXIMUM MISFIT VALUES ARE:
+		// EXAMPLE 1: 2.449E-16
+		// EXAMPLE 2: 4.78E-16
+		// EXAMPLE 3: 2.449E-16;
+		// EXAMPLE 4: 9.86E-16
         int IER[] = new int[1];
         double MXMIS[] = new double[1];
         double MXDIF[] = new double[1];
         double PSD[] = new double[1];
         double MINPD = 0.0;
         double MAXPD = 0.0;
-
-       TSTPLT(MXMIS,MXDIF,NARCS,PSD,MINPD,MAXPD,IER);
+        if (example == 1) {
+        	NARCS = 5;
+        }
+        else if (example == 2) {
+        	NARCS = 4;
+        }
+        else if (example == 3) {
+        	NARCS = 8;
+        }
+        else if (example == 4) {
+        	NARCS = 48;
+        }
+        TSTPLT(MXMIS,MXDIF,NARCS,PSD,MINPD,MAXPD,IER);
 	}
 
 
@@ -983,8 +1002,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
     		   PARFUNANS[1] = 2.0+2.0 * Math.exp(-TT[1]*(-0.7853981633974483))*Math.sin(-2.356194490192345+TT[0]*(-0.7853981633974483));
     	   }
     	   else if(IA == 2) {
-    		   T[0] = 2.3561945+TT[0] * (0.7853981999999999);
-    		   T[1] = TT[1] * (0.7853981999999999);
+    		   T[0] = 2.356194490192345+TT[0] * (0.7853981633974481);
+    	       T[1] = TT[1] * (0.7853981633974481);
     		   PARFUNANS[0] = Math.cos(T[0])*Math.cosh(T[1])-2.0*Math.cos(T[0])*Math.sinh(T[1]);
     		   PARFUNANS[1] = -Math.sin(T[0])*Math.sinh(T[1])+2.0*Math.sin(T[0])*Math.cosh(T[1]);
     	   }
@@ -1148,10 +1167,10 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	    		DPARFNANS[1] = (2.0)*(-0.7853981633974483)*Math.exp((-TT[1])*(-0.7853981633974483))*Math.cos(-2.356194490192345+TT[0]*(-0.7853981633974483));
 	    	}
 	        else if (IA == 2) {
-	            T[0] = 2.3561945+TT[0]*(0.7853981999999999);
-	    		T[1] = TT[1]*(0.7853981999999999);
-	    		DPARFNANS[0] = 0.7853981999999999*(-Math.sin(T[0])*Math.cosh(T[1])+2.0*Math.sin(T[0])*Math.sinh(T[1]));
-	    		DPARFNANS[1] = 0.7853981999999999*(2.0*Math.cos(T[0])*Math.cosh(T[1])-Math.cos(T[0])*Math.sinh(T[1]));
+	        	T[0] = 2.356194490192345+TT[0]*(0.7853981633974481);
+	            T[1] = TT[1]*(0.7853981633974481);
+	            DPARFNANS[0] = 0.7853981633974481*(-Math.sin(T[0])*Math.cosh(T[1])+2.0*Math.sin(T[0])*Math.sinh(T[1]));
+	            DPARFNANS[1] = 0.7853981633974481*(2.0*Math.cos(T[0])*Math.cosh(T[1])-Math.cos(T[0])*Math.sinh(T[1]));
 	        }
 	        else if (IA == 3) {
 	            DPARFNANS[0] = -0.5;
@@ -1542,6 +1561,12 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		// FMT="(A12,"+REDD+",A1,"+REDD+",A2)";
 
 		try {
+			raFile.writeBytes("      int IB;\n");
+			if (REFLN) {
+				raFile.writeBytes("      int IR, IS;\n");
+				raFile.writeBytes("      double TS[] = new double[2];\n");
+				raFile.writeBytes("      double ZETA[] = new double[2];\n");
+			}
 			if (PARFUN) {
 				NEEDC = ((CENSY[0] != 0.0) || (CENSY[1] != 0.0));
 				if (NEEDC || REFLN) {
@@ -1565,7 +1590,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					} // else
 					raFile.writeBytes("//\n");
 				} // if (NEEDC || REFLN)
-			} else if (REFLN) {
+			} // if (PARFUN) 
+			else if (REFLN) {
 				R = U2[0];
 				A = U2[1];
 				raFile.writeBytes("      double U2[] = new double[]{"+R+", " + A + "};\n");
@@ -2818,7 +2844,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			}
 		} // for (IA=1; IA <= NARCS; IA++)
 		if (MXMIS[0] >= TOL1) {
-			System.out.println("MAXIMUM CORNER MISFIT: " + MXMIS);
+			System.out.println("MAXIMUM CORNER MISFIT: " + MXMIS[0]);
 			System.out.println("OCCURS AT CORNER: " + IMX);
 		} else {
 			System.out.println("ALL ARCS FIT AT CORNERS:");
