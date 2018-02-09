@@ -27,12 +27,126 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	// If SYMTY is true, what are the coordinates of the center of symmetry?
 	private final int MNARC = 100;
 	private double CENSY[] = new double[2];
-	// If SYMTY is true, number of arcs on the fundamental boundary section
-	// If SYMTY is false, number of arcs on the boundary
 	// NARCS <= MNARC-1 = 99
+	// NARCS - INTEGER
+    // THE NUMBER OF ANALYTIC ARCS THAT MAKE UP THE
+	// W H O L E BOUNDARY OF THE PHYSICAL DOMAIN.
 	private int NARCS;
+	// ISYGP - INTEGER
+	// THE MAGNITUDE OF ISYGP IS THE ORDER OF THE
+	// SYMMETRY GROUP OF THE PHYSICAL DOMAIN.
+    // ISYGP.EQ.1 -THE SYMMETRY GROUP HAS ONLY ONE ELE-
+	// MENT,THE IDENTITY TRANSFORMATION; IN
+	// OTHER WORDS, THE DOMAIN HAS 'NO
+	// SYMMETRY'.
+	// ISYGP.GT.1 -THE SYMMETRY GROUP CONTAINS ONLY
+	// PROPER (IN-PLANE) ROTATIONS; IN OTHER
+	// WORDS, THE DOMAIN HAS ONLY ROTATIONAL
+	// SYMMETRIES.
+	// ISYGP.LT.-1 -THE SYMMETRY GROUP CONTAINS IMPROPER
+	// (OUT-OF-PLANE) ROATIONS; IN OTHER
+	// WORDS, THE DOMAIN HAS REFLECTIONAL
+	// SYMMETRY AND MAY ALSO HAVE ROTATIONAL
+	// SYMMETRIES.
+	// AN INPUT VALUE OF -1 OR 0 IS TREATED AS IF IT WERE
+	// 1.
+	private int ISYGP;
+	// RFARC - INTEGER
+    // THE REFERENCE ARC USED TO DEFINE THE ORIENTATION
+    // THAT IS GIVEN TO THE MAP. THE CONVENTION IS THAT
+    // THE POINT AT THE START OF ANALYTIC ARC NUMBER
+    // RFARC IS MAPPED TO THE POINT WITH ARGUMENT
+    // RFARG*PI ON THE UNIT DISC.
+    private int RFARC;
+    // RFARG - DOUBLE
+    // THE REFERENCE ARGUMENT/PI USED TO DEFINE THE
+    // ORIENTATION THAT IS GIVEN TO THE MAP. SEE RFARC
+    // ABOVE.
+    private double RFARG[] = new double[1];
+    // INCST - BOOLEAN
+    // IF INCST IS TRUE THEN AN INCREMENTAL STRATEGY IS
+    // USED TO TRY TO ACHIEVE THE ACCURACY SPECIFIED BY
+    // MAXER; VERY ROUGHLY SPEAKING, THIS MEANS THAT THE
+    // METHOD SUCCESSIVELY ACHIEVES THE TARGET ACCURACIES
+    // 1E-1,1E-2,...UNTIL MAXER HAS BEEN ACHIEVED. IF
+    // THE PROBLEM IS THOUGHT TO BE EITHER PARTICULARLY
+    // DIFFICULT OR PARTICULARLY SIMPLE, THEN INCST
+    // SHOULD BE SET TO .TRUE. FOR PROBLEMS OF 'AVERAGE'
+    // DIFFICULTY, SETTING INCST TO .FALSE. IS USUALLY
+    // MORE EFFICIENT.
+    private boolean INCST;
+	// TSTNG - INTEGER
+	// EITHER 0 OR 1.
+    // ON SUCCESSFUL COMPLETION OF THE NUMERICAL SOLUTION
+    // OF SYMM'S EQUATION, A MODULE IS PROVIDED FOR
+	// TESTING THE ERROR IN THE MODULUS OF THE COMPUTED
+	// MAP ON THE BOUNDARY OF THE DOMAIN.
+	// TSTNG=0 - TEST ONLY AT SUB-ARC END POINTS
+    // TSTNG=1 - IN ADDITION TO TESTING AT SUB-ARC END
+    // POINTS TEST ALSO AT INTERIOR POINTS
+	// ON EACH SUB-ARC.
+	private int TSTNG;
+	// MAXER - DOUBLE
+    // RELATIVE ACCURACY REQUESTED FOR THE CONFORMAL MAP;
+    // THIS IS THE SAME AS THE ABSOLUTE ACCURACY ON THE
+    // BOUNDARY OF THE PHYSICAL DOMAIN.
+	private double MAXER;
+	// OULVL - INTEGER
+    // EITHER 0,1,2,3,4 OR 5.
+	// CONTROLS THE AMOUNT OF OUTPUT IN THE LISTING FILE
+	// <JBNM>pl.
+	// OULVL=0 - OUTPUT A SOLUTION SUMMARY AT EACH STAGE
+	// IN THE ADAPTIVE PROCESS AND A SHORT
+	// SUMMARY OF THE ERRORS IN MODULUS.
+	// OULVL=1 - AS 0, BUT ALSO OUTPUT A DETAILED LIST OF
+	// THE ERRORS IN MODULUS.
+	// OULVL=2 - AS 0, BUT ALSO OUTPUT FULL DETAILS OF
+	// THE FINAL COMPUTED JACOBI COEFFICIENTS
+    // ON SUCCESSFUL COMPLETION.
+	// OULVL=3 - AS 2, BUT ALSO OUTPUT A DETAILED LIST OF
+	// THE ERRORS IN MODULUS.
+    // OULVL=4 - OUTPUT FULL DETAILS OF THE OF THE COMPU-
+	// TED JACOBI COEFFICIENTS AT EVERY STAGE
+	// IN THE ADAPTIVE PROCESS AND A SHORT
+	// SUMMARY OF THE ERRORS IN MODULUS.
+	// OULVL=5 - AS 4, BUT ALSO OUTPUT A DETAILED LIST OF
+	// THE ERRORS IN MODULUS.
+	private int OULVL;
 	// NUMDER is of length MNARC
 	// NUMDER is initially false
+	// MNSUA= MAXIMUM NUMBER OF SUBARCS ALLOWED ON THE PHYSICAL BOUNDARY
+    private int MNSUA = 150; // 150 in DRIVE1
+    // NUMBER OF QUADRATURE POINTS
+    private int NQPTS = 8; // 8 in DRIVE1
+    // MNEQN= MAXIMUM NUMBER OF LINEAR EQUATIONS ALLOWED IN THE 
+    //        COLLOCATION SOLUTION OF SYMM'S EQUATION
+    private int MNEQN = 150; // 150 in DRIVE1
+    // MNJXS= (MAXIMUM NUMBER OF CORNERS ALLOWED) + 1
+    private int MNJXS = 50; // 50 in DRIVE1
+    // MQIN1= (MAXIMUM NUMBER OF PANELS ALLOWED IN A SINGLE
+    //        COMPOSITE GAUSSIAN RULE) + 1
+    // From GQCANP:
+ 	// MQIN1 - INTEGER
+ 	// DEFINES THE NUMBER OF PANELS ALLOWED IN A
+ 	// COMPOSITE RULE. SPECIFICALLY, MQIN1 = 1 + (THE
+ 	// MAXIMUM NUMBER OF PANELS IN A COMPOSITE RULE FOR
+ 	// A SINGLE SUB-ARC ON THE BOUNDARY)
+    private int MQIN1 = 11; // 11 in DRIVE0
+    // MNQUA= MAXIMUM TOTAL NUMBER OF QUADRATURE POINTS ALLOWED OVER
+    //        ALL COMPOSITE GAUSSIAN RULES AT THE PROCESSING STAGE OF
+    // SOLVING SYMM'S EQUATION
+    private int MNQUA = 2000; // 2000 in DRIVE0
+    // SET UP THE ARRAY OF BOUNDS IBNDS FOR JAPHYC
+    private int IBNDS[] = new int[]{MNSUA,MNJXS,MQIN1,MNQUA,0};
+    // MATRX - DOUBLE ARRAY
+    // A 3-DIMENSIONAL MATRIX OF SIZE
+    // MNEQN X MNEQN X 2 .
+ 	// (IN THE ADAPTIVE PROCESS, MATRX(*,*,2) WILL STORE
+    // THE COEFFICIENT MATRIX OF THE CURRENT COLLOCATION
+    // SYSTEM AND MATRX(*,*,1) WILL STORE THE COEFFICIENT
+ 	// MATRIX OF THE PREVIOUS SYSTEM)
+    private double MATRX[][][] = new double[MNEQN][MNEQN][2];
+    private int IER[] = new int[1];
 	private boolean NUMDER[] = new boolean[MNARC];
 	// ARCTY is of length MNARC
 	// Type of arc, 1 = LINE SEGMENT, 2 = CIRCULAR ARC SEGMENT, 3 = CARTESIAN
@@ -95,7 +209,6 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	private boolean traditionalInput = true;
 	Scanner input = new Scanner(System.in);
 	private double zzset[][] = new double[400][2];
-	private int IBNDS[] = new int[5];
 	private int IGEOM[] = new int[4]; // Written in original JAPHYC
 	private int PARNT[] = new int[IBNDS[0]]; // Written in original JAPHYC
 	private double RGEOM[] = new double[2]; // Written in original JAPHYC
@@ -107,10 +220,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	private int JATYP[] = new int[IBNDS[0]]; // Written in original JAPHYC
 	private int LOSUB[] = new int[IBNDS[0]]; // Written in original JAPHYC
 	// Parts of RSNPH
-	private int NQPTS;
 	private int NJIND = NARCS + 1;
 	private int TNGQP = NQPTS * NJIND;
-	private int MNEQN;
 	private double ACOEF[] = new double[TNGQP]; // Written in original JAPHYC
 	private double BCOEF[] = new double[TNGQP]; // Written in original JAPHYC
 	private double AICOF[] = new double[TNGQP]; // Written in original JAPHYC
@@ -258,13 +369,6 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	private double ZSNCA[] = new double[2]; // At first location of ZSNCA
 	private double BFSNC[][] = new double[IBNDS[1]][2];
 	private double SOLNC[][] = new double[IBNDS[1]][2];
-	// From GQCANP:
-	// MQIN1 - INTEGER
-	// DEFINES THE NUMBER OF PANELS ALLOWED IN A
-	// COMPOSITE RULE. SPECIFICALLY, MQIN1 = 1 + (THE
-	// MAXIMUM NUMBER OF PANELS IN A COMPOSITE RULE FOR
-	// A SINGLE SUB-ARC ON THE BOUNDARY)
-	private int MQIN1;
 	// MQUCA - INTEGER
 	// THE MAXIMUM NUMBER OF QUADRATURE POINTS ALLOWED
 	// IN THE FINAL GLOBAL RULE. THE VALUE OF THIS
@@ -299,7 +403,87 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	private int example = 1;
 
 	public SymmsIntegralMapping() {
-
+		if (example == 1) {
+			INTER = true;
+        	NARCS = 5;
+        	ISYGP = 1;
+        	RFARC = 2;
+        	RFARG[0] = 0.5;
+        	INCST = false;
+        	TSTNG = 1;
+        	CENTR[0] = 0.0;
+        	CENTR[1] = 0.0;
+        	MAXER = 1.0E-4;
+        	OULVL = 2;
+        }
+        else if (example == 2) {
+        	INTER = true;
+        	NARCS = 4;
+        	ISYGP = 1;
+        	RFARC = 1;
+        	RFARG[0] = 0.0;
+        	INCST = true;
+        	TSTNG = 1;
+        	CENTR[0] = 0.6;
+        	CENTR[1] = 0.0;
+        	MAXER = 1.0E-4;
+        	OULVL = 2;
+        }
+        else if (example == 3) {
+        	INTER = false;
+        	NARCS = 8;
+        	ISYGP = 4;
+        	RFARC = 1;
+        	RFARG[0] = 0.0;
+        	INCST = false;
+        	TSTNG = 1;
+        	CENTR[0] = 0.0;
+        	CENTR[1] = 0.0;
+        	MAXER = 1.0E-4;
+        	OULVL = 2;
+        }
+        else if (example == 4) {
+        	INTER = true;
+        	NARCS = 48;
+        	ISYGP = -12;
+        	RFARC = 1;
+        	RFARG[0] = 0.0;
+        	INCST = true;
+        	TSTNG = 1;
+        	CENTR[0] = 0.0;
+        	CENTR[1] = -5.196152422706632;
+        	MAXER = 1.0E-4;
+        	OULVL = 2;
+        }
+		NJIND = NARCS + 1;
+		TNGQP = NQPTS * NJIND;
+		// Parts of RSNPH
+		ACOEF = new double[TNGQP]; // Written in original JAPHYC
+		BCOEF = new double[TNGQP]; // Written in original JAPHYC
+		AICOF = new double[TNGQP]; // Written in original JAPHYC
+		BICOF = new double[TNGQP]; // Written in original JAPHYC
+		QUPTS = new double[TNGQP]; // Written in original JAPHYC
+		QUWTS = new double[TNGQP]; // Written in original JAPHYC
+		H0VAL = new double[NJIND]; // Written in original JAPHYC
+		HIVAL = new double[NJIND]; // Written in original JAPHYC
+		JACIN = new double[NJIND]; // Written in original JAPHYC
+		// Part of RWORK
+		AQCOF = new double[TNGQP];
+		BQCOF = new double[TNGQP];
+		CQCOF = new double[TNGQP];
+		COLSC = new double[TNGQP];
+		RIGLL = new double[TNGQP];
+		// Part of RSNCA
+		ACOFC = new double[TNGQP];
+		BCOFC = new double[TNGQP];
+		AICOC = new double[TNGQP];
+		BICOC = new double[TNGQP];
+		QUPTC = new double[TNGQP];
+		QUWTC = new double[TNGQP];
+		H0VLC = new double[NJIND];
+		HIVLC = new double[NJIND];
+		JAINC = new double[NJIND];
+		COARG = new double[NJIND];
 	}
 
 	public SymmsIntegralMapping(ModelImage destImg, ModelImage srcImg, String FORTFL, boolean SYMTY, boolean REFLN,
@@ -867,26 +1051,77 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		// EXAMPLE 2: 4.78E-16
 		// EXAMPLE 3: 2.449E-16;
 		// EXAMPLE 4: 9.86E-16
-        int IER[] = new int[1];
         double MXMIS[] = new double[1];
         double MXDIF[] = new double[1];
         double PSD[] = new double[1];
         double MINPD = 0.0;
         double MAXPD = 0.0;
-        if (example == 1) {
-        	NARCS = 5;
-        }
-        else if (example == 2) {
-        	NARCS = 4;
-        }
-        else if (example == 3) {
-        	NARCS = 8;
-        }
-        else if (example == 4) {
-        	NARCS = 48;
-        }
-        TSTPLT(MXMIS,MXDIF,NARCS,PSD,MINPD,MAXPD,IER);
-	}
+        TSTPLT(MXMIS,MXDIF,PSD,MINPD,MAXPD);
+	} // public void DRIVE0()
+	
+
+    public void DRIVE1() {
+        
+        // .......................................................................
+        // EXAMPLE PROGRAM TO SHOW THE USE OF THE SYMM EQUATION SOLVING
+        // SUBROUTINE JAPHYC FROM THE
+    
+        //           C O N F P A C K    L I B R A R Y .
+        // .......................................................................
+
+        // SCALAR VARIABLES REQUIRED FOR MAIN SUBROUTINE
+
+        int IER[] = new int[1];
+
+        // MNEQN= MAXIMUM NUMBER OF LINEAR EQUATIONS ALLOWED IN THE 
+        //        COLLOCATION SOLUTION OF SYMM'S EQUATION
+
+        // MNJXS= (MAXIMUM NUMBER OF CORNERS ALLOWED) + 1
+
+        // MQIN1= (MAXIMUM NUMBER OF PANELS ALLOWED IN A SINGLE
+        //        COMPOSITE GAUSSIAN RULE) + 1
+
+        // MNQUA= MAXIMUM TOTAL NUMBER OF QUADRATURE POINTS ALLOWED OVER
+        //        ALL COMPOSITE GAUSSIAN RULES AT THE PROCESSING STAGE OF
+        // SOLVING SYMM'S EQUATION
+
+        // MNSUA= MAXIMUM NUMBER OF SUBARCS ALLOWED ON THE PHYSICAL 
+        // BOUNDARY
+
+        // THE ABOVE BOUNDS ARE RELATED TO THE NUMBER OF QUADRATURE POINTS
+        // NQPTS VIA
+        //       MNEQN <= MNSUA*NQPTS + 1
+        //       MNQUA <= (MQIN1-1)*MNJXS*NQPTS 
+    
+        // BUT IN PRACTICE MNEQN AND MNQUA MAY BE SIGNIFICANTLY
+        // LESS THAN THE VALUES ON THE RIGHT OF THESE INEQUALITIES.
+
+        // SUGGESTED VALUES TO COVER A WIDE RANGE OF PROBLEMS ARE SET IN
+        // THE FOLLOWING PARAMETER STATEMENT.
+
+        //NQPTS=8;
+        //MNSUA=150;
+        //MNEQN=500;
+        //MNJXS=50;
+        //MQIN1=11;
+        //MNQUA=2000;
+
+        // INTEGER 
+        // IBNDS(4)
+        // SET UP THE ARRAY OF BOUNDS IBNDS FOR JAPHYC
+        //IBNDS[0]=MNSUA;
+        //IBNDS[1]=MNJXS;
+        //IBNDS[2]=MQIN1;
+        //IBNDS[3]=MNQUA;
+   
+        // SOLVE SYMM'S INTEGRAL EQUATION, TO ESTIMATE THE JACOBI 
+        // COEFFICIENTS FOR THE DENSITY ASSOCIATED WITH THE MAP : PHYSICAL
+        // CANONICAL, WITH AUTOMATIC CREATION OF OUTPUT FILES 
+        // jbnm, <JBNM>pl, <JBNM>gm, <JBNM>ph.
+        JAPHYC();
+
+    } // public void DRIVE1()
+
 
 
 	private void HEADER(String TXT, String REDD, RandomAccessFile raFile) {
@@ -2630,8 +2865,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 
 	} // private void WRSYM3
 
-	private void TSTPLT(double MXMIS[], double MXDIF[], int NARCS, double PSD[], double MINPD, double MAXPD,
-			int IER[]) {
+	private void TSTPLT(double MXMIS[], double MXDIF[], double PSD[], double MINPD, double MAXPD) {
 		// CHARACTER*4 JBNM
 
 		// ......................................................................
@@ -3127,8 +3361,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		return result;
 	}
 
-	private void JAPHYC(double MAXER, int ISYGP, boolean INCST, int RFARC, double RFARG[], int TSTNG, int OULVL,
-			double MATRX[][][], int IER[]) {
+	private void JAPHYC() {
 
 		// INTEGER IBNDS(*),IGEOM(*),ISNPH(*),IWORK(*)
 		// REAL RGEOM(*),MATRX(MNEQN,MNEQN,2),RSNPH(*),RWORK(*)
@@ -4212,7 +4445,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
 		Preferences.debug("MINIMUM NUMBER OF QUADRATURE POINTS : " + NQPTS + "\n", Preferences.DEBUG_ALGORITHM);
 		Preferences.debug("MAXIMUM DEGREE OF POLYNOMIAL        : " + (NQPTS - 1) + "\n", Preferences.DEBUG_ALGORITHM);
-		Preferences.debug("INITIAL DEGREE OF POLYNOMIAL        : " + INDEG + (NQPTS - 1) + "\n",
+		Preferences.debug("INITIAL DEGREE OF POLYNOMIAL        : " + INDEG + "\n",
 				Preferences.DEBUG_ALGORITHM);
 		Preferences.debug("INCREMENTAL STRATEGY                : " + INCST + "\n", Preferences.DEBUG_ALGORITHM);
 
