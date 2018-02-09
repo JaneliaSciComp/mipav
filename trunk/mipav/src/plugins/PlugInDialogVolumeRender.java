@@ -226,8 +226,16 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 			{
 				if ( includeRange == null )
 				{
-					MipavUtil.displayError( "Please specify a range of images." );
-					return;
+					if ( createAnimation.isSelected() )
+					{
+						// Launch the animation tool
+						this.setVisible(false);
+						annotationAnimationFromSpreadSheet();
+					}
+					else {
+						MipavUtil.displayError( "Please specify a range of images." );
+						return;
+					}
 				}
 				startButton.setEnabled(false);
 				if ( segmentSeamCells.isSelected() )
@@ -367,12 +375,6 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						editMode = ReviewResults;
 						openStraightened();
 					}
-				}
-				else if ( createAnimation.isSelected() )
-				{
-					// Launch the animation tool
-					this.setVisible(false);
-					annotationAnimationFromSpreadSheet();
 				}
 			}
 
@@ -1247,8 +1249,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		VOIVector tempList = new VOIVector();
 		Vector< int[] > timesList = new Vector< int[] >();
 		ViewJProgressBar progress = new  ViewJProgressBar( "Generating Animation", "", 0, 100, false);
-		progress.dispose();
-		progress = null;
+        MipavUtil.centerOnScreen(progress);
 
 		String inputDirName = baseFileDir + File.separator;
 		//		System.err.println( inputDirName );
@@ -1260,6 +1261,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		int maxIndex = -1;
 		int fileIndex = 0;
 		if (inputFileDir.exists() && inputFileDir.isDirectory()) {
+	        progress.setVisible(true);
 			String[] list = inputFileDir.list();
 			for ( int i = 0; i < list.length; i++ )
 			{
@@ -1381,6 +1383,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					maxIndex = fileIndex;
 				}
 				fileIndex++;
+				progress.updateValueImmed((int) (100 * (float)fileIndex/(float)list.length));
 			}
 		}
 
@@ -1468,10 +1471,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		} else { // voiFileDir does not exist
 			outputFileDir.mkdir();
 		}
-
+		
+		progress.setTitle("Creating Animation Viewer..." );
 		animationImage.setImageDirectory( outputDirName );		
 		triVolume = new VolumeTriPlanarInterface(animationImage, null);
 		triVolume.addConfiguredListener(this);
+
+		progress.dispose();
+		progress = null;
 	}
 
 	/**
