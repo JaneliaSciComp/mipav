@@ -122,6 +122,9 @@ public class LatticeModel {
 	 */
 	public static void saveAnnotationsAsCSV(final String dir, final String fileName, VOI annotations)
 	{
+		Preferences.debug("Saving annotations list: " + "\n", Preferences.DEBUG_ALGORITHM );
+		System.err.println("Saving annotations list: " );
+		int numSaved = 0;
 		// check files, create new directories and delete any existing files:
 		final File fileDir = new File(dir);
 
@@ -152,6 +155,8 @@ public class LatticeModel {
 				VOIText annotation = (VOIText)annotations.getCurves().elementAt(i);
 				Vector3f position = annotation.elementAt(0);
 				bw.write(annotation.getText() + "," + position.X + "," + position.Y + ","	+ position.Z + "\n");
+				Preferences.debug(numSaved + "   " + annotation.getText() + "\n", Preferences.DEBUG_ALGORITHM );
+				System.err.println( numSaved++ + "   " + annotation.getText() );
 			}
 			bw.newLine();
 			bw.close();
@@ -159,7 +164,8 @@ public class LatticeModel {
 			System.err.println("CAUGHT EXCEPTION WITHIN saveSeamCellsTo");
 			e.printStackTrace();
 		}
-
+		Preferences.debug("Annotation written: " + numSaved + "\n", Preferences.DEBUG_ALGORITHM );
+		System.err.println( "Annotation written: " + numSaved );
 	}
 	
 	public static VOIVector readLatticeCSV(String fileName) {
