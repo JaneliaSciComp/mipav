@@ -437,6 +437,12 @@ public class VOILatticeManagerInterface extends VOIManagerInterface
 			movingPickedPoint = false;
 		}
 	}
+	
+	public void flipLattice() {
+		if ( latticeModel != null ) {
+			latticeModel.flipLattice();
+		}
+	}
 
 	public boolean is3DMouseEnabled()
 	{
