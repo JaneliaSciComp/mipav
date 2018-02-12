@@ -854,6 +854,16 @@ public class LatticeModel {
 		showSelectedVOI = null;
 		showSelected = null;
 	}
+	
+	public void flipLattice() {
+		Vector3f temp = new Vector3f();
+		for ( int i = 0; i < left.size(); i++ ) {
+			temp.copy(left.elementAt(i));
+			left.elementAt(i).copy(right.elementAt(i));
+			right.elementAt(i).copy(temp);
+		}
+		updateLattice(true);
+	}
 
 	public int getCurrentIndex()
 	{

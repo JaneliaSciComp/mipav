@@ -163,6 +163,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JPanel lutPanel;
 
 	private JButton newLatticeButton; 
+	private JButton flipLatticeButton; 
 	private JCheckBox displayModel;
 
 	private JButton nextButton;
@@ -523,7 +524,17 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				}
 				latticeSelectionPanel.removeAll();
 				latticeSelectionPanel.add(newLatticeButton);
+				latticeSelectionPanel.add(flipLatticeButton);
+				latticeSelectionPanel.add(displayModel);
+				displayModel.setSelected(false);
 				this.validate();
+			}
+			else if ( command.equals("flipLattice" ) )
+			{
+				if ( voiManager != null )
+				{
+					voiManager.flipLattice();
+				}				
 			}
 			else if ( command.equals("displayModel") )
 			{
@@ -1154,6 +1165,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 						}
 					}
 					latticeSelectionPanel.add(newLatticeButton);
+					latticeSelectionPanel.add(flipLatticeButton);
 					latticeSelectionPanel.add(displayModel);
 					displayModel.setSelected(false);
 					latticeSelectionPanel.setVisible(true);
@@ -1766,8 +1778,14 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		newLatticeButton.setActionCommand("newLattice");
 		newLatticeButton.setVisible(true);
 		newLatticeButton.setEnabled(true);
-
 		latticeSelectionPanel.add(newLatticeButton);
+
+		flipLatticeButton = gui.buildButton("flip lattice");
+		flipLatticeButton.addActionListener(this);
+		flipLatticeButton.setActionCommand("flipLattice");
+		flipLatticeButton.setVisible(true);
+		flipLatticeButton.setEnabled(true);
+		latticeSelectionPanel.add(flipLatticeButton);
 				
 		displayModel = gui.buildCheckBox("Show Model", false);
 		displayModel.addActionListener(this);
