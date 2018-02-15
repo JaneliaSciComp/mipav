@@ -1742,53 +1742,10 @@ public class JPanelSurface_WM extends JInterfaceBase
                 return;
             }
             String kName = akFiles[0].getAbsolutePath();
-                                             
-
             try {
-                float[] startLocation = m_kVolumeViewer.getImageA().getFileInfo(0).getOrigin();
-                int[] extents = m_kVolumeViewer.getImageA().getExtents();
-                int xDim = extents[0];
-                int yDim = extents[1];
-                int zDim = extents[2];
-                
-                float[] resols = m_kVolumeViewer.getImageA().getFileInfo()[0].getResolutions();
-                float xBox = (xDim - 1) * resols[0];
-                float yBox = (yDim - 1) * resols[1];
-                float zBox = (zDim - 1) * resols[2];
-                float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-
-                int[] direction = MipavCoordinateSystems.getModelDirections(m_kVolumeViewer.getImageA());
-                float[] box = new float[]{ xBox, yBox, zBox };
-
-                //                 for (int i = 0; i < meshes.length; i++) {
                 VertexBuffer kVBuffer = new VertexBuffer( akSurfaces[0].VBuffer );
-
-                // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
-                // The loaded vertex is at 2.0f*pt.x*resX - (xDim-1)*resX
-                // The mesh files must save the verticies as
-                // pt.x*resX*direction[0] + startLocation
-                for (int j = 0; j < kVBuffer.GetVertexQuantity(); j++) {
-                	kVBuffer.SetPosition3( j,
-                			((((akSurfaces[0].VBuffer.GetPosition3fX(j) * 2.0f * maxBox) + xBox) / 2.0f) * direction[0]) +
-                			startLocation[0],
-                			((((akSurfaces[0].VBuffer.GetPosition3fY(j) * 2.0f * maxBox) + yBox) / 2.0f) * direction[1]) +
-                			startLocation[1],
-                			((((akSurfaces[0].VBuffer.GetPosition3fZ(j) * 2.0f * maxBox) + zBox) / 2.0f) * direction[2]) +
-                			startLocation[2] );
-
-                }
-
-                //double[][] inverseDicomArray = null;
-                TransMatrix inverse_DicomMatrix = null;
-                if (m_kVolumeViewer.getImageA().getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-                	inverse_DicomMatrix = m_kVolumeViewer.getImageA().getMatrix().clone();
-                	inverse_DicomMatrix.Inverse();
-                	//inverseDicomArray = inverseDicomMatrix.getMatrix();
-                }
-
                 TriMesh surfaceSave = new TriMesh( kVBuffer, akSurfaces[0].IBuffer );
-                //int iType = akSurfaces[0] instanceof ClodMesh ? 1 : 0;
-                FileSurface_WM.saveProstateSurface(kName, surfaceSave, 0, surfaceSave.VBuffer, true, direction, startLocation, box, inverse_DicomMatrix, m_kVolumeViewer.getActiveImage());
+                FileSurface_WM.saveProstateSurface(kName, surfaceSave, m_kVolumeViewer.getActiveImage());
             } catch (IOException error) {
                 MipavUtil.displayError("Error while trying to save single mesh");
             }
