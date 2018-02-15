@@ -5886,7 +5886,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		final int NMAX = 100;
 		double TAU[] = new double[1];
 		double MAXRM[] = new double[1];
-		double TOL;
+		double TOL[] = new double[1];
 		double RIGHT[] = new double[1];
 		boolean T1FXD;
 
@@ -5902,7 +5902,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 
 		QINTS[0] = 1;
 		XENPT[0] = -1.0;
-		TOL = TOLIN;
+		TOL[0] = TOLIN;
 		DEJAC7(ZZ, NZZ, BETA, TAU, MAXDG, NQUAD, AJAC, BJAC, H0JAC, REMND, CSCAL, TOL, MAXRM, IER);
 		if (IER[0] > 0) {
 			return;
@@ -5957,7 +5957,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	} // private void SUBIN7
 
 	private void DEJAC7(double ZZ[][], int NZZ, double BETA, double TAU[], int MAXDG, int NQUAD, double ACOEF[],
-			double BCOEF[], double H0VAL, double REMND[][], double CSCAL[], double TOL, double MAXRM[], int IER[]) {
+			double BCOEF[], double H0VAL, double REMND[][], double CSCAL[], double TOL[], double MAXRM[], int IER[]) {
 		// INTEGER MAXDG,NQUAD,NZZ,IER
 		// REAL BETA,TAU,H0VAL,TOL,MAXRM
 		// REAL ACOEF(*),BCOEF(*),CSCAL(*)
@@ -6125,7 +6125,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 
 		while (true) {
 
-			HTOL = 0.5 * TOL;
+			HTOL = 0.5 * TOL[0];
 			K = 0;
 			for (J = 1; J <= NZZ; J++) {
 				XI[0] = (2.0 * ZZ[J - 1][0] + 1.0 - TAU[0]) / (1.0 + TAU[0]);
@@ -6168,7 +6168,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				MAXRM[0] = Math.max(MAXRM[0], TERM);
 			} // for (I=1; I <= LIM; I++)
 
-			if (MAXRM[0] < TOL) {
+			if (MAXRM[0] < TOL[0]) {
 
 				// ACCURACY IS ACHIEVED, BUT MAYBE TAU COULD BE INCREASED.
 
@@ -6188,17 +6188,17 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				else {
 					break;
 				}
-			} else { // MAXRM[0] >= TOL
+			} else { // MAXRM[0] >= TOL[0]
 
 				// ACCURACY NOT ACHIEVED AND TAU NEEDS DECREASING.
 
 				if (TAU[0] == 1.0) {
-					TOL = HTOL;
+					TOL[0] = HTOL;
 				}
 				UPPER = TAU[0];
 				TAU[0] = 0.5 * (LOWER + UPPER);
 				continue;
-			} // else MAXRM[0] >= TOL
+			} // else MAXRM[0] >= TOL[0]
 		} // while (true)
 
 		// NORMAL TERMINATION
@@ -6224,7 +6224,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	} // private double LGGAM
 
 	private void DELEG7(double ZZ[][], int NZZ, double BETA, double TAU1[], double TAU2[], boolean T1FXD, int MAXDG,
-			int NQUAD, double ACOEF[], double BCOEF[], double H0VAL, double REMND[][], double CSCAL[], double TOL,
+			int NQUAD, double ACOEF[], double BCOEF[], double H0VAL, double REMND[][], double CSCAL[], double TOL[],
 			double MAXRM[], int IER[]) {
 		// INTEGER MAXDG,NQUAD,IER,NZZ
 		// REAL BETA,TAU1,TAU2,H0VAL,TOL,MAXRM
@@ -6392,7 +6392,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 
 		while (true) {
 
-			HTOL = 0.5 * TOL;
+			HTOL = 0.5 * TOL[0];
 			RR = (TAU2[0] - TAU1[0]) * 0.5;
 			MEAN = (TAU1[0] + TAU2[0]) * 0.5;
 			BB = (1.0 + MEAN) / RR;
@@ -6457,7 +6457,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				MAXRM[0] = Math.max(MAXRM[0], TERM);
 			} // for (I=1; I <= 2*MAXDG+2; I++)
 
-			if (MAXRM[0] < TOL) {
+			if (MAXRM[0] < TOL[0]) {
 
 				// ACCURACY IS ACHIEVED, BUT MAYBE TAU2 COULD BE INCREASED OR
 				// TAU1 DECREASED
@@ -6485,14 +6485,14 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				else {
 					break;
 				}
-			} // if (MAXRM[0] < TOL)
-			else { // MAXRM[0] >= TOL
+			} // if (MAXRM[0] < TOL[0])
+			else { // MAXRM[0] >= TOL[0]
 
 				// ACCURACY NOT ACHIEVED AND TAU2 NEEDS DECREASING OR TAU1 NEEDS
 				// INCREASING.
 
 				if (FIRST) {
-					TOL = HTOL;
+					TOL[0] = HTOL;
 					FIRST = false;
 				}
 				if (T1FXD) {
@@ -6503,7 +6503,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					TAU1[0] = 0.5 * (LOWER + UPPER);
 				}
 				continue;
-			} // else MAXRM[0] >= TOL
+			} // else MAXRM[0] >= TOL[0]
 		} // while (true)
 
 		// NORMAL TERMINATION
