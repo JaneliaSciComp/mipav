@@ -82,7 +82,13 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         fileInfo1 = dwiSegArray[0].getFileInfo()[0];
         fileInfo1.setResolutions(dwiImage.getResolutions(0));
         fileInfo1.setUnitsOfMeasure(dwiImage.getUnitsOfMeasure());
-        dwiSegArray[0].setFileInfo(fileInfo1, 0);
+        fileInfo1.setAxisOrientation(dwiImage.getFileInfo(0).getAxisOrientation());
+        fileInfo1.setImageOrientation(dwiImage.getFileInfo(0).getImageOrientation());
+        fileInfo1.setOrigin(dwiImage.getFileInfo(0).getOrigin());
+        fileInfo1.setSliceThickness(dwiImage.getFileInfo(0).getSliceThickness());
+        for (int i = 0; i < dwiImage.getExtents()[2]; i++) {
+            dwiSegArray[0].setFileInfo(fileInfo1, i);
+        }
 
         AlgorithmFuzzyCMeans fcmAlgo = new AlgorithmFuzzyCMeans(dwiSegArray, dwiImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q, oneSmooth,
                                            twoSmooth, outputGainField, segmentation, cropBackground, threshold, maxIter,
@@ -509,11 +515,13 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         final String volUnitsStr = adcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr();
         
         CSVPrinter csvPrinter = null;
-        BufferedWriter writer = null;
+        BufferedWriter bw = null;
+        FileWriter fw = null;
         try {
-            writer = Files.newBufferedWriter(Paths.get(statsFile));
+            fw = new FileWriter(statsFile);
+            bw = new BufferedWriter(fw);
             
-            csvPrinter = new CSVPrinter(writer, CSVFormat.TDF.withHeader("Base Dir", "DWI File", "ADC File", "Core VOI", "Core Voxel Count", "Core Volume " + volUnitsStr));
+            csvPrinter = new CSVPrinter(bw, CSVFormat.TDF.withHeader("Base Dir", "DWI File", "ADC File", "Core VOI", "Core Voxel Count", "Core Volume " + volUnitsStr));
             csvPrinter.printRecord(outputDir, dwiFile, adcFile, voiFile, numVoxels, coreVol);
         } catch (final IOException e) {
             e.printStackTrace();
@@ -525,8 +533,11 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                     csvPrinter.flush();
                     csvPrinter.close();
                 }
-                if (writer != null) {
-                    writer.close();
+                if (bw != null) {
+                    bw.close();
+                }
+                if (fw != null) {
+                    fw.close();
                 }
             } catch (final IOException e) {
                 // do nothing
