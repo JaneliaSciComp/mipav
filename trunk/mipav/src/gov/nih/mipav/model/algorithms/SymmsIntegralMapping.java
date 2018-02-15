@@ -6324,8 +6324,8 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			mag = Math.pow(r, BETA);
 			theta = Math.atan2(ZZ[I - 1][1], 1.0 + ZZ[I - 1][0]);
 			ang = BETA * theta;
-			GG[I - 1][0] = mag * Math.cos(ang) * KK;
-			GG[I - 1][1] = mag * Math.sin(ang) * KK;
+			GG[I - 1][0] = -mag * Math.cos(ang) * KK;
+			GG[I - 1][1] = -mag * Math.sin(ang) * KK;
 			HH[I - 1][0] = -Math.log(r) * HCO * KK;
 			HH[I - 1][1] = -theta * HCO * KK;
 		} // for (I=1; I <= NZZ; I++)
@@ -7938,7 +7938,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		int I, I0, I1, I2, J, K, JI, JI0, JI1, JI2, P0, P1, P2, HI, LO, NQ, DIFF, TNCQP;
 		double DST[] = new double[2];
 		double BETA, H1, M1, T0, T2, SUM1, RR, RRB, MEAN, RXI, IXI;
-		final double ONE[] = new double[] { 1.0, 0.0 };
+		//final double ONE[] = new double[] { 1.0, 0.0 };
 		double ZZ[] = new double[2];
 		double Z0[] = new double[2];
 		double Z2[] = new double[2];
