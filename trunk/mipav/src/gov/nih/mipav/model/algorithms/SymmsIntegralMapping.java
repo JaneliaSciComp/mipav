@@ -484,6 +484,26 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		HIVLC = new double[NJIND];
 		JAINC = new double[NJIND];
 		COARG = new double[NJIND];
+		// eps returns the distance from 1.0 to the next larger double-precision
+		// number, that is, eps = 2^-52.
+		// epsilon = D1MACH(4)
+		// Machine epsilon is the smallest positive epsilon such that
+		// (1.0 + epsilon) != 1.0.
+		// epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+		// epsilon = 2.2204460e-16
+		// epsilon is called the largest relative spacing
+		EPS = 1.0;
+		double neweps = 1.0;
+
+		while (true) {
+
+			if (1.0 == (1.0 + neweps)) {
+				break;
+			} else {
+				EPS = neweps;
+				neweps = neweps / 2.0;
+			}
+		} // while(true)
 	}
 
 	public SymmsIntegralMapping(ModelImage destImg, ModelImage srcImg, String FORTFL, boolean SYMTY, boolean REFLN,
@@ -3920,10 +3940,10 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			double anorm;
 			int iwork[] = new int[NROWS];
 			int info[] = new int[1];
-			anorm = ge.dlange('1', MNEQN, MNEQN, A, MNEQN, WORK2);
-			le2.dgetrf(MNEQN, MNEQN, A, MNEQN, IPIVT, info);
+			anorm = ge.dlange('1', NROWS, NROWS, A, MNEQN, WORK2);
+			le2.dgetrf(NROWS, NROWS, A, MNEQN, IPIVT, info);
 			if (info[0] > 0) {
-				MipavUtil.displayError("In dgetrf factor U is exactly singular");
+				System.err.println("In dgetrf factor U is exactly singular");
 			}
 			le2.dgecon('1', NROWS, A, MNEQN, anorm, RCOND, WORK2, iwork, info);
 			// Reciprocal condition number of A in 1-norm.
@@ -4901,16 +4921,18 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			for (J = 1; J <= NQPTS; J++) {
 				X = QUPTS[LO + J - 1];
 				QQ[(J - 1) * NQPTS] = P0SCL;
-				double PP[] = new double[NQPTS - 1];
+				double PP[] = new double[NQPTS];
 				double AA[] = new double[NQPTS - 1];
 				double BB[] = new double[NQPTS - 1];
-				for (N = 0; N < NQPTS - 1; N++) {
+				for (N = 0; N < NQPTS; N++) {
 					PP[N] = QQ[(J - 1) * NQPTS + N];
+				}
+				for (N = 0; N < NQPTS - 1; N++) {
 					AA[N] = ACOEF[LO1 + N - 1];
 					BB[N] = BCOEF[LO1 + N - 1];
 				}
 				JAPAR7(PP, X, AA, BB, NQPTS - 1);
-				for (N = 0; N < NQPTS - 1; N++) {
+				for (N = 0; N < NQPTS; N++) {
 					QQ[(J - 1) * NQPTS + N] = PP[N];
 				}
 				TT[J - 1] = 1.0;
