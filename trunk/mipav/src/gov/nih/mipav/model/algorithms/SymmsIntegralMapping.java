@@ -6419,7 +6419,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 			for (J = 1; J <= NZZ; J++) {
 				XI[0] = (ZZ[J - 1][0] - MEAN) / RR;
 				XI[1] = ZZ[J - 1][1] / RR;
-				zmlt(XI[0], XI[0], XI[1], XI[1], cr, ci);
+				zmlt(XI[0], XI[1], XI[0], XI[1], cr, ci);
 				r = zabs(cr[0] - 1.0, ci[0]);
 				mag = Math.sqrt(r);
 				theta = Math.atan2(ci[0], cr[0] - 1.0);
@@ -6447,7 +6447,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					K = K + 1;
 					zmlt(CONGG[I][J - 1][0], CONGG[I][J - 1][1], FFG[0], FFG[1], cr, ci);
 					REMND[K - 1][0] = cr[0] + CONHH[I][J - 1][0] * FFH;
-					REMND[K - 1][1] = cr[0] + CONHH[I][J - 1][1] * FFH;
+					REMND[K - 1][1] = ci[0] + CONHH[I][J - 1][1] * FFH;
 				} // for (I=0; I <= MAXDG; I++)
 			} // for (J=1; J <= NZZ; J++)
 
