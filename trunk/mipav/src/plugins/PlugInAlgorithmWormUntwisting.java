@@ -36,6 +36,7 @@ import gov.nih.mipav.model.structures.ModelImageToImageJConversion;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -49,6 +50,8 @@ import java.io.File;
 import java.util.Vector;
 
 import javax.swing.JProgressBar;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  * Implements batch algorithms for worm untwisting:
@@ -280,18 +283,24 @@ public class PlugInAlgorithmWormUntwisting
 				File imageFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				File imageFile2 = new File(baseFileDir2 + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
 				
-				if ( imageFile.exists() ) {
-					resliceRotate(imageFile, imageName, xSize, ySize, zSize );
+				if ( imageFile.exists() ) {					
+					Vector3f[] conversion = resliceRotate(imageFile, imageName, xSize, ySize, zSize );					
+					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion);
+					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion);
+					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion);
 				}
 				if ( imageFile2.exists() ) {
-					resliceRotate(imageFile2, imageName, xSize, ySize, zSize );
+					Vector3f[] conversion = resliceRotate(imageFile2, imageName, xSize, ySize, zSize );					
+					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion);
+					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion);
+					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion);
 				}
 			}
 		}
 		MipavUtil.displayInfo( "Image reslicing complete." );
 	}
 	
-	private static void resliceRotate( File imageFile, String imageName, int xSize, int ySize, int zSize ) {
+	private static Vector3f[] resliceRotate( File imageFile, String imageName, int xSize, int ySize, int zSize ) {
 
 		FileIO fileIO = new FileIO();
 		ModelImage wormImage = fileIO.readImage(imageName, imageFile.getParent() + File.separator, false, null); 
@@ -303,7 +312,10 @@ public class PlugInAlgorithmWormUntwisting
 			int[] marginX = new int[]{(xSize - dimX)/2, (xSize - dimX)/2};
 			int[] marginY = new int[]{(ySize - dimY)/2, (ySize - dimY)/2};
 			int[] marginZ = new int[]{0, (zSize - dimZ)};
-									
+
+			Vector3f shiftV = new Vector3f( dimX/2, dimY/2, 0 );
+			Vector3f offsetV = new Vector3f( (xSize - dimX)/2, (ySize - dimY)/2, 0 );
+			
 			int[] destExtents = new int[]{xSize,ySize,zSize};
 
             ModelImage resliceImage = new ModelImage(wormImage.getType(), destExtents, JDialogBase.makeImageName(wormImage.getImageName(), "_temp.xml"));
@@ -333,8 +345,46 @@ public class PlugInAlgorithmWormUntwisting
     		wormImage.disposeLocal(false);
     		resliceImage.disposeLocal(false);
     		resultImage.disposeLocal(false);
+    		
+    		return new Vector3f[]{shiftV, offsetV};
 		}
+		
+		return null;
 	}
+	
+	private static void resliceAnnotations( String path, String name, Vector3f[] conversion ) {
+
+		Vector3f shift = conversion[0];
+		Vector3f offset = conversion[1];
+		
+		VOI annotations = LatticeModel.readAnnotationsCSV(path + name + ".csv");
+		if ( annotations == null ) return;
+		VOI localVOI = new VOI(annotations);
+		for ( int i = 0; i < localVOI.getCurves().size(); i++ ) {
+			VOIBase curveOrig = localVOI.getCurves().elementAt(i);
+			// add offset:
+			for ( int j = 0; j < curveOrig.size(); j++ ) {
+				curveOrig.elementAt(j).X -= shift.X;
+				curveOrig.elementAt(j).Y -= shift.Y;
+
+				curveOrig.elementAt(j).X += offset.X;
+				curveOrig.elementAt(j).Y += offset.Y;
+
+				curveOrig.elementAt(j).X += shift.X;
+				curveOrig.elementAt(j).Y += shift.Y;
+			}
+			// swap y and z coordinates:
+			for ( int j = 0; j < curveOrig.size(); j++ ) {
+				float temp = curveOrig.elementAt(j).Y;
+				curveOrig.elementAt(j).Y = curveOrig.elementAt(j).Z;
+				curveOrig.elementAt(j).Z = temp;
+			}
+		}
+
+		LatticeModel.saveAnnotationsAsCSV(path, name + "_reslice.csv", localVOI);
+		
+	}
+	
 
 	/**
 	 * Run the lattice-based worm straightening algorithm for the list of input files.
