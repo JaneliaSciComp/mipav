@@ -131,7 +131,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
  	// COMPOSITE RULE. SPECIFICALLY, MQIN1 = 1 + (THE
  	// MAXIMUM NUMBER OF PANELS IN A COMPOSITE RULE FOR
  	// A SINGLE SUB-ARC ON THE BOUNDARY)
-    private int MQIN1 = 11; // 11 in DRIVE0
+    private int MQIN1 = 110; // 11 in DRIVE0
     // MNQUA= MAXIMUM TOTAL NUMBER OF QUADRATURE POINTS ALLOWED OVER
     //        ALL COMPOSITE GAUSSIAN RULES AT THE PROCESSING STAGE OF
     // SOLVING SYMM'S EQUATION
@@ -1081,8 +1081,28 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 	
 
     public void DRIVE1() {
-        
-        // .......................................................................
+        // Running DOUBLE PRECISION FORTRAN ON WINDOWS FOR Example 1 GIVES:
+    	// JAPHYC: ABNORMAL EXIT
+    	// NUMBER OF EQUATIONS EXCEEDS MNEQN DURING REFINEMENT
+    	// Take MNEQN 500 -> 5000
+    	// JAPHYC: ABNORMAL EXIT
+    	// NUMBER OF SUBARCS EXCEEDS IBNDS(1) DURING REFINEMENT
+    	// IBNDS(1) = MNSUA
+    	// Take MNSUA 150 -> 1500
+    	// JAPHYC: ABNORMAL EXIT
+    	// NUMBER OF QUADRATURE PANELS EXCEEDS IBNDS(3) DURING REFINEMENT
+    	// IBNDS(3) = MQIN1
+    	// Take MQIN1 11 -> 110
+    	// JAPHYC: ABNROMAL EXIT
+    	// NUMBER OF EQUATIONS EXCEEDS MNEQN DURING REFINEMENT
+    	//
+    	// Running MIPAV for example 1 gives:
+    	// JAPHYC: ABNORMAL EXIT
+    	// NUMBER OF QUADRATURE PANELS EXCEEDS IBNDS[2] DURING REFINEMENT
+    	// IBNDS[2] = MQIN1
+    	// Take MQIN1 11 -> 110
+    	// Still receive same error message.
+    	// .......................................................................
         // EXAMPLE PROGRAM TO SHOW THE USE OF THE SYMM EQUATION SOLVING
         // SUBROUTINE JAPHYC FROM THE
     
