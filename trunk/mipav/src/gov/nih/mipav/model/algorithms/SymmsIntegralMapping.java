@@ -6195,6 +6195,9 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				if (TAU[0] == 1.0) {
 					TOL[0] = HTOL;
 				}
+				if ((TAU[0] == LOWER) && (TAU[0] == UPPER)) {
+					break;
+				}
 				UPPER = TAU[0];
 				TAU[0] = 0.5 * (LOWER + UPPER);
 				continue;
@@ -6391,7 +6394,6 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 		FIRST = true;
 
 		while (true) {
-
 			HTOL = 0.5 * TOL[0];
 			RR = (TAU2[0] - TAU1[0]) * 0.5;
 			MEAN = (TAU1[0] + TAU2[0]) * 0.5;
@@ -6474,7 +6476,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 						LOWER = TAU2[0];
 						TAU2[0] = 0.5 * (LOWER + UPPER);
 						continue;
-					} else if (!T1FXD && TAU1[0] > -1.0) {
+					} else if ((!T1FXD) && (TAU1[0] > -1.0)) {
 						UPPER = TAU1[0];
 						TAU1[0] = 0.5 * (LOWER + UPPER);
 						continue;
@@ -6496,9 +6498,15 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 					FIRST = false;
 				}
 				if (T1FXD) {
+					if ((TAU2[0] == LOWER) && (TAU2[0] == UPPER)) {
+						break;
+					}
 					UPPER = TAU2[0];
 					TAU2[0] = 0.5 * (LOWER + UPPER);
 				} else {
+					if ((TAU1[0] == LOWER) && (TAU1[0] == UPPER)) {
+						break;
+					}
 					LOWER = TAU1[0];
 					TAU1[0] = 0.5 * (LOWER + UPPER);
 				}
@@ -8176,7 +8184,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 
 		IER[0] = 0;
 
-	} // private void UPOCOQ1
+	} // private void UPCOQ1
 
 	private void TSJAC3(int LOTES[], int HITES[], double TESPR[], double ZTEST[][], int NQPTS, int NTEST[], int ORDSG,
 			int TNSUA, int TSTNG, int DGPOL[], int JATYP[], int PARNT[], double AICOF[], double BICOF[], double DIAG[],
