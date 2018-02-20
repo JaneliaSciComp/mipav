@@ -503,7 +503,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
 				EPS = neweps;
 				neweps = neweps / 2.0;
 			}
-		} // while(true)
+		} // while(true)-
 	}
 
 	public SymmsIntegralMapping(ModelImage destImg, ModelImage srcImg, String FORTFL, boolean SYMTY, boolean REFLN,
@@ -1095,6 +1095,10 @@ public class SymmsIntegralMapping extends AlgorithmBase {
     	// Take MQIN1 11 -> 110
     	// JAPHYC: ABNROMAL EXIT
     	// NUMBER OF EQUATIONS EXCEEDS MNEQN DURING REFINEMENT
+    	
+    	// TAKING EPS FROM 2.22E-16 to 1.0e-8 GIVES:
+    	// JAPHYC: ABONORMAL EXIT
+    	// COLLOCATION MATRIX IS EFFECTIVELY SINGULAR
     	//
     	// Running MIPAV for example 1 gives:
     	// JAPHYC: ABNORMAL EXIT
@@ -1102,6 +1106,7 @@ public class SymmsIntegralMapping extends AlgorithmBase {
     	// IBNDS[2] = MQIN1
     	// Take MQIN1 11 -> 110
     	// Still receive same error message.
+    	// Taking EPS from 2.22E-16 to 1.0E-8 still gives same error message.
     	// .......................................................................
         // EXAMPLE PROGRAM TO SHOW THE USE OF THE SYMM EQUATION SOLVING
         // SUBROUTINE JAPHYC FROM THE
