@@ -1011,7 +1011,12 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
                             exponent = ((lambdaOne - lambdaTwo) * (lambdaOne - lambdaTwo) / (float) k2);
 
-                            c1 = max(0.01f, (float) (1.0 - Math.exp(-exponent)));
+                            if (exponent == 0.0f) {
+                            	c1 = 0.0f;
+                            }
+                            else {
+                            	c1 = (float)(0.01 + (1 - 0.01)*Math.exp(-1.0/exponent));
+                            }
 
                             d11[idx] = 0.5f * (c1 + c2 + ((c2 - c1) * (s11[idx] - s22[idx]) / (alpha + epsilon)));
                             d12[idx] = (c2 - c1) * s12[idx] / (alpha + epsilon);
@@ -1380,7 +1385,12 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
                             exponent = ((lambdaOne - lambdaTwo) * (lambdaOne - lambdaTwo) / (float) k2);
 
-                            c1 = max(0.01f, (float) (1.0 - Math.exp(-exponent)));
+                            if (exponent == 0.0f) {
+                            	c1 = 0.0f;
+                            }
+                            else {
+                            	c1 = (float)(0.01 + (1 - 0.01)*Math.exp(-1.0/exponent));
+                            }
 
                             d11[idx] = 0.5f * (c1 + c2 + ((c2 - c1) * (s11[idx] - s22[idx]) / (alpha + epsilon)));
 
@@ -1762,7 +1772,12 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                                          ((lambdaOne - lambdaThree) * (lambdaOne - lambdaThree)) +
                                          ((lambdaTwo - lambdaThree) * (lambdaTwo - lambdaThree))) / (float) k2);
 
-                            c1 = max(0.01f, (float) (1.0 - Math.exp(-exponent)));
+                            if (exponent == 0.0f) {
+                            	c1 = 0.0f;
+                            }
+                            else {
+                            	c1 = (float)(0.01 + (1 - 0.01)*Math.exp(-1.0/exponent));
+                            }
                             cArray[0][0] = c1;
                             cArray[1][1] = c2;
                             cArray[2][2] = c3;
@@ -2328,7 +2343,12 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                                          ((lambdaOne - lambdaThree) * (lambdaOne - lambdaThree)) +
                                          ((lambdaTwo - lambdaThree) * (lambdaTwo - lambdaThree))) / (float) k2);
 
-                            c1 = max(0.01f, (float) (1.0 - Math.exp(-exponent)));
+                            if (exponent == 0.0f) {
+                            	c1 = 0.0f;
+                            }
+                            else {
+                            	c1 = (float)(0.01 + (1 - 0.01)*Math.exp(-1.0/exponent));
+                            }
                             cArray[0][0] = c1;
                             cArray[1][1] = c2;
                             cArray[2][2] = c3;
