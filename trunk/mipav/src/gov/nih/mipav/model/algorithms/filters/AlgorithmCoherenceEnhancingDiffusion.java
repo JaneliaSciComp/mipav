@@ -1012,7 +1012,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                             exponent = ((lambdaOne - lambdaTwo) * (lambdaOne - lambdaTwo) / (float) k2);
 
                             if (exponent == 0.0f) {
-                            	c1 = 0.0f;
+                            	c1 = 0.01f;
                             }
                             else {
                             	c1 = (float)(0.01 + (1 - 0.01)*Math.exp(-1.0/exponent));
@@ -1386,7 +1386,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                             exponent = ((lambdaOne - lambdaTwo) * (lambdaOne - lambdaTwo) / (float) k2);
 
                             if (exponent == 0.0f) {
-                            	c1 = 0.0f;
+                            	c1 = 0.01f;
                             }
                             else {
                             	c1 = (float)(0.01 + (1 - 0.01)*Math.exp(-1.0/exponent));
@@ -1773,7 +1773,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                                          ((lambdaTwo - lambdaThree) * (lambdaTwo - lambdaThree))) / (float) k2);
 
                             if (exponent == 0.0f) {
-                            	c1 = 0.0f;
+                            	c1 = 0.01f;
                             }
                             else {
                             	c1 = (float)(0.01 + (1 - 0.01)*Math.exp(-1.0/exponent));
@@ -2344,7 +2344,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
                                          ((lambdaTwo - lambdaThree) * (lambdaTwo - lambdaThree))) / (float) k2);
 
                             if (exponent == 0.0f) {
-                            	c1 = 0.0f;
+                            	c1 = 0.01f;
                             }
                             else {
                             	c1 = (float)(0.01 + (1 - 0.01)*Math.exp(-1.0/exponent));
