@@ -29,6 +29,7 @@ import gov.nih.mipav.model.algorithms.registration.AlgorithmConstrainedOAR3D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -277,7 +278,7 @@ public class PlugInAlgorithmWormUntwisting
 		{			
 			for ( int i = 0; i < includeRange.size(); i++ )
 			{
-				String imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.tif";
+				String imageName = baseFileName + "_" + includeRange.elementAt(i) + "_straight.xml";
 				String subDirName = baseFileName + "_" + includeRange.elementAt(i) + File.separator;
 				String subDirNameResults = baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator;
 				File imageFile = new File(baseFileDir + File.separator + subDirName + subDirNameResults + PlugInAlgorithmWormUntwisting.outputImages + File.separator + imageName);
@@ -285,15 +286,15 @@ public class PlugInAlgorithmWormUntwisting
 				
 				if ( imageFile.exists() ) {					
 					Vector3f[] conversion = resliceRotate(imageFile, imageName, xSize, ySize, zSize );					
-					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion);
-					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion);
-					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion);
+					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion, ySize);
+					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion, ySize);
+					resliceAnnotations( baseFileDir + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion, ySize);
 				}
 				if ( imageFile2.exists() ) {
 					Vector3f[] conversion = resliceRotate(imageFile2, imageName, xSize, ySize, zSize );					
-					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion);
-					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion);
-					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion);
+					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_annotations" + File.separator, "straightened_annotations", conversion, ySize);
+					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_lattice" + File.separator, "straightened_lattice", conversion, ySize);
+					resliceAnnotations( baseFileDir2 + File.separator + subDirName + subDirNameResults + "straightened_seamcells" + File.separator, "straightened_seamcells", conversion, ySize);
 				}
 			}
 		}
@@ -318,28 +319,17 @@ public class PlugInAlgorithmWormUntwisting
 			
 			int[] destExtents = new int[]{xSize,ySize,zSize};
 
-            ModelImage resliceImage = new ModelImage(wormImage.getType(), destExtents, JDialogBase.makeImageName(wormImage.getImageName(), "_temp.xml"));
+            ModelImage resliceImage = new ModelImage(wormImage.getType(), destExtents, JDialogBase.makeImageName(wormImage.getImageName(), "_temp"));
+            JDialogBase.updateFileInfo(wormImage, resliceImage);
             AlgorithmAddMargins padSlicesAlgo = new AlgorithmAddMargins(wormImage, resliceImage, marginX, marginY, marginZ);
             padSlicesAlgo.run();
-    		
 			destExtents = new int[]{xSize,zSize,ySize};
 
-            ModelImage resultImage = new ModelImage(wormImage.getType(), destExtents, JDialogBase.makeImageName(wormImage.getImageName(), "_reslice.xml"));
-
-			dimX = resliceImage.getExtents().length > 0 ? resliceImage.getExtents()[0] : 1;
-			dimY = resliceImage.getExtents().length > 1 ? resliceImage.getExtents()[1] : 1;
-			dimZ = resliceImage.getExtents().length > 2 ? resliceImage.getExtents()[2] : 1;
-			for ( int z = 0; z < dimZ; z++ ) {
-				for ( int y = 0; y < dimY; y++ ) {
-					for ( int x = 0; x < dimX; x++ ) {
-						if ( resliceImage.isColorImage() ) {}
-						else {
-							float value = resliceImage.getFloat(x, y, z );
-							resultImage.set(x, z, y, value );
-						}
-					}
-				}
-			}
+            AlgorithmRotate rotateAlgo = new AlgorithmRotate(resliceImage, AlgorithmRotate.X_AXIS_MINUS);
+            rotateAlgo.run();
+            ModelImage resultImage = rotateAlgo.getDestImage();
+            resultImage.setImageName(JDialogBase.makeImageName(wormImage.getImageName(), "_reslice"));
+            
 			ModelImage.saveImage(resultImage, resultImage.getImageName() + ".xml", imageFile.getParent() + File.separator, false);
     		ModelImage.saveImage(resultImage, resultImage.getImageName() + ".tif", imageFile.getParent() + File.separator, false);
     		wormImage.disposeLocal(false);
@@ -352,7 +342,7 @@ public class PlugInAlgorithmWormUntwisting
 		return null;
 	}
 	
-	private static void resliceAnnotations( String path, String name, Vector3f[] conversion ) {
+	private static void resliceAnnotations( String path, String name, Vector3f[] conversion, int ySize ) {
 
 		Vector3f shift = conversion[0];
 		Vector3f offset = conversion[1];
@@ -377,7 +367,7 @@ public class PlugInAlgorithmWormUntwisting
 			for ( int j = 0; j < curveOrig.size(); j++ ) {
 				float temp = curveOrig.elementAt(j).Y;
 				curveOrig.elementAt(j).Y = curveOrig.elementAt(j).Z;
-				curveOrig.elementAt(j).Z = temp;
+				curveOrig.elementAt(j).Z = (ySize - 1) - temp;
 			}
 		}
 
