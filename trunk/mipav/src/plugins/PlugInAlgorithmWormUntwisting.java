@@ -344,6 +344,7 @@ public class PlugInAlgorithmWormUntwisting
 	
 	private static void resliceAnnotations( String path, String name, Vector3f[] conversion, int ySize ) {
 
+		System.err.println("resliceAnnotations shift = " + conversion[0] + "   offset = " + conversion[1] );
 		Vector3f shift = conversion[0];
 		Vector3f offset = conversion[1];
 		
@@ -368,9 +369,11 @@ public class PlugInAlgorithmWormUntwisting
 				float temp = curveOrig.elementAt(j).Y;
 				curveOrig.elementAt(j).Y = curveOrig.elementAt(j).Z;
 				curveOrig.elementAt(j).Z = (ySize - 1) - temp;
+				
+				System.err.println( curveOrig.elementAt(j) );
 			}
 		}
-
+		System.err.println("");
 		LatticeModel.saveAnnotationsAsCSV(path, name + "_reslice.csv", localVOI);
 		
 	}

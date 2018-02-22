@@ -1114,7 +1114,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 					"straightened_lattice.csv");
 			for ( int j = 0; j < lattice.size(); j++ )
 			{
-				imageA.registerVOI(convertToLocal(lattice.elementAt(j)));
+				imageA.registerVOI(convertToLocal(lattice.elementAt(j), false));
 			}
 
 			// load any existing annotations from the csv file:
@@ -1129,7 +1129,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				if ( annotations != null )
 				{
 //					savedAnnotations = annotations;
-					savedAnnotations = convertToLocal(annotations);
+					savedAnnotations = convertToLocal(annotations, true);
 				}
 //				annotations = LatticeModel.readAnnotationsCSV(baseFileDir2 + File.separator + subDirName + subDirNameResults + "tracked_annotations" + File.separator +
 //						"tracked_annotations.csv");		
@@ -1381,17 +1381,20 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 		return (includeRange != null);
 	}
 	
-	private VOI convertToLocal( VOI voi ) {
+	private VOI convertToLocal( VOI voi, boolean print ) {
 		if ( !loadReslice.isSelected() /* && !loadRotated.isSelected() */ ) {
 			return voi;
 		}
 		int shiftX = originalExtents[0]/2;
 		int shiftY = originalExtents[1]/2;
-		int xOffset = (imageA.getExtents()[0] - originalExtents[0])/2;
-		int yOffset = (imageA.getExtents()[1] - originalExtents[1])/2;
-//		if ( loadRotated.isSelected() )
-		{
-			yOffset = (imageA.getExtents()[2] - originalExtents[1])/2;
+		int xSize = imageA.getExtents()[0];
+		int ySize = imageA.getExtents()[2];
+		int xOffset = (xSize - originalExtents[0])/2;
+		int yOffset = (ySize - originalExtents[1])/2;
+
+		if ( print ) {
+
+			System.err.println("convertToOriginal shift = " + shiftX + " " + shiftY + "   offset = " + xOffset + " " + yOffset );
 		}
 		
 		VOI localVOI = new VOI(voi);
@@ -1416,9 +1419,17 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				for ( int j = 0; j < curveOrig.size(); j++ ) {
 					float temp = curveOrig.elementAt(j).Y;
 					curveOrig.elementAt(j).Y = curveOrig.elementAt(j).Z;
-					curveOrig.elementAt(j).Z = temp;
+					curveOrig.elementAt(j).Z = (ySize - 1) - temp;
+
+					
+					if ( print ) {
+						System.err.println( curveOrig.elementAt(j) );
+					}
 				}
 			}
+		}
+		if ( print ) {
+			System.err.println( "" );
 		}
 		return localVOI;
 	}
@@ -1430,14 +1441,15 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 
 		int shiftX = imageA.getExtents()[0]/2;
 		int shiftY = imageA.getExtents()[1]/2;
-		int xOffset = (imageA.getExtents()[0] - originalExtents[0])/2;
-		int yOffset = (imageA.getExtents()[1] - originalExtents[1])/2;
+		int xSize = imageA.getExtents()[0];
+		int ySize = imageA.getExtents()[2];
+		int xOffset = (xSize - originalExtents[0])/2;
+		int yOffset = (ySize - originalExtents[1])/2;
 //		if ( loadRotated.isSelected() )
 		{
 			shiftY = imageA.getExtents()[2]/2;
 			yOffset = (imageA.getExtents()[2] - originalExtents[1])/2;
 		}
-		
 		VOI localVOI = new VOI(voi);
 		for ( int i = 0; i < localVOI.getCurves().size(); i++ ) {
 			VOIBase curveOrig = localVOI.getCurves().elementAt(i);
@@ -1446,7 +1458,7 @@ public class PlugInDialogTrackAnnotations extends JFrame implements ActionListen
 				// swap y and z coordinates:
 				for ( int j = 0; j < curveOrig.size(); j++ ) {
 					float temp = curveOrig.elementAt(j).Y;
-					curveOrig.elementAt(j).Y = curveOrig.elementAt(j).Z;
+					curveOrig.elementAt(j).Y = (ySize - 1) - curveOrig.elementAt(j).Z;
 					curveOrig.elementAt(j).Z = temp;
 				}
 			}
