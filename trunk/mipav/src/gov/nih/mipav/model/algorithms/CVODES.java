@@ -125,58 +125,53 @@ public abstract class CVODES {
 	 */
 
 	final int  CV_SUCCESS = 0;
-	/*#define CV_TSTOP_RETURN          1
-	#define CV_ROOT_RETURN           2
+	final int CV_TSTOP_RETURN = 1;
+	final int CV_ROOT_RETURN = 2;
 
-	#define CV_WARNING              99
+	final int CV_WARNING = 99;
 
-	#define CV_TOO_MUCH_WORK        -1
-	#define CV_TOO_MUCH_ACC         -2
-	#define CV_ERR_FAILURE          -3
-	#define CV_CONV_FAILURE         -4
+	final int CV_TOO_MUCH_WORK = -1;
+	final int CV_TOO_MUCH_ACC = -2;
+	final int CV_ERR_FAILURE = -3;
+	final int CV_CONV_FAILURE = -4;
 
-	#define CV_LINIT_FAIL           -5
-	#define CV_LSETUP_FAIL          -6
-	#define CV_LSOLVE_FAIL          -7
-	#define CV_RHSFUNC_FAIL         -8
-	#define CV_FIRST_RHSFUNC_ERR    -9
-	#define CV_REPTD_RHSFUNC_ERR    -10
-	#define CV_UNREC_RHSFUNC_ERR    -11
-	#define CV_RTFUNC_FAIL          -12
+	final int CV_LINIT_FAIL = -5;
+	final int CV_LSETUP_FAIL = -6;
+	final int CV_LSOLVE_FAIL = -7;
+	final int CV_RHSFUNC_FAIL = -8;
+	final int CV_FIRST_RHSFUNC_ERR = -9;
+	final int CV_REPTD_RHSFUNC_ERR = -10;
+	final int CV_UNREC_RHSFUNC_ERR = -11;
+	final int  CV_RTFUNC_FAIL = -12;
 
-	#define CV_MEM_FAIL             -20
-	#define CV_MEM_NULL             -21
-	#define CV_ILL_INPUT            -22
-	#define CV_NO_MALLOC            -23
-	#define CV_BAD_K                -24
-	#define CV_BAD_T                -25
-	#define CV_BAD_DKY              -26
-	#define CV_TOO_CLOSE            -27
-
-	#define CV_NO_QUAD              -30
-	#define CV_QRHSFUNC_FAIL        -31
-	#define CV_FIRST_QRHSFUNC_ERR   -32
-	#define CV_REPTD_QRHSFUNC_ERR   -33
-	#define CV_UNREC_QRHSFUNC_ERR   -34
-
-	#define CV_NO_SENS              -40
-	#define CV_SRHSFUNC_FAIL        -41
-	#define CV_FIRST_SRHSFUNC_ERR   -42
-	#define CV_REPTD_SRHSFUNC_ERR   -43
-	#define CV_UNREC_SRHSFUNC_ERR   -44
-
-	#define CV_BAD_IS               -45
-
-	#define CV_NO_QUADSENS          -50
-	#define CV_QSRHSFUNC_FAIL       -51
-	#define CV_FIRST_QSRHSFUNC_ERR  -52
-	#define CV_REPTD_QSRHSFUNC_ERR  -53
-	#define CV_UNREC_QSRHSFUNC_ERR  -54*/
-
+	final int CV_MEM_FAIL = -20;
 	final int CV_MEM_NULL = -21;
 	final int CV_ILL_INPUT = -22;
+	final int CV_NO_MALLOC = -23;
+	final int CV_BAD_K = -24;
+	final int CV_BAD_T = -25;
+	final int CV_BAD_DKY = -26;
+	final int CV_TOO_CLOSE = -27;
 
+	final int CV_NO_QUAD = -30;
+	final int CV_QRHSFUNC_FAIL = -31;
+	final int CV_FIRST_QRHSFUNC_ERR = -32;
+	final int CV_REPTD_QRHSFUNC_ERR = -33;
+	final int CV_UNREC_QRHSFUNC_ERR = -34;
 
+	final int CV_NO_SENS = -40;
+	final int CV_SRHSFUNC_FAIL = -41;
+	final int CV_FIRST_SRHSFUNC_ERR = -42;
+	final int CV_REPTD_SRHSFUNC_ERR = -43;
+	final int CV_UNREC_SRHSFUNC_ERR = -44;
+
+	final int CV_BAD_IS = -45;
+
+	final int CV_NO_QUADSENS = -50;
+	final int CV_QSRHSFUNC_FAIL = -51;
+	final int CV_FIRST_QSRHSFUNC_ERR = -52;
+	final int CV_REPTD_QSRHSFUNC_ERR = -53;
+	final int CV_UNREC_QSRHSFUNC_ERR = -54;
 
 	final double HMIN_DEFAULT = 0.0;    /* hmin default value     */
 	final double HMAX_INV_DEFAULT = 0.0;    /* hmax_inv default value */
@@ -187,6 +182,9 @@ public abstract class CVODES {
 	final int MXNEF = 7;
 	final double CORTES = 0.1;
 	final double ZERO = 0.0;
+	final double ONE = 1.0;
+	final double ETAMX1 = 10000.0; 
+
 	
 	final String MSG_TIME = "t = %lg";
 	final String MSG_TIME_H = "t = %lg and h = %lg";
@@ -403,14 +401,24 @@ public abstract class CVODES {
 		final double T1 = 0.4; // first output time
 		final double TMULT = 10.0; // output time factor
 		final int NOUT = 12; // number of output times
+		int f = cvsRoberts_dns;
+		int g = cvsRoberts_dns;
 		
 		// Set initial conditions
-		double y[] = new double[]{Y1,Y2,Y3};
+		NVector y = new NVector();
+		NVector abstol = new NVector();
+		double yr[] = new double[]{Y1,Y2,Y3};
+		N_VNew_Serial(y, NEQ);
+		y.setData(yr);
 		double reltol = RTOL; // Set the scalar relative tolerance
 		// Set the vector absolute tolerance
-		double abstol[] = new double[]{ATOL1,ATOL2,ATOL3};
+		double abstolr[] = new double[]{ATOL1,ATOL2,ATOL3};
+		N_VNew_Serial(abstol,NEQ);
+		abstol.setData(abstolr);
 		CVodeMemRec cvode_mem;
 		int flag;
+		double A[][];
+		SUNLinearSolver LS;
 		
 		// Call CVodeCreate to create the solver memory and specify the
 		// Backward Differentiation Formula and the use of a Newton
@@ -419,15 +427,65 @@ public abstract class CVODES {
 		if (cvode_mem == null) {
 		    return;	
 		}
-		flag = CVodeInit(cvode_mem, T0, y);
 		
 		// Call CVodeInit to initialize the integrator memory and specify the
 		// user's right hand side function in y' = f(t,y), the initial time T0, and
-		// the initial dependent variable vector y
+	    // the initial dependent variable vector y
+		flag = CVodeInit(cvode_mem, f, T0, y);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
 		
+		// Call CVodeSVtolerances to specify the scalar relative tolerance
+		// and vector absolute tolerances
+		flag = CVodeSVtolerances(cvode_mem, reltol, abstol);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVRootInit to specify the root function g with 2 components
+		flag = CVodeRootInit(cvode_mem, 2, g);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Create dense SUNMATRIX for use in linear solver
+		// indexed by columns stacked on top of each other
+		try {
+		    A = new double[NEQ][NEQ];
+		}
+		catch (OutOfMemoryError e) {
+		    MipavUtil.displayError("Out of memory error trying to create A");
+		    return;
+		}
+		
+		// Create dense SUNLinearSolver object for use by CVode
+		LS = SUNDenseLinearSolver(y, A);
+		if (LS == null) {
+			return;
+		}
+		
+		// Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode
+		//flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
 	}
 	
-	private int f(double t, double y[], double ydot[]) {
+	private void N_VNew_Serial(NVector y, int length) {
+	    if ((y != null) && (length > 0)) {
+	    	y.data = new double[length];
+	    	y.own_data = true;
+	    }
+	}
+	
+	/**
+	 * f routine.  Compte function f(t,y).
+	 * @param t
+	 * @param yv
+	 * @param ydotv
+	 * @return
+	 */
+	private int f(double t, NVector yv, NVector ydotv) {
+		double y[] = yv.getData();
+		double ydot[] = ydotv.getData();
 		if (problem == 1) {
 		    ydot[0] = -0.04*y[0] + 1.0E4*y[1]*y[2];
 		    ydot[2] = 3.0E7*y[1]*y[1];
@@ -436,10 +494,38 @@ public abstract class CVODES {
 		return 0;
 	}
 	
+	/**
+	 * g routine.  Compute functions g_i(t,y) for i = 0,1.
+	 * @param t
+	 * @param yv
+	 * @param gout
+	 * @return
+	 */
+	private int g(double t, NVector yv, double gout[]) {
+		double y[] = yv.getData();
+		if (problem == 1) {
+		    gout[0] = y[0] - 0.0001;
+		    gout[1] = y[2] - 0.01;
+		}
+		return 0;
+	}
+	
 	// Types: struct CVodeMemRec, CVodeMem
 	// -----------------------------------------------------------------
 	// The type CVodeMem is type pointer to struct CVodeMemRec.
 	// This structure contains fields to keep track of problem state.
+	
+	private class NVector {
+		double data[];
+		boolean own_data;
+		
+		void setData(double data[]) {
+			this.data = data;
+		}
+		double[] getData() {
+		    return data;	
+		}
+	}
 	
 	  
 	private class CVodeMemRec {
@@ -451,6 +537,7 @@ public abstract class CVODES {
 	    --------------------------*/
 
 	  //CVRhsFn cv_f;               /* y' = f(t,y(t))                                */
+	  int cv_f;
 	  //void *cv_user_data;         /* user pointer passed to f                      */
 
 	  int cv_lmm;                 /* lmm = ADAMS or BDF                            */
@@ -459,7 +546,7 @@ public abstract class CVODES {
 	  int cv_itol;                /* itol = CV_SS, CV_SV, or CV_WF, or CV_NN       */
 	  double cv_reltol;         /* relative tolerance                            */
 	  double cv_Sabstol;        /* scalar absolute tolerance                     */
-	  double cv_Vabstol[];        /* vector absolute tolerance                     */
+	  NVector cv_Vabstol = new NVector();        /* vector absolute tolerance                     */
 	  boolean cv_user_efun;   /* SUNTRUE if user sets efun                     */
 	  //CVEwtFn cv_efun;            /* function to set ewt                           */
 	  //void *cv_e_data;            /* user pointer passed to efun                   */
@@ -477,7 +564,7 @@ public abstract class CVODES {
 	  int cv_itolQ;               /* itolQ = CV_SS or CV_SV                        */
 	  double cv_reltolQ;        /* relative tolerance for quadratures            */
 	  double cv_SabstolQ;       /* scalar absolute tolerance for quadratures     */
-	  double cv_VabstolQ[];       /* vector absolute tolerance for quadratures     */
+	  NVector cv_VabstolQ = new NVector();       /* vector absolute tolerance for quadratures     */
 
 	  /*------------------------
 	    Sensitivity Related Data 
@@ -506,7 +593,7 @@ public abstract class CVODES {
 	  int cv_itolS;
 	  double cv_reltolS;        /* relative tolerance for sensitivities         */
 	  double cv_SabstolS[];      /* scalar absolute tolerances for sensi.        */
-	  double cv_VabstolS[];      /* vector absolute tolerances for sensi.        */
+	  NVector cv_VabstolS = new NVector();      /* vector absolute tolerances for sensi.        */
 
 	  /*-----------------------------------
 	    Quadrature Sensitivity Related Data 
@@ -523,13 +610,13 @@ public abstract class CVODES {
 	  int cv_itolQS;
 	  double cv_reltolQS;       /* relative tolerance for yQS                   */
 	  double cv_SabstolQS[];     /* scalar absolute tolerances for yQS           */
-	  double cv_VabstolQS[];     /* vector absolute tolerances for yQS           */
+	  NVector cv_VabstolQS = new NVector();     /* vector absolute tolerances for yQS           */
 
 	  /*-----------------------
 	    Nordsieck History Array 
 	    -----------------------*/
 
-	  double cv_zn[] = new double[L_MAX];      /* Nordsieck array, of size N x (q+1).
+	  NVector cv_zn[] = new NVector[L_MAX];   /* Nordsieck array, of size N x (q+1).
 	                                 zn[j] is a vector of length N (j=0,...,q)
 	                                 zn[j] = [1/factorial(j)] * h^j * 
 	                                 (jth derivative of the interpolating poly.)  */
@@ -538,37 +625,37 @@ public abstract class CVODES {
 	    Vectors of length N 
 	    -------------------*/
 
-	  double cv_ewt[];            /* error weight vector                          */
-	  double cv_y[];              /* y is used as temporary storage by the solver.
-	                                 The memory is provided by the user to CVode 
+	  NVector cv_ewt = new NVector();            /* error weight vector                          */
+	  NVector cv_y = new NVector();              // y is used as temporary storage by the solver.
+	                              /*   The memory is provided by the user to CVode 
 	                                 where the vector is named yout.              */
-	  double cv_acor[];           /* In the context of the solution of the
-	                                 nonlinear equation, acor = y_n(m) - y_n(0).
+	  NVector cv_acor = new NVector();           // In the context of the solution of the
+	                               /*  nonlinear equation, acor = y_n(m) - y_n(0).
 	                                 On return, this vector is scaled to give
 	                                 the estimated local error in y.              */
-	  double cv_tempv[];          /* temporary storage vector                     */
-	  double cv_ftemp[];          /* temporary storage vector                     */
+	  NVector cv_tempv = new NVector();          /* temporary storage vector                     */
+	  NVector cv_ftemp = new NVector();          /* temporary storage vector                     */
 	  
 	  /*--------------------------
 	    Quadrature Related Vectors 
 	    --------------------------*/
 
-	  double cv_znQ[] = new double[L_MAX];     /* Nordsieck arrays for quadratures             */
-	  double cv_ewtQ[];           /* error weight vector for quadratures          */
-	  double cv_yQ[];             /* Unlike y, yQ is not allocated by the user    */
-	  double cv_acorQ[];          /* acorQ = yQ_n(m) - yQ_n(0)                    */
-	  double cv_tempvQ[];         /* temporary storage vector (~ tempv)           */
+	  NVector cv_znQ[] = new NVector[L_MAX];     /* Nordsieck arrays for quadratures             */
+	  NVector cv_ewtQ = new NVector();           /* error weight vector for quadratures          */
+	  NVector cv_yQ = new NVector();             /* Unlike y, yQ is not allocated by the user    */
+	  NVector cv_acorQ = new NVector();          /* acorQ = yQ_n(m) - yQ_n(0)                    */
+	  NVector cv_tempvQ = new NVector();         /* temporary storage vector (~ tempv)           */
 
 	  /*---------------------------
 	    Sensitivity Related Vectors 
 	    ---------------------------*/
 
-	  double cv_znS[][] = new double[L_MAX][];    /* Nordsieck arrays for sensitivities           */
-	  double cv_ewtS[][];          /* error weight vectors for sensitivities       */
-	  double cv_yS[][];            /* yS=yS0 (allocated by the user)               */
-	  double cv_acorS[][];         /* acorS = yS_n(m) - yS_n(0)                    */
-	  double cv_tempvS[][];        /* temporary storage vector (~ tempv)           */
-	  double cv_ftempS[][];        /* temporary storage vector (~ ftemp)           */
+	  NVector cv_znS[] = new NVector[L_MAX];    /* Nordsieck arrays for sensitivities           */
+	  NVector cv_ewtS[];          /* error weight vectors for sensitivities       */
+	  NVector cv_yS[];            /* yS=yS0 (allocated by the user)               */
+	  NVector cv_acorS[];         /* acorS = yS_n(m) - yS_n(0)                    */
+	  NVector cv_tempvS[];        /* temporary storage vector (~ tempv)           */
+	  NVector cv_ftempS[];        /* temporary storage vector (~ ftemp)           */
 
 	  boolean cv_stgr1alloc;  /* Did we allocate ncfS1, ncfnS1, and nniS1?    */
 
@@ -576,12 +663,12 @@ public abstract class CVODES {
 	    Quadrature Sensitivity Related Vectors 
 	    --------------------------------------*/
 
-	  double cv_znQS[][] = new double[L_MAX][];   /* Nordsieck arrays for quadr. sensitivities    */
-	  double cv_ewtQS[][];         /* error weight vectors for sensitivities       */
-	  double cv_yQS[][];           /* Unlike yS, yQS is not allocated by the user  */
-	  double cv_acorQS[][];        /* acorQS = yQS_n(m) - yQS_n(0)                 */
-	  double cv_tempvQS[][];       /* temporary storage vector (~ tempv)           */
-	  double cv_ftempQ[];         /* temporary storage vector (~ ftemp)           */
+	  NVector cv_znQS[] = new NVector[L_MAX];   /* Nordsieck arrays for quadr. sensitivities    */
+	  NVector cv_ewtQS[];         /* error weight vectors for sensitivities       */
+	  NVector cv_yQS[];           /* Unlike yS, yQS is not allocated by the user  */
+	  NVector cv_acorQS[];        /* acorQS = yQS_n(m) - yQS_n(0)                 */
+	  NVector cv_tempvQS[];       /* temporary storage vector (~ tempv)           */
+	  NVector cv_ftempQ = new NVector();         /* temporary storage vector (~ ftemp)           */
 	  
 	  /*-----------------
 	    Tstop information
@@ -788,6 +875,7 @@ public abstract class CVODES {
 	    ----------------*/
 
 	  //CVRootFn cv_gfun;        /* Function g for roots sought                     */
+	  int cv_gfun;
 	  int cv_nrtfn;            /* number of components of g                       */
 	  int cv_iroots[];          /* array for root information                      */
 	  int cv_rootdir[];         /* array specifying direction of zero-crossing     */
@@ -857,10 +945,6 @@ public abstract class CVODES {
 
     	  cv_mem = null;
     	  cv_mem = new CVodeMemRec();
-    	  if (cv_mem == null) {
-    	    cvProcessError(null, 0, "CVODES", "CVodeCreate", MSGCV_CVMEM_FAIL);
-    	    return null;
-    	  }
 
     	  /* Zero out cv_mem */
     	  //memset(cv_mem, 0, sizeof(struct CVodeMemRec));
@@ -879,6 +963,7 @@ public abstract class CVODES {
     	  /* Set default values for integrator optional inputs */
 
     	  //cv_mem.cv_f          = null;
+    	  cv_mem.cv_f = -1;
     	  //cv_mem.cv_user_data  = null;
     	  cv_mem.cv_itol       = CV_NN;
     	  cv_mem.cv_user_efun  = false;
@@ -908,6 +993,7 @@ public abstract class CVODES {
     	  cv_mem.cv_iroots     = null;
     	  cv_mem.cv_rootdir    = null;
     	  //cv_mem.cv_gfun       = null;
+    	  cv_mem.cv_gfun = -1;
     	  cv_mem.cv_nrtfn      = 0;  
     	  cv_mem.cv_gactive    = null;
     	  cv_mem.cv_mxgnull    = 1;
@@ -1039,10 +1125,11 @@ public abstract class CVODES {
       * errfp and an error flag is returned. Otherwise, it returns CV_SUCCESS
       */
 
-     int CVodeInit(CVodeMemRec cv_mem, double t0, double y0[])
+     int CVodeInit(CVodeMemRec cv_mem, int f, double t0, NVector y0)
      {
        boolean nvectorOK, allocOK;
-       long lrw1, liw1;
+       long lrw1[] = new long[1];
+       long liw1[] = new long[1];
        int i,k;
 
        /* Check cvode_mem */
@@ -1061,11 +1148,11 @@ public abstract class CVODES {
          return(CV_ILL_INPUT);
        }
 
-       //if (f == NULL) {
-         //cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeInit",
-                        //MSGCV_NULL_F);
-         //return(CV_ILL_INPUT);
-       //}
+       if (f < 0) {
+         cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeInit",
+                        MSGCV_NULL_F);
+         return(CV_ILL_INPUT);
+       }
 
        /* Test if all required vector operations are implemented */
 
@@ -1078,96 +1165,105 @@ public abstract class CVODES {
 
        /* Set space requirements for one N_Vector */
 
-       /*if (y0->ops->nvspace != NULL) {
-         N_VSpace(y0, &lrw1, &liw1);
+       if (y0.getData() != null) {
+         N_VSpace_Serial(y0, lrw1, liw1);
        } else {
-         lrw1 = 0;
-         liw1 = 0;
+         lrw1[0] = 0;
+         liw1[0] = 0;
        }
-       cv_mem->cv_lrw1 = lrw1;
-       cv_mem->cv_liw1 = liw1;*/
+       cv_mem.cv_lrw1 = lrw1[0];
+       cv_mem.cv_liw1 = liw1[0];
 
        /* Allocate the vectors (using y0 as a template) */
 
-      /* allocOK = cvAllocVectors(cv_mem, y0);
+      allocOK = cvAllocVectors(cv_mem, y0);
        if (!allocOK) {
          cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES", "CVodeInit",
                         MSGCV_MEM_FAIL);
          return(CV_MEM_FAIL);
-       }*/
+       }
 
        /* All error checking is complete at this point */
 
        /* Copy the input parameters into CVODES state */
 
-       /*cv_mem->cv_f  = f;
-       cv_mem->cv_tn = t0;*/
+       //cv_mem.cv_f  = f;
+       cv_mem.cv_tn = t0;
 
        /* Set step parameters */
 
-       /*cv_mem->cv_q      = 1;
-       cv_mem->cv_L      = 2;
-       cv_mem->cv_qwait  = cv_mem->cv_L;
-       cv_mem->cv_etamax = ETAMX1;
+       cv_mem.cv_q      = 1;
+       cv_mem.cv_L      = 2;
+       cv_mem.cv_qwait  = cv_mem.cv_L;
+       cv_mem.cv_etamax = ETAMX1;
 
-       cv_mem->cv_qu     = 0;
-       cv_mem->cv_hu     = ZERO;
-       cv_mem->cv_tolsf  = ONE;*/
+       cv_mem.cv_qu     = 0;
+       cv_mem.cv_hu     = ZERO;
+       cv_mem.cv_tolsf  = ONE;
 
        /* Set the linear solver addresses to NULL.
           (We check != NULL later, in CVode, if using CV_NEWTON.) */
 
-       /*cv_mem->cv_linit  = NULL;
-       cv_mem->cv_lsetup = NULL;
-       cv_mem->cv_lsolve = NULL;
-       cv_mem->cv_lfree  = NULL;
-       cv_mem->cv_lmem   = NULL;*/
+       //cv_mem.cv_linit  = null;
+       //cv_mem.cv_lsetup = null;
+       //cv_mem.cv_lsolve = null;
+       //cv_mem.cv_lfree  = null;
+       //cv_mem.cv_lmem   = null;
 
        /* Set forceSetup to SUNFALSE */
 
-       //cv_mem->cv_forceSetup = SUNFALSE;
+       cv_mem.cv_forceSetup = false;
 
        /* Initialize zn[0] in the history array */
 
-       //N_VScale(ONE, y0, cv_mem->cv_zn[0]);
+       N_VScale(ONE, y0, cv_mem.cv_zn[0]);
 
        /* Initialize all the counters */
 
-       /*cv_mem->cv_nst     = 0;
-       cv_mem->cv_nfe     = 0;
-       cv_mem->cv_ncfn    = 0;
-       cv_mem->cv_netf    = 0;
-       cv_mem->cv_nni     = 0;
-       cv_mem->cv_nsetups = 0;
-       cv_mem->cv_nhnil   = 0;
-       cv_mem->cv_nstlp   = 0;
-       cv_mem->cv_nscon   = 0;
-       cv_mem->cv_nge     = 0;
+       cv_mem.cv_nst     = 0;
+       cv_mem.cv_nfe     = 0;
+       cv_mem.cv_ncfn    = 0;
+       cv_mem.cv_netf    = 0;
+       cv_mem.cv_nni     = 0;
+       cv_mem.cv_nsetups = 0;
+       cv_mem.cv_nhnil   = 0;
+       cv_mem.cv_nstlp   = 0;
+       cv_mem.cv_nscon   = 0;
+       cv_mem.cv_nge     = 0;
 
-       cv_mem->cv_irfnd   = 0;*/
+       cv_mem.cv_irfnd   = 0;
 
        /* Initialize other integrator optional outputs */
 
-       /*cv_mem->cv_h0u      = ZERO;
-       cv_mem->cv_next_h   = ZERO;
-       cv_mem->cv_next_q   = 0;*/
+       cv_mem.cv_h0u      = ZERO;
+       cv_mem.cv_next_h   = ZERO;
+       cv_mem.cv_next_q   = 0;
 
        /* Initialize Stablilty Limit Detection data */
        /* NOTE: We do this even if stab lim det was not
           turned on yet. This way, the user can turn it
           on at any time */
 
-       /*cv_mem->cv_nor = 0;
+       cv_mem.cv_nor = 0;
        for (i = 1; i <= 5; i++)
          for (k = 1; k <= 3; k++) 
-           cv_mem->cv_ssdat[i-1][k-1] = ZERO;*/
+           cv_mem.cv_ssdat[i-1][k-1] = ZERO;
 
        /* Problem has been successfully initialized */
 
-       /*cv_mem->cv_MallocDone = SUNTRUE;*/
+       cv_mem.cv_MallocDone = true;
 
        return(CV_SUCCESS);
      }
+     
+     void N_VSpace_Serial(NVector v, long lrw[], long liw[])
+     {
+       lrw[0] = v.getData().length;
+       liw[0] = 1;
+
+       return;
+     }
+
      
      /*
       * cvCheckNvector
@@ -1181,21 +1277,373 @@ public abstract class CVODES {
           (tmpl->ops->nvdestroy   == NULL) || // set null
           (tmpl->ops->nvlinearsum == NULL) || // (double a, double x[], double b, double y[], double z[])
                                               // z[i] = a*x[i] + b*y[i];
-          (tmpl->ops->nvconst     == NULL) ||
-          (tmpl->ops->nvprod      == NULL) ||
-          (tmpl->ops->nvdiv       == NULL) ||
-          (tmpl->ops->nvscale     == NULL) ||
-          (tmpl->ops->nvabs       == NULL) ||
-          (tmpl->ops->nvinv       == NULL) ||
-          (tmpl->ops->nvaddconst  == NULL) ||
-          (tmpl->ops->nvmaxnorm   == NULL) ||
-          (tmpl->ops->nvwrmsnorm  == NULL) ||
-          (tmpl->ops->nvmin       == NULL))
+          (tmpl->ops->nvconst     == NULL) || // set all to constant
+          (tmpl->ops->nvprod      == NULL) || // (double x[], double y[], double z[])
+                                              // z[i] = x[i] * y[i]
+          (tmpl->ops->nvdiv       == NULL) || // double x[], double y[], double z[])
+                                              // z[i] = x[i]/y[i]
+          (tmpl->ops->nvscale     == NULL) || // (double c, double x[], double z[])
+                                              // z[i] = c * x[i]
+          (tmpl->ops->nvabs       == NULL) || // (double x[], double z[])
+                                              // z[i] = abs(x[i])
+          (tmpl->ops->nvinv       == NULL) || // (double z[], double z[])
+                                              // z[i] = 1.0/x[i]
+          (tmpl->ops->nvaddconst  == NULL) || // (double x[], double b, double z[])
+                                              // z[i] = x[i] + b
+          (tmpl->ops->nvmaxnorm   == NULL) || // (double x[])
+                                              // max(abs(x[i]))
+          (tmpl->ops->nvwrmsnorm  == NULL) || // (double x[], double w[])
+                                              // prod = x[i] * w[i]
+                                              // sum = sum over all i of prod[i]*prod[i]
+                                              // answer = sqrt(sum/N)
+          (tmpl->ops->nvmin       == NULL))   // (double x[])
+                                              // min(x[i])
          return(SUNFALSE);
        else
          return(SUNTRUE);
      }*/
+     
+     /*
+      * cvAllocVectors
+      *
+      * This routine allocates the CVODES vectors ewt, acor, tempv, ftemp, and
+      * zn[0], ..., zn[maxord].
+      * If all memory allocations are successful, cvAllocVectors returns SUNTRUE. 
+      * Otherwise all allocated memory is freed and cvAllocVectors returns SUNFALSE.
+      * This routine also sets the optional outputs lrw and liw, which are
+      * (respectively) the lengths of the real and integer work spaces
+      * allocated here.
+      */
 
+     private boolean cvAllocVectors(CVodeMemRec cv_mem, NVector tmpl)
+     {
+       int i, j;
+
+       /* Allocate ewt, acor, tempv, ftemp */
+       
+       cv_mem.cv_ewt = N_VClone(tmpl);
+       if (cv_mem.cv_ewt == null) return(false);
+
+       cv_mem.cv_acor = N_VClone(tmpl);
+       if (cv_mem.cv_acor == null) {
+         N_VDestroy(cv_mem.cv_ewt);
+         return false;
+       }
+
+       cv_mem.cv_tempv = N_VClone(tmpl);
+       if (cv_mem.cv_tempv == null) {
+         N_VDestroy(cv_mem.cv_ewt);
+         N_VDestroy(cv_mem.cv_acor);
+         return false;
+       }
+
+       cv_mem.cv_ftemp = N_VClone(tmpl);
+       if (cv_mem.cv_ftemp == null) {
+         N_VDestroy(cv_mem.cv_tempv);
+         N_VDestroy(cv_mem.cv_ewt);
+         N_VDestroy(cv_mem.cv_acor);
+         return false;
+       }
+
+       /* Allocate zn[0] ... zn[qmax] */
+
+       for (j=0; j <= cv_mem.cv_qmax; j++) {
+         cv_mem.cv_zn[j] = N_VClone(tmpl);
+         if (cv_mem.cv_zn[j] == null) {
+           N_VDestroy(cv_mem.cv_ewt);
+           N_VDestroy(cv_mem.cv_acor);
+           N_VDestroy(cv_mem.cv_tempv);
+           N_VDestroy(cv_mem.cv_ftemp);
+           for (i=0; i < j; i++) N_VDestroy(cv_mem.cv_zn[i]);
+           return false;
+         }
+       }
+
+       /* Update solver workspace lengths  */
+       cv_mem.cv_lrw += (cv_mem.cv_qmax + 5)*cv_mem.cv_lrw1;
+       cv_mem.cv_liw += (cv_mem.cv_qmax + 5)*cv_mem.cv_liw1;
+
+       /* Store the value of qmax used here */
+       cv_mem.cv_qmax_alloc = cv_mem.cv_qmax;
+
+       return true;
+     }
+     
+     private NVector N_VClone(NVector y) {
+         NVector x = new NVector();
+         x.data = y.data.clone();
+         x.own_data = y.own_data;
+         return x;
+     }
+
+     private void N_VDestroy(NVector x) {
+    	 x.data = null;
+    	 x = null;
+     }
+     
+     private void N_VScale(double c, NVector x, NVector z) {
+    	 int i;
+    	 double xa[] = x.getData();
+    	 int n = xa.length;
+    	 double za[] = z.getData();
+    	 for (i = 0; i < n; i++) {
+    		 za[i] = c * xa[i];
+    	 }
+     }
+     
+     int CVodeSVtolerances(CVodeMemRec cv_mem, double reltol, NVector abstol)
+     {
+
+       if (cv_mem==null) {
+         cvProcessError(null, CV_MEM_NULL, "CVODES",
+                        "CVodeSVtolerances", MSGCV_NO_MEM);
+         return(CV_MEM_NULL);
+       }
+
+       if (cv_mem.cv_MallocDone == false) {
+         cvProcessError(cv_mem, CV_NO_MALLOC, "CVODES",
+                        "CVodeSVtolerances", MSGCV_NO_MALLOC);
+         return(CV_NO_MALLOC);
+       }
+
+       /* Check inputs */
+
+       if (reltol < ZERO) {
+         cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+                        "CVodeSVtolerances", MSGCV_BAD_RELTOL);
+         return(CV_ILL_INPUT);
+       }
+
+       if (N_VMin(abstol) < ZERO) {
+         cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+                        "CVodeSVtolerances", MSGCV_BAD_ABSTOL);
+         return(CV_ILL_INPUT);
+       }
+
+       /* Copy tolerances into memory */
+       
+       if ( !(cv_mem.cv_VabstolMallocDone) ) {
+         cv_mem.cv_Vabstol = N_VClone(cv_mem.cv_ewt);
+         cv_mem.cv_lrw += cv_mem.cv_lrw1;
+         cv_mem.cv_liw += cv_mem.cv_liw1;
+         cv_mem.cv_VabstolMallocDone = true;
+       }
+
+       cv_mem.cv_reltol = reltol;
+       N_VScale(ONE, abstol, cv_mem.cv_Vabstol);
+
+       cv_mem.cv_itol = CV_SV;
+
+       cv_mem.cv_user_efun = false;
+       //cv_mem.cv_efun = cvEwtSet;
+       //cv_mem.cv_e_data = null; /* will be set to cvode_mem in InitialSetup */
+
+       return(CV_SUCCESS);
+     }
+
+     private double N_VMin(NVector x) {
+    	 int i;
+    	 if ((x == null) || (x.data == null) || (x.data.length == 0)) {
+    		 return Double.NaN;
+    	 }
+    	 double data[] = x.data;
+    	 int n = data.length;
+    	 double min = data[0];
+    	 for (i = 1; i < n; i++) {
+    		 if (data[i] < min) {
+    			 min = data[i];
+    		 }
+    	 }
+    	 return min;
+     }
+     
+     /*
+      * CVodeRootInit
+      *
+      * CVodeRootInit initializes a rootfinding problem to be solved
+      * during the integration of the ODE system.  It loads the root
+      * function pointer and the number of root functions, and allocates
+      * workspace memory.  The return value is CV_SUCCESS = 0 if no errors
+      * occurred, or a negative value otherwise.
+      */
+
+     int CVodeRootInit(CVodeMemRec cv_mem, int nrtfn, int g)
+     {
+       int i, nrt;
+
+       /* Check cvode_mem */
+       if (cv_mem==null) {
+         cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeRootInit",
+                        MSGCV_NO_MEM);
+         return(CV_MEM_NULL);
+       }
+
+       nrt = (nrtfn < 0) ? 0 : nrtfn;
+
+       /* If rerunning CVodeRootInit() with a different number of root
+          functions (changing number of gfun components), then free
+          currently held memory resources */
+       if ((nrt != cv_mem.cv_nrtfn) && (cv_mem.cv_nrtfn > 0)) {
+         cv_mem.cv_glo = null;
+         cv_mem.cv_ghi = null;
+         cv_mem.cv_grout = null;
+         cv_mem.cv_iroots = null;
+         cv_mem.cv_rootdir = null;
+         cv_mem.cv_gactive = null;
+
+         cv_mem.cv_lrw -= 3 * (cv_mem.cv_nrtfn);
+         cv_mem.cv_liw -= 3 * (cv_mem.cv_nrtfn);
+       }
+
+       /* If CVodeRootInit() was called with nrtfn == 0, then set cv_nrtfn to
+          zero and cv_gfun to NULL before returning */
+       if (nrt == 0) {
+         cv_mem.cv_nrtfn = nrt;
+         cv_mem.cv_gfun = -1;
+         return(CV_SUCCESS);
+       }
+
+       /* If rerunning CVodeRootInit() with the same number of root functions
+          (not changing number of gfun components), then check if the root
+          function argument has changed */
+       /* If g != NULL then return as currently reserved memory resources
+          will suffice */
+       if (nrt == cv_mem.cv_nrtfn) {
+         if (g != cv_mem.cv_gfun) {
+           if (g < 0) {
+     	     cv_mem.cv_glo = null;
+     	     cv_mem.cv_ghi = null;
+     	     cv_mem.cv_grout = null;
+     	     cv_mem.cv_iroots = null;
+             cv_mem.cv_rootdir = null;
+             cv_mem.cv_gactive = null;
+
+             cv_mem.cv_lrw -= 3*nrt;
+             cv_mem.cv_liw -= 3*nrt;
+
+             cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeRootInit",
+                            MSGCV_NULL_G);
+             return(CV_ILL_INPUT);
+           }
+           else {
+     	     cv_mem.cv_gfun = g;
+             return(CV_SUCCESS);
+           }
+         }
+         else return(CV_SUCCESS);
+       }
+
+       /* Set variable values in CVode memory block */
+       cv_mem.cv_nrtfn = nrt;
+       if (g < 0) {
+         cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeRootInit",
+                        MSGCV_NULL_G);
+         return(CV_ILL_INPUT);
+       }
+       else cv_mem.cv_gfun = g;
+
+       /* Allocate necessary memory and return */
+       cv_mem.cv_glo = null;
+       cv_mem.cv_glo = new double[nrt];
+       if (cv_mem.cv_glo == null) {
+         cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES", "CVodeRootInit",
+                        MSGCV_MEM_FAIL);
+         return(CV_MEM_FAIL);
+       }
+         
+       cv_mem.cv_ghi = null;
+       cv_mem.cv_ghi = new double[nrt];
+       if (cv_mem.cv_ghi == null) {
+         cv_mem.cv_glo = null;
+         cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES", "CVodeRootInit",
+                        MSGCV_MEM_FAIL);
+         return(CV_MEM_FAIL);
+       }
+         
+       cv_mem.cv_grout = null;
+       cv_mem.cv_grout = new double[nrt];
+       if (cv_mem.cv_grout == null) {
+         cv_mem.cv_glo = null;
+         cv_mem.cv_ghi = null;
+         cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES", "CVodeRootInit",
+                        MSGCV_MEM_FAIL);
+         return(CV_MEM_FAIL);
+       }
+
+       cv_mem.cv_iroots = null;
+       cv_mem.cv_iroots = new int[nrt];
+       if (cv_mem.cv_iroots == null) {
+         cv_mem.cv_glo = null;
+         cv_mem.cv_ghi = null;
+         cv_mem.cv_grout = null;
+         cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES", "CVodeRootInit",
+                        MSGCV_MEM_FAIL);
+         return(CV_MEM_FAIL);
+       }
+
+       cv_mem.cv_rootdir = null;
+       cv_mem.cv_rootdir = new int[nrt];
+       if (cv_mem.cv_rootdir == null) {
+         cv_mem.cv_glo = null; 
+         cv_mem.cv_ghi = null;
+         cv_mem.cv_grout = null;
+         cv_mem.cv_iroots = null;
+         cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES", "CVodeRootInit",
+                        MSGCV_MEM_FAIL);
+         return(CV_MEM_FAIL);
+       }
+
+
+       cv_mem.cv_gactive = null;
+       cv_mem.cv_gactive = new boolean[nrt];
+       if (cv_mem.cv_gactive == null) {
+         cv_mem.cv_glo = null; 
+         cv_mem.cv_ghi = null;
+         cv_mem.cv_grout = null;
+         cv_mem.cv_iroots = null;
+         cv_mem.cv_rootdir = null;
+         cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES", "CVodeRootInit",
+                        MSGCV_MEM_FAIL);
+         return(CV_MEM_FAIL);
+       }
+
+
+       /* Set default values for rootdir (both directions) */
+       for(i=0; i<nrt; i++) cv_mem.cv_rootdir[i] = 0;
+
+       /* Set default values for gactive (all active) */
+       for(i=0; i<nrt; i++) cv_mem.cv_gactive[i] = true;
+
+       cv_mem.cv_lrw += 3*nrt;
+       cv_mem.cv_liw += 3*nrt;
+
+       return(CV_SUCCESS);
+     }
+     
+     class SUNLinearSolver {
+         long N; // Size of the linear system, the number of matrix rows
+         long pivots[]; // Array of size N, index array for partial pivoting in LU factorization
+         long last_flag; // last error return flag from internal setup/solve
+     }
+     
+     private SUNLinearSolver SUNDenseLinearSolver(NVector y, double A[][]) {
+    	 int matrixRows = A.length;
+    	 int matrixColumns = A[0].length;
+    	 if (matrixRows != matrixColumns) {
+    		 MipavUtil.displayError("Did not have the matrix rows = matrix columns required for a LinearSolver");
+    		 return null;
+    	 }
+    	 int vecLength = y.getData().length;
+    	 if (matrixRows != vecLength) {
+    		 MipavUtil.displayError("Did not have the matrix rows equal to vector length required for a LinearSolver");
+    		 return null;
+    	 }
+    	 SUNLinearSolver S = new SUNLinearSolver();
+    	 S.N = matrixRows;
+    	 S.last_flag = 0;
+    	 S.pivots = new long[matrixRows];
+    	 return S;
+     }
 
 
 }
