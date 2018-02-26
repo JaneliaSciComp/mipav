@@ -94,6 +94,18 @@ public abstract class CVODES {
 	final int CV_FUNCTIONAL = 1;
 	final int CV_NEWTON = 2;
 	
+	//itask: The itask input parameter to CVode indicates the job
+	//        of the solver for the next user step. The CV_NORMAL
+	//        itask is to have the solver take internal steps until
+	//        it has reached or just passed the user specified tout
+	//        parameter. The solver then interpolates in order to
+	//        return an approximate value of y(tout). The CV_ONE_STEP
+	//        option tells the solver to just take one internal step
+	//        and return the solution at the point reached by that step.
+	final int CV_NORMAL = 1;
+	final int CV_ONE_STEP = 2;
+
+	
 	/*
 	 * Control constants for type of sensitivity RHS
 	 * ---------------------------------------------
@@ -327,6 +339,46 @@ public abstract class CVODES {
 	final String MSGCV_BACK_ERROR  = "Error occured while integrating backward problem # %d"; 
 	final String MSGCV_BAD_TINTERP = "Bad t = %g for interpolation.";
 	final String MSGCV_WRONG_INTERP = "This function cannot be called for the specified interp type.";
+	
+	final int CVDLS_SUCCESS = 0;
+	final int CVDLS_MEM_NULL = -1;
+	final int CVDLS_LMEM_NULL = -2;
+	final int CVDLS_ILL_INPUT = -3;
+	final int  CVDLS_MEM_FAIL = -4;
+
+	/* Additional last_flag values */
+
+	final int CVDLS_JACFUNC_UNRECVR = -5;
+	final int CVDLS_JACFUNC_RECVR = -6;
+	final int CVDLS_SUNMAT_FAIL = -7;
+
+	/* Return values for the adjoint module */
+
+	final int CVDLS_NO_ADJ = -101;
+	final int CVDLS_LMEMB_NULL = -102;
+
+	final String MSGD_CVMEM_NULL = "Integrator memory is NULL.";
+	final String MSGD_BAD_NVECTOR = "A required vector operation is not implemented.";
+	final String MSGD_BAD_SIZES = "Illegal bandwidth parameter(s). Must have 0 <=  ml, mu <= N-1.";
+	final String MSGD_MEM_FAIL = "A memory request failed.";
+	final String MSGD_LMEM_NULL ="Linear solver memory is NULL.";
+	final String MSGD_JACFUNC_FAILED = "The Jacobian routine failed in an unrecoverable manner.";
+	final String MSGD_MATCOPY_FAILED = "The SUNMatCopy routine failed in an unrecoverable manner.";
+	final String MSGD_MATZERO_FAILED = "The SUNMatZero routine failed in an unrecoverable manner.";
+	final String MSGD_MATSCALEADDI_FAILED = "The SUNMatScaleAddI routine failed in an unrecoverable manner.";
+
+	final String MSGD_NO_ADJ = "Illegal attempt to call before calling CVodeAdjMalloc.";
+	final String MSGD_BAD_WHICH = "Illegal value for which.";
+	final String MSGD_LMEMB_NULL = "Linear solver memory is NULL for the backward integration.";
+	final String MSGD_BAD_TINTERP = "Bad t for interpolation.";
+	
+	public enum SUNLinearSolver_Type{
+		  SUNLINEARSOLVER_DIRECT,
+		  SUNLINEARSOLVER_ITERATIVE,
+		  SUNLINEARSOLVER_CUSTOM
+		};
+
+    final int cvDlsDQJac = -1;
 
 
     final int cvsRoberts_dns = 1;
@@ -403,6 +455,7 @@ public abstract class CVODES {
 		final int NOUT = 12; // number of output times
 		int f = cvsRoberts_dns;
 		int g = cvsRoberts_dns;
+		int Jac = cvsRoberts_dns;
 		
 		// Set initial conditions
 		NVector y = new NVector();
@@ -419,6 +472,9 @@ public abstract class CVODES {
 		int flag;
 		double A[][];
 		SUNLinearSolver LS;
+		double tout;
+		int iout;
+		double t[] = new double[1];
 		
 		// Call CVodeCreate to create the solver memory and specify the
 		// Backward Differentiation Formula and the use of a Newton
@@ -466,7 +522,27 @@ public abstract class CVODES {
 		}
 		
 		// Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode
-		//flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
+		flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// Set the user-supplied Jacobian routine Jac
+		flag = CVDlsSetJacFn(cvode_mem, Jac);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// In loop, call CVode, print results, and test for error.
+		// Break out of loop when NOUT preset output times have been reached.
+		System.out.println(" \n3-species kinetics problem\n");
+		
+		iout = 0;
+		tout = T1;
+		
+		while (true) {
+			flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
+		} // while (true)
 	}
 	
 	private void N_VNew_Serial(NVector y, int length) {
@@ -510,6 +586,33 @@ public abstract class CVODES {
 		return 0;
 	}
 	
+	/**
+	 * Jacobian routine.  Compute J(t,y) = df/dy.
+	 * @param t
+	 * @param y
+	 * @param fy
+	 * @param J
+	 * @param tmp1
+	 * @param tmp2
+	 * @return
+	 */
+	private int Jac(double t, NVector yv, NVector fy, double J[][], NVector tmp1, NVector tmp2) {
+		double y[] = yv.getData();
+	    J[0][0] = -0.04;
+	    J[0][1] = 1.0E4 * y[2];
+	    J[0][2] = 1.0E4 * y[1];
+	    
+	    J[1][0] = 0.04;
+	    J[1][1] = -1.0E4 * y[2] - 6.0E7*y[1];
+	    J[1][2] = -1.0E4 * y[1];
+	    
+	    J[2][0] = ZERO;
+	    J[2][1] = 6.0E7 * y[1];
+	    J[2][2] = ZERO;
+	    
+	    return 0;
+	}
+	
 	// Types: struct CVodeMemRec, CVodeMem
 	// -----------------------------------------------------------------
 	// The type CVodeMem is type pointer to struct CVodeMemRec.
@@ -539,6 +642,7 @@ public abstract class CVODES {
 	  //CVRhsFn cv_f;               /* y' = f(t,y(t))                                */
 	  int cv_f;
 	  //void *cv_user_data;         /* user pointer passed to f                      */
+	  CVodeMemRec cv_user_data; 
 
 	  int cv_lmm;                 /* lmm = ADAMS or BDF                            */
 	  int cv_iter;                /* iter = FUNCTIONAL or NEWTON                   */
@@ -810,7 +914,8 @@ public abstract class CVODES {
 
 	  /* Linear Solver specific memory */
 
-	  //void *cv_lmem;           
+	  //void *cv_lmem; 
+	  CVDlsMemRec cv_lmem;
 
 	  /* Flag to request a call to the setup routine */
 
@@ -1624,6 +1729,7 @@ public abstract class CVODES {
          long N; // Size of the linear system, the number of matrix rows
          long pivots[]; // Array of size N, index array for partial pivoting in LU factorization
          long last_flag; // last error return flag from internal setup/solve
+         SUNLinearSolver_Type type;
      }
      
      private SUNLinearSolver SUNDenseLinearSolver(NVector y, double A[][]) {
@@ -1642,8 +1748,771 @@ public abstract class CVODES {
     	 S.N = matrixRows;
     	 S.last_flag = 0;
     	 S.pivots = new long[matrixRows];
+    	 S.type = SUNLinearSolver_Type.SUNLINEARSOLVER_DIRECT;
     	 return S;
      }
+     
+     /*---------------------------------------------------------------
+     CVDlsSetLinearSolver specifies the direct linear solver.
+    ---------------------------------------------------------------*/
+    int CVDlsSetLinearSolver(CVodeMemRec cv_mem, SUNLinearSolver LS,
+                           double A[][])
+    {
+      CVDlsMemRec cvdls_mem;
+
+      /* Return immediately if any input is NULL */
+      if (cv_mem == null) {
+        cvProcessError(null, CVDLS_MEM_NULL, "CVSDLS", 
+                       "CVDlsSetLinearSolver", MSGD_CVMEM_NULL);
+        return(CVDLS_MEM_NULL);
+      }
+      if ( (LS == null)  || (A == null) ) {
+        cvProcessError(null, CVDLS_ILL_INPUT, "CVSDLS", 
+                       "CVDlsSetLinearSolver",
+                        "Both LS and A must be non-NULL");
+        return(CVDLS_ILL_INPUT);
+      }
+
+      /* Test if solver and vector are compatible with DLS */
+      if (LS.type != SUNLinearSolver_Type.SUNLINEARSOLVER_DIRECT) {
+        cvProcessError(cv_mem, CVDLS_ILL_INPUT, "CVSDLS", 
+                       "CVDlsSetLinearSolver", 
+                       "Non-direct LS supplied to CVDls interface");
+        return(CVDLS_ILL_INPUT);
+      }
+      //if (cv_mem.cv_tempv.ops.nvgetarraypointer == null ||
+          //cv_mem.cv_tempv.ops.nvsetarraypointer ==  null) {
+        //cvProcessError(cv_mem, CVDLS_ILL_INPUT, "CVSDLS", 
+                       //"CVDlsSetLinearSolver", MSGD_BAD_NVECTOR);
+        //return(CVDLS_ILL_INPUT);
+      //}
+
+      /* free any existing system solver attached to CVode */
+      //if (cv_mem.cv_lfree)  cv_mem.cv_lfree(cv_mem);
+
+      /* Set four main system linear solver function fields in cv_mem */
+      //cv_mem.cv_linit  = cvDlsInitialize;
+      //cv_mem.cv_lsetup = cvDlsSetup;
+      //cv_mem.cv_lsolve = cvDlsSolve;
+      //cv_mem.cv_lfree  = cvDlsFree;
+      
+      /* Get memory for CVDlsMemRec */
+      cvdls_mem = null;
+      cvdls_mem = new CVDlsMemRec();
+      if (cvdls_mem == null) {
+        cvProcessError(cv_mem, CVDLS_MEM_FAIL, "CVSDLS", 
+                        "CVDlsSetLinearSolver", MSGD_MEM_FAIL);
+        return(CVDLS_MEM_FAIL);
+      }
+
+      /* set SUNLinearSolver pointer */
+      cvdls_mem.LS = LS;
+      
+      /* Initialize Jacobian-related data */
+      cvdls_mem.jacDQ = true;
+      //cvdls_mem.jac = cvDlsDQJac;
+      cvdls_mem.J_data = cv_mem;
+      cvdls_mem.last_flag = CVDLS_SUCCESS;
+
+      /* Initialize counters */
+      cvDlsInitializeCounters(cvdls_mem);
+
+      /* Store pointer to A and create saved_J */
+      cvdls_mem.A = A;
+      cvdls_mem.savedJ = A.clone();
+      if (cvdls_mem.savedJ == null) {
+        cvProcessError(cv_mem, CVDLS_MEM_FAIL, "CVSDLS", 
+                        "CVDlsSetLinearSolver", MSGD_MEM_FAIL);
+        cvdls_mem = null;
+        return(CVDLS_MEM_FAIL);
+      }
+
+      /* Allocate memory for x */
+      cvdls_mem.x = N_VClone(cv_mem.cv_tempv);
+      if (cvdls_mem.x == null) {
+        cvProcessError(cv_mem, CVDLS_MEM_FAIL, "CVSDLS", 
+                        "CVDlsSetLinearSolver", MSGD_MEM_FAIL);
+        cvdls_mem.savedJ = null;
+        cvdls_mem = null;
+        return(CVDLS_MEM_FAIL);
+      }
+      /* Attach linear solver memory to integrator memory */
+      cv_mem.cv_lmem = cvdls_mem;
+
+      return(CVDLS_SUCCESS);
+    }
+    
+    //-----------------------------------------------------------------
+    //cvDlsInitializeCounters
+    //-----------------------------------------------------------------
+    //This routine resets the counters inside the CVDlsMem object.
+    //-----------------------------------------------------------------*/
+  int cvDlsInitializeCounters(CVDlsMemRec cvdls_mem)
+  {
+    cvdls_mem.nje   = 0;
+    cvdls_mem.nfeDQ = 0;
+    cvdls_mem.nstlj = 0;
+    return(0);
+  }
+
+    
+    
+    
+    //-----------------------------------------------------------------
+    //CVDlsMem is pointer to a CVDlsMemRec structure.
+    //-----------------------------------------------------------------*/
+
+  class CVDlsMemRec {
+
+    boolean jacDQ;    /* true if using internal DQ Jacobian approx. */
+    //CVDlsJacFn jac;       /* Jacobian routine to be called                 */
+    int jac;
+    //void *J_data;         /* data pointer passed to jac                    */
+    CVodeMemRec J_data;
+
+    double A[][];          /* A = I - gamma * df/dy                         */
+    double savedJ[][];     /* savedJ = old Jacobian                         */
+
+    SUNLinearSolver LS;   /* generic direct linear solver object           */
+
+    NVector x;           /* solution vector used by SUNLinearSolver       */
+    
+    long nstlj;       /* nstlj = nst at last Jacobian eval.            */
+
+    long nje;         /* nje = no. of calls to jac                     */
+
+    long nfeDQ;       /* no. of calls to f due to DQ Jacobian approx.  */
+
+    long last_flag;   /* last error return flag                        */
+
+  };
+
+
+  /* CVDlsSetJacFn specifies the Jacobian function. */
+  int CVDlsSetJacFn(CVodeMemRec cv_mem, int jac)
+  {
+    CVDlsMemRec cvdls_mem;
+
+    /* Return immediately if cvode_mem or cv_mem->cv_lmem are NULL */
+    if (cv_mem == null) {
+      cvProcessError(null, CVDLS_MEM_NULL, "CVSDLS",
+                     "CVDlsSetJacFn", MSGD_CVMEM_NULL);
+      return(CVDLS_MEM_NULL);
+    }
+  
+    if (cv_mem.cv_lmem == null) {
+      cvProcessError(cv_mem, CVDLS_LMEM_NULL, "CVSDLS",
+                     "CVDlsSetJacFn", MSGD_LMEM_NULL);
+      return(CVDLS_LMEM_NULL);
+    }
+    cvdls_mem = cv_mem.cv_lmem;
+
+    if (jac >= 0) {
+      cvdls_mem.jacDQ  = false;
+      cvdls_mem.jac    = jac;
+      cvdls_mem.J_data = cv_mem.cv_user_data;
+    } else {
+      cvdls_mem.jacDQ  = true;
+      cvdls_mem.jac    = cvDlsDQJac;
+      cvdls_mem.J_data = cv_mem;
+    }
+
+    return(CVDLS_SUCCESS);
+  }
+  
+  /*
+   * CVode
+   *
+   * This routine is the main driver of the CVODES package. 
+   *
+   * It integrates over a time interval defined by the user, by calling
+   * cvStep to do internal time steps.
+   *
+   * The first time that CVode is called for a successfully initialized
+   * problem, it computes a tentative initial step size h.
+   *
+   * CVode supports two modes, specified by itask: CV_NORMAL, CV_ONE_STEP.
+   * In the CV_NORMAL mode, the solver steps until it reaches or passes tout
+   * and then interpolates to obtain y(tout).
+   * In the CV_ONE_STEP mode, it takes one internal step and returns.
+   */
+
+  int CVode(CVodeMemRec cv_mem, double tout, NVector yout, 
+            double tret[], int itask)
+  {
+    long nstloc; 
+    int retval, hflag, kflag, istate, is, ir, ier, irfndp;
+    double troundoff, tout_hin, rh, nrm;
+    boolean inactive_roots;
+
+    /*
+     * -------------------------------------
+     * 1. Check and process inputs
+     * -------------------------------------
+     */
+
+    /* Check if cvode_mem exists */
+    if (cv_mem == null) {
+      cvProcessError(null, CV_MEM_NULL, "CVODES", "CVode",
+                     MSGCV_NO_MEM);
+      return(CV_MEM_NULL);
+    }
+
+    /* Check if cvode_mem was allocated */
+    if (cv_mem.cv_MallocDone == false) {
+      cvProcessError(cv_mem, CV_NO_MALLOC, "CVODES", "CVode",
+                     MSGCV_NO_MALLOC);
+      return(CV_NO_MALLOC);
+    }
+    
+    /* Check for yout != NULL */
+    if ((cv_mem.cv_y = yout) == null) {
+      cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                     MSGCV_YOUT_NULL);
+      return(CV_ILL_INPUT);
+    }
+    
+    /* Check for tret != NULL */
+    if (tret == null) {
+      cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                     MSGCV_TRET_NULL);
+      return(CV_ILL_INPUT);
+    }
+
+    /* Check for valid itask */
+    if ( (itask != CV_NORMAL) && (itask != CV_ONE_STEP) ) {
+      cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                     MSGCV_BAD_ITASK);
+      return(CV_ILL_INPUT);
+    }
+
+    if (itask == CV_NORMAL) cv_mem.cv_toutc = tout;
+    cv_mem.cv_taskc = itask;
+
+    /*
+     * ----------------------------------------
+     * 2. Initializations performed only at
+     *    the first step (nst=0):
+     *    - initial setup
+     *    - initialize Nordsieck history array
+     *    - compute initial step size
+     *    - check for approach to tstop
+     *    - check for approach to a root
+     * ----------------------------------------
+     */
+
+   /* if (cv_mem.cv_nst == 0) {
+
+      cv_mem.cv_tretlast = tret[0] = cv_mem.cv_tn;*/
+
+      /* Check inputs for corectness */
+
+      /*ier = cvInitialSetup(cv_mem);
+      if (ier!= CV_SUCCESS) return(ier);*/
+
+      /* 
+       * Call f at (t0,y0), set zn[1] = y'(t0). 
+       * If computing any quadratures, call fQ at (t0,y0), set znQ[1] = yQ'(t0)
+       * If computing sensitivities, call fS at (t0,y0,yS0), set znS[1][is] = yS'(t0), is=1,...,Ns.
+       * If computing quadr. sensi., call fQS at (t0,y0,yS0), set znQS[1][is] = yQS'(t0), is=1,...,Ns.
+       */
+
+      /*retval = cv_mem->cv_f(cv_mem->cv_tn, cv_mem->cv_zn[0],
+                            cv_mem->cv_zn[1], cv_mem->cv_user_data); 
+      cv_mem->cv_nfe++;
+      if (retval < 0) {
+        cvProcessError(cv_mem, CV_RHSFUNC_FAIL, "CVODES", "CVode",
+                       MSGCV_RHSFUNC_FAILED, cv_mem->cv_tn);
+        return(CV_RHSFUNC_FAIL);
+      }
+      if (retval > 0) {
+        cvProcessError(cv_mem, CV_FIRST_RHSFUNC_ERR, "CVODES", "CVode",
+                       MSGCV_RHSFUNC_FIRST);
+        return(CV_FIRST_RHSFUNC_ERR);
+      }
+
+      if (cv_mem->cv_quadr) {
+        retval = cv_mem->cv_fQ(cv_mem->cv_tn, cv_mem->cv_zn[0],
+                               cv_mem->cv_znQ[1], cv_mem->cv_user_data);
+        cv_mem->cv_nfQe++;
+        if (retval < 0) {
+          cvProcessError(cv_mem, CV_QRHSFUNC_FAIL, "CVODES", "CVode",
+                         MSGCV_QRHSFUNC_FAILED, cv_mem->cv_tn);
+          return(CV_QRHSFUNC_FAIL);
+        }
+        if (retval > 0) {
+          cvProcessError(cv_mem, CV_FIRST_QRHSFUNC_ERR, "CVODES",
+                         "CVode", MSGCV_QRHSFUNC_FIRST);
+          return(CV_FIRST_QRHSFUNC_ERR);
+        }
+      }
+
+      if (cv_mem->cv_sensi) {
+        retval = cvSensRhsWrapper(cv_mem, cv_mem->cv_tn, cv_mem->cv_zn[0],
+                                  cv_mem->cv_zn[1], cv_mem->cv_znS[0],
+                                  cv_mem->cv_znS[1], cv_mem->cv_tempv,
+                                  cv_mem->cv_ftemp);
+        if (retval < 0) {
+          cvProcessError(cv_mem, CV_SRHSFUNC_FAIL, "CVODES", "CVode",
+                         MSGCV_SRHSFUNC_FAILED, cv_mem->cv_tn);
+          return(CV_SRHSFUNC_FAIL);
+        } 
+        if (retval > 0) {
+          cvProcessError(cv_mem, CV_FIRST_SRHSFUNC_ERR, "CVODES",
+                         "CVode", MSGCV_SRHSFUNC_FIRST);
+          return(CV_FIRST_SRHSFUNC_ERR);
+        }
+      }
+
+      if (cv_mem->cv_quadr_sensi) {
+        retval = cv_mem->cv_fQS(cv_mem->cv_Ns, cv_mem->cv_tn, cv_mem->cv_zn[0],
+                                cv_mem->cv_znS[0], cv_mem->cv_znQ[1],
+                                cv_mem->cv_znQS[1], cv_mem->cv_fQS_data,
+                                cv_mem->cv_tempv, cv_mem->cv_tempvQ); 
+        cv_mem->cv_nfQSe++;
+        if (retval < 0) {
+          cvProcessError(cv_mem, CV_QSRHSFUNC_FAIL, "CVODES", "CVode",
+                         MSGCV_QSRHSFUNC_FAILED, cv_mem->cv_tn);
+          return(CV_QSRHSFUNC_FAIL);
+        } 
+        if (retval > 0) {
+          cvProcessError(cv_mem, CV_FIRST_QSRHSFUNC_ERR, "CVODES",
+                         "CVode", MSGCV_QSRHSFUNC_FIRST);
+          return(CV_FIRST_QSRHSFUNC_ERR);
+        }
+      }*/
+
+      /* Test input tstop for legality. */
+
+     /* if (cv_mem->cv_tstopset) {
+        if ( (cv_mem->cv_tstop - cv_mem->cv_tn)*(tout - cv_mem->cv_tn) <= ZERO ) {
+          cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                         MSGCV_BAD_TSTOP, cv_mem->cv_tstop, cv_mem->cv_tn);
+          return(CV_ILL_INPUT);
+        }
+      }*/
+
+      /* Set initial h (from H0 or cvHin). */
+      
+      /*cv_mem->cv_h = cv_mem->cv_hin;
+      if ( (cv_mem->cv_h != ZERO) && ((tout-cv_mem->cv_tn)*cv_mem->cv_h < ZERO) ) {
+        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode", MSGCV_BAD_H0);
+        return(CV_ILL_INPUT);
+      }
+      if (cv_mem->cv_h == ZERO) {
+        tout_hin = tout;
+        if ( cv_mem->cv_tstopset &&
+             (tout-cv_mem->cv_tn)*(tout-cv_mem->cv_tstop) > ZERO )
+          tout_hin = cv_mem->cv_tstop; 
+        hflag = cvHin(cv_mem, tout_hin);
+        if (hflag != CV_SUCCESS) {
+          istate = cvHandleFailure(cv_mem, hflag);
+          return(istate);
+        }
+      }
+      rh = SUNRabs(cv_mem->cv_h)*cv_mem->cv_hmax_inv;
+      if (rh > ONE) cv_mem->cv_h /= rh;
+      if (SUNRabs(cv_mem->cv_h) < cv_mem->cv_hmin)
+        cv_mem->cv_h *= cv_mem->cv_hmin/SUNRabs(cv_mem->cv_h);*/
+
+      /* Check for approach to tstop */
+
+      /*if (cv_mem->cv_tstopset) {
+        if ( (cv_mem->cv_tn + cv_mem->cv_h - cv_mem->cv_tstop)*cv_mem->cv_h > ZERO ) 
+          cv_mem->cv_h = (cv_mem->cv_tstop - cv_mem->cv_tn)*(ONE-FOUR*cv_mem->cv_uround);
+      }*/
+
+      /* 
+       * Scale zn[1] by h.
+       * If computing any quadratures, scale znQ[1] by h.
+       * If computing sensitivities,  scale znS[1][is] by h. 
+       * If computing quadrature sensitivities,  scale znQS[1][is] by h. 
+       */
+
+      /*cv_mem->cv_hscale = cv_mem->cv_h;
+      cv_mem->cv_h0u    = cv_mem->cv_h;
+      cv_mem->cv_hprime = cv_mem->cv_h;
+
+      N_VScale(cv_mem->cv_h, cv_mem->cv_zn[1], cv_mem->cv_zn[1]);
+      
+      if (cv_mem->cv_quadr)
+        N_VScale(cv_mem->cv_h, cv_mem->cv_znQ[1], cv_mem->cv_znQ[1]);
+
+      if (cv_mem->cv_sensi)
+        for (is=0; is<cv_mem->cv_Ns; is++) 
+          N_VScale(cv_mem->cv_h, cv_mem->cv_znS[1][is], cv_mem->cv_znS[1][is]);
+
+      if (cv_mem->cv_quadr_sensi)
+        for (is=0; is<cv_mem->cv_Ns; is++) 
+          N_VScale(cv_mem->cv_h, cv_mem->cv_znQS[1][is], cv_mem->cv_znQS[1][is]);*/
+      
+      /* Check for zeros of root function g at and near t0. */
+
+      /*if (cv_mem->cv_nrtfn > 0) {
+
+        retval = cvRcheck1(cv_mem);
+
+        if (retval == CV_RTFUNC_FAIL) {
+          cvProcessError(cv_mem, CV_RTFUNC_FAIL, "CVODES", "cvRcheck1",
+                         MSGCV_RTFUNC_FAILED, cv_mem->cv_tn);
+          return(CV_RTFUNC_FAIL);
+        }
+
+      }
+
+    } *//* end first call block */
+
+    /*
+     * ------------------------------------------------------
+     * 3. At following steps, perform stop tests:
+     *    - check for root in last step
+     *    - check if we passed tstop
+     *    - check if we passed tout (NORMAL mode)
+     *    - check if current tn was returned (ONE_STEP mode)
+     *    - check if we are close to tstop
+     *      (adjust step size if needed)
+     * -------------------------------------------------------
+     */
+
+   /* if (cv_mem->cv_nst > 0) {*/
+
+      /* Estimate an infinitesimal time interval to be used as
+         a roundoff for time quantities (based on current time 
+         and step size) */
+      /*troundoff = FUZZ_FACTOR * cv_mem->cv_uround *
+        (SUNRabs(cv_mem->cv_tn) + SUNRabs(cv_mem->cv_h));*/
+
+      /* First check for a root in the last step taken, other than the
+         last root found, if any.  If itask = CV_ONE_STEP and y(tn) was not
+         returned because of an intervening root, return y(tn) now.     */
+      /*if (cv_mem->cv_nrtfn > 0) {
+        
+        irfndp = cv_mem->cv_irfnd;
+        
+        retval = cvRcheck2(cv_mem);
+
+        if (retval == CLOSERT) {
+          cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvRcheck2",
+                         MSGCV_CLOSE_ROOTS, cv_mem->cv_tlo);
+          return(CV_ILL_INPUT);
+        } else if (retval == CV_RTFUNC_FAIL) {
+          cvProcessError(cv_mem, CV_RTFUNC_FAIL, "CVODES", "cvRcheck2",
+                         MSGCV_RTFUNC_FAILED, cv_mem->cv_tlo);
+          return(CV_RTFUNC_FAIL);
+        } else if (retval == RTFOUND) {
+          cv_mem->cv_tretlast = *tret = cv_mem->cv_tlo;
+          return(CV_ROOT_RETURN);
+        }*/
+        
+        /* If tn is distinct from tretlast (within roundoff),
+           check remaining interval for roots */
+        /*if ( SUNRabs(cv_mem->cv_tn - cv_mem->cv_tretlast) > troundoff ) {
+
+          retval = cvRcheck3(cv_mem);
+
+          if (retval == CV_SUCCESS) {*/     /* no root found */
+            /*cv_mem->cv_irfnd = 0;
+            if ((irfndp == 1) && (itask == CV_ONE_STEP)) {
+              cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+              N_VScale(ONE, cv_mem->cv_zn[0], yout);
+              return(CV_SUCCESS);
+            }
+          } else if (retval == RTFOUND) {*/  /* a new root was found */
+            /*cv_mem->cv_irfnd = 1;
+            cv_mem->cv_tretlast = *tret = cv_mem->cv_tlo;
+            return(CV_ROOT_RETURN);
+          } else if (retval == CV_RTFUNC_FAIL) { */ /* g failed */
+            /*cvProcessError(cv_mem, CV_RTFUNC_FAIL, "CVODES", "cvRcheck3", 
+                           MSGCV_RTFUNC_FAILED, cv_mem->cv_tlo);
+            return(CV_RTFUNC_FAIL);
+          }
+
+        }
+        
+      } *//* end of root stop check */
+      
+      /* In CV_NORMAL mode, test if tout was reached */
+     /* if ( (itask == CV_NORMAL) && ((cv_mem->cv_tn-tout)*cv_mem->cv_h >= ZERO) ) {
+        cv_mem->cv_tretlast = *tret = tout;
+        ier =  CVodeGetDky(cv_mem, tout, 0, yout);
+        if (ier != CV_SUCCESS) {
+          cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                         MSGCV_BAD_TOUT, tout);
+          return(CV_ILL_INPUT);
+        }
+        return(CV_SUCCESS);
+      }*/
+      
+      /* In CV_ONE_STEP mode, test if tn was returned */
+     /* if ( itask == CV_ONE_STEP &&
+           SUNRabs(cv_mem->cv_tn - cv_mem->cv_tretlast) > troundoff ) {
+        cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+        N_VScale(ONE, cv_mem->cv_zn[0], yout);
+        return(CV_SUCCESS);
+      }
+      
+      /* Test for tn at tstop or near tstop */
+     /* if ( cv_mem->cv_tstopset ) {
+        
+        if ( SUNRabs(cv_mem->cv_tn - cv_mem->cv_tstop) <= troundoff ) {
+          ier =  CVodeGetDky(cv_mem, cv_mem->cv_tstop, 0, yout);
+          if (ier != CV_SUCCESS) {
+            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                           MSGCV_BAD_TSTOP, cv_mem->cv_tstop, cv_mem->cv_tn);
+            return(CV_ILL_INPUT);
+          }
+          cv_mem->cv_tretlast = *tret = cv_mem->cv_tstop;
+          cv_mem->cv_tstopset = SUNFALSE;
+          return(CV_TSTOP_RETURN);
+        }*/
+        
+        /* If next step would overtake tstop, adjust stepsize */
+        /*if ( (cv_mem->cv_tn + cv_mem->cv_hprime - cv_mem->cv_tstop)*cv_mem->cv_h > ZERO ) {
+          cv_mem->cv_hprime = (cv_mem->cv_tstop - cv_mem->cv_tn)*(ONE-FOUR*cv_mem->cv_uround);
+          cv_mem->cv_eta = cv_mem->cv_hprime / cv_mem->cv_h;
+        }
+        
+      }
+      
+    }*/ /* end stopping tests block at nst>0 */  
+    
+    /*
+     * --------------------------------------------------
+     * 4. Looping point for internal steps
+     *
+     *    4.1. check for errors (too many steps, too much
+     *         accuracy requested, step size too small)
+     *    4.2. take a new step (call cvStep)
+     *    4.3. stop on error 
+     *    4.4. perform stop tests:
+     *         - check for root in last step
+     *         - check if tout was passed
+     *         - check if close to tstop
+     *         - check if in ONE_STEP mode (must return)
+     * --------------------------------------------------
+     */  
+    
+    /*nstloc = 0;
+    for(;;) {
+     
+      cv_mem->cv_next_h = cv_mem->cv_h;
+      cv_mem->cv_next_q = cv_mem->cv_q;*/
+      
+      /* Reset and check ewt, ewtQ, ewtS */   
+      /*if (cv_mem->cv_nst > 0) {
+
+        ier = cv_mem->cv_efun(cv_mem->cv_zn[0], cv_mem->cv_ewt, cv_mem->cv_e_data);
+        if(ier != 0) {
+          if (cv_mem->cv_itol == CV_WF)
+            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                           MSGCV_EWT_NOW_FAIL, cv_mem->cv_tn);
+          else
+            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                           MSGCV_EWT_NOW_BAD, cv_mem->cv_tn);
+          istate = CV_ILL_INPUT;
+          cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+          N_VScale(ONE, cv_mem->cv_zn[0], yout);
+          break;
+        }
+
+        if (cv_mem->cv_quadr && cv_mem->cv_errconQ) {
+          ier = cvQuadEwtSet(cv_mem, cv_mem->cv_znQ[0], cv_mem->cv_ewtQ);
+          if(ier != 0) {
+            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                           MSGCV_EWTQ_NOW_BAD, cv_mem->cv_tn);
+            istate = CV_ILL_INPUT;
+            cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+            N_VScale(ONE, cv_mem->cv_zn[0], yout);
+            break;
+          }
+        }
+
+        if (cv_mem->cv_sensi) {
+          ier = cvSensEwtSet(cv_mem, cv_mem->cv_znS[0], cv_mem->cv_ewtS);
+          if (ier != 0) {
+            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                           MSGCV_EWTS_NOW_BAD, cv_mem->cv_tn);
+            istate = CV_ILL_INPUT;
+            cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+            N_VScale(ONE, cv_mem->cv_zn[0], yout);
+            break;
+          }
+        }
+
+        if (cv_mem->cv_quadr_sensi && cv_mem->cv_errconQS) {
+          ier = cvQuadSensEwtSet(cv_mem, cv_mem->cv_znQS[0], cv_mem->cv_ewtQS);
+          if (ier != 0) {
+            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+                           MSGCV_EWTQS_NOW_BAD, cv_mem->cv_tn);
+            istate = CV_ILL_INPUT;
+            cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+            N_VScale(ONE, cv_mem->cv_zn[0], yout);
+            break;
+          }
+        }
+
+      }*/
+
+      /* Check for too many steps */
+      /*if ( (cv_mem->cv_mxstep>0) && (nstloc >= cv_mem->cv_mxstep) ) {
+        cvProcessError(cv_mem, CV_TOO_MUCH_WORK, "CVODES", "CVode",
+                       MSGCV_MAX_STEPS, cv_mem->cv_tn);
+        istate = CV_TOO_MUCH_WORK;
+        cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+        N_VScale(ONE, cv_mem->cv_zn[0], yout);
+        break;
+      }*/
+
+      /* Check for too much accuracy requested */
+      /*nrm = N_VWrmsNorm(cv_mem->cv_zn[0], cv_mem->cv_ewt);
+      if (cv_mem->cv_quadr && cv_mem->cv_errconQ) {
+        nrm = cvQuadUpdateNorm(cv_mem, nrm, cv_mem->cv_znQ[0], cv_mem->cv_ewtQ); 
+      }
+      if (cv_mem->cv_sensi && cv_mem->cv_errconS) {
+        nrm = cvSensUpdateNorm(cv_mem, nrm, cv_mem->cv_znS[0], cv_mem->cv_ewtS);
+      }
+      if (cv_mem->cv_quadr_sensi && cv_mem->cv_errconQS) {
+        nrm = cvQuadSensUpdateNorm(cv_mem, nrm, cv_mem->cv_znQS[0], cv_mem->cv_ewtQS);
+      }
+      cv_mem->cv_tolsf = cv_mem->cv_uround * nrm;
+      if (cv_mem->cv_tolsf > ONE) {
+        cvProcessError(cv_mem, CV_TOO_MUCH_ACC, "CVODES", "CVode",
+                       MSGCV_TOO_MUCH_ACC, cv_mem->cv_tn);
+        istate = CV_TOO_MUCH_ACC;
+        cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+        N_VScale(ONE, cv_mem->cv_zn[0], yout);
+        cv_mem->cv_tolsf *= TWO;
+        break;
+      } else {
+        cv_mem->cv_tolsf = ONE;
+      }*/
+      
+      /* Check for h below roundoff level in tn */
+     /* if (cv_mem->cv_tn + cv_mem->cv_h == cv_mem->cv_tn) {
+        cv_mem->cv_nhnil++;
+        if (cv_mem->cv_nhnil <= cv_mem->cv_mxhnil) 
+          cvProcessError(cv_mem, CV_WARNING, "CVODES", "CVode", MSGCV_HNIL,
+                         cv_mem->cv_tn, cv_mem->cv_h);
+        if (cv_mem->cv_nhnil == cv_mem->cv_mxhnil) 
+          cvProcessError(cv_mem, CV_WARNING, "CVODES", "CVode", MSGCV_HNIL_DONE);
+      }*/
+
+      /* Call cvStep to take a step */
+      /*kflag = cvStep(cv_mem); */
+
+      /* Process failed step cases, and exit loop */
+     /* if (kflag != CV_SUCCESS) {
+        istate = cvHandleFailure(cv_mem, kflag);
+        cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+        N_VScale(ONE, cv_mem->cv_zn[0], yout);
+        break;
+      }
+      
+      nstloc++;*/
+
+      /* If tstop is set and was reached, reset tn = tstop */
+      /*if ( cv_mem->cv_tstopset ) {
+        troundoff = FUZZ_FACTOR * cv_mem->cv_uround *
+          (SUNRabs(cv_mem->cv_tn) + SUNRabs(cv_mem->cv_h));
+        if ( SUNRabs(cv_mem->cv_tn - cv_mem->cv_tstop) <= troundoff)
+          cv_mem->cv_tn = cv_mem->cv_tstop;
+      }*/
+
+      /* Check for root in last step taken. */    
+      /*if (cv_mem->cv_nrtfn > 0) {
+        
+        retval = cvRcheck3(cv_mem);
+        
+        if (retval == RTFOUND) { */ /* A new root was found */
+         /* cv_mem->cv_irfnd = 1;
+          istate = CV_ROOT_RETURN;
+          cv_mem->cv_tretlast = *tret = cv_mem->cv_tlo;
+          break;
+        } else if (retval == CV_RTFUNC_FAIL) {*/ /* g failed */
+         /* cvProcessError(cv_mem, CV_RTFUNC_FAIL, "CVODES", "cvRcheck3",
+                         MSGCV_RTFUNC_FAILED, cv_mem->cv_tlo);
+          istate = CV_RTFUNC_FAIL;
+          break;
+        }*/
+
+        /* If we are at the end of the first step and we still have
+         * some event functions that are inactive, issue a warning
+         * as this may indicate a user error in the implementation
+         * of the root function. */
+
+       /* if (cv_mem->cv_nst==1) {
+          inactive_roots = SUNFALSE;
+          for (ir=0; ir<cv_mem->cv_nrtfn; ir++) { 
+            if (!cv_mem->cv_gactive[ir]) {
+              inactive_roots = SUNTRUE;
+              break;
+            }
+          }
+          if ((cv_mem->cv_mxgnull > 0) && inactive_roots) {
+            cvProcessError(cv_mem, CV_WARNING, "CVODES", "CVode",
+                           MSGCV_INACTIVE_ROOTS);
+          }
+        }
+
+      }*/
+
+      /* In NORMAL mode, check if tout reached */
+     /* if ( (itask == CV_NORMAL) &&  (cv_mem->cv_tn-tout)*cv_mem->cv_h >= ZERO ) {
+        istate = CV_SUCCESS;
+        cv_mem->cv_tretlast = *tret = tout;
+        (void) CVodeGetDky(cv_mem, tout, 0, yout);
+        cv_mem->cv_next_q = cv_mem->cv_qprime;
+        cv_mem->cv_next_h = cv_mem->cv_hprime;
+        break;
+      }*/
+
+      /* Check if tn is at tstop, or about to pass tstop */
+     /* if ( cv_mem->cv_tstopset ) {
+
+        troundoff = FUZZ_FACTOR * cv_mem->cv_uround *
+          (SUNRabs(cv_mem->cv_tn) + SUNRabs(cv_mem->cv_h));
+        if ( SUNRabs(cv_mem->cv_tn - cv_mem->cv_tstop) <= troundoff) {
+          (void) CVodeGetDky(cv_mem, cv_mem->cv_tstop, 0, yout);
+          cv_mem->cv_tretlast = *tret = cv_mem->cv_tstop;
+          cv_mem->cv_tstopset = SUNFALSE;
+          istate = CV_TSTOP_RETURN;
+          break;
+        }
+
+        if ( (cv_mem->cv_tn + cv_mem->cv_hprime - cv_mem->cv_tstop)*cv_mem->cv_h > ZERO ) {
+          cv_mem->cv_hprime = (cv_mem->cv_tstop - cv_mem->cv_tn)*(ONE-FOUR*cv_mem->cv_uround);
+          cv_mem->cv_eta = cv_mem->cv_hprime / cv_mem->cv_h;
+        }
+
+      }*/
+
+      /* In ONE_STEP mode, copy y and exit loop */
+      /*if (itask == CV_ONE_STEP) {
+        istate = CV_SUCCESS;
+        cv_mem->cv_tretlast = *tret = cv_mem->cv_tn;
+        N_VScale(ONE, cv_mem->cv_zn[0], yout);
+        cv_mem->cv_next_q = cv_mem->cv_qprime;
+        cv_mem->cv_next_h = cv_mem->cv_hprime;
+        break;
+      }
+
+    } *//* end looping for internal steps */
+    
+    /* Load optional output */
+   /* if (cv_mem->cv_sensi && (cv_mem->cv_ism==CV_STAGGERED1)) { 
+      cv_mem->cv_nniS  = 0;
+      cv_mem->cv_ncfnS = 0;
+      for (is=0; is<cv_mem->cv_Ns; is++) {
+        cv_mem->cv_nniS  += cv_mem->cv_nniS1[is];
+        cv_mem->cv_ncfnS += cv_mem->cv_ncfnS1[is];
+      }
+    }*/
+    
+    /*return(istate);*/
+    return -100;
+
+  }
+
 
 
 }
