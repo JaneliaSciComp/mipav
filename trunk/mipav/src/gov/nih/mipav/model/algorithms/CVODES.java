@@ -372,6 +372,33 @@ public abstract class CVODES {
 	final String MSGD_LMEMB_NULL = "Linear solver memory is NULL for the backward integration.";
 	final String MSGD_BAD_TINTERP = "Bad t for interpolation.";
 	
+	/*-----------------------------------------------------------------
+	 * IV. SUNLinearSolver error codes
+	 * ---------------------------------------------------------------
+	 */
+
+	final int SUNLS_SUCCESS = 0;  /* successful/converged          */
+
+	final int SUNLS_MEM_NULL = -1;  /* mem argument is NULL          */
+	final int SUNLS_ILL_INPUT = -2;  /* illegal function input        */
+	final int SUNLS_MEM_FAIL = -3;  /* failed memory access          */
+	final int SUNLS_ATIMES_FAIL_UNREC = -4;  /* atimes unrecoverable failure  */
+	final int SUNLS_PSET_FAIL_UNREC = -5;  /* pset unrecoverable failure    */
+	final int SUNLS_PSOLVE_FAIL_UNREC = -6;  /* psolve unrecoverable failure  */
+	final int SUNLS_PACKAGE_FAIL_UNREC = -7;  /* external package unrec. fail  */
+	final int SUNLS_GS_FAIL = -8;  /* Gram-Schmidt failure          */        
+	final int SUNLS_QRSOL_FAIL = -9;  /* QRsol found singular R        */
+
+	final int SUNLS_RES_REDUCED = 1;  /* nonconv. solve, resid reduced */
+	final int SUNLS_CONV_FAIL = 2;  /* nonconvergent solve           */
+	final int SUNLS_ATIMES_FAIL_REC = 3;  /* atimes failed recoverably     */
+	final int SUNLS_PSET_FAIL_REC = 4;  /* pset failed recoverably       */
+	final int SUNLS_PSOLVE_FAIL_REC = 5;  /* psolve failed recoverably     */
+	final int SUNLS_PACKAGE_FAIL_REC = 6;  /* external package recov. fail  */
+	final int SUNLS_QRFACT_FAIL = 7;  /* QRfact found singular matrix  */
+	final int SUNLS_LUFACT_FAIL = 8;  /* LUfact found singular matrix  */
+
+	
 	public enum SUNLinearSolver_Type{
 		  SUNLINEARSOLVER_DIRECT,
 		  SUNLINEARSOLVER_ITERATIVE,
@@ -379,7 +406,17 @@ public abstract class CVODES {
 		};
 
     final int cvDlsDQJac = -1;
-
+    
+    // For cv_mem.cv_efun_select
+    final int cvEwtSet_select = 1;
+    // For cv_mem.cv_linit_select
+    final int cvDlsInitialize_select = 1;
+    // For cv_mem.cv_lsolve_select
+    final int cvDlsSolve_select = 1;
+    // For cv_mem.cv_lfree_select
+    final int cvDlsFree_select = 1;
+    // For cv_mem.cv_setup_select
+    final int cvDlsSetup_select = 1;
 
     final int cvsRoberts_dns = 1;
     int problem = cvsRoberts_dns;
@@ -559,7 +596,7 @@ public abstract class CVODES {
 	 * @param ydotv
 	 * @return
 	 */
-	private int f(double t, NVector yv, NVector ydotv) {
+	private int f(double t, NVector yv, NVector ydotv, CVodeMemRec user_data) {
 		double y[] = yv.getData();
 		double ydot[] = ydotv.getData();
 		if (problem == 1) {
@@ -567,6 +604,10 @@ public abstract class CVODES {
 		    ydot[2] = 3.0E7*y[1]*y[1];
 		    ydot[1] = -ydot[0] - ydot[2];
 		}
+		return 0;
+	}
+	
+	private int fQ(double t, NVector x, NVector y, CVodeMemRec user_data) {
 		return 0;
 	}
 	
@@ -653,7 +694,9 @@ public abstract class CVODES {
 	  NVector cv_Vabstol = new NVector();        /* vector absolute tolerance                     */
 	  boolean cv_user_efun;   /* SUNTRUE if user sets efun                     */
 	  //CVEwtFn cv_efun;            /* function to set ewt                           */
+	  int cv_efun_select;
 	  //void *cv_e_data;            /* user pointer passed to efun                   */
+	  CVodeMemRec cv_e_data;
 
 	  /*-----------------------
 	    Quadrature Related Data 
@@ -697,7 +740,7 @@ public abstract class CVODES {
 	  int cv_itolS;
 	  double cv_reltolS;        /* relative tolerance for sensitivities         */
 	  double cv_SabstolS[];      /* scalar absolute tolerances for sensi.        */
-	  NVector cv_VabstolS = new NVector();      /* vector absolute tolerances for sensi.        */
+	  NVector cv_VabstolS[];      /* vector absolute tolerances for sensi.        */
 
 	  /*-----------------------------------
 	    Quadrature Sensitivity Related Data 
@@ -714,7 +757,7 @@ public abstract class CVODES {
 	  int cv_itolQS;
 	  double cv_reltolQS;       /* relative tolerance for yQS                   */
 	  double cv_SabstolQS[];     /* scalar absolute tolerances for yQS           */
-	  NVector cv_VabstolQS = new NVector();     /* vector absolute tolerances for yQS           */
+	  NVector cv_VabstolQS[];     /* vector absolute tolerances for yQS           */
 
 	  /*-----------------------
 	    Nordsieck History Array 
@@ -754,7 +797,7 @@ public abstract class CVODES {
 	    Sensitivity Related Vectors 
 	    ---------------------------*/
 
-	  NVector cv_znS[] = new NVector[L_MAX];    /* Nordsieck arrays for sensitivities           */
+	  NVector cv_znS[][] = new NVector[L_MAX][];    /* Nordsieck arrays for sensitivities           */
 	  NVector cv_ewtS[];          /* error weight vectors for sensitivities       */
 	  NVector cv_yS[];            /* yS=yS0 (allocated by the user)               */
 	  NVector cv_acorS[];         /* acorS = yS_n(m) - yS_n(0)                    */
@@ -767,7 +810,7 @@ public abstract class CVODES {
 	    Quadrature Sensitivity Related Vectors 
 	    --------------------------------------*/
 
-	  NVector cv_znQS[] = new NVector[L_MAX];   /* Nordsieck arrays for quadr. sensitivities    */
+	  NVector cv_znQS[][] = new NVector[L_MAX][];   /* Nordsieck arrays for quadr. sensitivities    */
 	  NVector cv_ewtQS[];         /* error weight vectors for sensitivities       */
 	  NVector cv_yQS[];           /* Unlike yS, yQS is not allocated by the user  */
 	  NVector cv_acorQS[];        /* acorQS = yQS_n(m) - yQS_n(0)                 */
@@ -902,15 +945,19 @@ public abstract class CVODES {
 	  /* Linear Solver functions to be called */
 
 	  //int (*cv_linit)(struct CVodeMemRec *cv_mem);
+	  int cv_linit_select;
 
 	  //int (*cv_lsetup)(struct CVodeMemRec *cv_mem, int convfail, 
 			   //N_Vector ypred, N_Vector fpred, booleantype *jcurPtr, 
 			   //N_Vector vtemp1, N_Vector vtemp2, N_Vector vtemp3); 
+	  int cv_lsetup_select;
 
 	  //int (*cv_lsolve)(struct CVodeMemRec *cv_mem, N_Vector b, N_Vector weight,
 			   //N_Vector ycur, N_Vector fcur);
+	  int cv_lsolve_select;
 
 	  //int (*cv_lfree)(struct CVodeMemRec *cv_mem);
+	  int cv_lfree_select;
 
 	  /* Linear Solver specific memory */
 
@@ -1073,7 +1120,8 @@ public abstract class CVODES {
     	  cv_mem.cv_itol       = CV_NN;
     	  cv_mem.cv_user_efun  = false;
     	  //cv_mem.cv_efun       = null;
-    	  //cv_mem.cv_e_data     = null;
+    	  cv_mem.cv_efun_select = -1;
+    	  cv_mem.cv_e_data     = null;
     	  //cv_mem.cv_ehfun      = cvErrHandler;
     	  cv_mem.cv_eh_data    = cv_mem;
     	  //cv_mem.cv_errfp      = stderr;
@@ -1310,9 +1358,13 @@ public abstract class CVODES {
           (We check != NULL later, in CVode, if using CV_NEWTON.) */
 
        //cv_mem.cv_linit  = null;
+       cv_mem.cv_linit_select = -1;
        //cv_mem.cv_lsetup = null;
+       cv_mem.cv_lsetup_select = -1;
        //cv_mem.cv_lsolve = null;
+       cv_mem.cv_lsolve_select = -1;
        //cv_mem.cv_lfree  = null;
+       cv_mem.cv_lfree_select = -1;
        //cv_mem.cv_lmem   = null;
 
        /* Set forceSetup to SUNFALSE */
@@ -1321,7 +1373,7 @@ public abstract class CVODES {
 
        /* Initialize zn[0] in the history array */
 
-       N_VScale(ONE, y0, cv_mem.cv_zn[0]);
+       N_VScale_Serial(ONE, y0, cv_mem.cv_zn[0]);
 
        /* Initialize all the counters */
 
@@ -1486,16 +1538,6 @@ public abstract class CVODES {
     	 x = null;
      }
      
-     private void N_VScale(double c, NVector x, NVector z) {
-    	 int i;
-    	 double xa[] = x.getData();
-    	 int n = xa.length;
-    	 double za[] = z.getData();
-    	 for (i = 0; i < n; i++) {
-    		 za[i] = c * xa[i];
-    	 }
-     }
-     
      int CVodeSVtolerances(CVodeMemRec cv_mem, double reltol, NVector abstol)
      {
 
@@ -1535,13 +1577,14 @@ public abstract class CVODES {
        }
 
        cv_mem.cv_reltol = reltol;
-       N_VScale(ONE, abstol, cv_mem.cv_Vabstol);
+       N_VScale_Serial(ONE, abstol, cv_mem.cv_Vabstol);
 
        cv_mem.cv_itol = CV_SV;
 
        cv_mem.cv_user_efun = false;
        //cv_mem.cv_efun = cvEwtSet;
-       //cv_mem.cv_e_data = null; /* will be set to cvode_mem in InitialSetup */
+       cv_mem.cv_efun_select = cvEwtSet_select;
+       cv_mem.cv_e_data = null; /* will be set to cvode_mem in InitialSetup */
 
        return(CV_SUCCESS);
      }
@@ -1727,8 +1770,8 @@ public abstract class CVODES {
      
      class SUNLinearSolver {
          long N; // Size of the linear system, the number of matrix rows
-         long pivots[]; // Array of size N, index array for partial pivoting in LU factorization
-         long last_flag; // last error return flag from internal setup/solve
+         int pivots[]; // Array of size N, index array for partial pivoting in LU factorization
+         int last_flag; // last error return flag from internal setup/solve
          SUNLinearSolver_Type type;
      }
      
@@ -1747,7 +1790,7 @@ public abstract class CVODES {
     	 SUNLinearSolver S = new SUNLinearSolver();
     	 S.N = matrixRows;
     	 S.last_flag = 0;
-    	 S.pivots = new long[matrixRows];
+    	 S.pivots = new int[matrixRows];
     	 S.type = SUNLinearSolver_Type.SUNLINEARSOLVER_DIRECT;
     	 return S;
      }
@@ -1788,29 +1831,28 @@ public abstract class CVODES {
       //}
 
       /* free any existing system solver attached to CVode */
-      //if (cv_mem.cv_lfree)  cv_mem.cv_lfree(cv_mem);
+      if (cv_mem.cv_lfree_select > 0)  cv_lfree(cv_mem, cv_mem.cv_lfree_select);
 
       /* Set four main system linear solver function fields in cv_mem */
       //cv_mem.cv_linit  = cvDlsInitialize;
+      cv_mem.cv_linit_select = cvDlsInitialize_select;
       //cv_mem.cv_lsetup = cvDlsSetup;
+      cv_mem.cv_lsetup_select = cvDlsSetup_select;
       //cv_mem.cv_lsolve = cvDlsSolve;
+      cv_mem.cv_lsolve_select = cvDlsSolve_select;
       //cv_mem.cv_lfree  = cvDlsFree;
+      cv_mem.cv_lfree_select = cvDlsFree_select;
       
       /* Get memory for CVDlsMemRec */
       cvdls_mem = null;
       cvdls_mem = new CVDlsMemRec();
-      if (cvdls_mem == null) {
-        cvProcessError(cv_mem, CVDLS_MEM_FAIL, "CVSDLS", 
-                        "CVDlsSetLinearSolver", MSGD_MEM_FAIL);
-        return(CVDLS_MEM_FAIL);
-      }
 
       /* set SUNLinearSolver pointer */
       cvdls_mem.LS = LS;
       
       /* Initialize Jacobian-related data */
       cvdls_mem.jacDQ = true;
-      //cvdls_mem.jac = cvDlsDQJac;
+      cvdls_mem.jac = cvDlsDQJac;
       cvdls_mem.J_data = cv_mem;
       cvdls_mem.last_flag = CVDLS_SUCCESS;
 
@@ -1883,7 +1925,7 @@ public abstract class CVODES {
 
     long nfeDQ;       /* no. of calls to f due to DQ Jacobian approx.  */
 
-    long last_flag;   /* last error return flag                        */
+    int last_flag;   /* last error return flag                        */
 
   };
 
@@ -2001,7 +2043,7 @@ public abstract class CVODES {
      * ----------------------------------------
      */
 
-   /* if (cv_mem.cv_nst == 0) {
+    /*if (cv_mem.cv_nst == 0) {
 
       cv_mem.cv_tretlast = tret[0] = cv_mem.cv_tn;*/
 
@@ -2017,12 +2059,13 @@ public abstract class CVODES {
        * If computing quadr. sensi., call fQS at (t0,y0,yS0), set znQS[1][is] = yQS'(t0), is=1,...,Ns.
        */
 
-      /*retval = cv_mem->cv_f(cv_mem->cv_tn, cv_mem->cv_zn[0],
-                            cv_mem->cv_zn[1], cv_mem->cv_user_data); 
-      cv_mem->cv_nfe++;
+      /*retval = f(cv_mem.cv_tn, cv_mem.cv_zn[0],
+                            cv_mem.cv_zn[1], cv_mem.cv_user_data); 
+      cv_mem.cv_nfe++;
       if (retval < 0) {
         cvProcessError(cv_mem, CV_RHSFUNC_FAIL, "CVODES", "CVode",
-                       MSGCV_RHSFUNC_FAILED, cv_mem->cv_tn);
+                       //MSGCV_RHSFUNC_FAILED, cv_mem.cv_tn);
+                         MSGCV_RHSFUNC_FAILED);
         return(CV_RHSFUNC_FAIL);
       }
       if (retval > 0) {
@@ -2031,10 +2074,10 @@ public abstract class CVODES {
         return(CV_FIRST_RHSFUNC_ERR);
       }
 
-      if (cv_mem->cv_quadr) {
-        retval = cv_mem->cv_fQ(cv_mem->cv_tn, cv_mem->cv_zn[0],
-                               cv_mem->cv_znQ[1], cv_mem->cv_user_data);
-        cv_mem->cv_nfQe++;
+      if (cv_mem.cv_quadr) {
+        retval = fQ(cv_mem.cv_tn, cv_mem.cv_zn[0],
+                               cv_mem.cv_znQ[1], cv_mem.cv_user_data);
+        cv_mem.cv_nfQe++;
         if (retval < 0) {
           cvProcessError(cv_mem, CV_QRHSFUNC_FAIL, "CVODES", "CVode",
                          MSGCV_QRHSFUNC_FAILED, cv_mem->cv_tn);
@@ -2047,7 +2090,7 @@ public abstract class CVODES {
         }
       }
 
-      if (cv_mem->cv_sensi) {
+      if (cv_mem.cv_sensi) {
         retval = cvSensRhsWrapper(cv_mem, cv_mem->cv_tn, cv_mem->cv_zn[0],
                                   cv_mem->cv_zn[1], cv_mem->cv_znS[0],
                                   cv_mem->cv_znS[1], cv_mem->cv_tempv,
@@ -2080,11 +2123,11 @@ public abstract class CVODES {
                          "CVode", MSGCV_QSRHSFUNC_FIRST);
           return(CV_FIRST_QSRHSFUNC_ERR);
         }
-      }*/
+      } */
 
       /* Test input tstop for legality. */
 
-     /* if (cv_mem->cv_tstopset) {
+      /*if (cv_mem->cv_tstopset) {
         if ( (cv_mem->cv_tstop - cv_mem->cv_tn)*(tout - cv_mem->cv_tn) <= ZERO ) {
           cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
                          MSGCV_BAD_TSTOP, cv_mem->cv_tstop, cv_mem->cv_tn);
@@ -2160,7 +2203,7 @@ public abstract class CVODES {
 
       }
 
-    } *//* end first call block */
+    }*/ /* end first call block */ // if (cv_mem.cv_nst == 0)
 
     /*
      * ------------------------------------------------------
@@ -2512,7 +2555,936 @@ public abstract class CVODES {
     return -100;
 
   }
+  
+  /*  
+   * cvInitialSetup
+   *
+   * This routine performs input consistency checks at the first step.
+   * If needed, it also checks the linear solver module and calls the
+   * linear solver initialization routine.
+   */
 
+  private int cvInitialSetup(CVodeMemRec cv_mem)
+  {
+    int ier;
+
+    /* Did the user specify tolerances? */
+    if (cv_mem.cv_itol == CV_NN) {
+      cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                     MSGCV_NO_TOL);
+      return(CV_ILL_INPUT);
+    }
+
+    /* Set data for efun */
+    if (cv_mem.cv_user_efun) cv_mem.cv_e_data = cv_mem.cv_user_data;
+    else                      cv_mem.cv_e_data = cv_mem;
+
+    /* Load initial error weights */
+    ier = cv_efun(cv_mem.cv_zn[0], cv_mem.cv_ewt,
+                          cv_mem.cv_e_data, cv_mem.cv_efun_select);
+    if (ier != 0) {
+      if (cv_mem.cv_itol == CV_WF) 
+        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                       MSGCV_EWT_FAIL);
+      else
+        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                       MSGCV_BAD_EWT);
+      return(CV_ILL_INPUT);
+    }
+    
+    /* Quadrature initial setup */
+
+    if (cv_mem.cv_quadr && cv_mem.cv_errconQ) {
+
+      /* Did the user specify tolerances? */
+      if (cv_mem.cv_itolQ == CV_NN) {
+        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                       MSGCV_NO_TOLQ);
+        return(CV_ILL_INPUT);
+      }
+
+      /* Load ewtQ */
+      ier = cvQuadEwtSet(cv_mem, cv_mem.cv_znQ[0], cv_mem.cv_ewtQ);
+      if (ier != 0) {
+        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                       MSGCV_BAD_EWTQ);
+        return(CV_ILL_INPUT);
+      }
+
+    }
+
+    if (!cv_mem.cv_quadr) cv_mem.cv_errconQ = false;
+
+    /* Forward sensitivity initial setup */
+
+    if (cv_mem.cv_sensi) {
+
+      /* Did the user specify tolerances? */
+      if (cv_mem.cv_itolS == CV_NN) {
+        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                       MSGCV_NO_TOLS);
+        return(CV_ILL_INPUT);
+      }
+
+      /* If using the internal DQ functions, we must have access to the problem parameters */
+      if(cv_mem.cv_fSDQ && (cv_mem.cv_p == null)) {
+        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                       MSGCV_NULL_P);
+        return(CV_ILL_INPUT);
+      }
+
+      /* Load ewtS */
+      ier = cvSensEwtSet(cv_mem, cv_mem.cv_znS[0], cv_mem.cv_ewtS);
+      if (ier != 0) {
+        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                       MSGCV_BAD_EWTS);
+        return(CV_ILL_INPUT);
+      }
+
+    }
+
+    /* FSA of quadrature variables */
+
+    if (cv_mem.cv_quadr_sensi) {
+
+      /* If using the internal DQ functions, we must have access to fQ
+       * (i.e. quadrature integration must be enabled) and to the problem parameters */
+
+      if (cv_mem.cv_fQSDQ) {
+
+        /* Test if quadratures are defined, so we can use fQ */
+        if (!cv_mem.cv_quadr) {
+          cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                         MSGCV_NULL_FQ);
+          return(CV_ILL_INPUT);
+        }
+
+        /* Test if we have the problem parameters */
+        if(cv_mem.cv_p == null) {
+          cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                         MSGCV_NULL_P);
+          return(CV_ILL_INPUT);
+        }
+
+      }
+
+      if (cv_mem.cv_errconQS) {
+        
+        /* Did the user specify tolerances? */
+        if (cv_mem.cv_itolQS == CV_NN) {
+          cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                         MSGCV_NO_TOLQS);
+          return(CV_ILL_INPUT);
+        }
+
+        /* If needed, did the user provide quadrature tolerances? */
+        if ( (cv_mem.cv_itolQS == CV_EE) && (cv_mem.cv_itolQ == CV_NN) ) {
+          cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                         MSGCV_NO_TOLQ);
+          return(CV_ILL_INPUT);
+        }
+
+        /* Load ewtQS */
+        ier = cvQuadSensEwtSet(cv_mem, cv_mem.cv_znQS[0], cv_mem.cv_ewtQS);
+        if (ier != 0) {
+          cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                         MSGCV_BAD_EWTQS);
+          return(CV_ILL_INPUT);
+        }
+
+      }
+
+    } else {
+
+      cv_mem.cv_errconQS = false;
+
+    }
+
+    /* Check if lsolve function exists (if needed) and call linit function (if it exists) */
+    if (cv_mem.cv_iter == CV_NEWTON) {
+      if (cv_mem.cv_lsolve_select < 0) {
+        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
+                       MSGCV_LSOLVE_NULL);
+        return(CV_ILL_INPUT);
+      }
+      if (cv_mem.cv_linit_select > 0) {
+        ier = cv_linit(cv_mem, cv_mem.cv_linit_select);
+        if (ier != 0) {
+          cvProcessError(cv_mem, CV_LINIT_FAIL, "CVODES", "cvInitialSetup",
+                         MSGCV_LINIT_FAIL);
+          return(CV_LINIT_FAIL);
+        }
+      }
+    }
+      
+    return(CV_SUCCESS);
+  }
+
+  /*
+   * cvEwtSet
+   *
+   * This routine is responsible for setting the error weight vector ewt,
+   * according to tol_type, as follows:
+   *
+   * (1) ewt[i] = 1 / (reltol * SUNRabs(ycur[i]) + *abstol), i=0,...,neq-1
+   *     if tol_type = CV_SS
+   * (2) ewt[i] = 1 / (reltol * SUNRabs(ycur[i]) + abstol[i]), i=0,...,neq-1
+   *     if tol_type = CV_SV
+   *
+   * cvEwtSet returns 0 if ewt is successfully set as above to a
+   * positive vector and -1 otherwise. In the latter case, ewt is
+   * considered undefined.
+   *
+   * All the real work is done in the routines cvEwtSetSS, cvEwtSetSV.
+   */
+
+  int cvEwtSet(NVector ycur, NVector weight, CVodeMemRec cv_mem)
+  {
+    int flag = 0;
+
+    switch(cv_mem.cv_itol) {
+    case CV_SS:
+      flag = cvEwtSetSS(cv_mem, ycur, weight);
+      break;
+    case CV_SV:
+      flag = cvEwtSetSV(cv_mem, ycur, weight);
+      break;
+    }
+
+    return(flag);
+  }
+  
+  /*
+   * cvEwtSetSS
+   *
+   * This routine sets ewt as decribed above in the case tol_type = CV_SS.
+   * It tests for non-positive components before inverting. cvEwtSetSS
+   * returns 0 if ewt is successfully set to a positive vector
+   * and -1 otherwise. In the latter case, ewt is considered undefined.
+   */
+
+  private int cvEwtSetSS(CVodeMemRec cv_mem, NVector ycur, NVector weight)
+  {
+    N_VAbs_Serial(ycur, cv_mem.cv_tempv);
+    N_VScale_Serial(cv_mem.cv_reltol, cv_mem.cv_tempv, cv_mem.cv_tempv);
+    N_VAddConst_Serial(cv_mem.cv_tempv, cv_mem.cv_Sabstol, cv_mem.cv_tempv);
+    if (N_VMin(cv_mem.cv_tempv) <= ZERO) return(-1);
+    N_VInv_Serial(cv_mem.cv_tempv, weight);
+
+    return(0);
+  }
+
+  /*
+   * cvEwtSetSV
+   *
+   * This routine sets ewt as decribed above in the case tol_type = CV_SV.
+   * It tests for non-positive components before inverting. cvEwtSetSV
+   * returns 0 if ewt is successfully set to a positive vector
+   * and -1 otherwise. In the latter case, ewt is considered undefined.
+   */
+
+  private int cvEwtSetSV(CVodeMemRec cv_mem, NVector ycur, NVector weight)
+  {
+    N_VAbs_Serial(ycur, cv_mem.cv_tempv);
+    N_VLinearSum_Serial(cv_mem.cv_reltol, cv_mem.cv_tempv, ONE,
+                 cv_mem.cv_Vabstol, cv_mem.cv_tempv);
+    if (N_VMin(cv_mem.cv_tempv) <= ZERO) return(-1);
+    N_VInv_Serial(cv_mem.cv_tempv, weight);
+    return(0);
+  }
+
+  private void N_VAbs_Serial(NVector x, NVector z)
+  {
+    int i, N;
+    double xd[], zd[];
+
+    xd = zd = null;
+    xd = x.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = Math.abs(xd[i]);
+
+    return;
+  }
+  
+  private void N_VAddConst_Serial(NVector x, double b, NVector z)
+  {
+    int i, N;
+    double xd[], zd[];
+
+    xd = zd = null;
+    xd = x.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++) 
+      zd[i] = xd[i]+b;
+
+    return;
+  }
+
+  private void N_VInv_Serial(NVector x, NVector z)
+  {
+    int i, N;
+    double xd[], zd[];
+
+    xd = zd = null;
+    
+    xd = x.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = ONE/xd[i];
+
+    return;
+  }
+  
+  private void N_VLinearSum_Serial(double a, NVector x, double b, NVector y, NVector z)
+  {
+    int i, N;
+    double c, xd[], yd[], zd[];
+    NVector v1, v2;
+    boolean test;
+
+    xd = yd = zd = null;
+
+    if ((b == ONE) && (z == y)) {    /* BLAS usage: axpy y <- ax+y */
+      Vaxpy_Serial(a,x,y);
+      return;
+    }
+
+    if ((a == ONE) && (z == x)) {    /* BLAS usage: axpy x <- by+x */
+      Vaxpy_Serial(b,y,x);
+      return;
+    }
+
+    /* Case: a == b == 1.0 */
+
+    if ((a == ONE) && (b == ONE)) {
+      VSum_Serial(x, y, z);
+      return;
+    }
+
+    /* Cases: (1) a == 1.0, b = -1.0, (2) a == -1.0, b == 1.0 */
+
+    if ((test = ((a == ONE) && (b == -ONE))) || ((a == -ONE) && (b == ONE))) {
+      v1 = test ? y : x;
+      v2 = test ? x : y;
+      VDiff_Serial(v2, v1, z);
+      return;
+    }
+
+    /* Cases: (1) a == 1.0, b == other or 0.0, (2) a == other or 0.0, b == 1.0 */
+    /* if a or b is 0.0, then user should have called N_VScale */
+
+    if ((test = (a == ONE)) || (b == ONE)) {
+      c  = test ? b : a;
+      v1 = test ? y : x;
+      v2 = test ? x : y;
+      VLin1_Serial(c, v1, v2, z);
+      return;
+    }
+
+    /* Cases: (1) a == -1.0, b != 1.0, (2) a != 1.0, b == -1.0 */
+
+    if ((test = (a == -ONE)) || (b == -ONE)) {
+      c = test ? b : a;
+      v1 = test ? y : x;
+      v2 = test ? x : y;
+      VLin2_Serial(c, v1, v2, z);
+      return;
+    }
+
+    /* Case: a == b */
+    /* catches case both a and b are 0.0 - user should have called N_VConst */
+
+    if (a == b) {
+      VScaleSum_Serial(a, x, y, z);
+      return;
+    }
+
+    /* Case: a == -b */
+
+    if (a == -b) {
+      VScaleDiff_Serial(a, x, y, z);
+      return;
+    }
+
+    /* Do all cases not handled above:
+       (1) a == other, b == 0.0 - user should have called N_VScale
+       (2) a == 0.0, b == other - user should have called N_VScale
+       (3) a,b == other, a !=b, a != -b */
+    
+    xd = x.data;
+    yd = y.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = (a*xd[i])+(b*yd[i]);
+
+    return;
+  }
+  
+  private void Vaxpy_Serial(double a, NVector x, NVector y)
+  {
+    int i, N;
+    double xd[], yd[];
+
+    xd = yd = null;
+
+    xd = x.data;
+    yd = y.data;
+    N = xd.length;
+
+    if (a == ONE) {
+      for (i = 0; i < N; i++)
+        yd[i] += xd[i];
+      return;
+    }
+
+    if (a == -ONE) {
+      for (i = 0; i < N; i++)
+        yd[i] -= xd[i];
+      return;
+    }    
+
+    for (i = 0; i < N; i++)
+      yd[i] += a*xd[i];
+
+    return;
+  }
+
+
+  private void N_VScale_Serial(double c, NVector x, NVector z)
+  {
+    int i, N;
+    double xd[], zd[];
+
+    xd = zd = null;
+
+    if (z == x) {  /* BLAS usage: scale x <- cx */
+      VScaleBy_Serial(c, x);
+      return;
+    }
+
+    if (c == ONE) {
+      VCopy_Serial(x, z);
+    } else if (c == -ONE) {
+      VNeg_Serial(x, z);
+    } else {
+    	xd = x.data;
+        zd = z.data;
+        N = xd.length;
+      for (i = 0; i < N; i++) 
+        zd[i] = c*xd[i];
+    }
+
+    return;
+  }
+  
+  private void VScaleBy_Serial(double a, NVector x)
+  {
+    int i, N;
+    double xd[];
+
+    xd = null;
+
+    xd = x.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      xd[i] *= a;
+
+    return;
+  }
+  
+  private void VCopy_Serial(NVector x, NVector z)
+  {
+    int i, N;
+    double xd[], zd[];
+
+    xd = zd = null;
+
+    xd = x.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = xd[i]; 
+
+    return;
+  }
+
+  private void VNeg_Serial(NVector x, NVector z)
+  {
+    int i, N;
+    double xd[], zd[];
+
+    xd = zd = null;
+
+    xd = x.data;
+    zd = z.data;
+    N = xd.length;
+    
+    for (i = 0; i < N; i++)
+      zd[i] = -xd[i];
+
+    return;
+  }
+  
+  private void VSum_Serial(NVector x, NVector y, NVector z)
+  {
+    int i, N;
+    double xd[], yd[], zd[];
+
+    xd = yd = zd = null;
+
+    xd = x.data;
+    yd = y.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = xd[i]+yd[i];
+
+    return;
+  }
+
+  private void VDiff_Serial(NVector x, NVector y, NVector z)
+  {
+    int i, N;
+    double xd[], yd[], zd[];
+
+    xd = yd = zd = null;
+
+    xd = x.data;
+    yd = y.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = xd[i]-yd[i];
+
+    return;
+  }
+
+  private void VLin1_Serial(double a, NVector x, NVector y, NVector z)
+  {
+    int i, N;
+    double xd[], yd[], zd[];
+
+    xd = yd = zd = null;
+
+    xd = x.data;
+    yd = y.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = (a*xd[i])+yd[i];
+
+    return;
+  }
+
+  private void VLin2_Serial(double a, NVector x, NVector y, NVector z)
+  {
+    int i, N;
+    double xd[], yd[], zd[];
+
+    xd = yd = zd = null;
+
+    xd = x.data;
+    yd = y.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = (a*xd[i])-yd[i];
+
+    return;
+  }
+  
+  private void VScaleSum_Serial(double c, NVector x, NVector y, NVector z)
+  {
+    int i, N;
+    double xd[], yd[], zd[];
+
+    xd = yd = zd = null;
+
+    xd = x.data;
+    yd = y.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = c*(xd[i]+yd[i]);
+
+    return;
+  }
+
+  private void VScaleDiff_Serial(double c, NVector x, NVector y, NVector z)
+  {
+    int i, N;
+    double xd[], yd[], zd[];
+
+    xd = yd = zd = null;
+
+    xd = x.data;
+    yd = y.data;
+    zd = z.data;
+    N = xd.length;
+
+    for (i = 0; i < N; i++)
+      zd[i] = c*(xd[i]-yd[i]);
+
+    return;
+  }
+
+  private int cv_efun(NVector ycur, NVector weight, CVodeMemRec cv_mem, int cv_efun_select) {
+	  int flag = 0;
+	  switch (cv_efun_select) {
+	  case cvEwtSet_select:
+		  flag = cvEwtSet(ycur, weight, cv_mem);  
+		  break;
+	  }
+	  return flag;
+  }
+  
+  /*
+   * cvQuadEwtSet
+   *
+   */
+
+  private int cvQuadEwtSet(CVodeMemRec cv_mem, NVector qcur, NVector weightQ)
+  {
+    int flag=0;
+
+    switch (cv_mem.cv_itolQ) {
+    case CV_SS:
+      flag = cvQuadEwtSetSS(cv_mem, qcur, weightQ);
+      break;
+    case CV_SV:
+      flag = cvQuadEwtSetSV(cv_mem, qcur, weightQ);
+      break;
+    }
+
+    return(flag);
+
+  }
+
+  /*
+   * cvQuadEwtSetSS
+   *
+   */
+
+  private int cvQuadEwtSetSS(CVodeMemRec cv_mem, NVector qcur, NVector weightQ)
+  {
+    N_VAbs_Serial(qcur, cv_mem.cv_tempvQ);
+    N_VScale_Serial(cv_mem.cv_reltolQ, cv_mem.cv_tempvQ, cv_mem.cv_tempvQ);
+    N_VAddConst_Serial(cv_mem.cv_tempvQ, cv_mem.cv_SabstolQ, cv_mem.cv_tempvQ);
+    if (N_VMin(cv_mem.cv_tempvQ) <= ZERO) return(-1);
+    N_VInv_Serial(cv_mem.cv_tempvQ, weightQ);
+
+    return(0);
+  }
+
+  /*
+   * cvQuadEwtSetSV
+   *
+   */
+
+  private int cvQuadEwtSetSV(CVodeMemRec cv_mem, NVector qcur, NVector weightQ)
+  {
+    N_VAbs_Serial(qcur, cv_mem.cv_tempvQ);
+    N_VLinearSum_Serial(cv_mem.cv_reltolQ, cv_mem.cv_tempvQ, ONE,
+                 cv_mem.cv_VabstolQ, cv_mem.cv_tempvQ);
+    if (N_VMin(cv_mem.cv_tempvQ) <= ZERO) return(-1);
+    N_VInv_Serial(cv_mem.cv_tempvQ, weightQ);
+
+    return(0);
+  }
+  
+  /*
+   * cvSensEwtSet
+   *
+   */
+
+  private int cvSensEwtSet(CVodeMemRec cv_mem, NVector yScur[], NVector weightS[])
+  {
+    int flag=0;
+
+    switch (cv_mem.cv_itolS) {
+    case CV_EE:
+      flag = cvSensEwtSetEE(cv_mem, yScur, weightS);
+      break;
+    case CV_SS:
+      flag = cvSensEwtSetSS(cv_mem, yScur, weightS);
+      break;
+    case CV_SV:
+      flag = cvSensEwtSetSV(cv_mem, yScur, weightS);
+      break;
+    }
+
+    return(flag);
+  }
+
+  /*
+   * cvSensEwtSetEE
+   *
+   * In this case, the error weight vector for the i-th sensitivity is set to
+   *
+   * ewtS_i = pbar_i * efun(pbar_i*yS_i)
+   *
+   * In other words, the scaled sensitivity pbar_i * yS_i has the same error
+   * weight vector calculation as the solution vector.
+   *
+   */
+
+  private int cvSensEwtSetEE(CVodeMemRec cv_mem, NVector yScur[], NVector weightS[])
+  {
+    int is;
+    NVector pyS;
+    int flag;
+
+    /* Use tempvS[0] as temporary storage for the scaled sensitivity */
+    pyS = cv_mem.cv_tempvS[0];
+
+    for (is=0; is<cv_mem.cv_Ns; is++) {
+      N_VScale_Serial(cv_mem.cv_pbar[is], yScur[is], pyS);
+      flag = cv_efun(pyS, weightS[is], cv_mem.cv_e_data, cv_mem.cv_efun_select);
+      if (flag != 0) return(-1);
+      N_VScale_Serial(cv_mem.cv_pbar[is], weightS[is], weightS[is]);
+    }
+
+    return(0);
+  }
+
+  /*
+   * cvSensEwtSetSS
+   *
+   */
+
+  private int cvSensEwtSetSS(CVodeMemRec cv_mem, NVector yScur[], NVector weightS[])
+  {
+    int is;
+    
+    for (is=0; is<cv_mem.cv_Ns; is++) {
+      N_VAbs_Serial(yScur[is], cv_mem.cv_tempv);
+      N_VScale_Serial(cv_mem.cv_reltolS, cv_mem.cv_tempv, cv_mem.cv_tempv);
+      N_VAddConst_Serial(cv_mem.cv_tempv, cv_mem.cv_SabstolS[is], cv_mem.cv_tempv);
+      if (N_VMin(cv_mem.cv_tempv) <= ZERO) return(-1);
+      N_VInv_Serial(cv_mem.cv_tempv, weightS[is]);
+    }
+    return(0);
+  }
+  
+  /*
+   * cvSensEwtSetSV
+   *
+   */
+
+  private int cvSensEwtSetSV(CVodeMemRec cv_mem, NVector yScur[], NVector weightS[])
+  {
+    int is;
+    
+    for (is=0; is<cv_mem.cv_Ns; is++) {
+      N_VAbs_Serial(yScur[is], cv_mem.cv_tempv);
+      N_VLinearSum_Serial(cv_mem.cv_reltolS, cv_mem.cv_tempv, ONE,
+                   cv_mem.cv_VabstolS[is], cv_mem.cv_tempv);
+      if (N_VMin(cv_mem.cv_tempv) <= ZERO) return(-1);
+      N_VInv_Serial(cv_mem.cv_tempv, weightS[is]);
+    }
+
+    return(0);
+  }
+
+  /*
+   * cvQuadSensEwtSet
+   *
+   */
+
+  private int cvQuadSensEwtSet(CVodeMemRec cv_mem, NVector yQScur[], NVector weightQS[])
+  {
+    int flag=0;
+
+    switch (cv_mem.cv_itolQS) {
+    case CV_EE:
+      flag = cvQuadSensEwtSetEE(cv_mem, yQScur, weightQS);
+      break;
+    case CV_SS:
+      flag = cvQuadSensEwtSetSS(cv_mem, yQScur, weightQS);
+      break;
+    case CV_SV:
+      flag = cvQuadSensEwtSetSV(cv_mem, yQScur, weightQS);
+      break;
+    }
+
+    return(flag);
+  }
+
+  /*
+   * cvQuadSensEwtSetEE
+   *
+   * In this case, the error weight vector for the i-th quadrature sensitivity
+   * is set to
+   *
+   * ewtQS_i = pbar_i * cvQuadEwtSet(pbar_i*yQS_i)
+   *
+   * In other words, the scaled sensitivity pbar_i * yQS_i has the same error
+   * weight vector calculation as the quadrature vector.
+   *
+   */
+  private int cvQuadSensEwtSetEE(CVodeMemRec cv_mem, NVector yQScur[], NVector weightQS[])
+  {
+    int is;
+    NVector pyS;
+    int flag;
+
+    /* Use tempvQS[0] as temporary storage for the scaled sensitivity */
+    pyS = cv_mem.cv_tempvQS[0];
+
+    for (is=0; is<cv_mem.cv_Ns; is++) {
+      N_VScale_Serial(cv_mem.cv_pbar[is], yQScur[is], pyS);
+      flag = cvQuadEwtSet(cv_mem, pyS, weightQS[is]);
+      if (flag != 0) return(-1);
+      N_VScale_Serial(cv_mem.cv_pbar[is], weightQS[is], weightQS[is]);
+    }
+
+    return(0);
+  }
+
+  private int cvQuadSensEwtSetSS(CVodeMemRec cv_mem, NVector yQScur[], NVector weightQS[])
+  {
+    int is;
+
+    for (is=0; is<cv_mem.cv_Ns; is++) {
+      N_VAbs_Serial(yQScur[is], cv_mem.cv_tempvQ);
+      N_VScale_Serial(cv_mem.cv_reltolQS, cv_mem.cv_tempvQ, cv_mem.cv_tempvQ);
+      N_VAddConst_Serial(cv_mem.cv_tempvQ, cv_mem.cv_SabstolQS[is], cv_mem.cv_tempvQ);
+      if (N_VMin(cv_mem.cv_tempvQ) <= ZERO) return(-1);
+      N_VInv_Serial(cv_mem.cv_tempvQ, weightQS[is]);
+    }
+
+    return(0);
+  }
+
+  private int cvQuadSensEwtSetSV(CVodeMemRec cv_mem, NVector yQScur[], NVector weightQS[])
+  {
+    int is;
+    
+    for (is=0; is<cv_mem.cv_Ns; is++) {
+      N_VAbs_Serial(yQScur[is], cv_mem.cv_tempvQ);
+      N_VLinearSum_Serial(cv_mem.cv_reltolQS, cv_mem.cv_tempvQ, ONE,
+                   cv_mem.cv_VabstolQS[is], cv_mem.cv_tempvQ);
+      if (N_VMin(cv_mem.cv_tempvQ) <= ZERO) return(-1);
+      N_VInv_Serial(cv_mem.cv_tempvQ, weightQS[is]);
+    }
+
+    return(0);
+  }
+  
+  private int cv_linit(CVodeMemRec cv_mem, int cv_linit_select) {
+	  int flag = 0;
+	  switch (cv_linit_select) {
+	  case cvDlsInitialize_select:
+		  flag = cvDlsInitialize(cv_mem);
+		  break;
+	  }
+	  return flag;
+  }
+  
+  /*-----------------------------------------------------------------
+  cvDlsInitialize
+  -----------------------------------------------------------------
+  This routine performs remaining initializations specific
+  to the direct linear solver interface (and solver itself)
+  -----------------------------------------------------------------*/
+    private int cvDlsInitialize(CVodeMemRec cv_mem)
+{
+  CVDlsMemRec cvdls_mem;
+
+  /* Return immediately if cv_mem or cv_mem->cv_lmem are NULL */
+  if (cv_mem == null) {
+    cvProcessError(null, CVDLS_MEM_NULL, "CVSDLS", 
+                    "cvDlsInitialize", MSGD_CVMEM_NULL);
+    return(CVDLS_MEM_NULL);
+  }
+  if (cv_mem.cv_lmem == null) {
+    cvProcessError(cv_mem, CVDLS_LMEM_NULL, "CVSDLS", 
+                    "cvDlsInitialize", MSGD_LMEM_NULL);
+    return(CVDLS_LMEM_NULL);
+  }
+  cvdls_mem = cv_mem.cv_lmem;
+ 
+  cvDlsInitializeCounters(cvdls_mem);
+
+  /* Set Jacobian function and data, depending on jacDQ (in case 
+     it has changed based on user input) */
+  if (cvdls_mem.jacDQ) {
+    cvdls_mem.jac    = cvDlsDQJac;
+    cvdls_mem.J_data = cv_mem;
+  } else {
+    cvdls_mem.J_data = cv_mem.cv_user_data;
+  }
+
+  /* Call LS initialize routine */
+  cvdls_mem.last_flag = SUNLinSolInitialize_Dense(cvdls_mem.LS);
+  return(cvdls_mem.last_flag);
+}
+    
+    private int SUNLinSolInitialize_Dense(SUNLinearSolver S)
+    {
+      /* all solver-specific memory has already been allocated */
+      S.last_flag = SUNLS_SUCCESS;
+      return S.last_flag;
+    }
+
+
+   private void cv_lfree(CVodeMemRec cv_mem, int cv_lfree_select) {
+	   switch (cv_lfree_select) {
+	   case cvDlsFree_select:
+		   cvDlsFree(cv_mem);
+	   break;
+	   }
+   }
+   
+   /*-----------------------------------------------------------------
+   cvDlsFree
+   -----------------------------------------------------------------
+   This routine frees memory associates with the CVDls solver 
+   interface.
+   -----------------------------------------------------------------*/
+ private int cvDlsFree(CVodeMemRec cv_mem)
+ {
+   CVDlsMemRec cvdls_mem;
+
+   /* Return immediately if cv_mem or cv_mem->cv_lmem are NULL */
+   if (cv_mem == null)  return (CVDLS_SUCCESS);
+   if (cv_mem.cv_lmem == null)  return(CVDLS_SUCCESS);
+   cvdls_mem = cv_mem.cv_lmem;
+
+   /* Free x vector */
+   if (cvdls_mem.x != null) {
+     N_VDestroy(cvdls_mem.x);
+   }
+
+   /* Free savedJ memory */
+   if (cvdls_mem.savedJ != null) {
+     cvdls_mem.savedJ = null;
+   }
+
+   /* Nullify other SUNMatrix pointer */
+   cvdls_mem.A = null;
+
+   /* free CVDls interface structure */
+   cv_mem.cv_lmem = null;
+   
+   return(CVDLS_SUCCESS);
+ }
 
 
 }
