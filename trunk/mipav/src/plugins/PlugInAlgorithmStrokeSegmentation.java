@@ -23,6 +23,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int adcThreshold;
     
+    private boolean doSymmetryRemoval;
+    
+    private int maxSymmetryRemovalSlice = 10;
+    
     private VOI coreVOI;
     
     private MaskObject largestObject;
@@ -32,7 +36,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     private int minAdcObjectSize = 10;
     private int maxAdcObjectSize = 100000;
     
-    private static final String outputBasename = "CoreSeg";
+    private String outputBasename = "CoreSeg";
     
     private static final String voiExtension = ".xml";
     
@@ -44,13 +48,16 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, String outputDir) {
         super();
         
         dwiImage = dwi;
         adcImage = adc;
         adcThreshold = threshold;
+        doSymmetryRemoval = symmetryRemoval;
         coreOutputDir = outputDir;
+        
+        outputBasename = new File(coreOutputDir).getName() + "_" + outputBasename;
     }
     
     /**
@@ -109,7 +116,9 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         fireProgressStateChanged("Extracting DWI mask ...");
         fireProgressStateChanged(45);
         
-        final int volLength = dwiImage.getExtents()[0] * dwiImage.getExtents()[1] * dwiImage.getExtents()[2];
+        final int[] extents = dwiImage.getExtents();
+        final int sliceLength = extents[0] * extents[1];
+        final int volLength = sliceLength * extents[2];
         short[] dwiSegBuffer = new short[volLength];
         try {
             dwiSeg.exportData(0, volLength, dwiSegBuffer);
@@ -168,9 +177,41 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh");
         
         // select largest object
-        // TODO: non-symmetric across midline?
         fireProgressStateChanged("Finding core lesion ...");
         fireProgressStateChanged(70);
+        
+        if (doSymmetryRemoval) {
+            short[] removedBuffer = new short[volLength];
+            
+            // if values are mirrored across the the l->r of the image, cancel them out.  core values should only be on one side, while the cerebelum will have values on both sides
+            for (int iZ = 0; iZ < maxSymmetryRemovalSlice && iZ < extents[2]; iZ++) {
+                for (int iY = 0; iY < extents[1]; iY++) {
+                    for (int iX = 0; iX < extents[0] / 2; iX++) {
+                        int index = (iZ * sliceLength) + (iY * extents[0]) + iX;
+                        int mirroredIndex = (iZ * sliceLength) + (iY * extents[0]) + (extents[0] - iX - 1);
+                        
+                        if (dwiSegBuffer[index] > 0 && dwiSegBuffer[mirroredIndex] > 0) {
+                            dwiSegBuffer[index] = 0;
+                            dwiSegBuffer[mirroredIndex] = 0;
+                            
+                            removedBuffer[index] = 1;
+                            removedBuffer[mirroredIndex] = 1;
+                        }
+                    }
+                }
+            }
+            
+            try {
+                dwiSeg.importData(0, removedBuffer, true);
+            } catch (IOException error) {
+                dwiSegBuffer = null;
+                displayError("Error on mirrored removed data importData: " + dwiImage.getImageName());
+                setCompleted(false);
+                return;
+            }
+            
+            saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_removed");
+        }
         
         short[] objectBuffer = keepOnlyLargestObject(dwiSeg, dwiSegBuffer);
         

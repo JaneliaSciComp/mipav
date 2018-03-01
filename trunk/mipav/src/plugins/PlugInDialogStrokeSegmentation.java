@@ -33,6 +33,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     private JTextField dwiImageFileField;
     
     private JTextField adcThresholdField;
+    
+    private JCheckBox symmetryCheckbox;
 
     private boolean adcImageMultifile = false;
     private ModelImage adcImage;
@@ -41,6 +43,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     private ModelImage dwiImage;
     
     private int adcThreshold = 620;
+    
+    private boolean doSymmetryRemoval = true;
     
     private PlugInAlgorithmStrokeSegmentation segAlgo = null;
     
@@ -253,6 +257,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
             }
         }
         
+        doSymmetryRemoval = symmetryCheckbox.isSelected();
+        
         return true;
     }
 
@@ -263,7 +269,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     protected void callAlgorithm() {
 
         try {
-            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, outputDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -307,6 +313,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         adcThreshold = scriptParameters.getParams().getInt("adc_threshold");
         
+        doSymmetryRemoval = scriptParameters.getParams().getBoolean("do_symmetry_removal");
+        
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
 
@@ -314,6 +322,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.storeImage(adcImage, "adc_image");
         scriptParameters.storeImage(dwiImage, "dwi_image");
         scriptParameters.getParams().put(ParameterFactory.newParameter("adc_threshold", adcThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_symmetry_removal", doSymmetryRemoval));
     }
     
     /**
@@ -358,6 +367,14 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         gbc.gridx = 0;
         
         gbc.gridwidth = 3;
+        
+        symmetryCheckbox = new JCheckBox("Perform symmetry removal on ADC mask", doSymmetryRemoval);
+        symmetryCheckbox.setForeground(Color.black);
+        symmetryCheckbox.setFont(serif12);
+        mainPanel.add(symmetryCheckbox, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
         
         dirMethodRadio = new JRadioButton("Select directory with Baseline_ADC and Baseline_DWI files/subdirectories");
         dirMethodRadio.setForeground(Color.black);
