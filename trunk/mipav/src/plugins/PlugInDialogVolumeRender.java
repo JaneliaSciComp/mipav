@@ -619,9 +619,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					voiManager.setAnnotations(annotations);
 					if ( editMode == EditAnnotations1 || editMode == EditAnnotations2 )
 					{
-						VOIVector latticeVector = new VOIVector();
-						latticeVector.add(finalLattice);
-						voiManager.setLattice(latticeVector);
+						if ( finalLattice != null ) {
+							VOIVector latticeVector = new VOIVector();
+							latticeVector.add(finalLattice);
+							voiManager.setLattice(latticeVector);
+						}
 					}
 
 					for (int i = 0; i < annotations.elementAt(0).getCurves().size(); i++)
@@ -888,7 +890,10 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 					if ( whichImage == 0 )
 					{
 						// continue with the default file:
-						wormImage.registerVOI( finalLattice );
+						if ( finalLattice != null ) 
+						{
+							wormImage.registerVOI( finalLattice );
+						}
 						wormData.readMarkers();				
 
 						if ( annotations != null )

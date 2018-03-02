@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
+import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
@@ -49,6 +50,13 @@ public abstract class VolumeClipEffect extends ShaderEffect
 
 
     protected float[] m_afVolumeMatrix = { 1f, 0f, 0f, 0f,  0f, 1f, 0f, 0f,  0f, 0f, 1f, 0f,  0f, 0f, 0f, 1f };
+    
+    protected boolean m_bClipEllipsoid = false;
+    protected float[] m_afClipEllipsoidCenter = {0,0,0,0};
+    protected float[] m_afClipEllipsoidAxis0 = {0,0,0,0};
+    protected float[] m_afClipEllipsoidAxis1 = {0,0,0,0};
+    protected float[] m_afClipEllipsoidAxis2 = {0,0,0,0};
+    protected float[] m_afClipEllipsoidExtent = {0,0,0,0};
 
     /* (non-Javadoc)
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#dispose()
@@ -93,6 +101,26 @@ public abstract class VolumeClipEffect extends ShaderEffect
         if ( pkCProgram.GetUC("volumeMatrix") != null ) 
         {
             pkCProgram.GetUC("volumeMatrix").SetDataSource(m_afVolumeMatrix);
+        }
+        if ( pkCProgram.GetUC("ellipsoidCenter") != null ) 
+        {
+            pkCProgram.GetUC("ellipsoidCenter").SetDataSource(m_afClipEllipsoidCenter);
+        }
+        if ( pkCProgram.GetUC("ellipsoidAxis0") != null ) 
+        {
+            pkCProgram.GetUC("ellipsoidAxis0").SetDataSource(m_afClipEllipsoidAxis0);
+        }
+        if ( pkCProgram.GetUC("ellipsoidAxis1") != null ) 
+        {
+            pkCProgram.GetUC("ellipsoidAxis1").SetDataSource(m_afClipEllipsoidAxis1);
+        }
+        if ( pkCProgram.GetUC("ellipsoidAxis2") != null ) 
+        {
+            pkCProgram.GetUC("ellipsoidAxis2").SetDataSource(m_afClipEllipsoidAxis2);
+        }
+        if ( pkCProgram.GetUC("ellipsoidExtent") != null ) 
+        {
+            pkCProgram.GetUC("ellipsoidExtent").SetDataSource(m_afClipEllipsoidExtent);
         }
         super.OnLoadPrograms( iPass, pkVProgram, pkPProgram, pkCProgram );
     }
@@ -174,6 +202,17 @@ public abstract class VolumeClipEffect extends ShaderEffect
         EnableClip();
     }
     
+    public void SetClipEllipsoid(Ellipsoid3f ellipsoid, boolean bEnable ) {
+    	m_bClipEllipsoid = true;
+    	m_afClipEllipsoidCenter[0] = ellipsoid.Center.X;    	m_afClipEllipsoidCenter[1] = ellipsoid.Center.Y;    	m_afClipEllipsoidCenter[2] = ellipsoid.Center.Z;
+    	m_afClipEllipsoidAxis0[0] = ellipsoid.Axis[0].X;    	m_afClipEllipsoidAxis0[1] = ellipsoid.Axis[0].Y;    	m_afClipEllipsoidAxis0[2] = ellipsoid.Axis[0].Z;
+    	m_afClipEllipsoidAxis1[0] = ellipsoid.Axis[1].X;    	m_afClipEllipsoidAxis1[1] = ellipsoid.Axis[1].Y;    	m_afClipEllipsoidAxis1[2] = ellipsoid.Axis[1].Z;
+    	m_afClipEllipsoidAxis2[0] = ellipsoid.Axis[2].X;    	m_afClipEllipsoidAxis2[1] = ellipsoid.Axis[2].Y;    	m_afClipEllipsoidAxis2[2] = ellipsoid.Axis[2].Z;
+    	m_afClipEllipsoidExtent[0] = ellipsoid.Extent[0];    	m_afClipEllipsoidExtent[1] = ellipsoid.Extent[1];    	m_afClipEllipsoidExtent[2] = ellipsoid.Extent[2];
+
+        m_afDoClip[0] = (bEnable) ? 1 : m_afDoClip[0];
+    }
+    
     public void setVolumeMatrix( float[] volumeMatrix )
     {
     	m_afVolumeMatrix = volumeMatrix;
@@ -197,6 +236,11 @@ public abstract class VolumeClipEffect extends ShaderEffect
     {
     	return (m_afClipAll[8] | m_afClipAll[7] | m_afClipAll[6]);
     }    
+    
+    public boolean isClipEllipsoid()
+    {
+    	return m_bClipEllipsoid;
+    }
     
     public Vector3f getClip()
     {

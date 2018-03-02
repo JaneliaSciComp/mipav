@@ -8,6 +8,8 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.Cla
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
@@ -64,6 +66,19 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform vec4 clipEye;" + "\n"
     	+ "uniform vec4 clipEyeInv;" + "\n"
     	+ "" + "\n";
+    
+    private static String clipEllipsoidParameters = ""
+        + "uniform vec4 ellipsoidCenter;" + "\n"
+        + "uniform vec4 ellipsoidAxis0;" + "\n"
+        + "uniform vec4 ellipsoidAxis1;" + "\n"
+        + "uniform vec4 ellipsoidAxis2;" + "\n"
+        + "uniform vec4 ellipsoidExtent;" + "\n"
+        + "" + "\n";
+    		
+    
+//    private static String filterParameters = ""
+//    		+ "uniform float filterRadius;" + "\n"
+//        	+ "" + "\n";
 
     private static String lightingParametersBasicColorA = ""
     	+ "uniform sampler3D eNormalMapA;" + "\n";
@@ -357,6 +372,21 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   }" + "\n"
     	+ "}" + "\n";
 
+    private static String clipEllipsoidSetup = ""
+        + "if ( bClipped != 1.0 ) {" + "\n"
+    	+ "   vec3 clipDif = position.xyz - ellipsoidCenter.xyz;" + "\n"
+    	+ "   float aDot0 = dot(ellipsoidAxis0.xyz, clipDif);" + "\n"
+    	+ "   float ratio0 = aDot0 / ellipsoidExtent.x;" + "\n"
+    	+ "   float aDot1 = dot(ellipsoidAxis1.xyz, clipDif);" + "\n"
+    	+ "   float ratio1 = aDot1 / ellipsoidExtent.y;" + "\n"
+    	+ "   float aDot2 = dot(ellipsoidAxis2.xyz, clipDif);" + "\n"
+    	+ "   float ratio2 = aDot2 / ellipsoidExtent.z;" + "\n"
+    	+ "   float clipEllipsoid = ratio0*ratio0+ratio1*ratio1+ratio2*ratio2-1.0f;" + "\n"
+    	+ "   if ( clipEllipsoid > 0 ) {" + "\n"
+    	+ "     bClipped = 1.0;" + "\n"
+    	+ "   }" + "\n"
+    	+ "}" + "\n";
+
     public static String surfaceInit = ""
     	+ "vec4 LocalMaterialDiffuse = MaterialDiffuse;" + "\n"
     	+ "vec4 LocalMaterialSpecular = MaterialSpecular;" + "\n"
@@ -643,6 +673,11 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	super.SetClipEyeInv(afEquation, bEnable);
     	checkPixelProgram();
     }
+    
+    public void SetClipEllipsoid(Ellipsoid3f ellipsoid, boolean bEnable ) {
+    	super.SetClipEllipsoid(ellipsoid, bEnable);
+    	checkPixelProgram();
+    }
 
     public void SetGradientMagnitude(boolean bShow)
     {
@@ -899,10 +934,18 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	{
     		text += clipAEParameters;
     	}
+    	if ( isClipEllipsoid() )
+    	{
+    		text += clipEllipsoidParameters;
+    	}
     	//if ( (m_afBlendParam[0] != 1.0) )
     	{
     		text += blendParameters;
     	}
+    	
+//    	if ( doFilter ) {
+//    		text += filterParameters;
+//    	}
     	// End Parameters
     	
     	// add generated color code:
@@ -925,6 +968,10 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		if ( isClipAE() )
     		{
         		text += clipAESetup;    			
+    		}
+    		if ( isClipEllipsoid() )
+    		{
+    			text += clipEllipsoidSetup;
     		}
     	}
     	if ( (m_afDoClip[0] != 0) )
