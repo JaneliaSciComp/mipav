@@ -64,8 +64,11 @@ import javax.swing.event.ChangeListener;
 
 import org.jocl.CL;
 
+import WildMagic.LibFoundation.Containment.ContBox3f;
+import WildMagic.LibFoundation.Mathematics.Box3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
@@ -1468,6 +1471,12 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		char ucKey = e.getKeyChar();
 		super.keyPressed(e);
 		switch (ucKey) {
+		case 'l':
+			applyClipFilter(true);
+			break;
+		case 'L':
+			applyClipFilter(false);
+			break;
 		case 'z':
 			m_bDoClip = !m_bDoClip;
 			System.err.println("Clipping is " + m_bDoClip);
@@ -3847,5 +3856,107 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 //    	System.err.println(max);
 //    	System.err.println("");
     }
-	
+    
+    private int xFilter = 0;
+    private int yFilter = 0;
+    private int zFilter = 0;
+    private Ellipsoid3f ellipsoidClip = null;
+    private Box3f orientedBox = null;
+    protected void applyClipFilter(boolean increase) {
+		if (m_kVolumeRayCast == null) {
+			return;
+		}
+		int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+		if ( ellipsoidClip == null ) {
+			System.err.println("creating oriented ellipse");
+//			Vector<Vector3f> insidePts = new Vector<Vector3f>();
+//			float max = (float) m_kVolumeImageA.GetImage().getMax();
+//			for ( int z = 0; z < aiExtents[2]; z++ ) {
+//				for ( int y = 0; y < aiExtents[1]; y++ ) {
+//					for ( int x = 0; x < aiExtents[0]; x++ ) {
+//						float value = m_kVolumeImageA.GetImage().getFloat(x,y,z);
+//						if ( value > (.5*max) ) {
+//							Vector3f volumePt = new Vector3f(x,y,z);
+////							volumePt.X /= aiExtents[0];
+////							volumePt.Y /= aiExtents[1];
+////							volumePt.Z /= aiExtents[2];
+////							
+////							volumePt.X *= m_fX;
+////							volumePt.Y *= m_fY;
+////							volumePt.Z *= m_fZ;
+////							m_kVolumeRayCast.volumeToLocalCoords(volumePt);
+//							insidePts.add(volumePt);
+//						}
+//					}
+//				}
+//			}
+//			orientedBox = ContBox3f.ContOrientedBox(insidePts.size(), insidePts);
+//			System.err.println(orientedBox.Center);
+//			System.err.println(orientedBox.Extent[0] + "  " + orientedBox.Extent[1] + "  " + orientedBox.Extent[2] );
+//			System.err.println(orientedBox.Axis[0] + "  " + orientedBox.Axis[1] + "  " + orientedBox.Axis[2] );
+//			System.err.println("done " + insidePts.size() );
+
+//			ellipsoidClip =  new Ellipsoid3f( new Vector3f( m_fX/2f, m_fY/2f, m_fZ/2f), new Vector3f[]{Vector3f.UNIT_X, Vector3f.UNIT_Y, Vector3f.UNIT_Z}, new float[]{m_fX, m_fY, m_fZ} );
+			ellipsoidClip =  new Ellipsoid3f( new Vector3f( .5f, .5f, .5f ), new Vector3f[]{Vector3f.UNIT_X, Vector3f.UNIT_Y, Vector3f.UNIT_Z}, new float[]{m_fX, m_fY, m_fZ} );
+			m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
+		}
+		
+		if ( increase )
+		{
+			ellipsoidClip.Extent[0] *= .99;
+			ellipsoidClip.Extent[1] *= .99;
+			ellipsoidClip.Extent[2] *= .99;
+			if ( ellipsoidClip.Extent[0] < (0.05 * m_fX) || ellipsoidClip.Extent[1] < (0.05 * m_fY) || ellipsoidClip.Extent[2] < (0.05 * m_fZ) ) {
+				ellipsoidClip.Extent[0] = (float) (0.05 * m_fX);
+				ellipsoidClip.Extent[1] = (float) (0.05 * m_fY);
+				ellipsoidClip.Extent[2] = (float) (0.05 * m_fZ);
+			}
+//			System.err.println(ellipsoidClip.Extent[0] + "  " + ellipsoidClip.Extent[1] + "  " + ellipsoidClip.Extent[2] );
+			m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
+		}
+		else
+		{
+			ellipsoidClip.Extent[0] *= 1.01;
+			ellipsoidClip.Extent[1] *= 1.01;
+			ellipsoidClip.Extent[2] *= 1.01;
+//			ellipsoidClip.Extent[0] = Math.min( ellipsoidClip.Extent[0], orientedBox.Extent[0] );
+//			ellipsoidClip.Extent[1] = Math.min( ellipsoidClip.Extent[1], orientedBox.Extent[1] );
+//			ellipsoidClip.Extent[2] = Math.min( ellipsoidClip.Extent[2], orientedBox.Extent[2] );
+//			System.err.println(ellipsoidClip.Extent[0] + "  " + ellipsoidClip.Extent[1] + "  " + ellipsoidClip.Extent[2] );
+			if ( ellipsoidClip.Extent[0] > m_fX || ellipsoidClip.Extent[1] > m_fY || ellipsoidClip.Extent[2] > m_fZ ) {
+				ellipsoidClip.Extent[0] = m_fX;
+				ellipsoidClip.Extent[1] = m_fY;
+				ellipsoidClip.Extent[2] = m_fZ;
+			}
+			m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
+		}
+		
+//    	if ( increase ) {
+//    		xFilter++;
+//    		yFilter++;
+//    		zFilter++;
+//        	xFilter = Math.min(xFilter, aiExtents[0]/2 );
+//        	yFilter = Math.min(yFilter, aiExtents[1]/2 );
+//        	zFilter = Math.min(zFilter, aiExtents[2]/2 );
+//    	}
+//    	else {
+//    		xFilter--;
+//    		yFilter--;
+//    		zFilter--;
+//        	xFilter = Math.max(xFilter, 0 );
+//        	yFilter = Math.max(yFilter, 0 );
+//        	zFilter = Math.max(zFilter, 0 );
+//    		
+//    	}
+//        setClipPlane( 0, xFilter, true );
+//        setClipPlane( 1, (aiExtents[0] -1) - xFilter, true );
+//        setClipPlane( 2, yFilter, true );
+//        setClipPlane( 3, (aiExtents[1] -1) - yFilter, true );
+//        setClipPlane( 4, zFilter, true );
+//        setClipPlane( 5, (aiExtents[2] -1) - zFilter, true );
+//        for ( int i = 0; i < 6; i++ )
+//        {
+//            displayClipPlane( i, false, ColorRGB.BLACK );
+//        }
+    }
 }

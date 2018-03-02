@@ -1074,6 +1074,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			case KeyEvent.VK_DELETE:
 				deleteSelectedPoint( );
 				break;
+			case KeyEvent.VK_PAGE_DOWN:
+				applyClipFilter(true);
+				break;
+			case KeyEvent.VK_PAGE_UP:
+				applyClipFilter(false);
+				break;
 			}
 	        // look for shortcuts now
 			if ( m_kVOIInterface != null )

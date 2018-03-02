@@ -8,6 +8,7 @@ import java.util.Vector;
 import WildMagic.LibFoundation.Intersection.IntrSegment3Plane3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Plane3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
@@ -577,6 +578,11 @@ public class VolumeRayCast extends VolumeObject
     public void SetClipEyeInv( float[] afEquation, boolean bEnable )
     {
         m_kVolumeShaderEffect.SetClipEyeInv(afEquation, bEnable);
+    }
+    
+    public void SetClipEllipsoid( Ellipsoid3f ellipsoid, boolean bEnable )
+    {
+    	m_kVolumeShaderEffect.SetClipEllipsoid(ellipsoid, bEnable);
     }
 
     public void SetCustomBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
