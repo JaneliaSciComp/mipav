@@ -207,18 +207,23 @@ public abstract class CVODES {
 	final int MXNEF = 7;
 	final double CORTES = 0.1;
 	final double ZERO = 0.0;
+	final double TINY = 1.0E-10;
 	final double PT1 = 0.1;
 	final double POINT2 = 0.2;
+	final double FOURTH = 0.25;
 	final double HALF = 0.5;
 	final double H_BIAS = HALF;
 	final double ONE = 1.0;
 	final double TWO = 2.0;
+	final double THREE = 3.0;
 	final double FOUR = 4.0;
 	final double FIVE = 5.0;
 	final double TWELVE = 12.0;
 	final double HUNDRED = 100.0;
 	final double ETAMXF = 0.2;
-	final double ETAMX1 = 10000.0; 
+	final double ETAMX1 = 10000.0;
+	final double ETAMX2 = 10.0;
+	final double ETAMX3 = 10.0;
 	final double HUB_FACTOR = 0.1;
 	final double HLB_FACTOR = 100.0;
 	final double FUZZ_FACTOR = 100.0;
@@ -234,6 +239,10 @@ public abstract class CVODES {
     final int MSBP = 20;
     // ONEPSM (1+epsilon) used in testing if the step size is below its bound
     final double ONEPSM = 1.000001;
+    // THRESH      if eta < THRESH reject a change in step size or order
+    final double THRESH = 1.5;
+    // SMALL_NST   nst > SMALL_NST => use ETAMX3 
+    final int SMALL_NST = 10;
     final double ETAMIN = 0.1;
     // MXNEF1      max no. of error test failures before forcing a reduction of order
     // SMALL_NEF   if an error failure occurs and SMALL_NEF <= nef <= MXNEF1, then
@@ -636,11 +645,13 @@ public abstract class CVODES {
 		abstol.setData(abstolr);
 		CVodeMemRec cvode_mem;
 		int flag;
+		int flagr;
 		double A[][];
 		SUNLinearSolver LS;
 		double tout;
 		int iout;
 		double t[] = new double[1];
+		int rootsfound[] = new int[2];
 		
 		// Call CVodeCreate to create the solver memory and specify the
 		// Backward Differentiation Formula and the use of a Newton
@@ -708,7 +719,39 @@ public abstract class CVODES {
 		
 		while (true) {
 			flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
+			System.out.println("At t = " + t + " y[0] = " + y.data[0] + " y[1] = " + y.data[1] + " y[2] = " + y.data[2]);
+			
+			if (flag == CV_ROOT_RETURN) {
+			    flagr = CVodeGetRootInfo(cvode_mem, rootsfound)	;
+			    if (flagr == CV_MEM_NULL) {
+			    	return;
+			    }
+			    System.out.println("Roots found are " + rootsfound[0] + " and " + rootsfound[1]);
+			}
+			
+			if (flag < 0) {
+				System.out.println("CVode failed with flag = " + flag);
+				break;
+			}
+			
+			if (flag == CV_SUCCESS) {
+				iout++;
+				tout *= TMULT;
+			}
+			
+			if (iout == NOUT) {
+				break;
+			}
 		} // while (true)
+		
+		// Print some final statistics
+		PrintFinalStats(cvode_mem);
+	}
+	
+	private void PrintFinalStats(CVodeMemRec cv_mem) {
+	    System.out.println("Number of integrations steps = " + cv_mem.cv_nst);
+	    System.out.println("Number of calls to f = " + cv_mem.cv_nfe);
+	    System.out.println("Number of calls to the linear solver setup routine = " + cv_mem.cv_nsetups);
 	}
 	
 	private void N_VNew_Serial(NVector y, int length) {
@@ -1049,8 +1092,8 @@ public abstract class CVODES {
 
 	  long cv_netf[] = new long[1];        /* number of error test failures                   */
 	  long cv_netfQ[] = new long[1];       /* number of quadr. error test failures            */
-	  long cv_netfS;       /* number of sensi. error test failures            */
-	  long cv_netfQS;      /* number of quadr. sensi. error test failures     */
+	  long cv_netfS[] = new long[1];       /* number of sensi. error test failures            */
+	  long cv_netfQS[] = new long[1];      /* number of quadr. sensi. error test failures     */
 
 	  long cv_nsetups;     /* number of setup calls                           */
 	  long cv_nsetupsS;    /* number of setup calls due to sensitivities      */
@@ -4836,13 +4879,15 @@ else                return(snrm);
    double dsm[] = new double[1];
    double saved_t;
    double dsmQ[] = new double[1];
-   double dsmS, dsmQS;
+   double dsmS[] = new double[1];
+   double dsmQS[] = new double[1];
    boolean do_sensi_stg, do_sensi_stg1;
    int ncf[] = new int[1]; 
    int ncfS[] = new int[1];
    int nef[] = new int[1];
    int nefQ[] = new int[1]; 
-   int nefS, nefQS;
+   int nefS[] = new int[1];
+   int nefQS[] = new int[1];
    int nflag[] = new int [1];
    int kflag, eflag;
    int retval, is;
@@ -4855,8 +4900,8 @@ else                return(snrm);
    /* Initialize local counters for convergence and error test failures */
 
    ncf[0]  = nef[0]  = 0;
-   nefQ[0] = nefQS = 0;
-   ncfS[0] = nefS = 0;
+   nefQ[0] = nefQS[0] = 0;
+   ncfS[0] = nefS[0] = 0;
    if (do_sensi_stg1) {
 	 cv_mem.cv_ncfS1 = new int[cv_mem.cv_Ns][1];
      for (is=0; is<cv_mem.cv_Ns; is++)
@@ -4930,101 +4975,101 @@ else                return(snrm);
 
      /* ------ Correct the sensitivity variables (STAGGERED or STAGGERED1) ------- */
 
-     /*if (do_sensi_stg || do_sensi_stg1) { 
+     if (do_sensi_stg || do_sensi_stg1) { 
 
-       ncf[0] = nef[0] = 0;   */     /* reset counters for states     */
-       /*if (cv_mem.cv_quadr) nefQ = 0; */ /* reset counter for quadratures */
+       ncf[0] = nef[0] = 0;       /* reset counters for states     */
+       if (cv_mem.cv_quadr) nefQ[0] = 0; /* reset counter for quadratures */
 
        /* Evaluate f at converged y, needed for future evaluations of sens. RHS 
         * If f() fails recoverably, treat it as a convergence failure and 
         * attempt the step again */
 
-     /* retval = f(cv_mem.cv_tn, cv_mem.cv_y,
+      retval = f(cv_mem.cv_tn, cv_mem.cv_y,
                              cv_mem.cv_ftemp, cv_mem.cv_user_data);
        cv_mem.cv_nfe++;
        if (retval < 0) return(CV_RHSFUNC_FAIL);
        if (retval > 0) {
-         nflag = PREV_CONV_FAIL;
+         nflag[0] = PREV_CONV_FAIL;
          continue;
        }
 
-       if (do_sensi_stg) { */
+       if (do_sensi_stg) {
          /* Nonlinear solve for sensitivities (all-at-once) */
-        /* nflag[0] = cvStgrNls(cv_mem);
+         nflag[0] = cvStgrNls(cv_mem);
          kflag = cvHandleNFlag(cv_mem, nflag, saved_t, ncfS,
                                cv_mem.cv_ncfnS);
-       } else { */
+       } else { 
          /* Nonlinear solve for sensitivities (one-by-one) */
-         /*for (is=0; is<cv_mem.cv_Ns; is++) { 
+         for (is=0; is<cv_mem.cv_Ns; is++) { 
            nflag[0] = cvStgr1Nls(cv_mem, is); 
            kflag = cvHandleNFlag(cv_mem, nflag, saved_t,
                                  cv_mem.cv_ncfS1[is],
-                                 cv_mem->cv_ncfnS1[is]);
+                                 cv_mem.cv_ncfnS1[is]);
            if (kflag != DO_ERROR_TEST) break; 
          }
        }
 
        if (kflag == PREDICT_AGAIN) continue;
-       if (kflag != DO_ERROR_TEST) return(kflag); */
+       if (kflag != DO_ERROR_TEST) return(kflag); 
 
        /* Error test on sensitivities */
-     /*  if (cv_mem->cv_errconS) {
+       if (cv_mem.cv_errconS) {
 
          if (do_sensi_stg1)
-           cv_mem->cv_acnrmS = cvSensNorm(cv_mem, cv_mem->cv_acorS, cv_mem->cv_ewtS);
+           cv_mem.cv_acnrmS = cvSensNorm(cv_mem, cv_mem.cv_acorS, cv_mem.cv_ewtS);
 
-         eflag = cvDoErrorTest(cv_mem, &nflag, saved_t, cv_mem->cv_acnrmS,
-                               &nefS, &(cv_mem->cv_netfS), &dsmS);
+         eflag = cvDoErrorTest(cv_mem, nflag, saved_t, cv_mem.cv_acnrmS,
+                              nefS, cv_mem.cv_netfS, dsmS);
 
          if (eflag == TRY_AGAIN)  continue;
-         if (eflag != CV_SUCCESS) return(eflag);*/
+         if (eflag != CV_SUCCESS) return(eflag);
 
          /* Set dsm = max(dsm, dsmS) to be used in cvPrepareNextStep */
-      /*   if (dsmS > dsm) dsm = dsmS;
+         if (dsmS[0] > dsm[0]) dsm[0] = dsmS[0];
 
        }
 
-     } */
+     } 
 
      /* ------ Correct the quadrature sensitivity variables ------ */
 
-   /*  if (cv_mem->cv_quadr_sensi) { */
+     if (cv_mem.cv_quadr_sensi) { 
 
        /* Reset local convergence and error test failure counters */
-    /*   ncf = nef = 0;
-       if (cv_mem->cv_quadr) nefQ = 0;
-       if (do_sensi_stg) ncfS = nefS = 0;
+       ncf[0] = nef[0] = 0;
+       if (cv_mem.cv_quadr) nefQ[0] = 0;
+       if (do_sensi_stg) ncfS[0] = nefS[0] = 0;
        if (do_sensi_stg1) {
-         for (is=0; is<cv_mem->cv_Ns; is++)
-           cv_mem->cv_ncfS1[is] = 0;
-         nefS = 0;
-       }*/
+         for (is=0; is<cv_mem.cv_Ns; is++)
+           cv_mem.cv_ncfS1[is][0] = 0;
+         nefS[0] = 0;
+       }
 
        /* Note that ftempQ contains yQdot evaluated at the converged y
         * (stored in cvQuadNls) and can be used in evaluating fQS */
 
-     /*  nflag = cvQuadSensNls(cv_mem);
-       kflag = cvHandleNFlag(cv_mem, &nflag, saved_t, &ncf, &(cv_mem->cv_ncfn));
+       nflag[0] = cvQuadSensNls(cv_mem);
+       kflag = cvHandleNFlag(cv_mem, nflag, saved_t, ncf, cv_mem.cv_ncfn);
 
        if (kflag == PREDICT_AGAIN) continue;
-       if (kflag != DO_ERROR_TEST) return(kflag);*/
+       if (kflag != DO_ERROR_TEST) return(kflag);
 
        /* Error test on quadrature sensitivities */
-     /*  if (cv_mem->cv_errconQS) {
-         cv_mem->cv_acnrmQS = cvQuadSensNorm(cv_mem, cv_mem->cv_acorQS,
-                                             cv_mem->cv_ewtQS);
-         eflag = cvDoErrorTest(cv_mem, &nflag, saved_t, cv_mem->cv_acnrmQS,
-                               &nefQS, &(cv_mem->cv_netfQS), &dsmQS);
+       if (cv_mem.cv_errconQS) {
+         cv_mem.cv_acnrmQS = cvQuadSensNorm(cv_mem, cv_mem.cv_acorQS,
+                                             cv_mem.cv_ewtQS);
+         eflag = cvDoErrorTest(cv_mem, nflag, saved_t, cv_mem.cv_acnrmQS,
+                              nefQS, cv_mem.cv_netfQS, dsmQS);
 
          if (eflag == TRY_AGAIN) continue;
-         if (eflag != CV_SUCCESS) return(eflag);*/
+         if (eflag != CV_SUCCESS) return(eflag);
 
          /* Set dsm = max(dsm, dsmQS) to be used in cvPrepareNextStep */
-       /*  if (dsmQS > dsm) dsm = dsmQS;
+         if (dsmQS[0] > dsm[0]) dsm[0] = dsmQS[0];
        }
 
 
-     }*/
+     }
 
 
      /* Everything went fine; exit loop */ 
@@ -5035,32 +5080,32 @@ else                return(snrm);
    /* Nonlinear system solve and error test were both successful.
       Update data, and consider change of step and/or order.       */
 
-   /*cvCompleteStep(cv_mem); 
+   cvCompleteStep(cv_mem); 
 
-   cvPrepareNextStep(cv_mem, dsm);*/ 
+   cvPrepareNextStep(cv_mem, dsm[0]);
 
    /* If Stablilty Limit Detection is turned on, call stability limit
       detection routine for possible order reduction. */
 
-  /* if (cv_mem->cv_sldeton) cvBDFStab(cv_mem);
+   if (cv_mem.cv_sldeton) cvBDFStab(cv_mem);
 
-   cv_mem->cv_etamax = (cv_mem->cv_nst <= SMALL_NST) ? ETAMX2 : ETAMX3;*/
+   cv_mem.cv_etamax = (cv_mem.cv_nst <= SMALL_NST) ? ETAMX2 : ETAMX3;
 
    /*  Finally, we rescale the acor array to be the 
        estimated local error vector. */
 
- /*  N_VScale(cv_mem->cv_tq[2], cv_mem->cv_acor, cv_mem->cv_acor);
+   N_VScale_Serial(cv_mem.cv_tq[2], cv_mem.cv_acor, cv_mem.cv_acor);
 
-   if (cv_mem->cv_quadr)
-     N_VScale(cv_mem->cv_tq[2], cv_mem->cv_acorQ, cv_mem->cv_acorQ);
+   if (cv_mem.cv_quadr)
+     N_VScale_Serial(cv_mem.cv_tq[2], cv_mem.cv_acorQ, cv_mem.cv_acorQ);
 
-   if (cv_mem->cv_sensi)
-     for (is=0; is<cv_mem->cv_Ns; is++)
-       N_VScale(cv_mem->cv_tq[2], cv_mem->cv_acorS[is], cv_mem->cv_acorS[is]);
+   if (cv_mem.cv_sensi)
+     for (is=0; is<cv_mem.cv_Ns; is++)
+       N_VScale_Serial(cv_mem.cv_tq[2], cv_mem.cv_acorS[is], cv_mem.cv_acorS[is]);
 
-   if (cv_mem->cv_quadr_sensi)
-     for (is=0; is<cv_mem->cv_Ns; is++)
-       N_VScale(cv_mem->cv_tq[2], cv_mem->cv_acorQS[is], cv_mem->cv_acorQS[is]);*/
+   if (cv_mem.cv_quadr_sensi)
+     for (is=0; is<cv_mem.cv_Ns; is++)
+       N_VScale_Serial(cv_mem.cv_tq[2], cv_mem.cv_acorQS[is], cv_mem.cv_acorQS[is]);
 
    return(CV_SUCCESS);
        
@@ -7842,6 +7887,762 @@ else                return(snrm);
 	   
 	   return(0);
 	 }
+	 
+	 /*
+	  * cvQuadSensNls
+	  * 
+	  * This routine solves for the quadrature sensitivity variables
+	  * at the new step. It does not solve a nonlinear system, but 
+	  * rather updates the quadrature variables. The name for this
+	  * function is just for uniformity purposes.
+	  *
+	  * Possible return values (interpreted by cvHandleNFlag)
+	  *
+	  *   CV_SUCCESS        -> continue with error test
+	  *   CV_QSRHSFUNC_FAIL -> halt the integration 
+	  *   QSRHSFUNC_RECVR   -> predict again or stop if too many
+	  *   
+	  */
+
+	 private int cvQuadSensNls(CVodeMemRec cv_mem)
+	 {
+	   int is, retval;
+
+	   /* Save quadrature correction in acorQ */
+	   retval = cvQuadSensRhsInternalDQ(cv_mem.cv_Ns, cv_mem.cv_tn, cv_mem.cv_y,
+	                           cv_mem.cv_yS, cv_mem.cv_ftempQ,
+	                           cv_mem.cv_acorQS, cv_mem.cv_user_data,
+	                           cv_mem.cv_tempv, cv_mem.cv_tempvQ);
+	   cv_mem.cv_nfQSe++;
+	   if (retval < 0) return(CV_QSRHSFUNC_FAIL);
+	   if (retval > 0) return(QSRHSFUNC_RECVR);
+
+
+	   for (is=0; is<cv_mem.cv_Ns; is++) {
+	     N_VLinearSum_Serial(cv_mem.cv_h, cv_mem.cv_acorQS[is], -ONE,
+	                  cv_mem.cv_znQS[1][is], cv_mem.cv_acorQS[is]);
+	     N_VScale_Serial(cv_mem.cv_rl1, cv_mem.cv_acorQS[is], cv_mem.cv_acorQS[is]);
+	     /* Apply correction to quadrature sensitivity variables */
+	     N_VLinearSum_Serial(ONE, cv_mem.cv_znQS[0][is], ONE,
+	                  cv_mem.cv_acorQS[is], cv_mem.cv_yQS[is]);
+	   }
+
+	   return(CV_SUCCESS);
+	 }
+
+	 /* 
+	  * -----------------------------------------------------------------
+	  * Functions called after a successful step
+	  * -----------------------------------------------------------------
+	  */
+
+	 /*
+	  * cvCompleteStep
+	  *
+	  * This routine performs various update operations when the solution
+	  * to the nonlinear system has passed the local error test. 
+	  * We increment the step counter nst, record the values hu and qu,
+	  * update the tau array, and apply the corrections to the zn array.
+	  * The tau[i] are the last q values of h, with tau[1] the most recent.
+	  * The counter qwait is decremented, and if qwait == 1 (and q < qmax)
+	  * we save acor and tq[5] for a possible order increase.
+	  */
+
+	 private void cvCompleteStep(CVodeMemRec cv_mem)
+	 {
+	   int i, j;
+	   int is;
+	   
+	   cv_mem.cv_nst++;
+	   cv_mem.cv_nscon++;
+	   cv_mem.cv_hu = cv_mem.cv_h;
+	   cv_mem.cv_qu = cv_mem.cv_q;
+
+	   for (i=cv_mem.cv_q; i >= 2; i--)
+	     cv_mem.cv_tau[i] = cv_mem.cv_tau[i-1];
+	   if ((cv_mem.cv_q==1) && (cv_mem.cv_nst > 1))
+	     cv_mem.cv_tau[2] = cv_mem.cv_tau[1];
+	   cv_mem.cv_tau[1] = cv_mem.cv_h;
+
+	   /* Apply correction to column j of zn: l_j * Delta_n */
+	   for (j=0; j <= cv_mem.cv_q; j++) 
+	     N_VLinearSum_Serial(cv_mem.cv_l[j], cv_mem.cv_acor, ONE,
+	                  cv_mem.cv_zn[j], cv_mem.cv_zn[j]);
+
+	   if (cv_mem.cv_quadr) {
+	     for (j=0; j <= cv_mem.cv_q; j++) 
+	       N_VLinearSum_Serial(cv_mem.cv_l[j], cv_mem.cv_acorQ, ONE,
+	                    cv_mem.cv_znQ[j], cv_mem.cv_znQ[j]);
+	   }
+
+	   if (cv_mem.cv_sensi) {
+	     for (is=0; is<cv_mem.cv_Ns; is++)
+	       for (j=0; j <= cv_mem.cv_q; j++) 
+	         N_VLinearSum_Serial(cv_mem.cv_l[j], cv_mem.cv_acorS[is], ONE,
+	                      cv_mem.cv_znS[j][is], cv_mem.cv_znS[j][is]);
+	   }
+
+	   if (cv_mem.cv_quadr_sensi) {
+	     for (is=0; is<cv_mem.cv_Ns; is++)
+	       for (j=0; j <= cv_mem.cv_q; j++) 
+	         N_VLinearSum_Serial(cv_mem.cv_l[j], cv_mem.cv_acorQS[is], ONE,
+	                      cv_mem.cv_znQS[j][is], cv_mem.cv_znQS[j][is]);
+	   }
+
+
+	   /* If necessary, store Delta_n in zn[qmax] to be used in order increase.
+	    * This actually will be Delta_{n-1} in the ELTE at q+1 since it happens at
+	    * the next to last step of order q before a possible one at order q+1
+	    */
+
+	   cv_mem.cv_qwait--;
+	   if ((cv_mem.cv_qwait == 1) && (cv_mem.cv_q != cv_mem.cv_qmax)) {
+	     
+	     N_VScale_Serial(ONE, cv_mem.cv_acor, cv_mem.cv_zn[cv_mem.cv_qmax]);
+	     
+	     if (cv_mem.cv_quadr)
+	       N_VScale_Serial(ONE, cv_mem.cv_acorQ, cv_mem.cv_znQ[cv_mem.cv_qmax]);
+
+	     if (cv_mem.cv_sensi)
+	       for (is=0; is<cv_mem.cv_Ns; is++)
+	         N_VScale_Serial(ONE, cv_mem.cv_acorS[is], cv_mem.cv_znS[cv_mem.cv_qmax][is]);
+	     
+	     if (cv_mem.cv_quadr_sensi)
+	       for (is=0; is<cv_mem.cv_Ns; is++)
+	         N_VScale_Serial(ONE, cv_mem.cv_acorQS[is], cv_mem.cv_znQS[cv_mem.cv_qmax][is]);
+
+	     cv_mem.cv_saved_tq5 = cv_mem.cv_tq[5];
+	     cv_mem.cv_indx_acor = cv_mem.cv_qmax;
+	   }
+
+	 }
+
+	 /*
+	  * cvPrepareNextStep
+	  *
+	  * This routine handles the setting of stepsize and order for the
+	  * next step -- hprime and qprime.  Along with hprime, it sets the
+	  * ratio eta = hprime/h.  It also updates other state variables 
+	  * related to a change of step size or order. 
+	  */
+
+	 private void cvPrepareNextStep(CVodeMemRec cv_mem, double dsm)
+	 {
+	   /* If etamax = 1, defer step size or order changes */
+	   if (cv_mem.cv_etamax == ONE) {
+	     cv_mem.cv_qwait = Math.max(cv_mem.cv_qwait, 2);
+	     cv_mem.cv_qprime = cv_mem.cv_q;
+	     cv_mem.cv_hprime = cv_mem.cv_h;
+	     cv_mem.cv_eta = ONE;
+	     return;
+	   }
+
+	   /* etaq is the ratio of new to old h at the current order */  
+	   cv_mem.cv_etaq = ONE /(Math.pow(BIAS2*dsm,ONE/cv_mem.cv_L) + ADDON);
+	   
+	   /* If no order change, adjust eta and acor in cvSetEta and return */
+	   if (cv_mem.cv_qwait != 0) {
+	     cv_mem.cv_eta = cv_mem.cv_etaq;
+	     cv_mem.cv_qprime = cv_mem.cv_q;
+	     cvSetEta(cv_mem);
+	     return;
+	   }
+	   
+	   /* If qwait = 0, consider an order change.   etaqm1 and etaqp1 are 
+	      the ratios of new to old h at orders q-1 and q+1, respectively.
+	      cvChooseEta selects the largest; cvSetEta adjusts eta and acor */
+	   cv_mem.cv_qwait = 2;
+	   cv_mem.cv_etaqm1 = cvComputeEtaqm1(cv_mem);
+	   cv_mem.cv_etaqp1 = cvComputeEtaqp1(cv_mem);  
+	   cvChooseEta(cv_mem); 
+	   cvSetEta(cv_mem);
+	 }
+
+	 /*
+	  * cvSetEta
+	  *
+	  * This routine adjusts the value of eta according to the various
+	  * heuristic limits and the optional input hmax.
+	  */
+
+	 private void cvSetEta(CVodeMemRec cv_mem)
+	 {
+
+	   /* If eta below the threshhold THRESH, reject a change of step size */
+	   if (cv_mem.cv_eta < THRESH) {
+	     cv_mem.cv_eta = ONE;
+	     cv_mem.cv_hprime = cv_mem.cv_h;
+	   } else {
+	     /* Limit eta by etamax and hmax, then set hprime */
+	     cv_mem.cv_eta = Math.min(cv_mem.cv_eta, cv_mem.cv_etamax);
+	     cv_mem.cv_eta /= Math.max(ONE, Math.abs(cv_mem.cv_h) *
+	                              cv_mem.cv_hmax_inv*cv_mem.cv_eta);
+	     cv_mem.cv_hprime = cv_mem.cv_h * cv_mem.cv_eta;
+	     if (cv_mem.cv_qprime < cv_mem.cv_q) cv_mem.cv_nscon = 0;
+	   }
+	 }
+	 
+	 /*
+	  * cvComputeEtaqm1
+	  *
+	  * This routine computes and returns the value of etaqm1 for a
+	  * possible decrease in order by 1.
+	  */
+
+	 private double cvComputeEtaqm1(CVodeMemRec cv_mem)
+	 {
+	   double ddn;
+	   
+	   cv_mem.cv_etaqm1 = ZERO;
+
+	   if (cv_mem.cv_q > 1) {
+
+	     ddn = N_VWrmsNorm_Serial(cv_mem.cv_zn[cv_mem.cv_q], cv_mem.cv_ewt);
+
+	     if ( cv_mem.cv_quadr && cv_mem.cv_errconQ )
+	       ddn = cvQuadUpdateNorm(cv_mem, ddn, cv_mem.cv_znQ[cv_mem.cv_q],
+	                              cv_mem.cv_ewtQ);
+
+	     if ( cv_mem.cv_sensi && cv_mem.cv_errconS )
+	       ddn = cvSensUpdateNorm(cv_mem, ddn, cv_mem.cv_znS[cv_mem.cv_q],
+	                              cv_mem.cv_ewtS);
+
+	     if ( cv_mem.cv_quadr_sensi && cv_mem.cv_errconQS )
+	       ddn = cvQuadSensUpdateNorm(cv_mem, ddn, cv_mem.cv_znQS[cv_mem.cv_q],
+	                                  cv_mem.cv_ewtQS);
+
+	     ddn = ddn * cv_mem.cv_tq[1];
+	     cv_mem.cv_etaqm1 = ONE/(Math.pow(BIAS1*ddn, ONE/cv_mem.cv_q) + ADDON);
+	   }
+
+	   return(cv_mem.cv_etaqm1);
+	 }
+
+	 /*
+	  * cvComputeEtaqp1
+	  *
+	  * This routine computes and returns the value of etaqp1 for a
+	  * possible increase in order by 1.
+	  */
+
+	 private double cvComputeEtaqp1(CVodeMemRec cv_mem)
+	 {
+	   double dup, cquot;
+	   int is;
+	   
+	   cv_mem.cv_etaqp1 = ZERO;
+
+	   if (cv_mem.cv_q != cv_mem.cv_qmax) {
+
+	     if (cv_mem.cv_saved_tq5 == ZERO) return(cv_mem.cv_etaqp1);
+
+	     cquot = (cv_mem.cv_tq[5] / cv_mem.cv_saved_tq5) *
+	       Math.pow(cv_mem.cv_h/cv_mem.cv_tau[2], cv_mem.cv_L);
+	     N_VLinearSum_Serial(-cquot, cv_mem.cv_zn[cv_mem.cv_qmax], ONE,
+	                  cv_mem.cv_acor, cv_mem.cv_tempv);
+	     dup = N_VWrmsNorm_Serial(cv_mem.cv_tempv, cv_mem.cv_ewt);
+
+	     if ( cv_mem.cv_quadr && cv_mem.cv_errconQ ) {
+	       N_VLinearSum_Serial(-cquot, cv_mem.cv_znQ[cv_mem.cv_qmax], ONE,
+	                    cv_mem.cv_acorQ, cv_mem.cv_tempvQ);
+	       dup = cvQuadUpdateNorm(cv_mem, dup, cv_mem.cv_tempvQ, cv_mem.cv_ewtQ);
+	     }
+
+	     if ( cv_mem.cv_sensi && cv_mem.cv_errconS ) {
+	       for (is=0; is<cv_mem.cv_Ns; is++) 
+	         N_VLinearSum_Serial(-cquot, cv_mem.cv_znS[cv_mem.cv_qmax][is], ONE,
+	                      cv_mem.cv_acorS[is], cv_mem.cv_tempvS[is]);
+	       dup = cvSensUpdateNorm(cv_mem, dup, cv_mem.cv_tempvS, cv_mem.cv_ewtS);
+	     }
+
+	     if ( cv_mem.cv_quadr_sensi && cv_mem.cv_errconQS ) {
+	       for (is=0; is<cv_mem.cv_Ns; is++) 
+	         N_VLinearSum_Serial(-cquot, cv_mem.cv_znQS[cv_mem.cv_qmax][is], ONE,
+	                      cv_mem.cv_acorQS[is], cv_mem.cv_tempvQS[is]);
+	       dup = cvSensUpdateNorm(cv_mem, dup, cv_mem.cv_tempvQS, cv_mem.cv_ewtQS);
+	     }
+
+	     dup = dup * cv_mem.cv_tq[3];
+	     cv_mem.cv_etaqp1 = ONE / (Math.pow(BIAS3*dup, ONE/(cv_mem.cv_L+1)) + ADDON);
+	   }
+
+	   return(cv_mem.cv_etaqp1);
+	 }
+	 
+	 /*
+	  * cvChooseEta
+	  * Given etaqm1, etaq, etaqp1 (the values of eta for qprime =
+	  * q - 1, q, or q + 1, respectively), this routine chooses the 
+	  * maximum eta value, sets eta to that value, and sets qprime to the
+	  * corresponding value of q.  If there is a tie, the preference
+	  * order is to (1) keep the same order, then (2) decrease the order,
+	  * and finally (3) increase the order.  If the maximum eta value
+	  * is below the threshhold THRESH, the order is kept unchanged and
+	  * eta is set to 1.
+	  */
+
+	 private void cvChooseEta(CVodeMemRec cv_mem)
+	 {
+	   double etam;
+	   int is;
+	   
+	   etam = Math.max(cv_mem.cv_etaqm1, Math.max(cv_mem.cv_etaq, cv_mem.cv_etaqp1));
+	   
+	   if (etam < THRESH) {
+	     cv_mem.cv_eta = ONE;
+	     cv_mem.cv_qprime = cv_mem.cv_q;
+	     return;
+	   }
+
+	   if (etam == cv_mem.cv_etaq) {
+
+	     cv_mem.cv_eta = cv_mem.cv_etaq;
+	     cv_mem.cv_qprime = cv_mem.cv_q;
+
+	   } else if (etam == cv_mem.cv_etaqm1) {
+
+	     cv_mem.cv_eta = cv_mem.cv_etaqm1;
+	     cv_mem.cv_qprime = cv_mem.cv_q - 1;
+
+	   } else {
+
+	     cv_mem.cv_eta = cv_mem.cv_etaqp1;
+	     cv_mem.cv_qprime = cv_mem.cv_q + 1;
+
+	     if (cv_mem.cv_lmm == CV_BDF) {
+
+	       /* 
+	        * Store Delta_n in zn[qmax] to be used in order increase 
+	        *
+	        * This happens at the last step of order q before an increase
+	        * to order q+1, so it represents Delta_n in the ELTE at q+1
+	        */
+	       
+	       N_VScale_Serial(ONE, cv_mem.cv_acor, cv_mem.cv_zn[cv_mem.cv_qmax]);
+	       
+	       if (cv_mem.cv_quadr && cv_mem.cv_errconQ)
+	         N_VScale_Serial(ONE, cv_mem.cv_acorQ, cv_mem.cv_znQ[cv_mem.cv_qmax]);
+	       
+	       if (cv_mem.cv_sensi && cv_mem.cv_errconS)
+	         for (is=0; is<cv_mem.cv_Ns; is++)
+	           N_VScale_Serial(ONE, cv_mem.cv_acorS[is], cv_mem.cv_znS[cv_mem.cv_qmax][is]);
+
+	       if (cv_mem.cv_quadr_sensi && cv_mem.cv_errconQS)
+	         for (is=0; is<cv_mem.cv_Ns; is++)
+	           N_VScale_Serial(ONE, cv_mem.cv_acorQS[is], cv_mem.cv_znQS[cv_mem.cv_qmax][is]);
+
+	     }
+	   }
+	 }
+
+	 /*
+	  * cvBDFStab
+	  *
+	  * This routine handles the BDF Stability Limit Detection Algorithm
+	  * STALD.  It is called if lmm = CV_BDF and the SLDET option is on.
+	  * If the order is 3 or more, the required norm data is saved.
+	  * If a decision to reduce order has not already been made, and
+	  * enough data has been saved, cvSLdet is called.  If it signals
+	  * a stability limit violation, the order is reduced, and the step
+	  * size is reset accordingly.
+	  */
+
+	 private void cvBDFStab(CVodeMemRec cv_mem)
+	 {
+	   int i,k, ldflag, factorial;
+	   double sq, sqm1, sqm2;
+	       
+	   /* If order is 3 or greater, then save scaled derivative data,
+	      push old data down in i, then add current values to top.    */
+
+	   if (cv_mem.cv_q >= 3) {
+	     for (k = 1; k <= 3; k++)
+	       for (i = 5; i >= 2; i--)
+	         cv_mem.cv_ssdat[i][k] = cv_mem.cv_ssdat[i-1][k];
+	     factorial = 1;
+	     for (i = 1; i <= cv_mem.cv_q-1; i++) factorial *= i;
+	     sq = factorial * cv_mem.cv_q * (cv_mem.cv_q+1) *
+	       cv_mem.cv_acnrm / Math.max(cv_mem.cv_tq[5],TINY);
+	     sqm1 = factorial * cv_mem.cv_q *
+	       N_VWrmsNorm_Serial(cv_mem.cv_zn[cv_mem.cv_q], cv_mem.cv_ewt);
+	     sqm2 = factorial *
+	       N_VWrmsNorm_Serial(cv_mem.cv_zn[cv_mem.cv_q-1], cv_mem.cv_ewt);
+	     cv_mem.cv_ssdat[1][1] = sqm2*sqm2;
+	     cv_mem.cv_ssdat[1][2] = sqm1*sqm1;
+	     cv_mem.cv_ssdat[1][3] = sq*sq;
+	   }  
+
+	   if (cv_mem.cv_qprime >= cv_mem.cv_q) {
+
+	     /* If order is 3 or greater, and enough ssdat has been saved,
+	        nscon >= q+5, then call stability limit detection routine.  */
+
+	     if ( (cv_mem.cv_q >= 3) && (cv_mem.cv_nscon >= cv_mem.cv_q+5) ) {
+	       ldflag = cvSLdet(cv_mem);
+	       if (ldflag > 3) {
+	         /* A stability limit violation is indicated by
+	            a return flag of 4, 5, or 6.
+	            Reduce new order.                     */
+	         cv_mem.cv_qprime = cv_mem.cv_q-1;
+	         cv_mem.cv_eta = cv_mem.cv_etaqm1; 
+	         cv_mem.cv_eta = Math.min(cv_mem.cv_eta,cv_mem.cv_etamax);
+	         cv_mem.cv_eta = cv_mem.cv_eta /
+	           Math.max(ONE,Math.abs(cv_mem.cv_h)*cv_mem.cv_hmax_inv*cv_mem.cv_eta);
+	         cv_mem.cv_hprime = cv_mem.cv_h * cv_mem.cv_eta;
+	         cv_mem.cv_nor = cv_mem.cv_nor + 1;
+	       }
+	     }
+	   }
+	   else {
+	     /* Otherwise, let order increase happen, and 
+	        reset stability limit counter, nscon.     */
+	     cv_mem.cv_nscon = 0;
+	   }
+	 }
+	 
+	 /*
+	  * cvSLdet
+	  *
+	  * This routine detects stability limitation using stored scaled 
+	  * derivatives data. cvSLdet returns the magnitude of the
+	  * dominate characteristic root, rr. The presents of a stability
+	  * limit is indicated by rr > "something a little less then 1.0",  
+	  * and a positive kflag. This routine should only be called if
+	  * order is greater than or equal to 3, and data has been collected
+	  * for 5 time steps. 
+	  * 
+	  * Returned values:
+	  *    kflag = 1 -> Found stable characteristic root, normal matrix case
+	  *    kflag = 2 -> Found stable characteristic root, quartic solution
+	  *    kflag = 3 -> Found stable characteristic root, quartic solution,
+	  *                 with Newton correction
+	  *    kflag = 4 -> Found stability violation, normal matrix case
+	  *    kflag = 5 -> Found stability violation, quartic solution
+	  *    kflag = 6 -> Found stability violation, quartic solution,
+	  *                 with Newton correction
+	  *
+	  *    kflag < 0 -> No stability limitation, 
+	  *                 or could not compute limitation.
+	  *
+	  *    kflag = -1 -> Min/max ratio of ssdat too small.
+	  *    kflag = -2 -> For normal matrix case, vmax > vrrt2*vrrt2
+	  *    kflag = -3 -> For normal matrix case, The three ratios
+	  *                  are inconsistent.
+	  *    kflag = -4 -> Small coefficient prevents elimination of quartics.  
+	  *    kflag = -5 -> R value from quartics not consistent.
+	  *    kflag = -6 -> No corrected root passes test on qk values
+	  *    kflag = -7 -> Trouble solving for sigsq.
+	  *    kflag = -8 -> Trouble solving for B, or R via B.
+	  *    kflag = -9 -> R via sigsq[k] disagrees with R from data.
+	  */
+
+	 private int cvSLdet(CVodeMemRec cv_mem)
+	 {
+	   int i, k, j, it, kmin = 0, kflag = 0;
+	   double rat[][] = new double[5][4];
+	   double rav[] = new double[4];
+	   double qkr[] = new double[4];
+	   double sigsq[] = new double[4];
+	   double smax[] = new double[4];
+	   double ssmax[] = new double[4];
+	   double drr[] = new double[4];
+	   double rrc[] = new double[4];
+	   double sqmx[] = new double[4];
+	   double qjk[][] = new double[4][4];
+	   double vrat[] = new double[5];
+	   double qc[][] = new double[6][4];
+	   double qco[][] = new double[6][4];
+	   double rr, rrcut, vrrtol, vrrt2, sqtol, rrtol;
+	   double smink, smaxk, sumrat, sumrsq, vmin, vmax, drrmax, adrr;
+	   double tem, sqmax, saqk, qp, s, sqmaxk, saqj;
+	   double sqmin = 0.0;
+	   double rsa, rsb, rsc, rsd, rd1a, rd1b, rd1c;
+	   double rd2a, rd2b, rd3a, cest1, corr1; 
+	   double ratp, ratm, qfac1, qfac2, bb, rrb;
+
+	   /* The following are cutoffs and tolerances used by this routine */
+
+	   rrcut  = 0.98;
+	   vrrtol = 1.0e-4;
+	   vrrt2  = 5.0e-4;
+	   sqtol  = 1.0e-3;
+	   rrtol  = 1.0e-2;
+
+	   rr = ZERO;
+
+	   /*  Index k corresponds to the degree of the interpolating polynomial. */
+	   /*      k = 1 -> q-1          */
+	   /*      k = 2 -> q            */
+	   /*      k = 3 -> q+1          */
+
+	   /*  Index i is a backward-in-time index, i = 1 -> current time, */
+	   /*      i = 2 -> previous step, etc    */
+
+	   /* get maxima, minima, and variances, and form quartic coefficients  */
+
+	   for (k=1; k<=3; k++) {
+	     smink = cv_mem.cv_ssdat[1][k];
+	     smaxk = ZERO;
+	     
+	     for (i=1; i<=5; i++) {
+	       smink = Math.min(smink,cv_mem.cv_ssdat[i][k]);
+	       smaxk = Math.max(smaxk,cv_mem.cv_ssdat[i][k]);
+	     }
+	     
+	     if (smink < TINY*smaxk) {
+	       kflag = -1;  
+	       return(kflag);
+	     }
+	     smax[k] = smaxk;
+	     ssmax[k] = smaxk*smaxk;
+
+	     sumrat = ZERO;
+	     sumrsq = ZERO;
+	     for (i=1; i<=4; i++) {
+	       rat[i][k] = cv_mem.cv_ssdat[i][k] / cv_mem.cv_ssdat[i+1][k];
+	       sumrat = sumrat + rat[i][k];
+	       sumrsq = sumrsq + rat[i][k]*rat[i][k];
+	     } 
+	     rav[k] = FOURTH*sumrat;
+	     vrat[k] = Math.abs(FOURTH*sumrsq - rav[k]*rav[k]);
+
+	     qc[5][k] = cv_mem.cv_ssdat[1][k] * cv_mem.cv_ssdat[3][k] -
+	       cv_mem.cv_ssdat[2][k] * cv_mem.cv_ssdat[2][k];
+	     qc[4][k] = cv_mem.cv_ssdat[2][k] * cv_mem.cv_ssdat[3][k] -
+	       cv_mem.cv_ssdat[1][k] * cv_mem.cv_ssdat[4][k];
+	     qc[3][k] = ZERO;
+	     qc[2][k] = cv_mem.cv_ssdat[2][k] * cv_mem.cv_ssdat[5][k] -
+	       cv_mem.cv_ssdat[3][k] * cv_mem.cv_ssdat[4][k];
+	     qc[1][k] = cv_mem.cv_ssdat[4][k] * cv_mem.cv_ssdat[4][k] -
+	       cv_mem.cv_ssdat[3][k] * cv_mem.cv_ssdat[5][k];
+
+	     for (i=1; i<=5; i++) {
+	       qco[i][k] = qc[i][k];
+	     }
+	   }                            /* End of k loop */
+	   
+	   /* Isolate normal or nearly-normal matrix case. Three quartic will
+	      have common or nearly-common roots in this case. 
+	      Return a kflag = 1 if this procedure works. If three root 
+	      differ more than vrrt2, return error kflag = -3.    */
+	   
+	   vmin = Math.min(vrat[1],Math.min(vrat[2],vrat[3]));
+	   vmax = Math.max(vrat[1],Math.max(vrat[2],vrat[3]));
+	   
+	   if (vmin < vrrtol*vrrtol) {
+
+	     if (vmax > vrrt2*vrrt2) {
+	       kflag = -2;  
+	       return(kflag);
+	     } else {
+	       rr = (rav[1] + rav[2] + rav[3])/THREE;
+	       drrmax = ZERO;
+	       for (k = 1;k<=3;k++) {
+	         adrr = Math.abs(rav[k] - rr);
+	         drrmax = Math.max(drrmax, adrr);
+	       }
+	       if (drrmax > vrrt2) kflag = -3;    
+	       kflag = 1;
+
+	       /*  can compute charactistic root, drop to next section   */
+	     }
+
+	   } else {
+
+	     /* use the quartics to get rr. */
+
+	     if (Math.abs(qco[1][1]) < TINY*ssmax[1]) {
+	       kflag = -4;    
+	       return(kflag);
+	     }
+
+	     tem = qco[1][2]/qco[1][1];
+	     for (i=2; i<=5; i++) {
+	       qco[i][2] = qco[i][2] - tem*qco[i][1];
+	     }
+
+	     qco[1][2] = ZERO;
+	     tem = qco[1][3]/qco[1][1];
+	     for (i=2; i<=5; i++) {
+	       qco[i][3] = qco[i][3] - tem*qco[i][1];
+	     }
+	     qco[1][3] = ZERO;
+
+	     if (Math.abs(qco[2][2]) < TINY*ssmax[2]) {
+	       kflag = -4;    
+	       return(kflag);
+	     }
+
+	     tem = qco[2][3]/qco[2][2];
+	     for (i=3; i<=5; i++) {
+	       qco[i][3] = qco[i][3] - tem*qco[i][2];
+	     }
+
+	     if (Math.abs(qco[4][3]) < TINY*ssmax[3]) {
+	       kflag = -4;    
+	       return(kflag);
+	     }
+
+	     rr = -qco[5][3]/qco[4][3];
+
+	     if (rr < TINY || rr > HUNDRED) {
+	       kflag = -5;   
+	       return(kflag);
+	     }
+
+	     for (k=1; k<=3; k++)
+	       qkr[k] = qc[5][k] + rr*(qc[4][k] + rr*rr*(qc[2][k] + rr*qc[1][k]));
+
+	     sqmax = ZERO;
+	     for (k=1; k<=3; k++) {
+	       saqk = Math.abs(qkr[k])/ssmax[k];
+	       if (saqk > sqmax) sqmax = saqk;
+	     } 
+
+	     if (sqmax < sqtol) {
+	       kflag = 2;
+
+	       /*  can compute charactistic root, drop to "given rr,etc"   */
+
+	     } else {
+
+	       /* do Newton corrections to improve rr.  */
+
+	       for (it=1; it<=3; it++) {
+	         for (k=1; k<=3; k++) {
+	           qp = qc[4][k] + rr*rr*(THREE*qc[2][k] + rr*FOUR*qc[1][k]);
+	           drr[k] = ZERO;
+	           if (Math.abs(qp) > TINY*ssmax[k]) drr[k] = -qkr[k]/qp;
+	           rrc[k] = rr + drr[k];
+	         } 
+
+	         for (k=1; k<=3; k++) {
+	           s = rrc[k];
+	           sqmaxk = ZERO;
+	           for (j=1; j<=3; j++) {
+	             qjk[j][k] = qc[5][j] + s*(qc[4][j] + s*s*(qc[2][j] + s*qc[1][j]));
+	             saqj = Math.abs(qjk[j][k])/ssmax[j];
+	             if (saqj > sqmaxk) sqmaxk = saqj;
+	           } 
+	           sqmx[k] = sqmaxk;
+	         }
+
+	         sqmin = sqmx[1] + ONE;
+	         for (k=1; k<=3; k++) {
+	           if (sqmx[k] < sqmin) {
+	             kmin = k;
+	             sqmin = sqmx[k];
+	           }
+	         } 
+	         rr = rrc[kmin];
+
+	         if (sqmin < sqtol) {
+	           kflag = 3;
+	           /*  can compute charactistic root   */
+	           /*  break out of Newton correction loop and drop to "given rr,etc" */ 
+	           break;
+	         } else {
+	           for (j=1; j<=3; j++) {
+	             qkr[j] = qjk[j][kmin];
+	           }
+	         }     
+	       } /*  end of Newton correction loop  */ 
+
+	       if (sqmin > sqtol) {
+	         kflag = -6;
+	         return(kflag);
+	       }
+	     } /*  end of if (sqmax < sqtol) else   */
+	   } /*  end of if (vmin < vrrtol*vrrtol) else, quartics to get rr. */
+
+	   /* given rr, find sigsq[k] and verify rr.  */
+	   /* All positive kflag drop to this section  */
+	   
+	   for (k=1; k<=3; k++) {
+	     rsa = cv_mem.cv_ssdat[1][k];
+	     rsb = cv_mem.cv_ssdat[2][k]*rr;
+	     rsc = cv_mem.cv_ssdat[3][k]*rr*rr;
+	     rsd = cv_mem.cv_ssdat[4][k]*rr*rr*rr;
+	     rd1a = rsa - rsb;
+	     rd1b = rsb - rsc;
+	     rd1c = rsc - rsd;
+	     rd2a = rd1a - rd1b;
+	     rd2b = rd1b - rd1c;
+	     rd3a = rd2a - rd2b;
+	     
+	     if (Math.abs(rd1b) < TINY*smax[k]) {
+	       kflag = -7;
+	       return(kflag);
+	     }
+	     
+	     cest1 = -rd3a/rd1b;
+	     if (cest1 < TINY || cest1 > FOUR) {
+	       kflag = -7;
+	       return(kflag);
+	     }
+	     corr1 = (rd2b/cest1)/(rr*rr);
+	     sigsq[k] = cv_mem.cv_ssdat[3][k] + corr1;
+	   }
+	   
+	   if (sigsq[2] < TINY) {
+	     kflag = -8;
+	     return(kflag);
+	   }
+	   
+	   ratp = sigsq[3]/sigsq[2];
+	   ratm = sigsq[1]/sigsq[2];
+	   qfac1 = FOURTH*(cv_mem.cv_q*cv_mem.cv_q - ONE);
+	   qfac2 = TWO/(cv_mem.cv_q - ONE);
+	   bb = ratp*ratm - ONE - qfac1*ratp;
+	   tem = ONE - qfac2*bb;
+	   
+	   if (Math.abs(tem) < TINY) {
+	     kflag = -8;
+	     return(kflag);
+	   }
+	   
+	   rrb = ONE/tem;
+	   
+	   if (Math.abs(rrb - rr) > rrtol) {
+	     kflag = -9;
+	     return(kflag);
+	   }
+	   
+	   /* Check to see if rr is above cutoff rrcut  */
+	   if (rr > rrcut) {
+	     if (kflag == 1) kflag = 4;
+	     if (kflag == 2) kflag = 5;
+	     if (kflag == 3) kflag = 6;
+	   }
+	   
+	   /* All positive kflag returned at this point  */
+	   
+	   return(kflag);
+	   
+	 }
+	 
+	 /* 
+	  * CVodeGetRootInfo
+	  *
+	  * Returns pointer to array rootsfound showing roots found
+	  */
+
+	 private int CVodeGetRootInfo(CVodeMemRec cv_mem, int rootsfound[])
+	 {
+	   int i, nrt;
+
+	   if (cv_mem==null) {
+	     cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeGetRootInfo", MSGCV_NO_MEM);
+	     return(CV_MEM_NULL);
+	   }
+
+	   nrt = cv_mem.cv_nrtfn;
+
+	   for (i=0; i<nrt; i++) rootsfound[i] = cv_mem.cv_iroots[i];
+
+	   return(CV_SUCCESS);
+	 }
+
 
 
 }
