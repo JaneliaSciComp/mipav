@@ -652,6 +652,7 @@ public abstract class CVODES {
 		int iout;
 		double t[] = new double[1];
 		int rootsfound[] = new int[2];
+		int i;
 		
 		// Call CVodeCreate to create the solver memory and specify the
 		// Backward Differentiation Formula and the use of a Newton
@@ -659,6 +660,16 @@ public abstract class CVODES {
 		cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
 		if (cvode_mem == null) {
 		    return;	
+		}
+		// Allow unlimited steps in reaching tout
+		flag = CVodeSetMaxNumSteps(cvode_mem, -1);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		// Allow many error test failures
+		flag = CVodeSetMaxErrTestFails(cvode_mem, Integer.MAX_VALUE);
+		if (flag != CV_SUCCESS) {
+			return;
 		}
 		
 		// Call CVodeInit to initialize the integrator memory and specify the
@@ -719,7 +730,7 @@ public abstract class CVODES {
 		
 		while (true) {
 			flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
-			System.out.println("At t = " + t + " y[0] = " + y.data[0] + " y[1] = " + y.data[1] + " y[2] = " + y.data[2]);
+			System.out.println("At t = " + t[0] + " y[0] = " + y.data[0] + " y[1] = " + y.data[1] + " y[2] = " + y.data[2]);
 			
 			if (flag == CV_ROOT_RETURN) {
 			    flagr = CVodeGetRootInfo(cvode_mem, rootsfound)	;
@@ -746,13 +757,88 @@ public abstract class CVODES {
 		
 		// Print some final statistics
 		PrintFinalStats(cvode_mem);
+		
+		// Check the solution error
+		flag = check_ans(y, reltol, abstol);
+		
+		// Free y and abstol vectors
+		N_VDestroy(y);
+		N_VDestroy(abstol);
+		
+		// Free the integrator memory
+		CVodeFree(cvode_mem);
+		
+		// Free the linear solver memory
+		SUNLinSolFree_Dense(LS);
+		
+		// Free the matrix memory
+		for (i = 0; i < NEQ; i++) {
+			A[i] = null;
+		}
+		A = null;
+		return;
 	}
 	
+	
+
 	private void PrintFinalStats(CVodeMemRec cv_mem) {
 	    System.out.println("Number of integrations steps = " + cv_mem.cv_nst);
 	    System.out.println("Number of calls to f = " + cv_mem.cv_nfe);
 	    System.out.println("Number of calls to the linear solver setup routine = " + cv_mem.cv_nsetups);
+	    System.out.println("Number of error test failures = " + cv_mem.cv_netf[0]);
+	    System.out.println("Number of nonlinear solver iterations = " + cv_mem.cv_nni);
+	    System.out.println("Number of nonlinear solver convergence failures = " + cv_mem.cv_ncfn[0]);
+	    System.out.println("Number of Jacobian evaluations = " + cv_mem.cv_lmem.nje);
+	    System.out.println("Number of calls to the ODE function needed for the DQ Jacobian approximation = " + cv_mem.cv_lmem.nfeDQ);
+	    System.out.println("Number of calls to g (for rootfinding) = " + cv_mem.cv_nge);
 	}
+	
+	/* compare the solution at the final time 4e10s to a reference solution computed
+	   using a relative tolerance of 1e-8 and absoltue tolerance of 1e-14 */
+	private int check_ans(NVector y, double rtol, NVector atol)
+	{
+	  int      passfail=0;        /* answer pass (0) or fail (1) flag */  
+	  NVector ref;               /* reference solution vector        */
+	  NVector ewt;               /* error weight vector              */
+	  double err;               /* wrms error                       */
+	  double ONE = 1.0;  
+
+	  /* create reference solution and error weight vectors */
+	  ref = N_VClone(y);
+	  ewt = N_VClone(y);
+
+	  /* set the reference solution data */
+	  ref.data[0] = 5.2083495894337328e-08;
+	  ref.data[1] = 2.0833399429795671e-13;
+	  ref.data[2] = 9.9999994791629776e-01;
+
+	  /* compute the error weight vector, loosen atol */
+	  N_VAbs_Serial(ref, ewt);
+	  N_VLinearSum_Serial(rtol, ewt, 10.0, atol, ewt);
+	  if (N_VMin_Serial(ewt) <= ZERO) {
+	    System.err.println("check_ans failed - ewt <= 0\n\n");
+	    return(-1);
+	  }
+	  N_VInv_Serial(ewt, ewt);   
+
+	  /* compute the solution error */
+	  N_VLinearSum_Serial(ONE, y, -ONE, ref, ref);
+	  err = N_VWrmsNorm_Serial(ref, ewt);
+
+	  /* is the solution within the tolerances? */
+	  passfail = (err < ONE) ? 0 : 1; 
+
+	  if (passfail == 1) {
+	    System.err.println("WARNING: check_ans error= " + err);
+	  }
+
+	  /* Free vectors */
+	  N_VDestroy(ref);
+	  N_VDestroy(ewt);
+
+	  return(passfail);
+	}
+
 	
 	private void N_VNew_Serial(NVector y, int length) {
 	    if ((y != null) && (length > 0)) {
@@ -1419,33 +1505,17 @@ public abstract class CVODES {
      void cvProcessError(CVodeMemRec cv_mem, 
                          int error_code,  String module, String fname, 
                          String msgfmt, double... numbers)
-     {
-    	 MipavUtil.displayError("In module " + module + " in function " + fname + " msgfmt");
-       //va_list ap;
-       //char msg[256];
-
-       /* Initialize the argument pointer variable 
-          (msgfmt is the last required argument to cvProcessError) */
-
-       //va_start(ap, msgfmt);
-
-       /* Compose the message */
-
-       //vsprintf(msg, msgfmt, ap);
-
-       //if (cv_mem == NULL) {    /* We write to stderr */
-     //#ifndef NO_FPRINTF_OUTPUT
-         //fprintf(stderr, "\n[%s ERROR]  %s\n  ", module, fname);
-         //fprintf(stderr, "%s\n\n", msg);
-     //#endif
-
-       //} else {                 /* We can call ehfun */
-         //cv_mem->cv_ehfun(error_code, module, fname, msg, cv_mem->cv_eh_data);
-       //}
-
-       /* Finalize argument processing */
-       //va_end(ap);
-
+     {   
+    	 int index = msgfmt.indexOf("%lg");
+    	 if (index > 0) {
+    		 msgfmt = msgfmt.substring(0, index)+numbers[0]+msgfmt.substring(index+3);
+    		 index = msgfmt.indexOf("%lg");
+    		 if (index > 0) {
+    			 msgfmt = msgfmt.substring(0, index)+numbers[1]+msgfmt.substring(index+3);	 
+    		 }
+    	 }
+    	 System.err.println("In module " + module + " in function " + fname + msgfmt);
+       
        return;
      }
      
@@ -1743,7 +1813,7 @@ public abstract class CVODES {
          return(CV_ILL_INPUT);
        }
 
-       if (N_VMin(abstol) < ZERO) {
+       if (N_VMin_Serial(abstol) < ZERO) {
          cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
                         "CVodeSVtolerances", MSGCV_BAD_ABSTOL);
          return(CV_ILL_INPUT);
@@ -1771,7 +1841,7 @@ public abstract class CVODES {
        return(CV_SUCCESS);
      }
 
-     private double N_VMin(NVector x) {
+     private double N_VMin_Serial(NVector x) {
     	 int i;
     	 if ((x == null) || (x.data == null) || (x.data.length == 0)) {
     		 return Double.NaN;
@@ -2948,7 +3018,7 @@ public abstract class CVODES {
     N_VAbs_Serial(ycur, cv_mem.cv_tempv);
     N_VScale_Serial(cv_mem.cv_reltol, cv_mem.cv_tempv, cv_mem.cv_tempv);
     N_VAddConst_Serial(cv_mem.cv_tempv, cv_mem.cv_Sabstol, cv_mem.cv_tempv);
-    if (N_VMin(cv_mem.cv_tempv) <= ZERO) return(-1);
+    if (N_VMin_Serial(cv_mem.cv_tempv) <= ZERO) return(-1);
     N_VInv_Serial(cv_mem.cv_tempv, weight);
 
     return(0);
@@ -2968,7 +3038,7 @@ public abstract class CVODES {
     N_VAbs_Serial(ycur, cv_mem.cv_tempv);
     N_VLinearSum_Serial(cv_mem.cv_reltol, cv_mem.cv_tempv, ONE,
                  cv_mem.cv_Vabstol, cv_mem.cv_tempv);
-    if (N_VMin(cv_mem.cv_tempv) <= ZERO) return(-1);
+    if (N_VMin_Serial(cv_mem.cv_tempv) <= ZERO) return(-1);
     N_VInv_Serial(cv_mem.cv_tempv, weight);
     return(0);
   }
@@ -3441,7 +3511,7 @@ public abstract class CVODES {
     N_VAbs_Serial(qcur, cv_mem.cv_tempvQ);
     N_VScale_Serial(cv_mem.cv_reltolQ, cv_mem.cv_tempvQ, cv_mem.cv_tempvQ);
     N_VAddConst_Serial(cv_mem.cv_tempvQ, cv_mem.cv_SabstolQ, cv_mem.cv_tempvQ);
-    if (N_VMin(cv_mem.cv_tempvQ) <= ZERO) return(-1);
+    if (N_VMin_Serial(cv_mem.cv_tempvQ) <= ZERO) return(-1);
     N_VInv_Serial(cv_mem.cv_tempvQ, weightQ);
 
     return(0);
@@ -3457,7 +3527,7 @@ public abstract class CVODES {
     N_VAbs_Serial(qcur, cv_mem.cv_tempvQ);
     N_VLinearSum_Serial(cv_mem.cv_reltolQ, cv_mem.cv_tempvQ, ONE,
                  cv_mem.cv_VabstolQ, cv_mem.cv_tempvQ);
-    if (N_VMin(cv_mem.cv_tempvQ) <= ZERO) return(-1);
+    if (N_VMin_Serial(cv_mem.cv_tempvQ) <= ZERO) return(-1);
     N_VInv_Serial(cv_mem.cv_tempvQ, weightQ);
 
     return(0);
@@ -3531,7 +3601,7 @@ public abstract class CVODES {
       N_VAbs_Serial(yScur[is], cv_mem.cv_tempv);
       N_VScale_Serial(cv_mem.cv_reltolS, cv_mem.cv_tempv, cv_mem.cv_tempv);
       N_VAddConst_Serial(cv_mem.cv_tempv, cv_mem.cv_SabstolS[is], cv_mem.cv_tempv);
-      if (N_VMin(cv_mem.cv_tempv) <= ZERO) return(-1);
+      if (N_VMin_Serial(cv_mem.cv_tempv) <= ZERO) return(-1);
       N_VInv_Serial(cv_mem.cv_tempv, weightS[is]);
     }
     return(0);
@@ -3550,7 +3620,7 @@ public abstract class CVODES {
       N_VAbs_Serial(yScur[is], cv_mem.cv_tempv);
       N_VLinearSum_Serial(cv_mem.cv_reltolS, cv_mem.cv_tempv, ONE,
                    cv_mem.cv_VabstolS[is], cv_mem.cv_tempv);
-      if (N_VMin(cv_mem.cv_tempv) <= ZERO) return(-1);
+      if (N_VMin_Serial(cv_mem.cv_tempv) <= ZERO) return(-1);
       N_VInv_Serial(cv_mem.cv_tempv, weightS[is]);
     }
 
@@ -3620,7 +3690,7 @@ public abstract class CVODES {
       N_VAbs_Serial(yQScur[is], cv_mem.cv_tempvQ);
       N_VScale_Serial(cv_mem.cv_reltolQS, cv_mem.cv_tempvQ, cv_mem.cv_tempvQ);
       N_VAddConst_Serial(cv_mem.cv_tempvQ, cv_mem.cv_SabstolQS[is], cv_mem.cv_tempvQ);
-      if (N_VMin(cv_mem.cv_tempvQ) <= ZERO) return(-1);
+      if (N_VMin_Serial(cv_mem.cv_tempvQ) <= ZERO) return(-1);
       N_VInv_Serial(cv_mem.cv_tempvQ, weightQS[is]);
     }
 
@@ -3635,7 +3705,7 @@ public abstract class CVODES {
       N_VAbs_Serial(yQScur[is], cv_mem.cv_tempvQ);
       N_VLinearSum_Serial(cv_mem.cv_reltolQS, cv_mem.cv_tempvQ, ONE,
                    cv_mem.cv_VabstolQS[is], cv_mem.cv_tempvQ);
-      if (N_VMin(cv_mem.cv_tempvQ) <= ZERO) return(-1);
+      if (N_VMin_Serial(cv_mem.cv_tempvQ) <= ZERO) return(-1);
       N_VInv_Serial(cv_mem.cv_tempvQ, weightQS[is]);
     }
 
@@ -8642,6 +8712,334 @@ else                return(snrm);
 
 	   return(CV_SUCCESS);
 	 }
+
+	 /*
+	  * CVodeFree
+	  *
+	  * This routine frees the problem memory allocated by CVodeInit.
+	  * Such memory includes all the vectors allocated by cvAllocVectors,
+	  * and the memory lmem for the linear solver (deallocated by a call
+	  * to lfree), as well as (if Ns!=0) all memory allocated for 
+	  * sensitivity computations by CVodeSensInit.
+	  */
+
+	 private void CVodeFree(CVodeMemRec cv_mem)
+	 {
+
+	   if (cv_mem == null) return;
+	   
+	   cvFreeVectors(cv_mem);
+
+	   CVodeQuadFree(cv_mem);
+
+	   CVodeSensFree(cv_mem);
+
+	   CVodeQuadSensFree(cv_mem);
+
+	   //CVodeAdjFree(cv_mem);
+
+	   cvDlsFree(cv_mem);
+
+	   if (cv_mem.cv_nrtfn > 0) {
+	     cv_mem.cv_glo = null; 
+	     cv_mem.cv_ghi = null;
+	     cv_mem.cv_grout = null;
+	     cv_mem.cv_iroots = null;
+	     cv_mem.cv_rootdir = null;
+	     cv_mem.cv_gactive = null;
+	   }
+	   
+	   cv_mem = null;
+	 }
+
+	 
+	 /*  
+	  * cvFreeVectors
+	  *
+	  * This routine frees the CVODES vectors allocated in cvAllocVectors.
+	  */
+
+	 private void cvFreeVectors(CVodeMemRec cv_mem)
+	 {
+	   int j, maxord;
+	   
+	   maxord = cv_mem.cv_qmax_alloc;
+
+	   N_VDestroy(cv_mem.cv_ewt);
+	   N_VDestroy(cv_mem.cv_acor);
+	   N_VDestroy(cv_mem.cv_tempv);
+	   N_VDestroy(cv_mem.cv_ftemp);
+	   for (j=0; j <= maxord; j++) N_VDestroy(cv_mem.cv_zn[j]);
+
+	   cv_mem.cv_lrw -= (maxord + 5)*cv_mem.cv_lrw1;
+	   cv_mem.cv_liw -= (maxord + 5)*cv_mem.cv_liw1;
+
+	   if (cv_mem.cv_VabstolMallocDone) {
+	     N_VDestroy(cv_mem.cv_Vabstol);
+	     cv_mem.cv_lrw -= cv_mem.cv_lrw1;
+	     cv_mem.cv_liw -= cv_mem.cv_liw1;
+	   }
+	 }
+
+	 
+	 /*
+	  * CVodeQuadFree
+	  *
+	  * CVodeQuadFree frees the problem memory in cvode_mem allocated
+	  * for quadrature integration. Its only argument is the pointer
+	  * cvode_mem returned by CVodeCreate. 
+	  */
+
+	 private void CVodeQuadFree(CVodeMemRec cv_mem)
+	 {
+	   
+	   if (cv_mem == null) return;
+
+	   if(cv_mem.cv_QuadMallocDone) {
+	     cvQuadFreeVectors(cv_mem);
+	     cv_mem.cv_QuadMallocDone = false;
+	     cv_mem.cv_quadr = false;
+	   }
+	 }
+	 
+	 /*
+	  * cvQuadFreeVectors
+	  *
+	  * This routine frees the CVODES vectors allocated in cvQuadAllocVectors.
+	  */
+
+	 private void cvQuadFreeVectors(CVodeMemRec cv_mem)
+	 {
+	   int j, maxord;
+	   
+	   maxord = cv_mem.cv_qmax_allocQ;
+
+	   N_VDestroy(cv_mem.cv_ewtQ);
+	   N_VDestroy(cv_mem.cv_acorQ);
+	   N_VDestroy(cv_mem.cv_yQ);
+	   N_VDestroy(cv_mem.cv_tempvQ);
+	   
+	   for (j=0; j<=maxord; j++) N_VDestroy(cv_mem.cv_znQ[j]);
+
+	   cv_mem.cv_lrw -= (maxord + 5)*cv_mem.cv_lrw1Q;
+	   cv_mem.cv_liw -= (maxord + 5)*cv_mem.cv_liw1Q;
+
+	   if (cv_mem.cv_VabstolQMallocDone) {
+	     N_VDestroy(cv_mem.cv_VabstolQ);
+
+	    cv_mem.cv_lrw -= cv_mem.cv_lrw1Q;
+	     cv_mem.cv_liw -= cv_mem.cv_liw1Q;
+	   }
+
+	   cv_mem.cv_VabstolQMallocDone = false;
+	 }
+
+
+	 /*
+	  *
+	 CVodeSensFree
+	  *
+	  * CVodeSensFree frees the problem memory in cvode_mem allocated
+	  * for sensitivity analysis. Its only argument is the pointer
+	  * cvode_mem returned by CVodeCreate. 
+	  */
+
+	 private void CVodeSensFree(CVodeMemRec cv_mem)
+	 {
+	   int i;
+	   if (cv_mem == null) return;
+
+	   if(cv_mem.cv_SensMallocDone) {
+	     if (cv_mem.cv_stgr1alloc) {
+	       for (i = 0; i < cv_mem.cv_ncfS1.length; i++) {
+	    	   cv_mem.cv_ncfS1[i] = null;
+	       }
+	       cv_mem.cv_ncfS1 = null;
+	       for (i = 0; i < cv_mem.cv_ncfS1.length; i++) {
+	    	   cv_mem.cv_ncfS1[i] = null;
+	       }
+	       cv_mem.cv_ncfnS1 = null;
+	       cv_mem.cv_nniS1 = null;
+	       cv_mem.cv_stgr1alloc = false;
+	     }
+	     cvSensFreeVectors(cv_mem);
+	     cv_mem.cv_SensMallocDone = false;
+	     cv_mem.cv_sensi = false;
+	   }
+	 }
+	 
+	 /*
+	  * cvSensFreeVectors
+	  *
+	  * This routine frees the CVODES vectors allocated in cvSensAllocVectors.
+	  */
+
+	 private void cvSensFreeVectors(CVodeMemRec cv_mem) 
+	 {
+	   int j, maxord;
+	   
+	   maxord = cv_mem.cv_qmax_allocS;
+
+	   N_VDestroyVectorArray(cv_mem.cv_yS, cv_mem.cv_Ns);
+	   N_VDestroyVectorArray(cv_mem.cv_ewtS, cv_mem.cv_Ns);
+	   N_VDestroyVectorArray(cv_mem.cv_acorS, cv_mem.cv_Ns);
+	   N_VDestroyVectorArray(cv_mem.cv_tempvS, cv_mem.cv_Ns);
+	   N_VDestroyVectorArray(cv_mem.cv_ftempS, cv_mem.cv_Ns);
+	   
+	   for (j=0; j<=maxord; j++)
+	     N_VDestroyVectorArray(cv_mem.cv_znS[j], cv_mem.cv_Ns);  
+
+	   cv_mem.cv_pbar = null;
+	   cv_mem.cv_plist = null;
+
+	   cv_mem.cv_lrw -= (maxord + 6)*cv_mem.cv_Ns*cv_mem.cv_lrw1 + cv_mem.cv_Ns;
+	   cv_mem.cv_liw -= (maxord + 6)*cv_mem.cv_Ns*cv_mem.cv_liw1 + cv_mem.cv_Ns;
+
+
+	  if (cv_mem.cv_VabstolSMallocDone) {
+	     N_VDestroyVectorArray(cv_mem.cv_VabstolS, cv_mem.cv_Ns);
+	     cv_mem.cv_lrw -= cv_mem.cv_Ns*cv_mem.cv_lrw1;
+	     cv_mem.cv_liw -= cv_mem.cv_Ns*cv_mem.cv_liw1;
+	   }
+	   if (cv_mem.cv_SabstolSMallocDone) {
+	     cv_mem.cv_SabstolS = null;
+	     cv_mem.cv_lrw -= cv_mem.cv_Ns;
+	   }
+	   cv_mem.cv_VabstolSMallocDone = false;
+	   cv_mem.cv_SabstolSMallocDone = false;
+	 }
+	 
+	 /* ----------------------------------------------------------------------------
+	  * Function to free an array created with N_VCloneVectorArray_Serial
+	  */
+
+	 private void N_VDestroyVectorArray(NVector vs[], int count)
+	 {
+	   int j;
+
+	   for (j = 0; j < count; j++) N_VDestroy(vs[j]);
+
+	   vs = null;
+
+	   return;
+	 }
+
+
+
+	 /*
+	  * CVodeQuadSensFree
+	  *
+	  * CVodeQuadSensFree frees the problem memory in cvode_mem allocated
+	  * for quadrature sensitivity analysis. Its only argument is the pointer
+	  * cvode_mem returned by CVodeCreate. 
+	  */
+
+	 private void CVodeQuadSensFree(CVodeMemRec cv_mem)
+	 {
+	   
+	   if (cv_mem == null) return;
+
+	   if(cv_mem.cv_QuadSensMallocDone) {
+	     cvQuadSensFreeVectors(cv_mem);
+	     cv_mem.cv_QuadSensMallocDone = false;
+	     cv_mem.cv_quadr_sensi = false;
+	   }
+	 }
+
+	   /*
+	    * cvQuadSensFreeVectors
+	    *
+
+	   * This routine frees the CVODES vectors allocated in cvQuadSensAllocVectors.
+	    */
+
+	   private void cvQuadSensFreeVectors(CVodeMemRec cv_mem)
+	   {
+	     int j, maxord;
+	     
+	     maxord = cv_mem.cv_qmax_allocQS;
+
+	     N_VDestroy(cv_mem.cv_ftempQ);
+
+	     N_VDestroyVectorArray(cv_mem.cv_yQS, cv_mem.cv_Ns);
+	     N_VDestroyVectorArray(cv_mem.cv_ewtQS, cv_mem.cv_Ns);
+	     N_VDestroyVectorArray(cv_mem.cv_acorQS, cv_mem.cv_Ns);
+	     N_VDestroyVectorArray(cv_mem.cv_tempvQS, cv_mem.cv_Ns);
+	     
+	     for (j=0; j<=maxord; j++)
+	       N_VDestroyVectorArray(cv_mem.cv_znQS[j], cv_mem.cv_Ns);  
+
+	     cv_mem.cv_lrw -= (maxord + 5)*cv_mem.cv_Ns*cv_mem.cv_lrw1Q;
+	     cv_mem.cv_liw -= (maxord + 5)*cv_mem.cv_Ns*cv_mem.cv_liw1Q;
+
+	     if (cv_mem.cv_VabstolQSMallocDone) {
+	       N_VDestroyVectorArray(cv_mem.cv_VabstolQS, cv_mem.cv_Ns);
+	       cv_mem.cv_lrw -= cv_mem.cv_Ns*cv_mem.cv_lrw1Q;
+	       cv_mem.cv_liw -= cv_mem.cv_Ns*cv_mem.cv_liw1Q;
+	     }
+	     if (cv_mem.cv_SabstolQSMallocDone) {
+	       cv_mem.cv_SabstolQS = null;
+	       cv_mem.cv_lrw -= cv_mem.cv_Ns;
+	     }
+	     cv_mem.cv_VabstolQSMallocDone = false;
+	     cv_mem.cv_SabstolQSMallocDone = false;
+
+	   }
+	   
+	   private int SUNLinSolFree_Dense(SUNLinearSolver S)
+	   {
+	     /* return if S is already free */
+	     if (S == null)
+	       return(SUNLS_SUCCESS);
+
+	     /* delete items from contents, then delete generic structure */
+	     S.pivots = null;
+	     S = null;
+	     return(SUNLS_SUCCESS);
+	   }
+	   
+	   /* 
+	    * CVodeSetMaxNumSteps
+	    *
+	    * Specifies the maximum number of integration steps
+	    */
+
+	   private int CVodeSetMaxNumSteps(CVodeMemRec cv_mem, long mxsteps)
+	   {
+
+	     if (cv_mem==null) {
+	       cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeSetMaxNumSteps", MSGCV_NO_MEM);
+	       return(CV_MEM_NULL);
+	     }
+
+	     /* Passing mxsteps=0 sets the default. Passing mxsteps<0 disables the test. */
+	     if (mxsteps == 0)
+	       cv_mem.cv_mxstep = MXSTEP_DEFAULT;
+	     else
+	       cv_mem.cv_mxstep = mxsteps;
+
+	     return(CV_SUCCESS);
+	   }
+
+	   /* 
+	    * CVodeSetMaxErrTestFails
+	    *
+	    * Specifies the maximum number of error test failures during one
+	    * step try.
+	    */
+
+	   private int CVodeSetMaxErrTestFails(CVodeMemRec cv_mem, int maxnef)
+	   {
+
+	     if (cv_mem==null) {
+	       cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeSetMaxErrTestFails", MSGCV_NO_MEM);
+	       return (CV_MEM_NULL);
+	     }
+
+	     cv_mem.cv_maxnef = maxnef;
+
+	     return(CV_SUCCESS);
+	   }
 
 
 
