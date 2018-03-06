@@ -35,6 +35,7 @@ import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
@@ -74,19 +75,23 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	 * 
 	 */
 	private static final long serialVersionUID = -5858343401705223389L;
-	private JRadioButton untwistedToTwisted;
-	private JRadioButton twistedToUntwisted;
-	private JRadioButton noseCentric;
-	private JRadioButton defaultCoords;
-	private ModelImage wormImage;
+//	private JRadioButton untwistedToTwisted;
+//	private JRadioButton twistedToUntwisted;
+//	private JRadioButton noseCentric;
+//	private JRadioButton defaultCoords;
+//	private ModelImage wormImage;
 
-	private String baseFileDir;
-	private JTextField  baseFileLocText;
-	private String baseFileName;
-	private JTextField  baseFileNameText;
-	private Vector<Integer> includeRange;
+//	private String baseFileDir;
+//	private JTextField  baseFileLocText;
+//	private String baseFileName;
+	private JTextField straightenedAnnotationText;
+	private String straightenedAnnotationFile;
+	private JTextField targetLocText;
+	private String targetDir;
+//	private JTextField  baseFileNameText;
+//	private Vector<Integer> includeRange;
 	private JPanel inputsPanel;
-	private JTextField rangeFusionText;
+//	private JTextField rangeFusionText;
 
 	public PlugInDialogUntwistedToTwisted()
 	{
@@ -102,16 +107,16 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	 */
 	public void actionPerformed(ActionEvent event)
 	{
-		if ( event.getSource() == twistedToUntwisted && twistedToUntwisted.isSelected() )
-		{
-			defaultCoords.setSelected(true);
-			noseCentric.setSelected(false);
-			noseCentric.setEnabled(false);
-		}
-		if ( event.getSource() == untwistedToTwisted && untwistedToTwisted.isSelected() )
-		{
-			noseCentric.setEnabled(true);
-		}
+//		if ( event.getSource() == twistedToUntwisted && twistedToUntwisted.isSelected() )
+//		{
+//			defaultCoords.setSelected(true);
+//			noseCentric.setSelected(false);
+//			noseCentric.setEnabled(false);
+//		}
+//		if ( event.getSource() == untwistedToTwisted && untwistedToTwisted.isSelected() )
+//		{
+//			noseCentric.setEnabled(true);
+//		}
 		
 		String command = event.getActionCommand();
 		if (command.equals("OK")) {
@@ -135,11 +140,11 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	public void dispose()
 	{
 		super.dispose();
-		if ( wormImage != null )
-		{
-			wormImage.disposeLocal();
-			wormImage = null;
-		}		
+//		if ( wormImage != null )
+//		{
+//			wormImage.disposeLocal();
+//			wormImage = null;
+//		}		
 	}
 
 	public void saveSegmentationStatistics(final String dir, Vector<String> fileNamesList, Vector<Integer> numSegmented, Vector<Integer> numMatched )
@@ -221,189 +226,271 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 
 	private void callAlgorithm()
 	{
-		if ( includeRange != null )
+		System.err.println( targetDir );
+		System.err.println( straightenedAnnotationFile );
+		
+		if ( (targetDir.length() == 0) || (straightenedAnnotationFile.length() == 0) ) {
+			return;
+		}
+		String targetDirName = targetDir.substring(targetDir.lastIndexOf( File.separator ) + 1, targetDir.length());
+		System.err.println(targetDirName);
+
+		String outputDirName = straightenedAnnotationFile.substring(0, straightenedAnnotationFile.lastIndexOf( File.separator ) + 1);
+		String inputFileName = straightenedAnnotationFile.substring(straightenedAnnotationFile.lastIndexOf( File.separator ) + 1, straightenedAnnotationFile.lastIndexOf( '.' ));
+		System.err.println(outputDirName);
+		System.err.println(inputFileName);
+		
+		String toTwistedName = targetDir + File.separator + targetDirName + "_results" + File.separator + 
+				"output_images" + File.separator + targetDirName + "_toTwisted.xml";
+		File toTwistedFile = new File( toTwistedName );
+		File annotationFile = new File( straightenedAnnotationFile );
+		System.err.println(toTwistedName + " " + toTwistedFile.exists() );
+		ModelImage toTwisted = null;
+		if ( toTwistedFile.exists() && annotationFile.exists() )
 		{
-			System.err.println("Starting plugin" );
-			for ( int i = 0; i < includeRange.size(); i++ )
-			{				
-				// Build the full image name:
-				baseFileName = baseFileNameText.getText();
-				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
-				File imageFile = new File(baseFileDir + File.separator + fileName);
-
-				if ( imageFile.exists() )
-				{	
-					System.err.println( "   " + fileName );
-					FileIO fileIO = new FileIO();
-					if ( wormImage != null )
+			System.err.println("opening image...");
+			FileIO fileIO = new FileIO();
+			toTwisted = fileIO.readImage(toTwistedName);  
+			if ( toTwisted != null )
+			{
+//				System.err.println("displaying image...");
+//				new ViewJFrameImage(toTwisted);
+				VOI annotations = LatticeModel.readAnnotationsCSV(straightenedAnnotationFile);
+				if ( annotations != null )
+				{
+					if ( annotations.getCurves().size() > 0 )
 					{
-						wormImage.disposeLocal(false);
-						wormImage = null;
-					}
-					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
-					WormData wormData = new WormData(wormImage);
+						Vector<String> failedList = new Vector<String>();
+						VOI annotationVOI = new VOI( (short)0, inputFileName + "_" + targetDirName, VOI.ANNOTATION, 0 );
+						for ( int j = 0; j < annotations.getCurves().size(); j++ )
+						{
+							VOIText text = (VOIText) annotations.getCurves().elementAt(j);
+							Vector3f pos = text.elementAt(0);
+							String name = text.getText();
 
-//					String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + "_positions.csv";
-//					System.err.println( "   " + positionsFile );
-//					File textFile = new File(baseFileDir + File.separator + "Positions" + File.separator + positionsFile);
-//					if ( textFile.exists() )
-//					{			
-//						if ( twistedToUntwisted.isSelected() )
-//						{
-//							String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator +
-//									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 									
-//									PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
-//							VOIVector latticeVector = new VOIVector();
-//							PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
-//							if ( latticeVector.size() != 0 )
+							float valid = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 0 );
+							//						if ( valid != 1 )
+							//						{
+							//							System.err.println( name + " invalid position" );
+							//						}
+							float x = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 1 );
+							float y = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 2 );
+							float z = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 3 );
+							Vector3f newPos = new Vector3f(x, y, z);
+
+							if ( !newPos.equals( Vector3f.ZERO ) )
+							{
+								VOIText newText = new VOIText();
+								newText.setText(name);
+								newText.add(newPos);
+
+								annotationVOI.getCurves().add(newText);
+							}
+							else
+							{
+								failedList.add(name);
+							}
+						}
+						LatticeModel.saveAnnotationsAsCSV(outputDirName, inputFileName + "_" + targetDirName + ".csv", annotationVOI);
+						String msg = "Retwisted " + annotationVOI.getCurves().size() + " out of " + annotations.getCurves().size() + " annotations" + "\n";
+						for ( int j = 0; j < failedList.size(); j++ )
+						{
+							msg += failedList.elementAt(j) + " failed" + "\n";
+						}
+						MipavUtil.displayInfo( msg );
+					}
+				}
+			}
+			else
+			{
+				System.err.println("image open failed");
+			}
+		}
+		
+		
+//		if ( includeRange != null )
+//		{
+//			System.err.println("Starting plugin" );
+//			for ( int i = 0; i < includeRange.size(); i++ )
+//			{				
+//				// Build the full image name:
+//				baseFileName = baseFileNameText.getText();
+//				String fileName = baseFileName + "_" + includeRange.elementAt(i) + ".tif";
+//				File imageFile = new File(baseFileDir + File.separator + fileName);
+//
+//				if ( imageFile.exists() )
+//				{	
+//					System.err.println( "   " + fileName );
+//					FileIO fileIO = new FileIO();
+//					if ( wormImage != null )
+//					{
+//						wormImage.disposeLocal(false);
+//						wormImage = null;
+//					}
+//					wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+//					WormData wormData = new WormData(wormImage);
+//
+////					String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + "_positions.csv";
+////					System.err.println( "   " + positionsFile );
+////					File textFile = new File(baseFileDir + File.separator + "Positions" + File.separator + positionsFile);
+////					if ( textFile.exists() )
+////					{			
+////						if ( twistedToUntwisted.isSelected() )
+////						{
+////							String latticeFile = baseFileDir + File.separator + baseFileName + "_"  + includeRange.elementAt(i) + File.separator +
+////									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 									
+////									PlugInAlgorithmWormUntwisting.autoLatticeGenerationOutput + "1" + File.separator;
+////							VOIVector latticeVector = new VOIVector();
+////							PlugInAlgorithmWormUntwisting.loadAllVOIsFrom(wormImage, latticeFile, true, latticeVector, false);
+////							if ( latticeVector.size() != 0 )
+////							{
+////								VOIVector vois = readMarkerPositions(positionsFile, textFile, null);
+////								VOI annotations = vois.elementAt(0);
+////
+////								if ( annotations != null )
+////								{
+////									if ( annotations.getCurves().size() > 0 )
+////									{
+////										LatticeModel model = new LatticeModel(wormImage);
+////										model.setSeamCellImage( wormData.readSeamSegmentation() );
+////										model.setLattice(latticeVector.elementAt(0));
+////										model.setMarkers(annotations);
+////
+////										model.interpolateLattice( false, false, false, true );	
+////
+////										VOI annotationsStraight = model.getAnnotationsStraight();
+////
+////
+////										String distanceName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+////												baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
+////												"output_images" + File.separator + 
+////												baseFileName + "_" + includeRange.elementAt(i) + "_distanceMap.xml";
+////										File distanceMapFile = new File(baseFileDir + File.separator + distanceName );
+//////										System.err.println(distanceName + " " + distanceMapFile.exists() );											
+////										ModelImage distanceMap = null;
+////										if ( distanceMapFile.exists() )
+////										{
+////											distanceMap = fileIO.readImage(distanceName, baseFileDir + File.separator, false, null);
+////										}
+////										Vector<Integer> distance = null;
+////										if ( distanceMap != null )
+////										{
+////											distance = new Vector<Integer>();
+////											for ( int j = 0; j < annotationsStraight.getCurves().size(); j++ )
+////											{
+////												VOIText text = (VOIText) annotationsStraight.getCurves().elementAt(j);
+////												Vector3f pos = text.elementAt(0);
+////												int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
+////												distance.add(d);
+////											}
+////											
+////											distanceMap.disposeLocal(false);
+////											distanceMap = null;
+////										}
+////
+////										String fileBase = baseFileName + "_" + includeRange.elementAt(i) + "_positions_straight.csv";
+////										saveMarkerPositions(baseFileDir + File.separator + "Positions" + File.separator + fileBase, annotationsStraight, distance);
+////										model.dispose();
+////										model = null;
+////									}
+////								}
+////							}
+////						}
+////						else if ( untwistedToTwisted.isSelected() )
+////						{
+//							String toTwistedName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+//									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
+//									"output_images" + File.separator + 
+//									baseFileName + "_" + includeRange.elementAt(i) + "_toTwisted.xml";
+//							File toTwistedFile = new File(baseFileDir + File.separator + toTwistedName );
+////							System.err.println(toTwistedName + " " + toTwistedFile.exists() );
+//							ModelImage toTwisted = null;
+//							if ( toTwistedFile.exists() )
 //							{
-//								VOIVector vois = readMarkerPositions(positionsFile, textFile, null);
+//								toTwisted = fileIO.readImage(toTwistedName, baseFileDir + File.separator, false, null);  
+//							}
+//							String distanceName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+//									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
+//									"output_images" + File.separator + 
+//									baseFileName + "_" + includeRange.elementAt(i) + "_distanceMap.xml";
+//							File distanceMapFile = new File(baseFileDir + File.separator + distanceName );
+////							System.err.println(distanceName + " " + distanceMapFile.exists() );
+//							ModelImage distanceMap = null;
+//							if ( distanceMapFile.exists() )
+//							{
+//								distanceMap = fileIO.readImage(distanceName, baseFileDir + File.separator, false, null);  
+//							}
+//							if ( toTwisted != null )
+//							{
+//								String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+//										baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator + 
+//										"tracked_annotations.csv";
+//								File textFile = new File(baseFileDir + File.separator + positionsFile);
+//										
+//								int[] imageExtents = new int[]{toTwisted.getExtents()[0], toTwisted.getExtents()[1]};
+//								VOIVector vois = readMarkerPositions(positionsFile, textFile, imageExtents);
 //								VOI annotations = vois.elementAt(0);
 //
 //								if ( annotations != null )
 //								{
 //									if ( annotations.getCurves().size() > 0 )
 //									{
-//										LatticeModel model = new LatticeModel(wormImage);
-//										model.setSeamCellImage( wormData.readSeamSegmentation() );
-//										model.setLattice(latticeVector.elementAt(0));
-//										model.setMarkers(annotations);
 //
-//										model.interpolateLattice( false, false, false, true );	
-//
-//										VOI annotationsStraight = model.getAnnotationsStraight();
-//
-//
-//										String distanceName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-//												baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
-//												"output_images" + File.separator + 
-//												baseFileName + "_" + includeRange.elementAt(i) + "_distanceMap.xml";
-//										File distanceMapFile = new File(baseFileDir + File.separator + distanceName );
-////										System.err.println(distanceName + " " + distanceMapFile.exists() );											
-//										ModelImage distanceMap = null;
-//										if ( distanceMapFile.exists() )
+//										VOI annotationVOI = new VOI( (short)0, fileName, VOI.ANNOTATION, 0 );
+//										Vector<Integer> distance = new Vector<Integer>();
+//										for ( int j = 0; j < annotations.getCurves().size(); j++ )
 //										{
-//											distanceMap = fileIO.readImage(distanceName, baseFileDir + File.separator, false, null);
+//											VOIText text = (VOIText) annotations.getCurves().elementAt(j);
+//											Vector3f pos = text.elementAt(0);
+//											String name = text.getText();
+//
+//											float valid = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 0 );
+////											if ( valid != 1 )
+////											{
+////												System.err.println( name + " invalid position" );
+////											}
+//											float x = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 1 );
+//											float y = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 2 );
+//											float z = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 3 );
+//											Vector3f newPos = new Vector3f(x, y, z);
+//
+//											VOIText newText = new VOIText();
+//											newText.setText(name);
+//											newText.add(newPos);
+//
+//											annotationVOI.getCurves().add(newText);
+//
+//
+//											int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
+//											distance.add(d);
 //										}
-//										Vector<Integer> distance = null;
+//										
+//										String outputFile = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
+//												baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator + 
+//												"tracked_annotations_twisted.csv";
+//										saveMarkerPositions(baseFileDir + File.separator + outputFile, annotationVOI, distance);
+//										
+//										toTwisted.disposeLocal(false);
+//										toTwisted = null;
 //										if ( distanceMap != null )
 //										{
-//											distance = new Vector<Integer>();
-//											for ( int j = 0; j < annotationsStraight.getCurves().size(); j++ )
-//											{
-//												VOIText text = (VOIText) annotationsStraight.getCurves().elementAt(j);
-//												Vector3f pos = text.elementAt(0);
-//												int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
-//												distance.add(d);
-//											}
-//											
 //											distanceMap.disposeLocal(false);
 //											distanceMap = null;
 //										}
-//
-//										String fileBase = baseFileName + "_" + includeRange.elementAt(i) + "_positions_straight.csv";
-//										saveMarkerPositions(baseFileDir + File.separator + "Positions" + File.separator + fileBase, annotationsStraight, distance);
-//										model.dispose();
-//										model = null;
 //									}
 //								}
 //							}
-//						}
-//						else if ( untwistedToTwisted.isSelected() )
-//						{
-							String toTwistedName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
-									"output_images" + File.separator + 
-									baseFileName + "_" + includeRange.elementAt(i) + "_toTwisted.xml";
-							File toTwistedFile = new File(baseFileDir + File.separator + toTwistedName );
-//							System.err.println(toTwistedName + " " + toTwistedFile.exists() );
-							ModelImage toTwisted = null;
-							if ( toTwistedFile.exists() )
-							{
-								toTwisted = fileIO.readImage(toTwistedName, baseFileDir + File.separator, false, null);  
-							}
-							String distanceName = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-									baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + 
-									"output_images" + File.separator + 
-									baseFileName + "_" + includeRange.elementAt(i) + "_distanceMap.xml";
-							File distanceMapFile = new File(baseFileDir + File.separator + distanceName );
-//							System.err.println(distanceName + " " + distanceMapFile.exists() );
-							ModelImage distanceMap = null;
-							if ( distanceMapFile.exists() )
-							{
-								distanceMap = fileIO.readImage(distanceName, baseFileDir + File.separator, false, null);  
-							}
-							if ( toTwisted != null )
-							{
-								String positionsFile = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-										baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator + 
-										"tracked_annotations.csv";
-								File textFile = new File(baseFileDir + File.separator + positionsFile);
-										
-								int[] imageExtents = new int[]{toTwisted.getExtents()[0], toTwisted.getExtents()[1]};
-								VOIVector vois = readMarkerPositions(positionsFile, textFile, imageExtents);
-								VOI annotations = vois.elementAt(0);
-
-								if ( annotations != null )
-								{
-									if ( annotations.getCurves().size() > 0 )
-									{
-
-										VOI annotationVOI = new VOI( (short)0, fileName, VOI.ANNOTATION, 0 );
-										Vector<Integer> distance = new Vector<Integer>();
-										for ( int j = 0; j < annotations.getCurves().size(); j++ )
-										{
-											VOIText text = (VOIText) annotations.getCurves().elementAt(j);
-											Vector3f pos = text.elementAt(0);
-											String name = text.getText();
-
-											float valid = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 0 );
-//											if ( valid != 1 )
-//											{
-//												System.err.println( name + " invalid position" );
-//											}
-											float x = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 1 );
-											float y = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 2 );
-											float z = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 3 );
-											Vector3f newPos = new Vector3f(x, y, z);
-
-											VOIText newText = new VOIText();
-											newText.setText(name);
-											newText.add(newPos);
-
-											annotationVOI.getCurves().add(newText);
-
-
-											int d = (distanceMap == null) ? 0 : distanceMap.getInt( (int)pos.X, (int)pos.Y, (int)pos.Z );
-											distance.add(d);
-										}
-										
-										String outputFile = baseFileName + "_" + includeRange.elementAt(i) + File.separator + 
-												baseFileName + "_" + includeRange.elementAt(i) + "_results" + File.separator + "tracked_annotations" + File.separator + 
-												"tracked_annotations_twisted.csv";
-										saveMarkerPositions(baseFileDir + File.separator + outputFile, annotationVOI, distance);
-										
-										toTwisted.disposeLocal(false);
-										toTwisted = null;
-										if ( distanceMap != null )
-										{
-											distanceMap.disposeLocal(false);
-											distanceMap = null;
-										}
-									}
-								}
-							}
-//						}
-//					}
-				}
-				else
-				{
-					MipavUtil.displayError( "Error in reading image file " + fileName );
-				}
-
-			}
-			System.err.println("Done plugin" );
-		}
+////						}
+////					}
+//				}
+//				else
+//				{
+//					MipavUtil.displayError( "Error in reading image file " + fileName );
+//				}
+//
+//			}
+//			System.err.println("Done plugin" );
+//		}
 	}     
 
 
@@ -443,17 +530,21 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
 		inputsPanel.setForeground(Color.black);
 
-		baseFileLocText = gui.buildFileField("Data directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
-		inputsPanel.add(baseFileLocText.getParent(), gbc);
+		straightenedAnnotationText = gui.buildFileField("Annotations to retwist: ", "", false, JFileChooser.FILES_ONLY, this);
+		inputsPanel.add(straightenedAnnotationText.getParent(), gbc);
 		gbc.gridy++;
 
-		baseFileNameText = gui.buildField("Base images name: ", "Decon");
-		inputsPanel.add(baseFileNameText.getParent(), gbc);
+		targetLocText = gui.buildFileField("Target directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
+		inputsPanel.add(targetLocText.getParent(), gbc);
 		gbc.gridy++;
 
-		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", "             ");
-		inputsPanel.add(rangeFusionText.getParent(), gbc);
-		gbc.gridy++;
+//		baseFileNameText = gui.buildField("Base images name: ", "Decon");
+//		inputsPanel.add(baseFileNameText.getParent(), gbc);
+//		gbc.gridy++;
+//
+//		rangeFusionText = gui.buildField("Range of images to segment (ex. 3-7, 12, 18-21, etc.): ", "             ");
+//		inputsPanel.add(rangeFusionText.getParent(), gbc);
+//		gbc.gridy++;
 
 //		ButtonGroup group = new ButtonGroup();
 //		untwistedToTwisted = gui.buildRadioButton( "untwisted->twisted", true);
@@ -591,35 +682,39 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	 */
 	private boolean setVariables()
 	{	    
-		baseFileDir = baseFileLocText.getText();
-		includeRange = new Vector<Integer>();
-		String rangeFusion = rangeFusionText.getText();
-		if(rangeFusion != null) {  
-			String[] ranges = rangeFusion.split("[,;]");
-			for(int i=0; i<ranges.length; i++) {
-				String[] subset = ranges[i].split("-");
-				int lowerBound = -1, bound = -1;
-				for(int j=0; j<subset.length; j++) {
-					try {
-						bound = Integer.valueOf(subset[j].trim());
-						if(lowerBound == -1) {
-							lowerBound = bound;
-							includeRange.add(lowerBound);
-						} 
-					} catch(NumberFormatException e) {
-						Preferences.debug("Invalid range specified: "+bound, Preferences.DEBUG_ALGORITHM);
-					}
-				}
-
-				for(int k=lowerBound+1; k<=bound; k++) {
-					includeRange.add(k);
-				}
-			}
-		}
-
-		if(includeRange.size() == 0) {
-			includeRange = null;
-		}
+		straightenedAnnotationFile = straightenedAnnotationText.getText();
+		targetDir = targetLocText.getText();
+		
+		
+//		baseFileDir = baseFileLocText.getText();
+//		includeRange = new Vector<Integer>();
+//		String rangeFusion = rangeFusionText.getText();
+//		if(rangeFusion != null) {  
+//			String[] ranges = rangeFusion.split("[,;]");
+//			for(int i=0; i<ranges.length; i++) {
+//				String[] subset = ranges[i].split("-");
+//				int lowerBound = -1, bound = -1;
+//				for(int j=0; j<subset.length; j++) {
+//					try {
+//						bound = Integer.valueOf(subset[j].trim());
+//						if(lowerBound == -1) {
+//							lowerBound = bound;
+//							includeRange.add(lowerBound);
+//						} 
+//					} catch(NumberFormatException e) {
+//						Preferences.debug("Invalid range specified: "+bound, Preferences.DEBUG_ALGORITHM);
+//					}
+//				}
+//
+//				for(int k=lowerBound+1; k<=bound; k++) {
+//					includeRange.add(k);
+//				}
+//			}
+//		}
+//
+//		if(includeRange.size() == 0) {
+//			includeRange = null;
+//		}
 
 		return true;
 	}
