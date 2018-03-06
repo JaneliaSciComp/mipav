@@ -3860,7 +3860,8 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
     private int xFilter = 0;
     private int yFilter = 0;
     private int zFilter = 0;
-    private Ellipsoid3f ellipsoidClip = null;
+    protected Ellipsoid3f ellipsoidClip = null;
+    protected Ellipsoid3f ellipsoidClipLocal = null;
     private Box3f orientedBox = null;
     protected void applyClipFilter(boolean increase) {
 		if (m_kVolumeRayCast == null) {
@@ -3898,6 +3899,11 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 //			ellipsoidClip =  new Ellipsoid3f( new Vector3f( m_fX/2f, m_fY/2f, m_fZ/2f), new Vector3f[]{Vector3f.UNIT_X, Vector3f.UNIT_Y, Vector3f.UNIT_Z}, new float[]{m_fX, m_fY, m_fZ} );
 			ellipsoidClip =  new Ellipsoid3f( new Vector3f( .5f, .5f, .5f ), new Vector3f[]{Vector3f.UNIT_X, Vector3f.UNIT_Y, Vector3f.UNIT_Z}, new float[]{m_fX, m_fY, m_fZ} );
+			Vector3f center = new Vector3f(m_kVolumeRayCast.GetTranslate() ); center.neg();
+//			ellipsoidClip =  new Ellipsoid3f( center, new Vector3f[]{Vector3f.UNIT_X, Vector3f.UNIT_Y, Vector3f.UNIT_Z}, new float[]{m_fX, m_fY, m_fZ} );
+			ellipsoidClipLocal =  new Ellipsoid3f( center, new Vector3f[]{Vector3f.UNIT_X, Vector3f.UNIT_Y, Vector3f.UNIT_Z}, new float[]{m_fX, m_fY, m_fZ} );
+
+//			System.err.println( center );
 			m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
 		}
 		
@@ -3911,6 +3917,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				ellipsoidClip.Extent[1] = (float) (0.05 * m_fY);
 				ellipsoidClip.Extent[2] = (float) (0.05 * m_fZ);
 			}
+			ellipsoidClipLocal.Extent = ellipsoidClip.Extent;
 //			System.err.println(ellipsoidClip.Extent[0] + "  " + ellipsoidClip.Extent[1] + "  " + ellipsoidClip.Extent[2] );
 			m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
 		}
@@ -3928,6 +3935,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				ellipsoidClip.Extent[1] = m_fY;
 				ellipsoidClip.Extent[2] = m_fZ;
 			}
+			ellipsoidClipLocal.Extent = ellipsoidClip.Extent;
 			m_kVolumeRayCast.SetClipEllipsoid( ellipsoidClip, true );
 		}
 		

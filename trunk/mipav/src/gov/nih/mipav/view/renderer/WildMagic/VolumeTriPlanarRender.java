@@ -1383,6 +1383,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					Vector3f maxPt = new Vector3f();
 					if ( m_kSlices.GetDisplay() )
 					{
+						// pick on the slices
 						m_kPicker.Execute(m_kSlices.GetScene(),kPos,kDir,0.0f,
 								Float.MAX_VALUE);
 						if (m_kPicker.Records.size() > 0)
@@ -1450,6 +1451,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 						}
 					}
 						
+					// pick in the volume.
 					m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
 							Float.MAX_VALUE);
 
@@ -1488,11 +1490,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 							Vector3f p0 = new Vector3f(firstIntersectionPoint);
 							Vector3f p1 = new Vector3f(secondIntersectionPoint);
 							Vector3f step = Vector3f.sub(p1, p0);
+							Vector3f test = new Vector3f();
 							float numSteps = step.length() + 1;
 							step.normalize();
 							for ( int i = 0; i < numSteps; i++ )
 							{
+								// step along the ray and pick the voxel with the highest value:
 								p0.add(step);
+								// test for clipping:
+								if ( ellipsoidClip != null ) {
+									test.copy( p0 );
+									m_kVolumeRayCast.volumeToLocalCoords( test );
+									
+//									Vector3f scale = new Vector3f(m_kVolumeImageA.GetScaleX()/(m_kVolumeImageA.GetImage().getExtents()[0] - 1), 
+//											m_kVolumeImageA.GetScaleY()/(m_kVolumeImageA.GetImage().getExtents()[1] - 1), 
+//											m_kVolumeImageA.GetScaleZ()/(m_kVolumeImageA.GetImage().getExtents()[2] - 1)  );
+//									test = Vector3f.mult( p0, scale);
+									if ( !ellipsoidClipLocal.Contains(test) ) {
+										continue;
+									}
+//									System.err.println( i + " " + test );
+								}
 								float value;
 								if ( m_kVolumeImageA.GetImage().isColorImage() )
 								{
@@ -1539,10 +1557,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 								boolean picked = false;
 								if ( is3DSelectionEnabled() )
 								{
+									// check for selecting an existing marker:
 									picked = modify3DMarker( firstIntersectionPoint, secondIntersectionPoint, maxPt, rightMousePressed );
 								}
 								if ( !picked )
 								{
+									// add a new picked point:
 									short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
 									int colorID = 0;
 									VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
