@@ -104,12 +104,8 @@ public class PlugInAlgorithmXMLtoCSVFile extends AlgorithmBase {
         	        	firstNumFound = true;
         	        	beginIndex = j;
         	        }
-        	        else if (firstNumFound && !Character.isDigit(ch)) {
-        	        	endIndex = j;
-        	        	break;
-        	        }
         	    } // for (j = 0; j < name.length(); j++)
-        	    id = name.substring(beginIndex, endIndex);
+        	    id = name.substring(beginIndex);
         	    try {
                     raInputFile = new RandomAccessFile(files[i], "r");
                 } catch (final FileNotFoundException e) {
