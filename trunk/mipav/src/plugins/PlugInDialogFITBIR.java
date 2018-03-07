@@ -42,6 +42,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.*;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
@@ -2158,19 +2159,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             } else if (fileFormatString[i].equalsIgnoreCase("mat")) {
                 fileFormatString[i] = "matlab";
             }
-
-            // if no modality, try to guess from structure being used
-            if (modality[i] == FileInfoBase.UNKNOWN_MODALITY) {
-                upperStructureName[i] = dataStructureName.toUpperCase();
-                if (upperStructureName[i].endsWith("IMAGINGMR")) {
-                    modality[i] = FileInfoBase.MAGNETIC_RESONANCE;
-                } else if (upperStructureName[i].endsWith("IMAGINGCT")) {
-                    modality[i] = FileInfoBase.COMPUTED_TOMOGRAPHY;
-                } else if (upperStructureName[i].endsWith("IMAGINGDIFFUSION")) {
-                    modality[i] = FileInfoBase.MAGNETIC_RESONANCE;
-                }
-                modalityString[i] = FileInfoBase.getModalityStr(modality[i]);
-            }
+            
+            modality[i] = determineModality(modality[i], dataStructureName);
+            modalityString[i] = FileInfoBase.getModalityStr(modality[i]);
 
             sliceThickness[i] = img[i].getFileInfo(0).getSliceThickness();
             orient[i] = img[i].getFileInfo(0).getImageOrientation();
@@ -3769,7 +3760,21 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     // the image is just one file, so don't zip. copy to output dir
                     try {
                         final File srcFile = new File(imgFileInfo.getOrigFiles().get(0));
-                        final File destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
+                        File destFile;
+                        
+                        // make sure the single file we're copying over has an extension.  
+                        // a bug in the validation tool requires that 'Triplanar' type data elements have an extension
+                        if (FilenameUtils.getExtension(srcFile.getName()).equals("")) {
+                            String ext = FileTypeTable.getFileTypeInfo(imgFileInfo.getFileFormat()).getDefaultExtension();
+                            if (ext == null || ext.equals("")) {
+                                ext = ".ima";
+                            }
+                            
+                            destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName() + ext);
+                        } else {
+                            destFile = new File(outputSubDir + outputFileNameBase + "_" + srcFile.getName());
+                        }
+                        
                         printlnToLog("Copying original image file into output directory:\t" + destFile.getAbsolutePath());
                         FileUtils.copyFile(srcFile, destFile);
                         imagePath = destFile.getAbsolutePath();
@@ -5022,6 +5027,35 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         }
 
         return "";
+    }
+    
+    private static final int determineModality(int curModality, String structName) {
+        int newModality = curModality;
+        
+        final String upperStructureName = structName.toUpperCase();
+        
+        // if no modality, try to guess from structure being used
+        if (curModality == FileInfoBase.UNKNOWN_MODALITY) {
+            
+            if (upperStructureName.endsWith("IMAGINGMR")) {
+                newModality = FileInfoBase.MAGNETIC_RESONANCE;
+            } else if (upperStructureName.endsWith("IMAGINGCT")) {
+                newModality = FileInfoBase.COMPUTED_TOMOGRAPHY;
+            } else if (upperStructureName.endsWith("IMAGINGDIFFUSION")) {
+                newModality = FileInfoBase.MAGNETIC_RESONANCE;
+            } else if (upperStructureName.endsWith("IMAGINGFUNCTIONALMR")) {
+                newModality = FileInfoBase.MAGNETIC_RESONANCE;
+            } else if (upperStructureName.endsWith("IMAGINGPET")) {
+                newModality = FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY;
+            } else if (upperStructureName.endsWith("IMAGINGSPECT")) {
+                newModality = FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY;
+            }
+        } else if (curModality == FileInfoBase.NUCLEAR_MEDICINE && upperStructureName.endsWith("IMAGINGSPECT")) {
+            // some PDBP/LBP SPECT data reports as the dicom modality "nuclear medicine"
+            newModality = FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY;
+        }
+        
+        return newModality;
     }
 
     /**
@@ -6684,13 +6718,13 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     previewImages.set(selectedRow, previewImg);
                     previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
                     structRowImgFileInfoList.set(selectedRow, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile,
-                            FileUtility.getFileNameList(srcImage), createThumbnailDataForWriting(thumbnailImage)));
+                            FileUtility.getFileNameList(srcImage), srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage)));
                 } else {
                     final int size = previewImages.size();
                     previewImages.set(size - 1, previewImg);
                     previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
                     structRowImgFileInfoList.set(size - 1, new ImgFileInfo(origSrcFile.getAbsolutePath(), isMultifile, FileUtility.getFileNameList(srcImage),
-                            createThumbnailDataForWriting(thumbnailImage)));
+                            srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage)));
                 }
 
                 // cleanup thumbnail modelimage
@@ -7204,19 +7238,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
             final int fileFormatInt = img.getFileInfo(0).getFileFormat();
             final String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
-
-            // if no modality, try to guess from structure being used
-            if (modality == FileInfoBase.UNKNOWN_MODALITY) {
-                final String upperStructureName = dataStructureName.toUpperCase();
-                if (upperStructureName.endsWith("IMAGINGMR")) {
-                    modality = FileInfoBase.MAGNETIC_RESONANCE;
-                } else if (upperStructureName.endsWith("IMAGINGCT")) {
-                    modality = FileInfoBase.COMPUTED_TOMOGRAPHY;
-                } else if (upperStructureName.endsWith("IMAGINGDIFFUSION")) {
-                    modality = FileInfoBase.MAGNETIC_RESONANCE;
-                }
-                modalityString = FileInfoBase.getModalityStr(modality);
-            }
+            
+            modality = determineModality(modality, dataStructureName);
+            modalityString = FileInfoBase.getModalityStr(modality);
 
             final ArrayList<String> csvFList = new ArrayList<String>();
             final ArrayList<String> csvPList = new ArrayList<String>();
@@ -7822,19 +7846,9 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
             } else if (fileFormatString.equalsIgnoreCase("mat")) {
                 fileFormatString = "matlab";
             }
-
-            // if no modality, try to guess from structure being used
-            if (modality == FileInfoBase.UNKNOWN_MODALITY) {
-                final String upperStructureName = dataStructureName.toUpperCase();
-                if (upperStructureName.endsWith("IMAGINGMR")) {
-                    modality = FileInfoBase.MAGNETIC_RESONANCE;
-                } else if (upperStructureName.endsWith("IMAGINGCT")) {
-                    modality = FileInfoBase.COMPUTED_TOMOGRAPHY;
-                } else if (upperStructureName.endsWith("IMAGINGDIFFUSION")) {
-                    modality = FileInfoBase.MAGNETIC_RESONANCE;
-                }
-                modalityString = FileInfoBase.getModalityStr(modality);
-            }
+            
+            modality = determineModality(modality, dataStructureName);
+            modalityString = FileInfoBase.getModalityStr(modality);
 
             final float sliceThickness = img.getFileInfo(0).getSliceThickness();
             final int orient = img.getFileInfo(0).getImageOrientation();
@@ -8246,17 +8260,16 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                     final JFileChooser chooser = fileChooser.getFileChooser();
                     chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
 
-                    // default to TECH filter
-                    int filter = ViewImageFileFilter.TECH;
-
-                    try {
-                        filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
-                    } catch (final NumberFormatException nfe) {
-
-                        // an invalid value was set in preferences -- so don't
-                        // use it!
-                        filter = -1;
-                    }
+                    int filter = ViewImageFileFilter.ALL;
+                    
+//                    try {
+//                        filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
+//                    } catch (final NumberFormatException nfe) {
+//
+//                        // an invalid value was set in preferences -- so don't
+//                        // use it!
+//                        filter = -1;
+//                    }
 
                     chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
                     chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
@@ -8326,7 +8339,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 previewImages.get(selectedRow).setSliceBrightness(previewImgBrightness, previewImgContrast);
 
                                 ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
-                                        createThumbnailDataForWriting(thumbnailImage));
+                                        srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage));
 
                                 structRowImgFileInfoList.set(selectedRow, imgInfo);
                             } else {
@@ -8335,7 +8348,7 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                 previewImages.get(size - 1).setSliceBrightness(previewImgBrightness, previewImgContrast);
 
                                 ImgFileInfo imgInfo = new ImgFileInfo(file.getAbsolutePath(), isMultiFile, FileUtility.getFileNameList(srcImage),
-                                        createThumbnailDataForWriting(thumbnailImage));
+                                        srcImage.getFileInfo(0).getFileFormat(), createThumbnailDataForWriting(thumbnailImage));
 
                                 structRowImgFileInfoList.set(size - 1, imgInfo);
                             }
@@ -9405,19 +9418,22 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
         public boolean isMultifile;
 
         public String imgFilePath;
+        
+        public int fileFormat;
 
-        public ImgFileInfo(final String imgFilePath, final boolean isMultifile) {
+/*        public ImgFileInfo(final String imgFilePath, final boolean isMultifile) {
             super();
             this.isMultifile = isMultifile;
             this.imgFilePath = imgFilePath;
-        }
+        }*/
 
-        public ImgFileInfo(final String imgFilePath, final boolean isMultifile, final List<String> origFiles, final MemoryImageSource thumbnailImgData) {
+        public ImgFileInfo(final String imgFilePath, final boolean isMultifile, final List<String> origFiles, final int format, final MemoryImageSource thumbnailImgData) {
             super();
             this.origFiles = origFiles;
             this.thumbnailImgData = thumbnailImgData;
             this.isMultifile = isMultifile;
             this.imgFilePath = imgFilePath;
+            this.fileFormat = format;
         }
 
         public List<String> getOrigFiles() {
@@ -9450,6 +9466,18 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
 
         public void setImgFilePath(final String imgFilePath) {
             this.imgFilePath = imgFilePath;
+        }
+        
+        public int getFileFormat() {
+            return fileFormat;
+        }
+        
+        public void setFileFormat(final int format) {
+            fileFormat = format;
+        }
+        
+        public String getFileFormatString() {
+            return FileUtility.getFileTypeStr(fileFormat);
         }
     }
 }
