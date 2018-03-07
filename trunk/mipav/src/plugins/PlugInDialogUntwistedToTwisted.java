@@ -253,6 +253,9 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 			toTwisted = fileIO.readImage(toTwistedName);  
 			if ( toTwisted != null )
 			{
+				int dimX = toTwisted.getExtents().length > 0 ? toTwisted.getExtents()[0] : 1;
+				int dimY = toTwisted.getExtents().length > 1 ? toTwisted.getExtents()[1] : 1;
+				int dimZ = toTwisted.getExtents().length > 2 ? toTwisted.getExtents()[2] : 1;
 //				System.err.println("displaying image...");
 //				new ViewJFrameImage(toTwisted);
 				VOI annotations = LatticeModel.readAnnotationsCSV(straightenedAnnotationFile);
@@ -268,23 +271,25 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 							Vector3f pos = text.elementAt(0);
 							String name = text.getText();
 
-							float valid = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 0 );
-							//						if ( valid != 1 )
-							//						{
-							//							System.err.println( name + " invalid position" );
-							//						}
-							float x = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 1 );
-							float y = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 2 );
-							float z = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 3 );
-							Vector3f newPos = new Vector3f(x, y, z);
-
-							if ( !newPos.equals( Vector3f.ZERO ) )
+							if ( ((int)pos.X < dimX) && ((int)pos.Y < dimY)  && ((int)pos.Z < dimZ) )
 							{
-								VOIText newText = new VOIText();
-								newText.setText(name);
-								newText.add(newPos);
+								float x = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 1 );
+								float y = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 2 );
+								float z = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 3 );
+								Vector3f newPos = new Vector3f(x, y, z);
 
-								annotationVOI.getCurves().add(newText);
+								if ( !newPos.equals( Vector3f.ZERO ) )
+								{
+									VOIText newText = new VOIText();
+									newText.setText(name);
+									newText.add(newPos);
+
+									annotationVOI.getCurves().add(newText);
+								}
+								else
+								{
+									failedList.add(name);
+								}
 							}
 							else
 							{
