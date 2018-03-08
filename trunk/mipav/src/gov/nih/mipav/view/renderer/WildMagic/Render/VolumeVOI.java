@@ -176,7 +176,7 @@ public class VolumeVOI extends VolumeObject
 	 */
 	public void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid )
 	{
-		if ( !m_bDisplay || !bSolid )
+		if ( !m_bDisplay || !bSolid || m_bClipped)
 		{
 			return;
 		}
@@ -326,6 +326,51 @@ public class VolumeVOI extends VolumeObject
 //		}
 //	}
 
+	private Vector3f m_kClip = null;
+	private Vector3f m_kClipInv = null;
+	private boolean m_bClipped = false;
+    /** Sets axis-aligned clipping for the VolumeShaderEffect.
+     * @param afClip the clipping parameters for axis-aligned clipping.
+     */
+    public void SetClip( int iWhich, float data, boolean bEnable)
+    {    	
+    	if ( m_kVOI.getType() == VOI.ANNOTATION )
+    	{
+    		if ( m_kClip == null )
+    		{
+    			m_kClip = new Vector3f();
+    			m_kClipInv = new Vector3f( m_kVolumeImageA.GetImage().getExtents()[0], m_kVolumeImageA.GetImage().getExtents()[1], m_kVolumeImageA.GetImage().getExtents()[2] );
+    		}
+			switch ( iWhich ) {
+			case 0:
+				m_kClip.X = data * (m_kVolumeImageA.GetImage().getExtents()[0] - 1);
+				break;
+			case 1:
+				m_kClipInv.X = data * (m_kVolumeImageA.GetImage().getExtents()[0] - 1);
+				break;
+			case 2:
+				m_kClip.Y = data * (m_kVolumeImageA.GetImage().getExtents()[1] - 1);
+				break;
+			case 3:
+				m_kClipInv.Y = data * (m_kVolumeImageA.GetImage().getExtents()[1] - 1);
+				break;
+			case 4:
+				m_kClip.Z = data * (m_kVolumeImageA.GetImage().getExtents()[2] - 1);
+				break;
+			case 5:
+				m_kClipInv.Z = data * (m_kVolumeImageA.GetImage().getExtents()[2] - 1);
+				break;
+			}
+    		Vector3f test = m_kVOI.elementAt(0);
+			m_bClipped = ( (test.X < m_kClip.X) || (test.X > m_kClipInv.X) || (test.Y < m_kClip.Y) || (test.Y > m_kClipInv.Y) || (test.Z < m_kClip.Z) || (test.Z > m_kClipInv.Z) );
+//    		test = m_kVOI.elementAt(1);
+//			m_bClipped |= ( (test.X < m_kClip.X) || (test.X > m_kClipInv.X) || (test.Y < m_kClip.Y) || (test.Y > m_kClipInv.Y) || (test.Z < m_kClip.Z) || (test.Z > m_kClipInv.Z) );
+			System.err.println( test );
+			System.err.println( m_kClip );
+			System.err.println( m_kClipInv );
+    	}
+    }
+    
 	/**
 	 * Sets the slice information for the shader.
 	 * @param bUseSlice

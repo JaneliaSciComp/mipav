@@ -1498,6 +1498,20 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 								// step along the ray and pick the voxel with the highest value:
 								p0.add(step);
 								// test for clipping:
+								if ( m_kVolumeRayCast.GetShaderEffect().isClip() )
+								{
+									test.copy( p0 );
+									Vector3f clip = m_kVolumeRayCast.GetShaderEffect().getClip();  
+									clip.scale((m_kVolumeImageA.GetImage().getExtents()[0] - 1), (m_kVolumeImageA.GetImage().getExtents()[1] - 1), (m_kVolumeImageA.GetImage().getExtents()[2] - 1) );
+									Vector3f clipInv = m_kVolumeRayCast.GetShaderEffect().getClipInv();
+									clipInv.scale((m_kVolumeImageA.GetImage().getExtents()[0] - 1), (m_kVolumeImageA.GetImage().getExtents()[1] - 1), (m_kVolumeImageA.GetImage().getExtents()[2] - 1) );
+									
+									if ( (test.X < clip.X) || (test.X > clipInv.X) || (test.Y < clip.Y) || (test.Y > clipInv.Y) || (test.Z < clip.Z) || (test.Z > clipInv.Z) )
+									{
+										continue;
+									}
+									
+								}
 								if ( ellipsoidClip != null ) {
 									test.copy( p0 );
 									m_kVolumeRayCast.volumeToLocalCoords( test );

@@ -49,6 +49,7 @@ import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormData;
 import gov.nih.mipav.view.renderer.WildMagic.WormUntwisting.WormSegmentation;
@@ -169,6 +170,8 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 	private JButton nextButton;
 	
 	private JPanel opacityPanel;
+	private JPanel clipPanel;
+	private JPanelClip_WM clipGUI;
 	
 	private PlugInDialogVolumeRender parent;
 	private VOI finalLattice;
@@ -606,6 +609,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		kTransfer.addPoint((min + ((max - min) * 2.0f / 3.0f)), 255 * 0.333f);
 		kTransfer.addPoint(max, 0);
 		volumeRenderer.getVolumeImage().UpdateImages(kTransfer, 0, null);
+		updateClipPanel();
 
 //		System.err.println( "algorithmPerformed" );
 		voiManager = new VOILatticeManagerInterface( null, volumeImage.GetImage(), null, 0, true, null );
@@ -1091,6 +1095,7 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 				{
 					volumeRenderer.setVisible(true);
 				}
+				updateClipPanel();
 				if ( !tabbedPane.isVisible() || !volumePanel.isVisible() )
 				{
 					tabbedPane.setVisible(true);
@@ -1687,9 +1692,11 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 
 		lutPanel = new JPanel();
 		opacityPanel = new JPanel();
+		clipPanel = new JPanel();
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("LUT", null, lutPanel);
 		tabbedPane.addTab("Opacity", null, opacityPanel);
+		tabbedPane.addTab("Clip", null, clipPanel);
 		tabbedPane.setVisible(false);
 		
 		JPanel leftPanel = new JPanel(new BorderLayout());
@@ -2233,5 +2240,20 @@ public class PlugInDialogVolumeRender extends JFrame implements ActionListener, 
 		volumeImage.GetImage().addImageDisplayListener(this);
 	}
 
+	private void updateClipPanel()
+	{
+		if ( clipGUI == null ) 
+		{
+			clipGUI = new JPanelClip_WM(volumeRenderer);
+		}
+		else
+		{
+			clipGUI.setRenderer(volumeRenderer);
+			clipPanel.removeAll();
+		}
+		clipPanel.add(clipGUI.getMainPanel() );
+        clipGUI.resizePanel(clipPanel.getWidth(), 400);
+		clipPanel.revalidate();
+	}
 
 }

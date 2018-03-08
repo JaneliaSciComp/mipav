@@ -4,6 +4,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -94,6 +95,26 @@ public class JPanelClip_WM extends JInterfaceBase
         clipValue[CLIP_Z_INV] = kVolumeViewer.getImageA().getExtents()[2];
         clipValue[CLIP_Z] = 0;
         clipValue[CLIP_EYE_INV] = kVolumeViewer.getImageA().getExtents()[2];
+        clipValue[CLIP_EYE] = 0;
+        clipValue[CLIP_A] = clipValue[CLIP_X_INV];//(int)(Math.max( clipValue[CLIP_X_INV], Math.max( clipValue[CLIP_Y_INV], clipValue[CLIP_Z_INV]) ) );
+
+        // Build dialog.
+        init();
+    }
+
+    /**
+     * 3D clipping dialog control.
+     * @param kVolumeViewer parent frame.
+     */
+    public JPanelClip_WM( VolumeTriPlanarRender rayBasedRenderWM ) {
+    	this.rayBasedRenderWM = rayBasedRenderWM; 
+        clipValue[CLIP_X_INV] = rayBasedRenderWM.getImage().getExtents()[0];
+        clipValue[CLIP_X] = 0;
+        clipValue[CLIP_Y_INV] = rayBasedRenderWM.getImage().getExtents()[1];
+        clipValue[CLIP_Y] = 0;
+        clipValue[CLIP_Z_INV] = rayBasedRenderWM.getImage().getExtents()[2];
+        clipValue[CLIP_Z] = 0;
+        clipValue[CLIP_EYE_INV] = rayBasedRenderWM.getImage().getExtents()[2];
         clipValue[CLIP_EYE] = 0;
         clipValue[CLIP_A] = clipValue[CLIP_X_INV];//(int)(Math.max( clipValue[CLIP_X_INV], Math.max( clipValue[CLIP_Y_INV], clipValue[CLIP_Z_INV]) ) );
 
@@ -691,6 +712,21 @@ public class JPanelClip_WM extends JInterfaceBase
         }
     }
 
+    public void setRenderer( VolumeTriPlanarRender rayBasedRenderWM ) {
+    	this.rayBasedRenderWM = rayBasedRenderWM; 
+        clipValue[CLIP_X_INV] = rayBasedRenderWM.getImage().getExtents()[0];
+        clipValue[CLIP_X] = 0;
+        clipValue[CLIP_Y_INV] = rayBasedRenderWM.getImage().getExtents()[1];
+        clipValue[CLIP_Y] = 0;
+        clipValue[CLIP_Z_INV] = rayBasedRenderWM.getImage().getExtents()[2];
+        clipValue[CLIP_Z] = 0;
+        clipValue[CLIP_EYE_INV] = rayBasedRenderWM.getImage().getExtents()[2];
+        clipValue[CLIP_EYE] = 0;
+        clipValue[CLIP_A] = clipValue[CLIP_X_INV];//(int)(Math.max( clipValue[CLIP_X_INV], Math.max( clipValue[CLIP_Y_INV], clipValue[CLIP_Z_INV]) ) );
+
+        // Build dialog.
+        init();
+    }
 
     /**
      * Sets the x slider and the labels beside and beneath it to the state given by <code>flag</code>.
