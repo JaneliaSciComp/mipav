@@ -2100,6 +2100,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				((VolumeSurface) m_kDisplayList.get(i)).SetClip(iWhich, fValue,
 						bEnable);
 			}
+			if (m_kDisplayList.get(i) instanceof VolumeVOI) {
+				((VolumeVOI) m_kDisplayList.get(i)).SetClip(iWhich, fValue,
+						bEnable);
+			}
 		}
 	}
 
