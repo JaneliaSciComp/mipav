@@ -614,20 +614,62 @@ public abstract class CVODES {
 		 * tolerance. Output is printed in decades from t = .4 to t = 4.e10.
 		 * Run statistics (optional outputs) are printed at the end.
 		 * -----------------------------------------------------------------*/
+		//Example manual and MIPAV agree for t = 0.4, 4.0, 400.0, t = 4.0E3, t = 4.0E4, t = 4.0E5,
+	    // t = 4.0E6, t = 4.0E7, and t = 4.0E8
+	    // MIPAV stops agreeing with example manual at 4.0E9
+		// At t = 4.0E10 the example manual gives:
+		// y[0] = 6.5181E-8 y[1] = 2.6072E-13 y[2] = 1.0000
+		// but the supplied check_ans routine gives:
+		// ref.data[0] = 5.2083495894337328e-08;
+		// ref.data[1] = 2.0833399429795671e-13;
+		// ref.data[2] = 9.9999994791629776e-01;
+		/*Example manual: at t = 0.4 y[0] = 0.98517 y[1] = 3.3864E-5 y[2] = 1.4794E-2
+		MIPAV: at t = 0.4 y[0] = 0.9851721138611713 y[1] = 3.3863953789795866E-5 y[2] = 0.014794022184947894
+		Example manual: at t = 4.0 y[0] = 0.90552 y[1] = 2.2405E-5 y[2] = 9.4459E-2
+		MIPAV: at t = 4.0 y[0] = 0.9055186785921142 y[1] = 2.2404756875816905E-5 y[2] = 0.09445891665808899
+		Example manual: at t = 40.0 y[0] = 0.71583 y[1] = 9.1856E-6 y[2] = 0.28416
+		MIPAV: at t = 40.0 y[0] = 0.715827068745404 y[1] = 9.185534765344522E-6 y[2] = 0.28416374572813036
+		Example manual: at t = 400.0 y[0] = 0.45052 y[1] = 3.2229E-6 y[2] = 0.54947
+		MIPAV: at t = 400.0 y[0] = 0.4505186684223784 y[1] = 3.222901440811379E-6 y[2] = 0.5494781087190751
+		Example manual: at t = 4.0E3 y[0] = 0.18317 y[1] = 8.9403E-7 y[2] = 0.81683
+		MIPAV: at t = 4000.0 y[0] = 0.18320225775817142 y[1] = 8.942371253468589E-7 y[2] = 0.8167968478397172
+		Example manual: at t = 4.0E4 y[0] = 3.8977E-2 y[1] = 1.6215E-7 y[2] = 0.96102
+		MIPAV: at t = 40000.0 y[0] = 0.038983377128004884 y[1] = 1.6217683145641717E-7 y[2] = 0.9610164625843524
+		Example manual: at t = 4.0E5 y[0] = 4.9387E-3 y[1] = 1.9852E-8 y[2] = 0.99506
+		MIPAV: at t = 400000.0 y[0] = 0.004938274376153642 y[1] = 1.98499403707653E-8 y[2] = 0.9950617019719638
+		Example manual: at t = 4.0E6 y[0] = 5.1684E-4 y[1] = 2.0684E-9 y[2] = 0.99948
+		MIPAV: at t = 4000000.0 y[0] = 5.168097052506471E-4 y[1] = 2.0682949105260644E-9 y[2] = 0.9994831816270917
+		Example manual: at t = 4.0E7 y[0] = 5.2039E-5 y[1] = 2.0817E-10 y[2] = 0.99995
+		MIPAV: at t = 2.0795462081963886E7 y[0] = 1.0E-4 y[1] = 4.0004167668416476E-10 y[2] = 0.9998946217354228
+		Roots found are -1 and 0
+		Example manual: at t = 4.0E7 y[0] = 5.2039E-5 y[1] = 2.0817E-10 y[2] = 0.99995
+		MIPAV: at t = 4.0E7 y[0] = 5.203026008088301E-5 y[1] = 2.0813195051402364E-10 y[2] = 0.9999469745454322
+		Example manual at t = 4.0E8 y[0] = 5.2106E-6 y[1] = 2.0842E-11 y[2] = 0.99999
+		MIPAV: at t = 4.0E8 y[0] = 5.231316609955509E-6 y[1] = 2.092540715323315E-11 y[2] = 0.9999929133739337
+		Example manual at t = 4.0E9 y[0] = 5.1881E-7 y[1] = 2.0752E-12 y[2] = 1.0000
+		MIPAV: at t = 4.0E9 y[0] = 7.480696384365109E-7 y[1] = 2.9922793356220927E-12 y[2] = 0.9999980891645214
+		Example manual at t = 4.0E10 y[0] = 6.5181E-8 y[1] = 2.6072E-13 y[2] = 1.0000
+        MIPAV: at t = 4.0E10 y[0] = 6.181145073087833E-7 y[1] = 2.472445298118015E-12 y[2] = 1.0000048993342436*/
+		
 		
 		/** Problem Constants */
 		final int NEQ = 3; // Number of equations
 		final double Y1 = 1.0; // Initial y components
 		final double Y2 = 0.0;
 		final double Y3 = 0.0;
-		final double RTOL = 1.0E-4; // scalar relative tolerance
-		final double ATOL1 = 1.0E-8; // vector absolute tolerance components
-		final double ATOL2 = 1.0E-14;
-		final double ATOL3 = 1.0E-6;
+		//final double RTOL = 1.0E-4; // scalar relative tolerance
+		final double RTOL = 1.0E-12;
+		//final double ATOL1 = 1.0E-8; // vector absolute tolerance components
+		final double ATOL1 = 1.0E-12;
+		//final double ATOL2 = 1.0E-14;
+		final double ATOL2 = 1.0E-15;
+		//final double ATOL3 = 1.0E-6;
+		final double ATOL3 = 1.0E-12;
 		final double T0 = 0.0; // initial time
 		final double T1 = 0.4; // first output time
 		final double TMULT = 10.0; // output time factor
-		final int NOUT = 12; // number of output times
+		//final int NOUT = 12; // number of output times
+		final int NOUT = 12;
 		int f = cvsRoberts_dns;
 		int g = cvsRoberts_dns;
 		int Jac = cvsRoberts_dns;
@@ -730,7 +772,45 @@ public abstract class CVODES {
 		
 		while (true) {
 			flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
-			System.out.println("At t = " + t[0] + " y[0] = " + y.data[0] + " y[1] = " + y.data[1] + " y[2] = " + y.data[2]);
+			switch (iout) {
+			case 0:
+				System.out.println("Example manual: at t = 0.4 y[0] = 0.98517 y[1] = 3.3864E-5 y[2] = 1.4794E-2");
+				break;
+			case 1:
+				System.out.println("Example manual: at t = 4.0 y[0] = 0.90552 y[1] = 2.2405E-5 y[2] = 9.4459E-2");
+				break;
+			case 2:
+				System.out.println("Example manual: at t = 40.0 y[0] = 0.71583 y[1] = 9.1856E-6 y[2] = 0.28416");
+				break;
+			case 3:
+				System.out.println("Example manual: at t = 400.0 y[0] = 0.45052 y[1] = 3.2229E-6 y[2] = 0.54947");
+				break;
+			case 4:
+				System.out.println("Example manual: at t = 4.0E3 y[0] = 0.18317 y[1] = 8.9403E-7 y[2] = 0.81683");
+				break;
+			case 5:
+				System.out.println("Example manual: at t = 4.0E4 y[0] = 3.8977E-2 y[1] = 1.6215E-7 y[2] = 0.96102");
+				break;
+			case 6:
+				System.out.println("Example manual: at t = 4.0E5 y[0] = 4.9387E-3 y[1] = 1.9852E-8 y[2] = 0.99506");
+				break;
+			case 7:
+				System.out.println("Example manual: at t = 4.0E6 y[0] = 5.1684E-4 y[1] = 2.0684E-9 y[2] = 0.99948");
+				break;
+			case 8:
+				System.out.println("Example manual: at t = 4.0E7 y[0] = 5.2039E-5 y[1] = 2.0817E-10 y[2] = 0.99995");
+				break;
+			case 9:
+				System.out.println("Example manual at t = 4.0E8 y[0] = 5.2106E-6 y[1] = 2.0842E-11 y[2] = 0.99999");
+				break;
+			case 10:
+				System.out.println("Example manual at t = 4.0E9 y[0] = 5.1881E-7 y[1] = 2.0752E-12 y[2] = 1.0000");
+				break;
+			case 11:
+				System.out.println("Example manual at t = 4.0E10 y[0] = 6.5181E-8 y[1] = 2.6072E-13 y[2] = 1.0000");
+				break;
+			}
+			System.out.println("MIPAV: at t = " + t[0] + " y[0] = " + y.data[0] + " y[1] = " + y.data[1] + " y[2] = " + y.data[2]);
 			
 			if (flag == CV_ROOT_RETURN) {
 			    flagr = CVodeGetRootInfo(cvode_mem, rootsfound)	;
@@ -794,7 +874,7 @@ public abstract class CVODES {
 	}
 	
 	/* compare the solution at the final time 4e10s to a reference solution computed
-	   using a relative tolerance of 1e-8 and absoltue tolerance of 1e-14 */
+	   using a relative tolerance of 1e-8 and absolute tolerance of 1e-14 */
 	private int check_ans(NVector y, double rtol, NVector atol)
 	{
 	  int      passfail=0;        /* answer pass (0) or fail (1) flag */  
