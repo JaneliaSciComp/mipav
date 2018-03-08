@@ -3866,6 +3866,10 @@ public class PlugInDialogFITBIR extends JFrame implements ActionListener, Change
                                         e.printStackTrace();
                                     }
                                 }
+                            } else if (deVal.getDataElementInfo().getType() == DataType.DATE && !deVal.getValue().equals("")) {
+                                // try to convert any date values entered to match ISO standard
+                                final String dateValue = deVal.getValue();
+                                deVal.setValue(convertDateToISOFormat(dateValue));
                             }
                         }
                     }
