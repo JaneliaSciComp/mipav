@@ -1,15 +1,12 @@
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
-import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -20,12 +17,20 @@ import javax.swing.*;
 
 
 public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
+    private static final long serialVersionUID = -8203006546174953787L;
+    
     private JRadioButton dirMethodRadio;
     private JRadioButton fileMethodRadio;
     
     private JTextField dirFileField;
     
     private String dirFileString;
+    
+    private String adcPath = null;
+    private String dwiPath = null;
+    
+    private boolean foundADC = false;
+    private boolean foundDWI = false;
     
     private String outputDir;
     
@@ -169,48 +174,12 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     }
     
     protected boolean setVariables() {
-        String adcPath = null;
-        String dwiPath = null;
-        
         boolean doDirMethod = dirMethodRadio.isSelected();
         
         if (doDirMethod) {
             dirFileString = dirFileField.getText();
-            final File dirFile = new File(dirFileString);
             
-            File[] dirContents = dirFile.listFiles();
-            
-            for (File file : dirContents) {
-                String nameNoExt = FileUtility.stripExtension(file.getName());
-                if (nameNoExt.equalsIgnoreCase(adcFileStub)) {
-                    if (file.isDirectory()) {
-                        File[] subContents = file.listFiles();
-                        if (subContents.length > 0) {
-                            adcPath = subContents[0].getAbsolutePath();
-                            adcImageMultifile = true;
-                        } else {
-                            MipavUtil.displayError("No files found in ADC directory: " + file.getAbsolutePath());
-                            return false;
-                        }
-                    } else if (file.getName().endsWith(".img")) {
-                        adcPath = file.getAbsolutePath();
-                    }
-                } else if (nameNoExt.equalsIgnoreCase(dwiFileStub)) {
-                    if (file.isDirectory()) {
-                        File[] subContents = file.listFiles();
-                        if (subContents.length > 0) {
-                            dwiPath = subContents[0].getAbsolutePath();
-                            dwiImageMultifile = true;
-                        } else {
-                            MipavUtil.displayError("No files found in DWI directory: " + file.getAbsolutePath());
-                            return false;
-                        }
-                    } else if (file.getName().endsWith(".img")) {
-                        dwiPath = file.getAbsolutePath();
-                    }
-                }
-            }
-            outputDir = dirFile.getAbsolutePath() + File.separator;
+            findVolumesInDir(dirFileString);
         } else {
             adcPath = adcImageFileField.getText();
             dwiPath = dwiImageFileField.getText();
@@ -393,7 +362,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         mainPanel.add(labelDir, gbc);
         
         dirFileField = new JTextField(50);
-        dirFileField.setText(lastDir);
+        //dirFileField.setText(lastDir);
         gbc.gridx++;
         mainPanel.add(dirFileField, gbc);
         
@@ -439,7 +408,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         mainPanel.add(labelDWI, gbc);
         
         dwiImageFileField = new JTextField(50);
-        dwiImageFileField.setText(lastDwi);
+        //dwiImageFileField.setText(lastDwi);
         gbc.gridx++;
         mainPanel.add(dwiImageFileField, gbc);
         
@@ -460,7 +429,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         mainPanel.add(labelADC, gbc);
         
         adcImageFileField = new JTextField(50);
-        adcImageFileField.setText(lastAdc);
+        //adcImageFileField.setText(lastAdc);
         gbc.gridx++;
         mainPanel.add(adcImageFileField, gbc);
         
@@ -640,5 +609,96 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         fileIO.setQuiet(true);
 
         return fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultiFile, null);
+    }
+    
+    private boolean findVolumesInDir(final String dir) {
+        final File dirFile = new File(dir);
+        
+        File[] dirContents = dirFile.listFiles();
+        
+        for (File file : dirContents) {
+            String nameNoExt = FileUtility.stripExtension(file.getName());
+            if (nameNoExt.equalsIgnoreCase(adcFileStub)) {
+                if (file.isDirectory()) {
+                    File[] subContents = file.listFiles();
+                    if (subContents.length > 0) {
+                        adcPath = subContents[0].getAbsolutePath();
+                        adcImageMultifile = true;
+                        foundADC = true;
+                    }
+                } else if (file.getName().endsWith(".img")) {
+                    adcPath = file.getAbsolutePath();
+                    foundADC = true;
+                }
+            } else if (nameNoExt.equalsIgnoreCase(dwiFileStub)) {
+                if (file.isDirectory()) {
+                    File[] subContents = file.listFiles();
+                    if (subContents.length > 0) {
+                        dwiPath = subContents[0].getAbsolutePath();
+                        dwiImageMultifile = true;
+                        foundDWI = true;
+                    }
+                } else if (file.getName().endsWith(".img")) {
+                    dwiPath = file.getAbsolutePath();
+                    foundDWI = true;
+                }
+            }
+        }
+
+        if (!foundADC || !foundDWI) {
+            findDicomFilesRecursive(dirFile);
+        }
+        
+        if (!foundADC) {
+            MipavUtil.displayError("No ADC files found in directory: " + dir);
+            return false;
+        }
+        
+        if (!foundDWI) {
+            MipavUtil.displayError("No DWI files found in directory: " + dir);
+            return false;
+        }
+        
+        outputDir = dirFile.getAbsolutePath() + File.separator;
+        
+        return true;
+    }
+    
+    private void findDicomFilesRecursive(final File dirFile) {
+        
+        File[] dirContents = dirFile.listFiles();
+        
+        boolean checkedFirstFile = false;
+        for (File file : dirContents) {
+            if (file.isDirectory()) {
+                findDicomFilesRecursive(file);
+            } else {
+                if (!checkedFirstFile && !file.getName().contains(PlugInAlgorithmStrokeSegmentation.outputLabel)) {
+                    checkedFirstFile = true;
+                    ModelImage img = openImage(file, false);
+                    if (img != null) {
+                        if (img.getFileInfo(0) instanceof FileInfoDicom) {
+                            String imageType = (String)((FileInfoDicom)img.getFileInfo(0)).getTagTable().getValue("0008,0008");
+                            
+                            for (String val : imageType.split("\\\\")) {
+                                if (val.equalsIgnoreCase("ADC") || val.equalsIgnoreCase("ADC_UNSPECIFIED")) {
+                                    adcPath = file.getAbsolutePath();
+                                    adcImageMultifile = true;
+                                    foundADC = true;
+                                    break;
+                                } else if (val.equalsIgnoreCase("SE") || val.equalsIgnoreCase("M_SE")) {
+                                    dwiPath = file.getAbsolutePath();
+                                    dwiImageMultifile = true;
+                                    foundDWI = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    img.disposeLocal();
+                    img = null;
+                }
+            }
+        }
     }
 }

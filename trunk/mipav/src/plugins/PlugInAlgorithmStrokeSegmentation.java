@@ -36,7 +36,9 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     private int minAdcObjectSize = 10;
     private int maxAdcObjectSize = 100000;
     
-    private String outputBasename = "CoreSeg";
+    public static final String outputLabel = "CoreSeg";
+    
+    private String outputBasename;
     
     private static final String voiExtension = ".xml";
     
@@ -57,7 +59,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         doSymmetryRemoval = symmetryRemoval;
         coreOutputDir = outputDir;
         
-        outputBasename = new File(coreOutputDir).getName() + "_" + outputBasename;
+        outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
     }
     
     /**
