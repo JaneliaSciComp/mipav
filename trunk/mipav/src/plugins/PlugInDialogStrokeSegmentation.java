@@ -40,6 +40,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     private JTextField adcThresholdField;
     
     private JCheckBox symmetryCheckbox;
+    
+    private JCheckBox cerebellumCheckbox;
+    private JTextField cerebellumSliceMaxField;
 
     private boolean adcImageMultifile = false;
     private ModelImage adcImage;
@@ -50,6 +53,10 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     private int adcThreshold = 620;
     
     private boolean doSymmetryRemoval = true;
+    
+    private boolean doCerebellumSkip = true;
+    
+    private int cerebellumSkipSliceMax = 7;
     
     private PlugInAlgorithmStrokeSegmentation segAlgo = null;
     
@@ -228,6 +235,9 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         doSymmetryRemoval = symmetryCheckbox.isSelected();
         
+        doCerebellumSkip = cerebellumCheckbox.isSelected();
+        cerebellumSkipSliceMax = Integer.parseInt(cerebellumSliceMaxField.getText());
+        
         return true;
     }
 
@@ -238,7 +248,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     protected void callAlgorithm() {
 
         try {
-            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, outputDir);
+            segAlgo = new PlugInAlgorithmStrokeSegmentation(dwiImage, adcImage, adcThreshold, doSymmetryRemoval, doCerebellumSkip, cerebellumSkipSliceMax, outputDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -284,6 +294,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         doSymmetryRemoval = scriptParameters.getParams().getBoolean("do_symmetry_removal");
         
+        // TODO cerebellum skip
+        
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
 
@@ -292,6 +304,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.storeImage(dwiImage, "dwi_image");
         scriptParameters.getParams().put(ParameterFactory.newParameter("adc_threshold", adcThreshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_symmetry_removal", doSymmetryRemoval));
+        // TODO cerebellum skip
     }
     
     /**
@@ -342,8 +355,30 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         symmetryCheckbox.setFont(serif12);
         mainPanel.add(symmetryCheckbox, gbc);
         
+        // TODO cerebellum skip fields
+        
         gbc.gridy++;
         gbc.gridx = 0;
+        
+        gbc.gridwidth = 1;
+        
+        cerebellumCheckbox = new JCheckBox("Ignore thresholded ADC values up to slice", doCerebellumSkip);
+        cerebellumCheckbox.setForeground(Color.black);
+        cerebellumCheckbox.setFont(serif12);
+        mainPanel.add(cerebellumCheckbox, gbc);
+        
+        gbc.gridwidth = 1;
+        
+        cerebellumSliceMaxField = new JTextField(10);
+        cerebellumSliceMaxField.setText("" + cerebellumSkipSliceMax);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx++;
+        mainPanel.add(cerebellumSliceMaxField, gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        gbc.gridwidth = 3;
         
         dirMethodRadio = new JRadioButton("Select directory with Baseline_ADC and Baseline_DWI files/subdirectories");
         dirMethodRadio.setForeground(Color.black);
@@ -471,7 +506,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         final JFileChooser chooser = new JFileChooser(initDir);
 
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setDialogTitle("Choose output directory for Validation Tool files");
+        chooser.setDialogTitle("Choose directory containing ADC and DWI volumes");
         final int returnValue = chooser.showOpenDialog(this);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             dirFileField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
@@ -686,7 +721,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                                     adcImageMultifile = true;
                                     foundADC = true;
                                     break;
-                                } else if (val.equalsIgnoreCase("SE") || val.equalsIgnoreCase("M_SE")) {
+                                } else if (val.equalsIgnoreCase("SE") || val.equalsIgnoreCase("M_SE") || val.equalsIgnoreCase("TRACEW")) {
                                     dwiPath = file.getAbsolutePath();
                                     dwiImageMultifile = true;
                                     foundDWI = true;
