@@ -27,6 +27,10 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private int maxSymmetryRemovalSlice = 10;
     
+    private boolean doCerebellumSkip;
+    
+    private int cerebellumSkipSliceMax;
+    
     private VOI coreVOI;
     
     private MaskObject largestObject;
@@ -50,13 +54,15 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * @param  dwi  DWI image
      * @param  adc  ADC image
      */
-    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, String outputDir) {
+    public PlugInAlgorithmStrokeSegmentation(ModelImage dwi, ModelImage adc, int threshold, boolean symmetryRemoval, boolean cerebellumSkip, int cerebellumSkipMax, String outputDir) {
         super();
         
         dwiImage = dwi;
         adcImage = adc;
         adcThreshold = threshold;
         doSymmetryRemoval = symmetryRemoval;
+        doCerebellumSkip = cerebellumSkip;
+        cerebellumSkipSliceMax = cerebellumSkipMax;
         coreOutputDir = outputDir;
         
         outputBasename = new File(coreOutputDir).getName() + "_" + outputLabel;
@@ -182,8 +188,32 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         fireProgressStateChanged("Finding core lesion ...");
         fireProgressStateChanged(70);
         
+        short[] removedBuffer = null;
+        if (doCerebellumSkip) {
+            if (removedBuffer == null) {
+                removedBuffer = new short[volLength];
+            }
+            
+            // if values are mirrored across the the l->r of the image, cancel them out.  core values should only be on one side, while the cerebelum will have values on both sides
+            for (int iZ = 0; iZ < cerebellumSkipSliceMax && iZ < extents[2]; iZ++) {
+                for (int iY = 0; iY < extents[1]; iY++) {
+                    for (int iX = 0; iX < extents[0]; iX++) {
+                        int index = (iZ * sliceLength) + (iY * extents[0]) + iX;
+                        
+                        if (dwiSegBuffer[index] > 0) {
+                            dwiSegBuffer[index] = 0;
+                            
+                            removedBuffer[index] = 1;
+                        }
+                    }
+                }
+            }
+        }
+        
         if (doSymmetryRemoval) {
-            short[] removedBuffer = new short[volLength];
+            if (removedBuffer == null) {
+                removedBuffer = new short[volLength];
+            }
             
             // if values are mirrored across the the l->r of the image, cancel them out.  core values should only be on one side, while the cerebelum will have values on both sides
             for (int iZ = 0; iZ < maxSymmetryRemovalSlice && iZ < extents[2]; iZ++) {
