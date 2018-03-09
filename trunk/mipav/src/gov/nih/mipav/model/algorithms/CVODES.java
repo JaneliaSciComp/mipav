@@ -219,6 +219,7 @@ public abstract class CVODES {
 	final double FOUR = 4.0;
 	final double FIVE = 5.0;
 	final double TWELVE = 12.0;
+	final double THIRTY = 30.0;
 	final double HUNDRED = 100.0;
 	final double ETAMXF = 0.2;
 	final double ETAMX1 = 10000.0;
@@ -557,9 +558,25 @@ public abstract class CVODES {
     final int cvDlsSetup_select = 1;
 
     final int cvsRoberts_dns = 1;
+    final int cvSDirectDemo_ls_Problem_1 = 2;
     int problem = cvsRoberts_dns;
     boolean testMode = true;
 	
+    // Linear Solver options for runcvsDirectDemo
+	final int FUNC = 1;
+	final int DENSE_USER = 2;
+	final int DENSE_DQ = 3;
+	final int DIAG = 4;
+	final int BAND_USER = 5;
+	final int BAND_DQ = 6;
+	// cvsDirectDemo Problem  1 Constants
+	final int P1_NEQ = 2;
+	final double P1_ETA = 3.0;
+	final int P1_NOUT = 4;
+	final double P1_T0 = 0.0;
+	final double P1_T1 = 1.39283880203;
+	final double P1_DTOUT = 2.214773875;
+	final double P1_TOL_FACTOR = 1.0E4;
 	
 	public CVODES() {
 		// eps returns the distance from 1.0 to the next larger double-precision
@@ -920,6 +937,264 @@ public abstract class CVODES {
 	  return(passfail);
 	}
 
+	private void runcvsDirectDemo_Problem_1() {
+		/* -----------------------------------------------------------------
+		 * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh and
+		 *                Radu Serban @ LLNL
+		 * -----------------------------------------------------------------
+		 * Demonstration program for CVODE - direct linear solvers.
+		 * Two separate problems are solved using both the CV_ADAMS and CV_BDF
+		 * linear multistep methods in combination with CV_FUNCTIONAL and
+		 * CV_NEWTON iterations:
+		 *
+		 * Problem 1: Van der Pol oscillator
+		 *   xdotdot - 3*(1 - x^2)*xdot + x = 0, x(0) = 2, xdot(0) = 0.
+		 * This second-order ODE is converted to a first-order system by
+		 * defining y0 = x and y1 = xdot.
+		 * The NEWTON iteration cases use the following types of Jacobian
+		 * approximation: (1) dense, user-supplied, (2) dense, difference
+		 * quotient approximation, (3) diagonal approximation.
+		 *
+		 * Problem 2: ydot = A * y, where A is a banded lower triangular
+		 * matrix derived from 2-D advection PDE.
+		 * The NEWTON iteration cases use the following types of Jacobian
+		 * approximation: (1) band, user-supplied, (2) band, difference
+		 * quotient approximation, (3) diagonal approximation.
+		 *
+		 * For each problem, in the series of eight runs, CVodeInit is
+		 * called only once, for the first run, whereas CVodeReInit is
+		 * called for each of the remaining seven runs.
+		 *
+		 * Notes: This program demonstrates the usage of the sequential
+		 * macros NV_Ith_S, SM_ELEMENT_D, SM_COLUMN_B, and
+		 * SM_COLUMN_ELEMENT_B. The NV_Ith_S macro is used to reference the
+		 * components of an N_Vector. It works for any size N=NEQ, but
+		 * due to efficiency concerns it should only by used when the
+		 * problem size is small. The Problem 1 right hand side and
+		 * Jacobian functions f1 and Jac1 both use NV_Ith_S. The 
+		 * N_VGetArrayPointer function gives the user access to the 
+		 * memory used for the component storage of an N_Vector. In the 
+		 * sequential case, the user may assume that this is one contiguous 
+		 * array of reals. The N_VGetArrayPointer function
+		 * gives a more efficient means (than the NV_Ith_S macro) to
+		 * access the components of an N_Vector and should be used when the
+		 * problem size is large. The Problem 2 right hand side function f2
+		 * uses the N_VGetArrayPointer function. The SM_ELEMENT_D macro 
+		 * used in Jac1 gives access to an element of a dense SUNMatrix. It 
+		 * should be used only when the problem size is small (the 
+		 * size of a Dense SUNMatrix is NEQ x NEQ) due to efficiency concerns. For
+		 * larger problem sizes, the macro SM_COLUMN_D can be used in order
+		 * to work directly with a column of a Dense SUNMatrix. The SM_COLUMN_B and
+		 * SM_COLUMN_ELEMENT_B allow efficient columnwise access to the elements
+		 * of a Banded SUNMatix. These macros are used in the Jac2 function.
+		 * -----------------------------------------------------------------
+		 */
+		// Shared Problem Constants
+		final double ATOL = 1.0E-6;
+		final double RTOL = 0.0;
+		int miter;
+		int f1;
+		double ero;
+		boolean firstrun;
+		int flag;
+		double reltol = RTOL;
+		double abstol = ATOL;
+		double t[] = new double[1];
+		int iout;
+		double tout;
+		int qu;
+		double hu;
+		int nerr = 0;
+		double er;
+	    NVector y = null;
+	    double A[][] = null;
+	    SUNLinearSolver LS = null;
+	    CVodeMemRec cvode_mem = null;
+	     
+	    y = new NVector();
+	    N_VNew_Serial(y,P1_NEQ);
+	    System.out.println("Demonstation package for CVODE package - direct linear solvers\n");
+		System.out.println("Problem 1: Van der Pol oscillator");
+		System.out.println("xdotdot - 3*(1 - x^2)*xdot + x = 0, x(0) = 2, xdot(0) = 0");
+		System.out.println("neq = " + P1_NEQ + ", reltol = " + RTOL + ", abstol = " + ATOL);
+		
+		problem = cvSDirectDemo_ls_Problem_1;
+		f1 = cvSDirectDemo_ls_Problem_1;
+		cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
+		if (cvode_mem == null) {
+			return;
+		}
+		for (miter = FUNC; miter <= DENSE_DQ; miter++) {
+		    ero = ZERO;
+		    y.data[0] = TWO;
+		    y.data[1] = ZERO;
+		    
+		    firstrun = (miter == FUNC);
+		    if (firstrun) {
+		    	flag = CVodeInit(cvode_mem, f1, P1_T0, y);
+		    	if (flag < 0) {
+		    		return;
+		    	}
+		    	flag = CVodeSStolerances(cvode_mem, reltol, abstol);
+		    	if (flag < 0) {
+		    		return;
+		    	}
+		    } // if (firstrun)
+		    else {
+		    	flag = CVodeSetIterType(cvode_mem, CV_NEWTON);
+		    	if (flag < 0) {
+		    		return;
+		    	}
+		    	flag = CVodeReInit(cvode_mem, P1_T0, y);
+		    	if (flag < 0) {
+		    		return;
+		    	}
+		    } // else
+		    
+		    flag = PrepareNextRun(cvode_mem, CV_ADAMS, miter, y, A, 0, 0, LS);
+		    if (flag < 0) {
+		    	return;
+		    }
+		    
+		    for (iout = 1, tout = P1_T1; iout <= P1_NOUT; iout++, tout += P1_DTOUT) {
+		        flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
+		        if (flag < 0) {
+		        	return;
+		        }
+		        // Returns the order on the last successful step
+		        qu = cvode_mem.cv_qu;
+		        // Return the step size used on the last successful step
+		        hu = cvode_mem.cv_hu;
+		        System.out.println("time = " + t[0]);
+		        System.out.println("y[0] = "+ y.data[0]);
+		        System.out.println("y[1] = " + y.data[1]);
+		        System.out.println("Step order qu = " + qu);
+		        System.out.println("Step size hu = " + hu);
+		        if (flag != CV_SUCCESS) {
+		        	nerr++;
+		        	break;
+		        }
+		        if ((iout %2) == 0) {
+		            er = Math.abs(y.data[0])/abstol;
+		            if (er > ero) ero = er;
+		            if (er > P1_TOL_FACTOR) {
+		            	nerr++;
+		            	System.out.println("Error exceeds " + P1_TOL_FACTOR + " * tolerance");
+		            }
+		        } // if ((iout %2) == 0)
+		        
+		    } // for (iout = 1, tout = P1_T1; iout <= P1_NOUT; iout++, tout += P1_DTOUT)
+		    PrintFinalStats(cvode_mem, miter, ero);
+		} // for (miter = FUNC; miter <= DENSE_DQ; miter++)
+	}
+	
+	private int PrepareNextRun(CVodeMemRec cvode_mem, int lmm, int miter, NVector y, double A[][],
+			int mu, int ml, SUNLinearSolver LS) {
+		int flag = CV_SUCCESS;
+		int Jac1;
+		if (lmm == CV_ADAMS) {
+		    System.out.println("\nLinear MultiStep Method: ADAMS");
+		}
+	    else {
+	    	 System.out.println("\nLinear MultiStep Method: BDF");
+	    }
+		
+		if (miter == FUNC) {
+		    System.out.println("Iteration: FUNCTIONAL");	
+		}
+		else {
+			System.out.println("Iteration: NEWTON");
+		}
+		
+		switch(miter) {
+		    case DENSE_USER:
+		    	System.out.println("Linear Solver: Dense, User-Supplied Jacobian");
+		    	// Create dense SUNMatrix for use in linear solver.
+		    	A = new double[P1_NEQ][P1_NEQ];
+		    	
+		    	// Create dense SUNLinearSolver object for use by CVode
+		    	LS = SUNDenseLinearSolver(y, A);
+		    	if (LS == null) {
+		    		return -1;
+		    	}
+		    	// Call the CVDlsSetLinearSolver to attach the matrix and linear solver to Cvode
+		    	flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
+		    	if (flag < 0) {
+		    		return flag;
+		    	}
+		    	Jac1 = cvSDirectDemo_ls_Problem_1;
+		    	flag = CVDlsSetJacFn(cvode_mem, Jac1);
+				if (flag != CVDLS_SUCCESS) {
+					return flag;
+				}
+		    	break;
+		    case DENSE_DQ:
+		    	System.out.println("Linear Solver: Dense, Difference Quotient Jacobian");
+		    	// Create dense SUNMatrix for use in linear solver.
+		    	A = new double[P1_NEQ][P1_NEQ];
+		    	
+		    	// Create dense SUNLinearSolver object for use by CVode
+		    	LS = SUNDenseLinearSolver(y, A);
+		    	if (LS == null) {
+		    		return -1;
+		    	}
+		    	// Call the CVDlsSetLinearSolver to attach the matrix and linear solver to Cvode
+		    	flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
+		    	if (flag < 0) {
+		    		return flag;
+		    	}
+		    	
+		    	// Use a difference quotient Jacobian
+		    	flag = CVDlsSetJacFn(cvode_mem, -1);
+		    	if (flag < 0) {
+		    		return flag;
+		    	}
+		    	break;
+		}
+		
+		return flag;
+	}
+	
+	private void PrintFinalStats(CVodeMemRec cvode_mem, int miter, double ero) {
+	    long lenrw, leniw;
+	    long nst, nfe, nsetups, netf, nni, ncfn, nje, nfeLS;
+	    // Integrator work space requirements
+	    leniw = cvode_mem.cv_liw;
+	    lenrw = cvode_mem.cv_lrw;
+	    // Number of integration steps
+	    nst = cvode_mem.cv_nst;
+	    // Number of calls to f
+	    nfe = cvode_mem.cv_nfe;
+	    // Number of calls to the linear solver setup routine
+	    nsetups = cvode_mem.cv_nsetups;
+	    // Number of error test failures
+	    netf = cvode_mem.cv_netf[0];
+	    // Number of iterations in the nonlinear solver
+	    nni = cvode_mem.cv_nni;
+	    // Number of convergence failures in the nonlinear solver
+	    ncfn = cvode_mem.cv_ncfn[0];
+	    
+	    System.out.println("Final statistics for this run:");
+	    System.out.println("CVode double workspace length = " + lenrw);
+	    System.out.println("CVode integer workspace length = " + leniw);
+	    System.out.println("Number of integration steps = " + nst);
+	    System.out.println("Number of f calls = " + nfe);
+	    System.out.println("Number of linear solver setup calls = " + nsetups);
+	    System.out.println("Number of nonlinear solver iterations = " + nni);
+	    System.out.println("Number of nonlinear convergence failures in the nonlinear solver = " + ncfn);
+	    System.out.println("Number of error test failures = " + netf);
+	    
+	    if (miter != FUNC) {
+	    	if (miter != DIAG) {
+	    	    // Number of Jacobian evaluations	
+	    		nje = cvode_mem.cv_lmem.nje;	
+	    		// the number of calls to the ODE function needed for the DQ Jacobian approximation
+	    		nfeLS = cvode_mem.cv_lmem.nfeDQ;
+	    	} // if (miter != DIAG)
+	    	else {
+	    	} // else
+	    } // if (miter != FUNC)
+	}
 	
 	private void N_VNew_Serial(NVector y, int length) {
 	    if ((y != null) && (length > 0)) {
@@ -929,7 +1204,7 @@ public abstract class CVODES {
 	}
 	
 	/**
-	 * f routine.  Compte function f(t,y).
+	 * f routine.  Compute function f(t,y).
 	 * @param t
 	 * @param yv
 	 * @param ydotv
@@ -9305,6 +9580,233 @@ else                return(snrm);
 	     return(CV_SUCCESS);
 	   }
 
+	   private int CVodeSStolerances(CVodeMemRec cv_mem, double reltol, double abstol)
+	   {
+
+	     if (cv_mem==null) {
+	       cvProcessError(null, CV_MEM_NULL, "CVODES", 
+	                      "CVodeSStolerances", MSGCV_NO_MEM);
+	       return(CV_MEM_NULL);
+	     }
+
+	     if (cv_mem.cv_MallocDone == false) {
+	       cvProcessError(cv_mem, CV_NO_MALLOC, "CVODES",
+	                      "CVodeSStolerances", MSGCV_NO_MALLOC);
+	       return(CV_NO_MALLOC);
+	     }
+
+	     /* Check inputs */
+
+	     if (reltol < ZERO) {
+	       cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+	                      "CVodeSStolerances", MSGCV_BAD_RELTOL);
+	       return(CV_ILL_INPUT);
+	     }
+
+	     if (abstol < ZERO) {
+	       cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+	                      "CVodeSStolerances", MSGCV_BAD_ABSTOL);
+	       return(CV_ILL_INPUT);
+	     }
+
+	     /* Copy tolerances into memory */
+	     
+	     cv_mem.cv_reltol = reltol;
+	     cv_mem.cv_Sabstol = abstol;
+
+	     cv_mem.cv_itol = CV_SS;
+
+	     cv_mem.cv_user_efun = false;
+	     //cv_mem.cv_efun = cvEwtSet;
+	     cv_mem.cv_efun_select = cvEwtSet_select;
+	     cv_mem.cv_e_data = null; /* will be set to cvode_mem in InitialSetup */
+
+	     return(CV_SUCCESS);
+	   }
+
+	   /* 
+	    * CVodeSetIterType
+	    *
+	    * Specifies the iteration type (CV_FUNCTIONAL or CV_NEWTON)
+	    */
+
+	   private int CVodeSetIterType(CVodeMemRec cv_mem, int iter)
+	   {
+
+	     if (cv_mem==null) {
+	       cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeSetIterType", MSGCV_NO_MEM);
+	       return(CV_MEM_NULL);
+	     }
+
+	     if ((iter != CV_FUNCTIONAL) && (iter != CV_NEWTON)) {
+	       cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSetIterType", MSGCV_BAD_ITER);
+	       return (CV_ILL_INPUT);
+	     }
+
+	     cv_mem.cv_iter = iter;
+
+	     return(CV_SUCCESS);
+	   }
+	   
+	   /*
+	    * CVodeReInit
+	    *
+	    * CVodeReInit re-initializes CVODES's memory for a problem, assuming
+	    * it has already been allocated in a prior CVodeInit call.
+	    * All problem specification inputs are checked for errors.
+	    * If any error occurs during initialization, it is reported to the
+	    * file whose file pointer is errfp.
+	    * The return value is CV_SUCCESS = 0 if no errors occurred, or
+	    * a negative value otherwise.
+	    */
+
+	   private int CVodeReInit(CVodeMemRec cv_mem, double t0, NVector y0)
+	   {
+	     int i,k;
+	    
+	     /* Check cvode_mem */
+
+	     if (cv_mem==null) {
+	       cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeReInit",
+	                      MSGCV_NO_MEM);
+	       return(CV_MEM_NULL);
+	     }
+
+	     /* Check if cvode_mem was allocated */
+
+	     if (cv_mem.cv_MallocDone == false) {
+	       cvProcessError(cv_mem, CV_NO_MALLOC, "CVODES", "CVodeReInit",
+	                      MSGCV_NO_MALLOC);
+	       return(CV_NO_MALLOC);
+	     }
+
+	     /* Check for legal input parameters */
+
+	     if (y0 == null) {
+	       cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeReInit",
+	                      MSGCV_NULL_Y0);
+	       return(CV_ILL_INPUT);
+	     }
+	     
+	     /* Copy the input parameters into CVODES state */
+
+	     cv_mem.cv_tn = t0;
+
+	     /* Set step parameters */
+
+	     cv_mem.cv_q      = 1;
+	     cv_mem.cv_L      = 2;
+	     cv_mem.cv_qwait  = cv_mem.cv_L;
+	     cv_mem.cv_etamax = ETAMX1;
+
+	     cv_mem.cv_qu     = 0;
+	     cv_mem.cv_hu     = ZERO;
+	     cv_mem.cv_tolsf  = ONE;
+
+	     /* Set forceSetup to SUNFALSE */
+
+	     cv_mem.cv_forceSetup = false;
+
+	     /* Initialize zn[0] in the history array */
+
+	     N_VScale_Serial(ONE, y0, cv_mem.cv_zn[0]);
+	    
+	     /* Initialize all the counters */
+
+	     cv_mem.cv_nst     = 0;
+	     cv_mem.cv_nfe     = 0;
+	     cv_mem.cv_ncfn[0]    = 0;
+	     cv_mem.cv_netf[0]    = 0;
+	     cv_mem.cv_nni     = 0;
+	     cv_mem.cv_nsetups = 0;
+	     cv_mem.cv_nhnil   = 0;
+	     cv_mem.cv_nstlp   = 0;
+	     cv_mem.cv_nscon   = 0;
+	     cv_mem.cv_nge     = 0;
+
+	     cv_mem.cv_irfnd   = 0;
+
+	     /* Initialize other integrator optional outputs */
+
+	     cv_mem.cv_h0u      = ZERO;
+	     cv_mem.cv_next_h   = ZERO;
+	     cv_mem.cv_next_q   = 0;
+
+	     /* Initialize Stablilty Limit Detection data */
+
+	     cv_mem.cv_nor = 0;
+	     for (i = 1; i <= 5; i++)
+	       for (k = 1; k <= 3; k++) 
+	         cv_mem.cv_ssdat[i-1][k-1] = ZERO;
+	     
+	     /* Problem has been successfully re-initialized */
+
+	     return(CV_SUCCESS);
+	   }
+
+	   /* CVDlsGetWorkSpace returns the length of workspace allocated for the
+	   CVDLS linear solver. */
+	private int CVDlsGetWorkSpace(CVodeMemRec cv_mem, long lenrwLS[],
+	                      long leniwLS[])
+	{
+	  CVDlsMemRec cvdls_mem;
+	  int lrw1[] = new int[1];
+	  int liw1[] = new int[1];
+	  long lrw, liw;
+	  int flag;
+
+	  /* Return immediately if cvode_mem or cv_mem->cv_lmem are NULL */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CVDLS_MEM_NULL, "CVSDLS",
+	                   "CVDlsGetWorkSpace", MSGD_CVMEM_NULL);
+	    return(CVDLS_MEM_NULL);
+	  }
+	  
+	  if (cv_mem.cv_lmem == null) {
+	    cvProcessError(cv_mem, CVDLS_LMEM_NULL, "CVSDLS",
+	                   "CVDlsGetWorkSpace", MSGD_LMEM_NULL);
+	    return(CVDLS_LMEM_NULL);
+	  }
+	  cvdls_mem = cv_mem.cv_lmem;
+
+	  /* initialize outputs with requirements from CVDlsMem structure */
+	  lenrwLS[0] = 0;
+	  leniwLS[0] = 4;
+
+	  /* add NVector size */
+	  N_VSpace_Serial(cvdls_mem.x, lrw1, liw1);
+	  lenrwLS[0] = lrw1[0];
+	  leniwLS[0] = liw1[0];
+	  
+	  /* add SUNMatrix size (only account for the one owned by Dls interface) */
+	  //*lenrw = SM_LDATA_D(A);
+	  //*leniw = 3 + SM_COLUMNS_D(A
+		  //     The assignment A_ldata = SM_LDATA_D(A) sets A_ldata to be
+		  //    the length of the data array for A.
+	      lenrwLS[0] += cvdls_mem.savedJ.length*cvdls_mem.savedJ[0].length;
+          leniwLS[0] += (3 + cvdls_mem.savedJ[0].length);
+
+	  /* add LS sizes */
+		 // *leniwLS = 2 + DENSE_CONTENT(S)->N;
+		 // content->N = MatrixRows;
+		  //MatrixRows = SUNDenseMatrix_Rows(A);
+
+		 // *lenrwLS = 0;
+          SUNLinearSolver LS = cvdls_mem.LS;
+        lenrwLS[0] += 0;
+        leniwLS[0] += (2 + LS.N);
+	    
+
+	  return(CVDLS_SUCCESS);
+	}
+	
+	private void N_VSpace_Serial(NVector v, int lrw[], int liw[])
+	{
+	  lrw[0] = v.data.length;
+	  liw[0] = 1;
+
+	  return;
+	}
 
 
 }
