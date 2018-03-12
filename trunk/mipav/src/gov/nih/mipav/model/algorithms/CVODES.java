@@ -2,6 +2,8 @@ package gov.nih.mipav.model.algorithms;
 
 import java.io.RandomAccessFile;
 
+import gov.nih.mipav.model.algorithms.CVODES.CVodeMemRec;
+import gov.nih.mipav.model.algorithms.CVODES.NVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -259,6 +261,8 @@ public abstract class CVODES {
     // LONG_WAIT   number of steps to wait before considering an order change when
     //             q==1 and MXNEF1 error test failures have occurred
     final int LONG_WAIT = 10;
+    /* Constant for DQ Jacobian approximation */
+    final double MIN_INC_MULT = 1000.0;
 
 
 	final int RTFOUND = +1;
@@ -559,7 +563,7 @@ public abstract class CVODES {
 
     final int cvsRoberts_dns = 1;
     final int cvSDirectDemo_ls_Problem_1 = 2;
-    int problem = cvsRoberts_dns;
+    int problem = cvSDirectDemo_ls_Problem_1;
     boolean testMode = true;
 	
     // Linear Solver options for runcvsDirectDemo
@@ -578,6 +582,34 @@ public abstract class CVODES {
 	final double P1_DTOUT = 2.214773875;
 	final double P1_TOL_FACTOR = 1.0E4;
 	
+	// USe the following code to call CVODES from another module:
+	/*boolean testme = true;
+    class CVODEStest extends CVODES {
+    	  public CVODEStest() {
+    		  super();
+    	  }
+    	  public int f(double t, NVector yv, NVector ydotv, CVodeMemRec user_data) {
+    		  return 0;
+    	  }
+    	  
+    	  public int g(double t, NVector yv, double gout[], CVodeMemRec user_data) {
+    		  return 0;
+    	  }
+    	  
+    	  public int fQ(double t, NVector x, NVector y, CVodeMemRec user_data) {
+    		  return 0;
+    	  }
+    	  
+    	  public int Jac(double t, NVector yv, NVector fy, double J[][], CVodeMemRec data, NVector tmp1, 
+    			  NVector tmp2, NVector tmp3) {
+    		  return 0;
+    	  }
+    	
+      }
+    if (testme) {
+    	new CVODEStest();
+    	return;
+    } */
 	public CVODES() {
 		// eps returns the distance from 1.0 to the next larger double-precision
 		// number, that is, eps = 2^-52.
@@ -603,6 +635,9 @@ public abstract class CVODES {
 	    UNIT_ROUNDOFF = DBL_EPSILON;
 	    if (problem == cvsRoberts_dns) {
 	    	runcvsRoberts_dns();
+	    }
+	    else if (problem == cvSDirectDemo_ls_Problem_1) {
+	    	runcvsDirectDemo_Problem_1();
 	    }
 	    return;
 	}
@@ -1086,6 +1121,78 @@ public abstract class CVODES {
 		    } // for (iout = 1, tout = P1_T1; iout <= P1_NOUT; iout++, tout += P1_DTOUT)
 		    PrintFinalStats(cvode_mem, miter, ero);
 		} // for (miter = FUNC; miter <= DENSE_DQ; miter++)
+		CVodeFree(cvode_mem);
+		
+		cvode_mem = CVodeCreate(CV_BDF, CV_FUNCTIONAL);
+		if (cvode_mem == null) {
+			return;
+		}
+		for (miter = FUNC; miter <= DENSE_DQ; miter++) {
+		    ero = ZERO;
+		    y.data[0] = TWO;
+		    y.data[1] = ZERO;
+		    
+		    firstrun = (miter == FUNC);
+		    if (firstrun) {
+		    	flag = CVodeInit(cvode_mem, f1, P1_T0, y);
+		    	if (flag < 0) {
+		    		return;
+		    	}
+		    	flag = CVodeSStolerances(cvode_mem, reltol, abstol);
+		    	if (flag < 0) {
+		    		return;
+		    	}
+		    } // if (firstrun)
+		    else {
+		    	flag = CVodeSetIterType(cvode_mem, CV_NEWTON);
+		    	if (flag < 0) {
+		    		return;
+		    	}
+		    	flag = CVodeReInit(cvode_mem, P1_T0, y);
+		    	if (flag < 0) {
+		    		return;
+		    	}
+		    } // else
+		    
+		    flag = PrepareNextRun(cvode_mem, CV_BDF, miter, y, A, 0, 0, LS);
+		    if (flag < 0) {
+		    	return;
+		    }
+		    
+		    for (iout = 1, tout = P1_T1; iout <= P1_NOUT; iout++, tout += P1_DTOUT) {
+		        flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
+		        if (flag < 0) {
+		        	return;
+		        }
+		        // Returns the order on the last successful step
+		        qu = cvode_mem.cv_qu;
+		        // Return the step size used on the last successful step
+		        hu = cvode_mem.cv_hu;
+		        System.out.println("time = " + t[0]);
+		        System.out.println("y[0] = "+ y.data[0]);
+		        System.out.println("y[1] = " + y.data[1]);
+		        System.out.println("Step order qu = " + qu);
+		        System.out.println("Step size hu = " + hu);
+		        if (flag != CV_SUCCESS) {
+		        	nerr++;
+		        	break;
+		        }
+		        if ((iout %2) == 0) {
+		            er = Math.abs(y.data[0])/abstol;
+		            if (er > ero) ero = er;
+		            if (er > P1_TOL_FACTOR) {
+		            	nerr++;
+		            	System.out.println("Error exceeds " + P1_TOL_FACTOR + " * tolerance");
+		            }
+		        } // if ((iout %2) == 0)
+		        
+		    } // for (iout = 1, tout = P1_T1; iout <= P1_NOUT; iout++, tout += P1_DTOUT)
+		    PrintFinalStats(cvode_mem, miter, ero);
+		}
+		CVodeFree(cvode_mem);
+		N_VDestroy(y);
+		return;
+		
 	}
 	
 	private int PrepareNextRun(CVodeMemRec cvode_mem, int lmm, int miter, NVector y, double A[][],
@@ -1157,7 +1264,12 @@ public abstract class CVODES {
 	
 	private void PrintFinalStats(CVodeMemRec cvode_mem, int miter, double ero) {
 	    long lenrw, leniw;
-	    long nst, nfe, nsetups, netf, nni, ncfn, nje, nfeLS;
+	    long nje = 0L;
+	    long nfeLS = 0L;
+	    long nfe,nst, nsetups, netf, nni, ncfn;
+	    long lenrwLS[] = new long[1];
+	    long leniwLS[] = new long[1];
+	    int flag;
 	    // Integrator work space requirements
 	    leniw = cvode_mem.cv_liw;
 	    lenrw = cvode_mem.cv_lrw;
@@ -1190,10 +1302,19 @@ public abstract class CVODES {
 	    		nje = cvode_mem.cv_lmem.nje;	
 	    		// the number of calls to the ODE function needed for the DQ Jacobian approximation
 	    		nfeLS = cvode_mem.cv_lmem.nfeDQ;
+	    		flag = CVDlsGetWorkSpace(cvode_mem, lenrwLS, leniwLS);
+	    		if (flag != CVDLS_SUCCESS) {
+	    			return;
+	    		}
 	    	} // if (miter != DIAG)
 	    	else {
 	    	} // else
+	    	System.out.println("Linear solver real workspace length = " + lenrwLS[0]);
+	    	System.out.println("Linear solver integer workspace length = " + leniwLS[0]);
+	    	System.out.println("Number of Jacobian evaluations = " + nje);
+	    	System.out.println("Number of f evaluations in linear solver = " + nfeLS);
 	    } // if (miter != FUNC)
+	    System.out.println("Error overrun = " + ero);
 	}
 	
 	private void N_VNew_Serial(NVector y, int length) {
@@ -1218,6 +1339,10 @@ public abstract class CVODES {
 		    ydot[0] = -0.04*y[0] + 1.0E4*y[1]*y[2];
 		    ydot[2] = 3.0E7*y[1]*y[1];
 		    ydot[1] = -ydot[0] - ydot[2];
+		}
+		else if (problem == cvSDirectDemo_ls_Problem_1) {
+			ydot[0] = y[1];
+			ydot[1] = (ONE - y[0]*y[0]) * P1_ETA * y[1] - y[0];
 		}
 		return 0;
 	}
@@ -1244,6 +1369,7 @@ public abstract class CVODES {
 		    gout[0] = y[0] - 0.0001;
 		    gout[1] = y[2] - 0.01;
 		}
+		
 		return 0;
 	}
 	
@@ -1274,6 +1400,12 @@ public abstract class CVODES {
 		    J[2][1] = 6.0E7 * y[1];
 		    J[2][2] = ZERO;
 		}
+		else if (problem == cvSDirectDemo_ls_Problem_1) {
+			J[0][0] = ZERO;
+			J[0][1] = ONE;
+			J[1][0] = -TWO * P1_ETA * y[0] * y[1] - ONE;
+			J[1][1] = P1_ETA * (ONE - y[0]*y[0]);
+		}
 	    
 	    return 0;
 	}
@@ -1287,7 +1419,7 @@ public abstract class CVODES {
 	// The type CVodeMem is type pointer to struct CVodeMemRec.
 	// This structure contains fields to keep track of problem state.
 	
-	private class NVector {
+	public class NVector {
 		double data[];
 		boolean own_data;
 		
@@ -1300,7 +1432,7 @@ public abstract class CVODES {
 	}
 	
 	  
-	private class CVodeMemRec {
+	public class CVodeMemRec {
 	    
 	  double cv_uround;         /* machine unit roundoff                         */   
 
@@ -6631,7 +6763,10 @@ else                return(snrm);
          return(-1);
        }
 
-       if (testMode) {
+       if (cvdls_mem.jacDQ) {
+    	   cvDlsDenseDQJac(cv_mem.cv_tn, y, fy, cvdls_mem.A, cv_mem, tmp1);  
+       }
+       else if (testMode) {
     	   retval = JacTestMode(cv_mem.cv_tn, y, fy, cvdls_mem.A, 
                    cvdls_mem.J_data, tmp1, tmp2, tmp3);   
        }
@@ -9799,7 +9934,7 @@ else                return(snrm);
 
 	  return(CVDLS_SUCCESS);
 	}
-	
+
 	private void N_VSpace_Serial(NVector v, int lrw[], int liw[])
 	{
 	  lrw[0] = v.data.length;
@@ -9807,6 +9942,90 @@ else                return(snrm);
 
 	  return;
 	}
+	
+	/*-----------------------------------------------------------------
+	  cvDlsDenseDQJac 
+	  -----------------------------------------------------------------
+	  This routine generates a dense difference quotient approximation 
+	  to the Jacobian of f(t,y). It assumes that a dense SUNMatrix is 
+	  stored column-wise, and that elements within each column are 
+	  contiguous. The address of the jth column of J is obtained via
+	  the accessor function SUNDenseMatrix_Column, and this pointer 
+	  is associated with an N_Vector using the N_VSetArrayPointer
+	  function.  Finally, the actual computation of the jth column of 
+	  the Jacobian is done with a call to N_VLinearSum.
+	  -----------------------------------------------------------------*/ 
+	private int cvDlsDenseDQJac(double t, NVector y, NVector fy, 
+	                    double Jac[][], CVodeMemRec cv_mem, NVector tmp1)
+	{
+	  double fnorm, minInc, inc, inc_inv, yjsaved, srur;
+	  double y_data[];
+	  double ewt_data[];
+	  NVector ftemp, jthCol;
+	  int j, N, i;
+	  int retval = 0;
+	  CVDlsMemRec cvdls_mem;
+
+	  /* access DlsMem interface structure */
+	  cvdls_mem = cv_mem.cv_lmem;
+
+	  /* access matrix dimension */
+	  N = Jac.length;
+
+	  /* Rename work vector for readibility */
+	  ftemp = tmp1;
+
+	  /* Create an empty vector for matrix column calculations */
+	  jthCol = N_VCloneEmpty_Serial(tmp1);
+
+	  /* Obtain pointers to the data for ewt, y */
+	  ewt_data = cv_mem.cv_ewt.data;
+	  y_data   = y.data;
+
+	  /* Set minimum increment based on uround and norm of f */
+	  srur = Math.sqrt(cv_mem.cv_uround);
+	  fnorm = N_VWrmsNorm_Serial(fy, cv_mem.cv_ewt);
+	  minInc = (fnorm != ZERO) ?
+	    (MIN_INC_MULT * Math.abs(cv_mem.cv_h) * cv_mem.cv_uround * N * fnorm) : ONE;
+
+	  for (j = 0; j < N; j++) {
+
+	    /* Generate the jth col of J(tn,y) */
+
+	   for (i = 0; i < Jac.length; i++) {
+		   jthCol.data[i] = Jac[i][j];
+	   }
+
+	    yjsaved = y_data[j];
+	    inc = Math.max(srur*Math.abs(yjsaved), minInc/ewt_data[j]);
+	    y_data[j] += inc;
+
+	    retval = f(t, y, ftemp, cv_mem.cv_user_data);
+	    cvdls_mem.nfeDQ++;
+	    if (retval != 0) break;
+	    
+	    y_data[j] = yjsaved;
+
+	    inc_inv = ONE/inc;
+	    N_VLinearSum_Serial(inc_inv, ftemp, -inc_inv, fy, jthCol);
+
+	    /* DENSE_COL(Jac,j) = N_VGetArrayPointer(jthCol); */  /* UNNECESSARY? */
+	  }
+
+	  N_VDestroy(jthCol);
+
+	  return(retval);
+	}
+	
+	private NVector N_VCloneEmpty_Serial(NVector w)
+	{
+	  NVector v = new NVector();
+	  v.data = new double[w.data.length];
+	  v.own_data = false;
+	  return(v);
+	}
+
+
 
 
 }
