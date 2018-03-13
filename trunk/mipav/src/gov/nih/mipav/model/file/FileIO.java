@@ -826,19 +826,20 @@ public class FileIO {
                                 // tPt[2] is MIPAV's z-axis. It is the position of the patient
                                 // along the axis that the image was sliced on.
                                 zOrients[nImages] = tPt[2];
+                                
                                 computedResAlongPerpendicularLine = true;
                                 float dircos0 = matrix.get(2, 0);
                                 float dircos1 = matrix.get(2, 1);
                                 float dircos2 = matrix.get(2, 2);
                                 distanceAlongPerpendicularLine[nImages] = savedFileInfos[nImages].xLocation*dircos0 + 
-                                		savedFileInfos[nImages].yLocation*dircos1 + savedFileInfos[nImages].zLocation*dircos2;
-                                if (nImages > 0) {
-                                	float zRes = Math.abs(distanceAlongPerpendicularLine[nImages] - distanceAlongPerpendicularLine[nImages-1]);
-                                	savedFileInfos[nImages-1].setResolutions(zRes,2);
-                                	if (nImages == nListImages - 1) {
-                                    	savedFileInfos[nImages].setResolutions(zRes,2);	
-                                    }
-                                }
+                                        savedFileInfos[nImages].yLocation*dircos1 + savedFileInfos[nImages].zLocation*dircos2;
+//                                if (nImages > 0) {
+//                                    float zRes = Math.abs(distanceAlongPerpendicularLine[nImages] - distanceAlongPerpendicularLine[nImages-1]);
+//                                    savedFileInfos[nImages-1].setResolutions(zRes,2);
+//                                    if (nImages == nListImages - 1) {
+//                                        savedFileInfos[nImages].setResolutions(zRes,2); 
+//                                    }
+//                                }
                                 
                             } else {
                                 zOrients[nImages] = 1;
@@ -850,6 +851,8 @@ public class FileIO {
                             zInst[nImages] = nImages;
                             nImages++;
                         } else {
+                            // TODO: allow for selection of which series to open if running with a UI
+                            
                             // series number for this slice doesn't match first one -
                             final String message = "FileIO: Found DICOM slice with non-matching series number (slice = " + nImages + "; file = " + fileList[i]
                                     + ").  Two image volumes may be stored together in this directory.";
@@ -868,19 +871,22 @@ public class FileIO {
 
                         if (matrix != null) {
                             matrix.transform(savedFileInfos[nImages].xLocation, savedFileInfos[nImages].yLocation, savedFileInfos[nImages].zLocation, tPt);
+                            
                             computedResAlongPerpendicularLine = true;
                             float dircos0 = matrix.get(2, 0);
                             float dircos1 = matrix.get(2, 1);
                             float dircos2 = matrix.get(2, 2);
                             distanceAlongPerpendicularLine[nImages] = savedFileInfos[nImages].xLocation*dircos0 + 
                             		savedFileInfos[nImages].yLocation*dircos1 + savedFileInfos[nImages].zLocation*dircos2;
-                            if (nImages > 0) {
-                            	float zRes = Math.abs(distanceAlongPerpendicularLine[nImages] - distanceAlongPerpendicularLine[nImages-1]);
-                            	savedFileInfos[nImages-1].setResolutions(zRes,2);
-                            	if (nImages == nListImages - 1) {
-                                	savedFileInfos[nImages].setResolutions(zRes,2);	
-                                }
-                            }
+                            
+//                            if (nImages > 0) {
+//                            	float zRes = Math.abs(distanceAlongPerpendicularLine[nImages] - distanceAlongPerpendicularLine[nImages-1]);
+//                            	savedFileInfos[nImages-1].setResolutions(zRes,2);
+//                            	if (nImages == nListImages - 1) {
+//                                	savedFileInfos[nImages].setResolutions(zRes,2);	
+//                                }
+//                            }
+                            
                             zOrients[nImages] = tPt[2];
                         } else {
                             zOrients[nImages] = 1;
@@ -1633,12 +1639,13 @@ public class FileIO {
                 if (computedResAlongPerpendicularLine) {
                 	// Uses 0020,0032 Image Position and 0020,0037 Image Orientation
                 	float zRes;
+                	
                 	for (int m = 0; m < nImages; m++) {
                 		if (m < nImages - 1) {
-                		    zRes = Math.abs(distanceAlongPerpendicularLine[m+1] - distanceAlongPerpendicularLine[m]);
+                            zRes = Math.abs(distanceAlongPerpendicularLine[indices[m+1]] - distanceAlongPerpendicularLine[indices[m]]);
                 		}
                 		else {
-                			zRes = Math.abs(distanceAlongPerpendicularLine[m] - distanceAlongPerpendicularLine[m-1]);	
+                			zRes = Math.abs(distanceAlongPerpendicularLine[indices[m]] - distanceAlongPerpendicularLine[indices[m-1]]);	
                 		}
                         image.getFileInfo(m).setResolutions(zRes, 2);
                     }
