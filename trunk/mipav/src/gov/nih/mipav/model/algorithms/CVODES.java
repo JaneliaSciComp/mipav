@@ -563,9 +563,10 @@ public abstract class CVODES {
     final int cvDlsSetup_select = 1;
 
     final int cvsRoberts_dns = 1;
-    final int cvSDirectDemo_ls_Problem_1 = 2;
+    final int cvsDirectDemo_ls_Problem_1 = 2;
     final int cvsRoberts_dns_uw = 3;
-    int problem = cvsRoberts_dns_uw;
+    final int cvsRoberts_FSA_dns = 4;
+    int problem = cvsDirectDemo_ls_Problem_1;
     boolean testMode = true;
 	
     // Linear Solver options for runcvsDirectDemo
@@ -590,24 +591,24 @@ public abstract class CVODES {
     	  public CVODEStest() {
     		  super();
     	  }
-    	  public int f(double t, NVector yv, NVector ydotv, CVodeMemRec user_data) {
+    	  public int f(double t, NVector yv, NVector ydotv, UserData user_data) {
     		  return 0;
     	  }
     	  
-    	  public int g(double t, NVector yv, double gout[], CVodeMemRec user_data) {
+    	  public int g(double t, NVector yv, double gout[], UserData user_data) {
     		  return 0;
     	  }
     	  
-    	  public int fQ(double t, NVector x, NVector y, CVodeMemRec user_data) {
+    	  public int fQ(double t, NVector x, NVector y, UserData user_data) {
     		  return 0;
     	  }
     	  
-    	  public int Jac(double t, NVector yv, NVector fy, double J[][], CVodeMemRec data, NVector tmp1, 
+    	  public int Jac(double t, NVector yv, NVector fy, double J[][], UserData data, NVector tmp1, 
     			  NVector tmp2, NVector tmp3) {
     		  return 0;
     	  }
     	  
-    	  public int ewt(NVector y, NVector w, CVodeMemRec user_data) {
+    	  public int ewt(NVector y, NVector w, UserData user_data) {
               return 0;
           }
     	
@@ -645,7 +646,10 @@ public abstract class CVODES {
 	    else if (problem == cvsRoberts_dns_uw) {
 	    	runcvsRoberts_dns_uw();
 	    }
-	    else if (problem == cvSDirectDemo_ls_Problem_1) {
+	    else if (problem == cvsRoberts_FSA_dns) {
+	    	runcvsRoberts_FSA_dns();
+	    }
+	    else if (problem == cvsDirectDemo_ls_Problem_1) {
 	    	runcvsDirectDemo_Problem_1();
 	    }
 	    return;
@@ -1156,6 +1160,280 @@ public abstract class CVODES {
 		return;
 	}
 	
+	private void runcvsRoberts_FSA_dns() {
+		/* -----------------------------------------------------------------
+		 * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh, and
+		 *                Radu Serban @ LLNL
+		 * -----------------------------------------------------------------
+		 * Example problem:
+		 *
+		 * The following is a simple example problem, with the coding
+		 * needed for its solution by CVODES for Forward Sensitivity 
+		 * Analysis. The problem is from chemical kinetics, and consists
+		 * of the following three rate equations:
+		 *    dy1/dt = -p1*y1 + p2*y2*y3
+		 *    dy2/dt =  p1*y1 - p2*y2*y3 - p3*(y2)^2
+		 *    dy3/dt =  p3*(y2)^2
+		 * on the interval from t = 0.0 to t = 4.e10, with initial
+		 * conditions y1 = 1.0, y2 = y3 = 0. The reaction rates are: p1=0.04,
+		 * p2=1e4, and p3=3e7. The problem is stiff.
+		 * This program solves the problem with the BDF method, Newton
+		 * iteration with the CVODES dense linear solver, and a
+		 * user-supplied Jacobian routine.
+		 * It uses a scalar relative tolerance and a vector absolute
+		 * tolerance.
+		 * Output is printed in decades from t = .4 to t = 4.e10.
+		 * Run statistics (optional outputs) are printed at the end.
+		 *
+		 * Optionally, CVODES can compute sensitivities with respect to the
+		 * problem parameters p1, p2, and p3.
+		 * The sensitivity right hand side is given analytically through the
+		 * user routine fS (of type SensRhs1Fn).
+		 * Any of three sensitivity methods (SIMULTANEOUS, STAGGERED, and
+		 * STAGGERED1) can be used and sensitivities may be included in the
+		 * error test or not (error control set on SUNTRUE or SUNFALSE,
+		 * respectively).
+		 *
+		 * Execution:
+		 *
+		 * If no sensitivities are desired:
+		 *    % cvsRoberts_FSA_dns -nosensi
+		 * If sensitivities are to be computed:
+		 *    % cvsRoberts_FSA_dns -sensi sensi_meth err_con
+		 * where sensi_meth is one of {sim, stg, stg1} and err_con is one of
+		 * {t, f}.
+		 * -----------------------------------------------------------------*/
+
+		/** Problem Constants */
+		final int NEQ = 3; // Number of equations
+		final int NS = 3; // Number of sensitivities computed
+		final double Y1 = 1.0; // Initial y components
+		final double Y2 = 0.0;
+		final double Y3 = 0.0;
+		//final double RTOL = 1.0E-4; // scalar relative tolerance
+		final double RTOL = 1.0E-12;
+		//final double ATOL1 = 1.0E-8; // vector absolute tolerance components
+		final double ATOL1 = 1.0E-12;
+		//final double ATOL2 = 1.0E-14;
+		final double ATOL2 = 1.0E-15;
+		//final double ATOL3 = 1.0E-6;
+		final double ATOL3 = 1.0E-12;
+		final double T0 = 0.0; // initial time
+		final double T1 = 0.4; // first output time
+		final double TMULT = 10.0; // output time factor
+		//final int NOUT = 12; // number of output times
+		final int NOUT = 12;
+		int f = cvsRoberts_dns;
+		int g = cvsRoberts_dns;
+		int Jac = cvsRoberts_dns;
+		int ewt_select = cvEwtUser_select1;
+		// User data structure
+		double p[] = new double[]{0.04,1.0E4,3.0E7};
+		UserData data = new UserData();
+		data.array = p;
+		
+		// Set initial conditions
+		NVector y = new NVector();
+		NVector yS[];
+		NVector abstol = new NVector();
+		double yr[] = new double[]{Y1,Y2,Y3};
+		N_VNew_Serial(y, NEQ);
+		y.setData(yr);
+		double reltol = RTOL; // Set the scalar relative tolerance
+		// Set the vector absolute tolerance
+		double abstolr[] = new double[]{ATOL1,ATOL2,ATOL3};
+		N_VNew_Serial(abstol,NEQ);
+		abstol.setData(abstolr);
+		CVodeMemRec cvode_mem;
+		int flag;
+		int flagr;
+		double A[][];
+		SUNLinearSolver LS;
+		double tout;
+		int iout;
+		double t[] = new double[1];
+		int rootsfound[] = new int[2];
+		int i;
+		boolean sensi = true;
+		double pbar[] = new double[3];
+		
+		// Call CVodeCreate to create the solver memory and specify the
+		// Backward Differentiation Formula and the use of a Newton
+		// iteration
+		cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
+		if (cvode_mem == null) {
+		    return;	
+		}
+		// Allow unlimited steps in reaching tout
+		flag = CVodeSetMaxNumSteps(cvode_mem, -1);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		// Allow many error test failures
+		flag = CVodeSetMaxErrTestFails(cvode_mem, Integer.MAX_VALUE);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeInit to initialize the integrator memory and specify the
+		// user's right hand side function in y' = f(t,y), the initial time T0, and
+	    // the initial dependent variable vector y
+		flag = CVodeInit(cvode_mem, f, T0, y);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Use private function to compute error weights
+		// CVodeWFtolerances specifies a user-provides function (of type CVEwtFn)
+		// which will be called to set the error weight vector.
+		flag = CVodeWFtolerances(cvode_mem, ewt_select);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Attach user data
+		cvode_mem.cv_user_data = data;
+		
+		
+		// Create dense SUNMATRIX for use in linear solver
+		// indexed by columns stacked on top of each other
+		try {
+		    A = new double[NEQ][NEQ];
+		}
+		catch (OutOfMemoryError e) {
+		    MipavUtil.displayError("Out of memory error trying to create A");
+		    return;
+		}
+		
+		// Create dense SUNLinearSolver object for use by CVode
+		LS = SUNDenseLinearSolver(y, A);
+		if (LS == null) {
+			return;
+		}
+		
+		// Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode
+		flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// Set the user-supplied Jacobian routine Jac
+		flag = CVDlsSetJacFn(cvode_mem, Jac);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// In loop, call CVode, print results, and test for error.
+		// Break out of loop when NOUT preset output times have been reached.
+		System.out.println(" \n3-species kinetics problem\n");
+		
+		// Sensitivity-related settings
+		if (sensi) {
+			
+			// Set parameter scaling factor
+			pbar[0] = data.array[0];
+			pbar[1] = data.array[1];
+			pbar[2] = data.array[2];
+			
+			// Set sensitivity initial conditions
+			yS = N_VCloneVectorArray_Serial(NS, y);
+			if (yS == null) {
+				return;
+			}
+		} // if (sensi)
+		
+		iout = 0;
+		tout = T1;
+		
+		while (true) {
+			flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
+			switch (iout) {
+			case 0:
+				System.out.println("Example manual: at t = 0.4 y[0] = 0.98517 y[1] = 3.3864E-5 y[2] = 1.4794E-2");
+				break;
+			case 1:
+				System.out.println("Example manual: at t = 4.0 y[0] = 0.90552 y[1] = 2.2405E-5 y[2] = 9.4459E-2");
+				break;
+			case 2:
+				System.out.println("Example manual: at t = 40.0 y[0] = 0.71583 y[1] = 9.1856E-6 y[2] = 0.28416");
+				break;
+			case 3:
+				System.out.println("Example manual: at t = 400.0 y[0] = 0.45052 y[1] = 3.2229E-6 y[2] = 0.54947");
+				break;
+			case 4:
+				System.out.println("Example manual: at t = 4.0E3 y[0] = 0.18317 y[1] = 8.9403E-7 y[2] = 0.81683");
+				break;
+			case 5:
+				System.out.println("Example manual: at t = 4.0E4 y[0] = 3.8977E-2 y[1] = 1.6215E-7 y[2] = 0.96102");
+				break;
+			case 6:
+				System.out.println("Example manual: at t = 4.0E5 y[0] = 4.9387E-3 y[1] = 1.9852E-8 y[2] = 0.99506");
+				break;
+			case 7:
+				System.out.println("Example manual: at t = 4.0E6 y[0] = 5.1684E-4 y[1] = 2.0684E-9 y[2] = 0.99948");
+				break;
+			case 8:
+				System.out.println("Example manual: at t = 4.0E7 y[0] = 5.2039E-5 y[1] = 2.0817E-10 y[2] = 0.99995");
+				break;
+			case 9:
+				System.out.println("Example manual at t = 4.0E8 y[0] = 5.2106E-6 y[1] = 2.0842E-11 y[2] = 0.99999");
+				break;
+			case 10:
+				System.out.println("Example manual at t = 4.0E9 y[0] = 5.1881E-7 y[1] = 2.0752E-12 y[2] = 1.0000");
+				break;
+			case 11:
+				System.out.println("Example manual at t = 4.0E10 y[0] = 6.5181E-8 y[1] = 2.6072E-13 y[2] = 1.0000");
+				break;
+			}
+			System.out.println("MIPAV: at t = " + t[0] + " y[0] = " + y.data[0] + " y[1] = " + y.data[1] + " y[2] = " + y.data[2]);
+			
+			if (flag == CV_ROOT_RETURN) {
+			    flagr = CVodeGetRootInfo(cvode_mem, rootsfound)	;
+			    if (flagr == CV_MEM_NULL) {
+			    	return;
+			    }
+			    System.out.println("Roots found are " + rootsfound[0] + " and " + rootsfound[1]);
+			}
+			
+			if (flag < 0) {
+				System.out.println("CVode failed with flag = " + flag);
+				break;
+			}
+			
+			if (flag == CV_SUCCESS) {
+				iout++;
+				tout *= TMULT;
+			}
+			
+			if (iout == NOUT) {
+				break;
+			}
+		} // while (true)
+		
+		// Print some final statistics
+		PrintFinalStats(cvode_mem);
+		
+		// Check the solution error
+		flag = check_ans(y, reltol, abstol);
+		
+		// Free y and abstol vectors
+		N_VDestroy(y);
+		N_VDestroy(abstol);
+		
+		// Free the integrator memory
+		CVodeFree(cvode_mem);
+		
+		// Free the linear solver memory
+		SUNLinSolFree_Dense(LS);
+		
+		// Free the matrix memory
+		for (i = 0; i < NEQ; i++) {
+			A[i] = null;
+		}
+		A = null;
+		return;
+	}
+	
 	
 
 	private void PrintFinalStats(CVodeMemRec cv_mem) {
@@ -1297,8 +1575,8 @@ public abstract class CVODES {
 		System.out.println("xdotdot - 3*(1 - x^2)*xdot + x = 0, x(0) = 2, xdot(0) = 0");
 		System.out.println("neq = " + P1_NEQ + ", reltol = " + RTOL + ", abstol = " + ATOL);
 		
-		problem = cvSDirectDemo_ls_Problem_1;
-		f1 = cvSDirectDemo_ls_Problem_1;
+		problem = cvsDirectDemo_ls_Problem_1;
+		f1 = cvsDirectDemo_ls_Problem_1;
 		cvode_mem = CVodeCreate(CV_ADAMS, CV_FUNCTIONAL);
 		if (cvode_mem == null) {
 			return;
@@ -1473,7 +1751,7 @@ public abstract class CVODES {
 		    	if (flag < 0) {
 		    		return flag;
 		    	}
-		    	Jac1 = cvSDirectDemo_ls_Problem_1;
+		    	Jac1 = cvsDirectDemo_ls_Problem_1;
 		    	flag = CVDlsSetJacFn(cvode_mem, Jac1);
 				if (flag != CVDLS_SUCCESS) {
 					return flag;
@@ -1576,28 +1854,28 @@ public abstract class CVODES {
 	 * @param user_data
 	 * @return
 	 */
-	private int fTestMode(double t, NVector yv, NVector ydotv, CVodeMemRec user_data) {
+	private int fTestMode(double t, NVector yv, NVector ydotv, UserData user_data) {
 		double y[] = yv.getData();
 		double ydot[] = ydotv.getData();
-		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)  || (problem == cvsRoberts_FSA_dns)) {
 		    ydot[0] = -0.04*y[0] + 1.0E4*y[1]*y[2];
 		    ydot[2] = 3.0E7*y[1]*y[1];
 		    ydot[1] = -ydot[0] - ydot[2];
 		}
-		else if (problem == cvSDirectDemo_ls_Problem_1) {
+		else if (problem == cvsDirectDemo_ls_Problem_1) {
 			ydot[0] = y[1];
 			ydot[1] = (ONE - y[0]*y[0]) * P1_ETA * y[1] - y[0];
 		}
 		return 0;
 	}
 	
-	public abstract int f(double t, NVector yv, NVector ydotv, CVodeMemRec user_data);
+	public abstract int f(double t, NVector yv, NVector ydotv, UserData user_data);
 	
-	private int fQTestMode(double t, NVector x, NVector y, CVodeMemRec user_data) {
+	private int fQTestMode(double t, NVector x, NVector y, UserData user_data) {
 		return 0;
 	}
 	
-	public abstract int fQ(double t, NVector x, NVector y, CVodeMemRec user_data);
+	public abstract int fQ(double t, NVector x, NVector y, UserData user_data);
 	
 	/**
 	 * g routine.  Compute functions g_i(t,y) for i = 0,1.
@@ -1607,9 +1885,9 @@ public abstract class CVODES {
 	 * @param user_data
 	 * @return
 	 */
-	private int gTestMode(double t, NVector yv, double gout[], CVodeMemRec user_data) {
+	private int gTestMode(double t, NVector yv, double gout[], UserData user_data) {
 		double y[] = yv.getData();
-		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_FSA_dns)) {
 		    gout[0] = y[0] - 0.0001;
 		    gout[1] = y[2] - 0.01;
 		}
@@ -1617,7 +1895,7 @@ public abstract class CVODES {
 		return 0;
 	}
 	
-	public abstract int g(double t, NVector yv, double gout[], CVodeMemRec user_data);
+	public abstract int g(double t, NVector yv, double gout[], UserData user_data);
 	
 	/**
 	 * Jacobian routine.  Compute J(t,y) = df/dy.
@@ -1629,9 +1907,9 @@ public abstract class CVODES {
 	 * @param tmp2
 	 * @return
 	 */
-	private int JacTestMode(double t, NVector yv, NVector fy, double J[][], CVodeMemRec data, NVector tmp1, NVector tmp2, NVector tmp3) {
+	private int JacTestMode(double t, NVector yv, NVector fy, double J[][], UserData data, NVector tmp1, NVector tmp2, NVector tmp3) {
 		double y[] = yv.getData();
-		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_FSA_dns)) {
 		    J[0][0] = -0.04;
 		    J[0][1] = 1.0E4 * y[2];
 		    J[0][2] = 1.0E4 * y[1];
@@ -1644,7 +1922,7 @@ public abstract class CVODES {
 		    J[2][1] = 6.0E7 * y[1];
 		    J[2][2] = ZERO;
 		}
-		else if (problem == cvSDirectDemo_ls_Problem_1) {
+		else if (problem == cvsDirectDemo_ls_Problem_1) {
 			J[0][0] = ZERO;
 			J[0][1] = ONE;
 			J[1][0] = -TWO * P1_ETA * y[0] * y[1] - ONE;
@@ -1654,10 +1932,10 @@ public abstract class CVODES {
 	    return 0;
 	}
 	
-	public abstract int Jac(double t, NVector yv, NVector fy, double J[][], CVodeMemRec data, NVector tmp1, NVector tmp2, NVector tmp3);
+	public abstract int Jac(double t, NVector yv, NVector fy, double J[][], UserData data, NVector tmp1, NVector tmp2, NVector tmp3);
 	
-	public int ewtTestMode(NVector y, NVector w, CVodeMemRec user_data) {
-		if (problem == cvsRoberts_dns_uw) {
+	public int ewtTestMode(NVector y, NVector w, UserData user_data) {
+		if ((problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_FSA_dns)) {
 			//final double RTOL = 1.0E-4; // scalar relative tolerance
 			final double RTOL = 1.0E-12;
 			//final double ATOL1 = 1.0E-8; // vector absolute tolerance components
@@ -1687,7 +1965,7 @@ public abstract class CVODES {
 		return 0;
 	}
 	
-	public abstract int ewt(NVector y, NVector w, CVodeMemRec user_data);
+	public abstract int ewt(NVector y, NVector w, UserData user_data);
 	
 	
 	
@@ -1708,6 +1986,11 @@ public abstract class CVODES {
 		}
 	}
 	
+	public class UserData {
+		CVodeMemRec memRec;
+		double[] array;
+	}
+	
 	  
 	public class CVodeMemRec {
 	    
@@ -1720,7 +2003,7 @@ public abstract class CVODES {
 	  //CVRhsFn cv_f;               /* y' = f(t,y(t))                                */
 	  int cv_f;
 	  //void *cv_user_data;         /* user pointer passed to f                      */
-	  CVodeMemRec cv_user_data; 
+	  UserData cv_user_data = new UserData(); 
 
 	  int cv_lmm;                 /* lmm = ADAMS or BDF                            */
 	  int cv_iter;                /* iter = FUNCTIONAL or NEWTON                   */
@@ -1733,7 +2016,7 @@ public abstract class CVODES {
 	  //CVEwtFn cv_efun;            /* function to set ewt                           */
 	  int cv_efun_select;
 	  //void *cv_e_data;            /* user pointer passed to efun                   */
-	  CVodeMemRec cv_e_data;
+	  UserData cv_e_data = new UserData();
 
 	  /*-----------------------
 	    Quadrature Related Data 
@@ -2162,7 +2445,7 @@ public abstract class CVODES {
     	  cv_mem.cv_user_efun  = false;
     	  //cv_mem.cv_efun       = null;
     	  cv_mem.cv_efun_select = -1;
-    	  cv_mem.cv_e_data     = null;
+    	  cv_mem.cv_e_data     =  new UserData();
     	  //cv_mem.cv_ehfun      = cvErrHandler;
     	  cv_mem.cv_eh_data    = cv_mem;
     	  //cv_mem.cv_errfp      = stderr;
@@ -2609,7 +2892,7 @@ public abstract class CVODES {
        cv_mem.cv_user_efun = false;
        //cv_mem.cv_efun = cvEwtSet;
        cv_mem.cv_efun_select = cvEwtSet_select;
-       cv_mem.cv_e_data = null; /* will be set to cvode_mem in InitialSetup */
+       cv_mem.cv_e_data = new UserData(); /* will be set to cvode_mem in InitialSetup */
 
        return(CV_SUCCESS);
      }
@@ -2634,7 +2917,7 @@ public abstract class CVODES {
  	  cv_mem.cv_user_efun = true;
  	  //cv_mem.cv_efun = efun;
  	  cv_mem.cv_efun_select = efun_select;
- 	  cv_mem.cv_e_data = null; /* will be set to user_data in InitialSetup */
+ 	  cv_mem.cv_e_data = new UserData(); /* will be set to user_data in InitialSetup */
 
  	  return(CV_SUCCESS);
  	}
@@ -2903,7 +3186,7 @@ public abstract class CVODES {
       /* Initialize Jacobian-related data */
       cvdls_mem.jacDQ = true;
       cvdls_mem.jac = cvDlsDQJac;
-      cvdls_mem.J_data = cv_mem;
+      cvdls_mem.J_data.memRec = cv_mem;
       cvdls_mem.last_flag = CVDLS_SUCCESS;
 
       /* Initialize counters */
@@ -2960,7 +3243,7 @@ public abstract class CVODES {
     //CVDlsJacFn jac;       /* Jacobian routine to be called                 */
     int jac;
     //void *J_data;         /* data pointer passed to jac                    */
-    CVodeMemRec J_data;
+    UserData J_data = new UserData();
 
     double A[][];          /* A = I - gamma * df/dy                         */
     double savedJ[][];     /* savedJ = old Jacobian                         */
@@ -3006,7 +3289,7 @@ public abstract class CVODES {
     } else {
       cvdls_mem.jacDQ  = true;
       cvdls_mem.jac    = cvDlsDQJac;
-      cvdls_mem.J_data = cv_mem;
+      cvdls_mem.J_data.memRec = cv_mem;
     }
 
     return(CVDLS_SUCCESS);
@@ -3645,7 +3928,7 @@ public abstract class CVODES {
 
     /* Set data for efun */
     if (cv_mem.cv_user_efun) cv_mem.cv_e_data = cv_mem.cv_user_data;
-    else                      cv_mem.cv_e_data = cv_mem;
+    else                      cv_mem.cv_e_data.memRec = cv_mem;
 
     /* Load initial error weights */
     if (testMode && cv_mem.cv_itol == CV_WF) {
@@ -4297,11 +4580,11 @@ public abstract class CVODES {
 
 
 
-  private int cv_efun(NVector ycur, NVector weight, CVodeMemRec cv_mem, int cv_efun_select) {
+  private int cv_efun(NVector ycur, NVector weight, UserData user_data, int cv_efun_select) {
 	  int flag = 0;
 	  switch (cv_efun_select) {
 	  case cvEwtSet_select:
-		  flag = cvEwtSet(ycur, weight, cv_mem);  
+		  flag = cvEwtSet(ycur, weight, user_data.memRec);  
 		  break;
 	  }
 	  return flag;
@@ -4579,7 +4862,7 @@ public abstract class CVODES {
      it has changed based on user input) */
   if (cvdls_mem.jacDQ) {
     cvdls_mem.jac    = cvDlsDQJac;
-    cvdls_mem.J_data = cv_mem;
+    cvdls_mem.J_data.memRec = cv_mem;
   } else {
     cvdls_mem.J_data = cv_mem.cv_user_data;
   }
@@ -8983,7 +9266,7 @@ else                return(snrm);
 	   /* Save quadrature correction in acorQ */
 	   retval = cvQuadSensRhsInternalDQ(cv_mem.cv_Ns, cv_mem.cv_tn, cv_mem.cv_y,
 	                           cv_mem.cv_yS, cv_mem.cv_ftempQ,
-	                           cv_mem.cv_acorQS, cv_mem.cv_user_data,
+	                           cv_mem.cv_acorQS, cv_mem.cv_user_data.memRec,
 	                           cv_mem.cv_tempv, cv_mem.cv_tempvQ);
 	   cv_mem.cv_nfQSe++;
 	   if (retval < 0) return(CV_QSRHSFUNC_FAIL);
@@ -10082,7 +10365,7 @@ else                return(snrm);
 	     cv_mem.cv_user_efun = false;
 	     //cv_mem.cv_efun = cvEwtSet;
 	     cv_mem.cv_efun_select = cvEwtSet_select;
-	     cv_mem.cv_e_data = null; /* will be set to cvode_mem in InitialSetup */
+	     cv_mem.cv_e_data = new UserData(); /* will be set to cvode_mem in InitialSetup */
 
 	     return(CV_SUCCESS);
 	   }
@@ -10352,6 +10635,82 @@ else                return(snrm);
 	  v.own_data = false;
 	  return(v);
 	}
+	
+	/* ----------------------------------------------------------------------------
+	 * Function to create an array of new serial vectors. 
+	 */
+
+	private NVector[] N_VCloneVectorArray_Serial(int count, NVector w)
+	{
+	  NVector vs[];
+	  int j;
+
+	  if (count <= 0) return(null);
+
+	  vs = null;
+	  vs = new NVector[count];
+	  if(vs == null) return(null);
+
+	  for (j = 0; j < count; j++) {
+	    vs[j] = null;
+	    vs[j] = N_VClone_Serial(w);
+	    if (vs[j] == null) {
+	      N_VDestroyVectorArray_Serial(vs, j-1);
+	      return(null);
+	    }
+	  }
+
+	  return(vs);
+	}
+	
+	private NVector N_VClone_Serial(NVector w)
+	{
+	  NVector v;
+	  double data[];
+	  int length;
+
+	  v = null;
+	  v = N_VCloneEmpty_Serial(w);
+	  if (v == null) return(null);
+
+	  length = w.data.length;
+
+	  /* Create data */
+	  if (length > 0) {
+
+	    /* Allocate memory */
+	    data = null;
+	    data = new double[length];
+
+	    /* Attach data */
+	    v.own_data = true;
+	    v.data     = data;
+
+	  }
+
+	  return(v);
+	}
+	
+	/* ----------------------------------------------------------------------------
+	 * Function to free an array created with N_VCloneVectorArray_Serial
+	 */
+
+	private void N_VDestroyVectorArray_Serial(NVector vs[], int count)
+	{
+	  int j;
+
+	  for (j = 0; j < count; j++) {
+		  vs[j].data = null;
+		  vs[j] = null;
+	  }
+
+	  vs = null;
+
+	  return;
+	}
+
+
+
 
 
 
