@@ -552,6 +552,7 @@ public abstract class CVODES {
     
     // For cv_mem.cv_efun_select
     final int cvEwtSet_select = 1;
+    final int cvEwtUser_select1 = 2;
     // For cv_mem.cv_linit_select
     final int cvDlsInitialize_select = 1;
     // For cv_mem.cv_lsolve_select
@@ -563,7 +564,8 @@ public abstract class CVODES {
 
     final int cvsRoberts_dns = 1;
     final int cvSDirectDemo_ls_Problem_1 = 2;
-    int problem = cvSDirectDemo_ls_Problem_1;
+    final int cvsRoberts_dns_uw = 3;
+    int problem = cvsRoberts_dns_uw;
     boolean testMode = true;
 	
     // Linear Solver options for runcvsDirectDemo
@@ -604,6 +606,10 @@ public abstract class CVODES {
     			  NVector tmp2, NVector tmp3) {
     		  return 0;
     	  }
+    	  
+    	  public int ewt(NVector y, NVector w, CVodeMemRec user_data) {
+              return 0;
+          }
     	
       }
     if (testme) {
@@ -635,6 +641,9 @@ public abstract class CVODES {
 	    UNIT_ROUNDOFF = DBL_EPSILON;
 	    if (problem == cvsRoberts_dns) {
 	    	runcvsRoberts_dns();
+	    }
+	    else if (problem == cvsRoberts_dns_uw) {
+	    	runcvsRoberts_dns_uw();
 	    }
 	    else if (problem == cvSDirectDemo_ls_Problem_1) {
 	    	runcvsDirectDemo_Problem_1();
@@ -778,6 +787,241 @@ public abstract class CVODES {
 		// Call CVodeSVtolerances to specify the scalar relative tolerance
 		// and vector absolute tolerances
 		flag = CVodeSVtolerances(cvode_mem, reltol, abstol);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVRootInit to specify the root function g with 2 components
+		flag = CVodeRootInit(cvode_mem, 2, g);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Create dense SUNMATRIX for use in linear solver
+		// indexed by columns stacked on top of each other
+		try {
+		    A = new double[NEQ][NEQ];
+		}
+		catch (OutOfMemoryError e) {
+		    MipavUtil.displayError("Out of memory error trying to create A");
+		    return;
+		}
+		
+		// Create dense SUNLinearSolver object for use by CVode
+		LS = SUNDenseLinearSolver(y, A);
+		if (LS == null) {
+			return;
+		}
+		
+		// Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode
+		flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// Set the user-supplied Jacobian routine Jac
+		flag = CVDlsSetJacFn(cvode_mem, Jac);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// In loop, call CVode, print results, and test for error.
+		// Break out of loop when NOUT preset output times have been reached.
+		System.out.println(" \n3-species kinetics problem\n");
+		
+		iout = 0;
+		tout = T1;
+		
+		while (true) {
+			flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
+			switch (iout) {
+			case 0:
+				System.out.println("Example manual: at t = 0.4 y[0] = 0.98517 y[1] = 3.3864E-5 y[2] = 1.4794E-2");
+				break;
+			case 1:
+				System.out.println("Example manual: at t = 4.0 y[0] = 0.90552 y[1] = 2.2405E-5 y[2] = 9.4459E-2");
+				break;
+			case 2:
+				System.out.println("Example manual: at t = 40.0 y[0] = 0.71583 y[1] = 9.1856E-6 y[2] = 0.28416");
+				break;
+			case 3:
+				System.out.println("Example manual: at t = 400.0 y[0] = 0.45052 y[1] = 3.2229E-6 y[2] = 0.54947");
+				break;
+			case 4:
+				System.out.println("Example manual: at t = 4.0E3 y[0] = 0.18317 y[1] = 8.9403E-7 y[2] = 0.81683");
+				break;
+			case 5:
+				System.out.println("Example manual: at t = 4.0E4 y[0] = 3.8977E-2 y[1] = 1.6215E-7 y[2] = 0.96102");
+				break;
+			case 6:
+				System.out.println("Example manual: at t = 4.0E5 y[0] = 4.9387E-3 y[1] = 1.9852E-8 y[2] = 0.99506");
+				break;
+			case 7:
+				System.out.println("Example manual: at t = 4.0E6 y[0] = 5.1684E-4 y[1] = 2.0684E-9 y[2] = 0.99948");
+				break;
+			case 8:
+				System.out.println("Example manual: at t = 4.0E7 y[0] = 5.2039E-5 y[1] = 2.0817E-10 y[2] = 0.99995");
+				break;
+			case 9:
+				System.out.println("Example manual at t = 4.0E8 y[0] = 5.2106E-6 y[1] = 2.0842E-11 y[2] = 0.99999");
+				break;
+			case 10:
+				System.out.println("Example manual at t = 4.0E9 y[0] = 5.1881E-7 y[1] = 2.0752E-12 y[2] = 1.0000");
+				break;
+			case 11:
+				System.out.println("Example manual at t = 4.0E10 y[0] = 6.5181E-8 y[1] = 2.6072E-13 y[2] = 1.0000");
+				break;
+			}
+			System.out.println("MIPAV: at t = " + t[0] + " y[0] = " + y.data[0] + " y[1] = " + y.data[1] + " y[2] = " + y.data[2]);
+			
+			if (flag == CV_ROOT_RETURN) {
+			    flagr = CVodeGetRootInfo(cvode_mem, rootsfound)	;
+			    if (flagr == CV_MEM_NULL) {
+			    	return;
+			    }
+			    System.out.println("Roots found are " + rootsfound[0] + " and " + rootsfound[1]);
+			}
+			
+			if (flag < 0) {
+				System.out.println("CVode failed with flag = " + flag);
+				break;
+			}
+			
+			if (flag == CV_SUCCESS) {
+				iout++;
+				tout *= TMULT;
+			}
+			
+			if (iout == NOUT) {
+				break;
+			}
+		} // while (true)
+		
+		// Print some final statistics
+		PrintFinalStats(cvode_mem);
+		
+		// Check the solution error
+		flag = check_ans(y, reltol, abstol);
+		
+		// Free y and abstol vectors
+		N_VDestroy(y);
+		N_VDestroy(abstol);
+		
+		// Free the integrator memory
+		CVodeFree(cvode_mem);
+		
+		// Free the linear solver memory
+		SUNLinSolFree_Dense(LS);
+		
+		// Free the matrix memory
+		for (i = 0; i < NEQ; i++) {
+			A[i] = null;
+		}
+		A = null;
+		return;
+	}
+	
+	private void runcvsRoberts_dns_uw() {
+		/* -----------------------------------------------------------------
+		 * Programmer(s): Scott D. Cohen, Alan C. Hindmarsh and
+		 *                Radu Serban @ LLNL
+		 * -----------------------------------------------------------------
+		 * Example problem:
+		 * 
+		 * The following is a simple example problem, with the coding
+		 * needed for its solution by CVODE. The problem is from
+		 * chemical kinetics, and consists of the following three rate
+		 * equations:         
+		 *    dy1/dt = -.04*y1 + 1.e4*y2*y3
+		 *    dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e7*(y2)^2
+		 *    dy3/dt = 3.e7*(y2)^2
+		 * on the interval from t = 0.0 to t = 4.e10, with initial
+		 * conditions: y1 = 1.0, y2 = y3 = 0. The problem is stiff.
+		 * While integrating the system, we also use the rootfinding
+		 * feature to find the points at which y1 = 1e-4 or at which
+		 * y3 = 0.01. This program solves the problem with the BDF method,
+		 * Newton iteration with the SUNDENSE dense linear solver, and a
+		 * user-supplied Jacobian routine.
+		 * It uses a user-supplied function to compute the error weights
+		 * required for the WRMS norm calculations.
+		 * Output is printed in decades from t = .4 to t = 4.e10.
+		 * Run statistics (optional outputs) are printed at the end.
+		 * -----------------------------------------------------------------*/
+		/** Problem Constants */
+		final int NEQ = 3; // Number of equations
+		final double Y1 = 1.0; // Initial y components
+		final double Y2 = 0.0;
+		final double Y3 = 0.0;
+		//final double RTOL = 1.0E-4; // scalar relative tolerance
+		final double RTOL = 1.0E-12;
+		//final double ATOL1 = 1.0E-8; // vector absolute tolerance components
+		final double ATOL1 = 1.0E-12;
+		//final double ATOL2 = 1.0E-14;
+		final double ATOL2 = 1.0E-15;
+		//final double ATOL3 = 1.0E-6;
+		final double ATOL3 = 1.0E-12;
+		final double T0 = 0.0; // initial time
+		final double T1 = 0.4; // first output time
+		final double TMULT = 10.0; // output time factor
+		//final int NOUT = 12; // number of output times
+		final int NOUT = 12;
+		int f = cvsRoberts_dns;
+		int g = cvsRoberts_dns;
+		int Jac = cvsRoberts_dns;
+		int ewt_select = cvEwtUser_select1;
+		
+		// Set initial conditions
+		NVector y = new NVector();
+		NVector abstol = new NVector();
+		double yr[] = new double[]{Y1,Y2,Y3};
+		N_VNew_Serial(y, NEQ);
+		y.setData(yr);
+		double reltol = RTOL; // Set the scalar relative tolerance
+		// Set the vector absolute tolerance
+		double abstolr[] = new double[]{ATOL1,ATOL2,ATOL3};
+		N_VNew_Serial(abstol,NEQ);
+		abstol.setData(abstolr);
+		CVodeMemRec cvode_mem;
+		int flag;
+		int flagr;
+		double A[][];
+		SUNLinearSolver LS;
+		double tout;
+		int iout;
+		double t[] = new double[1];
+		int rootsfound[] = new int[2];
+		int i;
+		
+		// Call CVodeCreate to create the solver memory and specify the
+		// Backward Differentiation Formula and the use of a Newton
+		// iteration
+		cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
+		if (cvode_mem == null) {
+		    return;	
+		}
+		// Allow unlimited steps in reaching tout
+		flag = CVodeSetMaxNumSteps(cvode_mem, -1);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		// Allow many error test failures
+		flag = CVodeSetMaxErrTestFails(cvode_mem, Integer.MAX_VALUE);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeInit to initialize the integrator memory and specify the
+		// user's right hand side function in y' = f(t,y), the initial time T0, and
+	    // the initial dependent variable vector y
+		flag = CVodeInit(cvode_mem, f, T0, y);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Use private function to compute error weights
+		// CVodeWFtolerances specifies a user-provides function (of type CVEwtFn)
+		// which will be called to set the error weight vector.
+		flag = CVodeWFtolerances(cvode_mem, ewt_select);
 		if (flag != CV_SUCCESS) {
 			return;
 		}
@@ -1335,7 +1579,7 @@ public abstract class CVODES {
 	private int fTestMode(double t, NVector yv, NVector ydotv, CVodeMemRec user_data) {
 		double y[] = yv.getData();
 		double ydot[] = ydotv.getData();
-		if (problem == cvsRoberts_dns) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
 		    ydot[0] = -0.04*y[0] + 1.0E4*y[1]*y[2];
 		    ydot[2] = 3.0E7*y[1]*y[1];
 		    ydot[1] = -ydot[0] - ydot[2];
@@ -1365,7 +1609,7 @@ public abstract class CVODES {
 	 */
 	private int gTestMode(double t, NVector yv, double gout[], CVodeMemRec user_data) {
 		double y[] = yv.getData();
-		if (problem == cvsRoberts_dns) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
 		    gout[0] = y[0] - 0.0001;
 		    gout[1] = y[2] - 0.01;
 		}
@@ -1387,7 +1631,7 @@ public abstract class CVODES {
 	 */
 	private int JacTestMode(double t, NVector yv, NVector fy, double J[][], CVodeMemRec data, NVector tmp1, NVector tmp2, NVector tmp3) {
 		double y[] = yv.getData();
-		if (problem == cvsRoberts_dns) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
 		    J[0][0] = -0.04;
 		    J[0][1] = 1.0E4 * y[2];
 		    J[0][2] = 1.0E4 * y[1];
@@ -1411,6 +1655,39 @@ public abstract class CVODES {
 	}
 	
 	public abstract int Jac(double t, NVector yv, NVector fy, double J[][], CVodeMemRec data, NVector tmp1, NVector tmp2, NVector tmp3);
+	
+	public int ewtTestMode(NVector y, NVector w, CVodeMemRec user_data) {
+		if (problem == cvsRoberts_dns_uw) {
+			//final double RTOL = 1.0E-4; // scalar relative tolerance
+			final double RTOL = 1.0E-12;
+			//final double ATOL1 = 1.0E-8; // vector absolute tolerance components
+			final double ATOL1 = 1.0E-12;
+			//final double ATOL2 = 1.0E-14;
+			final double ATOL2 = 1.0E-15;
+			//final double ATOL3 = 1.0E-6;
+			final double ATOL3 = 1.0E-12;
+			int i;
+			double yy, ww, rtol;
+			double atol[] = new double[3];
+			
+			rtol = RTOL;
+			atol[0] = ATOL1;
+			atol[1] = ATOL2;
+			atol[2] = ATOL3;
+			
+			for (i = 0; i < 3; i++) {
+				yy = y.data[i];
+				ww = rtol * Math.abs(yy) + atol[i];
+				if (ww <= 0) {
+					return -1;
+				}
+				w.data[i] = 1.0/ww;
+			}
+		} // if (problem == cvsRoberts_dns_uw)
+		return 0;
+	}
+	
+	public abstract int ewt(NVector y, NVector w, CVodeMemRec user_data);
 	
 	
 	
@@ -2336,6 +2613,31 @@ public abstract class CVODES {
 
        return(CV_SUCCESS);
      }
+     
+     private int CVodeWFtolerances(CVodeMemRec cv_mem, int efun_select)
+ 	{
+
+ 	  if (cv_mem== null) {
+ 	    cvProcessError(null, CV_MEM_NULL, "CVODES",
+ 	                   "CVodeWFtolerances", MSGCV_NO_MEM);
+ 	    return(CV_MEM_NULL);
+ 	  }
+
+ 	  if (cv_mem.cv_MallocDone == false) {
+ 	    cvProcessError(cv_mem, CV_NO_MALLOC, "CVODES",
+ 	                   "CVodeWFtolerances", MSGCV_NO_MALLOC);
+ 	    return(CV_NO_MALLOC);
+ 	  }
+
+ 	  cv_mem.cv_itol = CV_WF;
+
+ 	  cv_mem.cv_user_efun = true;
+ 	  //cv_mem.cv_efun = efun;
+ 	  cv_mem.cv_efun_select = efun_select;
+ 	  cv_mem.cv_e_data = null; /* will be set to user_data in InitialSetup */
+
+ 	  return(CV_SUCCESS);
+ 	}
 
      private double N_VMin_Serial(NVector x) {
     	 int i;
@@ -3103,19 +3405,27 @@ public abstract class CVODES {
       /* Reset and check ewt, ewtQ, ewtS */   
       if (cv_mem.cv_nst > 0) {
 
-        ier = cv_efun(cv_mem.cv_zn[0], cv_mem.cv_ewt, cv_mem.cv_e_data, cv_mem.cv_efun_select);
-        if(ier != 0) {
-          if (cv_mem.cv_itol == CV_WF)
-            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
-                           MSGCV_EWT_NOW_FAIL, cv_mem.cv_tn);
-          else
-            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
-                           MSGCV_EWT_NOW_BAD, cv_mem.cv_tn);
-          istate = CV_ILL_INPUT;
-          cv_mem.cv_tretlast = tret[0] = cv_mem.cv_tn;
-          N_VScale_Serial(ONE, cv_mem.cv_zn[0], yout);
-          break;
-        }
+          if (testMode && cv_mem.cv_itol == CV_WF) {
+        	  ier = ewtTestMode(cv_mem.cv_zn[0], cv_mem.cv_ewt, cv_mem.cv_e_data);
+          }
+          else if ((!testMode) && cv_mem.cv_itol == CV_WF) {
+        	  ier = ewt(cv_mem.cv_zn[0], cv_mem.cv_ewt, cv_mem.cv_e_data);
+          }
+          else {
+    	      ier = cv_efun(cv_mem.cv_zn[0], cv_mem.cv_ewt, cv_mem.cv_e_data, cv_mem.cv_efun_select);
+          }
+          if(ier != 0) {
+	          if (cv_mem.cv_itol == CV_WF)
+	            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+	                           MSGCV_EWT_NOW_FAIL, cv_mem.cv_tn);
+	          else
+	            cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVode",
+	                           MSGCV_EWT_NOW_BAD, cv_mem.cv_tn);
+	          istate = CV_ILL_INPUT;
+	          cv_mem.cv_tretlast = tret[0] = cv_mem.cv_tn;
+	          N_VScale_Serial(ONE, cv_mem.cv_zn[0], yout);
+	          break;
+          }
 
         if (cv_mem.cv_quadr && cv_mem.cv_errconQ) {
           ier = cvQuadEwtSet(cv_mem, cv_mem.cv_znQ[0], cv_mem.cv_ewtQ);
@@ -3338,8 +3648,18 @@ public abstract class CVODES {
     else                      cv_mem.cv_e_data = cv_mem;
 
     /* Load initial error weights */
-    ier = cv_efun(cv_mem.cv_zn[0], cv_mem.cv_ewt,
+    if (testMode && cv_mem.cv_itol == CV_WF) {
+        ier = ewtTestMode(cv_mem.cv_zn[0], cv_mem.cv_ewt,
+                          cv_mem.cv_e_data);
+    }
+    else if ((!testMode) && cv_mem.cv_itol == CV_WF) {
+    	ier = ewt(cv_mem.cv_zn[0], cv_mem.cv_ewt,
+                cv_mem.cv_e_data);	
+    }
+    else {
+        ier = cv_efun(cv_mem.cv_zn[0], cv_mem.cv_ewt,
                           cv_mem.cv_e_data, cv_mem.cv_efun_select);
+    }
     if (ier != 0) {
       if (cv_mem.cv_itol == CV_WF) 
         cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "cvInitialSetup",
@@ -4535,7 +4855,15 @@ public abstract class CVODES {
    temp2 = cv_mem.cv_acor;
 
    N_VAbs_Serial(cv_mem.cv_zn[0], temp2);
-   cv_efun(cv_mem.cv_zn[0], temp1, cv_mem.cv_e_data, cv_mem.cv_efun_select);
+   if (testMode && cv_mem.cv_itol == CV_WF) {
+	   ewtTestMode(cv_mem.cv_zn[0], temp1, cv_mem.cv_e_data);
+   }
+   else if ((!testMode) && cv_mem.cv_itol == CV_WF) {
+	   ewt(cv_mem.cv_zn[0], temp1, cv_mem.cv_e_data);   
+   }
+   else {
+       cv_efun(cv_mem.cv_zn[0], temp1, cv_mem.cv_e_data, cv_mem.cv_efun_select);
+   }
    N_VInv_Serial(temp1, temp1);
    N_VLinearSum_Serial(HUB_FACTOR, temp2, ONE, temp1, temp1);
 
@@ -10024,7 +10352,6 @@ else                return(snrm);
 	  v.own_data = false;
 	  return(v);
 	}
-
 
 
 
