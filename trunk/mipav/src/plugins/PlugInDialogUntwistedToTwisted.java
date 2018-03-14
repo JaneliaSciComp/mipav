@@ -25,6 +25,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.AlgorithmTPSpline;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
@@ -88,9 +89,15 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	private String straightenedAnnotationFile;
 	private JTextField targetLocText;
 	private String targetDir;
+	
+
+	private JTextField targetPointsText;
+	private String targetPointsFile;
+	private JTextField inputPointsText;
+	private String inputPointsFile;
 //	private JTextField  baseFileNameText;
 //	private Vector<Integer> includeRange;
-	private JPanel inputsPanel;
+//	private JPanel inputsPanel;
 //	private JTextField rangeFusionText;
 
 	public PlugInDialogUntwistedToTwisted()
@@ -244,15 +251,52 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 				"output_images" + File.separator + targetDirName + "_toTwisted.xml";
 		File toTwistedFile = new File( toTwistedName );
 		File annotationFile = new File( straightenedAnnotationFile );
+		File targetFile = new File( targetPointsFile );
+		File inputFile = new File( inputPointsFile );
 		System.err.println(toTwistedName + " " + toTwistedFile.exists() );
 		ModelImage toTwisted = null;
-		if ( toTwistedFile.exists() && annotationFile.exists() )
+		if ( toTwistedFile.exists() && annotationFile.exists() && targetFile.exists() && inputFile.exists() )
 		{
 			System.err.println("opening image...");
 			FileIO fileIO = new FileIO();
 			toTwisted = fileIO.readImage(toTwistedName);  
 			if ( toTwisted != null )
 			{
+				// read registration points and calculate thin-plate spline transform:
+				VOI targetPts = LatticeModel.readAnnotationsCSV(targetPointsFile);
+				VOI inputPts = LatticeModel.readAnnotationsCSV(inputPointsFile);
+				int numTargetPts = targetPts.getCurves().size();
+				int numInputPts = inputPts.getCurves().size();
+				if ( numTargetPts != numInputPts ) {
+					MipavUtil.displayError( "Number of registration target points and input points must match" );
+					return;
+				}
+				double[] xSource = new double[ numTargetPts ]; 
+				double[] ySource = new double[ numTargetPts ]; 
+				double[] zSource = new double[ numTargetPts ]; 
+				double[] xTarget = new double[ numTargetPts ]; 
+				double[] yTarget = new double[ numTargetPts ]; 
+				double[] zTarget = new double[ numTargetPts ]; 
+				for ( int i = 0; i < numTargetPts; i++ ) {
+					Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
+					Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
+					xSource[i] = sourcePt.X;					ySource[i] = sourcePt.Y;					zSource[i] = sourcePt.Z;
+					xTarget[i] = targetPt.X;					yTarget[i] = targetPt.Y;					zTarget[i] = targetPt.Z;
+				}
+				AlgorithmTPSpline spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTarget, yTarget, zTarget, 0.0f, toTwisted,
+						toTwisted, true);
+
+		        spline.setRunningInSeparateThread(false);
+		        spline.run();
+
+//				for ( int i = 0; i < numTargetPts; i++ ) {
+//					Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
+//					Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
+//					float[] transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+//					System.err.println( sourcePt + "   =>  " + targetPt + "    " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+//				}
+		        
+				
 				int dimX = toTwisted.getExtents().length > 0 ? toTwisted.getExtents()[0] : 1;
 				int dimY = toTwisted.getExtents().length > 1 ? toTwisted.getExtents()[1] : 1;
 				int dimZ = toTwisted.getExtents().length > 2 ? toTwisted.getExtents()[2] : 1;
@@ -271,11 +315,23 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 							Vector3f pos = text.elementAt(0);
 							String name = text.getText();
 
-							if ( ((int)pos.X < dimX) && ((int)pos.Y < dimY)  && ((int)pos.Z < dimZ) )
+							// do thin-plane spline registration on input:
+							Vector3f transformedPt = new Vector3f(pos);
+							if ( spline != null )
 							{
-								float x = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 1 );
-								float y = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 2 );
-								float z = toTwisted.getFloatC( (int)pos.X, (int)pos.Y, (int)pos.Z, 3 );
+								float[] temp = spline.getCorrespondingPoint(pos.X, pos.Y, pos.Z);
+								transformedPt.X = temp[0];
+								transformedPt.Y = temp[1];
+								transformedPt.Z = temp[2];
+							}
+							
+							if ( ((int)transformedPt.X >= 0) && ((int)transformedPt.X < dimX) && 
+								 ((int)transformedPt.Y >= 0) && ((int)transformedPt.Y < dimY) &&
+								 ((int)transformedPt.Z >= 0) && ((int)transformedPt.Z < dimZ)    )
+							{
+								float x = toTwisted.getFloatC( (int)transformedPt.X, (int)transformedPt.Y, (int)transformedPt.Z, 1 );
+								float y = toTwisted.getFloatC( (int)transformedPt.X, (int)transformedPt.Y, (int)transformedPt.Z, 2 );
+								float z = toTwisted.getFloatC( (int)transformedPt.X, (int)transformedPt.Y, (int)transformedPt.Z, 3 );
 								Vector3f newPos = new Vector3f(x, y, z);
 
 								if ( !newPos.equals( Vector3f.ZERO ) )
@@ -296,7 +352,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 								failedList.add(name);
 							}
 						}
-						LatticeModel.saveAnnotationsAsCSV(outputDirName, inputFileName + "_" + targetDirName + ".csv", annotationVOI);
+						LatticeModel.saveAnnotationsAsCSV(outputDirName, inputFileName + "_" + targetDirName + "_retwist.csv", annotationVOI);
 						String msg = "Retwisted " + annotationVOI.getCurves().size() + " out of " + annotations.getCurves().size() + " annotations" + "\n";
 						for ( int j = 0; j < failedList.size(); j++ )
 						{
@@ -531,16 +587,36 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 
 
 
-		inputsPanel = new JPanel(new GridBagLayout());
-		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input Options"));
+		JPanel inputsPanel = new JPanel(new GridBagLayout());
+		inputsPanel.setBorder(JDialogBase.buildTitledBorder("Input - Untwisted Space"));
 		inputsPanel.setForeground(Color.black);
-
-		straightenedAnnotationText = gui.buildFileField("Annotations to retwist: ", "", false, JFileChooser.FILES_ONLY, this);
+		
+		straightenedAnnotationText = gui.buildFileField("Annotations to retwist (csv): ", "", false, JFileChooser.FILES_ONLY, this);
 		inputsPanel.add(straightenedAnnotationText.getParent(), gbc);
 		gbc.gridy++;
 
+
+		
+		JPanel regPanel = new JPanel(new GridBagLayout());
+		regPanel.setBorder(JDialogBase.buildTitledBorder("Registration - Untwisted Space"));
+		regPanel.setForeground(Color.black);
+
+		targetPointsText = gui.buildFileField("Target points - register to this space (csv): ", "", false, JFileChooser.FILES_ONLY, this);
+		regPanel.add(targetPointsText.getParent(), gbc);
+		gbc.gridy++;
+
+		inputPointsText = gui.buildFileField("Input points - transform this space to target (csv): ", "", false, JFileChooser.FILES_ONLY, this);
+		regPanel.add(inputPointsText.getParent(), gbc);
+		gbc.gridy++;
+
+
+
+		JPanel dirPanel = new JPanel(new GridBagLayout());
+		dirPanel.setBorder(JDialogBase.buildTitledBorder("Directory Information"));
+		dirPanel.setForeground(Color.black);
+		
 		targetLocText = gui.buildFileField("Target directory: ", "", false, JFileChooser.DIRECTORIES_ONLY, this);
-		inputsPanel.add(targetLocText.getParent(), gbc);
+		dirPanel.add(targetLocText.getParent(), gbc);
 		gbc.gridy++;
 
 //		baseFileNameText = gui.buildField("Base images name: ", "Decon");
@@ -574,7 +650,12 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 //		group.add(noseCentric);
 //		gbc.gridy++;
 
-		getContentPane().add(inputsPanel, BorderLayout.NORTH);
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(inputsPanel, BorderLayout.NORTH);
+		panel.add(regPanel, BorderLayout.CENTER);
+		panel.add(dirPanel, BorderLayout.SOUTH);
+		
+		getContentPane().add(panel, BorderLayout.NORTH);
 
 		JPanel okCancelPanel = gui.buildOKCancelPanel();
 		getContentPane().add(okCancelPanel, BorderLayout.SOUTH);
@@ -690,6 +771,8 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		straightenedAnnotationFile = straightenedAnnotationText.getText();
 		targetDir = targetLocText.getText();
 		
+		targetPointsFile = targetPointsText.getText();
+		inputPointsFile = inputPointsText.getText();
 		
 //		baseFileDir = baseFileLocText.getText();
 //		includeRange = new Vector<Integer>();
