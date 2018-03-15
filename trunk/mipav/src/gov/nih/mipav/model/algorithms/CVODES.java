@@ -4,6 +4,7 @@ import java.io.RandomAccessFile;
 
 import gov.nih.mipav.model.algorithms.CVODES.CVodeMemRec;
 import gov.nih.mipav.model.algorithms.CVODES.NVector;
+import gov.nih.mipav.model.algorithms.CVODES.UserData;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -107,6 +108,8 @@ public abstract class CVODES {
 	final int CV_NORMAL = 1;
 	final int CV_ONE_STEP = 2;
 	
+	
+	boolean sensi = true;
 	//ism:   This parameter specifies the sensitivity corrector type
 	//        to be used. In the CV_SIMULTANEOUS case, the nonlinear
 	//        systems for states and all sensitivities are solved
@@ -118,7 +121,8 @@ public abstract class CVODES {
 	final int CV_SIMULTANEOUS = 1;
 	final int CV_STAGGERED = 2;
 	final int CV_STAGGERED1 = 3;
-
+    int sensi_meth = CV_SIMULTANEOUS;
+    boolean err_con = true;
 
 	
 	/*
@@ -561,6 +565,10 @@ public abstract class CVODES {
     final int cvDlsFree_select = 1;
     // For cv_mem.cv_setup_select
     final int cvDlsSetup_select = 1;
+    // For cv_mem.cv_fS1_select
+    final int cvSensRhs1InternalDQ_select = -1;
+    // For cv_mem.cv_f_select
+    final int cvSensRhsInternalDQ_select = -1;
 
     final int cvsRoberts_dns = 1;
     final int cvsDirectDemo_ls_Problem_1 = 2;
@@ -602,6 +610,11 @@ public abstract class CVODES {
     	  public int fQ(double t, NVector x, NVector y, UserData user_data) {
     		  return 0;
     	  }
+    	  
+    	  public int fS(int Ns, double t, NVector yv, NVector ydot, int is,
+			         NVector yS, NVector ySdot, UserData user_data, NVector tmp1, NVector tmp2) {
+        		  return 0;  
+          }
     	  
     	  public int Jac(double t, NVector yv, NVector fy, double J[][], UserData data, NVector tmp1, 
     			  NVector tmp2, NVector tmp3) {
@@ -969,9 +982,9 @@ public abstract class CVODES {
 		final double TMULT = 10.0; // output time factor
 		//final int NOUT = 12; // number of output times
 		final int NOUT = 12;
-		int f = cvsRoberts_dns;
-		int g = cvsRoberts_dns;
-		int Jac = cvsRoberts_dns;
+		int f = cvsRoberts_dns_uw;
+		int g = cvsRoberts_dns_uw;
+		int Jac = cvsRoberts_dns_uw;
 		int ewt_select = cvEwtUser_select1;
 		
 		// Set initial conditions
@@ -1223,9 +1236,11 @@ public abstract class CVODES {
 		final double TMULT = 10.0; // output time factor
 		//final int NOUT = 12; // number of output times
 		final int NOUT = 12;
-		int f = cvsRoberts_dns;
-		int g = cvsRoberts_dns;
-		int Jac = cvsRoberts_dns;
+		int qu;
+		double hu;
+		int f = cvsRoberts_FSA_dns;
+		int g = cvsRoberts_FSA_dns;
+		int Jac = cvsRoberts_FSA_dns;
 		int ewt_select = cvEwtUser_select1;
 		// User data structure
 		double p[] = new double[]{0.04,1.0E4,3.0E7};
@@ -1234,7 +1249,7 @@ public abstract class CVODES {
 		
 		// Set initial conditions
 		NVector y = new NVector();
-		NVector yS[];
+		NVector yS[] = null;
 		NVector abstol = new NVector();
 		double yr[] = new double[]{Y1,Y2,Y3};
 		N_VNew_Serial(y, NEQ);
@@ -1254,9 +1269,9 @@ public abstract class CVODES {
 		double t[] = new double[1];
 		int rootsfound[] = new int[2];
 		int i;
-		boolean sensi = true;
 		double pbar[] = new double[3];
-		
+		int is;
+		int fS = cvsRoberts_FSA_dns;		
 		// Call CVodeCreate to create the solver memory and specify the
 		// Backward Differentiation Formula and the use of a Newton
 		// iteration
@@ -1340,78 +1355,132 @@ public abstract class CVODES {
 			if (yS == null) {
 				return;
 			}
+			
+			for (is = 0; is < NS; is++) {
+			    N_VConst_Serial(ZERO, yS[is]);	
+			}
+			
+			// Call CVodeSensInit1 to activate forward sensitivity computations
+			// and allocate internal memory for COVEDS related to sensitivity
+			// calculations.  Computes the right-hand sides of the sensitivity
+			// ODE, one at a time.
+			flag = CVodeSensInit1(cvode_mem, NS, sensi_meth, fS, yS);
+			if (flag < 0) {
+				return;
+			}
+			
+			// Call CVodeSensEEtolerances to estimate tolerances for sensitivity
+			// variables based on the tolerances supplied for state variables and
+			// the scaling factor pbar.
+			flag = CVodeSensEEtolerances(cvode_mem);
+			if (flag < 0) {
+				return;
+			}
+			
+			// Set sensitivity analysis optional inputs.
+			// Call CVodeSetSensErrCon to specify the error control strategy for
+			// sensitivity variables.
+			cvode_mem.cv_errconS = err_con;
+			
+			// Call CVodeSetSensParams to specify problem parameter information for
+			// sensitivity calculations.
+			flag = CVodeSetSensParams(cvode_mem, null, pbar, null);
+			if (flag < 0) {
+				return;
+			}
+			
+			System.out.print("Sensitivity: YES ");
+			if (sensi_meth == CV_SIMULTANEOUS) {
+				System.out.print("( SIMULTANEOUS + ");
+			}
+			else if (sensi_meth == CV_STAGGERED) {
+				System.out.print("( STAGGERED + ");
+			}
+			else {
+				System.out.print("( STAGGERED1 + ");
+			}
+			if (err_con) {
+				System.out.println(" FULL ERROR CONTROL )");
+			}
+			else {
+				System.out.println(" PARTIAL ERROR CONTROL )");
+			}
 		} // if (sensi)
+		else {
+			System.out.println("Sensitivity: NO ");
+		}
 		
-		iout = 0;
-		tout = T1;
+		// In loop over output points, call CVode, print results, test for error.
 		
-		while (true) {
+		for (iout = 1, tout = T1; iout <= NOUT; iout++, tout *= TMULT) {
 			flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
+			if (flag < 0) {
+				break;
+			}
 			switch (iout) {
-			case 0:
+			case 1:
 				System.out.println("Example manual: at t = 0.4 y[0] = 0.98517 y[1] = 3.3864E-5 y[2] = 1.4794E-2");
 				break;
-			case 1:
+			case 2:
 				System.out.println("Example manual: at t = 4.0 y[0] = 0.90552 y[1] = 2.2405E-5 y[2] = 9.4459E-2");
 				break;
-			case 2:
+			case 3:
 				System.out.println("Example manual: at t = 40.0 y[0] = 0.71583 y[1] = 9.1856E-6 y[2] = 0.28416");
 				break;
-			case 3:
+			case 4:
 				System.out.println("Example manual: at t = 400.0 y[0] = 0.45052 y[1] = 3.2229E-6 y[2] = 0.54947");
 				break;
-			case 4:
+			case 5:
 				System.out.println("Example manual: at t = 4.0E3 y[0] = 0.18317 y[1] = 8.9403E-7 y[2] = 0.81683");
 				break;
-			case 5:
+			case 6:
 				System.out.println("Example manual: at t = 4.0E4 y[0] = 3.8977E-2 y[1] = 1.6215E-7 y[2] = 0.96102");
 				break;
-			case 6:
+			case 7:
 				System.out.println("Example manual: at t = 4.0E5 y[0] = 4.9387E-3 y[1] = 1.9852E-8 y[2] = 0.99506");
 				break;
-			case 7:
+			case 8:
 				System.out.println("Example manual: at t = 4.0E6 y[0] = 5.1684E-4 y[1] = 2.0684E-9 y[2] = 0.99948");
 				break;
-			case 8:
+			case 9:
 				System.out.println("Example manual: at t = 4.0E7 y[0] = 5.2039E-5 y[1] = 2.0817E-10 y[2] = 0.99995");
 				break;
-			case 9:
+			case 910:
 				System.out.println("Example manual at t = 4.0E8 y[0] = 5.2106E-6 y[1] = 2.0842E-11 y[2] = 0.99999");
 				break;
-			case 10:
+			case 11:
 				System.out.println("Example manual at t = 4.0E9 y[0] = 5.1881E-7 y[1] = 2.0752E-12 y[2] = 1.0000");
 				break;
-			case 11:
+			case 12:
 				System.out.println("Example manual at t = 4.0E10 y[0] = 6.5181E-8 y[1] = 2.6072E-13 y[2] = 1.0000");
 				break;
 			}
+			 System.out.println("Number of integrations steps = " + cvode_mem.cv_nst);
+			// Returns the order on the last successful step
+		    qu = cvode_mem.cv_qu;
+		    // Return the step size used on the last successful step
+		    hu = cvode_mem.cv_hu;
+		    System.out.println("Step order qu = " + qu);
+		    System.out.println("Step size hu = " + hu);
+
 			System.out.println("MIPAV: at t = " + t[0] + " y[0] = " + y.data[0] + " y[1] = " + y.data[1] + " y[2] = " + y.data[2]);
 			
-			if (flag == CV_ROOT_RETURN) {
-			    flagr = CVodeGetRootInfo(cvode_mem, rootsfound)	;
-			    if (flagr == CV_MEM_NULL) {
-			    	return;
-			    }
-			    System.out.println("Roots found are " + rootsfound[0] + " and " + rootsfound[1]);
-			}
+			// Call CVodeGetSens to get the sensitivity solution vector after a
+			// successful return from CVode
+			if (sensi) {
+				flag = CVodeGetSens(cvode_mem, t, yS);
+				if (flag < 0) {
+				    break;	
+				}
+				System.out.println("Sensitivity 1 = " + yS[0].data[0] + "  " + yS[0].data[1] + "  " + yS[0].data[2]);
+				System.out.println("Sensitivity 2 = " + yS[1].data[0] + "  " + yS[1].data[1] + "  " + yS[1].data[2]);
+				System.out.println("Sensitivity 3 = " + yS[2].data[0] + "  " + yS[2].data[1] + "  " + yS[2].data[2]);
+			} // if (sensi)
 			
-			if (flag < 0) {
-				System.out.println("CVode failed with flag = " + flag);
-				break;
-			}
-			
-			if (flag == CV_SUCCESS) {
-				iout++;
-				tout *= TMULT;
-			}
-			
-			if (iout == NOUT) {
-				break;
-			}
-		} // while (true)
+		} // for (iout = 1, tout = T1; iout <= NOUT; iout++, tout *= TMULT)
 		
 		// Print some final statistics
-		PrintFinalStats(cvode_mem);
+		PrintFinalStats(cvode_mem, sensi);
 		
 		// Check the solution error
 		flag = check_ans(y, reltol, abstol);
@@ -1446,6 +1515,32 @@ public abstract class CVODES {
 	    System.out.println("Number of Jacobian evaluations = " + cv_mem.cv_lmem.nje);
 	    System.out.println("Number of calls to the ODE function needed for the DQ Jacobian approximation = " + cv_mem.cv_lmem.nfeDQ);
 	    System.out.println("Number of calls to g (for rootfinding) = " + cv_mem.cv_nge);
+	}
+	
+	private void PrintFinalStats(CVodeMemRec cv_mem, boolean sensi) {
+		long nfeLS;
+	    System.out.println("Number of integrations steps = " + cv_mem.cv_nst);
+	    System.out.println("Number of calls to f = " + cv_mem.cv_nfe);
+	    System.out.println("Number of calls to the linear solver setup routine = " + cv_mem.cv_nsetups);
+	    System.out.println("Number of error test failures = " + cv_mem.cv_netf[0]);
+	    System.out.println("Number of nonlinear solver iterations = " + cv_mem.cv_nni);
+	    System.out.println("Number of nonlinear solver convergence failures = " + cv_mem.cv_ncfn[0]);
+	    
+	    if (sensi) {
+	        System.out.println("Number of calls to the sensitivity right hand side routine = " + cv_mem.cv_nfSe);	
+	        System.out.println("Number of calls to the user f routine due to finite difference evaluations ");
+	        System.out.println("of the sensitivity equations = " + cv_mem.cv_nfeS);
+            System.out.println("Number of calls made to the linear solver's setup routine due to ");
+            System.out.println("sensitivity computations = " + cv_mem.cv_nsetupsS);
+            System.out.println("Number of local error test failures for sensitivity variables = " + cv_mem.cv_netfS);
+            System.out.println("Total number of nonlinear iterations for sensitivity variables = " + cv_mem.cv_nniS);
+            System.out.println("Total number of nonlinear convergence failures for sensitivity variables = " + cv_mem.cv_ncfnS);
+	    } // if (sensi)
+	    
+	    System.out.println("Number of Jacobian evaluations = " + cv_mem.cv_lmem.nje);
+	    // the number of calls to the ODE function needed for the DQ Jacobian approximation
+		nfeLS = cv_mem.cv_lmem.nfeDQ;
+		System.out.println("Number of f evaluations in linear solver = " + nfeLS);
 	}
 	
 	/* compare the solution at the final time 4e10s to a reference solution computed
@@ -1857,10 +1952,16 @@ public abstract class CVODES {
 	private int fTestMode(double t, NVector yv, NVector ydotv, UserData user_data) {
 		double y[] = yv.getData();
 		double ydot[] = ydotv.getData();
-		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)  || (problem == cvsRoberts_FSA_dns)) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
 		    ydot[0] = -0.04*y[0] + 1.0E4*y[1]*y[2];
 		    ydot[2] = 3.0E7*y[1]*y[1];
 		    ydot[1] = -ydot[0] - ydot[2];
+		}
+		else if (problem == cvsRoberts_FSA_dns) {
+			double p[] = user_data.array;
+	        ydot[0] = -p[0]*y[0] + p[1]*y[1]*y[2];
+	        ydot[2] = p[2]*y[1]*y[1];
+	        ydot[1] =-ydot[0] - ydot[2];
 		}
 		else if (problem == cvsDirectDemo_ls_Problem_1) {
 			ydot[0] = y[1];
@@ -1876,6 +1977,39 @@ public abstract class CVODES {
 	}
 	
 	public abstract int fQ(double t, NVector x, NVector y, UserData user_data);
+	
+	private int fsTestMode(int Ns, double t, NVector yv, NVector ydot, int is,
+			NVector yS, NVector ySdot, UserData user_data, NVector tmp1, NVector tmp2) {
+		double y[] = yv.data;
+		double p[] = user_data.array;
+		double s[] = yS.data;
+		double sd[] = ySdot.data;
+		if (problem == cvsRoberts_FSA_dns) {
+			sd[0] = -p[0]*s[0] + p[1]*y[2]*s[1] + p[1]*y[1]*s[2];
+			sd[2] = 2.0*p[2]*y[1]*s[1];
+			sd[1] = -sd[0] -sd[2];
+			
+			switch (is) {
+			case 0:
+				sd[0] += -y[0];
+				sd[1] += y[0];
+				break;
+			case 1:
+				sd[0] += y[1]*y[2];
+				sd[1] += -y[1]*y[2];
+				break;
+			case 2:
+				sd[1] += -y[1]*y[1];
+				sd[2] += y[1]*y[1];
+				break;
+			}
+		}
+		
+		return 0;
+	}
+	
+	public abstract int fS(int Ns, double t, NVector yv, NVector ydot, int is,
+			NVector yS, NVector ySdot, UserData user_data, NVector tmp1, NVector tmp2);
 	
 	/**
 	 * g routine.  Compute functions g_i(t,y) for i = 0,1.
@@ -1909,7 +2043,7 @@ public abstract class CVODES {
 	 */
 	private int JacTestMode(double t, NVector yv, NVector fy, double J[][], UserData data, NVector tmp1, NVector tmp2, NVector tmp3) {
 		double y[] = yv.getData();
-		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_FSA_dns)) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
 		    J[0][0] = -0.04;
 		    J[0][1] = 1.0E4 * y[2];
 		    J[0][2] = 1.0E4 * y[1];
@@ -1921,6 +2055,20 @@ public abstract class CVODES {
 		    J[2][0] = ZERO;
 		    J[2][1] = 6.0E7 * y[1];
 		    J[2][2] = ZERO;
+		}
+		else if (problem == cvsRoberts_FSA_dns) {
+			double p[] = data.array;
+			J[0][0] = -p[0];
+			J[0][1] = p[1]*y[2];
+			J[0][2] = p[1]*y[1];
+			
+			J[1][0] = p[0];
+			J[1][1] = -p[1]*y[2] - 2.0*p[2]*y[1];
+			J[1][2] = -p[1]*y[1];
+			
+			J[2][0] = ZERO;
+			J[2][1] = 2.0*p[2]*y[1];
+			J[2][2] = ZERO;
 		}
 		else if (problem == cvsDirectDemo_ls_Problem_1) {
 			J[0][0] = ZERO;
@@ -2044,9 +2192,11 @@ public abstract class CVODES {
 	  int cv_ism;                 /* ism = SIMULTANEOUS or STAGGERED              */
 
 	  //CVSensRhsFn cv_fS;          /* fS = (df/dy)*yS + (df/dp)                    */
+	  int cv_fS_select;
 	  //CVSensRhs1Fn cv_fS1;        /* fS1 = (df/dy)*yS_i + (df/dp)                 */
+	  int cv_fS1_select;
 	  //void *cv_fS_data;           /* data pointer passed to fS                    */
-	  CVodeMemRec cv_fS_data;
+	  UserData cv_fS_data = new UserData();;
 	  boolean cv_fSDQ;        /* SUNTRUE if using internal DQ functions       */
 	  int cv_ifS;                 /* ifS = ALLSENS or ONESENS                     */
 
@@ -2485,9 +2635,11 @@ public abstract class CVODES {
     	  /* Set default values for sensi. optional inputs */
 
     	  cv_mem.cv_sensi      = false;
-    	  //cv_mem.cv_fS_data    = mull;
+    	  cv_mem.cv_fS_data    = new UserData();
     	  //cv_mem.cv_fS         = cvSensRhsInternalDQ;
-    	  //cv_mem.cv_fS1        = cvSensRhs1InternalDQ;
+    	  cv_mem.cv_fS_select = cvSensRhsInternalDQ_select;
+    	  //cv_mem.cv_fS1         = cvSensRhs1InternalDQ;
+    	  cv_mem.cv_fS1_select = cvSensRhs1InternalDQ_select;
     	  cv_mem.cv_fSDQ       = true;
     	  cv_mem.cv_ifS        = CV_ONESENS;
     	  cv_mem.cv_DQtype     = CV_CENTERED;
@@ -4952,12 +5104,12 @@ public abstract class CVODES {
 
    if (cv_mem.cv_ifS==CV_ALLSENS) {
      retval = cvSensRhsInternalDQ(cv_mem.cv_Ns, time, ycur, fcur, yScur, 
-                            fScur, cv_mem.cv_fS_data, temp1, temp2);
+                            fScur, cv_mem.cv_fS_data.memRec, temp1, temp2);
      cv_mem.cv_nfSe++;
    } else {
      for (is=0; is<cv_mem.cv_Ns; is++) {
        retval = cvSensRhs1InternalDQ(cv_mem.cv_Ns, time, ycur, fcur, is, yScur[is], 
-                               fScur[is], cv_mem.cv_fS_data, temp1, temp2);
+                               fScur[is], cv_mem.cv_fS_data.memRec, temp1, temp2);
        cv_mem.cv_nfSe++;
        if (retval != 0) break;
      }
@@ -8882,7 +9034,7 @@ else                return(snrm);
 	   int retval;
 
 	   retval = cvSensRhs1InternalDQ(cv_mem.cv_Ns, time, ycur, fcur, is, yScur, 
-	                           fScur, cv_mem.cv_fS_data, temp1, temp2);
+	                           fScur, cv_mem.cv_fS_data.memRec, temp1, temp2);
 	   cv_mem.cv_nfSe++;
 
 	   return(retval);
@@ -10710,6 +10862,484 @@ else                return(snrm);
 	}
 
 
+	/*
+	 * CVodeSensInit1
+	 *
+	 * CVodeSensInit1 allocates and initializes sensitivity related 
+	 * memory for a problem (using a sensitivity RHS function of type
+	 * CVSensRhs1Fn). All problem specification inputs are checked for 
+	 * errors.
+	 * The return value is CV_SUCCESS = 0 if no errors occurred, or
+	 * a negative value otherwise.
+	 */
+    // CVSensRhs1Fn fS1
+	private int CVodeSensInit1(CVodeMemRec cv_mem, int Ns, int ism, int fS1_select, NVector yS0[])
+	{
+	  boolean allocOK;
+	  int is;
+	  int i;
+	  
+	  /* Check cvode_mem */
+
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeSensInit1",
+	                   MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Check if CVodeSensInit or CVodeSensInit1 was already called */
+
+	  if (cv_mem.cv_SensMallocDone) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSensInit1",
+	                   MSGCV_SENSINIT_2);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Check if Ns is legal */
+
+	  if (Ns<=0) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSensInit1",
+	                   MSGCV_BAD_NS);
+	    return(CV_ILL_INPUT);
+	  }
+	  cv_mem.cv_Ns = Ns;
+
+	  /* Check if ism is legal */
+
+	  if ((ism!=CV_SIMULTANEOUS) && (ism!=CV_STAGGERED) && (ism!=CV_STAGGERED1)) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSensInit1",
+	                   MSGCV_BAD_ISM);
+	    return(CV_ILL_INPUT);
+	  }
+	  cv_mem.cv_ism = ism;
+
+	  /* Check if yS0 is non-null */
+
+	  if (yS0 == null) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSensInit1",
+	                   MSGCV_NULL_YS0);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Store sensitivity RHS-related data */
+
+	  cv_mem.cv_ifS = CV_ONESENS;
+	  //cv_mem.cv_fS  = null;
+	  cv_mem.cv_fS_select = -1;
+
+	  if (fS1_select < 0) {
+
+	    cv_mem.cv_fSDQ = true;
+	    cv_mem.cv_fS1_select  = cvSensRhs1InternalDQ_select;
+	    cv_mem.cv_fS_data.memRec = cv_mem;
+
+	  } else {
+
+	    cv_mem.cv_fSDQ = false;
+	    cv_mem.cv_fS1_select  = fS1_select;
+	    cv_mem.cv_fS_data = cv_mem.cv_user_data;
+
+	  }
+
+	  /* Allocate ncfS1, ncfnS1, and nniS1 if needed */
+
+	  if (ism == CV_STAGGERED1) {
+	    cv_mem.cv_stgr1alloc = true;
+	    cv_mem.cv_ncfS1 = null;
+	    cv_mem.cv_ncfS1 = new int[Ns][1];
+	    cv_mem.cv_ncfnS1 = null;
+	    cv_mem.cv_ncfnS1 = new long[Ns][1];
+	    cv_mem.cv_nniS1 = null;
+	    cv_mem.cv_nniS1 = new long[Ns];
+	    if ( (cv_mem.cv_ncfS1 == null) ||
+	         (cv_mem.cv_ncfnS1 == null) ||
+	         (cv_mem.cv_nniS1 == null) ) {
+	      cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES", "CVodeSensInit1",
+	                     MSGCV_MEM_FAIL);
+	      return(CV_MEM_FAIL);
+	    }
+	  } else {
+	    cv_mem.cv_stgr1alloc = false;
+	  }
+
+	  /* Allocate the vectors (using yS0[0] as a template) */
+
+	  allocOK = cvSensAllocVectors(cv_mem, yS0[0]);
+	  if (!allocOK) {
+	    if (cv_mem.cv_stgr1alloc) {
+	      for (i = 0; i < cv_mem.cv_ncfS1.length; i++) {
+	          cv_mem.cv_ncfS1[i] = null;
+	      }
+	      cv_mem.cv_ncfS1 = null;
+	      for (i = 0; i < cv_mem.cv_ncfnS1.length; i++) {
+	          cv_mem.cv_ncfnS1[i] = null;
+	      }
+	      cv_mem.cv_ncfnS1 = null;
+	      cv_mem.cv_nniS1 = null;
+	    }
+	    cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES", "CVodeSensInit1",
+	                   MSGCV_MEM_FAIL);
+	    return(CV_MEM_FAIL);
+	  }
+	  
+	  /*---------------------------------------------- 
+	    All error checking is complete at this point 
+	    -----------------------------------------------*/
+
+	  /* Initialize znS[0] in the history array */
+
+	  for (is=0; is<Ns; is++) 
+	    N_VScale_Serial(ONE, yS0[is], cv_mem.cv_znS[0][is]);
+
+	  /* Initialize all sensitivity related counters */
+
+	  cv_mem.cv_nfSe     = 0;
+	  cv_mem.cv_nfeS     = 0;
+	  cv_mem.cv_ncfnS[0]    = 0;
+	  cv_mem.cv_netfS[0]    = 0;
+	  cv_mem.cv_nniS     = 0;
+	  cv_mem.cv_nsetupsS = 0;
+	  if (ism==CV_STAGGERED1)
+	    for (is=0; is<Ns; is++) {
+	      cv_mem.cv_ncfnS1[is][0] = 0;
+	      cv_mem.cv_nniS1[is] = 0;
+	    }
+
+	  /* Set default values for plist and pbar */
+
+	  for (is=0; is<Ns; is++) {
+	    cv_mem.cv_plist[is] = is;
+	    cv_mem.cv_pbar[is] = ONE;
+	  }
+
+	  /* Sensitivities will be computed */
+
+	  cv_mem.cv_sensi = true;
+	  cv_mem.cv_SensMallocDone = true;
+
+	  /* Sensitivity initialization was successfull */
+
+	  return(CV_SUCCESS);
+	}
+
+	/*
+	 * cvSensAllocVectors
+	 *
+	 * Create (through duplication) N_Vectors used for sensitivity analysis, 
+	 * using the N_Vector 'tmpl' as a template.
+	 */
+
+	private boolean cvSensAllocVectors(CVodeMemRec cv_mem, NVector tmpl) 
+	{
+	  int i, j;
+	  
+	  /* Allocate yS */
+	  cv_mem.cv_yS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, tmpl);
+	  if (cv_mem.cv_yS == null) {
+	    return(false);
+	  }
+
+	  /* Allocate ewtS */
+	  cv_mem.cv_ewtS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, tmpl);
+	  if (cv_mem.cv_ewtS == null) {
+	    N_VDestroyVectorArray(cv_mem.cv_yS, cv_mem.cv_Ns);
+	    return(false);
+	  }
+	  
+	  /* Allocate acorS */
+	  cv_mem.cv_acorS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, tmpl);
+	  if (cv_mem.cv_acorS == null) {
+	    N_VDestroyVectorArray(cv_mem.cv_yS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_ewtS, cv_mem.cv_Ns);
+	    return(false);
+	  }
+	  
+	  /* Allocate tempvS */
+	  cv_mem.cv_tempvS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, tmpl);
+	  if (cv_mem.cv_tempvS == null) {
+	    N_VDestroyVectorArray(cv_mem.cv_yS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_ewtS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_acorS, cv_mem.cv_Ns);
+	    return(false);
+	  }
+	    
+	  /* Allocate ftempS */
+	  cv_mem.cv_ftempS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, tmpl);
+	  if (cv_mem.cv_ftempS == null) {
+	    N_VDestroyVectorArray(cv_mem.cv_yS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_ewtS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_acorS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_tempvS, cv_mem.cv_Ns);
+	    return(false);
+	  }
+	  
+	  /* Allocate znS */
+	  for (j=0; j<=cv_mem.cv_qmax; j++) {
+	    cv_mem.cv_znS[j] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, tmpl);
+	    if (cv_mem.cv_znS[j] == null) {
+	      N_VDestroyVectorArray(cv_mem.cv_yS, cv_mem.cv_Ns);
+	      N_VDestroyVectorArray(cv_mem.cv_ewtS, cv_mem.cv_Ns);
+	      N_VDestroyVectorArray(cv_mem.cv_acorS, cv_mem.cv_Ns);
+	      N_VDestroyVectorArray(cv_mem.cv_tempvS, cv_mem.cv_Ns);
+	      N_VDestroyVectorArray(cv_mem.cv_ftempS, cv_mem.cv_Ns);
+	      for (i=0; i<j; i++)
+	        N_VDestroyVectorArray(cv_mem.cv_znS[i], cv_mem.cv_Ns);
+	      return(false);
+	    }
+	  }
+	  
+	  /* Allocate space for pbar and plist */
+	  cv_mem.cv_pbar = null;
+	  cv_mem.cv_pbar = new double[cv_mem.cv_Ns];
+	  if (cv_mem.cv_pbar == null) {
+	    N_VDestroyVectorArray(cv_mem.cv_yS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_ewtS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_acorS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_tempvS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_ftempS, cv_mem.cv_Ns);
+	    for (i=0; i<=cv_mem.cv_qmax; i++)
+	      N_VDestroyVectorArray(cv_mem.cv_znS[i], cv_mem.cv_Ns);
+	    return(false);
+	  }
+
+	  cv_mem.cv_plist = null;
+	  cv_mem.cv_plist = new int[cv_mem.cv_Ns];
+	  if (cv_mem.cv_plist == null) {
+	    N_VDestroyVectorArray(cv_mem.cv_yS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_ewtS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_acorS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_tempvS, cv_mem.cv_Ns);
+	    N_VDestroyVectorArray(cv_mem.cv_ftempS, cv_mem.cv_Ns);
+	    for (i=0; i<=cv_mem.cv_qmax; i++)
+	      N_VDestroyVectorArray(cv_mem.cv_znS[i], cv_mem.cv_Ns);
+	    cv_mem.cv_pbar = null;
+	    return(false);
+	  }
+
+	  /* Update solver workspace lengths */
+	  cv_mem.cv_lrw += (cv_mem.cv_qmax + 6)*cv_mem.cv_Ns*cv_mem.cv_lrw1 + cv_mem.cv_Ns;
+	  cv_mem.cv_liw += (cv_mem.cv_qmax + 6)*cv_mem.cv_Ns*cv_mem.cv_liw1 + cv_mem.cv_Ns;
+	  
+	  /* Store the value of qmax used here */
+	  cv_mem.cv_qmax_allocS = cv_mem.cv_qmax;
+
+	  return(true);
+	}
+
+	private int CVodeSensEEtolerances(CVodeMemRec cv_mem)
+	{
+
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeSensEEtolerances",
+	                   MSGCV_NO_MEM);    
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was sensitivity initialized? */
+
+	  if (cv_mem.cv_SensMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_SENS, "CVODES", "CVodeSensEEtolerances",
+	                   MSGCV_NO_SENSI);
+	    return(CV_NO_SENS);
+	  } 
+
+	  cv_mem.cv_itolS = CV_EE;
+
+	  return(CV_SUCCESS);
+	}
+
+	private int CVodeSetSensParams(CVodeMemRec cv_mem, double p[], double pbar[], int plist[])
+	{
+	  int is, Ns;
+
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeSetSensParams", MSGCV_NO_MEM);    
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was sensitivity initialized? */
+
+	  if (cv_mem.cv_SensMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_SENS, "CVODES", "CVodeSetSensParams", MSGCV_NO_SENSI);
+	    return(CV_NO_SENS);
+	  }
+
+	  Ns = cv_mem.cv_Ns;
+
+	  /* Parameters */
+
+	  cv_mem.cv_p = p;
+
+	  /* pbar */
+
+	  if (pbar != null)
+	    for (is=0; is<Ns; is++) {
+	      if (pbar[is] == ZERO) {
+	        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSetSensParams", MSGCV_BAD_PBAR);
+	        return(CV_ILL_INPUT);
+	      }
+	      cv_mem.cv_pbar[is] = Math.abs(pbar[is]);
+	    }
+	  else
+	    for (is=0; is<Ns; is++)
+	      cv_mem.cv_pbar[is] = ONE;
+
+	  /* plist */
+
+	  if (plist != null)
+	    for (is=0; is<Ns; is++) {
+	      if ( plist[is] < 0 ) {
+	        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSetSensParams", MSGCV_BAD_PLIST);
+	        return(CV_ILL_INPUT);
+	      }
+	      cv_mem.cv_plist[is] = plist[is];
+	    }
+	  else
+	    for (is=0; is<Ns; is++)
+	      cv_mem.cv_plist[is] = is;
+
+	  return(CV_SUCCESS);
+	}
+	
+	/* 
+	 * CVodeGetSens
+	 *
+	 * This routine extracts sensitivity solution into ySout at the
+	 * time at which CVode returned the solution.
+	 * This is just a wrapper that calls CVodeSensDky with k=0.
+	 */
+	 
+	private int CVodeGetSens(CVodeMemRec cv_mem, double tret[], NVector ySout[])
+	{
+	  int flag;
+
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeGetSens", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  tret[0] = cv_mem.cv_tretlast;
+
+	  flag = CVodeGetSensDky(cv_mem,cv_mem.cv_tretlast,0,ySout);
+
+	  return(flag);
+	}
+	
+	/*
+	 * CVodeGetSensDky
+	 *
+	 * If the user calls directly CVodeSensDky then s must be allocated
+	 * prior to this call. When CVodeSensDky is called by 
+	 * CVodeGetSens, only ier=CV_SUCCESS, ier=CV_NO_SENS, or 
+	 * ier=CV_BAD_T are possible.
+	 */
+
+	private int CVodeGetSensDky(CVodeMemRec cv_mem, double t, int k, NVector dkyS[])
+	{
+	  int ier=CV_SUCCESS;
+	  int is;
+	  
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeGetSensDky", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }  
+	  
+	  if (dkyS == null) {
+	    cvProcessError(cv_mem, CV_BAD_DKY, "CVODES",
+	                   "CVodeGetSensDky", MSGCV_NULL_DKYA);
+	    return(CV_BAD_DKY);
+	  }
+	  
+	  for (is=0; is<cv_mem.cv_Ns; is++) {
+	    ier = CVodeGetSensDky1(cv_mem,t,k,is,dkyS[is]);
+	    if (ier!=CV_SUCCESS) break;
+	  }
+	  
+	  return(ier);
+	}
+	    
+	/*
+	 * CVodeGetSensDky1
+	 *
+	 * CVodeSensDky1 computes the kth derivative of the yS[is] function at
+	 * time t, where tn-hu <= t <= tn, tn denotes the current         
+	 * internal time reached, and hu is the last internal step size   
+	 * successfully used by the solver. The user may request 
+	 * is=0, 1, ..., Ns-1 and k=0, 1, ..., qu, where qu is the current
+	 * order. The derivative vector is returned in dky. This vector 
+	 * must be allocated by the caller. It is only legal to call this         
+	 * function after a successful return from CVode with sensitivity 
+	 * computation enabled.
+	 */
+
+	private int CVodeGetSensDky1(CVodeMemRec cv_mem, double t, int k, int is, NVector dkyS)
+	{ 
+	  double s, c, r;
+	  double tfuzz, tp, tn1;
+	  int i, j;
+	  
+	  /* Check all inputs for legality */
+	  
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeGetSensDky1",
+	                   MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }  
+	  
+	  if(cv_mem.cv_sensi != true) {
+	    cvProcessError(cv_mem, CV_NO_SENS, "CVODES", "CVodeGetSensDky1",
+	                   MSGCV_NO_SENSI);
+	    return(CV_NO_SENS);
+	  }
+
+	  if (dkyS == null) {
+	    cvProcessError(cv_mem, CV_BAD_DKY, "CVODES", "CVodeGetSensDky1",
+	                   MSGCV_NULL_DKY);
+	    return(CV_BAD_DKY);
+	  }
+	  
+	  if ((k < 0) || (k > cv_mem.cv_q)) {
+	    cvProcessError(cv_mem, CV_BAD_K, "CVODES", "CVodeGetSensDky1",
+	                   MSGCV_BAD_K);
+	    return(CV_BAD_K);
+	  }
+	  
+	  if ((is < 0) || (is > cv_mem.cv_Ns-1)) {
+	    cvProcessError(cv_mem, CV_BAD_IS, "CVODES", "CVodeGetSensDky1",
+	                   MSGCV_BAD_IS);
+	    return(CV_BAD_IS);
+	  }
+	  
+	  /* Allow for some slack */
+	  tfuzz = FUZZ_FACTOR * cv_mem.cv_uround *
+	    (Math.abs(cv_mem.cv_tn) + Math.abs(cv_mem.cv_hu));
+	  if (cv_mem.cv_hu < ZERO) tfuzz = -tfuzz;
+	  tp = cv_mem.cv_tn - cv_mem.cv_hu - tfuzz;
+	  tn1 = cv_mem.cv_tn + tfuzz;
+	  if ((t-tp)*(t-tn1) > ZERO) {
+	    cvProcessError(cv_mem, CV_BAD_T, "CVODES", "CVodeGetSensDky1",
+	                   MSGCV_BAD_T);
+	    return(CV_BAD_T);
+	  }
+	  
+	  /* Sum the differentiated interpolating polynomial */
+	  
+	  s = (t - cv_mem.cv_tn) / cv_mem.cv_h;
+	  for (j=cv_mem.cv_q; j >= k; j--) {
+	    c = ONE;
+	    for (i=j; i >= j-k+1; i--) c *= i;
+	    if (j == cv_mem.cv_q) {
+	      N_VScale_Serial(c, cv_mem.cv_znS[cv_mem.cv_q][is], dkyS);
+	    } else {
+	      N_VLinearSum_Serial(c, cv_mem.cv_znS[j][is], s, dkyS, dkyS);
+	    }
+	  }
+	  if (k == 0) return(CV_SUCCESS);
+	  r = Math.pow(cv_mem.cv_h, -k);
+	  N_VScale_Serial(r, dkyS, dkyS);
+	  return(CV_SUCCESS);
+	  
+	}
 
 
 
