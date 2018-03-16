@@ -2,11 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 import java.io.RandomAccessFile;
 
-import gov.nih.mipav.model.algorithms.CVODES.CVodeMemRec;
-import gov.nih.mipav.model.algorithms.CVODES.NVector;
-import gov.nih.mipav.model.algorithms.CVODES.UserData;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
 
 public abstract class CVODES {
 	// This is a port of code from CVODES, a stiff and non-stiff ODE solver, from C to Java
@@ -574,7 +570,7 @@ public abstract class CVODES {
     final int cvsDirectDemo_ls_Problem_1 = 2;
     final int cvsRoberts_dns_uw = 3;
     final int cvsRoberts_FSA_dns = 4;
-    int problem = cvsDirectDemo_ls_Problem_1;
+    int problem = cvsRoberts_FSA_dns;
     boolean testMode = true;
 	
     // Linear Solver options for runcvsDirectDemo
@@ -611,7 +607,7 @@ public abstract class CVODES {
     		  return 0;
     	  }
     	  
-    	  public int fS(int Ns, double t, NVector yv, NVector ydot, int is,
+    	  public int fS1(int Ns, double t, NVector yv, NVector ydot, int is,
 			         NVector yS, NVector ySdot, UserData user_data, NVector tmp1, NVector tmp2) {
         		  return 0;  
           }
@@ -1239,7 +1235,6 @@ public abstract class CVODES {
 		int qu;
 		double hu;
 		int f = cvsRoberts_FSA_dns;
-		int g = cvsRoberts_FSA_dns;
 		int Jac = cvsRoberts_FSA_dns;
 		int ewt_select = cvEwtUser_select1;
 		// User data structure
@@ -1261,13 +1256,11 @@ public abstract class CVODES {
 		abstol.setData(abstolr);
 		CVodeMemRec cvode_mem;
 		int flag;
-		int flagr;
 		double A[][];
 		SUNLinearSolver LS;
 		double tout;
 		int iout;
 		double t[] = new double[1];
-		int rootsfound[] = new int[2];
 		int i;
 		double pbar[] = new double[3];
 		int is;
@@ -1488,6 +1481,11 @@ public abstract class CVODES {
 		// Free y and abstol vectors
 		N_VDestroy(y);
 		N_VDestroy(abstol);
+		if (sensi) {
+		    N_VDestroyVectorArray(yS, NS);  // Free yS vector 
+		}
+		data.array = null;
+		data = null;
 		
 		// Free the integrator memory
 		CVodeFree(cvode_mem);
@@ -1532,9 +1530,9 @@ public abstract class CVODES {
 	        System.out.println("of the sensitivity equations = " + cv_mem.cv_nfeS);
             System.out.println("Number of calls made to the linear solver's setup routine due to ");
             System.out.println("sensitivity computations = " + cv_mem.cv_nsetupsS);
-            System.out.println("Number of local error test failures for sensitivity variables = " + cv_mem.cv_netfS);
+            System.out.println("Number of local error test failures for sensitivity variables = " + cv_mem.cv_netfS[0]);
             System.out.println("Total number of nonlinear iterations for sensitivity variables = " + cv_mem.cv_nniS);
-            System.out.println("Total number of nonlinear convergence failures for sensitivity variables = " + cv_mem.cv_ncfnS);
+            System.out.println("Total number of nonlinear convergence failures for sensitivity variables = " + cv_mem.cv_ncfnS[0]);
 	    } // if (sensi)
 	    
 	    System.out.println("Number of Jacobian evaluations = " + cv_mem.cv_lmem.nje);
@@ -1656,7 +1654,7 @@ public abstract class CVODES {
 		double tout;
 		int qu;
 		double hu;
-		int nerr = 0;
+		//int nerr = 0;
 		double er;
 	    NVector y = null;
 	    double A[][] = null;
@@ -1723,14 +1721,14 @@ public abstract class CVODES {
 		        System.out.println("Step order qu = " + qu);
 		        System.out.println("Step size hu = " + hu);
 		        if (flag != CV_SUCCESS) {
-		        	nerr++;
+		        	//nerr++;
 		        	break;
 		        }
 		        if ((iout %2) == 0) {
 		            er = Math.abs(y.data[0])/abstol;
 		            if (er > ero) ero = er;
 		            if (er > P1_TOL_FACTOR) {
-		            	nerr++;
+		            	//nerr++;
 		            	System.out.println("Error exceeds " + P1_TOL_FACTOR + " * tolerance");
 		            }
 		        } // if ((iout %2) == 0)
@@ -1791,14 +1789,14 @@ public abstract class CVODES {
 		        System.out.println("Step order qu = " + qu);
 		        System.out.println("Step size hu = " + hu);
 		        if (flag != CV_SUCCESS) {
-		        	nerr++;
+		        	//nerr++;
 		        	break;
 		        }
 		        if ((iout %2) == 0) {
 		            er = Math.abs(y.data[0])/abstol;
 		            if (er > ero) ero = er;
 		            if (er > P1_TOL_FACTOR) {
-		            	nerr++;
+		            	//nerr++;
 		            	System.out.println("Error exceeds " + P1_TOL_FACTOR + " * tolerance");
 		            }
 		        } // if ((iout %2) == 0)
@@ -1978,7 +1976,7 @@ public abstract class CVODES {
 	
 	public abstract int fQ(double t, NVector x, NVector y, UserData user_data);
 	
-	private int fsTestMode(int Ns, double t, NVector yv, NVector ydot, int is,
+	private int fS1TestMode(int Ns, double t, NVector yv, NVector ydot, int is,
 			NVector yS, NVector ySdot, UserData user_data, NVector tmp1, NVector tmp2) {
 		double y[] = yv.data;
 		double p[] = user_data.array;
@@ -2008,7 +2006,7 @@ public abstract class CVODES {
 		return 0;
 	}
 	
-	public abstract int fS(int Ns, double t, NVector yv, NVector ydot, int is,
+	public abstract int fS1(int Ns, double t, NVector yv, NVector ydot, int is,
 			NVector yS, NVector ySdot, UserData user_data, NVector tmp1, NVector tmp2);
 	
 	/**
@@ -2740,7 +2738,8 @@ public abstract class CVODES {
 
      int CVodeInit(CVodeMemRec cv_mem, int f, double t0, NVector y0)
      {
-       boolean nvectorOK, allocOK;
+       //boolean nvectorOK; 
+       boolean allocOK;
        long lrw1[] = new long[1];
        long liw1[] = new long[1];
        int i,k;
@@ -5103,13 +5102,25 @@ public abstract class CVODES {
    int retval=0, is;
 
    if (cv_mem.cv_ifS==CV_ALLSENS) {
-     retval = cvSensRhsInternalDQ(cv_mem.cv_Ns, time, ycur, fcur, yScur, 
+	 if (cv_mem.cv_fSDQ) {
+         retval = cvSensRhsInternalDQ(cv_mem.cv_Ns, time, ycur, fcur, yScur, 
                             fScur, cv_mem.cv_fS_data.memRec, temp1, temp2);
+	 }
      cv_mem.cv_nfSe++;
    } else {
      for (is=0; is<cv_mem.cv_Ns; is++) {
+      if (cv_mem.cv_fSDQ) {
        retval = cvSensRhs1InternalDQ(cv_mem.cv_Ns, time, ycur, fcur, is, yScur[is], 
                                fScur[is], cv_mem.cv_fS_data.memRec, temp1, temp2);
+       }
+       else if (testMode) {
+    	  fS1TestMode(cv_mem.cv_Ns, time, ycur, fcur, is, yScur[is], 
+                  fScur[is], cv_mem.cv_fS_data, temp1, temp2);
+       }
+       else {
+    	   fS1(cv_mem.cv_Ns, time, ycur, fcur, is, yScur[is], 
+                   fScur[is], cv_mem.cv_fS_data, temp1, temp2);   
+       }
        cv_mem.cv_nfSe++;
        if (retval != 0) break;
      }
@@ -9033,8 +9044,18 @@ else                return(snrm);
 	 {
 	   int retval;
 
-	   retval = cvSensRhs1InternalDQ(cv_mem.cv_Ns, time, ycur, fcur, is, yScur, 
+	   if (cv_mem.cv_fSDQ) {
+	       retval = cvSensRhs1InternalDQ(cv_mem.cv_Ns, time, ycur, fcur, is, yScur, 
 	                           fScur, cv_mem.cv_fS_data.memRec, temp1, temp2);
+	   }
+	   else if (testMode) {
+		   retval = fS1TestMode(cv_mem.cv_Ns, time, ycur, fcur, is, yScur, 
+                   fScur, cv_mem.cv_fS_data, temp1, temp2);   
+	   }
+	   else {
+		   retval = fS1(cv_mem.cv_Ns, time, ycur, fcur, is, yScur, 
+                   fScur, cv_mem.cv_fS_data, temp1, temp2);      
+	   }
 	   cv_mem.cv_nfSe++;
 
 	   return(retval);
@@ -10650,8 +10671,6 @@ else                return(snrm);
 	  CVDlsMemRec cvdls_mem;
 	  int lrw1[] = new int[1];
 	  int liw1[] = new int[1];
-	  long lrw, liw;
-	  int flag;
 
 	  /* Return immediately if cvode_mem or cv_mem->cv_lmem are NULL */
 	  if (cv_mem == null) {
@@ -10801,7 +10820,6 @@ else                return(snrm);
 
 	  vs = null;
 	  vs = new NVector[count];
-	  if(vs == null) return(null);
 
 	  for (j = 0; j < count; j++) {
 	    vs[j] = null;
