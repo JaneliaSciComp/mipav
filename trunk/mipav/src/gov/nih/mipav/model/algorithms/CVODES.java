@@ -10313,8 +10313,8 @@ else                return(snrm);
 	    	   cv_mem.cv_ncfS1[i] = null;
 	       }
 	       cv_mem.cv_ncfS1 = null;
-	       for (i = 0; i < cv_mem.cv_ncfS1.length; i++) {
-	    	   cv_mem.cv_ncfS1[i] = null;
+	       for (i = 0; i < cv_mem.cv_ncfnS1.length; i++) {
+	    	   cv_mem.cv_ncfnS1[i] = null;
 	       }
 	       cv_mem.cv_ncfnS1 = null;
 	       cv_mem.cv_nniS1 = null;
