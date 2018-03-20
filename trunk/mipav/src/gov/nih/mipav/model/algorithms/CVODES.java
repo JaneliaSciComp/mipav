@@ -570,7 +570,7 @@ public abstract class CVODES {
     final int cvsDirectDemo_ls_Problem_1 = 2;
     final int cvsRoberts_dns_uw = 3;
     final int cvsRoberts_FSA_dns = 4;
-    int problem = cvsRoberts_FSA_dns;
+    int problem = cvsDirectDemo_ls_Problem_1;
     boolean testMode = true;
 	
     // Linear Solver options for runcvsDirectDemo
@@ -2588,7 +2588,7 @@ public abstract class CVODES {
 
     	  //cv_mem.cv_f          = null;
     	  cv_mem.cv_f = -1;
-    	  //cv_mem.cv_user_data  = null;
+    	  cv_mem.cv_user_data  = null;
     	  cv_mem.cv_itol       = CV_NN;
     	  cv_mem.cv_user_efun  = false;
     	  //cv_mem.cv_efun       = null;
