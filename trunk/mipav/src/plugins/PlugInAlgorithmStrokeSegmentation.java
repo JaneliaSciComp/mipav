@@ -1,4 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.model.structures.*;
@@ -7,7 +8,6 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogFuzzyCMeans;
 
 import java.io.*;
-import java.nio.file.*;
 import java.util.Stack;
 import java.util.Vector;
 
@@ -47,6 +47,11 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     private static final String voiExtension = ".xml";
     
     private String coreOutputDir;
+    
+    private float lightboxOpacity = 0.5f;
+    
+    private File adcLightboxFile;
+    private File dwiLightboxFile;
     
     /**
      * Constructor.
@@ -157,7 +162,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         fireProgressStateChanged("Saving DWI mask ...");
         fireProgressStateChanged(50);
 
-        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_DWI_seg");
+        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_DWI_seg", FileUtility.XML);
         
         // get pixels from ADC within mask with intensity < 620
         fireProgressStateChanged("Thresholding ADC ...");
@@ -182,7 +187,14 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             return;
         }
         
-        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh");
+        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh", FileUtility.XML);
+        
+        // combine threshold with ADC and save lightbox
+        ModelImage adcLightbox = generateLightbox(adcImage, dwiSeg, lightboxOpacity);
+
+        adcLightboxFile = saveImageFile(adcLightbox, coreOutputDir, outputBasename + "_ADC_thresh_lightbox", FileUtility.PNG);
+        
+        adcLightbox.disposeLocal();
         
         // select largest object
         fireProgressStateChanged("Finding core lesion ...");
@@ -242,7 +254,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
                 return;
             }
             
-            saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_removed");
+            saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_removed", FileUtility.XML);
         }
         
         short[] objectBuffer = keepOnlyLargestObject(dwiSeg, dwiSegBuffer);
@@ -257,19 +269,28 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             return;
         }
         
-        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest");
+        saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest", FileUtility.XML);
         
-        // output core object to VOI on disk
-        fireProgressStateChanged("Saving core VOI ...");
-        fireProgressStateChanged(80);
+        // combine core mask with DWI and save lightbox
+        ModelImage dwiLightbox = generateLightbox(dwiImage, dwiSeg, lightboxOpacity);
         
-        coreVOI = maskToVOI(dwiSeg);
-        if (!saveVOI(dwiSeg, coreVOI, coreOutputDir, outputBasename + "_VOI")) {
-            // problem saving voi
-            displayError("Error saving core VOI");
-            setCompleted(false);
-            return;
-        }
+        dwiLightboxFile = saveImageFile(dwiLightbox, coreOutputDir, outputBasename + "_DWI_core_lightbox", FileUtility.PNG);
+        
+        dwiLightbox.disposeLocal();
+        
+        // commented out because masks seem just as useful to users
+        
+//        // output core object to VOI on disk
+//        fireProgressStateChanged("Saving core VOI ...");
+//        fireProgressStateChanged(80);
+//        
+//        coreVOI = maskToVOI(dwiSeg);
+//        if (!saveVOI(dwiSeg, coreVOI, coreOutputDir, outputBasename + "_VOI")) {
+//            // problem saving voi
+//            displayError("Error saving core VOI");
+//            setCompleted(false);
+//            return;
+//        }
         
         // save core stats to tab-delmited file
         if (!saveCoreStats(coreOutputDir, dwiImage.getImageFileName(), adcImage.getImageFileName(), outputBasename + "_VOI" + voiExtension, largestObject.size, adcImage.getResolutions(0))) {
@@ -297,7 +318,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return coreVOI;
     }
     
-    private void saveImageFile(final ModelImage img, final String dir, final String fileBasename) {
+    private File saveImageFile(final ModelImage img, final String dir, final String fileBasename, int fileType) {
         if (fileIO == null) {
             fileIO = new FileIO();
             fileIO.setQuiet(true);
@@ -316,13 +337,16 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
             opts.setEndTime(img.getExtents()[3] - 1);
         }
 
-        opts.setFileType(FileUtility.XML);
-        opts.setFileName(fileBasename + ".xml");
+        opts.setFileType(fileType);
+        final String ext = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
+        opts.setFileName(fileBasename + ext);
 
         opts.setOptionsSet(true);
         opts.setMultiFile(false);
 
         fileIO.writeImage(img, opts, false, false);
+        
+        return new File(dir + File.separator + fileBasename + ext);
     }
     
     public short[] keepOnlyLargestObject(final ModelImage img, final short[] imgBuffer) {
@@ -529,7 +553,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
      * Simple class to temporarily store the object's size, ID and seed index value. This class is used by the
      * identifyObjects and deleteObjects methods of AlgorithmMorphology3D class.
      */
-    private class MaskObject {
+    public class MaskObject {
 
         /** DOCUMENT ME! */
         public short id = 0;
@@ -618,5 +642,70 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         }
         
         return true;
+    }
+    
+    private ModelImage generateLightbox(final ModelImage imgA, final ModelImage mask, float blendingOpacity) {
+        ModelImage lightbox = null;
+        
+        ModelImage newRGB;
+        if (imgA.isColorImage()) {
+            newRGB = (ModelImage) imgA.clone();
+        } else {
+            newRGB = new ModelImage(ModelImage.ARGB, imgA.getExtents(), imgA.getImageName());
+            final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(imgA, imgA, imgA, newRGB, true, true, 255.0f, true);
+            mathAlgo.run();
+        }
+        
+        // set any values to fully red if set in the mask
+        for (int i = 0; i < mask.getDataSize(); i++) {
+            if (mask.getBoolean(i) == true) {
+                // TODO set value with opacity blending
+                
+                newRGB.setC(i, 1, 255.0f);
+                newRGB.setC(i, 2, 0f);
+                newRGB.setC(i, 3, 0f);
+            }
+        }
+        
+        // TODO change based on x/y dim size
+        final int zoomPercent = 125;
+        
+        // TODO change based on slice num
+        final int columns = 8;
+        final int rows = 5;
+        
+        final int rBorderVal = 0;
+        final int gBorderVal = 0;
+        final int bBorderVal = 0;
+        final int borderThick = 0;
+        
+        int startSlice = 0;
+        int endSlice = imgA.getExtents()[2] - 1;
+        LightboxGenerator lightGen;
+
+        try {
+            lightGen = new LightboxGenerator(newRGB, startSlice, endSlice, zoomPercent, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+            lightGen.run();
+            lightbox = lightGen.getImage();
+            lightbox.calcMinMax();
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+        
+        newRGB.disposeLocal();
+        
+        return lightbox;
+    }
+    
+    public File getAdcTheshLightboxFile() {
+        return adcLightboxFile;
+    }
+    
+    public File getDwiTheshLightboxFile() {
+        return dwiLightboxFile;
+    }
+    
+    public MaskObject getLargestObject() {
+        return largestObject;
     }
 }

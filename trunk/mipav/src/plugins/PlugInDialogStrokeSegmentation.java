@@ -2,11 +2,13 @@ import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.WidgetFactory;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -60,6 +62,10 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     
     private PlugInAlgorithmStrokeSegmentation segAlgo = null;
     
+    private boolean isDicomListenerRun = false;
+    
+    private StrokeSegmentationDicomReceiver listenerParent;
+    
     private static final String svnVersion = "$Rev$";
 
     private static final String svnLastUpdate = "$Date$";
@@ -106,6 +112,60 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
     }
     
     /**
+     * Constructor for DICOM catcher.
+     */
+    public PlugInDialogStrokeSegmentation(final StrokeSegmentationDicomReceiver parent, final String dicomDir) {
+        super(false);
+
+        setVisible(false);
+        
+        isDicomListenerRun = true;
+        
+        listenerParent = parent;
+        
+        dirFileString = dicomDir;
+        
+        // set dir and find files
+        findVolumesInDir(dirFileString);
+        
+        if (adcPath != null && !adcPath.equals("")) {
+            final File adcFile = new File(adcPath);
+            adcImage = openImage(adcFile, adcImageMultifile);
+            
+            if (adcImage == null) {
+                System.err.println("Error opening ADC volume from file: " + adcPath);
+                return;
+            }
+        } else {
+            System.err.println("No ADC volume selected.");
+            return;
+        }
+        
+        if (dwiPath != null && !dwiPath.equals("")) {
+            final File dwiFile = new File(dwiPath);
+            dwiImage = openImage(dwiFile, dwiImageMultifile);
+            
+            if (dwiImage == null) {
+                System.err.println("Error opening DWI volume from file: " + dwiPath);
+                return;
+            }
+        } else {
+            System.err.println("No DWI volume selected.");
+            return;
+        }
+        
+        // default values
+        adcThreshold = 620;
+        doSymmetryRemoval = true;
+        doCerebellumSkip = true;
+        cerebellumSkipSliceMax = 7;
+        
+        if (adcImage != null && dwiImage != null) {
+            callAlgorithm();
+        }
+    }
+    
+    /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
      * @param  event  Event that triggers function.
@@ -147,16 +207,33 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof PlugInAlgorithmStrokeSegmentation) {
-            Preferences.debug("Stroke segmentation Elapsed: " + algorithm.getElapsedTime());
+        PlugInAlgorithmStrokeSegmentation segAlgo = (PlugInAlgorithmStrokeSegmentation) algorithm;
+        
+        if (segAlgo instanceof PlugInAlgorithmStrokeSegmentation) {
+            Preferences.debug("Stroke segmentation Elapsed: " + segAlgo.getElapsedTime());
+            
+            float[] resol = adcImage.getResolutions(0);
+            int[] units = adcImage.getUnitsOfMeasure();
+            
+            Unit unit = Unit.getUnitFromLegacyNum(units[0]);
+            double[] resolCC = new double[resol.length];
+            for (int i = 0; i < resol.length; i++) {
+                resolCC[i] = unit.convertTo(resol[i], Unit.CENTIMETERS);
+            }
+            
+            double coreVolCC = segAlgo.getLargestObject().size * resolCC[0] * resolCC[1] * resolCC[2];
+            
+            if (listenerParent != null) {
+                listenerParent.emailReport(adcImage, segAlgo.getAdcTheshLightboxFile(), segAlgo.getDwiTheshLightboxFile(), coreVolCC);
+            }
 
-            if (algorithm.isCompleted()) {
+            if (segAlgo.isCompleted()) {
                 insertScriptLine();
             }
 
-            if (algorithm != null) {
-                algorithm.finalize();
-                algorithm = null;
+            if (segAlgo != null) {
+                segAlgo.finalize();
+                segAlgo = null;
             }
             
             // if running from a script, the script runner manages the adc/dwi image cleanup
@@ -171,11 +248,13 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                 }
             }
 
-            if (isExitRequired()) {
+            if (!isDicomListenerRun && isExitRequired()) {
                 System.exit(0);
             } else {
                 dispose();
             }
+            
+            log("Segmentation algorithm complete.");
         }
 
     }
@@ -284,7 +363,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
             return;
         }
 
-    } // end callAlgorithm()
+    }
 
     protected void setGUIFromParams() {
         adcImage = scriptParameters.retrieveImage("adc_image");
@@ -294,7 +373,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         doSymmetryRemoval = scriptParameters.getParams().getBoolean("do_symmetry_removal");
         
-        // TODO cerebellum skip
+        doCerebellumSkip = scriptParameters.getParams().getBoolean("do_cerebellum_skip");
+        cerebellumSkipSliceMax = scriptParameters.getParams().getInt("cerebellum_skip_slice_max");
         
         outputDir = adcImage.getImageDirectory() + File.separator;
     }
@@ -304,7 +384,8 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         scriptParameters.storeImage(dwiImage, "dwi_image");
         scriptParameters.getParams().put(ParameterFactory.newParameter("adc_threshold", adcThreshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_symmetry_removal", doSymmetryRemoval));
-        // TODO cerebellum skip
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_cerebellum_skip", doCerebellumSkip));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cerebellum_skip_slice_max", cerebellumSkipSliceMax));
     }
     
     /**
@@ -354,8 +435,6 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         symmetryCheckbox.setForeground(Color.black);
         symmetryCheckbox.setFont(serif12);
         mainPanel.add(symmetryCheckbox, gbc);
-        
-        // TODO cerebellum skip fields
         
         gbc.gridy++;
         gbc.gridx = 0;
@@ -705,6 +784,11 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
         
         boolean checkedFirstFile = false;
         for (File file : dirContents) {
+            // skip previously generated files
+            if (file.getName().equalsIgnoreCase("core_seg_report.html")) {
+                continue;
+            }
+            
             if (file.isDirectory()) {
                 findDicomFilesRecursive(file);
             } else {
@@ -734,6 +818,17 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
                     img = null;
                 }
             }
+        }
+    }
+    
+    /**
+     * Append a line to the log output area in the DICOM listener Log tab.
+     * 
+     * @param line The line to append (do not include the trailing newline).
+     */
+    public void log(final String line) {
+        if (listenerParent != null) {
+            listenerParent.log(line);
         }
     }
 }
