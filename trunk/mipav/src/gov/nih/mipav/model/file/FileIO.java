@@ -3637,8 +3637,8 @@ public class FileIO {
             if (fileType == FileUtility.UNDEFINED) { // if image type not defined by extension, popup
                 fileType = getFileType(); // dialog to get user to define image type
                 userDefinedFileType = fileType;
-                if (fileName.indexOf(".") != -1) {
-                    userDefinedSuffix = "." + fileName.split("\\.")[1];
+                if (fileName.lastIndexOf(".") != -1) {
+                    userDefinedSuffix = "." + fileName.substring(fileName.lastIndexOf(".") + 1);
                 }
             }
 
@@ -5656,7 +5656,7 @@ public class FileIO {
                 }
 
                 if (fName.indexOf(".") != -1) {
-                    fName = fName.substring(0, fName.indexOf(".")) + start + fName.substring(fName.indexOf("."), fName.length());
+                    fName = fName.substring(0, fName.lastIndexOf(".")) + start + fName.substring(fName.lastIndexOf("."), fName.length());
                 } else {
                     fName = fName + start;
                 }
@@ -15248,7 +15248,7 @@ public class FileIO {
         fileDicom.getTagTable().setValue("0002,0000", new Integer(metaInformationGroupLength), 4);
 
         if (options.isSaveAs()) {
-            index = options.getFileName().indexOf(".");
+            index = options.getFileName().lastIndexOf(".");
             prefix = options.getFileName().substring(0, index); // Used for setting file name
             fileSuffix = options.getFileName().substring(index);
         }
@@ -16270,7 +16270,7 @@ public class FileIO {
         createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
 
         if (options.isSaveAs()) {
-            index = options.getFileName().indexOf(".");
+            index = options.getFileName().lastIndexOf(".");
             prefix = options.getFileName().substring(0, index); // Used for setting file name
             fileSuffix = options.getFileName().substring(index);
 
@@ -16824,7 +16824,7 @@ public class FileIO {
      * @return Flag indicating that this was a successful write.
      */
     private boolean writeJimi(final ModelImage image, final FileWriteOptions options) {
-        final int index = options.getFileName().indexOf(".");
+        final int index = options.getFileName().lastIndexOf(".");
         final String prefix = options.getFileName().substring(0, index); // Used for setting file name
         final String fileSuffix = options.getFileName().substring(index + 1);
         int slice = 0;
@@ -16861,7 +16861,43 @@ public class FileIO {
             }
         }
 
-        if (image.getNDims() <= 3) {
+        if (image.getNDims() == 2) {
+            Image im;
+
+            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(0);
+
+            im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
+
+            name = options.getFileDirectory() + prefix + "." + fileSuffix;
+
+            /*
+             * if ( (i < 9) && (endSlice != beginSlice)) { name = options.getFileDirectory() + prefix + "00" + (i +
+             * 1) + fileSuffix; } else if ( (i >= 9) && (i < 99) && (endSlice != beginSlice)) { name =
+             * options.getFileDirectory() + prefix + "0" + (i + 1) + fileSuffix; } else if (endSlice != beginSlice)
+             * { name = options.getFileDirectory() + prefix + (i + 1) + fileSuffix; } else { name =
+             * options.getFileDirectory() + prefix + fileSuffix; }
+             */
+
+            try {
+                if (useImageIO) {
+                    ImageIO.write(getRenderedImage(im), fileSuffix, new File(name));
+                } else {
+                    Jimi.putImage(im, name);
+                }
+            } catch (final IOException e) {
+                Preferences.debug("ImageIO write error: " + e + "\n", Preferences.DEBUG_FILEIO);
+
+                e.printStackTrace();
+
+                return false;
+            } catch (final JimiException e) {
+                Preferences.debug("Jimi write error: " + e + "\n", Preferences.DEBUG_FILEIO);
+
+                e.printStackTrace();
+
+                return false;
+            }
+        } else if (image.getNDims() == 3) {
 
             for (int i = beginSlice; i <= endSlice; i++) {
 
