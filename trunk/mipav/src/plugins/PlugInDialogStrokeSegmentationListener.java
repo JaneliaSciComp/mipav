@@ -24,7 +24,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
     private JTextField aeField;
     private JTextField portField;
     private JTextField outputDirField;
-    private JTextField emailField;
+//    private JTextField emailField;
     
     private WidgetFactory.ScrollTextArea logOutputArea;
     
@@ -36,7 +36,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
 
     private String outputDir = new String(System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dicom_catcher" + File.separator);
     
-    private String emailAddress = "";
+    private String emailAddress = "mccreedy@mail.nih.gov";
     
     private StrokeSegmentationDicomReceiver dicomReceiver;
     
@@ -136,11 +136,11 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         labelEmail.setFont(serif12);
         mainPanel.add(labelEmail, gbc);
         
-        emailField = new JTextField(40);
-        emailField.setText("" + emailAddress);
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridx++;
-        mainPanel.add(emailField, gbc);
+//        emailField = new JTextField(40);
+//        emailField.setText("" + emailAddress);
+//        gbc.fill = GridBagConstraints.NONE;
+//        gbc.gridx++;
+//        mainPanel.add(emailField, gbc);
   
         getContentPane().add(mainPanel, BorderLayout.NORTH);
         
@@ -221,7 +221,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         ae = aeField.getText();
         port = Integer.parseInt(portField.getText());
         outputDir = outputDirField.getText();
-        emailAddress = emailField.getText();
+//        emailAddress = emailField.getText();
         
         return true;
     }

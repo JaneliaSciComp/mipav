@@ -38,8 +38,9 @@
 
 
 import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.structures.ModelImage;
 
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.components.WidgetFactory;
 
 import java.io.*;
@@ -50,6 +51,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.activation.*;
+import javax.mail.*;
+import javax.mail.internet.*;
 
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.Attributes;
@@ -362,47 +367,108 @@ public class StrokeSegmentationDicomReceiver {
     }
     
     public void emailReport(ModelImage adcImage, File adcLightboxFile, File dwiLightboxFile, double coreVolCC) {
-        String reportPath = generateReport(adcImage, adcLightboxFile, dwiLightboxFile, coreVolCC);
+        String reportTxt = generateReport(adcImage, adcLightboxFile, dwiLightboxFile, coreVolCC);
         
         if (emailAddress == null || emailAddress.equals("")) {
             return;
         }
         
+        if (reportTxt == null) {
+        	return;
+        }
+        
+        String outputDir = adcLightboxFile.getParent();
+        final String htmlReportPath = outputDir + File.separator + "core_seg_report.html";
+        
+        PrintWriter out;
+        try {
+            out = new PrintWriter(htmlReportPath);
+            out.println("<html>");
+            out.print(reportTxt);
+            out.println("</html>");
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        	MipavUtil.displayError("Unable to write core segmentation report: " + e.getMessage());
+        }
+        
         // TODO
+        final String fromAddress = "evan.mccreedy@gmail.com";
+        final String username = "evan.mccreedy@gmail.com";
+        final String password = "";
+        final String mailHost = "smtp.gmail.com";
+        final String mailPort = "465";
+        
+        Properties props = new Properties();
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.starttls.enable", "true");
+		props.put("mail.smtp.host", mailHost);
+		props.put("mail.smtp.port", mailPort);
+		props.put("mail.smtp.socketFactory.port", mailPort);
+		props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+
+		Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(username, password);
+			}
+		});
+
+		try {
+			MimeMultipart multipartContent = new MimeMultipart("related");
+			
+			BodyPart messageBody = new MimeBodyPart();
+			messageBody.setContent(reportTxt, "text/html");
+			multipartContent.addBodyPart(messageBody);
+			
+			messageBody = new MimeBodyPart();
+			DataSource imgDS = new FileDataSource(adcLightboxFile);
+			messageBody.setDataHandler(new DataHandler(imgDS));
+			messageBody.setHeader("Content-ID", "<adc-image>");
+			multipartContent.addBodyPart(messageBody);
+			
+			messageBody = new MimeBodyPart();
+			imgDS = new FileDataSource(dwiLightboxFile);
+			messageBody.setDataHandler(new DataHandler(imgDS));
+			messageBody.setHeader("Content-ID", "<dwi-image>");
+			multipartContent.addBodyPart(messageBody);
+			
+			Message message = new MimeMessage(session);
+
+			// Set From: header field of the header.
+			message.setFrom(new InternetAddress(fromAddress));
+
+			// Set To: header field of the header.
+			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(emailAddress));
+
+			// Set Subject: header field
+			message.setSubject("MIPAV Stroke Core Segmentation Report");
+
+			message.setContent(multipartContent);
+
+			// Send message
+			Transport.send(message);
+
+			log("Segmentation report successfully emailed.");
+		} catch (MessagingException e) {
+			e.printStackTrace();
+		}
     }
     
     private String generateReport(ModelImage adcImage, File adcLightboxFile, File dwiLightboxFile, double coreVolCC) {
         FileInfoDicom fileInfoDicom = (FileInfoDicom) adcImage.getFileInfo(0);
         
-        // TODO create PDF and write to disk, return path (or null if error)
-        
-        //File pdfFile = new File(dwiLightbox.getImageDirectory() + File.separator + "core_seg_report.pdf");
-        //File pdfFile = new File("C:\\Users\\mccreedy\\mipav\\dicom_catcher\\20180302.100509" + File.separator + "core_seg_report.pdf");
-        
-        //String dateStr = "2000-01-01";
         String dateStr = (String) fileInfoDicom.getTagTable().getValue("0008,0020");
         String timeStr = (String) fileInfoDicom.getTagTable().getValue("0008,0030");
         String patientName = (String) fileInfoDicom.getTagTable().getValue("0010,0010");
         String coreSegVol = "" + coreVolCC;
         
-        String outputDir = adcLightboxFile.getParent();
-        
         String dwiPdfImage = dwiLightboxFile.getName();
         String adcPdfImage = adcLightboxFile.getName();
-        //String dwiPdfImage = "20180302_1.100509_CoreSeg_DWI_core_lightbox.png";
-        //String adcPdfImage = "20180302_1.100509_CoreSeg_ADC_thresh_lightbox.png";
-        
-        // study date and time
-        // first initial of last name
-        // core seg volume in CC
-        // DWI with core seg + red lut
-        // ADC with thesh vol + red lut
-        // volumes generated by lightbox 8x5 (for 40 slices) 100 or 125 zoom, no border, include segmentation imageB w/ red lut
-        //pdfCreate(pdfFile, dateStr, timeStr, patientName, coreSegVol, dwiPdfImagePath, adcPdfImagePath);
         
         final int imgDisplay = 1027;
         
-        String reportTxt = "<html>\n";
+        //String reportTxt = "<html>\n";
+        String reportTxt = "";
         reportTxt += "<h1>" + "MIPAV Stroke Core Segmentation Report" + "</h1>\n";
         reportTxt += "<ul>\n";
         reportTxt += "<li>" + "<b>" + "Study date and time: " + "</b>" + convertDateTimeToISOFormat(dateStr, timeStr) + "</li>\n";
@@ -411,25 +477,14 @@ public class StrokeSegmentationDicomReceiver {
         //reportTxt += "<li>" + "<b>" + "" + "</b>" + "" + "</li>";
         reportTxt += "</ul>\n";
         reportTxt += "<h3>" + "DWI volume with core segmentation" + "</h3>\n";
-        reportTxt += "<a href='" + adcPdfImage + "'><img src='" + dwiPdfImage + "' alt='DWI volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
+        //reportTxt += "<a href='" + dwiPdfImage + "'><img src='" + dwiPdfImage + "' alt='DWI volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
+        reportTxt += "<img src='cid:dwi-image' alt='DWI volume with core segmentation'/>\n";
         reportTxt += "<h3>" + "ADC volume with thresholded regions" + "</h3>\n";
-        reportTxt += "<a href='" + adcPdfImage + "'><img src='" + adcPdfImage + "' alt='ADC volume with thresholded regions' width='" + imgDisplay + "'/></a>\n";
-        reportTxt += "</html>\n";
+        //reportTxt += "<a href='" + adcPdfImage + "'><img src='" + adcPdfImage + "' alt='ADC volume with thresholded regions' width='" + imgDisplay + "'/></a>\n";
+        reportTxt += "<img src='cid:adc-image' alt='ADC volume with thresholded regions'/>\n";
+        //reportTxt += "</html>\n";
         
-        final String htmlReportPath = outputDir + File.separator + "core_seg_report.html";
-        
-        PrintWriter out;
-        try {
-            out = new PrintWriter(htmlReportPath);
-            out.print(reportTxt);
-            out.close();
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
-        
-        return htmlReportPath;
+        return reportTxt;
     }
     
     /**
@@ -503,212 +558,4 @@ public class StrokeSegmentationDicomReceiver {
     private String getInitialFromName(final String dicomName) {
         return dicomName.substring(0, 1);
     }
-    
-/*
-    *//**
-     * Creates the PDF file and creates several tables for scanner information as well
-     * as the VOI statistic information
-     *
-     * @return the content stream for adding statistics to the first page
-     *//*
-    protected void pdfCreate(File pdfFile, String dateStr, String timeStr, String patientName, String coreSegVol, String dwiPdfImagePath, String adcPdfImagePath) {
-        PDDocument doc;
-        
-        // the document
-        doc = null;
-
-        //initialize blank PDF
-        doc = new PDDocument();
-        
-        try {
-            doc.save(pdfFile.toString());
-        } catch (IOException e) {
-            System.out.println("44 IOException " + e + " on doc.save(pdfFile.toString())");
-            return;
-        }
-        
-        try {
-            doc.close();
-        } catch (IOException e) {
-            System.out.println("45 IOException " + e + " on doc.close()");
-            return;
-        }
-        
-        PDPageContentStream contentStream = null;
-        //System.out.println("46 Have executed PDPageContentStream contentStream = null");
-        
-        try {
-            try {
-                doc = PDDocument.load( pdfFile );
-            } catch(IOException e) {
-                System.out.println("47 IOException "+ e + " on doc = PDDocument.load( pdfFile )");
-                return;
-            }
-            
-            PDFont boldFont = PDType1Font.HELVETICA_BOLD;
-            int headerFontSize = 18;
-            PDFont regFont = PDType1Font.HELVETICA;
-            int regFontSize = 12;
-
-            doc.addPage(new PDPage());
-            doc.addPage(new PDPage());
-            doc.addPage(new PDPage());
-            
-            PDPageTree pageTree = doc.getPages();
-            
-            PDPage textPage = pageTree.get(0);
-            
-            PDRectangle pageSize = textPage.getMediaBox();
-            
-            String title = "MIPAV Stroke Core Segmentation Report";
-            
-            float stringWidth = boldFont.getStringWidth( title );
-            
-            //System.out.println("70 stringWidth = " + stringWidth);
-            
-            float centeredPosition = (pageSize.getWidth() - (stringWidth*headerFontSize)/1000f)/2f;
-            // (float) (PDPage.PAGE_SIZE_LETTER.getWidth()/2.0)-120
-            
-            float valueOffset = 250f;
-            float newLineOffset = -15f;
-            
-            //System.out.println("71 centeredPosition = " + centeredPosition);
-            
-            try {
-                contentStream = new PDPageContentStream(doc, textPage);
-            } catch(IOException e) {
-                System.out.println("72 IOException " + e + " on contentStream = new PDPageContentStream(doc, page, false, true)");
-                return;
-            }
-            
-            try {
-                contentStream.beginText();
-            } catch(IOException e) {
-                System.out.println("73 IOException " + e + "on contentStream.beginText()");
-                return;
-            }
-
-            contentStream.setFont(boldFont, headerFontSize);
-            contentStream.moveTextPositionByAmount(centeredPosition, 750 );
-            contentStream.drawString( title );
-
-            // move to left side
-            contentStream.moveTextPositionByAmount(-centeredPosition + 10, newLineOffset - 10);
-            
-            // study date and time
-            contentStream.setFont(boldFont, regFontSize);
-            contentStream.drawString("Study date and time: ");
-            contentStream.moveTextPositionByAmount(valueOffset, 0);
-            contentStream.setFont(regFont, regFontSize);
-            contentStream.drawString(dateStr + " @ " + timeStr);
-
-            contentStream.moveTextPositionByAmount(-valueOffset, newLineOffset);
-            
-            // first initial of last name
-            contentStream.setFont(boldFont, regFontSize);
-            contentStream.drawString("Patient last name initial: ");
-            contentStream.moveTextPositionByAmount(valueOffset, 0);
-            contentStream.setFont(regFont, regFontSize);
-            contentStream.drawString(patientName);
-            
-            contentStream.moveTextPositionByAmount(-valueOffset, newLineOffset);
-            
-            // core seg volume in CC
-            contentStream.setFont(boldFont, regFontSize);
-            contentStream.drawString("Core segmentation volume (CC): ");
-            contentStream.moveTextPositionByAmount(valueOffset, 0);
-            contentStream.setFont(regFont, regFontSize);
-            contentStream.drawString(coreSegVol);
-            
-            contentStream.endText();
-            
-            contentStream.close();
-            
-            PDPage dwiPage = pageTree.get(1);
-            
-            try {
-                contentStream = new PDPageContentStream(doc, dwiPage);
-            } catch(IOException e) {
-                System.out.println("72 IOException " + e + " on contentStream = new PDPageContentStream(doc, page, false, true)");
-                return;
-            }
-
-            // DWI with core seg + red lut
-            
-            PDImageXObject pdDwiImage = PDImageXObject.createFromFile(dwiPdfImagePath, doc);
-            
-//            InputStream is = new BufferedInputStream(new FileInputStream(dwiPdfImagePath));
-//            PDXObjectImage pdDwiImage = new PDPixelMap(new PDStream(doc, is));
-//            is.close();
-//            is = null;
-//            
-//            contentStream.drawImage(pdDwiImage, pdDwiImage.getWidth(), pdDwiImage.getHeight());
-            contentStream.drawImage(pdDwiImage, pageSize.getWidth(), pageSize.getHeight());
-            
-            contentStream.close();
-            
-            // ADC with thesh vol + red lut
-            
-            PDPage adcPage = pageTree.get(2);
-            
-            try {
-                contentStream = new PDPageContentStream(doc, adcPage);
-            } catch(IOException e) {
-                System.out.println("72 IOException " + e + " on contentStream = new PDPageContentStream(doc, page, false, true)");
-                return;
-            }
-            
-            PDImageXObject pdAdcImage = PDImageXObject.createFromFile(adcPdfImagePath, doc);
-            
-//            is = new BufferedInputStream(new FileInputStream(adcPdfImagePath));
-//            PDXObjectImage pdAdcImage = new PDPixelMap(new PDStream(doc, is));
-//            is.close();
-//            is = null;
-            
-//            contentStream.drawImage(pdAdcImage, pdAdcImage.getWidth(), pdAdcImage.getHeight());
-            contentStream.drawImage(pdAdcImage, pageSize.getWidth(), pageSize.getHeight());
-            
-            contentStream.close();
-    
-            //System.out.println("200 pdfFile.toString() = " + pdfFile.toString());
-            try {
-                doc.save( pdfFile.toString() );
-            } catch (IOException e) {
-                System.out.println("202 IOException " + e + " on doc.save( pdfFile.toString()");
-                return;
-            }
-            
-            MipavUtil.displayInfo("PDF saved to: " + pdfFile);
-            ViewUserInterface.getReference().getMessageFrame().append("PDF saved to: " + pdfFile +  "\n", ViewJFrameMessage.DATA);
-        } catch (Exception e) {
-            ViewUserInterface.getReference().getMessageFrame().append("Error occured in PDF generation calling method\n", ViewJFrameMessage.DEBUG);
-            e.printStackTrace();
-            
-            if(contentStream != null) {
-                try {
-                    contentStream.close();
-                } catch (IOException e1) {
-                    e.printStackTrace();
-                    MipavUtil.displayError("Content stream could not be closed, please restart MIPAV.");
-                }
-            }
-            if( doc != null ) {
-                try {
-                    doc.close();
-                } catch (IOException e1) {
-                    e.printStackTrace();
-                    MipavUtil.displayError("PDF document could not be closed, please restart MIPAV.");
-                }
-            }
-        }  finally {
-            if( doc != null ) {
-                try {
-                    doc.close();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        }
-    }*/
 }
