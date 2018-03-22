@@ -41,10 +41,13 @@ import gov.nih.mipav.model.file.FileInfoDicom;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.components.WidgetFactory;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -137,16 +140,28 @@ public class StrokeSegmentationDicomReceiver {
     private int serverPort;
     private String serverAE;
     
-    private String emailAddress;
+    private boolean doEmailReport;
+    
+    private static final String reportDwiCid = "cid:dwi-image";
+    private static final String reportAdcCid = "cid:adc-image";
     
     private WidgetFactory.ScrollTextArea logOutputArea;
+    
+    private static final String configFileName = "stroke_seg_listener.properties";
+    
+    String emailFrom;
+    String emailTo;
+    String emailUsername;
+    String emailPassword;
+    String emailHost;
+    String emailPort;
 
-    public StrokeSegmentationDicomReceiver(final String ip, final int port, final String curAE, final String outputDir, final String email, final WidgetFactory.ScrollTextArea area) throws IOException {
+    public StrokeSegmentationDicomReceiver(final String ip, final int port, final String curAE, final String outputDir, final boolean doEmail, final WidgetFactory.ScrollTextArea area) throws IOException {
         serverIP = ip;
         serverPort = port;
         serverAE = curAE;
         
-        emailAddress = email;
+        doEmailReport = doEmail;
         
         logOutputArea = area;
         
@@ -369,10 +384,6 @@ public class StrokeSegmentationDicomReceiver {
     public void emailReport(ModelImage adcImage, File adcLightboxFile, File dwiLightboxFile, double coreVolCC) {
         String reportTxt = generateReport(adcImage, adcLightboxFile, dwiLightboxFile, coreVolCC);
         
-        if (emailAddress == null || emailAddress.equals("")) {
-            return;
-        }
-        
         if (reportTxt == null) {
         	return;
         }
@@ -382,6 +393,9 @@ public class StrokeSegmentationDicomReceiver {
         
         PrintWriter out;
         try {
+            reportTxt.replaceAll(reportDwiCid, dwiLightboxFile.getName());
+            reportTxt.replaceAll(reportAdcCid, adcLightboxFile.getName());
+            
             out = new PrintWriter(htmlReportPath);
             out.println("<html>");
             out.print(reportTxt);
@@ -392,75 +406,74 @@ public class StrokeSegmentationDicomReceiver {
         	MipavUtil.displayError("Unable to write core segmentation report: " + e.getMessage());
         }
         
-        // TODO
-        final String fromAddress = "evan.mccreedy@gmail.com";
-        final String username = "evan.mccreedy@gmail.com";
-        final String password = "";
-        final String mailHost = "smtp.gmail.com";
-        final String mailPort = "465";
-        
-        Properties props = new Properties();
-		props.put("mail.smtp.auth", "true");
-		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.smtp.host", mailHost);
-		props.put("mail.smtp.port", mailPort);
-		props.put("mail.smtp.socketFactory.port", mailPort);
-		props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-
-		Session session = Session.getInstance(props, new javax.mail.Authenticator() {
-			protected PasswordAuthentication getPasswordAuthentication() {
-				return new PasswordAuthentication(username, password);
-			}
-		});
-
-		try {
-			MimeMultipart multipartContent = new MimeMultipart("related");
-			
-			BodyPart messageBody = new MimeBodyPart();
-			messageBody.setContent(reportTxt, "text/html");
-			multipartContent.addBodyPart(messageBody);
-			
-			messageBody = new MimeBodyPart();
-			DataSource imgDS = new FileDataSource(adcLightboxFile);
-			messageBody.setDataHandler(new DataHandler(imgDS));
-			messageBody.setHeader("Content-ID", "<adc-image>");
-			multipartContent.addBodyPart(messageBody);
-			
-			messageBody = new MimeBodyPart();
-			imgDS = new FileDataSource(dwiLightboxFile);
-			messageBody.setDataHandler(new DataHandler(imgDS));
-			messageBody.setHeader("Content-ID", "<dwi-image>");
-			multipartContent.addBodyPart(messageBody);
-			
-			Message message = new MimeMessage(session);
-
-			// Set From: header field of the header.
-			message.setFrom(new InternetAddress(fromAddress));
-
-			// Set To: header field of the header.
-			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(emailAddress));
-
-			// Set Subject: header field
-			message.setSubject("MIPAV Stroke Core Segmentation Report");
-
-			message.setContent(multipartContent);
-
-			// Send message
-			Transport.send(message);
-
-			log("Segmentation report successfully emailed.");
-		} catch (MessagingException e) {
-			e.printStackTrace();
-		}
+        if (doEmailReport && readEmailConfig()) {
+            Properties props = new Properties();
+    		props.put("mail.smtp.auth", "true");
+    		props.put("mail.smtp.starttls.enable", "true");
+    		props.put("mail.smtp.host", emailHost);
+    		props.put("mail.smtp.port", emailPort);
+    		props.put("mail.smtp.socketFactory.port", emailPort);
+    		props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+    
+    		Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+    			protected PasswordAuthentication getPasswordAuthentication() {
+    				return new PasswordAuthentication(emailUsername, emailPassword);
+    			}
+    		});
+    
+    		try {
+    			MimeMultipart multipartContent = new MimeMultipart("related");
+    			
+    			BodyPart messageBody = new MimeBodyPart();
+    			messageBody.setContent(reportTxt, "text/html");
+    			multipartContent.addBodyPart(messageBody);
+    			
+    			messageBody = new MimeBodyPart();
+    			DataSource imgDS = new FileDataSource(adcLightboxFile);
+    			messageBody.setDataHandler(new DataHandler(imgDS));
+    			messageBody.setHeader("Content-ID", "<adc-image>");
+    			multipartContent.addBodyPart(messageBody);
+    			
+    			messageBody = new MimeBodyPart();
+    			imgDS = new FileDataSource(dwiLightboxFile);
+    			messageBody.setDataHandler(new DataHandler(imgDS));
+    			messageBody.setHeader("Content-ID", "<dwi-image>");
+    			multipartContent.addBodyPart(messageBody);
+    			
+    			Message message = new MimeMessage(session);
+    
+    			// Set From: header field of the header.
+    			message.setFrom(new InternetAddress(emailFrom));
+    
+    			// Set To: header field of the header.
+    			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(emailTo));
+    
+    			// Set Subject: header field
+    			message.setSubject("MIPAV Stroke Core Segmentation Report");
+    
+    			message.setContent(multipartContent);
+    
+    			// Send message
+    			Transport.send(message);
+    
+    			log("Segmentation report successfully emailed.");
+    		} catch (MessagingException e) {
+    			e.printStackTrace();
+    		}
+        }
     }
     
     private String generateReport(ModelImage adcImage, File adcLightboxFile, File dwiLightboxFile, double coreVolCC) {
+        final DecimalFormat format = new DecimalFormat("#######.####");
+        
         FileInfoDicom fileInfoDicom = (FileInfoDicom) adcImage.getFileInfo(0);
         
-        String dateStr = (String) fileInfoDicom.getTagTable().getValue("0008,0020");
-        String timeStr = (String) fileInfoDicom.getTagTable().getValue("0008,0030");
+        String curDateTimeStr = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss").format(new Date());
+        
+        String studyDateStr = (String) fileInfoDicom.getTagTable().getValue("0008,0020");
+        String studyTimeStr = (String) fileInfoDicom.getTagTable().getValue("0008,0030");
         String patientName = (String) fileInfoDicom.getTagTable().getValue("0010,0010");
-        String coreSegVol = "" + coreVolCC;
+        String coreSegVol = format.format(coreVolCC);
         
         String dwiPdfImage = dwiLightboxFile.getName();
         String adcPdfImage = adcLightboxFile.getName();
@@ -471,17 +484,18 @@ public class StrokeSegmentationDicomReceiver {
         String reportTxt = "";
         reportTxt += "<h1>" + "MIPAV Stroke Core Segmentation Report" + "</h1>\n";
         reportTxt += "<ul>\n";
-        reportTxt += "<li>" + "<b>" + "Study date and time: " + "</b>" + convertDateTimeToISOFormat(dateStr, timeStr) + "</li>\n";
+        reportTxt += "<li>" + "<b>" + "Time of segmentation run: " + "</b>" + curDateTimeStr + "</li>\n";
+        reportTxt += "<li>" + "<b>" + "Study date and time: " + "</b>" + convertDateTimeToISOFormat(studyDateStr, studyTimeStr) + "</li>\n";
         reportTxt += "<li>" + "<b>" + "Patient last name initial: " + "</b>" + getInitialFromName(patientName) + "</li>\n";
         reportTxt += "<li>" + "<b>" + "Core segmentation volume (CC): " + "</b>" + coreSegVol + "</li>\n";
         //reportTxt += "<li>" + "<b>" + "" + "</b>" + "" + "</li>";
         reportTxt += "</ul>\n";
         reportTxt += "<h3>" + "DWI volume with core segmentation" + "</h3>\n";
         //reportTxt += "<a href='" + dwiPdfImage + "'><img src='" + dwiPdfImage + "' alt='DWI volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
-        reportTxt += "<img src='cid:dwi-image' alt='DWI volume with core segmentation'/>\n";
+        reportTxt += "<img src='" + reportDwiCid + "' alt='DWI volume with core segmentation'/>\n";
         reportTxt += "<h3>" + "ADC volume with thresholded regions" + "</h3>\n";
         //reportTxt += "<a href='" + adcPdfImage + "'><img src='" + adcPdfImage + "' alt='ADC volume with thresholded regions' width='" + imgDisplay + "'/></a>\n";
-        reportTxt += "<img src='cid:adc-image' alt='ADC volume with thresholded regions'/>\n";
+        reportTxt += "<img src='" + reportAdcCid + "' alt='ADC volume with thresholded regions'/>\n";
         //reportTxt += "</html>\n";
         
         return reportTxt;
@@ -557,5 +571,54 @@ public class StrokeSegmentationDicomReceiver {
 
     private String getInitialFromName(final String dicomName) {
         return dicomName.substring(0, 1);
+    }
+    
+    private boolean readEmailConfig() {
+        final InputStream in = getClass().getResourceAsStream(configFileName);
+        if (in != null) {
+            final Properties prop = new Properties();
+            try {
+                prop.load(in);
+            } catch (final IOException e) {
+                Preferences.debug("Unable to load stroke segementation listener plugin preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
+                e.printStackTrace();
+                return false;
+            }
+            
+            emailFrom = prop.getProperty("emailFrom");
+            if (emailFrom == null || emailFrom.equals("")) {
+                return false;
+            }
+            
+            emailTo = prop.getProperty("emailTo");
+            if (emailTo == null || emailTo.equals("")) {
+                return false;
+            }
+            
+            emailUsername = prop.getProperty("emailUsername");
+            if (emailUsername == null || emailUsername.equals("")) {
+                return false;
+            }
+            
+            emailPassword = prop.getProperty("emailPassword");
+            if (emailPassword == null || emailPassword.equals("")) {
+                return false;
+            }
+            
+            emailHost = prop.getProperty("emailHost");
+            if (emailHost == null || emailHost.equals("")) {
+                return false;
+            }
+            
+            emailPort = prop.getProperty("emailPort");
+            if (emailPort == null || emailPort.equals("")) {
+                return false;
+            }
+            
+            return true;
+        } else {
+            // couldn't load file
+            return false;
+        }
     }
 }

@@ -26,6 +26,8 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
     private JTextField outputDirField;
 //    private JTextField emailField;
     
+    private JCheckBox emailCheckbox;
+    
     private WidgetFactory.ScrollTextArea logOutputArea;
     
     private String ae = "MIPAV-stroke";
@@ -36,7 +38,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
 
     private String outputDir = new String(System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dicom_catcher" + File.separator);
     
-    private String emailAddress = "mccreedy@mail.nih.gov";
+    private boolean doEmailReport = false;
     
     private StrokeSegmentationDicomReceiver dicomReceiver;
     
@@ -131,10 +133,16 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         gbc.gridy++;
         gbc.gridx = 0;
         
-        JLabel labelEmail = new JLabel("Send email report to");
-        labelEmail.setForeground(Color.black);
-        labelEmail.setFont(serif12);
-        mainPanel.add(labelEmail, gbc);
+        emailCheckbox = new JCheckBox("Email report to pre-defined address", doEmailReport);
+        emailCheckbox.setForeground(Color.black);
+        emailCheckbox.setFont(serif12);
+        mainPanel.add(emailCheckbox, gbc);
+        
+//        
+//        JLabel labelEmail = new JLabel("Send email report to");
+//        labelEmail.setForeground(Color.black);
+//        labelEmail.setFont(serif12);
+//        mainPanel.add(labelEmail, gbc);
         
 //        emailField = new JTextField(40);
 //        emailField.setText("" + emailAddress);
@@ -200,14 +208,14 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         ae = scriptParameters.getParams().getString("AE_title");
         port = scriptParameters.getParams().getInt("port");
         outputDir = scriptParameters.getParams().getString("output_dir");
-        emailAddress = scriptParameters.getParams().getString("email_address");
+        doEmailReport = scriptParameters.getParams().getBoolean("do_email_report");
     }
 
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.getParams().put(ParameterFactory.newParameter("AE_title", ae));
         scriptParameters.getParams().put(ParameterFactory.newParameter("port", port));
         scriptParameters.getParams().put(ParameterFactory.newParameter("output_dir", outputDir));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("email_address", emailAddress));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_email_report", doEmailReport));
     }
     
     /**
@@ -221,6 +229,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         ae = aeField.getText();
         port = Integer.parseInt(portField.getText());
         outputDir = outputDirField.getText();
+        doEmailReport = emailCheckbox.isSelected();
 //        emailAddress = emailField.getText();
         
         return true;
@@ -230,7 +239,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         try {
             log("Starting DICOM receiver: " + ae + " @ " + ipAddress + ":" + port);
             
-            dicomReceiver = new StrokeSegmentationDicomReceiver(ipAddress, port, ae, outputDir, emailAddress, logOutputArea);
+            dicomReceiver = new StrokeSegmentationDicomReceiver(ipAddress, port, ae, outputDir, doEmailReport, logOutputArea);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
