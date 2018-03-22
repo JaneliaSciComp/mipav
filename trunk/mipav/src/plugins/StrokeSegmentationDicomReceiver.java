@@ -393,12 +393,12 @@ public class StrokeSegmentationDicomReceiver {
         
         PrintWriter out;
         try {
-            reportTxt.replaceAll(reportDwiCid, dwiLightboxFile.getName());
-            reportTxt.replaceAll(reportAdcCid, adcLightboxFile.getName());
+            String fileTxt = reportTxt.replaceAll(reportDwiCid, dwiLightboxFile.getName());
+            fileTxt = fileTxt.replaceAll(reportAdcCid, adcLightboxFile.getName());
             
             out = new PrintWriter(htmlReportPath);
             out.println("<html>");
-            out.print(reportTxt);
+            out.print(fileTxt);
             out.println("</html>");
             out.close();
         } catch (FileNotFoundException e) {
@@ -474,11 +474,6 @@ public class StrokeSegmentationDicomReceiver {
         String studyTimeStr = (String) fileInfoDicom.getTagTable().getValue("0008,0030");
         String patientName = (String) fileInfoDicom.getTagTable().getValue("0010,0010");
         String coreSegVol = format.format(coreVolCC);
-        
-        String dwiPdfImage = dwiLightboxFile.getName();
-        String adcPdfImage = adcLightboxFile.getName();
-        
-        final int imgDisplay = 1027;
         
         //String reportTxt = "<html>\n";
         String reportTxt = "";

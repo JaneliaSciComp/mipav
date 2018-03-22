@@ -1,26 +1,30 @@
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Properties;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.File;
 
 import javax.swing.*;
 
 
-public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScriptablePlugin {
+public class PlugInDialogStrokeSegmentationListener extends JFrame implements ActionListener, WindowListener {
     private JTextField aeField;
     private JTextField portField;
     private JTextField outputDirField;
@@ -30,9 +34,9 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
     
     private WidgetFactory.ScrollTextArea logOutputArea;
     
-    private String ae = "MIPAV-stroke";
-
     private String ipAddress;
+    
+    private String ae = "MIPAV-stroke";
     
     private int port = 11115;
 
@@ -47,6 +51,8 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
     private static final String svnLastUpdate = "$Date$";
     
     private static final String pluginVersion = MipavUtil.getSVNChangedDate(svnLastUpdate);
+    
+    private static final String configFileName = "stroke_seg_listener.properties";
 
     public PlugInDialogStrokeSegmentationListener() {
         try {
@@ -55,6 +61,21 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        
+        if (JDialogStandalonePlugin.isExitRequired()) {
+            setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        } else {
+            setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        }
+
+        try {
+            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        } catch (final Exception e) {
+            // setIconImage() is not part of the Java 1.5 API - catch any
+            // runtime error on those systems
+        }
+        
+        readListenerConfig();
         
         init();
     }
@@ -77,11 +98,11 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("DICOM receiver parameters"));
+        mainPanel.setBorder(JDialogBase.buildTitledBorder("DICOM receiver parameters"));
         
         JLabel labelAE = new JLabel("AE title");
         labelAE.setForeground(Color.black);
-        labelAE.setFont(serif12);
+        labelAE.setFont(MipavUtil.font12);
         mainPanel.add(labelAE, gbc);
         
         aeField = new JTextField(20);
@@ -97,7 +118,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         
         JLabel labelPort = new JLabel("Port");
         labelPort.setForeground(Color.black);
-        labelPort.setFont(serif12);
+        labelPort.setFont(MipavUtil.font12);
         mainPanel.add(labelPort, gbc);
         
         portField = new JTextField(20);
@@ -113,7 +134,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         
         JLabel labelOutput = new JLabel("Output dir");
         labelOutput.setForeground(Color.black);
-        labelOutput.setFont(serif12);
+        labelOutput.setFont(MipavUtil.font12);
         mainPanel.add(labelOutput, gbc);
         
         outputDirField = new JTextField(40);
@@ -126,7 +147,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         dirFileButton.setActionCommand("BrowseDir");
         dirFileButton.addActionListener(this);
         dirFileButton.setForeground(Color.black);
-        dirFileButton.setFont(serif12B);
+        dirFileButton.setFont(MipavUtil.font12B);
         gbc.gridx++;
         mainPanel.add(dirFileButton, gbc);
         
@@ -135,13 +156,13 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         
         emailCheckbox = new JCheckBox("Email report to pre-defined address", doEmailReport);
         emailCheckbox.setForeground(Color.black);
-        emailCheckbox.setFont(serif12);
+        emailCheckbox.setFont(MipavUtil.font12);
         mainPanel.add(emailCheckbox, gbc);
         
 //        
 //        JLabel labelEmail = new JLabel("Send email report to");
 //        labelEmail.setForeground(Color.black);
-//        labelEmail.setFont(serif12);
+//        labelEmail.setFont(MipavUtil.font12);
 //        mainPanel.add(labelEmail, gbc);
         
 //        emailField = new JTextField(40);
@@ -165,29 +186,31 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
         startButton.setActionCommand("Start");
         startButton.addActionListener(this);
         startButton.setForeground(Color.black);
-        startButton.setFont(serif12B);
+        startButton.setFont(MipavUtil.font12B);
         buttonPanel.add(startButton);
         
         JButton stopButton = new JButton("Stop");
         stopButton.setActionCommand("Stop");
         stopButton.addActionListener(this);
         stopButton.setForeground(Color.black);
-        stopButton.setFont(serif12B);
+        stopButton.setFont(MipavUtil.font12B);
         buttonPanel.add(stopButton);
         
         JButton exitButton = new JButton("Exit");
         exitButton.setActionCommand("Exit");
         exitButton.addActionListener(this);
         exitButton.setForeground(Color.black);
-        exitButton.setFont(serif12B);
+        exitButton.setFont(MipavUtil.font12B);
         buttonPanel.add(exitButton);
 
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         pack();
-        setVisible(true);
         setResizable(true);
         System.gc();
+        
+        MipavUtil.centerOnScreen(this);
+        setVisible(true);
     }
     
     public void actionPerformed(final ActionEvent event) {
@@ -203,28 +226,7 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
             browseDir();
         }
     }
-    
-    protected void setGUIFromParams() {
-        ae = scriptParameters.getParams().getString("AE_title");
-        port = scriptParameters.getParams().getInt("port");
-        outputDir = scriptParameters.getParams().getString("output_dir");
-        doEmailReport = scriptParameters.getParams().getBoolean("do_email_report");
-    }
 
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.getParams().put(ParameterFactory.newParameter("AE_title", ae));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("port", port));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("output_dir", outputDir));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_email_report", doEmailReport));
-    }
-    
-    /**
-     * Perform any actions required after the running of the algorithm is complete.
-     */
-    protected void doPostAlgorithmActions() {
-        // nothing to do
-    }
-    
     private boolean setVariables() {
         ae = aeField.getText();
         port = Integer.parseInt(portField.getText());
@@ -260,8 +262,28 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
     public void windowClosing(WindowEvent event) {
         stopAlgorithm();
         
-        super.windowClosing(event);
+        if (JDialogStandalonePlugin.isExitRequired()) {
+            ViewUserInterface.getReference().windowClosing(event);
+        }
     }
+    
+    @Override
+    public void windowActivated(WindowEvent arg0) {}
+
+    @Override
+    public void windowClosed(WindowEvent arg0) {}
+
+    @Override
+    public void windowDeactivated(WindowEvent arg0) {}
+
+    @Override
+    public void windowDeiconified(WindowEvent arg0) {}
+
+    @Override
+    public void windowIconified(WindowEvent arg0) {}
+
+    @Override
+    public void windowOpened(WindowEvent arg0) {}
     
     private boolean browseDir() {
         String initDir = outputDirField.getText();
@@ -292,5 +314,32 @@ public class PlugInDialogStrokeSegmentationListener extends JDialogStandaloneScr
      */
     public void log(final String line) {
         logOutputArea.getTextArea().append(line + "\n");
+    }
+    
+    private boolean readListenerConfig() {
+        final InputStream in = getClass().getResourceAsStream(configFileName);
+        if (in != null) {
+            final Properties prop = new Properties();
+            try {
+                prop.load(in);
+            } catch (final IOException e) {
+                Preferences.debug("Unable to load stroke segementation listener plugin preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
+                e.printStackTrace();
+                return false;
+            }
+            
+            ae = prop.getProperty("listenerAETitle", ae);
+            
+            port = Integer.parseInt(prop.getProperty("listenerPort", "" + port));
+            
+            outputDir = prop.getProperty("listenerOutputDir", outputDir);
+            
+            doEmailReport = Boolean.parseBoolean(prop.getProperty("listenerDoEmail", "" + doEmailReport));
+            
+            return true;
+        } else {
+            // couldn't load file
+            return false;
+        }
     }
 }
