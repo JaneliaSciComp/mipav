@@ -142,8 +142,8 @@ public class StrokeSegmentationDicomReceiver {
     
     private boolean doEmailReport;
     
-    private static final String reportDwiCid = "cid:dwi-image";
-    private static final String reportAdcCid = "cid:adc-image";
+    private static final String reportCoreCid = "cid:core-image";
+    private static final String reportThreshCid = "cid:thresh-image";
     
     private WidgetFactory.ScrollTextArea logOutputArea;
     
@@ -381,20 +381,20 @@ public class StrokeSegmentationDicomReceiver {
         logOutputArea.getTextArea().append(line + "\n");
     }
     
-    public void emailReport(ModelImage adcImage, File adcLightboxFile, File dwiLightboxFile, double coreVolCC) {
-        String reportTxt = generateReport(adcImage, adcLightboxFile, dwiLightboxFile, coreVolCC);
+    public void emailReport(ModelImage adcImage, File threshLightboxFile, File coreLightboxFile, double coreVolCC) {
+        String reportTxt = generateReport(adcImage, threshLightboxFile, coreLightboxFile, coreVolCC);
         
         if (reportTxt == null) {
         	return;
         }
         
-        String outputDir = adcLightboxFile.getParent();
+        String outputDir = threshLightboxFile.getParent();
         final String htmlReportPath = outputDir + File.separator + "core_seg_report.html";
         
         PrintWriter out;
         try {
-            String fileTxt = reportTxt.replaceAll(reportDwiCid, dwiLightboxFile.getName());
-            fileTxt = fileTxt.replaceAll(reportAdcCid, adcLightboxFile.getName());
+            String fileTxt = reportTxt.replaceAll(reportCoreCid, coreLightboxFile.getName());
+            fileTxt = fileTxt.replaceAll(reportThreshCid, threshLightboxFile.getName());
             
             out = new PrintWriter(htmlReportPath);
             out.println("<html>");
@@ -429,15 +429,15 @@ public class StrokeSegmentationDicomReceiver {
     			multipartContent.addBodyPart(messageBody);
     			
     			messageBody = new MimeBodyPart();
-    			DataSource imgDS = new FileDataSource(adcLightboxFile);
+    			DataSource imgDS = new FileDataSource(threshLightboxFile);
     			messageBody.setDataHandler(new DataHandler(imgDS));
-    			messageBody.setHeader("Content-ID", "<adc-image>");
+    			messageBody.setHeader("Content-ID", "<core-image>");
     			multipartContent.addBodyPart(messageBody);
     			
     			messageBody = new MimeBodyPart();
-    			imgDS = new FileDataSource(dwiLightboxFile);
+    			imgDS = new FileDataSource(coreLightboxFile);
     			messageBody.setDataHandler(new DataHandler(imgDS));
-    			messageBody.setHeader("Content-ID", "<dwi-image>");
+    			messageBody.setHeader("Content-ID", "<thresh-image>");
     			multipartContent.addBodyPart(messageBody);
     			
     			Message message = new MimeMessage(session);
@@ -463,8 +463,8 @@ public class StrokeSegmentationDicomReceiver {
         }
     }
     
-    private String generateReport(ModelImage adcImage, File adcLightboxFile, File dwiLightboxFile, double coreVolCC) {
-        final DecimalFormat format = new DecimalFormat("#######.####");
+    private String generateReport(ModelImage adcImage, File threshLightboxFile, File coreLightboxFile, double coreVolCC) {
+        final DecimalFormat format = new DecimalFormat("#######.#");
         
         FileInfoDicom fileInfoDicom = (FileInfoDicom) adcImage.getFileInfo(0);
         
@@ -482,15 +482,15 @@ public class StrokeSegmentationDicomReceiver {
         reportTxt += "<li>" + "<b>" + "Time of segmentation run: " + "</b>" + curDateTimeStr + "</li>\n";
         reportTxt += "<li>" + "<b>" + "Study date and time: " + "</b>" + convertDateTimeToISOFormat(studyDateStr, studyTimeStr) + "</li>\n";
         reportTxt += "<li>" + "<b>" + "Patient last name initial: " + "</b>" + getInitialFromName(patientName) + "</li>\n";
-        reportTxt += "<li>" + "<b>" + "Core segmentation volume (CC): " + "</b>" + coreSegVol + "</li>\n";
+        reportTxt += "<li>" + "<b>" + "Core segmentation volume (mL): " + "</b>" + coreSegVol + "</li>\n";
         //reportTxt += "<li>" + "<b>" + "" + "</b>" + "" + "</li>";
         reportTxt += "</ul>\n";
-        reportTxt += "<h3>" + "DWI volume with core segmentation" + "</h3>\n";
-        //reportTxt += "<a href='" + dwiPdfImage + "'><img src='" + dwiPdfImage + "' alt='DWI volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
-        reportTxt += "<img src='" + reportDwiCid + "' alt='DWI volume with core segmentation'/>\n";
-        reportTxt += "<h3>" + "ADC volume with thresholded regions" + "</h3>\n";
+        reportTxt += "<h3>" + "ADC image with core segmentation" + "</h3>\n";
+        //reportTxt += "<a href='" + dwiPdfImage + "'><img src='" + dwiPdfImage + "' alt='ADC volume with core segmentation' width='" + imgDisplay + "'/></a>\n";
+        reportTxt += "<img src='" + reportCoreCid + "' alt='ADC image with core segmentation'/>\n";
+        reportTxt += "<h3>" + "ADC image with thresholded regions prior to core volume calculation" + "</h3>\n";
         //reportTxt += "<a href='" + adcPdfImage + "'><img src='" + adcPdfImage + "' alt='ADC volume with thresholded regions' width='" + imgDisplay + "'/></a>\n";
-        reportTxt += "<img src='" + reportAdcCid + "' alt='ADC volume with thresholded regions'/>\n";
+        reportTxt += "<img src='" + reportThreshCid + "' alt='ADC image with thresholded regions prior to core volume calculation'/>\n";
         //reportTxt += "</html>\n";
         
         return reportTxt;
@@ -569,50 +569,80 @@ public class StrokeSegmentationDicomReceiver {
     }
     
     private boolean readEmailConfig() {
-        final InputStream in = getClass().getResourceAsStream(configFileName);
-        if (in != null) {
-            final Properties prop = new Properties();
-            try {
-                prop.load(in);
-            } catch (final IOException e) {
-                Preferences.debug("Unable to load stroke segementation listener plugin preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
-                e.printStackTrace();
+        try {
+            final InputStream in = getClass().getResourceAsStream(configFileName);
+            if (in != null) {
+                final Properties prop = new Properties();
+                try {
+                    prop.load(in);
+                } catch (final IOException e) {
+                    Preferences.debug("Unable to load stroke segementation listener plugin preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
+                    e.printStackTrace();
+                    if (in != null) {
+                        in.close();
+                    }
+                    return false;
+                }
+                
+                emailFrom = prop.getProperty("emailFrom");
+                if (emailFrom == null || emailFrom.equals("")) {
+                    if (in != null) {
+                        in.close();
+                    }
+                    return false;
+                }
+                
+                emailTo = prop.getProperty("emailTo");
+                if (emailTo == null || emailTo.equals("")) {
+                    if (in != null) {
+                        in.close();
+                    }
+                    return false;
+                }
+                
+                emailUsername = prop.getProperty("emailUsername");
+                if (emailUsername == null || emailUsername.equals("")) {
+                    if (in != null) {
+                        in.close();
+                    }
+                    return false;
+                }
+                
+                emailPassword = prop.getProperty("emailPassword");
+                if (emailPassword == null || emailPassword.equals("")) {
+                    if (in != null) {
+                        in.close();
+                    }
+                    return false;
+                }
+                
+                emailHost = prop.getProperty("emailHost");
+                if (emailHost == null || emailHost.equals("")) {
+                    if (in != null) {
+                        in.close();
+                    }
+                    return false;
+                }
+                
+                emailPort = prop.getProperty("emailPort");
+                if (emailPort == null || emailPort.equals("")) {
+                    if (in != null) {
+                        in.close();
+                    }
+                    return false;
+                }
+                
+                if (in != null) {
+                    in.close();
+                }
+                return true;
+            } else {
+                // couldn't load file
                 return false;
             }
-            
-            emailFrom = prop.getProperty("emailFrom");
-            if (emailFrom == null || emailFrom.equals("")) {
-                return false;
-            }
-            
-            emailTo = prop.getProperty("emailTo");
-            if (emailTo == null || emailTo.equals("")) {
-                return false;
-            }
-            
-            emailUsername = prop.getProperty("emailUsername");
-            if (emailUsername == null || emailUsername.equals("")) {
-                return false;
-            }
-            
-            emailPassword = prop.getProperty("emailPassword");
-            if (emailPassword == null || emailPassword.equals("")) {
-                return false;
-            }
-            
-            emailHost = prop.getProperty("emailHost");
-            if (emailHost == null || emailHost.equals("")) {
-                return false;
-            }
-            
-            emailPort = prop.getProperty("emailPort");
-            if (emailPort == null || emailPort.equals("")) {
-                return false;
-            }
-            
-            return true;
-        } else {
-            // couldn't load file
+        } catch (IOException e) {
+            e.printStackTrace();
+            log("Error loading listener properties file: " + configFileName);
             return false;
         }
     }

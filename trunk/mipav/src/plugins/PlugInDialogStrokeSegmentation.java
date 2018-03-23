@@ -224,7 +224,7 @@ public class PlugInDialogStrokeSegmentation extends JDialogStandaloneScriptableP
             double coreVolCC = segAlgo.getLargestObject().size * resolCC[0] * resolCC[1] * resolCC[2];
             
             if (listenerParent != null) {
-                listenerParent.emailReport(adcImage, segAlgo.getAdcTheshLightboxFile(), segAlgo.getDwiTheshLightboxFile(), coreVolCC);
+                listenerParent.emailReport(adcImage, segAlgo.getTheshLightboxFile(), segAlgo.getCoreLightboxFile(), coreVolCC);
             }
 
             if (segAlgo.isCompleted()) {

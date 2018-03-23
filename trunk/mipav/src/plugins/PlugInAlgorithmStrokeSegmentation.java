@@ -50,8 +50,8 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
     
     private float lightboxOpacity = 0.5f;
     
-    private File adcLightboxFile;
-    private File dwiLightboxFile;
+    private File threshLightboxFile;
+    private File coreLightboxFile;
     
     /**
      * Constructor.
@@ -192,7 +192,7 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         // combine threshold with ADC and save lightbox
         ModelImage adcLightbox = generateLightbox(adcImage, dwiSeg, lightboxOpacity);
 
-        adcLightboxFile = saveImageFile(adcLightbox, coreOutputDir, outputBasename + "_ADC_thresh_lightbox", FileUtility.PNG);
+        threshLightboxFile = saveImageFile(adcLightbox, coreOutputDir, outputBasename + "_ADC_thresh_lightbox", FileUtility.PNG);
         
         adcLightbox.disposeLocal();
         
@@ -271,12 +271,12 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         
         saveImageFile(dwiSeg, coreOutputDir, outputBasename + "_ADC_thresh_only_largest", FileUtility.XML);
         
-        // combine core mask with DWI and save lightbox
-        ModelImage dwiLightbox = generateLightbox(dwiImage, dwiSeg, lightboxOpacity);
+        // combine core mask with ADC and save lightbox
+        ModelImage coreLightbox = generateLightbox(adcImage, dwiSeg, lightboxOpacity);
         
-        dwiLightboxFile = saveImageFile(dwiLightbox, coreOutputDir, outputBasename + "_DWI_core_lightbox", FileUtility.PNG);
+        coreLightboxFile = saveImageFile(coreLightbox, coreOutputDir, outputBasename + "_ADC_core_lightbox", FileUtility.PNG);
         
-        dwiLightbox.disposeLocal();
+        coreLightbox.disposeLocal();
         
         // commented out because masks seem just as useful to users
         
@@ -697,12 +697,12 @@ public class PlugInAlgorithmStrokeSegmentation extends AlgorithmBase {
         return lightbox;
     }
     
-    public File getAdcTheshLightboxFile() {
-        return adcLightboxFile;
+    public File getTheshLightboxFile() {
+        return threshLightboxFile;
     }
     
-    public File getDwiTheshLightboxFile() {
-        return dwiLightboxFile;
+    public File getCoreLightboxFile() {
+        return coreLightboxFile;
     }
     
     public MaskObject getLargestObject() {

@@ -317,28 +317,40 @@ public class PlugInDialogStrokeSegmentationListener extends JFrame implements Ac
     }
     
     private boolean readListenerConfig() {
-        final InputStream in = getClass().getResourceAsStream(configFileName);
-        if (in != null) {
-            final Properties prop = new Properties();
-            try {
-                prop.load(in);
-            } catch (final IOException e) {
-                Preferences.debug("Unable to load stroke segementation listener plugin preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
-                e.printStackTrace();
+        try {
+            final InputStream in = getClass().getResourceAsStream(configFileName);
+            if (in != null) {
+                final Properties prop = new Properties();
+                try {
+                    prop.load(in);
+                } catch (final IOException e) {
+                    Preferences.debug("Unable to load stroke segementation listener plugin preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
+                    e.printStackTrace();
+                    if (in != null) {
+                        in.close();
+                    }
+                    return false;
+                }
+                
+                ae = prop.getProperty("listenerAETitle", ae);
+                
+                port = Integer.parseInt(prop.getProperty("listenerPort", "" + port));
+                
+                outputDir = prop.getProperty("listenerOutputDir", outputDir);
+                
+                doEmailReport = Boolean.parseBoolean(prop.getProperty("listenerDoEmail", "" + doEmailReport));
+                
+                if (in != null) {
+                    in.close();
+                }
+                return true;
+            } else {
+                // couldn't load file
                 return false;
             }
-            
-            ae = prop.getProperty("listenerAETitle", ae);
-            
-            port = Integer.parseInt(prop.getProperty("listenerPort", "" + port));
-            
-            outputDir = prop.getProperty("listenerOutputDir", outputDir);
-            
-            doEmailReport = Boolean.parseBoolean(prop.getProperty("listenerDoEmail", "" + doEmailReport));
-            
-            return true;
-        } else {
-            // couldn't load file
+        } catch (IOException e) {
+            e.printStackTrace();
+            log("Error loading listener properties file: " + configFileName);
             return false;
         }
     }
