@@ -95,6 +95,10 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 	private String targetPointsFile;
 	private JTextField inputPointsText;
 	private String inputPointsFile;
+	private JTextField targetImageText;
+	private String targetImageName;
+	private JTextField inputImageText;
+	private String inputImageName;
 //	private JTextField  baseFileNameText;
 //	private Vector<Integer> includeRange;
 //	private JPanel inputsPanel;
@@ -255,46 +259,102 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		File inputFile = new File( inputPointsFile );
 		System.err.println(toTwistedName + " " + toTwistedFile.exists() );
 		ModelImage toTwisted = null;
-		if ( toTwistedFile.exists() && annotationFile.exists() && targetFile.exists() && inputFile.exists() )
+		if ( toTwistedFile.exists() && annotationFile.exists()  )
 		{
 			System.err.println("opening image...");
 			FileIO fileIO = new FileIO();
 			toTwisted = fileIO.readImage(toTwistedName);  
 			if ( toTwisted != null )
 			{
-				// read registration points and calculate thin-plate spline transform:
-				VOI targetPts = LatticeModel.readAnnotationsCSV(targetPointsFile);
-				VOI inputPts = LatticeModel.readAnnotationsCSV(inputPointsFile);
-				int numTargetPts = targetPts.getCurves().size();
-				int numInputPts = inputPts.getCurves().size();
-				if ( numTargetPts != numInputPts ) {
-					MipavUtil.displayError( "Number of registration target points and input points must match" );
-					return;
-				}
-				double[] xSource = new double[ numTargetPts ]; 
-				double[] ySource = new double[ numTargetPts ]; 
-				double[] zSource = new double[ numTargetPts ]; 
-				double[] xTarget = new double[ numTargetPts ]; 
-				double[] yTarget = new double[ numTargetPts ]; 
-				double[] zTarget = new double[ numTargetPts ]; 
-				for ( int i = 0; i < numTargetPts; i++ ) {
-					Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
-					Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
-					xSource[i] = sourcePt.X;					ySource[i] = sourcePt.Y;					zSource[i] = sourcePt.Z;
-					xTarget[i] = targetPt.X;					yTarget[i] = targetPt.Y;					zTarget[i] = targetPt.Z;
-				}
-				AlgorithmTPSpline spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTarget, yTarget, zTarget, 0.0f, toTwisted,
-						toTwisted, true);
+				AlgorithmTPSpline spline = null;
+				if ( targetFile.exists() && inputFile.exists() )
+				{
+					// read registration points and calculate thin-plate spline transform:
+					VOI targetPts = LatticeModel.readAnnotationsCSV(targetPointsFile);
+					VOI inputPts = LatticeModel.readAnnotationsCSV(inputPointsFile);
+					int numTargetPts = targetPts.getCurves().size();
+					int numInputPts = inputPts.getCurves().size();
+					if ( numTargetPts != numInputPts ) {
+						MipavUtil.displayError( "Number of registration target points and input points must match" );
+						return;
+					}
+					double[] xSource = new double[ numTargetPts ]; 
+					double[] ySource = new double[ numTargetPts ]; 
+					double[] zSource = new double[ numTargetPts ]; 
+					double[] xTarget = new double[ numTargetPts ]; 
+					double[] yTarget = new double[ numTargetPts ]; 
+					double[] zTarget = new double[ numTargetPts ]; 
+					for ( int i = 0; i < numTargetPts; i++ ) {
+						Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
+						Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
+						xSource[i] = sourcePt.X;					ySource[i] = sourcePt.Y;					zSource[i] = sourcePt.Z;
+						xTarget[i] = targetPt.X;					yTarget[i] = targetPt.Y;					zTarget[i] = targetPt.Z;
+					}
+					
+					ModelImage inputImage = null;
+					if ( inputImageName != null ) {
+						File inputImageFile = new File( inputImageName );
+						if ( inputImageFile.exists() )
+						{
+							fileIO = new FileIO();
+							inputImage = fileIO.readImage(inputImageName);
+						}
+					}
+					boolean writeOutput = true;
+					if ( inputImage == null )
+					{
+						// no input image to warp, use the toTwisted image for dimensions, etc.
+						inputImage = toTwisted;
+						writeOutput = false;
+					}
+					ModelImage targetImage = null;
+					if ( (targetImageName != null) && writeOutput) {
+						File inputImageFile = new File( targetImageName );
+						if ( inputImageFile.exists() )
+						{
+							fileIO = new FileIO();
+							targetImage = fileIO.readImage(targetImageName);
+						}
+					}
+					if ( targetImage == null )
+					{
+						targetImage = inputImage;
+					}
+					spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTarget, yTarget, zTarget, 0.0f, targetImage,
+							inputImage, !writeOutput);
 
-		        spline.setRunningInSeparateThread(false);
-		        spline.run();
+					spline.setRunningInSeparateThread(false);
+					spline.run();
+					
+					if ( writeOutput )
+					{
+						ModelImage outputImage = spline.getResultImage();
+						outputImage.calcMinMax();
+						new ViewJFrameImage((ModelImage) outputImage.clone());
+						System.err.println( outputImage.getImageName() + "   " + outputImage.getImageDirectory() );
+						ModelImage.saveImage(outputImage);
+						outputImage.disposeLocal(false);
+						outputImage = null;
+						inputImage.disposeLocal(false);
+						inputImage = null;
+						
+						if ( targetImage != null )
+						{
+							targetImage.disposeLocal(false);
+							targetImage = null;
+						}
+					}
 
-//				for ( int i = 0; i < numTargetPts; i++ ) {
-//					Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
-//					Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
-//					float[] transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
-//					System.err.println( sourcePt + "   =>  " + targetPt + "    " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
-//				}
+					for ( int i = 0; i < numTargetPts; i++ ) {
+						Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
+						Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
+						float[] transformedPt = spline.getCorrespondingPoint(sourcePt.X, sourcePt.Y, sourcePt.Z);
+						if ( (Math.round(targetPt.X) != Math.round(transformedPt[0])) || (Math.round(targetPt.Y) != Math.round(transformedPt[1])) || (Math.round(targetPt.Z) != Math.round(transformedPt[2])) )
+						{
+							System.err.println( sourcePt + "   =>  " + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2] );
+						}
+					}
+				}
 		        
 				
 				int dimX = toTwisted.getExtents().length > 0 ? toTwisted.getExtents()[0] : 1;
@@ -333,7 +393,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 								float y = toTwisted.getFloatC( (int)transformedPt.X, (int)transformedPt.Y, (int)transformedPt.Z, 2 );
 								float z = toTwisted.getFloatC( (int)transformedPt.X, (int)transformedPt.Y, (int)transformedPt.Z, 3 );
 								Vector3f newPos = new Vector3f(x, y, z);
-
+								System.err.println(newPos);
 								if ( !newPos.equals( Vector3f.ZERO ) )
 								{
 									VOIText newText = new VOIText();
@@ -361,11 +421,19 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 						MipavUtil.displayInfo( msg );
 					}
 				}
+				toTwisted.disposeLocal(false);
+				toTwisted = null;
 			}
 			else
 			{
+				MipavUtil.displayError( "Error reading file: " + 
+						toTwistedFile.getName() + " " +  annotationFile.getName() + " " + targetFile.getName() + " " + inputFile.getName() );
 				System.err.println("image open failed");
 			}
+		}
+		else
+		{
+			MipavUtil.displayError( "Error reading file: " + toTwistedFile.getName() );
 		}
 		
 		
@@ -598,7 +666,7 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 
 		
 		JPanel regPanel = new JPanel(new GridBagLayout());
-		regPanel.setBorder(JDialogBase.buildTitledBorder("Registration - Untwisted Space"));
+		regPanel.setBorder(JDialogBase.buildTitledBorder("Registration (optional) - Untwisted Space"));
 		regPanel.setForeground(Color.black);
 
 		targetPointsText = gui.buildFileField("Target points - register to this space (csv): ", "", false, JFileChooser.FILES_ONLY, this);
@@ -607,6 +675,14 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 
 		inputPointsText = gui.buildFileField("Input points - transform this space to target (csv): ", "", false, JFileChooser.FILES_ONLY, this);
 		regPanel.add(inputPointsText.getParent(), gbc);
+		gbc.gridy++;
+
+		targetImageText = gui.buildFileField("Target image (optional) - transform to this space: ", "", false, JFileChooser.FILES_ONLY, this);
+		regPanel.add(targetImageText.getParent(), gbc);
+		gbc.gridy++;
+
+		inputImageText = gui.buildFileField("Input image (optional) - transform this image to target space: ", "", false, JFileChooser.FILES_ONLY, this);
+		regPanel.add(inputImageText.getParent(), gbc);
 		gbc.gridy++;
 
 
@@ -773,6 +849,9 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 		
 		targetPointsFile = targetPointsText.getText();
 		inputPointsFile = inputPointsText.getText();
+
+		targetImageName = targetImageText.getText();
+		inputImageName = inputImageText.getText();
 		
 //		baseFileDir = baseFileLocText.getText();
 //		includeRange = new Vector<Integer>();
