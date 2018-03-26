@@ -5039,12 +5039,18 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             int nVOI = VOIs.size();
 
             for (int i = 0; i < nVOI; i++) {
+            	String voiName = JDialogBase.makeImageName( VOIs.VOIAt(i).getName(), "");
+                int index = voiName.lastIndexOf(File.separator);
+                if ( index != -1 )
+                {
+                	voiName = voiName.substring(index+1, voiName.length() );
+                }
                 if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
                     FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
                     fileVOI.writeVOI(VOIs.VOIAt(i), true);
                 } else {
-                    FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, currentImage);
-                    fileVOI.writeAnnotationInVoiAsXML(VOIs.VOIAt(i).getName(),true);
+                    FileVOI fileVOI = new FileVOI(voiName + ".lbl", voiDir, currentImage);
+                    fileVOI.writeAnnotationInVoiAsXML(voiName,true);
                 }
             }
 
