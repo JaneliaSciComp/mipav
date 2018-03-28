@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 import java.io.RandomAccessFile;
 
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.MipavUtil;
 
 public abstract class CVODES {
@@ -545,7 +546,8 @@ public abstract class CVODES {
 	public enum SUNLinearSolver_Type{
 		  SUNLINEARSOLVER_DIRECT,
 		  SUNLINEARSOLVER_ITERATIVE,
-		  SUNLINEARSOLVER_CUSTOM
+		  SUNLINEARSOLVER_CUSTOM,
+		  SUNLINEARLAPACKSOLVER_DIRECT
 		};
 
     final int cvDlsDQJac = -1;
@@ -557,10 +559,12 @@ public abstract class CVODES {
     final int cvDlsInitialize_select = 1;
     // For cv_mem.cv_lsolve_select
     final int cvDlsSolve_select = 1;
+    final int cvDlsLapackSolve_select = 2;
     // For cv_mem.cv_lfree_select
     final int cvDlsFree_select = 1;
     // For cv_mem.cv_setup_select
     final int cvDlsSetup_select = 1;
+    final int cvDlsLapackSetup_select = 2;
     // For cv_mem.cv_fS1_select
     final int cvSensRhs1InternalDQ_select = -1;
     // For cv_mem.cv_f_select
@@ -569,8 +573,9 @@ public abstract class CVODES {
     final int cvsRoberts_dns = 1;
     final int cvsDirectDemo_ls_Problem_1 = 2;
     final int cvsRoberts_dns_uw = 3;
-    final int cvsRoberts_FSA_dns = 4;
-    int problem = cvsDirectDemo_ls_Problem_1;
+    final int cvsRoberts_dnsL = 4;
+    final int cvsRoberts_FSA_dns = 5;
+    int problem = cvsRoberts_dnsL;
     boolean testMode = true;
 	
     // Linear Solver options for runcvsDirectDemo
@@ -654,6 +659,9 @@ public abstract class CVODES {
 	    }
 	    else if (problem == cvsRoberts_dns_uw) {
 	    	runcvsRoberts_dns_uw();
+	    }
+	    else if (problem == cvsRoberts_dnsL) {
+	        runcvsRoberts_dnsL();	
 	    }
 	    else if (problem == cvsRoberts_FSA_dns) {
 	    	runcvsRoberts_FSA_dns();
@@ -1057,6 +1065,237 @@ public abstract class CVODES {
 		
 		// Create dense SUNLinearSolver object for use by CVode
 		LS = SUNDenseLinearSolver(y, A);
+		if (LS == null) {
+			return;
+		}
+		
+		// Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode
+		flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// Set the user-supplied Jacobian routine Jac
+		flag = CVDlsSetJacFn(cvode_mem, Jac);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// In loop, call CVode, print results, and test for error.
+		// Break out of loop when NOUT preset output times have been reached.
+		System.out.println(" \n3-species kinetics problem\n");
+		
+		iout = 0;
+		tout = T1;
+		
+		while (true) {
+			flag = CVode(cvode_mem, tout, y, t, CV_NORMAL);
+			switch (iout) {
+			case 0:
+				System.out.println("Example manual: at t = 0.4 y[0] = 0.98517 y[1] = 3.3864E-5 y[2] = 1.4794E-2");
+				break;
+			case 1:
+				System.out.println("Example manual: at t = 4.0 y[0] = 0.90552 y[1] = 2.2405E-5 y[2] = 9.4459E-2");
+				break;
+			case 2:
+				System.out.println("Example manual: at t = 40.0 y[0] = 0.71583 y[1] = 9.1856E-6 y[2] = 0.28416");
+				break;
+			case 3:
+				System.out.println("Example manual: at t = 400.0 y[0] = 0.45052 y[1] = 3.2229E-6 y[2] = 0.54947");
+				break;
+			case 4:
+				System.out.println("Example manual: at t = 4.0E3 y[0] = 0.18317 y[1] = 8.9403E-7 y[2] = 0.81683");
+				break;
+			case 5:
+				System.out.println("Example manual: at t = 4.0E4 y[0] = 3.8977E-2 y[1] = 1.6215E-7 y[2] = 0.96102");
+				break;
+			case 6:
+				System.out.println("Example manual: at t = 4.0E5 y[0] = 4.9387E-3 y[1] = 1.9852E-8 y[2] = 0.99506");
+				break;
+			case 7:
+				System.out.println("Example manual: at t = 4.0E6 y[0] = 5.1684E-4 y[1] = 2.0684E-9 y[2] = 0.99948");
+				break;
+			case 8:
+				System.out.println("Example manual: at t = 4.0E7 y[0] = 5.2039E-5 y[1] = 2.0817E-10 y[2] = 0.99995");
+				break;
+			case 9:
+				System.out.println("Example manual at t = 4.0E8 y[0] = 5.2106E-6 y[1] = 2.0842E-11 y[2] = 0.99999");
+				break;
+			case 10:
+				System.out.println("Example manual at t = 4.0E9 y[0] = 5.1881E-7 y[1] = 2.0752E-12 y[2] = 1.0000");
+				break;
+			case 11:
+				System.out.println("Example manual at t = 4.0E10 y[0] = 6.5181E-8 y[1] = 2.6072E-13 y[2] = 1.0000");
+				break;
+			}
+			System.out.println("MIPAV: at t = " + t[0] + " y[0] = " + y.data[0] + " y[1] = " + y.data[1] + " y[2] = " + y.data[2]);
+			
+			if (flag == CV_ROOT_RETURN) {
+			    flagr = CVodeGetRootInfo(cvode_mem, rootsfound)	;
+			    if (flagr == CV_MEM_NULL) {
+			    	return;
+			    }
+			    System.out.println("Roots found are " + rootsfound[0] + " and " + rootsfound[1]);
+			}
+			
+			if (flag < 0) {
+				System.out.println("CVode failed with flag = " + flag);
+				break;
+			}
+			
+			if (flag == CV_SUCCESS) {
+				iout++;
+				tout *= TMULT;
+			}
+			
+			if (iout == NOUT) {
+				break;
+			}
+		} // while (true)
+		
+		// Print some final statistics
+		PrintFinalStats(cvode_mem);
+		
+		// Check the solution error
+		flag = check_ans(y, reltol, abstol);
+		
+		// Free y and abstol vectors
+		N_VDestroy(y);
+		N_VDestroy(abstol);
+		
+		// Free the integrator memory
+		CVodeFree(cvode_mem);
+		
+		// Free the linear solver memory
+		SUNLinSolFree_Dense(LS);
+		
+		// Free the matrix memory
+		for (i = 0; i < NEQ; i++) {
+			A[i] = null;
+		}
+		A = null;
+		return;
+	}
+	
+	private void runcvsRoberts_dnsL() {
+		/* -----------------------------------------------------------------
+		 * Programmer(s): Radu Serban @ LLNL
+		 * -----------------------------------------------------------------
+		 * Example problem:
+		 * 
+		 * The following is a simple example problem, with the coding
+		 * needed for its solution by CVODE. The problem is from
+		 * chemical kinetics, and consists of the following three rate
+		 * equations:         
+		 *    dy1/dt = -.04*y1 + 1.e4*y2*y3
+		 *    dy2/dt = .04*y1 - 1.e4*y2*y3 - 3.e7*(y2)^2
+		 *    dy3/dt = 3.e7*(y2)^2
+		 * on the interval from t = 0.0 to t = 4.e10, with initial
+		 * conditions: y1 = 1.0, y2 = y3 = 0. The problem is stiff.
+		 * While integrating the system, we also use the rootfinding
+		 * feature to find the points at which y1 = 1e-4 or at which
+		 * y3 = 0.01. This program solves the problem with the BDF method,
+		 * Newton iteration with the LAPACK dense linear solver, and a
+		 * user-supplied Jacobian routine.
+		 * It uses a scalar relative tolerance and a vector absolute
+		 * tolerance. Output is printed in decades from t = .4 to t = 4.e10.
+		 * Run statistics (optional outputs) are printed at the end.
+		 * -----------------------------------------------------------------*/
+		/** Problem Constants */
+		final int NEQ = 3; // Number of equations
+		final double Y1 = 1.0; // Initial y components
+		final double Y2 = 0.0;
+		final double Y3 = 0.0;
+		//final double RTOL = 1.0E-4; // scalar relative tolerance
+		final double RTOL = 1.0E-12;
+		//final double ATOL1 = 1.0E-8; // vector absolute tolerance components
+		final double ATOL1 = 1.0E-12;
+		//final double ATOL2 = 1.0E-14;
+		final double ATOL2 = 1.0E-15;
+		//final double ATOL3 = 1.0E-6;
+		final double ATOL3 = 1.0E-12;
+		final double T0 = 0.0; // initial time
+		final double T1 = 0.4; // first output time
+		final double TMULT = 10.0; // output time factor
+		//final int NOUT = 12; // number of output times
+		final int NOUT = 12;
+		int f = cvsRoberts_dnsL;
+		int g = cvsRoberts_dnsL;
+		int Jac = cvsRoberts_dnsL;
+		
+		// Set initial conditions
+		NVector y = new NVector();
+		NVector abstol = new NVector();
+		double yr[] = new double[]{Y1,Y2,Y3};
+		N_VNew_Serial(y, NEQ);
+		y.setData(yr);
+		double reltol = RTOL; // Set the scalar relative tolerance
+		// Set the vector absolute tolerance
+		double abstolr[] = new double[]{ATOL1,ATOL2,ATOL3};
+		N_VNew_Serial(abstol,NEQ);
+		abstol.setData(abstolr);
+		CVodeMemRec cvode_mem;
+		int flag;
+		int flagr;
+		double A[][];
+		SUNLinearSolver LS;
+		double tout;
+		int iout;
+		double t[] = new double[1];
+		int rootsfound[] = new int[2];
+		int i;
+		
+		// Call CVodeCreate to create the solver memory and specify the
+		// Backward Differentiation Formula and the use of a Newton
+		// iteration
+		cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
+		if (cvode_mem == null) {
+		    return;	
+		}
+		// Allow unlimited steps in reaching tout
+		flag = CVodeSetMaxNumSteps(cvode_mem, -1);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		// Allow many error test failures
+		flag = CVodeSetMaxErrTestFails(cvode_mem, Integer.MAX_VALUE);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeInit to initialize the integrator memory and specify the
+		// user's right hand side function in y' = f(t,y), the initial time T0, and
+	    // the initial dependent variable vector y
+		flag = CVodeInit(cvode_mem, f, T0, y);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeSVtolerances to specify the scalar relative tolerance
+		// and vector absolute tolerances
+		flag = CVodeSVtolerances(cvode_mem, reltol, abstol);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVRootInit to specify the root function g with 2 components
+		flag = CVodeRootInit(cvode_mem, 2, g);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Create dense SUNMATRIX for use in linear solver
+		// indexed by columns stacked on top of each other
+		try {
+		    A = new double[NEQ][NEQ];
+		}
+		catch (OutOfMemoryError e) {
+		    MipavUtil.displayError("Out of memory error trying to create A");
+		    return;
+		}
+		
+		// Create dense SUNLinearSolver object for use by CVode
+		LS = SUNDenseLinearLapackSolver(y, A);
 		if (LS == null) {
 			return;
 		}
@@ -1950,7 +2189,7 @@ public abstract class CVODES {
 	private int fTestMode(double t, NVector yv, NVector ydotv, UserData user_data) {
 		double y[] = yv.getData();
 		double ydot[] = ydotv.getData();
-		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_dnsL)) {
 		    ydot[0] = -0.04*y[0] + 1.0E4*y[1]*y[2];
 		    ydot[2] = 3.0E7*y[1]*y[1];
 		    ydot[1] = -ydot[0] - ydot[2];
@@ -2019,7 +2258,7 @@ public abstract class CVODES {
 	 */
 	private int gTestMode(double t, NVector yv, double gout[], UserData user_data) {
 		double y[] = yv.getData();
-		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_FSA_dns)) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_dnsL) || (problem == cvsRoberts_FSA_dns)) {
 		    gout[0] = y[0] - 0.0001;
 		    gout[1] = y[2] - 0.01;
 		}
@@ -2041,7 +2280,7 @@ public abstract class CVODES {
 	 */
 	private int JacTestMode(double t, NVector yv, NVector fy, double J[][], UserData data, NVector tmp1, NVector tmp2, NVector tmp3) {
 		double y[] = yv.getData();
-		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw)) {
+		if ((problem == cvsRoberts_dns) || (problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_dnsL)) {
 		    J[0][0] = -0.04;
 		    J[0][1] = 1.0E4 * y[2];
 		    J[0][2] = 1.0E4 * y[1];
@@ -3279,6 +3518,26 @@ public abstract class CVODES {
     	 return S;
      }
      
+     private SUNLinearSolver SUNDenseLinearLapackSolver(NVector y, double A[][]) {
+    	 int matrixRows = A.length;
+    	 int matrixColumns = A[0].length;
+    	 if (matrixRows != matrixColumns) {
+    		 MipavUtil.displayError("Did not have the matrix rows = matrix columns required for a LinearSolver");
+    		 return null;
+    	 }
+    	 int vecLength = y.getData().length;
+    	 if (matrixRows != vecLength) {
+    		 MipavUtil.displayError("Did not have the matrix rows equal to vector length required for a LinearSolver");
+    		 return null;
+    	 }
+    	 SUNLinearSolver S = new SUNLinearSolver();
+    	 S.N = matrixRows;
+    	 S.last_flag = 0;
+    	 S.pivots = new int[matrixRows];
+    	 S.type = SUNLinearSolver_Type.SUNLINEARLAPACKSOLVER_DIRECT;
+    	 return S;
+     }
+     
      /*---------------------------------------------------------------
      CVDlsSetLinearSolver specifies the direct linear solver.
     ---------------------------------------------------------------*/
@@ -3301,7 +3560,8 @@ public abstract class CVODES {
       }
 
       /* Test if solver and vector are compatible with DLS */
-      if (LS.type != SUNLinearSolver_Type.SUNLINEARSOLVER_DIRECT) {
+      if ((LS.type != SUNLinearSolver_Type.SUNLINEARSOLVER_DIRECT) &&
+    	 (LS.type != SUNLinearSolver_Type.SUNLINEARLAPACKSOLVER_DIRECT)) {
         cvProcessError(cv_mem, CVDLS_ILL_INPUT, "CVSDLS", 
                        "CVDlsSetLinearSolver", 
                        "Non-direct LS supplied to CVDls interface");
@@ -3321,9 +3581,19 @@ public abstract class CVODES {
       //cv_mem.cv_linit  = cvDlsInitialize;
       cv_mem.cv_linit_select = cvDlsInitialize_select;
       //cv_mem.cv_lsetup = cvDlsSetup;
-      cv_mem.cv_lsetup_select = cvDlsSetup_select;
+      if (LS.type == SUNLinearSolver_Type.SUNLINEARSOLVER_DIRECT) {
+          cv_mem.cv_lsetup_select = cvDlsSetup_select;
+      }
+      else {
+    	  cv_mem.cv_lsetup_select = cvDlsLapackSetup_select;
+      }
       //cv_mem.cv_lsolve = cvDlsSolve;
-      cv_mem.cv_lsolve_select = cvDlsSolve_select;
+      if (LS.type == SUNLinearSolver_Type.SUNLINEARSOLVER_DIRECT) {
+          cv_mem.cv_lsolve_select = cvDlsSolve_select;
+      }
+      else {
+    	  cv_mem.cv_lsolve_select = cvDlsLapackSolve_select;
+      }
       //cv_mem.cv_lfree  = cvDlsFree;
       cv_mem.cv_lfree_select = cvDlsFree_select;
       
@@ -7465,8 +7735,9 @@ else                return(snrm);
     	 int flag = 0;
     	 switch(select) {
     	 case cvDlsSetup_select:
+    	 case cvDlsLapackSetup_select:
     		 flag = cvDlsSetup(cv_mem, convfail, y, fy, jcurPtr,
-    				 tmp1, tmp2, tmp3);
+    				 tmp1, tmp2, tmp3,select);
     	 }
     	 return flag;
      }
@@ -7484,7 +7755,7 @@ else                return(snrm);
      -----------------------------------------------------------------*/
    int cvDlsSetup(CVodeMemRec cv_mem, int convfail, NVector y, 
                   NVector fy, boolean jcurPtr[], 
-                  NVector tmp1, NVector tmp2, NVector tmp3)
+                  NVector tmp1, NVector tmp2, NVector tmp3, int select)
    {
      boolean jbad, jok;
      double dgamma;
@@ -7580,7 +7851,12 @@ else                return(snrm);
 
      /* Call generic linear solver 'setup' with this system matrix, and
         return success/failure flag */
-     cvdls_mem.last_flag = SUNLinSolSetup_Dense(cvdls_mem.LS, cvdls_mem.A);
+     if (select == cvDlsSetup_select) {
+         cvdls_mem.last_flag = SUNLinSolSetup_Dense(cvdls_mem.LS, cvdls_mem.A);
+     }
+     else {
+    	 cvdls_mem.last_flag = SUNLinSolSetup_LapackDense(cvdls_mem.LS, cvdls_mem.A);
+     }
      return(cvdls_mem.last_flag);
    }
    
@@ -7738,6 +8014,33 @@ else                return(snrm);
 		   }
 	   }
 	   return 0;
+   }
+   
+   private int SUNLinSolSetup_LapackDense(SUNLinearSolver S, double A[][]) 
+   {
+     int pivots[];
+     int n;
+     LinearEquations2 le2 = new LinearEquations2();
+     
+     /* check for valid inputs */
+     if ( (A == null) || (S == null) ) 
+       return(SUNLS_MEM_NULL);
+     
+     n = A.length;
+     int ier[] = new int[1];
+     pivots = S.pivots;
+     le2.dgetrf(n, n, A, n, pivots, ier);
+	 //if (ier[0] > 0) {
+	    //MipavUtil.displayError("In dgetrf factor U is exactly singular");
+	 //}
+	 S.last_flag = ier[0];
+	 if (ier[0] > 0) {
+		 return(SUNLS_LUFACT_FAIL);
+	 }
+	 if (ier[0] < 0) {
+		 return(SUNLS_PACKAGE_FAIL_UNREC);
+	 }
+	 return(SUNLS_SUCCESS);
    }
 
    /*
@@ -7932,7 +8235,8 @@ else                return(snrm);
 	   int flag = 0;
 	   switch (select) {
 	   case cvDlsSolve_select:
-		   flag = cvDlsSolve(cv_mem, b, weight, ycur, fcur);
+	   case cvDlsLapackSolve_select:
+		   flag = cvDlsSolve(cv_mem, b, weight, ycur, fcur, select);
 		   break;
 	   }
 	   return flag;
@@ -7946,7 +8250,7 @@ else                return(snrm);
    the solution appropriately when gamrat != 1.
    -----------------------------------------------------------------*/
  private int cvDlsSolve(CVodeMemRec cv_mem, NVector b, NVector weight,
-                NVector ycur, NVector fcur)
+                NVector ycur, NVector fcur, int select)
  {
    int retval;
    CVDlsMemRec cvdls_mem;
@@ -7965,7 +8269,12 @@ else                return(snrm);
    cvdls_mem = cv_mem.cv_lmem;
 
    /* call the generic linear system solver, and copy b to x */
-   retval = SUNLinSolSolve_Dense(cvdls_mem.LS, cvdls_mem.A, cvdls_mem.x, b, ZERO);
+   if (select == cvDlsSolve_select) {
+       retval = SUNLinSolSolve_Dense(cvdls_mem.LS, cvdls_mem.A, cvdls_mem.x, b, ZERO);
+   }
+   else {
+	   retval = SUNLinSolSolve_LapackDense(cvdls_mem.LS, cvdls_mem.A, cvdls_mem.x, b, ZERO);
+   }
    N_VScale_Serial(ONE, cvdls_mem.x, b);
    
    /* scale the correction to account for change in gamma */
@@ -8055,6 +8364,45 @@ else                return(snrm);
 	   b[0] /= a[0][0];
 
 	 }
+	 
+	 private int SUNLinSolSolve_LapackDense(SUNLinearSolver S, double A[][], NVector x, 
+	         NVector b, double tol)
+	{
+    double xdata[];
+	int pivots[];
+	int n;
+	int ier[] = new int[1];
+	double xarr[][];
+	LinearEquations2 le2 = new LinearEquations2();
+	int i;
+	
+	if ( (A == null) || (S == null) || (x == null) || (b == null) ) 
+	return(SUNLS_MEM_NULL);
+	
+	/* copy b into x */
+	N_VScale_Serial(ONE, b, x);
+	
+	xdata = x.data;
+	xarr = new double[x.data.length][1];
+	for (i = 0; i < x.data.length; i++) {
+		xarr[i][0] = xdata[i];
+	}
+	pivots = S.pivots;
+	if ( (xdata == null)  || (pivots == null) ) {
+	S.last_flag = SUNLS_MEM_FAIL;
+	return(S.last_flag);
+	}
+	
+	// Call LAPACK to solve the linear system
+	n = A.length;
+	le2.dgetrs('N', n, 1, A, n, pivots, xarr, n, ier);
+	S.last_flag = ier[0];
+	if (ier[0] < 0) {
+		return(SUNLS_PACKAGE_FAIL_UNREC);
+	}
+	S.last_flag = SUNLS_SUCCESS;
+	return(S.last_flag);
+	}
 
 	 /*
 	  * cvHandleNFlag
