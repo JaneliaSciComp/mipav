@@ -2,6 +2,9 @@ package gov.nih.mipav.model.algorithms;
 
 import java.io.RandomAccessFile;
 
+import gov.nih.mipav.model.algorithms.CVODES.CVodeMemRec;
+import gov.nih.mipav.model.algorithms.CVODES.NVector;
+import gov.nih.mipav.model.algorithms.CVODES.UserData;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
 import gov.nih.mipav.view.MipavUtil;
 
@@ -146,6 +149,13 @@ public abstract class CVODES {
 	final int CV_CENTERED = 1;
 	final int CV_FORWARD = 2;
 	
+	
+	 // CV_HERMITE specifies cubic Hermite interpolation.
+	 // CV_POYNOMIAL specifies the polynomial interpolation
+	/* interp */
+	final int CV_HERMITE = 1;
+	final int CV_POLYNOMIAL = 2;
+
 	/* 
 	 * ----------------------------------------
 	 * CVODES return flags
@@ -575,7 +585,8 @@ public abstract class CVODES {
     final int cvsRoberts_dns_uw = 3;
     final int cvsRoberts_dnsL = 4;
     final int cvsRoberts_FSA_dns = 5;
-    int problem = cvsRoberts_dnsL;
+    final int cvsRoberts_ASAi_dns = 6;
+    int problem = cvsRoberts_FSA_dns;
     boolean testMode = true;
 	
     // Linear Solver options for runcvsDirectDemo
@@ -625,7 +636,19 @@ public abstract class CVODES {
     	  public int ewt(NVector y, NVector w, UserData user_data) {
               return 0;
           }
-    	
+          
+          public int fB(double t, NVector y, NVector yB, NVector yBdot, UserData user_dataB) {
+              return 0;
+          }
+          
+          public int JacB(double t, NVector y, NVector yB, NVector fyB, double JB[][], UserData user_dataB,
+			NVector tmp1B, NVector tmp2B, NVector tmp3B) {
+			  return 0;
+		  }
+    	  
+    	  public int fQB(double t, NVector y, NVector yB, NVector qBdot, UserData user_dataB) {
+              return 0;
+          }
       }
     if (testme) {
     	new CVODEStest();
@@ -665,6 +688,9 @@ public abstract class CVODES {
 	    }
 	    else if (problem == cvsRoberts_FSA_dns) {
 	    	runcvsRoberts_FSA_dns();
+	    }
+	    else if (problem == cvsRoberts_ASAi_dns) {
+	    	runcvsRoberts_ASAi_dns();
 	    }
 	    else if (problem == cvsDirectDemo_ls_Problem_1) {
 	    	runcvsDirectDemo_Problem_1();
@@ -1677,7 +1703,7 @@ public abstract class CVODES {
 			case 9:
 				System.out.println("Example manual: at t = 4.0E7 y[0] = 5.2039E-5 y[1] = 2.0817E-10 y[2] = 0.99995");
 				break;
-			case 910:
+			case 10:
 				System.out.println("Example manual at t = 4.0E8 y[0] = 5.2106E-6 y[1] = 2.0842E-11 y[2] = 0.99999");
 				break;
 			case 11:
@@ -1740,7 +1766,223 @@ public abstract class CVODES {
 		return;
 	}
 	
+	private void runcvsRoberts_ASAi_dns() {
+		/* -----------------------------------------------------------------
+		 * Programmer(s): Radu Serban @ LLNL
+		 * -----------------------------------------------------------------
+		 * LLNS Copyright Start
+		 * Copyright (c) 2014, Lawrence Livermore National Security
+		 * This work was performed under the auspices of the U.S. Department
+		 * of Energy by Lawrence Livermore National Laboratory in part under
+		 * Contract W-7405-Eng-48 and in part under Contract DE-AC52-07NA27344.
+		 * Produced at the Lawrence Livermore National Laboratory.
+		 * All rights reserved.
+		 * For details, see the LICENSE file.
+		 * LLNS Copyright End
+		 * -----------------------------------------------------------------
+		 * Adjoint sensitivity example problem.
+		 * The following is a simple example problem, with the coding
+		 * needed for its solution by CVODES. The problem is from chemical
+		 * kinetics, and consists of the following three rate equations.
+		 *    dy1/dt = -p1*y1 + p2*y2*y3
+		 *    dy2/dt =  p1*y1 - p2*y2*y3 - p3*(y2)^2
+		 *    dy3/dt =  p3*(y2)^2
+		 * on the interval from t = 0.0 to t = 4.e10, with initial
+		 * conditions: y1 = 1.0, y2 = y3 = 0. The reaction rates are:
+		 * p1=0.04, p2=1e4, and p3=3e7. The problem is stiff.
+		 * This program solves the problem with the BDF method, Newton
+		 * iteration with the CVODE dense linear solver, and a user-supplied
+		 * Jacobian routine.
+		 * It uses a scalar relative tolerance and a vector absolute
+		 * tolerance.
+		 * Output is printed in decades from t = .4 to t = 4.e10.
+		 * Run statistics (optional outputs) are printed at the end.
+		 * 
+		 * Optionally, CVODES can compute sensitivities with respect to
+		 * the problem parameters p1, p2, and p3 of the following quantity:
+		 *   G = int_t0^t1 g(t,p,y) dt
+		 * where
+		 *   g(t,p,y) = y3
+		 *        
+		 * The gradient dG/dp is obtained as:
+		 *   dG/dp = int_t0^t1 (g_p - lambda^T f_p ) dt - lambda^T(t0)*y0_p
+		 *         = - xi^T(t0) - lambda^T(t0)*y0_p
+		 * where lambda and xi are solutions of:
+		 *   d(lambda)/dt = - (f_y)^T * lambda - (g_y)^T
+		 *   lambda(t1) = 0
+		 * and
+		 *   d(xi)/dt = - (f_p)^T * lambda + (g_p)^T
+		 *   xi(t1) = 0
+		 * 
+		 * During the backward integration, CVODES also evaluates G as
+		 *   G = - phi(t0)
+		 * where
+		 *   d(phi)/dt = g(t,y,p)
+		 *   phi(t1) = 0
+		 * -----------------------------------------------------------------*/
 	
+		/** Problem Constants */
+		final int NEQ = 3; // Number of equations
+		//final double RTOL = 1.0E-6; // scalar relative tolerance
+		final double RTOL = 1.0E-12;
+		//final double ATOL1 = 1.0E-8; // vector absolute tolerance components
+		final double ATOL1 = 1.0E-12;
+		//final double ATOL2 = 1.0E-14;
+		final double ATOL2 = 1.0E-15;
+		//final double ATOL3 = 1.0E-6;
+		final double ATOL3 = 1.0E-12;
+		final double ATOLl = 1.0E-8; // absolute tolerance for adjoint variables
+		final double ATOLq = 1.0E-6; // absolute tolerannce for quuadratures
+		final double T0 = 0.0; // initial time
+		final double TOUT = 4.0E7; // final time
+		final double TB1 = 4.0E7; // starting point for adjoint problem
+		final double TB2 = 50.0; // starting point for adjoint problem
+		final double TBout1 = 40.0; // intermediate t for adjoint problem
+		final int STEPS = 150; // number of steps between check points
+		final int NP = 3; // number of problem parameters
+		double reltolQ;
+		double abstolQ;
+		CVodeMemRec cvode_mem;
+		int flag;
+        int f = cvsRoberts_ASAi_dns;
+        int Jac = cvsRoberts_ASAi_dns;
+		int ewt_select = cvEwtUser_select1;
+		int fQ= cvsRoberts_ASAi_dns;
+		double A[][];
+		SUNLinearSolver LS;
+		int steps;
+		
+		// Print problem description 
+		System.out.printf("\nAdjoint Sensitivity Example for Chemical Kinetics\n");
+		System.out.printf("-------------------------------------------------\n\n");
+		System.out.printf("ODE: dy1/dt = -p1*y1 + p2*y2*y3\n");
+		System.out.printf("     dy2/dt =  p1*y1 - p2*y2*y3 - p3*(y2)^2\n");
+		System.out.printf("     dy3/dt =  p3*(y2)^2\n\n");
+		System.out.printf("Find dG/dp for\n");
+		System.out.printf("     G = int_t0^tB0 g(t,p,y) dt\n");
+		System.out.printf("     g(t,p,y) = y3\n\n\n");
+
+		// User data structure
+		UserData data = new UserData();
+		data.array = new double[3];
+		data.array[0] = 0.04;
+		data.array[1] = 1.0E4;
+		data.array[2] = 3.0E7;
+		
+		// Initialize y
+		NVector y = new NVector();
+		double yr[] = new double[]{1.0,0.0,0.0};
+		N_VNew_Serial(y, NEQ);
+		y.setData(yr);
+		
+		// Initialize q
+		NVector q = new NVector();
+		double qr[] = new double[]{0.0};
+		N_VNew_Serial(q,1);
+		q.setData(qr);
+		
+		// Set the scalar relative and absolute tolerances reltolQ and abstolQ;
+		reltolQ = RTOL;
+		abstolQ = ATOLq;
+		
+		/* Create and allocate CVODES memory for forward run */
+		System.out.printf("Create and allocate CVODES memory for forward runs\n");
+
+		/* Call CVodeCreate to create the solver memory and specify the 
+		     Backward Differentiation Formula and the use of a Newton iteration */
+		cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
+		if (cvode_mem == null) {
+		    return;	
+		}
+		// Allow unlimited steps in reaching tout
+		flag = CVodeSetMaxNumSteps(cvode_mem, -1);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		// Allow many error test failures
+		flag = CVodeSetMaxErrTestFails(cvode_mem, Integer.MAX_VALUE);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeInit to initialize the integrator memory and specify the
+		// user's right hand side function in y' = f(t,y), the initial time T0, and
+	    // the initial dependent variable vector y
+		flag = CVodeInit(cvode_mem, f, T0, y);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Use private function to compute error weights
+		// CVodeWFtolerances specifies a user-provides function (of type CVEwtFn)
+		// which will be called to set the error weight vector.
+		flag = CVodeWFtolerances(cvode_mem, ewt_select);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Attach user data
+		cvode_mem.cv_user_data = data;
+		
+		
+		// Create dense SUNMATRIX for use in linear solver
+		// indexed by columns stacked on top of each other
+		try {
+		    A = new double[NEQ][NEQ];
+		}
+		catch (OutOfMemoryError e) {
+		    MipavUtil.displayError("Out of memory error trying to create A");
+		    return;
+		}
+		
+		// Create dense SUNLinearSolver object for use by CVode
+		LS = SUNDenseLinearSolver(y, A);
+		if (LS == null) {
+			return;
+		}
+		
+		// Call CVDlsSetLinearSolver to attach the matrix and linear solver to CVode
+		flag = CVDlsSetLinearSolver(cvode_mem, LS, A);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// Set the user-supplied Jacobian routine Jac
+		flag = CVDlsSetJacFn(cvode_mem, Jac);
+		if (flag != CVDLS_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeQuadInit to allocate internal memory and initialize
+		// quadrature integration
+		flag = CVodeQuadInit(cvode_mem, fQ, q);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		/* Call CVodeSetQuadErrCon to specify whether or not the quadrature variables
+	     are to be used in the step size control mechanism within CVODES. Call
+	     CVodeQuadSStolerances or CVodeQuadSVtolerances to specify the integration
+	     tolerances for the quadrature variables. */
+		cvode_mem.cv_errconQ = true;
+		
+		/* Call CVodeQuadSStolerances to specify scalar relative and absolute
+	     tolerances. */
+	    flag = CVodeQuadSStolerances(cvode_mem, reltolQ, abstolQ);
+        if (flag != CV_SUCCESS) {
+        	return;
+        }
+
+        /* Call CVodeAdjInit to update CVODES memory block by allocting the internal 
+        memory needed for backward integration.*/
+        steps = STEPS; /* no. of integration steps between two consecutive ckeckpoints*/
+        flag = CVodeAdjInit(cvode_mem, steps, CV_HERMITE);
+        /*
+        flag = CVodeAdjInit(cvode_mem, steps, CV_POLYNOMIAL);
+        */
+
+
+	}
 
 	private void PrintFinalStats(CVodeMemRec cv_mem) {
 	    System.out.println("Number of integrations steps = " + cv_mem.cv_nst);
@@ -2194,7 +2436,7 @@ public abstract class CVODES {
 		    ydot[2] = 3.0E7*y[1]*y[1];
 		    ydot[1] = -ydot[0] - ydot[2];
 		}
-		else if (problem == cvsRoberts_FSA_dns) {
+		else if ((problem == cvsRoberts_FSA_dns) || (problem == cvsRoberts_ASAi_dns)) {
 			double p[] = user_data.array;
 	        ydot[0] = -p[0]*y[0] + p[1]*y[1]*y[2];
 	        ydot[2] = p[2]*y[1]*y[1];
@@ -2210,6 +2452,9 @@ public abstract class CVODES {
 	public abstract int f(double t, NVector yv, NVector ydotv, UserData user_data);
 	
 	private int fQTestMode(double t, NVector x, NVector y, UserData user_data) {
+		if (problem == cvsRoberts_ASAi_dns) {
+			y.data[0] = x.data[2];
+		}
 		return 0;
 	}
 	
@@ -2293,7 +2538,7 @@ public abstract class CVODES {
 		    J[2][1] = 6.0E7 * y[1];
 		    J[2][2] = ZERO;
 		}
-		else if (problem == cvsRoberts_FSA_dns) {
+		else if ((problem == cvsRoberts_FSA_dns) || (problem == cvsRoberts_ASAi_dns)) {
 			double p[] = data.array;
 			J[0][0] = -p[0];
 			J[0][1] = p[1]*y[2];
@@ -2320,7 +2565,7 @@ public abstract class CVODES {
 	public abstract int Jac(double t, NVector yv, NVector fy, double J[][], UserData data, NVector tmp1, NVector tmp2, NVector tmp3);
 	
 	public int ewtTestMode(NVector y, NVector w, UserData user_data) {
-		if ((problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_FSA_dns)) {
+		if ((problem == cvsRoberts_dns_uw) || (problem == cvsRoberts_FSA_dns) || (problem == cvsRoberts_ASAi_dns)) {
 			//final double RTOL = 1.0E-4; // scalar relative tolerance
 			final double RTOL = 1.0E-12;
 			//final double ATOL1 = 1.0E-8; // vector absolute tolerance components
@@ -2352,7 +2597,57 @@ public abstract class CVODES {
 	
 	public abstract int ewt(NVector y, NVector w, UserData user_data);
 	
+	public int fBTestMode(double t, NVector y, NVector yB, NVector yBdot, UserData user_dataB) {
+		if (problem == cvsRoberts_ASAi_dns) {
+			double p[] = user_dataB.array;
+			double l10,l21,y12;
+			l10 = yB.data[1] - yB.data[0];
+			l21 = yB.data[2] - yB.data[1];
+			y12 = y.data[1] * y.data[2];
+			yBdot.data[0] = -p[0] * l10;
+			yBdot.data[1] = p[1]*y.data[2]*l10 - 2.0*p[2]*y.data[1]*l21;
+			yBdot.data[2] = p[1]*y.data[1]*l10 - 1.0;
+		}
+		return 0;
+	}
 	
+	public abstract int fB(double t, NVector y, NVector yB, NVector yBdot, UserData user_dataB);
+	
+	public int JacBTestMode(double t, NVector y, NVector yB, NVector fyB, double JB[][], UserData user_dataB,
+			NVector tmp1B, NVector tmp2B, NVector tmp3B) {
+		if (problem == cvsRoberts_ASAi_dns) {
+			double p[] = user_dataB.array;
+			JB[0][0] = p[0];
+			JB[0][1] = -p[0];
+			JB[0][2] = ZERO;
+			JB[1][0] = -p[1]*y.data[2];
+			JB[1][1] = p[1]*y.data[2] + 2.0*p[2]*y.data[1];
+			JB[1][2] = -2.0*p[2]*y.data[1];
+			JB[2][0] = -p[1]*y.data[1];
+			JB[2][1] = p[1]*y.data[1];
+			JB[2][2] = ZERO;
+		}
+		return 0;
+	}
+	
+	public abstract int JacB(double t, NVector y, NVector yB, NVector fyB, double JB[][], UserData user_dataB,
+			NVector tmp1B, NVector tmp2B, NVector tmp3B);
+	
+	// fQB routine.  Computes integrand for quadratures
+	public int fQBTestMode(double t, NVector y, NVector yB, NVector qBdot, UserData user_dataB) {
+		if (problem == cvsRoberts_ASAi_dns) {
+			double l10, l21, y12;
+			l10 = yB.data[1] - yB.data[0];
+			l21 = yB.data[2] - yB.data[1];
+			y12 = y.data[1] * y.data[2];
+			qBdot.data[0] = y.data[0] * l10;
+			qBdot.data[1] = -y12 * l10;
+			qBdot.data[2] = y.data[1] *y.data[1] * l21;
+		}
+		return 0;
+	}
+	
+	public abstract int fQB(double t, NVector y, NVector yB, NVector qBdot, UserData user_dataB);
 	
 	// Types: struct CVodeMemRec, CVodeMem
 	// -----------------------------------------------------------------
@@ -2410,6 +2705,7 @@ public abstract class CVODES {
 	  boolean cv_quadr;       /* SUNTRUE if integrating quadratures            */
 
 	  //CVQuadRhsFn cv_fQ;          /* q' = fQ(t, y(t))                              */
+	  int cv_fQ;
 
 	  boolean cv_errconQ;     /* SUNTRUE if quadrs. are included in error test */
 
@@ -2634,11 +2930,11 @@ public abstract class CVODES {
 	    Space requirements for CVODES 
 	    -----------------------------*/
 
-	  long cv_lrw1;        /* no. of realtype words in 1 N_Vector y           */ 
+	  long cv_lrw1;        /* no. of double words in 1 N_Vector y           */ 
 	  long cv_liw1;        /* no. of integer words in 1 N_Vector y            */ 
-	  long cv_lrw1Q;       /* no. of realtype words in 1 N_Vector yQ          */ 
+	  long cv_lrw1Q;       /* no. of double words in 1 N_Vector yQ          */ 
 	  long cv_liw1Q;       /* no. of integer words in 1 N_Vector yQ           */ 
-	  long cv_lrw;             /* no. of realtype words in CVODES work vectors    */
+	  long cv_lrw;             /* no. of double words in CVODES work vectors    */
 	  long cv_liw;             /* no. of integer words in CVODES work vectors     */
 
 	  /*----------------
@@ -2762,7 +3058,7 @@ public abstract class CVODES {
 
 	  boolean cv_adj;             /* SUNTRUE if performing ASA                */
 
-	  CVodeMemRec cv_adj_mem; /* Pointer to adjoint memory structure      */
+	  CVadjMemRec cv_adj_mem; /* Pointer to adjoint memory structure      */
 
 	  boolean cv_adjMallocDone;
 
@@ -11707,6 +12003,560 @@ else                return(snrm);
 	  
 	}
 
+	/*
+	 * CVodeQuadInit
+	 *
+	 * CVodeQuadInit allocates and initializes quadrature related 
+	 * memory for a problem. All problem specification inputs are 
+	 * checked for errors. If any error occurs during initialization, 
+	 * it is reported to the file whose file pointer is errfp. 
+	 * The return value is CV_SUCCESS = 0 if no errors occurred, or
+	 * a negative value otherwise.
+	 */
+
+	private int CVodeQuadInit(CVodeMemRec cv_mem, int fQ, NVector yQ0)
+	{
+	  boolean allocOK;
+	  long lrw1Q[] = new long[1];
+	  long liw1Q[] = new long[1];
+
+	  /* Check cvode_mem */
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeQuadInit",
+	                   MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Set space requirements for one N_Vector */
+	  N_VSpace_Serial(yQ0, lrw1Q, liw1Q);
+	  cv_mem.cv_lrw1Q = lrw1Q[0];
+	  cv_mem.cv_liw1Q = liw1Q[0];
+
+	  /* Allocate the vectors (using yQ0 as a template) */
+	  allocOK = cvQuadAllocVectors(cv_mem, yQ0);
+	  if (!allocOK) {
+	    cvProcessError(cv_mem, CV_MEM_FAIL, "CVODES",
+	                   "CVodeQuadInit", MSGCV_MEM_FAIL);
+	    return(CV_MEM_FAIL);
+	  }
+
+	  /* Initialize znQ[0] in the history array */
+	  N_VScale_Serial(ONE, yQ0, cv_mem.cv_znQ[0]);
+
+	  /* Copy the input parameters into CVODES state */
+	  cv_mem.cv_fQ = fQ;
+
+	  /* Initialize counters */
+	  cv_mem.cv_nfQe  = 0;
+	  cv_mem.cv_netfQ[0] = 0;
+
+	  /* Quadrature integration turned ON */
+	  cv_mem.cv_quadr = true;
+	  cv_mem.cv_QuadMallocDone = true;
+
+	  /* Quadrature initialization was successfull */
+	  return(CV_SUCCESS);
+	}
+
+	/*
+	 * CVodeQuadAllocVectors
+	 *
+	 * NOTE: Space for ewtQ is allocated even when errconQ=SUNFALSE, 
+	 * although in this case, ewtQ is never used. The reason for this
+	 * decision is to allow the user to re-initialize the quadrature
+	 * computation with errconQ=SUNTRUE, after an initialization with
+	 * errconQ=SUNFALSE, without new memory allocation within 
+	 * CVodeQuadReInit.
+	 */
+
+	private boolean cvQuadAllocVectors(CVodeMemRec cv_mem, NVector tmpl) 
+	{
+	  int i, j;
+
+	  /* Allocate ewtQ */
+	  cv_mem.cv_ewtQ = N_VClone(tmpl);
+	  if (cv_mem.cv_ewtQ == null) {
+	    return(false);
+	  }
+	  
+	  /* Allocate acorQ */
+	  cv_mem.cv_acorQ = N_VClone(tmpl);
+	  if (cv_mem.cv_acorQ == null) {
+	    N_VDestroy(cv_mem.cv_ewtQ);
+	    return(false);
+	  }
+
+	  /* Allocate yQ */
+	  cv_mem.cv_yQ = N_VClone(tmpl);
+	  if (cv_mem.cv_yQ == null) {
+	    N_VDestroy(cv_mem.cv_ewtQ);
+	    N_VDestroy(cv_mem.cv_acorQ);
+	    return(false);
+	  }
+
+	  /* Allocate tempvQ */
+	  cv_mem.cv_tempvQ = N_VClone(tmpl);
+	  if (cv_mem.cv_tempvQ == null) {
+	    N_VDestroy(cv_mem.cv_ewtQ);
+	    N_VDestroy(cv_mem.cv_acorQ);
+	    N_VDestroy(cv_mem.cv_yQ);
+	    return(false);
+	  }
+
+	  /* Allocate zQn[0] ... zQn[maxord] */
+
+	  for (j=0; j <= cv_mem.cv_qmax; j++) {
+	    cv_mem.cv_znQ[j] = N_VClone(tmpl);
+	    if (cv_mem.cv_znQ[j] == null) {
+	      N_VDestroy(cv_mem.cv_ewtQ);
+	      N_VDestroy(cv_mem.cv_acorQ);
+	      N_VDestroy(cv_mem.cv_yQ);
+	      N_VDestroy(cv_mem.cv_tempvQ);
+	      for (i=0; i < j; i++) N_VDestroy(cv_mem.cv_znQ[i]);
+	      return(false);
+	    }
+	  }
+
+	  /* Store the value of qmax used here */
+	  cv_mem.cv_qmax_allocQ = cv_mem.cv_qmax;
+
+	  /* Update solver workspace lengths */
+	  cv_mem.cv_lrw += (cv_mem.cv_qmax + 5)*cv_mem.cv_lrw1Q;
+	  cv_mem.cv_liw += (cv_mem.cv_qmax + 5)*cv_mem.cv_liw1Q;
+
+	  return(true);
+	}
+
+	private int CVodeQuadSStolerances(CVodeMemRec cv_mem, double reltolQ, double abstolQ)
+	{
+
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES",
+	                   "CVodeQuadSStolerances", MSGCV_NO_MEM);    
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Ckeck if quadrature was initialized? */
+
+	  if (cv_mem.cv_QuadMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_QUAD, "CVODES",
+	                   "CVodeQuadSStolerances", MSGCV_NO_QUAD); 
+	    return(CV_NO_QUAD);
+	  }
+
+	  /* Test user-supplied tolerances */
+
+	  if (reltolQ < ZERO) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+	                   "CVodeQuadSStolerances", MSGCV_BAD_RELTOLQ);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  if (abstolQ < 0) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES",
+	                   "CVodeQuadSStolerances", MSGCV_BAD_ABSTOLQ);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Copy tolerances into memory */
+
+	  cv_mem.cv_itolQ = CV_SS;
+
+	  cv_mem.cv_reltolQ  = reltolQ;
+	  cv_mem.cv_SabstolQ = abstolQ;
+
+	  return(CV_SUCCESS);
+	}
+	
+	/*
+	 * CVodeAdjInit
+	 *
+	 * This routine initializes ASA and allocates space for the adjoint 
+	 * memory structure.
+	 */
+
+	private int CVodeAdjInit(CVodeMemRec cv_mem, int steps, int interp)
+	{
+	  CVadjMemRec ca_mem;
+	  int i, ii;
+
+	  /* ---------------
+	   * Check arguments
+	   * --------------- */
+
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeAdjInit", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  if (steps <= 0) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeAdjInit", MSGCV_BAD_STEPS);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  if ( (interp != CV_HERMITE) && (interp != CV_POLYNOMIAL) ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeAdjInit", MSGCV_BAD_INTERP);
+	    return(CV_ILL_INPUT);
+	  } 
+
+	  /* ----------------------------
+	   * Allocate CVODEA memory block
+	   * ---------------------------- */
+
+	  ca_mem = null;
+	  ca_mem = new CVadjMemRec();
+	  if (ca_mem == null) {
+	    cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeAdjInit", MSGCV_MEM_FAIL);
+	    return(CV_MEM_FAIL);
+	  }
+
+	  /* Attach ca_mem to CVodeMem structure */
+
+	  cv_mem.cv_adj_mem = ca_mem;
+
+	  /* ------------------------------
+	   * Initialization of check points
+	   * ------------------------------ */
+
+	  /* Set Check Points linked list to NULL */
+	  ca_mem.ck_mem = null;
+
+	  /* Initialize nckpnts to ZERO */
+	  ca_mem.ca_nckpnts = 0;
+
+	  /* No interpolation data is available */
+	  ca_mem.ca_ckpntData = null;
+
+	  /* ------------------------------------
+	   * Initialization of interpolation data
+	   * ------------------------------------ */
+
+	  /* Interpolation type */
+
+	  ca_mem.ca_IMtype = interp;
+
+	  /* Number of steps between check points */
+
+	  ca_mem.ca_nsteps = steps;
+
+	  /* Allocate space for the array of Data Point structures */
+
+	  ca_mem.dt_mem = null;
+	  ca_mem.dt_mem = new DtpntMemRec[steps+1];
+	  if (ca_mem.dt_mem == null) {
+	    ca_mem = null;
+	    cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeAdjInit", MSGCV_MEM_FAIL);
+	    return(CV_MEM_FAIL);
+	  }
+
+	  for (i=0; i<=steps; i++) { 
+	    ca_mem.dt_mem[i] = null;
+	    ca_mem.dt_mem[i] = new DtpntMemRec();
+	    if (ca_mem.dt_mem[i] == null) {
+	      for(ii=0; ii<i; ii++) {ca_mem.dt_mem[ii] = null;}
+	      ca_mem.dt_mem = null;
+	      ca_mem = null;
+	      cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeAdjInit", MSGCV_MEM_FAIL);
+	      return(CV_MEM_FAIL);
+	    }
+	  }
+
+	  /* Attach functions for the appropriate interpolation module */
+	  
+	  switch(interp) {
+
+	  case CV_HERMITE:
+	    
+	    //ca_mem.ca_IMmalloc = CVAhermiteMalloc;
+	    //ca_mem.ca_IMfree   = CVAhermiteFree;
+	    //ca_mem.ca_IMget    = CVAhermiteGetY;
+	    //ca_mem.ca_IMstore  = CVAhermiteStorePnt;
+
+	    break;
+	    
+	  case CV_POLYNOMIAL:
+	  
+	    //ca_mem.ca_IMmalloc = CVApolynomialMalloc;
+	    //ca_mem.ca_IMfree   = CVApolynomialFree;
+	    //ca_mem.ca_IMget    = CVApolynomialGetY;
+	    //ca_mem.ca_IMstore  = CVApolynomialStorePnt;
+
+	    break;
+
+	  }
+
+	  /* The interpolation module has not been initialized yet */
+
+	  ca_mem.ca_IMmallocDone = false;
+
+	  /* By default we will store but not interpolate sensitivities
+	   *  - IMstoreSensi will be set in CVodeF to SUNFALSE if FSA is not enabled
+	   *    or if the user can force this through CVodeSetAdjNoSensi 
+	   *  - IMinterpSensi will be set in CVodeB to SUNTRUE if IMstoreSensi is
+	   *    SUNTRUE and if at least one backward problem requires sensitivities */
+
+	  ca_mem.ca_IMstoreSensi = true;
+	  ca_mem.ca_IMinterpSensi = false;
+
+	  /* ------------------------------------
+	   * Initialize list of backward problems
+	   * ------------------------------------ */
+
+	  ca_mem.cvB_mem = null;
+	  ca_mem.ca_bckpbCrt = null;
+	  ca_mem.ca_nbckpbs = 0;
+
+	  /* --------------------------------
+	   * CVodeF and CVodeB not called yet
+	   * -------------------------------- */
+
+	  ca_mem.ca_firstCVodeFcall = true;
+	  ca_mem.ca_tstopCVodeFcall = false;
+
+	  ca_mem.ca_firstCVodeBcall = true;
+
+	  /* ---------------------------------------------
+	   * ASA initialized and allocated
+	   * --------------------------------------------- */
+
+	  cv_mem.cv_adj = true;
+	  cv_mem.cv_adjMallocDone = true;
+
+	  return(CV_SUCCESS);
+	} 
+
+	class CVadjMemRec {
+	    
+		  /* --------------------
+		   * Forward problem data
+		   * -------------------- */
+
+		  /* Integration interval */
+		  double ca_tinitial, ca_tfinal;
+
+		  /* Flag for first call to CVodeF */
+		  boolean ca_firstCVodeFcall;
+
+		  /* Flag if CVodeF was called with TSTOP */
+		  boolean ca_tstopCVodeFcall;
+		  double ca_tstopCVodeF;
+		    
+		  /* ----------------------
+		   * Backward problems data
+		   * ---------------------- */
+
+		  /* Storage for backward problems */
+		  CVodeBMemRec cvB_mem;
+
+		  /* Number of backward problems */
+		  int ca_nbckpbs;
+
+		  /* Address of current backward problem */
+		  CVodeBMemRec ca_bckpbCrt;
+
+		  /* Flag for first call to CVodeB */
+		  boolean ca_firstCVodeBcall;
+		    
+		  /* ----------------
+		   * Check point data
+		   * ---------------- */
+
+		  /* Storage for check point information */
+		  CkpntMemRec ck_mem;
+
+		  /* Number of check points */
+		  int ca_nckpnts;
+
+		  /* address of the check point structure for which data is available */
+		  CkpntMemRec ca_ckpntData;
+		    
+		  /* ------------------
+		   * Interpolation data
+		   * ------------------ */
+
+		  /* Number of steps between 2 check points */
+		  long ca_nsteps;
+		  
+		  /* Storage for data from forward runs */
+		  DtpntMemRec dt_mem[];
+
+		  /* Actual number of data points in dt_mem (typically np=nsteps+1) */
+		  long ca_np;
+		    
+		  /* Interpolation type */
+		  int ca_IMtype;
+
+		  /* Functions set by the interpolation module */
+		  //cvaIMMallocFn   ca_IMmalloc; 
+		  //cvaIMFreeFn     ca_IMfree;
+		  //cvaIMStorePntFn ca_IMstore; /* store a new interpolation point */
+		  //cvaIMGetYFn     ca_IMget;   /* interpolate forward solution    */
+
+		  /* Flags controlling the interpolation module */
+		  boolean ca_IMmallocDone;   /* IM initialized? */
+		  boolean ca_IMnewData;      /* new data available in dt_mem?*/
+		  boolean ca_IMstoreSensi;   /* store sensitivities? */
+		  boolean ca_IMinterpSensi;  /* interpolate sensitivities? */
+
+		  /* Workspace for the interpolation module */
+		  NVector ca_Y[] = new NVector[L_MAX];     /* pointers to zn[i] */
+		  NVector ca_YS[][] = new NVector[L_MAX][];   /* pointers to znS[i] */
+		  double ca_T[] = new double[L_MAX];
+
+		  /* -------------------------------
+		   * Workspace for wrapper functions
+		   * ------------------------------- */
+
+		  NVector ca_ytmp;
+
+		  NVector ca_yStmp[];
+		    
+		};
+
+		/*
+		 * -----------------------------------------------------------------
+		 * Type : struct CVodeBMemRec
+		 * -----------------------------------------------------------------
+		 * The type CVodeBMem is a pointer to a structure which stores all
+		 * information for ONE backward problem.
+		 * The CVadjMem structure contains a linked list of CVodeBMem pointers
+		 * -----------------------------------------------------------------
+		 */
+
+		class CVodeBMemRec {
+
+		  /* Index of this backward problem */
+		  int cv_index;
+
+		  /* Time at which the backward problem is initialized */
+		  double cv_t0;
+		  
+		  /* CVODES memory for this backward problem */
+		  CVodeMemRec cv_mem;
+
+		  /* Flags to indicate that this backward problem's RHS or quad RHS
+		   * require forward sensitivities */
+		  boolean cv_f_withSensi;
+		  boolean cv_fQ_withSensi;
+
+		  /* Right hand side function for backward run */
+		  //CVRhsFnB cv_f;
+		  //CVRhsFnBS cv_fs;
+
+		  /* Right hand side quadrature function for backward run */
+		  //CVQuadRhsFnB cv_fQ;
+		  //CVQuadRhsFnBS cv_fQs;
+
+		  /* User user_data */
+		  UserData cv_user_data;
+		    
+		  /* Memory block for a linear solver's interface to CVODEA */
+		  //void *cv_lmem;
+
+		  /* Function to free any memory allocated by the linear solver */
+		  //int (*cv_lfree)(CVodeBMem cvB_mem);
+
+		  /* Memory block for a preconditioner's module interface to CVODEA */ 
+		  //void *cv_pmem;
+
+		  /* Function to free any memory allocated by the preconditioner module */
+		  //int (*cv_pfree)(CVodeBMem cvB_mem);
+
+		  /* Time at which to extract solution / quadratures */
+		  double cv_tout;
+		  
+		  /* Workspace Nvector */
+		  NVector cv_y;
+
+		  /* Pointer to next structure in list */
+		  CVodeBMemRec cv_next;
+
+		};
+		
+		/*
+		 * -----------------------------------------------------------------
+		 * Types : struct CkpntMemRec, CkpntMem
+		 * -----------------------------------------------------------------
+		 * The type CkpntMem is type pointer to struct CkpntMemRec.
+		 * This structure contains fields to store all information at a
+		 * check point that is needed to 'hot' start cvodes.
+		 * -----------------------------------------------------------------
+		 */
+
+		class CkpntMemRec {
+
+		  /* Integration limits */
+		  double ck_t0;
+		  double ck_t1;
+		    
+		  /* Nordsieck History Array */
+		  NVector ck_zn[] = new NVector[L_MAX];
+		    
+		  /* Do we need to carry quadratures? */
+		  boolean ck_quadr;
+		    
+		  /* Nordsieck History Array for quadratures */
+		  NVector ck_znQ[] = new NVector[L_MAX];
+		    
+		  /* Do we need to carry sensitivities? */
+		  boolean ck_sensi;
+
+		  /* number of sensitivities */
+		  int ck_Ns;
+
+		  /* Nordsieck History Array for sensitivities */
+		  NVector ck_znS[][] = new NVector[L_MAX][];
+
+		  /* Do we need to carry quadrature sensitivities? */
+		  boolean ck_quadr_sensi;
+
+		  /* Nordsieck History Array for quadrature sensitivities */
+		  NVector ck_znQS[][] = new NVector[L_MAX][];
+		    
+		  /* Was ck_zn[qmax] allocated?
+		     ck_zqm = 0    - no
+		     ck_zqm = qmax - yes      */
+		  int ck_zqm;
+		    
+		  /* Step data */
+		  long ck_nst;
+		  double ck_tretlast;
+		  int      ck_q;
+		  int      ck_qprime;
+		  int      ck_qwait;
+		  int      ck_L;
+		  double ck_gammap;
+		  double ck_h;
+		  double ck_hprime;
+		  double ck_hscale;
+		  double ck_eta;
+		  double ck_etamax;
+		  double ck_tau[] = new double[L_MAX+1];
+		  double ck_tq[] = new double[NUM_TESTS+1];
+		  double ck_l[] = new double[L_MAX];
+		    
+		  /* Saved values */
+		  double ck_saved_tq5;
+		    
+		  /* Pointer t next structure in list */
+		  CkpntMemRec ck_next;
+		    
+		};
+		
+		/*
+		 * -----------------------------------------------------------------
+		 * Type : struct DtpntMemRec
+		 * -----------------------------------------------------------------
+		 * This structure contains fields to store all information at a
+		 * data point that is needed to interpolate solution of forward
+		 * simulations. Its content field depends on IMtype.
+		 * -----------------------------------------------------------------
+		 */
+		  
+		class DtpntMemRec {
+		  double t;    /* time */
+		  //void *content; /* IMtype-dependent content */
+		};
 
 
 
