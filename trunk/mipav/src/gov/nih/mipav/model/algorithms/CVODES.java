@@ -123,6 +123,21 @@ public abstract class CVODES {
 	final int CV_STAGGERED1 = 3;
     int sensi_meth = CV_SIMULTANEOUS;
     boolean err_con = true;
+    
+    /* 
+     * ----------------------------------------
+     * CVODEA return flags
+     * ----------------------------------------
+     */
+
+    final int CV_NO_ADJ = -101;
+    final int CV_NO_FWD = -102;
+    final int CV_NO_BCK = -103;
+    final int CV_BAD_TB0 = -104;
+    final int CV_REIFWD_FAIL = -105;
+    final int CV_FWD_FAIL = -106;
+    final int CV_GETY_BADT = -107;
+
 
 	
 	/*
@@ -155,6 +170,10 @@ public abstract class CVODES {
 	/* interp */
 	final int CV_HERMITE = 1;
 	final int CV_POLYNOMIAL = 2;
+	final int CVAhermiteMalloc_select = 1;
+	final int CVApolynomialMalloc_select = 2;
+	final int CVAhermiteStorePnt_select = 1;
+	final int CVApolynomialStorePnt_select = 2;
 
 	/* 
 	 * ----------------------------------------
@@ -689,9 +708,10 @@ public abstract class CVODES {
 	    else if (problem == cvsRoberts_FSA_dns) {
 	    	runcvsRoberts_FSA_dns();
 	    }
-	    else if (problem == cvsRoberts_ASAi_dns) {
-	    	runcvsRoberts_ASAi_dns();
-	    }
+	    //else if (problem == cvsRoberts_ASAi_dns) {
+	    	//runcvsRoberts_ASAi_dns();
+	        // File becoming too large.  Must put runcvsRoberts_ASAi_dns() in second file to continue.
+	    //}
 	    else if (problem == cvsDirectDemo_ls_Problem_1) {
 	    	runcvsDirectDemo_Problem_1();
 	    }
@@ -1851,6 +1871,8 @@ public abstract class CVODES {
 		double A[][];
 		SUNLinearSolver LS;
 		int steps;
+		double time[] = new double[1];
+		int ncheck[] = new int[1];
 		
 		// Print problem description 
 		System.out.printf("\nAdjoint Sensitivity Example for Chemical Kinetics\n");
@@ -1973,14 +1995,26 @@ public abstract class CVODES {
         	return;
         }
 
-        /* Call CVodeAdjInit to update CVODES memory block by allocting the internal 
+        /* Call CVodeAdjInit to update CVODES memory block by allocating the internal 
         memory needed for backward integration.*/
-        steps = STEPS; /* no. of integration steps between two consecutive ckeckpoints*/
+        steps = STEPS; /* no. of integration steps between two consecutive checkpoints*/
         flag = CVodeAdjInit(cvode_mem, steps, CV_HERMITE);
         /*
         flag = CVodeAdjInit(cvode_mem, steps, CV_POLYNOMIAL);
         */
-
+        if (flag != CV_SUCCESS) {
+        	return;
+        }
+        
+        // Perform forward run
+        System.out.printf("Forward integration ... ");
+       
+        // Call CVodeF to integrate the forward problem over an interval in time and
+        // save checkpointing data.
+        flag = CVodeF(cvode_mem, TOUT, y, time, CV_NORMAL, ncheck);
+        if (flag < 0) {
+        	return;
+        }
 
 	}
 
@@ -12205,10 +12239,6 @@ else                return(snrm);
 
 	  ca_mem = null;
 	  ca_mem = new CVadjMemRec();
-	  if (ca_mem == null) {
-	    cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeAdjInit", MSGCV_MEM_FAIL);
-	    return(CV_MEM_FAIL);
-	  }
 
 	  /* Attach ca_mem to CVodeMem structure */
 
@@ -12267,19 +12297,19 @@ else                return(snrm);
 
 	  case CV_HERMITE:
 	    
-	    //ca_mem.ca_IMmalloc = CVAhermiteMalloc;
+	    ca_mem.ca_IMmalloc = CVAhermiteMalloc_select;
 	    //ca_mem.ca_IMfree   = CVAhermiteFree;
 	    //ca_mem.ca_IMget    = CVAhermiteGetY;
-	    //ca_mem.ca_IMstore  = CVAhermiteStorePnt;
+	    ca_mem.ca_IMstore  = CVAhermiteStorePnt_select;
 
 	    break;
 	    
 	  case CV_POLYNOMIAL:
 	  
-	    //ca_mem.ca_IMmalloc = CVApolynomialMalloc;
+	    ca_mem.ca_IMmalloc = CVApolynomialMalloc_select;
 	    //ca_mem.ca_IMfree   = CVApolynomialFree;
 	    //ca_mem.ca_IMget    = CVApolynomialGetY;
-	    //ca_mem.ca_IMstore  = CVApolynomialStorePnt;
+	    ca_mem.ca_IMstore  = CVApolynomialStorePnt_select;
 
 	    break;
 
@@ -12387,9 +12417,9 @@ else                return(snrm);
 		  int ca_IMtype;
 
 		  /* Functions set by the interpolation module */
-		  //cvaIMMallocFn   ca_IMmalloc; 
+		  int   ca_IMmalloc; 
 		  //cvaIMFreeFn     ca_IMfree;
-		  //cvaIMStorePntFn ca_IMstore; /* store a new interpolation point */
+		  int ca_IMstore; /* store a new interpolation point */
 		  //cvaIMGetYFn     ca_IMget;   /* interpolate forward solution    */
 
 		  /* Flags controlling the interpolation module */
@@ -12555,8 +12585,847 @@ else                return(snrm);
 		  
 		class DtpntMemRec {
 		  double t;    /* time */
-		  //void *content; /* IMtype-dependent content */
+		  int content;
+		  HermiteDataMemRec hermiteContent;
+		  PolynomialDataMemRec polynomialContent;
 		};
+
+		/*
+		 * CVodeF
+		 *
+		 * This routine integrates to tout and returns solution into yout.
+		 * In the same time, it stores check point data every 'steps' steps. 
+		 * 
+		 * CVodeF can be called repeatedly by the user.
+		 *
+		 * ncheckPtr points to the number of check points stored so far.
+		 */
+
+		private int CVodeF(CVodeMemRec cv_mem, double tout, NVector yout, 
+		           double tret[], int itask, int ncheckPtr[])
+		{
+		  CVadjMemRec ca_mem;
+		  CkpntMemRec tmp;
+		  DtpntMemRec dt_mem[];
+		  int flag, i;
+		  boolean iret, allocOK;
+
+		  /* Check if cvode_mem exists */
+		  if (cv_mem == null) {
+		    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeF", MSGCV_NO_MEM);
+		    return(CV_MEM_NULL);
+		  }
+
+		  /* Was ASA initialized? */
+		  if (cv_mem.cv_adjMallocDone == false) {
+		    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeF", MSGCV_NO_ADJ);
+		    return(CV_NO_ADJ);
+		  } 
+
+		  ca_mem = cv_mem.cv_adj_mem;
+
+		  /* Check for yout != NULL */
+		  if (yout == null) {
+		    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeF", MSGCV_YOUT_NULL);
+		    return(CV_ILL_INPUT);
+		  }
+		  
+		  /* Check for tret != NULL */
+		  if (tret == null) {
+		    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeF", MSGCV_TRET_NULL);
+		    return(CV_ILL_INPUT);
+		  }
+
+		  /* Check for valid itask */
+		  if ( (itask != CV_NORMAL) && (itask != CV_ONE_STEP) ) {
+		    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeF", MSGCV_BAD_ITASK);
+		    return(CV_ILL_INPUT);
+		  }
+
+		  /* All error checking done */
+
+		  dt_mem = ca_mem.dt_mem;
+
+		  /* If tstop is enabled, store some info */
+		  if (cv_mem.cv_tstopset) {
+		    ca_mem.ca_tstopCVodeFcall = true;
+		    ca_mem.ca_tstopCVodeF = cv_mem.cv_tstop;
+		  }
+
+		  /* We will call CVode in CV_ONE_STEP mode, regardless
+		   * of what itask is, so flag if we need to return */
+		  if (itask == CV_ONE_STEP) iret = true;
+		  else                      iret = false;
+
+		  /* On the first step:
+		   *   - set tinitial
+		   *   - initialize list of check points
+		   *   - if needed, initialize the interpolation module
+		   *   - load dt_mem[0]
+		   * On subsequent steps, test if taking a new step is necessary. 
+		   */
+		  if ( ca_mem.ca_firstCVodeFcall ) {
+
+		    ca_mem.ca_tinitial = cv_mem.cv_tn;
+
+		    ca_mem.ck_mem = CVAckpntInit(cv_mem);
+		    if (ca_mem.ck_mem == null) {
+		      cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeF", MSGCV_MEM_FAIL);
+		      return(CV_MEM_FAIL);
+		    }
+
+		    if ( !ca_mem.ca_IMmallocDone ) {
+
+		      /* Do we need to store sensitivities? */
+		      if (!cv_mem.cv_sensi) ca_mem.ca_IMstoreSensi = false;
+
+		      /* Allocate space for interpolation data */
+		      if (ca_mem.ca_IMmalloc == CVAhermiteMalloc_select) {
+		          allocOK = CVAhermiteMalloc(cv_mem);
+		      }
+		      else {
+		    	  allocOK = CVApolynomialMalloc(cv_mem);
+		      }
+		      if (!allocOK) {
+		        cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeF", MSGCV_MEM_FAIL);
+		        return(CV_MEM_FAIL);
+		      }
+
+		      /* Rename zn and, if needed, znS for use in interpolation */
+		      for (i=0;i<L_MAX;i++) ca_mem.ca_Y[i] = cv_mem.cv_zn[i];
+		      if (ca_mem.ca_IMstoreSensi) {
+		        for (i=0;i<L_MAX;i++) ca_mem.ca_YS[i] = cv_mem.cv_znS[i];
+		      }
+
+		      ca_mem.ca_IMmallocDone = true;
+
+		    }
+
+		    dt_mem[0].t = ca_mem.ck_mem.ck_t0;
+		    if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
+		        CVAhermiteStorePnt(cv_mem, dt_mem[0]);
+		    }
+		    else {
+		    	CVApolynomialStorePnt(cv_mem, dt_mem[0]);	
+		    }
+
+		    ca_mem.ca_firstCVodeFcall = false;
+
+		  } else if ( (cv_mem.cv_tn - tout)*cv_mem.cv_h >= ZERO ) {
+
+		    /* If tout was passed, return interpolated solution. 
+		       No changes to ck_mem or dt_mem are needed. */
+		    tret[0] = tout;
+		    flag = CVodeGetDky(cv_mem, tout, 0, yout);
+		    ncheckPtr[0] = ca_mem.ca_nckpnts;
+		    ca_mem.ca_IMnewData = true;
+		    ca_mem.ca_ckpntData = ca_mem.ck_mem;
+		    ca_mem.ca_np = cv_mem.cv_nst % ca_mem.ca_nsteps + 1;
+
+		    return(flag);
+
+		  }
+
+		  /* Integrate to tout (in CV_ONE_STEP mode) while loading check points */
+		  for(;;) {
+
+		    /* Perform one step of the integration */
+
+		    flag = CVode(cv_mem, tout, yout, tret, CV_ONE_STEP);
+		    if (flag < 0) break;
+
+		    /* Test if a new check point is needed */
+
+		    if ( cv_mem.cv_nst % ca_mem.ca_nsteps == 0 ) {
+
+		      ca_mem.ck_mem.ck_t1 = tret[0];
+
+		      /* Create a new check point, load it, and append it to the list */
+		      tmp = CVAckpntNew(cv_mem);
+		      if (tmp == null) {
+		        cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeF", MSGCV_MEM_FAIL);
+		        flag = CV_MEM_FAIL;
+		        break;
+		      }
+		      tmp.ck_next = ca_mem.ck_mem;
+		      ca_mem.ck_mem = tmp;
+		      ca_mem.ca_nckpnts++;
+		      cv_mem.cv_forceSetup = true;
+		      
+		      /* Reset i=0 and load dt_mem[0] */
+		      dt_mem[0].t = ca_mem.ck_mem.ck_t0;
+		      if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
+		          CVAhermiteStorePnt(cv_mem, dt_mem[0]);
+		      }
+		      else {
+		    	  CVApolynomialStorePnt(cv_mem, dt_mem[0]);	
+		      }
+
+		    } else {
+
+		      /* Load next point in dt_mem */
+		      dt_mem[(int)(cv_mem.cv_nst % ca_mem.ca_nsteps)].t = tret[0];
+		      if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
+		          CVAhermiteStorePnt(cv_mem, dt_mem[(int)(cv_mem.cv_nst % ca_mem.ca_nsteps)]);
+		      }
+		      else {
+		    	  CVApolynomialStorePnt(cv_mem, dt_mem[(int)(cv_mem.cv_nst % ca_mem.ca_nsteps)]);  
+		      }
+
+		    }
+
+		    /* Set t1 field of the current ckeck point structure
+		       for the case in which there will be no future
+		       check points */
+		    ca_mem.ck_mem.ck_t1 = tret[0];
+
+		    /* tfinal is now set to *tret */
+		    ca_mem.ca_tfinal = tret[0];
+
+		    /* Return if in CV_ONE_STEP mode */
+		    if (iret) break;
+
+		    /* Return if tout reached */
+		    if ( (tret[0] - tout)*cv_mem.cv_h >= ZERO ) {
+		      tret[0] = tout;
+		      CVodeGetDky(cv_mem, tout, 0, yout);
+		      /* Reset tretlast in cv_mem so that CVodeGetQuad and CVodeGetSens 
+		       * evaluate quadratures and/or sensitivities at the proper time */
+		      cv_mem.cv_tretlast = tout;
+		      break;
+		    }
+
+		  } /* end of for(;;)() */
+
+		  /* Get ncheck from ca_mem */ 
+		  ncheckPtr[0] = ca_mem.ca_nckpnts;
+
+		  /* Data is available for the last interval */
+		  ca_mem.ca_IMnewData = true;
+		  ca_mem.ca_ckpntData = ca_mem.ck_mem;
+		  ca_mem.ca_np = cv_mem.cv_nst % ca_mem.ca_nsteps + 1;
+
+		  return(flag);
+		}
+
+		/*
+		 * CVAckpntInit
+		 *
+		 * This routine initializes the check point linked list with 
+		 * information from the initial time.
+		 */
+
+		private CkpntMemRec CVAckpntInit(CVodeMemRec cv_mem)
+		{
+		  CkpntMemRec ck_mem;
+		  int is;
+
+		  /* Allocate space for ckdata */
+		  ck_mem = null;
+		  ck_mem = new CkpntMemRec();
+
+		  ck_mem.ck_zn[0] = N_VClone_Serial(cv_mem.cv_tempv);
+		  if (ck_mem.ck_zn[0] == null) {
+		    ck_mem = null;
+		    return(null);
+		  }
+		  
+		  ck_mem.ck_zn[1] = N_VClone_Serial(cv_mem.cv_tempv);
+		  if (ck_mem.ck_zn[1] == null) {
+		    N_VDestroy(ck_mem.ck_zn[0]);
+		    ck_mem = null;
+		    return(null);
+		  }
+
+		  /* ck_mem->ck_zn[qmax] was not allocated */
+		  ck_mem.ck_zqm = 0;
+
+		  /* Load ckdata from cv_mem */
+		  N_VScale_Serial(ONE, cv_mem.cv_zn[0], ck_mem.ck_zn[0]);
+		  ck_mem.ck_t0    = cv_mem.cv_tn;
+		  ck_mem.ck_nst   = 0;
+		  ck_mem.ck_q     = 1;
+		  ck_mem.ck_h     = 0.0;
+		  
+		  /* Do we need to carry quadratures */
+		  ck_mem.ck_quadr = cv_mem.cv_quadr && cv_mem.cv_errconQ;
+
+		  if (ck_mem.ck_quadr) {
+
+		    ck_mem.ck_znQ[0] = N_VClone_Serial(cv_mem.cv_tempvQ);
+		    if (ck_mem.ck_znQ[0] == null) {
+		      N_VDestroy(ck_mem.ck_zn[0]);
+		      N_VDestroy(ck_mem.ck_zn[1]);
+		      ck_mem = null;
+		      return(null);
+		    }
+
+		    N_VScale_Serial(ONE, cv_mem.cv_znQ[0], ck_mem.ck_znQ[0]);
+
+		  }
+
+		  /* Do we need to carry sensitivities? */
+		  ck_mem.ck_sensi = cv_mem.cv_sensi;
+
+		  if (ck_mem.ck_sensi) {
+
+		    ck_mem.ck_Ns = cv_mem.cv_Ns;
+
+		    ck_mem.ck_znS[0] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+		    if (ck_mem.ck_znS[0] == null) {
+		      N_VDestroy(ck_mem.ck_zn[0]);
+		      N_VDestroy(ck_mem.ck_zn[1]);
+		      if (ck_mem.ck_quadr) N_VDestroy(ck_mem.ck_znQ[0]);
+		      ck_mem = null;
+		      return(null);
+		    }
+
+		    for (is=0; is<cv_mem.cv_Ns; is++)
+		      N_VScale_Serial(ONE, cv_mem.cv_znS[0][is], ck_mem.ck_znS[0][is]);
+
+		  }
+
+		  /* Do we need to carry quadrature sensitivities? */
+		  ck_mem.ck_quadr_sensi = cv_mem.cv_quadr_sensi && cv_mem.cv_errconQS;
+
+		  if (ck_mem.ck_quadr_sensi) {
+		    ck_mem.ck_znQS[0] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempvQ);
+		    if (ck_mem.ck_znQS[0] == null) {
+		      N_VDestroy(ck_mem.ck_zn[0]);
+		      N_VDestroy(ck_mem.ck_zn[1]);
+		      if (ck_mem.ck_quadr) N_VDestroy(ck_mem.ck_znQ[0]);
+		      N_VDestroyVectorArray_Serial(ck_mem.ck_znS[0], cv_mem.cv_Ns);
+		      ck_mem = null;
+		      return(null);
+		    }
+		    
+		    for (is=0; is<cv_mem.cv_Ns; is++)
+		      N_VScale_Serial(ONE, cv_mem.cv_znQS[0][is], ck_mem.ck_znQS[0][is]);
+
+		  }
+
+		  /* Next in list */
+		  ck_mem.ck_next  = null;
+
+		  return(ck_mem);
+		}
+		
+		/*
+		 * CVAhermiteMalloc
+		 *
+		 * This routine allocates memory for storing information at all
+		 * intermediate points between two consecutive check points. 
+		 * This data is then used to interpolate the forward solution 
+		 * at any other time.
+		 */
+
+		private boolean CVAhermiteMalloc(CVodeMemRec cv_mem)
+		{
+		  CVadjMemRec ca_mem;
+		  DtpntMemRec dt_mem[];
+		  HermiteDataMemRec content;
+		  int i, ii=0;
+		  boolean allocOK;
+
+		  allocOK = true;
+
+		  ca_mem = cv_mem.cv_adj_mem;
+
+		  /* Allocate space for the vectors ytmp and yStmp */
+
+		  ca_mem.ca_ytmp = N_VClone(cv_mem.cv_tempv);
+		  if (ca_mem.ca_ytmp == null) {
+		    return(false);
+		  }
+
+		  if (ca_mem.ca_IMstoreSensi) {
+		    ca_mem.ca_yStmp = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+		    if (ca_mem.ca_yStmp == null) {
+		      N_VDestroy(ca_mem.ca_ytmp);
+		      return(false);
+		    }
+		  }
+
+		  /* Allocate space for the content field of the dt structures */
+
+		  dt_mem = ca_mem.dt_mem;
+
+		  for (i=0; i<=ca_mem.ca_nsteps; i++) {
+
+		    content = null;
+		    content = new HermiteDataMemRec();
+
+		    content.y = N_VClone(cv_mem.cv_tempv);
+		    if (content.y == null) {
+		      content = null;
+		      ii = i;
+		      allocOK = false;
+		      break;
+		    }
+
+		    content.yd = N_VClone(cv_mem.cv_tempv);
+		    if (content.yd == null) {
+		      N_VDestroy(content.y);
+		      content = null;
+		      ii = i;
+		      allocOK = false;
+		      break;
+		    }
+
+		    if (ca_mem.ca_IMstoreSensi) {
+
+		      content.yS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+		      if (content.yS == null) {
+		        N_VDestroy(content.y);
+		        N_VDestroy(content.yd);
+		        content = null;
+		        ii = i;
+		        allocOK = false;
+		        break;
+		      }
+
+		      content.ySd = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+		      if (content.ySd == null) {
+		        N_VDestroy(content.y);
+		        N_VDestroy(content.yd);
+		        N_VDestroyVectorArray_Serial(content.yS, cv_mem.cv_Ns);
+		        content = null;
+		        ii = i;
+		        allocOK = false;
+		        break;
+		      }
+		      
+		    }
+		    
+		    dt_mem[i].content = CV_HERMITE;
+		    dt_mem[i].hermiteContent = content;
+
+		  } 
+
+		  /* If an error occurred, deallocate and return */
+
+		  if (!allocOK) {
+
+		    N_VDestroy(ca_mem.ca_ytmp);
+
+		    if (ca_mem.ca_IMstoreSensi) {
+		      N_VDestroyVectorArray_Serial(ca_mem.ca_yStmp, cv_mem.cv_Ns);
+		    }
+
+		    for (i=0; i<ii; i++) {
+		      content = (dt_mem[i].hermiteContent);
+		      N_VDestroy(content.y);
+		      N_VDestroy(content.yd);
+		      if (ca_mem.ca_IMstoreSensi) {
+		        N_VDestroyVectorArray_Serial(content.yS, cv_mem.cv_Ns);
+		        N_VDestroyVectorArray_Serial(content.ySd, cv_mem.cv_Ns);
+		      }
+		      dt_mem[i].hermiteContent = null;
+		    }
+
+		  }
+
+		  return(allocOK);
+		}
+
+		/* Data for cubic Hermite interpolation */
+		class HermiteDataMemRec {
+		  NVector y;
+		  NVector yd;
+		  NVector yS[];
+		  NVector ySd[];
+		};
+
+		/* Data for polynomial interpolation */
+		class PolynomialDataMemRec {
+		  NVector y;
+		  NVector yS[];
+		  int order;
+		};
+		
+		/*
+		 * CVApolynomialMalloc
+		 *
+		 * This routine allocates memory for storing information at all
+		 * intermediate points between two consecutive check points. 
+		 * This data is then used to interpolate the forward solution 
+		 * at any other time.
+		 */
+
+		private boolean CVApolynomialMalloc(CVodeMemRec cv_mem)
+		{
+		  CVadjMemRec ca_mem;
+		  DtpntMemRec dt_mem[];
+		  PolynomialDataMemRec content;
+		  int i, ii=0;
+		  boolean allocOK;
+
+		  allocOK = true;
+
+		  ca_mem = cv_mem.cv_adj_mem;
+
+		  /* Allocate space for the vectors ytmp and yStmp */
+
+		  ca_mem.ca_ytmp = N_VClone(cv_mem.cv_tempv);
+		  if (ca_mem.ca_ytmp == null) {
+		    return(false);
+		  }
+
+		  if (ca_mem.ca_IMstoreSensi) {
+		    ca_mem.ca_yStmp = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+		    if (ca_mem.ca_yStmp == null) {
+		      N_VDestroy(ca_mem.ca_ytmp);
+		      return(false);
+		    }
+		  }
+
+		  /* Allocate space for the content field of the dt structures */
+
+		  dt_mem = ca_mem.dt_mem;
+
+		  for (i=0; i<=ca_mem.ca_nsteps; i++) {
+
+		    content = null;
+		    content = new PolynomialDataMemRec();
+
+		    content.y = N_VClone(cv_mem.cv_tempv);
+		    if (content.y == null) {
+		      content = null;
+		      ii = i;
+		      allocOK = false;
+		      break;
+		    }
+
+		    if (ca_mem.ca_IMstoreSensi) {
+
+		      content.yS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+		      if (content.yS == null) {
+		        N_VDestroy(content.y);
+		        content = null;
+		        ii = i;
+		        allocOK = false;
+		        break;
+		      }
+
+		    }
+
+		    dt_mem[i].content = CV_POLYNOMIAL;
+		    dt_mem[i].polynomialContent = content;
+
+		  } 
+
+		  /* If an error occurred, deallocate and return */
+
+		  if (!allocOK) {
+
+		    N_VDestroy(ca_mem.ca_ytmp);
+
+		    if (ca_mem.ca_IMstoreSensi) {
+		      N_VDestroyVectorArray_Serial(ca_mem.ca_yStmp, cv_mem.cv_Ns);
+		    }
+
+		    for (i=0; i<ii; i++) {
+		      content = (dt_mem[i].polynomialContent);
+		      N_VDestroy(content.y);
+		      if (ca_mem.ca_IMstoreSensi) {
+		        N_VDestroyVectorArray_Serial(content.yS, cv_mem.cv_Ns);
+		      }
+		      dt_mem[i].polynomialContent = null;
+		    }
+
+		  }
+
+		  return(allocOK);
+
+		}
+		
+		/*
+		 * CVAhermiteStorePnt ( -> IMstore )
+		 *
+		 * This routine stores a new point (y,yd) in the structure d for use
+		 * in the cubic Hermite interpolation.
+		 * Note that the time is already stored.
+		 */
+
+		private int CVAhermiteStorePnt(CVodeMemRec cv_mem, DtpntMemRec d)
+		{
+		  CVadjMemRec ca_mem;
+		  HermiteDataMemRec content;
+		  int is;
+		  /* int retval; */
+
+		  ca_mem = cv_mem.cv_adj_mem;
+
+		  content = d.hermiteContent;
+
+		  /* Load solution */
+
+		  N_VScale_Serial(ONE, cv_mem.cv_zn[0], content.y);
+		  
+		  if (ca_mem.ca_IMstoreSensi) {
+		    for (is=0; is<cv_mem.cv_Ns; is++) 
+		      N_VScale_Serial(ONE, cv_mem.cv_znS[0][is], content.yS[is]);
+		  }
+
+		  /* Load derivative */
+
+		  if (cv_mem.cv_nst == 0) {
+
+		    /**  retval = */ 
+			  if (testMode) {
+				  fTestMode(cv_mem.cv_tn, content.y, content.yd, cv_mem.cv_user_data);
+			  }
+			  else {
+			      f(cv_mem.cv_tn, content.y, content.yd, cv_mem.cv_user_data);
+			  }
+
+		    if (ca_mem.ca_IMstoreSensi) {
+		      /* retval = */ cvSensRhsWrapper(cv_mem, cv_mem.cv_tn, content.y, content.yd,
+		                                content.yS, content.ySd,
+		                                cv_mem.cv_tempv, cv_mem.cv_ftemp);
+		    }
+
+		  } else {
+
+		    N_VScale_Serial(ONE/cv_mem.cv_h, cv_mem.cv_zn[1], content.yd);
+
+		    if (ca_mem.ca_IMstoreSensi) {
+		      for (is=0; is<cv_mem.cv_Ns; is++) 
+		        N_VScale_Serial(ONE/cv_mem.cv_h, cv_mem.cv_znS[1][is], content.ySd[is]);
+		    }
+
+		  }
+
+		  return(0);
+		}
+
+		/*
+		 * CVApolynomialStorePnt ( -> IMstore )
+		 *
+		 * This routine stores a new point y in the structure d for use
+		 * in the Polynomial interpolation.
+		 * Note that the time is already stored.
+		 */
+
+		private int CVApolynomialStorePnt(CVodeMemRec cv_mem, DtpntMemRec d)
+		{
+		  CVadjMemRec ca_mem;
+		  PolynomialDataMemRec content;
+		  int is;
+
+		  ca_mem = cv_mem.cv_adj_mem;
+
+		  content = d.polynomialContent;
+
+		  N_VScale_Serial(ONE, cv_mem.cv_zn[0], content.y);
+
+		  if (ca_mem.ca_IMstoreSensi) {
+		    for (is=0; is<cv_mem.cv_Ns; is++) 
+		      N_VScale_Serial(ONE, cv_mem.cv_znS[0][is], content.yS[is]);
+		  }
+
+		  content.order = cv_mem.cv_qu;
+
+		  return(0);
+		}
+		
+		/*
+		 * CVAckpntNew
+		 *
+		 * This routine allocates space for a new check point and sets 
+		 * its data from current values in cv_mem.
+		 */
+
+		private CkpntMemRec CVAckpntNew(CVodeMemRec cv_mem)
+		{
+		  CkpntMemRec ck_mem;
+		  int j, jj, is, qmax; 
+
+		  /* Allocate space for ckdata */
+		  ck_mem = null;
+		  ck_mem = new CkpntMemRec();
+		  if (ck_mem == null) return(null);
+
+		  /* Set cv_next to NULL */
+		  ck_mem.ck_next = null;
+
+		  /* Test if we need to allocate space for the last zn.
+		   * NOTE: zn(qmax) may be needed for a hot restart, if an order
+		   * increase is deemed necessary at the first step after a check point */
+		  qmax = cv_mem.cv_qmax;
+		  ck_mem.ck_zqm = (cv_mem.cv_q < qmax) ? qmax : 0;
+
+		  for (j=0; j<=cv_mem.cv_q; j++) {
+		    ck_mem.ck_zn[j] = N_VClone(cv_mem.cv_tempv);
+		    if (ck_mem.ck_zn[j] == null) {
+		      for (jj=0; jj<j; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+		      ck_mem = null;
+		      return(null);
+		    }
+		  }
+
+		  if (cv_mem.cv_q < qmax) {
+		    ck_mem.ck_zn[qmax] = N_VClone(cv_mem.cv_tempv);
+		    if (ck_mem.ck_zn[qmax] == null) {
+		      for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+		      ck_mem = null;
+		      return(null);
+		    }
+		  }
+
+		  /* Test if we need to carry quadratures */
+		  ck_mem.ck_quadr = cv_mem.cv_quadr && cv_mem.cv_errconQ;
+
+		  if (ck_mem.ck_quadr) {
+
+		    for (j=0; j<=cv_mem.cv_q; j++) {
+		      ck_mem.ck_znQ[j] = N_VClone(cv_mem.cv_tempvQ);
+		      if(ck_mem.ck_znQ[j] == null) {
+		        for (jj=0; jj<j; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+		        if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_zn[qmax]);
+		        for (jj=0; jj<=cv_mem.cv_q; j++) N_VDestroy(ck_mem.ck_zn[jj]);
+		        ck_mem = null;
+		        return(null);
+		      }
+		    }
+
+		    if (cv_mem.cv_q < qmax) {
+		      ck_mem.ck_znQ[qmax] = N_VClone(cv_mem.cv_tempvQ);
+		      if (ck_mem.ck_znQ[qmax] == null) {
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+		        N_VDestroy(ck_mem.ck_zn[qmax]);
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+		        ck_mem = null;
+		        return(null);
+		      }
+		    }
+
+		  }
+
+		  /* Test if we need to carry sensitivities */
+		  ck_mem.ck_sensi = cv_mem.cv_sensi;
+
+		  if (ck_mem.ck_sensi) {
+
+		    ck_mem.ck_Ns = cv_mem.cv_Ns;
+
+		    for (j=0; j<=cv_mem.cv_q; j++) {
+		      ck_mem.ck_znS[j] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+		      if (ck_mem.ck_znS[j] == null) {
+		        for (jj=0; jj<j; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
+		        if (ck_mem.ck_quadr) {
+		          if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_znQ[qmax]);
+		          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+		        }
+		        if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_zn[qmax]);
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+		        ck_mem = null;
+		        return(null);
+		      }
+		    }
+
+		    if ( cv_mem.cv_q < qmax) {
+		      ck_mem.ck_znS[qmax] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+		      if (ck_mem.ck_znS[qmax] == null) {
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
+		        if (ck_mem.ck_quadr) {
+		          N_VDestroy(ck_mem.ck_znQ[qmax]);
+		          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+		        }
+		        N_VDestroy(ck_mem.ck_zn[qmax]);
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+		        ck_mem = null;
+		        return(null);
+		      }
+		    }
+
+		  }
+
+		  /* Test if we need to carry quadrature sensitivities */
+		  ck_mem.ck_quadr_sensi = cv_mem.cv_quadr_sensi && cv_mem.cv_errconQS;
+
+		  if (ck_mem.ck_quadr_sensi) {
+
+		    for (j=0; j<=cv_mem.cv_q; j++) {
+		      ck_mem.ck_znQS[j] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempvQ);
+		      if (ck_mem.ck_znQS[j] == null) {
+		        for (jj=0; jj<j; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znQS[jj], cv_mem.cv_Ns);
+		        if (cv_mem.cv_q < qmax) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[qmax], cv_mem.cv_Ns);
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
+		        if (ck_mem.ck_quadr) {
+		          if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_znQ[qmax]);
+		          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+		        }
+		        if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_zn[qmax]);
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+		        ck_mem = null;
+		        return(null);
+		      }
+		    }
+
+		    if ( cv_mem.cv_q < qmax) {
+		      ck_mem.ck_znQS[qmax] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempvQ);
+		      if (ck_mem.ck_znQS[qmax] == null) {
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znQS[jj], cv_mem.cv_Ns);
+		        N_VDestroyVectorArray_Serial(ck_mem.ck_znS[qmax], cv_mem.cv_Ns);
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
+		        if (ck_mem.ck_quadr) {
+		          N_VDestroy(ck_mem.ck_znQ[qmax]);
+		          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+		        }
+		        N_VDestroy(ck_mem.ck_zn[qmax]);
+		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+		        ck_mem = null;
+		        return(null);
+		      }
+		    }
+
+		  }
+
+		  /* Load check point data from cv_mem */
+
+		  for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_zn[j], ck_mem.ck_zn[j]);
+		  if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_zn[qmax], ck_mem.ck_zn[qmax]);
+
+		  if (ck_mem.ck_quadr) {
+		    for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_znQ[j], ck_mem.ck_znQ[j]);
+		    if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_znQ[qmax], ck_mem.ck_znQ[qmax]);
+		  }
+
+		  if (ck_mem.ck_sensi) {
+		    for (is=0; is<cv_mem.cv_Ns; is++) {
+		      for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_znS[j][is], ck_mem.ck_znS[j][is]);
+		      if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_znS[qmax][is], ck_mem.ck_znS[qmax][is]);
+		    }
+		  }
+
+		  if (ck_mem.ck_quadr_sensi) {
+		    for (is=0; is<cv_mem.cv_Ns; is++) {
+		      for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_znQS[j][is], ck_mem.ck_znQS[j][is]);
+		      if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_znQS[qmax][is], ck_mem.ck_znQS[qmax][is]);
+		    }
+		  }
+
+		  for (j=0; j<=L_MAX; j++)        ck_mem.ck_tau[j] = cv_mem.cv_tau[j];
+		  for (j=0; j<=NUM_TESTS; j++)    ck_mem.ck_tq[j] = cv_mem.cv_tq[j];
+		  for (j=0; j<=cv_mem.cv_q; j++) ck_mem.ck_l[j] = cv_mem.cv_l[j];
+		  ck_mem.ck_nst       = cv_mem.cv_nst;
+		  ck_mem.ck_tretlast  = cv_mem.cv_tretlast;
+		  ck_mem.ck_q         = cv_mem.cv_q;
+		  ck_mem.ck_qprime    = cv_mem.cv_qprime;
+		  ck_mem.ck_qwait     = cv_mem.cv_qwait;
+		  ck_mem.ck_L         = cv_mem.cv_L;
+		  ck_mem.ck_gammap    = cv_mem.cv_gammap;
+		  ck_mem.ck_h         = cv_mem.cv_h;
+		  ck_mem.ck_hprime    = cv_mem.cv_hprime;
+		  ck_mem.ck_hscale    = cv_mem.cv_hscale;
+		  ck_mem.ck_eta       = cv_mem.cv_eta;
+		  ck_mem.ck_etamax    = cv_mem.cv_etamax;
+		  ck_mem.ck_t0        = cv_mem.cv_tn;
+		  ck_mem.ck_saved_tq5 = cv_mem.cv_saved_tq5;
+
+		  return(ck_mem);
+		}
 
 
 
