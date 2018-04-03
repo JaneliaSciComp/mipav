@@ -133,7 +133,7 @@ public abstract class CVODES {
     final int CV_BAD_TB0 = -104;
     final int CV_REIFWD_FAIL = -105;
     final int CV_FWD_FAIL = -106;
-    final int CV_GETY_BADT = -107;
+    final static int CV_GETY_BADT = -107;
 
 
 	
@@ -171,6 +171,8 @@ public abstract class CVODES {
 	final int CVApolynomialMalloc_select = 2;
 	final int CVAhermiteStorePnt_select = 1;
 	final int CVApolynomialStorePnt_select = 2;
+	final int CVAhermiteGetY_select = 1;
+	final int CVApolynomialGetY_select = 2;
 
 	/* 
 	 * ----------------------------------------
@@ -178,7 +180,7 @@ public abstract class CVODES {
 	 * ----------------------------------------
 	 */
 
-	final int CV_SUCCESS = 0;
+	final static int CV_SUCCESS = 0;
 	final int CV_TSTOP_RETURN = 1;
 	final int CV_ROOT_RETURN = 2;
 
@@ -235,7 +237,7 @@ public abstract class CVODES {
 	final int MXNCF = 10;
 	final int MXNEF = 7;
 	final double CORTES = 0.1;
-	final double ZERO = 0.0;
+	final static double ZERO = 0.0;
 	final double TINY = 1.0E-10;
 	final double PT1 = 0.1;
 	final double POINT2 = 0.2;
@@ -256,7 +258,7 @@ public abstract class CVODES {
 	final double ETAMX3 = 10.0;
 	final double HUB_FACTOR = 0.1;
 	final double HLB_FACTOR = 100.0;
-	final double FUZZ_FACTOR = 100.0;
+	final static double FUZZ_FACTOR = 100.0;
 	final int MAX_ITERS = 4;
 	// CRDOWN constant used in the estimation of the convergence rate (crate)
 	//        of the iterates for the nonlinear equation
@@ -2263,7 +2265,7 @@ public abstract class CVODES {
 	
 	public abstract int fQ(double t, NVector x, NVector y, UserData user_data);
 	
-	private int fS1TestMode(int Ns, double t, NVector yv, NVector ydot, int is,
+	protected int fS1TestMode(int Ns, double t, NVector yv, NVector ydot, int is,
 			NVector yS, NVector ySdot, UserData user_data, NVector tmp1, NVector tmp2) {
 		double y[] = yv.data;
 		double p[] = user_data.array;
@@ -4723,7 +4725,7 @@ public abstract class CVODES {
     return;
   }
   
-  private void N_VLinearSum_Serial(double a, NVector x, double b, NVector y, NVector z)
+  protected void N_VLinearSum_Serial(double a, NVector x, double b, NVector y, NVector z)
   {
     int i, N;
     double c, xd[], yd[], zd[];
@@ -11871,7 +11873,7 @@ else                return(snrm);
 		  int   ca_IMmalloc; 
 		  //cvaIMFreeFn     ca_IMfree;
 		  int ca_IMstore; /* store a new interpolation point */
-		  //cvaIMGetYFn     ca_IMget;   /* interpolate forward solution    */
+		  int ca_IMget;   /* interpolate forward solution    */
 
 		  /* Flags controlling the interpolation module */
 		  boolean ca_IMmallocDone;   /* IM initialized? */
