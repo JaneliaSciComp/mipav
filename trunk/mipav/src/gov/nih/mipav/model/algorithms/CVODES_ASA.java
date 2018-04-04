@@ -4,7 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.view.MipavUtil;
 
 public abstract class CVODES_ASA extends CVODES {
-	final int CVArhs_select = 100;
+	
 	public CVODES_ASA() {
 		super();
 		runcvsRoberts_ASAi_dns();
@@ -141,8 +141,10 @@ public abstract class CVODES_ASA extends CVODES {
 		int flag;
         int f = cvsRoberts_ASAi_dns;
         int Jac = cvsRoberts_ASAi_dns;
+        int JacB = cvsRoberts_ASAi_dns;
 		int ewt_select = cvEwtUser_select1;
 		int fQ= cvsRoberts_ASAi_dns;
+		int fQB = cvsRoberts_ASAi_dns;
 		double A[][];
 		SUNLinearSolver LS;
 		int steps;
@@ -156,6 +158,8 @@ public abstract class CVODES_ASA extends CVODES {
 		double abstolQB;
 		int indexB[] = new int[1];
 		int fB = cvsRoberts_ASAi_dns;
+		double AB[][];
+		SUNLinearSolver LSB;
 		
 		// Print problem description 
 		System.out.printf("\nAdjoint Sensitivity Example for Chemical Kinetics\n");
@@ -358,7 +362,74 @@ public abstract class CVODES_ASA extends CVODES {
 		// Call CVodeInitB to allocate internal memory and initialize the
 		// backward problem.
 		flag = CVodeInitB(cvode_mem, indexB[0], fB, TB1, yB);
-	}
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Set the scalar relative and absolute tolerances.
+		flag = CVodeSStolerancesB(cvode_mem, indexB[0], reltolB, abstolB);
+		if (flag < 0) {
+			return;
+		}
+		
+		// Attach the user data for backward problem
+		flag = CVodeSetUserDataB(cvode_mem, indexB[0], data);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Create dense SUNMatrix for user in linear solver
+		AB = new double[NEQ][NEQ];
+		
+		// Create dense SUNLinearSolver object
+		LSB = SUNDenseLinearSolver(yB, AB);
+		if (LSB == null) {
+			return;
+		}
+		
+		// Attach the matrix and linear solver
+		flag = CVDlsSetLinearSolverB(cvode_mem, indexB[0], LSB, AB);
+		if (flag < 0) {
+			return;
+		}
+		
+		// Set the user-supplied Jacobian routine JacB
+		flag = CVDlsSetJacFnB(cvode_mem, indexB[0], JacB);
+		if (flag < 0) {
+			return;
+		}
+		
+		// Call CVodeQuadInitB to allocate internal memory and initialize backward
+		// quadrature integration.
+		flag = CVodeQuadInitB(cvode_mem, indexB[0], fQB, qB);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeSetQuadErrConB to specify whether or not the quadrature variables
+		// are to be used in the step size control mechanism within CVODES.  Call
+		// CVodeQuadSStoerancesB or CVodeQuadSVtolerancesB to specify the integration
+		// tolerances for the quadrature variables.
+		flag = CVodeSetQuadErrConB(cvode_mem, indexB[0], true);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Call CVodeQUadSStolerancesB to specify the scalar relative and absolute tolerances 
+		// for the backward problem.
+		flag = CVodeQuadSStolerancesB(cvode_mem, indexB[0], reltolB, abstolQB);
+		if (flag != CV_SUCCESS) {
+			return;
+		}
+		
+		// Backward integration
+		System.out.printf("Backward integration from tB0 = " + TB1 + "\n\n");
+		
+		// First get results at t = TBout1
+		
+		// Call CVodeBto integrate the backward ODE problem.
+		flag = CVodeB(cvode_mem, TBout1, CV_NORMAL);
+	} 
 	
 	/*
 	 * CVodeQuadInit
@@ -679,1392 +750,1836 @@ public abstract class CVODES_ASA extends CVODES {
 	} 
 
 	
-		/*
-		 * CVodeF
-		 *
-		 * This routine integrates to tout and returns solution into yout.
-		 * In the same time, it stores check point data every 'steps' steps. 
-		 * 
-		 * CVodeF can be called repeatedly by the user.
-		 *
-		 * ncheckPtr points to the number of check points stored so far.
-		 */
+	/*
+	 * CVodeF
+	 *
+	 * This routine integrates to tout and returns solution into yout.
+	 * In the same time, it stores check point data every 'steps' steps. 
+	 * 
+	 * CVodeF can be called repeatedly by the user.
+	 *
+	 * ncheckPtr points to the number of check points stored so far.
+	 */
 
-		private int CVodeF(CVodeMemRec cv_mem, double tout, NVector yout, 
-		           double tret[], int itask, int ncheckPtr[])
-		{
-		  CVadjMemRec ca_mem;
-		  CkpntMemRec tmp;
-		  DtpntMemRec dt_mem[];
-		  int flag, i;
-		  boolean iret, allocOK;
+	private int CVodeF(CVodeMemRec cv_mem, double tout, NVector yout, 
+	           double tret[], int itask, int ncheckPtr[])
+	{
+	  CVadjMemRec ca_mem;
+	  CkpntMemRec tmp;
+	  DtpntMemRec dt_mem[];
+	  int flag, i;
+	  boolean iret, allocOK;
 
-		  /* Check if cvode_mem exists */
-		  if (cv_mem == null) {
-		    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeF", MSGCV_NO_MEM);
-		    return(CV_MEM_NULL);
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeF", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeF", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  } 
+
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check for yout != NULL */
+	  if (yout == null) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeF", MSGCV_YOUT_NULL);
+	    return(CV_ILL_INPUT);
+	  }
+	  
+	  /* Check for tret != NULL */
+	  if (tret == null) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeF", MSGCV_TRET_NULL);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Check for valid itask */
+	  if ( (itask != CV_NORMAL) && (itask != CV_ONE_STEP) ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeF", MSGCV_BAD_ITASK);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* All error checking done */
+
+	  dt_mem = ca_mem.dt_mem;
+
+	  /* If tstop is enabled, store some info */
+	  if (cv_mem.cv_tstopset) {
+	    ca_mem.ca_tstopCVodeFcall = true;
+	    ca_mem.ca_tstopCVodeF = cv_mem.cv_tstop;
+	  }
+
+	  /* We will call CVode in CV_ONE_STEP mode, regardless
+	   * of what itask is, so flag if we need to return */
+	  if (itask == CV_ONE_STEP) iret = true;
+	  else                      iret = false;
+
+	  /* On the first step:
+	   *   - set tinitial
+	   *   - initialize list of check points
+	   *   - if needed, initialize the interpolation module
+	   *   - load dt_mem[0]
+	   * On subsequent steps, test if taking a new step is necessary. 
+	   */
+	  if ( ca_mem.ca_firstCVodeFcall ) {
+
+	    ca_mem.ca_tinitial = cv_mem.cv_tn;
+
+	    ca_mem.ck_mem = CVAckpntInit(cv_mem);
+	    if (ca_mem.ck_mem == null) {
+	      cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeF", MSGCV_MEM_FAIL);
+	      return(CV_MEM_FAIL);
+	    }
+
+	    if ( !ca_mem.ca_IMmallocDone ) {
+
+	      /* Do we need to store sensitivities? */
+	      if (!cv_mem.cv_sensi) ca_mem.ca_IMstoreSensi = false;
+
+	      /* Allocate space for interpolation data */
+	      if (ca_mem.ca_IMmalloc == CVAhermiteMalloc_select) {
+	          allocOK = CVAhermiteMalloc(cv_mem);
+	      }
+	      else {
+	    	  allocOK = CVApolynomialMalloc(cv_mem);
+	      }
+	      if (!allocOK) {
+	        cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeF", MSGCV_MEM_FAIL);
+	        return(CV_MEM_FAIL);
+	      }
+
+	      /* Rename zn and, if needed, znS for use in interpolation */
+	      for (i=0;i<L_MAX;i++) ca_mem.ca_Y[i] = cv_mem.cv_zn[i];
+	      if (ca_mem.ca_IMstoreSensi) {
+	        for (i=0;i<L_MAX;i++) ca_mem.ca_YS[i] = cv_mem.cv_znS[i];
+	      }
+
+	      ca_mem.ca_IMmallocDone = true;
+
+	    }
+
+	    dt_mem[0].t = ca_mem.ck_mem.ck_t0;
+	    if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
+	        CVAhermiteStorePnt(cv_mem, dt_mem[0]);
+	    }
+	    else {
+	    	CVApolynomialStorePnt(cv_mem, dt_mem[0]);	
+	    }
+
+	    ca_mem.ca_firstCVodeFcall = false;
+
+	  } else if ( (cv_mem.cv_tn - tout)*cv_mem.cv_h >= ZERO ) {
+
+	    /* If tout was passed, return interpolated solution. 
+	       No changes to ck_mem or dt_mem are needed. */
+	    tret[0] = tout;
+	    flag = CVodeGetDky(cv_mem, tout, 0, yout);
+	    ncheckPtr[0] = ca_mem.ca_nckpnts;
+	    ca_mem.ca_IMnewData = true;
+	    ca_mem.ca_ckpntData = ca_mem.ck_mem;
+	    ca_mem.ca_np = cv_mem.cv_nst % ca_mem.ca_nsteps + 1;
+
+	    return(flag);
+
+	  }
+
+	  /* Integrate to tout (in CV_ONE_STEP mode) while loading check points */
+	  for(;;) {
+
+	    /* Perform one step of the integration */
+
+	    flag = CVode(cv_mem, tout, yout, tret, CV_ONE_STEP);
+	    if (flag < 0) break;
+
+	    /* Test if a new check point is needed */
+
+	    if ( cv_mem.cv_nst % ca_mem.ca_nsteps == 0 ) {
+
+	      ca_mem.ck_mem.ck_t1 = tret[0];
+
+	      /* Create a new check point, load it, and append it to the list */
+	      tmp = CVAckpntNew(cv_mem);
+	      if (tmp == null) {
+	        cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeF", MSGCV_MEM_FAIL);
+	        flag = CV_MEM_FAIL;
+	        break;
+	      }
+	      tmp.ck_next = ca_mem.ck_mem;
+	      ca_mem.ck_mem = tmp;
+	      ca_mem.ca_nckpnts++;
+	      cv_mem.cv_forceSetup = true;
+	      
+	      /* Reset i=0 and load dt_mem[0] */
+	      dt_mem[0].t = ca_mem.ck_mem.ck_t0;
+	      if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
+	          CVAhermiteStorePnt(cv_mem, dt_mem[0]);
+	      }
+	      else {
+	    	  CVApolynomialStorePnt(cv_mem, dt_mem[0]);	
+	      }
+
+	    } else {
+
+	      /* Load next point in dt_mem */
+	      dt_mem[(int)(cv_mem.cv_nst % ca_mem.ca_nsteps)].t = tret[0];
+	      if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
+	          CVAhermiteStorePnt(cv_mem, dt_mem[(int)(cv_mem.cv_nst % ca_mem.ca_nsteps)]);
+	      }
+	      else {
+	    	  CVApolynomialStorePnt(cv_mem, dt_mem[(int)(cv_mem.cv_nst % ca_mem.ca_nsteps)]);  
+	      }
+
+	    }
+
+	    /* Set t1 field of the current ckeck point structure
+	       for the case in which there will be no future
+	       check points */
+	    ca_mem.ck_mem.ck_t1 = tret[0];
+
+	    /* tfinal is now set to *tret */
+	    ca_mem.ca_tfinal = tret[0];
+
+	    /* Return if in CV_ONE_STEP mode */
+	    if (iret) break;
+
+	    /* Return if tout reached */
+	    if ( (tret[0] - tout)*cv_mem.cv_h >= ZERO ) {
+	      tret[0] = tout;
+	      CVodeGetDky(cv_mem, tout, 0, yout);
+	      /* Reset tretlast in cv_mem so that CVodeGetQuad and CVodeGetSens 
+	       * evaluate quadratures and/or sensitivities at the proper time */
+	      cv_mem.cv_tretlast = tout;
+	      break;
+	    }
+
+	  } /* end of for(;;)() */
+
+	  /* Get ncheck from ca_mem */ 
+	  ncheckPtr[0] = ca_mem.ca_nckpnts;
+
+	  /* Data is available for the last interval */
+	  ca_mem.ca_IMnewData = true;
+	  ca_mem.ca_ckpntData = ca_mem.ck_mem;
+	  ca_mem.ca_np = cv_mem.cv_nst % ca_mem.ca_nsteps + 1;
+
+	  return(flag);
+	}
+
+	/*
+	 * CVAckpntInit
+	 *
+	 * This routine initializes the check point linked list with 
+	 * information from the initial time.
+	 */
+
+	private CkpntMemRec CVAckpntInit(CVodeMemRec cv_mem)
+	{
+	  CkpntMemRec ck_mem;
+	  int is;
+
+	  /* Allocate space for ckdata */
+	  ck_mem = null;
+	  ck_mem = new CkpntMemRec();
+
+	  ck_mem.ck_zn[0] = N_VClone_Serial(cv_mem.cv_tempv);
+	  if (ck_mem.ck_zn[0] == null) {
+	    ck_mem = null;
+	    return(null);
+	  }
+	  
+	  ck_mem.ck_zn[1] = N_VClone_Serial(cv_mem.cv_tempv);
+	  if (ck_mem.ck_zn[1] == null) {
+	    N_VDestroy(ck_mem.ck_zn[0]);
+	    ck_mem = null;
+	    return(null);
+	  }
+
+	  /* ck_mem->ck_zn[qmax] was not allocated */
+	  ck_mem.ck_zqm = 0;
+
+	  /* Load ckdata from cv_mem */
+	  N_VScale_Serial(ONE, cv_mem.cv_zn[0], ck_mem.ck_zn[0]);
+	  ck_mem.ck_t0    = cv_mem.cv_tn;
+	  ck_mem.ck_nst   = 0;
+	  ck_mem.ck_q     = 1;
+	  ck_mem.ck_h     = 0.0;
+	  
+	  /* Do we need to carry quadratures */
+	  ck_mem.ck_quadr = cv_mem.cv_quadr && cv_mem.cv_errconQ;
+
+	  if (ck_mem.ck_quadr) {
+
+	    ck_mem.ck_znQ[0] = N_VClone_Serial(cv_mem.cv_tempvQ);
+	    if (ck_mem.ck_znQ[0] == null) {
+	      N_VDestroy(ck_mem.ck_zn[0]);
+	      N_VDestroy(ck_mem.ck_zn[1]);
+	      ck_mem = null;
+	      return(null);
+	    }
+
+	    N_VScale_Serial(ONE, cv_mem.cv_znQ[0], ck_mem.ck_znQ[0]);
+
+	  }
+
+	  /* Do we need to carry sensitivities? */
+	  ck_mem.ck_sensi = cv_mem.cv_sensi;
+
+	  if (ck_mem.ck_sensi) {
+
+	    ck_mem.ck_Ns = cv_mem.cv_Ns;
+
+	    ck_mem.ck_znS[0] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+	    if (ck_mem.ck_znS[0] == null) {
+	      N_VDestroy(ck_mem.ck_zn[0]);
+	      N_VDestroy(ck_mem.ck_zn[1]);
+	      if (ck_mem.ck_quadr) N_VDestroy(ck_mem.ck_znQ[0]);
+	      ck_mem = null;
+	      return(null);
+	    }
+
+	    for (is=0; is<cv_mem.cv_Ns; is++)
+	      N_VScale_Serial(ONE, cv_mem.cv_znS[0][is], ck_mem.ck_znS[0][is]);
+
+	  }
+
+	  /* Do we need to carry quadrature sensitivities? */
+	  ck_mem.ck_quadr_sensi = cv_mem.cv_quadr_sensi && cv_mem.cv_errconQS;
+
+	  if (ck_mem.ck_quadr_sensi) {
+	    ck_mem.ck_znQS[0] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempvQ);
+	    if (ck_mem.ck_znQS[0] == null) {
+	      N_VDestroy(ck_mem.ck_zn[0]);
+	      N_VDestroy(ck_mem.ck_zn[1]);
+	      if (ck_mem.ck_quadr) N_VDestroy(ck_mem.ck_znQ[0]);
+	      N_VDestroyVectorArray_Serial(ck_mem.ck_znS[0], cv_mem.cv_Ns);
+	      ck_mem = null;
+	      return(null);
+	    }
+	    
+	    for (is=0; is<cv_mem.cv_Ns; is++)
+	      N_VScale_Serial(ONE, cv_mem.cv_znQS[0][is], ck_mem.ck_znQS[0][is]);
+
+	  }
+
+	  /* Next in list */
+	  ck_mem.ck_next  = null;
+
+	  return(ck_mem);
+	}
+	
+	/*
+	 * CVAhermiteMalloc
+	 *
+	 * This routine allocates memory for storing information at all
+	 * intermediate points between two consecutive check points. 
+	 * This data is then used to interpolate the forward solution 
+	 * at any other time.
+	 */
+
+	private boolean CVAhermiteMalloc(CVodeMemRec cv_mem)
+	{
+	  CVadjMemRec ca_mem;
+	  DtpntMemRec dt_mem[];
+	  HermiteDataMemRec content;
+	  int i, ii=0;
+	  boolean allocOK;
+
+	  allocOK = true;
+
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Allocate space for the vectors ytmp and yStmp */
+
+	  ca_mem.ca_ytmp = N_VClone(cv_mem.cv_tempv);
+	  if (ca_mem.ca_ytmp == null) {
+	    return(false);
+	  }
+
+	  if (ca_mem.ca_IMstoreSensi) {
+	    ca_mem.ca_yStmp = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+	    if (ca_mem.ca_yStmp == null) {
+	      N_VDestroy(ca_mem.ca_ytmp);
+	      return(false);
+	    }
+	  }
+
+	  /* Allocate space for the content field of the dt structures */
+
+	  dt_mem = ca_mem.dt_mem;
+
+	  for (i=0; i<=ca_mem.ca_nsteps; i++) {
+
+	    content = null;
+	    content = new HermiteDataMemRec();
+
+	    content.y = N_VClone(cv_mem.cv_tempv);
+	    if (content.y == null) {
+	      content = null;
+	      ii = i;
+	      allocOK = false;
+	      break;
+	    }
+
+	    content.yd = N_VClone(cv_mem.cv_tempv);
+	    if (content.yd == null) {
+	      N_VDestroy(content.y);
+	      content = null;
+	      ii = i;
+	      allocOK = false;
+	      break;
+	    }
+
+	    if (ca_mem.ca_IMstoreSensi) {
+
+	      content.yS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+	      if (content.yS == null) {
+	        N_VDestroy(content.y);
+	        N_VDestroy(content.yd);
+	        content = null;
+	        ii = i;
+	        allocOK = false;
+	        break;
+	      }
+
+	      content.ySd = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+	      if (content.ySd == null) {
+	        N_VDestroy(content.y);
+	        N_VDestroy(content.yd);
+	        N_VDestroyVectorArray_Serial(content.yS, cv_mem.cv_Ns);
+	        content = null;
+	        ii = i;
+	        allocOK = false;
+	        break;
+	      }
+	      
+	    }
+	    
+	    dt_mem[i].content = CV_HERMITE;
+	    dt_mem[i].hermiteContent = content;
+
+	  } 
+
+	  /* If an error occurred, deallocate and return */
+
+	  if (!allocOK) {
+
+	    N_VDestroy(ca_mem.ca_ytmp);
+
+	    if (ca_mem.ca_IMstoreSensi) {
+	      N_VDestroyVectorArray_Serial(ca_mem.ca_yStmp, cv_mem.cv_Ns);
+	    }
+
+	    for (i=0; i<ii; i++) {
+	      content = (dt_mem[i].hermiteContent);
+	      N_VDestroy(content.y);
+	      N_VDestroy(content.yd);
+	      if (ca_mem.ca_IMstoreSensi) {
+	        N_VDestroyVectorArray_Serial(content.yS, cv_mem.cv_Ns);
+	        N_VDestroyVectorArray_Serial(content.ySd, cv_mem.cv_Ns);
+	      }
+	      dt_mem[i].hermiteContent = null;
+	    }
+
+	  }
+
+	  return(allocOK);
+	}
+
+	
+	/*
+	 * CVApolynomialMalloc
+	 *
+	 * This routine allocates memory for storing information at all
+	 * intermediate points between two consecutive check points. 
+	 * This data is then used to interpolate the forward solution 
+	 * at any other time.
+	 */
+
+	private boolean CVApolynomialMalloc(CVodeMemRec cv_mem)
+	{
+	  CVadjMemRec ca_mem;
+	  DtpntMemRec dt_mem[];
+	  PolynomialDataMemRec content;
+	  int i, ii=0;
+	  boolean allocOK;
+
+	  allocOK = true;
+
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Allocate space for the vectors ytmp and yStmp */
+
+	  ca_mem.ca_ytmp = N_VClone(cv_mem.cv_tempv);
+	  if (ca_mem.ca_ytmp == null) {
+	    return(false);
+	  }
+
+	  if (ca_mem.ca_IMstoreSensi) {
+	    ca_mem.ca_yStmp = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+	    if (ca_mem.ca_yStmp == null) {
+	      N_VDestroy(ca_mem.ca_ytmp);
+	      return(false);
+	    }
+	  }
+
+	  /* Allocate space for the content field of the dt structures */
+
+	  dt_mem = ca_mem.dt_mem;
+
+	  for (i=0; i<=ca_mem.ca_nsteps; i++) {
+
+	    content = null;
+	    content = new PolynomialDataMemRec();
+
+	    content.y = N_VClone(cv_mem.cv_tempv);
+	    if (content.y == null) {
+	      content = null;
+	      ii = i;
+	      allocOK = false;
+	      break;
+	    }
+
+	    if (ca_mem.ca_IMstoreSensi) {
+
+	      content.yS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+	      if (content.yS == null) {
+	        N_VDestroy(content.y);
+	        content = null;
+	        ii = i;
+	        allocOK = false;
+	        break;
+	      }
+
+	    }
+
+	    dt_mem[i].content = CV_POLYNOMIAL;
+	    dt_mem[i].polynomialContent = content;
+
+	  } 
+
+	  /* If an error occurred, deallocate and return */
+
+	  if (!allocOK) {
+
+	    N_VDestroy(ca_mem.ca_ytmp);
+
+	    if (ca_mem.ca_IMstoreSensi) {
+	      N_VDestroyVectorArray_Serial(ca_mem.ca_yStmp, cv_mem.cv_Ns);
+	    }
+
+	    for (i=0; i<ii; i++) {
+	      content = (dt_mem[i].polynomialContent);
+	      N_VDestroy(content.y);
+	      if (ca_mem.ca_IMstoreSensi) {
+	        N_VDestroyVectorArray_Serial(content.yS, cv_mem.cv_Ns);
+	      }
+	      dt_mem[i].polynomialContent = null;
+	    }
+
+	  }
+
+	  return(allocOK);
+
+	}
+	
+	/*
+	 * CVAhermiteStorePnt ( -> IMstore )
+	 *
+	 * This routine stores a new point (y,yd) in the structure d for use
+	 * in the cubic Hermite interpolation.
+	 * Note that the time is already stored.
+	 */
+
+	private int CVAhermiteStorePnt(CVodeMemRec cv_mem, DtpntMemRec d)
+	{
+	  CVadjMemRec ca_mem;
+	  HermiteDataMemRec content;
+	  int is;
+	  /* int retval; */
+
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  content = d.hermiteContent;
+
+	  /* Load solution */
+
+	  N_VScale_Serial(ONE, cv_mem.cv_zn[0], content.y);
+	  
+	  if (ca_mem.ca_IMstoreSensi) {
+	    for (is=0; is<cv_mem.cv_Ns; is++) 
+	      N_VScale_Serial(ONE, cv_mem.cv_znS[0][is], content.yS[is]);
+	  }
+
+	  /* Load derivative */
+
+	  if (cv_mem.cv_nst == 0) {
+
+	    /**  retval = */ 
+		  if (testMode) {
+			  fTestMode(cv_mem.cv_tn, content.y, content.yd, cv_mem.cv_user_data);
+		  }
+		  else {
+		      f(cv_mem.cv_tn, content.y, content.yd, cv_mem.cv_user_data);
 		  }
 
-		  /* Was ASA initialized? */
-		  if (cv_mem.cv_adjMallocDone == false) {
-		    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeF", MSGCV_NO_ADJ);
-		    return(CV_NO_ADJ);
-		  } 
+	    if (ca_mem.ca_IMstoreSensi) {
+	      /* retval = */ cvSensRhsWrapper(cv_mem, cv_mem.cv_tn, content.y, content.yd,
+	                                content.yS, content.ySd,
+	                                cv_mem.cv_tempv, cv_mem.cv_ftemp);
+	    }
 
-		  ca_mem = cv_mem.cv_adj_mem;
+	  } else {
 
-		  /* Check for yout != NULL */
-		  if (yout == null) {
-		    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeF", MSGCV_YOUT_NULL);
-		    return(CV_ILL_INPUT);
-		  }
-		  
-		  /* Check for tret != NULL */
-		  if (tret == null) {
-		    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeF", MSGCV_TRET_NULL);
-		    return(CV_ILL_INPUT);
-		  }
+	    N_VScale_Serial(ONE/cv_mem.cv_h, cv_mem.cv_zn[1], content.yd);
 
-		  /* Check for valid itask */
-		  if ( (itask != CV_NORMAL) && (itask != CV_ONE_STEP) ) {
-		    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeF", MSGCV_BAD_ITASK);
-		    return(CV_ILL_INPUT);
-		  }
+	    if (ca_mem.ca_IMstoreSensi) {
+	      for (is=0; is<cv_mem.cv_Ns; is++) 
+	        N_VScale_Serial(ONE/cv_mem.cv_h, cv_mem.cv_znS[1][is], content.ySd[is]);
+	    }
 
-		  /* All error checking done */
+	  }
 
-		  dt_mem = ca_mem.dt_mem;
+	  return(0);
+	}
 
-		  /* If tstop is enabled, store some info */
-		  if (cv_mem.cv_tstopset) {
-		    ca_mem.ca_tstopCVodeFcall = true;
-		    ca_mem.ca_tstopCVodeF = cv_mem.cv_tstop;
-		  }
+	/*
+	 * CVApolynomialStorePnt ( -> IMstore )
+	 *
+	 * This routine stores a new point y in the structure d for use
+	 * in the Polynomial interpolation.
+	 * Note that the time is already stored.
+	 */
 
-		  /* We will call CVode in CV_ONE_STEP mode, regardless
-		   * of what itask is, so flag if we need to return */
-		  if (itask == CV_ONE_STEP) iret = true;
-		  else                      iret = false;
+	private int CVApolynomialStorePnt(CVodeMemRec cv_mem, DtpntMemRec d)
+	{
+	  CVadjMemRec ca_mem;
+	  PolynomialDataMemRec content;
+	  int is;
 
-		  /* On the first step:
-		   *   - set tinitial
-		   *   - initialize list of check points
-		   *   - if needed, initialize the interpolation module
-		   *   - load dt_mem[0]
-		   * On subsequent steps, test if taking a new step is necessary. 
-		   */
-		  if ( ca_mem.ca_firstCVodeFcall ) {
+	  ca_mem = cv_mem.cv_adj_mem;
 
-		    ca_mem.ca_tinitial = cv_mem.cv_tn;
+	  content = d.polynomialContent;
 
-		    ca_mem.ck_mem = CVAckpntInit(cv_mem);
-		    if (ca_mem.ck_mem == null) {
-		      cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeF", MSGCV_MEM_FAIL);
-		      return(CV_MEM_FAIL);
-		    }
+	  N_VScale_Serial(ONE, cv_mem.cv_zn[0], content.y);
 
-		    if ( !ca_mem.ca_IMmallocDone ) {
+	  if (ca_mem.ca_IMstoreSensi) {
+	    for (is=0; is<cv_mem.cv_Ns; is++) 
+	      N_VScale_Serial(ONE, cv_mem.cv_znS[0][is], content.yS[is]);
+	  }
 
-		      /* Do we need to store sensitivities? */
-		      if (!cv_mem.cv_sensi) ca_mem.ca_IMstoreSensi = false;
+	  content.order = cv_mem.cv_qu;
 
-		      /* Allocate space for interpolation data */
-		      if (ca_mem.ca_IMmalloc == CVAhermiteMalloc_select) {
-		          allocOK = CVAhermiteMalloc(cv_mem);
-		      }
-		      else {
-		    	  allocOK = CVApolynomialMalloc(cv_mem);
-		      }
-		      if (!allocOK) {
-		        cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeF", MSGCV_MEM_FAIL);
-		        return(CV_MEM_FAIL);
-		      }
+	  return(0);
+	}
+	
+	/*
+	 * CVAckpntNew
+	 *
+	 * This routine allocates space for a new check point and sets 
+	 * its data from current values in cv_mem.
+	 */
 
-		      /* Rename zn and, if needed, znS for use in interpolation */
-		      for (i=0;i<L_MAX;i++) ca_mem.ca_Y[i] = cv_mem.cv_zn[i];
-		      if (ca_mem.ca_IMstoreSensi) {
-		        for (i=0;i<L_MAX;i++) ca_mem.ca_YS[i] = cv_mem.cv_znS[i];
-		      }
+	private CkpntMemRec CVAckpntNew(CVodeMemRec cv_mem)
+	{
+	  CkpntMemRec ck_mem;
+	  int j, jj, is, qmax; 
 
-		      ca_mem.ca_IMmallocDone = true;
+	  /* Allocate space for ckdata */
+	  ck_mem = null;
+	  ck_mem = new CkpntMemRec();
 
-		    }
+	  /* Set cv_next to NULL */
+	  ck_mem.ck_next = null;
 
-		    dt_mem[0].t = ca_mem.ck_mem.ck_t0;
-		    if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
-		        CVAhermiteStorePnt(cv_mem, dt_mem[0]);
-		    }
-		    else {
-		    	CVApolynomialStorePnt(cv_mem, dt_mem[0]);	
-		    }
+	  /* Test if we need to allocate space for the last zn.
+	   * NOTE: zn(qmax) may be needed for a hot restart, if an order
+	   * increase is deemed necessary at the first step after a check point */
+	  qmax = cv_mem.cv_qmax;
+	  ck_mem.ck_zqm = (cv_mem.cv_q < qmax) ? qmax : 0;
 
-		    ca_mem.ca_firstCVodeFcall = false;
+	  for (j=0; j<=cv_mem.cv_q; j++) {
+	    ck_mem.ck_zn[j] = N_VClone(cv_mem.cv_tempv);
+	    if (ck_mem.ck_zn[j] == null) {
+	      for (jj=0; jj<j; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+	      ck_mem = null;
+	      return(null);
+	    }
+	  }
 
-		  } else if ( (cv_mem.cv_tn - tout)*cv_mem.cv_h >= ZERO ) {
+	  if (cv_mem.cv_q < qmax) {
+	    ck_mem.ck_zn[qmax] = N_VClone(cv_mem.cv_tempv);
+	    if (ck_mem.ck_zn[qmax] == null) {
+	      for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+	      ck_mem = null;
+	      return(null);
+	    }
+	  }
 
-		    /* If tout was passed, return interpolated solution. 
-		       No changes to ck_mem or dt_mem are needed. */
-		    tret[0] = tout;
-		    flag = CVodeGetDky(cv_mem, tout, 0, yout);
-		    ncheckPtr[0] = ca_mem.ca_nckpnts;
-		    ca_mem.ca_IMnewData = true;
-		    ca_mem.ca_ckpntData = ca_mem.ck_mem;
-		    ca_mem.ca_np = cv_mem.cv_nst % ca_mem.ca_nsteps + 1;
+	  /* Test if we need to carry quadratures */
+	  ck_mem.ck_quadr = cv_mem.cv_quadr && cv_mem.cv_errconQ;
 
-		    return(flag);
+	  if (ck_mem.ck_quadr) {
 
-		  }
+	    for (j=0; j<=cv_mem.cv_q; j++) {
+	      ck_mem.ck_znQ[j] = N_VClone(cv_mem.cv_tempvQ);
+	      if(ck_mem.ck_znQ[j] == null) {
+	        for (jj=0; jj<j; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+	        if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_zn[qmax]);
+	        for (jj=0; jj<=cv_mem.cv_q; j++) N_VDestroy(ck_mem.ck_zn[jj]);
+	        ck_mem = null;
+	        return(null);
+	      }
+	    }
 
-		  /* Integrate to tout (in CV_ONE_STEP mode) while loading check points */
-		  for(;;) {
+	    if (cv_mem.cv_q < qmax) {
+	      ck_mem.ck_znQ[qmax] = N_VClone(cv_mem.cv_tempvQ);
+	      if (ck_mem.ck_znQ[qmax] == null) {
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+	        N_VDestroy(ck_mem.ck_zn[qmax]);
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+	        ck_mem = null;
+	        return(null);
+	      }
+	    }
 
-		    /* Perform one step of the integration */
+	  }
 
-		    flag = CVode(cv_mem, tout, yout, tret, CV_ONE_STEP);
-		    if (flag < 0) break;
+	  /* Test if we need to carry sensitivities */
+	  ck_mem.ck_sensi = cv_mem.cv_sensi;
 
-		    /* Test if a new check point is needed */
+	  if (ck_mem.ck_sensi) {
 
-		    if ( cv_mem.cv_nst % ca_mem.ca_nsteps == 0 ) {
+	    ck_mem.ck_Ns = cv_mem.cv_Ns;
 
-		      ca_mem.ck_mem.ck_t1 = tret[0];
+	    for (j=0; j<=cv_mem.cv_q; j++) {
+	      ck_mem.ck_znS[j] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+	      if (ck_mem.ck_znS[j] == null) {
+	        for (jj=0; jj<j; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
+	        if (ck_mem.ck_quadr) {
+	          if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_znQ[qmax]);
+	          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+	        }
+	        if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_zn[qmax]);
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+	        ck_mem = null;
+	        return(null);
+	      }
+	    }
 
-		      /* Create a new check point, load it, and append it to the list */
-		      tmp = CVAckpntNew(cv_mem);
-		      if (tmp == null) {
-		        cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeF", MSGCV_MEM_FAIL);
-		        flag = CV_MEM_FAIL;
-		        break;
-		      }
-		      tmp.ck_next = ca_mem.ck_mem;
-		      ca_mem.ck_mem = tmp;
-		      ca_mem.ca_nckpnts++;
-		      cv_mem.cv_forceSetup = true;
-		      
-		      /* Reset i=0 and load dt_mem[0] */
-		      dt_mem[0].t = ca_mem.ck_mem.ck_t0;
-		      if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
-		          CVAhermiteStorePnt(cv_mem, dt_mem[0]);
-		      }
-		      else {
-		    	  CVApolynomialStorePnt(cv_mem, dt_mem[0]);	
-		      }
+	    if ( cv_mem.cv_q < qmax) {
+	      ck_mem.ck_znS[qmax] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
+	      if (ck_mem.ck_znS[qmax] == null) {
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
+	        if (ck_mem.ck_quadr) {
+	          N_VDestroy(ck_mem.ck_znQ[qmax]);
+	          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+	        }
+	        N_VDestroy(ck_mem.ck_zn[qmax]);
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+	        ck_mem = null;
+	        return(null);
+	      }
+	    }
 
-		    } else {
+	  }
 
-		      /* Load next point in dt_mem */
-		      dt_mem[(int)(cv_mem.cv_nst % ca_mem.ca_nsteps)].t = tret[0];
-		      if (ca_mem.ca_IMstore == CVAhermiteStorePnt_select) {
-		          CVAhermiteStorePnt(cv_mem, dt_mem[(int)(cv_mem.cv_nst % ca_mem.ca_nsteps)]);
-		      }
-		      else {
-		    	  CVApolynomialStorePnt(cv_mem, dt_mem[(int)(cv_mem.cv_nst % ca_mem.ca_nsteps)]);  
-		      }
+	  /* Test if we need to carry quadrature sensitivities */
+	  ck_mem.ck_quadr_sensi = cv_mem.cv_quadr_sensi && cv_mem.cv_errconQS;
 
-		    }
+	  if (ck_mem.ck_quadr_sensi) {
 
-		    /* Set t1 field of the current ckeck point structure
-		       for the case in which there will be no future
-		       check points */
-		    ca_mem.ck_mem.ck_t1 = tret[0];
+	    for (j=0; j<=cv_mem.cv_q; j++) {
+	      ck_mem.ck_znQS[j] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempvQ);
+	      if (ck_mem.ck_znQS[j] == null) {
+	        for (jj=0; jj<j; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znQS[jj], cv_mem.cv_Ns);
+	        if (cv_mem.cv_q < qmax) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[qmax], cv_mem.cv_Ns);
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
+	        if (ck_mem.ck_quadr) {
+	          if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_znQ[qmax]);
+	          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
+	        }
+	        if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_zn[qmax]);
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+	        ck_mem = null;
+	        return(null);
+	      }
+	    }
 
-		    /* tfinal is now set to *tret */
-		    ca_mem.ca_tfinal = tret[0];
+	    if ( cv_mem.cv_q < qmax) {
+	      ck_mem.ck_znQS[qmax] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempvQ);
+	      if (ck_mem.ck_znQS[qmax] == null) {
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znQS[jj], cv_mem.cv_Ns);
+	        N_VDestroyVectorArray_Serial(ck_mem.ck_znS[qmax], cv_mem.cv_Ns);
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
+	        if (ck_mem.ck_quadr) {
+	          N_VDestroy(ck_mem.ck_znQ[qmax]);
+	          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+	        }
+	        N_VDestroy(ck_mem.ck_zn[qmax]);
+	        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
+	        ck_mem = null;
+	        return(null);
+	      }
+	    }
 
-		    /* Return if in CV_ONE_STEP mode */
-		    if (iret) break;
+	  }
 
-		    /* Return if tout reached */
-		    if ( (tret[0] - tout)*cv_mem.cv_h >= ZERO ) {
-		      tret[0] = tout;
-		      CVodeGetDky(cv_mem, tout, 0, yout);
-		      /* Reset tretlast in cv_mem so that CVodeGetQuad and CVodeGetSens 
-		       * evaluate quadratures and/or sensitivities at the proper time */
-		      cv_mem.cv_tretlast = tout;
-		      break;
-		    }
+	  /* Load check point data from cv_mem */
 
-		  } /* end of for(;;)() */
+	  for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_zn[j], ck_mem.ck_zn[j]);
+	  if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_zn[qmax], ck_mem.ck_zn[qmax]);
 
-		  /* Get ncheck from ca_mem */ 
-		  ncheckPtr[0] = ca_mem.ca_nckpnts;
+	  if (ck_mem.ck_quadr) {
+	    for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_znQ[j], ck_mem.ck_znQ[j]);
+	    if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_znQ[qmax], ck_mem.ck_znQ[qmax]);
+	  }
 
-		  /* Data is available for the last interval */
-		  ca_mem.ca_IMnewData = true;
-		  ca_mem.ca_ckpntData = ca_mem.ck_mem;
-		  ca_mem.ca_np = cv_mem.cv_nst % ca_mem.ca_nsteps + 1;
+	  if (ck_mem.ck_sensi) {
+	    for (is=0; is<cv_mem.cv_Ns; is++) {
+	      for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_znS[j][is], ck_mem.ck_znS[j][is]);
+	      if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_znS[qmax][is], ck_mem.ck_znS[qmax][is]);
+	    }
+	  }
 
-		  return(flag);
-		}
+	  if (ck_mem.ck_quadr_sensi) {
+	    for (is=0; is<cv_mem.cv_Ns; is++) {
+	      for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_znQS[j][is], ck_mem.ck_znQS[j][is]);
+	      if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_znQS[qmax][is], ck_mem.ck_znQS[qmax][is]);
+	    }
+	  }
 
-		/*
-		 * CVAckpntInit
-		 *
-		 * This routine initializes the check point linked list with 
-		 * information from the initial time.
-		 */
+	  for (j=0; j<=L_MAX; j++)        ck_mem.ck_tau[j] = cv_mem.cv_tau[j];
+	  for (j=0; j<=NUM_TESTS; j++)    ck_mem.ck_tq[j] = cv_mem.cv_tq[j];
+	  for (j=0; j<=cv_mem.cv_q; j++) ck_mem.ck_l[j] = cv_mem.cv_l[j];
+	  ck_mem.ck_nst       = cv_mem.cv_nst;
+	  ck_mem.ck_tretlast  = cv_mem.cv_tretlast;
+	  ck_mem.ck_q         = cv_mem.cv_q;
+	  ck_mem.ck_qprime    = cv_mem.cv_qprime;
+	  ck_mem.ck_qwait     = cv_mem.cv_qwait;
+	  ck_mem.ck_L         = cv_mem.cv_L;
+	  ck_mem.ck_gammap    = cv_mem.cv_gammap;
+	  ck_mem.ck_h         = cv_mem.cv_h;
+	  ck_mem.ck_hprime    = cv_mem.cv_hprime;
+	  ck_mem.ck_hscale    = cv_mem.cv_hscale;
+	  ck_mem.ck_eta       = cv_mem.cv_eta;
+	  ck_mem.ck_etamax    = cv_mem.cv_etamax;
+	  ck_mem.ck_t0        = cv_mem.cv_tn;
+	  ck_mem.ck_saved_tq5 = cv_mem.cv_saved_tq5;
 
-		private CkpntMemRec CVAckpntInit(CVodeMemRec cv_mem)
-		{
-		  CkpntMemRec ck_mem;
-		  int is;
-
-		  /* Allocate space for ckdata */
-		  ck_mem = null;
-		  ck_mem = new CkpntMemRec();
-
-		  ck_mem.ck_zn[0] = N_VClone_Serial(cv_mem.cv_tempv);
-		  if (ck_mem.ck_zn[0] == null) {
-		    ck_mem = null;
-		    return(null);
-		  }
-		  
-		  ck_mem.ck_zn[1] = N_VClone_Serial(cv_mem.cv_tempv);
-		  if (ck_mem.ck_zn[1] == null) {
-		    N_VDestroy(ck_mem.ck_zn[0]);
-		    ck_mem = null;
-		    return(null);
-		  }
-
-		  /* ck_mem->ck_zn[qmax] was not allocated */
-		  ck_mem.ck_zqm = 0;
-
-		  /* Load ckdata from cv_mem */
-		  N_VScale_Serial(ONE, cv_mem.cv_zn[0], ck_mem.ck_zn[0]);
-		  ck_mem.ck_t0    = cv_mem.cv_tn;
-		  ck_mem.ck_nst   = 0;
-		  ck_mem.ck_q     = 1;
-		  ck_mem.ck_h     = 0.0;
-		  
-		  /* Do we need to carry quadratures */
-		  ck_mem.ck_quadr = cv_mem.cv_quadr && cv_mem.cv_errconQ;
-
-		  if (ck_mem.ck_quadr) {
-
-		    ck_mem.ck_znQ[0] = N_VClone_Serial(cv_mem.cv_tempvQ);
-		    if (ck_mem.ck_znQ[0] == null) {
-		      N_VDestroy(ck_mem.ck_zn[0]);
-		      N_VDestroy(ck_mem.ck_zn[1]);
-		      ck_mem = null;
-		      return(null);
-		    }
-
-		    N_VScale_Serial(ONE, cv_mem.cv_znQ[0], ck_mem.ck_znQ[0]);
-
-		  }
-
-		  /* Do we need to carry sensitivities? */
-		  ck_mem.ck_sensi = cv_mem.cv_sensi;
-
-		  if (ck_mem.ck_sensi) {
-
-		    ck_mem.ck_Ns = cv_mem.cv_Ns;
-
-		    ck_mem.ck_znS[0] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
-		    if (ck_mem.ck_znS[0] == null) {
-		      N_VDestroy(ck_mem.ck_zn[0]);
-		      N_VDestroy(ck_mem.ck_zn[1]);
-		      if (ck_mem.ck_quadr) N_VDestroy(ck_mem.ck_znQ[0]);
-		      ck_mem = null;
-		      return(null);
-		    }
-
-		    for (is=0; is<cv_mem.cv_Ns; is++)
-		      N_VScale_Serial(ONE, cv_mem.cv_znS[0][is], ck_mem.ck_znS[0][is]);
-
-		  }
-
-		  /* Do we need to carry quadrature sensitivities? */
-		  ck_mem.ck_quadr_sensi = cv_mem.cv_quadr_sensi && cv_mem.cv_errconQS;
-
-		  if (ck_mem.ck_quadr_sensi) {
-		    ck_mem.ck_znQS[0] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempvQ);
-		    if (ck_mem.ck_znQS[0] == null) {
-		      N_VDestroy(ck_mem.ck_zn[0]);
-		      N_VDestroy(ck_mem.ck_zn[1]);
-		      if (ck_mem.ck_quadr) N_VDestroy(ck_mem.ck_znQ[0]);
-		      N_VDestroyVectorArray_Serial(ck_mem.ck_znS[0], cv_mem.cv_Ns);
-		      ck_mem = null;
-		      return(null);
-		    }
-		    
-		    for (is=0; is<cv_mem.cv_Ns; is++)
-		      N_VScale_Serial(ONE, cv_mem.cv_znQS[0][is], ck_mem.ck_znQS[0][is]);
-
-		  }
-
-		  /* Next in list */
-		  ck_mem.ck_next  = null;
-
-		  return(ck_mem);
-		}
+	  return(ck_mem);
+	}
 		
-		/*
-		 * CVAhermiteMalloc
-		 *
-		 * This routine allocates memory for storing information at all
-		 * intermediate points between two consecutive check points. 
-		 * This data is then used to interpolate the forward solution 
-		 * at any other time.
-		 */
+	/* 
+	 * CVodeGetQuad
+	 *
+	 * This routine extracts quadrature solution into yQout at the
+	 * time which CVode returned the solution.
+	 * This is just a wrapper that calls CVodeGetQuadDky with k=0.
+	 */
+	 
+	private int CVodeGetQuad(CVodeMemRec cv_mem, double tret[], NVector yQout)
+	{
+	  int flag;
+	
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeGetQuad", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  } 
+	
+	  tret[0] = cv_mem.cv_tretlast;
+	  
+	  flag = CVodeGetQuadDky(cv_mem,cv_mem.cv_tretlast,0,yQout);
+	
+	  return(flag);
+	}
+	
+	/*
+	 * CVodeGetQuadDky
+	 *
+	 * CVodeQuadDky computes the kth derivative of the yQ function at
+	 * time t, where tn-hu <= t <= tn, tn denotes the current         
+	 * internal time reached, and hu is the last internal step size   
+	 * successfully used by the solver. The user may request 
+	 * k=0, 1, ..., qu, where qu is the current order. 
+	 * The derivative vector is returned in dky. This vector 
+	 * must be allocated by the caller. It is only legal to call this         
+	 * function after a successful return from CVode with quadrature
+	 * computation enabled.
+	 */
+	
+	private int CVodeGetQuadDky(CVodeMemRec cv_mem, double t, int k, NVector dkyQ)
+	{ 
+	  double s, c, r;
+	  double tfuzz, tp, tn1;
+	  int i, j;
+	  
+	  /* Check all inputs for legality */
+	  
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeGetQuadDky", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  } 
+	
+	  if(cv_mem.cv_quadr != true) {
+	    cvProcessError(cv_mem, CV_NO_QUAD, "CVODES", "CVodeGetQuadDky", MSGCV_NO_QUAD);
+	    return(CV_NO_QUAD);
+	  }
+	
+	  if (dkyQ == null) {
+	    cvProcessError(cv_mem, CV_BAD_DKY, "CVODES", "CVodeGetQuadDky", MSGCV_NULL_DKY);
+	    return(CV_BAD_DKY);
+	  }
+	  
+	  if ((k < 0) || (k > cv_mem.cv_q)) {
+	    cvProcessError(cv_mem, CV_BAD_K, "CVODES", "CVodeGetQuadDky", MSGCV_BAD_K);
+	    return(CV_BAD_K);
+	  }
+	  
+	  /* Allow for some slack */
+	  tfuzz = FUZZ_FACTOR * cv_mem.cv_uround *
+	    (Math.abs(cv_mem.cv_tn) + Math.abs(cv_mem.cv_hu));
+	  if (cv_mem.cv_hu < ZERO) tfuzz = -tfuzz;
+	  tp = cv_mem.cv_tn - cv_mem.cv_hu - tfuzz;
+	  tn1 = cv_mem.cv_tn + tfuzz;
+	  if ((t-tp)*(t-tn1) > ZERO) {
+	    cvProcessError(cv_mem, CV_BAD_T, "CVODES", "CVodeGetQuadDky", MSGCV_BAD_T);
+	    return(CV_BAD_T);
+	  }
+	  
+	  /* Sum the differentiated interpolating polynomial */
+	  
+	  s = (t - cv_mem.cv_tn) / cv_mem.cv_h;
+	  for (j=cv_mem.cv_q; j >= k; j--) {
+	    c = ONE;
+	    for (i=j; i >= j-k+1; i--) c *= i;
+	    if (j == cv_mem.cv_q) {
+	      N_VScale_Serial(c, cv_mem.cv_znQ[cv_mem.cv_q], dkyQ);
+	    } else {
+	      N_VLinearSum_Serial(c, cv_mem.cv_znQ[j], s, dkyQ, dkyQ);
+	    }
+	  }
+	  if (k == 0) return(CV_SUCCESS);
+	  r = Math.pow(cv_mem.cv_h, -k);
+	  N_VScale_Serial(r, dkyQ, dkyQ);
+	  return(CV_SUCCESS);
+	  
+	}
+	
+	class CVadjCheckPointRec {
+		  CkpntMemRec my_addr;
+		  CkpntMemRec next_addr;
+		  double t0;
+		  double t1;
+		  long nstep;
+		  int order;
+		  double step;
+		};
 
-		private boolean CVAhermiteMalloc(CVodeMemRec cv_mem)
-		{
-		  CVadjMemRec ca_mem;
-		  DtpntMemRec dt_mem[];
-		  HermiteDataMemRec content;
-		  int i, ii=0;
-		  boolean allocOK;
+	/*
+	 * CVodeGetAdjCheckPointsInfo
+	 *
+	 * This routine loads an array of nckpnts structures of type CVadjCheckPointRec.
+	 * The user must allocate space for ckpnt.
+	 */
 
-		  allocOK = true;
+	private int CVodeGetAdjCheckPointsInfo(CVodeMemRec cv_mem, CVadjCheckPointRec ckpnt[])
+	{
+	  CVadjMemRec ca_mem;
+	  CkpntMemRec ck_mem;
+	  int i;
 
-		  ca_mem = cv_mem.cv_adj_mem;
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeGetAdjCheckPointsInfo", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
 
-		  /* Allocate space for the vectors ytmp and yStmp */
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeGetAdjCheckPointsInfo", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  } 
+	  ca_mem = cv_mem.cv_adj_mem;
 
-		  ca_mem.ca_ytmp = N_VClone(cv_mem.cv_tempv);
-		  if (ca_mem.ca_ytmp == null) {
-		    return(false);
-		  }
+	  ck_mem = ca_mem.ck_mem;
 
-		  if (ca_mem.ca_IMstoreSensi) {
-		    ca_mem.ca_yStmp = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
-		    if (ca_mem.ca_yStmp == null) {
-		      N_VDestroy(ca_mem.ca_ytmp);
-		      return(false);
-		    }
-		  }
+	  i = 0;
 
-		  /* Allocate space for the content field of the dt structures */
+	  while (ck_mem != null) {
 
-		  dt_mem = ca_mem.dt_mem;
+	    ckpnt[i].my_addr = ck_mem;
+	    ckpnt[i].next_addr = ck_mem.ck_next;
+	    ckpnt[i].t0 = ck_mem.ck_t0;
+	    ckpnt[i].t1 = ck_mem.ck_t1;
+	    ckpnt[i].nstep = ck_mem.ck_nst;
+	    ckpnt[i].order = ck_mem.ck_q;
+	    ckpnt[i].step = ck_mem.ck_h;
 
-		  for (i=0; i<=ca_mem.ca_nsteps; i++) {
+	    ck_mem = ck_mem.ck_next;
+	    i++;
 
-		    content = null;
-		    content = new HermiteDataMemRec();
+	  }
 
-		    content.y = N_VClone(cv_mem.cv_tempv);
-		    if (content.y == null) {
-		      content = null;
-		      ii = i;
-		      allocOK = false;
-		      break;
-		    }
+	  return(CV_SUCCESS);
 
-		    content.yd = N_VClone(cv_mem.cv_tempv);
-		    if (content.yd == null) {
-		      N_VDestroy(content.y);
-		      content = null;
-		      ii = i;
-		      allocOK = false;
-		      break;
-		    }
+	}
+	
+	private int CVodeCreateB(CVodeMemRec cv_mem, int lmmB, int iterB, int which[])
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec new_cvB_mem;
+	  CVodeMemRec cvodeB_mem;
 
-		    if (ca_mem.ca_IMstoreSensi) {
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeCreateB", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
 
-		      content.yS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
-		      if (content.yS == null) {
-		        N_VDestroy(content.y);
-		        N_VDestroy(content.yd);
-		        content = null;
-		        ii = i;
-		        allocOK = false;
-		        break;
-		      }
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeCreateB", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  }
+	  ca_mem = cv_mem.cv_adj_mem;
 
-		      content.ySd = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
-		      if (content.ySd == null) {
-		        N_VDestroy(content.y);
-		        N_VDestroy(content.yd);
-		        N_VDestroyVectorArray_Serial(content.yS, cv_mem.cv_Ns);
-		        content = null;
-		        ii = i;
-		        allocOK = false;
-		        break;
-		      }
-		      
-		    }
-		    
-		    dt_mem[i].content = CV_HERMITE;
-		    dt_mem[i].hermiteContent = content;
+	  /* Allocate space for new CVodeBMem object */
 
-		  } 
+	  new_cvB_mem = null;
+	  new_cvB_mem = new CVodeBMemRec();
 
-		  /* If an error occurred, deallocate and return */
+	  /* Create and set a new CVODES object for the backward problem */
 
-		  if (!allocOK) {
+	  cvodeB_mem = CVodeCreate(lmmB, iterB);
+	  if (cvodeB_mem == null) {
+	    cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeCreateB", MSGCV_MEM_FAIL);
+	    return(CV_MEM_FAIL);
+	  }
 
-		    N_VDestroy(ca_mem.ca_ytmp);
+	  UserData userData = new UserData();
+	  userData.memRec = cv_mem;
+	  cvodeB_mem.cv_user_data = userData;
 
-		    if (ca_mem.ca_IMstoreSensi) {
-		      N_VDestroyVectorArray_Serial(ca_mem.ca_yStmp, cv_mem.cv_Ns);
-		    }
+	  cvodeB_mem.cv_mxhnil = -1;
 
-		    for (i=0; i<ii; i++) {
-		      content = (dt_mem[i].hermiteContent);
-		      N_VDestroy(content.y);
-		      N_VDestroy(content.yd);
-		      if (ca_mem.ca_IMstoreSensi) {
-		        N_VDestroyVectorArray_Serial(content.yS, cv_mem.cv_Ns);
-		        N_VDestroyVectorArray_Serial(content.ySd, cv_mem.cv_Ns);
-		      }
-		      dt_mem[i].hermiteContent = null;
-		    }
+	  //CVodeSetErrHandlerFn(cvodeB_mem, cv_mem->cv_ehfun, cv_mem->cv_eh_data);
+	  //cvodeB_mem.cv_ehfun = cv_mem.cv_ehfun;
+	  cvodeB_mem.cv_eh_data = cv_mem.cv_eh_data;
 
-		  }
+	  //CVodeSetErrFile(cvodeB_mem, cv_mem->cv_errfp);
+	  cvodeB_mem.cv_errfp = cv_mem.cv_errfp;
 
-		  return(allocOK);
-		}
+	  /* Set/initialize fields in the new CVodeBMem object, new_cvB_mem */
 
+	  new_cvB_mem.cv_index   = ca_mem.ca_nbckpbs;
+
+	  new_cvB_mem.cv_mem     = cvodeB_mem;
+
+	  new_cvB_mem.cv_f       = -1;
+	  //new_cvB_mem.cv_fs      = null;
+
+	  new_cvB_mem.cv_fQ      = -1;
+	  //new_cvB_mem.cv_fQs     = null;
+
+	  new_cvB_mem.cv_user_data  = null;
+
+	  new_cvB_mem.cv_lmem    = null;
+	  //new_cvB_mem.cv_lfree   = null;
+	  new_cvB_mem.cv_lfree_select = -1;
+	  //new_cvB_mem.cv_pmem    = null;
+	  //new_cvB_mem.cv_pfree   = null;
+
+	  new_cvB_mem.cv_y       = null;
+
+	  new_cvB_mem.cv_f_withSensi = false;
+	  new_cvB_mem.cv_fQ_withSensi = false;
+
+	  /* Attach the new object to the linked list cvB_mem */
+
+	  new_cvB_mem.cv_next = ca_mem.cvB_mem;
+	  ca_mem.cvB_mem = new_cvB_mem;
+	  
+	  /* Return the index of the newly created CVodeBMem object.
+	   * This must be passed to CVodeInitB and to other ***B 
+	   * functions to set optional inputs for this backward problem */
+
+	  which[0] = ca_mem.ca_nbckpbs;
+
+	  ca_mem.ca_nbckpbs++;
+
+	  return(CV_SUCCESS);
+	}
+
+	private int CVodeInitB(CVodeMemRec cv_mem, int which, 
+               int fB,
+               double tB0, NVector yB0)
+{
+  CVadjMemRec ca_mem;
+  CVodeBMemRec cvB_mem;
+  CVodeMemRec cvodeB_mem;
+  int flag;
+
+  /* Check if cvode_mem exists */
+
+  if (cv_mem == null) {
+    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeInitB", MSGCV_NO_MEM);
+    return(CV_MEM_NULL);
+  }
+
+  /* Was ASA initialized? */
+
+  if (cv_mem.cv_adjMallocDone == false) {
+    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeInitB", MSGCV_NO_ADJ);
+    return(CV_NO_ADJ);
+  } 
+  ca_mem = cv_mem.cv_adj_mem;
+
+  /* Check the value of which */
+
+  if ( which >= ca_mem.ca_nbckpbs ) {
+    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeInitB", MSGCV_BAD_WHICH);
+    return(CV_ILL_INPUT);
+  }
+
+  /* Find the CVodeBMem entry in the linked list corresponding to which */
+
+  cvB_mem = ca_mem.cvB_mem;
+  while (cvB_mem != null) {
+    if ( which == cvB_mem.cv_index ) break;
+    cvB_mem = cvB_mem.cv_next;
+  }
+
+  cvodeB_mem = cvB_mem.cv_mem;
+  
+  /* Allocate and set the CVODES object */
+
+  flag = CVodeInit(cvodeB_mem, CVArhs_select, tB0, yB0);
+
+  if (flag != CV_SUCCESS) return(flag);
+
+  /* Copy fB function in cvB_mem */
+
+  cvB_mem.cv_f_withSensi = false;
+  cvB_mem.cv_f = fB;
+
+  /* Allocate space and initialize the y Nvector in cvB_mem */
+
+  cvB_mem.cv_t0 = tB0;
+  cvB_mem.cv_y = N_VClone(yB0);
+  N_VScale_Serial(ONE, yB0, cvB_mem.cv_y);
+
+  return(CV_SUCCESS);
+}
+
+	
+	
+	
+
+	private int CVodeSStolerancesB(CVodeMemRec cv_mem, int which, double reltolB, double abstolB)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+	  CVodeMemRec cvodeB_mem;
+	  int flag;
+
+	  /* Check if cvode_mem exists */
+
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeSStolerancesB", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeSStolerancesB", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  } 
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check the value of which */
+
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeSStolerancesB", MSGCV_BAD_WHICH);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  }
+
+	  cvodeB_mem = cvB_mem.cv_mem;
+
+	  /* Set tolerances */
+
+	  flag = CVodeSStolerances(cvodeB_mem, reltolB, abstolB);
+
+	  return(flag);
+	}
+
+	private int CVodeSetUserDataB(CVodeMemRec cv_mem, int which, UserData user_dataB)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeSetUserDataB", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeSetUserDataB", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  } 
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check which */
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeSetUserDataB", MSGCV_BAD_WHICH);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  }
+
+	  cvB_mem.cv_user_data = user_dataB;
+
+	  return(CV_SUCCESS);
+	}
+	
+	/*---------------------------------------------------------------
+	  CVDlsSetLinearSolverB specifies the direct linear solver for 
+	  backward integration.
+	  ---------------------------------------------------------------*/
+	private int CVDlsSetLinearSolverB(CVodeMemRec cv_mem, int which,
+	                          SUNLinearSolver LS, double A[][])
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+	  CVodeMemRec cvodeB_mem;
+	  CVDlsMemRecB cvdlsB_mem;
+	  int flag;
+
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CVDLS_MEM_NULL, "CVSDLS",
+	                   "CVDlsSetLinearSolverB", MSGD_CVMEM_NULL);
+	    return(CVDLS_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CVDLS_NO_ADJ, "CVSDLS",
+	                   "CVDlsSetLinearSolverB", MSGD_NO_ADJ);
+	    return(CVDLS_NO_ADJ);
+	  } 
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check which */
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, CVDLS_ILL_INPUT, "CVSDLS",
+	                   "CVDlsSetLinearSolverB", MSGD_BAD_WHICH);
+	    return(CVDLS_ILL_INPUT);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  }
+
+	  /* Get memory for CVDlsMemRecB */
+	  cvdlsB_mem = new CVDlsMemRecB();
+
+	  /* free any existing system solver attached to cvB */
+	  //if (cvB_mem.cv_lfree_select > 0)  cvB_mem.cv_lfree(cvB_mem);
+
+	  /* Attach lmemB data and lfreeB function. */
+	  cvB_mem.cv_lmem  = cvdlsB_mem;
+	  cvB_mem.cv_lfree_select = cvDlsFreeB_select;
+
+	  /* initialize jacB and jacBS pointers */
+	  cvdlsB_mem.jacB  = -1;
+	  cvdlsB_mem.jacBS = -1;
+
+	  /* set the linear solver for this backward problem */
+	  cvodeB_mem = cvB_mem.cv_mem;
+	  flag = CVDlsSetLinearSolver(cvodeB_mem, LS, A);
+	  if (flag != CVDLS_SUCCESS) {
+	    cvdlsB_mem = null;
+	  }
+
+	  return(flag);
+	}
+
+	/*-----------------------------------------------------------------
+	  Type: CVDlsJacFnB
+	  -----------------------------------------------------------------
+	  A Jacobian approximation function jacB for the adjoint
+	  (backward) problem must have the prototype given below. 
+	  -----------------------------------------------------------------*/
+	//typedef int (*CVDlsJacFnB)(realtype t, N_Vector y, N_Vector yB,
+	                           //N_Vector fyB, SUNMatrix JB,
+	                          // void *user_dataB, N_Vector tmp1B,
+	                          // N_Vector tmp2B, N_Vector tmp3B);
+
+	/*-----------------------------------------------------------------
+	  Type: CVDlsJacFnBS
+	  -----------------------------------------------------------------
+	  A Jacobian approximation function jacBS for the adjoint
+	  (backward) problem, sensitivity-dependent case,  must have the
+	  prototype given below. 
+	  -----------------------------------------------------------------*/
+	//typedef int (*CVDlsJacFnBS)(realtype t, N_Vector y, N_Vector *yS,
+	                           // N_Vector yB, N_Vector fyB, SUNMatrix JB,
+	                            //void *user_dataB, N_Vector tmp1B,
+	                           // N_Vector tmp2B, N_Vector tmp3B);
+
+
+	
+				
+	private int CVDlsSetJacFnB(CVodeMemRec cv_mem, int which, int jacB)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+	  CVDlsMemRecB cvdlsB_mem;
+	  CVodeMemRec cvodeB_mem;
+	  int flag;
+
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CVDLS_MEM_NULL, "CVSDLS",
+	                   "CVDlsSetJacFnB", MSGD_CVMEM_NULL);
+	    return(CVDLS_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CVDLS_NO_ADJ, "CVSDLS",
+	                   "CVDlsSetJacFnB", MSGD_NO_ADJ);
+	    return(CVDLS_NO_ADJ);
+	  } 
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check which */
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, CVDLS_ILL_INPUT, "CVSDLS",
+	                   "CVDlsSetJacFnB", MSGD_BAD_WHICH);
+	    return(CVDLS_ILL_INPUT);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  }
+
+	  cvodeB_mem = cvB_mem.cv_mem;
+
+	  if (cvB_mem.cv_lmem == null) {
+	    cvProcessError(cv_mem, CVDLS_LMEMB_NULL, "CVSDLS",
+	                   "CVDlsSetJacFnB", MSGD_LMEMB_NULL);
+	    return(CVDLS_LMEMB_NULL);
+	  }
+	  cvdlsB_mem = cvB_mem.cv_lmem;
+
+	  cvdlsB_mem.jacB = jacB;
+
+	  if (jacB > 0) {
+	    flag = CVDlsSetJacFn(cvodeB_mem, cvDlsJacBWrapper_select);
+	  } else {
+	    flag = CVDlsSetJacFn(cvodeB_mem, -1);
+	  }
+
+	  return(flag);
+	}
+	
+		private int CVodeQuadInitB(CVodeMemRec cv_mem, int which,
+	           int fQB, NVector yQB0)
+	{
+	CVadjMemRec ca_mem;
+	CVodeBMemRec cvB_mem;
+	CVodeMemRec cvodeB_mem;
+	int flag;
+	
+	/* Check if cvode_mem exists */
+	if (cv_mem == null) {
+	cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeQuadInitB", MSGCV_NO_MEM);
+	return(CV_MEM_NULL);
+	}
+	
+	/* Was ASA initialized? */
+	if (cv_mem.cv_adjMallocDone == false) {
+	cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeQuadInitB", MSGCV_NO_ADJ);
+	return(CV_NO_ADJ);
+	} 
+	ca_mem = cv_mem.cv_adj_mem;
+	
+	/* Check which */
+	if ( which >= ca_mem.ca_nbckpbs ) {
+	cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeQuadInitB", MSGCV_BAD_WHICH);
+	return(CV_ILL_INPUT);
+	}
+	
+	/* Find the CVodeBMem entry in the linked list corresponding to which */
+	cvB_mem = ca_mem.cvB_mem;
+	while (cvB_mem != null) {
+	if ( which == cvB_mem.cv_index ) break;
+	cvB_mem = cvB_mem.cv_next;
+	}
+	
+	cvodeB_mem = cvB_mem.cv_mem;
+	
+	flag = CVodeQuadInit(cvodeB_mem, CVArhsQ_select, yQB0);
+	if (flag != CV_SUCCESS) return(flag);
+	
+	cvB_mem.cv_fQ_withSensi = false;
+	cvB_mem.cv_fQ = fQB;
+	
+	return(CV_SUCCESS);
+	}
 		
-		/*
-		 * CVApolynomialMalloc
-		 *
-		 * This routine allocates memory for storing information at all
-		 * intermediate points between two consecutive check points. 
-		 * This data is then used to interpolate the forward solution 
-		 * at any other time.
-		 */
-
-		private boolean CVApolynomialMalloc(CVodeMemRec cv_mem)
-		{
-		  CVadjMemRec ca_mem;
-		  DtpntMemRec dt_mem[];
-		  PolynomialDataMemRec content;
-		  int i, ii=0;
-		  boolean allocOK;
-
-		  allocOK = true;
-
-		  ca_mem = cv_mem.cv_adj_mem;
-
-		  /* Allocate space for the vectors ytmp and yStmp */
-
-		  ca_mem.ca_ytmp = N_VClone(cv_mem.cv_tempv);
-		  if (ca_mem.ca_ytmp == null) {
-		    return(false);
-		  }
-
-		  if (ca_mem.ca_IMstoreSensi) {
-		    ca_mem.ca_yStmp = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
-		    if (ca_mem.ca_yStmp == null) {
-		      N_VDestroy(ca_mem.ca_ytmp);
-		      return(false);
-		    }
-		  }
-
-		  /* Allocate space for the content field of the dt structures */
-
-		  dt_mem = ca_mem.dt_mem;
-
-		  for (i=0; i<=ca_mem.ca_nsteps; i++) {
-
-		    content = null;
-		    content = new PolynomialDataMemRec();
-
-		    content.y = N_VClone(cv_mem.cv_tempv);
-		    if (content.y == null) {
-		      content = null;
-		      ii = i;
-		      allocOK = false;
-		      break;
-		    }
-
-		    if (ca_mem.ca_IMstoreSensi) {
-
-		      content.yS = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
-		      if (content.yS == null) {
-		        N_VDestroy(content.y);
-		        content = null;
-		        ii = i;
-		        allocOK = false;
-		        break;
-		      }
-
-		    }
-
-		    dt_mem[i].content = CV_POLYNOMIAL;
-		    dt_mem[i].polynomialContent = content;
-
-		  } 
-
-		  /* If an error occurred, deallocate and return */
-
-		  if (!allocOK) {
-
-		    N_VDestroy(ca_mem.ca_ytmp);
+	/*
+	 * CVodeSetQuad*B
+	 *
+	 * Wrappers for the backward phase around the corresponding 
+	 * CVODES quadrature optional input functions
+	 */
+
+	private int CVodeSetQuadErrConB(CVodeMemRec cv_mem, int which, boolean errconQB)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+	  CVodeMemRec cvodeB_mem;
+	  int flag;
+
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeSetQuadErrConB", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeSetQuadErrConB", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  } 
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check which */
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeSetQuadErrConB", MSGCV_BAD_WHICH);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  }
+
+	  cvodeB_mem = cvB_mem.cv_mem;
+
+	  cvodeB_mem.cv_errconQ = errconQB;
+
+	  return(CV_SUCCESS);
+	}
+	
+	private int CVodeQuadSStolerancesB(CVodeMemRec cv_mem, int which, double reltolQB, double abstolQB)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem;
+	  CVodeMemRec cvodeB_mem;
+	  int flag;
+
+	  /* Check if cvode_mem exists */
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeQuadSStolerancesB", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeQuadSStolerancesB", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  } 
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check which */
+	  if ( which >= ca_mem.ca_nbckpbs ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeQuadSStolerancesB", MSGCV_BAD_WHICH);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Find the CVodeBMem entry in the linked list corresponding to which */
+	  cvB_mem = ca_mem.cvB_mem;
+	  while (cvB_mem != null) {
+	    if ( which == cvB_mem.cv_index ) break;
+	    cvB_mem = cvB_mem.cv_next;
+	  }
+
+	  cvodeB_mem = cvB_mem.cv_mem;
+
+	  flag = CVodeQuadSStolerances(cvodeB_mem, reltolQB, abstolQB);
+
+	  return(flag);
+	}
+	
+	/*
+	 * CVodeB
+	 *
+	 * This routine performs the backward integration towards tBout
+	 * of all backward problems that were defined.
+	 * When necessary, it performs a forward integration between two 
+	 * consecutive check points to update interpolation data.
+	 *
+	 * On a successful return, CVodeB returns CV_SUCCESS.
+	 *
+	 * NOTE that CVodeB DOES NOT return the solution for the backward
+	 * problem(s). Use CVodeGetB to extract the solution at tBret
+	 * for any given backward problem.
+	 *
+	 * If there are multiple backward problems and multiple check points,
+	 * CVodeB may not succeed in getting all problems to take one step
+	 * when called in ONE_STEP mode.
+	 */
+
+	private int CVodeB(CVodeMemRec cv_mem, double tBout, int itaskB)
+	{
+	  CVadjMemRec ca_mem;
+	  CVodeBMemRec cvB_mem, tmp_cvB_mem;
+	  CkpntMemRec ck_mem;
+	  int sign, flag=0;
+	  double tfuzz, tBn;
+	  double tBret[] = new double[1];
+	  boolean gotCheckpoint, isActive, reachedTBout;
+	  
+	  /* Check if cvode_mem exists */
+
+	  if (cv_mem == null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeB", MSGCV_NO_MEM);
+	    return(CV_MEM_NULL);
+	  }
+
+	  /* Was ASA initialized? */
+
+	  if (cv_mem.cv_adjMallocDone == false) {
+	    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeB", MSGCV_NO_ADJ);
+	    return(CV_NO_ADJ);
+	  }
+	  ca_mem = cv_mem.cv_adj_mem;
+
+	  /* Check if any backward problem has been defined */
+
+	  if ( ca_mem.ca_nbckpbs == 0 ) {
+	    cvProcessError(cv_mem, CV_NO_BCK, "CVODEA", "CVodeB", MSGCV_NO_BCK);
+	    return(CV_NO_BCK);
+	  }
+	  cvB_mem = ca_mem.cvB_mem;
 
-		    if (ca_mem.ca_IMstoreSensi) {
-		      N_VDestroyVectorArray_Serial(ca_mem.ca_yStmp, cv_mem.cv_Ns);
-		    }
-
-		    for (i=0; i<ii; i++) {
-		      content = (dt_mem[i].polynomialContent);
-		      N_VDestroy(content.y);
-		      if (ca_mem.ca_IMstoreSensi) {
-		        N_VDestroyVectorArray_Serial(content.yS, cv_mem.cv_Ns);
-		      }
-		      dt_mem[i].polynomialContent = null;
-		    }
-
-		  }
-
-		  return(allocOK);
-
-		}
-		
-		/*
-		 * CVAhermiteStorePnt ( -> IMstore )
-		 *
-		 * This routine stores a new point (y,yd) in the structure d for use
-		 * in the cubic Hermite interpolation.
-		 * Note that the time is already stored.
-		 */
-
-		private int CVAhermiteStorePnt(CVodeMemRec cv_mem, DtpntMemRec d)
-		{
-		  CVadjMemRec ca_mem;
-		  HermiteDataMemRec content;
-		  int is;
-		  /* int retval; */
-
-		  ca_mem = cv_mem.cv_adj_mem;
-
-		  content = d.hermiteContent;
-
-		  /* Load solution */
-
-		  N_VScale_Serial(ONE, cv_mem.cv_zn[0], content.y);
-		  
-		  if (ca_mem.ca_IMstoreSensi) {
-		    for (is=0; is<cv_mem.cv_Ns; is++) 
-		      N_VScale_Serial(ONE, cv_mem.cv_znS[0][is], content.yS[is]);
-		  }
-
-		  /* Load derivative */
-
-		  if (cv_mem.cv_nst == 0) {
-
-		    /**  retval = */ 
-			  if (testMode) {
-				  fTestMode(cv_mem.cv_tn, content.y, content.yd, cv_mem.cv_user_data);
-			  }
-			  else {
-			      f(cv_mem.cv_tn, content.y, content.yd, cv_mem.cv_user_data);
-			  }
-
-		    if (ca_mem.ca_IMstoreSensi) {
-		      /* retval = */ cvSensRhsWrapper(cv_mem, cv_mem.cv_tn, content.y, content.yd,
-		                                content.yS, content.ySd,
-		                                cv_mem.cv_tempv, cv_mem.cv_ftemp);
-		    }
-
-		  } else {
-
-		    N_VScale_Serial(ONE/cv_mem.cv_h, cv_mem.cv_zn[1], content.yd);
-
-		    if (ca_mem.ca_IMstoreSensi) {
-		      for (is=0; is<cv_mem.cv_Ns; is++) 
-		        N_VScale_Serial(ONE/cv_mem.cv_h, cv_mem.cv_znS[1][is], content.ySd[is]);
-		    }
-
-		  }
-
-		  return(0);
-		}
-
-		/*
-		 * CVApolynomialStorePnt ( -> IMstore )
-		 *
-		 * This routine stores a new point y in the structure d for use
-		 * in the Polynomial interpolation.
-		 * Note that the time is already stored.
-		 */
-
-		private int CVApolynomialStorePnt(CVodeMemRec cv_mem, DtpntMemRec d)
-		{
-		  CVadjMemRec ca_mem;
-		  PolynomialDataMemRec content;
-		  int is;
-
-		  ca_mem = cv_mem.cv_adj_mem;
-
-		  content = d.polynomialContent;
-
-		  N_VScale_Serial(ONE, cv_mem.cv_zn[0], content.y);
-
-		  if (ca_mem.ca_IMstoreSensi) {
-		    for (is=0; is<cv_mem.cv_Ns; is++) 
-		      N_VScale_Serial(ONE, cv_mem.cv_znS[0][is], content.yS[is]);
-		  }
-
-		  content.order = cv_mem.cv_qu;
-
-		  return(0);
-		}
-		
-		/*
-		 * CVAckpntNew
-		 *
-		 * This routine allocates space for a new check point and sets 
-		 * its data from current values in cv_mem.
-		 */
-
-		private CkpntMemRec CVAckpntNew(CVodeMemRec cv_mem)
-		{
-		  CkpntMemRec ck_mem;
-		  int j, jj, is, qmax; 
-
-		  /* Allocate space for ckdata */
-		  ck_mem = null;
-		  ck_mem = new CkpntMemRec();
-
-		  /* Set cv_next to NULL */
-		  ck_mem.ck_next = null;
-
-		  /* Test if we need to allocate space for the last zn.
-		   * NOTE: zn(qmax) may be needed for a hot restart, if an order
-		   * increase is deemed necessary at the first step after a check point */
-		  qmax = cv_mem.cv_qmax;
-		  ck_mem.ck_zqm = (cv_mem.cv_q < qmax) ? qmax : 0;
-
-		  for (j=0; j<=cv_mem.cv_q; j++) {
-		    ck_mem.ck_zn[j] = N_VClone(cv_mem.cv_tempv);
-		    if (ck_mem.ck_zn[j] == null) {
-		      for (jj=0; jj<j; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
-		      ck_mem = null;
-		      return(null);
-		    }
-		  }
-
-		  if (cv_mem.cv_q < qmax) {
-		    ck_mem.ck_zn[qmax] = N_VClone(cv_mem.cv_tempv);
-		    if (ck_mem.ck_zn[qmax] == null) {
-		      for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
-		      ck_mem = null;
-		      return(null);
-		    }
-		  }
-
-		  /* Test if we need to carry quadratures */
-		  ck_mem.ck_quadr = cv_mem.cv_quadr && cv_mem.cv_errconQ;
-
-		  if (ck_mem.ck_quadr) {
-
-		    for (j=0; j<=cv_mem.cv_q; j++) {
-		      ck_mem.ck_znQ[j] = N_VClone(cv_mem.cv_tempvQ);
-		      if(ck_mem.ck_znQ[j] == null) {
-		        for (jj=0; jj<j; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
-		        if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_zn[qmax]);
-		        for (jj=0; jj<=cv_mem.cv_q; j++) N_VDestroy(ck_mem.ck_zn[jj]);
-		        ck_mem = null;
-		        return(null);
-		      }
-		    }
-
-		    if (cv_mem.cv_q < qmax) {
-		      ck_mem.ck_znQ[qmax] = N_VClone(cv_mem.cv_tempvQ);
-		      if (ck_mem.ck_znQ[qmax] == null) {
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
-		        N_VDestroy(ck_mem.ck_zn[qmax]);
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
-		        ck_mem = null;
-		        return(null);
-		      }
-		    }
-
-		  }
-
-		  /* Test if we need to carry sensitivities */
-		  ck_mem.ck_sensi = cv_mem.cv_sensi;
-
-		  if (ck_mem.ck_sensi) {
-
-		    ck_mem.ck_Ns = cv_mem.cv_Ns;
-
-		    for (j=0; j<=cv_mem.cv_q; j++) {
-		      ck_mem.ck_znS[j] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
-		      if (ck_mem.ck_znS[j] == null) {
-		        for (jj=0; jj<j; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
-		        if (ck_mem.ck_quadr) {
-		          if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_znQ[qmax]);
-		          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
-		        }
-		        if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_zn[qmax]);
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
-		        ck_mem = null;
-		        return(null);
-		      }
-		    }
-
-		    if ( cv_mem.cv_q < qmax) {
-		      ck_mem.ck_znS[qmax] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempv);
-		      if (ck_mem.ck_znS[qmax] == null) {
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
-		        if (ck_mem.ck_quadr) {
-		          N_VDestroy(ck_mem.ck_znQ[qmax]);
-		          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
-		        }
-		        N_VDestroy(ck_mem.ck_zn[qmax]);
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
-		        ck_mem = null;
-		        return(null);
-		      }
-		    }
-
-		  }
-
-		  /* Test if we need to carry quadrature sensitivities */
-		  ck_mem.ck_quadr_sensi = cv_mem.cv_quadr_sensi && cv_mem.cv_errconQS;
-
-		  if (ck_mem.ck_quadr_sensi) {
-
-		    for (j=0; j<=cv_mem.cv_q; j++) {
-		      ck_mem.ck_znQS[j] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempvQ);
-		      if (ck_mem.ck_znQS[j] == null) {
-		        for (jj=0; jj<j; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znQS[jj], cv_mem.cv_Ns);
-		        if (cv_mem.cv_q < qmax) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[qmax], cv_mem.cv_Ns);
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
-		        if (ck_mem.ck_quadr) {
-		          if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_znQ[qmax]);
-		          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_znQ[jj]);
-		        }
-		        if (cv_mem.cv_q < qmax) N_VDestroy(ck_mem.ck_zn[qmax]);
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
-		        ck_mem = null;
-		        return(null);
-		      }
-		    }
-
-		    if ( cv_mem.cv_q < qmax) {
-		      ck_mem.ck_znQS[qmax] = N_VCloneVectorArray_Serial(cv_mem.cv_Ns, cv_mem.cv_tempvQ);
-		      if (ck_mem.ck_znQS[qmax] == null) {
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znQS[jj], cv_mem.cv_Ns);
-		        N_VDestroyVectorArray_Serial(ck_mem.ck_znS[qmax], cv_mem.cv_Ns);
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroyVectorArray_Serial(ck_mem.ck_znS[jj], cv_mem.cv_Ns);
-		        if (ck_mem.ck_quadr) {
-		          N_VDestroy(ck_mem.ck_znQ[qmax]);
-		          for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
-		        }
-		        N_VDestroy(ck_mem.ck_zn[qmax]);
-		        for (jj=0; jj<=cv_mem.cv_q; jj++) N_VDestroy(ck_mem.ck_zn[jj]);
-		        ck_mem = null;
-		        return(null);
-		      }
-		    }
-
-		  }
-
-		  /* Load check point data from cv_mem */
-
-		  for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_zn[j], ck_mem.ck_zn[j]);
-		  if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_zn[qmax], ck_mem.ck_zn[qmax]);
-
-		  if (ck_mem.ck_quadr) {
-		    for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_znQ[j], ck_mem.ck_znQ[j]);
-		    if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_znQ[qmax], ck_mem.ck_znQ[qmax]);
-		  }
-
-		  if (ck_mem.ck_sensi) {
-		    for (is=0; is<cv_mem.cv_Ns; is++) {
-		      for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_znS[j][is], ck_mem.ck_znS[j][is]);
-		      if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_znS[qmax][is], ck_mem.ck_znS[qmax][is]);
-		    }
-		  }
-
-		  if (ck_mem.ck_quadr_sensi) {
-		    for (is=0; is<cv_mem.cv_Ns; is++) {
-		      for (j=0; j<=cv_mem.cv_q; j++) N_VScale_Serial(ONE, cv_mem.cv_znQS[j][is], ck_mem.ck_znQS[j][is]);
-		      if ( cv_mem.cv_q < qmax ) N_VScale_Serial(ONE, cv_mem.cv_znQS[qmax][is], ck_mem.ck_znQS[qmax][is]);
-		    }
-		  }
-
-		  for (j=0; j<=L_MAX; j++)        ck_mem.ck_tau[j] = cv_mem.cv_tau[j];
-		  for (j=0; j<=NUM_TESTS; j++)    ck_mem.ck_tq[j] = cv_mem.cv_tq[j];
-		  for (j=0; j<=cv_mem.cv_q; j++) ck_mem.ck_l[j] = cv_mem.cv_l[j];
-		  ck_mem.ck_nst       = cv_mem.cv_nst;
-		  ck_mem.ck_tretlast  = cv_mem.cv_tretlast;
-		  ck_mem.ck_q         = cv_mem.cv_q;
-		  ck_mem.ck_qprime    = cv_mem.cv_qprime;
-		  ck_mem.ck_qwait     = cv_mem.cv_qwait;
-		  ck_mem.ck_L         = cv_mem.cv_L;
-		  ck_mem.ck_gammap    = cv_mem.cv_gammap;
-		  ck_mem.ck_h         = cv_mem.cv_h;
-		  ck_mem.ck_hprime    = cv_mem.cv_hprime;
-		  ck_mem.ck_hscale    = cv_mem.cv_hscale;
-		  ck_mem.ck_eta       = cv_mem.cv_eta;
-		  ck_mem.ck_etamax    = cv_mem.cv_etamax;
-		  ck_mem.ck_t0        = cv_mem.cv_tn;
-		  ck_mem.ck_saved_tq5 = cv_mem.cv_saved_tq5;
-
-		  return(ck_mem);
-		}
-		
-		/* 
-		 * CVodeGetQuad
-		 *
-		 * This routine extracts quadrature solution into yQout at the
-		 * time which CVode returned the solution.
-		 * This is just a wrapper that calls CVodeGetQuadDky with k=0.
-		 */
-		 
-		private int CVodeGetQuad(CVodeMemRec cv_mem, double tret[], NVector yQout)
-		{
-		  int flag;
-
-		  if (cv_mem == null) {
-		    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeGetQuad", MSGCV_NO_MEM);
-		    return(CV_MEM_NULL);
-		  } 
-
-		  tret[0] = cv_mem.cv_tretlast;
-		  
-		  flag = CVodeGetQuadDky(cv_mem,cv_mem.cv_tretlast,0,yQout);
-
-		  return(flag);
-		}
-		
-		/*
-		 * CVodeGetQuadDky
-		 *
-		 * CVodeQuadDky computes the kth derivative of the yQ function at
-		 * time t, where tn-hu <= t <= tn, tn denotes the current         
-		 * internal time reached, and hu is the last internal step size   
-		 * successfully used by the solver. The user may request 
-		 * k=0, 1, ..., qu, where qu is the current order. 
-		 * The derivative vector is returned in dky. This vector 
-		 * must be allocated by the caller. It is only legal to call this         
-		 * function after a successful return from CVode with quadrature
-		 * computation enabled.
-		 */
-
-		private int CVodeGetQuadDky(CVodeMemRec cv_mem, double t, int k, NVector dkyQ)
-		{ 
-		  double s, c, r;
-		  double tfuzz, tp, tn1;
-		  int i, j;
-		  
-		  /* Check all inputs for legality */
-		  
-		  if (cv_mem == null) {
-		    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeGetQuadDky", MSGCV_NO_MEM);
-		    return(CV_MEM_NULL);
-		  } 
-
-		  if(cv_mem.cv_quadr != true) {
-		    cvProcessError(cv_mem, CV_NO_QUAD, "CVODES", "CVodeGetQuadDky", MSGCV_NO_QUAD);
-		    return(CV_NO_QUAD);
-		  }
-
-		  if (dkyQ == null) {
-		    cvProcessError(cv_mem, CV_BAD_DKY, "CVODES", "CVodeGetQuadDky", MSGCV_NULL_DKY);
-		    return(CV_BAD_DKY);
-		  }
-		  
-		  if ((k < 0) || (k > cv_mem.cv_q)) {
-		    cvProcessError(cv_mem, CV_BAD_K, "CVODES", "CVodeGetQuadDky", MSGCV_BAD_K);
-		    return(CV_BAD_K);
-		  }
-		  
-		  /* Allow for some slack */
-		  tfuzz = FUZZ_FACTOR * cv_mem.cv_uround *
-		    (Math.abs(cv_mem.cv_tn) + Math.abs(cv_mem.cv_hu));
-		  if (cv_mem.cv_hu < ZERO) tfuzz = -tfuzz;
-		  tp = cv_mem.cv_tn - cv_mem.cv_hu - tfuzz;
-		  tn1 = cv_mem.cv_tn + tfuzz;
-		  if ((t-tp)*(t-tn1) > ZERO) {
-		    cvProcessError(cv_mem, CV_BAD_T, "CVODES", "CVodeGetQuadDky", MSGCV_BAD_T);
-		    return(CV_BAD_T);
-		  }
-		  
-		  /* Sum the differentiated interpolating polynomial */
-		  
-		  s = (t - cv_mem.cv_tn) / cv_mem.cv_h;
-		  for (j=cv_mem.cv_q; j >= k; j--) {
-		    c = ONE;
-		    for (i=j; i >= j-k+1; i--) c *= i;
-		    if (j == cv_mem.cv_q) {
-		      N_VScale_Serial(c, cv_mem.cv_znQ[cv_mem.cv_q], dkyQ);
-		    } else {
-		      N_VLinearSum_Serial(c, cv_mem.cv_znQ[j], s, dkyQ, dkyQ);
-		    }
-		  }
-		  if (k == 0) return(CV_SUCCESS);
-		  r = Math.pow(cv_mem.cv_h, -k);
-		  N_VScale_Serial(r, dkyQ, dkyQ);
-		  return(CV_SUCCESS);
-		  
-		}
-
-		class CVadjCheckPointRec {
-			  CkpntMemRec my_addr;
-			  CkpntMemRec next_addr;
-			  double t0;
-			  double t1;
-			  long nstep;
-			  int order;
-			  double step;
-			};
-
-			/*
-			 * CVodeGetAdjCheckPointsInfo
-			 *
-			 * This routine loads an array of nckpnts structures of type CVadjCheckPointRec.
-			 * The user must allocate space for ckpnt.
-			 */
-
-			private int CVodeGetAdjCheckPointsInfo(CVodeMemRec cv_mem, CVadjCheckPointRec ckpnt[])
-			{
-			  CVadjMemRec ca_mem;
-			  CkpntMemRec ck_mem;
-			  int i;
-
-			  /* Check if cvode_mem exists */
-			  if (cv_mem == null) {
-			    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeGetAdjCheckPointsInfo", MSGCV_NO_MEM);
-			    return(CV_MEM_NULL);
-			  }
-
-			  /* Was ASA initialized? */
-			  if (cv_mem.cv_adjMallocDone == false) {
-			    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeGetAdjCheckPointsInfo", MSGCV_NO_ADJ);
-			    return(CV_NO_ADJ);
-			  } 
-			  ca_mem = cv_mem.cv_adj_mem;
-
-			  ck_mem = ca_mem.ck_mem;
-
-			  i = 0;
-
-			  while (ck_mem != null) {
-
-			    ckpnt[i].my_addr = ck_mem;
-			    ckpnt[i].next_addr = ck_mem.ck_next;
-			    ckpnt[i].t0 = ck_mem.ck_t0;
-			    ckpnt[i].t1 = ck_mem.ck_t1;
-			    ckpnt[i].nstep = ck_mem.ck_nst;
-			    ckpnt[i].order = ck_mem.ck_q;
-			    ckpnt[i].step = ck_mem.ck_h;
-
-			    ck_mem = ck_mem.ck_next;
-			    i++;
-
-			  }
-
-			  return(CV_SUCCESS);
-
-			}
-			
-			private int CVodeCreateB(CVodeMemRec cv_mem, int lmmB, int iterB, int which[])
-			{
-			  CVadjMemRec ca_mem;
-			  CVodeBMemRec new_cvB_mem;
-			  CVodeMemRec cvodeB_mem;
-
-			  /* Check if cvode_mem exists */
-			  if (cv_mem == null) {
-			    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeCreateB", MSGCV_NO_MEM);
-			    return(CV_MEM_NULL);
-			  }
-
-			  /* Was ASA initialized? */
-			  if (cv_mem.cv_adjMallocDone == false) {
-			    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeCreateB", MSGCV_NO_ADJ);
-			    return(CV_NO_ADJ);
-			  }
-			  ca_mem = cv_mem.cv_adj_mem;
-
-			  /* Allocate space for new CVodeBMem object */
-
-			  new_cvB_mem = null;
-			  new_cvB_mem = new CVodeBMemRec();
-
-			  /* Create and set a new CVODES object for the backward problem */
-
-			  cvodeB_mem = CVodeCreate(lmmB, iterB);
-			  if (cvodeB_mem == null) {
-			    cvProcessError(cv_mem, CV_MEM_FAIL, "CVODEA", "CVodeCreateB", MSGCV_MEM_FAIL);
-			    return(CV_MEM_FAIL);
-			  }
-
-			  UserData userData = new UserData();
-			  userData.memRec = cv_mem;
-			  cvodeB_mem.cv_user_data = userData;
-
-			  cvodeB_mem.cv_mxhnil = -1;
-
-			  //CVodeSetErrHandlerFn(cvodeB_mem, cv_mem->cv_ehfun, cv_mem->cv_eh_data);
-			  //cvodeB_mem.cv_ehfun = cv_mem.cv_ehfun;
-			  cvodeB_mem.cv_eh_data = cv_mem.cv_eh_data;
-
-			  //CVodeSetErrFile(cvodeB_mem, cv_mem->cv_errfp);
-			  cvodeB_mem.cv_errfp = cv_mem.cv_errfp;
-
-			  /* Set/initialize fields in the new CVodeBMem object, new_cvB_mem */
-
-			  new_cvB_mem.cv_index   = ca_mem.ca_nbckpbs;
-
-			  new_cvB_mem.cv_mem     = cvodeB_mem;
-
-			  //new_cvB_mem.cv_f       = null;
-			  //new_cvB_mem.cv_fs      = null;
-
-			  //new_cvB_mem.cv_fQ      = null;
-			  //new_cvB_mem.cv_fQs     = null;
-
-			  new_cvB_mem.cv_user_data  = null;
-
-			  //new_cvB_mem.cv_lmem    = null;
-			  //new_cvB_mem.cv_lfree   = null;
-			  //new_cvB_mem.cv_pmem    = null;
-			  //new_cvB_mem.cv_pfree   = null;
-
-			  new_cvB_mem.cv_y       = null;
-
-			  new_cvB_mem.cv_f_withSensi = false;
-			  new_cvB_mem.cv_fQ_withSensi = false;
-
-			  /* Attach the new object to the linked list cvB_mem */
-
-			  new_cvB_mem.cv_next = ca_mem.cvB_mem;
-			  ca_mem.cvB_mem = new_cvB_mem;
-			  
-			  /* Return the index of the newly created CVodeBMem object.
-			   * This must be passed to CVodeInitB and to other ***B 
-			   * functions to set optional inputs for this backward problem */
-
-			  which[0] = ca_mem.ca_nbckpbs;
-
-			  ca_mem.ca_nbckpbs++;
-
-			  return(CV_SUCCESS);
-			}
-
-			private int CVodeInitB(CVodeMemRec cv_mem, int which, 
-		               int fB,
-		               double tB0, NVector yB0)
-		{
-		  CVadjMemRec ca_mem;
-		  CVodeBMemRec cvB_mem;
-		  CVodeMemRec cvodeB_mem;
-		  int flag;
-
-		  /* Check if cvode_mem exists */
-
-		  if (cv_mem == null) {
-		    cvProcessError(null, CV_MEM_NULL, "CVODEA", "CVodeInitB", MSGCV_NO_MEM);
-		    return(CV_MEM_NULL);
-		  }
-
-		  /* Was ASA initialized? */
-
-		  if (cv_mem.cv_adjMallocDone == false) {
-		    cvProcessError(cv_mem, CV_NO_ADJ, "CVODEA", "CVodeInitB", MSGCV_NO_ADJ);
-		    return(CV_NO_ADJ);
-		  } 
-		  ca_mem = cv_mem.cv_adj_mem;
-
-		  /* Check the value of which */
-
-		  if ( which >= ca_mem.ca_nbckpbs ) {
-		    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeInitB", MSGCV_BAD_WHICH);
-		    return(CV_ILL_INPUT);
-		  }
-
-		  /* Find the CVodeBMem entry in the linked list corresponding to which */
-
-		  cvB_mem = ca_mem.cvB_mem;
-		  while (cvB_mem != null) {
-		    if ( which == cvB_mem.cv_index ) break;
-		    cvB_mem = cvB_mem.cv_next;
-		  }
-
-		  cvodeB_mem = cvB_mem.cv_mem;
-		  
-		  /* Allocate and set the CVODES object */
-
-		  flag = CVodeInit(cvodeB_mem, CVArhs_select, tB0, yB0);
-
-		  if (flag != CV_SUCCESS) return(flag);
-
-		  /* Copy fB function in cvB_mem */
-
-		  cvB_mem.cv_f_withSensi = false;
-		  //cvB_mem.cv_f = fB;
-
-		  /* Allocate space and initialize the y Nvector in cvB_mem */
-
-		  cvB_mem.cv_t0 = tB0;
-		  cvB_mem.cv_y = N_VClone(yB0);
-		  N_VScale_Serial(ONE, yB0, cvB_mem.cv_y);
-
-		  return(CV_SUCCESS);
-		}
-
-			/*
-			 * CVArhs
-			 *
-			 * This routine interfaces to the CVRhsFnB (or CVRhsFnBS) routine 
-			 * provided by the user.
-			 */
-
-
-			private int CVArhs(double t, NVector yB, 
-			                  NVector yBdot, CVodeMemRec cv_mem)
-			{
-			  CVadjMemRec ca_mem;
-			  CVodeBMemRec cvB_mem;
-			  int flag = 0;
-			  int retval = 0;
-
-			  ca_mem = cv_mem.cv_adj_mem;
-
-			  cvB_mem = ca_mem.ca_bckpbCrt;
-
-			  /* Get forward solution from interpolation */
-
-			  if (ca_mem.ca_IMinterpSensi)
-				if (ca_mem.ca_IMget == CVAhermiteGetY_select) {
-			        flag = CVAhermiteGetY(cv_mem, t, ca_mem.ca_ytmp, ca_mem.ca_yStmp);
-				}
-			  else 
-				  if (ca_mem.ca_IMget == CVAhermiteGetY_select) {
-			          flag = CVAhermiteGetY(cv_mem, t, ca_mem.ca_ytmp, null);
-				  }
-
-			  if (flag != CV_SUCCESS) {
-			    cvProcessError(cv_mem, -1, "CVODEA", "CVArhs", MSGCV_BAD_TINTERP, t);
-			    return(-1);
-			  }
-
-			  /* Call the user's RHS function */
-
-			  if (cvB_mem.cv_f_withSensi)
-				if (testMode) {
-					//retval = fBS1TestMode(t, ca_mem.ca_ytmp, ca_mem.ca_yStmp, yB, yBdot, cvB_mem.cv_user_data);	
-				}
-				else {
-			        //retval = fBS1(t, ca_mem.ca_ytmp, ca_mem.ca_yStmp, yB, yBdot, cvB_mem.cv_user_data);
-				}
-			  else
-				  if (testMode) {
-					  retval = fBTestMode(t, ca_mem.ca_ytmp, yB, yBdot, cvB_mem.cv_user_data);
-				  }
-				  else {
-			          retval = fB(t, ca_mem.ca_ytmp, yB, yBdot, cvB_mem.cv_user_data);
-				  }
-
-			  return(retval);
-			}
-			
-			/*
-			 * CVAhermiteGetY ( -> IMget )
-			 *
-			 * This routine uses cubic piece-wise Hermite interpolation for 
-			 * the forward solution vector. 
-			 * It is typically called by the wrapper routines before calling
-			 * user provided routines (fB, djacB, bjacB, jtimesB, psolB) but
-			 * can be directly called by the user through CVodeGetAdjY
-			 */
-
-			private int CVAhermiteGetY(CVodeMemRec cv_mem, double t,
-			                          NVector y, NVector yS[])
-			{
-			  CVadjMemRec ca_mem;
-			  DtpntMemRec dt_mem[];
-			  HermiteDataMemRec content0, content1;
-
-			  double t0, t1, delta;
-			  double factor1, factor2, factor3;
-
-			  NVector y0, yd0, y1, yd1;
-			  NVector yS0[]=null;
-			  NVector ySd0[]= null;
-			  NVector yS1[], ySd1[];
-
-			  int flag, is, NS;
-			  long indx[] = new long[1];
-			  boolean newpoint[] = new boolean[1];
-
-			 
-			  ca_mem = cv_mem.cv_adj_mem;
-			  dt_mem = ca_mem.dt_mem;
-			 
-			  /* Local value of Ns */
-			 
-			  NS = (ca_mem.ca_IMinterpSensi && (yS != null)) ? cv_mem.cv_Ns : 0;
-
-			  /* Get the index in dt_mem */
-
-			  flag = CVAfindIndex(cv_mem, t, indx, newpoint);
-			  if (flag != CV_SUCCESS) return(flag);
-
-			  /* If we are beyond the left limit but close enough,
-			     then return y at the left limit. */
-
-			  if (indx[0] == 0) {
-			    content0 = dt_mem[0].hermiteContent;
-			    N_VScale_Serial(ONE, content0.y, y);
-			    for (is=0; is<NS; is++) N_VScale_Serial(ONE, content0.yS[is], yS[is]);
-			    return(CV_SUCCESS);
-			  }
-
-			  /* Extract stuff from the appropriate data points */
-
-			  t0 = dt_mem[(int)(indx[0]-1)].t;
-			  t1 = dt_mem[(int)indx[0]].t;
-			  delta = t1 - t0;
-
-			  content0 = dt_mem[(int)(indx[0]-1)].hermiteContent;
-			  y0  = content0.y;
-			  yd0 = content0.yd;
-			  if (ca_mem.ca_IMinterpSensi) {
-			    yS0  = content0.yS;
-			    ySd0 = content0.ySd;
-			  }
-
-			  if (newpoint[0]) {
-			    
-			    /* Recompute Y0 and Y1 */
-
-			    content1 = dt_mem[(int)indx[0]].hermiteContent;
-
-			    y1  = content1.y;
-			    yd1 = content1.yd;
-
-			    N_VLinearSum_Serial(ONE, y1, -ONE, y0, ca_mem.ca_Y[0]);
-			    N_VLinearSum_Serial(ONE, yd1,  ONE, yd0, ca_mem.ca_Y[1]);
-			    N_VLinearSum_Serial(delta, ca_mem.ca_Y[1], -TWO, ca_mem.ca_Y[0], ca_mem.ca_Y[1]);
-			    N_VLinearSum_Serial(ONE, ca_mem.ca_Y[0], -delta, yd0, ca_mem.ca_Y[0]);
-
-
-			    yS1  = content1.yS;
-			    ySd1 = content1.ySd;
-			      
-			    for (is=0; is<NS; is++) {
-			      N_VLinearSum_Serial(ONE, yS1[is], -ONE, yS0[is], ca_mem.ca_YS[0][is]);
-			      N_VLinearSum_Serial(ONE, ySd1[is],  ONE, ySd0[is], ca_mem.ca_YS[1][is]);
-			      N_VLinearSum_Serial(delta, ca_mem.ca_YS[1][is], -TWO, ca_mem.ca_YS[0][is], ca_mem.ca_YS[1][is]);
-			      N_VLinearSum_Serial(ONE, ca_mem.ca_YS[0][is], -delta, ySd0[is], ca_mem.ca_YS[0][is]);
-			    }
-
-			  }
-
-			  /* Perform the actual interpolation. */
-
-			  factor1 = t - t0;
-
-			  factor2 = factor1/delta;
-			  factor2 = factor2*factor2;
-
-			  factor3 = factor2*(t-t1)/delta;
-
-			  N_VLinearSum_Serial(ONE, y0, factor1, yd0, y);
-			  N_VLinearSum_Serial(ONE, y, factor2, ca_mem.ca_Y[0], y);
-			  N_VLinearSum_Serial(ONE, y, factor3, ca_mem.ca_Y[1], y);
-
-			  for (is=0; is<NS; is++) {
-			    N_VLinearSum_Serial(ONE, yS0[is], factor1, ySd0[is], yS[is]);
-			    N_VLinearSum_Serial(ONE, yS[is], factor2, ca_mem.ca_YS[0][is], yS[is]);
-			    N_VLinearSum_Serial(ONE, yS[is], factor3, ca_mem.ca_YS[1][is], yS[is]);
-			  }
-
-
-			  return(CV_SUCCESS);
-			}
-			
-			/*
-			 * CVAfindIndex
-			 *
-			 * Finds the index in the array of data point strctures such that
-			 *     dt_mem[indx-1].t <= t < dt_mem[indx].t
-			 * If indx is changed from the previous invocation, then newpoint = SUNTRUE
-			 *
-			 * If t is beyond the leftmost limit, but close enough, indx=0.
-			 *
-			 * Returns CV_SUCCESS if successful and CV_GETY_BADT if unable to
-			 * find indx (t is too far beyond limits).
-			 */
-
-			static int CVAfindIndex(CVodeMemRec cv_mem, double t, 
-			                        long indx[], boolean newpoint[])
-			{
-			  CVadjMemRec ca_mem;
-			  long ilast = 0;
-			  DtpntMemRec dt_mem[];
-			  int sign;
-			  boolean to_left, to_right;
-
-			  ca_mem = cv_mem.cv_adj_mem;
-			  dt_mem = ca_mem.dt_mem;
-
-			  newpoint[0] = false;
-
-			  /* Find the direction of integration */
-			  sign = (ca_mem.ca_tfinal - ca_mem.ca_tinitial > ZERO) ? 1 : -1;
-
-			  /* If this is the first time we use new data */
-			  if (ca_mem.ca_IMnewData) {
-			    ilast     = ca_mem.ca_np-1;
-			    newpoint[0] = true;
-			    ca_mem.ca_IMnewData   = false;
-			  }
-
-			  /* Search for indx starting from ilast */
-			  to_left  = ( sign*(t - dt_mem[(int)(ilast-1)].t) < ZERO);
-			  to_right = ( sign*(t - dt_mem[(int)(ilast)].t)   > ZERO);
-
-			  if ( to_left ) {
-			    /* look for a new indx to the left */
-
-			    newpoint[0] = true;
-			    
-			    indx[0] = ilast;
-			    for(;;) {
-			      if ( indx[0] == 0 ) break;
-			      if ( sign*(t - dt_mem[(int)(indx[0]-1)].t) <= ZERO ) (indx[0])--;
-			      else                                         break;
-			    }
-
-			    if ( indx[0] == 0 )
-			      ilast = 1;
-			    else
-			      ilast = indx[0];
-
-			    if ( indx[0] == 0 ) {
-			      /* t is beyond leftmost limit. Is it too far? */  
-			      if ( Math.abs(t - dt_mem[0].t) > FUZZ_FACTOR * cv_mem.cv_uround ) {
-			        return(CV_GETY_BADT);
-			      }
-			    }
-
-			  } else if ( to_right ) {
-			    /* look for a new indx to the right */
-
-			    newpoint[0] = true;
-
-			    indx [0]= ilast;
-			    for(;;) {
-			      if ( sign*(t - dt_mem[(int)indx[0]].t) > ZERO) (indx[0])++;
-			      else                                     break;
-			    }
-
-			    ilast = indx[0];
-
-
-			  } else {
-			    /* ilast is still OK */
-
-			    indx[0] = ilast;
-
-			  }
-
-			  return(CV_SUCCESS);
-
-
-			}
+	  /* Check whether CVodeF has been called */
 
+	  if ( ca_mem.ca_firstCVodeFcall ) {
+	    cvProcessError(cv_mem, CV_NO_FWD, "CVODEA", "CVodeB", MSGCV_NO_FWD);
+	    return(CV_NO_FWD);
+	  }
+	  sign = (ca_mem.ca_tfinal - ca_mem.ca_tinitial > ZERO) ? 1 : -1;
+
+	  /* If this is the first call, loop over all backward problems and
+	   *   - check that tB0 is valid
+	   *   - check that tBout is ahead of tB0 in the backward direction
+	   *   - check whether we need to interpolate forward sensitivities
+	   */
+
+	  if ( ca_mem.ca_firstCVodeBcall ) {
+
+	    tmp_cvB_mem = cvB_mem;
+
+	    while(tmp_cvB_mem != null) {
+
+	      tBn = tmp_cvB_mem.cv_mem.cv_tn;
+
+	      if ( (sign*(tBn-ca_mem.ca_tinitial) < ZERO) || (sign*(ca_mem.ca_tfinal-tBn) < ZERO) ) {
+	        cvProcessError(cv_mem, CV_BAD_TB0, "CVODEA", "CVodeB", MSGCV_BAD_TB0,
+	                       tmp_cvB_mem.cv_index);
+	        return(CV_BAD_TB0);
+	      }
+
+	      if (sign*(tBn-tBout) <= ZERO) {
+	        cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeB", MSGCV_BAD_TBOUT,
+	                       tmp_cvB_mem.cv_index);
+	        return(CV_ILL_INPUT);
+	      }
+
+	      if ( tmp_cvB_mem.cv_f_withSensi || tmp_cvB_mem.cv_fQ_withSensi )
+	          ca_mem.ca_IMinterpSensi = true;
+
+	      tmp_cvB_mem = tmp_cvB_mem.cv_next;
+
+	    }
+
+	    if ( ca_mem.ca_IMinterpSensi && !ca_mem.ca_IMstoreSensi) {
+	      cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeB", MSGCV_BAD_SENSI);
+	      return(CV_ILL_INPUT);
+	    }
+
+	    ca_mem.ca_firstCVodeBcall = false;
+	  }
+
+	  /* Check if itaskB is legal */
+
+	  if ( (itaskB != CV_NORMAL) && (itaskB != CV_ONE_STEP) ) {
+	    cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeB", MSGCV_BAD_ITASKB);
+	    return(CV_ILL_INPUT);
+	  }
+
+	  /* Check if tBout is legal */
+
+	  if ( (sign*(tBout-ca_mem.ca_tinitial) < ZERO) || (sign*(ca_mem.ca_tfinal-tBout) < ZERO) ) {
+	    tfuzz = HUNDRED*cv_mem.cv_uround*(Math.abs(ca_mem.ca_tinitial) + Math.abs(ca_mem.ca_tfinal));
+	    if ( (sign*(tBout-ca_mem.ca_tinitial) < ZERO) && (Math.abs(tBout-ca_mem.ca_tinitial) < tfuzz) ) {
+	      tBout = ca_mem.ca_tinitial;
+	    } else {
+	      cvProcessError(cv_mem, CV_ILL_INPUT, "CVODEA", "CVodeB", MSGCV_BAD_TBOUT);
+	      return(CV_ILL_INPUT);
+	    }
+	  }
+
+	  /* Loop through the check points and stop as soon as a backward
+	   * problem has its tn value behind the current check point's t0_
+	   * value (in the backward direction) */
+
+	  ck_mem = ca_mem.ck_mem;
+
+	  gotCheckpoint = false;
+
+	  for(;;) {
+
+	    tmp_cvB_mem = cvB_mem;
+	    while(tmp_cvB_mem != null) {
+	      tBn = tmp_cvB_mem.cv_mem.cv_tn;
+
+	      if ( sign*(tBn-ck_mem.ck_t0) > ZERO ) {
+	        gotCheckpoint = true;
+	        break;
+	      }
+
+	      if ( (itaskB==CV_NORMAL) && (tBn == ck_mem.ck_t0) && (sign*(tBout-ck_mem.ck_t0) >= ZERO) ) {
+	        gotCheckpoint = true;
+	        break;
+	      }
+
+	      tmp_cvB_mem = tmp_cvB_mem.cv_next;
+	    }
+
+	    if (gotCheckpoint) break;
+
+	    if (ck_mem.ck_next == null) break;
+
+	    ck_mem = ck_mem.ck_next;
+	  }
+
+	  /* Starting with the current check point from above, loop over check points
+	     while propagating backward problems */
+
+	  for(;;) {
+
+	    /* Store interpolation data if not available.
+	       This is the 2nd forward integration pass */
+
+	    if (ck_mem != ca_mem.ca_ckpntData) {
+	      flag = CVAdataStore(cv_mem, ck_mem);
+	      if (flag != CV_SUCCESS) break;
+	    }
+
+	    /* Loop through all backward problems and, if needed,
+	     * propagate their solution towards tBout */
+
+	    tmp_cvB_mem = cvB_mem;
+	    while (tmp_cvB_mem != null) {
+
+	      /* Decide if current backward problem is "active" in this check point */
+
+	      isActive = true;
+
+	      tBn = tmp_cvB_mem.cv_mem.cv_tn;
+
+	      if ( (tBn == ck_mem.ck_t0) && (sign*(tBout-ck_mem.ck_t0) < ZERO ) ) isActive = false;
+	      if ( (tBn == ck_mem.ck_t0) && (itaskB==CV_ONE_STEP) ) isActive = false;
+
+	      if ( sign * (tBn - ck_mem.ck_t0) < ZERO ) isActive = false;
+
+	      if ( isActive ) {
+
+	        /* Store the address of current backward problem memory 
+	         * in ca_mem to be used in the wrapper functions */
+	        ca_mem.ca_bckpbCrt = tmp_cvB_mem;
+
+	        /* Integrate current backward problem */
+	        CVodeSetStopTime(tmp_cvB_mem.cv_mem, ck_mem.ck_t0);
+	        flag = CVode(tmp_cvB_mem.cv_mem, tBout, tmp_cvB_mem.cv_y, tBret, itaskB);
+
+	        /* Set the time at which we will report solution and/or quadratures */
+	        tmp_cvB_mem.cv_tout = tBret[0];
+
+	        /* If an error occurred, exit while loop */
+	        if (flag < 0) break;
+
+	      } else {
+	        flag = CV_SUCCESS;
+	        tmp_cvB_mem.cv_tout = tBn;
+	      }
+
+	      /* Move to next backward problem */
+
+	      tmp_cvB_mem = tmp_cvB_mem.cv_next;
+	    }
+
+	    /* If an error occurred, return now */
+
+	    if (flag <0) {
+	      cvProcessError(cv_mem, flag, "CVODEA", "CVodeB", MSGCV_BACK_ERROR,
+	                     tmp_cvB_mem.cv_index);
+	      return(flag);
+	    }
+
+	    /* If in CV_ONE_STEP mode, return now (flag = CV_SUCCESS) */
+
+	    if (itaskB == CV_ONE_STEP) break;
+
+	    /* If all backward problems have succesfully reached tBout, return now */
+
+	    reachedTBout = true;
+
+	    tmp_cvB_mem = cvB_mem;
+	    while(tmp_cvB_mem != null) {
+	      if ( sign*(tmp_cvB_mem.cv_tout - tBout) > ZERO ) {
+	        reachedTBout = false;
+	        break;
+	      }
+	      tmp_cvB_mem = tmp_cvB_mem.cv_next;
+	    }
+
+	    if ( reachedTBout ) break;
+
+	    /* Move check point in linked list to next one */
+
+	    ck_mem = ck_mem.ck_next;
+
+	  } 
+
+	  return(flag);
+	}
+
+	/*
+	 * CVAdataStore
+	 *
+	 * This routine integrates the forward model starting at the check
+	 * point ck_mem and stores y and yprime at all intermediate steps.
+	 *
+	 * Return values:
+	 * CV_SUCCESS
+	 * CV_REIFWD_FAIL
+	 * CV_FWD_FAIL
+	 */
+
+	private int CVAdataStore(CVodeMemRec cv_mem, CkpntMemRec ck_mem)
+	{
+      CVadjMemRec ca_mem;
+	  DtpntMemRec dt_mem[];
+	  double t[] = new double[1];
+	  long i;
+	  int flag, sign;
+
+	  ca_mem = cv_mem.cv_adj_mem;
+	  dt_mem = ca_mem.dt_mem;
+
+	  /* Initialize cv_mem with data from ck_mem */
+	  //flag = CVAckpntGet(cv_mem, ck_mem);
+	  //if (flag != CV_SUCCESS)
+	    //return(CV_REIFWD_FAIL);
+
+	  /* Set first structure in dt_mem[0] */
+	  dt_mem[0].t = ck_mem.ck_t0;
+	  //ca_mem.ca_IMstore(cv_mem, dt_mem[0]);
+
+	  /* Decide whether TSTOP must be activated */
+	  if (ca_mem.ca_tstopCVodeFcall) {
+	    CVodeSetStopTime(cv_mem, ca_mem.ca_tstopCVodeF);
+	  }
+
+	  sign = (ca_mem.ca_tfinal - ca_mem.ca_tinitial > ZERO) ? 1 : -1;
+
+
+	  /* Run CVode to set following structures in dt_mem[i] */
+	  i = 1;
+	  do {
+
+	    flag = CVode(cv_mem, ck_mem.ck_t1, ca_mem.ca_ytmp, t, CV_ONE_STEP);
+	    if (flag < 0) return(CV_FWD_FAIL);
+
+	    dt_mem[(int)i].t = t[0];
+	    //ca_mem.ca_IMstore(cv_mem, dt_mem[(int)i]);
+	    i++;
+
+	  } while ( sign*(ck_mem.ck_t1 - t[0]) > ZERO );
+
+
+	  ca_mem.ca_IMnewData = true;     /* New data is now available    */
+	  ca_mem.ca_ckpntData = ck_mem;   /* starting at this check point */
+	  ca_mem.ca_np = i;               /* and we have this many points */
+
+	  return(CV_SUCCESS);
+	}
+	
+	/* 
+	 * CVodeSetStopTime
+	 *
+	 * Specifies the time beyond which the integration is not to proceed.
+	 */
+
+	private int CVodeSetStopTime(CVodeMemRec cv_mem, double tstop)
+	{
+
+	  if (cv_mem==null) {
+	    cvProcessError(null, CV_MEM_NULL, "CVODES", "CVodeSetStopTime", MSGCV_NO_MEM);
+	    return (CV_MEM_NULL);
+	  }
+
+	  /* If CVode was called at least once, test if tstop is legal
+	   * (i.e. if it was not already passed).
+	   * If CVodeSetStopTime is called before the first call to CVode,
+	   * tstop will be checked in CVode. */
+	  if (cv_mem.cv_nst > 0) {
+
+	    if ( (tstop - cv_mem.cv_tn) * cv_mem.cv_h < ZERO ) {
+	      cvProcessError(cv_mem, CV_ILL_INPUT, "CVODES", "CVodeSetStopTime", MSGCV_BAD_TSTOP, tstop, cv_mem.cv_tn);
+	      return(CV_ILL_INPUT);
+	    }
+
+	  }
+
+	  cv_mem.cv_tstop = tstop;
+	  cv_mem.cv_tstopset = true;
+
+	  return(CV_SUCCESS);
+	}
 
 
 
