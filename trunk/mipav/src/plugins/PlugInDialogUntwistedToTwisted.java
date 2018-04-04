@@ -272,10 +272,27 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 					// read registration points and calculate thin-plate spline transform:
 					VOI targetPts = LatticeModel.readAnnotationsCSV(targetPointsFile);
 					VOI inputPts = LatticeModel.readAnnotationsCSV(inputPointsFile);
-					int numTargetPts = targetPts.getCurves().size();
-					int numInputPts = inputPts.getCurves().size();
-					if ( numTargetPts != numInputPts ) {
-						MipavUtil.displayError( "Number of registration target points and input points must match" );
+					
+					Vector<String> commonNames = new Vector<String>();
+					for ( int i = 0; i < targetPts.getCurves().size(); i++ )
+					{
+						String targetName = ((VOIText)targetPts.getCurves().elementAt(i)).getText();
+						for ( int j = 0; j < inputPts.getCurves().size(); j++ )
+						{
+							String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
+							
+							if ( targetName.equals(inputName) )
+							{
+								commonNames.add(inputName);
+								break;
+							}
+						}
+					}
+					
+					
+					int numTargetPts = commonNames.size();
+					if ( numTargetPts <= 0 ) {
+						MipavUtil.displayError( "Target points and input points must match" );
 						return;
 					}
 					double[] xSource = new double[ numTargetPts ]; 
@@ -284,11 +301,33 @@ public class PlugInDialogUntwistedToTwisted extends JDialogStandalonePlugin impl
 					double[] xTarget = new double[ numTargetPts ]; 
 					double[] yTarget = new double[ numTargetPts ]; 
 					double[] zTarget = new double[ numTargetPts ]; 
-					for ( int i = 0; i < numTargetPts; i++ ) {
-						Vector3f sourcePt = inputPts.getCurves().elementAt(i).elementAt(0);
-						Vector3f targetPt = targetPts.getCurves().elementAt(i).elementAt(0);
-						xSource[i] = sourcePt.X;					ySource[i] = sourcePt.Y;					zSource[i] = sourcePt.Z;
-						xTarget[i] = targetPt.X;					yTarget[i] = targetPt.Y;					zTarget[i] = targetPt.Z;
+					for ( int i = 0; i < commonNames.size(); i++ ) {
+						Vector3f sourcePt = null;
+						Vector3f targetPt = null;
+						for ( int j = 0; j < targetPts.getCurves().size(); j++ )
+						{
+							String targetName = ((VOIText)targetPts.getCurves().elementAt(j)).getText();
+							if ( targetName.equals(commonNames.elementAt(i) ) )
+							{
+								targetPt = targetPts.getCurves().elementAt(j).elementAt(0);
+								break;
+							}
+						}
+						for ( int j = 0; j < inputPts.getCurves().size(); j++ )
+						{
+							String inputName = ((VOIText)inputPts.getCurves().elementAt(j)).getText();
+							if ( inputName.equals(commonNames.elementAt(i) ) )
+							{
+								sourcePt = inputPts.getCurves().elementAt(j).elementAt(0);
+								break;
+							}
+						}
+						if ( sourcePt != null && targetPt != null )
+						{
+							System.err.println( commonNames.elementAt(i) );
+							xSource[i] = sourcePt.X;					ySource[i] = sourcePt.Y;					zSource[i] = sourcePt.Z;
+							xTarget[i] = targetPt.X;					yTarget[i] = targetPt.Y;					zTarget[i] = targetPt.Z;
+						}
 					}
 					
 					ModelImage inputImage = null;
